@@ -432,7 +432,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 						   w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
 						   mamy ju¿ w liscie, to przyszla do nas zmiana rostera; usunmy wiec najpierw, a potem
 						   sprawdzmy, czy warto dodawac :) */
-						if (!(jdh->roster_retrieved) && (tmp = userlist_find(s, u.uid)) )
+						if (jdh->roster_retrieved && (tmp = userlist_find(s, u.uid)) )
 							userlist_remove(s, tmp);
 
 						if (jabber_attr(item->atts, "subscription") && 
