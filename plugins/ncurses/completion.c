@@ -467,7 +467,6 @@ static void theme_generator_adding(const char *dname, int themes_only)
 		if ((themes_only && xstrcmp(tmp2, name)) || !themes_only)
 			array_add_check(&completions, tmp2, 1);
 
-		xfree(tmp2);
 		xfree(namelist[i]);
 	}
 
@@ -917,33 +916,32 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 					}
 				}
 			}		
-
-			if (completions) {
-				for (j = 0; completions && completions[j]; j++) {
-					string_t s;
-					const char *p;
-
-					if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
-						continue;
-					s = string_init("\"");
-
-					for (p = completions[j]; *p; p++) {
-						if (!xstrchr("\"\\", *p))
-							string_append_c(s, *p);
-						else {
-							string_append_c(s, '\\');
-							string_append_c(s, *p);
-						}
-					}
-
-					string_append_c(s, '\"');
-					xfree(completions[j]);
-					completions[j] = string_free(s, 0);
-				}
-			}	
 		}
-	}
+		
+		if (completions) {
+			for (j = 0; completions && completions[j]; j++) {
+				string_t s;
+				const char *p;
+	
+				if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
+					continue;
+				s = string_init("\"");
 
+				for (p = completions[j]; *p; p++) {
+					if (!xstrchr("\"\\", *p))
+						string_append_c(s, *p);
+					else {
+						string_append_c(s, '\\');
+						string_append_c(s, *p);
+					}
+				}
+
+				string_append_c(s, '\"');
+				xfree(completions[j]);
+				completions[j] = string_free(s, 0);
+			}
+		}	
+	}
 	count = array_count(completions);
 	
 	/* 
