@@ -70,7 +70,7 @@ display_notify
 
 nickname
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domy¶lna warto¶æ: twoj login
 
 	okre¶la domy¶lny nick, pod jakim bêdziemy starali siê po³±czyæ
 	z serwerem IRC
@@ -78,7 +78,7 @@ nickname
 
 realname
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domy¶lna warto¶æ: realname u¿yszkodnika
 
 	dowolny tekst, który zostanie ustawiony jako nasz realname
 	[m.in. w odpowiedzi na /whois], by zmiany realname odnios³y skutek

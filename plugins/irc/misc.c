@@ -37,9 +37,6 @@
 #include "input.h"
 #include "autoacts.h"
 
-#define GDEBUG
-#define MARLENE
-
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
@@ -343,6 +340,7 @@ IRC_COMMAND(irc_c_error)
 	char *t, *dest = NULL, *coloured = NULL, *bang;
 	time_t try;
 	window_t *w;
+	char *altnick;
 
 #define IOK2(x) param[x]?OMITCOLON(param[x]):""
 	i = irccommands[ecode].future&0x100;
@@ -382,6 +380,20 @@ IRC_COMMAND(irc_c_error)
 		dest = w?t:NULL;
 	}
 	switch (i) {
+		case 433:
+			print_window(NULL, s, 0, "IRC_ERR_SECONDFIRST", 
+					session_name(s), param[3], IOK2(4));
+			if (j->connecting) {
+				altnick = (char *) session_get(s, "alt_nick");
+				if (xstrcmp(param[3], altnick)) {
+					print_window(NULL, s, 0, "IRC_TRYNICK",
+							session_name(s), altnick);
+					xfree(j->nick);
+					j->nick = xstrdup(altnick);
+					irc_write(j, "NICK %s\r\n", j->nick);
+				}
+			}
+			break;
 		case 404:
 			print_window(dest, s, 0, "IRC_RPL_CANTSEND", session_name(s), param[3]);
 			break;
@@ -623,6 +635,10 @@ IRC_COMMAND(irc_c_msg)
 010539 <@dredzik> GiM, hm... jeszcze by siê przyda³a jedna rzecz - tak ¿eby
 010539 pierwszym argumentem by³a sesja
 	*/
+		/* darkjames, je¿eli chcesz u¿ywaæ w SIMie
+		 * to musisz u¿ywaæ irc-protocol-message,
+		 * po to zosta³o to stworzone...
+		 */
 		query_emit(NULL, "irc-protocol-message",
 				&(s->uid), &xosd_nick, &coloured, 
 				&xosd_to_us, &xosd_is_priv, &xosd_chan);
@@ -752,6 +768,9 @@ IRC_COMMAND(irc_c_kick)
 	coloured = param[4]?xstrlen(OMITCOLON(param[4]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4]), 1):
 				xstrdup("no reason"):xstrdup("no reason");
+
+/* 14:56:30 ::: Zostales wykopany z darkjames przez #ekg2-leet (.) (bug)
+ */ 
 	print_window(channel, s, 0, stajl, session_name(s), 
 			OMITCOLON(param[3]), uid+4, tmp?tmp+1:"",
 			param[2], coloured);

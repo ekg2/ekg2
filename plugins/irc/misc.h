@@ -169,7 +169,7 @@ static IrcCommand irccommands[] =
 	{ 1,	424,	NULL,	"ERR_FILEERROR",	&irc_c_error,	IRC_ERR_ONLY1 },
 	{ 1,	431,	NULL,	"ERR_NONICKNAMEGIVEN",	&irc_c_error,	IRC_ERR_ONLY1 },
 	{ 1,	432,	NULL,	"ERR_ERRONEUSNICKNAME",	&irc_c_error,	IRC_ERR_21 },
-	{ 1,	433,	NULL,	"ERR_NICKNAMEINUSE",	&irc_c_error,	IRC_ERR_21 },
+	{ 1,	433,	NULL,	"ERR_NICKNAMEINUSE",	&irc_c_error,	IRC_ERR_OTHER },
 	{ 1,	436,	NULL,	"ERR_NICKCOLLISION",	&irc_c_error,	IRC_ERR_12 },
 	{ 1,	437,	NULL,	"ERR_UNAVAILRESOURCE",	&irc_c_error,	IRC_ERR_12 },
 	{ 1,	441,	NULL,	"ERR_USERNOTINCHANNEL",	&irc_c_error,	IRC_ERR_NEW },

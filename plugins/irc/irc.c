@@ -56,6 +56,17 @@
 
 #include "IRCVERSION.h"
 
+#define fix(s) ((s) ? (s) : "")
+
+#define DEFPARTMSG "EKG2 bejbi! http://ekg2.org/"
+#define DEFQUITMSG "EKG2 - It's better than sex!"
+
+#define SGPARTMSG(x) fix(session_get(x, "PART_MSG"))
+#define SGQUITMSG(x) fix(session_get(x, "QUIT_MSG"))
+
+#define PARTMSG(x) (strlen(SGPARTMSG(x))?SGPARTMSG(x):DEFPARTMSG)
+#define QUITMSG(x) (strlen(SGQUITMSG(x))?SGQUITMSG(x):DEFQUITMSG)
+
 /*                                                                       *
  * ======================================== STARTUP AND STANDARD FUNCS - *
  *                                                                       */
@@ -151,7 +162,7 @@ int irc_session(void *data, va_list ap)
  */
 int irc_print_version(void *data, va_list ap)
 {
-	print("generic", "IRC plugin by Michal 'GiM' Spadlinski v. "IRCVERSION);
+	print("generic", "IRC plugin by Michal 'GiM' Spadlinski, Jakub 'darkjames' Zawadzki v. "IRCVERSION);
 
 	return 0;
 }
@@ -292,7 +303,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 #endif
 	struct sockaddr_in ipv4, vhost;
 
-	int family, one = 1, res, expectedres, inetptonres;
+	int lfamily, family, one = 1, res, expectedres, inetptonres;
 	const char *port_s = session_get(s, "port");
 	const char *local_ip = session_get(s, "local_ip");
 	char bufek[100];
@@ -378,17 +389,19 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		return;
 	}
 
+	lfamily = family;
 	if (xstrlen(local_ip) > 1)
 	{
-		vhost.sin_family = family;
+		vhost.sin_family = lfamily;
 		vhost.sin_port = htons(0);
+		inetptonres = 0;
 #ifdef HAVE_INET_PTON
 		if (family == PF_INET)
 			inetptonres = inet_pton(PF_INET, local_ip, &(vhost.sin_addr));
 #ifdef HAVE_GETADDRINFO
-		else {
+		if (inetptonres<1) {
 			inetptonres = inet_pton(PF_INET6, local_ip, &(vhost6.sin6_addr));
-			vhost6.sin6_family = family;
+			vhost6.sin6_family = lfamily = PF_INET6;
 			vhost6.sin6_port = htons(0);
 		}
 #endif
@@ -398,17 +411,18 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 			config_changed = 1;
 			vhost.sin_addr.s_addr = htonl(INADDR_ANY);
 		}
-		if (family == PF_INET)
+		connret = -1;
+		if (lfamily == PF_INET)
 			connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
 #ifdef HAVE_GETADDRINFO
-		else
+		if (connret < 0);
 			connret = bind(fd, (struct sockaddr *)&vhost6, sizeof(vhost6));
 #endif
 #else
 		/* GiM->darkjames: nie dostawiam tego warninga je¶li
 		 * je¶li jest IPv6 a nie ma inet_pton
 		 */
-		vhost.sin_addr = inet_addr(local_ip);
+		vhost.sin_addr.s_addr = inet_addr(local_ip);
 		connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
 #endif
 		if (connret < 0)
@@ -423,7 +437,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 	ipv4.sin_family = family;
 	ipv4.sin_port = htons(port);
 #ifdef HAVE_GETADDRINFO
-	ipv6.sin6_family = AF_INET6;
+	ipv6.sin6_family = family;
 	ipv6.sin6_port = htons(port);
 #endif
 
@@ -603,7 +617,7 @@ COMMAND(irc_command_disconnect)
 	}
 	
 	if (session_connected_get(session))
-		irc_write (j, "QUIT :%s\r\n", params[0]?params[0]:"EKG2 - It's better than sex!");
+		irc_write (j, "QUIT :%s\r\n", params[0]?params[0]:QUITMSG(session));
 
 	if (j->connecting) {
 		j->connecting = 0;
@@ -894,8 +908,7 @@ int irc_window_kill(void *data, va_list ap)
 			session_connected_get(w->session)
 			)
 	{
-		irc_write(j, "PART %s :%s\r\n", (w->target)+4, 
-				"EKG2 bejbi! http://ekg2.org/");
+		irc_write(j, "PART %s :%s\r\n", (w->target)+4, PARTMSG(w->session));
 	}
 	return 0;
 }
@@ -1210,7 +1223,7 @@ COMMAND(irc_command_jopacy)
 	tmp = saprintf("JOIN %s\r\n", tar+4);
 	if (!xstrcmp(name, "part") || !xstrcmp(name, "cycle")) {
 		str = saprintf("PART %s :%s%s%s\r\n%s", tar+4,
-				(*mp)?(*mp):"EKG2 bejbi!",
+				(*mp)?(*mp):PARTMSG(session),
 				uf?" ":"",uf?mp[1]:"",
 				!xstrcmp(name, "cycle")?tmp:"");
 	} else if (!xstrcmp(name, "join")) {
@@ -1312,6 +1325,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:_autoback", NULL,	irc_command_away, 0, NULL);
 	command_add(&irc_plugin, "irc:quote", "?",	irc_command_quote, 0, NULL);
 
+	/* lower case: names of variables that reffer to client itself */
 	plugin_var_add(&irc_plugin, "server", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "password", VAR_STR, 0, 1, NULL);
 	plugin_var_add(&irc_plugin, "port", VAR_INT, "6667", 0, NULL);
@@ -1321,7 +1335,9 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
-	/* to mi siê wydaje ³adny poprawek, thx dj */
+	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
+
 	if (pwd_entry != NULL)
 	{
 		plugin_var_add(&irc_plugin, "nickname", VAR_STR, pwd_entry->pw_name, 0, NULL);
@@ -1332,6 +1348,7 @@ int irc_plugin_init(int prio)
 	}
 	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
 
+	/* upper case: names of variables, that reffer to protocol stuff */
 	plugin_var_add(&irc_plugin, "AUTO_JOIN", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
@@ -1339,6 +1356,8 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "DISPLAY_NICKCHANGE", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_QUIT", VAR_INT, "0", 0, NULL);
 	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
+	plugin_var_add(&irc_plugin, "PART_MSG", VAR_STR, DEFPARTMSG, 0, NULL);
+	plugin_var_add(&irc_plugin, "QUIT_MSG", VAR_STR, DEFQUITMSG, 0, NULL);
 	plugin_var_add(&irc_plugin, "REJOIN", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "REJOIN_TIME", VAR_INT, "2", 0, NULL);
 	
@@ -1446,6 +1465,7 @@ static int irc_theme_init()
 	format_add("IRC_PINGPONG", _("%) (%1) ping/pong %c%2%n\n"), 1);
 	format_add("IRC_YOUNEWNICK", _("%> You are now known as %G%3%n\n"), 1);
 	format_add("IRC_NEWNICK", _("%> %g%2%n is now known as %G%4%n\n"), 1);
+	format_add("IRC_TRYNICK", _("%> Will try to use %G%2%n instead\n"), 1);
 	
 	return 0;
 }
