@@ -183,6 +183,9 @@ void window_switch(int id)
 		
 		query_emit(NULL, "ui-window-switch", &w);	/* XXX */
 
+		if (!w->id)
+			w->session = session_current;
+
 		break;
 	}
 }
