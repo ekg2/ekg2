@@ -16,7 +16,7 @@
 COMMAND(gg_command_find)
 {
 	gg_private_t *g = session_private_get(session);
-	char **argv = NULL, *user;
+	char **argv = NULL, *user, *tmp;
 	gg_pubdir50_t req;
 	int i, res = 0, all = 0;
 
@@ -40,20 +40,22 @@ COMMAND(gg_command_find)
 			gg_pubdir50_free(s);
 			list_remove(&g->searches, s, 0);
 		}
-
+		
 		printq("search_stopped");
 
 		return 0;
 	}
-		
+	
 	if (!params[0]) {
 		if (!(params[0] = window_current->target)) {
 			printq("not_enough_params", name);
 			return -1;
 		}
 	}
-
-	argv = array_make(params[0], " \t", 0, 1, 1);
+	
+	tmp = array_join((char **) params, " ");
+	argv = array_make(tmp, " \t", 0, 1, 1);
+	xfree(tmp);
 
 	if (argv[0] && !argv[1] && argv[0][0] == '#') {
 		char *tmp = saprintf("/conference --find %s", argv[0]);
