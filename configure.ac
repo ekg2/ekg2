@@ -19,6 +19,7 @@ AC_SUBST(LTDLINCL)
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
+AM_GNU_GETTEXT([external])
 
 AC_SUBST(COMPAT)
 AC_SUBST(PLUGINS)
@@ -60,11 +61,7 @@ AC_CHECK_FUNCS(utimes)
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
-AC_CONFIG_FILES([plugins/mail/Makefile])
-AC_CONFIG_FILES([plugins/logs/Makefile])
-AC_CONFIG_FILES([plugins/rc/Makefile])
-AC_CONFIG_FILES([plugins/sms/Makefile])
-AC_CONFIG_FILES([plugins/pcm/Makefile])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile])
 PLUGINS="logs mail rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
@@ -217,9 +214,6 @@ AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 *** libgnutls was not found. You may want to get it from
 *** ftp://ftp.gnutls.org/pub/gnutls/
 ]]))
-
-
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile])
 
 PLUGINS_LIBS=""
 
