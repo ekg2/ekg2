@@ -282,18 +282,13 @@ void jabber_handle(void *data, xmlnode_t *n)
 					xfree(tmp);
 				}
 
-#if 1
 				if (!nbody && xmlnode_find_child(xitem, "composing")) {
-					char *tmp, *tmp2 = jabber_unescape(from);
+					char *tmp = jabber_unescape(from);
 
-
-					// TODO: usun±æ, albo zrobiæ prawdziwy format_string
-					tmp = saprintf("%s co¶ do nas pisze ...", tmp2);
-					print("generic2", tmp);
+					print("jabber_typing_notify", tmp);
+					
 					xfree(tmp);
-					xfree(tmp2);
 				}; /* composing */
-#endif
 
 			}; /* jabber:x:event */
 		}
@@ -953,6 +948,7 @@ static int jabber_theme_init()
         format_add("jabber_version_response", "%> Identyfikator Jabbera: %T%1%n\n%> Nazwa programu: %T%2%n\n%> Wersja programu: %T%3%n\n%> System operacyjny: %T%4%n\n", 1);
         format_add("jabber_unknown_resource", "%! (%1) Nieznany resource u¿ytkownika%n\n", 1);
         format_add("jabber_status_notavail", "%! (%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%n\n", 1);
+        format_add("jabber_typing_notify", "%> U¿ytkownik %T%1%n co¶ do nas pisze ...%n\n", 1);
 
 	return 0;
 }
