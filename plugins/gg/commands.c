@@ -656,8 +656,6 @@ COMMAND(gg_command_msg)
 			
 			query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
 
-			debug("kodniête secure (%d)\n", secure);
-
 			xfree(sid);
 			xfree(uid_tmp);
 
