@@ -53,7 +53,9 @@ char *xstrncpy(char *dest, const char *src, size_t n);
 int xstrncasecmp(const char *s1, const char *s2, size_t n);
 char *xstrpbrk(const char *s, const char *accept);
 char *xstrrchr(const char *s, int c);
+/*
 char *xstrsep(char **stringp, const char *delim);
+*/
 size_t xstrspn(const char *s, const char *accept);
 char *xstrstr(const char *haystack, const char *needle);
 char *xstrcasestr(const char *haystack, const char *needle);

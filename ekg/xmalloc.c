@@ -282,13 +282,15 @@ char *xstrrchr(const char *s, int c)
 {
 	return strrchr(fix(s), c);
 }
-
+#if 0
+nic tego nie u¿ywa, a to nie jest zaimplementowane na wszystkich systemach
+i tylko powoduje problemy z kompilacj± [Solaris again]
 char *xstrsep(char **stringp, const char *delim)
 {
-	/* kiedy stringo -- NUKL funkcja po prostu nic nie robi - man strsep */
+	/* kiedy stringo -- NULL funkcja po prostu nic nie robi - man strsep */
 	return strsep(stringp, fix(delim));
 }
-
+#endif
 size_t xstrspn(const char *s, const char *accept)
 {
 	return strspn(fix(s), fix(accept));
