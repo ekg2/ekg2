@@ -1003,8 +1003,8 @@ void theme_init()
 	format_add("auto_back_descr", _("%> (%2) Automagicznie zmieniono stan na %Ydostêpny%n: %T%1%n\n"), 1);
 
 	/* pomoc */
-	format_add("help", _("%> %T%1%n%2 - %3\n"), 1);
-	format_add("help_more", _("%) %|%1\n"), 1);
+	format_add("help", "%> %T%1%n%2 - %3\n", 1);
+	format_add("help_more", "%) %|%1\n", 1);
 	format_add("help_alias", _("%) %T%1%n jest aliasem i nie posiada opisu\n"), 1);
 	format_add("help_footer", _("\n%> %|Wiêcej szczegó³ów na temat komend zwróci %Thelp <komenda>%n. Poprzedzenie komendy znakiem %T^%n spowoduje ukrycie jej wyniku. Zamiast parametru <numer/alias> mo¿na u¿yæ znaku %T$%n oznaczaj±cego aktualnego rozmówcê.\n\n"), 1);
 	format_add("help_quick", _("%> %|Przed u¿yciem przeczytaj ulotkê. Plik %Tdocs/ULOTKA%n zawiera krótki przewodnik po za³±czonej dokumentacji. Je¶li go nie masz, mo¿esz ¶ci±gn±æ pakiet ze strony %Thttp://dev.null.pl/ekg2/%n\n"), 1);
@@ -1387,7 +1387,7 @@ void theme_init()
 
 	/* aliasy */
 	format_add("aliases_list_empty", _("%! Brak aliasów\n"), 1);
-	format_add("aliases_list", _("%> %T%1%n: %2\n"), 1);
+	format_add("aliases_list", "%> %T%1%n: %2\n", 1);
 	format_add("aliases_list_next", "%> %3  %2\n", 1);
 	format_add("aliases_add", _("%> Utworzono alias %T%1%n\n"), 1);
 	format_add("aliases_append", _("%> Dodano do aliasu %T%1%n\n"), 1);
@@ -1556,8 +1556,8 @@ void theme_init()
 
 #ifdef WITH_PYTHON
 	/* python */
-	format_add("python_list", _("%> %1\n", 1);
-	format_add("python_list_empty", _("%! Brak za³adowanych skryptów\n", 1);
+	format_add("python_list", "%> %1\n", 1);
+	format_add("python_list_empty", _("%! Brak za³adowanych skryptów\n"), 1);
 	format_add("python_removed", _("%) Skrypt zosta³ usuniêty\n", 1);
 	format_add("python_need_name", _("%! Nie podano nazwy skryptu\n", 1);
 	format_add("python_not_found", _("%! Nie znaleziono skryptu %T%1%n\n", 1);
