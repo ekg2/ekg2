@@ -199,6 +199,9 @@ void contacts_changed(const char *name)
 	if (config_contacts_size < 0)
 		config_contacts_size = 0;
 
+        if (config_contacts_size == 0)
+                config_contacts = 0;
+
 	if (config_contacts_size > 1000)
 		config_contacts_size = 1000;
 	

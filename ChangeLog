@@ -12,6 +12,8 @@ zg³osi³ b³±d.
 - przy wychodzeniu bez /save zapisywanie równie¿ stanu sesji (del)
 - poprawka: /add gg:numer nick dodaje do userlisty biezacej sesji 
   (np. do sesji jabberowej) (salvador)
+- poprawka wycieku pamiêci przy /set contacts_size 0 (mirek/del)
+
       
 
 // 2004-03-31
