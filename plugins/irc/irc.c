@@ -502,7 +502,7 @@ COMMAND(irc_command_msg)
 	const char *uid=NULL;
         window_t *w;
         char **rcpts; 
-        const int class = EKG_MSGCLASS_SENT; 
+        int class = EKG_MSGCLASS_SENT; 
         char *me, *format=NULL, *seq=NULL, *head;
         const time_t sent = time(NULL);					
 
@@ -538,6 +538,8 @@ COMMAND(irc_command_msg)
 				me, j->nick, uid+4, params[1]);
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
+
+	class |= EKG_NO_THEMEBIT;
 
 	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &head, &format, &sent, &class, &seq, NULL);
 	xfree(me);

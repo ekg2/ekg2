@@ -440,6 +440,7 @@ IRC_COMMAND(irc_c_whois)
 	}
 	gatoi(IOK2(4), &secs);
 	which = gatoi(IOK2(5), &timek_int);
+	timek = (time_t)timek_int;
 
 	/* GiM: Yes, I know what is modulo ;> */
 	mins = secs/60;
@@ -565,7 +566,10 @@ IRC_COMMAND(irc_c_msg)
 		xfree(me);
 		me = xstrdup(session_uid_get(s));
 		sent = time(NULL);
+		class |= EKG_NO_THEMEBIT;
+
 		query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head, &form, &sent, &class, &seq, NULL);
+
 		xfree(head);
 	}	
 

@@ -304,6 +304,12 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
         time_t now;
 	session_t *s = session_find(session);
         struct conference *c = NULL;
+	int empty_theme = 0;
+
+	if (class & EKG_NO_THEMEBIT) {
+		empty_theme = 1;
+		class &= ~EKG_NO_THEMEBIT;
+	}
 
 	switch (class) {
 		case EKG_MSGCLASS_SENT:
@@ -469,6 +475,9 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (config_emoticons)
 		emotted = emoticon_expand(text);
 
+	if (empty_theme)
+		class_str = "empty";
+
 	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, (emotted) ? emotted : text, (!xstrcasecmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), (!xstrcasecmp(class_str, "sent")) ? s->uid : get_uid(s, sender));
 
 	xfree(text);
@@ -493,6 +502,7 @@ int protocol_message(void *data, va_list ap)
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
 	char *target = NULL;
+	int empty_theme = 0;
 
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
@@ -504,9 +514,17 @@ int protocol_message(void *data, va_list ap)
 		userlist->blink = 1;
 //	else if (window_find(uid)) 
 //		userlist->blink = 1;
+	
+	if (class & EKG_NO_THEMEBIT) {
+		class &= ~EKG_NO_THEMEBIT;
+		empty_theme = 1;
+	}
 
-	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent))
+	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent)) {
+		if (empty_theme)
+			class |= EKG_NO_THEMEBIT;
 	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
+	}
 
         /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
 	if (!userlist) 

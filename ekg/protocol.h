@@ -36,6 +36,8 @@
 #define EKG_FORMAT_UNDERLINE 0x08000000L
 #define EKG_FORMAT_REVERSE 0x10000000L
 
+#define EKG_NO_THEMEBIT	256
+
 #define EKG_ACK_DELIVERED "delivered"	/* wiadomo¶æ dostarczono */
 #define EKG_ACK_QUEUED "queued"		/* wiadomo¶æ zakolejkowano */
 #define EKG_ACK_DROPPED "dropped"	/* wiadomo¶æ odrzucono */
