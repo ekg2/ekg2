@@ -1248,7 +1248,7 @@ COMMAND(gg_command_modify)
 	return res;
 }
 
-COMMAND(gg_command_check_inv)
+COMMAND(gg_command_check_conn)
 {
 	#define SIZE 20
 	userlist_t *u;
@@ -1284,7 +1284,7 @@ COMMAND(gg_command_check_inv)
 	}
 
 	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid+3), "", (const char *) &msg, sizeof(msg)) == -1) {
-		debug("-- check_inv - shits happens\n");
+		debug("-- check_conn - shits happens\n");
 		return -1;
 	}
 	
@@ -1303,7 +1303,7 @@ void gg_register_commands()
 	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:check_inv", "u", gg_command_check_inv, 0, NULL);
+	command_add(&gg_plugin, "gg:check_conn", "u", gg_command_check_conn, 0, NULL);
 	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:image", "u f", gg_command_image, 0, NULL);
 	command_add(&gg_plugin, "gg:block", "uUC ?", gg_command_block, 0, NULL);

@@ -758,7 +758,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 			if (e->event.image_request.crc32 == GG_CRC32_INVISIBLE) {
 				char *tmp = saprintf("gg:%d", e->event.image_request.sender);
 				
-				print("gg_user_is_invisible", get_nickname(s, tmp));
+				print("gg_user_is_connected", get_nickname(s, tmp));
 				
 				xfree(tmp);
 				break;
@@ -1096,7 +1096,7 @@ format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
         format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
         format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
         format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
-	format_add("gg_user_is_invisible", _("%> User %T%1%n is invisible\n"), 1);
+	format_add("gg_user_is_connected", _("%> User %T%1%n is connected\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	

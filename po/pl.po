@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-11-04 22:57+0100\n"
+"POT-Creation-Date: 2004-11-05 14:34+0100\n"
 "PO-Revision-Date: 2004-10-23 12:40+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -74,19 +74,63 @@ msgstr ""
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
 
-#: ekg/ekg.c:605
+#: ekg/ekg.c:555
+#, c-format
+msgid ""
+"uses: %s [OPTION] [COMMAND]\n"
+"  -u, --user=NAME\t      it uses given name profile\n"
+"  -t, --theme=FILE           loads theme from the given file\n"
+"  -n, --no-auto              it doesn't connect with the server\n"
+"  -m, --no-mouse             withou mouse support\n"
+"  -N, --no-global-config     global config is ignored\n"
+"  -a, --away[=OPIS]          it changes status to ,,busy''\n"
+"  -b, --back[=OPIS]          it changes status to ,,avaiable''\n"
+"  -i, --invisible[=OPIS]     it changes status to ,,invisible''\n"
+"  -d, --dnd[=OPIS]           it changes status to ,,do not disturb''\n"
+"  -f, --free-for-chat[=OPIS] it changes status to ,,free for chat''\n"
+"  -x, --xa[=OPIS]            it changes status to ,,extra busy''\n"
+"  -h, --help                 displays this help\n"
+"  -v, --version              shows version\n"
+"\n"
+"Options connected with status depend on session protocol --\n"
+"some session may not support ,,do not disturb'' etc.\n"
+"\n"
+msgstr ""
+"korzystaæ: %s [OPCJE] [KOMENDY]\n" 
+"  -u, --user=NAZWA           korzysta z profilu o podanej nazwie\n" 
+"  -t, --theme=PLIK           ³aduje opis wygl±du z podanego pliku\n" 
+"  -n, --no-auto              nie ³±czy siê automatycznie z serwerem\n" 
+"  -m, --no-mouse             nie ³aduje obs³ugi myszki\n" 
+"  -N, --no-global-config     ignoruje globalny plik konfiguracyjny\n" 
+
+"  -a, --away[=OPIS]          zmienia stan na ,,zajêty''\n" 
+"  -b, --back[=OPIS]          zmienia stan na ,,dostêpny''\n" 
+"  -i, --invisible[=OPIS]     zmienia stan na ,,niewidoczny''\n" 
+"  -d, --dnd[=OPIS]           zmienia stan na ,,nie przeszkadzaæ''\n" 
+"  -f, --free-for-chat[=OPIS] zmienia stan na ,,chêtny do rozmowy''\n" 
+"  -x, --xa[=OPIS]            zmienia stan na ,,bardzo zajêty''\n" 
+
+"  -h, --help                 wy¶wietla ten tekst pomocy\n" 
+"  -v, --version              wy¶wietla wersje programu i wychodzi\n" 
+"\n" 
+"Opcje dotycz±ce stanu zale¿± od w³a¶ciwo¶ci protoko³u danej sesji --\n" 
+"niektóre sesje mog± nie obs³ugiwaæ stanu ,,nie przeszkadzaæ'' itp.\n" 
+"\n" 
+
+
+#: ekg/ekg.c:608
 #, c-format
 msgid "Can't find user's home directory. Ask administration to fix it.\n"
 msgstr ""
 "Nie mogê znale¼æ katalogu domowego. Popro¶ administratora, ¿eby to "
 "naprawi³.\n"
 
-#: ekg/ekg.c:705
+#: ekg/ekg.c:710
 #, c-format
 msgid "To get more information, start program with --help.\n"
 msgstr "Aby uzyskaæ wiêcej informacji, uruchom program z opcj± --help.\n"
 
-#: ekg/ekg.c:957 ekg/ekg.c:963 ekg/ekg.c:975 ekg/ekg.c:982
+#: ekg/ekg.c:962 ekg/ekg.c:968 ekg/ekg.c:980 ekg/ekg.c:987
 #, c-format
 msgid "Error while saving.\n"
 msgstr "Wyst±pi³ b³±d podczas zapisu.\n"
@@ -1790,7 +1834,8 @@ msgid "%! First get token by function %Ttoken%n\n"
 msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
 #: plugins/gg/gg.c:1099
-msgid "%> User %T%1%n is invisible\n"
+#, fuzzy
+msgid "%> User %T%1%n is connected\n"
 msgstr "%> U¿ytkownik %1 jest %cniewidoczn%@2%n\n"
 
 #: plugins/gg/gg.c:1100

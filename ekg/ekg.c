@@ -552,25 +552,25 @@ struct option ekg_options[] = {
 };
 
 #define EKG_USAGE N_( \
-"u¿ycie: %s [OPCJE] [KOMENDY]\n" \
-"  -u, --user=NAZWA           korzysta z profilu o podanej nazwie\n" \
-"  -t, --theme=PLIK           ³aduje opis wygl±du z podanego pliku\n" \
-"  -n, --no-auto              nie ³±czy siê automatycznie z serwerem\n" \
-"  -m, --no-mouse             nie ³aduje obs³ugi myszki\n" \
-"  -N, --no-global-config     ignoruje globalny plik konfiguracyjny\n" \
+"uses: %s [OPTION] [COMMAND]\n" \
+"  -u, --user=NAME	      it uses given name profile\n" \
+"  -t, --theme=FILE           loads theme from the given file\n" \
+"  -n, --no-auto              it doesn't connect with the server\n" \
+"  -m, --no-mouse             withou mouse support\n" \
+"  -N, --no-global-config     global config is ignored\n" \
 \
-"  -a, --away[=OPIS]          zmienia stan na ,,zajêty''\n" \
-"  -b, --back[=OPIS]          zmienia stan na ,,dostêpny''\n" \
-"  -i, --invisible[=OPIS]     zmienia stan na ,,niewidoczny''\n" \
-"  -d, --dnd[=OPIS]           zmienia stan na ,,nie przeszkadzaæ''\n" \
-"  -f, --free-for-chat[=OPIS] zmienia stan na ,,chêtny do rozmowy''\n" \
-"  -x, --xa[=OPIS]            zmienia stan na ,,bardzo zajêty''\n" \
+"  -a, --away[=OPIS]          it changes status to ,,busy''\n" \
+"  -b, --back[=OPIS]          it changes status to ,,avaiable''\n" \
+"  -i, --invisible[=OPIS]     it changes status to ,,invisible''\n" \
+"  -d, --dnd[=OPIS]           it changes status to ,,do not disturb''\n" \
+"  -f, --free-for-chat[=OPIS] it changes status to ,,free for chat''\n" \
+"  -x, --xa[=OPIS]            it changes status to ,,extra busy''\n" \
 \
-"  -h, --help                 wy¶wietla ten tekst pomocy\n" \
-"  -v, --version              wy¶wietla wersje programu i wychodzi\n" \
+"  -h, --help                 displays this help\n" \
+"  -v, --version              shows version\n" \
 "\n" \
-"Opcje dotycz±ce stanu zale¿± od w³a¶ciwo¶ci protoko³u danej sesji --\n" \
-"niektóre sesje mog± nie obs³ugiwaæ stanu ,,nie przeszkadzaæ'' itp.\n" \
+"Options connected with status depend on session protocol --\n" \
+"some session may not support ,,do not disturb'' etc.\n" \
 "\n" )
 
 

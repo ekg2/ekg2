@@ -69,14 +69,16 @@ chat
 	Polecenie jest podobne do %Tmsg%n, ale wysy³a wiadomo¶æ w ramach rozmowy, 
 	a nie jako pojedyncz±.
 
-check_inv
+check_conn
 	parametry:  <alias>
-	krótki opis: sprawdza czy podana osoba jest niewidoczna
+	krótki opis: sprawdza czy podana osoba jest po³±czona 
 	
-	Sprawdza czy podana osoba jest niewidoczna. Klient tej osoby musi 
+	Sprawdza czy podana osoba jest po³±czona. Klient tej osoby musi 
 	obs³ugiwaæ obrazki. Przetestowane na GG 6.0 dla Windows. W przypadku 
 	klienta TLEN, kadu, ekg i ekg2 komenda nie dzia³a prawid³owo (osobie 
-	któr± sprawdzamy pojawia siê pusta wiadomo¶æ). 
+	któr± sprawdzamy pojawia siê pusta wiadomo¶æ). Dziêki tej funkcji 
+	mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna jest 
+	niewidoczna
 
 connect
 	parametry:  
