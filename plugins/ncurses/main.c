@@ -87,6 +87,9 @@ static int ncurses_ui_window_switch(void *data, va_list ap)
 	window_t **w = va_arg(ap, window_t **);
 	ncurses_window_t *n = (*w)->private;
 
+        list_destroy(sorted_all_cache, 1);
+        sorted_all_cache = NULL;
+
 	if (n->redraw)
 		ncurses_redraw(*w);
 
