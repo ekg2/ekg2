@@ -10,7 +10,8 @@ rozwi±zanie.
 
 * klient:
   - segfault przy wpisaniu jakiej¶ komendy np /list w oknie debug (del)
-  - poprawione warto¶ci zmiennych dla listy kontaktów (del)
+  - poprawione warto¶ci zmiennych dla listy kontaktów (w zasadzie to vars.c trzeba
+    przystosowaæ do wspó³pracy z pluginami - nie dzia³a to teraz dobrze) (del)
   - przy próbie wys³ania pustej lini wy¶wietla:
     "::: Za ma³o parametrów. Spróbuj help chat", a po co ? (del)
   - nie dzia³±j±ce list -d dla jabber'a (del)
