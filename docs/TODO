@@ -16,6 +16,7 @@ rozwi±zanie.
     /add gg:1111 ble, nie spowoduje, ¿e /list ble poka¿e nam prawid³owy stan (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
+  - przy ³±czeniu siê ma dzia³aæ poprawnie ustawianie/nieustawianie opisów (del)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
   - zmienna wy³±czaj±ca pytanie o zapisanie konfiguracji (Tohver)
   - ostatnio pisz±ca osoba blinka przez 5 sekund, w rogu ekranu (Oli)
