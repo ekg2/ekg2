@@ -48,6 +48,7 @@
 #include <ekg/themes.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
+#include <ekg/log.h>
 
 #include "jabber.h"
 
@@ -1031,13 +1032,16 @@ COMMAND(jabber_command_msg)
 		( config_display_ack == 1 || config_display_ack == 3 ? "<offline/>"   : "") );
 	jabber_write(j, "</message>");
 
+        if (config_last & 4) 
+        	last_add(1, get_uid(session, params[0]), time(NULL), 0, msg);
+
 	xfree(msg);
 	xfree(subject);
 
 	if (config_display_sent && !quiet) {
 		char *tmp = saprintf("jid:%s", uid);
 		const char *rcpts[2] = { tmp, NULL };
-		message_print(session_uid_get(session), session_uid_get(session), rcpts, params[1], NULL, time(NULL), (chat) ? EKG_MSGCLASS_SENT : EKG_MSGCLASS_MESSAGE, NULL);
+		message_print(session_uid_get(session), session_uid_get(session), rcpts, params[1], NULL, time(NULL), (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT, NULL);
 		xfree(tmp);
 	}
 

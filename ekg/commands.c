@@ -3110,8 +3110,8 @@ COMMAND(cmd_last)
 	struct tm *now;
 
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session) {
-                if(session_current)
+        if (!session) {
+                if (session_current)
                         session = session_current;
                 else
                         return -1;

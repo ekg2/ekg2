@@ -44,6 +44,7 @@
 #include <ekg/themes.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
+#include <ekg/log.h>
 
 #include "dcc.h"
 #include "gg.h"
@@ -1398,8 +1399,8 @@ COMMAND(gg_command_msg)
 
 //		put_log(uin, "%s,%s,%s,%s,%s\n", ((chat) ? "chatsend" : "msgsend"), uid, ((u && u->nickname) ? u->nickname : ""), log_timestamp(time(NULL)), raw_msg);
 
-//		if (config_last & 4)
-//			last_add(1, uin, time(NULL), 0, raw_msg);
+		if (config_last & 4) 
+			last_add(1, uid, time(NULL), 0, msg);
 
 		if (!chat || count == 1) {
 			unsigned char *__msg = xstrdup(msg);
@@ -1465,7 +1466,7 @@ COMMAND(gg_command_msg)
 
 	if (valid && config_display_sent && !quiet) {
 		const char *rcpts[2] = { nick, NULL };
-		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), (chat) ? EKG_MSGCLASS_SENT : EKG_MSGCLASS_MESSAGE, NULL);
+		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT, NULL);
 	}
 
 	xfree(msg);

@@ -287,6 +287,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 {
 	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text);
 	const char *target = sender, *user;
+        time_t now;
 	session_t *s = session_find(session);
 
 	switch (class) {
@@ -301,6 +302,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			class_str = "system";
 			target = "__status";
 			break;
+		case EKG_MSGCLASS_SENT_CHAT:
+			class_str = "sent";
+                        target = (rcpts) ? rcpts[0] : NULL;
+        	        break;
 	}
 
 	/* próbujemy odszyfrowaæ wiadomo¶æ */
@@ -374,8 +379,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	 * obecn±, ¿eby wybraæ odpowiedni format timestampu. */
 	{
 		char tmp[100], *timestamp_type = "timestamp";
-		struct tm *tm_now, *tm_msg;
-		time_t now;
+	        struct tm *tm_now, *tm_msg;
 
 		now = time(NULL);
 		tm_now = localtime(&now);
@@ -409,10 +413,12 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
 			play_sound(config_sound_sysmsg_file);
 	
+        if (config_last & 3 && xstrcasecmp(class_str, "sent")) 
+	        last_add(0, sender, now, sent, text);
 	
-	user = (class != EKG_MSGCLASS_SENT) ? format_user(s, sender) : session_format_n(sender);
+	user = xstrcasecmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
 
-	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT), class_str, user, timestamp, text, session_alias_uid(s), get_nickname(s, sender));
+	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, text, session_alias_uid(s), get_nickname(s, sender));
 	xfree(t);
 	return xstrdup(target);
 }
