@@ -9,8 +9,6 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - poprawione warto¶ci zmiennych dla listy kontaktów (w zasadzie to vars.c trzeba
-    przystosowaæ do wspó³pracy z pluginami - nie dzia³a to teraz dobrze) (del)
   - w themach %i ma dzia³aæ ( mruganie tekstu - przyda siê przy blinking) (del)
   - dope³nienia dobrze dzia³aj±ce (GiM)
   - zmienne s± pokazywane, ale nie mo¿na ich ustawiaæ (np zmienne pluginów) (zdz)

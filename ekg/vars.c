@@ -178,7 +178,6 @@ variable_t *variable_find(const char *name)
 
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
-
 		if (v->name_hash == hash && !strcasecmp(v->name, name))
 			return v;
 	}
@@ -218,6 +217,28 @@ variable_map_t *variable_map(int count, ...)
 
 	return res;
 }
+
+/*
+ * variable_add_compare()
+ *
+ * funkcja porównuj±ca nazwy zmiennych,, by wystêpowa³y alfabetycznie w li¶cie.
+ *
+ *  - data1, data2 - dwa wpisy zmiennychd do porównania.
+ *
+ * zwraca wynik strcasecmp() na nazwach zmiennych.
+ */
+static int variable_add_compare(void *data1, void *data2)
+{
+        variable_t *a = data1, *b = data2;
+
+        if (!a || !a->name || !b || !b->name)
+                return 0;
+
+        return strcasecmp(a->name, b->name);
+}
+
+
+
 
 /*
  * variable_add()
@@ -264,8 +285,7 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 		} else
 			*(char**)(ptr) = (char*)(v->ptr);
 	
-		xfree(__name);
-		v->name = xstrdup(name);
+		v->name = xstrdup(__name);
 		v->name_hash = hash;
 		v->type = type;
 		v->plugin = plugin;
@@ -274,10 +294,12 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 		v->notify = notify;
 		v->dyndisplay = dyndisplay;
 		v->ptr = ptr;
-
+		
+		xfree(__name);		
 		return 0;
 	}
 
+/*	
 	hash = variable_hash(name);
 
 	for (l = variables; l; l = l->next) {
@@ -302,16 +324,14 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 		v->notify = notify;
 		v->dyndisplay = dyndisplay;
 		v->ptr = ptr;
-
 		return 0;
 	}
 
-	xfree(__name);
-
+*/
 	memset(&v, 0, sizeof(v));
 
-	v.name = xstrdup(name);
-	v.name_hash = variable_hash(name);
+	v.name = xstrdup(__name);
+	v.name_hash = variable_hash(__name);
 	v.type = type;
 	v.display = display;
 	v.ptr = ptr;
@@ -319,7 +339,10 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 	v.map = map;
 	v.dyndisplay = dyndisplay;
 
-	return (list_add(&variables, &v, sizeof(v)) ? 0 : -1);
+	xfree(__name);
+
+	return (list_add_sorted(&variables, &v, sizeof(v), variable_add_compare) != NULL) ? 0 : -1;
+
 }
 
 /*
