@@ -499,7 +499,7 @@ int protocol_message(void *data, va_list ap)
 	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
 	int *__class = va_arg(ap, int*), class = *__class;
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
-	int *__doobeep = va_arg(ap, int*), doobeep = *__doobeep;
+	int *__dobeep = va_arg(ap, int*), dobeep = *__dobeep;
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
 	char *target = NULL;
@@ -524,7 +524,7 @@ int protocol_message(void *data, va_list ap)
 	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent)) {
 		if (empty_theme)
 			class |= EKG_NO_THEMEBIT;
-	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, doobeep);
+	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep);
 	}
 
         /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */

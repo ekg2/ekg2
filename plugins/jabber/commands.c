@@ -306,6 +306,7 @@ COMMAND(jabber_command_msg)
 	if (!quiet) {
 		char **rcpts = xmalloc(sizeof(char *) * 2);
 		const int class = (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
+		const int ekgbeep = EKG_TRY_BEEP;
 		char *me = xstrdup(session_uid_get(session));
 		const time_t sent = time(NULL);
 		char *format = NULL;
@@ -313,7 +314,7 @@ COMMAND(jabber_command_msg)
 		rcpts[0] = saprintf("jid:%s", uid);
 		rcpts[1] = NULL;
 		
-		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &params[1], &format, &sent, &class, &seq, EKG_TRY_BEEP, NULL);
+		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &params[1], &format, &sent, &class, &seq, &ekgbeep, NULL);
 
 		xfree(me);
 		xfree(rcpts[0]);

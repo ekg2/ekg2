@@ -582,6 +582,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 {
 	char *__session, *__sender, *__text, *__format, *__seq, **__rcpts = NULL;
 	int i, __class = 0;
+	int ekgbeep = EKG_TRY_BEEP;
 	time_t __sent;
 
 	__session = xstrdup(session_uid_get(s));
@@ -669,7 +670,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		}
 	}
 				
-	query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, EKG_TRY_BEEP, NULL);
+	query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, NULL);
 
 	xfree(__seq);
 	xfree(__text);

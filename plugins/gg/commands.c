@@ -691,13 +691,14 @@ COMMAND(gg_command_msg)
 	if (valid && !quiet) {
 		char **rcpts = xmalloc(sizeof(char *) * 2);
 		const int class = (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
+		const int ekgbeep = EKG_TRY_BEEP;
 		char *me = xstrdup(session_uid_get(session));
 		const time_t sent = time(NULL);
 		
 		rcpts[0] = xstrdup(nick);
 		rcpts[1] = NULL;
 		
-		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, EKG_TRY_BEEP, NULL);
+		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, &ekgbeep, NULL);
 
 		xfree(me);
 		xfree(rcpts[0]);

@@ -502,6 +502,7 @@ COMMAND(irc_command_msg)
         window_t *w;
         char **rcpts; 
         int class = EKG_MSGCLASS_SENT, ischn; 
+	int ekgbeep = EKG_NO_BEEP;
         char *me, *format=NULL, *seq=NULL, *head, *chantypes;
         const time_t sent = time(NULL);					
 	people_t *person;
@@ -549,7 +550,7 @@ COMMAND(irc_command_msg)
 
 	class |= EKG_NO_THEMEBIT;
 
-	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &head, &format, &sent, &class, &seq, EKG_NO_BEEP, NULL);
+	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &head, &format, &sent, &class, &seq, &ekgbeep, NULL);
 	xfree(me);
 	xfree(head);
 	xfree(rcpts[0]);

@@ -228,6 +228,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 		char *session, *sender, **rcpts = NULL, *text, *seq = NULL;
 		time_t sent = time(NULL);
 		int class = EKG_MSGCLASS_CHAT;
+		int ekgbeep = EKG_TRY_BEEP;
 		uint32_t *format = NULL;
 
 		if (nsubject && !nerr) {
@@ -301,7 +302,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 		string_free(body, 1);
 
 		if ((nbody || nsubject) && !nerr)
-			query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, EKG_TRY_BEEP, NULL);
+			query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, NULL);
 				
 		if (nerr) {
 			char *recipient, *mbody, *tmp, *tmp2;
