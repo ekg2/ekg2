@@ -591,7 +591,7 @@ static void binding_ui_ncurses_debug_toggle(const char *arg)
 static void binding_cycle_sessions(const char *arg)
 {
 	window_session_cycle(window_current);
-
+	
 	contacts_update(NULL);
 	update_statusbar(1);
 }

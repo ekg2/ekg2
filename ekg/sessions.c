@@ -638,6 +638,7 @@ COMMAND(session_command)
 		}
 
 		window_current->session = s;
+		session_current = s;
 
 		query_emit(NULL, "session-changed");
 

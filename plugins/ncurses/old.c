@@ -1213,7 +1213,7 @@ void update_statusbar(int commit)
 			case 3:
 			{
 				session_t *s = window_current->session;
-				char *tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s", s, (s && s->uid) ? s->uid : "", (s && s->alias) ? s->alias : "", (window_current->target) ? window_current->target : "");
+				char *tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s session_current->uid=%s", s, (s && s->uid) ? s->uid : "", (s && s->alias) ? s->alias : "", (window_current->target) ? window_current->target : "", (session_current->uid) ? session_current->uid : "");
 				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
 				xfree(tmp);
 				break;

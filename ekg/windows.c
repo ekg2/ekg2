@@ -566,12 +566,19 @@ int window_session_cycle(window_t *w)
 
 		if (l->next) {
 			w->session = (session_t*) l->next->data;
+			if (w == window_current)
+				session_current = window_current->session;
+        		query_emit(NULL, "session-changed");
 			return 0;
 		} else
 			break;
 	}
 
-	w->session = (session_t*) sessions->data;
+	w->session = (session_t*) sessions->data;	
+        if (w == window_current)
+                 session_current = window_current->session;
+
+        query_emit(NULL, "session-changed");
 
 	return 0;
 }

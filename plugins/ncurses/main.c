@@ -210,6 +210,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "ui-window-clear", ncurses_ui_window_clear, NULL);
 	query_connect(&ncurses_plugin, "session-added", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-removed", ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, "session-changed", contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-changed", ncurses_userlist_changed, NULL);
 
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
