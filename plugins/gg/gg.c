@@ -1124,6 +1124,8 @@ change:
 		return 0;
 	}
 
+	ekg_update_status(session);
+
 	gg_iso_to_cp(descr);
 
 	if (descr)
@@ -1553,7 +1555,6 @@ COMMAND(gg_command_unblock)
 
 	return 0;
 }
-
 
 int gg_plugin_init()
 {

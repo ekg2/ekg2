@@ -1944,6 +1944,29 @@ char *ekg_draw_descr(const char *status)
 	return xstrdup(value);
 }
 
+/* 
+ * ekg_update_status()
+ *
+ * updates our status, if we are on sessio contact list 
+ * 
+ */
+void ekg_update_status(session_t *session)
+{
+	userlist_t *u;
+
+        if ((u = userlist_find(session, session->uid))) {
+                xfree(u->descr);
+                u->descr = xstrdup(session->descr);
+
+                xfree(u->status);
+                if (!session_connected_get(session))
+                        u->status = xstrdup(EKG_STATUS_NA);
+                else
+                        u->status = xstrdup(session->status);
+        }
+
+}
+
 /*
  * ekg_sent_message_format()
  *

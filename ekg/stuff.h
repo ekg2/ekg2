@@ -38,6 +38,7 @@
 #include "plugins.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "sessions.h"
 
 #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
 
@@ -332,6 +333,8 @@ void timer_handle_command();
 void timer_free();
 
 const char *ekg_status_label(const char *status, const char *descr, const char *prefix);
+void ekg_update_status(session_t *session);
+#define ekg_update_status_n(a) ekg_update_status(session_find(a))
 
 char *ekg_draw_descr(const char *status);
 uint32_t *ekg_sent_message_format(const char *text);

@@ -133,6 +133,7 @@ int protocol_connected(void *data, va_list ap)
 	char **session = va_arg(ap, char**);
 	const char *descr = session_descr_get_n(*session);
 	
+        ekg_update_status_n(*session);
 
 	if (descr)
 		print("connected_descr", descr, session_name_n(*session));

@@ -1041,6 +1041,7 @@ COMMAND(jabber_command_away)
 	return -1;
 
 change:
+	ekg_update_status(session);
 	
 	if (descr) {
 		char *f = saprintf("%s_descr", format);
