@@ -552,10 +552,11 @@ void array_add(char ***array, char *string)
  */ 
 void array_add_check(char ***array, char *string, int casesensitive)
 {
-	if(!array_item_contains(*array, string, casesensitive))
+	if (!array_item_contains(*array, string, casesensitive))
 		array_add(array, string);
+	else
+		xfree(string);
 }
-
 
 /*
  * array_join()
