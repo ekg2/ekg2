@@ -518,6 +518,7 @@ struct option ekg_options[] = {
 	{ "away", optional_argument, 0, 'a' },
 	{ "invisible", optional_argument, 0, 'i' },
 	{ "dnd", optional_argument, 0, 'd' },
+	{ "chat", optional_argument, 0, 'f' },
 	{ "xa", optional_argument, 0, 'x' },
 	{ "private", no_argument, 0, 'p' },
 	{ "no-auto", no_argument, 0, 'n' },
@@ -540,6 +541,7 @@ struct option ekg_options[] = {
 "  -b, --back[=OPIS]          zmienia stan na ,,dostêpny''\n" \
 "  -i, --invisible[=OPIS]     zmienia stan na ,,niewidoczny''\n" \
 "  -d, --dnd[=OPIS]           zmienia stan na ,,nie przeszkadzaæ''\n" \
+"  -f, --free-for-chat[=OPIS] zmienia stan na ,,chêtny do rozmowy''\n" \
 "  -x, --xa[=OPIS]            zmienia stan na ,,bardzo zajêty''\n" \
 "  -v, --version              wy¶wietla wersje programu i wychodzi\n" \
 "\n" \
@@ -627,7 +629,16 @@ int main(int argc, char **argv)
 				xfree(new_descr);
 				new_descr = xstrdup(optarg);
 			        break;
+				
+                        case 'r':
+                                if (!optarg && argv[optind] && argv[optind][0] != '-')
+                                        optarg = argv[optind++];
 
+                                new_status = EKG_STATUS_FREE_FOR_CHAT;
+                                xfree(new_descr);
+                                new_descr = xstrdup(optarg);
+                                break;
+													
 			case 'x':
 				if (!optarg && argv[optind] && argv[optind][0] != '-')
 					optarg = argv[optind++];

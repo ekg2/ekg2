@@ -387,7 +387,14 @@ COMMAND(jabber_command_away)
 		session_unidle(session);
 		goto change;
 	}
-
+        
+	if (!xstrcmp(name, "ffc")) {
+	        format = "chat";
+	        session_status_set(session, EKG_STATUS_FREE_FOR_CHAT);
+                session_unidle(session);
+                goto change;
+        }
+	
 	if (!xstrcmp(name, "xa")) {
 		format = "xa";
 		session_status_set(session, EKG_STATUS_XA);
@@ -701,6 +708,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:_autoback", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
 	command_add(&jabber_plugin, "jid:invisible", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
 	command_add(&jabber_plugin, "jid:dnd", params("r"), jabber_command_away, 0, "", "zmienia stan na nie przeszkadzaæ","", NULL);
+	command_add(&jabber_plugin, "jid:ffc", params("r"), jabber_command_away, 0, "", "zmienia stan na chêtny do rozmowy","", NULL);
 	command_add(&jabber_plugin, "jid:xa", params("r"), jabber_command_away, 0, "", "zmienia stan na bardzo zajêty", "", NULL);
 	command_add(&jabber_plugin, "jid:passwd", params("?"), jabber_command_passwd, 0, "", "zmienia has³o", "", NULL);
 	command_add(&jabber_plugin, "jid:auth", params("p uU"), jabber_command_auth, 0, "", "obs³uga autoryzacji", 

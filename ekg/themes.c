@@ -913,7 +913,7 @@ void theme_init()
 	/* prompty i statusy dla ui-ncurses */
 	format_add("ncurses_prompt_none", "", 1);
 	format_add("ncurses_prompt_query", "[%1] ", 1);
-	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %w}%{?avail %W}%{?invisible %K}%{?notavail %k}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{window}}%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
+	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %w}%{?avail %W}%{?chat %W}%{?dnd %K}%{?xa %b}%{?invisible %K}%{?notavail %k}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{window}}%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
 	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)}}%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
 	format_add("statusbar_act_important", "%W", 1);
 	format_add("statusbar_act", "%K", 1);
@@ -965,6 +965,8 @@ void theme_init()
 	format_add("invisible_descr", "%> (%3) Zmieniono stan na niewidoczny: %T%1%n%2\n", 1);
 	format_add("dnd", "%> (%1) Zmieniono stan na nie przeszkadzaæ%n\n", 1);
 	format_add("dnd_descr", "%> (%3) Zmieniono stan na nie przeszkadzaæ: %T%1%n%2%n\n", 1);
+	format_add("chat", "%> (%1) Zmieniono stan na chêtny do rozmowy%n\n", 1);
+	format_add("chat_descr", "%> (%3) Zmieniono stan na chêtny do rozmowy: %T%1%n%2%n\n", 1);
 	format_add("xa", "%> (%1) Zmieniono stan na extended away %n\n", 1);
 	format_add("xa_descr", "%> (%3) Zmieniono stan na extended away: %T%1%n%2%n%n\n", 1);
 	format_add("private_mode_is_on", "%> (%1) Tryb ,,tylko dla znajomych'' jest w³±czony\n", 1);
@@ -1016,6 +1018,8 @@ void theme_init()
 	format_add("list_away_descr", "%> %1 %G(zajêt%@2: %n%5%G)%n %b%3:%4%n\n", 1);
 	format_add("list_dnd", "%> %1 %n(nie przeszkadzaæ) %b%3:%4%n\n", 1);
 	format_add("list_dnd_descr", "%> %1 %n(nie przeszkadzaæ: %5) %b%3:%4%n\n", 1);
+	format_add("list_chat", "%> %1 %Y(chêtny do rozmowy) %b%3:%4%n\n", 1);
+	format_add("list_chat_descr", "%> %1 %Y(chêtny do rozmowy: %5) %b%3:%4%n\n", 1);
 	format_add("list_error", "%> %1 %m(b³±d) %b%3:%4%n\n", 1);
 	format_add("list_error", "%> %1 %m(b³±d: %5) %b%3:%4%n\n", 1);
 	format_add("list_xa", "%> %1 %B(bardzo zajêt%@2)%n %b%3:%4%n\n", 1);
@@ -1054,10 +1058,18 @@ void theme_init()
 	format_add("contacts_dnd", " %w%1%n", 1);
 	format_add("contacts_dnd_descr", "%Ki%w%1%n", 1);
 	format_add("contacts_dnd_descr_full", "%Ki%w%1%n %2", 1);
-        format_add("contacts_dnd_blink", " %w%i%1%n", 1);
-        format_add("contacts_dnd_descr_blink", "%K%ii%w%i%1%n", 1);
-        format_add("contacts_dnd_descr_full_blink", "%K%ii%w%i%1%n %2", 1);
+	format_add("contacts_dnd_blink", " %w%i%1%n", 1);
+	format_add("contacts_dnd_descr_blink", "%K%ii%w%i%1%n", 1);
+	format_add("contacts_dnd_descr_full_blink", "%K%ii%w%i%1%n %2", 1);
 	format_add("contacts_dnd_footer", "", 1);
+	format_add("contacts_chat_header", "", 1);
+	format_add("contacts_chat", " %Y%1%n", 1);
+	format_add("contacts_chat_descr", "%Ki%Y%1%n", 1);
+	format_add("contacts_chat_descr_full", "%Ki%Y%1%n %2", 1);
+	format_add("contacts_chat_blink", " %Y%i%1%n", 1);
+	format_add("contacts_chat_descr_blink", "%K%ii%Y%i%1%n", 1);
+	format_add("contacts_chat_descr_full_blink", "%K%ii%Y%i%1%n %2", 1);
+	format_add("contacts_chat_footer", "", 1);
 	format_add("contacts_error_header", "", 1);
 	format_add("contacts_error", " %m%1%n", 1);
 	format_add("contacts_error_descr", "%Ki%m%1%n", 1);
@@ -1145,6 +1157,12 @@ void theme_init()
 	format_add("status_notavail_descr", "%> (%3) %1 jest niedostêpn%@2: %T%4%n\n", 1);
 	format_add("status_invisible", "%> (%3) %1 jest niewidoczn%@2\n", 1);
 	format_add("status_invisible_descr", "%> (%3) %1 jest niewidoczn%@2: %T%4%n\n", 1);
+        format_add("status_xa", "%> (%3) %1 jest bardzo zajêt%@2\n", 1);
+	format_add("status_xa_descr", "%> (%3) %1 jest bardzo zajêt%@2: %T%4%n\n", 1);
+        format_add("status_dnd", "%> (%3) %1 nie przeszkadzaæ\n", 1);
+        format_add("status_dnd_descr", "%> (%3) %1 nie przeszkadzaæ: %T%4%n\n", 1);
+        format_add("status_chat", "%> (%3) %1 jest chêtn%@2 do rozmowy\n", 1);
+        format_add("status_chat_descr", "%> (%3) %1 jest chêtn%@2 do rozmowy: %T%4%n\n", 1);
 
 	/* po³±czenie z serwerem */
 	format_add("connecting", "%> (%1) £±czenie z serwerem %n\n", 1);
@@ -1281,8 +1299,10 @@ void theme_init()
 	format_add("user_info_notavail_descr", "%rniedostêpn%@1%n %K(%n%2%K)%n", 1);
 	format_add("user_info_invisible", "%cniewidoczn%@1%n", 1);
 	format_add("user_info_invisible_descr", "%cniewidoczn%@1%n %K(%n%2%K)%n", 1);
-	format_add("user_info_dnd", "%cnie przeszkadzaæ%n", 1);
-	format_add("user_info_dnd_descr", "%cnie przeszkadzaæ%n %K(%n%2%K)%n", 1);
+        format_add("user_info_dnd", "%cnie przeszkadzaæ%n", 1);
+        format_add("user_info_dnd_descr", "%cnie przeszkadzaæ%n %K(%n%2%K)%n", 1);
+        format_add("user_info_chat", "%Ychêtn%@1 do rozmowy%n", 1);
+	format_add("user_info_chat_descr", "%Ychêtn%@1 do rozmowy%n %K(%n%2%K)%n", 1);
 	format_add("user_info_error", "%m b³±d%n", 1);
 	format_add("user_info_error_descr", "%mb³±d%n %K(%n%2%K)%n", 1);
 	format_add("user_info_xa", "%cbardzo zajêt%@1%n", 1);
@@ -1314,8 +1334,10 @@ void theme_init()
 	format_add("show_status_invisible_descr", "%cniewidoczny%n (%T%1%n%2)", 1);
 	format_add("show_status_xa", "%cbardzo zajêty%n", 1);
 	format_add("show_status_xa_descr", "%cbardzo zajêty%n (%T%1%n%2)", 1);
-	format_add("show_status_dnd", "%cnie przeszkaæ%n", 1);
-	format_add("show_status_dnd_descr", "%cnie przeszkadzaæ%n (%T%1%n%2)", 1);
+        format_add("show_status_dnd", "%cnie przeszkaæ%n", 1);
+        format_add("show_status_dnd_descr", "%cnie przeszkadzaæ%n (%T%1%n%2)", 1);
+	format_add("show_status_chat", "%Ychêtny do rozmowy%n", 1);
+	format_add("show_status_chat_descr", "%Ychêtny do rozmowy%n (%T%1%n%2)", 1);
 	format_add("show_status_notavail", "%rniedostêpny%n", 1);
 	format_add("show_status_private_on", ", tylko dla znajomych", 1);
 	format_add("show_status_private_off", "", 1);
@@ -1568,6 +1590,8 @@ void theme_init()
         format_add("metacontact_info_invisible_descr", "%cniewidoczn%@1%n %K(%n%2%K)%n", 1);
         format_add("metacontact_info_dnd", "%cnie przeszkadzaæ%n", 1);
         format_add("metacontact_info_dnd_descr", "%cnie przeszkadzaæ%n %K(%n%2%K)%n", 1);
+	format_add("metacontact_info_chat", "%Ychêtn%@1 do rozmowy%n", 1);
+        format_add("metacontact_info_chat_descr", "%Ychêtn%@1 do rozmowy%n %K(%n%2%K)%n", 1);
         format_add("metacontact_info_error", "%mb³±d%n", 1);
         format_add("metacontact_info_error_descr", "%mb³±d%n %K(%n%2%K)%n", 1);
         format_add("metacontact_info_xa", "%cbardzo zajêt%@1%n", 1);
