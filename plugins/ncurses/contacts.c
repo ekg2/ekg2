@@ -133,6 +133,11 @@ int ncurses_contacts_update(window_t *w)
 
 			if (group && !ekg_group_member(u, group))
 				continue;
+			
+			if (count < contacts_index) {
+				count++;
+				continue;
+			}
 
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
@@ -154,8 +159,7 @@ int ncurses_contacts_update(window_t *w)
 				xstrcat(tmp, "_blink");
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
-			if(count >= contacts_index)	
-				ncurses_backlog_add(w, fstring_new(line));
+			ncurses_backlog_add(w, fstring_new(line));
 			xfree(line);
 
 			count++;

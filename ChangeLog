@@ -12,6 +12,7 @@ zg³osi³ b³±d.
   - dope³nienia powinny odbywaæ siê tylko do aktualnej sesji (*/del)
 - zmienna wy³±czaj±ca pytanie o zapisanie konfiguracji - save_quit (Tohver/del)
 - zwalnianie pamiêci po sesjach przy /quit (del)
+- poprawione przewijanie listy kontaków (Ctrl-Down, Ctrl-Up) (deL)
 
 // 2004-04-17
 - poprawka wy¶wietlania ostatniego stanu (nie wy¶wietla ostatniego stanu, gdy ten by³
