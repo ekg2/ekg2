@@ -1656,6 +1656,22 @@ char color_map(unsigned char r, unsigned char g, unsigned char b)
 }
 
 /*
+ * sprawdza czy podany znak jest znakiem alphanumerycznym (uwzlglednia polskie znaki)
+ */
+int isalpha_pl(unsigned char c)
+{
+/*  gg_debug(GG_DEBUG_MISC, "c: %d\n", c); */
+    if(isalpha(c)) // normalne znaki
+        return 1;
+    else if(c == 177 || c == 230 || c == 234 || c == 179 || c == 241 || c == 243 || c == 182 || c == 191 || c == 188) /* polskie literki */
+        return 1;
+    else if(c == 161 || c == 198 || c == 202 || c == 209 || c == 163 || c == 211 || c == 166 || c == 175 || c == 172) /* wielka litery polskie */
+        return 1;
+    else
+        return 0;
+}
+
+/*
  * strcasestr()
  *
  * robi to samo co xstrstr() tyle ¿e bez zwracania uwagi na wielko¶æ

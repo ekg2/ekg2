@@ -37,6 +37,7 @@
 #include "dynstuff.h"
 #include "plugins.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
 
@@ -317,10 +318,11 @@ char *strcasestr(const char *haystack, const char *needle);
 int say_it(const char *str);
 char *split_line(char **ptr);
 
+int isalpha_pl(unsigned char c);
 /* makra, dziêki którym pozbywamy siê warning'ów */
 #define xisxdigit(c) isxdigit((int) (unsigned char) c)
 #define xisdigit(c) isdigit((int) (unsigned char) c)
-#define xisalpha(c) isalpha((int) (unsigned char) c)
+#define xisalpha(c) isalpha_pl((int) (unsigned char) c)
 #define xisalnum(c) isalnum((int) (unsigned char) c)
 #define xisspace(c) isspace((int) (unsigned char) c)
 #define xtolower(c) tolower((int) (unsigned char) c)
