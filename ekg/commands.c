@@ -2031,21 +2031,30 @@ COMMAND(cmd_test_fds)
 			sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
 
 		if (S_ISSOCK(st.st_mode)) {
-			struct sockaddr sa;
+			/* GiM: ten sock_n, bo sockaddr_in6 > sockaddr_in */
+			char sock_n[256], bufek[256];
+			struct sockaddr *sa = (struct sockaddr*)sock_n;
 //			struct sockaddr_un *sun = (struct sockaddr_un*) &sa;
-			struct sockaddr_in *sin = (struct sockaddr_in*) &sa;
-			int sa_len = sizeof(sa);
-			
-			if (getpeername(i, &sa, &sa_len) == -1) {
-				getsockname(i, &sa, &sa_len);
+			struct sockaddr_in *sin = (struct sockaddr_in*) sa;
+#ifdef HAVE_GETADDRINFO
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6*) sa;
+#endif
+			int sa_len = 256;
 
-				if (sa.sa_family == AF_INET) {
+			if (getpeername(i, sa, &sa_len) == -1) {
+				getsockname(i, sa, &sa_len);
+
+	/* dj: socket nie zawsze musi byc podbindowany pod 0.0.0.0 (::) */
+				if (sa->sa_family == AF_INET) {
 					xstrcat(buf, "socket, inet, *:");
+					xstrcat(buf, itoa(ntohs(sin->sin_port)));
+				} else if (sa->sa_family == AF_INET6) {
+					xstrcat(buf, "socket, inet6, *:");
 					xstrcat(buf, itoa(ntohs(sin->sin_port)));
 				} else
 					xstrcat(buf, "socket");
 			} else {
-				switch (sa.sa_family) {
+				switch (sa->sa_family) {
 					case AF_UNIX:
 						xstrcat(buf, "socket, unix");
 						break;
@@ -2054,10 +2063,23 @@ COMMAND(cmd_test_fds)
 						xstrcat(buf, inet_ntoa(sin->sin_addr));
 						xstrcat(buf, ":");
 						xstrcat(buf, itoa(ntohs(sin->sin_port)));
+#ifdef HAVE_GETADDRINFO
+					case AF_INET6:
+						xstrcat(buf, "socket, inet6, ");
+#ifdef HAVE_INET_NTOP
+						inet_ntop(sa->sa_family, &(sin6->sin6_addr), bufek, sizeof(bufek));
+						xstrcat(buf, bufek);
+#else
+						xstrcat(buf, "strange?");
+#endif
+						xstrcat(buf, ":");
+						xstrcat(buf, itoa(ntohs(sin6->sin6_port)));
+						break;
+#endif
 						break;
 					default:
 						xstrcat(buf, "socket, ");
-						xstrcat(buf, itoa(sa.sa_family));
+						xstrcat(buf, itoa(sa->sa_family));
 				}
 			}
 		}

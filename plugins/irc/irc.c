@@ -288,7 +288,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 	session_t *s = idta->session;
 	irc_private_t *j = irc_private(s);
 #ifdef HAVE_GETADDRINFO
-	struct sockaddr_in6 ipv6;
+	struct sockaddr_in6 ipv6, vhost6;
 #endif
 	struct sockaddr_in ipv4, vhost;
 
@@ -380,23 +380,33 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 
 	if (xstrlen(local_ip) > 1)
 	{
+		vhost.sin_family = family;
+		vhost.sin_port = htons(0);
 #ifdef HAVE_INET_PTON
-		inetptonres = inet_pton(family, local_ip, &(vhost.sin_addr));
+		if (family == PF_INET)
+			inetptonres = inet_pton(PF_INET, local_ip, &(vhost.sin_addr));
+		else {
+			inetptonres = inet_pton(PF_INET6, local_ip, &(vhost6.sin6_addr));
+			vhost6.sin6_family = family;
+			vhost6.sin6_port = htons(0);
+		}
 		if (inetptonres == 0 || inetptonres == -1) {
 			print("invalid_local_ip", session_name(s));
 			session_set(s, "local_ip", NULL);
 			config_changed = 1;
 			vhost.sin_addr.s_addr = htonl(INADDR_ANY);
 		}
+		if (family == PF_INET)
+			connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
+		else
+			connret = bind(fd, (struct sockaddr *)&vhost6, sizeof(vhost6));
 #else
 		/* GiM->darkjames: nie dostawiam tego warninga je¶li
 		 * je¶li jest IPv6 a nie ma inet_pton
 		 */
 		vhost.sin_addr = inet_addr(local_ip);
-#endif
-		vhost.sin_family = family;
-		vhost.sin_port = htons(0);
 		connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
+#endif
 		if (connret < 0)
 		{
 			debug ("[irc] handle_resolver() bind() failed: %s\n",
