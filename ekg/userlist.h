@@ -139,6 +139,7 @@ int userlist_remove(session_t *session, userlist_t *u);
 int userlist_remove_u(list_t userlist, userlist_t *u);
 int userlist_replace(session_t *session, userlist_t *u);
 userlist_t *userlist_find(session_t *session, const char *uid);
+userlist_t *userlist_find_u(list_t userlist, const char *uid);
 #define userlist_find_n(a, b) userlist_find(session_find(a), b)
 char *userlist_dump(session_t *session);
 void userlist_free(session_t *session);

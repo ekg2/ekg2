@@ -580,6 +580,45 @@ userlist_t *userlist_find(session_t *session, const char *uid)
         return NULL;
 }
 
+/* 
+ * userlist_find_u()
+ *
+ * finds and returns pointer to userlist_t which includes given
+ * uid
+ */
+userlist_t *userlist_find_u(list_t userlist, const char *uid)
+{
+        list_t l;
+
+        if (!uid || !userlist)
+                return NULL;
+
+        for (l = userlist; l; l = l->next) {
+                userlist_t *u = l->data;
+                const char *tmp;
+                int len;
+
+                if (!xstrcasecmp(u->uid, uid))
+                        return u;
+
+                if (u->nickname && !xstrcasecmp(u->nickname, uid))
+                        return u;
+
+                /* porównujemy resource */
+
+                if (!(tmp = xstrchr(uid, '/')))
+                        continue;
+
+                len = (int)(tmp - uid);
+
+                if (!xstrncasecmp(uid, u->uid, len))
+                        return u;
+
+        }
+
+        return NULL;
+}
+
 int userlist_set(session_t *session, const char *contacts)
 {
 	char **entries = array_make(contacts, "\r\n", 0, 1, 0);
