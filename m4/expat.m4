@@ -9,14 +9,14 @@ AC_DEFUN(AC_CHECK_EXPAT,
 		if test "x$withval" = "xno"; then
 			without_expat=yes
 		elif test "x$withval" != "xyes"; then
-			EXPAT_CFLAGS="-I$withval/include"
-			EXPAT_LIBS="-I$withval/lib"
+			EXPAT_CPPFLAGS="-I$withval/include"
+			EXPAT_LIBS="-L$withval/lib"
 		fi
 	])
 
 	if test "x$without_expat" != "xyes"; then
-		cflags="$CFLAGS $EXPAT_CFLAGS"
-		ldflags="$LDFLAGS $EXPAT_LIBS"
+		CPPFLAGS="$CPPFLAGS $EXPAT_CPPFLAGS"
+		LDFLAGS="$LDFLAGS $EXPAT_LIBS"
 		AC_CHECK_HEADERS([expat.h],
 		[
 			AC_CHECK_LIB([expat], [XML_ParserCreate],
@@ -26,8 +26,6 @@ AC_DEFUN(AC_CHECK_EXPAT,
 				have_expat="yes"
 			])
 		])
-		CFLAGS="$cflags"
-		LDFLAGS="$ldflags"
 	fi
 ])
 

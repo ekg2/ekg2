@@ -104,7 +104,7 @@ if test "x$have_libgsm" = "xyes"; then
 	PLUGINS="$PLUGINS gsm"
 fi
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile m4/Makefile])
 
 PLUGINS_LIBS=""
 
@@ -118,4 +118,3 @@ plugindir=$libdir/ekg/plugins
 AC_SUBST(plugindir)
 
 AC_OUTPUT
-
