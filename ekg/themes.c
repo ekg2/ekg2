@@ -1449,7 +1449,9 @@ void theme_init()
 	format_add("python_not_found", "%! Nie znaleziono skryptu %T%1%n\n", 1);
 	format_add("python_wrong_location", "%! Skrypt nale¿y umie¶ciæ w katalogu %T%1%n\n", 1);
 #endif
-
+	format_add("session_variable", "%> %T%1->%2 = %R%3%n\n", 1); /* uid, var, new_value*/
+	format_add("session_variable_removed", "%> Usuniêto %T%1->%2%n\n", 1); /* uid, var */
+	format_add("session_variable_doesnt_exist", "%! Nieznana zmienna: %T%1->%2%n\n", 1); /* uid, var */
 	format_add("session_list", "%> %T%1%n %3\n", 1); /* uid, uid, %{user_info_*} */
 	format_add("session_list_alias", "%> %T%2%n/%1 %3\n", 1); /* uid, alias, %{user_info_*} */
 	format_add("session_list_empty", "%! Lista sesji jest pusta\n", 1);

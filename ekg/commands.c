@@ -3789,12 +3789,17 @@ void command_init()
 	command_add(NULL, "session", "????", session_command, 0,
 	  " [opcje]", "zarz±dzanie sesjami",
 	  "\n"
-	  " [-l, --list]        wy¶wietla listê\n"
-	  " [-i, --info] <uid>  informacje o sesji\n"
+	  " <uid>	  	informacje o sesji\n"
 	  "  -a, --add <uid>    tworzy now± sesjê\n"
 	  "  -d, --del <uid>    usuwa sesjê\n"
-	  " [-s, --set] <uid> <opcja> <warto¶æ>\n"
+	  " [-l, --list]        wy¶wietla listê\n"
+	  " [-g, --get] [<uid>] <opcja>\n"
+	  "                     wy¶wietla opcjê sesji\n"
+	  " [-s, --set] [<uid>] <opcja> <warto¶æ>\n"
 	  "                     zmienia opcjê sesji\n"
+	  " [-s, --set] [<uid>] -<opcja>\n"
+	  "                     usuwa opcjê sesji\n"
+	  " [-w, --sw] <uid> zmienia aktualn± sesjê\n"
 	  "\n"
 	  "Muuu!");
 }
