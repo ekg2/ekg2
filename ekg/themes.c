@@ -270,12 +270,33 @@ char *va_format_string(const char *format, va_list ap)
 		}
 
 		if (*p == '%' && !escaped) {
-			int fill_before, fill_after, fill_soft, fill_length;
-			char fill_char;
+			int fill_before, fill_after, fill_soft, fill_length, hm;
+			char fill_char, *cnt=NULL;
 
 			p++;
 			if (!*p)
 				break;
+			if (*p == '{')
+			{
+				p++;
+				char *str = (char *)args[*p - '1'];
+				p++;
+				cnt = (char *)p;
+				hm = 0;
+
+				while (*cnt && *cnt!='}') { cnt++; hm++; }
+				hm>>=1; cnt=(char *)(p+hm);
+				/* debug(">>> [HM:%d]", hm); */
+				for (; hm>0; hm--) {
+					if (*p == *str) break;
+					p++; cnt++;
+				}
+				/* debug(" [%c%c][%d] [%s] ", *p, *cnt, hm, p); */
+				if (!hm) { p=*cnt?(cnt+1):cnt; continue; }
+				p=(cnt+hm+1);
+				/* debug(" [%s]\n"); */
+				*((char *)p)=*cnt;
+			}
 			if (*p == '%')
 				string_append_c(buf, '%');
 			if (*p == '>')
