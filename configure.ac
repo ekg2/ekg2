@@ -66,7 +66,7 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 AC_ARG_WITH(ioctld,
   [  --without-ioctld        Disable ioctld plugin])
 
-if test "x$without_ioctld" != "xyes"; then
+if test "x$with_ioctld" != "xno"; then
         AC_CHECK_HEADERS(linux/kd.h,
 	[
 		have_ioctld_includes=yes
