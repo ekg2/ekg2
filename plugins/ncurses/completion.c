@@ -406,8 +406,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			}
 
 			if (strcmp(tmp, "")) {
-				strcat(tmp, "\n");
-				print(tmp);
+				print("none", tmp);
 			}
 		}
 
