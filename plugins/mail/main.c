@@ -157,6 +157,7 @@ static void mail_handler(int type, int fd, const char *line, void *data)
 			break;
 		case 1:
 			check_mail_update("0,0", 0);	/* XXX paskuuudne! */
+			close(fd);
 			break;
 	}
 }
