@@ -385,11 +385,13 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 #ifdef HAVE_INET_PTON
 		if (family == PF_INET)
 			inetptonres = inet_pton(PF_INET, local_ip, &(vhost.sin_addr));
+#ifdef HAVE_GETADDRINFO
 		else {
 			inetptonres = inet_pton(PF_INET6, local_ip, &(vhost6.sin6_addr));
 			vhost6.sin6_family = family;
 			vhost6.sin6_port = htons(0);
 		}
+#endif
 		if (inetptonres == 0 || inetptonres == -1) {
 			print("invalid_local_ip", session_name(s));
 			session_set(s, "local_ip", NULL);
@@ -398,8 +400,10 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		}
 		if (family == PF_INET)
 			connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
+#ifdef HAVE_GETADDRINFO
 		else
 			connret = bind(fd, (struct sockaddr *)&vhost6, sizeof(vhost6));
+#endif
 #else
 		/* GiM->darkjames: nie dostawiam tego warninga je¶li
 		 * je¶li jest IPv6 a nie ma inet_pton
