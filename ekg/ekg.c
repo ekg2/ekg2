@@ -333,8 +333,13 @@ watches_again:
                                 continue;
 
                         if (w->fd == 0) {
-                                for (l = sessions; l; l = l->next) {
-                                        session_t *s = l->data;
+				list_t session_list;
+                                for (
+						session_list = sessions;
+						session_list;
+						session_list = session_list->next)
+				{
+                                        session_t *s = session_list->data;
 
                                         if (!s->connected || !s->autoaway)
                                                 continue;
