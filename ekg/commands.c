@@ -1391,6 +1391,7 @@ COMMAND(cmd_list)
 		char *tmp = xstrdup(params[0]);
 		xfree((char *) params[0]);
 		params[0] = xstrdup(strip_quotes(tmp));
+		xfree(tmp);
 	}
 
 	if (params[0] && *params[0] != '-') {

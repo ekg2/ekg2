@@ -119,6 +119,7 @@ static void irc_private_destroy(session_t *s)
 {
 	irc_private_t *j = irc_private(s);
 	const char *uid = session_uid_get(s);
+	int i;
 
 	if (xstrncasecmp(uid, IRC4, 4) || !j)
 		return;
@@ -130,6 +131,8 @@ static void irc_private_destroy(session_t *s)
 
 	irc_free_people(s, j);
 
+        for (i=0; i<SERVOPTS; i++)
+                xfree(j->sopt[i]);
 	xfree(j);
 	session_private_set(s, NULL);
 }
@@ -324,9 +327,11 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 
 	xfree(buf);
 
+	xfree(data);
 	return;
 
 fail:
+	xfree(data);
 	watch_remove(&irc_plugin, fd, WATCH_READ);
 }
 
@@ -348,6 +353,7 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		print("generic_error", strerror(res));
 		irc_handle_disconnect(idta->session);
+		xfree(data);
 		return;
 	}
 
@@ -383,7 +389,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 	char bufek[100];
 	int port = (port_s) ? atoi(port_s) : 6667, connret;
 
-	if (type != 0)
+	if (type != 0) 
 		return;
 
 	debug("[irc] handle_resolver() %d\n", type);
@@ -419,6 +425,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		close(fd);
 		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje");
 		j->connecting = 0;
+		xfree(data);
 		return;
 	}
 #if defined(HAVE_INET_NTOP) && defined(HAVE_GETADDRINFO)
@@ -441,6 +448,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 	{
 		print("generic_error", "Could not resolve your server");
 		j->connecting = 0;
+		xfree(data);
 		return;
 	}
 
@@ -449,6 +457,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 				strerror(errno));
 		print("generic_error", strerror(errno));
 		irc_handle_disconnect(s);
+		xfree(data);
 		return;
 	}
 
@@ -461,6 +470,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 				strerror(errno));
 		print("generic_error", strerror(errno));
 		irc_handle_disconnect(s);
+		xfree(data);
 		return;
 	}
 
@@ -488,6 +498,7 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 				strerror(errno));
 		print("generic_error", strerror(errno));
 		irc_handle_disconnect(s);
+		xfree(data);
 		return;
 	}
 

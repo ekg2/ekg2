@@ -282,7 +282,6 @@ IRC_COMMAND(irc_c_init)
 	{
 		case 1:
 			query_emit(NULL, "protocol-connected", &__session);
-			xfree(__session);
 			session_connected_set(s, 1);
 			session_unidle(s);
 			t = xstrchr(param[3], '!');
@@ -332,6 +331,7 @@ IRC_COMMAND(irc_c_init)
 			break;
 	}
 
+	xfree(__session);
 	return 0;
 }
 
