@@ -1,20 +1,23 @@
+# translation of pl.po to Polski
 # English (c) translation for ekg2.
 # Copyright (C) EKG2 team (http://www.ekg2.org)
 # This file is distributed under the same license as the ekg2 package.
 # Tomasz Torcz <zdzichu@irc.pl>, 2004.
+# Piotr Kupisiewicz <deletek@ekg2.org>, 2004.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ekg2\n"
+"Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-12 12:49+0200\n"
-"PO-Revision-Date: 2004-08-17 23:09+0200\n"
+"PO-Revision-Date: 2004-10-12 15:26+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
-"Language-Team: Polish <pl@li.org>\n"
+"Language-Team: Polski\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Report-msgstr-Bugs-To: \n"
+"X-Generator: KBabel 1.3.1\n"
 
 #: compat/getopt.c:430
 #, c-format
@@ -715,10 +718,8 @@ msgid "%! (%1) Invalid \"server\".%n\n"
 msgstr "%! (%1) B³êdna warto¶æ zmiennej sesyjnej \"server\".%n\n"
 
 #: ekg/themes.c:1285
-msgid ""
-"%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
-msgstr ""
-"%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
+msgid "%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
+msgstr "%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
 
 #: ekg/themes.c:1294
 msgid "%! Unknown variable: %T%1%n\n"
@@ -1317,8 +1318,7 @@ msgstr "%! Mo¿na prowadziæ tylko jedn± rozmowê g³osow± na raz\n"
 
 #: ekg/themes.c:1486
 msgid "%! Voice chat not compiled in. See %Tdocs/voip.txt%n\n"
-msgstr ""
-"%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
+msgstr "%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
 
 #: ekg/themes.c:1487
 msgid ""
@@ -1753,8 +1753,7 @@ msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
 #: plugins/gg/gg.c:1038
 msgid "%! Your operating system doesn't support tokens\n"
-msgstr ""
-"%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
+msgstr "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
 
 #: plugins/gg/gg.c:1039
 msgid "%! First get token by function %Ttoken%n\n"
@@ -1762,27 +1761,27 @@ msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
 #: plugins/irc/irc.c:1234
 msgid "%> %Y%2%n has joined %4\n"
-msgstr ""
+msgstr "%> %Y%2%n do³±czy³ %4\n"
 
 #: plugins/irc/irc.c:1235
 msgid "%> %g%2%n has left %4 (%5)\n"
-msgstr ""
+msgstr "%> %g%2%n opu¶ci³ %4 (%5)\n"
 
 #: plugins/irc/irc.c:1236
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
-msgstr ""
+msgstr "%> %Y%2%n zosta³ wykopany przez %R%3%n z %5 (%6)\n"
 
 #: plugins/irc/irc.c:1237
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
-msgstr ""
+msgstr "%> Zosta³e¶ wykopany z %R%3%n przez %5 (%6)\n"
 
 #: plugins/irc/irc.c:1238
 msgid "%> %Y%2%n has quit irc (%4)\n"
-msgstr ""
+msgstr "%> %Y%2%n opu¶ci³ irc (%4)\n"
 
 #: plugins/irc/irc.c:1239
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
-msgstr ""
+msgstr "%> %Y%2%n wys³a³ nieznany CTCP %3: (%4)\n"
 
 #: plugins/irc/irc.c:1240
 msgid "%> %y%e* %2%n %4\n"
@@ -1802,23 +1801,23 @@ msgstr ""
 
 #: plugins/irc/irc.c:1244
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
-msgstr ""
+msgstr "%> %Y%2%n zarz±da³ CTCP %5 od %4\n"
 
 #: plugins/irc/irc.c:1245
 msgid "%> %Y%2%n requested ctcp %5\n"
-msgstr ""
+msgstr "%> %Y%2%n zarz±da³ CTCP %5\n"
 
 #: plugins/irc/irc.c:1246
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
-msgstr ""
+msgstr "%> %Y%2%n odpowied¼ CTCP od %3: %5\n"
 
 #: plugins/irc/irc.c:1261
 msgid "%> Cannot send to channel %T%2%n\n"
-msgstr ""
+msgstr "%> Nie mo¿na pisaæ na kana³ %T%2%n\n"
 
 #: plugins/irc/irc.c:1266
 msgid "%G||%n away     : %2 - %3\n"
-msgstr ""
+msgstr "%G||%n zajêty     : %2 - %3\n"
 
 #: plugins/irc/irc.c:1268
 msgid ""
@@ -1826,22 +1825,25 @@ msgid ""
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n realname : %6\n"
 msgstr ""
+"%G.+===%g-----\n"
+"%G||%n (%T%2%n) (%3@%4)\n"
+"%G||%n prawdziwa nazwa : %6\n"
 
 #: plugins/irc/irc.c:1270
 msgid "%G||%n %|channels : %3\n"
-msgstr ""
+msgstr "%G||%n %|kana³y : %3\n"
 
 #: plugins/irc/irc.c:1271
 msgid "%G||%n %|server   : %3 (%4)\n"
-msgstr ""
+msgstr "%G||%n %|serwer   : %3 (%4)\n"
 
 #: plugins/irc/irc.c:1272
 msgid "%G||%n %|ircOp    : %3\n"
-msgstr ""
+msgstr "%G||%n %|ircOp    : %3\n"
 
 #: plugins/irc/irc.c:1273
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
-msgstr ""
+msgstr "%G||%n %|brak aktywno¶ci     : %3 (zalogowany: %4)\n"
 
 #: plugins/irc/irc.c:1274
 #, c-format
@@ -1850,39 +1852,39 @@ msgstr ""
 
 #: plugins/irc/irc.c:1276
 msgid "%> Topic %2: %3\n"
-msgstr ""
+msgstr "%> Temat %2: %3\n"
 
 #: plugins/irc/irc.c:1278
 msgid "%> set by %2 on %4"
-msgstr ""
+msgstr "%> ustawiony przez %2 dnia %4"
 
 #: plugins/irc/irc.c:1279
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
-msgstr ""
+msgstr "%> %T%2%n zmieni³ temat na %T%4%n: %5\n"
 
 #: plugins/irc/irc.c:1280
 msgid "%> %T%2%n unset topic on %T%4%n\n"
-msgstr ""
+msgstr "%> %T%2%n wyczy¶ci³ temat na %T%4%n\n"
 
 #: plugins/irc/irc.c:1281
 msgid "%> %2/%4 sets mode%5\n"
-msgstr ""
+msgstr "%> %2/%4 ustawia tryb%5\n"
 
 #: plugins/irc/irc.c:1282
 msgid "%> %2 set mode %3 on You\n"
-msgstr ""
+msgstr "%> %2 ustawia tryb %3 na Tobie\n"
 
 #: plugins/irc/irc.c:1284
 msgid "%) ping/pong %c%2%n\n"
-msgstr ""
+msgstr "%) ping/pong %c%2%n\n"
 
 #: plugins/irc/irc.c:1285
 msgid "%> You are now known as %G%3%n\n"
-msgstr ""
+msgstr "%> Jeste¶ teraz znany jako %G%3%n\n"
 
 #: plugins/irc/irc.c:1286
 msgid "%> %g%2%n is now known as %G%4%n\n"
-msgstr ""
+msgstr "%> %g%2%n jest znany jako %G%4%n\n"
 
 #: plugins/jabber/jabber.c:960
 msgid ""
@@ -1935,8 +1937,7 @@ msgid "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"
 
 #: plugins/jabber/jabber.c:971
-msgid ""
-"%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
+msgid "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
 msgstr ""
 "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) "
 "%r%3%n\n"
@@ -2028,3 +2029,4 @@ msgstr "%> SMS do %T%1%n zosta³ wys³any\n"
 #: plugins/sms/sms.c:355
 msgid "%! SMS to %T%1%n not sent\n"
 msgstr "%! SMS do %T%1%n nie zosta³ wys³any\n"
+
