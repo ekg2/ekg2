@@ -448,6 +448,8 @@ fstring_t *fstring_new(const char *str)
 	for (i = 0, j = 0; str[i]; i++) {
 		if (str[i] == 27) {
 			int tmp = 0;
+                        int m, ism, once=1, deli;
+                        char *p;
 
 			if (str[i + 1] != '[')
 				continue;
@@ -455,8 +457,6 @@ fstring_t *fstring_new(const char *str)
 			i += 2;
 
 			/* obs³uguje tylko "\033[...m", tak ma byæ */
- 			int m, ism, once=1, deli;
- 			char *p;
  			p=(char *)&(str[i]);
 			while (1) {
  				ism=deli=0;

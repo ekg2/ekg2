@@ -19,6 +19,8 @@ AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
+dnl It's obsolete in current versions of gettext but it's needed in older
+ALL_LINGUAS="en"
 AM_GNU_GETTEXT([external])
 
 AC_SUBST(COMPAT)
