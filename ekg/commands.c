@@ -1312,6 +1312,10 @@ COMMAND(cmd_list)
 COMMAND(cmd_save)
 {
 	last_save = time(NULL);
+	
+        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
+        if(!session)
+                return -1;
 
 	if (!userlist_write(session) && !config_write(params[0]) && !session_write()) {
 		printq("saved");
@@ -1753,6 +1757,10 @@ COMMAND(cmd_query)
 {
 	char **p = xcalloc(3, sizeof(char*));
 	int i, res = 0;
+
+        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
+        if(!session)
+                return -1;
 
 	/* skopiuj argumenty dla wywo³ania /chat */
 	for (i = 0; params[i]; i++)
@@ -2823,6 +2831,10 @@ COMMAND(cmd_timer)
 
 COMMAND(cmd_conference) 
 {
+        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
+        if(!session)
+                return -1;
+
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] == '#') {
 		list_t l, r;
 		int count = 0;
@@ -3045,6 +3057,11 @@ COMMAND(cmd_last)
 	const char *nick = NULL;
 	time_t n;
 	struct tm *now;
+
+        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
+        if(!session)
+                return -1;
+
 
 	if (match_arg(params[0], 'c', "clear", 2)) {
 		if (params[1] && !(uid = get_uid(session, params[1]))) {
