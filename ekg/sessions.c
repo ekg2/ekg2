@@ -633,7 +633,7 @@ COMMAND(session_command)
 		
 		    		printq("session_variable_doesnt_exist", window_current->session->uid, params[1]);
 			} else
-				printq("no session! [1]");
+				printq("invalid_session");
 			return -1;
 		}
 		 
