@@ -1223,7 +1223,7 @@ COMMAND(jabber_command_del)
 	}
 
 	if (!session_connected_get(session)) {
-		printq("not_connected");
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -1233,12 +1233,8 @@ COMMAND(jabber_command_del)
 	}
 
 	if (!(uid = get_uid(session, params[0]))) {
-		uid = (char *) params[0];
-
-		if (!(xstrchr(uid,'@') && xstrchr(uid, '@') < xstrchr(uid, '.'))) {
-			printq("user_not_found", params[0]);
-			return -1;
-		}
+		printq("user_not_found", params[0]);
+		return -1;
 	} else {
 		if (xstrncasecmp(uid, "jid:", 4)) {
 			printq("invalid_session");
@@ -1249,8 +1245,8 @@ COMMAND(jabber_command_del)
 
 	jabber_write(j, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
 	jabber_write(j, "<item jid=\"%s\" subscription=\"remove\"/></query></iq>", uid);
-	
-	print("user_deleted", params[0]);
+
+	print("user_deleted", params[0], session_name(session));
 	
 	return 0;
 }

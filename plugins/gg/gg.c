@@ -897,7 +897,7 @@ COMMAND(gg_command_connect)
 		return -1;
 	}
 
-	if (!strcasecmp(name, "disconnect") || !strcasecmp(name, "reconnect")) {
+	if (!strcasecmp(name, "disconnect") || (!strcasecmp(name, "reconnect") && session_connected_get(session))) {
 		if (!g->sess) {
 			printq("not_connected", session_name(session));
 		} else {
