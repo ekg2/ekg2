@@ -1979,7 +1979,7 @@ COMMAND(cmd_echo)
 
 COMMAND(cmd_bind)
 {
-	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, NULL);
+	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
 
 	return 0;
 }
