@@ -61,11 +61,11 @@
 #define DEFPARTMSG "EKG2 bejbi! http://ekg2.org/"
 #define DEFQUITMSG "EKG2 - It's better than sex!"
 
-#define SGPARTMSG(x) fix(session_get(x, "PART_MSG"))
-#define SGQUITMSG(x) fix(session_get(x, "QUIT_MSG"))
+#define SGPARTMSG(x) session_get(x, "PART_MSG")
+#define SGQUITMSG(x) session_get(x, "QUIT_MSG")
 
-#define PARTMSG(x) (strlen(SGPARTMSG(x))?SGPARTMSG(x):DEFPARTMSG)
-#define QUITMSG(x) (strlen(SGQUITMSG(x))?SGQUITMSG(x):DEFQUITMSG)
+#define PARTMSG(x) (SGPARTMSG(x)?SGPARTMSG(x):DEFPARTMSG)
+#define QUITMSG(x) (SGQUITMSG(x)?SGQUITMSG(x):DEFQUITMSG)
 
 /*                                                                       *
  * ======================================== STARTUP AND STANDARD FUNCS - *
@@ -305,6 +305,7 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 	/* ups, we get disconnected */
 	if (type == 1) {
 		debug ("[irc] handle_stream(): ROZ£¡CZY£O\n");
+		//xfree(idta);
 		irc_handle_disconnect(s);
 		return;
 	}
@@ -317,6 +318,8 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 	if ((len = read(fd, buf, 4095)) < 1) {
 		debug(" readerror\n");
 		print("generic_error", strerror(errno));
+		xfree(idta);
+		irc_handle_disconnect(s);
 		goto fail;
 	}
 
@@ -1407,27 +1410,27 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:quote", "?",	irc_command_quote, 0, NULL);
 
 	/* lower case: names of variables that reffer to client itself */
-	plugin_var_add(&irc_plugin, "server", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&irc_plugin, "password", VAR_STR, 0, 1, NULL);
-	plugin_var_add(&irc_plugin, "port", VAR_INT, "6667", 0, NULL);
-	plugin_var_add(&irc_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
-	plugin_var_add(&irc_plugin, "local_ip", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_away", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
-        plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
-
-	if (pwd_entry != NULL)
-	{
-		plugin_var_add(&irc_plugin, "nickname", VAR_STR, pwd_entry->pw_name, 0, NULL);
-		plugin_var_add(&irc_plugin, "realname", VAR_STR, pwd_entry->pw_gecos, 0, NULL);
-	} else {
-		plugin_var_add(&irc_plugin, "nickname", VAR_STR, NULL, 0, NULL);
-		plugin_var_add(&irc_plugin, "realname", VAR_STR, NULL, 0, NULL);
-	}
+	plugin_var_add(&irc_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
+        plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&irc_plugin, "local_ip", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&irc_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
 	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
+	if (pwd_entry != NULL)
+		plugin_var_add(&irc_plugin, "nickname", VAR_STR, pwd_entry->pw_name, 0, NULL);
+	else
+		plugin_var_add(&irc_plugin, "nickname", VAR_STR, NULL, 0, NULL);
+	plugin_var_add(&irc_plugin, "password", VAR_STR, 0, 1, NULL);
+	plugin_var_add(&irc_plugin, "port", VAR_INT, "6667", 0, NULL);
+	if (pwd_entry != NULL)
+		plugin_var_add(&irc_plugin, "realname", VAR_STR, pwd_entry->pw_gecos, 0, NULL);
+	else
+		plugin_var_add(&irc_plugin, "realname", VAR_STR, NULL, 0, NULL);
+	plugin_var_add(&irc_plugin, "server", VAR_STR, 0, 0, NULL);
 
 	/* upper case: names of variables, that reffer to protocol stuff */
 	plugin_var_add(&irc_plugin, "AUTO_JOIN", VAR_STR, 0, 0, NULL);
@@ -1494,6 +1497,7 @@ static int irc_theme_init()
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
 
 	format_add("irc_joined", _("%> %Y%2%n has joined %4\n"), 1);
+	format_add("irc_joined_you", _("%> %RYou%n has joined %4\n"), 1);
 	format_add("irc_left", _("%> %g%2%n has left %4 (%5)\n"), 1);
 	format_add("irc_kicked", _("%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"), 1);
 	format_add("irc_kicked_you", _("%> You have been kicked out by %R%3%n from %5 (%6)\n"), 1);
@@ -1533,7 +1537,7 @@ static int irc_theme_init()
 	format_add("RPL_INVITELIST", "%g|| %n %5 - %W%2%n: invite %c%3\n", 1);;
 	format_add("RPL_EMPTYLIST" , "%g|| %n Empty list \n", 1);
 	format_add("RPL_LINKS",      "%g|| %n %5 - %2  %3  %4\n", 1);
-	format_add("RPL_ENDOFLIST",  "%g`+=%G----- %n\n", 1);
+	format_add("RPL_ENDOFLIST",  "%g`+=%G----- %2%n\n", 1);
  
 	format_add("RPL_AWAY", _("%G||%n away     : %2 - %3\n"), 1);
 	/* in whois %2 is always nick */

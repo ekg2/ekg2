@@ -547,7 +547,7 @@ IRC_COMMAND(irc_c_list)
 	if (endlist) {
 			if (!mode_act)
 					print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
-			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s));
+			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK(3));
 			mode_act = 0; 
 			return 0;
 	}
@@ -757,11 +757,13 @@ IRC_COMMAND(irc_c_join)
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
 	 * z tego jaka¶ kupa, ale na razie nie chce mi siê nad tym my¶leæ */
 	if (!xstrcmp(j->nick, param[0]+1)) {
-		if (tmp) *tmp='!';
 		newwin = window_new(channel, s, 0);
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
 		ischan = irc_add_channel(s, j , OMITCOLON(param[2]), newwin);
+		print_window(channel, s, 0, "irc_joined_you", session_name(s),
+				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]));
+		if (tmp) *tmp='!';
 	/* someone joined */
 	} else {
 		irc_add_person(s, j, param[0]+1, OMITCOLON(param[2])); 

@@ -1,38 +1,6 @@
 // IRC protocol session variables description
 // (c) 2004 Michal 'GiM' Spadlinski
 
-server
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	adres serwera irc, np: warszawa.irc.pl
-	zmienna musi byæ ustawiona, ¿eby móc siê po³±czyæ
-
-password
-	typ: tekst
-	domy¶lna waro¶æ: brak
-
-	has³o do serwera
-
-port
-	typ: liczba
-	domy¶lna warto¶æ: 6667
-
-	port serwera, do którego bêdziemy siê pod³±czaæ
-
-default
-	typ: bool
-	domyslna warto¶æ: false
-
-	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
-	podczas uruchomienia programu)
-
-local_ip
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	pozwala na korzystanie z vhostów [opcja -h w irssi]
-
 auto_away
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -57,6 +25,19 @@ auto_connect
 	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
 	programu
 
+dcc_port
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	póki co jeszcze nie u¿ywane...
+
+default
+	typ: bool
+	domyslna warto¶æ: false
+
+	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
+	podczas uruchomienia programu)
+
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -68,21 +49,17 @@ display_notify
 	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2 
 	ukrywa zmiany stanu.
 
-nickname
+local_ip
 	typ: tekst
-	domy¶lna warto¶æ: twoj login
+	domy¶lna warto¶æ: brak
 
-	okre¶la domy¶lny nick, pod jakim bêdziemy starali siê po³±czyæ
-	z serwerem IRC
-	zmienna musi byæ ustawiona, ¿eby móc siê po³aczyæ
+	pozwala na korzystanie z vhostów [opcja -h w irssi]
 
-realname
+log_formats
 	typ: tekst
-	domy¶lna warto¶æ: realname u¿yszkodnika
+	domy¶lna waro¶æ: xml,simple
 
-	dowolny tekst, który zostanie ustawiony jako nasz realname
-	[m.in. w odpowiedzi na /whois], by zmiany realname odnios³y skutek
-	nale¿y siê ponownie po³±czyæ
+	format logów
 
 make_window
 	typ: liczba
@@ -99,6 +76,41 @@ make_window
 	Czyli np: ustawienie na 10 spowoduje otwieranie okienka rozmowy
 	przy przychodzeniu wiadomo¶ci i przy odpowiedzi na /ctcp
 	[je¿eli tylko okienko jeszcze nie istnieje]
+
+nickname
+	typ: tekst
+	domy¶lna warto¶æ: twoj login
+
+	okre¶la domy¶lny nick, pod jakim bêdziemy starali siê po³±czyæ
+	z serwerem IRC
+	zmienna musi byæ ustawiona, ¿eby móc siê po³aczyæ
+
+password
+	typ: tekst
+	domy¶lna waro¶æ: brak
+
+	has³o do serwera
+
+port
+	typ: liczba
+	domy¶lna warto¶æ: 6667
+
+	port serwera, do którego bêdziemy siê pod³±czaæ
+
+realname
+	typ: tekst
+	domy¶lna warto¶æ: realname u¿yszkodnika
+
+	dowolny tekst, który zostanie ustawiony jako nasz realname
+	[m.in. w odpowiedzi na /whois], by zmiany realname odnios³y skutek
+	nale¿y siê ponownie po³±czyæ
+
+server
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	adres serwera irc, np: warszawa.irc.pl
+	zmienna musi byæ ustawiona, ¿eby móc siê po³±czyæ
 
 AUTO_JOIN
 	typ: tekst
