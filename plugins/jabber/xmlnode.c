@@ -35,8 +35,10 @@ static void xmlnode_free(xmlnode_t *n)
 	xfree(n->atts);
 }
 
-void xmlnode_handle_start(session_t *s, const char *name, const char **atts)
+void xmlnode_handle_start(void *data, const char *name, const char **atts)
 {
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+	session_t *s = jdh->session;
 	xmlnode_t *n, *newnode;
 	jabber_private_t *j;
 	int i;
@@ -80,8 +82,10 @@ void xmlnode_handle_start(session_t *s, const char *name, const char **atts)
 	j->node = newnode;
 }
 
-void xmlnode_handle_end(session_t *s, const char *name)
+void xmlnode_handle_end(void *data, const char *name)
 {
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+	session_t *s = jdh->session;
 	xmlnode_t *n;
 	jabber_private_t *j;
 
@@ -99,7 +103,7 @@ void xmlnode_handle_end(session_t *s, const char *name)
 
 	if (!n->parent) {
 //		debug("[jabber] finished parsing <%s></%s>\n", name, name);
-		jabber_handle(s, n);
+		jabber_handle(data, n);
 		xmlnode_free(n);
 		j->node = NULL;
 		return;
@@ -111,8 +115,10 @@ void xmlnode_handle_end(session_t *s, const char *name)
 //	debug("[jabber] current node is now <%s>\n", j->node->name);
 }
 
-void xmlnode_handle_cdata(session_t *s, const char *text, int len)
+void xmlnode_handle_cdata(void *data, const char *text, int len)
 {
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+	session_t *s = jdh->session;
 	jabber_private_t *j;
 	xmlnode_t *n;
 	int oldlen;

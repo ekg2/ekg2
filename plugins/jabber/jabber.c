@@ -195,10 +195,13 @@ int jabber_write_status(session_t *s)
 	return 0;
 }
 
-void jabber_handle(session_t *s, xmlnode_t *n)
+void jabber_handle(void *data, xmlnode_t *n)
 {
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+	session_t *s = jdh->session;
 	jabber_private_t *j;
 	const char *id, *type, *to, *from;
+
 
 	if (!s || !(j = jabber_private(s)) || !n) {
 		debug("[jabber] jabber_handle() invalid parameters\n");
@@ -509,8 +512,9 @@ void jabber_reconnect_handler(int type, void *data)
 
 static void jabber_handle_start(void *data, const char *name, const char **atts)
 {
-	jabber_private_t *j = session_private_get(data);
-	session_t *s = data;
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+	jabber_private_t *j = session_private_get(jdh->session);
+	session_t *s = jdh->session;
 	
 	if (!xstrcmp(name, "stream:stream")) {
 		const char *password = session_get(s, "password");
@@ -541,7 +545,8 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 
 void jabber_handle_stream(int type, int fd, int watch, void *data)
 {
-	session_t *s = (session_t*) data;
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+	session_t *s = (session_t*) jdh->session;
 	jabber_private_t *j = session_private_get(s);
 	char *buf;
 	int len;
@@ -590,8 +595,9 @@ fail:
 
 void jabber_handle_connect(int type, int fd, int watch, void *data)
 {
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
 	int res = 0, res_size = sizeof(res);
-	jabber_private_t *j = session_private_get(data);
+	jabber_private_t *j = session_private_get(jdh->session);
 
 	debug("[jabber] jabber_handle_connect()\n");
 
@@ -612,15 +618,16 @@ void jabber_handle_connect(int type, int fd, int watch, void *data)
 
 	j->id = 1;
 	j->parser = XML_ParserCreate("UTF-8");
-	XML_SetUserData(j->parser, data);	
+	XML_SetUserData(j->parser, (void*)data);
 	XML_SetElementHandler(j->parser, (XML_StartElementHandler) jabber_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
 	XML_SetCharacterDataHandler(j->parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
 }
 
 void jabber_handle_resolver(int type, int fd, int watch, void *data)
 {
-	session_t *s = data;
-	jabber_private_t *j = jabber_private(data);
+	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+	session_t *s = jdh->session;
+	jabber_private_t *j = jabber_private(s);
 	struct in_addr a;
 	int one = 1, res;
 	int port_s = session_int_get(s, "port");
@@ -869,9 +876,11 @@ COMMAND(jabber_command_connect)
 	} else {
 		close(fd[1]);
 
+		jabber_handler_data_t *jdta = xmalloc(sizeof(jabber_handler_data_t));
+		jdta->session = session;
 		/* XXX dodaæ dzieciaka do przegl±dania */
 
-		watch_add(&jabber_plugin, fd[0], WATCH_READ, 0, jabber_handle_resolver, session);
+		watch_add(&jabber_plugin, fd[0], WATCH_READ, 0, jabber_handle_resolver, jdta);
 	}
 
 	j->connecting = 1;

@@ -44,6 +44,10 @@ typedef struct {
 	xmlnode_t *node;		/* aktualna ga³±¼ xmla */
 } jabber_private_t;
 
+typedef struct {
+	session_t *session;
+} jabber_handler_data_t;
+
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
 
 plugin_t jabber_plugin;
@@ -51,7 +55,7 @@ plugin_t jabber_plugin;
 char *jabber_attr(char **atts, const char *att);
 char *jabber_digest(const char *sid, const char *password);
 
-void jabber_handle(session_t *s, xmlnode_t *n);
+void jabber_handle(void *data, xmlnode_t *n);
 
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
@@ -64,9 +68,9 @@ int jabber_write(jabber_private_t *j, const char *format, ...) __attribute__ ((f
 int jabber_write(jabber_private_t *j, const char *format, ...);
 #endif
 
-void xmlnode_handle_start(session_t *s, const char *name, const char **atts);
-void xmlnode_handle_end(session_t *s, const char *name);
-void xmlnode_handle_cdata(session_t *s, const char *text, int len);
+void xmlnode_handle_start(void *data, const char *name, const char **atts);
+void xmlnode_handle_end(void *data, const char *name);
+void xmlnode_handle_cdata(void *data, const char *text, int len);
 xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name);
 
 #endif /* __EKG_JABBER_JABBER_H */
