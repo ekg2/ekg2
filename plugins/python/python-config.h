@@ -26,7 +26,7 @@
 
 typedef struct
 {
-   PyObject_HEAD;
+   PyObject_HEAD
 } ekg_configObj;
 
 void ekg_config_dealloc(PyObject *o);

@@ -44,18 +44,18 @@
 
 // * ***************************************************************************
 // *
-// * obiekt config
+// * config object
 // *
 // * ***************************************************************************
 
 /**
  * ekg_config_dealloc()
  *
- * usuniêcie obiektu config
+ * deallocation of config object
  *
  */
 
-void ekg_config_dealloc(PyObject *o)
+void ekg_config_dealloc(PyObject * o)
 {
 
 }
@@ -63,75 +63,83 @@ void ekg_config_dealloc(PyObject *o)
 /**
  * ekg_config_len()
  *
- * zwrócenie d³ugo¶ci sekwencji obiektu config
+ * return length of config object sequence
  *
  */
 
-int ekg_config_len(ekg_configObj *self)
+int ekg_config_len(ekg_configObj * self)
 {
-        return 0;
+	int cnt = 0;
+	list_t l;
+    for (l = variables; l; l = l->next) {
+		cnt++;
+    }
+    return cnt;
 }
 
 /**
  * ekg_config_get()
  *
- * zwrócenie opcji o podanej nazwie
+ * return config option with given name
  *
  */
 
-PyObject* ekg_config_get(ekg_configObj * self, PyObject * key)
+PyObject *ekg_config_get(ekg_configObj * self, PyObject * key)
 {
-        char * name = PyString_AsString(key);
-        debug("[python] Getting value for '%s' config option\n", name);
-        list_t l;
+    char *name = PyString_AsString(key);
+    debug("[python] Getting value for '%s' config option\n", name);
+    list_t l;
 
-        for (l = variables; l; l = l->next) {
-                variable_t *v = l->data;
+    for (l = variables; l; l = l->next) {
+		variable_t *v = l->data;
+		
+		if (!strcmp(v->name, name)) {
+			if (v->type == VAR_BOOL || v->type == VAR_INT
+					|| v->type == VAR_MAP) {
+				return Py_BuildValue("i", *(int *) (v->ptr));
+			} else {
+				return Py_BuildValue("s", *(char **) (v->ptr));
+			}
+		}
+    }
 
-                if (!strcmp(v->name, name)) {
-                        if (v->type == VAR_BOOL || v->type == VAR_INT || v->type == VAR_MAP)
-                                return Py_BuildValue("i", *(int*)(v->ptr));
-                        else
-                                return Py_BuildValue("s", *(char**)(v->ptr));
-                }
-        }
-
-        return NULL;
+    return NULL;
 }
 
 /**
  * ekg_config_set()
  *
- * ustawienie opcji konfiguracji
+ * set configuration option
  *
  */
 
-int ekg_config_set(ekg_configObj * self, PyObject* key, PyObject* value)
+int ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 {
-        char * name = PyString_AsString(key);
-        debug("[python] Setting '%s' config option to '%s'\n", name, PyString_AsString(value));
-        variable_t *v = variable_find(name);
+	char *name = PyString_AsString(key);
+	debug("[python] Setting '%s' config option to '%s'\n", name,
+		PyString_AsString(value));
+	variable_t *v = variable_find(name);
 
-        if (!v) {
-                PyErr_SetString(PyExc_LookupError, "unknown variable");
-                return -1;
-        }
+	if (!v) {
+		PyErr_SetString(PyExc_LookupError, "unknown variable");
+		return -1;
+    }
 
-        if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
-                if (!PyInt_Check(value)) {
-                        PyErr_SetString(PyExc_TypeError, "invalid type");
-                        return -1;
-                }
-                variable_set(name, itoa(PyInt_AsLong(value)), 0);
-        } else {
-                if (!PyString_Check(value)) {
-                        PyErr_SetString(PyExc_TypeError, "invalid type");
-                        return -1;
-                }
-                variable_set(name, PyString_AsString(value), 0);
-        }
+    if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
+		if (!PyInt_Check(value)) {
+			PyErr_SetString(PyExc_TypeError, "invalid type");
+			return -1;
+		}
+		variable_set(name, itoa(PyInt_AsLong(value)), 0);
+	} else {
+		if (!PyString_Check(value)) {
+			PyErr_SetString(PyExc_TypeError, "invalid type");
+			return -1;
+		}
+		variable_set(name, PyString_AsString(value), 0);
+    }
 
-        return 0;
+    return 0;
 }
 
 /*

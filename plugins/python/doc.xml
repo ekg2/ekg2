@@ -37,26 +37,26 @@
             </listitem>
          </varlistentry>
          <varlistentry>
+            <term>sessions()</term>
+            <listitem>
+               <para>
+                  Zwraca listê zawieraj±c± dostêpne sesje.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>plugins()</term>
+            <listitem>
+               <para>
+                  Zwraca listê zawieraj±ca za³adowane pluginy.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
             <term>config</term>
             <listitem>
                <para>
                   S³ownik zawieraj±cy opcjê konfiguracji ekg (odczyt i zapis)
-               </para>
-            </listitem>
-         </varlistentry>
-         <varlistentry>
-            <term>sessions (NFY)</term>
-            <listitem>
-               <para>
-                  S³ownik zawieraj±cy obiekty typu session.
-               </para>
-            </listitem>
-         </varlistentry>
-         <varlistentry>
-            <term>plugins</term>
-            <listitem>
-               <para>
-                  Lista zawieraj±ca za³adowane pluginy.
                </para>
             </listitem>
          </varlistentry>
@@ -321,7 +321,7 @@
    <sect3>
       <title>Obiekt session</title>
       <variablelist>
-         <title>Metody i pola obiektu session (NFY)</title>
+         <title>Metody i pola obiektu session</title>
          <varlistentry>
             <term>self</term>
             <listitem>
@@ -331,7 +331,7 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>connect()</term>
+            <term>connect() (NFY)</term>
             <listitem>
                <para>
                   £±czy sesjê.
@@ -339,7 +339,7 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>disconnect()</term>
+            <term>disconnect() (NFY)</term>
             <listitem>
                <para>
                   Roz³±cza sesjê().
@@ -355,7 +355,7 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>status()</term>
+            <term>status() (NFY)</term>
             <listitem>
                <para>
                   Zwraca tuple [ status, opis ], gdzie status jest jedn± ze
@@ -364,7 +364,7 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>users</term>
+            <term>users (NFY)</term>
             <listitem>
                <para>
                   S³ownik zawieraj±cy obiekty typu user (kluczowane po
@@ -375,7 +375,7 @@
       </variablelist>
    </sect3>
    <sect3>
-      <title>Klasa user</title>
+      <title>Klasa user (NFY)</title>
       <para>
          Obiekt zawiera atrybutowy dostêp do informacji o obiekcie:
       </para>
@@ -479,12 +479,23 @@
    <title>Przyk³adowy skrypt</title>
    <programlisting role="python">
 <![CDATA[
+# -*- encoding: iso-8859-2 -*-
+
 import ekg
 import time
 
 def handle_status(session, uid, status, desc):
+    for name in ekg.sessions():
+	sesja = ekg.getSession(name)
+	if sesja.connected():
+	    ekg.echo("sesja '%s' po³±czona" % (name,))
+	    ekg.echo("status: "+sesja['status'])
+	    ekg.echo("ustawiam t± sesjê jako domy¶ln±")
+	    sesja['default'] = "1"
+	else:
+	    ekg.echo("sesja '%s' nie jest po³±czona" % (name,))
     ekg.echo("Dosta³em status!")
-    ekg.echo("Sesja : "+str(session))
+    ekg.echo("Sesja : "+session)
     ekg.echo("UID   : "+uid)
     ekg.echo("Status: "+status)
     if desc:
@@ -499,7 +510,7 @@ def handle_status(session, uid, status, desc):
 def handle_msg(session, uid, type, text, sent_time, ignore_level):
     ekg.debug("[test script] some debug\n")
     ekg.echo("Dosta³em wiadomo¶æ!")
-    ekg.echo("Sesja : "+str(session))
+    ekg.echo("Sesja : "+session)
     ekg.echo("UID   : "+uid)
     if type == ekg.MSGCLASS_MESSAGE:
 	ekg.echo("Typ   : msg")
@@ -516,10 +527,27 @@ def handle_msg(session, uid, type, text, sent_time, ignore_level):
 def handle_msg_own(session, target, text):
     ekg.debug("[test script] some debug\n")
     ekg.echo("Wysy³am wiadomo¶æ!")
-    ekg.echo("Sesja : "+str(session))
+    ekg.echo("Sesja : "+session)
     ekg.echo("Target: "+target)
     ekg.echo("TxtLen: "+str(len(text)))
     return 1
+
+def handle_connect(session):
+    ekg.echo("Po³±czono! Ale super! Mo¿na gadaæ!")
+    ekg.echo("Sesja : "+session)
+    if session[:3] == 'irc':
+	struct = time.gmtime()
+	if struct[3] >= 8 and struct[3] < 17:
+	    ekg.echo('£adnie to tak ircowaæ w pracy? ;)')
+    sesja = ekg.getSession(session)
+    if sesja.connected():
+	ekg.echo('Po³±czony!')
+    else:
+	ekg.echo('W tym miejscu jeszcze nie po³±czony')
+
+def handle_disconnect(session):
+    ekg.echo("£o, sesja %s nam pad³a" % (session,))
+    ekg.echo("Wysy³amy smsa ¿e nam cu¶ pad³o...")
 ]]>
    </programlisting>
 </sect2>

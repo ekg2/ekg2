@@ -18,10 +18,15 @@
  */
 
 #ifndef __PYTHON_H_
-
 #define __PYTHON_H_
 
 #include <Python.h>
+
+#ifndef Py_RETURN_TRUE
+#define Py_RETURN_TRUE Py_INCREF(Py_True); return Py_True;
+#define Py_RETURN_FALSE Py_INCREF(Py_False); return Py_False;
+#endif
+
 #include <ekg/dynstuff.h>
 
 list_t python_modules;

@@ -55,10 +55,10 @@ int python_run(const char *filename);
  */
 
 plugin_t python_plugin = {
-        name: "python",
-        pclass: PLUGIN_GENERIC,
-        destroy: python_plugin_destroy,
-        theme_init: python_theme_init,
+	name: "python",
+	pclass: PLUGIN_GENERIC,
+	destroy: python_plugin_destroy,
+	theme_init: python_theme_init,
 };
 
 // * ***************************************************************************
@@ -76,12 +76,12 @@ plugin_t python_plugin = {
 
 COMMAND(python_command_eval)
 {
-        if (!params[0]) {
-                print("not_enough_params", name);
-                return -1;
-        }
-        python_exec(params[0]);
-        return 0;
+	if (!params[0]) {
+		print("not_enough_params", name);
+		return -1;
+	}
+	python_exec(params[0]);
+	return 0;
 }
 
 /**
@@ -93,12 +93,12 @@ COMMAND(python_command_eval)
 
 COMMAND(python_command_run)
 {
-        if (!params[0]) {
-                print("not_enough_params", name);
-                return -1;
-        }
-        python_run(params[0]);
-        return 0;
+	if (!params[0]) {
+		print("not_enough_params", name);
+		return -1;
+	}
+	python_run(params[0]);
+	return 0;
 }
 
 /**
@@ -110,12 +110,12 @@ COMMAND(python_command_run)
 
 COMMAND(python_command_load)
 {
-        if (!params[0]) {
-                print("not_enough_params", name);
-                return -1;
-        }
-        python_load(params[0], quiet);
-        return 0;
+	if (!params[0]) {
+		print("not_enough_params", name);
+		return -1;
+	}
+	python_load(params[0], quiet);
+	return 0;
 }
 
 /**
@@ -127,12 +127,12 @@ COMMAND(python_command_load)
 
 COMMAND(python_command_unload)
 {
-        if (!params[0]) {
-                print("not_enough_params", name);
-                return -1;
-        }
-        python_unload(params[0], quiet);
-        return 0;
+	if (!params[0]) {
+		print("not_enough_params", name);
+		return -1;
+	}
+	python_unload(params[0], quiet);
+	return 0;
 }
 
 /**
@@ -174,27 +174,27 @@ COMMAND(python_command_list)
 
 int python_protocol_status(void *data, va_list ap)
 {
-        debug("[python] handling status\n");
+	debug("[python] handling status\n");
 	char **__session = va_arg(ap, char**), *session = *__session;
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
 	char **__status = va_arg(ap, char**), *status = *__status;
 	char **__descr = va_arg(ap, char**), *descr = *__descr;
-        int python_handle_result;
+	int python_handle_result;
 
-        debug("[python] running python scripts\n");
-        PYTHON_HANDLE_HEADER(status, "(ssss)", session, uid, status, descr)
-        ;
-        PYTHON_HANDLE_FOOTER()
+	debug("[python] running python scripts\n");
+	PYTHON_HANDLE_HEADER(status, "(ssss)", session, uid, status, descr)
+	;
+	PYTHON_HANDLE_FOOTER()
 
 
-        switch (python_handle_result) {
-                case 0:
-                        return -1;
-                        break;
-                default:
-                        return 0;
-                        break;
-        }
+	switch (python_handle_result) {
+		case 0:
+			return -1;
+			break;
+		default:
+			return 0;
+			break;
+	}
 }
 
 /**
@@ -206,49 +206,52 @@ int python_protocol_status(void *data, va_list ap)
 
 int python_protocol_message(void *data, va_list ap)
 {
-        debug("[python] handling protocol message\n");
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        char ***__rcpts = va_arg(ap, char***), **rcpts = *__rcpts;
-        char **__text = va_arg(ap, char**), *text = *__text;
-        uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
-        time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
-        int *__class = va_arg(ap, int*), class = *__class;
-        char * target;
-        userlist_t *u;
-        session_t *s;
-        int python_handle_result;
+	debug("[python] handling protocol message\n");
+	char **__session = va_arg(ap, char**), *session = *__session;
+	char **__uid = va_arg(ap, char**), *uid = *__uid;
+	char ***__rcpts = va_arg(ap, char***), **rcpts = *__rcpts;
+	char **__text = va_arg(ap, char**), *text = *__text;
+	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
+	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
+	int *__class = va_arg(ap, int*), class = *__class;
+	char * target;
+	userlist_t *u;
+	session_t *s;
+	int python_handle_result;
 
-        if (!(s = session_find(session)))
-                return 0;
+	// silence warning
+	format = NULL;
 
-        u = userlist_find(s, uid);
+	if (!(s = session_find(session)))
+		return 0;
 
-        int level = ignored_check(s, uid);
+	u = userlist_find(s, uid);
 
-        if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
-                return 0;
+	int level = ignored_check(s, uid);
 
-        debug("[python] running python scripts\n");
-        if (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) {
-                target = (rcpts) ? rcpts[0] : NULL;
-                PYTHON_HANDLE_HEADER(msg_own, "(sss)", session, target, text)
-                ;
-                PYTHON_HANDLE_FOOTER()
-        } else {
-                PYTHON_HANDLE_HEADER(msg, "(ssisii)", session, uid, class, text, (int) sent, level)
-                ;
-                PYTHON_HANDLE_FOOTER()
-        }
+	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
+		return 0;
 
-        switch (python_handle_result) {
-                case 0:
-                        return -1;
-                        break;
-                default:
-                        return 0;
-                        break;
-        }
+	debug("[python] running python scripts\n");
+	if (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) {
+		target = (rcpts) ? rcpts[0] : NULL;
+		PYTHON_HANDLE_HEADER(msg_own, "(sss)", session, target, text)
+		;
+		PYTHON_HANDLE_FOOTER()
+	} else {
+		PYTHON_HANDLE_HEADER(msg, "(ssisii)", session, uid, class, text, (int) sent, level)
+		;
+		PYTHON_HANDLE_FOOTER()
+	}
+
+	switch (python_handle_result) {
+		case 0:
+			return -1;
+			break;
+		default:
+			return 0;
+			break;
+	}
 }
 
 /**
@@ -260,24 +263,24 @@ int python_protocol_message(void *data, va_list ap)
 
 int python_protocol_connected(void *data, va_list ap)
 {
-        debug("[python] handling connection\n");
-        char **__session = va_arg(ap, char**), *session = *__session;
-        int python_handle_result;
+	debug("[python] handling connection\n");
+	char **__session = va_arg(ap, char**), *session = *__session;
+	int python_handle_result;
 
-        debug("[python] running python scripts\n");
+	debug("[python] running python scripts\n");
 
-        PYTHON_HANDLE_HEADER(connect, "(s)", session)
-        ;
-        PYTHON_HANDLE_FOOTER()
+	PYTHON_HANDLE_HEADER(connect, "(s)", session)
+	;
+	PYTHON_HANDLE_FOOTER()
 
-        switch (python_handle_result) {
-                case 0:
-                        return -1;
-                        break;
-                default:
-                        return 0;
-                        break;
-        }
+	switch (python_handle_result) {
+		case 0:
+			return -1;
+			break;
+		default:
+			return 0;
+			break;
+	}
 }
 
 /**
@@ -289,24 +292,24 @@ int python_protocol_connected(void *data, va_list ap)
 
 int python_protocol_disconnected(void *data, va_list ap)
 {
-        debug("[python] handling disconnection\n");
-        char **__session = va_arg(ap, char**), *session = *__session;
-        int python_handle_result;
+	debug("[python] handling disconnection\n");
+	char **__session = va_arg(ap, char**), *session = *__session;
+	int python_handle_result;
 
-        debug("[python] running python scripts\n");
+	debug("[python] running python scripts\n");
 
-        PYTHON_HANDLE_HEADER(disconnect, "(s)", session)
-        ;
-        PYTHON_HANDLE_FOOTER()
+	PYTHON_HANDLE_HEADER(disconnect, "(s)", session)
+	;
+	PYTHON_HANDLE_FOOTER()
 
-        switch (python_handle_result) {
-                case 0:
-                        return -1;
-                        break;
-                default:
-                        return 0;
-                        break;
-        }
+	switch (python_handle_result) {
+		case 0:
+			return -1;
+			break;
+		default:
+			return 0;
+			break;
+	}
 }
 
 /**
@@ -338,21 +341,21 @@ void python_timer()
 
 int python_exec(const char *command)
 {
-        debug("[python] Running command: %s\n", command);
-        char *tmp;
+	debug("[python] Running command: %s\n", command);
+	char *tmp;
 
-        if (!command)
-                return 0;
+	if (!command)
+		return 0;
 
-        tmp = saprintf("import ekg\n%s\n", command);
+	tmp = saprintf("import ekg\n%s\n", command);
 
-        if (PyRun_SimpleString(tmp) == -1) {
-                print("python_eval_error");
-                debug("[python] script evaluation failed\n");
-        }
-        xfree(tmp);
+	if (PyRun_SimpleString(tmp) == -1) {
+		print("python_eval_error");
+		debug("[python] script evaluation failed\n");
+	}
+	xfree(tmp);
 
-        return 0;
+	return 0;
 }
 
 /**
@@ -366,17 +369,17 @@ int python_exec(const char *command)
 
 int python_run(const char *filename)
 {
-        FILE *f = fopen(filename, "r");
+	FILE *f = fopen(filename, "r");
 
-        if (!f) {
-                print("python_not_found", filename);
-                return -1;
-        }
+	if (!f) {
+		print("python_not_found", filename);
+		return -1;
+	}
 
-        PyRun_SimpleFile(f, (char*) filename);
-        fclose(f);
+	PyRun_SimpleFile(f, (char*) filename);
+	fclose(f);
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -550,9 +553,7 @@ int python_autorun()
 	if (!(dir = opendir(path)))
 		return 0;
 
-
-
-        // check if there's __init__.py in autorun dir
+	// check if there's __init__.py in autorun dir
 
 	tmp = saprintf("%s/__init__.py", path);
 
@@ -589,7 +590,7 @@ int python_autorun()
 	}
 
 	closedir(dir);
-        return 1;
+	return 1;
 }
 
 // ********************************************************************************
@@ -638,8 +639,8 @@ int python_initialize()
 	PyImport_AddModule("ekg");
 	if (!(ekg = Py_InitModule("ekg", ekg_methods)))
 		return -1;
-	ekg_config = PyObject_NEW(PyObject, &ekg_config_type);
 
+        ekg_config = PyObject_NEW(PyObject, &ekg_config_type);
 	PyModule_AddObject(ekg, "config", ekg_config);
 
 	// Const - general
@@ -745,9 +746,9 @@ int python_theme_init() {
 
 int python_plugin_destroy()
 {
-        python_finalize();
-        plugin_unregister(&python_plugin);
-        return 0;
+	python_finalize();
+	plugin_unregister(&python_plugin);
+	return 0;
 }
 
 /**
@@ -759,26 +760,25 @@ int python_plugin_destroy()
 
 int python_plugin_init(int prio)
 {
+	plugin_register(&python_plugin, prio);
+	python_theme_init();
 
-        plugin_register(&python_plugin, prio);
-        python_theme_init();
+	command_add(&python_plugin, "python:eval",   "?",  python_command_eval,   0, NULL);
+	command_add(&python_plugin, "python:run",    "?",  python_command_run,    0, NULL);
+	command_add(&python_plugin, "python:load",   "?",  python_command_load,   0, NULL);
+	command_add(&python_plugin, "python:unload", "?",  python_command_unload, 0, NULL);
+	command_add(&python_plugin, "python:list",    "",  python_command_list,   0, NULL);
 
-        command_add(&python_plugin, "python:eval",   "?",  python_command_eval,   0, NULL);
-        command_add(&python_plugin, "python:run",    "?",  python_command_run,    0, NULL);
-        command_add(&python_plugin, "python:load",   "?",  python_command_load,   0, NULL);
-        command_add(&python_plugin, "python:unload", "?",  python_command_unload, 0, NULL);
-        command_add(&python_plugin, "python:list",    "",  python_command_list,   0, NULL);
+	query_connect(&python_plugin, "protocol-message",      python_protocol_message,      NULL);
+	query_connect(&python_plugin, "protocol-status",       python_protocol_status,       NULL);
+	query_connect(&python_plugin, "protocol-connected",    python_protocol_connected,    NULL);
+	query_connect(&python_plugin, "protocol-disconnected", python_protocol_disconnected, NULL);
 
-        query_connect(&python_plugin, "protocol-message",      python_protocol_message,      NULL);
-        query_connect(&python_plugin, "protocol-status",       python_protocol_status,       NULL);
-        query_connect(&python_plugin, "protocol-connected",    python_protocol_connected,    NULL);
-        query_connect(&python_plugin, "protocol-disconnected", python_protocol_disconnected, NULL);
+	timer_add(&python_plugin, "python:timer_hook", 1, 1, python_timer, NULL);
 
-        timer_add(&python_plugin, "python:timer_hook", 1, 1, python_timer, NULL);
-
-        python_initialize();
+	python_initialize();
 	python_autorun();
-        return 0;
+	return 0;
 }
 
 /*

@@ -3,3 +3,5 @@
 - podmiana statusów/msgów
 - sprawdziæ czemu po unload/load nie uaktualnia skryptów
 - timer
+- rzucanie wyj±tku do ekg_config_get
+- poprawna implementacja ekg_config_len
