@@ -1,4 +1,4 @@
-EXTRA_DIST = 
+EXTRA_DIST = vars.txt 
 
 lib_LTLIBRARIES = xosd.la
 xosd_la_SOURCES = xosd.c
