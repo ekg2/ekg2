@@ -273,9 +273,13 @@ static void binding_word_rubout(const char *arg)
 	char *p;
 	int eaten = 0;
 
+	if (!line_index)
+		return;
+	
 	xfree(yanked);
 
 	p = line + line_index;
+	
 	if (xisspace(*(p-1))) {
 		while (p > line && xisspace(*(p-1))) {
 			p--;
