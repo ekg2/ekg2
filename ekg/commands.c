@@ -2171,6 +2171,8 @@ exact_match:
 
 		window_lock_dec_n(target);
 
+		query_emit(NULL, "ui-window-refresh");
+
 		xfree(line_save);
 
 		if (quit_command)

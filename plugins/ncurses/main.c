@@ -61,11 +61,6 @@ static void ncurses_statusbar_timer(int destroy, void *data)
 	update_statusbar(1);
 }
 
-static void ncurses_refresh_timer(int destroy, void *data)
-{
-        ncurses_commit();
-}
-
 static int ncurses_statusbar_query(void *data, va_list ap)
 {
 	update_statusbar(1);
@@ -143,7 +138,7 @@ int ncurses_ui_window_print(void *data, va_list ap)
 		if (!window_lock_get(w))
 			ncurses_commit();
 	}
-
+	
 	return 0;
 }
 
@@ -453,7 +448,6 @@ int ncurses_plugin_init()
 #endif
 	watch_add(&ncurses_plugin, 0, WATCH_READ, 1, ncurses_watch_stdin, NULL);
 	timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL);
-	timer_add(&ncurses_plugin, "ncurses:refresh", 0, 1, ncurses_refresh_timer, NULL);
 
 	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
 	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
