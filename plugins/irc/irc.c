@@ -170,7 +170,7 @@ int irc_validate_uid(void *data, va_list ap)
 	if (!*uid)
 		return 0;
 
-	if (!xstrncasecmp(*uid, IRC4, 4))
+	if (!xstrncasecmp(*uid, IRC4, 4) && xstrlen(*uid)>4)
 		(*valid)++;
 
 	return 0;

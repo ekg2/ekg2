@@ -147,13 +147,15 @@ int jabber_print_version(void *data, va_list ap)
  */
 int jabber_validate_uid(void *data, va_list ap)
 {
-        char **uid = va_arg(ap, char **);
+        char **__uid = va_arg(ap, char **), *uid = *__uid, *m;
         int *valid = va_arg(ap, int *);
 
-        if (!*uid)
+        if (!uid)
                 return 0;
 
-        if (!xstrncasecmp(*uid, "jid:", 4) && xstrchr(*uid, '@'))
+	/* minimum: jid:a@b */
+        if (!xstrncasecmp(uid, "jid:", 4) && (m=xstrchr(uid, '@')) &&
+			((uid+4)<m) && xstrlen(m+1))
                 (*valid)++;
 
         return 0;

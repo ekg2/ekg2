@@ -347,15 +347,24 @@ int gg_print_version(void *data, va_list ap)
  */
 int gg_validate_uid(void *data, va_list ap)
 {
-	char **uid = va_arg(ap, char **);
+	char **__uid = va_arg(ap, char **), *uid = *__uid;
 	int *valid = va_arg(ap, int *);
 
-	if (!*uid)
+	if (!uid)
 		return 0;
 
-	if (!xstrncasecmp(*uid, "gg:", 3))
+	if (!xstrncasecmp(uid, "gg:", 3) && xstrlen(uid)>3)
 		(*valid)++;
-	
+
+	/* sprawdzmy, czy w uidzie wystepuja tylko cyferki... */
+	uid+=3;
+	for (; *uid; uid++)
+		if (!isdigit(*uid))
+			break;
+
+	if (*uid)
+		(*valid)--;
+
 	return 0;
 }
 

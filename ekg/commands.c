@@ -226,6 +226,7 @@ COMMAND(cmd_add)
 	int params_free = 0;	/* zmienili¶my params[] i trzeba zwolniæ */
 	int result = 0;
 	userlist_t *u = NULL;
+	plugin_t *plug = NULL;
 	
 	if (!session_current) {
 		return -1;
@@ -277,7 +278,13 @@ COMMAND(cmd_add)
 		goto cleanup;
 	}
 
-	if (!plugin_find_uid(params[0])) {
+	if (!(plug=plugin_find_uid(params[0]))) {
+		printq("invalid_uid");
+		result = -1;
+		goto cleanup;
+	}
+
+	if (plug != plugin_find_uid(session_current->uid)) {
 		printq("invalid_uid");
 		result = -1;
 		goto cleanup;
