@@ -1183,7 +1183,7 @@ void update_statusbar(int commit)
 
 	__add_format("window", window_current->id, itoa(window_current->id));
 	__add_format("session", (sess), (sess->alias) ? sess->alias : sess->uid);
-	__add_format("descr", (sess && sess->descr), sess->descr);
+	__add_format("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
 	__add_format("query", (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : window_current->target, (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : window_current->target);
 
 	query_emit(NULL, "mail-count", &mail_count);
