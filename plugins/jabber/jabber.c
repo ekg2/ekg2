@@ -973,6 +973,7 @@ static int jabber_theme_init()
         format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
         format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
         format_add("jabber_typing_notify", _("%> %T%1%n ise typing to as ...%n\n"), 1);
+	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 3);
 
         return 0;
 }
@@ -1012,6 +1013,8 @@ int jabber_plugin_init()
         plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0, NULL);
 
+	config_jabber_console_charset = xstrdup("iso-8859-2");
+	variable_add(&jabber_plugin, "console_charset", VAR_STR, 1, &config_jabber_console_charset, NULL, NULL, NULL);
 
         for (l = sessions; l; l = l->next)
                 jabber_private_init((session_t*) l->data);

@@ -65,6 +65,8 @@ char *jabber_digest(const char *sid, const char *password);
 
 void jabber_handle(void *data, xmlnode_t *n);
 
+extern char *config_jabber_console_charset;
+void jabber_initialize_conversions(char *varname);
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
 int jabber_write_status(session_t *s);

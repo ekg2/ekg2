@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <iconv.h>
 
 #include <ekg2-config.h>
 
@@ -24,25 +25,7 @@ char *jabber_attr(char **atts, const char *att)
 	return NULL;
 }
 
-static char iso_utf_length[256] =
-{
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 0 - 15 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 16 - 31 */
-	1, 1, 6, 1, 1, 1, 5, 6, 1, 1, 1, 1, 1, 1, 1, 1,		/* 32 - 47 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 1,		/* 48 - 63 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 64 - 79 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 80 - 95 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 96 - 111 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 112 - 127 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 128 - 143 */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 144 - 159 */
-	1, 2, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2,		/* 160 - 175 */
-	2, 2, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2,		/* 176 - 191 */
-	1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1,		/* 192 - 207 */
-	1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 208 - 223 */
-	1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1,		/* 224 - 239 */
-	1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,		/* 240 - 255 */
-};
+char *config_jabber_console_charset = NULL;
 
 static char *iso_utf_ent[256] =
 {
@@ -56,13 +39,98 @@ static char *iso_utf_ent[256] =
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, "\xC4\x84", 0, "\xC5\x81", 0, 0, "\xC5\x9A", 0, 0, 0, 0, 0, "\xC5\xB9", 0, 0, "\xC5\xBB",
-	"\xC2\xB0", "\xC4\x85", 0, "\xC5\x82", 0, 0, "\xC5\x9B", 0, 0, 0, 0, 0, "\xC5\xBA", 0, 0, "\xC5\xBC",
-	0, 0, 0, 0, 0, 0, "\xC4\x86", 0, 0, 0, "\xC5\x98", 0, 0, 0, 0, 0,
-	0, "\xC5\x83", 0, "\xC3\x93", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, "\xC4\x87", 0, 0, 0, "\xC4\x99", 0, 0, 0, 0, 0,
-	0, "\xC5\x84", 0, "\xC3\xB3", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
+
+char *xiconv(const char *from, const char *to, const char *what)
+{
+	char *dst, *s, *d; //, unikludge[8];
+	size_t sl, dl, rdl, delta;
+	iconv_t conv; //, unikludge_c;
+
+	if ( (iconv_t)-1 == (conv = iconv_open(to, from)) ) {
+		print("jabber_charset_init_error", from, to, strerror(errno));
+		return (char *)NULL;
+	}
+
+	sl = dl = rdl = xstrlen(what);
+	dst = xstrdup(what);
+
+	d = dst;
+	s = what;
+	
+	while ( sl )
+		if ( (size_t)-1 == iconv(conv, &s, &sl, &d, &dl) ) {
+			switch ( errno ) {
+			case EILSEQ: /* Illegal sequence */
+				debug("[xiconv] -EILSEQ: %s (%s)", what, s);
+
+				{ 
+					/* Zjadamy jeden znak z wej¶cia przez konwersjê na WCHAR_T
+					   i odrzucenie efektu */
+					iconv_t kludge_c=0;
+					char kludge_s[16];
+					size_t kludge_l=sizeof(wchar_t);
+
+					if ( (iconv_t)-1 == 
+					     (kludge_c = iconv_open("WCHAR_T", from)) ) {
+						print("jabber_charset_init_error",
+						      from, "WCHAR_T", strerror(errno));
+						return (char *)NULL;
+					}
+					
+					while ( (size_t)-1 == 
+						iconv(kludge_c, &s, &sl, 
+						      (char **)&kludge_s, &kludge_l) ) {
+						if ( errno == E2BIG && kludge_l<15)
+							kludge_l++;
+						else {
+							debug("[xiconv] Kludge doesn't work here!");
+							s++;
+							sl++;
+							break;
+						}
+					}
+
+					iconv_close(kludge_c);
+				}
+				
+				/* Dopisujemy do wyj¶cia znak
+				   zapytania, ¿eby user wiedzia³, ¿e
+				   co¶ zjedzono. */
+
+				*d = '?';
+				d++;
+				dl++;
+				break;
+
+			case EINVAL: /* garbage at end of buffer */
+				debug("[xiconv] -EINVAL: %s (%s)", what, s);
+				sl=0;
+				break;
+
+			case E2BIG: /* dst too small */
+				delta = d-dst;
+				dst = xrealloc(dst, rdl*2);
+				d = dst+delta;
+				dl += rdl;
+				rdl *= 2;
+				break;
+
+			case EBADF: /* invalid conv */
+				debug("[xiconv] -EBADF (can't happen)");
+			}
+		}
+	*d = '\0';
+
+	iconv_close(conv);
+	return xrealloc(dst, strlen(dst)+1);
+}
 
 /*
  * jabber_escape()
@@ -77,19 +145,21 @@ static char *iso_utf_ent[256] =
 char *jabber_escape(const char *text)
 {
 	const unsigned char *p;
-	unsigned char *res, *q;
+	unsigned char *res, *q, *utftext;
 	int len;
 
 	if (!text)
 		return NULL;
-
-	for (p = text, len = 0; *p; p++)
-		len += iso_utf_length[*p];
+	if ( !(utftext = xiconv(config_jabber_console_charset, "utf-8", text)) )
+		return NULL;
+		
+	for (p = utftext, len = 0; *p; p++)
+		len += iso_utf_ent[*p] ? strlen(iso_utf_ent[*p]) : 1;
 
 	res = xmalloc(len + 1);	
 	memset(res, 0, len + 1);
 
-	for (p = text, q = res; *p; p++) {
+	for (p = utftext, q = res; *p; p++) {
 		char *ent = iso_utf_ent[*p];
 
 		if (ent)
@@ -97,9 +167,10 @@ char *jabber_escape(const char *text)
 		else
 			*q = *p;
 
-		q += iso_utf_length[*p];
+		q += iso_utf_ent[*p] ? strlen(iso_utf_ent[*p]) : 1;
 	}
 
+	xfree(utftext);
 	return res;
 }
 
@@ -115,46 +186,10 @@ char *jabber_escape(const char *text)
  */
 char *jabber_unescape(const char *text)
 {
-	const unsigned char *p;
-	int len;
-	char *res, *q;
-
 	if (!text)
 		return NULL;
 
-	for (p = text, len = 0; *p; p++) {
-		if (*p < 0x80 || *p >= 0xc0)
-			len++;
-	}
-
-	res = xmalloc(len + 1);	
-	memset(res, 0, len + 1);
-
-	for (p = text, q = res; *p; p++) {
-		if (*p >= 0x80 && *p < 0xc0)
-			continue;
-
-		if (*p >= 0xc0) {
-			int i;
-
-			*q = '?';
-
-			for (i = 128; i < 256; i++) {
-				if (iso_utf_ent[i] && !strncmp(p, iso_utf_ent[i], iso_utf_length[i])) {
-					*q = i;
-					break;
-				}
-			}
-
-			q++;
-
-			continue;
-		}
-
-		*q++ = *p;
-	}
-
-	return res;
+	return xiconv("utf-8", config_jabber_console_charset, text);
 }
 
 /*
@@ -269,7 +304,6 @@ int jabber_write(jabber_private_t *j, const char *format, ...)
 
 	return 0;
 }
-
 
 /*
  * Local Variables:
