@@ -7,8 +7,13 @@ rozwi±zanie.
 * przed wydaniem:
   - ustawiæ 'debug' domyslnie na 0
   - wywalic ustawianie ulimit -c na unlimited w ekg.c
+  - zmieniæ mylne nazwy plików np old.c w ncurses na co¶ sensownego
+  - THANKS - chyba przydatny by³by taki plik
+  - porz±dek w docs
 
 * klient:
+  - zmienienie plugins_var_add() tak aby przy zmianie zmiennej sesyjnej
+    wywo³ywany by³ równie¿ podany handler (del)
   - /msg_all (the same as ,,msg *'' in ekg1) (del)
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - wykrywanie niewidocznych jako opcja (wielu)
