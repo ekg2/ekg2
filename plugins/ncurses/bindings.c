@@ -579,6 +579,7 @@ static void binding_toggle_contacts_wrapper(const char *arg)
 static void binding_next_contacts_group(const char *arg)
 {
 	contacts_group_index++;
+	contacts_index = 0;
 	ncurses_contacts_update(NULL);
 	ncurses_resize();
 	ncurses_commit();

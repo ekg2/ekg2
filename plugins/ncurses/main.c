@@ -412,7 +412,6 @@ void ncurses_display_transparent_changed(const char *var)
 volatile int sigint_count = 0;
 void ncurses_sigint_handler(int s)
 {
-	int tmpbuf=3;
 	if (sigint_count++ > 4) {
 		ekg_exit();
 	} else {
