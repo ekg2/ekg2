@@ -286,7 +286,8 @@ void jabber_handle(void *data, xmlnode_t *n)
 				if (!nbody && xmlnode_find_child(xitem, "composing")) {
 					char *tmp = jabber_unescape(from);
 
-					print("jabber_typing_notify", tmp);
+					if (session_int_get(s, "show_typing_notify"))
+						print("jabber_typing_notify", tmp);
 					
 					xfree(tmp);
 				}; /* composing */
@@ -1000,6 +1001,7 @@ int jabber_plugin_init()
 	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, itoa(5223), 0, NULL);
+	plugin_var_add(&jabber_plugin, "show_typing_notify", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&jabber_plugin, "use_ssl", VAR_INT, itoa(0), 0, NULL);
 	plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0, NULL);
