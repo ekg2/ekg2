@@ -55,7 +55,7 @@ PLUGIN_DEFINE(logsqlite, PLUGIN_LOG, logsqlite_theme_init);
 COMMAND(logsqlite_cmd_last)
 {
 	sqlite * db = logsqlite_open_db();
-	char sql[100];
+	char sql[200];
 	char buf[100];
 	const char ** results;
 	const char ** fields;
@@ -94,9 +94,9 @@ COMMAND(logsqlite_cmd_last)
 		if (! gotten_uid) {
 			gotten_uid = nick;
 		}
-		sprintf(sql, "select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i", gotten_uid, limit);
+		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i) order by ts asc", gotten_uid, limit);
 	} else {
-		sprintf(sql, "select uid, nick, ts, body, sent from log_msg order by ts desc limit %i", limit);
+		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg order by ts desc limit %i) order by ts asc", limit);
 	}
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
