@@ -258,7 +258,35 @@ static int ncurses_variable_changed(void *data, va_list ap)
                 ncurses_resize();
         }
 
+        ncurses_contacts_update(NULL);
+        update_statusbar(1);
+
 	return 0;
+}
+
+static int ncurses_conference_renamed(void *data, va_list ap)
+{
+	char **__oldname = va_arg(ap, char**), **__newname = va_arg(ap, char**);
+	char *oldname = *__oldname, *newname = *__newname;
+        list_t l;
+
+        for (l = windows; l; l = l->next) {
+	        window_t *w = l->data;
+                ncurses_window_t *n = w->private;
+
+	        if (w->target && !xstrcasecmp(w->target, oldname)) {
+        	        xfree(w->target);
+                        xfree(n->prompt);
+                        w->target = xstrdup(newname);
+                        n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
+                        n->prompt_len = xstrlen(n->prompt);
+                }
+	}
+
+        ncurses_contacts_update(NULL);
+        update_statusbar(1);
+
+        return 0;
 }
 
 /*
@@ -388,6 +416,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);
 	query_connect(&ncurses_plugin, "variable-changed", ncurses_variable_changed, NULL);
+	query_connect(&ncurses_plugin, "conference-renamed", ncurses_conference_renamed, NULL);
 
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);

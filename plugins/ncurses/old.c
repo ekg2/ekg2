@@ -2208,47 +2208,6 @@ cleanup:
 }
 
 /*
- * ui_ncurses_event()
- *
- * obs³uga zdarzeñ.
- */
-int ui_ncurses_event(const char *event, ...)
-{
-	va_list ap;
-
-	va_start(ap, event);
-
-	if (!event)
-		return 0;
-
-	if (!xstrcmp(event, "conference_rename")) {
-		char *oldname = va_arg(ap, char*), *newname = va_arg(ap, char*);
-		list_t l;
-
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-			ncurses_window_t *n = w->private;
-
-			if (w->target && !xstrcasecmp(w->target, oldname)) {
-				xfree(w->target);
-				xfree(n->prompt);
-				w->target = xstrdup(newname);
-				n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
-				n->prompt_len = xstrlen(n->prompt);
-			}
-		}
-	}
-
-cleanup:
-	va_end(ap);
-
-	ncurses_contacts_update(NULL);
-	update_statusbar(1);
-	
-	return 0;
-}
-
-/*
  * header_statusbar_resize()
  *
  * zmienia rozmiar paska stanu i/lub nag³ówka okna.
