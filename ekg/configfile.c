@@ -163,6 +163,15 @@ int config_read_later(const char *filename)
                         }
 
                         array_free(pms);
+		} else if (!xstrcasecmp(buf, "bind-set")) {
+                        char **pms = array_make(foo, " \t", 2, 1, 0);
+
+                        if (array_count(pms) == 2) { 
+				
+				query_emit(NULL, "binding-set", pms[0], pms[1], 1);
+			}
+
+			array_free(pms);
 		} else if (!xstrcasecmp(buf, "plugin")) {
 			xfree(buf);
 			continue;
@@ -412,6 +421,12 @@ static void config_write_main(FILE *f)
 
 		fprintf(f, "bind %s %s\n", b->key, b->action);
 	}
+
+        for (l = bindings_added; l; l = l->next) {
+                binding_added_t *d = l->data;
+
+                fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
+        }
 
 	for (l = timers; l; l = l->next) {
 		struct timer *t = l->data;

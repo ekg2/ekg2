@@ -743,12 +743,6 @@ int binding_key(struct binding *b, const char *key, int add)
         __key("Delete", KEY_CTRL_DC, 0);
         __key("Backspace", KEY_CTRL_BACKSPACE, 0);
         __key("Tab", KEY_CTRL_TAB, 0);
-        __key("Left", KEY_CTRL_LEFT, 0);
-        __key("Right", KEY_CTRL_RIGHT, 0);
-        __key("Up", KEY_CTRL_UP, 0);
-        __key("Down", KEY_CTRL_DOWN, 0);
-        __key("PageUp", KEY_CTRL_PPAGE, 0);
-        __key("PageDown", KEY_CTRL_NPAGE, 0);
 
 #undef __key
 	
@@ -807,6 +801,92 @@ int binding_key(struct binding *b, const char *key, int add)
 #undef __key
 
 	return -1;
+}
+
+/*
+ * ncurses_binding_set()
+ *
+ * it sets some sequence to the given key
+ */
+void ncurses_binding_set(int quiet, const char *key, const char *sequence)
+{
+	list_t l;
+	binding_added_t b;
+	struct binding *binding_orginal = NULL;
+	char **chars = NULL, ch, *joined = NULL;
+	int added = 0;
+
+        for (l = bindings; l; l = l->next) {
+                struct binding *d = l->data;
+
+                if (!xstrcasecmp(key, d->key)) {
+                        binding_orginal = d;
+                        break;
+                }
+        }
+
+        if (!binding_orginal) {
+                printq("bind_doesnt_exist", key);
+                goto end;
+        }
+
+	if (sequence) {
+		joined = xstrdup(sequence);
+		goto after_key;
+	}
+
+	printq("bind_press_key");
+
+	nodelay(input, FALSE);
+	while ((ch = wgetch(input)) != ERR) {
+		array_add(&chars, xstrdup(itoa(ch)));
+		nodelay(input, TRUE);
+	}
+	
+	joined = array_join(chars, " ");
+
+after_key:
+
+        for (l = bindings; l; l = l->next) {
+                struct binding *d = l->data;
+
+                if (!xstrcasecmp(key, d->key)) {
+			binding_orginal = d;
+			break;
+                }
+        }
+	
+	if (!binding_orginal) {
+		printq("bind_doesnt_exist", key);
+		goto end;
+	}
+
+	
+	for (l = bindings_added; l; l = l->next) {
+		binding_added_t *d = l->data;
+
+		if (!xstrcasecmp(d->sequence, joined)) {
+			d->binding = binding_orginal;
+			added = 1;
+			goto end;
+		}
+	}
+
+        memset(&b, 0, sizeof(binding_added_t));
+
+	b.sequence = joined;
+	b.binding = binding_orginal;
+	list_add(&bindings_added, &b, sizeof(binding_added_t));
+	added = 2;
+end:
+	if (added != 2)
+		xfree(joined);
+	if (added) {
+	        if (!in_autoexec)
+        	        config_changed = 1;
+	        printq("bind_added");
+	}
+	array_free(chars);
 }
 
 /*

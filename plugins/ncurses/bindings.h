@@ -33,12 +33,6 @@
 #define KEY_CTRL_DC 354
 #define KEY_CTRL_BACKSPACE 355
 #define KEY_CTRL_TAB 356
-#define KEY_CTRL_LEFT 357
-#define KEY_CTRL_RIGHT 358
-#define KEY_CTRL_UP 359
-#define KEY_CTRL_DOWN 363
-#define KEY_CTRL_PPAGE 361
-#define KEY_CTRL_NPAGE 362
 
 
 struct binding *ncurses_binding_map[KEY_MAX + 1];
@@ -52,5 +46,6 @@ void ncurses_binding_destroy();
 void ncurses_binding_add(const char *key, const char *action, int internal, int quiet);
 void ncurses_binding_delete(const char *key, int quiet);
 void ncurses_binding_default();
+void ncurses_binding_set(int quiet, const char *key, const char *sequence);
 
 #endif /* __EKG_NCURSES_BINDINGS_H */

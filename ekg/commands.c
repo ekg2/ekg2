@@ -2444,6 +2444,7 @@ COMMAND(cmd_echo)
 
 COMMAND(cmd_bind)
 {
+	window_lock_dec_n(target); /* this is interactive command */
 	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
 
 	return 0;

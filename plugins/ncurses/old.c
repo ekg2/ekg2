@@ -1867,66 +1867,55 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 	
 	ekg_stdin_want_more = 1;
 
+	if (bindings_added) {
+		char **chars = NULL, *joined, c;
+		int i = 0, count = 0, success = 0;
+		list_t l;
+
+		array_add(&chars, xstrdup(itoa(ch)));
+
+        	while ((c = wgetch(input)) != ERR) {
+	                array_add(&chars, xstrdup(itoa(c)));
+			count++;
+	        }
+
+		joined = array_join(chars, " ");
+
+		for (l = bindings_added; l; l = l->next) {
+			binding_added_t *d = l->data;
+
+			if (!xstrcasecmp(d->sequence, joined)) {
+				struct binding *b = d->binding;
+
+	                        if (b->function)
+	                                b->function(b->arg);
+	                        else {
+	                                char *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+	                                command_exec(window_current->target, window_current->session, tmp, 0);
+	                                xfree(tmp);
+	                        }
+
+				success = 1;
+				goto end;
+			}
+		}
+		while (i < count ) {
+			if (atoi(chars[i + 1]) != 79) 
+				ungetch(atoi(chars[i + 1]));
+			i++;
+		} 
+end:
+		xfree(joined);
+		array_free(chars);
+		if (success)
+			goto then;
+	}
+
 	if (ch == 27) {
 		if ((ch = ekg_getch(27)) == -2)
 			return;
 
                 b = ncurses_binding_map_meta[ch];
-		
-		if (ch == 79) {
-			if((ch = ekg_getch(79)) == 53) {
-				ch = ekg_getch(53);
-				
-					switch(ch) { 
-						case 67: 
-							b = ncurses_binding_map[KEY_CTRL_RIGHT];
-							break;
-						case 68:
-							b = ncurses_binding_map[KEY_CTRL_LEFT];
-							break;
-                                                case 65:
-                                                        b = ncurses_binding_map[KEY_CTRL_UP];
-                                                        break;
-                                                case 66:
-                                                        b = ncurses_binding_map[KEY_CTRL_DOWN];
-                                                        break;
-						default: 
-							break;
-					}
-				
-				if(b) {
-//					debug("b->key: %s\n", b->key);
-					goto action;
-				}
-			}
-			
-		}
-/* tutaj jest prototyp obs³ugi CTRL+PAGE_UP ...  (wywaiæ 0 z warunku i poprawiæ */
-		if (ch == 91 && 0) {
-			ch = wgetch(input);
-			b = ncurses_binding_map[KEY_LEFT];
-			switch(ch) {
-                        	 case 52:
-                                	 b = ncurses_binding_map[KEY_CTRL_END];
-                                         break;
-                                 case 68:
-                                         b = ncurses_binding_map[KEY_CTRL_LEFT];
-                                         break;
-                                 case 65:
-                                         b = ncurses_binding_map[KEY_CTRL_UP];
-                                         break;
-                                 case 66:
-                                         b = ncurses_binding_map[KEY_CTRL_DOWN];
-                                         break;
-                                 default:
-                                        debug("ch: %d\n", ch);
-                                 	break;
-                        }
-			if(b) {
-                        	debug("b->key: %s\n", b->key);
-				goto action;
-			}
-		} 
 		
 		if (ch == 27)
 			b = ncurses_binding_map[27];
@@ -1949,7 +1938,6 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 				ungetch(tmp);
 		}
 
-action:
 		if (b && b->action) {
 			if (b->function)
 				b->function(b->arg);
@@ -1986,7 +1974,7 @@ action:
 			ncurses_line[line_index++] = ch;
 		}
 	}
-
+then:
 	if (ncurses_plugin_destroyed)
 		return;
 

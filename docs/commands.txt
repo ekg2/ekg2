@@ -131,6 +131,8 @@ bind
 	
 	  -L, --list-default [sekwencja]  j.w. plus domy¶lne sekwencje
 	
+	  -S, --set <sekwencja>		  binduje klawisze pod sekwencjê
+	
 	
 	Dostêpne sekwencje to: Ctrl-<znak>, Alt-<znak>, F<liczba>, Enter, 
 	Backspace, Delete, Insert, Home, End, Left, Right, Up, Down, PageUp, PageDown.

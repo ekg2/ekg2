@@ -312,6 +312,15 @@ void ncurses_changed_aspell(const char *var)
 #endif
 }
 
+static int ncurses_binding_set_query(void *data, va_list ap)
+{
+        char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*);
+        int quiet = va_arg(ap, int);
+
+	ncurses_binding_set(quiet, p1, p2);
+	
+	return 0;
+}
 
 static int ncurses_binding_query(void *data, va_list ap)
 {
@@ -330,6 +339,8 @@ static int ncurses_binding_query(void *data, va_list ap)
                         ncurses_binding_delete(p2, quiet);
         } else if (match_arg(p1, 'L', "list-default", 5)) {
         	binding_list(quiet, p2, 1);
+	} else if (match_arg(p1, 'S', "set", 2)) {
+		ncurses_binding_set(quiet, p2, NULL);
         } else {
         	if (match_arg(p1, 'l', "list", 2))
                 	binding_list(quiet, p2, 0);
@@ -427,6 +438,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "userlist-changed", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-added", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-removed", ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, "binding-set", ncurses_binding_set_query, NULL);
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);
 	query_connect(&ncurses_plugin, "variable-changed", ncurses_variable_changed, NULL);

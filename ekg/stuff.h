@@ -87,6 +87,11 @@ struct binding {
 	char *default_arg;		/* domy¶lny argument */
 };
 
+typedef struct {
+        char *sequence;
+        struct binding *binding;
+} binding_added_t;
+
 enum mesg_t {
 	MESG_CHECK = -1,
 	MESG_OFF,
@@ -134,6 +139,7 @@ list_t children;
 list_t autofinds;
 list_t aliases;
 list_t bindings;
+list_t bindings_added;
 list_t timers;
 list_t conferences;
 list_t buffers;

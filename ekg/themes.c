@@ -1489,6 +1489,9 @@ void theme_init()
 	format_add("bind_seq_list", "%> %1: %T%2%n\n", 1);
 	format_add("bind_seq_exist", _("%! Sekwencja %T%1%n ma ju¿ przypisan± akcjê\n"), 1);
 	format_add("bind_seq_list_empty", _("%! Brak przypisanych akcji\n"), 1);
+	format_add("bind_doesnt_exist", _("%! Nie mo¿na znale¼æ kombinacji %T%1%n\n"), 1);
+	format_add("bind_press_key", _("%! Naci¶nij klawisz(e), które maj± byæ podbindowane\n"), 1);
+	format_add("bind_added", _("%> Bindowanie zakoñczono pomy¶lnie\n"), 1);
 
 	/* at */
 	format_add("at_list", "%> %1, %2, %3 %K(%4)%n %5\n", 1);

@@ -1,4 +1,5 @@
-vCVS 2004-08-20
+vCVS 2004-08-22
+	* possiblity of manual binding keys (bind --set)
 	* internationalization
 	* loggin plugin (plugins/logs/README)
 	* new function ,,eval''

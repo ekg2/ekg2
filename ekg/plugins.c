@@ -130,6 +130,9 @@ int plugin_load(const char *name, int quiet)
 
 	printq("plugin_loaded", name);
 
+	if (!in_autoexec)
+		config_changed = 1;
+
 	return 0;
 }
 
@@ -226,6 +229,9 @@ int plugin_unload(plugin_t *p)
 	}
 
 	print("plugin_unloaded", name);
+
+        if (!in_autoexec)
+                config_changed = 1;
 
 	xfree(name);
 	return 0;
