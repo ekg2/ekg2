@@ -1143,10 +1143,12 @@ void update_statusbar(int commit)
 	__add_format("query_away", (q && !strcasecmp(q->status, EKG_STATUS_AWAY)), "");
 	__add_format("query_avail", (q && !strcasecmp(q->status, EKG_STATUS_AVAIL)), "");
 	__add_format("query_invisible", (q && !strcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
-	__add_format("query_na", (q && !strcasecmp(q->status, EKG_STATUS_NA)), "");
+	__add_format("query_notavail", (q && !strcasecmp(q->status, EKG_STATUS_NA)), "");
 	__add_format("query_dnd", (q && !strcasecmp(q->status, EKG_STATUS_DND)), "");
 	__add_format("query_xa", (q && !strcasecmp(q->status, EKG_STATUS_XA)), "");
-	__add_format("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip))));
+	__add_format("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
+	
+
 
 	__add_format("url", 1, "http://dev.null.pl/ekg/");
 	__add_format("version", 1, VERSION);
