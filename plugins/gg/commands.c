@@ -263,7 +263,6 @@ noproxy:
 	}
 
 end:
-	xfree(password);
 	return ret;
 }
 

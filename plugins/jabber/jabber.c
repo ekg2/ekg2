@@ -665,7 +665,6 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		else
 		  	jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>", j->server, username, jabber_digest(j->stream_id, password), resource);
 		xfree(username);
-		xfree(password);
 		return;
 	}
 

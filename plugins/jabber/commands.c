@@ -146,7 +146,6 @@ COMMAND(jabber_command_connect)
 	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
 end:
-	xfree(password);
 	return ret;
 }
 

@@ -258,9 +258,17 @@ int session_password_set(session_t *s, const char *password)
 	return 0;
 }
 
+/* static buffer is a better idea - i think (del) */
 const char *session_password_get(session_t *s)
 {
-	return (s && s->password) ? base64_decode(s->password) : 0; 
+        static char buf[100];
+	char *tmp = base64_decode(s->password);
+	
+	snprintf(buf, sizeof(buf), tmp);
+
+	xfree(tmp);
+	
+	return buf;
 }
 
 
@@ -816,7 +824,7 @@ COMMAND(session_command)
                          		printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? "(none)" : "(...)");
                                 else
                                         printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? "(none)" : var);
-
+				
                         	return 0;
 			}
 
