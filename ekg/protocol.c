@@ -81,6 +81,8 @@ int protocol_disconnected(void *data, va_list ap)
 	char **__reason = va_arg(ap, char**), *reason = *__reason;
 	int *__type = va_arg(ap, int*), type = *__type;
 
+	userlist_clear_status(session_find(session), NULL);
+
 	switch (type) {
 		case EKG_DISCONNECT_NETWORK:
 		case EKG_DISCONNECT_FAILURE:
