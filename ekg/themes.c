@@ -572,9 +572,9 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		
 		if ((res = strchr(target, '/'))) {
 			// newtarget = xstrmid(target, 0, (int)(res - target) - 1);
-
+			newtarget = xstrdup(target);
+			*(strchr(newtarget, '/')) = 0;
 			u = userlist_find(target);
-			
 			/* XXX cza dorobiæ, szefie */
 		} else {
 			u = userlist_find(target);
