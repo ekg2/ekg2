@@ -3192,7 +3192,7 @@ COMMAND(cmd_last)
 {
         list_t l;
 	const char *uid = NULL;
-	int show_sent = 0, last_n = 0, count = 0, i = 0;
+	int show_sent = 0, last_n = 0, count = 0, i = 0, show_all = 0;
 	char **arr = NULL;
 	const char *nick = NULL;
 	time_t n;
@@ -3259,7 +3259,9 @@ COMMAND(cmd_last)
 		}
 	}
 
-	if (nick && !(uid = get_uid(session, nick))) {
+	show_all = (nick && !xstrcasecmp(nick, "*")) ? 1 : 0;
+
+	if (!show_all && nick && !(uid = get_uid(session, nick))) {
 		printq("user_not_found", nick);
 		array_free(arr);
 		return -1;
@@ -3285,7 +3287,7 @@ COMMAND(cmd_last)
 		struct tm *tm, *st;
 		char buf[100], buf2[100], *time_str = NULL;
 
-		if (!uid || !xstrcasecmp(uid, ll->uid)) {
+		if (show_all || !uid || !xstrcasecmp(uid, ll->uid)) {
 
 			if (last_n && i++ < (count - last_n))
 				continue;
@@ -3767,7 +3769,7 @@ void command_init()
 	  possibilities("status descr notify msg dcc events *") );
 	  
 	command_add(NULL, "last", params("CpuU CuU"), cmd_last, 0,
-	  " [opcje]", "wy¶wietla lub czy¶ci ostatnie wiadomo¶ci",
+	  " [opcje] <alias>|*", "wy¶wietla lub czy¶ci ostatnie wiadomo¶ci",
 	  "\n"
 	  "  -c, --clear [numer/alias]      czy¶ci podane wiadomo¶ci lub wszystkie\n"
 	  "  -s, --stime [numer/alias]      wy¶wietla czas wys³ania wiadomo¶ci\n"
