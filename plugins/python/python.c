@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -324,7 +325,7 @@ PyObject *python_get_func(PyObject *module, const char *name)
 /*
  * python_load()
  *
- * ³aduje skrypt pythona o podanej nazwie z ~/.gg/scripts
+ * ³aduje skrypt pythona o podanej nazwie z ~/(etc/).ekg/scripts
  *
  *  - name - nazwa skryptu,
  *  - quiet.
@@ -456,6 +457,63 @@ int python_unload(const char *name, int quiet)
 	return -1;
 }
 
+/*
+ * python_autorun()
+ *
+ * ³aduje skrypty z katalogu $CONFIG/scripts/autorun
+ *
+ */
+int python_autorun()
+{
+	const char *path = prepare_path("scripts/autorun", 0);
+	struct dirent *d;
+	struct stat st;
+	char *tmp;
+	DIR *dir;
+
+	if (!(dir = opendir(path)))
+		return 0;
+
+	/* nale¿y utworzyæ plik ~/(ekg/).ekg/scripts/autorun/__init__.py, inaczej
+	 * python nie bêdzie mo¿na ³adowaæ skryptów przez ,,autorun.nazwa'' */
+
+	tmp = saprintf("%s/__init__.py", path);
+
+	if (stat(tmp, &st)) {
+		FILE *f = fopen(tmp, "w");
+		if (f)
+			fclose(f);
+	}
+
+	xfree(tmp);
+
+	while ((d = readdir(dir))) {
+		tmp = saprintf("%s/%s", path, d->d_name);
+
+		if (stat(tmp, &st) || S_ISDIR(st.st_mode)) {
+			xfree(tmp);
+			continue;
+		}
+
+		xfree(tmp);
+
+		if (!strcmp(d->d_name, "__init__.py"))
+			continue;
+
+		if (strlen(d->d_name) < 3 || strcmp(d->d_name + strlen(d->d_name) - 3, ".py"))
+			continue;
+
+		tmp = saprintf("autorun.%s", d->d_name);
+		tmp[strlen(tmp) - 3] = 0;
+
+		python_load(tmp, 0);
+
+		xfree(tmp);
+	}
+
+	closedir(dir);
+        return 1;
+}
 
 // ********************************************************************************
 // *
@@ -645,6 +703,7 @@ int python_plugin_init()
         timer_add(&python_plugin, "python:timer_hook", 1, 1, python_timer, NULL);
 
         python_initialize();
+	python_autorun();
         return 0;
 }
 
