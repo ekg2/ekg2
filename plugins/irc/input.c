@@ -175,7 +175,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 			if ((bang = xstrchr(sender+1, '!'))) 
 				*bang = '\0';
 
-			newsender = saprintf("irc:%s", sender);
+			newsender = saprintf("%s%s", IRC4, sender+1);
 				
 			if (ispriv) {
 				if ((ctcp_main_priv(sess, j, ctcp, begin, newsender,
@@ -200,7 +200,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 			*spc = ' ';
 			*/
 			irc_write(j, "NOTICE %s :\01ERRMSG %s :unknown ctcp\01\r\n",
-					sender, begin);
+					sender+1, begin);
 			begin--; *begin=1; *end=1; 
 		}
 		begin=end+1;
@@ -383,7 +383,7 @@ CTCP_COMMAND(ctcp_main_noti)
 	t = irc_ircoldcolstr_to_ekgcolstr(s, space);
 	print_window(win, s, ischn?(mw&1):!!(mw&8),
 			"irc_ctcp_reply", session_name(s),
-			ctcps[number-1].name, sender, idhost, t);
+			ctcps[number-1].name, sender+4, idhost, t);
 	xfree (t);
 	
 	return (0);

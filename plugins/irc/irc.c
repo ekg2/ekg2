@@ -1188,13 +1188,13 @@ static int irc_theme_init()
 	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
 	format_add("irc_msg_f_chan_nh",	"%B<%W%{2@%+GCP}X%2%3%B>%n %6", 1);
-	format_add("irc_msg_f_some",	"%b<%n%4%b>%n %6", 1);
+	format_add("irc_msg_f_some",	"%b<%n%3%b>%n %6", 1);
 
 	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%3/%5%B)%n %6", 1); /* NOT USED */
 	format_add("irc_not_f_chanh",	"%B(%W%{2@%+GCP}X%2%3/%5%B)%n %6", 1); /* NOT USED */
 	format_add("irc_not_f_chan_n",	"%B(%w%{2@%+gcp}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%3%B)%n %6", 1);
-	format_add("irc_not_f_some",	"%b(%n%4%b)%n %6", 1);
+	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
 
 	format_add("irc_joined", "%> %Y%2%n has joined %4\n", 1);
 	format_add("irc_left", "%> %g%2%n has left %4 (%5)\n", 1);
