@@ -533,7 +533,7 @@ COMMAND(irc_command_msg)
 	chantypes = SOP(_005_CHANTYPES);
 	ischn = !!xstrchr(chantypes, uid[4]);
 	if ((person = irc_find_person(j->people, j->nick)))
-		perchn = irc_find_person_chan(person->channels, uid);
+		perchn = irc_find_person_chan(person->channels, (char *)uid);
 
 	w = window_find_s(session, uid);
 	rcpts = xmalloc(sizeof(char *) * 2);
@@ -838,7 +838,7 @@ COMMAND(irc_command_devop)
 
 	modes = atoi(j->sopt[_005_MODES]);
 	op = xmalloc((modes+2) * sizeof(char));
-	c=xstrchr(name, 'p')?'o':'v';
+	c=xstrchr(name, 'p')?'o':xstrchr(name, 'h'):'h':'v';
 	/* Yes, I know there is such a function as memset() ;> */
 	for (i=0, tmp=op+1; i<modes; i++, tmp++) *tmp=c;
 	op[0]=*name=='d'?'-':'+';
@@ -1104,6 +1104,8 @@ int irc_plugin_init()
 	command_add(&irc_plugin, "irc:deop", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:voice", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:devoice", "w ?",	irc_command_devop, 0, NULL);
+	command_add(&irc_plugin, "irc:halfop", "w ?",	irc_command_devop, 0, NULL);
+	command_add(&irc_plugin, "irc:dehalfop", "w ?",	irc_command_devop, 0, NULL);
 	
 	command_add(&irc_plugin, "irc:away", "?",	irc_command_away, 0, NULL);
 	command_add(&irc_plugin, "irc:_autoaway", NULL,	irc_command_away, 0, NULL);
@@ -1163,15 +1165,15 @@ static int irc_theme_init()
 	/* %2 - prefix %3 - nick+ident+host, %4 - nick, %5 - chan, %6 - msg*/
 	format_add("irc_msg_sent",	"%P<%4/%5%P>%n %6", 1);
 	format_add("irc_msg_sent_n",	"%P<%4%P>%n %6", 1);
-	format_add("irc_msg_sent_chan",	"%P<%{2@+ Ccn}X%2%4%P>%n %6", 1);
+	format_add("irc_msg_sent_chan",	"%P<%{2@%+ Ggcn}X%2%4%P>%n %6", 1);
 	
-	format_add("irc_msg_f_chan",	"%B<%{2@+ Ccn}X%2%4/%5%B>%n %6", 1);
-	format_add("irc_msg_f_chan_n",	"%B<%{2@+ Ccn}X%2%4%B>%n %6", 1);
-	format_add("irc_msg_f_some",	"%b<%4%b>%n %6", 1);
+	format_add("irc_msg_f_chan",	"%B<%{2@%+ Ggcn}X%2%4/%5%B>%n %6", 1);
+	format_add("irc_msg_f_chan_n",	"%B<%{2@%+ Ggcn}X%2%4%B>%n %6", 1);
+	format_add("irc_msg_f_some",	"%b<%n%4%b>%n %6", 1);
 
-	format_add("irc_not_f_chan",	"%B(%{2@+ Ccn}X%2%4/%5%B)%n %6", 1);
-	format_add("irc_not_f_chan_n",	"%B(%{2@+ Ccn}X%2%4%B)%n %6", 1);
-	format_add("irc_not_f_some",	"%b(%4%b)%n %6", 1);
+	format_add("irc_not_f_chan",	"%B(%{2@%+ Ggcn}X%2%4/%5%B)%n %6", 1);
+	format_add("irc_not_f_chan_n",	"%B(%{2@%+ Ggcn}X%2%4%B)%n %6", 1);
+	format_add("irc_not_f_some",	"%b(%n%4%b)%n %6", 1);
 
 	format_add("irc_joined", "%> %Y%2%n has joined %4\n", 1);
 	format_add("irc_left", "%> %g%2%n has left %4 (%5)\n", 1);

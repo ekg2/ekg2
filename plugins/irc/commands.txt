@@ -162,6 +162,16 @@ devoice
 	krotki opis: t³umaczy siê samo :)
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
+halfop
+	parametry: <kana³> [nick]*
+	krotki opis: t³umaczy siê samo :-)
+	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+
+dehalfop
+	parametry: <kana³> [nick]*
+	krotki opis: t³umaczy siê samo :)
+	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+
 away
 	parametry: <opis>
 	krotki opis: zmienia stan na zajêty

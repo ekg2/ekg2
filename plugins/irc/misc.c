@@ -425,7 +425,7 @@ IRC_COMMAND(irc_c_error)
 
 IRC_COMMAND(irc_c_whois)
 {
-	char *dest = saprintf("irc:%s", param[3]);
+	char *dest = saprintf("%s%s", IRC4, param[3]);
 	char *str, *tmp, *col[5];
 	int secs, mins, hours, days, which, i;
 	time_t timek;
@@ -434,7 +434,7 @@ IRC_COMMAND(irc_c_whois)
 	if (irccommands[ecode].num != 317) { /* idle */
 		for (i=0; i<5; i++)
 			col[i] = irc_ircoldcolstr_to_ekgcolstr(s,
-					OMITCOLON(param[3+i]));
+					param[3+i]?OMITCOLON(param[3+i]):NULL);
 			
 		print_window(dest, s, 0, irccommands[ecode].name, 
 				session_name(s), col[0], col[1],
