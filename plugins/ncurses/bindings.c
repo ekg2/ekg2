@@ -43,7 +43,6 @@
 struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
 
-
 void *ncurses_binding_complete = NULL;
 
 #define line ncurses_line
@@ -470,7 +469,7 @@ static void binding_forward_contacts_line(const char *arg)
         if (contacts_index < 0)
                 contacts_index = 0;
 
-        contacts_update(NULL);
+        ncurses_contacts_update(NULL);
 
 }
 
@@ -503,7 +502,7 @@ static void binding_backward_contacts_page(const char *arg)
         if (contacts_index < 0)
                 contacts_index = 0;
 
-        contacts_update(NULL);
+        ncurses_contacts_update(NULL);
 
 }
 
@@ -537,7 +536,7 @@ static void binding_forward_contacts_page(const char *arg)
         if (contacts_index < 0)
                 contacts_index = 0;
 
-	contacts_update(NULL);
+	ncurses_contacts_update(NULL);
 }
 
 static void binding_ignore_query(const char *arg)
@@ -569,13 +568,13 @@ static void binding_toggle_contacts_wrapper(const char *arg)
 		config_contacts = 0;
 	}
 
-	contacts_changed("contacts");
+	ncurses_contacts_changed("contacts");
 }
 
 static void binding_next_contacts_group(const char *arg)
 {
 	contacts_group_index++;
-	contacts_update(NULL);
+	ncurses_contacts_update(NULL);
 	ncurses_resize();
 	ncurses_commit();
 }
@@ -592,7 +591,7 @@ static void binding_cycle_sessions(const char *arg)
 {
 	window_session_cycle(window_current);
 	
-	contacts_update(NULL);
+	ncurses_contacts_update(NULL);
 	update_statusbar(1);
 }
 

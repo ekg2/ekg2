@@ -12,8 +12,6 @@ rozwi±zanie.
   - przepisaæ complete() w ncurses wg:
 	- TAB powinien prze³±czaæ miêdzy kolejnymi dope³nieniami 
 	- dope³nienia powinny odbywaæ siê tylko do aktualnej sesji (*)
-  - przenie¶æ zmienne i ich ustawienia domy¶lne w ncurses do old.c
-  - zmieniæ nazwê old.c i trochê porz±dku w nazwach zmiennych (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
   - bindowane CTRL+Strza³ki, PageUP itd (del)

@@ -65,12 +65,6 @@ int ncurses_debug = 0;			/* debugowanie */
 
 static struct termios old_tio;
 
-int config_backlog_size = 1000;		/* maksymalny rozmiar backloga */
-int config_display_transparent = 1;	/* czy chcemy przezroczyste t³o? */
-int config_statusbar_size = 1;
-int config_header_size = 0;
-int config_enter_scrolls = 0;
-
 /*
  * color_pair()
  *
@@ -1339,7 +1333,7 @@ void ncurses_init()
 
 #undef __init_bg
 
-	contacts_changed("contacts");
+	ncurses_contacts_changed("contacts");
 	ncurses_commit();
 
 	/* deaktywujemy klawisze INTR, QUIT, SUSP i DSUSP */
@@ -1947,7 +1941,7 @@ int ncurses_command_window(void *data, va_list ap)
 	}
 	
 cleanup:
-	contacts_update(NULL);
+	ncurses_contacts_update(NULL);
 	update_statusbar(1);
 
 	return 0;
@@ -2075,7 +2069,7 @@ int ui_ncurses_event(const char *event, ...)
 cleanup:
 	va_end(ap);
 
-	contacts_update(NULL);
+	ncurses_contacts_update(NULL);
 	update_statusbar(1);
 	
 	return 0;
@@ -2172,7 +2166,7 @@ int ncurses_window_new(window_t *w)
 	w->private = n = xmalloc(sizeof(ncurses_window_t));
 
 	if (w->target && !strcmp(w->target, "__contacts"))
-		contacts_new(w);
+		ncurses_contacts_new(w);
 
 	if (w->target) {
 		const char *f = format_find("ncurses_prompt_query");

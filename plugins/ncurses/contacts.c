@@ -43,13 +43,9 @@
 
 #include "old.h"
 
-int config_contacts_size = 9;		/* szeroko¶æ okna kontaktów */
-int config_contacts = 2;		/* czy ma byæ okno kontaktów */
-char *config_contacts_options = NULL;	/* opcje listy kontaktów */
-char *config_contacts_groups = NULL;	/* grupy listy kontaktów */
-
 int contacts_group_index = 0;
 int contacts_index = 0;
+
 
 static int contacts_margin = 1;
 static int contacts_edge = WF_RIGHT;
@@ -60,11 +56,11 @@ static int contacts_wrap = 0;
 static char contacts_order[100] = CONTACTS_ORDER_DEFAULT;
 
 /*
- * contacts_update()
+ * ncurses_contacts_update()
  *
  * uaktualnia okno listy kontaktów.
  */
-int contacts_update(window_t *w)
+int ncurses_contacts_update(window_t *w)
 {
 	const char *header = NULL, *footer = NULL;
 	char *group = NULL;
@@ -187,11 +183,11 @@ int contacts_update(window_t *w)
 }
 
 /*
- * contacts_changed()
+ * ncurses_contacts_changed()
  *
  * wywo³ywane przy zmianach rozmiaru i w³±czeniu klienta.
  */
-void contacts_changed(const char *name)
+void ncurses_contacts_changed(const char *name)
 {
 	window_t *w = NULL;
 	list_t l;
@@ -311,17 +307,17 @@ void contacts_changed(const char *name)
 	if (config_contacts && !w)
 		window_new("__contacts", NULL, 1000);
 	
-	contacts_update(NULL);
+	ncurses_contacts_update(NULL);
         ncurses_resize();
 	ncurses_commit();
 }
 
 /*
- * contacts_new()
+ * ncurses_contacts_new()
  *
  * dostosowuje nowoutworzone okno do listy kontaktów.
  */
-void contacts_new(window_t *w)
+void ncurses_contacts_new(window_t *w)
 {
 	int size = config_contacts_size + contacts_margin + ((contacts_frame) ? 1 : 0);
 	ncurses_window_t *n = w->private;
@@ -348,7 +344,7 @@ void contacts_new(window_t *w)
 	w->floating = 1;
 	w->edge = contacts_edge;
 	w->frames = contacts_frame;
-	n->handle_redraw = contacts_update;
+	n->handle_redraw = ncurses_contacts_update;
 	w->nowrap = !contacts_wrap;
 	n->start = 10;
 }

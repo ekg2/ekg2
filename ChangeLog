@@ -6,6 +6,10 @@ d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
 przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
+// 2004-04-10
+- przeniesione zmienne w pluginie ncurses - tak, aby domy¶lne dzia³a³y (del)
+- pozmieniane nazwy funkcji w ncurses (del)
+
 // 2004-04-09
 - poprawka: dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:
  /add gg:1111 ble, nie spowoduje, ¿e /list ble poka¿e nam prawid³owy stan (del)
