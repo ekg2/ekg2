@@ -263,16 +263,17 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				
 				/* je¶li body nie ma, to odpowiedz na nasza prosbe */
 				if (!nbody && xmlnode_find_child(xitem, "delivered") && (config_display_ack == 1 || config_display_ack == 2))
-					print("ack_delivered", from);
+					print("ack_delivered", jabber_unescape(from));
 					
 				if (!nbody && xmlnode_find_child(xitem, "offline") && (config_display_ack == 1 || config_display_ack == 3))
-					print("ack_queued", from);
+					print("ack_queued", jabber_unescape(from));
 
 #if 1
 				if (!nbody && xmlnode_find_child(xitem, "composing")) {
 					char *tmp;
 
-					tmp = saprintf("%s co¶ do nas pisze ...", from);
+					// TODO: usun±æ, albo zrobiæ prawdziwy format_string
+					tmp = saprintf("%s co¶ do nas pisze ...", jabber_unescape(from));
 					print("generic2", tmp);
 					xfree(tmp);
 				}; /* composing */
@@ -395,7 +396,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 					/* 'id' powinno byc w <iq/> */
 					if (id && from) {
 						jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">", from, id);
-						jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>Aplication Platform and Instant Messaging System - EKG-NG</name>");
+						jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>Application Platform and Instant Messaging System - EKG-NG</name>");
 						jabber_write(j, "<version>%s</version>", VERSION);
 						jabber_write(j, "<os>%s %s %s</os>", jabber_escape(buf.sysname), jabber_escape(buf.release), jabber_escape(buf.machine));
 						jabber_write(j, "</query></iq>");
@@ -413,7 +414,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 		}
 
 		if (type && !xstrcmp(type, "unsubscribe") && from) {
-			print("jabber_auth_unsubscribe", from, session_name(s));
+			print("jabber_auth_unsubscribe", jabber_unescape(from), session_name(s));
 			return;
 		}
 
@@ -437,7 +438,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				descr = jabber_unescape(nstatus->data);
 
 			session = xstrdup(session_uid_get(s));
-			uid = saprintf("jid:%s", from);
+			uid = saprintf("jid:%s", jabber_unescape(from));
 			host = NULL;
 			port = 0;
 
@@ -1291,12 +1292,13 @@ int jabber_plugin_init()
 #undef params
         
 	plugin_var_add(&jabber_plugin, "alias", VAR_STR, 0, 0);
-        plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0);
+	plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0);
         plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0);
         plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0);
         plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0);
         plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0);
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0);
+	plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0);
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1);
 	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0);
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
