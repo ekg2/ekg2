@@ -203,7 +203,7 @@ group_cleanup:
 				memset(&u, 0, sizeof(u));
 				u.nickname = up->nickname;
 				u.descr = up->descr;
-				u.status = up->status;
+				u.status = (up->status) ? up->status : NULL;
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
 			}
 		}
@@ -221,7 +221,7 @@ group_cleanup:
 					continue;
 				
 				memset(&u, 0, sizeof(u));
-				u.status = up->status;
+				u.status = (up->status) ? up->status : NULL;
 				u.descr = up->descr;
 				u.nickname = m->name;
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
