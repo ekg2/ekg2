@@ -527,8 +527,12 @@ void changed_var_default(session_t *s, const char *var)
 
 		sparam = session_var_find(sp, var);
 
-		xfree(sparam->value);
-		sparam->value = xstrdup("0");
+		if (sparam) {
+			xfree(sparam->value);
+			sparam->value = xstrdup("0");
+		} else {
+			debug("Default variable didn't setted for the session: %s - contact with developers\n", session_name(sp));
+		}
 	}
 }
 
