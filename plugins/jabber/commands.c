@@ -432,8 +432,12 @@ change:
                 char *tmp;
 
                 if ((tmp = ekg_draw_descr(format))) {
-                        session_descr_set(session, tmp);
+                        session_status_set(session, tmp);
                         xfree(tmp);
+                }
+
+                if (!config_keep_reason) {
+                        session_descr_set(session, NULL);
                 }
 	}
 

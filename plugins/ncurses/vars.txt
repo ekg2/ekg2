@@ -1,6 +1,25 @@
 // opis dostêpnych zmiennych w pluginie ncurses
 // (c) copyright 2004 piotr kupisiewicz <deletek@ekg2.org>
 
+aspell
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la, czy s³ownik ma zostaæ w³±czony.
+	wiêcej o samym s³owniku w slownik.txt.
+
+aspell_lang
+	typ: tekst
+	domy¶lna warto¶æ: "pl"
+	
+	okre¶la jêzyk wykorzystywany przez s³ownik.
+
+aspell_encoding
+	typ: tekst
+	domy¶lna warto¶æ: "iso8859-2"
+
+	okre¶la kodowanie u¿ywane przez s³ownik.
+
 backlog_size
 	typ: liczba
 	domy¶lna warto¶æ: 1000

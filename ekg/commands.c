@@ -2287,8 +2287,6 @@ query:
 		}
 	} else {
 		query_emit(NULL, "ui-window-target-changed", &window_current);
-
-		printq("query_finished", window_current->target, session_name(session));
 	}
 
 chat:

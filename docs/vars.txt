@@ -149,13 +149,13 @@ dcc_limit
 	wyczerpaniu zasobów klienta. zwykle po ponownym w³±czeniu
 	bezpo¶rednich po³±czeñ nale¿y po³±czyæ siê ponownie z serwerem.
 
-default_status 
+default_status_window 
 	typ: bool
 	domy¶lna warto¶æ: 0
 
 	okre¶la czy wyniki poleceñ maj± trafiaæ domy¶lnie do okna statusu. 
 	je¿eli 0 to wyniki poleceñ trafiaj± do aktualnego okienka, je¿eli 1
-	to wszystko trafia do okna statusu 
+	to wszystkie komunikaty trafiaj± do okna statusu 
 
 display_ack
 	typ: liczba

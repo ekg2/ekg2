@@ -351,9 +351,14 @@ change:
 		char *tmp;
 
 		if ((tmp = ekg_draw_descr(df))) {
-			session_descr_set(session, tmp);
+			session_status_set(session, tmp);
 			xfree(tmp);
 		}
+
+		if (!config_keep_reason) {
+			session_descr_set(session, NULL);
+		}
+		
 	}
 
 	reason_changed = 1;
@@ -1306,7 +1311,7 @@ void gg_register_commands()
 	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:check_conn", "u", gg_command_check_conn, 0, NULL);
+	command_add(&gg_plugin, "gg:check_conn", "uU", gg_command_check_conn, 0, NULL);
 	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:image", "u f", gg_command_image, 0, NULL);
 	command_add(&gg_plugin, "gg:block", "uUC ?", gg_command_block, 0, NULL);
