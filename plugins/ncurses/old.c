@@ -1519,7 +1519,6 @@ void ncurses_deinit()
 
 #ifdef WITH_ASPELL
         delete_aspell_speller(spell_checker);
-        xfree(aspell_line);
 #endif
 
 	xfree(ncurses_line);
