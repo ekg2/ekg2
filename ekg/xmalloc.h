@@ -36,6 +36,25 @@ size_t xstrnlen(const char *s, size_t n);
 char *xstrndup(const char *s, size_t n);
 void *xmemdup(void *ptr, size_t size);
 
+int xstrcasecmp(const char *s1, const char *s2);
+char *xstrcat(char *dest, const char *src);
+char *xstrchr(const char *s, int c);
+int xstrcmp(const char *s1, const char *s2);
+int xstrcoll(const char *s1, const char *s2);
+char *xstrcpy(char *dest, const char *src);
+size_t xstrcspn(const char *s, const char *reject);
+char *xstrfry(char *string);
+size_t xstrlen(const char *s);
+char *xstrncat(char *dest, const char *src, size_t n);
+int xstrncmp(const char *s1, const char *s2, size_t n);
+char *xstrncpy(char *dest, const char *src, size_t n);
+int xstrncasecmp(const char *s1, const char *s2, size_t n);
+char *xstrpbrk(const char *s, const char *accept);
+char *xstrrchr(const char *s, int c);
+char *xstrsep(char **stringp, const char *delim);
+size_t xstrspn(const char *s, const char *accept);
+char *xstrstr(const char *haystack, const char *needle);
+
 char *vsaprintf(const char *format, va_list ap);
 
 #endif /* __EKG_XMALLOC_H */

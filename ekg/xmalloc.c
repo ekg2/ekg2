@@ -179,4 +179,10 @@ char *vsaprintf(const char *format, va_list ap)
 	return res;
 }
 
+char *xstrstr(const char *haystack, const char *needle)
+{
+	if (!haystack || !needle)
+		return 0;
+	return strstr(haystack, needle);		
+}
 
