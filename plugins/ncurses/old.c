@@ -328,7 +328,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				bc = string_init(NULL);
 				format = config_timestamp;
 				if (xstrcmp(format, "")) {
-					/* backward compatibility ;/ */
+					/* backward compatibility 
 					tmp = format;
 					while (*tmp)
 					{
@@ -344,7 +344,8 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 						tmp++;
 					}
 					string_append_c(bc, ' ');
-					format = string_free(bc, 0);
+					format = string_free(bc, 0); */
+					format = xstrdup(config_timestamp);
         	                        strftime(buf, sizeof(buf)-1, format, tm);
 					
 					tmp = format_string(buf);
