@@ -1,7 +1,7 @@
 EXTRA_DIST = vars.txt 
 
 lib_LTLIBRARIES = xosd.la
-xosd_la_SOURCES = xosd.c
+xosd_la_SOURCES = xosd.c osd.h
 xosd_la_LDFLAGS = -module -avoid-version
 xosd_la_LIBADD = $(LIBXOSD_LIBS) -lxosd
 xosd_la_CPPFLAGS = $(LIBXOSD_CFLAGS) $(LTDLINCL)
