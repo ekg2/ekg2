@@ -90,3 +90,12 @@ display_inactive_only
 	okien. wartosæ 1 powoduje, ¿e xosd wy¶wietla wiadomo¶ci z wszystkich
 	okien, prócz obecnego. wartosæ 0 powoduje wy¶wietlanie wszystkich 
 	wiadomo¶ci.
+
+display_new_queries_only
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la czy xosd ma wy¶wietlaæ wszystkie wiadomo¶ci czy tylko te
+	rozpoczynaj±ce rozmowê. warto¶æ 1 powoduje, ¿e xosd wy¶wietla tylko
+	wiadomo¶ci od osób, z którymi jeszcze nie rozpoczêli¶my rozmowy.
+	warto¶æ 0 powoduje wy¶wietlanie wszystkich wiadomo¶ci.

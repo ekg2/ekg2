@@ -96,7 +96,7 @@ static int xosd_protocol_status(void *data, va_list ap)
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
 	char **__status = va_arg(ap, char**), *status = *__status;
 	char **__descr = va_arg(ap, char**), *descr = *__descr;
-        userlist_t *u;
+	userlist_t *u;
 	session_t *s;
 	
 	if (!(s = session_find(session)))
@@ -165,6 +165,9 @@ static int xosd_protocol_message(void *data, va_list ap)
 	if(xosd_display_inactive_only && window_current && window_current->target && !xstrcmp(get_uid(s, window_current->target), get_uid(s, uid)))
 		return 0;
 
+	if(xosd_display_new_queries_only && window_find(uid))
+		return 0;
+
 	if (class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
 		const char *sender;
 		char *msgLine1;
@@ -210,6 +213,7 @@ void xosd_setvar_default()
 	xosd_text_limit = 50;
 	
 	xosd_display_inactive_only = 0;
+	xosd_display_new_queries_only = 0;
 	xosd_display_notify = 1;
 	
 	xosd_display_welcome = 1;
@@ -238,6 +242,7 @@ int xosd_plugin_init()
 	variable_add(&xosd_plugin, "text_limit", VAR_INT, 1, &xosd_text_limit, NULL, NULL, NULL);
 	
 	variable_add(&xosd_plugin, "display_inactive_only", VAR_BOOL, 1, &xosd_display_inactive_only, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, "display_new_queries_only", VAR_BOOL, 1, &xosd_display_new_queries_only, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "display_notify", VAR_MAP, 1, &xosd_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "session-depend"), NULL);
 	
 	variable_add(&xosd_plugin, "display_welcome", VAR_BOOL, 1, &xosd_display_welcome, NULL, NULL, NULL);
