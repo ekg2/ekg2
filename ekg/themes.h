@@ -24,7 +24,7 @@
 
 #include "dynstuff.h"
 
-#include <libintl.h>
+#include "gettext.h" 
 
 #define _(a) gettext(a)
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ekg2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-08-22 22:33+0200\n"
+"POT-Creation-Date: 2004-08-22 23:45+0200\n"
 "PO-Revision-Date: 2004-08-17 23:09+0200\n"
 "Last-Translator: Tomasz Torcz <zdzichu@irc.pl>\n"
 "Language-Team: Polisg <pl@li.org>\n"
@@ -15,119 +15,115 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: compat/getopt.c:430 ekg2-CVS/compat/getopt.c:430
+#: compat/getopt.c:430
 #, c-format
 msgid "%s: option `%s' is ambiguous\n"
 msgstr ""
 
-#: compat/getopt.c:453 ekg2-CVS/compat/getopt.c:453
+#: compat/getopt.c:453
 #, c-format
 msgid "%s: option `--%s' doesn't allow an argument\n"
 msgstr ""
 
-#: compat/getopt.c:458 ekg2-CVS/compat/getopt.c:458
+#: compat/getopt.c:458
 #, c-format
 msgid "%s: option `%c%s' doesn't allow an argument\n"
 msgstr ""
 
-#: compat/getopt.c:476 compat/getopt.c:629 ekg2-CVS/compat/getopt.c:476
-#: ekg2-CVS/compat/getopt.c:629
+#: compat/getopt.c:476 compat/getopt.c:629
 #, c-format
 msgid "%s: option `%s' requires an argument\n"
 msgstr ""
 
-#: compat/getopt.c:501 ekg2-CVS/compat/getopt.c:501
+#: compat/getopt.c:501
 #, c-format
 msgid "%s: unrecognized option `--%s'\n"
 msgstr ""
 
-#: compat/getopt.c:505 ekg2-CVS/compat/getopt.c:505
+#: compat/getopt.c:505
 #, c-format
 msgid "%s: unrecognized option `%c%s'\n"
 msgstr ""
 
-#: compat/getopt.c:528 ekg2-CVS/compat/getopt.c:528
+#: compat/getopt.c:528
 #, c-format
 msgid "%s: illegal option -- %c\n"
 msgstr ""
 
-#: compat/getopt.c:531 ekg2-CVS/compat/getopt.c:531
+#: compat/getopt.c:531
 #, c-format
 msgid "%s: invalid option -- %c\n"
 msgstr ""
 
-#: compat/getopt.c:557 compat/getopt.c:674 ekg2-CVS/compat/getopt.c:557
-#: ekg2-CVS/compat/getopt.c:674
+#: compat/getopt.c:557 compat/getopt.c:674
 #, c-format
 msgid "%s: option requires an argument -- %c\n"
 msgstr ""
 
-#: compat/getopt.c:597 ekg2-CVS/compat/getopt.c:597
+#: compat/getopt.c:597
 #, c-format
 msgid "%s: option `-W %s' is ambiguous\n"
 msgstr ""
 
-#: compat/getopt.c:613 ekg2-CVS/compat/getopt.c:613
+#: compat/getopt.c:613
 #, c-format
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
 
-#: ekg2-CVS/ekg/ekg.c:600 ekg/ekg.c:600
+#: ekg/ekg.c:600
 #, c-format
 msgid ""
 "Nie mogę znaleźć katalogu domowego. Poproś administratora, żeby to "
 "naprawił.\n"
 msgstr "Can't find user's home directory. Ask administration to fix it.\n"
 
-#: ekg2-CVS/ekg/ekg.c:700 ekg/ekg.c:700
+#: ekg/ekg.c:700
 #, c-format
 msgid "Aby uzyskać więcej informacji, uruchom program z opcją --help.\n"
 msgstr "To get more information, start program with --help.\n"
 
-#: ekg2-CVS/ekg/ekg.c:949 ekg2-CVS/ekg/ekg.c:955 ekg2-CVS/ekg/ekg.c:967
-#: ekg2-CVS/ekg/ekg.c:974 ekg/ekg.c:949 ekg/ekg.c:955 ekg/ekg.c:967
-#: ekg/ekg.c:974
+#: ekg/ekg.c:949 ekg/ekg.c:955 ekg/ekg.c:967 ekg/ekg.c:974
 #, c-format
 msgid "Wystąpił błąd podczas zapisu.\n"
 msgstr "Error while saving.\n"
 
-#: ekg2-CVS/ekg/themes.c:931 ekg/themes.c:931
+#: ekg/themes.c:931
 msgid "-- Wciśnij Enter by kontynuować lub Ctrl-D by przerwać --"
 msgstr "-- Press Enter to continue or Ctrl-D to break --"
 
-#: ekg2-CVS/ekg/themes.c:955 ekg/themes.c:955
+#: ekg/themes.c:955
 msgid "%! Za mało parametrów. Spróbuj %Thelp %1%n\n"
 msgstr "%! Too few parameters. Try %Thelp %1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:956 ekg/themes.c:956
+#: ekg/themes.c:956
 msgid "%! Nieprawidłowe parametry. Spróbuj %Thelp %1%n\n"
 msgstr "%! Invalid parameters. Try %Thelp %1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:957 ekg/themes.c:957
+#: ekg/themes.c:957
 msgid "%! Nieprawidłowy identyfikator użytkownika\n"
 msgstr "%! Invalid user id\n"
 
-#: ekg2-CVS/ekg/themes.c:958 ekg/themes.c:958
+#: ekg/themes.c:958
 msgid "%! Nieprawidłowa sesja\n"
 msgstr "%! Invalid session\n"
 
-#: ekg2-CVS/ekg/themes.c:959 ekg/themes.c:959
+#: ekg/themes.c:959
 msgid "%! Nieprawidłowa nazwa użytkownika\n"
 msgstr "%! Invalid username\n"
 
-#: ekg2-CVS/ekg/themes.c:960 ekg/themes.c:960
+#: ekg/themes.c:960
 msgid "%! Nie znaleziono użytkownika %T%1%n\n"
 msgstr "%! User %T%1%n not found\n"
 
-#: ekg2-CVS/ekg/themes.c:961 ekg/themes.c:961
+#: ekg/themes.c:961
 msgid "%! Tej funkcji jeszcze nie ma\n"
 msgstr "%! This function isn't ready yet\n"
 
-#: ekg2-CVS/ekg/themes.c:962 ekg/themes.c:962
+#: ekg/themes.c:962
 msgid "%! Nieznane polecenie: %T%1%n\n"
 msgstr "%! Unknown command: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:963 ekg/themes.c:963
+#: ekg/themes.c:963
 msgid ""
 "%> %Tekg2-%1%n (%ge%Gk%gg %Gr%ge%Ga%gk%Gt%gy%Gw%ga%Gc%gj%Ga%n)\n"
 "%> Program jest rozprowadzany na zasadach licencji GPL v2\n"
@@ -137,119 +133,119 @@ msgstr ""
 "%> Software licensed on GPL v2 terms\n"
 "\n"
 
-#: ekg2-CVS/ekg/themes.c:964 ekg/themes.c:964
+#: ekg/themes.c:964
 msgid "witamy w e k g 2."
 msgstr "welcome in e k g 2."
 
-#: ekg2-CVS/ekg/themes.c:965 ekg/themes.c:965
+#: ekg/themes.c:965
 msgid "%) %Tekg2-%1%n (skompilowano %2)\n"
 msgstr "%) %Tekg2-%1%n (compiled %2)\n"
 
-#: ekg2-CVS/ekg/themes.c:966 ekg/themes.c:966
+#: ekg/themes.c:966
 msgid "%Y(szyfrowane)%n "
 msgstr "%Y(encrypted)%n"
 
-#: ekg2-CVS/ekg/themes.c:969 ekg/themes.c:969
+#: ekg/themes.c:969
 msgid "%) Masz nową wiadomość email\n"
 msgstr "%) You got one email\n"
 
-#: ekg2-CVS/ekg/themes.c:970 ekg/themes.c:970
+#: ekg/themes.c:970
 msgid "%) Masz %1 nowe wiadomości email\n"
 msgstr "%) You got %1 new emails\n"
 
-#: ekg2-CVS/ekg/themes.c:971 ekg/themes.c:971
+#: ekg/themes.c:971
 msgid "%) Masz %1 nowych wiadomości email\n"
 msgstr "%) You got %1 new email\n"
 
-#: ekg2-CVS/ekg/themes.c:974 ekg/themes.c:974
+#: ekg/themes.c:974
 msgid "%> (%2) Dopisano %T%1%n do listy kontaktów\n"
 msgstr "%> (%2) Added %T%1%n to roster\n"
 
-#: ekg2-CVS/ekg/themes.c:975 ekg/themes.c:975
+#: ekg/themes.c:975
 msgid "%) (%2) Usunięto %T%1%n z listy kontaktów\n"
 msgstr "%) (%2) Removed %T%1%n from roster\n"
 
-#: ekg2-CVS/ekg/themes.c:976 ekg/themes.c:976
+#: ekg/themes.c:976
 msgid "%) (%1) Wyczyszczono listę kontaktów\n"
 msgstr "%) (%1) Roster cleared\n"
 
-#: ekg2-CVS/ekg/themes.c:977 ekg/themes.c:977
+#: ekg/themes.c:977
 msgid "%! (%2) %T%1%n już istnieje w liście kontaktów\n"
 msgstr "%! (%2) %T%1%n already in roster\n"
 
-#: ekg2-CVS/ekg/themes.c:978 ekg/themes.c:978
+#: ekg/themes.c:978
 msgid "%! (%3) %T%1%n już istnieje w liście kontaktów jako %2\n"
 msgstr "%! (%3) %T%1%n already in roster as %2\n"
 
-#: ekg2-CVS/ekg/themes.c:981 ekg/themes.c:981
+#: ekg/themes.c:981
 msgid "%> (%1) Zmieniono stan na %Gzajęty%n\n"
 msgstr "%> (%1) Status changed to %Gaway%n\n"
 
-#: ekg2-CVS/ekg/themes.c:982 ekg/themes.c:982
+#: ekg/themes.c:982
 msgid "%> (%3) Zmieniono stan na %Gzajęty%n: %T%1%n%2\n"
 msgstr "%> (%3) Status changed to %Gaway%n: %T%1%n%2\n"
 
-#: ekg2-CVS/ekg/themes.c:983 ekg/themes.c:983
+#: ekg/themes.c:983
 msgid "%> (%1) Zmieniono stan na %Ydostępny%n\n"
 msgstr "%> (%1) Status changed to %Yavailable%n\n"
 
-#: ekg2-CVS/ekg/themes.c:984 ekg/themes.c:984
+#: ekg/themes.c:984
 msgid "%> (%3) Zmieniono stan na %Ydostępny%n: %T%1%n%2%n\n"
 msgstr "%> (%3) Status changed to %Yavailable%n: %T%1%n%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:985 ekg/themes.c:985
+#: ekg/themes.c:985
 msgid "%> (%1) Zmieniono stan na %cniewidoczny%n\n"
 msgstr "%> (%1) Status changed to %cinvisible%n\n"
 
-#: ekg2-CVS/ekg/themes.c:986 ekg/themes.c:986
+#: ekg/themes.c:986
 msgid "%> (%3) Zmieniono stan na %cniewidoczny%n: %T%1%n%2\n"
 msgstr "%> (%3) Status changed to %cinvisible%n: %T%1%n%2\n"
 
-#: ekg2-CVS/ekg/themes.c:987 ekg/themes.c:987
+#: ekg/themes.c:987
 msgid "%> (%1) Zmieniono stan na %Bnie przeszkadzać%n\n"
 msgstr "%> (%1) Status changed to %Bdo not disturb%n\n"
 
-#: ekg2-CVS/ekg/themes.c:988 ekg/themes.c:988
+#: ekg/themes.c:988
 msgid "%> (%3) Zmieniono stan na %Bnie przeszkadzać%n: %T%1%n%2%n\n"
 msgstr "%> (%3) Status changed to %Bdo not disturb%n: %T%1%n%2\n"
 
-#: ekg2-CVS/ekg/themes.c:989 ekg/themes.c:989
+#: ekg/themes.c:989
 msgid "%> (%1) Zmieniono stan na %Wchętny do rozmowy%n\n"
 msgstr "%> (%1) Status changed to %Wfree for chat%n\n"
 
-#: ekg2-CVS/ekg/themes.c:990 ekg/themes.c:990
+#: ekg/themes.c:990
 msgid "%> (%3) Zmieniono stan na %Wchętny do rozmowy%n: %T%1%n%2%n\n"
 msgstr "%> (%3) Status changed to %Wfree for chat%n: %T%1%n%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:991 ekg/themes.c:991
+#: ekg/themes.c:991
 msgid "%> (%1) Zmieniono stan na %gextended away%n\n"
 msgstr "%> (%1) Status changed to %gextended away%n\n"
 
-#: ekg2-CVS/ekg/themes.c:992 ekg/themes.c:992
+#: ekg/themes.c:992
 msgid "%> (%3) Zmieniono stan na %gextended away%n: %T%1%n%2%n%n\n"
 msgstr "%> (%3) Status changed to %gextended away%n: %T%1%n%2%n%n\n"
 
-#: ekg2-CVS/ekg/themes.c:993 ekg/themes.c:993
+#: ekg/themes.c:993
 msgid "%> (%1) Tryb ,,tylko dla znajomych'' jest włączony\n"
 msgstr "%) (%1) \"Friends only\" mode is on\n"
 
-#: ekg2-CVS/ekg/themes.c:994 ekg/themes.c:994
+#: ekg/themes.c:994
 msgid "%> (%1) Tryb ,,tylko dla znajomych'' jest wyłączony\n"
 msgstr "%> (%1) \"Friends only\" mode is off\n"
 
-#: ekg2-CVS/ekg/themes.c:995 ekg/themes.c:995
+#: ekg/themes.c:995
 msgid "%> (%1) Włączono tryb ,,tylko dla znajomych''\n"
 msgstr "%) (%1) \"Friends only\" mode on\n"
 
-#: ekg2-CVS/ekg/themes.c:996 ekg/themes.c:996
+#: ekg/themes.c:996
 msgid "%> (%1) Wyłączono tryb ,,tylko dla znajomych''\n"
 msgstr "%> (%1) \"Friends only\" mode off\n"
 
-#: ekg2-CVS/ekg/themes.c:997 ekg/themes.c:997
+#: ekg/themes.c:997
 msgid "%! Nieprawidłowa wartość\n"
 msgstr "%! Invalid value for \"Friends only\" mode\n"
 
-#: ekg2-CVS/ekg/themes.c:998 ekg/themes.c:998
+#: ekg/themes.c:998
 msgid ""
 "%! %|Długość opisu przekracza limit o %T%1%n znaków\n"
 "Opis:%B%2%b%3%n\n"
@@ -257,27 +253,27 @@ msgstr ""
 "%! Description longer than maximum %T%1%n characters\n"
 "Descr: %B%2%b%3%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1000 ekg/themes.c:1000
+#: ekg/themes.c:1000
 msgid "%> (%1) Automagicznie zmieniono stan na %Gzajęty%n\n"
 msgstr "%> (%1) Auto %Gaway%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1001 ekg/themes.c:1001
+#: ekg/themes.c:1001
 msgid "%> (%2) Automagicznie zmieniono stan na %Gzajęty%n: %T%1%n\n"
 msgstr "%> (%2) Auto %Gaway%n: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1002 ekg/themes.c:1002
+#: ekg/themes.c:1002
 msgid "%> (%1) Automagicznie zmieniono stan na %Ydostępny%n\n"
 msgstr "%> (%1) Auto back - %Yavailable%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1003 ekg/themes.c:1003
+#: ekg/themes.c:1003
 msgid "%> (%2) Automagicznie zmieniono stan na %Ydostępny%n: %T%1%n\n"
 msgstr "%> (%2) Auto back - %Yavailable%n: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1008 ekg/themes.c:1008
+#: ekg/themes.c:1008
 msgid "%) %T%1%n jest aliasem i nie posiada opisu\n"
 msgstr "%) %T%1%n is an alias and don't have description\n"
 
-#: ekg2-CVS/ekg/themes.c:1009 ekg/themes.c:1009
+#: ekg/themes.c:1009
 msgid ""
 "\n"
 "%> %|Więcej szczegółów na temat komend zwróci %Thelp <komenda>%n. "
@@ -292,7 +288,7 @@ msgstr ""
 "T$%n, which means current query user.\n"
 "\n"
 
-#: ekg2-CVS/ekg/themes.c:1010 ekg/themes.c:1010
+#: ekg/themes.c:1010
 msgid ""
 "%> %|Przed użyciem przeczytaj ulotkę. Plik %Tdocs/ULOTKA%n zawiera krótki "
 "przewodnik po załączonej dokumentacji. Jeśli go nie masz, możesz ściągnąć "
@@ -302,11 +298,11 @@ msgstr ""
 "guide on included documentation. If you don't have it, you can visit %"
 "Thttp://dev.null.pl/ekg2/%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1011 ekg/themes.c:1011
+#: ekg/themes.c:1011
 msgid "%! Nie znaleziono opisu zmiennych (nieprawidłowa instalacja)\n"
 msgstr "%! Can't find variables descriptions (incomplete installation)\n"
 
-#: ekg2-CVS/ekg/themes.c:1012 ekg/themes.c:1012
+#: ekg/themes.c:1012
 msgid ""
 "%! Nie znaleziono opisu zmiennych dla pluginu %T%1%n (nieprawidłowa "
 "instalacja)\n"
@@ -314,11 +310,11 @@ msgstr ""
 "%! Can't find variables descriptions for %T%1%n plugin (incomplete "
 "installation)\n"
 
-#: ekg2-CVS/ekg/themes.c:1013 ekg/themes.c:1013
+#: ekg/themes.c:1013
 msgid "%! Nie znaleziono opisu zmiennej %T%1%n\n"
 msgstr "%! Cant find description of %T%1%n variable\n"
 
-#: ekg2-CVS/ekg/themes.c:1014 ekg/themes.c:1014
+#: ekg/themes.c:1014
 msgid ""
 "%> %T%1%n (%2, domyślna wartość: %3)\n"
 "%>\n"
@@ -326,11 +322,11 @@ msgstr ""
 "%> %T%1%n (%2, default value: %3)\n"
 "%>\n"
 
-#: ekg2-CVS/ekg/themes.c:1018 ekg/themes.c:1018
+#: ekg/themes.c:1018
 msgid "%! Nie znaleziono opisu komend (nieprawidłowa instalacja)\n"
 msgstr "%! Can't find commands descriptions (incomplete installation)\n"
 
-#: ekg2-CVS/ekg/themes.c:1019 ekg/themes.c:1019
+#: ekg/themes.c:1019
 msgid ""
 "%! Nie znaleziono opisu komend dla pluginu %T%1%n (nieprawidłowa "
 "instalacja)\n"
@@ -338,159 +334,159 @@ msgstr ""
 "%! Can't find commands descriptions for %T%1%n plugin (incomplete "
 "installation)\n"
 
-#: ekg2-CVS/ekg/themes.c:1020 ekg/themes.c:1020
+#: ekg/themes.c:1020
 msgid "%! Nie znaleziono opisu komendy %T%1%n\n"
 msgstr "%! Can't find command description: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1024 ekg/themes.c:1024
+#: ekg/themes.c:1024
 msgid "%> Dodano %T%1%n do listy ignorowanych\n"
 msgstr "%> Ignoring %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1025 ekg/themes.c:1025
+#: ekg/themes.c:1025
 msgid "%> Zmodyfikowano poziom ignorowania %T%1%n\n"
 msgstr "%> Modified ignore level of %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1026 ekg/themes.c:1026
+#: ekg/themes.c:1026
 msgid "%) Usunięto %1 z listy ignorowanych\n"
 msgstr "%) Unignored %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1027 ekg/themes.c:1027
+#: ekg/themes.c:1027
 msgid "%) Usunięto wszystkich z listy ignorowanych\n"
 msgstr "%) Ignore list cleared up\n"
 
-#: ekg2-CVS/ekg/themes.c:1028 ekg/themes.c:1028
+#: ekg/themes.c:1028
 msgid "%! %1 jest już na liście ignorowanych\n"
 msgstr "%! %1 already beeing ignored\n"
 
-#: ekg2-CVS/ekg/themes.c:1030 ekg/themes.c:1030
+#: ekg/themes.c:1030
 msgid "%! Lista ignorowanych użytkowników jest pusta\n"
 msgstr "%! Ignore list ist empty\n"
 
-#: ekg2-CVS/ekg/themes.c:1031 ekg/themes.c:1031
+#: ekg/themes.c:1031
 msgid "%! %1 nie jest na liście ignorowanych\n"
 msgstr "%! %1 is not beeing ignored\n"
 
-#: ekg2-CVS/ekg/themes.c:1032 ekg/themes.c:1032
+#: ekg/themes.c:1032
 msgid "%> Dodano %T%1%n do listy blokowanych\n"
 msgstr "%> Blocking %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1033 ekg/themes.c:1033
+#: ekg/themes.c:1033
 msgid "%) Usunięto %1 z listy blokowanych\n"
 msgstr "%) Unblocking %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1034 ekg/themes.c:1034
+#: ekg/themes.c:1034
 msgid "%) Usunięto wszystkich z listy blokowanych\n"
 msgstr "%) Block list cleared up\n"
 
-#: ekg2-CVS/ekg/themes.c:1035 ekg/themes.c:1035
+#: ekg/themes.c:1035
 msgid "%! %1 jest już na liście blokowanych\n"
 msgstr "%! %1 already beeing blocked\n"
 
-#: ekg2-CVS/ekg/themes.c:1037 ekg/themes.c:1037
+#: ekg/themes.c:1037
 msgid "%! Lista blokowanych użytkowników jest pusta\n"
 msgstr "%! Block list is empty\n"
 
-#: ekg2-CVS/ekg/themes.c:1038 ekg/themes.c:1038
+#: ekg/themes.c:1038
 msgid "%! %1 nie jest na liście blokowanych\n"
 msgstr "%! %1 is not beeing blocked\n"
 
-#: ekg2-CVS/ekg/themes.c:1041 ekg/themes.c:1041
+#: ekg/themes.c:1041
 msgid "%! Lista kontaktów jest pusta\n"
 msgstr "%! Roster is empty\n"
 
-#: ekg2-CVS/ekg/themes.c:1042 ekg/themes.c:1042
+#: ekg/themes.c:1042
 msgid "%> %1 %Y(dostępn%@2)%n %b%3:%4%n\n"
 msgstr "%> %1 %Y(available)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1043 ekg/themes.c:1043
+#: ekg/themes.c:1043
 msgid "%> %1 %Y(dostępn%@2: %n%5%Y)%n %b%3:%4%n\n"
 msgstr "%> %1 %Y(available: %n%5%Y)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1044 ekg/themes.c:1044
+#: ekg/themes.c:1044
 msgid "%> %1 %G(zajęt%@2)%n %b%3:%4%n\n"
 msgstr "%> %1 %G(away)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1045 ekg/themes.c:1045
+#: ekg/themes.c:1045
 msgid "%> %1 %G(zajęt%@2: %n%5%G)%n %b%3:%4%n\n"
 msgstr "%> %1 %G(away: %n%5%G)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1046 ekg/themes.c:1046
+#: ekg/themes.c:1046
 msgid "%> %1 %B(nie przeszkadzać)%n %b%3:%4%n\n"
 msgstr "%> %1 %B(do not disturb)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1047 ekg/themes.c:1047
+#: ekg/themes.c:1047
 msgid "%> %1 %G(nie przeszkadzać%n: %5%G)%n %b%3:%4%n\n"
 msgstr "%> %1 %G(do not disturb: %5%G)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1048 ekg/themes.c:1048
+#: ekg/themes.c:1048
 msgid "%> %1 %W(chętny do rozmowy)%n %b%3:%4%n\n"
 msgstr "%> %1 %W(free for chat)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1049 ekg/themes.c:1049
+#: ekg/themes.c:1049
 msgid "%> %1 %W(chętny do rozmowy%n: %5%W)%n %b%3:%4%n\n"
 msgstr "%> %1 %W(free for chat%n: %5%W)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1050 ekg/themes.c:1050
+#: ekg/themes.c:1050
 msgid "%> %1 %m(błąd) %b%3:%4%n\n"
 msgstr "%> %1 %m(error) %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1051 ekg/themes.c:1051
+#: ekg/themes.c:1051
 msgid "%> %1 %m(błąd%n: %5%m)%n %b%3:%4%n\n"
 msgstr "%> %1 %m(error%n: %5%m)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1052 ekg/themes.c:1052
+#: ekg/themes.c:1052
 msgid "%> %1 %g(bardzo zajęt%@2)%n %b%3:%4%n\n"
 msgstr "%> %1 %g(extended away)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1053 ekg/themes.c:1053
+#: ekg/themes.c:1053
 msgid "%> %1 %g(bardzo zajęt%@2: %n%5%g)%n %b%3:%4%n\n"
 msgstr "%> %1 %g(extended away: %n%5%g)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1054 ekg/themes.c:1054
+#: ekg/themes.c:1054
 msgid "%> %1 %r(niedostępn%@2)%n\n"
 msgstr "%> %1 %r(offline)%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1055 ekg/themes.c:1055
+#: ekg/themes.c:1055
 msgid "%> %1 %r(niedostępn%@2: %n%5%r)%n\n"
 msgstr "%> %1 %r(offline: %n%5%r)%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1056 ekg/themes.c:1056
+#: ekg/themes.c:1056
 msgid "%> %1 %c(niewidoczn%@2)%n %b%3:%4%n\n"
 msgstr "%> %1 %c(invisible)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1057 ekg/themes.c:1057
+#: ekg/themes.c:1057
 msgid "%> %1 %c(niewidoczn%@2: %n%5%c)%n %b%3:%4%n\n"
 msgstr "%> %1 %c(invisible: %n%5%c)%n %b%3:%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1058 ekg/themes.c:1058
+#: ekg/themes.c:1058
 msgid "%> %1 %m(blokując%@2)%n\n"
 msgstr "%> %1 %m(blocking)%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1060 ekg/themes.c:1060
+#: ekg/themes.c:1060
 msgid "%> %1 nie będzie widzieć naszego stanu\n"
 msgstr "%> %1 will not see aout status\n"
 
-#: ekg2-CVS/ekg/themes.c:1061 ekg/themes.c:1061
+#: ekg/themes.c:1061
 msgid "%> %1 będzie widzieć nasz stan\n"
 msgstr "%> %1 will se aout status\n"
 
-#: ekg2-CVS/ekg/themes.c:1062 ekg/themes.c:1062
+#: ekg/themes.c:1062
 msgid "%> Zmieniono wpis w liście kontaktów\n"
 msgstr "%> Modified item in roster\n"
 
-#: ekg2-CVS/ekg/themes.c:1142 ekg/themes.c:1142
+#: ekg/themes.c:1142
 msgid "%> Papa\n"
 msgstr "%> Bye\n"
 
-#: ekg2-CVS/ekg/themes.c:1143 ekg/themes.c:1143
+#: ekg/themes.c:1143
 msgid "%> Papa: %T%1%n%2\n"
 msgstr "%> Bye: %T%1%n%2\n"
 
-#: ekg2-CVS/ekg/themes.c:1144 ekg/themes.c:1144
+#: ekg/themes.c:1144
 msgid "Zapisać nową konfigurację? (tak/nie) "
 msgstr "Save new configuration ? (t-yes/n-no) "
 
-#: ekg2-CVS/ekg/themes.c:1145 ekg/themes.c:1145
+#: ekg/themes.c:1145
 msgid ""
 "Ustawiłeś keep_reason, tak aby zachowywał opisy.\n"
 "Czy chcesz zachować aktualny opis do pliku (przy następnym uruchomieniu EKG "
@@ -500,21 +496,19 @@ msgstr ""
 "Do you want to save current description to file (it will be restored upon "
 "next EKG exec)? (t-yes/n-no) "
 
-#: ekg2-CVS/ekg/themes.c:1146 ekg/themes.c:1146
+#: ekg/themes.c:1146
 msgid "%> Zapisano ustawienia\n"
 msgstr "%> Configuration saved\n"
 
-#: ekg2-CVS/ekg/themes.c:1147 ekg/themes.c:1147
+#: ekg/themes.c:1147
 msgid "%! Podczas zapisu ustawień wystąpił błąd\n"
 msgstr "%! There was some error during save\n"
 
-#: ekg2-CVS/ekg/themes.c:1154 ekg2-CVS/ekg/themes.c:1160
-#: ekg2-CVS/ekg/themes.c:1166 ekg/themes.c:1154 ekg/themes.c:1160
-#: ekg/themes.c:1166
+#: ekg/themes.c:1154 ekg/themes.c:1160 ekg/themes.c:1166
 msgid "wiadomość od %1: %3."
 msgstr "message from %1: %3."
 
-#: ekg2-CVS/ekg/themes.c:1174 ekg/themes.c:1174
+#: ekg/themes.c:1174
 msgid ""
 "%m.-- %TWiadomość systemowa%m --- -- -%n\n"
 "%m|%n %|%3%n\n"
@@ -524,23 +518,23 @@ msgstr ""
 "%m|%n %|%3%n\n"
 "%|%m`----- ---- --- -- -%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1175 ekg/themes.c:1175
+#: ekg/themes.c:1175
 msgid "wiadomość systemowa: %3."
 msgstr "system message: %3."
 
-#: ekg2-CVS/ekg/themes.c:1178 ekg/themes.c:1178
+#: ekg/themes.c:1178
 msgid "%> Wiadomość do %1 zostanie dostarczona później\n"
 msgstr "%> Message to %1 will be delivered later\n"
 
-#: ekg2-CVS/ekg/themes.c:1179 ekg/themes.c:1179
+#: ekg/themes.c:1179
 msgid "%> Wiadomość do %1 została dostarczona\n"
 msgstr "%> Message to %1 delivered\n"
 
-#: ekg2-CVS/ekg/themes.c:1180 ekg/themes.c:1180
+#: ekg/themes.c:1180
 msgid "%> Nie wiadomo, co się stało z wiadomością do %1\n"
 msgstr "%> Not clear what happened to message to %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1181 ekg/themes.c:1181
+#: ekg/themes.c:1181
 msgid ""
 "%! %|Wiadomość do %1 najprawdopodobniej nie została dostarczona, ponieważ "
 "dana osoba jest niedostępna, a serwer twierdzi, że doręczył wiadomość. "
@@ -551,194 +545,189 @@ msgstr ""
 "but server claims message is delivered. Message could been filtered out (e."
 "g. because of web address in it)\n"
 
-#: ekg2-CVS/ekg/themes.c:1182 ekg/themes.c:1182
+#: ekg/themes.c:1182
 msgid "%! Wiadomość jest zbyt długa i została skrócona\n"
 msgstr "%! Message was too long and got shortened\n"
 
-#: ekg2-CVS/ekg/themes.c:1185 ekg/themes.c:1185
+#: ekg/themes.c:1185
 msgid "%> (%3) %1 jest %Ydostępn%@2%n\n"
 msgstr "%> (%1) %1 is %Yavailable%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1186 ekg/themes.c:1186
+#: ekg/themes.c:1186
 msgid "%> (%3) %1 jest %Ydostępn%@2%n: %T%4%n\n"
 msgstr "%> (%3) %1 is %Yavailable%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1187 ekg/themes.c:1187
+#: ekg/themes.c:1187
 msgid "%> (%3) %1 jest %Gzajęt%@2%n\n"
 msgstr "%> (%3) %1 is %Gaway%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1188 ekg/themes.c:1188
+#: ekg/themes.c:1188
 msgid "%> (%3) %1 jest %Gzajęt%@2%n: %T%4%n\n"
 msgstr "%> (%3) %1 is %Gaway%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1189 ekg/themes.c:1189
+#: ekg/themes.c:1189
 msgid "%> (%3) %1 jest %rniedostępn%@2%n\n"
 msgstr "%> (%3) %1 is %roffline%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1190 ekg/themes.c:1190
+#: ekg/themes.c:1190
 msgid "%> (%3) %1 jest %rniedostępn%@2%n: %T%4%n\n"
 msgstr "%> (%3) %1 is %roffline%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1191 ekg/themes.c:1191
+#: ekg/themes.c:1191
 msgid "%> (%3) %1 jest %cniewidoczn%@2%n\n"
 msgstr "%> (%3) %1 is %cinvisible%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1192 ekg/themes.c:1192
+#: ekg/themes.c:1192
 msgid "%> (%3) %1 jest %cniewidoczn%@2%n: %T%4%n\n"
 msgstr "%> (%3) %1 is %cinvisible%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1193 ekg/themes.c:1193
+#: ekg/themes.c:1193
 msgid "%> (%3) %1 jest %gbardzo zajęt%@2%n\n"
 msgstr "%> (%3) %1 is %gextended away%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1194 ekg/themes.c:1194
+#: ekg/themes.c:1194
 msgid "%> (%3) %1 jest %gbardzo zajęt%@2%n: %T%4%n\n"
 msgstr "%> (%3) %1 is %gextended away%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1195 ekg/themes.c:1195
+#: ekg/themes.c:1195
 msgid "%> (%3) %1 %Bnie przeszkadzać%n\n"
 msgstr "%> (%3) %1 %Bdo not disturb%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1196 ekg/themes.c:1196
+#: ekg/themes.c:1196
 msgid "%> (%3) %1 %Bnie przeszkadzać%n: %T%4%n\n"
 msgstr "%> (%3) %1 %Bdo not disturb%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1197 ekg/themes.c:1197
+#: ekg/themes.c:1197
 msgid "%> (%3) %1 %mbłąd pobierania statusu%n\n"
 msgstr "%> (%3) %1 %merror fetching status%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1198 ekg/themes.c:1198
+#: ekg/themes.c:1198
 msgid "%> (%3) %1 %mbłąd pobierania statusu%n: %T%4%n\n"
 msgstr "%> (%3) %1 %merror fetching status%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1199 ekg/themes.c:1199
+#: ekg/themes.c:1199
 msgid "%> (%3) %1 jest %Wchętn%@2 do rozmowy%n\n"
 msgstr "%> (%3) %1 is %Wfree for chat%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1200 ekg/themes.c:1200
+#: ekg/themes.c:1200
 msgid "%> (%3) %1 jest %Wchętn%@2 do rozmowy%n: %T%4%n\n"
 msgstr "%> (%3) %1 is %Wfree for chat%n: %T%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1203 ekg/themes.c:1203
+#: ekg/themes.c:1203
 msgid "%> (%1) Łączenie z serwerem %n\n"
 msgstr "%> (%1) Connecting to server %n\n"
 
-#: ekg2-CVS/ekg/themes.c:1204 ekg/themes.c:1204
+#: ekg/themes.c:1204
 msgid "%! (%2) Połączenie nie powiodło się: %1%n\n"
 msgstr "%! (%2) Connection failure: %1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1205 ekg2-CVS/ekg/themes.c:1554 ekg/themes.c:1205
-#: ekg/themes.c:1554
+#: ekg/themes.c:1205 ekg/themes.c:1554
 msgid "Nie znaleziono serwera"
 msgstr "Server not found"
 
-#: ekg2-CVS/ekg/themes.c:1206 ekg2-CVS/ekg/themes.c:1555 ekg/themes.c:1206
-#: ekg/themes.c:1555
+#: ekg/themes.c:1206 ekg/themes.c:1555
 msgid "Nie można połączyć się z serwerem"
 msgstr "Can not connect ro server"
 
-#: ekg2-CVS/ekg/themes.c:1207 ekg/themes.c:1207
+#: ekg/themes.c:1207
 msgid "Nieprawidłowa odpowiedź serwera"
 msgstr "Invalid server response"
 
-#: ekg2-CVS/ekg/themes.c:1208 ekg2-CVS/ekg/themes.c:1556
-#: ekg2-CVS/ekg/themes.c:1557 ekg/themes.c:1208 ekg/themes.c:1556
-#: ekg/themes.c:1557
+#: ekg/themes.c:1208 ekg/themes.c:1556 ekg/themes.c:1557
 msgid "Serwer zerwał połączenie"
 msgstr "Server disconnected"
 
-#: ekg2-CVS/ekg/themes.c:1209 ekg/themes.c:1209
+#: ekg/themes.c:1209
 msgid "Nieprawidłowe hasło"
 msgstr "Invalid password"
 
-#: ekg2-CVS/ekg/themes.c:1210 ekg/themes.c:1210
+#: ekg/themes.c:1210
 msgid "Błąd serwera HTTP"
 msgstr "HTTP server error"
 
-#: ekg2-CVS/ekg/themes.c:1211 ekg/themes.c:1211
+#: ekg/themes.c:1211
 msgid "Błąd negocjacji TLS"
 msgstr "Error negotiating TLS"
 
-#: ekg2-CVS/ekg/themes.c:1212 ekg2-CVS/ekg/themes.c:1558 ekg/themes.c:1212
-#: ekg/themes.c:1558
+#: ekg/themes.c:1212 ekg/themes.c:1558
 msgid "Brak pamięci"
 msgstr "No memory"
 
-#: ekg2-CVS/ekg/themes.c:1213 ekg/themes.c:1213
+#: ekg/themes.c:1213
 msgid "%! (%1) Przerwano łączenie %n\n"
 msgstr "%! (%1) Connection interrupted %n\n"
 
-#: ekg2-CVS/ekg/themes.c:1214 ekg/themes.c:1214
+#: ekg/themes.c:1214
 msgid "%! (%1) Przekroczono limit czasu operacji łączenia z serwerem%n\n"
 msgstr "%! (%1) Connection timed out%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1215 ekg/themes.c:1215
+#: ekg/themes.c:1215
 msgid "%> (%1) Połączono%n\n"
 msgstr "%> (%1) Connectes%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1216 ekg/themes.c:1216
+#: ekg/themes.c:1216
 msgid "%> (%2) Połączono: %T%1%n\n"
 msgstr "%> (%2) Connected: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1217 ekg/themes.c:1217
+#: ekg/themes.c:1217
 msgid "%> (%1) Rozłączono%n\n"
 msgstr "%> (%1) Disconnected%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1218 ekg/themes.c:1218
+#: ekg/themes.c:1218
 msgid "%> (%2) Rozłączono: %T%1%n\n"
 msgstr "%> (%2) Disconnected: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1219 ekg/themes.c:1219
+#: ekg/themes.c:1219
 msgid ""
 "%! (%1) Klient jest już połączony. Wpisz %Treconnect%n aby połączyć ponownie%"
 "n\n"
 msgstr "%! (%1) Already connected. Use %Treconnect%n to reconnect%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1220 ekg/themes.c:1220
+#: ekg/themes.c:1220
 msgid "%! (%1) Łączenie trwa. Wpisz %Tdisconnect%n aby przerwać%n\n"
 msgstr "%! (%1) Connecting in progress. Use %Tdisconnect%n to abort%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1221 ekg/themes.c:1221
+#: ekg/themes.c:1221
 msgid "%! (%1) Połączenie zostało przerwane%n\n"
 msgstr "%! (%1) Connection broken%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1222 ekg/themes.c:1222
+#: ekg/themes.c:1222
 msgid "%! (%1) Serwer zerwał połączenie%n\n"
 msgstr "%! (%1) Server disconnected%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1223 ekg/themes.c:1223
+#: ekg/themes.c:1223
 msgid "%! (%1) Brak połączenia z serwerem.%n\n"
 msgstr "%! (%1) Not connected.%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1224 ekg/themes.c:1224
+#: ekg/themes.c:1224
 msgid ""
 "%! (%1) Brak połączenia z serwerem. Wiadomość będzie wysłana po połączeniu.%"
 "n\n"
 msgstr "%! (%1) Not connected. Message will be delivered when connected.%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1225 ekg/themes.c:1225
+#: ekg/themes.c:1225
 msgid "%! (%1) Zły id sesji.%n\n"
 msgstr "%! (%1) Wrong session id.%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1226 ekg/themes.c:1226
+#: ekg/themes.c:1226
 msgid "%! (%1) Błędna wartość zmiennej sesyjnej \"server\".%n\n"
 msgstr "%! (%1) Invalid \"server\" session variable.%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1227 ekg/themes.c:1227
+#: ekg/themes.c:1227
 msgid ""
 "%! (%1) Nieprawidłowy adres lokalny. Czyszczę zmienną sesyjną %Tlocal_ip%n\n"
 msgstr ""
 "%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
 
-#: ekg2-CVS/ekg/themes.c:1236 ekg/themes.c:1236
+#: ekg/themes.c:1236
 msgid "%! Nieznana zmienna: %T%1%n\n"
 msgstr "%! Unknown variable: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1237 ekg/themes.c:1237
+#: ekg/themes.c:1237
 msgid "%! Nieprawidłowa wartość zmiennej\n"
 msgstr "%! Invalid session variable value\n"
 
-#: ekg2-CVS/ekg/themes.c:1238 ekg/themes.c:1238
+#: ekg/themes.c:1238
 msgid ""
 "%! Niekompletna konfiguracja. Wpisz:\n"
 "%!   %Tsession -a <gg:numerek-gg/jid:jabber-id>%n\n"
@@ -774,7 +763,7 @@ msgstr ""
 "UID, for example %Tgg:<no>%n. \n"
 "\n"
 
-#: ekg2-CVS/ekg/themes.c:1239 ekg/themes.c:1239
+#: ekg/themes.c:1239
 msgid ""
 "niekompletna konfiguracja. wpisz session -a, a za tym gg: nummerek-gg, jid: "
 "ewentualnie dżaber id, a p, potem session pasłord, za tym swoje hasło. wpisz "
@@ -793,127 +782,127 @@ msgstr ""
 "enter connect to connect. if you dont have UID enter register, space, e-mail "
 "and password. blah blah blah"
 
-#: ekg2-CVS/ekg/themes.c:1240 ekg/themes.c:1240
+#: ekg/themes.c:1240
 msgid "%! Nie można odczytać pliku konfiguracyjnego: %1\n"
 msgstr "%! Error reading configuration file: %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1241 ekg/themes.c:1241
+#: ekg/themes.c:1241
 msgid "%> Wczytano plik konfiguracyjny %T%1%n\n"
 msgstr "%> Opened configuration file %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1242 ekg/themes.c:1242
+#: ekg/themes.c:1242
 msgid "%! Nieprawidłowa linia '%T%1%n', pomijam\n"
 msgstr "%! Invalid line '%T%1%n', skipping\n"
 
-#: ekg2-CVS/ekg/themes.c:1243 ekg/themes.c:1243
+#: ekg/themes.c:1243
 msgid "%> Automatycznie zapisano ustawienia\n"
 msgstr "%> Autosaved settings\n"
 
-#: ekg2-CVS/ekg/themes.c:1246 ekg/themes.c:1246
+#: ekg/themes.c:1246
 msgid "%> Rejestracja poprawna. Wygrany numerek: %T%1%n\n"
 msgstr "%> Registration successful. Your number: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1247 ekg/themes.c:1247
+#: ekg/themes.c:1247
 msgid "%! Błąd podczas rejestracji: %1\n"
 msgstr "%! Error during registration: %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1248 ekg/themes.c:1248
+#: ekg/themes.c:1248
 msgid "%! Rejestracja w toku\n"
 msgstr "%! Registration in progress\n"
 
-#: ekg2-CVS/ekg/themes.c:1249 ekg/themes.c:1249
+#: ekg/themes.c:1249
 msgid "%! Przekroczono limit czasu operacji rejestrowania\n"
 msgstr "%! Registration timed out\n"
 
-#: ekg2-CVS/ekg/themes.c:1250 ekg/themes.c:1250
+#: ekg/themes.c:1250
 msgid "%! Już zarejestrowano jeden numer. Nie nadużywaj\n"
 msgstr "%! Already registered. Do not abuse\n"
 
-#: ekg2-CVS/ekg/themes.c:1253 ekg/themes.c:1253
+#: ekg/themes.c:1253
 msgid "%> Konto %T%1%n zostało usunięte\n"
 msgstr "%> Account removed\n"
 
-#: ekg2-CVS/ekg/themes.c:1254 ekg/themes.c:1254
+#: ekg/themes.c:1254
 msgid "%! Przekroczono limit czasu operacji usuwania konta\n"
 msgstr "%! Account removal timed out\n"
 
-#: ekg2-CVS/ekg/themes.c:1255 ekg/themes.c:1255
+#: ekg/themes.c:1255
 msgid "%! Niepoprawny numer: %T%1%n\n"
 msgstr "%! Unknown uin: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1256 ekg/themes.c:1256
+#: ekg/themes.c:1256
 msgid "%! Błąd podczas usuwania konta: %1\n"
 msgstr "%! Error while deleting account: %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1259 ekg/themes.c:1259
+#: ekg/themes.c:1259
 msgid "%> Hasło zostało wysłane\n"
 msgstr "%> Password sent\n"
 
-#: ekg2-CVS/ekg/themes.c:1260 ekg/themes.c:1260
+#: ekg/themes.c:1260
 msgid "%! Błąd podczas wysyłania hasła: %1\n"
 msgstr "%! Error while sending password: %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1261 ekg/themes.c:1261
+#: ekg/themes.c:1261
 msgid "%! Przekroczono limit czasu operacji wysłania hasła\n"
 msgstr "%! Password sending timed out\n"
 
-#: ekg2-CVS/ekg/themes.c:1264 ekg/themes.c:1264
+#: ekg/themes.c:1264
 msgid "%> Hasło zostało zmienione\n"
 msgstr "%> Password changed\n"
 
-#: ekg2-CVS/ekg/themes.c:1265 ekg/themes.c:1265
+#: ekg/themes.c:1265
 msgid "%! Błąd podczas zmiany hasła: %1\n"
 msgstr "%! Error while changing password: %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1266 ekg/themes.c:1266
+#: ekg/themes.c:1266
 msgid "%! Przekroczono limit czasu operacji zmiany hasła\n"
 msgstr "%! Password changing timed out\n"
 
-#: ekg2-CVS/ekg/themes.c:1269 ekg/themes.c:1269
+#: ekg/themes.c:1269
 msgid "%> Informacje w katalogu publicznym zostały zmienione\n"
 msgstr "%> Informations in public directory chenged\n"
 
-#: ekg2-CVS/ekg/themes.c:1270 ekg/themes.c:1270
+#: ekg/themes.c:1270
 msgid "%! Błąd podczas zmiany informacji w katalogu publicznym\n"
 msgstr "%! Error while changing informations in public directory\n"
 
-#: ekg2-CVS/ekg/themes.c:1273 ekg/themes.c:1273
+#: ekg/themes.c:1273
 msgid "%! Wystąpił błąd podczas szukania: %1\n"
 msgstr "%! Error while search: %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1274 ekg/themes.c:1274
+#: ekg/themes.c:1274
 msgid "%! Nie znaleziono\n"
 msgstr "%! Not found\n"
 
-#: ekg2-CVS/ekg/themes.c:1275 ekg/themes.c:1275
+#: ekg/themes.c:1275
 msgid "%! Brak wyników ostatniego wyszukiwania\n"
 msgstr "%! Last search returned no result\n"
 
-#: ekg2-CVS/ekg/themes.c:1276 ekg/themes.c:1276
+#: ekg/themes.c:1276
 msgid "%! Brak pseudonimu w ostatnim wyszukiwaniu\n"
 msgstr "%! No nickname in last search\n"
 
-#: ekg2-CVS/ekg/themes.c:1277 ekg/themes.c:1277
+#: ekg/themes.c:1277
 msgid "%> Zatrzymano wyszukiwanie\n"
 msgstr "%> Search stopped\n"
 
-#: ekg2-CVS/ekg/themes.c:1289 ekg/themes.c:1289
+#: ekg/themes.c:1289
 msgid "%Y(dostępn%@1)%n"
 msgstr "%Y(available)%N"
 
-#: ekg2-CVS/ekg/themes.c:1290 ekg/themes.c:1290
+#: ekg/themes.c:1290
 msgid "%G(zajęt%@1)%n"
 msgstr "%G(away)%n"
 
-#: ekg2-CVS/ekg/themes.c:1291 ekg/themes.c:1291
+#: ekg/themes.c:1291
 msgid "%r(niedostępn%@1)%n"
 msgstr "%r(offline)%n"
 
-#: ekg2-CVS/ekg/themes.c:1292 ekg/themes.c:1292
+#: ekg/themes.c:1292
 msgid "%c(niewidoczn%@1)%n)"
 msgstr "%c(invisible)%n"
 
-#: ekg2-CVS/ekg/themes.c:1296 ekg/themes.c:1296
+#: ekg/themes.c:1296
 msgid ""
 "%) Pseudonim: %T%3%n\n"
 "%) Numerek: %T%1%n %7\n"
@@ -927,336 +916,318 @@ msgstr ""
 "%) City: %T%4%n\n"
 "%) Birth year: %T%5%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1300 ekg/themes.c:1300
+#: ekg/themes.c:1300
 msgid "%! Nie ma działających procesów\n"
 msgstr "%! There are no running procesees\n"
 
-#: ekg2-CVS/ekg/themes.c:1301 ekg/themes.c:1301
+#: ekg/themes.c:1301
 msgid "%> Proces %1 (%2) zakończył działanie z wynikiem %3\n"
 msgstr "%> Proces %1 (%2) exited with %3 status\n"
 
-#: ekg2-CVS/ekg/themes.c:1303 ekg/themes.c:1303
+#: ekg/themes.c:1303
 msgid "%! Błąd uruchamiania procesu: %1\n"
 msgstr "%! Error running process : %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1308 ekg/themes.c:1308
+#: ekg/themes.c:1308
 msgid "%K| %nPseudonim: %T%1%n\n"
 msgstr "%K| %nNickname: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1309 ekg/themes.c:1309
+#: ekg/themes.c:1309
 msgid "%K| %nImię i nazwisko: %T%1 %2%n\n"
 msgstr "K| %nName: %T%1 %2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1310 ekg/themes.c:1310
+#: ekg/themes.c:1310
 msgid "%K| %nStan: %T%1%n\n"
 msgstr "%K| %nStatus: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1312 ekg/themes.c:1312
+#: ekg/themes.c:1312
 msgid "%K| %nAktualny stan od: %T%1%n\n"
 msgstr "%K| %nCurrent status since: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1313 ekg/themes.c:1313
+#: ekg/themes.c:1313
 msgid "%K| %nRodzaj autoryzacji: %T%1%n\n"
 msgstr "%K| %nSubscription type: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1314 ekg/themes.c:1314
+#: ekg/themes.c:1314
 msgid "%K| %nBlokowan%@1\n"
 msgstr "%K| %nBlocked\n"
 
-#: ekg2-CVS/ekg/themes.c:1315 ekg/themes.c:1315
+#: ekg/themes.c:1315
 msgid "%K| %nNie widzi stanu\n"
 msgstr "%K| %nDon't see status\n"
 
-#: ekg2-CVS/ekg/themes.c:1316 ekg/themes.c:1316
+#: ekg/themes.c:1316
 msgid "%K| %nNie ma nas w swoich kontaktach\n"
 msgstr "%K| %nDon't have us in roster\n"
 
-#: ekg2-CVS/ekg/themes.c:1317 ekg/themes.c:1317
+#: ekg/themes.c:1317
 msgid "%K| %nZnajduje się za firewall/NAT\n"
 msgstr "%K| %nFirewalled/NATed\n"
 
-#: ekg2-CVS/ekg/themes.c:1318 ekg/themes.c:1318
+#: ekg/themes.c:1318
 msgid "%K| %nAdres: %T%1%n\n"
 msgstr "%K| %nAddress: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1319 ekg/themes.c:1319
+#: ekg/themes.c:1319
 msgid "%K| %nTelefon: %T%1%n\n"
 msgstr "%K| %nTelephone: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1320 ekg/themes.c:1320
+#: ekg/themes.c:1320
 msgid "%K| %nGrupy: %T%1%n\n"
 msgstr "%K| %nGroups: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1321 ekg/themes.c:1321
+#: ekg/themes.c:1321
 msgid "%K| %nNigdy nie widziano\n"
 msgstr "%K| %nNever seen\n"
 
-#: ekg2-CVS/ekg/themes.c:1322 ekg/themes.c:1322
+#: ekg/themes.c:1322
 msgid "%K| %nOstatnio widziano: %T%1%n\n"
 msgstr "%K| %nLast seen: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1324 ekg/themes.c:1324
+#: ekg/themes.c:1324
 msgid "%K| %nOstatni adres: %T%1%n\n"
 msgstr "%K| %nLast address: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1325 ekg/themes.c:1325
+#: ekg/themes.c:1325
 msgid "%K| %nOstatni stan: %T%1%n\n"
 msgstr "%K| %nLast status: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1329 ekg2-CVS/ekg/themes.c:1605 ekg/themes.c:1329
-#: ekg/themes.c:1605
+#: ekg/themes.c:1329 ekg/themes.c:1605
 msgid "%Ydostępn%@1%n"
 msgstr "%Yavailable%n"
 
-#: ekg2-CVS/ekg/themes.c:1330 ekg2-CVS/ekg/themes.c:1606 ekg/themes.c:1330
-#: ekg/themes.c:1606
+#: ekg/themes.c:1330 ekg/themes.c:1606
 msgid "%Ydostępn%@1%n %K(%n%2%K)%n"
 msgstr "%Yavailable%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1331 ekg2-CVS/ekg/themes.c:1607 ekg/themes.c:1331
-#: ekg/themes.c:1607
+#: ekg/themes.c:1331 ekg/themes.c:1607
 msgid "%Gzajęt%@1%n"
 msgstr "%Gaway%n"
 
-#: ekg2-CVS/ekg/themes.c:1332 ekg2-CVS/ekg/themes.c:1608 ekg/themes.c:1332
-#: ekg/themes.c:1608
+#: ekg/themes.c:1332 ekg/themes.c:1608
 msgid "%Gzajęt%@1%n %K(%n%2%K)%n"
 msgstr "%Gaway%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1333 ekg2-CVS/ekg/themes.c:1609 ekg/themes.c:1333
-#: ekg/themes.c:1609
+#: ekg/themes.c:1333 ekg/themes.c:1609
 msgid "%rniedostępn%@1%n"
 msgstr "%roffline%n"
 
-#: ekg2-CVS/ekg/themes.c:1334 ekg2-CVS/ekg/themes.c:1610 ekg/themes.c:1334
-#: ekg/themes.c:1610
+#: ekg/themes.c:1334 ekg/themes.c:1610
 msgid "%rniedostępn%@1%n %K(%n%2%K)%n"
 msgstr "%roffline%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1335 ekg2-CVS/ekg/themes.c:1611 ekg/themes.c:1335
-#: ekg/themes.c:1611
+#: ekg/themes.c:1335 ekg/themes.c:1611
 msgid "%cniewidoczn%@1%n"
 msgstr "%cinvisible%n"
 
-#: ekg2-CVS/ekg/themes.c:1336 ekg2-CVS/ekg/themes.c:1612 ekg/themes.c:1336
-#: ekg/themes.c:1612
+#: ekg/themes.c:1336 ekg/themes.c:1612
 msgid "%cniewidoczn%@1%n %K(%n%2%K)%n"
 msgstr "%cinvisible%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1337 ekg2-CVS/ekg/themes.c:1613 ekg/themes.c:1337
-#: ekg/themes.c:1613
+#: ekg/themes.c:1337 ekg/themes.c:1613
 msgid "%Bnie przeszkadzać%n"
 msgstr "%Bdo not disturb%n"
 
-#: ekg2-CVS/ekg/themes.c:1338 ekg2-CVS/ekg/themes.c:1614 ekg/themes.c:1338
-#: ekg/themes.c:1614
+#: ekg/themes.c:1338 ekg/themes.c:1614
 msgid "%Bnie przeszkadzać%n %K(%n%2%K)%n"
 msgstr "%Bdo not disturb%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1339 ekg2-CVS/ekg/themes.c:1615 ekg/themes.c:1339
-#: ekg/themes.c:1615
+#: ekg/themes.c:1339 ekg/themes.c:1615
 msgid "%Wchętn%@1 do rozmowy%n"
 msgstr "%Wfree for chat%n"
 
-#: ekg2-CVS/ekg/themes.c:1340 ekg2-CVS/ekg/themes.c:1616 ekg/themes.c:1340
-#: ekg/themes.c:1616
+#: ekg/themes.c:1340 ekg/themes.c:1616
 msgid "%Wchętn%@1 do rozmowy%n %K(%n%2%K)%n"
 msgstr "%Wfree for chat%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1341 ekg/themes.c:1341
+#: ekg/themes.c:1341
 #, c-format
 msgid "%m błąd%n"
 msgstr "%m error%n"
 
-#: ekg2-CVS/ekg/themes.c:1342 ekg2-CVS/ekg/themes.c:1618 ekg/themes.c:1342
-#: ekg/themes.c:1618
+#: ekg/themes.c:1342 ekg/themes.c:1618
 msgid "%mbłąd%n %K(%n%2%K)%n"
 msgstr "%merror%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1343 ekg2-CVS/ekg/themes.c:1619 ekg/themes.c:1343
-#: ekg/themes.c:1619
+#: ekg/themes.c:1343 ekg/themes.c:1619
 msgid "%gbardzo zajęt%@1%n"
 msgstr "%gextended away%n"
 
-#: ekg2-CVS/ekg/themes.c:1344 ekg2-CVS/ekg/themes.c:1620 ekg/themes.c:1344
-#: ekg/themes.c:1620
+#: ekg/themes.c:1344 ekg/themes.c:1620
 msgid "%gbardzo zajęt%@1%n %K(%n%2%K)%n"
 msgstr "%gextended away%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1345 ekg2-CVS/ekg/themes.c:1621 ekg/themes.c:1345
-#: ekg/themes.c:1621
+#: ekg/themes.c:1345 ekg/themes.c:1621
 msgid "%mblokując%@1%n"
 msgstr "%mblocking%n"
 
-#: ekg2-CVS/ekg/themes.c:1346 ekg2-CVS/ekg/themes.c:1622 ekg/themes.c:1346
-#: ekg/themes.c:1622
+#: ekg/themes.c:1346 ekg/themes.c:1622
 msgid "%mblokując%@1%n %K(%n%2%K)%n"
 msgstr "%mblocking%n %K(%n%2%K)%n"
 
-#: ekg2-CVS/ekg/themes.c:1347 ekg2-CVS/ekg/themes.c:1623 ekg/themes.c:1347
-#: ekg/themes.c:1623
+#: ekg/themes.c:1347 ekg/themes.c:1623
 msgid "%Mnieznany%n"
 msgstr "%Munknown%n"
 
-#: ekg2-CVS/ekg/themes.c:1350 ekg/themes.c:1350
+#: ekg/themes.c:1350
 msgid "%> %|Grupa %T%1%n: %2\n"
 msgstr "%> %|Group %T%1%n: %2\n"
 
-#: ekg2-CVS/ekg/themes.c:1351 ekg/themes.c:1351
+#: ekg/themes.c:1351
 msgid "%! %1 należy już do grupy %T%2%n\n"
 msgstr "%! %1 already in group %T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1352 ekg/themes.c:1352
+#: ekg/themes.c:1352
 msgid "%! %1 nie należy do grupy %T%2%n\n"
 msgstr "%! %1 not in group %T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1353 ekg/themes.c:1353
+#: ekg/themes.c:1353
 msgid "%! Grupa %T%1%n jest pusta\n"
 msgstr "%! Group %T%1%n is empty\n"
 
-#: ekg2-CVS/ekg/themes.c:1356 ekg/themes.c:1356
+#: ekg/themes.c:1356
 msgid "%) Profil: %T%1%n\n"
 msgstr "%) Profile: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1359 ekg/themes.c:1359
+#: ekg/themes.c:1359
 msgid "%) Aktualny stan: %T%1%2%n\n"
 msgstr "%) Current status: %T%1%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1360 ekg/themes.c:1360
+#: ekg/themes.c:1360
 msgid "%) Aktualny stan: %T%1%n\n"
 msgstr "%) Current status: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1361 ekg/themes.c:1361
+#: ekg/themes.c:1361
 msgid "%) Aktualny serwer: %T%1%n:%T%2%n\n"
 msgstr "%) Current server: %T%1%n:%T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1362 ekg/themes.c:1362
+#: ekg/themes.c:1362
 msgid "%) Aktualny serwer: %T%1%n:%T%2%Y (połączenie szyfrowane)%n\n"
 msgstr "%) Current server: %T%1%n:%T%2%Y (connection encrypted)%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1363 ekg/themes.c:1363
+#: ekg/themes.c:1363
 msgid "%) Trwa łączenie ..."
 msgstr "%) Connecting ..."
 
-#: ekg2-CVS/ekg/themes.c:1364 ekg/themes.c:1364
+#: ekg/themes.c:1364
 msgid "%Ydostępny%n"
 msgstr "%Yavailable%n"
 
-#: ekg2-CVS/ekg/themes.c:1365 ekg/themes.c:1365
+#: ekg/themes.c:1365
 msgid "%Ydostępny%n (%T%1%n%2)"
 msgstr "%Yavailable%n (%T%1%n%2)"
 
-#: ekg2-CVS/ekg/themes.c:1366 ekg/themes.c:1366
+#: ekg/themes.c:1366
 #, c-format
 msgid "%Gzajęty%n"
 msgstr "%Gaway%n"
 
-#: ekg2-CVS/ekg/themes.c:1367 ekg/themes.c:1367
+#: ekg/themes.c:1367
 msgid "%Gzajęty%n (%T%1%n%2)"
 msgstr "%Gaway%n (%T%1%n%2)"
 
-#: ekg2-CVS/ekg/themes.c:1368 ekg/themes.c:1368
+#: ekg/themes.c:1368
 #, c-format
 msgid "%cniewidoczny%n"
 msgstr "%cinvisible%n"
 
-#: ekg2-CVS/ekg/themes.c:1369 ekg/themes.c:1369
+#: ekg/themes.c:1369
 msgid "%cniewidoczny%n (%T%1%n%2)"
 msgstr "%cinvisible%n (%T%1%n%2)"
 
-#: ekg2-CVS/ekg/themes.c:1370 ekg/themes.c:1370
+#: ekg/themes.c:1370
 #, c-format
 msgid "%gbardzo zajęty%n"
 msgstr "%gextended away%n"
 
-#: ekg2-CVS/ekg/themes.c:1371 ekg/themes.c:1371
+#: ekg/themes.c:1371
 msgid "%gbardzo zajęty%n (%T%1%n%2)"
 msgstr "%gextended away%n (%T%1%n%2)"
 
-#: ekg2-CVS/ekg/themes.c:1372 ekg/themes.c:1372
+#: ekg/themes.c:1372
 #, c-format
 msgid "%cnie przeszkać%n"
 msgstr "%cdo not disturb%n"
 
-#: ekg2-CVS/ekg/themes.c:1373 ekg/themes.c:1373
+#: ekg/themes.c:1373
 msgid "%cnie przeszkadzać%n (%T%1%n%2)"
 msgstr "%cdo not disturb%n (%T%1%n%2)"
 
-#: ekg2-CVS/ekg/themes.c:1374 ekg/themes.c:1374
+#: ekg/themes.c:1374
 msgid "%Wchętny do rozmowy%n"
 msgstr "%Wfree for chat%n"
 
-#: ekg2-CVS/ekg/themes.c:1375 ekg/themes.c:1375
+#: ekg/themes.c:1375
 msgid "%Wchętny do rozmowy%n (%T%1%n%2)"
 msgstr "%Wfree for chat%n (%T%1%n%2)"
 
-#: ekg2-CVS/ekg/themes.c:1376 ekg/themes.c:1376
+#: ekg/themes.c:1376
 msgid "%rniedostępny%n"
 msgstr "%roffline%n"
 
-#: ekg2-CVS/ekg/themes.c:1377 ekg/themes.c:1377
+#: ekg/themes.c:1377
 msgid ", tylko dla znajomych"
 msgstr ", for friends only"
 
-#: ekg2-CVS/ekg/themes.c:1379 ekg/themes.c:1379
+#: ekg/themes.c:1379
 msgid "%) Połączony od: %T%1%n\n"
 msgstr "%) Connected since: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1380 ekg/themes.c:1380
+#: ekg/themes.c:1380
 msgid "%) Rozłączony od: %T%1%n\n"
 msgstr "%) Disconnected since: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1383 ekg/themes.c:1383
+#: ekg/themes.c:1383
 msgid "%) Program działa od: %T%1%n\n"
 msgstr "%) Program started: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1386 ekg/themes.c:1386
+#: ekg/themes.c:1386
 msgid "%) Ilość wiadomości w kolejce do wysłania: %T%1%n\n"
 msgstr "%) Messages queued for delivery: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1389 ekg/themes.c:1389
+#: ekg/themes.c:1389
 msgid "%! Brak aliasów\n"
 msgstr "%! No aliases\n"
 
-#: ekg2-CVS/ekg/themes.c:1392 ekg/themes.c:1392
+#: ekg/themes.c:1392
 msgid "%> Utworzono alias %T%1%n\n"
 msgstr "%> Created alias %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1393 ekg/themes.c:1393
+#: ekg/themes.c:1393
 msgid "%> Dodano do aliasu %T%1%n\n"
 msgstr "%> Added to alias %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1394 ekg/themes.c:1394
+#: ekg/themes.c:1394
 msgid "%) Usunięto alias %T%1%n\n"
 msgstr "%) Removed alias %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1395 ekg/themes.c:1395
+#: ekg/themes.c:1395
 msgid "%) Usunięto wszystkie aliasy\n"
 msgstr "%) Removed all aliases\n"
 
-#: ekg2-CVS/ekg/themes.c:1396 ekg/themes.c:1396
+#: ekg/themes.c:1396
 msgid "%! Alias %T%1%n już istnieje\n"
 msgstr "%! Alias %T%1%n already exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1397 ekg/themes.c:1397
+#: ekg/themes.c:1397
 msgid "%! Alias %T%1%n nie istnieje\n"
 msgstr "%! Alias %T%1%n do not exist\n"
 
-#: ekg2-CVS/ekg/themes.c:1398 ekg/themes.c:1398
+#: ekg/themes.c:1398
 msgid "%! %T%1%n jest wbudowaną komendą\n"
 msgstr "%! %T%1%n is internal command\n"
 
-#: ekg2-CVS/ekg/themes.c:1399 ekg/themes.c:1399
+#: ekg/themes.c:1399
 msgid "%! Alias %T%1%n wymaga większej ilości parametrów\n"
 msgstr "%! Alias %T%1%n requires more parameters\n"
 
-#: ekg2-CVS/ekg/themes.c:1402 ekg/themes.c:1402
+#: ekg/themes.c:1402
 msgid ""
 "%! %|Program otrzymał zbyt wiele żądań bezpośrednich połączeń, ostatnie od %"
 "1\n"
 msgstr "%! To many direct connections, last from %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1403 ekg/themes.c:1403
+#: ekg/themes.c:1403
 msgid ""
 "%! %|Przekroczono limit bezpośrednich połączeń i dla bezpieczeństwa zostały "
 "one wyłączone. Aby je włączyć ponownie, należy wpisać polecenie %Tset dcc 1%"
@@ -1267,92 +1238,91 @@ msgstr ""
 "them use %Tset dcc 1% and reconnect. Limit is controlled by %Tdcc_limit%n "
 "variable.\n"
 
-#: ekg2-CVS/ekg/themes.c:1404 ekg/themes.c:1404
+#: ekg/themes.c:1404
 msgid "%! Nie można włączyć połączeń bezpośrednich: %1\n"
 msgstr "%! Can't turn on direct connections: %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1405 ekg/themes.c:1405
+#: ekg/themes.c:1405
 msgid "%! Błąd transmisji z %1\n"
 msgstr "%! Error transmitting with %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1406 ekg/themes.c:1406
+#: ekg/themes.c:1406
 msgid "%! Połączenie z %1 zostało odrzucone\n"
 msgstr "%! Connection to %1 refused\n"
 
-#: ekg2-CVS/ekg/themes.c:1407 ekg/themes.c:1407
+#: ekg/themes.c:1407
 msgid "%! Nieznany błąd połączenia bezpośredniego\n"
 msgstr "%! Uknown direct connection error\n"
 
-#: ekg2-CVS/ekg/themes.c:1408 ekg/themes.c:1408
+#: ekg/themes.c:1408
 msgid "%! Nie można nawiązać połączenia z %1\n"
 msgstr "%! Can't connect with %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1409 ekg/themes.c:1409
+#: ekg/themes.c:1409
 msgid "%! %1 nie ma włączonej obsługi połączeń bezpośrednich\n"
 msgstr "%! %1 don't have direct connections enabled\n"
 
-#: ekg2-CVS/ekg/themes.c:1410 ekg/themes.c:1410
+#: ekg/themes.c:1410
 msgid "%! Przekroczono limit czasu operacji bezpośredniego połączenia z %1\n"
 msgstr "%! Direct connection to %1 timed out\n"
 
-#: ekg2-CVS/ekg/themes.c:1411 ekg/themes.c:1411
+#: ekg/themes.c:1411
 msgid "%! Opcja %T%1%n nie jest jeszcze obsługiwana\n"
 msgstr "%! Operation %T%1%n isn't supported yet\n"
 
-#: ekg2-CVS/ekg/themes.c:1412 ekg/themes.c:1412
+#: ekg/themes.c:1412
 msgid "%! Nie można otworzyć %T%1%n: %2\n"
 msgstr "%! Can't open %T%1%n: %2\n"
 
-#: ekg2-CVS/ekg/themes.c:1413 ekg/themes.c:1413
+#: ekg/themes.c:1413
 msgid "%> Połączenia oczekujące:\n"
 msgstr "%> Pending connections:\n"
 
-#: ekg2-CVS/ekg/themes.c:1414 ekg/themes.c:1414
+#: ekg/themes.c:1414
 msgid "%) #%1, %2, wysyłanie %T%3%n\n"
 msgstr "%) #%1, %2, sending %T%3%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1415 ekg/themes.c:1415
+#: ekg/themes.c:1415
 msgid "%) #%1, %2, odbiór %T%3%n\n"
 msgstr "%) #%1, %2, receiving %T%3%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1416 ekg2-CVS/ekg/themes.c:1420 ekg/themes.c:1416
-#: ekg/themes.c:1420
+#: ekg/themes.c:1416 ekg/themes.c:1420
 msgid "%) #%1, %2, rozmowa\n"
 msgstr "%) #%1, %2, chat\n"
 
-#: ekg2-CVS/ekg/themes.c:1417 ekg/themes.c:1417
+#: ekg/themes.c:1417
 msgid "%> Połączenia aktywne:\n"
 msgstr "%> Active connections:\n"
 
-#: ekg2-CVS/ekg/themes.c:1418 ekg/themes.c:1418
+#: ekg/themes.c:1418
 msgid "%) #%1, %2, wysyłanie %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 msgstr "%) #%1, %2, sending %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 
-#: ekg2-CVS/ekg/themes.c:1419 ekg/themes.c:1419
+#: ekg/themes.c:1419
 msgid "%) #%1, %2, odbiór %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 msgstr "%) #%1, %2, receiving %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 
-#: ekg2-CVS/ekg/themes.c:1421 ekg/themes.c:1421
+#: ekg/themes.c:1421
 msgid "%! Brak bezpośrednich połączeń\n"
 msgstr "%! No direct connections\n"
 
-#: ekg2-CVS/ekg/themes.c:1422 ekg/themes.c:1422
+#: ekg/themes.c:1422
 msgid "%! Plik %T%1%n od użytkownika %2 jest już pobierany\n"
 msgstr "%! File %T%1%n from %2 is being received\n"
 
-#: ekg2-CVS/ekg/themes.c:1424 ekg/themes.c:1424
+#: ekg/themes.c:1424
 msgid "%> Zakończono pobieranie pliku %T%2%n od %1\n"
 msgstr "%> Finished receiving filr %T%2%n from %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1425 ekg/themes.c:1425
+#: ekg/themes.c:1425
 msgid "%> Zakończono wysyłanie pliku %T%2%n do %1\n"
 msgstr "%> Finished sending file %T%2%n to %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1426 ekg/themes.c:1426
+#: ekg/themes.c:1426
 msgid "%) Zamknięto połączenie z %1\n"
 msgstr "%) Connection with %1 closed\n"
 
-#: ekg2-CVS/ekg/themes.c:1428 ekg/themes.c:1428
+#: ekg/themes.c:1428
 msgid ""
 "%) %1 chce rozmawiać\n"
 "%) Wpisz %Tdcc voice #%2%n, by rozpocząć rozmowę, lub %Tdcc close #%2%n, by "
@@ -1361,16 +1331,16 @@ msgstr ""
 "%) %1 wants to chat\n"
 "%) Use  %Tdcc voice #%2%n to start chat or %Tdcc close #%2%n to refuse\n"
 
-#: ekg2-CVS/ekg/themes.c:1429 ekg/themes.c:1429
+#: ekg/themes.c:1429
 msgid "%! Można prowadzić tylko jedną rozmowę głosową na raz\n"
 msgstr "%! Only one simultanous voice chat possible\n"
 
-#: ekg2-CVS/ekg/themes.c:1430 ekg/themes.c:1430
+#: ekg/themes.c:1430
 msgid ""
 "%! Nie wkompilowano obsługi rozmów głosowych. Przeczytaj %Tdocs/voip.txt%n\n"
 msgstr "%! Voice chat not compiled in. See %Tdocs/voip.txt%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1431 ekg/themes.c:1431
+#: ekg/themes.c:1431
 msgid ""
 "%) %1 przesyła plik %T%2%n o rozmiarze %T%3b%n\n"
 "%) Wpisz %Tdcc get #%4%n, by go odebrać, lub %Tdcc close #%4%n, by anulować\n"
@@ -1378,445 +1348,445 @@ msgstr ""
 "%) %1 sends %T%2%n (size %T%3b%n)\n"
 "%) Use %Tdcc get #%4%n to receive or %Tdcc close #%4%n to refuse\n"
 
-#: ekg2-CVS/ekg/themes.c:1432 ekg/themes.c:1432
+#: ekg/themes.c:1432
 msgid ""
 "%) Plik istnieje już na dysku, więc można wznowić pobieranie poleceniem %"
 "Tdcc resume #%4%n\n"
 msgstr "%) File exist, you can resume with %Tdcc resume #%4%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1433 ekg/themes.c:1433
+#: ekg/themes.c:1433
 msgid "%) Rozpoczęto pobieranie pliku %T%2%n od %1\n"
 msgstr "%) Started receiving %T%2%n from %1\n"
 
-#: ekg2-CVS/ekg/themes.c:1434 ekg/themes.c:1434
+#: ekg/themes.c:1434
 msgid "%! Nie można utworzyć pliku %T%1%n\n"
 msgstr "%! Can't open file %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1435 ekg/themes.c:1435
+#: ekg/themes.c:1435
 msgid "%! Nie znaleziono połączenia %T%1%n\n"
 msgstr "%! Connection not found: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1436 ekg/themes.c:1436
+#: ekg/themes.c:1436
 msgid "%! Nieprawidłowy adres IP\n"
 msgstr "%! Invalid IP address\n"
 
-#: ekg2-CVS/ekg/themes.c:1437 ekg/themes.c:1437
+#: ekg/themes.c:1437
 msgid "%! %1 musi być dostępn%@1, by móc nawiązać połączenie\n"
 msgstr "%! %1 has to available to connect\n"
 
-#: ekg2-CVS/ekg/themes.c:1440 ekg/themes.c:1440
+#: ekg/themes.c:1440
 msgid "%) (%2) Rozpoczęto rozmowę z %T%1%n\n"
 msgstr "%) (%2) Query with %T%1%n started\n"
 
-#: ekg2-CVS/ekg/themes.c:1441 ekg/themes.c:1441
+#: ekg/themes.c:1441
 msgid "%) Wciśnij %TAlt-G%n by ignorować, %TAlt-K%n by zamknąć okno\n"
 msgstr "%) Press %TAlt-G%n to ignore, %TAlt-K%n to close window\n"
 
-#: ekg2-CVS/ekg/themes.c:1442 ekg/themes.c:1442
+#: ekg/themes.c:1442
 msgid "%) (%2) Zakończono rozmowę z %T%1%n\n"
 msgstr "%) (%2) Finished query with %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1443 ekg/themes.c:1443
+#: ekg/themes.c:1443
 msgid "%! Rozmowa z %T%1%n jest już prowadzona w okienku nr %T%2%n\n"
 msgstr "%! Query with %T%1%n already in window no %T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1446 ekg/themes.c:1446
+#: ekg/themes.c:1446
 msgid "%! Brak zdarzeń\n"
 msgstr "%! No events\n"
 
-#: ekg2-CVS/ekg/themes.c:1449 ekg/themes.c:1449
+#: ekg/themes.c:1449
 msgid "%> Dodano zdarzenie %T%1%n\n"
 msgstr "%> Added event %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1450 ekg/themes.c:1450
+#: ekg/themes.c:1450
 msgid "%) Usunięto zdarzenie %T%1%n\n"
 msgstr "%) Removed event %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1451 ekg/themes.c:1451
+#: ekg/themes.c:1451
 msgid "%) Usunięto wszystkie zdarzenia\n"
 msgstr "%) Removed all events\n"
 
-#: ekg2-CVS/ekg/themes.c:1452 ekg/themes.c:1452
+#: ekg/themes.c:1452
 msgid "%! Zdarzenie %T%1%n istnieje dla %2\n"
 msgstr "%! Event %T%1%n exist for %2\n"
 
-#: ekg2-CVS/ekg/themes.c:1453 ekg/themes.c:1453
+#: ekg/themes.c:1453
 msgid "%! Zdarzenie %T%1%n nie istnieje\n"
 msgstr "%! Event %T%1%n do not exist\n"
 
-#: ekg2-CVS/ekg/themes.c:1456 ekg/themes.c:1456
+#: ekg/themes.c:1456
 msgid "%> Listę kontaktów zachowano na serwerze\n"
 msgstr "%> Roster saved on server\n"
 
-#: ekg2-CVS/ekg/themes.c:1457 ekg/themes.c:1457
+#: ekg/themes.c:1457
 msgid "%! Błąd podczas wysyłania listy kontaktów\n"
 msgstr "%! Error sending roster\n"
 
-#: ekg2-CVS/ekg/themes.c:1458 ekg/themes.c:1458
+#: ekg/themes.c:1458
 msgid "%> Listę kontaktów wczytano z serwera\n"
 msgstr "%> Roster read from server\n"
 
-#: ekg2-CVS/ekg/themes.c:1459 ekg/themes.c:1459
+#: ekg/themes.c:1459
 msgid "%! Błąd podczas pobierania listy kontaktów\n"
 msgstr "%! Error getting roster\n"
 
-#: ekg2-CVS/ekg/themes.c:1460 ekg/themes.c:1460
+#: ekg/themes.c:1460
 msgid "%) Usunięto listę kontaktów z serwera\n"
 msgstr "%) Removed roster from server\n"
 
-#: ekg2-CVS/ekg/themes.c:1461 ekg/themes.c:1461
+#: ekg/themes.c:1461
 msgid "%! Błąd podczas usuwania listy kontaktów\n"
 msgstr "%! Error removing roster\n"
 
-#: ekg2-CVS/ekg/themes.c:1465 ekg/themes.c:1465
+#: ekg/themes.c:1465
 msgid "lista kontaktów: "
 msgstr "roster:"
 
-#: ekg2-CVS/ekg/themes.c:1467 ekg/themes.c:1467
+#: ekg/themes.c:1467
 msgid "%1 jest dostępny, "
 msgstr "%1 is available"
 
-#: ekg2-CVS/ekg/themes.c:1469 ekg/themes.c:1469
+#: ekg/themes.c:1469
 msgid "%1 jest zajęty, "
 msgstr "%1 is away"
 
-#: ekg2-CVS/ekg/themes.c:1473 ekg/themes.c:1473
+#: ekg/themes.c:1473
 msgid "%) Utworzono nowe okno\n"
 msgstr "%) New window created\n"
 
-#: ekg2-CVS/ekg/themes.c:1474 ekg/themes.c:1474
+#: ekg/themes.c:1474
 msgid "%! Wybrane okno nie istnieje\n"
 msgstr "%! Choosend window do not exist\n"
 
-#: ekg2-CVS/ekg/themes.c:1475 ekg/themes.c:1475
+#: ekg/themes.c:1475
 msgid "%! Okno %T%1%n nie istnieje\n"
 msgstr "%! Window %T%1%n do not exist\n"
 
-#: ekg2-CVS/ekg/themes.c:1476 ekg/themes.c:1476
+#: ekg/themes.c:1476
 msgid "%! Nie można zamknąć ostatniego okna\n"
 msgstr "%! Can not close last window\n"
 
-#: ekg2-CVS/ekg/themes.c:1477 ekg/themes.c:1477
+#: ekg/themes.c:1477
 msgid "%) Zamknięto okno\n"
 msgstr "%) Window closed\n"
 
-#: ekg2-CVS/ekg/themes.c:1478 ekg/themes.c:1478
+#: ekg/themes.c:1478
 msgid "%! Wyczerpano limit ilości okien\n"
 msgstr "%! Window limit exhausted\n"
 
-#: ekg2-CVS/ekg/themes.c:1479 ekg/themes.c:1479
+#: ekg/themes.c:1479
 msgid "%) %1: rozmowa z %T%2%n\n"
 msgstr "%) %1: query with %T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1480 ekg/themes.c:1480
+#: ekg/themes.c:1480
 msgid "%) %1: brak rozmowy\n"
 msgstr "%) %1 no query\n"
 
-#: ekg2-CVS/ekg/themes.c:1481 ekg/themes.c:1481
+#: ekg/themes.c:1481
 msgid "%) %1: pływające %4x%5 w %2,%3 %T%6%n\n"
 msgstr "%) %1: floating %4x%5 in %2,%3 %T%6%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1482 ekg/themes.c:1482
+#: ekg/themes.c:1482
 msgid "%) Rozmowa z %T%2%n rozpoczęta w oknie %T%1%n\n"
 msgstr "%) Query with %T%2%n started in %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1483 ekg/themes.c:1483
+#: ekg/themes.c:1483
 msgid "%! Nie można zamknąć okna stanu\n"
 msgstr "%! Can't close status window!\n"
 
-#: ekg2-CVS/ekg/themes.c:1486 ekg/themes.c:1486
+#: ekg/themes.c:1486
 msgid "%! Sekwencja %T%1%n jest nieprawidłowa\n"
 msgstr "%! Sequence %T%1%n is invalid\n"
 
-#: ekg2-CVS/ekg/themes.c:1487 ekg/themes.c:1487
+#: ekg/themes.c:1487
 msgid "%> Dodano sekwencję %T%1%n\n"
 msgstr "%> Sequence %T%1%n added\n"
 
-#: ekg2-CVS/ekg/themes.c:1488 ekg/themes.c:1488
+#: ekg/themes.c:1488
 msgid "%) Usunięto sekwencję %T%1%n\n"
 msgstr "%) Sequence %T%1%n removed\n"
 
-#: ekg2-CVS/ekg/themes.c:1490 ekg/themes.c:1490
+#: ekg/themes.c:1490
 msgid "%! Sekwencja %T%1%n ma już przypisaną akcję\n"
 msgstr "%! Sequence %T%1%n is already bound\n"
 
-#: ekg2-CVS/ekg/themes.c:1491 ekg/themes.c:1491
+#: ekg/themes.c:1491
 msgid "%! Brak przypisanych akcji\n"
 msgstr "%! No bound actions\n"
 
-#: ekg2-CVS/ekg/themes.c:1492 ekg/themes.c:1492
+#: ekg/themes.c:1492
 #, fuzzy
 msgid "%! Nie można znaleźć kombinacji %T%1%n\n"
 msgstr "%! Can't open file %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1493 ekg/themes.c:1493
+#: ekg/themes.c:1493
 msgid "%! Naciśnij klawisz(e), które mają być podbindowane\n"
 msgstr "%! Press key(s) which should be binded\n"
 
-#: ekg2-CVS/ekg/themes.c:1494 ekg/themes.c:1494
+#: ekg/themes.c:1494
 msgid "%> Bindowanie zakończono pomyślnie\n"
 msgstr "%> Binding acomplished\n"
 
-#: ekg2-CVS/ekg/themes.c:1498 ekg/themes.c:1498
+#: ekg/themes.c:1498
 msgid "%> Utworzono plan %T%1%n\n"
 msgstr "%> Created plan %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1499 ekg/themes.c:1499
+#: ekg/themes.c:1499
 msgid "%) Usunięto plan %T%1%n\n"
 msgstr "%) Removed plan %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1500 ekg/themes.c:1500
+#: ekg/themes.c:1500
 msgid "%) Usunięto plany użytkownika\n"
 msgstr "%) Removed user's plans\n"
 
-#: ekg2-CVS/ekg/themes.c:1501 ekg/themes.c:1501
+#: ekg/themes.c:1501
 msgid "%! Plan %T%1%n już istnieje\n"
 msgstr "%! Plan %T%1%n already exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1502 ekg/themes.c:1502
+#: ekg/themes.c:1502
 msgid "%! Plan %T%1%n nie istnieje\n"
 msgstr "%! Plan %T%1%n do not exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1503 ekg/themes.c:1503
+#: ekg/themes.c:1503
 msgid "%! Brak planów\n"
 msgstr "%! No plans\n"
 
-#: ekg2-CVS/ekg/themes.c:1505 ekg/themes.c:1505
+#: ekg/themes.c:1505
 msgid "%! Gdyby można było cofnąć czas...\n"
 msgstr "%! If time travel were possible...\n"
 
-#: ekg2-CVS/ekg/themes.c:1509 ekg/themes.c:1509
+#: ekg/themes.c:1509
 msgid "%> Utworzono timer %T%1%n\n"
 msgstr "%> Created timer %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1510 ekg/themes.c:1510
+#: ekg/themes.c:1510
 msgid "%) Usunięto timer %T%1%n\n"
 msgstr "%) Removed timer  %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1511 ekg/themes.c:1511
+#: ekg/themes.c:1511
 msgid "%) Usunięto timery użytkownika\n"
 msgstr "%) Removed user's timers\n"
 
-#: ekg2-CVS/ekg/themes.c:1512 ekg/themes.c:1512
+#: ekg/themes.c:1512
 msgid "%! Timer %T%1%n już istnieje\n"
 msgstr "%! Timer %T%1%n already exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1513 ekg/themes.c:1513
+#: ekg/themes.c:1513
 msgid "%! Timer %T%1%n nie istnieje\n"
 msgstr "%! Timer %T%1%n does not exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1514 ekg/themes.c:1514
+#: ekg/themes.c:1514
 msgid "%! Brak timerów\n"
 msgstr "%! No timers\n"
 
-#: ekg2-CVS/ekg/themes.c:1519 ekg/themes.c:1519
+#: ekg/themes.c:1519
 msgid "%! Nie zalogowano żadnych wiadomości\n"
 msgstr "%! No messages logged\n"
 
-#: ekg2-CVS/ekg/themes.c:1520 ekg/themes.c:1520
+#: ekg/themes.c:1520
 msgid "%! Nie zalogowano żadnych wiadomości dla %T%1%n\n"
 msgstr "%! No messages from %T%1%n logged\n"
 
-#: ekg2-CVS/ekg/themes.c:1523 ekg/themes.c:1523
+#: ekg/themes.c:1523
 msgid "%) Wiadomości dla %T%1%n wyczyszczone\n"
 msgstr "%) Messages from %T%1%n cleared\n"
 
-#: ekg2-CVS/ekg/themes.c:1524 ekg/themes.c:1524
+#: ekg/themes.c:1524
 msgid "%) Wszystkie wiadomości wyczyszczone\n"
 msgstr "%) All messages cleared\n"
 
-#: ekg2-CVS/ekg/themes.c:1529 ekg/themes.c:1529
+#: ekg/themes.c:1529
 msgid "%) Kolejka wiadomości wyczyszczona\n"
 msgstr "%) Message queue cleared\n"
 
-#: ekg2-CVS/ekg/themes.c:1530 ekg/themes.c:1530
+#: ekg/themes.c:1530
 msgid "%) Kolejka wiadomości wyczyszczona dla %T%1%n\n"
 msgstr "%) Message queue for %T%1%n cleared\n"
 
-#: ekg2-CVS/ekg/themes.c:1531 ekg/themes.c:1531
+#: ekg/themes.c:1531
 msgid "%! Komenda działa tylko przy braku połączenia z serwerem\n"
 msgstr "%! Command works only when disconected\n"
 
-#: ekg2-CVS/ekg/themes.c:1532 ekg/themes.c:1532
+#: ekg/themes.c:1532
 msgid "%! Kolejka wiadomości jest pusta\n"
 msgstr "%! Messaged queue is empty\n"
 
-#: ekg2-CVS/ekg/themes.c:1533 ekg/themes.c:1533
+#: ekg/themes.c:1533
 msgid "%! Brak wiadomości w kolejce dla %T%1%n\n"
 msgstr "%! No messages to %T%1%n in queue\n"
 
-#: ekg2-CVS/ekg/themes.c:1534 ekg/themes.c:1534
+#: ekg/themes.c:1534
 msgid "%> (%1) Wysłano zaległe wiadomości z kolejki\n"
 msgstr "%> (%1) Sent messages from queue\n"
 
-#: ekg2-CVS/ekg/themes.c:1537 ekg/themes.c:1537
+#: ekg/themes.c:1537
 msgid "%! Brak konferencji\n"
 msgstr "%! No conference\n"
 
-#: ekg2-CVS/ekg/themes.c:1539 ekg/themes.c:1539
+#: ekg/themes.c:1539
 msgid "%> %T%1%n: %2 (%yingorowana%n)\n"
 msgstr "%> %T%1%n: %2 (%yingored%n)\n"
 
-#: ekg2-CVS/ekg/themes.c:1540 ekg/themes.c:1540
+#: ekg/themes.c:1540
 msgid "%> Utworzono konferencję %T%1%n\n"
 msgstr "%> Created conference %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1541 ekg/themes.c:1541
+#: ekg/themes.c:1541
 msgid "%! Nie utworzono konferencji %T%1%n\n"
 msgstr "%! Conference not created %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1542 ekg/themes.c:1542
+#: ekg/themes.c:1542
 msgid "%) Usunięto konferencję %T%1%n\n"
 msgstr "%) Removed conference %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1543 ekg/themes.c:1543
+#: ekg/themes.c:1543
 msgid "%) Usunięto wszystkie konferencje\n"
 msgstr "%) Removed all conferences\n"
 
-#: ekg2-CVS/ekg/themes.c:1544 ekg/themes.c:1544
+#: ekg/themes.c:1544
 msgid "%! Konferencja %T%1%n już istnieje\n"
 msgstr "%! Conference %T%1%n already exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1545 ekg/themes.c:1545
+#: ekg/themes.c:1545
 msgid "%! Konferencja %T%1%n nie istnieje\n"
 msgstr "%! Conference %T%1%n do not exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1546 ekg/themes.c:1546
+#: ekg/themes.c:1546
 msgid "%! Nazwa konferencji powinna zaczynać się od %T#%n\n"
 msgstr "%! Conference name should start with %T#%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1547 ekg/themes.c:1547
+#: ekg/themes.c:1547
 msgid "%> Nazwa konferencji zmieniona: %T%1%n --> %T%2%n\n"
 msgstr "%> Conference renamed: %T%1%n --> %T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1548 ekg/themes.c:1548
+#: ekg/themes.c:1548
 msgid "%> Konferencja %T%1%n będzie ignorowana\n"
 msgstr "%> Konference %T%1%n will be ignored\n"
 
-#: ekg2-CVS/ekg/themes.c:1549 ekg/themes.c:1549
+#: ekg/themes.c:1549
 msgid "%> Konferencja %T%1%n nie będzie ignorowana\n"
 msgstr "%> Conference %T%1%n won't be ignored\n"
 
-#: ekg2-CVS/ekg/themes.c:1550 ekg/themes.c:1550
+#: ekg/themes.c:1550
 msgid "%> Dołączono %1 do konferencji %T%2%n\n"
 msgstr "%> Joined %1 to conference %T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1551 ekg/themes.c:1551
+#: ekg/themes.c:1551
 msgid "%> %1 uczestniczy już w konferencji %T%2%n\n"
 msgstr "%> %1 already in conference %T%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1563 ekg/themes.c:1563
+#: ekg/themes.c:1563
 msgid "%! Brak załadowanych skryptów\n"
 msgstr "%! No scripts loaded\n"
 
-#: ekg2-CVS/ekg/themes.c:1564 ekg/themes.c:1564
+#: ekg/themes.c:1564
 msgid "%) Skrypt został usunięty\n"
 msgstr "%) Script removed\n"
 
-#: ekg2-CVS/ekg/themes.c:1565 ekg/themes.c:1565
+#: ekg/themes.c:1565
 msgid "%! Nie podano nazwy skryptu\n"
 msgstr "%! Enter script name\n"
 
-#: ekg2-CVS/ekg/themes.c:1566 ekg/themes.c:1566
+#: ekg/themes.c:1566
 msgid "%! Nie znaleziono skryptu %T%1%n\n"
 msgstr "%! Not found script: %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1567 ekg/themes.c:1567
+#: ekg/themes.c:1567
 msgid "%! Skrypt należy umieścić w katalogu %T%1%n\n"
 msgstr "%! Script should be located in  %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1571 ekg/themes.c:1571
+#: ekg/themes.c:1571
 msgid "%> Usunięto %T%1->%2%n\n"
 msgstr "%> Removed  %T%1->%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1572 ekg/themes.c:1572
+#: ekg/themes.c:1572
 msgid "%! Nieznana zmienna: %T%1->%2%n\n"
 msgstr "%! Unknown variable: %T%1->%2%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1575 ekg/themes.c:1575
+#: ekg/themes.c:1575
 msgid "%! Lista sesji jest pusta\n"
 msgstr "%! Session list is empty\n"
 
-#: ekg2-CVS/ekg/themes.c:1580 ekg/themes.c:1580
+#: ekg/themes.c:1580
 msgid "%! Sesja %T%1%n już istnieje\n"
 msgstr "%! Session %T%1%n already exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1581 ekg/themes.c:1581
+#: ekg/themes.c:1581
 msgid "%! Sesja %T%1%n nie istnieje\n"
 msgstr "%! Sesion %T%1%n does not exists\n"
 
-#: ekg2-CVS/ekg/themes.c:1582 ekg/themes.c:1582
+#: ekg/themes.c:1582
 msgid "%> Utworzono sesję %T%1%n\n"
 msgstr "%> Created session %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1583 ekg/themes.c:1583
+#: ekg/themes.c:1583
 msgid "%> Usunięto sesję %T%1%n\n"
 msgstr "%> Removed session %T%1%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1586 ekg/themes.c:1586
+#: ekg/themes.c:1586
 msgid "%! Nie można zmienić sesji w okienku rozmowy%n\n"
 msgstr "%! Can't change session in query window%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1617 ekg/themes.c:1617
+#: ekg/themes.c:1617
 #, c-format
 msgid "%mbłąd%n"
 msgstr "%merror%n"
 
-#: ekg2-CVS/ekg/themes.c:1625 ekg/themes.c:1625
+#: ekg/themes.c:1625
 msgid "%! Plugin %T%1%n jest już załadowany%n.\n"
 msgstr "%! Plugin %T%1%n already loaded%n.\n"
 
-#: ekg2-CVS/ekg/themes.c:1626 ekg/themes.c:1626
+#: ekg/themes.c:1626
 msgid "%! Plugin %T%1%n nie może zostać znaleziony%n\n"
 msgstr "%! Plugin %T%1%n can not be found%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1627 ekg/themes.c:1627
+#: ekg/themes.c:1627
 msgid "%! Plugin %T%1%n nie jest prawidłowym pluginem EKG2%n\n"
 msgstr "%! Plugin %T%1%n is not correct EKG2 plugin%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1628 ekg/themes.c:1628
+#: ekg/themes.c:1628
 msgid "%! Plugin %T%1%n nie został wczytany poprawnie%n\n"
 msgstr "%! Plugin %T%1%n not initialized correctly%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1629 ekg/themes.c:1629
+#: ekg/themes.c:1629
 msgid "%! Plugin %T%1%n jest pluginem UI i nie może zostać wyładowany%n\n"
 msgstr "%! Plugin %T%1%n is an UI plugin and can't ne unloaded%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1630 ekg/themes.c:1630
+#: ekg/themes.c:1630
 msgid "%> Plugin %T%1%n został załadowany%n\n"
 msgstr "%> Plugin %T%1%n loaded%n\n"
 
-#: ekg2-CVS/ekg/themes.c:1631 ekg/themes.c:1631
+#: ekg/themes.c:1631
 msgid "%> Plugin %T%1%n został wyładowany%n\n"
 msgstr "%> Plugin %T%1%n unloaded%n\n"
 
-#: ekg2-CVS/plugins/gg/gg.c:967 plugins/gg/gg.c:967
+#: plugins/gg/gg.c:967
 msgid "%> Token zapisano do pliku %T%1%n\n"
 msgstr "%> Token save to file %T%1%n\n"
 
-#: ekg2-CVS/plugins/gg/gg.c:968 plugins/gg/gg.c:968
+#: plugins/gg/gg.c:968
 msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
-#: ekg2-CVS/plugins/gg/gg.c:970 plugins/gg/gg.c:970
+#: plugins/gg/gg.c:970
 msgid "%! Błąd pobierania tokenu: %1\n"
 msgstr "%! Error fetching token: %1\n"
 
-#: ekg2-CVS/plugins/gg/gg.c:971 plugins/gg/gg.c:971
+#: plugins/gg/gg.c:971
 msgid "%! Przekroczono limit czasu pobierania tokenu\n"
 msgstr "%! Token fetching timed out\n"
 
-#: ekg2-CVS/plugins/gg/gg.c:972 plugins/gg/gg.c:972
+#: plugins/gg/gg.c:972
 msgid ""
 "%! System operacyjny nie zawiera funkcji potrzebnych do obsługi tokenów\n"
 msgstr ""
 "%! Operating system does not include functions required to token support\n"
 
-#: ekg2-CVS/plugins/gg/gg.c:973 plugins/gg/gg.c:973
+#: plugins/gg/gg.c:973
 msgid "%! Należy najpierw pobrać z serwera token komendą %Ttoken%n\n"
 msgstr "%! First fetch token from server using %Ttoken%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:951 plugins/jabber/jabber.c:951
+#: plugins/jabber/jabber.c:951
 msgid ""
 "%> (%2) %T%1%n prosi o autoryzację dodania. Użyj \"/auth -a %1\" aby "
 "zaakceptować, \"/auth -d %1\" aby odrzucić.%n\n"
@@ -1824,56 +1794,56 @@ msgstr ""
 "%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to grant, \"/auth "
 "-d %1\" to refuse.%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:952 plugins/jabber/jabber.c:952
+#: plugins/jabber/jabber.c:952
 msgid ""
 "%> (%2) %T%1%n prosi o autoryzację usunięcia. Użyj \"/auth -d %1\" aby "
 "usunąć.%n\n"
 msgstr "%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to remove.%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:953 plugins/jabber/jabber.c:953
+#: plugins/jabber/jabber.c:953
 msgid "%! (%1) Błąd parsowania XMLa%n\n"
 msgstr "%! (%1) Error parsing XML%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:954 plugins/jabber/jabber.c:954
+#: plugins/jabber/jabber.c:954
 msgid "%> (%2) Wysłano żądanie autoryzacji do %t%1%n.\n"
 msgstr "%> (%2) Sent authorisation request to %T%1%n.\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:955 plugins/jabber/jabber.c:955
+#: plugins/jabber/jabber.c:955
 msgid "%> (%2) Autoryzowano %T%1%n.\n"
 msgstr "%> (%2) Authorised %T%1%n.\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:956 plugins/jabber/jabber.c:956
+#: plugins/jabber/jabber.c:956
 msgid "%> (%2) Wysłano prośbę o cofnięcie autoryzacji do %T%1%n.\n"
 msgstr "%> (%2) Asked %T%1%n to remove authorisation.\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:957 plugins/jabber/jabber.c:957
+#: plugins/jabber/jabber.c:957
 msgid "%> (%2) Cofnięto autoryzację %T%1%n.\n"
 msgstr "%> (%2) Authorisation for%T%1%n revoked.\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:958 plugins/jabber/jabber.c:958
+#: plugins/jabber/jabber.c:958
 msgid "%> (%2) Odmówiona autoryzacji %T%1%n.\n"
 msgstr "%> (%2) Authorisation for %T%1%n denied.\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:959 plugins/jabber/jabber.c:959
+#: plugins/jabber/jabber.c:959
 msgid "%> (%2) Wysłano pytanie o obecność do %T%1%n.\n"
 msgstr "%> (%2) Sent presence probe to %T%1%n.\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:960 plugins/jabber/jabber.c:960
+#: plugins/jabber/jabber.c:960
 msgid "%! (%1) Błąd łączenia się z serwerem Jabbera%n\n"
 msgstr "%! (%1) Error connecting to Jabber server%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:961 plugins/jabber/jabber.c:961
+#: plugins/jabber/jabber.c:961
 msgid "%! Wiadomość do %T%1%n nie mogła być dostarczona: %R(%2) %r%3%n\n"
 msgstr "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:962 plugins/jabber/jabber.c:962
+#: plugins/jabber/jabber.c:962
 msgid ""
 "%! Wiadomość do %T%1%n %y(%n%K%4(...)%y)%n nie mogła być dostarczona: %R(%2) "
 "%r%3%n\n"
 msgstr ""
 "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:963 plugins/jabber/jabber.c:963
+#: plugins/jabber/jabber.c:963
 msgid ""
 "%> Identyfikator Jabbera: %T%1%n\n"
 "%> Nazwa programu: %T%2%n\n"
@@ -1885,78 +1855,78 @@ msgstr ""
 "%> Client version: %T%3%n\n"
 "%> Operating system:: %T%4%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:964 plugins/jabber/jabber.c:964
+#: plugins/jabber/jabber.c:964
 msgid "%! (%1) Nieznany resource użytkownika%n\n"
 msgstr ""
 "%! (%1) User's resource unknown%n\n"
 "\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:965 plugins/jabber/jabber.c:965
+#: plugins/jabber/jabber.c:965
 msgid ""
 "%! (%1) Nie można sprawdzić wersji, ponieważ użytkownik %2 nie jest dostępny%"
 "n\n"
 msgstr "%! (%1) Unable to check version, because %2 is unavailable%n\n"
 
-#: ekg2-CVS/plugins/jabber/jabber.c:966 plugins/jabber/jabber.c:966
+#: plugins/jabber/jabber.c:966
 msgid "%> Użytkownik %T%1%n coś do nas pisze ...%n\n"
 msgstr "%> %T%1%n ise typing to as ...%n\n"
 
-#: ekg2-CVS/plugins/sim/main.c:310 plugins/sim/main.c:310
+#: plugins/sim/main.c:310
 msgid "%> Czekaj, generuję klucze...\n"
 msgstr "%> Please wait, generating keys...\n"
 
-#: ekg2-CVS/plugins/sim/main.c:311 plugins/sim/main.c:311
+#: plugins/sim/main.c:311
 msgid "%> Wygenerowano i zapisano klucze\n"
 msgstr "%> Keys generated and saved\n"
 
-#: ekg2-CVS/plugins/sim/main.c:312 plugins/sim/main.c:312
+#: plugins/sim/main.c:312
 msgid "%! Wystąpił błąd podczas generowania kluczy: %1\n"
 msgstr "%! Error while generating keys: %1\n"
 
-#: ekg2-CVS/plugins/sim/main.c:313 plugins/sim/main.c:313
+#: plugins/sim/main.c:313
 msgid "%! Posiadasz już swoją parę kluczy\n"
 msgstr "%! You already own a key pair\n"
 
-#: ekg2-CVS/plugins/sim/main.c:314 plugins/sim/main.c:314
+#: plugins/sim/main.c:314
 msgid "%) Klucz publiczny %1 został usunięty\n"
 msgstr "%) Public key %1 removew\n"
 
-#: ekg2-CVS/plugins/sim/main.c:315 plugins/sim/main.c:315
+#: plugins/sim/main.c:315
 msgid "%! Nie znaleziono klucza publicznego %1\n"
 msgstr "%! Can find %1's public key\n"
 
-#: ekg2-CVS/plugins/sim/main.c:316 plugins/sim/main.c:316
+#: plugins/sim/main.c:316
 msgid "%! Brak kluczy publicznych\n"
 msgstr "%! No public keys\n"
 
-#: ekg2-CVS/plugins/sim/main.c:317 plugins/sim/main.c:317
+#: plugins/sim/main.c:317
 msgid "%> Otrzymano klucz publiczny od %1\n"
 msgstr "%> Received public key from %1\n"
 
-#: ekg2-CVS/plugins/sim/main.c:318 plugins/sim/main.c:318
+#: plugins/sim/main.c:318
 msgid "%! Błąd podczas zapisu klucza publicznego: %1\n"
 msgstr "%! Error while saving public key: %1\n"
 
-#: ekg2-CVS/plugins/sim/main.c:319 plugins/sim/main.c:319
+#: plugins/sim/main.c:319
 msgid "%> Wysłano klucz publiczny do %1\n"
 msgstr "%> Sent public key to %1\n"
 
-#: ekg2-CVS/plugins/sim/main.c:320 plugins/sim/main.c:320
+#: plugins/sim/main.c:320
 msgid "%! Błąd podczas wysyłania klucza publicznego\n"
 msgstr "%! Error sending public key\n"
 
-#: ekg2-CVS/plugins/sms/sms.c:352 plugins/sms/sms.c:352
+#: plugins/sms/sms.c:352
 msgid "%! Błąd wysyłania SMS: %1\n"
 msgstr "%! Error sending SMS: %1\n"
 
-#: ekg2-CVS/plugins/sms/sms.c:353 plugins/sms/sms.c:353
+#: plugins/sms/sms.c:353
 msgid "%! %1 nie ma podanego numeru komórki\n"
 msgstr "%! %1 don't cellphone number\n"
 
-#: ekg2-CVS/plugins/sms/sms.c:354 plugins/sms/sms.c:354
+#: plugins/sms/sms.c:354
 msgid "%> SMS do %T%1%n został wysłany\n"
 msgstr "%> SMS to %T%1%n sent\n"
 
-#: ekg2-CVS/plugins/sms/sms.c:355 plugins/sms/sms.c:355
+#: plugins/sms/sms.c:355
 msgid "%! SMS do %T%1%n nie został wysłany\n"
 msgstr "%! SMS to %T%1%n not sent\n"
