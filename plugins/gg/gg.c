@@ -694,11 +694,14 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 void gg_reconnect_handler(int type, void *data)
 {
 	session_t* s = session_find((char*) data);
+	char *tmp;
 
 	if (!s || session_connected_get(s) == 1)
 		return;
-
-	command_exec(NULL, s, xstrdup("/connect"), 0);
+	
+	tmp = xstrdup("/connect");
+	command_exec(NULL, s, tmp, 0);
+	xfree(tmp);
 }
 
 /*
