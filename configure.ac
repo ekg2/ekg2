@@ -234,11 +234,11 @@ if test "x$have_python" = "xyes"; then
 	PLUGINS="$PLUGINS python"
 fi
 
-PKG_CHECK_MODULES(SQLITE, sqlite >= 2.8.0, [
-        AC_CONFIG_FILES([plugins/logsqlite/Makefile])
-        PLUGINS="$PLUGINS logsqlite"
-        have_sqlite="yes"
-], [ have_sqlite="no"])
+AC_CHECK_SQLITE
+if test "x$have_sqlite" = "xyes"; then
+	AC_CONFIG_FILES([plugins/logsqlite/Makefile])
+	PLUGINS="$PLUGINS logsqlite"
+fi
 
 AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
