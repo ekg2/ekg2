@@ -17,6 +17,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef __EKG_EVENTS_H
+#define __EKG_EVENTS_H
+
 #include "dynstuff.h"
 #include "plugins.h"
 
@@ -50,4 +53,6 @@ int event_online(void *data, va_list ap);
 int event_descr(void *data, va_list ap);
 
 int event_target_check (char *buf);
+
+#endif /* __EKG_EVENTS_H */
 

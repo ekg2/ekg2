@@ -17,9 +17,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2-config.h"
+
 #ifdef HAVE_LIBGPM
 #	include <gpm.h>
 #endif
+
 #include <ncurses.h>
 
 #include <ekg/windows.h>

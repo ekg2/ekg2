@@ -9,6 +9,8 @@
 void ncurses_init();
 void ncurses_deinit();
 
+plugin_t ncurses_plugin;
+
 int ncurses_screen_width;
 int ncurses_screen_height;
 int ncurses_resize_term;

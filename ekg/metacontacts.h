@@ -18,7 +18,7 @@
  */
 
 #ifndef __EKG_METACONTACTS_H
-#define __EKG_CONTACTS_H
+#define __EKG_METACONTACTS_H
 
 list_t metacontacts;
 

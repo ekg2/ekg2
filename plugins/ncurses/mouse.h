@@ -17,12 +17,20 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef __EKG_NCURSES_MOUSE_H
+#define __EKG_NCURSES_MOUSE_H
+
+
+#include "ekg2-config.h"
+
 void ncurses_enable_mouse();
 void ncurses_disable_mouse();
 
 #ifdef HAVE_LIBGPM
-void show_mouse_pointer();
+	void show_mouse_pointer();
 #else
-#define show_mouse_pointer()
+#	define show_mouse_pointer()
 #endif
+
+#endif /* __EKG_NCURSES_MOUSE_H */
 
