@@ -412,16 +412,28 @@ void jabber_handle(void *data, xmlnode_t *n)
 				ns = jabber_attr(q->atts, "xmlns");
 
 				if (ns && !xstrncmp(ns, "jabber:iq:version", 17)) {
-					struct utsname buf;
-
-					uname(&buf);
 
 					/* 'id' powinno byc w <iq/> */
 					if (id && from) {
+						const char *ver_client_name, *ver_client_version, *ver_os;
+						
+						if (!(ver_client_name = session_get(s, "ver_client_name")))
+							ver_client_name = DEFAULT_CLIENT_NAME;
+						if (!(ver_client_version = session_get(s, "ver_client_version")))
+							ver_client_version = VERSION;
+
 						jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">", from, id);
-						jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>Application Platform and Instant Messaging System - EKG-NG</name>");
-						jabber_write(j, "<version>%s</version>", VERSION);
-						jabber_write(j, "<os>%s %s %s</os>", jabber_escape(buf.sysname), jabber_escape(buf.release), jabber_escape(buf.machine));
+						jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>%s</name>", jabber_escape(ver_client_name));
+						jabber_write(j, "<version>%s</version>", jabber_escape(ver_client_version));
+
+						if (!(ver_os = session_get(s, "ver_os"))) {
+							struct utsname buf;
+							uname(&buf);
+
+							jabber_write(j, "<os>%s %s %s</os>", jabber_escape(buf.sysname), jabber_escape(buf.release), jabber_escape(buf.machine));
+						} else 
+							jabber_write(j, "<os>%s</os>", jabber_escape(ver_os));
+
 						jabber_write(j, "</query></iq>");
 					}
 				}; /* jabber:iq:version */
@@ -1540,6 +1552,9 @@ int jabber_plugin_init()
 	plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
 	plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, itoa(5223), 0);
 	plugin_var_add(&jabber_plugin, "use_ssl", VAR_INT, itoa(1), 0);
+	plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0);
+	plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0);
+	plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0);
 
 	format_add("jabber_auth_subscribe", "%> (%2) %1 prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n", 1);
 	format_add("jabber_auth_unsubscribe", "%> (%2) %1 prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby usun±æ.%n\n", 1);

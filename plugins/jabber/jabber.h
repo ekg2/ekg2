@@ -14,6 +14,8 @@
 #include <gnutls/gnutls.h>
 #endif
 
+#define DEFAULT_CLIENT_NAME "EKG2 -- http://www.ekg2.org"
+
 struct xmlnode_s {
 	char *name;
 	char *data;
