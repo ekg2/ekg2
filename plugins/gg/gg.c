@@ -203,7 +203,7 @@ static void gg_session_handler_success(session_t *s)
 	query_emit(NULL, "protocol-connected", &__session);
 	xfree(__session);
 
-	gg_userlist_send(g->sess, userlist);
+	gg_userlist_send(g->sess, s->userlist);
 
 	/* zapiszmy adres serwera */
 	if (session_int_get(s, "server_save")) {
@@ -921,7 +921,7 @@ COMMAND(gg_command_msg)
 				continue;
 			}
 
-			for (l = userlist; l; l = l->next) {
+			for (l = session->userlist; l; l = l->next) {
 				userlist_t *u = l->data;			
 				list_t m;
 
@@ -1174,7 +1174,7 @@ COMMAND(gg_command_block)
 		list_t l;
 		int i = 0;
 
-		for (l = userlist; l; l = l->next) {
+		for (l = session->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 				
 			if (!group_member(u, "__blocked"))
@@ -1221,7 +1221,7 @@ COMMAND(gg_command_unblock)
 		list_t l;
 		int x = 0;
 
-		for (l = userlist; l; ) {
+		for (l = session->userlist; l; ) {
 			userlist_t *u = l->data;
 			
 			l = l->next;

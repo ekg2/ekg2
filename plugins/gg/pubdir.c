@@ -440,7 +440,7 @@ static void gg_handle_userlist_get(int type, int fd, int watch, void *data)
 		userlist_set(h->data);
 
 		if (g)
-			gg_userlist_send(g->sess, userlist);
+			gg_userlist_send(g->sess, s->userlist);
 	}
 
 fail:

@@ -643,7 +643,7 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 {
 	struct conference c;
 	char **nicks;
-	list_t l;
+	list_t l, sl;
 	int i, count;
 
 	memset(&c, 0, sizeof(c));
@@ -664,28 +664,31 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 			char *gname = xstrdup(nicks[i] + 1);
 			int first = 0;
 			int nig = 0; /* nicks in group */
+		
+			for (sl = sessions; sl; sl = sl->next) {
+				session_t *s = sl->data;
+			        for (l = s->userlist; l; l = l->next) {
+					userlist_t *u = l->data;
+					list_t m;
 
-		        for (l = userlist; l; l = l->next) {
-				userlist_t *u = l->data;
-				list_t m;
+					if (!u->nickname)
+						continue;
 
-				if (!u->nickname)
-					continue;
+					for (m = u->groups; m; m = m->next) {
+						struct group *g = m->data;
 
-				for (m = u->groups; m; m = m->next) {
-					struct group *g = m->data;
+						if (!strcasecmp(gname, g->name)) {
+							if (first++)
+								array_add(&nicks, xstrdup(u->nickname));
+							else {
+								xfree(nicks[i]);
+								nicks[i] = xstrdup(u->nickname);
+							}
 
-					if (!strcasecmp(gname, g->name)) {
-						if (first++)
-							array_add(&nicks, xstrdup(u->nickname));
-						else {
-							xfree(nicks[i]);
-							nicks[i] = xstrdup(u->nickname);
+							nig++;
+
+							break;
 						}
-
-						nig++;
-
-						break;
 					}
 				}
 			}

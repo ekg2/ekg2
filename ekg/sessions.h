@@ -36,7 +36,7 @@ typedef struct {
 	char *uid;			/* id u¿ytkownika */
 	char *alias;			/* alias sesji */
 	void *priv;			/* dla plugina obs³uguj±cego sesjê */
-	userlist_t *userlist;		/* userlista */
+	list_t userlist;		/* userlista */
 
 	/* private: */
 	char *status;			/* stan sesji */

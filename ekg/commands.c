@@ -684,6 +684,7 @@ COMMAND(cmd_status)
 	return 0;
 }
 
+/* XXX -> zaimplementowac w pluginach */
 COMMAND(cmd_del)
 {
 	userlist_t *u;
@@ -696,19 +697,21 @@ COMMAND(cmd_del)
 	}
 
 	if (del_all) {
-		list_t l;
-
-		for (l = userlist; l; ) {
-			userlist_t *u = l->data;
-			char *tmp;
+		list_t l, sl;
+		for (sl = sessions; sl; sl = sl->next) {
+			session_t *s = sl->data;
+			for (l = s->userlist; l; ) {
+				userlist_t *u = l->data;
+				char *tmp;
 		
-			l = l->next;
+				l = l->next;
 
-			tmp = xstrdup(u->uid);
-			query_emit(NULL, "userlist-removed", &tmp);
-			xfree(tmp);
+				tmp = xstrdup(u->uid);
+				query_emit(NULL, "userlist-removed", &tmp);
+				xfree(tmp);
 
-			userlist_remove(u);
+				userlist_remove(u);
+			}
 		}
 
 		printq("user_cleared_list");
@@ -968,19 +971,21 @@ COMMAND(cmd_ignore)
 		int flags;
 
 		if (!params[0]) {
-			list_t l;
+			list_t l, sl;
 			int i = 0;
+			for (sl = sessions; sl; sl = sl->next) {
+				session_t *s = sl-> data;
+				for (l = s->userlist; l; l = l->next) {
+					userlist_t *u = l->data;
+					int level;
 
-			for (l = userlist; l; l = l->next) {
-				userlist_t *u = l->data;
-				int level;
+					if (!(level = ignored_check(u->uid)))
+						continue;
 
-				if (!(level = ignored_check(u->uid)))
-					continue;
+					i = 1;
 
-				i = 1;
-
-				printq("ignored_list", format_user(u->uid), ignore_format(level));
+					printq("ignored_list", format_user(u->uid), ignore_format(level));
+				}
 			}
 
 			if (!i)
@@ -1046,18 +1051,21 @@ COMMAND(cmd_ignore)
 		}
 
 		if (unignore_all) {
-			list_t l;
+			list_t l, sl;
 			int x = 0;
+			
+			for (sl = sessions; sl; sl = sl->next) {
+				session_t *s = sl->data;
+				for (l = s->userlist; l; ) {
+					userlist_t *u = l->data;
 
-			for (l = userlist; l; ) {
-				userlist_t *u = l->data;
+					l = l->next;
 
-				l = l->next;
+					if (!ignored_remove(u->uid))
+						x = 1;
 
-				if (!ignored_remove(u->uid))
-					x = 1;
-
-				level = ignored_check(u->uid);
+					level = ignored_check(u->uid);
+				}
 			}
 
 			if (x) {
@@ -1088,7 +1096,7 @@ COMMAND(cmd_ignore)
 
 COMMAND(cmd_list)
 {
-	list_t l;
+	list_t l, sl;
 	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
 	char **argv = NULL, *show_group = NULL, *ip_str;
 	const char *tmp;
@@ -1110,15 +1118,18 @@ COMMAND(cmd_list)
 			string_t members = string_init(NULL);
 			char *__group;
 			int count = 0;
+			
+			for (sl = sessions; sl; sl = sl->next) {
+				session_t *s = sl->data;
+				for (l = s->userlist; l; l = l->next) {
+					u = l->data;
 
-			for (l = userlist; l; l = l->next) {
-				u = l->data;
-
-				if (u->groups || invert) {
-					if ((!invert && group_member(u, group + 1)) || (invert && !group_member(u, group + 1))) {
-						if (count++)
-							string_append(members, ", ");
-						string_append(members, u->nickname);
+					if (u->groups || invert) {
+						if ((!invert && group_member(u, group + 1)) || (invert && !group_member(u, group + 1))) {
+							if (count++)
+								string_append(members, ", ");
+							string_append(members, u->nickname);
+						}
 					}
 				}
 			}
@@ -1259,44 +1270,47 @@ COMMAND(cmd_list)
 		array_free(argv);
 	}
 
-	for (l = userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		int show;
+	for (sl = sessions; sl; sl = sl->next) {
+		session_t *s = sl->data;
+		for (l = s->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+			int show;
 
-		if (!u->nickname)
-			continue;
+			if (!u->nickname)
+				continue;
 
-		tmp = ekg_status_label(u->status, u->descr, "list_");
+			tmp = ekg_status_label(u->status, u->descr, "list_");
 
-		show = show_all;
+			show = show_all;
 
-		if (show_away && !strcasecmp(u->status, EKG_STATUS_AWAY))
-			show = 1;
+			if (show_away && !strcasecmp(u->status, EKG_STATUS_AWAY))
+				show = 1;
 
-		if (show_active && !strcasecmp(u->status, EKG_STATUS_AVAIL))
-			show = 1;
+			if (show_active && !strcasecmp(u->status, EKG_STATUS_AVAIL))
+				show = 1;
 
-		if (show_inactive && !strcasecmp(u->status, EKG_STATUS_NA))
-			show = 1;
+			if (show_inactive && !strcasecmp(u->status, EKG_STATUS_NA))
+				show = 1;
 
-		if (show_invisible && !strcasecmp(u->status, EKG_STATUS_INVISIBLE))
-			show = 1;
+			if (show_invisible && !strcasecmp(u->status, EKG_STATUS_INVISIBLE))
+				show = 1;
 
-		if (show_blocked && !strcasecmp(u->status, EKG_STATUS_BLOCKED))
-			show = 1;
+			if (show_blocked && !strcasecmp(u->status, EKG_STATUS_BLOCKED))
+				show = 1;
 
-		if (show_descr && u->descr)
-			show = 0;
+			if (show_descr && u->descr)
+				show = 0;
 
-		if (show_group && !group_member(u, show_group))
-			show = 0;
+			if (show_group && !group_member(u, show_group))
+				show = 0;
 
-		if (show_offline && group_member(u, "__offline"))
-			show = 1;
+			if (show_offline && group_member(u, "__offline"))
+				show = 1;
 
-		if (show) {
-			printq(tmp, format_user(u->uid), (u->first_name) ? u->first_name : u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
-			count++;
+			if (show) {
+				printq(tmp, format_user(u->uid), (u->first_name) ? u->first_name : u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
+				count++;
+			}
 		}
 	}
 
@@ -2136,29 +2150,31 @@ int binding_help(int a, int b)
 int binding_quick_list(int a, int b)
 {
 	string_t list = string_init(NULL);
-	list_t l;
+	list_t l, sl;
+	for (sl = sessions; sl; sl = sl->next) {
+		session_t *s = sl->data;
+		for (l = s->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+			const char *format = NULL;
+			char *tmp;
 
-	for (l = userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		const char *format = NULL;
-		char *tmp;
-
-		if (!u->nickname)
-			continue;
+			if (!u->nickname)
+				continue;
 		
-		format = ekg_status_label(u->status, NULL, "quick_list_");
+			format = ekg_status_label(u->status, NULL, "quick_list_");
 
-		if (!format)
-			continue;
+			if (!format)
+				continue;
 
-		if (!(tmp = format_string(format, u->nickname)))
-			continue;
+			if (!(tmp = format_string(format, u->nickname)))
+				continue;
 
-		string_append(list, tmp);
+			string_append(list, tmp);
 
-		xfree(tmp);
+			xfree(tmp);
+		}
 	}
-	
+
 	if (strlen(list->str) > 0)
 		print("quick_list", list->str);
 

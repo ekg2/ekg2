@@ -104,7 +104,7 @@ struct ignore_label {
 	char *name;
 };
 
-list_t userlist;
+//list_t userlist;
 
 int userlist_read();
 int userlist_write();

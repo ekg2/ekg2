@@ -116,43 +116,45 @@ int contacts_update(window_t *w)
 
 	for (j = 0; j < strlen(contacts_order); j += 2) {
 		int count = 0;
-		list_t l;
+		list_t l, sl;
 		const char *footer_status = NULL;
 		char tmp[100];
+		for (sl = sessions; sl; sl = sl->next) {
+			session_t *s = sl->data;	
+			for (l = s->userlist, count = 0; l; l = l->next) {
+				userlist_t *u = l->data;
+				const char *format;
+				char *line;
 
-		for (l = userlist, count = 0; l; l = l->next) {
-			userlist_t *u = l->data;
-			const char *format;
-			char *line;
+				if (!u->status || !u->nickname || strncmp(u->status, contacts_order + j, 2))
+					continue;
+	
+				if (group && !group_member(u, group))
+					continue;
 
-			if (!u->status || !u->nickname || strncmp(u->status, contacts_order + j, 2))
-				continue;
+				if (!count) {
+					snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
+					format = format_find(tmp);
+					if (strcmp(format, ""))
+						ncurses_backlog_add(w, fstring_new(format_string(format)));
+					footer_status = u->status;
+				}
 
-			if (group && !group_member(u, group))
-				continue;
+				if (u->descr && contacts_descr)
+					snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", u->status);
+				else if (u->descr && !contacts_descr)
+					snprintf(tmp, sizeof(tmp), "contacts_%s_descr", u->status);
+					
+				else
+					snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
 
-			if (!count) {
-				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
-				format = format_find(tmp);
-				if (strcmp(format, ""))
-					ncurses_backlog_add(w, fstring_new(format_string(format)));
-				footer_status = u->status;
+				line = format_string(format_find(tmp), u->nickname, u->descr);
+
+				ncurses_backlog_add(w, fstring_new(line));
+				xfree(line);
+
+				count++;
 			}
-
-			if (u->descr && contacts_descr)
-				snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", u->status);
-			else if (u->descr && !contacts_descr)
-				snprintf(tmp, sizeof(tmp), "contacts_%s_descr", u->status);
-				
-			else
-				snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
-
-			line = format_string(format_find(tmp), u->nickname, u->descr);
-
-			ncurses_backlog_add(w, fstring_new(line));
-			xfree(line);
-
-			count++;
 		}
 
 		if (count) {
