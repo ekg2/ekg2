@@ -2765,7 +2765,7 @@ COMMAND(cmd_timer)
 			return -1;
 		}
 
-		if ((t = timer_add(NULL, t_name, period, persistent, timer_handle_command, t_command))) {
+		if ((t = timer_add(NULL, t_name, period, persistent, timer_handle_command, xstrdup(t_command)))) {
 			printq("timer_added", t->name);
 			if (!in_autoexec)
 				config_changed = 1;
