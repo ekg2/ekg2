@@ -188,7 +188,7 @@ unsigned char finalcount[8];
  *
  * zwraca skrót has³a dla jabber:iq:auth.
  */
-const char *jabber_digest(const char *sid, const char *password)
+char *jabber_digest(const char *sid, const char *password)
 {
 	SHA1_CTX ctx;
 	char *tmp;

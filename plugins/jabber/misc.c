@@ -11,7 +11,7 @@
 
 #include "jabber.h"
 
-const char *jabber_attr(char **atts, const char *att)
+char *jabber_attr(char **atts, const char *att)
 {
 	int i;
 
