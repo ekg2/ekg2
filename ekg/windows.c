@@ -320,7 +320,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 			}
 
 		case 2:
-			if (!(w = window_find(target))) {
+			if (!(w = window_find_s(session, target))) {
 				if (!separate)
 					w = window_find("__status");
 				else {

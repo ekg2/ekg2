@@ -568,7 +568,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	 * zasobem to wrzucamy tam. je¶li mamy otwarte okno dla zasobu,
 	 * a przychodzi z innego, otwieramy nowe. */
 
-	if (!window_find_s(session_current, target)) {
+	if (!window_find_s(session, target)) {
 		const char *res;
 		userlist_t *u;
 		
@@ -580,15 +580,17 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		} else {
 			u = userlist_find(session, target);
 
-			if (u && window_find(u->uid))
+			if (u && window_find_s(session, u->uid))
 				newtarget = xstrdup(u->uid);
 			else if (u && u->nickname)
 				newtarget = xstrdup(u->nickname);
 		}
 	}
 
-	if (newtarget)
+	if (newtarget) {
 		target = newtarget;
+		debug("dupa\n");
+	}
 
 	if (!target)
 		target = "__current";
