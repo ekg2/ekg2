@@ -48,6 +48,17 @@
 
 PLUGIN_DEFINE(logsqlite, PLUGIN_LOG, logsqlite_theme_init);
 
+char *config_logsqlite_path = NULL;
+int config_logsqlite_last_in_window = 0;
+int config_logsqlite_last_open_window = 0;
+int config_logsqlite_last_limit = 10;
+int config_logsqlite_log = 0;
+int config_logsqlite_log_ignored = 0;
+int config_logsqlite_log_status = 0;
+int config_logsqlite_remind_number = 0;
+
+static sqlite * logsqlite_current_db = NULL;
+static char * logsqlite_current_db_path = NULL;
 
 /*
  * last log
@@ -193,21 +204,22 @@ sqlite * logsqlite_prepare_db(session_t * session, time_t sent)
 {
 	char * path;
 	sqlite * db;
+
 	if (!(path = logsqlite_prepare_path(session, sent)))
 		return 0;
-	if (!logsqlite_last_path) {
+	if (!logsqlite_current_db_path) {
 		db = logsqlite_open_db(session, sent, path);
-		logsqlite_last_path = xstrdup(path);
+		logsqlite_current_db_path = xstrdup(path);
 		logsqlite_current_db = db;
-	} else if (!xstrcmp(path, logsqlite_last_path)) {
+	} else if (!xstrcmp(path, logsqlite_current_db_path)) {
 		db = logsqlite_current_db;
 		debug("[logsqlite] keeping old db\n");
 	} else {
 		logsqlite_close_db(logsqlite_current_db);
 		db = logsqlite_open_db(session, sent, path);
 		logsqlite_current_db = db;
-		xfree(logsqlite_last_path);
-		logsqlite_last_path = xstrdup(path);
+		xfree(logsqlite_current_db_path);
+		logsqlite_current_db_path = xstrdup(path);
 	}
 	xfree(path);
 	return db;
