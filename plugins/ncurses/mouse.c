@@ -73,6 +73,16 @@ void ncurses_mouse_move_handler(int x, int y)
 	/* add function that should be done when mouse move is done */
 }
 
+/* 
+ * ncurses_mouse_clicked_handler()
+ * 
+ * handler for clicked of mouse
+ */
+void ncurses_mouse_clicked_handler(int x, int y)
+{
+	
+}
+
 /*
  * ncurses_gpm_watch_handler()
  * 
@@ -152,8 +162,8 @@ void ncurses_disable_mouse()
 
 	if (gpm_fd != 2) {
 		watch_remove(&ncurses_plugin, gpm_fd, WATCH_READ);
-		timer_remove(&ncurses_plugin, "ncurses:mouse");
 	}
 #endif
+	timer_remove(&ncurses_plugin, "ncurses:mouse");
 }
 
