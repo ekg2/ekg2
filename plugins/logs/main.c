@@ -113,7 +113,7 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
 		return NULL;
 
 	while (*tmp) {
-		if ((char)*tmp == '%' && *(tmp+1) != NULL) {
+		if ((char)*tmp == '%' && (tmp+1) != NULL) {
 			switch (*(tmp+1)) {
 				case 'S':	string_append_n(buf, session->uid, -1);
 						break;
