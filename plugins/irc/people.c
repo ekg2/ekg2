@@ -407,7 +407,7 @@ int irc_free_people(session_t *s, irc_private_t *j)
 	userlist_t *ulist;
 	window_t *w;
 
-	debug("[irc] free_people()\n");
+	debug("[irc] free_people() %08X %s\n", s, s->uid);
 	for (t1=j->people; t1; t1=t1->next)
 	{
 		per = (people_t *)t1->data;

@@ -39,6 +39,9 @@
 
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
+#define GDEBUG
+#define MARLENE
+
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 /*
  * irc_handle_write()
@@ -430,13 +433,6 @@ IRC_COMMAND(irc_c_error)
 				print_window(dest, s, 0, irccommands[ecode].name,
 						session_name(s), param[3], coloured);
 				xfree(coloured);
-			}
-			break;
-		case 324:
-			if ((chanp = irc_find_channel(j->channels, param[3])))
-			{
-				xfree(chanp->mode_str);
-				chanp->mode_str = xstrdup(IOK2(4));
 			}
 			break;
 		case 333:
@@ -978,7 +974,7 @@ IRC_COMMAND(irc_c_topic)
 
 IRC_COMMAND(irc_c_mode)
 {
-	int i, k, len, val=0, act=1;
+	int i, k, len, val=0, act=1, is324=irccommands[ecode].num==324;
 	char *t, *bang, *add, **pars, *channame;
 	people_t *per;
 	people_chan_t *ch;
@@ -987,8 +983,14 @@ IRC_COMMAND(irc_c_mode)
 	window_t *w;
 	string_t moderpl;
 
+	/* MODE <channel|nick> <mode> <modeparams>
+	 * <nick> <chan> <mode> <modeparams>
+	 */
 	/* GiM: FIXME TODO [this shouldn't be xstrcasecmp! user mode */
-	if (!xstrcasecmp(param[2], j->nick))
+	if (is324)
+	{
+		param = &(param[1]);
+	} else if (!xstrcasecmp(param[2], j->nick))
 	{
 		print_window(window_current->target, s, 0, 
 				"IRC_MODE", session_name(s), 
@@ -1003,7 +1005,7 @@ IRC_COMMAND(irc_c_mode)
 	if (len) add[--len] = '\0';
 
 	t=param[3];
-	for (i=0,k=4; i<xstrlen(param[3]); i++, t++) {
+	for (i=0,k=4; i<xstrlen(param[3]) && xstrlen(param[k]); i++, t++) {
 		if (*t=='+' || *t=='-')
 			act=*t-'-';
 		if ((bang=xstrchr(add, *t))) {
@@ -1034,20 +1036,24 @@ notreallyok:
 	if (bang) *bang='\0';
 	moderpl =  string_init("");
 	pars=&(param[3]);
-	while (*pars) {
-		/* we need a space first */
-		string_append_c(moderpl, ' ');
-		string_append(moderpl, *pars++);
-	}
-	print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
-			param[0]+1, bang?bang+1:"", param[2], moderpl->str);
 
-	/*
-	if ((chan = irc_find_channel(j->channels, param[2]))) {
-		xfree(chan->mode_str);
-		chan->mode_str = xstrdup(moderpl->str);
+	while (*pars) {
+		string_append(moderpl, *pars++);
+		if (*pars)
+			string_append_c(moderpl, ' ');
 	}
-	*/
+	if (!is324) {
+		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN_NEW", session_name(s),
+				param[0]+1, bang?bang+1:"", param[2], moderpl->str);
+	} else {
+		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
+				param[2], moderpl->str);
+
+		if ((chan = irc_find_channel(j->channels, param[2]))) {
+			xfree(chan->mode_str);
+			chan->mode_str = xstrdup(moderpl->str);
+		}
+	}
 	if (bang) *bang='!';
 	string_free(moderpl, 1);
 

@@ -180,7 +180,7 @@ static IrcCommand irccommands[] =
 
 /*	{ 1,	325,	NULL,	"RPL_UNIQOPIS",		&irc_c_error,	
 	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_error,   */
-	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_error,	IRC_RPL_OTHER},
+	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_mode,	IRC_RPL_OTHER},
 	/* 331 is really RPL_NOTOPIC, but I don't want another format... */
 	{ 1,	331,	NULL,	"RPL_TOPIC",		&irc_c_error,	IRC_RPL_OTHER},
 	{ 1,	332,	NULL,	"RPL_TOPIC",		&irc_c_error,	IRC_RPL_OTHER},

@@ -98,14 +98,14 @@ static void irc_private_init(session_t *s)
 
 	j->connecting = 0;
 	j->nick = NULL;
-	j->host_ident=NULL;
-	j->obuf=NULL;
-	j->obuf_len=0;
-	j->people=NULL;
-	j->channels=NULL;
+	j->host_ident = NULL;
+	j->obuf = NULL;
+	j->obuf_len = 0;
+	j->people = NULL;
+	j->channels = NULL;
 	session_connected_set(s, 0);
 	for (i=0; i<SERVOPTS; i++) 
-		j->sopt[i]=NULL;
+		j->sopt[i] = NULL;
 
 	session_private_set(s, j);
 }
@@ -124,7 +124,7 @@ static void irc_private_destroy(session_t *s)
 	if (xstrncasecmp(uid, IRC4, 4) || !j)
 		return;
 
-	irc_free_people(s, j);
+	/*irc_free_people(s, j); wtf? */
 	xfree(j->host_ident);
 	xfree(j->server);
 	xfree(j->nick);
@@ -316,7 +316,7 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 	memset(buf, 0, 4096);
 
 	if ((len = read(fd, buf, 4095)) < 1) {
-		debug(" readerror\n");
+		debug(" readerror %s\n", strerror(errno));
 		print("generic_error", strerror(errno));
 		xfree(idta);
 		irc_handle_disconnect(s);
@@ -1613,7 +1613,8 @@ static int irc_theme_init()
 	format_add("IRC_RPL_TOPICBY", _("%> set by %2 on %4"), 1);
 	format_add("IRC_TOPIC_CHANGE", _("%> %T%2%n changed topic on %T%4%n: %5\n"), 1);
 	format_add("IRC_TOPIC_UNSET", _("%> %T%2%n unset topic on %T%4%n\n"), 1);
-	format_add("IRC_MODE_CHAN", _("%> %2/%4 sets mode%5\n"), 1);
+	format_add("IRC_MODE_CHAN_NEW", _("%> %2/%4 sets mode [%5]\n"), 1);
+	format_add("IRC_MODE_CHAN", _("%> %2 mode is [%3]\n"), 1);
 	format_add("IRC_MODE", _("%> (%1) %2 set mode %3 on You\n"), 1);
 
 	format_add("IRC_PINGPONG", _("%) (%1) ping/pong %c%2%n\n"), 1);
