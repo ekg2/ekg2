@@ -56,6 +56,7 @@ typedef struct {
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
 
 plugin_t jabber_plugin;
+void jabber_register_commands(void);
 
 char *jabber_attr(char **atts, const char *att);
 char *jabber_digest(const char *sid, const char *password);
@@ -64,8 +65,10 @@ void jabber_handle(void *data, xmlnode_t *n);
 
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
+int jabber_write_status(session_t *s);
 
 void jabber_reconnect_handler(int type, void *data);
+void jabber_handle_resolver(int type, int fd, int watch, void *data);
 
 time_t jabber_try_xdelay(xmlnode_t *xmlnode, const char *ns);
 
