@@ -1982,8 +1982,6 @@ COMMAND(cmd_quit)
 	query_emit(NULL, "quitting", &reason);
 	xfree(reason);
 
-	tmp = saprintf("/disconnect %s", (params[0]) ? params[0] : "");
-
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 		
@@ -1996,7 +1994,6 @@ COMMAND(cmd_quit)
 	 * u¿ywan± przez siebie pamiêæ. */
 	quit_command = 1;
 
-	xfree(tmp);	
 	return 0;
 }
 
