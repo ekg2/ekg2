@@ -191,6 +191,9 @@ int logsqlite_msg_handler(void *data, va_list ap)
 
 	}
 
+	debug("[logsqlite] opening transaction\n");
+	sqlite_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+
 	debug("[logsqlite] running msg query\n");
 	sqlite_exec_printf(db, "INSERT INTO log_msg VALUES(%Q, %Q, %Q, %Q, %i, %i, %i, %Q)", 0, 0, 0,
 			session,
@@ -201,6 +204,9 @@ int logsqlite_msg_handler(void *data, va_list ap)
 			time(0),
 			sent,
 			text);
+
+	debug("[logsqlite] commiting\n");
+	sqlite_exec(db, "COMMIT", NULL, NULL, NULL);
 
 	xfree(type);
 	xfree(path);
@@ -255,6 +261,9 @@ int logsqlite_status_handler(void *data, va_list ap)
 	if ( descr == NULL )
 		descr = "";
 
+	debug("[logsqlite] opening transaction\n");
+	sqlite_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+
 	debug("[logsqlite] running status query\n");
 	sqlite_exec_printf(db, "INSERT INTO log_status VALUES(%Q, %Q, %Q, %i, %Q, %Q)", 0, 0, 0,
 			session,
@@ -263,6 +272,9 @@ int logsqlite_status_handler(void *data, va_list ap)
 			time(0),
 			status,
 			descr);
+
+	debug("[logsqlite] commiting\n");
+	sqlite_exec(db, "COMMIT", NULL, NULL, NULL);
 
 	xfree(path);
 	debug("[logsqlite] closing db\n");
