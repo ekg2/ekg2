@@ -946,7 +946,7 @@ COMMAND(irc_command_me)
 	col = irc_ircoldcolstr_to_ekgcolstr(session, str);
 	print_window(chan, session, ischn?(mw&1):!!(mw&2),
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
-			session_name(session), j->nick, chan, str);
+			session_name(session), j->nick, chan, col);
 	xfree(col);
 	xfree(str);
 	return 0;
