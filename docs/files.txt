@@ -39,6 +39,7 @@ Plik konfiguracyjny ,,config'' zawiera kolejne wpisy w postaci:
 	on <zdarzenie> <priorytet> <za³o¿enia> <komenda>
 	at [nazwa] <czas>/<czêstotliwo¶æ> <komenda>
 	timer [nazwa] [*/]<czas> <komenda>
+	plugin <nazwa>
 
 Je¶li pierwszy wyraz nie jest jednym ze znanych, jest traktowany jako
 nazwa zmiennej, po której wystêpuje jej warto¶æ -- chodzi o zachowanie

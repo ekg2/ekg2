@@ -210,7 +210,14 @@ int config_read(const char *filename)
                         if (ret)
                                 debug("  unknown variable %s\n", foo);
 
-                } else if (!xstrcasecmp(buf, "bind")) {
+                } else if (!xstrcasecmp(buf, "plugin")) {
+                        char **p = array_make(foo, " \t", 3, 1, 0);
+
+                                if (array_count(p) == 2)
+                                        plugin_load(p[0], atoi(p[1]), 1);
+
+                                array_free(p);
+		} else if (!xstrcasecmp(buf, "bind")) {
                         char **pms = array_make(foo, " \t", 2, 1, 0);
 
                         if (array_count(pms) == 2) {
