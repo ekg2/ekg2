@@ -515,6 +515,9 @@ static void possibilities_generator(const char *text, int len)
 	int i;
 	command_t *c = actual_completed_command;
 
+	if (!c)
+		return;
+
 	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
 		if (!xstrncmp(text, c->possibilities[i], len)) 
 			array_add_check(&completions, xstrdup(c->possibilities[i]), 1);
