@@ -400,18 +400,8 @@ IRC_COMMAND(irc_c_error)
 					session_name(s), param[3], IOK2(4));
 			if (j->connecting) {
 				altnick = (char *) session_get(s, "alt_nick");
-				/* hm, mozna pobierac session_get(s, "nickname")
-				 * i potem porownywac do param[3] jesli !xstrcmp()
-				 * i altnick istnieje to wysylamy, czyli w sumie wariant gorszy niz 
-				 * altnick && xstrcmp()
-				 *
-				 * hmm a masz pewno¶æ ¿e server ciê rzeczywi¶æie zarejstruje
-				 * pod tym co chcia³e¶ ? ;) [nie chce mi siê szukaæ po rfc,
-				 * ale je¶li tak to mo¿emy tak zrobiæ]
-				 * pozatym wariant z altnick && nie jest wcale taki z³y
-				 */
-				/* XXX: ZBADAÆ */
-				if (xstrcmp(param[3], altnick)) {
+				/* tu by³a kiedy¶ g³upia dyskusja ;> */
+				if (altnick && xstrcmp(param[3], altnick)) {
 					print_window(NULL, s, 0, "IRC_TRYNICK",
 							session_name(s), altnick);
 					xfree(j->nick);
