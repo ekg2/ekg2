@@ -1288,7 +1288,7 @@ static int irc_theme_init()
 	format_add("IRC_TOPIC_CHANGE", _("%> %T%2%n changed topic on %T%4%n: %5\n"), 1);
 	format_add("IRC_TOPIC_UNSET", _("%> %T%2%n unset topic on %T%4%n\n"), 1);
 	format_add("IRC_MODE_CHAN", _("%> %2/%4 sets mode%5\n"), 1);
-	format_add("IRC_MODE", _("%> %2 set mode %3 on You\n"), 1);
+	format_add("IRC_MODE", _("%> (%1) %2 set mode %3 on You\n"), 1);
 
 	format_add("IRC_PINGPONG", _("%) (%1) ping/pong %c%2%n\n"), 1);
 	format_add("IRC_YOUNEWNICK", _("%> You are now known as %G%3%n\n"), 1);
