@@ -299,6 +299,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 	if (!xstrcmp(n->name, "iq") && type) {
 		if (id && !xstrcmp(id, "auth")) {
+			s->last_conn = time(NULL);
 			j->connecting = 0;
 
 			if (!xstrcmp(type, "result")) {
@@ -511,6 +512,8 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 	char *buf;
 	int len;
 
+	s->activity = time(NULL);
+
 	/* ojej, roz³±czy³o nas */
 	if (type == 1) {
 		jabber_handle_disconnect(s);
@@ -633,6 +636,58 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	}
 
 	watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, data);
+}
+
+int jabber_status_show_handle(void *data, va_list ap)
+{
+	char **uid = va_arg(ap, char**);
+	session_t *s = session_find(*uid);
+	jabber_private_t *j = session_private_get(s);
+	userlist_t *u;
+	const char *port_s = session_get(s, "port");
+	int port = (port_s) ? atoi(port_s) : 5222;
+	struct tm *t;
+	time_t n;
+	int now_days;
+	char buf[100], *tmp;
+
+	if (!s || !j) 
+		return -1;
+
+	print("show_status_header");
+
+	// nasz stan
+	if ((u = userlist_find(s, s->uid)) && u->nickname)
+		print("show_status_uin_nick", s->uid, u->nickname);
+	else
+		print("show_status_uin", s->uid);
+
+	// serwer
+	print("show_status_server", j->server, itoa(port));
+	if (j->connecting)
+		print("show_status_connecting");
+
+	// kiedy ostatnie polaczenie/rozlaczenie
+	n = time(NULL);
+	t = localtime(&n);
+	now_days = t->tm_yday;
+
+	t = localtime(&s->last_conn);
+	strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t);
+
+	if (s->connected)
+		print("show_status_connected_since", buf);
+	else
+		print("show_status_disconnected_since", buf);
+
+	// nasz status
+	tmp = format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")),s->descr, "");
+
+	print("show_status_status_simple", tmp);
+
+	print("show_status_footer");
+
+	return 0;
 }
 
 COMMAND(jabber_command_connect)
@@ -1181,6 +1236,8 @@ int jabber_plugin_init()
 	query_connect(&jabber_plugin, "plugin-print-version", jabber_print_version, NULL);
 	query_connect(&jabber_plugin, "session-added", jabber_session, (void*) 1);
 	query_connect(&jabber_plugin, "session-removed", jabber_session, (void*) 0);
+	query_connect(&jabber_plugin, "status-show", jabber_status_show_handle, NULL);
+
 
 #define possibilities(x) array_make(x, " ", 0, 1, 1)
 #define params(x) array_make(x, " ", 0, 1, 1)
