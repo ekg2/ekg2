@@ -264,8 +264,7 @@ const char *session_password_get(session_t *s)
         static char buf[100];
 	char *tmp = base64_decode(s->password);
 	
-	snprintf(buf, sizeof(buf), tmp);
-
+	strlcpy(buf, tmp, sizeof(buf));
 	xfree(tmp);
 	
 	return buf;
@@ -653,6 +652,22 @@ int session_check(session_t *s, int need_private, const char *protocol)
 	return 1;
 }
 
+/* 
+ * session_name()
+ * 
+ * returns static buffer with formated session name
+ */
+const char *session_name(session_t *s)
+{
+	static char buf[150];
+	char *tmp = format_string(format_find("session_name"), (s->alias) ? s->alias : s->uid);
+
+	strlcpy(buf, tmp, sizeof(buf));
+	
+	xfree(tmp);
+	return buf;
+}
+
 /*
  * session_unidle()
  *
@@ -918,6 +933,7 @@ COMMAND(session_command)
 			session_set_n(s->uid, params[2], params[3]);
 			config_changed = 1;
 			command_exec(NULL, s, tmp, 0);
+			xfree(tmp);
 			return 0;
 		}
 		

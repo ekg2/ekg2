@@ -105,7 +105,7 @@ const char *session_format(session_t *s);
 #define session_format_n(a) session_format(session_find(a))
 
 /* alias or uid - formatted */
-#define session_name(a)  format_string(format_find("session_name"), (a->alias) ? a->alias : a->uid)
+const char *session_name(session_t *s);
 #define session_name_n(a) session_name(session_find(a))
 
 /* alias or uid - not formatted */
