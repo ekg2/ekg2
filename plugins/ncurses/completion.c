@@ -196,7 +196,7 @@ static void known_uin_generator(const char *text, int len)
 
                 if (u->nickname && !xstrncasecmp(text, u->nickname, len)) 
                         array_add_check(&completions, xstrdup(u->nickname), 1);
-        }
+        } 
 
 end:
 	if (session_name)
@@ -919,8 +919,33 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	xfree(cmd);
 
 	/* pocz±tek komendy? */
-	if (word == 0)
+	if (word == 0) {
 		command_generator(start, xstrlen(start));
+		if (!completions && window_current && window_current->target) {
+	                known_uin_generator(start, xstrlen(start));
+	                if (completions) {
+	                        for (j = 0; completions && completions[j]; j++) {
+	                                string_t s;
+	
+	                                if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' ')) {
+						s = string_init("");
+						string_append(s, completions[j]);
+						string_append_c(s, ':');
+						xfree(completions[j]);
+						completions[j] = string_free(s, 0);
+	                                        continue;
+					}
+	                                s = string_init("\"");
+	                                string_append(s, completions[j]);
+	                                string_append_c(s, '\"');
+					string_append_c(s, ':');
+	                                xfree(completions[j]);
+	                                completions[j] = string_free(s, 0);
+	                        }
+	                }
+
+		}
+	}
 	else {
 		char **params = NULL;
 		int abbrs = 0, i;
@@ -992,7 +1017,11 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 				}
 			}		
 		}
-		
+	
+		if (!completions && window_current && window_current->target) {
+			known_uin_generator(words[word], xstrlen(words[word]));
+		}	
+
 		if (completions) {
 			for (j = 0; completions && completions[j]; j++) {
 				string_t s;
