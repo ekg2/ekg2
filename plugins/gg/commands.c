@@ -1055,7 +1055,7 @@ COMMAND(gg_command_modify)
 	if (params[1])
 		argv = array_make(params[1], " \t", 0, 1, 1);
 
-	for (i = 0; argv[i]; i++) {
+	for (i = 0; argv && argv[i]; i++) {
 		
 		if (match_arg(argv[i], 'f', "first", 2) && argv[i + 1]) {
 			xfree(u->first_name);
