@@ -1,7 +1,7 @@
 #!/bin/sh
 
-PREINPUTS="header.xml bookinfo.xml userbook.xml"
-POSTINPUTS="develbook.xml faq.xml footer.xml"
+PREINPUTS="design/header.xml bookinfo.xml userbook.xml"
+POSTINPUTS="develbook.xml faq.xml design/footer.xml"
 OUTPUT="book.xml"
 GENPROG="./txt2docbook.py"
 
@@ -14,7 +14,7 @@ done
 
 # pluginy
 
-cat "plugins_header.xml" >> $OUTPUT
+cat "design/plugins_header.xml" >> $OUTPUT
 
 for i in ../../plugins/*
 do
@@ -25,7 +25,7 @@ do
 
    if [ -f $i/doc.xml -o -f $i/commands.txt -o -f $i/vars.txt ]
    then
-      cat "plugin_header.xml" | sed -e s/PLUGIN/`basename $i`/ >> $OUTPUT
+      cat "design/plugin_header.xml" | sed -e s/PLUGIN/`basename $i`/ >> $OUTPUT
       
       if [ -f $i/doc.xml ]
       then
@@ -45,12 +45,12 @@ do
          $GENPROG -s $i/session.txt >> $OUTPUT
       fi
 
-      cat "plugin_footer.xml" >> $OUTPUT
+      cat "design/plugin_footer.xml" >> $OUTPUT
    fi
    
 done
 
-cat "plugins_footer.xml" >> $OUTPUT
+cat "design/plugins_footer.xml" >> $OUTPUT
 
 for input in $POSTINPUTS
 do
