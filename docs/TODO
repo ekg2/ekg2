@@ -37,5 +37,6 @@ rozwi±zanie.
   - przenie¶æ wszystkie COMMAND() do commands.c (zdz)
   - zrobic makro JABBER_SANITY_CHECK; z zestawu funkcji powtarzaj±cych
     siê prze ka¿dym polecenie (zdz)
+  - conference support (similar to gg_command_msg() in gg)
   - komenda /ver do sprawdzania wersji czyjegos klienta (zdz)
 
