@@ -1102,3 +1102,124 @@ void sessions_free()
 	window_current->session = NULL;
 }
 
+/*
+ * session_help()
+ *
+ * it shows help about variable from ${datadir}/ekg/plugins/{plugin_name}/
+ * session.txt
+ *
+ * s - session
+ * name - name of the variable
+ */
+void session_help(session_t *s, const char *name)
+{
+	FILE *f; 
+	char *line, *type = NULL, *def = NULL, *tmp, *filename, *plugin_name;
+	string_t str = string_init(NULL);
+	int found = 0;
+
+	if (!s)
+		return;
+	
+	if (!session_is_var(s, name)) {
+		print("session_variable_doesnt_exist", session_name(s), name);
+		return;
+	}	
+
+	plugin_name = plugin_find_uid(s->uid)->name;
+	if ((tmp = getenv("LANGUAGE"))) {
+		char *tmp_cutted = xstrndup(tmp, 2);
+		filename = saprintf("session-%s.txt", tmp_cutted);
+		xfree(tmp_cutted);
+	} else {
+		filename = xstrdup("session.txt");
+	}
+
+	
+	tmp = saprintf(DATADIR "/plugins/%s/%s", plugin_name, filename);
+	f = fopen(tmp, "r");
+	xfree(tmp);
+
+	if (!f) {
+                print("help_session_file_not_found", plugin_name);
+	        return;
+	}
+		
+	xfree(filename);
+
+	while ((line = read_file(f))) {
+		if (!xstrcasecmp(line, name)) {
+			found = 1;
+			xfree(line);
+			break;
+		}
+
+		xfree(line);
+	}
+
+	if (!found) {
+		fclose(f);
+		print("help_session_var_not_found", name);
+		return;
+	}	
+
+	line = read_file(f);
+	
+	if ((tmp = xstrstr(line, ": ")))
+		type = xstrdup(tmp + 2);
+	else
+		type = xstrdup("?");
+	
+	xfree(line);
+
+	tmp = NULL;
+	
+	line = read_file(f);
+	if ((tmp = xstrstr(line, ": ")))
+		def = xstrdup(tmp + 2);
+	else
+		def = xstrdup("?");
+	xfree(line);
+
+	print("help_session_header", session_name(s), name, type, def);
+
+	xfree(type);
+	xfree(def);
+
+	if (tmp)			/* je¶li nie jest to ukryta zmienna... */
+		xfree(read_file(f));	/* ... pomijamy liniê */
+
+	while ((line = read_file(f))) {
+		if (line[0] != '\t') {
+			xfree(line);
+			break;
+		}
+
+		if (!xstrncmp(line, "\t- ", 3) && xstrcmp(str->str, "")) {
+			print("help_session_body", str->str);
+			string_clear(str);
+		}
+
+                if (!xstrncmp(line, "\t", 1) && xstrlen(line) == 1) {
+	                string_append(str, "\n\r");
+                        continue;
+                }
+	
+		string_append(str, line + 1);
+
+		if (line[xstrlen(line) - 1] != ' ')
+			string_append_c(str, ' ');
+
+		xfree(line);
+	}
+
+	if (xstrcmp(str->str, ""))
+		print("help_session_body", str->str);
+
+	string_free(str, 1);
+	
+	if (xstrcmp(format_find("help_session_footer"), ""))
+		print("help_session_footer", name);
+
+	fclose(f);
+}

@@ -13,4 +13,5 @@ install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/gg/
 	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/vars.txt
 	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/commands.txt
+	$(INSTALL) -m 644 session.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/session.txt
 

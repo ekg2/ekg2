@@ -953,7 +953,12 @@ COMMAND(cmd_help)
 				variable_help(params[1]);
 			return 0;
 		}
-		
+
+                if (!xstrcasecmp(p, "session") && params[1]) {
+                        if (!quiet)
+                                session_help(session, params[1]);
+                        return 0;
+                }
 
         	if (session && session->uid) {
 	                plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
@@ -970,13 +975,21 @@ COMMAND(cmd_help)
 
 			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !c->alias) {
 				FILE *f; 
-				char *line, *params_help = NULL, *brief = NULL, *tmp = NULL;
+				char *line, *params_help = NULL, *brief = NULL, *tmp = NULL, *filename;
 				const char *seeking_name;
 				string_t s = string_init(NULL);
 				int found = 0;
 
+			        if ((tmp = getenv("LANGUAGE"))) {
+				        char *tmp_cutted = xstrndup(tmp, 2);
+			                filename = saprintf("commands-%s.txt", tmp_cutted);
+			                xfree(tmp_cutted);
+			        } else {
+			                filename = xstrdup("commands.txt");
+			        }
+
 				if (c->plugin && c->plugin->name) {
-					char *tmp = saprintf(DATADIR "/plugins/%s/commands.txt", c->plugin->name);
+					char *tmp = saprintf(DATADIR "/plugins/%s/%s", c->plugin->name, filename);
 					f = fopen(tmp, "r");
 				        xfree(tmp);
 
@@ -990,14 +1003,19 @@ COMMAND(cmd_help)
 					else 
 				                seeking_name = tmp + 1;
 			        } else {
-			                f = fopen(DATADIR "/commands.txt", "r");
+					char *tmp = saprintf(DATADIR "/%s", filename);
+					f = fopen(tmp, "r");
+					xfree(tmp);
 
 			                if (!f) {
 		                	        print("help_command_file_not_found");
 			                        return -1;
 			                }
+
 	                		seeking_name = c->name;
         			}
+
+				xfree(filename);
 
 			        while ((line = read_file(f))) {
 			                if (!xstrcasecmp(line, seeking_name)) {
@@ -1088,12 +1106,20 @@ COMMAND(cmd_help)
 		if (xisalnum(*c->name) && !c->alias) {
 		    	char *blah = NULL;
                         FILE *f;
-                        char *line, *params_help, *brief, *tmp = NULL;
+                        char *line, *params_help, *brief, *tmp = NULL, *filename;
                         const char *seeking_name;
                         int found = 0;
 
-                        if (c->plugin && c->plugin->name) {
-	                        char *tmp = saprintf(DATADIR "/plugins/%s/commands.txt", c->plugin->name);
+		        if ((tmp = getenv("LANGUAGE"))) {
+		                char *tmp_cutted = xstrndup(tmp, 2);
+		                filename = saprintf("commands-%s.txt", tmp_cutted);
+		                xfree(tmp_cutted);
+		        } else {
+		                filename = xstrdup("commands.txt");
+		        }
+
+		        if (c->plugin && c->plugin->name) {
+	                        char *tmp = saprintf(DATADIR "/plugins/%s/%s", c->plugin->name, filename);
                                 f = fopen(tmp, "r");
                                 xfree(tmp);
 
@@ -1107,15 +1133,19 @@ COMMAND(cmd_help)
 				else 
 	                                seeking_name = tmp + 1;
                         } else {
-                                f = fopen(DATADIR "/commands.txt", "r");
+				char *tmp = saprintf(DATADIR "/%s", filename);
+                                f = fopen(tmp, "r");
+				xfree(tmp);
  
 				if (!f) {
                                 	print("help_command_file_not_found");
                                         return -1;
                                 }
+
                                 seeking_name = c->name;
                         }
 
+			xfree(filename);
 
                         while ((line = read_file(f))) {
                         	if (!xstrcasecmp(line, seeking_name)) {
@@ -1321,6 +1351,12 @@ COMMAND(cmd_list)
         if (!params[0] && window_current->target) { 
                 params[0] = xstrdup(window_current->target);
 		params[1] = NULL;
+	}
+
+	if (params[0]) {
+		char *tmp = xstrdup(params[0]);
+		xfree((char *) params[0]);
+		params[0] = xstrdup(strip_quotes(tmp));
 	}
 
 	if (params[0] && *params[0] != '-') {
@@ -3819,9 +3855,9 @@ void command_init()
  
 	command_add(NULL, "!", "?", cmd_exec, 0, NULL);
 
-	command_add(NULL, "help", "c v", cmd_help, 0, NULL);
+	command_add(NULL, "help", "c vS", cmd_help, 0, NULL);
 	  
-	command_add(NULL, "?", "c v", cmd_help, 0, NULL);
+	command_add(NULL, "?", "c vS", cmd_help, 0, NULL);
 	 
 	command_add(NULL, "ignore", "uUC I", cmd_ignore, 0,
 	  "status descr notify msg dcc events *");

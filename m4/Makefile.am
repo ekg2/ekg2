@@ -1,1 +1,1 @@
-EXTRA_DIST = expat.m4 libgsm.m4 ncurses.m4 openssl.m4 python.m4 readline.m4 stdint.m4 libgadu.m4 acx_pthread.m4 libgnutls.m4
+EXTRA_DIST = intmax.m4 longdouble.m4 longlong.m4 nls.m4 po.m4 printf-posix.m4 signed.m4 size_max.m4 wchar_t.m4 wint_t.m4 xsize.m4  expat.m4 libgsm.m4 ncurses.m4 openssl.m4 python.m4 readline.m4 stdint.m4 libgadu.m4 acx_pthread.m4 libgnutls.m4

@@ -1030,6 +1030,13 @@ void theme_init()
         format_add("help_command_file_not_found", _("%! Nie znaleziono opisu komend (nieprawid³owa instalacja)\n"), 1);
         format_add("help_command_file_not_found_plugin", _("%! Nie znaleziono opisu komend dla pluginu %T%1%n (nieprawid³owa instalacja)\n"), 1);
         format_add("help_command_not_found", _("%! Nie znaleziono opisu komendy %T%1%n\n"), 1);
+        format_add("help_session_body", "%> %|%1\n", 1);
+        format_add("help_session_file_not_found", _("%! Nie znaleziono opisu zmiennych sesyjnych dla pluginu %T%1%n (nieprawid³owa instalacja)\n"), 1);
+	format_add("help_session_var_not_found", _("%! Nie znaleziono opisu zmiennej sesyjnej %T%1%n\n"), 1);
+	format_add("help_session_header", _("%> %1->%T%2%n (%3, domy¶lna warto¶æ: %4)\n%>\n"), 1);
+        format_add("help_session_footer", "", 1);
+
+
 
 
 	/* ignore, unignore, block, unblock */

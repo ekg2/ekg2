@@ -1890,7 +1890,7 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 
 		array_add(&chars, xstrdup(itoa(ch)));
 
-        	while ((c = wgetch(input)) != ERR && count < bindings_added_max) {
+        	while (count <= bindings_added_max && (c = wgetch(input)) != ERR) {
 	                array_add(&chars, xstrdup(itoa(c)));
 			count++;
 	        }

@@ -127,4 +127,6 @@ int session_read();
 int session_write();
 
 void sessions_free();
+
+void session_help(session_t *s, const char *name);
 #endif /* __EKG_SESSIONS_H */

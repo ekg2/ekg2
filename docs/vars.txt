@@ -1,28 +1,6 @@
 // ma³y opis dostêpnych zmiennych
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 
-uin
-	typ: liczba
-	domy¶lna warto¶æ: brak
-
-	okre¶la numer GG, z którego ma korzystaæ klient. niezbêdna do
-	po³±czenia z serwerem. automatycznie ustawiana po udanej
-	rejestracji, gdy wcze¶niej by³a pusta.
-
-password
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	has³o u¿ytkownika. niezbêdne do po³±czenia z serwerem. automatycznie
-	ustawiane po udanej rejestracji, gdy wcze¶niej by³o puste.
-
-email
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	adres e-mail u¿ytkownika. automatycznie ustawiany po udanej rejestracji,
-	gdy wcze¶niej by³ pusty.
-
 audio_device
 	typ: tekst
 	domy¶lna warto¶æ: /dev/dsp
@@ -31,37 +9,13 @@ audio_device
 	je¶li poprzedzi siê je minusem ,,-'', sygna³ z wej¶cia urz±dzenia nie
 	bêdzie wysy³any podczas rozmowy g³osowej.
 
-auto_away
-	typ: liczba
-	domy¶lna warto¶æ: 600
-
-	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
-	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
-	nie bêdzie automatycznej zmiany.
-
-auto_back
-	typ: liczba
-	domy¶lna warto¶æ: 0
-
-	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
-	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
-	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
-	jakiejkolwiek wiadomo¶ci. je¶li równa 2, przy wci¶niêciu klawisza.
-	
-auto_reconnect
-	typ: liczba
-	domy¶lna warto¶æ: 10
-
-	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
-	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
-
 auto_save
 	typ: liczba
 	domy¶lna warto¶æ: 0
 
 	po jakim czasie automatycznie zapisaæ ustawienia, w sekundach.
 	je¶li 0, nie zapisuje automatycznie.
-	
+
 away_reason
 	typ: tekst
 	domy¶lna warto¶æ: brak
@@ -249,9 +203,10 @@ display_notify
 
 	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
 	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
-	tylko zmiany z niedostêpnego na dostêpny i na odwrót. w interfejse
-	ncurses wiêkszy priorytet ma zmienna ,,contacts'', która przy
-	warto¶ci 2 ukrywa zmiany stanu.
+	tylko zmiany z niedostêpnego na dostêpny i na odwrót. wiêkszy 
+	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2 
+	ukrywa zmiany stanu. wiêkszy priorytet ma równie¿ zmienna 
+	sesyjna (je¿eli nie równa -1)
 
 display_pl_chars
 	typ: bool
@@ -431,25 +386,6 @@ save_quit
 	zapisywana, je¿eli 1 to pojawia siê pytanie, je¿eli 2 to konfiguracja
 	zapisana jest bez pytania 
 
-server
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	adresy IP serwerów, z którym klient powinien próbowaæ siê po³±czyæ,
-	pomijaj±c w³a¶ciw± procedurê ³±czenia siê. przydane podczas awarii
-	g³ównego serwera. adresy nale¿y oddzielaæ przecinkami, ¶rednikami
-	lub spacjami. po dwukropku mo¿na podaæ port serwera. je¶li adres i
-	port serwera zostan± poprzedzone tekstem ,,tls:'', klient spróbuje
-	wynegocjowaæ bezpieczne po³±czenie TLSv1 z serwerem.
-
-server_save
-	typ: bool
-	domy¶lna warto¶æ: 0
-
-	okre¶la, czy ekg ma zapamiêtywaæ serwer, z którym ostatnio uda³o
-	siê po³±czyæ. w przypadku w³±czenia tej zmiennej, zmienna ,,server''
-	bêdzie automatycznie uaktualniana, a zawarto¶æ wpisana przez
-	u¿ytkownika zostanie usuniêta.
 
 sort_windows
 	typ: bool

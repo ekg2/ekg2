@@ -578,7 +578,7 @@ void variable_free()
 void variable_help(const char *name)
 {
 	FILE *f; 
-	char *line, *type = NULL, *def = NULL, *tmp;
+	char *line, *type = NULL, *def = NULL, *tmp, *filename;
 	const char *seeking_name;
 	string_t s = string_init(NULL);
 	int found = 0;
@@ -589,8 +589,16 @@ void variable_help(const char *name)
 		return;
 	}	
 
+	if ((tmp = getenv("LANGUAGE"))) {
+		char *tmp_cutted = xstrndup(tmp, 2);
+		filename = saprintf("vars-%s.txt", tmp_cutted);
+		xfree(tmp_cutted);
+	} else {
+		filename = xstrdup("vars.txt");
+	}
+
 	if (v->plugin && v->plugin->name) {
-		char *tmp = saprintf(DATADIR "/plugins/%s/vars.txt", v->plugin->name);
+		char *tmp = saprintf(DATADIR "/plugins/%s/%s", v->plugin->name, filename);
 		f = fopen(tmp, "r");
 		xfree(tmp);
 
@@ -598,16 +606,22 @@ void variable_help(const char *name)
         	        print("help_set_file_not_found_plugin", v->plugin->name);
 	                return;
 		}
-
+		
 		seeking_name = xstrchr(name, ':') + 1;
 	} else {
-		f = fopen(DATADIR "/vars.txt", "r");
+		char *tmp = saprintf(DATADIR "/%s", filename);
+		f = fopen(tmp, "r");
+		xfree(tmp);
+
                 if (!f) {
                         print("help_set_file_not_found");
                         return;
                 }
+
 		seeking_name = name;
 	}
+
+	xfree(filename);
 
 	while ((line = read_file(f))) {
 		if (!xstrcasecmp(line, seeking_name)) {

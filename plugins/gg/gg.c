@@ -1063,14 +1063,14 @@ int gg_plugin_init()
         variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0, NULL);	
-        plugin_var_add(&gg_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&gg_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "10", 0, NULL);
         plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
-        plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "-1", 0, NULL);
         plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
         plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1, NULL);
