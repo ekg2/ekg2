@@ -78,9 +78,31 @@ void ncurses_mouse_move_handler(int x, int y)
  * 
  * handler for clicked of mouse
  */
-void ncurses_mouse_clicked_handler(int x, int y)
+void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 {
-	
+	list_t l;
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+		
+		if (!w)
+			continue;
+
+		if (x >= w->left && x < w->left + w->width && y >= w->top && y < w->top + w->height) {
+			ncurses_window_t *n;
+			if (w->id == 0) { /* if we are reporting status window it means that we clicked 
+					 * on window_current and some other functions should be called */
+				ncurses_main_window_mouse_handler(x, y, mouse_flag);
+				break;
+			} else
+				n = w->private;
+
+//			debug("window id:%d y %d height %d\n", w->id, w->top, w->height);
+			if (n->handle_mouse)
+				n->handle_mouse(x, y, mouse_flag);
+			break;
+		}
+	}
 }
 
 /*
@@ -107,7 +129,7 @@ void ncurses_gpm_watch_handler(int last, int fd, int watch, void *data)
 		default:
 			break;
 	}
-//        debug("Event Type : %d at x=%d y=%d\n", event.type, event.x, event.y);
+        /* debug("Event Type : %d at x=%d y=%d\n", event.type, event.x, event.y); */
 }
 #endif
 
@@ -131,6 +153,7 @@ void ncurses_enable_mouse()
         if(Gpm_Open(&conn, 0) == -1) {
                 debug("Cannot connect to mouse server\n");
 	        mousemask(ALL_MOUSE_EVENTS, &oldmask);
+		mouseinterval(-1);
 		goto end;
 	}
 	else
@@ -141,9 +164,11 @@ void ncurses_enable_mouse()
 		gpm_visiblepointer = 1;
 	} else { /* xterm */
 	        mousemask(ALL_MOUSE_EVENTS, &oldmask);
+		mouseinterval(-1);
 	}
 #else
 	mousemask(ALL_MOUSE_EVENTS, &oldmask);
+	mouseinterval(-1);
 #endif
 end:
         timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);

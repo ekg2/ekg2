@@ -43,6 +43,8 @@
 #include <ekg/windows.h>
 
 #include "old.h"
+#include "mouse.h"
+#include "contacts.h"
 
 int contacts_index = 0;
 int contacts_group_index = 0;
@@ -68,6 +70,156 @@ typedef struct {
         const char *status;
 	const char *descr;
 } contact_t;
+
+void ncurses_backward_contacts_line(int arg)
+{
+	window_t *w = window_find("__contacts");
+
+        if (!w)
+        	return;
+
+	contacts_index -= arg;
+
+        if (contacts_index < 0)
+                contacts_index = 0;
+
+	ncurses_contacts_update(NULL);
+	ncurses_redraw(w);
+	ncurses_commit();
+}
+
+void ncurses_forward_contacts_line(int arg)
+{
+        ncurses_window_t *n;
+        window_t *w = window_find("__contacts");
+        int contacts_count = 0, all = 0, count = 0;
+
+        if (!w)
+                return;
+
+        n = w->private;
+
+        if (config_contacts_groups) {
+                char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
+                count = array_count(groups);
+                array_free(groups);
+        }
+
+        if (contacts_group_index > count + 1)
+                all = 2;
+        else if (contacts_group_index > count)
+                all = 1;
+
+        switch (all) {
+                case 1:
+                {
+                        list_t l;
+                        for (l = sessions; sessions && l; l = l->next) {
+                                session_t *s = l->data;
+
+                                if (!s || !s->userlist)
+                                        continue;
+
+                                contacts_count += list_count(s->userlist);
+                        }
+                        break;
+                }
+                case 2:
+                        contacts_count = list_count(metacontacts);
+                        break;
+                default:
+                        contacts_count = list_count(session_current->userlist);
+                        break;
+        }
+
+	contacts_index += arg;
+
+        if (contacts_index  > contacts_count - w->height + n->overflow + CONTACTS_MAX_HEADERS)
+                contacts_index = contacts_count - window_current->height + n->overflow + CONTACTS_MAX_HEADERS;
+        if (contacts_index < 0)
+                contacts_index = 0;
+
+        ncurses_contacts_update(NULL);
+	ncurses_redraw(w);
+	ncurses_commit();
+}
+
+
+void ncurses_backward_contacts_page(int arg)
+{
+        ncurses_window_t *n;
+        window_t *w = window_find("__contacts");
+
+        if (!w)
+                return;
+
+        n = w->private;
+
+        contacts_index -= w->height / 2;
+
+        if (contacts_index < 0)
+                contacts_index = 0;
+
+        ncurses_contacts_update(NULL);
+	ncurses_redraw(w);
+	ncurses_commit();
+}
+
+void ncurses_forward_contacts_page(int arg)
+{
+        ncurses_window_t *n;
+        window_t *w = window_find("__contacts");
+        int contacts_count = 0, all = 0, count = 0;
+
+        if (!w)
+                return;
+
+        n = w->private;
+
+	if (config_contacts_groups) {
+		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
+		count = array_count(groups);
+		array_free(groups);
+	}
+
+        if (contacts_group_index > count + 1) 
+	        all = 2;
+        else if (contacts_group_index > count) 
+                all = 1;
+
+	switch (all) {
+		case 1: 
+		{
+			list_t l;
+			for (l = sessions; sessions && l; l = l->next) {
+				session_t *s = l->data;
+				
+				if (!s || !s->userlist)
+					continue;
+
+				contacts_count += list_count(s->userlist);
+			}
+			break;
+		}
+		case 2: 
+			contacts_count = list_count(metacontacts);
+			break;
+		default:
+                        contacts_count = list_count(session_current->userlist);
+                        break;
+	}
+
+        contacts_index += w->height / 2;
+
+        if (contacts_index  > contacts_count - w->height + n->overflow + CONTACTS_MAX_HEADERS)
+                contacts_index = contacts_count - window_current->height + n->overflow + CONTACTS_MAX_HEADERS;
+        if (contacts_index < 0)
+                contacts_index = 0;
+
+        ncurses_contacts_update(NULL);
+	ncurses_redraw(w);
+	ncurses_commit();
+}
 
 /*
  * contacts_compare()
@@ -204,6 +356,7 @@ group_cleanup:
 				u.nickname = up->nickname;
 				u.descr = up->descr;
 				u.status = (up->status) ? up->status : NULL;
+				u.private = (void *) s;
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
 			}
 		}
@@ -224,6 +377,8 @@ group_cleanup:
 				u.status = (up->status) ? up->status : NULL;
 				u.descr = up->descr;
 				u.nickname = m->name;
+				u.private = (void *) 2;
+
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
 		}
 	} 
@@ -241,6 +396,7 @@ group_cleanup:
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
 			const char *format;
+			fstring_t *string;
 
 			if (!u->status || !u->nickname || !u->status || xstrlen(u->status) < 2 || xstrncmp(u->status, contacts_order + j, 2))
 				continue;
@@ -273,7 +429,9 @@ group_cleanup:
 				xstrcat(tmp, "_blink");
 	
 	                line = format_string(format_find(tmp), u->nickname, u->descr);
-	                ncurses_backlog_add(w, fstring_new(line));
+			string = fstring_new(line);
+			string->private = (u->private) ? u->private : (void *) session_current;
+	                ncurses_backlog_add(w, string);
 	                xfree(line);
 	
 			count++;
@@ -437,6 +595,60 @@ void ncurses_contacts_changed(const char *name)
 	ncurses_commit();
 }
 
+/* 
+ * ncurses_contacts_mouse_handler()
+ * 
+ * handler for mouse events
+ */
+void ncurses_contacts_mouse_handler(int x, int y, int mouse_state) 
+{
+        window_t *w = window_find("__contacts");
+        ncurses_window_t *n;
+	char *name;
+
+	if (mouse_state == EKG_SCROLLED_UP) {
+		ncurses_backward_contacts_line(5);
+		return;
+	} else if (mouse_state == EKG_SCROLLED_DOWN) {
+		ncurses_forward_contacts_line(5);
+		return;
+	}
+
+	if (!w || mouse_state != EKG_BUTTON1_DOUBLE_CLICKED)
+		return;
+
+	n = w->private;
+
+	if (y > n->backlog_size)
+		return;
+
+	name = n->backlog[n->backlog_size - y]->str;
+
+	if ((int) n->backlog[n->backlog_size - y]->private == 2) {
+		char *tmp = saprintf("/query %s", name);
+
+		command_exec(NULL, NULL, tmp, 0);
+		xfree(tmp);
+	} else {
+		session_t *s;
+		char *tmp;
+
+		s = (session_t *) n->backlog[n->backlog_size - y]->private;
+
+		if (!s) {
+			debug("it shouldn't happened - mouse handler error\n");
+			goto end;
+		}
+
+		tmp = saprintf("/query \"%s/%s\"", session_alias_uid(s), strip_spaces(name));
+		command_exec(NULL, s, tmp, 0);
+		xfree(tmp);
+	}
+
+end:
+	return;
+}
+
 /*
  * ncurses_contacts_new()
  *
@@ -470,6 +682,7 @@ void ncurses_contacts_new(window_t *w)
 	w->edge = contacts_edge;
 	w->frames = contacts_frame;
 	n->handle_redraw = ncurses_contacts_update;
+	n->handle_mouse = ncurses_contacts_mouse_handler;
 	w->nowrap = !contacts_wrap;
 	n->start = 0;
 }

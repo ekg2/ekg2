@@ -16,5 +16,10 @@ int ncurses_contacts_update(window_t *w);
 void ncurses_contacts_changed(const char *name);
 void ncurses_contacts_new(window_t *w);
 
+void ncurses_backward_contacts_line(int arg);
+void ncurses_forward_contacts_line(int arg);
+void ncurses_backward_contacts_page(int arg);
+void ncurses_forward_contacts_page(int arg);
+
 #endif /* __EKG_NCURSES_CONTACTS_H */
 

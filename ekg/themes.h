@@ -39,6 +39,7 @@ typedef struct {
 			   przej¶ciu do kolejnej linii. */
 	int prompt_empty;	/* prompt przy przenoszeniu bêdzie pusty */
 	int margin_left; 	/* where the margin is set (on what char) */
+	void *private;          /* can be helpfull */
 } fstring_t;
 
 list_t formats;

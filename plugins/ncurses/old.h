@@ -73,6 +73,8 @@ typedef struct {
 
 	int (*handle_redraw)(window_t *w);
 				/* obs³uga przerysowania zawarto¶ci okna */
+
+	void (*handle_mouse)(int x, int y, int state);
 } ncurses_window_t;
 
 struct format_data {
@@ -86,6 +88,8 @@ WINDOW *ncurses_status;
 WINDOW *ncurses_header;
 WINDOW *ncurses_input;
 WINDOW *ncurses_contacts;
+
+void ncurses_main_window_mouse_handler(int x, int y, int mouse_state);
 
 void ncurses_resize();
 int ncurses_backlog_add(window_t *w, fstring_t *str);

@@ -1,0 +1,18 @@
+// opis obs³ugi myszki w EKG2
+// (c) copyright 2004 Piotr Kupisiewicz <deli@ekg2.org>
+
+* * *
+
+myszka dzia³a prawid³owo w ¶rodowisku xterm (tutaj zosta³a przetestowana),
+¶rodowisko gpm zostanie uruchomione w najbli¿szym czasie 
+
+* * *
+
+U¿ycie: 
+- dwukrotne klikniêcie na nicka znajduj±cego siê na li¶ci kontaktow 
+  (po prawej stronie) spowoduje otwarcie query z nim
+- scrolle w g³ównym oknie i w oknie kontaktów powoduj± przewijanie siê
+  aktualnego okna
+
+* * *
+

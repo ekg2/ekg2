@@ -49,6 +49,7 @@
 #include "completion.h"
 #include "bindings.h"
 #include "contacts.h"
+#include "mouse.h"
 
 WINDOW *ncurses_status = NULL;		/* okno stanu */
 WINDOW *ncurses_header = NULL;		/* okno nag³ówka */
@@ -152,6 +153,38 @@ void ncurses_commit()
 	wnoutrefresh(input);
 
 	doupdate();
+}
+
+/* 
+ * ncurses_main_window_mouse_handler()
+ * 
+ * handler for mouse events in main window 
+ */
+void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
+{
+        if (mouse_state == EKG_SCROLLED_UP) {
+	        ncurses_current->start -= 5;
+	        if (ncurses_current->start < 0)
+	                ncurses_current->start = 0;
+        } else if (mouse_state == EKG_SCROLLED_DOWN) {
+	        ncurses_current->start += 5;
+	
+	        if (ncurses_current->start > ncurses_current->lines_count - window_current->height + ncurses_current->overflow)
+	                ncurses_current->start = ncurses_current->lines_count - window_current->height + ncurses_current->overflow;
+
+	        if (ncurses_current->start < 0)
+	                ncurses_current->start = 0;
+
+	        if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
+	                window_current->more = 0;
+	                update_statusbar(0);
+        	}
+        } else {
+		return;
+	}
+
+        ncurses_redraw(window_current);
+        ncurses_commit();
 }
 
 /*
@@ -1737,12 +1770,38 @@ int ekg_getch(int meta)
 	ch = wgetch(input);
 
 #if NCURSES_MOUSE_VERSION == 1
-/*	if (ch == KEY_MOUSE) {
+	if (ch == KEY_MOUSE) {
 		MEVENT m;
 
-		if (getmouse(&m) == OK)
-			debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%.8x\n", m.id, m.x, m.y, m.z, m.bstate);
-	} */
+		if (getmouse(&m) == OK) {
+			int mouse_state;
+
+			switch (m.bstate) {
+				case 2:
+					mouse_state = EKG_SCROLLED_UP;
+					break;
+				case 4:
+					mouse_state = EKG_BUTTON1_CLICKED;
+					break;
+				case 8:
+					mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
+					break;
+                                case 128:
+                                        mouse_state = EKG_SCROLLED_DOWN;
+                                        break;
+				case 134217728:
+					mouse_state = last_mouse_state;
+					break;
+				default:
+					mouse_state = 0;
+					break;
+			}
+			last_mouse_state = mouse_state;
+			ncurses_mouse_clicked_handler(m.x, m.y, mouse_state);
+			/* debug("bstate %d\n", m.bstate); */
+			/* debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%.8x\n", m.id, m.x, m.y, m.z, m.bstate); */
+		}
+	} 
 #endif
 
 	query_emit(NULL, "ui-keypress", &ch, NULL);

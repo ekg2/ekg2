@@ -26,11 +26,20 @@
 void ncurses_enable_mouse();
 void ncurses_disable_mouse();
 
+int last_mouse_state;
+
 #ifdef HAVE_LIBGPM
 	void show_mouse_pointer();
 #else
 #	define show_mouse_pointer()
 #endif
+
+#define EKG_BUTTON1_CLICKED	0x0001              /* clicked once */
+#define EKG_BUTTON1_DOUBLE_CLICKED 0x0002	    /* double clicked */
+#define EKG_SCROLLED_UP		0x0003		    /* scrolled up */
+#define EKG_SCROLLED_DOWN	0x0004		    /* scrolled down */
+
+void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
 
 #endif /* __EKG_NCURSES_MOUSE_H */
 

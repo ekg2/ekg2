@@ -523,153 +523,23 @@ static void binding_forward_page(const char *arg)
 
 static void binding_backward_contacts_line(const char *arg)
 {
-	window_t *w = window_find("__contacts");
-
-        if (!w)
-        	return;
-
-        contacts_index--;
-        if (contacts_index < 0)
-                contacts_index = 0;
-
-	ncurses_contacts_update(NULL);
-	ncurses_redraw(w);
-	ncurses_commit();
+	ncurses_backward_contacts_line(1);
 }
 
 static void binding_forward_contacts_line(const char *arg)
 {
-        ncurses_window_t *n;
-        window_t *w = window_find("__contacts");
-        int contacts_count = 0, all = 0, count = 0;
-
-        if (!w)
-                return;
-
-        n = w->private;
-
-        if (config_contacts_groups) {
-                char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
-                count = array_count(groups);
-                array_free(groups);
-        }
-
-        if (contacts_group_index > count + 1)
-                all = 2;
-        else if (contacts_group_index > count)
-                all = 1;
-
-        switch (all) {
-                case 1:
-                {
-                        list_t l;
-                        for (l = sessions; sessions && l; l = l->next) {
-                                session_t *s = l->data;
-
-                                if (!s || !s->userlist)
-                                        continue;
-
-                                contacts_count += list_count(s->userlist);
-                        }
-                        break;
-                }
-                case 2:
-                        contacts_count = list_count(metacontacts);
-                        break;
-                default:
-                        contacts_count = list_count(session_current->userlist);
-                        break;
-        }
-
-        contacts_index++;
-
-        if (contacts_index  > contacts_count - w->height + n->overflow + CONTACTS_MAX_HEADERS)
-                contacts_index = contacts_count - window_current->height + n->overflow + CONTACTS_MAX_HEADERS;
-        if (contacts_index < 0)
-                contacts_index = 0;
-
-        ncurses_contacts_update(NULL);
-	ncurses_redraw(w);
-	ncurses_commit();
+	ncurses_forward_contacts_line(1);
 }
 
 
 static void binding_backward_contacts_page(const char *arg)
 {
-        ncurses_window_t *n;
-        window_t *w = window_find("__contacts");
-        int contacts_count;
-
-        if (!w)
-                return;
-
-        n = w->private;
-        contacts_count = list_count(session_current->userlist);
-
-        contacts_index -= w->height / 2;
-
-        if (contacts_index < 0)
-                contacts_index = 0;
-
-        ncurses_contacts_update(NULL);
-	ncurses_redraw(w);
-	ncurses_commit();
+	ncurses_backward_contacts_page(0);
 }
 
 static void binding_forward_contacts_page(const char *arg)
 {
-        ncurses_window_t *n;
-        window_t *w = window_find("__contacts");
-        int contacts_count = 0, all = 0, count = 0;
-
-        if (!w)
-                return;
-
-        n = w->private;
-
-	if (config_contacts_groups) {
-		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
-		count = array_count(groups);
-		array_free(groups);
-	}
-
-        if (contacts_group_index > count + 1) 
-	        all = 2;
-        else if (contacts_group_index > count) 
-                all = 1;
-
-	switch (all) {
-		case 1: 
-		{
-			list_t l;
-			for (l = sessions; sessions && l; l = l->next) {
-				session_t *s = l->data;
-				
-				if (!s || !s->userlist)
-					continue;
-
-				contacts_count += list_count(s->userlist);
-			}
-			break;
-		}
-		case 2: 
-			contacts_count = list_count(metacontacts);
-			break;
-		default:
-                        contacts_count = list_count(session_current->userlist);
-                        break;
-	}
-
-        contacts_index += w->height / 2;
-
-        if (contacts_index  > contacts_count - w->height + n->overflow + CONTACTS_MAX_HEADERS)
-                contacts_index = contacts_count - window_current->height + n->overflow + CONTACTS_MAX_HEADERS;
-        if (contacts_index < 0)
-                contacts_index = 0;
-
-        ncurses_contacts_update(NULL);
-	ncurses_redraw(w);
-	ncurses_commit();
+	ncurses_forward_contacts_page(0);
 }
 
 static void binding_ignore_query(const char *arg)

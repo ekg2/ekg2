@@ -2195,15 +2195,8 @@ COMMAND(cmd_query)
 
 next:
 	if (params[0] && (m = metacontact_find(params[0]))) {
-		metacontact_item_t *i;
-		
-		if (!m) {
-			printq("metacontact_doesnt_exist", params[0]);
-			res = -1;
-			goto cleanup;
-		}
+		metacontact_item_t *i = metacontact_find_prio(m);
 
-		i = metacontact_find_prio(m);
 		if (!i) {
 			printq("metacontact_item_list_empty");
 			res = -1;
