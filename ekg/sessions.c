@@ -764,7 +764,10 @@ COMMAND(session_command)
 			return -1;
 		}
 
-		window_session_set(window_current, session_add(params[1]));
+		if (!window_current->session)
+			window_session_set(window_current, session_add(params[1]));
+		else
+			session_add(params[1]);
 		
 		config_changed = 1;
 		
