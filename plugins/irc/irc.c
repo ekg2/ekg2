@@ -1113,7 +1113,7 @@ int irc_plugin_init()
 	command_add(&irc_plugin, "irc:join", "w", 	irc_command_jopacy, 0, NULL);
 	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 0, NULL);
 	command_add(&irc_plugin, "irc:cycle", "w ?",	irc_command_jopacy, 0, NULL);
-	command_add(&irc_plugin, "irc:query", "?",	irc_command_query, 0, NULL);
+	command_add(&irc_plugin, "irc:query", "uUw",	irc_command_query, 0, NULL);
 	command_add(&irc_plugin, "irc:nick", "?",	irc_command_nick, 0, NULL);
 	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 0, NULL);
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 0, NULL);
