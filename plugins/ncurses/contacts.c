@@ -361,7 +361,7 @@ group_cleanup:
 			}
 		}
 	
-		for (l = w->userlist; l; l = l->next) {
+		for (l = window_current->userlist; l; l = l->next) {
 			userlist_t *up = l->data;
 			userlist_t u;
 
@@ -407,7 +407,7 @@ group_cleanup:
 		char *line;
 		char tmp[100];
 
-		if (!all && w->userlist)
+		if (!all && window_current->userlist)
 			l = w->userlist;
 
 		for (; l; l = l->next) {
