@@ -2,6 +2,7 @@
 
 #include <sys/stat.h>
 #include <string.h>
+#include <ctype.h>
 #include <dirent.h>
 #include <dirent.h>
 #ifndef HAVE_SCANDIR
@@ -72,7 +73,7 @@ int strncasecmp_pl(const char * cs,const char * ct,size_t count)
 }
 
 
-/* 
+/*
  * zamienia wszystkie znaki ci±gu na ma³e
  * zwraca ci±g po zmianach
  */
@@ -120,9 +121,12 @@ static void command_generator(const char *text, int len)
 			
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
+		char *without_sess_id = strchr(c->name, ':');
 
 		if (!strncasecmp(text, c->name, len))
 			array_add(&completions, saprintf("%s%s%s", slash, dash, c->name));
+		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !strncasecmp(text, without_sess_id + 1, len)) 
+			array_add(&completions, saprintf("%s%s%s", slash, dash, without_sess_id + 1));
 	}
 }
 

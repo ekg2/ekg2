@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "stuff.h"
 #include "dynstuff.h"
 #include "xmalloc.h"
 
@@ -595,6 +596,35 @@ int array_contains(char **array, const char *string, int casesensitive)
 
 	return 0;
 }
+
+/*
+ * array_item_contains()
+ *
+ * stwierdza czy w tablicy znajduje siê element zawieraj±cy podany ci±g
+ *
+ *  - array - tablica,
+ *  - string - szukany ci±g znaków,
+ *  - casesensitive - czy mamy zwracaæ uwagê na wielko¶æ znaków?
+ *
+ * 0/1
+ */
+int array_item_contains(char **array, const char *string, int casesensitive)
+{
+        int i;
+
+        if (!array || !string)
+                return 0;
+
+        for (i = 0; array[i]; i++) {
+                if (casesensitive && strstr(array[i], string))
+                        return 1;
+                if (!casesensitive && strcasestr(array[i], string))
+                        return 1;
+        }
+
+        return 0;
+}
+
 	
 /*
  * array_free()

@@ -96,6 +96,7 @@ char *array_join(char **array, const char *sep);
 void array_add(char ***array, char *string);
 int array_count(char **array);
 int array_contains(char **array, const char *string, int casesensitive);
+int array_item_contains(char **array, const char *string, int casesensitive);
 void array_free(char **array);
 
 /* rozszerzenia libców */

@@ -625,12 +625,15 @@ COMMAND(session_command)
 		}	
 		
 		if (!(s = session_find(params[1]))) {
-			if((var = session_get_n(window_current->session->uid, params[1]))) {
-				printq("session_variable", window_current->session->uid, params[1], var);
-				return 0;
-			}
+			if (window_current->session) {
+				if((var = session_get_n(window_current->session->uid, params[1]))) {
+					printq("session_variable", window_current->session->uid, params[1], var);
+					return 0;
+				}
 		
-	    		printq("session_variable_doesnt_exist", window_current->session->uid, params[1]);
+		    		printq("session_variable_doesnt_exist", window_current->session->uid, params[1]);
+			} else
+				printq("no session! [1]");
 			return -1;
 		}
 		 
@@ -658,16 +661,26 @@ COMMAND(session_command)
 		
 		if (!(s = session_find(params[1]))) {
 			if (params[1][0] == '-') {
-				session_set_n(window_current->session->uid, params[1] + 1, NULL);
-				printq("session_variable_removed", window_current->session->uid, params[1] + 1);
-				return 0;
+				if (window_current->session) {
+					session_set_n(window_current->session->uid, params[1] + 1, NULL);
+					printq("session_variable_removed", window_current->session->uid, params[1] + 1);
+					return 0;
+				} else {
+					printq("no session! [2]");
+					return -1;
+				}
 			}
 		
 			if(params[2] && !params[3]) {
-				session_set_n(window_current->session->uid, params[1], params[2]);
-				char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[1]);
-				command_exec(NULL, s, tmp, 0);
-				return 0;
+				if (window_current->session) {
+					session_set_n(window_current->session->uid, params[1], params[2]);
+					char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[1]);
+					command_exec(NULL, s, tmp, 0);
+					return 0;
+				} else {
+					printq("no session! [3]");
+					return -1;
+				}
 			}
 			
 			if(params[2] && params[3]) {
@@ -737,19 +750,19 @@ COMMAND(session_command)
 		return 0;	
 	}
 	
-	if (params[0] && params[0][0] != '-' && params[1] && window_current->session->uid) {
+	if (params[0] && params[0][0] != '-' && params[1] && window_current->session && window_current->session->uid) {
 		char *tmp = saprintf("%s --set %s %s %s", name, window_current->session->uid, params[0], params[1]);
 		command_exec(NULL, s, tmp, 0);
 		return 0;
         }
 	
-	if (params[0] && params[0][0] != '-' && window_current->session->uid) {
+	if (params[0] && params[0][0] != '-' && window_current->session && window_current->session->uid) {
 		char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[0]);
 		command_exec(NULL, s, tmp, 0);
 		return 0;
 	}
 	
-	if (params[0] && params[0][0] == '-' && window_current->session->uid) {
+	if (params[0] && params[0][0] == '-' && window_current->session && window_current->session->uid) {
 		char *tmp = saprintf("%s --set %s %s", name, window_current->session->uid, params[0]);
 		command_exec(NULL, s, tmp, 0);
 		return 0;

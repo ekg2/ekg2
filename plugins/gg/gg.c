@@ -630,7 +630,7 @@ COMMAND(gg_command_connect)
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
 	const char *password = session_get(session, "password");
 	
-	if (!session_check(session, 0, "gg")) {
+	if (!session_check(session, 0, "gg") || !g) {
 		printq("invalid_session");
 		return -1;
 	}

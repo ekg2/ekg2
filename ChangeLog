@@ -6,6 +6,13 @@ d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
 przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
+// 2004-03-23
+- usuniêcie paru mo¿liwo¶ci ew. segv (del)
+
+// 2004-03-21 
+- dodanie tabcompletion dla funkcji zwi±zanych z sesjami 
+  np. dope³niane jest connect mimo, ¿e istnieje tylko funkcja gg:connect (del)
+
 // 2004-03-15
 - poprawka segfaulta przy wpisaniu jakiej¶ komendy np /list w oknie debug (del)
 
