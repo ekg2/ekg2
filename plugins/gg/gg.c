@@ -396,7 +396,7 @@ static void gg_session_handler_success(session_t *s)
 
 	/* pamiêtajmy, ¿eby pingowaæ */
 	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
-	timer_add(&gg_plugin, buf, 300, 0, gg_ping_timer_handler, xstrdup(s->uid));
+	timer_add(&gg_plugin, buf, 180, 0, gg_ping_timer_handler, xstrdup(s->uid));
 
  	descr = xstrdup(session_descr_get(s));
         status = session_status_get(s);
