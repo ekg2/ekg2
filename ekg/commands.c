@@ -2074,6 +2074,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 	}
 
+	if (cmd)
+		debug("ju¿ mamy\n");
 	if (!cmd) {
 		tmp = cmd = line;
 		while (*tmp && !xisspace(*tmp))
@@ -2082,7 +2084,6 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		*tmp = 0;
 		p = strip_spaces(p);
 	}
-
 	/* poszukaj najpierw komendy dla danej sesji */
 	if (!session && session_current)
 		session = session_current;
@@ -2105,6 +2106,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 			if (!xstrncasecmp(c->name + plen, cmd, xstrlen(cmd))) {
 				abbrs_plugins++;
+				debug("ta dupa (%s) nam przeszkodzi³a\n", c->name);
 				last_abbr_plugins = c->function;
 				last_name = c->name;
 				last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
@@ -2117,13 +2119,16 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-
+		
 		if (!xstrcasecmp(c->name, cmd)) {
 			last_abbr = c->function;
 			last_name = c->name;
 			last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
 			abbrs = 1;
-			break;
+			/* if this is exact_match we should zero those below, they won't be used */
+			last_abbr_plugins = NULL; 
+			abbrs_plugins = 0;
+			goto exact_match; /* could be break; but for better readable code i used this */
 		}
 		if (!xstrncasecmp(c->name, cmd, xstrlen(cmd))) {
 			abbrs++;
