@@ -634,7 +634,7 @@ char *get_uid(session_t *session, const char *text)
 	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
-		text = window_current->target;
+		return window_current->target;
 	
 	u = userlist_find(session, text);
 
