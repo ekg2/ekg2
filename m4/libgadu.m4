@@ -22,9 +22,8 @@ AC_DEFUN([AC_CHECK_LIBGADU],
         AC_DEFINE(HAVE_OPENSSL, 1, [define if you have OpenSSL])
         AC_MSG_RESULT([yes (found via pkg-config)])
       else
-        ## pkg-config nie znalazl...
-        without_libgadu=yes
-        AC_MSG_RESULT([unknown to pkg-config. use --with-libgadu=DIR if libgadu is installed in nonstandard location])
+        ## pkg-config nie znalazl... wiêc sprawdzamy standardowo metod±
+        AC_MSG_WARN([unknown to pkg-config. use --with-libgadu=DIR if libgadu is installed in nonstandard location])
       fi
     fi
   elif test "x$without_libgadu" != "xyes" -a "x$with_arg" != "x"; then
@@ -51,6 +50,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
       AC_CHECK_LIB([gadu], [gg_logoff],
       [
         AC_DEFINE([HAVE_LIBGADU], 1, [define if you have libgadu])
+        LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS $LIBJPEG_LIBS"
         have_libgadu="yes"
       ])
     ])

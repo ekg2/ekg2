@@ -111,11 +111,6 @@ int ncurses_ui_window_print(void *data, va_list ap)
 	ncurses_window_t *n = w->private;
 	int bottom = 0, prev_count = n->lines_count, count = 0;
 
-	if (w->id == 0) {
-		fstring_free(line);
-		return 0;
-	}
-	
 	if (n->start == n->lines_count - w->height || (n->start == 0 && n->lines_count <= w->height))
 		bottom = 1;
 	
