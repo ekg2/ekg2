@@ -43,6 +43,9 @@ AC_CHECK_FUNCS(scandir, , [COMPAT="$COMPAT scandir.o"])
 dnl  setenv dla pythona
 AC_CHECK_FUNCS(setenv)
 
+dnl inet_pton
+AC_CHECK_FUNCS(inet_pton)
+
 dnl  strlcat,strlcpy itp wiele systemów nie posiada
 AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])
 AC_CHECK_FUNCS(strlcpy, , [COMPAT="$COMPAT strlcpy.o"])

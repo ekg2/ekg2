@@ -956,13 +956,32 @@ COMMAND(gg_command_connect)
 
 	if (!strcasecmp(name, "connect") || !strcasecmp(name, "reconnect")) {
 		struct gg_login_params p;
-		const char *tmp;
+		const char *tmp, *local_ip = session_get(session, "local_ip");
 		int tmpi;
 
 		if (g->sess) {
 			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", session_name(session));
 			return -1;
 		}
+
+	        if (local_ip == NULL)
+			gg_local_ip = htonl(INADDR_ANY);
+   	        else {
+#ifdef HAVE_INET_PTON
+	                int tmp = inet_pton(AF_INET, local_ip, &gg_local_ip);
+	
+			if (tmp == 0 || tmp == -1) {
+	               		print("invalid_local_ip", session_name(session));
+                        	session_set(session, "local_ip", NULL);
+				config_changed = 1;
+                        	gg_local_ip = htonl(INADDR_ANY);
+                	}
+			debug("achoj\n");
+#else
+                 	gg_local_ip = inet_addr(local_ip);
+#endif
+        	}
+
 
 		if (!uin || !password) {
 			printq("no_config");
@@ -1071,7 +1090,7 @@ noproxy:
 		g->sess = gg_login(&p);
 
 		if (!g->sess)	
-			printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"));
+			printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
 		else {
 			watch_t *w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, 0, gg_session_handler, session);
 			watch_timeout_set(w, g->sess->timeout);
@@ -1681,12 +1700,13 @@ int gg_plugin_init()
         plugin_var_add(&gg_plugin, "auto_connect", VAR_INT, "0", 0);
         plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0);
         plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "0", 0);
+        plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0);
         plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "0", 0);
+        plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0);
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0);
         plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1);
         plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0);
 	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0);
-	plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0);
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;
