@@ -744,8 +744,10 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
 #endif
 
-	if (type != 0)
+	if (type != 0) {
+		xfree(jdh);
 		return;
+	}
 
 	debug("[jabber] jabber_handle_resolver()\n", type);
 	
