@@ -641,7 +641,7 @@ void ncurses_redraw(window_t *w)
 
 		wattrset(n->window, A_NORMAL);
 
-		for (x = 0; l->ts && x < l->ts_len; x++) { 
+		for (x = 0; l->ts && l->ts[x] && x < l->ts_len; x++) { 
 			int attr = A_NORMAL;
 			short chattr = l->ts_attr[x];
 			unsigned char ch = (unsigned char) l->ts[x];
