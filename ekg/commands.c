@@ -3605,7 +3605,7 @@ void command_init()
 	  "Dwie ostatnie opcje dzia³aj± tylko, gdy w³±czony jest tryb ,,tylko "
 	  "dla znajomych''.\n", 
 	  possibilities("-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online") );
-	  
+	/* XXX: todo  
 	command_add(NULL, "on", params("p e CuU c"), cmd_on, 0,
 	  " [opcje]", "zarz±dzanie zdarzeniami",
 	  "\n"
@@ -3642,7 +3642,7 @@ void command_init()
 	  "U¿ywanie %T\\%3%n w przypadku komendy ,,exec'' jest %Tniebezpieczne%n i, je¶li naprawdê "
 	  "musisz wykorzystaæ tre¶æ wiadomo¶ci lub opis, u¿yj %T\"\\%4\"%n (w cudzys³owach).", 
 	  possibilities("-a --add -d --del -l --list") );
-
+*/
 	command_add(NULL, "play", params("f"), cmd_play, 0,
 	  " <plik>", "odtwarza plik d¼wiêkowy", "", NULL);
 
