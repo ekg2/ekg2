@@ -220,7 +220,8 @@ void print_message(struct gg_event *e, struct userlist *u, int chat, int secure)
 	if (config_last & 3 && (chat >= 0 && chat <= 2))
 	       last_add(0, e->event.msg.sender, tt, e->event.msg.time, e->event.msg.message);
 	
-	if (!strftime(timestr, sizeof(timestr), format_find(timestamp), tm))
+	if (!strftime(timestr, sizeof(timestr), format_find(timestamp), tm)
+			&& xstrlen(format_find(timestamp))>0)
 		xstrcpy(timestr, "TOOLONG");
 
 	if (!(width = atoi(format_find(line_width))))

@@ -1397,7 +1397,7 @@ const char *timestamp(const char *format)
 
 	time(&t);
 	tm = localtime(&t);
-	if (!strftime(buf, sizeof(buf), format, tm))
+	if (!strftime(buf, sizeof(buf), format, tm) && xstrlen(format)>0)
 		xstrcpy(buf, "TOOLONG");
 
 	return buf;

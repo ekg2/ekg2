@@ -899,7 +899,7 @@ int jabber_status_show_handle(void *data, va_list ap)
 	struct tm *t;
 	time_t n;
 	int now_days;
-	char buf[100], *tmp;
+	char buf[100], *tmp, *format;
 
 	if (!s || !j) 
 		return -1;
@@ -939,7 +939,8 @@ int jabber_status_show_handle(void *data, va_list ap)
 	now_days = t->tm_yday;
 
 	t = localtime(&s->last_conn);
-	if (!strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t))
+	format = format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event");
+	if (!strftime(buf, sizeof(buf), format, t) && xstrlen(format)>0)
 		xstrcpy(buf, "TOOLONG");
 
 	if (s->connected)

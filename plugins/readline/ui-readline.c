@@ -600,7 +600,8 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 		tm = localtime(&t);
 		/* I KNOW THIS PLUGIN IS UNUSED, BUT THIS PIECE
 		 * OF CODE IS SHITTY */
-		if (!strftime(buf, sizeof(buf), config_timestamp, tm))
+		if (!strftime(buf, sizeof(buf), config_timestamp, tm) 
+				&& xstrlen(config_timestamp)>0)
 			xstrcpy(buf, "TOOLONG");
 
 		string_append(s, buf);

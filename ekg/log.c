@@ -417,7 +417,8 @@ const char *log_timestamp(time_t t)
 	i = i % 2;
 
 	if (config_log_timestamp) {
-		if (!strftime(buf[i], sizeof(buf[0]), config_log_timestamp, tm))
+		if (!strftime(buf[i], sizeof(buf[0]), config_log_timestamp, tm)
+				&& xstrlen(config_log_timestamp)>0)
 			xstrcpy(buf[i], "TOOLONG");
 		return buf[i++];
 	} else

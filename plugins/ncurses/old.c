@@ -1163,7 +1163,8 @@ void update_statusbar(int commit)
 
 		tm = localtime(&t);
 
-		if (!strftime(tmp, sizeof(tmp), format_find("statusbar_timestamp"), tm))
+		if (!strftime(tmp, sizeof(tmp), format_find("statusbar_timestamp"), tm)
+				&& xstrlen(format_find("statusbar_timestamp"))>0)
 			strcpy(tmp, "TOOLONG!");
 		
 		__add_format("time", 1, tmp);
