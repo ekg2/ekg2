@@ -237,7 +237,8 @@ COMMAND(cmd_modify)
 		return -1;
 	}
 
-	argv = array_make(params[1], " \t", 0, 1, 1);
+	if (params[1])
+		argv = array_make(params[1], " \t", 0, 1, 1);
 
 	for (i = 0; argv[i]; i++) {
 		
