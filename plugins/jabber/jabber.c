@@ -891,7 +891,12 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
                 gnutls_certificate_allocate_credentials(&(j->xcred));
                 /* XXX - ~/.ekg/certs/server.pem */
                 gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
-                gnutls_init(&(j->ssl_session), GNUTLS_CLIENT);
+		if (gnutls_init(&(j->ssl_session), GNUTLS_CLIENT)) {
+			print("conn_failed_tls");
+			print("conn_failed", gnutls_strerror(ret), session_name(jdh->session));
+			jabber_handle_disconnect(jdh->session);
+			return;
+		}
                 gnutls_set_default_priority(j->ssl_session);
                 gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
                 gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
