@@ -281,6 +281,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "session-changed", ncurses_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-changed", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-added", ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, "userlist-removed", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);

@@ -675,7 +675,7 @@ COMMAND(cmd_del)
 	}
 
 	tmp = xstrdup(u->uid);
-	query_emit(NULL, "userlist-removed", &tmp);
+	query_emit(NULL, "userlist-removed", &params[0], &tmp);
 	query_emit(NULL, "remove-notify", &session_current->uid, &tmp);
 
         printq("user_deleted", params[0]);
