@@ -534,7 +534,7 @@ IRC_COMMAND(irc_c_msg)
 {
 	char *t, *dest, *me, *form=NULL, *seq=NULL, *format, **rcpts = NULL;
 	char *head;
-	char *ctcpstripped, *coloured, *pubtous, tous;
+	char *ctcpstripped, *coloured, *pubtous, tous, prefix[2];
 	int class, ekgbeep= EKG_NO_BEEP;
 	int mw = 666, prv=0;
 	window_t *w = NULL;
@@ -581,9 +581,12 @@ IRC_COMMAND(irc_c_msg)
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped);
 		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', me, param[2], OMITCOLON(param[3]));
 		xfree(ctcpstripped);
+		prefix[1] = '\0';
+		prefix[0] = perchn?*(perchn->sign):' ';
+		if (session_int_get(s, "DISPLAY_EMPTY_PREFIX") && *prefix==' ')
+			*prefix='\0';
 		head = format_string(format_find(format), session_name(s),
-				perchn?perchn->sign:" ",
-				me, param[0]+1, param[2], coloured, "Y ");
+				prefix, me, param[0]+1, param[2], coloured, "Y ");
 		xfree(coloured);
 		xfree(me);
 		me = xstrdup(session_uid_get(s));

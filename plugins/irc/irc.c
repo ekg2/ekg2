@@ -500,10 +500,10 @@ COMMAND(irc_command_msg)
 	irc_private_t *j = irc_private(session);
 	const char *uid=NULL;
         window_t *w;
-        char **rcpts; 
         int class = EKG_MSGCLASS_SENT, ischn; 
 	int ekgbeep = EKG_NO_BEEP;
         char *me, *format=NULL, *seq=NULL, *head, *chantypes, *coloured;
+        char **rcpts, prefix[2]; 
         const time_t sent = time(NULL);					
 	people_t *person;
 	people_chan_t *perchn = NULL;
@@ -540,10 +540,13 @@ COMMAND(irc_command_msg)
 	rcpts = xmalloc(sizeof(char *) * 2);
 	me = xstrdup(session_uid_get(session));
 	
-	
+	prefix[1] = '\0';
+	prefix[0] = perchn?*(perchn->sign):' ';
+	if (session_int_get(s, "DISPLAY_EMPTY_PREFIX") && *prefix==' ')
+		*prefix='\0';
 	head = format_string(format_find(ischn?"irc_msg_sent_chan":
 				w?"irc_msg_sent_n":"irc_msg_sent"),
-			session_name(session), perchn?perchn->sign:" ",
+			session_name(session), prefix,
 			j->nick, j->nick, uid+4, params[1]);
 
 	coloured = irc_ircoldcolstr_to_ekgcolstr(session, head);
@@ -1134,6 +1137,7 @@ int irc_plugin_init()
 	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_IN_CURRENT", VAR_INT, "2", 0, NULL);
+	plugin_var_add(&irc_plugin, "DISPLAY_EMPTY_PREFIX", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_QUIT", VAR_INT, "0", 0, NULL);
 	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
 	plugin_var_add(&irc_plugin, "REJOIN", VAR_INT, "0", 0, NULL);
@@ -1175,19 +1179,19 @@ static int irc_theme_init()
 
 	format_add("irc_msg_sent",	"%P<%n%4/%5%P>%n %6", 1);
 	format_add("irc_msg_sent_n",	"%P<%n%4%P>%n %6", 1);
-	format_add("irc_msg_sent_chan",	"%P<%{2@%+ gcpw}X%2%4%P>%n %6", 1);
-	format_add("irc_msg_sent_chanh","%P<%{2@%+ GCPW}X%2%4%P>%n %6", 1);
+	format_add("irc_msg_sent_chan",	"%P<%w%{2@%+gcp}X%2%4%P>%n %6", 1);
+	format_add("irc_msg_sent_chanh","%P<%W%{2@%+GCP}X%2%4%P>%n %6", 1);
 	
-	format_add("irc_msg_f_chan",	"%B<%{2@%+ gcpw}X%2%4/%5%B>%n %6", 1); /* NOT USED */
-	format_add("irc_msg_f_chanh",	"%B<%{2@%+ GCPW}X%2%4/%5%B>%n %6", 1); /* NOT USED */
-	format_add("irc_msg_f_chan_n",	"%B<%{2@%+ gcpw}X%2%4%B>%n %6", 1);
-	format_add("irc_msg_f_chan_nh",	"%B<%{2@%+ GCPW}X%2%4%B>%n %6", 1);
+	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%4/%5%B>%n %6", 1); /* NOT USED */
+	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%4/%5%B>%n %6", 1); /* NOT USED */
+	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%4%B>%n %6", 1);
+	format_add("irc_msg_f_chan_nh",	"%B<%W%{2@%+GCP}X%2%4%B>%n %6", 1);
 	format_add("irc_msg_f_some",	"%b<%n%4%b>%n %6", 1);
 
-	format_add("irc_not_f_chan",	"%B(%{2@%+ gcpw}X%2%4/%5%B)%n %6", 1); /* NOT USED */
-	format_add("irc_not_f_chanh",	"%B(%{2@%+ GCPW}X%2%4/%5%B)%n %6", 1); /* NOT USED */
-	format_add("irc_not_f_chan_n",	"%B(%{2@%+ gcpw}X%2%4%B)%n %6", 1);
-	format_add("irc_not_f_chan_nh",	"%B(%{2@%+ GCPW}X%2%4%B)%n %6", 1);
+	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%4/%5%B)%n %6", 1); /* NOT USED */
+	format_add("irc_not_f_chanh",	"%B(%W%{2@%+GCP}X%2%4/%5%B)%n %6", 1); /* NOT USED */
+	format_add("irc_not_f_chan_n",	"%B(%w%{2@%+gcp}X%2%4%B)%n %6", 1);
+	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%4%B)%n %6", 1);
 	format_add("irc_not_f_some",	"%b(%n%4%b)%n %6", 1);
 
 	format_add("irc_joined", "%> %Y%2%n has joined %4\n", 1);
