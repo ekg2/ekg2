@@ -202,9 +202,8 @@ $ ./configure --with-libintl-prefix=/usr/local/include
             </question>
             <answer>
                <para>
-                  Nale¿y ustawiæ zmiennej globalnej
-                  <varname>display_sent</varname> oraz zmiennej sesyjnej o tej
-                  samej nazwie na warto¶æ <literal>1</literal>.
+                  Nale¿y ustawiæ warto¶æ zmiennej
+                  <varname>display_sent</varname> na <literal>1</literal>.
                </para>
             </answer>
          </qandaentry>
