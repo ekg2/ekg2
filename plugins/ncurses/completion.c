@@ -550,7 +550,7 @@ void reason_generator(const char *text, int len)
                 /* not to good solution to avoid descr changing by complete */
 		descr = saprintf("\001%s", session_current->descr);
                 array_add_check(&completions, descr, 1);
-        }
+        } 
 }
 
 
@@ -602,7 +602,7 @@ static struct {
 void ncurses_complete(int *line_start, int *line_index, char *line)
 {
 	char *start, *cmd, **words, *separators;
-	int i, count, word, j, words_count, word_current, open_quote;
+	int i, count, word, j, words_count, word_current, open_quote, lenght;
 
 	/* 
 	 * sprawdzamy czy mamy kontynuowaæ dope³nianie (przeskakiwaæ miêdzy dope³nianymi wyrazami 
@@ -766,12 +766,13 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
                         break;
 	}
 	words_count = array_count(words);
+	lenght = xstrlen(line);
 	/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
-	if((xisspace(line[xstrlen(line) - 1]) || line[xstrlen(line) - 1] == ',') && word + 1== array_count(words) -1 )
+        if(xisspace(line[lenght - 1]))
+                word_current++;
+	if((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== array_count(words) -1 )
 		word++;
-	if(xisspace(line[xstrlen(line) - 1]) && words_count == word_current)
-		word_current++;
-	if(xisspace(line[xstrlen(line) - 1]))
+	if(xisspace(line[lenght - 1]))
 		words_count++;
 
 /*	debug("word = %d\n", word);
