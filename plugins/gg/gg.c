@@ -746,7 +746,12 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
                                 /* remove all contacts from notification list on server */
 				for (l = s->userlist; l; l = l->next) {
                                         userlist_t *u = l->data;
-                                        gg_remove_notify_ex(g->sess, str_to_uin(xstrchr(u->uid, ':') + 1), gg_userlist_type(u));
+					char *parsed;
+					
+					if (!u || !(parsed = xstrchr(u->uid, ':')))
+						continue;
+
+                                        gg_remove_notify_ex(g->sess, str_to_uin(parsed + 1), gg_userlist_type(u));
                                 }
 
                                 gg_cp_to_iso(e->event.userlist.reply);
