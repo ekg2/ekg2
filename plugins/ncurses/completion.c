@@ -582,7 +582,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		if (strlen(line) > 1 && line[strlen(line) - 1] == ' ')
 			array_add(&blocks, xstrdup(""));
 
-		if ((params && abbrs == 1 && word < strlen(params) + 1 )|| (strchr(params, 'u') && array_count(blocks) == strlen(strchr(params, 'u')))) {
+		if ((params && abbrs == 1 && word < strlen(params) + 1 ) || (params && strchr(params, 'u') && array_count(blocks) == strlen(strchr(params, 'u')))) {
 			
 			for (i = 0; generators[i].ch; i++) {
 			
