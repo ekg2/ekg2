@@ -7,6 +7,9 @@ przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
 // 2004-04-11
+- poprawka dotycz±ca /list: gdy kto¶ ma opis to poprawnie wy¶wietlane jest "ostatnio widziany" (salvador/del)
+
+// 2004-04-11
 - dodany ostatni adres IP i ostatni opis w /list (del)
 
 // 2004-04-10

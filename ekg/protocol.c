@@ -176,7 +176,7 @@ int protocol_status(void *data, va_list ap)
 	}
 
 	/* je¶li kto¶ nam znika, zapamiêtajmy kiedy go widziano */
-	if (!strcasecmp(status, EKG_STATUS_NA))
+	if (xstrcasecmp(u->status, EKG_STATUS_NA) && !xstrcasecmp(status, EKG_STATUS_NA))
 		u->last_seen = time(NULL);
 
 	/* XXX dodaæ sprawdzanie ignorowanych, events_delay */
