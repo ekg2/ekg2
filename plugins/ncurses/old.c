@@ -1723,78 +1723,60 @@ static void spellcheck(char *what, char *where)
 	int size;	/* zmienna tymczasowa */
 	
         /* Sprawdzamy czy nie mamy doczynienia z 47 (wtedy nie sprawdzamy reszty ) */
-        if(what[0] == 47 || what == NULL)
+        if (what[0] == 47 || what == NULL)
             return;       /* konczymy funkcje */
 	    
-	for(i = 0; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++)
-	{
-	    if((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) // separator/koniec lini/koniec stringu
-	    {
+	for (i = 0; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
+	    if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) { // separator/koniec lini/koniec stringu
 		size = strlen(what) + 1;
         	word = xmalloc(size);
         	memset(word, 0, size); /* czyscimy pamiec */
 		
-		for(; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++)
-		{
+		for (; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
 		    if(isalpha_pl(what[i])) /* szukamy jakiejs pierwszej literki */
 			break; 
 		}
 		
 		/* trochê poprawiona wydajno¶æ */
-		if(what[i] == '\0' || what[i] == '\n' || what[i] == '\r')
-		{
+		if (what[i] == '\0' || what[i] == '\n' || what[i] == '\r') {
 			i--;
 			goto aspell_loop_end; /* 
 					       * nie powinno siê u¿ywaæ goto, aczkolwiek s± du¿o szybsze
 					       * ni¿ instrukcje warunkowe i w tym przypadku nie psuj± bardzo
 					       * czytelno¶ci kodu
 					       */
-		}
 		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */ 
-		else if (what[i] == 'h' && what[i + 1] && what[i + 1] == 't' && what[i + 2] && what[i + 2] == 't' && what[i + 3] && what[i + 3] == 'p' && what[i + 4] && what[i + 4] == ':' && what[i + 5] && what[i + 5] == '/' && what[i + 6] && what[i + 6] == '/')
-		{
+		} else if (what[i] == 'h' && what[i + 1] && what[i + 1] == 't' && what[i + 2] && what[i + 2] == 't' && what[i + 3] && what[i + 3] == 'p' && what[i + 4] && what[i + 4] == ':' && what[i + 5] && what[i + 5] == '/' && what[i + 6] && what[i + 6] == '/') {
 			for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
 			i--;
 			goto aspell_loop_end;
-		}
 		
 		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */ 
-		else if (what[i] == 'f' && what[i + 1] && what[i + 1] == 't' && what[i + 2] && what[i + 2] == 'p' && what[i + 3] && what[i + 3] == ':' && what[i + 4] && what[i + 4] == '/' && what[i + 5] && what[i + 5] == '/')
-		{
+		} else if (what[i] == 'f' && what[i + 1] && what[i + 1] == 't' && what[i + 2] && what[i + 2] == 'p' && what[i + 3] && what[i + 3] == ':' && what[i + 4] && what[i + 4] == '/' && what[i + 5] && what[i + 5] == '/') {
 			for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
 			i--;
 			goto aspell_loop_end;
 		}
 		
-		
-
-		    
-				
 		/* wrzucamy aktualny wyraz do zmiennej word */		    
-		for(j=0; what[i] != '\n' && what[i] != '\0' && isalpha_pl(what[i]); i++)
-		{
-			if(isalpha_pl(what[i]))
-		 	{
+		for (j = 0; what[i] != '\n' && what[i] != '\0' && isalpha_pl(what[i]); i++) {
+			if(isalpha_pl(what[i])) {
 		    		word[j]= what[i];
 				j++;
-		    	}
-		    	else 
+		    	} else 
 				break;
 		}
 		word[j] = '\0';
-		if(i > 0)
+		if (i > 0)
 		    i--;
 
-/*		gg_debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
+/*		debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
 
 		/* sprawdzamy pisownie tego wyrazu */
-        	if(aspell_speller_check(spell_checker, word, strlen(word) ) == 0) /* jesli wyraz jest napisany blednie */
-        	{
+        	if (aspell_speller_check(spell_checker, word, strlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
 			for(j=strlen(word) - 1; j >= 0; j--)
 				where[i - j] = ASPELLCHAR;
-        	}
-        	else /* jesli wyraz jest napisany poprawnie */
-        	{
+        	} else { /* jesli wyraz jest napisany poprawnie */
 			for(j=strlen(word) - 1; j >= 0; j--)
 				where[i - j] = ' ';
         	}
