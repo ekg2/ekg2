@@ -295,6 +295,8 @@ char *str_tolower(const char *text);
 char *strip_pl_chars(const char *text);
 int tolower_pl(const unsigned char c);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
+void pl_to_normal(unsigned char ch);
+
 
 #ifdef __GNUC__
 char *saprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));

@@ -2087,7 +2087,7 @@ int strncasecmp_pl(const char * cs,const char * ct,size_t count)
         return __res;
 }
 
-void pl_to_normal(char ch)
+void pl_to_normal(unsigned char ch)
 {
 	switch(ch) {
                 case 161: // ¡
