@@ -1555,7 +1555,7 @@ int jabber_plugin_init()
 	format_add("jabber_generic_conn_failed", "%> (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n", 1);
 	format_add("jabber_version_response", "%> Identyfikator Jabbera: %1\n%> Nazwa programu: %2\n%> Wersja programu: %3\n%> System operacyjny: %4%n\n", 1);
 	format_add("jabber_unknown_resource", "%> (%1) Nieznany resource u¿ytkownika%n\n", 1);
-	format_add("jabber_user_not_found", "%> (%1) Nieznaleziono u¿ytkownika %2%n\n", 1);
+	format_add("jabber_user_not_found", "%> (%1) Nie znaleziono u¿ytkownika %2%n\n", 1);
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);
