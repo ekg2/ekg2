@@ -290,8 +290,8 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			for (; item && item->next; item = item->next) {
 				memset(&u, 0, sizeof(u));
 				u.uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
-				u.nickname = xstrdup(jabber_attr(item->atts, "name"));
-				
+				u.nickname = jabber_unescape(jabber_attr(item->atts, "name"));
+		
 				if (!u.nickname) 
 					u.nickname = strdup(u.uid); 				
 
