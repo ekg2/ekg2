@@ -853,8 +853,12 @@ int binding_key(struct binding *b, const char *key, int add)
 		ch = xtoupper(key[5]);
 		b->key = saprintf("Ctrl-%c", ch);
 
-		if (add)
-			ncurses_binding_map[ch - 64] = list_add(&bindings, b, sizeof(struct binding));
+		if (add) {
+                        if (xisalpha(ch))
+				ncurses_binding_map[ch - 64] = list_add(&bindings, b, sizeof(struct binding));
+			else
+				return -1;
+		}
 		
 		return 0;
 	}

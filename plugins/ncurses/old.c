@@ -76,7 +76,7 @@ int have_winch_pipe = 0;
 #  define ASPELLCHAR 5
 AspellConfig * spell_config;
 AspellSpeller * spell_checker = 0;
-static char *aspell_line;
+char *aspell_line;
 #endif
 
 /*
@@ -1979,6 +1979,8 @@ action:
                             else /* jesli jest wszystko okey to wyswietlamy normalny */
 	   			    print_char(input, i, j, p[j + line_start]);
 			}
+
+			xfree(aspell_line);
 #else
 			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
@@ -2008,6 +2010,8 @@ action:
                         else /* jesli jest wszystko okey to wyswietlamy normalny */
                                 print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
 		}
+
+		xfree(aspell_line);
 #else
  		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
@@ -2021,10 +2025,6 @@ action:
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
 	}
-#ifdef WITH_ASPELL
-	xfree(aspell_line);	
-#endif
-
 }
 
 int ncurses_command_window(void *data, va_list ap)
