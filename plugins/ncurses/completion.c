@@ -65,6 +65,7 @@ static void command_generator(const char *text, int len)
 {
 	const char *slash = "", *dash = "";
 	list_t l;
+	session_t *session = session_current;
 
 	if (*text == '/') {
 		slash = "/";
@@ -83,7 +84,13 @@ static void command_generator(const char *text, int len)
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		char *without_sess_id = xstrchr(c->name, ':');
+		char *without_sess_id = NULL;
+		int plen = 0;
+		if (session && session->uid)
+			plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
+
+                if (!xstrncasecmp(c->name, session->uid, plen))
+			without_sess_id = xstrchr(c->name, ':');
 
 		if (!xstrncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
 			array_add_check(&completions, saprintf("%s%s%s", slash, dash, c->name), 1);
