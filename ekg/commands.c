@@ -2134,7 +2134,7 @@ exact_match:
 			last_name = tmp + 1;
 		
 		window_lock_inc_n(target);
-		par = array_make(p, " \t", array_count(last_params) + 1, 1, 1);
+		par = array_make(p, " \t", array_count(last_params), 1, 1);
 		res = (last_abbr)(last_name, (const char **) par, (session) ? session : window_current->session, target, (quiet & 1));
 		array_free(par);
 

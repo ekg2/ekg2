@@ -1,4 +1,5 @@
 vCVS 2004-04-26
+	* 'display_notify' session variable added
 	* correct compilation on some systems (for example FreeBSD)
 	* working function /help for sessions
 	* changed binary and directory name from ekg to ekg2

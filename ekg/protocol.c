@@ -152,9 +152,13 @@ int protocol_status(void *data, va_list ap)
 	char **__host = va_arg(ap, char**), *host = *__host;
 	int *__port = va_arg(ap, int*), port = *__port;
 	userlist_t *u;
+	session_t *s;
+
+	if (!(s = session_find(session)))
+		return 0;
 
 	/* ignorujemy nieznanych nam osobników */
-	if (!(u = userlist_find(session_find(session), uid)))
+	if (!(u = userlist_find(s, uid)))
 		return 0;
 
 	/* zapisz adres IP i port */
@@ -196,7 +200,7 @@ int protocol_status(void *data, va_list ap)
 		tabnick_remove(u->nickname);
 
 	/* je¶li ma³o wa¿na zmiana stanu... */
-	if (config_display_notify == 2 && xstrcasecmp(u->status, EKG_STATUS_NA)) {
+	if ((session_int_get(s, "display_notify") == 2 || (session_int_get(s, "display_notify") == -1 && config_display_notify == 2)) && xstrcasecmp(u->status, EKG_STATUS_NA)) {
 		/* je¶li na zajêty, ignorujemy */
 		if (!xstrcasecmp(status, EKG_STATUS_AWAY))
 			goto notify_plugins;
@@ -214,8 +218,11 @@ int protocol_status(void *data, va_list ap)
 	if (config_sound_notify_file)
 		play_sound(config_sound_notify_file);
 
-	/* wy¶wietlaæ na ekranie? */
-	if (!config_display_notify)
+        /* wy¶wietlaæ na ekranie? */
+        if (!session_int_get(s, "display_notify")) 
+                goto notify_plugins;
+
+	if (!config_display_notify && session_int_get(s, "display_notify") == -1)
 		goto notify_plugins;
 
 	/* poka¿ */
@@ -223,7 +230,7 @@ int protocol_status(void *data, va_list ap)
 		char format[100];
 
 		snprintf(format, sizeof(format), "status_%s%s", status, (descr) ? "_descr" : "");
-		print_window(u->nickname, session_find(session), 0, format, format_user(session_find(session), uid), (u->first_name) ? u->first_name : u->nickname, descr);
+		print_window(u->nickname, s, 0, format, format_user(s, uid), (u->first_name) ? u->first_name : u->nickname, descr);
 	}
 
 notify_plugins:

@@ -1214,7 +1214,7 @@ int jabber_plugin_init()
  	  "  -r, --request <JID>   wysy³a ¿±danie autoryzacji\n"
 	  "  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji\n",
 	  possibilities("-a --accept -d --deny -r --request -c --cancel") );
-	command_add(&jabber_plugin, "jid:add", params("U?"), jabber_command_add, 0, "", "dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê", "<JID> [nazwa]", NULL ); 
+	command_add(&jabber_plugin, "jid:add", params("U ?"), jabber_command_add, 0, "", "dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê", "<JID> [nazwa]", NULL ); 
 	command_add(&jabber_plugin, "jid:del", params("u"), jabber_command_del, 0, "", "usuwa z naszego rostera", "", NULL);
 
 #undef possibilities 
