@@ -83,6 +83,18 @@ int plugin_load(const char *name, int quiet)
 	}
 
 	if (!plugin) {
+		xfree(lib);
+		lib = saprintf("plugins/%s/%s.la", name, name);
+		plugin = lt_dlopen(lib);
+	}
+
+	if (!plugin) {
+		xfree(lib);
+		lib = saprintf("../plugins/%s/%s.la", name, name);
+		plugin = lt_dlopen(lib);
+	}
+
+	if (!plugin) {
 		printq("plugin_doesnt_exist", name);
 		xfree(lib);	
 		return -1;
