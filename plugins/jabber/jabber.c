@@ -691,7 +691,7 @@ COMMAND(jabber_command_msg)
 	if (!(uid = get_uid(params[0]))) {
 		uid = params[0];
 
-		if (strchr(uid, '@') && strchr(uid, '@') < strchr(uid, '.'))) {			
+		if (strchr(uid, '@') && strchr(uid, '@') < strchr(uid, '.')) {			
 			printq("user_not_found", params[0]);
 			return -1;
 		}
