@@ -1966,23 +1966,25 @@ action:
 			p = ncurses_lines[lines_start + i];
 
 #ifdef WITH_ASPELL
-			aspell_line = xmalloc(xstrlen(p));
-			memset(aspell_line, 32, xstrlen(aspell_line));
-			if(line_start == 0) 
-				mispelling = 0;
-				    
-			if(config_aspell == 1)
+			if (config_aspell ) {
+				aspell_line = xmalloc(xstrlen(p));
+				memset(aspell_line, 32, xstrlen(aspell_line));
+				if (line_start == 0) 
+					mispelling = 0;
+					    
 				spellcheck(p, aspell_line);
-                                
+	                }
+
 			for (j = 0; j + line_start < strlen(p) && j < input->_maxx + 1; j++)
                         {                                 
-			    if(aspell_line[line_start + j] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+			    if (config_aspell && aspell_line[line_start + j] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 	                            print_char_underlined(input, i, j, p[line_start + j]);
                             else /* jesli jest wszystko okey to wyswietlamy normalny */
 	   			    print_char(input, i, j, p[j + line_start]);
 			}
 
-			xfree(aspell_line);
+			if (config_aspell)	
+				xfree(aspell_line);
 #else
 			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
@@ -1996,24 +1998,26 @@ action:
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
 
-#ifdef WITH_ASPELL			
-		aspell_line = xmalloc(xstrlen(ncurses_line));
-		memset(aspell_line, 32, xstrlen(aspell_line));
-		if(line_start == 0) 
-			mispelling = 0;
-
-		if(config_aspell == 1)
+#ifdef WITH_ASPELL		
+		if (config_aspell) {
+			aspell_line = xmalloc(xstrlen(ncurses_line) + 1);
+			memset(aspell_line, 32, xstrlen(aspell_line));
+			if(line_start == 0) 
+				mispelling = 0;
+	
 			spellcheck(ncurses_line, aspell_line);
+		}
 
                 for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
                 {
-			if(aspell_line[line_start + i] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+			if (config_aspell && aspell_line[line_start + i] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
                         	print_char_underlined(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
                         else /* jesli jest wszystko okey to wyswietlamy normalny */
                                 print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
 		}
 
-		xfree(aspell_line);
+		if (config_aspell)
+			xfree(aspell_line);
 #else
  		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
