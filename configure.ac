@@ -220,10 +220,10 @@ fi
 
 AM_CHECK_LIBXOSD
 
-dnl if test "x$have_libxosd" = "xyes"; then
-dnl	AC_CONFIG_FILES([plugins/xosd/Makefile])
-dnl	PLUGINS="$PLUGINS xosd"
-dnl fi
+if test "x$have_libxosd" = "xyes"; then
+	AC_CONFIG_FILES([plugins/xosd/Makefile])
+	PLUGINS="$PLUGINS xosd"
+fi
 
 AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
