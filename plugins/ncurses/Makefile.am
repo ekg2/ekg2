@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt vars-pl.txt
+EXTRA_DIST = vars.txt
 
 lib_LTLIBRARIES = ncurses.la
 ncurses_la_SOURCES = main.c old.c completion.c bindings.c contacts.c mouse.c\
@@ -13,5 +13,4 @@ INCLUDES = -DDATADIR=\"$(datadir)/ekg\"
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/ncurses/
 	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/ncurses/vars.txt
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/ncurses/vars-pl.txt
 

@@ -60,6 +60,7 @@ else
   $GETTEXTIZE --copy --force || exit 1
   if test -e po/ChangeLog~; then
     rm -f po/ChangeLog
+    mv po/ChangeLog~ po/ChangeLog
   fi
 fi
 

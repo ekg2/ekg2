@@ -278,8 +278,9 @@ char *va_format_string(const char *format, va_list ap)
 				break;
 			if (*p == '{')
 			{
+				char *str;
 				p++;
-				char *str = (char *)args[*p - '1'];
+				str = (char *)args[*p - '1'];
 				p++;
 				cnt = (char *)p;
 				hm = 0;

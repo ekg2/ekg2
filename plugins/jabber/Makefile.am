@@ -1,4 +1,4 @@
-EXTRA_DIST = commands.txt commands-pl.txt
+EXTRA_DIST = commands.txt
 
 lib_LTLIBRARIES = jabber.la
 jabber_la_SOURCES = jabber.c commands.c misc.c digest.c xmlnode.c jabber.h
@@ -11,5 +11,4 @@ libdir = $(plugindir)
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/jabber/
 	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/jabber/commands.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/jabber/commands-pl.txt
 
