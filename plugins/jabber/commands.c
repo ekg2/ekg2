@@ -597,13 +597,14 @@ COMMAND(jabber_command_modify)
                 return -1;
         }
 	
-	if (params[1])
+	if (params[1]) {
 		argv = array_make(params[1], " \t", 0, 1, 1);
 
-	for (i = 0; argv[i]; i++) {
+		for (i = 0; argv[i]; i++) {
 
-		if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1])
-			nickname = jabber_escape(argv[++i]);
+			if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1])
+				nickname = jabber_escape(argv[++i]);
+		}
 	}
 	
 	if (!xstrcasecmp(name, "add")) {
