@@ -480,7 +480,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 	query_emit(NULL, "ui-is-initialized", &is_UI);
 
 	if (!is_UI) {
-		printf(format, ap);
+		/* printf(format, ap); */ /* uncomment for debuging */
 		return;
 	}
 

@@ -35,6 +35,8 @@
 
 #include "metacontacts.h"
 
+list_t metacontacts = NULL;
+
 /* 
  * metacontact function support
  */
