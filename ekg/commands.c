@@ -3908,7 +3908,7 @@ void command_init()
 	  "", NULL);
 	  
 	command_add(NULL, "window", params("p ?"), cmd_window, 0,
-	  " <komenda> [numer_okna]", "zarz±dzanie okno",
+	  " <komenda> [numer_okna]", "zarz±dzanie oknami",
 	  "\n"
 	  "  active               prze³±cza do pierwszego okna,\n"
 	  "                       w którym co¶ siê dzieje\n"
