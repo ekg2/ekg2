@@ -1138,7 +1138,7 @@ COMMAND(cmd_list)
 
 		/* list <alias> [opcje] */
 		if (params[1])
-			return cmd_modify("list", params, NULL, NULL, quiet);
+			return cmd_modify("list", params, session, NULL, quiet);
 
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
