@@ -29,6 +29,7 @@
 
 #include "commands.h"
 #include "log.h"
+#include "emoticons.h"
 #include "msgqueue.h"
 #include "objects.h"
 #include "protocol.h"
@@ -298,7 +299,7 @@ notify_plugins:
  */
 char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq)
 {
-	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text);
+	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text), *emotted = NULL;
 	const char *target = sender, *user;
         time_t now;
 	session_t *s = session_find(session);
@@ -431,9 +432,14 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	
 	user = xstrcasecmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
 
-	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, text, (!xstrcasecmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), (!xstrcasecmp(class_str, "sent")) ? s->uid : get_uid(s, sender));
+	if (config_emoticons)
+		emotted = emoticon_expand(text);
+
+	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, (emotted) ? emotted : text, (!xstrcasecmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), (!xstrcasecmp(class_str, "sent")) ? s->uid : get_uid(s, sender));
+
 	xfree(text);
 	xfree(t);
+	xfree(emotted);
 	return xstrdup(target);
 }
 
