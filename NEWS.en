@@ -1,4 +1,5 @@
-vCVS 2004-07-01
+vCVS 2004-07-20
+	* new function ,,for''
 	* possibility of split big messages to small 
 	* aspell dictionary
 	* viewing all contacts in contacts window 

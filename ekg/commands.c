@@ -860,6 +860,71 @@ COMMAND(cmd_exec)
 	return 0;
 }
 
+COMMAND(cmd_for)
+{
+	char **tmp = NULL; // = array_make(params[0], ",", 0, 0, 0);
+	int for_all = 0, ret = 0;
+
+	if (!params[0] || !params[1]) {
+		printq("invalid_params");
+		ret = -1;
+		goto for_end;
+	}
+		
+
+	if (!xstrcmp(params[0], "*")) 
+		for_all = 1; 
+	else 
+		tmp = array_make(params[0], ",", 0, 0, 0);
+	
+	if (for_all) {
+		list_t l;
+		
+		if (!sessions) {
+			printq("session_list_empty");
+			ret = -2;
+			goto for_end;
+		}
+		
+		for (l = sessions; l; l = l->next) {
+			session_t *s = l->data;
+
+			if (!s)
+				continue;
+
+			command_exec(NULL, s, params[1], 0);
+		}
+		
+		goto for_end;
+	} else {
+		int i;
+		session_t **s;
+
+		s = xmalloc(sizeof(session_t *) * array_count(tmp));
+		
+		/* first we are checking all of the parametrs */
+		for (i = 0; tmp[i]; i++) {
+			if (!(s[i] = session_find(tmp[i]))) {
+				printq("session_doesnt_exist", tmp[i]);
+				ret = -1;
+				goto for_end;
+			}
+		}		
+		
+		for (i = 0; tmp[i]; i++) 
+			command_exec(NULL, s[i], params[1], 0);
+
+		xfree(s);
+	}
+
+
+for_end:
+	if (tmp)
+		array_free(tmp);
+
+	return ret;
+}
+
 COMMAND(cmd_help)
 {
 	list_t l;
@@ -3660,7 +3725,17 @@ void command_init()
 	  "wyniku. Ze wzglêdu na budowê klienta, numery i aliasy "
 	  "%Tnie bêd±%n dope³niane Tabem.",
 	  possibilities("-m --msg -b --bmsg") );
-	  
+	 
+	command_add(NULL, "for", params("? c"), cmd_for, 0,
+          " <sesje>|* <polecenie>", "wykonuje polecenie dla danych/wszystkich"
+	  " sesji",
+          "\n"
+          "Wykonuje polecenie dla podanych lub wszystkich sesji. "
+	  "Mo¿na podaæ * zamiast nazwy sesji, wtedy komenda wykonana jest dla "
+	  "wszystkich sesji",
+          NULL );
+
+ 
 	command_add(NULL, "!", params("?"), cmd_exec, 0,
 	  " [opcje] <polecenie>", "synonim dla %Texec%n",
 	  "", NULL);
