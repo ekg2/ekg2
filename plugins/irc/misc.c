@@ -37,6 +37,9 @@
 #include "input.h"
 #include "autoacts.h"
 
+#define GDEBUG
+#define MARLENE
+
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
@@ -432,6 +435,13 @@ IRC_COMMAND(irc_c_error)
 				xfree(coloured);
 			}
 			break;
+		case 324:
+			if ((chanp = irc_find_channel(j->channels, param[3])))
+			{
+				xfree(chanp->mode_str);
+				chanp->mode_str = xstrdup(IOK2(4));
+			}
+			break;
 		case 333:
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
@@ -546,12 +556,25 @@ IRC_COMMAND(irc_c_list)
 			print_window(dest, s, 0, "RPL_LISTSTART", session_name(s));
 	if (endlist) {
 			if (!mode_act)
-					print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
-			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK(3));
+				print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
+
+			if (irccommands[ecode].future - endlist == IRC_LISTSTA)
+				print_window(dest, s, 0, "RPL_STATSEND", session_name(s), IOK2(4), IOK2(3)); 
+			else
+				print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
+				/* stupid mistake */
+
 			mode_act = 0; 
 			return 0;
 	}
 	mode_act++;
+
+	if (irccommands[ecode].future == IRC_LISTSTA)
+	{
+		/* TODO: rewrite it */
+		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
+		goto cleanup;
+	} 
 
 	if (param[5] && *param[5] == ':') {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
@@ -559,14 +582,15 @@ IRC_COMMAND(irc_c_list)
 		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3),
 					IOK2(4), coloured, itoa(mode_act));
 	} else {
-		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3),
-					IOK2(4), IOK2(5), itoa(mode_act));
+		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK2(3),
+				IOK2(4), IOK2(5), itoa(mode_act));
+		 
 	}
 	/*
-	 * ircd-hybrid wysyla w IOK2(5) - nick!ident@host i w IOK2(6) unixtime zalozenia bana.
-	 * ircd2 nie. (?)
+	 * ircd-hybrid sends in IOK2(5) - nick!ident@host and in IOK2(6) unixtime of bana.
+	 * ircd2 not ?
 	 */
-
+cleanup:
 	xfree(coloured);
 	xfree(t);
 	return 0;
@@ -659,8 +683,14 @@ IRC_COMMAND(irc_c_msg)
 	xosd_nick = OMITCOLON(param[0]);
 	xosd_chan = param[2];
 
-	/* mesg do nas */
-	if (!xstrcmp(j->nick, param[2])) {
+	if (j->connecting && !xstrcmp(":_empty_", param[0]) && !prv) {
+		/* && !xstrcmp("AUTH", param[2] ) */
+		class = (mw&16)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
+		dest = saprintf("__status");
+		format = xstrdup("irc_not_f_server");
+		xosd_to_us = 1;
+		/*param[0] = saprintf(":%s",session_get(s, "server"));*/
+	} else if (!xstrcmp(j->nick, param[2])) {
 		class = (mw&2)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
 		dest = saprintf("irc:%s", OMITCOLON(param[0]));
 		format = xstrdup(prv?"irc_msg_f_some":"irc_not_f_some");
@@ -955,6 +985,7 @@ IRC_COMMAND(irc_c_mode)
 	char *t, *bang, *add, **pars, *channame;
 	people_t *per;
 	people_chan_t *ch;
+	channel_t *chan;
 	userlist_t *ul;
 	window_t *w;
 	string_t moderpl;
@@ -1007,16 +1038,17 @@ notreallyok:
 	moderpl =  string_init("");
 	pars=&(param[3]);
 	while (*pars) {
+		/* we need a space first */
 		string_append_c(moderpl, ' ');
 		string_append(moderpl, *pars++);
 	}
 	print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
 			param[0]+1, bang?bang+1:"", param[2], moderpl->str);
 
-	/* fucked up
-	if (ch && ch->chanp) {
-			xfree(ch->chanp->mode_str);
-			ch->chanp->mode_str = xstrdup(moderpl->str);
+	/*
+	if ((chan = irc_find_channel(j->channels, param[2]))) {
+		xfree(chan->mode_str);
+		chan->mode_str = xstrdup(moderpl->str);
 	}
 	*/
 	if (bang) *bang='!';

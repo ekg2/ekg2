@@ -707,6 +707,8 @@ COMMAND(irc_command_msg)
 	int secure = 0;
 	char *sid = NULL, *uid_tmp = NULL;
 	unsigned char *__msg = NULL;
+	char *what = NULL;
+	int prv = 0;
 
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
@@ -729,6 +731,12 @@ COMMAND(irc_command_msg)
 		return -1;
 	}
 
+	prv = xstrcmp(name, "notice");
+	if (prv) 
+		what = xstrdup("PRIVMSG");
+	else
+		what = xstrdup("NOTICE");
+
 	sid = xstrdup(session->uid);
 	uid_tmp = xstrdup(uid);
 	mline[0] = (char *)params[1];
@@ -739,14 +747,14 @@ COMMAND(irc_command_msg)
 		__msg = xstrdup(mline[0]);
 
 		query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
-		irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, __msg);
+		irc_write(j, "%s %s :%s\r\n", what, uid+4, __msg);
 		xfree(__msg);
 		mline[0] = (char *)(mline[1]+1);
 		*mline[1] = mlinechr;
 	}
 	__msg = xstrdup(mline[0]);
 	query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
-	irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, __msg);
+	irc_write(j, "%s %s :%s\r\n", what, uid+4, __msg);
 	xfree(sid);
 	xfree(uid_tmp);
 	xfree(__msg);
@@ -764,8 +772,9 @@ COMMAND(irc_command_msg)
 	prefix[0] = perchn?*(perchn->sign):' ';
 	if (!session_int_get(session, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
 		*prefix='\0';
-	head = format_string(format_find(ischn?"irc_msg_sent_chan":
-				w?"irc_msg_sent_n":"irc_msg_sent"),
+	head = format_string(format_find(prv?
+				ischn?"irc_msg_sent_chan":w?"irc_msg_sent_n":"irc_msg_sent":
+				ischn?"irc_not_sent_chan":w?"irc_not_sent_n":"irc_not_sent"),
 			session_name(session), prefix,
 			j->nick, j->nick, uid+4, params[1]);
 
@@ -782,6 +791,7 @@ COMMAND(irc_command_msg)
 	xfree(rcpts[0]);
 	xfree(rcpts);
 	xfree(coloured);
+	xfree(what);
 	
 	session_unidle(session);
 
@@ -1198,15 +1208,19 @@ COMMAND(irc_command_mode)
 	if (!(chan=irc_getchan(session, params, name,
 					&mp, 1, IRC_GC_CHAN))) 
 		return -1;
-	
+/*
 	if (!(*mp)) {
 		print("not_enough_params", name);
 		xfree(chan);
 		return -1;
 	}
-
-	irc_write(irc_private(session), "MODE %s %s %s\r\n",
-			chan+4, *mp, mp[1]?mp[1]:"");
+*/
+	if (!(*mp))
+		irc_write(irc_private(session), "MODE %s\r\n",
+				chan+4);
+	else
+		irc_write(irc_private(session), "MODE %s %s %s\r\n",
+				chan+4, *mp, mp[1]?mp[1]:"");
 
 	xfree(chan);
 	return 0;
@@ -1383,19 +1397,41 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 0, NULL);
 	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 0, NULL);
 	command_add(&irc_plugin, "irc:msg", "uUw ?",	irc_command_msg, 0, NULL);
+	command_add(&irc_plugin, "irc:notice", "uUw ?",	irc_command_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:me", "uUw ?",	irc_command_me, 0, NULL);
 	command_add(&irc_plugin, "irc:ctcp", "w? ? ?",	irc_command_ctcp, 0, NULL);
 	command_add(&irc_plugin, "irc:mode", "w ?",	irc_command_mode, 0, NULL);
 	command_add(&irc_plugin, "irc:umode", "?",	irc_command_umode, 0, NULL);
 	command_add(&irc_plugin, "irc:whois", "uU",	irc_command_whois, 0, NULL);
 	
-	/* TODO 
+	command_add(&irc_plugin, "irc:whowas", "uU",	irc_command_whois, 0, NULL);
+	/* G->d> po co to, */
+	/*command_add(&irc_plugin, "irc:notice", "?",irc_command_inline_msg, 0, NULL);*/
+	/* iwil, ale przez command_msg nie szlo tak jak chcialem */
+/*	command_add(&irc_plugin, "irc:stats", "\"STATS\" ?",irc_command_quote, 0, NULL); */
+	/* not working */
+	
+	/* dj>
+	 * what about implementing something like that in command_add:
+	 * that whatever is in \" \" would be send to executed command
+	 * 
+	 * without that we have to make handler for each function
+	 * even if there is nothing interesting there ;/
+	 * PS: maybe such a thing is already implemented, and I don't know that
+	 *
+	 * g> I'm guessing you wan't to use it just with _some_ commands
+	 *    not all that are below...
+	 */ 
+	/* TODO
 	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL); /quote admin
 	command_add(&irc_plugin, "irc:kick", "",        NULL, 0, NULL); /quote kick nick  :reason
 	command_add(&irc_plugin, "irc:ban",  "",        NULL, 0, NULL); /mode +b <%nick>
 	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL); /quote map
 	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); /quote links
-	*/
+	command_add(&irc_plugin, "irc:invite", "",	NULL, 0, NULL); /quote invite who kanal
+	command_add(&irc_plugin, "irc:oper", "",	NULL, 0, NULL); /quote oper %nick %pass
+	command_add(&irc_plugin, "irc:trace", "",	NULL, 0, NULL); /quote trace %...
+	 */
 	command_add(&irc_plugin, "irc:op", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:deop", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:voice", "w ?",	irc_command_devop, 0, NULL);
@@ -1434,7 +1470,7 @@ int irc_plugin_init(int prio)
 
 	/* upper case: names of variables, that reffer to protocol stuff */
 	plugin_var_add(&irc_plugin, "AUTO_JOIN", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_INT, "1", 0, NULL);
+	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_BOOL, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_IN_CURRENT", VAR_INT, "2", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_NICKCHANGE", VAR_INT, "0", 0, NULL);
@@ -1484,6 +1520,19 @@ static int irc_theme_init()
 	format_add("irc_msg_sent_chan",	"%P<%w%{2@%+gcp}X%2%3%P>%n %6", 1);
 	format_add("irc_msg_sent_chanh","%P<%W%{2@%+GCP}X%2%3%P>%n %6", 1);
 	
+	/* G->d> I've made other ones to keep it look like irc_not_f_* styles */
+	format_add("irc_not_sent",	"%P(%n%3/%5%P)%n %6", 1);
+	format_add("irc_not_sent_n",	"%P(%n%3%P)%n %6", 1);
+	format_add("irc_not_sent_chan",	"%P(%w%{2@%+gcp}X%2%3%P)%n %6", 1);
+	format_add("irc_not_sent_chanh","%P(%W%{2@%+GCP}X%2%3%P)%n %6", 1);
+	/* dj> here are mine irssi-like styles
+	 */
+	/*
+	format_add("irc_not_sent","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
+	format_add("irc_not_sent_n","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
+	format_add("irc_not_sent_chan","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
+	format_add("irc_not_sent_chanh","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
+	*/
 	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
@@ -1495,9 +1544,10 @@ static int irc_theme_init()
 	format_add("irc_not_f_chan_n",	"%B(%w%{2@%+gcp}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
+	format_add("irc_not_f_server",	"%g!%3%n %6", 1);
 
 	format_add("irc_joined", _("%> %Y%2%n has joined %4\n"), 1);
-	format_add("irc_joined_you", _("%> %RYou%n has joined %4\n"), 1);
+	format_add("irc_joined_you", _("%> %RYou%n have joined %4\n"), 1);
 	format_add("irc_left", _("%> %g%2%n has left %4 (%5)\n"), 1);
 	format_add("irc_kicked", _("%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"), 1);
 	format_add("irc_kicked_you", _("%> You have been kicked out by %R%3%n from %5 (%6)\n"), 1);
@@ -1538,19 +1588,28 @@ static int irc_theme_init()
 	format_add("RPL_EMPTYLIST" , "%g|| %n Empty list \n", 1);
 	format_add("RPL_LINKS",      "%g|| %n %5 - %2  %3  %4\n", 1);
 	format_add("RPL_ENDOFLIST",  "%g`+=%G----- %2%n\n", 1);
- 
+
+	format_add("RPL_STATS",      "%g|| %3 %n %4 %5 %6 %7 %8\n", 1);
+	format_add("RPL_STATS_EXT",  "%g|| %3 %n %2 %4 %5 %6 %7 %8\n", 1);
+	format_add("RPL_STATSEND",   "%g`+=%G--%3--- %2\n", 1);
+
 	format_add("RPL_AWAY", _("%G||%n away     : %2 - %3\n"), 1);
 	/* in whois %2 is always nick */
 	format_add("RPL_WHOISUSER", _("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
-			"%G||%n realname : %6\n"), 1);
+				"%G||%n realname : %6\n"), 1);
+
+	format_add("RPL_WHOWASUSER", _("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
+				"%G||%n realname : %6\n"), 1);
+
 	format_add("RPL_WHOISCHANNELS", _("%G||%n %|channels : %3\n"), 1);
 	format_add("RPL_WHOISSERVER", _("%G||%n %|server   : %3 (%4)\n"), 1);
 	format_add("RPL_WHOISOPERATOR", _("%G||%n %|ircOp    : %3\n"), 1);
 	format_add("RPL_WHOISIDLE", _("%G||%n %|idle     : %3 (signon: %4)\n"), 1);
 	format_add("RPL_ENDOFWHOIS", _("%G`+===%g-----\n"), 1);
+	format_add("RPL_ENDOFWHOWAS", _("%G`+===%g-----\n"), 1);
 	
 	format_add("RPL_TOPIC", _("%> Topic %2: %3\n"), 1);
-	/* \n not needed if you're including date [%3] */
+	/* \n not needed if you're including date [%4] */
 	format_add("IRC_RPL_TOPICBY", _("%> set by %2 on %4"), 1);
 	format_add("IRC_TOPIC_CHANGE", _("%> %T%2%n changed topic on %T%4%n: %5\n"), 1);
 	format_add("IRC_TOPIC_UNSET", _("%> %T%2%n unset topic on %T%4%n\n"), 1);

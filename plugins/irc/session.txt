@@ -73,6 +73,8 @@ make_window
 	    zapytanie ctcp
 	8 - tworzenie okna rozmowy z u¿ytkownikiem, je¶li przysz³a od niego
 	    odpowied¼, na wys³ane przez nas zapytanie ctcp
+	16 - tworzenie okienka, je¿eli dostajemy dostajemy NOTICE od serwera
+	    przy ³aczeniu... [AUTH mesejgi itp]
 	Czyli np: ustawienie na 10 spowoduje otwieranie okienka rozmowy
 	przy przychodzeniu wiadomo¶ci i przy odpowiedzi na /ctcp
 	[je¿eli tylko okienko jeszcze nie istnieje]

@@ -30,8 +30,9 @@ typedef int (*Irc_Cmd) 	    (session_t * , irc_private_t * , int   , int      , 
 #define IRC_LISTBAN		0x001
 #define IRC_LISTEXC		0x002
 #define IRC_LISTINV		0x004
-#define IRC_LISTLIN 	0x008
-#define IRC_LISTEND		0x010
+#define IRC_LISTLIN		0x008
+#define IRC_LISTSTA		0x010
+#define IRC_LISTEND		0x020
 
 enum { IRC_ERR_12=0, IRC_ERR_21, IRC_ERR_ONLY1, IRC_ERR_NEW, IRC_ERR_IGNO,
 	IRC_ERR_OTHER,
@@ -81,6 +82,9 @@ IRC_COMMAND(irc_c_whois);
  * it displays some information
  * if *_OTHER is used reply is treated according to its code
  * starting with line switch(i), where i is code
+ *
+ * if you add something that is not currently on the list
+ * give somewhere [*] in comment
  */
 static IrcCommand irccommands[] =
 {
@@ -110,10 +114,35 @@ static IrcCommand irccommands[] =
 	{ 1,	219,	NULL,	"RPL_ENDOFSTATS",	&irc_c_error,	
 	{ 1,	242,	NULL,	"RPL_STATSUPTIME",	&irc_c_error,	
 	{ 1,	243,	NULL,	"RPL_STATSOLINE",	&irc_c_error,	*/
+	/*[ ]  /stats M -> modules */
+	{ 1,	212,	NULL, 	"RPL_STATS",		&irc_c_list, IRC_LISTSTA},
+	/*[*] /stats C -> connect() */
+	{ 1,	213,	NULL,	"RPL_STATS_EXT",	&irc_c_list, IRC_LISTSTA},
+	/*[*] /stats I -> I:lines */
+	{ 1,	215,	NULL,	"RPL_STATS_EXT",	&irc_c_list, IRC_LISTSTA},
+	/*[*] /stats K -> K:lines */
+	{ 1,	216,	NULL,	"RPL_STATS_EXT",	&irc_c_list, IRC_LISTSTA},
+	/*[*] /stats Y -> classes */
+	{ 1,	218,	NULL,	"RPL_STATS",		&irc_c_list, IRC_LISTSTA},
+	{ 1,	219,	NULL,	"RPL_STATSEND",		&irc_c_list, IRC_LISTSTA|IRC_LISTEND },
+	/*[*] /stats P -> ports */
+	{ 1,	220,	NULL,	"RPL_STATS_EXT",	&irc_c_list, IRC_LISTSTA},
+	/*[*] /stats A */
+	{ 1,	226,	NULL, 	"RPL_STATS",		&irc_c_list, IRC_LISTSTA}, 
+	/*[ ] /stats u -> uptime */
+	{ 1,	242,	NULL,	"RPL_STATS",		&irc_c_list, IRC_LISTSTA},
+	/*[ ] /stats O -> O:lines ; P -> aktywni */
+	{ 1,	243,	NULL,	"RPL_STATS_EXT",	&irc_c_list, IRC_LISTSTA},
+	/*[*] /stats H -> */
+	{ 1,	244,	NULL,	"RPL_STATS",		&irc_c_list, IRC_LISTSTA},
+	/*[*] /stats F, R, T, Z, ? */
+	{ 1,	249,	NULL,	"RPL_STATS",		&irc_c_list, IRC_LISTSTA},
 
 /*	{ 1,	221,	NULL,	"RPL_UMODEIS",		&irc_c_error,	
 	{ 1,	234,	NULL,	"RPL_SERVLIST",		&irc_c_error,	
-	{ 1,	235,	NULL,	"RPL_SERVLISTEND",	&irc_c_error,	
+	{ 1,	235,	NULL,	"RPL_SERVLISTEND",	&irc_c_error,
+	
+	{ 1,250,NULL,"RPL_STATS",&irc_c_list,IRC_LISTSTA }, [*]
 	{ 1,	251,	NULL,	"RPL_LUSERCLIENT",	&irc_c_error,	
 	{ 1,	252,	NULL,	"RPL_LUSEROP",		&irc_c_error,	
 	{ 1,	253,	NULL,	"RPL_LUSERUNKNOWN",	&irc_c_error,	
@@ -122,11 +151,12 @@ static IrcCommand irccommands[] =
 	{ 1,	256,	NULL,	"RPL_ADMINME",		&irc_c_error,	
 	{ 1,	257,	NULL,	"RPL_ADMINLOC1",	&irc_c_error,	
 	{ 1,	258,	NULL,	"RPL_ADMINLOC2",	&irc_c_error,	
-	{ 1,	259,	NULL,	"RPL_ADMINEMAIL",	&irc_c_error,	
-	{ 1,	263,	NULL,	"RPL_TRYAGAIN",		&irc_c_error,	*/
-		
+	{ 1,	259,	NULL,	"RPL_ADMINEMAIL",	&irc_c_error,	*/
+	{ 1,	263,	NULL,	"RPL_TRYAGAIN",		&irc_c_error,	IRC_ERR_ONLY1},
+	
 /*	{ 1,	302,	NULL,	"RPL_USERHOST",		&irc_c_error,	
-	{ 1,	303,	NULL,	"RPL_ISON",		&irc_c_error,	*/
+	{ 1,	303,	NULL,	"RPL_ISON",		&irc_c_error,	G->d> yeah, i know */
+	
 	{ 1,	301,	NULL,	"RPL_AWAY",		&irc_c_error,	IRC_RPL_OTHER},
 	{ 1,	305,	NULL,	"RPL_UNAWAY",		&irc_c_error,	IRC_RPL_ONLY1},
 	{ 1,	306,	NULL,	"RPL_NOWAWAY",		&irc_c_error,	IRC_RPL_ONLY1},
@@ -138,8 +168,8 @@ static IrcCommand irccommands[] =
 	{ 1,	318,	NULL,	"RPL_ENDOFWHOIS",	&irc_c_whois,	0 },
 	{ 1,	319,	NULL,	"RPL_WHOISCHANNELS",	&irc_c_whois,	0 },
 
-/*	{ 1,	314,	NULL,	"RPL_WHOWASUSER",	&irc_c_error,	
-	{ 1,	369,	NULL,	"RPL_ENDOFWHOWAS",	&irc_c_error,	*/
+	{ 1,	314,	NULL,	"RPL_WHOWASUSER",	&irc_c_whois,	0 },
+	{ 1,	369,	NULL,	"RPL_ENDOFWHOWAS",	&irc_c_whois,	0 },
 
 /*	{ 1,	315,	NULL,	"RPL_ENDOFWHO",		&irc_c_error,
 	{ 1,	352,	NULL,	"RPL_WHOREPLY",		&irc_c_error,	*/
@@ -150,10 +180,11 @@ static IrcCommand irccommands[] =
 
 /*	{ 1,	325,	NULL,	"RPL_UNIQOPIS",		&irc_c_error,	
 	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_error,   */
-	/* this is really RPL_NOTOPIC, but I don't want another format... */
+	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_error,	IRC_RPL_OTHER},
+	/* 331 is really RPL_NOTOPIC, but I don't want another format... */
 	{ 1,	331,	NULL,	"RPL_TOPIC",		&irc_c_error,	IRC_RPL_OTHER},
 	{ 1,	332,	NULL,	"RPL_TOPIC",		&irc_c_error,	IRC_RPL_OTHER},
-	/* RFC doesn't specify 333 */
+	/* [*] 333 not in rfc 2812 */
 	{ 1,	333,	NULL,	"RPL_TOPICBY",		&irc_c_error,	IRC_RPL_OTHER},
 	
 /*	{ 1,	351,	NULL,	"RPL_VERSION",		&irc_c_error,	*/
