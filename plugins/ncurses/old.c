@@ -1672,12 +1672,12 @@ int ekg_getch(int meta)
 	ch = wgetch(input);
 
 #if NCURSES_MOUSE_VERSION == 1
-	if (ch == KEY_MOUSE) {
+/*	if (ch == KEY_MOUSE) {
 		MEVENT m;
 
 		if (getmouse(&m) == OK)
 			debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%.8x\n", m.id, m.x, m.y, m.z, m.bstate);
-	}
+	} */
 #endif
 
 	query_emit(NULL, "ui-keypress", &ch, NULL);

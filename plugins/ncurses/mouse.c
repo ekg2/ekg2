@@ -51,12 +51,12 @@ void show_mouse_pointer()
 #endif
 
 /*
- * ncurses_gpm_mouse_timer()
+ * ncurses_mouse_timer()
  * 
  * every second we should do something
  * it's done here
  */
-static void ncurses_gpm_mouse_timer(int destroy, void *data)
+static void ncurses_mouse_timer(int destroy, void *data)
 {
 	show_mouse_pointer();
 }
@@ -125,7 +125,6 @@ void ncurses_enable_mouse()
 
 	if (gpm_fd != -2) {
 	        watch_add(&ncurses_plugin, gpm_fd, WATCH_READ, 1, ncurses_gpm_watch_handler, NULL);
-	        timer_add(&ncurses_plugin, "ncurses:gpm_mouse", 1, 1, ncurses_gpm_mouse_timer, NULL);
 		gpm_visiblepointer = 1;
 	} else { /* xterm */
 	        mousemask(ALL_MOUSE_EVENTS, &oldmask);
@@ -133,6 +132,7 @@ void ncurses_enable_mouse()
 #else
 	mousemask(ALL_MOUSE_EVENTS, &oldmask);
 #endif
+        timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
 }
 
 /*
@@ -146,8 +146,10 @@ void ncurses_disable_mouse()
 #ifdef HAVE_LIBGPM
 	Gpm_Close();
 
-	if (gpm_fd != 2)
+	if (gpm_fd != 2) {
 		watch_remove(&ncurses_plugin, gpm_fd, WATCH_READ);
+		timer_remove(&ncurses_plugin, "ncurses:mouse");
+	}
 #endif
 }
 
