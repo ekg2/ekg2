@@ -222,7 +222,7 @@ int alias_add(const char *string, int quiet, int append)
 	list_add(&a.commands, cmd, xstrlen(cmd) + 1);
 	list_add(&aliases, &a, sizeof(a));
 
-	command_add(NULL, a.name, ((params) ? params: array_make("?", " ", 0, 1, 1)), cmd_alias_exec, 1, "", "", "", NULL);
+	command_add(NULL, a.name, ((params) ? array_join(params, " ") : "?"), cmd_alias_exec, 1, "", "", "", NULL);
 	
 	printq("aliases_add", a.name, "");
 
