@@ -9,9 +9,6 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - przepisaæ complete() w ncurses wg:
-	- TAB powinien prze³±czaæ miêdzy kolejnymi dope³nieniami 
-	- dope³nienia powinny odbywaæ siê tylko do aktualnej sesji (*)
   - nie dziala powtarzanie (strzalka w gore) wiadomosci wielolinijkowych (zdz)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)

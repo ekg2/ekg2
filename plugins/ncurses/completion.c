@@ -40,6 +40,11 @@
 #define xstrncasecmp(x...) xstrncasecmp_pl(x)
 
 static char **completions = NULL;	/* lista dope³nieñ */
+static char *last_line = NULL;
+static char *last_line_without_complete = NULL;
+static int last_pos = -1;
+int continue_complete = 0;
+int continue_complete_count = 0;
 
 static void dcc_generator(const char *text, int len)
 {
@@ -70,14 +75,14 @@ static void command_generator(const char *text, int len)
 
 	if (window_current->target)
 		slash = "/";
-			
+
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 		char *without_sess_id = xstrchr(c->name, ':');
 
 		if (!xstrncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
 			array_add(&completions, saprintf("%s%s%s", slash, dash, c->name));
-		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !xstrncasecmp(text, without_sess_id + 1, len)) 
+		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !xstrncasecmp(text, without_sess_id + 1, len))
 			array_add(&completions, saprintf("%s%s%s", slash, dash, without_sess_id + 1));
 	}
 }
@@ -405,7 +410,7 @@ static void sessions_var_generator(const char *text, int len)
 
 		for(i = 0; v->params && v->params[i]; i++) {
                 	if (*text == '-') {
-                        	if (!xstrncasecmp(text + 1, v->params[i]->key, len - 1)) 
+                        	if (!xstrncasecmp(text + 1, v->params[i]->key, len - 1))
                                 	array_add_check(&completions, saprintf("-%s", v->params[i]->key), 1);
 	                } else {
         	                if (!xstrncasecmp(text, v->params[i]->key, len))
@@ -452,27 +457,36 @@ static struct {
  * - Wprowadzona linia dzielona jest na wyrazy (uwzglêdniaj±c przecinki i znaki cudzyslowia)
  * - nastêpnie znaki separacji znajduj±ce siê miêdzy tymi wyrazami wrzucane s± do tablicy separators
  * - dalej sprawdzane jest za pomoc± zmiennej word_current (okre¶laj±cej aktualny wyraz bez uwzglêdnienia
- *   przecinków - po to, aby wiedzieæ czy w przypadku np funkcji /query ma byæ szukane dope³nienie 
+ *   przecinków - po to, aby wiedzieæ czy w przypadku np funkcji /query ma byæ szukane dope³nienie
  * - zmienna word odpowiada za aktualny wyraz (*z* uwzglêdnieniem przecinków)
  * - words - tablica zawieraj± wszystkie wyrazy
- * - gdy jest to mo¿liwe szukane jest dope³nienie 
+ * - gdy jest to mo¿liwe szukane jest dope³nienie
  * - gdy dope³nieñ jest wiêcej ni¿ jedno (count > 1) wy¶wietlamy tylko "wspóln±" czê¶æ wszystkich dope³nieñ
  *   np ,,que'' w przypadku funkcji /query i /queue
  * - gdy dope³nienie jest tylko jedno wy¶wietlamy owo dope³nienie
  * - przy wy¶wietlaniu dope³nienia ca³a linijka konstruowana jest od nowa, poniewa¿ nie wiadomo w którym miejscu
  *   podany wyraz ma zostañ "wsadzony", st±d konieczna jest tablica separatorów, tablica wszystkich wyrazów itd ...
+ * - przeskakiwanie miêdzy dope³nieniami po drugim TABie
  */
 void ncurses_complete(int *line_start, int *line_index, char *line)
 {
 	char *start, *cmd, **words, *separators;
 	int i, count, word, j, words_count, word_current, open_quote;
 
-	start = xmalloc(xstrlen(line) + 1);
-	count = 0;
 	/* 
-	 * je¶li uzbierano ju¿ co¶ to próbujemy wy¶wietliæ wszystkie mo¿liwo¶ci 
+	 * sprawdzamy czy mamy kontynuowaæ dope³nianie (przeskakiwaæ miêdzy dope³nianymi wyrazami 
+	 * dzia³a to tylko gdy jeste¶my na koñcu linijki, gdy¿ nie ma sensu robiæ takiego przeskakiwania 
+ 	 * w ¶rodku linii - wtedy sama lista jest wystarczaj±ca 
+ 	 */
+	if (xstrcmp(last_line, line) || last_pos != *line_index || *line_index != strlen(line)) {
+		continue_complete = 0;
+		continue_complete_count = 0;
+	}
+	
+	/*
+	 * je¶li uzbierano ju¿ co¶ to próbujemy wy¶wietliæ wszystkie mo¿liwo¶ci
 	 */
-	if (completions) {
+	if (completions && !continue_complete) {
 		int maxlen = 0, cols, rows;
 		char *tmp;
 
@@ -510,14 +524,28 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 				print("none", tmp);
 			}
 		}
-
+		
+		/* w³±czamy nastêpny etap dope³nienia - przeskakiwanie miêdzy dope³nianymi wyrazami */
+		continue_complete = 1;
+		continue_complete_count = 0;
+		last_line = xstrdup(line);
+		last_pos = *line_index;
+		xfree(last_line_without_complete);
+		last_line_without_complete = xstrdup(line);
 		xfree(tmp);
-		xfree(start);
+
 		return;
 	}
 
+	/* je¿eli przeskakujemy to trzeba wróciæ z lini± do poprzedniego stanu */
+	if (continue_complete) {
+		xstrcpy(line, last_line_without_complete);
+	}
+
 	/* zerujemy co mamy */
+	start = xmalloc(xstrlen(line) + 1);
 	words = NULL;
+	count = 0;
 
 	/* podziel (uwzglêdniaj±c cudzys³owia)*/
 	for (i = 0, j = 0, open_quote = 0; i < xstrlen(line); i++) {
@@ -535,7 +563,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		i--;
 		array_add(&words, saprintf("%s", start));
 	}
-	
+
 	/* je¿eli ostatnie znaki to spacja, albo przecinek to trzeba dodaæ jeszcze pusty wyraz do words */
 	if (xstrlen(line) > 1 && (line[xstrlen(line) - 1] == ' ' || line[xstrlen(line) - 1] == ',') && !open_quote)
 		array_add(&words, xstrdup(""));
@@ -614,11 +642,52 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
 /*	debug("word = %d\n", word);
 	debug("start = \"%s\"\n", start);
-	debug("words_count = %d\n", words_count);	 
+	debug("words_count = %d\n", words_count);
 */
 /*
 	 for(i = 0; i < xstrlen(separators); i++)
 		debug("separators[i = %d] = \"%c\"\n", i, separators[i]);   */
+
+	/* przeskakujemy na nastêpny wyraz - je¿eli konieczne i mo¿liwe */
+	if (continue_complete && completions) {
+		int cnt = continue_complete_count;
+
+		count = array_count(completions);
+		line[0] = '\0';
+		if (continue_complete_count >= count - 1)
+			continue_complete_count = 0;
+		else
+			continue_complete_count++;
+		if (!completions[cnt]) /* nigdy nie powinno siê zdarzyæ, ale na wszelki ... */
+			goto cleanup;
+			
+		for(i = 0; i < array_count(words); i++) {
+			if(i == word) {
+				if(xstrchr(completions[cnt],  '\001')) {
+					if(completions[cnt][0] == '"')
+						xstrncat(line, completions[cnt] + 2, xstrlen(completions[cnt]) - 2 - 1 );
+					else
+						xstrncat(line, completions[cnt] + 1, xstrlen(completions[cnt]) - 1);
+				} else
+			    		xstrcat(line, completions[cnt]);
+				*line_index = xstrlen(line) + 1;
+			} else {
+				if(xstrchr(words[i], ' '))
+					xstrcat(line, saprintf("\"%s\"", words[i]));
+				else
+					xstrcat(line, words[i]);
+			}
+			if((i == array_count(words) - 1 && line[xstrlen(line) - 1] != ' ' ))
+				xstrcat(line, " ");
+			else if (line[xstrlen(line) - 1] != ' ')
+                                xstrcat(line, saprintf("%c", separators[i]));
+		}
+		/* ustawiamy dane potrzebne do nastêpnego dope³nienia */
+		xfree(last_line);
+                last_line = xstrdup(line);
+                last_pos = *line_index;
+		goto cleanup;
+	}
 
 	cmd = saprintf("/%s ", (config_tab_command) ? config_tab_command : "chat");
 
@@ -718,7 +787,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	 * i uwa¿amy oczywi¶cie na \001 (patrz funkcje wy¿ej
 	 */
 	if (count == 1) {
-		line[0] = '\0';		
+		line[0] = '\0';
 		for(i = 0; i < array_count(words); i++) {
 			if(i == word) {
 				if(xstrchr(completions[0],  '\001')) {
@@ -814,14 +883,22 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		}
 	}
 
+cleanup:
 	array_free(words);
 	xfree(start);
 	xfree(separators);
 	return;
 }
+
 void ncurses_complete_clear()
 {
 	array_free(completions);
 	completions = NULL;
+        continue_complete = 0;
+        continue_complete_count = 0;
+	xfree(last_line);
+	last_line = NULL;
+        xfree(last_line_without_complete);
+	last_line_without_complete = NULL;
 }
 
