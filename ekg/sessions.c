@@ -144,7 +144,9 @@ int session_remove(const char *uid)
 				w->session = NULL;
 		}
 	}
-		
+	
+	if(s->connected)
+		command_exec(NULL, s, saprintf("/disconnect %s", s->uid), 1);	
 	tmp = xstrdup(uid);
 	query_emit(NULL, "session-removed", &tmp);
 	xfree(tmp);
