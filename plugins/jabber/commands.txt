@@ -91,6 +91,14 @@ msg
 	wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje 
 	potraktowanie pierwszej linijki jako tematu.
 
+modify
+        parametry:  <alias> <opcje>
+        krótki opis: zmienia wpisy w li¶cie kontaktów
+	
+	Opcje mog± byæ nastêpuj±ce:
+	
+	-n, --nickname <pseudonim>     wpis w li¶cie kontaktów
+
 passwd
 	parametry: 
 	krotki opis: zmienia has³o

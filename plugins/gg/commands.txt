@@ -139,7 +139,7 @@ invisible
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 modify
-	paremtry:  <alias> <opcje>
+	parametry:  <alias> <opcje>
 	krótki opis: zmienia wpisy w li¶cie kontaktów
 	
 	Opcje mog± byæ nastêpuj±ce:
