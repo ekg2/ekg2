@@ -767,10 +767,8 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
 #endif
 
-	if (type != 0) {
-		xfree(jdh);
+	if (type != 0) 
 		return;
-	}
 
 	debug("[jabber] jabber_handle_resolver()\n", type);
 	
@@ -825,7 +823,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
 	if (errno != EINPROGRESS) {
-		debug("[jabber] connect() failed: %s\n", strerror(errno));
+		debug("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
 		print("generic_error", strerror(errno));
 		jabber_handle_disconnect(jdh->session);
 		return;
