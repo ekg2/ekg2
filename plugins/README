@@ -6,6 +6,7 @@ ioctld		drg		obs³uga diod klawiatury		-
 irc		gim		obsuga protokou irc		-
 jabber		wojtekka	obs³uga protoko³u XMPP/Jabber	expat
 logs		zdzichu		logowanie wiadomo¶ci		-
+logsqlite	leafnode	logowanie wiadomo¶ci do sqlite	sqlite < 3
 mail		szalik		sprawdzanie poczty		-
 ncurses		*		interfejs tekstowy		ncurses
 pcm		wojtekka	kodek PCM			-
