@@ -207,11 +207,12 @@ sqlite * logsqlite_prepare_db(session_t * session, time_t sent)
 
 	if (!(path = logsqlite_prepare_path(session, sent)))
 		return 0;
-	if (!logsqlite_current_db_path) {
+	if (!logsqlite_current_db_path || !logsqlite_current_db) {
 		db = logsqlite_open_db(session, sent, path);
+                xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = xstrdup(path);
 		logsqlite_current_db = db;
-	} else if (!xstrcmp(path, logsqlite_current_db_path)) {
+	} else if (!xstrcmp(path, logsqlite_current_db_path) && logsqlite_current_db) {
 		db = logsqlite_current_db;
 		debug("[logsqlite] keeping old db\n");
 	} else {
@@ -287,6 +288,11 @@ void logsqlite_close_db(sqlite * db)
 		return;
 	}
 	debug("[logsqlite] close db\n");
+	if (db == logsqlite_current_db) {
+		logsqlite_current_db = NULL;
+		xfree(logsqlite_current_db_path);
+		logsqlite_current_db_path = NULL;
+	}
 	sqlite_close(db);
 }
 
