@@ -283,27 +283,46 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 	
 		}
 		
-		if (id && !strncmp(id, "roster", 7)) {
-			userlist_t u;
+		/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
+			i typ "result" (przy za¿±daniu rostera od serwera) */	
+		if (type && (!strncmp(type, "result", 6) || !strncmp(type, "set", 3)) ) {
 			xmlnode_t *q = xmlnode_find_child(n, "query");
-			xmlnode_t *item = xmlnode_find_child(q, "item");
-			for (; item ; item = item->next) {
-				memset(&u, 0, sizeof(u));
-				u.uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
-				u.nickname = jabber_unescape(jabber_attr(item->atts, "name"));
-		
-				if (!u.nickname) 
-					u.nickname = strdup(u.uid); 				
+			if (q) {
+				const char *ns;
+				ns = jabber_attr(q->atts, "xmlns");
+				
+				if (ns && !strncmp(ns, "jabber:iq:roster", 16)) {
+					userlist_t u;
 
-				u.status = xstrdup(EKG_STATUS_NA);
-				//XXX grupy
-				if (userlist_find(s, u.uid)) 
-					userlist_replace(s, &u);
-			 	else 
-					list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
-			};
-			
-		}
+					xmlnode_t *item = xmlnode_find_child(q, "item");
+					for (; item ; item = item->next) {
+						memset(&u, 0, sizeof(u));
+						u.uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
+						u.nickname = jabber_unescape(jabber_attr(item->atts, "name"));
+		
+						if (!u.nickname) 
+							u.nickname = strdup(u.uid);
+
+						u.status = xstrdup(EKG_STATUS_NA);
+						//XXX grupy
+
+						/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
+						   w przeciwnym wypadku - nalezy go dopisaæ do userlisty */
+						if (jabber_attr(item->atts, "subscription") && !strncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
+ 							if (userlist_find(s, u.uid))
+                                				userlist_remove(s, userlist_find(s, u.uid));
+						} else {
+							if (userlist_find(s, u.uid)) 
+								userlist_replace(s, &u);
+					 		else 
+								list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
+						};
+					} /* for */
+				}; /* jabber:iq:roster */
+
+			} /* if query */
+		} /* type == set */
+
 	} /* if iq */
 
 	if (!strcmp(n->name, "presence")) {
@@ -927,7 +946,7 @@ COMMAND(jabber_command_auth)
 		printq("not_enough_params", name);
 		return -1;
 	}
-	
+
 	if (!(uid = get_uid(session, params[1]))) {
 		uid = params[1];
 
@@ -1040,19 +1059,45 @@ COMMAND(jabber_command_add)
 
 COMMAND(jabber_command_del)
 {
-	char *tmp;
- 	int ret;
+	jabber_private_t *j = session_private_get(session);
+	char *uid;
+
+	if (!session_check(session, 1, "jid")) {
+		printq("invalid_session");
+		return -1;
+	}
+
+	if (!session_connected_get(session)) {
+		printq("not_connected");
+		return -1;
+	}
 
 	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
 
-	tmp = saprintf("/auth --deny %s", params[0]);
-	ret = command_exec(target, session, tmp, 0);
-	xfree(tmp);
+	if (!(uid = get_uid(session, params[0]))) {
+		uid = params[0];
 
-	return ret;
+		if (!(strchr(uid,'@') && strchr(uid, '@') < strchr(uid, '.'))) {
+			printq("user_not_found", params[0]);
+			return -1;
+		}
+	} else {
+		if (strncasecmp(uid, "jid:", 4)) {
+			printq("invalid_session");
+			return -1;
+		}
+		uid +=4;
+	};
+
+	jabber_write(j, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
+	jabber_write(j, "<item jid=\"%s\" subscription=\"remove\"/></query></iq>", uid);
+	
+	print("user_deleted", params[0]);
+	
+	return 0;
 }
 
 
@@ -1088,8 +1133,8 @@ int jabber_plugin_init()
 	  "  -d, --deny <JID>      odmawia udzielenia autoryzacji\n"
  	  "  -r, --request <JID>   wysy³a ¿±danie autoryzacji\n"
 	  "  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji\n");
-	command_add(&jabber_plugin, "jid:jadd", "??", jabber_command_add, 0, "", "dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê", "<JID> [nazwa]");
-	command_add(&jabber_plugin, "jid:jdel", "u", jabber_command_del, 0, "", "usuwa z naszego rostera", "");
+	command_add(&jabber_plugin, "jid:add", "??", jabber_command_add, 0, "", "dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê", "<JID> [nazwa]");
+	command_add(&jabber_plugin, "jid:del", "u", jabber_command_del, 0, "", "usuwa z naszego rostera", "");
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);
