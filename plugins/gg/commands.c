@@ -367,7 +367,7 @@ change:
 	status = session_status_get(session);
 
 	if (descr)
-		printq(fd, descr, "", session_name(session));
+		printq(fd, descr, session_name(session));
 	else
 		printq(f, session_name(session));
 	
