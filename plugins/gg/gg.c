@@ -985,7 +985,8 @@ COMMAND(gg_command_connect)
 		const char *tmp, *local_ip = session_get(session, "local_ip");
 		int tmpi;
                 int _status = gg_text_to_status(session_status_get(session), session_descr_get(session));
-
+                const char *realserver = session_get(session, "server");
+                int port = session_int_get(session, "port");
 
 		if (g->sess) {
 			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", session_name(session));
@@ -1004,7 +1005,6 @@ COMMAND(gg_command_connect)
 				config_changed = 1;
                         	gg_local_ip = htonl(INADDR_ANY);
                 	}
-			debug("achoj\n");
 #else
                  	gg_local_ip = inet_addr(local_ip);
 #endif
@@ -1045,7 +1045,6 @@ COMMAND(gg_command_connect)
 		if ((tmpi = session_int_get(session, "last_sysmsg")) != -1)
 			p.last_sysmsg = tmpi;
 
-		const char *realserver = session_get(session, "server");
 		if (realserver) {
 			in_addr_t tmp_in;
 			
@@ -1057,7 +1056,6 @@ COMMAND(gg_command_connect)
 			}
 		}
 
-		int port = session_int_get(session, "port");
 		if ((port < 1) || (port > 65535)) {
 			print("port_number_error", session_name(session));
 			return -1;

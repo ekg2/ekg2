@@ -487,6 +487,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 			char *session, *uid, *status = NULL, *descr = NULL, *host = NULL;
 			int port = 0;
 			time_t when = xitem ? jabber_try_xdelay(xitem, jabber_attr(xitem->atts, "xmlns")) : time(NULL);
+                        char **res_arr = array_make(from, "/", 2, 0, 0);
 
 			if (nshow)
 				status = jabber_unescape(nshow->data);
@@ -516,7 +517,6 @@ void jabber_handle(void *data, xmlnode_t *n)
 			host = NULL;
 			port = 0;
 
-			char **res_arr = array_make(from, "/", 2, 0, 0);
 			if (res_arr[0] && res_arr[1]) {
 				char *tmp = saprintf("jid:%s", res_arr[0]);
 				userlist_t *ut = userlist_find(s, tmp);

@@ -121,9 +121,10 @@ COMMAND(jabber_command_connect)
 
 		exit(0);
 	} else {
-		close(fd[1]);
+                jabber_handler_data_t *jdta = xmalloc(sizeof(jabber_handler_data_t));
 
-		jabber_handler_data_t *jdta = xmalloc(sizeof(jabber_handler_data_t));
+		close(fd[1]);
+		
 		jdta->session = session;
 		/* XXX dodaæ dzieciaka do przegl±dania */
 
@@ -617,10 +618,10 @@ COMMAND(jabber_command_del)
 
 COMMAND(jabber_command_ver)
 {
-	const char *uid;
-
 	jabber_private_t *j = session_private_get(session);
-	const char *query_uid;
+	const char *query_uid, *query_res, *uid;
+        userlist_t *ut;
+        const char *resource = session_get(session, "resource");
 
         if (!session_check(session, 1, "jid")) {
                 printq("invalid_session");
@@ -648,8 +649,7 @@ COMMAND(jabber_command_ver)
 	  return -1;
 	}
 
-	userlist_t *ut = userlist_find(session, uid);
-	if (!ut) {
+	if (!(ut = userlist_find(session, uid))) {
 		print("user_not_found", session_name(session));
 		return -1;
 	}
@@ -660,12 +660,10 @@ COMMAND(jabber_command_ver)
 		return -1;
 	}
 
-	const char *resource = session_get(session, "resource");
 	if (!resource)
 		resource = "ekg2";
 
-	char *query_res = (ut->resource) ? ut->resource : NULL;
-	if (!query_res) {
+	if (!(query_res = ut->resource)) {
 		print("jabber_unknown_resource", session_name(session), query_uid);
 		return -1;
 	}
