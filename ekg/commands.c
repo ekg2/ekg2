@@ -3717,7 +3717,7 @@ void command_init()
 	  "  list <nazwa>		   pokazuje aktualny stan metakontaktu.%n",
           possibilities("-a --add -d --del -i --add-item -r --del-item -l --list"));
 
-	command_add(NULL, "list", params("CpuUs ?"), cmd_list, 0,
+	command_add(NULL, "list", params("CpuUsm ?"), cmd_list, 0,
           " [alias|@grupa|opcje|metakontakt|sesja/alias]", "zarz±dzanie list± kontaktów",
 	  "\n"
 	  "Wy¶wietlanie osób o podanym stanie \"list [-a|-A|-i|-B|-d|-m|-o]\":\n"
