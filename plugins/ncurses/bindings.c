@@ -576,6 +576,7 @@ static void binding_next_contacts_group(const char *arg)
 {
 	contacts_group_index++;
 	contacts_update(NULL);
+	ncurses_resize();
 	ncurses_commit();
 }
 

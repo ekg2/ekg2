@@ -9,7 +9,6 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - dzia³aj±ce F2, F3, F4 oraz na bierz±co ncurses:contacts (del)
   - dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:
     /add gg:1111 ble, nie spowoduje, ¿e /list ble poka¿e nam prawid³owy stan (del)
   - wykrywanie niewidocznych jako opcja (wielu)

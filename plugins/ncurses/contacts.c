@@ -70,7 +70,11 @@ int contacts_update(window_t *w)
 	char *group = NULL;
 	int j;
 	ncurses_window_t *n;
-		
+	
+
+        if (!window_current->session)
+                return -1;
+	
 	if (!w) {
 		list_t l;
 
@@ -86,9 +90,6 @@ int contacts_update(window_t *w)
 		if (!w)
 			return -1;
 	}
-
-	if (!window_current->session)
-		return -1;
 
 	n = w->private;
 	
@@ -308,6 +309,7 @@ void contacts_changed(const char *name)
 		window_new("__contacts", NULL, 1000);
 	
 	contacts_update(NULL);
+        ncurses_resize();
 	ncurses_commit();
 }
 

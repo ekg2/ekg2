@@ -2178,7 +2178,7 @@ int binding_quick_list(int a, int b)
 			if (!u->nickname)
 				continue;
 		
-			format = ekg_status_label(u->status, NULL, "quick_list_");
+			format = format_find(ekg_status_label(u->status, NULL, "quick_list_"));
 
 			if (!format)
 				continue;
