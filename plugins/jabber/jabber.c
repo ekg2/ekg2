@@ -931,7 +931,7 @@ COMMAND(jabber_command_disconnect)
 		
 	jabber_write(j, "</stream:stream>");
 
-	if (j->connecting) {
+	if (j->connecting) 
 		j->connecting = 0;
 
 	{
