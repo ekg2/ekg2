@@ -28,6 +28,7 @@
 #include <sys/utsname.h> /* dla jabber:iq:version */
 
 #include <errno.h>
+#include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -738,6 +739,9 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
         if (j->using_ssl) {
                 do {
                         len = gnutls_record_recv(j->ssl_session, buf, 4095);
+#ifdef _POSIX_PRIORITY_SCHEDULING
+			sched_yield();
+#endif
                 } while ((len == GNUTLS_E_INTERRUPTED) || (len == GNUTLS_E_AGAIN));
 
                 if (len < 0) {
@@ -900,6 +904,9 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
                 do {
                         ret = gnutls_handshake(j->ssl_session);
+#ifdef _POSIX_PRIORITY_SCHEDULING
+			sched_yield();
+#endif
                 } while ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN));
 
                 if (ret < 0) {
