@@ -286,10 +286,11 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 	session_t *s = idta->session;
 	irc_private_t *j = irc_private(s);
 	struct in_addr a;
-	int one = 1, res;
+	int one = 1, res, inetptonres;
 	const char *port_s = session_get(s, "port");
+	const char *local_ip = session_get(s, "local_ip");
 	int port = (port_s) ? atoi(port_s) : 6667, connret;
-	struct sockaddr_in sin;
+	struct sockaddr_in sin, cin;
 
 	if (type != 0)
 		return;
@@ -329,6 +330,31 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		print("generic_error", strerror(errno));
 		irc_handle_disconnect(s);
 		return;
+	}
+
+	if (xstrlen(local_ip) > 1)
+	{
+#ifdef HAVE_INET_PTON
+		inetptonres = inet_pton(AF_INET, local_ip, &(cin.sin_addr));
+		if (inetptonres == 0 || inetptonres == -1) {
+			print("invalid_local_ip", session_name(s));
+			session_set(s, "local_ip", NULL);
+			config_changed = 1;
+			cin.sin_addr.s_addr = htonl(INADDR_ANY);
+		}
+#else
+		cin.sin_addr = inet_addr(local_ip);
+#endif
+		cin.sin_family = AF_INET;
+		cin.sin_port = htons(0);
+		connret = bind(fd, (struct sockaddr *)&cin, sizeof(cin));
+		if (connret < 0)
+		{
+			debug ("[irc] handle_resolver() bind() failed: %s\n",
+					strerror(errno));
+			print ("generic_error", strerror(errno));
+			/* nie ustawiamy tu local_ip na NULL */
+		}
 	}
 
 	sin.sin_family = AF_INET;
@@ -1165,6 +1191,7 @@ int irc_plugin_init()
 	plugin_var_add(&irc_plugin, "password", VAR_STR, 0, 1, NULL);
 	plugin_var_add(&irc_plugin, "port", VAR_INT, "6667", 0, NULL);
 	plugin_var_add(&irc_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
+	plugin_var_add(&irc_plugin, "local_ip", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_away", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);

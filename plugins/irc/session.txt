@@ -8,6 +8,12 @@ server
 	adres serwera irc, np: warszawa.irc.pl
 	zmienna musi byæ ustawiona, ¿eby móc siê po³±czyæ
 
+password
+	typ: tekst
+	domy¶lna waro¶æ: brak
+
+	has³o do serwera
+
 port
 	typ: liczba
 	domy¶lna warto¶æ: 6667
@@ -20,6 +26,12 @@ default
 
 	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
 	podczas uruchomienia programu)
+
+local_ip
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	pozwala na korzystanie z vhostów [opcja -h w irssi]
 
 auto_away
 	typ: liczba
