@@ -1013,7 +1013,7 @@ COMMAND(jabber_command_auth)
 	}
 
 	if (!(uid = get_uid(session, params[1]))) {
-		uid = params[1];
+		uid = (char *) params[1];
 
 		if (!(strchr(uid,'@') && strchr(uid, '@') < strchr(uid, '.'))) {
 			printq("user_not_found", params[1]);
@@ -1104,7 +1104,7 @@ COMMAND(jabber_command_add)
                 return -1;
         }
 	
-	uid = params[0]; 
+	uid = (char *) params[0]; 
 	if (!strncasecmp(uid, "jid:", 4))
 		uid += 4;
 
@@ -1143,7 +1143,7 @@ COMMAND(jabber_command_del)
 	}
 
 	if (!(uid = get_uid(session, params[0]))) {
-		uid = params[0];
+		uid = (char *) params[0];
 
 		if (!(strchr(uid,'@') && strchr(uid, '@') < strchr(uid, '.'))) {
 			printq("user_not_found", params[0]);
