@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-11-04 17:22+0100\n"
+"POT-Creation-Date: 2004-11-04 20:43+0100\n"
 "PO-Revision-Date: 2004-10-23 12:40+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -1038,6 +1038,7 @@ msgid "%roffline%n %K(%n%2%K)%n"
 msgstr "%rniedostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1392 ekg/themes.c:1425 ekg/themes.c:1670
+#, fuzzy, c-format
 msgid "%cinvisible%n"
 msgstr "%cniewidoczn%@1%n"
 
@@ -1080,6 +1081,7 @@ msgid "%gextended away%n %K(%n%2%K)%n"
 msgstr "%gbardzo zajêt%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1402 ekg/themes.c:1680
+#, fuzzy, c-format
 msgid "%mblocking%n"
 msgstr "%mblokuj±c%@1%n"
 
@@ -1148,6 +1150,7 @@ msgid "%gextended away%n (%T%1%n%2)"
 msgstr "%gbardzo zajêt%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1429
+#, fuzzy, c-format
 msgid "%cdo not disturb%n"
 msgstr "%Bnie przeszkadzaæ%n"
 
@@ -1726,6 +1729,7 @@ msgid "%! Can't change session in query window%n\n"
 msgstr "%! Nie mo¿na zmieniæ sesji w okienku rozmowy%n\n"
 
 #: ekg/themes.c:1676
+#, c-format
 msgid "%merror%n"
 msgstr "%mb³±d%n"
 
@@ -2078,3 +2082,51 @@ msgstr "%> SMS do %T%1%n zosta³ wys³any\n"
 #: plugins/sms/sms.c:355
 msgid "%! SMS to %T%1%n not sent\n"
 msgstr "%! SMS do %T%1%n nie zosta³ wys³any\n"
+
+#: plugins/xosd/xosd.c:215
+msgid "new message from %1"
+msgstr "nowa wiadomo¶æ od %1"
+
+#: plugins/xosd/xosd.c:219
+msgid "%1 is online,"
+msgstr "%1 jest dostêpn%@1,"
+
+#: plugins/xosd/xosd.c:220
+msgid "%1 is away,"
+msgstr "%1 jest zajêt%@1,"
+
+#: plugins/xosd/xosd.c:221
+msgid "%1: do not disturb,"
+msgstr "%1: nie przeszkadzaæ,"
+
+#: plugins/xosd/xosd.c:222
+msgid "%1 is extended away,"
+msgstr "%1 jest bardzo zajêt%@1,"
+
+#: plugins/xosd/xosd.c:223
+msgid "%1 is offline,"
+msgstr "%1 jest niedostêpn%@1,"
+
+#: plugins/xosd/xosd.c:224
+msgid "%1 is invisible,"
+msgstr "%1 jest niewidoczn%@1,"
+
+#: plugins/xosd/xosd.c:225
+msgid "%1 is free for chat,"
+msgstr "%1 jest chêtn%@1 do rozmowy,"
+
+#: plugins/xosd/xosd.c:226
+msgid "%1: status error,"
+msgstr "%1: b³±d pobierania statusu,"
+
+#: plugins/xosd/xosd.c:227
+msgid "%1 is blocking us,"
+msgstr "%1 blokuje nas,"
+
+#: plugins/xosd/xosd.c:232
+msgid "ekg2 XOnScreenDisplay plugin"
+msgstr "Wtyczka XOnScreenDisplay dla ekg2"
+
+#: plugins/xosd/xosd.c:233
+msgid "Author: Adam 'dredzik' Kuczynski"
+msgstr "Autor: Adam 'dredzik' Kuczyñski"
