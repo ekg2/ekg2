@@ -1303,9 +1303,9 @@ void gg_register_commands()
 	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:check_inv", "r", gg_command_check_inv, 0, NULL);
+	command_add(&gg_plugin, "gg:check_inv", "u", gg_command_check_inv, 0, NULL);
 	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:image", "?", gg_command_image, 0, NULL);
+	command_add(&gg_plugin, "gg:image", "u f", gg_command_image, 0, NULL);
 	command_add(&gg_plugin, "gg:block", "uUC ?", gg_command_block, 0, NULL);
 	command_add(&gg_plugin, "gg:unblock", "b ?", gg_command_unblock, 0, NULL);
 	command_add(&gg_plugin, "gg:modify", "Uu ?", gg_command_modify, 0, NULL);

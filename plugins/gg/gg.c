@@ -1215,6 +1215,8 @@ static int gg_plugin_destroy()
 	for (l = sessions; l; l = l->next)
 		gg_private_destroy((session_t*) l->data);
 
+	image_flush_queue();
+
 	plugin_unregister(&gg_plugin);
 
 	return 0;

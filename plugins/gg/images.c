@@ -1,3 +1,22 @@
+/* $id */
+
+/*
+ *  (C) Copyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include "ekg2-config.h"
 
 #include <sys/stat.h>
@@ -23,6 +42,8 @@
 
 #include "images.h"
 #include "gg.h"
+
+list_t images = NULL;
 
 COMMAND(gg_command_image)
 {
@@ -117,4 +138,22 @@ void image_remove_queue(image_t *i)
 	xfree(i->data);
 
 	list_remove(&images, i, 1);
+}
+
+void image_flush_queue()
+{
+	list_t l;
+
+	if (!images)
+		return;
+
+	for (l = images; l; l = l->next) {
+		image_t *i = l->data;
+
+	        xfree(i->filename);
+	        xfree(i->data);
+	}
+
+        list_destroy(images, 1);
+        images = NULL;
 }

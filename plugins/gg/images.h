@@ -1,6 +1,5 @@
 /*
- *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *  (C) Copyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -15,6 +14,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
+#ifndef __EKG_GG_IMAGES_H
+#define __EKG_GG_IMAGES_H
 
 #include <ekg/dynstuff.h>
 
@@ -31,3 +33,16 @@ list_t images;
 
 image_t *image_add_queue(char *filename, char *data, uint32_t size, uint32_t crc32);
 void image_remove_queue(image_t *i);
+void image_flush_queue();
+
+#endif /* __EKG_GG_IMAGES_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */
+
