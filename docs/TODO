@@ -12,6 +12,10 @@ rozwi±zanie.
   - przepisaæ complete() w ncurses wg:
 	- TAB powinien prze³±czaæ miêdzy kolejnymi dope³nieniami 
 	- dope³nienia powinny odbywaæ siê tylko do aktualnej sesji (*)
+  - Informacja o rozpoczeciu rozmowy czasem nie bierze nicka z userlisty,
+    ::: Rozmowa z jid:zdzichuBG@jabber.gda.pl rozpoczêta w oknie 2 
+    (problem z resource ?) (zdz)
+  - nie dziala powtarzanie (strzalka w gore) wiadomosci wielolinijkowych (zdz)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
