@@ -1985,7 +1985,7 @@ query:
 chat:
 	if (params[0] && params[1]) {
 		char *tmp = saprintf("/ %s", params[1]);
-		command_exec(params[0], session, tmp, quiet);
+		command_exec((p[0]) ? p[0] : params[0], session, tmp, quiet);
 		xfree(tmp);
 	}
 
