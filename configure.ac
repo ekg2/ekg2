@@ -227,6 +227,13 @@ if test "x$have_libxosd" = "xyes"; then
 	PLUGINS="$PLUGINS xosd"
 fi
 
+AM_CHECK_PYTHON
+
+if test "x$have_python" = "xyes"; then
+	AC_CONFIG_FILES([plugins/python/Makefile])
+	PLUGINS="$PLUGINS python"
+fi
+
 AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
 *** libgnutls was not found. You may want to get it from
@@ -295,6 +302,12 @@ if test "x$have_libgsm" = "xyes"; then
 	echo " - libgsm:  enabled"
 else
 	echo " - libgsm:  disabled"
+fi
+
+if test "x$have_python" = "xyes"; then
+	echo " - python:  enabled"
+else
+	echo " - python:  disabled"
 fi
 
 if test "x$have_libxosd" = "xyes"; then

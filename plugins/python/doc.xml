@@ -1,0 +1,258 @@
+<sect2>
+   <title>Interfejs od strony interpretera</title>
+   <sect3>
+      <title>Modu³ ekg</title>
+      <variablelist>
+         <title>Metody i atrybuty modu³u</title>
+         <varlistentry>
+            <term>command(str)</term>
+            <listitem>
+               <para>
+                  Wywo³anie polecenia ekg
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>printf(format, args ...)</term>
+            <listitem>
+               <para>
+                  Wy¶wietlenie tekstu w podanym formacie.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>echo(str)</term>
+            <listitem>
+               <para>
+                  Wy¶wietlenie tekstu w formacie generic
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>debug(format, args ...)</term>
+            <listitem>
+               <para>
+                  Zapisanie danych debugowych w podanym formacie (notacja printf).
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>config</term>
+            <listitem>
+               <para>
+                  S³ownik zawieraj±cy opcjê konfiguracji ekg (odczyt i zapis)
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>sessions (NFY)</term>
+            <listitem>
+               <para>
+                  S³ownik zawieraj±cy obiekty typu session.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>plugins (NFY)</term>
+            <listitem>
+               <para>
+                  Lista zawieraj±ca za³adowane pluginy.
+               </para>
+            </listitem>
+         </varlistentry>
+      </variablelist>
+   </sect3>
+   <sect3>
+      <title>Obiekt session</title>
+      <variablelist>
+         <title>Metody i pola obiektu session (NFY)</title>
+         <varlistentry>
+            <term>self</term>
+            <listitem>
+               <para>
+                  S³ownikowy dostêp do konfiguracji sesji. 
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>connect()</term>
+            <listitem>
+               <para>
+                  £±czy sesjê.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>disconnect()</term>
+            <listitem>
+               <para>
+                  Roz³±cza sesjê().
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>connected()</term>
+            <listitem>
+               <para>
+                  Zwraca True je¶li sesja jest po³±czona, False wpp.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>status()</term>
+            <listitem>
+               <para>
+                  Zwraca tuple [ status, opis ], gdzie status jest jedn± ze
+                  sta³ych okre¶laj±cych typ stanu.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>users</term>
+            <listitem>
+               <para>
+                  S³ownik zawieraj±cy obiekty typu user (kluczowane po
+                  identyfikatorze - gg:123, jid:test@example.com itp.)
+               </para>
+            </listitem>
+         </varlistentry>
+      </variablelist>
+   </sect3>
+   <sect3>
+      <title>Klasa user</title>
+      <para>
+         Obiekt zawiera atrybutowy dostêp do informacji o obiekcie:
+      </para>
+      <itemizedlist>
+         <listitem>
+            <para>
+               id
+            </para>
+         </listitem>
+         <listitem>
+            <para>
+               name
+            </para>
+         </listitem>
+         <listitem>
+            <para>
+               groups[]
+            </para>
+         </listitem>
+         <listitem>
+            <para>
+               status
+            </para>
+         </listitem>
+         <listitem>
+            <para>
+               desc
+            </para>
+         </listitem>
+         <listitem>
+            <para>
+               lastseen
+            </para>
+         </listitem>
+      </itemizedlist>
+   </sect3>
+</sect2>
+<sect2>
+   <title>Funkcje skryptów wywo³ywane przez ekg</title>
+   <variablelist>
+      <varlistentry>
+         <term>init()</term>
+         <listitem>
+            <para>
+               Wywo³ywana gdy skrypt jest ³adowany. Je¶li ta funkcja zwróci 0,
+               skrypt nie zostanie za³adowanych.
+            </para>
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>deinit()</term>
+         <listitem>
+            <para>
+               Wywo³ywana gdy skrypt jest usuwany z pamiêci.
+            </para>
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>handle_msg(session, id, class, text, time, ignore_level)</term>
+         <listitem>
+            <para>
+               Wywo³ywana gdy ekg otrzymuje wiadomo¶æ.
+            </para>
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>handle_msg_own(session, rcpts, text)</term>
+         <listitem>
+            <para>
+               Wywo³ywana gdy u¿ytkownik wysy³a wiadomo¶æ. rcpts jest
+               <emphasis>tekstow±</emphasis> reprezentacj± odbiorcy, dok³adnie
+               tak± jak poda³ u¿ytkownik (pierwszy argument /msg, /chat, /query
+               itd).
+            </para>
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>handle_status(session, from, type, desc)</term>
+         <listitem>
+            <para>
+               Wywo³ywana gdy kto¶ zmienia stan. nazwy parametrów powinny byæ
+               zrozumia³e.  je¶li zwróci 0, zmiana stanu zostanie zignorowana.
+               je¶li zwróci 2, zmiana stanu nie bêdzie ignorowana, ale nie
+               zostanie wy¶wietlona. je¶li zwróci krotkê o takich samych
+               argumentach jak funkcja, dane zostan± zmienione.
+            </para>  
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>handle_status_own(status, desc) (NFY)</term>
+         <listitem>
+            <para>
+               Wywo³ywana gdy klient zmienia stan. je¶li zwróci 0, stan nie
+               zostanie zmieniony.
+            </para>
+         </listitem>
+      </varlistentry>
+   </variablelist>
+</sect2>
+<sect2>
+   <title>Przyk³adowy skrypt</title>
+   <programlisting role="python">
+<![CDATA[
+import ekg
+import time
+
+def handle_status(session, uid, status, desc):
+    ekg.echo("Dosta³em status!")
+    ekg.echo("Sesja : "+str(session))
+    ekg.echo("UID   : "+uid)
+    ekg.echo("Status: "+status)
+    if desc:
+	ekg.echo("Opis  : "+desc)
+    if status == ekg.STATUS_AWAY:
+	ekg.echo("Chyba go nie ma...")
+    if status == ekg.STATUS_XA:
+	ekg.echo("Chyba bardzo go nie ma.")
+
+def handle_msg(session, uid, type, text, sent_time, ignore_level):
+    ekg.debug("[test script] some debug\n")
+    ekg.echo("Dosta³em wiadomo¶æ!")
+    ekg.echo("Sesja : "+str(session))
+    ekg.echo("UID   : "+uid)
+    if type == ekg.MSGCLASS_MESSAGE:
+	ekg.echo("Typ   : msg")
+    elif type == ekg.MSGCLASS_CHAT:
+	ekg.echo("Typ   : chat")
+    ekg.echo("Czas  : "+time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.gmtime(sent_time)))
+    ekg.echo("Ign   : "+str(ignore_level))
+    ekg.echo("TxtLen: "+str(len(text)))
+]]>
+   </programlisting>
+</sect2>
+<!--
+vim: ft=docbk encoding=iso-8859-2
+-->
