@@ -574,11 +574,12 @@ success:
 	return 0;
 }
 
-COMMAND(jabber_command_add)
+COMMAND(jabber_command_modify)
 {
 	jabber_private_t *j = session_private_get(session);
-	char *uid, *tmp;
-	int ret;
+	char *uid = NULL, *nickname = NULL;
+	char *tmp, **argv = NULL;
+	int ret = 0, i;
 
         if (!session_check(session, 1, "jid")) {
                 printq("invalid_session");
@@ -595,26 +596,53 @@ COMMAND(jabber_command_add)
                 return -1;
         }
 	
-	uid = (char *) params[0]; 
-	if (!xstrncasecmp(uid, "jid:", 4))
-		uid += 4;
-	else if (xstrchr(uid, ':')) { 
-                printq("invalid_uid");
-                return -1;
+	if (params[1])
+		argv = array_make(params[1], " \t", 0, 1, 1);
+
+	for (i = 0; argv[i]; i++) {
+
+		if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1])
+			nickname = jabber_escape(argv[++i]);
+	}
+	
+	if (!xstrcasecmp(name, "add")) {
+	       
+		uid = (char *) params[0]; 
+		
+		if (!nickname && params[1])
+			nickname = jabber_escape(params[1]);
 	}
 
-	jabber_write(j, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
-	if (params[1])
-		jabber_write(j, "<item jid=\"%s\" name=\"%s\"/>", uid, jabber_escape(params[1]));
+	if (!(uid = get_uid(session, params[0]))) 
+		uid = params[0]; 
+	
+	while (!xstrncasecmp(uid, "jid:", 4))
+		uid += 4;
+
+	/* could have 'gg:'; also should have dots in domain name */
+	if (xstrchr(uid, ':') || !xstrchr(uid, '.')) { 
+		printq("invalid_uid");
+		return -1;
+	}
+
+	jabber_write(j, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
+
+	if (nickname)
+		jabber_write(j, "<item jid=\"%s\" name=\"%s\"/>", uid, nickname);
 	else
 		jabber_write(j, "<item jid=\"%s\"/>", uid);
+
 	jabber_write(j, "</query></iq>");
 
-	tmp = saprintf("/auth --request jid:%s", uid);
-	ret = command_exec(target, session, tmp, 0);
-	xfree(tmp);
+	xfree(nickname);
 	
-	return ret;
+	if (!xstrcasecmp(name, "add")) {
+		tmp = saprintf("/auth --request jid:%s", uid);
+		ret = command_exec(target, session, tmp, 0);
+		xfree(tmp);
+	}
+	
+	return (ret ? ret : 0);
 }
 
 COMMAND(jabber_command_del)
@@ -719,7 +747,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:", "?", jabber_command_inline_msg, 0, NULL);
 	command_add(&jabber_plugin, "jid:_autoaway", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:_autoback", "r", jabber_command_away, 0, NULL);
-	command_add(&jabber_plugin, "jid:add", "U ?", jabber_command_add, 0, NULL); 
+	command_add(&jabber_plugin, "jid:add", "U ?", jabber_command_modify, 0, NULL); 
 	command_add(&jabber_plugin, "jid:auth", "p uU", jabber_command_auth, 0, 
 	  "-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, "jid:away", "r", jabber_command_away, 0, NULL);
@@ -732,6 +760,8 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:invisible", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:ffc", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:msg", "uU ?", jabber_command_msg, 0, NULL);
+	command_add(&jabber_plugin, "jid:modify", "Uu ?", jabber_command_modify, 0, 
+	  "-n --nickname");
 	command_add(&jabber_plugin, "jid:passwd", "?", jabber_command_passwd, 0, NULL);
 	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, 0, NULL);
 	command_add(&jabber_plugin, "jid:ver", "?u", jabber_command_ver, 0, NULL);
