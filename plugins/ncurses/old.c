@@ -1155,15 +1155,15 @@ void update_statusbar(int commit)
 	{
 		time_t t = time(NULL);
 		struct tm *tm;
-		char tmp[100];
+		char tmpt[100];
 
 		tm = localtime(&t);
 
-		if (!strftime(tmp, sizeof(tmp), format_find("statusbar_timestamp"), tm)
+		if (!strftime(tmpt, sizeof(tmpt), format_find("statusbar_timestamp"), tm)
 				&& xstrlen(format_find("statusbar_timestamp"))>0)
-			strcpy(tmp, "TOOLONG!");
+			strcpy(tmpt, "TOOLONG!");
 		
-		__add_format("time", 1, tmp);
+		__add_format("time", 1, tmpt);
 	}
 
 	__add_format("window", window_current->id, itoa(window_current->id));
@@ -1171,10 +1171,14 @@ void update_statusbar(int commit)
 	__add_format("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
 	tmp = (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : xstrdup(window_current->target);
 	__add_format("query", tmp, tmp);
-	xfree(tmp);
+	xfree(tmp); tmp = NULL;
 
 	query_emit(NULL, "mail-count", &mail_count);
 	__add_format("mail", (mail_count > 0), itoa(mail_count));
+
+	query_emit(NULL, "irc-topic", &tmp);
+	__add_format("irctopic", tmp, tmp);
+	xfree(tmp);
 
 	{
 		string_t s = string_init("");

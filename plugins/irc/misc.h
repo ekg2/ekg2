@@ -26,8 +26,16 @@
 
 #define IRC_COMMAND(x) int x(session_t *s, irc_private_t *j, int fd, int ecode, char **param)
 typedef int (*Irc_Cmd) 	    (session_t * , irc_private_t * , int   , int      , char **);
+
+#define IRC_LISTBAN		0x001
+#define IRC_LISTEXC		0x002
+#define IRC_LISTINV		0x004
+#define IRC_LISTLIN 	0x008
+#define IRC_LISTEND		0x010
+
 enum { IRC_ERR_12=0, IRC_ERR_21, IRC_ERR_ONLY1, IRC_ERR_NEW, IRC_ERR_IGNO,
 	IRC_ERR_OTHER,
+
 	IRC_RPL_12=256, IRC_RPL_21, IRC_RPL_ONLY1, IRC_RPL_NEW, IRC_RPL_IGNO,
 	IRC_RPL_OTHER };
 typedef struct {
@@ -50,11 +58,30 @@ IRC_COMMAND(irc_c_part);
 IRC_COMMAND(irc_c_kick);
 IRC_COMMAND(irc_c_quit);
 IRC_COMMAND(irc_c_error);
+IRC_COMMAND(irc_c_list);
 IRC_COMMAND(irc_c_namerpl);
 IRC_COMMAND(irc_c_mode);
 IRC_COMMAND(irc_c_topic);
 IRC_COMMAND(irc_c_whois);
 
+/* 1st - 1 if reply in numeric form, 0 if as a string
+ * 1st== 1                           | 0
+ * 2nd - code                        | 0
+ * 3rd - NULL			     | command
+ * 4th - name from rfc and stylename | command name
+ * 5th - function handler	     | function handler
+ * 6th - 0 or one of enum's above...
+ * 	 IRC_ERR if error, IRC_RPL if reply [used to determine style
+ * 	 of display]
+ *
+ * for simple numeric replies [and for ERROR] exsist one function
+ * irc_c_error
+ *
+ * first it checks style and if =NOT=  *_OTHER or *_IGNO [ignore]
+ * it displays some information
+ * if *_OTHER is used reply is treated according to its code
+ * starting with line switch(i), where i is code
+ */
 static IrcCommand irccommands[] =
 {
 	{ 1,	-1,	NULL,	NULL,			&irc_c_error,	IRC_ERR_NEW },
@@ -128,14 +155,21 @@ static IrcCommand irccommands[] =
 	{ 1,	332,	NULL,	"RPL_TOPIC",		&irc_c_error,	IRC_RPL_OTHER},
 	/* RFC doesn't specify 333 */
 	{ 1,	333,	NULL,	"RPL_TOPICBY",		&irc_c_error,	IRC_RPL_OTHER},
+	
 /*	{ 1,	351,	NULL,	"RPL_VERSION",		&irc_c_error,	*/
 	{ 1,	353,	NULL,	"RPL_NAMREPLY",		&irc_c_namerpl,	0 },
-/*	{ 1,	364,	NULL,	"RPL_LINKS",		&irc_c_error,	
-	{ 1,	365,	NULL,	"RPL_ENDOFLINKS",	&irc_c_error,	*/
+	{ 1,	364,	NULL,	"RPL_LINKS",		&irc_c_list,	IRC_LISTLIN },
+	{ 1,	365,	NULL,	"RPL_ENDOFLINKS",	&irc_c_list,	IRC_LISTLIN|IRC_LISTEND }, 
+	
+	{ 1,	346,	NULL,	"RPL_INVITELIST",	&irc_c_list,	IRC_LISTINV }, 
+	{ 1,	347,	NULL,	"RPL_ENDOFLIST",	&irc_c_list,	IRC_LISTINV|IRC_LISTEND }, 
+	{ 1,	348,	NULL,	"RPL_EXCEPTLIST", 	&irc_c_list,	IRC_LISTEXC },
+	{ 1,	349,	NULL,	"RPL_ENDOFLIST",	&irc_c_list,	IRC_LISTEXC|IRC_LISTEND },
+
 	{ 1,	366,	NULL,	"RPL_ENDOFNAMES",	&irc_c_error,	IRC_RPL_IGNO},
-/*	{ 1,	367,	NULL,	"RPL_BANLIST",		&irc_c_error,	
-	{ 1,	368,	NULL,	"RPL_ENDOFBANLIST",	&irc_c_error,	
-	{ 1,	371,	NULL,	"RPL_INFO",		&irc_c_error,	*/
+	{ 1,	367,	NULL,	"RPL_BANLIST",		&irc_c_list, 	IRC_LISTBAN },
+	{ 1,	368,	NULL,	"RPL_ENDOFBANLIST",	&irc_c_list,	IRC_LISTBAN|IRC_LISTEND },
+/*	{ 1,	371,	NULL,	"RPL_INFO",		&irc_c_error,	*/
 	{ 1,	372,	NULL,	"RPL_MOTD",		&irc_c_error,	IRC_RPL_OTHER},
 /*	{ 1,	374,	NULL,	"RPL_ENDOFINFO",	&irc_c_error,	*/
 	{ 1,	375,	NULL,	"RPL_MOTDSTART",	&irc_c_error,	IRC_RPL_OTHER},
@@ -213,6 +247,7 @@ static IrcCommand irccommands[] =
 	{ 0,	0,	"QUIT", "QUIT",			&irc_c_quit,	0 },
 	{ 0,	0,	"MODE", "MODE",			&irc_c_mode,	0 },
 	{ 0,	0,	"TOPIC", "TOPIC",		&irc_c_topic,	0 },
+	{ 0,	0,	"ERROR", "ERROR",		&irc_c_error,	0 },
 	{ -1,	-1,	NULL,	NULL,			NULL,		0 }
 };	
 /*

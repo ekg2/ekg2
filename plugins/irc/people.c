@@ -279,6 +279,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 		if (!(p->data)) break;
 		else irc_del_person_channel_int(j, (people_t *)p->data, chan);
 
+	xfree(chan->topic);
 	/* GiM: because we check j->channels in our kill-window handler
 	 * this must be done, before, we'll try to kill_window.... */
 	list_remove(&(j->channels), chan, 1);
@@ -304,6 +305,7 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 		p->name = saprintf("%s%s", IRC4, name);
 		p->mode = 0;
 		p->window = win;
+		p->topic = NULL;
 		debug("[irc] add_channel() WINDOW %08X\n", win);
 		p->onchan = NULL;
 		list_add(&(j->channels), p, 0);

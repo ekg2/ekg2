@@ -57,6 +57,7 @@ typedef struct {
 typedef struct {
 	char *name;
 	int mode;
+	char *topic;
 	window_t *window;
 	list_t onchan;
 } channel_t;
@@ -81,6 +82,7 @@ typedef struct {
 } irc_handler_data_t;
 
 void irc_handle_reconnect(int type, void *data);
+static void irc_handle_disconnect(session_t *s);
 
 #ifdef __GNU__
 int irc_write(irc_private_t *j, const char *format, ...) __attribute__ ((format (printf, 2, 3)));

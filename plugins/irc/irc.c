@@ -189,6 +189,74 @@ int irc_validate_uid(void *data, va_list ap)
 
 
 /*                                                                       *
+ * ======================================== CONNECTING ----------------- *
+ *                                                                       */
+
+/* we rather won't be acting as server, so doing this
+ * function _too_ universal is imho senseless
+ */
+int irc_common_bind(session_t *s, int fd, const char *ip, int port)
+{
+	int inetptonres4, inetptonres6, family=0, plen;
+	struct sockaddr_in ipv4;
+#ifdef HAVE_GETADDRINFO
+	struct sockaddr_in6 ipv6;
+#endif
+	struct sockaddr *p;
+
+
+	ipv4.sin_family = PF_INET;
+	ipv4.sin_port = htons(0);
+	p = (struct sockaddr *)&ipv4;
+	plen = sizeof(struct sockaddr_in);
+#ifdef HAVE_INET_PTON
+	inetptonres4 = inet_pton(PF_INET, ip, &(ipv4.sin_addr));
+	if (inetptonres4>0) {
+		family = PF_INET;
+	}
+#ifdef HAVE_GETADDRINFO
+	inetptonres6 = inet_pton(PF_INET6, ip, &(ipv6.sin6_addr));
+	if (inetptonres6>0 && !family) {
+		ipv6.sin6_family = family = PF_INET6;
+		ipv6.sin6_port = htons(port);
+		family = PF_INET6;
+		p = (struct sockaddr *)&ipv6;
+		plen = sizeof(struct sockaddr_in6);
+	}
+#endif
+	/* darkjames: nie mozemy zak³adaæ, ¿e -1 nie wyst±pi,
+	 * -1 sugeruje, ¿e nie ma supportu, a nie ¿e podano jaki¶ z³y parametr
+	 * co je¶li trafisz na maszynê gdzie np nie ma getaddrinfo a
+	 * wsparcie jest tylko dla PF_INET6 ?
+	 * [niemo¿liwe, ale nie mo¿esz zak³adaæ o tym co zwóric dana funkcja]
+	 */
+	if (inetptonres4<1 && inetptonres6<1) {
+		print("invalid_local_ip", session_name(s));
+		session_set(s, "local_ip", NULL);
+		config_changed = 1;
+		ipv4.sin_addr.s_addr = htonl(INADDR_ANY);
+	}
+#else
+	ipv4.sin_addr.s_addr = inet_addr(ip);
+#endif
+	return bind(fd, p, plen);
+}
+
+int irc_common_connect_ext(session_t *s, int fd, int family, const char *lip, int lport)
+{
+	if (irc_common_bind(s, fd, lip, lport)) {
+		debug ("[irc] handle_resolver() bind() failed: %s\n",
+				strerror(errno));
+		print ("generic_error", strerror(errno));
+		/* nie ustawiamy tu local_ip na NULL */
+	}
+	
+	return 0; /*irc_common_connect(s, fd, family, ip, port);*/
+
+}
+
+
+/*                                                                       *
  * ======================================== HANDLERS ------------------- *
  *                                                                       */
 
@@ -267,12 +335,12 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	const char *real;
 	char *pass;
 
-	debug ("[irc] handle_connect()\n");
 
 	if (type != 0) {
 		debug ("[irc] handle_connect(): type %d\n",type);
 		return;
 	}
+	debug ("[irc] handle_connect()\n");
 
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		print("generic_error", strerror(res));
@@ -299,11 +367,11 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 	session_t *s = idta->session;
 	irc_private_t *j = irc_private(s);
 #ifdef HAVE_GETADDRINFO
-	struct sockaddr_in6 ipv6, vhost6;
+	struct sockaddr_in6 ipv6;
 #endif
-	struct sockaddr_in ipv4, vhost;
+	struct sockaddr_in ipv4;
 
-	int lfamily, family, one = 1, res, expectedres, inetptonres;
+	int family, one = 1, res, expectedres, inetptonres;
 	const char *port_s = session_get(s, "port");
 	const char *local_ip = session_get(s, "local_ip");
 	char bufek[100];
@@ -340,7 +408,8 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		if (res == -1)
 			debug("[irc] unable to read data from resolver: %s\n", strerror(errno));
 		else
-			debug("[irc] read %d bytes from resolver. not good\n", res);
+			debug("[irc] read %d bytes instead of %d from resolver. not good\n",
+					res, expectedres);
 		close(fd);
 		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje");
 		j->connecting = 0;
@@ -389,55 +458,11 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		return;
 	}
 
-	lfamily = family;
 	if (xstrlen(local_ip) > 1)
-	{
-		vhost.sin_family = lfamily;
-		vhost.sin_port = htons(0);
-		inetptonres = 0;
-#ifdef HAVE_INET_PTON
-		if (family == PF_INET)
-			inetptonres = inet_pton(PF_INET, local_ip, &(vhost.sin_addr));
-#ifdef HAVE_GETADDRINFO
-		if (inetptonres<1) {
-			inetptonres = inet_pton(PF_INET6, local_ip, &(vhost6.sin6_addr));
-			vhost6.sin6_family = lfamily = PF_INET6;
-			vhost6.sin6_port = htons(0);
-		}
-#endif
-		if (inetptonres == 0 || inetptonres == -1) {
-			print("invalid_local_ip", session_name(s));
-			session_set(s, "local_ip", NULL);
-			config_changed = 1;
-			vhost.sin_addr.s_addr = htonl(INADDR_ANY);
-		}
-		connret = -1;
-		if (lfamily == PF_INET)
-			connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
-#ifdef HAVE_GETADDRINFO
-		if (connret < 0);
-			connret = bind(fd, (struct sockaddr *)&vhost6, sizeof(vhost6));
-#endif
-#else
-		/* GiM->darkjames: nie dostawiam tego warninga je¶li
-		 * je¶li jest IPv6 a nie ma inet_pton
-		 */
-		vhost.sin_addr.s_addr = inet_addr(local_ip);
-		connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
-#endif
-		if (connret < 0)
-		{
-			debug ("[irc] handle_resolver() bind() failed: %s\n",
-					strerror(errno));
-			print ("generic_error", strerror(errno));
-			/* nie ustawiamy tu local_ip na NULL */
-		}
-	}
+		irc_common_connect_ext(s, fd, family, local_ip, 0);
 
-	ipv4.sin_family = family;
 	ipv4.sin_port = htons(port);
 #ifdef HAVE_GETADDRINFO
-	ipv6.sin6_family = family;
 	ipv6.sin6_port = htons(port);
 #endif
 
@@ -692,6 +717,7 @@ COMMAND(irc_command_msg)
 		mlinechr = *mline[1];
 		*mline[1]='\0';
 		__msg = xstrdup(mline[0]);
+
 		query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
 		irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, __msg);
 		xfree(__msg);
@@ -913,6 +939,29 @@ int irc_window_kill(void *data, va_list ap)
 	return 0;
 }
 
+int irc_topic_header(void *data, va_list ap)
+{
+	char **top = va_arg(ap, char **);
+	char *targ = window_current->target;
+	channel_t *chanp = NULL;
+	irc_private_t *j = NULL;
+	char *tmp = NULL;
+
+	*top = NULL;
+	if (targ && !xstrncasecmp(targ, IRC4, 4) && window_current->session &&
+			session_check(window_current->session, 1, IRC3) &&
+			(j = irc_private(window_current->session)) &&
+			(tmp = SOP(_005_CHANTYPES)) &&
+			xstrchr(tmp, targ[4]) &&
+			(chanp = irc_find_channel((j->channels), targ)) &&
+			session_connected_get(window_current->session)
+			)
+	{
+		*top = xstrdup(chanp->topic);
+	}
+	return 0;
+}
+
 enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 {
@@ -1079,6 +1128,7 @@ COMMAND(irc_command_ctcp)
 			who+4, ctcps[i].name?ctcps[i].name:(*mp),
 			*mp?mp[1]?mp[1]:"":"");
 
+	xfree(who);
 	return 0;
 }
 
@@ -1110,6 +1160,7 @@ COMMAND(irc_command_me)
 	print_window(chan, session, ischn?(mw&1):!!(mw&2),
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
 			session_name(session), j->nick, chan, col);
+	xfree(chan);
 	xfree(col);
 	xfree(str);
 	return 0;
@@ -1204,6 +1255,7 @@ COMMAND(irc_command_query)
 	xfree(tmp);
 	for (i = 0; i<2 && params[i]; i++)
         	xfree(p[i]);
+	xfree(tar);
 	xfree(p);
 	return 0;
 }
@@ -1291,6 +1343,7 @@ int irc_plugin_init(int prio)
 	query_connect(&irc_plugin, "ui-window-kill", irc_window_kill, NULL);
 	query_connect(&irc_plugin, "session-added", irc_session, (void*) 1);
 	query_connect(&irc_plugin, "session-removed", irc_session, (void*) 0);
+	query_connect(&irc_plugin, "irc-topic",		irc_topic_header, (void*) 0);
 	
 	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 0, NULL);
@@ -1312,6 +1365,13 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:umode", "?",	irc_command_umode, 0, NULL);
 	command_add(&irc_plugin, "irc:whois", "uU",	irc_command_whois, 0, NULL);
 	
+	/* TODO 
+	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL); /quote admin
+	command_add(&irc_plugin, "irc:kick", "",        NULL, 0, NULL); /quote kick nick  :reason
+	command_add(&irc_plugin, "irc:ban",  "",        NULL, 0, NULL); /mode +b <%nick>
+	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL); /quote map
+	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); /quote links
+	*/
 	command_add(&irc_plugin, "irc:op", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:deop", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:voice", "w ?",	irc_command_devop, 0, NULL);
@@ -1432,18 +1492,28 @@ static int irc_theme_init()
 	format_add("IRC_RPL_FIRSTSECOND", "%> (%1) %2 %3\n", 1);
 	format_add("IRC_RPL_SECONDFIRST", "%> (%1) %3 %2\n", 1);
 	format_add("IRC_RPL_JUSTONE", "%> (%1) %2\n", 1);
-	format_add("IRC_RPL_NEWONE", "%> (%1) 1:%2 2:%3 3:%4 4:%5\n", 1);
+	format_add("IRC_RPL_NEWONE", "%> (%1,%2) 1:%3 2:%4 3:%5 4:%6\n", 1);
 
 	format_add("IRC_ERR_FIRSTSECOND", "%! (%1) %2 %3\n", 1);
 	format_add("IRC_ERR_SECONDFIRST", "%! (%1) %3 %2\n", 1);
 	format_add("IRC_ERR_JUSTONE", "%! (%1) %2\n", 1);
-	format_add("IRC_ERR_NEWONE", "%! (%1) 1:%2 2:%3 3:%4 4:%5\n", 1);
+	format_add("IRC_ERR_NEWONE", "%! (%1,%2) 1:%3 2:%4 3:%5 4:%6\n", 1);
 	
 	format_add("IRC_RPL_CANTSEND", _("%> Cannot send to channel %T%2%n\n"), 1);
 	format_add("RPL_MOTDSTART", "%g,+=%G-----\n", 1);
 	format_add("RPL_MOTD",      "%g|| %n%2\n", 1);
 	format_add("RPL_ENDOFMOTD", "%g`+=%G-----\n", 1);
-
+	
+	/*Wykorzystane w : /mode +b|e|I %2 - kanal %3 - to co dostalismy od serwera */
+	/* TO JEST TYMCZASOWE BÊDZIE INACZEJ, NIE U¯YWAÆ TYCH FORMATEK */
+	format_add("RPL_LISTSTART",  "%g,+=%G-----\n", 1);
+	format_add("RPL_EXCEPTLIST", "%g|| %n %W%2%n: except %c%3\n", 1);
+	format_add("RPL_BANLIST",    "%g|| %n %W%2%n: ban %c%3\n", 1);
+	format_add("RPL_INVITELIST", "%g|| %n %W%2%n: invite %c%3\n", 1);;
+	format_add("RPL_EMPTYLIST" , "%g|| %n Empty list \n", 1);
+	format_add("RPL_LINKS",      "%g|| %n %2  %3  %4\n", 1);
+	format_add("RPL_ENDOFLIST",  "%g`+=%G----- %n\n", 1);
+ 
 	format_add("RPL_AWAY", _("%G||%n away     : %2 - %3\n"), 1);
 	/* in whois %2 is always nick */
 	format_add("RPL_WHOISUSER", _("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"

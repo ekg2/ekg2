@@ -226,7 +226,8 @@ and the prefix.
 			while(irccommands[c].type != -1) {
 				if (irccommands[c].type == 0 && 
 						!xstrcmp(irccommands[c].comm, q[1])) {
-					if ((*(irccommands[c].handler))(s, j, fd, ecode, q) == -1 ) {
+					/* dj: zamiast ecode=c; */
+					if ((*(irccommands[c].handler))(s, j, fd, c, q) == -1 ) {
 						debug("[irc] parse_line() error while executing handler!\n");
 					}
 					break;
@@ -341,8 +342,22 @@ IRC_COMMAND(irc_c_error)
 	time_t try;
 	window_t *w;
 	char *altnick;
+	channel_t *chanp;
 
 #define IOK2(x) param[x]?OMITCOLON(param[x]):""
+
+	if (!xstrcmp("ERROR", irccommands[ecode].comm)) {
+		/* here error @ CONNECT klien'y 
+		 *   21:03:35 [:_empty_][ERROR][:Trying to reconnect too fast.]
+		 * brak I:line'ow 
+		 * etc.. wszystko co rozlacza fd 
+		 */
+		print_window(NULL, s, 0,
+				"IRC_ERR_ONLY1",
+				session_name(s), IOK2(2));
+		irc_command_disconnect(NULL, NULL, s, NULL, 0);
+		return 0;
+	}
 	i = irccommands[ecode].future&0x100;
 	switch (irccommands[ecode].future&0xff)
 	{
@@ -364,7 +379,7 @@ IRC_COMMAND(irc_c_error)
 #define IOK(x) param[x]?param[x]:""
 		case IRC_ERR_NEW:
 			print_window(NULL, s, 0, i?"IRC_RPL_NEWONE":
-					"IRC_ERR_NEWONE", session_name(s), 
+					"IRC_ERR_NEWONE", session_name(s), param[1],
 					IOK(3), IOK(4), IOK(5), IOK(6));
 			return (0);
 		case IRC_ERR_IGNO:
@@ -385,6 +400,7 @@ IRC_COMMAND(irc_c_error)
 					session_name(s), param[3], IOK2(4));
 			if (j->connecting) {
 				altnick = (char *) session_get(s, "alt_nick");
+				/* XXX: ZBADAÆ */
 				if (xstrcmp(param[3], altnick)) {
 					print_window(NULL, s, 0, "IRC_TRYNICK",
 							session_name(s), altnick);
@@ -405,11 +421,16 @@ IRC_COMMAND(irc_c_error)
 		/* topic */
 		case 331:
 		case 332:
-			coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
-					OMITCOLON(param[4]), 1);
-			print_window(dest, s, 0, irccommands[ecode].name,
-					session_name(s), param[3], coloured);
-			xfree(coloured);
+			if ((chanp = irc_find_channel(j->channels, param[3])))
+			{
+				xfree(chanp->topic);
+				chanp->topic = xstrdup(OMITCOLON(param[4]));
+				coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
+						OMITCOLON(param[4]), 1);
+				print_window(dest, s, 0, irccommands[ecode].name,
+						session_name(s), param[3], coloured);
+				xfree(coloured);
+			}
 			break;
 		case 333:
 			try = param[5]?atol(OMITCOLON(param[5])):0; 
@@ -420,6 +441,7 @@ IRC_COMMAND(irc_c_error)
 			if (bang) *bang ='!';
 			break;
 		case 376:
+			/* first we join */
 			if (session_get(s, "AUTO_JOIN"))
 				irc_write(j, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
 		case 372:
@@ -453,7 +475,7 @@ IRC_COMMAND(irc_c_whois)
 		for (i=0; i<5; i++)
 			col[i] = irc_ircoldcolstr_to_ekgcolstr(s,
 					param[3+i]?OMITCOLON(param[3+i]):NULL,1);
-			
+
 		print_window(dest, s, 0, irccommands[ecode].name, 
 				session_name(s), col[0], col[1],
 				col[2], col[3], col[4]);
@@ -497,6 +519,46 @@ IRC_COMMAND(irc_c_whois)
 			which?"N/A":tmp);
 	xfree(str);
 	xfree(tmp);
+	return 0;
+}
+
+int mode_already = 1;
+
+IRC_COMMAND(irc_c_list)
+{
+	char *t = saprintf("%s%s", IRC4, IOK(3));
+	char *coloured = NULL;
+	window_t *w = window_find_s(s, t);
+	char *dest = dest = w?t:NULL;
+
+	int endlist = irccommands[ecode].future & IRC_LISTEND;
+
+	if (mode_already) 
+			print_window(dest, s, 0, "RPL_LISTSTART", session_name(s));
+	if (endlist) {
+			if (mode_already)
+					print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
+			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s));
+			mode_already = 1; 
+	}
+	else mode_already = 0;
+
+	if (param[5] && *param[5] == ':') {
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
+
+		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3),
+					IOK2(4), coloured);
+	} else {
+		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3),
+					IOK2(4), IOK2(5));
+	}
+	/*
+	 * ircd-hybrid wysyla w IOK2(5) - nick!ident@host i w IOK2(6) unixtime zalozenia bana.
+	 * ircd2 nie. (?)
+	 */
+
+	xfree(coloured);
+	xfree(t);
 	return 0;
 }
 
@@ -618,6 +680,13 @@ IRC_COMMAND(irc_c_msg)
 	}
 
 	if (ctcpstripped) {
+		if (xosd_is_priv)
+			query_emit(NULL, "message-decrypt", &(s->uid), &dest, &ctcpstripped, &secure , NULL);
+		else
+			query_emit(NULL, "message-decrypt", &dest, &(s->uid), &ctcpstripped, &secure , NULL);
+	
+		/* TODO zda³oby siê jakie¶ sprawdzanie secure, ale nie wiem jak reagowaæ... */
+
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
 		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));
 		prefix[1] = '\0';
@@ -635,10 +704,6 @@ IRC_COMMAND(irc_c_msg)
 010539 <@dredzik> GiM, hm... jeszcze by siê przyda³a jedna rzecz - tak ¿eby
 010539 pierwszym argumentem by³a sesja
 	*/
-		/* darkjames, je¿eli chcesz u¿ywaæ w SIMie
-		 * to musisz u¿ywaæ irc-protocol-message,
-		 * po to zosta³o to stworzone...
-		 */
 		query_emit(NULL, "irc-protocol-message",
 				&(s->uid), &xosd_nick, &coloured, 
 				&xosd_to_us, &xosd_is_priv, &xosd_chan);
@@ -838,21 +903,27 @@ IRC_COMMAND(irc_c_topic)
 	window_t *w;
 	char *t, *dest=NULL;
 	char *coloured;
+	channel_t *chanp = NULL;
 
 	t = saprintf("%s%s", IRC4, param[2]);
 	w = window_find_s(s, t);
+	chanp = irc_find_channel(j->channels, param[2]);
 	dest = w?w->target:NULL;
 	xfree(t);
 	if ((t = xstrchr(param[0], '!')))
 		*t = '\0';
+	xfree(chanp->topic);
 	if (xstrlen(OMITCOLON(param[3]))) {
-		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]),1);
+		chanp->topic = xstrdup(OMITCOLON(param[3]));
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1);
 		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),
 				param[0]+1, t?t+1:"", param[2], coloured);
 		xfree(coloured);
-	} else
+	} else {
+		chanp->topic = xstrdup("No topic set!\n");
 		print_window(dest, s, 0, "IRC_TOPIC_UNSET", session_name(s),
 				param[0]+1, t?t+1:"", param[2]);
+	}
 	if (t) *t='!';
 	return 0;
 }
