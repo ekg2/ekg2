@@ -44,5 +44,6 @@ rozwi±zanie.
   - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
   - trzeba przystosowaæ cmd_on do EKG2 (zdz)
   - numerowanie sesji, potem odwo³ywanie sie do numerkow miast calych nazw (rmrmg)
+  - duzo informacji w jabberowym /status
 
 $Id$
