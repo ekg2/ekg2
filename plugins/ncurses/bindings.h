@@ -48,4 +48,5 @@ void ncurses_binding_delete(const char *key, int quiet);
 void ncurses_binding_default();
 void ncurses_binding_set(int quiet, const char *key, const char *sequence);
 
+int bindings_added_max;
 #endif /* __EKG_NCURSES_BINDINGS_H */

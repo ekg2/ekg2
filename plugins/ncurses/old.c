@@ -1890,7 +1890,7 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 
 		array_add(&chars, xstrdup(itoa(ch)));
 
-        	while ((c = wgetch(input)) != ERR) {
+        	while ((c = wgetch(input)) != ERR && count < bindings_added_max) {
 	                array_add(&chars, xstrdup(itoa(c)));
 			count++;
 	        }
@@ -1915,11 +1915,11 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 				goto end;
 			}
 		}
-		while (i < count ) {
-			if (atoi(chars[i + 1]) != 79) 
-				ungetch(atoi(chars[i + 1]));
-			i++;
-		} 
+
+                for (i = count; i > 0; i--) {
+                        ungetch(atoi(chars[i]));
+                }
+
 end:
 		xfree(joined);
 		array_free(chars);

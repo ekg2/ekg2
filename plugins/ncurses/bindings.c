@@ -46,6 +46,8 @@ struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
 
 void *ncurses_binding_complete = NULL;
 
+int bindings_added_max = 0;
+
 #define line ncurses_line
 #define lines ncurses_lines
 
@@ -882,9 +884,12 @@ end:
 	if (added != 2)
 		xfree(joined);
 	if (added) {
+		int count = array_count(chars);
 	        if (!in_autoexec)
         	        config_changed = 1;
 	        printq("bind_added");
+		if (count > bindings_added_max)
+			bindings_added_max = count;
 	}
 	array_free(chars);
 }
