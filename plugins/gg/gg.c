@@ -1553,7 +1553,7 @@ int gg_plugin_init()
 	  ",,%T-%n'' wyczy¶ci %Twszystkie%n pola.", 
 	  possibilities("-f --first -l --last -n --nick -b --born -c --city -N --familyname -C --familycity -F --female -M --male") );
 
-	command_add(&gg_plugin, "gg:dcc", params("p uU f ?"), gg_command_dcc, 0, " [opcje]", "obs³uga bezpo¶rednich po³±czeñ", "", possibilities("send rsend get resumce rvoice voice close list") );
+	command_add(&gg_plugin, "gg:dcc", params("p uU f ?"), gg_command_dcc, 0, " [opcje]", "obs³uga bezpo¶rednich po³±czeñ", "", possibilities("send rsend get resume rvoice voice close list") );
 
 #undef possibilities
 #undef params 

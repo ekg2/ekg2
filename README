@@ -21,7 +21,10 @@
 	/session server 217.17.41.84
 
   oczywi¶cie mo¿na mieæ kilka sesji. prze³±cza siê miêdzy nimi klawiszem
-  Ctrl-X.
+  Ctrl-X. Je¶li chcesz, aby EKG2 ³±czy³o siê z dan± sesj± (sesjami) przy
+  w³±czeniu programu, ustaw zmienn± auto_connect na 1, np. tak:
+
+  	/session --set gg:12345 auto_connect 1
 
 * ¿eby skorzystaæ z jabbera, wpisujemy:
 

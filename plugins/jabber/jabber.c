@@ -1205,7 +1205,7 @@ int jabber_plugin_init()
 	command_add(&jabber_plugin, "jid:_autoback", params("?"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
 	command_add(&jabber_plugin, "jid:invisible", params("?"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
 	command_add(&jabber_plugin, "jid:dnd", params("?"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
-	command_add(&jabber_plugin, "jid:xa", params("?"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
+	command_add(&jabber_plugin, "jid:xa", params("?"), jabber_command_away, 0, "", "zmienia stan na bardzo zajêty", "", NULL);
 	command_add(&jabber_plugin, "jid:passwd", params("?"), jabber_command_passwd, 0, "", "zmienia has³o", "", NULL);
 	command_add(&jabber_plugin, "jid:auth", params("p uU"), jabber_command_auth, 0, "", "obs³uga autoryzacji", 
 	  "<akcja> <JID> \n"
