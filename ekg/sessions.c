@@ -488,9 +488,11 @@ int session_read()
 				goto next;
 			}
 			xstrtr(tmp, '\002', '\n');
-			if(*tmp == '\001')  
-				session_set(s, line, base64_decode(tmp + 1));
-			else 
+			if(*tmp == '\001') { 
+				char *decoded = base64_decode(tmp + 1);
+				session_set(s, line, decoded);
+				xfree(decoded);
+			} else 
 				session_set(s, line, tmp);
 			goto next;
 		}

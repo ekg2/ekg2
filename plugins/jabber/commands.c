@@ -54,36 +54,41 @@
 
 COMMAND(jabber_command_connect)
 {
-	const char *password = session_get(session, "password");
+	char *password = (char *) session_get(session, "password");
 	const char *server, *realserver = session_get(session, "server"); 
-	int res, fd[2];
+	int res, fd[2], ret = 0;
 	jabber_private_t *j = session_private_get(session);
 	
 	if (!session_check(session, 1, "jid")) {
 		printq("invalid_session");
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	if (j->connecting) {
 		printq("during_connect", session_name(session));
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	if (session_connected_get(session)) {
 		printq("already_connected", session_name(session));
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	if (!password) {
 		printq("no_config");
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	debug("session->uid = %s\n", session->uid);
 	
 	if (!(server = xstrchr(session->uid, '@'))) {
 		printq("wrong_id", session->uid);
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	xfree(j->server);
@@ -93,14 +98,16 @@ COMMAND(jabber_command_connect)
 
 	if (pipe(fd) == -1) {
 		printq("generic_error", strerror(errno));
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	debug("[jabber] resolver pipes = { %d, %d }\n", fd[0], fd[1]);
 
 	if ((res = fork()) == -1) {
 		printq("generic_error", strerror(errno));
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	if (!res) {
@@ -137,8 +144,9 @@ COMMAND(jabber_command_connect)
 
 	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
-	
-	return 0;
+end:
+	xfree(password);
+	return ret;
 }
 
 COMMAND(jabber_command_disconnect)
@@ -344,7 +352,7 @@ COMMAND(jabber_command_away)
 		reason_changed = 1;
 	};
 
-	descr = session_descr_get(session);
+	descr = (char *) session_descr_get(session);
 
 	if (!xstrcmp(name, "_autoback")) {
 		format = "auto_back";

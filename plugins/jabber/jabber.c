@@ -352,7 +352,9 @@ void jabber_handle(void *data, xmlnode_t *n)
 
 		if (id && !xstrncmp(id, "passwd", 6)) {
 			if (!xstrcmp(type, "result")) {
-				session_set(s, "password", session_get(s, "__new_password"));
+				char *new_passwd = (char *) session_get(s, "__new_password");
+				session_set(s, "password", new_passwd);
+				xfree(new_passwd);
 				print("passwd");
 			}
 
@@ -617,7 +619,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 	session_t *s = jdh->session;
 	
 	if (!xstrcmp(name, "stream:stream")) {
-		const char *password = session_get(s, "password");
+		char *password = (char *) session_get(s, "password");
 		const char *resource = session_get(s, "resource");
 		const char *uid = session_uid_get(s);
 		char *username;
@@ -636,7 +638,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		else
 		  	jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>", j->server, username, jabber_digest(j->stream_id, password), resource);
 		xfree(username);
-
+		xfree(password);
 		return;
 	}
 

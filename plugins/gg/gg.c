@@ -933,11 +933,13 @@ COMMAND(gg_command_connect)
 {
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
-	const char *password = session_get(session, "password");
+	char *password = (char *) session_get(session, "password");
+	int ret = 0;
 	
 	if (!session_check(session, 0, "gg") || !g) {
 		printq("invalid_session");
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	if (!strcasecmp(name, "disconnect") || (!strcasecmp(name, "reconnect") && session_connected_get(session))) {
@@ -990,7 +992,8 @@ COMMAND(gg_command_connect)
 
 		if (g->sess) {
 			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", session_name(session));
-			return -1;
+			ret = -1;
+			goto end;
 		}
 
 	        if (local_ip == NULL)
@@ -1013,7 +1016,8 @@ COMMAND(gg_command_connect)
 
 		if (!uin || !password) {
 			printq("no_config");
-			return -1;
+			ret = -1;
+			goto end;
 		}
 
 		printq("connecting", session_name(session));
@@ -1049,16 +1053,18 @@ COMMAND(gg_command_connect)
 			in_addr_t tmp_in;
 			
 			if ((tmp_in = inet_addr(realserver)) != INADDR_NONE)
-			    p.server_addr = inet_addr(realserver);
+				p.server_addr = inet_addr(realserver);
 			else {
-			    print("inet_addr_failed", session_name(session));
-			    return -1;
+				print("inet_addr_failed", session_name(session));
+				ret = -1;
+				goto end;
 			}
 		}
 
 		if ((port < 1) || (port > 65535)) {
 			print("port_number_error", session_name(session));
-			return -1;
+			ret = -1;
+			goto end;
 		}
 		p.server_port = port;
 
@@ -1128,7 +1134,9 @@ noproxy:
 		}
 	}
 
-	return 0;
+end:
+	xfree(password);
+	return ret;
 }
 
 COMMAND(gg_command_away)
