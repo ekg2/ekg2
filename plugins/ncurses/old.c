@@ -1883,7 +1883,7 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 	
 	ekg_stdin_want_more = 1;
 
-	if (bindings_added) {
+	if (bindings_added && ch != KEY_MOUSE) {
 		char **chars = NULL, *joined, c;
 		int i = 0, count = 0, success = 0;
 		list_t l;
@@ -1925,7 +1925,7 @@ end:
 		array_free(chars);
 		if (success)
 			goto then;
-	}
+	} 
 
 	if (ch == 27) {
 		if ((ch = ekg_getch(27)) == -2)
