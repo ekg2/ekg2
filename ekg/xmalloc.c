@@ -183,6 +183,167 @@ char *xstrstr(const char *haystack, const char *needle)
 {
 	if (!haystack || !needle)
 		return 0;
+
 	return strstr(haystack, needle);		
+}
+
+int xstrcasecmp(const char *s1, const char *s2) 
+{
+	if (!s1 || !s2)
+		return 0;
+
+	return strcasecmp(s1, s2);
+}
+
+char *xstrcat(char *dest, const char *src) 
+{
+	if (!dest || !src)
+		return 0;
+
+	return strcat(dest, src);
+}
+
+char *xstrchr(const char *s, int c) 
+{
+	if (!s || !c)
+		return 0;
+
+	return strchr(s, c);
+}
+
+int xstrcmp(const char *s1, const char *s2)
+{
+	if (!s1 || !s2)
+		return 0;
+
+	return strcmp(s1, s2);
+}
+
+int xstrcoll(const char *s1, const char *s2)
+{
+	if (!s1 || !s2)
+		return 0;
+
+	return strcoll(s1, s2);
+}
+
+char *xstrcpy(char *dest, const char *src) 
+{
+	if (!dest || !src)
+		return 0;
+
+	return strcpy(dest, src);
+}
+
+size_t xstrcspn(const char *s, const char *reject)
+{
+	if (!s || !reject)
+		return 0;
+	
+	return strcspn(s, reject);
+}
+
+char *xstrfry(char *string)
+{
+	if (!string)
+		return 0;
+	
+	return strfry(string);
+}
+
+size_t xstrlen(const char *s)
+{
+	if (!s)
+		return 0;
+	
+	return strlen(s);
+}
+
+char *xstrncat(char *dest, const char *src, size_t n)
+{
+	if (!dest || !src || !n)
+		return 0;
+	
+	return strncat(dest, src, n);
+}
+
+int xstrncmp(const char *s1, const char *s2, size_t n)
+{
+	if (!s1 || !s2 || !n)
+		return 0;
+	
+	return strncmp(s1, s2, n);
+}
+
+char *xstrncpy(char *dest, const char *src, size_t n)
+{
+	if (!dest || !src || !n)
+		return 0;
+
+	return strncpy(dest, src, n);
+}
+
+int xstrncasecmp(const char *s1, const char *s2, size_t n)
+{
+	if (!s1 || !s2 || !n)
+		return 0;
+	
+	return strncasecmp(s1, s2, n);
+}
+
+char *xstrpbrk(const char *s, const char *accept) 
+{
+	if (!s || !accept)
+		return 0;
+	
+	return strpbrk(s, accept);
+}
+
+char *xstrrchr(const char *s, int c) 
+{
+	if (!s || !c)
+		return 0;
+
+	return strrchr(s, c);
+}
+
+char *xstrsep(char **stringp, const char *delim)
+{
+	if (!stringp || !delim)
+		return 0;
+	
+	return strsep(stringp, delim);
+}
+
+size_t xstrspn(const char *s, const char *accept)
+{
+	if (!s || !accept)
+		return 0;
+
+	return strspn(s, accept);
+}
+
+char *xstrtok(char *s, const char *delim)
+{
+	if (!s || !delim)
+		return 0;
+
+	return strtok(s, delim);
+}
+
+char *xindex(const char *s, int c)
+{
+	if (!s || !c)
+		return 0;
+	
+	return index(s, c);
+}
+
+char *xrindex(const char *s, int c)
+{
+	if (!s || !c)
+		return 0;
+
+	return index(s, c);
 }
 

@@ -43,6 +43,7 @@ int xstrcmp(const char *s1, const char *s2);
 int xstrcoll(const char *s1, const char *s2);
 char *xstrcpy(char *dest, const char *src);
 size_t xstrcspn(const char *s, const char *reject);
+char *xstrdup(const char *s);
 char *xstrfry(char *string);
 size_t xstrlen(const char *s);
 char *xstrncat(char *dest, const char *src, size_t n);
@@ -54,6 +55,10 @@ char *xstrrchr(const char *s, int c);
 char *xstrsep(char **stringp, const char *delim);
 size_t xstrspn(const char *s, const char *accept);
 char *xstrstr(const char *haystack, const char *needle);
+char *xstrtok(char *s, const char *delim);
+size_t xstrxfrm(char *dest, const char *src, size_t n);
+char *xindex(const char *s, int c);
+char *xrindex(const char *s, int c);
 
 char *vsaprintf(const char *format, va_list ap);
 
