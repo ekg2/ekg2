@@ -387,7 +387,8 @@ IRC_COMMAND(irc_c_error)
 		/* topic */
 		case 331:
 		case 332:
-			coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[4]);
+			coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
+					OMITCOLON(param[4]));
 			print_window(dest, s, 0, irccommands[ecode].name,
 					session_name(s), param[3], coloured);
 			xfree(coloured);

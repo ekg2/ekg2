@@ -725,10 +725,10 @@ char *irc_getarg(session_t *sess, char *stajl, const char *param0)
 	char *ret;
 	
 	if (!session_check(sess, 1, IRC3)) {
-		print("sesion_doesnt_exist", session_name(sess));
+		print("invalid_session");
 		return NULL;
 	}
-
+	
 	if (!session_connected_get(sess)) {
 		print("not_connected", session_name(sess));
 		return NULL;
@@ -802,10 +802,6 @@ char *irc_getchan(session_t *s, const char **params, const char ***v, int pr)
 }
 /*****************************************************************************/
 
-#ifdef fix
-#undef fix
-#endif
-#define fix(s) ((s) ? (s) : "")
 COMMAND(irc_command_topic)
 {
 	irc_private_t *j = session_private_get(session);
@@ -816,11 +812,15 @@ COMMAND(irc_command_topic)
 		return -1;
 	
 	if (*mp)
-		if (!mp[1] && xstrlen(*mp)==1 && **mp==':')
-			newtop = saprintf("TOPIC %s :\r\n", chan+4);
+		if (!mp[1])
+			if (xstrlen(*mp)==1 && **mp==':')
+				newtop = saprintf("TOPIC %s :\r\n", chan+4);
+			else
+				newtop = saprintf("TOPIC %s :%s\r\n", 
+						chan+4, *mp);
 		else
 			newtop = saprintf("TOPIC %s :%s %s\r\n", chan+4,
-					*mp, fix(mp[1]));
+					*mp, mp[1]);
 	else
 		newtop = saprintf("TOPIC %s\r\n", chan+4);
 
@@ -829,8 +829,6 @@ COMMAND(irc_command_topic)
 	xfree (chan);
 	return 0;
 }
-
-#undef fix
 
 COMMAND(irc_command_devop)
 {
@@ -965,11 +963,6 @@ COMMAND(irc_command_whois)
 {
 	char *person;
 
-        if (!session_check(session, 1, IRC3)) {
-                print("invalid_session");
-                return -1;
-        }
-	
 	if (!(person = irc_getarg(session, "umode_wtf", *params)))
 		return -1;
 
@@ -1024,16 +1017,19 @@ COMMAND(irc_command_part)
 {
 	irc_private_t *j = session_private_get(session);
 	char *tmp, *kan;
+	const char **mp;
 
-	if (!(kan = irc_getarg(session, "part_wtf", *params)))
+	if (!(kan=irc_getchan(session, params, &mp, 0)))
 		return -1;
 
-	tmp = SOP(_005_CHANTYPES);
-	if (tmp && xstrchr(tmp, kan[4])) 
-		irc_write(j, "PART %s :%s\r\n", 
-				kan+4, params[1]?params[1]:"EKG2 bejbi!");
-	else
-		print("not_a_channel", session_name(session), kan+4);
+	if (*mp && mp[1]) {
+		irc_write(j, "PART %s :%s %s\r\n", kan+4,
+				*mp, mp[1]?mp[1]:"EKG2 bejbi!");
+	} else {
+		irc_write(j, "PART %s :%s\r\n", kan+4,
+				(*mp)?(*mp):"EKG2 bejbi!");
+	}
+
 	xfree(kan);
 	return 0;
 }
