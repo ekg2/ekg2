@@ -310,3 +310,12 @@ char *xrindex(const char *s, int c)
 	return index(fix(s), c);
 }
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -89,3 +89,12 @@ int irc_write(irc_private_t *j, const char *format, ...);
 #endif
 
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

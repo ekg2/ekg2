@@ -12,3 +12,12 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e);
 void gg_session_handler_change50(session_t *s, struct gg_event *e);
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

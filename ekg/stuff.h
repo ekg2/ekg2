@@ -362,3 +362,12 @@ void ekg_exit();
 void ekg_debug_handler(int level, const char *format, va_list ap);
 	
 #endif /* __EKG_STUFF_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

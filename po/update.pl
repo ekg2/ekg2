@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-#  GNOME po update utility.
+#  GNOME po update utility used in ekg2.
 #  (C) 2000 The Free Software Foundation
 #
 #  Author(s): Kenneth Christiansen

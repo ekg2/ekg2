@@ -124,3 +124,12 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 	}
 	return 0;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -87,3 +87,12 @@ void variable_help(const char *name);
 void variable_free();
 
 #endif /* __EKG_VARS_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

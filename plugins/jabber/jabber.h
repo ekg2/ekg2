@@ -86,3 +86,12 @@ void xmlnode_handle_cdata(void *data, const char *text, int len);
 xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name);
 
 #endif /* __EKG_JABBER_JABBER_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

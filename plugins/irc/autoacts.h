@@ -36,3 +36,12 @@ int irc_onkick_handler(session_t *s, irc_onkick_handler_t *data);
 
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

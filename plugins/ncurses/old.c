@@ -2392,3 +2392,12 @@ int ncurses_window_new(window_t *w)
 
 	return 0;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

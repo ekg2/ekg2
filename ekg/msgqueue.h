@@ -49,3 +49,12 @@ int msg_queue_read();
 int msg_queue_write();
 
 #endif /* __EKG_MSGQUEUE_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -560,3 +560,12 @@ static int mail_plugin_destroy()
 
 	return 0;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

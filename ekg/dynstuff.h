@@ -105,3 +105,12 @@ void array_free(char **array);
 const char *itoa(long int i);
 
 #endif /* __EKG_DYNSTUFF_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -679,3 +679,12 @@ void gg_dcc_socket_close()
 	gg_dcc_socket = NULL;
 }
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -143,3 +143,12 @@ void watch_handle(watch_t *w);
 void watch_handle_line(watch_t *w);
 
 #endif /* __EKG_PLUGINS_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

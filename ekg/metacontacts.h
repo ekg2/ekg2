@@ -48,3 +48,12 @@ int metacontact_read();
 
 #endif /* __EKG_METACONTACTS_H */
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

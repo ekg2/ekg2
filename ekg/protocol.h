@@ -119,3 +119,12 @@ dcc_type_t dcc_type_get(dcc_t *);
 list_t dccs;
 
 #endif /* __EKG_PROTOCOL_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

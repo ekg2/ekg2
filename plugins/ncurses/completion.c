@@ -1170,3 +1170,12 @@ void ncurses_complete_clear()
 	last_line_without_complete = NULL;
 }
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -96,3 +96,12 @@ extern int _getopt_internal ();
 #undef __need_getopt
 
 #endif /* getopt.h */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

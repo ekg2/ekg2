@@ -39,3 +39,12 @@ size_t strlcat(char *dst, const char *src, size_t size)
 
 	return dlen + j;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

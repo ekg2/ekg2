@@ -130,3 +130,12 @@ void sessions_free();
 
 void session_help(session_t *s, const char *name);
 #endif /* __EKG_SESSIONS_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

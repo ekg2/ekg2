@@ -129,3 +129,12 @@ char color_map(unsigned char r, unsigned char g, unsigned char b)
 }
 
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

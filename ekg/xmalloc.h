@@ -66,3 +66,12 @@ char *xrindex(const char *s, int c);
 char *vsaprintf(const char *format, va_list ap);
 
 #endif /* __EKG_XMALLOC_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

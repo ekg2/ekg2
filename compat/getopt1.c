@@ -77,3 +77,12 @@ getopt_long_only (argc, argv, options, long_options, opt_index)
 
 #endif	/* Not ELIDE_CODE.  */
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -424,3 +424,12 @@ const char *log_timestamp(time_t t)
 	} else
 		return itoa(t);
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

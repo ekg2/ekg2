@@ -227,3 +227,12 @@ void emoticon_free()
 	list_destroy(emoticons, 1);
 	emoticons = NULL;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

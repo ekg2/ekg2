@@ -41,3 +41,12 @@ int blink_leds(int *flag, int *delay);
 int beeps_spk(int *tone, int *delay);
 
 #endif /* __EKG_IOCTLD_IOCTLD_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

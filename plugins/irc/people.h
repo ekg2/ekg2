@@ -49,3 +49,12 @@ int irc_color_in_contacts(char *modes, int mode, userlist_t *ul);
 int irc_free_people(session_t *s, irc_private_t *j);
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

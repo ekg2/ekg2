@@ -660,3 +660,12 @@ PROPERTY_INT_GET(dcc, started, time_t);
 PROPERTY_INT(dcc, active, int);
 PROPERTY_INT(dcc, type, dcc_type_t);
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -302,3 +302,12 @@ int gg_userlist_send(struct gg_session *s, list_t userlist)
 	xfree(types);
 	return res;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

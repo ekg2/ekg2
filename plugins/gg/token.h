@@ -232,3 +232,12 @@ const char token_id[][15] = {
 ".##.."};
 
 #endif /* __EKG_GG_TOKEN_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

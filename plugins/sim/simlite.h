@@ -60,3 +60,12 @@ char *sim_key_fingerprint(uint32_t uin);
 const char *sim_strerror(int error);
 
 #endif /* __SIMLITE_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

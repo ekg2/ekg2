@@ -716,3 +716,12 @@ int window_lock_get(window_t *w)
 {
 	return (w) ? w->lock : 0;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

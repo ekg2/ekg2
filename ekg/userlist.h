@@ -171,3 +171,12 @@ int check_uid_nick(const char *text);
 
 
 #endif /* __EKG_USERLIST_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -736,3 +736,12 @@ void ncurses_contacts_new(window_t *w)
 }
 
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

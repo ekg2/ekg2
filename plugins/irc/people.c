@@ -435,3 +435,12 @@ int irc_free_people(session_t *s, irc_private_t *j)
 
 	return 0;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

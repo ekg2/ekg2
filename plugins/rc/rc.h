@@ -32,3 +32,12 @@ void rc_input_close(rc_input_t *r);
 
 #endif /* __EKG_RC_RC_H */
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

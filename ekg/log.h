@@ -50,3 +50,12 @@ void put_log(const char *uid, const char *format, ...);
 const char *log_timestamp(time_t t);
 
 #endif /* __EKG_LOG_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

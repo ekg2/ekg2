@@ -50,3 +50,12 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence);
 
 int bindings_added_max;
 #endif /* __EKG_NCURSES_BINDINGS_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

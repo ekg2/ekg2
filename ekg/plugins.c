@@ -659,3 +659,12 @@ PROPERTY_DATA(watch);
 PROPERTY_MISC(watch, handler, watch_handler_func_t, NULL);
 
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -51,3 +51,12 @@ int mouse_initialized;
 
 #endif /* __EKG_NCURSES_MOUSE_H */
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

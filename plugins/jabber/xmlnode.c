@@ -152,3 +152,12 @@ xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name)
 }
 
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

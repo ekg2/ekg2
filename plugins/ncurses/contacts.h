@@ -25,3 +25,12 @@ void ncurses_forward_contacts_page(int arg);
 
 #endif /* __EKG_NCURSES_CONTACTS_H */
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

@@ -792,3 +792,12 @@ int event_target_check(char *buf)
 	return last_returned;
 }
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */

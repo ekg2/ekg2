@@ -39,3 +39,12 @@ int emoticon_add(const char *name, const char *value);
 int emoticon_remove(const char *name);
 
 #endif /* __EKG_EMOTICONS_H */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ */
