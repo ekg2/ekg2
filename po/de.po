@@ -1899,7 +1899,7 @@ msgstr ""
 
 #: plugins/jabber/jabber.c:1015
 msgid ""
-"%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
+"%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr ""
 
 #: plugins/jabber/jabber.c:1016
