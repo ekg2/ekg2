@@ -991,6 +991,7 @@ int conference_set_ignore(const char *name, int flag, int quiet)
 int conference_rename(const char *oldname, const char *newname, int quiet)
 {
 	struct conference *c;
+	char *tmp1, *tmp2;
 	
 	if (conference_find(newname)) {
 		printq("conferences_exist", newname);
@@ -1009,7 +1010,13 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	
 	printq("conferences_rename", oldname, newname);
 
-//	ui_event("conference_rename", oldname, newname, NULL);
+	tmp1 = xstrdup(oldname);
+	tmp2 = xstrdup(newname);
+
+	query_emit(NULL, "conference-renamed", &tmp1, &tmp2);
+
+	xfree(tmp1);
+	xfree(tmp2);
 	
 	return 0;
 }
