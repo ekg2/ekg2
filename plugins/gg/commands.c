@@ -1090,7 +1090,7 @@ static void gg_handle_token(int type, int fd, int watch, void *data)
 			int i;
 
 			for (i = 0; i < j.output_height; i++)
-				print("gg_token_body", token[i * (j.output_width + 1)]);
+				print("token_body", &token[i * (j.output_width + 1)]);
 		} else {
 			print("gg_token_ocr", tmp);
 			xfree(tmp);
