@@ -6,66 +6,78 @@ font
 	domy¶lna warto¶æ: 
 	"-adobe-helvetica-bold-r-normal-*-*-120-*-*-p-*-iso8859-2"
 	
-	czcionka, któr± maj± byæ wy¶wietlane wiadomo¶ci xosd.
+	czcionka, któr± maj± byæ wy¶wietlane komunikaty xosd.
 
 colour
 	typ: tekst
 	domy¶lna warto¶æ: "#00dd00"
 
-	kolor czcionki.
+	kolor czcionki, któr± maj± byæ wy¶wietlane komunikaty xosd.
 
 shadow_offset
 	typ: liczba
 	domy¶lna warto¶æ: 2
 
-	wielko¶æ wektora, o który ma byæ przesuniêty cieñ napisu. je¶li 0
-	to nie ma cienia.
+	wielko¶æ wektora (podana w pikselach), o który ma byæ przesuniêty 
+	cieñ komunikatu wzglêdem samego napisu. warto¶æ 0 wy³±cza cieñ.
 
 vertical_position
 	typ: liczba
 	domy¶lna warto¶æ: 2
 
-	pionowa pozycja tekstu na ekranie. 0 - góra, 1 - ¶rodek, 2 - dó³.
+	pionowa pozycja komunikatu na ekranie. warto¶æ 0 powoduje 
+	wy¶wietlanie komunikatu na górze ekranu, warto¶æ 1 na ¶rodku ekranu
+	a warto¶æ 2 na dole.
 
 vertical_offset
 	typ: liczba
 	domy¶lna warto¶æ: 48
 
-	odleg³o¶æ (w pikselach) od wybranego pionu tekstu.
+	wielko¶æ wektora (podana w pikselach), o który komunikat zostanie 
+	przesuniêty w pionie.
 
 horizontal_position
 	typ: liczba
 	domy¶lna warto¶æ: 0
 
-	pozioma pozycja tekstu na ekranie. 0 - lewo, 1 - ¶rodek, 2 - prawo.
+	pozioma pozycja komunikatu na ekranie. warto¶æ 0 powoduje
+	wy¶wietlanie komunikatu po lewej stronie ekranu, warto¶æ 1 na ¶rodku
+	a warto¶æ 2 po prawej.
 
 horizontal_offset
 	typ: liczba
 	domy¶lna warto¶æ: 48
 
-	odleg³o¶æ (w pikselach) od wybranego poziomu tekstu.
+	wielko¶æ wektora (podana w pikselach), o któy komunikat zostanie 
+	przesuniêty w poziomie.
 
 display_timeout
 	typ: liczba
 	domy¶lna warto¶æ: 6
 
-	czas jaki napis ma pozostawaæ na ekranie.
+	ilo¶æ czasu przez jak± xosd ma wy¶wietlaæ komunikat na ekranie
+	podana w sekundach.
 
 text_limit
 	typ: liczba
 	domy¶lna warto¶æ: 50
 
 	maksymalna d³ugo¶æ tekstu, który ma zostaæ wy¶wietlony w drugiej 
-	linii komunikatu.
+	linii komunikatu xosd.
 
 display_welcome
 	typ: bool
 	domy¶lna warto¶æ: 1
 
-	okre¶la czy ma byæ wy¶wietlany komunikat pocz±tkowy.
+	okre¶la czy ma byæ wy¶wietlany komunikat pocz±tkowy. warto¶æ 0
+	wy³±cza go a warto¶æ 1 w³±cza.
 
 display_notify
 	typ: bool
 	domy¶lna warto¶æ: 1
 	
-	okre¶la czy maj± byæ wy¶wietlane zmiany stanu. 1 - tak, 0 - nie.
+	okre¶la czy xosd ma wy¶wietlaæ zmiany stanu. warto¶æ 0 wy³±cza 
+	wy¶wietlanie zmian stanów, warto¶æ 1 w³±cza je globalnie a 
+	warto¶æ 2 powoduje, ¿e xosd bêdzie wy¶wietlaæ zmiany stanów 
+	tylko z sesji w których zmienna display_notify jest ustawiona
+	na 1.

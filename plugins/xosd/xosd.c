@@ -102,7 +102,7 @@ static int xosd_protocol_status(void *data, va_list ap)
 	if ((level == IGNORE_ALL) || (level & IGNORE_STATUS))
 		return 0;
 
-	if (!xosd_display_notify)
+	if (!xosd_display_notify || ((xosd_display_notify == 2) && (!session_int_get(session_find(session), "display_notify"))))
 		return 0;
 
 	const char *sender;
@@ -215,7 +215,7 @@ int xosd_plugin_init()
 	variable_add(&xosd_plugin, "horizontal_offset", VAR_INT, 1, &xosd_horizontal_offset, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "display_timeout", VAR_INT, 1, &xosd_display_timeout, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "text_limit", VAR_INT, 1, &xosd_text_limit, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "display_notify", VAR_BOOL, 1, &xosd_display_notify, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, "display_notify", VAR_MAP, 1, &xosd_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "session-depend"), NULL);
 	variable_add(&xosd_plugin, "display_welcome", VAR_BOOL, 1, &xosd_display_welcome, NULL, NULL, NULL);
 	
 	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
