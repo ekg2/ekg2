@@ -24,7 +24,21 @@ path
 	typ: tekst
 	domy¶lna warto¶æ: ~/.ekg2/logsqlite.db
 	
-        ¶cie¿ka do pliku z baz± danych. Je¶li plik nie istnieje, to zostanie stworzony.
+        ¶cie¿ka do pliku z baz± danych. Je¶li plik nie istnieje, to zostanie stworzony.        
+	Rozpoznawane znaki:
+	* %S - sesja nasza
+	* %Y, %M, %D - rok, miesi±c, dzieñ
+	Rozszerzenie pliku zale¿y od typu pliku logowanie (txt, xml, itp.)
+	Przyk³ady:
+	- logowanie do katalogów wg. sesji:
+	    log_path = "~/.ekg2/logsqlite/%S.db"
+	  np. /home/users/leafnode/.ekg/logsqlite/gg:123.db
+	- logowanie do katalogow wg. sesji (katalog) i daty (plik):
+	    log_path = "~/.ekg2/logsqlite/%S/%Y-%M-%D.db"
+	  np. /home/users/leafnode/.ekg2/logsqlite/jid:fr@h.pl/2004-05-31.db
+	- logowanie do /tmp z sesj± i dat±:
+	    log_path = "/tmp/%S-%Y.%M.%D.db"
+	  np. /tmp/gg:31337-2004.05.31.db
 
 last_limit
 	typ: liczba

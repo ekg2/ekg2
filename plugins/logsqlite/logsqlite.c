@@ -67,10 +67,9 @@ COMMAND(logsqlite_cmd_last)
 	int count2 = 0;
 	char * gotten_uid;
 	char * nick = NULL;
-	window_t * w;
 	int limit = config_logsqlite_last_limit;
 	int i = 0;
-	char * target_window = "__status";
+	char * target_window = "__current";
 
 	if (params[i] && match_arg(params[i], 'n', "number", 2)) {
 		i++;
@@ -96,9 +95,12 @@ COMMAND(logsqlite_cmd_last)
 		if (! gotten_uid) {
 			gotten_uid = nick;
 		}
-		target_window = gotten_uid;
+		if (config_logsqlite_last_in_window)
+			target_window = gotten_uid;
 		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i) order by ts asc", gotten_uid, limit);
 	} else {
+		if (config_logsqlite_last_in_window)
+			target_window = "__status";
 		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg order by ts desc limit %i) order by ts asc", limit);
 	}
 	sqlite_compile(db, sql, NULL, &vm, &errors);
@@ -107,33 +109,17 @@ COMMAND(logsqlite_cmd_last)
 		ts = (time_t) atoi(results[2]);
 		tm = localtime(&ts);
 		strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm);
-		if (config_logsqlite_last_in_window) {
-			if (!xstrcmp(results[4], "0")) {
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_in", buf, results[1], results[3]);
-			} else {
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_out", buf, results[1], results[3]);
-			}
+		if (!xstrcmp(results[4], "0")) {
+			print_window(target_window, session, config_logsqlite_last_open_window, "last_list_in", buf, results[1], results[3]);
 		} else {
-			if (!xstrcmp(results[4], "0")) {
-				printq("last_list_in", buf, results[1], results[3]);
-			} else {
-				printq("last_list_out", buf, results[1], results[3]);
-			}
+			print_window(target_window, session, config_logsqlite_last_open_window, "last_list_out", buf, results[1], results[3]);
 		}
 	}
 	if (count2 == 0) {
-		if (config_logsqlite_last_in_window) {
-			if (nick) {
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty_nick", nick);
-			} else {
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty");
-			}
+		if (nick) {
+			print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty_nick", nick);
 		} else {
-			if (nick) {
-				printq("last_list_empty_nick", nick);
-			} else {
-				printq("last_list_empty");
-			}
+			print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty");
 		}
 	}
 	sqlite_finalize(vm, &errors);
@@ -153,20 +139,43 @@ void logsqlite_setvar_default()
 /*
  * prepare path to database
  */
-char *logsqlite_prepare_path()
+char *logsqlite_prepare_path(session_t *session, time_t sent)
 {
-	char *path, *tmp;
+	char *path, *tmp, datetime[5];
+	struct tm *tm = localtime(&sent);
 	string_t buf = string_init(NULL);
 
 	if (!(tmp = config_logsqlite_path))
 		return NULL;
 
-	if (*tmp == '~' && (*(tmp+1) == '/' || *(tmp+1) == '\0')) {
-		const char *home = getenv("HOME");
-		string_append_n(buf, (home ? home : "."), -1);
+	while (*tmp) {
+		if ((char)*tmp == '%' && (tmp+1) != NULL) {
+			switch (*(tmp+1)) {
+				case 'S':	string_append_n(buf, session->uid, -1);
+						break;
+				case 'Y':	snprintf(datetime, 5, "%4d", tm->tm_year+1900);
+						string_append_n(buf, datetime, 4);
+						break;
+				case 'M':	snprintf(datetime, 3, "%02d", tm->tm_mon+1);
+						string_append_n(buf, datetime, 2);
+						break;
+				case 'D':       snprintf(datetime, 3, "%02d", tm->tm_mday);
+						string_append_n(buf, datetime, 2);
+						break;
+				default:	string_append_c(buf, *(tmp+1));
+			};
+
+			tmp++;
+		} else if (*tmp == '~' && (*(tmp+1) == '/' || *(tmp+1) == '\0')) {
+			const char *home = getenv("HOME");
+			string_append_n(buf, (home ? home : "."), -1);
+		} else
+			string_append_c(buf, *tmp);
 		tmp++;
-	}
-	string_append_n(buf, tmp, -1);
+	};
+
+
+	xstrtr(buf->str, ' ', '_');
 
 	path = string_free(buf, 0);
 
@@ -176,15 +185,36 @@ char *logsqlite_prepare_path()
 /*
  * open db
  */
-sqlite * logsqlite_open_db()
+sqlite * logsqlite_open_db(session_t * session, time_t sent)
 {
 	FILE * testFile;
-	char * path;
+	struct stat statbuf;
+	char * path, * slash, * dir;
 	sqlite * db;
 	char * errormsg = NULL;
+	int makedir = 1, slash_pos = 0;
 
-	if (!(path = logsqlite_prepare_path()))
+	if (!(path = logsqlite_prepare_path(session, sent)))
 		return 0;
+
+	while (makedir) {
+		if (!(slash = xstrchr(path + slash_pos, '/'))) {
+			makedir = 0;
+			continue;
+		};
+
+		slash_pos = slash - path + 1;
+		dir = xstrndup(path, slash_pos);
+
+		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
+			char *bo = saprintf("nie mo¿na %s bo %s", dir, strerror(errno));
+			print("generic",bo);
+			xfree(bo);
+			xfree(dir);
+			return NULL;
+		}
+		xfree(dir);
+	} // while mkdir
 
 	debug("[logsqlite] opening database %s\n", path);
 
@@ -245,7 +275,7 @@ int logsqlite_msg_handler(void *data, va_list ap)
 	if (!session)
 		return 0;
 
-	db = logsqlite_open_db();
+	db = logsqlite_open_db(s, sent);
 	if (!db) {
 		xfree(type);
 		return 0;
@@ -342,7 +372,7 @@ int logsqlite_status_handler(void *data, va_list ap)
 	if (!session)
 		return 0;
 
-	db = logsqlite_open_db();
+	db = logsqlite_open_db(s, time(0));
 	if (!db) {
 		return 0;
 	}

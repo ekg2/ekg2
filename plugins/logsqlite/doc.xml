@@ -9,13 +9,69 @@
 <sect2>
    <title>Sposób u¿ycia</title>
    <para>
-      Aby skorzystaæ z pluginu, nale¿y przygotowaæ sobie plik z pust± baz±
-      danych. Mo¿na to zrobiæ przy pomocy skryptu generate.sh do³±czonego do
-      ¼róde³ pluginu. Tworzy on w bie¿±cym katalogu plik logsqlite.db
-      zawieraj±cy czyst± bazê. Nale¿y przekopiowaæ go w dowolne miejsce, a
-      nastêpnie ustawiæ zmienn± logsqlite:path tak, aby wskazywa³a ona na ten
-      plik (zmienna musi zawieraæ te¿ nazwê pliku). Plugin nale¿y w³±czyæ
-      ustawiaj±c zmienn± logsqlite:logs na 1.
+      Aby skorzystaæ z pluginu, nale¿y ustawiæ zmienn±
+      <varname>logsqlite:log</varname> na <literal>1</literal>. Dane bêd±
+      logowane do pliku, który jest okre¶lony przez zmienn± logsqlite:path
+      - domy¶lnie <filename>~/.ekg2/logsqlite.db</filename>. Je¶li ten plik nie
+      istnieje, to zostanie stworzony, razem z odpowiedni± struktur±. Po
+      ustawieniu opcji <varname>logsqlite:log_status</varname> logowane bêd±
+      tak¿e zmiany statusów osób z listy u¿ytkowników.
+   </para>
+   <para>
+      Odpowiednie ustawienie zmiennej <varname>logsqlite:path</varname> pozwala
+      na logowanie do ró¿nych plików zale¿nie od daty i od sesji. Jest to
+      przydatna opcja, poniewa¿ baza mo¿e szybko urosn±æ, spowalniaj±c
+      dzia³anie pluginu. W ¶cie¿ce wystarczy umie¶ciæ odpowiednie znaki, które
+      zostan± podmienione na generowane na bie¿±co warto¶ci.
+      <literal>%S</literal> zostanie podmienione na nazwê sesji, a
+      <literal>%Y</literal>, <literal>%M</literal> i <literal>%D</literal>
+      zostanie podmienione na odpowiednio rok, miesi±c i dzieñ odebrania
+      wiadomo¶ci lub statusu.
+   </para>
+   <example>
+      <title>Przyk³ady ustawieñ zmiennej logsqlite:path</title>
+      <variablelist>
+         <varlistentry>
+            <term>~/.ekg2/logsqlite/%S.db</term>
+            <listitem>
+               np. /home/users/leafnode/.ekg/logsqlite/gg:123.db
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>~/.ekg2/logsqlite/%S/%Y-%M-%D.db</term>
+            <listitem>
+               np. /home/users/leafnode/.ekg2/logsqlite/jid:fr@h.pl/2004-05-31.db
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>/tmp/%S-%Y.%M.%D.db</term>
+            <listitem>
+               np. /tmp/gg:31337-2004.05.31.db
+            </listitem>
+         </varlistentry>
+      </variablelist>
+   </example>
+   <para>
+      ekg2 nie zapewnia mo¿liwo¶ci przeszukiwania stworzonej bazy danych,
+      oprócz polecenia <command>logsqlite:last</command>. Wy¶wietla ono
+      ostatnio zalogowane wiadomo¶ci - domy¶ln± ilo¶æ wy¶wietlanych wiadomo¶ci
+      okre¶la zmienna logsqlite:last_limit. Opcjonalnie, do polecenia mo¿na
+      podaæ parametr <parameter>-n [liczba]</parameter> okre¶laj±cy na bie¿±co
+      ile wierszy ma byæ wy¶wietlone. Drugi opcjonalny parametr to
+      identyfikator u¿ytkownika lub nazwa u¿ytkownika z bie¿±cej sesji, którego
+      wiadomo¶ci maj± byæ wy¶wietlane.
+   </para>
+   <para>
+      Domy¶lnie polecenie <command>logsqlite:last</command> wy¶wietla
+      wiadomo¶ci w bie¿±cym oknie.  Mo¿na to zmieniæ przez ustawienie opcji
+      <varname>logsqlite:last_in_window</varname> i
+      <varname>logsqlite:last_open_window</varname>. Pierwsza z tych zmienny
+      okre¶la, czy wiadomo¶ci wy¶wietlane przez
+      <command>logsqlite:last</command> maj± byæ wy¶wietlane w okienku z
+      rozmow± z danym u¿ytkownikiem (wiadomo¶ci bez wskazania u¿ytkownika bêd±
+      wy¶wietlane w oknie statusu). Po ustawieniu drugiej zmiennej na
+      <literal>1</literal> ekg2 bêdzie otwiera³o okno z rozmow± z danym
+      u¿ytkownikiem je¶li ono nie istnieje.
    </para>
 </sect2>
 <sect2>
