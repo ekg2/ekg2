@@ -1227,6 +1227,7 @@ void theme_init()
 	format_add("user_info_status", "%K| %nStan: %T%1%n\n", 1);
 	format_add("user_info_status_time_format", "%Y-%m-%d %H:%M", 1);
 	format_add("user_info_status_time", "%K| %nAktualny stan od: %T%1%n\n", 1);
+	format_add("user_info_auth_type", "%K| %nRodzaj autoryzacji: %T%1%n\n", 1);
 	format_add("user_info_block", "%K| %nBlokowan%@1\n", 1);
 	format_add("user_info_offline", "%K| %nNie widzi stanu\n", 1);
 	format_add("user_info_not_in_contacts", "%K| %nNie ma nas w swoich kontaktach\n", 1);

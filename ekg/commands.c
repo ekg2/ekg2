@@ -1210,6 +1210,9 @@ list_user:
 		if (u->last_status)
 			printq("user_info_last_status", last_status);
 
+		if (u->authtype)
+			printq("user_info_auth_type", u->authtype);
+
 		if (ekg_group_member(u, "__blocked"))
 			printq("user_info_block", ((u->first_name) ? u->first_name : u->nickname));
 		if (ekg_group_member(u, "__offline"))

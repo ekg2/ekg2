@@ -371,10 +371,14 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 						   sprawdzmy, czy warto dodawac :) */
 						if ((tmp = userlist_find(s, u.uid)) )
 							userlist_remove(s, tmp);
+
 						if (jabber_attr(item->atts, "subscription") && !xstrncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
 							/* nic nie robimy, bo juz usuniete */
-						} else 
+						} else { 
+							if (jabber_attr(item->atts, "subscription"))
+								u.authtype = xstrdup(jabber_attr(item->atts, "subscription"));
 							list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
+						}
 					}; /* for */
 				} /* jabber:iq:roster */
 			} /* if query */
