@@ -1,0 +1,35 @@
+// Obs³uga Secure Internet Messaging w ekg
+// (c) wojtekka
+
+Szyfrowanie to jest zgodne z http://gg.wha.la/crypt/ i powinno dzia³aæ
+bez problemu z PowerGG i Kadu.
+
+Klucze s± przechowywane w katalogu ~/.gg/keys w formacie PEM -- klucz
+prywatny w pliku ,,private.pem'', klucze publiczne w plikach odpowiadaj±cych
+numerowi rozmówcy z rozszerzeniem ,,.pem''.
+
+Aby wygenerowaæ sobie klucz piszemy:
+
+	key -g
+
+Zostanie on zapisany na dysku. Je¶li chcemy szyfrowaæ wiadomo¶ci wysy³ane
+do znajomych, musimy umie¶ciæ ich klucze publiczne w ~/.gg/keys. Je¶li
+chcemy, ¿eby wiadomo¶ci wysy³ane do nas by³y szyfrowane, musimy wys³aæ
+naszym rozmówcom nasz klucz publiczny, u¿ywaj±c polecenia ,,key -s''.
+NIE NALE¯Y NIKOMU WYSY£AÆ NIKOMU KLUCZA PRYWATNEGO Z PLIKU PRIVATE.PEM.
+
+By w³±czyæ szyfrowanie, nale¿y ju¿ tylko wpisaæ:
+
+	set encryption 1
+
+Dalej wszystko bêdzie siê dzia³o automagicznie. szyfrowane wiadomo¶ci s±
+odpowiednio oznaczane -- domy¶lnie jest to ¿ó³ty tekst ,,szyfrowane'' w
+nag³ówku wy¶wietlanej wiadomo¶ci.
+
+ekg po otrzymaniu w wiadomo¶ci klucza publicznego (to znaczy wiadomo¶ci
+zaczynaj±cej siê od ,,-----BEGIN RSA PUBLIC KEY-----'') zapisze go jako
+klucz nadawcy w katalogu ~/.gg/keys.
+
+Zarz±dzanie kluczami odbywa siê za pomoc± polecenia ,,key''.
+
+$Id$

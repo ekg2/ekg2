@@ -1,0 +1,43 @@
+// szybki kurs obs³ugi gdb
+// (c) copyright 2002 wojtek kaniewski <wojtekka@irc.pl>
+
+je¶li program siê wywróci³ i utworzy³ plik core, za pomoc± gdb mo¿na
+sprawdziæ, w którym miejscu wyst±pi³ b³±d. najpierw uruchamiamy gdb:
+
+  $ gdb ekg ~/.gg/core
+  GNU gdb 5.0 (UI_OUT)
+  Copyright 2000 Free Software Foundation, Inc.
+  (...)
+  #0  command_test_segv (name=0x80617c9 "_segv", params=0x8088c20)
+      at commands.c:1601
+  1601            return (*foo = 'A');
+  (gdb)
+
+od razu widzimy, ¿e b³±d wyst±pi³ w funkcji ,,command_test_segv''
+z pliku commands.c. potem widzimy b³êdn± liniê. w niektórych przypadkach
+niestety to nie wystarcza. mo¿liwe, ¿e linia, w której wyst±pi³ b³±d
+jest poprawna, ale dostarczone dane nie by³y w³a¶ciwe. wtedy z pomoc±
+przychodzi polecenie ,,bt'', które wy¶wietla stos wywo³añ funkcji.
+widzimy dziêki temu po kolei, jaka funkcja wywo³ywa³a jak± funkcjê
+i z jakimi parametrami:
+
+  (gdb) bt
+  #0  command_test_segv (name=0x80617c9 "_segv", params=0x8088c20)
+      at commands.c:1601
+  #1  0x080506e2 in old_execute (target=0x0, line=0x0) at commands.c:2009
+  #2  0x08050980 in ekg_execute (target=0x0, line=0x806d700 "_segv")
+      at commands.c:2136
+  #3  0x08059192 in ui_ncurses_loop () at ui-ncurses.c:231
+  #4  0x080578d8 in main (argc=1, argv=0xbffffb24) at ekg.c:726
+  #5  0x4008e38f in __libc_start_main () from /lib/libc.so.6
+	
+teraz widzimy, ¿e po prostu u¿ytkownik wywo³a³ komendê ,,_segv''.
+co prawda widaæ to po samej nazwie funkcji, w której wyst±pi³ b³±d,
+ale w wiêkszo¶ci przypadków nie bêdzie to a¿ tak oczywiste.
+
+niestety zdarza siê i tak, ¿e b³êdny kod narusza wa¿ne obszary pamiêci,
+a sam b³±d wystêpuje pó¼niej, chocia¿by przy wywo³ywaniu funkcji
+alokacji pamiêci. w takich przypadkach zlokalizowanie b³êdu jest znacznie
+trudniejsze.
+
+$Id$

@@ -1,0 +1,73 @@
+Teksty w nawiasach na koñcu linii mówi± o tym, kto dokona³ poprawki.
+Je¶li jest postaci ,,nick'', powinno byæ jasne. Postaæ ,,nick/x''
+oznacza, ¿e pomys³odawc± jest ,,nick'', a zrobi³ to kto¶, czyjego
+pierwsz± liter± nicka jest ,,x'' (w - wojtekka, s - speedy, a - arekm,
+d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
+przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
+zg³osi³ b³±d.
+
+// 2003-05-30
+
+- testowa poprawa wydajno¶ci wy¶wietlania - nie od¶wie¿a w obrêbie
+  jednej komendy, widaæ to np. przy /help (w/sz)
+
+// 2003-05-29
+
+- Ctrl-W wrzuca do yankbuffera (w/sz)
+
+// 2003-05-16
+
+- poprawka server_save dla po³±czeñ TLS (perry/w)
+- informacja o szyfrowanym po³±czeniu w /status (scooty/w)
+- leak w aliasach (sz)
+- poprawka dope³niania, aby dope³nia³o dobrze np. u¿ytkowników
+  ,,piotr_nowak'' oraz ,,piotr kowalski'' (sz)
+
+// 2003-05-15
+
+- obs³uga po³±czeñ szyfrowanych TLSv1. nale¿y podaæ adres serwera poprzedzony
+  tekstem ,,tls:'' (w)
+- usuniêcie leaka w obs³udze procesów potomnych (scooty/w)
+- korzystanie z huba do po³±czeñ TLS (,,/set server tls'') (w)
+
+// 2003-05-14
+
+- poprawka helpa /dcc (jojo/w)
+- poprawka dope³niania nazw plików (jojo/w)
+
+// 2003-05-10
+
+- poprawka obs³ugi polskich liter w /find (FIG/sz)
+- poprawka wyboru opisów z plików *.reasons - lepiej losuje i nie
+  wywraca siê przy pustym pliku (sz)
+
+// 2003-05-05
+
+- niedostêpno¶æ osób nie bêdzie wy¶wietlana przez ,,events_delay'' sekund
+  od po³±czenia (lordzik/w)
+
+// 2003-05-01
+
+- po utracie terminala koñczy pracê (tokugawa/w)
+
+// 2003-04-30
+
+- opis instalacji w katalogu domowym dla nowej wersji autoconfa (w)
+
+// 2003-04-29
+
+- /list pokazuje, kiedy ostatnio widziano u¿ytkownika (qbq/w)
+
+// 2003-04-28
+
+- dodanie polecenia ,,dcc resume'' do wznawiania przerwanych transferów (w)
+
+// 2003-04-26
+
+- poprawka wyciszania komendy /alias -a (sz)
+
+// 2003-04-23
+
+- poprawka zachowania trybu wielolinijkowego (theKnight/w)
+
+$Id$

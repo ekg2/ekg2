@@ -1,0 +1,24 @@
+kilka uwag co do przeno¶no¶ci kodu:
+
+1) na systemach BSD wa¿na jest kolejno¶æ sieciowych #include'ów:
+
+   #include <sys/types.h>
+   #include <sys/socket.h>
+   #include <netinet/in.h>
+   #include <arpa/inet.h>
+
+2) typy danych uintXX_t nie s± dostêpne na starszych platformach. na nowszych
+   mog± wyst±piæ w <stdint.h>, <inttypes.h> lub podobnych. najlepiej sprawdziæ
+   w configure, czy istniej±, a je¶li nie, zdefiniowaæ je.
+
+3) ,,__attribute__ ((packed))'' jest rozszerzeniem gcc, wiêc nie bêdzie
+   dostêpne na starszych platformach.
+
+4) zachowanie snprintf() zmieni³o siê w C99. wcze¶niej zwraca³o -1, je¶li
+   ci±g znaków by³ zbyt krótki, a teraz zwraca ilo¶æ bajtów, jaka by³aby
+   zapisana do bufora, gdyby starczy³o miejsca.
+
+5) trzeba uwa¿aæ na kolejno¶æ bajtów, je¶li pisze siê lub czyta binarne
+   warto¶ci liczbowe z plików lub gniazd.
+
+$Id$

@@ -1,0 +1,48 @@
+// lista wa¿niejszych dla u¿ytkowników zmian w 2.0
+// wojtekka
+
+* konfiguracja znajduje siê w katalogu ~/.ekg, dziêki czemu mo¿na siê bawiæ
+  ekg2 bez obawy o zepsucie konfiguracji i/lub userlisty ekg1. pó¼niej siê
+  pomy¶li, co z tym fantem zrobiæ.
+
+* /clear w koñcu czy¶ci okno, a /cleartab zosta³o zamienione na /tabclear,
+
+* ekg2 nie zawiera libgadu. by skompilowaæ obs³ugê GG, nale¿y skomplilowaæ
+  libgadu z --enable-shared, zainstalowaæ i mieæ pakiet pkgconfig.
+
+* domy¶lnym zachowaniem przy komendach /away, /back itp. jest zostawianie
+  opisu w spokoju. zmienne typu *_reason jeszcze nie dzia³aj±.
+
+* nie ma zmiennych ,,uin'', ,,password'', ,,server'' itp. do obs³ugi parametrów
+  sesji s³u¿y polecenie ,,/session''. je¶li chcemy dodaæ numer gg, wpisujemy:
+
+	/session --add gg:12345
+	/session password mojetajnehas³o
+	/session server 217.17.41.84
+
+  oczywi¶cie mo¿na mieæ kilka sesji. prze³±cza siê miêdzy nimi klawiszem
+  Ctrl-X.
+
+* ¿eby skorzystaæ z jabbera, wpisujemy:
+
+	/session --add jid:jankowalski@jabber.org
+	/session password mojetajnehas³o
+	/connect
+
+  obs³ugi rostera jeszcze nie ma, wiêc poza dodaniem do listy kontaktów,
+  nale¿y jeszcze wys³aæ kilka komend do serwera:
+  ¿eby dodaæ kogo¶ do listy kontaktów:
+
+	/jid:auth --request jid:hamlet@denmark.dk
+	/xml <iq type="set"><query xmlns="jabber:iq:roster"><item jid="hamlet@denmark.dk"/></query></iq>
+
+  ¿eby kogo¶ autoryzowaæ:
+
+  	/jid:auth --accept jid:julia@verona.it
+
+* dodano zmienn± debug. mo¿liwo¶æ zg³aszania b³êdów to jedno, przero¶niêta
+  binarka to drugie, ale np. przy ³±czeniu lub przy przesy³aniu plików ekg
+  jest niemi³osiernie wolne, bo ka¿dy przychodz±cy bajt jest mielony przez
+  kod logowania, przed kod okien i kod ui. bez sensu.
+
+

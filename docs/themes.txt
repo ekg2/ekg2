@@ -1,0 +1,94 @@
+
+.---------------,--------,-------,-----.
+| kolor         | zwyk³y | jasny | t³o |
+,---------------+--------+-------+-----'
+| czarny/szary  | %k     | %K    | %l  |
+| niebieski     | %b     | %B    | %e  |
+| czerwony      | %r     | %R    | %s  |
+| fioletowy     | %m/%p  | %M/%P | %q  |
+| turkusowy     | %c     | %C    | %d  |
+| br±zowy/¿ó³ty | %y     | %Y    | %z  |
+| zielony       | %g     | %G    | %h  |
+| bia³y         | %w     | %W    | %x  |
+| mrugaj±cy     | %i     | -     | -   |
+| t³usty	| %T	 | -	 | -   |
+,---------------'--------'-------'-----|
+| bez koloru    | %n                   |
+`---------------'----------------------'
+
+* * *
+
+przy %1-%9 mo¿na kazaæ dope³niaæ do konkretnej szeroko¶ci. przydaje siê
+do wszelkiego rodzaju tabelek.
+
+  %[10]1   dope³nia spacjami z prawej pierwszy parametr do 10 pól 
+  %[-10]1  j.w. tylko ¿e do lewej
+  %[.5]1   dope³nia zerami
+  %[,9]2   dope³nia kropkami
+  %[_4]1   dope³nia znakami podkre¶lenia
+  %(10)1   je¶li rozmiar parametru przekroczy 10 znaków nie obcina
+
+UWAGA! kolorkowe sekwencje ansi traktuje jak znaki, wiêc nie powinno
+siê ich u¿ywaæ przy dope³nianiu parametrów.
+
+* * *
+
+je¶li chce siê rozró¿niaæ przymiotniki dla ró¿nych p³ci, mo¿na u¿yæ
+%@n, gdzie ,,n'' to numer formatu, który bierzemy pod uwagê. je¶li
+ostatni± liter± bêdzie ,,a'', %@n zostanie zast±pione przez ,,a'',
+w innym przypadku przez ,,y''. przyk³ad:
+
+  %> %1 jest dostêpn%@1.
+
+nale¿y wzi±æ uwagê, ¿e w wielu wypadkach pseudonimy s± najpierw
+formatowane przez known_user i unknown_user, wiêc trzeba podaæ osobny
+parametr z samym pseudonimem.
+
+* * *
+
+%>  prompt (domy¶lnie zielony)
+%!  error (domy¶lnie czerwony)
+%)  prompt2 (domy¶lnie turkusowy)
+%#  timestamp (domy¶lnie GG:MM)
+
+%|  koniec promptu. je¶li ten format wystêpuje, to przy przenoszeniu do
+    nastêpnej linii, tekst przed tym formatem zostanie wy¶wietlony ponownie.
+
+    na przyk³ad dla:
+
+        %> D³uga linia, która zostanie podzielona na kilka linii
+
+    na ma³ym terminalu zostanie podzielone na:
+
+	.-------------------------.
+        | ::: D³uga linia, która  |
+        | zostanie podzielona na  |
+        | kilka linii             |
+	`-------------------------'
+
+    a po dodaniu %|, tzn:
+
+        %> %|D³uga linia, która zostanie podzielona na kilka linii
+
+    zostanie wy¶wietlone jako:
+
+        .-------------------------.
+        | ::: D³uga linia, która  |
+	| ::: zostanie podzielona |
+	| ::: na kilka linii      |
+	`-------------------------'
+
+* * *
+
+dwa specjalne formaty ,,known_user'' i ,,unknown_user'' okre¶laj±, jak
+bêd± pokazywani userzy z listy i spoza listy kontaktów. pierwszy za
+parametry przyjmuje %1 opis, %2 numerek, a drugi %1 numerek.
+
+* * *
+
+wpisy readline_*, oprócz readline_prompt_query nie mog± zawieraæ ¿adnych
+,,procentowych'' kodów steruj±cych. podobnie jest z promptem config_changed.
+
+* * *
+
+$Id$

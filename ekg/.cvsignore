@@ -1,0 +1,11 @@
+ekg
+ekg.log
+ioctld
+*.orig
+*.rej
+.DS_Store
+vekg
+.deps
+Makefile
+Makefile.in
+

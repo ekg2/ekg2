@@ -1,0 +1,39 @@
+Nie zawracaj ludziom g³owy i nie pisz, ¿e chcia³by¶ co¶ zaproponowaæ, je¶li
+zosta³o wymienione na poni¿szych listach. Listy lub wiadomo¶ci, ¿eby co¶
+z nich dostaæ bêd± albo ignorowane, albo odpowied¼ mo¿e byæ wulgarna.
+Zwykle im dana sprawa jest wy¿ej na li¶cie, tym wa¿niejsze jest jej
+rozwi±zanie.
+
+* biblioteka:
+  - komunikacja miêdzy klientami, bezpo¶rednie rozmowy,
+  - czas powrotu w stanach opisowych,
+
+* klient:
+  - dope³nianie w ¶rodku linii (sz)
+  - wykrywanie niewidocznych jako opcja (wielu)
+  - czas powrotu w stanach opisowych (?)
+  - zmienna wy³±czaj±ca pytanie o zapisanie konfiguracji (Tohver)
+  - autofind - szukanie osób, które do nas pisz±, a nie mamy ich w li¶cie
+    kontaktów (mateusza)
+  - odpowiednik ircowego /whowas (ostatni IP, opis, ...) (joshua)
+  - uporz±dkowane i dobrze dzia³aj±ce okna p³ywaj±ce (sz?)
+  - mo¿liwo¶æ automagicznego wyrównywania kolejnych linii wiadomo¶ci w tematach
+    ircopodobnych do d³ugo¶ci nazwy rozmówcy i timestampu (sz)
+  - zmienna beep_*_away (rmrmg)
+  - zapis do historii zgodny z http://kadu.net/history_format.html (Chilek)
+  - lista kontaktów w pierwszym oknie, rozmowy w kolejnych (jojo)
+  - osobna historia dla ka¿dego okna (koniu)
+  - zapisywanie backlog'a z okna do pliku (G.Sulek)
+  - zdarzenie dotycz±ce nowej konferencji (pmb)
+  - /ignore dla u¿ytkowników spoza listy kontaktów (mateusza)
+  - dalsza rozbudowa on (?) - zaprzeczenia i inne operatory (krzyk)
+  - mo¿liwo¶æ definiowania kolorów p³ywaj±cych okien: t³o, ramka (w)
+  - ,,wje¿d¿anie'' i automatyczne chowanie listy kontaktów, co¶ na wzór pasku
+    zadañ w windowsach (w)
+  - mo¿liwo¶æ blokowania terminala po d³u¿szym czasie nieaktywno¶ci (Gambler)
+  - okienka oparte o kolejne wywo³ania xterma (fidor)
+  - obs³uga myszy (mateusza)
+  - dope³nianie themów (Arim)
+ 
+
+$Id$

@@ -1,0 +1,58 @@
+.TH EKG n "11 november 2002" 
+.SH NAME
+ekg \- A Gadu-Gadu compatible client.
+.SH SYNOPSIS
+.B ekg [
+.BI options
+.B ]
+.B [
+.BI commands
+.B ]
+
+.SH DESCRIPTION
+.B ekg
+is an experimental Gadu-Gadu client.
+
+.SH OPTIONS
+.TP
+.BI \-h\ [\-\-help]
+Shows command line options.
+.TP
+.BI \-u\ username\ [\-\-user\ username]
+Starts ekg with other \"user profile\". 
+By default config files are stored in ~/.gg/ (if there is a non-empty
+$CONFIG_DIR environment variable, ~/$CONFIG_DIR/gg/ is used instead);
+this option gives
+ability to create subdirectories structure with other setups.
+.TP
+.BI \-t\ theme\ [\-\-theme\ theme]
+Loads theme from the specified file.
+.TP
+.BI \-c\ file\ [\-\-control-pipe\ file]
+Creates a named pipe that can be used to control the client.
+.TP
+.BI \-n\ [\-\-no-auto]
+Don't connect automagically. After starting program won't automatically 
+connect to the gg servers. 
+.TP
+.BI \-N\ [\-\-no-global-config]
+Don't load global configuration file (i.e. /etc/ekg.conf) after user's
+one.
+.TP
+.BI \-a\ [\-\-away[=description]]
+After connecting sets the status to "away".
+.TP
+.BI \-b\ [\-\-back[=description]]
+After connecting sets the status to "back".
+.TP
+.BI \-i\ [\-\-invisible[=description]]
+After connecting sets the status to "invisible".
+.TP
+.BI \-p\ [\-\-private]
+After connecting change to "private mode".
+.TP
+.BI \-v\ [\-\-version]
+Prints the client and libgadu library version.
+.TP
+.BI \-f\ name\ [\-\-frontend\ name]
+Selects given user interface.

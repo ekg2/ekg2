@@ -1,0 +1,390 @@
+
+                     Eksperymentalny Klient Gadu-Gadu
+
+          (C) Copyright 2001-2003 Autorzy (pe³na lista poni¿ej)
+
+LICENCJA
+
+    Program jest udostêpniony na zasadach licencji GPL v2, której tre¶æ
+    za³±czono w pliku src/COPYING. Niektóre pliki mog± byæ objête inn±
+    licencj± zgodn± z GPL v2. Fakt ten jest odnotowany na pocz±tku pliku.
+
+    Wyj±tkiem od licencji GPL v2 jest mo¿liwo¶æ kompilacji, konsolidacji
+    i u¿ywania programu z bibliotek± OpenSSL autorstwa Projektu OpenSSL
+    (The OpenSSL Project) dostêpn± pod adresem http://www.openssl.org/
+    
+    Bibliotekê libgadu obs³uguj±ca warstwê sieciow± udostêpniono na
+    zasadach licencji LGPL v2.1, której tre¶æ znajduje siê w pliku
+    lib/COPYING.
+    
+    Program i biblioteka zosta³y napisane na podstawie informacji
+    uzyskanych przez badanie pakietów wysy³anych miêdzy klientem
+    a serwerem oraz od osób trzecich. Autorzy nie disasemblowali
+    ani nie dekompilowali oryginalnego klienta. Projekt powsta³ przy
+    u¿yciu darmowych i wolnodostêpnych narzêdzi.
+
+    Gadu-Gadu jest zastrze¿onym znakiem towarowym sms-express Sp. z o.o.
+
+INSTALACJA
+
+    Rozpakowaæ poleceniem ,,tar zxvf ekg-XXX.tar.gz'' (gdzie XXX to wersja
+    programu lub data wykonania snapshotu), wej¶æ do utworzonego katalogu.
+    Je¶li mamy uprawnienia administratora na danej maszynie, wywo³ujemy
+    ,,./configure'', potem ,,make'' i z prawami roota ,,make install''.
+    Je¶li chcemy zainstalowaæ program w katalogu domowym, do polecenia
+    configure dodajemy parametry ,,--prefix=$HOME/ekg
+    --mandir=$HOME/ekg/share/man''. Po zainstalowaniu w ten sposób,
+    program gotowy do uruchomienia bêdzie znajdowa³ siê w katalogu
+    ekg/bin w katalogu domowym. Je¶li chcemy mieæ mo¿liwo¶æ u¿ywania
+    poleceñ ,,beeps_spk'' i ,,blink_leds'', s³u¿±cych m.in. do
+    manipulowania diodami LED na klawiaturze, nale¿y u¿yæ parametru
+    ,,--enable-ioctld''.
+
+    Proste? Proste. Po pierwszym uruchomieniu ekg powie, jak go
+    skonfigurowaæ.
+
+    Program domy¶lnie korzysta z biblioteki ncurses, wiêc powinny byæ
+    zainstalowane odpowiednie pakiety zawieraj±ce bibliotekê oraz pliki
+    nag³ówkowe. Je¶li chcesz u¿yæ starego interfejsu, do polecenia
+    configure dodaj ,,--disable-ui-ncurses''. Interfejs ten wymaga
+    zainstalowania biblioteki readline wraz z plikami nag³ówkowymi.
+    readline zwykle polega te¿ na innych bibliotekach do obs³ugi
+    terminala, jak np. libtermcap czy ncurses. Instalacja obu interfejsów
+    naraz nie jest wskazana. Oczywi¶cie niezbêdny jest te¿ zestaw narzêdzi
+    do kompilacji programów napisanych w jêzyku C -- kompilator,
+    preprocesor, linker, pliki nag³ówkowe, biblioteki systemowe itd.
+    Je¶li skrypt ./configure zg³osi jakie¶ b³êdy, skontaktuj siê ze swoim
+    administratorem.
+
+    ekg powinien dzia³aæ na wiêkszo¶ci systemów uniksowych, jak Linux,
+    *BSD, SunOS, IRIX itp. lecz czasami przy dodawaniu nowych funkcji
+    nie sposób sprawdziæ ich zachowania na wszystkich popularnych
+    systemach. W takim wypadku przydatne s± informacje o b³êdach z
+    dok³adnym wskazaniem systemu i architektury.
+
+U¯YCIE
+
+    Jest na tyle intuicyjne, ¿e nie powinno sprawiæ problemów (wszyscy
+    betatesterzy poradzili sobie bez jakiejkolwiek dokumentacji).
+    Interfejs jest wzorowany na irssi. Dope³nianie tabem jest dostêpne w
+    wiêkszo¶ci komend. Komendy mo¿na wywo³ywaæ skrótami, o ile s± one
+    jednoznaczne. Wysy³anie wiadomo¶ci komend± ,,msg'', otwarcie okna 
+    rozmowy komend± ,,query''. Informacje o rozmówcach ,,find'' w oknie
+    rozmowy. Szukanie t± sam± komend±, ale z ró¿nymi parametrami. ,,help''
+    Twoim przyjacielem. Je¶li dana komenda ma ró¿ne opcje, pomaga
+    ,,help <komenda>''. By wys³aæ kilkulinijkow± wiadomo¶æ w interfejsie
+    ncurses, wci¶nij Ctrl-Enter. W readline zamiast tre¶ci wpisz ,,\''
+    (backslash) i zakoñcz lini± z sam± kropk± (szczegó³y poni¿ej, w rodziale
+    ,,KLAWIATURA'').
+
+    Program mo¿na skonfigurowaæ pod wieloma wzglêdami, a wszystkie mo¿liwe
+    ustawienia, które zmienia siê poleceniem ,,set'', s± opisane w pliku
+    vars.txt. Pomoc dotycz±c± poszczególnych ustawieñ mo¿na uzyskaæ tak¿e
+    poprzez polecenie ,,help set <zmienna>''.
+
+    Je¶li dana komenda przyjmuje ,,--parametr'', mo¿na u¿yæ równie¿
+    skrótu ,,-p'', gdy nie powoduje to niejednoznaczno¶ci. Uwaga!
+    Brana pod uwagê jest zwykle pierwsza litera, wiêc je¶li wpiszesz
+    ,,list --gone'', ekg potraktuje to jako ,,list --get''.
+
+    Komendy mo¿na wysy³aæ tak¿e przez potok. By go uaktywniæ, nale¿y
+    uruchomiæ ekg z parametrem ,,-c'' i ¶cie¿k± potoku. Ze wzglêdu na
+    specyfikê potoków, wyniki poleceñ wysy³ane bêd± na terminal na którym
+    jest uruchomione ekg (tak jak normalnie). Pisaæ do potoku mo¿na tak
+    jak do normalnego pliku (choæby poleceniem echo).
+
+    Je¶li w linii poleceñ shella podasz po nazwie programu i parametrach
+    zaczynaj±cych siê od my¶lnika co¶ jeszcze, to zostanie to zinterpretowane
+    jako komenda wsadowa. ekg po³±czy siê z serwerem, wykona tylko tê komendê
+    i od razu wyjdzie. Je¶li na serwerze czekaj± na Ciebie jakie¶ wiadomo¶ci,
+    to serwer je przy¶le zaraz po po³±czeniu i w trybie wsadowym ekg wypisze
+    je na terminal. Je¶li zamierzasz przekierowaæ wyj¶cie do /dev/null i nie
+    masz w³±czonego logowania, wiadomo¶ci zgin± bezpowrotnie.
+
+KLAWIATURA
+
+    Je¶li nie masz do¶wiadczenia w obs³ugiwaniu programów z emacsow±
+    filozofi± obs³ugi klawiatury, oto lista obs³ugiwanych klawiszy:
+
+	Up, Down		przegl±danie historii poleceñ
+	Left, Right		poruszanie siê po aktualnej linii
+        Ctrl-A, Home		id¼ na pocz±tek linii
+	Ctrl-B			pogrubiona czcionka [3]
+        Ctrl-D, Delete		usuñ znak pod kursorem
+        Ctrl-H, Backspace	usuñ znak przed kursorem
+        Ctrl-I, Tab		dope³nianie
+	Ctrl-K			usuwa tekst od kursora do koñca linii
+        Ctrl-L			czyszczenie/od¶wie¿anie ekranu
+        Ctrl-M, Enter		zatwierdzenie linii
+        Ctrl-Q			odblokowanie terminala
+        Ctrl-S			zablokowanie terminala
+	Ctrl-T			pochy³a czcionka [3]
+	Ctrl-V			pozwala wpisaæ dowolny znak [2]
+        Ctrl-U			usuniêcie aktualnej linii
+        Ctrl-W, Alt-Backspace	usuniêcie s³owa przed kursorem
+        Ctrl-Y			wklejenie ostatnio usuniêtego bloku
+        Ctrl-Z			przeniesienie programu w t³o
+	Ctrl-_			podkre¶lona czcionka [3]
+	Alt-B			s³owo do ty³u
+	Alt-D			usuniêcie s³owa za kursorem
+	Alt-F			s³owo do przodu
+	Alt-cyfra		prze³±czenie do podanego okna
+	F1			pomoc
+	F2			krótka lista dostêpnych i zajêtych
+	F12 lub Alt-`		prze³±czenie do okna debugowania
+
+    Lista ta obejmuje klawisze obs³ugiwane przed interfejs readline
+    i ncurses, i nie zawiera kombinacji specyficznych dla tego pierwszego.
+    
+    Interfejs readline obs³uguje równie¿ inne kombinacje klawiszy. Dok³adna
+    lista znajduje siê w stronie manuala ,,readline'' w rozdziale ,,DEFAULT
+    KEY BINDINGS''. Dodatkowo:
+
+        Ctrl-D			zamyka rozmowê i anuluje wprowadzanie
+	                        wiadomo¶ci wielolinijkowej
+
+    Interfejs ncurses obs³uguje kilka dodatkowych kombinacji:
+
+	Page Up, Page Down	przewijanie ekranu
+	Ctrl-F, Ctrl-G		j.w.
+	Alt-A			przejd¼ do pierwszego aktywnego okna
+	Alt-N			utwórz nowe okno
+	Alt-K			zamknij aktualne okno
+	Alt-G			ignoruj aktualnego rozmówcê
+	Alt-Q do Alt-P		prze³±cza do okna 11 do 20
+	Ctrl-Fn			prze³±cza do podanego okna (konsola FreeBSD)
+	Ctrl-Enter		przej¶cie do trybu wielolinijkowego
+	Ctrl-P			poprzednie okno
+	Ctrl-N			kolejne okno
+	F3			w³±cza lub wy³±cza listê kontaktów [1]
+	F4			kolejna grupa w li¶cie kontaktów
+
+    Po wej¶ciu do trybu wielolinijkowego poruszamy siê za pomoc± kursorów
+    i zatwierdzamy ponownym wci¶niêciem Ctrl-Enter. By anulowaæ, wciskamy
+    Esc i czekamy chwilê. Je¶li kombinacja ta nie jest obs³ugiwana przez
+    terminal, mo¿na u¿ywaæ Alt-Enter lub wcisn±æ Esc i zaraz po nim Enter.
+
+    Dodatkowo, okre¶lonym kombinacjom klawiszy mo¿na przypisaæ ró¿ne
+    komendy za pomoc± polecenia ,,bind''.
+
+    Ze wzglêdu na niestandardowe zachowanie niektórych typów terminali,
+    mog± wyst±piæ problemy z kombinacj± Alt-Shift-O lub Alt-O przy
+    w³±czonym Caps Locku.
+
+    [1] Klawisz F3 zmienia warto¶æ zmiennej ,,contacts''. Je¶li warto¶æ tej
+        zmiennej by³a równa 0, wci¶niêcie klawisza zmienia jej warto¶æ na 2.
+	Je¶li by³a równa 1, kolejne wci¶niêcia F3 bêd± zmienia³y warto¶æ
+	z 1 na 0 i z 0 na 1. 
+
+    [2] Po wci¶niêciu Ctrl-V nale¿y wcisn±æ klawisz, który chcemy wkleiæ.
+        Dziêki temu mo¿liwe jest wpisanie znaków typu Escape, Ctrl-L czy
+	Ctrl-U.
+
+    [3] W miejscu wci¶niêcia klawisza pojawi siê znak oznaczaj±cy kod
+        klawisza w negatywie.
+
+PLIK KONFIGURACYJNY
+
+    Kolejno¶æ ³adowania plików konfiguracyjnych jest nastêpuj±ca:
+    1) /etc/ekg.conf (lub z innego katalogu wskazanego przez opcjê
+       --sysconfdir przekazan± skryptowi ./configure),
+    2) ~/.gg/config lub ~/.gg/<profil>/config,
+    3) /etc/ekg-override.conf
+
+    Dziêki temu administrator mo¿e wymusiæ pewne opcje na klientach
+    u¿ytkowników, jak na przyk³ad ,,server'' czy ,,proxy''. Globalne
+    pliki konfiguracyjne mo¿na ignorowaæ przez uruchomienie klienta
+    z opcj± ,,-N''.
+
+GDZIE SZUKAÆ POMOCY
+
+    Dobra rada numer jeden: zanim zaczniesz narzekaæ, ¿e czego¶ nie ma,
+    przeczytaj plik TODO.
+
+    Dobra rada numer dwa: plik ULOTKA mówi, co znajduje siê w którym pliku
+    dokumentacji.
+
+    Dobra rada numer trzy: zanim zaczniesz narzekaæ, ¿e czego¶ nie ma,
+    poszukaj w pliku ChangeLog.
+
+    Dobra rada numer cztery: je¶li jeste¶ nowym u¿ytkownikiem, nie pytaj
+    siê, czy co¶ da siê zrobiæ, albo ¿e przyda³oby siê. Program jest
+    rozwijany od ponad roku, wielu ludzi korzysta z niego na co dzieñ,
+    wiêc wiêkszo¶æ ,,bajerów'', o których mo¿esz pomy¶leæ, na pewno jest
+    ju¿ w programie.
+
+WYSY£ANIE SMSÓW
+
+    ekg korzysta z zewnêtrznego programu do wysy³ania smsów. Nie ma
+    najmniejszego sensu dublowania tej funkcji, skoro i tak wiêkszo¶æ
+    ma ju¿ zainstalowane odpowiednie skrypty/programy/cokolwiek.
+    Wystarczy podaæ ¶cie¿kê do takiego programu w zmiennej
+    ,,sms_send_app''. Powinien przyjmowaæ numer telefonu za pierwszy
+    parametr i wiadomo¶æ za drugi. Ten ze strony http://ceti.pl/~miki/
+    spe³nia podane wymagania.
+
+SYNTEZA MOWY
+
+    ekg potrafi korzystaæ z zewnêtrznej aplikacji do syntezy mowy, by
+    odczytywaæ wszystko, co trafia na ekran. Wystarczy ustawiæ zmienn±
+    ,,speech_app'' na nazwê programu czytaj±cego tekst z stdin. Jej
+    ustawienie spowoduje równie¿ zmianê wygl±du programu, by wy¶wietlane
+    komunikaty sta³y siê ³atwiejsze do wymówienia. Przyk³adowe ustawienia,
+    gdy korzystamy z programu ,,powiedz'', to:
+
+	set speech_app powiedz
+	set make_window 0
+	set display_sent 0
+	set display_ack 3
+
+    Program ,,powiedz'' mo¿na pobraæ z
+    http://cvs.pld.org.pl/SOURCES/powiedz_0.2.tgz
+
+ZNANE PROBLEMY
+
+    Je¶li nie mo¿esz wpisywaæ polskich liter w interfejsie readline,
+    dopisz do pliku /etc/inputrc lub ~/.inputrc nastêpuj±ce linie:
+
+	set meta-flag on
+	set convert-meta off
+	set output-meta on
+
+ROZPOZNAWANIE P£CI
+
+    Krótka wersja: Je¶li ekg ¼le rozpoznaje p³eæ, wpisz imiê do listy
+    kontaktów. W wiêkszo¶ci przypadków pomo¿e. No tak, nie masz pojêcia,
+    jak to zrobiæ? ,,list pseudonim -f imiê''. Pomog³o? ¦wietnie. Nie
+    pomog³o? Czytaj dalej.
+
+    D³uga wersja: Jedn± z najbardziej kontrowersyjnych cech programu jest
+    automatyczne rozpoznawanie p³ci na podstawie ostatniej litery imienia
+    lub gdy jest ono nieznane, pseudonimu. Gdy ostatni± liter± jest ,,a'',
+    ekg uznaje, ¿e dana osoba jest kobiet±. Na przyk³ad, je¶li Twój znajomy
+    ma pseudonim ,,Kuba'', wpisz do listy kontaktów imiê ,,Jakub''.
+    Problemy mog± wyst±piæ z rzadko spotykanymi imionami typu Barnaba
+    czy Mercedes. W takim wypadku nale¿y do imienia dopisaæ (chocia¿by
+    po uko¶niku lub w nawiasie) literê ,,a'' dla kobiet lub inn± ni¿
+    ,,a'' dla mê¿czyzn.
+
+ZG£ASZANIE B£ÊDÓW
+
+    Je¶li zauwa¿ysz jaki¶ b³±d, sprawd¼ najnowsz± wersjê. Wiêkszo¶æ
+    b³êdów jest poprawiana w ci±gu jednego lub dwóch dni od chwili
+    pojawienia siê. Przy zg³aszaniu b³êdu, zaznacz, w której wersji
+    wystêpuje.
+
+    Nie pisz o sprawach, które s± ju¿ wymienione w pliku TODO, bo doskonale
+    wiemy, ¿e co¶ trzeba poprawiæ.
+
+    Zaznacz, co to za system, jaka dystrybucja, jaka wersja.
+    
+    Je¶li b³±d jest powtarzalny i zwi±zany z sieci±, przejd¼ do okna debug
+    i przy¶lij to, co zostaje tam wy¶wietlone przed samym wyst±pieniem
+    b³êdu (zwykle ~20 linijek wystarczy). Mo¿esz te¿ skorzystaæ z ukrytego
+    polecenia ,,_debug_dump'', które zapisze ostatnie linie z debug do
+    pliku lub te¿ przed uruchomieniem ekg wpisaæ nazwê pliku, do którego
+    przekierowany bêdzie debug, do zmiennej systemowej ,,EKG_DEBUG''.
+
+    Je¶li program powoduje naruszenie ochrony pamiêci i powstaje plik
+    ,,core'', postêpuj zgodnie z instrukcjami pokazanymi na ekranie --
+    uruchom ,,gdb ekg core'', przy¶lij to, co siê pojawi. Potem wydaj
+    polecenie ,,bt'' i jego wynik równie¿ za³±cz do listu. Je¶li b³±d
+    mo¿e mieæ co¶ wspólnego z sieci±, wy¶lij utworzony plik ,,debug''.
+
+    Je¶li program siê zawiesi, nie reaguje na nic i zajmuje 100% czasu
+    procesora, w innym oknie terminala wydaj polecenie ,,strace -p <pid>'',
+    gdzie <pid> to numer procesu ekg (uzyskasz go poleceniem ,,ps x'')
+    i wy¶lij ostatnie 20 linii.
+
+    Informacjê o b³êdzie nale¿y przesy³aæ na listê ekg-users (nie trzeba
+    siê na ni± zapisywaæ, szczegó³y ni¿ej), poniewa¿ w ten sposób dostan±
+    j± (prawie) wszyscy autorzy kodu. Mo¿liwe te¿, ¿e który¶ z u¿ytkowników
+    natkn±³ siê na to samo i wie, jak sobie z tym poradziæ.
+
+¬RÓD£A
+
+    Snapshoty kodu s± dostêpne pod adresem http://dev.null.pl/ekg/
+    Je¶li nie wyst±pi ¿adne trzêsienie ziemi, brak pr±du ani barykady na
+    drogach, powinny byæ robione co 24 godziny, wieczorem.
+
+    Poza snapshotami, co jaki¶ czas bêd± umieszczane na serwerze kolejne
+    wersje klienta. Ze wzglêdu na organizacjê prac nad programem, w praktyce
+    nie bêd± siê one ró¿niæ znacznie od snapshotów. Przed wydaniem ka¿dej
+    wersji wstrzymane bêdzie dodawanie nowych opcji, by skupiæ siê na
+    usuwaniu b³êdów. Poza tym, u³atwi to pracê niektórym osobom zajmuj±cym
+    siê tworzeniem paczek dla dystrybucji -- zamiast uaktualniania ich do
+    nowych snapshotów, bêd± mia³y mo¿liwo¶æ pakowania ,,stabilnych'' wersji.
+
+    Czê¶æ kodu jest ³adnie udokumentowana, czê¶æ nie. Komentarze czasami
+    s± bardzo g³upie, ale je¶li siê do trzeciej rano siedzi nad dziwnym
+    segfaultem, ciê¿ko siê pohamowaæ. Je¶li napiszesz jakiegokolwiek
+    klienta, frontend czy co¶ takiego, daj znaæ -- odno¶nik do projektu
+    zostanie umieszczony na stronie ekg.
+
+LISTA DYSKUSYJNA
+
+    Istnieje lista dyskusyjna dla u¿ytkowników ekg o adresie 
+    ekg-users@list.ziew.org. Aby siê zapisaæ, nale¿y wej¶æ na 
+    stronê o adresie:
+	    
+	http://list.ziew.org/mailman/listinfo/ekg-users
+	
+    oraz postêpowaæ wed³ug instrukcji tam zawartych.
+    
+AUTORZY
+
+    Wymienione osoby mia³y mniejszy lub wiêkszy wp³yw na rozwój biblioteki
+    i klienta. Niektórzy pisali kod, pomagali analizowaæ protokó³, testowali
+    na ró¿nych systemach, inni podsy³ali patche i bugreporty. Je¶li kto¶
+    zosta³ pominiêty, niech da znaæ. W ka¿dym razie za to, jak wygl±da ekg,
+    odpowiedzialni s± (w porz±dku alfabetycznym):
+
+	Marek Antoniak <kfazi@kfazi.polnet.trzepak.pl>
+	Wojciech Bojdo³ <wojboj@htcon.pl>
+	Tomasz Chiliñski <chilek@chilan.com>
+	Marcin Chojnowski <martii@obgyn.edu.pl>
+	Piotr Domagalski <szalik@szalik.net>
+	Micha³ Dorociñski <zwierzak@venus.ci.uw.edu.pl>
+	Tomasz Dudzisz <eileen@ds1.agh.edu.pl>
+	Piotr Figiel <feeg@psychodelic.org>
+	Rafa³ Florek <raf@regionet.regionet.pl>
+	Artur Gawryszczak <gawrysz@camk.edu.pl>
+	Stanis³aw Gurgacz <fig@pd21.tarnobrzeg.sdi.tpnet.pl>
+	Darek Jackowski <ascent@home.pl>
+	Rafa³ Janiczek <jojo@dexter.zst.bytom.pl>
+	Dawid Jarosz <dawjar@poczta.onet.pl>
+	Tomasz Jarzynka <tomee@cpi.pl>
+	Kuba Jermak <kooba@irc.pl>
+	Jaros³aw Kamper <jack@jack.eu.org>
+	Asia Kaniewska <kj_asia@wp.pl>
+	Wojtek Kaniewski <wojtekka@irc.pl>
+	Maciej Korzeñ <maciekk@linux.sky.pl>
+	Pawe³ Kot <pkot@linuxnews.pl>
+	Marek Kozina <klith@irc.pl>
+	Adam Kruszewski <phantom@linux.bydg.org>
+	Adam Ludwikowski <adam.ludwikowski@wp.pl>
+	Jakub Martyñski <jakub@ceto.pl>
+	Pawe³ Maziarz <drg@go2.pl>
+	Marcin Miku³a <meecash@meecash.prv.pl>
+	Arkadiusz Mi¶kiewicz <misiek@pld.org.pl>
+	Jacek Osiecki <joshua@ceti.pl>
+	Robert Osowiecki <magic.robson@rassun.art.pl>
+	Adam Osuchowski <adwol@polsl.gliwice.pl>
+	Maurycy Paw³owski <maurycy@kocham.cie.gov.pl>
+	Artur Pietruk <arturp@plukwa.net>
+	Jacek Pospycha³a <tri10o@bsod.org>
+	Pawe³ Pruszkowski <arim@botrm.org>
+	Jacek Rembisz <jr178783@zodiac.mimuw.edu.pl>
+	Rafal Roszak <rmrmg@wp.pl>
+	Krzysztof Sk³adzieñ <coxoc@coxoc.org>
+	Rafa³ Skoczylas <nils@secprog.org>
+	Adrian Smarzewski <adrians@aska.com.pl>
+	Walerian Soko³owski <ws171913@yahoo.com>
+	Piotr Stolc <socrtp@sedez.iq.pl>
+	Tomasz Torcz <zdzichu@irc.pl>
+	Leszek Urbañski <tygrys@moo.pl>
+	Robert J. Wo¼ny <speedy@ziew.org>
+	Krzysztof Wójtowicz <misiolek@misiolki.prv.pl>
+	Piotr Wysocki <wysek@linux.bydg.org>
+	 
+$Id$

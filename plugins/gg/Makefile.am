@@ -1,0 +1,8 @@
+lib_LTLIBRARIES = gg.la
+gg_la_SOURCES = dcc.c gg.c misc.c pubdir.c pubdir50.c
+gg_la_LDFLAGS = -module -avoid-version
+gg_la_LIBADD = @LIBGADU_LIBS@
+gg_la_INCLUDES = @LIBGADU_CFLAGS@
+
+libdir = $(plugindir)
+

@@ -1,0 +1,117 @@
+// obs³uga skryptów w pythonie
+
+1) ./configure --with-python
+2) skrypty musz± znajdowaæ siê w ~/.gg/scripts
+3) /help python
+4) przyk³adowy skrypt:
+
+	# skrypt ignoruj±cy zmiany stanu zawieraj±ce w opisie co¶, co
+	# przypomina tytu³ empetrójek.
+	#
+	# 20021215 wojtekka
+
+	import ekg
+	import re
+		
+	regulka = re.compile("^[A-Z].* - [A-Z].*")
+
+	def init():
+		ekg.printf("generic", "Za³adowano super hiper skrypciora!")
+		return 1
+		
+	def deinit():
+		ekg.printf("generic", "Ta-jest, kapitanie")
+	
+	def handle_status(uin, name, status, descr):
+		if not descr:
+			return 1
+			
+		if regulka.match(descr):
+			return 2
+		else:
+			return 1
+
+***
+
+skrypty pythonowe w ekg maj± byæ naprawdê proste w pisaniu, w przeciwieñstwie
+do skryptów perlowych w irssi, które ciê¿ko z pocz±tku zrozumieæ. jest kilka
+funkcji, które bêd± wywo³ywane przez ekg w szczególnych przypadkach. je¶li
+która¶ funkcja zwróci warto¶æ 0, zdarzenie zostanie ignorowane, je¶li
+charakter zdarzenia na to pozwala (wiadomo¶ci, zmiany stanu itp.). je¶li
+zwróci 1, zdarzenie zostanie normalnie obs³u¿one przez ekg. je¶li zdarzenie 
+wi±¿e siê z wy¶wietleniem jakiego¶ tekstu, zwrócenie warto¶ci 2 powoduje
+ukrycie informacji o nim, ale zostanie ono obs³u¿one przez ekg. je¶li zdarzenie
+zwróci krotkê/entkê/cokolwiek (ang. tuple) o takim samym wygl±dzie jak
+argumenty funkcji, informacje o zdarzeniu zostan± zmienione na podane.
+na przyk³ad:
+
+	def handle_msg(uin, name, msgclass, text, time, secure):
+		if string.find(text, ":(((") != -1:
+			text = "(zbyt smutny tekst, ukryto)"
+			return (uin, name, msgclass, text, time, secure)
+
+		return 1
+
+oto lista wywo³ywanych funkcji:
+
+- init()
+
+  gdy skrypt jest ³adowany. je¶li ta funkcja zwróci 0, skrypt nie zostanie
+  za³adowanych.
+
+- deinit()
+
+  gdy skrypt jest usuwany z pamiêci.
+
+- handle_msg(uin, name, msgclass, text, time, secure)
+
+  gdy ekg otrzymuje wiadomo¶æ. uin - numer nadawcy, name - jego nazwa,
+  msgclass - klasa wiadomo¶ci, text - tre¶æ, secure - czy mamy do czynienia
+  z odszyfrowan± wiadomo¶ci±. je¶li zwróci 0, wiadomo¶æ zostanie zignorowana.
+  gdy zwróci 2, wiadomo¶æ nie zostanie wy¶wietlona na ekranie. je¶li zwróci
+  krotkê/entkê/cokolwiek (ang. tuple) o takich samych argumentach jak funkcja,
+  dane zostan± zmienione.
+
+- handle_status(uin, name, status, descr)
+
+  gdy kto¶ zmienia stan. nazwy parametrów powinny byæ zrozumia³e. je¶li
+  zwróci 0, zmiana stanu zostanie zignorowana. je¶li zwróci 2, zmiana stanu
+  nie bêdzie ignorowana, ale nie zostanie wy¶wietlona. je¶li zwróci krotkê
+  o takich samych argumentach jak funkcja, dane zostan± zmienione.
+
+- handle_keypress(meta, key)
+
+  gdy zostaje wci¶niêty klawisz o kodzie key. je¶li wcze¶niejszym kodem
+  by³ 27, meta jest równe 27.
+
+- handle_redraw_header()
+
+  gdy nale¿y od¶wie¿yæ nag³ówek okna.
+
+- handle_redraw_statusbar()
+
+  gdy nale¿y od¶wie¿yæ pasek stanu.
+
+pó¼niej zostan± dodane funkcje dotycz±ce wszystkich zdarzeñ zwi±zanych
+z sesj± gg, plus obs³uga interfejsu u¿ytkownika (informacja o wys³anej linii itp.)
+
+***
+
+skrypty umieszczone w katalogu ~/.gg/scripts/autorun bêd± ³adowane
+automagicznie przy starcie ekg.
+
+***
+
+przyk³ady u¿ycia modu³u ekg w skryptach:
+
+   ekg.printf("generic", "Jestem skryptem w Pythonie!")
+   ekg.command("msg 123 hej!")
+   ekg.disconnect()
+   ekg.config.uin = 12345
+   ekg.config.password = "test123"
+   ekg.connect()
+
+pó¼niej dojd± funkcje wywo³ywania podstawowych komend typu ,,msg'' itp.
+obs³uga okienek, themów, itd, itd.
+
+$Id$

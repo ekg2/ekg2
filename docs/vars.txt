@@ -1,0 +1,729 @@
+// ma³y opis dostêpnych zmiennych
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+
+uin
+	typ: liczba
+	domy¶lna warto¶æ: brak
+
+	okre¶la numer GG, z którego ma korzystaæ klient. niezbêdna do
+	po³±czenia z serwerem. automatycznie ustawiana po udanej
+	rejestracji, gdy wcze¶niej by³a pusta.
+
+password
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	has³o u¿ytkownika. niezbêdne do po³±czenia z serwerem. automatycznie
+	ustawiane po udanej rejestracji, gdy wcze¶niej by³o puste.
+
+email
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	adres e-mail u¿ytkownika. automatycznie ustawiany po udanej rejestracji,
+	gdy wcze¶niej by³ pusty.
+
+audio_device
+	typ: tekst
+	domy¶lna warto¶æ: /dev/dsp
+
+	urz±dzenie d¼wiêkowe, którego nale¿y u¿ywaæ przy rozmowach g³osowych.
+	je¶li poprzedzi siê je minusem ,,-'', sygna³ z wej¶cia urz±dzenia nie
+	bêdzie wysy³any podczas rozmowy g³osowej.
+
+auto_away
+	typ: liczba
+	domy¶lna warto¶æ: 600
+
+	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
+	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
+	nie bêdzie automatycznej zmiany.
+
+auto_back
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
+	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
+	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
+	jakiejkolwiek wiadomo¶ci. je¶li równa 2, przy wci¶niêciu klawisza.
+	
+auto_reconnect
+	typ: liczba
+	domy¶lna warto¶æ: 10
+
+	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
+	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
+
+auto_save
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	po jakim czasie automatycznie zapisaæ ustawienia, w sekundach.
+	je¶li 0, nie zapisuje automatycznie.
+	
+away_reason
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	domy¶lny opis stanu zajêtego, ustawiany przy zmianie bez podania 
+	parametru.
+
+back_reason
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	domy¶lny opis stanu dostêpnego, ustawiany przy zmianie bez podania 
+	parametru.
+
+backlog_size
+	typ: liczba
+	domy¶lna warto¶æ: 1000
+
+	ilo¶æ linii, która bêdzie zapisywana w buforze ekranu (tym, który
+	jest przewijany klawiszami Page Up i Page Down). nie mo¿e byæ
+	mniejsza ni¿ ilo¶æ linii na ekranie. dzia³a tylko w interfejsie
+	ncurses.
+
+beep
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	okre¶la, czy klient ma beepaæ w ró¿nych sytuacjach. wy³±czenie tej
+	opcji spowoduje, ¿e w przypadku ¿adnych zdarzeñ zwi±zanych z GG nie
+	bêdzie podnosiæ alarmu. niestety nie obejmuje to zdarzeñ zwi±zanych
+	z wprowadzanym tekstem i przy tab-completion mo¿e siê to przytrafiæ.
+
+beep_msg
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	czy beepaæ przy nadchodz±cych wiadomo¶ciach. wy³±czenie ,,beep''
+	wy³±cza równie¿ tê opcjê.
+
+beep_chat
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	czy beepaæ przy rozmowach. wy³±czenie ,,beep'' wy³±cza równie¿ tê
+	opcjê.
+
+beep_notify
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	czy beepaæ przy zmianie stanu którego¶ ze znajomych. wy³±czenie
+	,,beep'' wy³±cza równie¿ tê opcjê.
+
+beep_mail
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	czy beepaæ przy nadej¶ciu nowej poczty. wy³±czenie ,,beep'' wy³±cza
+	równie¿ tê opcjê.
+
+check_mail
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy ekg ma sprawdzaæ, czy nadesz³a nowa poczta i informowaæ
+	o tym na pasku stanu. warto¶æ 1 odpowiada sprawdzaniu skrzynki typu
+	mbox, a warto¶æ 2 skrzynki typu Maildir. dodadanie warto¶ci 4 oznacza,
+	¿e oprócz informowania na pasku stanu, bêdziemy otrzymywaæ krótk±
+	informacjê o nadej¶ciu poczty w aktualnym oknie. wszystkie dostêpne
+	warto¶ci to: 0, 1, 2, 5, 6.
+
+check_mail_frequency
+	typ: liczba
+	domy¶lna warto¶æ: 15
+	
+	okre¶la w sekundach, jak czêsto sprawdzaæ, czy nie ma nowej poczty.
+
+check_mail_folders
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	zawiera pliki (mbox) lub katalogi (Maildir) rozdzielone przecinkiem lub
+	spacj±, które ekg ma sprawdzaæ, poza g³ówn± skrzynk± pocztow±. mo¿e to
+	byæ ¶cie¿ka bezwzglêdna lub wzglêdem katalogu domowego.
+	g³ówna w przypadku mbox to ta zapisana w zmiennej systemowej MAIL lub
+	/var/mail/user przy braku tej zmiennej. dla Maildir z kolei, to katalog
+	Maildir w katalogu domowym u¿ytkownika.
+
+completion_notify
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	okre¶la, czy po pojawieniu siê którego¶ ze znajomych jego nick
+	ma byæ dopisywany do listy dope³niania klawiszem Tab. je¶li jest
+	równa 2, jest równie¿ usuwany po przej¶ciu w stan niedostêpny.
+	dodanie warto¶ci 4 spowoduje, ¿e dopisywani bêd± tak¿e ci, którzy
+	pojawi± siê na li¶cie ze stanem ,,zajêty''. wszystkie dostêpne
+	warto¶ci to: 0, 1, 2, 5, 6.
+
+ctrld_quits
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	okre¶la, czy wci¶niêcie Ctrl-D w ostatnim okienku, nie bêd±c
+	w trybie, rozmowy klient na zakoñczyæ dzia³anie. ma znaczenie
+	tylko dla interfejsu readline.
+
+contacts
+	typ: liczba
+	domy¶lna warto¶æ: 2
+
+	okre¶la, czy okienko z list± obecnych ma byæ wy¶wietlone z prawej
+	strony ekranu. je¶li jest równe 2, informacje o zmianie stanu nie
+	s± wy¶wietlane, ignoruj±c warto¶æ zmiennej ,,display_notify''.
+	dzia³a tylko w interfejsie ncurses.
+
+contacts_groups
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	oddzielone przecinkiem grupy, które mo¿na prze³±czaæ w li¶cie
+	kontaktów klawiszem F4. domy¶lnie wy¶wietlani s± wszyscy u¿ytkownicy.
+
+contacts_options
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	opcje listy kontaktów oddzielone przecinkiem lub spacj±. domy¶lne
+	ustawienia to ,,right, frame, margin=1, nowrap, nodescr, order=01234''.
+	mo¿liwe stany to: 0 - dostêpni, 1 - zajêci, 2 - niewidoczni, 3 -
+	blokuj±cy, 4 - niedostêpni). mo¿na pomin±æ niektóre stany -- nie
+	bêd± po prostu wy¶wietlane na li¶cie.
+	
+	lista dostêpnych opcji:
+	- left, right, top, bottom - po³o¿enie listy kontaktów na ekranie,
+	- frame, noframe - lista oddzielona ramk± od g³ównego okna lub nie,
+	- margin=n, nomargin - margines miêdzy list± a g³ównym oknem lub brak,
+	- wrap, nowrap - tre¶æ listy bêdzie zawijana lub ucinana,
+	- descr, nodescr - opisy stanu bêd± lub nie bêd± wy¶wietlane,
+	- order=n - kolejno¶æ wy¶wietlanych stanów.
+	
+contacts_size
+	typ: liczba
+	domy¶lna warto¶æ: 8
+	
+	okre¶la szeroko¶æ okienka z list± kontaktów.
+
+dcc
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	w³±cza lub wy³±cza bezpo¶rednie po³±czenia miêdzy klientami. zmiana
+	tej opcji wymaga ponownego po³±czenia z serwerem, by przes³aæ nowy
+	adres IP lub jego brak.
+
+dcc_ip
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la adres IP, który jest wysy³any serwerowi. je¶li przypisze
+	siê tej zmiennej warto¶æ ,,auto'', adres bêdzie ustalany 
+	automatycznie. je¶li chcemy bezproblemowo ³±czyæ siê z klientami
+	z tej samej sieci LAN, dobrze jest podaæ adres IP sieci LAN zamiast
+	zewnêtrznego.
+
+dcc_dir
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la katalog, do którego bêd± zapisywane pobierane pliki.
+
+dcc_limit
+	typ: tekst
+	domy¶lna warto¶æ: 30/30
+
+	okre¶la limit bezpo¶rednich po³±czeñ w danym przedziale czasu.
+	liczba przed uko¶nikiem okre¶la maksymaln± ilo¶æ po³±czeñ, a liczba
+	po uko¶niku ilo¶æ sekund. po przekroczeniu tego progu bezpo¶rednie
+	po³±czenia zostaj± wy³±czone, by zapobiec atakom polegaj±cym na
+	wyczerpaniu zasobów klienta. zwykle po ponownym w³±czeniu
+	bezpo¶rednich po³±czeñ nale¿y po³±czyæ siê ponownie z serwerem.
+
+display_ack
+	typ: liczba
+	domy¶lna warto¶æ: 3
+
+	okre¶la, czy i które powiadomienia o wys³aniu wiadomo¶ci maj±
+	byæ wy¶wietlane. 0 - ¿adne, 1 - wszystkie, 2 - tylko kiedy wiadomo¶æ
+	dotar³a do adresata, 3 - tylko kiedy adresat jest niedostêpny i
+	wiadomo¶æ zosta³a zachowania na serwerze.
+
+display_color
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	warto¶æ 0 wy³±cza wy¶wietlanie kolorów, warto¶æ 1 w³±cza. warto¶æ
+	2 ma znaczenie tylko w interfejsie ncurses i powoduje wy¶wietlanie
+	kolorów wszêdzie poza paskiem stanu i nag³ówkiem okna.
+
+display_color_map
+	typ: tekst
+	domy¶lna warto¶æ: "nTgGbBrR"
+
+	okre¶la jakie kolory bêd± przypisane ró¿nym atrybutom tekstu.
+	musi zawieraæ 8 znaków zgodnych ze spisem z pliku docs/themes.txt.
+	ka¿dy z nich okre¶la kolejno kolor dla:
+	- brak atrybutów,
+	- pogrubony,
+	- pochy³y,
+	- pochy³y+pogrubiony,
+	- podkre¶lony,
+	- podkre¶lony+pogrubiony,
+	- podkre¶lony+pochy³y,
+	- podkre¶lony+pochy³y+pogrubiony.
+
+display_crap
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	mówi, czy w oknie rozmowy maj± byæ wy¶wietlane komunikaty niezwi±zane
+	z rozmówc±. je¶li jest równe 0, w oknie rozmowy s± wy¶wietlane tylko
+	wiadomo¶ci i informacje o zmianie stanu rozmówcy. ma znaczenie tylko
+	w interfejsie ncurses.
+
+display_notify
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
+	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
+	tylko zmiany z niedostêpnego na dostêpny i na odwrót. w interfejse
+	ncurses wiêkszy priorytet ma zmienna ,,contacts'', która przy
+	warto¶ci 2 ukrywa zmiany stanu.
+
+display_pl_chars
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	je¶li w³±czone, wy¶wietlane s± polskie literki na terminalu.
+	w przeciwnym wypadku, zamieniane s± na odpowiadaj±ce im literki
+	ASCII.
+
+display_sent
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	je¶li w³±czone, wy¶wietlane s± równie¿ wysy³ane wiadomo¶ci. nale¿y
+	zwróciæ uwagê, ¿e przy make_window = 2, wys³anie wiadomo¶ci utworzy
+	automatycznie okienko rozmowy, a przy make_window = 1 tylko wtedy,
+	gdy nie bêdzie ¿adnych wolnych okienek.
+
+display_welcome
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	mówi, czy ekg ma wy¶wietliæ tekst powitalny po uruchomieniu.
+
+display_transparent
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	mówi, czy w interfejsie ncurses t³o ma byæ przezroczyste. zmiany
+	odnios± skutek po ponownym uruchomieniu.
+
+emoticons
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	uruchamia rozwijanie emotikonów w zdefiniowane teksty. wiêcej
+	szczegó³ów w pliku docs/files.txt w sekcji 5-tej.
+
+encryption
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	w³±cza szyfrowanie wiadomo¶ci. je¶li w systemie jest zainstalowana
+	biblioteka OpenSSL, mo¿liwe jest u¿ywanie szyfrowania zgodnego z SIM
+	opisanym na stronie http://gg.wha.la/crypt/
+	
+enter_scrolls
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	je¶li w³±czone, wci¶niêcie klawisza Enter w pustej linii spowoduje
+	przesuniêcie ekranu o jedn± liniê. ma znaczenie tylko w interfejsie
+	ncurses.
+
+events_delay
+	typ: liczba
+	domy¶lna warto¶æ: 3
+
+	okre¶la, po ilu sekundach od po³±czenia z serwerem zaczn± dzia³aæ
+	zdarzenia ,,on'', d¼wiêki zwi±zane ze zmianami stanu i bêd± wy¶wietlane
+	informacje o niedostêpno¶ci osób. chodzi o to, aby nie traktowaæ
+	pocz±tkowych informacji o stanie osób po po³±czeniu jako zmianê
+	ich stanu.
+
+header_size
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la rozmiar nag³ówka okna wy¶wietlanego na górze ekranu.
+	maksymalna ilo¶æ linii to 5.
+
+keep_reason
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	je¶li w³±czona, komendy ,,away'', ,,back'', ,,invisible'', ,,quit''
+	i ,,disconnect'' bez podanego powodu przejm± aktualny opis. zostanie
+	on wraz ze stanem zapisany bez wyra¼nego wydawania komendy zapisu 
+	konfiguracji. warto¶æ 2 powoduje zapisywanie opisu bez stanu.
+	
+last
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	wskazuje, czy zapisywaæ ostatnie wiadomo¶ci do podrêcznego bufora
+	(,,last_size'' musi byæ wiêksze od 0). dla 1, bêdzie zapisywaæ tylko
+	last_size wszystkich wiadomo¶ci przychodz±cych, dla 2, last_size
+	wiadomo¶ci od ka¿dego usera. dostêpna jest jeszcze logiczna
+	warto¶æ 4, która pozwala logowaæ wiadomo¶ci wys³ane. dostêpne s±
+	w takim razie warto¶ci 0, 1, 2, 5 i 6.
+	
+last_size
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	wskazuje, ile ma byæ zapisywanych wiadomo¶ci dla komendy ,,last''.
+
+log
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy i w jaki sposób bêd± logowane wysy³ane i otrzymywane
+	wiadomo¶ci. dla 0, nie bêd±. dla 1, bêd± logowane w pliku, który
+	okre¶la zmienna ,,log_path'' lub ,,~/.gg/history'' w przypadku
+	jej braku. dla 2, bêd± logowane w katalogu wskazanym przez zmienn±
+	,,log_path'', a nazwa pliku bêdzie numerem rozmówcy. je¶li mamy
+	wkompilowan± obs³ugê skompresowanych logów, dodanie warto¶ci 4
+	wymusi kompresjê logów. nie bêdzie ona dzia³a³a, je¶li istnieje
+	ju¿ nieskompresowany log. nale¿y go wcze¶niej skompresowaæ
+	poleceniem gzip. wszystkie dostêpne warto¶ci to: 0, 1, 2, 5, 6.
+
+log_ignored
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy logujemy ignorowane wiadomo¶ci.
+
+log_status
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy bêd± logowane zmiany stanu ludzi z listy (zmienna
+	,,log'' musi byæ ró¿na od 0)
+	
+log_path
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	¶cie¿ka, gdzie bêd± zachowywane wysy³ane i otrzymane wiadomo¶ci.
+
+log_timestamp
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la format czasu zapisywanego w historii. w przypadku braku,
+	zmiennej, zapisuje w postaci ilo¶ci sekund od 1 stycznia 1970r.
+	UTC. dok³adny opis formatu zawiera strona manuala strftime(3).
+
+make_window
+	typ: liczba
+	domy¶lna warto¶æ: 2
+
+	okre¶la czy bêd± tworzone nowe okienka dla nowych rozmów. dla 1 bêdzie
+	wykorzystane pierwsze wolne okno (na którym z nikim jeszcze siê nie
+	rozmawia), lub tworzone nowe w przypadku braku wolnych. dla 2
+	bezwarunkowo utworzone zostanie nowe okno.
+
+mesg
+	typ: liczba
+	domy¶lna warto¶æ: 2
+
+	ustala, czy zezwalamy na wysy³anie do nas komunikatów za pomoc± write,
+	talk lub wall. dla 0 nie wyra¿amy na to zgody, dla 1 zezwalamy na
+	pisanie na nasz terminal. w przypadku warto¶ci 2 u¿ywane s± ustawienia
+	sprzed uruchomienia ekg.
+
+proxy
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	adres i port serwera proxy, oddzielone dwukropkiem. je¶li nie podano
+	portu, domy¶lnie jest przyjmowany 8080. je¶li serwer proxy wymaga
+	autoryzacji, nale¿y poprzedziæ go nazw± u¿ytkownika, dwukropkiem,
+	has³em i ma³p± (np. ,,jan:tajnehas³o@serwer'')
+
+proxy_forwarding
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	adres i port (oddzielone dwukropkiem) serwera po¶rednicz±cego
+	(routera, proxy lub czego¶ innego) przekierowany na port 1550
+	naszego komputera.
+
+query_commands
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	mo¿liwo¶æ wydawania d³ugich poleceñ podczas rozmowy z u¿ytkownikiem
+	bez poprzedzania ich znakiem '/'.
+
+quit_reason
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	domy¶lny opis stanu niedostêpnego, ustawiany przy wychodzeniu.
+
+random_reason
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la czy przy zmianie stanu i po³±czeniu ma byæ losowany opis (z 
+	~/.gg/quit.reasons dla komend ,,quit'', ,,disconnect'', ,,invisible'', 
+	~/.gg/away.reasons dla ,,away'' i ~/.gg/back.reasons dla ,,back'').
+	dla 0 nie jest losowany, dla 1 losowany jest opis dotycz±cy stanu
+	zajêty, dla 2 niedostêpny, dla 4 dostêpny, dla 8 niewidoczny.
+	warto¶ci te mo¿na ze sob± dodawaæ, np. 11 bêdzie dotyczyæ stanów
+	niedostêpny, zajêty oraz niewidoczny. je¿eli z jakich¶ przyczyn
+	nie powiedzie siê odczyt, opis bêdzie pobierany ze zmiennych
+	,,away_reason'' lub ,,quit_reason'', o ile nie s± puste.
+
+reason_limit
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la czy opisy stanu musz± mie¶ciæ siê w okre¶lonym przez
+	protokó³ limicie. je¶li opcja jest aktywna i d³ugo¶æ opisu
+	przekracza t± d³ugo¶æ, komendy /away, /back i /invisible nie
+	zostan± wykonane.
+
+save_password
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	okre¶la czy has³o ma byæ zapisywane w pliku konfiguracyjnym. opcja
+	ta mo¿e przydaæ siê, gdy boimy siê administratora przegl±daj±cego
+	pliki u¿ytkowników.
+
+server
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	adresy IP serwerów, z którym klient powinien próbowaæ siê po³±czyæ,
+	pomijaj±c w³a¶ciw± procedurê ³±czenia siê. przydane podczas awarii
+	g³ównego serwera. adresy nale¿y oddzielaæ przecinkami, ¶rednikami
+	lub spacjami. po dwukropku mo¿na podaæ port serwera. je¶li adres i
+	port serwera zostan± poprzedzone tekstem ,,tls:'', klient spróbuje
+	wynegocjowaæ bezpieczne po³±czenie TLSv1 z serwerem.
+
+server_save
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy ekg ma zapamiêtywaæ serwer, z którym ostatnio uda³o
+	siê po³±czyæ. w przypadku w³±czenia tej zmiennej, zmienna ,,server''
+	bêdzie automatycznie uaktualniana, a zawarto¶æ wpisana przez
+	u¿ytkownika zostanie usuniêta.
+
+sms_away
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	w³±czenie tej opcji powoduje wysy³anie otrzymanych wiadomo¶ci na
+	telefon komórkowy podczas nieobecno¶ci (stan ,,zajêty''). wymaga
+	zdefiniowania zmiennych ,,sms_number'' i ,,sms_send_app''.
+
+	je¿eli warto¶ci± jest 1, to zmienna ,,sms_away_limit'' (je¶li ró¿na
+	od 0) dotyczyæ bêdzie ³±cznej liczby wiadomo¶ci wys³anych na telefon
+	komórkowy. warto¶æ 2, z kolei, wskazuje na to, ¿e limit dotyczy
+	ilo¶ci wiadomo¶ci od ka¿dej osoby.
+
+sms_away_limit
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la limit wiadomo¶ci, które mog± zostaæ wys³ane na telefon
+	komórkowy podczas naszej nieobecno¶ci. je¶li 0, to wiadomo¶ci nie
+	s± limitowane.	
+
+sms_max_length
+	typ: liczba
+	domy¶lna warto¶æ: 100
+
+	maksymalna d³ugo¶æ przekazywanych wiadomo¶ci. powy¿ej tego limitu
+	wiadomo¶æ zostanie uciêta. je¶li równa 0, nie ma limitu.
+
+sms_number
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	numer telefonu komórkowego, na który maj± byæ wysy³ane wiadomo¶ci
+	podczas nieobecno¶ci.
+
+sms_send_app
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	pe³na ¶cie¿ka do programu wysy³aj±cego SMSy. program musi za
+	pierwszy parametr przyjmowaæ numer odbiorcy, za drugi parametr
+	tre¶æ wiadomo¶ci. do tego celu nadaje siê program Miko³aja
+	Rydzewskiego ze strony http://ceti.pl/~miki/
+
+sort_windows
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	w³±czenie tej opcji spowoduje przesuwanie okien przy usuniêciu
+	którego¶ ze ¶rodka i likwidowanie luk w numeracji. na przyk³ad,
+	gdy mamy okna 1,2,3, to po usuniêciu drugiego otrzymamy 1,2
+	zamiast 1,3.
+
+sound_app
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	pe³na ¶cie¿ka do programu odtwarzaj±cego pliki zdefiniowane w
+	zmiennych ,,sound_{msg,chat,sysmsg}_file''. program musi braæ
+	za pierwszy (i jedyny) parametr nazwê pliku. wavplay i mpg123
+	doskonale siê nadaj±.
+
+sound_msg_file
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	plik d¼wiêkowy odtwarzany po otrzymaniu wiadomo¶ci.
+
+sound_chat_file
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	plik d¼wiêkowy odtwarzany w czasie rozmowy.
+
+sound_notify_file
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	plik d¼wiêkowy odtwarzany po zmianie stanu którego¶ ze znajomych.
+
+sound_sysmsg_file
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	plik d¼wiêkowy odtwarzany po otrzymaniu wiadomo¶ci systemowej.
+
+sound_mail_file
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	plik d¼wiêkowy odtwarzany po otrzymaniu nowej wiadomo¶ci e-mail.
+
+speech_app
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	aplikacja u¿ywana do odczytywania tekstów wy¶wietlanych na ekranie.
+	jej ustawienie powoduje równie¿ zmianê motywu na taki, który jest
+	³atwiejszy do wymówienia.
+
+statusbar_size
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	okre¶la rozmiar paska stanu w liniach w zakresie od 1 do 5.
+
+tab_command
+	typ: tekst
+	domy¶lna warto¶æ: "chat"
+
+	komenda, która bêdzie wstawiana w linii poleceñ z kolejn±
+	dostêpn± (patrz zmienna ,,completion_notify'') osob± z listy
+	kontaktów po wci¶niêciu klawisza Tab.
+
+theme
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	zawiera nazwê pliku okre¶laj±cego motyw.
+
+time_deviation
+	typ: liczba
+	domy¶lna warto¶æ: 300
+
+	okre¶la zakres rozbie¿no¶ci czasu odbieranych wzglêdem czasu
+	systemowego w sekundach, który jest traktowany jako chwila
+	aktualna. ma to wp³yw na wy¶wietlanie timestampów przy odbieranych
+	wiadomo¶ciach. je¶li czas odebranej wiadomo¶ci mie¶ci siê w +/-
+	podanego zakresu, timestamp nie jest wy¶wietlany.
+
+timestamp
+	typ: tekst
+	domy¶lna warto¶æ: "%H:%M "
+
+	w interfejsie ncurses okre¶la format czasu wy¶wietlanego na
+	pocz±tku ka¿dej linii. dok³adny opis formatu zawiera strona
+	manuala strftime(3).
+
+windows_save
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
+	uruchomieniu programu.
+
+
+
+status
+	typ: liczba, zmienna wewnêtrzna, ukryta
+
+	okre¶la stan klienta (zajêty/niewidoczny/tylko dla przyjació³)
+	po uruchomieniu i pierwszym po³±czeniu. zachowywana przy poleceniu
+	,,save''.
+
+reason
+	typ: tekst, zmienna wewnêtrzna, ukryta
+
+	okre¶la opis stanu klienta. zachowywana przy poleceniu ,,save''.
+	jest usuwana przy ka¿dej zmianie stanu lub wyj¶ciu z klienta,
+	chyba ¿e w³±czona jest zmienna ,,keep_reason''.
+
+interface
+	typ: tekst, zmienna wewnêtrzna, ukryta
+
+	okre¶la domy¶lny interfejs programu. jej warto¶æ jest zmieniana
+	przez podanie parametru -f w wywo³aniu programu i automatycznie
+	zapisywana.
+
+password_cp1250
+	typ: bool, zmienna wewnêtrzna, ukryta
+
+	przy w³±czonej opcji nie bêdzie przeprowadzana konwersja has³a
+	ze standardu ISO-8859-2 na CP1250.
+
+protocol
+	typ: liczba, zmienna wewnêtrzna, ukryta
+
+	okre¶la wersjê klienta, któr± przedstawia siê ekg. mo¿e byæ u¿ywana
+	do udawania nowszego klienta, gdy biblioteka jeszcze jej nie zna.
+	zmienna ta nie powinna byæ u¿ywana przez zwyk³ych u¿ytkowników.
+
+last_sysmsg
+	typ: liczba, zmienna wewnêtrzna, ukryta
+
+	okre¶la numer ostatniej wiadomo¶ci systemowej.
+
+windows_layout
+	typ: tekst, zmienna wewnêtrzna, ukryta
+
+	zawiera informacje o okienkach. wpis ka¿dego okna jest rozdzielony
+	znakiem ,,|''. je¶li okno nie ma przypisanej rozmowy, wpis jest
+	pusty. je¶li okno nie istnieje, wpis zawiera ,,-''.
+
+
+$Id$

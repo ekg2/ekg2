@@ -1,0 +1,72 @@
+// ui-ncurses
+// (c) copyright 2002 wojtek kaniewski <wojtekka@irc.pl>
+
+interfejs ten ró¿ni siê nieco od readline z okienkami. g³ówn± ró¿nic± jest
+fakt, ¿e pierwsze okienko istnieje _zawsze_ i jest oknem stanu. do niego
+lec± informacje o pojawianiu siê i znikaniu ludzi. szczegó³y dotycz±ce
+obs³ugi klawiatury znajduj± siê w pliku README.
+
+zalecane ustawienia:
+
+	set display_ack 3
+	set display_sent 1
+	set make_window 2
+
+pasek stanu zawiera zegar, informacje o w³asnym numerku (kolor okre¶la
+stan: czarny -- niedostêpny, bia³y -- dostêpny, szary -- zajêty, ciemnoszary
+-- niewidoczny), numer aktualnego okna, informacje o aktywno¶ci w innych
+oknach, nowej poczcie itd.
+
+dodano nowy format ,,statusbar''. podobnie jak i reszta obs³uguje kolory,
+ale nie ma dope³niania, mrugania itp. s± za to konstrukcje warunkowe oraz
+rozszerzone informacje:
+
+	%{time}		aktualny czas formatu %H:%M
+	%{uin}		w³asny numer
+	%{window}	numer aktualnego okna
+	%{query}	rozmówca w aktualnym oknie
+	%{activity}	lista okien, w których siê co¶ pojawi³o
+	%{nick}		w³asny pseudonim
+	%{descr}	opis stanu
+	%{mail}		ilo¶æ nowej poczty lub pusty je¶li nie ma
+	%{query_descr}	opis stanu rozmówcy
+	%{version}	wersja ekg
+	%{url}		adres do strony ekg
+
+konstrukcje warunkowe pozwalaj± dodawaæ do pasku stanu teksty tylko,
+gdy spe³niony zostanie okre¶lony warunek. konstrukcje te wygl±daj±
+nastêpuj±co:
+
+	%{?warunek tekst}	tekst wy¶wietlony przy spe³nionym warunku
+	%{?!warunek tekst}	tekst wy¶wietlony przy niespe³nionym warunku
+
+warunkiem mo¿e byæ dostêpno¶æ którego¶ z wy¿ej wymienionych tekstów.
+je¶li na przyk³ad w aktualnym oknie jest prowadzona rozmowa, warunek
+%{?query ...} bêdzie spe³niony. je¶li nie skonfigurowali¶my w³asnego
+numeru, spe³niony bêdzie warunek %{?!uin ...}. ponadto wystêpuj± równie¿:
+
+	%{?away ...}		stan zajêty
+	%{?avail ...}		stan dostêpny
+	%{?notavail ...}	stan niedostêpny (niepo³±czony)
+	%{?invisible ...}	stan niewidoczny
+	%{?more ...}		dopisano co¶ do okna, gdy jest przewiniête
+	%{?query_away ...}	rozmówca zajêty
+	%{?query_avail ...}	rozmówca dostêpny
+	%{?query_notavail ...}	rozmówca niedostêpny
+	%{?query_invisible ...}	rozmówca niewidoczny
+
+warunki mo¿na zagnie¿d¿aæ, tzn. %{?query %{!?query_descr ...}} zostanie
+wy¶wietlone, je¶li prowadzona jest rozmowa, ale rozmówca nie ma stanu
+opisowego.
+
+dziêki temu mo¿na konstruowaæ kosmiczne paski stanu. ale i tak domy¶lny
+powinien wystarczyæ ka¿demu. jest mo¿liwo¶æ rozszerzenia pasku stanu do
+maksymalnie 5-ciu linii. kolejne linie s± opisane formatami ,,statusbar2'',
+,,statusbar3'' itd. je¶li wystêpuje format ,,statusbar1'', ma on
+pierwszeñstwo przed ,,statusbar''.
+
+mo¿liwe jest te¿ w³±czenie nag³ówka okna, tj. paska wy¶wietlanego u góry
+ekranu, nad oknami. jest on opisany formatami ,,header'', ,,header1'',
+,,header2'' itd., analogicznie do paska stanu. dostêpne formaty s± identyczne.
+
+$Id$

@@ -1,0 +1,174 @@
+Spis tre¶ci:
+
+1. Format listy kontaktów ekg
+2. Format konfiguracji ekg
+3. Format konfiguracji zapisanej na serwerze
+4. Format historii ekg
+5. Format emotikon (Adam Osuchowski <adwol@polsl.gliwice.pl>)
+6. Format kolejki wiadomo¶ci
+
+* * *
+
+1. Format listy kontaktów ekg
+
+Lista kontaktów z pliku ,,userlist'' jest tego samego formatu co eksportowana
+z windowsowego klienta:
+
+    imiê;nazwisko;pseudonim;wy¶wietlana_nazwa;telefon;grupy;opis;numer
+
+ekg mo¿e dopisaæ u¿ytkownika do kilku metagrup:
+
+    __blocked - u¿ytkownik blokowany
+    __offline - jeste¶my niedostêpni dla u¿ytkownika
+    __ignored_<poziom> - u¿ytkownik jest ignorowany z danym poziomem
+    __ignored - wszystkie zdarzenia zwi±zane z u¿ytkownikiem s± ignorowane
+
+* * *
+
+2. Format konfiguracji ekg
+
+Plik konfiguracyjny ,,config'' zawiera kolejne wpisy postaci:
+
+	set <zmienna> <warto¶æ>
+	bind <klawisz> <komenda>
+	alias <nazwa> <komenda>
+	on <zdarzenie> <parametry> <komenda>
+
+Je¶li pierwszy wyraz nie jest jednym ze znanych, jest traktowany jako
+nazwa zmiennej, po której wystêpuje jej warto¶æ -- chodzi o zachowanie
+kompatybilno¶ci z innymi klientami.
+
+Je¶li warto¶æ zmiennej zaczyna siê od znaku o kodzie 1, to nastêpuj±ca
+po nim warto¶æ zmiennej jest zakodowana u¿ywaj±c base64.
+
+* * *
+
+3. Format konfiguracji zapisanej na serwerze
+
+Je¶li u¿ytkownik umie¶ci na serwerze równie¿ konfiguracjê, wszystkie zmienne
+(oprócz ,,uin'' i ,,password'', bo te nie s± wysy³ane) zostan± zapisane w
+skróconej postaci. Ka¿da zmienna jest opisana przez swoj± dwuliterow± nazwê
+(nie mo¿na u¿ywaæ cyfr). Je¶li zmienna jest zmienn± liczbow±, zaraz po
+nazwie umieszcza siê jej warto¶æ, a za ni± kolejn± zmienn±. Je¶li zmienna
+jest tekstowa i jest pusta, po nazwie umieszczany jest minus ,,-'' i za nim
+kolejna zmienna. Je¶li pierwszy znak zmiennej tekstowej jest plusem ,,+'',
+zawarto¶æ zmiennej zosta³a zakodowana w base64 i koñczy siê znakiem
+dwukropka ,,:''. Je¶li pierwszym znakiem nie jest plus, tre¶æ zmiennej
+znajduje siê zaraz za nazw± i równie¿ koñczy siê dwukropkiem. Po dwukropku
+znajduje siê kolejna zmienna. Widaæ zatem, ¿e zmienne, w których wystêpuje
+dwukropek lub ¶rednik, albo zaczynaj± siê od plusa, musz± zostaæ zakodowane
+w base64. Oto przyk³ady:
+
+    dc1di127.0.0.1:ts+JUg6JU0gAA==:qr-
+
+    dc (display_color) = 1
+    di (dcc_ip) = "127.0.0.1"
+    ts (timestamp) = "%H:%M "
+    qr (quit_reason) = (brak)
+
+Tak zapisana lista zmiennych jest umieszczana w oddzielnych wpisach listy
+kontaktów. Zamiast imienia jest ,,__config<liczba>'', gdzie <liczba> jest
+kolejn± liczb±, ale w rzeczywisto¶ci nie ma wiêkszego znaczenia. Lista
+zmiennych jest dzielona po 24 znaki i umieszczana w piêciu kolejnych
+polach listy kontaktów. w ostatnim polu znajduje siê losowa liczba udaj±ca
+numerek osoby.
+
+Przy odbiorze nie ma znaczenia liczba po ,,__config'', nie ma znaczenia
+podzia³ na kolejne pola. Wszystko jest i tak sklejane w jeden ci±g znaków
+i dopiero potem analizowane.
+
+* * *
+
+4. Format historii ekg
+
+W zale¿no¶ci od ustawienia klienta, historia mo¿e byæ umieszczona
+w pojedynczym pliku (domy¶lnie ~/.gg/history) lub w osobnych plikach,
+po ka¿dym na osobny numerek rozmówcy (domy¶lnie ~/.gg/history/<numer>).
+
+Pliki mog± byæ skompresowane za pomoc± gzip -- w takim wypadku maj±
+rozszerzenie ,,.gz''.
+
+Wpisy s± w formacie CSV, tj. ka¿dy wpis znajduje siê w oddzielnej linii,
+a jego poszczególne kolumny s± oddzielone przecinkami. Je¿eli która¶
+kolumna zawiera znak przecinka, nowej linii, cudzys³ów, backslash, to
+ca³a zawarto¶æ kolumny zostaje ujêta w cudzys³ów i zapisana jak ci±g
+znaków jêzyka C.
+
+Mo¿liwe wpisy to:
+
+- wysy³ana wiadomo¶æ lub rozmowa:
+
+	chatsend,<numer>,<nick>,<czas>,<tre¶æ>
+	msgsend,<numer>,<nick>,<czas>,<tre¶æ>
+
+- odebrana wiadomo¶æ lub rozmowa:
+
+	chatrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
+	msgrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
+
+- ignorowana wiadomo¶æ lub rozmowa, gdy w³±czono opcjê log_ignored:
+
+	chatrecvign,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
+	msgrecvign,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
+
+- zmiana stanu:
+
+	status,<numer>,<nick>,<adres_ip>[:port],<czas>,<stan>
+	status,<numer>,<nick>,<adres_ip>[:port],<czas>,<stan>,<opis>
+
+gdzie:
+- <numer> - numer nadawcy, odbiorcy lub osoby zmieniaj±cej stan,
+- <nick> - pseudonim osoby,
+- <czas> - domy¶lnie ilo¶æ sekund od 1 stycznia 1970r. UTC, ale u¿ytkownik
+           mo¿e zmieniæ format tego pola za pomoc± zmiennej log_timestamp,
+- <adres_ip> - je¶li jest nieznany, zapisuje siê ,,0.0.0.0'',
+- <stan> - jeden z ,,avail'', ,,busy'', ,,invisble'' i ,,notavail''.
+
+* * *
+
+5. Format emotikon (Adam Osuchowski <adwol@polsl.gliwice.pl>)
+
+Za pomoc± oryginalnego klienta GG mo¿na wys³aæ sekwencje znakowe, które bêd±
+siê zamieniaæ na odpowiednie ikony. Z oczywistych wzglêdów w ekg wykonaæ siê
+tego nie da (mo¿e kto¶ kiedy¶ zrobi wsparcie dla aaliba ;))). Sekwencje te,
+zamieniane s± wiêc na inne sekwencje. Np. sekwencja:
+
+<cmok>
+
+mo¿e byæ zamieniona na:
+
+:-*
+
+lub podobn±, wedle uznania u¿ytkownika.
+
+Aby skorzystaæ z mo¿liwo¶ci rozwijania tego typu makr w otrzymywanych
+wiadomo¶ciach, nale¿y je sobie wcze¶niej zdefiniowaæ. Robi siê to w pliku
+~/.gg/emoticons. Ka¿da linia tego pliku definiuje jedno makro, a jej format
+jest nastêpuj±cy:
+
+<makro><tabulatory><rozwiniecie>
+
+Nale¿y zwróciæ uwagê na to, ¿e do oddzielenia emoticonu od jego rozwiniêcia
+s³u¿± tylko i wy³±cznie tabulatory (jeden lub wiêcej). Spowodowane jest to
+wystêpowaniem spacji w oryginalnych GG-owych emoticonach.
+
+Przyk³adowy zestaw definicji mo¿na znale¼æ w docs/emoticons.sample. Nie
+zawiera on wszystkich definicji, bo nie mia³em na tyle inwencji, ¿eby je
+powymy¶laæ. :))
+
+* * *
+
+6. Format kolejki wiadomo¶ci
+
+Wiadomo¶ci s± zapisywane w osobnych plikach w katalogu ~/.gg/queue. Nazwa
+pliku jest po³±czeniem czasu wys³ania wiadomo¶ci, kropki i kolejnej liczby,
+ale nie ma ona wiêkszego znaczenia. Chodzi o zachowanie kolejno¶ci przy
+sortowaniu plików. Pierwsza linia pliku zawiera wersjê pliku. Aktualnie
+jest to ci±g znaków ,,v1''. Druga linia zawiera uid sesji, z której wiadomo¶æ
+by³a wysy³ana. Trzecia linia zawiera listê odbiorców. Czwarta linia zawiera
+czas wys³ania jako liczbê sekund od 1 stycznia 1970r. Pi±ta linia zawiera
+numer sekwencyjny lub dowolny ci±g znaków pozwalaj±cy jednoznacznie okre¶liæ
+wiadomo¶æ. Kolejne linie s± tre¶ci± wiadomo¶ci.
+
+
+$Id$

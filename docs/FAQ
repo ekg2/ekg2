@@ -1,0 +1,79 @@
+Najczê¶ciej zadawane pytania.
+
+Q: ...
+A: Najpierw przeczytaj README, potem TODO.
+
+Q: Sk±d ¶ci±gn±æ?
+A: http://dev.null.pl/ekg/
+
+Q: ./configure wyrzuca b³êdy. Co robiæ?
+A: Najprawdopodobniej nie masz narzêdzi i pakietów potrzebnych do
+   skompilowania EKG. Upewnij siê, ¿e masz zainstalowany kompilator
+   C, narzêdzia takie jak make, install, bibliotekê ncurses i
+   odpowiednie pliki nag³ówkowe.
+
+Q: ekg wygl±da jako¶ inaczej. Co zrobiæ, ¿eby wróciæ do poprzedniego?
+A: Uruchomiæ ,,./configure --disable-ui-ncurses'' potem ,,make clean''
+   i ,,make''.
+
+Q: Jak wys³aæ wiadomo¶æ do kogo¶ ze spacj± w nazwie?
+A: Wpisaæ nazwê w cudzys³owach. Niestety dope³nianie jeszcze nie dzia³a
+   jak trzeba. ¯eby siê nie mêczyæ, mo¿na zmieniæ w li¶cie kontaktów jego
+   nazwê: ,,list <numerek> --display bezspacji''.
+ 
+Q: Jak zarejestrowaæ nowego u¿ytkownika?
+A: U¿yæ polecenia ,,register <email> <has³o>''
+
+Q: Jak wys³aæ smsy?
+A: Patrz pierwsza odpowied¼. Jest opisane w dokumentacji.
+
+Q: Jak pobraæ listê u¿ytkowników z serwera lub j± tam umie¶ciæ?
+A: Odpowiednio ,,list --get'' i ,,list --put''.
+
+Q: Jak zmieniæ informacje w katalogu publicznym?
+A: U¿yæ polecenia ,,change''.
+
+Q: Jak wys³aæ lub odebraæ plik albo prowadziæ rozmowy g³osowe?
+A: Przeczytaæ szybki kurs z pliku ,,dcc.txt''.
+
+Q: Mo¿na otworzyæ osobne okienko do rozmowy?
+A: Jasne. Tworzymy nowe okno (,,window new''), prze³±czamy siê na nie
+   (,,window next'', ,,window switch NR'', lub Alt+1-9) i ,,query nick''.
+   Istnieje te¿ zmienna ,,make_window'', dziêki której ka¿da nowa rozmowa
+   tworzona jest w osobnym okienku (zobacz ,,vars.txt'').
+
+Q: Nie chce siê ³±czyæ, a windziany klient dzia³a! Co jest?
+A: Najwyra¼niej pad³ jeden z serwerów. Wpisz ,,set server 217.17.41.x'',
+   gdzie x to warto¶æ od 82 do 89 i spróbuj po³±czyæ siê jeszcze raz.
+
+Q: Jak usun±æ zmienn±?
+A: ,,set -zmienna''
+
+Q: ekg ¼le rozpoznaje p³eæ!
+A: Wpisz imiê do listy kontaktów. Wiêcej szczegó³ów w README.
+
+Q: Jak zrobiæ, ¿eby ekg pokazywa³o mój pseudonim przy wysy³aniu wiadomo¶ci?
+A: Dopisaæ alias do sesji.
+
+Q: Dlaczego w logach zamiast czasu jest jaka¶ dziwna liczba?
+A: Czas jest zapisywany jako ilo¶æ sekund od 1 stycznia 1970 UTC. Dziêki
+   temu, ró¿ne programy i skrypty nie bêd± mia³y problemów z analizowaniem
+   historii rozmów. Do czytania historii do³±czone s± skrypty o nazwach
+   ekl w katalogu contrib/. Mo¿esz równie¿ zmieniæ zmienn± ,,log_timestamp''
+   i dostosowaæ format czasu do swoich potrzeb.
+
+Q: Po zmianie wielko¶ci terminala przestaj± mi dzia³aæ strza³ki!
+A: Masz star± wersjê biblioteki ncurses. Zainstaluj nowsz± wersjê lub
+   popro¶ o to administratora systemu.
+
+Q: Jak wy¶wietlaæ wiadomo¶ci, które wysy³am?
+A: /set display_sent 1
+
+Q: Nie mam kolorów w ekg, co robiæ?
+A: Najprawdopodobniej masz ustawiony nieprawid³owy typ terminala. Spróbuj
+   wpisaæ ,,export TERM=ansi'' (lub ,,setenv TERM ansi'' dla pow³oki *csh)
+   przed uruchomieniem ekg. Je¶li to nie pomo¿e, zamiast ,,ansi'' spróbuj
+   podaæ ,,screen'', ,,linux'', ,,xterm-color'' lub ,,color_xterm''.
+
+
+$Id$

@@ -1,0 +1,64 @@
+// bezpo¶rednie po³±czenia miêdzy klientami (dcc) w ekg
+
+aby umo¿liwiæ przesy³anie plików i rozmowy g³osowe nale¿y wykonaæ
+nastêpuj±ce komendy:
+
+	set dcc 1
+	set dcc_ip <adres_ip>
+	reconnect
+
+je¶li jeste¶my za maskarad± lub chcemy przesy³aæ pliki do ludzi z tej
+samej sieci lokalnej, podajemy adres komputera widoczny od strony sieci.
+w przeciwnym wypadku podajemy adres zewnêtrzny. je¶li mamy tylko jeden
+interfejs sieciowy, problemu nie ma, bo adres jest tylko jeden. zamiast
+adresu mo¿na wpisaæ tekst ,,auto''. w takim wypadku ekg ustawi adres,
+z którego wychodzi po³±czenie do serwera.
+
+po ponownym po³±czeniu mo¿emy korzystaæ z dobrodziejstw bezpo¶rednich
+po³±czeñ. je¶li kto¶ spróbuje co¶ do nas wys³aæ, pojawi siê:
+
+	->- kto¶/123 przesy³a plik zdjecie.jpg o rozmiarze 129117
+	->- Wpisz dcc get #1, by go odebraæ, lub dcc close #1, by anulowaæ
+
+wystarczy zastosowaæ siê do podanych wskazówek. je¶li chcemy wys³aæ
+komu¶ plik, wpisujemy:
+
+	dcc send <pseudonim/numer> <nazwa_pliku>
+
+szczegó³y dotycz±ce rozmów g³osowych znajduj± siê w pliku ,,voip.txt''.
+
+nale¿y pamiêtaæ, ¿e do przesy³ania plików obie strony musz± mieæ
+dopisane siebie do list kontaktów. je¶li ustawimy niew³a¶ciwy adres,
+oryginalne klienty Gadu-Gadu bêd± odrzucaæ po³±czenia. dzieje siê tak,
+gdy adres z którego przychodzi po³±czenie jest inny ni¿ ten, który
+zosta³ przes³any przez serwer. ma to wp³yw g³ównie na sytuacje typu:
+
+			        ,-----------.
+				| Gadu-Gadu | workstacja
+				`-----+-----'
+           |      |          |        | 10.0.0.5
+           `------+---+------+--------'
+		      |                 (sieæ lokalna)
+	              | 10.0.0.1
+		 ,----+----.
+		 |   ekg   | router z NAT
+		 `----+----'
+		      | 1.2.3.4
+                      |
+		  (internet)
+
+je¶li ekg na routerze bêdzie mia³o ustawiony adres 1.2.3.4, taki adres
+zobaczy te¿ serwer. ten sam adres dostanie klient Gadu-Gadu w sieci
+lokalnej. tyle ¿e kiedy ekg bêdzie chcia³o wys³aæ plik do Gadu-Gadu,
+po³±czy siê z adresu 10.0.0.1, bo taki ma przypisany do sieci lokalnej.
+w takim wypadku Gadu-Gadu odrzuci po³±czenie ze wzglêdu na niezgodno¶æ
+adresów. dlatego mo¿na albo ustawiæ adres sieci lokalnej, albo u¿yæ
+do wysy³ania:
+
+	dcc rsend <pseudonim/numer> <nazwa_pliku>
+
+które wy¶le do Gadu-Gadu ¿±danie po³±czenia za po¶rednictwem serwera
+Gadu-Gadu i windowsowy klient sam siê z nami po³±czy. ekg nie jest a¿
+tak restrykcyjne, ale mo¿e siê to zmieniæ.
+
+$Id$

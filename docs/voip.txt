@@ -1,0 +1,25 @@
+// rozmowy g³osowe w ekg
+// (c) copyright 2002 wojtek kaniewski <wojtekka@irc.pl>
+
+obowi±zuje lektura pliku ,,dcc.txt''
+
+lista wad:
+- dzia³a tylko na Linuksie ze sterownikami OSS,
+- dzia³a tylko z kartami d¼wiêkowymi obs³uguj±cymi full-duplex,
+  czêstotliwo¶æ próbkowania 8000Hz i 16-bitow± rozdzielczo¶æ,
+- dzia³a tylko je¶li jest zainstalowana biblioteka libgsm skompilowana
+  z opcj± -DWAV49 (w PLD wystarczy zainstalowaæ pakiety libgsm oraz
+  libgsm-devel), 
+- wy¶wietla _duuuu¿o_ ¶mieci w oknie debugowania.
+
+by rozpocz±æ rozmowê nale¿y wpisaæ:
+
+   dcc voice <numer/alias>
+
+by zakoñczyæ:
+
+   dcc close <#numer>
+
+gdzie <#numer> to numer po³±czenia wy¶wietlony przez polecenie ,,dcc show''. 
+
+$Id$

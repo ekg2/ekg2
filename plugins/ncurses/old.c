@@ -1,0 +1,2163 @@
+/* $Id$ */
+
+/*
+ *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *                          Wojtek Bojdo³ <wojboj@htcon.pl>
+ *                          Pawe³ Maziarz <drg@infomex.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#include "config.h"
+
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include <ekg/commands.h>
+#include <ekg/sessions.h>
+#include <ekg/stuff.h>
+#include <ekg/themes.h>
+#include <ekg/userlist.h>
+#include <ekg/vars.h>
+#include <ekg/windows.h>
+#include <ekg/xmalloc.h>
+
+#include "old.h"
+#include "completion.h"
+#include "bindings.h"
+#include "contacts.h"
+
+WINDOW *ncurses_status = NULL;		/* okno stanu */
+WINDOW *ncurses_header = NULL;		/* okno nag³ówka */
+WINDOW *ncurses_input = NULL;		/* okno wpisywania tekstu */
+
+char *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
+int ncurses_history_index = 0;		/* offset w historii */
+
+char *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
+char *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
+char **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
+int ncurses_line_start = 0;		/* od którego znaku wy¶wietlamy? */
+int ncurses_line_index = 0;		/* na którym znaku jest kursor? */
+int ncurses_lines_start = 0;		/* od której linii wy¶wietlamy? */
+int ncurses_lines_index = 0;		/* w której linii jeste¶my? */
+int ncurses_input_size = 1;		/* rozmiar okna wpisywania tekstu */
+int ncurses_debug = 0;			/* debugowanie */
+
+static struct termios old_tio;
+
+int config_backlog_size = 1000;		/* maksymalny rozmiar backloga */
+int config_display_transparent = 1;	/* czy chcemy przezroczyste t³o? */
+int config_statusbar_size = 1;
+int config_header_size = 0;
+int config_enter_scrolls = 0;
+
+/*
+ * color_pair()
+ *
+ * zwraca numer COLOR_PAIR odpowiadaj±cej danej parze atrybutów: kolorze
+ * tekstu (plus pogrubienie) i kolorze t³a.
+ */
+static int color_pair(int fg, int bold, int bg)
+{
+	if (fg >= 8) {
+		bold = 1;
+		fg &= 7;
+	}
+
+	if (fg == COLOR_BLACK && bg == COLOR_BLACK) {
+		fg = 7;
+	} else if (fg == COLOR_WHITE && bg == COLOR_BLACK) {
+		fg = 0;
+	}
+
+	if (!config_display_color) {
+		if (bg != COLOR_BLACK)
+			return A_REVERSE;
+		else
+			return A_NORMAL | ((bold) ? A_BOLD : 0);
+	}
+		
+	return COLOR_PAIR(fg + 8 * bg) | ((bold) ? A_BOLD : 0);
+}
+
+/*
+ * ncurses_commit()
+ *
+ * zatwierdza wszystkie zmiany w buforach ncurses i wy¶wietla je na ekranie.
+ */
+void ncurses_commit()
+{
+	ncurses_refresh();
+
+	if (ncurses_header)
+		wnoutrefresh(ncurses_header);
+
+	wnoutrefresh(ncurses_status);
+
+	wnoutrefresh(input);
+
+	doupdate();
+}
+
+/*
+ * ncurses_backlog_add()
+ *
+ * dodaje do bufora okna. zak³adamy dodawanie linii ju¿ podzielonych.
+ * je¶li doda siê do backloga liniê zawieraj±c± '\n', bêdzie ¼le.
+ *
+ *  - w - wska¼nik na okno ekg
+ *  - str - linijka do dodania
+ *
+ * zwraca rozmiar dodanej linii w liniach ekranowych.
+ */
+int ncurses_backlog_add(window_t *w, fstring_t *str)
+{
+	int i, removed = 0;
+	ncurses_window_t *n = w->private;
+	
+	if (!w)
+		return 0;
+
+	if (n->backlog_size == config_backlog_size) {
+		fstring_t *line = n->backlog[n->backlog_size - 1];
+		int i;
+
+		for (i = 0; i < n->lines_count; i++) {
+			if (n->lines[i].backlog == n->backlog_size - 1)
+				removed++;
+		}
+
+		fstring_free(line);
+
+		n->backlog_size--;
+	} else 
+		n->backlog = xrealloc(n->backlog, (n->backlog_size + 1) * sizeof(fstring_t *));
+
+	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(fstring_t *));
+	n->backlog[0] = str;
+	n->backlog_size++;
+
+	for (i = 0; i < n->lines_count; i++)
+		n->lines[i].backlog++;
+
+	return ncurses_backlog_split(w, 0, removed);
+}
+
+/*
+ * ncurses_backlog_split()
+ *
+ * dzieli linie tekstu w buforze na linie ekranowe.
+ *
+ *  - w - okno do podzielenia
+ *  - full - czy robimy pe³ne uaktualnienie?
+ *  - removed - ile linii ekranowych z góry usuniêto?
+ *
+ * zwraca rozmiar w liniach ekranowych ostatnio dodanej linii.
+ */
+int ncurses_backlog_split(window_t *w, int full, int removed)
+{
+	int i, res = 0, bottom = 0;
+	ncurses_window_t *n = w->private;
+
+	if (!w)
+		return 0;
+
+	/* przy pe³nym przebudowaniu ilo¶ci linii nie musz± siê koniecznie
+	 * zgadzaæ, wiêc nie bêdziemy w stanie pó¼niej stwierdziæ czy jeste¶my
+	 * na koñcu na podstawie ilo¶ci linii mieszcz±cych siê na ekranie. */
+	if (full && n->start == n->lines_count - w->height)
+		bottom = 1;
+	
+	/* mamy usun±æ co¶ z góry, bo wywalono liniê z backloga. */
+	if (removed) {
+		for (i = 0; i < removed && i < n->lines_count; i++)
+			xfree(n->lines[i].ts);
+		memmove(&n->lines[0], &n->lines[removed], sizeof(struct screen_line) * (n->lines_count - removed));
+		n->lines_count -= removed;
+	}
+
+	/* je¶li robimy pe³ne przebudowanie backloga, czy¶cimy wszystko */
+	if (full) {
+		for (i = 0; i < n->lines_count; i++)
+			xfree(n->lines[i].ts);
+		n->lines_count = 0;
+		xfree(n->lines);
+		n->lines = NULL;
+	}
+
+	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
+	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
+		struct screen_line *l;
+		char *str, *attr;
+		int j;
+		time_t ts;
+
+		str = n->backlog[i]->str + n->backlog[i]->prompt_len;
+		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
+		ts = n->backlog[i]->ts;
+
+		for (;;) {
+			int word = 0, width;
+
+			if (!i)
+				res++;
+
+			n->lines_count++;
+			n->lines = xrealloc(n->lines, n->lines_count * sizeof(struct screen_line));
+			l = &n->lines[n->lines_count - 1];
+
+			l->str = str;
+			l->attr = attr;
+			l->len = strlen(str);
+			l->ts = NULL;
+			l->ts_len = 0;
+			l->backlog = i;
+
+			l->prompt_len = n->backlog[i]->prompt_len;
+			if (!n->backlog[i]->prompt_empty) {
+				l->prompt_str = n->backlog[i]->str;
+				l->prompt_attr = n->backlog[i]->attr;
+			} else {
+				l->prompt_str = NULL;
+				l->prompt_attr = NULL;
+			}
+
+			if (!w->floating && config_timestamp) {
+				struct tm *tm = localtime(&ts);
+				char buf[100];
+				strftime(buf, sizeof(buf), config_timestamp, tm);
+				l->ts = xstrdup(buf);
+				l->ts_len = strlen(l->ts);
+			}
+
+			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right;
+			if ((w->frames & WF_LEFT))
+				width -= 1;
+			if ((w->frames & WF_RIGHT))
+				width -= 1;
+
+			if (l->len < width)
+				break;
+			
+			for (j = 0, word = 0; j < l->len; j++) {
+
+				if (str[j] == ' ' && !w->nowrap)
+					word = j + 1;
+
+				if (j == width) {
+					l->len = (word) ? word : width;
+					if (str[j] == ' ') {
+						l->len--;
+						str++;
+						attr++;
+					}
+					break;
+				}
+			}
+
+			if (w->nowrap) {
+				while (*str) {
+					str++;
+					attr++;
+				}
+
+				break;
+			}
+		
+			str += l->len;
+			attr += l->len;
+
+			if (!str[0])
+				break;
+		}
+	}
+
+	if (bottom) {
+		n->start = n->lines_count - w->height;
+		if (n->start < 0)
+			n->start = 0;
+	}
+
+	if (full) {
+		if (window_current && window_current->id == w->id) 
+			ncurses_redraw(w);
+		else
+			n->redraw = 1;
+	}
+
+	return res;
+}
+
+/*
+ * ncurses_resize()
+ *
+ * dostosowuje rozmiar okien do rozmiaru ekranu, przesuwaj±c odpowiednio
+ * wy¶wietlan± zawarto¶æ.
+ */
+void ncurses_resize()
+{
+	int left, right, top, bottom, width, height;
+	list_t l;
+
+	left = 0;
+	right = stdscr->_maxx + 1;
+	top = config_header_size;
+	bottom = stdscr->_maxy + 1 - ncurses_input_size - config_statusbar_size;
+	width = right - left;
+	height = bottom - top;
+
+	if (width < 1)
+		width = 1;
+	if (height < 1)
+		height = 1;
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+		ncurses_window_t *n = w->private;
+
+		if (!n)
+			continue;
+
+		if (!w->edge)
+			continue;
+
+		w->hide = 0;
+
+		if ((w->edge & WF_LEFT)) {
+			if (w->width * 2 > width)
+				w->hide = 1;
+			else {
+				w->left = left;
+				w->top = top;
+				w->height = height;
+				w->hide = 0;
+				width -= w->width;
+				left += w->width;
+			}
+		}
+
+		if ((w->edge & WF_RIGHT)) {
+			if (w->width * 2 > width)
+				w->hide = 1;
+			else {
+				w->left = right - w->width;
+				w->top = top;
+				w->height = height;
+				width -= w->width;
+				right -= w->width;
+			}
+		}
+
+		if ((w->edge & WF_TOP)) {
+			if (w->height * 2 > height)
+				w->hide = 1;
+			else {
+				w->left = left;
+				w->top = top;
+				w->width = width;
+				height -= w->height;
+				top += w->height;
+			}
+		}
+
+		if ((w->edge & WF_BOTTOM)) {
+			if (w->height * 2 > height)
+				w->hide = 1;
+			else {
+				w->left = left;
+				w->top = bottom - w->height;
+				w->width = width;
+				height -= w->height;
+				bottom -= w->height;
+			}
+		}
+
+		wresize(n->window, w->height, w->width);
+		mvwin(n->window, w->top, w->left);
+
+		n->redraw = 1;
+	}
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+		ncurses_window_t *n = w->private;
+		int delta;
+
+		if (!n || w->floating)
+			continue;
+
+		delta = height - w->height;
+
+		if (n->lines_count - n->start == w->height) {
+			n->start -= delta;
+
+			if (delta < 0) {
+				if (n->start > n->lines_count)
+					n->start = n->lines_count;
+			} else {
+				if (n->start < 0)
+					n->start = 0;
+			}
+		}
+
+		if (n->overflow > height)
+			n->overflow = height;
+
+		w->height = height;
+
+		if (w->height < 1)
+			w->height = 1;
+
+		if (w->width != width && !w->doodle) {
+			w->width = width;
+			ncurses_backlog_split(w, 1, 0);
+		}
+
+		w->width = width;
+		
+		wresize(n->window, w->height, w->width);
+
+		w->top = top;
+		w->left = left;
+
+		if (w->left < 0)
+			w->left = 0;
+		if (w->left > stdscr->_maxx)
+			w->left = stdscr->_maxx;
+
+		if (w->top < 0)
+			w->top = 0;
+		if (w->top > stdscr->_maxy)
+			w->top = stdscr->_maxy;
+
+		mvwin(n->window, w->top, w->left);
+
+		if (n->overflow)
+			n->start = n->lines_count - w->height + n->overflow;
+
+		n->redraw = 1;
+	}
+
+	ncurses_screen_width = width;
+	ncurses_screen_height = height;
+}
+
+/*
+ * ncurses_redraw()
+ *
+ * przerysowuje zawarto¶æ okienka.
+ *
+ *  - w - okno
+ */
+void ncurses_redraw(window_t *w)
+{
+	int x, y, left, top, height, width;
+	ncurses_window_t *n = w->private;
+
+	if (!n)
+		return;
+	
+	left = n->margin_left;
+	top = n->margin_top;
+	height = w->height - n->margin_top - n->margin_bottom;
+	width = w->width - n->margin_left - n->margin_right;
+	
+	if (w->doodle) {
+		n->redraw = 0;
+		return;
+	}
+
+	if (n->handle_redraw) {
+		/* handler mo¿e sam narysowaæ wszystko, wtedy zwraca -1.
+		 * mo¿e te¿ tylko uaktualniæ zawarto¶æ okna, wtedy zwraca
+		 * 0 i rysowaniem zajmuje siê ta funkcja. */
+		if (n->handle_redraw(w) == -1)
+			return;
+	}
+	
+	werase(n->window);
+	wattrset(n->window, color_pair(COLOR_BLUE, 0, COLOR_BLACK));
+
+	if (w->floating) {
+		if ((w->frames & WF_LEFT)) {
+			left++;
+
+			for (y = 0; y < w->height; y++)
+				mvwaddch(n->window, y, n->margin_left, ACS_VLINE);
+		}
+
+		if ((w->frames & WF_RIGHT)) {
+			for (y = 0; y < w->height; y++)
+				mvwaddch(n->window, y, w->width - 1 - n->margin_right, ACS_VLINE);
+		}
+			
+		if ((w->frames & WF_TOP)) {
+			top++;
+			height--;
+
+			for (x = 0; x < w->width; x++)
+				mvwaddch(n->window, n->margin_top, x, ACS_HLINE);
+		}
+
+		if ((w->frames & WF_BOTTOM)) {
+			height--;
+
+			for (x = 0; x < w->width; x++)
+				mvwaddch(n->window, w->height - 1 - n->margin_bottom, x, ACS_HLINE);
+		}
+
+		if ((w->frames & WF_LEFT) && (w->frames & WF_TOP))
+			mvwaddch(n->window, 0, 0, ACS_ULCORNER);
+
+		if ((w->frames & WF_RIGHT) && (w->frames & WF_TOP))
+			mvwaddch(n->window, 0, w->width - 1, ACS_URCORNER);
+
+		if ((w->frames & WF_LEFT) && (w->frames & WF_BOTTOM))
+			mvwaddch(n->window, w->height - 1, 0, ACS_LLCORNER);
+
+		if ((w->frames & WF_RIGHT) && (w->frames & WF_BOTTOM))
+			mvwaddch(n->window, w->height - 1, w->width - 1, ACS_LRCORNER);
+	}
+
+	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
+		struct screen_line *l = &n->lines[n->start + y];
+
+		wattrset(n->window, A_NORMAL);
+
+		for (x = 0; l->ts && x < l->ts_len; x++)
+			mvwaddch(n->window, top + y, left + x, (unsigned char) l->ts[x]);
+
+		for (x = 0; x < l->prompt_len + l->len; x++) {
+			int attr = A_NORMAL;
+			unsigned char ch, chattr;
+			
+			if (x < l->prompt_len) {
+				if (!l->prompt_str)
+					continue;
+				
+				ch = l->prompt_str[x];
+				chattr = l->prompt_attr[x];
+			} else {
+				ch = l->str[x - l->prompt_len];
+				chattr = l->attr[x - l->prompt_len];
+			}
+
+			if ((chattr & 64))
+				attr |= A_BOLD;
+
+			if (!(chattr & 128))
+				attr |= color_pair(chattr & 7, 0, COLOR_BLACK);
+
+			if (ch < 32) {
+				ch += 64;
+				attr |= A_REVERSE;
+			}
+
+			if (ch > 127 && ch < 160) {
+				ch = '?';
+				attr |= A_REVERSE;
+			}
+
+			wattrset(n->window, attr);
+			mvwaddch(n->window, top + y, left + x + l->ts_len, ch);
+		}
+	}
+
+	n->redraw = 0;
+}
+
+/*
+ * ncurses_clear()
+ *
+ * czy¶ci zawarto¶æ okna.
+ */
+void ncurses_clear(window_t *w, int full)
+{
+	ncurses_window_t *n = w->private;
+		
+	if (!full) {
+		n->start = n->lines_count;
+		n->redraw = 1;
+		n->overflow = w->height;
+		return;
+	}
+
+	if (n->backlog) {
+		int i;
+
+		for (i = 0; i < n->backlog_size; i++)
+			fstring_free(n->backlog[i]);
+
+		xfree(n->backlog);
+
+		n->backlog = NULL;
+		n->backlog_size = 0;
+	}
+
+	if (n->lines) {
+		int i;
+
+		for (i = 0; i < n->lines_count; i++)
+			xfree(n->lines[i].ts);
+		
+		xfree(n->lines);
+
+		n->lines = NULL;
+		n->lines_count = 0;
+	}
+
+	n->start = 0;
+	n->redraw = 1;
+}
+
+/*
+ * window_floating_update()
+ *
+ * uaktualnia zawarto¶æ p³ywaj±cego okna o id == i
+ * lub wszystkich okienek, gdy i == 0.
+ */
+void window_floating_update(int i)
+{
+#if 0
+	list_t l;
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data, *tmp;
+		ncurses_window_t *n = w->private;
+
+		if (i && (w->id != i))
+			continue;
+
+		if (!w->floating)
+			continue;
+
+		/* je¶li ma w³asn± obs³ugê od¶wie¿ania, nie ruszamy */
+		if (n->handle_redraw)
+			continue;
+		
+		if (w->last_update == time(NULL))
+			continue;
+
+		w->last_update = time(NULL);
+
+		ncurses_clear(w, 1);
+		tmp = window_current;
+		window_current = w;
+		command_exec(w->target, w->target, 0);
+		window_current = tmp;
+
+		ncurses_redraw(w);
+	}
+#endif
+}
+
+/*
+ * ncurses_refresh()
+ *
+ * wnoutrefresh()uje aktualnie wy¶wietlane okienko.
+ */
+void ncurses_refresh()
+{
+	list_t l;
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+		ncurses_window_t *n = w->private;
+
+		if (!n)
+			continue;
+
+		if (w->floating || window_current->id != w->id)
+			continue;
+
+		if (n->redraw)
+			ncurses_redraw(w);
+
+		if (!w->hide)
+			wnoutrefresh(n->window);
+	}
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+		ncurses_window_t *n = w->private;
+
+		if (!w->floating || w->hide)
+			continue;
+
+		if (n->handle_redraw)
+			ncurses_redraw(w);
+		else
+			window_floating_update(w->id);
+
+		touchwin(n->window);
+		wnoutrefresh(n->window);
+	}
+	
+	mvwin(ncurses_status, stdscr->_maxy + 1 - ncurses_input_size - config_statusbar_size, 0);
+	wresize(input, ncurses_input_size, input->_maxx + 1);
+	mvwin(input, stdscr->_maxy - ncurses_input_size + 1, 0);
+}
+
+#if 0
+/*
+ * ui_ncurses_print()
+ *
+ * wy¶wietla w podanym okienku, co trzeba.
+ */
+void ui_ncurses_print(const char *target, int separate, const char *line)
+{
+	window_t *w;
+	fstring_t fs;
+	list_t l;
+	int count = 0, bottom = 0, prev_count;
+	char *lines, *lines_save, *line2;
+
+	switch (config_make_window) {
+		case 1:
+			if ((w = window_find(target)))
+				goto crap;
+
+			if (!separate)
+				w = window_find("__status");
+
+			for (l = windows; l; l = l->next) {
+				window_t *w = l->data;
+
+				if (separate && !w->target && w->id > 1) {
+					w->target = xstrdup(target);
+					xfree(w->prompt);
+					w->prompt = format_string(format_find("ncurses_prompt_query"), target);
+					w->prompt_len = strlen(w->prompt);
+					print("window_id_query_started", itoa(w->id), target);
+					print_window(target, 1, "query_started", target);
+					print_window(target, 1, "query_started_window", target);
+					if (!(ignored_check(get_uin(target)) & IGNORE_EVENTS))
+						event_check(EVENT_QUERY, get_uin(target), target);
+					break;
+				}
+			}
+
+		case 2:
+			if (!(w = window_find(target))) {
+				if (!separate)
+					w = window_find("__status");
+				else {
+					w = window_new(target, 0);
+					print("window_id_query_started", itoa(w->id), target);
+					print_window(target, 1, "query_started", target);
+					print_window(target, 1, "query_started_window", target);
+					if (!(ignored_check(get_uin(target)) & IGNORE_EVENTS))
+						event_check(EVENT_QUERY, get_uin(target), target);
+				}
+			}
+
+crap:
+			if (!config_display_crap && target && !strcmp(target, "__current"))
+				w = window_find("__status");
+			
+			break;
+			
+		default:
+			/* je¶li nie ma okna, rzuæ do statusowego. */
+			if (!(w = window_find(target)))
+				w = window_find("__status");
+	}
+
+	/* albo zaczynamy, albo koñczymy i nie ma okienka ¿adnego */
+	if (!w) 
+		return;
+ 
+	if (w != window_current && !w->floating) {
+		w->act = 1;
+		update_statusbar(0);
+	}
+
+	if (w->start == w->lines_count - w->height || (w->start == 0 && w->lines_count <= w->height))
+		bottom = 1;
+	
+	prev_count = w->lines_count;
+	
+	/* XXX wyrzuciæ dzielenie na linie z ui do ekg */
+	lines = lines_save = xstrdup(line);
+	while ((line2 = gg_get_line(&lines))) {
+		fs = fstring_new(line2);
+		fs->ts = time(NULL);
+		count += ncurses_backlog_add(w, fs);
+	}
+	xfree(lines_save);
+
+	if (w->overflow) {
+		w->overflow -= count;
+
+		if (w->overflow < 0) {
+			bottom = 1;
+			w->overflow = 0;
+		}
+	}
+
+	if (bottom)
+		w->start = w->lines_count - w->height;
+	else {
+		if (w->backlog_size == config_backlog_size)
+			w->start -= count - (w->lines_count - prev_count);
+	}
+
+	if (w->start < 0)
+		w->start = 0;
+
+	if (w->start < w->lines_count - w->height)
+		w->more = 1;
+
+	if (!w->floating) {
+		window_redraw(w);
+		if (!w->lock)
+			ncurses_commit();
+	}
+}
+#endif
+
+/*
+ * update_header()
+ *
+ * uaktualnia nag³ówek okna i wy¶wietla go ponownie.
+ *
+ *  - commit - czy wy¶wietliæ od razu?
+ */
+void update_header(int commit)
+{
+	int y;
+
+	if (!ncurses_header)
+		return;
+
+	wattrset(ncurses_header, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
+
+	for (y = 0; y < config_header_size; y++) {
+		int x;
+		
+		wmove(ncurses_header, y, 0);
+
+		for (x = 0; x <= ncurses_status->_maxx; x++)
+			waddch(ncurses_header, ' ');
+	}
+
+	if (commit)
+		ncurses_commit();
+}
+		
+/*
+ * window_printat()
+ *
+ * wy¶wietla dany tekst w danym miejscu okna.
+ *
+ *  - w - okno ncurses, do którego piszemy
+ *  - x, y - wspó³rzêdne, od których zaczynamy
+ *  - format - co mamy wy¶wietliæ
+ *  - data - dane do podstawienia w formatach
+ *  - fgcolor - domy¶lny kolor tekstu
+ *  - bold - domy¶lne pogrubienie
+ *  - bgcolor - domy¶lny kolor t³a
+ *  - status - czy to pasek stanu albo nag³ówek okna?
+ *
+ * zwraca ilo¶æ dopisanych znaków.
+ */
+int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, int fgcolor, int bold, int bgcolor, int status)
+{
+	int orig_x = x;
+	int backup_display_color = config_display_color;
+	char *format = (char*) format_;
+	const char *p;
+	struct format_data *data = data_;
+
+	if (!config_display_pl_chars) {
+		format = xstrdup(format);
+		iso_to_ascii(format);
+	}
+
+	p = format;
+
+	if (status && config_display_color == 2)
+		config_display_color = 0;
+
+	if (!w)
+		return -1;
+	
+	if (status && x == 0) {
+		int i;
+
+		wattrset(w, color_pair(fgcolor, 0, bgcolor));
+
+		wmove(w, y, 0);
+
+		for (i = 0; i <= w->_maxx; i++)
+			waddch(w, ' ');
+	}
+
+	wmove(w, y, x);
+			
+	while (*p && *p != '}' && x <= w->_maxx) {
+		int i, nest;
+
+		if (*p != '%') {
+			waddch(w, (unsigned char) *p);
+			p++;
+			x++;
+			continue;
+		}
+
+		p++;
+		if (!*p)
+			break;
+
+#define __fgcolor(x,y,z) \
+		case x: fgcolor = z; bold = 0; break; \
+		case y: fgcolor = z; bold = 1; break;
+#define __bgcolor(x,y) \
+		case x: bgcolor = y; break;
+
+		if (*p != '{') {
+			switch (*p) {
+				__fgcolor('k', 'K', COLOR_BLACK);
+				__fgcolor('r', 'R', COLOR_RED);
+				__fgcolor('g', 'G', COLOR_GREEN);
+				__fgcolor('y', 'Y', COLOR_YELLOW);
+				__fgcolor('b', 'B', COLOR_BLUE);
+				__fgcolor('m', 'M', COLOR_MAGENTA);
+				__fgcolor('c', 'C', COLOR_CYAN);
+				__fgcolor('w', 'W', COLOR_WHITE);
+				__bgcolor('l', COLOR_BLACK);
+				__bgcolor('s', COLOR_RED);
+				__bgcolor('h', COLOR_GREEN);
+				__bgcolor('z', COLOR_YELLOW);
+				__bgcolor('e', COLOR_BLUE);
+				__bgcolor('q', COLOR_MAGENTA);
+				__bgcolor('d', COLOR_CYAN);
+				__bgcolor('x', COLOR_WHITE);
+				case 'n':
+					bgcolor = COLOR_BLUE;
+					fgcolor = COLOR_WHITE;
+					bold = 0;
+					break;
+			}
+			p++;
+
+			wattrset(w, color_pair(fgcolor, bold, bgcolor));
+			
+			continue;
+		}
+#undef __fgcolor
+#undef __bgcolor
+
+		if (*p != '{' && !config_display_color)
+			continue;
+
+		p++;
+		if (!*p)
+			break;
+
+		for (i = 0; data && data[i].name; i++) {
+			int len;
+
+			if (!data[i].text)
+				continue;
+
+			len = strlen(data[i].name);
+
+			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
+				char *text = data[i].text;
+
+				if (!config_display_pl_chars) {
+					text = xstrdup(text);
+					iso_to_ascii(text);
+				}
+
+				waddstr(w, text);
+				p += len;
+				x += strlen(data[i].text);
+				
+				if (!config_display_pl_chars)
+					xfree(text);
+				
+				goto next;
+			}
+		}
+
+		if (*p == '?') {
+			int neg = 0;
+
+			p++;
+			if (!*p)
+				break;
+
+			if (*p == '!') {
+				neg = 1;
+				p++;
+			}
+
+			for (i = 0; data && data[i].name; i++) {
+				int len, matched = ((data[i].text) ? 1 : 0);
+
+				if (neg)
+					matched = !matched;
+
+				len = strlen(data[i].name);
+
+				if (!strncmp(p, data[i].name, len) && p[len] == ' ') {
+					p += len + 1;
+
+					if (matched)
+						x += window_printat(w, x, y, p, data, fgcolor, bold, bgcolor, status);
+					goto next;
+				}
+			}
+
+			goto next;
+		}
+
+next:
+		/* uciekamy z naszego poziomu zagnie¿d¿enia */
+
+		nest = 1;
+
+		while (*p && nest) {
+			if (*p == '}')
+				nest--;
+			if (*p == '{')
+				nest++;
+			p++;
+		}
+	}
+
+	config_display_color = backup_display_color;
+
+	if (!config_display_pl_chars)
+		xfree(format);
+
+	return x - orig_x;
+}
+
+/*
+ * update_statusbar()
+ *
+ * uaktualnia pasek stanu i wy¶wietla go ponownie.
+ *
+ *  - commit - czy wy¶wietliæ od razu?
+ */
+void update_statusbar(int commit)
+{
+	userlist_t *q = userlist_find(window_current->target);
+	struct format_data formats[40];	/* zwiêkszaæ! */
+	int formats_count = 0, i = 0, y;
+	int mail_count = -1;
+	session_t *sess = window_current->session;
+
+	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
+	if (ncurses_header)
+		wattrset(ncurses_header, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
+
+	/* inicjalizujemy wszystkie opisowe bzdurki */
+
+	memset(&formats, 0, sizeof(formats));
+
+#define __add_format(x, y, z) \
+	{ \
+		formats[formats_count].name = x; \
+		formats[formats_count].text = (y) ? xstrdup(z) : NULL; \
+		formats_count++; \
+		formats[formats_count].name = NULL; \
+		formats[formats_count].text = NULL; \
+	} 
+
+	{
+		time_t t = time(NULL);
+		struct tm *tm;
+		char tmp[16];
+
+		tm = localtime(&t);
+
+		strftime(tmp, sizeof(tmp), "%H:%M", tm);
+		
+		__add_format("time", 1, tmp);
+	}
+
+	__add_format("window", window_current->id, itoa(window_current->id));
+	__add_format("session", (sess), (sess->alias) ? sess->alias : sess->uid);
+	__add_format("descr", (sess && sess->descr), sess->descr);
+	__add_format("query", window_current->target, window_current->target);
+
+	query_emit(NULL, "mail-count", &mail_count);
+	__add_format("mail", (mail_count > 0), itoa(mail_count));
+
+	{
+		string_t s = string_init("");
+		int first = 1, act = 0;
+		list_t l;
+
+		for (l = windows; l; l = l->next) {
+			window_t *w = l->data;
+
+			if (!w->act || !w->id) 
+				continue;
+
+			if (!first)
+				string_append_c(s, ',');
+			
+			string_append(s, itoa(w->id));
+			first = 0;
+			act = 1;
+		}
+		
+		__add_format("activity", (act), s->str);
+
+		string_free(s, 1);
+	}
+
+	__add_format("debug", (!window_current->id), "");
+	__add_format("away", (sess && sess->connected && !strcasecmp(sess->status, EKG_STATUS_AWAY)), "");
+	__add_format("avail", (sess && sess->connected && !strcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
+	__add_format("invisible", (sess && sess->connected && !strcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format("notavail", (!sess || !sess->connected || !strcasecmp(sess->status, EKG_STATUS_NA)), "");
+	__add_format("more", (window_current->more), "");
+
+	__add_format("query_descr", (q && q->descr), q->descr);
+	__add_format("query_away", (q && !strcasecmp(q->status, EKG_STATUS_AWAY)), "");
+	__add_format("query_avail", (q && !strcasecmp(q->status, EKG_STATUS_AVAIL)), "");
+	__add_format("query_invisible", (q && !strcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format("query_na", (q && !strcasecmp(q->status, EKG_STATUS_NA)), "");
+	__add_format("query_dnd", (q && !strcasecmp(q->status, EKG_STATUS_DND)), "");
+	__add_format("query_xa", (q && !strcasecmp(q->status, EKG_STATUS_XA)), "");
+	__add_format("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip))));
+
+	__add_format("url", 1, "http://dev.null.pl/ekg/");
+	__add_format("version", 1, VERSION);
+
+#undef __add_format
+
+	for (y = 0; y < config_header_size; y++) {
+		const char *p;
+
+		if (!y) {
+			p = format_find("header1");
+
+			if (!strcmp(p, ""))
+				p = format_find("header");
+		} else {
+			char *tmp = saprintf("header%d", y + 1);
+			p = format_find(tmp);
+			xfree(tmp);
+		}
+
+		window_printat(ncurses_header, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+	}
+
+	for (y = 0; y < config_statusbar_size; y++) {
+		const char *p;
+
+		if (!y) {
+			p = format_find("statusbar1");
+
+			if (!strcmp(p, ""))
+				p = format_find("statusbar");
+		} else {
+			char *tmp = saprintf("statusbar%d", y + 1);
+			p = format_find(tmp);
+			xfree(tmp);
+		}
+
+		switch (ncurses_debug) {
+			case 0:
+				window_printat(ncurses_status, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				break;
+				
+			case 1:
+			{
+				char *tmp = saprintf(" debug: lines_count=%d start=%d height=%d overflow=%d screen_width=%d", ncurses_current->lines_count, ncurses_current->start, window_current->height, ncurses_current->overflow, ncurses_screen_width);
+				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				xfree(tmp);
+				break;
+			}
+
+			case 2:
+			{
+				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count(ncurses_lines), lines_start, lines_index, line_start, line_index);
+				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				xfree(tmp);
+				break;
+			}
+
+			case 3:
+			{
+				session_t *s = window_current->session;
+				char *tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s", s, (s && s->uid) ? s->uid : "", (s && s->alias) ? s->alias : "", (window_current->target) ? window_current->target : "");
+				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				xfree(tmp);
+				break;
+			}
+		}
+	}
+
+	for (i = 0; formats[i].name; i++)
+		xfree(formats[i].text);
+
+	query_emit(NULL, "ui-redrawing-header");
+	query_emit(NULL, "ui-redrawing-statusbar");
+	
+	if (commit)
+		ncurses_commit();
+}
+
+/*
+ * ncurses_window_kill()
+ *
+ * usuwa podane okno.
+ */
+int ncurses_window_kill(window_t *w)
+{
+	ncurses_window_t *n = w->private;
+
+	if (n->backlog) {
+		int i;
+
+		for (i = 0; i < n->backlog_size; i++)
+			fstring_free(n->backlog[i]);
+
+		xfree(n->backlog);
+	}
+
+	if (n->lines) {
+		int i;
+
+		for (i = 0; i < n->lines_count; i++)
+			xfree(n->lines[i].ts);
+		
+		xfree(n->lines);
+	}
+		
+	xfree(n->prompt);
+	n->prompt = NULL;
+	delwin(n->window);
+	n->window = NULL;
+	xfree(n);
+	w->private = NULL;
+
+//	ncurses_resize();
+
+	return 0;
+}
+
+#ifdef SIGWINCH
+static void sigwinch_handler()
+{
+	ncurses_resize_term = 1;
+	signal(SIGWINCH, sigwinch_handler);
+}
+#endif
+
+/*
+ * ncurses_init()
+ *
+ * inicjalizuje ca³± zabawê z ncurses.
+ */
+void ncurses_init()
+{
+	int background = COLOR_BLACK;
+
+	initscr();
+	cbreak();
+	noecho();
+	nonl();
+#if NCURSES_MOUSE_VERSION == 1
+	mousemask(ALL_MOUSE_EVENTS, NULL);
+#endif
+
+	if (config_display_transparent) {
+		background = COLOR_DEFAULT;
+		use_default_colors();
+	}
+
+	ncurses_screen_width = stdscr->_maxx + 1;
+	ncurses_screen_height = stdscr->_maxy + 1;
+	ncurses_resize_term = 0;
+	
+	ncurses_status = newwin(1, stdscr->_maxx + 1, stdscr->_maxy - 1, 0);
+	input = newwin(1, stdscr->_maxx + 1, stdscr->_maxy, 0);
+	keypad(input, TRUE);
+	nodelay(input, TRUE);
+
+	start_color();
+
+	init_pair(7, COLOR_BLACK, background);	/* ma³e obej¶cie domy¶lnego koloru */
+	init_pair(1, COLOR_RED, background);
+	init_pair(2, COLOR_GREEN, background);
+	init_pair(3, COLOR_YELLOW, background);
+	init_pair(4, COLOR_BLUE, background);
+	init_pair(5, COLOR_MAGENTA, background);
+	init_pair(6, COLOR_CYAN, background);
+
+#define __init_bg(x, y) \
+	init_pair(x, COLOR_BLACK, y); \
+	init_pair(x + 1, COLOR_RED, y); \
+	init_pair(x + 2, COLOR_GREEN, y); \
+	init_pair(x + 3, COLOR_YELLOW, y); \
+	init_pair(x + 4, COLOR_BLUE, y); \
+	init_pair(x + 5, COLOR_MAGENTA, y); \
+	init_pair(x + 6, COLOR_CYAN, y); \
+	init_pair(x + 7, COLOR_WHITE, y);
+
+	__init_bg(8, COLOR_RED);
+	__init_bg(16, COLOR_GREEN);
+	__init_bg(24, COLOR_YELLOW);
+	__init_bg(32, COLOR_BLUE);
+	__init_bg(40, COLOR_MAGENTA);
+	__init_bg(48, COLOR_CYAN);
+	__init_bg(56, COLOR_WHITE);
+
+#undef __init_bg
+
+	contacts_changed("contacts");
+	ncurses_commit();
+
+	/* deaktywujemy klawisze INTR, QUIT, SUSP i DSUSP */
+	if (!tcgetattr(0, &old_tio)) {
+		struct termios tio;
+
+		memcpy(&tio, &old_tio, sizeof(tio));
+		tio.c_cc[VINTR] = _POSIX_VDISABLE;
+		tio.c_cc[VQUIT] = _POSIX_VDISABLE;
+#ifdef VDSUSP
+		tio.c_cc[VDSUSP] = _POSIX_VDISABLE;
+#endif
+#ifdef VSUSP
+		tio.c_cc[VSUSP] = _POSIX_VDISABLE;
+#endif
+
+		tcsetattr(0, TCSADRAIN, &tio);
+	}
+
+#ifdef SIGWINCH
+	signal(SIGWINCH, sigwinch_handler);
+#endif
+
+	memset(ncurses_history, 0, sizeof(ncurses_history));
+
+	ncurses_binding_init();
+
+	ncurses_line = xmalloc(LINE_MAXLEN);
+	strcpy(ncurses_line, "");
+
+	ncurses_history[0] = ncurses_line;
+}
+
+/*
+ * ncurses_deinit()
+ *
+ * zamyka, robi porz±dki.
+ */
+void ncurses_deinit()
+{
+	static int done = 0;
+	list_t l;
+	int i;
+
+	for (l = windows; l; ) {
+		window_t *w = l->data;
+
+		l = l->next;
+
+		ncurses_window_kill(w);
+	}
+
+	list_destroy(windows, 1);
+
+	tcsetattr(0, TCSADRAIN, &old_tio);
+
+	keypad(input, FALSE);
+
+	werase(input);
+	wnoutrefresh(input);
+	doupdate();
+
+	delwin(input);
+	delwin(ncurses_status);
+	if (ncurses_header)
+		delwin(ncurses_header);
+	endwin();
+
+	for (i = 0; i < HISTORY_MAX; i++)
+		if (ncurses_history[i] != ncurses_line) {
+			xfree(ncurses_history[i]);
+			ncurses_history[i] = NULL;
+		}
+
+	if (ncurses_lines) {
+		for (i = 0; ncurses_lines[i]; i++) {
+			if (ncurses_lines[i] != ncurses_line)
+				xfree(ncurses_lines[i]);
+			ncurses_lines[i] = NULL;
+		}
+
+		xfree(ncurses_lines);
+		ncurses_lines = NULL;
+	}
+
+	xfree(ncurses_line);
+	xfree(ncurses_yanked);
+
+	done = 1;
+}
+
+/*
+ * line_adjust()
+ *
+ * ustawia kursor w odpowiednim miejscu ekranu po zmianie tekstu w poziomie.
+ */
+void ncurses_line_adjust()
+{
+	int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_len;
+
+	line_index = strlen(ncurses_line);
+	if (strlen(ncurses_line) < input->_maxx - 9 - prompt_len)
+		line_start = 0;
+	else
+		line_start = strlen(ncurses_line) - strlen(ncurses_line) % (input->_maxx - 9 - prompt_len);
+}
+
+/*
+ * lines_adjust()
+ *
+ * poprawia kursor po przesuwaniu go w pionie.
+ */
+void ncurses_lines_adjust()
+{
+	if (lines_index < lines_start)
+		lines_start = lines_index;
+
+	if (lines_index - 4 > lines_start)
+		lines_start = lines_index - 4;
+
+	ncurses_line = ncurses_lines[lines_index];
+
+	if (line_index > strlen(ncurses_line))
+		line_index = strlen(ncurses_line);
+}
+
+/*
+ * ncurses_input_update()
+ *
+ * uaktualnia zmianê rozmiaru pola wpisywania tekstu -- przesuwa okienka
+ * itd. je¶li zmieniono na pojedyncze, czy¶ci dane wej¶ciowe.
+ */
+void ncurses_input_update()
+{
+	if (ncurses_input_size == 1) {
+		int i;
+		
+		for (i = 0; ncurses_lines[i]; i++)
+			xfree(ncurses_lines[i]);
+		xfree(ncurses_lines);
+		ncurses_lines = NULL;
+
+		ncurses_line = xmalloc(LINE_MAXLEN);
+		strcpy(ncurses_line, "");
+
+		ncurses_history[0] = ncurses_line;
+
+		line_start = 0;
+		line_index = 0; 
+		lines_start = 0;
+		lines_index = 0;
+	} else {
+		ncurses_lines = xmalloc(2 * sizeof(char*));
+		ncurses_lines[0] = xmalloc(LINE_MAXLEN);
+		ncurses_lines[1] = NULL;
+		strcpy(ncurses_lines[0], ncurses_line);
+		xfree(ncurses_line);
+		ncurses_line = ncurses_lines[0];
+		ncurses_history[0] = NULL;
+		lines_start = 0;
+		lines_index = 0;
+	}
+	
+	ncurses_resize();
+
+	ncurses_redraw(window_current);
+	touchwin(ncurses_current->window);
+
+	ncurses_commit();
+}
+
+/*
+ * print_char()
+ *
+ * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
+ */
+void print_char(WINDOW *w, int y, int x, unsigned char ch)
+{
+	wattrset(w, A_NORMAL);
+
+	if (ch < 32) {
+		wattrset(w, A_REVERSE);
+		ch += 64;
+	}
+
+	if (ch >= 128 && ch < 160) {
+		ch = '?';
+		wattrset(w, A_REVERSE);
+	}
+
+	mvwaddch(w, y, x, ch);
+	wattrset(w, A_NORMAL);
+}
+
+/* 
+ * ekg_getch()
+ *
+ * czeka na wci¶niêcie klawisza i je¶li wkompilowano obs³ugê pythona,
+ * przekazuje informacjê o zdarzeniu do skryptu.
+ *
+ *  - meta - przedrostek klawisza.
+ *
+ * zwraca kod klawisza lub -2, je¶li nale¿y go pomin±æ.
+ */
+int ekg_getch(int meta)
+{
+	int ch;
+
+	ch = wgetch(input);
+
+#if NCURSES_MOUSE_VERSION == 1
+	if (ch == KEY_MOUSE) {
+		MEVENT m;
+
+		if (getmouse(&m) == OK)
+			debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%.8x\n", m.id, m.x, m.y, m.z, m.bstate);
+	}
+#endif
+
+	query_emit(NULL, "ui-keypress", &ch, NULL);
+
+	return ch;
+}
+
+/*
+ * ncurses_watch_stdin()
+ *
+ * g³ówna pêtla interfejsu.
+ */
+void ncurses_watch_stdin(int fd, int watch, void *data)
+{
+	struct binding *b = NULL;
+	int ch;
+
+	if (ncurses_resize_term) {
+		ncurses_resize_term = 0;
+		endwin();
+		refresh();
+		keypad(input, TRUE);
+		/* wywo³a wszystko, co potrzebne */
+		header_statusbar_resize();
+		changed_backlog_size("backlog_size");
+
+		return;
+	}
+
+	ch = ekg_getch(0);
+
+	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
+		return;
+
+	if (ch == -2)		/* python ka¿e ignorowaæ */
+		return;
+
+	if (ch == 0)		/* Ctrl-Space, g³upie to */
+		return;
+
+	if (ch == 27) {
+		if ((ch = ekg_getch(27)) == -2)
+			return;
+
+		b = ncurses_binding_map_meta[ch];
+
+		if (ch == 27)
+			b = ncurses_binding_map[27];
+
+		/* je¶li dostali¶my \033O to albo mamy Alt-O, albo
+		 * pokaleczone klawisze funkcyjne (\033OP do \033OS).
+		 * ogólnie rzecz bior±c, nieciekawa sytuacja ;) */
+
+		if (ch == 'O') {
+			int tmp = ekg_getch(ch);
+
+			if (tmp >= 'P' && tmp <= 'S')
+				b = ncurses_binding_map[KEY_F(tmp - 'P' + 1)];
+			else if (tmp == 'H')
+				b = ncurses_binding_map[KEY_HOME];
+			else if (tmp == 'F')
+				b = ncurses_binding_map[KEY_END];
+			else if (tmp == 'M')
+				b = ncurses_binding_map[13];
+			else
+				ungetch(tmp);
+		}
+
+		if (b && b->action) {
+			if (b->function)
+				b->function(b->arg);
+			else {
+				char *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+				command_exec(window_current->target, window_current->session, tmp, 0);
+				xfree(tmp);
+			}
+		} else {
+			/* obs³uga Ctrl-F1 - Ctrl-F12 na FreeBSD */
+			if (ch == '[') {
+				ch = wgetch(input);
+				if (ch >= 107 && ch <= 118)
+					window_switch(ch - 106);
+			}
+		}
+	} else {
+		if ((b = ncurses_binding_map[ch]) && b->action) {
+			if (b->function)
+				b->function(b->arg);
+			else {
+				char *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+				command_exec(window_current->target, window_current->session, tmp, 0);
+				xfree(tmp);
+			}
+		} else if (ch < 255 && strlen(ncurses_line) < LINE_MAXLEN - 1) {
+				
+			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, LINE_MAXLEN - line_index - 1);
+
+			ncurses_line[line_index++] = ch;
+		}
+	}
+
+	if (ncurses_plugin_destroyed)
+		return;
+
+	/* je¶li siê co¶ zmieni³o, wygeneruj dope³nienia na nowo */
+	if (!b || (b && b->function != ncurses_binding_complete))
+		ncurses_complete_clear();
+
+	if (line_index - line_start > input->_maxx - 9 - ncurses_current->prompt_len)
+		line_start += input->_maxx - 19 - ncurses_current->prompt_len;
+	if (line_index - line_start < 10) {
+		line_start -= input->_maxx - 19 - ncurses_current->prompt_len;
+		if (line_start < 0)
+			line_start = 0;
+	}
+	
+	werase(input);
+	wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
+
+	if (ncurses_lines) {
+		int i;
+		
+		for (i = 0; i < 5; i++) {
+			unsigned char *p;
+			int j;
+
+			if (!ncurses_lines[lines_start + i])
+				break;
+
+			p = ncurses_lines[lines_start + i];
+
+			for (j = 0; j + line_start < strlen(p) && j < input->_maxx + 1; j++)
+				print_char(input, i, j, p[j + line_start]);
+		}
+
+		wmove(input, lines_index - lines_start, line_index - line_start);
+	} else {
+		int i;
+
+		if (ncurses_current->prompt)
+			mvwaddstr(input, 0, 0, ncurses_current->prompt);
+
+		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < strlen(ncurses_line) - line_start; i++)
+			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
+
+		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
+		if (line_start > 0)
+			mvwaddch(input, 0, ncurses_current->prompt_len, '<');
+		if (strlen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
+			mvwaddch(input, 0, input->_maxx, '>');
+		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
+		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
+	}
+	
+	ncurses_commit();
+}
+
+int ncurses_command_window(void *data, va_list ap)
+{
+	int *Quiet = va_arg(ap, int*);
+	char **P1 = va_arg(ap, char**), **P2 = va_arg(ap, char**);
+	char *p1 = *P1, *p2 = *P2;
+	int quiet = *Quiet;
+
+	if (!p1 || !strcasecmp(p1, "list")) {
+		list_t l;
+
+		for (l = windows; l; l = l->next) {
+			window_t *w = l->data;
+
+			if (w->id) {
+				if (w->target) {
+					if (!w->floating)	
+						printq("window_list_query", itoa(w->id), w->target);
+					else
+						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
+				} else
+					printq("window_list_nothing", itoa(w->id));
+			}
+		}
+
+		goto cleanup;
+	}
+
+	if (!strcasecmp(p1, "move")) {
+		window_t *w = NULL;
+		ncurses_window_t *n;
+		char **argv;
+		list_t l;
+
+		if (!p2) {
+			printq("not_enough_params", "window");
+			goto cleanup;
+		}
+
+		argv = array_make(p2, " ,", 3, 0, 0);
+
+		if (array_count(argv) < 3) {
+			printq("not_enough_params", "window");
+			array_free(argv);
+			goto cleanup;
+		}
+
+		for (l = windows; l; l = l->next) {
+			window_t *v = l->data;
+
+			if (v->id == atoi(argv[0])) {
+				w = v;
+				break;
+			}
+		}
+
+		if (!w) {
+			printq("window_noexist");
+			array_free(argv);
+			goto cleanup;
+		}
+
+		n = w->private;
+
+		switch (argv[1][0]) {
+			case '-':
+				w->left += atoi(argv[1]);
+				break;
+			case '+':
+				w->left += atoi(argv[1] + 1);
+				break;
+			default:
+				w->left = atoi(argv[1]);
+		}
+
+		switch (argv[2][0]) {
+			case '-':
+				w->top += atoi(argv[2]);
+				break;
+			case '+':
+				w->top += atoi(argv[2] + 1);
+				break;
+			default:
+				w->top = atoi(argv[2]);
+		}
+
+		array_free(argv);
+			
+		if (w->left + w->width > stdscr->_maxx + 1)
+			w->left = stdscr->_maxx + 1 - w->width;
+		
+		if (w->top + w->height > stdscr->_maxy + 1)
+			w->top = stdscr->_maxy + 1 - w->height;
+		
+		if (w->floating)
+			mvwin(n->window, w->top, w->left);
+
+		touchwin(ncurses_current->window);
+		ncurses_refresh();
+		doupdate();
+
+		goto cleanup;
+	}
+
+	if (!strcasecmp(p1, "resize")) {
+		window_t *w = NULL;
+		ncurses_window_t *n = NULL;
+		char **argv;
+		list_t l;
+
+		if (!p2) {
+			printq("not_enough_params", "window");
+			goto cleanup;
+		}
+
+		argv = array_make(p2, " ,", 3, 0, 0);
+
+		if (array_count(argv) < 3) {
+			printq("not_enough_params", "window");
+			array_free(argv);
+			goto cleanup;
+		}
+
+		for (l = windows; l; l = l->next) {
+			window_t *v = l->data;
+
+			if (v->id == atoi(argv[0])) {
+				w = v;
+				break;
+			}
+		}
+
+		n = w->private;
+
+		if (!w) {
+			printq("window_noexist");
+			array_free(argv);
+			goto cleanup;
+		}
+
+		switch (argv[1][0]) {
+			case '-':
+				w->width += atoi(argv[1]);
+				break;
+			case '+':
+				w->width += atoi(argv[1] + 1);
+				break;
+			default:
+				w->width = atoi(argv[1]);
+		}
+
+		switch (argv[2][0]) {
+			case '-':
+				w->height += atoi(argv[2]);
+				break;
+			case '+':
+				w->height += atoi(argv[2] + 1);
+				break;
+			default:
+				w->height = atoi(argv[2]);
+		}
+
+		array_free(argv);
+			
+		if (w->floating) {
+			wresize(n->window, w->height, w->width);
+			ncurses_backlog_split(w, 1, 0);
+			ncurses_redraw(w);
+			touchwin(ncurses_current->window);
+			ncurses_commit();
+		}
+
+		goto cleanup;
+	}
+	
+cleanup:
+	contacts_update(NULL);
+	update_statusbar(1);
+
+	return 0;
+}
+
+/*
+ * ui_ncurses_event()
+ *
+ * obs³uga zdarzeñ.
+ */
+int ui_ncurses_event(const char *event, ...)
+{
+	va_list ap;
+
+	va_start(ap, event);
+
+	if (!event)
+		return 0;
+
+	if (!strcasecmp(event, "refresh_time"))
+		goto cleanup;
+
+	if (!strcasecmp(event, "commit"))
+		ncurses_commit();
+		
+#if 0
+	if (!strcasecmp(event, "printat")) {
+		char *target = va_arg(ap, char*);
+		int id = va_arg(ap, int), x = va_arg(ap, int), y = va_arg(ap, int);
+		char *text = va_arg(ap, char*);
+		window_t *w = NULL;
+
+		if (target)
+			w = window_find(target);
+
+		if (id) {
+			list_t l;
+
+			for (l = windows; l; l = l->next) {
+				window_t *v = l->data;
+
+				if (v->id == id) {
+					w = v;
+					break;
+				}
+			}
+		}
+
+		if (w && text)
+			window_printat(w->window, x, y, text, NULL, COLOR_WHITE, 0, COLOR_BLACK, 0);
+	}
+#endif 
+
+	if (!strcmp(event, "variable_changed")) {
+		char *name = va_arg(ap, char*);
+
+		if (!strcasecmp(name, "sort_windows") && config_sort_windows) {
+			list_t l;
+			int id = 2;
+
+			for (l = windows; l; l = l->next) {
+				window_t *w = l->data;
+
+				if (w->floating)
+					continue;
+				
+				if (w->id > 1)
+					w->id = id++;
+			}
+		}
+
+		if (!strcasecmp(name, "timestamp")) {
+			list_t l;
+
+			for (l = windows; l; l = l->next) {
+				window_t *w = l->data;
+				
+				ncurses_backlog_split(w, 1, 0);
+			}
+			
+			ncurses_resize();
+		}
+	}
+
+	if (!strcmp(event, "conference_rename")) {
+		char *oldname = va_arg(ap, char*), *newname = va_arg(ap, char*);
+		list_t l;
+
+		for (l = windows; l; l = l->next) {
+			window_t *w = l->data;
+			ncurses_window_t *n = w->private;
+
+			if (w->target && !strcasecmp(w->target, oldname)) {
+				xfree(w->target);
+				xfree(n->prompt);
+				w->target = xstrdup(newname);
+				n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
+				n->prompt_len = strlen(n->prompt);
+			}
+		}
+	}
+
+	if (!strcmp(event, "userlist_changed")) {
+		const char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*);
+		list_t l;
+
+		for (l = windows; l; l = l->next) {
+			window_t *w = l->data;
+			ncurses_window_t *n = w->private;
+
+			if (!w->target || strcasecmp(w->target, p1))
+				continue;
+
+			xfree(w->target);
+			w->target = xstrdup(p2);
+
+			xfree(n->prompt);
+			n->prompt = format_string(format_find("ncurses_prompt_query"), w->target);
+			n->prompt_len = strlen(n->prompt);
+		}
+
+		goto cleanup;
+	}
+
+	if (!strcmp(event, "command")) {
+		int quiet = va_arg(ap, int);
+		char *command = va_arg(ap, char*);
+
+		if (!strcasecmp(command, "bind")) {
+			char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
+
+			if (match_arg(p1, 'a', "add", 2)) {
+				if (!p2 || !p3)
+					printq("not_enough_params", "bind");
+				else
+					ncurses_binding_add(p2, p3, 0, quiet);
+			} else if (match_arg(p1, 'd', "delete", 2)) {
+				if (!p2)
+					printq("not_enough_params", "bind");
+				else
+					ncurses_binding_delete(p2, quiet);
+			} else if (match_arg(p1, 'L', "list-default", 5)) {
+				binding_list(quiet, p2, 1);
+			} else {
+				if (match_arg(p1, 'l', "list", 2))
+					binding_list(quiet, p2, 0);
+				else
+					binding_list(quiet, p1, 0);
+			}
+
+			goto cleanup;
+		}
+	}
+
+cleanup:
+	va_end(ap);
+
+	contacts_update(NULL);
+	update_statusbar(1);
+	
+	return 0;
+}
+
+/*
+ * header_statusbar_resize()
+ *
+ * zmienia rozmiar paska stanu i/lub nag³ówka okna.
+ */
+void header_statusbar_resize()
+{
+	if (!ncurses_status)
+		return;
+	
+	if (config_header_size < 0)
+		config_header_size = 0;
+
+	if (config_header_size > 5)
+		config_header_size = 5;
+
+	if (config_statusbar_size < 1)
+		config_statusbar_size = 1;
+
+	if (config_statusbar_size > 5)
+		config_statusbar_size = 5;
+
+	if (config_header_size) {
+		if (!header)
+			header = newwin(config_header_size, stdscr->_maxx + 1, 0, 0);
+		else
+			wresize(header, config_header_size, stdscr->_maxx + 1);
+
+		update_header(0);
+	}
+
+	if (!config_header_size && header) {
+		delwin(header);
+		header = NULL;
+	}
+
+	ncurses_resize();
+
+	wresize(ncurses_status, config_statusbar_size, stdscr->_maxx + 1);
+	mvwin(ncurses_status, stdscr->_maxy + 1 - ncurses_input_size - config_statusbar_size, 0);
+
+	update_statusbar(0);
+
+	ncurses_commit();
+}
+
+/*
+ * changed_backlog_size()
+ *
+ * wywo³ywane po zmianie warto¶ci zmiennej ,,backlog_size''.
+ */
+void changed_backlog_size(const char *var)
+{
+	list_t l;
+
+	if (config_backlog_size < ncurses_screen_height)
+		config_backlog_size = ncurses_screen_height;
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+		ncurses_window_t *n = w->private;
+		int i;
+				
+		if (n->backlog_size <= config_backlog_size)
+			continue;
+				
+		for (i = config_backlog_size; i < n->backlog_size; i++)
+			fstring_free(n->backlog[i]);
+
+		n->backlog_size = config_backlog_size;
+		n->backlog = xrealloc(n->backlog, n->backlog_size * sizeof(fstring_t *));
+
+		ncurses_backlog_split(w, 1, 0);
+	}
+}
+
+/*
+ * ncurses_window_new()
+ *
+ * tworzy nowe okno ncurses do istniej±cego okna ekg.
+ */
+int ncurses_window_new(window_t *w)
+{
+	ncurses_window_t *n;
+
+	if (w->private)
+		return 0;
+
+	w->private = n = xmalloc(sizeof(ncurses_window_t));
+
+	if (w->target && !strcmp(w->target, "__contacts"))
+		contacts_new(w);
+
+	if (w->target) {
+		const char *f = format_find("ncurses_prompt_query");
+
+		n->prompt = format_string(f, w->target);
+		n->prompt_len = strlen(n->prompt);
+	} else {
+		const char *f = format_find("ncurses_prompt_none");
+
+		if (strcmp(f, "")) {
+			n->prompt = format_string(f);
+			n->prompt_len = strlen(n->prompt);
+		}
+	}
+
+ 	n->window = newwin(w->height, w->width, w->top, w->left);
+
+	ncurses_resize();
+
+	return 0;
+}

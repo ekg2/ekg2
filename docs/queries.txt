@@ -1,0 +1,53 @@
+*** ekg -> plugin ***
+
+protocol-validate-uid(char *uid, int valid)
+	sprawdza, czy podany protokó³ jest obs³ugiwany. ka¿dy obs³uguj±cy
+	plugin powinien zwiêkszyæ `valid' o 1.
+
+protocol-ignore(char *uid, int prevlevel, int newlevel)
+	zmieniono poziom ignorowania osoby z `prevlevel' do `newlevel'.
+
+userlist-changed(char *session, *uid)
+	zmieni³ siê wpis w li¶cie kontaktów.
+
+userlist-removed(char *uid)
+	usuniêto wpis z listy kontaktów.
+
+userlist-added(char *uid)
+	dodano wpis do listy kontaktów.
+
+userlist-renamed(char *prevnick, char *newnick)
+	zmieniono pseudonim danej osoby.
+
+qutting(char *reason)
+	wpisano /quit.
+
+ui-window-target-changed(window_t *w)
+	zmieniono nazwê okna.
+
+plugin-print-version()
+	pro¶ba o wy¶wietlenie wersji pluginów.
+
+config-write(FILE *f)
+	zapisywanie konfiguracji.
+
+*** plugin -> ekg ***
+
+protocol-connected(char *session)
+	po³±czenie siê uda³o.
+
+protocol-failed(char *session, char *reason)
+	po³±czenie siê nie uda³o.
+
+protocol-disconnected(char *session, char *reason)
+	wywo³ywany przy roz³±czeniu sesji przez serwer.
+
+protocol-status(char *session, char *uid, char *status, char *descr, char *host, int port)
+	dana osoba zmieni³a swój stan.
+
+protocol-message(char *session, char *sender, char **recipients, char *text, uint32_t *format, time_t sent, int class, char *seq)
+	otrzymano wiadomo¶æ od danej osoby.
+
+protocol-message-ack(char *session, char *recipient, char *seq, char *status)
+	potwierdzenie nadania wiadomo¶ci.
+

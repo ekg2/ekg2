@@ -1,0 +1,97 @@
+#!/bin/bash
+# Skrypt do automatycznego sprawdzania czy jest nowa wersja ekg
+# Jezeli jest to sciaga, kompiluje i instaluje
+# Raport przychodzi na maila
+# Rev. 0.1
+# (C) by Tomasz T. Ciaszczyk <ciacho@ciacho.pl>
+
+KAT="/usr/local/share/AutoEKG"
+MAILTO="root"
+
+## Ponizej juz nic nie zmieniaj!
+URL="http://dev.null.pl/ekg/ekg-current.tar.gz"
+
+# Odznaczamy zmienne bo nie potrafil poprawnie wyciagnac daty
+LC_NUMERIC="POSIX"
+LC_TIME="POSIX"
+unset LC_ALL LANG
+
+EKGCheckDir()
+{
+ # Sprawdzamy czy istnieje katalog
+ [ -d $KAT ] || mkdir -p -m 755 $KAT ; cd $KAT
+ # Odznaczamy flage
+ [ -f ekg-last_tgz.flg ] || touch -t 01010000 ekg-last_tgz.flg
+}
+
+EKGDownload()
+{
+ cd $KAT
+ # Tworzymi znacznik 
+ [ -f ekg-current.tar.gz ] && touch -r ekg-current.tar.gz ekg-last_tgz.flg
+ wget --proxy=off --cache=off --timestamping --tries=3 --output-file=/dev/null $URL 2>&1
+ # Jezeli jest to samo to wychodzimy
+ [ ekg-current.tar.gz -nt ekg-last_tgz.flg ] || exit
+}
+
+
+EKGMake()
+{
+ cd $KAT
+ DATAPLIKU=`ls -l ekg-current.tar.gz --full-time | awk '{print $7" "$8" "$9" "$10}'`
+ DATAPLIKU=`date -d"$DATAPLIKU" +%Y%m%d`
+ # Interesuje nas jeden plik, aby z niego wyciagnac co sie zmienilo
+ tar xzf ekg-current.tar.gz ./ekg-$DATAPLIKU/ChangeLog 
+ LAST=`head -100 ./ekg-$DATAPLIKU/ChangeLog | grep -n "\/\/" | awk -F":" '{print $1}'  | head -2 | tail -1`
+ LAST=`expr $LAST - 1`
+ head -$LAST ./ekg-$DATAPLIKU/ChangeLog 
+
+ echo "## 1/5 ** Kasowanie starego programu"
+ rm -rf ./ekg-200* 2>&1 ; tar xzvf ekg-current.tar.gz 2>&1
+ [ `id -u` == 0 ] && chown -R 0.0 ekg-$DATAPLIKU
+
+ echo "## 2/5 ** Kompilowanie nowej wersji"
+ cd ./ekg-$DATAPLIKU ; ./configure 2>&1 ; cd ..
+ cd ./ekg-$DATAPLIKU ; make -k 2>&1 ; cd ..
+
+ if [ ! -f ekg-$DATAPLIKU/src/ekg ] 
+  then
+   echo "BLAD!!!! Brak pliku ekg-$DATAPLIKU/src/ekg. Przerywam"
+   exit 1
+ fi
+ touch ekg-new_version.flg
+
+ echo "## 3/5 ** Stripowanie"
+ /bin/ls -lo ./ekg-$DATAPLIKU/src/ekg
+ strip ./ekg-$DATAPLIKU/src/ekg
+ /bin/ls -lo ./ekg-$DATAPLIKU/src/ekg
+
+ echo "## 4/5 ** Instalowanie"
+ cd ekg-$DATAPLIKU ; make install 2>&1 ; cd ..
+
+ echo "## 5/5 Koniec :) Dziekujemy za wspolny lot"
+
+}
+
+EKG_Header()
+{
+FROM=`hostname`
+RND=`date "+%d.%m.%Y-%T"`
+RND="$RND _$RANDOM"
+
+ echo "Return-Path: <AutoEKG@$FROM>"
+ echo "From: \"Aktualizator EKG - v0.1\" <AutoEKG@$FROM>"
+ echo "To: $MAILTO@$FROM" #; echo "Bcc: AutoEKG@$FROM"
+ echo "X-Mailer: TTC AutoEKG v0.1 [pl]"
+ echo "X-Accept-Language: pl"
+ echo "Message-ID: <TTC-AutoEKG_$RND@$FROM>"
+ echo "Subject: EKG $DATAPLIKU"
+ echo "" ; cat $KAT/.mail.txt
+
+}
+
+
+EKGCheckDir ; EKGDownload ; EKGMake > $KAT/.mail.txt 
+[ -f ekg-new_version.flg ] || ( /bin/rm -f $KAT/.mail.txt ; exit )
+[ -f /usr/sbin/sendmail ] && ( EKG_Header | /usr/sbin/sendmail $MAILTO )
+/bin/rm -f $KAT/ekg-new_version.flg $KAT/ekg-last_tgz.flg $KAT/.mail.txt

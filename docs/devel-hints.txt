@@ -1,0 +1,56 @@
+parê wymagañ i wskazówek dla developerów:
+
+1) gdy co¶ poprawiasz/dodajesz, zachowuj styl reszty kodu. wciêcia rób
+   znakami tabulacji, a nie spacjami. stawiaj spacje po przecinkach i
+   ¶rednikach. je¶li masz inny styl, a podes³ane poprawki bêd± dobre
+   i/lub potrzebne, nie zdziw siê, je¶li Twój kod zostanie przeregadowany.
+
+2) dopisuj siê do copyrightów na pocz±tku pliku. inaczej zak³adam, ¿e
+   zrzekasz siê praw do podes³anych kawa³ków kodu. oczywi¶cie podsy³any
+   kod musi byæ na takiej samej licencji, co reszta. w innym wypadku 
+   nie traæ czasu i go nie przysy³aj.
+
+3) zachowuj przyjêt± konwencjê. je¶li wszystkie zmienne danej struktury
+   maj± nazwy typu ,,foobar_count'', nie dodawaj ,,foocount'', czy
+   ,,nfoo''.
+
+4) nie zmieniaj api bez powodu. nawet je¶li chcesz to zrobiæ, skonsultuj
+   z reszt± developerów.
+
+5) tworz±c wiêkszy kawa³ek/modu³/plik przeznaczony do jakiej¶ konkretnej
+   funkcji, staraj siê nazywaæ funkcje i zmienne tak, by by³o wiadomo,
+   do czego s³u¿±. przyk³ad: funkcje dotycz±ce list zaczynaj± siê list_*,
+   funkcje dotycz±ce userlisty to userlist_*, konfiguracja to config_*.
+
+6) do alokacji pamiêci u¿ywaj funkcji xmalloc(), xcalloc(), xrealloc()
+   i xstrdup(). nie musisz sprawdzaæ zwracanej warto¶ci. je¶li zabraknie
+   pamiêci, funkcje te same zajm± siê grzecznym zamkniêciem programu.
+   dbaj o zwalnianie buforów, gdy nie s± one ju¿ potrzebne.
+
+   zamiast strncpy() oraz strncat() u¿ywaj strlcpy() i strlcat(), które
+   przyjmuj± jako parametr ca³kowity rozmiar bufora. nie trzeba siê martwiæ
+   o to, ile w buforze pozosta³o jeszcze miejsca, czy znak zerowy siê zmie¶ci,
+   etc. obie funkcje _zawsze_ zwracaj± ilo¶æ znaków, jaka zosta³a(by) zapisana
+   do bufora.
+
+7) je¶li nie masz pojêcia o alokacji pamiêci i obs³udze stringów w C,
+   najlepiej daj sobie spokój. nawet je¶li kod dzia³a, ale nie trzyma
+   siê kupy, zostanie odrzucony.
+
+8) podsy³aj±c patche, twórz je poleceniem ,,diff -u''. diff bez parametrów
+   generuje patche, które nie zawieraj± ¿adnego kontekstu i ciê¿ko je
+   do³±czyæ do ¼ród³a, gdy zmieni³a siê wcze¶niej chocia¿ jedna linijka.
+   patche najlepiej generowaæ wzglêdem naj¶wie¿szej wersji, ale nie jest
+   to wymagane, je¶li w miêdzyczasie nie by³o powa¿nych zmian w kodzie.
+
+9) je¶li poprawka jest niewielka (jedna, dwie linijki), nie traæ swojego,
+   ani mojego czasu, tylko po prostu wklej orygina³ i poprawion± wersjê do
+   tre¶ci listu.
+
+nikt nie bêdzie siê zachowywaæ jak jaki¶ Linus, i wrzucaæ do ¼róde³ tylko
+to, co mu siê podoba, albo tylko patche ludzi, z którymi piwo pija. byle
+tylko by³y zachowane pewne zasady i nie by³o po miesi±cu ba³aganu w kodzie.
+oczywi¶cie wszystkie zmiany bêd± przegl±dane i w razie czego autor dostanie
+po ³apach.
+
+$Id$
