@@ -353,6 +353,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 				
 				if (ns && !xstrncmp(ns, "jabber:iq:roster", 16)) {
 					userlist_t u, *tmp;
+					char *ctmp;
 
 					xmlnode_t *item = xmlnode_find_child(q, "item");
 					for (; item ; item = item->next) {
@@ -380,7 +381,9 @@ void jabber_handle(void *data, xmlnode_t *n)
 							if (jabber_attr(item->atts, "subscription"))
 								u.authtype = xstrdup(jabber_attr(item->atts, "subscription"));
 							list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
-							command_exec(NULL, s, saprintf("/auth --probe %s", u.uid), 1);
+							ctmp = saprintf("/auth --probe %s", u.uid);
+							command_exec(NULL, s, ctmp, 1);
+							xfree(ctmp);
 						}
 					}; /* for */
 				} /* jabber:iq:roster */
@@ -524,11 +527,14 @@ static void jabber_handle_disconnect(session_t *s)
 void jabber_reconnect_handler(int type, void *data)
 {
 	session_t *s = session_find((char*) data);
+	char *tmp;
 
 	if (!s || session_connected_get(s) == 1)
 		return;
 
-	command_exec(NULL, s, xstrdup("/connect"), 0);
+	tmp = xstrdup("/connect");
+	command_exec(NULL, s, tmp, 0);
+	xfree(tmp);
 }
 
 static void jabber_handle_start(void *data, const char *name, const char **atts)
