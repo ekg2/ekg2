@@ -925,6 +925,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
         sin.sin_family = AF_INET;
         sin.sin_addr.s_addr = a.s_addr;
 #ifdef HAVE_GNUTLS
+	j->using_ssl = 0;
         if (use_ssl)
                 sin.sin_port = htons(ssl_port);
         else
@@ -943,7 +944,6 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
         }
 
 #ifdef HAVE_GNUTLS
-        j->using_ssl = 0;
         if (use_ssl) {
                 int ret;
                 gnutls_certificate_allocate_credentials(&(j->xcred));
