@@ -1,0 +1,171 @@
+// IRC protocol session variables description
+// (c) 2004 Michal 'GiM' Spadlinski
+
+server
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	adres serwera irc, np: warszawa.irc.pl
+	zmienna musi byæ ustawiona, ¿eby móc siê po³±czyæ
+
+port
+	typ: liczba
+	domy¶lna warto¶æ: 6667
+
+	port serwera, do którego bêdziemy siê pod³±czaæ
+
+default
+	typ: bool
+	domyslna warto¶æ: false
+
+	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
+	podczas uruchomienia programu)
+
+auto_away
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
+	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
+	nie bêdzie automatycznej zmiany.
+
+auto_back
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
+	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
+	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
+	jakiejkolwiek wiadomo¶ci. je¶li równa 2, przy wci¶niêciu klawisza.
+
+auto_connect
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
+	programu
+
+display_notify
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	warto¶æ -1 powoduje korzystanie z globalnej zmiennej. 
+	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
+	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
+	tylko zmiany z niedostêpnego na dostêpny i na odwrót. wiêkszy 
+	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2 
+	ukrywa zmiany stanu.
+
+nickname
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la domy¶lny nick, pod jakim bêdziemy starali siê po³±czyæ
+	z serwerem IRC
+	zmienna musi byæ ustawiona, ¿eby móc siê po³aczyæ
+
+realname
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	dowolny tekst, który zostanie ustawiony jako nasz realname
+	[m.in. w odpowiedzi na /whois], by zmiany realname odnios³y skutek
+	nale¿y siê ponownie po³±czyæ
+
+make_window
+	typ: liczba
+	domy¶lna warto¶æ: 2
+
+	suma bitowa, okre¶laj±ca czy nale¿y tworzyæ okna w danej sytuacji:
+	1 - nie u¿ywane
+	2 - tworzenie okna, gdy przychodzi do nas wiadomo¶æ od innego
+	    u¿ytkownika
+	4 - tworzenie okna rozmowy z u¿ytkownikiem, je¶li ten wys³a³ do nas
+	    zapytanie ctcp
+	8 - tworzenie okna rozmowy z u¿ytkownikiem, je¶li przysz³a od niego
+	    odpowied¼, na wys³ane przez nas zapytanie ctcp
+	Czyli np: ustawienie na 10 spowoduje otwieranie okienka rozmowy
+	przy przychodzeniu wiadomo¶ci i przy odpowiedzi na /ctcp
+	[je¿eli tylko okienko jeszcze nie istnieje]
+
+DISPLAY_PONG
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	okre¶la czy wy¶wietlaæ komunikat o odebraniu ping i wys³aniu pong
+	do serwera IRC. 1 - wy¶wietlaæ, 0 - nie.
+
+DISPLAY_AWAY_NOTIFICATION
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	okre¶la czy wy¶wietlaæ czyje¶ away [np: je¶li kto¶ ma ustawione
+	away i zrobimy /msg kto¶ co¶tam]
+
+DISPLAY_NAMES_IN_CURRENT
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	czy wy¶wietlaæ wynik komendy /names w aktualnym oknie [ogólnie
+	bardzo z³y pomys³ ;->]. 0 - bêdzie wy¶wietlany w oknie statusu,
+	1 - w aktualnym oknie
+
+REJOIN
+	typ: liczba
+	domyslna warto¶æ: 2
+
+	suma bitowa, okre¶laj±ca kiedy robiæ autorejoin
+	1 - przy dostaniu kicka z kana³u
+	2 - przy [re]connec'cie, je¶li s± jakie¶ otwarte okienka z kana³ami
+	[czyli ¿eby ustawiæ oba nale¿y nadaæ warto¶æ 3]
+
+REJOIN_TIME
+	typ: liczba
+	domy¶lna warto¶æ: 2
+
+	ilo¶æ sekund jak± plugin ma odczekaæ, przed prób± ponownego
+	do³±czeniu do kana³u, je¶li zostali¶my wykopani
+	zmienna ta, nie ma ¿adnego znaczenia, je¶li zmienna %TREJOIN%n
+	nie jest ustawiona tak, by klient robi³ autorejoin po kicku
+
+SKIP_MOTD
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	czy pomijaæ wy¶wietlanie MOTD. 1 - tak, 0 - nie.
+
+STRIPMIRCCOL
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	czy stripowaæ wy¶wietlanie durnych kolorków na IRCu.
+	0 - kolorki bêd± wy¶wietlane. 1 - nie bêd±.
+	zmienna ta nie ma wp³ywu na wy¶wietlanie atryburów takich jak
+	%Tbold%T, %Uunderline%U i %Vreverse%V...
+
+VERSION_NAME
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la pierwszy z ci±gów, którymi IRC plugin odpowiada na
+	zapytanie %Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest
+	ci±g: "IRC plugin for EKG2:"
+	
+VERSION_NO
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la drugi z ci±gów, którymi IRC plugin odpowiada na
+	zapytanie %Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest
+	ci±g: "numer_wersji_plugina:", mo¿na ustawiæ na pusty:
+	/session -s irc:nazwasesji VERSION_NO ""
+
+VERSION_SYS
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la trzeci z ci±gów, którymi IRC plugin odpowiada na
+	zapytanie %Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest
+	ci±g: "System wersja_j±dra architektura", mo¿na ustawiæ na pusty:
+	/session -s irc:nazwasesji VERSION_SYS ""
+
