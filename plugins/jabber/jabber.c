@@ -588,10 +588,8 @@ static void jabber_handle_disconnect(session_t *s)
 	j->fd = -1;
 
 #ifdef HAVE_GNUTLS
-	if (j->using_ssl) {
+	if (j->using_ssl) 
 		gnutls_deinit(j->ssl_session);
-		gnutls_global_deinit();
-	}
 #endif
 	reconnect_delay = session_int_get(s, "auto_reconnect");
 	if (reconnect_delay && reconnect_delay != -1) 
@@ -742,8 +740,8 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	const int ssl_port_s = session_int_get(s, "ssl_port");
 	int ssl_port = (ssl_port_s != -1) ? ssl_port_s : 5223;
 	/* Allow connections to servers that have OpenPGP keys as well. */
-	const int cert_type_priority[3] = {GNUTLS_CRT_X509,
-		GNUTLS_CRT_OPENPGP, 0};
+	const int cert_type_priority[3] = {GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0};
+	const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
 #endif
 
 	if (type != 0)
@@ -812,7 +810,6 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	j->using_ssl = 0;
 	if (use_ssl) {
 		int ret, retrycount = 65535; // insane
-		gnutls_global_init();
 		gnutls_certificate_allocate_credentials(&(j->xcred));
 		/* XXX - ~/.ekg/certs/server.pem */
 		gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
@@ -820,6 +817,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 		gnutls_set_default_priority(j->ssl_session);
 		gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
 		gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
+		gnutls_compression_set_priority(j->ssl_session, comp_type_priority);
 
 		/* we use read/write instead of recv/send */
 		gnutls_transport_set_pull_function(j->ssl_session, (gnutls_pull_func)read);
@@ -960,12 +958,20 @@ int jabber_plugin_init()
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);
 
+#ifdef HAVE_GNUTLS
+	gnutls_global_init();
+#endif
+
 	return 0;
 }
 
 static int jabber_plugin_destroy()
 {
 	list_t l;
+
+#ifdef HAVE_GNUTLS
+	gnutls_global_deinit();
+#endif
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_destroy((session_t*) l->data);
