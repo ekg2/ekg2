@@ -2,8 +2,9 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- * 		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
- * 		  2004 Adam Mikuta <adammikuta@poczta.onet.pl>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Adam Mikuta <adammikuta@poczta.onet.pl>
+ *		  2005 Leszek Krupiñski <leafnode@wafel.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -159,6 +160,10 @@ int gg_user_online_handle(void *data, va_list ap)
         gg_private_t *g = session_private_get(session);
 	int quiet = (int ) data;
         int uin = atoi(u->uid + 3);
+
+        if (!session_check(session, 0, "gg") || !g) {
+		return 0;
+        }
 
         gg_remove_notify_ex(g->sess, uin, gg_userlist_type(u));
         ekg_group_remove(u, "__offline");
@@ -1335,4 +1340,5 @@ int userlist_read(session_t *session)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=0 noexpandtab sw=8
  */
