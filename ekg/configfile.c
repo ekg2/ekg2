@@ -164,10 +164,13 @@ int config_read_later(const char *filename)
 
                         array_free(pms);
 		} else if (!xstrcasecmp(buf, "plugin")) {
+			xfree(buf);
 			continue;
 		} else if (!xstrcasecmp(buf, "alias")) {
+			xfree(buf);
 			continue;
 		} else if (!xstrcasecmp(buf, "at")) {
+			xfree(buf);
 			continue;
 		} else {
                         ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
@@ -261,6 +264,7 @@ int config_read(const char *filename)
 			array_free(pms);
 
 		} else if (!xstrcasecmp(buf, "bind")) {
+			xfree(buf);
 			continue;
 		} else if (!xstrcasecmp(buf, "at")) {
 			char **p = array_make(foo, " \t", 2, 1, 0);
