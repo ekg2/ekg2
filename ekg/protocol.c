@@ -412,7 +412,8 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			timestamp_type = "timestamp_today";
 
 		snprintf(tmp, sizeof(tmp), "%s_%s", class_str, timestamp_type);
-		strftime(timestamp, sizeof(timestamp), format_find(tmp), tm_msg);
+		if (!strftime(timestamp, sizeof(timestamp), format_find(tmp), tm_msg))
+			xstrcpy(timestamp, "TOOLONG");
 	}
 
 	/* if there is a lot of recipients, conference should be made */

@@ -100,7 +100,8 @@ int irc_write(irc_private_t *j, const char *format, ...)
 	text = vsaprintf(format, ap);
 	va_end(ap);
 
-	debug("[irc]_send:  %s\n", text);
+	debug("[irc]_send:  %s\n", text?xstrlen(text)?text:"[0LENGTH]":"[FAILED]");
+	if (!text) return -1;
 
 	if (!j->obuf) {
 		int res;

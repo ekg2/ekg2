@@ -452,7 +452,8 @@ COMMAND(cmd_status)
         now_days = t->tm_yday;
 
         t = localtime(&ekg_started);
-        strftime(buf1, sizeof(buf1), format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started"), t);
+        if (!strftime(buf1, sizeof(buf1), format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started"), t))
+		xstrcpy(buf1, "TOOLONG");
 
         printq("show_status_ekg_started_since", buf1);
         printq("show_status_footer");
@@ -1502,7 +1503,9 @@ list_user:
 			char buf[100];		
 
 			status_time = localtime(&(u->status_time));
-	        	strftime(buf, sizeof(buf), format_find("user_info_status_time_format") ,status_time);
+	        	if (!strftime(buf, sizeof(buf), format_find("user_info_status_time_format") ,status_time))
+				xstrcpy(buf, "TOOLONG");
+
 
 			printq("user_info_status_time", buf);
 		}
@@ -1538,7 +1541,8 @@ list_user:
 			
 			if (u->last_seen) {
 				last_seen_time = localtime(&(u->last_seen));
-				strftime(buf, sizeof(buf), format_find("user_info_last_seen_time"), last_seen_time);
+				if (!strftime(buf, sizeof(buf), format_find("user_info_last_seen_time"), last_seen_time))
+					xstrcpy(buf, "TOOLONG");
 				printq("user_info_last_seen", buf);
 			} else
 				printq("user_info_never_seen");
@@ -2910,7 +2914,8 @@ COMMAND(cmd_at)
 			gettimeofday(&tv, NULL);
 
 			at_time = localtime((time_t *) &t->ends.tv_sec);
-			strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time);
+			if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time))
+				xstrcpy(tmp, "TOOLONG");
 
 			if (t->persist) {
 				sec = t->period;
@@ -3521,11 +3526,13 @@ COMMAND(cmd_last)
 				continue;
 
 			tm = localtime(&ll->time);
-			strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm);
+			if (!strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm))
+				xstrcpy(buf, "TOOLONG");
 
 			if (show_sent && ll->type == 0 && !(ll->sent_time - config_time_deviation <= ll->time && ll->time <= ll->sent_time + config_time_deviation)) {
 				st = localtime(&ll->sent_time);
-				strftime(buf2, sizeof(buf2), format_find((tm->tm_yday == now->tm_yday) ? "last_list_timestamp_today" : "last_list_timestamp"), st);
+				if (!strftime(buf2, sizeof(buf2), format_find((tm->tm_yday == now->tm_yday) ? "last_list_timestamp_today" : "last_list_timestamp"), st))
+					xstrcpy(buf2, "TOOLONG");
 				time_str = saprintf("%s/%s", buf, buf2);
 			} else
 				time_str = xstrdup(buf);
@@ -3583,7 +3590,8 @@ COMMAND(cmd_queue)
 
 		if (!params[0] || !xstrcasecmp(m->rcpts, params[0])) {
 			tm = localtime(&m->time);
-			strftime(buf, sizeof(buf), format_find("queue_list_timestamp"), tm);
+			if (!strftime(buf, sizeof(buf), format_find("queue_list_timestamp"), tm))
+				xstrcpy(buf, "TOOLONG");
 
 			printq("queue_list_message", buf, m->rcpts, m->message);
 		}

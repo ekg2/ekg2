@@ -326,10 +326,12 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 				format = format_string(config_timestamp);
 				if (xstrcmp(format, "")) {
+					/* GiM: FIXME */
 					tmp = saprintf("%s ", format);
 					s = fstring_new(tmp);
 
-        	                        strftime(buf, sizeof(buf), s->str, tm);
+        	                        if (!strftime(buf, sizeof(buf)-1, s->str, tm))
+						xstrcpy(buf, "TOOLONG");
 
 					l->ts = xstrdup(buf);
 					l->ts_len = xstrlen(l->ts);
@@ -1157,11 +1159,12 @@ void update_statusbar(int commit)
 	{
 		time_t t = time(NULL);
 		struct tm *tm;
-		char tmp[16];
+		char tmp[100];
 
 		tm = localtime(&t);
 
-		strftime(tmp, sizeof(tmp), format_find("statusbar_timestamp"), tm);
+		if (!strftime(tmp, sizeof(tmp), format_find("statusbar_timestamp"), tm))
+			strcpy(tmp, "TOOLONG!");
 		
 		__add_format("time", 1, tmp);
 	}

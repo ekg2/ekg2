@@ -598,7 +598,10 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 
 		t = time(NULL);
 		tm = localtime(&t);
-		strftime(buf, sizeof(buf), config_timestamp, tm);
+		/* I KNOW THIS PLUGIN IS UNUSED, BUT THIS PIECE
+		 * OF CODE IS SHITTY */
+		if (!strftime(buf, sizeof(buf), config_timestamp, tm))
+			xstrcpy(buf, "TOOLONG");
 
 		string_append(s, buf);
 		

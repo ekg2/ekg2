@@ -930,7 +930,8 @@ int jabber_status_show_handle(void *data, va_list ap)
 	now_days = t->tm_yday;
 
 	t = localtime(&s->last_conn);
-	strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t);
+	if (!strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t))
+		xstrcpy(buf, "TOOLONG");
 
 	if (s->connected)
 		print("show_status_connected_since", buf);
