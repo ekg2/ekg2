@@ -652,7 +652,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		*(xstrchr(username, '@')) = 0;
 
 		if (!resource)
-			resource = "ekg2";
+			resource = JABBER_DEFAULT_RESOURCE;
 
 		j->stream_id = xstrdup(jabber_attr((char **) atts, "id"));
 
@@ -882,6 +882,8 @@ int jabber_status_show_handle(void *data, va_list ap)
 	const int ssl_port_s = session_int_get(s, "ssl_port");
 	int ssl_port = (ssl_port_s != -1) ? ssl_port_s : 5223;
 #endif
+	const char *resource = session_get(s, "resource");
+	char *fulluid;
 	struct tm *t;
 	time_t n;
 	int now_days;
@@ -890,12 +892,16 @@ int jabber_status_show_handle(void *data, va_list ap)
 	if (!s || !j) 
 		return -1;
 
+	fulluid = saprintf("%s/%s", s->uid, (resource ? resource : JABBER_DEFAULT_RESOURCE));
+	
 	// nasz stan
 	if ((u = userlist_find(s, s->uid)) && u->nickname)
-		print("show_status_uid_nick", s->uid, u->nickname);
+		print("show_status_uid_nick", fulluid, u->nickname);
 	else
-		print("show_status_uid", s->uid);
+		print("show_status_uid", fulluid);
 
+	xfree(fulluid);
+	
 	// serwer
 #ifdef HAVE_GNUTLS
 	if (j->using_ssl)

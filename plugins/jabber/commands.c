@@ -692,7 +692,7 @@ COMMAND(jabber_command_ver)
 	}
 
 	if (!resource)
-		resource = "ekg2";
+		resource = JABBER_DEFAULT_RESOURCE;
 
 	if (!(query_res = ut->resource)) {
 		print("jabber_unknown_resource", session_name(session), query_uid);

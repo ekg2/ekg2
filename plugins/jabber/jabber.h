@@ -15,6 +15,7 @@
 #endif
 
 #define DEFAULT_CLIENT_NAME "EKG2 -- http://www.ekg2.org"
+#define JABBER_DEFAULT_RESOURCE "ekg2"
 
 struct xmlnode_s {
 	char *name;
