@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt commands.txt sessions.txt
+EXTRA_DIST = vars.txt commands.txt session.txt
 
 lib_LTLIBRARIES = gg.la
 gg_la_SOURCES = commands.c dcc.c gg.c misc.c pubdir.c pubdir50.c \
