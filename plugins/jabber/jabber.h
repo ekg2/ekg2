@@ -40,8 +40,8 @@ typedef struct {
 
 plugin_t jabber_plugin;
 
-const char *jabber_attr(char **atts, const char *att);
-const char *jabber_digest(const char *sid, const char *password);
+char *jabber_attr(char **atts, const char *att);
+char *jabber_digest(const char *sid, const char *password);
 
 void jabber_handle(session_t *s, xmlnode_t *n);
 
