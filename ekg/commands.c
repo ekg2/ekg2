@@ -1537,7 +1537,7 @@ COMMAND(cmd_set)
 				break;
 		}
 	}
-set_end:
+	
 	xfree(value);
 
 	return res;
