@@ -2230,6 +2230,7 @@ next:
 
 		xfree(p[0]);
 		p[0] = xstrdup(i->name);
+		session = session_find(i->s_uid);
 		goto query;
 	}	
 
