@@ -518,11 +518,15 @@ int event_check(const char *session, const char *name, const char *target, const
 
         if (!(__session = session_find(session)))
 		__session = session_current;
+
 	if (__session)
                 uid = get_uid(__session, target);
         else
                 uid = NULL;
 
+	if (uid && ignored_check(__session, uid) & IGNORE_EVENTS) {
+		return -1;
+	}
 
 	if (!(ev = event_find_all(name, target, data)) && uid)
 		ev = event_find_all(name, uid, data);

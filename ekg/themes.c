@@ -975,6 +975,7 @@ void theme_init()
 
 	/* ignore, unignore, block, unblock */
 	format_add("ignored_added", "%> Dodano %T%1%n do listy ignorowanych\n", 1);
+        format_add("ignored_modified", "%> Zmodyfikowano poziom ignorowania %T%1%n\n", 1);
 	format_add("ignored_deleted", "%) Usuniêto %1 z listy ignorowanych\n", 1);
 	format_add("ignored_deleted_all", "%) Usuniêto wszystkich z listy ignorowanych\n", 1);
 	format_add("ignored_exist", "%! %1 jest ju¿ na li¶cie ignorowanych\n", 1);

@@ -6,7 +6,6 @@ rozwi±zanie.
 
 * klient:
   - /msg_all (the same as ,,msg *'' in ekg1) (del)
-  - dzia³anie ignore (del)
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - bindowane CTRL+Strza³ki, PageUP itd (del)

@@ -142,11 +142,12 @@ int gg_user_online_handle(void *data, va_list ap)
         userlist_t **__u = va_arg(ap, userlist_t**), *u = *__u;
         session_t **__session = va_arg(ap, session_t**), *session = *__session;
         gg_private_t *g = session_private_get(session);
+	int quiet = (int ) data;
         int uin = atoi(u->uid + 3);
 
         gg_remove_notify_ex(g->sess, uin, gg_userlist_type(u));
         ekg_group_remove(u, "__offline");
-        print("modify_online", format_user(session, u->uid));
+        printq("modify_online", format_user(session, u->uid));
         gg_add_notify_ex(g->sess, uin, gg_userlist_type(u));
 
 	return 0;
@@ -1598,6 +1599,7 @@ int gg_plugin_init()
 	query_connect(&gg_plugin, "status-show", gg_status_show_handle, NULL);
 	query_connect(&gg_plugin, "user-offline", gg_user_offline_handle, NULL);
 	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
+        query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
 
 #define possibilities(x) array_make(x, " ", 0, 1, 1)
 #define params(x) array_make(x, " ", 0, 1, 1)

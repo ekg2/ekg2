@@ -940,7 +940,7 @@ COMMAND(cmd_ignore)
 	const char *uid;
 
 	if (*name == 'i' || *name == 'I') {
-		int flags;
+		int flags, modified = 0;
 
 		if (!params[0]) {
 			list_t l;
@@ -972,14 +972,18 @@ COMMAND(cmd_ignore)
 			return res;
 		}
 
-		if (params[1]) {
-			flags = ignore_flags(params[1]);
+                if ((flags = ignored_check(session, get_uid(session, params[0]))))
+                        modified = 1;
 
-			if (!flags) {
+		if (params[1]) {
+			int __flags = ignore_flags(params[1]);
+
+			if (!__flags) {
 				printq("invalid_params", name);
 				return -1;
 			}
 
+                        flags |= __flags;
 		} else
 			flags = IGNORE_ALL;
 
@@ -988,13 +992,16 @@ COMMAND(cmd_ignore)
 			return -1;
 		}
 
-		if (!ignored_add(session, uid, flags)) {
-			printq("ignored_added", format_user(session, uid));
-			config_changed = 1;
-		} else {
-			printq("ignored_exist", format_user(session, uid));
-			return -1;
-		}
+		if (modified)
+			ignored_remove(session, uid);
+
+                if (!ignored_add(session, uid, flags)) {
+                        if (modified)
+                                printq("ignored_modified", format_user(session, uid));
+                        else
+                                printq("ignored_added", format_user(session, uid));
+                        config_changed = 1;
+                }
 
 	} else {
 		int unignore_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);

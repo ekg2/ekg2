@@ -385,13 +385,16 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 		case GG_EVENT_DCC_CLIENT_ACCEPT:
 		{
 			char peer[16], uin[16];
+			session_t *s; 
 
 			debug("[gg] GG_EVENT_DCC_CLIENT_ACCEPT\n");
 
 			snprintf(peer, sizeof(peer), "gg:%d", d->peer_uin);
 			snprintf(uin, sizeof(uin), "gg:%d", d->uin);
 			
-			if (!session_find(uin) || !userlist_find(session_find(uin), peer) ) {
+			s = session_find(uin);
+
+			if (!s || !userlist_find(s, peer) || (ignored_check(s, peer) & IGNORE_DCC)) {
 				debug("[gg] unauthorized client (uin=%ld), closing connection\n", d->peer_uin);
 				gg_free_dcc(d);
 				return;

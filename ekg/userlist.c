@@ -695,12 +695,10 @@ int ignored_remove(session_t *session, const char *uid)
 	tmp = xstrdup(u->uid);
 	query_emit(NULL, "protocol-ignore", &tmp, &level, &tmp2);
 	xfree(tmp);
-#if 0
-	if (sess && (level & IGNORE_STATUS || level & IGNORE_STATUS_DESCR)) {
-		gg_remove_notify_ex(sess, u->uin, userlist_type(u));
-		gg_add_notify_ex(sess, u->uin, userlist_type(u));
+	
+	if ((level & IGNORE_STATUS || level & IGNORE_STATUS_DESCR)) {
+		query_emit(NULL, "protocol-unignore", &u, &session);
 	}
-#endif
 
 	return 0;
 }

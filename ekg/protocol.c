@@ -56,6 +56,7 @@ void protocol_init()
 	query_connect(NULL, "protocol-disconnected", protocol_disconnected, NULL);
 }
 
+
 /*
  * protocol_reconnect_handler()
  *
@@ -162,6 +163,8 @@ int protocol_status(void *data, va_list ap)
 	int *__port = va_arg(ap, int*), port = *__port;
 	userlist_t *u;
 	session_t *s;
+        int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
+
 
 	if (!(s = session_find(session)))
 		return 0;
@@ -169,6 +172,11 @@ int protocol_status(void *data, va_list ap)
 	/* ignorujemy nieznanych nam osobników */
 	if (!(u = userlist_find(s, uid)))
 		return 0;
+
+        ignore_status = ignored_check(s, uid) & IGNORE_STATUS;
+        ignore_status_descr = ignored_check(s, uid) & IGNORE_STATUS_DESCR;
+	ignore_events = ignored_check(s, uid) & IGNORE_EVENTS;
+        ignore_notify = ignored_check(s, uid) & IGNORE_NOTIFY;
 
 	/* zapisz adres IP i port */
 	u->ip = (host) ? inet_addr(host) : 0;
@@ -251,26 +259,30 @@ notify_plugins:
 	        u->last_descr = xstrdup(u->descr);
 	}
 
-	if (!xstrcasecmp(u->status, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA))
+	if (!xstrcasecmp(u->status, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
 		query_emit(NULL, "event_online", __session, __uid);
 
-	xfree(u->status);
-	u->status = xstrdup(status);
+	if (!ignore_status) {
+		xfree(u->status);
+		u->status = xstrdup(status);
+	}
 
-	if (xstrcasecmp(u->descr, descr))
+	if (xstrcasecmp(u->descr, descr) && !ignore_events)
 		query_emit(NULL, "event_descr", __session, __uid, __descr);
 
-	xfree(u->descr);
-	u->descr = xstrdup(descr);
-	u->status_time = time(NULL);
+	if (!ignore_status && !ignore_status_descr) {
+		xfree(u->descr);
+		u->descr = xstrdup(descr);
+		u->status_time = time(NULL);
+	}
 	
 	query_emit(NULL, "userlist-changed", __session, __uid);
 
-	if (!xstrcasecmp(status, EKG_STATUS_AVAIL))
+	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && !ignore_events)
 		query_emit(NULL, "event_avail", __session, __uid);
-	if (!xstrcasecmp(status, EKG_STATUS_AWAY))
+	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && !ignore_events)
                 query_emit(NULL, "event_away", __session, __uid);
-        if (!xstrcasecmp(status, EKG_STATUS_NA))
+        if (!xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
                 query_emit(NULL, "event_na", __session, __uid);
 
 	return 0;
@@ -440,15 +452,19 @@ int protocol_message(void *data, va_list ap)
 	userlist_t *userlist = userlist_find(session_class, uid);
 	char *target;
 
+	if (ignored_check(session_class, uid) & IGNORE_MSG)
+		return -1;
+
 	if (userlist && window_current && window_current->target && !xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
 		userlist->blink = 0;
 	else if (userlist && config_make_window && config_display_blinking)	
 		userlist->blink = 1;
 //	else if (window_find(uid)) 
 //		userlist->blink = 1;
-	/* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
 
         target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
+
+        /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
 	if (!userlist) 
 		tabnick_add(uid);
 
