@@ -10,6 +10,6 @@ ncurses_la_CPPFLAGS = $(NCURSES_CPPFLAGS) $(LTDLINCL)
 libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
 
-install:
+install-data-am:
 	$(INSTALL) -D -m 644 vars.txt $(DESTDIR)$(datadir)/ekg/plugins/ncurses/vars.txt
 

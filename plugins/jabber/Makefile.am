@@ -8,6 +8,6 @@ jabber_la_CPPFLAGS = $(EXPAT_CPPFLAGS) $(LIBGNUTLS_CFLAGS) $(LTDLINCL)
 
 libdir = $(plugindir)
 
-install:
+install-data-am:
 	$(INSTALL) -D -m 644 commands.txt $(DESTDIR)$(datadir)/ekg/plugins/jabber/commands.txt
 
