@@ -19,7 +19,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
                 LIBS="-lgadu -lcrypto -lssl $LIBS $PTHREAD_LIBS"
 		AC_CHECK_HEADERS([libgadu.h],
 		[
-			AC_CHECK_LIB([gadu], [gg_token],
+			AC_CHECK_LIB([gadu], [gg_logoff],
 			[
 				AC_DEFINE([HAVE_LIBGADU], 1, [define if you have libgadu])
 				LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS"
