@@ -1722,7 +1722,7 @@ int msg_all(session_t *s, const char *function, const char *what)
 		if (!u || !u->uid)
 			continue;
 
-		tmp = saprintf("%s %s %s", function, get_nickname(s, u->uid), what);
+		tmp = saprintf("%s \"%s\" %s", function, get_nickname(s, u->uid), what);
 		command_exec(NULL, s, tmp, 0);
 		xfree(tmp);
 	}
