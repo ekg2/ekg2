@@ -274,7 +274,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		temp = saprintf("%s%s", IRC4, nick);
 		w = window_find_s(s, temp);
 		if (w) {
-			if (session_int_get(s, "close_windows") != 0) {
+			if (session_int_get(s, "close_windows") > 0) {
 				debug("[irc] del_person() window_kill(w, 1); %s\n", w->target);
 				window_kill(w, 0);
 		    		window_switch(window_current->id);
@@ -319,7 +319,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	
 	tmp = saprintf("%s%s", IRC4, name);
 	w = window_find_s(s, tmp);
-	if (w && (session_get(s, "close_windows") != 0)) {
+	if (w && (session_int_get(s, "close_windows") > 0)) {
 		debug("[irc]_del_channel() window_kill(w, 1); %s\n", w->target);
 		window_kill(w, 0);
 		window_switch(window_current->id);

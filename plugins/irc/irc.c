@@ -789,7 +789,8 @@ COMMAND(irc_command_connect)
 COMMAND(irc_command_disconnect)
 {
 	irc_private_t *j = irc_private(session);
-	char *reason = (char *)(params[0]?params[0]:QUITMSG(session));
+	char *reason = (char *)(params? params[0]?params[0]:QUITMSG(session): 
+					NULL);
 	
 	debug("[irc] comm_disconnect() !!!\n");
 
@@ -811,7 +812,7 @@ COMMAND(irc_command_disconnect)
 	
 
 	/* params can be NULL
-	 * [if we get ERROR from server]
+	 * [if we get ERROR from server, misc.c irc_c_error]
 	 */
 	if (params && session_connected_get(session))
 		irc_write (j, "QUIT :%s\r\n", params[0]?params[0]:QUITMSG(session));
