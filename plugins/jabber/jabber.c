@@ -762,8 +762,6 @@ int jabber_status_show_handle(void *data, va_list ap)
 	if (!s || !j) 
 		return -1;
 
-	print("show_status_header");
-
 	// nasz stan
 	if ((u = userlist_find(s, s->uid)) && u->nickname)
 		print("show_status_uid_nick", s->uid, u->nickname);
@@ -801,8 +799,6 @@ int jabber_status_show_handle(void *data, va_list ap)
 		tmp = format_string(format_find("show_status_notavail"));
 
 	print("show_status_status_simple", tmp);
-
-	print("show_status_footer");
 
 	return 0;
 }

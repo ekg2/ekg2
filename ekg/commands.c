@@ -634,6 +634,8 @@ COMMAND(cmd_status)
 	char buf1[100];
 	session_t *s = NULL;
 
+        printq("show_status_header");
+
 	if (!params[0] && session)
 		query_emit(plugin_find_uid(session->uid), "status-show", &session->uid);
 	else if (!(s = session_find(params[0]))) {
@@ -650,6 +652,8 @@ COMMAND(cmd_status)
         strftime(buf1, sizeof(buf1), format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started"), t);
 
         printq("show_status_ekg_started_since", buf1);
+        printq("show_status_footer");
+
 	return 0;
 }
 

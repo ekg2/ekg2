@@ -173,8 +173,6 @@ int gg_status_show_handle(void *data, va_list ap)
                 return -1;
 
 
-        print("show_status_header");
-
         if (config_profile)
                 print("show_status_profile", config_profile);
 
@@ -233,8 +231,6 @@ int gg_status_show_handle(void *data, va_list ap)
 
         xfree(tmp);
         xfree(priv);
-
-        print("show_status_footer");
 
         return 0;
 }

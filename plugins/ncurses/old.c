@@ -1816,7 +1816,6 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 	int ch;
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
-	aspell_line = xstrdup(ncurses_line);
 #endif
 
 	ch = ekg_getch(0);
@@ -1980,9 +1979,10 @@ action:
 			p = ncurses_lines[lines_start + i];
 
 #ifdef WITH_ASPELL
-			memset(aspell_line, 32, LINE_MAXLEN);
+			aspell_line = xmalloc(xstrlen(p));
+			memset(aspell_line, 32, xstrlen(aspell_line));
 			if(line_start == 0) 
-			mispelling = 0;
+				mispelling = 0;
 				    
 			if(config_aspell == 1)
 				spellcheck(p, aspell_line);
@@ -2008,7 +2008,7 @@ action:
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
 
 #ifdef WITH_ASPELL			
-		
+		aspell_line = xmalloc(xstrlen(ncurses_line));
 		memset(aspell_line, 32, xstrlen(aspell_line));
 		if(line_start == 0) 
 			mispelling = 0;
