@@ -115,7 +115,7 @@ int jabber_session(void *data, va_list ap)
 	session_t *s = session_find(*session);
 
 	if (!s)
-		return;
+		return -1;
 
 	if (data)
 		jabber_private_init(s);
@@ -303,7 +303,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				print("generic", "Po³±czono siê z Jabberem");
 				session_connected_set(s, 1);
 				session_unidle(s);
-				jabber_write(j, "<iq type=\"get\" id=\"roster\"><query xmlns=\"jabber:iq:roster\"/></iq>");
+				jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 				jabber_write_status(s);
 			}
 
@@ -347,7 +347,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				ns = jabber_attr(q->atts, "xmlns");
 				
 				if (ns && !strncmp(ns, "jabber:iq:roster", 16)) {
-					userlist_t u;
+					userlist_t u, *tmp;
 
 					xmlnode_t *item = xmlnode_find_child(q, "item");
 					for (; item ; item = item->next) {
@@ -361,17 +361,17 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 						u.status = xstrdup(EKG_STATUS_NA);
 						//XXX grupy
 
+
 						/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
-						   w przeciwnym wypadku - nalezy go dopisaæ do userlisty */
+						   w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
+						   mamy ju¿ w liscie, to przyszla do nas zmiana rostera; usunmy wiec najpierw, a potem
+						   sprawdzmy, czy warto dodawac :) */
+						if ((tmp = userlist_find(s, u.uid)) )
+							userlist_remove(s, tmp);
 						if (jabber_attr(item->atts, "subscription") && !strncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
- 							if (userlist_find(s, u.uid))
-                                				userlist_remove(s, userlist_find(s, u.uid));
-						} else {
-							if (userlist_find(s, u.uid)) 
-								userlist_replace(s, &u);
-					 		else 
-								list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
-						};
+							/* nic nie robimy, bo juz usuniete */
+						} else 
+							list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
 					}; /* for */
 				} /* jabber:iq:roster */
 			} /* if query */
