@@ -321,7 +321,7 @@ group_cleanup:
 		footer = format_find("contacts_metacontacts_footer");
 	} 
 
-        if (!session_current->userlist && window_current->userlist && !all && contacts_group_index == 0) {
+        if (!session_current->userlist && !window_current->userlist && !all && contacts_group_index == 0) {
                 n->redraw = 1;
                 return 0;
         }
