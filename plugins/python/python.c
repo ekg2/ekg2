@@ -186,7 +186,15 @@ int python_protocol_status(void *data, va_list ap)
         ;
         PYTHON_HANDLE_FOOTER()
 
-	return 0;
+
+        switch (python_handle_result) {
+                case 0:
+                        return -1;
+                        break;
+                default:
+                        return 0;
+                        break;
+        }
 }
 
 /**
@@ -233,7 +241,14 @@ int python_protocol_message(void *data, va_list ap)
                 PYTHON_HANDLE_FOOTER()
         }
 
-        return 0;
+        switch (python_handle_result) {
+                case 0:
+                        return -1;
+                        break;
+                default:
+                        return 0;
+                        break;
+        }
 }
 
 /**

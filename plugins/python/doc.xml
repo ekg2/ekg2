@@ -492,7 +492,9 @@ def handle_status(session, uid, status, desc):
     if status == ekg.STATUS_AWAY:
 	ekg.echo("Chyba go nie ma...")
     if status == ekg.STATUS_XA:
-	ekg.echo("Chyba bardzo go nie ma.")
+	ekg.echo("Chyba bardzo go nie ma, to na grzyb mi taki status?. Po³ykam. *¶lurp*")
+	return 0
+    return 1
 
 def handle_msg(session, uid, type, text, sent_time, ignore_level):
     ekg.debug("[test script] some debug\n")
@@ -506,6 +508,18 @@ def handle_msg(session, uid, type, text, sent_time, ignore_level):
     ekg.echo("Czas  : "+time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.gmtime(sent_time)))
     ekg.echo("Ign   : "+str(ignore_level))
     ekg.echo("TxtLen: "+str(len(text)))
+    if len(text) == 13:
+	ekg.echo("Oj, ale pechowa liczba, nie odbieram")
+	return 0
+    return 1
+
+def handle_msg_own(session, target, text):
+    ekg.debug("[test script] some debug\n")
+    ekg.echo("Wysy³am wiadomo¶æ!")
+    ekg.echo("Sesja : "+str(session))
+    ekg.echo("Target: "+target)
+    ekg.echo("TxtLen: "+str(len(text)))
+    return 1
 ]]>
    </programlisting>
 </sect2>
