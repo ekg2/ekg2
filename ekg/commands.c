@@ -1929,8 +1929,8 @@ COMMAND(cmd_test_deltab)
 
 COMMAND(cmd_test_debug)
 {
-	if (params[0])
-		debug("%s", params[0]);
+	if (params[0]) 
+		debug("%s\n", params[0]);
 
 	return 0;
 }

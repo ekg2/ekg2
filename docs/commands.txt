@@ -18,8 +18,8 @@ _addtab
 	
 	
 _debug
-	parametry: 
-	krotki opis: wy¶wietla tekst w oknie debug
+	parametry:  <tekst>
+	krotki opis: wy¶wietla podany tekst w oknie debug
 	
 	
 _debug_dump
