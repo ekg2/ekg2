@@ -9,6 +9,8 @@ zg³osi³ b³±d.
 // 2004-04-10
 - przeniesione zmienne w pluginie ncurses - tak, aby domy¶lne dzia³a³y (del)
 - pozmieniane nazwy funkcji w ncurses (del)
+- gdy mamy otwarte okienko z nieznanym numerkiem to po dodaniu go do
+  userlisty zostanie zmieniony nag³ówek (del)
 
 // 2004-04-09
 - poprawka: dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:

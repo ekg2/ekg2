@@ -479,7 +479,7 @@ COMMAND(cmd_add)
 	if (u || userlist_add(session, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
-		query_emit(NULL, "userlist-added", &uid);
+		query_emit(NULL, "userlist-added", &uid, &params[1]);
                 query_emit(NULL, "add-notify", &session_current->uid, &uid);
                 xfree(uid);
 

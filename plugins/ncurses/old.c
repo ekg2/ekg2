@@ -2044,28 +2044,6 @@ int ui_ncurses_event(const char *event, ...)
 		}
 	}
 
-	if (!strcmp(event, "userlist_changed")) {
-		const char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*);
-		list_t l;
-
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-			ncurses_window_t *n = w->private;
-
-			if (!w->target || strcasecmp(w->target, p1))
-				continue;
-
-			xfree(w->target);
-			w->target = xstrdup(p2);
-
-			xfree(n->prompt);
-			n->prompt = format_string(format_find("ncurses_prompt_query"), w->target);
-			n->prompt_len = strlen(n->prompt);
-		}
-
-		goto cleanup;
-	}
-
 cleanup:
 	va_end(ap);
 

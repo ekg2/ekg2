@@ -188,6 +188,26 @@ static int ncurses_ui_window_clear(void *data, va_list ap)
 
 static int ncurses_userlist_changed(void *data, va_list ap)
 {
+	char **p1 = va_arg(ap, char**);
+	char **p2 = va_arg(ap, char**);
+                
+	list_t l;
+
+        for (l = windows; l; l = l->next) {
+       		window_t *w = l->data;
+                ncurses_window_t *n = w->private;
+
+                if (!w->target || xstrcasecmp(w->target, *p1))
+                	continue;
+
+                xfree(w->target);
+                w->target = xstrdup(*p2);
+                
+		xfree(n->prompt);
+                n->prompt = format_string(format_find("ncurses_prompt_query"), w->target);
+                n->prompt_len = strlen(n->prompt);
+        }
+
 	ncurses_contacts_update(NULL);
 
 	return 0;
@@ -260,6 +280,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "session-removed", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-changed", ncurses_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-changed", ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, "userlist-added", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
