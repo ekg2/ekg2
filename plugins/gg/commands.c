@@ -1168,7 +1168,8 @@ COMMAND(gg_command_modify)
 		
 		if (match_arg(argv[i], 'u', "uid", 2) && argv[i + 1]) {
 			userlist_t *existing;
-			char *tmp;
+			char *tmp1, *tmp2;
+			int q = 1;
 
 			if (!valid_uid(argv[i + 1])) {
 				printq("invalid_uid");
@@ -1178,7 +1179,7 @@ COMMAND(gg_command_modify)
 
 			if ((existing = userlist_find(session, argv[i + 1]))) {
 				if (existing->nickname) {
-					printq("user_exists_other", argv[i], format_user(session, existing->uid), session_name(session));
+					printq("user_exists_other", argv[i + 1], format_user(session, existing->uid), session_name(session));
 					array_free(argv);
 					return -1;
 				} else {
@@ -1198,17 +1199,19 @@ COMMAND(gg_command_modify)
 				}
 			}
 
-			tmp = xstrdup(u->uid);
-			query_emit(NULL, "userlist-removed", &tmp);
-			xfree(tmp);
+			tmp1 = xstrdup(u->uid);
+			tmp2 = xstrdup(argv[i + 1]);
+			query_emit(NULL, "userlist-removed", &tmp1, &tmp2, &q);
+			xfree(tmp1);
+			xfree(tmp2);
 
 			userlist_clear_status(session, u->uid);
 
-			tmp = xstrdup(argv[i + 1]);
-			query_emit(NULL, "userlist-added", &tmp);
+			tmp1 = xstrdup(argv[++i]);
+			query_emit(NULL, "userlist-added", &tmp1, &tmp1, &q);
 
 			xfree(u->uid);
-			u->uid = tmp;
+			u->uid = tmp1;
 
 			modified = 1;
 			continue;
