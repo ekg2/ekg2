@@ -380,11 +380,25 @@ static void binding_previous_only_history(const char *arg)
                         history[0] = xstrdup(line);
                 history_index++;
 		if (xstrchr(history[history_index], '\015')) {
+			char **tmp;
+			int i;
+			
                         if (input_size == 1) {
                                 input_size = 5;
                                 ncurses_input_update();
                         }
-			lines = array_make(history[history_index], "\015", 0, 0, 0);
+
+                        tmp = array_make(history[history_index], "\015", 0, 0, 0);
+
+			array_free(lines);
+			lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
+
+			for (i = 0; i < array_count(tmp); i++) {
+				lines[i] = xmalloc(LINE_MAXLEN);
+				xstrcpy(lines[i], tmp[i]);
+			}
+
+			array_free(tmp);
 			lines_adjust();
 		} else {
 			if (input_size != 1) {
@@ -404,11 +418,25 @@ static void binding_next_only_history(const char *arg)
                         history[0] = xstrdup(line);
                 history_index--;
                 if (xstrchr(history[history_index], '\015')) {
+                        char **tmp;
+                        int i;
+
                         if (input_size == 1) {
                                 input_size = 5;
                                 ncurses_input_update();
 			}
-                        lines = array_make(history[history_index], "\015", 0, 0, 0);
+
+                        tmp = array_make(history[history_index], "\015", 0, 0, 0);
+
+                        array_free(lines);
+                        lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
+
+                        for (i = 0; i < array_count(tmp); i++) {
+                                lines[i] = xmalloc(LINE_MAXLEN);
+                                xstrcpy(lines[i], tmp[i]);
+                        }
+
+                        array_free(tmp);
                         lines_adjust();
                 } else {
                         if (input_size != 1) {
@@ -732,7 +760,7 @@ static void binding_parse(struct binding *b, const char *action)
  */
 int binding_key(struct binding *b, const char *key, int add)
 {
-//	debug("Key: %s\n", key);
+	/* debug("Key: %s\n", key); */
 	if (!xstrncasecmp(key, "Alt-", 4)) {
 		unsigned char ch;
 
@@ -870,7 +898,7 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
 	
 	if (!key || !action)
 		return;
-	
+
 	memset(&b, 0, sizeof(b));
 
 	b.internal = internal;
@@ -1058,8 +1086,8 @@ void ncurses_binding_init()
 {
 	memset(ncurses_binding_map, 0, sizeof(ncurses_binding_map));
 	memset(ncurses_binding_map_meta, 0, sizeof(ncurses_binding_map_meta));
-	ncurses_binding_default();
 
+	ncurses_binding_default();
 	ncurses_binding_complete = binding_complete;
 }
 

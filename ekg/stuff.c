@@ -322,7 +322,7 @@ void binding_list(int quiet, const char *name, int all)
 			continue;
 		}
 
-		if (!b->internal || (all && b->internal))
+		if (!b->internal || (all && b->internal)) 
 			printq("bind_seq_list", b->key, b->action);
 	}
 
