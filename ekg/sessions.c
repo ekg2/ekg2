@@ -538,7 +538,8 @@ int session_write()
                 }
 	}
 	fclose(f);
-
+	
+	reason_changed = 0;
 	return 0;
 }
 

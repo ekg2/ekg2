@@ -1093,6 +1093,8 @@ COMMAND(gg_command_away)
 	return -1;
 
 change:
+        reason_changed = 1;
+
 	if (params[0]) {
 		if (strlen(params[0]) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			printq("descr_too_long", itoa(strlen(params[0]) - GG_STATUS_DESCR_MAXSIZE));
@@ -1131,7 +1133,6 @@ change:
 
 	xfree(descr);
 
-	reason_changed = 1;
 	return 0;
 }
 	
