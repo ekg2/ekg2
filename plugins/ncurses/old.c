@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <locale.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1219,6 +1220,8 @@ void update_statusbar(int commit)
 	__add_format("debug", (!window_current->id), "");
 	__add_format("away", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AWAY)), "");
 	__add_format("avail", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
+        __add_format("dnd", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_DND)), "");
+        __add_format("xa", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_XA)), "");
 	__add_format("invisible", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
 	__add_format("notavail", (!sess || !sess->connected || !xstrcasecmp(sess->status, EKG_STATUS_NA)), "");
 	__add_format("more", (window_current->more), "");
@@ -1798,6 +1801,13 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
+        struct timeval before, after;
+	static char decimal_point;
+	decimal_point  =  localeconv()->decimal_point[0];
+
+	
+	gettimeofday(&before, (struct timezone *)NULL);
+
 
 	ch = ekg_getch(0);
 	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
@@ -2020,7 +2030,21 @@ action:
 #ifdef WITH_ASPELL
 	xfree(aspell_line);	
 #endif
-	ncurses_commit();
+
+//	ncurses_commit();
+
+
+	gettimeofday(&after, (struct timezone *)NULL);
+
+        after.tv_sec -= before.tv_sec;
+        after.tv_usec -= before.tv_usec;
+        if (after.tv_usec < 0)
+                after.tv_sec--, after.tv_usec += 1000000;
+
+//                debug("%9ld%c%02ld real ",
+  //                      after.tv_sec, decimal_point,
+    //                    after.tv_usec/10000);
+
 }
 
 int ncurses_command_window(void *data, va_list ap)
