@@ -755,14 +755,17 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			if(line[i] == '"') 
 				for(i++; i < xstrlen(line) && line[i] != '"'; i++);
 		for(i++; i < xstrlen(line) && xisspace(line[i]); i++);
-		if(i >= xstrlen(line))
+		if(i >= xstrlen(line)) {
 			word_current = words_count + 1;
+			break;
+		}
 		i--;
+		word_current++;
                 /* hmm, jeste¶my ju¿ na wyrazie wskazywany przez kursor ? */
                 if(i >= *line_index)
                         break;
 	}
-
+	words_count = array_count(words);
 	/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
 	if((xisspace(line[xstrlen(line) - 1]) || line[xstrlen(line) - 1] == ',') && word + 1== array_count(words) -1 )
 		word++;

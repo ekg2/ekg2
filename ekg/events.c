@@ -311,9 +311,7 @@ event_t *event_find_all(const char *name, const char *target, const char *data)
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-//				                if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (xstrcasecmp(a[i], b[j]) && xstrcasecmp(a[i], "*")))
-					if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(format_string(a[i], target, data)) && xstrcasecmp(a[i], "*")))
-
+						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(format_string(a[i], target, data)) && xstrcasecmp(a[i], "*") && xstrcasecmp(a[i], b[j])))
         		        	                continue;
                 		        	else if (ev->prio > ev_max_prio){
 	                        	        	ev_max = ev;

@@ -3611,7 +3611,7 @@ void command_init()
 	  "dla znajomych''.\n", 
 	  possibilities("-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online") );
 	  
-	command_add(NULL, "on", params("p e ? CuU c"), cmd_on, 0,
+	command_add(NULL, "on", params("p e ? UuC c"), cmd_on, 0,
 	  " [opcje]", "zarz±dzanie zdarzeniami",
 	  "\n"
 	  "  -a, --add <zdarzenie> <priorytet> <za³o¿enia> <komenda>  dodaje zdarzenie\n"
