@@ -10,13 +10,15 @@ AC_DEFUN(AC_CHECK_LIBGSM,
 			without_libgsm=yes
 		elif test "x$withval" != "xyes"; then
 			LIBGSM_CFLAGS="-I$withval/include"
-			LIBGSM_LIBS="-I$withval/lib"
+			LIBGSM_LIBS="-L$withval/lib"
 		fi
 	])
 
 	if test "x$without_libgsm" != "xyes"; then
-		cflags="$CFLAGS $LIBGSM_CFLAGS"
-		ldflags="$LDFLAGS $LIBGSM_LIBS"
+		old_cppflgs="$CPPFLAGS"
+		old_ldflags="$LDFLAGS"
+		CPPFLAGS="$CPPFLAGS $LIBGSM_CFLAGS"
+		LDFLAGS="$LDFLAGS $LIBGSM_LIBS"
 		have_libgsm_h=""
 		AC_CHECK_HEADERS([gsm.h],
 		[
@@ -39,8 +41,8 @@ AC_DEFUN(AC_CHECK_LIBGSM,
 
 		$as_unset have_libgsm_h
 
-		CFLAGS="$cflags"
-		LDFLAGS="$ldflags"
+		CPPFLAGS="$old_cppflags"
+		LDFLAGS="$old_ldflags"
 	fi
 ])
 
