@@ -95,7 +95,7 @@ COMMAND(cmd_on)
 	}
 
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
-		events_list((params[1] && atoi(params[1])) ? atoi(params[1]) : 0, 0);
+		events_list((params[0] && params[1] && atoi(params[1])) ? atoi(params[1]) : 0, 0);
 		return 0;
 	}
 
