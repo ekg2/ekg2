@@ -13,6 +13,8 @@ zg³osi³ b³±d.
 - dzia³aj±ce keep_reason (del)
 - dzialaj±ca funkcja status (del)
 - dzia³aj±ce dope³nianie nieznajomych uid'ów (del)
+- poprawione dope³nianie funkcji - teraz pewne rzeczy sa zale¿ne 
+  od sesji, w przeciwieñstwie do tego co by³o wcze¶niej (del)
 - [jabber] poprawka statusu ,,niedostêpny z opisem'' (zdz)
 
 // 2004-04-08

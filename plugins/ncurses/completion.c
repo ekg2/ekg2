@@ -143,27 +143,30 @@ static void unknown_uin_generator(const char *text, int len)
 
 static void known_uin_generator(const char *text, int len)
 {
-	list_t l, sl;
 	int done = 0;
+	list_t l;
+	session_t *s;
 
-	for (sl = sessions; sl; sl = sl->next) {	
-		session_t *s = sl->data;
-		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+	if (!session_current)
+		return;
 
-			if (u->nickname && !strncasecmp(text, u->nickname, len)) {
-				array_add(&completions, xstrdup(u->nickname));
-				done = 1;
-			}
-		}
+	s  = session_current;
 
-		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
-
-			if (!done && !strncasecmp(text, u->uid, len))
-				array_add(&completions, xstrdup(u->uid));
+	for (l = s->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		if (u->nickname && !strncasecmp(text, u->nickname, len)) {
+			array_add(&completions, xstrdup(u->nickname));
+			done = 1;
 		}
 	}
+
+	for (l = s->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+
+		if (!done && !strncasecmp(text, u->uid, len))
+			array_add(&completions, xstrdup(u->uid));
+	}
+	
 	for (l = conferences; l; l = l->next) {
 		struct conference *c = l->data;
 
@@ -196,36 +199,42 @@ static void variable_generator(const char *text, int len)
 
 static void ignored_uin_generator(const char *text, int len)
 {
-	list_t l, sl;
+        session_t *s;
+	list_t l;
 
-	for (sl = sessions; sl; sl = sl -> next) {
-		session_t *s = sl->data;
-		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+        if (!session_current)
+                return;
 
-			if (!ignored_check(s, u->uid))
-				continue;
+        s  = session_current;
 
-			if (!u->nickname) {
-				if (!strncasecmp(text, u->uid, len))
-					array_add(&completions, xstrdup(u->uid));
-			} else {
-				if (u->nickname && !strncasecmp(text, u->nickname, len))
-					array_add(&completions, xstrdup(u->nickname));
-			}
+	for (l = s->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+
+		if (!ignored_check(s, u->uid))
+			continue;
+
+		if (!u->nickname) {
+			if (!strncasecmp(text, u->uid, len))
+				array_add(&completions, xstrdup(u->uid));
+		} else {
+			if (u->nickname && !strncasecmp(text, u->nickname, len))
+				array_add(&completions, xstrdup(u->nickname));
 		}
 	}
 }
 
 static void blocked_uin_generator(const char *text, int len)
 {
-	list_t l, sl;
+        session_t *s;
+	list_t l;
 
-        for (sl = sessions; sl; sl = sl -> next) {
-                session_t *s = sl->data;
+        if (!session_current)
+                return;
 
-		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+        s  = session_current;
+
+	for (l = s->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
 
 		if (!ekg_group_member(u, "__blocked"))
 			continue;
@@ -236,7 +245,6 @@ static void blocked_uin_generator(const char *text, int len)
 		} else {
 			if (u->nickname && !strncasecmp(text, u->nickname, len))
 				array_add(&completions, xstrdup(u->nickname));
-			}
 		}
 	}
 }
