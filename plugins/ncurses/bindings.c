@@ -90,25 +90,21 @@ static void binding_toggle_input(const char *arg)
 		ncurses_input_update();
 	} else {
 		string_t s = string_init("");
+		char *tmp;
 		int i;
-		char **tmp, *tmp2;
 	
-		tmp = xmalloc((array_count(lines) + 1 )* sizeof(char *));
-
 		for (i = 0; lines[i]; i++) {
 			if (!xstrcmp(lines[i], "") && !lines[i + 1])
 				break;
 
 			string_append(s, lines[i]);
 			string_append(s, "\r\n");
-			if (!window_current->target)
-				tmp[i] = xstrdup(lines[i]);
 		}
 
 		line = string_free(s, 0);
-		tmp2 = xstrdup(line);
+		tmp = xstrdup(line);
 
-		if (history[0] != line)
+                if (history[0] != line)
                         xfree(history[0]);
                 history[0] = array_join(lines, "\015");
                 xfree(history[HISTORY_MAX - 1]);
@@ -120,16 +116,8 @@ static void binding_toggle_input(const char *arg)
 		input_size = 1;
 		ncurses_input_update();
 
-		if (window_current->target) {
-			command_exec(window_current->target, window_current->session, tmp2, 0);
-		} else {
-			for (i = 0; tmp[i]; i++) {
-				command_exec(window_current->target, window_current->session, tmp[i], 0);
-				xfree(tmp[i]);
-			}
-		}
+		command_exec(window_current->target, window_current->session, tmp, 0);
 		xfree(tmp);
-		xfree(tmp2);
 	}
 }
 
