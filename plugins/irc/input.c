@@ -177,7 +177,11 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 
 			newsender = saprintf("%s%s", IRC4, sender+1);
 
+			FILE *ffp=fopen("/tmp/dupa", "w");
+			fprintf(ffp, "%s\n\n", begin);
 			coloured = irc_ircoldcolstr_to_ekgcolstr(sess, begin);
+			fprintf(ffp, coloured);
+			fclose(ffp);
 			if (ispriv) {
 				if ((ctcp_main_priv(sess, j, ctcp, coloured, newsender,
 								bang?bang+1:"", winname)))
@@ -332,7 +336,7 @@ switch (number) {
 			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01PING %s\01\r\n",
-			purename, space);
+			purename, space?space:"");
 	return 0;
 
 	
@@ -357,7 +361,7 @@ switch (number) {
 			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01ERRMSG %s\01\r\n",
-			purename, space);
+			purename, space?space:"");
 	return 0;
 
 	
