@@ -44,7 +44,7 @@
 
 struct list {
 	void *data;
-	struct list *prev;
+	/*struct list *prev;*/
 	struct list *next;
 };
 

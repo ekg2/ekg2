@@ -403,7 +403,7 @@ int metacontact_session_renamed_handler(void *data, va_list ap)
 
 	for (l = metacontacts; l; l = l->next) {
         	metacontact_t *m = l->data;
-		list_t l2;
+		list_t l2, ltemp;
 
 		for (l2 = m->metacontact_items; l2; l2 = l2->next) {
 			metacontact_item_t *i = (l2 && l2->data) ? l2->data : NULL;
@@ -419,6 +419,7 @@ int metacontact_session_renamed_handler(void *data, va_list ap)
 				name = xstrdup(i->name);
 				prio = i->prio;
 
+				ltemp = l2;
 				l2 = l2->next;
 
 				metacontact_remove_item(m, s_uid, name, 1);
@@ -427,7 +428,8 @@ int metacontact_session_renamed_handler(void *data, va_list ap)
 				if (!l2)
 					break;
 
-				l2 = l2->prev;
+				/*l2 = l2->prev;*/
+				l2 = ltemp;
 
 				if (!l2)
 					break;

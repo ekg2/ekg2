@@ -53,7 +53,7 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 
 	new->data = data;
 	new->next = NULL;
-	new->prev = NULL;
+	/*new->prev = NULL;*/
 
 	if (alloc_size) {
 		new->data = xmalloc(alloc_size);
