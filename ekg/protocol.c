@@ -497,9 +497,10 @@ int protocol_message(void *data, va_list ap)
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
 
+	/* TODO: deletek */
 	if (userlist && window_current && window_current->target && !xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
 		userlist->blink = 0;
-	else if (userlist && config_make_window && config_display_blinking)	
+	else if (userlist && config_make_window && config_display_blinking && xstrcasecmp(uid, session_class->uid))
 		userlist->blink = 1;
 //	else if (window_find(uid)) 
 //		userlist->blink = 1;
