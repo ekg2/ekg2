@@ -1510,8 +1510,10 @@ COMMAND(cmd_list)
                         return -1;
         }
 
-        if (!params[0] && window_current->target) 
+        if (!params[0] && window_current->target) { 
                 params[0] = xstrdup(window_current->target);
+		params[1] = NULL;
+	}
 
 	if (params[0] && *params[0] != '-') {
 		char *status, *groups, *last_status;

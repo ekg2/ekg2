@@ -71,6 +71,7 @@ COMMAND(gg_command_find)
 			printq("not_enough_params", name);
 			return -1;
 		}
+		params[1] = NULL;
 	}
 
 	argv = (char **) params;
