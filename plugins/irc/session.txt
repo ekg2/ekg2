@@ -104,12 +104,19 @@ DISPLAY_AWAY_NOTIFICATION
 
 DISPLAY_IN_CURRENT
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domy¶lna warto¶æ: 0
 
 	suma bitów, okre¶laj±ca, ¿e pewne rzeczy bêd± wy¶wietlane
 	w aktualnym oknie:
 	1 - wynik komendy /names [RACZEJ G£UPOTA!]
-	2 - powiadomienia o /quit
+
+DISPLAY_QUIT
+	typ: liczba
+	domyslna warto¶æ: 0
+	
+	0 - we wszystkich kana³ach, na których by³ u¿ytkownik
+	1 - tylko w oknie statusu
+	2 - tylko w aktualnym oknie
 
 REJOIN
 	typ: liczba

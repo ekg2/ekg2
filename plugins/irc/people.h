@@ -31,8 +31,9 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame);
 
 /* someone made /part */
 int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *chan);
-/* someone made quit */
-int irc_del_person(session_t *s, irc_private_t *j, char *nick);
+/* someone made /quit */
+int irc_del_person(session_t *s, irc_private_t *j, char *nick,
+		char *wholenick, char *reason, int doprint);
 /* we've made /part */
 int irc_del_channel(session_t *s, irc_private_t *j, char *name);
 

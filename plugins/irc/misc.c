@@ -718,24 +718,28 @@ IRC_COMMAND(irc_c_kick)
  */
 IRC_COMMAND(irc_c_quit)
 {
-	char *tmp, *uid, *coloured;
+	char *tmp, *uid, *reason;
+	int dq;
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
-	irc_del_person(s, j, param[0]+1);
-	
 	uid = xstrdup(param[0]+1);
 	if (tmp) *tmp='!';
-
-	coloured = param[2]?xstrlen(OMITCOLON(param[2]))?
+	reason = param[2]?xstrlen(OMITCOLON(param[2]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[2])):
-				xstrdup("no reason"):xstrdup("no reason");
-	print_window((session_int_get(s, "DISPLAY_IN_CURRENT")&2)?
-			window_current->target:"__status",
-			s, 0, "irc_quit", session_name(s), 
-			uid, param[0]+1, coloured);
-	xfree(coloured);
+		xstrdup("no reason"):xstrdup("no reason");
+	
+	dq = session_int_get(s, "DISPLAY_QUIT");
+	
+	irc_del_person(s, j, uid, param[0]+1, reason, !dq);
+	
+	if (dq)
+		print_window(dq==2?window_current->target:"__status",
+				s, 0, "irc_quit", session_name(s), 
+				uid, param[0]+1, reason);
+	
+	xfree(reason);
 	xfree(uid);
-
+	
 	return 0;
 }
 
@@ -789,7 +793,7 @@ IRC_COMMAND(irc_c_topic)
 IRC_COMMAND(irc_c_mode)
 {
 	int i, k, len, val=0, act=1;
-	char *t, *bang, *add, **pars;
+	char *t, *bang, *add, **pars, *channame;
 	people_t *per;
 	people_chan_t *ch;
 	userlist_t *ul;
@@ -833,8 +837,9 @@ notreallyok:
 		if (xstrchr(add, *t)) k++;
 		if (!param[k]) break;
 	}
-
-	w = window_find_s(s, param[2]);
+	
+	channame = saprintf("%s%s", IRC4, param[2]);
+	w = window_find_s(s, channame);
 	bang = xstrchr(param[0], '!');
 	if (bang) *bang='\0';
 	moderpl =  string_init("");

@@ -232,18 +232,25 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 	return irc_del_person_channel_int(j, person, chan);
 }
 
-int irc_del_person(session_t *s, irc_private_t *j, char *nick)
+int irc_del_person(session_t *s, irc_private_t *j, char *nick,
+		char *wholenick, char *reason, int doprint)
 {
 	people_t *person;
+	people_chan_t *pech;
 	list_t tmp;
 
 	if (!(person = irc_find_person(j->people, nick))) 
 		return -1;
 
 	while ((tmp = (person->channels))) {
-		if (!(tmp && tmp->data)) break;
-		irc_del_person_channel_int(j, person, 
-				((people_chan_t *)(tmp->data))->chanp);
+		if (!(tmp && (pech = tmp->data))) break;
+
+		if (doprint)
+			print_window(pech->chanp->name,
+				s, 0, "irc_quit", session_name(s), 
+				nick, wholenick, reason);
+
+		irc_del_person_channel_int(j, person, pech->chanp);
 	}
 	/* GiM: removing from private->people is in
 	 * irc_del_person_channel_int
