@@ -1,5 +1,6 @@
 // ui-ncurses
 // (c) copyright 2002 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright 2004 Piotr Kupisiewicz <deli@rzepaknet.us>
 
 interfejs ten ró¿ni siê nieco od readline z okienkami. g³ówn± ró¿nic± jest
 fakt, ¿e pierwsze okienko istnieje _zawsze_ i jest oknem stanu. do niego
@@ -68,5 +69,11 @@ pierwszeñstwo przed ,,statusbar''.
 mo¿liwe jest te¿ w³±czenie nag³ówka okna, tj. paska wy¶wietlanego u góry
 ekranu, nad oknami. jest on opisany formatami ,,header'', ,,header1'',
 ,,header2'' itd., analogicznie do paska stanu. dostêpne formaty s± identyczne.
+
+Lista kontaktów, która jest dostêpna po prawej (zazwyczaj) stronie okna, 
+poprzez w³±czenie ncurses:contacts. Kontakty, które aktualnie do nas pisz±
+s± ustawiane jako mrugaj±ce (w zasadzie to element blink strutkury userlist_t).
+Ui-ncurses obs³ugujê to poprzez odczytanie stosownego theme'a i wy¶wietlenie 
+go w sposób prawid³owy.
 
 $Id$

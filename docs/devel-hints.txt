@@ -47,6 +47,11 @@ parê wymagañ i wskazówek dla developerów:
    ani mojego czasu, tylko po prostu wklej orygina³ i poprawion± wersjê do
    tre¶ci listu.
 
+10) u¿ywaj funkcji opakowuj±cych np. xstrdup, xstrndup
+    pozwala na to #include "xmalloc.h" - tam s± definicje wszystkch 
+    dostêpnych funkcji. nie musisz siê martwiæ o zwracane warto¶ci 
+    i o obs³ugê ewentualnych b³edów.
+
 nikt nie bêdzie siê zachowywaæ jak jaki¶ Linus, i wrzucaæ do ¼róde³ tylko
 to, co mu siê podoba, albo tylko patche ludzi, z którymi piwo pija. byle
 tylko by³y zachowane pewne zasady i nie by³o po miesi±cu ba³aganu w kodzie.
