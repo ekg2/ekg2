@@ -110,6 +110,8 @@ session_t *session_add(const char *uid)
 		if (!w->session)
 			w->session = sp;
 	}
+	if (!session_current)
+		session_current = sp;
 
 	tmp = xstrdup(uid);
 	query_emit(NULL, "session-added", &tmp);
@@ -134,7 +136,7 @@ int session_remove(const char *uid)
 
 	if (!(s = session_find(uid)))
 		return -1;
-	if (!xstrcasecmp(s->uid, session_current->uid))
+	if (session_current && !xstrcasecmp(s->uid, session_current->uid))
 		session_current = NULL;
 
 	count = list_count(sessions);
