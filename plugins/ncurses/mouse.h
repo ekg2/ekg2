@@ -47,5 +47,7 @@ int last_mouse_state;
 
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
 
+int mouse_initialized;
+
 #endif /* __EKG_NCURSES_MOUSE_H */
 

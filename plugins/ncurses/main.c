@@ -402,7 +402,6 @@ void ncurses_display_transparent_changed(const char *var)
 int ncurses_plugin_init()
 {
 	list_t l;
-	mmask_t oldmask;
 
 	plugin_register(&ncurses_plugin);
 	
@@ -472,9 +471,6 @@ int ncurses_plugin_init()
 
 	ncurses_init();
 	
-	/* wy³±czamy raportowanie myszy */
-	mousemask(0, &oldmask);
-
 	header_statusbar_resize("foo");
 
 	for (l = windows; l; l = l->next)

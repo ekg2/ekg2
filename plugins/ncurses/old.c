@@ -1349,10 +1349,7 @@ void ncurses_init()
 	cbreak();
 	noecho();
 	nonl();
-#if NCURSES_MOUSE_VERSION == 1
-	mousemask(ALL_MOUSE_EVENTS, NULL);
-#endif
-
+	
 	if (config_display_transparent) {
 		background = COLOR_DEFAULT;
 		use_default_colors();
@@ -1643,68 +1640,100 @@ int ekg_getch(int meta)
 {
 	int ch;
 
+#define GET_TIME(tv)    (gettimeofday(&tv, (struct timezone *)NULL))
+#define DIF_TIME(t1,t2) ((t2.tv_sec -t1.tv_sec) *1000+ \
+                         (t2.tv_usec-t1.tv_usec)/1000)
+
 	ch = wgetch(input);
 
-#if NCURSES_MOUSE_VERSION == 1
+	/* 
+	 * conception is borrowed from Midnight Commander project 
+	 *    (www.ibiblio.org/mc/) 
+	 */	
 	if (ch == KEY_MOUSE) {
-		MEVENT m;
+		int btn, mouse_state = 0, x, y;
+		static struct timeval tv1 = { 0, 0 }; 
+		static struct timeval tv2;
+		static int clicks;
+		static int last_btn = 0;
 
-		if (getmouse(&m) == OK) {
-			int mouse_state = 0;
+		btn = wgetch (input) - 32;
+    
+		if (btn == 3 && last_btn) {
+			last_btn -= 32;
 
-/*			switch (m.bstate) {
-				case 2:
-					mouse_state = EKG_SCROLLED_UP;
-					last_mouse_state = mouse_state;
-					break;
-				case 4:
-					mouse_state = EKG_BUTTON1_CLICKED;
-					last_mouse_state = 0;
-					break;
-				case 8:
-					mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
-					last_mouse_state = 0;
-					break;
-				case 256:
-					mouse_state = EKG_BUTTON2_CLICKED;
-					last_mouse_state = 0;
-					break;
-				case BUTTON3_DOUBLE_CLICKED:
-					mouse_state = EKG_BUTTON3_CLICKED;
-					last_mouse_state = 0;
-					break;
-                                case 128:
-                                        mouse_state = EKG_SCROLLED_DOWN;
-					last_mouse_state = mouse_state;
+			switch (last_btn) {
+                                case 0:
+                                        mouse_state = (clicks) ? EKG_BUTTON1_DOUBLE_CLICKED : EKG_BUTTON1_CLICKED;
                                         break;
-				case 134217728:
-					mouse_state = last_mouse_state;
-					break;
+                                case 1:
+                                        mouse_state = (clicks) ? EKG_BUTTON2_DOUBLE_CLICKED : EKG_BUTTON2_CLICKED;
+                                        break;
+                                case 2:
+                                        mouse_state = (clicks) ? EKG_BUTTON3_DOUBLE_CLICKED : EKG_BUTTON3_CLICKED;
+                                        break;
 				default:
-					mouse_state = 0;
+					debug("eee: %d\n", last_btn);
 					break;
-			} */
-			if (m.bstate & BUTTON1_CLICKED)
-				mouse_state = EKG_BUTTON1_CLICKED;
-			if (m.bstate & BUTTON1_DOUBLE_CLICKED) 
-				mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
-			if (m.bstate & BUTTON2_CLICKED)
-				mouse_state = EKG_BUTTON2_CLICKED;
-			if (m.bstate & BUTTON2_DOUBLE_CLICKED)
-				mouse_state = EKG_BUTTON2_DOUBLE_CLICKED;
-			if (m.bstate & BUTTON3_CLICKED)
-				mouse_state = EKG_BUTTON3_CLICKED;
-			if (m.bstate & BUTTON3_DOUBLE_CLICKED)
-				mouse_state = EKG_BUTTON3_DOUBLE_CLICKED;
-			if (mouse_state)
-					ncurses_mouse_clicked_handler(m.x, m.y - 1, mouse_state);
-		        /* debug("bstate %d\n", m.bstate); */
-			/* debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%x\n", m.id, m.x, m.y, m.z, m.bstate); */
+			}
+
+	 		last_btn = 0;
+			GET_TIME (tv1);
+			clicks = 0;
+
+    		} else if (!last_btn) {
+			GET_TIME (tv2);
+			if (tv1.tv_sec && (DIF_TIME (tv1,tv2) < 250)){
+				clicks++;
+	    			clicks %= 3;
+			} else
+	    			clicks = 0;
+	
+			switch (btn) {
+				case 0:
+					btn += 32;
+					break;
+				case 1:
+					btn += 32;
+					break;
+				case 2:
+					btn += 32;
+					break;
+                                case 64:
+                                        btn += 32;
+                                        break;
+                                case 65:
+                                        btn += 32;
+                                        break;
+				default:
+					btn = 0;
+					break;
+			}
+
+			last_btn = btn;
+		} else {
+			switch (btn) {
+				case 64:
+					mouse_state = EKG_SCROLLED_UP;
+					break;
+				case 65:
+					mouse_state = EKG_SCROLLED_DOWN;
+					break;
+			}
 		}
+		
+		/* 33 based */
+                x = wgetch(input) - 32; 
+		y = wgetch(input) - 32;
+
+		if (mouse_state)
+			ncurses_mouse_clicked_handler(x, y, mouse_state);
 	} 
-#endif
 
 	query_emit(NULL, "ui-keypress", &ch, NULL);
+
+#undef GET_TIME
+#undef DIF_TIME
 
 	return ch;
 }

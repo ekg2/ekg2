@@ -34,6 +34,7 @@
 #include "contacts.h"
 #include "mouse.h"
 
+int mouse_initialized = 0;
 
 /* 
  * show_mouse_pointer()
@@ -117,11 +118,11 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 			tmp = "scrolled down";
 			break;
 		default:
-			tmp = "nico??";
+			tmp = "nothing";
 			break;
 	}
 
-	debug("stalo sie: %s\n", tmp);
+	/* debug("stalo sie: %s x: %d y: %d\n", tmp, x, y); */
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 		
@@ -224,10 +225,11 @@ void ncurses_enable_mouse()
                         goto end;\
         }\
 	\
-	mousemask(ALL_MOUSE_EVENTS, &oldmask);\
-        mouseinterval(-1);
+        printf("\033[?1001s");\
+        printf("\033[?1000h");\
+	\
+	mouse_initialized = 1;
 	
-	mmask_t oldmask;
 	char *env = getenv("TERM");
 #ifdef HAVE_LIBGPM
         Gpm_Connect conn;
@@ -248,6 +250,7 @@ void ncurses_enable_mouse()
 	if (gpm_fd != -2) {
 	        watch_add(&ncurses_plugin, gpm_fd, WATCH_READ, 1, ncurses_gpm_watch_handler, NULL);
 		gpm_visiblepointer = 1;
+		mouse_initialized = 1;
 	} else { /* xterm */
 		xterm_mouse();
 	}
@@ -255,7 +258,8 @@ void ncurses_enable_mouse()
 	xterm_mouse();
 #endif
 end:
-        timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
+	if (mouse_initialized)
+	        timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
 #undef xterm_mouse
 }
 
@@ -267,6 +271,9 @@ end:
  */
 void ncurses_disable_mouse()
 {
+	if (!mouse_initialized)
+		return;
+
 #ifdef HAVE_LIBGPM
 	Gpm_Close();
 
