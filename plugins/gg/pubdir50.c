@@ -16,7 +16,7 @@
 COMMAND(gg_command_find)
 {
 	gg_private_t *g = session_private_get(session);
-	char **argv = NULL, *user, *tmp;
+	char **argv = NULL, *user;
 	gg_pubdir50_t req;
 	int i, res = 0, all = 0;
 
@@ -26,7 +26,7 @@ COMMAND(gg_command_find)
 	}
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		printq("not_connected");
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -52,21 +52,17 @@ COMMAND(gg_command_find)
 			return -1;
 		}
 	}
-	
-	tmp = array_join((char **) params, " ");
-	argv = array_make(tmp, " \t", 0, 1, 1);
-	xfree(tmp);
+
+	argv = (char **) params;
 
 	if (argv[0] && !argv[1] && argv[0][0] == '#') {
 		char *tmp = saprintf("/conference --find %s", argv[0]);
 		int res = command_exec(target, session, tmp, quiet);
 		xfree(tmp);
-		array_free(argv);
 		return res;
 	}
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH))) {
-		array_free(argv);
 		return -1;
 	}
 
@@ -77,14 +73,12 @@ COMMAND(gg_command_find)
 
 		if (!uid) {
 			printq("user_not_found", user);
-			array_free(argv);
 			xfree(user);
 			return -1;
 		}
 
 		if (strncasecmp(uid, "gg:", 3)) {
 			printq("generic_error", "Tylko GG");
-			array_free(argv);
 			xfree(user);
 			return -1;
 		}
@@ -170,7 +164,6 @@ COMMAND(gg_command_find)
 		}
 
 		printq("invalid_params", name);
-		array_free(argv);
 		gg_pubdir50_free(req);
 		return -1;
 	}
@@ -184,8 +177,6 @@ COMMAND(gg_command_find)
 		list_add(&g->searches, req, 0);
 	else
 		gg_pubdir50_free(req);
-
-	array_free(argv);
 
 	return res;
 }
