@@ -26,14 +26,7 @@
 #include <ekg/plugins.h>
 #include <ekg/xmalloc.h>
 
-static int pcm_plugin_destroy();
-
-static plugin_t pcm_plugin = {
-	name: "pcm",
-	pclass: PLUGIN_CODEC,
-	destroy: pcm_plugin_destroy,
-	theme_init: NULL,
-};
+PLUGIN_DEFINE(pcm, PLUGIN_CODEC, NULL);
 
 typedef struct {
 	int id;			/* numer instancji codeca */

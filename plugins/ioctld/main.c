@@ -55,14 +55,7 @@ static int ioctld_sock = -1;
 static int ioctld_pid = -1;
 static const char *ioctld_sock_path = NULL;
 
-static int ioctld_plugin_destroy();
-
-plugin_t ioctld_plugin = {
-	name: "ioctld",
-	pclass: PLUGIN_GENERIC,
-	destroy: ioctld_plugin_destroy,
-	theme_init: NULL,
-};
+PLUGIN_DEFINE(ioctld, PLUGIN_GENERIC, NULL);
 
 /*
  * ioctld_kill()

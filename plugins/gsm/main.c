@@ -35,14 +35,7 @@
 #include <ekg/plugins.h>
 #include <ekg/xmalloc.h>
 
-static int gsm_plugin_destroy();
-
-static plugin_t gsm_plugin = {
-	name: "gsm",
-	pclass: PLUGIN_CODEC,
-	destroy: gsm_plugin_destroy,
-	theme_init: NULL,
-};
+PLUGIN_DEFINE(gsm, PLUGIN_CODEC, NULL);
 
 static void *gsm_codec_init(const char *, const char *);
 static int gsm_codec_process(void *, char *, int, char **, int *);

@@ -38,13 +38,7 @@
 #include "contacts.h"
 #include "mouse.h"
 
-static int ncurses_plugin_destroy();
-
-plugin_t ncurses_plugin = {
-	name: "ncurses",
-	pclass: PLUGIN_UI,
-	destroy: ncurses_plugin_destroy
-};
+PLUGIN_DEFINE(ncurses, PLUGIN_UI, NULL);
 
 static int ncurses_beep(void *data, va_list ap)
 {

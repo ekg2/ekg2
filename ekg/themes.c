@@ -1539,6 +1539,8 @@ void theme_init()
         format_add("window_id_query_started", _("%) Query with %T%2%n started in %T%1%n\n"), 1);
         format_add("window_kill_status", _("%! Can't close status window!\n"), 1);
 
+	format_add("file_doesnt_exist", _("%! Can't open file %T%1%n\n"), 1);
+
         /* bind */
         format_add("bind_seq_incorrect", _("%! Sequence %T%1%n is invalid\n"), 1);
         format_add("bind_seq_add", _("%> Sequence %T%1%n added\n"), 1);

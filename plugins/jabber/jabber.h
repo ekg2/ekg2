@@ -57,7 +57,7 @@ typedef struct {
 
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
 
-plugin_t jabber_plugin;
+static plugin_t jabber_plugin;
 void jabber_register_commands(void);
 
 char *jabber_attr(char **atts, const char *att);

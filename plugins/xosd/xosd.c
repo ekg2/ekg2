@@ -31,15 +31,9 @@
 #include <xosd.h>
 #include <string.h>
 
-static int xosd_plugin_destroy();
 static int xosd_theme_init();
 
-static plugin_t xosd_plugin = {
-	name: "xosd",
-	pclass: PLUGIN_GENERIC,
-	destroy: xosd_plugin_destroy,
-	theme_init: xosd_theme_init,
-};
+PLUGIN_DEFINE(xosd, PLUGIN_GENERIC, xosd_theme_init);
 
 xosd *osd;
 

@@ -53,6 +53,7 @@
 
 #include "dcc.h"
 #include "gg.h"
+#include "images.h"
 #include "misc.h"
 #include "pubdir.h"
 #include "pubdir50.h"
@@ -1247,7 +1248,48 @@ COMMAND(gg_command_modify)
 	return res;
 }
 
+COMMAND(gg_command_check_inv)
+{
+	#define SIZE 20
+	userlist_t *u;
+	gg_private_t *g = session_private_get(session);
 
+	struct gg_msg_richtext_format_img {
+		struct gg_msg_richtext rt;
+		struct gg_msg_richtext_format f;
+		struct gg_msg_richtext_image image;
+	}msg;
+
+	msg.rt.flag=2;
+	msg.rt.length=13;
+	msg.f.position=0;
+	msg.f.font=0x80;
+	msg.image.unknown1=0x0109;
+	msg.image.size=SIZE;
+	msg.image.crc32=GG_CRC32_INVISIBLE; 
+
+	if (!session_check(session, 1, "gg")) {
+		printq("invalid_session");
+		return -1;
+	}
+
+	if (!params[0]) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+
+	if (!(u = userlist_find(session, params[0]))) {
+		printq("user_not_found", params[0]);
+		return -1;
+	}
+
+	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid+3), "", (const char *) &msg, sizeof(msg)) == -1) {
+		debug("-- check_inv - shits happens\n");
+		return -1;
+	}
+	
+	return 0;
+}
 void gg_register_commands()
 {
 	command_add(&gg_plugin, "gg:connect", "?", gg_command_connect, 0, NULL);
@@ -1261,7 +1303,9 @@ void gg_register_commands()
 	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, NULL);
+	command_add(&gg_plugin, "gg:check_inv", "r", gg_command_check_inv, 0, NULL);
 	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 0, NULL);
+	command_add(&gg_plugin, "gg:image", "?", gg_command_image, 0, NULL);
 	command_add(&gg_plugin, "gg:block", "uUC ?", gg_command_block, 0, NULL);
 	command_add(&gg_plugin, "gg:unblock", "b ?", gg_command_unblock, 0, NULL);
 	command_add(&gg_plugin, "gg:modify", "Uu ?", gg_command_modify, 0, NULL);

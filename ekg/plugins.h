@@ -75,13 +75,14 @@ int have_plugin_of_class(int);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
 plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 
-#define PLUGIN_DEFINE(x, y)\
+#define PLUGIN_DEFINE(x, y, z)\
 	static int x##_plugin_destroy(); \
 	\
 	static plugin_t x##_plugin = { \
 		name: #x, \
 		pclass: y, \
-		destroy: x##_plugin_destroy \
+		destroy: x##_plugin_destroy, \
+		theme_init: z \
 	}
 
 typedef int (*query_handler_func_t)(void *data, va_list ap);

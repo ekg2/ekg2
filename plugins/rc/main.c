@@ -18,7 +18,7 @@
 
 #include "rc.h"
 
-PLUGIN_DEFINE(rc, PLUGIN_UI);
+PLUGIN_DEFINE(rc, PLUGIN_UI, NULL);
 
 list_t rc_inputs = NULL;
 

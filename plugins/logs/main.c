@@ -50,7 +50,6 @@
 #include <errno.h>
 #include <string.h>
 
-static int logs_plugin_destroy();
 char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text, time_t sent, int class);
 FILE* logs_open_file(char *path, char *ext, int makedir);
 void logs_handler(void *data, va_list ap);
@@ -64,11 +63,7 @@ void logs_gaim();
 int logs_remind_number = 0; /* ile przypomniec? */
 list_t logs_reminded; /* lista z przypomnianymi wiadomosciami - nie logowac */
 
-static plugin_t logs_plugin = {
-	name: "logs",
-	pclass: PLUGIN_GENERIC,
-	destroy: logs_plugin_destroy,
-};
+PLUGIN_DEFINE(logs, PLUGIN_GENERIC, NULL);
 
 int logs_plugin_init()
 {

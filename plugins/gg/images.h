@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
  *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
@@ -18,24 +16,18 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __EKG_GG_PUBDIR50_H
-#define __EKG_GG_PUBDIR50_H
+#include <ekg/dynstuff.h>
 
-#include <ekg/commands.h>
+typedef struct {
+	char *filename;
+	char *data;
+	uint32_t size;
+	uint32_t crc32;
+} image_t;
 
-COMMAND(gg_command_find);
-COMMAND(gg_command_change);
+list_t images;
 
-void gg_session_handler_search50(session_t *s, struct gg_event *e);
-void gg_session_handler_change50(session_t *s, struct gg_event *e);
+#define GG_CRC32_INVISIBLE 99
 
-#endif
-
-/*
- * Local Variables:
- * mode: c
- * c-file-style: "k&r"
- * c-basic-offset: 8
- * indent-tabs-mode: t
- * End:
- */
+image_t *image_add_queue(char *filename, char *data, uint32_t size, uint32_t crc32);
+void image_remove_queue(image_t *i);

@@ -21,14 +21,7 @@
 
 #include <ekg/plugins.h>
 
-static int dummy_plugin_destroy();
-
-static plugin_t dummy_plugin = {
-	name: "dummy",
-	pclass: PLUGIN_GENERIC,
-	destroy: dummy_plugin_destroy,
-	theme_init: NULL,
-};
+PLUGIN_DEFINE(dummy, PLUGIN_GENERIC, NULL);
 
 int dummy_plugin_init()
 {

@@ -56,15 +56,9 @@
 
 #include "jabber.h"
 
-static int jabber_plugin_destroy();
 static int jabber_theme_init();
 
-plugin_t jabber_plugin = {
-        name: "jabber",
-        pclass: PLUGIN_PROTOCOL,
-        destroy: jabber_plugin_destroy,
-        theme_init: jabber_theme_init,
-};
+PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
 /*
  * jabber_private_destroy()

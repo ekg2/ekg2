@@ -57,15 +57,9 @@
  * ======================================== STARTUP AND STANDARD FUNCS - *
  *                                                                       */
 
-static int irc_plugin_destroy();
 static int irc_theme_init();
 
-plugin_t irc_plugin = {
-	name: IRC3,
-	pclass: PLUGIN_PROTOCOL,
-	destroy: irc_plugin_destroy,
-	theme_init: irc_theme_init
-};
+PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
 /*
  * irc_private_init()

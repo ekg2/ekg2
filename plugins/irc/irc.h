@@ -74,7 +74,7 @@ typedef struct {
 #define IRC4 "irc:"
 #define IRC3 "irc"
 
-plugin_t irc_plugin;
+static plugin_t irc_plugin;
 
 typedef struct {
 	session_t *session;

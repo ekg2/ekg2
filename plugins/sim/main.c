@@ -21,15 +21,9 @@
 #include "simlite.h"
 
 static int config_encryption = 0;
-static int sim_plugin_destroy();
 static int sim_theme_init();
 
-static plugin_t sim_plugin = {
-        name: "sim",
-        pclass: PLUGIN_CRYPT,
-        destroy: sim_plugin_destroy,
-        theme_init: sim_theme_init,
-};
+PLUGIN_DEFINE(sim, PLUGIN_CRYPT, sim_theme_init);
 
 static int message_encrypt(void *data, va_list ap)
 {

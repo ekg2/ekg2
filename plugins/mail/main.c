@@ -67,14 +67,7 @@ static int check_mail_maildir();
 static int check_mail_update(const char *, int);
 static void check_mail_free();
 
-
-static int mail_plugin_destroy();
-
-static plugin_t mail_plugin = {
-	name: "mail",
-	pclass: PLUGIN_GENERIC,
-	destroy: mail_plugin_destroy
-};
+PLUGIN_DEFINE(mail, PLUGIN_GENERIC, NULL);
 
 /*
  * check_mail()

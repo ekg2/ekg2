@@ -52,17 +52,12 @@
 #include "gg.h"
 #include "misc.h"
 #include "pubdir.h"
+#include "images.h"
 #include "pubdir50.h"
 
-static int gg_plugin_destroy();
 static int gg_theme_init();
 
-plugin_t gg_plugin = {
-	name: "gg",
-	pclass: PLUGIN_PROTOCOL,
-	destroy: gg_plugin_destroy,
-	theme_init: gg_theme_init,
-};
+PLUGIN_DEFINE(gg, PLUGIN_PROTOCOL, gg_theme_init);
 
 int gg_private_init(session_t *s)
 {
@@ -650,6 +645,11 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		for (i = 0; i < e->event.msg.formats_length; ) {
 			int j, pos = p[i] + p[i + 1] * 256;
 			uint32_t val = 0;
+
+                        if ((p[i + 3] & GG_FONT_IMAGE)) {
+			/* support of image receiving should be here */
+			}
+
 			
 			if ((p[i + 3] & GG_FONT_BOLD))
 				val |= EKG_FORMAT_BOLD;
@@ -735,6 +735,57 @@ void gg_reconnect_handler(int type, void *data)
 	tmp = xstrdup("/connect");
 	command_exec(NULL, s, tmp, 0);
 	xfree(tmp);
+}
+
+/* 
+ * gg_session_handler_image()
+ *
+ * support image request or reply
+ * now it is used only by /check_inv 
+ * we don't use support images
+ */
+static void gg_session_handler_image(session_t *s, struct gg_event *e)
+{
+	gg_private_t *g = session_private_get(s);
+
+	switch (e->type) {
+		case GG_EVENT_IMAGE_REQUEST:
+		{
+			list_t l;
+
+			debug("GG_EVENT_IMAGE_REQUEST (crc32 - %d)\n", e->event.image_request.crc32);
+
+			if (e->event.image_request.crc32 == GG_CRC32_INVISIBLE) {
+				char *tmp = saprintf("gg:%d", e->event.image_request.sender);
+				
+				print("gg_user_is_invisible", get_nickname(s, tmp));
+				
+				xfree(tmp);
+				break;
+			}
+
+			for (l = images; l; l = l->next) {
+				image_t *i = l->data;
+
+				if (e->event.image_request.crc32 == i->crc32 && 
+				  e->event.image_request.size == i->size) {
+					gg_image_reply(g->sess, e->event.image_request.sender, i->filename, i->data, i->size);
+					image_remove_queue(i);
+					break;
+				}
+			}
+			break;
+		}
+		case GG_EVENT_IMAGE_REPLY:
+		{
+			/* receiving messages */
+		}	
+		default:
+		{
+			debug("// gg_session_handler_image() - This function is not supported yet\n");
+			break;
+		}
+	}
 }
 
 /*
@@ -934,6 +985,12 @@ void gg_session_handler(int type, int fd, int watch, void *data)
 		case GG_EVENT_USERLIST:
 			gg_session_handler_userlist(data, e);
 			break;
+		case GG_EVENT_IMAGE_REQUEST:
+		case GG_EVENT_IMAGE_REPLY:
+		{
+			gg_session_handler_image(data, e);
+			break;
+		}
 
 		default:
 			debug("[gg] unhandled event 0x%.4x, consider upgrade\n", e->type);
@@ -1039,6 +1096,9 @@ format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
         format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
         format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
         format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
+	format_add("gg_user_is_invisible", _("%> User %T%1%n is invisible\n"), 1);
+	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
+	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	
 	return 0;
 }
