@@ -30,6 +30,9 @@ rozwi±zanie.
   - dokumentacja do themes - opis ka¿dego formatu (del)
   - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
 
+* gg 
+  - u¿ywanie serwera proxy (lukasz)
+
 * jabber (implementowaæ w takiej kolejno¶ci!)
   - przenie¶æ wszystkie COMMAND() do commands.c (zdz)
   - zrobic makro JABBER_SANITY_CHECK; z zestawu funkcji powtarzaj±cych
