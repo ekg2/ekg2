@@ -207,8 +207,6 @@ int gg_status_show_handle(void *data, va_list ap)
                 if ((mqc = msg_queue_count()))
                         print("show_status_msg_queue", itoa(mqc));
 
-                print("show_status_footer");
-
                 xfree(tmp);
 
                 return 0;
