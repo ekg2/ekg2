@@ -925,8 +925,8 @@ IRC_COMMAND(irc_c_topic)
 	xfree(chanp->topic);
 	xfree(chanp->topicby);
 	if (xstrlen(OMITCOLON(param[3]))) {
-		chanp->topic = xstrdup(OMITCOLON(param[3]));
-		chanp->topic = xstrdup(OMITCOLON(param[0]));
+		chanp->topic   = xstrdup(OMITCOLON(param[3]));
+		chanp->topicby = xstrdup(OMITCOLON(param[0]));
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1);
 		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),
 				param[0]+1, t?t+1:"", param[2], coloured);
