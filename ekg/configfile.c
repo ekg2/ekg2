@@ -181,6 +181,9 @@ int config_read_later(const char *filename)
 		} else if (!xstrcasecmp(buf, "at")) {
 			xfree(buf);
 			continue;
+                } else if (!xstrcasecmp(buf, "on")) {
+                        xfree(buf);
+                        continue;
 		} else {
                         ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
 
