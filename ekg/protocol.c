@@ -531,7 +531,7 @@ int protocol_message(void *data, va_list ap)
 	if (!userlist) 
 		tabnick_add(uid);
 
-        if (!userlist && session_int_get(session_class, "auto_find") >= 1) {
+        if (!userlist && xstrcasecmp(session_class->uid, uid) && session_int_get(session_class, "auto_find") >= 1) {
                 list_t l;
                 int do_find = 1, i;
 
