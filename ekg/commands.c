@@ -2814,7 +2814,7 @@ COMMAND(cmd_at)
 			return -1;
 		}
 
-		if ((t = timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_command, a_command))) {
+		if ((t = timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_command, xstrdup(a_command)))) {
 			t->at = 1;
 			printq("at_added", t->name);
 			if (freq)

@@ -1502,6 +1502,7 @@ int timer_remove(plugin_t *plugin, const char *name)
 
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
 			xfree(t->name);
+			xfree(t->data);
 			list_remove(&timers, t, 1);
 			removed = 1;
 		}
@@ -1543,6 +1544,7 @@ int timer_remove_user(int at)
 		if (t->at == at && t->function == timer_handle_command) { 
 			t->function(1, t->data);
 			xfree(t->name);
+			xfree(t->data);
 			list_remove(&timers, t, 1);
 			removed = 1;
 		}
@@ -1564,6 +1566,7 @@ void timer_free()
 		struct timer *t = l->data;
 		
 		xfree(t->name);
+		xfree(t->data);
 	}
 
 	list_destroy(timers, 1);

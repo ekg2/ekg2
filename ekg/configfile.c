@@ -124,7 +124,9 @@ int config_read_later(const char *filename)
 			continue;
 		} else if (!xstrcasecmp(buf, "alias")) {
 			continue;
-                } else {
+		} else if (!xstrcasecmp(buf, "at")) {
+			continue;
+		} else {
                         ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
 
                         if (ret) 
