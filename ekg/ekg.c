@@ -323,11 +323,6 @@ watches_again:
 		for (l = watches; l; ) {
 			watch_t *w = l->data;
 
-			if (!w) {
-				l = l->next;
-				continue;
-			}
-
 			/* handlery mog± dodawaæ kolejne watche, wiêc je¶li
 			 * dotrzemy do ostatniego sprzed wywo³ania pêtli,
 			 * koñczymy pracê. */
