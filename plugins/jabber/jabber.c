@@ -976,7 +976,7 @@ COMMAND(jabber_command_xml)
 
 COMMAND(jabber_command_away)
 {
-	const char *descr;
+	const char *descr, *format;
 	
 	if (!session_check(session, 1, "jid")) {
 		printq("invalid_session");
@@ -991,48 +991,48 @@ COMMAND(jabber_command_away)
 	descr = session_descr_get(session);
 
 	if (!xstrcmp(name, "_autoback")) {
-		printq("auto_back", session_name(session));
+		format = "auto_back";
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "back")) {
-		printq("back", session_name(session));
+		format = "back";
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "_autoaway")) {
-		printq("auto_away", session_name(session));
+		format = "auto_away";
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "away")) {
-		printq("away", session_name(session));
+		format = "away"; 
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "dnd")) {
-		printq("dnd", session_name(session));
+		format = "dnd";
 		session_status_set(session, EKG_STATUS_DND);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "xa")) {
-		printq("xa", session_name(session));
+		format = "xa";
 		session_status_set(session, EKG_STATUS_XA);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "invisible")) {
-		printq("invisible", session_name(session));
+		format = "invisible";
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		session_unidle(session);
 		goto change;
@@ -1041,6 +1041,14 @@ COMMAND(jabber_command_away)
 	return -1;
 
 change:
+	
+	if (descr) {
+		char *f = saprintf("%s_descr", format);
+		printq(f, descr, "", session_name(session));
+		xfree(f);
+	} else
+		printq(format, session_name(session));
+
 	jabber_write_status(session);
 	
 	return 0;

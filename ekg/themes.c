@@ -947,6 +947,7 @@ void theme_init()
 	format_add("invisible", "%> (%1) Zmieniono stan na niewidoczny\n", 1);
 	format_add("invisible_descr", "%> (%3) Zmieniono stan na niewidoczny: %T%1%n%2\n", 1);
 	format_add("dnd", "%> (%1) Zmieniono stan na nie przeszkadzaæ%n\n", 1);
+	format_add("dnd_descr", "%> (%3) Zmieniono stan na nie przeszkadzaæ: %T%1%n%2%n\n", 1);
 	format_add("xa", "%> (%1) Zmieniono stan na extended away:%\n", 1);
 	format_add("private_mode_is_on", "%> (%1) Tryb ,,tylko dla znajomych'' jest w³±czony\n", 1);
 	format_add("private_mode_is_off", "%> (%1) Tryb ,,tylko dla znajomych'' jest wy³±czony\n", 1);
