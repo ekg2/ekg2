@@ -303,6 +303,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	const char *target = sender, *user;
         time_t now;
 	session_t *s = session_find(session);
+        struct conference *c = NULL;
 
 	switch (class) {
 		case EKG_MSGCLASS_SENT:
@@ -406,6 +407,38 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 
 		snprintf(tmp, sizeof(tmp), "%s_%s", class_str, timestamp_type);
 		strftime(timestamp, sizeof(timestamp), format_find(tmp), tm_msg);
+	}
+
+	/* if there is a lot of recipients, conference should be made */
+	{
+		int recipients_count = array_count((char **) rcpts);
+
+		if (recipients_count > 0) {
+			c = conference_find_by_uids(s, sender, rcpts, recipients_count, 0);
+
+	                if (!c) {
+	                        string_t tmp = string_init(NULL);
+	                        int first = 0, i;
+	
+	                        for (i = 0; i < recipients_count; i++) {
+	                                if (first++)
+	                                        string_append_c(tmp, ',');
+	
+	                                string_append(tmp, rcpts[i]);
+	                        }
+	
+	                        string_append_c(tmp, ' ');
+	                        string_append(tmp, sender);
+	
+	                        c = conference_create(s, tmp->str);
+	
+	                        string_free(tmp, 1);
+	                }
+
+	                if (c) {
+	                        target = c->name;
+			}
+		}
 	}
 
 	/* daj znaæ d¼wiêkiem i muzyczk± */

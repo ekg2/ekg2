@@ -283,7 +283,7 @@ struct conference *conference_add(session_t *session, const char *string, const 
 int conference_remove(const char *name, int quiet);
 struct conference *conference_create(session_t *session, const char *nicks);
 struct conference *conference_find(const char *name);
-//struct conference *conference_find_by_uins(uin_t from, uin_t *recipients, int count, int quiet);
+struct conference *conference_find_by_uids(session_t *s, const char *from, const char **recipients, int count, int quiet);
 int conference_set_ignore(const char *name, int flag, int quiet);
 int conference_rename(const char *oldname, const char *newname, int quiet);
 int conference_participant(struct conference *c, const char *uid);

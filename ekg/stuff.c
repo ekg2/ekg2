@@ -961,7 +961,7 @@ int conference_participant(struct conference *c, const char *uid)
 }
 
 /*
- * conference_find_by_uins()
+ * conference_find_by_uids()
  *
  * znajduje konferencjê, do której nale¿± podane uiny. je¿eli nie znaleziono,
  * zwracany jest NULL. je¶li numerów jest wiêcej, zostan± dodane do
@@ -972,8 +972,7 @@ int conference_participant(struct conference *c, const char *uid)
  *  - count - ilo¶æ numerów,
  *  - quiet.
  */
-#if 0
-struct conference *conference_find_by_uins(uin_t from, uin_t *recipients, int count, int quiet) 
+struct conference *conference_find_by_uids(session_t *s, const char *from, const char **recipients, int count, int quiet) 
 {
 	int i;
 	list_t l;
@@ -989,27 +988,26 @@ struct conference *conference_find_by_uins(uin_t from, uin_t *recipients, int co
 		if (conference_participant(c, from))
 			matched++;
 
-		gg_debug(GG_DEBUG_MISC, "// conference_find_by_uins(): from=%d, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, list_count(c->recipients));
+		debug("// conference_find_by_uids(): from=%s, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, list_count(c->recipients));
 
-#if 0
-		if (matched == list_count(c->recipients) && matched <= (from == config_uin ? count : count + 1)) {
+		if (matched == list_count(c->recipients) && matched <= (!xstrcasecmp(from, s->uid) ? count : count + 1)) {
 			string_t new = string_init(NULL);
 			int comma = 0;
 
-			if (from != config_uin && !conference_participant(c, from)) {
+			if (xstrcasecmp(from, s->uid) && !conference_participant(c, from)) {
 				list_add(&c->recipients, &from, sizeof(from));
 
 				comma++;
-				string_append(new, format_user(from));
-			}
+				string_append(new, format_user(s, from));
+			} 
 
 			for (i = 0; i < count; i++) {
-				if (recipients[i] != config_uin && !conference_participant(c, recipients[i])) {
+				if (xstrcasecmp(recipients[i], s->uid) && !conference_participant(c, recipients[i])) {
 					list_add(&c->recipients, &recipients[i], sizeof(recipients[0]));
 			
 					if (comma++)
 						string_append(new, ", ");
-					string_append(new, format_user(recipients[i]));
+					string_append(new, format_user(s, recipients[i]));
 				}
 			}
 
@@ -1017,16 +1015,14 @@ struct conference *conference_find_by_uins(uin_t from, uin_t *recipients, int co
 				printq("conferences_joined", new->str, c->name);
 			string_free(new, 1);
 
-			gg_debug(GG_DEBUG_MISC, "// conference_find_by_uins(): matching %s\n", c->name);
+			debug("// conference_find_by_uins(): matching %s\n", c->name);
 
 			return c;
 		}
-#endif
 	}
 
 	return NULL;
 }
-#endif
 
 /*
  * conference_set_ignore()
