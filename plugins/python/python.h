@@ -110,6 +110,7 @@ struct python_module {
                         Py_DECREF(pModule); \
                         print("python_error", buffer); \
                         PyErr_Restore(exc_typ, exc_val, exc_tb); \
+                        PyErr_Clear(); \
                 } \
 		\
 		python_handle_result = -1; \
