@@ -118,8 +118,11 @@ void ncurses_enable_mouse()
 	conn.minMod      = 0;
         conn.maxMod      = ~0;
 
-        if(Gpm_Open(&conn, 0) == -1)
+        if(Gpm_Open(&conn, 0) == -1) {
                 debug("Cannot connect to mouse server\n");
+	        mousemask(ALL_MOUSE_EVENTS, &oldmask);
+		goto end;
+	}
 	else
 		debug("Gpm at fd no %d\n", gpm_fd);
 
@@ -132,6 +135,7 @@ void ncurses_enable_mouse()
 #else
 	mousemask(ALL_MOUSE_EVENTS, &oldmask);
 #endif
+end:
         timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
 }
 
