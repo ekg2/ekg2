@@ -455,8 +455,9 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 			
 			result = 0;
 			/*
-				pc and amd64: va_arg remove var from va_list when you use va_arg, so we must keep orig va_list for next plugins
-			*/
+			 * pc and amd64: va_arg remove var from va_list when you use va_arg, 
+			 * so we must keep orig va_list for next plugins
+			 */
 			va_copy(ap_plugin, ap);
 
 			if (handler(q->data, ap_plugin) == -1) {
