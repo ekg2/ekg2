@@ -1,6 +1,6 @@
 // Obs³uga Secure Internet Messaging w ekg
 // (c) copyright 2001-2003 by Wojtek Kaniewski <wojtekka@irc.pl>
-// 		      2004 by Piotr Kupisiewicz <deletek@ekg2.org>
+// 		 2004-2005 by Piotr Kupisiewicz <deletek@ekg2.org>
 
 Szyfrowanie to jest zgodne z http://gg.wha.la/crypt/ i powinno dzia³aæ
 bez problemu z PowerGG i Kadu.
