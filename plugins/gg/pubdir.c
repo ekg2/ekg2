@@ -93,7 +93,7 @@ COMMAND(gg_command_register)
 		return -1;
 	}
 	
-	if (!params[0] || !params[1]) {
+	if (!params[0] || !params[1] || !params[2]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
@@ -103,10 +103,16 @@ COMMAND(gg_command_register)
 		return -1;
 	}
 
+        if (!last_tokenid) {
+	        printq("gg_token_missing");
+                return -1;
+        }
+
+
 	passwd = xstrdup(params[1]);
 	gg_iso_to_cp(passwd);
 	
-	if (!(h = gg_register2(params[0], passwd, "", 1))) {
+	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[2], 1))) {
 		xfree(passwd);
 		printq("register_failed", strerror(errno));
 		return -1;
@@ -174,11 +180,16 @@ COMMAND(gg_command_unregister)
 	char *passwd;
 	watch_t *w;
 	uin_t uin;
-	
-	if (!params[0] || !params[1]) {
+
+	if (!params[0] || !params[1] || !params[2]) {
 		printq("not_enough_params", name);
 		return -1;
 	} 
+
+        if (!last_tokenid) {
+                printq("token_missing");
+                return -1;
+        }
 
 	if (!strncasecmp(params[0], "gg:", 3))
 		uin = atoi(params[0] + 3);
@@ -193,7 +204,7 @@ COMMAND(gg_command_unregister)
 	passwd = xstrdup(params[1]);
 	gg_iso_to_cp(passwd);
 
-	if (!(h = gg_unregister2(uin, passwd, "", 1))) {
+	if (!(h = gg_unregister3(uin, passwd, last_tokenid, params[2], 1))) {
 		printq("unregister_failed", strerror(errno));
 		xfree(passwd);
 		return -1;

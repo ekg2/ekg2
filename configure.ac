@@ -57,6 +57,8 @@ AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
 
+dnl  mkstemp do zapisywania tokenów przy braku libjpeg
+AC_CHECK_FUNCS(mkstemp)
 
 AC_CONFIG_FILES([plugins/mail/Makefile])
 AC_CONFIG_FILES([plugins/rc/Makefile])
@@ -136,6 +138,24 @@ if test "x$with_aspell" != "xno"; then
         fi
 fi
 
+dnl
+dnl  Sprawdzamy libjpeg.so i <jpeglib.h>
+dnl
+
+AC_ARG_WITH(libjpeg,
+        [  --without-libjpeg        Compile without JPEG token support])
+
+if test "x$with_libjpeg" != "xno"; then
+        AC_CHECK_LIB(jpeg, jpeg_start_decompress,
+        [
+                AC_CHECK_HEADERS(jpeglib.h,
+                [
+                        AC_DEFINE(HAVE_LIBJPEG, 1, [define if you have libjpeg])
+                        LIBJPEG_LIBS="-ljpeg"
+                        have_libjpeg=yes
+                ])
+        ])
+fi
 
 AC_CHECK_LIBGADU
 
@@ -231,5 +251,11 @@ if test "x$have_aspell" = "xyes"; then
         echo " - aspell: enabled"
 else
         echo " - aspell: disabled"
+fi
+
+if test "x$have_libjpeg" = "xyes"; then
+        echo " - libjpeg: enabled"
+else
+        echo " - libjpeg: disabled"
 fi
 

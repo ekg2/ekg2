@@ -24,6 +24,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
+
 
 #include <errno.h>
 #include <stdio.h>
@@ -31,8 +33,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include <libgadu.h>
+
+#ifdef HAVE_JPEGLIB_H
+#  include <jpeglib.h>
+#endif
+
 
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
@@ -51,6 +59,7 @@
 #include "misc.h"
 #include "pubdir.h"
 #include "pubdir50.h"
+#include "token.h"
 
 static int gg_plugin_destroy();
 
@@ -1636,6 +1645,214 @@ COMMAND(gg_command_unblock)
 	return 0;
 }
 
+/*
+ * token_check()
+ *
+ * funkcja sprawdza czy w danym miejscu znajduje siê zaproponowany znaczek
+ *
+ *  - n - numer od 0 do 15 (znaczki od 0 do f)
+ *  - x, y - wspó³rzêdne znaczka w tablicy ocr
+ */
+static int token_check(int nr, int x, int y, const char *ocr, int maxx, int maxy)
+{
+        int i;
+
+        for (i = nr * token_char_height; i < (nr + 1) * token_char_height; i++, y++) {
+                int j, xx = x;
+
+                for (j = 0; token_id[i][j] && j + xx < maxx; j++, xx++) {
+                        if (token_id[i][j] != ocr[y * (maxx + 1) + xx])
+                                return 0;
+                }
+        }
+
+        return 1;
+}
+
+/*
+ * token_ocr()
+ *
+ * zwraca tre¶æ tokenu
+ */
+char *token_ocr(const char *ocr, int width, int height, int length)
+{
+        int x, y, count = 0;
+        char *token;
+
+        token = xmalloc(length + 1);
+        memset(token, 0, length + 1);
+        for (x = 0; x < width; x++) {
+                for (y = 0; y < height - token_char_height; y++) {
+                        int result = 0, token_part = 0;
+
+                        do
+                                result = token_check(token_part++, x, y, ocr, width, height);
+                        while (!result && token_part < 16);
+
+                        if (result && count < length)
+                                token[count++] = token_id_char[token_part - 1];
+                }
+        }
+
+        if (count == length)
+                return token;
+
+        xfree(token);
+
+        return NULL;
+}
+
+
+static void gg_handle_token(int type, int fd, int watch, void *data)
+{
+        struct gg_http *h = data;
+	struct gg_token *t = NULL;
+	char *file = NULL;
+
+       if (type == 2) {
+                debug("[gg] gg_handle_token() timeout\n");
+                print("register_timeout");
+                goto fail;
+        }
+
+        if (type != 0)
+                return;
+
+	if (!h)
+		return;
+	
+	if (gg_token_watch_fd(h) || h->state == GG_STATE_ERROR) {
+		print("gg_token_failed", gg_http_error_string(h->error));
+		goto fail;
+	}
+
+	if (h->state != GG_STATE_DONE) {
+                watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_token, h);
+                watch_timeout_set(w, h->timeout);
+
+		return;
+	}
+
+	if (!(t = h->data) || !h->body) {
+		print("gg_token_failed", gg_http_error_string(h->error));
+		goto fail;
+	}
+
+	xfree(last_tokenid);
+	last_tokenid = xstrdup(t->tokenid);
+
+#ifdef HAVE_MKSTEMP
+
+	file = saprintf("%s/token.XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+
+	if ((fd = mkstemp(file)) == -1) {
+		print("gg_token_failed", strerror(errno));
+		goto fail;
+	}
+
+	if ((write(fd, h->body, h->body_size) != h->body_size) || (close(fd) != 0)) {
+		print("gg_token_failed", strerror(errno));
+		close(fd);
+		unlink(file);
+		goto fail;
+	}
+
+#ifdef HAVE_LIBJPEG
+	if (config_display_token) {
+		struct jpeg_decompress_struct j;
+		struct jpeg_error_mgr e;
+		JSAMPROW buf[1];
+		int size;
+		char *token, *tmp;
+		FILE *f;
+		int h = 0;
+
+		if (!(f = fopen(file, "rb"))) {
+			print("gg_token_failed", strerror(errno));
+			goto fail;
+		}
+
+		j.err = jpeg_std_error(&e);
+		jpeg_create_decompress(&j);
+		jpeg_stdio_src(&j, f);
+		jpeg_read_header(&j, TRUE);
+		jpeg_start_decompress(&j);
+
+		size = j.output_width * j.output_components;
+		buf[0] = xmalloc(size);
+                
+                token = xmalloc((j.output_width + 1) * j.output_height);
+		
+		while (j.output_scanline < j.output_height) {
+			int i;
+
+			jpeg_read_scanlines(&j, buf, 1);
+
+			for (i = 0; i < j.output_width; i++, h++)
+				token[h] = (buf[0][i*3] + buf[0][i*3+1] + buf[0][i*3+2] < 384) ? '#' : '.';
+			
+			token[h++] = 0;
+		}
+
+		if (!(tmp = token_ocr(token, j.output_width, j.output_height, t->length))) {
+			int i;
+
+			for (i = 0; i < j.output_height; i++)
+				print("gg_token_body", token[i * (j.output_width + 1)]);
+		} else {
+			print("gg_token_ocr", tmp);
+			xfree(tmp);
+		}
+
+		xfree(token);
+
+		jpeg_finish_decompress(&j);
+		jpeg_destroy_decompress(&j);
+
+		xfree(buf[0]);
+		fclose(f);
+		
+		unlink(file);
+	} else
+#else	/* HAVE_LIBJPEG */
+	{
+		char *file2 = saprintf("%s.jpg", file);
+
+		if (rename(file, file2) == -1)
+			print("token", file);
+		else
+			print("token", file2);
+
+		xfree(file2);
+	}
+#endif	/* HAVE_LIBJPEG */
+
+#else	/* HAVE_MKSTEMP */
+	print("gg_token_unsupported");
+#endif	/* HAVE_MKSTEMP */
+
+	xfree(file);
+
+fail:
+	watch_remove(&gg_plugin, h->fd, h->check);
+	gg_token_free(h);
+}
+
+COMMAND(gg_command_token)
+{
+        struct gg_http *h;
+	watch_t *w;
+
+        if (!(h = gg_token(1))) {
+                printq("gg_token_failed", strerror(errno));
+                return -1;
+        }
+
+        w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_token, h);
+        watch_timeout_set(w, h->timeout);
+
+        return 0;
+}
 int gg_plugin_init()
 {
 	list_t l;
@@ -1676,8 +1893,18 @@ int gg_plugin_init()
 	command_add(&gg_plugin, "gg:unblock", params("b ?"), gg_command_unblock, 0, " <numer/alias>|*", "usuwa z listy blokowanych", "", NULL);
 
 	command_add(&gg_plugin, "gg:remind", params("?"), gg_command_remind, 0, " [numer]", "wysy³a has³o na skrzynkê pocztow±", "", NULL);
-	command_add(&gg_plugin, "gg:register", params("? ?"), gg_command_register, 0, " <email> <has³o>", "rejestruje nowe konto", "", NULL);
-	command_add(&gg_plugin, "gg:unregister", params("? ?"), gg_command_unregister, 0, " <uin/alias> <has³o>", "usuwa konto z serwera", "\nPodanie numeru i has³a jest niezbêdne ze wzglêdów bezpieczeñstwa. Nikt nie chcia³by chyba usun±æ konta przypadkowo, bez ¿adnego potwierdzenia.", NULL);
+	command_add(&gg_plugin, "gg:register", params("? ? ?"), gg_command_register, 0, " <email> <has³o> <token>", "rejestruje nowe konto", "Przed rejestracj± nale¿y pobraæ token komend± token.", NULL);
+        command_add(&gg_plugin, "gg:token", params(""), gg_command_token, 0,
+          "", "pobiera z serwera token",
+          "\n"
+          "Komenda ta jest niezbêdna do rejestracji i zmiany has³a. Ma na celu "
+          "zapewnienie serwera, ¿e operacjê przeprowadza u¿ytkownik, a nie "
+          "automat. Je¶li system zawiera odpowiednie biblioteki, token "
+          "zostanie wy¶wietlony na ekranie. W przeciwnym wypadku zostanie "
+          "podana ¶cie¿ka, pod któr± zapisano plik graficzny zawieraj±cy "
+          "token.", NULL);
+
+	command_add(&gg_plugin, "gg:unregister", params("? ? ?"), gg_command_unregister, 0, " <uin/alias> <has³o> <token>", "usuwa konto z serwera", "\nPodanie numeru i has³a jest niezbêdne ze wzglêdów bezpieczeñstwa. Nikt nie chcia³by chyba usun±æ konta przypadkowo, bez ¿adnego potwierdzenia. Przed rejestracj± nale¿y pobraæ token komend± token.", NULL);
 	command_add(&gg_plugin, "gg:passwd", params("? ?"), gg_command_passwd, 0, " <has³o>", "zmienia has³o u¿ytkownika", "\nZmiana has³a nie wymaga ju¿ ustawienia zmiennej %Temail%n.", NULL);
 	command_add(&gg_plugin, "gg:userlist", params("p ?"), gg_command_list, 0, " [opcje]", "lista kontaktów na serwerze",
 	  "\n"
@@ -1726,6 +1953,18 @@ int gg_plugin_init()
 
 #undef possibilities
 #undef params 
+
+        variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &config_display_token, NULL, NULL, NULL);
+
+        /* pobieranie tokenu */
+        format_add("gg_token", "%> Token zapisano do pliku %T%1%n\n", 1);
+        format_add("gg_token_ocr", "%> Token: %T%1%n\n", 1);
+        format_add("gg_token_body", "%1\n", 1);
+        format_add("gg_token_failed", "%! B³±d pobierania tokenu: %1\n", 1);
+        format_add("gg_token_timeout", "%! Przekroczono limit czasu pobierania tokenu\n", 1);
+        format_add("gg_token_unsupported", "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n", 1);
+        format_add("gg_token_missing", "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n", 1);
+
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "0", 0);

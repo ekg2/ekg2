@@ -290,6 +290,7 @@ void iso_to_ascii(unsigned char *buf);
 char *strip_spaces(char *line);
 int strtrim(char *line);
 char *str_tolower(const char *text);
+char *strip_pl_chars(const char *text);
 int tolower_pl(const unsigned char c);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
 

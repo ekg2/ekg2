@@ -2060,6 +2060,8 @@ uint32_t *ekg_sent_message_format(const char *text)
 }
 
 /*
+ * strncasecmp_pl()
+ *
  * porównuje dwa ci±gi o okre¶lonej przez n d³ugo¶ci
  * dzia³a analogicznie do xstrncasecmp()
  * obs³uguje polskie znaki
@@ -2078,8 +2080,89 @@ int strncasecmp_pl(const char * cs,const char * ct,size_t count)
         return __res;
 }
 
+void pl_to_normal(char ch)
+{
+	switch(ch) {
+                case 161: // ¡
+			ch = 'A';
+			break;
+		case 177: // ±
+			ch = 'a';
+			break;
+                case 198: // Æ
+			ch = 'C';
+			break;
+		case 230: // æ
+			ch = 'c';
+			break;
+                case 202: // Ê
+			ch = 'E';
+			break;
+		case 234: // ê
+			ch = 'e';
+			break;
+                case 163: // £
+			ch = 'L';
+			break;
+		case 179: // ³
+			ch = 'l';
+			break;
+                case 209: // Ñ
+			ch = 'N';
+			break;
+		case 241: // ñ
+			ch = 'n';
+			break;
+                case 211: // Ó
+			ch = 'O';
+			break;
+		case 243: // ó
+			ch = 'o';
+			break;
+                case 166: // ¦
+			ch = 'S';
+			break;
+		case 182: // ¶
+			ch = 's';
+			break;
+                case 175: // ¯
+		case 172: // ¬
+			ch = 'Z';
+			break;
+		case 191: // ¿
+		case 188: // ¼
+			ch = 'z';
+			break;
+		default:
+			break;
+	}
+}
 
 /*
+ * strip_pl_chars()
+ *
+ * changes pl chars to normal chars 
+ * should be freed by free()
+ */
+char *strip_pl_chars(const char *text)
+{
+	char *ret = xstrdup(text);
+	char *p = ret;
+
+	if (!text)
+		return NULL;
+
+	for (; *p; *p++) {
+		if(isalpha_pl(*p))
+			pl_to_normal(*p);
+	}
+
+	return ret;
+}
+
+/*
+ * tolower_pl()
+ *
  * zamienia podany znak na ma³y je¶li to mo¿liwe
  * obs³uguje polskie znaki
  */
@@ -2110,6 +2193,8 @@ int tolower_pl(const unsigned char c) {
 
 
 /*
+ * str_tolower()
+ *
  * zamienia wszystkie znaki ci±gu na ma³e
  * zwraca ci±g po zmianach (wraz z zaalokowan± pamiêci±)
  */
@@ -2126,6 +2211,8 @@ char *str_tolower(const char *text) {
 }
 
 /*
+ * saprintf()
+ *
  * dzia³a jak sprintf() tylko, ¿e wyrzuca wska¼nik
  * do powsta³ego ci±gu
  */
@@ -2142,6 +2229,8 @@ char *saprintf(const char *format, ...)
 }
 
 /*
+ * xstrtr()
+ *
  * zamienia wszystko znaki a na b w podanym ci±gu
  * nie robie jego kopi!
  */

@@ -25,7 +25,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
 			AC_CHECK_LIB([gadu], [gg_logoff],
 			[
 				AC_DEFINE([HAVE_LIBGADU], 1, [define if you have libgadu])
-				LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS"
+				LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS $LIBJPEG_LIBS"
 				have_libgadu="yes"
 			])
 		])
