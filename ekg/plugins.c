@@ -33,6 +33,8 @@
 #include "stuff.h"
 #include "vars.h"
 #include "xmalloc.h"
+#include "themes.h"
+#include "ltdl.h"
 
 list_t plugins = NULL;
 list_t queries = NULL;
@@ -46,11 +48,32 @@ list_t queries = NULL;
  */
 int plugin_load(const char *name)
 {
-#ifdef HAVE_LIBDL
-	char *lib = saprintf("%s/%s.so", PLUGINS_PATH, name);
-	void *plugin = dlopen(lib, RTLD_LAZY);
-	char *init;
-	int (*plugin_init)();
+	char *lib = NULL;
+	char *env_ekg_plugins_path = NULL;
+	lt_dlhandle plugin = NULL;
+	char *init = NULL;
+	int (*plugin_init)() = NULL;
+	list_t l;
+
+	if (!name) return -1;
+	if (plugin_find(name)) {
+		print("generic_error", "Nie zaladujesz plagina dwa razy!");
+		return -1;
+	}
+	
+	lib = saprintf("%s/%s.so", PLUGINDIR, name);
+	plugin = lt_dlopen(lib);
+
+	if (!plugin && (env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
+		xfree(lib);
+		lib = saprintf("%s/%s.la", env_ekg_plugins_path, name);
+		plugin = lt_dlopen(lib);
+		if (!plugin) {
+			xfree(lib);
+			lib = saprintf("%s/%s/%s.la", env_ekg_plugins_path, name, name);
+			plugin = lt_dlopen(lib);
+		}
+	}
 
 	if (!plugin) {
 		print("generic_error", "Nie ma plagina!");
@@ -62,9 +85,9 @@ int plugin_load(const char *name)
 
 	init = saprintf("%s_plugin_init", name);
 
-	if (!(plugin_init = dlsym(plugin, init))) {
+	if (!(plugin_init = lt_dlsym(plugin, init))) {
 		print("generic_error", "To nie plagin ekg!");
-		dlclose(plugin);
+		lt_dlclose(plugin);
 		xfree(init);
 		return -1;
 	}
@@ -73,7 +96,7 @@ int plugin_load(const char *name)
 	
 	if (plugin_init() == -1) {
 		print("generic_error", "Plagin siê nie zainicjowa³");
-		dlclose(plugin);
+		lt_dlclose(plugin);
 		return -1;
 	}
 
@@ -85,10 +108,8 @@ int plugin_load(const char *name)
 			break;
 		}
 	}
-#else
-	debug("tried to load plugin \"%s\", but no dynamic plugins support\n", name);
-	return -1;
-#endif
+
+	return 0;
 }
 
 /*
@@ -125,18 +146,20 @@ int plugin_unload(plugin_t *p)
 	if (!p)
 		return -1;
 
-	if (p->dl) {
-#ifdef HAVE_LIBDL
-		dlclose(p->dl);
-		p->dl = NULL;
-#else
-		debug("tried to unload plugin, but no dynamic plugins support\n");
-		return -1;
-#endif
-	}
+	/* XXX eXtreme HACK warning
+	 * (mp) na razie jest tak.  docelowo: wyladowywac pluginy tylko z
+	 * glownego programu (queriesami?)
+	 * to cos segfaultowalo (wczesniej czy pozniej), jesli bylo wywolane z
+	 * ncurses.  niestety, problem pozostaje dla innych pluginow i takiego
+	 * np. rc. sie zrobi nast razem */
+	if (p->pclass == PLUGIN_PROTOCOL) return -1;
 
 	if (p->destroy)
 		p->destroy();
+
+	if (p->dl) {
+		lt_dlclose(p->dl);
+	}
 
 	return 0;
 }
@@ -443,6 +466,15 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 	}
 
 	return res;
+}
+
+int have_plugin_of_class(int pclass) {
+	list_t l;
+	for(l = plugins; l; l = l->next) {
+		plugin_t *p = l->data;
+		if (p->pclass == pclass) return 1;
+	}
+	return 0;
 }
 
 PROPERTY_INT(watch, persist, int);

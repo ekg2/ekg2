@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include "dynstuff.h"
+#include "ltdl.h"
 
 list_t plugins;
 list_t queries;
@@ -45,7 +46,7 @@ typedef struct {
 	char *name;
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
-	void *dl;
+	lt_dlhandle dl;
 } plugin_t;
 
 int plugin_load(const char *name);
@@ -53,6 +54,7 @@ int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *);
 int plugin_unregister(plugin_t *);
 plugin_t *plugin_find(const char *name);
+int have_plugin_of_class(int);
 
 #define PLUGIN_DEFINE(x, y)\
 	static int x##_plugin_destroy(); \
@@ -119,16 +121,5 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
 void watch_handle(watch_t *w);
 void watch_handle_line(watch_t *w);
-
-/* definicje funkcji pluginów */
-int ncurses_plugin_init();
-int sim_plugin_init();
-int ioctld_plugin_init();
-int mail_plugin_init();
-int rc_plugin_init();
-int gsm_plugin_init();
-int gg_plugin_init();
-int jabber_plugin_init();
-int sms_plugin_init();
 
 #endif /* __EKG_PLUGINS_H */

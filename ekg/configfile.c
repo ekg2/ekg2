@@ -38,6 +38,7 @@
 #include "stuff.h"
 #include "vars.h"
 #include "xmalloc.h"
+#include "plugins.h"
 
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX
@@ -196,6 +197,8 @@ int config_read(const char *filename)
 				xfree(period_str);
 			}
 				array_free(p);
+		} else if (!strcasecmp(buf, "plugin")) {
+			plugin_load(foo);
                 } else {
 			ret = variable_set(buf, foo, 1);
 
@@ -267,6 +270,11 @@ static void config_write_main(FILE *f)
 
 	if (!f)
 		return;
+
+	for (l = plugins; l; l = l->next) {
+		plugin_t *p = l->data;
+		if (p && p->name) fprintf(f, "plugin %s\n", p->name);
+	}
 
 	for (l = variables; l; l = l->next)
 		config_write_variable(f, l->data);

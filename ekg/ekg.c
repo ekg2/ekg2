@@ -68,6 +68,7 @@
 #include "vars.h"
 #include "windows.h"
 #include "xmalloc.h"
+#include "ltdl.h"
 
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX
@@ -579,6 +580,8 @@ int main(int argc, char **argv)
 	ekg_started = time(NULL);
         ekg_pid = getpid();
 
+	lt_dlinit();
+
 	srand(time(NULL));
 
 	strlcpy(argv0, argv[0], sizeof(argv0));
@@ -732,6 +735,10 @@ int main(int argc, char **argv)
 	emoticon_read();
 	msg_queue_read();
 
+#ifdef HAVE_NCURSES
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses");
+#endif
+
 	/* je¶li ma byæ theme, niech bêdzie theme */
 	if (load_theme)
 		theme_read(load_theme, 1);
@@ -742,10 +749,6 @@ int main(int argc, char **argv)
 	
 	theme_cache_reset();
 		
-#ifdef HAVE_NCURSES
-	ncurses_plugin_init();
-#endif
-
 	in_autoexec = 0;
 
 	time(&last_action);
@@ -770,24 +773,16 @@ int main(int argc, char **argv)
 		config_log_path = xstrdup(prepare_path("history", 0));
 
 	protocol_init();
-	
-#ifdef HAVE_OPENSSL
-	sim_plugin_init();
-#endif
-	ioctld_plugin_init();
-	mail_plugin_init();
-	rc_plugin_init();
-	sms_plugin_init();
-#ifdef HAVE_LIBGSM
-	gsm_plugin_init();
+
+	if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
+#ifdef HAVE_EXPAT
+		plugin_load("jabber");
 #endif
 #ifdef HAVE_LIBGADU
-	gg_plugin_init();
+		plugin_load("gg");
 #endif
-#ifdef HAVE_EXPAT
-	jabber_plugin_init();
-#endif
-
+	}
+	
 	/* wylosuj opisy i zmieñ stany klientów */
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;

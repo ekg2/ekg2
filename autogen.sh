@@ -13,7 +13,7 @@ echo "Running autoheader..."
 autoheader
 
 echo "Running libtoolize..."
-libtoolize
+libtoolize --ltdl
 
 echo "Running automake..."
 automake --foreign --add-missing

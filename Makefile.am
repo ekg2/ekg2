@@ -1,5 +1,5 @@
 EXTRA_DIST = ChangeLog
-SUBDIRS = plugins compat ekg docs
+SUBDIRS = libltdl plugins compat ekg docs
 ACLOCAL_AMFLAGS = -I m4
 INCLUDE = $(top_builddir)
 

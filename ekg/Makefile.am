@@ -4,8 +4,9 @@ ekg_SOURCES = audio.c commands.c configfile.c dynstuff.c ekg.c emoticons.c log.c
        audio.h commands.h configfile.h debug.h dynstuff.h emoticons.h \
        log.h msgqueue.h objects.h plugins.h protocol.h sessions.h stuff.h \
        themes.h userlist.h vars.h windows.h xmalloc.h
-ekg_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ @PLUGINS_LIBS@
-
+ekg_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ $(LIBLTDL)
+ekg_LDFLAGS = -export-dynamic
+ekg_DEPENDENCIES = $(LIBLTDL)
 
 INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(datadir)/ekg\" \
        -DPLUGINDIR=\"$(plugindir)\"
