@@ -1394,7 +1394,7 @@ COMMAND(cmd_list)
 		xfree(tmp);
 	}
 
-	if (params[0] && *params[0] != '-') {
+	if (params[0] && (*params[0] != '-' || (*params[0] == '-' && userlist_find(session, params[0])))) {
 		char *status, *groups, *last_status;
 		const char *group = params[0];
 		userlist_t *u;
