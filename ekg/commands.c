@@ -494,7 +494,7 @@ COMMAND(cmd_add)
 	}
 
 	if (params[2])
-		cmd_modify("add", &params[1], NULL, NULL, quiet);
+		cmd_modify("add", &params[1], session, NULL, quiet);
 
 cleanup:
 	if (params_free) {
