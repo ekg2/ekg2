@@ -955,7 +955,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 			char *plen = xstrchr(c->name, ':');
-			char *name = (plen && session_current && !xstrncasecmp(c->name, session_current->uid, xstrlen(plen))) ? xstrchr(c->name, ':') + 1 : c->name;
+			char *name = (plen && session_current && xstrncasecmp(c->name, session_current->uid, xstrlen(plen))) ? xstrchr(c->name, ':') + 1 : c->name;
 			int len = xstrlen(name);
 			
 			if (!xstrncasecmp(name, cmd, len) && xisspace(cmd[len])) {
