@@ -45,6 +45,9 @@ int xosd_show_message(char *line1, char *line2)
 	
 	xosd_set_colour(osd, xosd_colour);
 
+	xosd_set_outline_offset(osd, xosd_outline_offset);
+	xosd_set_outline_colour(osd, xosd_outline_colour);
+
 	switch (xosd_vertical_position) {
 		case 0:
 			xosd_set_pos(osd, XOSD_top);
@@ -162,10 +165,10 @@ static int xosd_protocol_message(void *data, va_list ap)
 	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
 		return 0;
 
-	if(xosd_display_inactive_only && window_current && window_current->target && !xstrcmp(get_uid(s, window_current->target), get_uid(s, uid)))
+	if (xosd_display_inactive_only && window_current && window_current->target && !xstrcmp(get_uid(s, window_current->target), get_uid(s, uid)))
 		return 0;
 
-	if(xosd_display_new_queries_only && window_find(uid))
+	if (xosd_display_new_queries_only && window_find(uid))
 		return 0;
 
 	if (class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
@@ -176,7 +179,7 @@ static int xosd_protocol_message(void *data, va_list ap)
 		sender = (u && u->nickname) ? u->nickname : uid;
 		msgLine1 = format_string(format_find("xosd_new_message_line_1"), sender);
 
-		if(xosd_text_limit && xstrlen(text) > xosd_text_limit)
+		if (xosd_text_limit && xstrlen(text) > xosd_text_limit)
 			msgLine2 = format_string(format_find("xosd_new_message_line_2_long"), xstrmid(text, 0, xosd_text_limit));
 		else
 			msgLine2 = format_string(format_find("xosd_new_message_line_2"), text);
@@ -200,10 +203,10 @@ void xosd_setvar_default()
 {
 	xfree(xosd_font);
 	xfree(xosd_colour);
+	xfree(xosd_outline_colour);
 
 	xosd_font = xstrdup("-adobe-helvetica-bold-r-normal-*-*-120-*-*-p-*-iso8859-2");
 	xosd_colour = xstrdup("#00dd00");
-	
 	xosd_shadow_offset = 2;
 	xosd_vertical_position = 2;
 	xosd_vertical_offset = 48;
@@ -211,11 +214,11 @@ void xosd_setvar_default()
 	xosd_horizontal_offset = 48;
 	xosd_display_timeout = 6;
 	xosd_text_limit = 50;
-	
+	xosd_outline_offset = 0;
+	xosd_outline_colour = xstrdup("#000000");
 	xosd_display_inactive_only = 0;
 	xosd_display_new_queries_only = 0;
 	xosd_display_notify = 1;
-	
 	xosd_display_welcome = 1;
 }
 
@@ -240,11 +243,11 @@ int xosd_plugin_init()
 	variable_add(&xosd_plugin, "horizontal_offset", VAR_INT, 1, &xosd_horizontal_offset, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "display_timeout", VAR_INT, 1, &xosd_display_timeout, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "text_limit", VAR_INT, 1, &xosd_text_limit, NULL, NULL, NULL);
-	
+	variable_add(&xosd_plugin, "outline_offset", VAR_INT, 1, &xosd_outline_offset, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, "outline_colour", VAR_STR, 1, &xosd_outline_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "display_inactive_only", VAR_BOOL, 1, &xosd_display_inactive_only, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "display_new_queries_only", VAR_BOOL, 1, &xosd_display_new_queries_only, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "display_notify", VAR_MAP, 1, &xosd_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "session-depend"), NULL);
-	
 	variable_add(&xosd_plugin, "display_welcome", VAR_BOOL, 1, &xosd_display_welcome, NULL, NULL, NULL);
 	
 	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
@@ -261,7 +264,6 @@ static int xosd_theme_init()
 	format_add("xosd_new_message_line_1", _("new message from %1"), 1);
 	format_add("xosd_new_message_line_2_long", "%1...", 1);
 	format_add("xosd_new_message_line_2", "%1", 1);
-
 	format_add("xosd_status_change_avail", _("%1 is online,"), 1);
 	format_add("xosd_status_change_away", _("%1 is away,"), 1);
 	format_add("xosd_status_change_dnd", _("%1: do not disturb,"), 1);
@@ -274,7 +276,6 @@ static int xosd_theme_init()
 	format_add("xosd_status_change_description", "%1", 1);
 	format_add("xosd_status_change_description_long", "%1...", 1);
 	format_add("xosd_status_change_no_description", _("[no description]"), 1);
-
 	format_add("xosd_welcome_message_line_1", _("ekg2 XOnScreenDisplay plugin"), 1);
 	format_add("xosd_welcome_message_line_2", _("Author: Adam 'dredzik' Kuczynski"), 1);
 	
