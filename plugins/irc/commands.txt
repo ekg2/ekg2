@@ -7,7 +7,7 @@
 
 	parametry: [tekst]
 	krotki opis: /help irc: by dostaæ pomoc na temat plugina
-
+	
 	[tekst] oznacza, ¿e parametr jest wymagany, <tekst>,
 	¿e parametr jest opcjonalny, + lub * po parametrze oznacza,
 	¿e mo¿e wystêpowaæ wiêcej parametrów danego typu
