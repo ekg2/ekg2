@@ -108,11 +108,11 @@ void variable_init()
 	variable_add(NULL, "keep_reason", VAR_INT, 1, &config_keep_reason, NULL, NULL, NULL);
 	variable_add(NULL, "last", VAR_MAP, 1, &config_last, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "separate", 4, 0, "sent"), NULL);
 	variable_add(NULL, "last_size", VAR_INT, 1, &config_last_size, NULL, NULL, NULL);
-	variable_add(NULL, "log", VAR_MAP, 1, &config_log, NULL, variable_map(4, 0, 0, "none", 1, 2, "file", 2, 1, "dir", 4, 0, "gzip"), NULL);
-	variable_add(NULL, "log_ignored", VAR_INT, 1, &config_log_ignored, NULL, NULL, dd_log);
-	variable_add(NULL, "log_status", VAR_BOOL, 1, &config_log_status, NULL, NULL, dd_log);
+//	variable_add(NULL, "log", VAR_MAP, 1, &config_log, NULL, variable_map(4, 0, 0, "none", 1, 2, "file", 2, 1, "dir", 4, 0, "gzip"), NULL);
+//	variable_add(NULL, "log_ignored", VAR_INT, 1, &config_log_ignored, NULL, NULL, dd_log);
+//	variable_add(NULL, "log_status", VAR_BOOL, 1, &config_log_status, NULL, NULL, dd_log);
 	variable_add(NULL, "log_path", VAR_DIR, 1, &config_log_path, NULL, NULL, dd_log);
-	variable_add(NULL, "log_timestamp", VAR_STR, 1, &config_log_timestamp, NULL, NULL, dd_log);
+//	variable_add(NULL, "log_timestamp", VAR_STR, 1, &config_log_timestamp, NULL, NULL, dd_log);
 	variable_add(NULL, "make_window", VAR_INT, 1, &config_make_window, NULL, variable_map(3, 0, 0, "none", 1, 2, "usefree", 2, 1, "always"), NULL);
 	variable_add(NULL, "mesg", VAR_INT, 1, &config_mesg, changed_mesg, variable_map(3, 0, 0, "no", 1, 2, "yes", 2, 1, "default"), NULL);
 //	variable_add(NULL, "proxy", VAR_STR, 1, &config_proxy, changed_proxy, NULL, NULL);
