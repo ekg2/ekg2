@@ -71,7 +71,7 @@ COMMAND(gg_command_find)
 	user = xstrdup(argv[0]);
 	
 	if (argv[0] && argv[0][0] != '-') {
-		const char *uid = get_uid(argv[0]);
+		const char *uid = get_uid(session, argv[0]);
 
 		if (!uid) {
 			printq("user_not_found", user);

@@ -148,7 +148,7 @@ int protocol_status(void *data, va_list ap)
 	userlist_t *u;
 
 	/* ignorujemy nieznanych nam osobników */
-	if (!(u = userlist_find(uid)))
+	if (!(u = userlist_find(session, uid)))
 		return 0;
 
 	/* zapisz adres IP i port */
@@ -212,7 +212,7 @@ int protocol_status(void *data, va_list ap)
 		char format[100];
 
 		snprintf(format, sizeof(format), "status_%s%s", status, (descr) ? "_descr" : "");
-		print_window(u->nickname, session_find(session), 0, format, format_user(uid), (u->first_name) ? u->first_name : u->nickname, descr);
+		print_window(u->nickname, session_find(session), 0, format, format_user(session, uid), (u->first_name) ? u->first_name : u->nickname, descr);
 	}
 
 notify_plugins:
@@ -337,7 +337,7 @@ void message_print(const char *session, const char *sender, const char **rcpts, 
 		strftime(timestamp, sizeof(timestamp), format_find(tmp), tm_msg);
 	}
 
-	user = (class != EKG_MSGCLASS_SENT) ? format_user(sender) : session_format_n(sender);
+	user = (class != EKG_MSGCLASS_SENT) ? format_user(session, sender) : session_format_n(sender);
 
 	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT), class_str, user, timestamp, text);
 
@@ -373,7 +373,7 @@ int protocol_message_ack(void *data, va_list ap)
 	char **p_seq = va_arg(ap, char**), *seq = *p_seq;
 	char **p_status = va_arg(ap, char**), *status = *p_status;
 	char format[100];
-	userlist_t *u = userlist_find(rcpt);
+	userlist_t *u = userlist_find(session, rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
 	int display = 0;
 
@@ -391,7 +391,7 @@ int protocol_message_ack(void *data, va_list ap)
 		display = 1;
 
 	if (display)
-		print_window(target, session_find(session), 0, format, format_user(rcpt));
+		print_window(target, session_find(session), 0, format, format_user(session, rcpt));
 
 	return 0;
 }

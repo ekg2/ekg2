@@ -33,6 +33,7 @@
 
 #include "dynstuff.h"
 #include "objects.h"
+#include "sessions.h"
 
 typedef struct {
 	char *uid;		/* protokó³:identyfikator */
@@ -106,24 +107,24 @@ struct ignore_label {
 
 //list_t userlist;
 
-int userlist_read();
-int userlist_write();
+int userlist_read(session_t* session);
+int userlist_write(session_t *session);
 #ifdef WITH_WAP
 int userlist_write_wap();
 #endif
 void userlist_write_crash();
-void userlist_clear_status(const char *uid);
-userlist_t *userlist_add(const char *uid, const char *nickname);
+void userlist_clear_status(session_t *session, const char *uid);
+userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname);
 int userlist_remove(userlist_t *u);
 int userlist_replace(userlist_t *u);
-userlist_t *userlist_find(const char *uid);
-char *userlist_dump();
-void userlist_free();
-int userlist_set(const char *contacts);
+userlist_t *userlist_find(session_t *session, const char *uid);
+char *userlist_dump(session_t *session);
+void userlist_free(session_t *session);
+int userlist_set(session_t *session, const char *contacts);
 
-int ignored_add(const char *uid, int level);
-int ignored_remove(const char *uid);
-int ignored_check(const char *uid);
+int ignored_add(session_t *session, const char *uid, int level);
+int ignored_remove(session_t *session, const char *uid);
+int ignored_check(session_t *session, const char *uid);
 int ignore_flags(const char *str);
 const char *ignore_format(int level);
 
@@ -136,8 +137,8 @@ list_t group_init(const char *groups);
 int valid_nick(const char *nick);
 int valid_uid(const char *uid);
 int same_protocol(char **uids);
-const char *format_user(const char *uid);
-const char *get_uid(const char *text);
+const char *format_user(session_t *session, const char *uid);
+const char *get_uid(session_t *session, const char *text);
 
 
 #endif /* __EKG_USERLIST_H */

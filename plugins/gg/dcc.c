@@ -52,7 +52,7 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 
-		if (!(u = userlist_find(get_uid(params[1])))) {
+		if (!(u = userlist_find(session, get_uid(session, params[1])))) {
 			printq("user_not_found", params[1]);
 			return -1;
 		}
@@ -63,12 +63,12 @@ COMMAND(gg_command_dcc)
 		}
 
 		if (!strcmp(u->status, EKG_STATUS_NA)) {
-			printq("dcc_user_not_avail", format_user(u->uid));
+			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}
 
 		if (!u->ip) {
-			printq("dcc_user_aint_dcc", format_user(u->uid));
+			printq("dcc_user_aint_dcc", format_user(session, u->uid));
 			return -1;
 		}
 
@@ -255,7 +255,7 @@ COMMAND(gg_command_dcc)
 				break;
 			}
 
-			if ((u = userlist_find(dcc_uid_get(D)))) {
+			if ((u = userlist_find(session, dcc_uid_get(D)))) {
 				if (!strcasecmp(params[1], u->uid) || (u->nickname && !strcasecmp(params[1], u->nickname))) {
 					d = D;
 					break;
@@ -269,7 +269,7 @@ COMMAND(gg_command_dcc)
 		}
 
 		if (dcc_active_get(d)) {
-			printq("dcc_receiving_already", dcc_filename_get(d), format_user(dcc_uid_get(d)));
+			printq("dcc_receiving_already", dcc_filename_get(d), format_user(session, dcc_uid_get(d)));
 			return -1;
 		}
 
@@ -295,7 +295,7 @@ COMMAND(gg_command_dcc)
 		
 		xfree(path);
 		
-		printq("dcc_get_getting", format_user(dcc_uid_get(d)), dcc_filename_get(d));
+		printq("dcc_get_getting", format_user(session, dcc_uid_get(d)), dcc_filename_get(d));
 		dcc_active_set(d, 1);
 		
 		watch_add(&gg_plugin, g->fd, g->check, 0, gg_dcc_handler, g);
@@ -392,7 +392,7 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 			snprintf(peer, sizeof(peer), "gg:%d", d->peer_uin);
 			snprintf(uin, sizeof(uin), "gg:%d", d->uin);
 			
-			if (!userlist_find(peer) || !session_find(uin)) {
+			if (!session_find(uin) || !userlist_find(session_find(uin), peer) ) {
 				debug("[gg] unauthorized client (uin=%ld), closing connection\n", d->peer_uin);
 				gg_free_dcc(d);
 				return;
@@ -464,10 +464,12 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 		case GG_EVENT_DCC_NEED_FILE_ACK:
 		{
 			char *path, *p;
+			char uin[16];
 			struct stat st;
 			dcc_t *D;
 
 			debug("[gg] GG_EVENT_DCC_NEED_FILE_ACK\n");
+		        snprintf(uin, sizeof(uin), "gg:%d", d->uin);
 
 			again = 0;
 
@@ -488,7 +490,7 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 			dcc_filename_set(D, d->file_info.filename);
 			dcc_size_set(D, d->file_info.size);
 
-			print("dcc_get_offer", format_user(dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));
+			print("dcc_get_offer", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));
 
 			if (config_dcc_dir)
 				path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(D));
@@ -496,7 +498,7 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 				path = xstrdup(dcc_filename_get(D));
 
 			if (!stat(path, &st) && st.st_size < d->file_info.size)
-				print("dcc_get_offer_resume", format_user(dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), dcc_id_get(D));
+				print("dcc_get_offer_resume", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), dcc_id_get(D));
 			
 			xfree(path);
 
@@ -550,8 +552,10 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 		case GG_EVENT_DCC_DONE:
 		{
 			dcc_t *D;
+			char uin[16];
 
 			debug("[gg] GG_EVENT_DCC_DONE\n");
+		 	snprintf(uin, sizeof(uin), "gg:%d", d->uin);
 
 			if (!(D = gg_dcc_find(d))) {
 				gg_free_dcc(d);
@@ -559,7 +563,7 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 				break;
 			}
 
-			print((dcc_type_get(D) == DCC_SEND) ? "dcc_done_send" : "dcc_done_get", format_user(dcc_uid_get(D)), dcc_filename_get(D));
+			print((dcc_type_get(D) == DCC_SEND) ? "dcc_done_send" : "dcc_done_get", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D));
 			
 			dcc_close(D);
 			gg_free_dcc(d);
@@ -573,7 +577,9 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 			struct in_addr addr;
 			unsigned short port = d->remote_port;
 			char *tmp;
-		
+			char uin[16];
+		 	snprintf(uin, sizeof(uin), "gg:%d", d->uin);
+
 			addr.s_addr = d->remote_addr;
 
 			if (d->peer_uin) {
@@ -581,13 +587,13 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 				userlist_t *u;
 				
 				snprintf(peer, sizeof(peer), "gg:%d", d->peer_uin);
-				u = userlist_find(peer);
+				u = userlist_find(session_find(uin), peer);
 
 				if (!addr.s_addr && u) {
 					addr.s_addr = u->ip;
 					port = u->port;
 				}
-				tmp = saprintf("%s (%s:%d)", xstrdup(format_user(peer)), inet_ntoa(addr), port);
+				tmp = saprintf("%s (%s:%d)", xstrdup(format_user(session_find(uin), peer)), inet_ntoa(addr), port);
 			} else 
 				tmp = saprintf("%s:%d", inet_ntoa(addr), port);
 			

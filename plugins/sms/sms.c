@@ -230,9 +230,9 @@ static COMMAND(sms_command_sms)
 		return -1;
 	}
 
-	if ((u = userlist_find(params[0]))) {
+	if ((u = userlist_find(session, params[0]))) {
 		if (!u->mobile || !strcmp(u->mobile, "")) {
-			printq("sms_unknown", format_user(u->uid));
+			printq("sms_unknown", format_user(session, u->uid));
 			return -1;
 		}
 		number = u->mobile;
@@ -294,7 +294,7 @@ static int sms_protocol_message(void *data, va_list ap)
 	if (sms_away_check(uid)) {
 		const char *sender;
 		char *msg;
-		userlist_t *u = userlist_find(uid);
+		userlist_t *u = userlist_find(session, uid);
 
 		sender = (u && u->nickname) ? u->nickname : uid;
 

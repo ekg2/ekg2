@@ -179,7 +179,7 @@ COMMAND(cmd_tabclear)
 			userlist_t *u = NULL;
 
 			if (send_nicks[i])
-				u = userlist_find(send_nicks[i]);
+				u = userlist_find(session, send_nicks[i]);
 
 			if (!u || strcasecmp(u->status, EKG_STATUS_NA))
 				continue;
@@ -206,7 +206,7 @@ COMMAND(cmd_modify)
 		return -1;
 	}
 
-	if (!(u = userlist_find(params[0]))) {
+	if (!(u = userlist_find(session, params[0]))) {
 		printq("user_not_found", params[0]);
 		return -1;
 	}
@@ -264,7 +264,7 @@ COMMAND(cmd_modify)
 							group_remove(u, tmp[x] + 1 + off);
 							modified = 1;
 						} else {
-							printq("group_member_not_yet", format_user(u->uid), tmp[x] + 1);
+							printq("group_member_not_yet", format_user(session, u->uid), tmp[x] + 1);
 							if (!modified)
 								modified = -1;
 						}
@@ -276,7 +276,7 @@ COMMAND(cmd_modify)
 							group_add(u, tmp[x] + 1 + off);
 							modified = 1;
 						} else {
-							printq("group_member_already", format_user(u->uid), tmp[x] + 1);
+							printq("group_member_already", format_user(session, u->uid), tmp[x] + 1);
 							if (!modified)
 								modified = -1;
 						}
@@ -288,7 +288,7 @@ COMMAND(cmd_modify)
 							group_add(u, tmp[x] + off);
 							modified = 1;
 						} else {
-							printq("group_member_already", format_user(u->uid), tmp[x]);
+							printq("group_member_already", format_user(session, u->uid), tmp[x]);
 							if (!modified)
 								modified = -1;
 						}
@@ -308,9 +308,9 @@ COMMAND(cmd_modify)
 				return -1;
 			}
 
-			if ((existing = userlist_find(argv[i + 1]))) {
+			if ((existing = userlist_find(session, argv[i + 1]))) {
 				if (existing->nickname) {
-					printq("user_exists_other", argv[i], format_user(existing->uid));
+					printq("user_exists_other", argv[i], format_user(session, existing->uid));
 					array_free(argv);
 					return -1;
 				} else {
@@ -334,7 +334,7 @@ COMMAND(cmd_modify)
 			query_emit(NULL, "userlist-removed", &tmp);
 			xfree(tmp);
 
-			userlist_clear_status(u->uid);
+			userlist_clear_status(session, u->uid);
 
 			tmp = xstrdup(argv[i + 1]);
 			query_emit(NULL, "userlist-added", &tmp);
@@ -455,11 +455,11 @@ COMMAND(cmd_add)
 		goto cleanup;
 	}
 
-	if (((u = userlist_find(params[0])) && u->nickname) || ((u = userlist_find(params[1])) && u->nickname)) {
+	if (((u = userlist_find(session, params[0])) && u->nickname) || ((u = userlist_find(session, params[1])) && u->nickname)) {
 		if (!strcasecmp(params[1], u->nickname) && !strcasecmp(params[0], u->uid))
 			printq("user_exists", params[1]);
 		else
-			printq("user_exists_other", params[1], format_user(u->uid));
+			printq("user_exists_other", params[1], format_user(session, u->uid));
 
 		result = -1;
 		goto cleanup;
@@ -471,7 +471,7 @@ COMMAND(cmd_add)
 		u->nickname = xstrdup(params[1]);
 	}
 
-	if (u || userlist_add(params[0], params[1])) {
+	if (u || userlist_add(session, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
 		query_emit(NULL, "userlist-added", &uid);
@@ -718,7 +718,7 @@ COMMAND(cmd_del)
 		return 0;
 	}
 
-	if (!(u = userlist_find(params[0])) || !u->nickname) {
+	if (!(u = userlist_find(session, params[0])) || !u->nickname) {
 		printq("user_not_found", params[0]);
 		return -1;
 	}
@@ -813,7 +813,7 @@ COMMAND(cmd_exec)
 					return -1;
 				}
 
-				if (!(uid = get_uid(args[1]))) {
+				if (!(uid = get_uid(session, args[1]))) {
 					printq("user_not_found", args[1]);
 					array_free(args);
 					return -1;
@@ -974,12 +974,12 @@ COMMAND(cmd_ignore)
 				userlist_t *u = l->data;
 				int level;
 
-				if (!(level = ignored_check(u->uid)))
+				if (!(level = ignored_check(session, u->uid)))
 					continue;
 
 				i = 1;
 
-				printq("ignored_list", format_user(u->uid), ignore_format(level));
+				printq("ignored_list", format_user(session, u->uid), ignore_format(level));
 			}
 
 			if (!i)
@@ -1008,16 +1008,16 @@ COMMAND(cmd_ignore)
 		} else
 			flags = IGNORE_ALL;
 
-		if (!(uid = get_uid(params[0]))) {
+		if (!(uid = get_uid(session, params[0]))) {
 			printq("user_not_found", params[0]);
 			return -1;
 		}
 
-		if (!ignored_add(uid, flags)) {
-			printq("ignored_added", format_user(uid));
+		if (!ignored_add(session, uid, flags)) {
+			printq("ignored_added", format_user(session, uid));
 			config_changed = 1;
 		} else {
-			printq("ignored_exist", format_user(uid));
+			printq("ignored_exist", format_user(session, uid));
 			return -1;
 		}
 
@@ -1039,7 +1039,7 @@ COMMAND(cmd_ignore)
 			return res;
 		}
 		
-		if (!unignore_all && !(uid = get_uid(params[0]))) {
+		if (!unignore_all && !(uid = get_uid(session, params[0]))) {
 			printq("user_not_found", params[0]);
 			return -1;
 		}
@@ -1053,10 +1053,10 @@ COMMAND(cmd_ignore)
 
 				l = l->next;
 
-				if (!ignored_remove(u->uid))
+				if (!ignored_remove(session, u->uid))
 					x = 1;
 
-				level = ignored_check(u->uid);
+				level = ignored_check(session, u->uid);
 			}
 
 			if (x) {
@@ -1070,13 +1070,13 @@ COMMAND(cmd_ignore)
 			return 0;
 		}
 
-		level = ignored_check(uid);
+		level = ignored_check(session, uid);
 		
-		if (!ignored_remove(uid)) {
-			printq("ignored_deleted", format_user(uid));
+		if (!ignored_remove(session, uid)) {
+			printq("ignored_deleted", format_user(session, uid));
 			config_changed = 1;
 		} else {
-			printq("error_not_ignored", format_user(uid));
+			printq("error_not_ignored", format_user(session, uid));
 			return -1;
 		}
 	
@@ -1136,7 +1136,7 @@ COMMAND(cmd_list)
 			return 0;
 		}
 
-		if (!(u = userlist_find(params[0])) || !u->nickname) {
+		if (!(u = userlist_find(session, params[0])) || !u->nickname) {
 			printq("user_not_found", params[0]);
 			return -1;
 		}
@@ -1294,7 +1294,7 @@ COMMAND(cmd_list)
 			show = 1;
 
 		if (show) {
-			printq(tmp, format_user(u->uid), (u->first_name) ? u->first_name : u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
+			printq(tmp, format_user(session, u->uid), (u->first_name) ? u->first_name : u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
 			count++;
 		}
 	}
@@ -1785,7 +1785,7 @@ COMMAND(cmd_query)
 		goto query;
 	}
 
-	if (params[0] && !get_uid(params[0])) {
+	if (params[0] && !get_uid(session, params[0])) {
 		printq("user_not_found", params[0]);
 		res = -1;
 		goto cleanup;
@@ -2842,7 +2842,7 @@ COMMAND(cmd_conference)
 			
 			for (r = c->recipients; r; r = r->next) {
 				char *uid = r->data;
-				userlist_t *u = userlist_find(uid);
+				userlist_t *u = userlist_find(session, uid);
 
 				if (u && u->nickname)
 					recipient = u->nickname;
@@ -2892,19 +2892,19 @@ COMMAND(cmd_conference)
 			return -1;
 		}
 
-		if (!(uid = get_uid(params[2]))) {
+		if (!(uid = get_uid(session, params[2]))) {
 			printq("unknown_user", params[2]);
 			return -1;
 		}
 
 		if (conference_participant(c, uid)) {
-			printq("conferences_already_joined", format_user(uid), params[1]);
+			printq("conferences_already_joined", format_user(session, uid), params[1]);
 			return -1;
 		}
 
 		list_add(&c->recipients, (void*) uid, strlen(uid) + 1);
 
-		printq("conferences_joined", format_user(uid), params[1]);
+		printq("conferences_joined", format_user(session, uid), params[1]);
 
 		return 0;
 	}
@@ -3043,14 +3043,14 @@ COMMAND(cmd_last)
 	struct tm *now;
 
 	if (match_arg(params[0], 'c', "clear", 2)) {
-		if (params[1] && !(uid = get_uid(params[1]))) {
+		if (params[1] && !(uid = get_uid(session, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
 		}
 
 		if ((uid && !last_count(uid)) || !list_count(lasts)) {
 			if (uid)
-				printq("last_list_empty_nick", format_user(uid));
+				printq("last_list_empty_nick", format_user(session, uid));
 			else
 				printq("last_list_empty");
 
@@ -3059,7 +3059,7 @@ COMMAND(cmd_last)
 
 		if (uid) {
 			last_del(uid);
-			printq("last_clear_uin", format_user(uid));
+			printq("last_clear_uin", format_user(session, uid));
 		} else {
 			last_free();
 			printq("last_clear");
@@ -3095,7 +3095,7 @@ COMMAND(cmd_last)
 		}
 	}
 
-	if (nick && !(uid = get_uid(nick))) {
+	if (nick && !(uid = get_uid(session, nick))) {
 		printq("user_not_found", nick);
 		array_free(arr);
 		return -1;
@@ -3105,7 +3105,7 @@ COMMAND(cmd_last)
 		
 	if (!((uid > 0) ? (count = last_count(uid)) : (count = list_count(lasts)))) {
 		if (uid) {
-			printq("last_list_empty_nick", format_user(uid));
+			printq("last_list_empty_nick", format_user(session, uid));
 			return -1;
 		}
 
@@ -3137,9 +3137,9 @@ COMMAND(cmd_last)
 				time_str = xstrdup(buf);
 
 			if (config_last & 4 && ll->type == 1)
-				printq("last_list_out", time_str, format_user(ll->uid), ll->message);
+				printq("last_list_out", time_str, format_user(session, ll->uid), ll->message);
 			else
-				printq("last_list_in", time_str, format_user(ll->uid), ll->message);
+				printq("last_list_in", time_str, format_user(session, ll->uid), ll->message);
 
 			xfree(time_str);
 		}
@@ -3155,7 +3155,7 @@ COMMAND(cmd_queue)
 	if (match_arg(params[0], 'c', "clear", 2)) {
 		if ((params[1] && !msg_queue_count_uid(params[1])) || !msg_queue_count()) {
 			if (params[1])
-				printq("queue_empty_uid", format_user(params[1]));
+				printq("queue_empty_uid", format_user(session, params[1]));
 			else
 				printq("queue_empty");
 
@@ -3164,7 +3164,7 @@ COMMAND(cmd_queue)
 
 		if (params[1]) {
 			msg_queue_remove_uid(params[1]);
-			printq("queue_clear_uid", format_user(params[1]));
+			printq("queue_clear_uid", format_user(session, params[1]));
 		} else {
 			msg_queue_free();
 			printq("queue_clear");
@@ -3175,7 +3175,7 @@ COMMAND(cmd_queue)
 
 	if ((params[0] && !msg_queue_count_uid(params[0])) || !msg_queue_count()) {
 		if (params[0])
-			printq("queue_empty_uid", format_user(params[0]));
+			printq("queue_empty_uid", format_user(session, params[0]));
 		else
 			printq("queue_empty");
 
@@ -3218,13 +3218,13 @@ COMMAND(cmd_dcc)
 
 			switch (d->type) {
 				case DCC_SEND:
-					printq("dcc_show_pending_send", itoa(d->id), format_user(d->uid), d->filename);
+					printq("dcc_show_pending_send", itoa(d->id), format_user(session, d->uid), d->filename);
 					break;
 				case DCC_GET:
-					printq("dcc_show_pending_get", itoa(d->id), format_user(d->uid), d->filename);
+					printq("dcc_show_pending_get", itoa(d->id), format_user(session, d->uid), d->filename);
 					break;
 				case DCC_VOICE:
-					printq("dcc_show_pending_voice", itoa(d->id), format_user(d->uid));
+					printq("dcc_show_pending_voice", itoa(d->id), format_user(session, d->uid));
 					break;
 				default:
 					break;
@@ -3246,13 +3246,13 @@ COMMAND(cmd_dcc)
 
 			switch (d->type) {
 				case DCC_SEND:
-					printq("dcc_show_active_send", itoa(d->id), format_user(d->uid), d->filename, itoa(d->offset), itoa(d->size), itoa(100 * d->offset / d->size));
+					printq("dcc_show_active_send", itoa(d->id), format_user(session, d->uid), d->filename, itoa(d->offset), itoa(d->size), itoa(100 * d->offset / d->size));
 					break;
 				case DCC_GET:
-					printq("dcc_show_active_get", itoa(d->id), format_user(d->uid), d->filename, itoa(d->offset), itoa(d->size), itoa(100 * d->offset / d->size));
+					printq("dcc_show_active_get", itoa(d->id), format_user(session, d->uid), d->filename, itoa(d->offset), itoa(d->size), itoa(100 * d->offset / d->size));
 					break;
 				case DCC_VOICE:
-					printq("dcc_show_active_voice", itoa(d->id), format_user(d->uid));
+					printq("dcc_show_active_voice", itoa(d->id), format_user(session, d->uid));
 					break;
 				default:
 					break;
@@ -3274,7 +3274,7 @@ COMMAND(cmd_dcc)
 			return -1;
 		}
 
-		uid = get_uid(params[1]);		
+		uid = get_uid(session, params[1]);		
 
 		for (l = dccs; l; l = l->next) {
 			dcc_t *D = l->data;
@@ -3297,7 +3297,7 @@ COMMAND(cmd_dcc)
 
 		dcc_close(d);
 
-		printq("dcc_close", format_user(uid));
+		printq("dcc_close", format_user(session, uid));
 		
 		return 0;
 	}

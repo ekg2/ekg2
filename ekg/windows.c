@@ -60,8 +60,13 @@ window_t *window_find(const char *target)
 			status = 1;
 	}
 
-	if (target && strncmp(target, "__", 2))
-		u = userlist_find(get_uid(target));
+	if (target && strncmp(target, "__", 2)) {
+		list_t sl;
+		for (sl = sessions; sl; sl->next) {
+			session_t *s = sl->data;
+			u = userlist_find(s, get_uid(s, target));
+		}
+	}
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;

@@ -379,7 +379,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e)
 
 		snprintf(uid, sizeof(uid), "gg:%d", e->event.msg.sender);
 
-		if (!(u = userlist_find(uid)))
+		if (!(u = userlist_find(s, uid)))
 			return;
 
 		query_emit(NULL, "protocol-dcc-validate", &__host, &__port, &__valid, NULL);
@@ -387,7 +387,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e)
 
 		if (!__valid) {
 			char *tmp = saprintf("/ignore %s", uid);
-			print_status("dcc_attack", format_user(uid));
+			print_status("dcc_attack", format_user(s, uid));
 			command_exec(NULL, s, tmp, 0);
 			xfree(tmp);
 
@@ -1067,12 +1067,12 @@ COMMAND(gg_command_msg)
 		if (!strcmp(*p, ""))
 			continue;
 
-		if (!(uid = get_uid(*p))) {
+		if (!(uid = get_uid(session, *p))) {
 			printq("user_not_found", *p);
 			continue;
 		}
 		
-	        u = userlist_find(uid);
+	        u = userlist_find(session, uid);
 
 //		put_log(uin, "%s,%s,%s,%s,%s\n", ((chat) ? "chatsend" : "msgsend"), uid, ((u && u->nickname) ? u->nickname : ""), log_timestamp(time(NULL)), raw_msg);
 
@@ -1110,7 +1110,7 @@ COMMAND(gg_command_msg)
 		for (p = nicks; *p; p++) {
 			const char *uid;
 			
-			if (!(uid = get_uid(*p)))
+			if (!(uid = get_uid(session, *p)))
 				continue;
 
 			if (strncmp(uid, "gg:", 3))
@@ -1182,7 +1182,7 @@ COMMAND(gg_command_block)
 
 			i = 1;
 
-			printq("blocked_list", format_user(u->uid));
+			printq("blocked_list", format_user(session, u->uid));
 		}
 
 		if (!i) 
@@ -1191,16 +1191,16 @@ COMMAND(gg_command_block)
 		return 0;
 	}
 
-	if (!(uid = get_uid(params[0]))) {
+	if (!(uid = get_uid(session, params[0]))) {
 		printq("user_not_found", params[0]);
 		return -1;
 	}
 		
 	if (gg_blocked_add(session, uid) != -1) {
-		printq("blocked_added", format_user(uid));
+		printq("blocked_added", format_user(session, uid));
 		config_changed = 1;
 	} else {
-		printq("blocked_exist", format_user(uid));
+		printq("blocked_exist", format_user(session, uid));
 		return -1;
 	}
 
@@ -1241,16 +1241,16 @@ COMMAND(gg_command_unblock)
 		return 0;
 	}
 
-	if (!(uid = get_uid(params[0]))) {
+	if (!(uid = get_uid(session, params[0]))) {
 		printq("user_not_found", params[0]);
 		return -1;
 	}
 		
 	if (gg_blocked_remove(session, uid) != -1) {
-		printq("blocked_deleted", format_user(uid));
+		printq("blocked_deleted", format_user(session, uid));
 		config_changed = 1;
 	} else {
-		printq("error_not_blocked", format_user(uid));
+		printq("error_not_blocked", format_user(session, uid));
 		return -1;
 	}
 

@@ -91,7 +91,7 @@ static int userlist_compare(void *data1, void *data2)
  *
  * dodaje do listy kontaktów pojedyncz± liniê z pliku lub z serwera.
  */
-void userlist_add_entry(const char *line)
+void userlist_add_entry(session_t *session,const char *line)
 {
 	char **entry = array_make(line, ";", 8, 0, 0);
 	userlist_t u;
@@ -138,25 +138,29 @@ void userlist_add_entry(const char *line)
 
 	xfree(entry);
 
-	list_add_sorted(&userlist, &u, sizeof(u), userlist_compare);
+	list_add_sorted(&(session->userlist), &u, sizeof(u), userlist_compare);
 }
 
 /*
  * userlist_read()
  *
- * wczytuje listê kontaktów z pliku ~/.gg/userlist w postaci eksportu
+ * wczytuje listê kontaktów z pliku ~/.ekg/gg:NUMER-userlist w postaci eksportu
  * tekstowego listy kontaktów windzianego klienta.
  *
  * 0/-1
  */
-int userlist_read()
+int userlist_read(session_t *session)
 {
 	const char *filename;
 	char *buf;
 	FILE *f;
+	char *tmp=saprintf("%s-userlist", session->uid);	
 
-	if (!(filename = prepare_path("userlist", 0)))
+	if (!(filename = prepare_path(tmp, 0))) {
+		xfree(tmp);
 		return -1;
+	}
+	xfree(tmp);
 	
 	if (!(f = fopen(filename, "r")))
 		return -1;
@@ -171,7 +175,7 @@ int userlist_read()
 			continue;
 		}
 
-		userlist_add_entry(buf);
+		userlist_add_entry(session,buf);
 
 		xfree(buf);
 	}
@@ -188,12 +192,12 @@ int userlist_read()
  *
  * zwraca zaalokowany bufor, który nale¿y zwolniæ.
  */
-char *userlist_dump()
+char *userlist_dump(session_t *session)
 {
 	string_t s = string_init(NULL);
 	list_t l;
 
-	for (l = userlist; l; l = l->next) {
+	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		const char *uid;
 		char *groups, *line;
@@ -224,19 +228,23 @@ char *userlist_dump()
 /*
  * userlist_write()
  *
- * zapisuje listê kontaktów w pliku ~/.gg/userlist
+ * zapisuje listê kontaktów w pliku ~/.ekg/gg:NUMER-userlist
  */
-int userlist_write()
+int userlist_write(session_t *session)
 {
 	const char *filename;
 	char *contacts;
 	FILE *f;
+	char *tmp=saprintf("%s-userlist", session->uid); 
 
-	if (!(contacts = userlist_dump()))
+	if (!(contacts = userlist_dump(session))) {
+		xfree(tmp);
 		return -1;
+	}
 	
-	if (!(filename = prepare_path("userlist", 1))) {
+	if (!(filename = prepare_path(tmp, 1))) {
 		xfree(contacts);
+		xfree(tmp);
 		return -1;
 	}
 	
@@ -307,11 +315,11 @@ void userlist_write_crash()
  *
  *  - uin.
  */
-void userlist_clear_status(const char *uid)
+void userlist_clear_status(session_t *session, const char *uid)
 {
         list_t l;
 
-        for (l = userlist; l; l = l->next) {
+        for (l = session->userlist; l; l = l->next) {
                 userlist_t *u = l->data;
 
 		if (!uid || !strcasecmp(uid, u->uid)) {
@@ -330,10 +338,10 @@ void userlist_clear_status(const char *uid)
  *
  * czy¶ci listê u¿ytkowników i zwalnia pamiêæ.
  */
-void userlist_free()
+void userlist_free(session_t *session)
 {
-	while (userlist)
-		userlist_remove(userlist->data);
+	while (session->userlist)
+		userlist_remove(session->userlist->data);
 }
 
 /*
@@ -344,7 +352,7 @@ void userlist_free()
  *  - uin,
  *  - display.
  */
-userlist_t *userlist_add(const char *uid, const char *nickname)
+userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname)
 {
 	userlist_t u;
 
@@ -354,7 +362,7 @@ userlist_t *userlist_add(const char *uid, const char *nickname)
 	u.nickname = xstrdup(nickname);
 	u.status = xstrdup(EKG_STATUS_NA);
 
-	return list_add_sorted(&userlist, &u, sizeof(u), userlist_compare);
+	return list_add_sorted(&(session->userlist), &u, sizeof(u), userlist_compare);
 }
 
 /*
@@ -424,14 +432,14 @@ int userlist_replace(userlist_t *u)
  *
  *  - uid,
  */
-userlist_t *userlist_find(const char *uid)
+userlist_t *userlist_find(session_t *session, const char *uid)
 {
 	list_t l;
 
-	if (!uid)
+	if (!uid || !session->userlist)
 		return NULL;
 	
-	for (l = userlist; l; l = l->next) {
+	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		const char *tmp;
 		int len;
@@ -457,15 +465,15 @@ userlist_t *userlist_find(const char *uid)
         return NULL;
 }
 
-int userlist_set(const char *contacts)
+int userlist_set(session_t *session, const char *contacts)
 {
 	char **entries = array_make(contacts, "\r\n", 0, 1, 0);
 	int i;
 
-	userlist_free();
+	userlist_free(session);
 
 	for (i = 0; entries[i]; i++)
-		userlist_add_entry(entries[i]);
+		userlist_add_entry(session, entries[i]);
 
 	array_free(entries);
 
@@ -530,14 +538,14 @@ int valid_uid(const char *uid)
  *
  *  - text.
  */
-const char *get_uid(const char *text)
+const char *get_uid(session_t *session, const char *text)
 {
 	userlist_t *u;
 
 	if (text && !strcmp(text, "$"))
 		text = window_current->target;
 	
-	u = userlist_find(text);
+	u = userlist_find(session, text);
 
 	if (u && u->uid)
 		return u->uid;
@@ -557,9 +565,9 @@ const char *get_uid(const char *text)
  *
  *  - uin - numerek danej osoby.
  */
-const char *format_user(const char *uid)
+const char *format_user(session_t *session, const char *uid)
 {
-	userlist_t *u = userlist_find(uid);
+	userlist_t *u = userlist_find(session, uid);
 	static char buf[256], *tmp;
 	
 	if (uid && strchr(uid, ':'))
@@ -584,9 +592,9 @@ const char *format_user(const char *uid)
  *
  *  - uin.
  */
-int ignored_remove(const char *uid)
+int ignored_remove(session_t *session, const char *uid)
 {
-	userlist_t *u = userlist_find(uid);
+	userlist_t *u = userlist_find(session, uid);
 	char *tmp;
 	list_t l;
 	int level, tmp2 = 0;
@@ -594,7 +602,7 @@ int ignored_remove(const char *uid)
 	if (!u)
 		return -1;
 
-	if (!(level = ignored_check(uid)))
+	if (!(level = ignored_check(session,uid)))
 		return -1;
 
 	for (l = u->groups; l; ) {
@@ -635,17 +643,17 @@ int ignored_remove(const char *uid)
  *  - uin.
  *  - level.
  */
-int ignored_add(const char *uid, int level)
+int ignored_add(session_t *session, const char *uid, int level)
 {
 	userlist_t *u;
 	char *tmp;
 	int oldlevel = 0;
 
-	if (ignored_check(uid))
+	if (ignored_check(session, uid))
 		return -1;
 	
-	if (!(u = userlist_find(uid)))
-		u = userlist_add(uid, NULL);
+	if (!(u = userlist_find(session, uid)))
+		u = userlist_add(session, uid, NULL);
 
 	tmp = saprintf("__ignored_%d", level);
 	group_add(u, tmp);
@@ -675,9 +683,9 @@ int ignored_add(const char *uid, int level)
  *
  *  - uin.
  */
-int ignored_check(const char *uid)
+int ignored_check(session_t *session, const char *uid)
 {
-	userlist_t *u = userlist_find(uid);
+	userlist_t *u = userlist_find(session, uid);
 	list_t l;
 
 	if (!u)

@@ -571,13 +571,12 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		userlist_t *u;
 		
 		if ((res = strchr(target, '/'))) {
-			// newtarget = xstrmid(target, 0, (int)(res - target) - 1);
 			newtarget = xstrdup(target);
 			*(strchr(newtarget, '/')) = 0;
-			u = userlist_find(target);
+			u = userlist_find(session, target);
 			/* XXX cza dorobiæ, szefie */
 		} else {
-			u = userlist_find(target);
+			u = userlist_find(session, target);
 
 			if (u && window_find(u->uid))
 				newtarget = xstrdup(u->uid);

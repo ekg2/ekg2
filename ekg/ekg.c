@@ -728,7 +728,7 @@ int main(int argc, char **argv)
 	if (!no_global_config)
 		config_read(SYSCONFDIR "/ekg-override.conf");
 	
-        userlist_read();
+/*        userlist_read(); */
 	emoticon_read();
 	msg_queue_read();
 
@@ -917,7 +917,7 @@ void ekg_exit()
 	msg_queue_free();
 	alias_free();
 	conference_free();
-	userlist_free();
+/*	userlist_free(); -- powiedzmy, ze to odpowiedzialno¶æ pluginow */
 	theme_free();
 	variable_free();
 	emoticon_free();

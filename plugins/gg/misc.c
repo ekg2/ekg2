@@ -150,7 +150,7 @@ char gg_userlist_type(userlist_t *u)
  */
 int gg_blocked_remove(session_t *s, const char *uid)
 {
-	userlist_t *u = userlist_find(uid);
+	userlist_t *u = userlist_find(s, uid);
 	gg_private_t *g = session_private_get(s);
 	list_t l;
 
@@ -194,7 +194,7 @@ int gg_blocked_remove(session_t *s, const char *uid)
  */
 int gg_blocked_add(session_t *s, const char *uid)
 {
-	userlist_t *u = userlist_find(uid);
+	userlist_t *u = userlist_find(s, uid);
 	gg_private_t *g = session_private_get(s);
 
 	if (!s || !g)
@@ -204,7 +204,7 @@ int gg_blocked_add(session_t *s, const char *uid)
 		return -1;
 	
 	if (!u)
-		u = userlist_add(uid, NULL);
+		u = userlist_add(s, uid, NULL);
 	else {
 		if (g->sess && g->sess->state == GG_STATE_CONNECTED)
 			gg_remove_notify_ex(g->sess, atoi(u->uid + 3), gg_userlist_type(u));

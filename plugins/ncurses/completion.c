@@ -178,7 +178,7 @@ static void ignored_uin_generator(const char *text, int len)
 		for (l = s->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 
-			if (!ignored_check(u->uid))
+			if (!ignored_check(s, u->uid))
 				continue;
 
 			if (!u->nickname) {

@@ -21,7 +21,6 @@
 #define __EKG_SESSIONS_H
 
 #include <ekg/dynstuff.h>
-#include "userlist.h"
 
 list_t sessions;
 

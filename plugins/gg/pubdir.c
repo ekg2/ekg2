@@ -437,7 +437,7 @@ static void gg_handle_userlist_get(int type, int fd, int watch, void *data)
 		session_t *s = session_find((char*) h->user_data);
 		gg_private_t *g = session_private_get(s);
 
-		userlist_set(h->data);
+		userlist_set(s, h->data);
 
 		if (g)
 			gg_userlist_send(g->sess, s->userlist);
@@ -539,7 +539,7 @@ COMMAND(gg_command_list)
 	
 	/* list --put */
 	if (params[0] && (match_arg(params[0], 'p', "put", 2))) {
-		char *contacts = userlist_dump();
+		char *contacts = userlist_dump(session);
 
 		gg_iso_to_cp(contacts);
 

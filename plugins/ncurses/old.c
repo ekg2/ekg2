@@ -1065,7 +1065,7 @@ next:
  */
 void update_statusbar(int commit)
 {
-	userlist_t *q = userlist_find(window_current->target);
+	userlist_t *q = userlist_find(window_current->session, window_current->target);
 	struct format_data formats[40];	/* zwiêkszaæ! */
 	int formats_count = 0, i = 0, y;
 	int mail_count = -1;

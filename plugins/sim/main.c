@@ -171,7 +171,7 @@ static COMMAND(command_key)
 		xfree(tmp);
 
 		if (!f) {
-			printq("key_public_not_found", format_user(session_uid_get(session)));
+			printq("key_public_not_found", format_user(session, session_uid_get(session)));
 			return -1;
 		}
 
@@ -184,7 +184,7 @@ static COMMAND(command_key)
 
 		command_exec(params[1], session, s->str, quiet);
 		
-		printq("key_send_success", format_user(params[1]));
+		printq("key_send_success", format_user(session, params[1]));
 		string_free(s, 1);
 
 		return 0;

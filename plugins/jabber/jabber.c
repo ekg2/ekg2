@@ -248,7 +248,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				print("generic", "Po³±czono siê z Jabberem");
 				session_connected_set(s, 1);
 				session_unidle(s);
-				jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
+				jabber_write(j, "<iq type=\"get\" id=\"ros_get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 				jabber_write_status(s);
 			}
 
@@ -280,8 +280,13 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			}
 
 			session_set(s, "__new_password", NULL);
+	
 		}
-	}
+		
+		if (id && !strncmp(id, "ros_get", 7)) {
+			/* XXX dostali¶my roster */
+		}
+	} /* if iq */
 
 	if (!strcmp(n->name, "presence")) {
 		if (type && !strcmp(type, "subscribe") && from) {
@@ -688,7 +693,7 @@ COMMAND(jabber_command_msg)
 		return -1;
 	}
 
-	if (!(uid = get_uid(params[0]))) {
+	if (!(uid = get_uid(session, params[0]))) {
 		uid = params[0];
 
 		if (strchr(uid, '@') && strchr(uid, '@') < strchr(uid, '.')) {			
@@ -890,7 +895,7 @@ COMMAND(jabber_command_auth)
 		return -1;
 	}
 	
-	if (!(uid = get_uid(params[1]))) {
+	if (!(uid = get_uid(session, params[1]))) {
 		uid = params[1];
 
 		if (!(strchr(uid,'@') && strchr(uid, '@') < strchr(uid, '.'))) {
