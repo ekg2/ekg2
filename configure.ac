@@ -23,7 +23,7 @@ dnl It's obsolete in current versions of gettext but it's needed in older
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 
-ALL_LINGUAS="en"
+ALL_LINGUAS="pl"
 
 AC_SUBST(COMPAT)
 AC_SUBST(PLUGINS)
