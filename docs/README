@@ -13,50 +13,29 @@ LICENCJA
     i u¿ywania programu z bibliotek± OpenSSL autorstwa Projektu OpenSSL
     (The OpenSSL Project) dostêpn± pod adresem http://www.openssl.org/
     
-    Bibliotekê libgadu obs³uguj±ca warstwê sieciow± udostêpniono na
-    zasadach licencji LGPL v2.1, której tre¶æ znajduje siê w pliku
-    lib/COPYING.
-    
-    Program i biblioteka zosta³y napisane na podstawie informacji
-    uzyskanych przez badanie pakietów wysy³anych miêdzy klientem
-    a serwerem oraz od osób trzecich. Autorzy nie disasemblowali
-    ani nie dekompilowali oryginalnego klienta. Projekt powsta³ przy
-    u¿yciu darmowych i wolnodostêpnych narzêdzi.
-
-    Gadu-Gadu jest zastrze¿onym znakiem towarowym sms-express Sp. z o.o.
-
 INSTALACJA
 
-    Rozpakowaæ poleceniem ,,tar zxvf ekg-XXX.tar.gz'' (gdzie XXX to wersja
+    Rozpakowaæ poleceniem ,,tar zxvf ekg2-XXX.tar.gz'' (gdzie XXX to wersja
     programu lub data wykonania snapshotu), wej¶æ do utworzonego katalogu.
     Je¶li mamy uprawnienia administratora na danej maszynie, wywo³ujemy
     ,,./configure'', potem ,,make'' i z prawami roota ,,make install''.
     Je¶li chcemy zainstalowaæ program w katalogu domowym, do polecenia
-    configure dodajemy parametry ,,--prefix=$HOME/ekg
-    --mandir=$HOME/ekg/share/man''. Po zainstalowaniu w ten sposób,
+    configure dodajemy parametry ,,--prefix=$HOME/ekg2
+    --mandir=$HOME/ekg2/share/man''. Po zainstalowaniu w ten sposób,
     program gotowy do uruchomienia bêdzie znajdowa³ siê w katalogu
-    ekg/bin w katalogu domowym. Je¶li chcemy mieæ mo¿liwo¶æ u¿ywania
-    poleceñ ,,beeps_spk'' i ,,blink_leds'', s³u¿±cych m.in. do
-    manipulowania diodami LED na klawiaturze, nale¿y u¿yæ parametru
-    ,,--enable-ioctld''.
+    ekg2/bin w katalogu domowym. 
 
-    Proste? Proste. Po pierwszym uruchomieniu ekg powie, jak go
+    Proste? Proste. Po pierwszym uruchomieniu EKG2 powie, jak go
     skonfigurowaæ.
 
-    Program domy¶lnie korzysta z biblioteki ncurses, wiêc powinny byæ
-    zainstalowane odpowiednie pakiety zawieraj±ce bibliotekê oraz pliki
-    nag³ówkowe. Je¶li chcesz u¿yæ starego interfejsu, do polecenia
-    configure dodaj ,,--disable-ui-ncurses''. Interfejs ten wymaga
-    zainstalowania biblioteki readline wraz z plikami nag³ówkowymi.
-    readline zwykle polega te¿ na innych bibliotekach do obs³ugi
-    terminala, jak np. libtermcap czy ncurses. Instalacja obu interfejsów
-    naraz nie jest wskazana. Oczywi¶cie niezbêdny jest te¿ zestaw narzêdzi
-    do kompilacji programów napisanych w jêzyku C -- kompilator,
-    preprocesor, linker, pliki nag³ówkowe, biblioteki systemowe itd.
-    Je¶li skrypt ./configure zg³osi jakie¶ b³êdy, skontaktuj siê ze swoim
+    Program korzyst domy¶lnie z pluginu wyj¶ciowego ncurses. Interfejs
+    readline w chwili obecnej nie jest gotowy do u¿ycia. Do instalacji 
+    konieczne jest zainstalowanie wszelkich narzêdzi wymaganych do tego:
+    kompilator, preprocesor, linker, pliki nag³ówkowe, biblioteki itd.
+    Je¿eli ./configure poka¿e jakie¶ b³êdy skontaktuj siê ze swoim 
     administratorem.
 
-    ekg powinien dzia³aæ na wiêkszo¶ci systemów uniksowych, jak Linux,
+    ekg2 powinien dzia³aæ na wiêkszo¶ci systemów uniksowych, jak Linux,
     *BSD, SunOS, IRIX itp. lecz czasami przy dodawaniu nowych funkcji
     nie sposób sprawdziæ ich zachowania na wszystkich popularnych
     systemach. W takim wypadku przydatne s± informacje o b³êdach z
