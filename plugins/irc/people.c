@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Ziomal SMrocku <michal.spadlinski@gim.org.pl>
+ *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -342,10 +342,12 @@ int irc_nick_prefix(irc_private_t *j, people_chan_t *ch, int irc_color)
 {
 	char *t = SOP(_005_PREFIX);
 	char *p = xstrchr(t, ')');
-	ch->sign=' ';
+	*(ch->sign)=' ';
+	(ch->sign)[1] = '\0';
 	if (p) {
 		p++;
-		if (irc_color < xstrlen(p)) ch->sign = p[irc_color];
+		if (irc_color < xstrlen(p))
+			*(ch->sign) = p[irc_color];
 	} 
 	return 0;
 }

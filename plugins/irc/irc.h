@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Ziomal SMrocku <michal.spadlinski@gim.org.pl>
+ *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -63,7 +63,7 @@ typedef struct {
 /* data for private->people->channels */
 typedef struct {
 	int mode; /* +v +o */
-	char sign;
+	char sign[2];
 	channel_t *chanp;
 } people_chan_t;
 

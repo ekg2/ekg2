@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Ziomal SMrocku <michal.spadlinski@gim.org.pl>
+ *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -137,7 +137,6 @@ int irc_session(void *data, va_list ap)
 	if (!s)
 		return 0;
 
-	debug("[irc] session(): %s\n", *session);
 	if (data)
 		irc_private_init(s);
 	else
@@ -502,9 +501,11 @@ COMMAND(irc_command_msg)
 	const char *uid=NULL;
         window_t *w;
         char **rcpts; 
-        int class = EKG_MSGCLASS_SENT; 
-        char *me, *format=NULL, *seq=NULL, *head;
+        int class = EKG_MSGCLASS_SENT, ischn; 
+        char *me, *format=NULL, *seq=NULL, *head, *chantypes;
         const time_t sent = time(NULL);					
+	people_t *person;
+	people_chan_t *perchn = NULL;
 
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
@@ -529,13 +530,20 @@ COMMAND(irc_command_msg)
 
 	irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, params[1]);
 
-	/* GiM: XXX */
+	chantypes = SOP(_005_CHANTYPES);
+	ischn = !!xstrchr(chantypes, uid[4]);
+	if ((person = irc_find_person(j->people, j->nick)))
+		perchn = irc_find_person_chan(person->channels, uid);
+
 	w = window_find_s(session, uid);
 	rcpts = xmalloc(sizeof(char *) * 2);
 	me = xstrdup(session_uid_get(session));
-	/* GiM: TODO zmieniæ formaty jeszcze */
-	head = format_string(format_find(w?"irc_msg_sent_n":"irc_msg_sent"),
-				me, j->nick, uid+4, params[1]);
+	
+	head = format_string(format_find(ischn?"irc_msg_sent_chan":
+				w?"irc_msg_sent_n":"irc_msg_sent"),
+			session_name(session), perchn?perchn->sign:" ",
+			j->nick, j->nick, uid+4, params[1]);
+
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
 
@@ -719,37 +727,7 @@ int irc_window_kill(void *data, va_list ap)
 	}
 	return 0;
 }
-/*
-char *irc_getarg(session_t *sess, char *stajl, const char *param0)
-{
-	char *ret;
-	
-	if (!session_check(sess, 1, IRC3)) {
-		print("invalid_session");
-		return NULL;
-	}
-	
-	if (!session_connected_get(sess)) {
-		print("not_connected", session_name(sess));
-		return NULL;
-	}
 
-	if (!param0) {
-		ret = xstrdup(window_current->target);
-		if (xstrncasecmp(ret, IRC4, 4)) {
-			print(stajl, session_name(sess), ret);
-			xfree(ret);
-			return NULL;
-		}
-	} else {
-		if (!xstrncasecmp(param0, IRC4, 4))
-			ret = xstrdup(param0);
-		else
-			ret = saprintf("irc:%s", param0);
-	}
-	return ret;
-}
-*/
 enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 {
@@ -1104,8 +1082,8 @@ int irc_plugin_init()
 	
 	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 0, NULL);
-	command_add(&irc_plugin, "irc:disconnect", NULL,irc_command_disconnect, 0, NULL);
-	command_add(&irc_plugin, "irc:reconnect", NULL,	irc_command_reconnect, 0, NULL);
+	command_add(&irc_plugin, "irc:disconnect", "?",irc_command_disconnect, 0, NULL);
+	command_add(&irc_plugin, "irc:reconnect", "?",	irc_command_reconnect, 0, NULL);
 
 	command_add(&irc_plugin, "irc:join", "w", 	irc_command_jopacy, 0, NULL);
 	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 0, NULL);
@@ -1179,19 +1157,21 @@ static int irc_plugin_destroy()
 static int irc_theme_init()
 {
 	/* %1 should be _always_ session name, if it's not so,
-	 * you should report this to me [GiM]
+	 * you should report this to me (GiM)
 	 */
 	
-	/* %2 - nick, %3 - chan, %4 - msg*/
-        format_add("irc_msg_sent",	"%P<%n%2/%3%P>%n %4", 1);
-        format_add("irc_msg_sent_n",	"%P<%n%2%P>%n %4", 1);
+	/* %2 - prefix %3 - nick+ident+host, %4 - nick, %5 - chan, %6 - msg*/
+	format_add("irc_msg_sent",	"%P<%4/%5%P>%n %6", 1);
+	format_add("irc_msg_sent_n",	"%P<%4%P>%n %6", 1);
+	format_add("irc_msg_sent_chan",	"%P<%{2@+ Ccn}X%2%4%P>%n %6", 1);
 	
-	format_add("irc_msg_f_chan",	"%B<%n%2/%3%B>%n %4", 1);
-        format_add("irc_msg_f_chan_n",	"%B<%n%2%B>%n %4", 1);
-	format_add("irc_msg_f_some",	"%b<%n%2%b>%n %4", 1);
-	format_add("irc_not_f_chan",	"%B(%n%2/%3%B)%n %4", 1);
-        format_add("irc_not_f_chan_n",	"%B(%n%2%B)%n %4", 1);
-	format_add("irc_not_f_some",	"%b(%n%2%b)%n %4", 1);
+	format_add("irc_msg_f_chan",	"%B<%{2@+ Ccn}X%2%4/%5%B>%n %6", 1);
+	format_add("irc_msg_f_chan_n",	"%B<%{2@+ Ccn}X%2%4%B>%n %6", 1);
+	format_add("irc_msg_f_some",	"%b<%4%b>%n %6", 1);
+
+	format_add("irc_not_f_chan",	"%B(%{2@+ Ccn}X%2%4/%5%B)%n %6", 1);
+	format_add("irc_not_f_chan_n",	"%B(%{2@+ Ccn}X%2%4%B)%n %6", 1);
+	format_add("irc_not_f_some",	"%b(%4%b)%n %6", 1);
 
 	format_add("irc_joined", "%> %Y%2%n has joined %4\n", 1);
 	format_add("irc_left", "%> %g%2%n has left %4 (%5)\n", 1);

@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Ziomal SMrocku <michal.spadlinski@gim.org.pl>
+ *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -375,7 +375,7 @@ IRC_COMMAND(irc_c_error)
 	i = irccommands[ecode].num;
 	t = NULL;
 	if (param[3]) {
-		t = saprintf("irc:%s",param[3]);
+		t = saprintf("%s%s", IRC4, param[3]);
 		w = window_find_s(s, t);
 		dest = w?t:NULL;
 	}
@@ -523,7 +523,7 @@ IRC_COMMAND(irc_c_nick)
 }
 
 /* p[0] - :nick!ident@host
- * p[1] - PRIVMSG
+ * p[1] - PRIVMSG | NOTICE
  * p[2] - destination (channel|nick)
  * p[3] - :message
  */
@@ -535,6 +535,8 @@ IRC_COMMAND(irc_c_msg)
 	int class;
 	int mw = 666,prv=0;
 	window_t *w = NULL;
+	people_t *person;
+	people_chan_t *perchn = NULL;
 	time_t sent;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
@@ -552,13 +554,15 @@ IRC_COMMAND(irc_c_msg)
 	} else {
 		class = EKG_MSGCLASS_CHAT;
 		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
-		dest = saprintf("irc:%s",param[2]);
+		dest = saprintf("%s%s", IRC4, param[2]);
 		format = xstrdup(prv?"irc_msg_f_chan_n":"irc_not_f_chan_n");
 		w = window_find_s(s, dest);
 		if (!w) {
 			xfree(format);
 			format = xstrdup(prv?"irc_msg_f_chan":"irc_not_f_chan");
 		}
+		if ((person = irc_find_person(j->people, param[0]+1)))
+			perchn = irc_find_person_chan(person->channels, dest);
 	}
 
 	if (t) *t='!'; 
@@ -567,8 +571,11 @@ IRC_COMMAND(irc_c_msg)
 
 	if((ctcpstripped = ctcp_parser(s, prv, me, param[2], OMITCOLON(param[3])))) {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped);
+		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', me, param[2], coloured);
 		xfree(ctcpstripped);
-		head = format_string(format_find(format), me, param[0]+1, param[2], coloured);
+		head = format_string(format_find(format), session_name(s),
+				perchn?perchn->sign:" ",
+				me, param[0]+1, param[2], coloured);
 		xfree(coloured);
 		xfree(me);
 		me = xstrdup(session_uid_get(s));
@@ -766,7 +773,7 @@ IRC_COMMAND(irc_c_topic)
 	char *t, *dest=NULL;
 	char *coloured;
 
-	t = saprintf("irc:%s", param[2]);
+	t = saprintf("%s%s", IRC4, param[2]);
 	w = window_find_s(s, t);
 	dest = w?w->target:NULL;
 	xfree(t);
@@ -854,6 +861,7 @@ notreallyok:
 	string_free(moderpl, 1);
 
 	xfree(add);
+	xfree(channame);
 	return 0;
 }
 

@@ -23,12 +23,17 @@ connect
 	oraz zmienn± nickname.
 
 disconnect
-	parametry: 
+	parametry: <tekst>
 	krotki opis: od³±cza od servera sieci IRC
 
+	wysy³a <tekst> jako QUIT, je¶li nie podano wysy³a tekst:
+	"EKG2 - It's better than sex!"
+
 reconnect
-	parametry: 
+	parametry: <tekst>
 	krotki opis: roz³±cza z serwerem i ³±czy ponownie
+
+	<tekst> jest przekazywany do polecenia disconnect
 
 join
 	parametry: <kana³>+
