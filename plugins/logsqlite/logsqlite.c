@@ -271,6 +271,9 @@ sqlite * logsqlite_open_db(session_t * session, time_t sent, char * path)
  */
 void logsqlite_close_db(sqlite * db)
 {
+	if (!db) {
+		return;
+	}
 	debug("[logsqlite] close db\n");
 	sqlite_close(db);
 }
