@@ -167,6 +167,7 @@ int config_contacts_size;
 int config_ctrld_quits;
 char *config_dcc_dir;
 int config_debug;
+int config_default_status;
 int config_display_ack;
 int config_display_blinking;
 int config_display_color;

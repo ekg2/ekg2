@@ -97,6 +97,7 @@ void variable_init()
 //	variable_add(NULL, "dcc_dir", VAR_STR, 1, &config_dcc_dir, NULL, NULL, dd_dcc);
 //	variable_add(NULL, "dcc_limit", VAR_STR, 1, &config_dcc_limit, NULL, NULL, dd_dcc);
 //	variable_add(NULL, "default_protocol", VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL);
+	variable_add(NULL, "default_status", VAR_BOOL, 1, &config_default_status, NULL, NULL, NULL);
 	variable_add(NULL, "display_ack", VAR_INT, 1, &config_display_ack, NULL, variable_map(4, 0, 0, "none", 1, 0, "all", 2, 0, "delivered", 3, 0, "queued"), NULL);
         variable_add(NULL, "display_blinking", VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
 	variable_add(NULL, "display_color", VAR_INT, 1, &config_display_color, NULL, NULL, NULL);

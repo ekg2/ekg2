@@ -42,8 +42,9 @@ typedef struct {
 
 list_t formats;
 
-#define print(x...) print_window("__current", NULL, 0, x)
+#define print(x...) (config_default_status) ? print_window("__status", NULL, 0, x) : print_window("__current", NULL, 0, x) 
 #define print_status(x...) print_window("__status", NULL, 0, x)
+
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
 
 int format_add(const char *name, const char *value, int replace);
