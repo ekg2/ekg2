@@ -2309,7 +2309,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	command_func_t *last_abbr = NULL;
 	int abbrs = 0;
         command_func_t *last_abbr_plugins = NULL;
-        int abbrs_plugins = 0;
+        int abbrs_plugins = 0, last_alias = 0;
 
 	list_t l;
 
@@ -2384,11 +2384,12 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 			if (xstrncasecmp(c->name, session->uid, plen))
 				continue;
-	
+		
 			if (!xstrcasecmp(c->name + plen, cmd)) {
 				last_abbr = c->function;
 				last_name = c->name;
 				last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
+				last_alias = (c->alias) ? 1 : 0;
 				abbrs = 1;
 				goto exact_match;
 			}
@@ -2407,11 +2408,12 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		
+
 		if (!xstrcasecmp(c->name, cmd)) {
 			last_abbr = c->function;
 			last_name = c->name;
 			last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
+			last_alias = (c->alias) ? 1 : 0;
 			abbrs = 1;
 			/* if this is exact_match we should zero those below, they won't be used */
 			last_abbr_plugins = NULL; 
@@ -2434,12 +2436,12 @@ exact_match:
 		char **par, *tmp;
 		int res;
 
-		if(last_abbr_plugins)
+		if (last_abbr_plugins)
 			last_abbr = last_abbr_plugins;
-		if(abbrs_plugins)
+		if (abbrs_plugins)
 			abbrs = abbrs_plugins;
 		
-		if ((tmp = xstrchr(last_name, ':')))
+		if (!last_alias && (tmp = xstrchr(last_name, ':')))
 			last_name = tmp + 1;
 		
 		window_lock_inc_n(target);

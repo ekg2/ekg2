@@ -964,6 +964,11 @@ COMMAND(irc_command_umode)
 COMMAND(irc_command_whois)
 {
 	char *person;
+
+        if (!session_check(session, 1, IRC3)) {
+                print("invalid_session");
+                return -1;
+        }
 	
 	if (!(person = irc_getarg(session, "umode_wtf", *params)))
 		return -1;
