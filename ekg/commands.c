@@ -1505,7 +1505,22 @@ COMMAND(cmd_set)
 			return -1;
 		}
 	} else {
+		variable_t *v = variable_find(arg);
 		theme_cache_reset();
+
+		if (!unset && !xstrcasecmp(value, "t")) {
+			if (v->type != VAR_BOOL) {
+				printq("variable_toggle_invalid", arg);
+				res = -1;
+				goto set_end;
+			} else {
+				int t_value = *(int*)(v->ptr);
+			
+				xfree(value);
+				value = (t_value) ? xstrdup("0") : xstrdup("1");
+			}
+		} 
+
 		switch (variable_set(arg, (unset) ? NULL : value, 0)) {
 			case 0:
 			{
@@ -1526,7 +1541,7 @@ COMMAND(cmd_set)
 				break;
 		}
 	}
-
+set_end:
 	xfree(value);
 
 	return res;
@@ -3859,7 +3874,9 @@ void command_init()
 	  "U¿ycie %Tset -zmienna%n czy¶ci zawarto¶æ zmiennej. Dla zmiennych "
 	  "bêd±cymi mapami bitowymi mo¿na okre¶liæ, czy warto¶æ ma byæ "
 	  "dodana (poprzedzone plusem), usuniêta (minusem) czy ustawiona "
-	  "(bez prefiksu). Warto¶æ zmiennej mo¿na wzi±æ w cudzys³ów. "
+	  "(bez prefiksu). Warto¶æ zmiennej mo¿na wzi±æ w cudzys³ów.\n"
+	  "Je¿eli chcemy prze³±czyæ warto¶æ zmiennej typu bool u¿ywamy %T,t'%n "
+	  "zamiast ustawianej warto¶ci.\n"
 	  "Poprzedzenie opcji parametrem %T-a%n lub %T--all%n spowoduje "
 	  "wy¶wietlenie wszystkich, nawet aktualnie nieaktywnych zmiennych.", NULL);
 
