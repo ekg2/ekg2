@@ -634,7 +634,7 @@ COMMAND(jabber_command_disconnect)
 
 	if (descr) {
 		char *tmp = jabber_escape(descr);
-		jabber_write(j, "<presence type=\"unavailable\">%s</presence>", tmp);
+		jabber_write(j, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp);
 		xfree(tmp);
 	} else
 		jabber_write(j, "<presence type=\"unavailable\"/>");
