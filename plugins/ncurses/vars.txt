@@ -24,6 +24,14 @@ contacts_groups
 	oddzielone przecinkiem grupy, które mo¿na prze³±czaæ w li¶cie
 	kontaktów klawiszem F4. domy¶lnie wy¶wietlani s± wszyscy u¿ytkownicy.
 
+contacts_metacontacts_swallow
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	Je¶li jest w³±czona, przy wy¶wietlaniu wszystkich u¿ytkowników gdy
+	w li¶cie kontaktów wy¶wietlany jest metakontakt, ukrywane s± poszczególne
+	kontakty do niego nale¿±ce.
+
 contacts_options
 	typ: tekst
 	domy¶lna warto¶æ: brak

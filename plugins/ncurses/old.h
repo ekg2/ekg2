@@ -147,6 +147,7 @@ int config_contacts_size;
 int config_contacts;
 char *config_contacts_options;
 char *config_contacts_groups;
+int config_contacts_metacontacts_swallow;
 int config_display_transparent;
 int config_display_crap;
 int config_enter_scrolls;

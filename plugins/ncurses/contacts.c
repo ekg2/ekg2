@@ -365,6 +365,7 @@ group_cleanup:
 					continue;
 			
 				memset(&u, 0, sizeof(u));
+				u.uid = up->uid;
 				u.nickname = up->nickname;
 				u.descr = up->descr;
 				u.status = up->status;
@@ -381,6 +382,8 @@ group_cleanup:
 			if (!up)
 				continue;
 
+			memset(&u, 0, sizeof(u));
+			u.uid = up->uid;
 			u.nickname = up->nickname;
 			u.descr = up->descr;
 			u.status = up->status;
@@ -395,8 +398,9 @@ group_cleanup:
  		for (l = metacontacts; l; l = l->next) {
                                 metacontact_t *m = l->data;
                                 metacontact_item_t *i = metacontact_find_prio(m);
-                                userlist_t *up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
+                                userlist_t *uu, *up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
 				userlist_t u;
+				list_t ml, sl;
 
 				if (!m || !i || !up)
 					continue;
@@ -409,6 +413,19 @@ group_cleanup:
 				u.blink = up->blink;
 
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
+
+				/* Remove contacts contained in this metacontact. */
+				if ( config_contacts_metacontacts_swallow )
+					for (ml = m->metacontact_items; ml; ml = ml->next) {
+						i = ml->data;
+						up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
+						if (up)
+						for ( sl = sorted_all ; sl ; sl = sl->next ) {
+							uu = sl->data;
+							if ( uu->uid && !xstrcmp(uu->uid, up->uid) )
+							list_remove(&sorted_all, uu, 1);
+						}
+					}
 		}
 	} 
 
@@ -628,6 +645,20 @@ void ncurses_contacts_changed(const char *name)
 	ncurses_contacts_update(NULL);
         ncurses_resize();
 	ncurses_commit();
+}
+
+/*
+ * ncurses_all_contacts_changed()
+ *
+ * wywo³ywane przy zmianach userlisty powoduj±cych konieczno¶æ
+ * podkasowania sorted_all_cache (zmiany w metakontaktach 
+ * i ncurses:contacts_metacontacts_swallow)
+ */
+void ncurses_all_contacts_changed(const char *name)
+{
+	list_destroy(sorted_all_cache, 1);
+	sorted_all_cache = NULL;
+	ncurses_contacts_changed(name);
 }
 
 /* 

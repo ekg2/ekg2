@@ -5,6 +5,7 @@ int config_contacts_size;
 int config_contacts;
 char *config_contacts_options;
 char *config_contacts_groups;
+int config_contacts_metacontacts_swallow;
 
 list_t sorted_all_cache;
 int contacts_index;
@@ -14,6 +15,7 @@ int contacts_group_index;
 
 int ncurses_contacts_update(window_t *w);
 void ncurses_contacts_changed(const char *name);
+void ncurses_all_contacts_changed(const char *name);
 void ncurses_contacts_new(window_t *w);
 
 void ncurses_backward_contacts_line(int arg);

@@ -365,6 +365,7 @@ void ncurses_setvar_default()
 
 	config_contacts_options = NULL;   /* opcje listy kontaktów */
 	config_contacts_groups = NULL;    /* grupy listy kontaktów */
+	config_contacts_metacontacts_swallow = 1;
 
 	config_backlog_size = 1000;         /* maksymalny rozmiar backloga */
 	config_display_transparent = 1;     /* czy chcemy przezroczyste t³o? */
@@ -460,10 +461,10 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "variable-changed", ncurses_variable_changed, NULL);
 	query_connect(&ncurses_plugin, "conference-renamed", ncurses_conference_renamed, NULL);
 
-        query_connect(&ncurses_plugin, "metacontact-added", ncurses_contacts_changed, NULL);
-        query_connect(&ncurses_plugin, "metacontact-removed", ncurses_contacts_changed, NULL);
-        query_connect(&ncurses_plugin, "metacontact-item-added", ncurses_contacts_changed, NULL);
-        query_connect(&ncurses_plugin, "metacontact-item-removed", ncurses_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact-added", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact-removed", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact-item-added", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact-item-removed", ncurses_all_contacts_changed, NULL);
 
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
@@ -475,6 +476,7 @@ int ncurses_plugin_init()
 	variable_add(&ncurses_plugin, "contacts_groups", VAR_STR, 1, &config_contacts_groups, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "contacts_options", VAR_STR, 1, &config_contacts_options, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "contacts_size", VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, "contacts_metacontacts_swallow", VAR_BOOL, 1, &config_contacts_metacontacts_swallow, ncurses_all_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "display_crap",  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "display_transparent", VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, "enter_scrolls", VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
