@@ -62,19 +62,22 @@ int plugin_load(const char *name)
 		print("generic_error", "Nie zaladujesz plagina dwa razy!");
 		return -1;
 	}
-	
-	lib = saprintf("%s/%s.so", PLUGINDIR, name);
-	plugin = lt_dlopen(lib);
 
-	if (!plugin && (env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-		xfree(lib);
-		lib = saprintf("%s/%s.la", env_ekg_plugins_path, name);
+        if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
+                lib = saprintf("%s/%s.la", env_ekg_plugins_path, name);
+                plugin = lt_dlopen(lib);
+                if (!plugin) {
+                        xfree(lib);
+                        lib = saprintf("%s/%s/%s.la", env_ekg_plugins_path, name, name);
+                        plugin = lt_dlopen(lib);
+                }
+        }
+	
+	if (!plugins) {
+		if (lib)
+			free(lib);
+		lib = saprintf("%s/%s.so", PLUGINDIR, name);
 		plugin = lt_dlopen(lib);
-		if (!plugin) {
-			xfree(lib);
-			lib = saprintf("%s/%s/%s.la", env_ekg_plugins_path, name, name);
-			plugin = lt_dlopen(lib);
-		}
 	}
 
 	if (!plugin) {
