@@ -12,6 +12,7 @@ zg³osi³ b³±d.
 - gdy mamy otwarte okienko z nieznanym numerkiem to po dodaniu go do
   userlisty zostanie zmieniony nag³ówek (del)
 - jak wy¿ej tylko po usuniêciu nag³ówek zostaje od¶wie¿ony (del)
+- poprawione "po³±czony od" w /status (del)
 
 // 2004-04-09
 - poprawka: dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:

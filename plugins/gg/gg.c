@@ -152,7 +152,7 @@ int gg_status_show_handle(void *data, va_list ap)
         t = localtime(&n);
         now_days = t->tm_yday;
 
-        t = localtime(&last_conn_event);
+        t = localtime(&s->last_conn);
         strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t);
 
         if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
@@ -160,7 +160,7 @@ int gg_status_show_handle(void *data, va_list ap)
 
                 print("show_status_status", tmp, "");
 
-                if (last_conn_event)
+                if (s->last_conn)
                         print("show_status_disconnected_since", buf);
                 if ((mqc = msg_queue_count()))
                         print("show_status_msg_queue", itoa(mqc));
@@ -370,6 +370,7 @@ static void gg_session_handler_success(session_t *s)
 
 	gg_userlist_send(g->sess, s->userlist);
 
+	s->last_conn = time(NULL);
 	/* zapiszmy adres serwera */
 	if (session_int_get(s, "server_save")) {
 		struct in_addr addr;

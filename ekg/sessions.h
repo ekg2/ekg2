@@ -45,6 +45,7 @@ typedef struct {
 	int connected;			/* czy sesja jest po³±czona? */
 	int activity;			/* kiedy ostatnio co¶ siê dzia³o? */
 	int autoaway;			/* jeste¶my w autoawayu? */
+	time_t last_conn;               /* kiedy siê po³±czyli¶my */
 	session_param_t **params;	/* parametry sesji */
 } session_t;
 

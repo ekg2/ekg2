@@ -225,7 +225,6 @@ int in_autoexec;
 int reconnect_timer;
 time_t last_action;
 int connecting;
-time_t last_conn_event;
 time_t ekg_started;
 int server_index;
 int in_auto_away;
