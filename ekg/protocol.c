@@ -557,6 +557,8 @@ int protocol_message(void *data, va_list ap)
                 xfree(___message);
 	}
 
+	query_emit(NULL, "protocol-message-post", &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+
 	/* show it ! */
 	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent)) {
 		if (empty_theme)

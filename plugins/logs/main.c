@@ -73,7 +73,7 @@ int logs_plugin_init(int prio)
         logs_setvar_default();
 
         query_connect(&logs_plugin, "set-vars-default", logs_setvar_default, NULL);
-	query_connect(&logs_plugin, "protocol-message",	logs_handler, NULL);
+	query_connect(&logs_plugin, "protocol-message-post",	logs_handler, NULL);
 	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);
 	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
 	variable_add(&logs_plugin, "log", VAR_MAP, 1, &config_logs_log, NULL, variable_map(3, 0, 0, "none", 1, 2, "simple", 2, 1, "xml"), NULL);

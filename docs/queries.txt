@@ -51,3 +51,5 @@ protocol-message(char *session, char *sender, char **recipients, char *text, uin
 protocol-message-ack(char *session, char *recipient, char *seq, char *status)
 	potwierdzenie nadania wiadomo¶ci.
 
+protocol-message-post(char *session, char *sender, char **recipients, char *text, uint32_t *format, time_t sent, int class, char *seq, int secure)
+	prawie jak protocol-message, tyle, ¿e po deszyfracji

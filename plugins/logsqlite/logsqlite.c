@@ -477,7 +477,7 @@ int logsqlite_plugin_init(int prio)
 
 	command_add(&logsqlite_plugin, "logsqlite:last", "puU uU uU", logsqlite_cmd_last, 0, "-n --number");
 
-	query_connect(&logsqlite_plugin, "protocol-message", logsqlite_msg_handler, NULL);
+	query_connect(&logsqlite_plugin, "protocol-message-post", logsqlite_msg_handler, NULL);
 	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);
 	variable_add(&logsqlite_plugin, "last_open_window", VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, "last_in_window", VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
