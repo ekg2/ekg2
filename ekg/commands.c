@@ -1924,12 +1924,12 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	if (!xline)
 		return 0;
 
-        if(!session) {
+/*        if(!session) {
                 if(session_current)
                         session = session_current;
                 else
                         return -1;
-        }
+        } */
 
 	/* wysy³amy do kogo¶ i nie ma na pocz±tku slasha */
 	if (target && *xline != '/') {

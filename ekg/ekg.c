@@ -572,10 +572,10 @@ struct option ekg_options[] = {
 
 int main(int argc, char **argv)
 {
-	int auto_connect = 1, c = 0, no_global_config = 0;
+	int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0;
 	char *tmp = NULL, *new_status = NULL, *new_descr = NULL;
 	char *load_theme = NULL, *new_profile = NULL;
-	struct passwd *pw; 
+	struct passwd *pw;
 	list_t l;
 
 	ekg_started = time(NULL);
@@ -715,7 +715,9 @@ int main(int argc, char **argv)
 	theme_init();
 
 	/* przed tworzeniem okien, ¿eby mieæ aliasy w linii stanu */
-	session_read();
+	if (session_read() == -1)
+		no_config = 1;
+
 
 	window_new(NULL, NULL, -1);			/* debugowanie */
 	window_current = window_new(NULL, NULL, 1);	/* okno stanu */
@@ -823,6 +825,9 @@ int main(int argc, char **argv)
 
 	if (config_auto_save)
 		last_save = time(NULL);
+
+	if (no_config)
+                print("no_config");
 
 	/* krêæ imprezê */
 	while (1) {
