@@ -1014,7 +1014,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			if((i == array_count(words) - 1 && line[xstrlen(line) - 1] != ' ' ))
 				xstrcat(line, " ");
 			else if (line[xstrlen(line) - 1] != ' ')
-                                xstrcat(line, saprintf("%c", separators[i]));
+                                xstrncat(line, separators + i, 1);
 		}
 		array_free(completions);
 		completions = NULL;

@@ -192,7 +192,7 @@ int userlist_write(session_t *session)
 	const char *filename;
 	char *contacts;
 	FILE *f;
-	char *tmp=saprintf("%s-userlist", session->uid); 
+	char *tmp = saprintf("%s-userlist", session->uid); 
 
 	if (!(contacts = userlist_dump(session))) {
 		xfree(tmp);
@@ -214,6 +214,7 @@ int userlist_write(session_t *session)
 	fclose(f);
 	
 	xfree(contacts);
+	xfree(tmp);
 
 	return 0;
 }

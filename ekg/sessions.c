@@ -821,8 +821,13 @@ COMMAND(session_command)
 		
 		if (!(s = session_find(params[1]))) {
 			if (window_current->session) {
+				int ret;
                         	char *tmp = saprintf("%s --get %s %s", name, session->uid, params[1]);
-                        	return command_exec(NULL, s, tmp, 0);
+				
+				ret = command_exec(NULL, s, tmp, 0);
+				xfree(tmp);
+				
+				return ret;
 			} else
 				printq("invalid_session");
 			return -1;
@@ -894,6 +899,7 @@ COMMAND(session_command)
 					session_set_n(session->uid, params[1], params[2]);
 					config_changed = 1;
 					command_exec(NULL, s, tmp, 0);
+					xfree(tmp);
 					return 0;
 				} else {
 					printq("invalid_session");
@@ -952,6 +958,8 @@ COMMAND(session_command)
 			tmp = saprintf("%s --set %s %s", name, params[0], params[1]);
 			config_changed = 1;
 			command_exec(NULL, s, tmp, 0);
+			xfree(tmp);
+			
 			return 0;
 		}
 
@@ -959,6 +967,8 @@ COMMAND(session_command)
 			tmp = saprintf("%s --set %s %s %s", name, params[0], params[1], params[2]);
 			command_exec(NULL, s, tmp, 0);
 			config_changed = 1;
+			xfree(tmp);
+			
 			return 0;
 		}
 		
@@ -966,6 +976,8 @@ COMMAND(session_command)
 			tmp = saprintf("%s --get %s %s", name, params[0], params[1]);
 			command_exec(NULL, s, tmp, 0);
 			config_changed = 1;
+			xfree(tmp);
+			
 			return 0;		
 		}
 		
@@ -995,18 +1007,21 @@ COMMAND(session_command)
 	if (params[0] && params[0][0] != '-' && params[1] && session && session->uid) {
 		char *tmp = saprintf("%s --set %s %s %s", name, session_alias_uid(session), params[0], params[1]);
 		command_exec(NULL, s, tmp, 0);
+		xfree(tmp);
 		return 0;
         }
 	
 	if (params[0] && params[0][0] != '-' && session && session->uid) {
 		char *tmp = saprintf("%s --get %s %s", name, session_alias_uid(session), params[0]);
 		command_exec(NULL, s, tmp, 0);
+		xfree(tmp);
 		return 0;
 	}
 	
 	if (params[0] && params[0][0] == '-' && session && session->uid) {
 		char *tmp = saprintf("%s --set %s %s", name, session_alias_uid(session), params[0]);
 		command_exec(NULL, s, tmp, 0);
+		xfree(tmp);
 		return 0;
 	}
 
