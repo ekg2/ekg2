@@ -526,7 +526,6 @@ static void sessions_var_generator(const char *text, int len)
 {
         int i;
         plugin_t *p;
-        char **words;
 
         if (!session_in_line)
                 return;
@@ -534,15 +533,13 @@ static void sessions_var_generator(const char *text, int len)
         if (!(p = plugin_find_uid(session_in_line->uid)))
                 return;
 
-        words = array_make(p->possibilities, ", ", 0, 1, 1);
-
-        for (i = 0; words[i]; i++) {
-                if(*text == '-') {
-                        if (!xstrncasecmp(text + 1, words[i], len - 1))
-                                array_add_check(&completions, saprintf("-%s", words[i]), 1);
+	for (i = 0; p->params[i]; i++) {
+		if(*text == '-') {
+                        if (!xstrncasecmp(text + 1, p->params[i]->key, len - 1))
+                                array_add_check(&completions, saprintf("-%s", p->params[i]->key), 1);
                 } else {
-                        if (!xstrncasecmp(text, words[i], len))
-                                array_add_check(&completions, xstrdup(words[i]), 1);
+                        if (!xstrncasecmp(text, p->params[i]->key, len))
+                                array_add_check(&completions, xstrdup(p->params[i]->key), 1);
                 }
         }
 }

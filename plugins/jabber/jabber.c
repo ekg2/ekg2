@@ -46,6 +46,7 @@
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/themes.h>
+#include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 
 #include "jabber.h"
@@ -56,7 +57,6 @@ plugin_t jabber_plugin = {
 	name: "jabber",
 	pclass: PLUGIN_PROTOCOL,
 	destroy: jabber_plugin_destroy,
-	possibilities: "alias auto_away auto_back auto_connect auto_find auto_reconnect display_notify password resource server"
 };
 
 /*
@@ -1289,6 +1289,17 @@ int jabber_plugin_init()
 
 #undef possibilities 
 #undef params
+        
+	plugin_var_add(&jabber_plugin, "alias", VAR_STR, 0, 0);
+        plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0);
+        plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0);
+        plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0);
+        plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0);
+        plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0);
+        plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0);
+        plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1);
+	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0);
+        plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
 
 	format_add("jabber_auth_subscribe", "%> (%2) %1 prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n", 1);
 	format_add("jabber_auth_unsubscribe", "%> (%2) %1 prosi o autoryzacjê usuniêcia. U¿yj \"/auth -c %1\" aby usun±æ.%n\n", 1);

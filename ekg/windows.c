@@ -655,6 +655,8 @@ int window_session_set(window_t *w, session_t *s)
 		return -1;
 
 	w->session = s;
+	if (window_current == w)
+		session_current = s;
 
 	return 0;
 }

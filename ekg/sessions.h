@@ -28,7 +28,6 @@ list_t sessions;
 typedef struct {
 	char *key;			/* nazwa parametru */
 	char *value;			/* warto¶æ parametru */
-	int secret;			/* czy warto¶æ ma byæ ukryta? */
 } session_param_t;
 
 typedef struct {
@@ -46,12 +45,17 @@ typedef struct {
 	int activity;			/* kiedy ostatnio co¶ siê dzia³o? */
 	int autoaway;			/* jeste¶my w autoawayu? */
 	time_t last_conn;               /* kiedy siê po³±czyli¶my */
-	session_param_t **params;	/* parametry sesji */
+	list_t params;
 } session_t;
 
 session_t *session_current;
 
 session_t *session_find(const char *uid);
+session_param_t *session_var_find(session_t *s, const char *key);
+int session_var_default(session_t *s);
+#define session_var_default_n(a) session_var_default(session_find(a))
+
+int session_is_var(session_t *s, const char *key);
 
 const char *session_uid_get(session_t *s);
 #define session_uid_get_n(a) session_uid_get(session_find(a))
@@ -115,7 +119,7 @@ int session_unidle(session_t *s);
 int session_compare(void *data1, void *data2);
 session_t *session_add(const char *uid);
 int session_remove(const char *uid);
-int session_remove_s(session_t *s);
+#define session_remove_s(a) session_remove(a->uid)
 
 int session_read();
 int session_write();

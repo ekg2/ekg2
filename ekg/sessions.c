@@ -84,6 +84,34 @@ int session_compare(void *data1, void *data2)
 }
 
 /*
+ * session_var_default()
+ *
+ * sets the default values 
+ * 
+ * s - session in which we are setting
+ */
+int session_var_default(session_t *s)
+{
+	plugin_t *p;
+	int i;
+	
+	if (!s)
+		return -1;	
+
+	p = plugin_find_uid(s->uid);
+
+	if (!p)
+		return -1;
+
+	for (i=0; p->params && p->params[i]; i++) {
+		debug("\tSetting default var %s at %s\n",  p->params[i]->key, p->params[i]->value);
+		session_set(s, p->params[i]->key, p->params[i]->value);
+	}
+
+	return 0;
+}
+
+/*
  * session_add()
  *
  * dodaje do listy sesji.
@@ -96,6 +124,11 @@ session_t *session_add(const char *uid)
 
 	if (!uid)
 		return NULL;
+
+	if (!valid_uid(uid)) {
+		debug("\tInvalid UID: %s\n", uid);
+		return NULL;
+	}
 	
 	memset(&s, 0, sizeof(s));
 
@@ -112,6 +145,8 @@ session_t *session_add(const char *uid)
 	}
 	if (!session_current)
 		session_current = sp;
+
+	session_var_default(sp);
 
 	tmp = xstrdup(uid);
 	query_emit(NULL, "session-added", &tmp);
@@ -132,7 +167,7 @@ int session_remove(const char *uid)
 	session_t *s;
 	char *tmp;
 	list_t l;
-	int i, count;
+	int count;
 
 	if (!(s = session_find(uid)))
 		return -1;
@@ -144,12 +179,12 @@ int session_remove(const char *uid)
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 
-		if (w->session == s) {
+		if (w && w->session && w->session == s) {
 			if (count > 1)
 				window_session_cycle(w);
 			else
 				w->session = NULL;
-		}
+		} 
 	}
 	
 	if(s->connected)
@@ -158,12 +193,21 @@ int session_remove(const char *uid)
 	query_emit(NULL, "session-removed", &tmp);
 	xfree(tmp);
 
-	for (i = 0; s->params && s->params[i]; i++) {
+/*	for (i = 0; s->params && s->params[i]; i++) {
 		xfree(s->params[i]->key);
 		xfree(s->params[i]->value);
 	}
 
-	xfree(s->params);
+	xfree(s->params); */
+
+        for (l = s->params; l; l = l->next) {
+                session_param_t *v = l->data;
+
+                xfree(v->key);
+		xfree(v->value);
+        }
+
+	list_destroy(s->params, 1);
 	xfree(s->alias);
 	xfree(s->uid);
 	xfree(s->status);
@@ -172,45 +216,6 @@ int session_remove(const char *uid)
 
 	list_remove(&sessions, s, 1);
 	return 0;
-}
-
-/*
- * session_remove()
- *
- * usuwa sesjê.
- *
- * 0/-1
- */
-int session_remove_s(session_t *s)
-{
-        char *tmp;
-	int i;
-
-	if (!s)
-		return -1;
-
-        if (s->connected)
-                command_exec(NULL, s, saprintf("/disconnect %s", s->uid), 1);
-
-        tmp = xstrdup(s->uid);
-        query_emit(NULL, "session-removed", &tmp);
-        xfree(tmp);
-
-        for (i = 0; s->params && s->params[i]; i++) {
-                xfree(s->params[i]->key);
-                xfree(s->params[i]->value);
-        }
-
-        xfree(s->params);
-        xfree(s->alias);
-        xfree(s->uid);
-        xfree(s->status);
-        xfree(s->descr);
-        xfree(s->password);
-
-        list_remove(&sessions, s, 1);
-
-        return 0;
 }
 
 PROPERTY_STRING_GET(session, status);
@@ -245,7 +250,7 @@ int session_status_set(session_t *s, const char *status)
 
 int session_password_set(session_t *s, const char *password)
 {
-	s->password = base64_encode(password);
+	s->password = (password) ? base64_encode(password) : NULL;
         return 0;
 }
 
@@ -272,6 +277,28 @@ int session_connected_set(session_t *s, int connected)
 
 PROPERTY_STRING_GET(session, uid);
 
+/* 
+ * session_var_find()
+ * 
+ * it looks for given var in given session
+ */
+session_param_t *session_var_find(session_t *s, const char *key)
+{
+	if (!s)
+		return NULL;
+
+        if (s->params) {
+                list_t l;
+		for (l = s->params; l; l = l->next) {
+                session_param_t *v = l->data;
+			if (!xstrcasecmp(v->key, key)) 
+				return v;
+		}	
+        }
+
+	return NULL;
+}
+
 /*
  * session_get()
  *
@@ -280,7 +307,7 @@ PROPERTY_STRING_GET(session, uid);
 const char *session_get(session_t *s, const char *key)
 {
 	variable_t *v;
-	int i;
+	session_param_t *sp;
 
 	if (!s)
 		return NULL;
@@ -300,12 +327,8 @@ const char *session_get(session_t *s, const char *key)
 	if (!xstrcasecmp(key, "password"))
                 return session_password_get(s);
 	
-	if (s->params) {
-		for (i = 0; s->params[i]; i++) {
-			if (!xstrcasecmp(s->params[i]->key, key))
-				return s->params[i]->value;
-		}
-	}
+	if ((sp = session_var_find(s, key)))
+		return sp->value;
 
 	if (!(v = variable_find(key)) || (v->type != VAR_INT && v->type != VAR_BOOL))
 		return NULL;
@@ -327,6 +350,44 @@ int session_int_get(session_t *s, const char *key)
 
 	return strtol(tmp, NULL, 0);
 }
+/* 
+ * session_is_var()
+ *
+ * checks if given variable is correct for given session
+ */
+int session_is_var(session_t *s, const char *key)
+{
+	if (!s)
+		return -1;
+
+        if (!xstrcasecmp(key, "alias"))
+                return 1;
+
+        if (!xstrcasecmp(key, "descr"))
+                return 1;
+
+        if (!xstrcasecmp(key, "status"))
+                return 1;
+
+        if (!xstrcasecmp(key, "password"))
+                return 1;
+	
+	if (session_var_find(s, key))
+		return 1;
+
+	return 0;
+}
+
+static int session_set_compare(void *data1, void *data2)
+{
+        session_param_t *a = data1, *b = data2;
+
+        if (!a || !a->key || !b || !b->key)
+                return 0;
+
+        return xstrcasecmp(a->key, b->key);
+}
+
 
 /*
  * session_set()
@@ -335,8 +396,8 @@ int session_int_get(session_t *s, const char *key)
  */
 int session_set(session_t *s, const char *key, const char *value)
 {
-	session_param_t *p;
-	int i, count;
+        session_param_t *sp;
+	session_param_t v;
 	
 	if (!s)
 		return -1;
@@ -357,44 +418,17 @@ int session_set(session_t *s, const char *key, const char *value)
                 return session_password_set(s, value);
 
 
-	for (i = 0; s->params && s->params[i]; i++) {
-		if (!xstrcasecmp(s->params[i]->key, key)) {
-			xfree(s->params[i]->value);
-			s->params[i]->value = xstrdup(value);
-			return 0;
-		}
+	if ((sp = session_var_find(s, key))) {
+		xfree(sp->value);
+		sp->value = xstrdup(value);
+		return 1;
 	}
 
-	p = xmalloc(sizeof(session_param_t));
-	p->key = xstrdup(key);
-	p->value = xstrdup(value);
+	memset(&v, 0, sizeof(v));
+	v.key = xstrdup(key);
+	v.value = xstrdup(value);
 
-	if (!s->params) {
-		s->params = xmalloc(sizeof(session_param_t *) * 2);
-		s->params[0] = p;
-		s->params[1] = NULL;
-		return 0;
-	}
-
-	for (i = 0, count = 0; s->params[i]; i++)
-		count++;
-
-	s->params = xrealloc(s->params, (count + 2) * sizeof(session_param_t *));
-
-#if 0
-	for (i = 0; s->params[i]; i++) {
-		if (xstrcasecmp(s->params[i]->key, key) > 0) {
-			memmove(&s->params[i], &s->params[i + 1], (count - i) * sizeof(session_param_t *));
-			s->params[i] = p;
-			return 0;
-		}
-	}
-#endif
-
-	s->params[count] = p;
-	s->params[count + 1] = NULL;
-
-	return 0;
+	return (list_add_sorted(&s->params, &v, sizeof(v), session_set_compare) != NULL) ? 0 : -1;
 }
 
 /*
@@ -431,7 +465,6 @@ int session_read()
 				goto next;
 
 			*tmp = 0;
-
 			s = session_add(line + 1);	
 
 			goto next;
@@ -440,7 +473,11 @@ int session_read()
 		if ((tmp = xstrchr(line, '='))) {
 			*tmp = 0;
 			tmp++;
-			if(*tmp == '\001') 
+			if (!session_is_var(s, line)) {
+				debug("\tSession variable \"%s\" is not correct\n", line);
+				goto next;
+			}
+			if(*tmp == '\001')  
 				session_set(s, line, base64_decode(tmp + 1));
 			else 
 				session_set(s, line, tmp);
@@ -464,7 +501,6 @@ next:
 int session_write()
 {
 	list_t l;
-	int i;
 	FILE *f = NULL;
 
 	f = fopen(prepare_path("sessions", 1), "w");
@@ -474,6 +510,7 @@ int session_write()
 
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
+		list_t lp;
 		
 		userlist_write(s);
 		fprintf(f, "[%s]\n", s->uid);
@@ -485,9 +522,13 @@ int session_write()
 			fprintf(f, "descr=%s\n", s->descr);
                 if (s->password && config_save_password)
                         fprintf(f, "password=\001%s\n", s->password);
-		for (i = 0; s->params && s->params[i]; i++)
-			if (s->params[i]->value)
-				fprintf(f, "%s=%s\n", s->params[i]->key, s->params[i]->value);
+                
+		for (lp = s->params; lp; lp = lp->next) {
+	                session_param_t *v = lp->data;
+        
+			if (v->value)
+				fprintf(f, "%s=%s\n", v->key, v->value);
+                }
 	}
 	fclose(f);
 
@@ -620,7 +661,7 @@ COMMAND(session_command)
 		
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
-			int i;
+			list_t lp;
 
 			debug("[%s]\n", s->uid);
 			if (s->alias)
@@ -629,11 +670,14 @@ COMMAND(session_command)
 				debug("status=%s\n", s->status);
 			if (s->descr)
 				debug("descr=%s\n", s->descr);
-			for (i = 0; s->params && s->params[i]; i++)
-				if (s->params[i]->value)
-					debug("%s=%s\n", s->params[i]->key, s->params[i]->value);
-		}
+                
+			for (lp = s->params; lp; lp = lp->next) {
+		                session_param_t *v = lp->data;
 
+				if (v->value)
+					debug("%s=%s\n", v->key, v->value);
+                	}
+		}
 		return 0;
 	}
 
@@ -705,31 +749,37 @@ COMMAND(session_command)
 		
 		if (!(s = session_find(params[1]))) {
 			if (window_current->session) {
-				if((var = session_get_n(window_current->session->uid, params[1]))) {
-					if(!xstrcasecmp(params[1], "password"))
-						printq("session_variable", session_name(window_current->session), params[1], "(...)");
-					else
-						printq("session_variable", session_name(window_current->session), params[1], var);
-				
-					return 0;
-				}
-		
-		    		printq("session_variable_doesnt_exist", session_name(window_current->session), params[1]);
+                        	char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[1]);
+                        	return command_exec(NULL, s, tmp, 0);
 			} else
 				printq("invalid_session");
 			return -1;
 		}
 		 
-		if(params[2] && (var = session_get_n(s->uid, params[2]))) {
-			if(!xstrcasecmp(params[2], "password"))
-				printq("session_variable", session_name_n(params[1]), params[2], "(...)");
-			else
-			printq("session_variable", session_name_n(params[1]), params[2], var);
-			return 0;
+		if (params[2] && session_is_var(s, params[2])) {
+			plugin_t *p = plugin_find_uid(s->uid);
+                        plugins_params_t *pa;
+
+                        if ((pa = plugin_var_find(p, params[2]))) {
+         	        	var = session_get_n(s->uid, params[2]);
+
+                 		if (pa->secret)
+                         		printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? "(none)" : "(...)");
+                                else
+                                        printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? "(none)" : var);
+
+                        	return 0;
+			}
+
+			var = session_get_n(s->uid, params[2]);
+                        if (!xstrcasecmp(params[2], "password"))
+                		printq("session_variable", session_name(window_current->session), params[2], (var) ? "(...)" : "(none)");
+                        else
+                                printq("session_variable", session_name(window_current->session), params[2], (var) ? var : "(none)");
+                        return 0;
 		}
 		
-		if(params[2])
-		{
+		if (params[2]) {
 	    		printq("session_variable_doesnt_exist", session_name_n(params[1]), params[2]);
 			return -1;
 		}
@@ -765,16 +815,6 @@ COMMAND(session_command)
 			if(params[2] && !params[3]) {
 				if (window_current->session) {
 					char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[1]);
-					plugin_t *p = plugin_find_uid(s->uid);
-		                        char **params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
-
-                		        if(!array_item_contains(params_plugin, params[2], 1)) {
-                                		printq("session_variable_doesnt_exist", session_name(window_current->session), params[2]);
-		                                array_free(params_plugin);
-		                                return -1;
-		                        }
-		                        array_free(params_plugin);
-
 					session_set_n(window_current->session->uid, params[1], params[2]);
 					config_changed = 1;
 					command_exec(NULL, s, tmp, 0);
@@ -808,15 +848,7 @@ COMMAND(session_command)
 		
 		if(params[2] && params[3]) {
 			char *tmp = saprintf("%s --get %s %s", name, s->uid, params[2]);
-			plugin_t *p = plugin_find_uid(s->uid);
-			char **params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
-
-			if(!array_item_contains(params_plugin, params[2], 1)) {
-				printq("session_variable_doesnt_exist", session_name_n(params[1]), params[2]);
-				array_free(params_plugin);
-				return -1;
-			}
-			array_free(params_plugin);
+			
 			session_set_n(s->uid, params[2], params[3]);
 			config_changed = 1;
 			command_exec(NULL, s, tmp, 0);
@@ -832,8 +864,7 @@ COMMAND(session_command)
 		const char *status;
 		char *tmp;
 		int i;
-		plugin_t *p;
-		char **params_plugin;
+		plugin_t *p = plugin_find_uid(s->uid);
 
 		if (params[1] && params[1][0] == '-') { 
 			tmp = saprintf("%s --set %s %s", name, params[0], params[1]);
@@ -865,19 +896,16 @@ COMMAND(session_command)
 		else
 			printq("session_info_header_alias", s->uid, s->alias, tmp);
 
-		p = plugin_find_uid(s->uid);
-		params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
-		for (i = 0; params_plugin[i]; i++) {
-			if (!xstrcasecmp(params_plugin[i], "password"))
-        	                printq("session_info_param", "password", "(...)");
+		for (i = 0; p->params[i]; i++) {
+			plugins_params_t *sp = p->params[i];
+			if (sp->secret)
+				printq("session_info_param", sp->key, (session_get(s, sp->key)) ? "(...)" : "(none)");
 			else
-				printq("session_info_param", params_plugin[i], (session_get(s, params_plugin[i])) ? session_get(s, params_plugin[i]) : "(none)");
-		}
-		
+				printq("session_info_param", sp->key, (session_get(s, sp->key)) ? session_get(s, sp->key) : "(none)");
+		}	
 
 		printq("session_info_footer", s->uid);
 
-		array_free(params_plugin);
 		return 0;	
 	}
 	

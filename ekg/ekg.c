@@ -714,19 +714,8 @@ int main(int argc, char **argv)
 
 	theme_init();
 
-	/* przed tworzeniem okien, ¿eby mieæ aliasy w linii stanu */
-	if (session_read() == -1)
-		no_config = 1;
-
-
 	window_new(NULL, NULL, -1);			/* debugowanie */
 	window_current = window_new(NULL, NULL, 1);	/* okno stanu */
-
-	/* okno stanu dostanie pierwsz± z brzegu sesjê */
-	if (sessions) {
-		session_current = (session_t*) sessions->data;
-		window_current->session = (session_t*) sessions->data;
-	}
 
 	if (!no_global_config)
 		config_read(SYSCONFDIR "/ekg.conf");
@@ -735,7 +724,7 @@ int main(int argc, char **argv)
 
 	if (!no_global_config)
 		config_read(SYSCONFDIR "/ekg-override.conf");
-	
+
 /*        userlist_read(); */
 	emoticon_read();
 	msg_queue_read();
@@ -753,9 +742,9 @@ int main(int argc, char **argv)
 		if (config_theme)
 			theme_read(config_theme, 1);
 	}
-	
+
 	theme_cache_reset();
-		
+
 	in_autoexec = 0;
 
 	time(&last_action);
@@ -763,7 +752,7 @@ int main(int argc, char **argv)
 	/* wypada³oby obserwowaæ stderr */
 	if (!batch_mode) {
 		int fd[2];
-		
+
 		if (!pipe(fd)) {
 			fcntl(fd[0], F_SETFL, O_NONBLOCK);
 			fcntl(fd[1], F_SETFL, O_NONBLOCK);
@@ -776,7 +765,7 @@ int main(int argc, char **argv)
 	if (!batch_mode && config_display_welcome)
 		print("welcome", VERSION);
 
-	if (!config_log_path) 
+	if (!config_log_path)
 		config_log_path = xstrdup(prepare_path("history", 0));
 
 	protocol_init();
@@ -790,13 +779,24 @@ int main(int argc, char **argv)
 		plugin_load("gg");
 #endif
 	}
-	
+
+	/* it has to be done after plugins are loaded, either we wouldn't know if we are
+	 * supporting some protocol in current build */
+	if (session_read() == -1)
+		no_config = 1;
+
+	/* status window takes first session */
+	if (sessions) {
+		session_current = (session_t*) sessions->data;
+		window_current->session = (session_t*) sessions->data;
+	}
+
 	/* wylosuj opisy i zmieñ stany klientów */
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 		const char *cmd = NULL;
 		char *tmp;
-		
+
 		if (new_status)
 			session_status_set(s, new_status);
 

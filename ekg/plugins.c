@@ -249,6 +249,70 @@ int plugin_unregister(plugin_t *p)
 	return 0;
 }
 
+/* 
+ * plugin_var_find()
+ *
+ * it looks for given var in given plugin
+ *
+ * returns pointer to this var or NULL if not found or error
+ */
+plugins_params_t *plugin_var_find(plugin_t *pl, const char *name)
+{
+	int i;
+	
+	if (!pl)
+		return NULL;
+
+	if (!pl->params)
+		return NULL;
+
+	for (i = 0; pl->params[i]; i++) {
+		if (!xstrcasecmp(pl->params[i]->key, name))
+			return pl->params[i];
+	}
+
+	return NULL;
+}
+
+/*
+ * plugin_var_add()
+ *
+ * adds given var to the given plugin
+ *
+ * name - name
+ * type - VAR_INT | VAR_STR
+ * value - default_value
+ * secret - hide when showing?
+ */
+int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret)
+{
+	plugins_params_t *p;
+	int i, count;
+
+        p = xmalloc(sizeof(plugins_params_t));
+        p->key = xstrdup(name);
+	p->type = type;
+	p->value = xstrdup(value);
+	p->secret = secret;
+
+        if (!pl->params) {
+                pl->params = xmalloc(sizeof(plugins_params_t *) * 2);
+                pl->params[0] = p;
+                pl->params[1] = NULL;
+                return 0;
+        }
+
+        for (i = 0, count = 0; pl->params[i]; i++)
+                count++;
+
+        pl->params = xrealloc(pl->params, (count + 2) * sizeof(plugins_params_t *));
+
+        pl->params[count] = p;
+        pl->params[count + 1] = NULL;
+
+        return 0;
+}
+
 int query_connect(plugin_t *plugin, const char *name, void *handler, void *data)
 {
 	query_t q;

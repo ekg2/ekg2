@@ -42,6 +42,7 @@
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/themes.h>
+#include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 
 #include "dcc.h"
@@ -56,7 +57,6 @@ plugin_t gg_plugin = {
 	name: "gg",
 	pclass: PLUGIN_PROTOCOL,
 	destroy: gg_plugin_destroy,
-	possibilities: "alias auto_away auto_back auto_connect auto_find auto_reconnect display_notify password server"
 };
 
 int gg_private_init(session_t *s)
@@ -710,7 +710,8 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 
 	if (type == 2) {
 		if (g->sess->state != GG_STATE_CONNECTING_GG) {
-			print("conn_timeout");
+			session_t *s = (session_t*) data;
+			print("conn_timeout", session_name(s));
 			gg_free_session(g->sess);
 			g->sess = NULL;
 			return;
@@ -1581,6 +1582,16 @@ int gg_plugin_init()
 
 #undef possibilities
 #undef params 
+
+	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0);
+	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "0", 0);
+	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0);	
+        plugin_var_add(&gg_plugin, "auto_connect", VAR_INT, "0", 0);
+        plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0);
+        plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "0", 0);
+        plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "0", 0);
+        plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1);
+	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0);
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;

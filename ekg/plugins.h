@@ -43,11 +43,19 @@ typedef enum {
 typedef int (*plugin_destroy_func_t)(void);
 
 typedef struct {
+        char *key;                      /* name */
+        char *value;                    /* value */
+        int secret;                     /* should it be hidden ? */
+	int type;			/* type */
+} plugins_params_t;
+
+
+typedef struct {
 	char *name;
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
 	lt_dlhandle dl;
-	char *possibilities;
+	plugins_params_t **params;
 } plugin_t;
 
 int plugin_load(const char *name);
@@ -56,7 +64,10 @@ int plugin_register(plugin_t *);
 int plugin_unregister(plugin_t *);
 plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
+#define plugin_find_s(a) plugin_find_uid(a->uid)
 int have_plugin_of_class(int);
+int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret);
+plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 
 #define PLUGIN_DEFINE(x, y)\
 	static int x##_plugin_destroy(); \
