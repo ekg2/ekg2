@@ -1147,7 +1147,7 @@ int irc_plugin_init()
 
 	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_NAMES_IN_CURRENT", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&irc_plugin, "DISPLAY_IN_CURRENT", VAR_INT, "2", 0, NULL);
 	plugin_var_add(&irc_plugin, "REJOIN", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "REJOIN_TIME", VAR_INT, "2", 0, NULL);
 	

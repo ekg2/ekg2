@@ -162,7 +162,7 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	if (!(chan = irc_find_channel(j->channels, channame)))
 	{
 		tmp = saprintf("People on %s: %s", channame, names);
-		if (session_int_get(s, "DISPLAY_NAMES_IN_CURRENT"))
+		if (session_int_get(s, "DISPLAY_IN_CURRENT")&1)
 			print_window(window_current->target, s, 0, "generic",
 					tmp);
 		else

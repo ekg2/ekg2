@@ -102,13 +102,14 @@ DISPLAY_AWAY_NOTIFICATION
 	okre¶la czy wy¶wietlaæ czyje¶ away [np: je¶li kto¶ ma ustawione
 	away i zrobimy /msg kto¶ co¶tam]
 
-DISPLAY_NAMES_IN_CURRENT
+DISPLAY_IN_CURRENT
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domy¶lna warto¶æ: 2
 
-	czy wy¶wietlaæ wynik komendy /names w aktualnym oknie [ogólnie
-	bardzo z³y pomys³ ;->]. 0 - bêdzie wy¶wietlany w oknie statusu,
-	1 - w aktualnym oknie
+	suma bitów, okre¶laj±ca, ¿e pewne rzeczy bêd± wy¶wietlane
+	w aktualnym oknie:
+	1 - wynik komendy /names [RACZEJ G£UPOTA!]
+	2 - powiadomienia o /quit
 
 REJOIN
 	typ: liczba

@@ -433,7 +433,8 @@ IRC_COMMAND(irc_c_whois)
 
 	if (irccommands[ecode].num != 317) { /* idle */
 		for (i=0; i<5; i++)
-			col[i] = irc_ircoldcolstr_to_ekgcolstr(s, param[3+i]);
+			col[i] = irc_ircoldcolstr_to_ekgcolstr(s,
+					OMITCOLON(param[3+i]));
 			
 		print_window(dest, s, 0, irccommands[ecode].name, 
 				session_name(s), col[0], col[1],
@@ -728,7 +729,9 @@ IRC_COMMAND(irc_c_quit)
 	coloured = param[2]?xstrlen(OMITCOLON(param[2]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[2])):
 				xstrdup("no reason"):xstrdup("no reason");
-	print_window(window_current->target, s, 0, "irc_quit", session_name(s), 
+	print_window((session_int_get(s, "DISPLAY_IN_CURRENT")&2)?
+			window_current->target:"__status",
+			s, 0, "irc_quit", session_name(s), 
 			uid, param[0]+1, coloured);
 	xfree(coloured);
 	xfree(uid);

@@ -73,7 +73,7 @@ char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str)
 	char *p;
 	string_t s;
 
-	if(!str) return xstrdup("");
+	if(!(str && xstrlen(str))) return xstrdup("");
 
 	s = string_init("");
 	strip = session_int_get(sess, "STRIPMIRCCOL");
