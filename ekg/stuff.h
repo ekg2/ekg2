@@ -268,7 +268,6 @@ void buffer_free();
 void changed_var_default(session_t *s, const char *var);
 
 void changed_auto_save(const char *var);
-void changed_backlog_size(const char *var);
 void changed_display_blinking(const char *var);
 void changed_dcc(const char *var);
 void changed_mesg(const char *var);

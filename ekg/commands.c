@@ -1996,6 +1996,7 @@ COMMAND(cmd_quit)
 	 * u¿ywan± przez siebie pamiêæ. */
 	quit_command = 1;
 
+	xfree(tmp);	
 	return 0;
 }
 

@@ -324,9 +324,9 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				char buf[100], *tmp = NULL, *format;
 				fstring_t *s = NULL;
 
-				format = config_timestamp;
+				format = format_string(config_timestamp);
 				if (xstrcmp(format, "")) {
-					tmp = saprintf("%s ", format_string(format));
+					tmp = saprintf("%s ", format);
 					s = fstring_new(tmp);
 
         	                        strftime(buf, sizeof(buf), s->str, tm);
@@ -340,6 +340,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 					xfree(s);
 					xfree(tmp);
 				}
+				xfree(format);
 			}
 
 			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right; 
@@ -1674,7 +1675,6 @@ int ekg_getch(int meta)
                                         mouse_state = (clicks) ? EKG_BUTTON3_DOUBLE_CLICKED : EKG_BUTTON3_CLICKED;
                                         break;
 				default:
-					debug("eee: %d\n", last_btn);
 					break;
 			}
 
