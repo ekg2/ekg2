@@ -2022,6 +2022,7 @@ int gg_plugin_init()
         plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0);
         plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "0", 0);
         plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0);
+	plugin_var_add(&gg_plugin, "default", VAR_BOOL, "0", 0);
         plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "0", 0);
         plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0);
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0);
