@@ -237,7 +237,7 @@ void ncurses_enable_mouse()
         conn.eventMask = ~0;
 	conn.defaultMask = 0;   
 	conn.minMod      = 0;
-        conn.maxMod      = ~0;
+        conn.maxMod      = 0;
 
 	if(Gpm_Open(&conn, 0) == -1) {
                 debug("Cannot connect to mouse server\n");
