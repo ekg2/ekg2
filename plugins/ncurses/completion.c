@@ -581,6 +581,9 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		if(i >= strlen(line))
 			word_current = words_count + 1;
 		i--;
+                /* hmm, jeste¶my ju¿ na wyrazie wskazywany przez kursor ? */
+                if(i >= *line_index)
+                        break;
 	}
 
 	/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
@@ -653,11 +656,8 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		}
 
 		if (params && abbrs == 1) {
-			if(strchr(params, 'u') && word_current != strlen(strchr(params, 'u')))
-				goto problem;
-
 			for (i = 0; generators[i].ch; i++) {
-				if (generators[i].ch == params[word - 1] || strchr(params, 'u')) {
+				if (generators[i].ch == params[word_current - 2]) {
 					int j;
 
 					generators[i].generate(words[word], strlen(words[word]));
@@ -690,7 +690,6 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
 		}
 	}
-problem:
 
 	count = array_count(completions);
 

@@ -6,6 +6,9 @@ d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
 przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
+// 2004-03-24
+- usuniêty b³±d z dope³nieniem np /dcc g[TAB] (Wojciech S/del)
+
 // 2004-03-23
 - usuniêcie paru mo¿liwo¶ci ew. segv (del)
 
