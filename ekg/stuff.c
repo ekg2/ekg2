@@ -1410,6 +1410,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	t.persist = persist;
 	t.function = function;
 	t.data = data;
+	t.plugin = plugin;
 
 	return list_add(&timers, &t, sizeof(t));
 }
