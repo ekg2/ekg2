@@ -1011,10 +1011,12 @@ notreallyok:
 	print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
 			param[0]+1, bang?bang+1:"", param[2], moderpl->str);
 
-	if (ch) {
+	/* fucked up
+	if (ch && ch->chanp) {
 			xfree(ch->chanp->mode_str);
 			ch->chanp->mode_str = xstrdup(moderpl->str);
 	}
+	*/
 	if (bang) *bang='!';
 	string_free(moderpl, 1);
 
