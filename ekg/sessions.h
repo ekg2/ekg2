@@ -21,6 +21,7 @@
 #define __EKG_SESSIONS_H
 
 #include <ekg/dynstuff.h>
+#include "userlist.h"
 
 list_t sessions;
 
@@ -35,6 +36,7 @@ typedef struct {
 	char *uid;			/* id u¿ytkownika */
 	char *alias;			/* alias sesji */
 	void *priv;			/* dla plugina obs³uguj±cego sesjê */
+	userlist_t *userlist;		/* userlista */
 
 	/* private: */
 	char *status;			/* stan sesji */
