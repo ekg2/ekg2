@@ -221,195 +221,6 @@ COMMAND(cmd_tabclear)
 	return -1;
 }
 
-COMMAND(cmd_modify)
-{
-	userlist_t *u;
-	char **argv = NULL;
-	int i, res = 0, modified = 0;
-
-	if (!params[0]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-
-	if (!(u = userlist_find(session, params[0]))) {
-		printq("user_not_found", params[0]);
-		return -1;
-	}
-
-	if (params[1])
-		argv = array_make(params[1], " \t", 0, 1, 1);
-
-	for (i = 0; argv[i]; i++) {
-		
-		if (match_arg(argv[i], 'f', "first", 2) && argv[i + 1]) {
-			xfree(u->first_name);
-			u->first_name = xstrdup(argv[++i]);
-			modified = 1;
-			continue;
-		}
-		
-		if (match_arg(argv[i], 'l', "last", 2) && argv[i + 1]) {
-			xfree(u->last_name);
-			u->last_name = xstrdup(argv[++i]);
-			modified = 1;
-			continue;
-		}
-		
-		if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1]) {
-			char *tmp1, *tmp2;
-
-			tmp1 = xstrdup(u->nickname);
-			tmp2 = xstrdup(argv[++i]);
-			query_emit(NULL, "userlist-renamed", &tmp1, &tmp2);
-			xfree(tmp1);
-				
-			xfree(u->nickname);
-			u->nickname = tmp2;
-			
-			modified = 1;
-			continue;
-		}
-		
-		if ((match_arg(argv[i], 'p', "phone", 2) || match_arg(argv[i], 'm', "mobile", 2)) && argv[i + 1]) {
-			xfree(u->mobile);
-			u->mobile = xstrdup(argv[++i]);
-			modified = 1;
-			continue;
-		}
-		
-		if (match_arg(argv[i], 'g', "group", 2) && argv[i + 1]) {
-			char **tmp = array_make(argv[++i], ",", 0, 1, 1);
-			int x, off;	/* je¶li zaczyna siê od '@', pomijamy pierwszy znak */
-			
-			for (x = 0; tmp[x]; x++)
-				switch (*tmp[x]) {
-					case '-':
-						off = (tmp[x][1] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
-
-						if (ekg_group_member(u, tmp[x] + 1 + off)) {
-							ekg_group_remove(u, tmp[x] + 1 + off);
-							modified = 1;
-						} else {
-							printq("group_member_not_yet", format_user(session, u->uid), tmp[x] + 1);
-							if (!modified)
-								modified = -1;
-						}
-						break;
-					case '+':
-						off = (tmp[x][1] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
-
-						if (!ekg_group_member(u, tmp[x] + 1 + off)) {
-							ekg_group_add(u, tmp[x] + 1 + off);
-							modified = 1;
-						} else {
-							printq("group_member_already", format_user(session, u->uid), tmp[x] + 1);
-							if (!modified)
-								modified = -1;
-						}
-						break;
-					default:
-						off = (tmp[x][0] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
-
-						if (!ekg_group_member(u, tmp[x] + off)) {
-							ekg_group_add(u, tmp[x] + off);
-							modified = 1;
-						} else {
-							printq("group_member_already", format_user(session, u->uid), tmp[x]);
-							if (!modified)
-								modified = -1;
-						}
-				}
-
-			array_free(tmp);
-			continue;
-		}
-		
-		if (match_arg(argv[i], 'u', "uid", 2) && argv[i + 1]) {
-			userlist_t *existing;
-			char *tmp;
-
-			if (!valid_uid(argv[i + 1])) {
-				printq("invalid_uid");
-				array_free(argv);
-				return -1;
-			}
-
-			if ((existing = userlist_find(session, argv[i + 1]))) {
-				if (existing->nickname) {
-					printq("user_exists_other", argv[i], format_user(session, existing->uid), session_name(session));
-					array_free(argv);
-					return -1;
-				} else {
-					char *egroups = group_to_string(existing->groups, 1, 0);
-					
-					if (egroups) {
-						char **arr = array_make(egroups, ",", 0, 0, 0);
-						int i;
-
-						for (i = 0; arr[i]; i++)
-							ekg_group_add(u, arr[i]);
-
-						array_free(arr);
-					}
-
-					userlist_remove(session, existing);
-				}
-			}
-
-			tmp = xstrdup(u->uid);
-			query_emit(NULL, "userlist-removed", &tmp);
-			xfree(tmp);
-
-			userlist_clear_status(session, u->uid);
-
-			tmp = xstrdup(argv[i + 1]);
-			query_emit(NULL, "userlist-added", &tmp);
-
-			xfree(u->uid);
-			u->uid = tmp;
-
-			modified = 1;
-			continue;
-		}
-
-		if (match_arg(argv[i], 'o', "offline", 2)) {
-			query_emit(NULL, "user-offline", &u, &session);
-			modified = 2;
-			continue;
-		}
-
-		if (match_arg(argv[i], 'O', "online", 2)) {
-			query_emit(NULL, "user-online", &u, &session);
-			modified = 2;
-			continue;
-		} 
-		
-		printq("invalid_params", name);
-		array_free(argv);
-		return -1;
-	}
-
-	if (xstrcasecmp(name, "add")) {
-		switch (modified) {
-			case 0:
-				printq("not_enough_params", name);
-				res = -1;
-				break;
-			case 1:
-				printq("modify_done", params[0]);
-			case 2:
-				config_changed = 1;
-				break;
-		}
-	} else
-		config_changed = 1;
-
-	array_free(argv);
-
-	return res;
-}
-
 COMMAND(cmd_add)
 {
 	int params_free = 0;	/* zmienili¶my params[] i trzeba zwolniæ */
@@ -497,7 +308,7 @@ COMMAND(cmd_add)
 	if (u || userlist_add(session_current, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
-		query_emit(NULL, "userlist-added", &uid, &params[1]);
+		query_emit(NULL, "userlist-added", &uid, &params[1], &quiet);
                 query_emit(NULL, "add-notify", &session_current->uid, &uid);
                 xfree(uid);
 
@@ -507,9 +318,6 @@ COMMAND(cmd_add)
 		config_changed = 1;
 
 	}
-
-	if (params[2])
-		cmd_modify("add", &params[1], session_current, NULL, quiet);
 
 cleanup:
 	if (params_free) {
@@ -1606,9 +1414,6 @@ next:
 			return -1;
 		}
 
-		/* list <alias> [opcje] */
-		if (params[1])
-			return cmd_modify("list", params, session, NULL, quiet);
 list_user:
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
@@ -4027,7 +3832,7 @@ void command_init()
         command_add(NULL, "metacontact", "mp m s uU ?", cmd_metacontact, 0,
           "-a --add -d --del -i --add-item -r --del-item -l --list");
 
-	command_add(NULL, "list", "CpuUsm ?", cmd_list, 0,
+	command_add(NULL, "list", "CpuUsm", cmd_list, 0,
 	  "-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online");
 	  
 	command_add(NULL, "on", "p e ? UuC c", cmd_on, 0,

@@ -138,6 +138,35 @@ invisible
         Je¿eli nie podano opisu to bêdzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
+modify
+	paremtry:  <alias> <opcje>
+	krótki opis: zmienia wpisy w li¶cie kontaktów
+	
+	Opcje mog± byæ nastêpuj±ce:
+	
+	  -f, --first <imiê>
+	
+	  -l, --last <nazwisko>
+	
+	  -n, --nick <pseudonim>     pseudonim (nie jest u¿ywany)
+	
+	  -d, --display <nazwa>      wy¶wietlana nazwa
+	
+	  -u, --uin <numerek>
+	
+	  -g, --group [+/-]<@grupa>  dodaje lub usuwa z grupy
+	
+	                             mo¿na podaæ wiêcej grup po przecinku
+	
+	  -p, --phone <numer>        numer telefonu komórkowego
+	
+	  -o, --offline              b±d¼ niedostêpny dla danej osoby
+	
+	  -O, --online               b±d¼ widoczny dla danej osoby
+	
+	
+	Dwie ostatnie opcje dzia³aj± tylko, gdy w³±czony jest tryb ,,tylko dla znajomych''.
+
 msg
 	parametry:  <numer/alias/@grupa/*> <wiadomo¶æ>
 	krotki opis: wysy³a wiadomo¶æ

@@ -29,4 +29,6 @@ void gg_register_commands();
 void gg_session_handler_msg(session_t *s, struct gg_event *e);
 void gg_session_handler(int type, int fd, int watch, void *data);
 
+COMMAND(gg_command_modify);
+
 #endif /* __EKG_GG_GG_H */

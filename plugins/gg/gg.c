@@ -111,6 +111,20 @@ int gg_private_destroy(session_t *s)
 	return 0;
 }
 
+int gg_userlist_added_handle(void *data, va_list ap)
+{
+	char **uid = va_arg(ap, char**);
+	char **params = va_arg(ap, char**);
+	int *quiet = va_arg(ap, int*);
+	
+	gg_command_modify("add", (const char **) params, session_current, NULL, *quiet);
+
+	uid = NULL;
+
+	return 0;
+}
+
+
 int gg_session_handle(void *data, va_list ap)
 {
 	char **uid = va_arg(ap, char**);
@@ -1042,6 +1056,7 @@ int gg_plugin_init()
 	query_connect(&gg_plugin, "user-offline", gg_user_offline_handle, NULL);
 	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
         query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
+	query_connect(&gg_plugin, "userlist-added", gg_userlist_added_handle, NULL);
 
 	gg_register_commands();
 	
