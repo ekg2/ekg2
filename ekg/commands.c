@@ -3467,7 +3467,6 @@ int command_add(plugin_t *plugin, const char *name, char **params, command_func_
 	memset(&c, 0, sizeof(c));
 
 	c.name = xstrdup(name);
-	c.params = NULL;
         for (i=0; params && params[i]; i++)
                 array_add(&c.params, params[i]);
 	c.function = function;
@@ -3476,12 +3475,8 @@ int command_add(plugin_t *plugin, const char *name, char **params, command_func_
 	c.brief_help = xstrdup(brief_help);
 	c.long_help = xstrdup(long_help);
 	c.plugin = plugin;
-	c.possibilities = NULL;
 	for (i=0; possibilities && possibilities[i]; i++)
 		array_add(&c.possibilities, possibilities[i]);
-
-	xfree(params);
-	xfree(possibilities);
 
 	return (list_add_sorted(&commands, &c, sizeof(c), command_add_compare) != NULL) ? 0 : -1;
 }
@@ -3503,13 +3498,10 @@ int command_remove(plugin_t *plugin, const char *name)
 
 		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
 			xfree(c->name);
+			xfree(c->params);
 			xfree(c->params_help);
 			xfree(c->brief_help);
 			xfree(c->long_help);
-			array_free(c->params);
-			c->params = NULL;
-			array_free(c->possibilities);
-			c->possibilities = NULL;
 			list_remove(&commands, c, 1);
 			return 0;
 		}
@@ -3988,13 +3980,10 @@ void command_free()
 		command_t *c = l->data;
 
 		xfree(c->name);
+		xfree(c->params);
 		xfree(c->params_help);
 		xfree(c->brief_help);
 		xfree(c->long_help);
-		array_free(c->params);
-		c->params = NULL;
-		array_free(c->possibilities);
-		c->possibilities = NULL;
 	}
 
 	list_destroy(commands, 1);
