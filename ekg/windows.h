@@ -47,6 +47,8 @@ typedef struct {
 	int hide;		/* ukrywamy, bo jest zbyt du¿e */
 	int lock;		/* blokowanie zmian w obrêbie komendy */
 
+	list_t userlist;	/* sometimes window may require separate userlist */
+
 	void *private;		/* prywatne informacje ui */
 } window_t;
 

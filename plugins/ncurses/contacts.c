@@ -355,11 +355,25 @@ group_cleanup:
 				memset(&u, 0, sizeof(u));
 				u.nickname = up->nickname;
 				u.descr = up->descr;
-				u.status = (up->status) ? up->status : NULL;
+				u.status = up->status;
 				u.private = (void *) s;
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
 			}
 		}
+	
+		for (l = w->userlist; l; l = l->next) {
+			userlist_t *up = l->data;
+			userlist_t u;
+
+			if (!up)
+				continue;
+
+			u.nickname = up->nickname;
+			u.descr = up->descr;
+			u.status = up->status;
+			u.private = (void *) w->session;
+			list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
+		}	
 	}
 	if ((all == 1 && !sorted_all_cache) || all == 2) {
 		list_t l;
@@ -392,6 +406,9 @@ group_cleanup:
 		const char *footer_status = NULL;
 		char *line;
 		char tmp[100];
+
+		if (!all && w->userlist)
+			l = w->userlist;
 
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
