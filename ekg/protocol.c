@@ -225,16 +225,19 @@ int protocol_status(void *data, va_list ap)
 	}
 
 notify_plugins:
-        xfree(u->last_status);
-        u->last_status = xstrdup(u->status);
-        xfree(u->last_descr);
-        u->last_descr = xstrdup(u->descr);
+	if (xstrcasecmp(u->status, EKG_STATUS_NA)) {
+	        xfree(u->last_status);
+	        u->last_status = xstrdup(u->status);
+	        xfree(u->last_descr);
+	        u->last_descr = xstrdup(u->descr);
+	}
 
 	xfree(u->status);
 	u->status = xstrdup(status);
 	xfree(u->descr);
 	u->descr = xstrdup(descr);
-		
+	u->status_time = time(NULL);
+	
 	query_emit(NULL, "userlist-changed", __session, __uid);
 
 	return 0;

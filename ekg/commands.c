@@ -1130,6 +1130,16 @@ COMMAND(cmd_list)
 			printq("user_info_name", u->last_name, "");
 
 		printq("user_info_status", status);
+                if (u->status_time) {
+		        struct tm *status_time;
+			char buf[100];		
+
+			status_time = localtime(&(u->status_time));
+	        	strftime(buf, sizeof(buf), format_find("user_info_status_time_format") ,status_time);
+
+			printq("user_info_status_time", buf);
+		}
+
 		if (u->last_status)
 			printq("user_info_last_status", last_status);
 

@@ -465,7 +465,7 @@ static struct {
 void ncurses_complete(int *line_start, int *line_index, char *line)
 {
 	char *start, *cmd, **words, *separators;
-	int i, count, word, j, words_count, word_current;
+	int i, count, word, j, words_count, word_current, open_quote;
 
 	start = xmalloc(xstrlen(line) + 1);
 	count = 0;
@@ -520,11 +520,13 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	words = NULL;
 
 	/* podziel (uwzglêdniaj±c cudzys³owia)*/
-	for (i = 0; i < xstrlen(line); i++) {
-		if(line[i] == '"')
+	for (i = 0, j = 0, open_quote = 0; i < xstrlen(line); i++) {
+		if(line[i] == '"') {
 			for(j = 0,  i++; i < xstrlen(line) && line[i] != '"'; i++, j++)
 				start[j] = line[i];
-		else
+			if (i == xstrlen(line))
+				open_quote = 1;
+		} else
 			for(j = 0; i < xstrlen(line) && !xisspace(line[i]) && line[i] != ','; j++, i++)
 				start[j] = line[i];
 		start[j] = '\0';
@@ -535,7 +537,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	}
 	
 	/* je¿eli ostatnie znaki to spacja, albo przecinek to trzeba dodaæ jeszcze pusty wyraz do words */
-	if (xstrlen(line) > 1 && (line[xstrlen(line) - 1] == ' ' || line[xstrlen(line) - 1] == ','))
+	if (xstrlen(line) > 1 && (line[xstrlen(line) - 1] == ' ' || line[xstrlen(line) - 1] == ',') && !open_quote)
 		array_add(&words, xstrdup(""));
 
 /*	 for(i = 0; i < array_count(words); i++)
@@ -613,7 +615,8 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 /*	debug("word = %d\n", word);
 	debug("start = \"%s\"\n", start);
 	debug("words_count = %d\n", words_count);	 
-
+*/
+/*
 	 for(i = 0; i < xstrlen(separators); i++)
 		debug("separators[i = %d] = \"%c\"\n", i, separators[i]);   */
 
@@ -750,6 +753,10 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		int common = 0;
 		int tmp = 0;
 		int quotes = 0;
+		char *s1  = completions[0];
+
+                if (*s1 =='"')
+	                s1++;
 
 	    	/* for(i = 0; completions[i]; i++)
                 	debug("completions[i] = %s\n", completions[i]); */
@@ -759,25 +766,23 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		 */
 		for(i=1, j = 0; ; i++, common++) {
 			for(j=0; j < count; j++) {
-//				if (!completions[j][i])
-//					break;
-				if(completions[j][0] == '"') 
+				char *s2;
+
+				s2 = completions[j];
+				if (*s2 == '"') {
 					quotes = 1;
-				if(completions[j][0] == '"' && completions[0][0] != '"')
-					tmp = xstrncasecmp(completions[0], completions[j] + 1, i);
-				else if(completions[0][0] == '"' && completions[j][0] != '"')
-					tmp = xstrncasecmp(completions[0] + 1, completions[j], i);
-				else
-					tmp = xstrncasecmp(completions[0], completions[j], i);
-				 /* debug("xstrncasecmp(\"%s\", \"%s\", %d) = %d\n", completions[0], completions[j], i, xstrncasecmp(completions[0], completions[j], i));  */
+					s2++;
+				}
+				tmp = xstrncasecmp(s1, s2, i);
+				/* debug("xstrncasecmp(\"%s\", \"%s\", %d) = %d\n", s1, s2, i, xstrncasecmp(s1, s2, i));  */
 				if (tmp)
 					break;
                         }
 			if (tmp)
 				break;
 		}
-		
-		/* debug("common :%d\n", common); */
+	
+		/* debug("common :%d\t\n", common); */
 
 		if (xstrlen(line) + common < LINE_MAXLEN) {
 		

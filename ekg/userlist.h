@@ -66,6 +66,7 @@ typedef struct {
 
 	char *last_status;	/* ostatni stan */
 	char *last_descr;	/* ostatni opis */
+	time_t status_time;	/* kiedy w³±czyli¶my aktualny status */
 } userlist_t;
 
 #if 0
