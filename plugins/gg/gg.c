@@ -592,7 +592,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	__sent = e->event.msg.time;
 	__seq = NULL;
 	__format = NULL;
-	__class = EKG_MSGCLASS_MESSAGE;
+	__class = EKG_MSGCLASS_CHAT;
 
 	if ((e->event.msg.msgclass & 0x0f) == GG_CLASS_CHAT || (e->event.msg.msgclass & GG_CLASS_QUEUED))
 		__class = EKG_MSGCLASS_CHAT;
