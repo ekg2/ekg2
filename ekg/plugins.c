@@ -334,6 +334,7 @@ int query_disconnect(plugin_t *plugin, const char *name)
 		query_t *q = l->data;
 
 		if (q->plugin == plugin && q->name == name) {
+			xfree(q->name);
 			list_remove(&queries, q, 1);
 			return 0;
 		}

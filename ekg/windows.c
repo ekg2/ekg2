@@ -487,6 +487,7 @@ cleanup:
 	query_emit(NULL, "ui-window-kill", &tmp);
 	xfree(tmp);
 
+	xfree(w->target);
 	list_remove(&windows, w, 1);
 }
 
