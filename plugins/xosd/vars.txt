@@ -81,3 +81,12 @@ display_notify
 	warto¶æ 2 powoduje, ¿e xosd bêdzie wy¶wietlaæ zmiany stanów 
 	tylko z sesji w których zmienna display_notify jest ustawiona
 	na 1.
+
+display_inactive_only
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la czy xosd ma wy¶wietlaæ wiadomo¶ci tylko z nieaktywnych 
+	okien. wartosæ 1 powoduje, ¿e xosd wy¶wietla wiadomo¶ci z wszystkich
+	okien, prócz obecnego. wartosæ 0 powoduje wy¶wietlanie wszystkich 
+	wiadomo¶ci.
