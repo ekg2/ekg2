@@ -297,8 +297,36 @@ void userlist_clear_status(session_t *session, const char *uid)
  */
 void userlist_free(session_t *session)
 {
-	if (session->userlist)
-		userlist_remove(session, session->userlist->data);
+	list_t l;
+
+	if (!session->userlist)
+		return;
+
+        for (l = session->userlist; l; l = l->next) {
+                userlist_t *u = l->data;
+		list_t lp;
+
+	        xfree(u->first_name);
+	        xfree(u->last_name);
+	        xfree(u->nickname);
+	        xfree(u->uid);
+	        xfree(u->mobile);
+	        xfree(u->status);
+	        xfree(u->descr);
+	        xfree(u->authtype);
+	        xfree(u->foreign);
+	        xfree(u->last_status);
+	        xfree(u->last_descr);
+	        xfree(u->resource);
+	
+	        for (lp = u->groups; lp; lp = lp->next) {
+	                struct group *g = lp->data;
+	
+	                xfree(g->name);
+	        }
+	
+	        list_destroy(u->groups, 1);
+        }
 
         list_destroy(session->userlist, 1);	
 }
