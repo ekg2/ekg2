@@ -695,7 +695,6 @@ COMMAND(jabber_command_ver)
 	jabber_private_t *j = session_private_get(session);
 	const char *query_uid, *query_res, *uid;
         userlist_t *ut;
-        const char *resource = session_get(session, "resource");
 
         if (!session_check(session, 1, "jid")) {
                 printq("invalid_session");
@@ -734,16 +733,13 @@ COMMAND(jabber_command_ver)
 		return -1;
 	}
 
-	if (!resource)
-		resource = JABBER_DEFAULT_RESOURCE;
-
 	if (!(query_res = ut->resource)) {
 		print("jabber_unknown_resource", session_name(session), query_uid);
 		return -1;
 	}
 
-       	jabber_write(j, "<iq from='%s/%s' id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
-		     jabber_escape(session->uid + 4), jabber_escape(resource), j->id++, jabber_escape(uid), jabber_escape(query_res));
+       	jabber_write(j, "<iq id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
+		     j->id++, jabber_escape(uid), jabber_escape(query_res));
 	return 0;
 }
 
@@ -752,7 +748,6 @@ COMMAND(jabber_command_userinfo)
 	jabber_private_t *j = session_private_get(session);
 	const char *query_uid, *uid;
 	userlist_t *ut;
-	const char *resource = session_get(session, "resource");
 
 	if (!session_check(session, 1, "jid")) {
 		printq("invalid_session");
@@ -796,7 +791,6 @@ COMMAND(jabber_command_lastseen)
 	jabber_private_t *j = session_private_get(session);
 	const char *query_uid, *uid;
         userlist_t *ut;
-        const char *resource = session_get(session, "resource");
 
         if (!session_check(session, 1, "jid")) {
                 printq("invalid_session");
