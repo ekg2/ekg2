@@ -372,25 +372,17 @@ COMMAND(cmd_modify)
 			continue;
 		}
 
-#if 0
 		if (match_arg(argv[i], 'o', "offline", 2)) {
-			gg_remove_notify_ex(sess, u->uin, userlist_type(u));
-			group_add(u, "__offline");
-			printq("modify_offline", format_user(u->uin));
+			query_emit(NULL, "user-offline", &u, &session);
 			modified = 2;
-			gg_add_notify_ex(sess, u->uin, userlist_type(u));
 			continue;
 		}
 
 		if (match_arg(argv[i], 'O', "online", 2)) {
-			gg_remove_notify_ex(sess, u->uin, userlist_type(u));
-			group_remove(u, "__offline");
-			printq("modify_online", format_user(u->uin));
+			query_emit(NULL, "user-online", &u, &session);
 			modified = 2;
-			gg_add_notify_ex(sess, u->uin, userlist_type(u));
 			continue;
-		}
-#endif
+		} 
 		
 		printq("invalid_params", name);
 		array_free(argv);

@@ -121,6 +121,36 @@ int gg_session_handle(void *data, va_list ap)
 	return 0;
 }
 
+int gg_user_offline_handle(void *data, va_list ap)
+{
+	userlist_t **__u = va_arg(ap, userlist_t**), *u = *__u;
+	session_t **__session = va_arg(ap, session_t**), *session = *__session;
+	gg_private_t *g = session_private_get(session);
+	int uin = atoi(u->uid + 3);
+
+        gg_remove_notify_ex(g->sess, uin, gg_userlist_type(u));
+	ekg_group_add(u, "__offline");
+        print("modify_offline", format_user(session, u->uid));
+        gg_add_notify_ex(g->sess, uin, gg_userlist_type(u));
+
+	return 0;
+}
+
+int gg_user_online_handle(void *data, va_list ap)
+{
+        userlist_t **__u = va_arg(ap, userlist_t**), *u = *__u;
+        session_t **__session = va_arg(ap, session_t**), *session = *__session;
+        gg_private_t *g = session_private_get(session);
+        int uin = atoi(u->uid + 3);
+
+        gg_remove_notify_ex(g->sess, uin, gg_userlist_type(u));
+        ekg_group_remove(u, "__offline");
+        print("modify_online", format_user(session, u->uid));
+        gg_add_notify_ex(g->sess, uin, gg_userlist_type(u));
+
+	return 0;
+}
+
 int gg_status_show_handle(void *data, va_list ap)
 {
         char **uid = va_arg(ap, char**);
@@ -1569,6 +1599,9 @@ int gg_plugin_init()
 	query_connect(&gg_plugin, "add-notify", gg_add_notify_handle, NULL);
 	query_connect(&gg_plugin, "remove-notify", gg_remove_notify_handle, NULL);
 	query_connect(&gg_plugin, "status-show", gg_status_show_handle, NULL);
+	query_connect(&gg_plugin, "user-offline", gg_user_offline_handle, NULL);
+	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
+
 #define possibilities(x) array_make(x, " ", 0, 1, 1)
 #define params(x) array_make(x, " ", 0, 1, 1)
 
