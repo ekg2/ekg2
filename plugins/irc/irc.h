@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -50,16 +50,28 @@ typedef struct {
 /* data for private->people */
 typedef struct {
 	char *nick;
+	char *realname;
 	/* G->dj: dya see any reason for keeping realname here ? */
+	/* Dj->G: yes. */
+	/* G->dj: WHAT reason ? */
 	char *host, *ident;
 	char *flags; /* G->dj: I think this isn't good place for this stuff
+	              * Dj->G: So where you want to do place it ? 
+		      * G->dj: have no f.ckin idea ;)
+		      *        but from simple reasons this can't be here
 			global-flags: auto-kick, auto-op, auto-unban, and so on ? :) */
+/* About flags one more time, if you don't want to place it in plugin so maybe python ?
+ * G->dj: no no flags should be internal thing in irc plugin, but
+ * this is definitely BAD place for this...
+ */
 	list_t channels;
 } people_t;
 
 /* data for private->channels */
 typedef struct {
 	char *name;
+	int    syncmode;
+	struct timeval syncstart;
 	int mode;
 	char *topic;
 	char *topicby;
@@ -89,7 +101,7 @@ typedef struct {
 } irc_handler_data_t;
 
 void irc_handle_reconnect(int type, void *data);
-static void irc_handle_disconnect(session_t *s);
+void irc_handle_disconnect(session_t *s);
 COMMAND(irc_command_disconnect);
 
 #ifdef __GNU__

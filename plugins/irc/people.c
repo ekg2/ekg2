@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -16,6 +16,8 @@
  */
 
 #include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include <ekg/xmalloc.h>
 
@@ -83,7 +85,8 @@ people_chan_t *irc_find_person_chan(list_t p, char *channame)
 	return NULL;
 }
 
-int irc_add_person_int(irc_private_t *j, char *nick, channel_t *chan)
+people_t *irc_add_person_int(session_t *s, irc_private_t *j,
+		char *nick, channel_t *chan)
 {
 	people_t *person, *peronchan;
 	people_chan_t *pch_tmp;
@@ -101,7 +104,7 @@ int irc_add_person_int(irc_private_t *j, char *nick, channel_t *chan)
 	
 	if (mode) nick++;
 	ircnick = saprintf("%s%s", IRC4, nick);
-	w = window_find(chan->name);
+	w = window_find_s(s, chan->name);
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
 	/* add entry in window's userlist
 		debug("+userlisty, "); */
@@ -114,8 +117,15 @@ int irc_add_person_int(irc_private_t *j, char *nick, channel_t *chan)
 		debug("+%s lista ludzi, ", nick); */
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
+		/* G: I know that in theory there can be machine
+		 * where NULL != 0 but I haven't seen a onem so if
+		 * someone will write me nice mail I'll uncomment this
+		person->realname = NULL;
+		person->ident= NULL;
 		person->host = NULL;
+		person->flags= NULL;
 		person->channels = NULL;
+		 */
 		list_add(&(j->people), person, 0);
 	}
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
@@ -137,21 +147,23 @@ int irc_add_person_int(irc_private_t *j, char *nick, channel_t *chan)
 	} //else { pch_tmp->mode = mode; }
 
 	xfree(modes);
-	return 0;
+	return person;
 }
 
-int irc_add_person(session_t *s, irc_private_t *j, char *nick, char *channame)
+people_t *irc_add_person(session_t *s, irc_private_t *j,
+		char *nick, char *channame)
 {
 	channel_t *chan;
-	if (!nick) return -1;
+	if (!nick)
+		return NULL;
 	
 	if (!(chan = irc_find_channel(j->channels, channame)))
 		/* GiM: if someone typed /names *
 		 * and he's not on that channel... */
-		return -1;
+		return NULL;
 
 	//query_emit(NULL, "userlist-changed", __session, __uid);
-	return irc_add_person_int(j, nick, chan);
+	return irc_add_person_int(s, j, nick, chan);
 }
 
 int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
@@ -174,17 +186,18 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 
 		return 0;
 	}
-	debug("[irc] add_people()\n");
+	debug("[irc] add_people() %08X\n", j);
 	save = nick = array_make(names, " ", 0, 1, 0);
 	while (*nick) {
-		irc_add_person_int(j, *nick, chan);
+		irc_add_person_int(s, j, *nick, chan);
 		nick++;
 	}
 	array_free(save);
 	return 0;	
 }
 
-int irc_del_person_channel_int(irc_private_t *j, people_t *nick, channel_t *chan)
+int irc_del_person_channel_int(session_t *s, irc_private_t *j,
+		people_t *nick, channel_t *chan)
 {
 	userlist_t *ulist = NULL;
 	people_chan_t *tmp;
@@ -196,7 +209,7 @@ int irc_del_person_channel_int(irc_private_t *j, people_t *nick, channel_t *chan
 	/* GiM: We can't use chan->window->userlist,
 	 * cause, window could be already destroyed. ;/ 
 	 */
-	if ((w = window_find(chan->name)))
+	if ((w = window_find_s(s, chan->name)))
 		ulist = userlist_find_u(&(w->userlist), nick->nick);
 	if (ulist) {
 	/* delete from userlist 
@@ -235,7 +248,7 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 	if (!(person = irc_find_person(j->people, nick)))
 		return -1;
 
-	return irc_del_person_channel_int(j, person, chan);
+	return irc_del_person_channel_int(s, j, person, chan);
 }
 
 int irc_del_person(session_t *s, irc_private_t *j, char *nick,
@@ -243,7 +256,9 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 {
 	people_t *person;
 	people_chan_t *pech;
+	window_t *w;
 	list_t tmp;
+	char *temp;
 
 	if (!(person = irc_find_person(j->people, nick))) 
 		return -1;
@@ -256,7 +271,22 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 				s, 0, "irc_quit", session_name(s), 
 				nick, wholenick, reason);
 
-		if (irc_del_person_channel_int(j, person, pech->chanp))
+		temp = saprintf("%s%s", IRC4, nick);
+		w = window_find_s(s, temp);
+		if (w) {
+			if (session_int_get(s, "close_windows") != 0) {
+				debug("[irc] del_person() window_kill(w, 1); %s\n", w->target);
+				window_kill(w, 0);
+		    		window_switch(window_current->id);
+			}
+			if (doprint)
+				print_window(temp,s, 0, "irc_quit",
+						session_name(s), nick,
+						wholenick, reason);
+		}
+		xfree(temp);
+
+		if (irc_del_person_channel_int(s, j, person, pech->chanp))
 			break;
 	}
 	/* GiM: removing from private->people is in
@@ -264,7 +294,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 	 */
 	return 0;
 }
-		
+
 int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 {
 	list_t p;
@@ -275,10 +305,10 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	if (!(chan = irc_find_channel((j->channels), name)))
 		return -1;
 
-	debug("[irc] del_channel() %s\n", name);
+	debug("[irc]_del_channel() %s\n", name);
 	while ((p = (chan->onchan)))
 		if (!(p->data)) break;
-		else irc_del_person_channel_int(j, (people_t *)p->data, chan);
+		else irc_del_person_channel_int(s, j, (people_t *)p->data, chan);
 
 	xfree(chan->topic);
 	xfree(chan->topicby);
@@ -288,9 +318,9 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	list_remove(&(j->channels), chan, 1);
 	
 	tmp = saprintf("%s%s", IRC4, name);
-	w = window_find(tmp);
-	if (w) {
-		debug("[irc] del_channel() window_kill(w, 1); %s\n", w->target);
+	w = window_find_s(s, tmp);
+	if (w && (session_get(s, "close_windows") != 0)) {
+		debug("[irc]_del_channel() window_kill(w, 1); %s\n", w->target);
 		window_kill(w, 0);
 		window_switch(window_current->id);
 	}
@@ -298,6 +328,18 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 
 	return 0;
 }
+
+
+int irc_sync_channel(session_t *s, irc_private_t *j, channel_t *p) 
+{
+	p->syncmode = 1;
+	/* to ma sie rownac ile ma byc roznych syncow narazie tylko WHO
+	 * ale moze bedziemy syncowac /mode +b, +e, +I) */
+	gettimeofday(&(p->syncstart), NULL);
+	irc_write(j, "WHO %s\r\n", p->name+4);
+	return 0;
+}
+
 
 channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t *win)
 {
@@ -313,6 +355,9 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 		p->mode_str	= NULL;
 		debug("[irc] add_channel() WINDOW %08X\n", win);
 		p->onchan 	= NULL;
+		p->syncmode   = 0;
+		if (session_int_get(s, "auto_channel_sync") != 0)
+			irc_sync_channel(s, j, p);
 		list_add(&(j->channels), p, 0);
 		return p;
 	}
@@ -430,8 +475,12 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		 */
 	}
 	for (t1=j->people; t1; t1=t1->next) {
-		xfree(((people_t *)(t1->data))->nick);
-		xfree(((people_t *)(t1->data))->host);
+		per = (people_t *) t1->data;
+		xfree(per->nick);
+		xfree(per->realname);
+		xfree(per->host);
+		xfree(per->ident);
+		xfree(per->flags);
 	}
 	for (t1=j->channels; t1; t1=t1->next) {
 		xfree(((channel_t *)(t1->data))->name);

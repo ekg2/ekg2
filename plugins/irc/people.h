@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -25,7 +25,7 @@ channel_t *irc_find_channel(list_t p, char *channame);
 people_chan_t *irc_find_person_chan(list_t p, char *channame);
 
 /* person joins channel */
-int irc_add_person(session_t *s, irc_private_t *j, char *nick, char *channame);
+people_t *irc_add_person(session_t *s, irc_private_t *j, char *nick, char *channame);
 /* we join channel */
 int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame);
 

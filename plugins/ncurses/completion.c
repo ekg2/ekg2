@@ -924,10 +924,10 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	}
 	xfree(cmd);
 
-	/* pocz±tek komendy? */
+	/* pocz±tek nicka, komendy? */
 	if (word == 0) {
-		command_generator(start, xstrlen(start));
-		if (!completions && window_current && window_current->target) {
+		/* dj's fixes... */
+		if (window_current && window_current->target) {
 	                known_uin_generator(start, xstrlen(start));
 	                if (completions) {
 	                        for (j = 0; completions && completions[j]; j++) {
@@ -954,6 +954,9 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	                }
 
 		}
+		if (!completions)
+			command_generator(start, xstrlen(start));
+
 	}
 	else {
 		char **params = NULL;

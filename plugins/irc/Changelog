@@ -1,3 +1,71 @@
+stardate: 15:44:24 CEST 2oo5-27-o3 version 0.7.65 (GiM)
+  * new nice irc_getchan
+  * applied dj's patches
+
+stardate: xx:xx:xx WEST 24.o3.2oo5 version 0.7.? (darkjames)
+  * invite command && lazy handling (displaying && AUTO_JOIN_CHANS_ON_INVITE) 
+
+stardate: xx:xx:xx WEST 21.o3.2oo5 version 0.7.? (darkjames)
+  * fixed large 4K memleak @ irc_handle_stream when len < 1
+  * probably fixed sigsegv @ irc_handle_disconnect [CHECK]
+  * nice channel and nick syncing.
+  * prefer_family
+  * some new features connected with nickchanging.
+  * /ban /kick /kickban /ban implementation
+
+stardate: xx:xx:xx WEST 20.o3.2oo5 version 0.7.? (darkjames)
+  * fixed iwil bug. Changed window_find() to window_find_s()
+  * (buggy (?)) reconnecting support
+    [commented out, because of faulty timer handling,
+     [ekg2's fault not yours :)]]
+
+stardate: xx:xx:xx WEST 01.o3.2oo5 version 0.7.? (darkjames)
+  * changing variable name from local_ip to hostname.
+    (irssi like)
+
+stardate: xx:xx:xx WEST 27.o2.2oo5 version 0.7.? (darkjames)
+  * fixed displaying "* no such nick / server"
+    [rejected]
+  * fixed stupid memleaks in irc_c_whois
+
+stardate: 12:1o:5o WEST 2oo4-17-1o version 0.7.26 (GiM)
+  * irc.c:
+    - password on servers
+  * input.c:
+    - colours in ctcps
+  * misc.c:
+    - DISPLAY_NICKCHANGE
+
+stardate: 19:54:13 CEST 2oo4-13-o9 version 0.7.14 (GiM)
+    - ident@host instead of nick!ident@host in formats (dre/GiM)
+    - yes, I'm forgetting about changing version no.
+  * irc.c:
+    - Solaris compatibility (Beeth)
+  * misc.c:
+    - fixed autojoin (viurs^/GiM)
+    - fix for FreeBSD in *_msg (Greyer/GiM)
+    - SHOW_NICKMODE_EMPTY (dre/GiM)
+  * people.c:
+    - fix in deleting person's channels (Greyer/GiM)
+  * autoacts.c:
+    - fixed autojoining on [dis]connect
+    
+stardate: o9:34:41 CEST 2oo4-o7-o9 version 0.7.13 (GiM)
+    - SKIP_MOTD --> SHOW_MOTD
+    - AUTO_JOIN [/session AUTO_JOIN for help]
+  * misc.c:
+    - simple highlight when our nick is in message on channel
+    - improved beeping ;)
+
+stardate: 11:57:26 CEST 2oo4-o4-o9 version 0.7.09 (GiM)
+    - fixes in quit and whois 
+    - DISPLAY_QUIT
+    - changed nick displaying (@%+ )
+    - added nick colouring depending on nick prefix
+    - added /[de]halfop
+    - changed beep bahaviour
+
+
 stardate: o9:o9:38 CEST 2oo4-31-o8 version 0.6.98 (GiM)
   * added session.txt
   * autoacts.[ch]:

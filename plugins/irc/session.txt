@@ -1,5 +1,12 @@
 // IRC protocol session variables description
-// (c) 2004 Michal 'GiM' Spadlinski
+// (c) 2004-2005 Michal 'GiM' Spadlinski
+//		Jakub 'darkjames' Zawadzki
+
+alias
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	krótka nazwa sesji
 
 auto_away
 	typ: liczba
@@ -25,6 +32,44 @@ auto_connect
 	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
 	programu
 
+auto_reconnect
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
+	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
+	TA ZMIENNA PÓKI CO NIE MA ZNACZENIA!
+
+ban_type
+	typ: liczba
+	domy¶lna warto¶æ: 10
+
+	Typy banów: (irssi-like) tylko ze zamiast tekstu mamy numerki.
+	 1 (Nick)   - nick!*@*
+	 2 (User)   - *!*user@*
+	 4 (Host)   - *!*@host.* (to jest troche inne niz w irssi
+	 			jak chcesz irssi-like to ustaw 12)
+	 8 (Domain) - *!*@*.domain.net
+	 8 (IP)     - *!*@192.168.11.*
+	i po dodaniu mamy np:
+	 3 (Nick|User)   - nick!user@*
+	10 (User|Domain) - *!*user@*.domain.net
+	itd... jak nie skapowaliscie to i tak nie skapujecie ;>
+	a jak zrozumieliscie to pytanie konkursowe: 
+	Co bedzie banowac jesli ban_type == 0 prawidlowa odpowiedz wyslijcie
+	na smsa 9100 do wygrania ten wlasnie ban na !ekg2 ;>
+	Zmienna uzywana przy /ban oraz /kickban
+	Wiecej /help ban (@irssi)
+
+close_windows
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	plugin sam zamyka `niepotrzebne` okna. przy /quit usera
+	z ktorym mamy otwarte query, kiedy zostalismy wykopaniu
+	przez kogos z kanalu imho zbedny fjuczer. Zachowanie
+	kompatylibnosci z GiMem ;>
+
 dcc_port
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -49,7 +94,7 @@ display_notify
 	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2 
 	ukrywa zmiany stanu.
 
-local_ip
+hostname
 	typ: tekst
 	domy¶lna warto¶æ: brak
 
@@ -98,6 +143,14 @@ port
 	domy¶lna warto¶æ: 6667
 
 	port serwera, do którego bêdziemy siê pod³±czaæ
+
+prefer_family
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	Jesli serwer ma rekordy A i AAAA to zostanie wybrany
+	rekord AAAA gdy prefer_family = 2
+	rekord A gdy prefer_family != 2
 
 realname
 	typ: tekst

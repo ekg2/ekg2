@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -33,7 +33,12 @@ typedef int (*Irc_Cmd) 	    (session_t * , irc_private_t * , int   , int      , 
 #define IRC_LISTLIN		0x008
 #define IRC_LISTSTA		0x010
 #define IRC_LISTWHO		0x020
-#define IRC_LISTEND		0x040
+#define IRC_LISTCHA		0x040
+#define IRC_LISTEND		0x080
+
+#define IRC_WHOIS		0x001
+#define IRC_WHOWAS		0x002
+#define IRC_WHOERR		0x004
 
 enum { IRC_ERR_12=0, IRC_ERR_21, IRC_ERR_ONLY1, IRC_ERR_NEW, IRC_ERR_IGNO,
 	IRC_ERR_OTHER,
@@ -50,8 +55,11 @@ typedef struct {
 } IrcCommand;
 
 int irc_input_parser(session_t *s, char *buf, int len);
+char *irc_make_banmask(int bantype, const char *nick, 
+		const char *ident, const char *hostname);
 
 IRC_COMMAND(irc_c_init);
+IRC_COMMAND(irc_c_invite);
 IRC_COMMAND(irc_c_ping);
 IRC_COMMAND(irc_c_nick);
 IRC_COMMAND(irc_c_msg);
@@ -165,23 +173,24 @@ static IrcCommand irccommands[] =
 	{ 1,	305,	NULL,	"RPL_UNAWAY",		&irc_c_error,	IRC_RPL_ONLY1},
 	{ 1,	306,	NULL,	"RPL_NOWAWAY",		&irc_c_error,	IRC_RPL_ONLY1},
 
-	{ 1,	311,	NULL,	"RPL_WHOISUSER",	&irc_c_whois,	0 },
-	{ 1,	312,	NULL,	"RPL_WHOISSERVER",	&irc_c_whois,	0 },
-	{ 1,	313,	NULL,	"RPL_WHOISOPERATOR",	&irc_c_whois,	0 },
-	{ 1,	317,	NULL,	"RPL_WHOISIDLE",	&irc_c_whois,	0 },
-	{ 1,	318,	NULL,	"RPL_ENDOFWHOIS",	&irc_c_whois,	0 },
-	{ 1,	319,	NULL,	"RPL_WHOISCHANNELS",	&irc_c_whois,	0 },
-
-	{ 1,	314,	NULL,	"RPL_WHOWASUSER",	&irc_c_whois,	1 },
-	{ 1,	369,	NULL,	"RPL_ENDOFWHOWAS",	&irc_c_whois,	1 },
+	{ 1,	311,	NULL,	"RPL_WHOISUSER",	&irc_c_whois,IRC_WHOIS},
+	{ 1,	312,	NULL,	"RPL_WHOISSERVER",	&irc_c_whois,IRC_WHOIS},
+	{ 1,	313,	NULL,	"RPL_WHOISOPERATOR",	&irc_c_whois,IRC_WHOIS},
+	{ 1,	317,	NULL,	"RPL_WHOISIDLE",	&irc_c_whois,IRC_WHOIS},
+	{ 1,	318,	NULL,	"RPL_ENDOFWHOIS",	&irc_c_whois,IRC_WHOIS},
+	{ 1,	319,	NULL,	"RPL_WHOISCHANNELS",	&irc_c_whois,IRC_WHOIS},
+	{ 1,	314,	NULL,	"RPL_WHOWASUSER",	&irc_c_whois,IRC_WHOWAS},
+	{ 1,	369,	NULL,	"RPL_ENDOFWHOWAS",	&irc_c_whois,IRC_WHOWAS},
 
 	/* G->dj I want to keep the names from rfc2812 */
 	{ 1,	315,	NULL,	"RPL_ENDOFWHO",		&irc_c_list, IRC_LISTWHO|IRC_LISTEND },
 	{ 1,	352,	NULL,	"RPL_WHOREPLY",		&irc_c_list, IRC_LISTWHO },	
 
-/*	{ 1,	321,	NULL,	"RPL_LISTSTART",	&irc_c_error,	
-	{ 1,	322,	NULL,	"RPL_LIST",		&irc_c_error,	
-	{ 1,	323,	NULL,	"RPL_LISTEND",		&irc_c_error,	*/
+	/* G->dj: with what it colides ?? */
+/*	{ 1,	321,	NULL,	"RPL_LISTSTART",	&irc_c_error,	*/
+	{ 1,	321,	NULL,	"RPL_CHLISTSTART",	&irc_c_list, IRC_LISTCHA },
+	{ 1,	322,	NULL,	"RPL_LIST",		&irc_c_list, IRC_LISTCHA },
+	{ 1,	323,	NULL,	"RPL_LISTEND",		&irc_c_list, IRC_LISTCHA|IRC_LISTEND },
 
 /*	{ 1,	325,	NULL,	"RPL_UNIQOPIS",		&irc_c_error,	*/
 	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_mode,	IRC_RPL_OTHER},
@@ -190,12 +199,13 @@ static IrcCommand irccommands[] =
 	{ 1,	332,	NULL,	"RPL_TOPIC",		&irc_c_error,	IRC_RPL_OTHER},
 	/* [*] 333 not in rfc 2812 */
 	{ 1,	333,	NULL,	"RPL_TOPICBY",		&irc_c_error,	IRC_RPL_OTHER},
-	
+	{ 1,	341,	NULL,	"RPL_INVITE",		&irc_c_error,	IRC_RPL_OTHER},
+/*	{ 1,	443, G->dj: ??? */
 /*	{ 1,	351,	NULL,	"RPL_VERSION",		&irc_c_error,	*/
 	{ 1,	353,	NULL,	"RPL_NAMREPLY",		&irc_c_namerpl,	0 },
 	{ 1,	364,	NULL,	"RPL_LINKS",		&irc_c_list,	IRC_LISTLIN },
 	{ 1,	365,	NULL,	"RPL_ENDOFLINKS",	&irc_c_list,	IRC_LISTLIN|IRC_LISTEND }, 
-	
+
 	{ 1,	346,	NULL,	"RPL_INVITELIST",	&irc_c_list,	IRC_LISTINV }, 
 	{ 1,	347,	NULL,	"RPL_ENDOFLIST",	&irc_c_list,	IRC_LISTINV|IRC_LISTEND }, 
 	{ 1,	348,	NULL,	"RPL_EXCEPTLIST", 	&irc_c_list,	IRC_LISTEXC },
@@ -221,6 +231,15 @@ static IrcCommand irccommands[] =
 	{ 1,	401,	NULL,	"ERR_NOSUCHNICK",	&irc_c_error,	IRC_ERR_21 },
 	{ 1,	402,	NULL,	"ERR_NOSUCHSERVER",	&irc_c_error,	IRC_ERR_21 },
 	{ 1,	403,	NULL,	"ERR_NOSUCHCHANNEL",	&irc_c_error,	IRC_ERR_21 },
+/*
+ * G->dj: what ? why dya want to put this stuff there ?
++	{ 1,	401,	NULL,	"ERR_NOSUCHNICK",	&irc_c_whois,	IRC_WHOIS  | IRC_WHOERR },
++	{ 1,	402,	NULL,	"ERR_NOSUCHSERVER",	&irc_c_whois,	IRC_WHOIS  | IRC_WHOERR },
++	{ 1,	403,	NULL,	"ERR_NOSUCHCHANNEL",	&irc_c_whois,	IRC_WHOIS  | IRC_WHOERR },
++	{ 1,	406,	NULL,	"ERR_WASNOSUCHNICK",	&irc_c_whois,	IRC_WHOWAS | IRC_WHOERR },
++	
+*/
+ 	{ 1,	404,	NULL,	"ERR_CANNOTSENDTOCHAN",	&irc_c_error,	IRC_ERR_OTHER },
 	{ 1,	404,	NULL,	"ERR_CANNOTSENDTOCHAN",	&irc_c_error,	IRC_ERR_OTHER },
 	{ 1,	405,	NULL,	"ERR_TOOMANYCHANNELS",	&irc_c_error,	IRC_ERR_12 },
 	{ 1,	406,	NULL,	"ERR_WASNOSUCHNICK",	&irc_c_error,	IRC_ERR_21 },
@@ -273,6 +292,7 @@ static IrcCommand irccommands[] =
 	{ 1,	502,	NULL,	"ERR_USERSDONTMATCH",	&irc_c_error,	IRC_ERR_ONLY1 },
        
 	{ 0,	0,	"PING",	"PING",			&irc_c_ping,	0 },
+	{ 0,	0,	"INVITE", "INVITE",		&irc_c_invite,	0 },
 	{ 0,	0,	"NICK", "NICK",			&irc_c_nick,	0 },
 	{ 0,	0,	"PRIVMSG", "PRIVMSG",		&irc_c_msg,	0 },
 	{ 0,	0,	"NOTICE", "NOTICE",		&irc_c_msg,	0 },

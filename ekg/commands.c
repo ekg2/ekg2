@@ -2024,6 +2024,46 @@ COMMAND(cmd_debug_query)
 	return 0;
 }
 
+/* 
+ * on Solaris files under /proc filesystem are in 
+ * binary format, so this is not portable...
+ *
+COMMAND(cmd_test_mem) 
+{
+	char *temp = saprintf("/proc/%d/status", getpid());
+	FILE *file = fopen(temp,"r");
+	char *buf  = NULL; 
+	int rozmiar = 0;
+
+	xfree(temp);
+
+	if (file) {
+		buf = xmalloc(300);
+		while (!feof(file)) {
+			fgets(buf, 300, file);
+			sscanf(buf, "VmSize:     %d kB", &rozmiar);
+			if (rozmiar != 0) break;
+		} 
+		xfree(buf);
+		fclose(file);
+		if (rozmiar == 0) {
+			printq("generic_error", "VmSize line not found!");
+			return -1;
+		} else {
+			buf = saprintf("Memory used by ekg2: %d kB", rozmiar);
+			printq("generic", buf);
+			xfree(buf);
+			return 0;
+		}
+	} else {
+		printq("generic_error", "/proc not mounted ? No permision ?");
+		return -1;
+	}
+	return 0;
+
+}
+*/
+
 COMMAND(cmd_test_fds)
 {
 	struct stat st;
@@ -2053,7 +2093,10 @@ COMMAND(cmd_test_fds)
 			if (getpeername(i, sa, &sa_len) == -1) {
 				getsockname(i, sa, &sa_len);
 
-	/* dj: socket nie zawsze musi byc podbindowany pod 0.0.0.0 (::) */
+				/* GiM->dj: I'm not changing this stuff
+				 * couse this was just beautifying stuff
+				 * and by '*' I don't mean 0.0.0.0
+				 */
 				if (sa->sa_family == AF_INET) {
 					xstrcat(buf, "socket, inet, *:");
 					xstrcat(buf, itoa(ntohs(sin->sin_port)));
@@ -2081,11 +2124,11 @@ COMMAND(cmd_test_fds)
 						xstrcat(buf, bufek);
 #else
 						xstrcat(buf, "strange?");
-#endif
+#endif /* HAVE_INET_NTOP */
 						xstrcat(buf, ":");
 						xstrcat(buf, itoa(ntohs(sin6->sin6_port)));
 						break;
-#endif
+#endif /* HAVE_GETADDRINFO */
 					default:
 						xstrcat(buf, "socket, ");
 						xstrcat(buf, itoa(sa->sa_family));
@@ -3716,6 +3759,7 @@ COMMAND(cmd_dcc)
 
 			if (params[1][0] == '#' && atoi(params[1] + 1) == D->id) {
 				d = D;
+				uid = dcc_uid_get(d);
 				break;
 			}
 
@@ -3730,10 +3774,9 @@ COMMAND(cmd_dcc)
 			return -1;
 		}
 
+		printq("dcc_close", format_user(session, uid));
 		dcc_close(d);
 
-		printq("dcc_close", format_user(session, uid));
-		
 		return 0;
 	}
 
@@ -4067,6 +4110,8 @@ void command_init()
 	command_add(NULL, "_deltab", "? ?", cmd_test_deltab, 0, NULL);
 
 	command_add(NULL, "_fds", NULL, cmd_test_fds, 0, NULL);
+
+/*	command_add(NULL, "_mem", NULL, cmd_test_mem, 0, NULL);*/
 
 	command_add(NULL, "_msg", "uUC ?", cmd_test_send, 0, NULL);
 
