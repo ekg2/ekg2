@@ -49,7 +49,8 @@ static char *iso_utf_ent[256] =
 
 char *xiconv(const char *from, const char *to, const char *what)
 {
-	char *dst, *s, *d; //, unikludge[8];
+	char *dst, *d; //, unikludge[8];
+	char *s;
 	size_t sl, dl, rdl, delta;
 	iconv_t conv; //, unikludge_c;
 
@@ -62,7 +63,7 @@ char *xiconv(const char *from, const char *to, const char *what)
 	dst = xstrdup(what);
 
 	d = dst;
-	s = what;
+	s = (char*)what;
 	
 	while ( sl )
 		if ( (size_t)-1 == iconv(conv, &s, &sl, &d, &dl) ) {
@@ -74,7 +75,7 @@ char *xiconv(const char *from, const char *to, const char *what)
 					/* Zjadamy jeden znak z wej¶cia przez konwersjê na WCHAR_T
 					   i odrzucenie efektu */
 					iconv_t kludge_c=0;
-					char kludge_s[16];
+					char kludge_s[32];
 					size_t kludge_l=sizeof(wchar_t);
 
 					if ( (iconv_t)-1 == 
@@ -83,12 +84,15 @@ char *xiconv(const char *from, const char *to, const char *what)
 						      from, "WCHAR_T", strerror(errno));
 						return (char *)NULL;
 					}
-					
+
 					while ( (size_t)-1 == 
 						iconv(kludge_c, &s, &sl, 
 						      (char **)&kludge_s, &kludge_l) ) {
-						if ( errno == E2BIG && kludge_l<15)
-							kludge_l++;
+						if ( errno == E2BIG)
+						{
+							debug("[xiconv] This shouldn't happen "
+								"- unicode should fit in 32 bytes.");
+						}
 						else {
 							debug("[xiconv] Kludge doesn't work here!");
 							s++;
@@ -127,6 +131,8 @@ char *xiconv(const char *from, const char *to, const char *what)
 			}
 		}
 	*d = '\0';
+
+	dumbdebug("ogolnie koniec petli iconva...");
 
 	iconv_close(conv);
 	return xrealloc(dst, strlen(dst)+1);
