@@ -837,6 +837,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 				}
 
                                 xfree(tmp);
+				xfree(image_file);
                                 break;
                         }
 	
