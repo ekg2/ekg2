@@ -9,6 +9,9 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
+  - jakie¶ bardziej zaawansowane zmienne sesyjne, w sensie jakie¶ typy np VAR_STR itp
+    powinny te¿ byæ ustawiane domy¶lne warto¶ci (w zale¿no¶ci od typu zmiennej) przy 
+    wykonywaniu session_add (del)
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - metakontakty (*)
   - ró¿ne kolory ack ( w zale¿no¶ci czy przyszed³ nam komunikat czy te¿ wiadomo¶æ) (KKKas)
