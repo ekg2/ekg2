@@ -149,9 +149,6 @@ int mesg_startup;
 
 char *config_audio_device;
 char *config_away_reason;
-int config_auto_away;
-int config_auto_back;
-int config_auto_reconnect;
 int config_auto_save;
 char *config_back_reason;
 int config_beep;
@@ -230,7 +227,6 @@ time_t last_action;
 int connecting;
 time_t ekg_started;
 int server_index;
-int in_auto_away;
 char *config_reason_first;
 
 int use_proxy;
