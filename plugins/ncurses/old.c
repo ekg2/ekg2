@@ -1779,15 +1779,19 @@ int ekg_getch(int meta)
 			switch (m.bstate) {
 				case 2:
 					mouse_state = EKG_SCROLLED_UP;
+					last_mouse_state = mouse_state;
 					break;
 				case 4:
 					mouse_state = EKG_BUTTON1_CLICKED;
+					last_mouse_state = 0;
 					break;
 				case 8:
 					mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
+					last_mouse_state = 0;
 					break;
                                 case 128:
                                         mouse_state = EKG_SCROLLED_DOWN;
+					last_mouse_state = mouse_state;
                                         break;
 				case 134217728:
 					mouse_state = last_mouse_state;
@@ -1796,7 +1800,6 @@ int ekg_getch(int meta)
 					mouse_state = 0;
 					break;
 			}
-			last_mouse_state = mouse_state;
 			ncurses_mouse_clicked_handler(m.x, m.y, mouse_state);
 			/* debug("bstate %d\n", m.bstate); */
 			/* debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%.8x\n", m.id, m.x, m.y, m.z, m.bstate); */
