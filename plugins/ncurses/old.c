@@ -323,26 +323,40 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				struct tm *tm = localtime(&ts);
 				char buf[100], *tmp = NULL, *format;
 				fstring_t *s = NULL;
+				string_t bc;
 
-				format = format_string(config_timestamp);
+				bc = string_init(NULL);
+				format = config_timestamp;
 				if (xstrcmp(format, "")) {
-					/* GiM: FIXME */
-					tmp = saprintf("%s ", format);
+					/* backward compatibility ;/ */
+					tmp = format;
+					while (*tmp)
+					{
+						if (*tmp == '\\') {
+							tmp++;
+							if (*tmp != '%') {
+								string_append_c(bc, '\\');
+								continue;
+							}
+						} else if (*tmp == '%')
+							string_append_c(bc, '%');
+						string_append_c(bc, *tmp);
+						tmp++;
+					}
+					format = string_free(bc, 0);
+        	                        strftime(buf, sizeof(buf)-1, format, tm);
+					
+					tmp = format_string(buf);
 					s = fstring_new(tmp);
 
-        	                        if (!strftime(buf, sizeof(buf)-1, s->str, tm))
-						xstrcpy(buf, "TOOLONG");
-
-					l->ts = xstrdup(buf);
+					l->ts = s->str;
 					l->ts_len = xstrlen(l->ts);
-
 					l->ts_attr = s->attr;
 
-					xfree(s->str);
 					xfree(s);
 					xfree(tmp);
+					xfree(format);
 				}
-				xfree(format);
 			}
 
 			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right; 
