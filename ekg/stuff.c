@@ -171,7 +171,7 @@ int alias_add(const char *string, int quiet, int append)
 	char *cmd;
 	list_t l;
 	struct alias a;
-	char *params = NULL;
+	char **params = NULL;
 
 	if (!string || !(cmd = xstrchr(string, ' ')))
 		return -1;
@@ -196,7 +196,7 @@ int alias_add(const char *string, int quiet, int append)
 
 					if (!xstrcasecmp(c->name, j->name)) {
 						xfree(c->params);
-						c->params = xstrdup("?");
+						c->params = array_make("?", " ", 0, 1, 1);
 						break;
 					}
 				}
@@ -218,7 +218,7 @@ int alias_add(const char *string, int quiet, int append)
 		}
 
 		if (!xstrcasecmp(tmp, c->name))
-			params = xstrdup(c->params);
+			params = c->params;
 	}
 
 	a.name = xstrdup(string);
@@ -226,10 +226,8 @@ int alias_add(const char *string, int quiet, int append)
 	list_add(&a.commands, cmd, xstrlen(cmd) + 1);
 	list_add(&aliases, &a, sizeof(a));
 
-	command_add(NULL, a.name, ((params) ? params: "?"), cmd_alias_exec, 1, "", "", "", NULL);
+	command_add(NULL, a.name, ((params) ? params: array_make("?", " ", 0, 1, 1)), cmd_alias_exec, 1, "", "", "", NULL);
 	
-	xfree(params);
-
 	printq("aliases_add", a.name, "");
 
 	return 0;
