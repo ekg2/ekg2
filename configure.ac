@@ -80,7 +80,7 @@ fi
 
 AC_CHECK_LIBGADU
 
-if test "x&have_libgadu" = "xyes"; then
+if test "x$have_libgadu" = "xyes"; then
 	AC_CONFIG_FILES([plugins/gg/Makefile])
 	PLUGINS="$PLUGINS gg"
 fi
@@ -138,7 +138,7 @@ else
 	echo " - ioctld: disabled"
 fi
 
-if test "x&have_libgadu" = "xyes"; then
+if test "x$have_libgadu" = "xyes"; then
 	echo " - libgadu: enabled"
 else
 	echo " - libgadu: disabled"
