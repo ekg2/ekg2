@@ -789,13 +789,11 @@ COMMAND(cmd_exec)
 
 				if (!args[1] || !args[2]) {
 					printq("not_enough_params", name);
-					array_free(args);
 					return -1;
 				}
 
 				if (!(uid = get_uid(session, args[1]))) {
 					printq("user_not_found", args[1]);
-					array_free(args);
 					return -1;
 				}
 
@@ -803,7 +801,6 @@ COMMAND(cmd_exec)
 				command = args[2];
 			} else {
 				printq("invalid_params", name);
-				array_free(args);
 				return -1;
 			}
 		} 
