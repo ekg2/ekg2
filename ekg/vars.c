@@ -136,6 +136,7 @@ void variable_init()
 	variable_add(NULL, "theme", VAR_THEME, 1, &config_theme, changed_theme, NULL, NULL);
 	variable_add(NULL, "time_deviation", VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
 	variable_add(NULL, "timestamp", VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);
+	variable_add(NULL, "timestamp_show", VAR_BOOL, 1, &config_timestamp_show, NULL, NULL, NULL);
 #if 0
 	variable_add(NULL, "windows_save", VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
 	variable_add(NULL, "windows_layout", VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
@@ -152,11 +153,9 @@ void variable_set_default()
 {
 	xfree(config_timestamp);
 	xfree(config_display_color_map);
-//	xfree(config_dcc_limit);
 
-	config_timestamp = xstrdup("%H:%M ");
+	config_timestamp = xstrdup("\%H%T:\%M ");
 	config_display_color_map = xstrdup("nTgGbBrR");
-//	config_dcc_limit = xstrdup("30/30");
 	config_subject_prefix = xstrdup("## ");
 }
 

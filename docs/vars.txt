@@ -688,11 +688,18 @@ time_deviation
 
 timestamp
 	typ: tekst
-	domy¶lna warto¶æ: "%H:%M "
+	domy¶lna warto¶æ: "\%H:\%M "
 
 	w interfejsie ncurses okre¶la format czasu wy¶wietlanego na
 	pocz±tku ka¿dej linii. dok³adny opis formatu zawiera strona
-	manuala strftime(3).
+	manuala strftime(3). znaki formatu nale¿y poprzedziæ znakiem
+	,\' tak aby nie by³y traktowane jako znaki formatu (kolory,itp)
+
+timestamp_show
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	okre¶la czy mamy wy¶wietlaæ timestamp, okre¶lany zmienn± timestamp
 
 windows_save
 	typ: bool

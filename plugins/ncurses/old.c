@@ -225,16 +225,20 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	
 	/* mamy usun±æ co¶ z góry, bo wywalono liniê z backloga. */
 	if (removed) {
-		for (i = 0; i < removed && i < n->lines_count; i++)
+		for (i = 0; i < removed && i < n->lines_count; i++) {
 			xfree(n->lines[i].ts);
+			xfree(n->lines[i].ts_attr);
+		}
 		memmove(&n->lines[0], &n->lines[removed], sizeof(struct screen_line) * (n->lines_count - removed));
 		n->lines_count -= removed;
 	}
 
 	/* je¶li robimy pe³ne przebudowanie backloga, czy¶cimy wszystko */
 	if (full) {
-		for (i = 0; i < n->lines_count; i++)
+		for (i = 0; i < n->lines_count; i++) {
 			xfree(n->lines[i].ts);
+			xfree(n->lines[i].ts_attr);
+		}
 		n->lines_count = 0;
 		xfree(n->lines);
 		n->lines = NULL;
@@ -267,6 +271,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			l->len = xstrlen(str);
 			l->ts = NULL;
 			l->ts_len = 0;
+			l->ts_attr = NULL;
 			l->backlog = i;
 
 			l->prompt_len = n->backlog[i]->prompt_len;
@@ -278,21 +283,30 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				l->prompt_attr = NULL;
 			}
 
-			if (!w->floating && config_timestamp) {
+			if (!w->floating && config_timestamp && config_timestamp_show) {
 				struct tm *tm = localtime(&ts);
-				char buf[100], *tmp;
-				fstring_t *s;
+				char buf[100], *tmp = NULL, *format;
+				fstring_t *s = NULL;
 
-				strftime(buf, sizeof(buf), config_timestamp, tm);
-				tmp = saprintf("%s ", format_string(format_find("timestamp")));
-				s = fstring_new(tmp);
+				format = config_timestamp;
+				if (xstrcmp(format, "")) {
+					int i;
 
-				l->ts = xstrdup(buf);
-				l->ts_len = xstrlen(l->ts);
-				l->ts_attr = s->attr[0];
+					tmp = saprintf("%s ", format_string(format));
+					s = fstring_new(tmp);
 
-				xfree(tmp);
-				fstring_free(s);
+        	                        strftime(buf, sizeof(buf), s->str, tm);
+
+					l->ts = xstrdup(buf);
+					l->ts_len = xstrlen(l->ts);
+
+					l->ts_attr = xmalloc(sizeof(s->attr));
+					for (i = 0; s->attr[i]; i++)
+						l->ts_attr[i] = s->attr[i];
+
+					fstring_free(s);	
+					xfree(tmp);
+				}
 			}
 
 			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right;
@@ -591,22 +605,34 @@ void ncurses_redraw(window_t *w)
 
 		wattrset(n->window, A_NORMAL);
 
-		if (l->ts_attr) {
+		for (x = 0; l->ts && x < l->ts_len; x++) { 
 			int attr = A_NORMAL;
+			short chattr = l->ts_attr[x];
+			unsigned char ch = (unsigned char) l->ts[x];
 
-                        if ((l->ts_attr & 64))
+                        if ((chattr & 64))
                                 attr |= A_BOLD;
 
-                        if ((l->ts_attr & 256))
+                        if ((chattr & 256))
                                 attr |= A_BLINK;
 
-                        if (!(l->ts_attr & 128))
-                              attr |= color_pair(l->ts_attr & 7, 0, COLOR_BLACK);
+                        if (!(chattr & 128))
+                                attr |= color_pair(chattr & 7, 0, COLOR_BLACK);
+
+                        if (ch < 32) {
+                                ch += 64;
+                                attr |= A_REVERSE;
+                        }
+
+                        if (ch > 127 && ch < 160) {
+                                ch = '?';
+                                attr |= A_REVERSE;
+                        }
 
                         wattrset(n->window, attr);
+
+			mvwaddch(n->window, top + y, left + x, ch);
 		}
-		for (x = 0; l->ts && x < l->ts_len; x++) 
-			mvwaddch(n->window, top + y, left + x, (unsigned char) l->ts[x]);
 
 		for (x = 0; x < l->prompt_len + l->len; x++) {
 			int attr = A_NORMAL;
@@ -682,8 +708,10 @@ void ncurses_clear(window_t *w, int full)
 	if (n->lines) {
 		int i;
 
-		for (i = 0; i < n->lines_count; i++)
+		for (i = 0; i < n->lines_count; i++) {
 			xfree(n->lines[i].ts);
+			xfree(n->lines[i].ts_attr);
+		}
 		
 		xfree(n->lines);
 
@@ -1359,8 +1387,10 @@ int ncurses_window_kill(window_t *w)
 	if (n->lines) {
 		int i;
 
-		for (i = 0; i < n->lines_count; i++)
+		for (i = 0; i < n->lines_count; i++) {
 			xfree(n->lines[i].ts);
+			xfree(n->lines[i].ts_attr);
+		}
 		
 		xfree(n->lines);
 	}

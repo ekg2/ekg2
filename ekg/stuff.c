@@ -121,6 +121,7 @@ int config_ctrld_quits = 1;
 int config_save_password = 1;
 int config_save_quit = 1;
 char *config_timestamp = NULL;
+int config_timestamp_show = 1;
 int config_display_sent = 1;
 int config_sort_windows = 0;
 int config_keep_reason = 1;

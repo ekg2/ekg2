@@ -219,6 +219,7 @@ char *config_tab_command;
 char *config_theme;
 int config_time_deviation;
 char *config_timestamp;
+int config_timestamp_show;
 char *config_windows_layout;
 int config_windows_save;
 
