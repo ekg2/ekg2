@@ -542,7 +542,7 @@ COMMAND(irc_command_msg)
 	
 	prefix[1] = '\0';
 	prefix[0] = perchn?*(perchn->sign):' ';
-	if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
+	if (!session_int_get(session, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
 		*prefix='\0';
 	head = format_string(format_find(ischn?"irc_msg_sent_chan":
 				w?"irc_msg_sent_n":"irc_msg_sent"),
