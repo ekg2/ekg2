@@ -1853,11 +1853,11 @@ static void spellcheck(char *what, char *where)
 /*		debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
 
 		/* sprawdzamy pisownie tego wyrazu */
-        	if (aspell_speller_check(spell_checker, word, strlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
-			for(j=strlen(word) - 1; j >= 0; j--)
+        	if (aspell_speller_check(spell_checker, word, xstrlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
+			for (j = xstrlen(word) - 1; j >= 0; j--)
 				where[i - j] = ASPELLCHAR;
         	} else { /* jesli wyraz jest napisany poprawnie */
-			for(j=strlen(word) - 1; j >= 0; j--)
+			for (j = xstrlen(word) - 1; j >= 0; j--)
 				where[i - j] = ' ';
         	}
 aspell_loop_end:
@@ -2046,7 +2046,7 @@ then:
 
 			for (j = 0; j + line_start < strlen(p) && j < input->_maxx + 1; j++)
                         {                                 
-			    if (config_aspell && aspell_line[line_start + j] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+			    if (config_aspell && aspell_line[line_start + j] == ASPELLCHAR && p[line_start + j] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 	                            print_char_underlined(input, i, j, p[line_start + j]);
                             else /* jesli jest wszystko okey to wyswietlamy normalny */
 	   			    print_char(input, i, j, p[j + line_start]);
@@ -2079,7 +2079,8 @@ then:
 
                 for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
                 {
-			if (config_aspell && aspell_line[line_start + i] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+			if (config_aspell && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start +
+i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
                         	print_char_underlined(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
                         else /* jesli jest wszystko okey to wyswietlamy normalny */
                                 print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
