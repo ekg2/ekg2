@@ -1811,6 +1811,8 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 	if (ch == 0)		/* Ctrl-Space, g³upie to */
 		return;
 	
+	ekg_stdin_want_more = 1;
+
 	if (ch == 27) {
 		if ((ch = ekg_getch(27)) == -2)
 			return;
@@ -2023,7 +2025,6 @@ action:
 	xfree(aspell_line);	
 #endif
 
-	ncurses_commit();
 }
 
 int ncurses_command_window(void *data, va_list ap)

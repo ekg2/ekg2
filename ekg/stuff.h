@@ -224,6 +224,7 @@ int config_windows_save;
 char *home_dir;
 char *config_dir;
 int in_autoexec;
+int ekg_stdin_want_more;
 int reconnect_timer;
 time_t last_action;
 int connecting;

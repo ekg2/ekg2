@@ -309,8 +309,8 @@ void ekg_loop()
 			continue;
 		}
 
+watches_again:
 		/* przejrzyj deskryptory */
-
 		for (l = watches; l; ) {
 			watch_t *w = l->data;
 
@@ -333,8 +333,12 @@ void ekg_loop()
 				}
 			}
 
-			if (!w->buf)
+			if (!w->buf) {
+				ekg_stdin_want_more = 0;
 				watch_handle(w);
+				if (ekg_stdin_want_more && w->fd == 0)
+					goto watches_again;
+			}
 			else
 				watch_handle_line(w);
 		}
