@@ -65,6 +65,8 @@ char *jabber_unescape(const char *text);
 
 void jabber_reconnect_handler(int type, void *data);
 
+time_t jabber_try_xdelay(xmlnode_t *xmlnode, const char *ns);
+
 #ifdef __GNU__
 int jabber_write(jabber_private_t *j, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 #else

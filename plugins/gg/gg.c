@@ -533,7 +533,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 
 	__port = port;
 
-	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, NULL);
+	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, NULL, NULL);
 
 	xfree(__host);
 	xfree(__descr);

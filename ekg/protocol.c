@@ -161,6 +161,7 @@ int protocol_status(void *data, va_list ap)
 	char **__descr = va_arg(ap, char**), *descr = *__descr;
 	char **__host = va_arg(ap, char**), *host = *__host;
 	int *__port = va_arg(ap, int*), port = *__port;
+	time_t *__when = va_arg(ap, time_t*), when = *__when;
 	userlist_t *u;
 	session_t *s;
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
@@ -200,7 +201,7 @@ int protocol_status(void *data, va_list ap)
 
 	/* je¶li kto¶ nam znika, zapamiêtajmy kiedy go widziano */
 	if (xstrcasecmp(u->status, EKG_STATUS_NA) && !xstrcasecmp(status, EKG_STATUS_NA))
-		u->last_seen = time(NULL);
+		u->last_seen = when ? when : time(NULL);
 
 	/* XXX dodaæ sprawdzanie ignorowanych, events_delay */
 	

@@ -236,18 +236,11 @@ void jabber_handle(void *data, xmlnode_t *n)
 			string_append(body, nbody->data);
 	
 		if (xitem) {
-			const char *ns, *stamp;
+			const char *ns;
 			ns = jabber_attr(xitem->atts, "xmlns");
-			stamp  = jabber_attr(xitem->atts, "stamp");
-			
-			if (ns && !xstrncmp(ns, "jabber:x:delay", 14) && stamp) {
-				struct tm tm;
-				memset(&tm, 0, sizeof(tm));
-				sscanf(stamp, "%4d%2d%2dT%2d:%2d:%2d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
-				tm.tm_year -= 1900;
-				tm.tm_mon -= 1;
-				sent = mktime(&tm);
-			};
+
+			/* try to parse timestamp */
+			sent = jabber_try_xdelay(xitem, ns);
 		
 			if (ns && !xstrncmp(ns, "jabber:x:event", 14)) {
 				/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
@@ -428,8 +421,10 @@ void jabber_handle(void *data, xmlnode_t *n)
 		if (!type || (type && !xstrcmp(type, "unavailable")) ) {
 			xmlnode_t *nshow = xmlnode_find_child(n, "show"); /* typ */
 			xmlnode_t *nstatus = xmlnode_find_child(n, "status"); /* opisowy */
+			xmlnode_t *xitem = xmlnode_find_child(n, "x"); 
 			char *session, *uid, *status = NULL, *descr = NULL, *host = NULL;
 			int port = 0;
+			time_t when = jabber_try_xdelay(xitem, jabber_attr(xitem->atts, "xmlns"));
 
 			if (nshow)
 				status = jabber_unescape(nshow->data);
@@ -449,7 +444,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 			host = NULL;
 			port = 0;
 
-			query_emit(NULL, "protocol-status", &session, &uid, &status, &descr, &host, &port, NULL);
+			query_emit(NULL, "protocol-status", &session, &uid, &status, &descr, &host, &port, &when, NULL);
 
 			xfree(session);
 			xfree(uid);
@@ -458,6 +453,25 @@ void jabber_handle(void *data, xmlnode_t *n)
 			xfree(host);
 		}
 	}
+}
+
+time_t jabber_try_xdelay(xmlnode_t *xitem, const char* ns)
+{
+	struct tm tm;
+
+ 	const char *stamp = jabber_attr(xitem->atts, "stamp");
+	
+	if (ns && !xstrncmp(ns, "jabber:x:delay", 14) && stamp) {
+		memset(&tm, 0, sizeof(tm));
+		sscanf(stamp, "%4d%2d%2dT%2d:%2d:%2d", 
+			&tm.tm_year, &tm.tm_mon, &tm.tm_mday, 
+			&tm.tm_hour, &tm.tm_min, &tm.tm_sec);
+		tm.tm_year -= 1900;
+		tm.tm_mon -= 1;
+		return mktime(&tm);
+	} else
+		return time(NULL);
+	
 }
 
 static void jabber_handle_disconnect(session_t *s)
