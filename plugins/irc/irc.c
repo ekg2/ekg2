@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <sys/utsname.h>
+#include <pwd.h>
 
 #ifdef sun	/* Solaris, thanks to Beeth */
 #include <sys/filio.h>
@@ -645,6 +646,8 @@ COMMAND(irc_command_msg)
 	people_t *person;
 	people_chan_t *perchn = NULL;
 	int secure = 0;
+	char *sid = NULL, *uid_tmp = NULL;
+	unsigned char *__msg = NULL;
 
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
@@ -667,16 +670,26 @@ COMMAND(irc_command_msg)
 		return -1;
 	}
 
-	mline[0] = params[1];
+	sid = xstrdup(session->uid);
+	uid_tmp = xstrdup(uid);
+	mline[0] = (char *)params[1];
 	while ( (mline[1]=xstrchr(mline[0], '\n')) )
 	{
 		mlinechr = *mline[1];
 		*mline[1]='\0';
-		irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, mline[0]);
-		mline[0] = mline[1]+1;
+		__msg = xstrdup(mline[0]);
+		query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
+		irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, __msg);
+		xfree(__msg);
+		mline[0] = (char *)(mline[1]+1);
 		*mline[1] = mlinechr;
 	}
-	irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, mline[0]);
+	__msg = xstrdup(mline[0]);
+	query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
+	irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, __msg);
+	xfree(sid);
+	xfree(uid_tmp);
+	xfree(__msg);
 
 	chantypes = SOP(_005_CHANTYPES);
 	ischn = !!xstrchr(chantypes, uid[4]);
@@ -1258,6 +1271,7 @@ int irc_plugin_init(int prio)
 	list_t l;
 
 	plugin_register(&irc_plugin, prio);
+	struct passwd *pwd_entry = getpwuid( getuid());
 
 	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
 	query_connect(&irc_plugin, "plugin-print-version", irc_print_version, NULL);
@@ -1307,9 +1321,15 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "nickname", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&irc_plugin, "realname", VAR_STR, 0, 0, NULL);
-	
+	/* to mi siê wydaje ³adny poprawek, thx dj */
+	if (pwd_entry != NULL)
+	{
+		plugin_var_add(&irc_plugin, "nickname", VAR_STR, pwd_entry->pw_name, 0, NULL);
+		plugin_var_add(&irc_plugin, "realname", VAR_STR, pwd_entry->pw_gecos, 0, NULL);
+	} else {
+		plugin_var_add(&irc_plugin, "nickname", VAR_STR, NULL, 0, NULL);
+		plugin_var_add(&irc_plugin, "realname", VAR_STR, NULL, 0, NULL);
+	}
 	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
 
 	plugin_var_add(&irc_plugin, "AUTO_JOIN", VAR_STR, 0, 0, NULL);
