@@ -1927,13 +1927,6 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	if (!xline)
 		return 0;
 
-/*        if(!session) {
-                if(session_current)
-                        session = session_current;
-                else
-                        return -1;
-        } */
-
 	/* wysy³amy do kogo¶ i nie ma na pocz±tku slasha */
 	if (target && *xline != '/') {
 		int correct_command = 0;
@@ -1993,6 +1986,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	}
 
 	/* poszukaj najpierw komendy dla danej sesji */
+	if (!session && session_current)
+		session = session_current;
 	if (session && session->uid) {
 		int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 		
