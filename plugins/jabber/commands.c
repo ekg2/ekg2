@@ -690,6 +690,13 @@ COMMAND(jabber_command_del)
 	return 0;
 }
 
+/*
+ * Warning! This command is kinda special:
+ * it needs destination uid, so destination must be in our userlist.
+ * It won't work for unknown JIDs.
+ * When implementing new command don't use jabber_command_ver as template.
+ */
+
 COMMAND(jabber_command_ver)
 {
 	jabber_private_t *j = session_private_get(session);
@@ -746,8 +753,7 @@ COMMAND(jabber_command_ver)
 COMMAND(jabber_command_userinfo)
 {
 	jabber_private_t *j = session_private_get(session);
-	const char *query_uid, *uid;
-	userlist_t *ut;
+	const char *uid;
 
 	if (!session_check(session, 1, "jid")) {
 		printq("invalid_session");
@@ -759,26 +765,20 @@ COMMAND(jabber_command_userinfo)
 		return -1;
 	}
 
-	query_uid = params[0];
-        if (!query_uid && !(query_uid = get_uid(session, "$"))) {
+        if (!params[0]) {
                 printq("not_enough_params", name);
                 return -1;
         }
 
-	if (!(uid = get_uid(session, query_uid))) {
-		print("user_not_found", query_uid);
-		return -1;
-	}
+	/* jabber id: [user@]host[/resource] */
+	if (!(uid = get_uid(session, params[0]))) 
+		uid = params[0];
 
 	if (xstrncasecmp(uid, "jid:", 4) != 0) {
 	  printq("invalid_session");
 	  return -1;
 	}
 
-	if (!(ut = userlist_find(session, uid))) {
-		print("user_not_found", session_name(session));
-		return -1;
-	}
 	uid += 4;
 
        	jabber_write(j, "<iq id='%d' to='%s' type='get'><vCard xmlns='vcard-temp'/></iq>", \
