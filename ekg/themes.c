@@ -1260,8 +1260,8 @@ void theme_init()
 
 	/* status */
 	format_add("show_status_profile", "%) Profil: %T%1%n\n", 1);
-	format_add("show_status_uin", "%) UIN: %T%1%n\n", 1);
-	format_add("show_status_uin_nick", "%) UIN: %T%1%n (%T%2%n)\n", 1);
+	format_add("show_status_uid", "%) UID: %T%1%n\n", 1);
+	format_add("show_status_uid_nick", "%) UID: %T%1%n (%T%2%n)\n", 1);
 	format_add("show_status_status", "%) Aktualny stan: %T%1%2%n\n", 1);
 	format_add("show_status_status_simple", "%) Aktualny stan: %T%1%n\n", 1);
 	format_add("show_status_server", "%) Aktualny serwer: %T%1%n:%T%2%n\n", 1);

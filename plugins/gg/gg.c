@@ -147,9 +147,9 @@ int gg_status_show_handle(void *data, va_list ap)
                 print("show_status_profile", config_profile);
 
         if ((u = userlist_find(s, s->uid)) && u->nickname)
-                print("show_status_uin_nick", s->uid, u->nickname);
+                print("show_status_uid_nick", s->uid, u->nickname);
         else
-                print("show_status_uin", s->uid);
+                print("show_status_uid", s->uid);
 
         n = time(NULL);
         t = localtime(&n);

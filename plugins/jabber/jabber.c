@@ -680,9 +680,9 @@ int jabber_status_show_handle(void *data, va_list ap)
 
 	// nasz stan
 	if ((u = userlist_find(s, s->uid)) && u->nickname)
-		print("show_status_uin_nick", s->uid, u->nickname);
+		print("show_status_uid_nick", s->uid, u->nickname);
 	else
-		print("show_status_uin", s->uid);
+		print("show_status_uid", s->uid);
 
 	// serwer
 	print("show_status_server", j->server, itoa(port));
