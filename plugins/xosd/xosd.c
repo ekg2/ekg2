@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2003 Jan Kowalski <jan.kowalski@gdzies.pl>
+ *  (C) Copyright 2004-2005 Adam Kuczyñski <dredzik@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -96,13 +96,21 @@ static int xosd_protocol_status(void *data, va_list ap)
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
 	char **__status = va_arg(ap, char**), *status = *__status;
 	char **__descr = va_arg(ap, char**), *descr = *__descr;
+        userlist_t *u;
+	session_t *s;
 	
-	int level = ignored_check(session_find(session),uid);
+	if (!(s = session_find(session)))
+                return 0;
+
+        if (!(u = userlist_find(s, uid)))
+                return 0;
+	
+	int level = ignored_check(s, uid);
 	
 	if ((level == IGNORE_ALL) || (level & IGNORE_STATUS))
 		return 0;
 
-	if (!xosd_display_notify || ((xosd_display_notify == 2) && (!session_int_get(session_find(session), "display_notify"))))
+	if (!xosd_display_notify || ((xosd_display_notify == 2) && (!session_int_get(s, "display_notify"))))
 		return 0;
 
 	const char *sender;
@@ -110,9 +118,7 @@ static int xosd_protocol_status(void *data, va_list ap)
 	char *msgLine2;
 	char format[100];
 	
-	userlist_t *u = userlist_find(session_find(session), uid);
-	
-	sender = (u && u->nickname) ? u->nickname : uid;
+	sender = (u->nickname) ? u->nickname : uid;
 
 	snprintf(format, sizeof(format), "xosd_status_change_%s", status );
 
@@ -143,8 +149,15 @@ static int xosd_protocol_message(void *data, va_list ap)
 	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
 	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
 	int *__class = va_arg(ap, int*), class = *__class;
-
-	int level = ignored_check(session_find(session), uid);
+        userlist_t *u;
+	session_t *s;
+	
+	if (!(s = session_find(session)))
+                return 0;
+		
+	u = userlist_find(s, uid);
+	
+	int level = ignored_check(s, uid);
 	
 	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
 		return 0;
@@ -154,8 +167,6 @@ static int xosd_protocol_message(void *data, va_list ap)
 		char *msgLine1;
 		char *msgLine2;
 		
-		userlist_t *u = userlist_find(session_find(session), uid);
-	
 		sender = (u && u->nickname) ? u->nickname : uid;
 		msgLine1 = format_string(format_find("xosd_new_message_line_1"), sender);
 
