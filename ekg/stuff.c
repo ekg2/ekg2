@@ -1673,6 +1673,36 @@ char *strcasestr(const char *haystack, const char *needle)
 }
 
 /*
+ * msg_all()
+ *
+ * msg to all users in session's userlist
+ * it uses function to do it
+ */
+int msg_all(session_t *s, const char *function, const char *what)
+{
+	list_t l;
+
+	if (!s->userlist)
+		return -1;
+
+	if (!function)
+		return -2;
+
+	for (l = s->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		char *tmp;
+
+		if (!u || !u->uid)
+			continue;
+
+		tmp = saprintf("%s %s %s", function, get_nickname(s, u->uid), what);
+		command_exec(NULL, s, tmp, 0);
+		xfree(tmp);
+	}
+
+	return 0;
+}
+/*
  * say_it()
  *
  * zajmuje siê wypowiadaniem tekstu, uwa¿aj±c na ju¿ dzia³aj±cy

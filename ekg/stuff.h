@@ -319,6 +319,7 @@ char *xstrmid(const char *str, int start, int length);
 void xstrtr(char *text, char from, char to);
 char color_map(unsigned char r, unsigned char g, unsigned char b);
 char *strcasestr(const char *haystack, const char *needle);
+int msg_all(session_t *s, const char *function, const char *what);
 int say_it(const char *str);
 char *split_line(char **ptr);
 
