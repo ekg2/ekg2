@@ -122,13 +122,19 @@ void ncurses_forward_contacts_line(int arg)
 
                                 contacts_count += list_count(s->userlist);
                         }
+			
+			if (window_current->userlist)
+				contacts_count += list_count(window_current->userlist);
                         break;
                 }
                 case 2:
                         contacts_count = list_count(metacontacts);
                         break;
                 default:
-                        contacts_count = list_count(session_current->userlist);
+                        if (window_current->userlist)
+	                        contacts_count = list_count(window_current->userlist);
+                        else
+				contacts_count = list_count(session_current->userlist);
                         break;
         }
 
@@ -187,27 +193,33 @@ void ncurses_forward_contacts_page(int arg)
         else if (contacts_group_index > count) 
                 all = 1;
 
-	switch (all) {
-		case 1: 
-		{
-			list_t l;
-			for (l = sessions; sessions && l; l = l->next) {
-				session_t *s = l->data;
-				
-				if (!s || !s->userlist)
-					continue;
+        switch (all) {
+                case 1:
+                {
+                        list_t l;
+                        for (l = sessions; sessions && l; l = l->next) {
+                                session_t *s = l->data;
 
-				contacts_count += list_count(s->userlist);
-			}
-			break;
-		}
-		case 2: 
-			contacts_count = list_count(metacontacts);
-			break;
-		default:
-                        contacts_count = list_count(session_current->userlist);
+                                if (!s || !s->userlist)
+                                        continue;
+
+                                contacts_count += list_count(s->userlist);
+                        }
+
+                        if (window_current->userlist)
+                                contacts_count += list_count(window_current->userlist);
                         break;
-	}
+                }
+                case 2:
+                        contacts_count = list_count(metacontacts);
+                        break;
+                default:
+                        if (window_current->userlist)
+                                contacts_count = list_count(window_current->userlist);
+                        else
+                                contacts_count = list_count(session_current->userlist);
+                        break;
+        }
 
         contacts_index += w->height / 2;
 
