@@ -290,8 +290,6 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 				format = config_timestamp;
 				if (xstrcmp(format, "")) {
-					int i;
-
 					tmp = saprintf("%s ", format_string(format));
 					s = fstring_new(tmp);
 
@@ -300,11 +298,10 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 					l->ts = xstrdup(buf);
 					l->ts_len = xstrlen(l->ts);
 
-					l->ts_attr = xmalloc(sizeof(s->attr));
-					for (i = 0; s->attr[i]; i++)
-						l->ts_attr[i] = s->attr[i];
+					l->ts_attr = s->attr;
 
-					fstring_free(s);	
+					xfree(s->str);
+					xfree(s);
 					xfree(tmp);
 				}
 			}
