@@ -819,6 +819,9 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 		return;
 	}
 
+	/* failure here isn't fatal, don't bother with checking return code */
+	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
+
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = a.s_addr;
 #ifdef HAVE_GNUTLS
