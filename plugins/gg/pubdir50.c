@@ -379,9 +379,9 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 
 		for (l = autofinds; l; l = l->next) {
 			char *d = (char *) l->data;
-			
+		
 			if (!xstrcasecmp(d + 3, uin)) {
-				target = uin;
+				target = d;
 				break;
 			}
 			
