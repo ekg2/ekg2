@@ -1166,7 +1166,10 @@ COMMAND(gg_command_inline_msg)
 {
 	const char *p[2] = { target, params[0] };
 
-	return gg_command_msg("chat", p, session, target, quiet);
+	if(p[1]) 
+		return gg_command_msg("chat", p, session, target, quiet);
+	else
+		return 0;
 }
 
 COMMAND(gg_command_block)

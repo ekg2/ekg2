@@ -12,8 +12,6 @@ rozwi±zanie.
   - w themach %i ma dzia³aæ ( mruganie tekstu - przyda siê przy blinking) (del)
   - dope³nienia dobrze dzia³aj±ce (GiM)
   - zmienne s± pokazywane, ale nie mo¿na ich ustawiaæ (np zmienne pluginów) (zdz)
-  - przy próbie wys³ania pustej lini wy¶wietla:
-    "::: Za ma³o parametrów. Spróbuj help chat", a po co ? (del)
   - nie dzia³±j±ce list -d dla jabber'a (del)
   - dope³nianie nazw sesji (del)
   - dope³nienie funkcji np /command (bez pocz±tku przyk³adowo gg:) (del)

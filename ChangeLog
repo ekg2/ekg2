@@ -8,6 +8,8 @@ zg³osi³ b³±d.
 
 // 2004-03-27
 - poprawiona obs³uga zmiennych - dzia³a ju¿ prawid³owo /set etc. (del)
+- poprawione: przy próbie wys³ania pustej lini wy¶wietla:
+  "::: Za ma³o parametrów. Spróbuj help chat", a po co ? (del)
 
 // 2004-03-26
 - [gg] zmniejszenie okresu miêdzy pingami do 3 minut (zdz)
