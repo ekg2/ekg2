@@ -53,6 +53,8 @@ AC_CHECK_FUNCS(setenv)
 
 dnl inet_pton
 AC_CHECK_FUNCS(inet_pton)
+AC_CHECK_FUNCS(inet_ntop)
+AC_CHECK_FUNCS(getaddrinfo)
 
 dnl  strlcat,strlcpy itp wiele systemów nie posiada
 AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])

@@ -18,7 +18,6 @@
 #include "ekg2-config.h"
 
 #include <errno.h>
-#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +26,9 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <sys/utsname.h>
 
 #ifdef sun	/* Solaris, thanks to Beeth */
@@ -116,7 +117,7 @@ static void irc_private_destroy(session_t *s)
 	xfree(j->nick);
 
 	irc_free_people(s, j);
-	
+
 	xfree(j);
 	session_private_set(s, NULL);
 }
@@ -170,7 +171,7 @@ int irc_validate_uid(void *data, va_list ap)
 
 	if (!xstrncasecmp(*uid, IRC4, 4))
 		(*valid)++;
-	
+
 	return 0;
 }
 
@@ -285,19 +286,45 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 	irc_handler_data_t *idta = (irc_handler_data_t *) data;
 	session_t *s = idta->session;
 	irc_private_t *j = irc_private(s);
-	struct in_addr a;
-	int one = 1, res, inetptonres;
+#ifdef HAVE_GETADDRINFO
+	struct sockaddr_in6 ipv6;
+#endif
+	struct sockaddr_in ipv4, vhost;
+
+	int family, one = 1, res, expectedres, inetptonres;
 	const char *port_s = session_get(s, "port");
 	const char *local_ip = session_get(s, "local_ip");
+	char bufek[100];
 	int port = (port_s) ? atoi(port_s) : 6667, connret;
-	struct sockaddr_in sin, cin;
 
 	if (type != 0)
 		return;
 
-	debug("[irc] handle_resolver()\n", type);
+	debug("[irc] handle_resolver() %d\n", type);
 
-	if ((res = read(fd, &a, sizeof(a))) != sizeof(a)) {
+	if ((res = read(fd, &family, sizeof(long))) != sizeof(long))
+	{
+		if (res == -1)
+			debug("[irc] unable to read data from resolver: %s\n", strerror(errno));
+		else
+			debug("[irc] read %d bytes from resolver. not good\n", res);
+		close(fd);
+		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje");
+		j->connecting = 0;
+	}
+
+	expectedres = sizeof(ipv4);
+
+	if (family == PF_INET)
+		res = read(fd, &ipv4, sizeof(ipv4));
+#ifdef HAVE_GETADDRINFO
+	else if (family == PF_INET6) {
+		res = read(fd, &ipv6, sizeof(ipv6));
+		expectedres = sizeof(ipv6);
+	}
+#endif
+
+	if (res != expectedres) {
 		if (res == -1)
 			debug("[irc] unable to read data from resolver: %s\n", strerror(errno));
 		else
@@ -307,12 +334,30 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		j->connecting = 0;
 		return;
 	}
-
-	debug("[irc] handle_resolver() resolved to %s\n", inet_ntoa(a));
+#if defined(HAVE_INET_NTOP) && defined(HAVE_GETADDRINFO)
+	if (family == PF_INET)
+		debug("[irc] handle_resolver4() resolved to %s\n",
+				inet_ntop(family, &ipv4.sin_addr, bufek, 100));
+	else
+		debug("[irc] handle_resolver6() resolved to %s\n",
+				inet_ntop(family, &ipv6.sin6_addr, bufek, 100));
+#else
+	if (family == PF_INET)
+		debug("[irc] handle_resolver4() resolved to %s\n",
+				inet_ntoa(ipv4.sin_addr));
+	else
+		debug("[irc] resolved but doesn't have inet_ntop ?\n");
+#endif
 
 	close(fd);
+	if (family == PF_INET && ipv4.sin_addr.s_addr == INADDR_NONE)
+	{
+		print("generic_error", "Could not resolve your server");
+		j->connecting = 0;
+		return;
+	}
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+	if ((fd = socket(family, SOCK_STREAM, 0)) == -1) {
 		debug("[irc] handle_resolver() socket() failed: %s\n",
 				strerror(errno));
 		print("generic_error", strerror(errno));
@@ -332,22 +377,22 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		return;
 	}
 
-	if (xstrlen(local_ip) > 1)
+	if (xstrlen(local_ip) > 1 && family != PF_INET6)
 	{
 #ifdef HAVE_INET_PTON
-		inetptonres = inet_pton(AF_INET, local_ip, &(cin.sin_addr));
+		inetptonres = inet_pton(AF_INET, local_ip, &(vhost.sin_addr));
 		if (inetptonres == 0 || inetptonres == -1) {
 			print("invalid_local_ip", session_name(s));
 			session_set(s, "local_ip", NULL);
 			config_changed = 1;
-			cin.sin_addr.s_addr = htonl(INADDR_ANY);
+			vhost.sin_addr.s_addr = htonl(INADDR_ANY);
 		}
 #else
-		cin.sin_addr = inet_addr(local_ip);
+		vhost.sin_addr = inet_addr(local_ip);
 #endif
-		cin.sin_family = AF_INET;
-		cin.sin_port = htons(0);
-		connret = bind(fd, (struct sockaddr *)&cin, sizeof(cin));
+		vhost.sin_family = AF_INET;
+		vhost.sin_port = htons(0);
+		connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
 		if (connret < 0)
 		{
 			debug ("[irc] handle_resolver() bind() failed: %s\n",
@@ -357,14 +402,23 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		}
 	}
 
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(port);
-	sin.sin_addr.s_addr = a.s_addr;
+	ipv4.sin_family = family;
+	ipv4.sin_port = htons(port);
+#ifdef HAVE_GETADDRINFO
+	ipv6.sin6_family = AF_INET6;
+	ipv6.sin6_port = htons(port);
+#endif
 
-	debug("[irc] handle_resolver() connecting to %s:%d\n", 
-			inet_ntoa(sin.sin_addr), port);
+	debug("[irc] handle_resolver() connecting to host, port: %d\n", port);
 
-	connret = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
+	if (family == PF_INET) {
+		connret = connect(fd, (struct sockaddr*) &ipv4, sizeof(ipv4));
+	}
+#ifdef HAVE_GETADDRINFO
+	else if (family == PF_INET6) {
+		connret = connect(fd, (struct sockaddr*) &ipv6, sizeof(ipv6));
+	}
+#endif
 
 	if (connret < 0 && errno != EINPROGRESS) {
 		debug("[irc] handle_resolver() connect() failed: %s\n",
@@ -404,7 +458,7 @@ COMMAND(irc_command_connect)
 	const char *server, *newnick;
 	int res, fd[2];
 	irc_private_t *j = irc_private(session);
-	
+
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
 		return -1;
@@ -440,29 +494,60 @@ COMMAND(irc_command_connect)
 	debug("[irc] comm_connect() resolver pipes = { %d, %d }\n", fd[0], fd[1]);
 
 	if ((res = fork()) == -1) {
+		close(fd[0]);
+		close(fd[1]);
 		print("generic_error", strerror(errno));
 		return -1;
 	}
 
 	if (!res) {
-		struct in_addr a;
-		if ((a.s_addr = inet_addr(server)) == INADDR_NONE) {
+		struct sockaddr_in a;
+		char buf[100];
+		int len;
+#ifdef HAVE_GETADDRINFO
+		struct addrinfo *ai;
+
+		if (!getaddrinfo(server, NULL, NULL, &ai))
+		{
+			/* we'll take first from the list
+			 * later i'll maybe add searching in the list...
+			 */
+			len = ai->ai_family;
+			memcpy(buf, &len, sizeof(long));
+			memcpy(buf+sizeof(long), ai->ai_addr, ai->ai_addrlen);
+			len = sizeof(long) + ai->ai_addrlen;
+			freeaddrinfo(ai);
+		} else {
+			a.sin_addr.s_addr = INADDR_NONE;
+			len = PF_INET;
+		}
+#else
+
+		if ((a.sin_addr.s_addr = inet_addr(server)) == INADDR_NONE) {
 			struct hostent *he = gethostbyname(server);
 
 			if (!he)
-				a.s_addr = INADDR_NONE;
+				a.sin_addr.s_addr = INADDR_NONE;
 			else
-				memcpy(&a, he->h_addr, sizeof(a));
+				memcpy(&a.sin_addr, he->h_addr, sizeof(a));
 		}
 
-		write(fd[1], &a, sizeof(a));
+		len = PF_INET;
+#endif
+		close(fd[0]);
+		if (len == PF_INET)
+		{
+			memcpy(buf, &len, sizeof(long));
+			memcpy(buf+sizeof(long), &a, sizeof(a));
+			len = sizeof(long) + sizeof(a);
+		}
+		write(fd[1], buf, len);
 
 		sleep(1);
-
 		exit(0);
 	} else {
 		irc_handler_data_t *idta = (irc_handler_data_t *) xmalloc (sizeof(irc_handler_data_t));
-				
+
 		close(fd[1]);
 
 		idta->session = session;
@@ -479,7 +564,7 @@ COMMAND(irc_command_connect)
 
 	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
-	
+
 	return 0;
 }
 
