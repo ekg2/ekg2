@@ -419,6 +419,7 @@ char *buffer_flush(int type, const char *target)
 
 		string_append(str, b->line);
 		string_append_c(str, '\n');
+		string_append_c(str, '\r');
 
 		xfree(b->line);
 		xfree(b->target);
