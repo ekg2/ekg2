@@ -580,7 +580,7 @@ int event_check(const char *session, const char *name, const char *target, const
 	actions = array_make(action, ";", 0, 0, 1);
 
 	for (i = 0; actions && actions[i]; i++) {
-	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(session));
+	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
 
 		debug("// event_check() calling \"%s\"\n", tmp);		
 
