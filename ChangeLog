@@ -10,6 +10,8 @@ zg³osi³ b³±d.
 - dope³nianie listy nicków abc,def,ghi (joshua/del)
 - przy dope³nieniu obs³uga du¿ych/ma³ych polskich liter (del)
 - poprawka ³±czenia siê jabber'a przy pustej userli¶cie (del)
+- poprawka segfaulta gdy usuniemy sesjê, a jeste¶my po³±czeni przy jej u¿yciu (del)
+
 
 // 2003-05-30
 
