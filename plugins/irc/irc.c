@@ -332,7 +332,7 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	irc_handler_data_t *idta = (irc_handler_data_t *) data;
 	int res = 0, res_size = sizeof(res);
 	irc_private_t *j = irc_private(idta->session);
-	const char *real;
+	const char *real, *localhostname;
 	char *pass;
 
 
@@ -354,11 +354,14 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 
 	real = session_get(idta->session, "realname");
 	real = real ? xstrlen(real) ? real : j->nick : j->nick;
+	localhostname = session_get(idta->session, "local_ip");
+	if (!xstrlen(localhostname))
+			localhostname = NULL;
 	pass = (char *)session_password_get(idta->session);
 	pass = xstrlen(strip_spaces(pass))?saprintf("PASS %s\r\n", strip_spaces(pass)):xstrdup("");
-	irc_write(j, "%sUSER %s 12 unused_field :%s\r\nNICK %s\r\n",
-			pass, j->nick, real, j->nick);
-
+	irc_write(j, "%sUSER %s %s unused_field :%s\r\nNICK %s\r\n",
+			pass, j->nick, localhostname?localhostname:"12", real, j->nick);
+	xfree(pass);
 }
 
 void irc_handle_resolver(int type, int fd, int watch, void *data)

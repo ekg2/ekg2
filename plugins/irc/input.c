@@ -191,6 +191,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 				ctcp_main_noti(sess, j, ctcp, coloured, newsender, 
 						bang?bang+1:"", winname);
 			}
+			xfree(newsender);
 			xfree(coloured);
 
 			if (bang) *bang = '!';
