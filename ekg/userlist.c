@@ -297,39 +297,10 @@ void userlist_clear_status(session_t *session, const char *uid)
  */
 void userlist_free(session_t *session)
 {
-	list_t l;
-
-	if (!session->userlist)
+	if (!session)
 		return;
 
-        for (l = session->userlist; l; l = l->next) {
-                userlist_t *u = l->data;
-		list_t lp;
-
-	        xfree(u->first_name);
-	        xfree(u->last_name);
-	        xfree(u->nickname);
-	        xfree(u->uid);
-	        xfree(u->mobile);
-	        xfree(u->status);
-	        xfree(u->descr);
-	        xfree(u->authtype);
-	        xfree(u->foreign);
-	        xfree(u->last_status);
-	        xfree(u->last_descr);
-	        xfree(u->resource);
-	
-	        for (lp = u->groups; lp; lp = lp->next) {
-	                struct group *g = lp->data;
-	
-	                xfree(g->name);
-	        }
-	
-	        list_destroy(u->groups, 1);
-        }
-
-        list_destroy(session->userlist, 1);	
-	session->userlist = NULL;
+	userlist_free_u(&(session->userlist));
 }
 
 /* 
@@ -337,14 +308,14 @@ void userlist_free(session_t *session)
  *
  * clear and remove from memory given userlist
  */
-void userlist_free_u(list_t userlist)
+void userlist_free_u (list_t *userlist)
 {
         list_t l;
 
-        if (!userlist)
+        if (!*userlist)
                 return;
 
-        for (l = userlist; l; l = l->next) {
+        for (l = *userlist; l; l = l->next) {
                 userlist_t *u = l->data;
                 list_t lp;
 
@@ -370,8 +341,8 @@ void userlist_free_u(list_t userlist)
                 list_destroy(u->groups, 1);
         }
 
-        list_destroy(userlist, 1);
-        userlist = NULL;
+        list_destroy(*userlist, 1);
+        *userlist = NULL;
 }
 
 /*
@@ -384,27 +355,10 @@ void userlist_free_u(list_t userlist)
  */
 userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname)
 {
-	userlist_t u;
+	if (!session)
+		return NULL;
 
-	memset(&u, 0, sizeof(u));
-
-	u.uid = xstrdup(uid);
-	u.nickname = xstrdup(nickname);
-	u.status = xstrdup(EKG_STATUS_NA);
-
-        u.first_name = NULL;
-        u.last_name = NULL;
-        u.mobile = NULL;
-        u.descr = NULL;
-        u.authtype = NULL;
-        u.foreign = NULL;
-        u.last_status = NULL;
-        u.last_descr = NULL;
-        u.resource = NULL;
-
-	u.blink = 0;
-
-	return list_add_sorted(&(session->userlist), &u, sizeof(u), userlist_compare);
+	return userlist_add_u(&(session->userlist), uid, nickname);
 }
 
 /*
@@ -414,7 +368,7 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
  * uid - uid,
  * nickname - display.
  */
-userlist_t *userlist_add_u(list_t userlist, const char *uid, const char *nickname)
+userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname)
 {
         userlist_t u;
 
@@ -434,7 +388,7 @@ userlist_t *userlist_add_u(list_t userlist, const char *uid, const char *nicknam
         u.last_descr = NULL;
         u.resource = NULL;
 
-        return list_add_sorted(&userlist, &u, sizeof(u), userlist_compare);
+        return list_add_sorted(userlist, &u, sizeof(u), userlist_compare);
 }
 
 /*
@@ -446,36 +400,7 @@ userlist_t *userlist_add_u(list_t userlist, const char *uid, const char *nicknam
  */
 int userlist_remove(session_t *session, userlist_t *u)
 {
-	list_t l;
-
-	if (!u)
-		return -1;
-
-
-	
-	xfree(u->first_name);
-	xfree(u->last_name);
-	xfree(u->nickname);
-	xfree(u->uid);
-	xfree(u->mobile);
-	xfree(u->status);
-	xfree(u->descr);
-	xfree(u->authtype);
-	xfree(u->foreign);
-	xfree(u->last_status);
-	xfree(u->last_descr);
-	xfree(u->resource);
-
-	for (l = u->groups; l; l = l->next) {
-		struct group *g = l->data;
-
-		xfree(g->name);
-	}
-
-	list_destroy(u->groups, 1);
-	list_remove(&(session->userlist), u, 1);
-
-	return 0;
+	return userlist_remove_u(&(session->userlist), u);
 }
 
 /*
@@ -485,7 +410,7 @@ int userlist_remove(session_t *session, userlist_t *u)
  *
  *  - u.
  */
-int userlist_remove_u(list_t userlist, userlist_t *u)
+int userlist_remove_u(list_t *userlist, userlist_t *u)
 {
         list_t l;
 
@@ -512,7 +437,7 @@ int userlist_remove_u(list_t userlist, userlist_t *u)
         }
 
         list_destroy(u->groups, 1);
-        list_remove(&userlist, u, 1);
+        list_remove(userlist, u, 1);
 
         return 0;
 }
@@ -551,35 +476,10 @@ int userlist_replace(session_t *session, userlist_t *u)
  */
 userlist_t *userlist_find(session_t *session, const char *uid)
 {
-	list_t l;
-
 	if (!uid || !session)
 		return NULL;
-	
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		const char *tmp;
-		int len;
 
-                if (!xstrcasecmp(u->uid, uid))
-			return u;
-
-		if (u->nickname && !xstrcasecmp(u->nickname, uid))
-			return u;
-
-		/* porównujemy resource */
-		
-		if (!(tmp = xstrchr(uid, '/')))
-			continue;
-
-		len = (int)(tmp - uid);
-
-		if (!xstrncasecmp(uid, u->uid, len))
-			return u;
-		
-        }
-
-        return NULL;
+        return userlist_find_u(&(session->userlist), uid);
 }
 
 /* 
@@ -588,14 +488,14 @@ userlist_t *userlist_find(session_t *session, const char *uid)
  * finds and returns pointer to userlist_t which includes given
  * uid
  */
-userlist_t *userlist_find_u(list_t userlist, const char *uid)
+userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 {
         list_t l;
 
         if (!uid || !userlist)
                 return NULL;
 
-        for (l = userlist; l; l = l->next) {
+        for (l = *userlist; l; l = l->next) {
                 userlist_t *u = l->data;
                 const char *tmp;
                 int len;
