@@ -430,6 +430,7 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 	static int nested = 0;
 	int result = -1;
 	va_list ap;
+	va_list ap_plugin;
 	list_t l;
 
 	if (nested > 32) {
@@ -441,7 +442,6 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 	nested++;
 
 	va_start(ap, name);
-
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
 
@@ -454,11 +454,17 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 			q->count++;
 			
 			result = 0;
+			/*
+				pc and amd64: va_arg remove var from va_list when you use va_arg, so we must keep orig va_list for next plugins
+			*/
+			va_copy(ap_plugin, ap);
 
-			if (handler(q->data, ap) == -1) {
+			if (handler(q->data, ap_plugin) == -1) {
 				result = -1;
 				goto cleanup;
 			}
+
+			va_end(ap_plugin);
 		}
 	}
 
