@@ -963,7 +963,8 @@ COMMAND(session_command)
 		}	
 
 		printq("session_info_footer", s->uid);
-
+		
+		xfree(tmp);
 		return 0;	
 	}
 	

@@ -214,7 +214,7 @@ void windows_save()
 				xfree(tmp);
 			}
 		}
-
+		xfree(config_windows_layout);
 		config_windows_layout = string_free(s, 0);
 	}
 }
