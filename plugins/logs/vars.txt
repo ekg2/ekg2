@@ -28,24 +28,18 @@ path
 
 	¶cie¿ka, gdzie bêd± zachowywane wysy³ane i otrzymane wiadomo¶ci.
 	Rozpoznawane znaki:
-
 	* %S - sesja nasza
 	* %u - uid u¿ytkownika, z którym piszemy
 	* %U - nick rozmówcy
 	* %Y, %M, %D - rok, miesi±c, dzieñ
-
 	Rozszerzenie pliku zale¿y od typu pliku logowanie (txt, xml, itp.)
-
 	Przyk³ady:
-
 	- logowanie do katalogów wg. sesji, pliki - nazwa rozmowcy:
 	    log_path = "~/.ekg/logs/%S/%u"
 	  np. /home/zdzichu/.ekg/logs/gg:123/gg:3334.txt
-
 	- logowanie do katalogow wg. rozmowcow, pliki - data:
 	    log_path = "~/.ekg/logs/%u/%Y-%M-%D"
 	  np. /home/zdzichu/.ekg/logs/jid:fr@h.pl/2004-05-31.xml
-
 	- logowanie do /tmp z data i rozmowa w nazwie klasy:
 	    log_path = "/tmp/%Y.%M.%D.%u"
 	  np. /tmp/2004.05.31.icq:67665.html

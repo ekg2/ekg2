@@ -8,7 +8,7 @@ log
         okre¶la, czy plugin loguje wiadomo¶ci
 
 log_ignored
-	typ: liczba
+	typ: bool
 	domy¶lna warto¶æ: 0
 
 	okre¶la, czy logujemy ignorowane wiadomo¶ci (NFY).
@@ -19,7 +19,7 @@ log_status
 
 	okre¶la, czy bêd± logowane zmiany stanu ludzi z listy (zmienna
 	,,log'' musi byæ ró¿na od 0)
-	
+
 path
 	typ: tekst
 	domy¶lna warto¶æ: brak

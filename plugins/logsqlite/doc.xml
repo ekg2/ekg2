@@ -20,8 +20,9 @@
 </sect2>
 <sect2>
    <title>Struktura bazy danych</title>
-   <programlisting role="sql">
+   <sect3>
       <title>Tabela log_msg</title>
+         <programlisting role="sql">
 <![CDATA[
    session text - nazwa sesji
    uid text - id u¿ytkownika, który wys³a³ wiadomo¶æ b±d¼ j± odbierze
@@ -32,9 +33,11 @@
    sentts timestamp - czas wys³ania wiadomo¶ci
    body text - tre¶æ wiadomo¶ci
 ]]>
-   </programlisting>
-   <programlisting role="sql">
-      <title>Tabela log_status</title>
+         </programlisting>
+      </sect3>
+      <sect3>
+         <title>Tabela log_status</title>
+         <programlisting role="sql">
 <![CDATA[
    session text - nazwa sesji
    uid text - id u¿ytkownika zmieniaj±cego stan
@@ -44,7 +47,8 @@
    desc text - opis
 
 ]]>
-   </programlisting>
+      </programlisting>
+   </sect3>
 </sect2>
 <!--
 vim: ft=docbk encoding=iso-8859-2
