@@ -499,7 +499,7 @@ int protocol_message(void *data, va_list ap)
 	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
 	int *__class = va_arg(ap, int*), class = *__class;
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
-	int *__doobeep = va_arg(ap, int), doobeep = *__doobeep;
+	int *__doobeep = va_arg(ap, int*), doobeep = *__doobeep;
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
 	char *target = NULL;
