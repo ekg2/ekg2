@@ -623,8 +623,8 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	jabber_private_t *j = jabber_private(data);
 	struct in_addr a;
 	int one = 1, res;
-	const char *port_s = session_get(s, "port");
-	int port = (port_s) ? atoi(port_s) : 5222;
+	int port_s = session_int_get(s, "port");
+	int port = (port_s != -1 ) ? port_s : 5222;
 	struct sockaddr_in sin;
 #ifdef HAVE_GNUTLS
 	const int use_ssl = session_int_get(s, "use_ssl");
@@ -739,8 +739,8 @@ int jabber_status_show_handle(void *data, va_list ap)
 	session_t *s = session_find(*uid);
 	jabber_private_t *j = session_private_get(s);
 	userlist_t *u;
-	const char *port_s = session_get(s, "port");
-	int port = (port_s) ? atoi(port_s) : 5222;
+	int port_s = session_int_get(s, "port");
+	int port = (port_s != -1) ? port_s : 5222;
 #ifdef HAVE_GNUTLS
 	const int ssl_port_s = session_int_get(s, "ssl_port");
 	int ssl_port = (ssl_port_s != -1) ? ssl_port_s : 5223;
