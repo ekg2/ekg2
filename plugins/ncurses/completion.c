@@ -62,8 +62,8 @@ static int tolower_pl(const unsigned char c) {
 int strncasecmp_pl(const char * cs,const char * ct,size_t count)
 {
         register signed char __res = 0;
-
-        while (count) {
+        
+	while (count) {
                 if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
                         break;
                 count--;
@@ -123,7 +123,7 @@ static void command_generator(const char *text, int len)
 		command_t *c = l->data;
 		char *without_sess_id = strchr(c->name, ':');
 
-		if (!strncasecmp(text, c->name, len))
+		if (!strncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
 			array_add(&completions, saprintf("%s%s%s", slash, dash, c->name));
 		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !strncasecmp(text, without_sess_id + 1, len)) 
 			array_add(&completions, saprintf("%s%s%s", slash, dash, without_sess_id + 1));
@@ -452,7 +452,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	int i, count, word, j, words_count, word_current;
 
 	start = xmalloc(strlen(line) + 1);
-	
+	count = 0;
 	/* 
 	 * je¶li uzbierano ju¿ co¶ to próbujemy wy¶wietliæ wszystkie mo¿liwo¶ci 
 	 */
@@ -517,7 +517,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		i--;
 		array_add(&words, saprintf("%s", start));
 	}
-
+	
 	/* je¿eli ostatnie znaki to spacja, albo przecinek to trzeba dodaæ jeszcze pusty wyraz do words */
 	if (strlen(line) > 1 && (line[strlen(line) - 1] == ' ' || line[strlen(line) - 1] == ','))
 		array_add(&words, xstrdup(""));
