@@ -600,6 +600,7 @@ int python_theme_init() {
 	format_add("python_loaded", "%) Skrypt zosta³ za³adowany\n", 1);
 	format_add("python_removed", "%) Skrypt zosta³ usuniêty\n", 1);
 	format_add("python_need_name", "%! Nie podano nazwy skryptu\n", 1);
+	format_add("python_error", "%! Error %T%1%n\n", 1);
 	format_add("python_not_found", "%! Nie znaleziono skryptu %T%1%n\n", 1);
 	format_add("python_wrong_location", "%! Skrypt nale¿y umie¶ciæ w katalogu %T%1%n\n", 1);
         return 0;

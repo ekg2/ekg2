@@ -45,6 +45,9 @@ struct python_module {
 #define PYTHON_HANDLE_HEADER(event, args...) \
 { \
 	list_t __py_l; \
+        PyObject *temp, *exc_typ, *exc_val, *exc_tb; \
+        PyObject *pName, *pModule, *pDict, *pFunc, *pArgs, *pValue; \
+        char * buffer; \
 	\
 	python_handle_result = -1;\
 	\
@@ -57,8 +60,57 @@ struct python_module {
 		\
 		__py_r = PyObject_CallFunction(__py_m->handle_##event, args); \
 		\
-		if (!__py_r) \
-			PyErr_Print(); \
+		if (!__py_r) { \
+                        buffer = xmalloc(1024); \
+                        PyErr_Fetch(&exc_typ, &exc_val, &exc_tb); \
+                        PyErr_NormalizeException(&exc_typ, &exc_val, &exc_tb); \
+                        pName = PyString_FromString("traceback"); \
+                        pModule = PyImport_Import(pName); \
+                        Py_DECREF(pName); \
+                        \
+                        temp = PyObject_Str(exc_typ); \
+                        if (temp != NULL) { \
+                                strcat(buffer, PyString_AsString(temp)); \
+                                strcat(buffer, "\n"); \
+                        } \
+                        temp = PyObject_Str(exc_val); \
+                        if (temp != NULL) { \
+                                strcat(buffer, PyString_AsString(temp)); \
+                        } \
+                        Py_DECREF(temp); \
+                        strcat(buffer, "\n"); \
+                        \
+                        if (exc_tb != NULL && pModule != NULL ) { \
+                                pDict = PyModule_GetDict(pModule); \
+                                pFunc = PyDict_GetItemString(pDict, "format_tb"); \
+                                if (pFunc && PyCallable_Check(pFunc)) { \
+                                        pArgs = PyTuple_New(1); \
+                                        pArgs = PyTuple_New(1); \
+                                        PyTuple_SetItem(pArgs, 0, exc_tb); \
+                                        pValue = PyObject_CallObject(pFunc, pArgs); \
+                                        if (pValue != NULL) { \
+                                                int len = PyList_Size(pValue); \
+                                                if (len > 0) { \
+                                                        PyObject *t,*tt; \
+                                                        char * buffer2; \
+                                                        int i; \
+                                                        for (i = 0; i < len; i++) { \
+                                                                tt = PyList_GetItem(pValue,i); \
+                                                                t = Py_BuildValue("(O)",tt); \
+                                                                PyArg_ParseTuple(t,"s",&buffer2); \
+                                                                strcat(buffer,buffer2); \
+                                                                strcat(buffer, "\n"); \
+                                                        } \
+                                                } \
+                                        } \
+                                        Py_DECREF(pValue); \
+                                        Py_DECREF(pArgs); \
+                                } \
+                        } \
+                        Py_DECREF(pModule); \
+                        print("python_error", buffer); \
+                        PyErr_Restore(exc_typ, exc_val, exc_tb); \
+                } \
 		\
 		python_handle_result = -1; \
 		\

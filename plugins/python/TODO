@@ -9,4 +9,4 @@
 - dokumentacja - opisy sta³ych
 - autorun
 - timer
-- przejmowanie i wy¶wietlanie wyj±tków
+- ekg siê wywala przy wychodzeniu je¶li skrypt zrzuci³ wyj±tek
