@@ -317,6 +317,7 @@ COMMAND(jabber_command_msg)
 
 		xfree(me);
 		xfree(rcpts[0]);
+		xfree(rcpts);
 	}
 
 	session_unidle(session);
