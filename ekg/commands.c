@@ -876,13 +876,20 @@ COMMAND(cmd_help)
 	
 	if (params[0]) {
 		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
+		int plen;
 
 		if (!xstrcasecmp(p, "set") && params[1]) {
 			if (!quiet)
 				variable_help(params[1]);
 			return 0;
 		}
-			
+		
+
+        	if (session && session->uid) {
+	                plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
+		} else
+			plen = 0;
+	
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 			
@@ -891,7 +898,7 @@ COMMAND(cmd_help)
 				return -1;
 			}
 
-			if (!xstrcasecmp(c->name, p) && !c->alias) {
+			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !c->alias) {
 			    	char *tmp = NULL;
 
 				if (xstrstr(c->brief_help, "%"))
