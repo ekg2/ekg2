@@ -64,11 +64,11 @@ int logs_plugin_init()
 	query_connect(&logs_plugin, "protocol-message",	logs_handler, NULL);
 	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);
 	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
-        variable_add(&logs_plugin, "log", VAR_MAP, 1, &config_logs_log, NULL, variable_map(3, 0, 0, "none", 1, 2, "simple", 2, 1, "xml"), NULL);
-        variable_add(&logs_plugin, "log_ignored", VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
-        variable_add(&logs_plugin, "log_status", VAR_BOOL, 1, &config_logs_log_status, NULL, NULL, NULL);
-        variable_add(&logs_plugin, "path", VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
-        variable_add(&logs_plugin, "timestamp", VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
+	variable_add(&logs_plugin, "log", VAR_MAP, 1, &config_logs_log, NULL, variable_map(3, 0, 0, "none", 1, 2, "simple", 2, 1, "xml"), NULL);
+	variable_add(&logs_plugin, "log_ignored", VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
+	variable_add(&logs_plugin, "log_status", VAR_BOOL, 1, &config_logs_log_status, NULL, NULL, NULL);
+	variable_add(&logs_plugin, "path", VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
+	variable_add(&logs_plugin, "timestamp", VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
 	debug("[logs] plugin registered\n");
 
@@ -220,7 +220,6 @@ char * prepare_timestamp(time_t ts)
 	buf = xmalloc(101);
 	if (config_logs_timestamp) {
 		strftime(buf, 100, config_logs_timestamp, tm);
-		debug("[logs] %s\n", buf);
 		return buf;
 	} else {
 		return itoa(ts);
