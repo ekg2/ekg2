@@ -265,6 +265,8 @@ static void gg_session_handler_success(session_t *s)
 {
 	char *__session = xstrdup(session_uid_get(s));
 	gg_private_t *g = session_private_get(s);
+        const char *status;
+	char *descr;
 	char buf[100];
 
 	if (!g || !g->sess) {
@@ -303,6 +305,18 @@ static void gg_session_handler_success(session_t *s)
 	/* pamiêtajmy, ¿eby pingowaæ */
 	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
 	timer_add(&gg_plugin, buf, 300, 0, gg_ping_timer_handler, xstrdup(s->uid));
+
+ 	descr = xstrdup(session_descr_get(s));
+        status = session_status_get(s);
+
+	gg_iso_to_cp(descr);
+
+        /* ustawiamy swój status */
+        if (s->descr)
+                gg_change_status_descr(g->sess, gg_text_to_status(status, descr), descr);
+        else
+                gg_change_status(g->sess, gg_text_to_status(status, NULL));
+
 }
 
 /*
@@ -380,9 +394,9 @@ static void gg_session_handler_disconnect(session_t *s)
 	char *__reason = NULL;
 	int __type = EKG_DISCONNECT_FORCED;
 	gg_private_t *g = session_private_get(s);
-
-	session_connected_set(s, 0);
 	
+	session_connected_set(s, 0);
+		
 	query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
 
 	xfree(__session);
@@ -719,7 +733,16 @@ COMMAND(gg_command_connect)
 			char *__reason = xstrdup(params[0]);
 			int __type = EKG_DISCONNECT_USER;
 
+			if (__reason) {
+                		char *tmp = xstrdup(__reason);
+                		gg_iso_to_cp(tmp);
+               			gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
+                		xfree(tmp);
+        		} else
+  			        gg_change_status(g->sess, GG_STATUS_NOT_AVAIL);
+
 			watch_remove(&gg_plugin, g->sess->fd, g->sess->check);
+			
 			gg_logoff(g->sess);
 			gg_free_session(g->sess);
 			g->sess = NULL;
