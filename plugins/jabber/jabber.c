@@ -450,11 +450,13 @@ void jabber_handle(void *data, xmlnode_t *n)
 					int seconds = 0;
 
 					const char *last = jabber_attr(q->atts, "seconds");
+                                        char buff[21];
+					char *from_str, *lastseen_str;
+
 					seconds = atoi(last);
 
 					/*TODO If user is online: display user's status; */
 
-					char buff[21];
 					if ((seconds>=0) && (seconds < 999 * 24 * 60 * 60  - 1) )
 						/* days, hours, minutes, seconds... */
 						snprintf (buff, 21, _("%03dd %02dh %02dm %02ds ago"),seconds / 86400 , \
@@ -462,8 +464,8 @@ void jabber_handle(void *data, xmlnode_t *n)
 					else
 						strcpy (buff, _("very long ago"));
 
-					char *from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
-					char *lastseen_str = xstrdup(buff);
+					from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
+					lastseen_str = xstrdup(buff);
 
 					print("jabber_lastseen_response", from_str, lastseen_str);
 					xfree(lastseen_str);
