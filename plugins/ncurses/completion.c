@@ -1019,10 +1019,6 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			}		
 		}
 	
-		if (!completions && window_current && window_current->target) {
-			known_uin_generator(words[word], xstrlen(words[word]));
-		}	
-
 		if (completions) {
 			for (j = 0; completions && completions[j]; j++) {
 				string_t s;
