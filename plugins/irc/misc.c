@@ -741,7 +741,7 @@ IRC_COMMAND(irc_c_topic)
 	char *t, *dest=NULL;
 	char *coloured;
 
-	t = saprintf("irc:%s",param[3]);
+	t = saprintf("irc:%s", param[2]);
 	w = window_find_s(s, t);
 	dest = w?w->target:NULL;
 	xfree(t);

@@ -1219,7 +1219,7 @@ static int irc_theme_init()
 	
 	/* \n not needed if you're including date [%3] */
 	format_add("IRC_RPL_TOPICBY", "%> set by %2 on %3", 1);
-	format_add("IRC_TOPIC_CHANGE", "%> Topic %2: %3\n%> changed by %4\n", 1);
+	format_add("IRC_TOPIC_CHANGE", "%> %T%4%n changed topic on %T%2%n: %3\n", 1);
 	format_add("IRC_TOPIC_UNSET", "%> Topic %2 unset by: %3\n", 1);
 	format_add("IRC_MODE_CHAN", "%> %2/%3 sets mode%4\n", 1);
 	format_add("IRC_MODE", "%> %2 set mode %3 on You\n", 1);
