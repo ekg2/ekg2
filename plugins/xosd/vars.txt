@@ -21,6 +21,12 @@ shadow_offset
 	wielko¶æ wektora (podana w pikselach), o który ma byæ przesuniêty 
 	cieñ komunikatu wzglêdem samego napisu. warto¶æ 0 wy³±cza cieñ.
 
+shadow_colour
+	typ: tekst
+	domy¶lna warto¶æ: "#000000"
+
+	okre¶la kolor cienia.
+
 vertical_position
 	typ: liczba
 	domy¶lna warto¶æ: 2

@@ -41,10 +41,11 @@ int xosd_show_message(char *line1, char *line2)
 {
 	xosd_set_font(osd, xosd_font); 
 	
-	xosd_set_shadow_offset(osd, xosd_shadow_offset);
-	
 	xosd_set_colour(osd, xosd_colour);
 
+	xosd_set_shadow_offset(osd, xosd_shadow_offset);
+	xosd_set_shadow_colour(osd, xosd_shadow_colour);
+	
 	xosd_set_outline_offset(osd, xosd_outline_offset);
 	xosd_set_outline_colour(osd, xosd_outline_colour);
 
@@ -203,11 +204,13 @@ void xosd_setvar_default()
 {
 	xfree(xosd_font);
 	xfree(xosd_colour);
+	xfree(xosd_shadow_colour);
 	xfree(xosd_outline_colour);
 
 	xosd_font = xstrdup("-adobe-helvetica-bold-r-normal-*-*-120-*-*-p-*-iso8859-2");
 	xosd_colour = xstrdup("#00dd00");
 	xosd_shadow_offset = 2;
+	xosd_shadow_colour = xstrdup("#000000");
 	xosd_vertical_position = 2;
 	xosd_vertical_offset = 48;
 	xosd_horizontal_position = 0;
@@ -236,6 +239,7 @@ int xosd_plugin_init()
 	variable_add(&xosd_plugin, "font", VAR_STR, 1, &xosd_font, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "colour", VAR_STR, 1, &xosd_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "shadow_offset", VAR_INT, 1, &xosd_shadow_offset, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, "shadow_colour", VAR_STR, 1, &xosd_shadow_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "vertical_position", VAR_MAP, 1, &xosd_vertical_position, NULL, variable_map(3, 0, 2, "top", 1, 0, "center", 2, 1, "bottom"), NULL);
 	variable_add(&xosd_plugin, "vertical_offset", VAR_INT, 1, &xosd_vertical_offset, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "horizontal_position", VAR_MAP, 1, &xosd_horizontal_position, NULL, variable_map(3, 0, 2, "left", 1, 0, "center", 2, 1, "right"), NULL);
