@@ -288,12 +288,37 @@ end:
 COMMAND(gg_command_away)
 {
 	gg_private_t *g = session_private_get(session);
-	char *descr, *f, *fd, *df;
+	char *descr, *f, *fd, *df, *params0=xstrdup(params[0]);
 	const char *status;
+	int timeout = session_int_get(session, "scroll_long_desc");
+	int autoscroll = 0;
 
 	if (!session_check(session, 1, "gg")) {
 		printq("invalid_session");
 		return -1;
+	}
+
+	if (xstrlen(params0))
+		session->scroll_pos = 0;
+
+	if (!xstrcasecmp(name, "_autoscroll")) {
+		autoscroll = 1;
+		status = session_status_get(session);
+		if (!xstrcasecmp(status, EKG_STATUS_AWAY) ||
+						!xstrcasecmp(status, EKG_STATUS_AUTOAWAY)) {
+				fd = "away_descr";
+		} else if (!xstrcasecmp(status, EKG_STATUS_AVAIL)) {
+				fd = "back_descr";
+		} else if (!xstrcasecmp(status, EKG_STATUS_INVISIBLE)) {
+				fd = "invisible_descr";
+		}
+		xfree(params0);
+		params0 = xstrdup(session_descr_get(session));
+		session->scroll_last = time(NULL);
+		debug("%s [%s] %d\n", session_name(session), fd, session->scroll_pos);
+		if (xstrlen(params0) < GG_STATUS_DESCR_MAXSIZE)
+				return -1;
+		goto change;
 	}
 
 	if (!xstrcasecmp(name, "away")) {
@@ -330,23 +355,29 @@ COMMAND(gg_command_away)
 		goto change;
 	}
 
+	xfree(params0);
 	return -1;
 
 change:
-	if (params[0]) {
-		if (xstrlen(params[0]) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
-			char *descr_poss = xstrndup(params[0], GG_STATUS_DESCR_MAXSIZE);
-			char *descr_not_poss = xstrdup(params[0] + GG_STATUS_DESCR_MAXSIZE);
+	if (params0) {
+		if (xstrlen(params0) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
+		/* fjuczer który zapewne wkurzy u¿ytkowników windzianego gg :) */
+			if (!timeout) {
+				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
+				char *descr_not_poss = xstrdup(params0 + GG_STATUS_DESCR_MAXSIZE);
 
-			printq("descr_too_long", itoa(xstrlen(params[0]) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
+				printq("descr_too_long", itoa(xstrlen(params0) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
+				session->scroll_op = 0;
 
-			xfree(descr_poss);
-			xfree(descr_not_poss);
+				xfree(descr_poss);
+				xfree(descr_not_poss);
 
-			return -1;
+				xfree(params0);
+				return -1;
+			}
 		}
 
-		session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
+		session_descr_set(session, (!xstrcmp(params0, "-")) ? NULL : params0);
 	} else {
 		char *tmp;
 
@@ -358,21 +389,52 @@ change:
 		if (!config_keep_reason) {
 			session_descr_set(session, NULL);
 		}
-		
+
 	}
 
 	reason_changed = 1;
 
-	descr = xstrdup(session_descr_get(session));
+	if (autoscroll || timeout) {
+			char *mode = session_get(session, "scroll_mode");
+
+			autoscroll = session -> scroll_pos;
+			descr = xstrndup(session_descr_get(session)+autoscroll,
+							GG_STATUS_DESCR_MAXSIZE);
+
+			if (!xstrcmp(mode, "bounce")) {
+				if (!session->scroll_op) {
+					session->scroll_pos++;
+				} else {
+					session->scroll_pos--;
+				}
+				if (session->scroll_pos <= 0 || session->scroll_pos >=
+								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE)
+						session->scroll_op^=1;
+			} else if (!xstrcmp(mode, "simple")) {
+				session->scroll_pos++;
+				if (session->scroll_pos >
+								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE)
+					session->scroll_pos=0;
+			}
+			/* chcia³em jeszcze dorzuciæ taki 'ciag³y' w lewo [lub w prawo]
+			 * ale musia³bym pozmieniaæ, a jestem leniem
+			 */
+	} else
+		descr = xstrdup(session_descr_get(session));
+
+	debug("%s - %s\n", name, descr);
 	status = session_status_get(session);
 
-	if (descr)
-		printq(fd, descr, "", session_name(session));
-	else
-		printq(f, session_name(session));
-	
+	if (!autoscroll) {
+		if (descr)
+			printq(fd, descr, "", session_name(session));
+		else
+			printq(f, session_name(session));
+	}
+
 	if (!g->sess || !session_connected_get(session)) {
 		xfree(descr);
+		xfree(params0);
 		return 0;
 	}
 
@@ -398,6 +460,7 @@ change:
 		gg_change_status(g->sess, _status);
 	}
 
+	xfree(params0);
 	xfree(descr);
 
 	return 0;
@@ -1318,6 +1381,7 @@ void gg_register_commands()
 	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, NULL);
+	command_add(&gg_plugin, "gg:_autoscroll", "?", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:check_conn", "uUC", gg_command_check_conn, 0, NULL);
 	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:image", "u f", gg_command_image, 0, NULL);

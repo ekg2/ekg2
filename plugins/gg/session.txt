@@ -114,6 +114,27 @@ private
 
 	tryb tylko dla znajomych.
 
+scroll_long_desc
+	typ: liczba
+	domy¶lna warto¶æ: 5
+
+	Okre¶la co ile sekund ma nast±piæ automagiczne scrollowanie
+	zbyt d³ugich statusów. Zero - brak scrollowania.
+	OSTRZE¯ENIE: u¿ywanie scrolla w statusach mo¿e doprowadziæ
+	             do usuniêcia konta u¿ytkownika gg
+	UWAGA: gdy status jest scrollowany w informacji wy¶wietlany
+	       jest tylko 'obciêty' status. infromacje o zmianach
+		   statusu na skutek scrollowania NIE s± wy¶wietlane
+
+scroll_mode
+	typ: tekst [bounce|simple]
+	domy¶lna warto¶æ: bounce
+
+	okre¶la rodzaj scrollowania
+	bounce - odbijanie od 'koñców'
+	simple - przewija w lewo, a¿ widaæ do samego koñca, po osi±gniêciu
+             koñca wraca na pocz±tek
+
 server
 	typ: tekst
 	domy¶lna warto¶æ: brak
