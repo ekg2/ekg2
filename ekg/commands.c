@@ -3459,29 +3459,26 @@ static int command_add_compare(void *data1, void *data2)
  *
  * 0 je¶li siê uda³o, -1 je¶li b³±d.
  */
-int command_add(plugin_t *plugin, const char *name, char **params, command_func_t function, int alias, const char *params_help, const char *brief_help, const char *long_help, char **possibilities)
+int command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int alias, const char *params_help, const char *brief_help, const char *long_help, char *possibilities)
 {
 	command_t c;
-	int i;
 
 	memset(&c, 0, sizeof(c));
-
 	c.name = xstrdup(name);
-	c.params = NULL;
-        for (i=0; params && params[i]; i++)
-                array_add(&c.params, xstrdup(params[i]));
+	if (params)
+		c.params = array_make(params, " ", 0, 1, 1);
+	else 
+		c.params = NULL;
 	c.function = function;
 	c.alias = alias;
 	c.params_help = xstrdup(params_help);
 	c.brief_help = xstrdup(brief_help);
 	c.long_help = xstrdup(long_help);
 	c.plugin = plugin;
-	c.possibilities = NULL;
-	for (i=0; possibilities && possibilities[i]; i++)
-		array_add(&c.possibilities, xstrdup(possibilities[i]));
-	
-	array_free(params);
-	array_free(possibilities);
+        if (possibilities)
+                c.possibilities = array_make(possibilities, " ", 0, 1, 1);
+        else
+		c.possibilities = NULL;
 
 	return (list_add_sorted(&commands, &c, sizeof(c), command_add_compare) != NULL) ? 0 : -1;
 }
@@ -3552,8 +3549,9 @@ int command_remove(plugin_t *plugin, const char *name)
  */
 void command_init()
 {
-#define possibilities(x) array_make(x, " ", 0, 1, 1)
-#define params(x) array_make(x, " ", 0, 1, 1)
+/* this are only for compatibility - don't use them */
+#define possibilities(x) x
+#define params(x) x
 
 	command_add(NULL, "add", params("U ? p"), cmd_add, 0,
 	  " [numer] [alias] [opcje]", "dodaje u¿ytkownika do listy kontaktów",

@@ -220,7 +220,9 @@ int ioctld_plugin_init()
 	ioctld_socket(ioctld_sock_path);
 	
 	atexit(ioctld_kill);
-#define params(x) array_make(x, " ", 0, 1, 1)
+/* this are only for compatibility - don't use them*/
+#define possibilities(x) x
+#define params(x) x
 
 	command_add(&ioctld_plugin,
 	  "beeps_spk", params("?"), command_beeps_spk, 0,
@@ -247,6 +249,7 @@ int ioctld_plugin_init()
 	  "\n"
 	  "Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.", NULL);
 #undef params
+#undef possibilities
 	return 0;
 }
 

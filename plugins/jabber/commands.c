@@ -682,8 +682,9 @@ COMMAND(jabber_command_ver)
 }
 
 
-#define possibilities(x) array_make(x, " ", 0, 1, 1)
-#define params(x) array_make(x, " ", 0, 1, 1)
+/* this are only for compatibility - don't use them*/
+#define possibilities(x) x
+#define params(x) x
 
 void jabber_register_commands()
 {

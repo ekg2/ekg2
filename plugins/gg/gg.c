@@ -1897,8 +1897,9 @@ int gg_plugin_init()
 	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
         query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
 
-#define possibilities(x) array_make(x, " ", 0, 1, 1)
-#define params(x) array_make(x, " ", 0, 1, 1)
+/* this are only for compatibility - don't use them */
+#define possibilities(x) x
+#define params(x) x
 
 	command_add(&gg_plugin, "gg:connect", params("?"), gg_command_connect, 0, "", "³±czy siê z serwerem", "", NULL);
 	command_add(&gg_plugin, "gg:disconnect", params("?"), gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "", NULL);

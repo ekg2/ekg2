@@ -298,8 +298,10 @@ int sim_plugin_init()
 
 	query_connect(&sim_plugin, "message-encrypt", message_encrypt, NULL);
 	query_connect(&sim_plugin, "message-decrypt", message_decrypt, NULL);
-#define possibilities(x) array_make(x, " ", 0, 1, 1)
-#define params(x) array_make(x, " ", 0, 1, 1)
+
+/* this are only for compatibility - don't use them*/
+#define possibilities(x) x
+#define params(x) x
 	
 	command_add(&sim_plugin, "key", params("puUC uUC"), command_key, 0,
 	  " [opcje]", "zarz±dzanie kluczami dla SIM",

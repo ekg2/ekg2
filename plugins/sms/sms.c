@@ -334,8 +334,11 @@ static void sms_changed_sms_away(const char *name)
 
 int sms_plugin_init()
 {
-#define params(x) array_make(x, " ", 0, 1, 1)
 	plugin_register(&sms_plugin);
+
+/* this are only for compatibility - don't use them*/
+#define possibilities(x) x
+#define params(x) x
 
 	command_add(&sms_plugin, "sms", params("u ?"), sms_command_sms, 0, " <numer/alias/telefon> <tre¶æ>", "wysy³a smsa do podanej osoby", "\nPolecenie wymaga zdefiniowana zmiennej %Tsms_send_app%n", NULL);
 
@@ -359,6 +362,8 @@ int sms_plugin_init()
 	format_add("sms_away", "<ekg:%1> %2", 1);
 
 	return 0;
+#undef possibilities
+#undef params
 }
 
 static int sms_plugin_destroy()
