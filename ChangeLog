@@ -11,6 +11,7 @@ zg³osi³ b³±d.
   stanem niedostêpno¶ci) (?/del)
 - poprawione tabcompletion (MS/del)
 - dodane "Aktualny stan od ..." w /list (del)
+- pare ma³ych poprawek min. Alt-Backspace usuwa do najbli¿szego ,,nie znaku'' (del)
 
 // 2004-04-12
 - poprawka wyswietlania nazwy uzytkownika z userlisty przy rozpoczeciu rozmowy (zdz)

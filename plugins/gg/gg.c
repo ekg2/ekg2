@@ -1055,19 +1055,29 @@ change:
 COMMAND(gg_command_msg)
 {
 	int count, valid = 0, chat, secure = 0, formatlen = 0;
-	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL;
+	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL, *uid;
 	unsigned char *msg = NULL, *raw_msg = NULL, *format = NULL;
 	uint32_t *ekg_format = NULL;
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
 
 	chat = (strcasecmp(name, "msg"));
+
+        if (!session_check(session, 1, "gg")) {
+                printq("invalid_session");
+                return -1;
+        }
 	
 	if (!params[0] || !params[1]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
-
+	uid = get_uid(session, params[0]);
+	if (!uid || xstrncasecmp(uid, "gg:", 3)) {
+		printq("invalid_nick");
+		return -1;
+	}
+	
 	session_unidle(session);
 
 //	if (!strcmp(params[0], "*")) {

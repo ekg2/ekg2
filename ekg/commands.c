@@ -3176,7 +3176,7 @@ COMMAND(cmd_last)
 COMMAND(cmd_queue)
 {
 	list_t l;
-
+	
 	if (match_arg(params[0], 'c', "clear", 2)) {
 		if ((params[1] && !msg_queue_count_uid(params[1])) || !msg_queue_count()) {
 			if (params[1])
