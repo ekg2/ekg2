@@ -1025,7 +1025,7 @@ COMMAND(jabber_command_msg)
 	xfree(msg);
 	xfree(subject);
 
-	if (config_display_sent) {
+	if (config_display_sent && !quiet) {
 		char *tmp = saprintf("jid:%s", uid);
 		const char *rcpts[2] = { tmp, NULL };
 		message_print(session_uid_get(session), session_uid_get(session), rcpts, params[1], NULL, time(NULL), (chat) ? EKG_MSGCLASS_SENT : EKG_MSGCLASS_MESSAGE, NULL);

@@ -1438,7 +1438,7 @@ void theme_init()
 	format_add("queue_wrong_use", "%! Komenda dzia³a tylko przy braku po³±czenia z serwerem\n", 1);
 	format_add("queue_empty", "%! Kolejka wiadomo¶ci jest pusta\n", 1);
 	format_add("queue_empty_uid", "%! Brak wiadomo¶ci w kolejce dla %T%1%n\n", 1);
-	format_add("queue_flush", "%> Wys³ano zaleg³e wiadomo¶ci z kolejki\n", 1);
+	format_add("queue_flush", "%> (%1) Wys³ano zaleg³e wiadomo¶ci z kolejki\n", 1);
 
 	/* conference */
 	format_add("conferences_list_empty", "%! Brak konferencji\n", 1);

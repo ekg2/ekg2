@@ -131,14 +131,18 @@ int protocol_disconnected(void *data, va_list ap)
 int protocol_connected(void *data, va_list ap)
 {
 	char **session = va_arg(ap, char**);
-	const char *descr = session_descr_get_n(*session);
+	session_t *s = session_find(*session);
+	const char *descr = session_descr_get(s);
 	
-        ekg_update_status_n(*session);
+        ekg_update_status(s);
 
 	if (descr)
-		print("connected_descr", descr, session_name_n(*session));
+		print("connected_descr", descr, session_name(s));
 	else
-		print("connected", session_name_n(*session));
+		print("connected", session_name(s));
+
+	if (!msg_queue_flush(*session))
+		print("queue_flush", session_name(s));
 
 	return 0;
 }
@@ -406,8 +410,8 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	
 
 	user = (class != EKG_MSGCLASS_SENT) ? format_user(session_find(session), sender) : session_format_n(sender);
+	
 	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT), class_str, user, timestamp, text);
-
 	xfree(t);
 	return xstrdup(target);
 }

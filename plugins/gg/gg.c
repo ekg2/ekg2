@@ -559,7 +559,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	__format = NULL;
 	__class = EKG_MSGCLASS_MESSAGE;
 
-	if ((e->event.msg.msgclass & 0x0f) == GG_CLASS_CHAT)
+	if ((e->event.msg.msgclass & 0x0f) == GG_CLASS_CHAT || (e->event.msg.msgclass & GG_CLASS_QUEUED))
 		__class = EKG_MSGCLASS_CHAT;
 
 	/* XXX sprawdzaæ, czy dcc w³±czone */
@@ -1451,7 +1451,7 @@ COMMAND(gg_command_msg)
 	if (valid && (!g->sess || g->sess->state != GG_STATE_CONNECTED))
 		printq("not_connected_msg_queued", session_name(session));
 
-	if (valid && config_display_sent) {
+	if (valid && config_display_sent && !quiet) {
 		const char *rcpts[2] = { nick, NULL };
 		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), (chat) ? EKG_MSGCLASS_SENT : EKG_MSGCLASS_MESSAGE, NULL);
 	}
