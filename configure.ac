@@ -215,6 +215,12 @@ if test "x$have_libgsm" = "xyes"; then
 	PLUGINS="$PLUGINS gsm"
 fi
 
+dnl
+AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
+***
+*** libgnutls was not found. You may want to get it from
+*** ftp://ftp.gnutls.org/pub/gnutls/
+]]))
 
 PLUGINS_LIBS=""
 
