@@ -737,7 +737,7 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 		g->sess = NULL;
 		
 		reconnect_delay = session_int_get((session_t*) data, "auto_reconnect");
-		if (reconnect_delay)
+		if (reconnect_delay && reconnect_delay != -1)
 			timer_add(&gg_plugin, "reconnect", reconnect_delay, 0, gg_reconnect_handler, xstrdup(((session_t*)data)->uid));
 
 		return;

@@ -477,7 +477,7 @@ static void jabber_handle_disconnect(session_t *s)
 	j->fd = -1;
 
 	reconnect_delay = session_int_get(s, "auto_reconnect");
-	if (reconnect_delay) 
+	if (reconnect_delay && reconnect_delay != -1) 
 		timer_add(&jabber_plugin, "reconnect", reconnect_delay, 0, jabber_reconnect_handler, xstrdup(s->uid));
 
 
