@@ -422,10 +422,23 @@ static void gg_session_handler_success(session_t *s)
 	gg_iso_to_cp(descr);
 
         /* ustawiamy swój status */
-        if (s->descr)
-                gg_change_status_descr(g->sess, gg_text_to_status(status, descr), descr);
-        else
-                gg_change_status(g->sess, gg_text_to_status(status, NULL));
+        if (s->descr) {
+                int _status = gg_text_to_status(status, descr);
+
+                _status = GG_S(_status);
+                if (session_int_get(s, "private")) 
+                        _status |= GG_STATUS_FRIENDS_MASK;
+
+               gg_change_status_descr(g->sess, _status, descr);
+        } else {
+                int _status = gg_text_to_status(status, NULL);
+
+                _status = GG_S(_status);
+                if (session_int_get(s, "private")) 
+                        _status |= GG_STATUS_FRIENDS_MASK;
+
+                gg_change_status(g->sess, _status);
+        }
 
 }
 
@@ -958,6 +971,8 @@ COMMAND(gg_command_connect)
 		struct gg_login_params p;
 		const char *tmp, *local_ip = session_get(session, "local_ip");
 		int tmpi;
+                int _status = gg_text_to_status(session_status_get(session), session_descr_get(session));
+
 
 		if (g->sess) {
 			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", session_name(session));
@@ -1002,7 +1017,12 @@ COMMAND(gg_command_connect)
 			
 		p.uin = uin;
 		p.password = (char*) password;
-		p.status = gg_text_to_status(session_status_get(session), session_descr_get(session));
+
+                _status = GG_S(_status);
+                if (session_int_get(session, "private"))
+                        _status |= GG_STATUS_FRIENDS_MASK;
+
+		p.status = _status;
 		p.status_descr = (char*) session_descr_get(session);
 		p.async = 1;
 
@@ -1183,10 +1203,23 @@ change:
 
 	gg_iso_to_cp(descr);
 
-	if (descr)
-		gg_change_status_descr(g->sess, gg_text_to_status(status, descr), descr);
-	else
-		gg_change_status(g->sess, gg_text_to_status(status, NULL));
+	if (descr) {
+                int _status = gg_text_to_status(status, descr);
+
+                _status = GG_S(_status);
+		if (session_int_get(session, "private"))
+	                _status |= GG_STATUS_FRIENDS_MASK;
+
+		gg_change_status_descr(g->sess, _status, descr);
+	} else {
+                int _status = gg_text_to_status(status, NULL);
+
+                _status = GG_S(_status);
+		if (session_int_get(session, "private"))
+	                _status |= GG_STATUS_FRIENDS_MASK;
+
+		gg_change_status(g->sess, _status);
+	}
 
 	xfree(descr);
 
@@ -1706,6 +1739,7 @@ int gg_plugin_init()
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0);
         plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1);
         plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0);
+	plugin_var_add(&gg_plugin, "private", VAR_BOOL, "0", 0);
 	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0);
 
 	gg_debug_handler = ekg_debug_handler;
