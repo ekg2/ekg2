@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 #include "commands.h"
+#include "events.h"
 #include "configfile.h"
 #include "dynstuff.h"
 #include "log.h"
@@ -1887,89 +1888,6 @@ cleanup:
 	return res;
 }
 
-#if 0
-COMMAND(cmd_on)
-{
-	if (match_arg(params[0], 'a', "add", 2)) {
-		int flags, res;
-		userlist_t *u = NULL;
-		const char *t = params[2];
-		uin_t uin = 0;
-		
-		if (!params[1] || !params[2] || !params[3]) {
-			printq("not_enough_params", name);
-			return -1;
-		}
-
-		if (!(flags = event_flags(params[1]))) {
-			printq("invalid_params", name);
-			return -1;
-		}
-
-		if (!(uin = get_uin(params[2])) && xstrcmp(params[2], "*") && params[2][0] != '@') {
-			printq("user_not_found", params[2]);
-			return -1;
-		}
-
-		if (uin) {
-			if ((u = userlist_find(uin, NULL)) && u->nickname)
-				t = u->nickname;
-			else
-				t = itoa(uin);
-		}
-
-		if (!(res = event_add(flags, t, params[3], quiet)))
-			config_changed = 1;
-
-		return res;
-	}
-
-	if (match_arg(params[0], 'd', "del", 2)) {
-
-		if (!params[1]) {
-			printq("not_enough_params", name);
-			return -1;
-		}
-
-		if (!event_remove(params[1], quiet)) {
-			config_changed = 1;
-			return 0;
-		} else
-			return -1;
-	}
-
-	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
-		list_t l;
-                int count = 0;
-		const char *ename = NULL;
-
-		if (params[0] && params[0][0] != '-')
-			ename = params[0];
-		else if (params[0] && match_arg(params[0], 'l', "list", 2))
-			ename = params[1];
-
-		for (l = events; l; l = l->next) {
-			struct event *ev = l->data;
-
-			if (ename && xstrcasecmp(ev->name, ename))
-				continue;
-
-			printq((ev->flags & INACTIVE_EVENT) ? "events_list_inactive" : "events_list", event_format(abs(ev->flags)), event_format_target(ev->target), ev->action, ev->name);
-			count++;
-		}
-
-		if (!count)
-			printq("events_list_empty");
-
-		return 0;
-	}
-
-	printq("invalid_params", name);
-
-	return -1;
-}
-#endif
-
 COMMAND(cmd_echo)
 {
 	printq("generic", (params && params[0]) ? params[0] : "");
@@ -1986,7 +1904,7 @@ COMMAND(cmd_bind)
 
 /*
  * command_exec()
- * 
+ *
  * wykonuje polecenie zawarte w linii tekstu. 
  *
  *  - target - w którym oknie nast±pi³o (NULL je¶li to nie query)
@@ -2009,6 +1927,13 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	if (!xline)
 		return 0;
+
+        if(!session) {
+                if(session_current)
+                        session = session_current;
+                else
+                        return -1;
+        }
 
 	/* wysy³amy do kogo¶ i nie ma na pocz±tku slasha */
 	if (target && *xline != '/') {
@@ -3682,7 +3607,6 @@ void command_init()
 	  "dla znajomych''.\n", 
 	  possibilities("-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online") );
 	  
-#if 0
 	command_add(NULL, "on", params("p e CuU c"), cmd_on, 0,
 	  " [opcje]", "zarz±dzanie zdarzeniami",
 	  "\n"
@@ -3719,7 +3643,6 @@ void command_init()
 	  "U¿ywanie %T\\%3%n w przypadku komendy ,,exec'' jest %Tniebezpieczne%n i, je¶li naprawdê "
 	  "musisz wykorzystaæ tre¶æ wiadomo¶ci lub opis, u¿yj %T\"\\%4\"%n (w cudzys³owach).", 
 	  possibilities("-a --add -d --del -l --list") );
-#endif
 
 	command_add(NULL, "play", params("f"), cmd_play, 0,
 	  " <plik>", "odtwarza plik d¼wiêkowy", "", NULL);
@@ -3860,7 +3783,7 @@ void command_init()
 	  "  prev                 prze³±cza do poprzedniego okna\n"
 	  "  switch <numer_okna>  prze³±cza do podanego okna\n"
 	  "  refresh              od¶wie¿a aktualne okno", 
-	  possibilities("active, clear, kill, last, list, new, next, prev, switch, refresh") );
+	  possibilities("active clear kill last list new next prev switch refresh") );
 
 	command_add(NULL, "_watches", params(""), cmd_debug_watches, 0, "", "wy¶wietla listê przegl±danych deskryptorów", "", NULL);
 	command_add(NULL, "_queries", params(""), cmd_debug_queries, 0, "", "wy¶wietla listê zapytañ", "", NULL);
