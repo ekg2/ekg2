@@ -321,15 +321,15 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
 	u.nickname = xstrdup(nickname);
 	u.status = xstrdup(EKG_STATUS_NA);
 
-        u->first_name = NULL;
-        u->last_name = NULL;
-        u->mobile = NULL;
-        u->descr = NULL;
-        u->authtype = NULL;
-        u->foreign = NULL;
-        u->last_status = NULL;
-        u->last_descr = NULL;
-        u->resource = NULL;
+        u.first_name = NULL;
+        u.last_name = NULL;
+        u.mobile = NULL;
+        u.descr = NULL;
+        u.authtype = NULL;
+        u.foreign = NULL;
+        u.last_status = NULL;
+        u.last_descr = NULL;
+        u.resource = NULL;
 
 	return list_add_sorted(&(session->userlist), &u, sizeof(u), userlist_compare);
 }
