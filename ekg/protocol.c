@@ -432,6 +432,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	user = xstrcasecmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
 
 	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, text, (!xstrcasecmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), (!xstrcasecmp(class_str, "sent")) ? s->uid : get_uid(s, sender));
+	xfree(text);
 	xfree(t);
 	return xstrdup(target);
 }

@@ -159,8 +159,10 @@ COMMAND(cmd_metacontact)
                 for (l = m->metacontact_items; l; l = l->next) {
                         metacontact_item_t *i = l->data;
 			userlist_t *u = userlist_find_n(i->s_uid, i->name);
+			char *tmp = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
-                        printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr), itoa(i->prio));
+                        printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, tmp, itoa(i->prio));
+			xfree(tmp);
                 }
 
 		printq("metacontact_item_list_footer", params[0]);

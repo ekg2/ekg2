@@ -313,12 +313,15 @@ event_t *event_find_all(const char *name, const char *uid, const char *target, c
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(format_string(a[i], uid, target, data)) && xstrcasecmp(a[i], "*") && xstrcasecmp(a[i], b[j])))
+						char *tmp = format_string(a[i], uid, target, data);
+						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(tmp) && xstrcasecmp(a[i], "*") && xstrcasecmp(a[i], b[j]))) {
+							xfree(tmp);
         		        	                continue;
-                		        	else if (ev->prio > ev_max_prio){
+						} else if (ev->prio > ev_max_prio){
 	                        	        	ev_max = ev;
 							ev_max_prio = ev->prio;
 						}
+						xfree(tmp);
 					}
 				}
 			}
