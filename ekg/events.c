@@ -270,7 +270,7 @@ event_t *event_find(const char *name, const char *target)
 	int ev_max_prio = 0;
 	char **b, **c;
 
-        debug("//event_find (name (%s), target (%s)\n", name, target);
+        debug("// event_find (name (%s), target (%s)\n", name, target);
 	b = array_make(target, "|,;", 0, 1, 0);
 	c = array_make(name, "|,;", 0, 1, 0);
         for (l = events; l; l = l->next) {
@@ -318,7 +318,7 @@ event_t *event_find_all(const char *name, const char *target)
 	int ev_max_prio = 0;
 	char **b, **c;
 
-        debug("//event_find_all (name (%s), target (%s)\n", name, target);
+        debug("// event_find_all (name (%s), target (%s)\n", name, target);
 	b = array_make(target, "|,;", 0, 1, 0);
 	c = array_make(name, "|,;", 0, 1, 0);
         for (l = events; l; l = l->next) {
@@ -389,7 +389,11 @@ void events_add_handler(char *name, void *function)
 int events_init()
 {
 	events_add_handler("protocol-message", event_protocol_message);
-
+	events_add_handler("event_avail", event_avail);
+	events_add_handler("event_away", event_away);
+	events_add_handler("event_na", event_na);
+	events_add_handler("event_online", event_online);
+	events_add_handler("event_descr", event_descr);
 	return 0;
 }
 
@@ -415,6 +419,108 @@ int event_protocol_message(void *data, va_list ap)
 
 	return 0;
 }
+
+/*
+ * event_avail ()
+ *
+ * handler for changing status on available
+ */
+int event_avail(void *data, va_list ap)
+{
+        char **__session = va_arg(ap, char**), *session = *__session;
+        char **__uid = va_arg(ap, char**), *uid = *__uid;
+        session_t *session_class = session_find(session);
+        userlist_t *userlist = userlist_find(session_class, uid);
+
+	if (userlist && userlist->nickname)
+		event_check(session, "event_avail", userlist->nickname, NULL);
+	else
+		event_check(session, "event_avail", uid, NULL);
+
+	return 0;
+}
+
+/*
+ * event_away ()
+ *
+ * handler for changing status on away
+ */
+int event_away(void *data, va_list ap)
+{
+        char **__session = va_arg(ap, char**), *session = *__session;
+        char **__uid = va_arg(ap, char**), *uid = *__uid;
+        session_t *session_class = session_find(session);
+        userlist_t *userlist = userlist_find(session_class, uid);
+
+        if (userlist && userlist->nickname)
+                event_check(session, "event_away", userlist->nickname, NULL);
+        else
+                event_check(session, "event_away", uid, NULL);
+
+        return 0;
+}
+
+/*
+ * event_na ()
+ *
+ * handler for changing status on NA
+ */
+int event_na(void *data, va_list ap)
+{
+        char **__session = va_arg(ap, char**), *session = *__session;
+        char **__uid = va_arg(ap, char**), *uid = *__uid;
+        session_t *session_class = session_find(session);
+        userlist_t *userlist = userlist_find(session_class, uid);
+
+        if (userlist && userlist->nickname)
+                event_check(session, "event_na", userlist->nickname, NULL);
+        else
+                event_check(session, "event_na", uid, NULL);
+
+        return 0;
+}
+
+/*
+ * event_online ()
+ *
+ * handler for changing status from NA to avail
+ */
+int event_online(void *data, va_list ap)
+{
+        char **__session = va_arg(ap, char**), *session = *__session;
+        char **__uid = va_arg(ap, char**), *uid = *__uid;
+        session_t *session_class = session_find(session);
+        userlist_t *userlist = userlist_find(session_class, uid);
+
+        if (userlist && userlist->nickname)
+                event_check(session, "event_online", userlist->nickname, NULL);
+        else
+                event_check(session, "event_online", uid, NULL);
+
+        return 0;
+}
+
+/*
+ * event_descr ()
+ *
+ * handler for changing description
+ */
+int event_descr(void *data, va_list ap)
+{
+        char **__session = va_arg(ap, char**), *session = *__session;
+        char **__uid = va_arg(ap, char**), *uid = *__uid;
+	char **__descr = va_arg(ap, char**), *descr = *__descr;
+        session_t *session_class = session_find(session);
+        userlist_t *userlist = userlist_find(session_class, uid);
+
+        if (userlist && userlist->nickname)
+                event_check(session, "event_descr", userlist->nickname, descr);
+        else
+                event_check(session, "event_descr", uid, descr);
+
+        return 0;
+}
+
 
 /* event_check ()
  * 
@@ -519,7 +625,7 @@ void event_free()
 	}
 
 	list_destroy(events, 1);
-	list_destroy(events_all, 1);
+	array_free(events_all);	
 	events = NULL;
 	events_all = NULL;
 }

@@ -199,6 +199,7 @@ int protocol_status(void *data, va_list ap)
 	if (!xstrcasecmp(status, EKG_STATUS_NA) && (config_completion_notify & 2) && u->nickname)
 		tabnick_remove(u->nickname);
 
+
 	/* je¶li ma³o wa¿na zmiana stanu... */
 	if ((session_int_get(s, "display_notify") == 2 || (session_int_get(s, "display_notify") == -1 && config_display_notify == 2)) && xstrcasecmp(u->status, EKG_STATUS_NA)) {
 		/* je¶li na zajêty, ignorujemy */
@@ -241,13 +242,27 @@ notify_plugins:
 	        u->last_descr = xstrdup(u->descr);
 	}
 
+	if (!xstrcasecmp(u->status, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA))
+		query_emit(NULL, "event_online", __session, __uid);
+
 	xfree(u->status);
 	u->status = xstrdup(status);
+
+	if (xstrcasecmp(u->descr, descr))
+		query_emit(NULL, "event_descr", __session, __uid, __descr);
+
 	xfree(u->descr);
 	u->descr = xstrdup(descr);
 	u->status_time = time(NULL);
 	
 	query_emit(NULL, "userlist-changed", __session, __uid);
+
+	if (!xstrcasecmp(status, EKG_STATUS_AVAIL))
+		query_emit(NULL, "event_avail", __session, __uid);
+	if (!xstrcasecmp(status, EKG_STATUS_AWAY))
+                query_emit(NULL, "event_away", __session, __uid);
+        if (!xstrcasecmp(status, EKG_STATUS_NA))
+                query_emit(NULL, "event_na", __session, __uid);
 
 	return 0;
 }

@@ -41,4 +41,9 @@ void event_free();
 int events_init();
 
 int event_protocol_message(void *data, va_list ap);
+int event_avail(void *data, va_list ap);
+int event_away(void *data, va_list ap);
+int event_na(void *data, va_list ap);
+int event_online(void *data, va_list ap);
+int event_descr(void *data, va_list ap);
 
