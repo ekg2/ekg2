@@ -44,6 +44,80 @@
 #  define PATH_MAX _POSIX_PATH_MAX
 #endif
 
+/* 
+ * config_read_later()
+ * 
+ * reads data after plugins initialization 
+ * 
+ * 0/-1
+ */
+int config_read_later(const char *filename)
+{
+        char *buf, *foo;
+        FILE *f;
+        int i = 0, good_file = 0, ret = 1;
+        struct stat st;
+
+        if (!filename && !(filename = prepare_path("config", 0)))
+                return -1;
+
+        if (!(f = fopen(filename, "r")))
+                return -1;
+
+        if (stat(filename, &st) || !S_ISREG(st.st_mode)) {
+                if (S_ISDIR(st.st_mode))
+                        errno = EISDIR;
+                else
+                        errno = EINVAL;
+                fclose(f);
+                return -1;
+        }
+
+        while ((buf = read_file(f))) {
+                i++;
+
+                if (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/')) {
+                        xfree(buf);
+                        continue;
+                }
+
+                if (!(foo = xstrchr(buf, ' '))) {
+                        xfree(buf);
+                        continue;
+                }
+
+                *foo++ = 0;
+
+
+		if (!xstrcasecmp(buf, "bind")) {
+                        char **pms = array_make(foo, " \t", 2, 1, 0);
+
+                        if (array_count(pms) == 2) {
+				char *tmp;
+
+				tmp = saprintf("/bind --add %s %s",  pms[0], pms[1]);
+	                        ret = command_exec(NULL, NULL, tmp, 1);
+				
+				xfree(tmp);
+                        }
+
+                        array_free(pms);
+                }
+                if (!ret)
+                        good_file = 1;
+
+                if (!good_file && i > 100) {
+                        xfree(buf);
+                        break;
+                }
+
+                xfree(buf);
+        }
+
+        fclose(f);
+	return (good_file) ? 0 : -1;
+}
+
 /*
  * config_read()
  *

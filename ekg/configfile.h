@@ -25,6 +25,7 @@
 #define __EKG_CONFIGFILE_H
 
 int config_read(const char *filename);
+int config_read_later(const char *filename);
 int config_write(const char *filename);
 int config_write_partly(char **vars);
 void config_write_crash();

@@ -741,6 +741,8 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses");
 #endif
 
+	config_read_later(NULL);
+
 	/* je¶li ma byæ theme, niech bêdzie theme */
 	if (load_theme)
 		theme_read(load_theme, 1);
