@@ -1581,6 +1581,7 @@ COMMAND(gg_command_msg)
 
 		xfree(me);
 		xfree(rcpts[0]);
+		xfree(rcpts);
 	}
 
 	xfree(msg);
