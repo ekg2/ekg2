@@ -7,7 +7,6 @@ char *config_contacts_options;
 char *config_contacts_groups;
 
 int contacts_group_index;
-int contacts_index;
 
 int ncurses_contacts_update(window_t *w);
 void ncurses_contacts_changed(const char *name);

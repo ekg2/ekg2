@@ -45,8 +45,6 @@
 #include "old.h"
 
 int contacts_group_index = 0;
-int contacts_index = 0;
-
 
 static int contacts_margin = 1;
 static int contacts_edge = WF_RIGHT;
@@ -99,7 +97,7 @@ int ncurses_contacts_update(window_t *w)
 {
 	const char *header = NULL, *footer = NULL;
 	char *group = NULL;
-	int j, count_all = 0;
+	int j, old_start;
 	int all = 0; /* 1 - all, 2 - metacontacts */
 	ncurses_window_t *n;
 	list_t sorted = NULL;
@@ -122,7 +120,9 @@ int ncurses_contacts_update(window_t *w)
 
 	n = w->private;
 	
+	old_start = n->start;
 	ncurses_clear(w, 1);
+	n->start = old_start;
 
         if (!session_current)
 		return -1;
@@ -185,7 +185,6 @@ group_cleanup:
 	
 	if (xstrcmp(header, "")) {
 		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
-		count_all--;
 	}
 
 	
@@ -210,18 +209,12 @@ group_cleanup:
 				if (group && !ekg_group_member(u, group))
 					continue;
 				
-				if (count_all < contacts_index + 3) {
-					count_all++;
-					continue;
-				}
-	
 				if (!count) {
 					snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
 					format = format_find(tmp);
 					if (xstrcmp(format, ""))
 						ncurses_backlog_add(w, fstring_new(format_string(format)));
 					footer_status = u->status;
-					count_all++;
 				}
 	
 				if (u->descr && contacts_descr)
@@ -246,7 +239,6 @@ group_cleanup:
 				xfree(line);
 	
 				count++;
-				count_all++;
 			}
 			if (!all)
 				break;
@@ -266,18 +258,12 @@ group_cleanup:
                                 if (!u->status || !u->nickname || xstrncmp(u->status, contacts_order + j, 2))
                                         continue;
 
-                                if (count_all < contacts_index + 3) {
-                                        count_all++;
-                                        continue;
-                                }
-
                                 if (!count) {
                                         snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
                                         format = format_find(tmp);
                                         if (xstrcmp(format, ""))
                                                 ncurses_backlog_add(w, fstring_new(format_string(format)));
                                         footer_status = u->status;
-					count_all++;
                                 }
 
                                 if (u->descr && contacts_descr)
@@ -299,7 +285,6 @@ group_cleanup:
                                 xfree(line);
 
                                 count++;
-				count_all++;
 			}
 		} 
 
@@ -503,7 +488,7 @@ void ncurses_contacts_new(window_t *w)
 	w->frames = contacts_frame;
 	n->handle_redraw = ncurses_contacts_update;
 	w->nowrap = !contacts_wrap;
-	n->start = 10;
+	n->start = 0;
 }
 
 

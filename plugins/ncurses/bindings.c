@@ -513,16 +513,8 @@ static void binding_forward_page(const char *arg)
 
 static void binding_backward_contacts_line(const char *arg)
 {
-	contacts_index--;
-        if (contacts_index < 0)
-                contacts_index = 0;
-}
-
-static void binding_forward_contacts_line(const char *arg)
-{
         ncurses_window_t *n;
         window_t *w = NULL;
-        int contacts_count;
 
         list_t l;
 
@@ -539,17 +531,47 @@ static void binding_forward_contacts_line(const char *arg)
                 return;
 
         n = w->private;
-        contacts_count = list_count(session_current->userlist);
 
-        contacts_index++;
+        n->start--;
 
-        if (contacts_index > contacts_count - w->height + n->overflow)
-                contacts_index = contacts_count - window_current->height + n->overflow;
-        if (contacts_index < 0)
-                contacts_index = 0;
+        if (n->start < 0)
+                n->start = 0;
 
-        ncurses_contacts_update(NULL);
+        ncurses_redraw(w);
+        ncurses_commit();
+}
 
+static void binding_forward_contacts_line(const char *arg)
+{
+        ncurses_window_t *n;
+        window_t *w = NULL;
+
+        list_t l;
+
+        for (l = windows; l; l = l->next) {
+                window_t *v = l->data;
+
+                if (v->target && !xstrcmp(v->target, "__contacts")) {
+                        w = v;
+                        break;
+                }
+        }
+
+        if (!w)
+                return;
+
+        n = w->private;
+	
+        n->start++;
+
+        if (n->start > n->backlog_size - w->height + n->overflow)
+                n->start = n->backlog_size - window_current->height + n->overflow;
+
+        if (n->start < 0)
+                n->start = 0;
+
+        ncurses_redraw(w);
+	ncurses_commit();
 }
 
 
@@ -557,7 +579,6 @@ static void binding_backward_contacts_page(const char *arg)
 {
         ncurses_window_t *n;
         window_t *w = NULL;
-        int contacts_count;
 
         list_t l;
 
@@ -574,22 +595,20 @@ static void binding_backward_contacts_page(const char *arg)
                 return;
 
         n = w->private;
-        contacts_count = list_count(session_current->userlist);
+	
+        n->start -= w->height / 2;
 
-        contacts_index -= w->height / 2;
+        if (n->start < 0)
+                n->start = 0;
 
-        if (contacts_index < 0)
-                contacts_index = 0;
-
-        ncurses_contacts_update(NULL);
-
+        ncurses_redraw(w);
+        ncurses_commit();
 }
 
 static void binding_forward_contacts_page(const char *arg)
 {
         ncurses_window_t *n;
 	window_t *w = NULL;
-	int contacts_count;
 
         list_t l;
 
@@ -606,16 +625,17 @@ static void binding_forward_contacts_page(const char *arg)
 	        return;
 
         n = w->private;
-	contacts_count = list_count(session_current->userlist);
 
-        contacts_index += w->height / 2;
+        n->start += w->height / 2;
 
-  	if (contacts_index > contacts_count - w->height + n->overflow)
-        	contacts_index = contacts_count - window_current->height + n->overflow;
-        if (contacts_index < 0)
-                contacts_index = 0;
+        if (n->start > n->backlog_size - w->height + n->overflow)
+                n->start = n->backlog_size - window_current->height + n->overflow;
 
-	ncurses_contacts_update(NULL);
+        if (n->start < 0)
+                n->start = 0;
+
+	ncurses_redraw(w);
+	ncurses_commit();
 }
 
 static void binding_ignore_query(const char *arg)
