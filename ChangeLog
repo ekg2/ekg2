@@ -15,6 +15,7 @@ zg³osi³ b³±d.
 - poprawione przewijanie listy kontaków (Ctrl-Down, Ctrl-Up) (deL)
 - poprawki Autotools i dodanie strfry (dla systemow, ktore go nie maja),
   ekg powinno sie teraz budowac na NetBSD (i pokrewnych) (mp)
+- nie mo¿na zmieniæ sesji w okienku rozmowy (dredzik/del)
 
 // 2004-04-17
 - poprawka wy¶wietlania ostatniego stanu (nie wy¶wietla ostatniego stanu, gdy ten by³

@@ -1490,5 +1490,6 @@ void theme_init()
 	format_add("session_removed", "%> Usuniêto sesjê %T%1%n\n", 1); /* uid */
 	format_add("session_format", "%T%1%n", 1);
 	format_add("session_format_alias", "%T%1%n/%2", 1);
+	format_add("session_cannot_change", "%! Nie mo¿na zmieniæ sesji w okienku rozmowy%n\n", 1);
 }
 

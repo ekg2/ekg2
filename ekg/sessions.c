@@ -670,13 +670,17 @@ COMMAND(session_command)
 	if (match_arg(params[0], 'w', "sw", 2)) {
 		session_t *s;
 		
-		if(!params[1]) {
+		if (!params[1]) {
 			printq("invalid_params", name);
 			return -1;		
 		}
 		if (!(s = session_find(params[1]))) {
 			printq("session_doesnt_exist", params[1]);
 			return -1;
+		}
+		if (window_current->target && window_current->id != 0) {
+			printq("sesssion_cannot_change");
+			return -1;			
 		}
 
 		window_current->session = s;
