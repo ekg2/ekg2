@@ -783,12 +783,12 @@ int main(int argc, char **argv)
 	
 
 	/* status window takes first session or setted as default one*/
-	if (sessions) {
+	if (sessions && (!session_current || window_current->session)) {
 		session_t *session_default = session_find_default();
 
 		session_current = (session_default) ? session_default : (session_t*) sessions->data;
 		window_current->session = session_current;
-	}
+	} 
 	
 	metacontact_read(); /* read the metacontacts info */
 

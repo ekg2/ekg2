@@ -307,6 +307,7 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 	v.notify = notify;
 	v.map = map;
 	v.dyndisplay = dyndisplay;
+	v.plugin = plugin;
 
 	xfree(__name);
 

@@ -2097,13 +2097,20 @@ COMMAND(cmd_reload)
 	if (params[0])
 		filename = params[0];
 
+
 	if ((res = config_read(filename)))
 		printq("error_reading_config", strerror(errno));
 
-	if (res == -1)
-		goto end;
+        if (res == -1)
+                goto end;
 
 	if ((res = config_read_later(filename)))
+                printq("error_reading_config", strerror(errno));
+
+        if (res == -1)
+                goto end;
+
+        if ((res = session_read()))
                 printq("error_reading_config", strerror(errno));
 
 end:

@@ -175,7 +175,7 @@ int session_remove(const char *uid)
 
 	count = list_count(sessions);
 
-	for (l = windows; l; l = l->next) {
+	for (l = windows; windows && l; l = l->next) {
 		window_t *w = l->data;
 
 		if (w && w->session && w->session == s) {
@@ -192,6 +192,7 @@ int session_remove(const char *uid)
 		xfree(tmp);
 	}
 	tmp = xstrdup(uid);
+        query_emit(NULL, "session-changed");
 	query_emit(NULL, "session-removed", &tmp);
 	xfree(tmp);
 
@@ -401,7 +402,7 @@ int session_set(session_t *s, const char *key, const char *value)
 {
         session_param_t *sp;
 	session_param_t v;
-        plugin_t *p = (s->uid) ? plugin_find_uid(s->uid) : NULL;
+        plugin_t *p = (s && s->uid) ? plugin_find_uid(s->uid) : NULL;
         plugins_params_t *pa = (p) ? plugin_var_find(p, key) : NULL; 
 	int ret = 0;
 
@@ -480,6 +481,11 @@ int session_read()
 	if (!(f = fopen(prepare_path("sessions", 0), "r")))
 		return -1;
 
+	if (!in_autoexec) {
+		sessions_free();
+		debug("	 flushed sessions\n");
+	}
+
 	while ((line = read_file(f))) {
 		char *tmp;
 
@@ -509,6 +515,10 @@ int session_read()
 				xfree(decoded);
 			} else 
 				session_set(s, line, tmp);
+			if (!xstrcmp(line, "default") && atoi(tmp) == 1) {
+				session_current = s;
+				window_current->session = s;
+			}
 			goto next;
 		}
 
@@ -1032,5 +1042,7 @@ void sessions_free()
 
         list_destroy(sessions, 1);
         sessions = NULL;
+	session_current = NULL;
+	window_current->session = NULL;
 }
 

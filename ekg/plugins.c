@@ -58,7 +58,9 @@ int plugin_load(const char *name, int quiet)
 	int (*plugin_init)() = NULL;
 	list_t l;
 
-	if (!name) return -1;
+	if (!name)
+		return -1;
+
 	if (plugin_find(name)) {
 		printq("plugin_already_loaded", name); 
 		return -1;
@@ -114,6 +116,8 @@ int plugin_load(const char *name, int quiet)
 		}
 	}
 
+	printq("plugin_loaded", name);
+
 	return 0;
 }
 
@@ -168,6 +172,8 @@ plugin_t *plugin_find_uid(const char *uid)
  */
 int plugin_unload(plugin_t *p)
 {
+	char *name; 
+
 	if (!p)
 		return -1;
 
@@ -177,7 +183,28 @@ int plugin_unload(plugin_t *p)
 	 * to cos segfaultowalo (wczesniej czy pozniej), jesli bylo wywolane z
 	 * ncurses.  niestety, problem pozostaje dla innych pluginow i takiego
 	 * np. rc. sie zrobi nast razem */
-	if (p->pclass == PLUGIN_PROTOCOL) return -1;
+	if (p->pclass == PLUGIN_PROTOCOL) {
+		list_t l;
+
+		for (l = sessions; l; ) {
+			session_t *s = l->data;
+
+			l = l->next;
+		
+			if (!s || !s->uid)
+				continue;
+
+			if (plugin_find_uid(s->uid) == p)
+				session_remove(s->uid);
+		}		
+	}
+
+	if (p->pclass == PLUGIN_UI) {
+		print("plugin_unload_ui", p->name);
+		return -1;
+	}
+
+	name = xstrdup(p->name);
 
 	if (p->destroy)
 		p->destroy();
@@ -186,6 +213,9 @@ int plugin_unload(plugin_t *p)
 		lt_dlclose(p->dl);
 	}
 
+	print("plugin_unloaded", name);
+
+	xfree(name);
 	return 0;
 }
 
@@ -226,12 +256,16 @@ int plugin_unregister(plugin_t *p)
 			query_disconnect(q->plugin, q->name);
 	}
 
+
 	for (l = variables; l; ) {
 		variable_t *v = l->data;
 
 		l = l->next;
 
-		if (v->plugin == p)
+		if (!v)
+			continue;
+
+		if (v->plugin == p) 
 			variable_remove(v->plugin, v->name);
 	}
 
@@ -243,6 +277,16 @@ int plugin_unregister(plugin_t *p)
 		if (c->plugin == p)
 			command_remove(c->plugin, c->name);
 	}
+
+        for (l = watches; l; ) {
+                watch_t *w = l->data;
+
+                l = l->next;
+
+                if (w->plugin == p)
+                        watch_free(w);
+        }
+
 
 	list_remove(&plugins, p, 0);
 

@@ -1626,6 +1626,9 @@ void theme_init()
 	format_add("plugin_doesnt_exist","%! Plugin %T%1%n nie mo¿e zostaæ znaleziony%n\n", 1);
 	format_add("plugin_incorrect", "%! Plugin %T%1%n nie jest prawid³owym pluginem EKG2%n\n", 1);
 	format_add("plugin_not_initialized", "%! Plugin %T%1%n nie zosta³ wczytany poprawnie%n\n", 1);
+	format_add("plugin_unload_ui", "%! Plugin %T%1%n jest pluginem UI i nie mo¿e zostaæ wy³adowany%n\n", 1);
+	format_add("plugin_loaded", "%> Plugin %T%1%n zosta³ za³adowany%n\n", 1);
+	format_add("plugin_unloaded", "%> Plugin %T%1%n zosta³ wy³adowany%n\n", 1);
 
 	theme_plugins_init();
 }

@@ -84,6 +84,7 @@ int gg_private_init(session_t *s)
 	g = xmalloc(sizeof(gg_private_t));
 	memset(g, 0, sizeof(gg_private_t));
 
+	userlist_free(s);
 	userlist_read(s);
 	session_private_set(s, g);
 

@@ -313,6 +313,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 				window_t *w = l->data;
 
 				if (separate && !w->target && w->id > 1) {
+					xfree(w->target);
 					w->target = xstrdup(target);
 					query_emit(NULL, "ui-window-target-changed", &w);	/* XXX */
 					print("window_id_query_started", itoa(w->id), who);
