@@ -537,6 +537,7 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 
 	/* ojej, roz³±czy³o nas */
 	if (type == 1) {
+		debug("[jabber] jabber_handle_stream() type == 1, exitting\n");
 		jabber_handle_disconnect(s);
 		return;
 	}
@@ -575,8 +576,10 @@ void jabber_handle_connect(int type, int fd, int watch, void *data)
 
 	debug("[jabber] jabber_handle_connect()\n");
 
-	if (type != 0)
+	if (type != 0) {
+		debug("wrong type: %d\n", type);
 		return;
+	}
 
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		print("generic_error", strerror(res));

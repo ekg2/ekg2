@@ -1012,6 +1012,7 @@ void theme_init()
 	/* lista kontaktów z boku ekranu */
 	format_add("contacts_header", "", 1);
 	format_add("contacts_header_group", "%K %1%n", 1);
+	format_add("contacts_metacontacts_header", "", 1);
 	format_add("contacts_avail_header", "", 1);
 	format_add("contacts_avail", " %Y%1%n", 1);
 	format_add("contacts_avail_descr", "%Ki%Y%1%n", 1);
@@ -1065,6 +1066,7 @@ void theme_init()
 	format_add("contacts_blocking_footer", "", 1);
 	format_add("contacts_footer", "", 1);
 	format_add("contacts_footer_group", "", 1);
+	format_add("contacts_metacontacts_footer", "", 1);
 		
 	/* ¿egnamy siê, zapisujemy konfiguracjê */
 	format_add("quit", "%> Papa\n", 1);

@@ -834,7 +834,7 @@ int main(int argc, char **argv)
 
 	/* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
 	 * wszystkim, co chce siê automagicznie ³±czyæ. */
-	for (l = sessions; l; l = l->next) {
+	for (l = sessions, (l->prev) ? l = l->prev : l; l; l = l->next) {
 		session_t *s = l->data;
 
 		if (auto_connect && session_int_get(s, "auto_connect") == 1)
