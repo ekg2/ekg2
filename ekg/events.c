@@ -61,7 +61,7 @@ COMMAND(cmd_on)
 			return -1;
 		}
 		
-		if (!event_add(params[1], prio, params[3], params[4], quiet)) {
+		if (event_add(params[1], prio, params[3], params[4], quiet)) {
                         config_changed = 1;
 			return 0;
 		} else
@@ -604,9 +604,9 @@ void event_free()
 	}
 
 	list_destroy(events, 1);
-	array_free(events_all);	
-	events = NULL;
+	xfree(events_all);
 	events_all = NULL;
+	events = NULL;
 }
 
 /*

@@ -952,6 +952,7 @@ void ekg_exit()
 	binding_free();
 	last_free();
 	buffer_free();
+	event_free();
 
 	list_destroy(windows, 1);
 
