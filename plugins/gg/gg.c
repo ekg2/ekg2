@@ -1030,13 +1030,13 @@ void gg_changed_proxy(session_t *s, const char *var)
 static int gg_theme_init()
 {
         /* pobieranie tokenu */
-        format_add("gg_token", _("%> Token zapisano do pliku %T%1%n\n"), 1);
+        format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
         format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
         format_add("gg_token_body", "%1\n", 1);
-        format_add("gg_token_failed", _("%! B³±d pobierania tokenu: %1\n"), 1);
-        format_add("gg_token_timeout", _("%! Przekroczono limit czasu pobierania tokenu\n"), 1);
-        format_add("gg_token_unsupported", _("%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"), 1);
-        format_add("gg_token_missing", _("%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"), 1);
+        format_add("gg_token_failed", _("%! Error when token was getting: %1\n"), 1);
+        format_add("gg_token_timeout", _("%! Token getting time ran out\n"), 1);
+        format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
+        format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
 	
 	return 0;
 }

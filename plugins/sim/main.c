@@ -24,83 +24,83 @@ static int config_encryption = 0;
 static int sim_plugin_destroy();
 
 static plugin_t sim_plugin = {
-	name: "sim",
-	pclass: PLUGIN_CRYPT,
-	destroy: sim_plugin_destroy,
-	theme_init: NULL,
+        name: "sim",
+        pclass: PLUGIN_CRYPT,
+        destroy: sim_plugin_destroy,
+        theme_init: NULL,
 };
 
 static int message_encrypt(void *data, va_list ap)
 {
-	char **session, **recipient, **message, *result;
-	int *encrypted;
+        char **session, **recipient, **message, *result;
+        int *encrypted;
 
-	session = va_arg(ap, char**);
-	recipient = va_arg(ap, char**);
-	message = va_arg(ap, char**);
-	encrypted = va_arg(ap, int*);
+        session = va_arg(ap, char**);
+        recipient = va_arg(ap, char**);
+        message = va_arg(ap, char**);
+        encrypted = va_arg(ap, int*);
 
-	if (!session || !message || !encrypted)
-		return 0;
+        if (!session || !message || !encrypted)
+                return 0;
 
-	debug("[sim] message-encrypt: %s -> %s\n", *session, *recipient);
+        debug("[sim] message-encrypt: %s -> %s\n", *session, *recipient);
 
-	if (!config_encryption)
-		return 0;
+        if (!config_encryption)
+                return 0;
 
-	if (!*session || strncmp(*session, "gg:", 3) || !*recipient || strncmp(*recipient, "gg:", 3))
-		return 0;
-	
-	result = sim_message_encrypt(*message, atoi(*recipient + 3));
+        if (!*session || strncmp(*session, "gg:", 3) || !*recipient || strncmp(*recipient, "gg:", 3))
+                return 0;
 
-	if (!result) {
-		debug("[sim] encryption failed: %s\n", sim_strerror(sim_errno));
-		return 0;
-	}
+        result = sim_message_encrypt(*message, atoi(*recipient + 3));
 
-	if (xstrlen(result) > 1989) {
-		debug("[sim] encrypted message too long - truncated\n");
-		result[1989] = 0;
-	}
+        if (!result) {
+                debug("[sim] encryption failed: %s\n", sim_strerror(sim_errno));
+                return 0;
+        }
 
-	xfree(*message);
-	*message = result;
-	*encrypted++;
-	
-	return 0;
+        if (xstrlen(result) > 1989) {
+                debug("[sim] encrypted message too long - truncated\n");
+                result[1989] = 0;
+        }
+
+        xfree(*message);
+        *message = result;
+        *encrypted++;
+
+        return 0;
 }
 
 static int message_decrypt(void *data, va_list ap)
 {
-	char **session, **sender, **message, *result;
-	int *decrypted;
+        char **session, **sender, **message, *result;
+        int *decrypted;
 
-	session = va_arg(ap, char**);
-	sender = va_arg(ap, char**);
-	message = va_arg(ap, char**);
-	decrypted = va_arg(ap, int*);
+        session = va_arg(ap, char**);
+        sender = va_arg(ap, char**);
+        message = va_arg(ap, char**);
+        decrypted = va_arg(ap, int*);
 
-	if (!session || !message || !decrypted)
-		return 0;
+        if (!session || !message || !decrypted)
+                return 0;
 
-	if (!config_encryption)
-		return 0;
+        if (!config_encryption)
+                return 0;
 
-	if (!*session || strncmp(*session, "gg:", 3) || !*sender || strncmp(*sender, "gg:", 3))
-		return 0;
+        if (!*session || strncmp(*session, "gg:", 3) || !*sender || strncmp(*sender, "gg:", 3))
+                return 0;
 
-	result = sim_message_decrypt(*message, atoi(*session) + 3);
+        result = sim_message_decrypt(*message, atoi(*session) + 3);
 
-	if (!result) {
-		debug("[sim] decryption failed: %s\n", sim_strerror(sim_errno));
-		return 0;
-	}
-	
-	xfree(*message);
-	*message = result;
-	*decrypted++;
+        if (!result) {
+                debug("[sim] decryption failed: %s\n", sim_strerror(sim_errno));
+                return 0;
+        }
 
-	return 0;
+        xfree(*message);
+        *message = result;
+        *decrypted++;
+
+        return 0;
 }
 
 /*
@@ -110,182 +110,182 @@ static int message_decrypt(void *data, va_list ap)
  */
 static COMMAND(command_key)
 {
-	if (match_arg(params[0], 'g', "generate", 2)) {
-		char *tmp, *tmp2;
-		struct stat st;
-		int uin;
+        if (match_arg(params[0], 'g', "generate", 2)) {
+                char *tmp, *tmp2;
+                struct stat st;
+                int uin;
 
-		if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
-			printq("generic", "Mo¿na generowaæ klucze tylko dla sesji Gadu-Gadu");
-			return -1;
-		}
+                if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
+                        printq("generic", "Mo¿na generowaæ klucze tylko dla sesji Gadu-Gadu");
+                        return -1;
+                }
 
-		uin = atoi(session_uid_get(session) + 3);
+                uin = atoi(session_uid_get(session) + 3);
 
-		if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
-			printq("key_generating_error", strerror(errno));
-			return -1;
-		}
+                if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
+                        printq("key_generating_error", strerror(errno));
+                        return -1;
+                }
 
-		tmp = saprintf("%s/%d.pem", prepare_path("keys", 0), uin);
-		tmp2 = saprintf("%s/private.pem", prepare_path("keys", 0));
+                tmp = saprintf("%s/%d.pem", prepare_path("keys", 0), uin);
+                tmp2 = saprintf("%s/private.pem", prepare_path("keys", 0));
 
-		if (!stat(tmp, &st) && !stat(tmp2, &st)) {
-			printq("key_private_exist");
-			xfree(tmp);
-			xfree(tmp2);
-			return -1;
-		} 
+                if (!stat(tmp, &st) && !stat(tmp2, &st)) {
+                        printq("key_private_exist");
+                        xfree(tmp);
+                        xfree(tmp2);
+                        return -1;
+                }
 
-		xfree(tmp);
-		xfree(tmp2);
+                xfree(tmp);
+                xfree(tmp2);
 
-		printq("key_generating");
+                printq("key_generating");
 
-		if (sim_key_generate(uin)) {
-			printq("key_generating_error", "sim_key_generate()");
-			return -1;
-		}
+                if (sim_key_generate(uin)) {
+                        printq("key_generating_error", "sim_key_generate()");
+                        return -1;
+                }
 
-		printq("key_generating_success");
+                printq("key_generating_success");
 
-		return 0;
-	}
+                return 0;
+        }
 
-	if (match_arg(params[0], 's', "send", 2)) {
-		string_t s = NULL;
-		char *tmp, buf[128];
-		FILE *f;
-		
-		if (!params[1]) {
-			printq("not_enough_params", name);
-			return -1;
-		}
+        if (match_arg(params[0], 's', "send", 2)) {
+                string_t s = NULL;
+                char *tmp, buf[128];
+                FILE *f;
 
-		if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
-			printq("generic", "Mo¿na wysy³aæ klucze tylko dla sesji Gadu-Gadu");
-			return -1;
-		}
+                if (!params[1]) {
+                        printq("not_enough_params", name);
+                        return -1;
+                }
 
-		tmp = saprintf("%s/%d.pem", prepare_path("keys", 0), atoi(session_uid_get(session) + 3));
-		f = fopen(tmp, "r");
-		xfree(tmp);
+                if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
+                        printq("generic", "Mo¿na wysy³aæ klucze tylko dla sesji Gadu-Gadu");
+                        return -1;
+                }
 
-		if (!f) {
-			printq("key_public_not_found", format_user(session, session_uid_get(session)));
-			return -1;
-		}
+                tmp = saprintf("%s/%d.pem", prepare_path("keys", 0), atoi(session_uid_get(session) + 3));
+                f = fopen(tmp, "r");
+                xfree(tmp);
 
-		s = string_init("/ ");
+                if (!f) {
+                        printq("key_public_not_found", format_user(session, session_uid_get(session)));
+                        return -1;
+                }
 
-		while (fgets(buf, sizeof(buf), f))
-			string_append(s, buf);
+                s = string_init("/ ");
 
-		fclose(f);
+                while (fgets(buf, sizeof(buf), f))
+                        string_append(s, buf);
 
-		command_exec(params[1], session, s->str, quiet);
-		
-		printq("key_send_success", format_user(session, params[1]));
-		string_free(s, 1);
+                fclose(f);
 
-		return 0;
-	}
+                command_exec(params[1], session, s->str, quiet);
 
-#if 0
- 	if (match_arg(params[0], 'd', "delete", 2)) {
-		char *tmp;
-		int uin;
+                printq("key_send_success", format_user(session, params[1]));
+                string_free(s, 1);
 
-		if (!params[1]) {
-			printq("not_enough_params", name);
-			return -1;
-		}
-
-		if (!(uin = get_uin(params[1]))) {
-			printq("user_not_found", params[1]);
-			return -1;
-		}
-
-		if (uin == config_uin) {
-			char *tmp = saprintf("%s/private.pem", prepare_path("keys", 0));
-			unlink(tmp);
-			xfree(tmp);
-		}
-
-		tmp = saprintf("%s/%d.pem", prepare_path("keys", 0), uin);
-		
-		if (unlink(tmp))
-			printq("key_public_not_found", format_user(uin));
-		else
-			printq("key_public_deleted", format_user(uin));
-		
-		xfree(tmp);
-
-		return 0;
-	}
-#endif
-
-	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
-		DIR *dir;
-		const char *path = prepare_path("keys", 0);
-
-		if (!(dir = opendir(path))) {
-			printq("key_public_noexist");
-			return 0;
-		}
+                return 0;
+        }
 
 #if 0
-		if (params[0] && params[0][0] != '-')
-			x = params[0];
-		else if (params[0] && match_arg(params[0], 'l', "list", 2))
-			x = params[1];
+        if (match_arg(params[0], 'd', "delete", 2)) {
+                char *tmp;
+                int uin;
 
-		if (x && !(list_uin = get_uin(x))) {
-			printq("user_not_found", x);
-			closedir(dir);
-			return -1;
-		}
-		
-		while ((d = readdir(dir))) {
-			struct stat st;
-			char *name = saprintf("%s/%s", path, d->d_name);
-			struct tm *tm;
-			const char *tmp;
+                if (!params[1]) {
+                        printq("not_enough_params", name);
+                        return -1;
+                }
 
-			if ((tmp = xstrstr(d->d_name, ".pem")) && !tmp[4] && !stat(name, &st) && S_ISREG(st.st_mode)) {
-				int uin = atoi(d->d_name);
+                if (!(uin = get_uin(params[1]))) {
+                        printq("user_not_found", params[1]);
+                        return -1;
+                }
 
-				if (list_uin && uin != list_uin)
-					continue;
+                if (uin == config_uin) {
+                        char *tmp = saprintf("%s/private.pem", prepare_path("keys", 0));
+                        unlink(tmp);
+                        xfree(tmp);
+                }
 
-				if (uin) {
-					char *fp = sim_key_fingerprint(uin);
-					char ts[100];
+                tmp = saprintf("%s/%d.pem", prepare_path("keys", 0), uin);
 
-					tm = localtime(&st.st_mtime);
-					strftime(ts, sizeof(ts), format_find("key_list_timestamp"), tm);
+                if (unlink(tmp))
+                        printq("key_public_not_found", format_user(uin));
+                else
+                        printq("key_public_deleted", format_user(uin));
 
-					print("key_list", format_user(uin), (fp) ? fp : "", ts);
-					count++;
+                xfree(tmp);
 
-					xfree(fp);
-				}
-			}
-
-			xfree(name);
-		}
-
-		closedir(dir);
-
-		if (!count)
-			printq("key_public_noexist");
+                return 0;
+        }
 #endif
-		return 0;
-	}
 
-	printq("invalid_params", name);
+        if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
+                DIR *dir;
+                const char *path = prepare_path("keys", 0);
 
-	return -1;
+                if (!(dir = opendir(path))) {
+                        printq("key_public_noexist");
+                        return 0;
+                }
+
+#if 0
+                if (params[0] && params[0][0] != '-')
+                        x = params[0];
+                else if (params[0] && match_arg(params[0], 'l', "list", 2))
+                        x = params[1];
+
+                if (x && !(list_uin = get_uin(x))) {
+                        printq("user_not_found", x);
+                        closedir(dir);
+                        return -1;
+                }
+
+                while ((d = readdir(dir))) {
+                        struct stat st;
+                        char *name = saprintf("%s/%s", path, d->d_name);
+                        struct tm *tm;
+                        const char *tmp;
+
+                        if ((tmp = xstrstr(d->d_name, ".pem")) && !tmp[4] && !stat(name, &st) && S_ISREG(st.st_mode)) {
+                                int uin = atoi(d->d_name);
+
+                                if (list_uin && uin != list_uin)
+                                        continue;
+
+                                if (uin) {
+                                        char *fp = sim_key_fingerprint(uin);
+                                        char ts[100];
+
+                                        tm = localtime(&st.st_mtime);
+                                        strftime(ts, sizeof(ts), format_find("key_list_timestamp"), tm);
+
+                                        print("key_list", format_user(uin), (fp) ? fp : "", ts);
+                                        count++;
+
+                                        xfree(fp);
+                                }
+                        }
+
+                        xfree(name);
+                }
+
+                closedir(dir);
+
+                if (!count)
+                        printq("key_public_noexist");
+#endif
+                return 0;
+        }
+
+        printq("invalid_params", name);
+
+        return -1;
 }
 
 /*
@@ -295,33 +295,33 @@ static COMMAND(command_key)
  */
 int sim_plugin_init()
 {
-	plugin_register(&sim_plugin);
+        plugin_register(&sim_plugin);
 
-	query_connect(&sim_plugin, "message-encrypt", message_encrypt, NULL);
-	query_connect(&sim_plugin, "message-decrypt", message_decrypt, NULL);
+        query_connect(&sim_plugin, "message-encrypt", message_encrypt, NULL);
+        query_connect(&sim_plugin, "message-decrypt", message_decrypt, NULL);
 
-	command_add(&sim_plugin, "sim:key", "puUC uUC", command_key, 0,
-	  "-g --generate -s --send -d --delete -l --list");
-	
-	variable_add(&sim_plugin, "encryption", VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
+        command_add(&sim_plugin, "sim:key", "puUC uUC", command_key, 0,
+          "-g --generate -s --send -d --delete -l --list");
 
-	sim_key_path = xstrdup(prepare_path("keys/", 0));
+        variable_add(&sim_plugin, "encryption", VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
 
-	format_add("key_generating", _("%> Czekaj, generujê klucze...\n"), 1);
-	format_add("key_generating_success", _("%> Wygenerowano i zapisano klucze\n"), 1);
-	format_add("key_generating_error", _("%! Wyst±pi³ b³±d podczas generowania kluczy: %1\n"), 1);
-	format_add("key_private_exist", _("%! Posiadasz ju¿ swoj± parê kluczy\n"), 1);
-	format_add("key_public_deleted", _("%) Klucz publiczny %1 zosta³ usuniêty\n"), 1);
-	format_add("key_public_not_found", _("%! Nie znaleziono klucza publicznego %1\n"), 1);
-	format_add("key_public_noexist", _("%! Brak kluczy publicznych\n"), 1);
-	format_add("key_public_received", _("%> Otrzymano klucz publiczny od %1\n"), 1);
-	format_add("key_public_write_failed", _("%! B³±d podczas zapisu klucza publicznego: %1\n"), 1);
-	format_add("key_send_success", _("%> Wys³ano klucz publiczny do %1\n"), 1);
-	format_add("key_send_error", _("%! B³±d podczas wysy³ania klucza publicznego\n"), 1);
-	format_add("key_list", "%> %1 (%3)\n%) %2\n", 1);
-	format_add("key_list_timestamp", "%Y-%m-%d %H:%M", 1);
+        sim_key_path = xstrdup(prepare_path("keys/", 0));
 
-	return 0;
+        format_add("key_generating", _("%> Please wait, generating keys...\n"), 1);
+        format_add("key_generating_success", _("%> Keys generated and saved\n"), 1);
+        format_add("key_generating_error", _("%! Error while generating keys: %1\n"), 1);
+        format_add("key_private_exist", _("%! You already own a key pair\n"), 1);
+        format_add("key_public_deleted", _("%) Public key %1 removew\n"), 1);
+        format_add("key_public_not_found", _("%! Can find %1's public key\n"), 1);
+        format_add("key_public_noexist", _("%! No public keys\n"), 1);
+        format_add("key_public_received", _("%> Received public key from %1\n"), 1);
+        format_add("key_public_write_failed", _("%! Error while saving public key: %1\n"), 1);
+        format_add("key_send_success", _("%> Sent public key to %1\n"), 1);
+        format_add("key_send_error", _("%! Error sending public key\n"), 1);
+        format_add("key_list", "%> %1 (%3)\n%) %2\n", 1);
+        format_add("key_list_timestamp", "%Y-%m-%d %H:%M", 1);
+
+        return 0;
 }
 
 /*
@@ -331,18 +331,18 @@ int sim_plugin_init()
  */
 static int sim_plugin_destroy()
 {
-	query_disconnect(&sim_plugin, "message-encrypt");
-	query_disconnect(&sim_plugin, "message-decrypt");
-	
-	command_remove(&sim_plugin, "key");
+        query_disconnect(&sim_plugin, "message-encrypt");
+        query_disconnect(&sim_plugin, "message-decrypt");
 
-	variable_remove(&sim_plugin, "encryption");
-	
-	plugin_unregister(&sim_plugin);
+        command_remove(&sim_plugin, "key");
 
-	xfree(sim_key_path);
+        variable_remove(&sim_plugin, "encryption");
 
-	return 0;
+        plugin_unregister(&sim_plugin);
+
+        xfree(sim_key_path);
+
+        return 0;
 }
 
 /*

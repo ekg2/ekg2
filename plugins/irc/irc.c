@@ -1231,19 +1231,19 @@ static int irc_theme_init()
 	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
 
-	format_add("irc_joined", "%> %Y%2%n has joined %4\n", 1);
-	format_add("irc_left", "%> %g%2%n has left %4 (%5)\n", 1);
-	format_add("irc_kicked", "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n", 1);
-	format_add("irc_kicked_you", "%> You have been kicked out by %R%3%n from %5 (%6)\n", 1);
-	format_add("irc_quit", "%> %Y%2%n has quit irc (%4)\n", 1);
-	format_add("irc_unknown_ctcp", "%> %Y%2%n sent unknown CTCP %3: (%4)\n", 1);
-	format_add("irc_ctcp_action_y_pub", "%> %y%e* %2%n %4\n", 1);
-	format_add("irc_ctcp_action_y", "%> %Y%e* %2%n %4\n", 1);
-	format_add("irc_ctcp_action_pub", "%> %y%h* %2%n %5\n", 1);
-	format_add("irc_ctcp_action", "%> %Y%h* %2%n %5\n", 1);
-	format_add("irc_ctcp_request_pub", "%> %Y%2%n requested ctcp %5 from %4\n", 1);
-	format_add("irc_ctcp_request", "%> %Y%2%n requested ctcp %5\n", 1);
-	format_add("irc_ctcp_reply", "%> %Y%2%n CTCP reply from %3: %5\n", 1);
+	format_add("irc_joined", _("%> %Y%2%n has joined %4\n"), 1);
+	format_add("irc_left", _("%> %g%2%n has left %4 (%5)\n"), 1);
+	format_add("irc_kicked", _("%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"), 1);
+	format_add("irc_kicked_you", _("%> You have been kicked out by %R%3%n from %5 (%6)\n"), 1);
+	format_add("irc_quit", _("%> %Y%2%n has quit irc (%4)\n"), 1);
+	format_add("irc_unknown_ctcp", _("%> %Y%2%n sent unknown CTCP %3: (%4)\n"), 1);
+	format_add("irc_ctcp_action_y_pub", _("%> %y%e* %2%n %4\n"), 1);
+	format_add("irc_ctcp_action_y", _("%> %Y%e* %2%n %4\n"), 1);
+	format_add("irc_ctcp_action_pub", _("%> %y%h* %2%n %5\n"), 1);
+	format_add("irc_ctcp_action", _("%> %Y%h* %2%n %5\n"), 1);
+	format_add("irc_ctcp_request_pub", _("%> %Y%2%n requested ctcp %5 from %4\n"), 1);
+	format_add("irc_ctcp_request", _("%> %Y%2%n requested ctcp %5\n"), 1);
+	format_add("irc_ctcp_reply", _("%> %Y%2%n CTCP reply from %3: %5\n"), 1);
 
 
 	format_add("IRC_ERR_CANNOTSENDTOCHAN", "%! %2: %1\n", 1);
@@ -1258,32 +1258,32 @@ static int irc_theme_init()
 	format_add("IRC_ERR_JUSTONE", "%! (%1) %2\n", 1);
 	format_add("IRC_ERR_NEWONE", "%! (%1) 1:%2 2:%3 3:%4 4:%5\n", 1);
 	
-	format_add("IRC_RPL_CANTSEND", "%> Cannot send to channel %T%2%n\n", 1);
+	format_add("IRC_RPL_CANTSEND", _("%> Cannot send to channel %T%2%n\n"), 1);
 	format_add("RPL_MOTDSTART", "%g,+=%G-----\n", 1);
 	format_add("RPL_MOTD",      "%g|| %n%2\n", 1);
 	format_add("RPL_ENDOFMOTD", "%g`+=%G-----\n", 1);
 
-	format_add("RPL_AWAY", "%G||%n away     : %2 - %3\n", 1);
+	format_add("RPL_AWAY", _("%G||%n away     : %2 - %3\n"), 1);
 	/* in whois %2 is always nick */
-	format_add("RPL_WHOISUSER", "%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
-			"%G||%n realname : %6\n", 1);
-	format_add("RPL_WHOISCHANNELS", "%G||%n %|channels : %3\n", 1);
-	format_add("RPL_WHOISSERVER", "%G||%n %|server   : %3 (%4)\n", 1);
-	format_add("RPL_WHOISOPERATOR", "%G||%n %|ircOp    : %3\n", 1);
-	format_add("RPL_WHOISIDLE", "%G||%n %|idle     : %3 (signon: %4)\n", 1);
-	format_add("RPL_ENDOFWHOIS", "%G`+===%g-----\n", 1);
+	format_add("RPL_WHOISUSER", _("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
+			"%G||%n realname : %6\n"), 1);
+	format_add("RPL_WHOISCHANNELS", _("%G||%n %|channels : %3\n"), 1);
+	format_add("RPL_WHOISSERVER", _("%G||%n %|server   : %3 (%4)\n"), 1);
+	format_add("RPL_WHOISOPERATOR", _("%G||%n %|ircOp    : %3\n"), 1);
+	format_add("RPL_WHOISIDLE", _("%G||%n %|idle     : %3 (signon: %4)\n"), 1);
+	format_add("RPL_ENDOFWHOIS", _("%G`+===%g-----\n"), 1);
 	
-	format_add("RPL_TOPIC", "%> Topic %2: %3\n", 1);
+	format_add("RPL_TOPIC", _("%> Topic %2: %3\n"), 1);
 	/* \n not needed if you're including date [%3] */
-	format_add("IRC_RPL_TOPICBY", "%> set by %2 on %4", 1);
-	format_add("IRC_TOPIC_CHANGE", "%> %T%2%n changed topic on %T%4%n: %5\n", 1);
-	format_add("IRC_TOPIC_UNSET", "%> %T%2%n unset topic on %T%4%n\n", 1);
-	format_add("IRC_MODE_CHAN", "%> %2/%4 sets mode%5\n", 1);
-	format_add("IRC_MODE", "%> %2 set mode %3 on You\n", 1);
+	format_add("IRC_RPL_TOPICBY", _("%> set by %2 on %4"), 1);
+	format_add("IRC_TOPIC_CHANGE", _("%> %T%2%n changed topic on %T%4%n: %5\n"), 1);
+	format_add("IRC_TOPIC_UNSET", _("%> %T%2%n unset topic on %T%4%n\n"), 1);
+	format_add("IRC_MODE_CHAN", _("%> %2/%4 sets mode%5\n"), 1);
+	format_add("IRC_MODE", _("%> %2 set mode %3 on You\n"), 1);
 
-	format_add("IRC_PINGPONG", "%) ping/pong %c%2%n\n", 1);
-	format_add("IRC_YOUNEWNICK", "%> You are now known as %G%3%n\n", 1);
-	format_add("IRC_NEWNICK", "%> %g%2%n is now known as %G%4%n\n", 1);
+	format_add("IRC_PINGPONG", _("%) ping/pong %c%2%n\n"), 1);
+	format_add("IRC_YOUNEWNICK", _("%> You are now known as %G%3%n\n"), 1);
+	format_add("IRC_NEWNICK", _("%> %g%2%n is now known as %G%4%n\n"), 1);
 	
 	return 0;
 }

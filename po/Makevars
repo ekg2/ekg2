@@ -4,7 +4,7 @@ DOMAIN = ekg2
 subdir = po
 top_builddir = ..
 
-XGETTEXT_OPTIONS = --keyword=_ --keyword=N_ --from-code=iso-8859-2
+XGETTEXT_OPTIONS = --keyword=_ --keyword=N_
 COPYRIGHT_HOLDER = Tomasz Torcz <zdzichu@irc.pl>
 MSGID_BUGS_ADDRESS =
 EXTRA_LOCALE_CATEGORIES =
