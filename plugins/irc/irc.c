@@ -542,7 +542,7 @@ COMMAND(irc_command_msg)
 	
 	prefix[1] = '\0';
 	prefix[0] = perchn?*(perchn->sign):' ';
-	if (session_int_get(s, "DISPLAY_EMPTY_PREFIX") && *prefix==' ')
+	if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
 		*prefix='\0';
 	head = format_string(format_find(ischn?"irc_msg_sent_chan":
 				w?"irc_msg_sent_n":"irc_msg_sent"),
@@ -1137,12 +1137,12 @@ int irc_plugin_init()
 	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_IN_CURRENT", VAR_INT, "2", 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_EMPTY_PREFIX", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_QUIT", VAR_INT, "0", 0, NULL);
 	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
 	plugin_var_add(&irc_plugin, "REJOIN", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "REJOIN_TIME", VAR_INT, "2", 0, NULL);
 	
+	plugin_var_add(&irc_plugin, "SHOW_NICKMODE_EMPTY", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "SHOW_MOTD", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "STRIPMIRCCOL", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_NAME", VAR_STR, 0, 0, NULL);

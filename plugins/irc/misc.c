@@ -583,7 +583,7 @@ IRC_COMMAND(irc_c_msg)
 		xfree(ctcpstripped);
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
-		if (session_int_get(s, "DISPLAY_EMPTY_PREFIX") && *prefix==' ')
+		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
 			*prefix='\0';
 		head = format_string(format_find(format), session_name(s),
 				prefix, me, param[0]+1, param[2], coloured, "Y ");

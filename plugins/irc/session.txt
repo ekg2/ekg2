@@ -118,13 +118,6 @@ DISPLAY_IN_CURRENT
 	w aktualnym oknie:
 	1 - wynik komendy /names [RACZEJ G£UPOTA!]
 
-DISPLAY_EMPTY_PREFIX
-	typ: liczba
-	domy¶lna warto¶æ: 1
-
-	je¶li 1 spacja NIE jest wy¶wietlana przed nickiem je¿eli
-	ircownik nie ma +, @ ani %, je¶li 0 spacja bêdzie wy¶wietlana
-
 DISPLAY_QUIT
 	typ: liczba
 	domyslna warto¶æ: 0
@@ -150,6 +143,13 @@ REJOIN_TIME
 	do³±czeniu do kana³u, je¶li zostali¶my wykopani
 	zmienna ta, nie ma ¿adnego znaczenia, je¶li zmienna %TREJOIN%n
 	nie jest ustawiona tak, by klient robi³ autorejoin po kicku
+
+SHOW_NICKMODE_EMPTY
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	je¶li 0 spacja NIE jest wy¶wietlana przed nickiem je¿eli
+	ircownik nie ma +, @ ani %, je¶li 1 spacja bêdzie wy¶wietlana
 
 SHOW_MOTD
 	typ: liczba
