@@ -2019,3 +2019,85 @@ uint32_t *ekg_sent_message_format(const char *text)
 	return format;
 }
 
+/*
+ * porównuje dwa ci±gi o okre¶lonej przez n d³ugo¶ci
+ * dzia³a analogicznie do strncasecmp()
+ * obs³uguje polskie znaki
+ */
+
+int strncasecmp_pl(const char * cs,const char * ct,size_t count)
+{
+        register signed char __res = 0;
+
+        while (count) {
+                if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
+                        break;
+                count--;
+        }
+
+        return __res;
+}
+
+
+/*
+ * zamienia podany znak na ma³y je¶li to mo¿liwe
+ * obs³uguje polskie znaki
+ */
+int tolower_pl(const unsigned char c) {
+        switch(c) {
+                case 161: // ¡
+                        return 177;
+                case 198: // Æ
+                        return 230;
+                case 202: // Ê
+                        return 234;
+                case 163: // £
+                        return 179;
+                case 209: // Ñ
+                        return 241;
+                case 211: // Ó
+                        return 243;
+                case 166: // ¦
+                        return 182;
+                case 175: // ¯
+                        return 191;
+                case 172: // ¬
+                        return 188;
+                default: //reszta
+                        return tolower(c);
+        }
+}
+
+
+/*
+ * zamienia wszystkie znaki ci±gu na ma³e
+ * zwraca ci±g po zmianach (wraz z zaalokowan± pamiêci±)
+ */
+char *str_tolower(const char *text) {
+        int i;
+        char *tmp;
+
+        tmp = xmalloc(strlen(text) + 1);
+
+        for(i=0; i < strlen(text); i++)
+                tmp[i] = tolower_pl(text[i]);
+        tmp[i] = '\0';
+        return tmp;
+}
+
+/*
+ * dzia³a jak sprintf() tylko, ¿e wyrzuca wska¼nik
+ * do powsta³ego ci±gu
+ */
+char *saprintf(const char *format, ...)
+{
+        va_list ap;
+        char *res;
+
+        va_start(ap, format);
+        res = vsaprintf(format, ap);
+        va_end(ap);
+
+        return res;
+}
+

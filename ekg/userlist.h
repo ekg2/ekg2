@@ -118,6 +118,7 @@ int userlist_write_wap();
 void userlist_write_crash();
 void userlist_clear_status(session_t *session, const char *uid);
 userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname);
+void userlist_add_entry(session_t *session,const char *line);
 int userlist_remove(session_t *session, userlist_t *u);
 int userlist_replace(session_t *session, userlist_t *u);
 userlist_t *userlist_find(session_t *session, const char *uid);
@@ -131,9 +132,9 @@ int ignored_check(session_t *session, const char *uid);
 int ignore_flags(const char *str);
 const char *ignore_format(int level);
 
-int group_add(userlist_t *u, const char *group);
-int group_remove(userlist_t *u, const char *group);
-int group_member(userlist_t *u, const char *group);
+int ekg_group_add(userlist_t *u, const char *group);
+int ekg_group_remove(userlist_t *u, const char *group);
+int ekg_group_member(userlist_t *u, const char *group);
 char *group_to_string(list_t l, int meta, int sep);
 list_t group_init(const char *groups);
 

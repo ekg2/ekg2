@@ -21,7 +21,9 @@
 #define __EKG_XMALLOC_H
 
 #include <sys/types.h>
+#include <stddef.h>
 #include <stdarg.h>
+#include "stuff.h"
 
 void ekg_oom_handler();
 
@@ -35,11 +37,5 @@ char *xstrndup(const char *s, size_t n);
 void *xmemdup(void *ptr, size_t size);
 
 char *vsaprintf(const char *format, va_list ap);
-
-#ifdef __GNUC__
-char *saprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-#else
-char *saprintf(const char *format, ...);
-#endif
 
 #endif /* __EKG_XMALLOC_H */

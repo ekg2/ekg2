@@ -288,6 +288,16 @@ int mesg_set(int what);
 void iso_to_ascii(unsigned char *buf);
 char *strip_spaces(char *line);
 int strtrim(char *line);
+char *str_tolower(const char *text);
+int tolower_pl(const unsigned char c);
+int strncasecmp_pl(const char * cs,const char * ct,size_t count);
+
+#ifdef __GNUC__
+char *saprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+#else
+char *saprintf(const char *format, ...);
+#endif
+
 
 int play_sound(const char *sound_path);
 

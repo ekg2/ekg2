@@ -643,7 +643,7 @@ int ignored_add(session_t *session, const char *uid, int level)
 		u = userlist_add(session, uid, NULL);
 
 	tmp = saprintf("__ignored_%d", level);
-	group_add(u, tmp);
+	ekg_group_add(u, tmp);
 	xfree(tmp);
 
 	if (level & IGNORE_STATUS) {
@@ -771,14 +771,14 @@ static int group_compare(void *data1, void *data2)
 }
 
 /*
- * group_add()
+ * ekg_group_add()
  *
  * dodaje u¿ytkownika do podanej grupy.
  *
  *  - u - wpis usera,
  *  - group - nazwa grupy.
  */
-int group_add(userlist_t *u, const char *group)
+int ekg_group_add(userlist_t *u, const char *group)
 {
 	struct group g;
 	list_t l;
@@ -801,7 +801,7 @@ int group_add(userlist_t *u, const char *group)
 }
 
 /*
- * group_remove()
+ * ekg_group_remove()
  *
  * usuwa u¿ytkownika z podanej grupy.
  *
@@ -810,7 +810,7 @@ int group_add(userlist_t *u, const char *group)
  *
  * zwraca 0 je¶li siê uda³o, inaczej -1.
  */
-int group_remove(userlist_t *u, const char *group)
+int ekg_group_remove(userlist_t *u, const char *group)
 {
 	list_t l;
 
@@ -832,13 +832,13 @@ int group_remove(userlist_t *u, const char *group)
 }
 
 /*
- * group_member()
+ * ekg_group_member()
  *
  * sprawdza czy u¿ytkownik jest cz³onkiem danej grupy.
  *
  * zwraca 1 je¶li tak, 0 je¶li nie.
  */
-int group_member(userlist_t *u, const char *group)
+int ekg_group_member(userlist_t *u, const char *group)
 {
 	list_t l;
 

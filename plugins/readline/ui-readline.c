@@ -355,7 +355,7 @@ static char *blocked_uin_generator(char *text, int state)
 
 		l = l->next;
 
-		if (!group_member(u, "__blocked"))
+		if (!ekg_group_member(u, "__blocked"))
 			continue;
 
 		if (!u->display) {

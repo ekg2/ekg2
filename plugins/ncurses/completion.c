@@ -23,71 +23,6 @@
 
 static char **completions = NULL;	/* lista dope³nieñ */
 
-/* 
- * zamienia podany znak na ma³y je¶li to mo¿liwe 
- * obs³uguje polskie znaki
- */
-static int tolower_pl(const unsigned char c) {
-	switch(c) {
-		case 161: // ¡
-			return 177; 
-		case 198: // Æ
-			return 230;
-		case 202: // Ê
-			return 234;
-		case 163: // £
-			return 179;
-		case 209: // Ñ
-			return 241;
-		case 211: // Ó
-			return 243;
-		case 166: // ¦
-			return 182;
-		case 175: // ¯
-			return 191;
-		case 172: // ¬
-			return 188;
-		default: //reszta
-			return tolower(c);
-	}
-}
-
-/* 
- * porównuje dwa ci±gi o okre¶lonej przez n d³ugo¶ci
- * dzia³a analogicznie do strncasecmp()
- * obs³uguje polskie znaki
- */
-
-int strncasecmp_pl(const char * cs,const char * ct,size_t count)
-{
-        register signed char __res = 0;
-        
-	while (count) {
-                if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
-                        break;
-                count--;
-        }
-
-        return __res;
-}
-
-
-/*
- * zamienia wszystkie znaki ci±gu na ma³e
- * zwraca ci±g po zmianach
- */
-static char *str_tolower(const char *text) {
-	int i;
-	char *tmp;
-
-	tmp = xmalloc(strlen(text) + 1);
-	
-        for(i=0; i < strlen(text); i++)
-		tmp[i] = tolower_pl(text[i]);
-	tmp[i] = '\0';
-	return tmp;
-}
-
 static void dcc_generator(const char *text, int len)
 {
 	const char *words[] = { "close", "get", "send", "list", "rsend", "rvoice", "voice", NULL };
@@ -274,7 +209,7 @@ static void blocked_uin_generator(const char *text, int len)
 		for (l = s->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 
-		if (!group_member(u, "__blocked"))
+		if (!ekg_group_member(u, "__blocked"))
 			continue;
 
 		if (!u->nickname) {
@@ -832,7 +767,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 					if(completions[0][common - 1] == '"')
 						common--;
 
-					strncat(line, str_tolower(completions[0]), common);
+					strncat(line, completions[0], common);
 					*line_index = strlen(line);
 				} else {
 					if(strrchr(words[i], ' '))

@@ -16,6 +16,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#define _GNU_SOURCE
 
 #include <sys/types.h>
 #include <stddef.h>
@@ -34,14 +35,12 @@
 #include "userlist.h"
 
 #ifndef HAVE_STRNDUP
-
 #  include "compat/strndup.h"
 #endif
 
 #ifndef HAVE_STRNLEN
 #  include "compat/strnlen.h"
 #endif
-
 
 
 void ekg_oom_handler()
@@ -176,18 +175,6 @@ char *vsaprintf(const char *format, va_list ap)
 #else
 	vsnprintf(res, size + 1, format, ap);
 #endif
-	
-	return res;
-}
-
-char *saprintf(const char *format, ...)
-{
-	va_list ap;
-	char *res;
-
-	va_start(ap, format);
-	res = vsaprintf(format, ap);
-	va_end(ap);
 	
 	return res;
 }

@@ -132,10 +132,10 @@ int gg_text_to_status(const char *text, const char *descr)
  */
 char gg_userlist_type(userlist_t *u)
 {
-	if (u && group_member(u, "__blocked"))
+	if (u && ekg_group_member(u, "__blocked"))
 		return GG_USER_BLOCKED;
 	
-	if (u && group_member(u, "__offline"))
+	if (u && ekg_group_member(u, "__offline"))
 		return GG_USER_OFFLINE;
 	
 	return GG_USER_NORMAL;
@@ -157,7 +157,7 @@ int gg_blocked_remove(session_t *s, const char *uid)
 	if (!u || !s || !g)
 		return -1;
 
-	if (!group_member(u, "__blocked"))
+	if (!ekg_group_member(u, "__blocked"))
 		return -1;
 
 	if (g->sess && g->sess->state == GG_STATE_CONNECTED)
@@ -200,7 +200,7 @@ int gg_blocked_add(session_t *s, const char *uid)
 	if (!s || !g)
 		return -1;
 
-	if (u && group_member(u, "__blocked"))
+	if (u && ekg_group_member(u, "__blocked"))
 		return -1;
 	
 	if (!u)
@@ -210,7 +210,7 @@ int gg_blocked_add(session_t *s, const char *uid)
 			gg_remove_notify_ex(g->sess, atoi(u->uid + 3), gg_userlist_type(u));
 	}
 
-	group_add(u, "__blocked");
+	ekg_group_add(u, "__blocked");
 
 	if (g->sess && g->sess->state == GG_STATE_CONNECTED)
 		gg_add_notify_ex(g->sess, atoi(u->uid + 3), gg_userlist_type(u));

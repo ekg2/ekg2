@@ -135,7 +135,7 @@ int contacts_update(window_t *w)
 			if (!u->status || !u->nickname || strncmp(u->status, contacts_order + j, 2))
 				continue;
 
-			if (group && !group_member(u, group))
+			if (group && !ekg_group_member(u, group))
 				continue;
 
 			if (!count) {

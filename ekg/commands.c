@@ -261,8 +261,8 @@ COMMAND(cmd_modify)
 					case '-':
 						off = (tmp[x][1] == '@' && strlen(tmp[x]) > 1) ? 1 : 0;
 
-						if (group_member(u, tmp[x] + 1 + off)) {
-							group_remove(u, tmp[x] + 1 + off);
+						if (ekg_group_member(u, tmp[x] + 1 + off)) {
+							ekg_group_remove(u, tmp[x] + 1 + off);
 							modified = 1;
 						} else {
 							printq("group_member_not_yet", format_user(session, u->uid), tmp[x] + 1);
@@ -273,8 +273,8 @@ COMMAND(cmd_modify)
 					case '+':
 						off = (tmp[x][1] == '@' && strlen(tmp[x]) > 1) ? 1 : 0;
 
-						if (!group_member(u, tmp[x] + 1 + off)) {
-							group_add(u, tmp[x] + 1 + off);
+						if (!ekg_group_member(u, tmp[x] + 1 + off)) {
+							ekg_group_add(u, tmp[x] + 1 + off);
 							modified = 1;
 						} else {
 							printq("group_member_already", format_user(session, u->uid), tmp[x] + 1);
@@ -285,8 +285,8 @@ COMMAND(cmd_modify)
 					default:
 						off = (tmp[x][0] == '@' && strlen(tmp[x]) > 1) ? 1 : 0;
 
-						if (!group_member(u, tmp[x] + off)) {
-							group_add(u, tmp[x] + off);
+						if (!ekg_group_member(u, tmp[x] + off)) {
+							ekg_group_add(u, tmp[x] + off);
 							modified = 1;
 						} else {
 							printq("group_member_already", format_user(session, u->uid), tmp[x]);
@@ -322,7 +322,7 @@ COMMAND(cmd_modify)
 						int i;
 
 						for (i = 0; arr[i]; i++)
-							group_add(u, arr[i]);
+							ekg_group_add(u, arr[i]);
 
 						array_free(arr);
 					}
@@ -1127,7 +1127,7 @@ COMMAND(cmd_list)
 				u = l->data;
 
 				if (u->groups || invert) {
-					if ((!invert && group_member(u, group + 1)) || (invert && !group_member(u, group + 1))) {
+					if ((!invert && ekg_group_member(u, group + 1)) || (invert && !ekg_group_member(u, group + 1))) {
 						if (count++)
 							string_append(members, ", ");
 						string_append(members, u->nickname);
@@ -1177,9 +1177,9 @@ COMMAND(cmd_list)
 
 		printq("user_info_status", status);
 
-		if (group_member(u, "__blocked"))
+		if (ekg_group_member(u, "__blocked"))
 			printq("user_info_block", ((u->first_name) ? u->first_name : u->nickname));
-		if (group_member(u, "__offline"))
+		if (ekg_group_member(u, "__offline"))
 			printq("user_info_offline", ((u->first_name) ? u->first_name : u->nickname));
 		if (u->port == 2)
 			printq("user_info_not_in_contacts");
@@ -1300,10 +1300,10 @@ COMMAND(cmd_list)
 		if (show_descr && !u->descr)
 			show = 0;
 
-		if (show_group && !group_member(u, show_group))
+		if (show_group && !ekg_group_member(u, show_group))
 			show = 0;
 
-		if (show_offline && group_member(u, "__offline"))
+		if (show_offline && ekg_group_member(u, "__offline"))
 			show = 1;
 
 		if (show) {

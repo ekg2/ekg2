@@ -226,10 +226,7 @@ static COMMAND(command_key)
 
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
 		DIR *dir;
-		struct dirent *d;
-		int count = 0, list_uin = 0;
 		const char *path = prepare_path("keys", 0);
-		const char *x = NULL;
 
 		if (!(dir = opendir(path))) {
 			printq("key_public_noexist");

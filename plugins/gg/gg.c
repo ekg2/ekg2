@@ -267,6 +267,8 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e)
 			reason = "conn_failed_tls";
 			break;
 #endif
+		default:
+			break;
 	}
 
 	if (session_get(s, "server_save")) {
@@ -1183,7 +1185,7 @@ COMMAND(gg_command_block)
 		for (l = session->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 				
-			if (!group_member(u, "__blocked"))
+			if (!ekg_group_member(u, "__blocked"))
 				continue;
 
 			i = 1;
