@@ -9,6 +9,8 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
+  - metakontakty (*)
+  - display_notify zale¿ne od sesji (rmrmg)
   - nie dziala powtarzanie (strzalka w gore) wiadomosci wielolinijkowych (zdz)
   - ró¿ne kolory ack ( w zale¿no¶ci czy przyszed³ nam komunikat czy te¿ wiadomo¶æ) (KKKas)
   - wykrywanie niewidocznych jako opcja (wielu)
