@@ -311,6 +311,7 @@ static void gg_session_handler_disconnect(session_t *s)
 	xfree(__session);
 	xfree(__reason);
 
+	gg_logoff(g->sess);		/* zamknie gniazdo */
 	gg_free_session(g->sess);
 	g->sess = NULL;
 }
@@ -498,13 +499,13 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 	struct gg_event *e;
 	int broken = 0;
 
-	if (!g || !g->sess) {
-		debug("[gg] gg_session_handler() called with NULL gg_session\n");
+	if (type == 1) {
+		/* tutaj powinni¶my usun±æ dane watcha. nie, dziêkujê. */
 		return;
 	}
 
-	if (type == 1) {
-		/* tutaj powinni¶my usun±æ dane watcha. nie, dziêkujê. */
+	if (!g || !g->sess) {
+		debug("[gg] gg_session_handler() called with NULL gg_session\n");
 		return;
 	}
 
@@ -582,13 +583,13 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 			break;
 #endif
 
-#ifdef GG_NOTIFY60
+#ifdef GG_NOTIFY_REPLY60
 		case GG_EVENT_NOTIFY60:
 		{
 			int i;
 
 			for (i = 0; e->event.notify60[i].uin; i++)
-				gg_session_handler_status(data, e->event.notify60.uin, e->event.notify60.status, e->event.notify60.descr, e->event.notify60.remote_ip, e->event.notify60.remote_port);
+				gg_session_handler_status(data, e->event.notify60[i].uin, e->event.notify60[i].status, e->event.notify60[i].descr, e->event.notify60[i].remote_ip, e->event.notify60[i].remote_port);
 
 			break;
 		}
