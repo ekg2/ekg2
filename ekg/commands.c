@@ -776,7 +776,7 @@ COMMAND(cmd_exec)
 
 		if (params[0][0] == '-') {
 			int big_match = 0;
-			args = array_make(params[0], " \t", 3, 1, 1);
+			args = (char **) params;
 
 			if (match_arg(args[0], 'M', "MSG", 2) || (buf = match_arg(args[0], 'B', "BMSG", 2)))
 				big_match = add_commandline = 1;
@@ -807,7 +807,6 @@ COMMAND(cmd_exec)
 
 		if (pipe(fd) == -1) {
 			printq("exec_error", strerror(errno));
-			array_free(args);
 			return -1;
 		}
 
@@ -826,7 +825,6 @@ COMMAND(cmd_exec)
 
 		if (pid < 0) {
 			printq("exec_error", strerror(errno));
-			array_free(args);
 			return -1;
 		}
 	
@@ -853,7 +851,6 @@ COMMAND(cmd_exec)
 		
 		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
 			
-		array_free(args);
 	} else {
 		for (l = children; l; l = l->next) {
 			child_t *c = l->data;
@@ -3521,7 +3518,7 @@ void command_init()
 	  " [tekst]", "wy¶wietla podany tekst",
 	  "", NULL);
 	  
-	command_add(NULL, "exec", params("p ?"), cmd_exec, 0,
+	command_add(NULL, "exec", params("p UuC ?"), cmd_exec, 0,
 	  " [opcje] <polecenie>", "uruchamia polecenie systemowe",
 	  "\n"
 	  "  -m, --msg  [numer/alias]  wysy³a wynik do danej osoby\n"
