@@ -550,7 +550,7 @@ time_deviation
 
 timestamp
 	typ: tekst
-	domy¶lna warto¶æ: "\%H:\%M "
+	domy¶lna warto¶æ: "\%H:\%M:\%S"
 
 	w interfejsie ncurses okre¶la format czasu wy¶wietlanego na
 	pocz±tku ka¿dej linii. dok³adny opis formatu zawiera strona

@@ -152,7 +152,7 @@ void variable_set_default()
 	xfree(config_timestamp);
 	xfree(config_display_color_map);
 
-	config_timestamp = xstrdup("\%H%T:\%M ");
+	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
 }
