@@ -429,7 +429,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 			xmlnode_t *xitem = xmlnode_find_child(n, "x"); 
 			char *session, *uid, *status = NULL, *descr = NULL, *host = NULL;
 			int port = 0;
-			time_t when = jabber_try_xdelay(xitem, jabber_attr(xitem->atts, "xmlns"));
+			time_t when = xitem ? jabber_try_xdelay(xitem, jabber_attr(xitem->atts, "xmlns")) : time(NULL);
 
 			if (nshow)
 				status = jabber_unescape(nshow->data);
