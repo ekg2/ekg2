@@ -387,7 +387,7 @@ on
 	
 	Za³o¿enia mo¿na ³±czyæ poprzez ,,|'' (lub) i ,,&'' (i). S± to standardowe 
 	operatory logiczne.Zaprzeczenia tworzymy przez dodanie ,,%T!%n'' przed 
-	za³o¿eniem, np. ,,%T!+%n''. Mo¿na u¿ywaæ %1 zamiast nazwy nadawcy oraz %2 
+	za³o¿eniem, np. ,,%T!+%n''. Mo¿na u¿ywaæ \%1 zamiast nazwy nadawcy oraz \%2 
 	zamiast ewentualnych parametrów. Gdy potrzeba u¿yæ spacji w za³o¿eniu nale¿y 
 	ca³e za³o¿enie uj±æ w cudzys³ów. 
 
