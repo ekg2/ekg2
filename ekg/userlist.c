@@ -332,6 +332,48 @@ void userlist_free(session_t *session)
 	session->userlist = NULL;
 }
 
+/* 
+ * userlist_free_u()
+ *
+ * clear and remove from memory given userlist
+ */
+void userlist_free_u(list_t userlist)
+{
+        list_t l;
+
+        if (!userlist)
+                return;
+
+        for (l = userlist; l; l = l->next) {
+                userlist_t *u = l->data;
+                list_t lp;
+
+                xfree(u->first_name);
+                xfree(u->last_name);
+                xfree(u->nickname);
+                xfree(u->uid);
+                xfree(u->mobile);
+                xfree(u->status);
+                xfree(u->descr);
+                xfree(u->authtype);
+                xfree(u->foreign);
+                xfree(u->last_status);
+                xfree(u->last_descr);
+                xfree(u->resource);
+
+                for (lp = u->groups; lp; lp = lp->next) {
+                        struct group *g = lp->data;
+
+                        xfree(g->name);
+                }
+
+                list_destroy(u->groups, 1);
+        }
+
+        list_destroy(userlist, 1);
+        userlist = NULL;
+}
+
 /*
  * userlist_add()
  *
@@ -361,6 +403,36 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
         u.resource = NULL;
 
 	return list_add_sorted(&(session->userlist), &u, sizeof(u), userlist_compare);
+}
+
+/*
+ * userlist_add_u()
+ *
+ * adds user to window's userlist
+ * uid - uid,
+ * nickname - display.
+ */
+userlist_t *userlist_add_u(list_t userlist, const char *uid, const char *nickname)
+{
+        userlist_t u;
+
+        memset(&u, 0, sizeof(u));
+
+        u.uid = xstrdup(uid);
+        u.nickname = xstrdup(nickname);
+        u.status = xstrdup(EKG_STATUS_NA);
+
+        u.first_name = NULL;
+        u.last_name = NULL;
+        u.mobile = NULL;
+        u.descr = NULL;
+        u.authtype = NULL;
+        u.foreign = NULL;
+        u.last_status = NULL;
+        u.last_descr = NULL;
+        u.resource = NULL;
+
+        return list_add_sorted(&userlist, &u, sizeof(u), userlist_compare);
 }
 
 /*
@@ -402,6 +474,45 @@ int userlist_remove(session_t *session, userlist_t *u)
 	list_remove(&(session->userlist), u, 1);
 
 	return 0;
+}
+
+/*
+ * userlist_remove_u()
+ *
+ * removes given user from window's userlist
+ *
+ *  - u.
+ */
+int userlist_remove_u(list_t userlist, userlist_t *u)
+{
+        list_t l;
+
+        if (!u)
+                return -1;
+
+        xfree(u->first_name);
+        xfree(u->last_name);
+        xfree(u->nickname);
+        xfree(u->uid);
+        xfree(u->mobile);
+        xfree(u->status);
+        xfree(u->descr);
+        xfree(u->authtype);
+        xfree(u->foreign);
+        xfree(u->last_status);
+        xfree(u->last_descr);
+        xfree(u->resource);
+
+        for (l = u->groups; l; l = l->next) {
+                struct group *g = l->data;
+
+                xfree(g->name);
+        }
+
+        list_destroy(u->groups, 1);
+        list_remove(&userlist, u, 1);
+
+        return 0;
 }
 
 /*

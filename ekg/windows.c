@@ -272,6 +272,7 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 	w.height = 1;
 	w.target = xstrdup(target);
 	w.session = session;
+	w.userlist = NULL;
 
 	result = list_add_sorted(&windows, &w, sizeof(w), window_new_compare);
 
@@ -450,6 +451,7 @@ void window_kill(window_t *w, int quiet)
 		printq("query_finished", window_current->target, session_name(window_current->session));
 		xfree(window_current->target);
 		window_current->target = NULL;
+		userlist_free_u(window_current->userlist);
 
 		tmp = xmemdup(w, sizeof(window_t));
 		query_emit(NULL, "ui-window-target-changed", &tmp);
@@ -489,6 +491,7 @@ cleanup:
 	xfree(tmp);
 
 	xfree(w->target);
+	userlist_free_u(w->userlist);
 	list_remove(&windows, w, 1);
 }
 

@@ -35,6 +35,7 @@
 #include "objects.h"
 #include "sessions.h"
 #include "plugins.h"
+#include "windows.h"
 
 typedef struct {
 	char *uid;		/* protokó³:identyfikator */
@@ -132,13 +133,16 @@ int userlist_write_wap();
 void userlist_write_crash();
 void userlist_clear_status(session_t *session, const char *uid);
 userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname);
+userlist_t *userlist_add_u(list_t userlist, const char *uid, const char *nickname);
 void userlist_add_entry(session_t *session,const char *line);
 int userlist_remove(session_t *session, userlist_t *u);
+int userlist_remove_u(list_t userlist, userlist_t *u);
 int userlist_replace(session_t *session, userlist_t *u);
 userlist_t *userlist_find(session_t *session, const char *uid);
 #define userlist_find_n(a, b) userlist_find(session_find(a), b)
 char *userlist_dump(session_t *session);
 void userlist_free(session_t *session);
+void userlist_free_u(list_t userlist);
 int userlist_set(session_t *session, const char *contacts);
 
 int ignored_add(session_t *session, const char *uid, int level);
