@@ -4,7 +4,7 @@ AC_INIT(ekg/ekg.c)
 AC_PREREQ(2.50)
 AC_CONFIG_HEADERS(config.h)
 
-AM_INIT_AUTOMAKE(ekg, CVS)
+AM_INIT_AUTOMAKE(ekg2, CVS)
 
 AC_PROG_CC
 AC_PROG_CPP
@@ -125,7 +125,7 @@ done
 
 CFLAGS="$CFLAGS -Wall"
 
-plugindir=$libdir/ekg/plugins
+plugindir=$libdir/ekg2/plugins
 AC_SUBST(plugindir)
 
 AC_OUTPUT
