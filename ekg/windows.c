@@ -308,7 +308,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 					w->target = xstrdup(target);
 					query_emit(NULL, "ui-window-target-changed", &w);	/* XXX */
 					print("window_id_query_started", itoa(w->id), who);
-					print_window(target, session, 1, "query_started", who);
+					print_window(target, session, 1, "query_started", who, session_name(session));
 					print_window(target, session, 1, "query_started_window", who);
 //					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
 //						event_check(EVENT_QUERY, get_uin(target), target);
@@ -323,7 +323,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 				else {
 					w = window_new(target, session, 0);
 					print("window_id_query_started", itoa(w->id), who);
-					print_window(target, session, 1, "query_started", who);
+					print_window(target, session, 1, "query_started", who, session_name(session));
 					print_window(target, session, 1, "query_started_window", who);
 //					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
 //						event_check(EVENT_QUERY, get_uin(target), target);
@@ -438,7 +438,7 @@ void window_kill(window_t *w, int quiet)
 		goto cleanup;
 
 	if (id == 1 && w->target) {
-		printq("query_finished", window_current->target);
+		printq("query_finished", window_current->target, session_name(window_current->session));
 		xfree(window_current->target);
 		window_current->target = NULL;
 

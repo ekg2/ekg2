@@ -1,4 +1,5 @@
-vCVS 2004-04-24
+vCVS 2004-05-13
+	* wy¶wietlane nazwy sesji przy zmianie statusów i w innych komendach
  	* dodana zmienna sesyjna auto_find 
 	* dodana obs³uga zdarzeñ (eventsów) - komenda /on
 	* dodana opcje do bindowania - previous-only-history i next-only-history

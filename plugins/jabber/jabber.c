@@ -302,7 +302,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			j->connecting = 0;
 
 			if (!xstrcmp(type, "result")) {
-				print("generic", "Po³±czono siê z Jabberem");
+				print("connected", session_name(s)); 
 				session_connected_set(s, 1);
 				session_unidle(s);
 				jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
@@ -318,7 +318,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 					xfree(data);
 					xfree(tmp);
 				} else
-					print("generic_error", "B³±d ³±czenia siê z Jabberem");
+					print("conn_failed", session_name(s));
 			}
 		}
 
@@ -407,21 +407,12 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 	if (!xstrcmp(n->name, "presence")) {
 		if (type && !xstrcmp(type, "subscribe") && from) {
-			char *tmp = saprintf("%s prosi o autoryzacjê dodania. U¿yj "
-				"\"/auth -a %s\" aby zaakceptowaæ, \"/auth -d %s\" "
-				"aby odrzuciæ.", from, from, from);
-			print("generic", tmp);
-			xfree(tmp);
-
+			print("jabber_auth_subscribe", session_name(s), from);
 			return;
 		}
 
 		if (type && !xstrcmp(type, "unsubscribe") && from) {
-			char *tmp = saprintf("%s prosi o autoryzacjê usuniêcia. U¿yj "
-				"\"/auth -c %s\" aby usun±æ.", from, from);
-			print("generic", tmp);
-			xfree(tmp);
-
+			print("jabber_auth_unsubscribe", from);
 			return;
 		}
 
@@ -543,7 +534,7 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 	debug("[jabber] recv %s\n", buf);
 
 	if (!XML_ParseBuffer(j->parser, len, (len == 0))) {
-		print("generic_error", "B³±d parsowania XMLa");
+		print("jabber_xmlerror", session_name(s));
 		goto fail;
 	}
 
@@ -657,24 +648,24 @@ COMMAND(jabber_command_connect)
 	}
 
 	if (j->connecting) {
-		printq("generic_error", "Ale ³±czenie ju¿ trwa, szefie");
+		printq("during_connect", session_name(session));
 		return -1;
 	}
 
 	if (session_connected_get(session)) {
-		printq("generic_error", "Jeste¶ ju¿ po³±czony, ziomu¶");
+		printq("already_connected", session_name(session));
 		return -1;
 	}
 
 	if (!password) {
-		printq("generic_error", "Nale¿y ustawiæ has³o sesji");
+		printq("no_config");
 		return -1;
 	}
 
 	debug("session->uid = %s\n", session->uid);
 
 	if (!(server = xstrchr(session->uid, '@'))) {
-		printq("generic_error", "Z³y id sesji. Nie ma serwera.");
+		printq("wrong_id", session->uid);
 		return -1;
 	}
 
@@ -722,7 +713,7 @@ COMMAND(jabber_command_connect)
 
 	j->connecting = 1;
 
-	printq("generic", "£±czê siê z Jabberem, czekaj no...");
+	printq("connecting", session_name(session));
 
 	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
@@ -741,7 +732,7 @@ COMMAND(jabber_command_disconnect)
 	}
 
 	if (!j->connecting && !session_connected_get(session)) {
-		printq("not_connected");
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -767,9 +758,10 @@ COMMAND(jabber_command_disconnect)
 
 	if (j->connecting) {
 		j->connecting = 0;
-		printq("conn_stopped");
+		printq("conn_stopped", session_name(session));
 	} else
-		printq("disconnected");
+		printq("disconnected", session_name(session));
+
 
 	/* wywo³a jabber_handle_disconnect() */
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
@@ -786,8 +778,9 @@ COMMAND(jabber_command_reconnect)
 		return -1;
 	}
 	
-	if (j->connecting || session_connected_get(session))
+	if (j->connecting || session_connected_get(session)) {
 		jabber_command_disconnect(name, params, session, target, quiet);
+	}
 
 	return jabber_command_connect(name, params, session, target, quiet);
 }
@@ -913,54 +906,53 @@ COMMAND(jabber_command_away)
 	descr = session_descr_get(session);
 
 	if (!xstrcmp(name, "_autoback")) {
-		printq("generic", "Automagicznie wracamy do ¿ywych");
+		printq("auto_back", session_name(session));
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "back")) {
-		printq("generic", "Wracamy do ¿ywych");
+		printq("back", session_name(session));
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "_autoaway")) {
-		printq("generic", "Automagicznie zajêty");
+		printq("auto_away", session_name(session));
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "away")) {
-		printq("generic", "Zajêty");
+		printq("away", session_name(session));
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "dnd")) {
-		printq("generic", "Nie przeszkadzaæ");
+		printq("dnd", session_name(session));
 		session_status_set(session, EKG_STATUS_DND);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "xa")) {
-		printq("generic", "Ekstended e³ej");
+		printq("xa", session_name(session));
 		session_status_set(session, EKG_STATUS_XA);
 		session_unidle(session);
 		goto change;
 	}
 
 	if (!xstrcmp(name, "invisible")) {
-		printq("generic", "Niewidoczny");
+		printq("invisible", session_name(session));
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		session_unidle(session);
 		goto change;
 	}
 
-	printq("generic_error", "Ale o so chozi?");
 	return -1;
 
 change:
@@ -980,7 +972,7 @@ COMMAND(jabber_command_passwd)
         }
 
 	if (!session_connected_get(session)) {
-		printq("not_connected");
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -1004,8 +996,9 @@ COMMAND(jabber_command_passwd)
 COMMAND(jabber_command_auth) 
 {
 	jabber_private_t *j = session_private_get(session);
+	session_t *s = session;
 	const char *action;
-	char *uid, *descr;
+	char *uid;
 
 	if (!session_check(session, 1, "jid")) {
 		printq("invalid_session");
@@ -1013,7 +1006,7 @@ COMMAND(jabber_command_auth)
         }
 
 	if (!session_connected_get(session)) {
-		printq("not_connected");
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -1043,19 +1036,19 @@ COMMAND(jabber_command_auth)
 
 	if (params[0] && match_arg(params[0], 'r', "request", 2)) {
 		action = "subscribe";
-		descr = saprintf("Wys³ano ¿±danie autoryzacji do %s", uid);
+		printq("jabber_auth_request", uid, session_name(s));
 		goto success;
 	}
 
 	if (params[0] && match_arg(params[0], 'a', "accept", 2)) {
 		action = "subscribed";
-		descr = saprintf("Autoryzowano %s", uid);
+		printq("jabber_auth_accept", uid, session_name(s));
 		goto success;
 	}
 
 	if (params[0] && match_arg(params[0], 'c', "cancel", 2)) {
 		action = "unsubscribed";
-		descr = saprintf("Wys³ano pro¶bê o cofniêcie autoryzacji do %s", uid);
+		printq("jabber_auth_unsubscribed", uid, session_name(s));
 		goto success;
 	}
 
@@ -1065,9 +1058,9 @@ COMMAND(jabber_command_auth)
 
 		tmp = saprintf("jid:%s", uid);
 		if (userlist_find(session, tmp))  // mamy w rosterze
-			descr = saprintf("Cofniêto autoryzacjê %s", uid);
+			printq("jabber_auth_cancel", uid, session_name(s));
 		else // nie mamy w rosterze
-			descr = saprintf("Odmówiona autoryzacji %s", uid);
+			printq("jabber_auth_denied", uid, session_name(s));
 		xfree(tmp);
 	
 		goto success;
@@ -1077,7 +1070,7 @@ COMMAND(jabber_command_auth)
 	   [Used on server only. Client authors need not worry about this.] */
 	if (params[0] && match_arg(params[0], 'p', "probe", 2)) {
 		action = "probe";
-		descr = saprintf("Wys³ano pytanie o obecno¶æ do %s", uid);
+		printq("jabber_auth_probe", uid, session_name(s));
 		goto success;
 	};
 
@@ -1088,8 +1081,6 @@ fail:
 
 success:
 	jabber_write(j, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid, action);
-	printq("generic", descr);
-	xfree(descr);
 	return 0;
 }
 
@@ -1221,6 +1212,16 @@ int jabber_plugin_init()
 
 #undef possibilities 
 #undef params
+
+	format_add("jabber_auth_subscribe", "%> (%2) %1 prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n", 1);
+	format_add("jabber_auth_unsubscribe", "%> (%2) %1 prosi o autoryzacjê usuniêcia. U¿yj \"/auth -c %1\" aby usun±æ.%n\n", 1);
+	format_add("jabber_xmlerror", "%> (%1) B³±d parsowania XMLa%n\n", 1);
+	format_add("jabber_auth_request", "%> (%2) Wys³ano ¿±danie autoryzacji do %1.%n%\n", 1);
+	format_add("jabber_auth_accept", "%> (%2) Autoryzowano %1. %n\n", 1);
+	format_add("jabber_auth_unsubscribed", "%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %1.%n\n", 1);
+	format_add("jabber_auth_cancel", "%> (%2) Cofniêto autoryzacjê %1.%n%\n", 1);
+	format_add("jabber_auth_denied", "%> (%2) Odmówiona autoryzacji %1. %n\n", 1);
+	format_add("jabber_auth_probe", "%> (%2) Wys³ano pytanie o obecno¶æ do %1.%n\n", 1);
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);

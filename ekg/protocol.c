@@ -98,24 +98,21 @@ int protocol_disconnected(void *data, va_list ap)
 				timer_add(NULL, "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
 
 			if (type == EKG_DISCONNECT_NETWORK)
-				print("conn_broken");
+				print("conn_broken", session_name_n(session));
 			else
-				print("conn_failed", reason);
-			
+				print("conn_failed", reason, session_name_n(session));
 			break;
 		}
 
 		case EKG_DISCONNECT_USER:
 			if (reason)
-				print("disconnected_descr", reason);
+				print("disconnected_descr", reason, session_name_n(session));
 			else
-				print("disconnected");
-
+				print("disconnected", session_name_n(session));
 			break;
 
 		case EKG_DISCONNECT_FORCED:
-			print("conn_disconnected");
-
+			print("conn_disconnected", session_name_n(session));
 			break;
 	}
 
@@ -131,11 +128,12 @@ int protocol_connected(void *data, va_list ap)
 {
 	char **session = va_arg(ap, char**);
 	const char *descr = session_descr_get_n(*session);
+	
 
 	if (descr)
-		print("connected_descr", descr);
+		print("connected_descr", descr, session_name_n(*session));
 	else
-		print("connected");
+		print("connected", session_name_n(*session));
 
 	return 0;
 }
@@ -233,7 +231,7 @@ int protocol_status(void *data, va_list ap)
 		char format[100];
 
 		snprintf(format, sizeof(format), "status_%s%s", status, (descr) ? "_descr" : "");
-		print_window(u->nickname, s, 0, format, format_user(s, uid), (u->first_name) ? u->first_name : u->nickname, descr);
+		print_window(u->nickname, s, 0, format, format_user(s, uid), (u->first_name) ? u->first_name : u->nickname, session_name(s), descr);
 	}
 
 notify_plugins:

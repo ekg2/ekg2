@@ -372,9 +372,13 @@ static void sessions_generator(const char *text, int len)
                 if (*text == '-') {
                         if (!xstrncasecmp(text + 1, v->uid, len - 1))
                                 array_add_check(&completions, saprintf("-%s", v->uid), 1);
+			if (!xstrncasecmp(text + 1, v->alias, len - 1))
+                                array_add_check(&completions, saprintf("-%s", v->alias), 1);
                 } else {
                         if (!xstrncasecmp(text, v->uid, len))
                                 array_add_check(&completions, xstrdup(v->uid), 1);
+                        if (!xstrncasecmp(text, v->alias, len))
+                                array_add_check(&completions, xstrdup(v->alias), 1);
                 }
         }
 }

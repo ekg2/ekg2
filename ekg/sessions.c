@@ -705,14 +705,14 @@ COMMAND(session_command)
 			if (window_current->session) {
 				if((var = session_get_n(window_current->session->uid, params[1]))) {
 					if(!xstrcasecmp(params[1], "password"))
-						printq("session_variable", window_current->session->uid, params[1], "(...)");
+						printq("session_variable", session_name(window_current->session), params[1], "(...)");
 					else
-						printq("session_variable", window_current->session->uid, params[1], var);
+						printq("session_variable", session_name(window_current->session), params[1], var);
 				
 					return 0;
 				}
 		
-		    		printq("session_variable_doesnt_exist", window_current->session->uid, params[1]);
+		    		printq("session_variable_doesnt_exist", session_name(window_current->session), params[1]);
 			} else
 				printq("invalid_session");
 			return -1;
@@ -720,15 +720,15 @@ COMMAND(session_command)
 		 
 		if(params[2] && (var = session_get_n(s->uid, params[2]))) {
 			if(!xstrcasecmp(params[2], "password"))
-				printq("session_variable", s->uid, params[2], "(...)");
+				printq("session_variable", session_name_n(params[1]), params[2], "(...)");
 			else
-			printq("session_variable", s->uid, params[2], var);
+			printq("session_variable", session_name_n(params[1]), params[2], var);
 			return 0;
 		}
 		
 		if(params[2])
 		{
-	    		printq("session_variable_doesnt_exist", s->uid, params[2]);
+	    		printq("session_variable_doesnt_exist", session_name_n(params[1]), params[2]);
 			return -1;
 		}
 
@@ -748,7 +748,7 @@ COMMAND(session_command)
 				if (window_current->session) {
 					session_set_n(window_current->session->uid, params[1] + 1, NULL);
 					config_changed = 1;
-					printq("session_variable_removed", window_current->session->uid, params[1] + 1);
+					printq("session_variable_removed", session_name(window_current->session), params[1] + 1);
 					return 0;
 				} else {
 					printq("invalid_session");
@@ -763,7 +763,7 @@ COMMAND(session_command)
 		                        char **params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
 
                 		        if(!array_item_contains(params_plugin, params[2], 1)) {
-                                		printq("session_variable_doesnt_exist", s->uid, params[2]);
+                                		printq("session_variable_doesnt_exist", session_name(window_current->session), params[2]);
 		                                array_free(params_plugin);
 		                                return -1;
 		                        }
@@ -791,7 +791,7 @@ COMMAND(session_command)
 		if (params[2] && params[2][0] == '-') {
 			session_set_n(s->uid, params[2] + 1, NULL);
 			config_changed = 1;
-			printq("session_variable_removed", s->uid, params[2] + 1);
+			printq("session_variable_removed", session_name_n(params[1]), params[2] + 1);
 			return 0;
 		}
 		
@@ -801,7 +801,7 @@ COMMAND(session_command)
 			char **params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
 
 			if(!array_item_contains(params_plugin, params[2], 1)) {
-				printq("session_variable_doesnt_exist", s->uid, params[2]);
+				printq("session_variable_doesnt_exist", session_name_n(params[1]), params[2]);
 				array_free(params_plugin);
 				return -1;
 			}
@@ -871,19 +871,19 @@ COMMAND(session_command)
 	}
 	
 	if (params[0] && params[0][0] != '-' && params[1] && window_current->session && window_current->session->uid) {
-		char *tmp = saprintf("%s --set %s %s %s", name, window_current->session->uid, params[0], params[1]);
+		char *tmp = saprintf("%s --set %s %s %s", name, session_alias_uid(window_current->session), params[0], params[1]);
 		command_exec(NULL, s, tmp, 0);
 		return 0;
         }
 	
 	if (params[0] && params[0][0] != '-' && window_current->session && window_current->session->uid) {
-		char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[0]);
+		char *tmp = saprintf("%s --get %s %s", name, session_alias_uid(window_current->session), params[0]);
 		command_exec(NULL, s, tmp, 0);
 		return 0;
 	}
 	
 	if (params[0] && params[0][0] == '-' && window_current->session && window_current->session->uid) {
-		char *tmp = saprintf("%s --set %s %s", name, window_current->session->uid, params[0]);
+		char *tmp = saprintf("%s --set %s %s", name, session_alias_uid(window_current->session), params[0]);
 		command_exec(NULL, s, tmp, 0);
 		return 0;
 	}

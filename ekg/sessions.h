@@ -98,6 +98,14 @@ int session_int_set(session_t *s, const char *key, int value);
 const char *session_format(session_t *s);
 #define session_format_n(a) session_format(session_find(a))
 
+/* alias or uid - formatted */
+#define session_name(a)  format_string(format_find("session_name"), (a->alias) ? a->alias : a->uid)
+#define session_name_n(a) session_name(session_find(a))
+
+/* alias or uid - not formatted */
+#define session_alias_uid(a) (a->alias) ? a->alias : a->uid
+#define session_alias_uid_n(a) session_alias_uid(session_find(a))
+
 int session_check(session_t *s, int need_private, const char *protocol);
 #define session_check_n(a,b,c) session_check(session_find(a),b,c)
 

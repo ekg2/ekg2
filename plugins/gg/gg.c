@@ -819,7 +819,7 @@ COMMAND(gg_command_connect)
 
 	if (!strcasecmp(name, "disconnect") || !strcasecmp(name, "reconnect")) {
 		if (!g->sess) {
-			printq("not_connected");
+			printq("not_connected", session_name(session));
 		} else {
 			char *__session = xstrdup(session->uid);
 			char *__reason = xstrdup(params[0]);
@@ -872,7 +872,7 @@ COMMAND(gg_command_connect)
 			return -1;
 		}
 
-		printq("connecting");
+		printq("connecting", session_name(session));
 
 		memset(&p, 0, sizeof(p));
 
@@ -1033,9 +1033,9 @@ change:
 	status = session_status_get(session);
 
 	if (descr)
-		printq(fd, descr, "");
+		printq(fd, descr, "", session_name(session));
 	else
-		printq(f);
+		printq(f, session_name(session));
 	
 	if (!g->sess || !session_connected_get(session)) {
 		xfree(descr);

@@ -1,4 +1,5 @@
-vCVS 2004-04-26
+vCVS 2004-05-13
+	* showing name of the session when status are changing or in other commands
 	* added session variable auto_find
 	* added events support (command /on)
 	* added new options to binding - previous-only-history and next-only-history

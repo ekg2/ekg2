@@ -876,7 +876,7 @@ void theme_init()
 	format_add("error,speech", "b³±d!", 1);
 	format_add("timestamp", "%H:%M", 1);
 	format_add("timestamp,speech", " ", 1);
-	
+
 	/* prompty dla ui-readline */
 	format_add("readline_prompt", "% ", 1);
 	format_add("readline_prompt_away", "/ ", 1);
@@ -890,7 +890,7 @@ void theme_init()
 	format_add("readline_prompt_away_win_act", "%1 (act/%2)/ ", 1);
 	format_add("readline_prompt_invisible_win_act", "%1 (act/%2). ", 1);
 	format_add("readline_prompt_query_win_act", "%2:%1 (act/%3)> ", 1);
-					
+
 	format_add("readline_more", "-- Wci¶nij Enter by kontynuowaæ lub Ctrl-D by przerwaæ --", 1);
 
 	/* prompty i statusy dla ui-ncurses */
@@ -903,7 +903,7 @@ void theme_init()
 	format_add("known_user", "%T%1%n/%2", 1);
 	format_add("known_user,speech", "%1", 1);
 	format_add("unknown_user", "%T%1%n", 1);
-	
+
 	/* czêsto wykorzystywane, ró¿ne, przydatne itd. */
 	format_add("none", "%1\n", 1);
 	format_add("generic", "%> %1\n", 1);
@@ -931,31 +931,33 @@ void theme_init()
 	format_add("new_mail_more", "%) Masz %1 nowych wiadomo¶ci email\n", 1);
 
 	/* add, del */
-	format_add("user_added", "%> Dopisano %T%1%n do listy kontaktów\n", 1);
-	format_add("user_deleted", "%) Usuniêto %T%1%n z listy kontaktów\n", 1);
-	format_add("user_cleared_list", "%) Wyczyszczono listê kontaktów\n", 1);
-	format_add("user_exists", "%! %T%1%n ju¿ istnieje w li¶cie kontaktów\n", 1);
-	format_add("user_exists_other", "%! %T%1%n ju¿ istnieje w li¶cie kontaktów jako %2\n", 1);
+	format_add("user_added", "%> (%2) Dopisano %T%1%n do listy kontaktów\n", 1);
+	format_add("user_deleted", "%) (%2) Usuniêto %T%1%n z listy kontaktów\n", 1);
+	format_add("user_cleared_list", "%) (%1) Wyczyszczono listê kontaktów\n", 1);
+	format_add("user_exists", "%! (%2) %T%1%n ju¿ istnieje w li¶cie kontaktów\n", 1);
+	format_add("user_exists_other", "%! (%3) %T%1%n ju¿ istnieje w li¶cie kontaktów jako %2\n", 1);
 
 	/* zmiany stanu */
-	format_add("away", "%> Zmieniono stan na zajêty\n", 1);
-	format_add("away_descr", "%> Zmieniono stan na zajêty: %T%1%n%2\n", 1);
-	format_add("back", "%> Zmieniono stan na dostêpny\n", 1);
-	format_add("back_descr", "%> Zmieniono stan na dostêpny: %T%1%n%2%n\n", 1);
-	format_add("invisible", "%> Zmieniono stan na niewidoczny\n", 1);
-	format_add("invisible_descr", "%> Zmieniono stan na niewidoczny: %T%1%n%2\n", 1);
-	format_add("private_mode_is_on", "%> Tryb ,,tylko dla znajomych'' jest w³±czony\n", 1);
-	format_add("private_mode_is_off", "%> Tryb ,,tylko dla znajomych'' jest wy³±czony\n", 1);
-	format_add("private_mode_on", "%> W³±czono tryb ,,tylko dla znajomych''\n", 1);
-	format_add("private_mode_off", "%> Wy³±czono tryb ,,tylko dla znajomych''\n", 1);
+	format_add("away", "%> (%1) Zmieniono stan na zajêty\n", 1);
+	format_add("away_descr", "%> (%3) Zmieniono stan na zajêty: %T%1%n%2\n", 1);
+	format_add("back", "%> (%1) Zmieniono stan na dostêpny\n", 1);
+	format_add("back_descr", "%> (%3) Zmieniono stan na dostêpny: %T%1%n%2%n\n", 1);
+	format_add("invisible", "%> (%1) Zmieniono stan na niewidoczny\n", 1);
+	format_add("invisible_descr", "%> (%3) Zmieniono stan na niewidoczny: %T%1%n%2\n", 1);
+	format_add("dnd", "%> (%1) Zmieniono stan na nie przeszkadzaæ%n\n", 1);
+	format_add("xa", "%> (%1) Zmieniono stan na extended away:%\n", 1);
+	format_add("private_mode_is_on", "%> (%1) Tryb ,,tylko dla znajomych'' jest w³±czony\n", 1);
+	format_add("private_mode_is_off", "%> (%1) Tryb ,,tylko dla znajomych'' jest wy³±czony\n", 1);
+	format_add("private_mode_on", "%> (%1) W³±czono tryb ,,tylko dla znajomych''\n", 1);
+	format_add("private_mode_off", "%> (%1) Wy³±czono tryb ,,tylko dla znajomych''\n", 1);
 	format_add("private_mode_invalid", "%! Nieprawid³owa warto¶æ\n", 1);
 	format_add("descr_too_long", "%! D³ugo¶æ opisu przekracza limit. Ilo¶æ uciêtych znaków: %T%1%n\n", 1);
 
-	format_add("auto_away", "%> Automagicznie zmieniono stan na zajêty\n", 1);
-	format_add("auto_away_descr", "%> Automagicznie zmieniono stan na zajêty: %T%1%n\n", 1);
-	format_add("auto_back", "%> Automagicznie zmieniono stan na dostêpny\n", 1);
-	format_add("auto_back_descr", "%> Automagicznie zmieniono stan na dostêpny: %T%1%n\n", 1);
-	
+	format_add("auto_away", "%> (%1) Automagicznie zmieniono stan na zajêty\n", 1);
+	format_add("auto_away_descr", "%> (%2) Automagicznie zmieniono stan na zajêty: %T%1%n\n", 1);
+	format_add("auto_back", "%> (%1) Automagicznie zmieniono stan na dostêpny\n", 1);
+	format_add("auto_back_descr", "%> (%2) Automagicznie zmieniono stan na dostêpny: %T%1%n\n", 1);
+
 	/* pomoc */
 	format_add("help", "%> %T%1%n%2 - %3\n", 1);
 	format_add("help_more", "%) %|%1\n", 1);
@@ -1099,18 +1101,18 @@ void theme_init()
 	format_add("message_too_long", "%! Wiadomo¶æ jest zbyt d³uga i zosta³a skrócona\n", 1);
 
 	/* ludzie zmieniaj± stan */
-	format_add("status_avail", "%> %1 jest dostêpn%@2\n", 1);
-	format_add("status_avail_descr", "%> %1 jest dostêpn%@2: %T%3%n\n", 1);
-	format_add("status_away", "%> %1 jest zajêt%@2\n", 1);
-	format_add("status_away_descr", "%> %1 jest zajêt%@2: %T%3%n\n", 1);
-	format_add("status_notavail", "%> %1 jest niedostêpn%@2\n", 1);
-	format_add("status_notavail_descr", "%> %1 jest niedostêpn%@2: %T%3%n\n", 1);
-	format_add("status_invisible", "%> %1 jest niewidoczn%@2\n", 1);
-	format_add("status_invisible_descr", "%> %1 jest niewidoczn%@2: %T%3%n\n", 1);
+	format_add("status_avail", "%> (%3) %1 jest dostêpn%@2\n", 1);
+	format_add("status_avail_descr", "%> (%3) %1 jest dostêpn%@2: %T%4%n\n", 1);
+	format_add("status_away", "%> (%3) %1 jest zajêt%@2\n", 1);
+	format_add("status_away_descr", "%> (%3) %1 jest zajêt%@2: %T%4%n\n", 1);
+	format_add("status_notavail", "%> (%3) %1 jest niedostêpn%@2\n", 1);
+	format_add("status_notavail_descr", "%> (%3) %1 jest niedostêpn%@2: %T%4%n\n", 1);
+	format_add("status_invisible", "%> (%3) %1 jest niewidoczn%@2\n", 1);
+	format_add("status_invisible_descr", "%> (%3) %1 jest niewidoczn%@2: %T%4%n\n", 1);
 
 	/* po³±czenie z serwerem */
-	format_add("connecting", "%> £±czenie z serwerem...\n", 1);
-	format_add("conn_failed", "%! Po³±czenie nie powiod³o siê: %1\n", 1);
+	format_add("connecting", "%> (%1) £±czenie z serwerem %n\n", 1);
+	format_add("conn_failed", "%! (%2) Po³±czenie nie powiod³o siê: %1%n\n", 1);
 	format_add("conn_failed_resolving", "Nie znaleziono serwera", 1);
 	format_add("conn_failed_connecting", "Nie mo¿na po³±czyæ siê z serwerem", 1);
 	format_add("conn_failed_invalid", "Nieprawid³owa odpowied¼ serwera", 1);
@@ -1119,18 +1121,19 @@ void theme_init()
 	format_add("conn_failed_404", "B³±d serwera HTTP", 1);
 	format_add("conn_failed_tls", "B³±d negocjacji TLS", 1);
 	format_add("conn_failed_memory", "Brak pamiêci", 1);
-	format_add("conn_stopped", "%! Przerwano ³±czenie\n", 1);
-	format_add("conn_timeout", "%! Przekroczono limit czasu operacji ³±czenia z serwerem\n", 1);
-	format_add("connected", "%> Po³±czono\n", 1);
-	format_add("connected_descr", "%> Po³±czono: %T%1%n\n", 1);
-	format_add("disconnected", "%> Roz³±czono\n", 1);
-	format_add("disconnected_descr", "%> Roz³±czono: %T%1%n\n", 1);
-	format_add("already_connected", "%! Klient jest ju¿ po³±czony. Wpisz %Treconnect%n aby po³±czyæ ponownie\n", 1);
-	format_add("during_connect", "%! £±czenie trwa. Wpisz %Tdisconnect%n aby przerwaæ\n", 1);
-	format_add("conn_broken", "%! Po³±czenie zosta³o przerwane\n", 1);
-	format_add("conn_disconnected", "%! Serwer zerwa³ po³±czenie\n", 1);
-	format_add("not_connected", "%! Brak po³±czenia z serwerem.%n\n", 1);
-	format_add("not_connected_msg_queued", "%! Brak po³±czenia z serwerem. Wiadomo¶æ bêdzie wys³ana po po³±czeniu.%n\n", 1);
+	format_add("conn_stopped", "%! (%1) Przerwano ³±czenie %n\n", 1);
+	format_add("conn_timeout", "%! (%1) Przekroczono limit czasu operacji ³±czenia z serwerem%n\n", 1);
+	format_add("connected", "%> (%1) Po³±czono%n\n", 1);
+	format_add("connected_descr", "%> (%2) Po³±czono: %T%1%n\n", 1);
+	format_add("disconnected", "%> (%1) Roz³±czono%n\n", 1);
+	format_add("disconnected_descr", "%> (%2) Roz³±czono: %T%1%n\n", 1);
+	format_add("already_connected", "%! (%1) Klient jest ju¿ po³±czony. Wpisz %Treconnect%n aby po³±czyæ ponownie%n\n", 1);
+	format_add("during_connect", "%! (%1) £±czenie trwa. Wpisz %Tdisconnect%n aby przerwaæ%n\n", 1);
+	format_add("conn_broken", "%! (%1) Po³±czenie zosta³o przerwane%n\n", 1);
+	format_add("conn_disconnected", "%! (%1) Serwer zerwa³ po³±czenie%n\n", 1);
+	format_add("not_connected", "%! (%1) Brak po³±czenia z serwerem.%n\n", 1);
+	format_add("not_connected_msg_queued", "%! (%1) Brak po³±czenia z serwerem. Wiadomo¶æ bêdzie wys³ana po po³±czeniu.%n\n", 1);
+	format_add("wrong_id", "%! (%1) Z³y id sesji.%n\n", 1);
 
 	/* obs³uga motywów */
 	format_add("theme_loaded", "%> Wczytano motyw %T%1%n\n", 1);
@@ -1174,7 +1177,7 @@ void theme_init()
 	/* zmiana informacji w katalogu publicznym */
 	format_add("change", "%> Informacje w katalogu publicznym zosta³y zmienione\n", 1);
 	format_add("change_failed", "%! B³±d podczas zmiany informacji w katalogu publicznym\n", 1);
-	
+
 	/* wyszukiwanie u¿ytkowników */
 	format_add("search_failed", "%! Wyst±pi³ b³±d podczas szukania: %1\n", 1);
 	format_add("search_not_found", "%! Nie znaleziono\n", 1);
@@ -1330,9 +1333,9 @@ void theme_init()
 	format_add("dcc_user_notavail", "%! %1 musi byæ dostêpn%@1, by móc nawi±zaæ po³±czenie\n", 1);
 
 	/* query */
-	format_add("query_started", "%) Rozpoczêto rozmowê z %T%1%n\n", 1);
+	format_add("query_started", "%) (%2) Rozpoczêto rozmowê z %T%1%n\n", 1);
 	format_add("query_started_window", "%) Wci¶nij %TAlt-G%n by ignorowaæ, %TAlt-K%n by zamkn±æ okno\n", 1);
-	format_add("query_finished", "%) Zakoñczono rozmowê z %T%1%n\n", 1);
+	format_add("query_finished", "%) (%2) Zakoñczono rozmowê z %T%1%n\n", 1);
 	format_add("query_exist", "%! Rozmowa z %T%1%n jest ju¿ prowadzona w okienku nr %T%2%n\n", 1);
 
 	/* zdarzenia */
@@ -1472,6 +1475,7 @@ void theme_init()
 	format_add("python_not_found", "%! Nie znaleziono skryptu %T%1%n\n", 1);
 	format_add("python_wrong_location", "%! Skrypt nale¿y umie¶ciæ w katalogu %T%1%n\n", 1);
 #endif
+	format_add("session_name", "%B%1%n", 1);
 	format_add("session_variable", "%> %T%1->%2 = %R%3%n\n", 1); /* uid, var, new_value*/
 	format_add("session_variable_removed", "%> Usuniêto %T%1->%2%n\n", 1); /* uid, var */
 	format_add("session_variable_doesnt_exist", "%! Nieznana zmienna: %T%1->%2%n\n", 1); /* uid, var */

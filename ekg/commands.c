@@ -334,7 +334,7 @@ COMMAND(cmd_modify)
 
 			if ((existing = userlist_find(session, argv[i + 1]))) {
 				if (existing->nickname) {
-					printq("user_exists_other", argv[i], format_user(session, existing->uid));
+					printq("user_exists_other", argv[i], format_user(session, existing->uid), session_name(session));
 					array_free(argv);
 					return -1;
 				} else {
@@ -485,9 +485,9 @@ COMMAND(cmd_add)
 
 	if (((u = userlist_find(session_current, params[0])) && u->nickname) || ((u = userlist_find(session_current, params[1])) && u->nickname)) {
 		if (!xstrcasecmp(params[1], u->nickname) && !xstrcasecmp(params[0], u->uid))
-			printq("user_exists", params[1]);
+			printq("user_exists", params[1], session_name(session_current));
 		else
-			printq("user_exists_other", params[1], format_user(session_current, u->uid));
+			printq("user_exists_other", params[1], format_user(session_current, u->uid), session_name(session_current));
 
 		result = -1;
 		goto cleanup;
@@ -506,7 +506,7 @@ COMMAND(cmd_add)
                 query_emit(NULL, "add-notify", &session_current->uid, &uid);
                 xfree(uid);
 
-		printq("user_added", params[1]);
+		printq("user_added", params[1], session_name(session_current));
 
 		tabnick_remove(params[0]);
 		config_changed = 1;
@@ -665,6 +665,9 @@ COMMAND(cmd_del)
 	char *tmp;
 	int del_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
 
+	if (!session)
+		return -1;
+	
 	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
@@ -685,7 +688,7 @@ COMMAND(cmd_del)
 			userlist_remove(session, u);
 		}
 
-		printq("user_cleared_list");
+		printq("user_cleared_list", session_name(session));
 		tabnick_flush();
 		config_changed = 1;
 
@@ -699,9 +702,9 @@ COMMAND(cmd_del)
 
 	tmp = xstrdup(u->uid);
 	query_emit(NULL, "userlist-removed", &params[0], &tmp);
-	query_emit(NULL, "remove-notify", &session_current->uid, &tmp);
+	query_emit(NULL, "remove-notify", &session->uid, &tmp);
 
-        printq("user_deleted", params[0]);
+        printq("user_deleted", params[0], session_name(session));
 	xfree(tmp);
 
 	tabnick_remove(u->uid);
@@ -1865,7 +1868,7 @@ query:
 	} else {
 		query_emit(NULL, "ui-window-target-changed", &window_current);
 
-		printq("query_finished", window_current->target);
+		printq("query_finished", window_current->target, session_name(session));
 	}
 
 chat:
