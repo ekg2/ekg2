@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -369,7 +370,10 @@ int protocol_message(void *data, va_list ap)
 		userlist->blink = 1;
 //	else if (window_find(uid)) 
 //		userlist->blink = 1;
-		
+	/* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
+	if (!userlist) 
+		tabnick_add(uid);
+	
 	message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
 
 	return 0;
