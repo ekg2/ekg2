@@ -237,7 +237,7 @@ void logs_handler(void *data, va_list ap)
 	/* well, 'format' is unused, so silence the warning */
 	format = NULL;
 
-	if (!session)
+	if (!session || (!valid_uid(uid) && ! valid_nick(uid) ))
 		return;
 
 	if (!(log_formats = session_get(s, "log_formats")))
