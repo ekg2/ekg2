@@ -56,7 +56,7 @@
 
 
 
-PLUGIN_DEFINE(logs, PLUGIN_GENERIC, NULL);
+PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 
 int logs_plugin_init(int prio)
 {

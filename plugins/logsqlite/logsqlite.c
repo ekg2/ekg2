@@ -46,7 +46,7 @@
 #include "logsqlite.h"
 
 
-PLUGIN_DEFINE(logsqlite, PLUGIN_GENERIC, logsqlite_theme_init);
+PLUGIN_DEFINE(logsqlite, PLUGIN_LOG, logsqlite_theme_init);
 
 int logsqlite_plugin_init(int prio)
 {
