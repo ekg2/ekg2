@@ -9,8 +9,8 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - zmienne s± pokazywane, ale nie mo¿na ich ustawiaæ (np zmienne pluginów) (zdz)
-  - nie dzia³±j±ce list -d dla jabber'a (del)
+  - dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:
+    /add gg:1111 ble, nie spowoduje, ¿e /list ble poka¿e nam prawid³owy stan (del)
   - przy make_window == 2 i po "¶wie¿ym" otwarciu gg, przy pobieraniu wiadomo¶ci
     "le¿±cych" na serwerze nowe okna nie s± tworzone (del)
   - po roz³±czeniu z serwerem nie jest aktualizowania lista kontaktów (salvador)
