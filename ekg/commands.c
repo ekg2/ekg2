@@ -166,6 +166,29 @@ void tabnick_flush()
 	send_nicks_index = 0;
 }
 
+/*
+ * command_find()
+ *
+ * szuka podanej komendy.
+ */
+command_t *command_find(const char *name)
+{
+        list_t l;
+
+        if (!name)
+                return NULL;
+
+        for (l = commands; l; l = l->next) {
+                command_t *c = l->data;
+
+                if (!xstrcasecmp(c->name, name))
+                        return c;
+        }
+
+        return NULL;
+}
+
+
 COMMAND(cmd_tabclear)
 {
 	int i;
@@ -397,7 +420,7 @@ COMMAND(cmd_add)
 	int params_free = 0;	/* zmienili¶my params[] i trzeba zwolniæ */
 	int result = 0;
 	userlist_t *u = NULL;
-
+	
 	if (!session_current) {
 		return -1;
 	}
@@ -1969,7 +1992,8 @@ COMMAND(cmd_bind)
  */
 int command_exec(const char *target, session_t *session, const char *xline, int quiet)
 {
-	char *cmd = NULL, *tmp, *p = NULL, short_cmd[2] = ".", *last_name = NULL, *last_params = NULL, *line_save = NULL, *line = NULL;
+	char *cmd = NULL, *tmp, *p = NULL, short_cmd[2] = ".", *last_name = NULL, *line_save = NULL, *line = NULL;
+	char **last_params = NULL;
 	command_func_t *last_abbr = NULL;
 	int abbrs = 0;
         command_func_t *last_abbr_plugins = NULL;
@@ -2051,7 +2075,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			if (!xstrcasecmp(c->name + plen, cmd)) {
 				last_abbr = c->function;
 				last_name = c->name;
-				last_params = (c->alias) ? "?" : c->params;
+				last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
 				abbrs = 1;
 				goto exact_match;
 			}
@@ -2060,7 +2084,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				abbrs_plugins++;
 				last_abbr_plugins = c->function;
 				last_name = c->name;
-				last_params = (c->alias) ? "?" : c->params;
+				last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
 			} else {
 				if (last_abbr_plugins && abbrs_plugins == 1)
 					break;
@@ -2074,7 +2098,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (!xstrcasecmp(c->name, cmd)) {
 			last_abbr = c->function;
 			last_name = c->name;
-			last_params = (c->alias) ? "?" : c->params;
+			last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
 			abbrs = 1;
 			break;
 		}
@@ -2082,7 +2106,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			abbrs++;
 			last_abbr = c->function;
 			last_name = c->name;
-			last_params = (c->alias) ? "?" : c->params;
+			last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
 		} else {
 			if (last_abbr && abbrs == 1)
 				break;
@@ -2092,7 +2116,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 exact_match:
 	if ((last_abbr && abbrs == 1 && !last_abbr_plugins && !abbrs_plugins) || (last_abbr_plugins && abbrs_plugins == 1 && !last_abbr && !abbrs)) {
 		char **par, *tmp;
-		int res, len = xstrlen(last_params);
+		int res;
 
 		if(last_abbr_plugins)
 			last_abbr = last_abbr_plugins;
@@ -2103,9 +2127,8 @@ exact_match:
 			last_name = tmp + 1;
 		
 		window_lock_inc_n(target);
-
-		par = array_make(p, " \t", len, 1, 1);
-		res = (last_abbr)(last_name, (const char**) par, (session) ? session : window_current->session, target, (quiet & 1));
+		par = array_make(p, " \t", array_count(last_params), 1, 1);
+		res = (last_abbr)(last_name, (const char **) par, (session) ? session : window_current->session, target, (quiet & 1));
 		array_free(par);
 
 		window_lock_dec_n(target);
@@ -3388,23 +3411,28 @@ static int command_add_compare(void *data1, void *data2)
  *  - help_params - opis parametrów,
  *  - help_brief - krótki opis komendy,
  *  - help_long - szczegó³owy opis komendy.
+ *  - possibilities - mo¿liwo¶ci tj ewentualne parametry - przy dope³nianiu przydatne 
  *
  * 0 je¶li siê uda³o, -1 je¶li b³±d.
  */
-int command_add(plugin_t *plugin, const char *name, const char *params, command_func_t function, int alias, const char *params_help, const char *brief_help, const char *long_help)
+int command_add(plugin_t *plugin, const char *name, char **params, command_func_t function, int alias, const char *params_help, const char *brief_help, const char *long_help, char **possibilities)
 {
 	command_t c;
+	int i;
 
 	memset(&c, 0, sizeof(c));
 
 	c.name = xstrdup(name);
-	c.params = xstrdup(params);
+        for (i=0; params && params[i]; i++)
+                array_add(&c.params, params[i]);
 	c.function = function;
 	c.alias = alias;
 	c.params_help = xstrdup(params_help);
 	c.brief_help = xstrdup(brief_help);
 	c.long_help = xstrdup(long_help);
 	c.plugin = plugin;
+	for (i=0; possibilities && possibilities[i]; i++)
+		array_add(&c.possibilities, possibilities[i]);
 
 	return (list_add_sorted(&commands, &c, sizeof(c), command_add_compare) != NULL) ? 0 : -1;
 }
@@ -3443,22 +3471,26 @@ int command_remove(plugin_t *plugin, const char *name)
  *
  * '?' - olewamy,
  * 'U' - rêcznie wpisany uin, nadawca mesgów,
- * 'u' - nazwa lub uin z kontaktów, nazwa konferencji, rêcznie wpisany uin,
- *       nadawca mesgów,
- * 'c' - komenda,
+ * 'u' - nazwa lub uin z kontaktów
+ * 'C' - nazwa konferencji
+ * 'c' - nazwa komendy,
  * 'i' - nicki z listy ignorowanych osób,
  * 'b' - nicki z listy blokowanych osób,
  * 'v' - nazwa zmiennej,
- * 'd' - komenda dcc,
- * 'p' - komenda python,
- * 'w' - komenda window,
+ * 'p' - parametry wpisane w possibilities,
  * 'f' - plik,
  * 'e' - nazwy zdarzeñ,
  * 'I' - poziomy ignorowania.
  * 's' - nazwa sesji
  * 'S' - zmienna sesji 
- * 'A' - nazwa lub zmienna sesji
+ * 
+ * je¿eli parametr == 'p' to 9 argument funkcji command_add() przyjmuje jako argument
+ * tablicê z mo¿liwymi uzupe³nieniami 
+ * 
+ * parametry te¿ s± tablic±, dlatego u¿ywamy makr possibilities() i params() - najlepiej
+ * przeanalizowaæ przyk³ady 
  */
+
 
 /*
  * command_init()
@@ -3467,7 +3499,10 @@ int command_remove(plugin_t *plugin, const char *name)
  */
 void command_init()
 {
-	command_add(NULL, "add", "U??", cmd_add, 0,
+#define possibilities(x) array_make(x, " ", 0, 1, 1)
+#define params(x) array_make(x, " ", 0, 1, 1)
+
+	command_add(NULL, "add", params("U ? p"), cmd_add, 0,
 	  " [numer] [alias] [opcje]", "dodaje u¿ytkownika do listy kontaktów",
 	  "\n"
 	  "  -f, --find [alias]  dodaje ostatnio wyszukan± osobê\n"
@@ -3476,9 +3511,11 @@ void command_init()
 	  "wyszukiwaniu nie znaleziono pseudonimu. "
 	  "Pozosta³e opcje identyczne jak dla polecenia %Tlist%n (dotycz±ce "
 	  "wpisu). W oknie rozmowy z kim¶ spoza naszej listy kontaktów jako "
-	  "parametr mo¿na podaæ sam alias.");
+	  "parametr mo¿na podaæ sam alias.", 
+	  possibilities("-f --find") );
+
 	  
-	command_add(NULL, "alias", "??", cmd_alias, 0,
+	command_add(NULL, "alias", params("p ?"), cmd_alias, 0,
 	  " [opcje]", "zarz±dzanie aliasami",
 	  "\n"
 	  "  -a, --add <alias> <komenda>     dodaje alias\n"
@@ -3487,9 +3524,10 @@ void command_init()
 	  " [-l, --list] [alias]             wy¶wietla listê aliasów\n"
 	  "\n"
 	  "W komendzie mo¿na u¿yæ formatów od %T\\%1%n do %T\\%9%n i w "
-	  "ten sposób ustaliæ kolejno¶æ przekazywanych argumentów.");
+	  "ten sposób ustaliæ kolejno¶æ przekazywanych argumentów.",
+	  possibilities("-a --add -A --append -d --del -l --list") );
 	  
-	command_add(NULL, "at", "???c", cmd_at, 0,
+	command_add(NULL, "at", params("p ? ? c"), cmd_at, 0,
 	  " [opcje]", "planuje wykonanie komend",
 	  "\n"
 	  "  -a, --add [nazwa] <czas>[/czêst.] <komenda>  tworzy nowy plan\n"
@@ -3504,12 +3542,13 @@ void command_init()
 	  "miesi±ca, miesi±c, rok. Je¶li podanie zostana czêstotliwo¶æ, wyra¿ona "
 	  "w sekundach lub za pomoc± przyrostków takich, jak dla komendy %Ttimer%n, "
 	  "to komenda bêdzie wykonywana w zadanych odstepach czasu od momentu jej "
-	  "pierwszego wykonania.");
+	  "pierwszego wykonania.",
+	  possibilities("-a --add -d --del -l --list") );
  
-	command_add(NULL, "beep", "", cmd_beep, 0,
-	  "", "wydaje d¼wiêk", "");
+	command_add(NULL, "beep", params(""), cmd_beep, 0,
+	  "", "wydaje d¼wiêk", "", NULL);
 	  
-	command_add(NULL, "bind", "???", cmd_bind, 0,
+	command_add(NULL, "bind", params("p ? ?"), cmd_bind, 0,
 	  " [opcje]", "przypisywanie akcji klawiszom",
 	  "\n"
 	  "  -a, --add <sekwencja> <akcja>   przypisuje now± sekwencjê\n"
@@ -3522,12 +3561,13 @@ void command_init()
 	  "PageUp, PageDown.\n"
 	  "\n"
 	  "Dostêpne akcje to: backward-word, forward-word, kill-word, toggle-input, cancel-input, backward-delete-char, beginning-of-line, end-of-line, delete-char, backward-page, forward-page, kill-line, yank, accept-line, line-discard, quoted-insert, word-rubout, backward-char, forward-char, previous-history, next-history, complete, quick-list, toggle-contacts, next-contacts-group, ignore-query, forward-contacts-page, backward-contacts-page, forward-contacts-line, backward-contacts-line."
-	  "Ka¿da inna akcja bêdzie traktowana jako komenda do wykonania.");
+	  "Ka¿da inna akcja bêdzie traktowana jako komenda do wykonania.", 
+	  possibilities("-a --add -d --del -l --list -L --list-default") );
   
-	command_add(NULL, "clear", "", cmd_window, 0,
-	  "", "czy¶ci ekran", "");
+	command_add(NULL, "clear", params(""), cmd_window, 0,
+	  "", "czy¶ci ekran", "", NULL);
   
-	command_add(NULL, "dcc", "duf?", cmd_dcc, 0,
+	command_add(NULL, "dcc", params("p u f ?"), cmd_dcc, 0,
 	  " <komenda> [opcje]", "obs³uga bezpo¶rednich po³±czeñ",
 	  "\n"
 	  "  [r]send <numer/alias> <¶cie¿ka>  wysy³a podany plik\n"
@@ -3540,17 +3580,18 @@ void command_init()
 	  "Po³±czenia bezpo¶rednie wymagaj± w³±czonej opcji %Tdcc%n. "
 	  "Komendy %Trsend%n i %Trvoice%n wysy³aj± ¿±danie po³±czenia siê "
 	  "drugiego klienta z naszym i s± przydatne, gdy nie jeste¶my w stanie "
-	  "siê z nim sami po³±czyæ.");
+	  "siê z nim sami po³±czyæ.", 
+	  possibilities("send rsend get resumce rvoice voice close list") );
 
-	command_add(NULL, "del", "u?", cmd_del, 0,
+	command_add(NULL, "del", params("u ?"), cmd_del, 0,
 	  " <numer/alias>|*", "usuwa u¿ytkownika z listy kontaktów",
-	  "");
+	  "", NULL);
 	
-	command_add(NULL, "echo", "?", cmd_echo, 0,
+	command_add(NULL, "echo", params("?"), cmd_echo, 0,
 	  " [tekst]", "wy¶wietla podany tekst",
-	  "");
+	  "", NULL);
 	  
-	command_add(NULL, "exec", "?", cmd_exec, 0,
+	command_add(NULL, "exec", params("p ?"), cmd_exec, 0,
 	  " [opcje] <polecenie>", "uruchamia polecenie systemowe",
 	  "\n"
 	  "  -m, --msg  [numer/alias]  wysy³a wynik do danej osoby\n"
@@ -3560,23 +3601,24 @@ void command_init()
 	  "zakoñczeniu. Zapisanie opcji wielkimi literami (np. %T-B%n) "
 	  "spowoduje umieszczenie polecenia w pierwszej linii wysy³anego "
 	  "wyniku. Ze wzglêdu na budowê klienta, numery i aliasy "
-	  "%Tnie bêd±%n dope³niane Tabem.");
+	  "%Tnie bêd±%n dope³niane Tabem.",
+	  possibilities("-m --msg -b --bmsg") );
 	  
-	command_add(NULL, "!", "?", cmd_exec, 0,
+	command_add(NULL, "!", params("?"), cmd_exec, 0,
 	  " [opcje] <polecenie>", "synonim dla %Texec%n",
-	  "");
+	  "", NULL);
 
-	command_add(NULL, "help", "cv", cmd_help, 0,
+	command_add(NULL, "help", params("c v"), cmd_help, 0,
 	  " [polecenie] [zmienna]", "wy¶wietla informacjê o poleceniach",
 	  "\n"
 	  "Mo¿liwe jest wy¶wietlenie informacji o zmiennych, je¶li jako "
-	  "polecenie poda siê %Tset%n");
+	  "polecenie poda siê %Tset%n", NULL);
 	  
-	command_add(NULL, "?", "cv", cmd_help, 0,
+	command_add(NULL, "?", params("c v"), cmd_help, 0,
 	  " [polecenie] [zmienna]", "synonim dla %Thelp%n",
-	  "");
+	  "", NULL);
 	 
-	command_add(NULL, "ignore", "uI", cmd_ignore, 0,
+	command_add(NULL, "ignore", params("uUC I"), cmd_ignore, 0,
 	  " [numer/alias] [poziom]", "dodaje do listy ignorowanych",
 	  "\n"
 	  "Dostêpne poziomy ignorowania:\n"
@@ -3588,9 +3630,10 @@ void command_init()
 	  "  - events - ignoruje zdarzenia zwi±zane z u¿ytkownikiem\n"
 	  "  - * - wszystkie poziomy\n"
 	  "\n"
-	  "Poziomy mo¿na ³±czyæ ze sob± za pomoc± przecinka lub ,,%T|%n''.");
+	  "Poziomy mo¿na ³±czyæ ze sob± za pomoc± przecinka lub ,,%T|%n''.", 
+	  possibilities("status descr notify msg dcc events *") );
 	  
-	command_add(NULL, "last", "uu", cmd_last, 0,
+	command_add(NULL, "last", params("CpuU CuU"), cmd_last, 0,
 	  " [opcje]", "wy¶wietla lub czy¶ci ostatnie wiadomo¶ci",
 	  "\n"
 	  "  -c, --clear [numer/alias]      czy¶ci podane wiadomo¶ci lub wszystkie\n"
@@ -3599,9 +3642,10 @@ void command_init()
 	  "  [numer/alias]                  wy¶wietla ostatnie wiadomo¶ci\n"
 	  "\n"
 	  "W przypadku opcji %T--stime%n czas wy¶wietlany jest "
-	  ",,inteligentnie'' zgodnie ze zmienn± %Ttime_deviation.%n");
+	  ",,inteligentnie'' zgodnie ze zmienn± %Ttime_deviation.%n", 
+	  possibilities("-c --clear -s --stime -n --number") );
 
-	command_add(NULL, "list", "u?", cmd_list, 0,
+	command_add(NULL, "list", params("CpuU ?"), cmd_list, 0,
           " [alias|@grupa|opcje]", "zarz±dzanie list± kontaktów",
 	  "\n"
 	  "Wy¶wietlanie osób o podanym stanie \"list [-a|-A|-i|-B|-d|-m|-o]\":\n"
@@ -3629,10 +3673,11 @@ void command_init()
 	  "  -O, --online               b±d¼ widoczny dla danej osoby\n"
 	  "\n"
 	  "Dwie ostatnie opcje dzia³aj± tylko, gdy w³±czony jest tryb ,,tylko "
-	  "dla znajomych''.\n");
+	  "dla znajomych''.\n", 
+	  possibilities("-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online") );
 	  
 #if 0
-	command_add(NULL, "on", "?euc", cmd_on, 0,
+	command_add(NULL, "on", params("p e CuU c"), cmd_on, 0,
 	  " [opcje]", "zarz±dzanie zdarzeniami",
 	  "\n"
 	  "  -a, --add <zdarzenie> <numer/alias/@grupa> <komenda>  dodaje zdarzenie\n"
@@ -3666,34 +3711,36 @@ void command_init()
 	  "Format %T\\%4%n ró¿ni siê od %T\\%3%n tym, ¿e wszystkie niebiezpieczne znaki, "
 	  "które mog³yby zostaæ zinterpretowane przez shell, zostan± poprzedzone backslashem. "
 	  "U¿ywanie %T\\%3%n w przypadku komendy ,,exec'' jest %Tniebezpieczne%n i, je¶li naprawdê "
-	  "musisz wykorzystaæ tre¶æ wiadomo¶ci lub opis, u¿yj %T\"\\%4\"%n (w cudzys³owach).");
+	  "musisz wykorzystaæ tre¶æ wiadomo¶ci lub opis, u¿yj %T\"\\%4\"%n (w cudzys³owach).", 
+	  possibilities("-a --add -d --del -l --list") );
 #endif
 
-	command_add(NULL, "play", "f", cmd_play, 0,
-	  " <plik>", "odtwarza plik d¼wiêkowy", "");
+	command_add(NULL, "play", params("f"), cmd_play, 0,
+	  " <plik>", "odtwarza plik d¼wiêkowy", "", NULL);
 
-	command_add(NULL, "plugin", "?", cmd_plugin, 0,
-	  " [-|+][nazwa]", "³aduje lub usuwa rozszerzenie ekg", "");
+	command_add(NULL, "plugin", params("?"), cmd_plugin, 0,
+	  " [-|+][nazwa]", "³aduje lub usuwa rozszerzenie ekg", "", NULL);
 
 #ifdef WITH_PYTHON
-	command_add(NULL, "python", "p?", cmd_python, 0,
+	command_add(NULL, "python", params("p ?"), cmd_python, 0,
 	  " [komenda] [opcje]", "obs³uga skryptów",
 	  "\n"
 	  "  load <skrypt>    ³aduje skrypt\n"
 	  "  unload <skrypt>  usuwa skrypt z pamiêci\n"
 	  "  run <plik>       uruchamia skrypt\n"
 	  "  exec <komenda>   uruchamia komendê\n"
-	  " [list]            wy¶wietla listê za³adowanych skryptów");
+	  " [list]            wy¶wietla listê za³adowanych skryptów", 
+	  possibilities("load unload run exec list") );
 #endif
 
-	command_add(NULL, "query", "u?", cmd_query, 0,
+	command_add(NULL, "query", params("uUC ?"), cmd_query, 0,
 	  " <numer/alias/@grupa> [wiadomo¶æ]", "w³±cza rozmowê",
 	  "\n"
 	  "Mo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub "
 	  "pseudonimy przecinkiem (ale bez odstêpów). W takim wypadku "
-          "zostanie rozpoczêta rozmowa grupowa.");
+          "zostanie rozpoczêta rozmowa grupowa.", NULL);
 
-	command_add(NULL, "queue", "uu", cmd_queue, 0,
+	command_add(NULL, "queue", params("puUC uUC"), cmd_queue, 0,
 	  " [opcje]", "zarz±dzanie wiadomo¶ciami do wys³ania po po³±czeniu",
 	  "\n"
 	  "  -c, --clear [numer/alias]  usuwa podane wiadomo¶ci lub wszystkie\n"
@@ -3701,35 +3748,37 @@ void command_init()
 	  "\n"
 	  "Podaj±c numer lub alias, nale¿y podaæ ten, który by³ u¿ywany "
 	  "przy wysy³aniu wiadomo¶ci, lub nazwê okna, w którym wiadomo¶ci "
-	  "by³y wysy³ane.");
+	  "by³y wysy³ane.", 
+	  possibilities("-c --clear") );
 	  
-	command_add(NULL, "quit", "?", cmd_quit, 0,
+	command_add(NULL, "quit", params("?"), cmd_quit, 0,
 	  " [powód/-]", "wychodzi z programu",
 	  "\n"
           "Je¶li w³±czona jest odpowiednia opcja %Trandom_reason%n i nie "
 	  "podano powodu, zostanie wylosowany z pliku %Tquit.reasons%n. "
 	  "Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie bez "
-	  "wzglêdu na ustawienia zmiennych.");
+	  "wzglêdu na ustawienia zmiennych.", NULL);
 	  
-	command_add(NULL, "reload", "f", cmd_reload, 0,
+	command_add(NULL, "reload", params("f"), cmd_reload, 0,
 	  " [plik]", "wczytuje plik konfiguracyjny u¿ytkownika lub podany",
-	  "");
+	  "", NULL);
 	  
-	command_add(NULL, "save", "?", cmd_save, 0,
+	command_add(NULL, "save", params("?"), cmd_save, 0,
 	  " [plik]", "zapisuje ustawienia programu",
 	  "\n"
 	  "Aktualny stan zostanie zapisany i bêdzie przywrócony przy "
 	  "nastêpnym uruchomieniu programu. Mo¿na podaæ plik, do którego "
-	  "ma byæ zapisana konfiguracja.");
+	  "ma byæ zapisana konfiguracja.", NULL);
 
-	command_add(NULL, "say", "?", cmd_say, 0,
+	command_add(NULL, "say", params("?"), cmd_say, 0,
 	  " [tekst]", "wymawia tekst",
 	  "\n"
 	  "  -c, --clear  usuwa z bufora tekst do wymówienia\n"
 	  "\n"
-	  "Polecenie wymaga zdefiniowana zmiennej %Tspeech_app%n");
+	  "Polecenie wymaga zdefiniowana zmiennej %Tspeech_app%n", 
+	  possibilities("-c --clear") );
 	  
-	command_add(NULL, "set", "v?", cmd_set, 0,
+	command_add(NULL, "set", params("v ?"), cmd_set, 0,
   	  " [-]<zmienna> [[+/-]warto¶æ]", "wy¶wietla lub zmienia ustawienia",
 	  "\n"
 	  "U¿ycie %Tset -zmienna%n czy¶ci zawarto¶æ zmiennej. Dla zmiennych "
@@ -3737,19 +3786,20 @@ void command_init()
 	  "dodana (poprzedzone plusem), usuniêta (minusem) czy ustawiona "
 	  "(bez prefiksu). Warto¶æ zmiennej mo¿na wzi±æ w cudzys³ów. "
 	  "Poprzedzenie opcji parametrem %T-a%n lub %T--all%n spowoduje "
-	  "wy¶wietlenie wszystkich, nawet aktualnie nieaktywnych zmiennych.");
+	  "wy¶wietlenie wszystkich, nawet aktualnie nieaktywnych zmiennych.", NULL);
 
-        command_add(NULL,  "status", "s", cmd_status, 0,
+        command_add(NULL,  "status", params("s"), cmd_status, 0,
           " [opcje]", "wy¶wietla aktualny stan",
 	  "\n"
-          "  <uid> wy¶wietla aktualny stan dla konkretnej sesji");
+          "  <uid> wy¶wietla aktualny stan dla konkretnej sesji", NULL);
 
-	command_add(NULL, "tabclear", "?", cmd_tabclear, 0,
+	command_add(NULL, "tabclear", params("p"), cmd_tabclear, 0,
 	  " [opcje]", "czy¶ci listê nicków do dope³nienia",
 	  "\n"
-	  "  -o, --offline  usuwa tylko nieobecnych");
+	  "  -o, --offline  usuwa tylko nieobecnych", 
+	  possibilities("-o --offline") );
 
-	command_add(NULL, "conference", "??u", cmd_conference, 0,
+	command_add(NULL, "conference", params("p C uU"), cmd_conference, 0,
 	  " [opcje]", "zarz±dzanie konferencjami",
 	  "\n"
 	  "  -a, --add [#nazwa] <numer/alias/@grupa>  tworzy now± konferencjê\n"
@@ -3763,9 +3813,10 @@ void command_init()
 	  "\n"
 	  "Dodaje nazwê konferencji i definiuje, kto bierze w niej udzia³. "
 	  "Kolejne numery, pseudonimy lub grupy mog± byæ oddzielone "
-	  "przecinkiem lub spacj±.");
+	  "przecinkiem lub spacj±.", 
+	  possibilities("-a --add -j --join -d --del -i --ignore -u --unignore -r --rename -f --find -l --list") );
 
-	command_add(NULL, "timer", "???c", cmd_timer, 0,
+	command_add(NULL, "timer", params("p ? ? c"), cmd_timer, 0,
 	  " [opcje]", "zarz±dzanie timerami",
 	  "\n"
 	  "  -a, --add [nazwa] [*/]<czas> <komenda>  tworzy nowy timer\n"
@@ -3777,17 +3828,18 @@ void command_init()
 	  "oznaczaj±cych dni, godziny, minuty, sekundy, np. 5h20m. Timer po "
 	  "jednorazowym uruchomieniu jest usuwany, chyba ¿e czas poprzedzimy "
 	  "wyra¿eniem ,,%T*/%n''. Wtedy timer bêdzie uruchamiany w zadanych odstêpach "
-	  "czasu, a na li¶cie bêdzie oznaczony gwiazdk±.");
+	  "czasu, a na li¶cie bêdzie oznaczony gwiazdk±.", 
+	  possibilities("-a --add -d --del -l --list") );
 
-	command_add(NULL, "unignore", "i?", cmd_ignore, 0,
+	command_add(NULL, "unignore", params("i ?"), cmd_ignore, 0,
 	  " <numer/alias>|*", "usuwa z listy ignorowanych osób",
-	  "");
+	  "", NULL);
 	  
-	command_add(NULL, "version", "", cmd_version, 0,
+	command_add(NULL, "version", params(""), cmd_version, 0,
 	  "", "wy¶wietla wersjê programu",
-	  "");
+	  "", NULL);
 	  
-	command_add(NULL, "window", "w?", cmd_window, 0,
+	command_add(NULL, "window", params("p ?"), cmd_window, 0,
 	  " <komenda> [numer_okna]", "zarz±dzanie okno",
 	  "\n"
 	  "  active               prze³±cza do pierwszego okna,\n"
@@ -3801,21 +3853,22 @@ void command_init()
 	  "  next                 prze³±cza do nastêpnego okna\n"
 	  "  prev                 prze³±cza do poprzedniego okna\n"
 	  "  switch <numer_okna>  prze³±cza do podanego okna\n"
-	  "  refresh              od¶wie¿a aktualne okno");
+	  "  refresh              od¶wie¿a aktualne okno", 
+	  possibilities("active, clear, kill, last, list, new, next, prev, switch, refresh") );
 
-	command_add(NULL, "_watches", "", cmd_debug_watches, 0, "", "wy¶wietla listê przegl±danych deskryptorów", "");
-	command_add(NULL, "_queries", "", cmd_debug_queries, 0, "", "wy¶wietla listê zapytañ", "");
-	command_add(NULL, "_query", "??????????", cmd_debug_query, 0, " <zapytanie> [parametry...]", "generuje zapytanie", "");
+	command_add(NULL, "_watches", params(""), cmd_debug_watches, 0, "", "wy¶wietla listê przegl±danych deskryptorów", "", NULL);
+	command_add(NULL, "_queries", params(""), cmd_debug_queries, 0, "", "wy¶wietla listê zapytañ", "", NULL);
+	command_add(NULL, "_query", params("? ? ? ? ? ? ? ? ? ?"), cmd_debug_query, 0, " <zapytanie> [parametry...]", "generuje zapytanie", "", NULL);
 
-	command_add(NULL, "_addtab", "??", cmd_test_addtab, 0, "", "dodaje do listy dope³niania TABem", "");
-	command_add(NULL, "_deltab", "??", cmd_test_deltab, 0, "", "usuwa z listy dope³niania TABem", "");
-	command_add(NULL, "_fds", "", cmd_test_fds, 0, "", "wy¶wietla otwarte pliki", "");
-	command_add(NULL, "_msg", "u?", cmd_test_send, 0, "", "udaje, ¿e wysy³a wiadomo¶æ", "");
-	command_add(NULL, "_segv", "", cmd_test_segv, 0, "", "wywo³uje naruszenie segmentacji pamiêci", "");
-	command_add(NULL, "_debug", "?", cmd_test_debug, 0, "", "wy¶wietla tekst w oknie debug", "");
-	command_add(NULL, "_debug_dump", "", cmd_test_debug_dump, 0, "", "zrzuca debug do pliku", "");
+	command_add(NULL, "_addtab", params("? ?"), cmd_test_addtab, 0, "", "dodaje do listy dope³niania TABem", "", NULL);
+	command_add(NULL, "_deltab", params("? ?"), cmd_test_deltab, 0, "", "usuwa z listy dope³niania TABem", "", NULL);
+	command_add(NULL, "_fds", params(""), cmd_test_fds, 0, "", "wy¶wietla otwarte pliki", "", NULL);
+	command_add(NULL, "_msg", params("uUC ?"), cmd_test_send, 0, "", "udaje, ¿e wysy³a wiadomo¶æ", "", NULL);
+	command_add(NULL, "_segv", params(""), cmd_test_segv, 0, "", "wywo³uje naruszenie segmentacji pamiêci", "", NULL);
+	command_add(NULL, "_debug", params("?"), cmd_test_debug, 0, "", "wy¶wietla tekst w oknie debug", "", NULL);
+	command_add(NULL, "_debug_dump", params(""), cmd_test_debug_dump, 0, "", "zrzuca debug do pliku", "", NULL);
 
-	command_add(NULL, "session", "AA??", session_command, 0,
+	command_add(NULL, "session", params("psS psS sS ?"), session_command, 0,
 	  " [opcje]", "zarz±dzanie sesjami",
 	  "\n"
 	  " <uid>	  	informacje o sesji\n"
@@ -3828,8 +3881,10 @@ void command_init()
 	  "                     zmienia opcjê sesji\n"
 	  " [-s, --set] [<uid>] -<opcja>\n"
 	  "                     usuwa opcjê sesji\n"
-	  " [-w, --sw] <uid> zmienia aktualn± sesjê\n"
-	  "");
+	  " [-w, --sw] <uid> zmienia aktualn± sesjê\n", 
+	  possibilities("-a --add -d --del -l --list -g --get -s --set -w --sw") ); 
+#undef possibilities
+#undef params
 }
 
 /*

@@ -13,6 +13,8 @@ zg³osi³ b³±d.
 - poprawiony b³±d wieszaj±cy w niektórych wypadkach ekg - protokó³ GG (del)
 - poprawione /list - "Aktualny stan od:" tylko dla dostêpny, zajêtych etc. (del)
 - dodana zmienna default_status (del)
+- DU¯A ZMIANA: poprawione dodawanie komend (dodane nowe argumenty) - dziêki czemu 
+  w wielu funkcjach zosta³a dodana mo¿liwo¶æ dope³nienia niektórych parametrów (del)
 
 // 2004-04-18
 - poprawione complete() wed³ug nastêpuj±cych kryteriów:

@@ -1484,35 +1484,41 @@ int gg_plugin_init()
 	query_connect(&gg_plugin, "add-notify", gg_add_notify_handle, NULL);
 	query_connect(&gg_plugin, "remove-notify", gg_remove_notify_handle, NULL);
 	query_connect(&gg_plugin, "status-show", gg_status_show_handle, NULL);
+#define possibilities(x) array_make(x, " ", 0, 1, 1)
+#define params(x) array_make(x, " ", 0, 1, 1)
 
-	command_add(&gg_plugin, "gg:connect", "?", gg_command_connect, 0, "", "³±czy siê z serwerem", "");
-	command_add(&gg_plugin, "gg:disconnect", "?", gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "");
-	command_add(&gg_plugin, "gg:reconnect", "", gg_command_connect, 0, "", "roz³±cza i ³±czy siê ponownie", "");
-	command_add(&gg_plugin, "gg:msg", "u?", gg_command_msg, 0, " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", "\nMo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub pseudonimy przecinkiem (ale bez odstêpów). Je¶li zamiast odbiorcy podany zostanie znak ,,%T*%n'', to wiadomo¶æ bêdzie wys³ana do wszystkich aktualnych rozmówców.");
-	command_add(&gg_plugin, "gg:chat", "u?", gg_command_msg, 0, " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", "\nPolecenie jest podobne do %Tmsg%n, ale wysy³a wiadomo¶æ w ramach rozmowy, a nie jako pojedyncz±.");
-	command_add(&gg_plugin, "gg:", "?", gg_command_inline_msg, 0, "", "", "");
-	command_add(&gg_plugin, "gg:_descr", "?", gg_command_away, 0, " [opis/-]", "zmienia opis stanu", "");
-	command_add(&gg_plugin, "gg:away", "?", gg_command_away, 0, " [opis/-]", "zmienia stan na zajêty", "");
-	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, "", "automatycznie zmienia stan na zajêty", "");
-	command_add(&gg_plugin, "gg:back", "?", gg_command_away, 0, " [opis/-]", "zmienia stan na dostêpny", "");
-	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, "", "automatycznie zmienia stan na dostêpny", "");
-	command_add(&gg_plugin, "gg:invisible", "?", gg_command_away, 0, " [opis/-]", "zmienia stan na niewidoczny", "");
+	command_add(&gg_plugin, "gg:connect", params("?"), gg_command_connect, 0, "", "³±czy siê z serwerem", "", NULL);
+	command_add(&gg_plugin, "gg:disconnect", params("?"), gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "", NULL);
+	command_add(&gg_plugin, "gg:reconnect", params(""), gg_command_connect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
+	command_add(&gg_plugin, "gg:msg", params("uUC ?"), gg_command_msg, 0, 
+	   " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", 
+	   "\nMo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub pseudonimy przecinkiem (ale bez odstêpów). Je¶li zamiast odbiorcy podany zostanie znak ,,%T*%n'', to wiadomo¶æ bêdzie wys³ana do wszystkich aktualnych rozmówców.",
+	   NULL);
+	command_add(&gg_plugin, "gg:chat", params("uUC ?"), gg_command_msg, 0, " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", "\nPolecenie jest podobne do %Tmsg%n, ale wysy³a wiadomo¶æ w ramach rozmowy, a nie jako pojedyncz±.", NULL);
+	command_add(&gg_plugin, "gg:", params("?"), gg_command_inline_msg, 0, "", "", "", NULL);
+	command_add(&gg_plugin, "gg:_descr", params("?"), gg_command_away, 0, " [opis/-]", "zmienia opis stanu", "", NULL);
+	command_add(&gg_plugin, "gg:away", params("?"), gg_command_away, 0, " [opis/-]", "zmienia stan na zajêty", "", NULL);
+	command_add(&gg_plugin, "gg:_autoaway", params("?"), gg_command_away, 0, "", "automatycznie zmienia stan na zajêty", "", NULL);
+	command_add(&gg_plugin, "gg:back", params("?"), gg_command_away, 0, " [opis/-]", "zmienia stan na dostêpny", "", NULL);
+	command_add(&gg_plugin, "gg:_autoback", params("?"), gg_command_away, 0, "", "automatycznie zmienia stan na dostêpny", "", NULL);
+	command_add(&gg_plugin, "gg:invisible", params("?"), gg_command_away, 0, " [opis/-]", "zmienia stan na niewidoczny", "", NULL);
 
-	command_add(&gg_plugin, "gg:block", "u?", gg_command_block, 0, " [numer/alias]", "dodaje do listy blokowanych", "");
-	command_add(&gg_plugin, "gg:unblock", "b?", gg_command_unblock, 0, " <numer/alias>|*", "usuwa z listy blokowanych", "");
+	command_add(&gg_plugin, "gg:block", params("uUC ?"), gg_command_block, 0, " [numer/alias]", "dodaje do listy blokowanych", "", NULL);
+	command_add(&gg_plugin, "gg:unblock", params("b ?"), gg_command_unblock, 0, " <numer/alias>|*", "usuwa z listy blokowanych", "", NULL);
 
-	command_add(&gg_plugin, "gg:remind", "?", gg_command_remind, 0, " [numer]", "wysy³a has³o na skrzynkê pocztow±", "");
-	command_add(&gg_plugin, "gg:register", "??", gg_command_register, 0, " <email> <has³o>", "rejestruje nowe konto", "");
-	command_add(&gg_plugin, "gg:unregister", "??", gg_command_unregister, 0, " <uin/alias> <has³o>", "usuwa konto z serwera", "\nPodanie numeru i has³a jest niezbêdne ze wzglêdów bezpieczeñstwa. Nikt nie chcia³by chyba usun±æ konta przypadkowo, bez ¿adnego potwierdzenia.");
-	command_add(&gg_plugin, "gg:passwd", "??", gg_command_passwd, 0, " <has³o>", "zmienia has³o u¿ytkownika", "\nZmiana has³a nie wymaga ju¿ ustawienia zmiennej %Temail%n.");
-	command_add(&gg_plugin, "gg:list", "u?", gg_command_list, 0, " [opcje]", "lista kontaktów na serwerze",
+	command_add(&gg_plugin, "gg:remind", params("?"), gg_command_remind, 0, " [numer]", "wysy³a has³o na skrzynkê pocztow±", "", NULL);
+	command_add(&gg_plugin, "gg:register", params("? ?"), gg_command_register, 0, " <email> <has³o>", "rejestruje nowe konto", "", NULL);
+	command_add(&gg_plugin, "gg:unregister", params("? ?"), gg_command_unregister, 0, " <uin/alias> <has³o>", "usuwa konto z serwera", "\nPodanie numeru i has³a jest niezbêdne ze wzglêdów bezpieczeñstwa. Nikt nie chcia³by chyba usun±æ konta przypadkowo, bez ¿adnego potwierdzenia.", NULL);
+	command_add(&gg_plugin, "gg:passwd", params("? ?"), gg_command_passwd, 0, " <has³o>", "zmienia has³o u¿ytkownika", "\nZmiana has³a nie wymaga ju¿ ustawienia zmiennej %Temail%n.", NULL);
+	command_add(&gg_plugin, "gg:list", params("puUC ?"), gg_command_list, 0, " [opcje]", "lista kontaktów na serwerze",
 	  "\n"
 	  "Lista kontaktów na serwerze \"list [-p|-g|-c]\":\n"
 	  "  -c, --clear  usuwa listê z serwera\n"
 	  "  -g, --get    pobiera listê z serwera\n"
-	  "  -p, --put    umieszcza listê na serwerze");
+	  "  -p, --put    umieszcza listê na serwerze", 
+	  possibilities("-c --clear -g --get -p --put") );
 
-	command_add(&gg_plugin, "gg:find", "u", gg_command_find, 0,
+	command_add(&gg_plugin, "gg:find", params("puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC"), gg_command_find, 0,
 	  " [numer|opcje]", "przeszukiwanie katalogu publicznego",
 	  "\n"
 	  "  -u, --uin <numerek>\n"
@@ -1526,9 +1532,10 @@ int gg_plugin_init()
 	  "  -M, --male              mê¿czy¼ni\n"
 	  "  -s, --start <n>         wy¶wietla od n-tego numeru\n"
 	  "  -A, --all               wy¶wietla wszystkich\n"
-	  "  -S, --stop              zatrzymuje wszystkie poszukiwania");
+	  "  -S, --stop              zatrzymuje wszystkie poszukiwania", 
+	  possibilities("-u --uin -f --first -l --last -n --nick -c --city -b --botn -a --active -F --female -M --male -s --start -A --all -S --stop") );
 	
-	command_add(&gg_plugin, "gg:change", "?", gg_command_change, 0,
+	command_add(&gg_plugin, "gg:change", params("p"), gg_command_change, 0,
 	  " <opcje>", "zmienia informacje w katalogu publicznym",
 	  "\n"
 	  "  -f, --first <imiê>\n"
@@ -1543,9 +1550,13 @@ int gg_plugin_init()
 	  "\n"
 	  "Je¶li który¶ z parametrów nie zostanie podany, jego warto¶æ "
 	  "zostanie wyczyszczona w katalogu publicznym. Podanie parametru "
-	  ",,%T-%n'' wyczy¶ci %Twszystkie%n pola.");
+	  ",,%T-%n'' wyczy¶ci %Twszystkie%n pola.", 
+	  possibilities("-f --first -l --last -n --nick -b --born -c --city -N --familyname -C --familycity -F --female -M --male") );
 
-	command_add(&gg_plugin, "gg:dcc", "duf?", gg_command_dcc, 0, " [opcje]", "obs³uga bezpo¶rednich po³±czeñ", "");
+	command_add(&gg_plugin, "gg:dcc", params("p uU f ?"), gg_command_dcc, 0, " [opcje]", "obs³uga bezpo¶rednich po³±czeñ", "", possibilities("send rsend get resumce rvoice voice close list") );
+
+#undef possibilities
+#undef params 
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;

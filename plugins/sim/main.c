@@ -298,14 +298,17 @@ int sim_plugin_init()
 
 	query_connect(&sim_plugin, "message-encrypt", message_encrypt, NULL);
 	query_connect(&sim_plugin, "message-decrypt", message_decrypt, NULL);
+#define possibilities(x) array_make(x, " ", 0, 1, 1)
+#define params(x) array_make(x, " ", 0, 1, 1)
 	
-	command_add(&sim_plugin, "key", "uu", command_key, 0,
+	command_add(&sim_plugin, "key", params("puUC uUC"), command_key, 0,
 	  " [opcje]", "zarz±dzanie kluczami dla SIM",
 	  "\n"
 	  "  -g, --generate              generuje parê kluczy u¿ytkownika\n"
 	  "  -s, --send <numer/alias>    wysy³a nasz klucz publiczny\n"
 	  "  -d, --delete <numer/alias>  usuwa klucz publiczny\n"
-	  "  [-l, --list] [numer/alias]  wy¶wietla posiadane klucze publiczne");
+	  "  [-l, --list] [numer/alias]  wy¶wietla posiadane klucze publiczne",
+	  possibilities("-g --generate -s --send -d --delete -l --list") );
 	
 	variable_add(&sim_plugin, "encryption", VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
 

@@ -220,9 +220,10 @@ int ioctld_plugin_init()
 	ioctld_socket(ioctld_sock_path);
 	
 	atexit(ioctld_kill);
+#define params(x) array_make(x, " ", 0, 1, 1)
 
 	command_add(&ioctld_plugin,
-	  "beeps_spk", "?", command_beeps_spk, 0,
+	  "beeps_spk", params("?"), command_beeps_spk, 0,
 	  " <sekwencja>", "wydaje d¼wiêki zgodnie z sekwencj±",
 	  "\n"
 	  "Kolejne d¼wiêki oddzielone s± przecinkami. D¼wiêk sk³ada siê "
@@ -230,10 +231,10 @@ int ioctld_plugin_init()
 	  "uko¶nikiem (,,%T/%n''). Je¶li nie podano czasu trwania, domy¶lna "
 	  "warto¶æ to 0,1s.\n"
 	  "\n"
-	  "Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.");
+	  "Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.", NULL);
 
 	command_add(&ioctld_plugin,
-	  "blink_leds", "?", command_blink_leds, 0,
+	  "blink_leds", params("?"), command_blink_leds, 0,
 	  " <sekwencja>", "odtwarza sekwencjê na diodach LED",
 	  "\n"
 	  "Kombinacje diod oddzielone s± przecinkami. Je¶li po kombinacji "
@@ -244,8 +245,8 @@ int ioctld_plugin_init()
 	  "przyk³ad w³±czenie NumLock i CapsLock jednocze¶nie to 1+4 czyli "
 	  "5.\n"
 	  "\n"
-	  "Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.");
-
+	  "Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.", NULL);
+#undef params
 	return 0;
 }
 

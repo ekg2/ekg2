@@ -37,18 +37,20 @@ typedef struct {
 	plugin_t *plugin;
 
 	/* private: */
-	char *params;
+	char **params;
 	command_func_t *function;
 	int alias;
 	char *params_help;
 	char *brief_help;
 	char *long_help;
+	char **possibilities;
 } command_t;
 
 list_t commands;
 
-int command_add(plugin_t *plugin, const char *name, const char *params, command_func_t function, int alias, const char *params_help, const char *brief_help, const char *long_help);
+int command_add(plugin_t *plugin, const char *name, char **params, command_func_t function, int alias, const char *params_help, const char *brief_help, const char *long_help, char **possibilities);
 int command_remove(plugin_t *plugin, const char *name);
+command_t *command_find (const char *name);
 void command_init();
 void command_free();
 int command_exec(const char *target, session_t *session, const char *line, int quiet);

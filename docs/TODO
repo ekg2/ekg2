@@ -9,8 +9,6 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - zmienienie command_add tak, aby do dope³nienia ewentualne parametry te¿ da³o
-    siê podaæ jako parametr (del)
   - nie dziala powtarzanie (strzalka w gore) wiadomosci wielolinijkowych (zdz)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
@@ -39,7 +37,6 @@ rozwi±zanie.
   - okienka oparte o kolejne wywo³ania xterma (fidor)
   - obs³uga myszy (mateusza)
   - dope³nianie themów (Arim)
-  - dope³nianie parametrów ró¿nych funkcji (del)
   - dokumentacja do themes - opis ka¿dego formatu (del)
   - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
   - trzeba przystosowaæ cmd_on do EKG2 (zdz)

@@ -45,6 +45,7 @@ static char *last_line_without_complete = NULL;
 static int last_pos = -1;
 int continue_complete = 0;
 int continue_complete_count = 0;
+command_t *actual_completed_command;
 
 static void dcc_generator(const char *text, int len)
 {
@@ -171,15 +172,18 @@ static void known_uin_generator(const char *text, int len)
 		if (!done && !xstrncasecmp(text, u->uid, len))
 			array_add(&completions, xstrdup(u->uid));
 	}
-	
-	for (l = conferences; l; l = l->next) {
-		struct conference *c = l->data;
+}
 
-		if (!xstrncasecmp(text, c->name, len))
-			array_add(&completions, xstrdup(c->name));
-	}
+static void conference_generator(const char *text, int len)
+{
+        list_t l;
 
-	unknown_uin_generator(text, len);
+        for (l = conferences; l; l = l->next) {
+                struct conference *c = l->data;
+
+                if (!xstrncasecmp(text, c->name, len))
+                        array_add(&completions, xstrdup(c->name));
+        }
 }
 
 static void variable_generator(const char *text, int len)
@@ -353,14 +357,14 @@ again:
 	xfree(namelist);
 }
 
-static void python_generator(const char *text, int len)
+static void possibilities_generator(const char *text, int len)
 {
-	const char *words[] = { "load", "unload", "run", "exec", "list", NULL };
 	int i;
+	command_t *c = actual_completed_command;
 
-	for (i = 0; words[i]; i++)
-		if (!xstrncasecmp(text, words[i], len))
-			array_add(&completions, xstrdup(words[i]));
+	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
+		if (!xstrncasecmp(text, c->possibilities[i], len))
+			array_add(&completions, xstrdup(c->possibilities[i])); 
 }
 
 static void window_generator(const char *text, int len)
@@ -420,17 +424,12 @@ static void sessions_var_generator(const char *text, int len)
         }
 }
 
-static void sessions_all_generator(const char *text, int len)
-{
-	sessions_var_generator(text, len);
-	sessions_generator(text, len);
-}
-
 static struct {
 	char ch;
 	void (*generate)(const char *text, int len);
 } generators[] = {
 	{ 'u', known_uin_generator },
+	{ 'C', conference_generator },
 	{ 'U', unknown_uin_generator },
 	{ 'c', command_generator },
 	{ 'x', empty_generator },
@@ -438,13 +437,12 @@ static struct {
 	{ 'b', blocked_uin_generator },
 	{ 'v', variable_generator },
 	{ 'd', dcc_generator },
-	{ 'p', python_generator },
+	{ 'p', possibilities_generator },
 	{ 'w', window_generator },
 	{ 'f', file_generator },
 	{ 'e', events_generator },
         { 's', sessions_generator },
 	{ 'S', sessions_var_generator },
-        { 'A', sessions_all_generator },
 	{ 'I', ignorelevels_generator },
 	{ 0, NULL }
 };
@@ -718,19 +716,20 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	if (word == 0)
 		command_generator(start, xstrlen(start));
 	else {
-		char *params = NULL;
+		char **params = NULL;
 		int abbrs = 0, i;
 		list_t l;
+                char *cmd = (line[0] == '/') ? line + 1 : line;
 
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 			char *name = (xstrchr(c->name, ':')) ? xstrchr(c->name, ':') + 1 : c->name;
 			int len = xstrlen(name);
-			char *cmd = (line[0] == '/') ? line + 1 : line;
 			
 			if (!xstrncasecmp(name, cmd, len) && xisspace(cmd[len])) {
 				params = c->params;
 				abbrs = 1;
+				actual_completed_command = c;
 				break;
 			}
 
@@ -739,41 +738,45 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			if (!xstrncasecmp(name, cmd, len)) {
 				params = c->params;
 				abbrs++;
+                                actual_completed_command = c;
 			} else
 				if (params && abbrs == 1)
 					break;
 		}
 		
-		if (params && abbrs == 1) {
+		if (params && abbrs == 1 && params[word_current - 2]) {
+			int j;
+
 			for (i = 0; generators[i].ch; i++) {
-				if (generators[i].ch == params[word_current - 2]) {
-					int j;
-
-					generators[i].generate(words[word], xstrlen(words[word]));
-
-					for (j = 0; completions && completions[j]; j++) {
-						string_t s;
-						const char *p;
-
-						if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
-							continue;
-
-						s = string_init("\"");
-
-						for (p = completions[j]; *p; p++) {
-							if (!xstrchr("\"\\", *p))
-								string_append_c(s, *p);
-							else {
-								string_append_c(s, '\\');
-								string_append_c(s, *p);
+				for (j = 0; params[word_current - 2][j]; j++) {
+					if (generators[i].ch == params[word_current - 2][j]) {
+						int j;
+						generators[i].generate(words[word], xstrlen(words[word]));
+	
+						for (j = 0; completions && completions[j]; j++) {
+							string_t s;
+							const char *p;
+	
+							if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
+								continue;
+	
+							s = string_init("\"");
+	
+							for (p = completions[j]; *p; p++) {
+								if (!xstrchr("\"\\", *p))
+									string_append_c(s, *p);
+								else {
+									string_append_c(s, '\\');
+									string_append_c(s, *p);
+								}
 							}
+							string_append_c(s, '\"');
+	
+							xfree(completions[j]);
+							completions[j] = string_free(s, 0);
 						}
-						string_append_c(s, '\"');
-
-						xfree(completions[j]);
-						completions[j] = string_free(s, 0);
-					}
-					break;
+						break;
+					}	
 				}
 			}
 		}
