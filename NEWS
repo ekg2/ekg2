@@ -1,4 +1,7 @@
-vCVS 2004-11-07
+vCVS 2005-04-05
+	* plugin logs
+	* plugin logsqlite
+	* plugin python
 	* funkcja /window move
 	* opcja nosort ncurses:contacts_options
 	* irc plugin

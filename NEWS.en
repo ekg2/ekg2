@@ -1,4 +1,7 @@
-vCVS 2004-11-07
+vCVS 2005-04-05
+	* logs plugin
+	* logsqlite plugin
+	* python plugin
 	* window move function
 	* nosort option in ncurses:contacts_options
 	* irc plugin
