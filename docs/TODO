@@ -15,6 +15,7 @@ rozwi±zanie.
   - wykrywanie niewidocznych jako opcja (wielu)
   - /add gg:numer nick dodaje do userlisty biezacej sesji (np. do sesji
     jabberowej) (salvador)
+  - przy wychodzeniu bez /save zapisywanie równie¿ stanu sesji (del)
   - czas powrotu w stanach opisowych (?)
   - zmienna wy³±czaj±ca pytanie o zapisanie konfiguracji (Tohver)
   - ostatnio pisz±ca osoba blinka przez 5 sekund, w rogu ekranu (Oli)
