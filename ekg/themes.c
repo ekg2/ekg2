@@ -1128,7 +1128,7 @@ void theme_init()
 	format_add("during_connect", "%! £±czenie trwa. Wpisz %Tdisconnect%n aby przerwaæ\n", 1);
 	format_add("conn_broken", "%! Po³±czenie zosta³o przerwane\n", 1);
 	format_add("conn_disconnected", "%! Serwer zerwa³ po³±czenie\n", 1);
-	format_add("not_connected", "%! Brak po³±czenia z serwerem. Wpisz %Tconnect%n\n", 1);
+	format_add("not_connected", "%! Brak po³±czenia z serwerem.%n\n", 1);
 	format_add("not_connected_msg_queued", "%! Brak po³±czenia z serwerem. Wiadomo¶æ bêdzie wys³ana po po³±czeniu.%n\n", 1);
 
 	/* obs³uga motywów */
