@@ -710,7 +710,7 @@ int jabber_status_show_handle(void *data, va_list ap)
 COMMAND(jabber_command_connect)
 {
 	const char *password = session_get(session, "password");
-	const char *server = session_get(session, "server"); 
+	const char *server, *realserver = session_get(session, "server"); 
 	int res, fd[2];
 	jabber_private_t *j = session_private_get(session);
 	
@@ -736,15 +736,15 @@ COMMAND(jabber_command_connect)
 
 	debug("session->uid = %s\n", session->uid);
 	
-	if (!server && !(server = xstrchr(session->uid, '@'))) {
+	if (!(server = xstrchr(session->uid, '@'))) {
 		printq("wrong_id", session->uid);
 		return -1;
 	}
 
 	xfree(j->server);
-	j->server = xstrdup( (xstrchr(server, '@')? ++server : server) );
+	j->server = xstrdup(++server) ;
 
-	debug("[jabber] resolving %s\n", server);
+	debug("[jabber] resolving %s\n", (realserver ? realserver : server));
 
 	if (pipe(fd) == -1) {
 		printq("generic_error", strerror(errno));
@@ -762,7 +762,7 @@ COMMAND(jabber_command_connect)
 		struct in_addr a;
 
 		if ((a.s_addr = inet_addr(server)) == INADDR_NONE) {
-			struct hostent *he = gethostbyname(server);
+			struct hostent *he = gethostbyname(realserver ? realserver : server);
 
 			if (!he)
 				a.s_addr = INADDR_NONE;
