@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2002 Wojtek Kaniewski <wojtekka@irc.pl>
+ *		       2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -56,6 +57,7 @@ char *xstrrchr(const char *s, int c);
 char *xstrsep(char **stringp, const char *delim);
 size_t xstrspn(const char *s, const char *accept);
 char *xstrstr(const char *haystack, const char *needle);
+char *xstrcasestr(const char *haystack, const char *needle);
 char *xstrtok(char *s, const char *delim);
 size_t xstrxfrm(char *dest, const char *src, size_t n);
 char *xindex(const char *s, int c);

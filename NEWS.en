@@ -1,4 +1,5 @@
 vCVS 2004-05-30
+	* events based on conditions 
 	* diffrent colours of act in statusbar
 	* session variables have their defaults settings 
 	* showing name of the session when status are changing or in other commands

@@ -47,3 +47,5 @@ int event_na(void *data, va_list ap);
 int event_online(void *data, va_list ap);
 int event_descr(void *data, va_list ap);
 
+int event_target_check (char *buf);
+

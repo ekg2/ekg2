@@ -1,4 +1,5 @@
-vCVS 2004-05-30
+vCVS 2004-06-01
+	* zdarzenia mog± byæ konfigurowane przez zaprzeczenia, porównania itp. 
 	* ró¿ne kolorory act w statusbarze 
 	* zmienne sesyjne przyjmuj± domy¶lne warto¶ci
 	* wy¶wietlane nazwy sesji przy zmianie statusów i w innych komendach

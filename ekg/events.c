@@ -56,7 +56,7 @@ COMMAND(cmd_on)
                         return -1;
                 }
 
-		if (!conference_find(params[3]) && !get_uid(session, params[3]) && xstrcasecmp(params[3], "*")) {
+/*		if (!conference_find(params[3]) && !get_uid(session, params[3]) && xstrcasecmp(params[3], "*")) {
 			if (xstrchr(params[3], ',')) {
 		                char **a;
 		                int i;
@@ -76,7 +76,7 @@ COMMAND(cmd_on)
 				printq("user_not_found", params[3]);
 				return -1;
 			}
-		}
+		} */
 		if (!(prio = atoi(params[2]))) {
 			printq("invalid_params", params[2]);
 			return -1;
@@ -311,7 +311,7 @@ event_t *event_find(const char *name, const char *target)
  * descriptor to event
  *
  */
-event_t *event_find_all(const char *name, const char *target)
+event_t *event_find_all(const char *name, const char *target, const char *data)
 {
         list_t l;
 	event_t *ev_max = NULL;
@@ -332,7 +332,9 @@ event_t *event_find_all(const char *name, const char *target)
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-				                if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (xstrcasecmp(a[i], b[j]) && xstrcasecmp(a[i], "*")))
+//				                if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (xstrcasecmp(a[i], b[j]) && xstrcasecmp(a[i], "*")))
+					if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(format_string(a[i], target, data)) && xstrcasecmp(a[i], "*")))
+
         		        	                continue;
                 		        	else if (ev->prio > ev_max_prio){
 	                        	        	ev_max = ev;
@@ -545,8 +547,8 @@ int event_check(const char *session, const char *name, const char *target, const
                 uid = NULL;
 
 
-	if(!(ev = event_find_all(name, target)) && uid)
-		ev = event_find_all(name, uid);
+	if (!(ev = event_find_all(name, target, data)) && uid)
+		ev = event_find_all(name, uid, data);
 	
 	if (!ev) {
 		return -1;
@@ -630,5 +632,178 @@ void event_free()
 	events_all = NULL;
 }
 
+/*
+ * event_target_check_compare()
+ *
+ * it only compares given as an argument values
+ *
+ * returns logical value
+ */
+int event_target_check_compare(char *buf)
+{
+        string_t s;
 
+        s = string_init("");
+
+        while(*buf) {
+                if (*buf == '/') {
+                        *buf++;
+                        if (!*buf)
+                                break;
+                        *buf++;
+                        if (!*buf)
+                                break;
+                        continue;
+                }
+
+                if (*buf == '=') {
+                        *buf++;
+
+                        if (!*buf)
+                                break;
+
+                        if (*buf == '=') /* '==' */ {
+                                *buf++;
+				if (!*buf)
+					break;
+
+				return (!xstrcmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+			}
+
+                        /* '=' */
+                	return (!xstrcasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+		}
+
+                if (*buf == '!') {
+                        *buf++;
+
+                        if (!*buf)
+                                break;
+
+                        if (*buf == '=') {
+                                *buf++;
+
+                                if (!*buf)
+                                        break;
+
+                                if (*buf == '=') { /* '!==' */
+        	                        *buf++;
+	                                if (!*buf)
+                	                        break;
+
+					return (xstrcmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+                                }
+
+                                /* '!=' */
+				return (xstrcasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+                        }
+
+                        if (*buf == '+') {
+                                *buf++;
+
+                                if (!*buf)
+                                        break;
+
+                                if (*buf == '+') { /* '!++' */
+                                        *buf++;
+                                        if (!*buf)
+                                                break;
+
+                	                return (!xstrstr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
+				}
+
+			
+				/* '!+' */
+	                        return (!xstrcasestr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
+			}
+
+                        continue;
+                }
+
+		if (*buf == '+') {
+			*buf++;
+
+                        if (!*buf)
+                                break;
+			
+			if (*buf == '+') { /* '++' */
+	                        *buf++;
+        
+	                        if (!*buf)
+        	                        break;
+
+				return (xstrstr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
+ 			}
+
+			/* '+' */
+			return (xstrcasestr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
+		}
+
+                string_append_c(s, *buf);
+                *buf++;
+        }
+	
+	string_free(s, 1);
+	return 0;
+}
+
+/* 
+ * event_target_check()
+ *
+ * it has to get as an argument parametr to check
+ *
+ * returns logical value of given expression
+ */
+
+int event_target_check(char *buf)
+{
+	char **params = array_make(buf, "&|", 0, 1, 1);
+	int i = 1;
+	char *separators;
+	char last_returned = 0;
+	int first = 1;
+	
+#define s separators[i]
+
+	if (!params)
+		return -1;
+	
+	separators = xmalloc(array_count(params) * sizeof(char) + 1);
+	
+	while (*buf) {
+		if (*buf == '&' || *buf == '|') {
+			s = *buf;
+			i++;	
+		}
+		*buf++;
+	}
+	for (i = 0; params[i]; i++) {
+		int returned_now;
+
+		returned_now = event_target_check_compare(params[i]);
+		if (s && s == '&') {
+			if (returned_now && last_returned)
+				last_returned = 1;
+			else
+				last_returned = 0;	
+		} else if (s && s == '|') {
+			if (returned_now || last_returned)
+				last_returned = 1;
+			else
+				last_returned = 0;
+		}
+
+		if (first) {
+			last_returned = returned_now;
+			first = 0;
+		}
+
+	}
+#undef s
+
+	xfree(separators);
+	array_free(params);
+
+	return last_returned;
+}
 

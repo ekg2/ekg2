@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 #include "commands.h"
+#include "events.h"
 #include "configfile.h"
 #include "dynstuff.h"
 #include "log.h"
@@ -1575,6 +1576,13 @@ COMMAND(cmd_test_debug_dump)
 	printq("generic", tmp);
 	xfree(tmp);
 
+	return 0;
+}
+
+COMMAND(cmd_test_event_test)
+{
+	if (params[0])
+		event_target_check(xstrdup(params[0]));
 	return 0;
 }
 
@@ -3606,15 +3614,28 @@ void command_init()
 	command_add(NULL, "on", params("p e ? CuU c"), cmd_on, 0,
 	  " [opcje]", "zarz±dzanie zdarzeniami",
 	  "\n"
-	  "  -a, --add <zdarzenie> <priorytet> <numer/alias/@grupa> <komenda>  dodaje zdarzenie\n"
+	  "  -a, --add <zdarzenie> <priorytet> <za³o¿enia> <komenda>  dodaje zdarzenie\n"
 	  "  -d, --del <numer>|*         usuwa zdarzenie o podanym numerze\n"
 	  " [-l, --list] [numer]         wy¶wietla listê zdarzeñ\n"
 	  "\n"
 	  "Dostêpne zdarzenia mo¿na znale¼æ w pliku events.txt w dokumentacji programu.\n"
 	  "\n"
-	  "W przypadkach, w których nie jest mo¿liwe okre¶lenie nadawcy lub chcemy, aby "
-	  "zdarzenie dotyczy³o wszystkich u¿ytkowników podajemy ,,%T*%n'' jako sprawcê zdarzenia. "
-	  "Zdarzenia mog± byæ ro¼dzielone przecinkiem.\n"
+	  "Za³o¿enie mog± byæ nastêpuj±ce:\n"
+	  "  ,,%T=%n'' - jest takie same i wielko¶ci liter nie maj± znaczenia\n"
+	  "  ,,%T==%n'' - jest takie same i wielko¶ci liter maj± znaczenie\n"
+	  "  ,,%T+%n'' - pierwszy ci±g zawiera siê w drugim, wielko¶æ liter nie ma znaczenia\n"
+ 	  "  ,,%T++%n'' - pierwszy ci±g zawiera siê w drugim, wielko¶æ liter ma znaczenie\n"
+	  "\n"
+	  "Za³o¿enia mo¿na ³±czyæ poprzez ,,|'' (lub) i ,,&'' (i). S± to standardowe operatory logiczne."
+	  "Zaprzeczenia tworzymy przez dodanie ,,%T!%n'' przed za³o¿eniem, np. ,,%T!+%n''. "
+	  "Mo¿na u¿ywaæ %1 zamiast nazwy nadawcy oraz %2 zamiast ewentualnych parametrów. "
+	  "Gdy potrzeba u¿yæ spacji w za³o¿eniu nale¿y ca³e za³o¿enie uj±æ w cudzys³ów. \n"
+	  "\n"
+	  "Przyk³adowe za³o¿enie mo¿e mieæ postaæ: ,,%T\\%1=nick&\\%1!=nick2|\\%2+tekst%n''\n"
+	  "\n"
+	  "W przypdakach, w których chcemy, aby zdarzenie dotyczy³o wszystkich mo¿liwych sytuacji nale¿y "
+	  "zamiast za³o¿enia u¿yæ ,,%T*%n''.\n"
+	  "Nazwy zdarzeñ mog± byæ ro¼dzielone przecinkiem.\n"
 	  "\n"
 	  "  - * - wszystkie zdarzenia\n"
 	  "\n"
@@ -3782,7 +3803,7 @@ void command_init()
 	command_add(NULL, "_segv", params(""), cmd_test_segv, 0, "", "wywo³uje naruszenie segmentacji pamiêci", "", NULL);
 	command_add(NULL, "_debug", params("?"), cmd_test_debug, 0, "", "wy¶wietla tekst w oknie debug", "", NULL);
 	command_add(NULL, "_debug_dump", params(""), cmd_test_debug_dump, 0, "", "zrzuca debug do pliku", "", NULL);
-
+	command_add(NULL, "_event_test", params(""), cmd_test_event_test, 0, "", "iha", "", NULL);
 	command_add(NULL, "session", params("psS psS sS ?"), session_command, 0,
 	  " [opcje]", "zarz±dzanie sesjami",
 	  "\n"

@@ -198,6 +198,11 @@ char *xstrstr(const char *haystack, const char *needle)
 	return strstr(fix(haystack), fix(needle));		
 }
 
+char *xstrcasestr(const char *haystack, const char *needle)
+{
+        return strcasestr(fix(haystack), fix(needle));
+}
+
 int xstrcasecmp(const char *s1, const char *s2) 
 {
 	return strcasecmp(fix(s1), fix(s2));
