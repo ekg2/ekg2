@@ -508,6 +508,10 @@ IRC_COMMAND(irc_c_ping)
 IRC_COMMAND(irc_c_nick)
 {
 	char *t;
+	int nickdisp = session_int_get(s, "DISPLAY_NICKCHANGE");
+	people_t *per;
+	people_chan_t *ch;
+	list_t kan;
 
 	if ((t = xstrchr(param[0], '!'))) *t ='\0';
 	/* debug("irc_nick> %s %s\n", j->nick, param[0]+1); */
@@ -519,8 +523,21 @@ IRC_COMMAND(irc_c_nick)
 		xfree(j->nick);
 		j->nick = xstrdup(OMITCOLON(param[2]));	
 	} else {
-		print_window(window_current->target, s, 0, "IRC_NEWNICK",
-				session_name(s), param[0]+1, t?t+1:"", OMITCOLON(param[2]));
+		(per = irc_find_person(j->people, OMITCOLON(param[2])));
+		debug("tutaj %08X %s\n", per, param[0]+1);
+		if (nickdisp || !per)
+			print_window(nickdisp==2?window_current->target:"__status",
+					s, 0, "IRC_NEWNICK", session_name(s),
+					param[0]+1, t?t+1:"", OMITCOLON(param[2]));
+		else if (per) {
+			for (kan = per->channels; kan; kan=kan->next)
+			{
+				ch = (people_chan_t *)kan->data;
+				print_window(ch->chanp->name,
+						s, 0, "IRC_NEWNICK", session_name(s),
+						param[0]+1, t?t+1:"", OMITCOLON(param[2]));
+			}
+		}
 	}
 	if (t) *t='!';
 	return 0;

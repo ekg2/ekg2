@@ -792,6 +792,7 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 	}
 
 	tf = params[0]; ts = window_current->target;
+	debug ("dupa: %s - %s\n", tf, ts);
 
 	if (pr) { tmp=tf; tf=ts; ts=tmp; }
 
@@ -1011,7 +1012,7 @@ COMMAND(irc_command_query)
 	const char **mp;
 	int i;
 
-        for (i = 0; params[i]; i++)
+        for (i = 0; i<2 && params[i]; i++)
                 p[i] = xstrdup(params[i]);
 
         p[i] = NULL;
@@ -1039,6 +1040,9 @@ COMMAND(irc_command_query)
 	window_switch(w->id);
 
 	xfree(tmp);
+	for (i = 0; i<2 && params[i]; i++)
+        	xfree(p[i]);
+	xfree(p);
 	return 0;
 }
 
@@ -1175,6 +1179,7 @@ int irc_plugin_init()
 	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_IN_CURRENT", VAR_INT, "2", 0, NULL);
+	plugin_var_add(&irc_plugin, "DISPLAY_NICKCHANGE", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_QUIT", VAR_INT, "0", 0, NULL);
 	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
 	plugin_var_add(&irc_plugin, "REJOIN", VAR_INT, "0", 0, NULL);

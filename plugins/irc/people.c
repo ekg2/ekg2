@@ -39,7 +39,7 @@ people_t *irc_find_person(list_t p, char *nick)
 	people_t *person = NULL;
 	if (!(nick && p)) return NULL;
 	if (*nick=='+' || *nick=='@') nick++;
-	
+
 	for (; p; p=p->next)
 	{
 		person = (people_t *)(p->data);

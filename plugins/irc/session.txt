@@ -118,9 +118,15 @@ DISPLAY_IN_CURRENT
 	w aktualnym oknie:
 	1 - wynik komendy /names [RACZEJ G£UPOTA!]
 
+DISPLAY_NICKCHANGE
+	typ: liczba
+	domy¶lna warto¶æ: 0
+	
+	gdzie wy¶wietlaæ zmiany nicków [zobacz opis DISPLAY_QUIT
+
 DISPLAY_QUIT
 	typ: liczba
-	domyslna warto¶æ: 0
+	domy¶lna warto¶æ: 0
 	
 	0 - we wszystkich kana³ach, na których by³ u¿ytkownik
 	1 - tylko w oknie statusu

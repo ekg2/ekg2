@@ -1882,6 +1882,9 @@ char *base64_decode(const char *buf)
 	const char *end;
 	int index = 0;
 
+	if (!buf)
+		return NULL;
+
 	save = res = xcalloc(1, (xstrlen(buf) / 4 + 1) * 3 + 2);
 
 	end = buf + xstrlen(buf) - 1;
