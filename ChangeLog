@@ -13,7 +13,8 @@ zg³osi³ b³±d.
 - poprawiona kolejno¶æ zapisywania danych do pliku z configiem (del)
 - poprawiona komenda /list:
  - list -d dzia³a prawid³owo
- - /list zamiast samych uid'ów pokazuje jeszcze przed nimi nazwy protoko³ów (del) 
+ - /list zamiast samych uid'ów pokazuje jeszcze przed nimi nazwy protoko³ów (del)
+- przy wyj¶ciu zapisywane s± jeszcze sesje do sessions (del) 
 
 // 2004-03-26
 - [gg] zmniejszenie okresu miêdzy pingami do 3 minut (zdz)
