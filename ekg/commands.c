@@ -122,7 +122,6 @@ void tabnick_add(const char *nick)
 		send_nicks_count++;
 	
 	send_nicks[0] = xstrdup(nick);
-	debug("send_nicks[0] = (%s)\n", send_nicks[0]);
 }
 
 /*
