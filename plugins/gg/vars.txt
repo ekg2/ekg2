@@ -1,6 +1,7 @@
 // ma³y opis dostêpnych zmiennych pluginu gg
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2004 adam mikuta <adammikuta@poczta.onet.pl>
 
 dcc
 	typ: bool
@@ -50,6 +51,13 @@ display_token
 	zmienna dostêpna tylko gdy w systemie jest biblioteka pozwalaj±ca
 	dekodowaæ pliki JPEG. wy³±czenie jej spowoduje dzia³anie ekg tak,
 	jakby biblioteki nie by³o, tj. zapisywanie tokenów do pliku.
+
+get_images
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	przy ustawionej warto¶ci 1 je¶li w wiadomo¶ciach bêd± siê znajdowa³y
+	obrazki to bêd± one ¶ci±gane i zapisywane do .ekg2/images
 
 split_messages
 	typ: bool

@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
  *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *                2004 Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -38,6 +39,7 @@ char *gg_config_dcc_dir;
 char *gg_config_dcc_ip;
 char *gg_config_dcc_limit;
 int gg_config_dcc_port;
+int gg_config_get_images;
 int gg_config_split_messages;
 
 typedef enum {

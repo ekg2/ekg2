@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
  * 		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ * 		  2004 Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -580,6 +581,12 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	time_t __sent;
 	int secure = 0;
 
+	int image=0;
+	char* __text_image;
+
+	gg_private_t *g = session_private_get(s);
+
+
 	__session = xstrdup(session_uid_get(s));
 	__sender = saprintf("gg:%d", e->event.msg.sender);
 	__text = xstrdup(e->event.msg.message);
@@ -641,39 +648,73 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		int i, len = xstrlen(__text);
 		
 		__format = xmalloc(len * sizeof(uint32_t));
+		
+		int ii;
+		gg_debug(GG_DEBUG_DUMP, "// formats:");
+		for (ii = 0; ii < e->event.msg.formats_length; ii++)
+			gg_debug(GG_DEBUG_DUMP, " %.2x", (unsigned char) p[ii]);
+		gg_debug(GG_DEBUG_DUMP, "\n");
+		
+		gg_debug(GG_DEBUG_DUMP, "< len: %d >\n", e->event.msg.formats_length);
 
 		for (i = 0; i < e->event.msg.formats_length; ) {
 			int j, pos = p[i] + p[i + 1] * 256;
 			uint32_t val = 0;
-
-                        if ((p[i + 3] & GG_FONT_IMAGE)) {
-			/* support of image receiving should be here */
-			}
-
 			
-			if ((p[i + 3] & GG_FONT_BOLD))
+			gg_debug(GG_DEBUG_DUMP, "< %.2x > %.2x\n", i,*(p+i));
+			
+			/*
+			 * was p[i+3] why?
+			 * IMHO p[i+2]
+			 * but colors bold etc not working...
+			 */
+			
+			if ((p[i + 2] & GG_FONT_BOLD))
 				val |= EKG_FORMAT_BOLD;
 
-			if ((p[i + 3] & GG_FONT_ITALIC))
+			if ((p[i + 2] & GG_FONT_ITALIC))
 				val |= EKG_FORMAT_ITALIC;
 			
-			if ((p[i + 3] & GG_FONT_UNDERLINE))
+			if ((p[i + 2] & GG_FONT_UNDERLINE))
 				val |= EKG_FORMAT_UNDERLINE;
 			
-			if ((p[i + 3] & GG_FONT_COLOR)) {
+			if ((p[i + 2] & GG_FONT_COLOR)) {
 				val |= EKG_FORMAT_COLOR | p[i + 4] | (p[i + 5] << 8) | (p[i + 6] << 16);
 				i += 3;
 			}
+			if ((p[i + 2] & GG_FONT_IMAGE))	{
+				image=1;
+				debug("%d\n",((struct gg_msg_richtext_image*)&p[i+3])->size);
+				
+				gg_debug(GG_DEBUG_DUMP, "<i: %.2x >\n",  i);
+
+				if(gg_config_get_images){
+					gg_image_request(g->sess, e->event.msg.sender, ((struct gg_msg_richtext_image*)&p[i+3])->size, ((struct gg_msg_richtext_image*)&p[i+3])->crc32);
+				}
+				i+=10;
+
+			}
 
 			i += 3;
-
-			for (j = pos; j < len; j++)
-				__format[j] = val;
+			
+			if (val!=0) // only image format
+				for (j = pos; j < len; j++)
+					__format[j] = val;
 		}
 	}
-				
-	query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
-
+	
+	if (image){
+		unsigned int __text_len;
+		__text_len=strlen(__text);
+		__text_image=xmalloc(__text_len+8);
+		strcpy(__text_image,__text);
+		strcpy(__text_image+__text_len," [image]");
+	}
+	
+	query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, image?&__text_image:&__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+	
+	if(image)
+		xfree(__text_image);
 	xfree(__seq);
 	xfree(__text);
 	xfree(__sender);
@@ -779,10 +820,37 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 		case GG_EVENT_IMAGE_REPLY:
 		{
 			/* receiving messages */
+			debug("image from %d\n",e->event.image_reply.sender);
+			
+			/*
+			* in future we should add varible with format
+			* of name file
+			*/
+			unsigned int len=strlen(itoa(e->event.image_reply.sender))+strlen(itoa(e->event.image_reply.crc32))+strlen(e->event.image_reply.filename);
+			
+			char*image_file=xmalloc(len+3+7);
+			sprintf(image_file,"images/%s_%s_%s",itoa(e->event.image_reply.sender),itoa(e->event.image_reply.crc32),e->event.image_reply.filename);
+					
+			FILE* fp;
+			debug("%s\n",image_file);
+			if((fp=fopen(prepare_path(image_file, 1), "w"))==NULL){
+				// ogs³uga b³êdów ;-)
+				debug("can't open file for image \n");
+			}else{
+				int i;
+				for(i=0;i<e->event.image_reply.size;i++){
+					fputc(e->event.image_reply.image[i],fp);
+				}
+				fclose(fp);
+			}
+			
+			xfree(image_file);
+				
+		
 		}	
 		default:
 		{
-			debug("// gg_session_handler_image() - This function is not supported yet\n");
+			//debug("// gg_session_handler_image() - This function is not supported yet\n");
 			break;
 		}
 	}
@@ -1110,6 +1178,7 @@ void gg_setvar_default()
 	xfree(gg_config_dcc_limit);
 
 	gg_config_display_token = 1;
+	gg_config_get_images = 0;
 	gg_config_dcc = 0;
 	gg_config_dcc_dir = NULL;
 	gg_config_dcc_ip = NULL;
@@ -1146,6 +1215,7 @@ int gg_plugin_init()
 	variable_add(&gg_plugin, "dcc_ip", VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
 	variable_add(&gg_plugin, "dcc_limit", VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
 	variable_add(&gg_plugin, "dcc_port", VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, "get_images", VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
         variable_add(&gg_plugin, "split_messages", VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
