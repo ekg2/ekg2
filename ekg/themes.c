@@ -621,7 +621,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 		if ((p = xstrstr(line, "\033[00m"))) {
 			xfree(prompt);
-			if (p != line)
+			if (p != line) 
 				prompt = xstrmid(line, 0, (int) (p - line) + 5);
 			else
 				prompt = NULL;
@@ -636,6 +636,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 			window_print(target, session, separate, fstring_new(line));
 	}
 
+	xfree(prompt);
 	xfree(stmp);
 	xfree(newtarget);
 }
