@@ -21,6 +21,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
@@ -295,6 +297,18 @@ int ncurses_plugin_init()
 	variable_add(&ncurses_plugin, "header_size", VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
 	variable_add(&ncurses_plugin, "statusbar_size", VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
 
+	have_winch_pipe = 0;
+#ifdef SIGWINCH
+	if (pipe(winch_pipe) == 0) {
+		have_winch_pipe = 1;
+		watch_add(&ncurses_plugin,
+				winch_pipe[0],
+				WATCH_READ,
+				1,			/* persistent */
+				ncurses_watch_winch,	/* handler */
+				NULL);			/* data */
+	}
+#endif
 	watch_add(&ncurses_plugin, 0, WATCH_READ, 1, ncurses_watch_stdin, NULL);
 	timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL);
 
@@ -319,6 +333,8 @@ static int ncurses_plugin_destroy()
 	ncurses_plugin_destroyed = 1;
 
 	watch_remove(&ncurses_plugin, 0, WATCH_READ);
+	if (have_winch_pipe)
+		watch_remove(&ncurses_plugin, winch_pipe[0], WATCH_READ);
 
 	timer_remove(&ncurses_plugin, "ncurses:clock");
 

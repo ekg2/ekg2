@@ -358,10 +358,9 @@ watch_t *watch_new(plugin_t *plugin, int fd, watch_type_t type)
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 {
 	list_t l;
-
+	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-
 		if (w->plugin == plugin && w->fd == fd && w->type == type && !w->removed)
 			return w;
 	}

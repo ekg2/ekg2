@@ -65,6 +65,9 @@ int ncurses_debug = 0;			/* debugowanie */
 
 static struct termios old_tio;
 
+int winch_pipe[2];
+int have_winch_pipe = 0;
+
 /*
  * color_pair()
  *
@@ -1267,8 +1270,11 @@ int ncurses_window_kill(window_t *w)
 #ifdef SIGWINCH
 static void sigwinch_handler()
 {
-	ncurses_resize_term = 1;
 	signal(SIGWINCH, sigwinch_handler);
+	if (have_winch_pipe) {
+		char c = ' ';
+		write(winch_pipe[1], &c, 1);
+	}
 }
 #endif
 
@@ -1296,7 +1302,6 @@ void ncurses_init()
 
 	ncurses_screen_width = stdscr->_maxx + 1;
 	ncurses_screen_height = stdscr->_maxy + 1;
-	ncurses_resize_term = 0;
 	
 	ncurses_status = newwin(1, stdscr->_maxx + 1, stdscr->_maxy - 1, 0);
 	input = newwin(1, stdscr->_maxx + 1, stdscr->_maxy, 0);
@@ -1377,6 +1382,14 @@ void ncurses_deinit()
 	static int done = 0;
 	list_t l;
 	int i;
+
+#ifdef SIGWINCH
+	signal(SIGWINCH, SIG_DFL);
+#endif
+	if (have_winch_pipe) {
+		close(winch_pipe[0]);
+		close(winch_pipe[1]);
+	}
 
 	for (l = windows; l; ) {
 		window_t *w = l->data;
@@ -1558,6 +1571,31 @@ int ekg_getch(int meta)
 	return ch;
 }
 
+/* XXX: deklaracja ncurses_watch_stdin nie zgadza sie ze
+ * sposobem wywolywania watchow.
+ * todo brzmi: dorobic do tego jakis typ (typedef watch_handler_t),
+ * zeby nie bylo niejasnosci
+ * (mp)
+ */
+void ncurses_watch_winch(int last, int fd, int watch, void *data)
+{
+	char c;
+	if (last) return;
+	read(winch_pipe[0], &c, 1);
+
+	/* skopiowalem ponizsze z ncurses_watch_stdin.
+	 * problem polegal na tym, ze select czeka na system, a ungetc
+	 * ungetuje w bufor libca.
+	 * (mp)
+	 */
+	endwin();
+	refresh();
+	keypad(input, TRUE);
+	/* wywo³a wszystko, co potrzebne */
+	header_statusbar_resize();
+	changed_backlog_size("backlog_size");
+}
+
 /*
  * ncurses_watch_stdin()
  *
@@ -1567,18 +1605,6 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 {
 	struct binding *b = NULL;
 	int ch;
-
-	if (ncurses_resize_term) {
-		ncurses_resize_term = 0;
-		endwin();
-		refresh();
-		keypad(input, TRUE);
-		/* wywo³a wszystko, co potrzebne */
-		header_statusbar_resize();
-		changed_backlog_size("backlog_size");
-
-		return;
-	}
 
 	ch = ekg_getch(0);
 	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
