@@ -1,5 +1,25 @@
 /* $Id$ */
 
+/* $Id$ */
+
+/*
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
+ *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,7 +40,7 @@ COMMAND(gg_command_find)
 	gg_pubdir50_t req;
 	int i, res = 0, all = 0;
 
-	if (!session || !g || strncasecmp(session_uid_get(session), "gg:", 3)) {
+	if (!session || !g || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
 		printq("invalid_session");
 		return -1;
 	}
@@ -77,7 +97,7 @@ COMMAND(gg_command_find)
 			return -1;
 		}
 
-		if (strncasecmp(uid, "gg:", 3)) {
+		if (xstrncasecmp(uid, "gg:", 3)) {
 			printq("generic_error", "Tylko GG");
 			xfree(user);
 			return -1;
@@ -147,7 +167,7 @@ COMMAND(gg_command_find)
 		}
 
 		if (match_arg(arg, 'b', "born", 2) && argv[i + 1]) {
-			char *foo = strchr(argv[++i], ':');
+			char *foo = xstrchr(argv[++i], ':');
 		
 			if (foo)
 				*foo = ' ';
@@ -205,7 +225,7 @@ COMMAND(gg_command_change)
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_WRITE)))
 		return -1;
 
-	if (strcmp(params[0], "-")) {
+	if (xstrcmp(params[0], "-")) {
 		char **argv = array_make(params[0], " \t", 0, 1, 1);
 		
 		for (i = 0; argv[i]; i++)
@@ -330,7 +350,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		int status = (__fmstatus) ? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
 
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
-		const char *birthyear = (__birthyear && strcmp(__birthyear, "0")) ? __birthyear : "-";
+		const char *birthyear = (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : "-";
 
 		const char *__city = gg_pubdir50_get(res, i, "city");
 		char *city = xstrdup((__city) ? __city : "");

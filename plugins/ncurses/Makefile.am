@@ -1,3 +1,5 @@
+EXTRA_DIST = vars.txt
+
 lib_LTLIBRARIES = ncurses.la
 ncurses_la_SOURCES = main.c old.c completion.c bindings.c contacts.c mouse.c\
 	bindings.h completion.h contacts.h ecurses.h old.h mouse.h
@@ -7,4 +9,7 @@ ncurses_la_CPPFLAGS = $(NCURSES_CPPFLAGS) $(LTDLINCL)
 
 libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
+
+install:
+	$(INSTALL) -D -m 644 vars.txt $(DESTDIR)$(datadir)/ekg/plugins/ncurses/vars.txt
 

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __TOKEN_H
-#define __TOKEN_H
+#ifndef __EKG_GG_TOKEN_H
+#define __EKG_GG_TOKEN_H
 
 const int token_char_height = 12; 
 const char token_id_char[] = {"0123456789abcdef"};
@@ -231,4 +231,4 @@ const char token_id[][15] = {
 ".##..",
 ".##.."};
 
-#endif /* __TOKEN_H */
+#endif /* __EKG_GG_TOKEN_H */

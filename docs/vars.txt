@@ -169,46 +169,6 @@ ctrld_quits
 	w trybie, rozmowy klient na zakoñczyæ dzia³anie. ma znaczenie
 	tylko dla interfejsu readline.
 
-contacts
-	typ: liczba
-	domy¶lna warto¶æ: 2
-
-	okre¶la, czy okienko z list± obecnych ma byæ wy¶wietlone z prawej
-	strony ekranu. je¶li jest równe 2, informacje o zmianie stanu nie
-	s± wy¶wietlane, ignoruj±c warto¶æ zmiennej ,,display_notify''.
-	dzia³a tylko w interfejsie ncurses.
-
-contacts_groups
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	oddzielone przecinkiem grupy, które mo¿na prze³±czaæ w li¶cie
-	kontaktów klawiszem F4. domy¶lnie wy¶wietlani s± wszyscy u¿ytkownicy.
-
-contacts_options
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	opcje listy kontaktów oddzielone przecinkiem lub spacj±. domy¶lne
-	ustawienia to ,,right, frame, margin=1, nowrap, nodescr, order=01234''.
-	mo¿liwe stany to: 0 - dostêpni, 1 - zajêci, 2 - niewidoczni, 3 -
-	blokuj±cy, 4 - niedostêpni). mo¿na pomin±æ niektóre stany -- nie
-	bêd± po prostu wy¶wietlane na li¶cie.
-	
-	lista dostêpnych opcji:
-	- left, right, top, bottom - po³o¿enie listy kontaktów na ekranie,
-	- frame, noframe - lista oddzielona ramk± od g³ównego okna lub nie,
-	- margin=n, nomargin - margines miêdzy list± a g³ównym oknem lub brak,
-	- wrap, nowrap - tre¶æ listy bêdzie zawijana lub ucinana,
-	- descr, nodescr - opisy stanu bêd± lub nie bêd± wy¶wietlane,
-	- order=n - kolejno¶æ wy¶wietlanych stanów.
-	
-contacts_size
-	typ: liczba
-	domy¶lna warto¶æ: 8
-	
-	okre¶la szeroko¶æ okienka z list± kontaktów.
-
 dcc
 	typ: bool
 	domy¶lna warto¶æ: 0
@@ -348,14 +308,6 @@ emoticons
 	uruchamia rozwijanie emotikonów w zdefiniowane teksty. wiêcej
 	szczegó³ów w pliku docs/files.txt w sekcji 5-tej.
 
-encryption
-	typ: bool
-	domy¶lna warto¶æ: 0
-
-	w³±cza szyfrowanie wiadomo¶ci. je¶li w systemie jest zainstalowana
-	biblioteka OpenSSL, mo¿liwe jest u¿ywanie szyfrowania zgodnego z SIM
-	opisanym na stronie http://gg.wha.la/crypt/
-	
 enter_scrolls
 	typ: bool
 	domy¶lna warto¶æ: 0
@@ -556,50 +508,6 @@ server_save
 	bêdzie automatycznie uaktualniana, a zawarto¶æ wpisana przez
 	u¿ytkownika zostanie usuniêta.
 
-sms_away
-	typ: liczba
-	domy¶lna warto¶æ: 0
-
-	w³±czenie tej opcji powoduje wysy³anie otrzymanych wiadomo¶ci na
-	telefon komórkowy podczas nieobecno¶ci (stan ,,zajêty''). wymaga
-	zdefiniowania zmiennych ,,sms_number'' i ,,sms_send_app''.
-
-	je¿eli warto¶ci± jest 1, to zmienna ,,sms_away_limit'' (je¶li ró¿na
-	od 0) dotyczyæ bêdzie ³±cznej liczby wiadomo¶ci wys³anych na telefon
-	komórkowy. warto¶æ 2, z kolei, wskazuje na to, ¿e limit dotyczy
-	ilo¶ci wiadomo¶ci od ka¿dej osoby.
-
-sms_away_limit
-	typ: liczba
-	domy¶lna warto¶æ: 0
-
-	okre¶la limit wiadomo¶ci, które mog± zostaæ wys³ane na telefon
-	komórkowy podczas naszej nieobecno¶ci. je¶li 0, to wiadomo¶ci nie
-	s± limitowane.	
-
-sms_max_length
-	typ: liczba
-	domy¶lna warto¶æ: 100
-
-	maksymalna d³ugo¶æ przekazywanych wiadomo¶ci. powy¿ej tego limitu
-	wiadomo¶æ zostanie uciêta. je¶li równa 0, nie ma limitu.
-
-sms_number
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	numer telefonu komórkowego, na który maj± byæ wysy³ane wiadomo¶ci
-	podczas nieobecno¶ci.
-
-sms_send_app
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	pe³na ¶cie¿ka do programu wysy³aj±cego SMSy. program musi za
-	pierwszy parametr przyjmowaæ numer odbiorcy, za drugi parametr
-	tre¶æ wiadomo¶ci. do tego celu nadaje siê program Miko³aja
-	Rydzewskiego ze strony http://ceti.pl/~miki/
-
 sort_windows
 	typ: bool
 	domy¶lna warto¶æ: 0
@@ -707,42 +615,6 @@ windows_save
 
 	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
 	uruchomieniu programu.
-
-
-
-status
-	typ: liczba, zmienna wewnêtrzna, ukryta
-
-	okre¶la stan klienta (zajêty/niewidoczny/tylko dla przyjació³)
-	po uruchomieniu i pierwszym po³±czeniu. zachowywana przy poleceniu
-	,,save''.
-
-reason
-	typ: tekst, zmienna wewnêtrzna, ukryta
-
-	okre¶la opis stanu klienta. zachowywana przy poleceniu ,,save''.
-	jest usuwana przy ka¿dej zmianie stanu lub wyj¶ciu z klienta,
-	chyba ¿e w³±czona jest zmienna ,,keep_reason''.
-
-interface
-	typ: tekst, zmienna wewnêtrzna, ukryta
-
-	okre¶la domy¶lny interfejs programu. jej warto¶æ jest zmieniana
-	przez podanie parametru -f w wywo³aniu programu i automatycznie
-	zapisywana.
-
-password_cp1250
-	typ: bool, zmienna wewnêtrzna, ukryta
-
-	przy w³±czonej opcji nie bêdzie przeprowadzana konwersja has³a
-	ze standardu ISO-8859-2 na CP1250.
-
-protocol
-	typ: liczba, zmienna wewnêtrzna, ukryta
-
-	okre¶la wersjê klienta, któr± przedstawia siê ekg. mo¿e byæ u¿ywana
-	do udawania nowszego klienta, gdy biblioteka jeszcze jej nie zna.
-	zmienna ta nie powinna byæ u¿ywana przez zwyk³ych u¿ytkowników.
 
 last_sysmsg
 	typ: liczba, zmienna wewnêtrzna, ukryta

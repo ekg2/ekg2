@@ -34,10 +34,16 @@ int last_mouse_state;
 #	define show_mouse_pointer()
 #endif
 
-#define EKG_BUTTON1_CLICKED	0x0001              /* clicked once */
-#define EKG_BUTTON1_DOUBLE_CLICKED 0x0002	    /* double clicked */
-#define EKG_SCROLLED_UP		0x0003		    /* scrolled up */
-#define EKG_SCROLLED_DOWN	0x0004		    /* scrolled down */
+#define EKG_BUTTON1_CLICKED	0x0001          
+#define EKG_BUTTON2_CLICKED	0x0007
+#define EKG_BUTTON3_CLICKED	0x0008
+#define EKG_UNKNOWN_CLICKED	0x0006
+#define EKG_BUTTON1_DOUBLE_CLICKED 0x0002
+#define	EKG_BUTTON2_DOUBLE_CLICKED 0x0009
+#define EKG_BUTTON3_DOUBLE_CLICKED 0x0010
+#define EKG_UNKNOWN_DOUBLE_CLICKED 0x0005
+#define EKG_SCROLLED_UP		0x0003
+#define EKG_SCROLLED_DOWN	0x0004
 
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
 

@@ -781,6 +781,7 @@ int main(int argc, char **argv)
 	if (session_read() == -1)
 		no_config = 1;
 	
+	config_postread();
 
 	/* status window takes first session or setted as default one*/
 	if (sessions && (!session_current || window_current->session)) {
@@ -870,6 +871,8 @@ void ekg_exit()
 	xfree(last_search_nickname);
 	xfree(config_reason_first);
 
+	windows_save();
+	
 	if (config_windows_save)
 		array_add(&vars, xstrdup("windows_layout"));
 
@@ -905,9 +908,10 @@ void ekg_exit()
 		l = l->next;
 
 		p->destroy();
-	} 
+	}
 
 	list_destroy(watches, 0);
+
 
 	if (config_changed && !config_speech_app && config_save_quit == 1) {
 		char line[80];

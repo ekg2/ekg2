@@ -39,7 +39,7 @@ COMMAND(gg_command_dcc)
 	}
 
 	/* send, rsend */
-	if (params[0] && (!strncasecmp(params[0], "se", 2) || !strncasecmp(params[0], "rse", 3))) {
+	if (params[0] && (!xstrncasecmp(params[0], "se", 2) || !xstrncasecmp(params[0], "rse", 3))) {
 		struct gg_dcc *gd = NULL;
 		struct stat st;
 		userlist_t *u;
@@ -61,7 +61,7 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 
-		if (!strcmp(u->status, EKG_STATUS_NA)) {
+		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
 			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}
@@ -83,7 +83,7 @@ COMMAND(gg_command_dcc)
 
 		close(fd);
 
-		if (u->port < 10 || !strncasecmp(params[0], "rse", 3)) {
+		if (u->port < 10 || !xstrncasecmp(params[0], "rse", 3)) {
 			/* nie mo¿emy siê z nim po³±czyæ, wiêc on spróbuje */
 			gg_dcc_request(g->sess, atoi(u->uid + 3));
 		} else {
@@ -109,7 +109,7 @@ COMMAND(gg_command_dcc)
 	}
 
 #if 0
-	if (params[0][0] == 'v' || !strncasecmp(params[0], "rvo", 3)) {			/* voice, rvoice */
+	if (params[0][0] == 'v' || !xstrncasecmp(params[0], "rvo", 3)) {			/* voice, rvoice */
 #ifdef HAVE_VOIP
 		struct userlist *u = NULL;
 		struct transfer *t, tt;
@@ -136,7 +136,7 @@ COMMAND(gg_command_dcc)
 			}
 
 			if (t && (u = userlist_find(t->uin, NULL))) {
-				if (!strcasecmp(params[1], itoa(u->uin)) || (u->display && !strcasecmp(params[1], u->display))) {
+				if (!xstrcasecmp(params[1], itoa(u->uin)) || (u->display && !xstrcasecmp(params[1], u->display))) {
 					t = f;
 					break;
 				}
@@ -203,7 +203,7 @@ COMMAND(gg_command_dcc)
 		tt.type = GG_SESSION_DCC_VOICE;
 		tt.protocol = u->protocol;
 
-		if (u->port < 10 || !strncasecmp(params[0], "rvo", 3)) {
+		if (u->port < 10 || !xstrncasecmp(params[0], "rvo", 3)) {
 			/* nie mo¿emy siê z nim po³±czyæ, wiêc on spróbuje */
 			gg_dcc_request(sess, uin);
 		} else {
@@ -229,7 +229,7 @@ COMMAND(gg_command_dcc)
 #endif
 	
 	/* get, resume */
-	if (params[0] && (!strncasecmp(params[0], "g", 1) || !strncasecmp(params[0], "re", 2))) {
+	if (params[0] && (!xstrncasecmp(params[0], "g", 1) || !xstrncasecmp(params[0], "re", 2))) {
 		dcc_t *d = NULL;
 		struct gg_dcc *g;
 		char *path;
@@ -249,13 +249,13 @@ COMMAND(gg_command_dcc)
 				break;
 			}
 
-			if (params[1][0] == '#' && strlen(params[1]) > 1 && atoi(params[1] + 1) == dcc_id_get(D)) {
+			if (params[1][0] == '#' && xstrlen(params[1]) > 1 && atoi(params[1] + 1) == dcc_id_get(D)) {
 				d = D;
 				break;
 			}
 
 			if ((u = userlist_find(session, dcc_uid_get(D)))) {
-				if (!strcasecmp(params[1], u->uid) || (u->nickname && !strcasecmp(params[1], u->nickname))) {
+				if (!xstrcasecmp(params[1], u->uid) || (u->nickname && !xstrcasecmp(params[1], u->nickname))) {
 					d = D;
 					break;
 				}
@@ -417,7 +417,7 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 
 				debug("[gg] dcc id=%d, uid=%d, type=%d\n", dcc_id_get(D), dcc_uid_get(D), dcc_type_get(D));
 
-				if (!strcmp(dcc_uid_get(D), peer) && !dcc_private_get(D)) {
+				if (!xstrcmp(dcc_uid_get(D), peer) && !dcc_private_get(D)) {
 					debug("[gg] found transfer, uid=%d, type=%d\n", dcc_uid_get(D), dcc_type_get(D));
 
 					dcc_private_set(D, d);
@@ -503,11 +503,6 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 				print("dcc_get_offer_resume", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), dcc_id_get(D));
 			
 			xfree(path);
-
-#if 0
-			if (!(ignored_check(t->uin) & IGNORE_EVENTS))
-				event_check(EVENT_DCC, t->uin, t->filename);
-#endif
 
 			break;
 		}

@@ -1,0 +1,50 @@
+// ma³y opis dostêpnych zmiennych pluginu sms
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+
+sms_away
+	typ: liczba
+	domy¶lna warto¶æ: 0
+	
+	w³±czenie tej opcji powoduje wysy³anie otrzymanych wiadomo¶ci na
+	telefon komórkowy podczas nieobecno¶ci (stan ,,zajêty''). wymaga
+	zdefiniowania zmiennych ,,sms_number'' i ,,sms_send_app''.
+	
+	
+	je¿eli warto¶ci± jest 1, to zmienna ,,sms_away_limit'' (je¶li ró¿na
+	od 0) dotyczyæ bêdzie ³±cznej liczby wiadomo¶ci wys³anych na telefon
+	komórkowy. warto¶æ 2, z kolei, wskazuje na to, ¿e limit dotyczy
+	ilo¶ci wiadomo¶ci od ka¿dej osoby.
+
+sms_away_limit
+	typ: liczba
+	domy¶lna warto¶æ: 0
+	
+	okre¶la limit wiadomo¶ci, które mog± zostaæ wys³ane na telefon
+	komórkowy podczas naszej nieobecno¶ci. je¶li 0, to wiadomo¶ci nie
+	s± limitowane.	
+
+sms_max_length
+	typ: liczba
+	domy¶lna warto¶æ: 100
+	
+	maksymalna d³ugo¶æ przekazywanych wiadomo¶ci. powy¿ej tego limitu
+	wiadomo¶æ zostanie uciêta. je¶li równa 0, nie ma limitu.
+
+sms_number
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	numer telefonu komórkowego, na który maj± byæ wysy³ane wiadomo¶ci
+	podczas nieobecno¶ci.
+
+sms_send_app
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	pe³na ¶cie¿ka do programu wysy³aj±cego SMSy. program musi za
+	pierwszy parametr przyjmowaæ numer odbiorcy, za drugi parametr
+	tre¶æ wiadomo¶ci. do tego celu nadaje siê program Miko³aja
+	Rydzewskiego ze strony http://ceti.pl/~miki/
+
+$Id$

@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ * 	 	  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -136,7 +137,7 @@ int ncurses_ui_window_print(void *data, va_list ap)
 
 	if (!w->floating) {
 		ncurses_redraw(w);
-		if (!window_lock_get(w))
+		if (!window_lock_get(w)) // && w == window_current) it should be tested
 			ncurses_commit();
 	}
 	
@@ -343,6 +344,10 @@ void ncurses_setvar_default()
 {
 	config_contacts_size = 9;         /* szeroko¶æ okna kontaktów */
 	config_contacts = 2;              /* czy ma byæ okno kontaktów */
+
+	xfree(config_contacts_options);
+	xfree(config_contacts_groups);
+
 	config_contacts_options = NULL;   /* opcje listy kontaktów */
 	config_contacts_groups = NULL;    /* grupy listy kontaktów */
 

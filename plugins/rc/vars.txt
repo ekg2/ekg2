@@ -1,0 +1,9 @@
+// opis dostêpnych zmiennych w pluginie rc
+// (c) copyright 2004 piotr kupisiewicz <deletek@ekg2.org>
+
+remote_control
+        typ: tekst
+        domy¶lna warto¶æ: brak
+	
+	okre¶la strumieñ wej¶ciowy dla kontroli zdalnej
+

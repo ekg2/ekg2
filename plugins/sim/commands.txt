@@ -1,0 +1,17 @@
+// opis komend dla pluginu sim
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+
+key
+        parametry:  [opcje]
+        krotki opis: zarz±dzanie kluczami dla SIM
+	
+	  -g, --generate              generuje parê kluczy u¿ytkownika
+	
+	  -s, --send <numer/alias>    wysy³a nasz klucz publiczny
+	
+	  -d, --delete <numer/alias>  usuwa klucz publiczny
+	
+	  [-l, --list] [numer/alias]  wy¶wietla posiadane klucze publiczne
+
+$Id$

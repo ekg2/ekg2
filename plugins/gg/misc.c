@@ -1,5 +1,25 @@
 /* $Id$ */
 
+/* $Id$ */
+
+/*
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
+ *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include "ekg2-config.h"
 
 #include <string.h>
@@ -107,19 +127,19 @@ const char *gg_status_to_text(int status)
  */
 int gg_text_to_status(const char *text, const char *descr)
 {
-	if (!strcasecmp(text, EKG_STATUS_NA))
+	if (!xstrcasecmp(text, EKG_STATUS_NA))
 		return (descr) ? GG_STATUS_NOT_AVAIL_DESCR : GG_STATUS_NOT_AVAIL;
 
-	if (!strcasecmp(text, EKG_STATUS_AVAIL))
+	if (!xstrcasecmp(text, EKG_STATUS_AVAIL))
 		return (descr) ? GG_STATUS_AVAIL_DESCR : GG_STATUS_AVAIL;
 
-	if (!strcasecmp(text, EKG_STATUS_AWAY) || !strcasecmp(text, EKG_STATUS_DND) || !strcasecmp(text, EKG_STATUS_XA))
+	if (!xstrcasecmp(text, EKG_STATUS_AWAY) || !xstrcasecmp(text, EKG_STATUS_DND) || !xstrcasecmp(text, EKG_STATUS_XA))
 		return (descr) ? GG_STATUS_BUSY_DESCR : GG_STATUS_BUSY;
 
-	if (!strcasecmp(text, EKG_STATUS_INVISIBLE))
+	if (!xstrcasecmp(text, EKG_STATUS_INVISIBLE))
 		return (descr) ? GG_STATUS_INVISIBLE_DESCR : GG_STATUS_INVISIBLE;
 
-	if (!strcasecmp(text, EKG_STATUS_BLOCKED))
+	if (!xstrcasecmp(text, EKG_STATUS_BLOCKED))
 		return GG_STATUS_BLOCKED;
 
 	return GG_STATUS_NOT_AVAIL;
@@ -168,7 +188,7 @@ int gg_blocked_remove(session_t *s, const char *uid)
 
 		l = l->next;
 
-		if (strcasecmp(g->name, "__blocked"))
+		if (xstrcasecmp(g->name, "__blocked"))
 			continue;
 
 		xfree(g->name);
@@ -258,7 +278,7 @@ int gg_userlist_send(struct gg_session *s, list_t userlist)
 	for (l = userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 
-		if (!strncasecmp(u->uid, "gg:", 3))
+		if (!xstrncasecmp(u->uid, "gg:", 3))
 			count++;
 	}
 
@@ -268,7 +288,7 @@ int gg_userlist_send(struct gg_session *s, list_t userlist)
 	for (i = 0, l = userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 
-		if (strncasecmp(u->uid, "gg:", 3))
+		if (xstrncasecmp(u->uid, "gg:", 3))
 			continue;
 
 		uins[i] = atoi(u->uid + 3);

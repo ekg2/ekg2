@@ -89,7 +89,7 @@ char *aspell_line;
 void ncurses_spellcheck_init(void)
 {
         AspellCanHaveError * possible_err;
-        if(config_aspell != 1)
+        if(config_aspell != 1 || !config_aspell_encoding || !config_aspell_lang)
             return;
 
         spell_config = new_aspell_config();
@@ -773,11 +773,10 @@ void ncurses_clear(window_t *w, int full)
  */
 void window_floating_update(int i)
 {
-#if 0
 	list_t l;
 
 	for (l = windows; l; l = l->next) {
-		window_t *w = l->data, *tmp;
+		window_t *w = l->data;
 		ncurses_window_t *n = w->private;
 
 		if (i && (w->id != i))
@@ -796,14 +795,9 @@ void window_floating_update(int i)
 		w->last_update = time(NULL);
 
 		ncurses_clear(w, 1);
-		tmp = window_current;
-		window_current = w;
-		command_exec(w->target, w->target, 0);
-		window_current = tmp;
 
 		ncurses_redraw(w);
 	}
-#endif
 }
 
 /*
@@ -852,124 +846,6 @@ void ncurses_refresh()
 	wresize(input, ncurses_input_size, input->_maxx + 1);
 	mvwin(input, stdscr->_maxy - ncurses_input_size + 1, 0);
 }
-
-#if 0
-/*
- * ui_ncurses_print()
- *
- * wy¶wietla w podanym okienku, co trzeba.
- */
-void ui_ncurses_print(const char *target, int separate, const char *line)
-{
-	window_t *w;
-	fstring_t fs;
-	list_t l;
-	int count = 0, bottom = 0, prev_count;
-	char *lines, *lines_save, *line2;
-
-	switch (config_make_window) {
-		case 1:
-			if ((w = window_find(target)))
-				goto crap;
-
-			if (!separate)
-				w = window_find("__status");
-
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-
-				if (separate && !w->target && w->id > 1) {
-					w->target = xstrdup(target);
-					xfree(w->prompt);
-					w->prompt = format_string(format_find("ncurses_prompt_query"), target);
-					w->prompt_len = xstrlen(w->prompt);
-					print("window_id_query_started", itoa(w->id), target);
-					print_window(target, 1, "query_started", target);
-					print_window(target, 1, "query_started_window", target);
-					if (!(ignored_check(get_uin(target)) & IGNORE_EVENTS))
-						event_check(EVENT_QUERY, get_uin(target), target);
-					break;
-				}
-			}
-
-		case 2:
-			if (!(w = window_find(target))) {
-				if (!separate)
-					w = window_find("__status");
-				else {
-					w = window_new(target, 0);
-					print("window_id_query_started", itoa(w->id), target);
-					print_window(target, 1, "query_started", target);
-					print_window(target, 1, "query_started_window", target);
-					if (!(ignored_check(get_uin(target)) & IGNORE_EVENTS))
-						event_check(EVENT_QUERY, get_uin(target), target);
-				}
-			}
-
-crap:
-			if (!config_display_crap && target && !xstrcmp(target, "__current"))
-				w = window_find("__status");
-			
-			break;
-			
-		default:
-			/* je¶li nie ma okna, rzuæ do statusowego. */
-			if (!(w = window_find(target)))
-				w = window_find("__status");
-	}
-
-	/* albo zaczynamy, albo koñczymy i nie ma okienka ¿adnego */
-	if (!w) 
-		return;
- 
-	if (w != window_current && !w->floating) {
-		w->act = 1;
-		update_statusbar(0);
-	}
-
-	if (w->start == w->lines_count - w->height || (w->start == 0 && w->lines_count <= w->height))
-		bottom = 1;
-	
-	prev_count = w->lines_count;
-	
-	/* XXX wyrzuciæ dzielenie na linie z ui do ekg */
-	lines = lines_save = xstrdup(line);
-	while ((line2 = gg_get_line(&lines))) {
-		fs = fstring_new(line2);
-		fs->ts = time(NULL);
-		count += ncurses_backlog_add(w, fs);
-	}
-	xfree(lines_save);
-
-	if (w->overflow) {
-		w->overflow -= count;
-
-		if (w->overflow < 0) {
-			bottom = 1;
-			w->overflow = 0;
-		}
-	}
-
-	if (bottom)
-		w->start = w->lines_count - w->height;
-	else {
-		if (w->backlog_size == config_backlog_size)
-			w->start -= count - (w->lines_count - prev_count);
-	}
-
-	if (w->start < 0)
-		w->start = 0;
-
-	if (w->start < w->lines_count - w->height)
-		w->more = 1;
-
-	if (!w->floating) {
-		window_redraw(w);
-		if (!w->lock)
-			ncurses_commit();
-	}
-}
-#endif
 
 /*
  * update_header()
@@ -1774,9 +1650,9 @@ int ekg_getch(int meta)
 		MEVENT m;
 
 		if (getmouse(&m) == OK) {
-			int mouse_state;
+			int mouse_state = 0;
 
-			switch (m.bstate) {
+/*			switch (m.bstate) {
 				case 2:
 					mouse_state = EKG_SCROLLED_UP;
 					last_mouse_state = mouse_state;
@@ -1789,6 +1665,14 @@ int ekg_getch(int meta)
 					mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
 					last_mouse_state = 0;
 					break;
+				case 256:
+					mouse_state = EKG_BUTTON2_CLICKED;
+					last_mouse_state = 0;
+					break;
+				case BUTTON3_DOUBLE_CLICKED:
+					mouse_state = EKG_BUTTON3_CLICKED;
+					last_mouse_state = 0;
+					break;
                                 case 128:
                                         mouse_state = EKG_SCROLLED_DOWN;
 					last_mouse_state = mouse_state;
@@ -1799,10 +1683,23 @@ int ekg_getch(int meta)
 				default:
 					mouse_state = 0;
 					break;
-			}
-			ncurses_mouse_clicked_handler(m.x, m.y, mouse_state);
-			/* debug("bstate %d\n", m.bstate); */
-			/* debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%.8x\n", m.id, m.x, m.y, m.z, m.bstate); */
+			} */
+			if (m.bstate & BUTTON1_CLICKED)
+				mouse_state = EKG_BUTTON1_CLICKED;
+			if (m.bstate & BUTTON1_DOUBLE_CLICKED) 
+				mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
+			if (m.bstate & BUTTON2_CLICKED)
+				mouse_state = EKG_BUTTON2_CLICKED;
+			if (m.bstate & BUTTON2_DOUBLE_CLICKED)
+				mouse_state = EKG_BUTTON2_DOUBLE_CLICKED;
+			if (m.bstate & BUTTON3_CLICKED)
+				mouse_state = EKG_BUTTON3_CLICKED;
+			if (m.bstate & BUTTON3_DOUBLE_CLICKED)
+				mouse_state = EKG_BUTTON3_DOUBLE_CLICKED;
+			if (mouse_state)
+					ncurses_mouse_clicked_handler(m.x, m.y - 1, mouse_state);
+		        /* debug("bstate %d\n", m.bstate); */
+			/* debug("id=%d, x=%d, y=%d, z=%d, bstate=0x%x\n", m.id, m.x, m.y, m.z, m.bstate); */
 		}
 	} 
 #endif

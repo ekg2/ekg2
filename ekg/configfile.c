@@ -41,10 +41,53 @@
 #include "vars.h"
 #include "xmalloc.h"
 #include "plugins.h"
+#include "windows.h"
 
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX
 #endif
+
+/* 
+ * config_postread()
+ *
+ * initialized after config is read 
+ */
+void config_postread()
+{
+        if (config_windows_save && config_windows_layout) {
+                char **targets = array_make(config_windows_layout, "|", 0, 0, 0);
+                int i;
+
+                for (i = 1; targets[i]; i++) {
+			char *tmp;
+
+                        if (!strcmp(targets[i], "-"))
+                                continue;
+
+		        if (xstrcmp(targets[i], "") && (tmp = xstrrchr(targets[i], '/'))) {
+		                char *session_name = xstrndup(targets[i], xstrlen(targets[i]) - xstrlen(tmp));
+				session_t *s;
+
+				debug("session: %s\n", session_name);
+
+		                if (!(s = session_find(session_name)))
+					continue;
+
+		                tmp++;
+				strip_spaces(tmp);
+				tmp = strip_quotes(tmp);
+
+				window_new(tmp, s, i + 1);	
+	
+		                xfree(session_name);
+		        } else {
+	                        window_new(NULL, NULL, i + 1);
+			}
+                }
+
+                array_free(targets);
+        }
+}
 
 /* 
  * config_read_later()

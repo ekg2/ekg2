@@ -101,7 +101,7 @@ static int ioctld_parse_seq(const char *seq, struct action_data *data)
 		int delay;
 		char *tmp;
 		
-		if ((tmp = strchr(entries[i], '/'))) {
+		if ((tmp = xstrchr(entries[i], '/'))) {
 			*tmp = 0;
 			delay = atoi(tmp + 1);
 		} else
@@ -169,7 +169,7 @@ static int ioctld_send(const char *seq, int act, int quiet)
 	if (!xisdigit(*seq)) {
 		const char *tmp = format_find(seq);
 
-		if (!strcmp(tmp, "")) {
+		if (!xstrcmp(tmp, "")) {
 			printq("events_seq_not_found", seq);
 			return -1;
 		}
@@ -221,43 +221,15 @@ int ioctld_plugin_init()
 	ioctld_socket(ioctld_sock_path);
 	
 	atexit(ioctld_kill);
-/* this are only for compatibility - don't use them*/
-#define possibilities(x) x
-#define params(x) x
 
-	command_add(&ioctld_plugin,
-	  "beeps_spk", params("?"), command_beeps_spk, 0,
-	  " <sekwencja>", "wydaje d¼wiêki zgodnie z sekwencj±",
-	  "\n"
-	  "Kolejne d¼wiêki oddzielone s± przecinkami. D¼wiêk sk³ada siê "
-	  "z tonu w hercach i d³ugo¶ci trwania w mikrosekundach oddzielonej "
-	  "uko¶nikiem (,,%T/%n''). Je¶li nie podano czasu trwania, domy¶lna "
-	  "warto¶æ to 0,1s.\n"
-	  "\n"
-	  "Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.", NULL);
-
-	command_add(&ioctld_plugin,
-	  "blink_leds", params("?"), command_blink_leds, 0,
-	  " <sekwencja>", "odtwarza sekwencjê na diodach LED",
-	  "\n"
-	  "Kombinacje diod oddzielone s± przecinkami. Je¶li po kombinacji "
-	  "wystêpuje znak uko¶nika (,,%T/%n''), po nim podany jest czas "
-	  "trwania w mikrosekundach. Domy¶lny czas trwania to 0,1s. "
-	  "Kombinacja jest map± bitow± o nastêpuj±cych "
-	  "warto¶ciach: 1 - NumLock, 2 - ScrollLock, 4 - CapsLock. Na "
-	  "przyk³ad w³±czenie NumLock i CapsLock jednocze¶nie to 1+4 czyli "
-	  "5.\n"
-	  "\n"
-	  "Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.", NULL);
-#undef params
-#undef possibilities
+	command_add(&ioctld_plugin, "ioctld:beeps_spk", "?", command_beeps_spk, 0, NULL);
+	command_add(&ioctld_plugin, "ioctld:blink_leds", "?", command_blink_leds, 0, NULL);
+	
 	return 0;
 }
 
 static int ioctld_plugin_destroy()
 {
-	command_remove(&ioctld_plugin, "beeps_spk");
-	command_remove(&ioctld_plugin, "blink_leds");
 	plugin_unregister(&ioctld_plugin);
 
 	if (ioctld_sock != -1)

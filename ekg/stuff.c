@@ -52,6 +52,7 @@
 #include "themes.h"
 #include "userlist.h"
 #include "vars.h"
+#include "windows.h"
 #include "xmalloc.h"
 
 #ifndef PATH_MAX
@@ -152,6 +153,72 @@ char *last_search_uid = 0;
 
 int reason_changed = 0;
 
+/* 
+ * windows_save()
+ *
+ * saves windows to the variable 
+ */
+void windows_save()
+{
+	list_t l;
+
+	if (config_windows_save) {
+		string_t s = string_init(NULL);
+		int maxid = 0, i;
+		
+		xfree(config_windows_layout);
+
+		for (l = windows; l; l = l->next) {
+			window_t *w = l->data;
+
+			if (!w->floating && w->id > maxid)
+				maxid = w->id;
+		}
+
+		for (i = 1; i <= maxid; i++) {
+			const char *target = "-";
+			const char *session_name = NULL;
+			
+			for (l = windows; l; l = l->next) {
+				window_t *w = l->data;
+
+				if (w->id == i) {
+					target = w->target;
+					if (w->session)
+						session_name = w->session->uid;
+					break;
+				}
+			}
+		
+			if (session_name && target) {
+				string_append(s, session_name);
+				string_append_c(s, '/');
+			}
+
+			if (target) {
+				string_append_c(s, '\"');
+				string_append(s, target);
+				string_append_c(s, '\"');
+			}
+
+			if (i < maxid)
+				string_append_c(s, '|');
+		}
+
+		for (l = windows; l; l = l->next) {
+			window_t *w = l->data;
+
+			if (w->floating && (!w->target || strncmp(w->target, "__", 2))) {
+				char *tmp = saprintf("|*%d,%d,%d,%d,%d,%s", w->left, w->top, w->width, w->height, w->frames, w->target);
+				string_append(s, tmp);
+				xfree(tmp);
+			}
+		}
+
+		config_windows_layout = string_free(s, 0);
+	}
+}
+
 /*
  * alias_add()
  *
@@ -223,7 +290,7 @@ int alias_add(const char *string, int quiet, int append)
 	list_add(&a.commands, cmd, xstrlen(cmd) + 1);
 	list_add(&aliases, &a, sizeof(a));
 
-	command_add(NULL, a.name, ((params) ? array_join(params, " ") : "?"), cmd_alias_exec, 1, "", "", "", NULL);
+	command_add(NULL, a.name, ((params) ? array_join(params, " ") : "?"), cmd_alias_exec, 1, NULL);
 	
 	printq("aliases_add", a.name, "");
 
@@ -652,31 +719,6 @@ void changed_theme(const char *var)
 		}
 	}
 }
-
-#if 0
-/*
- * changed_xxx_reason()
- *
- * funkcja wywo³ywana przy zmianie domy¶lnych powodów.
- */
-void changed_xxx_reason(const char *var)
-{
-	char *tmp = NULL;
-
-	if (!xstrcmp(var, "away_reason"))
-		tmp = config_away_reason;
-	if (!xstrcmp(var, "back_reason"))
-		tmp = config_back_reason;
-	if (!xstrcmp(var, "quit_reason"))
-		tmp = config_quit_reason;
-
-	if (!tmp)
-		return;
-
-	if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE)
-		print("descr_too_long", itoa(xstrlen(tmp) - GG_STATUS_DESCR_MAXSIZE));
-}
-#endif
 
 const char *compile_time()
 {
@@ -1167,6 +1209,24 @@ void iso_to_ascii(unsigned char *buf)
 
 		buf++;
 	}
+}
+
+/*
+ * strip_quotes()
+ *
+ * strips quotes from the begging and the end of 
+ * given string
+ */
+char *strip_quotes(char *line)
+{
+        char *buf;
+
+        for (buf = line; *buf == '\"'; buf++);
+
+        while (line[xstrlen(line) - 1] == '\"')
+                line[xstrlen(line) - 1] = 0;
+
+        return buf;
 }
 
 /*

@@ -245,6 +245,8 @@ int batch_mode;
 char *batch_line;
 struct color_map default_color_map[16+10];
 
+void windows_save();
+
 int alias_add(const char *string, int quiet, int append);
 int alias_remove(const char *name, int quiet);
 void alias_free();
@@ -292,6 +294,7 @@ int ekg_hash(const char *name);
 
 int mesg_set(int what);
 void iso_to_ascii(unsigned char *buf);
+char *strip_quotes(char *line);
 char *strip_spaces(char *line);
 int strtrim(char *line);
 char *str_tolower(const char *text);

@@ -1,5 +1,23 @@
 /* $Id$ */
 
+/*
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
+ *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -191,7 +209,7 @@ COMMAND(gg_command_unregister)
                 return -1;
         }
 
-	if (!strncasecmp(params[0], "gg:", 3))
+	if (!xstrncasecmp(params[0], "gg:", 3))
 		uin = atoi(params[0] + 3);
 	else
 		uin = atoi(params[0]);
@@ -265,7 +283,7 @@ fail:
 		gg_private_t *g = session_private_get(s);
 		list_t m;
 
-		if (strncasecmp(s->uid, "gg:", 3))
+		if (xstrncasecmp(s->uid, "gg:", 3))
 			continue;
 		
 		for (m = g->passwds; m; ) {
@@ -382,7 +400,7 @@ COMMAND(gg_command_remind)
 	if (params[0])
 		uin = atoi(params[0]);
 	else {
-		if (!uin && (!session || !g || strncasecmp(session_uid_get(session), "gg:", 3))) {
+		if (!uin && (!session || !g || xstrncasecmp(session_uid_get(session), "gg:", 3))) {
 			if (!params[0])
 				printq("invalid_session");
 			return -1;
@@ -478,3 +496,4 @@ fail:
 
 	return -1;
 }
+

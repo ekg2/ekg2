@@ -1008,10 +1008,16 @@ void theme_init()
 	format_add("help_footer", "\n%> %|Wiêcej szczegó³ów na temat komend zwróci %Thelp <komenda>%n. Poprzedzenie komendy znakiem %T^%n spowoduje ukrycie jej wyniku. Zamiast parametru <numer/alias> mo¿na u¿yæ znaku %T$%n oznaczaj±cego aktualnego rozmówcê.\n\n", 1);
 	format_add("help_quick", "%> %|Przed u¿yciem przeczytaj ulotkê. Plik %Tdocs/ULOTKA%n zawiera krótki przewodnik po za³±czonej dokumentacji. Je¶li go nie masz, mo¿esz ¶ci±gn±æ pakiet ze strony %Thttp://dev.null.pl/ekg2/%n\n", 1);
 	format_add("help_set_file_not_found", "%! Nie znaleziono opisu zmiennych (nieprawid³owa instalacja)\n", 1);
+        format_add("help_set_file_not_found_plugin", "%! Nie znaleziono opisu zmiennych dla pluginu %T%1%n (nieprawid³owa instalacja)\n", 1);
 	format_add("help_set_var_not_found", "%! Nie znaleziono opisu zmiennej %T%1%n\n", 1);
 	format_add("help_set_header", "%> %T%1%n (%2, domy¶lna warto¶æ: %3)\n%>\n", 1);
 	format_add("help_set_body", "%> %|%1\n", 1);
 	format_add("help_set_footer", "", 1);
+        format_add("help_command_body", "%> %|%1\n", 1);
+        format_add("help_command_file_not_found", "%! Nie znaleziono opisu komend (nieprawid³owa instalacja)\n", 1);
+        format_add("help_command_file_not_found_plugin", "%! Nie znaleziono opisu komend dla pluginu %T%1%n (nieprawid³owa instalacja)\n", 1);
+        format_add("help_command_not_found", "%! Nie znaleziono opisu komendy %T%1%n\n", 1);
+
 
 	/* ignore, unignore, block, unblock */
 	format_add("ignored_added", "%> Dodano %T%1%n do listy ignorowanych\n", 1);

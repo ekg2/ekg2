@@ -367,9 +367,7 @@ COMMAND(jabber_command_away)
 	if (params[0]) {
 		session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
 		reason_changed = 1;
-	};
-
-	descr = (char *) session_descr_get(session);
+	}
 
 	if (!xstrcmp(name, "_autoback")) {
 		format = "auto_back";
@@ -429,6 +427,17 @@ COMMAND(jabber_command_away)
 	return -1;
 
 change:
+	if (!params[0]) {
+                char *tmp;
+
+                if ((tmp = ekg_draw_descr(format))) {
+                        session_descr_set(session, tmp);
+                        xfree(tmp);
+                }
+	}
+
+	descr = (char *) session_descr_get(session);
+
 	ekg_update_status(session);
 	
 	if (descr) {
@@ -706,40 +715,28 @@ COMMAND(jabber_command_ver)
 }
 
 
-/* this are only for compatibility - don't use them*/
-#define possibilities(x) x
-#define params(x) x
-
 void jabber_register_commands()
 {
-	command_add(&jabber_plugin, "jid:connect", params("?"), jabber_command_connect, 0, "", "³±czy siê z serwerem", "", NULL);
-	command_add(&jabber_plugin, "jid:disconnect", params("?"), jabber_command_disconnect, 0, " [powód/-]", "roz³±cza siê od serwera", "", NULL);
-	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
-	command_add(&jabber_plugin, "jid:msg", params("uU ?"), jabber_command_msg, 0, "", "wysy³a pojedyncz± wiadomo¶æ", "\nWszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomo¶ci wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje potraktowanie pierwszej linijki jako tematu.", NULL);
-	command_add(&jabber_plugin, "jid:chat", params("uU ?"), jabber_command_msg, 0, "", "wysy³a wiadomo¶æ w ramach rozmowy", "", NULL);
-	command_add(&jabber_plugin, "jid:", params("?"), jabber_command_inline_msg, 0, "", "wysy³a wiadomo¶æ", "", NULL);
-	command_add(&jabber_plugin, "jid:xml", params("?"), jabber_command_xml, 0, "", "wysy³a polecenie xml", "\nPolecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML (\" ' & < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.", NULL);
-	command_add(&jabber_plugin, "jid:away", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:_autoaway", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:back", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
-	command_add(&jabber_plugin, "jid:_autoback", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
-	command_add(&jabber_plugin, "jid:invisible", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:dnd", params("r"), jabber_command_away, 0, "", "zmienia stan na nie przeszkadzaæ","", NULL);
-	command_add(&jabber_plugin, "jid:ffc", params("r"), jabber_command_away, 0, "", "zmienia stan na chêtny do rozmowy","", NULL);
-	command_add(&jabber_plugin, "jid:xa", params("r"), jabber_command_away, 0, "", "zmienia stan na bardzo zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:passwd", params("?"), jabber_command_passwd, 0, "", "zmienia has³o", "", NULL);
-	command_add(&jabber_plugin, "jid:auth", params("p uU"), jabber_command_auth, 0, "", "obs³uga autoryzacji", 
-	  "<akcja> <JID> \n"
-	  "  -a, --accept <JID>    autoryzuje JID\n"
-	  "  -d, --deny <JID>      odmawia udzielenia autoryzacji\n"
- 	  "  -r, --request <JID>   wysy³a ¿±danie autoryzacji\n"
-	  "  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji\n",
-	  possibilities("-a --accept -d --deny -r --request -c --cancel") );
-	command_add(&jabber_plugin, "jid:add", params("U ?"), jabber_command_add, 0, "", "dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê", "<JID> [nazwa]", NULL ); 
-	command_add(&jabber_plugin, "jid:del", params("u"), jabber_command_del, 0, "", "usuwa z naszego rostera", "", NULL);
-	command_add(&jabber_plugin, "jid:ver", params("?u"), jabber_command_ver, 0, "", "pobiera informacjê o sytemie operacyjnym i wersji klienta Jabbera danego jid", "", NULL);
+	command_add(&jabber_plugin, "jid:", "?", jabber_command_inline_msg, 0, NULL);
+	command_add(&jabber_plugin, "jid:_autoaway", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:_autoback", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:add", "U ?", jabber_command_add, 0, NULL); 
+	command_add(&jabber_plugin, "jid:auth", "p uU", jabber_command_auth, 0, 
+	  "-a --accept -d --deny -r --request -c --cancel");
+	command_add(&jabber_plugin, "jid:away", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:back", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:chat", "uU ?", jabber_command_msg, 0, NULL);
+	command_add(&jabber_plugin, "jid:connect", "?", jabber_command_connect, 0, NULL);
+	command_add(&jabber_plugin, "jid:del", "u", jabber_command_del, 0, NULL);
+	command_add(&jabber_plugin, "jid:disconnect", "?", jabber_command_disconnect, 0, NULL);
+	command_add(&jabber_plugin, "jid:dnd", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:invisible", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:ffc", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:msg", "uU ?", jabber_command_msg, 0, NULL);
+	command_add(&jabber_plugin, "jid:passwd", "?", jabber_command_passwd, 0, NULL);
+	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, 0, NULL);
+	command_add(&jabber_plugin, "jid:ver", "?u", jabber_command_ver, 0, NULL);
+	command_add(&jabber_plugin, "jid:xa", "r", jabber_command_away, 0, NULL);
+	command_add(&jabber_plugin, "jid:xml", "?", jabber_command_xml, 0, NULL);
 };
-
-#undef possibilities 
-#undef params
 

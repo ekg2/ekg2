@@ -137,10 +137,8 @@ void variable_init()
 	variable_add(NULL, "time_deviation", VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
 	variable_add(NULL, "timestamp", VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);
 	variable_add(NULL, "timestamp_show", VAR_BOOL, 1, &config_timestamp_show, NULL, NULL, NULL);
-#if 0
 	variable_add(NULL, "windows_save", VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
 	variable_add(NULL, "windows_layout", VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
-#endif
 }
 
 /*
@@ -343,7 +341,9 @@ int variable_remove(plugin_t *plugin, const char *name)
 				tmp = saprintf("%d", *(int*)(v->ptr));
 				v->ptr = (void*)tmp;
 			} else {
-				tmp = xstrdup((char*)(v->ptr));
+				char **pointer = (char **) (v->ptr);
+				tmp = xstrdup(*pointer);
+				xfree(*pointer);
 				v->ptr = tmp;
 			}
 
@@ -572,25 +572,47 @@ void variable_free()
 /*
  * variable_help()
  *
- * wy¶wietla pomoc dotycz±c± danej zmiennej na podstawie pliku
- * ${datadir}/ekg/vars.txt.
+ * it shows help about variable from file ${datadir}/ekg/vars.txt
+ * or ${datadir}/ekg/plugins/{plugin_name}/vars.txt
  *
- *  - name - nazwa zmiennej.
+ * name - name of the variable
  */
 void variable_help(const char *name)
 {
-	FILE *f = fopen(DATADIR "/vars.txt", "r");
+	FILE *f; 
 	char *line, *type = NULL, *def = NULL, *tmp;
+	const char *seeking_name;
 	string_t s = string_init(NULL);
 	int found = 0;
+	variable_t *v = variable_find(name);
 
-	if (!f) {
-		print("help_set_file_not_found");
+	if (!v) {
+		print("variable_not_found", name);
 		return;
+	}	
+
+	if (v->plugin && v->plugin->name) {
+		char *tmp = saprintf(DATADIR "/plugins/%s/vars.txt", v->plugin->name);
+		f = fopen(tmp, "r");
+		xfree(tmp);
+
+		if (!f) {
+        	        print("help_set_file_not_found_plugin", v->plugin->name);
+	                return;
+		}
+
+		seeking_name = xstrchr(name, ':') + 1;
+	} else {
+		f = fopen(DATADIR "/vars.txt", "r");
+                if (!f) {
+                        print("help_set_file_not_found");
+                        return;
+                }
+		seeking_name = name;
 	}
 
 	while ((line = read_file(f))) {
-		if (!xstrcasecmp(line, name)) {
+		if (!xstrcasecmp(line, seeking_name)) {
 			found = 1;
 			xfree(line);
 			break;
@@ -637,11 +659,16 @@ void variable_help(const char *name)
 			break;
 		}
 
-		if (!strncmp(line, "\t- ", 3) && xstrcmp(s->str, "")) {
+		if (!xstrncmp(line, "\t- ", 3) && xstrcmp(s->str, "")) {
 			print("help_set_body", s->str);
 			string_clear(s);
 		}
-		
+
+                if (!xstrncmp(line, "\t", 1) && xstrlen(line) == 1) {
+	                string_append(s, "\n\r");
+                        continue;
+                }
+	
 		string_append(s, line + 1);
 
 		if (line[xstrlen(line) - 1] != ' ')

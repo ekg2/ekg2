@@ -29,7 +29,6 @@ rozwi±zanie.
   - mo¿liwo¶æ blokowania terminala po d³u¿szym czasie nieaktywno¶ci (Gambler)
   - okienka oparte o kolejne wywo³ania xterma (fidor)
   - dokumentacja do themes - opis ka¿dego formatu (del)
-  - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
 
 * gg 
   - u¿ywanie serwera proxy (lukasz)

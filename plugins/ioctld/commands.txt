@@ -1,0 +1,31 @@
+// opis komend dla pluginu ioctld 
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+
+beeps_spk
+        parametry:  <sekwencja>
+        krotki opis: wydaje d¼wiêki zgodnie z sekwencj±
+	
+	Kolejne d¼wiêki oddzielone s± przecinkami. D¼wiêk sk³ada siê 
+	z tonu w hercach i d³ugo¶ci trwania w mikrosekundach oddzielonej 
+	uko¶nikiem (,,%T/%n''). Je¶li nie podano czasu trwania, domy¶lna 
+	warto¶æ to 0,1s.
+	
+	
+	Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.
+
+blink_leds
+	parametry:  <sekwencja>
+	krotki opis: odtwarza sekwencjê na diodach LED
+	
+	Kombinacje diod oddzielone s± przecinkami. Je¶li po kombinacji 
+	wystêpuje znak uko¶nika (,,%T/%n''), po nim podany jest czas 
+	trwania w mikrosekundach. Domy¶lny czas trwania to 0,1s. 
+	Kombinacja jest map± bitow± o nastêpuj±cych 
+	warto¶ciach: 1 - NumLock, 2 - ScrollLock, 4 - CapsLock. Na 
+	przyk³ad w³±czenie NumLock i CapsLock jednocze¶nie to 1+4 czyli 5.
+	
+	
+	Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.
+
+$Id$

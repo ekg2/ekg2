@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #ifndef __EKG_GG_GG_H
 #define __EKG_GG_GG_H
 
@@ -21,5 +23,10 @@ typedef struct {
 	list_t passwds;			/* operacje zmiany has³a */
 	gg_quiet_t quiet;		/* co ma byæ cicho */
 } gg_private_t;
+
+void gg_register_commands();
+
+void gg_session_handler_msg(session_t *s, struct gg_event *e);
+void gg_session_handler(int type, int fd, int watch, void *data);
 
 #endif /* __EKG_GG_GG_H */

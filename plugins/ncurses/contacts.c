@@ -627,7 +627,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 
 	name = n->backlog[n->backlog_size - y]->str;
 
-	tmp = saprintf("/query \"%s\"", (char *) n->backlog[n->backlog_size - y]->private);
+	tmp = saprintf("/query \"%s\"", (char *) n->backlog[n->backlog_size - y	]->private);
 	command_exec(NULL, NULL, tmp, 0);
 	xfree(tmp);
 

@@ -336,14 +336,8 @@ int sms_plugin_init()
 {
 	plugin_register(&sms_plugin);
 
-/* this are only for compatibility - don't use them*/
-#define possibilities(x) x
-#define params(x) x
+	command_add(&sms_plugin, "sms:sms", "u ?", sms_command_sms, 0, NULL);
 
-	command_add(&sms_plugin, "sms", params("u ?"), sms_command_sms, 0, " <numer/alias/telefon> <tre¶æ>", "wysy³a smsa do podanej osoby", "\nPolecenie wymaga zdefiniowana zmiennej %Tsms_send_app%n", NULL);
-
-#undef params
- 
 	variable_add(&sms_plugin, "sms_send_app", VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
 	variable_add(&sms_plugin, "sms_away", VAR_MAP, 1, &config_sms_away, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
 	variable_add(&sms_plugin, "sms_away_limit", VAR_INT, 1, &config_sms_away_limit, sms_changed_sms_away, NULL, dd_sms);
@@ -362,8 +356,6 @@ int sms_plugin_init()
 	format_add("sms_away", "<ekg:%1> %2", 1);
 
 	return 0;
-#undef possibilities
-#undef params
 }
 
 static int sms_plugin_destroy()

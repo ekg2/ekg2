@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2004 Piotr Kupisiewicz <deli@rzepaknet.us>
+ *  (C) Copyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -83,36 +83,74 @@ void ncurses_mouse_move_handler(int x, int y)
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 {
 	list_t l;
+	char *tmp;
 
+	switch (mouse_flag) {
+		case EKG_BUTTON1_CLICKED:
+			tmp = "button1_clicked";
+			break;
+		case EKG_BUTTON2_CLICKED:
+			tmp = "button2_clicked";
+			break;
+		case EKG_BUTTON3_CLICKED:
+			tmp = "button3_clicked";
+			break;
+		case EKG_UNKNOWN_CLICKED:
+			tmp = "unknown_clicked";
+			break;
+		case EKG_BUTTON1_DOUBLE_CLICKED:
+			tmp = "button1_d_clicked";
+			break;
+		case EKG_BUTTON2_DOUBLE_CLICKED:
+			tmp = "button2_d_clicked";
+			break;
+		case EKG_BUTTON3_DOUBLE_CLICKED:
+			tmp = "button3_d_clicked";
+			break;
+		case EKG_UNKNOWN_DOUBLE_CLICKED:
+			tmp = "unknown_d_clicked";
+			break;
+		case EKG_SCROLLED_UP:
+			tmp = "scrolled_up";
+			break;
+		case EKG_SCROLLED_DOWN:
+			tmp = "scrolled down";
+			break;
+		default:
+			tmp = "nico??";
+			break;
+	}
+
+	debug("stalo sie: %s\n", tmp);
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 		
 		if (!w)
 			continue;
 
-		if (x >= w->left && x < w->left + w->width && y >= w->top && y < w->top + w->height) {
+		if (x > w->left && x <= w->left + w->width && y > w->top && y <= w->top + w->height) {
 			ncurses_window_t *n;
 			if (w->id == 0) { /* if we are reporting status window it means that we clicked 
 					 * on window_current and some other functions should be called */
-				ncurses_main_window_mouse_handler(x, y, mouse_flag);
+				ncurses_main_window_mouse_handler(x - w->left, y - w->top, mouse_flag);
 				break;
 			} else
 				n = w->private;
 
-//			debug("window id:%d y %d height %d\n", w->id, w->top, w->height);
+			/* debug("window id:%d y %d height %d\n", w->id, w->top, w->height); */
 			if (n->handle_mouse)
-				n->handle_mouse(x, y, mouse_flag);
+				n->handle_mouse(x - w->left, y - w->top, mouse_flag);
 			break;
 		}
 	}
 }
 
+#ifdef HAVE_LIBGPM
 /*
  * ncurses_gpm_watch_handler()
  * 
  * handler for gpm events etc
  */
-#ifdef HAVE_LIBGPM
 void ncurses_gpm_watch_handler(int last, int fd, int watch, void *data)
 {
         Gpm_Event event;
@@ -122,16 +160,53 @@ void ncurses_gpm_watch_handler(int last, int fd, int watch, void *data)
 
         Gpm_GetEvent(&event);
 
+	/* przy double click nie powinno byæ wywo³ywane single click */
+
 	if (gpm_visiblepointer) GPM_DRAWPOINTER(&event);
 
-	switch (GPM_BARE_EVENTS(event.type)) {
+	switch (event.type) {
 		case GPM_MOVE:
 			ncurses_mouse_move_handler(event.x, event.y);
 			break;
+		case GPM_DOUBLE + GPM_UP:
+			{
+				int mouse_state = EKG_UNKNOWN_DOUBLE_CLICKED;
+			        switch (event.buttons) {
+		        	        case GPM_B_LEFT:
+						mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
+						break;
+		                	case GPM_B_RIGHT:
+			                        mouse_state = EKG_BUTTON3_DOUBLE_CLICKED;
+						break;
+			                case GPM_B_MIDDLE:
+			                        mouse_state = EKG_BUTTON2_DOUBLE_CLICKED;
+						break;
+		       		}
+				ncurses_mouse_clicked_handler(event.x, event.y, mouse_state);
+				break;
+			}
+                case GPM_SINGLE + GPM_UP:
+                        {
+                                int mouse_state = EKG_UNKNOWN_CLICKED;
+                                switch (event.buttons) {
+                                        case GPM_B_LEFT:
+                                                mouse_state = EKG_BUTTON1_CLICKED;
+                                                break;
+                                        case GPM_B_RIGHT:
+                                                mouse_state = EKG_BUTTON3_CLICKED;
+                                                break;
+                                        case GPM_B_MIDDLE:
+                                                mouse_state = EKG_BUTTON2_CLICKED;
+                                                break;
+                                }
+                                ncurses_mouse_clicked_handler(event.x, event.y, mouse_state);
+                                break;
+                        }
+                        break;
 		default:
 			break;
 	}
-        /* debug("Event Type : %d at x=%d y=%d\n", event.type, event.x, event.y); */
+        /* debug("Event Type : %d at x=%d y=%d buttons=%d\n", event.type, event.x, event.y, event.buttons); */
 }
 #endif
 

@@ -19,8 +19,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __IOCTLD_H
-#define __IOCTLD_H
+#ifndef __EKG_IOCTLD_IOCTLD_H
+#define __EKG_IOCTLD_IOCTLD_H
 
 #define IOCTLD_MAX_ITEMS 	50
 #define IOCTLD_MAX_DELAY 	2000000
@@ -40,4 +40,4 @@ enum action_type {
 int blink_leds(int *flag, int *delay);
 int beeps_spk(int *tone, int *delay);
 
-#endif /* __IOCTLD_H */
+#endif /* __EKG_IOCTLD_IOCTLD_H */

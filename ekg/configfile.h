@@ -24,6 +24,7 @@
 #ifndef __EKG_CONFIGFILE_H
 #define __EKG_CONFIGFILE_H
 
+void config_postread();
 int config_read(const char *filename);
 int config_read_later(const char *filename);
 int config_write(const char *filename);
