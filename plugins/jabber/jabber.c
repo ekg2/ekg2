@@ -380,6 +380,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 							if (jabber_attr(item->atts, "subscription"))
 								u.authtype = xstrdup(jabber_attr(item->atts, "subscription"));
 							list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
+							command_exec(NULL, s, saprintf("/auth --probe %s", u.uid), 1);
 						}
 					}; /* for */
 				} /* jabber:iq:roster */
