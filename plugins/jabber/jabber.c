@@ -347,11 +347,11 @@ void jabber_handle(void *data, xmlnode_t *n)
                         j->connecting = 0;
 
                         if (!xstrcmp(type, "result")) {
+                                session_connected_set(s, 1);
                                 char *__session = xstrdup(session_uid_get(s));
+                                session_unidle(s);
                                 query_emit(NULL, "protocol-connected", &__session);
                                 xfree(__session);
-                                session_connected_set(s, 1);
-                                session_unidle(s);
                                 jdh->roster_retrieved = 0;
                                 jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
                                 jabber_write_status(s);
