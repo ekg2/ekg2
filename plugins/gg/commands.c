@@ -1311,7 +1311,7 @@ void gg_register_commands()
 	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:check_conn", "uU", gg_command_check_conn, 0, NULL);
+	command_add(&gg_plugin, "gg:check_conn", "uUC", gg_command_check_conn, 0, NULL);
 	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 0, NULL);
 	command_add(&gg_plugin, "gg:image", "u f", gg_command_image, 0, NULL);
 	command_add(&gg_plugin, "gg:block", "uUC ?", gg_command_block, 0, NULL);
