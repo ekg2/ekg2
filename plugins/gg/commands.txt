@@ -71,7 +71,7 @@ chat
 
 check_conn
 	parametry:  <alias>
-	krótki opis: sprawdza czy podana osoba jest po³±czona 
+	krotki opis: sprawdza czy podana osoba jest po³±czona 
 	
 	Sprawdza czy podana osoba jest po³±czona. Klient tej osoby musi 
 	obs³ugiwaæ obrazki. Przetestowane na GG 6.0 dla Windows. W przypadku 
@@ -144,7 +144,7 @@ find
 
 image
 	parametry:  <alias> <obrazek>
-	krótki opis: wysy³a obrazek do podanej osoby
+	krotki opis: wysy³a obrazek do podanej osoby
 	
 	Obrazek zostanie wys³any jako osobna wiadomo¶æ. Klient adresata 
 	musi obs³ugiwaæ	obrazki.
@@ -158,7 +158,7 @@ invisible
 
 modify
 	parametry:  <alias> <opcje>
-	krótki opis: zmienia wpisy w li¶cie kontaktów
+	krotki opis: zmienia wpisy w li¶cie kontaktów
 	
 	Opcje mog± byæ nastêpuj±ce:
 	

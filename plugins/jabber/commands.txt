@@ -92,8 +92,8 @@ msg
 	potraktowanie pierwszej linijki jako tematu.
 
 modify
-        parametry:  <alias> <opcje>
-        krótki opis: zmienia wpisy w li¶cie kontaktów
+	parametry:  <alias> <opcje>
+	krotki opis: zmienia wpisy w li¶cie kontaktów
 	
 	Opcje mog± byæ nastêpuj±ce:
 	

@@ -1,11 +1,11 @@
 // opis komend dla pluginu sms
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// $Id$
 
 sms
-        parametry:  <numer/alias/telefon> <tre¶æ>
-        krotki opis: wysy³a smsa do podanej osoby
+	parametry:  <numer/alias/telefon> <tre¶æ>
+	krotki opis: wysy³a smsa do podanej osoby
 	
 	Polecenie wymaga zdefiniowana zmiennej %Tsms_send_app%n
 
-$Id$

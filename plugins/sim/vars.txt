@@ -1,6 +1,7 @@
 // ma³y opis dostêpnych zmiennych pluginu sim
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// $Id$
 
 encryption
 	typ: bool
@@ -10,4 +11,3 @@ encryption
 	biblioteka OpenSSL, mo¿liwe jest u¿ywanie szyfrowania zgodnego z SIM
 	opisanym na stronie http://gg.wha.la/crypt/
 
-$Id$
