@@ -77,6 +77,8 @@ PLUGINS="logs mail rc sms pcm irc"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
+AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
+
 mouse_lib="xterm only"
 AC_ARG_WITH(gpm-mouse,
         [  --with-gpm-mouse         Compile with gpm mouse support (Linux only)])

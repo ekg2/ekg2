@@ -43,14 +43,13 @@ AC_DEFUN([AC_CHECK_SQLITE], [
 
   # Try to automagically find SQLite, either with pkg-config, or without.
   if test "x$ac_sqlite" = "xauto"; then
-      AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
       if test "x$PKGCONFIG" != "xno"; then
           AC_MSG_CHECKING([for SQLite])
           SQLITE_LIBS=$($PKGCONFIG --libs sqlite)
           SQLITE_CFLAGS=$($PKGCONFIG --cflags sqlite)
           if test "x$SQLITE_LIBS" = "x" -a "x$SQLITE_CFLAGS" = "x"; then
-              ac_sqlite="no"
-          else
+	      AC_CHECK_LIB([sqlite], [sqlite_open], [ac_sqlite="yes"], [ac_sqlite="no"])
+	  else
               ac_sqlite="yes"
           fi
           AC_MSG_RESULT([$ac_sqlite])

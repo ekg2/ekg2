@@ -13,7 +13,6 @@ AC_DEFUN([AC_CHECK_LIBGADU],
 
   if test "x$without_libgadu" != "xyes" -a "x$with_arg" = "x"; then
     ## for now, we'll check for pkg-config idenpendently - it's cached anyway
-    AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
     if test "x$PKGCONFIG" != "xno"; then
       AC_MSG_CHECKING([for libgadu])
       if $PKGCONFIG --exists libgadu; then
