@@ -549,7 +549,7 @@ IRC_COMMAND(irc_c_nick)
 IRC_COMMAND(irc_c_msg)
 {
 	char *t, *dest, *me, *form=NULL, *seq=NULL, *format, **rcpts = NULL;
-	char *head, *xosd_nick;
+	char *head, *xosd_nick, *xosd_chan;
 	char *ctcpstripped, *coloured, *pubtous, tous, prefix[2];
 	int class, ekgbeep= EKG_NO_BEEP;
 	int mw = 666, prv=0;
@@ -569,7 +569,8 @@ IRC_COMMAND(irc_c_msg)
 
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
 	me = xstrdup(t?t+1:"");
-	xosd_nick = xstrdup(OMITCOLON(param[0]));
+	xosd_nick = OMITCOLON(param[0]);
+	xosd_chan = param[2];
 
 	/* mesg do nas */
 	if (!xstrcmp(j->nick, param[2])) {
@@ -620,11 +621,10 @@ IRC_COMMAND(irc_c_msg)
 010539 pierwszym argumentem by³a sesja
 	*/
 		query_emit(NULL, "irc-protocol-message",
-				&(s->uid), &(xosd_nick), &coloured, 
-				&xosd_to_us, &xosd_is_priv, &(dest[4]));
+				&(s->uid), &xosd_nick, &coloured, 
+				&xosd_to_us, &xosd_is_priv, &xosd_chan);
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
-		debug(">>>%s\n", coloured);
 		xfree(ctcpstripped);
 		xfree(coloured);
 		xfree(me);
