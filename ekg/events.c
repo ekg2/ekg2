@@ -56,29 +56,8 @@ COMMAND(cmd_on)
                         return -1;
                 }
 
-/*		if (!conference_find(params[3]) && !get_uid(session, params[3]) && xstrcasecmp(params[3], "*")) {
-			if (xstrchr(params[3], ',')) {
-		                char **a;
-		                int i;
-
-                		a = array_make(params[3], "|,;", 0, 1, 0);
-		                for (i = 0; a[i]; i++) {
-					if (get_uid(session, a[i]))
-						continue;
-					else {
-						printq("user_not_found", a[i]);
-						return -1;
-					}
-				}
-				array_free(a);
-			}
-			else {
-				printq("user_not_found", params[3]);
-				return -1;
-			}
-		} */
-		if (!(prio = atoi(params[2]))) {
-			printq("invalid_params", params[2]);
+		if (!(prio = atoi(params[2])) || !array_contains(events_all, params[1], 0)) {
+			printq("invalid_params", name);
 			return -1;
 		}
 		
