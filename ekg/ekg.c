@@ -232,7 +232,6 @@ void ekg_loop()
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-#if 0
 		/* ale je¶li który¶ timer ma wyst±piæ wcze¶niej ni¿ za sekundê
 		 * to skróæmy odpowiednio czas oczekiwania */
 		
@@ -274,7 +273,7 @@ void ekg_loop()
 
 		if (tv.tv_usec < 0)
 			tv.tv_usec = 1;
-#endif
+		
 		/* sprawd¼, co siê dzieje */
 
 		ret = select(maxfd + 1, &rd, &wd, NULL, &tv);
