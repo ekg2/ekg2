@@ -561,24 +561,19 @@ IRC_COMMAND(irc_c_msg)
 		class = EKG_MSGCLASS_CHAT;
 		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
 		dest = saprintf("%s%s", IRC4, param[2]);
-		format = xstrdup(prv?"irc_msg_f_chan_n":"irc_not_f_chan_n");
-		w = window_find_s(s, dest);
-		if (!w) {
-			xfree(format);
-			format = xstrdup(prv?"irc_msg_f_chan":"irc_not_f_chan");
+		if (ctcpstripped && (pubtous = strcasestr(ctcpstripped, j->nick))) {
+			tous = pubtous[xstrlen(j->nick)];
+			if (!isalnum(tous) && !isalpha_pl(tous)) 
+				ekgbeep = EKG_TRY_BEEP;
 		}
+		w = window_find_s(s, dest);
+		
+		format = saprintf("irc_%s_f_chan%s%s", prv?"msg":"not",
+					(!w)?"":"_n", ekgbeep?"h":"");
+
 		if ((person = irc_find_person(j->people, param[0]+1)))
 			perchn = irc_find_person_chan(person->channels, dest);
 
-		if (ctcpstripped && (pubtous = strcasestr(ctcpstripped, j->nick))) {
-			tous = pubtous[xstrlen(j->nick)];
-			if (!isalnum(tous) && !isalpha_pl(tous)) {
-				ekgbeep = EKG_TRY_BEEP;
-				xrealloc(format, 1);
-				format[xstrlen(format)+1]='\0';
-				format[xstrlen(format)]='h';
-			}
-		}
 	}
 
 	if (ctcpstripped) {
