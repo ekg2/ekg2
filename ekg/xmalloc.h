@@ -46,6 +46,7 @@ size_t xstrcspn(const char *s, const char *reject);
 char *xstrdup(const char *s);
 char *xstrfry(char *string);
 size_t xstrlen(const char *s);
+int xstrncasecmp_pl(const char *s1, const char *s2, size_t n);
 char *xstrncat(char *dest, const char *src, size_t n);
 int xstrncmp(const char *s1, const char *s2, size_t n);
 char *xstrncpy(char *dest, const char *src, size_t n);
