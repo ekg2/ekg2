@@ -58,9 +58,10 @@ static void ncurses_statusbar_timer(int destroy, void *data)
 	update_statusbar(1);
 }
 
-static void ncurses_statusbar_query(void *data, va_list ap)
+static int ncurses_statusbar_query(void *data, va_list ap)
 {
 	update_statusbar(1);
+	return 0;
 }
 
 static int ncurses_ui_window_switch(void *data, va_list ap)

@@ -101,18 +101,20 @@ int gg_private_destroy(session_t *s)
 	return 0;
 }
 
-void gg_session_handle(void *data, va_list ap)
+int gg_session_handle(void *data, va_list ap)
 {
 	char **uid = va_arg(ap, char**);
 	session_t *s = session_find(*uid);
 	
 	if (!s)
-		return;
+		return 0;
 
 	if (data)
 		gg_private_init(s);
 	else
 		gg_private_destroy(s);
+
+	return 0;
 }
 
 /*

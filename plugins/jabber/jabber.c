@@ -109,7 +109,7 @@ static void jabber_private_destroy(session_t *s)
  * obs³uguje dodawanie i usuwanie sesji -- inicjalizuje lub zwalnia
  * strukturê odpowiedzialn± za wnêtrzno¶ci jabberowej sesji.
  */
-void jabber_session(void *data, va_list ap)
+int jabber_session(void *data, va_list ap)
 {
 	char **session = va_arg(ap, char**);
 	session_t *s = session_find(*session);
@@ -121,6 +121,8 @@ void jabber_session(void *data, va_list ap)
 		jabber_private_init(s);
 	else
 		jabber_private_destroy(s);
+
+	return 0;
 }
 
 /*
@@ -390,7 +392,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 					/* 'id' powinno byc w <iq/> */
 					if (id && from) {
 						jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">", from, id);
-						jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>EKG2</name>");
+						jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>Aplication Platform and Instant Messaging System - EKG-NG</name>");
 						jabber_write(j, "<version>%s</version>", VERSION);
 						jabber_write(j, "<os>%s %s %s</os>", jabber_escape(buf.sysname), jabber_escape(buf.release), jabber_escape(buf.machine));
 						jabber_write(j, "</query></iq>");
