@@ -151,7 +151,7 @@ int is_ctcp(char *mesg)
 char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s)
 {
 	irc_private_t *j = session_private_get(sess);
-	char *begin, *end, *winname, *p, *bang, *newsender;
+	char *begin, *end, *winname, *p, *bang, *newsender, *coloured;
 	string_t ret;
 	int ctcp;
 
@@ -176,18 +176,19 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 				*bang = '\0';
 
 			newsender = saprintf("%s%s", IRC4, sender+1);
-				
+
+			coloured = irc_ircoldcolstr_to_ekgcolstr(sess, begin);
 			if (ispriv) {
-				if ((ctcp_main_priv(sess, j, ctcp, begin, newsender,
+				if ((ctcp_main_priv(sess, j, ctcp, coloured, newsender,
 								bang?bang+1:"", winname)))
 				{
 					/* blah blah blah */
 				}
 			} else {
-				ctcp_main_noti(sess, j, ctcp, begin, newsender, 
+				ctcp_main_noti(sess, j, ctcp, coloured, newsender, 
 						bang?bang+1:"", winname);
 			}
-			
+			xfree(coloured);
 
 			if (bang) *bang = '!';
 			string_append(ret, p);

@@ -258,6 +258,7 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	int res = 0, res_size = sizeof(res);
 	irc_private_t *j = irc_private(idta->session);
 	const char *real;
+	char *pass;
 
 	debug ("[irc] handle_connect()\n");
 
@@ -277,8 +278,11 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	idta->session->last_conn = time(NULL);
 
 	real = session_get(idta->session, "realname");
-	irc_write(j, "USER %s 5 unused_field :%s\r\nNICK %s\r\n",
-			j->nick, real?real:j->nick, j->nick);
+	real = real ? xstrlen(real) ? real : j->nick : j->nick;
+	pass = (char *)session_password_get(idta->session);
+	pass = xstrlen(strip_spaces(pass))?saprintf("PASS %s\r\n", strip_spaces(pass)):xstrdup("");
+	irc_write(j, "%sUSER %s 12 unused_field :%s\r\nNICK %s\r\n",
+			pass, j->nick, real, j->nick);
 
 }
 
@@ -370,6 +374,11 @@ void irc_handle_reconnect(int type, void *data)
  * ======================================== COMMANDS ------------------- *
  *                                                                       */
 
+void resolver_child_handler(child_t *c, int pid, const char *name, int status, void *priv)
+{
+	debug("(%s) resolver [%d] exited with %d\n", name, pid, status);
+}
+
 COMMAND(irc_command_connect)
 {
 	const char *server, *newnick;
@@ -417,7 +426,6 @@ COMMAND(irc_command_connect)
 
 	if (!res) {
 		struct in_addr a;
-
 		if ((a.s_addr = inet_addr(server)) == INADDR_NONE) {
 			struct hostent *he = gethostbyname(server);
 
@@ -440,6 +448,10 @@ COMMAND(irc_command_connect)
 		idta->session = session;
 
 		watch_add (&irc_plugin, fd[0], WATCH_READ, 0, irc_handle_resolver, idta);
+
+		/* TEST ONLY */
+		child_add(&irc_plugin, res, session->uid, resolver_child_handler, NULL);
+
 	}
 	j->connecting = 1;
 
@@ -910,7 +922,7 @@ COMMAND(irc_command_ctcp)
 COMMAND(irc_command_me)
 {
 	irc_private_t *j = irc_private(session);
-	char *chan, *chantypes = SOP(_005_CHANTYPES), *str;
+	char *chan, *chantypes = SOP(_005_CHANTYPES), *str, *col;
 	const char **mp;
 	int mw = session_int_get(session, "make_window"), ischn;
 
@@ -931,9 +943,11 @@ COMMAND(irc_command_me)
 	irc_write(irc_private(session), "PRIVMSG %s :\01ACTION %s\01\r\n",
 			chan+4, str);
 
+	col = irc_ircoldcolstr_to_ekgcolstr(session, str);
 	print_window(chan, session, ischn?(mw&1):!!(mw&2),
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
 			session_name(session), j->nick, chan, str);
+	xfree(col);
 	xfree(str);
 	return 0;
 }
@@ -1125,6 +1139,7 @@ int irc_plugin_init()
 	command_add(&irc_plugin, "irc:quote", "?",	irc_command_quote, 0, NULL);
 
 	plugin_var_add(&irc_plugin, "server", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&irc_plugin, "password", VAR_STR, 0, 1, NULL);
 	plugin_var_add(&irc_plugin, "port", VAR_INT, "6667", 0, NULL);
 	plugin_var_add(&irc_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
 	plugin_var_add(&irc_plugin, "auto_away", VAR_INT, "0", 0, NULL);
