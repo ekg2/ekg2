@@ -115,6 +115,8 @@ void window_switch(int id)
 		window_current = w;
 
 		w->act = 0;
+		if (w->target && w->session && userlist_find(w->session, w->target)->blink) 
+			userlist_find(w->session, w->target)->blink = 0;
 		
 		query_emit(NULL, "ui-window-switch", &w);	/* XXX */
 
@@ -281,7 +283,6 @@ crap:
 
 	if (!line->ts)
 		line->ts = time(NULL);
-
 	query_emit(NULL, "ui-window-print", &w, &line);	/* XXX */
 }
 

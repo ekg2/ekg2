@@ -32,6 +32,7 @@
 #include "stuff.h"
 #include "userlist.h"
 #include "themes.h"
+#include "windows.h"
 #include "xmalloc.h"
 
 /*
@@ -357,7 +358,17 @@ int protocol_message(void *data, va_list ap)
 	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
 	int *__class = va_arg(ap, int*), class = *__class;
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
-
+	session_t *session_class = session_find(session);
+	userlist_t *userlist = userlist_find(session_class, uid);
+        window_t *w;
+	
+	if (window_current && window_current->target && !strcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
+		userlist->blink = 0;
+	else if (config_make_window)	
+		userlist->blink = 1;
+//	else if (window_find(uid)) 
+//		userlist->blink = 1;
+		
 	message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
 
 	return 0;

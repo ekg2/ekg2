@@ -507,7 +507,7 @@ char *get_uid(session_t *session, const char *text)
 		return u->uid;
 
 	if (valid_uid(text))
-		return text;
+		return (char *)text;
 
 	return NULL;
 }

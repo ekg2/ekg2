@@ -57,6 +57,8 @@ typedef struct {
 	char *foreign;		/* dla kompatybilno¶ci */
 
 	void *priv;		/* dane pluginu obs³uguj±cego usera */
+	
+	int blink;		/* czy ma byæ zaznaczony jako u¿ytkownik, od którego mamy msg */
 } userlist_t;
 
 #if 0
