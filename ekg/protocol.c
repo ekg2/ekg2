@@ -406,7 +406,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	
 
 	user = (class != EKG_MSGCLASS_SENT) ? format_user(session_find(session), sender) : session_format_n(sender);
-	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_MESSAGE), class_str, user, timestamp, text);
+	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT), class_str, user, timestamp, text);
 
 	xfree(t);
 	return xstrdup(target);

@@ -1163,7 +1163,7 @@ change:
 COMMAND(gg_command_msg)
 {
 	int count, valid = 0, chat, secure = 0, formatlen = 0;
-	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL, *uid;
+	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL;
 	unsigned char *msg = NULL, *raw_msg = NULL, *format = NULL;
 	uint32_t *ekg_format = NULL;
 	userlist_t *u;
@@ -1453,7 +1453,7 @@ COMMAND(gg_command_msg)
 
 	if (valid && config_display_sent) {
 		const char *rcpts[2] = { nick, NULL };
-		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), EKG_MSGCLASS_SENT, NULL);
+		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), (chat) ? EKG_MSGCLASS_SENT : EKG_MSGCLASS_MESSAGE, NULL);
 	}
 
 	xfree(msg);
