@@ -18,29 +18,15 @@ TODO		lista rzeczy, które czekaj± w kolejce na realizacjê. je¶li
 		zajrzyj tutaj. mo¿liwe, ¿e kto¶ wcze¶niej zg³osi³
 		,,zapotrzebowanie''.
 
-ChangeLog	lista zmian w kolejnych wersjach. czêsto zawiera informacje
-		wa¿ne, a nie wymienione w innych plikach.
-
 vars.txt	opis zmiennych u¿ywanych przez program.
+
+commands.txt	opis funkcji u¿ywanych przez program
 
 files.txt	opis formatów plików: listy kontaktów, konfiguracji,
 		historii, emotikonów.
 
 themes.txt	opis dotycz±cy zmiany wygl±du klienta. przydatny dla tych,
 		którzy lubi± bawiæ siê w kolorki.
-
-protocol.html	opis protoko³u u¿ywanego przez klienty Gadu-Gadu przy
-		po³±czeniach z serwerem, protoko³u bezpo¶rednich
-		po³±czeñ miêdzy klientami oraz us³ug HTTP. niestety s±
-		niekompletne, ze wzglêdu na ci±g³e zmiany w protokole.
-
-api.txt		krótki opis api biblioteki libgadu. powinien wystarczyæ
-		na pocz±tek. reszty niestety trzeba szukaæ w ¼ród³ach
-		klienta.
-
-dcc.txt		opis wykorzystania bezpo¶rednich po³±czeñ do przesy³ania
-		plików. ich obs³uga nie jest jeszcze kompletna i ma prawo
-		dzia³aæ nieprawid³owo. dodatkowo zawiera opis api kodu.
 
 devel-hints.txt	wskazówki dla tych, którzy chc± co¶ poprawiæ w ekg/libgadu.
 
@@ -50,14 +36,10 @@ przenosny-kod.txt
 
 gdb.txt		szybki kurs obs³ugi gdb.
 
-ui.txt		wskazówki dla developerów chc±cych dodaæ nowe ui.
-
 ui-ncurses.txt	opis interfejsu ncurses oraz ustawieñ/mo¿liwo¶ci wystêpuj±cych
 		wy³±cznie w tym interfejsie.
 
 sim.txt		wskazówki dotycz±ce korzystania z szyfrowania wiadomo¶ci.
-
-python.txt	krótki opis mo¿liwo¶ci obs³ugi skryptów w pythonie przez ekg.
 
 
 [1] autor Jacek Pop³awski, <slrnaor068.54v.jp@darkwood.somewhere>

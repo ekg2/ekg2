@@ -58,6 +58,11 @@ parê wymagañ i wskazówek dla developerów:
     highlight WhitespaceEOL ctermbg=red guibg=red
     match WhitespaceEOL /\s\+$/
 
+12) wszelkie komentarze powinny byæ w jêzyku angielskim.
+
+13) wszystkie formatki i wszystko co zostaje wy¶wietlane na ekranie ma byæ
+    w jêzyku angielskim.
+
 nikt nie bêdzie siê zachowywaæ jak jaki¶ Linus, i wrzucaæ do ¼róde³ tylko
 to, co mu siê podoba, albo tylko patche ludzi, z którymi piwo pija. byle
 tylko by³y zachowane pewne zasady i nie by³o po miesi±cu ba³aganu w kodzie.

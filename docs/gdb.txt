@@ -1,10 +1,11 @@
 // szybki kurs obs³ugi gdb
 // (c) copyright 2002 wojtek kaniewski <wojtekka@irc.pl>
+//		 2004 Piotr Kupisiewicz <deletek@ekg2.org>
 
 je¶li program siê wywróci³ i utworzy³ plik core, za pomoc± gdb mo¿na
 sprawdziæ, w którym miejscu wyst±pi³ b³±d. najpierw uruchamiamy gdb:
 
-  $ gdb ekg ~/.gg/core
+  $ gdb ekg ~/.ekg2/core.<pid>
   GNU gdb 5.0 (UI_OUT)
   Copyright 2000 Free Software Foundation, Inc.
   (...)
