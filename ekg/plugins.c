@@ -254,7 +254,25 @@ static int plugin_register_compare(void *data1, void *data2)
  */
 int plugin_register(plugin_t *p, int prio)
 {
-	p->prio = prio;
+	if (prio == -254) {
+		switch (p->pclass) {
+			case PLUGIN_UI:
+				p->prio = 0;
+				break;
+			case PLUGIN_PROTOCOL:
+				p->prio = 5;
+				break;
+			case PLUGIN_LOG:
+				p->prio = 10;
+				break;
+			default:
+				p->prio = 15;
+				break;
+		}
+	} else {
+		p->prio = prio;
+	}
+
 	list_add_sorted(&plugins, p, 0, plugin_register_compare);
 
 	return 0;

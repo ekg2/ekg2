@@ -3763,8 +3763,24 @@ COMMAND(cmd_plugin)
 		return 0;
 	}
 
+        if (match_arg(params[0], 'd', "default", 2)) {
+                list_t l;
+
+                for (l = plugins; l;) {
+                        plugin_t *p = l->data;
+
+                        l = l->next;
+
+                        list_remove(&plugins, p, 0);
+                        plugin_register(p, -254);
+                }
+
+		config_changed = 1;
+                printq("plugin_default");
+        }
+
 	if (params[0][0] == '+') {
-		ret = plugin_load(params[0] + 1, 0, 0);
+		ret = plugin_load(params[0] + 1, -254, 0);
 		changed_theme(NULL);
 		return ret;
 	}

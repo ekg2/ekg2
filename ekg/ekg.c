@@ -758,16 +758,17 @@ int main(int argc, char **argv)
         msg_queue_read();
 
 #ifdef HAVE_NCURSES
-        if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses", 0, 1);
+        if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses", -254, 1);
 #endif
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
-                plugin_load("jabber", 0, 1);
+                plugin_load("jabber", -254, 1);
 #endif
 #ifdef HAVE_LIBGADU
-                plugin_load("gg", 0, 1);
+                plugin_load("gg", -254, 1);
 #endif
+                plugin_load("irc", -254, 1);
         }
 
         config_read_later(NULL);

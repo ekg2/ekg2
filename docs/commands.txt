@@ -433,8 +433,10 @@ play
 	krotki opis: odtwarza plik d¼wiêkowy
 
 plugin
-	parametry:  [-|+][nazwa] [prio]
+	parametry:  [-|+][nazwa][opcje] [prio]
 	krotki opis: ³aduje lub usuwa rozszerzenie ekg2
+	
+	  -d, --default		ustawia domy¶lne priorytety pluginom
 	
 	Usuwa lub dodaje plugin ekg2. Drugi parametr pozwala ustawiæ priorytet
 	pluginu, co pozwala ustawiæ kolejno¶æ przetwarzania instrukcji przez
