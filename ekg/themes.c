@@ -1618,15 +1618,6 @@ void theme_init()
         format_add("http_failed_writing", _("Server disconnected"), 1);
         format_add("http_failed_memory", _("No memory"), 1);
 
-#ifdef WITH_PYTHON
-        /* python */
-        format_add("python_list", "%> %1\n", 1);
-        format_add("python_list_empty", _("%! No scripts loaded\n"), 1);
-        format_add("python_removed", _("%) Script removed\n", 1);
-        format_add("python_need_name", _("%! Enter script name\n", 1);
-        format_add("python_not_found", _("%! Not found script: %T%1%n\n", 1);
-        format_add("python_wrong_location", _("%! Script should be located in  %T%1%n\n", 1);
-#endif
         format_add("session_name", "%B%1%n", 1);
         format_add("session_variable", "%> %T%1->%2 = %R%3%n\n", 1); /* uid, var, new_value*/
         format_add("session_variable_removed", _("%> Removed  %T%1->%2%n\n"), 1); /* uid, var */

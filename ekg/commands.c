@@ -3994,11 +3994,6 @@ void command_init()
 
 	command_add(NULL, "plugin", "?", cmd_plugin, 0, NULL);
 
-#ifdef WITH_PYTHON
-	command_add(NULL, "python", "p ?", cmd_python, 0,
-	  "load unload run exec list");
-#endif
-
 	command_add(NULL, "query", "uUCms ?", cmd_query, 0,
 	  "-c --clear");
 
