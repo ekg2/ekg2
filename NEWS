@@ -1,4 +1,5 @@
-vCVS 2004-11-06
+vCVS 2004-11-07
+	* funkcja /window move
 	* opcja nosort ncurses:contacts_options
 	* irc plugin
 	* mo¿liwo¶ci samodzielnego bindowania klawiszy (bind --set)

@@ -1538,6 +1538,8 @@ void theme_init()
         format_add("window_list_floating", _("%) %1: floating %4x%5 in %2,%3 %T%6%n\n"), 1);
         format_add("window_id_query_started", _("%) Query with %T%2%n started in %T%1%n\n"), 1);
         format_add("window_kill_status", _("%! Can't close status window!\n"), 1);
+	format_add("window_cannot_move_status", _("%! Can't move status window!\n"), 1);
+	format_add("window_invalid_move", _("%! Window %T%1%n can't be moved\n"), 1);
 
 	format_add("file_doesnt_exist", _("%! Can't open file %T%1%n\n"), 1);
 

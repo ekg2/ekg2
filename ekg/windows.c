@@ -498,8 +498,48 @@ cleanup:
 	list_remove(&windows, w, 1);
 }
 
+/* 
+ * window_exist()
+ *
+ * check if window exist 
+ */
+window_t *window_exist(int id)
+{
+	list_t l;
+
+        for (l = windows; l; l = l->next) {
+	        window_t *w = l->data;
+
+                if (w->id == id) 
+			return w;
+        }
+
+	return NULL;
+}
+
 /*
- * cmd_window()
+ * window_move()
+ * 
+ * swap windows 
+ */
+void window_move(int first, int second)
+{
+	window_t *w, *w1, *w2;
+
+	if (!(w1 = window_exist(first)) || !(w2 = window_exist(second)))
+		return;
+
+	w = xmalloc(sizeof(w));
+
+	memmove(w, w2, sizeof(w));
+	memmove(w2, w1, sizeof(w));
+	memmove(w1, w, sizeof(w));
+
+	xfree(w);
+}
+
+
+/*
  *
  * komenda ekg obs³uguj±ca okna
  */
@@ -620,6 +660,67 @@ COMMAND(cmd_window)
 		window_prev();
 		goto cleanup;
 	}
+
+        if (!xstrcasecmp(params[0], "move")) {
+		int source, dest;
+
+		if (!window_current)
+			goto cleanup;
+
+		if (!params[1]) {
+			printq("invalid_params", name);
+			goto cleanup;
+		}
+
+		source = (params[2]) ? atoi(params[2]) : window_current->id;
+
+		if (!source) {
+                        printq("window_invalid_move", itoa(source));
+                        goto cleanup;
+		}
+
+		if (!window_exist(source)) {
+			printq("window_doesnt_exist", itoa(source));
+			goto cleanup;
+		}
+
+		if (source == 1) {
+			printq("window_cannot_move_status");
+			goto cleanup;
+		}
+
+		/* source is okey, now we are checking destination window */
+		
+		if (!xstrcasecmp(params[1], "left"))
+			dest = source - 1;
+		else if (!xstrcasecmp(params[1], "right")) 
+			dest = source + 1;
+		else
+			dest = atoi(params[1]);
+
+
+		if (!dest) {
+			printq("window_invalid_move", itoa(dest));
+			goto cleanup;
+		}
+
+                if (dest == 1) {
+                        printq("window_cannot_move_status");
+                        goto cleanup;
+                }
+
+                if (!window_exist(dest)) {
+			window_new(NULL, NULL, dest);
+                }
+
+		if (dest == source)
+			goto cleanup;
+
+		window_move(source, dest);
+		window_switch(dest);
+                goto cleanup;
+        }
+
 	
 	if (!xstrcasecmp(params[0], "refresh")) {
 		query_emit(NULL, "ui-window-refresh");
