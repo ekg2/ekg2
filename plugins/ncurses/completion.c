@@ -47,6 +47,7 @@ static int last_pos = -1;
 int continue_complete = 0;
 int continue_complete_count = 0;
 command_t *actual_completed_command;
+session_t *session_in_line;
 
 static void dcc_generator(const char *text, int len)
 {
@@ -380,32 +381,26 @@ static void sessions_generator(const char *text, int len)
 
 static void sessions_var_generator(const char *text, int len)
 {
-        list_t l;
-	int i;
-        const char *words[] = { "uid", "password", "auto_connect", "alias", "server", NULL };
+        int i;
+        plugin_t *p;
+        char **words;
+
+        if (!session_in_line)
+                return;
+
+        if (!(p = plugin_find_uid(session_in_line->uid)))
+                return;
+
+        words = array_make(p->possibilities, ", ", 0, 1, 1);
 
         for (i = 0; words[i]; i++) {
-		if(*text == '-') {
-	        	if (!xstrncasecmp(text + 1, words[i], len - 1))
-        	        	array_add_check(&completions, saprintf("-%s", words[i]), 1);
-		} else {
-			if (!xstrncasecmp(text, words[i], len))
+                if(*text == '-') {
+                        if (!xstrncasecmp(text + 1, words[i], len - 1))
+                                array_add_check(&completions, saprintf("-%s", words[i]), 1);
+                } else {
+                        if (!xstrncasecmp(text, words[i], len))
                                 array_add_check(&completions, xstrdup(words[i]), 1);
-		}
-	}
- 
-	for (l = sessions; l; l = l->next) {
-                session_t *v = l->data;
-
-		for(i = 0; v->params && v->params[i]; i++) {
-                	if (*text == '-') {
-                        	if (!xstrncasecmp(text + 1, v->params[i]->key, len - 1))
-                                	array_add_check(&completions, saprintf("-%s", v->params[i]->key), 1);
-	                } else {
-        	                if (!xstrncasecmp(text, v->params[i]->key, len))
-                	                array_add_check(&completions, xstrdup(v->params[i]->key), 1);
- 	               }
-		}
+                }
         }
 }
 
@@ -626,6 +621,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 /*	debug("word = %d\n", word);
 	debug("start = \"%s\"\n", start);
 	debug("words_count = %d\n", words_count);
+	debug("word_current: %d\n", word_current);
 */
 /*
 	 for(i = 0; i < xstrlen(separators); i++)
@@ -733,13 +729,19 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			int j;
 
 			for (i = 0; generators[i].ch; i++) {
+				for (j = 0; words[j]; j++) {
+					if ((session_in_line = session_find(words[j])))
+						break;
+				}
+				if (!session_in_line)
+					session_in_line = session_current;
 				for (j = 0; params[word_current - 2][j]; j++) {
 					if (generators[i].ch == params[word_current - 2][j]) {
 						generators[i].generate(words[word], xstrlen(words[word]));
 					}
 				}
 				
-				if (completions) {																
+				if (completions) {
 					for (j = 0; completions && completions[j]; j++) {
 						string_t s;
 						const char *p;
@@ -762,7 +764,6 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 						xfree(completions[j]);
 						completions[j] = string_free(s, 0);
 					}
-					break;
 				}	
 			}
 		}

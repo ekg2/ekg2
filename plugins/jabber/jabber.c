@@ -55,7 +55,8 @@ static int jabber_plugin_destroy();
 plugin_t jabber_plugin = {
 	name: "jabber",
 	pclass: PLUGIN_PROTOCOL,
-	destroy: jabber_plugin_destroy
+	destroy: jabber_plugin_destroy,
+	possibilities: "auto_reconnect display_notify password resource server"
 };
 
 /*

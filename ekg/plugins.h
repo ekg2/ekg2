@@ -47,6 +47,7 @@ typedef struct {
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
 	lt_dlhandle dl;
+	char *possibilities;
 } plugin_t;
 
 int plugin_load(const char *name);

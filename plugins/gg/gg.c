@@ -55,7 +55,8 @@ static int gg_plugin_destroy();
 plugin_t gg_plugin = {
 	name: "gg",
 	pclass: PLUGIN_PROTOCOL,
-	destroy: gg_plugin_destroy
+	destroy: gg_plugin_destroy,
+	possibilities: "auto_reconnect display_notify password server"
 };
 
 int gg_private_init(session_t *s)
