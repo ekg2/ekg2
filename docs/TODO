@@ -13,7 +13,6 @@ rozwi±zanie.
 
 * klient:
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
-  - wykrywanie niewidocznych jako opcja (wielu)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
   - ostatnio pisz±ca osoba blinka przez 5 sekund, w rogu ekranu (Oli)
   - uporz±dkowane i dobrze dzia³aj±ce okna p³ywaj±ce (sz?)
