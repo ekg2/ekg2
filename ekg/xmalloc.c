@@ -105,6 +105,22 @@ char *xstrdup(const char *s)
 	return tmp;
 }
 
+#ifndef HAVE_STRNDUP
+char *strndup(const char *s, size_t n)
+{
+	char *ret;
+        
+	n = strnlen(s, n);
+	ret = malloc(n+1);
+        if (!ret)
+	        return NULL;
+        memcpy(ret, s, n);
+        ret[n] = 0;
+ 
+        return ret;
+}
+#endif
+
 char *xstrndup(const char *s, size_t n)
 {
         char *tmp;

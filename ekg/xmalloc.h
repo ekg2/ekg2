@@ -30,10 +30,18 @@ void *xmalloc(size_t size);
 void xfree(void *ptr);
 void *xrealloc(void *ptr, size_t size);
 char *xstrdup(const char *s);
-char *xstrndup(const char *s, size_t n);
+//char *xstrndup(const char *s, size_t n);
 void *xmemdup(void *ptr, size_t size);
 
 char *vsaprintf(const char *format, va_list ap);
+#ifndef HAVE_STRNLEN
+size_t strnlen(const char *s, size_t n);
+#endif
+
+#ifndef HAVE_STRNDUP
+char *strndup(const char *s, size_t n);
+#endif
+
 #ifdef __GNUC__
 char *saprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 #else
