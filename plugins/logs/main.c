@@ -292,6 +292,14 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 	char *timestamp = saprintf("%u", (unsigned int)time(NULL));
 	char *senttimestamp = saprintf("%u", (unsigned int)sent);
 	session_t *s = session_find((const char*)session);
+	char *gotten_uid = get_uid(s, uid);
+	char *gotten_nickname = get_nickname(s, uid);
+
+	if ( gotten_uid == NULL )
+		gotten_uid = uid;
+
+	if ( gotten_nickname == NULL )
+		gotten_nickname = uid;
 
 	if (!(file = logs_open_file(path, "txt", 1)) || !s) {
 		xfree(senttimestamp);
@@ -322,8 +330,8 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 	 * chatrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
 	 */
 	
-	fputs(get_uid(s, uid), file);      fputc(',', file);
-	fputs(get_nickname(s, uid), file); fputc(',', file);
+	fputs(gotten_uid, file);      fputc(',', file);
+	fputs(gotten_nickname, file); fputc(',', file);
 
 	fputs(timestamp, file); fputc(',', file);
 
