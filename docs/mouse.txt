@@ -1,5 +1,5 @@
 // opis obs³ugi myszki w EKG2
-// (c) copyright 2004 Piotr Kupisiewicz <deli@ekg2.org>
+// (c) copyright 2004-2005 Piotr Kupisiewicz <deli@ekg2.org>
 
 * * *
 
