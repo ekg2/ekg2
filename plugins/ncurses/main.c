@@ -260,6 +260,38 @@ void ncurses_setvar_default()
 	config_enter_scrolls = 0;
 }
 
+/*
+ * ncurses_display_transparent_changed ()
+ *
+ * called when var display_transparent is changed 
+ */
+void ncurses_display_transparent_changed(const char *var)
+{
+	int background;
+
+        if (config_display_transparent) {
+                background = COLOR_DEFAULT;
+                use_default_colors();
+        } else {
+                background = COLOR_BLACK;
+		assume_default_colors(COLOR_WHITE, COLOR_BLACK);
+	}
+        init_pair(7, COLOR_BLACK, background); 
+        init_pair(1, COLOR_RED, background);
+        init_pair(2, COLOR_GREEN, background);
+        init_pair(3, COLOR_YELLOW, background);
+        init_pair(4, COLOR_BLUE, background);
+        init_pair(5, COLOR_MAGENTA, background);
+        init_pair(6, COLOR_CYAN, background);
+
+        endwin();
+        refresh();
+        /* it will call what's needed */
+	header_statusbar_resize();
+        changed_backlog_size("backlog_size");
+
+}
+
 int ncurses_plugin_init()
 {
 	list_t l;
@@ -292,7 +324,7 @@ int ncurses_plugin_init()
 	variable_add(&ncurses_plugin, "contacts_options", VAR_STR, 1, &config_contacts_options, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "contacts_size", VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "display_crap",  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
-	variable_add(&ncurses_plugin, "display_transparent", VAR_BOOL, 1, &config_display_transparent, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, "display_transparent", VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, "enter_scrolls", VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "header_size", VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
 	variable_add(&ncurses_plugin, "statusbar_size", VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);

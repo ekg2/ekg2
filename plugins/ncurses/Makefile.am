@@ -6,4 +6,5 @@ ncurses_la_LIBADD = $(NCURSES_LIBS)
 ncurses_la_CPPFLAGS = $(NCURSES_CPPFLAGS) $(LTDLINCL)
 
 libdir = $(plugindir)
+INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
 

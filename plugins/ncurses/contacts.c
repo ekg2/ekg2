@@ -115,7 +115,7 @@ int ncurses_contacts_update(window_t *w)
 	
 	if (xstrcmp(header, "")) 
 		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
-
+	
 	for (j = 0; j < xstrlen(contacts_order); j += 2) {
 		int count = 0;
 		list_t l;

@@ -111,7 +111,7 @@ void variable_init()
 	variable_add(NULL, "log", VAR_MAP, 1, &config_log, NULL, variable_map(4, 0, 0, "none", 1, 2, "file", 2, 1, "dir", 4, 0, "gzip"), NULL);
 	variable_add(NULL, "log_ignored", VAR_INT, 1, &config_log_ignored, NULL, NULL, dd_log);
 	variable_add(NULL, "log_status", VAR_BOOL, 1, &config_log_status, NULL, NULL, dd_log);
-	variable_add(NULL, "log_path", VAR_STR, 1, &config_log_path, NULL, NULL, dd_log);
+	variable_add(NULL, "log_path", VAR_DIR, 1, &config_log_path, NULL, NULL, dd_log);
 	variable_add(NULL, "log_timestamp", VAR_STR, 1, &config_log_timestamp, NULL, NULL, dd_log);
 	variable_add(NULL, "make_window", VAR_INT, 1, &config_make_window, NULL, variable_map(3, 0, 0, "none", 1, 2, "usefree", 2, 1, "always"), NULL);
 	variable_add(NULL, "mesg", VAR_INT, 1, &config_mesg, changed_mesg, variable_map(3, 0, 0, "no", 1, 2, "yes", 2, 1, "default"), NULL);
@@ -123,16 +123,16 @@ void variable_init()
 	variable_add(NULL, "save_password", VAR_BOOL, 1, &config_save_password, NULL, NULL, NULL);
 	variable_add(NULL, "save_quit", VAR_INT, 1, &config_save_quit, NULL, NULL, NULL);
 	variable_add(NULL, "sort_windows", VAR_BOOL, 1, &config_sort_windows, NULL, NULL, NULL);
-	variable_add(NULL, "sound_msg_file", VAR_STR, 1, &config_sound_msg_file, NULL, NULL, dd_sound);
-	variable_add(NULL, "sound_chat_file", VAR_STR, 1, &config_sound_chat_file, NULL, NULL, dd_sound);
-	variable_add(NULL, "sound_sysmsg_file", VAR_STR, 1, &config_sound_sysmsg_file, NULL, NULL, dd_sound);
-	variable_add(NULL, "sound_notify_file", VAR_STR, 1, &config_sound_notify_file, NULL, NULL, dd_sound);
-	variable_add(NULL, "sound_mail_file", VAR_STR, 1, &config_sound_mail_file, NULL, NULL, dd_sound);
+	variable_add(NULL, "sound_msg_file", VAR_FILE, 1, &config_sound_msg_file, NULL, NULL, dd_sound);
+	variable_add(NULL, "sound_chat_file", VAR_FILE, 1, &config_sound_chat_file, NULL, NULL, dd_sound);
+	variable_add(NULL, "sound_sysmsg_file", VAR_FILE, 1, &config_sound_sysmsg_file, NULL, NULL, dd_sound);
+	variable_add(NULL, "sound_notify_file", VAR_FILE, 1, &config_sound_notify_file, NULL, NULL, dd_sound);
+	variable_add(NULL, "sound_mail_file", VAR_FILE, 1, &config_sound_mail_file, NULL, NULL, dd_sound);
 	variable_add(NULL, "sound_app", VAR_STR, 1, &config_sound_app, NULL, NULL, NULL);
 	variable_add(NULL, "speech_app", VAR_STR, 1, &config_speech_app, NULL, NULL, NULL);
 	variable_add(NULL, "subject_prefix", VAR_STR, 1, &config_subject_prefix, NULL, NULL, NULL);
 	variable_add(NULL, "tab_command", VAR_STR, 1, &config_tab_command, NULL, NULL, NULL);
-	variable_add(NULL, "theme", VAR_STR, 1, &config_theme, changed_theme, NULL, NULL);
+	variable_add(NULL, "theme", VAR_THEME, 1, &config_theme, changed_theme, NULL, NULL);
 	variable_add(NULL, "time_deviation", VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
 	variable_add(NULL, "timestamp", VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);
 #if 0
@@ -537,6 +537,22 @@ int variable_set(const char *name, const char *value, int allow_foreign)
 	
 			goto notify;
 		}
+                case VAR_FILE:
+                {
+                        char **tmp = (char**)(v->ptr);
+
+                        xfree(*tmp);
+
+                        if (value) {
+                                if (*value == 1)
+                                        *tmp = base64_decode(value + 1);
+                                else
+                                        *tmp = xstrdup(value);
+                        } else
+                                *tmp = NULL;
+
+                        goto notify;
+                }
 	}
 
 	return -1;

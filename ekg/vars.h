@@ -28,7 +28,10 @@ typedef enum {
 	VAR_INT,		/* liczba ca³kowita */
 	VAR_BOOL,		/* 0/1, tak/nie, yes/no, on/off */
 	VAR_FOREIGN,		/* nieznana zmienna */
-	VAR_MAP			/* bitmapa */
+	VAR_MAP,		/* bitmapa */
+	VAR_FILE,		/* plik */
+	VAR_DIR,		/* katalog */
+	VAR_THEME		/* theme */
 } variable_class_t;
 
 typedef struct {

@@ -1084,6 +1084,9 @@ COMMAND(cmd_list)
                         return -1;
         }
 
+        if (!params[0] && window_current->target) 
+                params[0] = xstrdup(window_current->target);
+
 	if (params[0] && *params[0] != '-') {
 		char *status, *groups, *last_status;
 		const char *group = params[0];
@@ -1392,7 +1395,7 @@ COMMAND(cmd_set)
 					continue;
 				}
 
-				if (v->type == VAR_STR) {
+				if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
 					char *tmp = (string) ? saprintf("\"%s\"", string) : "(none)";
 
 					printq("variable", v->name, tmp);
@@ -1862,8 +1865,8 @@ query:
 		query_emit(NULL, "ui-window-target-changed", &window_current);
 
 		if (!quiet) {
-			print_window(p[0], session, 0, "query_started", p[0]);
-			print_window(p[0], session, 0, "query_started_window", p[0]);
+			print_window(p[0], session, 0, "query_started", p[0], session_name(session));
+			print_window(p[0], session, 0, "query_started_window", p[0], session_name(session));
 		}
 	} else {
 		query_emit(NULL, "ui-window-target-changed", &window_current);
@@ -3394,21 +3397,22 @@ int command_remove(plugin_t *plugin, const char *name)
 /*
  * rodzaje parametrów komend:
  *
- * '?' - olewamy,
- * 'U' - rêcznie wpisany uin, nadawca mesgów,
- * 'u' - nazwa lub uin z kontaktów
- * 'C' - nazwa konferencji
- * 'c' - nazwa komendy,
- * 'i' - nicki z listy ignorowanych osób,
- * 'b' - nicki z listy blokowanych osób,
- * 'v' - nazwa zmiennej,
- * 'p' - parametry wpisane w possibilities,
- * 'f' - plik,
- * 'e' - nazwy zdarzeñ,
- * 'I' - poziomy ignorowania.
- * 's' - nazwa sesji
- * 'S' - zmienna sesji
+ * '?' - it means nothing 
+ * 'U' - uid typed by hand, sender of message
+ * 'u' - name or uid from the contact list
+ * 'C' - name of conference
+ * 'c' - name of command
+ * 'i' - nicks of ignored
+ * 'b' - nicks of blocked
+ * 'v' - variable name
+ * 'p' - params typed in possibilities
+ * 'f' - file
+ * 'e' - event name
+ * 'I' - ignored level
+ * 's' - session name
+ * 'S' - session variable name
  * 'r' - session description 
+ * 'o' - directory
  * 
  * je¿eli parametr == 'p' to 9 argument funkcji command_add() przyjmuje jako argument
  * tablicê z mo¿liwymi uzupe³nieniami 
@@ -3665,7 +3669,7 @@ void command_init()
 	  "by³y wysy³ane.", 
 	  possibilities("-c --clear") );
 	  
-	command_add(NULL, "quit", params("?"), cmd_quit, 0,
+	command_add(NULL, "quit", params("r"), cmd_quit, 0,
 	  " [powód/-]", "wychodzi z programu",
 	  "\n"
           "Je¶li w³±czona jest odpowiednia opcja %Trandom_reason%n i nie "

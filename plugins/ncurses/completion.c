@@ -22,6 +22,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
+
 #include "ekg2-config.h"
 #ifndef HAVE_SCANDIR
 #  include "compat/scandir.h"
@@ -249,7 +250,91 @@ static void empty_generator(const char *text, int len)
 
 }
 
-void file_generator(const char *text, int len)
+void dir_generator(const char *text, int len)
+{
+	struct dirent **namelist = NULL;
+	char *dname, *tmp;
+	const char *fname;
+	int count, i;
+
+	/* `dname' zawiera nazwê katalogu z koñcz±cym znakiem `/', albo
+	 * NULL, je¶li w dope³nianym tek¶cie nie ma ¶cie¿ki. */
+
+	dname = xstrdup(text);
+
+	if ((tmp = xstrrchr(dname, '/'))) {
+		tmp++;
+		*tmp = 0;
+	} else
+		dname = NULL;
+
+	/* `fname' zawiera nazwê szukanego pliku */
+
+	fname = xstrrchr(text, '/');
+
+	if (fname)
+		fname++;
+	else
+		fname = text;
+
+	/* zbierzmy listê plików w ¿±danym katalogu */
+
+	count = scandir((dname) ? dname : ".", &namelist, NULL, alphasort);
+
+	debug("dname=\"%s\", fname=\"%s\", count=%d\n", (dname) ? dname : "(null)", (fname) ? fname : "(null)", count);
+
+	for (i = 0; i < count; i++) {
+		char *name = namelist[i]->d_name, *tmp = saprintf("%s%s", (dname) ? dname : "", name);
+		struct stat st;
+
+		if (!stat(tmp, &st)) {
+			if (!S_ISDIR(st.st_mode)) {
+				xfree(tmp);
+				xfree(namelist[i]);
+				continue;
+			}
+		}
+
+		xfree(tmp);
+
+		if (!xstrcmp(name, ".")) {
+			xfree(namelist[i]);
+			continue;
+		}
+
+		/* je¶li mamy `..', sprawd¼ czy katalog sk³ada siê z
+		 * `../../../' lub czego¶ takiego. */
+
+		if (!xstrcmp(name, "..")) {
+			const char *p;
+			int omit = 0;
+
+			for (p = dname; p && *p; p++) {
+				if (*p != '.' && *p != '/') {
+					omit = 1;
+					break;
+				}
+			}
+
+			if (omit) {
+				xfree(namelist[i]);
+				continue;
+			}
+		}
+
+		if (!strncmp(name, fname, xstrlen(fname))) {
+			name = saprintf("%s%s%s", (dname) ? dname : "", name, "/");
+			array_add(&completions, name);
+		}
+
+		xfree(namelist[i]);
+        }
+
+	xfree(dname);
+	xfree(namelist);
+}
+
+static void file_generator(const char *text, int len)
 {
 	struct dirent **namelist = NULL;
 	char *dname, *tmp;
@@ -278,7 +363,7 @@ void file_generator(const char *text, int len)
 
 again:
 	/* zbierzmy listê plików w ¿±danym katalogu */
-	
+
 	count = scandir((dname) ? dname : ".", &namelist, NULL, alphasort);
 
 	debug("dname=\"%s\", fname=\"%s\", count=%d\n", (dname) ? dname : "(null)", (fname) ? fname : "(null)", count);
@@ -300,7 +385,7 @@ again:
 
 		/* je¶li mamy `..', sprawd¼ czy katalog sk³ada siê z
 		 * `../../../' lub czego¶ takiego. */
-		
+
 		if (!xstrcmp(name, "..")) {
 			const char *p;
 			int omit = 0;
@@ -317,7 +402,7 @@ again:
 				continue;
 			}
 		}
-		
+
 		if (!strncmp(name, fname, xstrlen(fname))) {
 			name = saprintf("%s%s%s", (dname) ? dname : "", name, (isdir) ? "/" : "");
 			array_add(&completions, name);
@@ -343,6 +428,60 @@ again:
 	xfree(namelist);
 }
 
+/*
+ * theme_generator_adding ()
+ *
+ * function that helps theme_generator to add all of the paths
+ *
+ * dname - path
+ * themes_only - only the .theme extension
+ *
+ */
+static void theme_generator_adding(const char *dname, int themes_only)
+{
+	struct dirent **namelist = NULL;
+	int count, i;
+
+	count = scandir((dname) ? dname : ".", &namelist, NULL, alphasort);
+
+	for(i = 0; i < count; i++) {
+		struct stat st;
+		char *name = namelist[i]->d_name, *tmp = saprintf("%s/%s", (dname) ? dname : "", name), *tmp2;
+
+		if (!stat(tmp, &st)) {
+			if (S_ISDIR(st.st_mode) && stat(saprintf("%s%s%s", tmp, "/", name), &st) == -1 && stat(saprintf("%s%s%s.theme", tmp, "/", name), &st) == -1) {
+				xfree(namelist[i]);
+				xfree(tmp);
+				continue;
+			}
+		}
+
+		xfree(tmp);
+
+		if (!xstrcmp(name, ".") || !xstrcmp(name, "..")) {
+			xfree(namelist[i]);
+			continue;
+		}
+
+		tmp2 = xstrndup(name, xstrlen(name) - xstrlen(xstrstr(name, ".theme")));
+		if ((themes_only && xstrcmp(tmp2, name)) || !themes_only)
+			array_add_check(&completions, tmp2, 1);
+
+		xfree(tmp2);
+		xfree(namelist[i]);
+	}
+
+	xfree(namelist);
+}
+
+static void theme_generator(const char *text, int len)
+{
+
+	theme_generator_adding(DATADIR "/themes", 0);
+	theme_generator_adding(prepare_path("", 0), 1);
+	theme_generator_adding(prepare_path("themes", 0), 0);
+}
+
 static void possibilities_generator(const char *text, int len)
 {
 	int i;
@@ -350,7 +489,7 @@ static void possibilities_generator(const char *text, int len)
 
 	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
 		if (!xstrncasecmp(text, c->possibilities[i], len))
-			array_add(&completions, xstrdup(c->possibilities[i])); 
+			array_add(&completions, xstrdup(c->possibilities[i]));
 }
 
 static void window_generator(const char *text, int len)
@@ -440,6 +579,8 @@ static struct {
 	{ 'S', sessions_var_generator },
 	{ 'I', ignorelevels_generator },
 	{ 'r', reason_generator },
+	{ 't', theme_generator },
+	{ 'o', dir_generator },
 	{ 0, NULL }
 };
 
@@ -741,6 +882,28 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 					break;
 		}
 		
+		/* for /set maybe we want to complete the file path */
+		if (!xstrncmp(cmd, "set", xstrlen("set")) && words[1] && words[2] && word_current == 3) {
+			variable_t *v;
+
+			if ((v = variable_find(words[1]))) {
+				switch (v->type) {
+					case VAR_FILE:
+						file_generator(words[word], xstrlen(words[word]));
+						break;
+					case VAR_THEME:
+						theme_generator(words[word], xstrlen(words[word]));
+						break;
+					case VAR_DIR:
+						dir_generator(words[word], xstrlen(words[word]));
+						break;
+					default:
+						break;
+				}
+			}
+
+		}
+
 		if (params && abbrs == 1 && params[word_current - 2]) {
 			int j;
 
