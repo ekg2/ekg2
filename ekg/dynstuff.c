@@ -447,6 +447,8 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 					break;
 			}
 
+                        len++;
+
 			if ((token = xcalloc(1, len + 1))) {
 				char *r = token;
 			
