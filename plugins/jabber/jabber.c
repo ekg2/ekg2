@@ -710,7 +710,7 @@ int jabber_status_show_handle(void *data, va_list ap)
 COMMAND(jabber_command_connect)
 {
 	const char *password = session_get(session, "password");
-	const char *server;
+	const char *server = session_get(session, "server"); 
 	int res, fd[2];
 	jabber_private_t *j = session_private_get(session);
 	
@@ -735,14 +735,14 @@ COMMAND(jabber_command_connect)
 	}
 
 	debug("session->uid = %s\n", session->uid);
-
-	if (!(server = xstrchr(session->uid, '@'))) {
+	
+	if (!server && !(server = xstrchr(session->uid, '@'))) {
 		printq("wrong_id", session->uid);
 		return -1;
 	}
 
 	xfree(j->server);
-	j->server = xstrdup(++server);
+	j->server = xstrdup( (xstrchr(server, '@')? ++server : server) );
 
 	debug("[jabber] resolving %s\n", server);
 
