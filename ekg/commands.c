@@ -907,6 +907,7 @@ COMMAND(cmd_for)
 			if (!(s[i] = session_find(tmp[i]))) {
 				printq("session_doesnt_exist", tmp[i]);
 				ret = -1;
+				xfree(s);
 				goto for_end;
 			}
 		}		
