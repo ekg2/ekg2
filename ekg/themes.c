@@ -457,14 +457,6 @@ fstring_t *fstring_new(const char *str)
                 if (str[i] == 13)
                         continue;
 
-                if (str[i + 1] && str[i] == '/' && str[i + 1] == '|') {
-                        if ((i != 0 && str[i - 1] != '/') || i == 0) {
-                                i++;
-                                continue;
-                        }
-                        continue;
-                }
-
                 len++;
         }
 
