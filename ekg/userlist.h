@@ -60,6 +60,9 @@ typedef struct {
 	void *priv;		/* dane pluginu obs³uguj±cego usera */
 	
 	int blink;		/* czy ma byæ zaznaczony jako u¿ytkownik, od którego mamy msg */
+
+        uint32_t last_ip;            /* ostatni adres ip */
+        uint16_t last_port;          /* ostatni port */
 } userlist_t;
 
 #if 0
@@ -72,6 +75,8 @@ PROPERTY_STRING(userlist, status);
 PROPERTY_STRING(userlist, descr);
 PROPERTY_INT(userlist, ip, uint32_t);
 PROPERTY_INT(userlist, port, uint16_t);
+PROPERTY_INT(userlist, last_ip, uint32_t);
+PROPERTY_INT(userlist, last_port, uint16_t);
 PROPERTY_INT(userlist, last_seen, time_t);
 #endif
 

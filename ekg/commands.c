@@ -1137,6 +1137,11 @@ COMMAND(cmd_list)
 		
 		if (u->ip)
 			printq("user_info_ip", ip_str);
+                else if (u->last_ip) {
+			ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
+                        printq("user_info_last_ip", ip_str);
+		}
+
 		if (u->mobile && strcmp(u->mobile, ""))
 			printq("user_info_mobile", u->mobile);
 		if (strcmp(groups, ""))

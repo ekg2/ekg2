@@ -159,6 +159,11 @@ int protocol_status(void *data, va_list ap)
 	u->ip = (host) ? inet_addr(host) : 0;
 	u->port = port;
 
+	if (host)
+		u->last_ip = inet_addr(host);
+	if (port)
+		u->last_port = port;
+
 	/* je¶li te same stany... */
 	if (!strcasecmp(status, u->status)) {
 		/* ...i nie ma opisu, ignoruj */
