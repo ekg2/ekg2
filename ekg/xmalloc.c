@@ -309,7 +309,7 @@ char *xindex(const char *s, int c)
 
 char *xrindex(const char *s, int c)
 {
-	return index(fix(s), c);
+	return rindex(fix(s), c);
 }
 
 
