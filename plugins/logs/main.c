@@ -245,7 +245,7 @@ char * prepare_timestamp(time_t ts)
 		strftime(buf, 100, config_logs_timestamp, tm);
 		return buf;
 	} else {
-		return itoa(ts);
+		return strcpy(buf, itoa(ts));
 	}
 }
 
