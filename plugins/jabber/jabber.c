@@ -1110,6 +1110,10 @@ COMMAND(jabber_command_add)
 	uid = (char *) params[0]; 
 	if (!strncasecmp(uid, "jid:", 4))
 		uid += 4;
+	else if (strchr(uid, ':')) { 
+                printq("invalid_uid");
+                return -1;
+	}
 
 	jabber_write(j, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
 	if (params[1])
