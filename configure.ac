@@ -82,6 +82,7 @@ AC_CHECK_NCURSES
 if test "x$have_ncurses" = "xyes"; then
 	AC_CONFIG_FILES([plugins/ncurses/Makefile])
 	PLUGINS="$PLUGINS ncurses"
+	AC_CHECK_HEADERS(curses.h ncurses.h ncurses/ncurses.h)
 fi
 
 AC_CHECK_LIBGSM
