@@ -593,7 +593,7 @@ int main(int argc, char **argv)
 	signal(SIGALRM, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 
-	while ((c = getopt_long(argc, argv, "b::a::i::d::x::pnc:hot:u:vN", ekg_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "b::a::i::d::x::f::pnc:hot:u:vN", ekg_options, NULL)) != -1) {
 		switch (c) {
 			case 'b':
 				if (!optarg && argv[optind] && argv[optind][0] != '-')
@@ -631,7 +631,7 @@ int main(int argc, char **argv)
 				new_descr = xstrdup(optarg);
 			        break;
 				
-                        case 'r':
+                        case 'f':
                                 if (!optarg && argv[optind] && argv[optind][0] != '-')
                                         optarg = argv[optind++];
 
