@@ -40,7 +40,10 @@ xosd *osd;
 
 int xosd_show_message(char *line1, char *line2)
 {
-	xosd_set_font(osd, xosd_font); 
+	if(xosd_font && xosd_set_font(osd, xosd_font)) {
+		debug("xosd: font error: %s\n", xosd_error);
+		return 0;
+	}
 	
 	xosd_set_colour(osd, xosd_colour);
 
