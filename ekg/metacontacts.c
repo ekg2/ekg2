@@ -1,3 +1,4 @@
+/* $Id$ */
 /*
  *  (C) Copyright 2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
