@@ -38,6 +38,5 @@ rozwi±zanie.
   - dope³nianie themów (Arim)
   - dokumentacja do themes - opis ka¿dego formatu (del)
   - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
-  - numerowanie sesji, potem odwo³ywanie sie do numerkow miast calych nazw (rmrmg)
 
 $Id$
