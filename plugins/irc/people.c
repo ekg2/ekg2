@@ -214,6 +214,9 @@ int irc_del_person_channel_int(irc_private_t *j, people_t *nick, channel_t *chan
 		chtmp = nick->nick; nick->nick=NULL;
 		list_remove(&(j->people), nick, 1);
 		xfree(chtmp);
+		
+		list_remove(&(chan->onchan), nick, 0);
+		return 1;
 	}
 	
 	/* delete entry in private->channels->onchan
@@ -252,7 +255,8 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 				s, 0, "irc_quit", session_name(s), 
 				nick, wholenick, reason);
 
-		irc_del_person_channel_int(j, person, pech->chanp);
+		if (irc_del_person_channel_int(j, person, pech->chanp))
+			break;
 	}
 	/* GiM: removing from private->people is in
 	 * irc_del_person_channel_int

@@ -583,7 +583,7 @@ IRC_COMMAND(irc_c_msg)
 
 	if (ctcpstripped) {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped);
-		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', me, param[2], coloured);
+		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', me, param[2], OMITCOLON(param[3]));
 		xfree(ctcpstripped);
 		head = format_string(format_find(format), session_name(s),
 				perchn?perchn->sign:" ",
