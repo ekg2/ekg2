@@ -1092,6 +1092,10 @@ COMMAND(cmd_list)
 	char **argv = NULL, *show_group = NULL, *ip_str;
 	const char *tmp;
 
+	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
+	if(!session)
+		return -1;		
+
 	if (params[0] && *params[0] != '-') {
 		char *status, *groups;
 		const char *group = params[0];

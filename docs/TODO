@@ -9,7 +9,6 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - segfault przy wpisaniu jakiej¶ komendy np /list w oknie debug (del)
   - poprawione warto¶ci zmiennych dla listy kontaktów (w zasadzie to vars.c trzeba
     przystosowaæ do wspó³pracy z pluginami - nie dzia³a to teraz dobrze) (del)
   - przy próbie wys³ania pustej lini wy¶wietla:
