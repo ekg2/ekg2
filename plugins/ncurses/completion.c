@@ -973,8 +973,6 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			}
 		}	 
 	}
-	for (i = 0; completions && completions[i]; i++)
-		debug("completions[i = %d]: (%s)\n", i, completions[i]);
 	count = array_count(completions);
 	
 	/* 
@@ -1047,7 +1045,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 				break;
 		}
 	
-		 debug("common :%d\t\n", common); 
+		/* debug("common :%d\t\n", common); */
 
 		if (xstrlen(line) + common < LINE_MAXLEN) {
 		
