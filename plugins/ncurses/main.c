@@ -135,7 +135,8 @@ int ncurses_ui_window_print(void *data, va_list ap)
 
 	if (!w->floating) {
 		ncurses_redraw(w);
-		ncurses_commit();
+		if (!window_lock_get(w))
+			ncurses_commit();
 	}
 
 	return 0;
