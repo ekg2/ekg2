@@ -933,9 +933,6 @@ COMMAND(jabber_command_disconnect)
 
 	if (j->connecting) {
 		j->connecting = 0;
-		printq("conn_stopped", session_name(session));
-	} else
-		printq("disconnected", session_name(session));
 
 	{
 		char *__session = xstrdup(session->uid);
