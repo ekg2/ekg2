@@ -449,49 +449,49 @@ fstring_t *fstring_new(const char *str)
 			i += 2;
 
 			/* obs³uguje tylko "\033[...m", tak ma byæ */
-			
-			for (; str[i]; i++) {
-				if (str[i] >= '0' && str[i] <= '9') {
-					tmp *= 10;
-					tmp += (str[i] - '0');
+ 			int m, ism, once=1, deli;
+ 			char *p;
+ 			p=(char *)&(str[i]);
+			while (1) {
+ 				ism=deli=0;
+ 				ism=sscanf(p, "%02d", &m);
+ 				if (ism) {
+ 					p++; deli++; i++;
+ 					if(isdigit(*p)) { p++; deli++; i++; }
+ 					if(once && isdigit(*p)) { p++; deli++; i++; }
+ 				}
+				once = 0;
+ 				if (*p == ';' || *p == 'm') {
+					if (!ism)
+						goto wedonthavem;
+ 					if (m == 0) {
+ 						attr = 128;
+ 						if (deli >= 2)
+ 							res->prompt_len = j;
+ 						if (i>3 && deli == 3)
+ 							res->prompt_empty = 1;
+ 					}
+ 					else if (m == 1) /* bold */
+ 						attr |= 64;
+ 					else if (m == 5) /* blink ? */
+ 						attr |= 256;
+ 					else if (m>=30)
+ 						tmp = m;
+wedonthavem:
+ 					if (tmp >= 30 && tmp <= 37) {
+ 						attr &= ~(128+1+2+4);
+ 						attr |= (tmp - 30);
+ 					}
+ 
+ 					if (tmp >= 40 && tmp <= 47) {
+ 						attr &= ~(128+8+16+32);
+ 						attr |= (tmp - 40) << 3;
+ 					}
+					if (*p == ';') { i++; p++; }
 				}
-
-				if (str[i] == ';' || str[i] == 'm') {
-					if (tmp == 0) {
-						attr = 128;
-
-						/* prompt jako \033[00m */
-						if (str[i - 1] == '0' && str[i - 2] == '0')
-							res->prompt_len = j;
-
-						/* odstêp jako \033[000m */
-						if (i > 3 && str[i - 1] == '0' && str[i - 2] == '0' && str[i - 3] == 0) {
-							res->prompt_len = j;
-							res->prompt_empty = 1;
-						}
-					}
-					if (tmp == 1)
-						attr |= 64;
-
-					if (tmp == 5)
-						attr |= 256;
-
-					if (tmp >= 30 && tmp <= 37) {
-						attr &= ~(128+1+2+4);
-						attr |= (tmp - 30);
-					}
-
-					if (tmp >= 40 && tmp <= 47) {
-						attr &= ~(128+8+16+32);
-						attr |= (tmp - 40) << 3;
-					} 
-
-					tmp = 0;
-				}
-
-				if (isalpha_pl_PL(str[i]))
-					break;
-			}
+				if (*p == 'm') break;
+ 				tmp = 0;
+ 			}
 
 			continue;
 		}
