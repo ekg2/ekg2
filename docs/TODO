@@ -15,6 +15,7 @@ rozwi±zanie.
   - nie dzia³±j±ce list -d dla jabber'a (del)
   - dope³nianie nazw sesji (del)
   - dope³nienie funkcji np /command (bez pocz±tku przyk³adowo gg:) (del)
+  - kodowanie hase³ w ~/.ekg/sessions
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
   - zmienna wy³±czaj±ca pytanie o zapisanie konfiguracji (Tohver)
@@ -26,6 +27,7 @@ rozwi±zanie.
     ircopodobnych do d³ugo¶ci nazwy rozmówcy i timestampu (sz)
   - zmienna beep_*_away (rmrmg)
   - zapis do historii zgodny z http://kadu.net/history_format.html (Chilek)
+  - logowanie nie dzia³a (?)
   - lista kontaktów w pierwszym oknie, rozmowy w kolejnych (jojo)
   - osobna historia dla ka¿dego okna (koniu)
   - zapisywanie backlog'a z okna do pliku (G.Sulek)
