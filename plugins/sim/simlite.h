@@ -20,7 +20,9 @@
 #ifndef __SIMLITE_H
 #define __SIMLITE_H
 
+#ifndef __AC_STDINT_H
 #include <stdint.h>
+#endif 
 
 extern char *sim_key_path;
 extern int sim_errno;

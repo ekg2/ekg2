@@ -23,6 +23,9 @@ AC_SUBST(COMPAT)
 AC_SUBST(PLUGINS)
 AC_SUBST(PLUGINS_LIBS)
 
+dnl FreeBSD
+AC_NEED_STDINT_H
+
 dnl  SunOS
 AC_CHECK_LIB(nsl, t_accept, LIBS="$LIBS -lnsl")
 AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")

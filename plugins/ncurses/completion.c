@@ -22,7 +22,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <dirent.h>
+#include "config.h"
 #ifndef HAVE_SCANDIR
 #  include "compat/scandir.h"
 #endif

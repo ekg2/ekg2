@@ -16,7 +16,7 @@ echo "Running libtoolize..."
 libtoolize --ltdl || exit 1 
 
 echo "Running automake..."
-automake --foreign --add-missing || exit 1 
+automake --foreign --add-missing 
 
 echo "Running once again aclocal..."
 aclocal -I m4 || exit 1 
