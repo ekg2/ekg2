@@ -237,7 +237,7 @@ COMMAND(jabber_command_msg)
 	char *msg;
 	char *subject = NULL;
 	char *subtmp;
-	const char *uid;
+	const char *uid, *seq = NULL;
 
 	if (!session_check(session, 1, "jid")) {
 		printq("invalid_session");
@@ -303,11 +303,20 @@ COMMAND(jabber_command_msg)
 	xfree(msg);
 	xfree(subject);
 
-	if (config_display_sent && !quiet) {
-		char *tmp = saprintf("jid:%s", uid);
-		const char *rcpts[2] = { tmp, NULL };
-		message_print(session_uid_get(session), session_uid_get(session), rcpts, params[1], NULL, time(NULL), (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT, NULL);
-		xfree(tmp);
+	if (!quiet) {
+		char **rcpts = xmalloc(sizeof(char *) * 2);
+		const int class = (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
+		char *me = xstrdup(session_uid_get(session));
+		const time_t sent = time(NULL);
+		char *format = NULL;
+
+		rcpts[0] = saprintf("jid:%s", uid);
+		rcpts[1] = NULL;
+		
+		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &params[1], &format, &sent, &class, &seq, NULL);
+
+		xfree(me);
+		xfree(rcpts[0]);
 	}
 
 	session_unidle(session);

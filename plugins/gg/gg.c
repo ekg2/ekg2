@@ -1265,6 +1265,7 @@ COMMAND(gg_command_msg)
 	int count, valid = 0, chat, secure = 0, formatlen = 0;
 	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL;
 	unsigned char *msg = NULL, *raw_msg = NULL, *format = NULL;
+	const char *seq;
 	uint32_t *ekg_format = NULL;
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
@@ -1511,7 +1512,6 @@ COMMAND(gg_command_msg)
 			unsigned char *__msg = xstrdup(msg);
 			char *sid = xstrdup(uid);
 			uin_t uin = atoi(uid + 3);
-			const char *seq;
 
 			secure = 0;
 			
@@ -1533,7 +1533,6 @@ COMMAND(gg_command_msg)
 	if (count > 1 && chat) {
 		uin_t *uins = xmalloc(count * sizeof(uin_t));
 		int realcount = 0;
-		const char *seq;
 
 		for (p = nicks; *p; p++) {
 			const char *uid;
@@ -1569,9 +1568,19 @@ COMMAND(gg_command_msg)
 	if (valid && (!g->sess || g->sess->state != GG_STATE_CONNECTED))
 		printq("not_connected_msg_queued", session_name(session));
 
-	if (valid && config_display_sent && !quiet) {
-		const char *rcpts[2] = { nick, NULL };
-		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT, NULL);
+	if (valid && !quiet) {
+		char **rcpts = xmalloc(sizeof(char *) * 2);
+		const int class = (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
+		char *me = xstrdup(session_uid_get(session));
+		const time_t sent = time(NULL);
+		
+		rcpts[0] = xstrdup(nick);
+		rcpts[1] = NULL;
+		
+		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, NULL);
+
+		xfree(me);
+		xfree(rcpts[0]);
 	}
 
 	xfree(msg);

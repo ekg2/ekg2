@@ -463,7 +463,8 @@ int protocol_message(void *data, va_list ap)
 //	else if (window_find(uid)) 
 //		userlist->blink = 1;
 
-        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
+	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent))
+	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
 
         /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
 	if (!userlist) 
