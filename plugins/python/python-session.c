@@ -232,6 +232,37 @@ PyObject *ekg_session_getUser(ekg_sessionObj * self, PyObject * pyargs)
     return (PyObject *)pyuser;
 }
 
+/**
+ * ekg_session_users()
+ *
+ * return userlist
+ *
+ */
+
+PyObject *ekg_session_users(ekg_sessionObj * self)
+{
+	session_t * s = session_find(self->name);
+    PyObject *list;
+    list_t l;
+    int len = 0;
+
+    for (l = s->userlist; l; l = l->next) {
+		len++;
+    }
+
+    list = PyList_New(len);
+    len = 0;
+
+    for (l = s->userlist; l; l = l->next) {
+		userlist_t * u = l->data;
+		PyList_SetItem(list, len, PyString_FromString(u->uid));
+		len++;
+    }
+    Py_INCREF(list);
+    return list;
+}
+
+
 /*
  * Local Variables:
  * mode: c

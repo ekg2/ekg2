@@ -319,9 +319,9 @@
       </variablelist>
    </sect3>
    <sect3>
-      <title>Obiekt session</title>
+      <title>Klasa session</title>
       <variablelist>
-         <title>Metody i pola obiektu session</title>
+         <title>Metody i pola obiektu klasy session</title>
          <varlistentry>
             <term>self</term>
             <listitem>
@@ -351,6 +351,15 @@
             <listitem>
                <para>
                   Zwraca True je¶li sesja jest po³±czona, False wpp.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>users()</term>
+            <listitem>
+               <para>
+                  Zwraca listê identyfikatorów u¿ytkowników na li¶cie danej
+                  sesji.
                </para>
             </listitem>
          </varlistentry>
@@ -603,6 +612,7 @@ def handle_status(session, uid, status, desc):
     if desc:
 	ekg.echo("Opis  : "+desc)
     sesja = ekg.getSession(session)
+    ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
     user = sesja.getUser(uid)
     if user.last_status:
 	ekg.echo(str(user.last_status))
@@ -658,6 +668,7 @@ def handle_connect(session):
 	ekg.echo('Po³±czony!')
     else:
 	ekg.echo('W tym miejscu jeszcze nie po³±czony')
+    ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
 
 def handle_disconnect(session):
     ekg.echo("£o, sesja %s nam pad³a" % (session,))

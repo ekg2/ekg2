@@ -36,6 +36,7 @@ int ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value);
 PyObject *ekg_session_connected(ekg_sessionObj * self);
 PyObject *ekg_session_get_attr(ekg_sessionObj * self, char * attr);
 PyObject *ekg_session_getUser(ekg_sessionObj * self, PyObject * pyargs);
+PyObject *ekg_session_users(ekg_sessionObj * self);
 PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key);
 
 
@@ -43,6 +44,7 @@ PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key);
 staticforward PyMethodDef ekg_session_methods[] = {
     {"connected", (PyCFunction)ekg_session_connected, METH_NOARGS, "Check if session is connected"},
 	{"getUser", (PyCFunction)ekg_session_getUser, METH_VARARGS, "Return user object"},
+	{"users", (PyCFunction)ekg_session_users, METH_NOARGS, "Return userlist"},
     {NULL, NULL, 0, NULL}
 };
 
