@@ -92,7 +92,7 @@ static int userlist_compare(void *data1, void *data2)
  *
  * dodaje do listy kontaktów pojedyncz± liniê z pliku lub z serwera.
  */
-void userlist_add_entry(session_t *session,const char *line)
+void userlist_add_entry(session_t *session, const char *line)
 {
 	char **entry = array_make(line, ";", 8, 0, 0);
 	userlist_t u;
@@ -297,8 +297,10 @@ void userlist_clear_status(session_t *session, const char *uid)
  */
 void userlist_free(session_t *session)
 {
-	while (session->userlist)
+	if (session->userlist)
 		userlist_remove(session, session->userlist->data);
+
+        list_destroy(session->userlist, 1);	
 }
 
 /*
@@ -335,6 +337,8 @@ int userlist_remove(session_t *session, userlist_t *u)
 
 	if (!u)
 		return -1;
+
+
 	
 	xfree(u->first_name);
 	xfree(u->last_name);

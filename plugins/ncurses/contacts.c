@@ -290,9 +290,10 @@ group_cleanup:
 
 		if (count) {
 			const char *format;
+			list_t lp;
 
-			for (; sorted; sorted = sorted->next) {
-				contact_t *c = sorted->data;
+			for (lp = sorted; lp; lp = lp->next) {
+				contact_t *c = lp->data;
 
 				ncurses_backlog_add(w, fstring_new(c->line));
 

@@ -931,7 +931,6 @@ void ekg_exit()
 	alias_free();
 	conference_free();
 	sessions_free();
-/*	userlist_free(); -- powiedzmy, ze to odpowiedzialno¶æ pluginow */
 	theme_free();
 	variable_free();
 	emoticon_free();

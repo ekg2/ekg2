@@ -276,9 +276,11 @@ fail:
 			if (sh != h)
 				continue;
 
-			if (p && p->success)
-				session_set(s, "password", session_get(s, "new_password"));
-
+			if (p && p->success) {
+				char *new_passwd = (char *) session_get(s, "new_password");
+				session_set(s, "password", new_passwd);
+				xfree(new_passwd);
+			}
 			session_set(s, "new_password", NULL);
 
 			list_remove(&g->passwds, h, 0);

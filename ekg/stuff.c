@@ -1807,7 +1807,7 @@ char *base64_decode(const char *buf)
 
 	save = res = xcalloc(1, (xstrlen(buf) / 4 + 1) * 3 + 2);
 
-	end = buf + xstrlen(buf);
+	end = buf + xstrlen(buf) - 1;
 
 	while (*buf && buf < end) {
 		if (*buf == '\r' || *buf == '\n') {
