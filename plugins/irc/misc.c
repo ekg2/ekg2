@@ -37,6 +37,9 @@
 #include "input.h"
 #include "autoacts.h"
 
+#define GDEBUG
+#define MARLENE
+
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
@@ -865,11 +868,15 @@ IRC_COMMAND(irc_c_mode)
 		return 0;
 	/* channel mode */
 	}
+
 	t=param[3];
 	for (i=0,k=4; i<xstrlen(param[3]); i++, t++) {
 		if (*t=='+' || *t=='-')
 			act=*t-'-';
 		if ((bang=xstrchr(add, *t))) {
+			/* 23:26:o2 CET 2oo5-22-o1 yet another ivil hack */
+			if (xstrchr(param[k], ' '))
+				*xstrchr(param[k], ' ') = '\0';
 			per = irc_find_person(j->people, param[k]);
 			if (!per) goto notreallyok;
 			ch = irc_find_person_chan(per->channels, param[2]); 
@@ -879,8 +886,7 @@ IRC_COMMAND(irc_c_mode)
 			if (act) ch->mode |= val; else ch->mode-=val;
 			ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]);
 			if(!ul) goto notreallyok;
-			
-			
+
 			irc_nick_prefix(j, ch, irc_color_in_contacts(add, 
 						ch->mode, ul));
 		}
@@ -888,7 +894,7 @@ notreallyok:
 		if (xstrchr(add, *t)) k++;
 		if (!param[k]) break;
 	}
-	
+
 	channame = saprintf("%s%s", IRC4, param[2]);
 	w = window_find_s(s, channame);
 	bang = xstrchr(param[0], '!');
