@@ -432,10 +432,11 @@ void jabber_handle(void *data, xmlnode_t *n)
 						   w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
 						   mamy ju¿ w liscie, to przyszla do nas zmiana rostera; usunmy wiec najpierw, a potem
 						   sprawdzmy, czy warto dodawac :) */
-						if ((tmp = userlist_find(s, u.uid)) )
+						if (!(jdh->roster_retrieved) && (tmp = userlist_find(s, u.uid)) )
 							userlist_remove(s, tmp);
 
-						if (jabber_attr(item->atts, "subscription") && !xstrncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
+						if (jabber_attr(item->atts, "subscription") && 
+							!xstrncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
 							/* nic nie robimy, bo juz usuniete */
 						} else { 
 							if (jabber_attr(item->atts, "subscription"))
@@ -447,8 +448,8 @@ void jabber_handle(void *data, xmlnode_t *n)
 								xfree(ctmp);
 							}
 						}
-						jdh->roster_retrieved = 1;
 					}; /* for */
+					jdh->roster_retrieved = 1;
 				} /* jabber:iq:roster */
 			} /* if query */
 		} /* type == set */
