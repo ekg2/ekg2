@@ -357,7 +357,10 @@ crap:
 		return;
  
 	if (w != window_current && !w->floating) {
-		w->act = (separate) ? 2 : 1;
+		if (separate)
+			w->act = 2;
+		else if (w->act != 2)
+			w->act = 1;
 		query_emit(NULL, "ui-window-act-changed");
 	}
 

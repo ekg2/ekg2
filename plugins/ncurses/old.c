@@ -1179,6 +1179,7 @@ void update_statusbar(int commit)
 			string_append(s, itoa(w->id));
 			first = 0;
 			act = 1;
+			xfree(tmp);
 		}
 		
 		__add_format("activity", (act), s->str);
