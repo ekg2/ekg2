@@ -33,11 +33,11 @@ dnl FreeBSD
 AC_NEED_STDINT_H
 
 dnl  SunOS
-AC_CHECK_LIB(nsl, t_accept, LIBS="$LIBS -lnsl")
-AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")
+AC_CHECK_FUNC(gethostbyname, [], [AC_CHECK_LIB(nsl, gethostbyname, LIBS="$LIBS -lnsl")])
+AC_CHECK_FUNC(socket, [], [AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")])
 
 dnl  BeOS
-AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")
+AC_CHECK_FUNC(inet_addr, [], [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")])
 
 dnl  sprawdzamy, czy system ma getopt_long
 AC_CHECK_FUNC(getopt_long, , [COMPAT="$COMPAT getopt.o getopt1.o"])
