@@ -24,7 +24,8 @@
 
 #include "dynstuff.h"
 
-#include "gettext.h"
+#include <libintl.h>
+
 #define _(a) gettext(a)
 
 struct format {
