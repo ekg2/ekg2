@@ -37,9 +37,6 @@
 #include "input.h"
 #include "autoacts.h"
 
-#define GDEBUG
-#define MARLENE
-
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
