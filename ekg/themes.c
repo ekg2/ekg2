@@ -993,7 +993,7 @@ void theme_init()
 	format_add("private_mode_on", "%> (%1) W³±czono tryb ,,tylko dla znajomych''\n", 1);
 	format_add("private_mode_off", "%> (%1) Wy³±czono tryb ,,tylko dla znajomych''\n", 1);
 	format_add("private_mode_invalid", "%! Nieprawid³owa warto¶æ\n", 1);
-	format_add("descr_too_long", "%! D³ugo¶æ opisu przekracza limit. Ilo¶æ uciêtych znaków: %T%1%n\n", 1);
+	format_add("descr_too_long", "%! D³ugo¶æ opisu przekracza limit o %T%1%n znaków\n", 1);
 
 	format_add("auto_away", "%> (%1) Automagicznie zmieniono stan na %Gzajêty%n\n", 1);
 	format_add("auto_away_descr", "%> (%2) Automagicznie zmieniono stan na %Gzajêty%n: %T%1%n\n", 1);
