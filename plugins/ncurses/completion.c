@@ -441,7 +441,6 @@ static void sessions_var_generator(const char *text, int len)
  
 	for (l = sessions; l; l = l->next) {
                 session_t *v = l->data;
-		list_t lt;
 
 		for(i = 0; v->params && v->params[i]; i++) {
                 	if (*text == '-') {
