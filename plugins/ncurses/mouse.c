@@ -23,6 +23,8 @@
 #	include <gpm.h>
 #endif
 
+#include <stdlib.h>
+
 #include "ecurses.h"
 
 #include <ekg/windows.h>
@@ -141,7 +143,17 @@ void ncurses_gpm_watch_handler(int last, int fd, int watch, void *data)
  */
 void ncurses_enable_mouse()
 {
+#define xterm_mouse() mouseinterval(-1);\
+	if (xstrcasecmp(env, "xterm") && xstrcasecmp(env, "xterm-colour")) {\
+                        debug("Mouse in %s terminal is not supported\n", env);\
+                        goto end;\
+        }\
+	\
+	mousemask(ALL_MOUSE_EVENTS, &oldmask);\
+        mouseinterval(-1);
+	
 	mmask_t oldmask;
+	char *env = getenv("TERM");
 #ifdef HAVE_LIBGPM
         Gpm_Connect conn;
 
@@ -150,10 +162,9 @@ void ncurses_enable_mouse()
 	conn.minMod      = 0;
         conn.maxMod      = ~0;
 
-        if(Gpm_Open(&conn, 0) == -1) {
+	if(Gpm_Open(&conn, 0) == -1) {
                 debug("Cannot connect to mouse server\n");
-	        mousemask(ALL_MOUSE_EVENTS, &oldmask);
-		mouseinterval(-1);
+		xterm_mouse();
 		goto end;
 	}
 	else
@@ -163,15 +174,14 @@ void ncurses_enable_mouse()
 	        watch_add(&ncurses_plugin, gpm_fd, WATCH_READ, 1, ncurses_gpm_watch_handler, NULL);
 		gpm_visiblepointer = 1;
 	} else { /* xterm */
-	        mousemask(ALL_MOUSE_EVENTS, &oldmask);
-		mouseinterval(-1);
+		xterm_mouse();
 	}
 #else
-	mousemask(ALL_MOUSE_EVENTS, &oldmask);
-	mouseinterval(-1);
+	xterm_mouse();
 #endif
 end:
         timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
+#undef xterm_mouse
 }
 
 /*

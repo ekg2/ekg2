@@ -430,7 +430,10 @@ group_cleanup:
 	
 	                line = format_string(format_find(tmp), u->nickname, u->descr);
 			string = fstring_new(line);
-			string->private = (u->private) ? u->private : (void *) session_current;
+			if (u->private && (int) u->private == 2)
+				string->private = (void *) saprintf("%s", u->nickname);
+			else 
+				string->private = (void *) saprintf("%s/%s", (u->private) ? ((session_t *) u->private)->uid : session_current->uid, u->nickname);
 	                ncurses_backlog_add(w, string);
 	                xfree(line);
 	
@@ -604,7 +607,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 {
         window_t *w = window_find("__contacts");
         ncurses_window_t *n;
-	char *name;
+	char *name, *tmp;
 
 	if (mouse_state == EKG_SCROLLED_UP) {
 		ncurses_backward_contacts_line(5);
@@ -624,28 +627,10 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 
 	name = n->backlog[n->backlog_size - y]->str;
 
-	if ((int) n->backlog[n->backlog_size - y]->private == 2) {
-		char *tmp = saprintf("/query %s", name);
+	tmp = saprintf("/query \"%s\"", (char *) n->backlog[n->backlog_size - y]->private);
+	command_exec(NULL, NULL, tmp, 0);
+	xfree(tmp);
 
-		command_exec(NULL, NULL, tmp, 0);
-		xfree(tmp);
-	} else {
-		session_t *s;
-		char *tmp;
-
-		s = (session_t *) n->backlog[n->backlog_size - y]->private;
-
-		if (!s) {
-			debug("it shouldn't happened - mouse handler error\n");
-			goto end;
-		}
-
-		tmp = saprintf("/query \"%s/%s\"", session_alias_uid(s), strip_spaces(name));
-		command_exec(NULL, s, tmp, 0);
-		xfree(tmp);
-	}
-
-end:
 	return;
 }
 

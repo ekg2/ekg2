@@ -544,6 +544,7 @@ void fstring_free(fstring_t *str)
 
 	xfree(str->str);
 	xfree(str->attr);
+	xfree(str->private);
 	xfree(str);
 }
 
