@@ -280,7 +280,13 @@ char *va_format_string(const char *format, va_list ap)
 			{
 				char *str;
 				p++;
-				str = (char *)args[*p - '1'];
+				if (*p >= '0' && *p <= '9')
+					str = (char *)args[*p - '1'];
+				else if (*p == '}') {
+					p++; p++; continue;
+				} else {
+					p++; continue;
+				}
 				p++;
 				cnt = (char *)p;
 				hm = 0;
@@ -293,7 +299,7 @@ char *va_format_string(const char *format, va_list ap)
 					p++; cnt++;
 				}
 				/* debug(" [%c%c][%d] [%s] ", *p, *cnt, hm, p); */
-				if (!hm) { p=*cnt?(cnt+1):cnt; continue; }
+				if (!hm) { p=*cnt?*(cnt+1)?(cnt+2):(cnt+1):cnt; continue; }
 				p=(cnt+hm+1);
 				/* debug(" [%s]\n"); */
 				*((char *)p)=*cnt;
