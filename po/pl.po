@@ -1766,7 +1766,7 @@ msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
 #: plugins/irc/irc.c:1234
 msgid "%> %Y%2%n has joined %4\n"
-msgstr "%> %Y%2%n do³±czy³ %4\n"
+msgstr "%> %Y%2%n do³±czy³ do %4\n"
 
 #: plugins/irc/irc.c:1235
 msgid "%> %g%2%n has left %4 (%5)\n"
@@ -1880,8 +1880,8 @@ msgid "%> %2 set mode %3 on You\n"
 msgstr "%> %2 ustawia tryb %3 na Tobie\n"
 
 #: plugins/irc/irc.c:1284
-msgid "%) ping/pong %c%2%n\n"
-msgstr "%) ping/pong %c%2%n\n"
+msgid "%) (%1) ping/pong %c%2%n\n"
+msgstr "%) (%1) ping/pong %c%2%n\n"
 
 #: plugins/irc/irc.c:1285
 msgid "%> You are now known as %G%3%n\n"

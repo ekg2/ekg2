@@ -1286,7 +1286,7 @@ static int irc_theme_init()
 	format_add("IRC_MODE_CHAN", _("%> %2/%4 sets mode%5\n"), 1);
 	format_add("IRC_MODE", _("%> %2 set mode %3 on You\n"), 1);
 
-	format_add("IRC_PINGPONG", _("%) ping/pong %c%2%n\n"), 1);
+	format_add("IRC_PINGPONG", _("%) (%1) ping/pong %c%2%n\n"), 1);
 	format_add("IRC_YOUNEWNICK", _("%> You are now known as %G%3%n\n"), 1);
 	format_add("IRC_NEWNICK", _("%> %g%2%n is now known as %G%4%n\n"), 1);
 	
