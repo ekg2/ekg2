@@ -516,6 +516,9 @@ int event_check(const char *session, const char *name, const char *target, const
 	int i;
 	event_t *ev = NULL;
 
+	if (!events)
+		return 1;
+
         if (!(__session = session_find(session)))
 		__session = session_current;
 
