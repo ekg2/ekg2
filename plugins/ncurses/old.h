@@ -13,6 +13,7 @@ int ncurses_screen_width;
 int ncurses_screen_height;
 int ncurses_resize_term;
 
+int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
 #define LINE_MAXLEN 1000		/* rozmiar linii */

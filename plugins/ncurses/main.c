@@ -67,6 +67,19 @@ static int ncurses_statusbar_query(void *data, va_list ap)
 	return 0;
 }
 
+static int ncurses_ui_is_initialized(void *data, va_list ap)
+{
+        int *tmp = va_arg(ap, int *);
+	
+	if (ncurses_initialized)
+		*tmp = 1;
+	else
+		*tmp = 0;	
+
+	return 0;
+}
+
+
 static int ncurses_ui_window_switch(void *data, va_list ap)
 {
 	window_t **w = va_arg(ap, window_t **);
@@ -302,6 +315,7 @@ int ncurses_plugin_init()
 	ncurses_setvar_default();
 	
 	query_connect(&ncurses_plugin, "ui-beep", ncurses_beep, NULL);
+	query_connect(&ncurses_plugin, "ui-is-initialized", ncurses_ui_is_initialized, NULL);
 	query_connect(&ncurses_plugin, "ui-window-switch", ncurses_ui_window_switch, NULL);
 	query_connect(&ncurses_plugin, "ui-window-print", ncurses_ui_window_print, NULL);
 	query_connect(&ncurses_plugin, "ui-window-new", ncurses_ui_window_new, NULL);
@@ -357,12 +371,15 @@ int ncurses_plugin_init()
 	for (l = windows; l; l = l->next)
 		ncurses_window_new(l->data);
 
+	ncurses_initialized = 1;
+
 	return 0;
 }
 
 static int ncurses_plugin_destroy()
 {
 	ncurses_plugin_destroyed = 1;
+	ncurses_initialized = 0;
 
 	watch_remove(&ncurses_plugin, 0, WATCH_READ);
 	if (have_winch_pipe)

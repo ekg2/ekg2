@@ -502,8 +502,14 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 {
 	static string_t line = NULL;
 	char *tmp;
+	int is_UI;
 
 	if (!config_debug)
+		return;
+
+	query_emit(NULL, "ui-is-initialized", &is_UI);
+
+	if (!is_UI)
 		return;
 
 	tmp = vsaprintf(format, ap);
