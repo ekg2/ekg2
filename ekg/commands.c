@@ -1983,6 +1983,9 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	char *cmd = NULL, *tmp, *p = NULL, short_cmd[2] = ".", *last_name = NULL, *last_params = NULL, *line_save = NULL, *line = NULL;
 	command_func_t *last_abbr = NULL;
 	int abbrs = 0;
+        command_func_t *last_abbr_plugins = NULL;
+        int abbrs_plugins = 0;
+
 	list_t l;
 
 	if (!xline)
@@ -2065,14 +2068,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!strncasecmp(c->name + plen, cmd, strlen(cmd))) {
-				abbrs++;
-				last_abbr = c->function;
+				abbrs_plugins++;
+				last_abbr_plugins = c->function;
 				last_name = c->name;
 				last_params = (c->alias) ? "?" : c->params;
 			} else {
-				if (last_abbr && abbrs == 1)
+				if (last_abbr_plugins && abbrs_plugins == 1)
 					break;
-			}
+			} 
 		}
 	}
 
@@ -2095,13 +2098,18 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			if (last_abbr && abbrs == 1)
 				break;
 		}
-	}
+	} 
 
 exact_match:
-	if (last_abbr && abbrs == 1) {
+	if ((last_abbr && abbrs == 1 && !last_abbr_plugins && !abbrs_plugins) || (last_abbr_plugins && abbrs_plugins == 1 && !last_abbr && !abbrs)) {
 		char **par, *tmp;
 		int res, len = strlen(last_params);
 
+		if(last_abbr_plugins)
+			last_abbr = last_abbr_plugins;
+		if(abbrs_plugins)
+			abbrs = abbrs_plugins;
+		
 		if ((tmp = strchr(last_name, ':')))
 			last_name = tmp + 1;
 		

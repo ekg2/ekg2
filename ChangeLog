@@ -15,6 +15,8 @@ zg³osi³ b³±d.
  - list -d dzia³a prawid³owo
  - /list zamiast samych uid'ów pokazuje jeszcze przed nimi nazwy protoko³ów (del)
 - przy wyj¶ciu zapisywane s± jeszcze sesje do sessions (del) 
+- poprawione nieprawid³owe szukanie komend np /con wywo³ywa³o /connect, 
+  mimo tego, ¿e istani³o /conference (del)
 
 // 2004-03-26
 - [gg] zmniejszenie okresu miêdzy pingami do 3 minut (zdz)
