@@ -139,6 +139,7 @@ list_t searches;
 time_t last_save;
 char *config_profile;
 int config_changed;
+int reason_changed;
 
 pid_t speech_pid;
 

@@ -1065,6 +1065,7 @@ void theme_init()
 	format_add("quit", "%> Papa\n", 1);
 	format_add("quit_descr", "%> Papa: %T%1%n%2\n", 1);
 	format_add("config_changed", "Zapisaæ now± konfiguracjê? (tak/nie) ", 1);
+	format_add("quit_keep_reason", "Ustawi³e¶ keep_reason, tak aby zachowywa³ opisy.\nCzy chcesz zachowaæ aktualny opis do pliku (przy nastêpnym uruchomieniu EKG opis ten zostanie przywrócony)? (tak/nie) ", 1);
 	format_add("saved", "%> Zapisano ustawienia\n", 1);
 	format_add("error_saving", "%! Podczas zapisu ustawieñ wyst±pi³ b³±d\n", 1);
 

@@ -125,7 +125,7 @@ int config_save_password = 1;
 char *config_timestamp = NULL;
 int config_display_sent = 1;
 int config_sort_windows = 0;
-int config_keep_reason = 0;
+int config_keep_reason = 1;
 int server_index = 0;
 char *config_audio_device = NULL;
 char *config_speech_app = NULL;
@@ -151,6 +151,8 @@ char *last_search_first_name = NULL;
 char *last_search_last_name = NULL;
 char *last_search_nickname = NULL;
 char *last_search_uid = 0;
+
+int reason_changed = 0;
 
 /*
  * alias_add()

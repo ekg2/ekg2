@@ -436,9 +436,9 @@ int session_write()
 		fprintf(f, "[%s]\n", s->uid);
 		if (s->alias)
 			fprintf(f, "alias=%s\n", s->alias);
-		if (s->status)
+		if (s->status && config_keep_reason != 2)
 			fprintf(f, "status=%s\n", s->status);
-		if (s->descr)
+		if (s->descr && config_keep_reason)
 			fprintf(f, "descr=%s\n", s->descr);
                 if (s->password && config_save_password)
                         fprintf(f, "password=\001%s\n", s->password);

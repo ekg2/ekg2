@@ -10,6 +10,7 @@ zg³osi³ b³±d.
 - poprawka: dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:
  /add gg:1111 ble, nie spowoduje, ¿e /list ble poka¿e nam prawid³owy stan (del)
 - dzia³a poprawnie ustawianie/nieustawianie opisów w protokole GG (del)
+- dzia³aj±ce keep_reason (del)
 
 // 2004-04-08
 - dodane funkcje opakowuj±ce (del)

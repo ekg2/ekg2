@@ -735,8 +735,18 @@ COMMAND(gg_command_connect)
 
 			if (__reason) {
                 		char *tmp = xstrdup(__reason);
-                		gg_iso_to_cp(tmp);
-               			gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
+
+	                        if (tmp && !strcmp(tmp, "-")) {
+        	                        xfree(tmp);
+                	                tmp = NULL;
+                        	}
+				else 
+	                		gg_iso_to_cp(tmp);
+
+          			if (config_keep_reason)
+					session_descr_set(session, __reason);
+				
+				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
                 		xfree(tmp);
         		} else
   			        gg_change_status(g->sess, GG_STATUS_NOT_AVAIL);
@@ -949,6 +959,7 @@ change:
 
 	xfree(descr);
 
+	reason_changed = 1;
 	return 0;
 }
 	

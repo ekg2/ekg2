@@ -850,12 +850,6 @@ void ekg_exit()
 	xfree(last_search_nickname);
 	xfree(config_reason_first);
 
-	if (config_keep_reason) {
-		if (config_keep_reason != 2)
-			array_add(&vars, xstrdup("status"));
-		array_add(&vars, xstrdup("reason"));
-	}
-
 	if (config_windows_save)
 		array_add(&vars, xstrdup("windows_layout"));
 
@@ -909,6 +903,21 @@ void ekg_exit()
 			}
 		} else
 			printf("\n");
+	} else  if (config_keep_reason && reason_changed) {
+                char line[80];
+
+                printf("%s", format_find("quit_keep_reason"));
+                fflush(stdout);
+                if (fgets(line, sizeof(line), stdin)) {
+                        if (line[strlen(line) - 1] == '\n')
+                                line[strlen(line) - 1] = 0;
+                        if (!strcasecmp(line, "tak") || !strcasecmp(line, "yes") || !strcasecmp(line, "t") || !strcasecmp(line, "y")) {
+                                if (session_write())
+                                        printf("Wyst±pi³ b³±d podczas zapisu.\n");
+                        }
+                } else
+                        printf("\n");
+
 	}
 
 	msg_queue_free();

@@ -958,6 +958,7 @@ COMMAND(jabber_command_away)
 
 change:
 	jabber_write_status(session);
+//	reason_changed = 1;
 	
 	return 0;
 }
