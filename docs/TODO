@@ -32,7 +32,8 @@ rozwi±zanie.
 * gg 
   - u¿ywanie serwera proxy (lukasz)
 
-* jabber (implementowaæ w takiej kolejno¶ci!)
+* jabber
+  - resolve SRV first
   - conference support (similar to gg_command_msg() in gg)
   - ignore support 
 
