@@ -315,12 +315,11 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				xmlnode_t *e = xmlnode_find_child(n, "error");
 
 				if (e && e->data) {
-					char *data = jabber_unescape(e->data), *tmp = saprintf("B³±d ³±czenia siê z Jabberem: %s", data);
-					print("generic_error", tmp);
+					char *data = jabber_unescape(e->data);
+					print("conn_failed", data, session_name(s));
 					xfree(data);
-					xfree(tmp);
 				} else
-					print("conn_failed", session_name(s));
+					print("jabber_generic_conn_failed", session_name(s));
 			}
 		}
 
@@ -1328,6 +1327,7 @@ int jabber_plugin_init()
 	format_add("jabber_auth_cancel", "%> (%2) Cofniêto autoryzacjê %1.%n%\n", 1);
 	format_add("jabber_auth_denied", "%> (%2) Odmówiona autoryzacji %1. %n\n", 1);
 	format_add("jabber_auth_probe", "%> (%2) Wys³ano pytanie o obecno¶æ do %1.%n\n", 1);
+	format_add("jabber_generic_conn_failed", "%> (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n", 1);
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);
