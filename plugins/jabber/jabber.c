@@ -246,14 +246,19 @@ void jabber_handle(void *data, xmlnode_t *n)
 				/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
 				if (nbody && (xmlnode_find_child(xitem, "delivered") || xmlnode_find_child(xitem, "displayed")) ) {
 					char *id = jabber_attr(n->atts, "id");
+					const char *our_status = session_status_get(s);
 
 					jabber_write(j, "<message to=\"%s\">", from);
 					jabber_write(j, "<x xmlns=\"jabber:x:event\">");
 
-					if (xmlnode_find_child(xitem, "delivered"))
-						jabber_write(j, "<delivered/>");
-					if (xmlnode_find_child(xitem, "displayed")) 
-						jabber_write(j, "<displayed/>");
+					if (!xstrcmp(our_status, EKG_STATUS_INVISIBLE)) {
+						jabber_write(j, "<offline/>");
+					} else {
+						if (xmlnode_find_child(xitem, "delivered"))
+							jabber_write(j, "<delivered/>");
+						if (xmlnode_find_child(xitem, "displayed")) 
+							jabber_write(j, "<displayed/>");
+					};
 
 					jabber_write(j, "<id>%s</id></x></message>",id);
 				};
