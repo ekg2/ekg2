@@ -483,11 +483,11 @@ COMMAND(cmd_add)
 		goto cleanup;
 	}
 
-	if (((u = userlist_find(session, params[0])) && u->nickname) || ((u = userlist_find(session, params[1])) && u->nickname)) {
+	if (((u = userlist_find(session_current, params[0])) && u->nickname) || ((u = userlist_find(session_current, params[1])) && u->nickname)) {
 		if (!xstrcasecmp(params[1], u->nickname) && !xstrcasecmp(params[0], u->uid))
 			printq("user_exists", params[1]);
 		else
-			printq("user_exists_other", params[1], format_user(session, u->uid));
+			printq("user_exists_other", params[1], format_user(session_current, u->uid));
 
 		result = -1;
 		goto cleanup;
@@ -499,7 +499,7 @@ COMMAND(cmd_add)
 		u->nickname = xstrdup(params[1]);
 	}
 
-	if (u || userlist_add(session, params[0], params[1])) {
+	if (u || userlist_add(session_current, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
 		query_emit(NULL, "userlist-added", &uid, &params[1]);
@@ -520,7 +520,7 @@ COMMAND(cmd_add)
 	}
 
 	if (params[2])
-		cmd_modify("add", &params[1], session, NULL, quiet);
+		cmd_modify("add", &params[1], session_current, NULL, quiet);
 
 cleanup:
 	if (params_free) {
