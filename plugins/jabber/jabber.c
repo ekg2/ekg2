@@ -729,7 +729,7 @@ COMMAND(jabber_command_msg)
 	xfree(subject);
 
 	if (config_display_sent) {
-		char *tmp = saprintf("uid:%s", uid);
+		char *tmp = saprintf("jid:%s", uid);
 		const char *rcpts[2] = { tmp, NULL };
 		message_print(session_uid_get(session), session_uid_get(session), rcpts, params[1], NULL, time(NULL), EKG_MSGCLASS_SENT, NULL);
 		xfree(tmp);

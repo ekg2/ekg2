@@ -695,8 +695,8 @@ int main(int argc, char **argv)
 	else
 		tmp = xstrdup("");
 
-	if (getenv("CONFIG_DIR"))
-		config_dir = saprintf("%s/%s/ekg%s", home_dir, getenv("CONFIG_DIR"), tmp);
+	if (getenv("HOME_ETC"))
+		config_dir = saprintf("%s/ekg%s", getenv("HOME_ETC"), tmp);
 	else
 		config_dir = saprintf("%s/.ekg%s", home_dir, tmp);
 
