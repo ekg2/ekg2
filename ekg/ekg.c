@@ -213,6 +213,7 @@ void ekg_loop()
 
 			if (!config_write(NULL) && !session_write()) {
 				config_changed = 0;
+				reason_changed = 0;
 				print("autosaved");
 			} else
 				print("error_saving");
@@ -838,6 +839,8 @@ int main(int argc, char **argv)
 
 	if (no_config)
                 print("no_config");
+
+	reason_changed = 0;
 
 	/* krêæ imprezê */
 	while (1) {

@@ -1366,6 +1366,7 @@ COMMAND(cmd_save)
 	if (!userlist_write(session) && !config_write(params[0]) && !session_write() && !metacontact_write()) {
 		printq("saved");
 		config_changed = 0;
+		reason_changed = 0;
 	} else {
 		printq("error_saving");
 		return -1;
