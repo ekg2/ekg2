@@ -123,8 +123,10 @@ static int check_mail_update(const char *s, int more)
 	if (new_count == mail_count)
 		return 0;
 
-	last_mail_count = mail_count;
-	mail_count = new_count;
+	if (!more) {
+		last_mail_count = mail_count;
+		mail_count = new_count;
+	}
 
 	if (!more && mail_count && mail_count > last_mail_count) {
 		if (config_check_mail & 4) {
@@ -257,7 +259,7 @@ static int check_mail_mbox()
 
 #ifdef HAVE_UTIMES
 			{
-				struct timeval foo[1];
+				struct timeval foo[2];
 
 				foo[0].tv_sec = st.st_atime;
 				foo[1].tv_sec = st.st_mtime;
