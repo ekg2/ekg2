@@ -497,7 +497,7 @@ COMMAND(gg_command_msg)
 		return 0;
 	}
 
-	if (config_split_messages && xstrlen(params[1]) > 1989) {
+	if (gg_config_split_messages && xstrlen(params[1]) > 1989) {
 		int i, len = xstrlen(params[1]);
 		
 		for (i = 1; i * 1989 <= len; i++) {

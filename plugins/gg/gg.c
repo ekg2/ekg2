@@ -1086,6 +1086,7 @@ int gg_plugin_init()
 	variable_add(&gg_plugin, "dcc_ip", VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
 	variable_add(&gg_plugin, "dcc_limit", VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
 	variable_add(&gg_plugin, "dcc_port", VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
+        variable_add(&gg_plugin, "split_messages", VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);

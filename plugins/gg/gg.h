@@ -18,6 +18,7 @@ char *gg_config_dcc_dir;
 char *gg_config_dcc_ip;
 char *gg_config_dcc_limit;
 int gg_config_dcc_port;
+int gg_config_split_messages;
 
 typedef enum {
 	GG_QUIET_CHANGE = 0x0001

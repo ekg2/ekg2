@@ -51,4 +51,12 @@ display_token
 	dekodowaæ pliki JPEG. wy³±czenie jej spowoduje dzia³anie ekg tak,
 	jakby biblioteki nie by³o, tj. zapisywanie tokenów do pliku.
 
+split_messages
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	zmienna okre¶la co robiæ gdy wiadomo¶æ przekracza maksymaln± d³ugo¶æ
+	wiadomo¶ci. je¿eli 1 to wiadomo¶æ dzielona jest na czê¶ci, je¶li 0
+	to wiadomo¶æ jest wysy³ana niekompletna
+
 $Id$
