@@ -524,18 +524,19 @@ window_t *window_exist(int id)
  */
 void window_move(int first, int second)
 {
-	window_t *w, *w1, *w2;
+	window_t *w1, *w2;
 
 	if (!(w1 = window_exist(first)) || !(w2 = window_exist(second)))
 		return;
 
-	w = xmalloc(sizeof(w));
+        list_remove(&windows, w1, 0);
+	w1->id = second;
 
-	memmove(w, w2, sizeof(w));
-	memmove(w2, w1, sizeof(w));
-	memmove(w1, w, sizeof(w));
+        list_remove(&windows, w2, 0);
+	w2->id = first;
 
-	xfree(w);
+	list_add_sorted(&windows, w1, sizeof(window_t), window_new_compare);	
+        list_add_sorted(&windows, w2, sizeof(window_t), window_new_compare);
 }
 
 

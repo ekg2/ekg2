@@ -582,8 +582,7 @@ window
 	  list                 wy¶wietla listê okien
 	
 	  move <docelowe> [¼ród³owe] przesuwa okno
-				opcja <docelowe> mo¿e przyj±æ
-				warto¶ci ,,left'' i ,,right''
+	opcja <docelowe> mo¿e przyj±æ warto¶ci ,,left'' i ,,right''
 	
 	  new [nazwa]          tworzy nowe okno
 	
