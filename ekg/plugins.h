@@ -54,6 +54,7 @@ int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *);
 int plugin_unregister(plugin_t *);
 plugin_t *plugin_find(const char *name);
+plugin_t *plugin_find_uid(const char *uid);
 int have_plugin_of_class(int);
 
 #define PLUGIN_DEFINE(x, y)\

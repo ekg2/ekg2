@@ -448,7 +448,7 @@ COMMAND(cmd_add)
 		goto cleanup;
 	}
 
-	if (!valid_plugin_uid(plugin_find(session_current->plugin_name), params[0])) {
+	if (!plugin_find_uid(params[0])) {
 		printq("invalid_uid");
 		result = -1;
 		goto cleanup;
@@ -611,83 +611,31 @@ COMMAND(cmd_alias)
 
 COMMAND(cmd_status)
 {
-#if 0
-	userlist_t *u;
-	struct in_addr i;
-	struct tm *t;
-	time_t n;
-	int mqc, now_days;
-	char *tmp, *priv, *r1, *r2, buf[100], buf1[100];
+        struct tm *t;
+        time_t n;
+        int now_days;
+	char buf1[100];
+	session_t *s = NULL;
 
-	if (config_profile)
-		printq("show_status_profile", config_profile);
+	if (!params[0] && session)
+		query_emit(plugin_find_uid(session->uid), "status-show", &session->uid);
+	else if (!(s = session_find(params[0]))) {
+		printq("invalid_uid", params[0]);
+		return -1;
+	} else
+		query_emit(plugin_find_uid(s->uid), "status-show", &s->uid);
 
-	if ((u = userlist_find(config_uin, NULL)) && u->nickname)
-		printq("show_status_uin_nick", itoa(config_uin), u->nickname);
-	else
-		printq("show_status_uin", itoa(config_uin));
+        n = time(NULL);
+        t = localtime(&n);
+        now_days = t->tm_yday;
 
-	n = time(NULL);
-	t = localtime(&n);
-	now_days = t->tm_yday;
-	
-	t = localtime(&last_conn_event);
-	strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t);
+        t = localtime(&ekg_started);
+        strftime(buf1, sizeof(buf1), format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started"), t);
 
-	t = localtime(&ekg_started);
-	strftime(buf1, sizeof(buf1), format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started"), t);
-	
-	if (!sess || sess->state != GG_STATE_CONNECTED) {
-		char *tmp = format_string(format_find("show_status_notavail"));
-
-		printq("show_status_status", tmp, "");
-		printq("show_status_ekg_started_since", buf1);
-
-		if (last_conn_event)
-			printq("show_status_disconnected_since", buf);
-		if ((mqc = msg_queue_count()))
-			printq("show_status_msg_queue", itoa(mqc)); 
-
-		xfree(tmp);
-
-		return 0;
-	}
-
-	if (GG_S_F(config_status))
-		priv = format_string(format_find("show_status_private_on"));
-	else
-		priv = format_string(format_find("show_status_private_off"));
-
-	r1 = xstrmid(config_reason, 0, GG_STATUS_DESCR_MAXSIZE);
-	r2 = xstrmid(config_reason, GG_STATUS_DESCR_MAXSIZE, -1);
-
-	tmp = format_string(format_find(ekg_status_label(config_status, "show_status_")), r1, r2);
-
-	xfree(r1);
-	xfree(r2);
-	
-	i.s_addr = sess->server_addr;
-
-	printq("show_status_status", tmp, priv);
-	printq("show_status_ekg_started_since", buf1);
-	printq("show_status_server", inet_ntoa(i), itoa(sess->port));
-#ifdef __GG_LIBGADU_HAVE_OPENSSL
-	if (sess->ssl)
-		printq("show_status_server_tls", inet_ntoa(i), itoa(sess->port));
-	else
-#endif
-		printq("show_status_server", inet_ntoa(i), itoa(sess->port));
-
-	printq("show_status_connected_since", buf);
-
-	xfree(tmp);
-	xfree(priv);
-#endif
-
+        printq("show_status_ekg_started_since", buf1);
 	return 0;
 }
 
-/* XXX -> zaimplementowac w pluginach */
 COMMAND(cmd_del)
 {
 	userlist_t *u;
@@ -3769,9 +3717,10 @@ void command_init()
 	  "Poprzedzenie opcji parametrem %T-a%n lub %T--all%n spowoduje "
 	  "wy¶wietlenie wszystkich, nawet aktualnie nieaktywnych zmiennych.");
 
-	command_add(NULL, "status", "", cmd_status, 0,
-	  "", "wy¶wietla aktualny stan",
-	  "");
+        command_add(NULL,  "status", "s", cmd_status, 0,
+          " [opcje]", "wy¶wietla aktualny stan",
+	  "\n"
+          "  <uid> wy¶wietla aktualny stan dla konkretnej sesji");
 
 	command_add(NULL, "tabclear", "?", cmd_tabclear, 0,
 	  " [opcje]", "czy¶ci listê nicków do dope³nienia",
@@ -3858,8 +3807,7 @@ void command_init()
 	  " [-s, --set] [<uid>] -<opcja>\n"
 	  "                     usuwa opcjê sesji\n"
 	  " [-w, --sw] <uid> zmienia aktualn± sesjê\n"
-	  "\n"
-	  "Muuu!");
+	  "");
 }
 
 /*

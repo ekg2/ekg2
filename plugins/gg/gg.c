@@ -1,7 +1,8 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
+ * 		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -116,6 +117,93 @@ int gg_session_handle(void *data, va_list ap)
 
 	return 0;
 }
+
+int gg_status_show_handle(void *data, va_list ap)
+{
+        char **uid = va_arg(ap, char**);
+        session_t *s = session_find(*uid);
+        userlist_t *u;
+        struct in_addr i;
+        struct tm *t;
+        time_t n;
+        int mqc, now_days;
+        char *tmp, *priv, *r1, *r2, buf[100];
+	gg_private_t *g;
+
+        if (!s) {
+                debug("Function gg_status_show_handle() called with NULL data\n");
+                return -1;
+        }
+        if (!(g = session_private_get(s)))
+                return -1;
+
+
+        print("show_status_header");
+
+        if (config_profile)
+                print("show_status_profile", config_profile);
+
+        if ((u = userlist_find(s, s->uid)) && u->nickname)
+                print("show_status_uin_nick", s->uid, u->nickname);
+        else
+                print("show_status_uin", s->uid);
+
+        n = time(NULL);
+        t = localtime(&n);
+        now_days = t->tm_yday;
+
+        t = localtime(&last_conn_event);
+        strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t);
+
+        if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
+                char *tmp = format_string(format_find("show_status_notavail"));
+
+                print("show_status_status", tmp, "");
+
+                if (last_conn_event)
+                        print("show_status_disconnected_since", buf);
+                if ((mqc = msg_queue_count()))
+                        print("show_status_msg_queue", itoa(mqc));
+
+                print("show_status_footer");
+
+                xfree(tmp);
+
+                return 0;
+        }
+
+        if (GG_S_F(g->sess->status))
+                priv = format_string(format_find("show_status_private_on"));
+        else
+                priv = format_string(format_find("show_status_private_off")); 
+
+        r1 = xstrmid(s->descr, 0, GG_STATUS_DESCR_MAXSIZE);
+        r2 = xstrmid(s->descr, GG_STATUS_DESCR_MAXSIZE, -1);
+
+        tmp = format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")), r1, r2);
+
+        xfree(r1);
+        xfree(r2);
+
+        i.s_addr = g->sess->server_addr;
+
+        print("show_status_status", tmp, priv);
+#ifdef __GG_LIBGADU_HAVE_OPENSSL
+        if (g->sess->ssl)
+                print("show_status_server_tls", inet_ntoa(i), itoa(g->sess->port));
+        else
+#endif
+                print("show_status_server", inet_ntoa(i), itoa(g->sess->port));
+        print("show_status_connected_since", buf);
+
+        xfree(tmp);
+        xfree(priv);
+
+        print("show_status_footer");
+
+        return 0;
+}
+
 /*
  * str_to_uin()
  *
@@ -1384,6 +1472,7 @@ int gg_plugin_init()
 	query_connect(&gg_plugin, "session-removed", gg_session_handle, (void *)0);
 	query_connect(&gg_plugin, "add-notify", gg_add_notify_handle, NULL);
 	query_connect(&gg_plugin, "remove-notify", gg_remove_notify_handle, NULL);
+	query_connect(&gg_plugin, "status-show", gg_status_show_handle, NULL);
 
 	command_add(&gg_plugin, "gg:connect", "?", gg_command_connect, 0, "", "³±czy siê z serwerem", "");
 	command_add(&gg_plugin, "gg:disconnect", "?", gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "");

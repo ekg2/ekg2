@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ * 		  2004 Piotr Kupisiewicz (deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -33,6 +34,7 @@
 #include "stuff.h"
 #include "vars.h"
 #include "xmalloc.h"
+#include "userlist.h"
 #include "themes.h"
 #include "ltdl.h"
 
@@ -131,6 +133,26 @@ plugin_t *plugin_find(const char *name)
 	}
 
 	return NULL;
+}
+
+/*
+ * plugin_find()
+ *
+ * odnajduje plugin_t odpowiadaj±cy podanemu uid'owie.
+ */
+plugin_t *plugin_find_uid(const char *uid)
+{
+        list_t l;
+
+        for (l = plugins; l; l = l->next) {
+		plugin_t *p = l->data;
+                if (!p || !p->name || !valid_plugin_uid(p, uid))
+                        continue;
+
+                return p;
+        }
+
+        return NULL;
 }
 
 /*

@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ * 		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -34,7 +35,6 @@ typedef struct {
 	/* public: */
 	char *uid;			/* id u¿ytkownika */
 	char *alias;			/* alias sesji */
-	char *plugin_name;		/* nazwa plugin'a obs³uguj±cego aktualn± sesjê */
 	void *priv;			/* dla plugina obs³uguj±cego sesjê */
 	list_t userlist;		/* userlista */
 

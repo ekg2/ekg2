@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -100,7 +101,6 @@ session_t *session_add(const char *uid)
 
 	s.uid = xstrdup(uid);
 	s.status = xstrdup(EKG_STATUS_NA);
-	s.plugin_name = xstrndup(uid, strlen(uid) - strlen(strchr(uid, ':')));
 	
 	sp = list_add_sorted(&sessions, &s, sizeof(s), session_compare);
 
