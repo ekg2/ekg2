@@ -226,6 +226,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 {
 	window_t *w;
 	list_t l;
+	userlist_t *uid = userlist_find(session, target);
 
 	switch (config_make_window) {
 		case 1:
@@ -241,8 +242,8 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 				if (separate && !w->target && w->id > 1) {
 					w->target = xstrdup(target);
 					query_emit(NULL, "ui-window-target-changed", &w);	/* XXX */
-					print("window_id_query_started", itoa(w->id), target);
-					print_window(target, session, 1, "query_started", target);
+					print("window_id_query_started", itoa(w->id), uid->nickname);
+					print_window(target, session, 1, "query_started", uid->nickname);
 					print_window(target, session, 1, "query_started_window", target);
 //					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
 //						event_check(EVENT_QUERY, get_uin(target), target);
@@ -256,9 +257,9 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 					w = window_find("__status");
 				else {
 					w = window_new(target, session, 0);
-					print("window_id_query_started", itoa(w->id), target);
-					print_window(target, session, 1, "query_started", target);
-					print_window(target, session, 1, "query_started_window", target);
+					print("window_id_query_started", itoa(w->id), uid->nickname);
+					print_window(target, session, 1, "query_started", uid->nickname);
+					print_window(target, session, 1, "query_started_window", uid->nickname);
 //					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
 //						event_check(EVENT_QUERY, get_uin(target), target);
 				}
