@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2004 Leszek Krupiñski <leafnode@pld-linux.org>
+ *  (C) Copyright 2004-2005 Leszek Krupiñski <leafnode@pld-linux.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -123,7 +123,6 @@ PyObject * ekg_cmd_debug(PyObject *self, PyObject *pyargs)
 {
         char *str = NULL;
         char *args[9];
-        int quiet = 0;
 
 	if (!PyArg_ParseTuple(pyargs, "s|sssssssss:debug", &str, &args[0], &args[1], &args[2], &args[3], &args[4], &args[5], &args[6], &args[7], &args[8]))
                 return NULL;
@@ -132,6 +131,35 @@ PyObject * ekg_cmd_debug(PyObject *self, PyObject *pyargs)
 
         Py_INCREF(Py_None);
         return Py_None;
+}
+
+/**
+ * ekg_cmd_plugins()
+ *
+ * returns plugin list
+ *
+ */
+
+PyObject * ekg_cmd_plugins(PyObject *self, PyObject *pyargs)
+{
+        PyObject * list;
+        list_t l;
+        int len = 0;
+
+        for (l = plugins; l; l = l->next) {
+                len++;
+        }
+
+        list = PyList_New(len);
+        len = 0;
+
+        for (l = plugins; l; l = l->next) {
+                plugin_t *p = l->data;
+                PyList_SetItem(list, len, PyString_FromString(p->name));
+                len++;
+        }
+        Py_INCREF(list);
+        return list;
 }
 
 /*

@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2004 Leszek Krupiñski <leafnode@pld-linux.org>
+ *  (C) Copyright 2004-2005 Leszek Krupiñski <leafnode@pld-linux.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as

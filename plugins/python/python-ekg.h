@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2004 Leszek Krupiñski <leafnode@pld-linux.org>
+ *  (C) Copyright 2004-2005 Leszek Krupiñski <leafnode@pld-linux.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -27,6 +27,7 @@ PyObject * ekg_cmd_command(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_echo(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_printf(PyObject *self, PyObject *pyargs);
 PyObject * ekg_cmd_debug(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_plugins(PyObject *self, PyObject *args);
 
 /**
  * metody modu³u ekg
@@ -37,6 +38,7 @@ PyMethodDef ekg_methods[] = {
         { "echo", ekg_cmd_echo, METH_VARARGS, "" },
         { "printf", ekg_cmd_printf, METH_VARARGS, "" },
         { "debug", ekg_cmd_debug, METH_VARARGS, "" },
+        { "plugins", ekg_cmd_plugins, METH_VARARGS, "" },
         { NULL, NULL, 0, NULL }
 };
 
