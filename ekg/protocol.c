@@ -490,7 +490,7 @@ int protocol_message(void *data, va_list ap)
 		return -1;
 
 	/* display blinking */
-	if (config_display_blinking && class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
+	if (config_display_blinking && userlist && class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
 		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
 			userlist->blink = 1;
 		else if (!config_make_window) {
