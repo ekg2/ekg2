@@ -472,23 +472,57 @@ void jabber_handle(void *data, xmlnode_t *n)
                                         /* 'id' powinno byc w <iq/> */
                                         if (id && from) {
                                                 const char *ver_client_name, *ver_client_version, *ver_os;
+						char *escaped_client_name;
+						char *escaped_client_version;
 
                                                 if (!(ver_client_name = session_get(s, "ver_client_name")))
                                                         ver_client_name = DEFAULT_CLIENT_NAME;
                                                 if (!(ver_client_version = session_get(s, "ver_client_version")))
                                                         ver_client_version = VERSION;
 
+						escaped_client_name = jabber_escape(ver_client_name);
+						escaped_client_version = jabber_escape(ver_client_version);
+
                                                 jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">", from, id);
-                                                jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>%s</name>", jabber_escape(ver_client_name));
-                                                jabber_write(j, "<version>%s</version>", jabber_escape(ver_client_version));
+                                                jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>%s</name>",
+							escaped_client_name);
+                                                jabber_write(j, "<version>%s</version>",
+							escaped_client_version);
+
+						xfree(escaped_client_name);
+						xfree(escaped_client_version);
 
                                                 if (!(ver_os = session_get(s, "ver_os"))) {
                                                         struct utsname buf;
-                                                        uname(&buf);
 
-                                                        jabber_write(j, "<os>%s %s %s</os>", jabber_escape(buf.sysname), jabber_escape(buf.release), jabber_escape(buf.machine));
-                                                } else
+							
+                                                        if (uname(&buf) == 0) {
+								char *escaped_sysname;
+								char *escaped_release;
+								char *escaped_machine;
+
+								escaped_sysname = jabber_escape(buf.sysname);
+								escaped_release = jabber_escape(buf.release);
+								escaped_machine = jabber_escape(buf.machine);
+
+								jabber_write(j, "<os>%s %s %s</os>", 
+									escaped_sysname,
+									escaped_release,
+									escaped_machine);
+
+								xfree(escaped_sysname);
+								xfree(escaped_release);
+								xfree(escaped_machine);
+							} else {
+								jabber_write(j, "<os>unknown</os>");
+							}
+							
+                                                } else {
+							char *escaped_ver_os;
+							escaped_ver_os = jabber_escape(ver_os);
                                                         jabber_write(j, "<os>%s</os>", jabber_escape(ver_os));
+							xfree(escaped_ver_os);
+						}
 
                                                 jabber_write(j, "</query></iq>");
                                         }
