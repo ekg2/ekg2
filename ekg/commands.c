@@ -3592,7 +3592,7 @@ void command_init()
 	  "pierwszego wykonania.",
 	  possibilities("-a --add -d --del -l --list") );
  
-	command_add(NULL, "beep", params(""), cmd_beep, 0,
+	command_add(NULL, "beep", NULL, cmd_beep, 0,
 	  "", "wydaje d¼wiêk", "", NULL);
 	  
 	command_add(NULL, "bind", params("p ? ?"), cmd_bind, 0,
@@ -3611,7 +3611,7 @@ void command_init()
 	  "Ka¿da inna akcja bêdzie traktowana jako komenda do wykonania.", 
 	  possibilities("-a --add -d --del -l --list -L --list-default") );
   
-	command_add(NULL, "clear", params(""), cmd_window, 0,
+	command_add(NULL, "clear", NULL, cmd_window, 0,
 	  "", "czy¶ci ekran", "", NULL);
   
 	command_add(NULL, "dcc", params("p u f ?"), cmd_dcc, 0,
@@ -3913,7 +3913,7 @@ void command_init()
 	  " <numer/alias>|*", "usuwa z listy ignorowanych osób",
 	  "", NULL);
 	  
-	command_add(NULL, "version", params(""), cmd_version, 0,
+	command_add(NULL, "version", NULL, cmd_version, 0,
 	  "", "wy¶wietla wersjê programu",
 	  "", NULL);
 	  
@@ -3934,18 +3934,18 @@ void command_init()
 	  "  refresh              od¶wie¿a aktualne okno", 
 	  possibilities("active clear kill last list new next prev switch refresh") );
 
-	command_add(NULL, "_watches", params(""), cmd_debug_watches, 0, "", "wy¶wietla listê przegl±danych deskryptorów", "", NULL);
-	command_add(NULL, "_queries", params(""), cmd_debug_queries, 0, "", "wy¶wietla listê zapytañ", "", NULL);
+	command_add(NULL, "_watches", NULL, cmd_debug_watches, 0, "", "wy¶wietla listê przegl±danych deskryptorów", "", NULL);
+	command_add(NULL, "_queries", NULL, cmd_debug_queries, 0, "", "wy¶wietla listê zapytañ", "", NULL);
 	command_add(NULL, "_query", params("? ? ? ? ? ? ? ? ? ?"), cmd_debug_query, 0, " <zapytanie> [parametry...]", "generuje zapytanie", "", NULL);
 
 	command_add(NULL, "_addtab", params("? ?"), cmd_test_addtab, 0, "", "dodaje do listy dope³niania TABem", "", NULL);
 	command_add(NULL, "_deltab", params("? ?"), cmd_test_deltab, 0, "", "usuwa z listy dope³niania TABem", "", NULL);
-	command_add(NULL, "_fds", params(""), cmd_test_fds, 0, "", "wy¶wietla otwarte pliki", "", NULL);
+	command_add(NULL, "_fds", NULL, cmd_test_fds, 0, "", "wy¶wietla otwarte pliki", "", NULL);
 	command_add(NULL, "_msg", params("uUC ?"), cmd_test_send, 0, "", "udaje, ¿e wysy³a wiadomo¶æ", "", NULL);
-	command_add(NULL, "_segv", params(""), cmd_test_segv, 0, "", "wywo³uje naruszenie segmentacji pamiêci", "", NULL);
+	command_add(NULL, "_segv", NULL, cmd_test_segv, 0, "", "wywo³uje naruszenie segmentacji pamiêci", "", NULL);
 	command_add(NULL, "_debug", params("?"), cmd_test_debug, 0, "", "wy¶wietla tekst w oknie debug", "", NULL);
-	command_add(NULL, "_debug_dump", params(""), cmd_test_debug_dump, 0, "", "zrzuca debug do pliku", "", NULL);
-	command_add(NULL, "_event_test", params(""), cmd_test_event_test, 0, "", "iha", "", NULL);
+	command_add(NULL, "_debug_dump", NULL, cmd_test_debug_dump, 0, "", "zrzuca debug do pliku", "", NULL);
+	command_add(NULL, "_event_test", NULL, cmd_test_event_test, 0, "", "iha", "", NULL);
 	command_add(NULL, "session", params("psS psS sS ?"), session_command, 0,
 	  " [opcje]", "zarz±dzanie sesjami",
 	  "\n"

@@ -681,7 +681,7 @@ void jabber_register_commands()
 {
 	command_add(&jabber_plugin, "jid:connect", params("?"), jabber_command_connect, 0, "", "³±czy siê z serwerem", "", NULL);
 	command_add(&jabber_plugin, "jid:disconnect", params("?"), jabber_command_disconnect, 0, " [powód/-]", "roz³±cza siê od serwera", "", NULL);
-	command_add(&jabber_plugin, "jid:reconnect", params(""), jabber_command_reconnect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
+	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
 	command_add(&jabber_plugin, "jid:msg", params("uU ?"), jabber_command_msg, 0, "", "wysy³a pojedyncz± wiadomo¶æ", "\nPoprzedzenie wiadomo¶ci wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje potraktowanie pierwszej linijki jako tematu.", NULL);
 	command_add(&jabber_plugin, "jid:chat", params("uU ?"), jabber_command_msg, 0, "", "wysy³a wiadomo¶æ w ramach rozmowy", "", NULL);
 	command_add(&jabber_plugin, "jid:", params("?"), jabber_command_inline_msg, 0, "", "wysy³a wiadomo¶æ", "", NULL);

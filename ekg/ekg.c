@@ -472,7 +472,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 {
 	static string_t line = NULL;
 	char *tmp;
-	int is_UI;
+	int is_UI = 0;
 
 	if (!config_debug)
 		return;

@@ -969,9 +969,24 @@ void sessions_free()
 
         for (l = sessions; l; l = l->next) {
                 session_t *s = l->data;
+		list_t lp;
 
-                if (s && s->uid)
-                        session_remove_s(s);
+		if (!s)
+			continue;
+
+	        for (lp = s->params; lp; lp = lp->next) {
+        	        session_param_t *v = lp->data;
+	
+	                xfree(v->key);
+	                xfree(v->value);
+	        }
+	
+	        list_destroy(s->params, 1);
+	        xfree(s->alias);
+	        xfree(s->uid);
+	        xfree(s->status);
+        	xfree(s->descr);
+	        xfree(s->password);
         }
 
         list_destroy(sessions, 1);

@@ -1894,7 +1894,7 @@ int gg_plugin_init()
 
 	command_add(&gg_plugin, "gg:connect", params("?"), gg_command_connect, 0, "", "³±czy siê z serwerem", "", NULL);
 	command_add(&gg_plugin, "gg:disconnect", params("?"), gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "", NULL);
-	command_add(&gg_plugin, "gg:reconnect", params(""), gg_command_connect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
+	command_add(&gg_plugin, "gg:reconnect", NULL, gg_command_connect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
 	command_add(&gg_plugin, "gg:msg", params("uUC ?"), gg_command_msg, 0, 
 	   " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", 
 	   "\nMo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub pseudonimy przecinkiem (ale bez odstêpów). Je¶li zamiast odbiorcy podany zostanie znak ,,%T*%n'', to wiadomo¶æ bêdzie wys³ana do wszystkich aktualnych rozmówców.",
@@ -1913,7 +1913,7 @@ int gg_plugin_init()
 
 	command_add(&gg_plugin, "gg:remind", params("?"), gg_command_remind, 0, " [numer]", "wysy³a has³o na skrzynkê pocztow±", "", NULL);
 	command_add(&gg_plugin, "gg:register", params("? ? ?"), gg_command_register, 0, " <email> <has³o> <token>", "rejestruje nowe konto", "Przed rejestracj± nale¿y pobraæ token komend± token.", NULL);
-        command_add(&gg_plugin, "gg:token", params(""), gg_command_token, 0,
+        command_add(&gg_plugin, "gg:token", NULL, gg_command_token, 0,
           "", "pobiera z serwera token",
           "\n"
           "Komenda ta jest niezbêdna do rejestracji i zmiany has³a. Ma na celu "
