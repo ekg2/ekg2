@@ -930,7 +930,10 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	                                if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' ')) {
 						s = string_init("");
 						string_append(s, completions[j]);
-						string_append_c(s, ':');
+						if (config_completion_char && strlen(config_completion_char))
+							string_append_c(s, *config_completion_char);
+						else
+							string_append_c(s, ':');
 						xfree(completions[j]);
 						completions[j] = string_free(s, 0);
 	                                        continue;

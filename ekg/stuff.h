@@ -167,6 +167,7 @@ int config_beep_chat;
 int config_beep_notify;
 int config_beep_mail;
 int config_completion_notify;
+char *config_completion_char;
 int config_contacts;
 char *config_contacts_groups;
 char *config_contacts_options;

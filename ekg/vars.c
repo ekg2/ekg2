@@ -87,6 +87,7 @@ void variable_init()
 	variable_add(NULL, "beep_chat", VAR_BOOL, 1, &config_beep_chat, NULL, NULL, dd_beep);
 	variable_add(NULL, "beep_notify", VAR_BOOL, 1, &config_beep_notify, NULL, NULL, dd_beep);
 	variable_add(NULL, "beep_mail", VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
+	variable_add(NULL, "completion_char", VAR_STR, 1, &config_completion_char, NULL, NULL, NULL);
 	variable_add(NULL, "completion_notify", VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 	variable_add(NULL, "debug", VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
 //	variable_add(NULL, "default_protocol", VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL);
