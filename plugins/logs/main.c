@@ -232,7 +232,7 @@ void logs_handler(void *data, va_list ap)
 	char     **__seq = va_arg(ap, char**), *seq = *__seq;
 	session_t *s = session_find(session); // session pointer
 	const char *log_formats;
-	char *path;
+	char *path, *ttt;
 
 	/* well, 'format' is unused, so silence the warning */
 	format = NULL;
@@ -246,7 +246,7 @@ void logs_handler(void *data, va_list ap)
 	if (!(path = logs_prepare_path(s, uid, rcpts, text, sent, class)))
 		return;
 
-	char *ttt=saprintf("Log do: %s\n", path);
+	ttt = saprintf("Log do: %s\n", path);
 	debug(ttt);
 	xfree(ttt);
 	
