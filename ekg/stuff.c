@@ -1940,7 +1940,7 @@ char *ekg_draw_descr(const char *status)
 		snprintf(file, sizeof(file), "%s.reasons", status);
 	}
 
-	if (!(v = variable_find(var)) || v->type == VAR_STR)
+	if (!(v = variable_find(var)) || v->type != VAR_STR)
 		return NULL;
 
 	value = *(char**)(v->ptr);
