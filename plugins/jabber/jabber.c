@@ -67,7 +67,7 @@ static void jabber_private_init(session_t *s)
 	const char *uid = session_uid_get(s);
 	jabber_private_t *j;
 
-	if (strncasecmp(uid, "jid:", 4))
+	if (xstrncasecmp(uid, "jid:", 4))
 		return;
 
 	if (session_private_get(s))
@@ -89,7 +89,7 @@ static void jabber_private_destroy(session_t *s)
 	jabber_private_t *j = session_private_get(s);
 	const char *uid = session_uid_get(s);
 
-	if (strncasecmp(uid, "jid:", 4) || !j)
+	if (xstrncasecmp(uid, "jid:", 4) || !j)
 		return;
 
 	xfree(j->server);
@@ -150,7 +150,7 @@ int jabber_validate_uid(void *data, va_list ap)
 	if (!*uid)
 		return 0;
 
-	if (!strncasecmp(*uid, "jid:", 4) && strchr(*uid, '@'))
+	if (!xstrncasecmp(*uid, "jid:", 4) && xstrchr(*uid, '@'))
 		(*valid)++;
 	
 	return 0;
@@ -171,12 +171,12 @@ int jabber_write_status(session_t *s)
 	status = session_status_get(s);
 	descr = jabber_escape(session_descr_get(s));
 
-	if (!strcmp(status, EKG_STATUS_AVAIL)) {
+	if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
 		if (descr)
 			jabber_write(j, "<presence><status>%s</status></presence>", descr);
 		else
 			jabber_write(j, "<presence/>");
-	} else if (!strcmp(status, EKG_STATUS_INVISIBLE)) {
+	} else if (!xstrcmp(status, EKG_STATUS_INVISIBLE)) {
 		if (descr)
 			jabber_write(j, "<presence type=\"invisible\"><status>%s</status></presence>", descr);
 		else
@@ -210,7 +210,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 	to = jabber_attr(n->atts, "to");
 	from = jabber_attr(n->atts, "from");
 
-	if (!strcmp(n->name, "message")) {
+	if (!xstrcmp(n->name, "message")) {
 		xmlnode_t *nbody = xmlnode_find_child(n, "body");
 		xmlnode_t *nsubject = xmlnode_find_child(n, "subject");
 		xmlnode_t *xitem = xmlnode_find_child(n, "x");
@@ -234,7 +234,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			ns = jabber_attr(xitem->atts, "xmlns");
 			stamp  = jabber_attr(xitem->atts, "stamp");
 			
-			if (ns && !strncmp(ns, "jabber:x:delay", 14) && stamp) {
+			if (ns && !xstrncmp(ns, "jabber:x:delay", 14) && stamp) {
 				struct tm tm;
 				memset(&tm, 0, sizeof(tm));
 				sscanf(stamp, "%4d%2d%2dT%2d:%2d:%2d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
@@ -243,7 +243,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				sent = mktime(&tm);
 			};
 		
-			if (ns && !strncmp(ns, "jabber:x:event", 14)) {
+			if (ns && !xstrncmp(ns, "jabber:x:event", 14)) {
 				/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
 				if (nbody && (xmlnode_find_child(xitem, "delivered") || xmlnode_find_child(xitem, "displayed")) ) {
 					char *id = jabber_attr(n->atts, "id");
@@ -295,11 +295,11 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 		xfree(seq);
 	}
 
-	if (!strcmp(n->name, "iq") && type) {
-		if (id && !strcmp(id, "auth")) {
+	if (!xstrcmp(n->name, "iq") && type) {
+		if (id && !xstrcmp(id, "auth")) {
 			j->connecting = 0;
 
-			if (!strcmp(type, "result")) {
+			if (!xstrcmp(type, "result")) {
 				print("generic", "Po³±czono siê z Jabberem");
 				session_connected_set(s, 1);
 				session_unidle(s);
@@ -307,7 +307,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				jabber_write_status(s);
 			}
 
-			if (!strcmp(type, "error")) {
+			if (!xstrcmp(type, "error")) {
 				xmlnode_t *e = xmlnode_find_child(n, "error");
 
 				if (e && e->data) {
@@ -320,13 +320,13 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			}
 		}
 
-		if (id && !strncmp(id, "passwd", 6)) {
-			if (!strcmp(type, "result")) {
+		if (id && !xstrncmp(id, "passwd", 6)) {
+			if (!xstrcmp(type, "result")) {
 				session_set(s, "password", session_get(s, "__new_password"));
 				print("passwd");
 			}
 
-			if (!strcmp(type, "error")) {
+			if (!xstrcmp(type, "error")) {
 				xmlnode_t *e = xmlnode_find_child(n, "error");
 				char *reason = (e && e->data) ? jabber_unescape(e->data) : xstrdup("?");
 
@@ -340,13 +340,13 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 		
 		/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 			i typ "result" (przy za¿±daniu rostera od serwera) */	
-		if (type && (!strncmp(type, "result", 6) || !strncmp(type, "set", 3)) ) {
+		if (type && (!xstrncmp(type, "result", 6) || !xstrncmp(type, "set", 3)) ) {
 			xmlnode_t *q = xmlnode_find_child(n, "query");
 			if (q) {
 				const char *ns;
 				ns = jabber_attr(q->atts, "xmlns");
 				
-				if (ns && !strncmp(ns, "jabber:iq:roster", 16)) {
+				if (ns && !xstrncmp(ns, "jabber:iq:roster", 16)) {
 					userlist_t u, *tmp;
 
 					xmlnode_t *item = xmlnode_find_child(q, "item");
@@ -368,7 +368,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 						   sprawdzmy, czy warto dodawac :) */
 						if ((tmp = userlist_find(s, u.uid)) )
 							userlist_remove(s, tmp);
-						if (jabber_attr(item->atts, "subscription") && !strncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
+						if (jabber_attr(item->atts, "subscription") && !xstrncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
 							/* nic nie robimy, bo juz usuniete */
 						} else 
 							list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
@@ -377,14 +377,14 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			} /* if query */
 		} /* type == set */
 	
-		if (type && !strncmp(type, "get", 3)) {
+		if (type && !xstrncmp(type, "get", 3)) {
 			xmlnode_t *q = xmlnode_find_child(n, "query");
 
 			if (q) {
 				const char *ns;
 				ns = jabber_attr(q->atts, "xmlns");
 
-				if (ns && !strncmp(ns, "jabber:iq:version", 17)) {
+				if (ns && !xstrncmp(ns, "jabber:iq:version", 17)) {
 					struct utsname buf;
 
 					uname(&buf);
@@ -403,8 +403,8 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 		} /* type == get */ 
 	} /* if iq */
 
-	if (!strcmp(n->name, "presence")) {
-		if (type && !strcmp(type, "subscribe") && from) {
+	if (!xstrcmp(n->name, "presence")) {
+		if (type && !xstrcmp(type, "subscribe") && from) {
 			char *tmp = saprintf("%s prosi o autoryzacjê dodania. U¿yj "
 				"\"/auth -a %s\" aby zaakceptowaæ, \"/auth -d %s\" "
 				"aby odrzuciæ.", from, from, from);
@@ -414,7 +414,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			return;
 		}
 
-		if (type && !strcmp(type, "unsubscribe") && from) {
+		if (type && !xstrcmp(type, "unsubscribe") && from) {
 			char *tmp = saprintf("%s prosi o autoryzacjê usuniêcia. U¿yj "
 				"\"/auth -c %s\" aby usun±æ.", from, from);
 			print("generic", tmp);
@@ -434,7 +434,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			else
 				status = xstrdup(EKG_STATUS_AVAIL);
 
-			if (!strcmp(status, "na")) {
+			if (!xstrcmp(status, "na")) {
 				xfree(status);
 				status = xstrdup(EKG_STATUS_NA);
 			}
@@ -487,14 +487,14 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 	jabber_private_t *j = session_private_get(data);
 	session_t *s = data;
 	
-	if (!strcmp(name, "stream:stream")) {
+	if (!xstrcmp(name, "stream:stream")) {
 		const char *password = session_get(s, "password");
 		const char *resource = session_get(s, "resource");
 		const char *uid = session_uid_get(s);
 		char *username;
 
 		username = xstrdup(uid + 4);
-		*(strchr(username, '@')) = 0;
+		*(xstrchr(username, '@')) = 0;
 
 		if (!resource)
 			resource = "ekg2";
@@ -671,7 +671,7 @@ COMMAND(jabber_command_connect)
 
 	debug("session->uid = %s\n", session->uid);
 
-	if (!(server = strchr(session->uid, '@'))) {
+	if (!(server = xstrchr(session->uid, '@'))) {
 		printq("generic_error", "Z³y id sesji. Nie ma serwera.");
 		return -1;
 	}
@@ -722,7 +722,7 @@ COMMAND(jabber_command_connect)
 
 	printq("generic", "£±czê siê z Jabberem, czekaj no...");
 
-	if (!strcmp(session_status_get(session), EKG_STATUS_NA))
+	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
 	
 	return 0;
@@ -744,7 +744,7 @@ COMMAND(jabber_command_disconnect)
 	}
 
 	/* je¶li jest /reconnect, nie mieszamy z opisami */
-	if (strcmp(name, "reconnect")) {
+	if (xstrcmp(name, "reconnect")) {
 		if (params[0])
 			descr = xstrdup(params[0]);
 		else
@@ -811,12 +811,12 @@ COMMAND(jabber_command_msg)
 	if (!(uid = get_uid(session, params[0]))) {
 		uid = params[0];
 
-		if (strchr(uid, '@') && strchr(uid, '@') < strchr(uid, '.')) {			
+		if (xstrchr(uid, '@') && xstrchr(uid, '@') < xstrchr(uid, '.')) {
 			printq("user_not_found", params[0]);
 			return -1;
 		}
 	} else {
-		if (strncasecmp(uid, "jid:", 4)) {
+		if (xstrncasecmp(uid, "jid:", 4)) {
 			printq("invalid_session");
 			return -1;
 		}
@@ -825,21 +825,21 @@ COMMAND(jabber_command_msg)
 	}
 	
 	/* czy wiadomo¶æ ma mieæ temat? */
-	if (config_subject_prefix && !strncmp(params[1], config_subject_prefix, strlen(config_subject_prefix))) {
+	if (config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, xstrlen(config_subject_prefix))) {
 		/* obcinamy prefix tematu */
-		subtmp = xstrdup((params[1]+strlen(config_subject_prefix)));
+		subtmp = xstrdup((params[1]+xstrlen(config_subject_prefix)));
 
 		/* je¶li ma wiêcej linijek, zostawiamu tylko pierwsz± */
-		if (strchr(subtmp, 10)) *(strchr(subtmp, 10)) = 0;
+		if (xstrchr(subtmp, 10)) *(xstrchr(subtmp, 10)) = 0;
 
 		subject = jabber_escape(subtmp);
 		/* body of wiadomo¶æ to wszystko po koñcu pierwszej linijki */
-		msg = jabber_escape(strchr(params[1], 10)); 
+		msg = jabber_escape(xstrchr(params[1], 10)); 
 		xfree(subtmp);
 	} else 
 		msg = jabber_escape(params[1]); /* bez tematu */
 
-	jabber_write(j, "<message %sto=\"%s\" id=\"%d\">", (!strcasecmp(name, "chat")) ? "type=\"chat\" " : "", uid, time(NULL));
+	jabber_write(j, "<message %sto=\"%s\" id=\"%d\">", (!xstrcasecmp(name, "chat")) ? "type=\"chat\" " : "", uid, time(NULL));
 
 	if (subject) jabber_write(j, "<subject>%s</subject>", subject);
 
@@ -847,7 +847,7 @@ COMMAND(jabber_command_msg)
 
 	jabber_write(j, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
 		( config_display_ack == 1 || config_display_ack == 2 ? "<delivered/>" : ""),
-		( config_display_ack == 1 || config_display_ack == 3 ? "<offline/>  " : "") );
+		( config_display_ack == 1 || config_display_ack == 3 ? "<offline/>"   : "") );
 	jabber_write(j, "</message>");
 
 	xfree(msg);
@@ -900,53 +900,55 @@ COMMAND(jabber_command_away)
 		return -1;
 	}
 
-	if (params[0])
-		session_descr_set(session, (!strcmp(params[0], "-")) ? NULL : params[0]);
+	if (params[0]) {
+		session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
+		reason_changed = 1;
+	};
 
 	descr = session_descr_get(session);
 
-	if (!strcmp(name, "_autoback")) {
+	if (!xstrcmp(name, "_autoback")) {
 		printq("generic", "Automagicznie wracamy do ¿ywych");
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 		goto change;
 	}
 
-	if (!strcmp(name, "back")) {
+	if (!xstrcmp(name, "back")) {
 		printq("generic", "Wracamy do ¿ywych");
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 		goto change;
 	}
 
-	if (!strcmp(name, "_autoaway")) {
+	if (!xstrcmp(name, "_autoaway")) {
 		printq("generic", "Automagicznie zajêty");
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		goto change;
 	}
 
-	if (!strcmp(name, "away")) {
+	if (!xstrcmp(name, "away")) {
 		printq("generic", "Zajêty");
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
 		goto change;
 	}
 
-	if (!strcmp(name, "dnd")) {
+	if (!xstrcmp(name, "dnd")) {
 		printq("generic", "Nie przeszkadzaæ");
 		session_status_set(session, EKG_STATUS_DND);
 		session_unidle(session);
 		goto change;
 	}
 
-	if (!strcmp(name, "xa")) {
+	if (!xstrcmp(name, "xa")) {
 		printq("generic", "Ekstended e³ej");
 		session_status_set(session, EKG_STATUS_XA);
 		session_unidle(session);
 		goto change;
 	}
 
-	if (!strcmp(name, "invisible")) {
+	if (!xstrcmp(name, "invisible")) {
 		printq("generic", "Niewidoczny");
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		session_unidle(session);
@@ -958,7 +960,6 @@ COMMAND(jabber_command_away)
 
 change:
 	jabber_write_status(session);
-//	reason_changed = 1;
 	
 	return 0;
 }
@@ -984,7 +985,7 @@ COMMAND(jabber_command_passwd)
         }
 
 	username = xstrdup(session->uid + 4);
-	*(strchr(username, '@')) = 0;
+	*(xstrchr(username, '@')) = 0;
 
 	passwd = jabber_escape(params[0]);
 	jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", j->server, j->id++, username, passwd);
@@ -1019,12 +1020,12 @@ COMMAND(jabber_command_auth)
 	if (!(uid = get_uid(session, params[1]))) {
 		uid = (char *) params[1];
 
-		if (!(strchr(uid,'@') && strchr(uid, '@') < strchr(uid, '.'))) {
+		if (!(xstrchr(uid,'@') && xstrchr(uid, '@') < xstrchr(uid, '.'))) {
 			printq("user_not_found", params[1]);
 			return -1;
 		}
 	} else {
-		if (strncasecmp(uid, "jid:", 4)) {
+		if (xstrncasecmp(uid, "jid:", 4)) {
 			printq("invalid_session");
 			return -1;
 		}
@@ -1109,9 +1110,9 @@ COMMAND(jabber_command_add)
         }
 	
 	uid = (char *) params[0]; 
-	if (!strncasecmp(uid, "jid:", 4))
+	if (!xstrncasecmp(uid, "jid:", 4))
 		uid += 4;
-	else if (strchr(uid, ':')) { 
+	else if (xstrchr(uid, ':')) { 
                 printq("invalid_uid");
                 return -1;
 	}
@@ -1153,12 +1154,12 @@ COMMAND(jabber_command_del)
 	if (!(uid = get_uid(session, params[0]))) {
 		uid = (char *) params[0];
 
-		if (!(strchr(uid,'@') && strchr(uid, '@') < strchr(uid, '.'))) {
+		if (!(xstrchr(uid,'@') && xstrchr(uid, '@') < xstrchr(uid, '.'))) {
 			printq("user_not_found", params[0]);
 			return -1;
 		}
 	} else {
-		if (strncasecmp(uid, "jid:", 4)) {
+		if (xstrncasecmp(uid, "jid:", 4)) {
 			printq("invalid_session");
 			return -1;
 		}
