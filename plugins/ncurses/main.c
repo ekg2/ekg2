@@ -89,6 +89,7 @@ static int ncurses_ui_window_switch(void *data, va_list ap)
 
         list_destroy(sorted_all_cache, 1);
         sorted_all_cache = NULL;
+	contacts_index = 0;
 
 	if (n->redraw)
 		ncurses_redraw(*w);

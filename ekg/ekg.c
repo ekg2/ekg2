@@ -930,6 +930,9 @@ void ekg_exit()
 
 		l = l->next;
 
+		if (p->pclass != PLUGIN_UI)
+			continue;
+
 		p->destroy();
 	}
 
@@ -973,6 +976,14 @@ void ekg_exit()
 	        if (session_write())
         	        printf(_("Wyst±pi³ b³±d podczas zapisu.\n"));
 	}
+
+        for (l = plugins; l; ) {
+                plugin_t *p = l->data;
+
+                l = l->next;
+
+                p->destroy();
+        }
 
 	msg_queue_free();
 	alias_free();
