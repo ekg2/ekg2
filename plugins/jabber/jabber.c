@@ -791,7 +791,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 		else
 			debug("[jabber] read %d bytes from resolver. not good\n", res);
 		close(fd);
-		print("generic_error", "Nie znaleziono serwera, sorry");
+		print("conn_failed_resolving");
 		/* no point in reconnecting by jabber_handle_disconnect() */
 		j->connecting = 0;
 		return;
@@ -803,7 +803,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		debug("[jabber] socket() failed: %s\n", strerror(errno));
-		print("generic_error", strerror(errno));
+		print("conn_failed", strerror(errno), session_name(jdh->session));
 		jabber_handle_disconnect(jdh->session);
 		return;
 	}
@@ -814,7 +814,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
 	if (ioctl(fd, FIONBIO, &one) == -1) {
 		debug("[jabber] ioctl() failed: %s\n", strerror(errno));
-		print("generic_error", strerror(errno));
+		print("conn_failed", strerror(errno), session_name(jdh->session));
 		jabber_handle_disconnect(jdh->session);
 		return;
 	}
@@ -837,7 +837,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
 	if (errno != EINPROGRESS && errno != 0) {
 		debug("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
-		print("generic_error", strerror(errno));
+		print("conn_failed", strerror(errno), session_name(jdh->session));
 		jabber_handle_disconnect(jdh->session);
 		return;
 	}
@@ -866,7 +866,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
 		if (ret < 0) {
 			debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
-			print("generic_error", gnutls_strerror(ret));
+			print("conn_failed", gnutls_strerror(ret), session_name(jdh->session));
 			gnutls_deinit(j->ssl_session);
 			gnutls_certificate_free_credentials(j->xcred);
 			jabber_handle_disconnect(jdh->session);
