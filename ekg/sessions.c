@@ -666,7 +666,7 @@ COMMAND(session_command)
 					printq("session_variable_removed", window_current->session->uid, params[1] + 1);
 					return 0;
 				} else {
-					printq("no session! [2]");
+					printq("invalid_session");
 					return -1;
 				}
 			}
@@ -678,7 +678,7 @@ COMMAND(session_command)
 					command_exec(NULL, s, tmp, 0);
 					return 0;
 				} else {
-					printq("no session! [3]");
+					printq("invalid_session");
 					return -1;
 				}
 			}
