@@ -1074,6 +1074,7 @@ COMMAND(cmd_list)
 	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
 	char **argv = NULL, *show_group = NULL, *ip_str, *last_ip_str;
 	const char *tmp;
+	metacontact_t *m = NULL;
 
 	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ co¶ dalej ... */
         if(!session) {
@@ -1130,18 +1131,31 @@ COMMAND(cmd_list)
 			return 0;
 		}
 
-		/* list _metacontact */
-		if (params[0] && params[0][0] == '_') {
-			char *name = xstrdup(params[0] + 1);
-	                metacontact_t *m = metacontact_find(name);
-        	        metacontact_item_t *i;
+	        if (params[0] && (tmp = xstrrchr(params[0], '/'))) {
+        	        char *session_name = xstrndup(params[0], xstrlen(params[0]) - xstrlen(tmp));
 	
-	                if (!m) {
-	                        printq("metacontact_doesnt_exist", name);
+	                if (!session_find(session_name))
+	                        goto next;
+	
+	                tmp++;
+	                session = session_find(session_name);
+	        	if (!(u = userlist_find(session, tmp)) || !u->nickname) {
+	                        printq("user_not_found", tmp);
+				xfree(session_name);
 	                	return -1;
 			}
 	
+	                xfree(session_name);
+	                goto list_user;
+	        }
+
+next:
+		/* list _metacontact */
+		if (params[0] && (m = metacontact_find(params[0]))) {
+        	        metacontact_item_t *i;
+	
 	                i = metacontact_find_prio(m);
+
 	                if (!i) {
 	                        printq("metacontact_item_list_empty");
 				return -1;
@@ -1151,11 +1165,10 @@ COMMAND(cmd_list)
 
 	                status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
-	                printq("metacontact_info_header", name);
+	                printq("metacontact_info_header", params[0]);
 			printq("metacontact_info_status", status);
-	                printq("metacontact_info_footer", name);
+	                printq("metacontact_info_footer", params[0]);
 
-			xfree(name);
 			xfree(status);
 			return 0;
 		}
@@ -1168,7 +1181,7 @@ COMMAND(cmd_list)
 		/* list <alias> [opcje] */
 		if (params[1])
 			return cmd_modify("list", params, session, NULL, quiet);
-
+list_user:
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
                 last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->last_descr);
@@ -1811,6 +1824,8 @@ COMMAND(cmd_query)
 {
 	char **p = xcalloc(3, sizeof(char*));
 	int i, res = 0;
+	metacontact_t *m;
+	char *tmp;
 
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
         if(!session) {
@@ -1855,12 +1870,33 @@ COMMAND(cmd_query)
 		goto query;
 	}
 
-	if (params[0] && params[0][0] == '_') {
-		metacontact_t *m = metacontact_find(params[0] + 1);
+	if (params[0] && (tmp = xstrrchr(params[0], '/'))) {
+		char *session_name = xstrndup(params[0], xstrlen(params[0]) - xstrlen(tmp));
+
+		if (!session_find(session_name))
+			goto next;
+
+		tmp++;
+                session = session_find(session_name);
+		if (!get_uid(session, tmp)) {
+			printq("user_not_found", tmp);
+			xfree(session_name);
+		        res = -1;
+	                goto cleanup;
+		}
+
+		xfree(session_name);
+                xfree(p[0]);
+		p[0] = xstrdup(tmp);
+		goto query;
+	}
+
+next:
+	if (params[0] && (m = metacontact_find(params[0]))) {
 		metacontact_item_t *i;
 		
 		if (!m) {
-			printq("metacontact_doesnt_exist", params[0] + 1);
+			printq("metacontact_doesnt_exist", params[0]);
 			res = -1;
 			goto cleanup;
 		}
@@ -3657,12 +3693,12 @@ void command_init()
 	  "wiadomo¶æ kierowana jest do osoby o najwiêkszym priorytecie.\n"
 	  "\n"
 	  "Funkcje korzystaj±ce z metakontaktów to:\n"
-	  "  query _<nazwa>		   rozpoczyna rozmowê\n"
-	  "  list _<nazwa>		   pokazuje aktualny stan metakontaktu.%n",
+	  "  query <nazwa>		   rozpoczyna rozmowê\n"
+	  "  list <nazwa>		   pokazuje aktualny stan metakontaktu.%n",
           possibilities("-a --add -d --del -i --add-item -r --del-item -l --list"));
 
-	command_add(NULL, "list", params("CpuU ?"), cmd_list, 0,
-          " [alias|@grupa|opcje|_metakontakt]", "zarz±dzanie list± kontaktów",
+	command_add(NULL, "list", params("CpuUs ?"), cmd_list, 0,
+          " [alias|@grupa|opcje|metakontakt|sesja/alias]", "zarz±dzanie list± kontaktów",
 	  "\n"
 	  "Wy¶wietlanie osób o podanym stanie \"list [-a|-A|-i|-B|-d|-m|-o]\":\n"
 	  "  -a, --active           dostêpne\n"
@@ -3750,8 +3786,8 @@ void command_init()
 	  possibilities("load unload run exec list") );
 #endif
 
-	command_add(NULL, "query", params("uUCm ?"), cmd_query, 0,
-	  " <numer/alias/@grupa|_metakontakt> [wiadomo¶æ]", "w³±cza rozmowê",
+	command_add(NULL, "query", params("uUCms ?"), cmd_query, 0,
+	  " <numer|alias|@grupa|metakontakt|sesja/alias|sesja/numer> [wiadomo¶æ]", "w³±cza rozmowê",
 	  "\n"
 	  "Mo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub "
 	  "pseudonimy przecinkiem (ale bez odstêpów). W takim wypadku "

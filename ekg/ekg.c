@@ -929,7 +929,7 @@ void ekg_exit()
                 if (config_write(NULL) || session_write() || metacontact_write())
 	                printf("Wyst±pi³ b³±d podczas zapisu.\n");
 
-	} else  if (config_keep_reason && reason_changed) {
+	} else if (config_keep_reason && reason_changed && config_save_quit == 1) {
                 char line[80];
 
                 printf("%s", format_find("quit_keep_reason"));
@@ -944,6 +944,9 @@ void ekg_exit()
                 } else
                         printf("\n");
 
+	} else if (config_keep_reason && reason_changed && config_save_quit == 2) {
+	        if (session_write())
+        	        printf("Wyst±pi³ b³±d podczas zapisu.\n");
 	}
 
 	msg_queue_free();

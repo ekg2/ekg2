@@ -140,17 +140,33 @@ static void known_uin_generator(const char *text, int len)
 	int done = 0;
 	list_t l;
 	session_t *s;
+	char *tmp = NULL, *session_name = NULL;
+	int tmp_len = 0;
 
 	if (!session_current)
 		return;
 
 	s  = session_current;
 
+	tmp = xstrrchr(text, '/');
+	if (tmp && tmp + 1) {
+		tmp++;
+		tmp_len = xstrlen(tmp);
+		session_name = xstrndup(text, xstrlen(text) - tmp_len - 1);
+		if (session_find(session_name))
+			s = session_find(session_name);
+	}
+
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
 			array_add_check(&completions, xstrdup(u->nickname), 1);
 			done = 1;
+		}
+		
+		if (u->nickname && tmp && !xstrncasecmp(tmp, u->nickname, tmp_len)) { 
+                        array_add_check(&completions, saprintf("%s/%s", session_name, u->nickname), 1);
+                        done = 1;
 		}
 	}
 
@@ -159,7 +175,12 @@ static void known_uin_generator(const char *text, int len)
 
 		if (!done && !xstrncasecmp(text, u->uid, len))
 			array_add_check(&completions, xstrdup(u->uid), 1);
+		if (!done && tmp && !xstrncasecmp(tmp, u->uid, tmp_len)) 
+                        array_add_check(&completions, saprintf("%s/%s", session_name, u->uid), 1);
 	}
+
+	if (session_name)
+		xfree(session_name);
 }
 
 static void conference_generator(const char *text, int len)
