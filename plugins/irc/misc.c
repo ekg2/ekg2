@@ -549,7 +549,7 @@ IRC_COMMAND(irc_c_nick)
 IRC_COMMAND(irc_c_msg)
 {
 	char *t, *dest, *me, *form=NULL, *seq=NULL, *format, **rcpts = NULL;
-	char *head;
+	char *head, *xosd_nick;
 	char *ctcpstripped, *coloured, *pubtous, tous, prefix[2];
 	int class, ekgbeep= EKG_NO_BEEP;
 	int mw = 666, prv=0;
@@ -569,11 +569,12 @@ IRC_COMMAND(irc_c_msg)
 
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
 	me = xstrdup(t?t+1:"");
+	xosd_nick = xstrdup(OMITCOLON(param[0]));
 
 	/* mesg do nas */
 	if (!xstrcmp(j->nick, param[2])) {
 		class = (mw&2)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
-		dest = saprintf("irc:%s", param[0]+1);
+		dest = saprintf("irc:%s", OMITCOLON(param[0]));
 		format = xstrdup(prv?"irc_msg_f_some":"irc_not_f_some");
 		ekgbeep = EKG_TRY_BEEP;
 		xosd_to_us = xosd_is_priv = 1;
@@ -619,7 +620,7 @@ IRC_COMMAND(irc_c_msg)
 010539 pierwszym argumentem by³a sesja
 	*/
 		query_emit(NULL, "irc-protocol-message",
-				&(s->uid), &(param[0][1]), &coloured, 
+				&(s->uid), &(xosd_nick), &coloured, 
 				&xosd_to_us, &xosd_is_priv, &(dest[4]));
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
