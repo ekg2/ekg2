@@ -66,8 +66,11 @@ COMMAND(logsqlite_cmd_last)
 	int count;
 	int count2 = 0;
 	char * gotten_uid;
+	char * nick = NULL;
 
 	if (params[0]) {
+		nick = xstrdup(params[0]);
+		nick = strip_quotes(nick);
 		if (!session) {
 			if (session_current) {
 				session = session_current;
@@ -75,15 +78,14 @@ COMMAND(logsqlite_cmd_last)
 				return -1;
 			}
 		}
-		gotten_uid = get_uid(session, params[0]);
+		gotten_uid = get_uid(session, nick);
 		if (! gotten_uid) {
-			gotten_uid = params[0];
+			gotten_uid = nick;
 		}
 		sprintf(sql, "select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i", gotten_uid, config_logsqlite_last_limit);
 	} else {
 		sprintf(sql, "select uid, nick, ts, body, sent from log_msg order by ts desc limit %i", config_logsqlite_last_limit);
 	}
-	debug("%s\n",sql);
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		count2++;
@@ -97,8 +99,12 @@ COMMAND(logsqlite_cmd_last)
 		}
 	}
 	if (count2 == 0) {
-		printq("last_list_empty");
-	};
+		if (nick) {
+			printq("last_list_empty_nick", nick);
+		} else {
+			printq("last_list_empty");
+		}
+	}
 	sqlite_finalize(vm, &errors);
 	logsqlite_close_db(db);
 	return 0;
