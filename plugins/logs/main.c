@@ -58,10 +58,21 @@
 
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 
+void logs_setvar_default()
+{
+	xfree(config_logs_path);
+	xfree(config_logs_timestamp);
+	config_logs_path = "~/.ekg2/logs/%S/%u";
+	config_logs_timestamp = NULL;
+}
+
 int logs_plugin_init(int prio)
 {
 	plugin_register(&logs_plugin, prio);
 
+        logs_setvar_default();
+
+        query_connect(&logs_plugin, "set-vars-default", logs_setvar_default, NULL);
 	query_connect(&logs_plugin, "protocol-message",	logs_handler, NULL);
 	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);
 	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
