@@ -1092,7 +1092,7 @@ COMMAND(cmd_list)
 	char **argv = NULL, *show_group = NULL, *ip_str;
 	const char *tmp;
 
-	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
+	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ co¶ dalej ... */
 	if(!session)
 		return -1;		
 
@@ -1288,7 +1288,7 @@ COMMAND(cmd_list)
 		if (show_blocked && !strcasecmp(u->status, EKG_STATUS_BLOCKED))
 			show = 1;
 
-		if (show_descr && u->descr)
+		if (show_descr && !u->descr)
 			show = 0;
 
 		if (show_group && !group_member(u, show_group))

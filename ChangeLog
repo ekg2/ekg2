@@ -10,7 +10,10 @@ zg³osi³ b³±d.
 - poprawiona obs³uga zmiennych - dzia³a ju¿ prawid³owo /set etc. (del)
 - poprawione: przy próbie wys³ania pustej lini wy¶wietla:
   "::: Za ma³o parametrów. Spróbuj help chat", a po co ? (del)
-- poprawiona kolejno¶æ zapisywania danych do pliku z configiem (del) 
+- poprawiona kolejno¶æ zapisywania danych do pliku z configiem (del)
+- poprawiona komenda /list:
+ - list -d dzia³a prawid³owo
+ - /list zamiast samych uid'ów pokazuje jeszcze przed nimi nazwy protoko³ów (del) 
 
 // 2004-03-26
 - [gg] zmniejszenie okresu miêdzy pingami do 3 minut (zdz)
