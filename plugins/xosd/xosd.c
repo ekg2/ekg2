@@ -213,32 +213,30 @@ int xosd_plugin_init()
 	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
 	query_connect(&xosd_plugin, "protocol-status", xosd_protocol_status, NULL);
 
-	debug("xosd plugin registered\n");
-
 	return 0;
 }
 
 static int xosd_theme_init()
 {
-	format_add("xosd_new_message_line_1", "%1 przesy³a do nas wiadomo¶æ", 1);
+	format_add("xosd_new_message_line_1", _("new message from %1"), 1);
 	format_add("xosd_new_message_line_2_long", "%1...", 1);
 	format_add("xosd_new_message_line_2", "%1", 1);
 
-	format_add("xosd_status_change_avail", "%1 zmienia stan na dostêpny", 1);
-	format_add("xosd_status_change_away", "%1 zmienia stan na zajêty", 1);
-	format_add("xosd_status_change_dnd", "%1 zmienia stan na nie przeszkadzaæ", 1);
-	format_add("xosd_status_change_xa", "%1 zmienia stan na bardzo zajêty", 1);
-	format_add("xosd_status_change_notavail", "%1 jest niedostêpny", 1);
-	format_add("xosd_status_change_invisible", "%1 zmienia stan na ukryty", 1);
-	format_add("xosd_status_change_chat", "%1 zmienia stan na chêtny do rozmowy", 1);
-	format_add("xosd_status_change_error", "%1: b³±d pobierania statusu", 1);
-	format_add("xosd_status_change_blocking", "%1 blokuje nas", 1);
+	format_add("xosd_status_change_avail", _("%1 is online"), 1);
+	format_add("xosd_status_change_away", _("%1 is away"), 1);
+	format_add("xosd_status_change_dnd", _("%1: do not disturb"), 1);
+	format_add("xosd_status_change_xa", _("%1 is extended away"), 1);
+	format_add("xosd_status_change_notavail", _("%1 is offline"), 1);
+	format_add("xosd_status_change_invisible", _("%1 is invisible"), 1);
+	format_add("xosd_status_change_chat", _("%1 is free for chat"), 1);
+	format_add("xosd_status_change_error", _("%1: status error"), 1);
+	format_add("xosd_status_change_blocking", _("%1 is blocking us"), 1);
 	format_add("xosd_status_change_description", "%1", 1);
 	format_add("xosd_status_change_description_long", "%1...", 1);
-	format_add("xosd_status_change_no_description", "[brak opisu]", 1);
+	format_add("xosd_status_change_no_description", "", 1);
 
-	format_add("xosd_welcome_message_line_1", "ekg2 XOnScreenDisplay plugin", 1);
-	format_add("xosd_welcome_message_line_2", "Author: Adam 'dredzik' Kuczyñski", 1);
+	format_add("xosd_welcome_message_line_1", _("ekg2 XOnScreenDisplay plugin"), 1);
+	format_add("xosd_welcome_message_line_2", _("Author: Adam 'dredzik' Kuczynski"), 1);
 	
 	if (xosd_display_welcome) 
 		xosd_show_message(format_string(format_find("xosd_welcome_message_line_1")), format_string(format_find("xosd_welcome_message_line_2")));
@@ -251,8 +249,6 @@ static int xosd_plugin_destroy()
 	xosd_destroy(osd);
 	
 	plugin_unregister(&xosd_plugin);
-
-	debug("xosd plugin unregistered\n");
 
 	return 0;
 }
