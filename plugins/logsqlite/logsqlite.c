@@ -54,7 +54,7 @@ PLUGIN_DEFINE(logsqlite, PLUGIN_LOG, logsqlite_theme_init);
  */
 COMMAND(logsqlite_cmd_last)
 {
-	sqlite * db = logsqlite_open_db();
+	sqlite * db;
 	char sql[200];
 	char buf[100];
 	const char ** results;
@@ -71,6 +71,14 @@ COMMAND(logsqlite_cmd_last)
 	int i = 0;
 	char * target_window = "__current";
 
+	if (!session) {
+		if (session_current) {
+			session = session_current;
+		} else {
+			return -1;
+		}
+	}
+
 	if (params[i] && match_arg(params[i], 'n', "number", 2)) {
 		i++;
 		if (params[i]) {
@@ -81,16 +89,10 @@ COMMAND(logsqlite_cmd_last)
 			return 0;
 		}
 	}
+
 	if (params[i]) {
 		nick = xstrdup(params[i]);
 		nick = strip_quotes(nick);
-		if (!session) {
-			if (session_current) {
-				session = session_current;
-			} else {
-				return -1;
-			}
-		}
 		gotten_uid = get_uid(session, nick);
 		if (! gotten_uid) {
 			gotten_uid = nick;
@@ -103,6 +105,7 @@ COMMAND(logsqlite_cmd_last)
 			target_window = "__status";
 		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg order by ts desc limit %i) order by ts asc", limit);
 	}
+	db = logsqlite_open_db(session, time(0));
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		count2++;
