@@ -3727,6 +3727,49 @@ COMMAND(cmd_plugin)
 }
 
 /*
+ * changes reason without changing status
+ */
+
+COMMAND(cmd_desc)
+{
+	const char *status, *cmd;
+	char *command;
+	int ret;
+	
+	if (!session)
+		return -1;
+	
+	status = session_status_get(session);
+
+	if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
+		cmd = "back";
+	} else if (!xstrcmp(status, EKG_STATUS_AWAY)) {
+		cmd = "away";
+	} else if (!xstrcmp(status, EKG_STATUS_AUTOAWAY)) {
+		cmd = "away";
+	} else if (!xstrcmp(status, EKG_STATUS_INVISIBLE)) {
+		cmd = "invisible";
+	} else if (!xstrcmp(status, EKG_STATUS_XA)) {
+		cmd = "xa";
+	} else if (!xstrcmp(status, EKG_STATUS_DND)) {
+		cmd = "dnd";
+	} else if (!xstrcmp(status, EKG_STATUS_FREE_FOR_CHAT)) {
+		cmd = "ffc";
+	} else {
+		/* invalid self status? */
+		return -2;
+	};
+	
+	command = saprintf("/%s %s", cmd, (params[0] ? params[0] : ""));
+
+	ret = command_exec(NULL, session, command, 0);
+
+	xfree(command);	
+
+	return ret;
+}
+
+/*
  * command_add_compare()
  *
  * funkcja porównuj±ca nazwy komend, by wystêpowa³y alfabetycznie w li¶cie.
@@ -3965,6 +4008,8 @@ void command_init()
 	command_add(NULL, "_debug_dump", NULL, cmd_test_debug_dump, 0, NULL);
  
 	command_add(NULL, "_event_test", NULL, cmd_test_event_test, 0, NULL);
+
+	command_add(NULL, "_desc", "r", cmd_desc, 0, NULL);
 }
 
 /*

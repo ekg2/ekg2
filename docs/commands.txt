@@ -32,6 +32,10 @@ _deltab
 	krotki opis: usuwa z listy dope³niania TABem
 	
 	
+_desc
+	parametry: [-/opis]
+	krotki opis: zmienia opis nie zmieniaj±c stanu
+
 _event_test
 	parametry: 
 	krotki opis: iha
