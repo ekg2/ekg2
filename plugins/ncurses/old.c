@@ -1858,6 +1858,7 @@ aspell_loop_end:
 }
 #endif
 
+extern volatile int sigint_count;
 /*
  * ncurses_watch_stdin()
  *
@@ -1877,6 +1878,9 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 
 	if (ch == -2)		/* python ka¿e ignorowaæ */
 		return;
+
+	if (ch != 3 && sigint_count)
+		sigint_count = 0;
 
 	if (ch == 0)		/* Ctrl-Space, g³upie to */
 		return;
@@ -2079,6 +2083,9 @@ then:
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
 #endif
 
+		/* this mut be here if we don't want 'timeout' after pressing ^C */
+		if (ch == 3) ncurses_commit();
+		
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
 			mvwaddch(input, 0, ncurses_current->prompt_len, '<');

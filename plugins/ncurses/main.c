@@ -414,6 +414,21 @@ void ncurses_display_transparent_changed(const char *var)
 
 }
 
+volatile int sigint_count = 0;
+void ncurses_sigint_handler(int s)
+{
+	int tmpbuf=3;
+	if (sigint_count++ > 4) {
+		ekg_exit();
+	} else {
+		/* this'll make some shit with ncurses_bind_set
+		 * but I think someone will solve how to do it better
+		 * G */
+		ungetch(3);
+		ncurses_watch_stdin(0, 0, NULL);
+	}
+}
+
 int ncurses_plugin_init()
 {
 	list_t l;
@@ -480,6 +495,7 @@ int ncurses_plugin_init()
 	}
 #endif
 	watch_add(&ncurses_plugin, 0, WATCH_READ, 1, ncurses_watch_stdin, NULL);
+	signal(SIGINT, ncurses_sigint_handler);
 	timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL);
 
 	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;

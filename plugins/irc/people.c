@@ -134,6 +134,8 @@ int irc_add_person_int(irc_private_t *j, char *nick, channel_t *chan)
 		irc_nick_prefix(j, pch_tmp, irccol);
 		list_add(&(person->channels), pch_tmp, 0);
 	} //else { pch_tmp->mode = mode; }
+
+	xfree(modes);
 	return 0;
 }
 
