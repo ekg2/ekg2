@@ -4,7 +4,6 @@
 #define __EKG_DEBUG_H
 
 void debug(const char *format, ...);
-void dupadebug(const char *format, ...);
 
 #endif
 
