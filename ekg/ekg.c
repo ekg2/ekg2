@@ -86,6 +86,8 @@ pid_t speech_pid = 0;
 
 static int stderr_backup = 0;
 
+int no_mouse = 0;
+
 /*
  * ekg_loop()
  *
@@ -528,6 +530,7 @@ struct option ekg_options[] = {
 	{ "user", required_argument, 0, 'u' },
 	{ "version", no_argument, 0, 'v' },
 	{ "no-global-config", no_argument, 0, 'N' },
+	{ "no-mouse", no_argument, 0, 'm' }, 
 	{ 0, 0, 0, 0 }
 };
 
@@ -537,6 +540,7 @@ struct option ekg_options[] = {
 "  -u, --user=NAZWA           korzysta z profilu o podanej nazwie\n" \
 "  -t, --theme=PLIK           ³aduje opis wygl±du z podanego pliku\n" \
 "  -n, --no-auto              nie ³±czy siê automatycznie z serwerem\n" \
+"  -m, --no-mouse	      nie ³aduje obs³ugi myszki\n" \
 "  -a, --away[=OPIS]          zmienia stan na ,,zajêty''\n" \
 "  -b, --back[=OPIS]          zmienia stan na ,,dostêpny''\n" \
 "  -i, --invisible[=OPIS]     zmienia stan na ,,niewidoczny''\n" \
@@ -592,7 +596,7 @@ int main(int argc, char **argv)
 	signal(SIGALRM, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 
-	while ((c = getopt_long(argc, argv, "b::a::i::d::x::f::pnc:hot:u:vN", ekg_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "b::a::i::d::x::f::pnc:hot:u:vNm", ekg_options, NULL)) != -1) {
 		switch (c) {
 			case 'b':
 				if (!optarg && argv[optind] && argv[optind][0] != '-')
@@ -666,6 +670,10 @@ int main(int argc, char **argv)
 
 			case 't':
 				load_theme = optarg;
+				break;
+			
+			case 'm':
+				no_mouse = 1;
 				break;
 
 			case 'v':

@@ -478,7 +478,8 @@ int ncurses_plugin_init()
 
 	ncurses_initialized = 1;
 
-	ncurses_enable_mouse(); 
+	if (!no_mouse)
+		ncurses_enable_mouse(); 
 
 	return 0;
 }

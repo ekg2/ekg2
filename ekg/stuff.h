@@ -146,6 +146,8 @@ int reason_changed;
 
 pid_t speech_pid;
 
+int no_mouse;
+
 int old_stderr;
 int mesg_startup;
 
