@@ -175,6 +175,7 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 	struct stat statbuf;
 	char *dir, *fullname, *slash;
 	int slash_pos = 0;
+	int pos;
 	FILE* fdesc;
 
         debug("[logs] opening log file\n");
@@ -209,7 +210,7 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 	 */
 	if (config_logs_log == 2) {
 		fdesc = fopen(fullname, "r");
-	
+
 		if (fdesc == NULL) {
 			fdesc = fopen(fullname, "a+");
 			fputs("<?xml version=\"1.0\"?>\n", fdesc);
