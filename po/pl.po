@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-11 10:58+0100\n"
+"POT-Creation-Date: 2004-12-27 02:40+0100\n"
 "PO-Revision-Date: 2004-10-23 12:40+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -1822,67 +1822,67 @@ msgstr "%! B³±d podczas wysy³ania obrazka\n"
 msgid "%> Image sent properly\n"
 msgstr "%> Obrazek zosta³ wys³any prawid³owo\n"
 
-#: plugins/irc/irc.c:1238
+#: plugins/irc/irc.c:1368
 msgid "%> %Y%2%n has joined %4\n"
 msgstr "%> %Y%2%n do³±czy³ do %4\n"
 
-#: plugins/irc/irc.c:1239
+#: plugins/irc/irc.c:1369
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr "%> %g%2%n opu¶ci³ %4 (%5)\n"
 
-#: plugins/irc/irc.c:1240
+#: plugins/irc/irc.c:1370
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> %Y%2%n zosta³ wykopany przez %R%3%n z %5 (%6)\n"
 
-#: plugins/irc/irc.c:1241
+#: plugins/irc/irc.c:1371
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> Zosta³e¶ wykopany z %R%3%n przez %5 (%6)\n"
 
-#: plugins/irc/irc.c:1242
+#: plugins/irc/irc.c:1372
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr "%> %Y%2%n opu¶ci³ irc (%4)\n"
 
-#: plugins/irc/irc.c:1243
+#: plugins/irc/irc.c:1373
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr "%> %Y%2%n wys³a³ nieznany CTCP %3: (%4)\n"
 
-#: plugins/irc/irc.c:1244
+#: plugins/irc/irc.c:1374
 msgid "%> %y%e* %2%n %4\n"
 msgstr "%> %y%e* %2%n %4\n"
 
-#: plugins/irc/irc.c:1245
+#: plugins/irc/irc.c:1375
 msgid "%> %Y%e* %2%n %4\n"
 msgstr "%> %Y%e* %2%n %4\n"
 
-#: plugins/irc/irc.c:1246
+#: plugins/irc/irc.c:1376
 msgid "%> %y%h* %2%n %5\n"
 msgstr "%> %y%h* %2%n %5\n"
 
-#: plugins/irc/irc.c:1247
+#: plugins/irc/irc.c:1377
 msgid "%> %Y%h* %2%n %5\n"
 msgstr "%> %Y%h* %2%n %5\n"
 
-#: plugins/irc/irc.c:1248
+#: plugins/irc/irc.c:1378
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5 od %4\n"
 
-#: plugins/irc/irc.c:1249
+#: plugins/irc/irc.c:1379
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5\n"
 
-#: plugins/irc/irc.c:1250
+#: plugins/irc/irc.c:1380
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr "%> %Y%2%n odpowied¼ CTCP od %3: %5\n"
 
-#: plugins/irc/irc.c:1265
+#: plugins/irc/irc.c:1395
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr "%> Nie mo¿na pisaæ na kana³ %T%2%n\n"
 
-#: plugins/irc/irc.c:1270
+#: plugins/irc/irc.c:1400
 msgid "%G||%n away     : %2 - %3\n"
 msgstr "%G||%n zajêty     : %2 - %3\n"
 
-#: plugins/irc/irc.c:1272
+#: plugins/irc/irc.c:1402
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
@@ -1892,60 +1892,60 @@ msgstr ""
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n prawdziwa nazwa : %6\n"
 
-#: plugins/irc/irc.c:1274
+#: plugins/irc/irc.c:1404
 msgid "%G||%n %|channels : %3\n"
 msgstr "%G||%n %|kana³y : %3\n"
 
-#: plugins/irc/irc.c:1275
+#: plugins/irc/irc.c:1405
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr "%G||%n %|serwer   : %3 (%4)\n"
 
-#: plugins/irc/irc.c:1276
+#: plugins/irc/irc.c:1406
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr "%G||%n %|ircOp    : %3\n"
 
-#: plugins/irc/irc.c:1277
+#: plugins/irc/irc.c:1407
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr "%G||%n %|brak aktywno¶ci     : %3 (zalogowany: %4)\n"
 
-#: plugins/irc/irc.c:1278
+#: plugins/irc/irc.c:1408
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr "%G`+===%g-----\n"
 
-#: plugins/irc/irc.c:1280
+#: plugins/irc/irc.c:1410
 msgid "%> Topic %2: %3\n"
 msgstr "%> Temat %2: %3\n"
 
-#: plugins/irc/irc.c:1282
+#: plugins/irc/irc.c:1412
 msgid "%> set by %2 on %4"
 msgstr "%> ustawiony przez %2 dnia %4"
 
-#: plugins/irc/irc.c:1283
+#: plugins/irc/irc.c:1413
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr "%> %T%2%n zmieni³ temat na %T%4%n: %5\n"
 
-#: plugins/irc/irc.c:1284
+#: plugins/irc/irc.c:1414
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr "%> %T%2%n wyczy¶ci³ temat na %T%4%n\n"
 
-#: plugins/irc/irc.c:1285
+#: plugins/irc/irc.c:1415
 msgid "%> %2/%4 sets mode%5\n"
 msgstr "%> %2/%4 ustawia tryb%5\n"
 
-#: plugins/irc/irc.c:1286
+#: plugins/irc/irc.c:1416
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr "%> (%1) %2 ustawia tryb %3 na Tobie\n"
 
-#: plugins/irc/irc.c:1288
+#: plugins/irc/irc.c:1418
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr "%) (%1) ping/pong %c%2%n\n"
 
-#: plugins/irc/irc.c:1289
+#: plugins/irc/irc.c:1419
 msgid "%> You are now known as %G%3%n\n"
 msgstr "%> Jeste¶ teraz znany jako %G%3%n\n"
 
-#: plugins/irc/irc.c:1290
+#: plugins/irc/irc.c:1420
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr "%> %g%2%n jest znany jako %G%4%n\n"
 
@@ -1980,7 +1980,8 @@ msgid "%> (%2) Asked %T%1%n to remove authorisation.\n"
 msgstr "%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %T%1%n.\n"
 
 #: plugins/jabber/jabber.c:996
-msgid "%> (%2) Authorisation for%T%1%n revoked.\n"
+#, fuzzy
+msgid "%> (%2) Authorisation for %T%1%n revoked.\n"
 msgstr "%> (%2) Cofniêto autoryzacjê %T%1%n.\n"
 
 #: plugins/jabber/jabber.c:997
@@ -2007,11 +2008,12 @@ msgstr ""
 "%r%3%n\n"
 
 #: plugins/jabber/jabber.c:1002
+#, fuzzy
 msgid ""
 "%> Jabber ID: %T%1%n\n"
 "%> Client name: %T%2%n\n"
 "%> Client version: %T%3%n\n"
-"%> Operating system:: %T%4%n\n"
+"%> Operating system: %T%4%n\n"
 msgstr ""
 "%> Identyfikator Jabbera: %T%1%n\n"
 "%> Nazwa programu: %T%2%n\n"
@@ -2102,54 +2104,58 @@ msgstr "%> SMS do %T%1%n zosta³ wys³any\n"
 msgid "%! SMS to %T%1%n not sent\n"
 msgstr "%! SMS do %T%1%n nie zosta³ wys³any\n"
 
-#: plugins/xosd/xosd.c:223
+#: plugins/xosd/xosd.c:336
+msgid "new message from %1 at %2"
+msgstr "nowa wiadomo¶æ od %1 na %2"
+
+#: plugins/xosd/xosd.c:337
 msgid "new message from %1"
 msgstr "nowa wiadomo¶æ od %1"
 
-#: plugins/xosd/xosd.c:227
+#: plugins/xosd/xosd.c:340
 msgid "%1 is online,"
 msgstr "%1 jest dostêpn%@1,"
 
-#: plugins/xosd/xosd.c:228
+#: plugins/xosd/xosd.c:341
 msgid "%1 is away,"
 msgstr "%1 jest zajêt%@1,"
 
-#: plugins/xosd/xosd.c:229
+#: plugins/xosd/xosd.c:342
 msgid "%1: do not disturb,"
 msgstr "%1: nie przeszkadzaæ,"
 
-#: plugins/xosd/xosd.c:230
+#: plugins/xosd/xosd.c:343
 msgid "%1 is extended away,"
 msgstr "%1 jest bardzo zajêt%@1,"
 
-#: plugins/xosd/xosd.c:231
+#: plugins/xosd/xosd.c:344
 msgid "%1 is offline,"
 msgstr "%1 jest niedostêpn%@1,"
 
-#: plugins/xosd/xosd.c:232
+#: plugins/xosd/xosd.c:345
 msgid "%1 is invisible,"
 msgstr "%1 jest niewidoczn%@1,"
 
-#: plugins/xosd/xosd.c:233
+#: plugins/xosd/xosd.c:346
 msgid "%1 is free for chat,"
 msgstr "%1 jest chêtn%@1 do rozmowy,"
 
-#: plugins/xosd/xosd.c:234
+#: plugins/xosd/xosd.c:347
 msgid "%1: status error,"
 msgstr "%1: b³±d pobierania statusu,"
 
-#: plugins/xosd/xosd.c:235
+#: plugins/xosd/xosd.c:348
 msgid "%1 is blocking us,"
 msgstr "%1 blokuje nas,"
 
-#: plugins/xosd/xosd.c:238
+#: plugins/xosd/xosd.c:351
 msgid "[no description]"
 msgstr "[brak opisu]"
 
-#: plugins/xosd/xosd.c:240
+#: plugins/xosd/xosd.c:352
 msgid "ekg2 XOnScreenDisplay plugin"
 msgstr "Wtyczka XOnScreenDisplay dla ekg2"
 
-#: plugins/xosd/xosd.c:241
+#: plugins/xosd/xosd.c:353
 msgid "Author: Adam 'dredzik' Kuczynski"
 msgstr "Autor: Adam 'dredzik' Kuczyñski"
