@@ -406,11 +406,7 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 		debug ("[irc] handle_connect(): type %d\n",type);
 		/* debug("%d\n", session_int_get(idta->session, "auto_reconnect")); */
 		/*RECTIMERADD(idta->session);*/
-		/* nasty hack, cause irc_h_d checks this */
-		session_connected_set(idta->session, 1);
-		j->connecting = 0;
-		irc_handle_disconnect(idta->session, "conn_failed_connecting", 
-				EKG_DISCONNECT_FAILURE);
+		/* this is called when we're connected so watch out! */
 		return;
 	}
 	/*RECTIMERDEL;*/
@@ -419,6 +415,10 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		debug("[irc] handle_connect(): SO_ERROR\n");
 		print("generic_error", strerror(res));
+		session_connected_set(idta->session, 1);
+		j->connecting = 0;
+		irc_handle_disconnect(idta->session, "conn_failed_connecting", 
+				EKG_DISCONNECT_FAILURE);
 		return;
 	}
 
