@@ -105,7 +105,7 @@ COMMAND(logsqlite_cmd_last)
 			target_window = "__status";
 		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg order by ts desc limit %i) order by ts asc", limit);
 	}
-	db = logsqlite_open_db(session, time(0));
+	db = logsqlite_prepare_db(session, time(0));
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		count2++;
@@ -185,20 +185,46 @@ char *logsqlite_prepare_path(session_t *session, time_t sent)
 	return path;
 }
 
+
+/*
+ * prepare db handler
+ */
+sqlite * logsqlite_prepare_db(session_t * session, time_t sent)
+{
+	char * path;
+	sqlite * db;
+	if (!(path = logsqlite_prepare_path(session, sent)))
+		return 0;
+	if (!logsqlite_last_path) {
+		db = logsqlite_open_db(session, sent, path);
+		logsqlite_last_path = xstrdup(path);
+		logsqlite_current_db = db;
+	} else if (!xstrcmp(path, logsqlite_last_path)) {
+		db = logsqlite_current_db;
+		debug("[logsqlite] keeping old db\n");
+	} else {
+		logsqlite_close_db(logsqlite_current_db);
+		db = logsqlite_open_db(session, sent, path);
+		logsqlite_current_db = db;
+		xfree(logsqlite_last_path);
+		logsqlite_last_path = xstrdup(path);
+	}
+	xfree(path);
+	return db;
+}
+
 /*
  * open db
  */
-sqlite * logsqlite_open_db(session_t * session, time_t sent)
+sqlite * logsqlite_open_db(session_t * session, time_t sent, char * path)
 {
 	FILE * testFile;
 	struct stat statbuf;
-	char * path, * slash, * dir;
+	char * slash, * dir;
 	sqlite * db;
 	char * errormsg = NULL;
 	int makedir = 1, slash_pos = 0;
 
-	if (!(path = logsqlite_prepare_path(session, sent)))
-		return 0;
 
 	while (makedir) {
 		if (!(slash = xstrchr(path + slash_pos, '/'))) {
@@ -235,7 +261,6 @@ sqlite * logsqlite_open_db(session_t * session, time_t sent)
 	if (!db) {
 		debug("[logsqlite] error opening database - %s\n", *errormsg);
 		print("logsqlite_open_error", errormsg);
-		xfree(path);
 		return 0;
 	}
 	return db;
@@ -278,7 +303,7 @@ int logsqlite_msg_handler(void *data, va_list ap)
 	if (!session)
 		return 0;
 
-	db = logsqlite_open_db(s, sent);
+	db = logsqlite_prepare_db(s, sent);
 	if (!db) {
 		xfree(type);
 		return 0;
@@ -375,7 +400,7 @@ int logsqlite_status_handler(void *data, va_list ap)
 	if (!session)
 		return 0;
 
-	db = logsqlite_open_db(s, time(0));
+	db = logsqlite_prepare_db(s, time(0));
 	if (!db) {
 		return 0;
 	}
@@ -417,6 +442,11 @@ int logsqlite_theme_init()
 
 static int logsqlite_plugin_destroy()
 {
+
+	if (logsqlite_current_db) {
+		logsqlite_close_db(logsqlite_current_db);
+	}
+
 	plugin_unregister(&logsqlite_plugin);
 
 	debug("[logsqlite] plugin unregistered\n");

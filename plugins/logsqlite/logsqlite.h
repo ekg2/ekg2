@@ -28,7 +28,8 @@ char *logsqlite_prepare_path();
 int logsqlite_msg_handler(void *data, va_list ap);
 int logsqlite_status_handler(void *data, va_list ap);
 int logsqlite_theme_init();
-sqlite * logsqlite_open_db();
+sqlite * logsqlite_prepare_db(session_t * session, time_t sent);
+sqlite * logsqlite_open_db(session_t * session, time_t sent, char * path);
 void logsqlite_close_db(sqlite * db);
 void logsqlite_setvar_default();
 
@@ -40,5 +41,7 @@ int config_logsqlite_log_ignored = 0;
 int config_logsqlite_log_status = 0;
 int config_logsqlite_remind_number = 0;
 char * config_logsqlite_path;
+char * logsqlite_last_path;
+sqlite * logsqlite_current_db;
 
 #endif
