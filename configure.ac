@@ -2,7 +2,7 @@ dnl $Id$
 
 AC_INIT(ekg/ekg.c)
 AC_PREREQ(2.50)
-AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_HEADERS(ekg2-config.h)
 
 AM_INIT_AUTOMAKE(ekg2, CVS)
 
@@ -89,7 +89,7 @@ dnl
 AC_ARG_WITH(pthread,
   [  --with-pthread          Use pthread in resolver])
 
-if test "x$without_pthread" != "xno"; then
+if test "x$with_pthread" != "xno"; then
         ACX_PTHREAD(
         [
                 dnl workaround dla pkconfiga
