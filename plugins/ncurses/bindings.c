@@ -1091,8 +1091,8 @@ void ncurses_binding_default()
 	ncurses_binding_add("F4", "next-contacts-group", 1, 1);
 	ncurses_binding_add("F12", "/window switch 0", 1, 1);
 	ncurses_binding_add("F11", "ui-ncurses-debug-toggle", 1, 1);
-	ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1);
-	ncurses_binding_add("Ctrl-Up", "backward-contacts-page", 1, 1);
+	/* ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1); 
+	ncurses_binding_add("Ctrl-Up", "backward-contacts-page", 1, 1); */
 }
 
 void ncurses_binding_init()
