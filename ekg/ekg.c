@@ -479,8 +479,10 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
 	query_emit(NULL, "ui-is-initialized", &is_UI);
 
-	if (!is_UI)
+	if (!is_UI) {
+		printf(format, ap);
 		return;
+	}
 
 	tmp = vsaprintf(format, ap);
 
@@ -715,6 +717,15 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses", 1);
 #endif
 
+        if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
+#ifdef HAVE_EXPAT
+                plugin_load("jabber", 1);
+#endif
+#ifdef HAVE_LIBGADU
+                plugin_load("gg", 1);
+#endif
+	}
+
 	config_read_later(NULL);
 
 	/* je¶li ma byæ theme, niech bêdzie theme */
@@ -753,15 +764,6 @@ int main(int argc, char **argv)
 	protocol_init();
 	events_init();
 	metacontact_init();
-
-	if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
-#ifdef HAVE_EXPAT
-		plugin_load("jabber", 1);
-#endif
-#ifdef HAVE_LIBGADU
-		plugin_load("gg", 1);
-#endif
-	}
 
 	/* it has to be done after plugins are loaded, either we wouldn't know if we are
 	 * supporting some protocol in current build */

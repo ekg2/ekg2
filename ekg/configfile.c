@@ -94,8 +94,20 @@ int config_read_later(const char *filename)
 
                 *foo++ = 0;
 
+                if (!xstrcasecmp(buf, "set")) {
+                        char *bar;
 
-		if (!xstrcasecmp(buf, "bind")) {
+                        if (!(bar = xstrchr(foo, ' ')))
+                                ret = variable_set(foo, NULL, 0);
+                        else {
+                                *bar++ = 0;
+                                ret = variable_set(foo, bar, 0);
+                        }
+
+                        if (ret)
+                                debug("  unknown variable %s\n", foo);
+
+		} else if (!xstrcasecmp(buf, "bind")) {
                         char **pms = array_make(foo, " \t", 2, 1, 0);
 
                         if (array_count(pms) == 2) {
@@ -108,7 +120,13 @@ int config_read_later(const char *filename)
                         }
 
                         array_free(pms);
+                } else {
+                        ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
+
+                        if (ret) 
+                                debug("  unknown variable %s\n", buf);
                 }
+
                 if (!ret)
                         good_file = 1;
 
@@ -179,20 +197,7 @@ int config_read(const char *filename)
 
 		*foo++ = 0;
 
-		if (!xstrcasecmp(buf, "set")) {
-			char *bar;
-
-			if (!(bar = xstrchr(foo, ' ')))
-				ret = variable_set(foo, NULL, 1);
-			else {
-				*bar++ = 0;
-				ret = variable_set(foo, bar, 1);
-			}
-
-			if (ret)
-				debug("  unknown variable %s\n", foo);
-		
-		} else if (!xstrcasecmp(buf, "alias")) {
+		if (!xstrcasecmp(buf, "alias")) {
 			debug("  alias %s\n", foo);
 			ret = alias_add(foo, 1, 1);
 		
@@ -255,11 +260,6 @@ int config_read(const char *filename)
 				array_free(p);
 		} else if (!xstrcasecmp(buf, "plugin")) {
 			plugin_load(foo, 1);
-                } else {
-			ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 1);
-
-			if (ret)
-				debug("  unknown variable %s\n", buf);
 		}
 
 		if (!ret)

@@ -347,10 +347,6 @@ int variable_remove(plugin_t *plugin, const char *name)
 				v->ptr = tmp;
 			}
 
-			tmp = saprintf("%s:%s", plugin->name, v->name);
-			xfree(v->name);
-			v->name = tmp;
-			v->name_hash = variable_hash(v->name);
 			v->type = VAR_FOREIGN;
 
 			return 0;
