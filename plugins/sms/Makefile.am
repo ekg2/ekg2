@@ -1,14 +1,10 @@
-EXTRA_DIST = vars.txt commands.txt
+EXTRA_DIST = 
 
-lib_LTLIBRARIES = sms.la
-sms_la_SOURCES = sms.c
-sms_la_LDFLAGS = -module -avoid-version
-sms_la_CPPFLAGS = $(LTDLINCL)
+lib_LTLIBRARIES = xosd.la
+xosd_la_SOURCES = xosd.c
+xosd_la_LDFLAGS = -module -avoid-version
+xosdla_LIBADD = $(LIBXOSD_LIBS)
+xosd_la_CPPFLAGS = $(LIBXOSD_CPPFLAGS) $(LTDLINCL)
 
 libdir = $(plugindir)
-
-install-data-am:
-	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/sms/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/sms/vars.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/sms/commands.txt
 
