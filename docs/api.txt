@@ -2,5 +2,5 @@
 
 Dokumentacja API dostêpna jest na stronie domowej projektu:
 http://www.ekg2.org/doxygen/
-
+	
 $Id$
