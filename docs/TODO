@@ -14,7 +14,6 @@ rozwi±zanie.
   - nie dzia³±j±ce list -d dla jabber'a (del)
   - przy make_window == 2 i po "¶wie¿ym" otwarciu gg, przy pobieraniu wiadomo¶ci
     "le¿±cych" na serwerze nowe okna nie s± tworzone (del)
-  - kodowanie hase³ w ~/.ekg/sessions
   - po roz³±czeniu z serwerem nie jest aktualizowania lista kontaktów (salvador)
   - wykrywanie niewidocznych jako opcja (wielu)
   - /add gg:numer nick dodaje do userlisty biezacej sesji (np. do sesji
