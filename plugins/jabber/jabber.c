@@ -297,9 +297,10 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 				u.status = xstrdup(EKG_STATUS_NA);
 				//XXX grupy
-				
-				//userlist_replace(s, &u);
-			 	list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
+				if (userlist_find(s,u.uid)) 
+					userlist_replace(s, &u);
+			 	else 
+					list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
 			};
 			
 		}
