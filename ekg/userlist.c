@@ -574,6 +574,32 @@ char *get_uid_all(const char *text)
         return NULL;
 }
 
+/* 
+ * get_nickname()
+ *
+ * if given text is nickname it returns the same, if it is 
+ * an uid it returns its nickname (if exists), if there is 
+ * no nickname it returns uid, else if contacts doesnt exist
+ * it returns text if it is a correct uid, else NULL
+ */
+char *get_nickname(session_t *session, const char *text)
+{
+        userlist_t *u;
+
+        u = userlist_find(session, text);
+
+        if (u && u->nickname)
+                return u->nickname;
+
+	if (u && u->uid)
+		return u->uid;
+
+	if (valid_uid(text))
+	        return (char *)text;
+
+        return NULL;
+}
+
 
 /* 
  * check_uid_nick()

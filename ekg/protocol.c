@@ -287,6 +287,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 {
 	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text);
 	const char *target = sender, *user;
+	session_t *s = session_find(session);
 
 	switch (class) {
 		case EKG_MSGCLASS_SENT:
@@ -408,10 +409,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
 			play_sound(config_sound_sysmsg_file);
 	
-
-	user = (class != EKG_MSGCLASS_SENT) ? format_user(session_find(session), sender) : session_format_n(sender);
 	
-	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT), class_str, user, timestamp, text);
+	user = (class != EKG_MSGCLASS_SENT) ? format_user(s, sender) : session_format_n(sender);
+
+	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT), class_str, user, timestamp, text, session_alias_uid(s), get_nickname(s, sender));
 	xfree(t);
 	return xstrdup(target);
 }
