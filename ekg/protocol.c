@@ -213,7 +213,7 @@ int protocol_status(void *data, va_list ap)
 
 	/* daj znaæ d¼wiêkiem... */
 	if (config_beep && config_beep_notify)
-		query_emit(NULL, "beep");
+		query_emit(NULL, "ui-beep");
 
 	/* ...i muzyczk± */
 	if (config_sound_notify_file)
@@ -384,7 +384,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (class == EKG_MSGCLASS_CHAT) {
 
 		if (config_beep && config_beep_chat)
-			query_emit(NULL, "beep");
+			query_emit(NULL, "ui-beep");
 	
 		if (config_sound_chat_file) 
 			play_sound(config_sound_chat_file);
@@ -392,7 +392,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_MESSAGE) {
 
 		if (config_beep && config_beep_msg)
-			query_emit(NULL, "beep");
+			query_emit(NULL, "ui-beep");
 		if (config_sound_msg_file)
 			play_sound(config_sound_chat_file);
 
