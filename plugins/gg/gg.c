@@ -672,6 +672,22 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 }
 
 /*
+ * gg_reconnect_handler()
+ *
+ * obs³uga powtórnego po³±czenia
+ */
+
+void gg_reconnect_handler(int type, void *data)
+{
+	session_t* s = session_find((char*) data);
+
+	if (!s || session_connected_get(s) == 1)
+		return;
+
+	command_exec(NULL, s, xstrdup("/connect"), 0);
+}
+
+/*
  * gg_session_handler()
  *
  * obs³uga zdarzeñ przy po³±czeniu gg.
@@ -708,6 +724,7 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 		char *__session = xstrdup(session_uid_get((session_t*) data));
 		char *__reason = NULL;
 		int __type = EKG_DISCONNECT_NETWORK;
+		int reconnect_delay;
 
 		session_connected_set((session_t*) data, 0);
 		
@@ -718,6 +735,10 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 
 		gg_free_session(g->sess);
 		g->sess = NULL;
+		
+		reconnect_delay = session_int_get((session_t*) data, "auto_reconnect");
+		if (reconnect_delay)
+			timer_add(&gg_plugin, "reconnect", reconnect_delay, 0, gg_reconnect_handler, xstrdup(((session_t*)data)->uid));
 
 		return;
 	}

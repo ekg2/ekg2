@@ -48,6 +48,8 @@ void jabber_handle(session_t *s, xmlnode_t *n);
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
 
+void jabber_reconnect_handler(int type, void *data);
+
 #ifdef __GNU__
 int jabber_write(jabber_private_t *j, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 #else

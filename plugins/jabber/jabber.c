@@ -455,6 +455,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 static void jabber_handle_disconnect(session_t *s)
 {
 	jabber_private_t *j = jabber_private(s);
+	int reconnect_delay;
 
 	if (!j)
 		return;
@@ -474,6 +475,22 @@ static void jabber_handle_disconnect(session_t *s)
 	j->parser = NULL;
 	close(j->fd);
 	j->fd = -1;
+
+	reconnect_delay = session_int_get(s, "auto_reconnect");
+	if (reconnect_delay) 
+		timer_add(&jabber_plugin, "reconnect", reconnect_delay, 0, jabber_reconnect_handler, xstrdup(s->uid));
+
+
+}
+
+void jabber_reconnect_handler(int type, void *data)
+{
+	session_t *s = session_find((char*) data);
+
+	if (!s || session_connected_get(s) == 1)
+		return;
+
+	command_exec(NULL, s, xstrdup("/connect"), 0);
 }
 
 static void jabber_handle_start(void *data, const char *name, const char **atts)
