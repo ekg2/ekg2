@@ -171,6 +171,45 @@ int session_remove(const char *uid)
 	return 0;
 }
 
+/*
+ * session_remove()
+ *
+ * usuwa sesjê.
+ *
+ * 0/-1
+ */
+int session_remove_s(session_t *s)
+{
+        char *tmp;
+	int i;
+
+	if (!s)
+		return -1;
+
+        if (s->connected)
+                command_exec(NULL, s, saprintf("/disconnect %s", s->uid), 1);
+
+        tmp = xstrdup(s->uid);
+        query_emit(NULL, "session-removed", &tmp);
+        xfree(tmp);
+
+        for (i = 0; s->params && s->params[i]; i++) {
+                xfree(s->params[i]->key);
+                xfree(s->params[i]->value);
+        }
+
+        xfree(s->params);
+        xfree(s->alias);
+        xfree(s->uid);
+        xfree(s->status);
+        xfree(s->descr);
+        xfree(s->password);
+
+        list_remove(&sessions, s, 1);
+
+        return 0;
+}
+
 PROPERTY_STRING_GET(session, status);
 
 int session_status_set(session_t *s, const char *status)

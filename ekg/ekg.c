@@ -889,7 +889,7 @@ void ekg_exit()
 
 	list_destroy(watches, 0);
 
-	if (config_changed && !config_speech_app) {
+	if (config_changed && !config_speech_app && config_save_quit == 1) {
 		char line[80];
 
 		printf("%s", format_find("config_changed"));
@@ -903,6 +903,10 @@ void ekg_exit()
 			}
 		} else
 			printf("\n");
+	} else if (config_save_quit == 2) {
+                if (config_write(NULL) || session_write())
+	                printf("Wyst±pi³ b³±d podczas zapisu.\n");
+
 	} else  if (config_keep_reason && reason_changed) {
                 char line[80];
 
@@ -923,6 +927,7 @@ void ekg_exit()
 	msg_queue_free();
 	alias_free();
 	conference_free();
+	sessions_free();
 /*	userlist_free(); -- powiedzmy, ze to odpowiedzialno¶æ pluginow */
 	theme_free();
 	variable_free();

@@ -519,6 +519,15 @@ save_password
 	ta mo¿e przydaæ siê, gdy boimy siê administratora przegl±daj±cego
 	pliki u¿ytkowników.
 
+save_quit
+        typ: liczba 
+        domy¶lna warto¶æ: 1
+	
+	okre¶la czy po ewentualnych zmianach przy wyj¶ciu ma pojawiaæ siê
+	pytanie o zapisanie konfiguracji. je¿eli 0 to konfiguracja nie jest
+	zapisywana, je¿eli 1 to pojawia siê pytanie, je¿eli 2 to konfiguracja
+	zapisana jest bez pytania 
+
 server
 	typ: tekst
 	domy¶lna warto¶æ: brak

@@ -121,6 +121,7 @@ int config_make_window = 2;
 char *config_tab_command = NULL;
 int config_ctrld_quits = 1;
 int config_save_password = 1;
+int config_save_quit = 1;
 char *config_timestamp = NULL;
 int config_display_sent = 1;
 int config_sort_windows = 0;
@@ -1328,6 +1329,29 @@ char *read_file(FILE *f)
 
 	return res;
 }
+
+/* sessions_free()
+ * 
+ * zwalnia wszystkie dostêpne sesje 
+ */
+void sessions_free()
+{
+        list_t l;
+
+        if (!sessions)
+                return;
+
+        for (l = sessions; l; l = l->next) {
+                session_t *s = l->data;
+	
+		if (s && s->uid)	
+			session_remove_s(s);
+        }
+
+        list_destroy(sessions, 1);
+        sessions = NULL;
+}
+
 
 /*
  * timestamp()

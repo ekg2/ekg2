@@ -106,6 +106,7 @@ int session_unidle(session_t *s);
 
 session_t *session_add(const char *uid);
 int session_remove(const char *uid);
+int session_remove_s(session_t *s);
 
 int session_read();
 int session_write();

@@ -123,6 +123,7 @@ void variable_init()
 	variable_add(NULL, "quit_reason", VAR_STR, 1, &config_quit_reason, NULL, NULL, NULL);
 	variable_add(NULL, "query_commands", VAR_BOOL, 1, &config_query_commands, NULL, NULL, NULL);
 	variable_add(NULL, "save_password", VAR_BOOL, 1, &config_save_password, NULL, NULL, NULL);
+	variable_add(NULL, "save_quit", VAR_INT, 1, &config_save_quit, NULL, NULL, NULL);
 	variable_add(NULL, "sort_windows", VAR_BOOL, 1, &config_sort_windows, NULL, NULL, NULL);
 	variable_add(NULL, "sound_msg_file", VAR_STR, 1, &config_sound_msg_file, NULL, NULL, dd_sound);
 	variable_add(NULL, "sound_chat_file", VAR_STR, 1, &config_sound_chat_file, NULL, NULL, dd_sound);

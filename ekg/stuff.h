@@ -200,6 +200,7 @@ char *config_quit_reason;
 int config_random_reason;
 int config_reason_limit;
 int config_save_password;
+int config_save_quit;
 char *config_server;
 int config_server_save;
 int config_sort_windows;
@@ -304,6 +305,8 @@ int play_sound(const char *sound_path);
 const char *prepare_path(const char *filename, int do_mkdir);
 char *random_line(const char *path);
 char *read_file(FILE *f);
+
+void sessions_free();
 
 const char *timestamp(const char *format);
 void unidle();
