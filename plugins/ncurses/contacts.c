@@ -201,7 +201,8 @@ void ncurses_contacts_changed(const char *name)
 	window_t *w = NULL;
 	list_t l;
 
-	config_contacts = 1;
+	if (!xstrcasecmp(name, "ncurses:contacts_size"))
+		config_contacts = 1;
 
 	if (config_contacts_size < 0) 
 		config_contacts_size = 0;
