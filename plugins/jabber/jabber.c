@@ -698,8 +698,12 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 
 #ifdef HAVE_GNUTLS
 	if (j->using_ssl) {
-		if ((len = gnutls_record_recv(j->ssl_session, buf, 4095))<1) {
-			print("generic_error", strerror(errno));
+		do {
+			len = gnutls_record_recv(j->ssl_session, buf, 4095);
+		} while ((len == GNUTLS_E_INTERRUPTED) || (len == GNUTLS_E_AGAIN));
+		
+		if (len < 0) {
+			print("generic_error", gnutls_strerror(len));
 			goto fail;
 		}
 	} else
@@ -838,7 +842,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 #ifdef HAVE_GNUTLS
 	j->using_ssl = 0;
 	if (use_ssl) {
-		int ret, retrycount = 65535; // insane
+		int ret;
 		gnutls_certificate_allocate_credentials(&(j->xcred));
 		/* XXX - ~/.ekg/certs/server.pem */
 		gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
@@ -856,14 +860,13 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 		do { 
 			ret = gnutls_handshake(j->ssl_session);
 			retrycount--;
-		} while (((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN)) && retrycount);
+		} while ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN));
 
 		if (ret < 0) {
 			debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
 			print("generic_error", gnutls_strerror(ret));
 			gnutls_deinit(j->ssl_session);
 			gnutls_certificate_free_credentials(j->xcred);
-			gnutls_global_deinit();
 			jabber_handle_disconnect(jdh->session);
 			return;
 		}

@@ -169,9 +169,17 @@ void jabber_handle_write(int type, int fd, int watch, void *data)
 	int res;
 
 #ifdef HAVE_GNUTLS
-	if (j->using_ssl)
-		res = gnutls_record_send(j->ssl_session, j->obuf, j->obuf_len);	
-	else
+	if (j->using_ssl) {
+		do {
+			res = gnutls_record_send(j->ssl_session, j->obuf, j->obuf_len);	
+		} while ((res == GNUTLS_E_INTERRUPTED) || (res == GNUTLS_E_AGAIN)); 
+		
+		if (res < 0) {
+			print("generic_error", gnutls_strerror(res));
+			return;
+		}
+			
+	} else
 #endif
 		res = write(j->fd, j->obuf, j->obuf_len);
 
