@@ -396,6 +396,9 @@ int metacontact_session_renamed_handler(void *data, va_list ap)
 					break;
 
 				l2 = l2->prev;
+
+				if (!l2)
+					break;
 			}
 		}
 	}
