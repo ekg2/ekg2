@@ -18,16 +18,31 @@
  */
 
 #include <sys/types.h>
+#include <stddef.h>
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <string.h>
 #include <unistd.h>
+
+#include "config.h"
 
 #include "configfile.h"
 #include "stuff.h"
 #include "userlist.h"
+
+#ifndef HAVE_STRNDUP
+
+#  include "compat/strndup.h"
+#endif
+
+#ifndef HAVE_STRNLEN
+#  include "compat/strnlen.h"
+#endif
+
+
 
 void ekg_oom_handler()
 {
@@ -105,21 +120,14 @@ char *xstrdup(const char *s)
 	return tmp;
 }
 
-#ifndef HAVE_STRNDUP
-char *strndup(const char *s, size_t n)
+size_t xstrnlen(const char *s, size_t n) 
 {
-	char *ret;
-        
-	n = strnlen(s, n);
-	ret = malloc(n+1);
-        if (!ret)
-	        return NULL;
-        memcpy(ret, s, n);
-        ret[n] = 0;
- 
-        return ret;
+        if (!s)
+                return 0;
+
+        return strnlen(s, n);
 }
-#endif
+
 
 char *xstrndup(const char *s, size_t n)
 {
@@ -128,7 +136,7 @@ char *xstrndup(const char *s, size_t n)
         if (!s)
                 return NULL;
 
-        if (!(tmp = strndup(s, n)))
+       if (!(tmp = strndup((char *) s, n)))
                 ekg_oom_handler();
 
         return tmp;

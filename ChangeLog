@@ -6,6 +6,10 @@ d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
 przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
+// 2005-04-05
+- dzia³aj±ce make dist (mp)
+- dodanie strnlen do xmalloc.c, a w zasadzie to przeniesienie tego do common (del)
+
 // 2004-04-04
 - dodane wpisy w dokumentacji (del)
 - dodana opcja --withot-openssl do ./configure (del)
@@ -14,14 +18,11 @@ zg³osi³ b³±d.
   (np. do sesji jabberowej) (salvador)
 - poprawka wycieku pamiêci przy /set contacts_size 0 (mirek/del)
 
-      
-
 // 2004-03-31
 - dzia³aj±ce F2, F3, F4 oraz na bierz±co ncurses:contacts (del)
 - Przewijanie dzia³a tak¿e w oknie debuga (del)
 - po Ctrl-x od¶wie¿ana jest lista kontaktów (del)
 - poprawnie dzia³aj±ca komenda /bind (zdz/del)
-
 
 // 2004-03-29
 - przewijane okienko kontaktow (*/del)

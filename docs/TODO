@@ -9,7 +9,6 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - dodanie strnlen do xmalloc.c, a w zasadzie to przeniesienie tego do common (del)
   - przenie¶æ zmienne i ich ustawienia domy¶lne w ncurses do old.c
   - zmieniæ nazwê old.c i trochê porz±dku w nazwach zmiennych (del)
   - dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:

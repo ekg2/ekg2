@@ -38,11 +38,11 @@ AC_CHECK_FUNCS(scandir, , [COMPAT="$COMPAT scandir.o"])
 dnl  setenv dla pythona
 AC_CHECK_FUNCS(setenv)
 
-dnl  strlcat/strlcpy wiele systemów nie posiada
+dnl  strlcat,strlcpy itp wiele systemów nie posiada
 AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])
 AC_CHECK_FUNCS(strlcpy, , [COMPAT="$COMPAT strlcpy.o"])
-AC_CHECK_FUNCS(strnlen)
-AC_CHECK_FUNCS(strndup)
+AC_CHECK_FUNCS(strndup, , [COMPAT="$COMPAT strldup.o"])
+AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
 
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
