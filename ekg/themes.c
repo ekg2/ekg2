@@ -587,10 +587,8 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		}
 	}
 
-	if (newtarget) {
+	if (newtarget) 
 		target = newtarget;
-		debug("dupa\n");
-	}
 
 	if (!target)
 		target = "__current";
