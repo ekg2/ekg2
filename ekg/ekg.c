@@ -209,7 +209,7 @@ void ekg_loop()
 			debug("autosaving userlist and config after %d seconds\n", time(NULL) - last_save);
 			last_save = time(NULL);
 
-			if (/*!userlist_write(session) &&*/ !config_write(NULL)) {
+			if (!config_write(NULL) && !session_write()) {
 				config_changed = 0;
 				print("autosaved");
 			} else

@@ -471,7 +471,8 @@ int session_write()
 
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
-
+		
+		userlist_write(s);
 		fprintf(f, "[%s]\n", s->uid);
 		if (s->alias)
 			fprintf(f, "alias=%s\n", s->alias);
