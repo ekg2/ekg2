@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-23 12:38+0200\n"
+"POT-Creation-Date: 2004-10-23 12:51+0200\n"
 "PO-Revision-Date: 2004-10-23 12:40+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -157,13 +157,9 @@ msgstr "%Y(szyfrowane)%n "
 msgid "%) You got one email\n"
 msgstr "%) Masz now± wiadomo¶æ email\n"
 
-#: ekg/themes.c:1020
+#: ekg/themes.c:1020 ekg/themes.c:1021
 msgid "%) You got %1 new emails\n"
 msgstr "%) Masz %1 nowe wiadomo¶ci email\n"
-
-#: ekg/themes.c:1021
-msgid "%) You got %1 new email\n"
-msgstr "%) Masz %1 nowych wiadomo¶ci email\n"
 
 #: ekg/themes.c:1024
 msgid "%> (%2) Added %T%1%n to roster\n"
@@ -471,11 +467,13 @@ msgid "%> %1 %m(blocking)%n\n"
 msgstr "%> %1 %m(blokuj±c%@2)%n\n"
 
 #: ekg/themes.c:1117
-msgid "%> %1 will not see aout status\n"
+#, fuzzy
+msgid "%> %1 will not see your status\n"
 msgstr "%> %1 nie bêdzie widzieæ naszego stanu\n"
 
 #: ekg/themes.c:1118
-msgid "%> %1 will se aout status\n"
+#, fuzzy
+msgid "%> %1 will see your status\n"
 msgstr "%> %1 bêdzie widzieæ nasz stan\n"
 
 #: ekg/themes.c:1119
@@ -633,8 +631,9 @@ msgstr "%! (%2) Po³±czenie nie powiod³o siê: %1%n\n"
 msgid "Server not found"
 msgstr "Nie znaleziono serwera"
 
-#: ekg/themes.c:1265 ekg/themes.c:1612
-msgid "Can not connect ro server"
+#: ekg/themes.c:1265
+#, fuzzy
+msgid "Can't connect to server"
 msgstr "Nie mo¿na po³±czyæ siê z serwerem"
 
 #: ekg/themes.c:1266
@@ -722,8 +721,10 @@ msgid "%! (%1) Invalid \"server\".%n\n"
 msgstr "%! (%1) B³êdna warto¶æ zmiennej sesyjnej \"server\".%n\n"
 
 #: ekg/themes.c:1286
-msgid "%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
-msgstr "%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
+msgid ""
+"%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
+msgstr ""
+"%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
 
 #: ekg/themes.c:1295
 msgid "%! Unknown variable: %T%1%n\n"
@@ -734,6 +735,7 @@ msgid "%! Invalid session variable value\n"
 msgstr "%! Nieprawid³owa warto¶æ zmiennej\n"
 
 #: ekg/themes.c:1297
+#, fuzzy
 msgid ""
 "%! Incomplete configuration. Use:\n"
 "%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n"
@@ -746,7 +748,7 @@ msgid ""
 "\n"
 "%> %|Query windows will be created automatically. To switch windows press %"
 "TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%"
-"n. To add some to roster use %Tadd%n. All key shortcuts are described in %"
+"n. To add someone to roster use %Tadd%n. All key shortcuts are described in %"
 "TREADME%n. There is also %Thelp%n command. Rememer about prefixes before "
 "UID, for example %Tgg:<no>%n. \n"
 "\n"
@@ -770,23 +772,33 @@ msgstr ""
 "\n"
 
 #: ekg/themes.c:1298
+#, fuzzy
 msgid ""
 "incomplete configuration. enter session -a, and then gg: gg-number, or jid: "
 "jabber id, then session password and your password. enter save to save. "
 "enter connect to connect. if you dont have UID enter register, space, e-mail "
-"and password. blah blah blah"
+"and password. Query windows will be created automatically. To switch windows "
+"press Alt and window number or Escape and then number. To start conversation "
+"use query command. To add someone to roster use add command. All key "
+"shortcuts are described in README file. There is also help command."
 msgstr ""
-"niekompletna konfiguracja. wpisz session -a, a za tym gg: nummerek-gg, jid: "
-"ewentualnie d¿aber id, a p, potem session pas³ord, za tym swoje has³o. wpisz "
-"sejf, ¿eby zapisaæ ustawienia. wpisz konekt by siê po³±czyæ. je¶li nie masz "
-"swojego numeru gadu-gadu, wpisz red¿ister, a po spacji imejl i has³o. po "
-"po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie, gdy kto¶ przy¶le "
-"wiadomo¶æ. aby przej¶æ do okna o podanym numerze, nale¿y wcisn±æ alt-numer "
-"lub eskejp, a nastêpnie cyfrê. aby rozpocz±æ rozmowê, nale¿y u¿yæ polecenia "
-"k³ery. aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ polecenia edd. "
-"wszystkie kombinacje klawiszy s± opisane w pliku ridmi, a listê komend "
-"wy¶wietla polecenie help. Pamiêtaj o prefixie przed ka¿dym uidem, prawid³owy "
-"przyk³adowy uid ma postaæ gg:<nr>"
+"%! Niekompletna konfiguracja. Wpisz:\n"
+"%!   %Tsession -a <gg:numerek-gg/jid:jabber-id>%n\n"
+"%!   %Tsession password <has³o>%n\n"
+"%!   %Tsave%n\n"
+"%! Nastêpnie wydaj polecenie:\n"
+"%!   %Tconnect%n\n"
+"%! Je¶li nie masz swojego numerka, wpisz:\n"
+"%!   %Tregister <e-mail> <has³o>%n\n"
+"\n"
+"%> %|Po po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie, gdy kto¶ "
+"przy¶le wiadomo¶æ. Aby przej¶æ do okna o podanym numerze nale¿y wcisn±æ %"
+"TAlt-numer%n lub %TEsc%n, a nastêpnie cyfrê. Aby rozpocz±æ rozmowê, nale¿y "
+"u¿yæ polecenia %Tquery%n. Aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ "
+"polecenia %Tadd%n. Wszystkie kombinacje klawiszy s± opisane w pliku %TREADME%"
+"n, a listê komend wy¶wietla polecenie %Thelp%n. Pamiêtaj o prefixie przed "
+"ka¿dym UID'em, prawid³owy przyk³adowy UID ma postaæ: %Tgg:<nr>%n. \n"
+"\n"
 
 #: ekg/themes.c:1299
 msgid "%! Error reading configuration file: %1\n"
@@ -801,7 +813,8 @@ msgid "%! Invalid line '%T%1%n', skipping\n"
 msgstr "%! Nieprawid³owa linia '%T%1%n', pomijam\n"
 
 #: ekg/themes.c:1302
-msgid "%> Autosaved settings\n"
+#, fuzzy
+msgid "%> Automatically saved settings\n"
 msgstr "%> Automatycznie zapisano ustawienia\n"
 
 #: ekg/themes.c:1305
@@ -962,11 +975,13 @@ msgid "%K| %nBlocked\n"
 msgstr "%K| %nBlokowan%@1\n"
 
 #: ekg/themes.c:1372
-msgid "%K| %nDon't see status\n"
+#, fuzzy
+msgid "%K| %nCan't see our status\n"
 msgstr "%K| %nNie widzi stanu\n"
 
 #: ekg/themes.c:1373
-msgid "%K| %nDon't have us in roster\n"
+#, fuzzy
+msgid "%K| %nDoesn't have us in roster\n"
 msgstr "%K| %nNie ma nas w swoich kontaktach\n"
 
 #: ekg/themes.c:1374
@@ -1196,7 +1211,8 @@ msgid "%! Alias %T%1%n already exists\n"
 msgstr "%! Alias %T%1%n ju¿ istnieje\n"
 
 #: ekg/themes.c:1454
-msgid "%! Alias %T%1%n do not exist\n"
+#, fuzzy
+msgid "%! Alias %T%1%n doesn't exist\n"
 msgstr "%! Alias %T%1%n nie istnieje\n"
 
 #: ekg/themes.c:1455
@@ -1245,7 +1261,8 @@ msgid "%! Can't connect with %1\n"
 msgstr "%! Nie mo¿na nawi±zaæ po³±czenia z %1\n"
 
 #: ekg/themes.c:1466
-msgid "%! %1 don't have direct connections enabled\n"
+#, fuzzy
+msgid "%! %1 doesn't have direct connections enabled\n"
 msgstr "%! %1 nie ma w³±czonej obs³ugi po³±czeñ bezpo¶rednich\n"
 
 #: ekg/themes.c:1467
@@ -1297,7 +1314,8 @@ msgid "%! File %T%1%n from %2 is being received\n"
 msgstr "%! Plik %T%1%n od u¿ytkownika %2 jest ju¿ pobierany\n"
 
 #: ekg/themes.c:1481
-msgid "%> Finished receiving filr %T%2%n from %1\n"
+#, fuzzy
+msgid "%> Finished receiving file %T%2%n from %1\n"
 msgstr "%> Zakoñczono pobieranie pliku %T%2%n od %1\n"
 
 #: ekg/themes.c:1482
@@ -1323,7 +1341,8 @@ msgstr "%! Mo¿na prowadziæ tylko jedn± rozmowê g³osow± na raz\n"
 
 #: ekg/themes.c:1487
 msgid "%! Voice chat not compiled in. See %Tdocs/voip.txt%n\n"
-msgstr "%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
+msgstr ""
+"%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
 
 #: ekg/themes.c:1488
 msgid ""
@@ -1420,7 +1439,8 @@ msgid "%) Removed roster from server\n"
 msgstr "%) Usuniêto listê kontaktów z serwera\n"
 
 #: ekg/themes.c:1518
-msgid "%! Error removing roster\n"
+#, fuzzy
+msgid "%! Error removing roster from server\n"
 msgstr "%! B³±d podczas usuwania listy kontaktów\n"
 
 #: ekg/themes.c:1522
@@ -1440,15 +1460,18 @@ msgid "%) New window created\n"
 msgstr "%) Utworzono nowe okno\n"
 
 #: ekg/themes.c:1531
-msgid "%! Choosend window do not exist\n"
+#, fuzzy
+msgid "%! Choosen window do not exist\n"
 msgstr "%! Wybrane okno nie istnieje\n"
 
 #: ekg/themes.c:1532
-msgid "%! Window %T%1%n do not exist\n"
+#, fuzzy
+msgid "%! Window %T%1%n does not exist\n"
 msgstr "%! Okno %T%1%n nie istnieje\n"
 
 #: ekg/themes.c:1533
-msgid "%! Can not close last window\n"
+#, fuzzy
+msgid "%! Can't close last window\n"
 msgstr "%! Nie mo¿na zamkn±æ ostatniego okna\n"
 
 #: ekg/themes.c:1534
@@ -1500,11 +1523,13 @@ msgid "%! No bound actions\n"
 msgstr "%! Brak przypisanych akcji\n"
 
 #: ekg/themes.c:1550
-msgid "%! Press key(s) which should be binded\n"
+#, fuzzy
+msgid "%! Press key(s) which should be bound\n"
 msgstr "%! Naci¶nij klawisz(e), które maj± byæ podbindowane\n"
 
 #: ekg/themes.c:1551
-msgid "%> Binding acomplished\n"
+#, fuzzy
+msgid "%> Binding added\n"
 msgstr "%> Bindowanie zakoñczono pomy¶lnie\n"
 
 #: ekg/themes.c:1555
@@ -1532,7 +1557,8 @@ msgid "%! No plans\n"
 msgstr "%! Brak planów\n"
 
 #: ekg/themes.c:1562
-msgid "%! If time travel were possible...\n"
+#, fuzzy
+msgid "%! If time travels were possible...\n"
 msgstr "%! Gdyby mo¿na by³o cofn±æ czas...\n"
 
 #: ekg/themes.c:1566
@@ -1655,6 +1681,10 @@ msgstr "%> Do³±czono %1 do konferencji %T%2%n\n"
 msgid "%> %1 already in conference %T%2%n\n"
 msgstr "%> %1 uczestniczy ju¿ w konferencji %T%2%n\n"
 
+#: ekg/themes.c:1612
+msgid "Can not connect ro server"
+msgstr "Nie mo¿na po³±czyæ siê z serwerem"
+
 #: ekg/themes.c:1620
 msgid "%! No scripts loaded\n"
 msgstr "%! Brak za³adowanych skryptów\n"
@@ -1692,7 +1722,8 @@ msgid "%! Session %T%1%n already exists\n"
 msgstr "%! Sesja %T%1%n ju¿ istnieje\n"
 
 #: ekg/themes.c:1638
-msgid "%! Sesion %T%1%n does not exists\n"
+#, fuzzy
+msgid "%! Sesion %T%1%n does not exist\n"
 msgstr "%! Sesja %T%1%n nie istnieje\n"
 
 #: ekg/themes.c:1639
@@ -1729,7 +1760,8 @@ msgid "%! Plugin %T%1%n not initialized correctly%n\n"
 msgstr "%! Plugin %T%1%n nie zosta³ wczytany poprawnie%n\n"
 
 #: ekg/themes.c:1686
-msgid "%! Plugin %T%1%n is an UI plugin and can't ne unloaded%n\n"
+#, fuzzy
+msgid "%! Plugin %T%1%n is an UI plugin and can't be unloaded%n\n"
 msgstr "%! Plugin %T%1%n jest pluginem UI i nie mo¿e zostaæ wy³adowany%n\n"
 
 #: ekg/themes.c:1687
@@ -1749,16 +1781,19 @@ msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
 #: plugins/gg/gg.c:1038
-msgid "%! Error when token was getting: %1\n"
-msgstr "%! Wyst±pi³ b³±d podczas pobierania tokenu: %1\n"
+#, fuzzy
+msgid "%! Error getting token: %1\n"
+msgstr "%! B³±d podczas pobierania listy kontaktów\n"
 
 #: plugins/gg/gg.c:1039
-msgid "%! Token getting time ran out\n"
+#, fuzzy
+msgid "%! Token getting timeout\n"
 msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
 #: plugins/gg/gg.c:1040
 msgid "%! Your operating system doesn't support tokens\n"
-msgstr "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
+msgstr ""
+"%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
 
 #: plugins/gg/gg.c:1041
 msgid "%! First get token by function %Ttoken%n\n"
@@ -1942,7 +1977,8 @@ msgid "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"
 
 #: plugins/jabber/jabber.c:971
-msgid "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
+msgid ""
+"%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
 msgstr ""
 "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) "
 "%r%3%n\n"
@@ -1972,7 +2008,8 @@ msgstr ""
 "n\n"
 
 #: plugins/jabber/jabber.c:975
-msgid "%> %T%1%n ise typing to as ...%n\n"
+#, fuzzy
+msgid "%> %T%1%n is typing to us ...%n\n"
 msgstr "%> U¿ytkownik %T%1%n co¶ do nas pisze ...%n\n"
 
 #: plugins/jabber/jabber.c:976
@@ -2032,7 +2069,8 @@ msgid "%! Error sending SMS: %1\n"
 msgstr "%! B³±d wysy³ania SMS: %1\n"
 
 #: plugins/sms/sms.c:353
-msgid "%! %1 don't cellphone number\n"
+#, fuzzy
+msgid "%! %1 not a cellphone number\n"
 msgstr "%! %1 nie ma podanego numeru komórki\n"
 
 #: plugins/sms/sms.c:354

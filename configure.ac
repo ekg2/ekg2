@@ -215,7 +215,13 @@ if test "x$have_libgsm" = "xyes"; then
 	PLUGINS="$PLUGINS gsm"
 fi
 
-dnl
+AM_CHECK_LIBXOSD
+
+if test "x$have_libxosd" = "xyes"; then
+	AC_CONFIG_FILES([plugins/xosd/Makefile])
+	PLUGINS="$PLUGINS xosd"
+fi
+
 AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
 *** libgnutls was not found. You may want to get it from
@@ -284,6 +290,12 @@ if test "x$have_libgsm" = "xyes"; then
 	echo " - libgsm:  enabled"
 else
 	echo " - libgsm:  disabled"
+fi
+
+if test "x$have_libxosd" = "xyes"; then
+	echo " - libxosd: enabled"
+else
+	echo " - libxosd: disabled"
 fi
 
 if test "x$have_aspell" = "xyes"; then

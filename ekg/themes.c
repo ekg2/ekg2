@@ -1018,7 +1018,7 @@ void theme_init()
         /* mail */
         format_add("new_mail_one", _("%) You got one email\n"), 1);
         format_add("new_mail_two_four", _("%) You got %1 new emails\n"), 1);
-        format_add("new_mail_more", _("%) You got %1 new email\n"), 1);
+        format_add("new_mail_more", _("%) You got %1 new emails\n"), 1);
 
         /* add, del */
         format_add("user_added", _("%> (%2) Added %T%1%n to roster\n"), 1);
@@ -1114,8 +1114,8 @@ void theme_init()
         format_add("list_invisible_descr", _("%> %1 %c(invisible: %n%5%c)%n %b%3:%4%n\n"), 1);
         format_add("list_blocked", _("%> %1 %m(blocking)%n\n"), 1);
         format_add("list_unknown", "%> %1\n", 1);
-        format_add("modify_offline", _("%> %1 will not see aout status\n"), 1);
-        format_add("modify_online", _("%> %1 will se aout status\n"), 1);
+        format_add("modify_offline", _("%> %1 will not see your status\n"), 1);
+        format_add("modify_online", _("%> %1 will see your status\n"), 1);
         format_add("modify_done", _("%> Modified item in roster\n"), 1);
 
         /* lista kontaktów z boku ekranu */
@@ -1262,7 +1262,7 @@ void theme_init()
         format_add("connecting", _("%> (%1) Connecting to server %n\n"), 1);
         format_add("conn_failed", _("%! (%2) Connection failure: %1%n\n"), 1);
         format_add("conn_failed_resolving", _("Server not found"), 1);
-        format_add("conn_failed_connecting", _("Can not connect ro server"), 1);
+        format_add("conn_failed_connecting", _("Can't connect to server"), 1);
         format_add("conn_failed_invalid", _("Invalid server response"), 1);
         format_add("conn_failed_disconnected", _("Server disconnected"), 1);
         format_add("conn_failed_password", _("Invalid password"), 1);
@@ -1286,20 +1286,20 @@ void theme_init()
         format_add("invalid_local_ip", _("%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"), 1);
 
         /* obs³uga motywów */
-        format_add("theme_loaded", "%> Wczytano motyw %T%1%n\n", 1);
-        format_add("theme_default", "%> Ustawiono domy¶lny motyw\n", 1);
-        format_add("error_loading_theme", "%! B³±d podczas ³adowania motywu: %1\n", 1);
+        format_add("theme_loaded", "%> Loaded theme%T%1%n\n", 1);
+        format_add("theme_default", "%> Default theme selected\n", 1);
+        format_add("error_loading_theme", "%! Error loading theme: %1\n", 1);
 
         /* zmienne, konfiguracja */
         format_add("variable", "%> %1 = %2\n", 1);
         format_add("variable_not_found", _("%! Unknown variable: %T%1%n\n"), 1);
         format_add("variable_invalid", _("%! Invalid session variable value\n"), 1);
-        format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add some to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Rememer about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
-        format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or jid: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. blah blah blah"), 1);
+        format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Rememer about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
+        format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or jid: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
         format_add("error_reading_config", _("%! Error reading configuration file: %1\n"), 1);
         format_add("config_read_success", _("%> Opened configuration file %T%1%n\n"), 1);
         format_add("config_line_incorrect", _("%! Invalid line '%T%1%n', skipping\n"), 1);
-        format_add("autosaved", _("%> Autosaved settings\n"), 1);
+        format_add("autosaved", _("%> Automatically saved settings\n"), 1);
 
         /* rejestracja nowego numeru */
         format_add("register", _("%> Registration successful. Your number: %T%1%n\n"), 1);
@@ -1369,8 +1369,8 @@ void theme_init()
         format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
         format_add("user_info_auth_type", _("%K| %nSubscription type: %T%1%n\n"), 1);
         format_add("user_info_block", _("%K| %nBlocked\n"), 1);
-        format_add("user_info_offline", _("%K| %nDon't see status\n"), 1);
-        format_add("user_info_not_in_contacts", _("%K| %nDon't have us in roster\n"), 1);
+        format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
+        format_add("user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
         format_add("user_info_firewalled", _("%K| %nFirewalled/NATed\n"), 1);
         format_add("user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
         format_add("user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
@@ -1451,7 +1451,7 @@ void theme_init()
         format_add("aliases_del", _("%) Removed alias %T%1%n\n"), 1);
         format_add("aliases_del_all", _("%) Removed all aliases\n"), 1);
         format_add("aliases_exist", _("%! Alias %T%1%n already exists\n"), 1);
-        format_add("aliases_noexist", _("%! Alias %T%1%n do not exist\n"), 1);
+        format_add("aliases_noexist", _("%! Alias %T%1%n doesn't exist\n"), 1);
         format_add("aliases_command", _("%! %T%1%n is internal command\n"), 1);
         format_add("aliases_not_enough_params", _("%! Alias %T%1%n requires more parameters\n"), 1);
 
@@ -1463,7 +1463,7 @@ void theme_init()
         format_add("dcc_error_refused", _("%! Connection to %1 refused\n"), 1);
         format_add("dcc_error_unknown", _("%! Uknown direct connection error\n"), 1);
         format_add("dcc_error_handshake", _("%! Can't connect with %1\n"), 1);
-        format_add("dcc_user_aint_dcc", _("%! %1 don't have direct connections enabled\n"), 1);
+        format_add("dcc_user_aint_dcc", _("%! %1 doesn't have direct connections enabled\n"), 1);
         format_add("dcc_timeout", _("%! Direct connection to %1 timed out\n"), 1);
         format_add("dcc_not_supported", _("%! Operation %T%1%n isn't supported yet\n"), 1);
         format_add("dcc_open_error", _("%! Can't open %T%1%n: %2\n"), 1);
@@ -1478,7 +1478,7 @@ void theme_init()
         format_add("dcc_show_empty", _("%! No direct connections\n"), 1);
         format_add("dcc_receiving_already", _("%! File %T%1%n from %2 is being received\n"), 1);
 
-        format_add("dcc_done_get", _("%> Finished receiving filr %T%2%n from %1\n"), 1);
+        format_add("dcc_done_get", _("%> Finished receiving file %T%2%n from %1\n"), 1);
         format_add("dcc_done_send", _("%> Finished sending file %T%2%n to %1\n"), 1);
         format_add("dcc_close", _("%) Connection with %1 closed\n"), 1);
 
@@ -1515,7 +1515,7 @@ void theme_init()
         format_add("userlist_get_ok", _("%> Roster read from server\n"), 1);
         format_add("userlist_get_error", _("%! Error getting roster\n"), 1);
         format_add("userlist_clear_ok", _("%) Removed roster from server\n"), 1);
-        format_add("userlist_clear_error", _("%! Error removing roster\n"), 1);
+        format_add("userlist_clear_error", _("%! Error removing roster from server\n"), 1);
 
         /* szybka lista kontaktów pod F2 */
         format_add("quick_list", "%)%1\n", 1);
@@ -1528,9 +1528,9 @@ void theme_init()
 
         /* window */
         format_add("window_add", _("%) New window created\n"), 1);
-        format_add("window_noexist", _("%! Choosend window do not exist\n"), 1);
-        format_add("window_doesnt_exist", _("%! Window %T%1%n do not exist\n"), 1);
-        format_add("window_no_windows", _("%! Can not close last window\n"), 1);
+        format_add("window_noexist", _("%! Choosen window do not exist\n"), 1);
+        format_add("window_doesnt_exist", _("%! Window %T%1%n does not exist\n"), 1);
+        format_add("window_no_windows", _("%! Can't close last window\n"), 1);
         format_add("window_del", _("%) Window closed\n"), 1);
         format_add("windows_max", _("%! Window limit exhausted\n"), 1);
         format_add("window_list_query", _("%) %1: query with %T%2%n\n"), 1);
@@ -1547,8 +1547,8 @@ void theme_init()
         format_add("bind_seq_exist", _("%! Sequence %T%1%n is already bound\n"), 1);
         format_add("bind_seq_list_empty", _("%! No bound actions\n"), 1);
         format_add("bind_doesnt_exist", _("%! Can't open file %T%1%n\n"), 1);
-        format_add("bind_press_key", _("%! Press key(s) which should be binded\n"), 1);
-        format_add("bind_added", _("%> Binding acomplished\n"), 1);
+        format_add("bind_press_key", _("%! Press key(s) which should be bound\n"), 1);
+        format_add("bind_added", _("%> Binding added\n"), 1);
 
         /* at */
         format_add("at_list", "%> %1, %2, %3 %K(%4)%n %5\n", 1);
@@ -1559,7 +1559,7 @@ void theme_init()
         format_add("at_noexist", _("%! Plan %T%1%n do not exists\n"), 1);
         format_add("at_empty", _("%! No plans\n"), 1);
         format_add("at_timestamp", "%d-%m-%Y %H:%M", 1);
-        format_add("at_back_to_past", _("%! If time travel were possible...\n"), 1);
+        format_add("at_back_to_past", _("%! If time travels were possible...\n"), 1);
 
         /* timer */
         format_add("timer_list", "%> %1, %2s, %3 %K(%4)%n %T%5%n\n", 1);
@@ -1635,7 +1635,7 @@ void theme_init()
         format_add("session_info_param", "%)    %1 = %T%2%n\n", 1); /* key, value */
         format_add("session_info_footer", "", 1); /* uid */
         format_add("session_exists", _("%! Session %T%1%n already exists\n"), 1); /* uid */
-        format_add("session_doesnt_exist", _("%! Sesion %T%1%n does not exists\n"), 1); /* uid */
+        format_add("session_doesnt_exist", _("%! Sesion %T%1%n does not exist\n"), 1); /* uid */
         format_add("session_added", _("%> Created session %T%1%n\n"), 1); /* uid */
         format_add("session_removed", _("%> Removed session %T%1%n\n"), 1); /* uid */
         format_add("session_format", "%T%1%n", 1);
@@ -1643,20 +1643,20 @@ void theme_init()
         format_add("session_cannot_change", _("%! Can't change session in query window%n\n"), 1);
 
         format_add("metacontact_list", "%> %T%1%n", 1);
-        format_add("metacontact_list_empty", "%! Nie ma ¿adnych metakontaktów\n", 1);
-        format_add("metacontact_exists", "%! Metakontakt %T%1%n ju¿ istnieje\n", 1);
-        format_add("metacontact_added", "%> Utworzono metakontakt %T%1%n\n", 1);
-        format_add("metacontact_removed", "%> Usuniêto metakontakt %T%1%n\n", 1);
-        format_add("metacontact_doesnt_exist", "%! Metakontakt %T%1%n nie istnieje\n", 1);
-        format_add("metacontact_added_item", "%> Dodano %T%1/%2%n do %T%3%n\n", 1);
-        format_add("metacontact_removed_item", "%> Usuniêto %T%1/%2%n z %T%3%n\n", 1);
+        format_add("metacontact_list_empty", "%! Metacontact list is empty\n", 1);
+        format_add("metacontact_exists", "%! Metacontact %T%1%n already exists\n", 1);
+        format_add("metacontact_added", "%> Metacontact %T%1%n added\n", 1);
+        format_add("metacontact_removed", "%> Metacontact %T%1%n removed\n", 1);
+        format_add("metacontact_doesnt_exist", "%! Metacontact %T%1%n doesn't exist\n", 1);
+        format_add("metacontact_added_item", "%> Added %T%1/%2%n to metacontact %T%3%n\n", 1);
+        format_add("metacontact_removed_item", "%> Removed %T%1/%2%n from metacontact %T%3%n\n", 1);
         format_add("metacontact_item_list_header", "", 1);
         format_add("metacontact_item_list", "%> %T%1/%2 (%3)%n - prio %T%4%n\n", 1);
-        format_add("metacontact_item_list_empty", "%! Metakontakt jest pusty\n", 1);
+        format_add("metacontact_item_list_empty", "%! Metacontact is empty\n", 1);
         format_add("metacontact_item_list_footer", "", 1);
-        format_add("metacontact_item_doesnt_exist", "%! Kontakt %T%1/%2%n nie istnieje\n", 1);
-        format_add("metacontact_info_header", "%K.--%n Metakontakt %T%1%n %K--- -- -%n\n", 1);
-        format_add("metacontact_info_status", "%K| %nStan: %T%1%n\n", 1);
+        format_add("metacontact_item_doesnt_exist", "%! Contact %T%1/%2%n doesn't exiet\n", 1);
+        format_add("metacontact_info_header", "%K.--%n Metacontact %T%1%n %K--- -- -%n\n", 1);
+        format_add("metacontact_info_status", "%K| %nStatus: %T%1%n\n", 1);
         format_add("metacontact_info_footer", "%K`----- ---- --- -- -%n\n", 1);
 
         format_add("metacontact_info_avail", _("%Yavailable%n"), 1);
@@ -1683,7 +1683,7 @@ void theme_init()
         format_add("plugin_doesnt_exist", _("%! Plugin %T%1%n can not be found%n\n"), 1);
         format_add("plugin_incorrect", _("%! Plugin %T%1%n is not correct EKG2 plugin%n\n"), 1);
         format_add("plugin_not_initialized", _("%! Plugin %T%1%n not initialized correctly%n\n"), 1);
-        format_add("plugin_unload_ui", _("%! Plugin %T%1%n is an UI plugin and can't ne unloaded%n\n"), 1);
+        format_add("plugin_unload_ui", _("%! Plugin %T%1%n is an UI plugin and can't be unloaded%n\n"), 1);
         format_add("plugin_loaded", _("%> Plugin %T%1%n loaded%n\n"), 1);
         format_add("plugin_unloaded", _("%> Plugin %T%1%n unloaded%n\n"), 1);
 

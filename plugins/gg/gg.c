@@ -1035,8 +1035,8 @@ static int gg_theme_init()
         format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
         format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
         format_add("gg_token_body", "%1\n", 1);
-        format_add("gg_token_failed", _("%! Error when token was getting: %1\n"), 1);
-        format_add("gg_token_timeout", _("%! Token getting time ran out\n"), 1);
+format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
+        format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
         format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
         format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
 	

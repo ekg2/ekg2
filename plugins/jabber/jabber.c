@@ -972,7 +972,7 @@ static int jabber_theme_init()
         format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system:: %T%4%n\n"), 1);
         format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
         format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
-        format_add("jabber_typing_notify", _("%> %T%1%n ise typing to as ...%n\n"), 1);
+        format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 3);
 
         return 0;

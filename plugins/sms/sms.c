@@ -350,7 +350,7 @@ int sms_plugin_init()
         query_connect(&sms_plugin, "session-status", sms_session_status, NULL);
 
         format_add("sms_error", _("%! Error sending SMS: %1\n"), 1);
-        format_add("sms_unknown", _("%! %1 don't cellphone number\n"), 1);
+        format_add("sms_unknown", _("%! %1 not a cellphone number\n"), 1);
         format_add("sms_sent", _("%> SMS to %T%1%n sent\n"), 1);
         format_add("sms_failed", _("%! SMS to %T%1%n not sent\n"), 1);
         format_add("sms_away", "<ekg:%1> %2", 1);
