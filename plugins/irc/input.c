@@ -178,14 +178,14 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 			newsender = saprintf("irc:%s", sender);
 				
 			if (ispriv) {
-				if ((ctcp_main_priv(sess, j, ctcp, begin, 
-								newsender, winname)))
+				if ((ctcp_main_priv(sess, j, ctcp, begin, newsender,
+								bang?bang+1:"", winname)))
 				{
 					/* blah blah blah */
 				}
 			} else {
-				ctcp_main_noti(sess, j, ctcp, begin, 
-						newsender, winname);
+				ctcp_main_noti(sess, j, ctcp, begin, newsender, 
+						bang?bang+1:"", winname);
 			}
 			
 
@@ -218,7 +218,6 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
  *   This is used by losers on IRC to simulate "role playing" games.
  * </quote> ;-)
  */
-/* TODO: make some chenckings and using of make_window variable */
 CTCP_COMMAND(ctcp_main_priv)
 {
 	char *ischn = xstrchr(SOP(_005_CHANTYPES), targ[4]);
@@ -242,7 +241,7 @@ switch (number) {
 	if (space && xstrlen(space)) {
 		print_window(win, s, ischn?(mw&1):!!(mw&4),
 				ischn?"irc_ctcp_action_pub":"irc_ctcp_action",
-				session_name(s), purename, targ+4, space);
+				session_name(s), purename, idhost, targ+4, space);
 	}
 	return 0;
 
@@ -265,7 +264,7 @@ switch (number) {
 
 	print_window(win, s, ischn?(mw&1):!!(mw&4),
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01FINGER :%s connected since %s\01\r\n",
 			purename, j->nick, ta);
@@ -276,7 +275,7 @@ switch (number) {
     case CTCP_VERSION:	/* ===== ===== ===== ===== ===== VERSION */
 	print_window(win, s, ischn?(mw&1):!!(mw&4), 
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	ta = (char *)session_get(s, "VERSION_NAME");
 	tb = (char *)session_get(s, "VERSION_NO");
@@ -298,7 +297,7 @@ switch (number) {
     case CTCP_SOURCE:	/* ===== ===== ===== ===== ===== SOURCE */
 	print_window(win, s, ischn?(mw&1):!!(mw&4),
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01SOURCE \02\x1fhttp://ekg2.org/ekg2-current.tar.gz\x1f\02\01\r\n",
 			purename);
@@ -309,7 +308,7 @@ switch (number) {
 	ta = (char *)session_get(s, "USERINFO");
 	print_window(win, s, ischn?(mw&1):!!(mw&4),
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01USERINFO :%s\01\r\n",
 			purename, ta?ta:"no userinfo set");
@@ -319,7 +318,7 @@ switch (number) {
     case CTCP_CLIENTINFO:	/* ===== ===== ===== ===== ===== CLIENTINFO */
 	print_window(win, s, ischn?(mw&1):!!(mw&4),
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01CLIENTINFO \01\r\n",
 			purename);
@@ -329,7 +328,7 @@ switch (number) {
     case CTCP_PING:		/* ===== ===== ===== ===== ===== PING */
 	print_window(win, s, ischn?(mw&1):!!(mw&4),
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01PING %s\01\r\n",
 			purename, space);
@@ -339,7 +338,7 @@ switch (number) {
     case CTCP_TIME:		/* ===== ===== ===== ===== ===== TIME */
 	print_window(win, s, ischn?(mw&1):!!(mw&4),
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	timek = time(NULL);
 	ta = xstrdup(ctime(&timek));
@@ -354,7 +353,7 @@ switch (number) {
     case CTCP_ERRMSG:	/* ===== ===== ===== ===== ===== ERRMSG */
 	print_window(win, s, ischn?(mw&1):!!(mw&4),
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
-			session_name(s), purename, targ+4, ctcp);
+			session_name(s), purename, idhost, targ+4, ctcp);
 
 	irc_write(j, "NOTICE %s :\01ERRMSG %s\01\r\n",
 			purename, space);
@@ -383,7 +382,8 @@ CTCP_COMMAND(ctcp_main_noti)
 
 	t = irc_ircoldcolstr_to_ekgcolstr(s, space);
 	print_window(win, s, ischn?(mw&1):!!(mw&8),
-			"irc_ctcp_reply", session_name(s), ctcps[number-1].name, sender, t);
+			"irc_ctcp_reply", session_name(s),
+			ctcps[number-1].name, sender, idhost, t);
 	xfree (t);
 	
 	return (0);

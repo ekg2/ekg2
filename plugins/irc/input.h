@@ -25,9 +25,9 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 
 
 #define CTCP_COMMAND(x) int x(session_t *s, irc_private_t *j, int number, \
-		char *ctcp, char *sender, char *targ)
+		char *ctcp, char *sender, char*idhost, char *targ)
 typedef int (*CTCP_Cmd) (session_t *s, irc_private_t *j, int number,
-		char *ctcp, char *sender, char *targ);
+		char *ctcp, char *sender, char *idhost, char *targ);
 
 typedef struct {
 	char *name;

@@ -339,7 +339,7 @@ IRC_COMMAND(irc_c_init)
 IRC_COMMAND(irc_c_error)
 {
 	int  i;
-	char *t, *dest = NULL, *coloured = NULL;
+	char *t, *dest = NULL, *coloured = NULL, *bang;
 	time_t try;
 	window_t *w;
 
@@ -400,9 +400,11 @@ IRC_COMMAND(irc_c_error)
 			break;
 		case 333:
 			try = param[5]?atol(OMITCOLON(param[5])):0; 
+			if ((bang = xstrchr(param[4], '!'))) *bang = '\0';
 			print_window(dest, s, 0, "IRC_RPL_TOPICBY",
-					session_name(s), param[4], param[5]?
-					ctime(&try):"unknown\n");
+					session_name(s), param[4], bang?bang+1:"",
+					param[5]?ctime(&try):"unknown\n");
+			if (bang) *bang ='!';
 			break;
 		case 376:
 			if (session_get(s, "AUTO_JOIN"))
@@ -511,17 +513,16 @@ IRC_COMMAND(irc_c_nick)
 	/* debug("irc_nick> %s %s\n", j->nick, param[0]+1); */
 	irc_nick_change(s, j, param[0]+1, OMITCOLON(param[2]));
 	if (!xstrcmp(j->nick, param[0]+1)) {
-		*t='!';
 		print_window(window_current->target, s, 0, "IRC_YOUNEWNICK", 
-				session_name(s), OMITCOLON(param[2]));
+				session_name(s), t?t+1:"", OMITCOLON(param[2]));
 		
 		xfree(j->nick);
 		j->nick = xstrdup(OMITCOLON(param[2]));	
 	} else {
 		print_window(window_current->target, s, 0, "IRC_NEWNICK",
-				session_name(s), param[0]+1, OMITCOLON(param[2]));
-		if (t) *t='!';
+				session_name(s), param[0]+1, t?t+1:"", OMITCOLON(param[2]));
 	}
+	if (t) *t='!';
 	return 0;
 }
 
@@ -547,9 +548,11 @@ IRC_COMMAND(irc_c_msg)
 			return 0;
 
 	mw = session_int_get(s, "make_window");
-	me = xstrdup(param[0]+1);
+	
+	ctcpstripped = ctcp_parser(s, prv, param[0], param[2], OMITCOLON(param[3]));
+
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
-	ctcpstripped = ctcp_parser(s, prv, me, param[2], OMITCOLON(param[3]));
+	me = xstrdup(t?t+1:"");
 	
 	/* mesg do nas */
 	if (!xstrcmp(j->nick, param[2])) {
@@ -579,14 +582,14 @@ IRC_COMMAND(irc_c_msg)
 
 	if (ctcpstripped) {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped);
-		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', me, param[2], OMITCOLON(param[3]));
+		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));
 		xfree(ctcpstripped);
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
 		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
 			*prefix='\0';
 		head = format_string(format_find(format), session_name(s),
-				prefix, me, param[0]+1, param[2], coloured, "Y ");
+				prefix, param[0]+1, me, param[2], coloured, "Y ");
 		xfree(coloured);
 		xfree(me);
 		me = xstrdup(session_uid_get(s));
@@ -612,7 +615,7 @@ IRC_COMMAND(irc_c_msg)
  */
 IRC_COMMAND(irc_c_join)
 {
-	char *channel, *tmp, *text;
+	char *channel, *tmp;
 	channel_t *ischan;
 	window_t *newwin;
 	//int  __class = EKG_MSGCLASS_CHAT;
@@ -624,20 +627,18 @@ IRC_COMMAND(irc_c_join)
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
 	 * z tego jaka¶ kupa, ale na razie nie chce mi siê nad tym my¶leæ */
 	if (!xstrcmp(j->nick, param[0]+1)) {
-		*tmp='!';
+		if (tmp) *tmp='!';
 		newwin = window_new(channel, s, 0);
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
 		ischan = irc_add_channel(s, j , OMITCOLON(param[2]), newwin);
 	/* someone joined */
 	} else {
-		text = xstrdup(param[0]+1);
 		irc_add_person(s, j, param[0]+1, OMITCOLON(param[2])); 
 		
-		if(tmp) *tmp='!';
 		print_window(channel, s, 0, "irc_joined", session_name(s),
-				text, param[0]+1, OMITCOLON(param[2]));
-		xfree(text);
+				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]));
+		if(tmp) *tmp='!';
 		
 	}
 	xfree(channel);
@@ -651,7 +652,7 @@ IRC_COMMAND(irc_c_join)
  */
 IRC_COMMAND(irc_c_part)
 {
-	char *channel, *tmp, *uid, *coloured;
+	char *channel, *tmp, *coloured;
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 	/* we part */
@@ -666,8 +667,6 @@ IRC_COMMAND(irc_c_part)
 		 * SHOULD NOT ;/
 		 */
 		irc_del_person_channel(s, j, param[0]+1, OMITCOLON(param[2]));
-		uid = xstrdup(param[0]+1);
-		if (tmp) *tmp='!';
 
 		channel = saprintf("irc:%s", param[2]);
 		
@@ -675,10 +674,10 @@ IRC_COMMAND(irc_c_part)
 			irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3])):
 					xstrdup("no reason"):xstrdup("no reason");
 		print_window(channel, s, 0, "irc_left", session_name(s),
-				uid, param[0]+1, OMITCOLON(param[2]), coloured);
+				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]), coloured);
+		if (tmp) *tmp='!';
 		xfree(coloured);
 		xfree(channel);
-		xfree(uid);
 	}
 	return 0;
 }
@@ -715,7 +714,7 @@ IRC_COMMAND(irc_c_kick)
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4])):
 				xstrdup("no reason"):xstrdup("no reason");
 	print_window(channel, s, 0, stajl, session_name(s), 
-			OMITCOLON(param[3]), uid+4, param[0]+1,
+			OMITCOLON(param[3]), uid+4, tmp?tmp+1:"",
 			param[2], coloured);
 	xfree(coloured);
 	xfree(stajl);
@@ -736,27 +735,25 @@ IRC_COMMAND(irc_c_kick)
  */
 IRC_COMMAND(irc_c_quit)
 {
-	char *tmp, *uid, *reason;
+	char *tmp, *reason;
 	int dq;
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
-	uid = xstrdup(param[0]+1);
-	if (tmp) *tmp='!';
 	reason = param[2]?xstrlen(OMITCOLON(param[2]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[2])):
 		xstrdup("no reason"):xstrdup("no reason");
 	
 	dq = session_int_get(s, "DISPLAY_QUIT");
 	
-	irc_del_person(s, j, uid, param[0]+1, reason, !dq);
+	irc_del_person(s, j, param[0]+1, tmp?tmp+1:"", reason, !dq);
 	
 	if (dq)
 		print_window(dq==2?window_current->target:"__status",
 				s, 0, "irc_quit", session_name(s), 
-				uid, param[0]+1, reason);
+				param[0]+1, tmp?tmp+1:"", reason);
 	
 	xfree(reason);
-	xfree(uid);
+	if (tmp) *tmp='!';
 	
 	return 0;
 }
@@ -793,11 +790,11 @@ IRC_COMMAND(irc_c_topic)
 	if (xstrlen(OMITCOLON(param[3]))) {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]));
 		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),
-				param[2], coloured, param[0]+1);
+				param[0]+1, t?t+1:"", param[2], coloured);
 		xfree(coloured);
 	} else
 		print_window(dest, s, 0, "IRC_TOPIC_UNSET", session_name(s),
-				param[2], param[0]+1);
+				param[0]+1, t?t+1:"", param[2]);
 	if (t) *t='!';
 	return 0;
 }
@@ -867,7 +864,7 @@ notreallyok:
 		string_append(moderpl, *pars++);
 	}
 	print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
-			param[0]+1, param[2], moderpl->str);
+			param[0]+1, bang?bang+1:"", param[2], moderpl->str);
 	if (bang) *bang='!';
 	string_free(moderpl, 1);
 

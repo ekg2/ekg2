@@ -1175,23 +1175,22 @@ static int irc_theme_init()
 	 * you should report this to me (GiM)
 	 */
 	
-	/* %2 - prefix %3 - nick+ident+host, %4 - nick, %5 - chan, %6 - msg*/
-
-	format_add("irc_msg_sent",	"%P<%n%4/%5%P>%n %6", 1);
-	format_add("irc_msg_sent_n",	"%P<%n%4%P>%n %6", 1);
-	format_add("irc_msg_sent_chan",	"%P<%w%{2@%+gcp}X%2%4%P>%n %6", 1);
-	format_add("irc_msg_sent_chanh","%P<%W%{2@%+GCP}X%2%4%P>%n %6", 1);
+	/* %2 - prefix, %3 - nick, %4 - nick+ident+host, %5 - chan, %6 - msg*/
+	format_add("irc_msg_sent",	"%P<%n%3/%5%P>%n %6", 1);
+	format_add("irc_msg_sent_n",	"%P<%n%3%P>%n %6", 1);
+	format_add("irc_msg_sent_chan",	"%P<%w%{2@%+gcp}X%2%3%P>%n %6", 1);
+	format_add("irc_msg_sent_chanh","%P<%W%{2@%+GCP}X%2%3%P>%n %6", 1);
 	
-	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%4/%5%B>%n %6", 1); /* NOT USED */
-	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%4/%5%B>%n %6", 1); /* NOT USED */
-	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%4%B>%n %6", 1);
-	format_add("irc_msg_f_chan_nh",	"%B<%W%{2@%+GCP}X%2%4%B>%n %6", 1);
+	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%3/%5%B>%n %6", 1); /* NOT USED */
+	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
+	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
+	format_add("irc_msg_f_chan_nh",	"%B<%W%{2@%+GCP}X%2%3%B>%n %6", 1);
 	format_add("irc_msg_f_some",	"%b<%n%4%b>%n %6", 1);
 
-	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%4/%5%B)%n %6", 1); /* NOT USED */
-	format_add("irc_not_f_chanh",	"%B(%W%{2@%+GCP}X%2%4/%5%B)%n %6", 1); /* NOT USED */
-	format_add("irc_not_f_chan_n",	"%B(%w%{2@%+gcp}X%2%4%B)%n %6", 1);
-	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%4%B)%n %6", 1);
+	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%3/%5%B)%n %6", 1); /* NOT USED */
+	format_add("irc_not_f_chanh",	"%B(%W%{2@%+GCP}X%2%3/%5%B)%n %6", 1); /* NOT USED */
+	format_add("irc_not_f_chan_n",	"%B(%w%{2@%+gcp}X%2%3%B)%n %6", 1);
+	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_some",	"%b(%n%4%b)%n %6", 1);
 
 	format_add("irc_joined", "%> %Y%2%n has joined %4\n", 1);
@@ -1202,11 +1201,11 @@ static int irc_theme_init()
 	format_add("irc_unknown_ctcp", "%> %Y%2%n sent unknown CTCP %3: (%4)\n", 1);
 	format_add("irc_ctcp_action_y_pub", "%> %y%e* %2%n %4\n", 1);
 	format_add("irc_ctcp_action_y", "%> %Y%e* %2%n %4\n", 1);
-	format_add("irc_ctcp_action_pub", "%> %y%h* %2%n %4\n", 1);
-	format_add("irc_ctcp_action", "%> %Y%h* %2%n %4\n", 1);
-	format_add("irc_ctcp_request_pub", "%> %Y%2%n requested ctcp %4 from %3\n", 1);
-	format_add("irc_ctcp_request", "%> %Y%2%n requested ctcp %4\n", 1);
-	format_add("irc_ctcp_reply", "%> %Y%2%n CTCP reply from %3: %4\n", 1);
+	format_add("irc_ctcp_action_pub", "%> %y%h* %2%n %5\n", 1);
+	format_add("irc_ctcp_action", "%> %Y%h* %2%n %5\n", 1);
+	format_add("irc_ctcp_request_pub", "%> %Y%2%n requested ctcp %5 from %4\n", 1);
+	format_add("irc_ctcp_request", "%> %Y%2%n requested ctcp %5\n", 1);
+	format_add("irc_ctcp_reply", "%> %Y%2%n CTCP reply from %3: %5\n", 1);
 
 
 	format_add("IRC_ERR_CANNOTSENDTOCHAN", "%! %2: %1\n", 1);
@@ -1238,15 +1237,15 @@ static int irc_theme_init()
 	
 	format_add("RPL_TOPIC", "%> Topic %2: %3\n", 1);
 	/* \n not needed if you're including date [%3] */
-	format_add("IRC_RPL_TOPICBY", "%> set by %2 on %3", 1);
-	format_add("IRC_TOPIC_CHANGE", "%> %T%4%n changed topic on %T%2%n: %3\n", 1);
-	format_add("IRC_TOPIC_UNSET", "%> %T%3%n unset topic on %T%2%n\n", 1);
-	format_add("IRC_MODE_CHAN", "%> %2/%3 sets mode%4\n", 1);
+	format_add("IRC_RPL_TOPICBY", "%> set by %2 on %4", 1);
+	format_add("IRC_TOPIC_CHANGE", "%> %T%2%n changed topic on %T%4%n: %5\n", 1);
+	format_add("IRC_TOPIC_UNSET", "%> %T%2%n unset topic on %T%4%n\n", 1);
+	format_add("IRC_MODE_CHAN", "%> %2/%4 sets mode%5\n", 1);
 	format_add("IRC_MODE", "%> %2 set mode %3 on You\n", 1);
 
 	format_add("IRC_PINGPONG", "%) ping/pong %c%2%n\n", 1);
-	format_add("IRC_YOUNEWNICK", "%> You are now known as %G%2%n\n", 1);
-	format_add("IRC_NEWNICK", "%> %g%2%n is now known as %G%3%n\n", 1);
+	format_add("IRC_YOUNEWNICK", "%> You are now known as %G%3%n\n", 1);
+	format_add("IRC_NEWNICK", "%> %g%2%n is now known as %G%4%n\n", 1);
 	
 	return 0;
 }
