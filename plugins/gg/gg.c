@@ -1331,8 +1331,25 @@ COMMAND(gg_command_msg)
 		return 0;
 	}
 
-	if (strlen(params[1]) > 1989)
-		printq("message_too_long");
+	if (config_split_messages && xstrlen(params[1]) > 1989) {
+		int i, len = xstrlen(params[1]);
+		
+		for (i = 1; i * 1989 <= len; i++) {
+			char *tmp = (i != len) ? xstrndup(params[1] + (i - 1) * 1989, 1989) : xstrdup(params[1] + (i - 1) * 1989);
+			char *cmd = saprintf("/%s %s %s", name, params[0], tmp);
+
+			command_exec(target, session, cmd, 0);
+			debug("cmd: %s\n", cmd);
+			
+			xfree(cmd);
+			xfree(tmp);
+		}
+	
+		return 0;
+
+	} else if (xstrlen(params[1]) > 1989) {
+              printq("message_too_long");
+	}
 
 	msg = xstrmid(params[1], 0, 1989);
 	ekg_format = ekg_sent_message_format(msg);
