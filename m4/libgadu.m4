@@ -8,7 +8,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
 			without_libgadu=yes
 		elif test "x$withval" != "xyes"; then
 			LIBGADU_CPPFLAGS="-I$withval/include"
-			LIBGADU_LIBS="-L$withval/lib -lgadu -lcrypto -lssl -lpthread"
+			LIBGADU_LIBS="-L$withval/lib -lgadu -lcrypto -lssl -lpthread $PTHREAD_LIBS"
 		fi
 	])
 
@@ -16,13 +16,13 @@ AC_DEFUN([AC_CHECK_LIBGADU],
 		CPPFLAGS="$CPPFLAGS $LIBGADU_CPPFLAGS"
 		LDFLAGS="$LDFLAGS $LIBGADU_LIBS"
 	        save_LIBS="$LIBS"
-                LIBS="-lgadu -lcrypto -lssl -lpthread $LIBS"
+                LIBS="-lgadu -lcrypto -lssl $LIBS $PTHREAD_LIBS"
 		AC_CHECK_HEADERS([libgadu.h],
 		[
-			AC_CHECK_LIB([gadu], [gg_login],
+			AC_CHECK_LIB([gadu], [gg_token],
 			[
 				AC_DEFINE([HAVE_LIBGADU], 1, [define if you have libgadu])
-				LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl -lpthread"
+				LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS"
 				have_libgadu="yes"
 			])
 		])

@@ -81,6 +81,27 @@ if test "x$without_ioctld" != "xyes"; then
 	fi
 fi
 
+dnl
+dnl  Resolver libgadu oparty na pthread
+dnl
+
+AC_ARG_WITH(pthread,
+  [  --with-pthread          Use pthread in resolver])
+
+if test "x$without_pthread" != "xno"; then
+        ACX_PTHREAD(
+        [
+                dnl workaround dla pkconfiga
+                if test "x$PTHREAD_CFLAGS" = "x-pthread"; then
+                        PTHREAD_LIBS="$PTHREAD_LIBS -pthread"
+                fi
+
+                have_pthread=yes
+        ], [
+                AC_MSG_ERROR([Your system is not supporting pthreads])
+        ])
+fi
+
 AC_CHECK_LIBGADU
 
 if test "x$have_libgadu" = "xyes"; then
