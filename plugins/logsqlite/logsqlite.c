@@ -67,8 +67,10 @@ COMMAND(logsqlite_cmd_last)
 	int count2 = 0;
 	char * gotten_uid;
 	char * nick = NULL;
+	window_t * w;
 	int limit = config_logsqlite_last_limit;
 	int i = 0;
+	char * target_window = "__status";
 
 	if (params[i] && match_arg(params[i], 'n', "number", 2)) {
 		i++;
@@ -94,6 +96,7 @@ COMMAND(logsqlite_cmd_last)
 		if (! gotten_uid) {
 			gotten_uid = nick;
 		}
+		target_window = gotten_uid;
 		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i) order by ts asc", gotten_uid, limit);
 	} else {
 		sprintf(sql, "select * from (select uid, nick, ts, body, sent from log_msg order by ts desc limit %i) order by ts asc", limit);
@@ -104,17 +107,33 @@ COMMAND(logsqlite_cmd_last)
 		ts = (time_t) atoi(results[2]);
 		tm = localtime(&ts);
 		strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm);
-		if (!xstrcmp(results[4], "0")) {
-			printq("last_list_in", buf, results[1], results[3]);
+		if (config_logsqlite_last_in_window) {
+			if (!xstrcmp(results[4], "0")) {
+				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_in", buf, results[1], results[3]);
+			} else {
+				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_out", buf, results[1], results[3]);
+			}
 		} else {
-			printq("last_list_out", buf, results[1], results[3]);
+			if (!xstrcmp(results[4], "0")) {
+				printq("last_list_in", buf, results[1], results[3]);
+			} else {
+				printq("last_list_out", buf, results[1], results[3]);
+			}
 		}
 	}
 	if (count2 == 0) {
-		if (nick) {
-			printq("last_list_empty_nick", nick);
+		if (config_logsqlite_last_in_window) {
+			if (nick) {
+				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty_nick", nick);
+			} else {
+				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty");
+			}
 		} else {
-			printq("last_list_empty");
+			if (nick) {
+				printq("last_list_empty_nick", nick);
+			} else {
+				printq("last_list_empty");
+			}
 		}
 	}
 	sqlite_finalize(vm, &errors);
@@ -382,10 +401,12 @@ int logsqlite_plugin_init(int prio)
 
 	query_connect(&logsqlite_plugin, "protocol-message", logsqlite_msg_handler, NULL);
 	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);
-	variable_add(&logsqlite_plugin, "log", VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "last_open_window", VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "last_in_window", VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "last_limit", VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, "log_ignored", VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, "log_status", VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "last_limit", VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "log", VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, "path", VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
 
 	debug("[logsqlite] plugin registered\n");

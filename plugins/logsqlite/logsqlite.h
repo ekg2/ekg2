@@ -32,11 +32,13 @@ sqlite * logsqlite_open_db();
 void logsqlite_close_db(sqlite * db);
 void logsqlite_setvar_default();
 
-int config_logsqlite_log;
+int config_logsqlite_last_in_window = 0;
+int config_logsqlite_last_open_window = 0;
+int config_logsqlite_last_limit = 10;
+int config_logsqlite_log = 0;
 int config_logsqlite_log_ignored = 0;
 int config_logsqlite_log_status = 0;
 int config_logsqlite_remind_number = 0;
-int config_logsqlite_last_limit = 10;
 char * config_logsqlite_path;
 
 #endif
