@@ -46,7 +46,6 @@
 #include <unistd.h>
 
 #include "commands.h"
-#include "events.h"
 #include "configfile.h"
 #include "dynstuff.h"
 #include "log.h"
