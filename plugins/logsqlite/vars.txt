@@ -1,0 +1,28 @@
+// ma³y opis dostêpnych zmiennych
+// (c) copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
+
+log
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+        okre¶la, czy plugin loguje wiadomo¶ci
+
+log_ignored
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy logujemy ignorowane wiadomo¶ci (NFY).
+
+log_status
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy bêd± logowane zmiany stanu ludzi z listy (zmienna
+	,,log'' musi byæ ró¿na od 0) (NFY)
+	
+path
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+        ¶cie¿ka do pliku z baz± danych zawieraj±c± odpowiedni± strukturê
+        (plik musi istnieæ).

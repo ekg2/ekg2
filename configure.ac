@@ -234,6 +234,12 @@ if test "x$have_python" = "xyes"; then
 	PLUGINS="$PLUGINS python"
 fi
 
+PKG_CHECK_MODULES(SQLITE, sqlite >= 2.8.0, [
+        AC_CONFIG_FILES([plugins/logsqlite/Makefile])
+        PLUGINS="$PLUGINS logsqlite"
+        have_sqlite="yes"
+], [ have_sqlite="no"])
+
 AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
 *** libgnutls was not found. You may want to get it from
@@ -257,75 +263,81 @@ echo
 echo "configured options:"
 
 if test "x$have_ioctld_includes" = "xyes"; then
- 	echo " - ioctld:  enabled"
+ 	echo " - ioctld:    enabled"
 else
-	echo " - ioctld:  disabled"
+	echo " - ioctld:    disabled"
 fi
 
 if test "x$have_libgadu" = "xyes"; then
-	echo " - libgadu: enabled"
+	echo " - libgadu:   enabled"
 else
-	echo " - libgadu: disabled"
+	echo " - libgadu:   disabled"
 fi
 
 if test "x$have_pthread" = "xyes"; then
-	echo " - pthread: enabled"
+	echo " - pthread:   enabled"
 else
-	echo " - pthread: disabled"
+	echo " - pthread:   disabled"
 fi
 
 if test "x$have_openssl" = "xyes"; then
-	echo " - openssl: enabled"
+	echo " - openssl:   enabled"
 else
-	echo " - openssl: disabled"
+	echo " - openssl:   disabled"
 fi
 
 if test "x$have_gnutls" = "xyes"; then
-	echo " - gnutls:  enabled"
+	echo " - gnutls:    enabled"
 else
-	echo " - gnutls:  disabled"
+	echo " - gnutls:    disabled"
 fi
 
 if test "x$have_expat" = "xyes"; then
-	echo " - expat:   enabled"
+	echo " - expat:     enabled"
 else
-	echo " - expat:   disabled"
+	echo " - expat:     disabled"
 fi
 
 if test "x$have_ncurses" = "xyes"; then
-	echo " - ncurses: enabled"
+	echo " - ncurses:   enabled"
 else
-	echo " - ncurses: disabled"
+	echo " - ncurses:   disabled"
 fi
 
 if test "x$have_libgsm" = "xyes"; then
-	echo " - libgsm:  enabled"
+	echo " - libgsm:    enabled"
 else
-	echo " - libgsm:  disabled"
+	echo " - libgsm:    disabled"
 fi
 
 if test "x$have_python" = "xyes"; then
-	echo " - python:  enabled"
+	echo " - python:    enabled"
 else
-	echo " - python:  disabled"
+	echo " - python:    disabled"
 fi
 
 if test "x$have_libxosd" = "xyes"; then
-	echo " - libxosd: enabled"
+	echo " - libxosd:   enabled"
 else
-	echo " - libxosd: disabled"
+	echo " - libxosd:   disabled"
+fi
+
+if test "x$have_sqlite" = "xyes"; then
+	echo " - logsqlite: enabled"
+else
+	echo " - logsqlite: disabled"
 fi
 
 if test "x$have_aspell" = "xyes"; then
-        echo " - aspell:  enabled"
+        echo " - aspell:    enabled"
 else
-        echo " - aspell:  disabled"
+        echo " - aspell:    disabled"
 fi
 
 if test "x$have_libjpeg" = "xyes"; then
-        echo " - libjpeg: enabled"
+        echo " - libjpeg:   enabled"
 else
-        echo " - libjpeg: disabled"
+        echo " - libjpeg:   disabled"
 fi
 
 echo " - mouse support in $mouse_lib"
