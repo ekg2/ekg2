@@ -404,12 +404,14 @@ static void gg_session_handler_success(session_t *s)
 	gg_userlist_send(g->sess, s->userlist);
 
 	s->last_conn = time(NULL);
+	
 	/* zapiszmy adres serwera */
-	if (session_int_get(s, "server_save") == 1) {
-		struct in_addr addr;
+	if (session_int_get(s, "connection_save") == 1) {
+		struct in_addr addr;		
 
 		addr.s_addr = g->sess->server_addr;
 		session_set(s, "server", inet_ntoa(addr));
+		session_int_set(s, "port", g->sess->port);
 	}
 
 	/* pamiêtajmy, ¿eby pingowaæ */
@@ -467,8 +469,11 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e)
 			break;
 	}
 
-	if (session_int_get(s, "server_save") == 1) 
-			session_set(s, "server", NULL);
+	if (session_int_get(s, "connection_save") == 1) {
+		session_set(s, "server", NULL);
+		session_int_set(s, "port", GG_DEFAULT_PORT);
+	}
+			
 
 	gg_free_session(g->sess);
 	g->sess = NULL;
@@ -997,6 +1002,13 @@ COMMAND(gg_command_connect)
 			    return -1;
 			}
 		}
+
+		int port = session_int_get(session, "port");
+		if ((port < 1) || (port > 65535)) {
+			print("port_number_error", session_name(session));
+			return -1;
+		}
+		p.server_port = port;
 
 		gg_proxy_port = 0;
 		xfree(gg_proxy_host);
@@ -1669,8 +1681,9 @@ int gg_plugin_init()
         plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "0", 0);
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0);
         plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1);
+        plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0);
 	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0);
-	plugin_var_add(&gg_plugin, "server_save", VAR_INT, "0", 0);
+	plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0);
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;
