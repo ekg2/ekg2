@@ -547,6 +547,34 @@ char *get_uid(session_t *session, const char *text)
 	return NULL;
 }
 
+/*
+ * get_uid_all()
+ * 
+ * the same as get_uid(), but searches in all sessions
+ */
+char *get_uid_all(const char *text)
+{
+	list_t l;
+	for (l = sessions; l; l = l->next) {
+		session_t *session = l->data;
+	        userlist_t *u;
+
+	        if (text && !xstrcmp(text, "$"))
+	                text = window_current->target;
+	
+	        u = userlist_find(session, text);
+	
+	        if (u && u->uid)
+	                return u->uid;
+	
+	        if (valid_uid(text))
+	                return (char *)text;
+	}
+
+        return NULL;
+}
+
+
 /* 
  * check_uid_nick()
  *

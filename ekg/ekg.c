@@ -148,50 +148,8 @@ void ekg_loop()
 				void (*handler)(int, int, int, void*) = w->handler;
 				handler(2, w->fd, w->type, w->data);
 			}
-			
-#if 0
-			switch (c->type) {
-				case GG_SESSION_DCC:
-				case GG_SESSION_DCC_GET:
-				case GG_SESSION_DCC_SEND:
-				{
-					struct in_addr addr;
-					unsigned short port = d->remote_port;
-					char *tmp;
-			
-					addr.s_addr = d->remote_addr;
-
-					if (d->peer_uin) {
-						userlist_t *u = userlist_find(d->peer_uin, NULL);
-						if (!addr.s_addr && u) {
-							addr.s_addr = u->ip.s_addr;
-							port = u->port;
-						}
-						tmp = saprintf("%s (%s:%d)", xstrdup(format_user(d->peer_uin)), inet_ntoa(addr), port);
-					} else 
-						tmp = saprintf("%s:%d", inet_ntoa(addr), port);
-					print("dcc_timeout", tmp);
-					xfree(tmp);
-					remove_transfer(d);
-					list_remove(&watches, d, 0);
-					gg_free_dcc(d);
-					break;
-				}
-			}
-
-			break;
-#endif
 		}
 		
-#if 0
-		/* timeout pinga */
-		if (sess && sess->state == GG_STATE_CONNECTED && time(NULL) - last_ping > 60) {
-			if (last_ping)
-				gg_ping(sess);
-			last_ping = time(NULL);
-		}
-#endif
-
 		/* sprawd¼ autoawaye ró¿nych sesji */
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;

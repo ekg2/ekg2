@@ -665,6 +665,7 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 	char **nicks;
 	list_t l, sl;
 	int i, count;
+	char **p;
 
 	memset(&c, 0, sizeof(c));
 
@@ -738,19 +739,20 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 		}
 	}
 
-#if 0
+
 	for (p = nicks, i = 0; *p; p++) {
-		uin_t uin;
+		char *uid;
 
 		if (!xstrcmp(*p, ""))
 		        continue;
 
-		uin = get_uin(*p);
+		uid = get_uid_all(*p);
 
-		list_add(&(c.recipients), &uin, sizeof(uin));
+		if (uid)
+			list_add(&(c.recipients), uid, xstrlen(uid) +1);
 		i++;
 	}
-#endif
+
 
 	array_free(nicks);
 

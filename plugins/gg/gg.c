@@ -1180,11 +1180,6 @@ COMMAND(gg_command_msg)
 		printq("not_enough_params", name);
 		return -1;
 	}
-	uid = get_uid(session, params[0]);
-	if (!uid || xstrncasecmp(uid, "gg:", 3)) {
-		printq("invalid_nick");
-		return -1;
-	}
 	
 	session_unidle(session);
 
@@ -1192,9 +1187,6 @@ COMMAND(gg_command_msg)
 //		msg_all_wrapper(chat, params[1], quiet);
 //		return 0;
 //	}
-
-//	if (config_auto_back == 1 && GG_S_B(config_status) && in_auto_away)
-//		change_status(GG_STATUS_AVAIL, NULL, 1);
 
 	nick = xstrdup(params[0]);
 
@@ -1205,9 +1197,9 @@ COMMAND(gg_command_msg)
 		if (c) {
 			xfree(nick);
 			nick = xstrdup(c->name);
-
-			for (l = c->recipients; l; l = l->next)
-				array_add(&nicks, xstrdup(itoa(*((uin_t *) (l->data)))));
+			
+			for (l = c->recipients; l; l = l->next) 
+				array_add(&nicks, xstrdup((char *) (l->data)));
 			
 			add_send = xstrdup(c->name);
 		}
@@ -1222,7 +1214,7 @@ COMMAND(gg_command_msg)
 		}
 
 		for (l = c->recipients; l; l = l->next)
-			array_add(&nicks, xstrdup(itoa(*((uin_t *) (l->data)))));
+			array_add(&nicks, xstrdup((char *) (l->data)));
 		
 		add_send = xstrdup(c->name);
 	} else {
@@ -1457,7 +1449,7 @@ COMMAND(gg_command_msg)
 	xfree(add_send);
 
 	if (valid && (!g->sess || g->sess->state != GG_STATE_CONNECTED))
-		printq("not_connected_msg_queued");
+		printq("not_connected_msg_queued", session_name(session));
 
 	if (valid && config_display_sent) {
 		const char *rcpts[2] = { nick, NULL };
