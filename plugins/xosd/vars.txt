@@ -1,0 +1,65 @@
+// ma³y opis dostêpnych zmiennych pluginu sms
+// (c) copyright 2004 Adam 'dredzik' Kuczyñski <dredzik@sedez.iq.pl>
+
+xosd_font
+	typ: tekst
+	domy¶lna warto¶æ: 
+	"-adobe-helvetica-bold-r-normal-*-*-120-*-*-p-*-iso8859-2"
+
+	czcionka, któr± maj± byæ wy¶wietlane wiadomo¶ci xosd.
+
+xosd_colour:
+	typ: tekst
+	domy¶lna warto¶æ: "#00dd00"
+
+	kolor czcionki.
+
+xosd_shadow_offset:
+	typ: liczba
+	domy¶lna warto¶æ: 2
+
+	wielko¶æ wektora, o który ma byæ przesuniêty cieñ napisu. je¶li 0
+	to nie ma cienia.
+
+xosd_vertical_position:
+	typ: liczba
+	domy¶lna warto¶æ: 2
+
+	pionowa pozycja tekstu na ekranie. 0 - góra, 1 - ¶rodek, 2 - dó³.
+
+xosd_vertical_offset:
+	typ: liczba
+	domy¶lna warto¶æ: 48
+
+	odleg³o¶æ (w pikselach) od wybranego pionu tekstu.
+
+xosd_horizontal_position:
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	pozioma pozycja tekstu na ekranie. 0 - lewo, 1 - ¶rodek, 2 - prawo.
+
+xosd_horizontal_offset:
+	typ: liczba
+	domy¶lna warto¶æ: 48
+
+	odleg³o¶æ (w pikselach) od wybranego poziomu tekstu.
+
+xosd_display_timeout:
+	typ: liczba
+	domy¶lna warto¶æ: 6
+
+	czas jaki napis ma pozostawaæ na ekranie.
+
+xosd_text_limit:
+	typ: liczba
+	domy¶lna warto¶æ: 50
+
+	maksymalna d³ugo¶æ tekstu, który ma zostaæ wy¶wietlony w drugiej 
+	linii komunikatu.
+
+xosd_display_welcome:
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	okre¶la czy ma byæ wy¶wietlany komunikat pocz±tkowy.
