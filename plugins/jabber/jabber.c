@@ -423,9 +423,9 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			return;
 		}
 
-		if (!type) {
-			xmlnode_t *nshow = xmlnode_find_child(n, "show");
-			xmlnode_t *nstatus = xmlnode_find_child(n, "status");
+		if (!type || (type && !xstrcmp(type, "unavailable")) ) {
+			xmlnode_t *nshow = xmlnode_find_child(n, "show"); /* typ */
+			xmlnode_t *nstatus = xmlnode_find_child(n, "status"); /* opisowy */
 			char *session, *uid, *status = NULL, *descr = NULL, *host = NULL;
 			int port = 0;
 
@@ -434,7 +434,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			else
 				status = xstrdup(EKG_STATUS_AVAIL);
 
-			if (!xstrcmp(status, "na")) {
+			if (!xstrcmp(status, "na") || !xstrcmp(type, "unavailable")) {
 				xfree(status);
 				status = xstrdup(EKG_STATUS_NA);
 			}
