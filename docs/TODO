@@ -9,7 +9,6 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
-  - w themach %i ma dzia³aæ ( mruganie tekstu - przyda siê przy blinking) (del)
   - zmienne s± pokazywane, ale nie mo¿na ich ustawiaæ (np zmienne pluginów) (zdz)
   - nie dzia³±j±ce list -d dla jabber'a (del)
   - przy make_window == 2 i po "¶wie¿ym" otwarciu gg, przy pobieraniu wiadomo¶ci

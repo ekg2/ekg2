@@ -208,7 +208,8 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
 		struct screen_line *l;
-		char *str, *attr;
+		char *str; 
+		short *attr;
 		int j;
 		time_t ts;
 
@@ -549,7 +550,8 @@ void ncurses_redraw(window_t *w)
 
 		for (x = 0; x < l->prompt_len + l->len; x++) {
 			int attr = A_NORMAL;
-			unsigned char ch, chattr;
+			unsigned char ch;
+			short chattr;
 			
 			if (x < l->prompt_len) {
 				if (!l->prompt_str)
@@ -564,6 +566,9 @@ void ncurses_redraw(window_t *w)
 
 			if ((chattr & 64))
 				attr |= A_BOLD;
+
+                        if ((chattr & 256))
+                                attr |= A_BLINK;
 
 			if (!(chattr & 128))
 				attr |= color_pair(chattr & 7, 0, COLOR_BLACK);

@@ -10,6 +10,8 @@ zg³osi³ b³±d.
 - has³a sesji zachowywane s± w pliku w postaci kodowanej oraz uwzglêdniana
  jest zmienna save_password (del)
 - poprawka wy¶wietlania osoby niedostêpnej w headerze (del)
+- poprawna obs³uga %i w themach - zwiêkszony rozmiar atrybutów co pozwoli na dodanie 
+ dodatkowych attr jak np underline (del)
 
 // 2004-03-27
 - poprawiona obs³uga zmiennych - dzia³a ju¿ prawid³owo /set etc. (del)

@@ -25,10 +25,10 @@ struct screen_line {
 	int len;		/* d³ugo¶æ linii */
 	
 	char *str;		/* tre¶æ */
-	char *attr;		/* atrybuty */
+	short *attr;		/* atrybuty */
 	
 	char *prompt_str;	/* tre¶æ promptu */
-	char *prompt_attr;	/* atrybuty promptu */
+	short *prompt_attr;	/* atrybuty promptu */
 	int prompt_len;		/* d³ugo¶æ promptu */
 	
 	char *ts;		/* timestamp */

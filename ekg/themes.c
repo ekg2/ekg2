@@ -397,7 +397,7 @@ char *va_format_string(const char *format, va_list ap)
 fstring_t *fstring_new(const char *str)
 {
 	fstring_t *res = xmalloc(sizeof(fstring_t));
-	unsigned char attr = 128;
+	short attr = 128;
 	int i, j, len = 0;
 	
 	for (i = 0; str[i]; i++) {
@@ -425,7 +425,7 @@ fstring_t *fstring_new(const char *str)
 	}
 
 	res->str = xmalloc(len + 1);
-	res->attr = xmalloc(len + 1);
+	res->attr = xmalloc((len + 1) * sizeof(short));
 	res->prompt_len = 0;
 	res->prompt_empty = 0;
 
@@ -460,9 +460,11 @@ fstring_t *fstring_new(const char *str)
 							res->prompt_empty = 1;
 						}
 					}
-
 					if (tmp == 1)
 						attr |= 64;
+
+					if (tmp == 5)
+						attr |= 256;
 
 					if (tmp >= 30 && tmp <= 37) {
 						attr &= 127;
@@ -472,7 +474,7 @@ fstring_t *fstring_new(const char *str)
 					if (tmp >= 40 && tmp <= 47) {
 						attr &= 127;
 						attr |= (tmp - 40) << 3;
-					}
+					} 
 
 					tmp = 0;
 				}
@@ -500,7 +502,7 @@ fstring_t *fstring_new(const char *str)
 
 		res->str[j] = str[i];
 		res->attr[j] = attr;
-
+//		res->attr[j] |= 64;
 		j++;
 	}
 
@@ -1007,48 +1009,51 @@ void theme_init()
 	format_add("contacts_header_group", "%K %1%n", 1);
 	format_add("contacts_avail_header", "", 1);
 	format_add("contacts_avail", " %Y%1%n", 1);
-	format_add("contacts_avail_blink", " %T%1%n", 1);
 	format_add("contacts_avail_descr", "%Ki%Y%1%n", 1);
-	format_add("contacts_avail_descr_blink", "%Ki%T%1%n", 1);
 	format_add("contacts_avail_descr_full", "%Ki%Y%1%n %2", 1);
-	format_add("contacts_avail_descr_full_blink", "%Ki%T%1%n %2", 1);
+        format_add("contacts_avail_blink", " %Y%i%1%n", 1);
+        format_add("contacts_avail_descr_blink", "%K%ii%Y%i%1%n", 1);
+        format_add("contacts_avail_descr_full_blink", "%K%ii%Y%i%1%n %2", 1);
 	format_add("contacts_avail_footer", "", 1);
 	format_add("contacts_away_header", "", 1);
 	format_add("contacts_away", " %G%1%n", 1);
 	format_add("contacts_away_descr", "%Ki%G%1%n", 1);
 	format_add("contacts_away_descr_full", "%Ki%G%1%n %2", 1);
-	format_add("contacts_away_blink", " %R%1%n", 1);
-	format_add("contacts_away_descr_blink", "%Ki%R%1%n", 1);
-	format_add("contacts_away_descr_full_blink", "%Ki%R%1%n %2", 1);
+        format_add("contacts_away_blink", " %G%i%1%n", 1);
+        format_add("contacts_away_descr_blink", "%K%ii%G%i%1%n", 1);
+        format_add("contacts_away_descr_full_blink", "%K%ii%G%i%1%n %2", 1);
 	format_add("contacts_away_footer", "", 1);
 	format_add("contacts_dnd_header", "", 1);
 	format_add("contacts_dnd", " %w%1%n", 1);
 	format_add("contacts_dnd_descr", "%Ki%w%1%n", 1);
 	format_add("contacts_dnd_descr_full", "%Ki%w%1%n %2", 1);
-	format_add("contacts_dnd_blink", " %w%1%n", 1);
-	format_add("contacts_dnd_descr_blink", "%Ki%w%1%n", 1);
-	format_add("contacts_dnd_descr_full_blink", "%Ki%w%1%n %2", 1);
+        format_add("contacts_dnd_blink", " %w%i%1%n", 1);
+        format_add("contacts_dnd_descr_blink", "%K%ii%w%i%1%n", 1);
+        format_add("contacts_dnd_descr_full_blink", "%K%ii%w%i%1%n %2", 1);
 	format_add("contacts_dnd_footer", "", 1);
 	format_add("contacts_xa_header", "", 1);
 	format_add("contacts_xa", " %B%1%n", 1);
 	format_add("contacts_xa_descr", "%Ki%B%1%n", 1);
 	format_add("contacts_xa_descr_full", "%Ki%B%1%n %2", 1);
-	format_add("contacts_xa_blink", " %B%1%n", 1);
-	format_add("contacts_xa_descr_blink", "%Ki%B%1%n", 1);
-	format_add("contacts_xa_descr_full_blink", "%Ki%B%1%n %2", 1);
+        format_add("contacts_xa_blink", " %B%i%1%n", 1);
+        format_add("contacts_xa_descr_blink", "%K%ii%B%i%1%n", 1);
+        format_add("contacts_xa_descr_full_blink", "%K%ii%B%i%1%n %2", 1);
 	format_add("contacts_xa_footer", "", 1);
 	format_add("contacts_notavail_header", "", 1);
 	format_add("contacts_notavail", " %r%1%n", 1);
 	format_add("contacts_notavail_descr", "%Ki%r%1%n", 1);
 	format_add("contacts_notavail_descr_full", "%Ki%r%1%n %2", 1);
-	format_add("contacts_notavail_blink", " %G%1%n", 1);
-	format_add("contacts_notavail_descr_blink", "%Ki%G%1%n", 1);
-	format_add("contacts_notavail_descr_full_blink", "%Ki%G%1%n %2", 1);
+        format_add("contacts_notavail_blink", " %r%i%1%n", 1);
+        format_add("contacts_notavail_descr_blink", "%K%ii%r%i%1%n", 1);
+        format_add("contacts_notavail_descr_full_blink", "%K%ii%r%i%1%n %2", 1);
 	format_add("contacts_notavail_footer", "", 1);
 	format_add("contacts_invisible_header", "", 1);
 	format_add("contacts_invisible", " %c%1%n", 1);
 	format_add("contacts_invisible_descr", "%Ki%c%1%n", 1);
 	format_add("contacts_invisible_descr_full", "%Ki%c%1%n %2", 1);
+        format_add("contacts_invisible_blink", " %c%i%1%n", 1);
+        format_add("contacts_invisible_descr_blink", "%K%ii%c%i%1%n", 1);
+        format_add("contacts_invisible_descr_full_blink", "%K%ii%c%i%1%n %2", 1);
 	format_add("contacts_invisible_footer", "", 1);
 	format_add("contacts_blocking_header", "", 1);
 	format_add("contacts_blocking", " %m%1%n", 1);

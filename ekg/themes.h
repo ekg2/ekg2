@@ -32,7 +32,7 @@ struct format {
 
 typedef struct {
 	char *str;	/* znaki, ci±g zakoñczony \0 */
-	char *attr;	/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
+	short *attr;	/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	int ts;		/* timestamp */
 
 	int prompt_len;	/* d³ugo¶æ promptu, który bêdzie powtarzany przy i
