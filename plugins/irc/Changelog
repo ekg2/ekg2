@@ -1,0 +1,76 @@
+stardate 18:37:53 CEST 2oo4-27-o8 version 0.6.68 (GiM)
+  * irc.c:
+    - irc_getchan() renamed to irc_getchan_int()
+    - changed /mode behaviour, added /umode
+    - /whois
+    - changed /mode
+  * misc.c:
+    - WHOIS reply handling
+
+stardate: 22:51:3o CEST 2oo4-26-o8 version 0.6.48 (GiM)
+ * input.c:
+   - added simple ctcp handling routines
+   - fixed window printing
+ * irc.c:
+   - added /ctcp command
+   - added VERSION_* variables
+ 
+stardate: oo:o6:57 CEST 2oo4-25-o8 version 0.5.95 (GiM)
+ * misc.c:
+   - KICK and QUIT handling,
+   - irc_del_person() rewritten
+ * irc.c:
+   - fixes in nearly every function
+   - additional MODE commands:
+     /op; /deop; /voice; /unvoice
+
+stardate: 22:11:53 CEST 2oo4-22-o8 version 0.5.62 (GiM)
+ * input.[ch] [NEW file]:
+   - colours support ;>
+
+stardate: 21:55:35 CEST 2oo4-2o-o8 version 0.5.20 (GiM)
+ * irc.c:
+   - MODE command
+ * misc.c:
+   - improvments in irc_parse_line()
+   - Improvemnts in prefix-modes changing
+     thanks to Piotr 'Beeth' Kucharski dor pointing me to:
+     www.irc.org/tech_docs/005.html
+ * people.c:
+   - NEW irc_color_in_contacts()
+
+stardate: yesterday
+ * irc.c:
+   - More simplifications in /part; /join
+   - TOPIC command:
+     /topic [chan] [:|new topic]
+     details in README
+ * misc.c/irc.c:
+   - NOTICE command
+
+stardate: o1:o6:28 CEST 2oo4-19-o8 version 0.4.57 (GiM)
+ * I've started Changelog ;] 
+ * I've simplified today most of functions I've written to this moment,
+   + different ways to join channel:
+     /window new irc:#fsck + /join; /join #fsck; /join irc:#fsck; 
+   + different ways to part channel:
+     /part; /part #fsck; /part irc:#fsck; Alt+k; /window kill
+ * I've changed some things, that maybe aren't important now,
+   but I hope they will make easier some stuff in the future...
+
+Yesterday iirc
+ * changed lot of things, cause I've discoverer I was doing
+   really baaad things ;)
+ * dealing with RPLs 321, 322, 323, TOPIC, MODE server responses
+   [right now I just care about +-[ov], to change colors
+    in contactlist]
+
+Explanation: irc-plugin version changes quite quick, because
+it's rather built number than version number ;]
+The first number I've entered manually was 0.2.40.
+Maybe there were more builts, than 240, but ahh yawn, I'm going to bed
+
+client->server: irc.c
+server->client: misc.c
+channels stuff: people.c
+colouring+ctcp: input.c

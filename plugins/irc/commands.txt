@@ -1,0 +1,157 @@
+// IRC protocol commands description
+// (c) 2004 Michal 'GiM' Spadlinski
+// parametry opcjonalne s± w <> wymagane w [], 
+// + lub * oznacza, ¿e mo¿na podaæ wiêcej parametrów
+// danego typu
+
+
+	parametry: [tekst]
+	krotki opis: wysy³a tekst na kana³ b±d¼ do osoby
+
+connect
+	parametry: 
+	krotki opis: pod³±cza sesjê do sieci IRC
+	
+	Nale¿y wcze¶niej ustawiæ zmienn± sesyjn± server 
+	[/session irc:nazwa_sesji server irc_servewr_name]
+	oraz zmienn± nickname.
+
+disconnect
+	parametry: 
+	krotki opis: od³±cza od servera sieci IRC
+
+reconnect
+	parametry: 
+	krotki opis: roz³±cza z serwerem i ³±czy ponownie
+
+join
+	parametry: [kana³]+
+	krotki opis: do³±cza u¿ytkownika do kana³u/ów
+	
+	W wypadku wiêkszej ilo¶ci parametrów, nazwy kana³ów
+	nale¿y oddzieliæ przecinkami. np:
+	/join !ekg2,#apcoh,!apcoh,#english
+
+part
+	parametry: <kana³> <powód>
+	krotki opis: od³±cza u¿ytkownika od aktualnego lub podanego kana³u
+	
+	Je¶li podano powód i je¿eli serwer obs³uguje powody, zostanie on
+	wy¶wietlony przy wychodzeniu innym osobom na kanale.
+
+query
+	parametry: [nick]
+	krotki opis: otwiera okno rozmowy z osob±
+
+nick
+	parametry: [nowynick]
+	krotki opis: zmienia nick na nowy.
+	
+	Komenda ta zmienia tylko nicka, na IRCu, nie zmienia zmiennej
+	sesyjnej nickname, w zwi±zku z czym po ponownym po³aczeniu
+	bêdzie taki nick, jak± warto¶æ ma owa zmienna sesyjna.
+
+topic
+	parametry: <kana³> <:>|<nowy temat>
+	krotki opis: wy¶wietla/zmienia/usuwa topic kana³u
+	
+	-| bez parametrów - wy¶wietla topic aktualnego kana³u
+	
+	-| [kana³] - wy¶wietla topic kana³u
+	
+	-| <kana³> [:] - usuwa topic aktualnego, b±d¼ podanego kana³u
+	
+	-| <kana³> [nowy temat] - ustawia topic aktualnego, b±d¼ podanego kana³u na 'nowy temat'
+
+people
+	parametry: 
+	 
+
+add
+	parametry: 
+	krotki opis: nie robi nic ;-)
+
+msg
+	parametry: [nick|kana³] [wiadomo¶æ]
+	krotki opis: no zgadnij ;-)
+
+ctcp
+	parametry: <osoba|kana³> <rodzaj> <...>
+	krotki opis: wysy³a zapytanie ctcp do osoby, kana³u.
+	
+	Rodzaj to: ACTION [/me], FINGER, VERSION, SOURCE,
+	USERINFO, CLIENTINFO, PING, TIME, ERRMSG
+	
+	przed wys³aniem ctcp warto wys³aæ /ctcp nick|kana³ clientinfo
+	w celu sprawdzenia, jakie ctcp obs³uguje inny klient.
+	
+	je¿eli nie zostanie podany rodzaj wysy³any jest VERSION
+	je¿eli nie podamy, rodzaju, mo¿na nie podaæ pierwszego
+	parametru, je¿eli tylko znajdujemy siê w oknie [kana³u|rozmowy]
+
+mode
+	parametry: <kana³> [tryby] <opcje...>
+	krotki opis: zobacz te¿ /help irc:umode
+	
+	ustawia MODE kana³u [poczytaj jaki¶ help o MODEach
+	kana³ów]
+	je¿eli nie podano parametru, brana jest nazwa aktualnego okna,
+	[je¶li oczywi¶cie jest to okno kana³u!]
+
+umode
+	parametry: [+|-][riws]
+	krotki opis: zmienia %TTWÓJ%n mode
+	
+	r - ustawia restricted [serwer raczej nie pozwoli zdj±æ ;>]
+	
+	i - invisible
+	
+	w - otrzymywanie wallops
+	
+	s - otrzymywanie notice'ów od serwera
+
+
+whois
+	parametry: [nick]
+	krotki opis: robi /whois na danej osobie
+
+op
+	parametry: <kana³> [nick]*
+	krotki opis: t³umaczy siê samo :)
+	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+
+deop
+	parametry: <kana³> [nick]*
+	krotki opis: t³umaczy siê samo :)
+	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+
+voice
+	parametry: <kana³> [nick]*
+	krotki opis: t³umaczy siê samo :-)
+	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+
+devoice
+	parametry: <kana³> [nick]*
+	krotki opis: t³umaczy siê samo :)
+	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+
+away
+	parametry: <opis>
+	krotki opis: zmienia stan na zajêty
+
+_autoaway
+	parametry: 
+	krotki opis: zmienia stan na zajêty
+
+back
+	parametry: 
+	krotki opis: zmienia stan na dostêpny
+
+_autoback
+	parametry: 
+	krotki opis: zmienia stan na zajêty
+
+quote
+	parametry: [komendy]
+	krotki opis: wysy³a bezpo¶rednio tekst do serwera IRC
+

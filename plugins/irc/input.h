@@ -1,0 +1,61 @@
+/*
+ *  (C) Copyright 2004 Ziomal SMrocku <michal.spadlinski@gim.org.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#ifndef __EKG_PLUGINS_IRC_INPUT_H
+#define __EKG_PLUGINS_IRC_INPUT_H
+
+#include "irc.h"
+
+char *irc_ircoldcolstr_to_ekgcolstr(session_t *s, char *str);
+char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s);
+
+
+#define CTCP_COMMAND(x) int x(session_t *s, irc_private_t *j, int number, \
+		char *ctcp, char *sender, char *targ)
+typedef int (*CTCP_Cmd) (session_t *s, irc_private_t *j, int number,
+		char *ctcp, char *sender, char *targ);
+
+typedef struct {
+	char *name;
+	int handled;
+} ctcp_t;
+
+/* GiM: I've decided to make one big handler instead of many small ones */
+CTCP_COMMAND(ctcp_main_priv);
+CTCP_COMMAND(ctcp_main_noti);
+
+int is_ctcp(char *mesg);
+enum { CTCP_ACTION=1, CTCP_DCC, CTCP_SED, CTCP_FINGER, CTCP_VERSION, CTCP_SOURCE,
+	CTCP_USERINFO, CTCP_CLIENTINFO, CTCP_PING, CTCP_TIME, CTCP_ERRMSG };
+
+static ctcp_t ctcps[] = {
+        { "ACTION",     1 },
+        { "DCC",        0 },
+        { "SED",        0 },
+
+        { "FINGER",     1 },
+        { "VERSION",    1 },
+        { "SOURCE",     1 },
+        { "USERINFO",   1 },
+        { "CLIENTINFO", 1 },
+        { "PING",       1 },
+        { "TIME",       1 },
+        { "ERRMSG",     1 },
+        { NULL,         0 }
+};
+
+#endif

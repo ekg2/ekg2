@@ -995,7 +995,7 @@ COMMAND(cmd_help)
 
 			                if (!f) {
                         			print("help_command_file_not_found_plugin", c->plugin->name);
-			                        return -1;
+						continue;
 			                }
 					tmp = xstrchr(c->name, ':');
 					if (!tmp)
@@ -1124,8 +1124,7 @@ COMMAND(cmd_help)
                                 xfree(tmp);
 
                                 if (!f) {
-        	                        print("help_command_file_not_found_plugin", c->plugin->name);
-                                        return -1;
+					continue;
                                 }
 				tmp = xstrchr(c->name, ':');
 				if (!tmp)
