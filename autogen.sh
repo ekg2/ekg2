@@ -57,7 +57,9 @@ if test "$gettext_ver" -ge 01100; then
 	fi
 	$AUTOPOINT --force || exit 1
 else
-	$GETTEXTIZE --copy --force || exit 1
+	sed -e '/AM_GNU_GETTEXT_VERSION(0.11.5)/d' configure.ac > configure.ac1
+	mv -f configure.ac1 configure.ac
+	$GETTEXTIZE --copy --force --no-changelog || exit 1
 fi
 
 # Generate po/POTFILES.in
