@@ -112,4 +112,5 @@ int session_remove_s(session_t *s);
 int session_read();
 int session_write();
 
+void sessions_free();
 #endif /* __EKG_SESSIONS_H */

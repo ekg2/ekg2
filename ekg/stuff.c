@@ -1328,29 +1328,6 @@ char *read_file(FILE *f)
 	return res;
 }
 
-/* sessions_free()
- * 
- * zwalnia wszystkie dostêpne sesje 
- */
-void sessions_free()
-{
-        list_t l;
-
-        if (!sessions)
-                return;
-
-        for (l = sessions; l; l = l->next) {
-                session_t *s = l->data;
-	
-		if (s && s->uid)	
-			session_remove_s(s);
-        }
-
-        list_destroy(sessions, 1);
-        sessions = NULL;
-}
-
-
 /*
  * timestamp()
  *
