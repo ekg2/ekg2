@@ -28,9 +28,10 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -835,13 +836,11 @@ COMMAND(cmd_exec)
 
 		if (!(pid = fork())) {
 			dup2(open("/dev/null", O_RDONLY), 0);
+			dup2(fd[1], 1);
+			dup2(fd[1], 2);
 
-			if (fd[1]) {
-				close(fd[0]);
-				dup2(fd[1], 2);
-				dup2(fd[1], 1);
-				close(fd[1]);
-			}	
+			close(fd[0]);
+			close(fd[1]);
 
 			execl("/bin/sh", "sh", "-c", (command[0] == '^') ? command + 1 : command, (void *) NULL);
 
@@ -1628,8 +1627,6 @@ COMMAND(cmd_debug_query)
 	return 0;
 }
 
-#if 0
-
 COMMAND(cmd_test_fds)
 {
 	struct stat st;
@@ -1647,17 +1644,22 @@ COMMAND(cmd_test_fds)
 
 		if (S_ISSOCK(st.st_mode)) {
 			struct sockaddr sa;
-			struct sockaddr_un *sun = (struct sockaddr_un*) &sa;
+//			struct sockaddr_un *sun = (struct sockaddr_un*) &sa;
 			struct sockaddr_in *sin = (struct sockaddr_in*) &sa;
 			int sa_len = sizeof(sa);
 			
 			if (getpeername(i, &sa, &sa_len) == -1) {
-				strcat(buf, "socket, not connected");
+				getsockname(i, &sa, &sa_len);
+
+				if (sa.sa_family == AF_INET) {
+					strcat(buf, "socket, inet, *:");
+					strcat(buf, itoa(ntohs(sin->sin_port)));
+				} else
+					strcat(buf, "socket");
 			} else {
 				switch (sa.sa_family) {
 					case AF_UNIX:
-						strcat(buf, "socket, unix, ");
-						strcat(buf, sun->sun_path);
+						strcat(buf, "socket, unix");
 						break;
 					case AF_INET:
 						strcat(buf, "socket, inet, ");
@@ -1689,9 +1691,9 @@ COMMAND(cmd_test_fds)
 
 		printq("generic", buf);
 	}
+
 	return 0;
 }
-#endif
 
 COMMAND(cmd_beep)
 {
@@ -3777,6 +3779,7 @@ void command_init()
 
 	command_add(NULL, "_addtab", "??", cmd_test_addtab, 0, "", "dodaje do listy dope³niania TABem", "");
 	command_add(NULL, "_deltab", "??", cmd_test_deltab, 0, "", "usuwa z listy dope³niania TABem", "");
+	command_add(NULL, "_fds", "", cmd_test_fds, 0, "", "wy¶wietla otwarte pliki", "");
 	command_add(NULL, "_msg", "u?", cmd_test_send, 0, "", "udaje, ¿e wysy³a wiadomo¶æ", "");
 	command_add(NULL, "_segv", "", cmd_test_segv, 0, "", "wywo³uje naruszenie segmentacji pamiêci", "");
 	command_add(NULL, "_debug", "?", cmd_test_debug, 0, "", "wy¶wietla tekst w oknie debug", "");

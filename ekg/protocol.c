@@ -375,12 +375,23 @@ int protocol_message_ack(void *data, va_list ap)
 	char format[100];
 	userlist_t *u = userlist_find(rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
+	int display = 0;
 
 	snprintf(format, sizeof(format), "ack_%s", status);
 
-	print_window(target, session_find(session), 0, format, format_user(rcpt));
+	msg_queue_remove_seq(seq);
+	
+	if (config_display_ack == 1)
+		display = 1;
 
-	msg_queue_remove_seq(seq);	
+	if (strcmp(status, "delivered") && config_display_ack == 2)
+		display = 1;
+
+	if (strcmp(status, "queued") && config_display_ack == 3)
+		display = 1;
+
+	if (display)
+		print_window(target, session_find(session), 0, format, format_user(rcpt));
 
 	return 0;
 }
