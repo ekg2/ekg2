@@ -569,9 +569,11 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 	}
 
 #ifdef HAVE_GNUTLS
-	if (j->using_ssl && ((len = gnutls_record_recv(j->ssl_session, buf, 4095))<1)) {
-		print("generic_error", strerror(errno));
-		goto fail;
+	if (j->using_ssl) {
+		if ((len = gnutls_record_recv(j->ssl_session, buf, 4095))<1) {
+			print("generic_error", strerror(errno));
+			goto fail;
+		}
 	} else
 #endif
 		if ((len = read(fd, buf, 4095)) < 1) {
@@ -638,7 +640,6 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	const int use_ssl = session_int_get(s, "use_ssl");
 	const int ssl_port_s = session_int_get(s, "ssl_port");
 	int ssl_port = (ssl_port_s != -1) ? ssl_port_s : 5223;
-	gnutls_certificate_credentials xcred;
 	/* Allow connections to servers that have OpenPGP keys as well. */
 	const int cert_type_priority[3] = {GNUTLS_CRT_X509,
 		GNUTLS_CRT_OPENPGP, 0};
@@ -711,14 +712,17 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	if (use_ssl) {
 		int ret, retrycount = 65535; // insane
 		gnutls_global_init();
-		gnutls_certificate_allocate_credentials(&xcred);
+		gnutls_certificate_allocate_credentials(&(j->xcred));
 		/* XXX - ~/.ekg/certs/server.pem */
-		gnutls_certificate_set_x509_trust_file(xcred, "brak", GNUTLS_X509_FMT_PEM);
+		gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
 		gnutls_init(&(j->ssl_session), GNUTLS_CLIENT);
 		gnutls_set_default_priority(j->ssl_session);
 		gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
-		gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, xcred);
+		gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
 
+		/* we use read/write instead of recv/send */
+		gnutls_transport_set_pull_function(j->ssl_session, (gnutls_pull_func)read);
+		gnutls_transport_set_push_function(j->ssl_session, (gnutls_push_func)write);
 		gnutls_transport_set_ptr(j->ssl_session, (gnutls_transport_ptr)(j->fd));
 
 		do { 
@@ -730,7 +734,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 			debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
 			print("generic_error", gnutls_strerror(ret));
 			gnutls_deinit(j->ssl_session);
-			gnutls_certificate_free_credentials(xcred);
+			gnutls_certificate_free_credentials(j->xcred);
 			gnutls_global_deinit();
 			jabber_handle_disconnect(jdh->session);
 			return;

@@ -3,6 +3,8 @@
 #ifndef __EKG_JABBER_JABBER_H
 #define __EKG_JABBER_JABBER_H
 
+#include <ekg2-config.h>
+
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
 
@@ -30,6 +32,7 @@ typedef struct {
 	int fd;				/* deskryptor po³±czenia */
 #ifdef HAVE_GNUTLS
 	gnutls_session ssl_session;	/* sesja ssla */
+	gnutls_certificate_credentials xcred;
 	char using_ssl;			/* czy polaczono uzywajac ssl */
 #endif
 	int id;				/* id zapytañ */
