@@ -4,6 +4,10 @@ z nich dostaæ bêd± albo ignorowane, albo odpowied¼ mo¿e byæ wulgarna.
 Zwykle im dana sprawa jest wy¿ej na li¶cie, tym wa¿niejsze jest jej
 rozwi±zanie.
 
+* przed wydaniem:
+  - ustawiæ 'debug' domyslnie na 0
+  - wywalic ustawianie ulimit -c na unlimited w ekg.c
+
 * klient:
   - /msg_all (the same as ,,msg *'' in ekg1) (del)
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
