@@ -274,47 +274,6 @@ last_size
 
 	wskazuje, ile ma byæ zapisywanych wiadomo¶ci dla komendy ,,last''.
 
-log
-	typ: liczba
-	domy¶lna warto¶æ: 0
-
-	okre¶la, czy i w jaki sposób bêd± logowane wysy³ane i otrzymywane
-	wiadomo¶ci. dla 0, nie bêd±. dla 1, bêd± logowane w pliku, który
-	okre¶la zmienna ,,log_path'' lub ,,~/.gg/history'' w przypadku
-	jej braku. dla 2, bêd± logowane w katalogu wskazanym przez zmienn±
-	,,log_path'', a nazwa pliku bêdzie numerem rozmówcy. je¶li mamy
-	wkompilowan± obs³ugê skompresowanych logów, dodanie warto¶ci 4
-	wymusi kompresjê logów. nie bêdzie ona dzia³a³a, je¶li istnieje
-	ju¿ nieskompresowany log. nale¿y go wcze¶niej skompresowaæ
-	poleceniem gzip. wszystkie dostêpne warto¶ci to: 0, 1, 2, 5, 6.
-
-log_ignored
-	typ: liczba
-	domy¶lna warto¶æ: 0
-
-	okre¶la, czy logujemy ignorowane wiadomo¶ci.
-
-log_status
-	typ: bool
-	domy¶lna warto¶æ: 0
-
-	okre¶la, czy bêd± logowane zmiany stanu ludzi z listy (zmienna
-	,,log'' musi byæ ró¿na od 0)
-	
-log_path
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	¶cie¿ka, gdzie bêd± zachowywane wysy³ane i otrzymane wiadomo¶ci.
-
-log_timestamp
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	okre¶la format czasu zapisywanego w historii. w przypadku braku,
-	zmiennej, zapisuje w postaci ilo¶ci sekund od 1 stycznia 1970r.
-	UTC. dok³adny opis formatu zawiera strona manuala strftime(3).
-
 make_window
 	typ: liczba
 	domy¶lna warto¶æ: 2
