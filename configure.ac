@@ -15,6 +15,7 @@ AC_LIBTOOL_DLOPEN
 AC_LIBLTDL_CONVENIENCE
 AC_CONFIG_SUBDIRS([libltdl])
 AC_SUBST(LIBLTDL)
+AC_SUBST(LTDLINCL)
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
@@ -41,25 +42,35 @@ AC_CHECK_FUNCS(setenv)
 dnl  strlcat,strlcpy itp wiele systemów nie posiada
 AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])
 AC_CHECK_FUNCS(strlcpy, , [COMPAT="$COMPAT strlcpy.o"])
-AC_CHECK_FUNCS(strndup, , [COMPAT="$COMPAT strldup.o"])
+AC_CHECK_FUNCS(strndup, , [COMPAT="$COMPAT strndup.o"])
 AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
+AC_CHECK_FUNCS(strnlen, , [COMPAT="$COMPAT strnlen.o"])
+AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
 
 
-AC_CONFIG_FILES([plugins/ioctld/Makefile])
 AC_CONFIG_FILES([plugins/mail/Makefile])
 AC_CONFIG_FILES([plugins/rc/Makefile])
 AC_CONFIG_FILES([plugins/sms/Makefile])
 AC_CONFIG_FILES([plugins/pcm/Makefile])
-PLUGINS="mail ioctld rc sms pcm"
+PLUGINS="mail rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
+
+AC_ARG_WITH(ioctld,
+  [  --without-ioctld        Disable ioctld plugin])
+
+if test "x$with_ioctld" != "xno"; then
+	AC_CONFIG_FILES([plugins/ioctld/Makefile])
+	PLUGINS="$PLUGINS ioctld"
+fi
+
+
 AC_ARG_WITH(libgadu,
   [  --without-libgadu        Disable GG plugin])
-
 
 if test "x$with_libgadu" != "xno"; then
 	PKG_CHECK_MODULES(LIBGADU, libgadu,

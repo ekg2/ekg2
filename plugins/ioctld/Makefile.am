@@ -7,4 +7,4 @@ libdir = $(plugindir)
 libexec_PROGRAMS = ioctld
 ioctld_SOURCES = ioctld.c ioctld.h
 
-INCLUDES = -DIOCTLD_PATH=\"$(libexecdir)/ioctld\"
+INCLUDES = -DIOCTLD_PATH=\"$(libexecdir)/ioctld\" $(LTDLINCL)

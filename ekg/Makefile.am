@@ -9,4 +9,4 @@ ekg_LDFLAGS = -export-dynamic
 ekg_DEPENDENCIES = $(LIBLTDL)
 
 INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(datadir)/ekg\" \
-       -DPLUGINDIR=\"$(plugindir)\"
+       -DPLUGINDIR=\"$(plugindir)\" $(LTDLINCL)

@@ -2,7 +2,7 @@ lib_LTLIBRARIES = gsm.la
 gsm_la_SOURCES = main.c
 gsm_la_LDFLAGS = -module -avoid-version
 gsm_la_LIBADD = @LIBGSM_LIBS@
-gsm_la_INCLUDES = @LIBGSM_CFLAGS@
+gsm_la_INCLUDES = @LIBGSM_CFLAGS@ $(LTDLINCL)
 
 libdir = $(plugindir)
 

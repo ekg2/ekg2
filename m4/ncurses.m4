@@ -1,22 +1,22 @@
 dnl $Id$
 
-AC_DEFUN(AC_CHECK_NCURSES,
+AC_DEFUN([AC_CHECK_NCURSES],
 [
 	AC_SUBST(NCURSES_LIBS)
-	AC_SUBST(NCURSES_CFLAGS)
+	AC_SUBST(NCURSES_CPPFLAGS)
 
 	AC_ARG_WITH(ncurses, [[  --with-ncurses[=dir]  Compile with ncurses/locate base dir]], [
 		if test "x$withval" = "xno"; then
 			without_ncurses=yes
 		elif test "x$withval" != "xyes"; then
-			NCURSES_CFLAGS="-I$withval/include"
-			NCURSES_LIBS="-I$withval/lib"
+			NCURSES_CPPFLAGS="-I$withval/include"
+			NCURSES_LIBS="-L$withval/lib"
 		fi
 	])
 
 	if test "x$without_ncurses" != "xyes"; then
-		cflags="$CFLAGS $NCURSES_CFLAGS"
-		ldflags="$LDFLAGS $NCURSES_LIBS"
+		CPPFLAGS="$CPPFLAGS $NCURSES_CPPFLAGS"
+		LDFLAGS="$LDFLAGS $NCURSES_LIBS"
 		have_ncurses_h=""
 		AC_CHECK_HEADERS([ncurses.h],
 		[
@@ -38,9 +38,6 @@ AC_DEFUN(AC_CHECK_NCURSES,
 		fi
 
 		$as_unset have_ncurses_h
-
-		CFLAGS="$cflags"
-		LDFLAGS="$ldflags"
 	fi
 ])
 

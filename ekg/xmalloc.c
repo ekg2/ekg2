@@ -54,6 +54,10 @@
 #  include "compat/strnlen.h"
 #endif
 
+#ifndef HAVE_STRFRY
+#  include "compat/strfry.h"
+#endif
+
 #define fix(s) ((s) ? (s) : "")
 
 void ekg_oom_handler()
