@@ -313,6 +313,7 @@ int plugin_unregister(plugin_t *p)
                 if (t->plugin == p) {
 			list_remove(&timers, t, 0);
                         xfree(t->name);
+			xfree(t->data);
                         xfree(t);
 		}
         }
