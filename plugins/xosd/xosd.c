@@ -235,7 +235,7 @@ static int xosd_theme_init()
 	format_add("xosd_status_change_blocking", "%1 blokuje nas", 1);
 	format_add("xosd_status_change_description", "%1", 1);
 	format_add("xosd_status_change_description_long", "%1...", 1);
-	format_add("xosd_status_change_description", "[brak opisu]", 1);
+	format_add("xosd_status_change_no_description", "[brak opisu]", 1);
 
 	format_add("xosd_welcome_message_line_1", "ekg2 XOnScreenDisplay plugin", 1);
 	format_add("xosd_welcome_message_line_2", "Author: Adam 'dredzik' Kuczyñski", 1);
