@@ -411,7 +411,7 @@ group_cleanup:
 		char tmp[100];
 
 		if (!all && window_current->userlist)
-			l = w->userlist;
+			l = window_current->userlist;
 
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
