@@ -73,7 +73,7 @@ session_t *session_find(const char *uid)
  *
  * zwraca wynik xstrcasecmp() na nazwach sesji.
  */
-static int session_compare(void *data1, void *data2)
+int session_compare(void *data1, void *data2)
 {
 	session_t *a = data1, *b = data2;
 	

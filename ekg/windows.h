@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ * 		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -22,9 +23,9 @@
 
 #include "ekg2-config.h"
 
-#include <ekg/commands.h>
-#include <ekg/sessions.h>
-#include <ekg/themes.h>
+#include "commands.h"
+#include "sessions.h"
+#include "themes.h"
 
 typedef struct {
 	int id;			/* numer okna */
@@ -53,6 +54,7 @@ list_t windows;
 window_t *window_current;
 
 window_t *window_find(const char *target);
+window_t *window_find_s(session_t *session, const char *target);
 window_t *window_new(const char *target, session_t *session, int new_id);
 void window_kill(window_t *w, int quiet);
 void window_switch(int id);

@@ -104,6 +104,7 @@ int session_check(session_t *s, int need_private, const char *protocol);
 int session_unidle(session_t *s);
 #define session_unidle_n(a) session_unidle(session_find(a))
 
+int session_compare(void *data1, void *data2);
 session_t *session_add(const char *uid);
 int session_remove(const char *uid);
 int session_remove_s(session_t *s);

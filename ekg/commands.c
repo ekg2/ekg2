@@ -1780,6 +1780,7 @@ COMMAND(cmd_query)
                         return -1;
         }
 
+	debug("session->uid !!! (%s)\n", session->uid);
 	/* skopiuj argumenty dla wywo³ania /chat */
 	for (i = 0; params[i]; i++)
 		p[i] = xstrdup(params[i]);
@@ -1828,7 +1829,8 @@ query:
 	if (p[0]) {
 		window_t *w;
 
-		if ((w = window_find(p[0]))) {
+		if ((w = window_find_s(session, p[0]))) {
+			debug("session_compare(w->session (%s), session (%s)): %d\n", w->session->uid, session->uid, session_compare(w->session, session));
 			window_switch(w->id);
 			goto chat;
 		}

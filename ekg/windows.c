@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Pawe³ Maziarz <drg@infomex.pl>
+ * 		       2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -27,13 +28,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ekg/commands.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/userlist.h>
-#include <ekg/vars.h>
-#include <ekg/xmalloc.h>
-#include <ekg/windows.h>
+#include "commands.h"
+#include "stuff.h"
+#include "sessions.h"
+#include "themes.h"
+#include "userlist.h"
+#include "vars.h"
+#include "xmalloc.h"
+#include "windows.h"
 
 list_t windows = NULL;			/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
@@ -43,7 +45,8 @@ window_t *window_current = NULL;	/* zawsze na co¶ musi wskazywaæ! */
 /*
  * window_find()
  *
- * szuka okna o podanym celu. zwraca strukturê opisuj±c± je.
+ * it seeks for an window with given target
+ * returns structure describing it
  */
 window_t *window_find(const char *target)
 {
@@ -86,6 +89,62 @@ window_t *window_find(const char *target)
 
 			if (u && !xstrcasecmp(u->uid, w->target))
 				return w;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * window_find_s()
+ *
+ * it seeks for an window with given target and session
+ * returns structure describing it
+ */
+window_t *window_find_s(session_t *session, const char *target)
+{
+	int current = ((target) ? !xstrcasecmp(target, "__current") : 0);
+	int debug = ((target) ? !xstrcasecmp(target, "__debug") : 0);
+	int status = ((target) ? !xstrcasecmp(target, "__status") : 0);
+	userlist_t *u = NULL;
+	list_t l;
+
+	if (!target || current) {
+		if (window_current->id)
+			return window_current;
+		else
+			status = 1;
+	}
+
+	if (target && strncmp(target, "__", 2)) {
+		list_t sl;
+		for (sl = sessions; sl; sl = sl->next) {
+			session_t *s = sl->data;
+			u = userlist_find(s, get_uid(s, target));
+		}
+	}
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+
+		if (!w->id && debug)
+			return w;
+
+		if (w->id == 1 && status)
+			return w;
+
+		if (w->target && target && !session_compare(w->session, session)) {
+			if (!xstrcasecmp(target, w->target)) {
+				return w;
+			}
+
+			if (u && u->nickname && !xstrcasecmp(u->nickname, w->target)) {
+				return w;
+}
+
+			if (u && !xstrcasecmp(u->uid, w->target)) {
+				return w;
+			}
 		}
 	}
 
@@ -162,7 +221,7 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 //	userlist_t *u = NULL;
 
 	if (target) {
-		window_t *w = window_find(target);
+		window_t *w = window_find_s(session, target);
 
 		if (w)
 			return w;
@@ -236,7 +295,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 
 	switch (config_make_window) {
 		case 1:
-			if ((w = window_find(target)))
+			if ((w = window_find_s(session, target)))
 				goto crap;
 
 			if (!separate)
