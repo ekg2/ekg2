@@ -3703,6 +3703,7 @@ COMMAND(cmd_dcc)
 
 COMMAND(cmd_plugin)
 {
+	int ret;
 	if (!params[0]) {
 		list_t l;
 		
@@ -3715,8 +3716,11 @@ COMMAND(cmd_plugin)
 		return 0;
 	}
 
-	if (params[0][0] == '+')
-		return plugin_load(params[0] + 1, 0);
+	if (params[0][0] == '+') {
+		ret = plugin_load(params[0] + 1, 0);
+		changed_theme(NULL);
+		return ret;
+	}
 
 	if (params[0][0] == '-')
 		return plugin_unload(plugin_find(params[0] + 1));
