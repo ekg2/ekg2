@@ -844,18 +844,18 @@ COMMAND(session_command)
          	        	var = session_get_n(s->uid, params[2]);
 
                  		if (pa->secret)
-                         		printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? "(none)" : "(...)");
+                         		printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? format_string(format_find("value_none")) : "(...)");
                                 else
-                                        printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? "(none)" : var);
+                                        printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? format_string(format_find("value_none")) : var);
 				
                         	return 0;
 			}
 
 			var = session_get_n(s->uid, params[2]);
                         if (!xstrcasecmp(params[2], "password"))
-                		printq("session_variable", session_name(session), params[2], (var) ? "(...)" : "(none)");
+                		printq("session_variable", session_name(session), params[2], (var) ? "(...)" : format_string(format_find("value_none")));
                         else
-                                printq("session_variable", session_name(session), params[2], (var) ? var : "(none)");
+                                printq("session_variable", session_name(session), params[2], (var) ? var : format_string(format_find("value_none")));
                         return 0;
 		}
 		
@@ -996,9 +996,9 @@ COMMAND(session_command)
 		for (i = 0; p->params[i]; i++) {
 			plugins_params_t *sp = p->params[i];
 			if (sp->secret)
-				printq("session_info_param", sp->key, (session_get(s, sp->key)) ? "(...)" : "(none)");
+				printq("session_info_param", sp->key, (session_get(s, sp->key)) ? "(...)" : format_string(format_find("value_none")));
 			else
-				printq("session_info_param", sp->key, (session_get(s, sp->key)) ? session_get(s, sp->key) : "(none)");
+				printq("session_info_param", sp->key, (session_get(s, sp->key)) ? session_get(s, sp->key) : format_string(format_find("value_none")));
 		}	
 
 		printq("session_info_footer", s->uid);

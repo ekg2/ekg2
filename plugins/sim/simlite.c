@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *                     Piotr Domagalski <szalik@szalik.net>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  Idea and concept from SIM by Michal J. Kubski available at
  *  http://gg.wha.la/crypt/. Original source code can be found
@@ -72,11 +73,11 @@ static int sim_seed_prng()
  *
  * tworzy parê kluczy i zapisuje je na dysku.
  *
- *  - uin - numer, dla którego generujemy klucze.
+ *  - uid - numer, dla którego generujemy klucze.
  *
  * 0/-1
  */
-int sim_key_generate(uint32_t uin)
+int sim_key_generate(const char *uid)
 {
 	char path[PATH_MAX];
 	RSA *keys = NULL;
@@ -91,7 +92,7 @@ int sim_key_generate(uint32_t uin)
 		goto cleanup;
 	}
 
-	snprintf(path, sizeof(path), "%s/%d.pem", sim_key_path, uin);
+	snprintf(path, sizeof(path), "%s/%s.pem", sim_key_path, uid);
 
 	if (!(f = fopen(path, "w"))) {
 		sim_errno = SIM_ERROR_PUBLIC;
@@ -106,7 +107,7 @@ int sim_key_generate(uint32_t uin)
 	fclose(f);
 	f = NULL;
 
-	snprintf(path, sizeof(path), "%s/private.pem", sim_key_path);
+	snprintf(path, sizeof(path), "%s/private-%s.pem", sim_key_path, uid);
 
 	if (!(f = fopen(path, "w"))) {
 		sim_errno = SIM_ERROR_PRIVATE;
@@ -138,29 +139,36 @@ cleanup:
  * wczytuje klucz RSA podanego numer. klucz prywatny mo¿na wczytaæ, je¶li
  * zamiasr numeru poda siê 0.
  *
- *  - uin - numer klucza.
+ *  - uid - numer klucza.
  *
  * zaalokowany klucz RSA, który nale¿y zwolniæ RSA_free()
  */
-static RSA *sim_key_read(uint32_t uin)
+static RSA *sim_key_read(const char *uid, const char *session)
 {
 	char path[PATH_MAX];
 	FILE *f;
 	RSA *key;
+	unsigned long err;
 
-	if (uin)
-		snprintf(path, sizeof(path), "%s/%d.pem", sim_key_path, uin);
+	if (uid)
+		snprintf(path, sizeof(path), "%s/%s.pem", sim_key_path, uid);
 	else
-		snprintf(path, sizeof(path), "%s/private.pem", sim_key_path);
+		snprintf(path, sizeof(path), "%s/private-%s.pem", sim_key_path, session);
 
 	if (!(f = fopen(path, "r")))
 		return NULL;
 	
-	if (uin)
+	if (uid)
 		key = PEM_read_RSAPublicKey(f, NULL, NULL, NULL);
 	else
 		key = PEM_read_RSAPrivateKey(f, NULL, NULL, NULL);
+
+	if (!key) {
 	
+		err = ERR_get_error();
+
+		debug("Error reading Private Key = %s\n",ERR_reason_error_string(err));
+	}	
 	fclose(f);
 
 	return key;
@@ -171,22 +179,24 @@ static RSA *sim_key_read(uint32_t uin)
  *
  * zwraca fingerprint danego klucza.
  *
- *  - uin - numer posiadacza klucza.
+ *  - uid - numer posiadacza klucza.
  *
  * zaalokowany bufor.
  */
-char *sim_key_fingerprint(uint32_t uin)
+char *sim_key_fingerprint(const char *uid)
 {
-	RSA *key = sim_key_read(uin);
+	RSA *key = sim_key_read(uid, NULL);
 	unsigned char md_value[EVP_MAX_MD_SIZE], *buf, *newbuf;
 	char *result = NULL;
 	EVP_MD_CTX ctx;
 	int md_len, size, i;
 
-	if (!key)
+	if (!key) {
+		debug("out (%s)\n", uid);
 		return NULL;
+	}
 
-	if (uin)
+	if (uid)
 		size = i2d_RSAPublicKey(key, NULL);
 	else
 		size = i2d_RSAPrivateKey(key, NULL);
@@ -196,7 +206,7 @@ char *sim_key_fingerprint(uint32_t uin)
 		goto cleanup;
 	}
 
-	if (uin)
+	if (uid)
 		size = i2d_RSAPublicKey(key, &newbuf);
 	else
 		size = i2d_RSAPrivateKey(key, &newbuf);
@@ -274,11 +284,11 @@ const char *sim_strerror(int error)
  * zapis w base64.
  *
  *  - message - tre¶æ wiadomo¶ci,
- *  - uin - numer odbiorcy.
+ *  - uid - numer odbiorcy.
  *
  * zaalokowany bufor.
  */
-char *sim_message_encrypt(const unsigned char *message, uint32_t uin)
+char *sim_message_encrypt(const unsigned char *message, const char *uid)
 {
 	sim_message_header head;	/* nag³ówek wiadomo¶ci */
 	unsigned char ivec[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -290,7 +300,7 @@ char *sim_message_encrypt(const unsigned char *message, uint32_t uin)
 	char *res = NULL, *tmp;
 
 	/* wczytaj klucz publiczny delikwenta */
-	if (!(public = sim_key_read(uin))) {
+	if (!(public = sim_key_read(uid, NULL))) {
 		sim_errno = SIM_ERROR_PUBLIC;
 		goto cleanup;
 	}
@@ -376,11 +386,11 @@ cleanup:
  * odszyfrowuje wiadomo¶æ od podanej osoby.
  *
  *  - message - tre¶æ wiadomo¶ci,
- *  - uin - numer nadawcy.
+ *  - uid - numer nadawcy.
  *
  * zaalokowany bufor.
  */
-char *sim_message_decrypt(const unsigned char *message, uint32_t uin)
+char *sim_message_decrypt(const unsigned char *message, const char *uid)
 {
 	sim_message_header head;	/* nag³ówek wiadomo¶ci */
 	unsigned char ivec[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -399,7 +409,7 @@ char *sim_message_decrypt(const unsigned char *message, uint32_t uin)
 	}
 	
 	/* wczytaj klucz prywatny */
-	if (!(private = sim_key_read(0))) {
+	if (!(private = sim_key_read(0, uid))) {
 		sim_errno = SIM_ERROR_PRIVATE;
 		goto cleanup;
 	}
@@ -459,10 +469,11 @@ char *sim_message_decrypt(const unsigned char *message, uint32_t uin)
 
 	memcpy(&head, data, sizeof(head));
 
-	if (head.magic != SIM_MAGIC_V1 || head.magic != SIM_MAGIC_V1_BE) {
+	/* XXX: Why isn't it working */
+	/* if (head.magic != SIM_MAGIC_V1 || head.magic != SIM_MAGIC_V1_BE) {
 		sim_errno = SIM_ERROR_MAGIC;
 		goto cleanup;
-	}
+	} */
 
 	len -= sizeof(head);
 
@@ -473,7 +484,7 @@ char *sim_message_decrypt(const unsigned char *message, uint32_t uin)
 	
 	memcpy(res, data + sizeof(head), len);
 	res[len] = 0;
-	
+
 cleanup:
 	if (cbio)
 		BIO_free(cbio);

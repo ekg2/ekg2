@@ -297,7 +297,7 @@ notify_plugins:
  *
  * zwraca target
  */
-char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep)
+char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure)
 {
 	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text), *emotted = NULL;
 	const char *target = sender, *user;
@@ -327,28 +327,6 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			class_str = "sent";
                         target = (rcpts) ? rcpts[0] : NULL;
         	        break;
-	}
-
-	/* próbujemy odszyfrowaæ wiadomo¶æ */
-	{
-		char *__session = xstrdup(session);
-		char *__sender = xstrdup(sender);
-		char *__message = xstrdup(text);
-		int __decrypted = 0;
-
-		do
-			query_emit(NULL, "message-decrypt", &__session, &__sender, &__message, &__decrypted, NULL);
-		while (__decrypted);
-
-		if (__decrypted) {
-			xfree(text);
-			text = __message;
-			__message = NULL;
-		}
-
-		xfree(__session);
-		xfree(__sender);
-		xfree(__message);
 	}
 
 	/* dodajemy kolorki do tekstu */
@@ -480,7 +458,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (empty_theme)
 		class_str = "empty";
 
-	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, (emotted) ? emotted : text, (!xstrcasecmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), (!xstrcasecmp(class_str, "sent")) ? s->uid : get_uid(s, sender));
+	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, (emotted) ? emotted : text, (!xstrcasecmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), (!xstrcasecmp(class_str, "sent")) ? s->uid : get_uid(s, sender), (secure) ? format_string(format_find("secure")) : "");
 
 	xfree(text);
 	xfree(t);
@@ -502,6 +480,7 @@ int protocol_message(void *data, va_list ap)
 	int *__class = va_arg(ap, int*), class = *__class;
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
 	int *__dobeep = va_arg(ap, int*), dobeep = *__dobeep;
+	int *__secure = va_arg(ap, int*), secure = *__secure;
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
 	char *target = NULL;
@@ -523,10 +502,31 @@ int protocol_message(void *data, va_list ap)
 		empty_theme = 1;
 	}
 
+	/* there is no need to decode our messages */
+	if (class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
+                char *___session = xstrdup(session);
+                char *___sender = xstrdup(uid);
+                char *___message = xstrdup(text);
+                int ___decrypted = 0;
+
+                query_emit(NULL, "message-decrypt", &___session, &___sender, &___message, &___decrypted, NULL);
+
+                if (___decrypted) {
+                        text = ___message;
+                        ___message = NULL;
+                        secure = 1;
+                }
+
+                xfree(___session);
+                xfree(___sender);
+                xfree(___message);
+	}
+
+	/* show it ! */
 	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent)) {
 		if (empty_theme)
 			class |= EKG_NO_THEMEBIT;
-	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep);
+	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep, secure);
 	}
 
         /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */

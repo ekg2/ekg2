@@ -45,7 +45,7 @@ protocol-disconnected(char *session, char *reason)
 protocol-status(char *session, char *uid, char *status, char *descr, char *host, int port, time_t when)
 	dana osoba zmieni³a swój stan.
 
-protocol-message(char *session, char *sender, char **recipients, char *text, uint32_t *format, time_t sent, int class, char *seq)
+protocol-message(char *session, char *sender, char **recipients, char *text, uint32_t *format, time_t sent, int class, char *seq, int secure)
 	otrzymano wiadomo¶æ od danej osoby.
 
 protocol-message-ack(char *session, char *recipient, char *seq, char *status)

@@ -559,6 +559,7 @@ IRC_COMMAND(irc_c_msg)
 	people_t *person;
 	people_chan_t *perchn = NULL;
 	time_t sent;
+	int secure = 0;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
@@ -613,7 +614,7 @@ IRC_COMMAND(irc_c_msg)
 		sent = time(NULL);
 		class |= EKG_NO_THEMEBIT;
 
-		query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head, &form, &sent, &class, &seq, &ekgbeep, NULL);
+		query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head, &form, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(head);
 	}	

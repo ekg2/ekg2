@@ -647,14 +647,18 @@ COMMAND(gg_command_msg)
 
 		if (!chat || count == 1) {
 			unsigned char *__msg = xstrdup(msg);
-			char *sid = xstrdup(uid);
+			char *sid = xstrdup(session->uid);
+			char *uid_tmp = xstrdup(uid);
 			uin_t uin = atoi(uid + 3);
 
 			secure = 0;
 			
-			query_emit(NULL, "message-encrypt", &sid, &__msg, &secure);
+			query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
+
+			debug("kodniête secure (%d)\n", secure);
 
 			xfree(sid);
+			xfree(uid_tmp);
 
 			if (g->sess)
 				seq = itoa(gg_send_message_richtext(g->sess, (chat) ? GG_CLASS_CHAT : GG_CLASS_MSG, uin, __msg, format, formatlen));
@@ -715,7 +719,7 @@ COMMAND(gg_command_msg)
 		rcpts[0] = xstrdup(nick);
 		rcpts[1] = NULL;
 		
-		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, &ekgbeep, NULL);
+		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(me);
 		xfree(rcpts[0]);

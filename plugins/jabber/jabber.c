@@ -209,7 +209,7 @@ void jabber_handle(void *data, xmlnode_t *n)
         jabber_private_t *j;
         const char *id, *type, *to, *from;
         char *tmp;
-
+	int secure = 0;
 
         if (!s || !(j = jabber_private(s)) || !n) {
                 debug("[jabber] jabber_handle() invalid parameters\n");
@@ -307,7 +307,7 @@ void jabber_handle(void *data, xmlnode_t *n)
                 string_free(body, 1);
 
                 if ((nbody || nsubject) && !nerr)
-                        query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, NULL);
+                        query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
                 if (nerr) {
                         char *recipient, *mbody, *tmp, *tmp2;

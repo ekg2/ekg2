@@ -1001,6 +1001,7 @@ void theme_init()
         format_add("generic2_bold", "%) %T%1%n\n", 1);
         format_add("generic_error", "%! %1\n", 1);
         format_add("debug", "%n%1\n", 1);
+	format_add("value_none", _("(none)"), 1);
         format_add("not_enough_params", _("%! Too few parameters. Try %Thelp %1%n\n"), 1);
         format_add("invalid_params", _("%! Invalid parameters. Try %Thelp %1%n\n"), 1);
         format_add("invalid_uid", _("%! Invalid user id\n"), 1);
@@ -1203,7 +1204,7 @@ void theme_init()
         format_add("error_saving", _("%! There was some error during save\n"), 1);
 
         /* incoming messages */
-        format_add("message", "%g.-- %n%1 %c%2%g--- -- -%n\n%g|%n %|%3%n\n%|%g`----- ---- --- -- -%n\n", 1);
+        format_add("message", "%g.-- %n%1 %c%2%n%6%n%g--- -- -%n\n%g|%n %|%3%n\n%|%g`----- ---- --- -- -%n\n", 1);
         format_add("message_timestamp", "(%Y-%m-%d %H:%M) ", 1);
         format_add("message_timestamp_today", "(%H:%M) ", 1);
         format_add("message_timestamp_now", "", 1);
@@ -1211,19 +1212,19 @@ void theme_init()
 
         format_add("empty", "%3\n", 1);
 
-        format_add("conference", "%g.-- %n%1 %c%2%g--- -- -%n\n%g|%n %|%3%n\n%|%g`----- ---- --- -- -%n\n", 1);
+        format_add("conference", "%g.-- %n%1 %c%2%n%6%n%g--- -- -%n\n%g|%n %|%3%n\n%|%g`----- ---- --- -- -%n\n", 1);
         format_add("conference_timestamp", "(%Y-%m-%d %H:%M) ", 1);
         format_add("conference_timestamp_today", "(%H:%M) ", 1);
         format_add("conference_timestamp_now", "", 1);
         format_add("confrence,speech", _("message from %1: %3."), 1);
 
-        format_add("chat", "%c.-- %n%1 %c%2%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
+        format_add("chat", "%c.-- %n%1 %c%2%n%6%n%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
         format_add("chat_timestamp", "(%Y-%m-%d %H:%M) ", 1);
         format_add("chat_timestamp_today", "(%H:%M) ", 1);
         format_add("chat_timestamp_now", "", 1);
         format_add("chat,speech", _("message from %1: %3."), 1);
 
-        format_add("sent", "%b.-- %n%1 %c%2%b--- -- -%n\n%b|%n %|%3%n\n%|%b`----- ---- --- -- -%n\n", 1);
+        format_add("sent", "%b.-- %n%1 %c%2%n%6%n%b--- -- -%n\n%b|%n %|%3%n\n%|%b`----- ---- --- -- -%n\n", 1);
         format_add("sent_timestamp", "(%Y-%m-%d %H:%M) ", 1);
         format_add("sent_timestamp_today", "(%H:%M) ", 1);
         format_add("sent_timestamp_now", "", 1);

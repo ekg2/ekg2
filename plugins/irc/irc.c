@@ -522,6 +522,7 @@ COMMAND(irc_command_msg)
         const time_t sent = time(NULL);					
 	people_t *person;
 	people_chan_t *perchn = NULL;
+	int secure = 0;
 
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
@@ -571,7 +572,7 @@ COMMAND(irc_command_msg)
 
 	class |= EKG_NO_THEMEBIT;
 
-	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, NULL);
+	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
 	xfree(me);
 	xfree(head);
 	xfree(rcpts[0]);

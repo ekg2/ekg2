@@ -52,10 +52,10 @@ __attribute__ ((packed))
 #endif
 sim_message_header;
 
-char *sim_message_decrypt(const unsigned char *message, uint32_t uin);
-char *sim_message_encrypt(const unsigned char *message, uint32_t uin);
-int sim_key_generate(uint32_t uin);
-char *sim_key_fingerprint(uint32_t uin);
+char *sim_message_decrypt(const unsigned char *message, const char *uid);
+char *sim_message_encrypt(const unsigned char *message, const char *uid);
+int sim_key_generate(const char *uid);
+char *sim_key_fingerprint(const char *uid);
 
 const char *sim_strerror(int error);
 
