@@ -859,7 +859,6 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
 		do { 
 			ret = gnutls_handshake(j->ssl_session);
-			retrycount--;
 		} while ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN));
 
 		if (ret < 0) {
