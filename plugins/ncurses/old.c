@@ -1072,6 +1072,7 @@ void update_statusbar(int commit)
 	int formats_count = 0, i = 0, y;
 	int mail_count = -1;
 	session_t *sess = window_current->session;
+	userlist_t *u;
 
 	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
 	if (ncurses_header)
@@ -1105,7 +1106,7 @@ void update_statusbar(int commit)
 	__add_format("window", window_current->id, itoa(window_current->id));
 	__add_format("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format("descr", (sess && sess->descr), sess->descr);
-	__add_format("query", window_current->target, window_current->target);
+	__add_format("query", (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : window_current->target, (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : window_current->target);
 
 	query_emit(NULL, "mail-count", &mail_count);
 	__add_format("mail", (mail_count > 0), itoa(mail_count));
