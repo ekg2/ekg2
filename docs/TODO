@@ -5,8 +5,9 @@ Zwykle im dana sprawa jest wy¿ej na li¶cie, tym wa¿niejsze jest jej
 rozwi±zanie.
 
 * klient:
+  - /reload dzia³aj±ce (*)
+  - dzia³anie ignore (del)
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
-  - metakontakty na li¶cie kontaktów (mp)
   - wykrywanie niewidocznych jako opcja (wielu)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
   - ostatnio pisz±ca osoba blinka przez 5 sekund, w rogu ekranu (Oli)
