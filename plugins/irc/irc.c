@@ -689,15 +689,19 @@ COMMAND(irc_command_away)
 	}
 
 	if (!xstrcmp(name, "back")) {
+#if 0
 		if (!params[0]) {
+#endif
 			session_descr_set(session, NULL);
 			session_status_set(session, EKG_STATUS_AVAIL);
 			session_unidle(session);
 			goto change;
+#if 0
 		} else {
 			print("invalid_params", "irc:back");
 			return -1;
 		}
+#endif
 	}
 	if (!xstrcmp(name, "away")) {
 		if (params[0]) 
