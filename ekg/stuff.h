@@ -270,9 +270,9 @@ void changed_xxx_reason(const char *var);
 
 const char *compile_time();
 
-struct conference *conference_add(const char *string, const char *nicklist, int quiet);
+struct conference *conference_add(session_t *session, const char *string, const char *nicklist, int quiet);
 int conference_remove(const char *name, int quiet);
-struct conference *conference_create(const char *nicks);
+struct conference *conference_create(session_t *session, const char *nicks);
 struct conference *conference_find(const char *name);
 //struct conference *conference_find_by_uins(uin_t from, uin_t *recipients, int count, int quiet);
 int conference_set_ignore(const char *name, int flag, int quiet);

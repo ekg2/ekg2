@@ -659,7 +659,7 @@ const char *compile_time()
  *
  * zaalokowan± struct conference lub NULL w przypadku b³êdu.
  */
-struct conference *conference_add(const char *name, const char *nicklist, int quiet)
+struct conference *conference_add(session_t *session, const char *name, const char *nicklist, int quiet)
 {
 	struct conference c;
 	char **nicks;
@@ -746,7 +746,7 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 		if (!xstrcmp(*p, ""))
 		        continue;
 
-		uid = get_uid_all(*p);
+		uid = get_uid(session, *p);
 
 		if (uid)
 			list_add(&(c.recipients), uid, xstrlen(uid) +1);
@@ -823,13 +823,13 @@ int conference_remove(const char *name, int quiet)
  *
  *  - nicks - lista ników tak, jak dla polecenia conference.
  */
-struct conference *conference_create(const char *nicks)
+struct conference *conference_create(session_t *session, const char *nicks)
 {
 	struct conference *c;
 	static int count = 1;
 	char *name = saprintf("#conf%d", count);
 
-	if ((c = conference_add(name, nicks, 0)))
+	if ((c = conference_add(session, name, nicks, 0)))
 		count++;
 
 	xfree(name);

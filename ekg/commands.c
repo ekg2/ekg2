@@ -1844,7 +1844,7 @@ COMMAND(cmd_query)
 	p[i] = NULL;
 
 	if (params[0] && (params[0][0] == '@' || xstrchr(params[0], ','))) {
-		struct conference *c = conference_create(params[0]);
+		struct conference *c = conference_create(session, params[0]);
 		
 		if (!c) {
 			res = -1;
@@ -2987,9 +2987,9 @@ COMMAND(cmd_conference)
 				printq("conferences_name_error");
 				return -1;
 			} else
-				conference_add(params[1], params[2], quiet);
+				conference_add(session, params[1], params[2], quiet);
 		} else
-			conference_create(params[1]);
+			conference_create(session, params[1]);
 
 		return 0;
 	}

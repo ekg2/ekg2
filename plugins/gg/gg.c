@@ -1191,7 +1191,7 @@ COMMAND(gg_command_msg)
 	nick = xstrdup(params[0]);
 
 	if ((*nick == '@' || strchr(nick, ',')) && chat) {
-		struct conference *c = conference_create(nick);
+		struct conference *c = conference_create(session, nick);
 		list_t l;
 
 		if (c) {
