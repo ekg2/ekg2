@@ -2071,6 +2071,7 @@ COMMAND(cmd_test_fds)
 						xstrcat(buf, inet_ntoa(sin->sin_addr));
 						xstrcat(buf, ":");
 						xstrcat(buf, itoa(ntohs(sin->sin_port)));
+						break;
 #ifdef HAVE_GETADDRINFO
 					case AF_INET6:
 						xstrcat(buf, "socket, inet6, ");
@@ -2084,7 +2085,6 @@ COMMAND(cmd_test_fds)
 						xstrcat(buf, itoa(ntohs(sin6->sin6_port)));
 						break;
 #endif
-						break;
 					default:
 						xstrcat(buf, "socket, ");
 						xstrcat(buf, itoa(sa->sa_family));
