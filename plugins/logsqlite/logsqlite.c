@@ -67,9 +67,21 @@ COMMAND(logsqlite_cmd_last)
 	int count2 = 0;
 	char * gotten_uid;
 	char * nick = NULL;
+	int limit = config_logsqlite_last_limit;
+	int i = 0;
 
-	if (params[0]) {
-		nick = xstrdup(params[0]);
+	if (params[i] && match_arg(params[i], 'n', "number", 2)) {
+		i++;
+		if (params[i]) {
+			limit = atoi(params[i]);
+			i++;
+		} else {
+			printq("invalid_params", "logsqlite:last");
+			return 0;
+		}
+	}
+	if (params[i]) {
+		nick = xstrdup(params[i]);
 		nick = strip_quotes(nick);
 		if (!session) {
 			if (session_current) {
@@ -82,10 +94,11 @@ COMMAND(logsqlite_cmd_last)
 		if (! gotten_uid) {
 			gotten_uid = nick;
 		}
-		sprintf(sql, "select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i", gotten_uid, config_logsqlite_last_limit);
+		sprintf(sql, "select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i", gotten_uid, limit);
 	} else {
-		sprintf(sql, "select uid, nick, ts, body, sent from log_msg order by ts desc limit %i", config_logsqlite_last_limit);
+		sprintf(sql, "select uid, nick, ts, body, sent from log_msg order by ts desc limit %i", limit);
 	}
+	debug("%s\n", sql);
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		count2++;
@@ -366,7 +379,7 @@ int logsqlite_plugin_init(int prio)
 
 	logsqlite_setvar_default();
 
-	command_add(&logsqlite_plugin, "logsqlite:last", "u", logsqlite_cmd_last, 0, NULL);
+	command_add(&logsqlite_plugin, "logsqlite:last", "puU uU uU", logsqlite_cmd_last, 0, "-n --number");
 
 	query_connect(&logsqlite_plugin, "protocol-message", logsqlite_msg_handler, NULL);
 	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);
