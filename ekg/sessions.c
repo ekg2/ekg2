@@ -134,6 +134,8 @@ int session_remove(const char *uid)
 
 	if (!(s = session_find(uid)))
 		return -1;
+	if (!xstrcasecmp(s->uid, session_current->uid))
+		session_current = NULL;
 
 	count = list_count(sessions);
 
@@ -167,7 +169,6 @@ int session_remove(const char *uid)
 	xfree(s->password);
 
 	list_remove(&sessions, s, 1);
-
 	return 0;
 }
 

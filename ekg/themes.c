@@ -568,7 +568,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	 * zasobem to wrzucamy tam. je¶li mamy otwarte okno dla zasobu,
 	 * a przychodzi z innego, otwieramy nowe. */
 
-	if (!window_find(target)) {
+	if (!window_find_s(session_current, target)) {
 		const char *res;
 		userlist_t *u;
 		
