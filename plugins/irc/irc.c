@@ -655,9 +655,11 @@ COMMAND(irc_command_disconnect)
 			print("not_connected", session_name(session));
 			return -1;
 	}
-	
-	if (session_connected_get(session))
-		irc_write (j, "QUIT :%s\r\n", (params && params[0])?params[0]:QUITMSG(session));
+	/* params can be NULL
+	 * [if we get ERROR from server]
+	 */
+	if (params && session_connected_get(session))
+		irc_write (j, "QUIT :%s\r\n", params[0]?params[0]:QUITMSG(session));
 
 	if (j->connecting) {
 		j->connecting = 0;
