@@ -202,8 +202,6 @@ char *config_log_timestamp;
 int config_make_window;
 int config_mesg;
 int config_protocol;
-char *config_proxy;
-char *config_proxy_forwarding;
 int config_query_commands;
 char *config_quit_reason;
 int config_random_reason;

@@ -961,6 +961,57 @@ void gg_changed_private(session_t *s, const char *var)
         }
 }
 
+/*
+ * changed_proxy()
+ *
+ * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,gg:proxy''.
+ */
+void gg_changed_proxy(session_t *s, const char *var)
+{
+	char **auth, **userpass = NULL, **hostport = NULL;
+	const char *gg_config_proxy;
+	
+	gg_proxy_port = 0;
+	xfree(gg_proxy_host);
+	gg_proxy_host = NULL;
+	xfree(gg_proxy_username);
+	gg_proxy_username = NULL;
+	xfree(gg_proxy_password);
+	gg_proxy_password = NULL;
+	gg_proxy_enabled = 0;	
+
+	if (!(gg_config_proxy = session_get(s, var)))
+		return;
+
+	auth = array_make(gg_config_proxy, "@", 0, 0, 0);
+
+	if (!auth[0] || !xstrcmp(auth[0], "")) {
+		array_free(auth);
+		return; 
+	}
+	
+	gg_proxy_enabled = 1;
+
+	if (auth[0] && auth[1]) {
+		userpass = array_make(auth[0], ":", 0, 0, 0);
+		hostport = array_make(auth[1], ":", 0, 0, 0);
+	} else
+		hostport = array_make(auth[0], ":", 0, 0, 0);
+	
+	if (userpass && userpass[0] && userpass[1]) {
+		gg_proxy_username = xstrdup(userpass[0]);
+		gg_proxy_password = xstrdup(userpass[1]);
+	}
+
+	gg_proxy_host = xstrdup(hostport[0]);
+	gg_proxy_port = (hostport[1]) ? atoi(hostport[1]) : 8080;
+
+	array_free(hostport);
+	array_free(userpass);
+	array_free(auth);
+}
+
+
 static int gg_theme_init()
 {
         /* pobieranie tokenu */
@@ -994,7 +1045,7 @@ int gg_plugin_init()
 
 	gg_register_commands();
 	
-        variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &config_display_token, NULL, NULL, NULL);
+        variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "0", 0, NULL);
@@ -1009,6 +1060,8 @@ int gg_plugin_init()
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
         plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1, NULL);
         plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0, NULL);
+	plugin_var_add(&gg_plugin, "proxy", VAR_STR, 0, 0, gg_changed_proxy);
+	plugin_var_add(&gg_plugin, "proxy_forwarding", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "private", VAR_BOOL, "0", 0, gg_changed_private);
 	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0, NULL);
 

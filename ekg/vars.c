@@ -115,8 +115,6 @@ void variable_init()
 //	variable_add(NULL, "log_timestamp", VAR_STR, 1, &config_log_timestamp, NULL, NULL, dd_log);
 	variable_add(NULL, "make_window", VAR_INT, 1, &config_make_window, NULL, variable_map(3, 0, 0, "none", 1, 2, "usefree", 2, 1, "always"), NULL);
 	variable_add(NULL, "mesg", VAR_INT, 1, &config_mesg, changed_mesg, variable_map(3, 0, 0, "no", 1, 2, "yes", 2, 1, "default"), NULL);
-//	variable_add(NULL, "proxy", VAR_STR, 1, &config_proxy, changed_proxy, NULL, NULL);
-//	variable_add(NULL, "proxy_forwarding", VAR_STR, 1, &config_proxy_forwarding, NULL, NULL, NULL);
 	variable_add(NULL, "reason_limit", VAR_BOOL, 1, &config_reason_limit, NULL, NULL, NULL);
 	variable_add(NULL, "quit_reason", VAR_STR, 1, &config_quit_reason, NULL, NULL, NULL);
 	variable_add(NULL, "query_commands", VAR_BOOL, 1, &config_query_commands, NULL, NULL, NULL);

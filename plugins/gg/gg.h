@@ -11,7 +11,7 @@ plugin_t gg_plugin;
 int gg_userlist_put_config;
 char *last_tokenid;
 
-int config_display_token;
+int gg_config_display_token;
 
 typedef enum {
 	GG_QUIET_CHANGE = 0x0001

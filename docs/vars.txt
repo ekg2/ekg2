@@ -378,23 +378,6 @@ mesg
 	pisanie na nasz terminal. w przypadku warto¶ci 2 u¿ywane s± ustawienia
 	sprzed uruchomienia ekg.
 
-proxy
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	adres i port serwera proxy, oddzielone dwukropkiem. je¶li nie podano
-	portu, domy¶lnie jest przyjmowany 8080. je¶li serwer proxy wymaga
-	autoryzacji, nale¿y poprzedziæ go nazw± u¿ytkownika, dwukropkiem,
-	has³em i ma³p± (np. ,,jan:tajnehas³o@serwer'')
-
-proxy_forwarding
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	adres i port (oddzielone dwukropkiem) serwera po¶rednicz±cego
-	(routera, proxy lub czego¶ innego) przekierowany na port 1550
-	naszego komputera.
-
 query_commands
 	typ: bool
 	domy¶lna warto¶æ: 1

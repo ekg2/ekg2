@@ -109,7 +109,6 @@ char *config_away_reason = NULL;
 char *config_back_reason = NULL;
 int config_random_reason = 0;
 int config_query_commands = 0;
-char *config_proxy = NULL;
 char *config_server = NULL;
 int quit_message_send = 0;
 int registered_today = 0;
@@ -139,7 +138,6 @@ char *config_display_color_map = NULL;
 int config_windows_save = 0;
 char *config_windows_layout = NULL;
 char *config_profile = NULL;
-char *config_proxy_forwarding = NULL;
 char *config_interface = NULL;
 int config_reason_limit = 1;
 char *config_reason_first = NULL;
@@ -625,57 +623,6 @@ void changed_mesg(const char *var)
 		mesg_set(config_mesg);
 }
 	
-#if 0
-/*
- * changed_proxy()
- *
- * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,proxy''.
- */
-void changed_proxy(const char *var)
-{
-	char **auth, **userpass = NULL, **hostport = NULL;
-	
-	gg_proxy_port = 0;
-	xfree(gg_proxy_host);
-	gg_proxy_host = NULL;
-	xfree(gg_proxy_username);
-	gg_proxy_username = NULL;
-	xfree(gg_proxy_password);
-	gg_proxy_password = NULL;
-	gg_proxy_enabled = 0;	
-
-	if (!config_proxy)
-		return;
-
-	auth = array_make(config_proxy, "@", 0, 0, 0);
-
-	if (!auth[0] || !xstrcmp(auth[0], "")) {
-		array_free(auth);
-		return; 
-	}
-	
-	gg_proxy_enabled = 1;
-
-	if (auth[0] && auth[1]) {
-		userpass = array_make(auth[0], ":", 0, 0, 0);
-		hostport = array_make(auth[1], ":", 0, 0, 0);
-	} else
-		hostport = array_make(auth[0], ":", 0, 0, 0);
-	
-	if (userpass && userpass[0] && userpass[1]) {
-		gg_proxy_username = xstrdup(userpass[0]);
-		gg_proxy_password = xstrdup(userpass[1]);
-	}
-
-	gg_proxy_host = xstrdup(hostport[0]);
-	gg_proxy_port = (hostport[1]) ? atoi(hostport[1]) : 8080;
-
-	array_free(hostport);
-	array_free(userpass);
-	array_free(auth);
-}
-#endif
-
 /*
  * changed_auto_save()
  *

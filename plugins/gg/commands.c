@@ -931,7 +931,7 @@ static void gg_handle_token(int type, int fd, int watch, void *data)
 	}
 
 #ifdef HAVE_LIBJPEG
-	if (config_display_token) {
+	if (gg_config_display_token) {
 		struct jpeg_decompress_struct j;
 		struct jpeg_error_mgr e;
 		JSAMPROW buf[1];
