@@ -1,4 +1,5 @@
-vCVS 2004-05-13
+vCVS 2004-05-30
+	* ró¿ne kolorory act w statusbarze 
 	* zmienne sesyjne przyjmuj± domy¶lne warto¶ci
 	* wy¶wietlane nazwy sesji przy zmianie statusów i w innych komendach
  	* dodana zmienna sesyjna auto_find 

@@ -967,8 +967,6 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 			
 			continue;
 		}
-#undef __fgcolor
-#undef __bgcolor
 
 		if (*p != '{' && !config_display_color)
 			continue;
@@ -987,23 +985,63 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
 				char *text = data[i].text;
-
+                             	
 				if (!config_display_pl_chars) {
-					text = xstrdup(text);
-					iso_to_ascii(text);
-				}
+                                	text = xstrdup(text);
+                                	iso_to_ascii(text);
+                              	}
 
-				waddstr(w, text);
+				while (*text) {
+					if (*text != '%') {
+						waddch(w, (unsigned char) *text);
+						*text++;	
+						x++;
+						continue;
+					}
+					*text++;
+					
+					if (!*text)	
+						break;
+
+		                        switch (*text) {
+		                                __fgcolor('k', 'K', COLOR_BLACK);
+                		                __fgcolor('r', 'R', COLOR_RED);
+		                                __fgcolor('g', 'G', COLOR_GREEN);
+                		                __fgcolor('y', 'Y', COLOR_YELLOW);
+                                		__fgcolor('b', 'B', COLOR_BLUE);
+		                                __fgcolor('m', 'M', COLOR_MAGENTA);
+		                                __fgcolor('c', 'C', COLOR_CYAN);
+		                                __fgcolor('w', 'W', COLOR_WHITE);
+		                                __bgcolor('l', COLOR_BLACK);
+		                                __bgcolor('s', COLOR_RED);
+		                                __bgcolor('h', COLOR_GREEN);
+		                                __bgcolor('z', COLOR_YELLOW);
+		                                __bgcolor('e', COLOR_BLUE);
+		                                __bgcolor('q', COLOR_MAGENTA);
+		                                __bgcolor('d', COLOR_CYAN);
+		                                __bgcolor('x', COLOR_WHITE);
+		                                case 'n':
+		                                        bgcolor = COLOR_BLUE;
+		                                        fgcolor = COLOR_WHITE;
+		                                        bold = 0;
+		                                        break;
+                		        }
+					
+					*text++;
+		                        wattrset(w, color_pair(fgcolor, bold, bgcolor));
+				}			
+
+//				waddstr(w, text);
+				
 				p += len;
-				x += xstrlen(data[i].text);
 				
 				if (!config_display_pl_chars)
 					xfree(text);
-				
 				goto next;
 			}
 		}
-
+#undef __fgcolor
+#undef __bgcolor
 		if (*p == '?') {
 			int neg = 0;
 
@@ -1054,7 +1092,7 @@ next:
 
 	if (!config_display_pl_chars)
 		xfree(format);
-
+	
 	return x - orig_x;
 }
 
@@ -1118,13 +1156,16 @@ void update_statusbar(int commit)
 
 		for (l = windows; l; l = l->next) {
 			window_t *w = l->data;
+			char *tmp;
 
 			if (!w->act || !w->id) 
 				continue;
 
 			if (!first)
 				string_append_c(s, ',');
-			
+		
+			tmp = saprintf("statusbar_act%s", (w->act == 1) ? "" :  "_important");
+			string_append(s, format_find(tmp));
 			string_append(s, itoa(w->id));
 			first = 0;
 			act = 1;

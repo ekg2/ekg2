@@ -898,6 +898,8 @@ void theme_init()
 	format_add("ncurses_prompt_query", "[%1] ", 1);
 	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %w}%{?avail %W}%{?invisible %K}%{?notavail %k}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{window}}%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
 	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)}}%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
+	format_add("statusbar_act_important", "%W", 1);
+	format_add("statusbar_act", "%K", 1);
 
 	/* dla funkcji format_user() */
 	format_add("known_user", "%T%1%n/%2", 1);
