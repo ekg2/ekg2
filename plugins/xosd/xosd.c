@@ -216,15 +216,15 @@ static int xosd_theme_init()
 	format_add("xosd_new_message_line_2_long", "%1...", 1);
 	format_add("xosd_new_message_line_2", "%1", 1);
 
-	format_add("xosd_status_change_avail", _("%1 is online"), 1);
-	format_add("xosd_status_change_away", _("%1 is away"), 1);
-	format_add("xosd_status_change_dnd", _("%1: do not disturb"), 1);
-	format_add("xosd_status_change_xa", _("%1 is extended away"), 1);
-	format_add("xosd_status_change_notavail", _("%1 is offline"), 1);
-	format_add("xosd_status_change_invisible", _("%1 is invisible"), 1);
-	format_add("xosd_status_change_chat", _("%1 is free for chat"), 1);
-	format_add("xosd_status_change_error", _("%1: status error"), 1);
-	format_add("xosd_status_change_blocking", _("%1 is blocking us"), 1);
+	format_add("xosd_status_change_avail", _("%1 is online,"), 1);
+	format_add("xosd_status_change_away", _("%1 is away,"), 1);
+	format_add("xosd_status_change_dnd", _("%1: do not disturb,"), 1);
+	format_add("xosd_status_change_xa", _("%1 is extended away,"), 1);
+	format_add("xosd_status_change_notavail", _("%1 is offline,"), 1);
+	format_add("xosd_status_change_invisible", _("%1 is invisible,"), 1);
+	format_add("xosd_status_change_chat", _("%1 is free for chat,"), 1);
+	format_add("xosd_status_change_error", _("%1: status error,"), 1);
+	format_add("xosd_status_change_blocking", _("%1 is blocking us,"), 1);
 	format_add("xosd_status_change_description", "%1", 1);
 	format_add("xosd_status_change_description_long", "%1...", 1);
 	format_add("xosd_status_change_no_description", "", 1);
