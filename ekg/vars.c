@@ -238,9 +238,6 @@ static int variable_add_compare(void *data1, void *data2)
         return xstrcasecmp(a->name, b->name);
 }
 
-
-
-
 /*
  * variable_add()
  *
@@ -283,9 +280,10 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 		if (type == VAR_INT || type == VAR_BOOL || type == VAR_MAP) {
 			*(int*)(ptr) = atoi((char*)(v->ptr));
 			xfree((char*)(v->ptr));
-		} else
+		} else 
 			*(char**)(ptr) = (char*)(v->ptr);
 	
+		xfree(v->name);
 		v->name = xstrdup(__name);
 		v->name_hash = hash;
 		v->type = type;
@@ -300,35 +298,6 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 		return 0;
 	}
 
-/*	
-	hash = variable_hash(name);
-
-	for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
-
-		if (v->name_hash != hash || xstrcasecmp(v->name, name))
-			continue;
-
-		if (type == VAR_INT || type == VAR_BOOL || type == VAR_MAP) {
-			*(int*)(ptr) = atoi((char*)(v->ptr));
-			xfree((char*)(v->ptr));
-		} else
-			*(char**)(ptr) = (char*)(v->ptr);
-	
-		xfree(v->name);
-		v->name = __name;
-		v->name_hash = hash;
-		v->type = type;
-		v->plugin = plugin;
-		v->display = display;
-		v->map = map;
-		v->notify = notify;
-		v->dyndisplay = dyndisplay;
-		v->ptr = ptr;
-		return 0;
-	}
-
-*/
 	memset(&v, 0, sizeof(v));
 
 	v.name = xstrdup(__name);
@@ -367,14 +336,14 @@ int variable_remove(plugin_t *plugin, const char *name)
 		if (!v->name)
 			continue;
 		
-		if (hash == v->name_hash && plugin == v->plugin && xstrcasecmp(name, v->name)) {
+		if (hash == v->name_hash && plugin == v->plugin && !xstrcasecmp(name, v->name)) {
 			char *tmp;
 
 			if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
 				tmp = saprintf("%d", *(int*)(v->ptr));
 				v->ptr = (void*)tmp;
 			} else
-				v->ptr = (char*)(v->ptr);
+				v->ptr = xstrdup((char*)(v->ptr));
 
 			tmp = saprintf("%s:%s", plugin->name, v->name);
 			xfree(v->name);
@@ -569,13 +538,24 @@ void variable_free()
 
 		xfree(v->name);
 
-		if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_THEME || v->type == VAR_DIR) {
-			xfree(*((char**) v->ptr));
-			*((char**) v->ptr) = NULL;
+		switch (v->type) {
+			case VAR_STR:
+			case VAR_FILE:
+			case VAR_THEME:
+			case VAR_DIR:
+			{
+	                        xfree(*((char**) v->ptr));
+	                        *((char**) v->ptr) = NULL;
+				break;
+			}
+			case VAR_FOREIGN:
+			{
+				xfree((char*) v->ptr);
+				break;
+			}
+			default:
+				break;
 		}
-
-		if (v->type == VAR_FOREIGN)
-			xfree((char*) v->ptr);
 
 		if (v->map) {
 			int i;
