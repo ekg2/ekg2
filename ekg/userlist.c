@@ -402,6 +402,8 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
         u.last_descr = NULL;
         u.resource = NULL;
 
+	u.blink = 0;
+
 	return list_add_sorted(&(session->userlist), &u, sizeof(u), userlist_compare);
 }
 

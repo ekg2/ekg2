@@ -357,6 +357,7 @@ group_cleanup:
 				u.descr = up->descr;
 				u.status = up->status;
 				u.private = (void *) s;
+				u.blink = up->blink;
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
 			}
 		}
@@ -372,6 +373,7 @@ group_cleanup:
 			u.descr = up->descr;
 			u.status = up->status;
 			u.private = (void *) w->session;
+			u.blink = up->blink;
 			list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
 		}	
 	}
@@ -388,10 +390,11 @@ group_cleanup:
 					continue;
 				
 				memset(&u, 0, sizeof(u));
-				u.status = (up->status) ? up->status : NULL;
+				u.status = up->status;
 				u.descr = up->descr;
 				u.nickname = m->name;
 				u.private = (void *) 2;
+				u.blink = up->blink;
 
 				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
 		}

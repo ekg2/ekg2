@@ -2101,6 +2101,7 @@ void ekg_update_status(session_t *session)
                         u->status = xstrdup(EKG_STATUS_NA);
                 else
                         u->status = xstrdup(session->status);
+		u->blink = 0;
         }
 
 }
