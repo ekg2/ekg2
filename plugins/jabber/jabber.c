@@ -822,7 +822,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	
 	connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
-	if (errno != EINPROGRESS) {
+	if (errno != EINPROGRESS && errno != 0) {
 		debug("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
 		print("generic_error", strerror(errno));
 		jabber_handle_disconnect(jdh->session);
