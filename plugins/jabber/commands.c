@@ -446,7 +446,7 @@ change:
 	
 	if (descr) {
 		char *f = saprintf("%s_descr", format);
-		printq(f, descr, session_name(session));
+		printq(f, descr, "", session_name(session));
 		xfree(f);
 	} else
 		printq(format, session_name(session));
