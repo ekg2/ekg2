@@ -38,7 +38,6 @@ auto_reconnect
 
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
-	TA ZMIENNA PÓKI CO NIE MA ZNACZENIA!
 
 ban_type
 	typ: liczba
@@ -54,10 +53,6 @@ ban_type
 	i po dodaniu mamy np:
 	 3 (Nick|User)   - nick!user@*
 	10 (User|Domain) - *!*user@*.domain.net
-	itd... jak nie skapowaliscie to i tak nie skapujecie ;>
-	a jak zrozumieliscie to pytanie konkursowe: 
-	Co bedzie banowac jesli ban_type == 0 prawidlowa odpowiedz wyslijcie
-	na smsa 9100 do wygrania ten wlasnie ban na !ekg2 ;>
 	Zmienna uzywana przy /ban oraz /kickban
 	Wiecej /help ban (@irssi)
 

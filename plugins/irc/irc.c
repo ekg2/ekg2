@@ -58,8 +58,6 @@
 
 #include "IRCVERSION.h"
 
-#define fix(s) ((s) ? (s) : "")
-
 #define DEFPARTMSG "EKG2 bejbi! http://ekg2.org/"
 #define DEFQUITMSG "EKG2 - It's better than sex!"
 #define DEFKICKMSG "EKG2 - Y0U 57iNK2 50 MUCH!"
@@ -77,9 +75,6 @@
 #define RECTIMERDEL timer_remove(&irc_plugin, "reconnect")
 
 /* ************************ KNOWN BUGS ***********************
- *  SIGSEGV
- *    -> @ whois  (corrected by darkjames, but patch not commited ;()
- *    -> @ irc_handle_disconnect (corrected ?, darkjames, GiM imho it works)
  *  OTHER LESS IMPORTANT BUGS
  *    -> somewhere with altnick sending
  *    G->dj: still not as I would like it to be
@@ -91,27 +86,12 @@
  *
  * -> split mode.
  * -> disconnection detection
- *    1. While receiving anything from server we add timer x secs -> /reconnect
- *       G->dj: this is as shitty idea as hell ;)
- *    2. We send notice ctcp ping message to ourself, we add timer x secs->recc
- *       while revceiving we delete timer and btw we know the lag...
- *       G->dj: quite cool but still shitty ;)
  *       why not just sending simple PING to SERVER and deal with it's
  *       pong reply...
  *               PING konstantynopolitanczykiewikowna lublin.irc.pl
  *       :prefix PONG lublin.irc.pl konstantynopolitanczykiewikowna
- *    3. setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, ...) would it give anything ?
- *       G->dj: nope
  * *************************************************************
  */
-
-/* 
- * I still don't get this error in whois ... ;/
- * I don't think values of minutes or seconds can have any meaning...
- *
- * 
- */
-
 
 /*                                                                       *
  * ======================================== STARTUP AND STANDARD FUNCS - *

@@ -287,17 +287,40 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
  *        1 (Nick)   - nick!*@*
  *        2 (User)   - *!*ident@*
  *        4 (Host)   - *!*@host.*
- *	  4 (IP)     - *!*@*.168.11.11
+ *	  4 (IP)     - *!*@*.168.11.11 * bug, it bans @*.11 *
  *        8 (Domain) - *!*@*.domain.net
  *        8 (IP)     - *!*@192.168.11.*
  */
 	char *host = xstrdup(hostname);
 	const char *tmp[4];
 	char *temp = NULL;
-	int  cidr = 0; /* TODO */
+
+	int  family = 0; 
+	char tesciur[33];
+	char ind = '.';
+	
+	
+#ifdef HAVE_INET_PTON
+	if (xstrchr(host, ':')) {
+		/* to protect againt iwil var in ircd.conf (ircd-hybrid)
+		 *  dot_in_ip6_addr = yes;
+		 */ 
+		if (host[xstrlen(host)-1] == '.') 
+			host[strlen(host)-1] = 0;
+			
+		if (inet_pton(AF_INET6, host, &tesciur) > 0) {
+			family = AF_INET6;
+			ind = ':';
+		}
+	}
+	else if (inet_pton(AF_INET, host, &tesciur) > 0)
+		family = AF_INET;
+#else
+	debug("[IRC].... TODO\n");
+#endif
 
 	/* G->dj: xrindex stinks as hell */
-	if (host && (temp=strrchr(host, '.')))
+	if (host && (temp=strrchr(host, ind)))
 		*temp = '\0';
 
 	if (bantype > 15) bantype = 10;
@@ -306,16 +329,11 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
 #define getit(x) tmp[x]?tmp[x]:"*"
 	if (bantype & 1) tmp[0] = nick;
 	if (bantype & 2) tmp[1] = ident;
-	if (cidr) {
-		if (bantype & 4) tmp[2] = hostname? temp?temp+1:NULL :NULL;
-		if (bantype & 8) tmp[3] = host;
-	} else {
-		if (bantype & 4) tmp[2] = host;
-		if (bantype & 8) tmp[3] = hostname? temp?temp+1:NULL :NULL;
-	}
+	if (bantype & 4) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
+	if (bantype & 8) tmp[2] = host;
 
-	temp = saprintf("%s!*%s@%s.%s", getit(0), getit(1), getit(2), getit(3));
-	xfree(host);
+	temp = saprintf("%s!*%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3));
+ 	xfree(host);
 	return temp;
 #undef getit
 }
@@ -520,8 +538,13 @@ IRC_COMMAND(irc_c_error)
 			if (session_get(s, "AUTO_JOIN") && strlen(session_get(s, "AUTO_JOIN")))
 				irc_write(j, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
 			/* dj> htfcik ? :) 
-			 * dj> I want to make it in a different way, that's why I haven't
-			 *     commited your patch [but still similar] */
+			 * dj> I want to make it in a different way, that's 
+			 *     why I haven't commited your patch
+			 *     [but still similar] 
+			 * SO DO IT!
+			 *
+			 * first I must to do some changes in ekg2
+			 */
 		case 372:
 		case 375:
 			if (session_int_get(s, "SHOW_MOTD") != 0) {
@@ -586,8 +609,6 @@ IRC_COMMAND(irc_c_whois)
 	hours -= (days * 24);
 
 #define IOK3(x) (x)?(x):""
-	/* G->dj: I'm leaving this, cause this looks more 1337 ;)
-	 */
 	/* GiM: No, I'm not going to do the same in polish
 	 * it'd have to be more cases ;> */
 	str = days?saprintf("%d %s ", days, days==1?"day":"days"):NULL;
@@ -658,7 +679,11 @@ IRC_COMMAND(irc_c_list)
 				PRINT_WINDOW(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
 			}
 			if (kanal) {
-				if (kanal->syncmode > 0)
+				/* G->dj: I'm not commiting this stuff,
+				 * it just increases indents, which doesn't
+				 * seem cool to me ;)
+				 */
+				if (kanal->syncmode > 0) 
 					kanal->syncmode--;
 				if (kanal->syncmode == 0) {
 					struct timeval tv;
@@ -821,6 +846,12 @@ IRC_COMMAND(irc_c_msg)
 		dest = saprintf("__status");
 		format = xstrdup("irc_not_f_server");
 		/* WTF ? WHY this -1 ? insane ?
+		 * dj->G: because of it: (param[0]+1) 
+		 * G->dj: this is really shitty hack/workaround
+		 *        never do things like that, better change those
+		 *        param[0]+1 to OMITCOLON, and btw: I think in 
+		 *        IRC_COMMANDs we shouldn't change param-s table
+		 *
 		param[0] = (char *) session_get(s, "server")-1; */
 		xosd_to_us = 1;
 		/*param[0] = saprintf(":%s",session_get(s, "server"));*/
