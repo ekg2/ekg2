@@ -405,23 +405,11 @@ static void gg_session_handler_success(session_t *s)
 
 	s->last_conn = time(NULL);
 	/* zapiszmy adres serwera */
-	if (session_int_get(s, "server_save")) {
+	if (session_int_get(s, "server_save") == 1) {
 		struct in_addr addr;
 
 		addr.s_addr = g->sess->server_addr;
-
-#ifdef __GG_LIBGADU_HAVE_OPENSSL
-		if (g->sess->ssl) {
-			char *tmp = saprintf("tls:%s:%d", inet_ntoa(addr), g->sess->port);
-			session_set(s, "server", tmp);
-			xfree(tmp);
-		} else
-#endif
-		{
-			char *tmp = saprintf("%s:%d", inet_ntoa(addr), g->sess->port);
-			session_set(s, "server", tmp);
-			xfree(tmp);
-		}
+		session_set(s, "server", inet_ntoa(addr));
 	}
 
 	/* pamiêtajmy, ¿eby pingowaæ */
@@ -479,16 +467,8 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e)
 			break;
 	}
 
-	if (session_get(s, "server_save")) {
-#ifdef __GG_LIBGADU_HAVE_OPENSSL
-		const char *server = session_get(s, "server");
-
-		if (g->sess->ssl && server && !strncasecmp(server, "tls", 3))
-			session_set(s, "server", "tls");
-		else
-#endif
+	if (session_int_get(s, "server_save") == 1) 
 			session_set(s, "server", NULL);
-	}
 
 	gg_free_session(g->sess);
 	g->sess = NULL;
@@ -1006,7 +986,7 @@ COMMAND(gg_command_connect)
 		if ((tmpi = session_int_get(session, "last_sysmsg")) != -1)
 			p.last_sysmsg = tmpi;
 
-		char *realserver = session_get(session, "server");
+		const char *realserver = session_get(session, "server");
 		if (realserver) {
 			in_addr_t tmp_in;
 			
@@ -1698,6 +1678,7 @@ int gg_plugin_init()
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0);
         plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1);
 	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0);
+	plugin_var_add(&gg_plugin, "server_save", VAR_INT, "0", 0);
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;
