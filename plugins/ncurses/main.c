@@ -133,7 +133,7 @@ int ncurses_ui_window_print(void *data, va_list ap)
 	if (n->start < n->lines_count - w->height)
 		w->more = 1;
 
-	if (!w->floating) {
+	if (!w->floating && window_current && window_current->id == w->id) {
 		ncurses_redraw(w);
 		if (!window_lock_get(w))
 			ncurses_commit();

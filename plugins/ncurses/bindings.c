@@ -492,6 +492,7 @@ static void binding_backward_page(const char *arg)
 	if (ncurses_current->start < 0)
 		ncurses_current->start = 0;
 	ncurses_redraw(window_current);
+	ncurses_commit();
 }
 
 static void binding_forward_page(const char *arg)
@@ -509,6 +510,7 @@ static void binding_forward_page(const char *arg)
 		update_statusbar(0);
 	}
 	ncurses_redraw(window_current);
+	ncurses_commit();
 }
 
 static void binding_backward_contacts_line(const char *arg)
