@@ -68,11 +68,11 @@ if test "x$with_ioctld" != "xno"; then
 	PLUGINS="$PLUGINS ioctld"
 fi
 
-
+AC_CHECK_LIBGADU
 AC_ARG_WITH(libgadu,
   [  --without-libgadu        Disable GG plugin])
 
-if test "x$with_libgadu" != "xno"; then
+if test "x$with_libgadu" != "xno" && test "x&with_libgadu" != "xno"; then
 	PKG_CHECK_MODULES(LIBGADU, libgadu,
 	[
 		AC_CONFIG_FILES([plugins/gg/Makefile])
