@@ -362,9 +362,9 @@ int protocol_message(void *data, va_list ap)
 	userlist_t *userlist = userlist_find(session_class, uid);
         window_t *w;
 	
-	if (window_current && window_current->target && !strcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
+	if (userlist && window_current && window_current->target && !strcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
 		userlist->blink = 0;
-	else if (config_make_window)	
+	else if (userlist && config_make_window)	
 		userlist->blink = 1;
 //	else if (window_find(uid)) 
 //		userlist->blink = 1;

@@ -102,6 +102,7 @@ window_t *window_find(const char *target)
 void window_switch(int id)
 {
 	list_t l;
+	userlist_t *u;
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
@@ -115,8 +116,8 @@ void window_switch(int id)
 		window_current = w;
 
 		w->act = 0;
-		if (w->target && w->session && userlist_find(w->session, w->target)->blink) 
-			userlist_find(w->session, w->target)->blink = 0;
+		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && u->blink) 
+			u->blink = 0;
 		
 		query_emit(NULL, "ui-window-switch", &w);	/* XXX */
 
