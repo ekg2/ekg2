@@ -38,6 +38,8 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
+
 /*
  * protocol_init()
  *
@@ -271,8 +273,10 @@ notify_plugins:
  * message_print()
  *
  * wy¶wietla wiadomo¶æ w odpowiednim oknie i w odpowiedniej postaci.
+ *
+ * zwraca target
  */
-void message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq)
+char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq)
 {
 	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text);
 	const char *target = sender, *user;
@@ -402,6 +406,7 @@ void message_print(const char *session, const char *sender, const char **rcpts, 
 	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_MESSAGE || EKG_MSGCLASS_SENT), class_str, user, timestamp, text);
 
 	xfree(t);
+	return xstrdup(target);
 }
 
 /*
@@ -419,7 +424,8 @@ int protocol_message(void *data, va_list ap)
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
-	
+	char *target;
+
 	if (userlist && window_current && window_current->target && !xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
 		userlist->blink = 0;
 	else if (userlist && config_make_window && config_display_blinking)	
@@ -428,11 +434,40 @@ int protocol_message(void *data, va_list ap)
 //		userlist->blink = 1;
 	/* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
 
+        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
 	if (!userlist) 
 		tabnick_add(uid);
-	
-	message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
 
+        if (!userlist && session_int_get(session_class, "auto_find") >= 1) {
+                list_t l;
+                int do_find = 1, i;
+
+                for (l = autofinds, i = 0; l; l = l->next, i++) {
+                        char *d = l->data;
+
+                        if (!xstrcmp(d, uid)) {
+                                do_find = 0;
+                                break;
+                        }
+                }
+
+                if (do_find) {
+                        char *tmp;
+
+                        if (i == auto_find_limit) {
+                                debug("// autofind reached %d limit, removing the oldest uin: %d\n", auto_find_limit, *((char *)autofinds->data));
+                                list_remove(&autofinds, autofinds->data, 1);
+                        }
+
+                        list_add(&autofinds, &uid, sizeof(uid));
+
+                        tmp = saprintf("/find %s", uid);
+                        command_exec(target, session_class, tmp, 0);
+                        xfree(tmp);
+                }
+        }
+
+	xfree(target);
 	return 0;
 }
 

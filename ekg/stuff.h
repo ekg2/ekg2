@@ -130,6 +130,7 @@ struct color_map {
 };
 
 list_t children;
+list_t autofinds;
 list_t aliases;
 list_t bindings;
 list_t timers;
