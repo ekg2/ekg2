@@ -12,5 +12,6 @@ ioctld_SOURCES = ioctld.c ioctld.h
 INCLUDES = -DIOCTLD_PATH=\"$(libexecdir)/ioctld\" $(LTDLINCL)
 
 install-data-am:
-	$(INSTALL) -D -m 644 commands.txt $(DESTDIR)$(datadir)/ekg/plugins/ioctld/commands.txt
+	mkdir -p  $(DESTDIR)$(datadir)/ekg/plugins/ioctld/
+	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(datadir)/ekg/plugins/ioctld/commands.txt
 
