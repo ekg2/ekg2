@@ -884,7 +884,7 @@ COMMAND(gg_command_connect)
 		int tmpi;
 
 		if (g->sess) {
-			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect");
+			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", session_name(session));
 			return -1;
 		}
 
