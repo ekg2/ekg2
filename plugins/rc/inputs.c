@@ -119,18 +119,18 @@ int rc_input_new_pipe(const char *path)
  */
 int rc_input_new_unix(const char *path)
 {
-	struct sockaddr_un sun;
+	struct sockaddr_un beeth;
 	int fd;
 
-	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	beeth.sun_family = AF_UNIX;
+	strlcpy(beeth.sun_path, path, sizeof(beeth.sun_path));
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		debug("[rc] socket() failed: %s\n", strerror(errno));
 		return -1;
 	}
 	
-	if (bind(fd, (struct sockaddr*) &sun, sizeof(sun))) {
+	if (bind(fd, (struct sockaddr*) &beeth, sizeof(beeth))) {
 		debug("[rc] bind() failed: %s\n", strerror(errno));
 		return -1;
 	}
