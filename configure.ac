@@ -10,6 +10,7 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_C_CONST
+AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
 
 AC_LIBTOOL_DLOPEN
 AC_LIBLTDL_CONVENIENCE
@@ -26,6 +27,8 @@ AC_SUBST(PLUGINS_LIBS)
 dnl  SunOS
 AC_CHECK_LIB(nsl, t_accept, LIBS="$LIBS -lnsl")
 AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")
+AC_CHECK_LIB(gadu, gg_login, LIBS="$LIBS -lgadu")
+
 
 dnl  BeOS
 AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")
@@ -68,11 +71,10 @@ if test "x$with_ioctld" != "xno"; then
 	PLUGINS="$PLUGINS ioctld"
 fi
 
-AC_CHECK_LIBGADU
 AC_ARG_WITH(libgadu,
   [  --without-libgadu        Disable GG plugin])
 
-if test "x$have_libgadu" != "xno" && test "x&with_libgadu" != "xno"; then
+if test "x&with_libgadu" != "xno"; then
 	PKG_CHECK_MODULES(LIBGADU, libgadu,
 	[
 		AC_CONFIG_FILES([plugins/gg/Makefile])
