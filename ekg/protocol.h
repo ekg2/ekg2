@@ -47,6 +47,7 @@
 #define EKG_DISCONNECT_NETWORK 1	/* problemy z sieci± */
 #define EKG_DISCONNECT_FORCED 2		/* serwer kaza³ siê roz³±czyæ */
 #define EKG_DISCONNECT_FAILURE 3	/* b³±d ³±czenia siê z serwerem */
+#define EKG_DISCONNECT_STOPPED 4	/* u¿ytkownik przerwa³ ³±czenie */
 
 #define EKG_NO_BEEP 0
 #define EKG_TRY_BEEP 1

@@ -101,7 +101,7 @@ typedef struct {
 } irc_handler_data_t;
 
 void irc_handle_reconnect(int type, void *data);
-void irc_handle_disconnect(session_t *s);
+void irc_handle_disconnect(session_t *s, char *reason, int type);
 COMMAND(irc_command_disconnect);
 
 #ifdef __GNU__

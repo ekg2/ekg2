@@ -306,16 +306,17 @@ int irc_common_connect_ext(session_t *s, int fd, int family, const char *lip, in
  * ======================================== HANDLERS ------------------- *
  *                                                                       */
 
-static void irc_handle_disconnect(session_t *s)
+void irc_handle_disconnect(session_t *s, char *reason, int type)
 {
 	irc_private_t *j = irc_private(s);
         char *__session = xstrdup(session_uid_get(s));
-        char *__reason = NULL;
-        int __type = EKG_DISCONNECT_FAILURE;
+        char *__reason = xstrdup(reason);
+        int __type = type;
 
-	if (!j)
+	if (!j || session_connected_get(s) == 0)
 		return;
 
+	debug("[irc]_handle_disconnect %d\n", type);
 	if (j->obuf || j->connecting)
 		watch_remove(&irc_plugin, j->fd, WATCH_WRITE);
 
@@ -354,8 +355,10 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 	/* ups, we get disconnected */
 	if (type == 1) {
 		debug ("[irc] handle_stream(): ROZ£¡CZY£O\n");
-		irc_handle_disconnect(s);
-		goto fail;
+		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
+		xfree(idta);
+		xfree(buf);
+		return;
 	}
 
 	debug("[irc] handle_stream()");
@@ -370,7 +373,7 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 		 * besides this is needed since you put 
 		 * REC_TIMERDEL in irc_handle_disconnect
 		 */
-		irc_handle_disconnect(s); 
+		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK); 
 		goto fail;
 	}
 
@@ -385,8 +388,6 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 
 fail:
 	watch_remove(&irc_plugin, fd, WATCH_READ);
-	xfree(idta);
-	xfree(buf);
 	return;
 }
 
@@ -399,18 +400,25 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	char *pass;
 
 	/* buggy timer-handling (?), check it! (darkjames) */	
-	if (type != 0) {
+	
+
+	if (type == 1) {
 		debug ("[irc] handle_connect(): type %d\n",type);
 		/* debug("%d\n", session_int_get(idta->session, "auto_reconnect")); */
 		/*RECTIMERADD(idta->session);*/
+		/* nasty hack, cause irc_h_d checks this */
+		session_connected_set(idta->session, 1);
+		j->connecting = 0;
+		irc_handle_disconnect(idta->session, "conn_failed_connecting", 
+				EKG_DISCONNECT_FAILURE);
 		return;
 	}
 	/*RECTIMERDEL;*/
 	debug ("[irc] handle_connect()\n");
 
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
+		debug("[irc] handle_connect(): SO_ERROR\n");
 		print("generic_error", strerror(res));
-		irc_handle_disconnect(idta->session);
 		return;
 	}
 
@@ -525,7 +533,8 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		debug("[irc] handle_resolver() socket() failed: %s\n",
 				strerror(errno));
 		print("generic_error", strerror(errno));
-		irc_handle_disconnect(s);
+		irc_handle_disconnect(s, "conn_failed_connecting",
+				EKG_DISCONNECT_FAILURE);
 		return;
 	}
 
@@ -537,7 +546,8 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		debug("[irc] handle_resolver() ioctl() failed: %s\n",
 				strerror(errno));
 		print("generic_error", strerror(errno));
-		irc_handle_disconnect(s);
+		irc_handle_disconnect(s, "conn_failed_connecting", 
+				EKG_DISCONNECT_FAILURE);
 		return;
 	}
 
@@ -570,7 +580,8 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		debug("[irc] handle_resolver() connect() failed: %s\n",
 				strerror(errno));
 		print("generic_error", strerror(errno));
-		irc_handle_disconnect(s);
+		irc_handle_disconnect(s, "conn_failed_connecting", 
+				EKG_DISCONNECT_FAILURE);
 		return;
 	}
 
@@ -798,6 +809,7 @@ COMMAND(irc_command_connect)
 COMMAND(irc_command_disconnect)
 {
 	irc_private_t *j = irc_private(session);
+	char *reason = (char *)(params[0]?params[0]:QUITMSG(session));
 	
 	debug("[irc] comm_disconnect() !!!\n");
 
@@ -816,6 +828,8 @@ COMMAND(irc_command_disconnect)
 			printq("not_connected", session_name(session));
 			return -1;
 	}
+	
+
 	/* params can be NULL
 	 * [if we get ERROR from server]
 	 */
@@ -824,9 +838,9 @@ COMMAND(irc_command_disconnect)
 
 	if (j->connecting) {
 		j->connecting = 0;
-		printq("conn_stopped", session_name(session));
+		irc_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
 	} else
-		printq("disconnected", session_name(session));
+		irc_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
 
 	watch_remove(&irc_plugin, j->fd, WATCH_READ);
 

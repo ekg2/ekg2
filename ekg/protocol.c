@@ -126,6 +126,14 @@ int protocol_disconnected(void *data, va_list ap)
 		case EKG_DISCONNECT_FORCED:
 			print("conn_disconnected", session_name_n(session));
 			break;
+			
+		case EKG_DISCONNECT_STOPPED:
+			print("conn_stopped", session_name_n(session));
+			break;
+
+		default:
+			print("generic_error", "protocol_disconnect internal error, report to authors");
+			break;
 	}
 
 	return 0;
