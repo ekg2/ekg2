@@ -61,10 +61,11 @@ dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
 AC_CONFIG_FILES([plugins/mail/Makefile])
+AC_CONFIG_FILES([plugins/logs/Makefile])
 AC_CONFIG_FILES([plugins/rc/Makefile])
 AC_CONFIG_FILES([plugins/sms/Makefile])
 AC_CONFIG_FILES([plugins/pcm/Makefile])
-PLUGINS="mail rc sms pcm"
+PLUGINS="logs mail rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
@@ -211,6 +212,13 @@ if test "x$have_libgsm" = "xyes"; then
 	AC_CONFIG_FILES([plugins/gsm/Makefile])
 	PLUGINS="$PLUGINS gsm"
 fi
+
+AM_PATH_LIBGNUTLS( 1.0.0,, AC_MSG_ERROR([[
+***
+*** libgnutls was not found. You may want to get it from
+*** ftp://ftp.gnutls.org/pub/gnutls/
+]]))
+
 
 AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile m4/Makefile])
 

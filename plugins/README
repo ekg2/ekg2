@@ -4,6 +4,7 @@ gg		wojtekka	obs³uga protoko³u Gadu-Gadu	libgadu
 gsm		wojtekka	kodek GSM do rozmów g³osowych 	libgsm
 ioctld		drg		obs³uga diod klawiatury		-
 jabber		wojtekka	obs³uga protoko³u XMPP/Jabber	expat
+logs		zdzichu		logowanie wiadomo¶ci		-
 mail		szalik		sprawdzanie poczty		-
 ncurses		*		interfejs tekstowy		ncurses
 pcm		wojtekka	kodek PCM			-
