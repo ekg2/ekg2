@@ -1,7 +1,8 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *                2003 Adam Czerwiski <acze@acze.net>
  * 		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
