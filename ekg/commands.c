@@ -3921,7 +3921,7 @@ void command_init()
 	  "Mo¿na podaæ ,,%T*%n'' zamiast nazwy/id, tak aby komenda by³a wykonana "
 	  "dla wszystkich elementów.\n"
 	  "\n"
-	  "Polecenie mo¿e zawieraæ elementy specjalne, tzn pola %T%1%n i %T%2%n.\n"
+	  "Polecenie mo¿e zawieraæ elementy specjalne, tzn pola ,,%T\\%1%n'' i ,,%T\\%2%n''.\n"
 	  "Oznaczaj± kolejno:\n"
 	  "  dla sesji: nazwa, uid\n"
 	  "  dla u¿ytkowników: alias, uid\n"
