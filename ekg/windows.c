@@ -62,7 +62,7 @@ window_t *window_find(const char *target)
 
 	if (target && strncmp(target, "__", 2)) {
 		list_t sl;
-		for (sl = sessions; sl; sl->next) {
+		for (sl = sessions; sl; sl = sl->next) {
 			session_t *s = sl->data;
 			u = userlist_find(s, get_uid(s, target));
 		}
