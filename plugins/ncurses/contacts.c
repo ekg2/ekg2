@@ -85,6 +85,9 @@ int contacts_update(window_t *w)
 			return -1;
 	}
 
+	if (!window_current->session)
+		return -1;
+
 	n = w->private;
 	
 	ncurses_clear(w, 1);
