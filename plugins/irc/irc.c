@@ -1007,18 +1007,38 @@ COMMAND(irc_command_whois)
 COMMAND(irc_command_query)
 {
 	window_t *w;
-	char *tar;
+	char *tar, **p = xcalloc(3, sizeof(char*)), *tmp;
 	const char **mp;
+	int i;
+
+        for (i = 0; params[i]; i++)
+                p[i] = xstrdup(params[i]);
+
+        p[i] = NULL;
+
+        if (params[0] && (tmp = xstrrchr(params[0], '/'))) {
+                tmp++;
+                
+                xfree(p[0]);
+                p[0] = xstrdup(tmp);
+        }
 	
-	if (!(tar = irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_NOT_CHAN)))
+	if (!(tar = irc_getchan(session, (const char **) p, name,
+					&mp, 0, IRC_GC_NOT_CHAN))) {
 		return -1;
+	}
+
+	tmp = xstrdup(tar);
+	tmp = strip_quotes(tmp);
 	
-	w = window_find_s(session, tar);
+	w = window_find_s(session, tmp);
+
 	if (!w)
-		w = window_new(tar, session, 0);
+		w = window_new(tmp, session, 0);
+
 	window_switch(w->id);
 
+	xfree(tmp);
 	return 0;
 }
 

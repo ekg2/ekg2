@@ -2201,9 +2201,10 @@ COMMAND(cmd_query)
 	if (params[0] && (tmp = xstrrchr(params[0], '/'))) {
 		char *session_name = xstrndup(params[0], xstrlen(params[0]) - xstrlen(tmp));
 
-		if (!(session = session_find(session_name)))
+		if (!(session = session_find(session_name))) {
+			xfree(session_name);
 			goto next;
-
+		}
 		tmp++;
 		if (!get_uid(session, tmp)) {
 			printq("user_not_found", tmp);
