@@ -384,8 +384,6 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 				target = d;
 				break;
 			}
-			
-			xfree(d);
 		}
 		
 		print_window(target, s, 0, __format(""), uin, name, nickname, city, birthyear, gender, active);
