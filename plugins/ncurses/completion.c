@@ -137,8 +137,7 @@ static void unknown_uin_generator(const char *text, int len)
 	
 	for (i = 0; i < send_nicks_count; i++) {
 		if (send_nicks[i] && xstrchr(send_nicks[i], ':') && xisdigit(xstrchr(send_nicks[i], ':')[1]) && !xstrncasecmp(text, send_nicks[i], len))
-			if (!array_contains(completions, send_nicks[i], 0))
-				array_add_check(&completions, xstrdup(send_nicks[i]), 1);
+			array_add_check(&completions, xstrdup(send_nicks[i]), 1);
 	}
 }
 
@@ -517,7 +516,7 @@ static void possibilities_generator(const char *text, int len)
 	command_t *c = actual_completed_command;
 
 	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
-		if (!xstrncasecmp(text, c->possibilities[i], len))
+		if (!xstrncmp(text, c->possibilities[i], len)) 
 			array_add_check(&completions, xstrdup(c->possibilities[i]), 1);
 }
 
