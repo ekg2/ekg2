@@ -575,14 +575,14 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
  */
 void gg_session_handler_msg(session_t *s, struct gg_event *e)
 {
-	char *__session, *__sender, *__text, *__format, *__seq, **__rcpts = NULL;
+	char *__session, *__sender, *__text, *__seq, **__rcpts = NULL;
+	uint32_t *__format;
 	int i, __class = 0;
 	int ekgbeep = EKG_TRY_BEEP;
 	time_t __sent;
 	int secure = 0;
 
 	int image=0;
-	char* __text_image;
 
 	gg_private_t *g = session_private_get(s);
 
@@ -647,7 +647,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		unsigned char *p = e->event.msg.formats;
 		int i, len = xstrlen(__text);
 		
-		__format = xmalloc(len * sizeof(uint32_t));
+		__format = xcalloc(1,len * sizeof(uint32_t));
 		
 		int ii;
 		gg_debug(GG_DEBUG_DUMP, "// formats:");
@@ -655,66 +655,50 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 			gg_debug(GG_DEBUG_DUMP, " %.2x", (unsigned char) p[ii]);
 		gg_debug(GG_DEBUG_DUMP, "\n");
 		
-		gg_debug(GG_DEBUG_DUMP, "< len: %d >\n", e->event.msg.formats_length);
-
 		for (i = 0; i < e->event.msg.formats_length; ) {
 			int j, pos = p[i] + p[i + 1] * 256;
 			uint32_t val = 0;
 			
-			gg_debug(GG_DEBUG_DUMP, "< %.2x > %.2x\n", i,*(p+i));
-			
-			/*
-			 * was p[i+3] why?
-			 * IMHO p[i+2]
-			 * but colors bold etc not working...
-			 */
-			
-			if ((p[i + 2] & GG_FONT_BOLD))
-				val |= EKG_FORMAT_BOLD;
-
-			if ((p[i + 2] & GG_FONT_ITALIC))
-				val |= EKG_FORMAT_ITALIC;
-			
-			if ((p[i + 2] & GG_FONT_UNDERLINE))
-				val |= EKG_FORMAT_UNDERLINE;
-			
-			if ((p[i + 2] & GG_FONT_COLOR)) {
-				val |= EKG_FORMAT_COLOR | p[i + 4] | (p[i + 5] << 8) | (p[i + 6] << 16);
-				i += 3;
-			}
 			if ((p[i + 2] & GG_FONT_IMAGE))	{
 				image=1;
-				debug("%d\n",((struct gg_msg_richtext_image*)&p[i+3])->size);
-				
-				gg_debug(GG_DEBUG_DUMP, "<i: %.2x >\n",  i);
 
 				if(gg_config_get_images){
 					gg_image_request(g->sess, e->event.msg.sender, ((struct gg_msg_richtext_image*)&p[i+3])->size, ((struct gg_msg_richtext_image*)&p[i+3])->crc32);
 				}
 				i+=10;
 
+			}else{
+				if ((p[i + 2] & GG_FONT_BOLD))
+					val |= EKG_FORMAT_BOLD;
+
+				if ((p[i + 2] & GG_FONT_ITALIC))
+					val |= EKG_FORMAT_ITALIC;
+				
+				if ((p[i + 2] & GG_FONT_UNDERLINE))
+					val |= EKG_FORMAT_UNDERLINE;
+				
+				if ((p[i + 2] & GG_FONT_COLOR)) {
+					val |= EKG_FORMAT_COLOR | p[i + 3] | (p[i + 4] << 8) | (p[i + 5] << 16);
+					i += 3;
+				}
 			}
 
 			i += 3;
 			
-			if (val!=0) // only image format
-				for (j = pos; j < len; j++)
-					__format[j] = val;
+			//if (val!=0) // only image format
+			for (j = pos; j < len; j++)
+				__format[j] = val;
 		}
 	}
 	
 	if (image){
-		unsigned int __text_len;
-		__text_len=strlen(__text);
-		__text_image=xmalloc(__text_len+8);
-		strcpy(__text_image,__text);
-		strcpy(__text_image+__text_len," [image]");
+		// TODO printq("generic", "image in message.\n"); - or something
+		query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+
+	}else{
+		query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
 	}
 	
-	query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, image?&__text_image:&__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
-	
-	if(image)
-		xfree(__text_image);
 	xfree(__seq);
 	xfree(__text);
 	xfree(__sender);

@@ -1251,6 +1251,7 @@ COMMAND(gg_command_check_conn)
 	#define SIZE 20
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
+	char *tmp;
 
 	struct gg_msg_richtext_format_img {
 		struct gg_msg_richtext rt;
@@ -1276,6 +1277,10 @@ COMMAND(gg_command_check_conn)
 		return -1;
 	}
 
+	tmp = xstrdup(params[0]);
+        xfree((char *) params[0]);
+        params[0] = xstrdup(strip_quotes(tmp));
+
 	if (!(u = userlist_find(session, params[0]))) {
 		printq("user_not_found", params[0]);
 		return -1;
@@ -1285,7 +1290,7 @@ COMMAND(gg_command_check_conn)
 		debug("-- check_conn - shits happens\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 void gg_register_commands()
