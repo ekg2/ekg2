@@ -21,7 +21,7 @@
 #ifndef __EKG_USERLIST_H
 #define __EKG_USERLIST_H
 
-#include "config.h"
+#include "ekg2-config.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

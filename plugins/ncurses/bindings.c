@@ -20,7 +20,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "config.h"
+#include "ekg2-config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

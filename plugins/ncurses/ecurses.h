@@ -3,7 +3,7 @@
 #ifndef __EKG_NCURSES_ECURSES_H
 #define __EKG_NCURSES_ECURSES_H
 
-#include "config.h"
+#include "ekg2-config.h"
 
 #ifdef HAVE_NCURSES_H
 #  include <ncurses.h>

@@ -22,7 +22,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
-#include "config.h"
+#include "ekg2-config.h"
 #ifndef HAVE_SCANDIR
 #  include "compat/scandir.h"
 #endif

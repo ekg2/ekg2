@@ -20,7 +20,7 @@
 #ifndef __EKG_PROTOCOL_H
 #define __EKG_PROTOCOL_H
 
-#include "config.h"
+#include "ekg2-config.h"
 
 #include <stdarg.h>
 #include <stdint.h>

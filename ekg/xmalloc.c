@@ -30,6 +30,8 @@
 
 #define _GNU_SOURCE
 
+#include "ekg2-config.h"
+
 #include <sys/types.h>
 #include <stddef.h>
 
@@ -39,8 +41,6 @@
 
 #include <string.h>
 #include <unistd.h>
-
-#include "config.h"
 
 #include "configfile.h"
 #include "stuff.h"

@@ -14,7 +14,7 @@ A million repetitions of "a"
   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
 
-#include "config.h"
+#include "ekg2-config.h"
 
 #include <ekg/xmalloc.h>
 

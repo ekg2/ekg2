@@ -20,7 +20,7 @@
 #ifndef __EKG_WINDOWS_H
 #define __EKG_WINDOWS_H
 
-#include "config.h"
+#include "ekg2-config.h"
 
 #include <ekg/commands.h>
 #include <ekg/sessions.h>

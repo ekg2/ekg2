@@ -1,6 +1,6 @@
 /* $Id$ */
 
-#include "config.h"
+#include "ekg2-config.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
