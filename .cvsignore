@@ -5,6 +5,8 @@ config.h.in
 config.log
 config.status
 config.cache
+config.guess
+config.sub
 configure
 .DS_Store
 unoff
@@ -20,4 +22,6 @@ install-sh
 stamp-*
 libltdl
 libtool
+ltmain.sh
+ekg2-config.h*
 
