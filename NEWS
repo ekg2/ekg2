@@ -1,4 +1,5 @@
-vCVS 2004-07-28
+vCVS 2004-08-05
+	* plugin logowania (plugins/logs/README)
 	* nowa funkcja ,,eval''
 	* mo¿liwo¶æ dzielenia okna i wyrównywaæ (szczegó³y w themes.txt)
 	* kolorowe timestampy

@@ -3,7 +3,8 @@
 Rozpoznawane znaki:
 
  * %S - sesja nasza
- * %u - u¿ytkownik, z którym piszemy
+ * %u - uid u¿ytkownika, z którym piszemy
+ * %U - nick rozmówcy
  * %Y, %M, %D - rok, miesi±c, dzieñ
 
 Rozszerzenie pliku zale¿y od typu pliku logowanie (txt, xml, itp.)

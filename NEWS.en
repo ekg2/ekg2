@@ -1,4 +1,5 @@
-vCVS 2004-07-28
+vCVS 2004-08-05
+	* loggin plugin (plugins/logs/README)
 	* new function ,,eval''
 	* window can be splitted and then text can be justified (see themes.txt) 
 	* coloured timestamp
