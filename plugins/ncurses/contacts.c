@@ -72,7 +72,7 @@ int contacts_update(window_t *w)
 	ncurses_window_t *n;
 	
 
-        if (!window_current->session)
+        if (!window_current->session || !session_current || !session_current->userlist) 
                 return -1;
 	
 	if (!w) {
