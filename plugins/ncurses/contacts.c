@@ -99,7 +99,7 @@ int ncurses_contacts_update(window_t *w)
 {
 	const char *header = NULL, *footer = NULL;
 	char *group = NULL;
-	int j, count_all;
+	int j, count_all = 0;
 	int all = 0; /* 1 - all, 2 - metacontacts */
 	ncurses_window_t *n;
 	list_t sorted = NULL;
@@ -183,11 +183,13 @@ group_cleanup:
 		footer = format_find("contacts_footer");
 	}
 	
-	if (xstrcmp(header, "")) 
+	if (xstrcmp(header, "")) {
 		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
+		count_all--;
+	}
 
 	
-	for (j = 0, count_all = 0; j < xstrlen(contacts_order); j += 2) {
+	for (j = 0; j < xstrlen(contacts_order); j += 2) {
 		int count = 0;
 		list_t l;
 		list_t lp;
@@ -208,7 +210,7 @@ group_cleanup:
 				if (group && !ekg_group_member(u, group))
 					continue;
 				
-				if (count_all < contacts_index) {
+				if (count_all < contacts_index + 3) {
 					count_all++;
 					continue;
 				}
@@ -264,7 +266,7 @@ group_cleanup:
                                 if (!u->status || !u->nickname || xstrncmp(u->status, contacts_order + j, 2))
                                         continue;
 
-                                if (count++ < contacts_index) {
+                                if (count_all < contacts_index + 3) {
                                         count_all++;
                                         continue;
                                 }
