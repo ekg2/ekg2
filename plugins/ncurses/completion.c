@@ -459,7 +459,7 @@ again:
  * themes_only - only the .theme extension
  *
  */
-static void theme_generator_adding(const char *dname, int themes_only)
+static void theme_generator_adding(const char *text, int len, const char *dname, int themes_only)
 {
 	struct dirent **namelist = NULL;
 	int count, i;
@@ -486,7 +486,8 @@ static void theme_generator_adding(const char *dname, int themes_only)
 		}
 
 		tmp2 = xstrndup(name, xstrlen(name) - xstrlen(xstrstr(name, ".theme")));
-		if ((themes_only && xstrcmp(tmp2, name)) || !themes_only)
+		
+		if (!xstrncmp(text, name, len) || (!xstrncmp(text, tmp2, len) && !themes_only) )
 			array_add_check(&completions, tmp2, 1);
 
 		xfree(namelist[i]);
@@ -498,9 +499,9 @@ static void theme_generator_adding(const char *dname, int themes_only)
 static void theme_generator(const char *text, int len)
 {
 
-	theme_generator_adding(DATADIR "/themes", 0);
-	theme_generator_adding(prepare_path("", 0), 1);
-	theme_generator_adding(prepare_path("themes", 0), 0);
+	theme_generator_adding(text, len, DATADIR "/themes", 0);
+	theme_generator_adding(text, len, prepare_path("", 0), 1);
+	theme_generator_adding(text, len, prepare_path("themes", 0), 0);
 }
 
 static void possibilities_generator(const char *text, int len)
@@ -972,6 +973,8 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			}
 		}	 
 	}
+	for (i = 0; completions && completions[i]; i++)
+		debug("completions[i = %d]: (%s)\n", i, completions[i]);
 	count = array_count(completions);
 	
 	/* 
@@ -1044,7 +1047,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 				break;
 		}
 	
-		/* debug("common :%d\t\n", common); */
+		 debug("common :%d\t\n", common); 
 
 		if (xstrlen(line) + common < LINE_MAXLEN) {
 		
