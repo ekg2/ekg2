@@ -175,6 +175,9 @@ static int xosd_protocol_message(void *data, va_list ap)
 	
 	if (!(s = session_find(session)))
                 return 0;
+
+	if (session_check(s, 0, "irc"))
+		return 0;
 		
 	u = userlist_find(s, uid);
 	
@@ -210,6 +213,46 @@ static int xosd_protocol_message(void *data, va_list ap)
 		xfree(msgLine1);
 		xfree(msgLine2);
 	}
+
+	return 0;
+}
+
+static int xosd_irc_protocol_message(void *data, va_list ap)
+{
+	char **__session = va_arg(ap, char**), *session = *__session;
+	char **__uid = va_arg(ap, char**), *uid = *__uid;
+	char **__text = va_arg(ap, char**), *text = *__text;
+	int **__foryou = va_arg(ap, int**), *foryou = *__foryou;
+	int **__private = va_arg(ap, int**), *private = *__private;
+	char **__channame = va_arg(ap, char**), *channame = *__channame;
+	session_t *s;
+	
+	if (!(s = session_find(session)))
+                return 0;
+	
+	if (!foryou)
+		return 0;
+	
+	char *msgLine1;
+	char *msgLine2;
+	
+	if (private)
+		msgLine1 = format_string(format_find("xosd_new_message_line_1"), uid);
+	else
+		msgLine1 = format_string(format_find("xosd_new_message_irc"), uid, channame);
+
+	if (xosd_text_limit && xstrlen(text) > xosd_text_limit)
+		msgLine2 = format_string(format_find("xosd_new_message_line_2_long"), xstrmid(text, 0, xosd_text_limit));
+	else
+		msgLine2 = format_string(format_find("xosd_new_message_line_2"), text);
+
+	if (xosd_short_messages)
+		msgLine2 = "";
+
+	xosd_show_message(msgLine1, msgLine2);
+	
+	xfree(msgLine1);
+	xfree(msgLine2);
 
 	return 0;
 }
@@ -278,6 +321,7 @@ int xosd_plugin_init()
 	variable_add(&xosd_plugin, "vertical_position", VAR_MAP, 1, &xosd_vertical_position, NULL, variable_map(3, 0, 2, "top", 1, 0, "center", 2, 1, "bottom"), NULL);
 	
 	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
+	query_connect(&xosd_plugin, "irc-protocol-message", xosd_irc_protocol_message, NULL);
 	query_connect(&xosd_plugin, "protocol-status", xosd_protocol_status, NULL);
 	
 	timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
@@ -289,6 +333,7 @@ int xosd_plugin_init()
 
 static int xosd_theme_init()
 {
+	format_add("xosd_new_message_irc", _("new message from %1 at %2"), 1);
 	format_add("xosd_new_message_line_1", _("new message from %1"), 1);
 	format_add("xosd_new_message_line_2_long", "%1...", 1);
 	format_add("xosd_new_message_line_2", "%1", 1);
