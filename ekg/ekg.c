@@ -747,14 +747,14 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses", 1);
 #endif
 
-        if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
+/*        if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
                 plugin_load("jabber", 1);
 #endif
 #ifdef HAVE_LIBGADU
                 plugin_load("gg", 1);
 #endif
-	}
+	} */
 
 	config_read_later(NULL);
 
@@ -985,6 +985,15 @@ void ekg_exit()
 	event_free();
 	metacontact_free();
 
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+
+		if (!w)
+			continue;
+		
+		xfree(w->target);
+	}
+	
 	list_destroy(windows, 1);
 
 	xfree(home_dir);
