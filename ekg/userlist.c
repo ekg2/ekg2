@@ -329,6 +329,7 @@ void userlist_free(session_t *session)
         }
 
         list_destroy(session->userlist, 1);	
+	session->userlist = NULL;
 }
 
 /*
