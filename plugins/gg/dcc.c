@@ -629,6 +629,9 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 		if (dcc_private_get(D) != d)
 			continue;
 
+		if (!d)
+			continue;
+
 		if (d->state == GG_STATE_SENDING_FILE_HEADER || d->state == GG_STATE_READING_FILE_HEADER)
 			dcc_active_set(D, 1);
 
