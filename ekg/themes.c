@@ -456,7 +456,7 @@ fstring_t *fstring_new(const char *str)
 					tmp += (str[i] - '0');
 				}
 
-				if (str[i] == ';' || isalpha_pl_PL(str[i])) {
+				if (str[i] == ';' || str[i] == 'm') {
 					if (tmp == 0) {
 						attr = 128;
 
@@ -477,12 +477,12 @@ fstring_t *fstring_new(const char *str)
 						attr |= 256;
 
 					if (tmp >= 30 && tmp <= 37) {
-						attr &= 127;
+						attr &= ~(128+1+2+4);
 						attr |= (tmp - 30);
 					}
 
 					if (tmp >= 40 && tmp <= 47) {
-						attr &= 127;
+						attr &= ~(128+8+16+32);
 						attr |= (tmp - 40) << 3;
 					} 
 
