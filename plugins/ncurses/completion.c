@@ -740,32 +740,31 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 						generators[i].generate(words[word], xstrlen(words[word]));
 					}
 				}
-				
-				if (completions) {
-					for (j = 0; completions && completions[j]; j++) {
-						string_t s;
-						const char *p;
+			}		
 
-						if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
-							continue;
+			if (completions) {
+				for (j = 0; completions && completions[j]; j++) {
+					string_t s;
+					const char *p;
 
-						s = string_init("\"");
+					if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
+						continue;
+					s = string_init("\"");
 
-						for (p = completions[j]; *p; p++) {
-							if (!xstrchr("\"\\", *p))
-								string_append_c(s, *p);
-							else {
-								string_append_c(s, '\\');
-								string_append_c(s, *p);
-							}
+					for (p = completions[j]; *p; p++) {
+						if (!xstrchr("\"\\", *p))
+							string_append_c(s, *p);
+						else {
+							string_append_c(s, '\\');
+							string_append_c(s, *p);
 						}
-						string_append_c(s, '\"');
-
-						xfree(completions[j]);
-						completions[j] = string_free(s, 0);
 					}
-				}	
-			}
+
+					string_append_c(s, '\"');
+					xfree(completions[j]);
+					completions[j] = string_free(s, 0);
+				}
+			}	
 		}
 	}
 
