@@ -134,6 +134,121 @@ $ ./configure --with-libintl-prefix=/usr/local/include
          <qandaentry>
             <question>
                <para>
+                  Jak dodaæ kogo¶ do listy kontaktów w GG?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  <command>/add gg:1234567 Pseudonim</command>
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Przy dodawaniu kogo¶ do listy kontaktów w GG dostajê b³±d
+                  <computeroutput>invalid id</computeroutput>, co zrobiæ?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Upewnij siê, ¿e plugin gg jest za³adowany. Polecenie
+                  <command>/plugin +gg</command> powinno pomóc.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Po wydaniu polecenia <command>/plugin +gg</command> program
+                  mówi, ¿e nie mo¿e odnale¼æ pluginu
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Upewnij siê, ¿e plugin gg jest skompilowany (w katalogu
+                  <filename>${prefix}/lib/ekg2/plugins/</filename> powinny
+                  znajdowaæ siê pliki <filename>gg.so</filename> i
+                  <filename>gg.la</filename>) oraz, ¿e ekg2 zosta³o
+                  skompilowane z obs³ug± libgadu (w jednej z ostatnich linijek
+                  wy¶wietlonych przez polecenie <command>./configure</command>,
+                  powinno siê wy¶wietliæ <computeroutput>libgadu:
+                     enabled</computeroutput>)
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Mam libgadu a mimo to <command>./configure</command>
+                  wy¶wietla <computeroutput>libgadu: disabled</computeroutput>
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Upewnij siê, ¿e <command>./configure</command> mo¿e odnale¼æ
+                  pliki nag³ówkowe biblioteki libgadu (m. in.
+                  <filename>libgadu.h</filename> oraz bibliotekê
+                  <filename>libgadu.so.3</filename>:
+                  <itemizedlist>
+                     <listitem>
+                        <simpara>
+                           katalog w którym znajduje siê libgadu.so.3 powinien
+                           byæ dopisany do pliku
+                           <filename>/etc/ld.so.conf</filename>; je¶li go tam
+                           nie ma, to nale¿y go dopisaæ i uruchomiæ program
+                           <command>ldconfig</command> jako root
+                        </simpara>
+                     </listitem>
+                     <listitem>
+                        <simpara>
+                           je¿eli to nie pomaga, a
+                           <filename>libgadu.so.3</filename> znajduje siê w
+                           niestandardowym miejscu, mo¿na spróbowaæ zrobiæ
+                           symboliczny link do tego pliku w
+                           <filename>/usr/lib</filename>
+                        </simpara>
+                     </listitem>
+                  </itemizedlist>
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Mam libgadu, plugin gg jest skompilowany, mimo to przy próbie
+                  za³adowania pluginu ekg2 wy¶wietla, ¿e nie mo¿e go odnale¼æ
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Upewnij siê, ¿e ekg2 mo¿e odnale¼æ bibliotekê libgadu.so.3 -
+                  odpowiednie kroki zosta³y przedstawione w pytaniu powy¿ej.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  W moim systemie nie ma pliku
+                  <filename>libgadu.so.3</filename>
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Pobierz najnowsze libgadu, które mo¿na znale¼æ pod adresem
+                  <ulink url="http://dev.null.pl/ekg/libgadu-current.tar.gz">
+                     http://dev.null.pl/ekg/libgadu-current.tar.gz </ulink>,
+                  rozpakuj, skonfiguruj poleceniem <command>./configure
+                     --enable-shared</command>, skompiluj poleceniem
+                  <command>make</command> i jako root zainstaluj poleceniem
+                  <command>make install</command>
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
                   Jak ustawiæ tryb prywatny dla sesji Gadu-Gadu?
                </para>
             </question>
