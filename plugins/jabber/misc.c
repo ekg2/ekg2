@@ -27,7 +27,7 @@ char *jabber_attr(char **atts, const char *att)
 
 char *config_jabber_console_charset = NULL;
 
-static char *iso_utf_ent[256] =
+static char *utf_ent[256] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -47,94 +47,125 @@ static char *iso_utf_ent[256] =
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-char *xiconv(const char *from, const char *to, const char *what)
+/* Following two functions shamelessly ripped from mutt-1.4.2i 
+ * (http://www.mutt.org, license: GPL)
+ * 
+ * Copyright (C) 1999-2000 Thomas Roessler <roessler@guug.de>
+ * Modified 2004 by Maciek Pasternacki <maciekp@japhy.fnord.org>
+ */
+
+/*
+ * Like iconv, but keeps going even when the input is invalid
+ * If you're supplying inrepls, the source charset should be stateless;
+ * if you're supplying an outrepl, the target charset should be.
+ */
+size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
+		   char **outbuf, size_t *outbytesleft,
+		   char **inrepls, const char *outrepl)
 {
-	char *dst, *d; //, unikludge[8];
-	char *s;
-	size_t sl, dl, rdl, delta;
-	iconv_t conv; //, unikludge_c;
+  size_t ret = 0, ret1;
+  char *ib = *inbuf;
+  size_t ibl = *inbytesleft;
+  char *ob = *outbuf;
+  size_t obl = *outbytesleft;
 
-	if ( (iconv_t)-1 == (conv = iconv_open(to, from)) ) {
-		print("jabber_charset_init_error", from, to, strerror(errno));
-		return (char *)NULL;
+  for (;;)
+  {
+    ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
+    if (ret1 != (size_t)-1)
+      ret += ret1;
+    if (ibl && obl && errno == EILSEQ)
+    {
+      if (inrepls)
+      {
+	/* Try replacing the input */
+	char **t;
+	for (t = inrepls; *t; t++)
+	{
+	  char *ib1 = *t;
+	  size_t ibl1 = strlen (*t);
+	  char *ob1 = ob;
+	  size_t obl1 = obl;
+	  iconv (cd, &ib1, &ibl1, &ob1, &obl1);
+	  if (!ibl1)
+	  {
+	    ++ib, --ibl;
+	    ob = ob1, obl = obl1;
+	    ++ret;
+	    break;
+	  }
 	}
-
-	sl = dl = rdl = xstrlen(what);
-	dst = xstrdup(what);
-
-	d = dst;
-	s = (char*)what;
-	
-	while ( sl )
-		if ( (size_t)-1 == iconv(conv, &s, &sl, &d, &dl) ) {
-			switch ( errno ) {
-			case EILSEQ: /* Illegal sequence */
-				debug("[xiconv] -EILSEQ: %s (%s)", what, s);
-
-				{ 
-					/* Zjadamy jeden znak z wej¶cia przez konwersjê na WCHAR_T
-					   i odrzucenie efektu */
-					iconv_t kludge_c=0;
-					char kludge_s[32];
-					size_t kludge_l=sizeof(wchar_t);
-
-					if ( (iconv_t)-1 == 
-					     (kludge_c = iconv_open("WCHAR_T", from)) ) {
-						print("jabber_charset_init_error",
-						      from, "WCHAR_T", strerror(errno));
-						return (char *)NULL;
-					}
-
-					while ( (size_t)-1 == 
-						iconv(kludge_c, &s, &sl, 
-						      (char **)&kludge_s, &kludge_l) ) {
-						if ( errno == E2BIG)
-						{
-							debug("[xiconv] This shouldn't happen "
-								"- unicode should fit in 32 bytes.");
-						}
-						else {
-							debug("[xiconv] Kludge doesn't work here!");
-							s++;
-							sl++;
-							break;
-						}
-					}
-
-					iconv_close(kludge_c);
-				}
-				
-				/* Dopisujemy do wyj¶cia znak
-				   zapytania, ¿eby user wiedzia³, ¿e
-				   co¶ zjedzono. */
-
-				*d = '?';
-				d++;
-				dl++;
-				break;
-
-			case EINVAL: /* garbage at end of buffer */
-				debug("[xiconv] -EINVAL: %s (%s)", what, s);
-				sl=0;
-				break;
-
-			case E2BIG: /* dst too small */
-				delta = d-dst;
-				dst = xrealloc(dst, rdl*2);
-				d = dst+delta;
-				dl += rdl;
-				rdl *= 2;
-				break;
-
-			case EBADF: /* invalid conv */
-				debug("[xiconv] -EBADF (can't happen)");
-			}
-		}
-	*d = '\0';
-
-	iconv_close(conv);
-	return xrealloc(dst, strlen(dst)+1);
+	if (*t)
+	  continue;
+      }
+      if (outrepl)
+      {
+	/* Try replacing the output */
+	int n = strlen (outrepl);
+	if (n <= obl)
+	{
+	  memcpy (ob, outrepl, n);
+	  ++ib, --ibl;
+	  ob += n, obl -= n;
+	  ++ret;
+	  continue;
+	}
+      }
+    }
+    *inbuf = ib, *inbytesleft = ibl;
+    *outbuf = ob, *outbytesleft = obl;
+    return ret;
+  }
 }
+
+/*
+ * Convert a string
+ * Used in rfc2047.c and rfc2231.c
+ */
+
+char *mutt_convert_string (char *ps, const char *from, const char *to)
+{
+  iconv_t cd;
+  char *repls[] = { "\357\277\275", "?", 0 };
+  char *s = ps;
+
+  if (!s || !*s)
+    return 0;
+
+  if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1)
+  {
+    int len;
+    char *ib;
+    char *buf, *ob;
+    size_t ibl, obl;
+    char **inrepls = 0;
+    char *outrepl = 0;
+
+    if ( !xstrcasecmp(to, "utf-8") )
+      outrepl = "\357\277\275";
+    else if ( !xstrcasecmp(from, "utf-8"))
+      inrepls = repls;
+    else
+      outrepl = "?";
+      
+    len = strlen (s);
+    ib = s, ibl = len + 1;
+    obl = 16 * ibl;
+    ob = buf = xmalloc (obl + 1);
+    
+    mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
+    iconv_close (cd);
+
+    *ob = '\0';
+
+    buf = (char*)xrealloc((void*)buf, strlen(buf)+1);
+    return buf;
+  }
+  else
+    return 0;
+}
+
+/* End of code taken from mutt. */
 
 /*
  * jabber_escape()
@@ -154,24 +185,24 @@ char *jabber_escape(const char *text)
 
 	if (!text)
 		return NULL;
-	if ( !(utftext = xiconv(config_jabber_console_charset, "utf-8", text)) )
+	if ( !(utftext = mutt_convert_string(text, config_jabber_console_charset, "utf-8")) )
 		return NULL;
 		
 	for (p = utftext, len = 0; *p; p++)
-		len += iso_utf_ent[*p] ? strlen(iso_utf_ent[*p]) : 1;
+		len += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
 
 	res = xmalloc(len + 1);	
 	memset(res, 0, len + 1);
 
 	for (p = utftext, q = res; *p; p++) {
-		char *ent = iso_utf_ent[*p];
+		char *ent = utf_ent[*p];
 
 		if (ent)
 			xstrcpy(q, ent);
 		else
 			*q = *p;
 
-		q += iso_utf_ent[*p] ? strlen(iso_utf_ent[*p]) : 1;
+		q += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
 	}
 
 	xfree(utftext);
@@ -193,7 +224,7 @@ char *jabber_unescape(const char *text)
 	if (!text)
 		return NULL;
 
-	return xiconv("utf-8", config_jabber_console_charset, text);
+	return mutt_convert_string(text, "utf-8", config_jabber_console_charset);
 }
 
 /*
