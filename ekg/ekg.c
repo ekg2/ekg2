@@ -335,12 +335,18 @@ watches_again:
 
 			if (!w->buf) {
 				ekg_stdin_want_more = 0;
-				watch_handle(w);
+
+				if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) || 
+				    ((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
+					watch_handle(w);
+
 				if (ekg_stdin_want_more && w->fd == 0)
 					goto watches_again;
 			}
 			else
-				watch_handle_line(w);
+				if (FD_ISSET(w->fd, &rd))
+					watch_handle_line(w);
+
 		}
 	}
 	
