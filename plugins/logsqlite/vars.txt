@@ -5,7 +5,7 @@ log
 	typ: liczba
 	domy¶lna warto¶æ: 0
 	
-        okre¶la, czy plugin loguje wiadomo¶ci
+	okre¶la, czy plugin loguje wiadomo¶ci
 
 log_ignored
 	typ: bool
