@@ -843,8 +843,9 @@ COMMAND(jabber_command_msg)
 
 	jabber_write(j, "<body>%s</body>", msg);
 
-	/* XXX: zmienna jaka¶? */
-	if (1) jabber_write(j, "<x xmlns=\"jabber:x:event\"><offline/><delivered/><displayed/><composing/></x>");
+	jabber_write(j, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
+		( config_display_ack == 1 || config_display_ack == 2 ? "<delivered/>" : ""),
+		( config_display_ack == 1 || config_display_ack == 3 ? "<offline/>  " : "") );
 	jabber_write(j, "</message>");
 
 	xfree(msg);
