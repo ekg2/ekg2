@@ -35,6 +35,7 @@
 
 #include "commands.h"
 #include "dynstuff.h"
+#include "events.h"
 #include "stuff.h"
 #include "vars.h"
 #include "xmalloc.h"
@@ -204,19 +205,19 @@ int config_read(const char *filename)
 		} else if (!xstrcasecmp(buf, "alias")) {
 			debug("  alias %s\n", foo);
 			ret = alias_add(foo, 1, 1);
-#if 0
+		
 		} else if (!xstrcasecmp(buf, "on")) {
-                        int flags;
-                        char **pms = array_make(foo, " \t", 3, 1, 0);
+                        char **pms = array_make(foo, " \t", 4, 1, 0);
 
-                        if (array_count(pms) == 3 && (flags = event_flags(pms[0]))) {
+                        if (array_count(pms) == 4) {
 				debug("  on %s %s %s\n", pms[0], pms[1], pms[2]);
-                                ret = event_add(flags, pms[1], pms[2], 1);
+                                ret = event_add(pms[0], atoi(pms[1]), pms[2], pms[3], 1);
 			}
 
 			array_free(pms);
 
-		} else if (!xstrcasecmp(buf, "bind")) {
+#if 0	
+	} else if (!xstrcasecmp(buf, "bind")) {
 			char **pms = array_make(foo, " \t", 2, 1, 0);
 
 			if (array_count(pms) == 2) {
@@ -359,13 +360,11 @@ static void config_write_main(FILE *f)
 			fprintf(f, "alias %s %s\n", a->name, (char*) m->data);
 	}
 
-#if 0
         for (l = events; l; l = l->next) {
-                struct event *e = l->data;
+                event_t *e = l->data;
 
-                fprintf(f, "on %s %s %s\n", event_format(e->flags), e->target, e->action);
+                fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
         }
-#endif
 
 	for (l = bindings; l; l = l->next) {
 		struct binding *b = l->data;
