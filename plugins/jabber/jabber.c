@@ -56,7 +56,7 @@ plugin_t jabber_plugin = {
 	name: "jabber",
 	pclass: PLUGIN_PROTOCOL,
 	destroy: jabber_plugin_destroy,
-	possibilities: "auto_away auto_back auto_find auto_reconnect display_notify password resource server"
+	possibilities: "alias auto_away auto_back auto_find auto_reconnect display_notify password resource server"
 };
 
 /*
