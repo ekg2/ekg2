@@ -533,7 +533,7 @@ COMMAND(irc_command_msg)
 		printq("invalid_session");
 		return -1;
 	}
-	
+
 	if (!session_connected_get(session)) {
 		print("not_connected", session_name(session));
 		return -1;
@@ -549,7 +549,7 @@ COMMAND(irc_command_msg)
 	w = window_find_s(session, uid);
 	rcpts = xmalloc(sizeof(char *) * 2);
 	me = xstrdup(session_uid_get(session));
-	
+
 	prefix[1] = '\0';
 	prefix[0] = perchn?*(perchn->sign):' ';
 	if (!session_int_get(session, "SHOW_NICKMODE_EMPTY") && *prefix==' ')

@@ -51,7 +51,7 @@ void irc_handle_write(int type, int fd, int watch, void *data)
 {
 	irc_private_t *j = data;
 	int res;
-	
+
 	res = write(j->fd, j->obuf, j->obuf_len);
 
 	if (res == -1) {
@@ -290,6 +290,11 @@ IRC_COMMAND(irc_c_init)
 			else j->host_ident=NULL;
 			debug("\nspoko miejscówka ziom!...[%s:%s]\n", j->nick, j->host_ident);
 			j->connecting = 0;
+
+			SOP(_005_PREFIX) = xstrdup("(ov)@+");
+			SOP(_005_CHANTYPES) = xstrdup("#!");
+			SOP(_005_MODES) = xstrdup("3");
+
 			break;
 		case 2:
 		case 3:
@@ -319,20 +324,14 @@ IRC_COMMAND(irc_c_init)
 					}
 				}
 			}
-			if (!SOP(_005_PREFIX)) 
-				SOP(_005_PREFIX) = xstrdup("(ov)@+");
-			if (!SOP(_005_CHANTYPES))
-				SOP(_005_CHANTYPES) = xstrdup("#!");
-			if (!SOP(_005_MODES))
-				SOP(_005_MODES) = xstrdup("3");
-			
+
 			irc_autorejoin(s, IRC_REJOIN_CONNECT, NULL);
 
 			break;
 		default:
 			break;
 	}
-	
+
 	return 0;
 }
 
@@ -832,11 +831,11 @@ IRC_COMMAND(irc_c_mode)
 	userlist_t *ul;
 	window_t *w;
 	string_t moderpl;
-	
+
 	len = (xstrlen(SOP(_005_PREFIX))>>1);
 	add = xmalloc(len * sizeof(char));
 	for (i=0; i<len; i++) add[i] = SOP(_005_PREFIX)[i+1];
-	add[--len] = '\0';
+	if (len) add[--len] = '\0';
 
 	/* GiM: FIXME TODO [this shouldn't be xstrcasecmp! user mode */
 	if (!xstrcasecmp(param[2], j->nick))

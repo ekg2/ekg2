@@ -35,11 +35,11 @@ typedef struct {
 	char *host_ident;		/* ident+host */
 	char *obuf;			/* output buffer */
 	int obuf_len;			/* size of above */
-	
+
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */
 	list_t hilights;
-	
+
 	char *sopt[SERVOPTS];		/* just a few options from
 					 * www.irc.org/tech_docs/005.html
 					 * server's response */
