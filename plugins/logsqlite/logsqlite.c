@@ -355,7 +355,7 @@ static int logsqlite_plugin_destroy()
 {
 	plugin_unregister(&logsqlite_plugin);
 
-	debug("[logs] plugin unregistered\n");
+	debug("[logsqlite] plugin unregistered\n");
 
 	return 0;
 }
