@@ -1075,8 +1075,6 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 				
 				p += len;
 				
-				if (!config_display_pl_chars)
-					xfree(text);
 				goto next;
 			}
 		}
