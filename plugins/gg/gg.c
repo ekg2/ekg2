@@ -645,11 +645,10 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
-		int i, len = xstrlen(__text);
+		int i, len = xstrlen(__text), ii;
 		
 		__format = xcalloc(1,len * sizeof(uint32_t));
 		
-		int ii;
 		gg_debug(GG_DEBUG_DUMP, "// formats:");
 		for (ii = 0; ii < e->event.msg.formats_length; ii++)
 			gg_debug(GG_DEBUG_DUMP, " %.2x", (unsigned char) p[ii]);
@@ -803,34 +802,33 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 		}
 		case GG_EVENT_IMAGE_REPLY:
 		{
-			/* receiving messages */
-			debug("image from %d\n",e->event.image_reply.sender);
-			
 			/*
-			* in future we should add varible with format
-			* of name file
-			*/
-			unsigned int len=strlen(itoa(e->event.image_reply.sender))+strlen(itoa(e->event.image_reply.crc32))+strlen(e->event.image_reply.filename);
+			 * in future we should add varible with format
+			 * of name file
+			 */
+			unsigned int len = strlen(itoa(e->event.image_reply.sender)) + strlen(itoa(e->event.image_reply.crc32)) + strlen(e->event.image_reply.filename);
+			char *image_file = xmalloc(len+3+7);
+			FILE *fp;
 			
-			char*image_file=xmalloc(len+3+7);
-			sprintf(image_file,"images/%s_%s_%s",itoa(e->event.image_reply.sender),itoa(e->event.image_reply.crc32),e->event.image_reply.filename);
-					
-			FILE* fp;
+			sprintf(image_file, "images/%s_%s_%s", itoa(e->event.image_reply.sender), itoa(e->event.image_reply.crc32), e->event.image_reply.filename);
+			
+                        /* receiving messages */
+                        debug("image from %d\n",e->event.image_reply.sender);
+			
 			debug("%s\n",image_file);
-			if((fp=fopen(prepare_path(image_file, 1), "w"))==NULL){
-				// ogs³uga b³êdów ;-)
+			
+			if ((fp = fopen(prepare_path(image_file, 1), "w")) == NULL) {
 				debug("can't open file for image \n");
-			}else{
+			} else {
 				int i;
-				for(i=0;i<e->event.image_reply.size;i++){
+				
+				for (i = 0; i<e->event.image_reply.size; i++) {
 					fputc(e->event.image_reply.image[i],fp);
 				}
 				fclose(fp);
 			}
 			
 			xfree(image_file);
-				
-		
 		}	
 		default:
 		{
