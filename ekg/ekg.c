@@ -897,8 +897,10 @@ void ekg_exit()
         msg_queue_write();
 
         /* setting default session */
-        if (session_current)
+        if (config_sessions_save && session_current) {
                 session_int_set(session_current, "default", 1);
+		config_changed = 1;
+	}
 
         xfree(last_search_first_name);
         xfree(last_search_last_name);
@@ -907,8 +909,10 @@ void ekg_exit()
 
         windows_save();
 
-        if (config_windows_save)
+        if (config_windows_save) {
                 array_add(&vars, xstrdup("windows_layout"));
+		config_changed = 1;
+	}
 
         if (vars) {
                 config_write_partly(vars);

@@ -208,6 +208,7 @@ int config_save_password;
 int config_save_quit;
 char *config_server;
 int config_server_save;
+int config_sessions_save;
 int config_sort_windows;
 char *config_sound_app;
 char *config_sound_chat_file;
