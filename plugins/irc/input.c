@@ -110,6 +110,8 @@ coloring_finito:
 			string_append(s, "%U");
 		else if (*str == '%')
 			string_append(s, "\\%");
+		else if (*str == '\\')
+			string_append(s, "\\\\");
 		else 
 			string_append_c(s, *str);
 		str++;
