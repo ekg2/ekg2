@@ -280,10 +280,19 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			if (!w->floating && config_timestamp) {
 				struct tm *tm = localtime(&ts);
-				char buf[100];
+				char buf[100], *tmp;
+				fstring_t *s;
+
 				strftime(buf, sizeof(buf), config_timestamp, tm);
+				tmp = saprintf("%s ", format_string(format_find("timestamp")));
+				s = fstring_new(tmp);
+
 				l->ts = xstrdup(buf);
 				l->ts_len = xstrlen(l->ts);
+				l->ts_attr = s->attr[0];
+
+				xfree(tmp);
+				fstring_free(s);
 			}
 
 			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right;
@@ -582,7 +591,21 @@ void ncurses_redraw(window_t *w)
 
 		wattrset(n->window, A_NORMAL);
 
-		for (x = 0; l->ts && x < l->ts_len; x++)
+		if (l->ts_attr) {
+			int attr = A_NORMAL;
+
+                        if ((l->ts_attr & 64))
+                                attr |= A_BOLD;
+
+                        if ((l->ts_attr & 256))
+                                attr |= A_BLINK;
+
+                        if (!(l->ts_attr & 128))
+                              attr |= color_pair(l->ts_attr & 7, 0, COLOR_BLACK);
+
+                        wattrset(n->window, attr);
+		}
+		for (x = 0; l->ts && x < l->ts_len; x++) 
 			mvwaddch(n->window, top + y, left + x, (unsigned char) l->ts[x]);
 
 		for (x = 0; x < l->prompt_len + l->len; x++) {
@@ -1149,6 +1172,7 @@ void update_statusbar(int commit)
 	int mail_count = -1;
 	session_t *sess = window_current->session;
 	userlist_t *u;
+	char *tmp;
 
 	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
 	if (ncurses_header)
@@ -1182,7 +1206,9 @@ void update_statusbar(int commit)
 	__add_format("window", window_current->id, itoa(window_current->id));
 	__add_format("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
-	__add_format("query", (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : window_current->target, (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : window_current->target);
+	tmp = (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : xstrdup(window_current->target);
+	__add_format("query", tmp, tmp);
+	xfree(tmp);
 
 	query_emit(NULL, "mail-count", &mail_count);
 	__add_format("mail", (mail_count > 0), itoa(mail_count));

@@ -1,4 +1,5 @@
-vCVS 2004-07-20
+vCVS 2004-07-25
+	* coloured timestamp
 	* new function ,,for''
 	* possibility of split big messages to small 
 	* aspell dictionary

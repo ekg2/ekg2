@@ -891,7 +891,7 @@ void theme_init()
 	format_add("prompt2,speech", " ", 1);
 	format_add("error", "%K:%r:%R:%n", 1);
 	format_add("error,speech", "b³±d!", 1);
-	format_add("timestamp", "%H:%M", 1);
+	format_add("timestamp", "%T", 1);
 	format_add("timestamp,speech", " ", 1);
 
 	/* prompty dla ui-readline */
