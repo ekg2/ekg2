@@ -38,6 +38,7 @@ typedef struct {
 	int prompt_len;	/* d³ugo¶æ promptu, który bêdzie powtarzany przy i
 			   przej¶ciu do kolejnej linii. */
 	int prompt_empty;	/* prompt przy przenoszeniu bêdzie pusty */
+	int margin_left; 	/* where the margin is set (on what char) */
 } fstring_t;
 
 list_t formats;

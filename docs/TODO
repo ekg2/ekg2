@@ -12,15 +12,11 @@ rozwi±zanie.
   - porz±dek w docs
 
 * klient:
-  - zmienienie plugins_var_add() tak aby przy zmianie zmiennej sesyjnej
-    wywo³ywany by³ równie¿ podany handler (del)
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
   - ostatnio pisz±ca osoba blinka przez 5 sekund, w rogu ekranu (Oli)
   - uporz±dkowane i dobrze dzia³aj±ce okna p³ywaj±ce (sz?)
-  - mo¿liwo¶æ automagicznego wyrównywania kolejnych linii wiadomo¶ci w tematach
-    ircopodobnych do d³ugo¶ci nazwy rozmówcy i timestampu (sz)
   - zmienna beep_*_away (rmrmg)
   - logowanie nie dzia³a (?)
   - osobna historia dla ka¿dego okna (koniu)

@@ -557,7 +557,6 @@ int main(int argc, char **argv)
 	char *load_theme = NULL, *new_profile = NULL;
 	struct passwd *pw;
 	struct rlimit rlim;
-	session_t *session_default;
 	list_t l;
 
 	/* zostaw po sobie core */

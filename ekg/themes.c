@@ -399,7 +399,9 @@ fstring_t *fstring_new(const char *str)
 	fstring_t *res = xmalloc(sizeof(fstring_t));
 	short attr = 128;
 	int i, j, len = 0;
-	
+
+	res->margin_left = -1;
+
 	for (i = 0; str[i]; i++) {
 		if (str[i] == 27) {
 			if (str[i + 1] != '[')
@@ -420,6 +422,14 @@ fstring_t *fstring_new(const char *str)
 
 		if (str[i] == 13)
 			continue;
+
+                if (str[i + 1] && str[i] == '/' && str[i + 1] == '|') {
+                        if ((i != 0 && str[i - 1] != '/') || i == 0) {
+                                i++;
+                                continue;
+                        }
+			continue;
+                }
 
 		len++;
 	}
@@ -489,6 +499,15 @@ fstring_t *fstring_new(const char *str)
 		if (str[i] == 13)
 			continue;
 
+		if (str[i + 1] && str[i] == '/' && str[i + 1] == '|') {
+			if ((i != 0 && str[i - 1] != '/') || i == 0) {
+				res->margin_left = j;
+				i++;
+				continue;
+			}
+			continue;
+		}
+
 		if (str[i] == 9) {
 			int k = 0, l = 8 - (j % 8);
 
@@ -499,10 +518,9 @@ fstring_t *fstring_new(const char *str)
 
 			continue;
 		}
-
+		
 		res->str[j] = str[i];
 		res->attr[j] = attr;
-//		res->attr[j] |= 64;
 		j++;
 	}
 

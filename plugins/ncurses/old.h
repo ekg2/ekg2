@@ -39,6 +39,7 @@ struct screen_line {
 	short *ts_attr;		/* attributes of the timestamp */
 
 	int backlog;		/* z której linii backlogu pochodzi? */
+	int margin_left;	/* where the margin should be setted */	
 };
 
 enum window_frame_t {
@@ -146,6 +147,7 @@ int config_display_transparent;
 int config_display_crap;
 int config_enter_scrolls;
 int config_header_size;
+int config_margin_size;
 int config_statusbar_size;
 
 void ncurses_watch_stdin(int fd, int watch, void *data);

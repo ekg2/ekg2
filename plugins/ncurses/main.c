@@ -252,7 +252,7 @@ static int ncurses_variable_changed(void *data, va_list ap)
                         if (w->id > 1)
 	                        w->id = id++;
                 }
-        } else if (!xstrcasecmp(name, "timestamp")) {
+        } else if (!xstrcasecmp(name, "timestamp") || !xstrcasecmp(name, "margin_size")) {
        		list_t l;
 
                 for (l = windows; l; l = l->next) {
@@ -351,6 +351,7 @@ void ncurses_setvar_default()
 	config_statusbar_size = 1;
 	config_header_size = 0;
 	config_enter_scrolls = 0;
+	config_margin_size = 15;
 
 #ifdef WITH_ASPELL
         xfree(config_aspell_lang);
@@ -443,6 +444,7 @@ int ncurses_plugin_init()
 	variable_add(&ncurses_plugin, "display_transparent", VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, "enter_scrolls", VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "header_size", VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
+        variable_add(&ncurses_plugin, "margin_size", VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "statusbar_size", VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
 	
 	have_winch_pipe = 0;

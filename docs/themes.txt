@@ -91,4 +91,16 @@ wpisy readline_*, oprócz readline_prompt_query nie mog± zawieraæ ¿adnych
 
 * * *
 
+(ncurses) w ekg2 mo¿na ustawiaæ tzw marginesy poprzez zmienn± ncurses:margin_size.
+aby z nich korzystaæ nale¿y w formatce u¿yæ znaków /| do oddzielenia tekstu
+znajduj±cego siê po prawej i po lewej stronie.
+
+przyk³ad:
+	tekst/|tekst2
+spowoduje wy¶wietlenie:
+	tekst		tekst2
+odstêp reguluje siê poprzez zmienn± ncurses:margin_size.
+
+* * *
+
 $Id$

@@ -249,13 +249,15 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		struct screen_line *l;
 		char *str; 
 		short *attr;
-		int j;
+		int j, margin_left, wrapping = 0;
 		time_t ts;
+		
 
 		str = n->backlog[i]->str + n->backlog[i]->prompt_len;
 		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
 		ts = n->backlog[i]->ts;
-
+		margin_left = (!w->floating) ? n->backlog[i]->margin_left : -1;
+		
 		for (;;) {
 			int word = 0, width;
 
@@ -273,6 +275,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			l->ts_len = 0;
 			l->ts_attr = NULL;
 			l->backlog = i;
+			l->margin_left = (!wrapping || margin_left == -1) ? margin_left : 0;
 
 			l->prompt_len = n->backlog[i]->prompt_len;
 			if (!n->backlog[i]->prompt_empty) {
@@ -306,7 +309,10 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				}
 			}
 
-			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right;
+			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right; 
+			if (l->margin_left != -1)
+				width -= config_margin_size;
+
 			if ((w->frames & WF_LEFT))
 				width -= 1;
 			if ((w->frames & WF_RIGHT))
@@ -314,7 +320,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			if (l->len < width)
 				break;
-			
+		
 			for (j = 0, word = 0; j < l->len; j++) {
 
 				if (str[j] == ' ' && !w->nowrap)
@@ -339,12 +345,14 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 				break;
 			}
-		
+
 			str += l->len;
 			attr += l->len;
 
 			if (!str[0])
 				break;
+
+			wrapping = 1;
 		}
 	}
 
@@ -599,6 +607,7 @@ void ncurses_redraw(window_t *w)
 
 	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
 		struct screen_line *l = &n->lines[n->start + y];
+		int x_real = 0;
 
 		wattrset(n->window, A_NORMAL);
 
@@ -667,7 +676,12 @@ void ncurses_redraw(window_t *w)
 			}
 
 			wattrset(n->window, attr);
-			mvwaddch(n->window, top + y, left + x + l->ts_len, ch);
+			if (l->margin_left != -1 && x >= l->margin_left) 
+				x_real = x - l->margin_left + config_margin_size;
+			else 
+				x_real = x;
+
+			mvwaddch(n->window, top + y, left + x_real + l->ts_len, ch);
 		}
 	}
 
