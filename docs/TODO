@@ -45,5 +45,7 @@ rozwi±zanie.
   - dokumentacja do themes - opis ka¿dego formatu (del)
   - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
   - trzeba przystosowaæ cmd_on do EKG2 (zdz)
+  - numerowanie sesji, potem odwo³ywanie sie do numerkow miast calych nazw (rmrmg)
+  - wywolanie playera dzwiekow nie powinno generowac informacji o kodzie zakonczenia (rmrmg)
 
 $Id$
