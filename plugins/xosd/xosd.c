@@ -297,8 +297,10 @@ int xosd_plugin_init()
 
 	osd = NULL;	
 	osd = xosd_create(2);
-	if (osd == NULL)	
-		return 1;
+	if (osd == NULL) {
+		debug("xosd: error creating osd: %s\n", xosd_error);
+		return 0;
+	}
 
 	xosd_setvar_default();
 
