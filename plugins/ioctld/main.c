@@ -255,5 +255,8 @@ static int ioctld_plugin_destroy()
 	command_remove(&ioctld_plugin, "blink_leds");
 	plugin_unregister(&ioctld_plugin);
 
+	if (ioctld_sock != -1)
+		close(ioctld_sock);
+
 	return 0;
 }
