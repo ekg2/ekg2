@@ -19,6 +19,12 @@
 
 static char **completions = NULL;	/* lista dope³nieñ */
 
+static void str_tolower(char *text) {
+	int i;
+        for(i=0; i <= strlen(text); i++)
+		text[i] = tolower(text[i]);
+}
+
 static void dcc_generator(const char *text, int len)
 {
 	const char *words[] = { "close", "get", "send", "list", "rsend", "rvoice", "voice", NULL };
@@ -530,8 +536,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	if (count == 1) {
 		line[0] = '\0';		
 		for(i = 0; i < array_count(words); i++) {
-			if(i == word)
-			{
+			if(i == word) {
 				strcat(line, completions[0]);
 				*line_index = strlen(line) + 1;
 			}
@@ -544,41 +549,30 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		completions = NULL;
 	}
 
-#define __IS_QUOTED(x) (x[0] == '"' && x[strlen(x) - 1] == '"')
-#define __STRLEN_QUOTED(x) (strlen(x) - (__IS_QUOTED(x) * 2))
-
 	if (count > 1) {
-		int common = 0, minlen = __STRLEN_QUOTED(completions[0]);
+		int common = 0;
+		
+		for(i=1, j = 0;i < 10; i++, common++) { 
+			for(j=1; j < count; j++) {
+				/* debug("strncasecmp(%s, completions[%d]: %s, %d) = %d\n", completions[0], j, completions[j], i, strncasecmp(completions[0], completions[j], i)); */
 
-		for (i = 1; i < count; i++) {
-			if (__STRLEN_QUOTED(completions[i]) < minlen)
-				minlen = __STRLEN_QUOTED(completions[i]);
-		}
-
-		if (__IS_QUOTED(completions[0]))
-			common++;
-
-		for (i = 0; i < minlen; i++, common++) {
-			char c = completions[0][i + __IS_QUOTED(completions[0])];
-			int j, out = 0;
-
-			for (j = 1; j < count; j++) {
-				if (completions[j][i + __IS_QUOTED(completions[j])] != c) {
-					out = 1;
+				if(strncasecmp(completions[0], completions[j], i) < 0)
 					break;
-				}
 			}
-			
-			if (out)
+			if(j < count && strncasecmp(completions[0], completions[j], i) < 0)
 				break;
+
 		}
+		
+/*		debug("comon: %d\n", common); */
 
 		if (strlen(line) + common < LINE_MAXLEN) {
 			line[0] = '\0';		
 			for(i = 0; i < array_count(words); i++) {
-				if(i == word)
-				{
+				if(i == word) {
+					str_tolower(completions[0]);
 					strncat(line, completions[0], common);
+					strcat(line, "");
 					*line_index = strlen(line);
 				}
 				else
