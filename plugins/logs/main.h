@@ -35,7 +35,7 @@ int config_logs_log;
 int config_logs_log_ignored;
 int config_logs_log_status;
 int config_logs_remind_number = 0;
-char * config_logs_path;
+char * config_logs_path = "~/.ekg2/logs/%S/%u";
 char * config_logs_timestamp;
 
 list_t logs_reminded; /* lista z przypomnianymi wiadomosciami - nie logowac */
