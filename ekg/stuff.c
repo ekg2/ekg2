@@ -1810,6 +1810,37 @@ void debug(const char *format, ...)
 	va_end(ap);
 }
 
+void dupadebug(const char *format, ...)
+{
+	va_list ap;
+	char b[4096];
+	char timebuf[1024];
+	const struct tm *tm;
+	time_t t;
+
+	FILE *dupadebugfile;
+	
+	va_start(ap, format);
+	vsnprintf(b, 4096, format, ap);
+	va_end(ap);
+
+	t = time(NULL);
+	tm = localtime(&t);
+	strftime(timebuf, 1024, "%Y-%m-%d %H-%M-%S", tm);
+
+	if ((dupadebugfile = fopen("ekg2-debug.log", "a")))
+	{
+		size_t len;
+		len = strlen(b);
+		fprintf(dupadebugfile, "%s ", timebuf);
+		if (len > 0 && b[len-1] == '\n')
+			fprintf(dupadebugfile, "%s", b);
+		else
+			fprintf(dupadebugfile, "%s\n", b);
+		fclose(dupadebugfile);
+	}
+}
+
 static char base64_charset[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

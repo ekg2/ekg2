@@ -698,10 +698,20 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 
         debug("[jabber] jabber_handle_stream()\n");
 
+	dupadebug("ok, wchodzimy...");
+	
+	if (j->parser == NULL)
+	{
+		dupadebug("chyba zaraz bedzie sigfolt, j->parses == NULL");
+	}
+
         if (!(buf = XML_GetBuffer(j->parser, 4096))) {
                 print("generic_error", "XML_GetBuffer failed");
+		dupadebug("jakis blad w XML_GetBuffer");
                 goto fail;
         }
+
+	dupadebug("ok, przeszlo....");
 
 #ifdef HAVE_GNUTLS
         if (j->using_ssl) {
@@ -903,7 +913,8 @@ int jabber_status_show_handle(void *data, va_list ap)
         struct tm *t;
         time_t n;
         int now_days;
-        char buf[100], *tmp, *format;
+        char buf[100], *tmp;
+	const char *format;
 
         if (!s || !j)
                 return -1;

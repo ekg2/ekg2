@@ -323,9 +323,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				struct tm *tm = localtime(&ts);
 				char buf[100], *tmp = NULL, *format;
 				fstring_t *s = NULL;
-				string_t bc;
 
-				bc = string_init(NULL);
 				if (xstrcmp(config_timestamp, "")) {
 					tmp = format_string(config_timestamp);
 					format = saprintf("%s ", tmp);
