@@ -262,7 +262,7 @@ int session_password_set(session_t *s, const char *password)
 const char *session_password_get(session_t *s)
 {
         static char buf[100];
-	char *tmp = base64_decode(s->password);
+	char *tmp = s->password?base64_decode(s->password):xstrdup("");
 	
 	strlcpy(buf, tmp, sizeof(buf));
 	xfree(tmp);
