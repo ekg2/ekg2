@@ -239,7 +239,7 @@ size_t xstrlen(const char *s)
 	return strlen(fix(s));
 }
 
-int *xstrncasecmp_pl(const char *s1, const char *s2, size_t n)
+int xstrncasecmp_pl(const char *s1, const char *s2, size_t n)
 {
 	return strncasecmp_pl(fix(s1), fix(s2), n);
 }
