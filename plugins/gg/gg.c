@@ -1267,6 +1267,8 @@ int gg_plugin_init()
 
 	query_connect(&gg_plugin, "protocol-validate-uid", gg_validate_uid, NULL);
 	query_connect(&gg_plugin, "plugin-print-version", gg_print_version, NULL);
+	query_connect(&gg_plugin, "session-added", gg_session_handle, (void *)1);
+	query_connect(&gg_plugin, "session-removed", gg_print_handle, (void *)0);
 
 	command_add(&gg_plugin, "gg:connect", "?", gg_command_connect, 0, "", "³±czy siê z serwerem", "");
 	command_add(&gg_plugin, "gg:disconnect", "?", gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "");
