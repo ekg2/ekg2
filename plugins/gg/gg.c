@@ -1594,7 +1594,7 @@ int gg_plugin_init()
 	command_add(&gg_plugin, "gg:register", params("? ?"), gg_command_register, 0, " <email> <has³o>", "rejestruje nowe konto", "", NULL);
 	command_add(&gg_plugin, "gg:unregister", params("? ?"), gg_command_unregister, 0, " <uin/alias> <has³o>", "usuwa konto z serwera", "\nPodanie numeru i has³a jest niezbêdne ze wzglêdów bezpieczeñstwa. Nikt nie chcia³by chyba usun±æ konta przypadkowo, bez ¿adnego potwierdzenia.", NULL);
 	command_add(&gg_plugin, "gg:passwd", params("? ?"), gg_command_passwd, 0, " <has³o>", "zmienia has³o u¿ytkownika", "\nZmiana has³a nie wymaga ju¿ ustawienia zmiennej %Temail%n.", NULL);
-	command_add(&gg_plugin, "gg:list", params("puUCs ?"), gg_command_list, 0, " [opcje]", "lista kontaktów na serwerze",
+	command_add(&gg_plugin, "gg:userlist", params("p ?"), gg_command_list, 0, " [opcje]", "lista kontaktów na serwerze",
 	  "\n"
 	  "Lista kontaktów na serwerze \"list [-p|-g|-c]\":\n"
 	  "  -c, --clear  usuwa listê z serwera\n"
