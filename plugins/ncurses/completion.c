@@ -930,21 +930,12 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 				if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
 					continue;
 				s = string_init("\"");
-
-				for (p = completions[j]; *p; p++) {
-					if (!xstrchr("\"\\", *p))
-						string_append_c(s, *p);
-					else {
-						string_append_c(s, '\\');
-						string_append_c(s, *p);
-					}
-				}
-
+				string_append(s, completions[j]);				
 				string_append_c(s, '\"');
 				xfree(completions[j]);
 				completions[j] = string_free(s, 0);
 			}
-		}	
+		}	 
 	}
 	count = array_count(completions);
 	
