@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-11-07 22:01+0100\n"
+"POT-Creation-Date: 2004-12-11 10:58+0100\n"
 "PO-Revision-Date: 2004-10-23 12:40+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -809,8 +809,8 @@ msgstr ""
 "ka¿dym UID'em, prawid³owy przyk³adowy UID ma postaæ: %Tgg:<nr>%n. \n"
 "\n"
 
-#: ekg/themes.c:1298
 # fuzzy
+#: ekg/themes.c:1298
 msgid ""
 "incomplete configuration. enter session -a, and then gg: gg-number, or jid: "
 "jabber id, then session password and your password. enter save to save. "
@@ -930,6 +930,7 @@ msgid "%Y(available)%N"
 msgstr "%Y(dostêpn%@1)%n"
 
 #: ekg/themes.c:1349
+#, fuzzy, c-format
 msgid "%G(away)%n"
 msgstr "%G(zajêt%@1)%n"
 
@@ -938,6 +939,7 @@ msgid "%r(offline)%n"
 msgstr "%r(niedostêpn%@1)%n"
 
 #: ekg/themes.c:1351
+#, fuzzy, c-format
 msgid "%c(invisible)%n"
 msgstr "%c(niewidoczn%@1)%n)"
 
@@ -1040,6 +1042,7 @@ msgid "%Yavailable%n %K(%n%2%K)%n"
 msgstr "%Ydostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1388 ekg/themes.c:1423 ekg/themes.c:1668
+#, fuzzy, c-format
 msgid "%Gaway%n"
 msgstr "%Gzajêt%@1%n"
 
@@ -1056,6 +1059,7 @@ msgid "%roffline%n %K(%n%2%K)%n"
 msgstr "%rniedostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1392 ekg/themes.c:1425 ekg/themes.c:1672
+#, fuzzy, c-format
 msgid "%cinvisible%n"
 msgstr "%cniewidoczn%@1%n"
 
@@ -1089,6 +1093,7 @@ msgid "%merror%n %K(%n%2%K)%n"
 msgstr "%mb³±d%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1400 ekg/themes.c:1427 ekg/themes.c:1680
+#, fuzzy, c-format
 msgid "%gextended away%n"
 msgstr "%gbardzo zajêt%@1%n"
 
@@ -1097,6 +1102,7 @@ msgid "%gextended away%n %K(%n%2%K)%n"
 msgstr "%gbardzo zajêt%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1402 ekg/themes.c:1682
+#, fuzzy, c-format
 msgid "%mblocking%n"
 msgstr "%mblokuj±c%@1%n"
 
@@ -1165,6 +1171,7 @@ msgid "%gextended away%n (%T%1%n%2)"
 msgstr "%gbardzo zajêt%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1429
+#, fuzzy, c-format
 msgid "%cdo not disturb%n"
 msgstr "%Bnie przeszkadzaæ%n"
 
@@ -1638,8 +1645,8 @@ msgid "%! No conference\n"
 msgstr "%! Brak konferencji\n"
 
 #: ekg/themes.c:1600
-msgid "%> %T%1%n: %2 (%yingored%n)\n"
-msgstr "%> %T%1%n: %2 (%yingorowana%n)\n"
+msgid "%> %T%1%n: %2 (%yignored%n)\n"
+msgstr "%> %T%1%n: %2 (%yignorowana%n)\n"
 
 #: ekg/themes.c:1601
 msgid "%> Created conference %T%1%n\n"
@@ -1778,40 +1785,40 @@ msgstr "%> Plugin %T%1%n zosta³ za³adowany%n\n"
 msgid "%> Plugin %T%1%n unloaded%n\n"
 msgstr "%> Plugin %T%1%n zosta³ wy³adowany%n\n"
 
-#: plugins/gg/gg.c:1092
+#: plugins/gg/gg.c:1142
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr "%> Token zapisano do pliku %T%1%n\n"
 
-#: plugins/gg/gg.c:1093
+#: plugins/gg/gg.c:1143
 msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
-#: plugins/gg/gg.c:1095
+#: plugins/gg/gg.c:1145
 msgid "%! Error getting token: %1\n"
 msgstr "%! B³±d podczas pobierania tokena\n"
 
-#: plugins/gg/gg.c:1096
+#: plugins/gg/gg.c:1146
 msgid "%! Token getting timeout\n"
 msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
-#: plugins/gg/gg.c:1097
+#: plugins/gg/gg.c:1147
 msgid "%! Your operating system doesn't support tokens\n"
 msgstr ""
 "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
 
-#: plugins/gg/gg.c:1098
+#: plugins/gg/gg.c:1148
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
-#: plugins/gg/gg.c:1099
+#: plugins/gg/gg.c:1149
 msgid "%> User %T%1%n is connected\n"
 msgstr "%> U¿ytkownik %1 jest po³±czony\n"
 
-#: plugins/gg/gg.c:1100
+#: plugins/gg/gg.c:1150
 msgid "%! Error sending image\n"
 msgstr "%! B³±d podczas wysy³ania obrazka\n"
 
-#: plugins/gg/gg.c:1101
+#: plugins/gg/gg.c:1151
 msgid "%> Image sent properly\n"
 msgstr "%> Obrazek zosta³ wys³any prawid³owo\n"
 
@@ -1942,7 +1949,7 @@ msgstr "%> Jeste¶ teraz znany jako %G%3%n\n"
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr "%> %g%2%n jest znany jako %G%4%n\n"
 
-#: plugins/jabber/jabber.c:989
+#: plugins/jabber/jabber.c:990
 msgid ""
 "%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/"
 "auth -d %1\" to refuse.%n\n"
@@ -1950,56 +1957,56 @@ msgstr ""
 "%> (%2) %T%1%n prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby "
 "zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n"
 
-#: plugins/jabber/jabber.c:990
+#: plugins/jabber/jabber.c:991
 msgid "%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"
 msgstr ""
 "%> (%2) %T%1%n prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby "
 "usun±æ.%n\n"
 
-#: plugins/jabber/jabber.c:991
+#: plugins/jabber/jabber.c:992
 msgid "%! (%1) Error parsing XML%n\n"
 msgstr "%! (%1) B³±d parsowania XMLa%n\n"
 
-#: plugins/jabber/jabber.c:992
+#: plugins/jabber/jabber.c:993
 msgid "%> (%2) Sent authorisation request to %T%1%n.\n"
 msgstr "%> (%2) Wys³ano ¿±danie autoryzacji do %t%1%n.\n"
 
-#: plugins/jabber/jabber.c:993
+#: plugins/jabber/jabber.c:994
 msgid "%> (%2) Authorised %T%1%n.\n"
 msgstr "%> (%2) Autoryzowano %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:994
+#: plugins/jabber/jabber.c:995
 msgid "%> (%2) Asked %T%1%n to remove authorisation.\n"
 msgstr "%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:995
+#: plugins/jabber/jabber.c:996
 msgid "%> (%2) Authorisation for%T%1%n revoked.\n"
 msgstr "%> (%2) Cofniêto autoryzacjê %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:996
+#: plugins/jabber/jabber.c:997
 msgid "%> (%2) Authorisation for %T%1%n denied.\n"
 msgstr "%> (%2) Odmówiona autoryzacji %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:997
+#: plugins/jabber/jabber.c:998
 msgid "%> (%2) Sent presence probe to %T%1%n.\n"
 msgstr "%> (%2) Wys³ano pytanie o obecno¶æ do %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:998
+#: plugins/jabber/jabber.c:999
 msgid "%! (%1) Error connecting to Jabber server%n\n"
 msgstr "%! (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n"
 
-#: plugins/jabber/jabber.c:999
+#: plugins/jabber/jabber.c:1000
 msgid "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"
 
-#: plugins/jabber/jabber.c:1000
+#: plugins/jabber/jabber.c:1001
 msgid ""
 "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
 msgstr ""
 "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) "
 "%r%3%n\n"
 
-#: plugins/jabber/jabber.c:1001
+#: plugins/jabber/jabber.c:1002
 msgid ""
 "%> Jabber ID: %T%1%n\n"
 "%> Client name: %T%2%n\n"
@@ -2011,23 +2018,23 @@ msgstr ""
 "%> Wersja programu: %T%3%n\n"
 "%> System operacyjny: %T%4%n\n"
 
-#: plugins/jabber/jabber.c:1002
+#: plugins/jabber/jabber.c:1003
 msgid ""
 "%! (%1) User's resource unknown%n\n"
 "\n"
 msgstr "%! (%1) Nieznany resource u¿ytkownika%n\n"
 
-#: plugins/jabber/jabber.c:1003
+#: plugins/jabber/jabber.c:1004
 msgid "%! (%1) Unable to check version, because %2 is unavailable%n\n"
 msgstr ""
 "%! (%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%"
 "n\n"
 
-#: plugins/jabber/jabber.c:1004
+#: plugins/jabber/jabber.c:1005
 msgid "%> %T%1%n is typing to us ...%n\n"
 msgstr "%> U¿ytkownik %T%1%n co¶ do nas pisze ...%n\n"
 
-#: plugins/jabber/jabber.c:1005
+#: plugins/jabber/jabber.c:1006
 msgid "%! Error initialising charset conversion (%1->%2): %3"
 msgstr "%! B³ad przy inicjalizacji kodowania(%1->%2): %3"
 
@@ -2095,54 +2102,54 @@ msgstr "%> SMS do %T%1%n zosta³ wys³any\n"
 msgid "%! SMS to %T%1%n not sent\n"
 msgstr "%! SMS do %T%1%n nie zosta³ wys³any\n"
 
-#: plugins/xosd/xosd.c:215
+#: plugins/xosd/xosd.c:223
 msgid "new message from %1"
 msgstr "nowa wiadomo¶æ od %1"
 
-#: plugins/xosd/xosd.c:219
+#: plugins/xosd/xosd.c:227
 msgid "%1 is online,"
 msgstr "%1 jest dostêpn%@1,"
 
-#: plugins/xosd/xosd.c:220
+#: plugins/xosd/xosd.c:228
 msgid "%1 is away,"
 msgstr "%1 jest zajêt%@1,"
 
-#: plugins/xosd/xosd.c:221
+#: plugins/xosd/xosd.c:229
 msgid "%1: do not disturb,"
 msgstr "%1: nie przeszkadzaæ,"
 
-#: plugins/xosd/xosd.c:222
+#: plugins/xosd/xosd.c:230
 msgid "%1 is extended away,"
 msgstr "%1 jest bardzo zajêt%@1,"
 
-#: plugins/xosd/xosd.c:223
+#: plugins/xosd/xosd.c:231
 msgid "%1 is offline,"
 msgstr "%1 jest niedostêpn%@1,"
 
-#: plugins/xosd/xosd.c:224
+#: plugins/xosd/xosd.c:232
 msgid "%1 is invisible,"
 msgstr "%1 jest niewidoczn%@1,"
 
-#: plugins/xosd/xosd.c:225
+#: plugins/xosd/xosd.c:233
 msgid "%1 is free for chat,"
 msgstr "%1 jest chêtn%@1 do rozmowy,"
 
-#: plugins/xosd/xosd.c:226
+#: plugins/xosd/xosd.c:234
 msgid "%1: status error,"
 msgstr "%1: b³±d pobierania statusu,"
 
-#: plugins/xosd/xosd.c:227
+#: plugins/xosd/xosd.c:235
 msgid "%1 is blocking us,"
 msgstr "%1 blokuje nas,"
 
-#: plugins/xosd/xosd.c:230
+#: plugins/xosd/xosd.c:238
 msgid "[no description]"
 msgstr "[brak opisu]"
 
-#: plugins/xosd/xosd.c:232
+#: plugins/xosd/xosd.c:240
 msgid "ekg2 XOnScreenDisplay plugin"
 msgstr "Wtyczka XOnScreenDisplay dla ekg2"
 
-#: plugins/xosd/xosd.c:233
+#: plugins/xosd/xosd.c:241
 msgid "Author: Adam 'dredzik' Kuczynski"
 msgstr "Autor: Adam 'dredzik' Kuczyñski"
