@@ -52,7 +52,7 @@ static int contacts_edge = WF_RIGHT;
 static int contacts_frame = WF_LEFT;
 static int contacts_descr = 0;
 static int contacts_wrap = 0;
-#define CONTACTS_ORDER_DEFAULT "chopvoluavawdnxainnoerr"
+#define CONTACTS_ORDER_DEFAULT "chopvoluavawxadninnoerr"
 static char contacts_order[100] = CONTACTS_ORDER_DEFAULT;
 
 
