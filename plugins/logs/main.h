@@ -31,10 +31,13 @@ void logs_simple();
 void logs_xml();
 void logs_gaim();
 
-int logs_log;
-int logs_log_ignored;
-int logs_log_status;
-char * logs_path;
-char * logs_timestamp;
+int config_logs_log;
+int config_logs_log_ignored;
+int config_logs_log_status;
+int config_logs_remind_number = 0;
+char * config_logs_path;
+char * config_logs_timestamp;
+
+list_t logs_reminded; /* lista z przypomnianymi wiadomosciami - nie logowac */
 
 #endif
