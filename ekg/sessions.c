@@ -649,12 +649,13 @@ COMMAND(session_command)
 
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
-			const char *status;
+			const char *status, *descr;
 			char *tmp;
 
 			status = (!s->connected) ? EKG_STATUS_NA : s->status;
+			descr = (s->connected) ? s->descr : NULL;
 
-			tmp = format_string(format_find(ekg_status_label(status, s->descr, "user_info_")), "foobar", s->descr);
+			tmp = format_string(format_find(ekg_status_label(status, descr, "user_info_")), "foobar", descr);
 
 			if (!s->alias)
 				printq("session_list", s->uid, s->uid, tmp);
