@@ -116,11 +116,16 @@ window_t *window_find_s(session_t *session, const char *target)
 			status = 1;
 	}
 
-	if (target && strncmp(target, "__", 2)) {
-		list_t sl;
-		for (sl = sessions; sl; sl = sl->next) {
-			session_t *s = sl->data;
-			u = userlist_find(s, get_uid(s, target));
+	if (session && target) {
+		u = userlist_find(session, get_uid(session, target));
+	} else {
+		if (target && strncmp(target, "__", 2)) {
+			list_t sl;
+			for (sl = sessions; sl; sl = sl->next) {
+				session_t *s = sl->data;
+				u = userlist_find(s, get_uid(s, target));
+				break;
+			}
 		}
 	}
 
