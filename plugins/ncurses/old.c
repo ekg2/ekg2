@@ -471,7 +471,9 @@ void ncurses_redraw(window_t *w)
 {
 	int x, y, left, top, height, width;
 	ncurses_window_t *n = w->private;
-
+	const char *vertical_line_char = format_find("contacts_vertical_line_char");
+	const char *horizontal_line_char = format_find("contacts_horizontal_line_char");
+	
 	if (!n)
 		return;
 	
@@ -501,12 +503,12 @@ void ncurses_redraw(window_t *w)
 			left++;
 
 			for (y = 0; y < w->height; y++)
-				mvwaddch(n->window, y, n->margin_left, ACS_VLINE);
+				mvwaddch(n->window, y, n->margin_left, vertical_line_char[0]);
 		}
 
 		if ((w->frames & WF_RIGHT)) {
 			for (y = 0; y < w->height; y++)
-				mvwaddch(n->window, y, w->width - 1 - n->margin_right, ACS_VLINE);
+				mvwaddch(n->window, y, w->width - 1 - n->margin_right, vertical_line_char[0]);
 		}
 			
 		if ((w->frames & WF_TOP)) {
@@ -514,14 +516,14 @@ void ncurses_redraw(window_t *w)
 			height--;
 
 			for (x = 0; x < w->width; x++)
-				mvwaddch(n->window, n->margin_top, x, ACS_HLINE);
+				mvwaddch(n->window, n->margin_top, x, horizontal_line_char[0]);
 		}
 
 		if ((w->frames & WF_BOTTOM)) {
 			height--;
 
 			for (x = 0; x < w->width; x++)
-				mvwaddch(n->window, w->height - 1 - n->margin_bottom, x, ACS_HLINE);
+				mvwaddch(n->window, w->height - 1 - n->margin_bottom, x, horizontal_line_char[0]);
 		}
 
 		if ((w->frames & WF_LEFT) && (w->frames & WF_TOP))

@@ -1067,6 +1067,8 @@ void theme_init()
 	format_add("contacts_footer", "", 1);
 	format_add("contacts_footer_group", "", 1);
 	format_add("contacts_metacontacts_footer", "", 1);
+	format_add("contacts_vertical_line_char", "|", 1);
+	format_add("contacts_horizontal_line_char", "-", 1);
 		
 	/* ¿egnamy siê, zapisujemy konfiguracjê */
 	format_add("quit", "%> Papa\n", 1);
