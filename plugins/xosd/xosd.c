@@ -151,7 +151,7 @@ static int xosd_protocol_status(void *data, va_list ap)
 		msgLine2 = format_string(format_find("xosd_status_change_no_description"));
 
 	if (xosd_short_messages)
-		msgLine2 = "";
+		msgLine2 = format_string("");
 
 	xosd_show_message(msgLine1, msgLine2);
 
@@ -206,7 +206,7 @@ static int xosd_protocol_message(void *data, va_list ap)
 			msgLine2 = format_string(format_find("xosd_new_message_line_2"), text);
 
 		if (xosd_short_messages)
-			msgLine2 = "";
+			msgLine2 = format_string("");
 
 		xosd_show_message(msgLine1, msgLine2);
 	
@@ -247,7 +247,7 @@ static int xosd_irc_protocol_message(void *data, va_list ap)
 		msgLine2 = format_string(format_find("xosd_new_message_line_2"), text);
 
 	if (xosd_short_messages)
-		msgLine2 = "";
+		msgLine2 = format_string("");
 
 	xosd_show_message(msgLine1, msgLine2);
 	
