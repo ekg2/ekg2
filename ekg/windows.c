@@ -274,6 +274,9 @@ crap:
 		query_emit(NULL, "ui-window-act-changed");
 	}
 
+	if (!line->ts)
+		line->ts = time(NULL);
+
 	query_emit(NULL, "ui-window-print", &w, &line);	/* XXX */
 }
 
