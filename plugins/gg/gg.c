@@ -1885,7 +1885,7 @@ fail:
 void gg_changed_private(session_t *s, const char *var)
 {
 	gg_private_t *g = (s) ? session_private_get(s) : NULL;
-	char *status = session_status_get(s);
+	const char *status = session_status_get(s);
 	char *descr = xstrdup(session_descr_get(s));
 
 	if (!session_connected_get(s))

@@ -1,4 +1,5 @@
-vCVS 2004-07-25
+vCVS 2004-07-28
+	* new function ,,eval''
 	* window can be splitted and then text can be justified (see themes.txt) 
 	* coloured timestamp
 	* new function ,,for''

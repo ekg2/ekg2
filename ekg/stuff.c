@@ -514,6 +514,9 @@ void changed_var_default(session_t *s, const char *var)
 
 	if (!sessions)
 		return;
+	
+	if (session_int_get(s, var) == 0)
+		return; 
 
 	for (l = sessions; l; l = l->next) {
 		session_t *sp = l->data;

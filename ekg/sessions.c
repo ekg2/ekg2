@@ -103,7 +103,7 @@ int session_var_default(session_t *s)
 		return -1;
 
 	for (i=0; p->params && p->params[i]; i++) {
-		debug("\tSetting default var %s at %s\n",  p->params[i]->key, p->params[i]->value);
+		/* debug("\tSetting default var %s at %s\n",  p->params[i]->key, p->params[i]->value); */
 		session_set(s, p->params[i]->key, p->params[i]->value);
 	}
 

@@ -782,7 +782,7 @@ int main(int argc, char **argv)
 		no_config = 1;
 	
 
-	/* status window takes first session */
+	/* status window takes first session or setted as default one*/
 	if (sessions) {
 		session_t *session_default = session_find_default();
 
@@ -860,6 +860,10 @@ void ekg_exit()
 	int i;
 
 	msg_queue_write();
+
+	/* setting default session */
+	if (session_current)
+		session_int_set(session_current, "default", 1);
 
 	xfree(last_search_first_name);
 	xfree(last_search_last_name);

@@ -860,6 +860,31 @@ COMMAND(cmd_exec)
 	return 0;
 }
 
+COMMAND(cmd_eval)
+{
+	int ret = 0, argv_count, i;
+	char **argv;
+
+	if (!params[0]) {
+                printq("invalid_params", name);
+                ret = -1;
+                goto eval_end;
+	}
+
+	argv = array_make(params[0], " ", 0, 1, 1);
+	
+	argv_count = array_count(argv);
+
+	for (i = 0; argv[i]; i++) {
+		command_exec(NULL, session, argv[i], 0);
+	}
+
+	array_free(argv);
+
+eval_end:
+	return ret;
+}
+
 COMMAND(cmd_for)
 {
 	int for_all = 0, ret = 0;
@@ -3909,8 +3934,17 @@ void command_init()
 	  "wyniku. Ze wzglêdu na budowê klienta, numery i aliasy "
 	  "%Tnie bêd±%n dope³niane Tabem.",
 	  possibilities("-m --msg -b --bmsg") );
-	 
-	command_add(NULL, "for", params("? ? c"), cmd_for, 0,
+	
+	command_add(NULL, "eval", params("?"), cmd_eval, 0, 
+	  " <polecenie(a)>", "wykonuje podane polecenia",
+	  "\n"
+	  "Wykonuje podane polecenia odzdzielone spacjami. W przypadku gdy "
+	  "polecenie zawiera spacje nale¿y u¿yæ cudzys³owiów.\n"
+	  "Ze wzglêdu na budowê klienta, polecenia, numery i aliasy "
+	  "%Tnie bêd±%n dope³niane Tabem.",
+	  NULL);
+ 
+	command_add(NULL, "for", params("p ? c"), cmd_for, 0,
           " <opcje> <sesje/okna/alias>|* <polecenie>", "wykonuje polecenie dla "
 	  "danych/wszystkich sesji/okien/u¿ytkowników",
           "\n"
@@ -3926,7 +3960,7 @@ void command_init()
 	  "  dla sesji: nazwa, uid\n"
 	  "  dla u¿ytkowników: alias, uid\n"
 	  "  dla okien: alias, uid\n",
-          NULL );
+          "-s --sessions -u --users -w --windows" );
 
  
 	command_add(NULL, "!", params("?"), cmd_exec, 0,
