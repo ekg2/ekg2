@@ -89,7 +89,7 @@ static void command_generator(const char *text, int len)
 		if (session && session->uid)
 			plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
-                if (!xstrncasecmp(c->name, session->uid, plen))
+                if (session && !xstrncasecmp(c->name, session->uid, plen))
 			without_sess_id = xstrchr(c->name, ':');
 
 		if (!xstrncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
