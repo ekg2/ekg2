@@ -372,7 +372,6 @@ COMMAND(gg_command_away)
 change:
 	if (params0) {
 		if (xstrlen(params0) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
-		/* fjuczer który zapewne wkurzy u¿ytkowników windzianego gg :) */
 			if (!timeout) {
 				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
 				char *descr_not_poss = xstrdup(params0 + GG_STATUS_DESCR_MAXSIZE);
@@ -407,10 +406,11 @@ change:
 	if (!session_descr_get(session))
 			autoscroll = timeout = 0;
 
-	if (autoscroll || timeout) {
+	if (autoscroll || (timeout && xstrlen(params0) > GG_STATUS_DESCR_MAXSIZE)) {
 			const char *mode = session_get(session, "scroll_mode");
 			char *desk;
 
+			timeout = autoscroll;
 			autoscroll = session -> scroll_pos;
 			desk = xstrndup(session_descr_get(session) + autoscroll,
 							GG_STATUS_DESCR_MAXSIZE-1);
@@ -448,7 +448,7 @@ change:
 			 * but I'd have to change some things, and I'm soooo lazy
 			 */
 
-			autoscroll = 1;
+			autoscroll = timeout;
 	} else
 		descr = xstrdup(session_descr_get(session));
 
