@@ -22,7 +22,7 @@ log_status
 
 path
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domy¶lna warto¶æ: ~/.ekg2/logsqlite.db
 	
         ¶cie¿ka do pliku z baz± danych. Je¶li plik nie istnieje, to zostanie stworzony.
 

@@ -30,6 +30,7 @@ int logsqlite_status_handler(void *data, va_list ap);
 int logsqlite_theme_init();
 sqlite * logsqlite_open_db();
 void logsqlite_close_db(sqlite * db);
+void logsqlite_setvar_default();
 
 int config_logsqlite_log;
 int config_logsqlite_log_ignored = 0;

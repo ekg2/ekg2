@@ -111,6 +111,15 @@ COMMAND(logsqlite_cmd_last)
 }
 
 /*
+ * set default configuration options
+ */
+void logsqlite_setvar_default()
+{
+	xfree(config_logsqlite_path);
+	config_logsqlite_path = xstrdup("~/.ekg2/logsqlite.db");
+}
+
+/*
  * prepare path to database
  */
 char *logsqlite_prepare_path()
@@ -354,6 +363,8 @@ static int logsqlite_plugin_destroy()
 int logsqlite_plugin_init(int prio)
 {
 	plugin_register(&logsqlite_plugin, prio);
+
+	logsqlite_setvar_default();
 
 	command_add(&logsqlite_plugin, "logsqlite:last", "u", logsqlite_cmd_last, 0, NULL);
 
