@@ -24,6 +24,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
+#include <sys/utsname.h> /* dla jabber:iq:version */
 
 #include <errno.h>
 #include <stdio.h>
@@ -317,12 +318,35 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 					 		else 
 								list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
 						};
-					} /* for */
-				}; /* jabber:iq:roster */
-
+					}; /* for */
+				} /* jabber:iq:roster */
 			} /* if query */
 		} /* type == set */
+	
+		if (type && !strncmp(type, "get", 3)) {
+			xmlnode_t *q = xmlnode_find_child(n, "query");
 
+			if (q) {
+				const char *ns;
+				ns = jabber_attr(q->atts, "xmlns");
+
+				if (ns && !strncmp(ns, "jabber:iq:version", 17)) {
+					struct utsname buf;
+
+					uname(&buf);
+
+					/* 'id' powinno byc w <iq/> */
+					if (id && from) {
+						jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">", from, id);
+						jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>EKG2</name>");
+						jabber_write(j, "<version>%s</version>", VERSION);
+						jabber_write(j, "<os>%s %s %s</os>", jabber_escape(buf.sysname), jabber_escape(buf.release), jabber_escape(buf.machine));
+						jabber_write(j, "</query></iq>");
+					}
+				}; /* jabber:iq:version */
+
+			} /* if query */
+		} /* type == get */ 
 	} /* if iq */
 
 	if (!strcmp(n->name, "presence")) {
@@ -344,21 +368,6 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 			return;
 		}
-
- 		if (type && !strcmp(type, "unsubscribed") && from) {
-			userlist_t u;
-			char *err;
-			u.uid = xstrdup(from);
-			if (userlist_find(s, u.uid))
-				userlist_remove(s, &u);
-			else {
-				err = saprintf("Ej, %s czego¶ od nas chce. Znasz go, Zenek?", u.uid);
-				print("generic", err);
-				xfree(err);
-			}
-                        return;
-                }
-
 
 		if (!type) {
 			xmlnode_t *nshow = xmlnode_find_child(n, "show");
