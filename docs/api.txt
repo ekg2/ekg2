@@ -1,4 +1,4 @@
-// (c) copyright 2004 by Piotr Kupisiewicz <deletek@ekg2.org>
+// (c) copyright 2004-2005 by Piotr Kupisiewicz <deletek@ekg2.org>
 
 Dokumentacja API dostêpna jest na stronie domowej projektu:
 http://www.ekg2.org/doxygen/
