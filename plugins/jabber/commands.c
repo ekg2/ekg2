@@ -290,7 +290,7 @@ COMMAND(jabber_command_msg)
 
 	if (subject) jabber_write(j, "<subject>%s</subject>", subject);
 
-	jabber_write(j, "<body>%s</body>", msg);
+	if (msg) jabber_write(j, "<body>%s</body>", msg);
 
 	jabber_write(j, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
 		( config_display_ack == 1 || config_display_ack == 2 ? "<delivered/>" : ""),
