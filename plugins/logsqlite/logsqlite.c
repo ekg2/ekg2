@@ -98,7 +98,6 @@ COMMAND(logsqlite_cmd_last)
 	} else {
 		sprintf(sql, "select uid, nick, ts, body, sent from log_msg order by ts desc limit %i", limit);
 	}
-	debug("%s\n", sql);
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		count2++;
