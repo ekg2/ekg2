@@ -33,6 +33,7 @@
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
+#include <ekg/log.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/sessions.h>
@@ -40,6 +41,7 @@
 #include <ekg/themes.h> //print()
 #include <ekg/vars.h>
 #include <ekg/windows.h>
+#include <ekg/userlist.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -98,7 +100,8 @@ static int logs_plugin_destroy()
 /*
  * przygotowanie nazwy pliku bez rozszerzenia
  * %S - sesja nasza
- * %u - u¿ytkownik, z którym piszemy
+ * %u - u¿ytkownik (uid), z którym piszemy
+ * %U - u¿ytkownik (nick)   -||-
  * %Y, %M, %D - rok, miesi±c, dzieñ
  * zwraca ¶cie¿kê, która nale¿y rêcznie zwolniæ przez xfree()
  */
@@ -119,10 +122,18 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
 						break;
 				case 'u':	if (class == EKG_MSGCLASS_SENT ||
 						    class == EKG_MSGCLASS_SENT_CHAT)
-							uidtmp = xstrdup(rcpts[0]);
+							uidtmp = xstrdup(get_uid(session, rcpts[0]));
 						else
-							uidtmp = xstrdup(uid);
-						xstrtr(uidtmp, '/', '-');
+							uidtmp = xstrdup(get_uid(session, uid));
+						goto attach; /* avoid code duplication */
+				case 'U':	if (class == EKG_MSGCLASS_SENT ||
+						    class == EKG_MSGCLASS_SENT_CHAT)
+							uidtmp = xstrdup(get_nickname(session, rcpts[0]));
+						else
+							uidtmp = xstrdup(get_nickname(session, uid));
+					attach:
+						if (xstrchr(uidtmp, '/'))  
+							*(xstrchr(uidtmp, '/')) = 0; // strip resource
 						string_append_n(buf, uidtmp, -1);
 						xfree(uidtmp);
 						break;
@@ -223,7 +234,7 @@ void logs_handler(void *data, va_list ap)
 	const char *log_formats;
 	char *path;
 
-	/* well, 'format' is unused, so silence warning */
+	/* well, 'format' is unused, so silence the warning */
 	format = NULL;
 
 	if (!session)
@@ -235,12 +246,15 @@ void logs_handler(void *data, va_list ap)
 	if (!(path = logs_prepare_path(s, uid, rcpts, text, sent, class)))
 		return;
 
-	char *ttt=saprintf("Log do: %s", path);
-	print("generic2",ttt);
+	char *ttt=saprintf("Log do: %s\n", path);
+	debug(ttt);
 	xfree(ttt);
 	
 	if (xstrstr(log_formats, "simple"))
-		logs_simple(path, session, uid, text, sent, class, seq);
+		logs_simple(path, session, 
+			((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid),
+			 text, sent, class, seq);
+
 	// itd. dla innych formatow logow
 	
 	xfree(path);
@@ -272,15 +286,15 @@ void logs_handler_newwin(void *data, va_list ap)
  * typ,uid,nickname,timestamp,{timestamp wyslania dla odleglych}, text
  */
 
-void logs_simple(char *path, session_t *session, char *uid, char *text, time_t sent, int class, int seq)
+void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, int seq)
 {
 	FILE *file;
-	char *textcopy = xstrdup(text);	
+	char *textcopy = log_escape(text);	
 	char *timestamp = saprintf("%u", (unsigned int)time(NULL));
 	char *senttimestamp = saprintf("%u", (unsigned int)sent);
+	session_t *s = session_find((const char*)session);
 
-
-	if (!(file = logs_open_file(path, "txt", 1))) {
+	if (!(file = logs_open_file(path, "txt", 1)) || !s) {
 		xfree(senttimestamp);
 		xfree(timestamp);
 		xfree(textcopy);
@@ -309,8 +323,9 @@ void logs_simple(char *path, session_t *session, char *uid, char *text, time_t s
 	 * chatrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
 	 */
 	
-	fputs(uid, file); fputc(',', file);
-	// session find uid ==> nickname
+	fputs(get_uid(s, uid), file);      fputc(',', file);
+	fputs(get_nickname(s, uid), file); fputc(',', file);
+
 	fputs(timestamp, file); fputc(',', file);
 
 	if (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_CHAT) {
@@ -318,7 +333,6 @@ void logs_simple(char *path, session_t *session, char *uid, char *text, time_t s
 	       	fputc(',', file);
 	}
 	
-	xstrtr(textcopy, '\n', '\\');
 	fputs(textcopy, file); 
 	fputs("\n", file);	
 

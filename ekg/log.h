@@ -44,6 +44,8 @@ void last_del(const char *uid);
 int last_count(const char *uid);
 void last_free();
 
+char *log_escape(const char *str);
+
 void put_log(const char *uid, const char *format, ...);
 const char *log_timestamp(time_t t);
 

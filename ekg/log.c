@@ -206,7 +206,7 @@ void last_free()
  *
  * zaalokowany bufor.
  */
-static char *log_escape(const char *str)
+char *log_escape(const char *str)
 {
 	const char *p;
 	char *res, *q;
