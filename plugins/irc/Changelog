@@ -1,3 +1,16 @@
+stardate: o9:o9:38 CEST 2oo4-31-o8 version 0.6.98 (GiM)
+  * added session.txt
+  * autoacts.[ch]:
+    - responsible for autorejoin
+  * irc.c:
+    - changed /part (del/GiM)
+    - deleted irc_getarg
+    - changed most of function
+    - added /me
+    - changed /part,/join, added /cycle
+  * misc.c:
+    - fixed silly, but hard to find segv in irc_free_people
+
 stardate 18:37:53 CEST 2oo4-27-o8 version 0.6.68 (GiM)
   * irc.c:
     - irc_getchan() renamed to irc_getchan_int()

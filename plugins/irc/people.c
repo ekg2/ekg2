@@ -17,13 +17,12 @@
 
 #include <stdio.h>
 
-#include <ekg/dynstuff.h>
 #include <ekg/xmalloc.h>
 
 //#include <ekg/commands.h>
 //#include <ekg/plugins.h>
 #include <ekg/protocol.h>
-//#include <ekg/sessions.h>
+#include <ekg/sessions.h>
 //#include <ekg/stuff.h>
 //#include <ekg/themes.h>
 #include <ekg/userlist.h>
@@ -385,6 +384,7 @@ int irc_free_people(session_t *s, irc_private_t *j)
 	people_t *per;
 	channel_t *chan;
 	userlist_t *ulist;
+	window_t *w;
 
 	debug("[irc] free_people()\n");
 	for (t1=j->people; t1; t1=t1->next)
@@ -398,12 +398,14 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		chan = (channel_t *)t1->data;
 		list_destroy(chan->onchan, 0);
 		chan->onchan = NULL;
-		while (chan->window->userlist) {
-			ulist = (userlist_t *)(chan->window->userlist->data);
-			debug("usuwam z userlisty: %s\n", ulist->nickname);
-			userlist_remove_u(&(chan->window->userlist), ulist);
-		}
-		//window_kill(chan->window, 1);
+		
+		/* GiM: check if window isn't allready destroyed */
+		w = window_find_s(s, chan->name);
+		if (w && w->userlist)
+			userlist_free_u(&(chan->window->userlist));
+		/* 
+		 * window_kill(chan->window, 1);
+		 */
 	}
 	for (t1=j->people; t1; t1=t1->next)
 		xfree(((people_t *)(t1->data))->nick);

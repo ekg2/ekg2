@@ -18,13 +18,12 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/utsname.h>
 
-#include <ekg/dynstuff.h>
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
-#include <sys/utsname.h>
 
 #include "input.h"
 #include "IRCVERSION.h"
@@ -381,7 +380,7 @@ CTCP_COMMAND(ctcp_main_noti)
 	if (!ischn && !w && !(mw&4)) win = window_current->target;
 
 	t = irc_ircoldcolstr_to_ekgcolstr(s, space);
-	print_window(win, s, ischn?(mw&1):!!(mw&4),
+	print_window(win, s, ischn?(mw&1):!!(mw&8),
 			"irc_ctcp_reply", session_name(s), ctcps[number-1].name, sender, t);
 	xfree (t);
 	

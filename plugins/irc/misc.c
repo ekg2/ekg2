@@ -36,6 +36,7 @@
 #include "misc.h"
 #include "people.h"
 #include "input.h"
+#include "autoacts.h"
 
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
@@ -323,6 +324,9 @@ IRC_COMMAND(irc_c_init)
 				SOP(_005_CHANTYPES) = xstrdup("#!");
 			if (!SOP(_005_MODES))
 				SOP(_005_MODES) = xstrdup("3");
+			
+			irc_autorejoin(s, IRC_REJOIN_CONNECT, NULL);
+
 			break;
 		default:
 			break;
@@ -405,7 +409,8 @@ IRC_COMMAND(irc_c_error)
 			if (!session_int_get(s, "SKIP_MOTD")) {
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s,
 						IOK2(3));
-				print_window(NULL, s, 0, irccommands[ecode].name,
+				print_window("__status", s, 0,
+						irccommands[ecode].name,
 						session_name(s), coloured);
 				xfree(coloured);
 			}
@@ -669,6 +674,7 @@ IRC_COMMAND(irc_c_part)
 IRC_COMMAND(irc_c_kick)
 {
 	char *channel, *tmp, *uid, *stajl, *coloured;
+	irc_onkick_handler_t *onkick;
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 	/* we were kicked out */
@@ -679,7 +685,9 @@ IRC_COMMAND(irc_c_kick)
 		irc_del_person_channel(s, j, OMITCOLON(param[3]), param[2]);
 		stajl = xstrdup("irc_kicked");
 	}
-	uid = xstrdup(param[0]+1);
+
+	uid = saprintf("%s%s", IRC4, param[0]+1);
+
 	if (tmp) *tmp='!';
 
 	channel = saprintf("irc:%s", param[2]);
@@ -688,13 +696,18 @@ IRC_COMMAND(irc_c_kick)
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4])):
 				xstrdup("no reason"):xstrdup("no reason");
 	print_window(channel, s, 0, stajl, session_name(s), 
-			OMITCOLON(param[3]), uid, param[0]+1,
+			OMITCOLON(param[3]), uid+4, param[0]+1,
 			param[2], coloured);
 	xfree(coloured);
-	xfree(channel);
 	xfree(stajl);
-	xfree(uid);
 
+	onkick = xmalloc(sizeof(irc_onkick_handler_t));
+	onkick->s = s;
+	onkick->nick = saprintf("%s%s", IRC4, OMITCOLON(param[3]));
+	onkick->chan = channel;
+	onkick->kickedby = uid;
+
+	irc_onkick_handler(s, onkick);
 	return 0;
 }
 

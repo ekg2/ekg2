@@ -18,7 +18,10 @@
 #ifndef __EKG_PLUGINS_IRC_MISC_H
 #define __EKG_PLUGINS_IRC_MISC_H
 
+#include <stdio.h>
+
 #include <ekg/plugins.h>
+
 #include "irc.h"
 
 #define IRC_COMMAND(x) int x(session_t *s, irc_private_t *j, int fd, int ecode, char **param)

@@ -6,7 +6,13 @@
 
 
 	parametry: [tekst]
-	krotki opis: wysy³a tekst na kana³ b±d¼ do osoby
+	krotki opis: /help irc: by dostaæ pomoc na temat plugina
+
+	[tekst] oznacza, ¿e parametr jest wymagany, <tekst>,
+	¿e parametr jest opcjonalny, + lub * po parametrze oznacza,
+	¿e mo¿e wystêpowaæ wiêcej parametrów danego typu
+	je¿eli w przyk³adach komend pojawia siê ¶rednik
+	oznacza on, koniec komendy [nale¿y wcisn±æ enter ;>]
 
 connect
 	parametry: 
@@ -25,12 +31,15 @@ reconnect
 	krotki opis: roz³±cza z serwerem i ³±czy ponownie
 
 join
-	parametry: [kana³]+
+	parametry: <kana³>+
 	krotki opis: do³±cza u¿ytkownika do kana³u/ów
 	
 	W wypadku wiêkszej ilo¶ci parametrów, nazwy kana³ów
 	nale¿y oddzieliæ przecinkami. np:
 	/join !ekg2,#apcoh,!apcoh,#english
+	je¿eli nie podano argumentu, próbuje siê pod³±czyæ do
+	kana³u, którego nazw± jest nazwa aktualnego okna
+	[np mo¿na zrobiæ: /window new irc:!6E6WPekg2; /join]
 
 part
 	parametry: <kana³> <powód>
@@ -38,6 +47,15 @@ part
 	
 	Je¶li podano powód i je¿eli serwer obs³uguje powody, zostanie on
 	wy¶wietlony przy wychodzeniu innym osobom na kanale.
+	je¿eli pierwszy argument nie jest kana³em, brana jest nazwa aktualnego
+	okna.
+
+cycle
+	parametry <kana³> <powód>
+	krótki opis: robi /part i /join
+
+	je¿eli pierwszy argument nie jest kana³em, brana jest nazwa
+	aktualnego okna
 
 query
 	parametry: [nick]
@@ -74,6 +92,10 @@ add
 msg
 	parametry: [nick|kana³] [wiadomo¶æ]
 	krotki opis: no zgadnij ;-)
+
+me
+	parametry: [tekst]
+	krotki opis: robi /me ;-)
 
 ctcp
 	parametry: <osoba|kana³> <rodzaj> <...>
