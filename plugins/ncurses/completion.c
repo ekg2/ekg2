@@ -925,7 +925,6 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		if (completions) {
 			for (j = 0; completions && completions[j]; j++) {
 				string_t s;
-				const char *p;
 	
 				if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
 					continue;
