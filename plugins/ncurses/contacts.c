@@ -235,6 +235,7 @@ group_cleanup:
 		int count = 0;
 		list_t l = (!all) ? session_current->userlist : sorted_all;
 		const char *footer_status = NULL;
+		char *line;
 		char tmp[100];
 
 		for (; l; l = l->next) {
@@ -270,7 +271,7 @@ group_cleanup:
 			if (u->blink)
 				xstrcat(tmp, "_blink");
 	
-	                char *line = format_string(format_find(tmp), u->nickname, u->descr);
+	                line = format_string(format_find(tmp), u->nickname, u->descr);
 	                ncurses_backlog_add(w, fstring_new(line));
 	                xfree(line);
 	
