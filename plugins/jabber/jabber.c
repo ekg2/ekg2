@@ -363,7 +363,6 @@ void jabber_handle(void *data, xmlnode_t *n)
                                 if (e && e->data) {
                                         char *data = jabber_unescape(e->data);
                                         print("conn_failed", data, session_name(s));
-                                        xfree(data);
                                 } else
                                         print("jabber_generic_conn_failed", session_name(s));
                         }
@@ -779,17 +778,17 @@ void jabber_handle_connect(int type, int fd, int watch, void *data)
         debug("[jabber] jabber_handle_connect()\n");
 
         if (type != 0) {
-                debug("wrong type: %d\n", type);
                 return;
         }
 
         if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
                 print("generic_error", strerror(res));
                 jabber_handle_disconnect(jdh->session);
+		xfree(data);
                 return;
         }
 
-        watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_handle_stream, data);
+        watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_handle_stream, jdh);
 
         jabber_write(j, "<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\">", j->server);
 
@@ -819,7 +818,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
         const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
 #endif
 
-        if (type != 0)
+        if (type != 0) 
                 return;
 
         debug("[jabber] jabber_handle_resolver()\n", type);
@@ -925,8 +924,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
                 j->using_ssl = 1;
         } // use_ssl
 #endif
-
-        watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, data);
+        watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, jdh);
 }
 
 int jabber_status_show_handle(void *data, va_list ap)
