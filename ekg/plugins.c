@@ -73,9 +73,8 @@ int plugin_load(const char *name)
                 }
         }
 	
-	if (!plugins) {
-		if (lib)
-			free(lib);
+	if (!plugin) {
+		xfree(lib);
 		lib = saprintf("%s/%s.so", PLUGINDIR, name);
 		plugin = lt_dlopen(lib);
 	}
