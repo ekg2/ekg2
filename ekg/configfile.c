@@ -316,6 +316,9 @@ static void config_write_variable(FILE *f, variable_t *v)
 		return;
 
 	switch (v->type) {
+		case VAR_DIR:
+		case VAR_THEME:
+		case VAR_FILE:
 		case VAR_STR:
 			if (*(char**)(v->ptr))
 				fprintf(f, "%s %s\n", v->name, *(char**)(v->ptr));

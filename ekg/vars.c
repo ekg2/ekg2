@@ -568,7 +568,7 @@ void variable_free()
 
 		xfree(v->name);
 
-		if (v->type == VAR_STR) {
+		if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_THEME || v->type == VAR_DIR) {
 			xfree(*((char**) v->ptr));
 			*((char**) v->ptr) = NULL;
 		}
