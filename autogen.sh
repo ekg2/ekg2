@@ -51,15 +51,9 @@ fi
 
 rm -rf intl
 if test "$gettext_ver" -ge 01100; then
-	if test "$gettext_ver" -lt 01105; then
-		echo "Upgrade gettext to at least 0.11.5 or downgrade to 0.10.40" 2>&1
-		exit 1
-	fi
-	$AUTOPOINT --force || exit 1
+	GETTEXTIZE_OPTIONS="--no-changelog"
 else
-	sed -e '/AM_GNU_GETTEXT_VERSION(0.11.5)/d' configure.ac > configure.ac1
-	mv -f configure.ac1 configure.ac
-	$GETTEXTIZE --copy --force --no-changelog || exit 1
+	$GETTEXTIZE --copy --force $GETTEXTIZE_OPTIONS || exit 1
 fi
 
 # Generate po/POTFILES.in
@@ -93,7 +87,12 @@ $XGETTEXT --keyword=_ --keyword=N_ --output=- $XGETTEXT_OPTIONS `find . -name '*
 
 
 if test ! -r m4/gettext.m4; then
-	cp compat/gettext.m4 m4/gettext.m4
+        if test -r /usr/share/aclocal/gettext.m4; then
+                cp /usr/share/aclocal/gettext.m4 m4/gettext.m4
+        else
+                echo "gettext.m4 wasn't found - copy it manualy to m4/"
+                exit 1
+        fi
 fi
 
 echo "Running aclocal..."
