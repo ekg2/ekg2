@@ -608,13 +608,13 @@ void changed_theme(const char *var)
 	if (!config_theme) {
 		theme_free();
 		theme_init();
-//		ui_event("theme_init");
 	} else {
 		if (!theme_read(config_theme, 1)) {
 			if (!in_autoexec)
 				print("theme_loaded", config_theme);
 		} else
 			print("error_loading_theme", strerror(errno));
+			variable_set("theme", NULL, 0);
 	}
 }
 

@@ -805,14 +805,15 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	words_count = array_count(words);
 	lenght = xstrlen(line);
 	/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
-        if(xisspace(line[lenght - 1]))
+        if (xisspace(line[lenght - 1]))
                 word_current++;
-	if((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== array_count(words) -1 )
+	if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== array_count(words) -1 )
 		word++;
-	if(xisspace(line[lenght - 1]))
+	if (xisspace(line[lenght - 1]))
 		words_count++;
 
-/*	debug("word = %d\n", word);
+/*
+	debug("word = %d\n", word);
 	debug("start = \"%s\"\n", start);
 	debug("words_count = %d\n", words_count);
 	debug("word_current: %d\n", word_current);
@@ -940,6 +941,9 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			}
 
 		}
+
+		if (word_current > array_count(params) + 1) 
+			word_current = array_count(params) + 2;
 
 		if (params && abbrs == 1 && params[word_current - 2]) {
 			int j;
