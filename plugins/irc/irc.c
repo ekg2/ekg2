@@ -517,7 +517,7 @@ COMMAND(irc_command_msg)
 	}
 
 	if (!params[0] || !params[1]) {
-		print("not_enough_params", name);
+		if (!params[0]) print("not_enough_params", name);
 		return -1;
 	}
 
