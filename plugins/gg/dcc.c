@@ -370,7 +370,6 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 			__host = inet_ntoa(*((struct in_addr*) &d->remote_addr));
 			__port = d->remote_port;
 			query_emit(NULL, "protocol-dcc-validate", &__host, &__port, &__valid, NULL);
-			xfree(__host);
 
 			if (__valid)
 				watch_add(&gg_plugin, d->fd, d->check, 0, gg_dcc_handler, d);
