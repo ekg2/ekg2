@@ -914,6 +914,14 @@ int jabber_status_show_handle(void *data, va_list ap)
 
 	xfree(fulluid);
 	
+	// nasz status
+	if (s->connected)
+		tmp = format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")),s->descr, "");
+	else
+		tmp = format_string(format_find("show_status_notavail"));
+
+	print("show_status_status_simple", tmp);
+
 	// serwer
 #ifdef HAVE_GNUTLS
 	if (j->using_ssl)
@@ -938,14 +946,6 @@ int jabber_status_show_handle(void *data, va_list ap)
 		print("show_status_connected_since", buf);
 	else
 		print("show_status_disconnected_since", buf);
-
-	// nasz status
-	if (s->connected)
-		tmp = format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")),s->descr, "");
-	else
-		tmp = format_string(format_find("show_status_notavail"));
-
-	print("show_status_status_simple", tmp);
 
 	return 0;
 }
