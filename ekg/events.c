@@ -292,7 +292,7 @@ event_t *event_find(const char *name, const char *target)
  * descriptor to event
  *
  */
-event_t *event_find_all(const char *name, const char *target, const char *data)
+event_t *event_find_all(const char *name, const char *uid, const char *target, const char *data)
 {
         list_t l;
 	event_t *ev_max = NULL;
@@ -313,7 +313,7 @@ event_t *event_find_all(const char *name, const char *target, const char *data)
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(format_string(a[i], target, data)) && xstrcasecmp(a[i], "*") && xstrcasecmp(a[i], b[j])))
+						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(format_string(a[i], uid, target, data)) && xstrcasecmp(a[i], "*") && xstrcasecmp(a[i], b[j])))
         		        	                continue;
                 		        	else if (ev->prio > ev_max_prio){
 	                        	        	ev_max = ev;
@@ -533,12 +533,8 @@ int event_check(const char *session, const char *name, const char *target, const
 		return -1;
 	}
 
-	if (!(ev = event_find_all(name, target, data)) && uid)
-		ev = event_find_all(name, uid, data);
-	
-	if (!ev) {
+	if (!(ev = event_find_all(name, uid, target, data)))
 		return -1;
-	}
 
 	action = ev->action;
 
