@@ -515,7 +515,7 @@ group_cleanup:
 			char *short_status;
 			fstring_t *string;
 
-			if (!u->status || !u->nickname || !u->status || xstrlen(u->status) < 2) 
+			if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2) 
 				continue;
 			
 			if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
