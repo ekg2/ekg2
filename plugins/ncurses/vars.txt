@@ -67,6 +67,8 @@ contacts_options
 	- wrap, nowrap - tre¶æ listy bêdzie zawijana lub ucinana,
 	- descr, nodescr - opisy stanu bêd± lub nie bêd± wy¶wietlane,
 	- order=n - kolejno¶æ wy¶wietlanych stanów.
+	- nosort - kolejno¶æ listy jest alfabetyczna, wy¶wietlane s± jednak
+	tylko statusy pojawiaj±ce siê w opcji order
 
 contacts_size
 	typ: liczba

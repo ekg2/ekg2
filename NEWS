@@ -1,4 +1,5 @@
-vCVS 2004-08-28
+vCVS 2004-11-06
+	* opcja nosort ncurses:contacts_options
 	* irc plugin
 	* mo¿liwo¶ci samodzielnego bindowania klawiszy (bind --set)
 	* wsparcie dla komunikatów w wielu jêzykach

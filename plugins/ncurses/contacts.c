@@ -56,7 +56,7 @@ static int contacts_descr = 0;
 static int contacts_wrap = 0;
 #define CONTACTS_ORDER_DEFAULT "chopvoluavawxadninnoerr"
 static char contacts_order[100] = CONTACTS_ORDER_DEFAULT;
-
+static int contacts_nosort = 0;
 
 list_t sorted_all_cache = NULL;
 
@@ -445,10 +445,23 @@ group_cleanup:
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
 			const char *format;
+			char *short_status;
 			fstring_t *string;
 
-			if (!u->status || !u->nickname || !u->status || xstrlen(u->status) < 2 || xstrncmp(u->status, contacts_order + j, 2))
+			if (!u->status || !u->nickname || !u->status || xstrlen(u->status) < 2) 
 				continue;
+			
+			if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
+				continue;
+
+			short_status = xstrndup(u->status, 2);
+
+			if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
+				xfree(short_status);
+				continue;
+			}
+
+			xfree(short_status);
 	
 			if (count_all < contacts_index) {
 				count_all++;
@@ -498,6 +511,10 @@ group_cleanup:
 			if (xstrcmp(format, ""))
 				ncurses_backlog_add(w, fstring_new(format_string(format)));
 		}
+
+		if (contacts_nosort) {
+			break;
+		}
 	}
 
 	if (xstrcmp(footer, "")) 
@@ -542,6 +559,7 @@ void ncurses_contacts_changed(const char *name)
 	xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);
 	contacts_wrap = 0;
 	contacts_descr = 0;
+	contacts_nosort = 0;
 
 	if (config_contacts_options) {
 		char **args = array_make(config_contacts_options, " \t,", 0, 1, 1);
@@ -611,6 +629,9 @@ void ncurses_contacts_changed(const char *name)
 
 			if (!xstrcasecmp(args[i], "descr"))
 				contacts_descr = 1;
+
+                        if (!xstrcasecmp(args[i], "nosort"))
+                                contacts_nosort = 1;
 
 			if (!xstrcasecmp(args[i], "nodescr"))
 				contacts_descr = 0;
