@@ -52,9 +52,8 @@ fi
 rm -rf intl
 if test "$gettext_ver" -ge 01100; then
 	GETTEXTIZE_OPTIONS="--no-changelog"
-else
-	$GETTEXTIZE --copy --force $GETTEXTIZE_OPTIONS || exit 1
 fi
+$GETTEXTIZE --copy --force $GETTEXTIZE_OPTIONS || exit 1
 
 # Generate po/POTFILES.in
 echo "Generating po/POTFILES.in"
