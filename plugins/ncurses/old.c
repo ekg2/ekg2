@@ -343,6 +343,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 						string_append_c(bc, *tmp);
 						tmp++;
 					}
+					string_append(bc, ' ');
 					format = string_free(bc, 0);
         	                        strftime(buf, sizeof(buf)-1, format, tm);
 					
