@@ -47,9 +47,9 @@ window_t *window_current = NULL;	/* zawsze na co¶ musi wskazywaæ! */
  */
 window_t *window_find(const char *target)
 {
-	int current = ((target) ? !strcasecmp(target, "__current") : 0);
-	int debug = ((target) ? !strcasecmp(target, "__debug") : 0);
-	int status = ((target) ? !strcasecmp(target, "__status") : 0);
+	int current = ((target) ? !xstrcasecmp(target, "__current") : 0);
+	int debug = ((target) ? !xstrcasecmp(target, "__debug") : 0);
+	int status = ((target) ? !xstrcasecmp(target, "__status") : 0);
 	userlist_t *u = NULL;
 	list_t l;
 
@@ -78,13 +78,13 @@ window_t *window_find(const char *target)
 			return w;
 
 		if (w->target && target) {
-			if (!strcasecmp(target, w->target))
+			if (!xstrcasecmp(target, w->target))
 				return w;
 
-			if (u && u->nickname && !strcasecmp(u->nickname, w->target))
+			if (u && u->nickname && !xstrcasecmp(u->nickname, w->target))
 				return w;
 
-			if (u && !strcasecmp(u->uid, w->target))
+			if (u && !xstrcasecmp(u->uid, w->target))
 				return w;
 		}
 	}
@@ -169,7 +169,7 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 
 //		u = get_uid(target);
 
-		if (!strcmp(target, "$"))
+		if (!xstrcmp(target, "$"))
 			return window_current;
 	}
 
@@ -265,7 +265,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 			}
 
 crap:
-			if (!config_display_crap && target && !strcmp(target, "__current"))
+			if (!config_display_crap && target && !xstrcmp(target, "__current"))
 				w = window_find("__status");
 			
 			break;
@@ -423,14 +423,14 @@ cleanup:
  */
 COMMAND(cmd_window)
 {
-	if (!strcmp(name, "clear") || (params[0] && !strcasecmp(params[0], "clear"))) {
+	if (!xstrcmp(name, "clear") || (params[0] && !xstrcasecmp(params[0], "clear"))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
 		query_emit(NULL, "ui-window-clear", &w);
 		xfree(w);
 		goto cleanup;
 	}
 
-	if (!params[0] || !strcasecmp(params[0], "list")) {
+	if (!params[0] || !xstrcasecmp(params[0], "list")) {
 		list_t l;
 
 		for (l = windows; l; l = l->next) {
@@ -450,7 +450,7 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}
 
-	if (!strcasecmp(params[0], "active")) {
+	if (!xstrcasecmp(params[0], "active")) {
 		list_t l;
 		int id = 0;
 
@@ -469,7 +469,7 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}
 
-	if (!strcasecmp(params[0], "new")) {
+	if (!xstrcasecmp(params[0], "new")) {
 		window_t *w = window_new(params[1], session, 0);
 
 		w->session = window_current->session;
@@ -488,8 +488,8 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}
 
-	if (!strcasecmp(params[0], "switch")) {
-		if (!params[1] || (!atoi(params[1]) && strcmp(params[1], "0")))
+	if (!xstrcasecmp(params[0], "switch")) {
+		if (!params[1] || (!atoi(params[1]) && xstrcmp(params[1], "0")))
 			printq("not_enough_params", "window");
 		else
 			window_switch(atoi(params[1]));
@@ -497,12 +497,12 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}			
 
-	if (!strcasecmp(params[0], "last")) {
+	if (!xstrcasecmp(params[0], "last")) {
 		window_switch(window_last_id);
 		goto cleanup;
 	}
 	
-	if (!strcasecmp(params[0], "kill")) {
+	if (!xstrcasecmp(params[0], "kill")) {
 		window_t *w = window_current;
 
 		if (params[1]) {
@@ -529,17 +529,17 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}
 
-	if (!strcasecmp(params[0], "next")) {
+	if (!xstrcasecmp(params[0], "next")) {
 		window_next();
 		goto cleanup;
 	}
 	
-	if (!strcasecmp(params[0], "prev")) {
+	if (!xstrcasecmp(params[0], "prev")) {
 		window_prev();
 		goto cleanup;
 	}
 	
-	if (!strcasecmp(params[0], "refresh")) {
+	if (!xstrcasecmp(params[0], "refresh")) {
 		query_emit(NULL, "ui-window-refresh");
 		goto cleanup;
 	}

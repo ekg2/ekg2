@@ -165,13 +165,13 @@ int protocol_status(void *data, va_list ap)
 		u->last_port = port;
 
 	/* je¶li te same stany... */
-	if (!strcasecmp(status, u->status)) {
+	if (!xstrcasecmp(status, u->status)) {
 		/* ...i nie ma opisu, ignoruj */
 		if (!descr && !u->descr)
 			return 0;
 	
 		/* ...i te same opisy, ignoruj */
-		if (descr && u->descr && !strcmp(descr, u->descr))
+		if (descr && u->descr && !xstrcmp(descr, u->descr))
 			return 0;
 	}
 
@@ -186,21 +186,21 @@ int protocol_status(void *data, va_list ap)
 		put_log(uid, "status,%s,%s,%s:%d,%s,%s%s%s\n", uid, (u->nickname) ? u->nickname : "", inet_ntoa(*((struct in_addr*) &u->ip)), u->port, log_timestamp(time(NULL)), u->status, (u->descr) ? "," : "", (u->descr) ? u->descr : "");
 	
 	/* je¶li dostêpny lub zajêty, dopisz to taba. je¶li niedostêpny, usuñ */
-	if (!strcasecmp(status, EKG_STATUS_AVAIL) && config_completion_notify && u->nickname)
+	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && config_completion_notify && u->nickname)
 		tabnick_add(u->nickname);
-	if (!strcasecmp(status, EKG_STATUS_AWAY) && (config_completion_notify & 4) && u->nickname)
+	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && (config_completion_notify & 4) && u->nickname)
 		tabnick_add(u->nickname);
-	if (!strcasecmp(status, EKG_STATUS_NA) && (config_completion_notify & 2) && u->nickname)
+	if (!xstrcasecmp(status, EKG_STATUS_NA) && (config_completion_notify & 2) && u->nickname)
 		tabnick_remove(u->nickname);
 
 	/* je¶li ma³o wa¿na zmiana stanu... */
-	if (config_display_notify == 2 && strcasecmp(u->status, EKG_STATUS_NA)) {
+	if (config_display_notify == 2 && xstrcasecmp(u->status, EKG_STATUS_NA)) {
 		/* je¶li na zajêty, ignorujemy */
-		if (!strcasecmp(status, EKG_STATUS_AWAY))
+		if (!xstrcasecmp(status, EKG_STATUS_AWAY))
 			goto notify_plugins;
 
 		/* je¶li na dostêpny, ignorujemy */
-		if (!strcasecmp(status, EKG_STATUS_AVAIL))
+		if (!xstrcasecmp(status, EKG_STATUS_AVAIL))
 			goto notify_plugins;
 	}
 
@@ -292,7 +292,7 @@ void message_print(const char *session, const char *sender, const char **rcpts, 
 		const char *attrmap;
 		int i;
 
-		if (config_display_color_map && strlen(config_display_color_map) == 8)
+		if (config_display_color_map && xstrlen(config_display_color_map) == 8)
 			attrmap = config_display_color_map;
 		else
 			attrmap = "nTgGbBrR";
@@ -374,7 +374,7 @@ int protocol_message(void *data, va_list ap)
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
 	
-	if (userlist && window_current && window_current->target && !strcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
+	if (userlist && window_current && window_current->target && !xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
 		userlist->blink = 0;
 	else if (userlist && config_make_window && config_display_blinking)	
 		userlist->blink = 1;
@@ -410,10 +410,10 @@ int protocol_message_ack(void *data, va_list ap)
 	if (config_display_ack == 1)
 		display = 1;
 
-	if (!strcmp(status, "delivered") && config_display_ack == 2)
+	if (!xstrcmp(status, "delivered") && config_display_ack == 2)
 		display = 1;
 
-	if (!strcmp(status, "queued") && config_display_ack == 3)
+	if (!xstrcmp(status, "queued") && config_display_ack == 3)
 		display = 1;
 
 	if (display)

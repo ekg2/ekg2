@@ -199,11 +199,11 @@ char *jabber_digest(const char *sid, const char *password)
 	SHA1Init(&ctx);
 	
 	tmp = jabber_escape(sid);
-	SHA1Update(&ctx, tmp, strlen(tmp));
+	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
 	tmp = jabber_escape(password);
-	SHA1Update(&ctx, tmp, strlen(tmp));
+	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
 	SHA1Final(digest, &ctx);

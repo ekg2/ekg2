@@ -218,7 +218,7 @@ static char *command_generator(char *text, int state)
 			return saprintf((window_current->query_nick) ? "/%s" : "%s", (config_tab_command) ? config_tab_command : "msg");
 		send_nicks_index = (send_nicks_count > 1) ? 1 : 0;
 
-		nick = ((strchr(send_nicks[0], ' ')) ? saprintf("\"%s\"", send_nicks[0]) : xstrdup(send_nicks[0])); 
+		nick = ((xstrchr(send_nicks[0], ' ')) ? saprintf("\"%s\"", send_nicks[0]) : xstrdup(send_nicks[0])); 
 		ret = saprintf((window_current->query_nick) ? "/%s %s" : "%s %s", (config_tab_command) ? config_tab_command : "chat", nick);
 		xfree(nick);
 		return ret;
@@ -226,13 +226,13 @@ static char *command_generator(char *text, int state)
 
 	if (!state) {
 		l = commands;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	for (; l; l = l->next) {
 		struct command *c = l->data;
 
-		if (!strncasecmp(text, c->name, len)) {
+		if (!xstrncasecmp(text, c->name, len)) {
 			l = l->next;
 			return (window_current->query_nick) ? saprintf("/%s", c->name) : xstrdup(c->name);
 		}
@@ -248,7 +248,7 @@ static char *known_uin_generator(char *text, int state)
 
 	if (!state) {
 		l = userlist;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (l) {
@@ -256,8 +256,8 @@ static char *known_uin_generator(char *text, int state)
 
 		l = l->next;
 
-		if (u->display && !strncasecmp(text, u->display, len))
-			return ((strchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
+		if (u->display && !xstrncasecmp(text, u->display, len))
+			return ((xstrchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
 	}
 
 	return NULL;
@@ -269,12 +269,12 @@ static char *unknown_uin_generator(char *text, int state)
 
 	if (!state) {
 		index = 0;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (index < send_nicks_count)
 		if (xisdigit(send_nicks[index++][0]))
-			if (!strncasecmp(text, send_nicks[index - 1], len))
+			if (!xstrncasecmp(text, send_nicks[index - 1], len))
 				return xstrdup(send_nicks[index - 1]);
 
 	return NULL;
@@ -287,7 +287,7 @@ static char *variable_generator(char *text, int state)
 
 	if (!state) {
 		l = variables;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (l) {
@@ -299,10 +299,10 @@ static char *variable_generator(char *text, int state)
 			continue;
 
 		if (*text == '-') {
-			if (!strncasecmp(text + 1, v->name, len - 1))
+			if (!xstrncasecmp(text + 1, v->name, len - 1))
 				return saprintf("-%s", v->name);
 		} else {
-			if (!strncasecmp(text, v->name, len))
+			if (!xstrncasecmp(text, v->name, len))
 				return xstrdup(v->name);
 		}
 	}
@@ -317,7 +317,7 @@ static char *ignored_uin_generator(char *text, int state)
 
 	if (!state) {
 		l = userlist;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (l) {
@@ -329,11 +329,11 @@ static char *ignored_uin_generator(char *text, int state)
 			continue;
 
 		if (!u->display) {
-			if (!strncasecmp(text, itoa(u->uin), len))
+			if (!xstrncasecmp(text, itoa(u->uin), len))
 				return xstrdup(itoa(u->uin));
 		} else {
-			if (u->display && !strncasecmp(text, u->display, len))
-				return ((strchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
+			if (u->display && !xstrncasecmp(text, u->display, len))
+				return ((xstrchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
 		}
 	}
 
@@ -347,7 +347,7 @@ static char *blocked_uin_generator(char *text, int state)
 
 	if (!state) {
 		l = userlist;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (l) {
@@ -359,11 +359,11 @@ static char *blocked_uin_generator(char *text, int state)
 			continue;
 
 		if (!u->display) {
-			if (!strncasecmp(text, itoa(u->uin), len))
+			if (!xstrncasecmp(text, itoa(u->uin), len))
 				return xstrdup(itoa(u->uin));
 		} else {
-			if (u->display && !strncasecmp(text, u->display, len))
-				return ((strchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
+			if (u->display && !xstrncasecmp(text, u->display, len))
+				return ((xstrchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
 		}
 	}
 
@@ -377,11 +377,11 @@ static char *dcc_generator(char *text, int state)
 
 	if (!state) {
 		i = 0;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (commands[i]) {
-		if (!strncasecmp(text, commands[i], len))
+		if (!xstrncasecmp(text, commands[i], len))
 			return xstrdup(commands[i++]);
 		i++;
 	}
@@ -396,11 +396,11 @@ static char *window_generator(char *text, int state)
 
 	if (!state) {
 		i = 0;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (commands[i]) {
-		if (!strncasecmp(text, commands[i], len))
+		if (!xstrncasecmp(text, commands[i], len))
 			return xstrdup(commands[i++]);
 		i++;
 	}
@@ -415,11 +415,11 @@ static char *python_generator(char *text, int state)
 
 	if (!state) {
 		i = 0;
-		len = strlen(text);
+		len = xstrlen(text);
 	}
 
 	while (commands[i]) {
-		if (!strncasecmp(text, commands[i], len))
+		if (!xstrncasecmp(text, commands[i], len))
 			return xstrdup(commands[i++]);
 		i++;
 	}
@@ -449,17 +449,17 @@ static char **my_completion(char *text, int start, int end)
 			tmp++;
 		}
 
-		if (!strncasecmp(tmp, cmd, strlen(cmd)) && tmp[strlen(cmd)] == ' ') {
+		if (!xstrncasecmp(tmp, cmd, xstrlen(cmd)) && tmp[xstrlen(cmd)] == ' ') {
 			int in_quote = 0;
 			word = 0;
-			for (i = 0; i < strlen(rl_line_buffer); i++) {
+			for (i = 0; i < xstrlen(rl_line_buffer); i++) {
 				if (rl_line_buffer[i] == '"')
 					in_quote = !in_quote;
 
 				if (xisspace(rl_line_buffer[i]) && !in_quote)
 					word++;
 			}
-			if (word == 2 && xisspace(rl_line_buffer[strlen(rl_line_buffer) - 1])) {
+			if (word == 2 && xisspace(rl_line_buffer[xstrlen(rl_line_buffer) - 1])) {
 				if (send_nicks_count != my_send_nicks_count) {
 					my_send_nicks_count = send_nicks_count;
 					send_nicks_index = 0;
@@ -468,13 +468,13 @@ static char **my_completion(char *text, int start, int end)
 				if (send_nicks_count > 0) {
 					char buf[100], *tmp;
 
-					tmp = ((strchr(send_nicks[send_nicks_index], ' ')) ? saprintf("\"%s\"", send_nicks[send_nicks_index]) : xstrdup(send_nicks[send_nicks_index]));
+					tmp = ((xstrchr(send_nicks[send_nicks_index], ' ')) ? saprintf("\"%s\"", send_nicks[send_nicks_index]) : xstrdup(send_nicks[send_nicks_index]));
 					snprintf(buf, sizeof(buf), "%s%s %s ", (slash) ? "/" : "", cmd, tmp);
 					xfree(tmp);
 					send_nicks_index++;
-					rl_extend_line_buffer(strlen(buf));
-					strcpy(rl_line_buffer, buf);
-					rl_end = strlen(buf);
+					rl_extend_line_buffer(xstrlen(buf));
+					xstrcpy(rl_line_buffer, buf);
+					rl_end = xstrlen(buf);
 					rl_point = rl_end;
 					rl_redisplay();
 				}
@@ -502,10 +502,10 @@ static char **my_completion(char *text, int start, int end)
 
 		for (l = commands; l; l = l->next) {
 			struct command *c = l->data;
-			int len = strlen(c->name);
+			int len = xstrlen(c->name);
 			char *cmd = (*rl_line_buffer == '/') ? rl_line_buffer + 1 : rl_line_buffer;
 
-			if (!strncasecmp(cmd, c->name, len) && xisspace(cmd[len])) {
+			if (!xstrncasecmp(cmd, c->name, len) && xisspace(cmd[len])) {
 				params = c->params;
 				abbrs = 1;
 				break;
@@ -513,7 +513,7 @@ static char **my_completion(char *text, int start, int end)
 			
 			for (len = 0; cmd[len] && cmd[len] != ' '; len++);
 
-			if (!strncasecmp(cmd, c->name, len)) {
+			if (!xstrncasecmp(cmd, c->name, len)) {
 				params = c->params;
 				abbrs++;
 			} else
@@ -522,7 +522,7 @@ static char **my_completion(char *text, int start, int end)
 		}
 
 		if (params && abbrs == 1) {
-			if (word >= strlen(params))
+			if (word >= xstrlen(params))
 				func = empty_generator;
 			else {
 				switch (params[word]) {
@@ -586,7 +586,7 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 	const char *p, *line = NULL;
 	string_t s = NULL;
 
-	if (target && !strcmp(target, "__debug"))
+	if (target && !xstrcmp(target, "__debug"))
 		return;
 
 	if (config_timestamp) {
@@ -666,7 +666,7 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 /*		rl_set_prompt(NULL); */
 		rl_redisplay();
 		printf("\r");
-		for (i = 0; i < strlen(old_prompt); i++)
+		for (i = 0; i < xstrlen(old_prompt); i++)
 			printf(" ");
 		printf("\r");
         }
@@ -917,10 +917,10 @@ static void ui_readline_loop()
 			}
 		}
 
-		if (strlen(line) > 0 && line[strlen(line) - 1] == '\\') {
+		if (xstrlen(line) > 0 && line[xstrlen(line) - 1] == '\\') {
 			string_t s = string_init(NULL);
 
-			line[strlen(line) - 1] = 0;
+			line[xstrlen(line) - 1] = 0;
 
 			string_append(s, line);
 
@@ -930,7 +930,7 @@ static void ui_readline_loop()
 			rl_bind_key(9, rl_insert);
 
 			while ((line = my_readline())) {
-				if (!strcmp(line, ".")) {
+				if (!xstrcmp(line, ".")) {
 					xfree(line);
 					break;
 				}
@@ -986,10 +986,10 @@ static int ui_readline_event(const char *event, ...)
 
 	va_start(ap, event);
 	
-        if (!strcmp(event, "variable_changed")) {
+        if (!xstrcmp(event, "variable_changed")) {
 		char *name = va_arg(ap, char*);
 
-		if (!strcasecmp(name, "sort_windows") && config_sort_windows) {
+		if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
 			list_t l;
 			int id = 1;
 
@@ -1001,11 +1001,11 @@ static int ui_readline_event(const char *event, ...)
 		}
 	}
 
-	if (!strcasecmp(event, "command")) {
+	if (!xstrcasecmp(event, "command")) {
 		int quiet = va_arg(ap, int);
 		char *command = va_arg(ap, char*);
 
-		if (!strcasecmp(command, "query-current")) {
+		if (!xstrcasecmp(command, "query-current")) {
 			int *param = va_arg(ap, uin_t*);
 
 			if (window_current->query_nick)
@@ -1016,7 +1016,7 @@ static int ui_readline_event(const char *event, ...)
 			goto cleanup;
 		}
 
-		if (!strcasecmp(command, "query-nicks")) {
+		if (!xstrcasecmp(command, "query-nicks")) {
 			char ***param = va_arg(ap, char***);
 			list_t l;
 
@@ -1032,7 +1032,7 @@ static int ui_readline_event(const char *event, ...)
 			goto cleanup;
 		}
 
-		if (!strcasecmp(command, "query")) {
+		if (!xstrcasecmp(command, "query")) {
 			char *param = va_arg(ap, char*);	
 			
 			if (!param && !window_current->query_nick)
@@ -1061,7 +1061,7 @@ static int ui_readline_event(const char *event, ...)
 			result = 1;
 		}
 
-		if (!strcasecmp(command, "find")) {
+		if (!xstrcasecmp(command, "find")) {
 			char *tmp = NULL;
 			
 			if (window_current->query_nick) {
@@ -1089,16 +1089,16 @@ static int ui_readline_event(const char *event, ...)
 			goto cleanup;
 		}
 
-		if (!strcasecmp(command, "window")) {
+		if (!xstrcasecmp(command, "window")) {
 			char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*);
 
-			if (!p1 || !strcasecmp(p1, "list")) {
+			if (!p1 || !xstrcasecmp(p1, "list")) {
 				if (!quiet)
 					window_list();
-			} else if (!strcasecmp(p1, "last")) {
+			} else if (!xstrcasecmp(p1, "last")) {
 				if (window_last_id != -1)
 					window_switch(window_last_id, quiet);
-			} else if (!strcasecmp(p1, "active")) {
+			} else if (!xstrcasecmp(p1, "active")) {
 				list_t l;
 
 				for (l = windows; l; l = l->next) {
@@ -1108,30 +1108,30 @@ static int ui_readline_event(const char *event, ...)
 						window_switch(w->id, quiet);
 				}
 
-		        } else if (!strcasecmp(p1, "new")) {
+		        } else if (!xstrcasecmp(p1, "new")) {
 		                window_add();
  
-			} else if (!strcasecmp(p1, "next")) {
+			} else if (!xstrcasecmp(p1, "next")) {
 		                window_switch(window_current->id + 1, quiet);
 
-			} else if (!strcasecmp(p1, "prev")) {
+			} else if (!xstrcasecmp(p1, "prev")) {
 		                window_switch(window_current->id - 1, quiet);
 				
-		        } else if (!strcasecmp(p1, "kill")) {
+		        } else if (!xstrcasecmp(p1, "kill")) {
 		                int id = (p2) ? atoi(p2) : window_current->id;
 
 				window_remove(id, quiet);
 				
-		        } else if (!strcasecmp(p1, "switch")) {
+		        } else if (!xstrcasecmp(p1, "switch")) {
 		                if (!p2) {
 		                        printq("not_enough_params", "window");
 		                } else
 		                	window_switch(atoi(p2), quiet);
 
-			} else if (!strcasecmp(p1, "refresh")) {
+			} else if (!xstrcasecmp(p1, "refresh")) {
 		                window_refresh();
 
-			} else if (!strcasecmp(p1, "clear")) {
+			} else if (!xstrcasecmp(p1, "clear")) {
 		                window_clear();
 				window_refresh();
 
@@ -1141,23 +1141,23 @@ static int ui_readline_event(const char *event, ...)
 			result = 1;
 		}
 
-		if (!strcasecmp(command, "bind")) {
+		if (!xstrcasecmp(command, "bind")) {
 			char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
 			
-			if (p1 && (!strcasecmp(p1, "-a") || !strcasecmp(p1, "--add"))) {
+			if (p1 && (!xstrcasecmp(p1, "-a") || !xstrcasecmp(p1, "--add"))) {
 				if ((!p2 || !p3) && !quiet)
 					print("not_enough_params", "bind");
 				else
 					bind_sequence(p2, p3, quiet);
 			
-			} else if (p1 && (!strcasecmp(p1, "-d") || !strcasecmp(p1, "--del"))) {
+			} else if (p1 && (!xstrcasecmp(p1, "-d") || !xstrcasecmp(p1, "--del"))) {
 				if (!p2 && !quiet)
 					print("not_enough_params", "bind");
 				else
 					bind_sequence(p2, NULL, quiet);
 			
 			} else {
-				if (p1 && (!strcasecmp(p1, "-l") || !strcasecmp(p1, "--list")))
+				if (p1 && (!xstrcasecmp(p1, "-l") || !xstrcasecmp(p1, "--list")))
 					binding_list(quiet, p2, 0);
 				else
 					binding_list(quiet, p1, 0);
@@ -1167,7 +1167,7 @@ static int ui_readline_event(const char *event, ...)
 		}
 	}
 
-	if (!strcasecmp(event, "check_mail"))
+	if (!xstrcasecmp(event, "check_mail"))
 		check_mail();
 
 cleanup:
@@ -1404,7 +1404,7 @@ static int window_find_query(const char *nick)
         for (l = windows; l; l = l->next) {
                 struct window *w = l->data;
 
-		if (w->query_nick && !strcasecmp(w->query_nick, nick))
+		if (w->query_nick && !xstrcasecmp(w->query_nick, nick))
 			return w->id;
         }
 
@@ -1535,7 +1535,7 @@ static char *window_activity()
 	}
 
 	if (!first)
-		act = strdup(s->str);
+		act = xstrdup(s->str);
 	
 	string_free(s, 1);
 	
@@ -1557,7 +1557,7 @@ static char *bind_find_command(const char *seq)
 	for (l = bindings; l; l = l->next) {
 		struct binding *s = l->data;
 
-		if (s->key && !strcasecmp(s->key, seq))
+		if (s->key && !xstrcasecmp(s->key, seq))
 			return s->action;
 	}
 
@@ -1631,7 +1631,7 @@ static int bind_sequence(const char *seq, const char *command, int quiet)
 		return -1;
 	}
 	
-	if (!strncasecmp(seq, "Ctrl-", 5) && strlen(seq) == 6 && xisalpha(seq[5])) {
+	if (!xstrncasecmp(seq, "Ctrl-", 5) && xstrlen(seq) == 6 && xisalpha(seq[5])) {
 		int key = CTRL(xtoupper(seq[5]));
 
 		if (command) {
@@ -1645,7 +1645,7 @@ static int bind_sequence(const char *seq, const char *command, int quiet)
 		} else
 			rl_unbind_key(key);
 
-	} else if (!strncasecmp(seq, "Alt-", 4) && strlen(seq) == 5) {
+	} else if (!xstrncasecmp(seq, "Alt-", 4) && xstrlen(seq) == 5) {
 
 		if (command) {
 			rl_bind_key_in_map(xtolower(seq[4]), bind_handler_alt, emacs_meta_keymap);
@@ -1683,7 +1683,7 @@ static int bind_sequence(const char *seq, const char *command, int quiet)
 		for (l = bindings; l; l = l->next) {
 			struct binding *s = l->data;
 
-			if (s->key && !strcasecmp(s->key, seq)) {
+			if (s->key && !xstrcasecmp(s->key, seq)) {
 				list_remove(&bindings, s, 1);
 				if (!quiet) {
 					print("bind_seq_remove", seq);

@@ -356,7 +356,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 						u.nickname = jabber_unescape(jabber_attr(item->atts, "name"));
 		
 						if (!u.nickname) 
-							u.nickname = strdup(u.uid);
+							u.nickname = xstrdup(u.uid);
 
 						u.status = xstrdup(EKG_STATUS_NA);
 						//XXX grupy

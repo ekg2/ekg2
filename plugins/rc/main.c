@@ -110,7 +110,7 @@ static rc_input_t *rc_input_find(const char *path)
 	for (l = rc_inputs; l; l = l->next) {
 		rc_input_t *r = l->data;
 
-		if (!strcmp(r->path, path))
+		if (!xstrcmp(r->path, path))
 			return r;
 	}
 	

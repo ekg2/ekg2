@@ -105,7 +105,7 @@ int plugin_load(const char *name)
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 
-		if (!strcasecmp(p->name, name)) {
+		if (!xstrcasecmp(p->name, name)) {
 			p->dl = plugin;
 			break;
 		}
@@ -126,7 +126,7 @@ plugin_t *plugin_find(const char *name)
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 
-		if (!p || !p->name || strcmp(p->name, name))
+		if (!p || !p->name || xstrcmp(p->name, name))
 			continue;
 
 		return p;
@@ -298,7 +298,7 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 		if (!q->name)
 			continue;
 
-		if (!strcmp(q->name, name) && (!plugin || (plugin == q->plugin))) {
+		if (!xstrcmp(q->name, name) && (!plugin || (plugin == q->plugin))) {
 			int (*handler)(void *data, va_list ap) = q->handler;
 
 			q->count++;
@@ -416,13 +416,13 @@ void watch_handle_line(watch_t *w)
 	if (ret == 0 || (ret == -1 && errno != EAGAIN))
 		string_append_c(w->buf, '\n');
 
-	while ((tmp = strchr(w->buf->str, '\n'))) {
+	while ((tmp = xstrchr(w->buf->str, '\n'))) {
 		int index = tmp - w->buf->str;
 		char *line = xstrmid(w->buf->str, 0, index);
 		string_t new;
 			
-		if (strlen(line) > 1 && line[strlen(line) - 1] == '\r')
-			line[strlen(line) - 1] = 0;
+		if (xstrlen(line) > 1 && line[xstrlen(line) - 1] == '\r')
+			line[xstrlen(line) - 1] = 0;
 
 		handler(0, w->fd, line, w->data);
 					

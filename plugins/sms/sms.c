@@ -141,7 +141,7 @@ static void sms_away_add(const char *uid)
 	for (l = sms_away; l; l = l->next) {
 		sms_away_t *s = l->data;
 
-		if (!strcasecmp(s->uid, uid)) {
+		if (!xstrcasecmp(s->uid, uid)) {
 			s->count += 1;
 			return;
 		}
@@ -187,7 +187,7 @@ static int sms_away_check(const char *uid)
 	for (l = sms_away; l; l = l->next) {
 		sms_away_t *s = l->data;
 
-		if (!strcasecmp(s->uid, uid)) {
+		if (!xstrcasecmp(s->uid, uid)) {
 			if (s->count > config_sms_away_limit)
 				return 0;
 			else 
@@ -231,7 +231,7 @@ static COMMAND(sms_command_sms)
 	}
 
 	if ((u = userlist_find(session, params[0]))) {
-		if (!u->mobile || !strcmp(u->mobile, "")) {
+		if (!u->mobile || !xstrcmp(u->mobile, "")) {
 			printq("sms_unknown", format_user(session, u->uid));
 			return -1;
 		}
@@ -264,7 +264,7 @@ static int sms_session_status(void *data, va_list ap)
 
 	if (session);	/* warning */
 
-	if (strcmp(status, EKG_STATUS_AWAY) && strcmp(status, EKG_STATUS_XA) && strcmp(status, EKG_STATUS_DND))
+	if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
 		sms_away_free();
 
 	return 0;
@@ -286,7 +286,7 @@ static int sms_protocol_message(void *data, va_list ap)
 	if (!status || !config_sms_away || !config_sms_app || !config_sms_number)
 		return 0;
 
-	if (strcmp(status, EKG_STATUS_AWAY) && strcmp(status, EKG_STATUS_XA) && strcmp(status, EKG_STATUS_DND))
+	if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
 		return 0;
 	
 	sms_away_add(uid);
@@ -298,7 +298,7 @@ static int sms_protocol_message(void *data, va_list ap)
 
 		sender = (u && u->nickname) ? u->nickname : uid;
 
-		if (config_sms_max_length && strlen(text) > config_sms_max_length) {
+		if (config_sms_max_length && xstrlen(text) > config_sms_max_length) {
 			char *tmp = xstrmid(text, 0, config_sms_max_length);
 			msg = format_string(format_find("sms_away"), sender, tmp);
 			xfree(tmp);
@@ -306,7 +306,7 @@ static int sms_protocol_message(void *data, va_list ap)
 			msg = format_string(format_find("sms_away"), sender, text);
 
 		/* niech nie wysy³a smsów, je¶li brakuje formatów */
-		if (strcmp(msg, ""))
+		if (xstrcmp(msg, ""))
 			sms_send(config_sms_number, msg);
 	
 		xfree(msg);

@@ -107,17 +107,17 @@ int config_read(const char *filename)
 			continue;
 		}
 
-		if (!(foo = strchr(buf, ' '))) {
+		if (!(foo = xstrchr(buf, ' '))) {
 			xfree(buf);
 			continue;
 		}
 
 		*foo++ = 0;
 
-		if (!strcasecmp(buf, "set")) {
+		if (!xstrcasecmp(buf, "set")) {
 			char *bar;
 
-			if (!(bar = strchr(foo, ' ')))
+			if (!(bar = xstrchr(foo, ' ')))
 				ret = variable_set(foo, NULL, 1);
 			else {
 				*bar++ = 0;
@@ -127,11 +127,11 @@ int config_read(const char *filename)
 			if (ret)
 				debug("  unknown variable %s\n", foo);
 		
-		} else if (!strcasecmp(buf, "alias")) {
+		} else if (!xstrcasecmp(buf, "alias")) {
 			debug("  alias %s\n", foo);
 			ret = alias_add(foo, 1, 1);
 #if 0
-		} else if (!strcasecmp(buf, "on")) {
+		} else if (!xstrcasecmp(buf, "on")) {
                         int flags;
                         char **pms = array_make(foo, " \t", 3, 1, 0);
 
@@ -142,7 +142,7 @@ int config_read(const char *filename)
 
 			array_free(pms);
 
-		} else if (!strcasecmp(buf, "bind")) {
+		} else if (!xstrcasecmp(buf, "bind")) {
 			char **pms = array_make(foo, " \t", 2, 1, 0);
 
 			if (array_count(pms) == 2) {
@@ -152,7 +152,7 @@ int config_read(const char *filename)
 
 			array_free(pms);
 #endif
-		} else if (!strcasecmp(buf, "at")) {
+		} else if (!xstrcasecmp(buf, "at")) {
 			char **p = array_make(foo, " \t", 2, 1, 0);
 
 			if (array_count(p) == 2) {
@@ -160,7 +160,7 @@ int config_read(const char *filename)
 
 				debug("  at %s %s\n", p[0], p[1]);
 
-				if (strcmp(p[0], "(null)"))
+				if (xstrcmp(p[0], "(null)"))
 					name = p[0];
 
 				tmp = saprintf("/at -a %s %s", ((name) ? name : ""), p[1]);
@@ -169,7 +169,7 @@ int config_read(const char *filename)
 			}
 
 			array_free(p);
-		} else if (!strcasecmp(buf, "timer")) {
+		} else if (!xstrcasecmp(buf, "timer")) {
 			char **p = array_make(foo, " \t", 3, 1, 0);
 			char *tmp = NULL, *period_str = NULL, *name = NULL;
 			time_t period;
@@ -177,7 +177,7 @@ int config_read(const char *filename)
 			if (array_count(p) == 3) {
 				debug("  timer %s %s %s\n", p[0], p[1], p[2]);
 
-				if (strcmp(p[0], "(null)"))
+				if (xstrcmp(p[0], "(null)"))
 					name = p[0];
 
 				if (!strncmp(p[1], "*/", 2)) {
@@ -197,7 +197,7 @@ int config_read(const char *filename)
 				xfree(period_str);
 			}
 				array_free(p);
-		} else if (!strcasecmp(buf, "plugin")) {
+		} else if (!xstrcasecmp(buf, "plugin")) {
 			plugin_load(foo);
                 } else {
 			ret = variable_set(buf, foo, 1);
@@ -418,30 +418,30 @@ int config_write_partly(char **vars)
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
 			goto pass;
 
-		if (!strchr(line, ' '))
+		if (!xstrchr(line, ' '))
 			goto pass;
 
-		if (!strncasecmp(line, "alias ", 6))
+		if (!xstrncasecmp(line, "alias ", 6))
 			goto pass;
 
-		if (!strncasecmp(line, "on ", 3))
+		if (!xstrncasecmp(line, "on ", 3))
 			goto pass;
 
-		if (!strncasecmp(line, "bind ", 5))
+		if (!xstrncasecmp(line, "bind ", 5))
 			goto pass;
 
 		tmp = line;
 
-		if (!strncasecmp(tmp, "set ", 4))
+		if (!xstrncasecmp(tmp, "set ", 4))
 			tmp += 4;
 		
 		for (i = 0; vars[i]; i++) {
-			int len = strlen(vars[i]);
+			int len = xstrlen(vars[i]);
 
-			if (strlen(tmp) < len + 1)
+			if (xstrlen(tmp) < len + 1)
 				continue;
 
-			if (strncasecmp(tmp, vars[i], len) || tmp[len] != ' ')
+			if (xstrncasecmp(tmp, vars[i], len) || tmp[len] != ' ')
 				continue;
 			
 			config_write_variable(fo, variable_find(vars[i]));

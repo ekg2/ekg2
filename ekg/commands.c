@@ -84,7 +84,7 @@ int match_arg(const char *arg, char shortopt, const char *longopt, int longoptle
 	arg++;
 
 	if (*arg == '-') {
-		int len = strlen(++arg);
+		int len = xstrlen(++arg);
 
 		if (longoptlen > len)
 			len = longoptlen;
@@ -105,7 +105,7 @@ void tabnick_add(const char *nick)
 	int i;
 
 	for (i = 0; i < send_nicks_count; i++)
-		if (send_nicks[i] && !strcmp(nick, send_nicks[i])) {
+		if (send_nicks[i] && !xstrcmp(nick, send_nicks[i])) {
 			tabnick_remove(nick);
 			break;
 		}
@@ -134,7 +134,7 @@ void tabnick_remove(const char *nick)
 	int i, j;
 
 	for (i = 0; i < send_nicks_count; i++) {
-		if (send_nicks[i] && !strcmp(send_nicks[i], nick)) {
+		if (send_nicks[i] && !xstrcmp(send_nicks[i], nick)) {
 			xfree(send_nicks[i]);
 
 			for (j = i + 1; j < send_nicks_count; j++)
@@ -182,7 +182,7 @@ COMMAND(cmd_tabclear)
 			if (send_nicks[i])
 				u = userlist_find(session, send_nicks[i]);
 
-			if (!u || strcasecmp(u->status, EKG_STATUS_NA))
+			if (!u || xstrcasecmp(u->status, EKG_STATUS_NA))
 				continue;
 
 			tabnick_remove(send_nicks[i]);
@@ -259,7 +259,7 @@ COMMAND(cmd_modify)
 			for (x = 0; tmp[x]; x++)
 				switch (*tmp[x]) {
 					case '-':
-						off = (tmp[x][1] == '@' && strlen(tmp[x]) > 1) ? 1 : 0;
+						off = (tmp[x][1] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
 
 						if (ekg_group_member(u, tmp[x] + 1 + off)) {
 							ekg_group_remove(u, tmp[x] + 1 + off);
@@ -271,7 +271,7 @@ COMMAND(cmd_modify)
 						}
 						break;
 					case '+':
-						off = (tmp[x][1] == '@' && strlen(tmp[x]) > 1) ? 1 : 0;
+						off = (tmp[x][1] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
 
 						if (!ekg_group_member(u, tmp[x] + 1 + off)) {
 							ekg_group_add(u, tmp[x] + 1 + off);
@@ -283,7 +283,7 @@ COMMAND(cmd_modify)
 						}
 						break;
 					default:
-						off = (tmp[x][0] == '@' && strlen(tmp[x]) > 1) ? 1 : 0;
+						off = (tmp[x][0] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
 
 						if (!ekg_group_member(u, tmp[x] + off)) {
 							ekg_group_add(u, tmp[x] + off);
@@ -372,7 +372,7 @@ COMMAND(cmd_modify)
 		return -1;
 	}
 
-	if (strcasecmp(name, "add")) {
+	if (xstrcasecmp(name, "add")) {
 		switch (modified) {
 			case 0:
 				printq("not_enough_params", name);
@@ -423,7 +423,7 @@ COMMAND(cmd_add)
 
 		tmp = strip_spaces(last_search_nickname);
 
-		if ((nonick = !strcmp(tmp, "")) && !params[1]) {
+		if ((nonick = !xstrcmp(tmp, "")) && !params[1]) {
 			printq("search_no_last_nickname");
 			return -1;
 		}
@@ -461,7 +461,7 @@ COMMAND(cmd_add)
 	}
 
 	if (((u = userlist_find(session, params[0])) && u->nickname) || ((u = userlist_find(session, params[1])) && u->nickname)) {
-		if (!strcasecmp(params[1], u->nickname) && !strcasecmp(params[0], u->uid))
+		if (!xstrcasecmp(params[1], u->nickname) && !xstrcasecmp(params[0], u->uid))
 			printq("user_exists", params[1]);
 		else
 			printq("user_exists_other", params[1], format_user(session, u->uid));
@@ -511,7 +511,7 @@ cleanup:
 COMMAND(cmd_alias)
 {
 	if (match_arg(params[0], 'a', "add", 2)) {
-		if (!params[1] || !strchr(params[1], ' ')) {
+		if (!params[1] || !xstrchr(params[1], ' ')) {
 			printq("not_enough_params", name);
 			return -1;
 		}
@@ -525,7 +525,7 @@ COMMAND(cmd_alias)
 	}
 
 	if (match_arg(params[0], 'A', "append", 2)) {
-		if (!params[1] || !strchr(params[1], ' ')) {
+		if (!params[1] || !xstrchr(params[1], ' ')) {
 			printq("not_enough_params", name);
 			return -1;
 		}
@@ -546,7 +546,7 @@ COMMAND(cmd_alias)
 			return -1;
 		}
 
-		if (!strcmp(params[1], "*"))
+		if (!xstrcmp(params[1], "*"))
 			ret = alias_remove(NULL, quiet);
 		else
 			ret = alias_remove(params[1], quiet);
@@ -575,13 +575,13 @@ COMMAND(cmd_alias)
 			int first = 1, i;
 			char *tmp;
 			
-			if (aname && strcasecmp(aname, a->name))
+			if (aname && xstrcasecmp(aname, a->name))
 				continue;
 
-			tmp = xcalloc(strlen(a->name) + 1, 1);
+			tmp = xcalloc(xstrlen(a->name) + 1, 1);
 
-			for (i = 0; i < strlen(a->name); i++)
-				strcat(tmp, " ");
+			for (i = 0; i < xstrlen(a->name); i++)
+				xstrcat(tmp, " ");
 
 			for (m = a->commands; m; m = m->next) {
 				printq((first) ? "aliases_list" : "aliases_list_next", a->name, (char*) m->data, tmp);
@@ -640,7 +640,7 @@ COMMAND(cmd_del)
 {
 	userlist_t *u;
 	char *tmp;
-	int del_all = ((params[0] && !strcmp(params[0], "*")) ? 1 : 0);
+	int del_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
 
 	if (!params[0]) {
 		printq("not_enough_params", name);
@@ -852,9 +852,9 @@ COMMAND(cmd_help)
 	list_t l;
 	
 	if (params[0]) {
-		const char *p = (params[0][0] == '/' && strlen(params[0]) > 1) ? params[0] + 1 : params[0];
+		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
 
-		if (!strcasecmp(p, "set") && params[1]) {
+		if (!xstrcasecmp(p, "set") && params[1]) {
 			if (!quiet)
 				variable_help(params[1]);
 			return 0;
@@ -863,21 +863,21 @@ COMMAND(cmd_help)
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 			
-			if (!strcasecmp(c->name, p) && c->alias) {
+			if (!xstrcasecmp(c->name, p) && c->alias) {
 				printq("help_alias", p);
 				return -1;
 			}
 
-			if (!strcasecmp(c->name, p) && !c->alias) {
+			if (!xstrcasecmp(c->name, p) && !c->alias) {
 			    	char *tmp = NULL;
 
-				if (strstr(c->brief_help, "%"))
+				if (xstrstr(c->brief_help, "%"))
 				    	tmp = format_string(c->brief_help);
 				
 				printq("help", c->name, c->params_help, tmp ? tmp : c->brief_help, "");
 				xfree(tmp);
 
-				if (c->long_help && strcmp(c->long_help, "")) {
+				if (c->long_help && xstrcmp(c->long_help, "")) {
 					char *foo, *tmp, *bar = format_string(c->long_help);
 
 					foo = bar;
@@ -899,7 +899,7 @@ COMMAND(cmd_help)
 		if (xisalnum(*c->name) && !c->alias) {
 		    	char *blah = NULL;
 
-			if (strstr(c->brief_help, "%"))
+			if (xstrstr(c->brief_help, "%"))
 			    	blah = format_string(c->brief_help);
 	
 			printq("help", c->name, c->params_help, blah ? blah : c->brief_help, "");
@@ -976,7 +976,7 @@ COMMAND(cmd_ignore)
 		}
 
 	} else {
-		int unignore_all = ((params[0] && !strcmp(params[0], "*")) ? 1 : 0);
+		int unignore_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
 		int level;
 
 		if (!params[0]) {
@@ -1067,7 +1067,7 @@ COMMAND(cmd_list)
 		}
 
 		/* list @grupa */
-		if (group[0] == '@' && strlen(group) > 1) {
+		if (group[0] == '@' && xstrlen(group) > 1) {
 			string_t members = string_init(NULL);
 			char *__group;
 			int count = 0;
@@ -1119,14 +1119,14 @@ COMMAND(cmd_list)
 		last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
 
 		printq("user_info_header", u->nickname, u->uid);
-		if (u->nickname && strcmp(u->nickname, u->nickname)) 
+		if (u->nickname && xstrcmp(u->nickname, u->nickname)) 
 			printq("user_info_nickname", u->nickname);
 
-		if (u->first_name && strcmp(u->first_name, "") && u->last_name && u->last_name && strcmp(u->last_name, ""))
+		if (u->first_name && xstrcmp(u->first_name, "") && u->last_name && u->last_name && xstrcmp(u->last_name, ""))
 			printq("user_info_name", u->first_name, u->last_name);
-		if (u->first_name && strcmp(u->first_name, "") && (!u->last_name || !strcmp(u->last_name, "")))
+		if (u->first_name && xstrcmp(u->first_name, "") && (!u->last_name || !xstrcmp(u->last_name, "")))
 			printq("user_info_name", u->first_name, "");
-		if ((!u->first_name || !strcmp(u->first_name, "")) && u->last_name && strcmp(u->last_name, ""))
+		if ((!u->first_name || !xstrcmp(u->first_name, "")) && u->last_name && xstrcmp(u->last_name, ""))
 			printq("user_info_name", u->last_name, "");
 
 		printq("user_info_status", status);
@@ -1148,11 +1148,11 @@ COMMAND(cmd_list)
                         printq("user_info_last_ip", last_ip_str);
 		}
 
-		if (u->mobile && strcmp(u->mobile, ""))
+		if (u->mobile && xstrcmp(u->mobile, ""))
 			printq("user_info_mobile", u->mobile);
-		if (strcmp(groups, ""))
+		if (xstrcmp(groups, ""))
 			printq("user_info_groups", groups);
-		if (!strcasecmp(u->status, EKG_STATUS_NA) || !strcasecmp(u->status, EKG_STATUS_INVISIBLE)) {
+		if (!xstrcasecmp(u->status, EKG_STATUS_NA) || !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE)) {
 			char buf[100];
 			struct tm *last_seen_time;
 			
@@ -1213,13 +1213,13 @@ COMMAND(cmd_list)
 
 			if (match_arg(argv[i], 'm', "member", 2)) {
 				if (j && argv[i+1]) {
-					int off = (argv[i+1][0] == '@' && strlen(argv[i+1]) > 1) ? 1 : 0;
+					int off = (argv[i+1][0] == '@' && xstrlen(argv[i+1]) > 1) ? 1 : 0;
 
 					show_group = xstrdup(argv[i+1] + off);
 				} else
 					if (params[i+1]) {
 						char **tmp = array_make(params[i+1], " \t", 0, 1, 1);
-						int off = (params[i+1][0] == '@' && strlen(params[i+1]) > 1) ? 1 : 0;
+						int off = (params[i+1][0] == '@' && xstrlen(params[i+1]) > 1) ? 1 : 0;
 
  						show_group = xstrdup(tmp[0] + off);
 						array_free(tmp);
@@ -1243,19 +1243,19 @@ COMMAND(cmd_list)
 
 		show = show_all;
 
-		if (show_away && !strcasecmp(u->status, EKG_STATUS_AWAY))
+		if (show_away && !xstrcasecmp(u->status, EKG_STATUS_AWAY))
 			show = 1;
 
-		if (show_active && !strcasecmp(u->status, EKG_STATUS_AVAIL))
+		if (show_active && !xstrcasecmp(u->status, EKG_STATUS_AVAIL))
 			show = 1;
 
-		if (show_inactive && !strcasecmp(u->status, EKG_STATUS_NA))
+		if (show_inactive && !xstrcasecmp(u->status, EKG_STATUS_NA))
 			show = 1;
 
-		if (show_invisible && !strcasecmp(u->status, EKG_STATUS_INVISIBLE))
+		if (show_invisible && !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE))
 			show = 1;
 
-		if (show_blocked && !strcasecmp(u->status, EKG_STATUS_BLOCKED))
+		if (show_blocked && !xstrcasecmp(u->status, EKG_STATUS_BLOCKED))
 			show = 1;
 
 		if (show_descr && !u->descr)
@@ -1339,7 +1339,7 @@ COMMAND(cmd_set)
 		for (l = variables; l; l = l->next) {
 			variable_t *v = l->data;
 			
-			if ((!arg || !strcasecmp(arg, v->name)) && (v->display != 2 || strcmp(name, "set"))) {
+			if ((!arg || !xstrcasecmp(arg, v->name)) && (v->display != 2 || xstrcmp(name, "set"))) {
 				char *string = *(char**)(v->ptr);
 				int value = *(int*)(v->ptr);
 
@@ -1549,14 +1549,14 @@ COMMAND(cmd_debug_watches)
 		watch_t *w = l->data;
 		char wa[4], *plugin;
 
-		strcpy(wa, "");
+		xstrcpy(wa, "");
 
 		if ((w->type & WATCH_READ))
-			strcat(wa, "R");
+			xstrcat(wa, "R");
 		if (w->buf)
-			strcat(wa, "L");
+			xstrcat(wa, "L");
 		if ((w->type & WATCH_WRITE))
-			strcat(wa, "W");
+			xstrcat(wa, "W");
 
 		if (w->plugin)
 			plugin = w->plugin->name;
@@ -1621,7 +1621,7 @@ COMMAND(cmd_test_fds)
 		sprintf(buf, "%d: ", i);
 
 		if (S_ISREG(st.st_mode))
-			sprintf(buf + strlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
+			sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
 
 		if (S_ISSOCK(st.st_mode)) {
 			struct sockaddr sa;
@@ -1633,42 +1633,42 @@ COMMAND(cmd_test_fds)
 				getsockname(i, &sa, &sa_len);
 
 				if (sa.sa_family == AF_INET) {
-					strcat(buf, "socket, inet, *:");
-					strcat(buf, itoa(ntohs(sin->sin_port)));
+					xstrcat(buf, "socket, inet, *:");
+					xstrcat(buf, itoa(ntohs(sin->sin_port)));
 				} else
-					strcat(buf, "socket");
+					xstrcat(buf, "socket");
 			} else {
 				switch (sa.sa_family) {
 					case AF_UNIX:
-						strcat(buf, "socket, unix");
+						xstrcat(buf, "socket, unix");
 						break;
 					case AF_INET:
-						strcat(buf, "socket, inet, ");
-						strcat(buf, inet_ntoa(sin->sin_addr));
-						strcat(buf, ":");
-						strcat(buf, itoa(ntohs(sin->sin_port)));
+						xstrcat(buf, "socket, inet, ");
+						xstrcat(buf, inet_ntoa(sin->sin_addr));
+						xstrcat(buf, ":");
+						xstrcat(buf, itoa(ntohs(sin->sin_port)));
 						break;
 					default:
-						strcat(buf, "socket, ");
-						strcat(buf, itoa(sa.sa_family));
+						xstrcat(buf, "socket, ");
+						xstrcat(buf, itoa(sa.sa_family));
 				}
 			}
 		}
 		
 		if (S_ISDIR(st.st_mode))
-			strcat(buf, "directory");
+			xstrcat(buf, "directory");
 		
 		if (S_ISCHR(st.st_mode))
-			strcat(buf, "char");
+			xstrcat(buf, "char");
 
 		if (S_ISBLK(st.st_mode))
-			strcat(buf, "block");
+			xstrcat(buf, "block");
 
 		if (S_ISFIFO(st.st_mode))
-			strcat(buf, "fifo");
+			xstrcat(buf, "fifo");
 
 		if (S_ISLNK(st.st_mode))
-			strcat(buf, "symlink");
+			xstrcat(buf, "symlink");
 
 		printq("generic", buf);
 	}
@@ -1746,7 +1746,7 @@ COMMAND(cmd_query)
 
 	p[i] = NULL;
 
-	if (params[0] && (params[0][0] == '@' || strchr(params[0], ','))) {
+	if (params[0] && (params[0][0] == '@' || xstrchr(params[0], ','))) {
 		struct conference *c = conference_create(params[0]);
 		
 		if (!c) {
@@ -1866,7 +1866,7 @@ COMMAND(cmd_on)
 			return -1;
 		}
 
-		if (!(uin = get_uin(params[2])) && strcmp(params[2], "*") && params[2][0] != '@') {
+		if (!(uin = get_uin(params[2])) && xstrcmp(params[2], "*") && params[2][0] != '@') {
 			printq("user_not_found", params[2]);
 			return -1;
 		}
@@ -1911,7 +1911,7 @@ COMMAND(cmd_on)
 		for (l = events; l; l = l->next) {
 			struct event *ev = l->data;
 
-			if (ename && strcasecmp(ev->name, ename))
+			if (ename && xstrcasecmp(ev->name, ename))
 				continue;
 
 			printq((ev->flags & INACTIVE_EVENT) ? "events_list_inactive" : "events_list", event_format(abs(ev->flags)), event_format_target(ev->target), ev->action, ev->name);
@@ -1978,9 +1978,9 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (config_query_commands) {
 			for (l = commands; l; l = l->next) {
 				command_t *c = l->data;
-				int l = strlen(c->name);
+				int l = xstrlen(c->name);
 
-				if (l < 3 || strncasecmp(xline, c->name, l))
+				if (l < 3 || xstrncasecmp(xline, c->name, l))
 					continue;
 				
 				if (!xline[l] || xisspace(xline[l])) {
@@ -2012,7 +2012,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		if (!isalpha_pl_PL(c->name[0]) && strlen(c->name) == 1 && line[0] == c->name[0]) {
+		if (!isalpha_pl_PL(c->name[0]) && xstrlen(c->name) == 1 && line[0] == c->name[0]) {
 			short_cmd[0] = c->name[0];
 			cmd = short_cmd;
 			p = line + 1;
@@ -2030,15 +2030,15 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	/* poszukaj najpierw komendy dla danej sesji */
 	if (session && session->uid) {
-		int plen = (int)(strchr(session->uid, ':') - session->uid) + 1;
+		int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 		
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 
-			if (strncasecmp(c->name, session->uid, plen))
+			if (xstrncasecmp(c->name, session->uid, plen))
 				continue;
 	
-			if (!strcasecmp(c->name + plen, cmd)) {
+			if (!xstrcasecmp(c->name + plen, cmd)) {
 				last_abbr = c->function;
 				last_name = c->name;
 				last_params = (c->alias) ? "?" : c->params;
@@ -2046,7 +2046,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				goto exact_match;
 			}
 
-			if (!strncasecmp(c->name + plen, cmd, strlen(cmd))) {
+			if (!xstrncasecmp(c->name + plen, cmd, xstrlen(cmd))) {
 				abbrs_plugins++;
 				last_abbr_plugins = c->function;
 				last_name = c->name;
@@ -2061,14 +2061,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		if (!strcasecmp(c->name, cmd)) {
+		if (!xstrcasecmp(c->name, cmd)) {
 			last_abbr = c->function;
 			last_name = c->name;
 			last_params = (c->alias) ? "?" : c->params;
 			abbrs = 1;
 			break;
 		}
-		if (!strncasecmp(c->name, cmd, strlen(cmd))) {
+		if (!xstrncasecmp(c->name, cmd, xstrlen(cmd))) {
 			abbrs++;
 			last_abbr = c->function;
 			last_name = c->name;
@@ -2082,14 +2082,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 exact_match:
 	if ((last_abbr && abbrs == 1 && !last_abbr_plugins && !abbrs_plugins) || (last_abbr_plugins && abbrs_plugins == 1 && !last_abbr && !abbrs)) {
 		char **par, *tmp;
-		int res, len = strlen(last_params);
+		int res, len = xstrlen(last_params);
 
 		if(last_abbr_plugins)
 			last_abbr = last_abbr_plugins;
 		if(abbrs_plugins)
 			abbrs = abbrs_plugins;
 		
-		if ((tmp = strchr(last_name, ':')))
+		if ((tmp = xstrchr(last_name, ':')))
 			last_name = tmp + 1;
 		
 		window_lock_inc_n(target);
@@ -2108,7 +2108,7 @@ exact_match:
 		return res;
 	}
 
-	if (strcmp(cmd, "")) {
+	if (xstrcmp(cmd, "")) {
 		quiet = quiet & 2;
 		printq("unknown_command", cmd);
 	}
@@ -2159,7 +2159,7 @@ int binding_quick_list(int a, int b)
 		}
 	}
 
-	if (strlen(list->str) > 0)
+	if (xstrlen(list->str) > 0)
 		print("quick_list", list->str);
 
 	string_free(list, 1);
@@ -2175,7 +2175,7 @@ COMMAND(cmd_alias_exec)
 	for (l = aliases; l; l = l->next) {
 		struct alias *a = l->data;
 
-		if (!strcasecmp(name, a->name)) {
+		if (!xstrcasecmp(name, a->name)) {
 			tmp = a->commands;
 			break;
 		}
@@ -2207,7 +2207,7 @@ COMMAND(cmd_alias_exec)
 				need_args = __need;
 		}
 
-		list_add(&m, tmp->data, strlen(tmp->data) + 1);
+		list_add(&m, tmp->data, xstrlen(tmp->data) + 1);
 	}
 	
 	for (tmp = m; tmp; tmp = tmp->next) {
@@ -2288,7 +2288,7 @@ COMMAND(cmd_at)
 		if (!strncmp(params[2], "*/", 2) || xisdigit(params[2][0])) {
 			a_name = params[1];
 
-			if (!strcmp(a_name, "(null)")) {
+			if (!xstrcmp(a_name, "(null)")) {
 				printq("invalid_params", name);
 				return -1;
 			}
@@ -2296,7 +2296,7 @@ COMMAND(cmd_at)
 			for (l = timers; l; l = l->next) {
 				t = l->data;
 
-				if (!strcasecmp(t->name, a_name)) {
+				if (!xstrcasecmp(t->name, a_name)) {
 					printq("at_exist", a_name);
 					return -1;
 				}
@@ -2316,20 +2316,20 @@ COMMAND(cmd_at)
 			lt->tm_isdst = -1;
 
 			/* czêstotliwo¶æ */
-			if ((tmp = strchr(foo, '/'))) {
+			if ((tmp = xstrchr(foo, '/'))) {
 				*tmp = 0;
 				freq_str = ++tmp;
 			}
 
 			/* wyci±gamy sekundy, je¶li s± i obcinamy */
-			if ((tmp = strchr(foo, '.')) && !(wrong = (strlen(tmp) != 3))) {
+			if ((tmp = xstrchr(foo, '.')) && !(wrong = (xstrlen(tmp) != 3))) {
 				sscanf(tmp + 1, "%2d", &lt->tm_sec);
 				tmp[0] = 0;
 			} else
 				lt->tm_sec = 0;
 
 			/* pozb±d¼my siê dwukropka */
-			if ((tmp = strchr(foo, ':')) && !(wrong = (strlen(tmp) != 3))) {
+			if ((tmp = xstrchr(foo, ':')) && !(wrong = (xstrlen(tmp) != 3))) {
 				tmp[0] = tmp[1];
 				tmp[1] = tmp[2];
 				tmp[2] = 0;
@@ -2337,7 +2337,7 @@ COMMAND(cmd_at)
 
 			/* jedziemy ... */
 			if (!wrong) {
-				switch (strlen(foo)) {
+				switch (xstrlen(foo)) {
 					int ret;
 
 					case 12:
@@ -2394,9 +2394,9 @@ COMMAND(cmd_at)
 						return -1;
 					}
 
-					freq_str += strlen(itoa(_period));
+					freq_str += xstrlen(itoa(_period));
 
-					if (strlen(freq_str)) {
+					if (xstrlen(freq_str)) {
 						switch (xtolower(*freq_str++)) {
 							case 'd':
 								_period *= 86400;
@@ -2447,7 +2447,7 @@ COMMAND(cmd_at)
 
 			a_command = strip_spaces(a_command);
 			
-			if (!strcmp(a_command, "")) {
+			if (!xstrcmp(a_command, "")) {
 				printq("not_enough_params", name);
 				xfree(tmp);
 				return -1;
@@ -2481,7 +2481,7 @@ COMMAND(cmd_at)
 			return -1;
 		}
 
-		if (!strcmp(params[1], "*")) {
+		if (!xstrcmp(params[1], "*")) {
 			del_all = 1;
 			ret = timer_remove_user(1);
 		} else
@@ -2522,7 +2522,7 @@ COMMAND(cmd_at)
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
 
-			if (!t->at || (a_name && strcasecmp(t->name, a_name)))
+			if (!t->at || (a_name && xstrcasecmp(t->name, a_name)))
 				continue;
 
 			if (t->function != timer_handle_command)
@@ -2614,7 +2614,7 @@ COMMAND(cmd_timer)
 		if (xisdigit(params[2][0]) || !strncmp(params[2], "*/", 2)) {
 			t_name = params[1];
 
-			if (!strcmp(t_name, "(null)")) {
+			if (!xstrcmp(t_name, "(null)")) {
 				printq("invalid_params", name);
 				return -1;
 			}
@@ -2622,7 +2622,7 @@ COMMAND(cmd_timer)
 			for (l = timers; l; l = l->next) {
 				t = l->data;
 
-				if (!t->at && !strcasecmp(t->name, t_name)) {
+				if (!t->at && !xstrcasecmp(t->name, t_name)) {
 					printq("timer_exist", t_name);
 					return -1;
 				}
@@ -2649,9 +2649,9 @@ COMMAND(cmd_timer)
 				return -1;
 			}
 
-			p += strlen(itoa(_period));
+			p += xstrlen(itoa(_period));
 
-			if (strlen(p)) {
+			if (xstrlen(p)) {
 				switch (xtolower(*p++)) {
 					case 'd':
 						_period *= 86400;
@@ -2682,7 +2682,7 @@ COMMAND(cmd_timer)
 
 			t_command = strip_spaces(t_command);
 
-			if (!strcmp(t_command, "")) {
+			if (!xstrcmp(t_command, "")) {
 				printq("not_enough_params", name);
 				xfree(tmp);
 				return -1;
@@ -2712,7 +2712,7 @@ COMMAND(cmd_timer)
 			return -1;
 		}
 
-		if (!strcmp(params[1], "*")) {
+		if (!xstrcmp(params[1], "*")) {
 			del_all = 1;
 			ret = timer_remove_user(0);
 		} else
@@ -2755,7 +2755,7 @@ COMMAND(cmd_timer)
 			if (t->function != timer_handle_command)
 				continue;
 
-			if (t->at || (t_name && strcasecmp(t->name, t_name)))
+			if (t->at || (t_name && xstrcasecmp(t->name, t_name)))
 				continue;
 
 			count++;
@@ -2844,7 +2844,7 @@ COMMAND(cmd_conference)
 
 			recipients = string_init(NULL);
 
-			if (cname && strcasecmp(cname, c->name))
+			if (cname && xstrcasecmp(cname, c->name))
 				continue;
 			
 			for (r = c->recipients; r; r = r->next) {
@@ -2909,7 +2909,7 @@ COMMAND(cmd_conference)
 			return -1;
 		}
 
-		list_add(&c->recipients, (void*) uid, strlen(uid) + 1);
+		list_add(&c->recipients, (void*) uid, xstrlen(uid) + 1);
 
 		printq("conferences_joined", format_user(session, uid), params[1]);
 
@@ -2940,7 +2940,7 @@ COMMAND(cmd_conference)
 			return -1;
 		}
 
-		if (!strcmp(params[1], "*"))
+		if (!xstrcmp(params[1], "*"))
 			conference_remove(NULL, quiet);
 		else {
 			if (params[1][0] != '#') {
@@ -3136,7 +3136,7 @@ COMMAND(cmd_last)
 		struct tm *tm, *st;
 		char buf[100], buf2[100], *time_str = NULL;
 
-		if (!uid || !strcasecmp(uid, ll->uid)) {
+		if (!uid || !xstrcasecmp(uid, ll->uid)) {
 
 			if (last_n && i++ < (count - last_n))
 				continue;
@@ -3202,7 +3202,7 @@ COMMAND(cmd_queue)
 		struct tm *tm;
 		char buf[100];
 
-		if (!params[0] || !strcasecmp(m->rcpts, params[0])) {
+		if (!params[0] || !xstrcasecmp(m->rcpts, params[0])) {
 			tm = localtime(&m->time);
 			strftime(buf, sizeof(buf), format_find("queue_list_timestamp"), tm);
 
@@ -3217,7 +3217,7 @@ COMMAND(cmd_dcc)
 {
 	list_t l;
 
-	if (!params[0] || !strncasecmp(params[0], "li", 2)) {	/* list */
+	if (!params[0] || !xstrncasecmp(params[0], "li", 2)) {	/* list */
 		int empty = 1, passed = 0;
 
 		for (l = dccs; l; l = l->next) {
@@ -3280,7 +3280,7 @@ COMMAND(cmd_dcc)
 		return 0;
 	}
 
-	if (!strncasecmp(params[0], "c", 1)) {		/* close */
+	if (!xstrncasecmp(params[0], "c", 1)) {		/* close */
 		dcc_t *d = NULL;
 		const char *uid;
 
@@ -3299,7 +3299,7 @@ COMMAND(cmd_dcc)
 				break;
 			}
 
-			if (uid && !strcasecmp(D->uid, uid)) {
+			if (uid && !xstrcasecmp(D->uid, uid)) {
 				d = D;
 				break;
 			}
@@ -3354,7 +3354,7 @@ COMMAND(cmd_plugin)
  *
  *  - data1, data2 - dwa wpisy komend do porównania.
  *
- * zwraca wynik strcasecmp() na nazwach komend.
+ * zwraca wynik xstrcasecmp() na nazwach komend.
  */
 static int command_add_compare(void *data1, void *data2)
 {
@@ -3363,7 +3363,7 @@ static int command_add_compare(void *data1, void *data2)
 	if (!a || !a->name || !b || !b->name)
 		return 0;
 
-	return strcasecmp(a->name, b->name);
+	return xstrcasecmp(a->name, b->name);
 }
 
 /*
@@ -3414,7 +3414,7 @@ int command_remove(plugin_t *plugin, const char *name)
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		if (!strcasecmp(name, c->name) && plugin == c->plugin) {
+		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
 			xfree(c->name);
 			xfree(c->params);
 			xfree(c->params_help);

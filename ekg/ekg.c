@@ -194,7 +194,7 @@ void ekg_loop()
 			session_t *s = l->data;
 			int tmp;
 
-			if (!s->connected || strcmp(s->status, EKG_STATUS_AVAIL))
+			if (!s->connected || xstrcmp(s->status, EKG_STATUS_AVAIL))
 				continue;
 
 			if ((tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
@@ -469,14 +469,14 @@ static char *prepare_batch_line(int argc, char *argv[], int n)
 	int i;
 
 	for (i = n; i < argc; i++)
-		len += strlen(argv[i]) + 1;
+		len += xstrlen(argv[i]) + 1;
 
 	buf = xmalloc(len);
 
 	for (i = n; i < argc; i++) {
-		strcat(buf, argv[i]);
+		xstrcat(buf, argv[i]);
 		if (i < argc - 1)
-			strcat(buf, " ");
+			xstrcat(buf, " ");
 	}
 
 	return buf;
@@ -512,12 +512,12 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 		xfree(tmp);
 		tmp = NULL;
 
-		if (line->str[strlen(line->str) - 1] == '\n') {
+		if (line->str[xstrlen(line->str) - 1] == '\n') {
 			tmp = string_free(line, 0);
 			line = NULL;
 		}
 	} else {
-		if (tmp[strlen(tmp) - 1] != '\n') {
+		if (tmp[xstrlen(tmp) - 1] != '\n') {
 			line = string_init(tmp);
 			xfree(tmp);
 			tmp = NULL;
@@ -527,7 +527,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 	if (!tmp)
 		return;
 
-	tmp[strlen(tmp) - 1] = 0;
+	tmp[xstrlen(tmp) - 1] = 0;
 
 	buffer_add(BUFFER_DEBUG, NULL, tmp, DEBUG_MAX_LINES);
 	print_window("__debug", NULL, 0, "debug", tmp);
@@ -797,7 +797,7 @@ int main(int argc, char **argv)
 		if (new_descr)
 			session_descr_set(s, new_descr);
 		
-		if (!strcmp(s->status, EKG_STATUS_AVAIL) || !strcmp(s->status, EKG_STATUS_NA))
+		if (!xstrcmp(s->status, EKG_STATUS_AVAIL) || !xstrcmp(s->status, EKG_STATUS_NA))
 			cmd = "back";
 
 		if (!cmd)
@@ -895,9 +895,9 @@ void ekg_exit()
 		printf("%s", format_find("config_changed"));
 		fflush(stdout);
 		if (fgets(line, sizeof(line), stdin)) {
-			if (line[strlen(line) - 1] == '\n')
-				line[strlen(line) - 1] = 0;
-			if (!strcasecmp(line, "tak") || !strcasecmp(line, "yes") || !strcasecmp(line, "t") || !strcasecmp(line, "y")) {
+			if (line[xstrlen(line) - 1] == '\n')
+				line[xstrlen(line) - 1] = 0;
+			if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
         			if (config_write(NULL) || session_write()) 
 					printf("Wyst±pi³ b³±d podczas zapisu.\n");
 			}
@@ -909,9 +909,9 @@ void ekg_exit()
                 printf("%s", format_find("quit_keep_reason"));
                 fflush(stdout);
                 if (fgets(line, sizeof(line), stdin)) {
-                        if (line[strlen(line) - 1] == '\n')
-                                line[strlen(line) - 1] = 0;
-                        if (!strcasecmp(line, "tak") || !strcasecmp(line, "yes") || !strcasecmp(line, "t") || !strcasecmp(line, "y")) {
+                        if (line[xstrlen(line) - 1] == '\n')
+                                line[xstrlen(line) - 1] = 0;
+                        if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
                                 if (session_write())
                                         printf("Wyst±pi³ b³±d podczas zapisu.\n");
                         }

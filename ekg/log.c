@@ -94,7 +94,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 		for (l = lasts; l; l = l->next) {
 			struct last *lll = l->data;
 
-			if (config_last & 2 && strcasecmp(lll->uid, uid))
+			if (config_last & 2 && xstrcasecmp(lll->uid, uid))
 				continue;
 
 			if (!tmp_time)
@@ -108,7 +108,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 		for (l = lasts; l; l = l->next) {
 			struct last *lll = l->data;
 
-			if (lll->time == tmp_time && !strcasecmp(lll->uid, uid)) {
+			if (lll->time == tmp_time && !xstrcasecmp(lll->uid, uid)) {
 				xfree(lll->message);
 				list_remove(&lasts, lll, 1);
 				break;
@@ -144,7 +144,7 @@ void last_del(const char *uid)
 
 		l = l->next;
 
-		if (!strcasecmp(uid, ll->uid)) {
+		if (!xstrcasecmp(uid, ll->uid)) {
 			xfree(ll->uid);
 			xfree(ll->message);
 			list_remove(&lasts, ll, 1);
@@ -167,7 +167,7 @@ int last_count(const char *uid)
 	for (l = lasts; l; l = l->next) {
 		struct last *ll = l->data;
 
-		if (!strcasecmp(uid, ll->uid))
+		if (!xstrcasecmp(uid, ll->uid))
 			count++;
 	}
 
@@ -296,14 +296,14 @@ void put_log(const char *uid, const char *format, ...)
 				char *e, *tmp = va_arg(ap, char*);
 
 				e = log_escape(tmp);
-				size += strlen(e);
+				size += xstrlen(e);
 				xfree(e);
 			}
 			
 			if (*p == 'd') {
 				int tmp = ((long_int) ? va_arg(ap, long) : va_arg(ap, int));
 
-				size += strlen(itoa(tmp));
+				size += xstrlen(itoa(tmp));
 			}
 		} else
 			size++;
@@ -334,18 +334,18 @@ void put_log(const char *uid, const char *format, ...)
 				char *e, *tmp = va_arg(ap, char*);
 
 				e = log_escape(tmp);
-				strcat(buf, e);
+				xstrcat(buf, e);
 				xfree(e);
 			}
 
 			if (*p == 'd') {
 				int tmp = ((long_int) ? va_arg(ap, long) : va_arg(ap, int));
 
-				strcat(buf, itoa(tmp));
+				xstrcat(buf, itoa(tmp));
 			}
 		} else {
-			buf[strlen(buf) + 1] = 0;
-			buf[strlen(buf)] = *p;
+			buf[xstrlen(buf) + 1] = 0;
+			buf[xstrlen(buf)] = *p;
 		}
 	}
 
@@ -361,7 +361,7 @@ void put_log(const char *uid, const char *format, ...)
 	if ((config_log & 2)) {
 		if (mkdir(path, 0700) && errno != EEXIST)
 			goto cleanup;
-		snprintf(path + strlen(path), sizeof(path) - strlen(path), "/%s", uid);
+		snprintf(path + xstrlen(path), sizeof(path) - xstrlen(path), "/%s", uid);
 	}
 
 #ifdef HAVE_ZLIB
@@ -374,7 +374,7 @@ void put_log(const char *uid, const char *format, ...)
 		if (stat(path, &st) == -1) {
 			gzFile f;
 
-			snprintf(path + strlen(path), sizeof(path) - strlen(path), ".gz");
+			snprintf(path + xstrlen(path), sizeof(path) - xstrlen(path), ".gz");
 
 			if (!(f = gzopen(path, "a")))
 				goto cleanup;

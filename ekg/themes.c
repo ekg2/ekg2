@@ -64,11 +64,11 @@ const char *format_find(const char *name)
 
 	hash = ekg_hash(name);
 
-	if (config_speech_app && !strchr(name, ',')) {
+	if (config_speech_app && !xstrchr(name, ',')) {
 		char *name2 = saprintf("%s,speech", name);
 		const char *tmp;
 		
-		if (strcmp((tmp = format_find(name2)), "")) {
+		if (xstrcmp((tmp = format_find(name2)), "")) {
 			xfree(name2);
 			return tmp;
 		}
@@ -76,11 +76,11 @@ const char *format_find(const char *name)
 		xfree(name2);
 	}
 
-	if (config_theme && (tmp = strchr(config_theme, ',')) && !strchr(name, ',')) {
+	if (config_theme && (tmp = xstrchr(config_theme, ',')) && !xstrchr(name, ',')) {
 		char *name2 = saprintf("%s,%s", name, tmp + 1);
 		const char *tmp;
 		
-		if (strcmp((tmp = format_find(name2)), "")) {
+		if (xstrcmp((tmp = format_find(name2)), "")) {
 			xfree(name2);
 			return tmp;
 		}
@@ -91,7 +91,7 @@ const char *format_find(const char *name)
 	for (l = formats; l; l = l->next) {
 		struct format *f = l->data;
 
-		if (hash == f->name_hash && !strcasecmp(f->name, name))
+		if (hash == f->name_hash && !xstrcasecmp(f->name, name))
 			return f->value;
 	}
 	
@@ -292,7 +292,7 @@ char *va_format_string(const char *format, va_list ap)
 				char *str = (char*) args[*(p + 1) - '1'];
 
 				if (str) {
-					char *q = str + strlen(str) - 1;
+					char *q = str + xstrlen(str) - 1;
 
 					while (q >= str && !isalpha_pl_PL(*q))
 						q--;
@@ -348,7 +348,7 @@ char *va_format_string(const char *format, va_list ap)
 
 				if (!str)
 					str = "";
-				len = strlen(str);
+				len = xstrlen(str);
 
 				if (fill_length) {
 					if (len >= fill_length) {
@@ -572,9 +572,9 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		const char *res;
 		userlist_t *u;
 		
-		if ((res = strchr(target, '/'))) {
+		if ((res = xstrchr(target, '/'))) {
 			newtarget = xstrdup(target);
-			*(strchr(newtarget, '/')) = 0;
+			*(xstrchr(newtarget, '/')) = 0;
 			u = userlist_find(session, target);
 			/* XXX cza dorobiæ, szefie */
 		} else {
@@ -600,7 +600,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	while ((line = split_line(&tmp))) {
 		char *p;
 
-		if ((p = strstr(line, "\033[00m"))) {
+		if ((p = xstrstr(line, "\033[00m"))) {
 			xfree(prompt);
 			if (p != line)
 				prompt = xstrmid(line, 0, (int) (p - line) + 5);
@@ -656,7 +656,7 @@ int format_add(const char *name, const char *value, int replace)
 
 	hash = ekg_hash(name);
 
-	if (hash == ekg_hash("no_prompt_cache") && !strcasecmp(name, "no_prompt_cache")) {
+	if (hash == ekg_hash("no_prompt_cache") && !xstrcasecmp(name, "no_prompt_cache")) {
 		no_prompt_cache = 1;
 		return 0;
 	}
@@ -664,7 +664,7 @@ int format_add(const char *name, const char *value, int replace)
 	for (l = formats; l; l = l->next) {
 		struct format *g = l->data;
 
-		if (hash == g->name_hash && !strcasecmp(name, g->name)) {
+		if (hash == g->name_hash && !xstrcasecmp(name, g->name)) {
 			if (replace) {
 				xfree(g->value);
 				g->value = xstrdup(value);
@@ -698,7 +698,7 @@ int format_remove(const char *name)
 	for (l = formats; l; l = l->next) {
 		struct format *f = l->data;
 
-		if (!strcasecmp(f->name, name)) {
+		if (!xstrcasecmp(f->name, name)) {
 			xfree(f->value);
 			xfree(f->name);
 			list_remove(&formats, f, 1);
@@ -774,13 +774,13 @@ int theme_read(const char *filename, int replace)
         } else {
 		char *fn = xstrdup(filename), *tmp;
 
-		if ((tmp = strchr(fn, ',')))
+		if ((tmp = xstrchr(fn, ',')))
 			*tmp = 0;
 		
 		errno = ENOENT;
 		f = theme_open(NULL, NULL, fn);
 
-		if (!strchr(filename, '/')) {
+		if (!xstrchr(filename, '/')) {
 			f = theme_open(f, prepare_path("", 0), fn);
 			f = theme_open(f, prepare_path("themes", 0), fn);
 			f = theme_open(f, DATADIR "/themes", fn);
@@ -804,7 +804,7 @@ int theme_read(const char *filename, int replace)
                         continue;
 		}
 
-                if (!(value = strchr(buf, ' '))) {
+                if (!(value = xstrchr(buf, ' '))) {
 			xfree(buf);
 			continue;
 		}
@@ -817,7 +817,7 @@ int theme_read(const char *filename, int replace)
 					break;
 				if (*(p + 1) == 'n')
 					*p = '\n';
-				memmove(p + 1, p + 2, strlen(p + 1));
+				memmove(p + 1, p + 2, xstrlen(p + 1));
 			}
 		}
 

@@ -57,7 +57,7 @@ session_t *session_find(const char *uid)
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 
-                if (!strcasecmp(s->uid, uid) || (s->alias && !strcasecmp(s->alias, uid)))
+                if (!xstrcasecmp(s->uid, uid) || (s->alias && !xstrcasecmp(s->alias, uid)))
 			return s;
 	}
 
@@ -71,7 +71,7 @@ session_t *session_find(const char *uid)
  *
  *  - data1, data2 - dwa wpisy userlisty do porównania.
  *
- * zwraca wynik strcasecmp() na nazwach sesji.
+ * zwraca wynik xstrcasecmp() na nazwach sesji.
  */
 static int session_compare(void *data1, void *data2)
 {
@@ -80,7 +80,7 @@ static int session_compare(void *data1, void *data2)
 	if (!a || !a->uid || !b || !b->uid)
 		return 1;
 
-	return strcasecmp(a->uid, b->uid);
+	return xstrcasecmp(a->uid, b->uid);
 }
 
 /*
@@ -187,7 +187,7 @@ int session_status_set(session_t *s, const char *status)
 
 	xfree(s->status);
 
-	if (!strcmp(__status, EKG_STATUS_AUTOAWAY)) {
+	if (!xstrcmp(__status, EKG_STATUS_AUTOAWAY)) {
 		xfree(__status);
 		__status = xstrdup(EKG_STATUS_AWAY);
 		s->autoaway = 1;
@@ -243,24 +243,24 @@ const char *session_get(session_t *s, const char *key)
 	if (!s)
 		return NULL;
 	
-	if (!strcasecmp(key, "uid"))
+	if (!xstrcasecmp(key, "uid"))
 		return session_uid_get(s);
 
-	if (!strcasecmp(key, "alias"))
+	if (!xstrcasecmp(key, "alias"))
 		return session_alias_get(s);
 
-	if (!strcasecmp(key, "descr"))
+	if (!xstrcasecmp(key, "descr"))
 		return session_descr_get(s);
 
-	if (!strcasecmp(key, "status"))
+	if (!xstrcasecmp(key, "status"))
 		return session_status_get(s);
 	
-	if (!strcasecmp(key, "password"))
+	if (!xstrcasecmp(key, "password"))
                 return session_password_get(s);
 	
 	if (s->params) {
 		for (i = 0; s->params[i]; i++) {
-			if (!strcasecmp(s->params[i]->key, key))
+			if (!xstrcasecmp(s->params[i]->key, key))
 				return s->params[i]->value;
 		}
 	}
@@ -299,24 +299,24 @@ int session_set(session_t *s, const char *key, const char *value)
 	if (!s)
 		return -1;
 
-	if (!strcasecmp(key, "uid"))
+	if (!xstrcasecmp(key, "uid"))
 		return -1;
 
-	if (!strcasecmp(key, "alias"))
+	if (!xstrcasecmp(key, "alias"))
 		return session_alias_set(s, value);
 
-	if (!strcasecmp(key, "descr"))
+	if (!xstrcasecmp(key, "descr"))
 		return session_descr_set(s, value);
 
-	if (!strcasecmp(key, "status"))
+	if (!xstrcasecmp(key, "status"))
 		return session_status_set(s, value);
 
-	if (!strcasecmp(key, "password"))
+	if (!xstrcasecmp(key, "password"))
                 return session_password_set(s, value);
 
 
 	for (i = 0; s->params && s->params[i]; i++) {
-		if (!strcasecmp(s->params[i]->key, key)) {
+		if (!xstrcasecmp(s->params[i]->key, key)) {
 			xfree(s->params[i]->value);
 			s->params[i]->value = xstrdup(value);
 			return 0;
@@ -341,7 +341,7 @@ int session_set(session_t *s, const char *key, const char *value)
 
 #if 0
 	for (i = 0; s->params[i]; i++) {
-		if (strcasecmp(s->params[i]->key, key) > 0) {
+		if (xstrcasecmp(s->params[i]->key, key) > 0) {
 			memmove(&s->params[i], &s->params[i + 1], (count - i) * sizeof(session_param_t *));
 			s->params[i] = p;
 			return 0;
@@ -383,7 +383,7 @@ int session_read()
 		char *tmp;
 
 		if (line[0] == '[') {
-			tmp = strchr(line, ']');
+			tmp = xstrchr(line, ']');
 
 			if (!tmp)
 				goto next;
@@ -395,7 +395,7 @@ int session_read()
 			goto next;
 		}
 
-		if ((tmp = strchr(line, '='))) {
+		if ((tmp = xstrchr(line, '='))) {
 			*tmp = 0;
 			tmp++;
 			if(*tmp == '\001') 
@@ -469,8 +469,8 @@ const char *session_format(session_t *s)
 
 	uid = s->uid;
 
-	if (strchr(uid, ':'))
-		uid = strchr(uid, ':') + 1;
+	if (xstrchr(uid, ':'))
+		uid = xstrchr(uid, ':') + 1;
 
 	if (!s->alias)
 		tmp = format_string(format_find("session_format"), uid, uid);
@@ -501,9 +501,9 @@ int session_check(session_t *s, int need_private, const char *protocol)
 		return 0;
 
 	if (protocol) {
-		int plen = strlen(protocol);
+		int plen = xstrlen(protocol);
 
-		if (strlen(s->uid) < plen + 1)
+		if (xstrlen(s->uid) < plen + 1)
 			return 0;
 
 		if (strncmp(s->uid, protocol, plen) || s->uid[plen] != ':')
@@ -572,7 +572,7 @@ COMMAND(session_command)
 		return 0;
 	}
 	
-	if (!strcasecmp(params[0], "--dump")) {
+	if (!xstrcasecmp(params[0], "--dump")) {
 		list_t l;
 		
 		for (l = sessions; l; l = l->next) {
@@ -659,7 +659,7 @@ COMMAND(session_command)
 		if (!(s = session_find(params[1]))) {
 			if (window_current->session) {
 				if((var = session_get_n(window_current->session->uid, params[1]))) {
-					if(!strcasecmp(params[1], "password"))
+					if(!xstrcasecmp(params[1], "password"))
 						printq("session_variable", window_current->session->uid, params[1], "(...)");
 					else
 						printq("session_variable", window_current->session->uid, params[1], var);
@@ -674,7 +674,7 @@ COMMAND(session_command)
 		}
 		 
 		if(params[2] && (var = session_get_n(s->uid, params[2]))) {
-			if(!strcasecmp(params[2], "password"))
+			if(!xstrcasecmp(params[2], "password"))
 				printq("session_variable", s->uid, params[2], "(...)");
 			else
 			printq("session_variable", s->uid, params[2], var);

@@ -179,7 +179,7 @@ variable_t *variable_find(const char *name)
 
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
-		if (v->name_hash == hash && !strcasecmp(v->name, name))
+		if (v->name_hash == hash && !xstrcasecmp(v->name, name))
 			return v;
 	}
 
@@ -226,7 +226,7 @@ variable_map_t *variable_map(int count, ...)
  *
  *  - data1, data2 - dwa wpisy zmiennychd do porównania.
  *
- * zwraca wynik strcasecmp() na nazwach zmiennych.
+ * zwraca wynik xstrcasecmp() na nazwach zmiennych.
  */
 static int variable_add_compare(void *data1, void *data2)
 {
@@ -235,7 +235,7 @@ static int variable_add_compare(void *data1, void *data2)
         if (!a || !a->name || !b || !b->name)
                 return 0;
 
-        return strcasecmp(a->name, b->name);
+        return xstrcasecmp(a->name, b->name);
 }
 
 
@@ -277,7 +277,7 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
 
-		if (v->name_hash != hash || strcasecmp(v->name, __name) || v->type != VAR_FOREIGN)
+		if (v->name_hash != hash || xstrcasecmp(v->name, __name) || v->type != VAR_FOREIGN)
 			continue;
 
 		if (type == VAR_INT || type == VAR_BOOL || type == VAR_MAP) {
@@ -306,7 +306,7 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
 
-		if (v->name_hash != hash || strcasecmp(v->name, name))
+		if (v->name_hash != hash || xstrcasecmp(v->name, name))
 			continue;
 
 		if (type == VAR_INT || type == VAR_BOOL || type == VAR_MAP) {
@@ -367,7 +367,7 @@ int variable_remove(plugin_t *plugin, const char *name)
 		if (!v->name)
 			continue;
 		
-		if (hash == v->name_hash && plugin == v->plugin && strcasecmp(name, v->name)) {
+		if (hash == v->name_hash && plugin == v->plugin && xstrcasecmp(name, v->name)) {
 			char *tmp;
 
 			if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
@@ -428,7 +428,7 @@ int variable_set(const char *name, const char *value, int allow_foreign)
 				int i;
 
 				for (i = 0; v->map[i].label; i++)
-					if (!strcasecmp(v->map[i].label, value))
+					if (!xstrcasecmp(v->map[i].label, value))
 						value = itoa(v->map[i].value);
 			}
 
@@ -454,7 +454,7 @@ int variable_set(const char *name, const char *value, int allow_foreign)
 					int j, found = 0;
 
 					for (j = 0; v->map[j].label; j++) {
-						if (!strcasecmp(args[i], v->map[j].label)) {
+						if (!xstrcasecmp(args[i], v->map[j].label)) {
 							found = 1;
 
 							if (mode == 2)
@@ -479,7 +479,7 @@ int variable_set(const char *name, const char *value, int allow_foreign)
 
 			p = value;
 				
-			if ((hex = !strncasecmp(p, "0x", 2)))
+			if ((hex = !xstrncasecmp(p, "0x", 2)))
 				p += 2;
 
 			while (*p && *p != ' ') {
@@ -610,7 +610,7 @@ void variable_help(const char *name)
 	}
 
 	while ((line = read_file(f))) {
-		if (!strcasecmp(line, name)) {
+		if (!xstrcasecmp(line, name)) {
 			found = 1;
 			xfree(line);
 			break;
@@ -627,7 +627,7 @@ void variable_help(const char *name)
 
 	line = read_file(f);
 	
-	if ((tmp = strstr(line, ": ")))
+	if ((tmp = xstrstr(line, ": ")))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup("?");
@@ -637,7 +637,7 @@ void variable_help(const char *name)
 	tmp = NULL;
 	
 	line = read_file(f);
-	if ((tmp = strstr(line, ": ")))
+	if ((tmp = xstrstr(line, ": ")))
 		def = xstrdup(tmp + 2);
 	else
 		def = xstrdup("?");
@@ -657,25 +657,25 @@ void variable_help(const char *name)
 			break;
 		}
 
-		if (!strncmp(line, "\t- ", 3) && strcmp(s->str, "")) {
+		if (!strncmp(line, "\t- ", 3) && xstrcmp(s->str, "")) {
 			print("help_set_body", s->str);
 			string_clear(s);
 		}
 		
 		string_append(s, line + 1);
 
-		if (line[strlen(line) - 1] != ' ')
+		if (line[xstrlen(line) - 1] != ' ')
 			string_append_c(s, ' ');
 
 		xfree(line);
 	}
 
-	if (strcmp(s->str, ""))
+	if (xstrcmp(s->str, ""))
 		print("help_set_body", s->str);
 
 	string_free(s, 1);
 	
-	if (strcmp(format_find("help_set_footer"), ""))
+	if (xstrcmp(format_find("help_set_footer"), ""))
 		print("help_set_footer", name);
 
 	fclose(f);

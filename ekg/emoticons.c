@@ -59,7 +59,7 @@ int emoticon_add(const char *name, const char *value)
 	for (l = emoticons; l; l = l->next) {
 		emoticon_t *g = l->data;
 
-		if (!strcasecmp(name, g->name)) {
+		if (!xstrcasecmp(name, g->name)) {
 			xfree(g->value);
 			g->value = xstrdup(value);
 			return 0;
@@ -88,7 +88,7 @@ int emoticon_remove(const char *name)
 	for (l = emoticons; l; l = l->next) {
 		emoticon_t *f = l->data;
 
-		if (!strcasecmp(f->name, name)) {
+		if (!xstrcasecmp(f->name, name)) {
 			xfree(f->value);
 			xfree(f->name);
 			list_remove(&emoticons, f, 1);
@@ -158,22 +158,22 @@ char *emoticon_expand(const char *s)
 
 	for (ss = s; *ss; ss++) {
 		emoticon_t *e = NULL;
-		size_t ns = strlen(ss);
+		size_t ns = xstrlen(ss);
 		int ret = 1;
 
 		for (l = emoticons; l && ret; l = (ret ? l->next : l)) {
 			size_t nn;
 
 			e = l->data;
-			nn = strlen(e->name);
+			nn = xstrlen(e->name);
 			if (ns >= nn)
 				ret = strncmp(ss, e->name, nn);
 		}
 
 		if (l) {
 			e = l->data;
-			n += strlen(e->value);
-			ss += strlen(e->name) - 1;
+			n += xstrlen(e->value);
+			ss += xstrlen(e->name) - 1;
 		} else
 			n++;
 	}
@@ -182,24 +182,24 @@ char *emoticon_expand(const char *s)
 
 	for (ss = s; *ss; ss++) {
 		emoticon_t *e = NULL;
-		size_t ns = strlen(ss);
+		size_t ns = xstrlen(ss);
 		int ret = 1;
 
 		for (l = emoticons; l && ret; l = (ret ? l->next : l)) {
 			size_t n;
 
 			e = l->data;
-			n = strlen(e->name);
+			n = xstrlen(e->name);
 			if (ns >= n)
 				ret = strncmp(ss, e->name, n);
 		}
 
 		if (l) {
 			e = l->data;
-			strcat(ms, e->value);
-			ss += strlen(e->name) - 1;
+			xstrcat(ms, e->value);
+			ss += xstrlen(e->name) - 1;
 		} else
-			ms[strlen(ms)] = *ss;
+			ms[xstrlen(ms)] = *ss;
 	}
 
 	return ms;

@@ -58,9 +58,9 @@ static void binding_backward_word(const char *arg)
 
 static void binding_forward_word(const char *arg)
 {
-	while (line_index < strlen(line) && line[line_index] == ' ')
+	while (line_index < xstrlen(line) && line[line_index] == ' ')
 		line_index++;
-	while (line_index < strlen(line) && line[line_index] != ' ')
+	while (line_index < xstrlen(line) && line[line_index] != ' ')
 		line_index++;
 }
 
@@ -79,7 +79,7 @@ static void binding_kill_word(const char *arg)
 		eaten++;
 	}
 
-	memmove(line + line_index, line + line_index + eaten, strlen(line) - line_index - eaten + 1);
+	memmove(line + line_index, line + line_index + eaten, xstrlen(line) - line_index - eaten + 1);
 }
 
 static void binding_toggle_input(const char *arg)
@@ -93,7 +93,7 @@ static void binding_toggle_input(const char *arg)
 		int i;
 	
 		for (i = 0; lines[i]; i++) {
-			if (!strcmp(lines[i], "") && !lines[i + 1])
+			if (!xstrcmp(lines[i], "") && !lines[i + 1])
 				break;
 
 			string_append(s, lines[i]);
@@ -122,11 +122,11 @@ static void binding_cancel_input(const char *arg)
 
 static void binding_backward_delete_char(const char *arg)
 {
-	if (lines && line_index == 0 && lines_index > 0 && strlen(lines[lines_index]) + strlen(lines[lines_index - 1]) < LINE_MAXLEN) {
+	if (lines && line_index == 0 && lines_index > 0 && xstrlen(lines[lines_index]) + xstrlen(lines[lines_index - 1]) < LINE_MAXLEN) {
 		int i;
 
-		line_index = strlen(lines[lines_index - 1]);
-		strcat(lines[lines_index - 1], lines[lines_index]);
+		line_index = xstrlen(lines[lines_index - 1]);
+		xstrcat(lines[lines_index - 1], lines[lines_index]);
 		
 		xfree(lines[lines_index]);
 
@@ -141,7 +141,7 @@ static void binding_backward_delete_char(const char *arg)
 		return;
 	}
 
-	if (strlen(line) > 0 && line_index > 0) {
+	if (xstrlen(line) > 0 && line_index > 0) {
 		memmove(line + line_index - 1, line + line_index, LINE_MAXLEN - line_index);
 		line[LINE_MAXLEN - 1] = 0;
 		line_index--;
@@ -155,19 +155,19 @@ static void binding_kill_line(const char *arg)
 
 static void binding_yank(const char *arg)
 {
-	if (yanked && strlen(yanked) + strlen(line) + 1 < LINE_MAXLEN) {
-		memmove(line + line_index + strlen(yanked), line + line_index, LINE_MAXLEN - line_index - strlen(yanked));
-		memcpy(line + line_index, yanked, strlen(yanked));
-		line_index += strlen(yanked);
+	if (yanked && xstrlen(yanked) + xstrlen(line) + 1 < LINE_MAXLEN) {
+		memmove(line + line_index + xstrlen(yanked), line + line_index, LINE_MAXLEN - line_index - xstrlen(yanked));
+		memcpy(line + line_index, yanked, xstrlen(yanked));
+		line_index += xstrlen(yanked);
 	}
 }
 
 static void binding_delete_char(const char *arg)
 {
-	if (line_index == strlen(line) && lines_index < array_count(lines) - 1 && strlen(line) + strlen(lines[lines_index + 1]) < LINE_MAXLEN) {
+	if (line_index == xstrlen(line) && lines_index < array_count(lines) - 1 && xstrlen(line) + xstrlen(lines[lines_index + 1]) < LINE_MAXLEN) {
 		int i;
 
-		strcat(line, lines[lines_index + 1]);
+		xstrcat(line, lines[lines_index + 1]);
 
 		xfree(lines[lines_index + 1]);
 
@@ -181,7 +181,7 @@ static void binding_delete_char(const char *arg)
 		return;
 	}
 				
-	if (line_index < strlen(line)) {
+	if (line_index < xstrlen(line)) {
 		memmove(line + line_index, line + line_index + 1, LINE_MAXLEN - line_index - 1);
 		line[LINE_MAXLEN - 1] = 0;
 	}
@@ -198,7 +198,7 @@ static void binding_accept_line(const char *arg)
 			lines[i + 1] = lines[i];
 
 		lines[lines_index + 1] = xmalloc(LINE_MAXLEN);
-		strcpy(lines[lines_index + 1], line + line_index);
+		xstrcpy(lines[lines_index + 1], line + line_index);
 		line[line_index] = 0;
 		
 		line_index = 0;
@@ -215,7 +215,7 @@ static void binding_accept_line(const char *arg)
 	if (ncurses_plugin_destroyed)
 		return;
 
-	if (strcmp(line, "")) {
+	if (xstrcmp(line, "")) {
 		if (history[0] != line)
 			xfree(history[0]);
 		history[0] = xstrdup(line);
@@ -235,7 +235,7 @@ static void binding_accept_line(const char *arg)
 static void binding_line_discard(const char *arg)
 {
 	xfree(yanked);
-	yanked = strdup(line);
+	yanked = xstrdup(line);
 	line[0] = 0;
 	line_adjust();
 
@@ -282,7 +282,7 @@ static void binding_word_rubout(const char *arg)
 	yanked = xmalloc(eaten + 1);
 	strlcpy(yanked, p, eaten + 1);
 
-	memmove(p, line + line_index, strlen(line) - line_index + 1);
+	memmove(p, line + line_index, xstrlen(line) - line_index + 1);
 	line_index -= eaten;
 }
 
@@ -293,7 +293,7 @@ static void binding_complete(const char *arg)
 	else {
 		int i, count = 8 - (line_index % 8);
 
-		if (strlen(line) + count >= LINE_MAXLEN - 1)
+		if (xstrlen(line) + count >= LINE_MAXLEN - 1)
 			return;
 
 		memmove(line + line_index + count, line + line_index, LINE_MAXLEN - line_index - count);
@@ -328,7 +328,7 @@ static void binding_backward_char(const char *arg)
 static void binding_forward_char(const char *arg)
 {
 	if (lines) {
-		if (line_index < strlen(line))
+		if (line_index < xstrlen(line))
 			line_index++;
 		else {
 			if (lines_index < array_count(lines) - 1) {
@@ -342,7 +342,7 @@ static void binding_forward_char(const char *arg)
 		return;
 	}
 
-	if (line_index < strlen(line))
+	if (line_index < xstrlen(line))
 		line_index++;
 }
 
@@ -376,7 +376,7 @@ static void binding_previous_history(const char *arg)
 		if (history_index == 0)
 			history[0] = xstrdup(line);
 		history_index++;
-		strcpy(line, history[history_index]);
+		xstrcpy(line, history[history_index]);
 		line_adjust();
 	}
 }
@@ -398,7 +398,7 @@ static void binding_next_history(const char *arg)
 
 	if (history_index > 0) {
 		history_index--;
-		strcpy(line, history[history_index]);
+		xstrcpy(line, history[history_index]);
 		line_adjust();
 		if (history_index == 0 && history[0] != line) {
 			xfree(history[0]);
@@ -450,7 +450,7 @@ static void binding_forward_contacts_line(const char *arg)
         for (l = windows; l; l = l->next) {
                 window_t *v = l->data;
 
-                if (v->target && !strcmp(v->target, "__contacts")) {
+                if (v->target && !xstrcmp(v->target, "__contacts")) {
                         w = v;
                         break;
                 }
@@ -485,7 +485,7 @@ static void binding_backward_contacts_page(const char *arg)
         for (l = windows; l; l = l->next) {
                 window_t *v = l->data;
 
-                if (v->target && !strcmp(v->target, "__contacts")) {
+                if (v->target && !xstrcmp(v->target, "__contacts")) {
                         w = v;
                         break;
                 }
@@ -517,7 +517,7 @@ static void binding_forward_contacts_page(const char *arg)
         for (l = windows; l; l = l->next) {
         	window_t *v = l->data;
 
-                if (v->target && !strcmp(v->target, "__contacts")) {
+                if (v->target && !xstrcmp(v->target, "__contacts")) {
                 	w = v;
                         break;
                 }
@@ -621,7 +621,7 @@ static void binding_parse(struct binding *b, const char *action)
 	}
 	
 #define __action(x,y) \
-	if (!strcmp(args[0], x)) { \
+	if (!xstrcmp(args[0], x)) { \
 		b->function = y; \
 		b->arg = xstrdup(args[1]); \
 	} 
@@ -675,17 +675,17 @@ static void binding_parse(struct binding *b, const char *action)
 int binding_key(struct binding *b, const char *key, int add)
 {
 //	debug("Key: %s\n", key);
-	if (!strncasecmp(key, "Alt-", 4)) {
+	if (!xstrncasecmp(key, "Alt-", 4)) {
 		unsigned char ch;
 
-		if (!strcasecmp(key + 4, "Enter")) {
+		if (!xstrcasecmp(key + 4, "Enter")) {
 			b->key = xstrdup("Alt-Enter");
 			if (add)
 				ncurses_binding_map_meta[13] = list_add(&bindings, b, sizeof(struct binding));
 			return 0;
 		}
 
-		if (!strcasecmp(key + 4, "Backspace")) {
+		if (!xstrcasecmp(key + 4, "Backspace")) {
 			b->key = xstrdup("Alt-Backspace");
 			if (add) {
 				ncurses_binding_map_meta[KEY_BACKSPACE] = list_add(&bindings, b, sizeof(struct binding));
@@ -694,7 +694,7 @@ int binding_key(struct binding *b, const char *key, int add)
 			return 0;
 		}
 
-		if (strlen(key) != 5)
+		if (xstrlen(key) != 5)
 			return -1;
 	
 		ch = xtoupper(key[4]);
@@ -710,13 +710,13 @@ int binding_key(struct binding *b, const char *key, int add)
 		return 0;
 	}
 
-	if (!strncasecmp(key, "Ctrl-", 5)) {
+	if (!xstrncasecmp(key, "Ctrl-", 5)) {
 		unsigned char ch;
 		
-//		if (strlen(key) != 6)
+//		if (xstrlen(key) != 6)
 //			return -1;
 #define __key(x, y, z) \
-        if (!strcasecmp(key + 5, x)) { \
+        if (!xstrcasecmp(key + 5, x)) { \
                 b->key = xstrdup(key); \
                 if (add) { \
                         ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
@@ -766,7 +766,7 @@ int binding_key(struct binding *b, const char *key, int add)
 	}
 
 #define __key(x, y, z) \
-	if (!strcasecmp(key, x)) { \
+	if (!xstrcasecmp(key, x)) { \
 		b->key = xstrdup(x); \
 		if (add) { \
 			ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
@@ -820,7 +820,7 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
 	for (l = bindings; l; l = l->next) {
 		struct binding *d = l->data;
 
-		if (!strcasecmp(key, d->key)) {
+		if (!xstrcasecmp(key, d->key)) {
 			if (d->internal) {
 				c = d;
 				break;
@@ -881,7 +881,7 @@ void ncurses_binding_delete(const char *key, int quiet)
 		struct binding *b = l->data;
 		int i;
 
-		if (!b->key || strcasecmp(key, b->key))
+		if (!b->key || xstrcasecmp(key, b->key))
 			continue;
 
 		if (b->internal) {

@@ -223,7 +223,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			l->str = str;
 			l->attr = attr;
-			l->len = strlen(str);
+			l->len = xstrlen(str);
 			l->ts = NULL;
 			l->ts_len = 0;
 			l->backlog = i;
@@ -242,7 +242,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				char buf[100];
 				strftime(buf, sizeof(buf), config_timestamp, tm);
 				l->ts = xstrdup(buf);
-				l->ts_len = strlen(l->ts);
+				l->ts_len = xstrlen(l->ts);
 			}
 
 			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right;
@@ -746,7 +746,7 @@ void ui_ncurses_print(const char *target, int separate, const char *line)
 					w->target = xstrdup(target);
 					xfree(w->prompt);
 					w->prompt = format_string(format_find("ncurses_prompt_query"), target);
-					w->prompt_len = strlen(w->prompt);
+					w->prompt_len = xstrlen(w->prompt);
 					print("window_id_query_started", itoa(w->id), target);
 					print_window(target, 1, "query_started", target);
 					print_window(target, 1, "query_started_window", target);
@@ -771,7 +771,7 @@ void ui_ncurses_print(const char *target, int separate, const char *line)
 			}
 
 crap:
-			if (!config_display_crap && target && !strcmp(target, "__current"))
+			if (!config_display_crap && target && !xstrcmp(target, "__current"))
 				w = window_find("__status");
 			
 			break;
@@ -980,7 +980,7 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 			if (!data[i].text)
 				continue;
 
-			len = strlen(data[i].name);
+			len = xstrlen(data[i].name);
 
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
 				char *text = data[i].text;
@@ -992,7 +992,7 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 
 				waddstr(w, text);
 				p += len;
-				x += strlen(data[i].text);
+				x += xstrlen(data[i].text);
 				
 				if (!config_display_pl_chars)
 					xfree(text);
@@ -1019,7 +1019,7 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 				if (neg)
 					matched = !matched;
 
-				len = strlen(data[i].name);
+				len = xstrlen(data[i].name);
 
 				if (!strncmp(p, data[i].name, len) && p[len] == ' ') {
 					p += len + 1;
@@ -1132,19 +1132,19 @@ void update_statusbar(int commit)
 	}
 
 	__add_format("debug", (!window_current->id), "");
-	__add_format("away", (sess && sess->connected && !strcasecmp(sess->status, EKG_STATUS_AWAY)), "");
-	__add_format("avail", (sess && sess->connected && !strcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
-	__add_format("invisible", (sess && sess->connected && !strcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
-	__add_format("notavail", (!sess || !sess->connected || !strcasecmp(sess->status, EKG_STATUS_NA)), "");
+	__add_format("away", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AWAY)), "");
+	__add_format("avail", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
+	__add_format("invisible", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format("notavail", (!sess || !sess->connected || !xstrcasecmp(sess->status, EKG_STATUS_NA)), "");
 	__add_format("more", (window_current->more), "");
 
 	__add_format("query_descr", (q && q->descr), q->descr);
-	__add_format("query_away", (q && !strcasecmp(q->status, EKG_STATUS_AWAY)), "");
-	__add_format("query_avail", (q && !strcasecmp(q->status, EKG_STATUS_AVAIL)), "");
-	__add_format("query_invisible", (q && !strcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
-	__add_format("query_notavail", (q && !strcasecmp(q->status, EKG_STATUS_NA)), "");
-	__add_format("query_dnd", (q && !strcasecmp(q->status, EKG_STATUS_DND)), "");
-	__add_format("query_xa", (q && !strcasecmp(q->status, EKG_STATUS_XA)), "");
+	__add_format("query_away", (q && !xstrcasecmp(q->status, EKG_STATUS_AWAY)), "");
+	__add_format("query_avail", (q && !xstrcasecmp(q->status, EKG_STATUS_AVAIL)), "");
+	__add_format("query_invisible", (q && !xstrcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format("query_notavail", (q && !xstrcasecmp(q->status, EKG_STATUS_NA)), "");
+	__add_format("query_dnd", (q && !xstrcasecmp(q->status, EKG_STATUS_DND)), "");
+	__add_format("query_xa", (q && !xstrcasecmp(q->status, EKG_STATUS_XA)), "");
 	__add_format("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
 
 	__add_format("url", 1, "http://dev.null.pl/ekg/");
@@ -1158,7 +1158,7 @@ void update_statusbar(int commit)
 		if (!y) {
 			p = format_find("header1");
 
-			if (!strcmp(p, ""))
+			if (!xstrcmp(p, ""))
 				p = format_find("header");
 		} else {
 			char *tmp = saprintf("header%d", y + 1);
@@ -1175,7 +1175,7 @@ void update_statusbar(int commit)
 		if (!y) {
 			p = format_find("statusbar1");
 
-			if (!strcmp(p, ""))
+			if (!xstrcmp(p, ""))
 				p = format_find("statusbar");
 		} else {
 			char *tmp = saprintf("statusbar%d", y + 1);
@@ -1362,7 +1362,7 @@ void ncurses_init()
 	ncurses_binding_init();
 
 	ncurses_line = xmalloc(LINE_MAXLEN);
-	strcpy(ncurses_line, "");
+	xstrcpy(ncurses_line, "");
 
 	ncurses_history[0] = ncurses_line;
 }
@@ -1434,11 +1434,11 @@ void ncurses_line_adjust()
 {
 	int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_len;
 
-	line_index = strlen(ncurses_line);
-	if (strlen(ncurses_line) < input->_maxx - 9 - prompt_len)
+	line_index = xstrlen(ncurses_line);
+	if (xstrlen(ncurses_line) < input->_maxx - 9 - prompt_len)
 		line_start = 0;
 	else
-		line_start = strlen(ncurses_line) - strlen(ncurses_line) % (input->_maxx - 9 - prompt_len);
+		line_start = xstrlen(ncurses_line) - xstrlen(ncurses_line) % (input->_maxx - 9 - prompt_len);
 }
 
 /*
@@ -1456,8 +1456,8 @@ void ncurses_lines_adjust()
 
 	ncurses_line = ncurses_lines[lines_index];
 
-	if (line_index > strlen(ncurses_line))
-		line_index = strlen(ncurses_line);
+	if (line_index > xstrlen(ncurses_line))
+		line_index = xstrlen(ncurses_line);
 }
 
 /*
@@ -1477,7 +1477,7 @@ void ncurses_input_update()
 		ncurses_lines = NULL;
 
 		ncurses_line = xmalloc(LINE_MAXLEN);
-		strcpy(ncurses_line, "");
+		xstrcpy(ncurses_line, "");
 
 		ncurses_history[0] = ncurses_line;
 
@@ -1489,7 +1489,7 @@ void ncurses_input_update()
 		ncurses_lines = xmalloc(2 * sizeof(char*));
 		ncurses_lines[0] = xmalloc(LINE_MAXLEN);
 		ncurses_lines[1] = NULL;
-		strcpy(ncurses_lines[0], ncurses_line);
+		xstrcpy(ncurses_lines[0], ncurses_line);
 		xfree(ncurses_line);
 		ncurses_line = ncurses_lines[0];
 		ncurses_history[0] = NULL;
@@ -1702,7 +1702,7 @@ action:
 				command_exec(window_current->target, window_current->session, tmp, 0);
 				xfree(tmp);
 			}
-		} else if (ch < 255 && strlen(ncurses_line) < LINE_MAXLEN - 1) {
+		} else if (ch < 255 && xstrlen(ncurses_line) < LINE_MAXLEN - 1) {
 				
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, LINE_MAXLEN - line_index - 1);
 
@@ -1740,7 +1740,7 @@ action:
 
 			p = ncurses_lines[lines_start + i];
 
-			for (j = 0; j + line_start < strlen(p) && j < input->_maxx + 1; j++)
+			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
 		}
 
@@ -1751,13 +1751,13 @@ action:
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
 
-		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < strlen(ncurses_line) - line_start; i++)
+		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
 
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
 			mvwaddch(input, 0, ncurses_current->prompt_len, '<');
-		if (strlen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
+		if (xstrlen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
 			mvwaddch(input, 0, input->_maxx, '>');
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
@@ -1773,7 +1773,7 @@ int ncurses_command_window(void *data, va_list ap)
 	char *p1 = *P1, *p2 = *P2;
 	int quiet = *Quiet;
 
-	if (!p1 || !strcasecmp(p1, "list")) {
+	if (!p1 || !xstrcasecmp(p1, "list")) {
 		list_t l;
 
 		for (l = windows; l; l = l->next) {
@@ -1793,7 +1793,7 @@ int ncurses_command_window(void *data, va_list ap)
 		goto cleanup;
 	}
 
-	if (!strcasecmp(p1, "move")) {
+	if (!xstrcasecmp(p1, "move")) {
 		window_t *w = NULL;
 		ncurses_window_t *n;
 		char **argv;
@@ -1869,7 +1869,7 @@ int ncurses_command_window(void *data, va_list ap)
 		goto cleanup;
 	}
 
-	if (!strcasecmp(p1, "resize")) {
+	if (!xstrcasecmp(p1, "resize")) {
 		window_t *w = NULL;
 		ncurses_window_t *n = NULL;
 		char **argv;
@@ -1961,14 +1961,14 @@ int ui_ncurses_event(const char *event, ...)
 	if (!event)
 		return 0;
 
-	if (!strcasecmp(event, "refresh_time"))
+	if (!xstrcasecmp(event, "refresh_time"))
 		goto cleanup;
 
-	if (!strcasecmp(event, "commit"))
+	if (!xstrcasecmp(event, "commit"))
 		ncurses_commit();
 		
 #if 0
-	if (!strcasecmp(event, "printat")) {
+	if (!xstrcasecmp(event, "printat")) {
 		char *target = va_arg(ap, char*);
 		int id = va_arg(ap, int), x = va_arg(ap, int), y = va_arg(ap, int);
 		char *text = va_arg(ap, char*);
@@ -1995,10 +1995,10 @@ int ui_ncurses_event(const char *event, ...)
 	}
 #endif 
 
-	if (!strcmp(event, "variable_changed")) {
+	if (!xstrcmp(event, "variable_changed")) {
 		char *name = va_arg(ap, char*);
 
-		if (!strcasecmp(name, "sort_windows") && config_sort_windows) {
+		if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
 			list_t l;
 			int id = 2;
 
@@ -2013,7 +2013,7 @@ int ui_ncurses_event(const char *event, ...)
 			}
 		}
 
-		if (!strcasecmp(name, "timestamp")) {
+		if (!xstrcasecmp(name, "timestamp")) {
 			list_t l;
 
 			for (l = windows; l; l = l->next) {
@@ -2026,7 +2026,7 @@ int ui_ncurses_event(const char *event, ...)
 		}
 	}
 
-	if (!strcmp(event, "conference_rename")) {
+	if (!xstrcmp(event, "conference_rename")) {
 		char *oldname = va_arg(ap, char*), *newname = va_arg(ap, char*);
 		list_t l;
 
@@ -2034,12 +2034,12 @@ int ui_ncurses_event(const char *event, ...)
 			window_t *w = l->data;
 			ncurses_window_t *n = w->private;
 
-			if (w->target && !strcasecmp(w->target, oldname)) {
+			if (w->target && !xstrcasecmp(w->target, oldname)) {
 				xfree(w->target);
 				xfree(n->prompt);
 				w->target = xstrdup(newname);
 				n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
-				n->prompt_len = strlen(n->prompt);
+				n->prompt_len = xstrlen(n->prompt);
 			}
 		}
 	}
@@ -2143,20 +2143,20 @@ int ncurses_window_new(window_t *w)
 
 	w->private = n = xmalloc(sizeof(ncurses_window_t));
 
-	if (w->target && !strcmp(w->target, "__contacts"))
+	if (w->target && !xstrcmp(w->target, "__contacts"))
 		ncurses_contacts_new(w);
 
 	if (w->target) {
 		const char *f = format_find("ncurses_prompt_query");
 
 		n->prompt = format_string(f, w->target);
-		n->prompt_len = strlen(n->prompt);
+		n->prompt_len = xstrlen(n->prompt);
 	} else {
 		const char *f = format_find("ncurses_prompt_none");
 
-		if (strcmp(f, "")) {
+		if (xstrcmp(f, "")) {
 			n->prompt = format_string(f);
-			n->prompt_len = strlen(n->prompt);
+			n->prompt_len = xstrlen(n->prompt);
 		}
 	}
 

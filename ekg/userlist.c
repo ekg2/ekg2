@@ -75,7 +75,7 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
  *
  *  - data1, data2 - dwa wpisy userlisty do porównania.
  *
- * zwraca wynik strcasecmp() na nazwach userów.
+ * zwraca wynik xstrcasecmp() na nazwach userów.
  */
 static int userlist_compare(void *data1, void *data2)
 {
@@ -84,7 +84,7 @@ static int userlist_compare(void *data1, void *data2)
 	if (!a || !a->nickname || !b || !b->nickname)
 		return 1;
 
-	return strcasecmp(a->nickname, b->nickname);
+	return xstrcasecmp(a->nickname, b->nickname);
 }
 
 /*
@@ -111,7 +111,7 @@ void userlist_add_entry(session_t *session,const char *line)
 		u.uid = xstrdup(entry[6]);
 
 	for (i = 0; i < 6; i++) {
-		if (!strcmp(entry[i], "(null)") || !strcmp(entry[i], "")) {
+		if (!xstrcmp(entry[i], "(null)") || !xstrcmp(entry[i], "")) {
 			xfree(entry[i]);
 			entry[i] = NULL;
 		}
@@ -279,7 +279,7 @@ void userlist_clear_status(session_t *session, const char *uid)
         for (l = session->userlist; l; l = l->next) {
                 userlist_t *u = l->data;
 
-		if (!uid || !strcasecmp(uid, u->uid)) {
+		if (!uid || !xstrcasecmp(uid, u->uid)) {
 			xfree(u->status);
 			u->status = xstrdup(EKG_STATUS_NA);
 			memset(&u->ip, 0, sizeof(struct in_addr));
@@ -401,20 +401,20 @@ userlist_t *userlist_find(session_t *session, const char *uid)
 		const char *tmp;
 		int len;
 
-                if (!strcasecmp(u->uid, uid))
+                if (!xstrcasecmp(u->uid, uid))
 			return u;
 
-		if (u->nickname && !strcasecmp(u->nickname, uid))
+		if (u->nickname && !xstrcasecmp(u->nickname, uid))
 			return u;
 
 		/* porównujemy resource */
 		
-		if (!(tmp = strchr(uid, '/')))
+		if (!(tmp = xstrchr(uid, '/')))
 			continue;
 
 		len = (int)(tmp - uid);
 
-		if (!strncasecmp(uid, u->uid, len))
+		if (!xstrncasecmp(uid, u->uid, len))
 			return u;
 		
         }
@@ -458,11 +458,11 @@ int valid_nick(const char *nick)
 		return 0;
 
 	for (i = 0; wrong[i]; i++) {
-		if (!strcmp(nick, wrong[i]))
+		if (!xstrcmp(nick, wrong[i]))
 			return 0;
 	}
 
-	if (nick[0] == '@' || nick[0] == '#' || strchr(nick, ','))
+	if (nick[0] == '@' || nick[0] == '#' || xstrchr(nick, ','))
 		return 0;
 
 	return 1;
@@ -529,7 +529,7 @@ char *get_uid(session_t *session, const char *text)
 {
 	userlist_t *u;
 
-	if (text && !strcmp(text, "$"))
+	if (text && !xstrcmp(text, "$"))
 		text = window_current->target;
 	
 	u = userlist_find(session, text);
@@ -557,8 +557,8 @@ const char *format_user(session_t *session, const char *uid)
 	userlist_t *u = userlist_find(session, uid);
 	static char buf[256], *tmp;
 	
-//	if (uid && strchr(uid, ':'))
-//		uid = strchr(uid, ':') + 1;
+//	if (uid && xstrchr(uid, ':'))
+//		uid = xstrchr(uid, ':') + 1;
 
 	if (!u || !u->nickname)
 		tmp = format_string(format_find("unknown_user"), uid, uid);
@@ -597,7 +597,7 @@ int ignored_remove(session_t *session, const char *uid)
 
 		l = l->next;
 
-		if (strncasecmp(g->name, "__ignored", 9))
+		if (xstrncasecmp(g->name, "__ignored", 9))
 			continue;
 
 		xfree(g->name);
@@ -681,10 +681,10 @@ int ignored_check(session_t *session, const char *uid)
 	for (l = u->groups; l; l = l->next) {
 		struct group *g = l->data;
 
-		if (!strcasecmp(g->name, "__ignored"))
+		if (!xstrcasecmp(g->name, "__ignored"))
 			return IGNORE_ALL;
 
-		if (!strncasecmp(g->name, "__ignored_", 10))
+		if (!xstrncasecmp(g->name, "__ignored_", 10))
 			return atoi(g->name + 10);
 	}
 
@@ -708,13 +708,13 @@ int ignore_flags(const char *str)
 	arr = array_make(str, "|,:", 0, 1, 0);
 
 	for (x = 0; arr[x]; x++) {
-		if (!strcmp(arr[x], "*")) {
+		if (!xstrcmp(arr[x], "*")) {
 			ret = IGNORE_ALL;
 			break;
 		}
 
 		for (y = 0; ignore_labels[y].name; y++)
-			if (!strcasecmp(arr[x], ignore_labels[y].name))
+			if (!xstrcasecmp(arr[x], ignore_labels[y].name))
 				ret |= ignore_labels[y].level;
 	}
 
@@ -758,7 +758,7 @@ const char *ignore_format(int level)
  *
  *  - data1, data2 - dwa wpisy grup do porównania.
  *
- * zwraca wynik strcasecmp() na nazwach grup.
+ * zwraca wynik xstrcasecmp() na nazwach grup.
  */
 static int group_compare(void *data1, void *data2)
 {
@@ -767,7 +767,7 @@ static int group_compare(void *data1, void *data2)
 	if (!a || !a->name || !b || !b->name)
 		return 0;
 
-	return strcasecmp(a->name, b->name);
+	return xstrcasecmp(a->name, b->name);
 }
 
 /*
@@ -789,7 +789,7 @@ int ekg_group_add(userlist_t *u, const char *group)
 	for (l = u->groups; l; l = l->next) {
 		struct group *g = l->data;
 
-		if (!strcasecmp(g->name, group))
+		if (!xstrcasecmp(g->name, group))
 			return -1;
 	}
 	
@@ -820,7 +820,7 @@ int ekg_group_remove(userlist_t *u, const char *group)
 	for (l = u->groups; l; l = l->next) {
 		struct group *g = l->data;
 
-		if (!strcasecmp(g->name, group)) {
+		if (!xstrcasecmp(g->name, group)) {
 			xfree(g->name);
 			list_remove(&u->groups, g, 1);
 			
@@ -848,7 +848,7 @@ int ekg_group_member(userlist_t *u, const char *group)
 	for (l = u->groups; l; l = l->next) {
 		struct group *g = l->data;
 
-		if (!strcasecmp(g->name, group))
+		if (!xstrcasecmp(g->name, group))
 			return 1;
 	}
 
@@ -934,7 +934,7 @@ int same_protocol(char **uids)
 	const char *colon;
 	int len, i;
 
-	if (!uids || !uids[0] || !(colon = strchr(uids[0], ':')))
+	if (!uids || !uids[0] || !(colon = xstrchr(uids[0], ':')))
 		return 0;
 
 	len = (int) (colon - uids[0]) + 1;

@@ -16,7 +16,7 @@ char *jabber_attr(char **atts, const char *att)
 	int i;
 
 	for (i = 0; atts[i]; i += 2)
-		if (!strcmp(atts[i], att))
+		if (!xstrcmp(atts[i], att))
 			return atts[i + 1];
 		
 	return NULL;
@@ -91,7 +91,7 @@ char *jabber_escape(const char *text)
 		char *ent = iso_utf_ent[*p];
 
 		if (ent)
-			strcpy(q, ent);
+			xstrcpy(q, ent);
 		else
 			*q = *p;
 
@@ -219,7 +219,7 @@ int jabber_write(jabber_private_t *j, const char *format, ...)
 	if (!j->obuf) {
 		int res;
 
-		len = strlen(text);
+		len = xstrlen(text);
 		res = write(j->fd, text, len);
 
 		if (res == len) {
@@ -236,7 +236,7 @@ int jabber_write(jabber_private_t *j, const char *format, ...)
 	} else
 		buf = text;
 
-	len = strlen(buf);
+	len = xstrlen(buf);
 
 	if (!j->obuf)
 		watch_add(&jabber_plugin, j->fd, WATCH_WRITE, 0, jabber_handle_write, j);

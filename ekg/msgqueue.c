@@ -106,7 +106,7 @@ int msg_queue_remove_uid(const char *uid)
 
 		l = l->next;
 
-		if (!strcasecmp(m->rcpts, uid)) {
+		if (!xstrcasecmp(m->rcpts, uid)) {
 			msg_queue_remove(m);
 			res = 0;
 		}
@@ -134,7 +134,7 @@ int msg_queue_remove_seq(const char *seq)
 
 		l = l->next;
 
-		if (!strcasecmp(m->seq, seq)) {
+		if (!xstrcasecmp(m->seq, seq)) {
 			msg_queue_remove(m);
 			res = 0;
 		}
@@ -202,7 +202,7 @@ int msg_queue_flush(const char *session)
 			continue;
 		}
 
-		if (session && strcmp(m->session, session)) 
+		if (session && xstrcmp(m->session, session)) 
 			continue;
 
 		tmp = saprintf("/msg \"%s\" %s", m->rcpts, m->message);
@@ -242,7 +242,7 @@ int msg_queue_count_uid(const char *uid)
 	for (l = msg_queue; l; l = l->next) {
 		msg_queue_t *m = l->data;
 
-		if (!strcasecmp(m->rcpts, uid))
+		if (!xstrcasecmp(m->rcpts, uid))
 			count++;
 	}
 
@@ -334,7 +334,7 @@ int msg_queue_read()
 
 		buf = read_file(f);
 
-		if (!buf || strcmp(buf, "v1")) {
+		if (!buf || xstrcmp(buf, "v1")) {
 			xfree(buf);
 			fclose(f);
 			continue;

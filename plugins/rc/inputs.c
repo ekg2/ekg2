@@ -34,8 +34,8 @@ int rc_input_new_inet(const char *path, int type)
 	int port, fd;
 	uint32_t addr = INADDR_ANY;
 
-	if (strchr(path, ':')) {
-		char *tmp = xstrdup(path), *c = strchr(tmp, ':');
+	if (xstrchr(path, ':')) {
+		char *tmp = xstrdup(path), *c = xstrchr(tmp, ':');
 
 		port = atoi(c + 1);
 		*c = 0;

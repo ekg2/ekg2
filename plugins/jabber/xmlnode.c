@@ -127,7 +127,7 @@ void xmlnode_handle_cdata(session_t *s, const char *text, int len)
 		return;
 	}
 
-	oldlen = (n->data) ? strlen(n->data) : 0;
+	oldlen = (n->data) ? xstrlen(n->data) : 0;
 	n->data = xrealloc(n->data, oldlen + len + 1);
 	memcpy(n->data + oldlen, text, len);
 	n->data[oldlen + len] = 0;
@@ -139,7 +139,7 @@ xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name)
 		return NULL;
 
 	for (n = n->children; n; n = n->next)
-		if (!strcmp(n->name, name))
+		if (!xstrcmp(n->name, name))
 			return n;
 
 	return NULL;

@@ -36,6 +36,7 @@
 #include <time.h>
 
 #include "simlite.h"
+#include <ekg/xmalloc.h>
 
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX
@@ -340,7 +341,7 @@ char *sim_message_encrypt(const unsigned char *message, uint32_t uin)
 	BIO_push(cbio, bbio);
 
 	BIO_write(cbio, &head, sizeof(head));
-	BIO_write(cbio, message, strlen(message));
+	BIO_write(cbio, message, xstrlen(message));
 	BIO_flush(cbio);
 
 	/* zachowaj wynik */
@@ -392,7 +393,7 @@ char *sim_message_decrypt(const unsigned char *message, uint32_t uin)
 
 	/* je¶li wiadomo¶æ jest krótsza ni¿ najkrótsza zaszyfrowana,
 	 * nie ma sensu siê bawiæ w próby odszyfrowania. */
-	if (strlen(message) < 192) {
+	if (xstrlen(message) < 192) {
 		sim_errno = SIM_ERROR_INVALID;
 		goto cleanup;
 	}
@@ -407,7 +408,7 @@ char *sim_message_decrypt(const unsigned char *message, uint32_t uin)
 	bbio = BIO_new(BIO_f_base64());
 	BIO_set_flags(bbio, BIO_FLAGS_BASE64_NO_NL);
 	BIO_push(bbio, mbio);
-	BIO_write(mbio, message, strlen(message));
+	BIO_write(mbio, message, xstrlen(message));
 	BIO_flush(mbio);
 
 	if (BIO_read(bbio, bf_key_rsa, sizeof(bf_key_rsa)) < sizeof(bf_key_rsa)) {

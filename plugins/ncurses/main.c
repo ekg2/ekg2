@@ -161,7 +161,7 @@ static int ncurses_ui_window_target_changed(void *data, va_list ap)
 
 	tmp = format_string(format_find((w->target) ? "ncurses_prompt_query" : "ncurses_prompt_none"), w->target);
 	n->prompt = tmp; 
-	n->prompt_len = strlen(tmp);
+	n->prompt_len = xstrlen(tmp);
 
 	update_statusbar(1);
 
@@ -205,7 +205,7 @@ static int ncurses_userlist_changed(void *data, va_list ap)
                 
 		xfree(n->prompt);
                 n->prompt = format_string(format_find("ncurses_prompt_query"), w->target);
-                n->prompt_len = strlen(n->prompt);
+                n->prompt_len = xstrlen(n->prompt);
         }
 
 	ncurses_contacts_update(NULL);

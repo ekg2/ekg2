@@ -77,7 +77,7 @@ int ncurses_contacts_update(window_t *w)
 		for (l = windows; l; l = l->next) {
 			window_t *v = l->data;
 			
-			if (v->target && !strcmp(v->target, "__contacts")) {
+			if (v->target && !xstrcmp(v->target, "__contacts")) {
 				w = v;
 				break;
 			}
@@ -113,10 +113,10 @@ int ncurses_contacts_update(window_t *w)
 		footer = format_find("contacts_footer");
 	}
 	
-	if (strcmp(header, "")) 
+	if (xstrcmp(header, "")) 
 		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
 
-	for (j = 0; j < strlen(contacts_order); j += 2) {
+	for (j = 0; j < xstrlen(contacts_order); j += 2) {
 		int count = 0;
 		list_t l;
 		const char *footer_status = NULL;
@@ -137,7 +137,7 @@ int ncurses_contacts_update(window_t *w)
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
 				format = format_find(tmp);
-				if (strcmp(format, ""))
+				if (xstrcmp(format, ""))
 					ncurses_backlog_add(w, fstring_new(format_string(format)));
 				footer_status = u->status;
 			}
@@ -151,7 +151,7 @@ int ncurses_contacts_update(window_t *w)
 				snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
 			
 			if(u->blink)
-				strcat(tmp, "_blink");
+				xstrcat(tmp, "_blink");
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
 			if(count >= contacts_index)	
@@ -167,12 +167,12 @@ int ncurses_contacts_update(window_t *w)
 			snprintf(tmp, sizeof(tmp), "contacts_%s_footer", footer_status);
 			format = format_find(tmp);
 		
-			if (strcmp(format, ""))
+			if (xstrcmp(format, ""))
 				ncurses_backlog_add(w, fstring_new(format_string(format)));
 		}
 	}
 
-	if (strcmp(footer, "")) 
+	if (xstrcmp(footer, "")) 
 		ncurses_backlog_add(w, fstring_new(format_string(footer, group)));
 
 	xfree(group);
@@ -204,7 +204,7 @@ void ncurses_contacts_changed(const char *name)
 	contacts_margin = 1;
 	contacts_edge = WF_RIGHT;
 	contacts_frame = WF_LEFT;
-	strcpy(contacts_order, CONTACTS_ORDER_DEFAULT);
+	xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);
 	contacts_wrap = 0;
 	contacts_descr = 0;
 
@@ -213,34 +213,34 @@ void ncurses_contacts_changed(const char *name)
 		int i;
 
 		for (i = 0; args[i]; i++) {
-			if (!strcasecmp(args[i], "left")) {
+			if (!xstrcasecmp(args[i], "left")) {
 				contacts_edge = WF_LEFT;
 				if (contacts_frame)
 					contacts_frame = WF_RIGHT;
 			}
 
-			if (!strcasecmp(args[i], "right")) {
+			if (!xstrcasecmp(args[i], "right")) {
 				contacts_edge = WF_RIGHT;
 				if (contacts_frame)
 					contacts_frame = WF_LEFT;
 			}
 
-			if (!strcasecmp(args[i], "top")) {
+			if (!xstrcasecmp(args[i], "top")) {
 				contacts_edge = WF_TOP;
 				if (contacts_frame)
 					contacts_frame = WF_BOTTOM;
 			}
 
-			if (!strcasecmp(args[i], "bottom")) {
+			if (!xstrcasecmp(args[i], "bottom")) {
 				contacts_edge = WF_BOTTOM;
 				if (contacts_frame)
 					contacts_frame = WF_TOP;
 			}
 
-			if (!strcasecmp(args[i], "noframe"))
+			if (!xstrcasecmp(args[i], "noframe"))
 				contacts_frame = 0;
 
-			if (!strcasecmp(args[i], "frame")) {
+			if (!xstrcasecmp(args[i], "frame")) {
 				switch (contacts_edge) {
 					case WF_TOP:
 						contacts_frame = WF_BOTTOM;
@@ -257,7 +257,7 @@ void ncurses_contacts_changed(const char *name)
 				}
 			}
 
-			if (!strncasecmp(args[i], "margin=", 7)) {
+			if (!xstrncasecmp(args[i], "margin=", 7)) {
 				contacts_margin = atoi(args[i] + 7);
 				if (contacts_margin > 10)
 					contacts_margin = 10;
@@ -265,22 +265,22 @@ void ncurses_contacts_changed(const char *name)
 					contacts_margin = 0;
 			}
 
-			if (!strcasecmp(args[i], "nomargin"))
+			if (!xstrcasecmp(args[i], "nomargin"))
 				contacts_margin = 0;
 
-			if (!strcasecmp(args[i], "wrap"))
+			if (!xstrcasecmp(args[i], "wrap"))
 				contacts_wrap = 1;
 
-			if (!strcasecmp(args[i], "nowrap"))
+			if (!xstrcasecmp(args[i], "nowrap"))
 				contacts_wrap = 0;
 
-			if (!strcasecmp(args[i], "descr"))
+			if (!xstrcasecmp(args[i], "descr"))
 				contacts_descr = 1;
 
-			if (!strcasecmp(args[i], "nodescr"))
+			if (!xstrcasecmp(args[i], "nodescr"))
 				contacts_descr = 0;
 
-			if (!strncasecmp(args[i], "order=", 6))
+			if (!xstrncasecmp(args[i], "order=", 6))
 				snprintf(contacts_order, sizeof(contacts_order), args[i] + 6);
 		}
 
@@ -293,7 +293,7 @@ void ncurses_contacts_changed(const char *name)
 	for (l = windows; l; l = l->next) {
 		window_t *v = l->data;
 
-		if (v->target && !strcmp(v->target, "__contacts")) {
+		if (v->target && !xstrcmp(v->target, "__contacts")) {
 			w = v;
 			break;
 		}

@@ -105,11 +105,11 @@ static int check_mail_update(const char *s, int more)
 	int h = 0, c = 0, new_count = 0;
 	list_t l;
 
-	if (!s || !strchr(s, ','))
+	if (!s || !xstrchr(s, ','))
 		return -1;
 
 	h = atoi(s);
-	c = atoi(strchr(s, ',') + 1);
+	c = atoi(xstrchr(s, ',') + 1);
 
 	for (l = mail_folders; l; l = l->next) {
 		struct mail_folder *m = l->data;
@@ -247,7 +247,7 @@ static int check_mail_mbox()
 
 				strip_spaces(line);
 
-				if (strlen(line) == 0)
+				if (xstrlen(line) == 0)
 					in_header = 0;
 
 				xfree(line_save);
@@ -279,7 +279,7 @@ static int check_mail_mbox()
 			s = saprintf("%d,%d\n", m->fhash, f_new);
 
 			{
-				int sent = 0, left = strlen(s);
+				int sent = 0, left = xstrlen(s);
 				char *ptr = s;
 
 				while (left > 0) {
@@ -371,7 +371,7 @@ static int check_mail_maildir()
 				s = saprintf("%d,%d\n", m->fhash, d_new);
 
 			{
-				int sent = 0, left = strlen(s);
+				int sent = 0, left = xstrlen(s);
 				char *ptr = s;
 
 				while (left > 0) {
@@ -486,7 +486,7 @@ static void changed_check_mail(const char *var)
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
 
-			if (!strcmp(t->name, "mail-check")) {
+			if (!xstrcmp(t->name, "mail-check")) {
 				t->period = config_check_mail_frequency;
 				return;
 			}

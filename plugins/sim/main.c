@@ -57,7 +57,7 @@ static int message_encrypt(void *data, va_list ap)
 		return 0;
 	}
 
-	if (strlen(result) > 1989) {
+	if (xstrlen(result) > 1989) {
 		debug("[sim] encrypted message too long - truncated\n");
 		result[1989] = 0;
 	}
@@ -114,7 +114,7 @@ static COMMAND(command_key)
 		struct stat st;
 		int uin;
 
-		if (!session || strncasecmp(session_uid_get(session), "gg:", 3)) {
+		if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
 			printq("generic", "Mo¿na generowaæ klucze tylko dla sesji Gadu-Gadu");
 			return -1;
 		}
@@ -161,7 +161,7 @@ static COMMAND(command_key)
 			return -1;
 		}
 
-		if (!session || strncasecmp(session_uid_get(session), "gg:", 3)) {
+		if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
 			printq("generic", "Mo¿na wysy³aæ klucze tylko dla sesji Gadu-Gadu");
 			return -1;
 		}
@@ -251,7 +251,7 @@ static COMMAND(command_key)
 			struct tm *tm;
 			const char *tmp;
 
-			if ((tmp = strstr(d->d_name, ".pem")) && !tmp[4] && !stat(name, &st) && S_ISREG(st.st_mode)) {
+			if ((tmp = xstrstr(d->d_name, ".pem")) && !tmp[4] && !stat(name, &st) && S_ISREG(st.st_mode)) {
 				int uin = atoi(d->d_name);
 
 				if (list_uin && uin != list_uin)

@@ -76,7 +76,7 @@ static void *gsm_codec_init(const char *from, const char *to)
 	if (!from || !to)
 		return NULL;
 
-	if (!((!strncasecmp(from, "gsm:", 3) && !strcasecmp(to, "pcm:8000,16,1")) || (!strcasecmp(from, "pcm:8000,16,1") && !strncasecmp(to, "gsm:", 3))))
+	if (!((!xstrncasecmp(from, "gsm:", 3) && !xstrcasecmp(to, "pcm:8000,16,1")) || (!xstrcasecmp(from, "pcm:8000,16,1") && !xstrncasecmp(to, "gsm:", 3))))
 		return NULL;
 
 	if (!(codec = gsm_create()))
@@ -88,9 +88,9 @@ static void *gsm_codec_init(const char *from, const char *to)
 	gsm_option(codec, GSM_OPT_LTP_CUT, &value);
 
 	c->codec = codec;
-	c->encoder = (!strncasecmp(from, "pcm:", 3));
+	c->encoder = (!xstrncasecmp(from, "pcm:", 3));
 
-	if (!strcasecmp(from, "gsm:ms") || !strcasecmp(to, "gsm:ms")) {
+	if (!xstrcasecmp(from, "gsm:ms") || !xstrcasecmp(to, "gsm:ms")) {
 		gsm_option(codec, GSM_OPT_WAV49, &value);
 		c->msgsm = 1;
 	}

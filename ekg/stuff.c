@@ -171,7 +171,7 @@ int alias_add(const char *string, int quiet, int append)
 	struct alias a;
 	char *params = NULL;
 
-	if (!string || !(cmd = strchr(string, ' ')))
+	if (!string || !(cmd = xstrchr(string, ' ')))
 		return -1;
 
 	*cmd++ = 0;
@@ -179,20 +179,20 @@ int alias_add(const char *string, int quiet, int append)
 	for (l = aliases; l; l = l->next) {
 		struct alias *j = l->data;
 
-		if (!strcasecmp(string, j->name)) {
+		if (!xstrcasecmp(string, j->name)) {
 			if (!append) {
 				printq("aliases_exist", string);
 				return -1;
 			} else {
 				list_t l;
 
-				list_add(&j->commands, cmd, strlen(cmd) + 1);
+				list_add(&j->commands, cmd, xstrlen(cmd) + 1);
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
 				for (l = commands; l; l = l->next) {
 					command_t *c = l->data;
 
-					if (!strcasecmp(c->name, j->name)) {
+					if (!xstrcasecmp(c->name, j->name)) {
 						xfree(c->params);
 						c->params = xstrdup("?");
 						break;
@@ -210,18 +210,18 @@ int alias_add(const char *string, int quiet, int append)
 		command_t *c = l->data;
 		char *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
 
-		if (!strcasecmp(string, c->name) && !c->alias) {
+		if (!xstrcasecmp(string, c->name) && !c->alias) {
 			printq("aliases_command", string);
 			return -1;
 		}
 
-		if (!strcasecmp(tmp, c->name))
+		if (!xstrcasecmp(tmp, c->name))
 			params = xstrdup(c->params);
 	}
 
 	a.name = xstrdup(string);
 	a.commands = NULL;
-	list_add(&a.commands, cmd, strlen(cmd) + 1);
+	list_add(&a.commands, cmd, xstrlen(cmd) + 1);
 	list_add(&aliases, &a, sizeof(a));
 
 	command_add(NULL, a.name, ((params) ? params: "?"), cmd_alias_exec, 1, "", "", "");
@@ -253,7 +253,7 @@ int alias_remove(const char *name, int quiet)
 
 		l = l->next;
 
-		if (!name || !strcasecmp(a->name, name)) {
+		if (!name || !xstrcasecmp(a->name, name)) {
 			if (name)
 				printq("aliases_del", name);
 			command_remove(NULL, a->name);
@@ -418,7 +418,7 @@ char *buffer_flush(int type, const char *target)
 		if (type != b->type)
 			continue;
 
-		if (target && b->target && strcmp(target, b->target))
+		if (target && b->target && xstrcmp(target, b->target))
 			continue;
 
 		string_append(str, b->line);
@@ -541,7 +541,7 @@ void changed_proxy(const char *var)
 
 	auth = array_make(config_proxy, "@", 0, 0, 0);
 
-	if (!auth[0] || !strcmp(auth[0], "")) {
+	if (!auth[0] || !xstrcmp(auth[0], "")) {
 		array_free(auth);
 		return; 
 	}
@@ -631,18 +631,18 @@ void changed_xxx_reason(const char *var)
 {
 	char *tmp = NULL;
 
-	if (!strcmp(var, "away_reason"))
+	if (!xstrcmp(var, "away_reason"))
 		tmp = config_away_reason;
-	if (!strcmp(var, "back_reason"))
+	if (!xstrcmp(var, "back_reason"))
 		tmp = config_back_reason;
-	if (!strcmp(var, "quit_reason"))
+	if (!xstrcmp(var, "quit_reason"))
 		tmp = config_quit_reason;
 
 	if (!tmp)
 		return;
 
-	if (strlen(tmp) > GG_STATUS_DESCR_MAXSIZE)
-		print("descr_too_long", itoa(strlen(tmp) - GG_STATUS_DESCR_MAXSIZE));
+	if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE)
+		print("descr_too_long", itoa(xstrlen(tmp) - GG_STATUS_DESCR_MAXSIZE));
 }
 #endif
 
@@ -674,7 +674,7 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 	if (!name || !nicklist)
 		return NULL;
 
-	if (nicklist[0] == ',' || nicklist[strlen(nicklist) - 1] == ',') {
+	if (nicklist[0] == ',' || nicklist[xstrlen(nicklist) - 1] == ',') {
 		printq("invalid_params", "chat");
 		return NULL;
 	}
@@ -700,7 +700,7 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 					for (m = u->groups; m; m = m->next) {
 						struct group *g = m->data;
 
-						if (!strcasecmp(gname, g->name)) {
+						if (!xstrcasecmp(gname, g->name)) {
 							if (first++)
 								array_add(&nicks, xstrdup(u->nickname));
 							else {
@@ -732,7 +732,7 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 	for (l = conferences; l; l = l->next) {
 		struct conference *cf = l->data;
 		
-		if (!strcasecmp(name, cf->name)) {
+		if (!xstrcasecmp(name, cf->name)) {
 			printq("conferences_exist", name);
 
 			array_free(nicks);
@@ -745,7 +745,7 @@ struct conference *conference_add(const char *name, const char *nicklist, int qu
 	for (p = nicks, i = 0; *p; p++) {
 		uin_t uin;
 
-		if (!strcmp(*p, ""))
+		if (!xstrcmp(*p, ""))
 		        continue;
 
 		uin = get_uin(*p);
@@ -791,7 +791,7 @@ int conference_remove(const char *name, int quiet)
 
 		l = l->next;
 
-		if (!name || !strcasecmp(c->name, name)) {
+		if (!name || !xstrcasecmp(c->name, name)) {
 			if (name)
 				printq("conferences_del", name);
 			tabnick_remove(c->name);
@@ -852,7 +852,7 @@ struct conference *conference_find(const char *name)
 	for (l = conferences; l; l = l->next) {
 		struct conference *c = l->data;
 
-		if (!strcmp(c->name, name))
+		if (!xstrcmp(c->name, name))
 			return c;
 	}
 	
@@ -876,7 +876,7 @@ int conference_participant(struct conference *c, const char *uid)
 	for (l = c->recipients; l; l = l->next) {
 		char *u = l->data;
 
-		if (!strcasecmp(u, uid))
+		if (!xstrcasecmp(u, uid))
 			return 1;
 	}
 
@@ -937,7 +937,7 @@ struct conference *conference_find_by_uins(uin_t from, uin_t *recipients, int co
 				}
 			}
 
-			if (strcmp(new->str, "") && !c->ignore)
+			if (xstrcmp(new->str, "") && !c->ignore)
 				printq("conferences_joined", new->str, c->name);
 			string_free(new, 1);
 
@@ -1139,8 +1139,8 @@ char *strip_spaces(char *line)
 	
 	for (buf = line; xisspace(*buf); buf++);
 
-	while (xisspace(line[strlen(line) - 1]))
-		line[strlen(line) - 1] = 0;
+	while (xisspace(line[xstrlen(line) - 1]))
+		line[xstrlen(line) - 1] = 0;
 	
 	return buf;
 }
@@ -1239,7 +1239,7 @@ const char *prepare_path(const char *filename, int do_mkdir)
 		if (config_profile) {
 			char *cd = xstrdup(config_dir), *tmp;
 
-			if ((tmp = strrchr(cd, '/')))
+			if ((tmp = xstrrchr(cd, '/')))
 				*tmp = 0;
 
 			if (mkdir(cd, 0700) && errno != EEXIST) {
@@ -1310,21 +1310,21 @@ char *read_file(FILE *f)
 
 	while (fgets(buf, sizeof(buf), f)) {
 		int first = (res) ? 0 : 1;
-		size_t new_size = ((res) ? strlen(res) : 0) + strlen(buf) + 1;
+		size_t new_size = ((res) ? xstrlen(res) : 0) + xstrlen(buf) + 1;
 
 		res = xrealloc(res, new_size);
 		if (first)
 			*res = 0;
-		strcpy(res + strlen(res), buf);
+		xstrcpy(res + xstrlen(res), buf);
 
-		if (strchr(buf, '\n'))
+		if (xstrchr(buf, '\n'))
 			break;
 	}
 
-	if (res && strlen(res) > 0 && res[strlen(res) - 1] == '\n')
-		res[strlen(res) - 1] = 0;
-	if (res && strlen(res) > 0 && res[strlen(res) - 1] == '\r')
-		res[strlen(res) - 1] = 0;
+	if (res && xstrlen(res) > 0 && res[xstrlen(res) - 1] == '\n')
+		res[xstrlen(res) - 1] = 0;
+	if (res && xstrlen(res) > 0 && res[xstrlen(res) - 1] == '\r')
+		res[xstrlen(res) - 1] = 0;
 
 	return res;
 }
@@ -1372,10 +1372,10 @@ int on_off(const char *value)
 	if (!value)
 		return -1;
 
-	if (!strcasecmp(value, "on") || !strcasecmp(value, "true") || !strcasecmp(value, "yes") || !strcasecmp(value, "tak") || !strcmp(value, "1"))
+	if (!xstrcasecmp(value, "on") || !xstrcasecmp(value, "true") || !xstrcasecmp(value, "yes") || !xstrcasecmp(value, "tak") || !xstrcmp(value, "1"))
 		return 1;
 
-	if (!strcasecmp(value, "off") || !strcasecmp(value, "false") || !strcasecmp(value, "no") || !strcasecmp(value, "nie") || !strcmp(value, "0"))
+	if (!xstrcasecmp(value, "off") || !xstrcasecmp(value, "false") || !xstrcasecmp(value, "no") || !xstrcasecmp(value, "nie") || !xstrcmp(value, "0"))
 		return 0;
 
 	return -1;
@@ -1413,7 +1413,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 			for (l = timers; l; l = l->next) {
 				struct timer *tt = l->data;
 
-				if (!strcmp(tt->name, itoa(i))) {
+				if (!xstrcmp(tt->name, itoa(i))) {
 					gotit = 1;
 					break;
 				}
@@ -1458,7 +1458,7 @@ int timer_remove(plugin_t *plugin, const char *name)
 
 		l = l->next;
 
-		if (t->plugin == plugin && !strcasecmp(name, t->name)) {
+		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
 			xfree(t->name);
 			list_remove(&timers, t, 1);
 			removed = 1;
@@ -1545,17 +1545,17 @@ char *xstrmid(const char *str, int start, int length)
 	if (!str)
 		return xstrdup("");
 
-	if (start > strlen(str))
-		start = strlen(str);
+	if (start > xstrlen(str))
+		start = xstrlen(str);
 
 	if (length == -1)
-		length = strlen(str) - start;
+		length = xstrlen(str) - start;
 
 	if (length < 1)
 		return xstrdup("");
 
-	if (length > strlen(str) - start)
-		length = strlen(str) - start;
+	if (length > xstrlen(str) - start)
+		length = xstrlen(str) - start;
 	
 	res = xmalloc(length + 1);
 	
@@ -1634,15 +1634,15 @@ char color_map(unsigned char r, unsigned char g, unsigned char b)
 /*
  * strcasestr()
  *
- * robi to samo co strstr() tyle ¿e bez zwracania uwagi na wielko¶æ
+ * robi to samo co xstrstr() tyle ¿e bez zwracania uwagi na wielko¶æ
  * znaków.
  */
 char *strcasestr(const char *haystack, const char *needle)
 {
-	int i, hlen = strlen(haystack), nlen = strlen(needle);
+	int i, hlen = xstrlen(haystack), nlen = xstrlen(needle);
 
 	for (i = 0; i <= hlen - nlen; i++) {
-		if (!strncasecmp(haystack + i, needle, nlen))
+		if (!xstrncasecmp(haystack + i, needle, nlen))
 			return (char*) (haystack + i);
 	}
 
@@ -1661,7 +1661,7 @@ int say_it(const char *str)
 {
 	pid_t pid;
 
-	if (!config_speech_app || !str || !strcmp(str, ""))
+	if (!config_speech_app || !str || !xstrcmp(str, ""))
 		return -1;
 
 	if (speech_pid) {
@@ -1725,7 +1725,7 @@ static char base64_charset[] =
 char *base64_encode(const char *buf)
 {
 	char *out, *res;
-	int i = 0, j = 0, k = 0, len = strlen(buf);
+	int i = 0, j = 0, k = 0, len = xstrlen(buf);
 	
 	res = out = xmalloc((len / 3 + 1) * 4 + 2);
 
@@ -1782,16 +1782,16 @@ char *base64_decode(const char *buf)
 	const char *end;
 	int index = 0;
 
-	save = res = xcalloc(1, (strlen(buf) / 4 + 1) * 3 + 2);
+	save = res = xcalloc(1, (xstrlen(buf) / 4 + 1) * 3 + 2);
 
-	end = buf + strlen(buf);
+	end = buf + xstrlen(buf);
 
 	while (*buf && buf < end) {
 		if (*buf == '\r' || *buf == '\n') {
 			buf++;
 			continue;
 		}
-		if (!(foo = strchr(base64_charset, *buf)))
+		if (!(foo = xstrchr(base64_charset, *buf)))
 			foo = base64_charset;
 		val = (int)(foo - base64_charset);
 		buf++;
@@ -1836,18 +1836,18 @@ char *split_line(char **ptr)
 {
         char *foo, *res;
 
-        if (!ptr || !*ptr || !strcmp(*ptr, ""))
+        if (!ptr || !*ptr || !xstrcmp(*ptr, ""))
                 return NULL;
 
         res = *ptr;
 
-        if (!(foo = strchr(*ptr, '\n')))
-                *ptr += strlen(*ptr);
+        if (!(foo = xstrchr(*ptr, '\n')))
+                *ptr += xstrlen(*ptr);
         else {
                 *ptr = foo + 1;
                 *foo = 0;
-                if (strlen(res) > 1 && res[strlen(res) - 1] == '\r')
-                        res[strlen(res) - 1] = 0;
+                if (xstrlen(res) > 1 && res[xstrlen(res) - 1] == '\r')
+                        res[xstrlen(res) - 1] = 0;
         }
 
         return res;
@@ -1883,13 +1883,13 @@ int strtrim(char *s)
 	if (!s)
 		return -1;
 	
-	while (xisspace(s[strlen(s) - 1]))
-		s[strlen(s) - 1] = 0;
+	while (xisspace(s[xstrlen(s) - 1]))
+		s[xstrlen(s) - 1] = 0;
 
 	for (t = s; xisspace(*t); t++)
 		;
 	
-	memmove(s, t, strlen(t) + 1);
+	memmove(s, t, xstrlen(t) + 1);
 
 	return 0;
 }
@@ -1906,12 +1906,12 @@ char *ekg_draw_descr(const char *status)
 	char var[100], file[100];
 	variable_t *v;	
 
-	if (!strcmp(status, EKG_STATUS_NA) || !strcmp(status, EKG_STATUS_INVISIBLE)) {
-		strcpy(var, "quit_reason");
-		strcpy(file, "quit.reasons");
-	} else if (!strcmp(status, EKG_STATUS_AVAIL)) {
-		strcpy(var, "back_reason");
-		strcpy(file, "back.reasons");
+	if (!xstrcmp(status, EKG_STATUS_NA) || !xstrcmp(status, EKG_STATUS_INVISIBLE)) {
+		xstrcpy(var, "quit_reason");
+		xstrcpy(file, "quit.reasons");
+	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
+		xstrcpy(var, "back_reason");
+		xstrcpy(file, "back.reasons");
 	} else {
 		snprintf(var, sizeof(var), "%s_reason", status);
 		snprintf(file, sizeof(file), "%s.reasons", status);
@@ -1925,7 +1925,7 @@ char *ekg_draw_descr(const char *status)
 	if (!value)
 		return NULL;
 
-	if (!strcmp(value, "*"))
+	if (!xstrcmp(value, "*"))
 		return random_line(prepare_path(file, 0));
 
 	return xstrdup(value);
@@ -1946,22 +1946,22 @@ uint32_t *ekg_sent_message_format(const char *text)
 	int len;
 
 	/* je¶li nie stwierdzono znaków kontrolnych, spadamy */
-//	if (!strpbrk(text, "\x02\x03\x12\x14\x1f"))
+//	if (!xstrpbrk(text, "\x02\x03\x12\x14\x1f"))
 //		return NULL;
 
 	/* oblicz d³ugo¶æ tekstu bez znaczków formatuj±cych */
 	for (p = text, len = 0; *p; p++) {
-		if (!strchr("\x02\x03\x12\x14\x1f", *p))
+		if (!xstrchr("\x02\x03\x12\x14\x1f", *p))
 			len++;
 	}
 
-	if (len == strlen(text))
+	if (len == xstrlen(text))
 		return NULL;
 	
 	newtext = xmalloc(len + 1);
 	format = xmalloc(len * 4);
 
-	end = text + strlen(text);
+	end = text + xstrlen(text);
 
 	for (p = text, q = newtext, attr = 0; p < end; ) {
 		int j;
@@ -2022,7 +2022,7 @@ uint32_t *ekg_sent_message_format(const char *text)
 
 /*
  * porównuje dwa ci±gi o okre¶lonej przez n d³ugo¶ci
- * dzia³a analogicznie do strncasecmp()
+ * dzia³a analogicznie do xstrncasecmp()
  * obs³uguje polskie znaki
  */
 
@@ -2078,9 +2078,9 @@ char *str_tolower(const char *text) {
         int i;
         char *tmp;
 
-        tmp = xmalloc(strlen(text) + 1);
+        tmp = xmalloc(xstrlen(text) + 1);
 
-        for(i=0; i < strlen(text); i++)
+        for(i=0; i < xstrlen(text); i++)
                 tmp[i] = tolower_pl(text[i]);
         tmp[i] = '\0';
         return tmp;

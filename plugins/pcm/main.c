@@ -50,7 +50,7 @@ static pcm_codec_t *pcm_codec_find(const char *cid)
 	list_t l;
 	int id;
 
-	if (strncasecmp(cid, "pcm:", 4) || !(id = atoi(cid + 4)))
+	if (xstrncasecmp(cid, "pcm:", 4) || !(id = atoi(cid + 4)))
 		return NULL;
 
 	for (l = pcm_codecs; l; l = l->next) {
@@ -90,7 +90,7 @@ static int pcm_codec_init(void *data, va_list ap)
 	if (*p_cid)
 		return 0;
 
-	if (strncasecmp(from, "pcm:", 4) || strncasecmp(to, "pcm:", 4))
+	if (xstrncasecmp(from, "pcm:", 4) || xstrncasecmp(to, "pcm:", 4))
 		return 0;
 
 	afrom = array_make(from + 4, ",", 0, 0, 0);

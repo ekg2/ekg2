@@ -246,12 +246,12 @@ int string_append_n(string_t s, const char *str, int count)
 	}
 
 	if (count == -1)
-		count = strlen(str);
+		count = xstrlen(str);
 
 	string_realloc(s, s->len + count);
 
 	s->str[s->len + count] = 0;
-	strncpy(s->str + s->len, str, count);
+	xstrncpy(s->str + s->len, str, count);
 
 	s->len += count;
 
@@ -279,7 +279,7 @@ void string_insert_n(string_t s, int index, const char *str, int count)
 		return;
 
 	if (count == -1)
-		count = strlen(str);
+		count = xstrlen(str);
 
 	if (index > s->len)
 		index = s->len;
@@ -314,8 +314,8 @@ string_t string_init(const char *value)
 		value = "";
 
 	tmp->str = xstrdup(value);
-	tmp->len = strlen(value);
-	tmp->size = strlen(value) + 1;
+	tmp->len = xstrlen(value);
+	tmp->size = xstrlen(value) + 1;
 
 	return tmp;
 }
@@ -429,7 +429,7 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 			last = 1;
 		
 		if (trim) {
-			while (*p && strchr(sep, *p))
+			while (*p && xstrchr(sep, *p))
 				p++;
 			if (!*p)
 				break;
@@ -482,9 +482,9 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 			p = (*q) ? q + 1 : q;
 
 		} else {
-			for (q = p, len = 0; *q && (last || !strchr(sep, *q)); q++, len++);
+			for (q = p, len = 0; *q && (last || !xstrchr(sep, *q)); q++, len++);
 			token = xcalloc(1, len + 1);
-			strncpy(token, p, len);
+			xstrncpy(token, p, len);
 			token[len] = 0;
 			p = q;
 		}
@@ -605,9 +605,9 @@ int array_contains(char **array, const char *string, int casesensitive)
 		return 0;
 
 	for (i = 0; array[i]; i++) {
-		if (casesensitive && !strcmp(array[i], string))
+		if (casesensitive && !xstrcmp(array[i], string))
 			return 1;
-		if (!casesensitive && !strcasecmp(array[i], string))
+		if (!casesensitive && !xstrcasecmp(array[i], string))
 			return 1;
 	}
 
@@ -633,7 +633,7 @@ int array_item_contains(char **array, const char *string, int casesensitive)
                 return 0;
 
         for (i = 0; array[i]; i++) {
-                if (casesensitive && strstr(array[i], string))
+                if (casesensitive && xstrstr(array[i], string))
                         return 1;
                 if (!casesensitive && strcasestr(array[i], string))
                         return 1;
