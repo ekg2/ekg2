@@ -310,8 +310,6 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			}
 
 			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right; 
-			if (l->margin_left != -1)
-				width -= config_margin_size;
 
 			if ((w->frames & WF_LEFT))
 				width -= 1;
