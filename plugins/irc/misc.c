@@ -353,7 +353,7 @@ IRC_COMMAND(irc_c_error)
 		 * etc.. wszystko co rozlacza fd 
 		 */
 		print_window(NULL, s, 0,
-				"IRC_ERR_ONLY1",
+				"IRC_ERR_JUSTONE",
 				session_name(s), IOK2(2));
 		irc_command_disconnect(NULL, NULL, s, NULL, 0);
 		return 0;
@@ -400,6 +400,16 @@ IRC_COMMAND(irc_c_error)
 					session_name(s), param[3], IOK2(4));
 			if (j->connecting) {
 				altnick = (char *) session_get(s, "alt_nick");
+				/* hm, mozna pobierac session_get(s, "nickname")
+				 * i potem porownywac do param[3] jesli !xstrcmp()
+				 * i altnick istnieje to wysylamy, czyli w sumie wariant gorszy niz 
+				 * altnick && xstrcmp()
+				 *
+				 * hmm a masz pewno¶æ ¿e server ciê rzeczywi¶æie zarejstruje
+				 * pod tym co chcia³e¶ ? ;) [nie chce mi siê szukaæ po rfc,
+				 * ale je¶li tak to mo¿emy tak zrobiæ]
+				 * pozatym wariant z altnick && nie jest wcale taki z³y
+				 */
 				/* XXX: ZBADAÆ */
 				if (xstrcmp(param[3], altnick)) {
 					print_window(NULL, s, 0, "IRC_TRYNICK",
@@ -540,6 +550,7 @@ IRC_COMMAND(irc_c_list)
 					print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
 			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s));
 			mode_already = 1; 
+			return 0;
 	}
 	else mode_already = 0;
 

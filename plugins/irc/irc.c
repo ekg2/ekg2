@@ -206,7 +206,7 @@ int irc_common_bind(session_t *s, int fd, const char *ip, int port)
 
 
 	ipv4.sin_family = PF_INET;
-	ipv4.sin_port = htons(0);
+	ipv4.sin_port = htons(port);
 	p = (struct sockaddr *)&ipv4;
 	plen = sizeof(struct sockaddr_in);
 #ifdef HAVE_INET_PTON
