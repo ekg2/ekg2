@@ -6,6 +6,9 @@ d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
 przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
+// 2004-04-19
+- poprawiony b³±d wieszaj±cy w niektórych wypadkach ekg - protokó³ GG (del)
+
 // 2004-04-18
 - poprawione complete() wed³ug nastêpuj±cych kryteriów:
   - TAB powinien prze³±czaæ miêdzy kolejnymi dope³nieniami

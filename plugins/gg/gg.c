@@ -588,7 +588,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	if (e->event.msg.sender == 0)
 		__class = EKG_MSGCLASS_SYSTEM;
 
-	for (i = 0; e->event.msg.recipients_count; i++)
+	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
 	
 	if (e->event.msg.formats && e->event.msg.formats_length) {
