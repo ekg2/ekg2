@@ -473,6 +473,10 @@ static void jabber_handle_disconnect(session_t *s)
 		j->obuf_len = 0;
 	}
 
+#ifdef HAVE_GNUTLS
+	if (j->using_ssl)
+		gnutls_bye(j->ssl_session, GNUTLS_SHUT_RDWR);
+#endif
 	session_connected_set(s, 0);
 	j->connecting = 0;
 	if (j->parser)
@@ -481,10 +485,15 @@ static void jabber_handle_disconnect(session_t *s)
 	close(j->fd);
 	j->fd = -1;
 
+#ifdef HAVE_GNUTLS
+	if (j->using_ssl) {
+		gnutls_deinit(j->ssl_session);
+		gnutls_global_deinit();
+	}
+#endif
 	reconnect_delay = session_int_get(s, "auto_reconnect");
 	if (reconnect_delay && reconnect_delay != -1) 
 		timer_add(&jabber_plugin, "reconnect", reconnect_delay, 0, jabber_reconnect_handler, xstrdup(s->uid));
-
 
 }
 
@@ -553,10 +562,16 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 		goto fail;
 	}
 
-	if ((len = read(fd, buf, 4095)) < 1) {
+#ifdef HAVE_GNUTLS
+	if (j->using_ssl && ((len = gnutls_record_recv(j->ssl_session, buf, 4095))<1)) {
 		print("generic_error", strerror(errno));
 		goto fail;
-	}
+	} else
+#endif
+		if ((len = read(fd, buf, 4095)) < 1) {
+			print("generic_error", strerror(errno));
+			goto fail;
+		}
 
 	buf[len] = 0;
 
@@ -611,6 +626,15 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	const char *port_s = session_get(s, "port");
 	int port = (port_s) ? atoi(port_s) : 5222;
 	struct sockaddr_in sin;
+#ifdef HAVE_GNUTLS
+	const int use_ssl = session_int_get(s, "use_ssl");
+	const int ssl_port_s = session_int_get(s, "ssl_port");
+	int ssl_port = (ssl_port_s != -1) ? ssl_port_s : 5223;
+	gnutls_certificate_credentials xcred;
+	/* Allow connections to servers that have OpenPGP keys as well. */
+	const int cert_type_priority[3] = {GNUTLS_CRT_X509,
+		GNUTLS_CRT_OPENPGP, 0};
+#endif
 
 	if (type != 0)
 		return;
@@ -654,10 +678,15 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	}
 
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(port);
 	sin.sin_addr.s_addr = a.s_addr;
+#ifdef HAVE_GNUTLS
+	if (use_ssl)
+		sin.sin_port = htons(ssl_port);
+	else
+#endif
+		sin.sin_port = htons(port);
 
-	debug("[jabber] connecting to %s:%d\n", inet_ntoa(sin.sin_addr), port);
+	debug("[jabber] connecting to %s:%d\n", inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
 	
 	connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
@@ -667,6 +696,39 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 		j->connecting = 0;
 		return;
 	}
+
+#ifdef HAVE_GNUTLS
+	j->using_ssl = 0;
+	if (use_ssl) {
+		int ret, retrycount = 65535; // insane
+		gnutls_global_init();
+		gnutls_certificate_allocate_credentials(&xcred);
+		/* XXX - ~/.ekg/certs/server.pem */
+		gnutls_certificate_set_x509_trust_file(xcred, "brak", GNUTLS_X509_FMT_PEM);
+		gnutls_init(&(j->ssl_session), GNUTLS_CLIENT);
+		gnutls_set_default_priority(j->ssl_session);
+		gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
+		gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, xcred);
+
+		gnutls_transport_set_ptr(j->ssl_session, (gnutls_transport_ptr)(j->fd));
+
+		do { 
+			ret = gnutls_handshake(j->ssl_session);
+			retrycount--;
+		} while (((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN)) && retrycount);
+
+		if (ret < 0) {
+			debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
+			print("generic_error", gnutls_strerror(ret));
+			j->connecting = 0;
+			gnutls_deinit(j->ssl_session);
+			gnutls_certificate_free_credentials(xcred);
+			gnutls_global_deinit();
+			return;
+		}
+		j->using_ssl = 1;
+	} // use_ssl
+#endif
 
 	watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, data);
 }
@@ -679,6 +741,10 @@ int jabber_status_show_handle(void *data, va_list ap)
 	userlist_t *u;
 	const char *port_s = session_get(s, "port");
 	int port = (port_s) ? atoi(port_s) : 5222;
+#ifdef HAVE_GNUTLS
+	const int ssl_port_s = session_int_get(s, "ssl_port");
+	int ssl_port = (ssl_port_s != -1) ? ssl_port_s : 5223;
+#endif
 	struct tm *t;
 	time_t n;
 	int now_days;
@@ -696,7 +762,13 @@ int jabber_status_show_handle(void *data, va_list ap)
 		print("show_status_uid", s->uid);
 
 	// serwer
-	print("show_status_server", j->server, itoa(port));
+#ifdef HAVE_GNUTLS
+	if (j->using_ssl)
+		print("show_status_server_tls", j->server, itoa(ssl_port));
+	else
+#endif
+		print("show_status_server", j->server, itoa(port));
+
 	if (j->connecting)
 		print("show_status_connecting");
 
@@ -1336,7 +1408,9 @@ int jabber_plugin_init()
         plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0);
 	plugin_var_add(&jabber_plugin, "port", VAR_INT, itoa(5222), 0);
 	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0);
-        plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
+	plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
+	plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, itoa(5223), 0);
+	plugin_var_add(&jabber_plugin, "use_ssl", VAR_INT, itoa(1), 0);
 
 	format_add("jabber_auth_subscribe", "%> (%2) %1 prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n", 1);
 	format_add("jabber_auth_unsubscribe", "%> (%2) %1 prosi o autoryzacjê usuniêcia. U¿yj \"/auth -c %1\" aby usun±æ.%n\n", 1);

@@ -8,6 +8,10 @@
 
 #include <expat.h>
 
+#ifdef HAVE_GNUTLS
+#include <gnutls/gnutls.h>
+#endif
+
 struct xmlnode_s {
 	char *name;
 	char *data;
@@ -24,6 +28,10 @@ typedef struct xmlnode_s xmlnode_t;
 
 typedef struct {
 	int fd;				/* deskryptor po³±czenia */
+#ifdef HAVE_GNUTLS
+	gnutls_session ssl_session;	/* sesja ssla */
+	char using_ssl;			/* czy polaczono uzywajac ssl */
+#endif
 	int id;				/* id zapytañ */
 	XML_Parser parser;		/* instancja parsera expata */
 	char *server;			/* nazwa serwera */

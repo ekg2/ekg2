@@ -4,6 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <ekg2-config.h>
+
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -165,8 +167,13 @@ void jabber_handle_write(int type, int fd, int watch, void *data)
 {
 	jabber_private_t *j = data;
 	int res;
-	
-	res = write(j->fd, j->obuf, j->obuf_len);
+
+#ifdef HAVE_GNUTLS
+	if (j->using_ssl)
+		res = gnutls_record_send(j->ssl_session, j->obuf, j->obuf_len);	
+	else
+#endif
+		res = write(j->fd, j->obuf, j->obuf_len);
 
 	if (res == -1) {
 		debug("[jabber] write() failed: %s\n", strerror(errno));
@@ -183,7 +190,7 @@ void jabber_handle_write(int type, int fd, int watch, void *data)
 		j->obuf_len = 0;
 		return;
 	}
-
+	
 	memmove(j->obuf, j->obuf + res, j->obuf_len - res);
 	j->obuf_len -= res;
 
@@ -220,7 +227,12 @@ int jabber_write(jabber_private_t *j, const char *format, ...)
 		int res;
 
 		len = xstrlen(text);
-		res = write(j->fd, text, len);
+#ifdef HAVE_GNUTLS
+		if (j->using_ssl)
+			res = gnutls_record_send(j->ssl_session, text, len);
+		else
+#endif
+			res = write(j->fd, text, len);
 
 		if (res == len) {
 			xfree(text);
