@@ -1347,27 +1347,35 @@ COMMAND(gg_command_modify)
 	return res;
 }
 
+static void gg_checked_timer_handler(int type, void *data)
+{
+        gg_currently_checked_t *c = (gg_currently_checked_t *) data;
+	list_t l;
+
+	if (type == 1) {
+		xfree(c);
+		return;
+	}
+
+	for (l = gg_currently_checked; l; l = l->next) {
+		gg_currently_checked_t *c2 = l->data;
+
+		if (!session_compare(c2->session, c->session) && !xstrcmp(c2->uid, c->uid)) {
+			print("gg_user_is_not_connected", format_user(c->session, c->uid));
+			list_remove(&gg_currently_checked, c, 1);
+			return; 
+		}
+	}
+	
+}
+
 COMMAND(gg_command_check_conn)
 {
-	#define SIZE 20
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
 	char *tmp;
+	gg_currently_checked_t c, *c_timer;
 	const char *par;
-
-	struct gg_msg_richtext_format_img {
-		struct gg_msg_richtext rt;
-		struct gg_msg_richtext_format f;
-		struct gg_msg_richtext_image image;
-	}msg;
-
-	msg.rt.flag=2;
-	msg.rt.length=13;
-	msg.f.position=0;
-	msg.f.font=0x80;
-	msg.image.unknown1=0x0109;
-	msg.image.size=SIZE;
-	msg.image.crc32=GG_CRC32_INVISIBLE; 
 
 	if (!session_check(session, 1, "gg")) {
 		printq("invalid_session");
@@ -1376,6 +1384,11 @@ COMMAND(gg_command_check_conn)
 
 	if (!params[0] && !window_current->target) {
 		printq("not_enough_params", name);
+		return -1;
+	}
+	
+	if (!g->sess || !session_connected_get(session)) {
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -1390,11 +1403,23 @@ COMMAND(gg_command_check_conn)
 		return -1;
 	}
 
-
-	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
-		debug("-- check_conn - shits happens\n");
+	if (gg_image_request(g->sess, atoi(u->uid + 3), 1, GG_CRC32_INVISIBLE) == -1)
 		return -1;
-	}
+
+	c_timer = xmalloc(sizeof(gg_currently_checked_t));
+
+        memset(&c, 0, sizeof(c));
+
+	c_timer->uid = u->uid;
+	c_timer->session = session;
+
+        c.uid = u->uid;
+        c.session = session;
+
+	list_add(&gg_currently_checked, &c, sizeof(c));
+
+	/* if there is no reply after 15 secs user is not connected */
+	timer_add(&gg_plugin, NULL, 15, 0, gg_checked_timer_handler, c_timer);
 
 	return 0;
 }

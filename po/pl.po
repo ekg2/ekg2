@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-29 12:25+0100\n"
+"POT-Creation-Date: 2005-03-13 16:14+0100\n"
 "PO-Revision-Date: 2005-01-29 12:32+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -761,8 +761,10 @@ msgid "%! (%1) Invalid \"server\".%n\n"
 msgstr "%! (%1) B³êdna warto¶æ zmiennej sesyjnej \"server\".%n\n"
 
 #: ekg/themes.c:1279
-msgid "%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
-msgstr "%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
+msgid ""
+"%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
+msgstr ""
+"%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
 
 #: ekg/themes.c:1280
 msgid "%! (%1) EKG2 won't try to connect anymore - use /connect.%n\n"
@@ -1358,7 +1360,8 @@ msgstr "%! Mo¿na prowadziæ tylko jedn± rozmowê g³osow± na raz\n"
 
 #: ekg/themes.c:1481
 msgid "%! Voice chat not compiled in. See %Tdocs/voip.txt%n\n"
-msgstr "%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
+msgstr ""
+"%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
 
 #: ekg/themes.c:1482
 msgid ""
@@ -1780,103 +1783,113 @@ msgstr "%> Priorytet plugin %T%1%n zosta³ ustawiony na%T%2%n\n"
 msgid "%> Plugins prio setted to default\n"
 msgstr "%> Priorytet pluginu zosta³ ustawiony na domy¶lny\n"
 
-#: plugins/gg/gg.c:1149
+#: plugins/gg/gg.c:1164
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr "%> Token zapisano do pliku %T%1%n\n"
 
-#: plugins/gg/gg.c:1150
+#: plugins/gg/gg.c:1165
 msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
-#: plugins/gg/gg.c:1152
+#: plugins/gg/gg.c:1167
 msgid "%! Error getting token: %1\n"
 msgstr "%! B³±d podczas pobierania tokena\n"
 
-#: plugins/gg/gg.c:1153
+#: plugins/gg/gg.c:1168
 msgid "%! Token getting timeout\n"
 msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
-#: plugins/gg/gg.c:1154
+#: plugins/gg/gg.c:1169
 msgid "%! Your operating system doesn't support tokens\n"
-msgstr "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
+msgstr ""
+"%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
 
-#: plugins/gg/gg.c:1155
+#: plugins/gg/gg.c:1170
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
-#: plugins/gg/gg.c:1156
+#: plugins/gg/gg.c:1171
 msgid "%> User %T%1%n is connected\n"
 msgstr "%> U¿ytkownik %1 jest po³±czony\n"
 
-#: plugins/gg/gg.c:1157
+#: plugins/gg/gg.c:1172
+msgid "%> User %T%1%n is not connected\n"
+msgstr "%> U¿ytkownik %1 nie jest po³±czony\n"
+
+#: plugins/gg/gg.c:1173
 msgid "%! Error sending image\n"
 msgstr "%! B³±d podczas wysy³ania obrazka\n"
 
-#: plugins/gg/gg.c:1158
+#: plugins/gg/gg.c:1174
 msgid "%> Image sent properly\n"
 msgstr "%> Obrazek zosta³ wys³any prawid³owo\n"
 
-#: plugins/irc/irc.c:1491
+#: plugins/irc/irc.c:1576
 msgid "%> %Y%2%n has joined %4\n"
 msgstr "%> %Y%2%n do³±czy³ do %4\n"
 
-#: plugins/irc/irc.c:1492
+#: plugins/irc/irc.c:1577
+#, fuzzy
+msgid "%> %RYou%n have joined %4\n"
+msgstr "%> %Y%2%n do³±czy³ do %4\n"
+
+#: plugins/irc/irc.c:1578
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr "%> %g%2%n opu¶ci³ %4 (%5)\n"
 
-#: plugins/irc/irc.c:1493
+#: plugins/irc/irc.c:1579
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> %Y%2%n zosta³ wykopany przez %R%3%n z %5 (%6)\n"
 
-#: plugins/irc/irc.c:1494
+#: plugins/irc/irc.c:1580
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> Zosta³e¶ wykopany z %R%3%n przez %5 (%6)\n"
 
-#: plugins/irc/irc.c:1495
+#: plugins/irc/irc.c:1581
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr "%> %Y%2%n opu¶ci³ irc (%4)\n"
 
-#: plugins/irc/irc.c:1496
+#: plugins/irc/irc.c:1582
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr "%> %Y%2%n wys³a³ nieznany CTCP %3: (%4)\n"
 
-#: plugins/irc/irc.c:1497
+#: plugins/irc/irc.c:1583
 msgid "%> %y%e* %2%n %4\n"
 msgstr "%> %y%e* %2%n %4\n"
 
-#: plugins/irc/irc.c:1498
+#: plugins/irc/irc.c:1584
 msgid "%> %Y%e* %2%n %4\n"
 msgstr "%> %Y%e* %2%n %4\n"
 
-#: plugins/irc/irc.c:1499
+#: plugins/irc/irc.c:1585
 msgid "%> %y%h* %2%n %5\n"
 msgstr "%> %y%h* %2%n %5\n"
 
-#: plugins/irc/irc.c:1500
+#: plugins/irc/irc.c:1586
 msgid "%> %Y%h* %2%n %5\n"
 msgstr "%> %Y%h* %2%n %5\n"
 
-#: plugins/irc/irc.c:1501
+#: plugins/irc/irc.c:1587
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5 od %4\n"
 
-#: plugins/irc/irc.c:1502
+#: plugins/irc/irc.c:1588
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5\n"
 
-#: plugins/irc/irc.c:1503
+#: plugins/irc/irc.c:1589
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr "%> %Y%2%n odpowied¼ CTCP od %3: %5\n"
 
-#: plugins/irc/irc.c:1518
+#: plugins/irc/irc.c:1604
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr "%> Nie mo¿na pisaæ na kana³ %T%2%n\n"
 
-#: plugins/irc/irc.c:1533
+#: plugins/irc/irc.c:1633
 msgid "%G||%n away     : %2 - %3\n"
 msgstr "%G||%n zajêty     : %2 - %3\n"
 
-#: plugins/irc/irc.c:1535
+#: plugins/irc/irc.c:1635 plugins/irc/irc.c:1638
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
@@ -1886,68 +1899,93 @@ msgstr ""
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n prawdziwa nazwa : %6\n"
 
-#: plugins/irc/irc.c:1537
+#: plugins/irc/irc.c:1641
 msgid "%G||%n %|channels : %3\n"
 msgstr "%G||%n %|kana³y : %3\n"
 
-#: plugins/irc/irc.c:1538
+#: plugins/irc/irc.c:1642
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr "%G||%n %|serwer   : %3 (%4)\n"
 
-#: plugins/irc/irc.c:1539
+#: plugins/irc/irc.c:1643
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr "%G||%n %|ircOp    : %3\n"
 
-#: plugins/irc/irc.c:1540
+#: plugins/irc/irc.c:1644
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr "%G||%n %|brak aktywno¶ci     : %3 (zalogowany: %4)\n"
 
-#: plugins/irc/irc.c:1541
+#: plugins/irc/irc.c:1645 plugins/irc/irc.c:1646
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr "%G`+===%g-----\n"
 
-#: plugins/irc/irc.c:1543
+#: plugins/irc/irc.c:1648
 msgid "%> Topic %2: %3\n"
 msgstr "%> Temat %2: %3\n"
 
-#: plugins/irc/irc.c:1545
+#: plugins/irc/irc.c:1650
 msgid "%> set by %2 on %4"
 msgstr "%> ustawiony przez %2 dnia %4"
 
-#: plugins/irc/irc.c:1546
+#: plugins/irc/irc.c:1651
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr "%> %T%2%n zmieni³ temat na %T%4%n: %5\n"
 
-#: plugins/irc/irc.c:1547
+#: plugins/irc/irc.c:1652
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr "%> %T%2%n wyczy¶ci³ temat na %T%4%n\n"
 
-#: plugins/irc/irc.c:1548
-msgid "%> %2/%4 sets mode%5\n"
+#: plugins/irc/irc.c:1653
+#, fuzzy
+msgid "%> %2/%4 sets mode [%5]\n"
 msgstr "%> %2/%4 ustawia tryb%5\n"
 
-#: plugins/irc/irc.c:1549
+#: plugins/irc/irc.c:1654
+#, fuzzy
+msgid "%> %2 mode is [%3]\n"
+msgstr "%> %2/%4 ustawia tryb%5\n"
+
+#: plugins/irc/irc.c:1655
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr "%> (%1) %2 ustawia tryb %3 na Tobie\n"
 
-#: plugins/irc/irc.c:1551
+#: plugins/irc/irc.c:1657
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr "%) (%1) ping/pong %c%2%n\n"
 
-#: plugins/irc/irc.c:1552
+#: plugins/irc/irc.c:1658
 msgid "%> You are now known as %G%3%n\n"
 msgstr "%> Jeste¶ teraz znany jako %G%3%n\n"
 
-#: plugins/irc/irc.c:1553
+#: plugins/irc/irc.c:1659
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr "%> %g%2%n jest znany jako %G%4%n\n"
 
-#: plugins/irc/irc.c:1554
+#: plugins/irc/irc.c:1660
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1004
+#: plugins/jabber/jabber.c:407 plugins/jabber/jabber.c:408
+#: plugins/jabber/jabber.c:409 plugins/jabber/jabber.c:410
+#: plugins/jabber/jabber.c:411 plugins/jabber/jabber.c:412
+#: plugins/jabber/jabber.c:435 plugins/jabber/jabber.c:436
+#: plugins/jabber/jabber.c:437 plugins/jabber/jabber.c:438
+#: plugins/jabber/jabber.c:467
+#, fuzzy
+msgid "unknown"
+msgstr "%Mnieznany%n"
+
+#: plugins/jabber/jabber.c:462
+#, c-format
+msgid "%03dd %02dh %02dm %02ds ago"
+msgstr ""
+
+#: plugins/jabber/jabber.c:465
+msgid "very long ago"
+msgstr ""
+
+#: plugins/jabber/jabber.c:1061
 msgid ""
 "%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/"
 "auth -d %1\" to refuse.%n\n"
@@ -1955,56 +1993,57 @@ msgstr ""
 "%> (%2) %T%1%n prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby "
 "zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n"
 
-#: plugins/jabber/jabber.c:1005
+#: plugins/jabber/jabber.c:1062
 msgid "%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"
 msgstr ""
 "%> (%2) %T%1%n prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby "
 "usun±æ.%n\n"
 
-#: plugins/jabber/jabber.c:1006
+#: plugins/jabber/jabber.c:1063
 msgid "%! (%1) Error parsing XML%n\n"
 msgstr "%! (%1) B³±d parsowania XMLa%n\n"
 
-#: plugins/jabber/jabber.c:1007
+#: plugins/jabber/jabber.c:1064
 msgid "%> (%2) Sent authorisation request to %T%1%n.\n"
 msgstr "%> (%2) Wys³ano ¿±danie autoryzacji do %t%1%n.\n"
 
-#: plugins/jabber/jabber.c:1008
+#: plugins/jabber/jabber.c:1065
 msgid "%> (%2) Authorised %T%1%n.\n"
 msgstr "%> (%2) Autoryzowano %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1009
+#: plugins/jabber/jabber.c:1066
 msgid "%> (%2) Asked %T%1%n to remove authorisation.\n"
 msgstr "%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1010
+#: plugins/jabber/jabber.c:1067
 #, fuzzy
 msgid "%> (%2) Authorisation for %T%1%n revoked.\n"
 msgstr "%> (%2) Cofniêto autoryzacjê %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1011
+#: plugins/jabber/jabber.c:1068
 msgid "%> (%2) Authorisation for %T%1%n denied.\n"
 msgstr "%> (%2) Odmówiona autoryzacji %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1012
+#: plugins/jabber/jabber.c:1069
 msgid "%> (%2) Sent presence probe to %T%1%n.\n"
 msgstr "%> (%2) Wys³ano pytanie o obecno¶æ do %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1013
+#: plugins/jabber/jabber.c:1070
 msgid "%! (%1) Error connecting to Jabber server%n\n"
 msgstr "%! (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n"
 
-#: plugins/jabber/jabber.c:1014
+#: plugins/jabber/jabber.c:1071
 msgid "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"
 
-#: plugins/jabber/jabber.c:1015
-msgid "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"
+#: plugins/jabber/jabber.c:1072
+msgid ""
+"%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr ""
 "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) "
 "%r%3%n\n"
 
-#: plugins/jabber/jabber.c:1016
+#: plugins/jabber/jabber.c:1073
 #, fuzzy
 msgid ""
 "%> Jabber ID: %T%1%n\n"
@@ -2017,23 +2056,44 @@ msgstr ""
 "%> Wersja programu: %T%3%n\n"
 "%> System operacyjny: %T%4%n\n"
 
-#: plugins/jabber/jabber.c:1017
+#: plugins/jabber/jabber.c:1074
+#, fuzzy
+msgid ""
+"%> Jabber ID: %T%1%n\n"
+"%> Full Name: %T%2%n\n"
+"%> Nickname: %T%3%n\n"
+"%> Birthday: %T%4%n\n"
+"%> City: %T%5%n\n"
+"%> Desc: %T%6%n\n"
+msgstr ""
+"%> Identyfikator Jabbera: %T%1%n\n"
+"%> Nazwa programu: %T%2%n\n"
+"%> Wersja programu: %T%3%n\n"
+"%> System operacyjny: %T%4%n\n"
+
+#: plugins/jabber/jabber.c:1075
+msgid ""
+"%> Jabber ID:  %T%1%n\n"
+"%> Logged out: %T%2%n\n"
+msgstr ""
+
+#: plugins/jabber/jabber.c:1076
 msgid ""
 "%! (%1) User's resource unknown%n\n"
 "\n"
 msgstr "%! (%1) Nieznany resource u¿ytkownika%n\n"
 
-#: plugins/jabber/jabber.c:1018
+#: plugins/jabber/jabber.c:1077
 msgid "%! (%1) Unable to check version, because %2 is unavailable%n\n"
 msgstr ""
 "%! (%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%"
 "n\n"
 
-#: plugins/jabber/jabber.c:1019
+#: plugins/jabber/jabber.c:1078
 msgid "%> %T%1%n is typing to us ...%n\n"
 msgstr "%> U¿ytkownik %T%1%n co¶ do nas pisze ...%n\n"
 
-#: plugins/jabber/jabber.c:1020
+#: plugins/jabber/jabber.c:1079
 msgid "%! Error initialising charset conversion (%1->%2): %3"
 msgstr "%! B³ad przy inicjalizacji kodowania(%1->%2): %3"
 
@@ -2192,4 +2252,3 @@ msgstr "Wtyczka XOnScreenDisplay dla ekg2"
 #: plugins/xosd/xosd.c:365
 msgid "Author: Adam 'dredzik' Kuczynski"
 msgstr "Autor: Adam 'dredzik' Kuczyñski"
-

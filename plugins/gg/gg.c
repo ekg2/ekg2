@@ -61,6 +61,8 @@ static int gg_theme_init();
 
 PLUGIN_DEFINE(gg, PLUGIN_PROTOCOL, gg_theme_init);
 
+list_t gg_currenlty_checked = NULL;
+
 int gg_private_init(session_t *s)
 {
 	gg_private_t *g;
@@ -795,15 +797,6 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 
 			debug("GG_EVENT_IMAGE_REQUEST (crc32 - %d)\n", e->event.image_request.crc32);
 
-			if (e->event.image_request.crc32 == GG_CRC32_INVISIBLE) {
-				char *tmp = saprintf("gg:%d", e->event.image_request.sender);
-				
-				print("gg_user_is_connected", get_nickname(s, tmp));
-				
-				xfree(tmp);
-				break;
-			}
-
 			for (l = images; l; l = l->next) {
 				image_t *i = l->data;
 
@@ -827,11 +820,28 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 			FILE *fp;
 			
 			sprintf(image_file, "images/%s_%s_%s", itoa(e->event.image_reply.sender), itoa(e->event.image_reply.crc32), e->event.image_reply.filename);
-			
+		
+                        if (e->event.image_request.crc32 == GG_CRC32_INVISIBLE) {
+                                char *tmp = saprintf("gg:%d", e->event.image_request.sender);
+				list_t l;
+
+				for (l = gg_currently_checked; l; l = l->next) {
+					gg_currently_checked_t *c = l->data;
+
+					if (!session_compare(c->session, s) && !xstrcmp(c->uid, tmp)) {
+						print("gg_user_is_connected", format_user(s, tmp));
+						list_remove(&gg_currently_checked, c, 1);
+						break;
+					}
+					
+				}
+
+                                xfree(tmp);
+                                break;
+                        }
+	
                         /* receiving messages */
-                        debug("image from %d\n",e->event.image_reply.sender);
-			
-			debug("%s\n",image_file);
+                        debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
 			
 			if ((fp = fopen(prepare_path(image_file, 1), "w")) == NULL) {
 				debug("can't open file for image \n");
@@ -848,7 +858,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 		}	
 		default:
 		{
-			//debug("// gg_session_handler_image() - This function is not supported yet\n");
+			debug("// gg_session_handler_image() - This function is not supported yet\n");
 			break;
 		}
 	}
@@ -1159,6 +1169,7 @@ format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
         format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
         format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
 	format_add("gg_user_is_connected", _("%> User %T%1%n is connected\n"), 1);
+	format_add("gg_user_is_not_connected", _("%> User %T%1%n is not connected\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	
@@ -1244,6 +1255,8 @@ int gg_plugin_init(int prio)
 static int gg_plugin_destroy()
 {
 	list_t l;
+
+	list_destroy(gg_currently_checked, 1);
 
 	for (l = gg_reminds; l; l = l->next) {
 		struct gg_http *h = l->data;

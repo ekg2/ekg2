@@ -60,6 +60,13 @@ void gg_session_handler(int type, int fd, int watch, void *data);
 
 COMMAND(gg_command_modify);
 
+typedef struct {
+	const char *uid;
+	session_t *session;
+} gg_currently_checked_t;
+
+
+list_t gg_currently_checked;
 #endif /* __EKG_GG_GG_H */
 
 /*

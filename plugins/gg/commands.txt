@@ -79,7 +79,9 @@ check_conn
 	któr± sprawdzamy pojawia siê pusta wiadomo¶æ). Dziêki tej funkcji 
 	mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna jest 
 	niewidoczna. Je¿eli brak aliasu jako parametr sprawdzana jest osoba,
-	z któr± rozmowa znajdujê siê w aktualnym okienku
+	z któr± rozmowa znajdujê siê w aktualnym okienku.
+	
+	Po 15 sekundach u¿ytkownik uznawany jest za niepo³±czonego.
 
 connect
 	parametry:  
