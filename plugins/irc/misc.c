@@ -403,10 +403,11 @@ IRC_COMMAND(irc_c_error)
 					session_name(s), param[4], param[5]?
 					ctime(&try):"unknown\n");
 			break;
+		case 376:
+			irc_write(j, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
 		case 372:
 		case 375:
-		case 376:
-			if (!session_int_get(s, "SKIP_MOTD")) {
+			if (!session_int_get(s, "SHOW_MOTD")) {
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s,
 						IOK2(3));
 				print_window("__status", s, 0,
@@ -531,10 +532,9 @@ IRC_COMMAND(irc_c_msg)
 {
 	char *t, *dest, *me, *form=NULL, *seq=NULL, *format, **rcpts = NULL;
 	char *head;
-	char *ctcpstripped, *coloured;
-	int class;
-	int ekgbeep = EKG_NO_BEEP;
-	int mw = 666,prv=0;
+	char *ctcpstripped, *coloured, *pubtous, tous;
+	int class, ekgbeep= EKG_NO_BEEP;
+	int mw = 666, prv=0;
 	window_t *w = NULL;
 	people_t *person;
 	people_chan_t *perchn = NULL;
@@ -545,12 +545,16 @@ IRC_COMMAND(irc_c_msg)
 			return 0;
 
 	mw = session_int_get(s, "make_window");
+	me = xstrdup(param[0]+1);
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
+	ctcpstripped = ctcp_parser(s, prv, me, param[2], OMITCOLON(param[3]));
+	
 	/* mesg do nas */
 	if (!xstrcmp(j->nick, param[2])) {
 		class = (mw&2)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
 		dest = saprintf("irc:%s", param[0]+1);
 		format = xstrdup(prv?"irc_msg_f_some":"irc_not_f_some");
+		ekgbeep = EKG_TRY_BEEP;
 	/* kana³ */
 	} else {
 		class = EKG_MSGCLASS_CHAT;
@@ -564,19 +568,25 @@ IRC_COMMAND(irc_c_msg)
 		}
 		if ((person = irc_find_person(j->people, param[0]+1)))
 			perchn = irc_find_person_chan(person->channels, dest);
+
+		if (ctcpstripped && (pubtous = strcasestr(ctcpstripped, j->nick))) {
+			tous = pubtous[xstrlen(j->nick)];
+			if (!isalnum(tous) && !isalpha_pl(tous)) {
+				ekgbeep = EKG_TRY_BEEP;
+				xrealloc(format, 1);
+				format[xstrlen(format)+1]='\0';
+				format[xstrlen(format)]='h';
+			}
+		}
 	}
 
-	if (t) *t='!'; 
-	me = xstrdup(param[0]+1);
-	if (t) *t='\0';	
-
-	if((ctcpstripped = ctcp_parser(s, prv, me, param[2], OMITCOLON(param[3])))) {
+	if (ctcpstripped) {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped);
 		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', me, param[2], coloured);
 		xfree(ctcpstripped);
 		head = format_string(format_find(format), session_name(s),
 				perchn?perchn->sign:" ",
-				me, param[0]+1, param[2], coloured);
+				me, param[0]+1, param[2], coloured, "Y ");
 		xfree(coloured);
 		xfree(me);
 		me = xstrdup(session_uid_get(s));

@@ -38,6 +38,7 @@ typedef struct {
 	
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */
+	list_t hilights;
 	
 	char *sopt[SERVOPTS];		/* just a few options from
 					 * www.irc.org/tech_docs/005.html

@@ -503,7 +503,7 @@ COMMAND(irc_command_msg)
         char **rcpts; 
         int class = EKG_MSGCLASS_SENT, ischn; 
 	int ekgbeep = EKG_NO_BEEP;
-        char *me, *format=NULL, *seq=NULL, *head, *chantypes;
+        char *me, *format=NULL, *seq=NULL, *head, *chantypes, *coloured;
         const time_t sent = time(NULL);					
 	people_t *person;
 	people_chan_t *perchn = NULL;
@@ -540,21 +540,25 @@ COMMAND(irc_command_msg)
 	rcpts = xmalloc(sizeof(char *) * 2);
 	me = xstrdup(session_uid_get(session));
 	
+	
 	head = format_string(format_find(ischn?"irc_msg_sent_chan":
 				w?"irc_msg_sent_n":"irc_msg_sent"),
 			session_name(session), perchn?perchn->sign:" ",
 			j->nick, j->nick, uid+4, params[1]);
+
+	coloured = irc_ircoldcolstr_to_ekgcolstr(session, head);
 
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
 
 	class |= EKG_NO_THEMEBIT;
 
-	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &head, &format, &sent, &class, &seq, &ekgbeep, NULL);
+	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, NULL);
 	xfree(me);
 	xfree(head);
 	xfree(rcpts[0]);
 	xfree(rcpts);
+	xfree(coloured);
 	
 	session_unidle(session);
 
@@ -1126,14 +1130,16 @@ int irc_plugin_init()
 	
 	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
 
+	plugin_var_add(&irc_plugin, "AUTO_JOIN", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_IN_CURRENT", VAR_INT, "2", 0, NULL);
 	plugin_var_add(&irc_plugin, "DISPLAY_QUIT", VAR_INT, "0", 0, NULL);
+	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
 	plugin_var_add(&irc_plugin, "REJOIN", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "REJOIN_TIME", VAR_INT, "2", 0, NULL);
 	
-	plugin_var_add(&irc_plugin, "SKIP_MOTD", VAR_INT, "1", 0, NULL);
+	plugin_var_add(&irc_plugin, "SHOW_MOTD", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&irc_plugin, "STRIPMIRCCOL", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_NAME", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_NO", VAR_STR, 0, 0, NULL);
@@ -1159,21 +1165,29 @@ static int irc_plugin_destroy()
 
 static int irc_theme_init()
 {
+	debug("I love you honey bunny\n");
+
 	/* %1 should be _always_ session name, if it's not so,
 	 * you should report this to me (GiM)
 	 */
 	
 	/* %2 - prefix %3 - nick+ident+host, %4 - nick, %5 - chan, %6 - msg*/
-	format_add("irc_msg_sent",	"%P<%4/%5%P>%n %6", 1);
-	format_add("irc_msg_sent_n",	"%P<%4%P>%n %6", 1);
-	format_add("irc_msg_sent_chan",	"%P<%{2@%+ Ggcn}X%2%4%P>%n %6", 1);
+
+	format_add("irc_msg_sent",	"%P<%n%4/%5%P>%n %6", 1);
+	format_add("irc_msg_sent_n",	"%P<%n%4%P>%n %6", 1);
+	format_add("irc_msg_sent_chan",	"%P<%{2@%+ gcpw}X%2%4%P>%n %6", 1);
+	format_add("irc_msg_sent_chanh","%P<%{2@%+ GCPW}X%2%4%P>%n %6", 1);
 	
-	format_add("irc_msg_f_chan",	"%B<%{2@%+ Ggcn}X%2%4/%5%B>%n %6", 1);
-	format_add("irc_msg_f_chan_n",	"%B<%{2@%+ Ggcn}X%2%4%B>%n %6", 1);
+	format_add("irc_msg_f_chan",	"%B<%{2@%+ gcpw}X%2%4/%5%B>%n %6", 1); /* NOT USED */
+	format_add("irc_msg_f_chanh",	"%B<%{2@%+ GCPW}X%2%4/%5%B>%n %6", 1); /* NOT USED */
+	format_add("irc_msg_f_chan_n",	"%B<%{2@%+ gcpw}X%2%4%B>%n %6", 1);
+	format_add("irc_msg_f_chan_nh",	"%B<%{2@%+ GCPW}X%2%4%B>%n %6", 1);
 	format_add("irc_msg_f_some",	"%b<%n%4%b>%n %6", 1);
 
-	format_add("irc_not_f_chan",	"%B(%{2@%+ Ggcn}X%2%4/%5%B)%n %6", 1);
-	format_add("irc_not_f_chan_n",	"%B(%{2@%+ Ggcn}X%2%4%B)%n %6", 1);
+	format_add("irc_not_f_chan",	"%B(%{2@%+ gcpw}X%2%4/%5%B)%n %6", 1); /* NOT USED */
+	format_add("irc_not_f_chanh",	"%B(%{2@%+ GCPW}X%2%4/%5%B)%n %6", 1); /* NOT USED */
+	format_add("irc_not_f_chan_n",	"%B(%{2@%+ gcpw}X%2%4%B)%n %6", 1);
+	format_add("irc_not_f_chan_nh",	"%B(%{2@%+ GCPW}X%2%4%B)%n %6", 1);
 	format_add("irc_not_f_some",	"%b(%n%4%b)%n %6", 1);
 
 	format_add("irc_joined", "%> %Y%2%n has joined %4\n", 1);

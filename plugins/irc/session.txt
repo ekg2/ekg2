@@ -88,6 +88,14 @@ make_window
 	przy przychodzeniu wiadomo¶ci i przy odpowiedzi na /ctcp
 	[je¿eli tylko okienko jeszcze nie istnieje]
 
+AUTO_JOIN
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	kana³y, do których klient ma siê pod³±czyæ po po³aczeniu, podane
+	w formie:
+	kana³1,kana³2,kana³3,kana³4, klucznakana³1,klucznakana³2
+
 DISPLAY_PONG
 	typ: liczba
 	domy¶lna warto¶æ: 1
@@ -136,11 +144,11 @@ REJOIN_TIME
 	zmienna ta, nie ma ¿adnego znaczenia, je¶li zmienna %TREJOIN%n
 	nie jest ustawiona tak, by klient robi³ autorejoin po kicku
 
-SKIP_MOTD
+SHOW_MOTD
 	typ: liczba
 	domy¶lna warto¶æ: 1
 
-	czy pomijaæ wy¶wietlanie MOTD. 1 - tak, 0 - nie.
+	czy wy¶wietlaæ MOTD. 1 - tak, 0 - nie.
 
 STRIPMIRCCOL
 	typ: liczba
