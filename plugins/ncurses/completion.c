@@ -185,6 +185,20 @@ static void known_uin_generator(const char *text, int len)
                         array_add_check(&completions, saprintf("%s/%s", session_name, u->uid), 1);
 	}
 
+	if (!window_current) 
+		goto end;	
+
+        for (l = window_current->userlist; l; l = l->next) {
+                userlist_t *u = l->data;
+
+                if (u->uid && !xstrncasecmp(text, u->uid, len))
+                        array_add_check(&completions, xstrdup(u->uid), 1);
+
+                if (u->nickname && !xstrncasecmp(text, u->nickname, len)) 
+                        array_add_check(&completions, xstrdup(u->nickname), 1);
+        }
+
+end:
 	if (session_name)
 		xfree(session_name);
 }
