@@ -136,7 +136,7 @@ int ncurses_contacts_update(window_t *w)
                 }
 
 		if (contacts_group_index > count + 1) {
-			all = 2;
+			all = (metacontacts) ? 2 : 0;
 			goto group_cleanup;
 		}
 
