@@ -888,7 +888,7 @@ COMMAND(session_command)
 
 			session_set_n(s->uid, params[2] + 1, NULL);
 			config_changed = 1;
-			printq("session_variable_removed", session_name_n(params[1]), params[2] + 1);
+			printq("session_variable_removed", session_name_n(s->uid), params[2] + 1);
 			return 0;
 		}
 		
