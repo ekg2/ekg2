@@ -1267,7 +1267,7 @@ COMMAND(gg_command_msg)
                 printq("invalid_session");
                 return -1;
         }
-	
+
 	if (!params[0] || !params[1]) {
 		printq("not_enough_params", name);
 		return -1;
@@ -1275,11 +1275,12 @@ COMMAND(gg_command_msg)
 	
 	session_unidle(session);
 
-//	if (!strcmp(params[0], "*")) {
-//		msg_all_wrapper(chat, params[1], quiet);
-//		return 0;
-//	}
-
+        if (!xstrcmp(params[0], "*")) {
+		if (msg_all(session, name, params[1]) == -1)
+			printq("list_empty");
+		return 0;
+	}
+	
 	nick = xstrdup(params[0]);
 
 	if ((*nick == '@' || strchr(nick, ',')) && chat) {
@@ -1936,7 +1937,7 @@ int gg_plugin_init()
 	command_add(&gg_plugin, "gg:disconnect", params("?"), gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "", NULL);
 	command_add(&gg_plugin, "gg:reconnect", NULL, gg_command_connect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
 	command_add(&gg_plugin, "gg:msg", params("uUC ?"), gg_command_msg, 0, 
-	   " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", 
+	   " <numer/alias/@grupa/*> <wiadomo¶æ>", "wysy³a wiadomo¶æ", 
 	   "\nMo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub pseudonimy przecinkiem (ale bez odstêpów). Je¶li zamiast odbiorcy podany zostanie znak ,,%T*%n'', to wiadomo¶æ bêdzie wys³ana do wszystkich aktualnych rozmówców.",
 	   NULL);
 	command_add(&gg_plugin, "gg:chat", params("uUC ?"), gg_command_msg, 0, " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", "\nPolecenie jest podobne do %Tmsg%n, ale wysy³a wiadomo¶æ w ramach rozmowy, a nie jako pojedyncz±.", NULL);

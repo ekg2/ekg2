@@ -14,7 +14,6 @@ rozwi±zanie.
 * klient:
   - zmienienie plugins_var_add() tak aby przy zmianie zmiennej sesyjnej
     wywo³ywany by³ równie¿ podany handler (del)
-  - /msg_all (the same as ,,msg *'' in ekg1) (del)
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
