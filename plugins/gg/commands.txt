@@ -70,7 +70,7 @@ chat
 	a nie jako pojedyncz±.
 
 check_conn
-	parametry:  <alias>
+	parametry:  [alias]
 	krotki opis: sprawdza czy podana osoba jest po³±czona 
 	
 	Sprawdza czy podana osoba jest po³±czona. Klient tej osoby musi 
@@ -78,7 +78,8 @@ check_conn
 	klienta TLEN, kadu, ekg i ekg2 komenda nie dzia³a prawid³owo (osobie 
 	któr± sprawdzamy pojawia siê pusta wiadomo¶æ). Dziêki tej funkcji 
 	mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna jest 
-	niewidoczna
+	niewidoczna. Je¿eli brak aliasu jako parametr sprawdzana jest osoba,
+	z któr± rozmowa znajdujê siê w aktualnym okienku
 
 connect
 	parametry:  

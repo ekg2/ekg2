@@ -1257,6 +1257,7 @@ COMMAND(gg_command_check_conn)
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
 	char *tmp;
+	const char *par;
 
 	struct gg_msg_richtext_format_img {
 		struct gg_msg_richtext rt;
@@ -1277,21 +1278,24 @@ COMMAND(gg_command_check_conn)
 		return -1;
 	}
 
-	if (!params[0]) {
+	if (!params[0] && !window_current->target) {
 		printq("not_enough_params", name);
 		return -1;
 	}
 
-	tmp = xstrdup(params[0]);
-        xfree((char *) params[0]);
-        params[0] = xstrdup(strip_quotes(tmp));
+	par = params[0] ? params[0] : window_current->target;
 
-	if (!(u = userlist_find(session, params[0]))) {
-		printq("user_not_found", params[0]);
+	tmp = xstrdup(par);
+        xfree((char *) par);
+        par = xstrdup(strip_quotes(tmp));
+
+	if (!(u = userlist_find(session, par))) {
+		printq("user_not_found", par);
 		return -1;
 	}
 
-	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid+3), "", (const char *) &msg, sizeof(msg)) == -1) {
+
+	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
 		debug("-- check_conn - shits happens\n");
 		return -1;
 	}
