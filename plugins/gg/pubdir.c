@@ -71,7 +71,7 @@ static void gg_handle_register(int type, int fd, int watch, void *data)
 	session_set(s, "password", gg_register_password);
 	xfree(gg_register_password);
 	gg_register_password = NULL;
-	session_set(s, "email", gg_register_email);
+//	session_set(s, "email", gg_register_email);
 	xfree(gg_register_email);
 	gg_register_email = NULL;
 
