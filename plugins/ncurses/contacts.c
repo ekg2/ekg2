@@ -183,7 +183,6 @@ group_cleanup:
 	
 	if (xstrcmp(header, "")) {
 		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
-		count_all++;
 	}
 
 	
