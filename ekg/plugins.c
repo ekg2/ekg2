@@ -249,6 +249,12 @@ int plugin_unregister(plugin_t *p)
 	return 0;
 }
 
+int plugin_theme_reload(plugin_t *p)
+{
+	if (p->theme_init)
+		p->theme_init();
+}
+
 /* 
  * plugin_var_find()
  *

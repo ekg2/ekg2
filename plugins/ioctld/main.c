@@ -60,7 +60,8 @@ static int ioctld_plugin_destroy();
 plugin_t ioctld_plugin = {
 	name: "ioctld",
 	pclass: PLUGIN_GENERIC,
-	destroy: ioctld_plugin_destroy
+	destroy: ioctld_plugin_destroy,
+	theme_init: NULL,
 };
 
 /*

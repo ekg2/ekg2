@@ -41,6 +41,7 @@ typedef enum {
 } plugin_class_t;
 
 typedef int (*plugin_destroy_func_t)(void);
+typedef int (*plugin_theme_init_func_t)(void);
 
 typedef struct {
         char *key;                      /* name */
@@ -56,12 +57,14 @@ typedef struct {
 	plugin_destroy_func_t destroy;
 	lt_dlhandle dl;
 	plugins_params_t **params;
+	plugin_theme_init_func_t theme_init;
 } plugin_t;
 
 int plugin_load(const char *name, int quiet);
 int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *);
 int plugin_unregister(plugin_t *);
+int plugin_theme_reload(plugin_t *);
 plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
 #define plugin_find_s(a) plugin_find_uid(a->uid)

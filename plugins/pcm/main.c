@@ -31,7 +31,8 @@ static int pcm_plugin_destroy();
 static plugin_t pcm_plugin = {
 	name: "pcm",
 	pclass: PLUGIN_CODEC,
-	destroy: pcm_plugin_destroy
+	destroy: pcm_plugin_destroy,
+	theme_init: NULL,
 };
 
 typedef struct {

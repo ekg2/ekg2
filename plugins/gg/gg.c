@@ -62,11 +62,13 @@
 #include "token.h"
 
 static int gg_plugin_destroy();
+static int gg_theme_init();
 
 plugin_t gg_plugin = {
 	name: "gg",
 	pclass: PLUGIN_PROTOCOL,
 	destroy: gg_plugin_destroy,
+	theme_init: gg_theme_init,
 };
 
 int gg_private_init(session_t *s)
@@ -1840,7 +1842,16 @@ static void gg_handle_token(int type, int fd, int watch, void *data)
 		fclose(f);
 		
 		unlink(file);
-	} else
+	} else {
+                char *file2 = saprintf("%s.jpg", file);
+
+                if (rename(file, file2) == -1)
+                        print("gg_token", file);
+                else
+                        print("gg_token", file2);
+
+                xfree(file2);
+	}
 #else	/* HAVE_LIBJPEG */
 	{
 		char *file2 = saprintf("%s.jpg", file);
@@ -1880,6 +1891,21 @@ COMMAND(gg_command_token)
 
         return 0;
 }
+
+static int gg_theme_init()
+{
+        /* pobieranie tokenu */
+        format_add("gg_token", "%> Token zapisano do pliku %T%1%n\n", 1);
+        format_add("gg_token_ocr", "%> Token: %T%1%n\n", 1);
+        format_add("gg_token_body", "%1\n", 1);
+        format_add("gg_token_failed", "%! B³±d pobierania tokenu: %1\n", 1);
+        format_add("gg_token_timeout", "%! Przekroczono limit czasu pobierania tokenu\n", 1);
+        format_add("gg_token_unsupported", "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n", 1);
+        format_add("gg_token_missing", "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n", 1);
+	
+	return 0;
+}
+
 int gg_plugin_init()
 {
 	list_t l;
@@ -1983,16 +2009,6 @@ int gg_plugin_init()
 #undef params 
 
         variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &config_display_token, NULL, NULL, NULL);
-
-        /* pobieranie tokenu */
-        format_add("gg_token", "%> Token zapisano do pliku %T%1%n\n", 1);
-        format_add("gg_token_ocr", "%> Token: %T%1%n\n", 1);
-        format_add("gg_token_body", "%1\n", 1);
-        format_add("gg_token_failed", "%! B³±d pobierania tokenu: %1\n", 1);
-        format_add("gg_token_timeout", "%! Przekroczono limit czasu pobierania tokenu\n", 1);
-        format_add("gg_token_unsupported", "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n", 1);
-        format_add("gg_token_missing", "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n", 1);
-
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "0", 0);

@@ -40,7 +40,8 @@ static int gsm_plugin_destroy();
 static plugin_t gsm_plugin = {
 	name: "gsm",
 	pclass: PLUGIN_CODEC,
-	destroy: gsm_plugin_destroy
+	destroy: gsm_plugin_destroy,
+	theme_init: NULL,
 };
 
 static void *gsm_codec_init(const char *, const char *);

@@ -27,6 +27,7 @@ static plugin_t sim_plugin = {
 	name: "sim",
 	pclass: PLUGIN_CRYPT,
 	destroy: sim_plugin_destroy,
+	theme_init: NULL,
 };
 
 static int message_encrypt(void *data, va_list ap)

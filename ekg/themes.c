@@ -858,6 +858,23 @@ void theme_free()
 	theme_cache_reset();
 }
 
+void theme_plugins_init()
+{
+	list_t l;
+	
+	if (!plugins)
+		return;
+
+	for (l = plugins; l; l = l->next) {
+		plugin_t *p = l->data;
+
+		if (!p)
+			continue;
+
+		plugin_theme_reload(p);
+	}
+}
+
 /*
  * theme_init()
  *
@@ -1563,5 +1580,7 @@ void theme_init()
 	format_add("plugin_doesnt_exist","%! Plugin %T%1%n nie mo¿e zostaæ znaleziony%n\n", 1);
 	format_add("plugin_incorrect", "%! Plugin %T%1%n nie jest prawid³owym pluginem EKG2%n\n", 1);
 	format_add("plugin_not_initialized", "%! Plugin %T%1%n nie zosta³ wczytany poprawnie%n\n", 1);
+
+	theme_plugins_init();
 }
 
