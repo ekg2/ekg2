@@ -249,7 +249,7 @@ static int metacontact_add_item_compare(void *data1, void *data2)
 
         if (!a || !a->name || !a->s_uid || !b || !b->name || !b->s_uid)
                 return 0;
-	
+
 	if (!xstrcasecmp(a->s_uid, b->s_uid))
 		return xstrcasecmp(a->name, b->name);
 
@@ -403,13 +403,15 @@ int metacontact_session_renamed_handler(void *data, va_list ap)
 
 	for (l = metacontacts; l; l = l->next) {
         	metacontact_t *m = l->data;
-		list_t l2, ltemp;
+		list_t l2;
 
-		for (l2 = m->metacontact_items; l2; l2 = l2->next) {
+		for (l2 = m->metacontact_items; l2;) {
 			metacontact_item_t *i = (l2 && l2->data) ? l2->data : NULL;
 			
 			if (!i)
 				break;
+
+			l2 = l2->next;
 
 			if (!xstrcasecmp(session, i->s_uid)) {
 				char *s_uid, *name;
@@ -418,21 +420,12 @@ int metacontact_session_renamed_handler(void *data, va_list ap)
 				s_uid = xstrdup(i->s_uid);
 				name = xstrdup(i->name);
 				prio = i->prio;
-
-				ltemp = l2;
-				l2 = l2->next;
-
+				
 				metacontact_remove_item(m, s_uid, name, 1);
 				metacontact_add_item(m, s_uid, name, prio, 1);
-				
-				if (!l2)
-					break;
-
-				/*l2 = l2->prev;*/
-				l2 = ltemp;
-
-				if (!l2)
-					break;
+			
+				xfree(s_uid);
+				xfree(name);
 			}
 		}
 	}
