@@ -423,6 +423,7 @@ IRC_COMMAND(irc_c_whois)
 	char *str, *tmp, *col[5];
 	int secs, mins, hours, days, which, i;
 	time_t timek;
+	int timek_int = (int) timek;
 
 	if (irccommands[ecode].num != 317) { /* idle */
 		for (i=0; i<5; i++)
@@ -438,7 +439,7 @@ IRC_COMMAND(irc_c_whois)
 		return (0);
 	}
 	gatoi(IOK2(4), &secs);
-	which = gatoi(IOK2(5), (int *)timek);
+	which = gatoi(IOK2(5), &timek_int);
 
 	/* GiM: Yes, I know what is modulo ;> */
 	mins = secs/60;
