@@ -116,6 +116,78 @@ int gg_session_handle(void *data, va_list ap)
 
 	return 0;
 }
+/*
+ * str_to_uin()
+ *
+ * funkcja, która zajmuje siê zamian± stringa na
+ * liczbê i sprawdzeniem, czy to prawid³owy uin.
+ *
+ * zwraca uin lub 0 w przypadku b³êdu.
+ */
+uin_t str_to_uin(const char *text)
+{
+        char *tmp;
+        long num;
+
+        if (!text)
+                return 0;
+
+        errno = 0;
+        num = strtol(text, &tmp, 0);
+
+        if (*text == '\0' || *tmp != '\0')
+                return 0;
+
+        if ((errno == ERANGE || (num == LONG_MAX || num == LONG_MIN)) || num > UINT_MAX || num < 0)
+                return 0;
+
+        return (uin_t) num;
+}
+
+/* 
+ * trzeba dodaæ numer u¿ytkownika do listy osób, o których
+ * zmianach statusów chcemy byæ informowani 
+ */
+int gg_add_notify_handle(void *data, va_list ap)
+{
+	char **session_uid = va_arg(ap, char**);
+	session_t *s = session_find(*session_uid);
+ 	char **uid = va_arg(ap, char**);
+	gg_private_t *g;
+
+	if (!s) {
+		debug("Function gg_add_notify_handle() called with NULL data\n");
+		return -1;
+	}
+        if (!(g = session_private_get(s)))
+		return -1;
+
+	gg_add_notify_ex(g->sess, str_to_uin(strchr(*uid, ':') + 1), gg_userlist_type(userlist_find(s, s->uid))); 
+	return 0;
+}
+
+/*
+ * trzeba usun±ææ numer u¿ytkownika z listy osób, o których
+ * zmianach statusów chcemy byæ informowani
+ */
+int gg_remove_notify_handle(void *data, va_list ap)
+{
+        char **session_uid = va_arg(ap, char**);
+        session_t *s = session_find(*session_uid);
+        char **uid = va_arg(ap, char**);
+        gg_private_t *g;
+
+        if (!s) {
+                debug("Function gg_remove_notify_handle() called with NULL data\n");
+                return -1;
+        }
+        if (!(g = session_private_get(s)))
+                return -1;
+
+        gg_remove_notify(g->sess, str_to_uin(strchr(*uid, ':') + 1));
+        return 0;
+}
+
 
 /*
  * gg_print_version()
@@ -1276,6 +1348,8 @@ int gg_plugin_init()
 	query_connect(&gg_plugin, "plugin-print-version", gg_print_version, NULL);
 	query_connect(&gg_plugin, "session-added", gg_session_handle, (void *)1);
 	query_connect(&gg_plugin, "session-removed", gg_session_handle, (void *)0);
+	query_connect(&gg_plugin, "add-notify", gg_add_notify_handle, NULL);
+	query_connect(&gg_plugin, "remove-notify", gg_remove_notify_handle, NULL);
 
 	command_add(&gg_plugin, "gg:connect", "?", gg_command_connect, 0, "", "³±czy siê z serwerem", "");
 	command_add(&gg_plugin, "gg:disconnect", "?", gg_command_connect, 0, " [powód/-]", "roz³±cza siê od serwera", "");

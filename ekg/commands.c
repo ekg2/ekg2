@@ -480,18 +480,16 @@ COMMAND(cmd_add)
 		char *uid = xstrdup(params[0]);
 
 		query_emit(NULL, "userlist-added", &uid);
-		xfree(uid);
+                query_emit(NULL, "add-notify", &session_current->uid, &uid);
+                xfree(uid);
 
 		printq("user_added", params[1]);
-		
-#if 0
-		if (sess)
-			gg_add_notify_ex(sess, uin, userlist_type(u));
-#endif
+
 		tabnick_remove(params[0]);
 		config_changed = 1;
+
 #if 0
-		if (uin == config_uin) {
+		if (uid == session_uid_get(session_current)) {
 			update_status();
 			update_status_myip();
 		}
@@ -730,6 +728,9 @@ COMMAND(cmd_del)
 
 	tmp = xstrdup(u->uid);
 	query_emit(NULL, "userlist-removed", &tmp);
+	query_emit(NULL, "remove-notify", &session_current->uid, &tmp);
+
+        printq("user_deleted", params[0]);
 	xfree(tmp);
 
 	tabnick_remove(u->uid);

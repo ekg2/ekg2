@@ -14,8 +14,6 @@ rozwi±zanie.
 	- dope³nienia powinny odbywaæ siê tylko do aktualnej sesji (*)
   - przenie¶æ zmienne i ich ustawienia domy¶lne w ncurses do old.c
   - zmieniæ nazwê old.c i trochê porz±dku w nazwach zmiennych (del)
-  - dodawanie u¿ytkownika nie powoduje ustawienia jego stanu tj:
-    /add gg:1111 ble, nie spowoduje, ¿e /list ble poka¿e nam prawid³owy stan (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
   - przy ³±czeniu siê ma dzia³aæ poprawnie ustawianie/nieustawianie opisów (del)
