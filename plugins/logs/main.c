@@ -164,8 +164,7 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
  	// TODO
 	xstrtr(buf->str, ' ', '_');
 
-	path = saprintf("%s", buf->str);
-	string_free(buf, 1);
+	path = string_free(buf, 0);
 
 	return path;
 }
