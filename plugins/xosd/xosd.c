@@ -84,7 +84,7 @@ int xosd_show_message(char *line1, char *line2)
 			break;
 	}
 	
-	xosd_set_horizontal_offset(osd, xosd_vertical_offset);
+	xosd_set_horizontal_offset(osd, xosd_horizontal_offset);
 
 	xosd_set_timeout(osd, xosd_display_timeout);
 
