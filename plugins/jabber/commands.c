@@ -747,6 +747,95 @@ COMMAND(jabber_command_ver)
 	return 0;
 }
 
+COMMAND(jabber_command_userinfo)
+{
+	jabber_private_t *j = session_private_get(session);
+	const char *query_uid, *uid;
+	userlist_t *ut;
+	const char *resource = session_get(session, "resource");
+
+	if (!session_check(session, 1, "jid")) {
+		printq("invalid_session");
+		return -1;
+	}
+
+	if (!session_connected_get(session)) {
+		printq("not_connected", session_name(session));
+		return -1;
+	}
+
+	query_uid = params[0];
+        if (!query_uid && !(query_uid = get_uid(session, "$"))) {
+                printq("not_enough_params", name);
+                return -1;
+        }
+
+	if (!(uid = get_uid(session, query_uid))) {
+		print("user_not_found", query_uid);
+		return -1;
+	}
+
+	if (xstrncasecmp(uid, "jid:", 4) != 0) {
+	  printq("invalid_session");
+	  return -1;
+	}
+
+	if (!(ut = userlist_find(session, uid))) {
+		print("user_not_found", session_name(session));
+		return -1;
+	}
+	uid += 4;
+
+       	jabber_write(j, "<iq id='%d' to='%s' type='get'><vCard xmlns='vcard-temp'/></iq>", \
+		     j->id++, jabber_escape(uid));
+	return 0;
+}
+
+COMMAND(jabber_command_lastseen)
+{
+	jabber_private_t *j = session_private_get(session);
+	const char *query_uid, *uid;
+        userlist_t *ut;
+        const char *resource = session_get(session, "resource");
+
+        if (!session_check(session, 1, "jid")) {
+                printq("invalid_session");
+                return -1;
+        }
+
+	if (!session_connected_get(session)) {
+		printq("not_connected", session_name(session));
+		return -1;
+	}
+
+	query_uid = params[0];
+        if (!query_uid && !(query_uid = get_uid(session, "$"))) {
+                printq("not_enough_params", name);
+                return -1;
+        }
+
+	if (!(uid = get_uid(session, query_uid))) {
+		print("user_not_found", query_uid);
+		return -1;
+	}
+
+	if (xstrncasecmp(uid, "jid:", 4) != 0) {
+	  printq("invalid_session");
+	  return -1;
+	}
+
+	if (!(ut = userlist_find(session, uid))) {
+		print("user_not_found", session_name(session));
+		return -1;
+	}
+	uid += 4;
+
+       	jabber_write(j, "<iq id='%d' to='%s' type='get'><query xmlns='jabber:iq:last'/></iq>", \
+		     j->id++, jabber_escape(uid));
+	return 0;
+}
+
+
 
 void jabber_register_commands()
 {
@@ -771,6 +860,8 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:passwd", "?", jabber_command_passwd, 0, NULL);
 	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, 0, NULL);
 	command_add(&jabber_plugin, "jid:ver", "?u", jabber_command_ver, 0, NULL);
+	command_add(&jabber_plugin, "jid:userinfo", "?u", jabber_command_userinfo, 0, NULL);
+	command_add(&jabber_plugin, "jid:lastseen", "?u", jabber_command_lastseen, 0, NULL);
 	command_add(&jabber_plugin, "jid:xa", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:xml", "?", jabber_command_xml, 0, NULL);
 };

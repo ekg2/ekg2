@@ -83,6 +83,10 @@ invisible
         Je¿eli nie podano opisu to bêdzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
+lastseen
+	parametry: 
+	krotki opis: pobiera informacjê o czasie wylogowania siê danego jid
+
 msg
 	parametry: 
 	krotki opis: wysy³a pojedyncz± wiadomo¶æ
@@ -106,6 +110,10 @@ passwd
 reconnect
 	parametry: 
 	krotki opis: roz³±cza i ³±czy siê ponownie
+
+userinfo
+	parametry: 
+	krotki opis: pobiera informacje z katalogu Jabbera o danym jid
 
 ver
 	parametry: 

@@ -391,20 +391,51 @@ void jabber_handle(void *data, xmlnode_t *n)
                 /* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
                         i typ "result" (przy za¿±daniu rostera od serwera) */
                 if (type && (!xstrncmp(type, "result", 6) || !xstrncmp(type, "set", 3)) ) {
-                        xmlnode_t *q = xmlnode_find_child(n, "query");
+			/* First we check if there is vCard...                */
+			xmlnode_t *q = xmlnode_find_child(n, "vCard");
+			if (q) {
+				const char *ns = jabber_attr(q->atts, "xmlns");
+
+				if (ns && !xstrncmp(ns, "vcard-temp", 10)) {
+					xmlnode_t *fullname = xmlnode_find_child(q, "FN");
+					xmlnode_t *nickname = xmlnode_find_child(q, "NICKNAME");
+					xmlnode_t *birthday = xmlnode_find_child(q, "BDAY");
+					xmlnode_t *adr = xmlnode_find_child(q, "ADR");
+					xmlnode_t *city = xmlnode_find_child(adr, "LOCALITY");
+					xmlnode_t *desc = xmlnode_find_child(q, "DESC");
+
+					char *from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
+					char *fullname_str = (fullname && fullname->data) ? jabber_unescape(fullname->data) : xstrdup(_("unknown"));
+					char *nickname_str = (nickname && nickname->data) ? jabber_unescape(nickname->data) : xstrdup(_("unknown"));
+					char *bday_str = (birthday && birthday->data) ? jabber_unescape(birthday->data) : xstrdup(_("unknown"));
+					char *city_str = (city && city->data) ? jabber_unescape(city->data) : xstrdup(_("unknown"));
+					char *desc_str = (desc && desc->data) ? jabber_unescape(desc->data) : xstrdup(_("unknown"));
+
+					print("jabber_userinfo_response", from_str, fullname_str,nickname_str, bday_str, city_str,desc_str);
+
+					xfree(desc_str);
+					xfree(city_str);
+					xfree(bday_str);
+					xfree(nickname_str);
+					xfree(fullname_str);
+					xfree(from_str);
+				}
+			}
+
+                        q = 0;
+                        q = xmlnode_find_child(n, "query");
                         if (q) {
-                                const char *ns;
-                                ns = jabber_attr(q->atts, "xmlns");
+                                const char *ns = jabber_attr(q->atts, "xmlns");
 
                                 if (ns && !xstrncmp(ns, "jabber:iq:version", 17)) {
                                         xmlnode_t *name = xmlnode_find_child(q, "name");
                                         xmlnode_t *version = xmlnode_find_child(q, "version");
                                         xmlnode_t *os = xmlnode_find_child(q, "os");
 
-                                        char *from_str = (from) ? jabber_unescape(from) : xstrdup("unknown");
-                                        char *name_str = (name && name->data) ? jabber_unescape(name->data) : xstrdup("unknown");
-                                        char *version_str = (version && version->data) ? jabber_unescape(version->data) : xstrdup("unknown");
-                                        char *os_str = (os && os->data) ? jabber_unescape(os->data) : xstrdup("unknown");
+                                        char *from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
+                                        char *name_str = (name && name->data) ? jabber_unescape(name->data) : xstrdup(_("unknown"));
+                                        char *version_str = (version && version->data) ? jabber_unescape(version->data) : xstrdup(_("unknown"));
+                                        char *os_str = (os && os->data) ? jabber_unescape(os->data) : xstrdup(_("unknown"));
 
                                         print("jabber_version_response", from_str, name_str, version_str, os_str);
 
@@ -413,6 +444,31 @@ void jabber_handle(void *data, xmlnode_t *n)
                                         xfree(name_str);
                                         xfree(from_str);
                                 }
+
+                                if (ns && !xstrncmp(ns, "jabber:iq:last", 14)) {
+
+					int seconds = 0;
+
+					const char *last = jabber_attr(q->atts, "seconds");
+					seconds = atoi(last);
+
+					/*TODO If user is online: display user's status; */
+
+					char buff[21];
+					if ((seconds>=0) && (seconds < 999 * 24 * 60 * 60  - 1) )
+						/* days, hours, minutes, seconds... */
+						snprintf (buff, 21, _("%03dd %02dh %02dm %02ds ago"),seconds / 86400 , \
+							(seconds / 3600) % 24, (seconds / 60) % 60, seconds % 60);
+					else
+						strcpy (buff, _("very long ago"));
+
+					char *from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
+					char *lastseen_str = xstrdup(buff);
+
+					print("jabber_lastseen_response", from_str, lastseen_str);
+					xfree(lastseen_str);
+					xfree(from_str);
+				}
 
                                 if (ns && !xstrncmp(ns, "jabber:iq:roster", 16)) {
                                         userlist_t u, *tmp;
@@ -1012,6 +1068,8 @@ static int jabber_theme_init()
         format_add("jabber_msg_failed", _("%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"),1);
         format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
         format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
+        format_add("jabber_userinfo_response", _("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
+        format_add("jabber_lastseen_response", _("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2%n\n"), 1);
         format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
         format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
         format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
