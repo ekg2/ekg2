@@ -1006,6 +1006,18 @@ COMMAND(gg_command_connect)
 		if ((tmpi = session_int_get(session, "last_sysmsg")) != -1)
 			p.last_sysmsg = tmpi;
 
+		char *realserver = session_get(session, "server");
+		if (realserver) {
+			in_addr_t tmp_in;
+			
+			if ((tmp_in = inet_addr(realserver)) != INADDR_NONE)
+			    p.server_addr = inet_addr(realserver);
+			else {
+			    print("inet_addr_failed", session_name(session));
+			    return -1;
+			}
+		}
+
 		gg_proxy_port = 0;
 		xfree(gg_proxy_host);
 		gg_proxy_host = NULL;

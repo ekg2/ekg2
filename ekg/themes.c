@@ -1141,6 +1141,7 @@ void theme_init()
 	format_add("not_connected", "%! (%1) Brak po³±czenia z serwerem.%n\n", 1);
 	format_add("not_connected_msg_queued", "%! (%1) Brak po³±czenia z serwerem. Wiadomo¶æ bêdzie wys³ana po po³±czeniu.%n\n", 1);
 	format_add("wrong_id", "%! (%1) Z³y id sesji.%n\n", 1);
+	format_add("inet_addr_failed", "%! (%1) B³êdna warto¶æ zmiennej sesyjnej \"server\".%n\n", 1);
 
 	/* obs³uga motywów */
 	format_add("theme_loaded", "%> Wczytano motyw %T%1%n\n", 1);
