@@ -459,7 +459,10 @@ int metacontact_userlist_removed_handler(void *data, va_list ap)
 				break;
 			
 			u = userlist_find_n(i->s_uid, i->name);
-			
+		
+			if (!u)
+				continue;
+	
 			if (u->nickname && !xstrcasecmp(*name, u->nickname)) {
 				metacontact_remove_item(m, i->s_uid, i->name, 1);
 				break;
