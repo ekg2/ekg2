@@ -342,8 +342,10 @@ int variable_remove(plugin_t *plugin, const char *name)
 			if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
 				tmp = saprintf("%d", *(int*)(v->ptr));
 				v->ptr = (void*)tmp;
-			} else
-				v->ptr = xstrdup((char*)(v->ptr));
+			} else {
+				tmp = xstrdup((char*)(v->ptr));
+				v->ptr = tmp;
+			}
 
 			tmp = saprintf("%s:%s", plugin->name, v->name);
 			xfree(v->name);
