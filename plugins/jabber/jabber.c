@@ -1101,7 +1101,6 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);

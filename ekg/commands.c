@@ -1683,14 +1683,14 @@ COMMAND(cmd_save)
 	last_save = time(NULL);
 	
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session) {
-		if(session_current)
+        if (!session) {
+		if (session_current)
 			session = session_current;
 		else
 			return -1;
 	}
 
-	if (!userlist_write(session) && !config_write(params[0]) && !session_write() && !metacontact_write()) {
+	if (!config_write(params[0]) && !session_write() && !metacontact_write()) {
 		printq("saved");
 		config_changed = 0;
 		reason_changed = 0;
@@ -2148,20 +2148,15 @@ COMMAND(cmd_say)
 
 COMMAND(cmd_reload)
 {
-	const char *filename = NULL;
 	int res = 0;
 
-	if (params[0])
-		filename = params[0];
-
-
-	if ((res = config_read(filename)))
+	if ((res = config_read_plugins()))
 		printq("error_reading_config", strerror(errno));
 
         if (res == -1)
                 goto end;
 
-	if ((res = config_read_later(filename)))
+	if ((res = config_read(NULL)))
                 printq("error_reading_config", strerror(errno));
 
         if (res == -1)
@@ -2172,7 +2167,7 @@ COMMAND(cmd_reload)
 
 end:
 	if (res != -1) {
-		printq("config_read_success", (res != -2 && filename) ? filename : prepare_path("config", 0));
+		printq("config_read_success");
 		config_changed = 0;
 	}
 
@@ -4034,9 +4029,9 @@ void command_init()
  
 	command_add(NULL, "quit", "r", cmd_quit, 0, NULL);
 	  
-	command_add(NULL, "reload", "f", cmd_reload, 0, NULL);
+	command_add(NULL, "reload", NULL, cmd_reload, 0, NULL);
 	  
-	command_add(NULL, "save", "?", cmd_save, 0, NULL);
+	command_add(NULL, "save", NULL, cmd_save, 0, NULL);
 
 	command_add(NULL, "say", "?", cmd_say, 0,
 	  "-c --clear");
@@ -4044,7 +4039,7 @@ void command_init()
         command_add(NULL, "session", "psS psS sS ?", session_command, 0,
           "-a --add -d --del -l --list -g --get -s --set -w --sw");
 
-	command_add(NULL, "set", "v ?", cmd_set, 0, NULL);
+	command_add(NULL, "set", "v ?s", cmd_set, 0, NULL);
 
         command_add(NULL,  "status", "s", cmd_status, 0, NULL);
 

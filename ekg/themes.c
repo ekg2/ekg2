@@ -1291,7 +1291,7 @@ void theme_init()
         format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
         format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or jid: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
         format_add("error_reading_config", _("%! Error reading configuration file: %1\n"), 1);
-        format_add("config_read_success", _("%> Opened configuration file %T%1%n\n"), 1);
+        format_add("config_read_success", _("%> Configuratin read correctly.%n\n"), 1);
         format_add("config_line_incorrect", _("%! Invalid line '%T%1%n', skipping\n"), 1);
         format_add("autosaved", _("%> Automatically saved settings\n"), 1);
 

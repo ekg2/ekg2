@@ -1376,6 +1376,7 @@ COMMAND(gg_command_check_conn)
 	char *tmp;
 	gg_currently_checked_t c, *c_timer;
 	const char *par;
+	list_t l;
 
 	if (!session_check(session, 1, "gg")) {
 		printq("invalid_session");
@@ -1406,7 +1407,14 @@ COMMAND(gg_command_check_conn)
 	if (gg_image_request(g->sess, atoi(u->uid + 3), 1, GG_CRC32_INVISIBLE) == -1)
 		return -1;
 
-	c_timer = xmalloc(sizeof(gg_currently_checked_t));
+	for (l = gg_currently_checked; l; l = l->next) {
+		gg_currently_checked_t *c = l->data;
+
+		if (!xstrcmp(c->uid, u->uid) && c->session == session)
+			return 0;
+	}
+
+        c_timer = xmalloc(sizeof(gg_currently_checked_t));
 
         memset(&c, 0, sizeof(c));
 

@@ -431,8 +431,8 @@ static void handle_sigsegv()
 "*** Naruszenie ochrony pamiêci ***\r\n"
 "\r\n"
 "Spróbujê zapisaæ ustawienia, ale nie obiecujê, ¿e cokolwiek z tego\r\n"
-"wyjdzie. Trafi± one do plików %s/config.%d\r\n"
-"oraz %s/userlist.%d\r\n"
+"wyjdzie. Trafi± one do plików %s/config.%d,\r\n"
+"%s/config-<plugin>.%d oraz %s/userlist.%d\r\n"
 "\r\n"
 "Do pliku %s/debug.%d zapiszê ostatanie komunikaty\r\n"
 "z okna debugowania.\r\n"
@@ -440,14 +440,14 @@ static void handle_sigsegv()
 "Je¶li zostanie utworzony plik %s/core, spróbuj uruchomiæ\r\n"
 "polecenie:\r\n"
 "\r\n"
-"    gdb %s %s/core\r\n"
+"    gdb %s %s/core.%d\r\n"
 "\n"
 "zanotowaæ kilka ostatnich linii, a nastêpnie zanotowaæ wynik polecenia\r\n"
 ",,bt''. Dziêki temu autorzy dowiedz± siê, w którym miejscu wyst±pi³ b³±d\r\n"
 "i najprawdopodobniej pozwoli to unikn±æ tego typu sytuacji w przysz³o¶ci.\r\n"
 "Wiêcej szczegó³ów w dokumentacji, w pliku ,,gdb.txt''.\r\n"
 "\r\n",
-config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, argv0, config_dir);
+config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, argv0, config_dir, (int) getpid());
 
         config_write_crash();
         userlist_write_crash();
@@ -764,7 +764,7 @@ int main(int argc, char **argv)
         if (!no_global_config)
                 config_read(SYSCONFDIR "/ekg2.conf");
 
-        config_read(NULL);
+	config_read_plugins();
 
         if (!no_global_config)
                 config_read(SYSCONFDIR "/ekg2-override.conf");
@@ -787,7 +787,7 @@ int main(int argc, char **argv)
                 plugin_load("irc", -254, 1);
         }
 
-        config_read_later(NULL);
+	config_read(NULL);
 
         /* je¶li ma byæ theme, niech bêdzie theme */
         if (load_theme)
@@ -833,13 +833,12 @@ int main(int argc, char **argv)
 
         config_postread();
 
-        /* status window takes first session or setted as default one*/
-        if (sessions && (!session_current || window_current->session)) {
-                session_t *session_default = session_find_default();
+        /* status window takes first session if not setted before*/
+	if (!session_current && sessions)
+			session_current = (session_t*) sessions->data;
 
-                session_current = (session_default) ? session_default : (session_t*) sessions->data;
-                window_current->session = session_current;
-        }
+	if (session_current != window_current->session)
+		window_current->session = session_current;
 
         metacontact_read(); /* read the metacontacts info */
 
@@ -915,7 +914,7 @@ void ekg_exit()
         /* setting default session */
         if (config_sessions_save && session_current) {
                 session_int_set(session_current, "default", 1);
-		config_changed = 1;
+//		config_changed = 1;
 	}
 
         xfree(last_search_first_name);
@@ -927,11 +926,10 @@ void ekg_exit()
 
         if (config_windows_save) {
                 array_add(&vars, xstrdup("windows_layout"));
-		config_changed = 1;
 	}
 
         if (vars) {
-                config_write_partly(vars);
+                config_write_partly(NULL, vars);
                 array_free(vars);
         }
 
@@ -968,7 +966,6 @@ void ekg_exit()
         }
 
         list_destroy(watches, 0);
-
 
         if (config_changed && !config_speech_app && config_save_quit == 1) {
                 char line[80];

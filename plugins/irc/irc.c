@@ -522,11 +522,11 @@ COMMAND(irc_command_connect)
 	irc_private_t *j = irc_private(session);
 
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 	if (!(server=session_get(session, "server"))) {
-		print("generic_error", "gdzie lecimy ziom ?! [/session server]");
+		printq("generic_error", "gdzie lecimy ziom ?! [/session server]");
 		return -1;
 	}
 	if (j->connecting) {
@@ -549,7 +549,7 @@ COMMAND(irc_command_connect)
 	debug("[irc] comm_connect() session->uid = %s resolving %s\n",
 			session->uid, server);
 	if (pipe(fd) == -1) {
-		print("generic_error", strerror(errno));
+		printq("generic_error", strerror(errno));
 		return -1;
 	}
 
@@ -558,7 +558,7 @@ COMMAND(irc_command_connect)
 	if ((res = fork()) == -1) {
 		close(fd[0]);
 		close(fd[1]);
-		print("generic_error", strerror(errno));
+		printq("generic_error", strerror(errno));
 		return -1;
 	}
 
@@ -637,7 +637,7 @@ COMMAND(irc_command_disconnect)
 	debug("[irc] comm_disconnect() !!!\n");
 
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 
@@ -648,7 +648,7 @@ COMMAND(irc_command_disconnect)
 	}
 
 	if (!j->connecting && !session_connected_get(session)) {
-			print("not_connected", session_name(session));
+			printq("not_connected", session_name(session));
 			return -1;
 	}
 	/* params can be NULL
@@ -659,9 +659,9 @@ COMMAND(irc_command_disconnect)
 
 	if (j->connecting) {
 		j->connecting = 0;
-		print("conn_stopped", session_name(session));
+		printq("conn_stopped", session_name(session));
 	} else
-		print("disconnected", session_name(session));
+		printq("disconnected", session_name(session));
 
 	watch_remove(&irc_plugin, j->fd, WATCH_READ);
 
@@ -673,7 +673,7 @@ COMMAND(irc_command_reconnect)
 	irc_private_t *j = irc_private(session);
 
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 	
@@ -704,12 +704,12 @@ COMMAND(irc_command_msg)
 	int prv = 0;
 
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 
 	if (!params[0] || !params[1]) {
-		if (!params[0]) print("not_enough_params", name);
+		if (!params[0]) printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -720,7 +720,7 @@ COMMAND(irc_command_msg)
 	}
 
 	if (!session_connected_get(session)) {
-		print("not_connected", session_name(session));
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -806,17 +806,17 @@ COMMAND(irc_command_quote)
 	irc_private_t *j = irc_private(session);
 
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 
 	if (!params[0]) {
-		print("not_enough_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
 	if (!session_connected_get(session)) {
-		print("not_connected", session_name(session));
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -833,7 +833,7 @@ COMMAND(irc_command_pipl)
 	people_chan_t *chan;
 
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 	
@@ -855,7 +855,7 @@ COMMAND(irc_command_pipl)
 COMMAND(irc_command_add)
 {
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 	
@@ -895,7 +895,7 @@ int irc_write_status(session_t *s, int quiet)
 COMMAND(irc_command_away)
 {
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 
@@ -909,7 +909,7 @@ COMMAND(irc_command_away)
 			goto change;
 #if 0
 		} else {
-			print("invalid_params", "irc:back");
+			printq("invalid_params", "irc:back");
 			return -1;
 		}
 #endif
@@ -1105,7 +1105,7 @@ COMMAND(irc_command_devop)
 		return -1;
 	
 	if (!(*mp)) {
-		print("not_enough_params", name);
+		printq("not_enough_params", name);
 		xfree(chan);
 		return -1;
 	}
@@ -1364,16 +1364,16 @@ COMMAND(irc_command_nick)
 	irc_private_t *j = irc_private(session);
 
 	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
+		printq("invalid_session");
 		return -1;
 	}
 	
 	if (!params[0]) {
-		print("not_enough_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 	if (!j) {
-		print("sesion_doesnt_exist", session->uid);
+		printq("sesion_doesnt_exist", session->uid);
 		return -1;
 	}
 	
@@ -1486,7 +1486,6 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
         plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "local_ip", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);

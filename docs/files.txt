@@ -30,13 +30,12 @@ ekg mo¿e dopisaæ u¿ytkownika do kilku metagrup:
 
 2. Format konfiguracji ekg2
 
-Plik konfiguracyjny ,,config'' zawiera kolejne wpisy postaci:
+Plik konfiguracyjny ,,config'' zawiera kolejne wpisy w postaci:
 
-	set <zmienna> <warto¶æ>
+	<set> <zmienna> <warto¶æ>
 	bind <klawisz> <komenda>
 	bind-set <klawisz> <sekwencja>
 	alias <nazwa> <komenda>
-	plugin <nazwa>
 	on <zdarzenie> <priorytet> <za³o¿enia> <komenda>
 	at [nazwa] <czas>/<czêstotliwo¶æ> <komenda>
 	timer [nazwa] [*/]<czas> <komenda>
@@ -44,6 +43,12 @@ Plik konfiguracyjny ,,config'' zawiera kolejne wpisy postaci:
 Je¶li pierwszy wyraz nie jest jednym ze znanych, jest traktowany jako
 nazwa zmiennej, po której wystêpuje jej warto¶æ -- chodzi o zachowanie
 kompatybilno¶ci z innymi klientami.
+
+Plik konfiguracyjny ,,config-plugin'' zawiera kolejne wpisy w postaci:
+	<zmienna> <warto¶æ>
+
+Plik konfiguracyjny ,,plugins'' zawiera kolejny wpisy w postaci:
+	plugin <nazwa>
 
 Je¶li warto¶æ zmiennej zaczyna siê od znaku o kodzie 1, to nastêpuj±ca
 po nim warto¶æ zmiennej jest zakodowana u¿ywaj±c base64.
@@ -98,7 +103,7 @@ wiadomo¶æ. Kolejne linie s± tre¶ci± wiadomo¶ci.
 
 5. Format pliku konfiguracji sesji ekg2 
 
-Plik konfiguracyjny sessions mo¿e zawieraæ nastêpuj±ce definicje:
+Plik konfiguracyjny sessions-<plugin> mo¿e zawieraæ nastêpuj±ce definicje:
 
 	[uid sesji] - wszystkie zmienne bêd±ce poni¿ej s± podrzêdne dla 
 		      tej sesji

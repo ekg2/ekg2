@@ -484,9 +484,8 @@ int session_read()
 	char *line;
 	FILE *f;
 	session_t *s = NULL;
-
-	if (!(f = fopen(prepare_path("sessions", 0), "r")))
-		return -1;
+	list_t l;
+	int ret = 0;
 
 	if (!in_autoexec) {
 		list_t l;
@@ -500,94 +499,128 @@ int session_read()
 		debug("	 flushed sessions\n");
 	}
 
-	while ((line = read_file(f))) {
+	for (l = plugins; l; l = l->next) {
+		plugin_t *p = l->data;
 		char *tmp;
 
-		if (line[0] == '[') {
-			tmp = xstrchr(line, ']');
+		if (!p || p->pclass != PLUGIN_PROTOCOL)
+			continue;
 
-			if (!tmp)
-				goto next;
+		tmp = saprintf("sessions-%s", p->name);
 
-			*tmp = 0;
-			s = session_add(line + 1);	
-
-			goto next;
+	        if (!(f = fopen(prepare_path(tmp, 0), "r"))) {
+			debug("Error opening file %s\n", tmp);
+			xfree(tmp);
+			ret = -1;
+			continue;
 		}
 
-		if ((tmp = xstrchr(line, '='))) {
-			*tmp = 0;
-			tmp++;
-			if (!session_is_var(s, line)) {
-				debug("\tSession variable \"%s\" is not correct\n", line);
+		xfree(tmp);
+
+		while ((line = read_file(f))) {
+			char *tmp;
+
+			if (line[0] == '[') {
+				tmp = xstrchr(line, ']');
+
+				if (!tmp)
+					goto next;
+
+				*tmp = 0;
+				s = session_add(line + 1);	
+
 				goto next;
 			}
-			xstrtr(tmp, '\002', '\n');
-			if(*tmp == '\001') { 
-				char *decoded = base64_decode(tmp + 1);
-				session_set(s, line, decoded);
-				xfree(decoded);
-			} else 
-				session_set(s, line, tmp);
-			if (!xstrcmp(line, "default") && atoi(tmp) == 1) {
-				session_current = s;
-				window_current->session = s;
+
+			if ((tmp = xstrchr(line, '='))) {
+				*tmp = 0;
+				tmp++;
+				if (!session_is_var(s, line)) {
+					debug("\tSession variable \"%s\" is not correct\n", line);
+					goto next;
+				}
+				xstrtr(tmp, '\002', '\n');
+				if(*tmp == '\001') { 
+					char *decoded = base64_decode(tmp + 1);
+					session_set(s, line, decoded);
+					xfree(decoded);
+				} else 
+					session_set(s, line, tmp);
+				if (!xstrcmp(line, "default") && atoi(tmp) == 1) {
+					session_current = s;
+					window_current->session = s;
+				}
+				goto next;
 			}
-			goto next;
-		}
 
 next:
-		xfree(line);
+			xfree(line);
+		}
+
+		fclose(f);
 	}
 
-	fclose(f);
-
-	return 0;
+	return ret;
 }
 
 /*
  * session_write()
  *
- * zapisuje informacje o sesjach w pliku.
+ * writes informations about sessions in files
  */
 int session_write()
 {
-	list_t l;
+	list_t l, ls;
 	FILE *f = NULL;
+	int ret = 0;
 
-	f = fopen(prepare_path("sessions", 1), "w");
+	for (l = plugins; l; l = l->next) {
+		plugin_t *p = l->data;
+		char *tmp = saprintf("sessions-%s", p->name);
 
-	if (!f)
-		return -1;
-
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-		list_t lp;
-		
-		userlist_write(s);
-		fprintf(f, "[%s]\n", s->uid);
-		if (s->alias)
-			fprintf(f, "alias=%s\n", s->alias);
-		if (s->status && config_keep_reason != 2)
-			fprintf(f, "status=%s\n", s->status);
-		if (s->descr && config_keep_reason) {
-			xstrtr(s->descr, '\n', '\002');
-			fprintf(f, "descr=%s\n", s->descr);
-			xstrtr(s->descr, '\002', '\n');
-		}
-                if (s->password && config_save_password)
-                        fprintf(f, "password=\001%s\n", s->password);
-                
-		for (lp = s->params; lp; lp = lp->next) {
-	                session_param_t *v = lp->data;
-        
-			if (v->value)
-				fprintf(f, "%s=%s\n", v->key, v->value);
+                if (!(f = fopen(prepare_path(tmp, 1), "w"))) {
+                        debug("Error opening file %s\n", tmp);
+                        xfree(tmp);
+			ret = -1;
+			continue;
                 }
+
+                xfree(tmp);
+
+		for (ls = sessions; ls; ls = ls->next) {
+			session_t *s = ls->data;
+			list_t lp;
+			plugin_t *ps = plugin_find_uid(s->uid);
+
+			if (ps != p)
+				continue;
+
+			userlist_write(s);
+			fprintf(f, "[%s]\n", s->uid);
+			if (s->alias)
+				fprintf(f, "alias=%s\n", s->alias);
+			if (s->status && config_keep_reason != 2)
+				fprintf(f, "status=%s\n", s->status);
+			if (s->descr && config_keep_reason) {
+				xstrtr(s->descr, '\n', '\002');
+				fprintf(f, "descr=%s\n", s->descr);
+				xstrtr(s->descr, '\002', '\n');
+			}
+        	        if (s->password && config_save_password)
+	                        fprintf(f, "password=\001%s\n", s->password);
+                
+			for (lp = s->params; lp; lp = lp->next) {
+		                session_param_t *v = lp->data;
+        
+				if (v->value)
+					fprintf(f, "%s=%s\n", v->key, v->value);
+	                }
+		}
+
+		fclose(f);
 	}
-	fclose(f);
-	
-	return 0;
+
+	return ret;
 }
 
 /*
@@ -1031,29 +1064,6 @@ COMMAND(session_command)
 	printq("invalid_params", name);
 	
 	return -1;
-}
-
-/* 
- * session_find_default()
- *
- * it returns pointer to the first default session
- * in the list
- */
-session_t *session_find_default()
-{
-	list_t l;
-	
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-
-		if (!s)
-			continue;
-
-		if (session_int_get(s, "default") == 1)
-			return s;
-	}
-
-	return NULL;
 }
 
 /* sessions_free()

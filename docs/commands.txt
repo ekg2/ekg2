@@ -469,15 +469,15 @@ quit
 	zmiennych.
 
 reload
-	parametry:  [plik]
-	krotki opis: wczytuje plik konfiguracyjny u¿ytkownika lub podany
+	parametry:  
+	krotki opis: wczytuje pliki konfiguracyjny, pluginy oraz sesje
 
 save
-	parametry:  [plik]
+	parametry:  
 	krotki opis: zapisuje ustawienia programu
 	
 	Aktualny stan zostanie zapisany i bêdzie przywrócony przy nastêpnym uruchomieniu 
-	programu. Mo¿na podaæ plik, do którego ma byæ zapisana konfiguracja.
+	programu. 
 
 say
 	parametry:  [tekst]

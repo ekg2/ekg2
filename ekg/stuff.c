@@ -135,6 +135,7 @@ int config_time_deviation = 300;
 int config_mesg = MESG_DEFAULT;
 int config_display_welcome = 1;
 char *config_display_color_map = NULL;
+char *config_session_default = NULL;
 int config_sessions_save = 0;
 int config_windows_save = 0;
 char *config_windows_layout = NULL;

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ekg2 CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-13 16:14+0100\n"
+"POT-Creation-Date: 2005-03-20 12:55+0100\n"
 "PO-Revision-Date: 2005-01-05 20:19+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polish\n"
@@ -106,7 +106,7 @@ msgstr ""
 msgid "To get more information, start program with --help.\n"
 msgstr ""
 
-#: ekg/ekg.c:983 ekg/ekg.c:989 ekg/ekg.c:1001 ekg/ekg.c:1008
+#: ekg/ekg.c:980 ekg/ekg.c:986 ekg/ekg.c:998 ekg/ekg.c:1005
 #, c-format
 msgid "Error while saving.\n"
 msgstr ""
@@ -755,7 +755,7 @@ msgid "%! Error reading configuration file: %1\n"
 msgstr ""
 
 #: ekg/themes.c:1294
-msgid "%> Opened configuration file %T%1%n\n"
+msgid "%> Configuratin read correctly.%n\n"
 msgstr ""
 
 #: ekg/themes.c:1295
@@ -1727,139 +1727,139 @@ msgstr ""
 msgid "%> Image sent properly\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1576
+#: plugins/irc/irc.c:1575
 msgid "%> %Y%2%n has joined %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1577
+#: plugins/irc/irc.c:1576
 msgid "%> %RYou%n have joined %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1578
+#: plugins/irc/irc.c:1577
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1579
+#: plugins/irc/irc.c:1578
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1580
+#: plugins/irc/irc.c:1579
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1581
+#: plugins/irc/irc.c:1580
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1582
+#: plugins/irc/irc.c:1581
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1583
+#: plugins/irc/irc.c:1582
 msgid "%> %y%e* %2%n %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1584
+#: plugins/irc/irc.c:1583
 msgid "%> %Y%e* %2%n %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1585
+#: plugins/irc/irc.c:1584
 msgid "%> %y%h* %2%n %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1586
+#: plugins/irc/irc.c:1585
 msgid "%> %Y%h* %2%n %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1587
+#: plugins/irc/irc.c:1586
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1588
+#: plugins/irc/irc.c:1587
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1589
+#: plugins/irc/irc.c:1588
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1604
+#: plugins/irc/irc.c:1603
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1633
+#: plugins/irc/irc.c:1632
 msgid "%G||%n away     : %2 - %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1635 plugins/irc/irc.c:1638
+#: plugins/irc/irc.c:1634 plugins/irc/irc.c:1637
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n realname : %6\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1641
+#: plugins/irc/irc.c:1640
 msgid "%G||%n %|channels : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1642
+#: plugins/irc/irc.c:1641
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1643
+#: plugins/irc/irc.c:1642
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1644
+#: plugins/irc/irc.c:1643
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1645 plugins/irc/irc.c:1646
+#: plugins/irc/irc.c:1644 plugins/irc/irc.c:1645
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1648
+#: plugins/irc/irc.c:1647
 msgid "%> Topic %2: %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1650
+#: plugins/irc/irc.c:1649
 msgid "%> set by %2 on %4"
 msgstr ""
 
-#: plugins/irc/irc.c:1651
+#: plugins/irc/irc.c:1650
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1652
+#: plugins/irc/irc.c:1651
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1653
+#: plugins/irc/irc.c:1652
 msgid "%> %2/%4 sets mode [%5]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1654
+#: plugins/irc/irc.c:1653
 msgid "%> %2 mode is [%3]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1655
+#: plugins/irc/irc.c:1654
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1657
+#: plugins/irc/irc.c:1656
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1658
+#: plugins/irc/irc.c:1657
 msgid "%> You are now known as %G%3%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1659
+#: plugins/irc/irc.c:1658
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1660
+#: plugins/irc/irc.c:1659
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 

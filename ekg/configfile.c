@@ -1,11 +1,12 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2001-2005 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Robert J. Wo¼ny <speedy@ziew.org>
  *                          Pawe³ Maziarz <drg@o2.pl>
  *                          Dawid Jarosz <dawjar@poczta.onet.pl>
  *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -47,6 +48,19 @@
 #  define PATH_MAX _POSIX_PATH_MAX
 #endif
 
+#define check_file() if (!(f = fopen(filename, "r")))\
+                return -1;\
+\
+        if (stat(filename, &st) || !S_ISREG(st.st_mode)) {\
+                if (S_ISDIR(st.st_mode))\
+                        errno = EISDIR;\
+                else\
+                        errno = EINVAL;\
+                fclose(f);\
+                return -1;\
+        }
+
+
 /* 
  * config_postread()
  *
@@ -68,8 +82,6 @@ void config_postread()
 		                char *session_name = xstrndup(targets[i], xstrlen(targets[i]) - xstrlen(tmp));
 				session_t *s;
 
-				debug("session: %s\n", session_name);
-
 		                if (!(s = session_find(session_name)))
 					continue;
 
@@ -87,49 +99,35 @@ void config_postread()
 
                 array_free(targets);
         }
+
+	if (config_sessions_save && config_session_default) {
+		session_t *s = session_find(config_session_default);
+
+		if (s) {
+			debug("setted default session to %s\n", s->uid);
+			session_current = s;
+			window_current->session = s;
+			query_emit(NULL, "session-changed");
+		} else {
+			debug("default session not found\n");
+		}
+	}
 }
 
-/* 
- * config_read_later()
- * 
- * reads data after plugins initialization 
- * 
- * 0/-1
- */
-int config_read_later(const char *filename)
+int config_read_plugins()
 {
         char *buf, *foo;
-        FILE *f;
-        int i = 0, good_file = 0, ret = 1;
+	const char *filename;
+	FILE *f;
         struct stat st;
 
-        if (!filename && !(filename = prepare_path("config", 0)))
-                return -1;
 
-        if (!(f = fopen(filename, "r")))
-                return -1;
+        if (!(filename = prepare_path("plugins", 0)))
+                        return -1;
+	
+	check_file();
 
-        if (stat(filename, &st) || !S_ISREG(st.st_mode)) {
-                if (S_ISDIR(st.st_mode))
-                        errno = EISDIR;
-                else
-                        errno = EINVAL;
-                fclose(f);
-                return -1;
-        }
-
-	if (!in_autoexec) {
- 	       query_emit(NULL, "binding-default");
-	}
-
-        while ((buf = read_file(f))) {
-                i++;
-
-                if (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/')) {
-                        xfree(buf);
-                        continue;
-                }
-
+	while ((buf = read_file(f))) {
                 if (!(foo = xstrchr(buf, ' '))) {
                         xfree(buf);
                         continue;
@@ -137,79 +135,24 @@ int config_read_later(const char *filename)
 
                 *foo++ = 0;
 
-                if (!xstrcasecmp(buf, "set")) {
-                        char *bar;
+		if (!xstrcasecmp(buf, "plugin")) {
+                        char **p = array_make(foo, " \t", 3, 1, 0);
 
-                        if (!(bar = xstrchr(foo, ' ')))
-                                ret = variable_set(foo, NULL, 0);
-                        else {
-                                *bar++ = 0;
-                                ret = variable_set(foo, bar, 0);
-                        }
+                                if (array_count(p) == 2)
+                                        plugin_load(p[0], atoi(p[1]), 1);
 
-                        if (ret)
-                                debug("  unknown variable %s\n", foo);
-
-		} else if (!xstrcasecmp(buf, "bind")) {
-                        char **pms = array_make(foo, " \t", 2, 1, 0);
-
-                        if (array_count(pms) == 2) {
-				char *tmp;
-
-				tmp = saprintf("/bind --add %s %s",  pms[0], pms[1]);
-	                        ret = command_exec(NULL, NULL, tmp, 1);
-				
-				xfree(tmp);
-                        }
-
-                        array_free(pms);
-		} else if (!xstrcasecmp(buf, "bind-set")) {
-                        char **pms = array_make(foo, " \t", 2, 1, 0);
-
-                        if (array_count(pms) == 2) { 
-				
-				query_emit(NULL, "binding-set", pms[0], pms[1], 1);
-			}
-
-			array_free(pms);
-		} else if (!xstrcasecmp(buf, "plugin")) {
-			xfree(buf);
-			continue;
-		} else if (!xstrcasecmp(buf, "alias")) {
-			xfree(buf);
-			continue;
-		} else if (!xstrcasecmp(buf, "at")) {
-			xfree(buf);
-			continue;
-                } else if (!xstrcasecmp(buf, "on")) {
-                        xfree(buf);
-                        continue;
-		} else {
-                        ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
-
-                        if (ret) 
-                                debug("  unknown variable %s\n", buf);
+                                array_free(p);
                 }
+		xfree(buf);
+	}
 
-                if (!ret)
-                        good_file = 1;
-
-                if (!good_file && i > 100) {
-                        xfree(buf);
-                        break;
-                }
-
-                xfree(buf);
-        }
-
-        fclose(f);
-	return (good_file) ? 0 : -1;
+	return 0;
 }
 
 /*
  * config_read()
  *
- * czyta z pliku ~/.gg/config lub podanego konfiguracjê.
+ * czyta z pliku ~/.ekg2/config lub podanego konfiguracjê.
  *
  *  - filename,
  *
@@ -219,34 +162,28 @@ int config_read(const char *filename)
 {
 	char *buf, *foo;
 	FILE *f;
-	int i = 0, good_file = 0, ret = 1, home = ((filename) ? 0 : 1);
+	list_t l;
+	int i = 0, good_file = 0, first = (filename) ? 0 : 1, ret = 1;
 	struct stat st;
 
-	if (!filename && !(filename = prepare_path("config", 0)))
-		return -1;
+	/* then global and plugins variables */
+        if (!filename && !(filename = prepare_path("config", 0)))
+                return -1;
 
-	if (!(f = fopen(filename, "r")))
-		return -1;
+        check_file();
 
-	if (stat(filename, &st) || !S_ISREG(st.st_mode)) {
-		if (S_ISDIR(st.st_mode))
-			errno = EISDIR;
-		else
-			errno = EINVAL;
-		fclose(f);
-		return -1;
-	}
-
-	if (!in_autoexec) {
+	if (!in_autoexec && !filename) {
 		alias_free();
 		timer_remove_user(-1);
 		event_free();
 		variable_set_default();
 		query_emit(NULL, "set-vars-default");
+		query_emit(NULL, "binding-default");
 		debug("  flushed previous config\n");
 	} 
 
 	while ((buf = read_file(f))) {
+		ret = 0;
 		i++;
 
 		if (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/')) {
@@ -260,8 +197,42 @@ int config_read(const char *filename)
 		}
 
 		*foo++ = 0;
+                if (!xstrcasecmp(buf, "set")) {
+                        char *bar;
 
-		if (!xstrcasecmp(buf, "alias")) {
+                        if (!(bar = xstrchr(foo, ' ')))
+                                ret = variable_set(foo, NULL, 0);
+                        else {
+                                *bar++ = 0;
+                                ret = variable_set(foo, bar, 0);
+                        }
+
+                        if (ret)
+                                debug("  unknown variable %s\n", foo);
+
+                } else if (!xstrcasecmp(buf, "bind")) {
+                        char **pms = array_make(foo, " \t", 2, 1, 0);
+
+                        if (array_count(pms) == 2) {
+                                char *tmp;
+
+                                tmp = saprintf("/bind --add %s %s",  pms[0], pms[1]);
+                                ret = command_exec(NULL, NULL, tmp, 1);
+
+                                xfree(tmp);
+                        }
+
+                        array_free(pms);
+                } else if (!xstrcasecmp(buf, "bind-set")) {
+                        char **pms = array_make(foo, " \t", 2, 1, 0);
+
+                        if (array_count(pms) == 2) {
+
+                                query_emit(NULL, "binding-set", pms[0], pms[1], 1);
+                        }
+
+                        array_free(pms);
+                } else if (!xstrcasecmp(buf, "alias")) {
 			debug("  alias %s\n", foo);
 			ret = alias_add(foo, 1, 1);
 		
@@ -323,14 +294,13 @@ int config_read(const char *filename)
 				xfree(period_str);
 			}
 				array_free(p);
-		} else if (!xstrcasecmp(buf, "plugin")) {
-			char **p = array_make(foo, " \t", 3, 1, 0);
-			
-				if (array_count(p) == 2) 
-					plugin_load(p[0], atoi(p[1]), 1);
+		} else {
+                        ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
 
-				array_free(p);
-		}
+                        if (ret)
+                                debug("  unknown variable %s\n", buf);
+                }
+
 
 		if (!ret)
 			good_file = 1;
@@ -345,10 +315,14 @@ int config_read(const char *filename)
 	
 	fclose(f);
 
-	if (!good_file && !home && !in_autoexec) {
-		config_read(NULL);
-		errno = EINVAL;
-		return -2;
+	if (first) {
+		for (l = plugins; l; l = l->next) {
+			plugin_t *p = l->data;
+			char *tmp = saprintf("config-%s", p->name);
+	
+			config_read(prepare_path(tmp, 0));
+			xfree(tmp);
+		}
 	}
 	
 	return 0;
@@ -391,6 +365,26 @@ static void config_write_variable(FILE *f, variable_t *v)
 }
 
 /*
+ * config_write_plugins()
+ *
+ * function saving plugins 
+ *
+ * - f - file, that we are saving to
+ */
+static void config_write_plugins(FILE *f)
+{
+	list_t l;
+
+	if (!f)
+		return;
+
+        for (l = plugins; l; l = l->next) {
+                plugin_t *p = l->data;
+                if (p && p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
+        }
+}
+
+/*
  * config_write_main()
  *
  * w³a¶ciwa funkcja zapisuj±ca konfiguracjê do podanego pliku.
@@ -404,8 +398,12 @@ static void config_write_main(FILE *f)
 	if (!f)
 		return;
 
-	for (l = variables; l; l = l->next)
-		config_write_variable(f, l->data);
+	for (l = variables; l; l = l->next) {
+		variable_t *v = l->data;
+
+		if (!v->plugin)
+			config_write_variable(f, v);
+	}
 
 	for (l = aliases; l; l = l->next) {
 		struct alias *a = l->data;
@@ -477,25 +475,23 @@ static void config_write_main(FILE *f)
 			xfree(foo);
 		}
 	}
-
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
-                if (p && p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
-        }
 }
 
 /*
  * config_write()
  *
- * zapisuje aktualn± konfiguracjê do pliku ~/.gg/config lub podanego.
+ * zapisuje aktualn± konfiguracjê do pliku ~/.ekg2/config lub podanego.
  *
  * 0/-1
  */
-int config_write(const char *filename)
+int config_write()
 {
 	FILE *f;
+	const char *filename;
+	list_t l;
 
-	if (!filename && !(filename = prepare_path("config", 1)))
+	/* first of all we are saving plugins */
+	if (!(filename = prepare_path("plugins", 1)))
 		return -1;
 	
 	if (!(f = fopen(filename, "w")))
@@ -503,11 +499,50 @@ int config_write(const char *filename)
 	
 	fchmod(fileno(f), 0600);
 
+	config_write_plugins(f);
+        fclose(f);
+
+        /* now we are saving global variables and settings
+	 * timers, bindings etc. */
+        if (!(filename = prepare_path("config", 1)))
+                return -1;
+
+        if (!(f = fopen(filename, "w")))
+                return -1;
+
+        fchmod(fileno(f), 0600);
+
 	config_write_main(f);
+        fclose(f);
 
-	query_emit(NULL, "config-write", &f, NULL);
+	/* now plugins variables */
+	for (l = plugins; l; l = l->next) {
+		list_t lv;
+		plugin_t *p = l->data;
+		char *tmp = saprintf("config-%s", p->name);
 
-	fclose(f);
+		if (!(filename = prepare_path(tmp, 1))) {
+			xfree(tmp);
+			return -1;
+		}
+
+		xfree(tmp);
+
+		if (!(f = fopen(filename, "w")))
+			return -1;
+
+		fchmod(fileno(f), 0600);
+
+		for (lv = variables; lv; lv = lv->next) {
+			variable_t *v = lv->data;
+
+			if (p == v->plugin) {
+				config_write_variable(f, v);
+			}
+		}	
+
+		fclose(f);	
+	}
 	
 	return 0;
 }
@@ -521,17 +556,17 @@ int config_write(const char *filename)
  * 
  * 0/-1
  */
-int config_write_partly(char **vars)
+int config_write_partly(const char *filename, char **vars)
 {
-	const char *filename;
 	char *newfn, *line;
 	FILE *fi, *fo;
-	int *wrote, i;
+	int *wrote, i, first = (filename) ? 0 : 1;
+	list_t l;
 
 	if (!vars)
 		return -1;
 
-	if (!(filename = prepare_path("config", 1)))
+	if (!filename && !(filename = prepare_path("config", 1)))
 		return -1;
 	
 	if (!(fi = fopen(filename, "r")))
@@ -615,6 +650,17 @@ pass:
 
 	xfree(newfn);
 
+	if (first) {
+		for (l = plugins; l; l = l->next) {
+			plugin_t *p = l->data;
+			char *tmp = saprintf("config-%s", p->name);
+	
+			config_write_partly(prepare_path(tmp, 1), vars);
+	
+			xfree(tmp);
+		}
+	}
+
 	return 0;
 }
 
@@ -628,9 +674,24 @@ void config_write_crash()
 {
 	char name[32];
 	FILE *f;
+	list_t l;
 
 	chdir(config_dir);
 
+        /* first of all we are saving plugins */
+	snprintf(name, sizeof(name), "plugins.%d", (int) getpid());
+
+        if (!(f = fopen(name, "w")))
+                return;
+
+        fchmod(fileno(f), 0400);
+
+        config_write_plugins(f);
+
+	fflush(f);
+        fclose(f);
+
+	/* then main part of config */
 	snprintf(name, sizeof(name), "config.%d", (int) getpid());
 	if (!(f = fopen(name, "w")))
 		return;
@@ -640,10 +701,31 @@ void config_write_crash()
 	config_write_main(f);
 
 	fflush(f);
-
-	query_emit(NULL, "config-write", &f, NULL);
-	
 	fclose(f);
+
+        /* now plugins variables */
+        for (l = plugins; l; l = l->next) {
+                list_t lv;
+                plugin_t *p = l->data;
+
+		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());
+
+                if (!(f = fopen(name, "w")))
+			continue;	
+	
+		chmod(name, 0400);
+
+                for (lv = variables; lv; lv = lv->next) {
+                        variable_t *v = lv->data;
+
+                        if (p == v->plugin) {
+                                config_write_variable(f, v);
+                        }
+                }
+
+		fflush(f);
+                fclose(f);
+        }
 }
 
 /*
