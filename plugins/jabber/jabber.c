@@ -1544,7 +1544,7 @@ int jabber_plugin_init()
 	plugin_var_add(&jabber_plugin, "use_ssl", VAR_INT, itoa(1), 0);
 
 	format_add("jabber_auth_subscribe", "%> (%2) %1 prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n", 1);
-	format_add("jabber_auth_unsubscribe", "%> (%2) %1 prosi o autoryzacjê usuniêcia. U¿yj \"/auth -c %1\" aby usun±æ.%n\n", 1);
+	format_add("jabber_auth_unsubscribe", "%> (%2) %1 prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby usun±æ.%n\n", 1);
 	format_add("jabber_xmlerror", "%> (%1) B³±d parsowania XMLa%n\n", 1);
 	format_add("jabber_auth_request", "%> (%2) Wys³ano ¿±danie autoryzacji do %1.%n%\n", 1);
 	format_add("jabber_auth_accept", "%> (%2) Autoryzowano %1. %n\n", 1);
