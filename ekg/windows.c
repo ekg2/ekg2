@@ -172,7 +172,7 @@ void window_switch(int id)
 		if (id != window_current->id)
 			window_last_id = window_current->id;
 		
-		if(w->id && w->session)
+		if (w->id != 0 && w->session)
 			session_current = w->session;
 	
 		window_current = w;
