@@ -12,6 +12,7 @@ rozwi±zanie.
   - porz±dek w docs
 
 * klient:
+  - /_desc - change description without changing status
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
@@ -33,6 +34,7 @@ rozwi±zanie.
 
 * jabber
   - resolve SRV first
+  - emit events, authorisation-request and so on
   - conference support (similar to gg_command_msg() in gg)
   - ignore support 
 
