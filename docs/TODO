@@ -32,6 +32,8 @@ rozwi±zanie.
   - obs³uga myszy (mateusza)
   - dokumentacja do themes - opis ka¿dego formatu (del)
   - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
+  - wiadomosci w oknie query maja naglowek "nickname/uid". 
+    natomiast prompt w oknie i gorny status tylko uid. poprawic w theme (zdz)
 
 * jabber (implementowaæ w takiej kolejno¶ci!)
   - przenie¶æ wszystkie COMMAND() do commands.c (zdz)
