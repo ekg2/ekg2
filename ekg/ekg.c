@@ -900,7 +900,7 @@ void ekg_exit()
 		l = l->next;
 
 		p->destroy();
-	}
+	} 
 
 	list_destroy(watches, 0);
 
@@ -952,6 +952,8 @@ void ekg_exit()
 	binding_free();
 	last_free();
 	buffer_free();
+
+	list_destroy(windows, 1);
 
 	xfree(home_dir);
 

@@ -1441,8 +1441,6 @@ void ncurses_deinit()
 		ncurses_window_kill(w);
 	}
 
-	list_destroy(windows, 1);
-
 	tcsetattr(0, TCSADRAIN, &old_tio);
 
 	keypad(input, FALSE);
