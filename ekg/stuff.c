@@ -81,6 +81,7 @@ int config_beep_msg = 1;
 int config_beep_chat = 1;
 int config_beep_notify = 1;
 int config_beep_mail = 1;
+int config_display_blinking = 1;
 int config_display_pl_chars = 1;
 int config_events_delay = 3;
 char *config_sound_msg_file = NULL;
@@ -577,6 +578,27 @@ void changed_auto_save(const char *var)
 	 * bardziej ,,naturalne'' */
 	last_save = time(NULL);
 }
+
+/*
+ * changed_display_blinking()
+ *
+ * wywo³ywane po zmianie warto¶ci zmiennej ,,display_blinking''.
+ */
+void changed_display_blinking(const char *var)
+{
+	list_t sl;
+
+	/* wy³anczamy wszystkie blinkaj±ce uid'y */
+        for (sl = sessions; sl; sl = sl->next) {
+		list_t l;
+        	session_t *s = sl->data;
+		for(l = s->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+			u->blink = 0;			
+		}
+	}
+}
+
 		
 /*
  * changed_theme()

@@ -166,6 +166,7 @@ int config_ctrld_quits;
 char *config_dcc_dir;
 int config_debug;
 int config_display_ack;
+int config_display_blinking;
 int config_display_color;
 char *config_display_color_map;
 int config_display_crap;
@@ -258,6 +259,7 @@ void buffer_free();
 
 void changed_auto_save(const char *var);
 void changed_backlog_size(const char *var);
+void changed_display_blinking(const char *var);
 void changed_dcc(const char *var);
 void changed_mesg(const char *var);
 void changed_proxy(const char *var);

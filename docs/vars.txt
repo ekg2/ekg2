@@ -253,6 +253,13 @@ display_ack
 	dotar³a do adresata, 3 - tylko kiedy adresat jest niedostêpny i
 	wiadomo¶æ zosta³a zachowania na serwerze.
 
+display_blinking
+        typ: bool
+        domy¶lna warto¶æ: 1
+
+	okre¶la czy powinny zostawaæ pod¶wietlane osoby, które do nas
+	aktualnie pisz± 
+
 display_color
 	typ: liczba
 	domy¶lna warto¶æ: 1

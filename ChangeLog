@@ -8,12 +8,14 @@ zg³osi³ b³±d.
 
 // 2004-03-28
 - has³a sesji zachowywane s± w pliku w postaci kodowanej oraz uwzglêdniana
- jest zmienna save_password (del)
+  jest zmienna save_password (del)
 - poprawka wy¶wietlania osoby niedostêpnej w headerze (del)
 - poprawna obs³uga %i w themach - zwiêkszony rozmiar atrybutów co pozwoli na dodanie 
- dodatkowych attr jak np underline (del)
+  dodatkowych attr jak np underline (del)
 - poprawka: przy make_window == 2 i po "¶wie¿ym" otwarciu gg, przy pobieraniu wiadomo¶ci
   "le¿±cych" na serwerze nowe okna nie s± tworzone (del)
+- dodana zmienna display_blinking okre¶laj±ca czy osoby aktualnie pisz±ce
+  maj± zostaæ pod¶wietlone (del)
 
 
 // 2004-03-27
