@@ -428,6 +428,15 @@ void binding_free()
 
 	list_destroy(bindings, 1);
 	bindings = NULL;
+
+        for (l = bindings; l; l = l->next) {
+                binding_added_t *b = l->data;
+
+                xfree(b->sequence);
+        }
+
+	list_destroy(bindings_added, 1);
+	bindings_added = NULL;
 }
 
 /*
