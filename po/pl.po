@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-11-04 20:43+0100\n"
+"POT-Creation-Date: 2004-11-04 22:57+0100\n"
 "PO-Revision-Date: 2004-10-23 12:40+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -2122,6 +2122,10 @@ msgstr "%1: b³±d pobierania statusu,"
 #: plugins/xosd/xosd.c:227
 msgid "%1 is blocking us,"
 msgstr "%1 blokuje nas,"
+
+#: plugins/xosd/xosd.c:230
+msgid "[no description]"
+msgstr "[brak opisu]"
 
 #: plugins/xosd/xosd.c:232
 msgid "ekg2 XOnScreenDisplay plugin"

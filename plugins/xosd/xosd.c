@@ -227,7 +227,7 @@ static int xosd_theme_init()
 	format_add("xosd_status_change_blocking", _("%1 is blocking us,"), 1);
 	format_add("xosd_status_change_description", "%1", 1);
 	format_add("xosd_status_change_description_long", "%1...", 1);
-	format_add("xosd_status_change_no_description", "", 1);
+	format_add("xosd_status_change_no_description", _("[no description]"), 1);
 
 	format_add("xosd_welcome_message_line_1", _("ekg2 XOnScreenDisplay plugin"), 1);
 	format_add("xosd_welcome_message_line_2", _("Author: Adam 'dredzik' Kuczynski"), 1);
