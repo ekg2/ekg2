@@ -1,8 +1,9 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2001-2004 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Robert J. Wo¼ny <speedy@ziew.org>
+ *                          Leszek Krupiñski <leafnode@wafel.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -59,11 +60,6 @@ static int dd_sound(const char *name)
 	return (config_sound_app != NULL);
 }
 
-static int dd_log(const char *name)
-{
-	return (config_log);
-}
-
 static int dd_color(const char *name)
 {
 	return (config_display_color);
@@ -105,11 +101,6 @@ void variable_init()
 	variable_add(NULL, "keep_reason", VAR_INT, 1, &config_keep_reason, NULL, NULL, NULL);
 	variable_add(NULL, "last", VAR_MAP, 1, &config_last, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "separate", 4, 0, "sent"), NULL);
 	variable_add(NULL, "last_size", VAR_INT, 1, &config_last_size, NULL, NULL, NULL);
-//	variable_add(NULL, "log", VAR_MAP, 1, &config_log, NULL, variable_map(4, 0, 0, "none", 1, 2, "file", 2, 1, "dir", 4, 0, "gzip"), NULL);
-//	variable_add(NULL, "log_ignored", VAR_INT, 1, &config_log_ignored, NULL, NULL, dd_log);
-//	variable_add(NULL, "log_status", VAR_BOOL, 1, &config_log_status, NULL, NULL, dd_log);
-	variable_add(NULL, "log_path", VAR_DIR, 1, &config_log_path, NULL, NULL, dd_log);
-//	variable_add(NULL, "log_timestamp", VAR_STR, 1, &config_log_timestamp, NULL, NULL, dd_log);
 	variable_add(NULL, "make_window", VAR_INT, 1, &config_make_window, NULL, variable_map(3, 0, 0, "none", 1, 2, "usefree", 2, 1, "always"), NULL);
 	variable_add(NULL, "mesg", VAR_INT, 1, &config_mesg, changed_mesg, variable_map(3, 0, 0, "no", 1, 2, "yes", 2, 1, "default"), NULL);
 	variable_add(NULL, "reason_limit", VAR_BOOL, 1, &config_reason_limit, NULL, NULL, NULL);
