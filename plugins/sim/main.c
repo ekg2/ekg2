@@ -43,7 +43,7 @@ static int message_encrypt(void *data, va_list ap)
         if (!config_encryption)
                 return 0;
 
-        if (!*session || strncmp(*session, "gg:", 3) || !*recipient || strncmp(*recipient, "gg:", 3))
+        if (!*session || !*recipient)
                 return 0;
 
 	if (!xstrncmp(*message, "-----BEGIN RSA PUBLIC KEY-----", 20)) {
@@ -85,7 +85,7 @@ static int message_decrypt(void *data, va_list ap)
         if (!config_encryption)
                 return 0;
 
-        if (!*session || strncmp(*session, "gg:", 3) || !*sender || strncmp(*sender, "gg:", 3))
+        if (!*session || !*sender)
                 return 0;
 
 	if (!xstrncmp(*message, "-----BEGIN RSA PUBLIC KEY-----", 20)) {
@@ -140,11 +140,8 @@ static COMMAND(command_key)
                 struct stat st;
                 const char *uid;
 
-                if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
-                        printq("key_only_gg");
+                if (!session) 
                         return -1;
-                }
-
                 uid = session_uid_get(session);
 
                 if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
@@ -187,10 +184,8 @@ static COMMAND(command_key)
                         return -1;
                 }
 
-                if (!session || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
-			printq("key_only_gg");
+                if (!session) 
                         return -1;
-                }
 
                 tmp = saprintf("%s/%s.pem", prepare_path("keys", 0), session_uid_get(session));
                 f = fopen(tmp, "r");
@@ -321,7 +316,6 @@ static COMMAND(command_key)
  */
 static int sim_theme_init()
 {
-	format_add("key_only_gg", _("%! This function works only in GG protocol\n"), 1);
         format_add("key_generating", _("%> Please wait, generating keys...\n"), 1);
         format_add("key_generating_success", _("%> Keys generated and saved\n"), 1);
         format_add("key_generating_error", _("%! Error while generating keys: %1\n"), 1);
