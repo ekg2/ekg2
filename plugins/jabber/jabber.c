@@ -287,7 +287,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 			userlist_t u;
 			xmlnode_t *q = xmlnode_find_child(n, "query");
 			xmlnode_t *item = xmlnode_find_child(q, "item");
-			for (; item && item->next; item = item->next) {
+			for (; item ; item = item->next) {
 				memset(&u, 0, sizeof(u));
 				u.uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
 				u.nickname = jabber_unescape(jabber_attr(item->atts, "name"));
