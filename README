@@ -29,12 +29,9 @@
 	/session password mojetajnehas³o
 	/connect
 
-  obs³ugi rostera jeszcze nie ma, wiêc poza dodaniem do listy kontaktów,
-  nale¿y jeszcze wys³aæ kilka komend do serwera:
-  ¿eby dodaæ kogo¶ do listy kontaktów:
+#  ¿eby dodaæ kogo¶ do listy kontaktów:
 
-	/jid:auth --request jid:hamlet@denmark.dk
-	/xml <iq type="set"><query xmlns="jabber:iq:roster"><item jid="hamlet@denmark.dk"/></query></iq>
+   	/jadd hamlet@denmark.dk Hamlet
 
   ¿eby kogo¶ autoryzowaæ:
 

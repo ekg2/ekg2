@@ -297,7 +297,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 				u.status = xstrdup(EKG_STATUS_NA);
 				//XXX grupy
-				if (userlist_find(s,u.uid)) 
+				if (userlist_find(s, u.uid)) 
 					userlist_replace(s, &u);
 			 	else 
 					list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
@@ -328,8 +328,15 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
  		if (type && !strcmp(type, "unsubscribed") && from) {
 			userlist_t u;
+			char *err;
 			u.uid = xstrdup(from);
-			userlist_remove(s, &u);
+			if (userlist_find(s, u.uid))
+				userlist_remove(s, &u);
+			else {
+				err = saprintf("Ej, %s czego¶ od nas chce. Znasz go, Zenek?", u.uid);
+				print("generic", err);
+				xfree(err);
+			}
                         return;
                 }
 
@@ -900,6 +907,11 @@ COMMAND(jabber_command_passwd)
 	return 0;
 }
 
+/* 
+   zarz±dzanie autoryzacjami
+   s³u¿y równie¿ do usuwania u¿ytkowników (gdy wywo³ane z nazw± "jdel")
+*/
+
 COMMAND(jabber_command_auth) 
 {
 	jabber_private_t *j = session_private_get(session);
@@ -958,7 +970,7 @@ COMMAND(jabber_command_auth)
 		goto success;
 	}
 
-	if (params[0] && match_arg(params[0], 'd', "deny", 2)) {
+	if (params[0] && (match_arg(params[0], 'd', "deny", 2) || !strcasecmp(name, "jdel")) ) {
 		action = "unsubscribe";
 		/* TODO: sprawdziæ, czy cofamy autoryzacje czy odmawiamy - czy mamy w rosterze*/
 		descr = saprintf("Cofniêto/odmówiono autoryzacji %s", uid);
@@ -984,6 +996,45 @@ success:
 	xfree(descr);
 	return 0;
 }
+
+COMMAND(jabber_command_add)
+{
+ 	jabber_private_t *j = session_private_get(session);
+        char *uid, *tmp;
+
+        if (!session_check(session, 1, "jid")) {
+                printq("invalid_session");
+                return -1;
+        }
+
+        if (!session_connected_get(session)) {
+                printq("not_connected");
+                return -1;
+        }
+
+        if (!params[0]) {
+                printq("not_enough_params", name);
+                return -1;
+        }
+	
+	uid = params[0]; 
+	if (!strncasecmp(uid, "jid:", 4))
+		uid += 4;
+
+	jabber_write(j, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
+	if (params[1])
+		jabber_write(j, "<item jid=\"%s\" name=\"%s\"/>", uid, jabber_escape(params[1]));
+	else
+		jabber_write(j, "<item jid=\"%s\"/>", uid);
+	jabber_write(j, "</query></iq>");
+
+	tmp = saprintf("/auth --request jid:%s", uid);
+	command_exec(target, session, tmp, 0);
+	xfree(tmp);
+	
+	return 0;
+}
+
 
 int jabber_plugin_init()
 {
@@ -1017,6 +1068,8 @@ int jabber_plugin_init()
 	  "  -d, --deny <JID>      odmawia udzielenia autoryzacji\n"
  	  "  -r, --request <JID>   wysy³a ¿±danie autoryzacji\n"
 	  "  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji\n");
+	command_add(&jabber_plugin, "jid:jadd", "??", jabber_command_add, 0, "", "dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê", "<JID> [nazwa]");
+	command_add(&jabber_plugin, "jid:jdel", "u", jabber_command_auth, 0, "", "usuwa z naszego rostera", "");
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);
