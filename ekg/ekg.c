@@ -732,12 +732,12 @@ int main(int argc, char **argv)
 	window_current = window_new(NULL, NULL, 1);	/* okno stanu */
 
 	if (!no_global_config)
-		config_read(SYSCONFDIR "/ekg.conf");
+		config_read(SYSCONFDIR "/ekg2.conf");
 
 	config_read(NULL);
 
 	if (!no_global_config)
-		config_read(SYSCONFDIR "/ekg-override.conf");
+		config_read(SYSCONFDIR "/ekg2-override.conf");
 
 /*        userlist_read(); */
 	emoticon_read();
