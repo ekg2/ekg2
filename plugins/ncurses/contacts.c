@@ -67,10 +67,6 @@ int ncurses_contacts_update(window_t *w)
 	int j;
 	ncurses_window_t *n;
 	
-
-        if (!session_current || !session_current->userlist) 
-                return -1;
-	
 	if (!w) {
 		list_t l;
 
@@ -90,6 +86,15 @@ int ncurses_contacts_update(window_t *w)
 	n = w->private;
 	
 	ncurses_clear(w, 1);
+
+        if (!session_current)
+		return -1;
+
+	if (!session_current->userlist) {
+		n->redraw = 1;
+	        return 0;
+	}
+
 
 	if (config_contacts_groups) {
 		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
