@@ -1093,8 +1093,12 @@ COMMAND(cmd_list)
 	const char *tmp;
 
 	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ co¶ dalej ... */
-	if(!session)
-		return -1;		
+        if(!session) {
+                if(session_current)
+                        session = session_current;
+                else
+                        return -1;
+        }
 
 	if (params[0] && *params[0] != '-') {
 		char *status, *groups;
@@ -1314,8 +1318,12 @@ COMMAND(cmd_save)
 	last_save = time(NULL);
 	
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session)
-                return -1;
+        if(!session) {
+		if(session_current)
+			session = session_current;
+		else
+			return -1;
+	}
 
 	if (!userlist_write(session) && !config_write(params[0]) && !session_write()) {
 		printq("saved");
@@ -1759,8 +1767,12 @@ COMMAND(cmd_query)
 	int i, res = 0;
 
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session)
-                return -1;
+        if(!session) {
+                if(session_current)
+                        session = session_current;
+                else
+                        return -1;
+        }
 
 	/* skopiuj argumenty dla wywo³ania /chat */
 	for (i = 0; params[i]; i++)
@@ -2840,8 +2852,12 @@ COMMAND(cmd_timer)
 COMMAND(cmd_conference) 
 {
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session)
-                return -1;
+        if(!session) {
+                if(session_current)
+                        session = session_current;
+                else
+                        return -1;
+        }
 
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] == '#') {
 		list_t l, r;
@@ -3067,9 +3083,12 @@ COMMAND(cmd_last)
 	struct tm *now;
 
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session)
-                return -1;
-
+        if(!session) {
+                if(session_current)
+                        session = session_current;
+                else
+                        return -1;
+        }
 
 	if (match_arg(params[0], 'c', "clear", 2)) {
 		if (params[1] && !(uid = get_uid(session, params[1]))) {
