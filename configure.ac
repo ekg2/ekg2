@@ -58,6 +58,7 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 AC_ARG_WITH(libgadu,
   [  --without-libgadu        Disable GG plugin])
 
+
 if test "x$with_libgadu" != "xno"; then
 	PKG_CHECK_MODULES(LIBGADU, libgadu,
 	[
@@ -66,12 +67,16 @@ if test "x$with_libgadu" != "xno"; then
 		AC_DEFINE(HAVE_LIBGADU, [], [Define if libgadu is found])
 	])
 fi
+
+AC_CHECK_OPENSSL
 	
-PKG_CHECK_MODULES(OPENSSL, openssl,
-[
-	AC_CONFIG_FILES([plugins/sim/Makefile])
-	PLUGINS="$PLUGINS sim"
-])
+if test "x$have_openssl" = "xyes"; then
+	PKG_CHECK_MODULES(OPENSSL, openssl,
+	[
+		AC_CONFIG_FILES([plugins/sim/Makefile])
+		PLUGINS="$PLUGINS sim"
+	])
+fi
 
 AC_CHECK_EXPAT
 
