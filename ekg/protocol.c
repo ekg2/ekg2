@@ -4,6 +4,7 @@
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *		  2004 Adam Mikuta <adammikuta@poczta.onet.pl>
+ *		  2005 Leszek Krupiñski <leafnode@wafel.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -267,8 +268,11 @@ int protocol_status(void *data, va_list ap)
 	/* poka¿ */
 	if (u->nickname) {
 		char format[100];
-
-		snprintf(format, sizeof(format), "status_%s%s", status, (descr) ? "_descr" : "");
+		if (ignore_status_descr) {
+			snprintf(format, sizeof(format), "status_%s%s", status, "");
+		} else {
+			snprintf(format, sizeof(format), "status_%s%s", status, (descr) ? "_descr" : "");
+		}
 		print_window(u->nickname, s, 0, format, format_user(s, uid), (u->first_name) ? u->first_name : u->nickname, session_name(s), descr);
 	}
 
