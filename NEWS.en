@@ -1,4 +1,5 @@
 vCVS 2004-05-13
+	* session variables have their defaults settings 
 	* showing name of the session when status are changing or in other commands
 	* added session variable auto_find
 	* added events support (command /on)
