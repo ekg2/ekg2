@@ -61,7 +61,30 @@ else
 fi
 
 # Generate po/POTFILES.in
-$XGETTEXT --keyword=_ --keyword=N_ --output=- --from-code=iso-8859-2 `find . -name '*.[ch]'` | \
+echo "Generating po/POTFILES.in"
+
+# Ensure that gettext is reasonably new.
+xgettext_ver=`$XGETTEXT --version | \
+        sed '2,$d;# remove all but the first line
+             s/.* //;# take text after the last space
+             s/-.*//;# strip "-pre" or "-rc" at the end
+             s/\([^.][^.]*\)/0\1/g;# prepend 0 to every token
+             s/0\([^.][^.]\)/\1/g;# strip leading 0 from long tokens
+             s/$/.00.00/;# add .00.00 for short version strings
+             s/\.//g;# remove dots
+             s/\(......\).*/\1/;# leave only 6 leading digits
+             '`
+
+if test -z "$xgettext_ver"; then
+        echo "Cannot determine version of gettext" 2>&1
+        exit 1
+fi
+
+if test "$xgettext_ver" -gt 01200; then
+	XGETTEXT_OPTIONS="--from-code=iso-8859-2"
+fi
+
+$XGETTEXT --keyword=_ --keyword=N_ --output=- $XGETTEXT_OPTIONS `find . -name '*.[ch]'` | \
         sed -ne '/^#:/{s/#://;s/:[0-9]*/\
 /g;s/ //g;p;}' | \
         grep -v '^$' | sort | uniq | grep -v 'regex.c' >po/POTFILES.in
