@@ -37,6 +37,6 @@ rozwi±zanie.
   - zrobic makro JABBER_SANITY_CHECK; z zestawu funkcji powtarzaj±cych
     siê prze ka¿dym polecenie (zdz)
   - conference support (similar to gg_command_msg() in gg)
+  - ignore support 
   - komenda /ver do sprawdzania wersji czyjegos klienta (zdz)
-
 
