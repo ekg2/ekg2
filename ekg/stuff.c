@@ -1327,10 +1327,10 @@ child_handler_t child_handler_get(child_t *c)
 /*
  * prepare_path()
  *
- * zwraca pe³n± ¶cie¿kê do podanego pliku katalogu ~/.gg/
+ * zwraca pe³n± ¶cie¿kê do podanego pliku katalogu ~/.ekg2/
  *
  *  - filename - nazwa pliku,
- *  - do_mkdir - czy tworzyæ katalog ~/.gg ?
+ *  - do_mkdir - czy tworzyæ katalog ~/.ekg2 ?
  */
 const char *prepare_path(const char *filename, int do_mkdir)
 {

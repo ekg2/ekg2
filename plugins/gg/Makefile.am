@@ -10,7 +10,7 @@ gg_la_CPPFLAGS = $(LIBGADU_CPPFLAGS) $(LTDLINCL)
 libdir = $(plugindir)
 
 install-data-am:
-	mkdir -p $(DESTDIR)$(datadir)/ekg/plugins/gg/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(datadir)/ekg/plugins/gg/vars.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(datadir)/ekg/plugins/gg/commands.txt
+	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/gg/
+	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/vars.txt
+	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/commands.txt
 

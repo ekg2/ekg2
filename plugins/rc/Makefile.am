@@ -8,6 +8,6 @@ rc_la_CPPFLAGS = $(LTDLINCL)
 libdir = $(plugindir)
 
 install-data-am:
-	mkdir -p $(DESTDIR)$(datadir)/ekg/plugins/rc/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(datadir)/ekg/plugins/rc/vars.txt
+	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/rc/
+	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/rc/vars.txt
 

@@ -714,9 +714,9 @@ int main(int argc, char **argv)
 		tmp = xstrdup("");
 
 	if (getenv("HOME_ETC"))
-		config_dir = saprintf("%s/ekg%s", getenv("HOME_ETC"), tmp);
+		config_dir = saprintf("%s/ekg2%s", getenv("HOME_ETC"), tmp);
 	else
-		config_dir = saprintf("%s/.ekg%s", home_dir, tmp);
+		config_dir = saprintf("%s/.ekg2%s", home_dir, tmp);
 
 	xfree(tmp);
 	tmp = NULL;

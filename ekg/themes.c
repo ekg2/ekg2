@@ -797,7 +797,7 @@ int theme_read(const char *filename, int replace)
 			*tmp = 0;
 		
 		errno = ENOENT;
-		f = theme_open(NULL, NULL, fn);
+		f = NULL;
 
 		if (!xstrchr(filename, '/')) {
 			f = theme_open(f, prepare_path("", 0), fn);

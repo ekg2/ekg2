@@ -11,6 +11,6 @@ libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
 
 install-data-am:
-	mkdir -p $(DESTDIR)$(datadir)/ekg/plugins/ncurses/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(datadir)/ekg/plugins/ncurses/vars.txt
+	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/ncurses/
+	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/ncurses/vars.txt
 

@@ -8,7 +8,7 @@ sms_la_CPPFLAGS = $(LTDLINCL)
 libdir = $(plugindir)
 
 install-data-am:
-	mkdir -p $(DESTDIR)$(datadir)/ekg/plugins/sms/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(datadir)/ekg/plugins/sms/vars.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(datadir)/ekg/plugins/sms/commands.txt
+	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/sms/
+	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/sms/vars.txt
+	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/sms/commands.txt
 

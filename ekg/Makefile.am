@@ -8,5 +8,5 @@ ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ $(LIBLTDL)
 ekg2_LDFLAGS = -export-dynamic
 ekg2_DEPENDENCIES = $(LIBLTDL)
 
-INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(datadir)/ekg\" \
+INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
        -DPLUGINDIR=\"$(plugindir)\" $(LTDLINCL)
