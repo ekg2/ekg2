@@ -84,7 +84,12 @@ static void irc_private_init(session_t *s)
 	memset(j, 0, sizeof(irc_private_t));
 	j->fd = -1;
 
-	j->nick = xstrdup(uid+4);
+	/* 
+ 	 * something here is fucked up 
+	 * we are setting j->nick and we
+	 * are then setting it to NULL
+	 * what way is correct - GiM fix it */
+	/* j->nick = xstrdup(uid+4); */
 	j->connecting = 0;
 	j->nick = NULL;
 	j->host_ident=NULL;

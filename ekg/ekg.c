@@ -998,6 +998,7 @@ void ekg_exit()
         msg_queue_free();
         alias_free();
         conference_free();
+        metacontact_free();
         sessions_free();
         theme_free();
         variable_free();
@@ -1008,7 +1009,6 @@ void ekg_exit()
         last_free();
         buffer_free();
         event_free();
-        metacontact_free();
 
         for (l = windows; l; l = l->next) {
                 window_t *w = l->data;

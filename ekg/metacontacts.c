@@ -367,8 +367,10 @@ int metacontact_remove(const char *name)
 	metacontact_t *m = metacontact_find(name);
 	list_t l;
 
-        for (l = m->metacontact_items; l; l = l->next) {
+        for (l = m->metacontact_items; l; ) {
 		metacontact_item_t *i = l->data;
+
+		l = l->next;
 
 		metacontact_remove_item(m, i->s_uid, i->name, 1);
 	}
@@ -548,9 +550,10 @@ void metacontact_free()
 {
 	list_t l;
 
-        for (l = metacontacts; l; l = l->next) {
+        for (l = metacontacts; l;) {
                 metacontact_t *m = l->data;
 		
+		l = l->next;
 		metacontact_remove(m->name);		
 	}
 

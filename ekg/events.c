@@ -605,10 +605,12 @@ void event_free()
 	if (!events)
 		return;
 
-	for (l = events; l; l = l->next) {
+	for (l = events; l; ) {
 		struct event *e = l->data;
 
-		xfree(e->action);
+		l = l->next;
+
+		event_remove(e->id, 1);
 	}
 
 	list_destroy(events, 1);

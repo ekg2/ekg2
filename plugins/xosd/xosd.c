@@ -262,8 +262,15 @@ static int xosd_irc_protocol_message(void *data, va_list ap)
 
 static void xosd_display_welcome_message()
 {
-	if (xosd_display_welcome) 
-		xosd_show_message(format_string(format_find("xosd_welcome_message_line_1")), format_string(format_find("xosd_welcome_message_line_2")));
+	if (xosd_display_welcome) { 
+		char *line1 = format_string(format_find("xosd_welcome_message_line_1"));
+		char *line2 = format_string(format_find("xosd_welcome_message_line_2"));
+
+		xosd_show_message(line1, line2);
+
+		xfree(line1);
+		xfree(line2);		
+	}
 	timer_remove(&xosd_plugin, "xosd:display_welcome_timer");
 }
 

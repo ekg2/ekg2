@@ -161,8 +161,6 @@ void windows_save()
 		string_t s = string_init(NULL);
 		int maxid = 0, i;
 		
-		xfree(config_windows_layout);
-
 		for (l = windows; l; l = l->next) {
 			window_t *w = l->data;
 
@@ -424,7 +422,7 @@ void binding_free()
 	list_destroy(bindings, 1);
 	bindings = NULL;
 
-        for (l = bindings; l; l = l->next) {
+        for (l = bindings_added; l; l = l->next) {
                 binding_added_t *b = l->data;
 
                 xfree(b->sequence);
