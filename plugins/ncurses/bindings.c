@@ -455,15 +455,7 @@ static void binding_next_history(const char *arg)
 		return;
 	}
 
-	if (history_index > 0) {
-		history_index--;
-		xstrcpy(line, history[history_index]);
-		line_adjust();
-		if (history_index == 0 && history[0] != line) {
-			xfree(history[0]);
-			history[0] = line;
-		}
-	}
+	binding_next_only_history(NULL);
 }
 
 static void binding_backward_page(const char *arg)
