@@ -542,7 +542,8 @@ IRC_COMMAND(irc_c_msg)
 		format = xstrdup(prv?"irc_msg_f_some":"irc_not_f_some");
 	/* kana³ */
 	} else {
-		class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
+		class = EKG_MSGCLASS_CHAT;
+		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
 		dest = saprintf("irc:%s",param[2]);
 		format = xstrdup(prv?"irc_msg_f_chan_n":"irc_not_f_chan_n");
 		w = window_find_s(s, dest);

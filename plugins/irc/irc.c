@@ -529,11 +529,9 @@ COMMAND(irc_command_msg)
 
 	irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, params[1]);
 
-	debug("%s\n", params[1]);
-
 	/* GiM: XXX */
 	w = window_find_s(session, uid);
-	*rcpts = xmalloc(sizeof(char *) * 2);
+	rcpts = xmalloc(sizeof(char *) * 2);
 	me = xstrdup(session_uid_get(session));
 	/* GiM: TODO zmieniæ formaty jeszcze */
 	head = format_string(format_find(w?"irc_msg_sent_n":"irc_msg_sent"),
