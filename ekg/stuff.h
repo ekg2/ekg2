@@ -295,6 +295,7 @@ char *str_tolower(const char *text);
 char *strip_pl_chars(const char *text);
 int tolower_pl(const unsigned char c);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
+int strcasecmp_pl(const char *cs, const char *ct);
 void pl_to_normal(unsigned char ch);
 
 

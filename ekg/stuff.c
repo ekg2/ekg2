@@ -2074,7 +2074,7 @@ uint32_t *ekg_sent_message_format(const char *text)
  * obs³uguje polskie znaki
  */
 
-int strncasecmp_pl(const char * cs,const char * ct,size_t count)
+int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 {
         register signed char __res = 0;
 
@@ -2086,6 +2086,19 @@ int strncasecmp_pl(const char * cs,const char * ct,size_t count)
 
         return __res;
 }
+
+int strcasecmp_pl(const char *cs, const char *ct)
+{
+        register signed char __res = 0;
+
+        while ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) == 0 && !*cs++) {
+		if (!*cs++)
+			return(0);
+        }
+
+        return __res;
+}
+
 
 void pl_to_normal(unsigned char ch)
 {
