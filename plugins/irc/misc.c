@@ -353,8 +353,8 @@ IRC_COMMAND(irc_c_error)
 		 * etc.. wszystko co rozlacza fd 
 		 */
 		print_window(NULL, s, 0,
-				"IRC_ERR_JUSTONE",
-				session_name(s), IOK2(2));
+				"IRC_ERR_FIRSTSECOND",
+				session_name(s), irccommands[ecode].comm, IOK2(2));
 		irc_command_disconnect(NULL, NULL, s, NULL, 0);
 		return 0;
 	}
@@ -433,20 +433,28 @@ IRC_COMMAND(irc_c_error)
 			}
 			break;
 		case 333:
-			try = param[5]?atol(OMITCOLON(param[5])):0; 
-			if ((bang = xstrchr(param[4], '!'))) *bang = '\0';
-			print_window(dest, s, 0, "IRC_RPL_TOPICBY",
-					session_name(s), param[4], bang?bang+1:"",
-					param[5]?ctime(&try):"unknown\n");
-			if (bang) *bang ='!';
+			if ((chanp = irc_find_channel(j->channels, param[3])))
+			{
+				xfree(chanp->topicby);
+				try = param[5]?atol(OMITCOLON(param[5])):0; 
+				if ((bang = xstrchr(param[4], '!'))) *bang = '\0';
+				chanp->topicby = xstrdup(param[4]);
+				print_window(dest, s, 0, "IRC_RPL_TOPICBY",
+						session_name(s), param[4], bang?bang+1:"",
+						param[5]?ctime(&try):"unknown\n");
+				if (bang) *bang ='!';
+			}
 			break;
 		case 376:
 			/* first we join */
 			if (session_get(s, "AUTO_JOIN"))
 				irc_write(j, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
+			/* dj> htfcik ? :) 
+			 * dj> I want to make it in a different way, that's why I haven't
+			 *     commited your patch [but still similar] */
 		case 372:
 		case 375:
-			if (session_int_get(s, "SHOW_MOTD")) {
+			if (session_int_get(s, "SHOW_MOTD") == 1) {
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s,
 						IOK2(3), 1);
 				print_window("__status", s, 0,
@@ -483,6 +491,7 @@ IRC_COMMAND(irc_c_whois)
 		for (i=0; i<5; i++)
 			xfree(col[i]);
 
+		xfree(dest);
 		return (0);
 	}
 	gatoi(IOK2(4), &secs);
@@ -517,13 +526,13 @@ IRC_COMMAND(irc_c_whois)
 	print_window(dest, s, 0, irccommands[ecode].name, 
 			session_name(s), IOK(3), IOK3(str), 
 			which?"N/A":tmp);
+	xfree(dest);
 	xfree(str);
 	xfree(tmp);
 	return 0;
 }
 
-int mode_already = 1;
-
+int mode_act = 0;
 IRC_COMMAND(irc_c_list)
 {
 	char *t = saprintf("%s%s", IRC4, IOK(3));
@@ -533,25 +542,25 @@ IRC_COMMAND(irc_c_list)
 
 	int endlist = irccommands[ecode].future & IRC_LISTEND;
 
-	if (mode_already) 
+	if (!mode_act) 
 			print_window(dest, s, 0, "RPL_LISTSTART", session_name(s));
 	if (endlist) {
-			if (mode_already)
+			if (!mode_act)
 					print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
 			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s));
-			mode_already = 1; 
+			mode_act = 0; 
 			return 0;
 	}
-	else mode_already = 0;
+	mode_act++;
 
 	if (param[5] && *param[5] == ':') {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
 
 		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3),
-					IOK2(4), coloured);
+					IOK2(4), coloured, itoa(mode_act));
 	} else {
 		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3),
-					IOK2(4), IOK2(5));
+					IOK2(4), IOK2(5), itoa(mode_act));
 	}
 	/*
 	 * ircd-hybrid wysyla w IOK2(5) - nick!ident@host i w IOK2(6) unixtime zalozenia bana.
@@ -914,14 +923,17 @@ IRC_COMMAND(irc_c_topic)
 	if ((t = xstrchr(param[0], '!')))
 		*t = '\0';
 	xfree(chanp->topic);
+	xfree(chanp->topicby);
 	if (xstrlen(OMITCOLON(param[3]))) {
 		chanp->topic = xstrdup(OMITCOLON(param[3]));
+		chanp->topic = xstrdup(OMITCOLON(param[0]));
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1);
 		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),
 				param[0]+1, t?t+1:"", param[2], coloured);
 		xfree(coloured);
 	} else {
-		chanp->topic = xstrdup("No topic set!\n");
+		chanp->topic   = xstrdup("No topic set!\n");
+		chanp->topicby = xstrdup(OMITCOLON(param[0]));
 		print_window(dest, s, 0, "IRC_TOPIC_UNSET", session_name(s),
 				param[0]+1, t?t+1:"", param[2]);
 	}
@@ -945,11 +957,6 @@ IRC_COMMAND(irc_c_mode)
 	window_t *w;
 	string_t moderpl;
 
-	len = (xstrlen(SOP(_005_PREFIX))>>1);
-	add = xmalloc(len * sizeof(char));
-	for (i=0; i<len; i++) add[i] = SOP(_005_PREFIX)[i+1];
-	if (len) add[--len] = '\0';
-
 	/* GiM: FIXME TODO [this shouldn't be xstrcasecmp! user mode */
 	if (!xstrcasecmp(param[2], j->nick))
 	{
@@ -959,6 +966,11 @@ IRC_COMMAND(irc_c_mode)
 		return 0;
 	/* channel mode */
 	}
+
+	len = (xstrlen(SOP(_005_PREFIX))>>1);
+	add = xmalloc(len * sizeof(char));
+	for (i=0; i<len; i++) add[i] = SOP(_005_PREFIX)[i+1];
+	if (len) add[--len] = '\0';
 
 	t=param[3];
 	for (i=0,k=4; i<xstrlen(param[3]); i++, t++) {
@@ -998,6 +1010,11 @@ notreallyok:
 	}
 	print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
 			param[0]+1, bang?bang+1:"", param[2], moderpl->str);
+
+	if (ch) {
+			xfree(ch->chanp->mode_str);
+			ch->chanp->mode_str = xstrdup(moderpl->str);
+	}
 	if (bang) *bang='!';
 	string_free(moderpl, 1);
 

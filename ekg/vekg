@@ -1,15 +1,17 @@
 #!/bin/sh
 
+#    --trace-malloc=yes \
+
 valgrind \
    -v \
    --tool=memcheck \
    --log-file=ekg2.valgrind \
     --leak-check=yes \
-    --trace-malloc=yes \
     --error-limit=no \
     --demangle=yes \
     --num-callers=20 \
+	--track-fds=yes \
+	--trace-children=yes \
+	--show-reachable=yes \
    ./ekg2 "$@"
-
-
 

@@ -944,13 +944,15 @@ int irc_window_kill(void *data, va_list ap)
 
 int irc_topic_header(void *data, va_list ap)
 {
-	char **top = va_arg(ap, char **);
+	char **top   = va_arg(ap, char **);
+	char **setby = va_arg(ap, char **);
+	char **modes = va_arg(ap, char **);
 	char *targ = window_current->target;
 	channel_t *chanp = NULL;
 	irc_private_t *j = NULL;
 	char *tmp = NULL;
 
-	*top = NULL;
+	*top = *setby = *modes = NULL;
 	if (targ && !xstrncasecmp(targ, IRC4, 4) && window_current->session &&
 			session_check(window_current->session, 1, IRC3) &&
 			(j = irc_private(window_current->session)) &&
@@ -960,7 +962,9 @@ int irc_topic_header(void *data, va_list ap)
 			session_connected_get(window_current->session)
 			)
 	{
-		*top = xstrdup(chanp->topic);
+		*top   = xstrdup(chanp->topic);
+		*setby = xstrdup(chanp->topicby);
+		*modes = xstrdup(chanp->mode_str);
 	}
 	return 0;
 }
@@ -1336,10 +1340,10 @@ COMMAND(irc_command_nick)
 
 int irc_plugin_init(int prio)
 {
+	struct passwd *pwd_entry = getpwuid(getuid());
 	list_t l;
 
 	plugin_register(&irc_plugin, prio);
-	struct passwd *pwd_entry = getpwuid( getuid());
 
 	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
 	query_connect(&irc_plugin, "plugin-print-version", irc_print_version, NULL);
@@ -1510,11 +1514,11 @@ static int irc_theme_init()
 	/*Wykorzystane w : /mode +b|e|I %2 - kanal %3 - to co dostalismy od serwera */
 	/* TO JEST TYMCZASOWE BÊDZIE INACZEJ, NIE U¯YWAÆ TYCH FORMATEK */
 	format_add("RPL_LISTSTART",  "%g,+=%G-----\n", 1);
-	format_add("RPL_EXCEPTLIST", "%g|| %n %W%2%n: except %c%3\n", 1);
-	format_add("RPL_BANLIST",    "%g|| %n %W%2%n: ban %c%3\n", 1);
-	format_add("RPL_INVITELIST", "%g|| %n %W%2%n: invite %c%3\n", 1);;
+	format_add("RPL_EXCEPTLIST", "%g|| %n %5 - %W%2%n: except %c%3\n", 1);
+	format_add("RPL_BANLIST",    "%g|| %n %5 - %W%2%n: ban %c%3\n", 1);
+	format_add("RPL_INVITELIST", "%g|| %n %5 - %W%2%n: invite %c%3\n", 1);;
 	format_add("RPL_EMPTYLIST" , "%g|| %n Empty list \n", 1);
-	format_add("RPL_LINKS",      "%g|| %n %2  %3  %4\n", 1);
+	format_add("RPL_LINKS",      "%g|| %n %5 - %2  %3  %4\n", 1);
 	format_add("RPL_ENDOFLIST",  "%g`+=%G----- %n\n", 1);
  
 	format_add("RPL_AWAY", _("%G||%n away     : %2 - %3\n"), 1);

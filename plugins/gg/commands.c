@@ -396,10 +396,19 @@ change:
 
 	if (autoscroll || timeout) {
 			char *mode = session_get(session, "scroll_mode");
+			char *desk;
 
 			autoscroll = session -> scroll_pos;
-			descr = xstrndup(session_descr_get(session)+autoscroll,
-							GG_STATUS_DESCR_MAXSIZE);
+			desk = xstrndup(session_descr_get(session)+autoscroll,
+							GG_STATUS_DESCR_MAXSIZE-1);
+			/* this is made especially to make other people happy ;)
+			 * and make it easy to ignore states with '>' at beginning
+			 */
+			if (autoscroll)
+					descr = saprintf("<%s", desk);
+			else 
+					descr = saprintf("%s>", desk);
+			xfree(desk);
 
 			if (!xstrcmp(mode, "bounce")) {
 				if (!session->scroll_op) {
@@ -407,18 +416,26 @@ change:
 				} else {
 					session->scroll_pos--;
 				}
-				if (session->scroll_pos <= 0 || session->scroll_pos >=
-								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE)
-						session->scroll_op^=1;
+				/* I've changed xor to simple setting to 0 and 1 because
+				 * it was possible to screw things up by playing with
+				 * scroll_mode session variable
+				 */
+				if (session->scroll_pos <= 0)
+						session->scroll_op=0;
+				else if (session->scroll_pos >=
+								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
+						session->scroll_op=1;
 			} else if (!xstrcmp(mode, "simple")) {
 				session->scroll_pos++;
 				if (session->scroll_pos >
-								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE)
+								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
 					session->scroll_pos=0;
 			}
-			/* chcia³em jeszcze dorzuciæ taki 'ciag³y' w lewo [lub w prawo]
-			 * ale musia³bym pozmieniaæ, a jestem leniem
+			/* I wanted to add one more 'constant' to the left [or right]
+			 * but I'd have to change some things, and I'm soooo lazy
 			 */
+
+			autoscroll = 1;
 	} else
 		descr = xstrdup(session_descr_get(session));
 
