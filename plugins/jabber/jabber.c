@@ -505,7 +505,8 @@ void jabber_handle(void *data, xmlnode_t *n)
 		}
 
 		if (!type || (type && 
-			(!xstrcmp(type, "unavailable") || !xstrcmp(type, "error"))) ) {
+			(!xstrcmp(type, "unavailable") || !xstrcmp(type, "error")
+			 	|| !xstrcmp(type, "available"))) ) {
 			xmlnode_t *nshow = xmlnode_find_child(n, "show"); /* typ */
 			xmlnode_t *nstatus = xmlnode_find_child(n, "status"); /* opisowy */
 			xmlnode_t *xitem = xmlnode_find_child(n, "x"); 
