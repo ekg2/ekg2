@@ -290,9 +290,10 @@ group_cleanup:
 
 		if (count) {
 			const char *format;
+			list_t ls;
 
-			for (; sorted; sorted = sorted->next) {
-				contact_t *c = sorted->data;
+			for (ls = sorted; ls; ls = ls->next) {
+				contact_t *c = ls->data;
 
 				ncurses_backlog_add(w, fstring_new(c->line));
 
@@ -300,10 +301,8 @@ group_cleanup:
 				xfree(c->status);
 				xfree(c->name);
 			}
-			if (sorted) {
-				list_destroy(sorted, 1);
-				sorted = NULL;
-			}
+			list_destroy(sorted, 1);
+			sorted = NULL;
 
 			snprintf(tmp, sizeof(tmp), "contacts_%s_footer", footer_status);
 			format = format_find(tmp);
