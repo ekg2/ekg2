@@ -34,6 +34,7 @@
 #include "dynstuff.h"
 #include "objects.h"
 #include "sessions.h"
+#include "plugins.h"
 
 typedef struct {
 	char *uid;		/* protokó³:identyfikator */

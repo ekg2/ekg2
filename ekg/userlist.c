@@ -43,6 +43,7 @@
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
 #endif
+#include "plugins.h"
 #include "stuff.h"
 #include "themes.h"
 #include "userlist.h"
