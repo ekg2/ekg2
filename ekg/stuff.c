@@ -612,9 +612,10 @@ void changed_theme(const char *var)
 		if (!theme_read(config_theme, 1)) {
 			if (!in_autoexec)
 				print("theme_loaded", config_theme);
-		} else
+		} else {
 			print("error_loading_theme", strerror(errno));
 			variable_set("theme", NULL, 0);
+		}
 	}
 }
 
