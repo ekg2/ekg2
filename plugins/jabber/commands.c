@@ -244,11 +244,17 @@ COMMAND(jabber_command_msg)
 		return -1;
 	}
 
-	if (!params[0] || !params[1]) {
+        if (!params[0] || !params[1]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
-
+	
+	if (!xstrcmp(params[0], "*")) {
+		if (msg_all(session, name, params[1]) == -1)
+			printq("list_empty");
+		return 0;
+	}
+	
 	if (!(uid = get_uid(session, params[0]))) {
 		uid = params[0];
 
@@ -698,7 +704,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:connect", params("?"), jabber_command_connect, 0, "", "³±czy siê z serwerem", "", NULL);
 	command_add(&jabber_plugin, "jid:disconnect", params("?"), jabber_command_disconnect, 0, " [powód/-]", "roz³±cza siê od serwera", "", NULL);
 	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, 0, "", "roz³±cza i ³±czy siê ponownie", "", NULL);
-	command_add(&jabber_plugin, "jid:msg", params("uU ?"), jabber_command_msg, 0, "", "wysy³a pojedyncz± wiadomo¶æ", "\nPoprzedzenie wiadomo¶ci wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje potraktowanie pierwszej linijki jako tematu.", NULL);
+	command_add(&jabber_plugin, "jid:msg", params("uU ?"), jabber_command_msg, 0, "", "wysy³a pojedyncz± wiadomo¶æ", "\nWszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomo¶ci wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje potraktowanie pierwszej linijki jako tematu.", NULL);
 	command_add(&jabber_plugin, "jid:chat", params("uU ?"), jabber_command_msg, 0, "", "wysy³a wiadomo¶æ w ramach rozmowy", "", NULL);
 	command_add(&jabber_plugin, "jid:", params("?"), jabber_command_inline_msg, 0, "", "wysy³a wiadomo¶æ", "", NULL);
 	command_add(&jabber_plugin, "jid:xml", params("?"), jabber_command_xml, 0, "", "wysy³a polecenie xml", "\nPolecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML (\" ' & < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.", NULL);
