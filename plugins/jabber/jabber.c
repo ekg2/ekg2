@@ -472,7 +472,8 @@ static void jabber_handle_disconnect(session_t *s)
 
 	session_connected_set(s, 0);
 	j->connecting = 0;
-	XML_ParserFree(j->parser);
+	if (j->parser)
+		XML_ParserFree(j->parser);
 	j->parser = NULL;
 	close(j->fd);
 	j->fd = -1;
@@ -504,7 +505,8 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		const char *resource = session_get(s, "resource");
 		const char *uid = session_uid_get(s);
 		char *username;
-
+		int plaintext = session_int_get(s, "plaintext_passwd");
+		
 		username = xstrdup(uid + 4);
 		*(xstrchr(username, '@')) = 0;
 
@@ -513,8 +515,10 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 
 		j->stream_id = xstrdup(jabber_attr((char **) atts, "id"));
 
-		jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>", j->server, username, jabber_digest(j->stream_id, password), resource);
-		
+		if (plaintext)
+			jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username><password>%s</password><resource>%s</resource></query></iq>", j->server, username, password, resource);
+		else
+		  	jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>", j->server, username, jabber_digest(j->stream_id, password), resource);
 		xfree(username);
 
 		return;
@@ -1300,6 +1304,7 @@ int jabber_plugin_init()
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0);
 	plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0);
 	plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1);
+        plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0);
 	plugin_var_add(&jabber_plugin, "port", VAR_INT, itoa(5222), 0);
 	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0);
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
