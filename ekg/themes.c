@@ -425,7 +425,7 @@ fstring_t *fstring_new(const char *str)
 {
 	fstring_t *res = xmalloc(sizeof(fstring_t));
 	short attr = 128;
-	int i, j, len = 0;
+	int i, j, len = 0, isbold = 0;
 
 	res->margin_left = -1;
 
@@ -493,16 +493,25 @@ fstring_t *fstring_new(const char *str)
 						goto wedonthavem;
  					if (m == 0) {
  						attr = 128;
+						isbold = 0;
  						if (deli >= 2)
  							res->prompt_len = j;
  						if (i>3 && deli == 3)
  							res->prompt_empty = 1;
  					}
  					else if (m == 1) /* bold */
- 						attr |= 64;
-					else if (m == 2) 
+					{
+						if (*p == 'm' && !isbold)
+							attr ^= 64;
+						if (*p == ';')  {
+							attr |= 64;
+							isbold = 1;
+						}
+					}
+					else if (m == 2) {
 						attr &= (56);
-					else if (m == 4) /* underline */
+						isbold = 0;
+					} else if (m == 4) /* underline */
 						attr ^= 512;
  					else if (m == 5) /* blink */
  						attr ^= 256;
