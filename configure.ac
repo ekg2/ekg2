@@ -61,7 +61,7 @@ AC_CHECK_FUNCS(utimes)
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile po/Makefile])
 PLUGINS="logs mail rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"

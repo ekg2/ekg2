@@ -10,8 +10,8 @@ echo "Running libtoolize..."
 libtoolize --force --automake --ltdl --copy || exit 1
 
 echo "Running gettextize..."
-touch po/Makefile.in
 gettextize --force
+ln -s Makefile.in.in po/Makefile.in
 
 echo "Running aclocal..."
 aclocal -I m4 || exit 1 
