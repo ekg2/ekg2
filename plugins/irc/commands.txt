@@ -56,7 +56,7 @@ part
 	okna.
 
 cycle
-	parametry <kana³> <powód>
+	parametry: <kana³> <powód>
 	krótki opis: robi /part i /join
 
 	je¿eli pierwszy argument nie jest kana³em, brana jest nazwa
