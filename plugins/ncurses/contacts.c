@@ -44,6 +44,7 @@
 
 #include "old.h"
 
+int contacts_index = 0;
 int contacts_group_index = 0;
 
 static int contacts_margin = 1;
@@ -60,9 +61,10 @@ static char contacts_order[100] = CONTACTS_ORDER_DEFAULT;
  * maybe stupid way, but at the moment i couldn't find better (del)
  */
 typedef struct {
-	char *name;
-        char *status;
 	char *line;
+	const char *name;
+        const char *status;
+	const char *descr;
 } contact_t;
 
 /*
@@ -97,7 +99,7 @@ int ncurses_contacts_update(window_t *w)
 {
 	const char *header = NULL, *footer = NULL;
 	char *group = NULL;
-	int j, old_start;
+	int j, count_all = 0;
 	int all = 0; /* 1 - all, 2 - metacontacts */
 	ncurses_window_t *n;
 	list_t sorted = NULL;
@@ -120,14 +122,10 @@ int ncurses_contacts_update(window_t *w)
 
 	n = w->private;
 	
-	old_start = n->start;
 	ncurses_clear(w, 1);
-	n->start = old_start;
 
         if (!session_current)
 		return -1;
-
-
 
 	if (config_contacts_groups) {
 		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
@@ -185,6 +183,7 @@ group_cleanup:
 	
 	if (xstrcmp(header, "")) {
 		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
+		count_all++;
 	}
 
 	
@@ -200,19 +199,23 @@ group_cleanup:
 			for (l = (all) ? s->userlist : session_current->userlist; l; l = l->next) {
 				userlist_t *u = l->data;
 				const char *format;
-				char *line;
 				contact_t c;
 
 				if (!u->status || !u->nickname || xstrncmp(u->status, contacts_order + j, 2))
 					continue;
 	
+				if (count_all < contacts_index) {
+					count_all++;
+					continue;
+				}
+
 				if (group && !ekg_group_member(u, group))
 					continue;
 				
 				if (!count) {
 					snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
 					format = format_find(tmp);
-					if (xstrcmp(format, ""))
+					if (xstrcmp(format, "") && count_all >= contacts_index) 
 						ncurses_backlog_add(w, fstring_new(format_string(format)));
 					footer_status = u->status;
 				}
@@ -221,22 +224,23 @@ group_cleanup:
 					snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", u->status);
 				else if (u->descr && !contacts_descr)
 					snprintf(tmp, sizeof(tmp), "contacts_%s_descr", u->status);
-					
 				else
 					snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
 				
-				if(u->blink)
+				if (u->blink)
 					xstrcat(tmp, "_blink");
 	
-				line = format_string(format_find(tmp), u->nickname, u->descr);
-
-				memset(&c, 0, sizeof(c));
-				c.status = xstrdup(u->status);
-				c.line = xstrdup(line);
-				c.name = xstrdup(u->nickname);
-				list_add_sorted(&sorted, &c, sizeof(c), contacts_compare);
-
-				xfree(line);
+				if (all) {
+					memset(&c, 0, sizeof(c));
+					c.status = xstrdup(u->status);
+					c.descr = u->descr;
+					c.name = u->nickname;
+					list_add_sorted(&sorted, &c, sizeof(c), contacts_compare);
+				} else {
+                              		char *line = format_string(format_find(tmp), u->nickname, u->descr);
+                              		ncurses_backlog_add(w, fstring_new(line));
+                                	xfree(line);
+				}
 	
 				count++;
 			}
@@ -247,7 +251,6 @@ group_cleanup:
 			for (l = metacontacts; l; l = l->next) {
                                 metacontact_t *m = l->data;
                                 const char *format;
-                                char *line;
 				metacontact_item_t *i = metacontact_find_prio(m);
 				userlist_t *u = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
                                 contact_t c;
@@ -258,11 +261,16 @@ group_cleanup:
                                 if (!u->status || !u->nickname || xstrncmp(u->status, contacts_order + j, 2))
                                         continue;
 
+				if (count_all < contacts_index) {
+					count_all++;
+					continue;
+				}
+
                                 if (!count) {
                                         snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
                                         format = format_find(tmp);
-                                        if (xstrcmp(format, ""))
-                                                ncurses_backlog_add(w, fstring_new(format_string(format)));
+        			        if (xstrcmp(format, "") && count_all >= contacts_index)
+	                                        ncurses_backlog_add(w, fstring_new(format_string(format)));
                                         footer_status = u->status;
                                 }
 
@@ -270,19 +278,14 @@ group_cleanup:
                                         snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", u->status);
                                 else if (u->descr && !contacts_descr)
                                         snprintf(tmp, sizeof(tmp), "contacts_%s_descr", u->status);
-
                                 else
                                         snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
 
-                                line = format_string(format_find(tmp), m->name, u->descr);
-
                                 memset(&c, 0, sizeof(c));
-                                c.status = xstrdup(u->status);
-                                c.line = xstrdup(line);
-                                c.name = xstrdup(m->name);
+                                c.status = u->status;
+				c.descr = u->descr;			
+                                c.name = m->name;
                                 list_add_sorted(&sorted, &c, sizeof(c), contacts_compare);
-
-                                xfree(line);
 
                                 count++;
 			}
@@ -292,17 +295,17 @@ group_cleanup:
 			const char *format;
 			list_t ls;
 
-			for (ls = sorted; ls; ls = ls->next) {
-				contact_t *c = ls->data;
+			if (sorted) {
+				for (ls = sorted; ls; ls = ls->next) {
+					contact_t *c = ls->data;
+					char *line = format_string(format_find(tmp), c->name, c->descr);
+					ncurses_backlog_add(w, fstring_new(line));
+					xfree(line);
+				}
 
-				ncurses_backlog_add(w, fstring_new(c->line));
-
-				xfree(c->line);
-				xfree(c->status);
-				xfree(c->name);
+				list_destroy(sorted, 1);
+				sorted = NULL;
 			}
-			list_destroy(sorted, 1);
-			sorted = NULL;
 
 			snprintf(tmp, sizeof(tmp), "contacts_%s_footer", footer_status);
 			format = format_find(tmp);

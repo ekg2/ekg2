@@ -207,7 +207,7 @@ static int ncurses_userlist_changed(void *data, va_list ap)
 {
 	char **p1 = va_arg(ap, char**);
 	char **p2 = va_arg(ap, char**);
-                
+        window_t *w = NULL;
 	list_t l;
 
         for (l = windows; l; l = l->next) {
@@ -226,7 +226,9 @@ static int ncurses_userlist_changed(void *data, va_list ap)
         }
 
 	ncurses_contacts_update(NULL);
-
+	if ((w = window_find("__contacts")))
+		ncurses_redraw(w);
+	ncurses_commit();
 	return 0;
 }
 

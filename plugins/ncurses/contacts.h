@@ -6,7 +6,10 @@ int config_contacts;
 char *config_contacts_options;
 char *config_contacts_groups;
 
+int contacts_index;
 int contacts_group_index;
+
+#define CONTACTS_MAX_HEADERS 20
 
 int ncurses_contacts_update(window_t *w);
 void ncurses_contacts_changed(const char *name);
