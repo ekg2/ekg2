@@ -61,6 +61,262 @@
             </listitem>
          </varlistentry>
       </variablelist>
+      <variablelist>
+         <title>Sta³e</title>
+         <varlistentry>
+            <term>MSGCLASS_MESSAGE</term>
+            <listitem>
+               <formalpara>
+                  <title>typ wiadomo¶ci</title>
+                  <para>
+                     wiadomo¶æ
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>MSGCLASS_CHAT</term>
+            <listitem>
+               <formalpara>
+                  <title>typ wiadomo¶ci</title>
+                  <para>
+                     rozmowa ci±g³a
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>MSGCLASS_SENT</term>
+            <listitem>
+               <formalpara>
+                  <title>typ wiadomo¶ci</title>
+                  <para>
+                     wys³ana wiadomo¶æ
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>MSGCLASS_SENT_CHAT</term>
+            <listitem>
+               <formalpara>
+                  <title>typ wiadomo¶ci</title>
+                  <para>
+                     wys³ana wiadomo¶æ w ramach rozmowy ci±g³ej
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>MSGCLASS_SYSTEM</term>
+            <listitem>
+               <formalpara>
+                  <title>typ wiadomo¶ci</title>
+                  <para>
+                     wiadomo¶æ systemowa
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_NA</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Not Available (roz³±czony)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_AVAIL</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Available (dostêpny)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_AWAY</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Away (z dala od klawiatury)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_AUTOAWAY</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Auto Away (automatyczny stan bezczynno¶ci)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_INVISIBLE</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Invisible (niewidoczny)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_XA</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Extended Away (niedostêpny)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_DND</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Do Not Disturb (nie przeszkadzaæ)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_FREE_FOR_CHAT</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Free for Chat (chêtny do rozmowy)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_BLOCKED</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Blocked (zablokowany)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_UNKNOWN</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Unknown (nieznany)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>STATUS_ERROR</term>
+            <listitem>
+               <formalpara>
+                  <title>stan</title>
+                  <para>
+                     Error (b³±d)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>IGNORE_STATUS</term>
+            <listitem>
+               <formalpara>
+                  <title>ignorowanie</title>
+                  <para>
+                     zmian stanu
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>IGNORE_STATUS_DESCR</term>
+            <listitem>
+               <formalpara>
+                  <title>ignorowanie</title>
+                  <para>
+                     stanów z opisem
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>IGNORE_MSG</term>
+            <listitem>
+               <formalpara>
+                  <title>ignorowanie</title>
+                  <para>
+                     wiadomo¶ci
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>IGNORE_DCC</term>
+            <listitem>
+               <formalpara>
+                  <title>ignorowanie</title>
+                  <para>
+                     po³±czeñ bezpo¶rednich (DCC)
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>IGNORE_EVENTS</term>
+            <listitem>
+               <formalpara>
+                  <title>ignorowanie</title>
+                  <para>
+                     zdarzeñ
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>IGNORE_NOTIFY</term>
+            <listitem>
+               <formalpara>
+                  <title>ignorowanie</title>
+                  <para>
+                     powiadomieñ
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>IGNORE_ALL</term>
+            <listitem>
+               <formalpara>
+                  <title>ignorowanie</title>
+                  <para>
+                     wszystkiego
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+      </variablelist>
    </sect3>
    <sect3>
       <title>Obiekt session</title>
