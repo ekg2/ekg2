@@ -1597,7 +1597,7 @@ void theme_init()
         /* conference */
         format_add("conferences_list_empty", _("%! No conference\n"), 1);
         format_add("conferences_list", "%> %T%1%n: %2\n", 1);
-        format_add("conferences_list_ignored", _("%> %T%1%n: %2 (%yingored%n)\n"), 1);
+        format_add("conferences_list_ignored", _("%> %T%1%n: %2 (%yignored%n)\n"), 1);
         format_add("conferences_add", _("%> Created conference %T%1%n\n"), 1);
         format_add("conferences_not_added", _("%! Conference not created %T%1%n\n"), 1);
         format_add("conferences_del", _("%) Removed conference %T%1%n\n"), 1);
