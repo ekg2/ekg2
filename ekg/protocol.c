@@ -437,6 +437,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 
 	                if (c) {
 	                        target = c->name;
+				class_str = "conference";
 			}
 		}
 	}

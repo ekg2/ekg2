@@ -1152,6 +1152,12 @@ void theme_init()
 	format_add("message_timestamp_now", "", 1);
 	format_add("message,speech", "wiadomo¶æ od %1: %3.", 1);
 
+        format_add("conference", "%g.-- %n%1 %c%2%g--- -- -%n\n%g|%n %|%3%n\n%|%g`----- ---- --- -- -%n\n", 1);
+        format_add("conference_timestamp", "(%Y-%m-%d %H:%M) ", 1);
+        format_add("conference_timestamp_today", "(%H:%M) ", 1);
+        format_add("conference_timestamp_now", "", 1);
+        format_add("confrence,speech", "wiadomo¶æ od %1: %3.", 1);
+
 	format_add("chat", "%c.-- %n%1 %c%2%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
 	format_add("chat_timestamp", "(%Y-%m-%d %H:%M) ", 1);
 	format_add("chat_timestamp_today", "(%H:%M) ", 1);
