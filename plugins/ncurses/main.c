@@ -418,7 +418,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);
 	query_connect(&ncurses_plugin, "variable-changed", ncurses_variable_changed, NULL);
 	query_connect(&ncurses_plugin, "conference-renamed", ncurses_conference_renamed, NULL);
-/*
+
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, "aspell_lang", VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
@@ -434,7 +434,7 @@ int ncurses_plugin_init()
 	variable_add(&ncurses_plugin, "enter_scrolls", VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "header_size", VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
 	variable_add(&ncurses_plugin, "statusbar_size", VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
-*/
+	
 	have_winch_pipe = 0;
 #ifdef SIGWINCH
 	if (pipe(winch_pipe) == 0) {
