@@ -271,11 +271,6 @@ static void config_write_main(FILE *f)
 	if (!f)
 		return;
 
-	for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
-		if (p && p->name) fprintf(f, "plugin %s\n", p->name);
-	}
-
 	for (l = variables; l; l = l->next)
 		config_write_variable(f, l->data);
 
@@ -346,6 +341,10 @@ static void config_write_main(FILE *f)
 		}
 	}
 
+        for (l = plugins; l; l = l->next) {
+                plugin_t *p = l->data;
+                if (p && p->name) fprintf(f, "plugin %s\n", p->name);
+        }
 }
 
 /*
