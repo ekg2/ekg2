@@ -82,7 +82,7 @@ static char *str_tolower(const char *text) {
 
 	tmp = xmalloc(strlen(text) + 1);
 	
-        for(i=0; i <= strlen(text); i++)
+        for(i=0; i < strlen(text); i++)
 		tmp[i] = tolower_pl(text[i]);
 	tmp[i] = '\0';
 	return tmp;
