@@ -494,7 +494,7 @@ int valid_uid(const char *uid)
  *
  *  - text.
  */
-const char *get_uid(session_t *session, const char *text)
+char *get_uid(session_t *session, const char *text)
 {
 	userlist_t *u;
 

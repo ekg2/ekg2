@@ -138,7 +138,7 @@ int valid_nick(const char *nick);
 int valid_uid(const char *uid);
 int same_protocol(char **uids);
 const char *format_user(session_t *session, const char *uid);
-const char *get_uid(session_t *session, const char *text);
+char *get_uid(session_t *session, const char *text);
 
 
 #endif /* __EKG_USERLIST_H */
