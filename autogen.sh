@@ -89,6 +89,11 @@ $XGETTEXT --keyword=_ --keyword=N_ --output=- $XGETTEXT_OPTIONS `find . -name '*
 /g;s/ //g;p;}' | \
         grep -v '^$' | sort | uniq | grep -v 'regex.c' >po/POTFILES.in
 
+
+if test ! -r m4/gettext.m4; then
+	cp compat/gettext.m4 m4/gettext.m4
+fi
+
 echo "Running aclocal..."
 $ACLOCAL -I m4 || exit 1 
 
