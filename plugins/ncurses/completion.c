@@ -951,31 +951,42 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		int abbrs = 0, i;
 		list_t l;
                 char *cmd = (line[0] == '/') ? line + 1 : line;
+		int len;
 
-		for (l = commands; l; l = l->next) {
-			command_t *c = l->data;
-			char *plen = xstrchr(c->name, ':');
-			char *name = (plen && session_current && xstrncasecmp(c->name, session_current->uid, xstrlen(plen))) ? xstrchr(c->name, ':') + 1 : c->name;
-			int len = xstrlen(name);
-			
-			if (!xstrncasecmp(name, cmd, len) && xisspace(cmd[len])) {
-				params = c->params;
-				abbrs = 1;
-				actual_completed_command = c;
-				break;
+		for (len = 0; cmd[len] && !xisspace(cmd[len]); len++);
+
+		/* first we look for some session complete */
+		if (session_current) {
+			session_t *session = session_current;
+			int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
+
+			for (l = commands; l; l = l->next) {
+				command_t *c = l->data;
+
+	                        if (xstrncasecmp(c->name, session->uid, plen))
+	                                continue;
+
+                	        if (!xstrncasecmp(c->name + plen, cmd, len)) {
+	                                params = c->params;
+	                                abbrs = 1;
+	                                actual_completed_command = c;
+	                                goto exact_match;
+	                        }
 			}
-
-			for (len = 0; cmd[len] && cmd[len] != ' '; len++);
-
-			if (!xstrncasecmp(name, cmd, len)) {
-				params = c->params;
-				abbrs++;
-                                actual_completed_command = c;
-			} else
-				if (params && abbrs == 1)
-					break;
 		}
-		
+
+        	for (l = commands; l; l = l->next) {
+	                command_t *c = l->data;
+
+	                if (!xstrncasecmp(c->name, cmd, len)) {
+	                        params = c->params;
+	                        abbrs = 1;
+	                        actual_completed_command = c;
+	                        goto exact_match; 
+        	        }
+        	}
+
+exact_match: 
 		/* for /set maybe we want to complete the file path */
 		if (!xstrncmp(cmd, "set", xstrlen("set")) && words[1] && words[2] && word_current == 3) {
 			variable_t *v;
