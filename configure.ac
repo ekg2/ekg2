@@ -10,7 +10,6 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_C_CONST
-AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
 
 AC_LIBTOOL_DLOPEN
 AC_LIBLTDL_CONVENIENCE
@@ -27,8 +26,6 @@ AC_SUBST(PLUGINS_LIBS)
 dnl  SunOS
 AC_CHECK_LIB(nsl, t_accept, LIBS="$LIBS -lnsl")
 AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")
-AC_CHECK_LIB(gadu, gg_login, LIBS="$LIBS -lgadu")
-
 
 dnl  BeOS
 AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")
@@ -62,37 +59,37 @@ PLUGINS="mail rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
-
 AC_ARG_WITH(ioctld,
   [  --without-ioctld        Disable ioctld plugin])
 
-if test "x$with_ioctld" != "xno"; then
-	AC_CONFIG_FILES([plugins/ioctld/Makefile])
-	PLUGINS="$PLUGINS ioctld"
+if test "x$without_ioctld" != "xyes"; then
+        AC_CHECK_HEADERS(linux/kd.h,
+	[
+		have_ioctld_includes=yes
+	], [
+	        AC_CHECK_HEADERS(sys/kbio.h,
+	        [
+		        have_ioctld_includes=yes
+		])
+	])
+        if test "x$have_ioctld_includes" = "xyes"; then
+		AC_CONFIG_FILES([plugins/ioctld/Makefile])
+		PLUGINS="$PLUGINS ioctld"
+	fi
 fi
 
-AC_ARG_WITH(libgadu,
-  [  --without-libgadu        Disable GG plugin])
+AC_CHECK_LIBGADU
 
-if test "x&with_libgadu" != "xno"; then
-	PKG_CHECK_MODULES(LIBGADU, libgadu,
-	[
-		AC_CONFIG_FILES([plugins/gg/Makefile])
-		PLUGINS="$PLUGINS gg"
-		AC_DEFINE(HAVE_LIBGADU, [], [Define if libgadu is found])
-	])
+if test "x&have_libgadu" = "xyes"; then
+	AC_CONFIG_FILES([plugins/gg/Makefile])
+	PLUGINS="$PLUGINS gg"
 fi
 
 AC_CHECK_OPENSSL
-AC_ARG_WITH(openssl,
-  [  --without-openssl	     Disable OpenSSL support])
 
-if test "x$have_openssl" = "xyes" && test "x$with_openssl" != "xno"; then
-	PKG_CHECK_MODULES(OPENSSL, openssl,
-	[
-		AC_CONFIG_FILES([plugins/sim/Makefile])
-		PLUGINS="$PLUGINS sim"
-	])
+if test "x$have_openssl" = "xyes"; then
+	AC_CONFIG_FILES([plugins/sim/Makefile])
+	PLUGINS="$PLUGINS sim"
 fi
 
 AC_CHECK_EXPAT
@@ -131,3 +128,43 @@ plugindir=$libdir/ekg2/plugins
 AC_SUBST(plugindir)
 
 AC_OUTPUT
+
+echo
+echo "configured options:"
+
+if test "x$have_ioctld_includes" = "xyes"; then
+ 	echo " - ioctld: enabled"
+else
+	echo " - ioctld: disabled"
+fi
+
+if test "x&have_libgadu" = "xyes"; then
+	echo " - libgadu: enabled"
+else
+	echo " - libgadu: disabled"
+fi
+
+if test "x$have_openssl" = "xyes"; then
+	echo " - openssl: enabled"
+else
+	echo " - openssl: disabled"
+fi
+
+if test "x$have_expat" = "xyes"; then
+	echo " - expat: enabled"
+else
+	echo " - expat: disabled"
+fi
+
+if test "x$have_ncurses" = "xyes"; then
+	echo " - ncurses: enabled"
+else
+	echo " - ncurses: disabled"
+fi
+
+if test "x$have_libgsm" = "xyes"; then
+	echo " - libgsm: enabled"
+else
+	echo " - libgsm: disabled"
+fi
+
