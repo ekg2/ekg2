@@ -500,7 +500,7 @@ COMMAND(jabber_command_auth)
 		return -1;
 	}
 
-	if (!params[1]) {
+	if (!params[0] || !params[1]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
