@@ -169,7 +169,7 @@ static int xosd_protocol_message(void *data, va_list ap)
 	if (xosd_display_filter == 1 && window_current && window_current->target && !xstrcmp(get_uid(s, window_current->target), get_uid(s, uid)))
 		return 0;
 
-	if (xosd_display_filter == 2 && window_find(uid))
+	if (xosd_display_filter == 2 && window_find_s(s, uid))
 		return 0;
 
 	if (class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
