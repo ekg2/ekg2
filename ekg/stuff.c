@@ -123,7 +123,7 @@ int config_save_quit = 1;
 char *config_timestamp = NULL;
 int config_display_sent = 1;
 int config_sort_windows = 0;
-int config_keep_reason = 0;
+int config_keep_reason = 1;
 int server_index = 0;
 char *config_audio_device = NULL;
 char *config_speech_app = NULL;
@@ -2113,5 +2113,20 @@ char *saprintf(const char *format, ...)
         va_end(ap);
 
         return res;
+}
+
+/*
+ * zamienia wszystko znaki a na b w podanym ci±gu
+ * nie robie jego kopi!
+ */
+void xstrtr(char *text, char from, char to)
+{
+	
+	if (!text || !from || !to)
+		return;
+
+	while (*text++) 
+		if (*text == from)
+			*text = to;
 }
 

@@ -484,6 +484,7 @@ int session_read()
 				debug("\tSession variable \"%s\" is not correct\n", line);
 				goto next;
 			}
+			xstrtr(tmp, '\002', '\n');
 			if(*tmp == '\001')  
 				session_set(s, line, base64_decode(tmp + 1));
 			else 
@@ -525,8 +526,11 @@ int session_write()
 			fprintf(f, "alias=%s\n", s->alias);
 		if (s->status && config_keep_reason != 2)
 			fprintf(f, "status=%s\n", s->status);
-		if (s->descr && config_keep_reason)
+		if (s->descr && config_keep_reason) {
+			xstrtr(s->descr, '\n', '\002');
 			fprintf(f, "descr=%s\n", s->descr);
+			xstrtr(s->descr, '\002', '\n');
+		}
                 if (s->password && config_save_password)
                         fprintf(f, "password=\001%s\n", s->password);
                 
