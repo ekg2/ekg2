@@ -13,13 +13,14 @@ AC_C_CONST
 
 AC_LIBTOOL_DLOPEN
 AC_LIBLTDL_CONVENIENCE
-AC_CONFIG_SUBDIRS([libltdl])
 AC_SUBST(LIBLTDL)
 AC_SUBST(LTDLINCL)
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
-AM_GNU_GETTEXT([external])
+
+AM_GNU_GETTEXT
+AM_GNU_GETTEXT_VERSION(0.11.5)
 
 AC_SUBST(COMPAT)
 AC_SUBST(PLUGINS)
@@ -61,7 +62,9 @@ AC_CHECK_FUNCS(utimes)
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile po/Makefile])
+AC_CONFIG_SUBDIRS([libltdl])
+
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile intl/Makefile po/Makefile.in ])
 PLUGINS="logs mail rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
