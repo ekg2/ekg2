@@ -34,6 +34,7 @@ typedef struct {
 	/* public: */
 	char *uid;			/* id u¿ytkownika */
 	char *alias;			/* alias sesji */
+	char *plugin_name;		/* nazwa plugin'a obs³uguj±cego aktualn± sesjê */
 	void *priv;			/* dla plugina obs³uguj±cego sesjê */
 	list_t userlist;		/* userlista */
 

@@ -904,7 +904,7 @@ void ekg_exit()
 			if (line[strlen(line) - 1] == '\n')
 				line[strlen(line) - 1] = 0;
 			if (!strcasecmp(line, "tak") || !strcasecmp(line, "yes") || !strcasecmp(line, "t") || !strcasecmp(line, "y")) {
-        			if (!config_write(NULL) || !session_write()) 
+        			if (config_write(NULL) || session_write()) 
 					printf("Wyst±pi³ b³±d podczas zapisu.\n");
 			}
 		} else

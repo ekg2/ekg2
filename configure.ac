@@ -41,6 +41,8 @@ AC_CHECK_FUNCS(setenv)
 dnl  strlcat/strlcpy wiele systemów nie posiada
 AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])
 AC_CHECK_FUNCS(strlcpy, , [COMPAT="$COMPAT strlcpy.o"])
+AC_CHECK_FUNCS(strnlen)
+AC_CHECK_FUNCS(strndup)
 
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
@@ -69,8 +71,10 @@ if test "x$with_libgadu" != "xno"; then
 fi
 
 AC_CHECK_OPENSSL
-	
-if test "x$have_openssl" = "xyes"; then
+AC_ARG_WITH(openssl,
+  [  --without-openssl	     Disable OpenSSL support])
+
+if test "x$have_openssl" = "xyes" && test "x$with_openssl" != "xno"; then
 	PKG_CHECK_MODULES(OPENSSL, openssl,
 	[
 		AC_CONFIG_FILES([plugins/sim/Makefile])

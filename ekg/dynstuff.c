@@ -660,3 +660,4 @@ void array_free(char **array)
 
 	xfree(array);
 }
+

@@ -100,7 +100,8 @@ session_t *session_add(const char *uid)
 
 	s.uid = xstrdup(uid);
 	s.status = xstrdup(EKG_STATUS_NA);
-
+	s.plugin_name = xstrndup(uid, strlen(uid) - strlen(strchr(uid, ':')));
+	
 	sp = list_add_sorted(&sessions, &s, sizeof(s), session_compare);
 
 	for (l = windows; l; l = l->next) {
@@ -445,7 +446,6 @@ int session_write()
 			if (s->params[i]->value)
 				fprintf(f, "%s=%s\n", s->params[i]->key, s->params[i]->value);
 	}
-
 	fclose(f);
 
 	return 0;
@@ -606,7 +606,9 @@ COMMAND(session_command)
 		}
 
 		window_session_set(window_current, session_add(params[1]));
-
+		
+		config_changed = 1;
+		
 		printq("session_added", params[1]);
 
 		return 0;
@@ -619,7 +621,8 @@ COMMAND(session_command)
 		}
 
 		session_remove(params[1]);
-
+		
+		config_changed = 1;
 		printq("session_removed", params[1]);
 
 		return 0;
@@ -699,6 +702,7 @@ COMMAND(session_command)
 			if (params[1][0] == '-') {
 				if (window_current->session) {
 					session_set_n(window_current->session->uid, params[1] + 1, NULL);
+					config_changed = 1;
 					printq("session_variable_removed", window_current->session->uid, params[1] + 1);
 					return 0;
 				} else {
@@ -709,8 +713,9 @@ COMMAND(session_command)
 		
 			if(params[2] && !params[3]) {
 				if (window_current->session) {
-					session_set_n(window_current->session->uid, params[1], params[2]);
 					char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[1]);
+					session_set_n(window_current->session->uid, params[1], params[2]);
+					config_changed = 1;
 					command_exec(NULL, s, tmp, 0);
 					return 0;
 				} else {
@@ -730,6 +735,7 @@ COMMAND(session_command)
 		
 		if (params[2] && params[2][0] == '-') {
 			session_set_n(s->uid, params[2] + 1, NULL);
+			config_changed = 1;
 			printq("session_variable_removed", s->uid, params[2] + 1);
 			return 0;
 		}
@@ -737,6 +743,7 @@ COMMAND(session_command)
 		if(params[2] && params[3]) {
 			char *tmp = saprintf("%s --get %s %s", name, s->uid, params[2]);
 			session_set_n(s->uid, params[2], params[3]);
+			config_changed = 1;
 			command_exec(NULL, s, tmp, 0);
 			return 0;
 		}
@@ -753,6 +760,7 @@ COMMAND(session_command)
 
 		if (params[1] && params[1][0] == '-') { 
 			tmp = saprintf("%s --set %s %s", name, params[0], params[1]);
+			config_changed = 1;
 			command_exec(NULL, s, tmp, 0);
 			return 0;
 		}
@@ -760,12 +768,14 @@ COMMAND(session_command)
 		if(params[1] && params[2]) {
 			tmp = saprintf("%s --set %s %s %s", name, params[0], params[1], params[2]);
 			command_exec(NULL, s, tmp, 0);
+			config_changed = 1;
 			return 0;
 		}
 		
 		if(params[1]) {
 			tmp = saprintf("%s --get %s %s", name, params[0], params[1]);
 			command_exec(NULL, s, tmp, 0);
+			config_changed = 1;
 			return 0;		
 		}
 		

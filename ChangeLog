@@ -6,6 +6,14 @@ d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
 przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
+// 2004-04-04
+- dodane wpisy w dokumentacji (del)
+- dodana opcja --withot-openssl do ./configure (del)
+- przy wychodzeniu bez /save zapisywanie równie¿ stanu sesji (del)
+- poprawka: /add gg:numer nick dodaje do userlisty biezacej sesji 
+  (np. do sesji jabberowej) (salvador)
+      
+
 // 2004-03-31
 - dzia³aj±ce F2, F3, F4 oraz na bierz±co ncurses:contacts (del)
 - Przewijanie dzia³a tak¿e w oknie debuga (del)

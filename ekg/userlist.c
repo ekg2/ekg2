@@ -502,7 +502,6 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid)
 {
         int valid = 0;
         char *tmp;
-        plugin_t *plugin;
 
 	if (!plugin)
 		return -1;

@@ -9,6 +9,7 @@
  *                          Dawid Jarosz <dawjar@poczta.onet.pl>
  *                          Piotr Domagalski <szalik@szalik.net>
  *                          Kuba Kowalski <qbq@kofeina.net>
+ *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -397,6 +398,10 @@ COMMAND(cmd_add)
 	int result = 0;
 	userlist_t *u = NULL;
 
+	if (!session_current) {
+		return -1;
+	}
+	
 	if (params[0] && !params[1] && params[0][0] != '-' && window_current->target) {
 		const char *name = params[0], *s1 = params[1], *s2 = params[2];
 		params_free = 1;
@@ -443,7 +448,7 @@ COMMAND(cmd_add)
 		goto cleanup;
 	}
 
-	if (!valid_uid(params[0])) {
+	if (!valid_plugin_uid(plugin_find(session_current->plugin_name), params[0])) {
 		printq("invalid_uid");
 		result = -1;
 		goto cleanup;
