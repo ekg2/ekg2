@@ -1846,9 +1846,9 @@ static void gg_handle_token(int type, int fd, int watch, void *data)
 		char *file2 = saprintf("%s.jpg", file);
 
 		if (rename(file, file2) == -1)
-			print("token", file);
+			print("gg_token", file);
 		else
-			print("token", file2);
+			print("gg_token", file2);
 
 		xfree(file2);
 	}
