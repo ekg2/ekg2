@@ -66,7 +66,7 @@ AC_CHECK_FUNCS(mkstemp)
 AC_CONFIG_SUBDIRS([libltdl])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in ])
-PLUGINS="logs mail rc sms pcm"
+PLUGINS="logs mail rc sms pcm irc"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
