@@ -25,7 +25,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <locale.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1801,13 +1800,6 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
-        struct timeval before, after;
-	static char decimal_point;
-	decimal_point  =  localeconv()->decimal_point[0];
-
-	
-	gettimeofday(&before, (struct timezone *)NULL);
-
 
 	ch = ekg_getch(0);
 	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
@@ -2031,20 +2023,7 @@ action:
 	xfree(aspell_line);	
 #endif
 
-//	ncurses_commit();
-
-
-	gettimeofday(&after, (struct timezone *)NULL);
-
-        after.tv_sec -= before.tv_sec;
-        after.tv_usec -= before.tv_usec;
-        if (after.tv_usec < 0)
-                after.tv_sec--, after.tv_usec += 1000000;
-
-//                debug("%9ld%c%02ld real ",
-  //                      after.tv_sec, decimal_point,
-    //                    after.tv_usec/10000);
-
+	ncurses_commit();
 }
 
 int ncurses_command_window(void *data, va_list ap)
@@ -2241,71 +2220,6 @@ int ui_ncurses_event(const char *event, ...)
 
 	if (!event)
 		return 0;
-
-	if (!xstrcasecmp(event, "refresh_time"))
-		goto cleanup;
-
-	if (!xstrcasecmp(event, "commit"))
-		ncurses_commit();
-		
-#if 0
-	if (!xstrcasecmp(event, "printat")) {
-		char *target = va_arg(ap, char*);
-		int id = va_arg(ap, int), x = va_arg(ap, int), y = va_arg(ap, int);
-		char *text = va_arg(ap, char*);
-		window_t *w = NULL;
-
-		if (target)
-			w = window_find(target);
-
-		if (id) {
-			list_t l;
-
-			for (l = windows; l; l = l->next) {
-				window_t *v = l->data;
-
-				if (v->id == id) {
-					w = v;
-					break;
-				}
-			}
-		}
-
-		if (w && text)
-			window_printat(w->window, x, y, text, NULL, COLOR_WHITE, 0, COLOR_BLACK, 0);
-	}
-#endif 
-
-	if (!xstrcmp(event, "variable_changed")) {
-		char *name = va_arg(ap, char*);
-
-		if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
-			list_t l;
-			int id = 2;
-
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-
-				if (w->floating)
-					continue;
-				
-				if (w->id > 1)
-					w->id = id++;
-			}
-		}
-
-		if (!xstrcasecmp(name, "timestamp")) {
-			list_t l;
-
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-				
-				ncurses_backlog_split(w, 1, 0);
-			}
-			
-			ncurses_resize();
-		}
-	}
 
 	if (!xstrcmp(event, "conference_rename")) {
 		char *oldname = va_arg(ap, char*), *newname = va_arg(ap, char*);

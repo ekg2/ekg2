@@ -229,6 +229,37 @@ static int ncurses_userlist_changed(void *data, va_list ap)
 	return 0;
 }
 
+static int ncurses_variable_changed(void *data, va_list ap)
+{
+	char **__name = va_arg(ap, char**), *name = *__name;
+
+        if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
+	        list_t l;
+                int id = 2;
+
+                for (l = windows; l; l = l->next) {
+	                window_t *w = l->data;
+                               
+			if (w->floating)
+                        	continue;
+
+                        if (w->id > 1)
+	                        w->id = id++;
+                }
+        } else if (!xstrcasecmp(name, "timestamp")) {
+       		list_t l;
+
+                for (l = windows; l; l = l->next) {
+	                window_t *w = l->data;
+
+	                ncurses_backlog_split(w, 1, 0);
+                }
+
+                ncurses_resize();
+        }
+
+	return 0;
+}
 
 /*
  * changed_aspell()
@@ -242,6 +273,7 @@ void ncurses_changed_aspell(const char *var)
         ncurses_spellcheck_init();
 #endif
 }
+
 
 static int ncurses_binding_query(void *data, va_list ap)
 {
@@ -355,6 +387,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "userlist-removed", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);
+	query_connect(&ncurses_plugin, "variable-changed", ncurses_variable_changed, NULL);
 
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);

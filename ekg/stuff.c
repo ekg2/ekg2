@@ -597,7 +597,6 @@ void changed_display_blinking(const char *var)
 	}
 }
 
-		
 /*
  * changed_theme()
  *

@@ -256,7 +256,7 @@ int config_read(const char *filename)
 		} else if (!xstrcasecmp(buf, "plugin")) {
 			plugin_load(foo, 1);
                 } else {
-			ret = variable_set(buf, foo, 1);
+			ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 1);
 
 			if (ret)
 				debug("  unknown variable %s\n", buf);
@@ -304,11 +304,15 @@ static void config_write_variable(FILE *f, variable_t *v)
 		case VAR_STR:
 			if (*(char**)(v->ptr))
 				fprintf(f, "%s %s\n", v->name, *(char**)(v->ptr));
+			else 
+                                fprintf(f, "%s %s\n", v->name, "");
 			break;
 
 		case VAR_FOREIGN:
 			if (v->ptr)
 				fprintf(f, "%s %s\n", v->name, (char*) v->ptr);
+			else
+                                fprintf(f, "%s %s\n", v->name, "");
 			break;
 			
 		default:
