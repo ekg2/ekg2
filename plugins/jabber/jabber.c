@@ -220,22 +220,23 @@ void jabber_handle(void *data, xmlnode_t *n)
 		xmlnode_t *nbody = xmlnode_find_child(n, "body");
 		xmlnode_t *nsubject = xmlnode_find_child(n, "subject");
 		xmlnode_t *xitem = xmlnode_find_child(n, "x");
+		xmlnode_t *nerr = xmlnode_find_child(n, "error");
 		string_t body = string_init("");
 		char *session, *sender, **rcpts = NULL, *text, *seq = NULL;
 		time_t sent = time(NULL);
 		int class = EKG_MSGCLASS_CHAT;
 		uint32_t *format = NULL;
 
-		if (nsubject) {
+		if (nsubject && !nerr) {
 			string_append(body, "Subject: ");
 			string_append(body, nsubject->data);
 			string_append(body, "\n\n");
 		}
 
-		if (nbody)
+		if (nbody && !nerr)
 			string_append(body, nbody->data);
 	
-		if (xitem) {
+		if (xitem && !nerr) {
 			const char *ns;
 			ns = jabber_attr(xitem->atts, "xmlns");
 
@@ -289,8 +290,31 @@ void jabber_handle(void *data, xmlnode_t *n)
 		text = jabber_unescape(body->str);
 		string_free(body, 1);
 
-		if (nbody || nsubject)
+		if ((nbody || nsubject) && !nerr)
 			query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, NULL);
+				
+		if (nerr) {
+			char *recipient, *mbody, *tmp;
+			char *ecode = jabber_attr(nerr->atts, "code");
+			char *etext = jabber_unescape(nerr->data);
+		
+			tmp = saprintf("jid:%s", jabber_unescape(from));
+			recipient = get_nickname(s, tmp);
+	
+			if (nbody && nbody->data) {
+				char *tmp2 = jabber_unescape(nbody->data);
+				mbody = xstrndup(tmp2, 15);
+	
+				print("jabber_msg_failed_long", recipient, ecode, etext, mbody);
+
+				xfree(mbody);
+				xfree(tmp2);
+			} else 
+				print("jabber_msg_failed", recipient, ecode, etext);
+
+			xfree(etext);
+			xfree(tmp);
+		}
 
 		xfree(session);
 		xfree(sender);
@@ -912,6 +936,8 @@ int jabber_plugin_init()
 	format_add("jabber_auth_denied", "%> (%2) Odmówiona autoryzacji %T%1%n.\n", 1);
 	format_add("jabber_auth_probe", "%> (%2) Wys³ano pytanie o obecno¶æ do %T%1%n.\n", 1);
 	format_add("jabber_generic_conn_failed", "%! (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n", 1);
+	format_add("jabber_msg_failed", "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n",1);
+	format_add("jabber_msg_failed_long", "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n",1);
 	format_add("jabber_version_response", "%> Identyfikator Jabbera: %T%1%n\n%> Nazwa programu: %T%2%n\n%> Wersja programu: %T%3%n\n%> System operacyjny: %T%4%n\n", 1);
 	format_add("jabber_unknown_resource", "%! (%1) Nieznany resource u¿ytkownika%n\n", 1);
 	format_add("jabber_status_notavail", "%! (%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%n\n", 1);
