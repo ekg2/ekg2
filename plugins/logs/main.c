@@ -1,7 +1,8 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2003 Tomasz Torcz <zdzichu@irc.pl>
+ *  (C) Copyright 2003-2004 Tomasz Torcz <zdzichu@irc.pl>
+ *                          Leszek Krupiñski <leafnode@wafel.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -50,18 +51,12 @@
 #include <errno.h>
 #include <string.h>
 
-char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text, time_t sent, int class);
-FILE* logs_open_file(char *path, char *ext, int makedir);
-void logs_handler(void *data, va_list ap);
-void logs_handler_newwin(void *data, va_list ap);
-void logs_simple();
-void logs_xml();
-void logs_sql();
-void logs_gaim();
+#include "main.h"
 
 
 int logs_remind_number = 0; /* ile przypomniec? */
 list_t logs_reminded; /* lista z przypomnianymi wiadomosciami - nie logowac */
+
 
 PLUGIN_DEFINE(logs, PLUGIN_GENERIC, NULL);
 
@@ -72,8 +67,13 @@ int logs_plugin_init()
 	query_connect(&logs_plugin, "protocol-message",	logs_handler, NULL);
 	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);
 	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &logs_remind_number, NULL, NULL, NULL);
+        variable_add(&logs_plugin, "log", VAR_MAP, 1, &logs_log, NULL, variable_map(3, 0, 0, "none", 1, 2, "simple", 2, 1, "xml"), NULL);
+        variable_add(&logs_plugin, "log_ignored", VAR_INT, 1, &logs_log_ignored, NULL, NULL, NULL);
+        variable_add(&logs_plugin, "log_status", VAR_BOOL, 1, &logs_log_status, NULL, NULL, NULL);
+        variable_add(&logs_plugin, "path", VAR_DIR, 1, &logs_path, NULL, NULL, NULL);
+        variable_add(&logs_plugin, "timestamp", VAR_STR, 1, &logs_timestamp, NULL, NULL, NULL);
 
-	debug("logs plugin registered\n");
+	debug("[logs] plugin registered\n");
 
 	return 0;
 }
@@ -81,12 +81,12 @@ int logs_plugin_init()
 static int logs_plugin_destroy()
 {
 	// zapominamy wszystko
-	if (logs_reminded) 
+	if (logs_reminded)
 		list_destroy(logs_reminded, 1);
 
 	plugin_unregister(&logs_plugin);
 
-	debug("logs plugin unregistered\n");
+	debug("[logs] plugin unregistered\n");
 
 	return 0;
 }
@@ -107,7 +107,7 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
 	struct tm *tm = localtime(&sent);
 	string_t buf = string_init(NULL);
 
-	if (!(tmp = config_log_path))
+	if (!(tmp = logs_path))
 		return NULL;
 
 	while (*tmp) {
@@ -127,7 +127,7 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
 						else
 							uidtmp = xstrdup(get_nickname(session, uid));
 					attach:
-						if (xstrchr(uidtmp, '/'))  
+						if (xstrchr(uidtmp, '/'))
 							*(xstrchr(uidtmp, '/')) = 0; // strip resource
 						string_append_n(buf, uidtmp, -1);
 						xfree(uidtmp);
@@ -141,9 +141,9 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
 				case 'D':       snprintf(datetime, 3, "%02d", tm->tm_mday);
 						string_append_n(buf, datetime, 2);
 						break;
-				default:	string_append_c(buf, *(tmp+1));	
+				default:	string_append_c(buf, *(tmp+1));
 			};
-				
+
 			tmp++;
 		} else if (*tmp == '~' && (*(tmp+1) == '/' || *(tmp+1) == '\0')) {
 			const char *home = getenv("HOME");
@@ -156,7 +156,7 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
 
 	// sanityzacja sciezki - wywalic "../", zamienic znaki spec. na inne
 	// zamieniamy szkodliwe znaki na minusy, spacje na podkreslenia
- 	// TODO
+	// TODO
 	xstrtr(buf->str, ' ', '_');
 
 	path = string_free(buf, 0);
@@ -166,7 +166,7 @@ char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text,
 
 
 /*
- * otwarcie pliku do zapisu/odczytu 
+ * otwarcie pliku do zapisu/odczytu
  * tworzy wszystkie katalogi po drodze, je¶li nie istniej± i mkdir =1
  * ext - rozszerzenie jakie nadac
  * zwraca numer deskryptora b±d¼ NULL
@@ -179,6 +179,7 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 	int slash_pos = 0;
 	FILE* fdesc;
 
+        debug("[logs] opening log file\n");
 
 	while (makedir) {
 		if (!(slash = xstrchr(path + slash_pos, '/'))) {
@@ -191,7 +192,7 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 		dir = xstrndup(path, slash_pos);
 
 		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
-			char *bo = saprintf("nie mo¿na %s bo %s", dir, strerror(errno)); 
+			char *bo = saprintf("nie mo¿na %s bo %s", dir, strerror(errno));
 			print("generic",bo); // XXX usun±æ !! 
 			xfree(bo);
 			xfree(dir);
@@ -211,8 +212,27 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 	return fdesc;
 };
 
+/**
+ * przygotowuje timstamp do wstawienia do logów
+ */
 
-/* glowny handler */
+char * prepare_timestamp(time_t ts)
+{
+	struct tm *tm = localtime(&ts);
+	char * buf;
+	buf = xmalloc(101);
+	if (logs_timestamp) {
+		strftime(buf, 100, logs_timestamp, tm);
+		debug("[logs] %s\n", buf);
+		return buf;
+	} else {
+		return itoa(ts);
+	}
+}
+
+/**
+ * glowny handler
+ */
 
 void logs_handler(void *data, va_list ap)
 {
@@ -226,7 +246,10 @@ void logs_handler(void *data, va_list ap)
 	char     **__seq = va_arg(ap, char**), *seq = *__seq;
 	session_t *s = session_find(session); // session pointer
 	const char *log_formats;
-	char *path, *ttt;
+	char *path;
+
+	if (logs_log == 0)
+		return;
 
 	/* well, 'format' is unused, so silence the warning */
 	format = NULL;
@@ -240,17 +263,15 @@ void logs_handler(void *data, va_list ap)
 	if (!(path = logs_prepare_path(s, uid, rcpts, text, sent, class)))
 		return;
 
-	ttt = saprintf("Log do: %s\n", path);
-	debug(ttt);
-	xfree(ttt);
-	
-	if (xstrstr(log_formats, "simple"))
-		logs_simple(path, session, 
-			((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid),
-			 text, sent, class, seq);
+	debug("[logs] logging to file %s\n", path);
+
+	if (logs_log == 1 && xstrstr(log_formats, "simple"))
+			logs_simple(path, session,
+				((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid),
+				 text, sent, class, seq);
 
 	// itd. dla innych formatow logow
-	
+
 	xfree(path);
 };
 
@@ -275,7 +296,7 @@ void logs_handler_newwin(void *data, va_list ap)
 	// usunac liste
 };
 
-/* 
+/*
  * zapis w formacie znanym z ekg1
  * typ,uid,nickname,timestamp,{timestamp wyslania dla odleglych}, text
  */
@@ -283,9 +304,9 @@ void logs_handler_newwin(void *data, va_list ap)
 void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, int seq)
 {
 	FILE *file;
-	char *textcopy = log_escape(text);	
-	char *timestamp = saprintf("%u", (unsigned int)time(NULL));
-	char *senttimestamp = saprintf("%u", (unsigned int)sent);
+	char *textcopy = log_escape(text);
+	char *timestamp = prepare_timestamp((time_t)time(0));
+	char *senttimestamp = prepare_timestamp(sent);
 	session_t *s = session_find((const char*)session);
 	char *gotten_uid = get_uid(s, uid);
 	char *gotten_nickname = get_nickname(s, uid);
@@ -319,12 +340,12 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 
 	};
 	fputc(',', file);
-	
+
 	/*
 	 * chatsend,<numer>,<nick>,<czas>,<tre¶æ>
 	 * chatrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
 	 */
-	
+
 	fputs(gotten_uid, file);      fputc(',', file);
 	fputs(gotten_nickname, file); fputc(',', file);
 
@@ -332,11 +353,11 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 
 	if (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_CHAT) {
 		fputs(senttimestamp, file);
-	       	fputc(',', file);
+		fputc(',', file);
 	}
-	
-	fputs(textcopy, file); 
-	fputs("\n", file);	
+
+	fputs(textcopy, file);
+	fputs("\n", file);
 
 	xfree(senttimestamp);
 	xfree(timestamp);
@@ -362,17 +383,6 @@ void logs_gaim()
 };
 
 
-#ifdef PGSQLROX
-/*
- * zapis do bazy
- */
-
-void logs_sql()
-{
-};
-#endif 
-
-
 /* interesujace nas wydarzenia */
 // query_connect "protocol-message"
 //? query_connect "presence??"
@@ -386,4 +396,5 @@ void logs_sql()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=8 sw=8 noexpandtab
  */
