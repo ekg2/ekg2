@@ -52,6 +52,12 @@ parê wymagañ i wskazówek dla developerów:
     dostêpnych funkcji. nie musisz siê martwiæ o zwracane warto¶ci 
     i o obs³ugê ewentualnych b³edów.
 
+11) poni¿sze linijki dopisane do ~/.vimrc u³atwiaj± wychwytywanie znaków
+    niedrukowalnych pozostawionych na koñcach linii poprzez zmianê ich koloru:
+
+    highlight WhitespaceEOL ctermbg=red guibg=red
+    match WhitespaceEOL /\s\+$/
+
 nikt nie bêdzie siê zachowywaæ jak jaki¶ Linus, i wrzucaæ do ¼róde³ tylko
 to, co mu siê podoba, albo tylko patche ludzi, z którymi piwo pija. byle
 tylko by³y zachowane pewne zasady i nie by³o po miesi±cu ba³aganu w kodzie.
