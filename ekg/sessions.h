@@ -40,6 +40,7 @@ typedef struct {
 	/* private: */
 	char *status;			/* stan sesji */
 	char *descr;			/* opis stanu sesji */
+	char *password;
 	int connected;			/* czy sesja jest po³±czona? */
 	int activity;			/* kiedy ostatnio co¶ siê dzia³o? */
 	int autoaway;			/* jeste¶my w autoawayu? */
@@ -65,6 +66,11 @@ const char *session_descr_get(session_t *s);
 #define session_descr_get_n(a) session_descr_get(session_find(a))
 int session_descr_set(session_t *s, const char *descr);
 #define session_descr_set_n(a,b) session_descr_set(session_find(a),b)
+
+const char *session_password_get(session_t *s);
+#define session_password_get_n(a) session_descr_get(session_find(a))
+int session_password_set(session_t *s, const char *password);
+#define session_password_set_n(a,b) session_descr_set(session_find(a),b)
 
 void *session_private_get(session_t *s);
 #define session_private_get_n(a) session_private_get(session_find(a))

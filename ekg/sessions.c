@@ -161,6 +161,7 @@ int session_remove(const char *uid)
 	xfree(s->uid);
 	xfree(s->status);
 	xfree(s->descr);
+	xfree(s->password);
 
 	list_remove(&sessions, s, 1);
 
@@ -196,6 +197,18 @@ int session_status_set(session_t *s, const char *status)
 
 	return 0;
 }
+
+int session_password_set(session_t *s, const char *password)
+{
+	s->password = base64_encode(password);
+        return 0;
+}
+
+const char *session_password_get(session_t *s)
+{
+	return (s && s->password) ? base64_decode(s->password) : 0; 
+}
+
 
 PROPERTY_STRING(session, descr);
 PROPERTY_STRING(session, alias);
@@ -238,6 +251,9 @@ const char *session_get(session_t *s, const char *key)
 
 	if (!strcasecmp(key, "status"))
 		return session_status_get(s);
+	
+	if (!strcasecmp(key, "password"))
+                return session_password_get(s);
 	
 	if (s->params) {
 		for (i = 0; s->params[i]; i++) {
@@ -291,6 +307,10 @@ int session_set(session_t *s, const char *key, const char *value)
 
 	if (!strcasecmp(key, "status"))
 		return session_status_set(s, value);
+
+	if (!strcasecmp(key, "password"))
+                return session_password_set(s, value);
+
 
 	for (i = 0; s->params && s->params[i]; i++) {
 		if (!strcasecmp(s->params[i]->key, key)) {
@@ -374,7 +394,11 @@ int session_read()
 
 		if ((tmp = strchr(line, '='))) {
 			*tmp = 0;
-			session_set(s, line, tmp + 1);
+			tmp++;
+			if(*tmp == '\001') 
+				session_set(s, line, base64_decode(tmp + 1));
+			else 
+				session_set(s, line, tmp);
 			goto next;
 		}
 
@@ -413,6 +437,8 @@ int session_write()
 			fprintf(f, "status=%s\n", s->status);
 		if (s->descr)
 			fprintf(f, "descr=%s\n", s->descr);
+                if (s->password && config_save_password)
+                        fprintf(f, "password=\001%s\n", s->password);
 		for (i = 0; s->params && s->params[i]; i++)
 			if (s->params[i]->value)
 				fprintf(f, "%s=%s\n", s->params[i]->key, s->params[i]->value);
@@ -627,7 +653,11 @@ COMMAND(session_command)
 		if (!(s = session_find(params[1]))) {
 			if (window_current->session) {
 				if((var = session_get_n(window_current->session->uid, params[1]))) {
-					printq("session_variable", window_current->session->uid, params[1], var);
+					if(!strcasecmp(params[1], "password"))
+						printq("session_variable", window_current->session->uid, params[1], "(...)");
+					else
+						printq("session_variable", window_current->session->uid, params[1], var);
+				
 					return 0;
 				}
 		
@@ -637,7 +667,10 @@ COMMAND(session_command)
 			return -1;
 		}
 		 
-		if(params[2] && (var = session_get_n(s->uid, params[2])))	{
+		if(params[2] && (var = session_get_n(s->uid, params[2]))) {
+			if(!strcasecmp(params[2], "password"))
+				printq("session_variable", s->uid, params[2], "(...)");
+			else
 			printq("session_variable", s->uid, params[2], var);
 			return 0;
 		}

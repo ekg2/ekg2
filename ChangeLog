@@ -6,6 +6,10 @@ d - drg, sz - szalik). ,,p/nick'' oznacza patch lub ¼ród³o podes³ane
 przez ,,nick'', ,,i/nick'' oznacza czyj¶ pomys³, ,,b/nick'' mówi, kto
 zg³osi³ b³±d.
 
+// 2004-03-28
+- has³a sesji zachowywane s± w pliku w postaci kodowanej oraz uwzglêdniana
+ jest zmienna save_password (del)
+
 // 2004-03-27
 - poprawiona obs³uga zmiennych - dzia³a ju¿ prawid³owo /set etc. (del)
 - poprawione: przy próbie wys³ania pustej lini wy¶wietla:
