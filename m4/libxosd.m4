@@ -7,7 +7,7 @@
 dnl AM_CHECK_LIBXOSD([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
 dnl Test to see if libxosd is installed, and define LIBXOSD_CFLAGS, LIBXOSDLIBS
 dnl
-AC_DEFUN(AM_CHECK_LIBXOSD,
+AC_DEFUN([AM_CHECK_LIBXOSD],
 [dnl
 dnl Get the cflags and libraries from the xosd-config script
 dnl
