@@ -340,7 +340,7 @@ void message_print(const char *session, const char *sender, const char **rcpts, 
 
 	user = (class != EKG_MSGCLASS_SENT) ? format_user(session_find(session), sender) : session_format_n(sender);
 
-	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT), class_str, user, timestamp, text);
+	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_MESSAGE), class_str, user, timestamp, text);
 
 	xfree(t);
 }
@@ -360,7 +360,6 @@ int protocol_message(void *data, va_list ap)
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
-        window_t *w;
 	
 	if (userlist && window_current && window_current->target && !strcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
 		userlist->blink = 0;
