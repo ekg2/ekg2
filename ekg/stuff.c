@@ -1436,6 +1436,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	tv.tv_sec += period;
 	memcpy(&t.ends, &tv, sizeof(tv));
 	t.name = xstrdup(name);
+	t.period = period;
 	t.persist = persist;
 	t.function = function;
 	t.data = data;
