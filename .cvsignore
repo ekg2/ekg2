@@ -18,4 +18,6 @@ missing
 install-sh
 .deps
 stamp-*
+libltdl
+libtool
 
