@@ -305,6 +305,17 @@ int plugin_unregister(plugin_t *p)
                         watch_free(w);
         }
 
+        for (l = timers; l; ) {
+                struct timer *t = l->data;
+
+                l = l->next;
+
+                if (t->plugin == p) {
+			list_remove(&timers, t, 0);
+                        xfree(t->name);
+                        xfree(t);
+		}
+        }
 
 	list_remove(&plugins, p, 0);
 
