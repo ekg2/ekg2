@@ -15,6 +15,8 @@ rozwi±zanie.
   - nie dzia³±j±ce list -d dla jabber'a (del)
   - dope³nianie nazw sesji (del)
   - dope³nienie funkcji np /command (bez pocz±tku przyk³adowo gg:) (del)
+  - przy make_window == 2 i po "¶wie¿ym" otwarciu gg, przy pobieraniu wiadomo¶ci
+    "le¿±cych" na serwerze nowe okna nie s± tworzone (del)
   - kodowanie hase³ w ~/.ekg/sessions
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
