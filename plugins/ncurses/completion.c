@@ -636,10 +636,11 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
-			int len = strlen(c->name);
+			char *name = (strchr(c->name, ':')) ? strchr(c->name, ':') + 1 : c->name;
+			int len = strlen(name);
 			char *cmd = (line[0] == '/') ? line + 1 : line;
-
-			if (!strncasecmp(cmd, c->name, len) && xisspace(cmd[len])) {
+			
+			if (!strncasecmp(name, cmd, len) && xisspace(cmd[len])) {
 				params = c->params;
 				abbrs = 1;
 				break;
@@ -647,7 +648,8 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
 			for (len = 0; cmd[len] && cmd[len] != ' '; len++);
 
-			if (!strncasecmp(cmd, c->name, len)) {
+			if (!strncasecmp(name, cmd, len)) {
+				debug("paramsy: %s\n", c->params);
 				params = c->params;
 				abbrs++;
 			} else
