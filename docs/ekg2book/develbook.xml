@@ -6,6 +6,352 @@
    <title>
       Podrêcznik developera ekg2
    </title>
+   <sect1 id="develbook-programming">
+      <title>Rozwijanie kodu ekg2</title>
+      <sect2>
+         <title>Wskazówki dla programistów</title>
+         <itemizedlist>
+            <listitem>
+               <para>
+                  Gdy co¶ poprawiasz/dodajesz, zachowuj styl reszty kodu.
+                  Wciêcia rób znakami tabulacji, a nie spacjami. Stawiaj spacje
+                  po przecinkach i ¶rednikach. Je¶li masz inny styl, a
+                  podes³ane poprawki bêd± dobre i/lub potrzebne, nie zdziw siê,
+                  je¶li Twój kod zostanie przeregadowany.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Dopisuj siê do copyrightów na pocz±tku pliku. Inaczej
+                  zak³adam, ¿e zrzekasz siê praw do podes³anych kawa³ków kodu.
+                  Oczywi¶cie podsy³any kod musi byæ na takiej samej licencji,
+                  co reszta. W innym wypadku nie traæ czasu i go nie przysy³aj.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Zachowuj przyjêt± konwencjê. Je¶li wszystkie zmienne danej
+                  struktury maj± nazwy typu <varname>foobar_count</varname>,
+                  nie dodawaj <varname>foocount</varname>, czy
+                  <varname>nfoo</varname>.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Nie zmieniaj api bez powodu. Nawet je¶li chcesz to zrobiæ,
+                  skonsultuj z reszt± developerów.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Tworz±c wiêkszy kawa³ek/modu³/plik przeznaczony do jakiej¶
+                  konkretnej funkcji, staraj siê nazywaæ funkcje i zmienne tak,
+                  by by³o wiadomo, do czego s³u¿±. Przyk³ad: funkcje dotycz±ce
+                  list zaczynaj± siê <function>list_*</function>, funkcje
+                  dotycz±ce userlisty to <function>userlist_*</function>,
+                  konfiguracja to <function>config_*</function>.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Do alokacji pamiêci u¿ywaj funkcji
+                  <function>xmalloc()</function>,
+                  <function>xcalloc()</function>,
+                  <function>xrealloc()</function> i
+                  <function>xstrdup()</function>. Nie musisz sprawdzaæ
+                  zwracanej warto¶ci. Je¶li zabraknie pamiêci, funkcje te same
+                  zajm± siê grzecznym zamkniêciem programu.  Dbaj o zwalnianie
+                  buforów, gdy nie s± one ju¿ potrzebne.
+               </para>
+               <para>
+                  Zamiast <function>strncpy()</function> oraz
+                  <function>strncat()</function> u¿ywaj
+                  <function>strlcpy()</function> i
+                  <function>strlcat()</function>, które przyjmuj± jako parametr
+                  ca³kowity rozmiar bufora. Nie trzeba siê martwiæ o to, ile w
+                  buforze pozosta³o jeszcze miejsca, czy znak zerowy siê
+                  zmie¶ci, etc. Obie funkcje <emphasis>zawsze</emphasis>
+                  zwracaj± ilo¶æ znaków, jaka zosta³a(by) zapisana do bufora.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Je¶li nie masz pojêcia o alokacji pamiêci i obs³udze stringów
+                  w C, najlepiej daj sobie spokój. Nawet je¶li kod dzia³a, ale
+                  nie trzyma siê kupy, zostanie odrzucony.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Podsy³aj±c patche, twórz je poleceniem <command>diff
+                     -u</command>. diff bez parametrów generuje patche, które
+                  nie zawieraj± ¿adnego kontekstu i ciê¿ko je do³±czyæ do
+                  ¼ród³a, gdy zmieni³a siê wcze¶niej chocia¿ jedna linijka.
+                  Patche najlepiej generowaæ wzglêdem naj¶wie¿szej wersji, ale
+                  nie jest to wymagane, je¶li w miêdzyczasie nie by³o powa¿nych
+                  zmian w kodzie.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Je¶li poprawka jest niewielka (jedna, dwie linijki), nie traæ
+                  swojego, ani mojego czasu, tylko po prostu wklej orygina³ i
+                  poprawion± wersjê do tre¶ci listu.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Poni¿sze linijki dopisane do ~/.vimrc u³atwiaj± wychwytywanie
+                  znaków niedrukowalnych pozostawionych na koñcach linii
+                  poprzez zmianê ich koloru:
+               </para>
+               <programlisting>
+<![CDATA[
+    highlight WhitespaceEOL ctermbg=red guibg=red
+    match WhitespaceEOL /\s\+$/
+]]>
+               </programlisting>
+            </listitem>
+            <listitem>
+               <para>
+                  Wszelkie komentarze powinny byæ w jêzyku angielskim.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Wszystkie formatki i wszystko co zostaje wy¶wietlane na
+                  ekranie ma byæ w jêzyku angielskim.
+               </para>
+            </listitem>
+            <listitem>
+               <para>
+                  Po zmianie jakiejkolwiek formatki nale¿y w katalogu po/
+                  wywo³aæ make update-po i ewentualnie poprawiæ pliki *.po 
+               </para>
+            </listitem>
+         </itemizedlist>
+         <para>
+            Nikt nie bêdzie siê zachowywaæ jak jaki¶ Linus i wrzucaæ do ¼róde³
+            tylko to, co mu siê podoba, albo tylko patche ludzi, z którymi piwo
+            pija. Byle tylko by³y zachowane pewne zasady i nie by³o po miesi±cu
+            ba³aganu w kodzie. Oczywi¶cie wszystkie zmiany bêd± przegl±dane i
+            w razie czego autor dostanie po ³apach.
+         </para>
+      </sect2>
+      <sect2>
+         <title>API</title>
+         <para>
+            Dokumentacja API dostêpna jest na stronie domowej projektu: <ulink
+               url="http://www.ekg2.org/doxygen/">http://www.ekg2.org/doxygen/</ulink>
+         </para>
+      </sect2>
+   </sect1>
+   <sect1>
+      <title>Formaty plików</title>
+      <sect2>
+         <title>Format listy kontaktów ekg2</title>
+         <para>
+            Lista kontaktów z pliku <filename>userlist</filename> jest tego samego
+            formatu co eksportowana z windowsowego klienta:
+         </para>
+         <programlisting>
+<![CDATA[
+imiê;nazwisko;pseudonim;wy¶wietlana_nazwa;telefon;grupy;opis;numer
+]]>
+         </programlisting>
+         <para>
+            ekg mo¿e dopisaæ u¿ytkownika do kilku metagrup.
+         </para>
+         <itemizedlist>
+            <listitem>
+               <simpara>
+                  __blocked - u¿ytkownik blokowany
+               </simpara>
+            </listitem>
+            <listitem>
+               <simpara>
+                  __offline - jeste¶my niedostêpni dla u¿ytkownika
+               </simpara>
+            </listitem>
+            <listitem>
+               <simpara>
+                  __ignored_[poziom] - u¿ytkownik jest ignorowany z danym poziomem
+               </simpara>
+            </listitem>
+            <listitem>
+               <simpara>
+                  __ignored - wszystkie zdarzenia zwi±zane z u¿ytkownikiem s± ignorowane
+               </simpara>
+            </listitem>
+         </itemizedlist>
+      </sect2>
+      <sect2>
+         <title>Format konfiguracji ekg2</title>
+         <para>
+            Plik konfiguracyjny <filename>config</filename> zawiera kolejne
+            wpisy w postaci:
+         </para>
+         <programlisting>
+<![CDATA[
+<set> <zmienna> <warto¶æ>
+bind <klawisz> <komenda>
+bind-set <klawisz> <sekwencja>
+alias <nazwa> <komenda>
+on <zdarzenie> <priorytet> <za³o¿enia> <komenda>
+at [nazwa] <czas>/<czêstotliwo¶æ> <komenda>
+timer [nazwa] [*/]<czas> <komenda>
+plugin <nazwa>
+]]>
+         </programlisting>
+         <para>
+            Je¶li pierwszy wyraz nie jest jednym ze znanych, jest traktowany
+            jako nazwa zmiennej, po której wystêpuje jej warto¶æ - chodzi o
+            zachowanie kompatybilno¶ci z innymi klientami.
+         </para>
+         <para>
+            Plik konfiguracyjny <filename>config-plugin</filename> zawiera
+            kolejne wpisy w postaci:
+         </para>
+         <programlisting>
+<![CDATA[
+<zmienna> <warto¶æ>
+]]>
+         </programlisting>
+         <para>
+            Plik konfiguracyjny ,,plugins'' zawiera kolejny wpisy w postaci:
+         </para>
+         <programlisting>
+<![CDATA[
+plugin <nazwa>
+]]>
+         </programlisting>
+         <para>
+            Je¶li warto¶æ zmiennej zaczyna siê od znaku o kodzie 1, to
+            nastêpuj±ca po nim warto¶æ zmiennej jest zakodowana u¿ywaj±c
+            base64.
+         </para>
+      </sect2>
+      <sect2>
+         <title>Format emotikon</title>
+         <para>
+            Za pomoc± oryginalnego klienta GG mo¿na wys³aæ sekwencje znakowe,
+            które bêd± siê zamieniaæ na odpowiednie ikony. Z oczywistych
+            wzglêdów w ekg wykonaæ siê tego nie da (mo¿e kto¶ kiedy¶ zrobi
+            wsparcie dla aaliba ;))). Sekwencje te, zamieniane s± wiêc na inne
+            sekwencje. Np. sekwencja <literal>&lt;cmok&gt;</literal>mo¿e byæ
+            zamieniona na <literal>:-*</literal> lub podobn±, wedle uznania
+            u¿ytkownika.
+         </para>
+         <para>
+            Aby skorzystaæ z mo¿liwo¶ci rozwijania tego typu makr w
+            otrzymywanych wiadomo¶ciach, nale¿y je sobie wcze¶niej zdefiniowaæ.
+            Robi siê to w pliku <filename>~/.gg/emoticons</filename>. Ka¿da
+            linia tego pliku definiuje jedno makro, a jej format jest
+            Nastêpuj±cy:
+         </para>
+         <programlisting>
+<![CDATA[
+<makro><tabulatory><rozwiniecie>
+]]>
+         </programlisting>
+         <para>
+            Nale¿y zwróciæ uwagê na to, ¿e do oddzielenia emoticonu od jego
+            rozwiniêcia s³u¿± tylko i wy³±cznie tabulatory (jeden lub wiêcej).
+            Spowodowane jest to wystêpowaniem spacji w oryginalnych GG-owych
+            emoticonach.
+         </para>
+         <para>
+            Przyk³adowy zestaw definicji mo¿na znale¼æ w docs/emoticons.sample.
+            Nie zawiera on wszystkich definicji, bo nie mia³em na tyle
+            inwencji, ¿eby je powymy¶laæ. 
+         </para>
+      </sect2>
+      <sect2>
+         <title>Format kolejki wiadomo¶ci</title>
+         <para>
+            Wiadomo¶ci s± zapisywane w osobnych plikach w katalogu
+            <filename>~/.gg/queue</filename>. Nazwa pliku jest po³±czeniem
+            czasu wys³ania wiadomo¶ci, kropki i kolejnej liczby, ale nie ma ona
+            wiêkszego znaczenia. Chodzi o zachowanie kolejno¶ci przy sortowaniu
+            plików. Pierwsza linia pliku zawiera wersjê pliku. Aktualnie jest
+            to ci±g znaków <literal>v1</literal>. Druga linia zawiera uid
+            sesji, z której wiadomo¶æ by³a wysy³ana. Trzecia linia zawiera
+            listê odbiorców. Czwarta linia zawiera czas wys³ania jako liczbê
+            sekund od 1 stycznia 1970r. Pi±ta linia zawiera numer sekwencyjny
+            lub dowolny ci±g znaków pozwalaj±cy jednoznacznie okre¶liæ
+            wiadomo¶æ. Kolejne linie s± tre¶ci± wiadomo¶ci.
+         </para>
+      </sect2>
+      <sect2>
+         <title>Format pliku konfiguracji sesji ekg2</title>
+         <para>
+            Plik konfiguracyjny sessions-&lt;plugin&gt; mo¿e zawieraæ
+            nastêpuj±ce definicje:
+         </para>
+         <programlisting>
+<![CDATA[
+	[uid sesji] - wszystkie zmienne bêd±ce poni¿ej s± podrzêdne dla 
+		      tej sesji
+
+	zmienna=warto¶æ 
+]]>
+         </programlisting>
+      </sect2>
+   </sect1>
+   <sect1>
+      <title>Debugowanie</title>
+      <para>
+         Je¶li program siê wywróci³ i utworzy³ plik core, za pomoc± gdb mo¿na
+         sprawdziæ, w którym miejscu wyst±pi³ b³±d. Najpierw uruchamiamy gdb.
+      </para>
+      <screen>
+<![CDATA[
+$ gdb ekg ~/.ekg2/core.<pid>
+GNU gdb 5.0 (UI_OUT)
+Copyright 2000 Free Software Foundation, Inc.
+(...)
+#0  command_test_segv (name=0x80617c9 "_segv", params=0x8088c20)
+    at commands.c:1601
+1601            return (*foo = 'A');
+(gdb)
+]]>
+      </screen>
+      <para>
+         Od razu widzimy, ¿e b³±d wyst±pi³ w funkcji
+         <function>command_test_segv</function> z pliku
+         <filename>commands.c</filename>. Potem widzimy b³êdn± liniê. W
+         niektórych przypadkach niestety to nie wystarcza. Mo¿liwe, ¿e linia, w
+         której wyst±pi³ b³±d jest poprawna, ale dostarczone dane nie by³y
+         w³a¶ciwe. Wtedy z pomoc± przychodzi polecenie <command>bt</command>,
+         które wy¶wietla stos wywo³añ funkcji.  Widzimy dziêki temu po kolei,
+         jaka funkcja wywo³ywa³a jak± funkcjê i z jakimi parametrami.
+      </para>
+      <screen>
+<![CDATA[
+(gdb) bt
+#0  command_test_segv (name=0x80617c9 "_segv", params=0x8088c20)
+    at commands.c:1601
+#1  0x080506e2 in old_execute (target=0x0, line=0x0) at commands.c:2009
+#2  0x08050980 in ekg_execute (target=0x0, line=0x806d700 "_segv")
+    at commands.c:2136
+#3  0x08059192 in ui_ncurses_loop () at ui-ncurses.c:231
+#4  0x080578d8 in main (argc=1, argv=0xbffffb24) at ekg.c:726
+#5  0x4008e38f in __libc_start_main () from /lib/libc.so.6
+]]>
+      </screen>
+      <para>
+         Teraz widzimy, ¿e po prostu u¿ytkownik wywo³a³ komendê
+         <command>_segv</command>.  co prawda widaæ to po samej nazwie funkcji,
+         w której wyst±pi³ b³±d, ale w wiêkszo¶ci przypadków nie bêdzie to a¿
+         tak oczywiste.
+      </para>
+      <para>
+         Niestety zdarza siê i tak, ¿e b³êdny kod narusza wa¿ne obszary
+         pamiêci, a sam b³±d wystêpuje pó¼niej, chocia¿by przy wywo³ywaniu
+         funkcji alokacji pamiêci. W takich przypadkach zlokalizowanie b³êdu
+         jest znacznie trudniejsze.
+      </para>
+   </sect1>
    <sect1 id="develbook-themes">
       <title>Tworzenie tematów graficznych</title>
       <sect2>

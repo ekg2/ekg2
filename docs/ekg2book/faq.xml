@@ -134,6 +134,102 @@ $ ./configure --with-libintl-prefix=/usr/local/include
          <qandaentry>
             <question>
                <para>
+                  Gdzie podzia³y siê niektóre zmienne (proxy, server) ?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Jako, ¿e s± to zmienne specyficzne dla ka¿dego protoko³u
+                  umieszczone s± w zmiennych sesyjnych.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Jak usun±æ zmienn±?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  <command>set -zmienna</command>
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  ekg ¼le rozpoznaje p³eæ!
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Wpisz imiê do listy kontaktów.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Jak zrobiæ, ¿eby ekg pokazywa³o mój pseudonim przy wysy³aniu
+                  wiadomo¶ci?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Dopisaæ alias do sesji.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Po zmianie wielko¶ci terminala przestaj± mi dzia³aæ strza³ki!
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Masz star± wersjê biblioteki ncurses. Zainstaluj nowsz±
+                  wersjê lub popro¶ o to administratora systemu.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Jak wy¶wietlaæ wiadomo¶ci, które wysy³am?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Nale¿y ustawiæ zmiennej globalnej
+                  <varname>display_sent</varname> oraz zmiennej sesyjnej o tej
+                  samej nazwie na warto¶æ <literal>1</literal>.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Nie mam kolorów w ekg, co robiæ?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Najprawdopodobniej masz ustawiony nieprawid³owy typ
+                  terminala. Spróbuj wpisaæ <command>export TERM=ansi</command>
+                  (lub <command>setenv TERM ansi</command> dla pow³oki *csh)
+                  przed uruchomieniem ekg. Je¶li to nie pomo¿e, zamiast
+                  <literal>ansi</literal> spróbuj podaæ
+                  <literal>screen</literal>, <literal>linux</literal>,
+                  <literal>xterm-color</literal> lub
+                  <literal>color_xterm</literal>.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
                   Jak dodaæ kogo¶ do listy kontaktów w GG?
                </para>
             </question>
