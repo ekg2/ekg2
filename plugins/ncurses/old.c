@@ -326,30 +326,12 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				string_t bc;
 
 				bc = string_init(NULL);
-				format = config_timestamp;
-				if (xstrcmp(format, "")) {
-					/* backward compatibility 
-					tmp = format;
-					while (*tmp)
-					{
-						if (*tmp == '\\') {
-							tmp++;
-							if (*tmp != '%') {
-								string_append_c(bc, '\\');
-								continue;
-							}
-						} else if (*tmp == '%')
-							string_append_c(bc, '%');
-						string_append_c(bc, *tmp);
-						tmp++;
-					}
-					string_append_c(bc, ' ');
-					format = string_free(bc, 0); */
-					format = xstrdup(config_timestamp);
+				if (xstrcmp(config_timestamp, "")) {
+					tmp = format_string(config_timestamp);
+					format = saprintf("%s ", tmp);
         	                        strftime(buf, sizeof(buf)-1, format, tm);
 					
-					tmp = format_string(buf);
-					s = fstring_new(tmp);
+					s = fstring_new(buf);
 
 					l->ts = s->str;
 					l->ts_len = xstrlen(l->ts);
