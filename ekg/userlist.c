@@ -392,7 +392,7 @@ userlist_t *userlist_find(session_t *session, const char *uid)
 {
 	list_t l;
 
-	if (!uid)
+	if (!uid || !session)
 		return NULL;
 	
 	for (l = session->userlist; l; l = l->next) {
@@ -425,6 +425,9 @@ int userlist_set(session_t *session, const char *contacts)
 {
 	char **entries = array_make(contacts, "\r\n", 0, 1, 0);
 	int i;
+
+	if (!session)
+		return -1;
 
 	userlist_free(session);
 
