@@ -617,9 +617,11 @@ IRC_COMMAND(irc_c_msg)
 234707 <@dredzik> GiM, string nadawca, string wiadomo¶æ, bool
 234707 wiadomo¶æ_do_ciebie, bool kana³_czy_priv, string
 234707 je¿eli_kana³_to_nazwa_kana³u
+010539 <@dredzik> GiM, hm... jeszcze by siê przyda³a jedna rzecz - tak ¿eby
+010539 pierwszym argumentem by³a sesja
 	*/
 		query_emit(NULL, "irc-protocol-message",
-				&me,&coloured,&xosd_to_us,&xosd_is_priv,
+				&s, &me,&coloured,&xosd_to_us,&xosd_is_priv,
 				&(dest[4]));
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
