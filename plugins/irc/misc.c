@@ -410,7 +410,7 @@ IRC_COMMAND(irc_c_error)
 				irc_write(j, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
 		case 372:
 		case 375:
-			if (!session_int_get(s, "SHOW_MOTD")) {
+			if (session_int_get(s, "SHOW_MOTD")) {
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s,
 						IOK2(3));
 				print_window("__status", s, 0,
@@ -422,7 +422,7 @@ IRC_COMMAND(irc_c_error)
 		default:
 			return(-1);
 	}
-	
+
 	xfree(t);
 	return 0;
 }

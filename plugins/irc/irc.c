@@ -1,5 +1,6 @@
 /*
  *  (C) Copyright 2004 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *                     Jakub 'darkjames' Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -377,10 +378,10 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 		return;
 	}
 
-	if (xstrlen(local_ip) > 1 && family != PF_INET6)
+	if (xstrlen(local_ip) > 1)
 	{
 #ifdef HAVE_INET_PTON
-		inetptonres = inet_pton(AF_INET, local_ip, &(vhost.sin_addr));
+		inetptonres = inet_pton(family, local_ip, &(vhost.sin_addr));
 		if (inetptonres == 0 || inetptonres == -1) {
 			print("invalid_local_ip", session_name(s));
 			session_set(s, "local_ip", NULL);
@@ -388,9 +389,12 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 			vhost.sin_addr.s_addr = htonl(INADDR_ANY);
 		}
 #else
+		/* GiM->darkjames: nie dostawiam tego warninga je¶li
+		 * je¶li jest IPv6 a nie ma inet_pton
+		 */
 		vhost.sin_addr = inet_addr(local_ip);
 #endif
-		vhost.sin_family = AF_INET;
+		vhost.sin_family = family;
 		vhost.sin_port = htons(0);
 		connret = bind(fd, (struct sockaddr *)&vhost, sizeof(vhost));
 		if (connret < 0)
