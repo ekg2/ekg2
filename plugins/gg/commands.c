@@ -156,11 +156,28 @@ COMMAND(gg_command_connect)
 		if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 			session_status_set(session, EKG_STATUS_AVAIL);
 
-		if (gg_dcc_socket) {
-			gg_dcc_ip = inet_addr("255.255.255.255");
-			gg_dcc_port = gg_dcc_socket->port;
-		}
+		
+		/* dcc */
+		if (gg_config_dcc) {
+			gg_dcc_socket_close();
+	
+                        if (!gg_config_dcc_ip || !xstrcasecmp(gg_config_dcc_ip, "auto")) {
+                                gg_dcc_ip = inet_addr("255.255.255.255");
+                        } else {
+                                if (inet_addr(gg_config_dcc_ip) != INADDR_NONE)
+                                        gg_dcc_ip = inet_addr(gg_config_dcc_ip);
+                                else {
+                                        print("dcc_invalid_ip");
+					gg_config_dcc_ip = NULL;
+                                        gg_dcc_ip = 0;
+                                }
+                        }
+
+			gg_dcc_port = gg_config_dcc_port;
 			
+			gg_dcc_socket_open(gg_config_dcc_port);
+		} 
+
 		p.uin = uin;
 		p.password = (char*) password;
 

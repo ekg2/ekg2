@@ -324,7 +324,6 @@ int gg_remove_notify_handle(void *data, va_list ap)
         return 0;
 }
 
-
 /*
  * gg_print_version()
  *
@@ -597,8 +596,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	if ((e->event.msg.msgclass & 0x0f) == GG_CLASS_CHAT || (e->event.msg.msgclass & GG_CLASS_QUEUED))
 		__class = EKG_MSGCLASS_CHAT;
 
-	/* XXX sprawdzaæ, czy dcc w³±czone */
-	if ((e->event.msg.msgclass & GG_CLASS_CTCP)) {
+	if (gg_config_dcc && (e->event.msg.msgclass & GG_CLASS_CTCP)) {
 		char *__host = NULL, uid[16];
 		int __port = -1, __valid = 1;
 		struct gg_dcc *d;
@@ -632,6 +630,9 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 
 		return;
 	}
+
+	if (e->event.msg.msgclass & GG_CLASS_CTCP)
+		return;
 
 	if (e->event.msg.sender == 0)
 		__class = EKG_MSGCLASS_SYSTEM;
@@ -1041,12 +1042,29 @@ static int gg_theme_init()
 	return 0;
 }
 
+void gg_setvar_default() 
+{
+	xfree(gg_config_dcc_dir);
+	xfree(gg_config_dcc_ip);
+	xfree(gg_config_dcc_limit);
+
+	gg_config_display_token = 1;
+	gg_config_dcc = 0;
+	gg_config_dcc_dir = NULL;
+	gg_config_dcc_ip = NULL;
+	gg_config_dcc_limit = xstrdup("30/30");
+	gg_config_dcc_port = 1550;
+}
+
 int gg_plugin_init()
 {
 	list_t l;
 
 	plugin_register(&gg_plugin);
 
+	gg_setvar_default();
+
+	query_connect(&gg_plugin, "set-vars-default", gg_setvar_default, NULL);
 	query_connect(&gg_plugin, "protocol-validate-uid", gg_validate_uid, NULL);
 	query_connect(&gg_plugin, "plugin-print-version", gg_print_version, NULL);
 	query_connect(&gg_plugin, "session-added", gg_session_handle, (void *)1);
@@ -1062,6 +1080,11 @@ int gg_plugin_init()
 	gg_register_commands();
 	
         variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
+	variable_add(&gg_plugin, "dcc", VAR_BOOL, 1, &gg_config_dcc, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, "dcc_dir", VAR_STR, 1, &gg_config_dcc_dir, NULL, NULL, NULL);
+	variable_add(&gg_plugin, "dcc_ip", VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, "dcc_limit", VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
+	variable_add(&gg_plugin, "dcc_port", VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);
@@ -1083,8 +1106,6 @@ int gg_plugin_init()
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;
-
-	gg_dcc_socket_open(); /* XXX */
 
 	for (l = sessions; l; l = l->next)
 		gg_private_init((session_t*) l->data);

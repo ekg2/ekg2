@@ -28,6 +28,61 @@
 
 struct gg_dcc *gg_dcc_socket = NULL;
 
+static int dcc_limit_time = 0;  /* time from the first connection */
+static int dcc_limit_count = 0; /* how many connections from the last time */
+
+/* 
+ * gg_changed_dcc()
+ *
+ * called when some dcc_* variables are changed
+ */
+void gg_changed_dcc(const char *var)
+{
+	if (!xstrcmp(var, "dcc")) {
+		if (!gg_config_dcc) {
+			gg_dcc_socket_close();
+			gg_dcc_ip = 0;
+			gg_dcc_port = 0;
+		}
+	
+		if (gg_config_dcc) {
+			if (gg_dcc_socket_open(gg_config_dcc_port) == -1)
+				print("dcc_create_error", strerror(errno));
+		}
+	}
+
+	if (!strcmp(var, "dcc_ip")) {
+		if (gg_config_dcc_ip) {
+			if (!xstrcasecmp(gg_config_dcc_ip, "auto")) {
+				gg_dcc_ip = inet_addr("255.255.255.255");
+			} else {
+				if (inet_addr(gg_config_dcc_ip) != INADDR_NONE) 
+					gg_dcc_ip = inet_addr(gg_config_dcc_ip);
+				else {
+					print("dcc_invalid_ip");
+					gg_config_dcc_ip = NULL;
+					gg_dcc_ip = 0;
+				}
+			}
+		} else
+			gg_dcc_ip = 0;
+	}
+
+	if (!strcmp(var, "dcc_port")) {
+		if (gg_config_dcc && gg_config_dcc_port) {
+			gg_dcc_socket_close();
+			gg_dcc_ip = 0;
+			gg_dcc_port = 0;
+
+                        if (gg_dcc_socket_open(gg_config_dcc_port) == -1)
+                                print("dcc_create_error", strerror(errno));
+	
+		}
+	}
+
+	print("dcc_must_reconnect");
+}
+
 COMMAND(gg_command_dcc)
 {
 	uin_t uin = atoi(session->uid + 3);
@@ -272,8 +327,8 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 
-		if (config_dcc_dir) 
-		    	path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
+		if (gg_config_dcc_dir) 
+		    	path = saprintf("%s/%s", gg_config_dcc_dir, dcc_filename_get(d));
 		else
 		    	path = xstrdup(dcc_filename_get(d));
 		
@@ -366,6 +421,36 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 			char *__host;
 
 			debug("[gg] GG_EVENT_DCC_CLIENT_NEW\n");
+
+                        if (gg_config_dcc_limit) {
+                                int c, t = 60;
+                                char *tmp;
+
+                                if ((tmp = xstrchr(gg_config_dcc_limit, '/')))
+                                        t = atoi(tmp + 1);
+
+                                c = atoi(gg_config_dcc_limit);
+
+                                if (time(NULL) - dcc_limit_time > t) {
+                                        dcc_limit_time = time(NULL);
+                                        dcc_limit_count = 0;
+                                }
+
+                                dcc_limit_count++;
+
+                                if (dcc_limit_count > c) {
+                                        print("dcc_limit");
+                                        gg_config_dcc = 0;
+                                        gg_changed_dcc("dcc");
+
+                                        dcc_limit_time = 0;
+                                        dcc_limit_count = 0;
+
+                                        gg_dcc_free(e->event.dcc_new);
+                                        e->event.dcc_new = NULL;
+                                        break;
+                                }
+                        }
 
 			__host = inet_ntoa(*((struct in_addr*) &d->remote_addr));
 			__port = d->remote_port;
@@ -493,8 +578,8 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 
 			print("dcc_get_offer", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));
 
-			if (config_dcc_dir)
-				path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(D));
+			if (gg_config_dcc_dir)
+				path = saprintf("%s/%s", gg_config_dcc_dir, dcc_filename_get(D));
 			else
 				path = xstrdup(dcc_filename_get(D));
 
@@ -650,12 +735,12 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 /*
  * gg_dcc_socket_open()
  */
-int gg_dcc_socket_open()
+int gg_dcc_socket_open(int port)
 {
 	if (gg_dcc_socket)
 		return 0;
 
-	if (!(gg_dcc_socket = gg_dcc_socket_create(1, 0)))
+	if (!(gg_dcc_socket = gg_dcc_socket_create(1, port)))
 		return -1;
 	
 	watch_add(&gg_plugin, gg_dcc_socket->fd, gg_dcc_socket->check, 1, gg_dcc_handler, gg_dcc_socket);

@@ -11,7 +11,13 @@ plugin_t gg_plugin;
 int gg_userlist_put_config;
 char *last_tokenid;
 
+/* variables */
 int gg_config_display_token;
+int gg_config_dcc;
+char *gg_config_dcc_dir;
+char *gg_config_dcc_ip;
+char *gg_config_dcc_limit;
+int gg_config_dcc_port;
 
 typedef enum {
 	GG_QUIET_CHANGE = 0x0001

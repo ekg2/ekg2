@@ -1362,7 +1362,7 @@ void theme_init()
         /* detailed info about user */
 	format_add("user_info_header", "%K.--%n %T%1%n/%2 %K--- -- -%n\n", 1);
         format_add("user_info_nickname", _("%K| %nNickname: %T%1%n\n"), 1);
-        format_add("user_info_name", _("K| %nName: %T%1 %2%n\n"), 1);
+        format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
         format_add("user_info_status", _("%K| %nStatus: %T%1%n\n"), 1);
         format_add("user_info_status_time_format", "%Y-%m-%d %H:%M", 1);
         format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);

@@ -100,9 +100,6 @@ char *config_theme = NULL;
 int config_default_status_window = 0;
 char *reg_password = NULL;
 char *reg_email = NULL;
-int config_dcc = 0;
-char *config_dcc_ip = NULL;
-char *config_dcc_dir = NULL;
 char *home_dir = NULL;
 char *config_quit_reason = NULL;
 char *config_away_reason = NULL;
@@ -141,7 +138,6 @@ char *config_profile = NULL;
 char *config_interface = NULL;
 int config_reason_limit = 1;
 char *config_reason_first = NULL;
-char *config_dcc_limit = NULL;
 int config_debug = 1;
 
 char *last_search_first_name = NULL;

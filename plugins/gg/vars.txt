@@ -2,6 +2,47 @@
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 
+dcc
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	w³±cza lub wy³±cza bezpo¶rednie po³±czenia miêdzy klientami. zmiana
+	tej opcji wymaga ponownego po³±czenia z serwerem, by przes³aæ nowy
+	adres IP lub jego brak.
+
+dcc_ip
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la adres IP, który jest wysy³any serwerowi. je¶li przypisze
+	siê tej zmiennej warto¶æ ,,auto'', adres bêdzie ustalany 
+	automatycznie. je¶li chcemy bezproblemowo ³±czyæ siê z klientami
+	z tej samej sieci LAN, dobrze jest podaæ adres IP sieci LAN zamiast
+	zewnêtrznego.
+
+dcc_dir
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	okre¶la katalog, do którego bêd± zapisywane pobierane pliki.
+
+dcc_limit
+	typ: tekst
+	domy¶lna warto¶æ: 30/30
+
+	okre¶la limit bezpo¶rednich po³±czeñ w danym przedziale czasu.
+	liczba przed uko¶nikiem okre¶la maksymaln± ilo¶æ po³±czeñ, a liczba
+	po uko¶niku ilo¶æ sekund. po przekroczeniu tego progu bezpo¶rednie
+	po³±czenia zostaj± wy³±czone, by zapobiec atakom polegaj±cym na
+	wyczerpaniu zasobów klienta. zwykle po ponownym w³±czeniu
+	bezpo¶rednich po³±czeñ nale¿y po³±czyæ siê ponownie z serwerem.
+
+dcc_port
+	typ: liczba
+	domy¶lna warto¶æ: 1550
+
+	port, na którym ekg bêdzie oczekiwaæ na po³±czenia bezpo¶rednie.
+
 display_token
 	typ: bool
 	domy¶lna warto¶æ: 1

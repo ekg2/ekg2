@@ -89,10 +89,6 @@ void variable_init()
 	variable_add(NULL, "beep_mail", VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
 	variable_add(NULL, "completion_notify", VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 	variable_add(NULL, "debug", VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
-//	variable_add(NULL, "dcc", VAR_BOOL, 1, &config_dcc, changed_dcc, NULL, NULL);
-//	variable_add(NULL, "dcc_ip", VAR_STR, 1, &config_dcc_ip, changed_dcc, NULL, dd_dcc);
-//	variable_add(NULL, "dcc_dir", VAR_STR, 1, &config_dcc_dir, NULL, NULL, dd_dcc);
-//	variable_add(NULL, "dcc_limit", VAR_STR, 1, &config_dcc_limit, NULL, NULL, dd_dcc);
 //	variable_add(NULL, "default_protocol", VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL);
 	variable_add(NULL, "default_status_window", VAR_BOOL, 1, &config_default_status_window, NULL, NULL, NULL);
 	variable_add(NULL, "display_ack", VAR_INT, 1, &config_display_ack, NULL, variable_map(4, 0, 0, "none", 1, 0, "all", 2, 0, "delivered", 3, 0, "queued"), NULL);

@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-12 12:49+0200\n"
-"PO-Revision-Date: 2004-10-12 15:26+0200\n"
+"POT-Creation-Date: 2004-10-16 12:02+0200\n"
+"PO-Revision-Date: 2004-10-16 11:06+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
 "MIME-Version: 1.0\n"
@@ -718,8 +718,10 @@ msgid "%! (%1) Invalid \"server\".%n\n"
 msgstr "%! (%1) B³êdna warto¶æ zmiennej sesyjnej \"server\".%n\n"
 
 #: ekg/themes.c:1285
-msgid "%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
-msgstr "%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
+msgid ""
+"%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
+msgstr ""
+"%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
 
 #: ekg/themes.c:1294
 msgid "%! Unknown variable: %T%1%n\n"
@@ -937,7 +939,8 @@ msgid "%K| %nNickname: %T%1%n\n"
 msgstr "%K| %nPseudonim: %T%1%n\n"
 
 #: ekg/themes.c:1365
-msgid "K| %nName: %T%1 %2%n\n"
+#, fuzzy
+msgid "%K| %nName: %T%1 %2%n\n"
 msgstr "%K| %nImiê i nazwisko: %T%1 %2%n\n"
 
 #: ekg/themes.c:1366
@@ -1318,7 +1321,8 @@ msgstr "%! Mo¿na prowadziæ tylko jedn± rozmowê g³osow± na raz\n"
 
 #: ekg/themes.c:1486
 msgid "%! Voice chat not compiled in. See %Tdocs/voip.txt%n\n"
-msgstr "%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
+msgstr ""
+"%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
 
 #: ekg/themes.c:1487
 msgid ""
@@ -1735,27 +1739,28 @@ msgstr "%> Plugin %T%1%n zosta³ za³adowany%n\n"
 msgid "%> Plugin %T%1%n unloaded%n\n"
 msgstr "%> Plugin %T%1%n zosta³ wy³adowany%n\n"
 
-#: plugins/gg/gg.c:1033
+#: plugins/gg/gg.c:1034
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr "%> Token zapisano do pliku %T%1%n\n"
 
-#: plugins/gg/gg.c:1034
+#: plugins/gg/gg.c:1035
 msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
-#: plugins/gg/gg.c:1036
+#: plugins/gg/gg.c:1037
 msgid "%! Error when token was getting: %1\n"
 msgstr "%! Wyst±pi³ b³±d podczas pobierania tokenu: %1\n"
 
-#: plugins/gg/gg.c:1037
+#: plugins/gg/gg.c:1038
 msgid "%! Token getting time ran out\n"
 msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
-#: plugins/gg/gg.c:1038
-msgid "%! Your operating system doesn't support tokens\n"
-msgstr "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
-
 #: plugins/gg/gg.c:1039
+msgid "%! Your operating system doesn't support tokens\n"
+msgstr ""
+"%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
+
+#: plugins/gg/gg.c:1040
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
@@ -1937,7 +1942,8 @@ msgid "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"
 
 #: plugins/jabber/jabber.c:971
-msgid "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
+msgid ""
+"%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2)%r%3%n\n"
 msgstr ""
 "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) "
 "%r%3%n\n"
@@ -2029,4 +2035,3 @@ msgstr "%> SMS do %T%1%n zosta³ wys³any\n"
 #: plugins/sms/sms.c:355
 msgid "%! SMS to %T%1%n not sent\n"
 msgstr "%! SMS do %T%1%n nie zosta³ wys³any\n"
-

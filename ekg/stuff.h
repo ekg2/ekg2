@@ -172,7 +172,6 @@ char *config_contacts_groups;
 char *config_contacts_options;
 int config_contacts_size;
 int config_ctrld_quits;
-char *config_dcc_dir;
 int config_debug;
 int config_default_status_window;
 int config_display_ack;
@@ -273,7 +272,6 @@ void changed_var_default(session_t *s, const char *var);
 
 void changed_auto_save(const char *var);
 void changed_display_blinking(const char *var);
-void changed_dcc(const char *var);
 void changed_mesg(const char *var);
 void changed_proxy(const char *var);
 void changed_theme(const char *var);
