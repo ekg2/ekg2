@@ -413,7 +413,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	{
 		int recipients_count = array_count((char **) rcpts);
 
-		if (recipients_count > 0) {
+		if (xstrcmp(class_str, "sent") && recipients_count > 0) {
 			c = conference_find_by_uids(s, sender, rcpts, recipients_count, 0);
 
 	                if (!c) {
