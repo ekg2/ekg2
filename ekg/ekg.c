@@ -745,7 +745,7 @@ int main(int argc, char **argv)
 	msg_queue_read();
 
 #ifdef HAVE_NCURSES
-	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses");
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses", 1);
 #endif
 
 	config_read_later(NULL);
@@ -789,10 +789,10 @@ int main(int argc, char **argv)
 
 	if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
-		plugin_load("jabber");
+		plugin_load("jabber", 1);
 #endif
 #ifdef HAVE_LIBGADU
-		plugin_load("gg");
+		plugin_load("gg", 1);
 #endif
 	}
 

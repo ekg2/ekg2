@@ -314,7 +314,8 @@ int ncurses_plugin_init()
 	plugin_register(&ncurses_plugin);
 	
 	ncurses_setvar_default();
-	
+
+	query_connect(&ncurses_plugin, "set-vars-default", ncurses_setvar_default, NULL);	
 	query_connect(&ncurses_plugin, "ui-beep", ncurses_beep, NULL);
 	query_connect(&ncurses_plugin, "ui-is-initialized", ncurses_ui_is_initialized, NULL);
 	query_connect(&ncurses_plugin, "ui-window-switch", ncurses_ui_window_switch, NULL);
@@ -332,6 +333,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "userlist-added", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-removed", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
+	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);
 
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	variable_add(&ncurses_plugin, "contacts", VAR_INT, 1, &config_contacts, ncurses_contacts_changed, NULL, NULL);

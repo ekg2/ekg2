@@ -36,6 +36,7 @@
 #include "commands.h"
 #include "dynstuff.h"
 #include "events.h"
+#include "metacontacts.h"
 #include "stuff.h"
 #include "vars.h"
 #include "xmalloc.h"
@@ -73,6 +74,10 @@ int config_read_later(const char *filename)
                 fclose(f);
                 return -1;
         }
+
+	if (!in_autoexec) {
+ 	       query_emit(NULL, "binding-default");
+	}
 
         while ((buf = read_file(f))) {
                 i++;
@@ -151,28 +156,13 @@ int config_read(const char *filename)
 	}
 
 	if (!in_autoexec) {
-#if 0
-		list_t l;
-
-		for (l = bindings; l; ) {
-			struct binding *b = l->data;
-
-			l = l->next;
-
-			if (!b->internal)
-				ui_event("command", 1, "bind", "--del", b->key, NULL, NULL);
-		}
-#endif
-
 		alias_free();
 		timer_remove_user(-1);
-//		event_free();
-		variable_free();
-		variable_init();
+		event_free();
 		variable_set_default();
-
+		query_emit(NULL, "set-vars-default");
 		debug("  flushed previous config\n");
-	}
+	} 
 
 	while ((buf = read_file(f))) {
 		i++;
@@ -216,17 +206,8 @@ int config_read(const char *filename)
 
 			array_free(pms);
 
-#if 0	
-	} else if (!xstrcasecmp(buf, "bind")) {
-			char **pms = array_make(foo, " \t", 2, 1, 0);
-
-			if (array_count(pms) == 2) {
-				debug("  bind %s %s\n", pms[0], pms[1]);
-				ui_event("command", 1, "bind", "--add", pms[0], pms[1], NULL);
-			}
-
-			array_free(pms);
-#endif
+		} else if (!xstrcasecmp(buf, "bind")) {
+			continue;
 		} else if (!xstrcasecmp(buf, "at")) {
 			char **p = array_make(foo, " \t", 2, 1, 0);
 
@@ -273,7 +254,7 @@ int config_read(const char *filename)
 			}
 				array_free(p);
 		} else if (!xstrcasecmp(buf, "plugin")) {
-			plugin_load(foo);
+			plugin_load(foo, 1);
                 } else {
 			ret = variable_set(buf, foo, 1);
 

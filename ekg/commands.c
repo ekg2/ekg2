@@ -1812,6 +1812,13 @@ COMMAND(cmd_reload)
 	if ((res = config_read(filename)))
 		printq("error_reading_config", strerror(errno));
 
+	if (res == -1)
+		goto end;
+
+	if ((res = config_read_later(filename)))
+                printq("error_reading_config", strerror(errno));
+
+end:
 	if (res != -1) {
 		printq("config_read_success", (res != -2 && filename) ? filename : prepare_path("config", 0));
 		config_changed = 0;
@@ -3395,7 +3402,7 @@ COMMAND(cmd_plugin)
 	}
 
 	if (params[0][0] == '+')
-		return plugin_load(params[0] + 1);
+		return plugin_load(params[0] + 1, 0);
 
 	if (params[0][0] == '-')
 		return plugin_unload(plugin_find(params[0] + 1));

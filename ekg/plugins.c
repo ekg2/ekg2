@@ -49,7 +49,7 @@ list_t queries = NULL;
  * 
  * 0/-1
  */
-int plugin_load(const char *name)
+int plugin_load(const char *name, int quiet)
 {
 	char *lib = NULL;
 	char *env_ekg_plugins_path = NULL;
@@ -60,7 +60,7 @@ int plugin_load(const char *name)
 
 	if (!name) return -1;
 	if (plugin_find(name)) {
-		print("generic_error", "Nie zaladujesz plagina dwa razy!");
+		printq("plugin_already_loaded", name); 
 		return -1;
 	}
 
@@ -81,7 +81,7 @@ int plugin_load(const char *name)
 	}
 
 	if (!plugin) {
-		print("generic_error", "Nie ma plagina!");
+		printq("plugin_doesnt_exist", name);
 		xfree(lib);	
 		return -1;
 	}
@@ -91,7 +91,7 @@ int plugin_load(const char *name)
 	init = saprintf("%s_plugin_init", name);
 
 	if (!(plugin_init = lt_dlsym(plugin, init))) {
-		print("generic_error", "To nie plagin ekg!");
+		printq("plugin_incorrect", name);
 		lt_dlclose(plugin);
 		xfree(init);
 		return -1;
@@ -100,7 +100,7 @@ int plugin_load(const char *name)
 	xfree(init);
 	
 	if (plugin_init() == -1) {
-		print("generic_error", "Plagin siê nie zainicjowa³");
+		printq("plugin_not_initialized", name);
 		lt_dlclose(plugin);
 		return -1;
 	}

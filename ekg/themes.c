@@ -1540,5 +1540,9 @@ void theme_init()
         format_add("metacontact_info_blocked_descr", "%mblokuj±c%@1%n %K(%n%2%K)%n", 1);
         format_add("metacontact_info_unknown", "%Mnieznany%n", 1);
 
+	format_add("plugin_already_loaded", "%! Plugin %T%1%n jest ju¿ za³adowany%n.\n", 1);
+	format_add("plugin_doesnt_exist","%! Plugin %T%1%n nie mo¿e zostaæ znaleziony%n\n", 1);
+	format_add("plugin_incorrect", "%! Plugin %T%1%n nie jest prawid³owym pluginem EKG2%n\n", 1);
+	format_add("plugin_not_initialized", "%! Plugin %T%1%n nie zosta³ wczytany poprawnie%n\n", 1);
 }
 

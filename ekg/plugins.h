@@ -58,7 +58,7 @@ typedef struct {
 	plugins_params_t **params;
 } plugin_t;
 
-int plugin_load(const char *name);
+int plugin_load(const char *name, int quiet);
 int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *);
 int plugin_unregister(plugin_t *);
