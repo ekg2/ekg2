@@ -178,7 +178,7 @@ static void gg_ping_timer_handler(int type, void *data)
 		gg_ping(g->sess);
 
 		snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
-		timer_add(&gg_plugin, buf, 300, 0, gg_ping_timer_handler, xstrdup(s->uid));
+		timer_add(&gg_plugin, buf, 180, 0, gg_ping_timer_handler, xstrdup(s->uid));
 	}
 }
 
