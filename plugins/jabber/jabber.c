@@ -248,7 +248,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				print("generic", "Po³±czono siê z Jabberem");
 				session_connected_set(s, 1);
 				session_unidle(s);
-				jabber_write(j, "<iq type=\"get\" id=\"ros_get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
+				jabber_write(j, "<iq type=\"get\" id=\"roster\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 				jabber_write_status(s);
 			}
 
@@ -283,8 +283,25 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 	
 		}
 		
-		if (id && !strncmp(id, "ros_get", 7)) {
-			/* XXX dostali¶my roster */
+		if (id && !strncmp(id, "roster", 7)) {
+			userlist_t u;
+			xmlnode_t *q = xmlnode_find_child(n, "query");
+			xmlnode_t *item = xmlnode_find_child(q, "item");
+			for (; item->next; item = item->next) {
+				memset(&u, 0, sizeof(u));
+				u.uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
+				u.nickname = xstrdup(jabber_attr(item->atts, "name"));
+				
+				if (!u.nickname) 
+					u.nickname = strdup(u.uid); 				
+
+				u.status = xstrdup(EKG_STATUS_NA);
+				//XXX grupy
+				
+				//userlist_replace(s, &u);
+			 	list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
+			};
+			
 		}
 	} /* if iq */
 
@@ -307,6 +324,14 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 			return;
 		}
+
+ 		if (type && !strcmp(type, "unsubscribed") && from) {
+			userlist_t u;
+			u.uid = xstrdup(from);
+			userlist_remove(s, &u);
+                        return;
+                }
+
 
 		if (!type) {
 			xmlnode_t *nshow = xmlnode_find_child(n, "show");
@@ -953,7 +978,7 @@ fail:
 	return -1;
 
 success:
-	jabber_write(j, "<presence to=\"%s\" type=\"%s\"/>", uid, action);
+	jabber_write(j, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid, action);
 	printq("generic", descr);
 	xfree(descr);
 	return 0;
