@@ -1,8 +1,5 @@
 - hook status_own ?
-- hook connect
-- hook disconnect
 - dokoñczyæ modu³ ekg
-- komentarze debugowe
 - podmiana statusów/msgów
 - sprawdziæ czemu po unload/load nie uaktualnia skryptów
 - timer
