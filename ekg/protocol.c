@@ -64,15 +64,19 @@ void protocol_init()
 static void protocol_reconnect_handler(int type, void *data)
 {
 	char *session = (char*) data;
+	session_t *s = session_find(session);
 
 	if (type == 1) {
 		xfree(session);
 		return;
 	}
 
+        if (!s || session_connected_get(s) == 1)
+                return;
+
 	debug("reconnecting session %s\n", session);
 
-	command_exec(NULL, session_find(session), "/connect", 0);
+	command_exec(NULL, s, "/connect", 0);
 }
 
 /*
