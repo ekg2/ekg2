@@ -28,6 +28,7 @@ list_t sessions;
 typedef struct {
 	char *key;			/* nazwa parametru */
 	char *value;			/* warto¶æ parametru */
+	int type;               	/* type - VAR_STR, VAR_INT - declared in vars.h */
 	int secret;			/* czy warto¶æ ma byæ ukryta? */
 } session_param_t;
 
@@ -90,8 +91,8 @@ const char *session_get(session_t *s, const char *key);
 #define session_get_n(a,b) session_get(session_find(a),b)
 int session_int_get(session_t *s, const char *key);
 #define session_int_get_n(a,b) session_int_get(session_find(a),b)
-int session_set(session_t *s, const char *key, const char *value);
-#define session_set_n(a,b,c) session_set(session_find(a),b,c)
+int session_set(session_t *s, const char *key, const char *value, int type);
+#define session_set_n(a,b,c,d) session_set(session_find(a),b,c,d)
 int session_int_set(session_t *s, const char *key, int value);
 #define session_int_set_n(a,b,c) session_int_set(session_find(a),b,c)
 

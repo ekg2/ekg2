@@ -4,10 +4,6 @@ z nich dostaæ bêd± albo ignorowane, albo odpowied¼ mo¿e byæ wulgarna.
 Zwykle im dana sprawa jest wy¿ej na li¶cie, tym wa¿niejsze jest jej
 rozwi±zanie.
 
-* biblioteka:
-  - komunikacja miêdzy klientami, bezpo¶rednie rozmowy,
-  - czas powrotu w stanach opisowych,
-
 * klient:
   - jakie¶ bardziej zaawansowane zmienne sesyjne, w sensie jakie¶ typy np VAR_STR itp
     powinny te¿ byæ ustawiane domy¶lne warto¶ci (w zale¿no¶ci od typu zmiennej) przy 
@@ -34,6 +30,7 @@ rozwi±zanie.
   - ,,wje¿d¿anie'' i automatyczne chowanie listy kontaktów, co¶ na wzór pasku
     zadañ w windowsach (w)
   - mo¿liwo¶æ blokowania terminala po d³u¿szym czasie nieaktywno¶ci (Gambler)
+  - obs³uga DCC, SSL itp. (z ekg1) (del)
   - okienka oparte o kolejne wywo³ania xterma (fidor)
   - obs³uga myszy (mateusza)
   - dokumentacja do themes - opis ka¿dego formatu (del)
