@@ -264,7 +264,7 @@ char *va_format_string(const char *format, va_list ap)
 	while (*p) {
 		int escaped = 0;
 
-		if (*p == '\\' && p[1] == '%') {
+		if (*p == '\\' && (p[1] == '%' || p[1] == '\\')) {
 			escaped = 1;
 			p++;
 		}
