@@ -62,7 +62,7 @@ void logs_setvar_default()
 {
 	xfree(config_logs_path);
 	xfree(config_logs_timestamp);
-	config_logs_path = "~/.ekg2/logs/%S/%u";
+	config_logs_path = xstrdup("~/.ekg2/logs/%S/%u");
 	config_logs_timestamp = NULL;
 }
 
