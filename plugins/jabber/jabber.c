@@ -885,13 +885,13 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
         if (!port)
                 port = 5222;
 
-        if ((res = read(fd, &a, sizeof(a))) != sizeof(a)) {
+        if ((res = read(fd, &a, sizeof(a))) != sizeof(a) || (res && !xstrcmp(inet_ntoa(a), "255.255.255.255"))) {
                 if (res == -1)
                         debug("[jabber] unable to read data from resolver: %s\n", strerror(errno));
                 else
                         debug("[jabber] read %d bytes from resolver. not good\n", res);
                 close(fd);
-                print("conn_failed_resolving");
+                print("conn_failed", format_find("conn_failed_resolving"), session_name(jdh->session));
                 /* no point in reconnecting by jabber_handle_disconnect() */
                 j->connecting = 0;
                 return;
