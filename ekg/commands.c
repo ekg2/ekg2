@@ -3837,8 +3837,6 @@ void command_init()
 	command_add(NULL, "quit", params("r"), cmd_quit, 0,
 	  " [powód/-]", "wychodzi z programu",
 	  "\n"
-          "Je¶li w³±czona jest odpowiednia opcja %Trandom_reason%n i nie "
-	  "podano powodu, zostanie wylosowany z pliku %Tquit.reasons%n. "
 	  "Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie bez "
 	  "wzglêdu na ustawienia zmiennych.", NULL);
 	  
