@@ -27,7 +27,6 @@ rozwi±zanie.
   - mo¿liwo¶æ automagicznego wyrównywania kolejnych linii wiadomo¶ci w tematach
     ircopodobnych do d³ugo¶ci nazwy rozmówcy i timestampu (sz)
   - zmienna beep_*_away (rmrmg)
-  - zapis do historii zgodny z http://kadu.net/history_format.html (Chilek)
   - logowanie nie dzia³a (?)
   - lista kontaktów w pierwszym oknie, rozmowy w kolejnych (jojo)
   - osobna historia dla ka¿dego okna (koniu)
