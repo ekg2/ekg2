@@ -211,6 +211,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 	if (!strcmp(n->name, "message")) {
 		xmlnode_t *nbody = xmlnode_find_child(n, "body");
 		xmlnode_t *nsubject = xmlnode_find_child(n, "subject");
+		xmlnode_t *xitem = xmlnode_find_child(n, "x");
 		string_t body = string_init("");
 		char *session, *sender, **rcpts = NULL, *text, *seq = NULL;
 		time_t sent = time(NULL);
@@ -225,6 +226,21 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 		if (nbody)
 			string_append(body, nbody->data);
+	
+		if (xitem) {
+			const char *ns, *stamp;
+			ns = jabber_attr(xitem->atts, "xmlns");
+			stamp  = jabber_attr(xitem->atts, "stamp");
+			
+			if (ns && !strncmp(ns, "jabber:x:delay", 14) && stamp) {
+				struct tm tm;
+				memset(&tm, 0, sizeof(tm));
+				sscanf(stamp, "%4d%2d%2dT%2d:%2d:%2d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
+				tm.tm_year -= 1900;
+				tm.tm_mon -= 1;
+				sent = mktime(&tm);
+			};
+		}
 
 		session = xstrdup(session_uid_get(s));
 		sender = saprintf("jid:%s", from);
@@ -1136,7 +1152,7 @@ int jabber_plugin_init()
 	command_add(&jabber_plugin, "jid:dnd", "?", jabber_command_away, 0, "", "zmienia stan na dostêpny", "");
 	command_add(&jabber_plugin, "jid:xa", "?", jabber_command_away, 0, "", "zmienia stan na dostêpny", "");
 	command_add(&jabber_plugin, "jid:passwd", "?", jabber_command_passwd, 0, "", "zmienia has³o", "");
-	command_add(&jabber_plugin, "jid:auth", "??", jabber_command_auth, 0, "", "obs³uga autoryzacji", 
+	command_add(&jabber_plugin, "jid:auth", "?u", jabber_command_auth, 0, "", "obs³uga autoryzacji", 
 	  "<akcja> <JID> \n"
 	  "  -a, --accept <JID>    autoryzuje JID\n"
 	  "  -d, --deny <JID>      odmawia udzielenia autoryzacji\n"
