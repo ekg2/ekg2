@@ -105,6 +105,19 @@ char *xstrdup(const char *s)
 	return tmp;
 }
 
+char *xstrndup(const char *s, size_t n)
+{
+        char *tmp;
+
+        if (!s)
+                return NULL;
+
+        if (!(tmp = strndup(s, n)))
+                ekg_oom_handler();
+
+        return tmp;
+}
+
 void *xmemdup(void *ptr, size_t size)
 {
 	void *tmp = xmalloc(size);

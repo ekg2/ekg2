@@ -138,6 +138,7 @@ list_t group_init(const char *groups);
 
 int valid_nick(const char *nick);
 int valid_uid(const char *uid);
+int valid_plugin_uid(plugin_t *plugin, const char *uid);
 int same_protocol(char **uids);
 const char *format_user(session_t *session, const char *uid);
 char *get_uid(session_t *session, const char *text);

@@ -479,12 +479,40 @@ int valid_uid(const char *uid)
 {
 	int valid = 0;
 	char *tmp;
-
 	tmp = xstrdup(uid);
+
 	query_emit(NULL, "protocol-validate-uid", &tmp, &valid);
 	xfree(tmp);
 
 	return (valid > 0);
+}
+
+/*
+ * valid_plugin_uid()
+ *
+ * sprawdza, czy uid jest obs³ugiwany przez podany plugin i czy jest
+ * poprawny.
+ *
+ * zwraca 1 je¶li nick jest w porz±dku, w przeciwnym razie 0.
+ * natoamiast zwraca -1 gdy pogadany plugin jest pusty 
+ */
+
+int valid_plugin_uid(plugin_t *plugin, const char *uid)
+{
+        int valid = 0;
+        char *tmp;
+        plugin_t *plugin;
+
+	if (!plugin)
+		return -1;
+
+        tmp = xstrdup(uid);
+
+        query_emit(plugin, "protocol-validate-uid", &tmp, &valid);
+        xfree(tmp);
+
+        return (valid > 0);
+
 }
 
 /*
