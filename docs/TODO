@@ -9,6 +9,7 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
+  - nie pokazywaæ "Aktualny stan od" gdy ten czas == czas po³±czenia (del)
   - zmienienie command_add tak, aby do dope³nienia ewentualne parametry te¿ da³o
     siê podaæ jako parametr (del)
   - nie dziala powtarzanie (strzalka w gore) wiadomosci wielolinijkowych (zdz)
