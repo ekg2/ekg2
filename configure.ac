@@ -53,12 +53,17 @@ PLUGINS="mail ioctld rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
-PKG_CHECK_MODULES(LIBGADU, libgadu,
-[
-	AC_CONFIG_FILES([plugins/gg/Makefile])
-	PLUGINS="$PLUGINS gg"
-	AC_DEFINE(HAVE_LIBGADU, [], [Define if libgadu is found])
-])
+AC_ARG_WITH(libgadu,
+  [  --without-libgadu        Disable GG plugin])
+
+if test "x$with_libgadu" != "xno"; then
+	PKG_CHECK_MODULES(LIBGADU, libgadu,
+	[
+		AC_CONFIG_FILES([plugins/gg/Makefile])
+		PLUGINS="$PLUGINS gg"
+		AC_DEFINE(HAVE_LIBGADU, [], [Define if libgadu is found])
+	])
+fi
 	
 PKG_CHECK_MODULES(OPENSSL, openssl,
 [
