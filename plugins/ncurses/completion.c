@@ -21,7 +21,6 @@
 /* nadpisujemy funkcjê strncasecmp() odpowiednikiem z obs³ug± polskich znaków */
 #define strncasecmp(x...) strncasecmp_pl(x)
 
-
 static char **completions = NULL;	/* lista dope³nieñ */
 
 /* 
@@ -408,6 +407,60 @@ static void window_generator(const char *text, int len)
 			array_add(&completions, xstrdup(words[i]));
 }
 
+static void sessions_generator(const char *text, int len)
+{
+        list_t l;
+
+        for (l = sessions; l; l = l->next) {
+                session_t *v = l->data;
+                if (*text == '-') {
+                        if (!strncasecmp(text + 1, v->uid, len - 1))
+                                array_add_check(&completions, saprintf("-%s", v->uid), 1);
+                } else {
+                        if (!strncasecmp(text, v->uid, len))
+                                array_add_check(&completions, xstrdup(v->uid), 1);
+                }
+        }
+}
+
+static void sessions_var_generator(const char *text, int len)
+{
+        list_t l;
+	int i;
+        const char *words[] = { "uid", "password", "auto_connect", "alias", "server", NULL };
+
+        for (i = 0; words[i]; i++) {
+		if(*text == '-') {
+	        	if (!strncasecmp(text + 1, words[i], len - 1))
+        	        	array_add_check(&completions, saprintf("-%s", words[i]), 1);
+		} else {
+			if (!strncasecmp(text, words[i], len))
+                                array_add_check(&completions, xstrdup(words[i]), 1);
+		}
+	}
+ 
+	for (l = sessions; l; l = l->next) {
+                session_t *v = l->data;
+		list_t lt;
+
+		for(i = 0; v->params && v->params[i]; i++) {
+                	if (*text == '-') {
+                        	if (!strncasecmp(text + 1, v->params[i]->key, len - 1)) 
+                                	array_add_check(&completions, saprintf("-%s", v->params[i]->key), 1);
+	                } else {
+        	                if (!strncasecmp(text, v->params[i]->key, len))
+                	                array_add_check(&completions, xstrdup(v->params[i]->key), 1);
+ 	               }
+		}
+        }
+}
+
+static void sessions_all_generator(const char *text, int len)
+{
+	sessions_var_generator(text, len);
+	sessions_generator(text, len);
+}
+
 static struct {
 	char ch;
 	void (*generate)(const char *text, int len);
@@ -415,7 +468,7 @@ static struct {
 	{ 'u', known_uin_generator },
 	{ 'U', unknown_uin_generator },
 	{ 'c', command_generator },
-	{ 's', empty_generator },
+	{ 'x', empty_generator },
 	{ 'i', ignored_uin_generator },
 	{ 'b', blocked_uin_generator },
 	{ 'v', variable_generator },
@@ -424,6 +477,9 @@ static struct {
 	{ 'w', window_generator },
 	{ 'f', file_generator },
 	{ 'e', events_generator },
+        { 's', sessions_generator },
+	{ 'S', sessions_var_generator },
+        { 'A', sessions_all_generator },
 	{ 'I', ignorelevels_generator },
 	{ 0, NULL }
 };
@@ -649,14 +705,13 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			for (len = 0; cmd[len] && cmd[len] != ' '; len++);
 
 			if (!strncasecmp(name, cmd, len)) {
-				debug("paramsy: %s\n", c->params);
 				params = c->params;
 				abbrs++;
 			} else
 				if (params && abbrs == 1)
 					break;
 		}
-
+		
 		if (params && abbrs == 1) {
 			for (i = 0; generators[i].ch; i++) {
 				if (generators[i].ch == params[word_current - 2]) {
@@ -689,12 +744,11 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 					break;
 				}
 			}
-
 		}
 	}
 
 	count = array_count(completions);
-
+	
 	/* 
 	 * je¶li jest tylko jedna mo¿lwio¶æ na dope³nienie to drukujemy co mamy,
 	 * ewentualnie bierzemy czê¶æ wyrazów w cudzys³owia ...
@@ -737,12 +791,16 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		int tmp = 0;
 		int quotes = 0;
 
+	    	/* for(i = 0; completions[i]; i++)
+                	debug("completions[i] = %s\n", completions[i]); */
 		/*
 		 * mo¿e nie za ³adne programowanie, ale skuteczne i w sumie jedyne w 100% spe³niaj±ce	
 	 	 * wymagania dope³niania (uwzglêdnianie cudzyws³owiów itp...)
 		 */
 		for(i=1, j = 0; ; i++, common++) {
-			for(j=1; j < count; j++) {
+			for(j=0; j < count; j++) {
+//				if (!completions[j][i])
+//					break;
 				if(completions[j][0] == '"') 
 					quotes = 1;
 				if(completions[j][0] == '"' && completions[0][0] != '"')
@@ -751,15 +809,15 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 					tmp = strncasecmp(completions[0] + 1, completions[j], i);
 				else
 					tmp = strncasecmp(completions[0], completions[j], i);
-				/* gg_debug(GG_DEBUG_MISC,"strncasecmp(\"%s\", \"%s\", %d) = %d\n", completions[0], completions[j], i, strncasecmp(completions[0], completions[j], i));  */
-				if( tmp < 0 || ( tmp > 0 && tmp < i))
+				 /* debug("strncasecmp(\"%s\", \"%s\", %d) = %d\n", completions[0], completions[j], i, strncasecmp(completions[0], completions[j], i));  */
+				if (tmp)
 					break;
-			}
-			if( tmp < 0 || ( tmp > 0 && tmp < i))
+                        }
+			if (tmp)
 				break;
 		}
 		
-		/* gg_debug(GG_DEBUG_MISC,"common :%d\n", common); */
+		/* debug("common :%d\n", common); */
 
 		if (strlen(line) + common < LINE_MAXLEN) {
 		

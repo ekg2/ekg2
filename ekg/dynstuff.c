@@ -541,6 +541,23 @@ void array_add(char ***array, char *string)
 }
 
 /*
+ * array_add_check()
+ * 
+ * dodaje element do tablicy, uprzednio sprawdzaj±c
+ * czy taki ju¿ w niej nie istnieje
+ *
+ *  - array - tablica,
+ *  - string - szukany ci±g znaków,
+ *  - casesensitive - czy mamy zwracaæ uwagê na wielko¶æ znaków?
+ */ 
+void array_add_check(char ***array, char *string, int casesensitive)
+{
+	if(!array_item_contains(*array, string, casesensitive))
+		array_add(array, string);
+}
+
+
+/*
  * array_join()
  *
  * ³±czy elementy tablicy w jeden string oddzielaj±c elementy odpowiednim

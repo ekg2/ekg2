@@ -3459,6 +3459,9 @@ int command_remove(plugin_t *plugin, const char *name)
  * 'f' - plik,
  * 'e' - nazwy zdarzeñ,
  * 'I' - poziomy ignorowania.
+ * 's' - nazwa sesji
+ * 'S' - zmienna sesji 
+ * 'A' - nazwa lub zmienna sesji
  */
 
 /*
@@ -3815,7 +3818,7 @@ void command_init()
 	command_add(NULL, "_debug", "?", cmd_test_debug, 0, "", "wy¶wietla tekst w oknie debug", "");
 	command_add(NULL, "_debug_dump", "", cmd_test_debug_dump, 0, "", "zrzuca debug do pliku", "");
 
-	command_add(NULL, "session", "????", session_command, 0,
+	command_add(NULL, "session", "AA??", session_command, 0,
 	  " [opcje]", "zarz±dzanie sesjami",
 	  "\n"
 	  " <uid>	  	informacje o sesji\n"

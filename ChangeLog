@@ -16,6 +16,7 @@ zg³osi³ b³±d.
   "le¿±cych" na serwerze nowe okna nie s± tworzone (del)
 - dodana zmienna display_blinking okre¶laj±ca czy osoby aktualnie pisz±ce
   maj± zostaæ pod¶wietlone (del)
+- tabcompletion dla /session (del)
 
 
 // 2004-03-27
