@@ -12,7 +12,7 @@ vCVS 2004-08-28
 	* wy¶wietlanie kontaktów ze wszystkich sesji w oknie kontaktów
 	* metakontakty
 	* zdarzenia mog± byæ konfigurowane przez zaprzeczenia, porównania itp. 
-	* ró¿ne kolorory act w statusbarze 
+	* ró¿ne kolory act w statusbarze 
 	* zmienne sesyjne przyjmuj± domy¶lne warto¶ci
 	* wy¶wietlane nazwy sesji przy zmianie statusów i w innych komendach
  	* dodana zmienna sesyjna auto_find 
