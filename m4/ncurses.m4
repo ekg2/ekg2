@@ -34,7 +34,7 @@ AC_DEFUN([AC_CHECK_NCURSES],
 			AC_CHECK_LIB([ncurses], [initscr],
 			[
 				AC_DEFINE([HAVE_NCURSES], 1, [define if you have ncurses])
-				NCURSES_LIBS="$NCURSES_LIBS -lncurses"
+				NCURSES_LIBS="$NCURSES_LIBS -lncurses $ASPELL_LIBS"
 				have_ncurses="yes"
 			])
 		fi

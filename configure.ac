@@ -106,6 +106,37 @@ if test "x$with_pthread" != "xno"; then
         ])
 fi
 
+dnl
+dnl  sprawdzanie pisowni w ncurses
+dnl
+
+AC_ARG_WITH(aspell,
+  [  --with-aspell          Enable aspell support])
+
+if test "x$with_aspell" != "xno"; then
+       AC_CHECK_HEADERS(aspell.h,
+        [
+                have_aspell_includes=yes
+        ])
+        if test "x$have_aspell_includes" = "xyes"; then
+            AC_CHECK_LIB(aspell, new_aspell_config,
+            [
+                have_aspell_libs=yes
+            ])
+            if test "x$have_aspell_libs" = "xyes"; then
+            	AC_DEFINE(WITH_ASPELL, 1, [define if you want aspell support])
+                ASPELL_LIBS="$ASPELL_LIBS -laspell"
+		AC_SUBST(ASPELL_LIBS)
+		have_aspell=yes
+            else
+                have_aspell=no
+            fi
+        else
+            have_aspell=no
+        fi
+fi
+
+
 AC_CHECK_LIBGADU
 
 if test "x$have_libgadu" = "xyes"; then
@@ -194,5 +225,11 @@ if test "x$have_libgsm" = "xyes"; then
 	echo " - libgsm: enabled"
 else
 	echo " - libgsm: disabled"
+fi
+
+if test "x$have_aspell" = "xyes"; then
+        echo " - aspell: enabled"
+else
+        echo " - aspell: disabled"
 fi
 

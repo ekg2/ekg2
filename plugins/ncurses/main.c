@@ -230,6 +230,19 @@ static int ncurses_userlist_changed(void *data, va_list ap)
 }
 
 
+/*
+ * changed_aspell()
+ *
+ * wywo³ywane po zmianie warto¶ci zmiennej ,,aspell'' lub ,,aspell_lang'' lub ,,aspell_encoding''.
+ */
+void ncurses_changed_aspell(const char *var)
+{
+#ifdef WITH_ASPELL
+        /* probujemy zainicjowac jeszcze raz aspell'a */
+        ncurses_spellcheck_init();
+#endif
+}
+
 static int ncurses_binding_query(void *data, va_list ap)
 {
         char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
@@ -272,6 +285,14 @@ void ncurses_setvar_default()
 	config_statusbar_size = 1;
 	config_header_size = 0;
 	config_enter_scrolls = 0;
+
+#ifdef WITH_ASPELL
+        xfree(config_aspell_lang);
+        xfree(config_aspell_encoding);
+
+        config_aspell_lang = xstrdup("pl");
+        config_aspell_encoding = xstrdup("iso8859-2");
+#endif
 }
 
 /*
@@ -335,6 +356,11 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);
 
+#ifdef WITH_ASPELL
+	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
+        variable_add(&ncurses_plugin, "aspell_lang", VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
+        variable_add(&ncurses_plugin, "aspell_encoding", VAR_STR, 1, &config_aspell_encoding, ncurses_changed_aspell, NULL, NULL);
+#endif
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	variable_add(&ncurses_plugin, "contacts", VAR_INT, 1, &config_contacts, ncurses_contacts_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, "contacts_groups", VAR_STR, 1, &config_contacts_groups, ncurses_contacts_changed, NULL, dd_contacts);

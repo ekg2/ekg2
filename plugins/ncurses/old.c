@@ -32,6 +32,10 @@
 #include <termios.h>
 #include <unistd.h>
 
+#ifdef WITH_ASPELL
+#       include <aspell.h>
+#endif
+
 #include <ekg/commands.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
@@ -67,6 +71,40 @@ static struct termios old_tio;
 
 int winch_pipe[2];
 int have_winch_pipe = 0;
+
+#ifdef WITH_ASPELL
+#  define ASPELLCHAR 5
+AspellConfig * spell_config;
+AspellSpeller * spell_checker = 0;
+static char *aspell_line;
+#endif
+
+/*
+ * ncurses_spellcheck_init()
+ * 
+ * it inializes dictionary
+ */
+#ifdef WITH_ASPELL
+void ncurses_spellcheck_init(void)
+{
+        AspellCanHaveError * possible_err;
+        if(config_aspell != 1)
+            return;
+
+        spell_config = new_aspell_config();
+        aspell_config_replace(spell_config, "encoding", config_aspell_encoding);
+        aspell_config_replace(spell_config, "lang", config_aspell_lang);
+        possible_err = new_aspell_speller(spell_config);
+
+        if (aspell_error_number(possible_err) != 0)
+        {
+            debug("Aspell error: %s\n", aspell_error_message(possible_err));
+            config_aspell = 0;
+        }
+        else
+            spell_checker = to_aspell_speller(possible_err);
+}
+#endif
 
 /*
  * color_pair()
@@ -1409,6 +1447,11 @@ void ncurses_init()
 	memset(ncurses_history, 0, sizeof(ncurses_history));
 
 	ncurses_binding_init();
+	
+#ifdef WITH_ASPELL
+	if (config_aspell)
+		ncurses_spellcheck_init();
+#endif
 
 	ncurses_line = xmalloc(LINE_MAXLEN);
 	xstrcpy(ncurses_line, "");
@@ -1473,6 +1516,11 @@ void ncurses_deinit()
 		xfree(ncurses_lines);
 		ncurses_lines = NULL;
 	}
+
+#ifdef WITH_ASPELL
+        delete_aspell_speller(spell_checker);
+        xfree(aspell_line);
+#endif
 
 	xfree(ncurses_line);
 	xfree(ncurses_yanked);
@@ -1583,6 +1631,29 @@ void print_char(WINDOW *w, int y, int x, unsigned char ch)
 	wattrset(w, A_NORMAL);
 }
 
+/*
+ * print_char_underlined()
+ *
+ * wy¶wietla w danym okienku podkreslony znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
+ */
+void print_char_underlined(WINDOW *w, int y, int x, unsigned char ch)
+{
+        wattrset(w, A_UNDERLINE);
+
+        if (ch < 32) {
+                wattrset(w, A_REVERSE | A_UNDERLINE);
+                ch += 64;
+        }
+
+        if (ch >= 128 && ch < 160) {
+                ch = '?';
+                wattrset(w, A_REVERSE | A_UNDERLINE);
+        }
+
+        mvwaddch(w, y, x, ch);
+        wattrset(w, A_NORMAL);
+}
+
 /* 
  * ekg_getch()
  *
@@ -1638,6 +1709,102 @@ void ncurses_watch_winch(int last, int fd, int watch, void *data)
 	changed_backlog_size("backlog_size");
 }
 
+/* 
+ * spellcheck()
+ *
+ * it checks if the given word is correct
+ */
+#ifdef WITH_ASPELL
+static void spellcheck(char *what, char *where)
+{
+        char *word;             /* aktualny wyraz */
+        register int i = 0;     /* licznik */
+	register int j = 0;     /* licznik */
+	int size;	/* zmienna tymczasowa */
+	
+        /* Sprawdzamy czy nie mamy doczynienia z 47 (wtedy nie sprawdzamy reszty ) */
+        if(what[0] == 47 || what == NULL)
+            return;       /* konczymy funkcje */
+	    
+	for(i = 0; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++)
+	{
+	    if((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) // separator/koniec lini/koniec stringu
+	    {
+		size = strlen(what) + 1;
+        	word = xmalloc(size);
+        	memset(word, 0, size); /* czyscimy pamiec */
+		
+		for(; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++)
+		{
+		    if(isalpha_pl(what[i])) /* szukamy jakiejs pierwszej literki */
+			break; 
+		}
+		
+		/* trochê poprawiona wydajno¶æ */
+		if(what[i] == '\0' || what[i] == '\n' || what[i] == '\r')
+		{
+			i--;
+			goto aspell_loop_end; /* 
+					       * nie powinno siê u¿ywaæ goto, aczkolwiek s± du¿o szybsze
+					       * ni¿ instrukcje warunkowe i w tym przypadku nie psuj± bardzo
+					       * czytelno¶ci kodu
+					       */
+		}
+		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */ 
+		else if (what[i] == 'h' && what[i + 1] && what[i + 1] == 't' && what[i + 2] && what[i + 2] == 't' && what[i + 3] && what[i + 3] == 'p' && what[i + 4] && what[i + 4] == ':' && what[i + 5] && what[i + 5] == '/' && what[i + 6] && what[i + 6] == '/')
+		{
+			for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
+			i--;
+			goto aspell_loop_end;
+		}
+		
+		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */ 
+		else if (what[i] == 'f' && what[i + 1] && what[i + 1] == 't' && what[i + 2] && what[i + 2] == 'p' && what[i + 3] && what[i + 3] == ':' && what[i + 4] && what[i + 4] == '/' && what[i + 5] && what[i + 5] == '/')
+		{
+			for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
+			i--;
+			goto aspell_loop_end;
+		}
+		
+		
+
+		    
+				
+		/* wrzucamy aktualny wyraz do zmiennej word */		    
+		for(j=0; what[i] != '\n' && what[i] != '\0' && isalpha_pl(what[i]); i++)
+		{
+			if(isalpha_pl(what[i]))
+		 	{
+		    		word[j]= what[i];
+				j++;
+		    	}
+		    	else 
+				break;
+		}
+		word[j] = '\0';
+		if(i > 0)
+		    i--;
+
+/*		gg_debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
+
+		/* sprawdzamy pisownie tego wyrazu */
+        	if(aspell_speller_check(spell_checker, word, strlen(word) ) == 0) /* jesli wyraz jest napisany blednie */
+        	{
+			for(j=strlen(word) - 1; j >= 0; j--)
+				where[i - j] = ASPELLCHAR;
+        	}
+        	else /* jesli wyraz jest napisany poprawnie */
+        	{
+			for(j=strlen(word) - 1; j >= 0; j--)
+				where[i - j] = ' ';
+        	}
+aspell_loop_end:
+		xfree(word);
+	    }	
+	}
+}
+#endif
+
 /*
  * ncurses_watch_stdin()
  *
@@ -1647,6 +1814,10 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 {
 	struct binding *b = NULL;
 	int ch;
+#ifdef WITH_ASPELL
+	int mispelling = 0; /* zmienna pomocnicza */
+	aspell_line = xstrdup(ncurses_line);
+#endif
 
 	ch = ekg_getch(0);
 	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
@@ -1808,8 +1979,25 @@ action:
 
 			p = ncurses_lines[lines_start + i];
 
+#ifdef WITH_ASPELL
+			memset(aspell_line, 32, LINE_MAXLEN);
+			if(line_start == 0) 
+			mispelling = 0;
+				    
+			if(config_aspell == 1)
+				spellcheck(p, aspell_line);
+                                
+			for (j = 0; j + line_start < strlen(p) && j < input->_maxx + 1; j++)
+                        {                                 
+			    if(aspell_line[line_start + j] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+	                            print_char_underlined(input, i, j, p[line_start + j]);
+                            else /* jesli jest wszystko okey to wyswietlamy normalny */
+	   			    print_char(input, i, j, p[j + line_start]);
+			}
+#else
 			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
+#endif
 		}
 
 		wmove(input, lines_index - lines_start, line_index - line_start);
@@ -1819,8 +2007,26 @@ action:
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
 
-		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
+#ifdef WITH_ASPELL			
+		
+		memset(aspell_line, 32, xstrlen(aspell_line));
+		if(line_start == 0) 
+			mispelling = 0;
+
+		if(config_aspell == 1)
+			spellcheck(ncurses_line, aspell_line);
+
+                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
+                {
+			if(aspell_line[line_start + i] == ASPELLCHAR) /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+                        	print_char_underlined(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
+                        else /* jesli jest wszystko okey to wyswietlamy normalny */
+                                print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
+		}
+#else
+ 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
+#endif
 
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
@@ -1830,7 +2036,9 @@ action:
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
 	}
-	
+#ifdef WITH_ASPELL
+	xfree(aspell_line);	
+#endif
 	ncurses_commit();
 }
 

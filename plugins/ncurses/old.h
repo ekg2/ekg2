@@ -125,6 +125,14 @@ int ncurses_debug;
 
 void header_statusbar_resize();
 
+#ifdef WITH_ASPELL
+void ncurses_spellcheck_init();
+
+int config_aspell;
+char *config_aspell_lang;
+char *config_aspell_encoding;
+#endif
+
 int config_backlog_size;
 void changed_backlog_size(const char *var);
 int config_contacts_size;
