@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+		       2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -16,6 +17,17 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
+/*
+ * Dodane s± tutaj funkcje opakowuj±ce, które maj± zapobiec problemoom
+ * z dostarczeniem do funkcji argumentu o warto¶ci NULL. W niektórych
+ * systemach doprowadza to do segmeentation fault.
+ * 
+ * Problem zostaje rozwi±zany poprzez zamienienie warto¶ci NULL 
+ * warto¶ci± "", która jest ju¿ prawid³ow± dan± wej¶ciow±.
+ * Makro fix(s) zosta³o w³a¶nie stworzone w tym celu 
+ */
+
 #define _GNU_SOURCE
 
 #include <sys/types.h>
@@ -42,6 +54,7 @@
 #  include "compat/strnlen.h"
 #endif
 
+#define fix(s) ((s) ? (s) : "")
 
 void ekg_oom_handler()
 {
@@ -121,10 +134,7 @@ char *xstrdup(const char *s)
 
 size_t xstrnlen(const char *s, size_t n) 
 {
-        if (!s)
-                return 0;
-
-        return strnlen(s, n);
+        return strnlen(fix(s), n);
 }
 
 
@@ -181,169 +191,108 @@ char *vsaprintf(const char *format, va_list ap)
 
 char *xstrstr(const char *haystack, const char *needle)
 {
-	if (!haystack || !needle)
-		return 0;
-
-	return strstr(haystack, needle);		
+	return strstr(fix(haystack), fix(needle));		
 }
 
 int xstrcasecmp(const char *s1, const char *s2) 
 {
-	if (!s1 || !s2)
-		return 0;
-
-	return strcasecmp(s1, s2);
+	return strcasecmp(fix(s1), fix(s2));
 }
 
 char *xstrcat(char *dest, const char *src) 
 {
-	if (!dest || !src)
-		return 0;
-
-	return strcat(dest, src);
+	return strcat(dest, fix(src));
 }
 
 char *xstrchr(const char *s, int c) 
 {
-	if (!s || !c)
-		return 0;
-
-	return strchr(s, c);
+	return strchr(fix(s), c);
 }
 
 int xstrcmp(const char *s1, const char *s2)
 {
-	if (!s1 || !s2)
-		return 0;
-
-	return strcmp(s1, s2);
+	return strcmp(fix(s1), fix(s2));
 }
 
 int xstrcoll(const char *s1, const char *s2)
 {
-	if (!s1 || !s2)
-		return 0;
-
-	return strcoll(s1, s2);
+	return strcoll(fix(s1), fix(s2));
 }
 
 char *xstrcpy(char *dest, const char *src) 
 {
-	if (!dest || !src)
-		return 0;
-
-	return strcpy(dest, src);
+	return strcpy(dest, fix(src));
 }
 
 size_t xstrcspn(const char *s, const char *reject)
 {
-	if (!s || !reject)
-		return 0;
-	
-	return strcspn(s, reject);
+	return strcspn(fix(s), fix(reject));
 }
 
 char *xstrfry(char *string)
 {
-	if (!string)
-		return 0;
-	
-	return strfry(string);
+	return strfry(fix(string));
 }
 
 size_t xstrlen(const char *s)
 {
-	if (!s)
-		return 0;
-	
-	return strlen(s);
+	return strlen(fix(s));
 }
 
 char *xstrncat(char *dest, const char *src, size_t n)
 {
-	if (!dest || !src || !n)
-		return 0;
-	
-	return strncat(dest, src, n);
+	return strncat(dest, fix(src), n);
 }
 
 int xstrncmp(const char *s1, const char *s2, size_t n)
 {
-	if (!s1 || !s2 || !n)
-		return 0;
-	
-	return strncmp(s1, s2, n);
+	return strncmp(fix(s1), fix(s2), n);
 }
 
 char *xstrncpy(char *dest, const char *src, size_t n)
 {
-	if (!dest || !src || !n)
-		return 0;
-
-	return strncpy(dest, src, n);
+	return strncpy(dest, fix(src), n);
 }
 
 int xstrncasecmp(const char *s1, const char *s2, size_t n)
 {
-	if (!s1 || !s2 || !n)
-		return 0;
-	
-	return strncasecmp(s1, s2, n);
+	return strncasecmp(fix(s1), fix(s2), n);
 }
 
 char *xstrpbrk(const char *s, const char *accept) 
 {
-	if (!s || !accept)
-		return 0;
-	
-	return strpbrk(s, accept);
+	return strpbrk(fix(s), fix(accept));
 }
 
 char *xstrrchr(const char *s, int c) 
 {
-	if (!s || !c)
-		return 0;
-
-	return strrchr(s, c);
+	return strrchr(fix(s), c);
 }
 
 char *xstrsep(char **stringp, const char *delim)
 {
-	if (!stringp || !delim)
-		return 0;
-	
-	return strsep(stringp, delim);
+	/* kiedy stringo -- NUKL funkcja po prostu nic nie robi - man strsep */
+	return strsep(stringp, fix(delim));
 }
 
 size_t xstrspn(const char *s, const char *accept)
 {
-	if (!s || !accept)
-		return 0;
-
-	return strspn(s, accept);
+	return strspn(fix(s), fix(accept));
 }
 
 char *xstrtok(char *s, const char *delim)
 {
-	if (!s || !delim)
-		return 0;
-
-	return strtok(s, delim);
+	/* pierwszy argument powinien byæ NULL */
+	return strtok(s, fix(delim));
 }
 
 char *xindex(const char *s, int c)
 {
-	if (!s || !c)
-		return 0;
-	
-	return index(s, c);
+	return index(fix(s), c);
 }
 
 char *xrindex(const char *s, int c)
 {
-	if (!s || !c)
-		return 0;
-
-	return index(s, c);
+	return index(fix(s), c);
 }
 
