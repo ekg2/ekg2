@@ -173,6 +173,12 @@ static int xosd_protocol_message(void *data, va_list ap)
 	return 0;
 }
 
+static void xosd_display_welcome_message()
+{
+	xosd_show_message(format_string(format_find("xosd_welcome_message_line_1")), format_string(format_find("xosd_welcome_message_line_2")));
+	timer_remove(&xosd_plugin, "xosd:display_welcome_timer");
+}
+
 void xosd_setvar_default()
 {
 	xfree(xosd_font);
@@ -220,6 +226,9 @@ int xosd_plugin_init()
 	
 	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
 	query_connect(&xosd_plugin, "protocol-status", xosd_protocol_status, NULL);
+	
+	if (xosd_display_welcome) 
+		timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
 
 	return 0;
 }
@@ -246,9 +255,6 @@ static int xosd_theme_init()
 	format_add("xosd_welcome_message_line_1", _("ekg2 XOnScreenDisplay plugin"), 1);
 	format_add("xosd_welcome_message_line_2", _("Author: Adam 'dredzik' Kuczynski"), 1);
 	
-	if (xosd_display_welcome) 
-		xosd_show_message(format_string(format_find("xosd_welcome_message_line_1")), format_string(format_find("xosd_welcome_message_line_2")));
-
 	return 0;
 }
 
