@@ -20,8 +20,10 @@ AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
 dnl It's obsolete in current versions of gettext but it's needed in older
-ALL_LINGUAS="en"
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.11.5)
+
+ALL_LINGUAS="en"
 
 AC_SUBST(COMPAT)
 AC_SUBST(PLUGINS)

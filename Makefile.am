@@ -1,4 +1,4 @@
-EXTRA_DIST = m4 gettext.h
+EXTRA_DIST = config.rpath mkinstalldirs  m4 gettext.h
 SUBDIRS = libltdl plugins compat ekg docs contrib po
 ACLOCAL_AMFLAGS = -I m4
 INCLUDES = $(top_builddir) $(LTDLINCL)

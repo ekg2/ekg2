@@ -51,9 +51,18 @@ fi
 
 rm -rf intl
 if test "$gettext_ver" -ge 01100; then
-	GETTEXTIZE_OPTIONS="--no-changelog"
+  if test "$gettext_ver" -lt 01105; then
+    echo "Upgrade gettext to at least 0.11.5 or downgrade to 0.10.40" 2>&1
+    exit 1
+  fi
+  $AUTOPOINT --force || exit 1
+else
+  $GETTEXTIZE --copy --force || exit 1
+  if test -e po/ChangeLog~; then
+    rm -f po/ChangeLog
+  fi
 fi
-$GETTEXTIZE --copy --force $GETTEXTIZE_OPTIONS || exit 1
+
 
 # Generate po/POTFILES.in
 echo "Generating po/POTFILES.in"
