@@ -276,6 +276,9 @@ void userlist_clear_status(session_t *session, const char *uid)
 {
         list_t l;
 
+	if (!session)
+		return;
+
         for (l = session->userlist; l; l = l->next) {
                 userlist_t *u = l->data;
 

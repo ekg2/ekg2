@@ -482,6 +482,13 @@ int session_read()
 		return -1;
 
 	if (!in_autoexec) {
+		list_t l;
+
+		for (l = sessions; l; l = l->next) {
+			session_t *s = l->data;
+
+			command_exec(NULL, s, "disconnect", 1);	
+		}
 		sessions_free();
 		debug("	 flushed sessions\n");
 	}
@@ -1039,6 +1046,15 @@ void sessions_free()
 	        xfree(s->password);
 		userlist_free(s);
         }
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+
+		if (!w)
+			continue;
+
+		w->session = NULL;
+	}
 
         list_destroy(sessions, 1);
         sessions = NULL;
