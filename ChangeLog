@@ -8,6 +8,7 @@ zg³osi³ b³±d.
 
 // 2004-04-19
 - poprawiony b³±d wieszaj±cy w niektórych wypadkach ekg - protokó³ GG (del)
+- poprawione /list - "Aktualny stan od:" tylko dla dostêpny, zajêtych etc. (del)
 
 // 2004-04-18
 - poprawione complete() wed³ug nastêpuj±cych kryteriów:

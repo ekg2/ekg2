@@ -1130,7 +1130,7 @@ COMMAND(cmd_list)
 			printq("user_info_name", u->last_name, "");
 
 		printq("user_info_status", status);
-                if (u->status_time) {
+                if (u->status_time && xstrcasecmp(u->status, EKG_STATUS_NA)) {
 		        struct tm *status_time;
 			char buf[100];		
 
