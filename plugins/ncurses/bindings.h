@@ -36,7 +36,7 @@
 #define KEY_CTRL_LEFT 357
 #define KEY_CTRL_RIGHT 358
 #define KEY_CTRL_UP 359
-#define KEY_CTRL_DOWN 360
+#define KEY_CTRL_DOWN 363
 #define KEY_CTRL_PPAGE 361
 #define KEY_CTRL_NPAGE 362
 
