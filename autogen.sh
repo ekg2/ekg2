@@ -7,7 +7,7 @@ else
 fi
 
 echo "Running libtoolize..."
-libtoolize --ltdl || exit 1 
+libtoolize --ltdl --copy || exit 1 
 
 echo "Running aclocal..."
 aclocal -I m4 || exit 1 
