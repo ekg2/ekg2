@@ -225,6 +225,9 @@ static int ncurses_userlist_changed(void *data, va_list ap)
                 n->prompt_len = xstrlen(n->prompt);
         }
 
+	list_destroy(sorted_all_cache, 1);
+	sorted_all_cache = NULL;
+
 	ncurses_contacts_update(NULL);
 	if ((w = window_find("__contacts")))
 		ncurses_redraw(w);
@@ -421,6 +424,11 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "variable-changed", ncurses_variable_changed, NULL);
 	query_connect(&ncurses_plugin, "conference-renamed", ncurses_conference_renamed, NULL);
 
+        query_connect(&ncurses_plugin, "metacontact-added", ncurses_contacts_changed, NULL);
+        query_connect(&ncurses_plugin, "metacontact-removed", ncurses_contacts_changed, NULL);
+        query_connect(&ncurses_plugin, "metacontact-item-added", ncurses_contacts_changed, NULL);
+        query_connect(&ncurses_plugin, "metacontact-item-removed", ncurses_contacts_changed, NULL);
+
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, "aspell_lang", VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
@@ -484,6 +492,11 @@ static int ncurses_plugin_destroy()
 		watch_remove(&ncurses_plugin, winch_pipe[0], WATCH_READ);
 
 	timer_remove(&ncurses_plugin, "ncurses:clock");
+
+	if (sorted_all_cache) {
+		list_destroy(sorted_all_cache, 1);
+		sorted_all_cache = NULL;
+	}
 
 	ncurses_deinit();
 

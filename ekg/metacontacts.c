@@ -67,8 +67,13 @@ COMMAND(cmd_metacontact)
 		}
 
 		if (metacontact_add(params[1])) {
+			char *tmp = xstrdup(params[1]);
+
 	                config_changed = 1;
 	                printq("metacontact_added", params[1]);
+
+	                query_emit(NULL, "metacontact-added", &tmp);
+			xfree(tmp);
 		}
 		return 0;	
 	}
@@ -83,8 +88,13 @@ COMMAND(cmd_metacontact)
                 }
 
                 if (metacontact_remove(params[1])) {
+			char *tmp = xstrdup(params[1]);
+
 	                config_changed = 1;
 	                printq("metacontact_removed", params[1]);
+			
+	                query_emit(NULL, "metacontact-removed", &tmp);
+			xfree(tmp);
 		}
                 return 0;
 	}
@@ -99,7 +109,14 @@ COMMAND(cmd_metacontact)
                 }
 
 		if (metacontact_add_item(m, params[2], params[3], atoi(params[4]), 0)) {
+			char *tmp1 = xstrdup(params[2]), *tmp2 = xstrdup(params[3]), *tmp3 = xstrdup(params[1]);
+
 			printq("metacontact_added_item", session_alias_uid_n(params[2]), params[3], params[1]);
+
+	                query_emit(NULL, "metacontact-item-added", &tmp1, &tmp2, &tmp3);
+			xfree(tmp1);
+			xfree(tmp2);
+			xfree(tmp3);
 		}
 		return 0;
 	}
@@ -114,7 +131,14 @@ COMMAND(cmd_metacontact)
                 }
 
                 if (metacontact_remove_item(m, params[2], params[3], 0)) {
+                        char *tmp1 = xstrdup(params[2]), *tmp2 = xstrdup(params[3]), *tmp3 = xstrdup(params[1]);
+
                         printq("metacontact_removed_item", session_alias_uid_n(params[2]), params[3], params[1]);
+
+                        query_emit(NULL, "metacontact-item-removed", &tmp1, &tmp2, &tmp3);
+                        xfree(tmp1);
+                        xfree(tmp2);
+                        xfree(tmp3);
                 }
                 return 0;
         }

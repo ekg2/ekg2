@@ -506,12 +506,6 @@ COMMAND(cmd_add)
 		tabnick_remove(params[0]);
 		config_changed = 1;
 
-#if 0
-		if (uid == session_uid_get(session_current)) {
-			update_status();
-			update_status_myip();
-		}
-#endif
 	}
 
 	if (params[2])

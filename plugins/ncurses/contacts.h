@@ -6,6 +6,7 @@ int config_contacts;
 char *config_contacts_options;
 char *config_contacts_groups;
 
+list_t sorted_all_cache;
 int contacts_index;
 int contacts_group_index;
 

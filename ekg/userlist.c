@@ -84,7 +84,7 @@ static int userlist_compare(void *data1, void *data2)
 	if (!a || !a->nickname || !b || !b->nickname)
 		return 1;
 
-	return strcasecmp_pl(a->nickname, b->nickname);
+	return xstrcasecmp(a->nickname, b->nickname);
 }
 
 /*
