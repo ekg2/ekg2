@@ -512,7 +512,7 @@ random_reason
 
 reason_limit
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domy¶lna warto¶æ: 1
 
 	okre¶la czy opisy stanu musz± mie¶ciæ siê w okre¶lonym przez
 	protokó³ limicie. je¶li opcja jest aktywna i d³ugo¶æ opisu
