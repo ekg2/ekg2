@@ -15,6 +15,8 @@ AC_DEFUN([AC_CHECK_NCURSES],
 	])
 
 	if test "x$without_ncurses" != "xyes"; then
+		save_CPPFLAGS="$CPPFLAGS"
+		save_LDFLAGS="$LDFLAGS"
 		CPPFLAGS="$CPPFLAGS $NCURSES_CPPFLAGS"
 		LDFLAGS="$LDFLAGS $NCURSES_LIBS"
 		have_ncurses_h=""
@@ -38,6 +40,9 @@ AC_DEFUN([AC_CHECK_NCURSES],
 		fi
 
 		$as_unset have_ncurses_h
+
+		CPPFLAGS="$save_CPPFLAGS"
+		LDFLAGS="$save_LDFLAGS"
 	fi
 ])
 

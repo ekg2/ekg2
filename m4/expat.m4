@@ -15,6 +15,8 @@ AC_DEFUN([AC_CHECK_EXPAT],
 	])
 
 	if test "x$without_expat" != "xyes"; then
+		cf="$CPPFLAGS"
+		lf="$LDFLAGS"
 		CPPFLAGS="$CPPFLAGS $EXPAT_CPPFLAGS"
 		LDFLAGS="$LDFLAGS $EXPAT_LIBS"
 		AC_CHECK_HEADERS([expat.h],
@@ -26,6 +28,8 @@ AC_DEFUN([AC_CHECK_EXPAT],
 				have_expat="yes"
 			])
 		])
+		CPPFLAGS="$cf"
+		LDFLAGS="$lf"
 	fi
 ])
 
