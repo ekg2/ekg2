@@ -1,0 +1,11 @@
+// opis komend dla pluginu logsqlite
+// (c) copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
+
+last
+	parametry: <uid>
+	krótki opis: wy¶wietla ostatnie zalogowane wiadomo¶ci
+	
+	Polecenie wy¶wietla ostatnie wiadomo¶ci zalogowane w bazie przez plugin
+	sqlite. Maksymalna ilo¶æ wiadomo¶ci okre¶la zmienna
+	logsqlite:last_limit. Opcjonalny parametr to identyfikator lub nazwa
+	u¿ytkownika, dla którego maj± byæ wy¶wietlone wiadomo¶ci.

@@ -48,37 +48,65 @@
 
 PLUGIN_DEFINE(logsqlite, PLUGIN_LOG, logsqlite_theme_init);
 
-int logsqlite_plugin_init(int prio)
+
+/*
+ * last log
+ */
+COMMAND(logsqlite_cmd_last)
 {
-	plugin_register(&logsqlite_plugin, prio);
+	sqlite * db = logsqlite_open_db();
+	char sql[100];
+	char buf[100];
+	const char ** results;
+	const char ** fields;
+	sqlite_vm * vm;
+	struct tm *tm;
+	char * errors;
+	time_t ts;
+	int count;
+	int count2 = 0;
+	char * gotten_uid;
 
-	query_connect(&logsqlite_plugin, "protocol-message", logsqlite_msg_handler, NULL);
-	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);
-	variable_add(&logsqlite_plugin, "log", VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "log_ignored", VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "log_status", VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "path", VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
-
-	debug("[logsqlite] plugin registered\n");
-
+	if (params[0]) {
+		if (!session) {
+			if (session_current) {
+				session = session_current;
+			} else {
+				return -1;
+			}
+		}
+		gotten_uid = get_uid(session, params[0]);
+		if (! gotten_uid) {
+			gotten_uid = params[0];
+		}
+		sprintf(sql, "select uid, nick, ts, body, sent from log_msg where uid = '%s' order by ts desc limit %i", gotten_uid, config_logsqlite_last_limit);
+	} else {
+		sprintf(sql, "select uid, nick, ts, body, sent from log_msg order by ts desc limit %i", config_logsqlite_last_limit);
+	}
+	debug("%s\n",sql);
+	sqlite_compile(db, sql, NULL, &vm, &errors);
+	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
+		count2++;
+		ts = (time_t) atoi(results[2]);
+		tm = localtime(&ts);
+		strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm);
+		if (!xstrcmp(results[4], "0")) {
+			printq("last_list_in", buf, results[1], results[3]);
+		} else {
+			printq("last_list_out", buf, results[1], results[3]);
+		}
+	}
+	if (count2 == 0) {
+		printq("last_list_empty");
+	};
+	sqlite_finalize(vm, &errors);
+	logsqlite_close_db(db);
 	return 0;
 }
 
-static int logsqlite_plugin_destroy()
-{
-	plugin_unregister(&logsqlite_plugin);
-
-	debug("[logs] plugin unregistered\n");
-
-	return 0;
-}
-
-int logsqlite_theme_init()
-{
-	format_add("logsqlite_open_error", "%! Can't open database: %1\n", 1);
-	return 0;
-}
-
+/*
+ * prepare path to database
+ */
 char *logsqlite_prepare_path()
 {
 	char *path, *tmp;
@@ -99,6 +127,49 @@ char *logsqlite_prepare_path()
 	return path;
 }
 
+/*
+ * open db
+ */
+sqlite * logsqlite_open_db()
+{
+	FILE * testFile;
+	char * path;
+	sqlite * db;
+	char * errormsg = NULL;
+
+	if (!(path = logsqlite_prepare_path()))
+		return 0;
+
+	debug("[logsqlite] opening database %s\n", path);
+
+	testFile = fopen(path, "r");
+	if (!testFile) {
+		debug("[logsqlite] creating database %s\n", path);
+		db = sqlite_open(path, 0, &errormsg);
+		sqlite_exec(db, "CREATE TABLE log_msg (session text, uid text, nick text, type text, sent boolean, ts timestamp, sentts timestamp, body text)", NULL, NULL, NULL);
+		sqlite_exec(db, "CREATE TABLE log_status (session text, uid text, nick text, ts timestamp, status text, desc text)", NULL, NULL, NULL);
+	} else {
+		fclose(testFile);
+		db = sqlite_open(path, 0, &errormsg);
+	}
+
+	if (!db) {
+		debug("[logsqlite] error opening database - %s\n", *errormsg);
+		print("logsqlite_open_error", errormsg);
+		xfree(path);
+		return 0;
+	}
+	return db;
+}
+
+/*
+ * close db
+ */
+void logsqlite_close_db(sqlite * db)
+{
+	debug("[logsqlite] close db\n");
+	sqlite_close(db);
+}
 
 /**
  * handler wiadomo¶ci
@@ -117,10 +188,8 @@ int logsqlite_msg_handler(void *data, va_list ap)
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
 	char * type = xmalloc(10);
-	char * path;
-	char * errormsg = NULL;
-	int is_sent;
 	sqlite * db;
+	int is_sent;
 
 	if (config_logsqlite_log == 0)
 		return 0;
@@ -130,15 +199,8 @@ int logsqlite_msg_handler(void *data, va_list ap)
 	if (!session)
 		return 0;
 
-	if (!(path = logsqlite_prepare_path()))
-		return 0;
-
-	debug("[logsqlite] logging to file %s\n", path);
-
-	db = sqlite_open(path, 0, &errormsg);
+	db = logsqlite_open_db();
 	if (!db) {
-		debug("[logsqlite] error opening database - %s\n", *errormsg);
-		print("logsqlite_open_error", errormsg);
 		xfree(type);
 		return 0;
 	}
@@ -209,9 +271,7 @@ int logsqlite_msg_handler(void *data, va_list ap)
 	sqlite_exec(db, "COMMIT", NULL, NULL, NULL);
 
 	xfree(type);
-	xfree(path);
-	debug("[logsqlite] closing db\n");
-	sqlite_close(db);
+	logsqlite_close_db(db);
 
 	return 0;
 };
@@ -219,8 +279,6 @@ int logsqlite_msg_handler(void *data, va_list ap)
 /**
  * handler statusów
  */
-
-
 int logsqlite_status_handler(void *data, va_list ap)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
@@ -230,8 +288,6 @@ int logsqlite_status_handler(void *data, va_list ap)
 	session_t *s = session_find((const char*)session);
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
-	char * path;
-	char * errormsg;
 	sqlite * db;
 
 	if (!config_logsqlite_log_status)
@@ -240,15 +296,8 @@ int logsqlite_status_handler(void *data, va_list ap)
 	if (!session)
 		return 0;
 
-	if (!(path = logsqlite_prepare_path()))
-		return 0;
-
-	debug("[logsqlite] logging to file %s\n", path);
-
-	db = sqlite_open(path, 0, &errormsg);
+	db = logsqlite_open_db();
 	if (!db) {
-		debug("[logsqlite] error opening database - %s\n", *errormsg);
-		print("logsqlite_open_error", errormsg);
 		return 0;
 	}
 
@@ -276,12 +325,44 @@ int logsqlite_status_handler(void *data, va_list ap)
 	debug("[logsqlite] commiting\n");
 	sqlite_exec(db, "COMMIT", NULL, NULL, NULL);
 
-	xfree(path);
-	debug("[logsqlite] closing db\n");
-	sqlite_close(db);
+	logsqlite_close_db(db);
 
 	return 0;
-};
+}
+
+int logsqlite_theme_init()
+{
+	format_add("logsqlite_open_error", "%! Can't open database: %1\n", 1);
+	return 0;
+}
+
+static int logsqlite_plugin_destroy()
+{
+	plugin_unregister(&logsqlite_plugin);
+
+	debug("[logs] plugin unregistered\n");
+
+	return 0;
+}
+
+int logsqlite_plugin_init(int prio)
+{
+	plugin_register(&logsqlite_plugin, prio);
+
+	command_add(&logsqlite_plugin, "logsqlite:last", "u", logsqlite_cmd_last, 0, NULL);
+
+	query_connect(&logsqlite_plugin, "protocol-message", logsqlite_msg_handler, NULL);
+	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);
+	variable_add(&logsqlite_plugin, "log", VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "log_ignored", VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "log_status", VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "last_limit", VAR_BOOL, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "path", VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
+
+	debug("[logsqlite] plugin registered\n");
+
+	return 0;
+}
 
 /*
  * Local Variables:

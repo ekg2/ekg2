@@ -22,15 +22,20 @@
 
 #define __LOGSQLITE_H__
 
+#include <sqlite.h>
+
 char *logsqlite_prepare_path();
 int logsqlite_msg_handler(void *data, va_list ap);
 int logsqlite_status_handler(void *data, va_list ap);
 int logsqlite_theme_init();
+sqlite * logsqlite_open_db();
+void logsqlite_close_db(sqlite * db);
 
 int config_logsqlite_log;
-int config_logsqlite_log_ignored;
-int config_logsqlite_log_status;
+int config_logsqlite_log_ignored = 0;
+int config_logsqlite_log_status = 0;
 int config_logsqlite_remind_number = 0;
+int config_logsqlite_last_limit = 10;
 char * config_logsqlite_path;
 
 #endif
