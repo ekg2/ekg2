@@ -1,4 +1,5 @@
 vCVS 2004-04-24
+	* dodana opcje do bindowania - previous-only-history i next-only-history
 	* dodana zmienna sesyjna 'display_notify'
 	* poprawna kompilacja na niektórych systemach (np FreeBSD)
 	* dzia³aj±ca funkcja /help dla sesji 

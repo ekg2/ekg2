@@ -1980,7 +1980,6 @@ COMMAND(cmd_echo)
 COMMAND(cmd_bind)
 {
 	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, NULL);
-//	ui_event("command", quiet, "bind", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, NULL); 
 
 	return 0;
 }
@@ -3567,7 +3566,7 @@ void command_init()
 	  "Backspace, Delete, Insert, Home, End, Left, Right, Up, Down, "
 	  "PageUp, PageDown.\n"
 	  "\n"
-	  "Dostêpne akcje to: backward-word, forward-word, kill-word, toggle-input, cancel-input, backward-delete-char, beginning-of-line, end-of-line, delete-char, backward-page, forward-page, kill-line, yank, accept-line, line-discard, quoted-insert, word-rubout, backward-char, forward-char, previous-history, next-history, complete, quick-list, toggle-contacts, next-contacts-group, ignore-query, forward-contacts-page, backward-contacts-page, forward-contacts-line, backward-contacts-line."
+	  "Dostêpne akcje to: backward-word, forward-word, kill-word, toggle-input, cancel-input, backward-delete-char, beginning-of-line, end-of-line, delete-char, backward-page, forward-page, kill-line, yank, accept-line, line-discard, quoted-insert, word-rubout, backward-char, forward-char, previous-history, next-history, complete, quick-list, toggle-contacts, next-contacts-group, ignore-query, forward-contacts-page, backward-contacts-page, forward-contacts-line, backward-contacts-line, previous-only-history, next-only-history.\n" 
 	  "Ka¿da inna akcja bêdzie traktowana jako komenda do wykonania.", 
 	  possibilities("-a --add -d --del -l --list -L --list-default") );
   

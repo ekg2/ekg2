@@ -102,7 +102,15 @@ static void binding_toggle_input(const char *arg)
 
 		line = string_free(s, 0);
 		tmp = xstrdup(line);
+
+                if (history[0] != line)
+                        xfree(history[0]);
+                history[0] = array_join(lines, "\015");
+                xfree(history[HISTORY_MAX - 1]);
+                memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
+
 		history[0] = line;
+	        history_index = 0;
 
 		input_size = 1;
 		ncurses_input_update();
@@ -365,6 +373,55 @@ static void binding_beginning_of_line(const char *arg)
 	line_start = 0;
 }
 
+static void binding_previous_only_history(const char *arg)
+{
+        if (history[history_index + 1]) {
+                if (history_index == 0)
+                        history[0] = xstrdup(line);
+                history_index++;
+		if (xstrchr(history[history_index], '\015')) {
+                        if (input_size == 1) {
+                                input_size = 5;
+                                ncurses_input_update();
+                        }
+			lines = array_make(history[history_index], "\015", 0, 0, 0);
+			lines_adjust();
+		} else {
+			if (input_size != 1) {
+		                input_size = 1;
+		                ncurses_input_update();
+		        }
+			xstrcpy(line, history[history_index]);
+	                line_adjust();
+		}
+        }
+}
+
+static void binding_next_only_history(const char *arg)
+{
+        if (history_index > 0) {
+                if (history_index == 0)
+                        history[0] = xstrdup(line);
+                history_index--;
+                if (xstrchr(history[history_index], '\015')) {
+                        if (input_size == 1) {
+                                input_size = 5;
+                                ncurses_input_update();
+			}
+                        lines = array_make(history[history_index], "\015", 0, 0, 0);
+                        lines_adjust();
+                } else {
+                        if (input_size != 1) {
+                                input_size = 1;
+                                ncurses_input_update();
+                        }
+                        xstrcpy(line, history[history_index]);
+                        line_adjust();
+                }
+        }
+}
+
+
 static void binding_previous_history(const char *arg)
 {
 	if (lines) {
@@ -379,14 +436,8 @@ static void binding_previous_history(const char *arg)
 
 		return;
 	}
-				
-	if (history[history_index + 1]) {
-		if (history_index == 0)
-			history[0] = xstrdup(line);
-		history_index++;
-		xstrcpy(line, history[history_index]);
-		line_adjust();
-	}
+	
+	binding_previous_only_history(NULL);				
 }
 
 static void binding_next_history(const char *arg)
@@ -659,7 +710,9 @@ static void binding_parse(struct binding *b, const char *action)
 	__action("backward-char", binding_backward_char);
 	__action("forward-char", binding_forward_char);
 	__action("previous-history", binding_previous_history);
+	__action("previous-only-history", binding_previous_only_history);
 	__action("next-history", binding_next_history);
+	__action("next-only-history", binding_next_only_history);
 	__action("complete", binding_complete);
 	__action("quick-list", binding_quick_list_wrapper);
 	__action("toggle-contacts", binding_toggle_contacts_wrapper);
@@ -1007,9 +1060,6 @@ void ncurses_binding_default()
 	ncurses_binding_add("F11", "ui-ncurses-debug-toggle", 1, 1);
 	ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1);
 	ncurses_binding_add("Ctrl-Up", "backward-contacts-page", 1, 1);
-// 	ncurses_binding_add("Ctrl-Down", "forward-contacts-line", 1, 1);
-// 	ncurses_binding_add("Ctrl-Up", "backward-contacts-line", 1, 1);
-
 }
 
 void ncurses_binding_init()
