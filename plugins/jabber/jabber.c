@@ -408,12 +408,12 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 
 	if (!xstrcmp(n->name, "presence")) {
 		if (type && !xstrcmp(type, "subscribe") && from) {
-			print("jabber_auth_subscribe", session_name(s), from);
+			print("jabber_auth_subscribe", from, session_name(s));
 			return;
 		}
 
 		if (type && !xstrcmp(type, "unsubscribe") && from) {
-			print("jabber_auth_unsubscribe", from);
+			print("jabber_auth_unsubscribe", from, session_name(s));
 			return;
 		}
 
