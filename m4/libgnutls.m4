@@ -33,7 +33,8 @@ AC_ARG_WITH(libgnutls-prefix,
     LIBGNUTLS_CFLAGS=`$LIBGNUTLS_CONFIG $libgnutls_config_args --cflags`
     LIBGNUTLS_LIBS=`$LIBGNUTLS_CONFIG $libgnutls_config_args --libs`
     libgnutls_config_version=`$LIBGNUTLS_CONFIG $libgnutls_config_args --version`
-
+    AC_DEFINE([HAVE_GNUTLS], 1, [define if you have GnuTLS])
+    have_gnutls="yes"
 
       ac_save_CFLAGS="$CFLAGS"
       ac_save_LIBS="$LIBS"

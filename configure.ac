@@ -239,9 +239,9 @@ echo
 echo "configured options:"
 
 if test "x$have_ioctld_includes" = "xyes"; then
- 	echo " - ioctld: enabled"
+ 	echo " - ioctld:  enabled"
 else
-	echo " - ioctld: disabled"
+	echo " - ioctld:  disabled"
 fi
 
 if test "x$have_libgadu" = "xyes"; then
@@ -256,10 +256,16 @@ else
 	echo " - openssl: disabled"
 fi
 
-if test "x$have_expat" = "xyes"; then
-	echo " - expat: enabled"
+if test "x$have_gnutls" = "xyes"; then
+	echo " - gnutls:  enabled"
 else
-	echo " - expat: disabled"
+	echo " - gnutls:  disabled"
+fi
+
+if test "x$have_expat" = "xyes"; then
+	echo " - expat:   enabled"
+else
+	echo " - expat:   disabled"
 fi
 
 if test "x$have_ncurses" = "xyes"; then
@@ -269,15 +275,15 @@ else
 fi
 
 if test "x$have_libgsm" = "xyes"; then
-	echo " - libgsm: enabled"
+	echo " - libgsm:  enabled"
 else
-	echo " - libgsm: disabled"
+	echo " - libgsm:  disabled"
 fi
 
 if test "x$have_aspell" = "xyes"; then
-        echo " - aspell: enabled"
+        echo " - aspell:  enabled"
 else
-        echo " - aspell: disabled"
+        echo " - aspell:  disabled"
 fi
 
 if test "x$have_libjpeg" = "xyes"; then
