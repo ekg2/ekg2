@@ -41,8 +41,7 @@ int xosd_show_message(char *line1, char *line2)
 {
 	xosd_set_font(osd, xosd_font); 
 	
-	if (xosd_shadow_offset) 
-		xosd_set_shadow_offset(osd, xosd_shadow_offset);
+	xosd_set_shadow_offset(osd, xosd_shadow_offset);
 	
 	xosd_set_colour(osd, xosd_colour);
 
