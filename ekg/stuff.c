@@ -1162,7 +1162,7 @@ int play_sound(const char *sound_path)
 		return -1;
 	}
 
-	params[0] = saprintf("%s %s", config_sound_app, sound_path);
+	params[0] = saprintf("^%s %s", config_sound_app, sound_path);
 	params[1] = NULL;
 
 	res = cmd_exec("exec", (const char**) params, NULL, NULL, 1);
