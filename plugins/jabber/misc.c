@@ -132,8 +132,6 @@ char *xiconv(const char *from, const char *to, const char *what)
 		}
 	*d = '\0';
 
-	dumbdebug("ogolnie koniec petli iconva...");
-
 	iconv_close(conv);
 	return xrealloc(dst, strlen(dst)+1);
 }
