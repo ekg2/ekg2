@@ -451,7 +451,7 @@ int protocol_message(void *data, va_list ap)
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
-	char *target;
+	char *target = NULL;
 
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
