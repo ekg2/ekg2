@@ -1587,7 +1587,6 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 	}
 
 	ch = ekg_getch(0);
-
 	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
 		return;
 
@@ -1596,13 +1595,68 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 
 	if (ch == 0)		/* Ctrl-Space, g³upie to */
 		return;
-
+	
 	if (ch == 27) {
 		if ((ch = ekg_getch(27)) == -2)
 			return;
 
-		b = ncurses_binding_map_meta[ch];
-
+                b = ncurses_binding_map_meta[ch];
+		
+		if (ch == 79) {
+			if((ch = ekg_getch(79)) == 53) {
+				ch = ekg_getch(53);
+				
+					switch(ch) { 
+						case 67: 
+							b = ncurses_binding_map[KEY_CTRL_RIGHT];
+							break;
+						case 68:
+							b = ncurses_binding_map[KEY_CTRL_LEFT];
+							break;
+                                                case 65:
+                                                        b = ncurses_binding_map[KEY_CTRL_UP];
+                                                        break;
+                                                case 66:
+                                                        b = ncurses_binding_map[KEY_CTRL_DOWN];
+                                                        break;
+						default: 
+							break;
+					}
+				
+				if(b) {
+//					debug("b->key: %s\n", b->key);
+					goto action;
+				}
+			}
+			
+		}
+/* tutaj jest prototyp obs³ugi CTRL+PAGE_UP ...  (wywaiæ 0 z warunku i poprawiæ */
+		if (ch == 91 && 0) {
+			ch = wgetch(input);
+			b = ncurses_binding_map[KEY_LEFT];
+			switch(ch) {
+                        	 case 52:
+                                	 b = ncurses_binding_map[KEY_CTRL_END];
+                                         break;
+                                 case 68:
+                                         b = ncurses_binding_map[KEY_CTRL_LEFT];
+                                         break;
+                                 case 65:
+                                         b = ncurses_binding_map[KEY_CTRL_UP];
+                                         break;
+                                 case 66:
+                                         b = ncurses_binding_map[KEY_CTRL_DOWN];
+                                         break;
+                                 default:
+                                        debug("ch: %d\n", ch);
+                                 	break;
+                        }
+			if(b) {
+                        	debug("b->key: %s\n", b->key);
+				goto action;
+			}
+		} 
+		
 		if (ch == 27)
 			b = ncurses_binding_map[27];
 
@@ -1612,7 +1666,6 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 
 		if (ch == 'O') {
 			int tmp = ekg_getch(ch);
-
 			if (tmp >= 'P' && tmp <= 'S')
 				b = ncurses_binding_map[KEY_F(tmp - 'P' + 1)];
 			else if (tmp == 'H')
@@ -1625,6 +1678,7 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 				ungetch(tmp);
 		}
 
+action:
 		if (b && b->action) {
 			if (b->function)
 				b->function(b->arg);

@@ -26,6 +26,21 @@
 
 #include <ekg/stuff.h>
 
+#define KEY_CTRL_ENTER 350
+#define KEY_CTRL_ESCAPE 351
+#define KEY_CTRL_HOME 352
+#define KEY_CTRL_END 353
+#define KEY_CTRL_DC 354
+#define KEY_CTRL_BACKSPACE 355
+#define KEY_CTRL_TAB 356
+#define KEY_CTRL_LEFT 357
+#define KEY_CTRL_RIGHT 358
+#define KEY_CTRL_UP 359
+#define KEY_CTRL_DOWN 360
+#define KEY_CTRL_PPAGE 361
+#define KEY_CTRL_NPAGE 362
+
+
 struct binding *ncurses_binding_map[KEY_MAX + 1];
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];
 

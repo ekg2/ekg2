@@ -1,9 +1,10 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2002-2004 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Wojtek Bojdo³ <wojboj@htcon.pl>
  *                          Pawe³ Maziarz <drg@infomex.pl>
+ *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -41,6 +42,7 @@
 
 struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
+
 
 void *ncurses_binding_complete = NULL;
 
@@ -431,6 +433,113 @@ static void binding_forward_page(const char *arg)
 	ncurses_redraw(window_current);
 }
 
+static void binding_backward_contacts_line(const char *arg)
+{
+	contacts_index--;
+        if (contacts_index < 0)
+                contacts_index = 0;
+}
+
+static void binding_forward_contacts_line(const char *arg)
+{
+        ncurses_window_t *n;
+        window_t *w = NULL;
+        int contacts_count;
+
+        list_t l;
+
+        for (l = windows; l; l = l->next) {
+                window_t *v = l->data;
+
+                if (v->target && !strcmp(v->target, "__contacts")) {
+                        w = v;
+                        break;
+                }
+        }
+
+        if (!w)
+                return;
+
+        n = w->private;
+        contacts_count = list_count(session_current->userlist);
+
+        contacts_index++;
+
+        if (contacts_index > contacts_count - w->height + n->overflow)
+                contacts_index = contacts_count - window_current->height + n->overflow;
+        if (contacts_index < 0)
+                contacts_index = 0;
+
+        contacts_update(NULL);
+
+}
+
+
+static void binding_backward_contacts_page(const char *arg)
+{
+        ncurses_window_t *n;
+        window_t *w = NULL;
+        int contacts_count;
+
+        list_t l;
+
+        for (l = windows; l; l = l->next) {
+                window_t *v = l->data;
+
+                if (v->target && !strcmp(v->target, "__contacts")) {
+                        w = v;
+                        break;
+                }
+        }
+
+        if (!w)
+                return;
+
+        n = w->private;
+        contacts_count = list_count(session_current->userlist);
+
+        contacts_index -= w->height / 2;
+
+        if (contacts_index < 0)
+                contacts_index = 0;
+
+        contacts_update(NULL);
+
+}
+
+static void binding_forward_contacts_page(const char *arg)
+{
+        ncurses_window_t *n;
+	window_t *w = NULL;
+	int contacts_count;
+
+        list_t l;
+
+        for (l = windows; l; l = l->next) {
+        	window_t *v = l->data;
+
+                if (v->target && !strcmp(v->target, "__contacts")) {
+                	w = v;
+                        break;
+                }
+        }
+
+        if (!w)
+	        return;
+
+        n = w->private;
+	contacts_count = list_count(session_current->userlist);
+
+        contacts_index += w->height / 2;
+
+  	if (contacts_index > contacts_count - w->height + n->overflow)
+        	contacts_index = contacts_count - window_current->height + n->overflow;
+        if (contacts_index < 0)
+                contacts_index = 0;
+
+	contacts_update(NULL);
+}
+
 static void binding_ignore_query(const char *arg)
 {
 	char *tmp;
@@ -545,6 +654,11 @@ static void binding_parse(struct binding *b, const char *action)
 	__action("ignore-query", binding_ignore_query);
 	__action("ui-ncurses-debug-toggle", binding_ui_ncurses_debug_toggle);
 	__action("cycle-sessions", binding_cycle_sessions);
+	__action("forward-contacts-page", binding_forward_contacts_page);
+	__action("backward-contacts-page", binding_backward_contacts_page);
+	__action("forward-contacts-line", binding_forward_contacts_line);
+	__action("backward-contacts-line", binding_backward_contacts_line);
+
 
 #undef __action
 
@@ -560,6 +674,7 @@ static void binding_parse(struct binding *b, const char *action)
  */
 int binding_key(struct binding *b, const char *key, int add)
 {
+//	debug("Key: %s\n", key);
 	if (!strncasecmp(key, "Alt-", 4)) {
 		unsigned char ch;
 
@@ -598,9 +713,35 @@ int binding_key(struct binding *b, const char *key, int add)
 	if (!strncasecmp(key, "Ctrl-", 5)) {
 		unsigned char ch;
 		
-		if (strlen(key) != 6)
-			return -1;
+//		if (strlen(key) != 6)
+//			return -1;
+#define __key(x, y, z) \
+        if (!strcasecmp(key + 5, x)) { \
+                b->key = xstrdup(key); \
+                if (add) { \
+                        ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
+                        if (z) \
+                                ncurses_binding_map[z] = ncurses_binding_map[y]; \
+                } \
+                return 0; \
+        }
 
+        __key("Enter", KEY_CTRL_ENTER, 0);
+        __key("Escape", KEY_CTRL_ESCAPE, 0);
+        __key("Home", KEY_CTRL_HOME, 0);
+        __key("End", KEY_CTRL_END, 0);
+        __key("Delete", KEY_CTRL_DC, 0);
+        __key("Backspace", KEY_CTRL_BACKSPACE, 0);
+        __key("Tab", KEY_CTRL_TAB, 0);
+        __key("Left", KEY_CTRL_LEFT, 0);
+        __key("Right", KEY_CTRL_RIGHT, 0);
+        __key("Up", KEY_CTRL_UP, 0);
+        __key("Down", KEY_CTRL_DOWN, 0);
+        __key("PageUp", KEY_CTRL_PPAGE, 0);
+        __key("PageDown", KEY_CTRL_NPAGE, 0);
+
+#undef __key
+	
 		ch = xtoupper(key[5]);
 		b->key = saprintf("Ctrl-%c", ch);
 
@@ -763,6 +904,7 @@ void ncurses_binding_delete(const char *key, int quiet)
 					ncurses_binding_map[i] = NULL;
 				if (ncurses_binding_map_meta[i] == b)
 					ncurses_binding_map_meta[i] = NULL;
+
 			}
 
 			list_remove(&bindings, b, 1);
@@ -850,13 +992,17 @@ void ncurses_binding_default()
 	ncurses_binding_add("F4", "next-contacts-group", 1, 1);
 	ncurses_binding_add("F12", "/window switch 0", 1, 1);
 	ncurses_binding_add("F11", "ui-ncurses-debug-toggle", 1, 1);
+	ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1);
+	ncurses_binding_add("Ctrl-Up", "backward-contacts-page", 1, 1);
+// 	ncurses_binding_add("Ctrl-Down", "forward-contacts-line", 1, 1);
+// 	ncurses_binding_add("Ctrl-Up", "backward-contacts-line", 1, 1);
+
 }
 
 void ncurses_binding_init()
 {
 	memset(ncurses_binding_map, 0, sizeof(ncurses_binding_map));
 	memset(ncurses_binding_map_meta, 0, sizeof(ncurses_binding_map_meta));
-
 	ncurses_binding_default();
 
 	ncurses_binding_complete = binding_complete;

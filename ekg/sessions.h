@@ -47,6 +47,8 @@ typedef struct {
 	session_param_t **params;	/* parametry sesji */
 } session_t;
 
+session_t *session_current;
+
 session_t *session_find(const char *uid);
 
 const char *session_uid_get(session_t *s);

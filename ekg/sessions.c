@@ -38,6 +38,8 @@
 #endif
 
 list_t sessions = NULL;
+session_t *session_current;
+
 
 /*
  * session_find()

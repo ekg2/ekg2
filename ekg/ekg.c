@@ -720,8 +720,10 @@ int main(int argc, char **argv)
 	window_current = window_new(NULL, NULL, 1);	/* okno stanu */
 
 	/* okno stanu dostanie pierwsz± z brzegu sesjê */
-	if (sessions)
+	if (sessions) {
+		session_current = (session_t*) sessions->data;
 		window_current->session = (session_t*) sessions->data;
+	}
 
 	if (!no_global_config)
 		config_read(SYSCONFDIR "/ekg.conf");

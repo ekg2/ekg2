@@ -1,9 +1,10 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2002-2004 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Wojtek Bojdo³ <wojboj@htcon.pl>
  *                          Pawe³ Maziarz <drg@infomex.pl>
+ *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -48,6 +49,7 @@ char *config_contacts_options = NULL;	/* opcje listy kontaktów */
 char *config_contacts_groups = NULL;	/* grupy listy kontaktów */
 
 int contacts_group_index = 0;
+int contacts_index = 0;
 
 static int contacts_margin = 1;
 static int contacts_edge = WF_RIGHT;
@@ -123,7 +125,8 @@ int contacts_update(window_t *w)
 		const char *footer_status = NULL;
 		char tmp[100];
 
-		for (l = window_current->session->userlist, count = 0; l; l = l->next) {
+
+		for (l = session_current->userlist, count = 0; l; l = l->next) {
 			userlist_t *u = l->data;
 			const char *format;
 			char *line;
@@ -154,8 +157,8 @@ int contacts_update(window_t *w)
 				strcat(tmp, "_blink");
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
-				
-			ncurses_backlog_add(w, fstring_new(line));
+			if(count >= contacts_index)	
+				ncurses_backlog_add(w, fstring_new(line));
 			xfree(line);
 
 			count++;
@@ -342,6 +345,7 @@ void contacts_new(window_t *w)
 	w->frames = contacts_frame;
 	n->handle_redraw = contacts_update;
 	w->nowrap = !contacts_wrap;
+	n->start = 10;
 }
 
 

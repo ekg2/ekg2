@@ -7,6 +7,7 @@ char *config_contacts_options;
 char *config_contacts_groups;
 
 int contacts_group_index;
+int contacts_index;
 
 int contacts_update(window_t *w);
 void contacts_changed(const char *name);
