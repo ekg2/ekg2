@@ -3,13 +3,15 @@ plugin		autor		przeznaczenie			zale¿no¶ci
 gg		wojtekka	obs³uga protoko³u Gadu-Gadu	libgadu
 gsm		wojtekka	kodek GSM do rozmów g³osowych 	libgsm
 ioctld		drg		obs³uga diod klawiatury		-
+irc		gim		obsuga protokou irc		-
 jabber		wojtekka	obs³uga protoko³u XMPP/Jabber	expat
 logs		zdzichu		logowanie wiadomo¶ci		-
 mail		szalik		sprawdzanie poczty		-
 ncurses		*		interfejs tekstowy		ncurses
 pcm		wojtekka	kodek PCM			-
+python		leafnode	obsuga pythona			python
 rc		wojtekka	zdalne sterowanie ekg		-
 readline	*		interfejs tekstowy		readline
 sim		*		szyfrowanie wiadomo¶ci		openssl
 sms		wojtekka	wysy³anie smsów i takie tam	/usr/bin/sms
-
+xosd		dredzik		xosd ;]				xosd

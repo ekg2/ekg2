@@ -640,7 +640,7 @@ COMMAND(irc_command_msg)
         int class = EKG_MSGCLASS_SENT, ischn; 
 	int ekgbeep = EKG_NO_BEEP;
         char *me, *format=NULL, *seq=NULL, *head, *chantypes, *coloured;
-        char **rcpts, prefix[2]; 
+        char **rcpts, prefix[2], *mline[2], mlinechr;
         const time_t sent = time(NULL);					
 	people_t *person;
 	people_chan_t *perchn = NULL;
@@ -667,7 +667,16 @@ COMMAND(irc_command_msg)
 		return -1;
 	}
 
-	irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, params[1]);
+	mline[0] = params[1];
+	while ( (mline[1]=xstrchr(mline[0], '\n')) )
+	{
+		mlinechr = *mline[1];
+		*mline[1]='\0';
+		irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, mline[0]);
+		mline[0] = mline[1]+1;
+		*mline[1] = mlinechr;
+	}
+	irc_write(j, "PRIVMSG %s :%s\r\n", uid+4, mline[0]);
 
 	chantypes = SOP(_005_CHANTYPES);
 	ischn = !!xstrchr(chantypes, uid[4]);

@@ -258,7 +258,7 @@ int irc_input_parser(session_t *s, char *buf, int len)
 	for (i=0,l=irc_lastline_start,p=buf; i<len; i++,l++)
 	{
 		irc_lastline[l]=buf[i];
-		if ('\n' == buf[i]) {
+		if ('\n' == buf[i] || '\r' == buf[i]) {
 			buf[i]='\0';
 			irc_lastline[l]='\0';
 			irc_parse_line(s, irc_lastline, l, fd, j);
