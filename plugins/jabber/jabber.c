@@ -348,6 +348,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 				xfree(__session);
 				session_connected_set(s, 1);
 				session_unidle(s);
+				jdh->roster_retrieved = 0;
 				jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 				jabber_write_status(s);
 			}
@@ -440,10 +441,13 @@ void jabber_handle(void *data, xmlnode_t *n)
 							if (jabber_attr(item->atts, "subscription"))
 								u.authtype = xstrdup(jabber_attr(item->atts, "subscription"));
 							list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
-							ctmp = saprintf("/auth --probe %s", u.uid);
-							command_exec(NULL, s, ctmp, 1);
-							xfree(ctmp);
+							if (jdh->roster_retrieved) {
+								ctmp = saprintf("/auth --probe %s", u.uid);
+								command_exec(NULL, s, ctmp, 1);
+								xfree(ctmp);
+							}
 						}
+						jdh->roster_retrieved = 1;
 					}; /* for */
 				} /* jabber:iq:roster */
 			} /* if query */

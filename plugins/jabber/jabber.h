@@ -52,6 +52,7 @@ typedef struct {
 
 typedef struct {
 	session_t *session;
+	char roster_retrieved;
 } jabber_handler_data_t;
 
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))

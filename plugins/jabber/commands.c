@@ -133,6 +133,7 @@ COMMAND(jabber_command_connect)
 		close(fd[1]);
 		
 		jdta->session = session;
+		jdta->roster_retrieved = 0;
 		/* XXX dodaæ dzieciaka do przegl±dania */
 
 		watch_add(&jabber_plugin, fd[0], WATCH_READ, 0, jabber_handle_resolver, jdta);
