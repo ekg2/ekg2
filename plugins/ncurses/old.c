@@ -655,7 +655,15 @@ void ncurses_redraw(window_t *w)
                                 attr |= A_BLINK;
 
                         if (!(chattr & 128))
-                                attr |= color_pair(chattr & 7, 0, COLOR_BLACK);
+                                attr |= color_pair(chattr & 7, 0, 
+					config_display_transparent?COLOR_BLACK:
+					(chattr>>3)&7);
+
+			if ((chattr & 512))
+				attr |= A_UNDERLINE;
+
+			if ((chattr & 1024))
+				attr |= A_REVERSE;
 
                         if (ch < 32) {
                                 ch += 64;
@@ -694,8 +702,16 @@ void ncurses_redraw(window_t *w)
                         if ((chattr & 256))
                                 attr |= A_BLINK;
 
-			if (!(chattr & 128))
-				attr |= color_pair(chattr & 7, 0, COLOR_BLACK);
+                        if (!(chattr & 128))
+                                attr |= color_pair(chattr & 7, 0, 
+					config_display_transparent?COLOR_BLACK:
+					(chattr>>3)&7);
+
+			if ((chattr & 512))
+				attr |= A_UNDERLINE;
+
+			if ((chattr & 1024))
+				attr |= A_REVERSE;
 
 			if (ch < 32) {
 				ch += 64;

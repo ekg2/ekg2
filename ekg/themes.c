@@ -153,12 +153,16 @@ const char *format_ansi(char ch)
 		return "\033[1;37m";
 	if (ch == 'x')
 		return "\033[47m";
-	if (ch == 'i')
-		return "\033[5m";
-	if (ch == 'n')
+	if (ch == 'n')			/* clear all attributes */
 		return "\033[0m";
-	if (ch == 'T')
+	if (ch == 'T')			/* bold */
 		return "\033[1m";
+	if (ch == 'U')			/* underline */
+		return "\033[4m";
+	if (ch == 'i')			/* blink */
+		return "\033[5m";
+	if (ch == 'V')			/* reverse */
+		return "\033[7m";
 
 	return "";
 }
@@ -473,8 +477,12 @@ fstring_t *fstring_new(const char *str)
  					}
  					else if (m == 1) /* bold */
  						attr |= 64;
- 					else if (m == 5) /* blink ? */
- 						attr |= 256;
+					else if (m == 4) /* underline */
+						attr ^= 512;
+ 					else if (m == 5) /* blink */
+ 						attr ^= 256;
+					else if (m == 7) /* reverse */
+						attr ^= 1024;
  					else if (m>=30)
  						tmp = m;
 wedonthavem:
