@@ -6,6 +6,7 @@
  *                          Pawe³ Maziarz <drg@o2.pl>
  *                          Dawid Jarosz <dawjar@poczta.onet.pl>
  *                          Piotr Domagalski <szalik@szalik.net>
+ *                          Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -72,6 +73,7 @@ list_t searches = NULL;
 int in_autoexec = 0;
 int reconnect_timer = 0;
 int config_auto_save = 0;
+int config_auto_user_add = 0;
 time_t last_save = 0;
 int config_display_color = 1;
 int config_beep = 1;

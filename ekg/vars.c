@@ -4,6 +4,7 @@
  *  (C) Copyright 2001-2004 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Robert J. Wo¼ny <speedy@ziew.org>
  *                          Leszek Krupiñski <leafnode@wafel.com>
+ *                          Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -77,6 +78,7 @@ void variable_init()
 #endif
 	variable_add(NULL, "auto_save", VAR_INT, 1, &config_auto_save, changed_auto_save, NULL, NULL);
 	variable_add(NULL, "away_reason", VAR_STR, 1, &config_away_reason, NULL, NULL, NULL);
+	variable_add(NULL, "auto_user_add", VAR_BOOL, 1, &config_auto_user_add, NULL, NULL, NULL);
 	variable_add(NULL, "back_reason", VAR_STR, 1, &config_back_reason, NULL, NULL, NULL);
 	variable_add(NULL, "beep", VAR_BOOL, 1, &config_beep, NULL, NULL, NULL);
 	variable_add(NULL, "beep_msg", VAR_BOOL, 1, &config_beep_msg, NULL, NULL, dd_beep);

@@ -6,6 +6,7 @@
  *                          Pawe³ Maziarz <drg@go2.pl>
  *                          Dawid Jarosz <dawjar@poczta.onet.pl>
  *                          Piotr Domagalski <szalik@szalik.net>
+ *                          Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -160,6 +161,7 @@ int mesg_startup;
 char *config_audio_device;
 char *config_away_reason;
 int config_auto_save;
+int config_auto_user_add;
 char *config_back_reason;
 int config_beep;
 int config_beep_msg;

@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
+ *		  2004 Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -171,9 +172,15 @@ int protocol_status(void *data, va_list ap)
 	if (!(s = session_find(session)))
 		return 0;
 
-	/* ignorujemy nieznanych nam osobników */
-	if (!(u = userlist_find(s, uid)))
-		return 0;
+	/* we are checking who user we know */
+	if (!(u = userlist_find(s, uid))) {
+		if (config_auto_user_add) {
+			if (!(u=userlist_add(s, uid, uid)))
+				return 0;
+		} else {
+			return 0;
+		}
+	}
 
         ignore_status = ignored_check(s, uid) & IGNORE_STATUS;
         ignore_status_descr = ignored_check(s, uid) & IGNORE_STATUS_DESCR;

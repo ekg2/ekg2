@@ -1,5 +1,6 @@
 // ma³y opis dostêpnych zmiennych
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+//		      2004 adam mikuta <adammikuta@poczta.onet.pl>
 
 audio_device
 	typ: tekst
@@ -15,6 +16,17 @@ auto_save
 
 	po jakim czasie automatycznie zapisaæ ustawienia, w sekundach.
 	je¶li 0, nie zapisuje automatycznie.
+
+auto_user_add
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	okre¶la czy osoby których nie mamy w kontaktach a dostajemy 
+	informacjê o ich stanie maj± byæ dodawane automatycznie do listy
+	kontaktów
+	(taka sytacja wystêpuje je¶li w kontaktach ma nas kto¶ kto ma
+	w³±czony tryb tylko dla przyjació³ a my go w swoich kontaktach
+	nie mamy)
 
 away_reason
 	typ: tekst
