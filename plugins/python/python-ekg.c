@@ -154,16 +154,16 @@ PyObject *ekg_cmd_plugins(PyObject * self, PyObject * pyargs)
     int len = 0;
 
     for (l = plugins; l; l = l->next) {
-	len++;
+		len++;
     }
 
     list = PyList_New(len);
     len = 0;
 
     for (l = plugins; l; l = l->next) {
-	plugin_t *p = l->data;
-	PyList_SetItem(list, len, PyString_FromString(p->name));
-	len++;
+		plugin_t *p = l->data;
+		PyList_SetItem(list, len, PyString_FromString(p->name));
+		len++;
     }
     Py_INCREF(list);
     return list;

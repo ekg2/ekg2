@@ -56,7 +56,7 @@ int python_run(const char *filename);
 
 plugin_t python_plugin = {
 	name: "python",
-	pclass: PLUGIN_GENERIC,
+	pclass: PLUGIN_SCRIPTING,
 	destroy: python_plugin_destroy,
 	theme_init: python_theme_init,
 };

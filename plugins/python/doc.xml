@@ -355,6 +355,15 @@
             </listitem>
          </varlistentry>
          <varlistentry>
+            <term>getUser(nazwa)</term>
+            <listitem>
+               <para>
+                  Zwraca obiekt klasy user o danym identyfikatorze (gg:123,
+                  jid:test@example.com itp.)
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
             <term>status() (NFY)</term>
             <listitem>
                <para>
@@ -363,52 +372,145 @@
                </para>
             </listitem>
          </varlistentry>
-         <varlistentry>
-            <term>users (NFY)</term>
-            <listitem>
-               <para>
-                  S³ownik zawieraj±cy obiekty typu user (kluczowane po
-                  identyfikatorze - gg:123, jid:test@example.com itp.)
-               </para>
-            </listitem>
-         </varlistentry>
       </variablelist>
    </sect3>
    <sect3>
-      <title>Klasa user (NFY)</title>
+      <title>Klasa user</title>
       <para>
          Obiekt zawiera atrybutowy dostêp do informacji o obiekcie:
       </para>
       <itemizedlist>
          <listitem>
-            <para>
-               id
-            </para>
+            <formalpara>
+               <title>
+                  uid
+               </title>
+               <para>
+                  identyfikator
+               </para>
+            </formalpara>
          </listitem>
          <listitem>
-            <para>
-               name
-            </para>
+            <formalpara>
+               <title>
+                  nickname
+               </title>
+               <para>
+                  ksywka
+               </para>
+            </formalpara>
          </listitem>
          <listitem>
-            <para>
-               groups[]
-            </para>
+            <formalpara>
+               <title>
+                  first_name
+               </title>
+               <para>
+                  imiê
+               </para>
+            </formalpara>
          </listitem>
          <listitem>
-            <para>
-               status
-            </para>
+            <formalpara>
+               <title>
+                  last_name
+               </title>
+               <para>
+                  nazwisko
+               </para>
+            </formalpara>
          </listitem>
          <listitem>
-            <para>
-               desc
-            </para>
+            <formalpara>
+               <title>
+                  mobile
+               </title>
+               <para>
+                  nr telefonu
+               </para>
+            </formalpara>
          </listitem>
          <listitem>
-            <para>
-               lastseen
-            </para>
+            <formalpara>
+               <title>
+                  status
+               </title>
+               <para>
+                  Zwraca krotkê zawieraj±c± status i opis
+               </para>
+            </formalpara>
+         </listitem>
+         <listitem>
+            <formalpara>
+               <title>
+                  resource
+               </title>
+               <para>
+                  Zasób jabberowy u¿ytkownika
+               </para>
+            </formalpara>
+         </listitem>
+         <listitem>
+            <formalpara>
+               <title>
+                  last_seen
+               </title>
+               <para>
+                  Czas ostatniej dostêpno¶ci (timestamp)
+               </para>
+            </formalpara>
+         </listitem>
+         <listitem>
+            <formalpara>
+               <title>
+                  groups()
+               </title>
+               <para>
+                  metoda zwracaj±ca listê zawieraj±c± nazwy grup do których nale¿y
+                  u¿ytkownik
+               </para>
+            </formalpara>
+         </listitem>
+         <listitem>
+            <formalpara>
+               <title>
+                  ip
+               </title>
+               <para>
+                  adres ip
+               </para>
+            </formalpara>
+         </listitem>
+         <listitem>
+            <formalpara>
+               <title>
+                  last_ip
+               </title>
+               <para>
+                  poprzedni adres ip
+               </para>
+            </formalpara>
+         </listitem>
+         <listitem>
+            <formalpara>
+               <title>
+                  status_time
+               </title>
+               <para>
+                  czas ostatniej zmiany statusu (timestamp)
+               </para>
+            </formalpara>
+         </listitem>
+         <listitem>
+            <formalpara>
+               <title>
+                  last_status
+               </title>
+               <para>
+                  krotka zawieraj±ca status i opis, kiedy osoba by³a ostatni
+                  raz dostêpna
+               </para>
+            </formalpara>
          </listitem>
       </itemizedlist>
    </sect3>
@@ -500,6 +602,18 @@ def handle_status(session, uid, status, desc):
     ekg.echo("Status: "+status)
     if desc:
 	ekg.echo("Opis  : "+desc)
+    sesja = ekg.getSession(session)
+    user = sesja.getUser(uid)
+    if user.last_status:
+	ekg.echo(str(user.last_status))
+	stat, des = user.last_status
+	ekg.echo("Ostatni status: "+stat)
+	if user.last_status[1]:
+	    ekg.echo("Ostatni opis  : "+des)
+    else:
+	ekg.echo("Nie ma poprzedniego stanu - pewnie dopiero siê ³±czymy...")
+    ekg.echo("IP: "+user.ip)
+    ekg.echo("Grupy: "+", ".join(user.groups()))
     if status == ekg.STATUS_AWAY:
 	ekg.echo("Chyba go nie ma...")
     if status == ekg.STATUS_XA:

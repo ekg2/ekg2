@@ -41,6 +41,7 @@
 
 #include "python.h"
 #include "python-session.h"
+#include "python-user.h"
 
 // * ***************************************************************************
 // *
@@ -195,6 +196,41 @@ PyObject *ekg_session_connected(ekg_sessionObj * self)
 	}
 }
 
+/**
+ * ekg_session_getUser()
+ *
+ * return user object
+ *
+ */
+
+PyObject *ekg_session_getUser(ekg_sessionObj * self, PyObject * pyargs)
+{
+    ekg_userObj *pyuser;
+    char buf[100];
+    char *name = NULL;
+
+    if (!PyArg_ParseTuple(pyargs, "s:getUser", &name))
+		return NULL;
+
+    debug("[python] checking for user '%s' in session '%s'\n", name, self->name);
+    session_t *s = session_find(self->name);
+	userlist_t *u = userlist_find(s, name);
+    if (!u) {
+		snprintf(buf, 99, "Can't find user '%s'", name);
+		PyErr_SetString(PyExc_KeyError, buf);
+		Py_INCREF(Py_None);
+		return Py_None;
+    }
+
+    debug("[python] Building object for user '%s'\n", name);
+	pyuser = PyObject_New(ekg_userObj, &ekg_user_type);
+	pyuser->name = xmalloc(xstrlen(name)+1);
+	xstrcpy(pyuser->name, name);
+	pyuser->session = xmalloc(xstrlen(self->name)+1);
+	xstrcpy(pyuser->session, self->name);
+    Py_INCREF(pyuser);
+    return (PyObject *)pyuser;
+}
 
 /*
  * Local Variables:
