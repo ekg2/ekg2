@@ -520,6 +520,22 @@ int variable_set(const char *name, const char *value, int allow_foreign)
 
 			goto notify;
 		}
+                case VAR_THEME:
+                {
+                        char **tmp = (char**)(v->ptr);
+
+                        xfree(*tmp);
+
+                        if (value) {
+                                if (*value == 1)
+                                        *tmp = base64_decode(value + 1);
+                                else
+                                        *tmp = xstrdup(value);
+                        } else
+                                *tmp = NULL;
+
+                        goto notify;
+                }
 
 		case VAR_STR:
 		{
