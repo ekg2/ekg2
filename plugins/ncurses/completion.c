@@ -57,7 +57,7 @@ static void dcc_generator(const char *text, int len)
 
 	for (i = 0; words[i]; i++)
 		if (!xstrncasecmp(text, words[i], len))
-			array_add(&completions, xstrdup(words[i]));
+			array_add_check(&completions, xstrdup(words[i]), 1);
 }
 
 static void command_generator(const char *text, int len)
@@ -85,9 +85,9 @@ static void command_generator(const char *text, int len)
 		char *without_sess_id = xstrchr(c->name, ':');
 
 		if (!xstrncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
-			array_add(&completions, saprintf("%s%s%s", slash, dash, c->name));
+			array_add_check(&completions, saprintf("%s%s%s", slash, dash, c->name), 1);
 		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !xstrncasecmp(text, without_sess_id + 1, len))
-			array_add(&completions, saprintf("%s%s%s", slash, dash, without_sess_id + 1));
+			array_add_check(&completions, saprintf("%s%s%s", slash, dash, without_sess_id + 1), 1);
 	}
 }
 
@@ -97,7 +97,7 @@ static void events_generator(const char *text, int len)
         
 	for (i = 0; events_all && events_all[i]; i++)
                 if (!xstrncasecmp(text, events_all[i], len))
-                        array_add(&completions, xstrdup(events_all[i]));
+                        array_add_check(&completions, xstrdup(events_all[i]), 1);
 }
 
 static void ignorelevels_generator(const char *text, int len)
@@ -120,7 +120,7 @@ static void ignorelevels_generator(const char *text, int len)
 
 	for (i = 0; ignore_labels[i].name; i++)
 		if (!xstrncasecmp(tmp, ignore_labels[i].name, len))
-			array_add(&completions, ((tmp == text) ? xstrdup(ignore_labels[i].name) : saprintf("%s%s", pre, ignore_labels[i].name)));
+			array_add_check(&completions, ((tmp == text) ? xstrdup(ignore_labels[i].name) : saprintf("%s%s", pre, ignore_labels[i].name)), 1);
 }
 
 static void unknown_uin_generator(const char *text, int len)
@@ -130,7 +130,7 @@ static void unknown_uin_generator(const char *text, int len)
 	for (i = 0; i < send_nicks_count; i++) {
 		if (send_nicks[i] && xstrchr(send_nicks[i], ':') && xisdigit(xstrchr(send_nicks[i], ':')[1]) && !xstrncasecmp(text, send_nicks[i], len))
 			if (!array_contains(completions, send_nicks[i], 0))
-				array_add(&completions, xstrdup(send_nicks[i]));
+				array_add_check(&completions, xstrdup(send_nicks[i]), 1);
 	}
 }
 
@@ -148,7 +148,7 @@ static void known_uin_generator(const char *text, int len)
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
-			array_add(&completions, xstrdup(u->nickname));
+			array_add_check(&completions, xstrdup(u->nickname), 1);
 			done = 1;
 		}
 	}
@@ -157,7 +157,7 @@ static void known_uin_generator(const char *text, int len)
 		userlist_t *u = l->data;
 
 		if (!done && !xstrncasecmp(text, u->uid, len))
-			array_add(&completions, xstrdup(u->uid));
+			array_add_check(&completions, xstrdup(u->uid), 1);
 	}
 }
 
@@ -169,7 +169,7 @@ static void conference_generator(const char *text, int len)
                 struct conference *c = l->data;
 
                 if (!xstrncasecmp(text, c->name, len))
-                        array_add(&completions, xstrdup(c->name));
+                        array_add_check(&completions, xstrdup(c->name), 1);
         }
 }
 
@@ -185,10 +185,10 @@ static void variable_generator(const char *text, int len)
 
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
-				array_add(&completions, saprintf("-%s", v->name));
+				array_add_check(&completions, saprintf("-%s", v->name), 1);
 		} else {
 			if (!xstrncasecmp(text, v->name, len))
-				array_add(&completions, xstrdup(v->name));
+				array_add_check(&completions, xstrdup(v->name), 1);
 		}
 	}
 }
@@ -211,10 +211,10 @@ static void ignored_uin_generator(const char *text, int len)
 
 		if (!u->nickname) {
 			if (!xstrncasecmp(text, u->uid, len))
-				array_add(&completions, xstrdup(u->uid));
+				array_add_check(&completions, xstrdup(u->uid), 1);
 		} else {
 			if (u->nickname && !xstrncasecmp(text, u->nickname, len))
-				array_add(&completions, xstrdup(u->nickname));
+				array_add_check(&completions, xstrdup(u->nickname), 1);
 		}
 	}
 }
@@ -237,10 +237,10 @@ static void blocked_uin_generator(const char *text, int len)
 
 		if (!u->nickname) {
 			if (!xstrncasecmp(text, u->uid, len))
-				array_add(&completions, xstrdup(u->uid));
+				array_add_check(&completions, xstrdup(u->uid), 1);
 		} else {
 			if (u->nickname && !xstrncasecmp(text, u->nickname, len))
-				array_add(&completions, xstrdup(u->nickname));
+				array_add_check(&completions, xstrdup(u->nickname), 1);
 		}
 	}
 }
@@ -324,7 +324,7 @@ void dir_generator(const char *text, int len)
 
 		if (!strncmp(name, fname, xstrlen(fname))) {
 			name = saprintf("%s%s%s", (dname) ? dname : "", name, "/");
-			array_add(&completions, name);
+			array_add_check(&completions, name, 1);
 		}
 
 		xfree(namelist[i]);
@@ -405,7 +405,7 @@ again:
 
 		if (!strncmp(name, fname, xstrlen(fname))) {
 			name = saprintf("%s%s%s", (dname) ? dname : "", name, (isdir) ? "/" : "");
-			array_add(&completions, name);
+			array_add_check(&completions, name, 1);
 		}
 
 		xfree(namelist[i]);
@@ -489,7 +489,7 @@ static void possibilities_generator(const char *text, int len)
 
 	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
 		if (!xstrncasecmp(text, c->possibilities[i], len))
-			array_add(&completions, xstrdup(c->possibilities[i]));
+			array_add_check(&completions, xstrdup(c->possibilities[i]), 1);
 }
 
 static void window_generator(const char *text, int len)
@@ -499,7 +499,7 @@ static void window_generator(const char *text, int len)
 
 	for (i = 0; words[i]; i++)
 		if (!xstrncasecmp(text, words[i], len))
-			array_add(&completions, xstrdup(words[i]));
+			array_add_check(&completions, xstrdup(words[i]), 1);
 }
 
 static void sessions_generator(const char *text, int len)
