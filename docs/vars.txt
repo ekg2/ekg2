@@ -76,15 +76,6 @@ back_reason
 	domy¶lny opis stanu dostêpnego, ustawiany przy zmianie bez podania 
 	parametru.
 
-backlog_size
-	typ: liczba
-	domy¶lna warto¶æ: 1000
-
-	ilo¶æ linii, która bêdzie zapisywana w buforze ekranu (tym, który
-	jest przewijany klawiszami Page Up i Page Down). nie mo¿e byæ
-	mniejsza ni¿ ilo¶æ linii na ekranie. dzia³a tylko w interfejsie
-	ncurses.
-
 beep
 	typ: bool
 	domy¶lna warto¶æ: 1
@@ -252,15 +243,6 @@ display_color_map
 	- podkre¶lony+pochy³y,
 	- podkre¶lony+pochy³y+pogrubiony.
 
-display_crap
-	typ: bool
-	domy¶lna warto¶æ: 1
-
-	mówi, czy w oknie rozmowy maj± byæ wy¶wietlane komunikaty niezwi±zane
-	z rozmówc±. je¶li jest równe 0, w oknie rozmowy s± wy¶wietlane tylko
-	wiadomo¶ci i informacje o zmianie stanu rozmówcy. ma znaczenie tylko
-	w interfejsie ncurses.
-
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: 1
@@ -294,27 +276,12 @@ display_welcome
 
 	mówi, czy ekg ma wy¶wietliæ tekst powitalny po uruchomieniu.
 
-display_transparent
-	typ: bool
-	domy¶lna warto¶æ: 1
-
-	mówi, czy w interfejsie ncurses t³o ma byæ przezroczyste. zmiany
-	odnios± skutek po ponownym uruchomieniu.
-
 emoticons
 	typ: bool
 	domy¶lna warto¶æ: 1
 
 	uruchamia rozwijanie emotikonów w zdefiniowane teksty. wiêcej
 	szczegó³ów w pliku docs/files.txt w sekcji 5-tej.
-
-enter_scrolls
-	typ: bool
-	domy¶lna warto¶æ: 0
-
-	je¶li w³±czone, wci¶niêcie klawisza Enter w pustej linii spowoduje
-	przesuniêcie ekranu o jedn± liniê. ma znaczenie tylko w interfejsie
-	ncurses.
 
 events_delay
 	typ: liczba
@@ -325,13 +292,6 @@ events_delay
 	informacje o niedostêpno¶ci osób. chodzi o to, aby nie traktowaæ
 	pocz±tkowych informacji o stanie osób po po³±czeniu jako zmianê
 	ich stanu.
-
-header_size
-	typ: liczba
-	domy¶lna warto¶æ: 0
-
-	okre¶la rozmiar nag³ówka okna wy¶wietlanego na górze ekranu.
-	maksymalna ilo¶æ linii to 5.
 
 keep_reason
 	typ: liczba
@@ -563,13 +523,7 @@ speech_app
 	aplikacja u¿ywana do odczytywania tekstów wy¶wietlanych na ekranie.
 	jej ustawienie powoduje równie¿ zmianê motywu na taki, który jest
 	³atwiejszy do wymówienia.
-
-statusbar_size
-	typ: liczba
-	domy¶lna warto¶æ: 1
-
-	okre¶la rozmiar paska stanu w liniach w zakresie od 1 do 5.
-
+	
 tab_command
 	typ: tekst
 	domy¶lna warto¶æ: "chat"

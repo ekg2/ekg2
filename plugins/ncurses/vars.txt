@@ -1,6 +1,14 @@
 // opis dostêpnych zmiennych w pluginie ncurses
 // (c) copyright 2004 piotr kupisiewicz <deletek@ekg2.org>
 
+backlog_size
+	typ: liczba
+	domy¶lna warto¶æ: 1000
+	
+	ilo¶æ linii, która bêdzie zapisywana w buforze ekranu (tym, który
+	jest przewijany klawiszami Page Up i Page Down). nie mo¿e byæ
+	mniejsza ni¿ ilo¶æ linii na ekranie. 
+
 contacts
 	typ: liczba
 	domy¶lna warto¶æ: 2
@@ -57,5 +65,45 @@ contacts_size
 	domy¶lna warto¶æ: 8
 	
 	okre¶la szeroko¶æ okienka z list± kontaktów.
+
+display_crap
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	mówi, czy w oknie rozmowy maj± byæ wy¶wietlane komunikaty niezwi±zane
+	z rozmówc±. je¶li jest równe 0, w oknie rozmowy s± wy¶wietlane tylko
+	wiadomo¶ci i informacje o zmianie stanu rozmówcy. 
+
+display_transparent
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	mówi, czy w t³o ma byæ przezroczyste. 
+
+enter_scrolls
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	je¶li w³±czone, wci¶niêcie klawisza Enter w pustej linii spowoduje
+	przesuniêcie ekranu o jedn± liniê. 
+
+header_size
+	typ: liczba
+	domy¶lna warto¶æ: 0
+	
+	okre¶la rozmiar nag³ówka okna wy¶wietlanego na górze ekranu.
+	maksymalna ilo¶æ linii to 5.
+
+margin_size
+	typ: liczba
+	domy¶lna warto¶æ: 15
+	
+	okre¶la rozmiar marginesu wykorzystywanego przy /| w themach
+
+statusbar_size
+	typ: liczba
+	domy¶lna warto¶æ: 1
+	
+	okre¶la rozmiar paska stanu w liniach w zakresie od 1 do 5.
 
 $Id$
