@@ -162,6 +162,7 @@ int jabber_validate_uid(void *data, va_list ap)
 int jabber_write_status(session_t *s)
 {
         jabber_private_t *j = session_private_get(s);
+        int priority = session_int_get(s, "priority");
         const char *status;
         char *descr;
 
@@ -176,19 +177,19 @@ int jabber_write_status(session_t *s)
 
         if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
                 if (descr)
-                        jabber_write(j, "<presence><status>%s</status></presence>", descr);
+                        jabber_write(j, "<presence><status>%s</status><priority>%d</priority></presence>", descr, priority);
                 else
-                        jabber_write(j, "<presence/>");
+                        jabber_write(j, "<presence><priority>%d</priority></presence>", priority);
         } else if (!xstrcmp(status, EKG_STATUS_INVISIBLE)) {
                 if (descr)
-                        jabber_write(j, "<presence type=\"invisible\"><status>%s</status></presence>", descr);
+                        jabber_write(j, "<presence type=\"invisible\"><status>%s</status><priority>%d</priority></presence>", descr, priority);
                 else
-                        jabber_write(j, "<presence type=\"invisible\"/>");
+                        jabber_write(j, "<presence type=\"invisible\"><priority>%d</priority></presence>", priority);
         } else {
                 if (descr)
-                        jabber_write(j, "<presence><show>%s</show><status>%s</status></presence>", status, descr);
+                        jabber_write(j, "<presence><show>%s</show><status>%s</status><priority>%d</priority></presence>", status, descr, priority);
                 else
-                        jabber_write(j, "<presence><show>%s</show></presence>", status);
+                        jabber_write(j, "<presence><show>%s</show><priority>%d</priority></presence>", status, priority);
         }
 
         xfree(descr);
@@ -1033,6 +1034,7 @@ int jabber_plugin_init()
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
         plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "port", VAR_INT, itoa(5222), 0, NULL);
+        plugin_var_add(&jabber_plugin, "priority", VAR_INT, itoa(5), 0, NULL);
         plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, itoa(5223), 0, NULL);

@@ -1,4 +1,4 @@
-EXTRA_DIST = commands.txt
+EXTRA_DIST = commands.txt session.txt vars.txt
 
 lib_LTLIBRARIES = jabber.la
 jabber_la_SOURCES = jabber.c commands.c misc.c digest.c xmlnode.c jabber.h

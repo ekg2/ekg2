@@ -86,6 +86,12 @@ port
 	
 	port jakiego mamy u¿ywaæ przy ³±czeniu
 
+priority
+	typ: liczba
+	domy¶lna warto¶æ: 5
+
+	priorytet po³±czenia z serwerem jabbera.
+
 resource
 	typ: tekst
 	domy¶lna warto¶æ: ekg2
