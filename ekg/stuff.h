@@ -209,6 +209,7 @@ char *config_sound_notify_file;
 char *config_sound_mail_file;
 char *config_speech_app;
 int config_statusbar_size;
+char *config_subject_prefix;
 char *config_tab_command;
 char *config_theme;
 int config_time_deviation;

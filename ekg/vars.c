@@ -130,6 +130,7 @@ void variable_init()
 	variable_add(NULL, "sound_mail_file", VAR_STR, 1, &config_sound_mail_file, NULL, NULL, dd_sound);
 	variable_add(NULL, "sound_app", VAR_STR, 1, &config_sound_app, NULL, NULL, NULL);
 	variable_add(NULL, "speech_app", VAR_STR, 1, &config_speech_app, NULL, NULL, NULL);
+	variable_add(NULL, "subject_prefix", VAR_STR, 1, &config_subject_prefix, NULL, NULL, NULL);
 	variable_add(NULL, "tab_command", VAR_STR, 1, &config_tab_command, NULL, NULL, NULL);
 	variable_add(NULL, "theme", VAR_STR, 1, &config_theme, changed_theme, NULL, NULL);
 	variable_add(NULL, "time_deviation", VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
@@ -155,6 +156,7 @@ void variable_set_default()
 	config_timestamp = xstrdup("%H:%M ");
 	config_display_color_map = xstrdup("nTgGbBrR");
 //	config_dcc_limit = xstrdup("30/30");
+	config_subject_prefix = xstrdup("## ");
 }
 
 /*

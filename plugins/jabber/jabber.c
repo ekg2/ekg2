@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *		       Tomasz Torcz <zdzichu@irc.pl>	
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -673,6 +674,8 @@ COMMAND(jabber_command_msg)
 {
 	jabber_private_t *j = session_private_get(session);
 	char *msg;
+	char *subject = NULL;
+	char *subtmp;
 	const char *uid;
 
 	if (!session_check(session, 1, "jid")) {
@@ -700,10 +703,30 @@ COMMAND(jabber_command_msg)
 
 		uid += 4;
 	}
+	
+	/* czy wiadomo¶æ ma mieæ temat? */
+	if (config_subject_prefix && !strncmp(params[1], config_subject_prefix, strlen(config_subject_prefix))) {
+		/* obcinamy prefix tematu */
+		subtmp = xstrdup((params[1]+strlen(config_subject_prefix)));
 
-	msg = jabber_escape(params[1]);
-	jabber_write(j, "<message %sto=\"%s\"><body>%s</body></message>", (!strcasecmp(name, "chat")) ? "type=\"chat\" " : "", uid, msg);
+		/* je¶li ma wiêcej linijek, zostawiamu tylko pierwsz± */
+		if (strchr(subtmp, 10)) *(strchr(subtmp, 10)) = 0;
+
+		subject = jabber_escape(subtmp);
+		/* body of wiadomo¶æ to wszystko po koñcu pierwszej linijki */
+		msg = jabber_escape(strchr(params[1], 10)); 
+		xfree(subtmp);
+	} else 
+		msg = jabber_escape(params[1]); /* bez tematu */
+
+	jabber_write(j, "<message %sto=\"%s\">", (!strcasecmp(name, "chat")) ? "type=\"chat\" " : "", uid);
+
+	if (subject) jabber_write(j, "<subject>%s</subject>", subject);
+
+	jabber_write(j, "<body>%s</body></message>", msg);
+
 	xfree(msg);
+	xfree(subject);
 
 	if (config_display_sent) {
 		char *tmp = saprintf("uid:%s", uid);
@@ -945,7 +968,7 @@ int jabber_plugin_init()
 	command_add(&jabber_plugin, "jid:connect", "?", jabber_command_connect, 0, "", "³±czy siê z serwerem", "");
 	command_add(&jabber_plugin, "jid:disconnect", "?", jabber_command_disconnect, 0, " [powód/-]", "roz³±cza siê od serwera", "");
 	command_add(&jabber_plugin, "jid:reconnect", "", jabber_command_reconnect, 0, "", "roz³±cza i ³±czy siê ponownie", "");
-	command_add(&jabber_plugin, "jid:msg", "??", jabber_command_msg, 0, "", "wysy³a pojedyncz± wiadomo¶æ", "");
+	command_add(&jabber_plugin, "jid:msg", "??", jabber_command_msg, 0, "", "wysy³a pojedyncz± wiadomo¶æ", "\nPoprzedzenie wiadomo¶ci wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje potraktowanie pierwszej linijki jako tematu.");
 	command_add(&jabber_plugin, "jid:chat", "??", jabber_command_msg, 0, "", "wysy³a wiadomo¶æ w ramach rozmowy", "");
 	command_add(&jabber_plugin, "jid:", "?", jabber_command_inline_msg, 0, "", "wysy³a wiadomo¶æ", "");
 	command_add(&jabber_plugin, "jid:xml", "?", jabber_command_xml, 0, "", "wysy³a polecenie xml", "\nPolecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML (\" ' & < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.");
