@@ -47,7 +47,7 @@ COMMAND(gg_command_find)
 	}
 	
 	if (!params[0]) {
-		if (!(params[0] = window_current->target)) {
+		if (!(params[0] = xstrdup(window_current->target))) {
 			printq("not_enough_params", name);
 			return -1;
 		}
