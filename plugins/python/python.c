@@ -51,7 +51,7 @@ int python_run(const char *filename);
 /**
  * python_plugin
  *
- * struktura opisuj±ca plugin
+ * plugin definition
  */
 
 plugin_t python_plugin = {
@@ -70,7 +70,7 @@ plugin_t python_plugin = {
 /**
  * python_command_eval()
  *
- * wykonanie kodu pythona
+ * execute python code
  *
  */
 
@@ -87,7 +87,7 @@ COMMAND(python_command_eval)
 /**
  * python_command_run()
  *
- * wykonanie skryptu pythonowego
+ * run single python script
  *
  */
 
@@ -104,7 +104,7 @@ COMMAND(python_command_run)
 /**
  * python_command_load()
  *
- * za³adowanie modu³u
+ * load python script
  *
  */
 
@@ -121,7 +121,7 @@ COMMAND(python_command_load)
 /**
  * python_command_unload()
  *
- * usuniêcie modu³u
+ * unload python script
  *
  */
 
@@ -138,7 +138,7 @@ COMMAND(python_command_unload)
 /**
  * python_command_list()
  *
- * wy¶wietla listê za³adowanych skryptów.
+ * list loaded python scripts
  *
  */
 
@@ -168,7 +168,7 @@ COMMAND(python_command_list)
 /**
  * python_protocol_status()
  *
- * przetwarzanie statusów
+ * handle status events
  *
  */
 
@@ -200,7 +200,7 @@ int python_protocol_status(void *data, va_list ap)
 /**
  * python_protocol_message()
  *
- * przetwarzanie wiadomo¶ci
+ * handle message events
  *
  */
 
@@ -252,6 +252,64 @@ int python_protocol_message(void *data, va_list ap)
 }
 
 /**
+ * python_protocol_connected()
+ *
+ * handle connect events
+ *
+ */
+
+int python_protocol_connected(void *data, va_list ap)
+{
+        debug("[python] handling connection\n");
+        char **__session = va_arg(ap, char**), *session = *__session;
+        int python_handle_result;
+
+        debug("[python] running python scripts\n");
+
+        PYTHON_HANDLE_HEADER(connect, "(s)", session)
+        ;
+        PYTHON_HANDLE_FOOTER()
+
+        switch (python_handle_result) {
+                case 0:
+                        return -1;
+                        break;
+                default:
+                        return 0;
+                        break;
+        }
+}
+
+/**
+ * python_protocol_disconnected()
+ *
+ * handle disconnect events
+ *
+ */
+
+int python_protocol_disconnected(void *data, va_list ap)
+{
+        debug("[python] handling disconnection\n");
+        char **__session = va_arg(ap, char**), *session = *__session;
+        int python_handle_result;
+
+        debug("[python] running python scripts\n");
+
+        PYTHON_HANDLE_HEADER(disconnect, "(s)", session)
+        ;
+        PYTHON_HANDLE_FOOTER()
+
+        switch (python_handle_result) {
+                case 0:
+                        return -1;
+                        break;
+                default:
+                        return 0;
+                        break;
+        }
+}
+
+/**
  * python_timer()
  *
  * timer
@@ -272,9 +330,9 @@ void python_timer()
 /**
  * python_exec()
  *
- * wykonuje polecenie pythona.
+ * run python code
  *
- *  - command - polecenie.
+ *  - command - code to run
  *
  */
 
@@ -300,7 +358,9 @@ int python_exec(const char *command)
 /**
  * python_run()
  *
- * uruchamia jednorazowo skrypt pythona.
+ * run python script from file
+ *
+ * - filename - path to file to run
  *
  */
 
@@ -322,7 +382,8 @@ int python_run(const char *filename)
 /*
  * python_get_func()
  *
- * zwraca dan± funkcjê modu³u.
+ * return function from module
+ *
  */
 
 PyObject *python_get_func(PyObject *module, const char *name)
@@ -340,9 +401,9 @@ PyObject *python_get_func(PyObject *module, const char *name)
 /*
  * python_load()
  *
- * ³aduje skrypt pythona o podanej nazwie z ~/(etc/).ekg/scripts
+ * load script with given name from ~/(etc/).ekg/scripts
  *
- *  - name - nazwa skryptu,
+ *  - name - script name
  *  - quiet.
  *
  * 0/-1
@@ -406,7 +467,7 @@ int python_load(const char *name, int quiet)
 	m.handle_status_own       = python_get_func(module, "handle_status_own");
 	m.handle_connect          = python_get_func(module, "handle_connect");
 	m.handle_disconnect       = python_get_func(module, "handle_disconnect");
-//	m.handle_keypress         = python_get_func(module, "handle_keypress"); // XXX do dodania pó¼niej
+//	m.handle_keypress         = python_get_func(module, "handle_keypress"); // TODO
 
 	PyErr_Clear();
 
@@ -422,7 +483,7 @@ int python_load(const char *name, int quiet)
 /*
  * python_unload()
  *
- * usuwa z pamiêci podany skrypt.
+ * remove script from memory
  *
  *  - name - nazwa skryptu,
  *  - quiet.
@@ -475,7 +536,7 @@ int python_unload(const char *name, int quiet)
 /*
  * python_autorun()
  *
- * ³aduje skrypty z katalogu $CONFIG/scripts/autorun
+ * load scripts from $CONFIG/scripts/autorun
  *
  */
 int python_autorun()
@@ -489,8 +550,9 @@ int python_autorun()
 	if (!(dir = opendir(path)))
 		return 0;
 
-	/* nale¿y utworzyæ plik ~/(ekg/).ekg/scripts/autorun/__init__.py, inaczej
-	 * python nie bêdzie mo¿na ³adowaæ skryptów przez ,,autorun.nazwa'' */
+
+
+        // check if there's __init__.py in autorun dir
 
 	tmp = saprintf("%s/__init__.py", path);
 
@@ -532,25 +594,20 @@ int python_autorun()
 
 // ********************************************************************************
 // *
-// * Obs³uga interpretera
+// * Interpreter related functions
 // *
 // ********************************************************************************
 
 /**
  * python_initialize()
  *
- * inicjalizacja interpretera
+ * initialize interpreter
  *
  */
 
 int python_initialize()
 {
 	PyObject *ekg, *ekg_config;
-
-	/* PyImport_ImportModule spodziewa siê nazwy modu³u, który znajduje
-	 * siê w $PYTHONPATH, wiêc dodajemy tam katalog ~/.gg/scripts. mo¿na
-	 * to zrobiæ w bardziej elegancki sposób, ale po co komplikowaæ sobie
-	 * ¿ycie? */
 
 	if (getenv("PYTHONPATH")) {
 		char *tmp = saprintf("%s:%s", getenv("PYTHONPATH"), prepare_path("scripts", 0));
@@ -585,11 +642,11 @@ int python_initialize()
 
 	PyModule_AddObject(ekg, "config", ekg_config);
 
-	// Sta³e - ogólne
+	// Const - general
 
 	PyModule_AddStringConstant(ekg, "VERSION", VERSION);
 
-	// Sta³e - typy wiadomo¶ci
+	// Const - message types
 
 	PyModule_AddIntConstant(ekg, "MSGCLASS_MESSAGE",   EKG_MSGCLASS_MESSAGE);
 	PyModule_AddIntConstant(ekg, "MSGCLASS_CHAT",      EKG_MSGCLASS_CHAT);
@@ -597,7 +654,7 @@ int python_initialize()
 	PyModule_AddIntConstant(ekg, "MSGCLASS_SENT_CHAT", EKG_MSGCLASS_SENT_CHAT);
 	PyModule_AddIntConstant(ekg, "MSGCLASS_SYSTEM",    EKG_MSGCLASS_SYSTEM);
 
-	// Sta³e - typy statusów
+	// Const - status types
 
 	PyModule_AddStringConstant(ekg, "STATUS_NA",            EKG_STATUS_NA);
 	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",         EKG_STATUS_AVAIL);
@@ -611,7 +668,7 @@ int python_initialize()
 	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",       EKG_STATUS_UNKNOWN);
 	PyModule_AddStringConstant(ekg, "STATUS_ERROR",         EKG_STATUS_ERROR);
 
-	// Sta³ê - ignorowanie
+	// Const - ignore levels
 
 	PyModule_AddIntConstant(ekg, "IGNORE_STATUS",       IGNORE_STATUS);
 	PyModule_AddIntConstant(ekg, "IGNORE_STATUS_DESCR", IGNORE_STATUS_DESCR);
@@ -627,7 +684,7 @@ int python_initialize()
 /**
  * python_finalize()
  *
- * oczyszczenie interpretera, usuniêcie modu³ów, skryptów
+ * clean interpreter, unload modules, scripts etc.
  *
  */
 
@@ -655,34 +712,34 @@ int python_finalize()
 
 // ********************************************************************************
 // *
-// * Obs³uga pluginu
+// * Plugin support functions
 // *
 // ********************************************************************************
 
 /**
  * python_theme_init()
  *
- * inicjalizacja formatek
+ * initialize theme formats
  *
  */
 
 int python_theme_init() {
-	format_add("python_eval_error", "%! B³±d wykonywania kodu\n", 1);
-	format_add("python_list", "%> %1\n", 1);
-	format_add("python_list_empty", "%! Brak za³adowanych skryptów\n", 1);
-	format_add("python_loaded", "%) Skrypt zosta³ za³adowany\n", 1);
-	format_add("python_removed", "%) Skrypt zosta³ usuniêty\n", 1);
-	format_add("python_need_name", "%! Nie podano nazwy skryptu\n", 1);
-	format_add("python_error", "%! Error %T%1%n\n", 1);
-	format_add("python_not_found", "%! Nie znaleziono skryptu %T%1%n\n", 1);
-	format_add("python_wrong_location", "%! Skrypt nale¿y umie¶ciæ w katalogu %T%1%n\n", 1);
+	format_add("python_eval_error", _("%! Error running code\n"), 1);
+	format_add("python_list", _("%> %1\n"), 1);
+	format_add("python_list_empty", _("%! No scripts loaded\n"), 1);
+	format_add("python_loaded", _("%) Script loaded\n"), 1);
+	format_add("python_removed", _("%) Script removed\n"), 1);
+	format_add("python_need_name", _("%! No filename given\n"), 1);
+	format_add("python_error", _("%! Error %T%1%n\n"), 1);
+	format_add("python_not_found", _("%! Can't find script %T%1%n\n"), 1);
+	format_add("python_wrong_location", _("%! Script have to be in %T%1%n (don't add path)\n"), 1);
         return 0;
 }
 
 /**
  * python_plugin_destroy()
  *
- * wyczyszczenie pluginu
+ * remove plugin
  *
  */
 
@@ -712,8 +769,10 @@ int python_plugin_init()
         command_add(&python_plugin, "python:unload", "?",  python_command_unload, 0, NULL);
         command_add(&python_plugin, "python:list",    "",  python_command_list,   0, NULL);
 
-        query_connect(&python_plugin, "protocol-message", python_protocol_message, NULL);
-        query_connect(&python_plugin, "protocol-status",  python_protocol_status,  NULL);
+        query_connect(&python_plugin, "protocol-message",      python_protocol_message,      NULL);
+        query_connect(&python_plugin, "protocol-status",       python_protocol_status,       NULL);
+        query_connect(&python_plugin, "protocol-connected",    python_protocol_connected,    NULL);
+        query_connect(&python_plugin, "protocol-disconnected", python_protocol_disconnected, NULL);
 
         timer_add(&python_plugin, "python:timer_hook", 1, 1, python_timer, NULL);
 
