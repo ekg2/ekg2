@@ -236,15 +236,12 @@ group_cleanup:
 	
 				line = format_string(format_find(tmp), u->nickname, u->descr);
 
-				if (!all) {
-	                                ncurses_backlog_add(w, fstring_new(line));
-				} else {
-					memset(&c, 0, sizeof(c));
-					c.status = xstrdup(u->status);
-					c.line = xstrdup(line);
-					c.name = xstrdup(u->nickname);
-					list_add_sorted(&sorted, &c, sizeof(c), contacts_compare);
-				}
+				memset(&c, 0, sizeof(c));
+				c.status = xstrdup(u->status);
+				c.line = xstrdup(line);
+				c.name = xstrdup(u->nickname);
+				list_add_sorted(&sorted, &c, sizeof(c), contacts_compare);
+
 				xfree(line);
 	
 				count++;
@@ -306,7 +303,7 @@ group_cleanup:
 		if (count) {
 			const char *format;
 
-			for (; sorted && all; sorted = sorted->next) {
+			for (; sorted; sorted = sorted->next) {
 				contact_t *c = sorted->data;
 
 				ncurses_backlog_add(w, fstring_new(c->line));
