@@ -301,7 +301,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 		string_free(body, 1);
 
 		if ((nbody || nsubject) && !nerr)
-			query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, NULL);
+			query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, EKG_TRY_BEEP, NULL);
 				
 		if (nerr) {
 			char *recipient, *mbody, *tmp, *tmp2;

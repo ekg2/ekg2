@@ -48,6 +48,9 @@
 #define EKG_DISCONNECT_FORCED 2		/* serwer kaza³ siê roz³±czyæ */
 #define EKG_DISCONNECT_FAILURE 3	/* b³±d ³±czenia siê z serwerem */
 
+#define EKG_NO_BEEP 0
+#define EKG_TRY_BEEP 1
+
 enum msgclass_t {
 	EKG_MSGCLASS_MESSAGE = 0,	/* pojedyncza wiadomo¶æ */
 	EKG_MSGCLASS_CHAT,		/* wiadomo¶æ w ramach rozmowy */
@@ -66,7 +69,7 @@ int protocol_status(void *data, va_list ap);
 int protocol_message(void *data, va_list ap);
 int protocol_message_ack(void *data, va_list ap);
 
-char *message_print(const char *session, const char *sender, const char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq);
+char *message_print(const char *session, const char *sender, const char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep);
 
 typedef enum {
 	DCC_NONE = 0,

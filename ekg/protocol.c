@@ -297,7 +297,7 @@ notify_plugins:
  *
  * zwraca target
  */
-char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq)
+char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep)
 {
 	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text), *emotted = NULL;
 	const char *target = sender, *user;
@@ -451,17 +451,17 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	/* daj znaæ d¼wiêkiem i muzyczk± */
 	if (class == EKG_MSGCLASS_CHAT) {
 
-		if (config_beep && config_beep_chat)
+		if (config_beep && config_beep_chat && dobeep)
 			query_emit(NULL, "ui-beep");
 	
-		if (config_sound_chat_file) 
+		if (config_sound_chat_file && dobeep)
 			play_sound(config_sound_chat_file);
 
 	} else if (class == EKG_MSGCLASS_MESSAGE) {
 
-		if (config_beep && config_beep_msg)
+		if (config_beep && config_beep_msg && dobeep)
 			query_emit(NULL, "ui-beep");
-		if (config_sound_msg_file)
+		if (config_sound_msg_file && dobeep)
 			play_sound(config_sound_chat_file);
 
 	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
@@ -499,6 +499,7 @@ int protocol_message(void *data, va_list ap)
 	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
 	int *__class = va_arg(ap, int*), class = *__class;
 	char **__seq = va_arg(ap, char**), *seq = *__seq;
+	int *__doobeep = va_arg(ap, int), doobeep = *__doobeep;
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
 	char *target = NULL;
@@ -523,7 +524,7 @@ int protocol_message(void *data, va_list ap)
 	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent)) {
 		if (empty_theme)
 			class |= EKG_NO_THEMEBIT;
-	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq);
+	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, doobeep);
 	}
 
         /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */

@@ -549,7 +549,7 @@ COMMAND(irc_command_msg)
 
 	class |= EKG_NO_THEMEBIT;
 
-	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &head, &format, &sent, &class, &seq, NULL);
+	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &head, &format, &sent, &class, &seq, EKG_NO_BEEP, NULL);
 	xfree(me);
 	xfree(head);
 	xfree(rcpts[0]);

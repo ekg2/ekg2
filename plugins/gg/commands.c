@@ -697,7 +697,7 @@ COMMAND(gg_command_msg)
 		rcpts[0] = xstrdup(nick);
 		rcpts[1] = NULL;
 		
-		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, NULL);
+		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, EKG_TRY_BEEP, NULL);
 
 		xfree(me);
 		xfree(rcpts[0]);

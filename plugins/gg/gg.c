@@ -669,7 +669,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		}
 	}
 				
-	query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, NULL);
+	query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, EKG_TRY_BEEP, NULL);
 
 	xfree(__seq);
 	xfree(__text);
