@@ -698,7 +698,10 @@ int jabber_status_show_handle(void *data, va_list ap)
 		print("show_status_disconnected_since", buf);
 
 	// nasz status
-	tmp = format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")),s->descr, "");
+	if (s->connected)
+		tmp = format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")),s->descr, "");
+	else
+		tmp = format_string(format_find("show_status_notavail"));
 
 	print("show_status_status_simple", tmp);
 
@@ -1271,7 +1274,7 @@ int jabber_plugin_init()
 	command_add(&jabber_plugin, "jid:back", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
 	command_add(&jabber_plugin, "jid:_autoback", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
 	command_add(&jabber_plugin, "jid:invisible", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:dnd", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
+	command_add(&jabber_plugin, "jid:dnd", params("r"), jabber_command_away, 0, "", "zmienia stan na nie przeszkadzaæ","", NULL);
 	command_add(&jabber_plugin, "jid:xa", params("r"), jabber_command_away, 0, "", "zmienia stan na bardzo zajêty", "", NULL);
 	command_add(&jabber_plugin, "jid:passwd", params("?"), jabber_command_passwd, 0, "", "zmienia has³o", "", NULL);
 	command_add(&jabber_plugin, "jid:auth", params("p uU"), jabber_command_auth, 0, "", "obs³uga autoryzacji", 

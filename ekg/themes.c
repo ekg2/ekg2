@@ -1271,6 +1271,10 @@ void theme_init()
 	format_add("show_status_away_descr", "%Gzajêty%n (%T%1%n%2)", 1);
 	format_add("show_status_invisible", "%cniewidoczny%n", 1);
 	format_add("show_status_invisible_descr", "%cniewidoczny%n (%T%1%n%2)", 1);
+	format_add("show_status_xa", "%cbardzo zajêty%n", 1);
+	format_add("show_status_xa_descr", "%cbardzo zajêty%n (%T%1%n%2)", 1);
+	format_add("show_status_dnd", "%cnie przeszkaæ%n", 1);
+	format_add("show_status_dnd_descr", "%cnie przeszkadzaæ%n (%T%1%n%2)", 1);
 	format_add("show_status_notavail", "%rniedostêpny%n", 1);
 	format_add("show_status_private_on", ", tylko dla znajomych", 1);
 	format_add("show_status_private_off", "", 1);
