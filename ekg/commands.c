@@ -46,6 +46,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <sys/utsname.h>
+#ifdef sun
+#include <procfs.h>
+#endif
+
 #include "commands.h"
 #include "events.h"
 #include "configfile.h"
@@ -2027,42 +2032,69 @@ COMMAND(cmd_debug_query)
 /* 
  * on Solaris files under /proc filesystem are in 
  * binary format, so this is not portable...
- *
+ */
 COMMAND(cmd_test_mem) 
 {
-	char *temp = saprintf("/proc/%d/status", getpid());
-	FILE *file = fopen(temp,"r");
-	char *buf  = NULL; 
-	int rozmiar = 0;
+	char *temp = saprintf("/proc/%d/status", getpid()), *p = NULL;
+	FILE *file = fopen(temp,"rb");
+	int rd = 0, rozmiar = 0;
+	struct utsname sys;
 
-	xfree(temp);
+	if (uname(&sys) == -1 || !strlen(sys.sysname))
+		return -1;
 
 	if (file) {
-		buf = xmalloc(300);
-		while (!feof(file)) {
-			fgets(buf, 300, file);
-			sscanf(buf, "VmSize:     %d kB", &rozmiar);
-			if (rozmiar != 0) break;
-		} 
-		xfree(buf);
-		fclose(file);
-		if (rozmiar == 0) {
-			printq("generic_error", "VmSize line not found!");
+		if (!xstrcmp(sys.sysname, "Linux"))
+		{
+			char buf[1024];
+			
+			xfree(temp);
+			rd = fread(buf, 1, 1024, file);
+			fclose(file);
+			if (rd == 0)
+			{
+				printq("generic_error", "Internal error, GiM's fault");
+				return -1;
+			} 
+			p = xstrstr(buf, "VmSize");
+			if (p) {
+				sscanf(p, "VmSize:     %d kB", &rozmiar);
+			} else {
+				printq("generic_error", "VmSize line not found!");
+				return -1;
+			}
+		} else if (!xstrcmp(sys.sysname, "SunOS")) {
+#ifdef sun
+			pstatus_t proc_stat;
+			rd = fread(&proc_stat, sizeof(proc_stat), 1, file);
+			fclose(file);
+			if (rd == 0)
+			{
+				printq("generic_error", "Internal error, GiM's fault");
+				return -1;
+			}
+			rozmiar = proc_stat.pr_brksize + proc_stat.pr_stksize;
+#else
+			p = saprintf("'sun' not defined %s %s %s %s",
+					sys.sysname, sys.release, 
+					sys.version, sys.machine);
+			printq("generic_error", p);
 			return -1;
+#endif
 		} else {
-			buf = saprintf("Memory used by ekg2: %d kB", rozmiar);
-			printq("generic", buf);
-			xfree(buf);
-			return 0;
+			printq("generic_error", "You seem to have /proc mounted, but I don't know how to deal with it. Authors would be very thankful, if you'd contact with them");
+			return -1;
 		}
+		p = saprintf("Memory used by ekg2: %d kB", rozmiar);
+		printq("generic", p);
+		xfree(p);
 	} else {
-		printq("generic_error", "/proc not mounted ? No permision ?");
+		printq("generic_error", "/proc not mounted, no permissions, or no proc filesystem support");
 		return -1;
 	}
 	return 0;
 
 }
-*/
 
 COMMAND(cmd_test_fds)
 {
@@ -4111,7 +4143,7 @@ void command_init()
 
 	command_add(NULL, "_fds", NULL, cmd_test_fds, 0, NULL);
 
-/*	command_add(NULL, "_mem", NULL, cmd_test_mem, 0, NULL);*/
+	command_add(NULL, "_mem", NULL, cmd_test_mem, 0, NULL);
 
 	command_add(NULL, "_msg", "uUC ?", cmd_test_send, 0, NULL);
 
