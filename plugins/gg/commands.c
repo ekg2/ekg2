@@ -315,6 +315,10 @@ COMMAND(gg_command_away)
 		xfree(params0);
 		params0 = xstrdup(session_descr_get(session));
 		session->scroll_last = time(NULL);
+		if (!xstrlen(params0)) {
+			xfree(params0);
+			return -1;
+		}
 		debug("%s [%s] %d\n", session_name(session), fd, session->scroll_pos);
 		if (xstrlen(params0) < GG_STATUS_DESCR_MAXSIZE)
 				return -1;
@@ -393,13 +397,15 @@ change:
 	}
 
 	reason_changed = 1;
+	if (!session_descr_get(session))
+			autoscroll = timeout = 0;
 
 	if (autoscroll || timeout) {
 			char *mode = session_get(session, "scroll_mode");
 			char *desk;
 
 			autoscroll = session -> scroll_pos;
-			desk = xstrndup(session_descr_get(session)+autoscroll,
+			desk = xstrndup(session_descr_get(session) + autoscroll,
 							GG_STATUS_DESCR_MAXSIZE-1);
 			/* this is made especially to make other people happy ;)
 			 * and make it easy to ignore states with '>' at beginning

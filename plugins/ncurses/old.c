@@ -1134,6 +1134,7 @@ void update_statusbar(int commit)
 	session_t *sess = window_current->session;
 	userlist_t *u;
 	char *tmp;
+	char *t2, *t3; /* yeah, I know, shitty way */
 
 	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
 	if (ncurses_header)
@@ -1171,14 +1172,18 @@ void update_statusbar(int commit)
 	__add_format("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
 	tmp = (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : xstrdup(window_current->target);
 	__add_format("query", tmp, tmp);
-	xfree(tmp); tmp = NULL;
+	xfree(tmp); tmp = t2 = t3 = NULL;
 
 	query_emit(NULL, "mail-count", &mail_count);
 	__add_format("mail", (mail_count > 0), itoa(mail_count));
 
-	query_emit(NULL, "irc-topic", &tmp);
+	query_emit(NULL, "irc-topic", &tmp, &t2, &t3);
 	__add_format("irctopic", tmp, tmp);
+	__add_format("irctopicby", t2, t2);
+	__add_format("ircmode", t3, t3);
 	xfree(tmp);
+	xfree(t2);
+	xfree(t3);
 
 	{
 		string_t s = string_init("");
