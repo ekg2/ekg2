@@ -39,9 +39,6 @@
 
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
-#define GDEBUG
-#define MARLENE
-
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 /*
  * irc_handle_write()
@@ -476,11 +473,15 @@ IRC_COMMAND(irc_c_error)
 
 IRC_COMMAND(irc_c_whois)
 {
-	char *dest = saprintf("%s%s", IRC4, param[3]);
+	char *t = saprintf("%s%s", IRC4, param[3]), *dest=t;
 	char *str, *tmp, *col[5];
 	int secs, mins, hours, days, which, i;
 	time_t timek;
 	int timek_int = (int) timek;
+        window_t *w = window_find_s(s, t);
+
+	if (session_int_get(s, "DISPLAY_IN_CURRENT")&2)
+        	dest = w?t:NULL;
 
 	if (irccommands[ecode].num != 317) { /* idle */
 		for (i=0; i<5; i++)
@@ -510,6 +511,8 @@ IRC_COMMAND(irc_c_whois)
 	hours -= (days * 24);
 
 #define IOK3(x) (x)?(x):""
+	/* G->dj: I'm leaving this, cause this looks more 1337 ;)
+	 * If you'll still have problems give me /msg */
 	/* GiM: No, I'm not going to do the same in polish
 	 * it'd have to be more cases ;> */
 	str = days?saprintf("%d %s ", days, days==1?"day":"days"):NULL;
@@ -538,12 +541,24 @@ IRC_COMMAND(irc_c_whois)
 int mode_act = 0;
 IRC_COMMAND(irc_c_list)
 {
-	char *t = saprintf("%s%s", IRC4, IOK(3));
+	char *dest, *t = NULL;
 	char *coloured = NULL;
+	int tempf = irccommands[ecode].future;
 	window_t *w = window_find_s(s, t);
-	char *dest = dest = w?t:NULL;
 
-	int endlist = irccommands[ecode].future & IRC_LISTEND;
+	int endlist = tempf & IRC_LISTEND;
+	if (endlist) tempf -= IRC_LISTEND;
+	if (tempf == IRC_LISTWHO)
+		t = NULL;
+//             t = saprintf("%s%s", IRC4, IOK(3));
+//             t = saprintf("%s%s", IRC4, IOK(7));
+//             t = xstrdup("__status");
+	else if (tempf == IRC_LISTSTA)
+		t = NULL;
+	else
+		t = saprintf("%s%s", IRC4, IOK(3));
+
+	dest = w?t:NULL;
 
 	if (!mode_act) 
 			print_window(dest, s, 0, "RPL_LISTSTART", session_name(s));
@@ -551,40 +566,35 @@ IRC_COMMAND(irc_c_list)
 			if (!mode_act)
 				print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
 
-			if (irccommands[ecode].future - endlist == IRC_LISTSTA)
+			if (tempf == IRC_LISTSTA)
 				print_window(dest, s, 0, "RPL_STATSEND", session_name(s), IOK2(4), IOK2(3)); 
 			else
 				print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
-				/* stupid mistake */
-
 			mode_act = 0; 
-			return 0;
+			goto cleanup;
 	}
 	mode_act++;
 
-	if (irccommands[ecode].future == IRC_LISTSTA)
-	{
-		/* TODO: rewrite it */
-		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
-		goto cleanup;
-	} 
-
-	if (param[5] && *param[5] == ':') {
-		coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
-
-		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3),
-					IOK2(4), coloured, itoa(mode_act));
-	} else {
-		print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK2(3),
-				IOK2(4), IOK2(5), itoa(mode_act));
-		 
+	switch (tempf) {
+		/* TODO: poprawic te 2 pierwsze... */
+		case (IRC_LISTSTA):
+			print_window(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
+			break;
+		case (IRC_LISTWHO):
+			print_window(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), xstrchr(IOK2(9), ' '));
+			/* TODO: syncowanie */
+			break;
+		default:
+			if (param[5] && *param[5] == ':') {
+				coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
+				print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, itoa(mode_act));
+			} else {
+				print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK2(3), IOK2(4), IOK2(5), itoa(mode_act));
+			}
+			xfree(coloured);
+			break;
 	}
-	/*
-	 * ircd-hybrid sends in IOK2(5) - nick!ident@host and in IOK2(6) unixtime of bana.
-	 * ircd2 not ?
-	 */
 cleanup:
-	xfree(coloured);
 	xfree(t);
 	return 0;
 }

@@ -114,7 +114,8 @@ int irc_add_person_int(irc_private_t *j, char *nick, channel_t *chan)
 		debug("+%s lista ludzi, ", nick); */
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
-		person->channels=NULL;
+		person->host = NULL;
+		person->channels = NULL;
 		list_add(&(j->people), person, 0);
 	}
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
@@ -428,8 +429,10 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		 * window_kill(chan->window, 1);
 		 */
 	}
-	for (t1=j->people; t1; t1=t1->next)
+	for (t1=j->people; t1; t1=t1->next) {
 		xfree(((people_t *)(t1->data))->nick);
+		xfree(((people_t *)(t1->data))->host);
+	}
 	for (t1=j->channels; t1; t1=t1->next) {
 		xfree(((channel_t *)(t1->data))->name);
 	}

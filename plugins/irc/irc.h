@@ -50,6 +50,10 @@ typedef struct {
 /* data for private->people */
 typedef struct {
 	char *nick;
+	/* G->dj: dya see any reason for keeping realname here ? */
+	char *host, *ident;
+	char *flags; /* G->dj: I think this isn't good place for this stuff
+			global-flags: auto-kick, auto-op, auto-unban, and so on ? :) */
 	list_t channels;
 } people_t;
 
@@ -68,6 +72,7 @@ typedef struct {
 typedef struct {
 	int mode; /* +v +o */
 	char sign[2];
+	char *flags; /* G->dj: as above... */
 	channel_t *chanp;
 } people_chan_t;
 

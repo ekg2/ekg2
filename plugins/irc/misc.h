@@ -32,7 +32,8 @@ typedef int (*Irc_Cmd) 	    (session_t * , irc_private_t * , int   , int      , 
 #define IRC_LISTINV		0x004
 #define IRC_LISTLIN		0x008
 #define IRC_LISTSTA		0x010
-#define IRC_LISTEND		0x020
+#define IRC_LISTWHO		0x020
+#define IRC_LISTEND		0x040
 
 enum { IRC_ERR_12=0, IRC_ERR_21, IRC_ERR_ONLY1, IRC_ERR_NEW, IRC_ERR_IGNO,
 	IRC_ERR_OTHER,
@@ -148,6 +149,9 @@ static IrcCommand irccommands[] =
 	{ 1,	253,	NULL,	"RPL_LUSERUNKNOWN",	&irc_c_error,	
 	{ 1,	254,	NULL,	"RPL_LUSERCHANNELS",	&irc_c_error,	
 	{ 1,	255,	NULL,	"RPL_LUSERME",		&irc_c_error,	
+*/
+
+/*
 	{ 1,	256,	NULL,	"RPL_ADMINME",		&irc_c_error,	
 	{ 1,	257,	NULL,	"RPL_ADMINLOC1",	&irc_c_error,	
 	{ 1,	258,	NULL,	"RPL_ADMINLOC2",	&irc_c_error,	
@@ -155,7 +159,7 @@ static IrcCommand irccommands[] =
 	{ 1,	263,	NULL,	"RPL_TRYAGAIN",		&irc_c_error,	IRC_ERR_ONLY1},
 	
 /*	{ 1,	302,	NULL,	"RPL_USERHOST",		&irc_c_error,	
-	{ 1,	303,	NULL,	"RPL_ISON",		&irc_c_error,	G->d> yeah, i know */
+	{ 1,	303,	NULL,	"RPL_ISON",		&irc_c_error,	*/
 	
 	{ 1,	301,	NULL,	"RPL_AWAY",		&irc_c_error,	IRC_RPL_OTHER},
 	{ 1,	305,	NULL,	"RPL_UNAWAY",		&irc_c_error,	IRC_RPL_ONLY1},
@@ -168,18 +172,18 @@ static IrcCommand irccommands[] =
 	{ 1,	318,	NULL,	"RPL_ENDOFWHOIS",	&irc_c_whois,	0 },
 	{ 1,	319,	NULL,	"RPL_WHOISCHANNELS",	&irc_c_whois,	0 },
 
-	{ 1,	314,	NULL,	"RPL_WHOWASUSER",	&irc_c_whois,	0 },
-	{ 1,	369,	NULL,	"RPL_ENDOFWHOWAS",	&irc_c_whois,	0 },
+	{ 1,	314,	NULL,	"RPL_WHOWASUSER",	&irc_c_whois,	1 },
+	{ 1,	369,	NULL,	"RPL_ENDOFWHOWAS",	&irc_c_whois,	1 },
 
-/*	{ 1,	315,	NULL,	"RPL_ENDOFWHO",		&irc_c_error,
-	{ 1,	352,	NULL,	"RPL_WHOREPLY",		&irc_c_error,	*/
+	/* G->dj I want to keep the names from rfc2812 */
+	{ 1,	315,	NULL,	"RPL_ENDOFWHO",		&irc_c_list, IRC_LISTWHO|IRC_LISTEND },
+	{ 1,	352,	NULL,	"RPL_WHOREPLY",		&irc_c_list, IRC_LISTWHO },	
 
 /*	{ 1,	321,	NULL,	"RPL_LISTSTART",	&irc_c_error,	
 	{ 1,	322,	NULL,	"RPL_LIST",		&irc_c_error,	
 	{ 1,	323,	NULL,	"RPL_LISTEND",		&irc_c_error,	*/
 
-/*	{ 1,	325,	NULL,	"RPL_UNIQOPIS",		&irc_c_error,	
-	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_error,   */
+/*	{ 1,	325,	NULL,	"RPL_UNIQOPIS",		&irc_c_error,	*/
 	{ 1,	324,	NULL,	"RPL_CHANNELMODEIS",	&irc_c_mode,	IRC_RPL_OTHER},
 	/* 331 is really RPL_NOTOPIC, but I don't want another format... */
 	{ 1,	331,	NULL,	"RPL_TOPIC",		&irc_c_error,	IRC_RPL_OTHER},

@@ -143,6 +143,9 @@ DISPLAY_IN_CURRENT
 	suma bitów, okre¶laj±ca, ¿e pewne rzeczy bêd± wy¶wietlane
 	w aktualnym oknie:
 	1 - wynik komendy /names [RACZEJ G£UPOTA!]
+	2 - wynik /whois je¿eli nie ma otwartego okna rozmowy
+	    z danym uzytkownikiem bêdzie wy¶wietlony w aktualnym
+	    oknie zamiast w oknie statusu
 
 DISPLAY_NICKCHANGE
 	typ: liczba

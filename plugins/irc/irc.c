@@ -227,12 +227,6 @@ int irc_common_bind(session_t *s, int fd, const char *ip, int port)
 		plen = sizeof(struct sockaddr_in6);
 	}
 #endif
-	/* darkjames: nie mozemy zak³adaæ, ¿e -1 nie wyst±pi,
-	 * -1 sugeruje, ¿e nie ma supportu, a nie ¿e podano jaki¶ z³y parametr
-	 * co je¶li trafisz na maszynê gdzie np nie ma getaddrinfo a
-	 * wsparcie jest tylko dla PF_INET6 ?
-	 * [niemo¿liwe, ale nie mo¿esz zak³adaæ o tym co zwóric dana funkcja]
-	 */
 	if (inetptonres4<1 && inetptonres6<1) {
 		print("invalid_local_ip", session_name(s));
 		session_set(s, "local_ip", NULL);
@@ -313,7 +307,6 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 	debug("[irc] handle_stream()");
 
 	buf = xmalloc(4096);
-	memset(buf, 0, 4096);
 
 	if ((len = read(fd, buf, 4095)) < 1) {
 		debug(" readerror %s\n", strerror(errno));
@@ -383,11 +376,11 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 #endif
 	struct sockaddr_in ipv4;
 
-	int family, one = 1, res, expectedres, inetptonres;
-	const char *port_s = session_get(s, "port");
-	const char *local_ip = session_get(s, "local_ip");
+	int family, one = 1, res, expectedres;
 	char bufek[100];
-	int port = (port_s) ? atoi(port_s) : 6667, connret;
+	const char *port_s	= session_get(s, "port");
+	const char *local_ip	= session_get(s, "local_ip");
+	int port		= (port_s) ? atoi(port_s) : 6667, connret;
 
 	if (type != 0) 
 		return;
@@ -802,7 +795,10 @@ COMMAND(irc_command_inline_msg)
 {
 	const char *p[2] = { target, params[0] };
 
+	/* G->dj: what for ? */
+//	char **p = array_make(....)
 	return irc_command_msg("msg", p, session, target, quiet);
+//	array_free()
 }
 
 COMMAND(irc_command_quote)
@@ -845,7 +841,7 @@ COMMAND(irc_command_pipl)
 			
 	for (t1 = j->people; t1; t1=t1->next) {
 		per = (people_t *)t1->data;
-		debug("[%s] ", per->nick);
+		debug("[%s] (%s) ", per->nick, per->host);
 		for (t2 = per->channels; t2; t2=t2->next)
 		{
 			chan = (people_chan_t *)t2->data;
@@ -996,6 +992,13 @@ int irc_topic_header(void *data, va_list ap)
 	return 0;
 }
 
+/* checks if name is in format irc:something
+ * checkcon is one of:
+ *   name is               channel   |  nick 
+ *   IRC_GC_CHAN 	-  channame  |  NULL
+ *   IRC_GC_NOT_CHAN	-  NULL      | nickname
+ *   IRC_GC_ANY		-  name if it's in proper format [irc:something]
+ */
 enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 {
@@ -1021,6 +1024,11 @@ char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 	return NULL;
 }
 
+/* pr - specifies priority of check
+ *   0 - first param, than current window
+ *   1 - reverse
+ * as side effect it adjust table passed as v argument
+ */
 char *irc_getchan(session_t *s, const char **params, const char *name,
 		const char ***v, int pr, int checkchan)
 {
@@ -1047,10 +1055,11 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 			print("invalid_params", name);
 			return 0;
 		}
-		*v = pr?(&(params[1])):(params);
-	} else *v = pr?(params):&(params[1]);
+		pr = !!pr;
+	} else pr = !!!pr;
 
-	
+	*v = &(params[pr]);
+
 	return chan;
 }
 /*****************************************************************************/
@@ -1208,7 +1217,7 @@ COMMAND(irc_command_mode)
 	if (!(chan=irc_getchan(session, params, name,
 					&mp, 1, IRC_GC_CHAN))) 
 		return -1;
-/*
+/* G->dj: I'm still leaving this 
 	if (!(*mp)) {
 		print("not_enough_params", name);
 		xfree(chan);
@@ -1251,9 +1260,30 @@ COMMAND(irc_command_whois)
 					&mp, 0, IRC_GC_NOT_CHAN)))
 		return -1;
 
+	/* G->dj, I'm not changing this to %s name,
+	 * bacause I want it to be easily visible what command we send to server
+	 * [yes, I know, I can take a look into debug, but I won't it to be clearly
+	 *  visible in source code ;)]
+	 */
 	irc_write(irc_private(session),	"WHOIS %s\r\n", person+4);
 	xfree (person);
 	return 0;
+}
+
+int irc_status_show_handle(void *data, va_list ap)
+{
+        char **uid 		= va_arg(ap, char**);
+        session_t *s 		= session_find(*uid);
+	irc_private_t *j;
+	const char *p[2];
+
+	if (!s)
+		return -1;
+
+	j = irc_private(s);
+	p[0] = p[1] = j->nick;
+
+	return irc_command_whois("whois", p, s, NULL, 0);
 }
 
 COMMAND(irc_command_query)
@@ -1378,11 +1408,12 @@ int irc_plugin_init(int prio)
 
 	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
 	query_connect(&irc_plugin, "plugin-print-version", irc_print_version, NULL);
-	query_connect(&irc_plugin, "ui-window-kill", irc_window_kill, NULL);
-	query_connect(&irc_plugin, "session-added", irc_session, (void*) 1);
-	query_connect(&irc_plugin, "session-removed", irc_session, (void*) 0);
+	query_connect(&irc_plugin, "ui-window-kill",	irc_window_kill, NULL);
+	query_connect(&irc_plugin, "session-added",	irc_session, (void*) 1);
+	query_connect(&irc_plugin, "session-removed",	irc_session, (void*) 0);
 	query_connect(&irc_plugin, "irc-topic",		irc_topic_header, (void*) 0);
-	
+	query_connect(&irc_plugin, "status-show",	irc_status_show_handle, NULL);
+
 	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 0, NULL);
 	command_add(&irc_plugin, "irc:disconnect", "?",irc_command_disconnect, 0, NULL);
@@ -1405,11 +1436,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:whois", "uU",	irc_command_whois, 0, NULL);
 	
 	command_add(&irc_plugin, "irc:whowas", "uU",	irc_command_whois, 0, NULL);
-	/* G->d> po co to, */
 	/*command_add(&irc_plugin, "irc:notice", "?",irc_command_inline_msg, 0, NULL);*/
-	/* iwil, ale przez command_msg nie szlo tak jak chcialem */
-/*	command_add(&irc_plugin, "irc:stats", "\"STATS\" ?",irc_command_quote, 0, NULL); */
-	/* not working */
 	
 	/* dj>
 	 * what about implementing something like that in command_add:
@@ -1421,17 +1448,24 @@ int irc_plugin_init(int prio)
 	 *
 	 * g> I'm guessing you wan't to use it just with _some_ commands
 	 *    not all that are below...
+	 *
+	 * d> Why not ? ;)
+	 *    I think it could be aliases to command /quote ....
+	 *    I really don't like writing unnecessary code (thx crs) ;)
 	 */ 
 	/* TODO
-	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL); /quote admin
-	command_add(&irc_plugin, "irc:kick", "",        NULL, 0, NULL); /quote kick nick  :reason
-	command_add(&irc_plugin, "irc:ban",  "",        NULL, 0, NULL); /mode +b <%nick>
-	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL); /quote map
-	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); /quote links
-	command_add(&irc_plugin, "irc:invite", "",	NULL, 0, NULL); /quote invite who kanal
-	command_add(&irc_plugin, "irc:oper", "",	NULL, 0, NULL); /quote oper %nick %pass
-	command_add(&irc_plugin, "irc:trace", "",	NULL, 0, NULL); /quote trace %...
-	 */
+	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL);   q admin
+	command_add(&irc_plugin, "irc:kick", "",        NULL, 0, NULL); V q kick nick  :reason 
+	command_add(&irc_plugin, "irc:ban",  "",        NULL, 0, NULL); V mode +b <%nick>
+	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL);   q map
+	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); V q links
+	command_add(&irc_plugin, "irc:invite", "",	NULL, 0, NULL);   q invite [who] <kanal>
+	command_add(&irc_plugin, "irc:oper", "",	NULL, 0, NULL);   q oper %nick %pass
+	command_add(&irc_plugin, "irc:trace", "",	NULL, 0, NULL);   q trace %...
+	command_add(&irc_plugin, "irc:who", "",		NULL, 0, NULL); V q who %...
+	command_add(&irc_plugin, "irc:stats", "\"STATS\" ?",irc_command_quote, 0, NULL); V q stats
+	command:add(&irc_plugin, "irc:list", .....)			V q list 
+	*/
 	command_add(&irc_plugin, "irc:op", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:deop", "w ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:voice", "w ?",	irc_command_devop, 0, NULL);
@@ -1447,6 +1481,7 @@ int irc_plugin_init(int prio)
 
 	/* lower case: names of variables that reffer to client itself */
 	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
+	plugin_var_add(&irc_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_away", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
@@ -1482,8 +1517,8 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "REJOIN_TIME", VAR_INT, "2", 0, NULL);
 	
 	plugin_var_add(&irc_plugin, "SHOW_NICKMODE_EMPTY", VAR_INT, "1", 0, NULL);
-	plugin_var_add(&irc_plugin, "SHOW_MOTD", VAR_INT, "1", 0, NULL);
-	plugin_var_add(&irc_plugin, "STRIPMIRCCOL", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&irc_plugin, "SHOW_MOTD", VAR_BOOL, "1", 0, NULL);
+	plugin_var_add(&irc_plugin, "STRIPMIRCCOL", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_NAME", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_NO", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_SYS", VAR_STR, 0, 0, NULL);
@@ -1520,19 +1555,11 @@ static int irc_theme_init()
 	format_add("irc_msg_sent_chan",	"%P<%w%{2@%+gcp}X%2%3%P>%n %6", 1);
 	format_add("irc_msg_sent_chanh","%P<%W%{2@%+GCP}X%2%3%P>%n %6", 1);
 	
-	/* G->d> I've made other ones to keep it look like irc_not_f_* styles */
 	format_add("irc_not_sent",	"%P(%n%3/%5%P)%n %6", 1);
 	format_add("irc_not_sent_n",	"%P(%n%3%P)%n %6", 1);
 	format_add("irc_not_sent_chan",	"%P(%w%{2@%+gcp}X%2%3%P)%n %6", 1);
 	format_add("irc_not_sent_chanh","%P(%W%{2@%+GCP}X%2%3%P)%n %6", 1);
-	/* dj> here are mine irssi-like styles
-	 */
-	/*
-	format_add("irc_not_sent","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
-	format_add("irc_not_sent_n","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
-	format_add("irc_not_sent_chan","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
-	format_add("irc_not_sent_chanh","%n%K[%Rnotice%K(%r%5%K)]%n %6", 1);
-	*/
+
 	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
@@ -1578,7 +1605,7 @@ static int irc_theme_init()
 	format_add("RPL_MOTDSTART", "%g,+=%G-----\n", 1);
 	format_add("RPL_MOTD",      "%g|| %n%2\n", 1);
 	format_add("RPL_ENDOFMOTD", "%g`+=%G-----\n", 1);
-	
+
 	/*Wykorzystane w : /mode +b|e|I %2 - kanal %3 - to co dostalismy od serwera */
 	/* TO JEST TYMCZASOWE BÊDZIE INACZEJ, NIE U¯YWAÆ TYCH FORMATEK */
 	format_add("RPL_LISTSTART",  "%g,+=%G-----\n", 1);
@@ -1589,9 +1616,19 @@ static int irc_theme_init()
 	format_add("RPL_LINKS",      "%g|| %n %5 - %2  %3  %4\n", 1);
 	format_add("RPL_ENDOFLIST",  "%g`+=%G----- %2%n\n", 1);
 
+	/* %2 - number; 3 - type of stats (I, O, K, etc..) ....*/
 	format_add("RPL_STATS",      "%g|| %3 %n %4 %5 %6 %7 %8\n", 1);
 	format_add("RPL_STATS_EXT",  "%g|| %3 %n %2 %4 %5 %6 %7 %8\n", 1);
 	format_add("RPL_STATSEND",   "%g`+=%G--%3--- %2\n", 1);
+	format_add("RPL_CHLISTSTART",  "%g,+=%G lp %2\t%3\t%4\n", 1);
+	format_add("RPL_CHLIST",       "%g|| %n %5 %2\t%3\t%4\n", 1);
+
+	/* 2 - number; 3 - chan; 4 - ident; 5 - host; 6 - server ; 7 - nick; 8 - mode; 9 -> realname
+	 * format_add("RPL_WHOREPLY",   "%g|| %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n", 1);
+	 * G->dj: write comments in english, please ;)
+	 */
+	format_add("RPL_WHOREPLY",   "%g|| %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n", 1);
+	/* delete those irssi-like styles */
 
 	format_add("RPL_AWAY", _("%G||%n away     : %2 - %3\n"), 1);
 	/* in whois %2 is always nick */
@@ -1607,7 +1644,7 @@ static int irc_theme_init()
 	format_add("RPL_WHOISIDLE", _("%G||%n %|idle     : %3 (signon: %4)\n"), 1);
 	format_add("RPL_ENDOFWHOIS", _("%G`+===%g-----\n"), 1);
 	format_add("RPL_ENDOFWHOWAS", _("%G`+===%g-----\n"), 1);
-	
+
 	format_add("RPL_TOPIC", _("%> Topic %2: %3\n"), 1);
 	/* \n not needed if you're including date [%4] */
 	format_add("IRC_RPL_TOPICBY", _("%> set by %2 on %4"), 1);
