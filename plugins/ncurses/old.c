@@ -1147,7 +1147,7 @@ void update_statusbar(int commit)
 	__add_format("query_xa", (q && !xstrcasecmp(q->status, EKG_STATUS_XA)), "");
 	__add_format("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
 
-	__add_format("url", 1, "http://dev.null.pl/ekg/");
+	__add_format("url", 1, "http://dev.null.pl/ekg2/");
 	__add_format("version", 1, VERSION);
 
 #undef __add_format
