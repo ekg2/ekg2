@@ -185,7 +185,18 @@ void window_switch(int id)
 		w->act = 0;
 		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && u->blink) 
 			u->blink = 0;
-		
+
+		if (!config_make_window && w->id == 1) {
+			list_t l;
+	                session_t *s = session_current;
+
+			for (l = s->userlist; l; l = l->next) {
+                        	userlist_t *u = l->data;
+				if (!window_find_s(s, u->uid))
+		                        u->blink = 0;
+			}
+                }
+
 		query_emit(NULL, "ui-window-switch", &w);	/* XXX */
 
 		if (!w->id)
@@ -348,7 +359,7 @@ crap:
 			
 		default:
 			/* je¶li nie ma okna, rzuæ do statusowego. */
-			if (!(w = window_find(target)))
+			if (!(w = window_find_s(session, target)))
 				w = window_find("__status");
 	}
 

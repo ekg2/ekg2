@@ -643,7 +643,7 @@ void changed_display_blinking(const char *var)
         for (sl = sessions; sl; sl = sl->next) {
 		list_t l;
         	session_t *s = sl->data;
-		for(l = s->userlist; l; l = l->next) {
+		for (l = s->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 			u->blink = 0;			
 		}

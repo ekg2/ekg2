@@ -489,13 +489,25 @@ int protocol_message(void *data, va_list ap)
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
 
-	/* TODO: deletek */
-	if (userlist && window_current && window_current->target && !xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid)))
-		userlist->blink = 0;
-	else if (userlist && config_make_window && config_display_blinking && xstrcasecmp(uid, session_class->uid))
-		userlist->blink = 1;
-//	else if (window_find(uid)) 
-//		userlist->blink = 1;
+	/* display blinking */
+	if (config_display_blinking && class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
+		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
+			userlist->blink = 1;
+		else if (!config_make_window) {
+			window_t *w;
+
+			/*
+			 * now we are checking if there is some window with query for this
+			 * user 
+			 */
+			w = window_find_s(session_class, uid);
+
+			if (!w && window_current->id != 1)
+				userlist->blink = 1; 
+			if (w && window_current->id != w->id)
+				userlist->blink = 1;
+		}
+	}
 	
 	if (class & EKG_NO_THEMEBIT) {
 		class &= ~EKG_NO_THEMEBIT;
