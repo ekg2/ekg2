@@ -521,6 +521,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 {
 	char *__session, *__uid, *__status, *__descr, *__host = NULL;
 	int __port = 0;
+	time_t when = time(NULL);
 
 	__session = xstrdup(session_uid_get(s));
 	__uid = saprintf("gg:%d", uin);
@@ -533,7 +534,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 
 	__port = port;
 
-	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, NULL, NULL);
+	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
 
 	xfree(__host);
 	xfree(__descr);
