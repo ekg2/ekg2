@@ -1043,7 +1043,7 @@ COMMAND(cmd_list)
 {
 	list_t l;
 	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
-	char **argv = NULL, *show_group = NULL, *ip_str;
+	char **argv = NULL, *show_group = NULL, *ip_str, *last_ip_str;
 	const char *tmp;
 
 	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ co¶ dalej ... */
@@ -1055,7 +1055,7 @@ COMMAND(cmd_list)
         }
 
 	if (params[0] && *params[0] != '-') {
-		char *status, *groups;
+		char *status, *groups, *last_status;
 		const char *group = params[0];
 		userlist_t *u;
 		int invert = 0;
@@ -1109,9 +1109,14 @@ COMMAND(cmd_list)
 
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
+                last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->last_descr);
+
+
 		groups = group_to_string(u->groups, 0, 1);
 
 		ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port));
+
+		last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
 
 		printq("user_info_header", u->nickname, u->uid);
 		if (u->nickname && strcmp(u->nickname, u->nickname)) 
@@ -1125,6 +1130,8 @@ COMMAND(cmd_list)
 			printq("user_info_name", u->last_name, "");
 
 		printq("user_info_status", status);
+		if (u->last_status)
+			printq("user_info_last_status", last_status);
 
 		if (ekg_group_member(u, "__blocked"))
 			printq("user_info_block", ((u->first_name) ? u->first_name : u->nickname));
@@ -1138,8 +1145,7 @@ COMMAND(cmd_list)
 		if (u->ip)
 			printq("user_info_ip", ip_str);
                 else if (u->last_ip) {
-			ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
-                        printq("user_info_last_ip", ip_str);
+                        printq("user_info_last_ip", last_ip_str);
 		}
 
 		if (u->mobile && strcmp(u->mobile, ""))
@@ -1163,7 +1169,8 @@ COMMAND(cmd_list)
 		xfree(ip_str);
 		xfree(groups);
 		xfree(status);
-
+		xfree(last_ip_str);
+		xfree(last_status);
 		return 0;
 	}
 

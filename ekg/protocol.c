@@ -225,6 +225,11 @@ int protocol_status(void *data, va_list ap)
 	}
 
 notify_plugins:
+        xfree(u->last_status);
+        u->last_status = xstrdup(u->status);
+        xfree(u->last_descr);
+        u->last_descr = xstrdup(u->descr);
+
 	xfree(u->status);
 	u->status = xstrdup(status);
 	xfree(u->descr);

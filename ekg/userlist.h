@@ -61,8 +61,11 @@ typedef struct {
 	
 	int blink;		/* czy ma byæ zaznaczony jako u¿ytkownik, od którego mamy msg */
 
-        uint32_t last_ip;            /* ostatni adres ip */
-        uint16_t last_port;          /* ostatni port */
+        uint32_t last_ip;       /* ostatni adres ip */
+        uint16_t last_port;     /* ostatni port */
+
+	char *last_status;	/* ostatni stan */
+	char *last_descr;	/* ostatni opis */
 } userlist_t;
 
 #if 0
