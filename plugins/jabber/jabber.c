@@ -361,7 +361,8 @@ void jabber_handle(void *data, xmlnode_t *n)
 					const char *version_str = (version && version->data) ? version->data : "unknown";
 					const char *os_str = (os && os->data) ? os->data : "unknown";
 
-					print("jabber_version_response", from_str, name_str, version_str, os_str);
+					print("jabber_version_response", jabber_unescape(from_str), jabber_unescape(name_str),
+					      jabber_unescape(version_str), jabber_unescape(os_str));
 				}
 
 				if (ns && !xstrncmp(ns, "jabber:iq:roster", 16)) {
@@ -1443,42 +1444,39 @@ COMMAND(jabber_command_ver)
         }
 
 	if (!(uid = get_uid(session, query_uid))) {
-		uid = params[0];
+		print("user_not_found", query_uid);
+		return -1;
+	}
 
-		if (xstrchr(uid, '@') && xstrchr(uid, '@') < xstrchr(uid, '.')) {
-			printq("user_not_found", params[0]);
-			return -1;
-		}
-	} else {
-		if (xstrncasecmp(query_uid, "jid:", 4)) {
-			printq("invalid_session");
-			return -1;
-		}
+	if (xstrncasecmp(uid, "jid:", 4) != 0) {
+	  printq("invalid_session");
+	  return -1;
+	}
 
-		query_uid += 4;
+	userlist_t *ut = userlist_find(session, uid);
+	if (!ut) {
+		print("user_not_found", session_name(session));
+		return -1;
+	}
+	uid += 4;
+
+	if (xstrcasecmp(ut->status, EKG_STATUS_NA) == 0) {
+		print("jabber_status_notavail", session_name(session), ut->uid);
+		return -1;
 	}
 
 	const char *resource = session_get(session, "resource");
 	if (!resource)
 		resource = "ekg2";
 
-	char *tmp = saprintf("jid:%s", query_uid);
-	userlist_t *ut = userlist_find(session, tmp);
-	char *query_res = (ut && ut->resource) ? ut->resource : NULL;
-	xfree(tmp);
-
+	char *query_res = (ut->resource) ? ut->resource : NULL;
 	if (!query_res) {
-		print("jabber_user_not_found", session_name(session), query_uid);
-		return -1;
-	}
-
-	if (!ut) {
-		print("jabber_unknown_resource", session_name(session));
+		print("jabber_unknown_resource", session_name(session), query_uid);
 		return -1;
 	}
 
        	jabber_write(j, "<iq from='%s/%s' id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
-		     session->uid + 4, resource, j->id++, query_uid, query_res);
+		     jabber_escape(session->uid + 4), jabber_escape(resource), j->id++, jabber_escape(uid), jabber_escape(query_res));
 	return 0;
 }
 
@@ -1555,7 +1553,7 @@ int jabber_plugin_init()
 	format_add("jabber_generic_conn_failed", "%> (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n", 1);
 	format_add("jabber_version_response", "%> Identyfikator Jabbera: %1\n%> Nazwa programu: %2\n%> Wersja programu: %3\n%> System operacyjny: %4%n\n", 1);
 	format_add("jabber_unknown_resource", "%> (%1) Nieznany resource u¿ytkownika%n\n", 1);
-	format_add("jabber_user_not_found", "%> (%1) Nie znaleziono u¿ytkownika %2%n\n", 1);
+	format_add("jabber_status_notavail", "(%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%n\n", 1);
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);
