@@ -259,14 +259,17 @@ int plugin_register(plugin_t *p, int prio)
 			case PLUGIN_UI:
 				p->prio = 0;
 				break;
-			case PLUGIN_PROTOCOL:
+			case PLUGIN_LOG:
 				p->prio = 5;
 				break;
-			case PLUGIN_LOG:
+			case PLUGIN_SCRIPTING:
 				p->prio = 10;
 				break;
-			default:
+			case PLUGIN_PROTOCOL:
 				p->prio = 15;
+				break;
+			default:
+				p->prio = 20;
 				break;
 		}
 	} else {

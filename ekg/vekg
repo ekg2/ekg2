@@ -1,4 +1,15 @@
 #!/bin/sh
-# skrypt uruchamiaj±cy ekg pod kontrol± valgrinda. przydatny tylko
-# developerom. w snapshotach go nie ma.
-valgrind --num-callers=10 --leak-check=yes --show-reachable=yes --trace-children=no -v --logfile=ekg2.log ./ekg2 "$@"
+
+valgrind \
+   -v \
+   --tool=memcheck \
+   --log-file=ekg2.valgrind \
+    --leak-check=yes \
+    --trace-malloc=yes \
+    --error-limit=no \
+    --demangle=yes \
+    --num-callers=20 \
+   ./ekg2 "$@"
+
+
+
