@@ -48,6 +48,7 @@ typedef struct {
 				 * invisible, dnd, xa itp. */
 	char *descr;		/* opis/powód stanu */
 	char *authtype;		/* to/from/both itp */	
+	char *resource;         /* jabberowy resource */
 
 	uint32_t ip;		/* adres ip */
 	uint16_t port;		/* port */

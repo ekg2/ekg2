@@ -347,6 +347,7 @@ int userlist_remove(session_t *session, userlist_t *u)
 	xfree(u->foreign);
 	xfree(u->last_status);
 	xfree(u->last_descr);
+	xfree(u->resource);
 
 	for (l = u->groups; l; l = l->next) {
 		struct group *g = l->data;

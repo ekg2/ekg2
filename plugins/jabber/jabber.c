@@ -351,6 +351,19 @@ void jabber_handle(void *data, xmlnode_t *n)
 				const char *ns;
 				ns = jabber_attr(q->atts, "xmlns");
 				
+				if (ns && !xstrncmp(ns, "jabber:iq:version", 17)) {
+					xmlnode_t *name = xmlnode_find_child(q, "name");
+					xmlnode_t *version = xmlnode_find_child(q, "version");
+					xmlnode_t *os = xmlnode_find_child(q, "os");
+
+					const char *from_str = (from) ? from : "unknown";					
+					const char *name_str = (name && name->data) ? name->data : "unknown";
+					const char *version_str = (version && version->data) ? version->data : "unknown";
+					const char *os_str = (os && os->data) ? os->data : "unknown";
+
+					print("jabber_version_response", from_str, name_str, version_str, os_str);
+				}
+
 				if (ns && !xstrncmp(ns, "jabber:iq:roster", 16)) {
 					userlist_t u, *tmp;
 					char *ctmp;
@@ -452,6 +465,16 @@ void jabber_handle(void *data, xmlnode_t *n)
 			uid = saprintf("jid:%s", jabber_unescape(from));
 			host = NULL;
 			port = 0;
+
+			char **res_arr = array_make(from, "/", 2, 0, 0);
+			if (res_arr[0] && res_arr[1]) {
+				char *tmp = saprintf("jid:%s", res_arr[0]);
+				userlist_t *ut = userlist_find(s, tmp);
+				xfree(tmp);
+				if (ut)
+					ut->resource = xstrdup(res_arr[1]);
+			}
+			array_free(res_arr);
 
 			query_emit(NULL, "protocol-status", &session, &uid, &status, &descr, &host, &port, &when, NULL);
 
@@ -1396,6 +1419,68 @@ COMMAND(jabber_command_del)
 	return 0;
 }
 
+COMMAND(jabber_command_ver)
+{
+	const char *uid;
+
+	jabber_private_t *j = session_private_get(session);
+	const char *query_uid;
+
+        if (!session_check(session, 1, "jid")) {
+                printq("invalid_session");
+                return -1;
+        }
+
+	if (!session_connected_get(session)) {
+		printq("not_connected", session_name(session));
+		return -1;
+	}
+
+	query_uid = params[0];
+        if (!query_uid && !(query_uid = get_uid(session, "$"))) {
+                printq("not_enough_params", name);
+                return -1;
+        }
+
+	if (!(uid = get_uid(session, query_uid))) {
+		uid = params[0];
+
+		if (xstrchr(uid, '@') && xstrchr(uid, '@') < xstrchr(uid, '.')) {
+			printq("user_not_found", params[0]);
+			return -1;
+		}
+	} else {
+		if (xstrncasecmp(query_uid, "jid:", 4)) {
+			printq("invalid_session");
+			return -1;
+		}
+
+		query_uid += 4;
+	}
+
+	const char *resource = session_get(session, "resource");
+	if (!resource)
+		resource = "ekg2";
+
+	char *tmp = saprintf("jid:%s", query_uid);
+	userlist_t *ut = userlist_find(session, tmp);
+	char *query_res = (ut && ut->resource) ? ut->resource : NULL;
+	xfree(tmp);
+
+	if (!query_res) {
+		print("jabber_user_not_found", session_name(session), query_uid);
+		return -1;
+	}
+
+	if (!ut) {
+		print("jabber_unknown_resource", session_name(session));
+		return -1;
+	}
+
+       	jabber_write(j, "<iq from='%s/%s' id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
+		     session->uid + 4, resource, j->id++, query_uid, query_res);
+	return 0;
+}
 
 int jabber_plugin_init()
 {
@@ -1437,6 +1522,7 @@ int jabber_plugin_init()
 	  possibilities("-a --accept -d --deny -r --request -c --cancel") );
 	command_add(&jabber_plugin, "jid:add", params("U ?"), jabber_command_add, 0, "", "dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê", "<JID> [nazwa]", NULL ); 
 	command_add(&jabber_plugin, "jid:del", params("u"), jabber_command_del, 0, "", "usuwa z naszego rostera", "", NULL);
+	command_add(&jabber_plugin, "jid:ver", params("?u"), jabber_command_ver, 0, "", "pobiera informacjê o sytemie operacyjnym i wersji klienta Jabbera danego jid", "", NULL);
 
 #undef possibilities 
 #undef params
@@ -1467,6 +1553,9 @@ int jabber_plugin_init()
 	format_add("jabber_auth_denied", "%> (%2) Odmówiona autoryzacji %1. %n\n", 1);
 	format_add("jabber_auth_probe", "%> (%2) Wys³ano pytanie o obecno¶æ do %1.%n\n", 1);
 	format_add("jabber_generic_conn_failed", "%> (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n", 1);
+	format_add("jabber_version_response", "%> Identyfikator Jabbera: %1\n%> Nazwa programu: %2\n%> Wersja programu: %3\n%> System operacyjny: %4%n\n", 1);
+	format_add("jabber_unknown_resource", "%> (%1) Nieznany resource u¿ytkownika%n\n", 1);
+	format_add("jabber_user_not_found", "%> (%1) Nieznaleziono u¿ytkownika %2%n\n", 1);
 
 	for (l = sessions; l; l = l->next)
 		jabber_private_init((session_t*) l->data);
