@@ -801,8 +801,14 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 
 	if (type == 2) {
 		if (g->sess->state != GG_STATE_CONNECTING_GG) {
+	                int reconnect_delay;
 			session_t *s = (session_t*) data;
 			print("conn_timeout", session_name(s));
+
+		        reconnect_delay = session_int_get((session_t*) data, "auto_reconnect");
+                	if (reconnect_delay && reconnect_delay != -1)
+                        	timer_add(&gg_plugin, "reconnect", reconnect_delay, 0, gg_reconnect_handler, xstrdup(((session_t*) data)->uid));
+
 			gg_free_session(g->sess);
 			g->sess = NULL;
 			return;
