@@ -1,0 +1,153 @@
+<!--
+   userbook.xml
+-->
+
+<chapter id="faq">
+   <title>
+      Czêsto Zadawane Pytania
+   </title>
+   <sect1 id="faq-install">
+      <title>Instalacja</title>
+      <qandaset>
+         <qandaentry>
+            <question>
+               <para>
+                  Sk±d ¶ci±gn±æ ¼ród³a EKG2 ?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Zapraszam na <ulink url="http://ekg2.org">/http://ekg2.org/</ulink>
+                  do dzialu Pliki i stamt±d mo¿na ¶ciagaæ codzinne snapshoty. Mo¿na
+                  równie¿ skorzystaæ z CVS'a który pozwala byæ na bie¿±co z
+                  aktualizacjami (np. jak sie oka¿e ¿e 10 minut temu naprawiono b³±d
+                  powoduj±ce Segmentation Fault naszego EKG2). Sposób postêpowania
+                  jest oczywisty bo wszystko ³adnie zosta³o opisane na stronce, wiêc
+                  nie bêdê powiela³.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  Mam wersjê CVS EKG2 ale przy wykonywaniu ./autogen.sh pojawiaja mi
+                  siê b³edy o brakuj±cym libtoolize, libtool, aclocal, autoheader,
+                  automake, autoconf, autom4te. Co z tym zrobic?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Wpierw upewnij siê, ¿e masz zainstalowane w systemie najnowsze
+                  wersje tych¿e narzêdzi (proponuje przejrzeæ zawarto¶æ
+                  <filename>/usr/ports/devel</filename> w ich poszukiwaniu a je¶li
+                  nie umiesz instalowaæ z portsów to polecam <command>man
+                     ports</command>). Je¶li pomimo tego, i¿ masz zainstalowane te
+                  narzêdzia pojawiaj± Ci siê b³edy oznacza to, i¿ nie widzi ich w
+                  systemie. Jest to zapewne spowodowane tym, ¿e nie ma symlinków
+                  odnosz±cych sie do w/w narzêdzi. Wszystkie one znajduj± siê
+                  standardowo w katalogu <filename>/usr/local/bin</filename> i
+                  proponuje porobiæ symlinki do tych¿e narzêdzi. Np. <command>ln
+                     -s libtoolize19 libtoolize</command> i tak po kolei dla
+                  wszystkich innych narzêdzi. A najlepiej, na przysz³o¶æ, dla
+                  wszystkich narzêdzi zakoñczonych liczbami a nie maj±cych
+                  symlinków do wersji bez liczb, a w szczególno¶ci dla tych
+                  wszystkich auto-narzêdzi.   
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  W systemie BSD, przy wywo³aniu <command>./configure</command>
+                  jak i <command>./autogen.sh</command> pojawia mi siê, i¿ libgadu
+                  czy te¿ expat (biblioteka jabbera) sa wy³aczone (disabled).  Co
+                  robiæ?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Jako, ¿e FreeBSD ma inn± lokalizacjê plików bibliotecznych czasem,
+                  aczkolwiek nie zawsze, nie widzi odpowiednich bibliotek. Polecam
+                  wtedy dodac opcje --with-libgadu=/usr/local jak równie¿
+                  --with-expat=/usr/local. Oczywi¶cie powy¿sze tzreba mieæ w systemie
+                  skompilowane je¶li ich nie posiadamy.
+               </para>
+               <programlisting role="shell">
+<![CDATA[
+$ ./autogen.sh --with-libgadu=/usr/local --with-expat=/usr/local 
+$ ./configure --with-libgadu=/usr/local --with-expat=/usr/local
+]]>
+               </programlisting>
+               <para>
+                  <emphasis>libgadu</emphasis> znajdziemy na stronie <ulink
+                     url="http://dev.null.pl/ekg/">http://dev.null.pl/ekg/</ulink>
+                  (libgadu powinni¶my oczywi¶cie skompilowaæ z opcj±
+                  <parameter>--enable-shared</parameter>).
+               </para>
+               <para>
+                  <emphasis>expat</emphasis> znajdziemy w oficjalnym drzewie portów lub te¿, w
+                  najnowszych wersjach FreeBSD (FreeBSD 5.3.x), w ¼ród³ach
+                  systemu.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
+                  W systemie BSD przy kompilacji pokazuje mi siê b³±d o braku
+                  libintl.h z pakietu gettext.h:
+               </para>
+               <screen>
+<![CDATA[
+gcc -DHAVE_CONFIG_H -I. -I. -I../.. -I../../libltdl -g -O2 -Wall -MT main.lo -M
+D -MP -MF .deps/main.Tpo -c main.c  -fPIC -DPIC -o .libs/main.o
+In file included from ../../ekg/themes.h:27,
+                 from main.c:41:
+../../gettext.h:26:22: libintl.h: No such file or directory
+]]>
+               </screen>
+               <para>
+                  gettext jest zainstalowany w systemie. Co robiæ?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Niestety ale znowu jest to spowodowane tym, i¿ BSD maj± nieco
+                  inne po³o¿enie bibliotek systemowych ni¿ linuksy. Najprostszym
+                  rozwi±zaniem jest dopisaæ przy <command>./autogen.sh</command>
+                  lub <command>./configure opcji
+                     --with-libintl-prefix=/usr/local/include</command>
+               </para>
+               <programlisting role="shell">
+<![CDATA[
+$ ./autogen.sh --with-libintl-prefix=/usr/local/include
+$ ./configure --with-libintl-prefix=/usr/local/include
+]]>
+               </programlisting>
+            </answer>
+         </qandaentry>
+      </qandaset>
+   </sect1>
+   <sect1 id="faq-usage">
+      <title>U¿ytkowanie</title>
+      <qandaset>
+         <qandaentry>
+            <question>
+               <para>
+                  Jak ustawiæ tryb prywatny dla sesji Gadu-Gadu?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Wystarczy ustawiæ zmienn± sesyjn± <varname>private</varname>
+                  na <literal>1</literal>, na przyk³ad <command>/session
+                     gg:997997 private 1</command>
+               </para>
+            </answer>
+         </qandaentry>
+      </qandaset>
+   </sect1>
+</chapter>
+<!--
+   vim: filetype=docbk encoding=iso-8859-2
+-->

@@ -1,0 +1,453 @@
+<!--
+   develbook.xml
+-->
+
+<chapter id="develbook">
+   <title>
+      Podrêcznik developera ekg2
+   </title>
+   <sect1 id="develbook-themes">
+      <title>Tworzenie tematów graficznych</title>
+      <sect2>
+         <title>Stworzenie nowego tematu</title>
+         <para>
+            Tworzenie w³asnego tematu graficznego do ekg2 najlepiej rozpocz±c od
+            wygenerowania "czystego" pliku z tematem, zawieraj±cego ustawienia
+            domy¶lne. Do wygenerowania takiego pliku mo¿na u¿yæ prostego skryptu
+            pow³oki, na przyk³ad takiego jak poni¿szy, który nale¿y uruchomiæ w
+            katalogu ze ¼ród³ami ekg2.
+         </para>
+         <programlisting role="shell">
+<![CDATA[
+grep -R -I 'format_add("' * | cut -d: -f2- | \
+   perl -ne '/format_add\("(.*?)".+"(.*)".*/; print $1." ".$2."\n"' \
+   > my.theme
+   ]]>
+         </programlisting>
+         <para>
+            Maj±c wygenerowany taki plik mo¿na przyst±piæ do modyfikacji.
+            Wszystkie zmienione formatki nale¿y zapisaæ, niezmienione mo¿na usun±æ
+            lub pozostawiæ. Nastêpnie nale¿y plik z tematem umie¶ciæ we w³a¶ciwym
+            katalogu - podkatalogu <filename>themes</filename> katalogu z danymi
+            ekg2 (zazwyczaj <filename>/usr/share/ekg2</filename> lub
+            <filename>/usr/local/share/ekg2</filename>) lub w katalogu z
+            konfiguracj± ekg2 (<filename>~/.ekg2</filename> lub
+            <filename>~/etc/ekg2</filename>). Stworzony temat mo¿na przetestowaæ
+            ustawiaj±c zmienn± <varname>theme</varname>, nadaj±c jej warto¶æ tak±
+            jak nazwa pliku z tematem bez koñcówki <literal>.theme</literal>.
+         </para>
+      </sect2>
+      <sect2>
+         <title>Formatki</title>
+         <table frame="all">
+            <title>Kolory w tematach graficznych</title>
+            <tgroup cols="4">
+               <colspec colname="kolor"/>
+               <colspec colname="zwykly"/>
+               <colspec colname="jasny"/>
+               <colspec colname="tlo"/>
+               <spanspec spanname="nocolor" namest="zwykly" nameend="tlo"/>
+               <tbody>
+                  <row>
+                     <entry>
+                        Kolor
+                     </entry>
+                     <entry>
+                        Zwyk³y
+                     </entry>
+                     <entry>
+                        Jasny
+                     </entry>
+                     <entry>
+                        T³o
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        czarny/szary
+                     </entry>
+                     <entry>
+                        %k
+                     </entry>
+                     <entry>
+                        %K
+                     </entry>
+                     <entry>
+                        %l
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        niebieski
+                     </entry>
+                     <entry>
+                        %b
+                     </entry>
+                     <entry>
+                        %B
+                     </entry>
+                     <entry>
+                        %e
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        czerwony
+                     </entry>
+                     <entry>
+                        %r
+                     </entry>
+                     <entry>
+                        %R
+                     </entry>
+                     <entry>
+                        %s
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        fioletowy
+                     </entry>
+                     <entry>
+                        %m/%p
+                     </entry>
+                     <entry>
+                        %M/%P
+                     </entry>
+                     <entry>
+                        %q
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        turkusowy
+                     </entry>
+                     <entry>
+                        %c
+                     </entry>
+                     <entry>
+                        %C
+                     </entry>
+                     <entry>
+                        %d
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        br±zowy/¿ó³ty
+                     </entry>
+                     <entry>
+                        %y
+                     </entry>
+                     <entry>
+                        %Y
+                     </entry>
+                     <entry>
+                        %z
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        zielony
+                     </entry>
+                     <entry>
+                        %g
+                     </entry>
+                     <entry>
+                        %G
+                     </entry>
+                     <entry>
+                        %h
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        bia³y
+                     </entry>
+                     <entry>
+                        %w
+                     </entry>
+                     <entry>
+                        %W
+                     </entry>
+                     <entry>
+                        %x
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        mrugaj±cy
+                     </entry>
+                     <entry>
+                        %i
+                     </entry>
+                     <entry>
+                        -
+                     </entry>
+                     <entry>
+                        -
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        t³usty
+                     </entry>
+                     <entry>
+                        %T
+                     </entry>
+                     <entry>
+                        -
+                     </entry>
+                     <entry>
+                        -
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        bez koloru
+                     </entry>
+                     <entry spanname="nocolor">
+                        %n
+                     </entry>
+                  </row>
+               </tbody>
+            </tgroup>
+         </table>
+      </sect2>
+      <sect2>
+         <title>Dope³nianie do szeroko¶ci</title>
+         <para>
+            Przy parametrach %1-%9 mo¿na kazaæ dope³niaæ do konkretnej
+            szeroko¶ci. przydaje siê do wszelkiego rodzaju tabelek.
+         </para>
+         <table frame="all">
+            <title>Dope³nianie do szeroko¶ci</title>
+            <tgroup cols="2">
+               <colspec name="typ"/>
+               <colspec name="opis"/>
+               <tbody>
+                  <row>
+                     <entry>
+                        %[10]1
+                     </entry>
+                     <entry>
+                        dope³nia spacjami z prawej pierwszy parametr do 10 pól
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %[-10]1
+                     </entry>
+                     <entry>
+                        j.w. tylko ¿e do lewej
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %[.5]1
+                     </entry>
+                     <entry>
+                        dope³nia zerami
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %[,9]2
+                     </entry>
+                     <entry>
+                        dope³nia kropkami
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %[_4]1
+                     </entry>
+                     <entry>
+                        dope³nia znakami podkre¶lenia
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %(10)1
+                     </entry>
+                     <entry>
+                        je¶li rozmiar parametru przekroczy 10 znaków nie obcina
+                     </entry>
+                  </row>
+               </tbody>
+            </tgroup>
+         </table>
+         <para>
+            UWAGA! kolorkowe sekwencje ansi traktuje jak znaki, wiêc nie
+            powinno siê ich u¿ywaæ przy dope³nianiu parametrów.
+         </para>
+      </sect2>
+      <sect2>
+         <title>Koñcówki zale¿ne od p³ci</title>
+         <para>
+            Je¶li chce siê rozró¿niaæ przymiotniki dla ró¿nych p³ci, mo¿na u¿yæ
+            %@n, gdzie ,,n'' to numer formatu, który bierzemy pod uwagê. je¶li
+            ostatni± liter± bêdzie ,,a'', %@n zostanie zast±pione przez ,,a'',
+            w innym przypadku przez ,,y''. przyk³ad: <literal>%> %1 jest
+               dostêpn%@1</literal>
+         </para>
+         <para>
+            Nale¿y wzi±æ uwagê, ¿e w wielu wypadkach pseudonimy s± najpierw
+            formatowane przez known_user i unknown_user, wiêc trzeba podaæ
+            osobny parametr z samym pseudonimem.
+         </para>
+      </sect2>
+      <sect2>
+         <title>Znaki zachêty</title>
+         <table frame="all">
+            <title>Znaki zachêty</title>
+            <tgroup cols="2">
+               <colspec name="typ"/>
+               <colspec name="opis"/>
+               <tbody>
+                  <row>
+                     <entry>
+                        %>
+                     </entry>
+                     <entry>
+                        prompt (domy¶lnie zielony)
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %!
+                     </entry>
+                     <entry>
+                        error (domy¶lnie czerwony)
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %)
+                     </entry>
+                     <entry>
+                        prompt2 (domy¶lnie turkusowy)
+                     </entry>
+                  </row>
+                  <row>
+                     <entry>
+                        %#
+                     </entry>
+                     <entry>
+                        timestamp (domy¶lnie GG:MM)
+                     </entry>
+                  </row>
+               </tbody>
+            </tgroup>
+         </table>
+         <para>
+            <literal>%|</literal> oznacza koniec promptu. Je¶li ten format
+            wystêpuje, to przy przenoszeniu do nastêpnej linii, tekst przed tym
+            formatem zostanie wy¶wietlony ponownie.
+         </para>
+         <example>
+            <title>U¿ycie formatu %|</title>
+            <programlisting>
+<![CDATA[
+%> D³uga linia, która zostanie podzielona na kilka linii
+]]>
+            </programlisting>
+            <para>
+               Na ma³ym terminalu powy¿szy przyk³ad wy¶wietli:
+            </para>
+            <screen>
+<![CDATA[
+	.-------------------------.
+        | ::: D³uga linia, która  |
+        | zostanie podzielona na  |
+        | kilka linii             |
+	`-------------------------'
+]]>
+            </screen>
+            <para>
+               Po dodaniu %|, to znaczy:
+            </para>
+            <programlisting>
+<![CDATA[
+%> %|D³uga linia, która zostanie podzielona na kilka linii
+]]>
+            </programlisting>
+            <para>
+               zostanie wy¶wietlone jako:
+            </para>
+            <screen>
+<![CDATA[
+        .-------------------------.
+        | ::: D³uga linia, która  |
+	| ::: zostanie podzielona |
+	| ::: na kilka linii      |
+	`-------------------------'
+]]>
+            </screen>
+         </example>
+      </sect2>
+      <sect2>
+         <title>U¿ytkownicy spoza listy kontaktów</title>
+         <para>
+            Dwa specjalne formaty ,,known_user'' i ,,unknown_user'' okre¶laj±,
+            jak bêd± pokazywani userzy z listy i spoza listy kontaktów.
+            Pierwszy za parametry przyjmuje %1 opis, %2 numerek, a drugi %1
+            numerek.
+         </para>
+      </sect2>
+      <sect2>
+         <title>Prompty readline</title>
+         <para>
+            Wpisy readline_*, oprócz readline_prompt_query nie mog± zawieraæ
+            ¿adnych ,,procentowych'' kodów steruj±cych. Podobnie jest z
+            promptem config_changed.
+         </para>
+      </sect2>
+      <sect2>
+         <title>Marginesy</title>
+         <para>
+            (ncurses) W ekg2 mo¿na ustawiaæ tzw. marginesy poprzez zmienn±
+            ncurses:margin_size. Aby z nich korzystaæ nale¿y w formatce u¿yæ
+            znaków /| do oddzielenia tekstu znajduj±cego siê po prawej i po
+            lewej stronie.
+         </para>
+         <example>
+            <title>Przyk³ad u¿ycia marginesów</title>
+            <programlisting>
+<![CDATA[
+tekst/|tekst2
+]]>
+            </programlisting>
+            <para>
+               Powy¿sza formatka zostanie wy¶wietlona jako:
+            </para>
+            <screen>
+<![CDATA[
+tekst        tekst2
+]]>
+            </screen>
+            <para>
+               Odstêp reguluje siê poprzez zmienn± ncurses:margin_size.
+            </para>
+         </example>
+      </sect2>
+   </sect1>
+   <sect1 id="develbook-plugins">
+      <title>Tworzenie pluginów</title>
+      <sect2>
+         <title>Struktura plugin_t</title>
+      </sect2>
+      <sect2>
+         <title>Obs³uga zdarzeñ</title>
+      </sect2>
+      <sect2>
+         <title>Wywo³ywanie poleceñ ekg2</title>
+      </sect2>
+      <sect2>
+         <title>Wy¶wietlanie danych</title>
+      </sect2>
+   </sect1>
+</chapter>
+<!--
+   vim: filetype=docbk encoding=iso-8859-2
+-->

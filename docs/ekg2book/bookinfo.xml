@@ -1,0 +1,17 @@
+   <bookinfo>
+      <author>
+         <firstname>Leszek</firstname>
+         <surname>Krupinski</surname>
+         <email>leszek@wafel.com</email>
+      </author>
+      <author>
+         <firstname>Sebastian</firstname>
+         <surname>Szary</surname>
+         <email>greyer@killer.radom.net</email>
+      </author>
+      <copyright>
+         <year>2004, 2005</year>
+         <holder>Grupa rozwijaj±ca ekg2</holder>
+      </copyright>
+   </bookinfo>
+

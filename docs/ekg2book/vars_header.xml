@@ -1,0 +1,9 @@
+ <chapter>
+   <title>Opcje konfiguracji</title>
+   <para>
+      Poni¿ej znajduje siê lista opcji konfiguracji, które mo¿na ustawiæ za
+      pomoc± polecenia <emphasis>/set</emphasis>. W przypadku opcji
+      poszczególnych wtyczek, nale¿y je ustawiaæ poprzedzaj±c nazwê zmiennej
+      nazw± pluginu i dwukropkiem, na przyk³ad <userinput>/set gg:dcc
+         1</userinput>
+   </para>
