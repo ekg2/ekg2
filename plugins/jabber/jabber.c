@@ -609,7 +609,7 @@ void jabber_handle_connect(int type, int fd, int watch, void *data)
 
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		print("generic_error", strerror(res));
-		j->connecting = 0;
+		jabber_handle_disconnect(jdh->session);
 		return;
 	}
 
@@ -659,6 +659,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 			debug("[jabber] read %d bytes from resolver. not good\n", res);
 		close(fd);
 		print("generic_error", "Nie znaleziono serwera, sorry");
+		/* no point in reconnecting by jabber_handle_disconnect() */
 		j->connecting = 0;
 		return;
 	}
@@ -670,7 +671,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		debug("[jabber] socket() failed: %s\n", strerror(errno));
 		print("generic_error", strerror(errno));
-		j->connecting = 0;
+		jabber_handle_disconnect(jdh->session);
 		return;
 	}
 
@@ -681,7 +682,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	if (ioctl(fd, FIONBIO, &one) == -1) {
 		debug("[jabber] ioctl() failed: %s\n", strerror(errno));
 		print("generic_error", strerror(errno));
-		j->connecting = 0;
+		jabber_handle_disconnect(jdh->session);
 		return;
 	}
 
@@ -701,7 +702,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	if (errno != EINPROGRESS) {
 		debug("[jabber] connect() failed: %s\n", strerror(errno));
 		print("generic_error", strerror(errno));
-		j->connecting = 0;
+		jabber_handle_disconnect(jdh->session);
 		return;
 	}
 
@@ -728,10 +729,10 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 		if (ret < 0) {
 			debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
 			print("generic_error", gnutls_strerror(ret));
-			j->connecting = 0;
 			gnutls_deinit(j->ssl_session);
 			gnutls_certificate_free_credentials(xcred);
 			gnutls_global_deinit();
+			jabber_handle_disconnect(jdh->session);
 			return;
 		}
 		j->using_ssl = 1;
@@ -905,6 +906,10 @@ COMMAND(jabber_command_disconnect)
 		return -1;
 	}
 
+	/* jesli istnieje timer reconnecta, to znaczy, ze przerywamy laczenie */
+	if (timer_remove(&jabber_plugin, "reconnect") == 0)
+		return 0;
+
 	if (!j->connecting && !session_connected_get(session)) {
 		printq("not_connected", session_name(session));
 		return -1;
@@ -951,6 +956,9 @@ COMMAND(jabber_command_disconnect)
 
 	/* wywo³a jabber_handle_disconnect() */
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
+
+	/* skoro zrobilismy sami /disco, to nie chcemy reconnecta */
+	timer_remove(&jabber_plugin, "reconnect");
 
 	return 0;
 }
