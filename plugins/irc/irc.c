@@ -657,7 +657,7 @@ COMMAND(irc_command_disconnect)
 	}
 	
 	if (session_connected_get(session))
-		irc_write (j, "QUIT :%s\r\n", params[0]?params[0]:QUITMSG(session));
+		irc_write (j, "QUIT :%s\r\n", (params && params[0])?params[0]:QUITMSG(session));
 
 	if (j->connecting) {
 		j->connecting = 0;
