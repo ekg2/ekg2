@@ -757,10 +757,10 @@ int python_plugin_destroy()
  *
  */
 
-int python_plugin_init()
+int python_plugin_init(int prio)
 {
 
-        plugin_register(&python_plugin);
+        plugin_register(&python_plugin, prio);
         python_theme_init();
 
         command_add(&python_plugin, "python:eval",   "?",  python_command_eval,   0, NULL);

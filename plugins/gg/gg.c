@@ -1179,11 +1179,11 @@ void gg_setvar_default()
 	gg_config_dcc_port = 1550;
 }
 
-int gg_plugin_init()
+int gg_plugin_init(int prio)
 {
 	list_t l;
 
-	plugin_register(&gg_plugin);
+	plugin_register(&gg_plugin, prio);
 
 	gg_setvar_default();
 

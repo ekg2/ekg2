@@ -1244,11 +1244,11 @@ COMMAND(irc_command_nick)
 
 #define params(x) x
 
-int irc_plugin_init()
+int irc_plugin_init(int prio)
 {
 	list_t l;
 
-	plugin_register(&irc_plugin);
+	plugin_register(&irc_plugin, prio);
 
 	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
 	query_connect(&irc_plugin, "plugin-print-version", irc_print_version, NULL);

@@ -1674,6 +1674,8 @@ void theme_init()
         format_add("plugin_unload_ui", _("%! Plugin %T%1%n is an UI plugin and can't be unloaded%n\n"), 1);
         format_add("plugin_loaded", _("%> Plugin %T%1%n loaded%n\n"), 1);
         format_add("plugin_unloaded", _("%> Plugin %T%1%n unloaded%n\n"), 1);
+	format_add("plugin_list", _("%> %T%1%n - %2%n\n"), 1);
+	format_add("plugin_prio_set", _("%> Plugin %T%1%n prio is setted to %T%2%n\n"), 1);
 
         theme_plugins_init();
 }

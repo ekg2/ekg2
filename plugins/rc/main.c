@@ -220,9 +220,9 @@ static void rc_paths_changed(const char *name)
 	array_free(paths);
 }
 
-int rc_plugin_init()
+int rc_plugin_init(int prio)
 {
-	plugin_register(&rc_plugin);
+	plugin_register(&rc_plugin, prio);
 
 	variable_add(&rc_plugin, "remote_control", VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
 

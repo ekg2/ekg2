@@ -221,9 +221,9 @@ static int pcm_codec_destroy(void *data, va_list ap)
 	return 0;
 }
 
-int pcm_plugin_init()
+int pcm_plugin_init(int prio)
 {
-	plugin_register(&pcm_plugin);
+	plugin_register(&pcm_plugin, prio);
 
 	query_connect(&pcm_plugin, "codec-capabilities", pcm_codec_capabilities, NULL);
 	query_connect(&pcm_plugin, "codec-init", pcm_codec_init, NULL);

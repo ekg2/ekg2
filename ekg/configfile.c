@@ -324,7 +324,12 @@ int config_read(const char *filename)
 			}
 				array_free(p);
 		} else if (!xstrcasecmp(buf, "plugin")) {
-			plugin_load(foo, 1);
+			char **p = array_make(foo, " \t", 3, 1, 0);
+			
+				if (array_count(p) == 2) 
+					plugin_load(p[0], atoi(p[1]), 1);
+
+				array_free(p);
 		}
 
 		if (!ret)
@@ -475,7 +480,7 @@ static void config_write_main(FILE *f)
 
         for (l = plugins; l; l = l->next) {
                 plugin_t *p = l->data;
-                if (p && p->name) fprintf(f, "plugin %s\n", p->name);
+                if (p && p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
         }
 }
 

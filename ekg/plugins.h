@@ -56,6 +56,7 @@ typedef struct {
 
 typedef struct {
 	char *name;
+	int prio;
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
 	lt_dlhandle dl;
@@ -63,9 +64,9 @@ typedef struct {
 	plugin_theme_init_func_t theme_init;
 } plugin_t;
 
-int plugin_load(const char *name, int quiet);
+int plugin_load(const char *name, int prio, int quiet);
 int plugin_unload(plugin_t *);
-int plugin_register(plugin_t *);
+int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);
 int plugin_theme_reload(plugin_t *);
 plugin_t *plugin_find(const char *name);

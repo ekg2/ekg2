@@ -433,8 +433,12 @@ play
 	krotki opis: odtwarza plik d¼wiêkowy
 
 plugin
-	parametry:  [-|+][nazwa]
-	krotki opis: ³aduje lub usuwa rozszerzenie ekg
+	parametry:  [-|+][nazwa] [prio]
+	krotki opis: ³aduje lub usuwa rozszerzenie ekg2
+	
+	Usuwa lub dodaje plugin ekg2. Drugi parametr pozwala ustawiæ priorytet
+	pluginu, co pozwala ustawiæ kolejno¶æ przetwarzania instrukcji przez
+	pluginy.
 
 query
 	parametry:  <numer|alias|@grupa|metakontakt|sesja/alias|sesja/numer> [wiadomo¶æ]

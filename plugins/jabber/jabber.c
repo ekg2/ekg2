@@ -1017,11 +1017,11 @@ static int jabber_theme_init()
         return 0;
 }
 
-int jabber_plugin_init()
+int jabber_plugin_init(int prio)
 {
         list_t l;
 
-        plugin_register(&jabber_plugin);
+        plugin_register(&jabber_plugin, prio);
 
         query_connect(&jabber_plugin, "protocol-validate-uid", jabber_validate_uid, NULL);
         query_connect(&jabber_plugin, "plugin-print-version", jabber_print_version, NULL);

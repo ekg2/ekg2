@@ -200,9 +200,9 @@ static COMMAND(command_blink_leds)
 	return ((ioctld_send(params[0], ACT_BLINK_LEDS, quiet) == -1) ? -1 : 0);
 }
 
-int ioctld_plugin_init()
+int ioctld_plugin_init(int prio)
 {
-	plugin_register(&ioctld_plugin);
+	plugin_register(&ioctld_plugin, prio);
 
 	ioctld_sock_path = prepare_path(".socket", 1);
 	

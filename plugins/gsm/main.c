@@ -149,9 +149,9 @@ static void gsm_codec_destroy(void *codec)
 	xfree(c);
 }
 
-int gsm_plugin_init()
+int gsm_plugin_init(int prio)
 {
-	plugin_register(&gsm_plugin);
+	plugin_register(&gsm_plugin, prio);
 	codec_register(&gsm_codec);
 
 	return 0;

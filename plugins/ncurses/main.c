@@ -423,11 +423,11 @@ void ncurses_sigint_handler(int s)
 	}
 }
 
-int ncurses_plugin_init()
+int ncurses_plugin_init(int prio)
 {
 	list_t l;
 
-	plugin_register(&ncurses_plugin);
+	plugin_register(&ncurses_plugin, prio);
 	
 	ncurses_setvar_default();
 

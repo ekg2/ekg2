@@ -23,9 +23,9 @@
 
 PLUGIN_DEFINE(dummy, PLUGIN_GENERIC, NULL);
 
-int dummy_plugin_init()
+int dummy_plugin_init(int prio)
 {
-	plugin_register(&dummy_plugin);
+	plugin_register(&dummy_plugin, prio);
 
 	debug("dummy plugin registered\n");
 

@@ -510,9 +510,9 @@ static int mail_count_query(void *data, va_list ap)
 	return 0;
 }
 
-int mail_plugin_init()
+int mail_plugin_init(int prio)
 {
-	plugin_register(&mail_plugin);
+	plugin_register(&mail_plugin, prio);
 
 	query_connect(&mail_plugin, "mail-count", mail_count_query, NULL);
 

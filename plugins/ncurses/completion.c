@@ -51,16 +51,6 @@ int continue_complete_count = 0;
 command_t *actual_completed_command;
 session_t *session_in_line;
 
-static void dcc_generator(const char *text, int len)
-{
-	const char *words[] = { "close", "get", "send", "list", "rsend", "rvoice", "voice", NULL };
-	int i;
-
-	for (i = 0; words[i]; i++)
-		if (!xstrncasecmp(text, words[i], len))
-			array_add_check(&completions, xstrdup(words[i]), 1);
-}
-
 static void command_generator(const char *text, int len)
 {
 	const char *slash = "", *dash = "";
@@ -212,6 +202,22 @@ static void conference_generator(const char *text, int len)
 
                 if (!xstrncasecmp(text, c->name, len))
                         array_add_check(&completions, xstrdup(c->name), 1);
+        }
+}
+
+static void plugin_generator(const char *text, int len)
+{
+        list_t l;
+
+        for (l = plugins; l; l = l->next) {
+                plugin_t *p = l->data;
+
+                if (!xstrncasecmp(text, p->name, len))
+                        array_add_check(&completions, xstrdup(p->name), 1);
+		if ((text[0] == '+' || text[0] == '-') && !xstrncasecmp(text + 1, p->name, len - 1)) {
+			char *tmp = saprintf("%c%s", text[0], p->name);
+			array_add_check(&completions, tmp, 1);
+		}
         }
 }
 
@@ -630,8 +636,8 @@ static struct {
 	{ 'i', ignored_uin_generator },
 	{ 'b', blocked_uin_generator },
 	{ 'v', variable_generator },
-	{ 'd', dcc_generator },
 	{ 'p', possibilities_generator },
+	{ 'P', plugin_generator },
 	{ 'w', window_generator },
 	{ 'f', file_generator },
 	{ 'e', events_generator },
@@ -1103,8 +1109,8 @@ exact_match:
 		 * mo¿e nie za ³adne programowanie, ale skuteczne i w sumie jedyne w 100% spe³niaj±ce	
 	 	 * wymagania dope³niania (uwzglêdnianie cudzyws³owiów itp...)
 		 */
-		for(i=1, j = 0; ; i++, common++) {
-			for(j=0; j < count; j++) {
+		for (i=1, j = 0; ; i++, common++) {
+			for (j=0; j < count; j++) {
 				char *s2;
 
 				s2 = completions[j];
@@ -1113,7 +1119,7 @@ exact_match:
 					s2++;
 				}
 				tmp = xstrncasecmp(s1, s2, i);
-				/* debug("xstrncasecmp(\"%s\", \"%s\", %d) = %d\n", s1, s2, i, xstrncasecmp(s1, s2, i));  */
+				/* debug("xstrncasecmp(\"%s\", \"%s\", %d) = %d\n", s1, s2, i, xstrncasecmp(s1, s2, i)); */
 				if (tmp)
 					break;
                         }

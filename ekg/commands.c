@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2001-2005 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Robert J. Wo¼ny <speedy@ziew.org>
  *                          Pawe³ Maziarz <drg@infomex.pl>
  *                          Wojciech Bojdo³ <wojboj@htc.net.pl>
@@ -3749,26 +3749,38 @@ COMMAND(cmd_dcc)
 COMMAND(cmd_plugin)
 {
 	int ret;
+	plugin_t *pl;
+
 	if (!params[0]) {
 		list_t l;
 		
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
 
-			printq("generic", (p && p->name) ? p->name : "?");
+			printq("plugin_list", (p && p->name) ? p->name : "?", itoa(p->prio));
 		}
 
 		return 0;
 	}
 
 	if (params[0][0] == '+') {
-		ret = plugin_load(params[0] + 1, 0);
+		ret = plugin_load(params[0] + 1, 0, 0);
 		changed_theme(NULL);
 		return ret;
 	}
 
 	if (params[0][0] == '-')
 		return plugin_unload(plugin_find(params[0] + 1));
+
+	if (params[1] && (pl = plugin_find(params[0]))) {
+		list_remove(&plugins, pl, 0);
+		plugin_register(pl, atoi(params[1])); 
+
+		config_changed = 1;
+		printq("plugin_prio_set", pl->name, params[1]);
+
+		return 0;
+	}
 
 	printq("invalid_params", name);
 
@@ -3913,6 +3925,7 @@ int command_remove(plugin_t *plugin, const char *name)
  * 'b' - nicks of blocked
  * 'v' - variable name
  * 'p' - params typed in possibilities
+ * 'P' - plugin's name
  * 'f' - file
  * 'e' - event name
  * 'I' - ignored level
@@ -3993,7 +4006,7 @@ void command_init()
 	
 	command_add(NULL, "play", "f", cmd_play, 0, NULL);
 
-	command_add(NULL, "plugin", "?", cmd_plugin, 0, NULL);
+	command_add(NULL, "plugin", "P ?", cmd_plugin, 0, NULL);
 
 	command_add(NULL, "query", "uUCms ?", cmd_query, 0,
 	  "-c --clear");

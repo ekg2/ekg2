@@ -58,9 +58,9 @@
 
 PLUGIN_DEFINE(logs, PLUGIN_GENERIC, NULL);
 
-int logs_plugin_init()
+int logs_plugin_init(int prio)
 {
-	plugin_register(&logs_plugin);
+	plugin_register(&logs_plugin, prio);
 
 	query_connect(&logs_plugin, "protocol-message",	logs_handler, NULL);
 	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);

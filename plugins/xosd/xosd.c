@@ -301,9 +301,9 @@ void xosd_setvar_default()
 }
 
 
-int xosd_plugin_init()
+int xosd_plugin_init(int prio)
 {
-	plugin_register(&xosd_plugin);
+	plugin_register(&xosd_plugin, prio);
 
 	osd = NULL;	
 	osd = xosd_create(2);

@@ -48,9 +48,9 @@
 
 PLUGIN_DEFINE(logsqlite, PLUGIN_GENERIC, logsqlite_theme_init);
 
-int logsqlite_plugin_init()
+int logsqlite_plugin_init(int prio)
 {
-	plugin_register(&logsqlite_plugin);
+	plugin_register(&logsqlite_plugin, prio);
 
 	query_connect(&logsqlite_plugin, "protocol-message", logsqlite_msg_handler, NULL);
 	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);

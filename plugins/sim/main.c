@@ -344,9 +344,9 @@ static int sim_theme_init()
  *
  * inicjalizacja pluginu.
  */
-int sim_plugin_init()
+int sim_plugin_init(int prio)
 {
-        plugin_register(&sim_plugin);
+        plugin_register(&sim_plugin, prio);
 
         query_connect(&sim_plugin, "message-encrypt", message_encrypt, NULL);
         query_connect(&sim_plugin, "message-decrypt", message_decrypt, NULL);

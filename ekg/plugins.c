@@ -49,7 +49,7 @@ list_t queries = NULL;
  * 
  * 0/-1
  */
-int plugin_load(const char *name, int quiet)
+int plugin_load(const char *name, int prio, int quiet)
 {
 	char *lib = NULL;
 	char *env_ekg_plugins_path = NULL;
@@ -113,7 +113,7 @@ int plugin_load(const char *name, int quiet)
 		
 	xfree(init);
 	
-	if (plugin_init() == -1) {
+	if (plugin_init(prio) == -1) {
 		printq("plugin_not_initialized", name);
 		lt_dlclose(plugin);
 		return -1;
@@ -237,6 +237,14 @@ int plugin_unload(plugin_t *p)
 	return 0;
 }
 
+static int plugin_register_compare(void *data1, void *data2)
+{
+        plugin_t *a = data1, *b = data2;
+
+        return b->prio - a->prio;
+}
+
+
 /*
  * plugin_register()
  *
@@ -244,9 +252,10 @@ int plugin_unload(plugin_t *p)
  *
  * 0/-1
  */
-int plugin_register(plugin_t *p)
+int plugin_register(plugin_t *p, int prio)
 {
-	list_add(&plugins, p, 0);
+	p->prio = prio;
+	list_add_sorted(&plugins, p, 0, plugin_register_compare);
 
 	return 0;
 }

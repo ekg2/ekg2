@@ -332,9 +332,9 @@ static void sms_changed_sms_away(const char *name)
         last = config_sms_away;
 }
 
-int sms_plugin_init()
+int sms_plugin_init(int prio)
 {
-        plugin_register(&sms_plugin);
+        plugin_register(&sms_plugin, prio);
 
         command_add(&sms_plugin, "sms:sms", "u ?", sms_command_sms, 0, NULL);
 
