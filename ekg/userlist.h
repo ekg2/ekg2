@@ -47,7 +47,8 @@ typedef struct {
 	char *status;		/* aktualny stan: notavail, avail, away,
 				 * invisible, dnd, xa itp. */
 	char *descr;		/* opis/powód stanu */
-	
+	char *authtype;		/* to/from/both itp */	
+
 	uint32_t ip;		/* adres ip */
 	uint16_t port;		/* port */
 
