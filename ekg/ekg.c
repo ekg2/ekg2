@@ -33,6 +33,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/resource.h> // rlimit
 
 #include <dirent.h>
 #include <errno.h>
@@ -584,7 +585,13 @@ int main(int argc, char **argv)
 	char *tmp = NULL, *new_status = NULL, *new_descr = NULL;
 	char *load_theme = NULL, *new_profile = NULL;
 	struct passwd *pw;
+	struct rlimit rlim;
 	list_t l;
+
+	/* zostaw po sobie core */
+	rlim.rlim_cur = RLIM_INFINITY;
+	rlim.rlim_max = RLIM_INFINITY;
+	setrlimit(RLIMIT_CORE, &rlim);
 
 	ekg_started = time(NULL);
         ekg_pid = getpid();
