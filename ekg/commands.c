@@ -866,7 +866,7 @@ COMMAND(cmd_for)
 	int for_all = 0, ret = 0;
 
 	if (!params[0] || !params[1]) {
-		printq("invalid_params");
+		printq("invalid_params", name);
 		ret = -1;
 		goto for_end;
 	}
