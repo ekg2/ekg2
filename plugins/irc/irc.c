@@ -1255,12 +1255,12 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 		if (!pr) {
 			if (!hasq)
 			{
-				for (i=0; i<parnum; i++) {
+				for (i=0; i<parnum && i<argnum; i++) {
 					(*v)[i] = xstrdup(params[i]);
 					debug("  v[%d] - %s\n", i, (*v)[i]);
 				}
 			} else {
-				for (i=0; i < parnum-2; i++)
+				for (i=0; i < parnum-2 && i<argnum; i++)
 				{
 					(*v)[i] = xstrdup(params[i]);
 					debug("o v[%d] - %s\n", i, (*v)[i]);
