@@ -32,6 +32,7 @@
 #include <ekg/xmalloc.h>
 #include <ekg/commands.h>
 #include <ekg/stuff.h>
+#include <ekg/metacontacts.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
 #include <ekg/events.h>
@@ -521,6 +522,19 @@ static void sessions_generator(const char *text, int len)
         }
 }
 
+static void metacontacts_generator(const char *text, int len)
+{
+        list_t l;
+
+        for (l = metacontacts; l; l = l->next) {
+		metacontact_t *m = l->data;
+		
+		if (!xstrncasecmp(text, m->name, len)) 
+                	array_add_check(&completions, xstrdup(m->name), 1);
+        }
+
+}
+
 static void sessions_var_generator(const char *text, int len)
 {
         int i;
@@ -577,6 +591,7 @@ static struct {
 	{ 'r', reason_generator },
 	{ 't', theme_generator },
 	{ 'o', dir_generator },
+	{ 'm', metacontacts_generator }, 
 	{ 0, NULL }
 };
 

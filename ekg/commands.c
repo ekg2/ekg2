@@ -50,6 +50,7 @@
 #include "configfile.h"
 #include "dynstuff.h"
 #include "log.h"
+#include "metacontacts.h"
 #include "msgqueue.h"
 #include "protocol.h"
 #include "sessions.h"
@@ -1129,6 +1130,36 @@ COMMAND(cmd_list)
 			return 0;
 		}
 
+		/* list _metacontact */
+		if (params[0] && params[0][0] == '_') {
+			char *name = xstrdup(params[0] + 1);
+	                metacontact_t *m = metacontact_find(name);
+        	        metacontact_item_t *i;
+	
+	                if (!m) {
+	                        printq("metacontact_doesnt_exist", name);
+	                	return -1;
+			}
+	
+	                i = metacontact_find_prio(m);
+	                if (!i) {
+	                        printq("metacontact_item_list_empty");
+				return -1;
+	               	} 
+		
+			u = userlist_find_n(i->s_uid, i->name);
+
+	                status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
+
+	                printq("metacontact_info_header", name);
+			printq("metacontact_info_status", status);
+	                printq("metacontact_info_footer", name);
+
+			xfree(name);
+			xfree(status);
+			return 0;
+		}
+	
 		if (!(u = userlist_find(session, params[0])) || !u->nickname) {
 			printq("user_not_found", params[0]);
 			return -1;
@@ -1332,7 +1363,7 @@ COMMAND(cmd_save)
 			return -1;
 	}
 
-	if (!userlist_write(session) && !config_write(params[0]) && !session_write()) {
+	if (!userlist_write(session) && !config_write(params[0]) && !session_write() && !metacontact_write()) {
 		printq("saved");
 		config_changed = 0;
 	} else {
@@ -1822,6 +1853,28 @@ COMMAND(cmd_query)
 
 		goto query;
 	}
+
+	if (params[0] && params[0][0] == '_') {
+		metacontact_t *m = metacontact_find(params[0] + 1);
+		metacontact_item_t *i;
+		
+		if (!m) {
+			printq("metacontact_doesnt_exist", params[0] + 1);
+			res = -1;
+			goto cleanup;
+		}
+
+		i = metacontact_find_prio(m);
+		if (!i) {
+			printq("metacontact_item_list_empty");
+			res = -1;
+			goto cleanup;
+		}
+
+		xfree(p[0]);
+		p[0] = xstrdup(i->name);
+		goto query;
+	}	
 
 	if (params[0] && !get_uid(session, params[0])) {
 		printq("user_not_found", params[0]);
@@ -3418,6 +3471,7 @@ int command_remove(plugin_t *plugin, const char *name)
  * 'S' - session variable name
  * 'r' - session description 
  * 'o' - directory
+ * 'm' - metacontact
  * 
  * je¿eli parametr == 'p' to 9 argument funkcji command_add() przyjmuje jako argument
  * tablicê z mo¿liwymi uzupe³nieniami 
@@ -3580,8 +3634,34 @@ void command_init()
 	  ",,inteligentnie'' zgodnie ze zmienn± %Ttime_deviation.%n", 
 	  possibilities("-c --clear -s --stime -n --number") );
 
+        command_add(NULL, "metacontact", params("mp m s uU ?"), cmd_metacontact, 0,
+          " [opcje]", "zarz±dzanie metakontaktami",
+          "\n"
+	  "  -a, --add <nazwa>		    dodaje metakontakt o podanej nazwie\n"
+	  "  -d, --del <nazwa>		    usuwa metakontakt o podanej nazwie\n"
+	  "  -i, --add-item <nazwa> <nazwa_sesji> <nazwa_kontaktu> <prio>"
+	  "	dodaje do metakontaktu kontakt\n"
+	  "  -r, --del-item <nazwa> <nazwa_sesji> <nazwa_kontaktu>"
+	  "	usuwa z metakontaktu kontakt\n"
+	  "  -l, --list 		    wy¶wietla listê wszystkich metakontaktów\n"
+	  "  <nazwa> 			    wy¶weitla listê kontaktów danego metakontaktu\n"
+	  "\n"
+          "Przyk³adowe dodanie metakontaktu mo¿e wygl±daæ nastêpuj±co:\n"
+	  "metacontact -a metakontakt\n"
+	  "metakoctact -i metakontakt sesja nazwa_u¿ytkownika 1\n"
+	  "\n"
+	  "Metakontakty pozwalaj± na stworzenie kontaktu zawieraj±cego inne kontakty. "
+	  "query _metakontakt otwiera rozmowê z osob±, która jest aktualnie dostêpna i ma"
+	  "najwiêkszy priorytet. W przypadku, w którym ¿aden z kontaktów nie jest dostêpny,"
+	  "wiadomo¶æ kierowana jest do osoby o najwiêkszym priorytecie.\n"
+	  "\n"
+	  "Funkcje korzystaj±ce z metakontaktów to:\n"
+	  "  query _<nazwa>		   rozpoczyna rozmowê\n"
+	  "  list _<nazwa>		   pokazuje aktualny stan metakontaktu.%n",
+          possibilities("-a --add -d --del -i --add-item -r --del-item -l --list"));
+
 	command_add(NULL, "list", params("CpuU ?"), cmd_list, 0,
-          " [alias|@grupa|opcje]", "zarz±dzanie list± kontaktów",
+          " [alias|@grupa|opcje|_metakontakt]", "zarz±dzanie list± kontaktów",
 	  "\n"
 	  "Wy¶wietlanie osób o podanym stanie \"list [-a|-A|-i|-B|-d|-m|-o]\":\n"
 	  "  -a, --active           dostêpne\n"
@@ -3669,8 +3749,8 @@ void command_init()
 	  possibilities("load unload run exec list") );
 #endif
 
-	command_add(NULL, "query", params("uUC ?"), cmd_query, 0,
-	  " <numer/alias/@grupa> [wiadomo¶æ]", "w³±cza rozmowê",
+	command_add(NULL, "query", params("uUCm ?"), cmd_query, 0,
+	  " <numer/alias/@grupa|_metakontakt> [wiadomo¶æ]", "w³±cza rozmowê",
 	  "\n"
 	  "Mo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub "
 	  "pseudonimy przecinkiem (ale bez odstêpów). W takim wypadku "

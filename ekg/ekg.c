@@ -57,6 +57,7 @@
 #include "configfile.h"
 #include "emoticons.h"
 #include "log.h"
+#include "metacontacts.h"
 #include "msgqueue.h"
 #include "protocol.h"
 #ifndef HAVE_STRLCPY
@@ -776,6 +777,7 @@ int main(int argc, char **argv)
 
 	protocol_init();
 	events_init();
+	metacontact_init();
 
 	if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
@@ -796,6 +798,8 @@ int main(int argc, char **argv)
 		session_current = (session_t*) sessions->data;
 		window_current->session = (session_t*) sessions->data;
 	}
+	
+	metacontact_read(); /* read the metacontacts info */
 
 	/* wylosuj opisy i zmieñ stany klientów */
 	for (l = sessions; l; l = l->next) {
@@ -919,7 +923,7 @@ void ekg_exit()
 		} else
 			printf("\n");
 	} else if (config_save_quit == 2) {
-                if (config_write(NULL) || session_write())
+                if (config_write(NULL) || session_write() || metacontact_write())
 	                printf("Wyst±pi³ b³±d podczas zapisu.\n");
 
 	} else  if (config_keep_reason && reason_changed) {
@@ -953,6 +957,7 @@ void ekg_exit()
 	last_free();
 	buffer_free();
 	event_free();
+	metacontact_free();
 
 	list_destroy(windows, 1);
 

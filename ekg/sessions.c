@@ -405,8 +405,15 @@ int session_set(session_t *s, const char *key, const char *value)
 	if (!xstrcasecmp(key, "uid"))
 		return -1;
 
-	if (!xstrcasecmp(key, "alias"))
-		return session_alias_set(s, value);
+	if (!xstrcasecmp(key, "alias")) {
+		int ret = session_alias_set(s, value);
+		char *tmp = xstrdup(value);
+
+		query_emit(NULL, "session-renamed", &tmp);
+		xfree(tmp);
+
+		return ret;
+	}
 
 	if (!xstrcasecmp(key, "descr"))
 		return session_descr_set(s, value);

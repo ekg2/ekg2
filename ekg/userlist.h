@@ -131,6 +131,7 @@ void userlist_add_entry(session_t *session,const char *line);
 int userlist_remove(session_t *session, userlist_t *u);
 int userlist_replace(session_t *session, userlist_t *u);
 userlist_t *userlist_find(session_t *session, const char *uid);
+#define userlist_find_n(a, b) userlist_find(session_find(a), b)
 char *userlist_dump(session_t *session);
 void userlist_free(session_t *session);
 int userlist_set(session_t *session, const char *contacts);
@@ -153,6 +154,7 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid);
 int same_protocol(char **uids);
 const char *format_user(session_t *session, const char *uid);
 char *get_uid(session_t *session, const char *text);
+int check_uid_nick(const char *text);
 
 
 #endif /* __EKG_USERLIST_H */

@@ -1,4 +1,5 @@
-vCVS 2004-05-30
+vCVS 2004-06-19
+	* metacontacts
 	* events based on conditions 
 	* diffrent colours of act in statusbar
 	* session variables have their defaults settings 

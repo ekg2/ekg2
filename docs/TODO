@@ -6,7 +6,7 @@ rozwi±zanie.
 
 * klient:
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
-  - metakontakty (*)
+  - metakontakty na li¶cie kontaktów (mp)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
   - bindowane CTRL+Strza³ki, PageUP itd (del)

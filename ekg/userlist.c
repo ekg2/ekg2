@@ -488,6 +488,7 @@ int valid_uid(const char *uid)
 	return (valid > 0);
 }
 
+
 /*
  * valid_plugin_uid()
  *
@@ -541,6 +542,31 @@ char *get_uid(session_t *session, const char *text)
 		return (char *)text;
 
 	return NULL;
+}
+
+/* 
+ * check_uid_nick()
+ *
+ * checks, if given uid/nick is on our contacts list
+ * it checks every session
+ */
+
+int check_uid_nick(const char *text)
+{
+        list_t l;
+
+        if (!text)
+                return -1;
+
+        for (l = sessions; l; l = l->next) {
+                session_t *s = l->data;
+
+		if (userlist_find(s, text))
+			return 1;
+        }
+
+        return 0;
+
 }
 
 /*

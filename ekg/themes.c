@@ -1501,5 +1501,39 @@ void theme_init()
 	format_add("session_format", "%T%1%n", 1);
 	format_add("session_format_alias", "%T%1%n/%2", 1);
 	format_add("session_cannot_change", "%! Nie mo¿na zmieniæ sesji w okienku rozmowy%n\n", 1);
+
+	format_add("metacontact_list", "%> %T%1%n", 1);
+        format_add("metacontact_list_empty", "%! Nie ma ¿adnych metakontaktów\n", 1);
+	format_add("metacontact_exists", "%! Metakontakt %T%1%n ju¿ istnieje\n", 1);
+        format_add("metacontact_added", "%> Utworzono metakontakt %T%1%n\n", 1);
+        format_add("metacontact_removed", "%> Usuniêto metakontakt %T%1%n\n", 1);
+	format_add("metacontact_doesnt_exist", "%! Metakontakt %T%1%n nie istnieje\n", 1);
+        format_add("metacontact_added_item", "%> Dodano %T%1/%2%n do %T%3%n\n", 1);
+	format_add("metacontact_removed_item", "%> Usuniêto %T%1/%2%n z %T%3%n\n", 1);
+	format_add("metacontact_item_list_header", "", 1);
+        format_add("metacontact_item_list", "%> %T%1/%2 (%3)%n - prio %T%4%n\n", 1);
+        format_add("metacontact_item_list_empty", "%! Metakontakt jest pusty\n", 1);
+	format_add("metacontact_item_list_footer", "", 1);
+        format_add("metacontact_item_doesnt_exist", "%! Kontakt %T%1/%2%n nie istnieje\n", 1);
+        format_add("metacontact_info_header", "%K.--%n Metakontakt %T%1%n %K--- -- -%n\n", 1);
+        format_add("metacontact_info_status", "%K| %nStan: %T%1%n\n", 1);
+        format_add("metacontact_info_footer", "%K`----- ---- --- -- -%n\n", 1);
+
+        format_add("metacontact_info_avail", "%Ydostêpn%@1%n", 1);
+        format_add("metacontact_info_avail_descr", "%Ydostêpn%@1%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_away", "%Gzajêt%@1%n", 1);
+        format_add("metacontact_info_away_descr", "%Gzajêt%@1%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_notavail", "%rniedostêpn%@1%n", 1);
+        format_add("metacontact_info_notavail_descr", "%rniedostêpn%@1%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_invisible", "%cniewidoczn%@1%n", 1);
+        format_add("metacontact_info_invisible_descr", "%cniewidoczn%@1%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_dnd", "%cnie przeszkadzaæ%n", 1);
+        format_add("metacontact_info_dnd_descr", "%cnie przeszkadzaæ%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_xa", "%cbardzo zajêt%@1%n", 1);
+        format_add("metacontact_info_xa_descr", "%cbardzo zajêt%@1%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_blocked", "%mblokuj±c%@1%n", 1);
+        format_add("metacontact_info_blocked_descr", "%mblokuj±c%@1%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_unknown", "%Mnieznany%n", 1);
+
 }
 
