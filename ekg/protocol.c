@@ -215,7 +215,7 @@ int protocol_status(void *data, va_list ap)
 	if (xstrcasecmp(u->status, EKG_STATUS_NA) && !xstrcasecmp(status, EKG_STATUS_NA))
 		u->last_seen = when ? when : time(NULL);
 
-	/* XXX dodaæ sprawdzanie ignorowanych, events_delay */
+	/* XXX dodaæ events_delay */
 	
 	/* zaloguj */
 	if (config_log_status)
@@ -240,6 +240,14 @@ int protocol_status(void *data, va_list ap)
 		if (!xstrcasecmp(status, EKG_STATUS_AVAIL))
 			goto notify_plugins;
 	}
+
+	/* ignorowanie statusu - nie wy¶wietlamy, ale pluginy niech robi± co chc± */
+        if (ignore_status)
+		goto notify_plugins;
+
+	/* nie zmieni³ siê status, zmieni³ siê opis */
+	if (ignore_status_descr && !xstrcmp(status, u->status) && xstrcmp(descr, u->descr))
+		goto notify_plugins;
 
 	/* daj znaæ d¼wiêkiem... */
 	if (config_beep && config_beep_notify)
@@ -691,4 +699,5 @@ PROPERTY_INT(dcc, type, dcc_type_t);
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=0 noexpandtab sw=8
  */
