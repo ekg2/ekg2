@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-23 12:51+0200\n"
+"POT-Creation-Date: 2004-10-26 22:55+0200\n"
 "PO-Revision-Date: 2004-10-23 12:40+0200\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -556,7 +556,7 @@ msgid "%! Message was too long and got shortened\n"
 msgstr "%! Wiadomo¶æ jest zbyt d³uga i zosta³a skrócona\n"
 
 #: ekg/themes.c:1244
-msgid "%> (%1) %1 is %Yavailable%n\n"
+msgid "%> (%3) %1 is %Yavailable%n\n"
 msgstr "%> (%3) %1 jest %Ydostêpn%@2%n\n"
 
 #: ekg/themes.c:1245
@@ -975,9 +975,8 @@ msgid "%K| %nBlocked\n"
 msgstr "%K| %nBlokowan%@1\n"
 
 #: ekg/themes.c:1372
-#, fuzzy
 msgid "%K| %nCan't see our status\n"
-msgstr "%K| %nNie widzi stanu\n"
+msgstr "%K| %nNie widzi naszego stanu\n"
 
 #: ekg/themes.c:1373
 #, fuzzy
@@ -2080,4 +2079,3 @@ msgstr "%> SMS do %T%1%n zosta³ wys³any\n"
 #: plugins/sms/sms.c:355
 msgid "%! SMS to %T%1%n not sent\n"
 msgstr "%! SMS do %T%1%n nie zosta³ wys³any\n"
-

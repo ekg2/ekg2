@@ -1241,7 +1241,7 @@ void theme_init()
         format_add("message_too_long", _("%! Message was too long and got shortened\n"), 1);
 
         /* people are changing their statuses */
-	format_add("status_avail", _("%> (%1) %1 is %Yavailable%n\n"), 1);
+	format_add("status_avail", _("%> (%3) %1 is %Yavailable%n\n"), 1);
         format_add("status_avail_descr", _("%> (%3) %1 is %Yavailable%n: %T%4%n\n"), 1);
         format_add("status_away", _("%> (%3) %1 is %Gaway%n\n"), 1);
         format_add("status_away_descr", _("%> (%3) %1 is %Gaway%n: %T%4%n\n"), 1);
