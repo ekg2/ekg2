@@ -911,6 +911,14 @@ COMMAND(jabber_command_auth)
 		goto success;
 	};
 
+	/* ha! undocumented :-); bo 
+	   [Used on server only. Client authors need not worry about this.] */
+	if (params[0] && match_arg(params[0], 'p', "probe", 2)) {
+		action = "probe";
+		descr = saprintf("Wys³ano pytanie o obecno¶æ do %s", uid);
+		goto success;
+	};
+
 	goto  fail;
 fail:
 	printq("invalid_params", name);
