@@ -240,6 +240,41 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 				tm.tm_mon -= 1;
 				sent = mktime(&tm);
 			};
+		
+			if (ns && !strncmp(ns, "jabber:x:event", 14)) {
+				/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
+				if (nbody && (xmlnode_find_child(xitem, "delivered") || xmlnode_find_child(xitem, "displayed")) ) {
+					char *id = jabber_attr(n->atts, "id");
+
+					jabber_write(j, "<message to=\"%s\">", from);
+					jabber_write(j, "<x xmlns=\"jabber:x:event\">");
+
+					if (xmlnode_find_child(xitem, "delivered"))
+						jabber_write(j, "<delivered/>");
+					if (xmlnode_find_child(xitem, "displayed")) 
+						jabber_write(j, "<displayed/>");
+
+					jabber_write(j, "<id>%s</id></x></message>",id);
+				};
+				
+				/* je¶li body nie ma, to odpowiedz na nasza prosbe */
+				if (!nbody && xmlnode_find_child(xitem, "delivered") && (config_display_ack == 1 || config_display_ack == 2))
+					print("ack_delivered", from);
+					
+				if (!nbody && xmlnode_find_child(xitem, "offline") && (config_display_ack == 1 || config_display_ack == 3))
+					print("ack_queued", from);
+
+#if 1
+				if (!nbody && xmlnode_find_child(xitem, "composing")) {
+					char *tmp;
+
+					tmp = saprintf("%s co¶ do nas pisze ...", from);
+					print("generic2", tmp);
+					xfree(tmp);
+				}; /* composing */
+#endif
+
+			}; /* jabber:x:event */
 		}
 
 		session = xstrdup(session_uid_get(s));
@@ -247,7 +282,8 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 		text = jabber_unescape(body->str);
 		string_free(body, 1);
 
-		query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, NULL);
+		if (nbody || nsubject)
+			query_emit(NULL, "protocol-message", &session, &sender, &rcpts, &text, &format, &sent, &class, &seq, NULL);
 
 		xfree(session);
 		xfree(sender);
@@ -801,11 +837,15 @@ COMMAND(jabber_command_msg)
 	} else 
 		msg = jabber_escape(params[1]); /* bez tematu */
 
-	jabber_write(j, "<message %sto=\"%s\">", (!strcasecmp(name, "chat")) ? "type=\"chat\" " : "", uid);
+	jabber_write(j, "<message %sto=\"%s\" id=\"%d\">", (!strcasecmp(name, "chat")) ? "type=\"chat\" " : "", uid, time(NULL));
 
 	if (subject) jabber_write(j, "<subject>%s</subject>", subject);
 
-	jabber_write(j, "<body>%s</body></message>", msg);
+	jabber_write(j, "<body>%s</body>", msg);
+
+	/* XXX: zmienna jaka¶? */
+	if (1) jabber_write(j, "<x xmlns=\"jabber:x:event\"><offline/><delivered/><displayed/><composing/></x>");
+	jabber_write(j, "</message>");
 
 	xfree(msg);
 	xfree(subject);
