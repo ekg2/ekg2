@@ -149,9 +149,12 @@ int contacts_update(window_t *w)
 				
 			else
 				snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
+			
+			if(u->blink)
+				strcat(tmp, "_blink");
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
-
+				
 			ncurses_backlog_add(w, fstring_new(line));
 			xfree(line);
 
