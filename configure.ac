@@ -220,7 +220,7 @@ AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ]]))
 
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile m4/Makefile])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile])
 
 PLUGINS_LIBS=""
 
