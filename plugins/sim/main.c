@@ -309,6 +309,8 @@ int sim_plugin_init()
 	  "  -d, --delete <numer/alias>  usuwa klucz publiczny\n"
 	  "  [-l, --list] [numer/alias]  wy¶wietla posiadane klucze publiczne",
 	  possibilities("-g --generate -s --send -d --delete -l --list") );
+#undef possibilities
+#undef params
 	
 	variable_add(&sim_plugin, "encryption", VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
 
