@@ -351,7 +351,7 @@ int userlist_remove(session_t *session, userlist_t *u)
 	}
 
 	list_destroy(u->groups, 1);
-	list_remove(session->userlist, u, 1);
+	list_remove(&(session->userlist), u, 1);
 
 	return 0;
 }
@@ -372,9 +372,9 @@ int userlist_replace(session_t *session, userlist_t *u)
 {
 	if (!u)
 		return -1;
-	if (list_remove(session->userlist, u, 0))
+	if (list_remove(&(session->userlist), u, 0))
 		return -1;
-	if (!list_add_sorted(session->userlist, u, 0, userlist_compare))
+	if (!list_add_sorted(&(session->userlist), u, 0, userlist_compare))
 		return -1;
 
 	return 0;
