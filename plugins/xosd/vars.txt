@@ -64,3 +64,8 @@ display_welcome
 
 	okre¶la czy ma byæ wy¶wietlany komunikat pocz±tkowy.
 
+display_notify
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	okre¶la czy maj± byæ wy¶wietlane zmiany stanu. 1 - tak, 0 - nie.
