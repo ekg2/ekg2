@@ -1973,6 +1973,7 @@ COMMAND(cmd_echo)
 
 COMMAND(cmd_bind)
 {
+	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, NULL);
 //	ui_event("command", quiet, "bind", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, NULL); 
 
 	return 0;

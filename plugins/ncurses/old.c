@@ -2072,36 +2072,6 @@ int ui_ncurses_event(const char *event, ...)
 		goto cleanup;
 	}
 
-	if (!strcmp(event, "command")) {
-		int quiet = va_arg(ap, int);
-		char *command = va_arg(ap, char*);
-
-		if (!strcasecmp(command, "bind")) {
-			char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
-
-			if (match_arg(p1, 'a', "add", 2)) {
-				if (!p2 || !p3)
-					printq("not_enough_params", "bind");
-				else
-					ncurses_binding_add(p2, p3, 0, quiet);
-			} else if (match_arg(p1, 'd', "delete", 2)) {
-				if (!p2)
-					printq("not_enough_params", "bind");
-				else
-					ncurses_binding_delete(p2, quiet);
-			} else if (match_arg(p1, 'L', "list-default", 5)) {
-				binding_list(quiet, p2, 1);
-			} else {
-				if (match_arg(p1, 'l', "list", 2))
-					binding_list(quiet, p2, 0);
-				else
-					binding_list(quiet, p1, 0);
-			}
-
-			goto cleanup;
-		}
-	}
-
 cleanup:
 	va_end(ap);
 

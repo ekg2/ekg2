@@ -29,6 +29,7 @@
 #include <ekg/themes.h>
 #include <ekg/xmalloc.h>
 
+#include "bindings.h"
 #include "ecurses.h"
 #include "old.h"
 #include "contacts.h"
@@ -192,6 +193,38 @@ static int ncurses_userlist_changed(void *data, va_list ap)
 	return 0;
 }
 
+
+static int ncurses_binding_query(void *data, va_list ap)
+{
+        char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
+        int quiet = va_arg(ap, int);
+
+        if (match_arg(p1, 'a', "add", 2)) {
+	        if (!p2 || !p3)
+        	        printq("not_enough_params", "bind");
+                else
+                        ncurses_binding_add(p2, p3, 0, quiet);
+        } else if (match_arg(p1, 'd', "delete", 2)) {
+        	if (!p2)
+                	printq("not_enough_params", "bind");
+                else
+                        ncurses_binding_delete(p2, quiet);
+        } else if (match_arg(p1, 'L', "list-default", 5)) {
+        	binding_list(quiet, p2, 1);
+        } else {
+        	if (match_arg(p1, 'l', "list", 2))
+                	binding_list(quiet, p2, 0);
+                else
+                        binding_list(quiet, p1, 0);
+        }
+
+        contacts_update(NULL);
+        update_statusbar(1);
+
+        return 0;
+}
+
+
 int ncurses_plugin_init()
 {
 	list_t l;
@@ -212,6 +245,7 @@ int ncurses_plugin_init()
 	query_connect(&ncurses_plugin, "session-removed", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-changed", contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-changed", ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	variable_add(&ncurses_plugin, "contacts", VAR_INT, 1, &config_contacts, contacts_changed, NULL, NULL);

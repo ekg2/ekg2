@@ -10,6 +10,7 @@ zg³osi³ b³±d.
 - dzia³aj±ce F2, F3, F4 oraz na bierz±co ncurses:contacts (del)
 - Przewijanie dzia³a tak¿e w oknie debuga (del)
 - po Ctrl-x od¶wie¿ana jest lista kontaktów (del)
+- poprawnie dzia³aj±ca komenda /bind (zdz/del)
 
 
 // 2004-03-29

@@ -1014,4 +1014,3 @@ void ncurses_binding_destroy()
 
 }
 
-
