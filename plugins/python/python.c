@@ -398,6 +398,8 @@ int python_load(const char *name, int quiet)
 
 	xfree(name2);
 
+        printq("python_loaded");
+
 	return 0;
 }
 
@@ -595,6 +597,7 @@ int python_theme_init() {
 	format_add("python_eval_error", "%! B³±d wykonywania kodu\n", 1);
 	format_add("python_list", "%> %1\n", 1);
 	format_add("python_list_empty", "%! Brak za³adowanych skryptów\n", 1);
+	format_add("python_loaded", "%) Skrypt zosta³ za³adowany\n", 1);
 	format_add("python_removed", "%) Skrypt zosta³ usuniêty\n", 1);
 	format_add("python_need_name", "%! Nie podano nazwy skryptu\n", 1);
 	format_add("python_not_found", "%! Nie znaleziono skryptu %T%1%n\n", 1);
