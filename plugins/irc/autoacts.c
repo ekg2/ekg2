@@ -67,8 +67,9 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 {
 	irc_private_t *j;
 	list_t l;
+	string_t st;
 	window_t *w;
-	char *chanprefix, *str,*tmp;
+	char *chanprefix;
 	int rejoin;
 
 	if (!s) return -1;
@@ -84,7 +85,7 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 	switch (when)
 	{
 		case IRC_REJOIN_CONNECT:
-			tmp = str = NULL;
+			st = string_init(NULL);
 			for (l = windows; l; l = l->next) {
 				w = l->data;
 				if (!(w->target))
@@ -95,17 +96,25 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 					continue;
 				if (!xstrchr(chanprefix, (w->target)[4]))
 					continue;
-				if (str) {
-					tmp = str;
-					str = saprintf("%s,%s", tmp,
-							(w->target)+4);
-					xfree(tmp);
-				} else str = xstrdup((w->target)+4);
+				if (st->len) {
+					string_append_c(st, ',');
+					if ((w->target)[4] == '!')
+					{
+						string_append_c(st, '!');
+						string_append(st, w->target + 10);
+					} else
+						string_append(st, w->target + 4);
+				} else {
+					if ((w->target)[4] == '!') {
+						string_append_c(st, '!');
+						string_append(st, w->target + 10);
+					} else
+						string_append(st, w->target + 4);
+				}
 			}
-			if (str) {
-				irc_write(j, "JOIN %s\r\n", str);
-				xfree(str);
-			}
+			if (st->len) 
+				irc_write(j, "JOIN %s\r\n", st->str);
+			string_free(st, 1);
 			break;
 		case IRC_REJOIN_KICK:
 			irc_write(j, "JOIN %s\r\n", chan);
