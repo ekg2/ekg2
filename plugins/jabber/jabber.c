@@ -642,7 +642,7 @@ static void jabber_handle_disconnect(session_t *s)
         }
 
 #ifdef HAVE_GNUTLS
-        if (j->using_ssl)
+        if (j->using_ssl && j->ssl_session)
                 gnutls_bye(j->ssl_session, GNUTLS_SHUT_RDWR);
 #endif
         session_connected_set(s, 0);
@@ -654,7 +654,7 @@ static void jabber_handle_disconnect(session_t *s)
         j->fd = -1;
 
 #ifdef HAVE_GNUTLS
-        if (j->using_ssl)
+        if (j->using_ssl && j->ssl_session)
                 gnutls_deinit(j->ssl_session);
 #endif
 
@@ -736,7 +736,7 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
         }
 
 #ifdef HAVE_GNUTLS
-        if (j->using_ssl) {
+        if (j->using_ssl && j->ssl_session) {
                 do {
                         len = gnutls_record_recv(j->ssl_session, buf, 4095);
 #ifdef _POSIX_PRIORITY_SCHEDULING
