@@ -1453,7 +1453,7 @@ COMMAND(gg_command_msg)
 
 	if (valid && config_display_sent) {
 		const char *rcpts[2] = { nick, NULL };
-		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), (chat) ? EKG_MSGCLASS_CHAT: EKG_MSGCLASS_SENT, NULL);
+		message_print(session_uid_get(session), session_uid_get(session), rcpts, raw_msg, ekg_format, time(NULL), EKG_MSGCLASS_SENT, NULL);
 	}
 
 	xfree(msg);
