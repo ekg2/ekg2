@@ -396,143 +396,38 @@ COMMAND(gg_command_remind)
 	return 0;
 }
 
-static void gg_handle_userlist_get(int type, int fd, int watch, void *data)
-{
-	struct gg_http *h = data;
-
-	if (type == 2) {
-		debug("[gg] gg_handle_userlist_get() timeout\n");
-		print("userlist_get_timeout");
-		goto fail;
-	}
-
-	if (type != 0)
-		return;
-
-	if (!h) {
-		debug("[gg] gg_handle_userlist_get() called with NULL data\n");
-		return;
-	}
-
-	if (gg_userlist_get_watch_fd(h) || h->state == GG_STATE_ERROR) {
-		print("userlist_get_failed", gg_http_error_string(h->error));
-		goto fail;
-	}
-
-	if (h->state != GG_STATE_DONE) {
-		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_userlist_get, h);
-		watch_timeout_set(w, h->timeout);
-		
-		return;
-	}
-
-	if (!h->data) {
-		print("userlist_get_failed", gg_http_error_string(0));
-		goto fail;
-	}
-
-	print("userlist_get_ok");
-
-	{
-		session_t *s = session_find((char*) h->user_data);
-		gg_private_t *g = session_private_get(s);
-
-		userlist_set(s, h->data);
-
-		if (g)
-			gg_userlist_send(g->sess, s->userlist);
-	}
-
-fail:
-	xfree(h->user_data);
-	list_remove(&gg_userlists, h, 0);
-	gg_free_pubdir(h);
-}
-
-static void gg_handle_userlist_put(int type, int fd, int watch, void *data)
-{
-	struct gg_http *h = data;
-	const char *ftype = "", *stype = "";
-
-	if (type == 2) {
-		debug("[gg] gg_handle_userlist_put() timeout\n");
-		print("userlist_put_timeout");
-		goto fail;
-	}
-
-	if (type != 0)
-		return;
-
-	if (!h) {
-		debug("[gg] gg_handle_userlist_put() called with NULL data\n");
-		return;
-	}
-
-	if (!h->user_data) {
-		ftype = "userlist_put_failed";
-		stype = "userlist_put_ok";
-	} else {
-		ftype = "userlist_clear_failed";
-		stype = "userlist_clear_ok";
-	}
-	
-	if (gg_userlist_put_watch_fd(h) || h->state == GG_STATE_ERROR) {
-		print(ftype, gg_http_error_string(h->error));
-		goto fail;
-	}
-
-	if (h->state != GG_STATE_DONE) {
-		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_userlist_put, h);
-		watch_timeout_set(w, h->timeout);
-
-		return;
-	}
-
-	if (!h->data) {
-		print(ftype, gg_http_error_string(0));
-		goto fail;
-	}
-
-	print(stype);
-
-fail:
-	list_remove(&gg_userlists, h, 0);
-	gg_free_pubdir(h);
-}
-
 COMMAND(gg_command_list)
 {
-	uin_t uin = atoi(session->uid + 3);
-	struct gg_http *h;
-	watch_t *w;
 	char *passwd;
+	gg_private_t *g;
 
 	if (!session_check(session, 1, "gg")) {
 		printq("invalid_session");
 		return -1;
 	}
-
+	
+	g = session_private_get(session);
 	passwd = xstrdup(session_get(session, "password"));
 	gg_iso_to_cp(passwd);
 		
 	/* list --get */
 	if (params[0] && match_arg(params[0], 'g', "get", 2)) {
-		if (!(h = gg_userlist_get(uin, passwd, 1))) {
-			printq("userlist_get_error", strerror(errno));
+                if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
+                        printq("userlist_get_error", strerror(errno));
 			goto fail;
-		}
+	        }
 
 		goto success;
 	}
 
 	/* list --clear */
 	if (params[0] && match_arg(params[0], 'c', "clear", 2)) {
-		if (!(h = gg_userlist_put(uin, passwd, "", 1))) {
-			printq("userlist_clear_error", strerror(errno));
-			goto fail;
-		}
+                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, NULL) == -1) {
+                        printq("userlist_clear_error", strerror(errno));
+                        return -1;
+                }
 
-		h->user_data = (char *) 2;
+		gg_userlist_put_config = 2;
 		
 		goto success;
 	}
@@ -543,11 +438,13 @@ COMMAND(gg_command_list)
 
 		gg_iso_to_cp(contacts);
 
-		if (!(h = gg_userlist_put(uin, passwd, contacts, 1))) {
-			printq("userlist_put_error", strerror(errno));
-			xfree(contacts);
-			goto fail;
-		}
+                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, contacts) == -1) {
+                        printq("userlist_put_error", strerror(errno));
+                        xfree(contacts);
+                        return -1;
+                }
+
+		gg_userlist_put_config = 0;
 
 		xfree(contacts);
 		
@@ -560,16 +457,6 @@ COMMAND(gg_command_list)
 
 success:
 	xfree(passwd);
-
-	if (h->type == GG_SESSION_USERLIST_GET) {
-		h->user_data = xstrdup(session->uid);
-		w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_userlist_get, h); 
-	} else 
-		w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_userlist_put, h); 
-
-	watch_timeout_set(w, h->timeout);
-
-	list_add(&gg_userlists, h, 0);
 
 	return 0;
 

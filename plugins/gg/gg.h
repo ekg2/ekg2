@@ -6,6 +6,7 @@
 #include <ekg/plugins.h>
 
 plugin_t gg_plugin;
+int gg_userlist_put_config;
 
 typedef enum {
 	GG_QUIET_CHANGE = 0x0001

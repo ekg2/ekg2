@@ -280,6 +280,5 @@ int gg_userlist_send(struct gg_session *s, list_t userlist)
 
 	xfree(uins);
 	xfree(types);
-
 	return res;
 }

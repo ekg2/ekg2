@@ -688,6 +688,60 @@ void gg_reconnect_handler(int type, void *data)
 }
 
 /*
+ * gg_session_handler_userlist()
+ *
+ * support for userlist's events 
+ *
+ */
+static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
+{
+        switch (e->event.userlist.type) {
+                case GG_USERLIST_GET_REPLY:
+                {
+	                print("userlist_get_ok");
+
+                        if (e->event.userlist.reply) {
+				list_t l;
+				gg_private_t *g = session_private_get(s);
+
+                                /* remove all contacts from notification list on server */
+				for (l = s->userlist; l; l = l->next) {
+                                        userlist_t *u = l->data;
+                                        gg_remove_notify_ex(g->sess, str_to_uin(xstrchr(u->uid, ':') + 1), gg_userlist_type(u));
+                                }
+
+                                gg_cp_to_iso(e->event.userlist.reply);
+				userlist_set(s, e->event.userlist.reply);
+		                gg_userlist_send(g->sess, s->userlist);
+
+                                config_changed = 1;
+                        }
+
+                        break;
+                }
+
+                case GG_USERLIST_PUT_REPLY:
+                {
+                        switch (gg_userlist_put_config) {
+                                case 0:
+                                        print("userlist_put_ok");
+                                        break;
+                                case 1:
+                                        print("userlist_config_put_ok");
+                                        break;
+                                case 2:
+                                        print("userlist_clear_ok");
+                                        break;
+                                case 3:
+                                        print("userlist_config_clear_ok");
+                                        break;
+                        }
+                        break;
+                }
+        }
+}
+
+/*
  * gg_session_handler()
  *
  * obs³uga zdarzeñ przy po³±czeniu gg.
@@ -814,6 +868,10 @@ static void gg_session_handler(int type, int fd, int watch, void *data)
 
 		case GG_EVENT_PUBDIR50_WRITE:
 			gg_session_handler_change50(data, e);
+			break;
+
+		case GG_EVENT_USERLIST:
+			gg_session_handler_userlist(data, e);
 			break;
 
 		default:
