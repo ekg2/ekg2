@@ -77,7 +77,7 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
  *
  * zwraca wynik xstrcasecmp() na nazwach userów.
  */
-static int userlist_compare(void *data1, void *data2)
+int userlist_compare(void *data1, void *data2)
 {
 	userlist_t *a = data1, *b = data2;
 	

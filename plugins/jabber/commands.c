@@ -614,7 +614,7 @@ COMMAND(jabber_command_modify)
 	}
 
 	if (!(uid = get_uid(session, params[0]))) 
-		uid = params[0]; 
+		uid = (char *) params[0]; 
 	
 	while (!xstrncasecmp(uid, "jid:", 4))
 		uid += 4;

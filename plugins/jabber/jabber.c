@@ -441,7 +441,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 						} else { 
 							if (jabber_attr(item->atts, "subscription"))
 								u.authtype = xstrdup(jabber_attr(item->atts, "subscription"));
-							list_add_sorted(&(s->userlist), &u, sizeof(u), NULL);
+							list_add_sorted(&(s->userlist), &u, sizeof(u), userlist_compare);
 							if (jdh->roster_retrieved) {
 								ctmp = saprintf("/auth --probe %s", u.uid);
 								command_exec(NULL, s, ctmp, 1);
