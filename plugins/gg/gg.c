@@ -1196,7 +1196,14 @@ COMMAND(gg_command_away)
 change:
 	if (params[0]) {
 		if (strlen(params[0]) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
-			printq("descr_too_long", itoa(strlen(params[0]) - GG_STATUS_DESCR_MAXSIZE));
+			char *descr_poss = xstrndup(params[0], GG_STATUS_DESCR_MAXSIZE);
+			char *descr_not_poss = xstrdup(params[0] + GG_STATUS_DESCR_MAXSIZE);
+
+			printq("descr_too_long", itoa(strlen(params[0]) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
+
+			xfree(descr_poss);
+			xfree(descr_not_poss);
+
 			return -1;
 		}
 
