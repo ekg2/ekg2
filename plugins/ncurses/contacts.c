@@ -242,7 +242,7 @@ group_cleanup:
 			userlist_t *u = l->data;
 			const char *format;
 
-			if (!u->status || !u->nickname || xstrncmp(u->status, contacts_order + j, 2))
+			if (!u->status || !u->nickname || !u->status || xstrlen(u->status) < 2 || xstrncmp(u->status, contacts_order + j, 2))
 				continue;
 	
 			if (count_all < contacts_index) {
