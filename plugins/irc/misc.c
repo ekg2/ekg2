@@ -392,7 +392,7 @@ IRC_COMMAND(irc_c_error)
 		case 331:
 		case 332:
 			coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
-					OMITCOLON(param[4]));
+					OMITCOLON(param[4]), 1);
 			print_window(dest, s, 0, irccommands[ecode].name,
 					session_name(s), param[3], coloured);
 			xfree(coloured);
@@ -412,7 +412,7 @@ IRC_COMMAND(irc_c_error)
 		case 375:
 			if (session_int_get(s, "SHOW_MOTD")) {
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s,
-						IOK2(3));
+						IOK2(3), 1);
 				print_window("__status", s, 0,
 						irccommands[ecode].name,
 						session_name(s), coloured);
@@ -438,7 +438,7 @@ IRC_COMMAND(irc_c_whois)
 	if (irccommands[ecode].num != 317) { /* idle */
 		for (i=0; i<5; i++)
 			col[i] = irc_ircoldcolstr_to_ekgcolstr(s,
-					param[3+i]?OMITCOLON(param[3+i]):NULL);
+					param[3+i]?OMITCOLON(param[3+i]):NULL,1);
 			
 		print_window(dest, s, 0, irccommands[ecode].name, 
 				session_name(s), col[0], col[1],
@@ -558,7 +558,7 @@ IRC_COMMAND(irc_c_msg)
 	people_t *person;
 	people_chan_t *perchn = NULL;
 	time_t sent;
-	int secure = 0;
+	int secure = 0, xosd_to_us = 0, xosd_is_priv = 0;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
@@ -570,13 +570,14 @@ IRC_COMMAND(irc_c_msg)
 
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
 	me = xstrdup(t?t+1:"");
-	
+
 	/* mesg do nas */
 	if (!xstrcmp(j->nick, param[2])) {
 		class = (mw&2)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
 		dest = saprintf("irc:%s", param[0]+1);
 		format = xstrdup(prv?"irc_msg_f_some":"irc_not_f_some");
 		ekgbeep = EKG_TRY_BEEP;
+		xosd_to_us = xosd_is_priv = 1;
 	/* kana³ */
 	} else {
 		class = EKG_MSGCLASS_CHAT;
@@ -584,11 +585,14 @@ IRC_COMMAND(irc_c_msg)
 		dest = saprintf("%s%s", IRC4, param[2]);
 		if (ctcpstripped && (pubtous = strcasestr(ctcpstripped, j->nick))) {
 			tous = pubtous[xstrlen(j->nick)];
-			if (!isalnum(tous) && !isalpha_pl(tous)) 
+			if (!isalnum(tous) && !isalpha_pl(tous))
+			{
 				ekgbeep = EKG_TRY_BEEP;
+				xosd_to_us = 1;
+			} 
 		}
 		w = window_find_s(s, dest);
-		
+
 		format = saprintf("irc_%s_f_chan%s%s", prv?"msg":"not",
 					(!w)?"":"_n", ekgbeep?"h":"");
 
@@ -598,7 +602,7 @@ IRC_COMMAND(irc_c_msg)
 	}
 
 	if (ctcpstripped) {
-		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped);
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
 		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));
 		xfree(ctcpstripped);
 		prefix[1] = '\0';
@@ -608,6 +612,17 @@ IRC_COMMAND(irc_c_msg)
 		head = format_string(format_find(format), session_name(s),
 				prefix, param[0]+1, me, param[2], coloured, "Y ");
 		xfree(coloured);
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,0);
+	/*
+234707 <@dredzik> GiM, string nadawca, string wiadomo¶æ, bool
+234707 wiadomo¶æ_do_ciebie, bool kana³_czy_priv, string
+234707 je¿eli_kana³_to_nazwa_kana³u
+	*/
+		query_emit(NULL, "irc-protocol-message",
+				&me,&coloured,&xosd_to_us,&xosd_is_priv,
+				&(dest[4]));
+				/*&sender,&text,&to_us,&is_priv,&channame);*/
+
 		xfree(me);
 		me = xstrdup(session_uid_get(s));
 		sent = time(NULL);
@@ -688,7 +703,7 @@ IRC_COMMAND(irc_c_part)
 		channel = saprintf("irc:%s", param[2]);
 		
 		coloured = param[3]?xstrlen(OMITCOLON(param[3]))?
-			irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3])):
+			irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1):
 					xstrdup("no reason"):xstrdup("no reason");
 		print_window(channel, s, 0, "irc_left", session_name(s),
 				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]), coloured);
@@ -728,7 +743,7 @@ IRC_COMMAND(irc_c_kick)
 	channel = saprintf("irc:%s", param[2]);
 	
 	coloured = param[4]?xstrlen(OMITCOLON(param[4]))?
-		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4])):
+		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4]), 1):
 				xstrdup("no reason"):xstrdup("no reason");
 	print_window(channel, s, 0, stajl, session_name(s), 
 			OMITCOLON(param[3]), uid+4, tmp?tmp+1:"",
@@ -757,7 +772,7 @@ IRC_COMMAND(irc_c_quit)
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 	reason = param[2]?xstrlen(OMITCOLON(param[2]))?
-		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[2])):
+		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[2]), 1):
 		xstrdup("no reason"):xstrdup("no reason");
 	
 	dq = session_int_get(s, "DISPLAY_QUIT");
@@ -805,7 +820,7 @@ IRC_COMMAND(irc_c_topic)
 	if ((t = xstrchr(param[0], '!')))
 		*t = '\0';
 	if (xstrlen(OMITCOLON(param[3]))) {
-		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]));
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]),1);
 		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),
 				param[0]+1, t?t+1:"", param[2], coloured);
 		xfree(coloured);

@@ -684,7 +684,7 @@ COMMAND(irc_command_msg)
 			session_name(session), prefix,
 			j->nick, j->nick, uid+4, params[1]);
 
-	coloured = irc_ircoldcolstr_to_ekgcolstr(session, head);
+	coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
@@ -1068,7 +1068,7 @@ COMMAND(irc_command_me)
 	irc_write(irc_private(session), "PRIVMSG %s :\01ACTION %s\01\r\n",
 			chan+4, str);
 
-	col = irc_ircoldcolstr_to_ekgcolstr(session, str);
+	col = irc_ircoldcolstr_to_ekgcolstr(session, str, 1);
 	print_window(chan, session, ischn?(mw&1):!!(mw&2),
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
 			session_name(session), j->nick, chan, col);

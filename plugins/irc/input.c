@@ -65,9 +65,9 @@ int irc_getircoldcol(char *org)
 	return ret;
 }
 
-char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str)
+char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str, int strip)
 {
-	int  col, strip;
+	int  col;
 	char mirc_sux_so_much[16]=  "WkbgrypRYGcCBPKw";
 	char mirc_sux_even_more[16]="xlehszqszhddeqlx";
 	char *p;
@@ -76,7 +76,9 @@ char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str)
 	if(!(str && xstrlen(str))) return xstrdup("");
 
 	s = string_init("");
-	strip = session_int_get(sess, "STRIPMIRCCOL");
+	if (strip)
+		strip = session_int_get(sess, "STRIPMIRCCOL");
+
 	for (;*str;)
 	{
 		if (*str == 3) /* ^c */
@@ -177,7 +179,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 
 			newsender = saprintf("%s%s", IRC4, sender+1);
 
-			coloured = irc_ircoldcolstr_to_ekgcolstr(sess, begin);
+			coloured = irc_ircoldcolstr_to_ekgcolstr(sess, begin,1);
 			if (ispriv) {
 				if ((ctcp_main_priv(sess, j, ctcp, coloured, newsender,
 								bang?bang+1:"", winname)))
@@ -381,7 +383,7 @@ CTCP_COMMAND(ctcp_main_noti)
 	w = window_find_s(s, win);
 	if (!ischn && !w && !(mw&4)) win = window_current->target;
 
-	t = irc_ircoldcolstr_to_ekgcolstr(s, space);
+	t = irc_ircoldcolstr_to_ekgcolstr(s, space,1);
 	print_window(win, s, ischn?(mw&1):!!(mw&8),
 			"irc_ctcp_reply", session_name(s),
 			ctcps[number-1].name, sender+4, idhost, t);
