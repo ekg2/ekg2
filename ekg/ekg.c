@@ -552,25 +552,25 @@ struct option ekg_options[] = {
 };
 
 #define EKG_USAGE N_( \
-"uses: %s [OPTION] [COMMAND]\n" \
-"  -u, --user=NAME	      it uses given name profile\n" \
-"  -t, --theme=FILE           loads theme from the given file\n" \
-"  -n, --no-auto              it doesn't connect with the server\n" \
-"  -m, --no-mouse             withou mouse support\n" \
-"  -N, --no-global-config     global config is ignored\n" \
+"Usage: %s [OPTIONS] [COMMANDS]\n" \
+"  -u, --user=NAME             uses profile NAME\n" \
+"  -t, --theme=FILE            loads theme from FILE\n"\
+"  -n, --no-auto               does not connect to server automatically\n" \
+"  -m, --no-mouse              does not load mouse support\n" \
+"  -N, --no-global-config      ignores global configuration file\n" \
 \
-"  -a, --away[=OPIS]          it changes status to ,,busy''\n" \
-"  -b, --back[=OPIS]          it changes status to ,,avaiable''\n" \
-"  -i, --invisible[=OPIS]     it changes status to ,,invisible''\n" \
-"  -d, --dnd[=OPIS]           it changes status to ,,do not disturb''\n" \
-"  -f, --free-for-chat[=OPIS] it changes status to ,,free for chat''\n" \
-"  -x, --xa[=OPIS]            it changes status to ,,extra busy''\n" \
+"  -a, --away[=DESCRIPTION]    changes status to ``away''\n" \
+"  -b, --back[=DESCRIPTION]    changes status to ``available''\n" \
+"  -i, --invisible[=DESCR]     changes status to ``invisible''\n" \
+"  -d, --dnd[=DESCRIPTION]     changes status to ``do not disturb''\n" \
+"  -f, --free-for-chat[=DESCR] changes status to ``free for chat''\n" \
+"  -x, --xa[=DESCRIPTION]      changes status to ``very busy''\n" \
 \
-"  -h, --help                 displays this help\n" \
-"  -v, --version              shows version\n" \
+"  -h, --help                  displays this help message\n" \
+"  -v, --version               displays program version and exits\n" \
 "\n" \
-"Options connected with status depend on session protocol --\n" \
-"some session may not support ,,do not disturb'' etc.\n" \
+"Options concerned with status depend on the protocol of particular session --\n" \
+"some sessions may not support ``do not disturb'' status, etc.\n" \
 "\n" )
 
 

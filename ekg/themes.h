@@ -27,6 +27,7 @@
 #include "gettext.h" 
 
 #define _(a) gettext(a)
+#define N_(a) gettext_noop(a)
 
 struct format {
 	char *name;
