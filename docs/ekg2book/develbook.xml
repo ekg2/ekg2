@@ -146,7 +146,7 @@
          </para>
       </sect2>
    </sect1>
-   <sect1>
+   <sect1 id="develbook-files">
       <title>Formaty plików</title>
       <sect2>
          <title>Format listy kontaktów ekg2</title>
@@ -298,7 +298,7 @@ plugin <nazwa>
          </programlisting>
       </sect2>
    </sect1>
-   <sect1>
+   <sect1 id="develbook-debugging">
       <title>Debugowanie</title>
       <para>
          Je¶li program siê wywróci³ i utworzy³ plik core, za pomoc± gdb mo¿na
