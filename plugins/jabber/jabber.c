@@ -813,6 +813,7 @@ COMMAND(jabber_command_disconnect)
 	jabber_private_t *j = session_private_get(session);
 	char *descr = NULL;
 
+
 	if (!session_check(session, 1, "jid")) {
 		printq("invalid_session");
 		return -1;
@@ -849,6 +850,18 @@ COMMAND(jabber_command_disconnect)
 	} else
 		printq("disconnected", session_name(session));
 
+	{
+		char *__session = xstrdup(session->uid);
+		char *__reason = params[0] ? xstrdup(params[0]) : NULL;
+                int __type = EKG_DISCONNECT_USER;
+
+		query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+
+                xfree(__reason);
+                xfree(__session);
+	}
+
+	userlist_free(session);
 
 	/* wywo³a jabber_handle_disconnect() */
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
