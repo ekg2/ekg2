@@ -354,16 +354,18 @@ int gg_validate_uid(void *data, va_list ap)
 		return 0;
 
 	if (!xstrncasecmp(uid, "gg:", 3) && xstrlen(uid)>3)
+	{
 		(*valid)++;
 
-	/* sprawdzmy, czy w uidzie wystepuja tylko cyferki... */
-	uid+=3;
-	for (; *uid; uid++)
-		if (!isdigit(*uid))
-			break;
+		/* sprawdzmy, czy w uidzie wystepuja tylko cyferki... */
+		uid+=3;
+		for (; *uid; uid++)
+			if (!isdigit(*uid))
+				break;
 
-	if (*uid)
-		(*valid)--;
+		if (*uid)
+			(*valid)--;
+	}
 
 	return 0;
 }
