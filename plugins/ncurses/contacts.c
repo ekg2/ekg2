@@ -99,7 +99,7 @@ int ncurses_contacts_update(window_t *w)
 {
 	const char *header = NULL, *footer = NULL;
 	char *group = NULL;
-	int j;
+	int j, count_all;
 	int all = 0; /* 1 - all, 2 - metacontacts */
 	ncurses_window_t *n;
 	list_t sorted = NULL;
@@ -187,7 +187,7 @@ group_cleanup:
 		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
 
 	
-	for (j = 0; j < xstrlen(contacts_order); j += 2) {
+	for (j = 0, count_all = 0; j < xstrlen(contacts_order); j += 2) {
 		int count = 0;
 		list_t l;
 		list_t lp;
@@ -202,16 +202,14 @@ group_cleanup:
 				char *line;
 				contact_t c;
 
-
-	
 				if (!u->status || !u->nickname || xstrncmp(u->status, contacts_order + j, 2))
 					continue;
 	
 				if (group && !ekg_group_member(u, group))
 					continue;
 				
-				if (count < contacts_index) {
-					count++;
+				if (count_all < contacts_index) {
+					count_all++;
 					continue;
 				}
 	
@@ -221,6 +219,7 @@ group_cleanup:
 					if (xstrcmp(format, ""))
 						ncurses_backlog_add(w, fstring_new(format_string(format)));
 					footer_status = u->status;
+					count_all++;
 				}
 	
 				if (u->descr && contacts_descr)
@@ -245,6 +244,7 @@ group_cleanup:
 				xfree(line);
 	
 				count++;
+				count_all++;
 			}
 			if (!all)
 				break;
@@ -264,8 +264,8 @@ group_cleanup:
                                 if (!u->status || !u->nickname || xstrncmp(u->status, contacts_order + j, 2))
                                         continue;
 
-                                if (count < contacts_index) {
-                                        count++;
+                                if (count++ < contacts_index) {
+                                        count_all++;
                                         continue;
                                 }
 
@@ -275,6 +275,7 @@ group_cleanup:
                                         if (xstrcmp(format, ""))
                                                 ncurses_backlog_add(w, fstring_new(format_string(format)));
                                         footer_status = u->status;
+					count_all++;
                                 }
 
                                 if (u->descr && contacts_descr)
@@ -296,7 +297,7 @@ group_cleanup:
                                 xfree(line);
 
                                 count++;
-
+				count_all++;
 			}
 		} 
 
