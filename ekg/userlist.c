@@ -297,7 +297,7 @@ void userlist_clear_status(session_t *session, const char *uid)
 void userlist_free(session_t *session)
 {
 	while (session->userlist)
-		userlist_remove(session->userlist->data);
+		userlist_remove(session, session->userlist->data);
 }
 
 /*
@@ -328,7 +328,7 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
  *
  *  - u.
  */
-int userlist_remove(userlist_t *u)
+int userlist_remove(session_t *session, userlist_t *u)
 {
 	list_t l;
 
@@ -351,7 +351,7 @@ int userlist_remove(userlist_t *u)
 	}
 
 	list_destroy(u->groups, 1);
-	list_remove(&userlist, u, 1);
+	list_remove(session->userlist, u, 1);
 
 	return 0;
 }
@@ -368,13 +368,13 @@ int userlist_remove(userlist_t *u)
  *
  * 0/-1
  */
-int userlist_replace(userlist_t *u)
+int userlist_replace(session_t *session, userlist_t *u)
 {
 	if (!u)
 		return -1;
-	if (list_remove(&userlist, u, 0))
+	if (list_remove(session->userlist, u, 0))
 		return -1;
-	if (!list_add_sorted(&userlist, u, 0, userlist_compare))
+	if (!list_add_sorted(session->userlist, u, 0, userlist_compare))
 		return -1;
 
 	return 0;
@@ -574,7 +574,7 @@ int ignored_remove(session_t *session, const char *uid)
 	}
 
 	if (!u->nickname && !u->groups) {
-		userlist_remove(u);
+		userlist_remove(session, u);
 		return 0;
 	}
 

@@ -294,7 +294,7 @@ static int sms_protocol_message(void *data, va_list ap)
 	if (sms_away_check(uid)) {
 		const char *sender;
 		char *msg;
-		userlist_t *u = userlist_find(session, uid);
+		userlist_t *u = userlist_find(session_find(session), uid);
 
 		sender = (u && u->nickname) ? u->nickname : uid;
 

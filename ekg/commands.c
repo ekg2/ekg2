@@ -326,7 +326,7 @@ COMMAND(cmd_modify)
 						array_free(arr);
 					}
 
-					userlist_remove(existing);
+					userlist_remove(session, existing);
 				}
 			}
 
@@ -708,7 +708,7 @@ COMMAND(cmd_del)
 			query_emit(NULL, "userlist-removed", &tmp);
 			xfree(tmp);
 
-			userlist_remove(u);
+			userlist_remove(session, u);
 		}
 
 		printq("user_cleared_list");
@@ -732,7 +732,7 @@ COMMAND(cmd_del)
 
 	config_changed = 1;
 
-	userlist_remove(u);
+	userlist_remove(session, u);
 	
 	return 0;
 }
@@ -1309,7 +1309,7 @@ COMMAND(cmd_save)
 {
 	last_save = time(NULL);
 
-	if (!userlist_write(NULL) && !config_write(params[0]) && !session_write()) {
+	if (!userlist_write(session) && !config_write(params[0]) && !session_write()) {
 		printq("saved");
 		config_changed = 0;
 	} else {

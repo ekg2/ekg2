@@ -176,7 +176,7 @@ int gg_blocked_remove(session_t *s, const char *uid)
 	}
 
 	if (!u->nickname && !u->groups)
-		userlist_remove(u);
+		userlist_remove(s, u);
 	else {
 		if (g->sess && g->sess->state == GG_STATE_CONNECTED)
 			gg_add_notify_ex(g->sess, atoi(u->uid + 3), gg_userlist_type(u));
