@@ -354,6 +354,26 @@ void message_print(const char *session, const char *sender, const char **rcpts, 
 		strftime(timestamp, sizeof(timestamp), format_find(tmp), tm_msg);
 	}
 
+	/* daj znaæ d¼wiêkiem i muzyczk± */
+	if (class == EKG_MSGCLASS_CHAT) {
+
+		if (config_beep && config_beep_chat)
+			query_emit(NULL, "beep");
+	
+		if (config_sound_chat_file) 
+			play_sound(config_sound_chat_file);
+
+	} else if (class == EKG_MSGCLASS_MESSAGE) {
+
+		if (config_beep && config_beep_msg)
+			query_emit(NULL, "beep");
+		if (config_sound_msg_file)
+			play_sound(config_sound_chat_file);
+
+	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
+			play_sound(config_sound_sysmsg_file);
+	
+
 	user = (class != EKG_MSGCLASS_SENT) ? format_user(session_find(session), sender) : session_format_n(sender);
 	print_window(target, session_find(session), (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_MESSAGE), class_str, user, timestamp, text);
 
