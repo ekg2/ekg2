@@ -20,6 +20,7 @@
 #include "ekg2-config.h"
 #include "osd.h"
 
+#include <ekg/commands.h>
 #include <ekg/plugins.h>
 #include <ekg/themes.h>
 #include <ekg/stuff.h>
@@ -93,6 +94,18 @@ int xosd_show_message(char *line1, char *line2)
 		xosd_display(osd, 1, XOSD_string, line2);
 	
 	return 0; 
+}
+
+COMMAND(xosd_command_msg) 
+{
+	if (!params[0]) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+	
+	xosd_show_message((char *) params[0], "");
+
+	return 0;
 }
 
 static int xosd_protocol_status(void *data, va_list ap)
@@ -269,6 +282,8 @@ int xosd_plugin_init()
 	
 	timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
 
+	command_add(&xosd_plugin, "xosd:msg", "?", xosd_command_msg, 0, NULL);
+	
 	return 0;
 }
 

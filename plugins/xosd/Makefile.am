@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt 
+EXTRA_DIST = vars.txt commands.txt 
 
 lib_LTLIBRARIES = xosd.la
 xosd_la_SOURCES = xosd.c osd.h
@@ -11,4 +11,4 @@ libdir = $(plugindir)
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/xosd/
 	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/xosd/vars.txt
-
+	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/xosd/commands.txt
