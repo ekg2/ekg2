@@ -96,6 +96,11 @@ static int xosd_protocol_status(void *data, va_list ap)
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
 	char **__status = va_arg(ap, char**), *status = *__status;
 	char **__descr = va_arg(ap, char**), *descr = *__descr;
+	
+	int level = ignored_check(session_find(session),uid);
+	
+	if ((level == IGNORE_ALL) || (level & IGNORE_STATUS))
+		return 0;
 
 	const char *sender;
 	char *msgLine1;
@@ -110,7 +115,7 @@ static int xosd_protocol_status(void *data, va_list ap)
 
 	msgLine1 = format_string(format_find(format), sender);
 
-	if (xstrcmp(descr, ""))
+	if (xstrcmp(descr, "") && !(level & IGNORE_STATUS_DESCR))
 		if (xosd_text_limit && xstrlen(descr) > xosd_text_limit)
 			msgLine2 = format_string(format_find("xosd_status_change_description_long"), xstrmid(descr, 0, xosd_text_limit));
 		else
@@ -136,12 +141,16 @@ static int xosd_protocol_message(void *data, va_list ap)
 	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
 	int *__class = va_arg(ap, int*), class = *__class;
 
+	int level = ignored_check(session_find(session), uid);
 	
+	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
+		return 0;
+
 	if (class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
 		const char *sender;
 		char *msgLine1;
 		char *msgLine2;
-	
+		
 		userlist_t *u = userlist_find(session_find(session), uid);
 	
 		sender = (u && u->nickname) ? u->nickname : uid;
