@@ -604,7 +604,6 @@ IRC_COMMAND(irc_c_msg)
 	if (ctcpstripped) {
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
 		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));
-		xfree(ctcpstripped);
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
 		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
@@ -621,10 +620,13 @@ IRC_COMMAND(irc_c_msg)
 010539 pierwszym argumentem by³a sesja
 	*/
 		query_emit(NULL, "irc-protocol-message",
-				&s, &me,&coloured,&xosd_to_us,&xosd_is_priv,
-				&(dest[4]));
+				&(s->uid), &me, &coloured, 
+				&xosd_to_us, &xosd_is_priv, &(dest[4]));
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
+		debug(">>>%s\n", coloured);
+		xfree(ctcpstripped);
+		xfree(coloured);
 		xfree(me);
 		me = xstrdup(session_uid_get(s));
 		sent = time(NULL);
