@@ -67,7 +67,7 @@ int irc_getircoldcol(char *org)
 
 char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str, int strip)
 {
-	int  col;
+	int  col, oldstrip = strip;
 	char mirc_sux_so_much[16]=  "WkbgrypRYGcCBPKw";
 	char mirc_sux_even_more[16]="xlehszqszhddeqlx";
 	char *p;
@@ -118,7 +118,8 @@ coloring_finito:
 			string_append_c(s, *str);
 		str++;
 	}
-	string_append(s, "%n");
+	if (oldstrip)
+		string_append(s, "%n");
 	p = format_string(s->str);
 	string_free(s, 1);
 	return p;

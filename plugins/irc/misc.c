@@ -14,7 +14,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -620,7 +619,7 @@ IRC_COMMAND(irc_c_msg)
 010539 pierwszym argumentem by³a sesja
 	*/
 		query_emit(NULL, "irc-protocol-message",
-				&(s->uid), &me, &coloured, 
+				&(s->uid), &(param[0][1]), &coloured, 
 				&xosd_to_us, &xosd_is_priv, &(dest[4]));
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
