@@ -1882,6 +1882,37 @@ fail:
 	gg_token_free(h);
 }
 
+void gg_changed_private(session_t *s, const char *var)
+{
+	gg_private_t *g = (s) ? session_private_get(s) : NULL;
+	char *status = session_status_get(s);
+	char *descr = xstrdup(session_descr_get(s));
+
+	if (!session_connected_get(s))
+		return;
+
+	gg_iso_to_cp(descr);
+
+	
+        if (s->descr) {
+                int _status = gg_text_to_status(status, descr);
+
+                _status = GG_S(_status);
+                if (session_int_get(s, "private"))
+                        _status |= GG_STATUS_FRIENDS_MASK;
+
+               gg_change_status_descr(g->sess, _status, descr);
+        } else {
+                int _status = gg_text_to_status(status, NULL);
+
+                _status = GG_S(_status);
+                if (session_int_get(s, "private"))
+                        _status |= GG_STATUS_FRIENDS_MASK;
+
+                gg_change_status(g->sess, _status);
+        }
+}
+
 COMMAND(gg_command_token)
 {
         struct gg_http *h;
@@ -2016,21 +2047,21 @@ int gg_plugin_init()
 
         variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &config_display_token, NULL, NULL, NULL);
 
-	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0);
-	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "0", 0);
-	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0);	
-        plugin_var_add(&gg_plugin, "auto_connect", VAR_INT, "0", 0);
-        plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0);
-        plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "0", 0);
-        plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0);
-	plugin_var_add(&gg_plugin, "default", VAR_BOOL, "0", 0);
-        plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "0", 0);
-        plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0);
-	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0);
-        plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1);
-        plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0);
-	plugin_var_add(&gg_plugin, "private", VAR_BOOL, "0", 0);
-	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0);
+	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0, NULL);	
+        plugin_var_add(&gg_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
+        plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
+        plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1, NULL);
+        plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0, NULL);
+	plugin_var_add(&gg_plugin, "private", VAR_BOOL, "0", 0, gg_changed_private);
+	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0, NULL);
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;

@@ -401,7 +401,10 @@ int session_set(session_t *s, const char *key, const char *value)
 {
         session_param_t *sp;
 	session_param_t v;
-	
+        plugin_t *p = (s->uid) ? plugin_find_uid(s->uid) : NULL;
+        plugins_params_t *pa = (p) ? plugin_var_find(p, key) : NULL; 
+	int ret = 0;
+
 	if (!s)
 		return -1;
 
@@ -409,29 +412,35 @@ int session_set(session_t *s, const char *key, const char *value)
 		return -1;
 
 	if (!xstrcasecmp(key, "alias")) {
-		int ret = session_alias_set(s, value);
 		char *tmp = xstrdup(value);
+		ret = session_alias_set(s, value);
 
 		query_emit(NULL, "session-renamed", &tmp);
 		xfree(tmp);
 
-		return ret;
+		goto notify;
 	}
 
-	if (!xstrcasecmp(key, "descr"))
-		return session_descr_set(s, value);
+	if (!xstrcasecmp(key, "descr")) {
+		ret = session_descr_set(s, value);
+		goto notify;
+	}
 
-	if (!xstrcasecmp(key, "status"))
-		return session_status_set(s, value);
+	if (!xstrcasecmp(key, "status")) {
+		ret = session_status_set(s, value);
+		goto notify;
+	}
 
-	if (!xstrcasecmp(key, "password"))
-                return session_password_set(s, value);
+	if (!xstrcasecmp(key, "password")) {
+                ret = session_password_set(s, value);
+		goto notify;
+	}
 
 
 	if ((sp = session_var_find(s, key))) {
 		xfree(sp->value);
 		sp->value = xstrdup(value);
-		return 1;
+		goto notify;
 	}
 
 	memset(&v, 0, sizeof(v));
@@ -439,6 +448,12 @@ int session_set(session_t *s, const char *key, const char *value)
 	v.value = xstrdup(value);
 
 	return (list_add_sorted(&s->params, &v, sizeof(v), session_set_compare) != NULL) ? 0 : -1;
+
+notify:
+	if (pa && pa->notify)
+		pa->notify(s, key);
+
+	return ret;
 }
 
 /*

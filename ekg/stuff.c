@@ -501,6 +501,33 @@ void buffer_free()
 	buffers = NULL;
 }
 
+/* 
+ * changed_var_default()
+ * 
+ * function called when session var ,,default''
+ * is changed
+ */
+void changed_var_default(session_t *s, const char *var)
+{
+	list_t l;
+
+	if (!sessions)
+		return;
+
+	for (l = sessions; l; l = l->next) {
+		session_t *sp = l->data;
+		session_param_t *sparam;
+
+		if (!session_compare(s, sp))
+			continue;
+
+		sparam = session_var_find(sp, var);
+
+		xfree(sparam->value);
+		sparam->value = xstrdup("0");
+	}
+}
+
 /*
  * changed_mesg()
  *

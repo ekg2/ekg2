@@ -968,25 +968,25 @@ int jabber_plugin_init()
 
 	jabber_register_commands();       
  
-	plugin_var_add(&jabber_plugin, "alias", VAR_STR, 0, 0);
-	plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0);
-        plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0);
-        plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0);
-        plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0);
-        plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0);
-	plugin_var_add(&jabber_plugin, "default", VAR_BOOL, "0", 0);
-        plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0);
-	plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0);
-	plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1);
-        plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0);
-	plugin_var_add(&jabber_plugin, "port", VAR_INT, itoa(5222), 0);
-	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0);
-	plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
-	plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, itoa(5223), 0);
-	plugin_var_add(&jabber_plugin, "use_ssl", VAR_INT, itoa(1), 0);
-	plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0);
-	plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0);
-	plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0);
+	plugin_var_add(&jabber_plugin, "alias", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "default", VAR_BOOL, "0", 0, changed_var_default);
+        plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
+	plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
+        plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "port", VAR_INT, itoa(5222), 0, NULL);
+	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, itoa(5223), 0, NULL);
+	plugin_var_add(&jabber_plugin, "use_ssl", VAR_INT, itoa(1), 0, NULL);
+	plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0, NULL);
 
 
 	for (l = sessions; l; l = l->next)

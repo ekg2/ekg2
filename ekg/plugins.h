@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include "dynstuff.h"
 #include "ltdl.h"
+#include "sessions.h"
 
 list_t plugins;
 list_t queries;
@@ -42,12 +43,14 @@ typedef enum {
 
 typedef int (*plugin_destroy_func_t)(void);
 typedef int (*plugin_theme_init_func_t)(void);
+typedef void (plugin_notify_func_t)(session_t *, const char *);
 
 typedef struct {
         char *key;                      /* name */
         char *value;                    /* value */
         int secret;                     /* should it be hidden ? */
 	int type;			/* type */
+	plugin_notify_func_t *notify;	/* notify */
 } plugins_params_t;
 
 
@@ -69,7 +72,7 @@ plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
 #define plugin_find_s(a) plugin_find_uid(a->uid)
 int have_plugin_of_class(int);
-int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret);
+int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
 plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 
 #define PLUGIN_DEFINE(x, y)\

@@ -253,6 +253,8 @@ int plugin_theme_reload(plugin_t *p)
 {
 	if (p->theme_init)
 		p->theme_init();
+
+	return 0;
 }
 
 /* 
@@ -290,7 +292,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name)
  * value - default_value
  * secret - hide when showing?
  */
-int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret)
+int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify)
 {
 	plugins_params_t *p;
 	int i, count;
@@ -300,8 +302,9 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
 	p->type = type;
 	p->value = xstrdup(value);
 	p->secret = secret;
+        p->notify = notify;
 
-        if (!pl->params) {
+	if (!pl->params) {
                 pl->params = xmalloc(sizeof(plugins_params_t *) * 2);
                 pl->params[0] = p;
                 pl->params[1] = NULL;
