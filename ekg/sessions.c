@@ -39,8 +39,7 @@
 #endif
 
 list_t sessions = NULL;
-session_t *session_current;
-
+session_t *session_current = NULL;
 
 /*
  * session_find()
@@ -957,6 +956,29 @@ COMMAND(session_command)
 	printq("invalid_params", name);
 	
 	return -1;
+}
+
+/* 
+ * session_find_default()
+ *
+ * it returns pointer to the first default session
+ * in the list
+ */
+session_t *session_find_default()
+{
+	list_t l;
+	
+	for (l = sessions; l; l = l->next) {
+		session_t *s = l->data;
+
+		if (!s)
+			continue;
+
+		if (session_int_get(s, "default") == 1)
+			return s;
+	}
+
+	return NULL;
 }
 
 /* sessions_free()

@@ -557,6 +557,7 @@ int main(int argc, char **argv)
 	char *load_theme = NULL, *new_profile = NULL;
 	struct passwd *pw;
 	struct rlimit rlim;
+	session_t *session_default;
 	list_t l;
 
 	/* zostaw po sobie core */
@@ -780,11 +781,14 @@ int main(int argc, char **argv)
 	 * supporting some protocol in current build */
 	if (session_read() == -1)
 		no_config = 1;
+	
 
 	/* status window takes first session */
 	if (sessions) {
-		session_current = (session_t*) sessions->data;
-		window_current->session = (session_t*) sessions->data;
+		session_t *session_default = session_find_default();
+
+		session_current = (session_default) ? session_default : (session_t*) sessions->data;
+		window_current->session = session_current;
 	}
 	
 	metacontact_read(); /* read the metacontacts info */

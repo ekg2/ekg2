@@ -52,6 +52,8 @@ session_t *session_current;
 
 session_t *session_find(const char *uid);
 session_param_t *session_var_find(session_t *s, const char *key);
+session_t *session_find_default();
+
 int session_var_default(session_t *s);
 #define session_var_default_n(a) session_var_default(session_find(a))
 
