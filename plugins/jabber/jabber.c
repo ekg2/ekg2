@@ -347,8 +347,8 @@ void jabber_handle(void *data, xmlnode_t *n)
                         j->connecting = 0;
 
                         if (!xstrcmp(type, "result")) {
-                                session_connected_set(s, 1);
                                 char *__session = xstrdup(session_uid_get(s));
+                                session_connected_set(s, 1);
                                 session_unidle(s);
                                 query_emit(NULL, "protocol-connected", &__session);
                                 xfree(__session);
