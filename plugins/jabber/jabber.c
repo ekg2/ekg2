@@ -304,6 +304,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 			if (nbody && nbody->data) {
 				char *tmp2 = jabber_unescape(nbody->data);
 				mbody = xstrndup(tmp2, 15);
+				xstrtr(mbody, '\n', ' ');
 	
 				print("jabber_msg_failed_long", recipient, ecode, etext, mbody);
 
