@@ -581,6 +581,7 @@ void jabber_handle_connect(int type, int fd, int watch, void *data)
 
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		print("generic_error", strerror(res));
+		j->connecting = 0;
 		return;
 	}
 
@@ -620,6 +621,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 			debug("[jabber] read %d bytes from resolver. not good\n", res);
 		close(fd);
 		print("generic_error", "Nie znaleziono serwera, sorry");
+		j->connecting = 0;
 		return;
 	}
 
@@ -630,6 +632,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		debug("[jabber] socket() failed: %s\n", strerror(errno));
 		print("generic_error", strerror(errno));
+		j->connecting = 0;
 		return;
 	}
 
@@ -640,6 +643,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	if (ioctl(fd, FIONBIO, &one) == -1) {
 		debug("[jabber] ioctl() failed: %s\n", strerror(errno));
 		print("generic_error", strerror(errno));
+		j->connecting = 0;
 		return;
 	}
 
@@ -654,6 +658,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 	if (errno != EINPROGRESS) {
 		debug("[jabber] connect() failed: %s\n", strerror(errno));
 		print("generic_error", strerror(errno));
+		j->connecting = 0;
 		return;
 	}
 
