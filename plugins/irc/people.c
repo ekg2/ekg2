@@ -90,7 +90,7 @@ int irc_add_person_int(irc_private_t *j, char *nick, channel_t *chan)
 	people_chan_t *pch_tmp;
 	userlist_t *ulist;
 	window_t *w;
-	int i, k, mode = 0, irccol;
+	int i, k, mode = 0, irccol = 0;
 	char *ircnick, *modes, *t;
 
 	k = (xstrlen(SOP(_005_PREFIX))>>1);
@@ -237,7 +237,6 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick)
 {
 	people_t *person;
 	list_t tmp;
-	char *tmpnick;
 
 	if (!(person = irc_find_person(j->people, nick))) 
 		return -1;
@@ -325,7 +324,7 @@ int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
 		case 3:
 			ul->status = xstrdup(EKG_STATUS_INVISIBLE);
 			break;
-		deafult:
+		default:
 			ul->status = xstrdup(EKG_STATUS_ERROR);
 			break;
 	}

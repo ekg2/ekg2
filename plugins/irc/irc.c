@@ -431,9 +431,10 @@ COMMAND(irc_command_connect)
 
 		exit(0);
 	} else {
+		irc_handler_data_t *idta = (irc_handler_data_t *) xmalloc (sizeof(irc_handler_data_t));
+				
 		close(fd[1]);
 
-		irc_handler_data_t *idta = (irc_handler_data_t *) xmalloc (sizeof(irc_handler_data_t));
 		idta->session = session;
 
 		watch_add (&irc_plugin, fd[0], WATCH_READ, 0, irc_handle_resolver, idta);
@@ -499,6 +500,11 @@ COMMAND(irc_command_msg)
 {
 	irc_private_t *j = session_private_get(session);
 	const char *uid=NULL;
+        window_t *w;
+        char **rcpts; 
+        const int class = EKG_MSGCLASS_SENT; 
+        char *me, *format=NULL, *seq=NULL, *head;
+        const time_t sent = time(NULL);					
 
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
@@ -526,14 +532,12 @@ COMMAND(irc_command_msg)
 	debug("%s\n", params[1]);
 
 	/* GiM: XXX */
-	window_t *w = window_find_s(session, uid);
-	char **rcpts = xmalloc(sizeof(char *) * 2);
-	const int class = EKG_MSGCLASS_SENT;
-	char *me = xstrdup(session_uid_get(session)), *format=NULL, *seq=NULL;
+	w = window_find_s(session, uid);
+	*rcpts = xmalloc(sizeof(char *) * 2);
+	me = xstrdup(session_uid_get(session));
 	/* GiM: TODO zmieniæ formaty jeszcze */
-	char *head = format_string(format_find(w?"irc_msg_sent_n":"irc_msg_sent"),
+	head = format_string(format_find(w?"irc_msg_sent_n":"irc_msg_sent"),
 				me, j->nick, uid+4, params[1]);
-	const time_t sent = time(NULL);
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
 
