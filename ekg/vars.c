@@ -597,13 +597,20 @@ void variable_help(const char *name)
 		filename = xstrdup("vars.txt");
 	}
 
+again:
 	if (v->plugin && v->plugin->name) {
 		char *tmp = saprintf(DATADIR "/plugins/%s/%s", v->plugin->name, filename);
 		f = fopen(tmp, "r");
 		xfree(tmp);
 
 		if (!f) {
+			if (xstrcasecmp(filename, "vars.txt")) {
+				xfree(filename);
+				filename = xstrdup("vars.txt");
+				goto again;
+			}
         	        print("help_set_file_not_found_plugin", v->plugin->name);
+			xfree(filename);
 	                return;
 		}
 		
@@ -614,7 +621,13 @@ void variable_help(const char *name)
 		xfree(tmp);
 
                 if (!f) {
+                        if (xstrcasecmp(filename, "vars.txt")) {
+                                xfree(filename);
+                                filename = xstrdup("vars.txt");
+				goto again;
+                        }
                         print("help_set_file_not_found");
+			xfree(filename);
                         return;
                 }
 

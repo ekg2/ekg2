@@ -1140,8 +1140,15 @@ void session_help(session_t *s, const char *name)
 	f = fopen(tmp, "r");
 	xfree(tmp);
 
+again:
 	if (!f) {
+ 	        if (xstrcasecmp(filename, "session.txt")) {
+        		xfree(filename);
+                        filename = xstrdup("session.txt");
+                        goto again;
+                }
                 print("help_session_file_not_found", plugin_name);
+		xfree(filename);
 	        return;
 	}
 		

@@ -988,14 +988,21 @@ COMMAND(cmd_help)
 			                filename = xstrdup("commands.txt");
 			        }
 
+again:
 				if (c->plugin && c->plugin->name) {
 					char *tmp = saprintf(DATADIR "/plugins/%s/%s", c->plugin->name, filename);
 					f = fopen(tmp, "r");
 				        xfree(tmp);
 
 			                if (!f) {
+			                        if (xstrcasecmp(filename, "commands.txt")) {
+			                                xfree(filename);
+			                                filename = xstrdup("commands.txt");
+			                                goto again;
+			                        }
                         			print("help_command_file_not_found_plugin", c->plugin->name);
-						continue;
+						xfree(filename);
+						return -1;
 			                }
 					tmp = xstrchr(c->name, ':');
 					if (!tmp)
@@ -1008,8 +1015,14 @@ COMMAND(cmd_help)
 					xfree(tmp);
 
 			                if (!f) {
+			                        if (xstrcasecmp(filename, "commands.txt")) {
+			                                xfree(filename);
+			                                filename = xstrdup("commands.txt");
+			                                goto again;
+			                        }
 		                	        print("help_command_file_not_found");
-			                        return -1;
+						xfree(filename);
+						return -1;
 			                }
 
 	                		seeking_name = c->name;
@@ -1117,13 +1130,19 @@ COMMAND(cmd_help)
 		        } else {
 		                filename = xstrdup("commands.txt");
 		        }
-
+again2:
 		        if (c->plugin && c->plugin->name) {
 	                        char *tmp = saprintf(DATADIR "/plugins/%s/%s", c->plugin->name, filename);
                                 f = fopen(tmp, "r");
                                 xfree(tmp);
 
                                 if (!f) {
+		                        if (xstrcasecmp(filename, "commands.txt")) {
+		                                xfree(filename);
+		                                filename = xstrdup("commands.txt");
+		                                goto again2;
+		                        }
+					xfree(filename);
 					continue;
                                 }
 				tmp = xstrchr(c->name, ':');
@@ -1137,8 +1156,13 @@ COMMAND(cmd_help)
 				xfree(tmp);
  
 				if (!f) {
-                                	print("help_command_file_not_found");
-                                        return -1;
+                                        if (xstrcasecmp(filename, "commands.txt")) {
+                                                xfree(filename);
+                                                filename = xstrdup("commands.txt");
+                                                goto again2;
+                                        }
+                                        xfree(filename);
+					continue;
                                 }
 
                                 seeking_name = c->name;
