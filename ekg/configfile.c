@@ -120,6 +120,8 @@ int config_read_later(const char *filename)
                         }
 
                         array_free(pms);
+		} else if (!xstrcasecmp(buf, "plugin")) {
+			continue;
                 } else {
                         ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
 
