@@ -798,8 +798,8 @@ COMMAND(cmd_exec)
 		watch_t *w;
 
 		if (params[0][0] == '-') {
-			args = array_make(params[0], " \t", 3, 1, 1);
 			int big_match = 0;
+			args = array_make(params[0], " \t", 3, 1, 1);
 
 			if (match_arg(args[0], 'M', "MSG", 2) || (buf = match_arg(args[0], 'B', "BMSG", 2)))
 				big_match = add_commandline = 1;
