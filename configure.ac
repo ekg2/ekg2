@@ -213,7 +213,7 @@ if test "x$have_libgsm" = "xyes"; then
 	PLUGINS="$PLUGINS gsm"
 fi
 
-AM_PATH_LIBGNUTLS( 1.0.0,, AC_MSG_ERROR([[
+AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
 *** libgnutls was not found. You may want to get it from
 *** ftp://ftp.gnutls.org/pub/gnutls/
@@ -248,6 +248,12 @@ if test "x$have_libgadu" = "xyes"; then
 	echo " - libgadu: enabled"
 else
 	echo " - libgadu: disabled"
+fi
+
+if test "x$have_pthread" = "xyes"; then
+	echo " - pthread: enabled"
+else
+	echo " - pthread: disabled"
 fi
 
 if test "x$have_openssl" = "xyes"; then
