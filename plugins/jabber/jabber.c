@@ -39,6 +39,10 @@
 #  include <expat.h>
 #endif
 
+#ifdef sun	/* Solaris, thanks to Beeth */
+#include <sys/filio.h>
+#endif
+
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
 #include <ekg/protocol.h>
