@@ -964,13 +964,13 @@ void gg_changed_private(session_t *s, const char *var)
 static int gg_theme_init()
 {
         /* pobieranie tokenu */
-        format_add("gg_token", "%> Token zapisano do pliku %T%1%n\n", 1);
-        format_add("gg_token_ocr", "%> Token: %T%1%n\n", 1);
+        format_add("gg_token", _("%> Token zapisano do pliku %T%1%n\n"), 1);
+        format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
         format_add("gg_token_body", "%1\n", 1);
-        format_add("gg_token_failed", "%! B³±d pobierania tokenu: %1\n", 1);
-        format_add("gg_token_timeout", "%! Przekroczono limit czasu pobierania tokenu\n", 1);
-        format_add("gg_token_unsupported", "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n", 1);
-        format_add("gg_token_missing", "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n", 1);
+        format_add("gg_token_failed", _("%! B³±d pobierania tokenu: %1\n"), 1);
+        format_add("gg_token_timeout", _("%! Przekroczono limit czasu pobierania tokenu\n"), 1);
+        format_add("gg_token_unsupported", _("%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"), 1);
+        format_add("gg_token_missing", _("%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"), 1);
 	
 	return 0;
 }

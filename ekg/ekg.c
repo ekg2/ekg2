@@ -44,6 +44,7 @@
 #  include "compat/getopt.h"
 #endif
 #include <limits.h>
+#include <locale.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -584,6 +585,9 @@ int main(int argc, char **argv)
 
 	lt_dlinit();
 
+	setlocale(LC_ALL, ""); 
+	textdomain("ekg2");
+	
 	srand(time(NULL));
 
 	strlcpy(argv0, argv[0], sizeof(argv0));
@@ -593,7 +597,7 @@ int main(int argc, char **argv)
 			home_dir = xstrdup(pw->pw_dir);
 
 		if (!home_dir) {
-			fprintf(stderr, "Nie mogê znale¼æ katalogu domowego. Popro¶ administratora, ¿eby to naprawi³.\n");
+			fprintf(stderr, _("Nie mogê znale¼æ katalogu domowego. Popro¶ administratora, ¿eby to naprawi³.\n"));
 			return 1;
 		}
 	}
@@ -693,7 +697,7 @@ int main(int argc, char **argv)
 
 			case '?':
 				/* obs³ugiwane przez getopt */
-				fprintf(stdout, "Aby uzyskaæ wiêcej informacji, uruchom program z opcj± --help.\n");
+				fprintf(stdout, _("Aby uzyskaæ wiêcej informacji, uruchom program z opcj± --help.\n"));
 				return 1;
 
 			default:
@@ -942,13 +946,13 @@ void ekg_exit()
 				line[xstrlen(line) - 1] = 0;
 			if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
         			if (config_write(NULL) || session_write() || metacontact_write()) 
-					printf("Wyst±pi³ b³±d podczas zapisu.\n");
+					printf(_("Wyst±pi³ b³±d podczas zapisu.\n"));
 			}
 		} else
 			printf("\n");
 	} else if (config_save_quit == 2) {
                 if (config_write(NULL) || session_write() || metacontact_write())
-	                printf("Wyst±pi³ b³±d podczas zapisu.\n");
+	                printf(_("Wyst±pi³ b³±d podczas zapisu.\n"));
 
 	} else if (config_keep_reason && reason_changed && config_save_quit == 1) {
                 char line[80];
@@ -960,14 +964,14 @@ void ekg_exit()
                                 line[xstrlen(line) - 1] = 0;
                         if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
                                 if (session_write())
-                                        printf("Wyst±pi³ b³±d podczas zapisu.\n");
+                                        printf(_("Wyst±pi³ b³±d podczas zapisu.\n"));
                         }
                 } else
                         printf("\n");
 
 	} else if (config_keep_reason && reason_changed && config_save_quit == 2) {
 	        if (session_write())
-        	        printf("Wyst±pi³ b³±d podczas zapisu.\n");
+        	        printf(_("Wyst±pi³ b³±d podczas zapisu.\n"));
 	}
 
 	msg_queue_free();

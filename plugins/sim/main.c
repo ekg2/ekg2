@@ -307,17 +307,17 @@ int sim_plugin_init()
 
 	sim_key_path = xstrdup(prepare_path("keys/", 0));
 
-	format_add("key_generating", "%> Czekaj, generujê klucze...\n", 1);
-	format_add("key_generating_success", "%> Wygenerowano i zapisano klucze\n", 1);
-	format_add("key_generating_error", "%! Wyst±pi³ b³±d podczas generowania kluczy: %1\n", 1);
-	format_add("key_private_exist", "%! Posiadasz ju¿ swoj± parê kluczy\n", 1);
-	format_add("key_public_deleted", "%) Klucz publiczny %1 zosta³ usuniêty\n", 1);
-	format_add("key_public_not_found", "%! Nie znaleziono klucza publicznego %1\n", 1);
-	format_add("key_public_noexist", "%! Brak kluczy publicznych\n", 1);
-	format_add("key_public_received", "%> Otrzymano klucz publiczny od %1\n", 1);
-	format_add("key_public_write_failed", "%! B³±d podczas zapisu klucza publicznego: %1\n", 1);
-	format_add("key_send_success", "%> Wys³ano klucz publiczny do %1\n", 1);
-	format_add("key_send_error", "%! B³±d podczas wysy³ania klucza publicznego\n", 1);
+	format_add("key_generating", _("%> Czekaj, generujê klucze...\n"), 1);
+	format_add("key_generating_success", _("%> Wygenerowano i zapisano klucze\n"), 1);
+	format_add("key_generating_error", _("%! Wyst±pi³ b³±d podczas generowania kluczy: %1\n"), 1);
+	format_add("key_private_exist", _("%! Posiadasz ju¿ swoj± parê kluczy\n"), 1);
+	format_add("key_public_deleted", _("%) Klucz publiczny %1 zosta³ usuniêty\n"), 1);
+	format_add("key_public_not_found", _("%! Nie znaleziono klucza publicznego %1\n"), 1);
+	format_add("key_public_noexist", _("%! Brak kluczy publicznych\n"), 1);
+	format_add("key_public_received", _("%> Otrzymano klucz publiczny od %1\n"), 1);
+	format_add("key_public_write_failed", _("%! B³±d podczas zapisu klucza publicznego: %1\n"), 1);
+	format_add("key_send_success", _("%> Wys³ano klucz publiczny do %1\n"), 1);
+	format_add("key_send_error", _("%! B³±d podczas wysy³ania klucza publicznego\n"), 1);
 	format_add("key_list", "%> %1 (%3)\n%) %2\n", 1);
 	format_add("key_list_timestamp", "%Y-%m-%d %H:%M", 1);
 

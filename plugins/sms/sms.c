@@ -349,10 +349,10 @@ int sms_plugin_init()
 
 	query_connect(&sms_plugin, "session-status", sms_session_status, NULL);
 
-	format_add("sms_error", "%! B³±d wysy³ania SMS: %1\n", 1);
-	format_add("sms_unknown", "%! %1 nie ma podanego numeru komórki\n", 1);
-	format_add("sms_sent", "%> SMS do %T%1%n zosta³ wys³any\n", 1);
-	format_add("sms_failed", "%! SMS do %T%1%n nie zosta³ wys³any\n", 1);
+	format_add("sms_error", _("%! B³±d wysy³ania SMS: %1\n"), 1);
+	format_add("sms_unknown", _("%! %1 nie ma podanego numeru komórki\n"), 1);
+	format_add("sms_sent", _("%> SMS do %T%1%n zosta³ wys³any\n"), 1);
+	format_add("sms_failed", _("%! SMS do %T%1%n nie zosta³ wys³any\n"), 1);
 	format_add("sms_away", "<ekg:%1> %2", 1);
 
 	return 0;

@@ -947,22 +947,22 @@ int jabber_status_show_handle(void *data, va_list ap)
 
 static int jabber_theme_init()
 {
-        format_add("jabber_auth_subscribe", "%> (%2) %T%1%n prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n", 1);
-        format_add("jabber_auth_unsubscribe", "%> (%2) %T%1%n prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby usun±æ.%n\n", 1);
-        format_add("jabber_xmlerror", "%! (%1) B³±d parsowania XMLa%n\n", 1);
-        format_add("jabber_auth_request", "%> (%2) Wys³ano ¿±danie autoryzacji do %t%1%n.\n", 1);
-        format_add("jabber_auth_accept", "%> (%2) Autoryzowano %T%1%n.\n", 1);
-        format_add("jabber_auth_unsubscribed", "%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %T%1%n.\n", 1);
-        format_add("jabber_auth_cancel", "%> (%2) Cofniêto autoryzacjê %T%1%n.\n", 1);
-        format_add("jabber_auth_denied", "%> (%2) Odmówiona autoryzacji %T%1%n.\n", 1);
-        format_add("jabber_auth_probe", "%> (%2) Wys³ano pytanie o obecno¶æ do %T%1%n.\n", 1);
-        format_add("jabber_generic_conn_failed", "%! (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n", 1);
-        format_add("jabber_msg_failed", "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n",1);
-        format_add("jabber_msg_failed_long", "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n",1);
-        format_add("jabber_version_response", "%> Identyfikator Jabbera: %T%1%n\n%> Nazwa programu: %T%2%n\n%> Wersja programu: %T%3%n\n%> System operacyjny: %T%4%n\n", 1);
-        format_add("jabber_unknown_resource", "%! (%1) Nieznany resource u¿ytkownika%n\n", 1);
-        format_add("jabber_status_notavail", "%! (%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%n\n", 1);
-        format_add("jabber_typing_notify", "%> U¿ytkownik %T%1%n co¶ do nas pisze ...%n\n", 1);
+        format_add("jabber_auth_subscribe", _("%> (%2) %T%1%n prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n"), 1);
+        format_add("jabber_auth_unsubscribe", _("%> (%2) %T%1%n prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby usun±æ.%n\n"), 1);
+        format_add("jabber_xmlerror", _("%! (%1) B³±d parsowania XMLa%n\n"), 1);
+        format_add("jabber_auth_request", _("%> (%2) Wys³ano ¿±danie autoryzacji do %t%1%n.\n"), 1);
+        format_add("jabber_auth_accept", _("%> (%2) Autoryzowano %T%1%n.\n"), 1);
+        format_add("jabber_auth_unsubscribed", _("%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %T%1%n.\n"), 1);
+        format_add("jabber_auth_cancel", _("%> (%2) Cofniêto autoryzacjê %T%1%n.\n"), 1);
+        format_add("jabber_auth_denied", _("%> (%2) Odmówiona autoryzacji %T%1%n.\n"), 1);
+        format_add("jabber_auth_probe", _("%> (%2) Wys³ano pytanie o obecno¶æ do %T%1%n.\n"), 1);
+        format_add("jabber_generic_conn_failed", _("%! (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n"), 1);
+        format_add("jabber_msg_failed", _("%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"),1);
+        format_add("jabber_msg_failed_long", _("%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"),1);
+        format_add("jabber_version_response", _("%> Identyfikator Jabbera: %T%1%n\n%> Nazwa programu: %T%2%n\n%> Wersja programu: %T%3%n\n%> System operacyjny: %T%4%n\n"), 1);
+        format_add("jabber_unknown_resource", _("%! (%1) Nieznany resource u¿ytkownika%n\n"), 1);
+        format_add("jabber_status_notavail", _("%! (%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%n\n"), 1);
+        format_add("jabber_typing_notify", _("%> U¿ytkownik %T%1%n co¶ do nas pisze ...%n\n"), 1);
 
 	return 0;
 }

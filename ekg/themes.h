@@ -24,6 +24,9 @@
 
 #include "dynstuff.h"
 
+#include "gettext.h"
+#define _(a) gettext(a)
+
 struct format {
 	char *name;
 	int name_hash;

@@ -1,4 +1,5 @@
-vCVS 2004-08-05
+vCVS 2004-08-20
+	* wsparcie dla komunikatów w wielu jêzykach
 	* plugin logowania (plugins/logs/README)
 	* nowa funkcja ,,eval''
 	* mo¿liwo¶æ dzielenia okna i wyrównywaæ (szczegó³y w themes.txt)
