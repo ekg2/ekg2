@@ -862,67 +862,248 @@ COMMAND(cmd_exec)
 
 COMMAND(cmd_for)
 {
-	char **tmp = NULL; // = array_make(params[0], ",", 0, 0, 0);
 	int for_all = 0, ret = 0;
 
-	if (!params[0] || !params[1]) {
+	if (!params[0] || !params[1] || !params[2]) {
 		printq("invalid_params", name);
 		ret = -1;
 		goto for_end;
 	}
-		
-
-	if (!xstrcmp(params[0], "*")) 
-		for_all = 1; 
-	else 
-		tmp = array_make(params[0], ",", 0, 0, 0);
 	
-	if (for_all) {
-		list_t l;
-		
-		if (!sessions) {
-			printq("session_list_empty");
-			ret = -2;
-			goto for_end;
-		}
-		
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
+	if (!xstrcmp(params[1], "*")) 
+		for_all = 1; 
 
-			if (!s)
-				continue;
+	if (match_arg(params[0], 's', "sessions", 2)) {
+		char *param = (char *) params[2];
+		int next_is_for = 0;
 
-			command_exec(NULL, s, params[1], 0);
-		}
-		
-		goto for_end;
-	} else {
-		int i;
-		session_t **s;
+		if (param[0] == '/')
+			param++;
 
-		s = xmalloc(sizeof(session_t *) * array_count(tmp));
-		
-		/* first we are checking all of the parametrs */
-		for (i = 0; tmp[i]; i++) {
-			if (!(s[i] = session_find(tmp[i]))) {
-				printq("session_doesnt_exist", tmp[i]);
-				ret = -1;
-				xfree(s);
+		if (!xstrncasecmp(param, name, xstrlen(name)))
+			next_is_for = 1;
+
+		if (for_all) {
+			list_t l;
+			
+			if (!sessions) {
+				printq("session_list_empty");
+				ret = -2;
 				goto for_end;
 			}
-		}		
-		
-		for (i = 0; tmp[i]; i++) 
-			command_exec(NULL, s[i], params[1], 0);
+				
+			for (l = sessions; l; l = l->next) {
+				session_t *s = l->data;
+				char *for_command;
+				
+				if (!s || !s->uid)
+					continue;
+				
+				if (!next_is_for)
+					for_command = format_string(params[2], session_alias_uid(s), s->uid);
+				else
+					for_command = xstrdup(params[2]);
+			
+				command_exec(NULL, s, for_command, 0);
+				xfree(for_command);
+			}
+		} else {
+			char **tmp = array_make(params[1], ",", 0, 0, 0);
+			int i;
+			session_t **s;
+	
+			s = xmalloc(sizeof(session_t *) * array_count(tmp));
+			
+			/* first we are checking all of the parametrs */
+			for (i = 0; tmp[i]; i++) {
+				if (!(s[i] = session_find(tmp[i]))) {
+					printq("session_doesnt_exist", tmp[i]);
+					ret = -1;
+					xfree(s);
+					goto for_end;
+				}
+			}		
+			
+			for (i = 0; tmp[i]; i++) {
+				char *for_command;
+				
+				if (!s[i] || !s[i]->uid)
+					continue;
+				
+				if (!next_is_for)
+					for_command = format_string(params[2], session_alias_uid(s[i]), s[i]->uid);
+				else
+					for_command = xstrdup(params[2]);
 
-		xfree(s);
+				command_exec(NULL, s[i], for_command, 0);
+				xfree(for_command);
+			}
+	
+			xfree(s);
+		}
+	} else if (match_arg(params[0], 'u', "users", 2)) {
+		char *param = (char *) params[2];
+                int next_is_for = 0;
+
+                if (param[0] == '/')
+                        param++;
+
+                if (!xstrncasecmp(param, name, xstrlen(name)))
+                        next_is_for = 1;
+				
+		if (!session) {
+			ret = -1;
+			goto for_end;
+		}
+
+		if (!session->userlist) {
+			printq("list_empty");
+			ret = -1;
+			goto for_end;
+		}
+
+		if (for_all) {
+			list_t l;
+
+			for (l = session->userlist; l; l = l->next) {
+				userlist_t *u = l->data;
+				char *for_command;
+
+				if (!u || !u->uid)
+					continue;
+				
+				if (!next_is_for)
+					for_command = format_string(params[2], (u->nickname) ? u->nickname : u->uid, u->uid);
+				else
+					for_command = xstrdup(params[2]);
+
+				command_exec(NULL, session, for_command, 0);
+				xfree(for_command);
+			}
+				
+		} else {
+                        char **tmp = array_make(params[1], ",", 0, 0, 0);
+                        int i;
+                        userlist_t **u;
+
+                        u = xmalloc(sizeof(userlist_t *) * array_count(tmp));
+
+                        /* first we are checking all of the parametrs */
+                        for (i = 0; tmp[i]; i++) {
+                                if (!(u[i] = userlist_find(session, tmp[i]))) {
+                                        printq("user_not_found", tmp[i]);
+                                        ret = -1;
+                                        xfree(u);
+                                        goto for_end;
+                                }
+                        }
+
+                        for (i = 0; tmp[i]; i++) {
+                                char *for_command;
+
+                                if (!u[i] || !u[i]->uid)
+                                        continue;
+
+				if (!next_is_for)
+	                                for_command = format_string(params[2], (u[i]->nickname) ? u[i]->nickname : u[i]->uid, u[i]->uid);
+				else
+					for_command = xstrdup(params[2]);
+
+                                command_exec(NULL, session, for_command, 0);
+                                xfree(for_command);
+                        }
+
+                        xfree(u);
+                }
+	} else if (match_arg(params[0], 'w', "windows", 2)) {
+                char *param = (char *) params[2];
+                int next_is_for = 0;
+
+                if (param[0] == '/')
+                        param++;
+
+                if (!xstrncasecmp(param, name, xstrlen(name)))
+                        next_is_for = 1;
+
+                if (!windows) {
+                        ret = -1;
+                        goto for_end;
+                }
+
+                if (for_all) {
+                        list_t l;
+
+                        for (l = windows; l; l = l->next) {
+                        	window_t *w = l->data;
+                                char *for_command;
+
+                                if (!w || !w->target || !w->session)
+                                        continue;
+
+                                if (!next_is_for)
+                                        for_command = format_string(params[2], get_nickname(w->session, w->target), get_uid(w->session, w->target));
+                                else
+                                        for_command = xstrdup(params[2]);
+
+                                command_exec(NULL, session, for_command, 0);
+                                xfree(for_command);
+			}
+                 } else {
+                       	char **tmp = array_make(params[1], ",", 0, 0, 0);
+	                int i;
+	                window_t **w;
+
+                        w = xmalloc(sizeof(window_t *) * array_count(tmp));
+
+                        /* first we are checking all of the parametrs */
+                        for (i = 0; tmp[i]; i++) {
+				list_t l;
+				int found = 0;
+
+				for (l = windows; l; l = l->next) {
+					window_t *wp = l->data;
+
+					if (!wp)
+						continue;
+					
+					if (atoi(tmp[i]) == wp->id) {
+						found = 1;
+						w[i] = wp;
+						break;
+					}
+				}
+			
+				if (!found) {
+		                        printq("window_doesnt_exist", tmp[i]);
+		                        ret = -1;	
+                                        xfree(w);
+       	                                goto for_end;
+				}
+                        }
+
+                        for (i = 0; tmp[i]; i++) {
+                                char *for_command;
+
+                                if (!w[i] || !w[i]->target || !w[i]->session)
+                                        continue;
+
+                                if (!next_is_for)
+                                        for_command = format_string(params[2], get_nickname(w[i]->session, w[i]->target), get_uid(w[i]->session, w[i]->target));
+                                else
+                                        for_command = xstrdup(params[2]);
+
+                                command_exec(NULL, session, for_command, 0);
+                                xfree(for_command);
+                        }
+
+                        xfree(w);
+                }
+	} else {
+	        printq("invalid_params", name);
+	        ret = -1;
 	}
-
-
+	
 for_end:
-	if (tmp)
-		array_free(tmp);
-
 	return ret;
 }
 
@@ -3729,13 +3910,22 @@ void command_init()
 	  "%Tnie bêd±%n dope³niane Tabem.",
 	  possibilities("-m --msg -b --bmsg") );
 	 
-	command_add(NULL, "for", params("? c"), cmd_for, 0,
-          " <sesje>|* <polecenie>", "wykonuje polecenie dla danych/wszystkich"
-	  " sesji",
+	command_add(NULL, "for", params("? ? c"), cmd_for, 0,
+          " <opcje> <sesje/okna/alias>|* <polecenie>", "wykonuje polecenie dla "
+	  "danych/wszystkich sesji/okien/u¿ytkowników",
           "\n"
-          "Wykonuje polecenie dla podanych lub wszystkich sesji. "
-	  "Mo¿na podaæ * zamiast nazwy sesji, wtedy komenda wykonana jest dla "
-	  "wszystkich sesji",
+	  "  -s, --sessions [nazwa]  wykonuje polecenie dla podanych sesji\n"
+	  "  -u, --users [nazwa]     wykonuje polecenie dla podanych u¿ytkowników\n"
+	  "  -w, --windows [id]	     wykonuje polecenie dla podanych okien\n"
+	  "\n"
+	  "Mo¿na podaæ ,,%T*%n'' zamiast nazwy/id, tak aby komenda by³a wykonana "
+	  "dla wszystkich elementów.\n"
+	  "\n"
+	  "Polecenie mo¿e zawieraæ elementy specjalne, tzn pola %T%1%n i %T%2%n.\n"
+	  "Oznaczaj± kolejno:\n"
+	  "  dla sesji: nazwa, uid\n"
+	  "  dla u¿ytkowników: alias, uid\n"
+	  "  dla okien: alias, uid\n",
           NULL );
 
  

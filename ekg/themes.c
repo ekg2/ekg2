@@ -1439,6 +1439,7 @@ void theme_init()
 	/* window */
 	format_add("window_add", "%) Utworzono nowe okno\n", 1);
 	format_add("window_noexist", "%! Wybrane okno nie istnieje\n", 1);
+	format_add("window_doesnt_exist", "%! Okno %T%1%n nie istnieje\n", 1);
 	format_add("window_no_windows", "%! Nie mo¿na zamkn±æ ostatniego okna\n", 1);
 	format_add("window_del", "%) Zamkniêto okno\n", 1);
 	format_add("windows_max", "%! Wyczerpano limit ilo¶ci okien\n", 1);
