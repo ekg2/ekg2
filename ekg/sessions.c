@@ -759,6 +759,16 @@ COMMAND(session_command)
 			if(params[2] && !params[3]) {
 				if (window_current->session) {
 					char *tmp = saprintf("%s --get %s %s", name, window_current->session->uid, params[1]);
+					plugin_t *p = plugin_find_uid(s->uid);
+		                        char **params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
+
+                		        if(!array_item_contains(params_plugin, params[2], 1)) {
+                                		printq("session_variable_doesnt_exist", s->uid, params[2]);
+		                                array_free(params_plugin);
+		                                return -1;
+		                        }
+		                        array_free(params_plugin);
+
 					session_set_n(window_current->session->uid, params[1], params[2]);
 					config_changed = 1;
 					command_exec(NULL, s, tmp, 0);
@@ -787,6 +797,15 @@ COMMAND(session_command)
 		
 		if(params[2] && params[3]) {
 			char *tmp = saprintf("%s --get %s %s", name, s->uid, params[2]);
+			plugin_t *p = plugin_find_uid(s->uid);
+			char **params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
+
+			if(!array_item_contains(params_plugin, params[2], 1)) {
+				printq("session_variable_doesnt_exist", s->uid, params[2]);
+				array_free(params_plugin);
+				return -1;
+			}
+			array_free(params_plugin);
 			session_set_n(s->uid, params[2], params[3]);
 			config_changed = 1;
 			command_exec(NULL, s, tmp, 0);
@@ -802,6 +821,8 @@ COMMAND(session_command)
 		const char *status;
 		char *tmp;
 		int i;
+		plugin_t *p;
+		char **params_plugin;
 
 		if (params[1] && params[1][0] == '-') { 
 			tmp = saprintf("%s --set %s %s", name, params[0], params[1]);
@@ -833,14 +854,19 @@ COMMAND(session_command)
 		else
 			printq("session_info_header_alias", s->uid, s->alias, tmp);
 
-		for (i = 0; s->params && s->params[i]; i++) 
-			printq("session_info_param", s->params[i]->key, s->params[i]->value);
-
-		if (s->password)
-                        printq("session_info_param", "password", "(...)");
+		p = plugin_find_uid(s->uid);
+		params_plugin = array_make(p->possibilities, ", ", 0, 1, 1);
+		for (i = 0; params_plugin[i]; i++) {
+			if (!xstrcasecmp(params_plugin[i], "password"))
+        	                printq("session_info_param", "password", "(...)");
+			else
+				printq("session_info_param", params_plugin[i], (session_get(s, params_plugin[i])) ? session_get(s, params_plugin[i]) : "(none)");
+		}
+		
 
 		printq("session_info_footer", s->uid);
 
+		array_free(params_plugin);
 		return 0;	
 	}
 	
