@@ -204,6 +204,27 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 	else
 		fullname = xstrdup(path);
 
+	/*
+	 * better way - if xml, prepare xml file
+	 */
+	if (config_logs_log == 2) {
+		fdesc = fopen(fullname, "r");
+	
+		if (fdesc == NULL) {
+			fdesc = fopen(fullname, "a+");
+			fputs("<?xml version=\"1.0\"?>\n", fdesc);
+			fputs("<!DOCTYPE ekg2log PUBLIC \"-//ekg2log//DTD ekg2log 1.0//EN\" ", fdesc);
+			fputs("\"http://www.ekg2.org/DTD/ekg2log.dtd\">\n", fdesc);
+			fputs("<ekg2log xmlns=\"http://www.ekg2.org/DTD/\">\n", fdesc);
+			fclose(fdesc);
+		} else {
+			fseek(fdesc, 0, SEEK_END);
+			pos = ftell(fdesc);
+			fclose(fdesc);
+			truncate(fullname, pos - 11); //very ugly - 11 is charcount of </ekg2log>\n
+		}
+	}
+
 	fdesc = fopen(fullname, "a+");
 	xfree(fullname);
 
@@ -211,75 +232,6 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 };
 
 /*
- * otwarcie pliku do zapisu/odczytu - wersja dla xml
- * tworzy wszystkie katalogi po drodze, je¶li nie istniej± i mkdir =1
- * ext - rozszerzenie jakie nadac
- * zwraca numer deskryptora b±d¼ NULL
- */
-
-FILE* logs_open_xml_file(char *path, char *ext, int makedir)
-{
-	struct stat statbuf;
-	char *dir, *fullname, *slash;
-	int slash_pos = 0;
-	long pos = 0;
-	FILE* fdesc;
-
-        debug("[logs] opening xml log file\n");
-
-	while (makedir) {
-		if (!(slash = xstrchr(path + slash_pos, '/'))) {
-			// nie ma juz slashy - zostala tylko nazwa pliku
-			makedir = 0; // konczymy petle
-			continue;
-		};
-
-		slash_pos = slash - path + 1;
-		dir = xstrndup(path, slash_pos);
-
-		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
-			char *bo = saprintf("nie mo¿na %s bo %s", dir, strerror(errno));
-			print("generic",bo); // XXX usun±æ !! 
-			xfree(bo);
-			xfree(dir);
-			return NULL;
-		}
-		xfree(dir);
-	} // while mkdir
-
-	if (ext)
-		fullname = saprintf("%s.%s", path, ext);
-	else
-		fullname = xstrdup(path);
-
-	fdesc = fopen(fullname, "r");
-	
-	/*
-	 * if the file does not exist create it and 
-	 * put some xml specific things there
-	 */
-	if (fdesc == NULL) {
-		fdesc = fopen(fullname, "a+");
-		fputs("<?xml version=\"1.0\"?>\n", fdesc);
-		fputs("<!DOCTYPE ekg2log PUBLIC \"-//ekg2log//DTD ekg2log 1.0//EN\" ", fdesc);
-		fputs("\"http://www.ekg2.org/DTD/ekg2log.dtd\">\n", fdesc);
-		fputs("<ekg2log xmlns=\"http://www.ekg2.org/DTD/\">\n", fdesc);
-		fclose(fdesc);
-	} else {
-		fseek(fdesc, 0, SEEK_END);
-		pos = ftell(fdesc);
-		fclose(fdesc);
-		truncate(fullname, pos - 11); //very ugly - 11 is charcount of </ekg2log>\n
-	}
-	
-	fdesc = fopen(fullname, "a+");
-	xfree(fullname);
-
-	return fdesc;
-};
-
-
-/**
  * przygotowuje timstamp do wstawienia do logów
  */
 
@@ -451,13 +403,13 @@ void logs_xml(char *path, char *session, char *uid, char *text, time_t sent, int
 	char *gotten_uid = get_uid(s, uid);
 	char *gotten_nickname = get_nickname(s, uid);
 
-	if ( gotten_uid == NULL )
+	if (gotten_uid == NULL)
 		gotten_uid = uid;
 
-	if ( gotten_nickname == NULL )
+	if (gotten_nickname == NULL)
 		gotten_nickname = uid;
 
-	if (!(file = logs_open_xml_file(path, "xml", 1)) || !s) {
+	if (!(file = logs_open_file(path, "xml", 1)) || !s) {
 		xfree(senttimestamp);
 		xfree(timestamp);
 		xfree(textcopy);
