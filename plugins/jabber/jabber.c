@@ -744,7 +744,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 
         if (!xstrcmp(name, "stream:stream")) {
                 char *password = (char *) session_get(s, "password");
-                const char *resource = session_get(s, "resource");
+                char *resource = jabber_escape(session_get(s, "resource"));
                 const char *uid = session_uid_get(s);
                 char *username;
                 int plaintext = session_int_get(s, "plaintext_passwd");
@@ -762,6 +762,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
                 else
                         jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>", j->server, username, jabber_digest(j->stream_id, password), resource);
                 xfree(username);
+		xfree(resource);
                 return;
         }
 
