@@ -1520,12 +1520,12 @@ int gg_plugin_init()
 	   NULL);
 	command_add(&gg_plugin, "gg:chat", params("uUC ?"), gg_command_msg, 0, " <numer/alias/@grupa> <wiadomo¶æ>", "wysy³a wiadomo¶æ", "\nPolecenie jest podobne do %Tmsg%n, ale wysy³a wiadomo¶æ w ramach rozmowy, a nie jako pojedyncz±.", NULL);
 	command_add(&gg_plugin, "gg:", params("?"), gg_command_inline_msg, 0, "", "", "", NULL);
-	command_add(&gg_plugin, "gg:_descr", params("?"), gg_command_away, 0, " [opis/-]", "zmienia opis stanu", "", NULL);
-	command_add(&gg_plugin, "gg:away", params("?"), gg_command_away, 0, " [opis/-]", "zmienia stan na zajêty", "", NULL);
+	command_add(&gg_plugin, "gg:_descr", params("r"), gg_command_away, 0, " [opis/-]", "zmienia opis stanu", "", NULL);
+	command_add(&gg_plugin, "gg:away", params("r"), gg_command_away, 0, " [opis/-]", "zmienia stan na zajêty", "", NULL);
 	command_add(&gg_plugin, "gg:_autoaway", params("?"), gg_command_away, 0, "", "automatycznie zmienia stan na zajêty", "", NULL);
-	command_add(&gg_plugin, "gg:back", params("?"), gg_command_away, 0, " [opis/-]", "zmienia stan na dostêpny", "", NULL);
+	command_add(&gg_plugin, "gg:back", params("r"), gg_command_away, 0, " [opis/-]", "zmienia stan na dostêpny", "", NULL);
 	command_add(&gg_plugin, "gg:_autoback", params("?"), gg_command_away, 0, "", "automatycznie zmienia stan na dostêpny", "", NULL);
-	command_add(&gg_plugin, "gg:invisible", params("?"), gg_command_away, 0, " [opis/-]", "zmienia stan na niewidoczny", "", NULL);
+	command_add(&gg_plugin, "gg:invisible", params("r"), gg_command_away, 0, " [opis/-]", "zmienia stan na niewidoczny", "", NULL);
 
 	command_add(&gg_plugin, "gg:block", params("uUC ?"), gg_command_block, 0, " [numer/alias]", "dodaje do listy blokowanych", "", NULL);
 	command_add(&gg_plugin, "gg:unblock", params("b ?"), gg_command_unblock, 0, " <numer/alias>|*", "usuwa z listy blokowanych", "", NULL);

@@ -1266,13 +1266,13 @@ int jabber_plugin_init()
 	command_add(&jabber_plugin, "jid:chat", params("uU ?"), jabber_command_msg, 0, "", "wysy³a wiadomo¶æ w ramach rozmowy", "", NULL);
 	command_add(&jabber_plugin, "jid:", params("?"), jabber_command_inline_msg, 0, "", "wysy³a wiadomo¶æ", "", NULL);
 	command_add(&jabber_plugin, "jid:xml", params("?"), jabber_command_xml, 0, "", "wysy³a polecenie xml", "\nPolecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML (\" ' & < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.", NULL);
-	command_add(&jabber_plugin, "jid:away", params("?"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:_autoaway", params("?"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:back", params("?"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
-	command_add(&jabber_plugin, "jid:_autoback", params("?"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
-	command_add(&jabber_plugin, "jid:invisible", params("?"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
-	command_add(&jabber_plugin, "jid:dnd", params("?"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
-	command_add(&jabber_plugin, "jid:xa", params("?"), jabber_command_away, 0, "", "zmienia stan na bardzo zajêty", "", NULL);
+	command_add(&jabber_plugin, "jid:away", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
+	command_add(&jabber_plugin, "jid:_autoaway", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
+	command_add(&jabber_plugin, "jid:back", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
+	command_add(&jabber_plugin, "jid:_autoback", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
+	command_add(&jabber_plugin, "jid:invisible", params("r"), jabber_command_away, 0, "", "zmienia stan na zajêty", "", NULL);
+	command_add(&jabber_plugin, "jid:dnd", params("r"), jabber_command_away, 0, "", "zmienia stan na dostêpny", "", NULL);
+	command_add(&jabber_plugin, "jid:xa", params("r"), jabber_command_away, 0, "", "zmienia stan na bardzo zajêty", "", NULL);
 	command_add(&jabber_plugin, "jid:passwd", params("?"), jabber_command_passwd, 0, "", "zmienia has³o", "", NULL);
 	command_add(&jabber_plugin, "jid:auth", params("p uU"), jabber_command_auth, 0, "", "obs³uga autoryzacji", 
 	  "<akcja> <JID> \n"

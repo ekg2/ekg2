@@ -408,6 +408,17 @@ static void sessions_var_generator(const char *text, int len)
         }
 }
 
+void reason_generator(const char *text, int len)
+{
+        if (session_current && session_current->descr  && !xstrncasecmp(text, session_current->descr, len)) {
+                char *descr;
+                /* not to good solution to avoid descr changing by complete */
+		descr = saprintf("\001%s", session_current->descr);
+                array_add_check(&completions, descr, 1);
+        }
+}
+
+
 static struct {
 	char ch;
 	void (*generate)(const char *text, int len);
@@ -428,6 +439,7 @@ static struct {
         { 's', sessions_generator },
 	{ 'S', sessions_var_generator },
 	{ 'I', ignorelevels_generator },
+	{ 'r', reason_generator },
 	{ 0, NULL }
 };
 

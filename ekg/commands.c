@@ -3407,7 +3407,8 @@ int command_remove(plugin_t *plugin, const char *name)
  * 'e' - nazwy zdarzeñ,
  * 'I' - poziomy ignorowania.
  * 's' - nazwa sesji
- * 'S' - zmienna sesji 
+ * 'S' - zmienna sesji
+ * 'r' - session description 
  * 
  * je¿eli parametr == 'p' to 9 argument funkcji command_add() przyjmuje jako argument
  * tablicê z mo¿liwymi uzupe³nieniami 
