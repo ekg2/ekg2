@@ -161,8 +161,10 @@ COMMAND(jabber_command_disconnect)
 	}
 
 	/* jesli istnieje timer reconnecta, to znaczy, ze przerywamy laczenie */
-	if (timer_remove(&jabber_plugin, "reconnect") == 0)
+	if (timer_remove(&jabber_plugin, "reconnect") == 0) {
+		printq("auto_reconnect_removed", session_name(session));
 		return 0;
+	}
 
 	if (!j->connecting && !session_connected_get(session)) {
 		printq("not_connected", session_name(session));
@@ -207,9 +209,6 @@ COMMAND(jabber_command_disconnect)
 
 	/* wywo³a jabber_handle_disconnect() */
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
-
-	/* skoro zrobilismy sami /disco, to nie chcemy reconnecta */
-	timer_remove(&jabber_plugin, "reconnect");
 
 	return 0;
 }

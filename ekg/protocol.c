@@ -100,9 +100,13 @@ int protocol_disconnected(void *data, va_list ap)
 		case EKG_DISCONNECT_FAILURE:
 		{
 			int tmp;
+			session_t *s = session_find(session);
 
-			if ((tmp = session_int_get_n(session, "auto_reconnect")))
-				timer_add(NULL, "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
+			if (!s)
+				break;
+
+			if ((tmp = session_int_get(s, "auto_reconnect")) && tmp != -1)
+				timer_add(plugin_find_uid(s->uid), "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
 
 			if (type == EKG_DISCONNECT_NETWORK)
 				print("conn_broken", session_name_n(session));

@@ -931,16 +931,17 @@ void gg_session_handler(int type, int fd, int watch, void *data)
 
 	if (type == 2) {
 		if (g->sess->state != GG_STATE_CONNECTING_GG) {
-	                int reconnect_delay;
-			session_t *s = (session_t*) data;
-			print("conn_timeout", session_name(s));
+	                char *__session = xstrdup(session_uid_get((session_t*) data));
+	                char *__reason = NULL;
+	                int __type = EKG_DISCONNECT_FAILURE;
 
-		        reconnect_delay = session_int_get((session_t*) data, "auto_reconnect");
-                	if (reconnect_delay && reconnect_delay != -1)
-                        	timer_add(&gg_plugin, "reconnect", reconnect_delay, 0, gg_reconnect_handler, xstrdup(((session_t*) data)->uid));
+	                query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
 
+		        xfree(__reason);
+                	xfree(__session);
 			gg_free_session(g->sess);
 			g->sess = NULL;
+
 			return;
 		}
 
@@ -952,7 +953,6 @@ void gg_session_handler(int type, int fd, int watch, void *data)
 		char *__session = xstrdup(session_uid_get((session_t*) data));
 		char *__reason = NULL;
 		int __type = EKG_DISCONNECT_NETWORK;
-		int reconnect_delay;
 
 		session_connected_set((session_t*) data, 0);
 		
@@ -964,10 +964,6 @@ void gg_session_handler(int type, int fd, int watch, void *data)
 		gg_free_session(g->sess);
 		g->sess = NULL;
 		
-		reconnect_delay = session_int_get((session_t*) data, "auto_reconnect");
-		if (reconnect_delay && reconnect_delay != -1)
-			timer_add(&gg_plugin, "reconnect", reconnect_delay, 0, gg_reconnect_handler, xstrdup(((session_t*)data)->uid));
-
 		return;
 	}
 

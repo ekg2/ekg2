@@ -1277,6 +1277,7 @@ void theme_init()
         format_add("wrong_id", _("%! (%1) Wrong session id.%n\n"), 1);
         format_add("inet_addr_failed", _("%! (%1) Invalid \"server\".%n\n"), 1);
         format_add("invalid_local_ip", _("%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"), 1);
+        format_add("auto_reconnect_removed", _("%! (%1) EKG2 won't try to connect anymore - use /connect.%n\n"), 1);
 
         /* obs³uga motywów */
         format_add("theme_loaded", "%> Loaded theme%T%1%n\n", 1);

@@ -263,7 +263,9 @@ int irc_common_connect_ext(session_t *s, int fd, int family, const char *lip, in
 static void irc_handle_disconnect(session_t *s)
 {
 	irc_private_t *j = irc_private(s);
-	int reconnect_delay;
+        char *__session = xstrdup(session_uid_get(s));
+        char *__reason = NULL;
+        int __type = EKG_DISCONNECT_FAILURE;
 
 	if (!j)
 		return;
@@ -284,9 +286,10 @@ static void irc_handle_disconnect(session_t *s)
 
 	irc_free_people(s, j);
 
-	reconnect_delay = session_int_get(s, "auto_reconnect");
-	if (reconnect_delay > -1) 
-		timer_add(&irc_plugin, "reconnect", reconnect_delay, 0, irc_handle_reconnect, xstrdup(s->uid));
+	query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+
+	xfree(__reason);
+	xfree(__session);
 }
 
 void irc_handle_stream(int type, int fd, int watch, void *data)
@@ -637,6 +640,12 @@ COMMAND(irc_command_disconnect)
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
 		return -1;
+	}
+
+        /* if ,,reconnect'' timer exists we should stop doing */
+        if (timer_remove(&irc_plugin, "reconnect") == 0) {
+		printq("auto_reconnect_removed", session_name(session));
+		return 0;
 	}
 
 	if (!j->connecting && !session_connected_get(session)) {

@@ -72,7 +72,14 @@ COMMAND(gg_command_connect)
 		goto end;
 	}
 
-	if (!xstrcasecmp(name, "disconnect") || (!xstrcasecmp(name, "reconnect") && session_connected_get(session))) {
+	if (!xstrcasecmp(name, "disconnect") || (!xstrcasecmp(name, "reconnect"))) {
+
+	        /* if ,,reconnect'' timer exists we should stop doing */
+	        if (timer_remove(&gg_plugin, "reconnect") == 0) {
+			printq("auto_reconnect_removed", session_name(session));
+	                return 0;
+		}
+
 		if (!g->sess) {
 			printq("not_connected", session_name(session));
 		} else {
@@ -288,7 +295,7 @@ end:
 COMMAND(gg_command_away)
 {
 	gg_private_t *g = session_private_get(session);
-	char *descr, *f, *fd, *df, *params0=xstrdup(params[0]);
+	char *descr, *f = NULL, *fd = NULL, *df = NULL, *params0 = xstrdup(params[0]);
 	const char *status;
 	int timeout = session_int_get(session, "scroll_long_desc");
 	int autoscroll = 0;
@@ -401,7 +408,7 @@ change:
 			autoscroll = timeout = 0;
 
 	if (autoscroll || timeout) {
-			char *mode = session_get(session, "scroll_mode");
+			const char *mode = session_get(session, "scroll_mode");
 			char *desk;
 
 			autoscroll = session -> scroll_pos;
