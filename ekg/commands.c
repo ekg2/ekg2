@@ -2074,8 +2074,6 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 	}
 
-	if (cmd)
-		debug("ju¿ mamy\n");
 	if (!cmd) {
 		tmp = cmd = line;
 		while (*tmp && !xisspace(*tmp))
@@ -2106,7 +2104,6 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 			if (!xstrncasecmp(c->name + plen, cmd, xstrlen(cmd))) {
 				abbrs_plugins++;
-				debug("ta dupa (%s) nam przeszkodzi³a\n", c->name);
 				last_abbr_plugins = c->function;
 				last_name = c->name;
 				last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
