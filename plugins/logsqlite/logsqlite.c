@@ -373,7 +373,7 @@ int logsqlite_plugin_init(int prio)
 	variable_add(&logsqlite_plugin, "log", VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, "log_ignored", VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, "log_status", VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "last_limit", VAR_BOOL, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, "last_limit", VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, "path", VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
 
 	debug("[logsqlite] plugin registered\n");
