@@ -982,7 +982,7 @@ COMMAND(irc_command_whois)
 COMMAND(irc_command_query)
 {
 	window_t *w;
-	char *tar;;
+	char *tar;
 	const char **mp;
 	
 	if (!(tar = irc_getchan(session, params, name,
