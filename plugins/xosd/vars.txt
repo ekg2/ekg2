@@ -73,7 +73,7 @@ display_welcome
 	wy³±cza go a warto¶æ 1 w³±cza.
 
 display_notify
-	typ: bool
+	typ: liczba
 	domy¶lna warto¶æ: 1
 	
 	okre¶la czy xosd ma wy¶wietlaæ zmiany stanu. warto¶æ 0 wy³±cza 
@@ -82,23 +82,14 @@ display_notify
 	tylko z sesji w których zmienna display_notify jest ustawiona
 	na 1.
 
-display_inactive_only
-	typ: bool
+display_filter
+	typ: liczba
 	domy¶lna warto¶æ: 0
 
-	okre¶la czy xosd ma wy¶wietlaæ wiadomo¶ci tylko z nieaktywnych 
-	okien. wartosæ 1 powoduje, ¿e xosd wy¶wietla wiadomo¶ci z wszystkich
-	okien, prócz obecnego. wartosæ 0 powoduje wy¶wietlanie wszystkich 
-	wiadomo¶ci.
-
-display_new_queries_only
-	typ: bool
-	domy¶lna warto¶æ: 0
-
-	okre¶la czy xosd ma wy¶wietlaæ wszystkie wiadomo¶ci czy tylko te
-	rozpoczynaj±ce rozmowê. warto¶æ 1 powoduje, ¿e xosd wy¶wietla tylko
-	wiadomo¶ci od osób, z którymi jeszcze nie rozpoczêli¶my rozmowy.
-	warto¶æ 0 powoduje wy¶wietlanie wszystkich wiadomo¶ci.
+	okre¶la filtry wy¶wietlania nowych wiadomo¶ci. warto¶æ 0 wy¶wietla 
+	wszystkie wiadomo¶ci. warto¶æ 1 powoduje wy¶wietlanie wiadomo¶ci
+	tylko z okien nieaktywnych. warto¶æ 2 powoduje wy¶wietlanie
+	tylko wiadomo¶ci rozpoczynaj±cych rozmowê.
 
 outline_offset
 	typ: liczba

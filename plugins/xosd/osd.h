@@ -10,7 +10,6 @@ int xosd_display_timeout;
 int xosd_text_limit;
 int xosd_outline_offset;
 char *xosd_outline_colour;
-int xosd_display_inactive_only;
-int xosd_display_new_queries_only;
+int xosd_display_filter;
 int xosd_display_notify;
 int xosd_display_welcome;
