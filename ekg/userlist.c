@@ -392,7 +392,7 @@ userlist_t *userlist_find(session_t *session, const char *uid)
 {
 	list_t l;
 
-	if (!uid || !session->userlist)
+	if (!uid)
 		return NULL;
 	
 	for (l = session->userlist; l; l = l->next) {
