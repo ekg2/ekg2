@@ -78,6 +78,7 @@ typedef struct {
 
 int query_connect(plugin_t *, const char *, void *, void *);
 int query_disconnect(plugin_t *, const char *);
+query_t *query_find(const char *name);
 
 int query_emit(plugin_t *, const char *, ...);
 

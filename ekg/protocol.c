@@ -412,6 +412,7 @@ int protocol_message(void *data, va_list ap)
 //	else if (window_find(uid)) 
 //		userlist->blink = 1;
 	/* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
+
 	if (!userlist) 
 		tabnick_add(uid);
 	

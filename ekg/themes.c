@@ -1337,15 +1337,13 @@ void theme_init()
 
 	/* zdarzenia */
         format_add("events_list_empty", "%! Brak zdarzeñ\n", 1);
-        format_add("events_list", "%> %4, on %1 %2 %3\n", 1);
-	format_add("events_list_inactive", "%> %4, on %1 %2 %3 %K(nieaktywne)%n\n", 1);
+	format_add("events_list_header", "", 1);
+        format_add("events_list", "%> %5 on %1 %3 %4 - prio %2\n", 1);
         format_add("events_add", "%> Dodano zdarzenie %T%1%n\n", 1);
         format_add("events_del", "%) Usuniêto zdarzenie %T%1%n\n", 1);
         format_add("events_del_all", "%) Usuniêto wszystkie zdarzenia\n", 1);
         format_add("events_exist", "%! Zdarzenie %T%1%n istnieje dla %2\n", 1);
         format_add("events_del_noexist", "%! Zdarzenie %T%1%n nie istnieje\n", 1);
-        format_add("events_seq_not_found", "%! Sekwencja %T%1%n nie znaleziona\n", 1);
-	format_add("events_seq_incorrect", "%! Nieprawid³owa sekwencja\n", 1);
 
 	/* lista kontaktów z serwera */
 	format_add("userlist_put_ok", "%> Listê kontaktów zachowano na serwerze\n", 1);

@@ -61,7 +61,6 @@
 struct gg_session *sess = NULL;
 list_t children = NULL;
 list_t aliases = NULL;
-list_t events = NULL;
 list_t bindings = NULL;
 list_t timers = NULL;
 list_t conferences = NULL;

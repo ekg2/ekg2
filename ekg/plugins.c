@@ -28,6 +28,7 @@
 #endif
 
 #include "commands.h"
+#include "events.h"
 #include "dynstuff.h"
 #include "objects.h"
 #include "plugins.h"
@@ -304,7 +305,7 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 			int (*handler)(void *data, va_list ap) = q->handler;
 
 			q->count++;
-
+			
 			result = 0;
 
 			if (handler(q->data, ap) == -1) {
@@ -320,6 +321,22 @@ cleanup:
 	nested--;
 
 	return result;
+}
+
+query_t *query_find(const char *name)
+{
+        list_t l;
+
+        for (l = queries; l; l = l->next) {
+                query_t *q = l->data;
+
+                if (xstrcasecmp(q->name, name))
+                        continue;
+                else
+                        return q;
+        }
+
+        return 0;
 }
 
 /*

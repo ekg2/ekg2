@@ -53,6 +53,7 @@
 #include <unistd.h>
 
 #include "commands.h"
+#include "events.h"
 #include "configfile.h"
 #include "emoticons.h"
 #include "log.h"
@@ -777,6 +778,7 @@ int main(int argc, char **argv)
 		config_log_path = xstrdup(prepare_path("history", 0));
 
 	protocol_init();
+	events_init();
 
 	if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT

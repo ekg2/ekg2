@@ -1,0 +1,5 @@
+// opis wydarzeñ, których mo¿na u¿ywaæ poleceniem /on
+// (c) copyright 2004 Piotr Kupisiewicz <deli@rzepaknet.us>
+
+protocol-message:
+	odpowiada za odebrane wiadomo¶ci. jako parametr przekazywany jest UID lub nickname.

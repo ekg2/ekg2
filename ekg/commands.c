@@ -3605,44 +3605,34 @@ void command_init()
 	  "Dwie ostatnie opcje dzia³aj± tylko, gdy w³±czony jest tryb ,,tylko "
 	  "dla znajomych''.\n", 
 	  possibilities("-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online") );
-	/* XXX: todo  
-	command_add(NULL, "on", params("p e CuU c"), cmd_on, 0,
+	  
+	command_add(NULL, "on", params("p e ? CuU c"), cmd_on, 0,
 	  " [opcje]", "zarz±dzanie zdarzeniami",
 	  "\n"
-	  "  -a, --add <zdarzenie> <numer/alias/@grupa> <komenda>  dodaje zdarzenie\n"
+	  "  -a, --add <zdarzenie> <priorytet> <numer/alias/@grupa> <komenda>  dodaje zdarzenie\n"
 	  "  -d, --del <numer>|*         usuwa zdarzenie o podanym numerze\n"
 	  " [-l, --list] [numer]         wy¶wietla listê zdarzeñ\n"
 	  "\n"
-	  "Dostêpne zdarzenia to:\n"
-	  "  - avail, away, notavail - zmiana stanu na podany (bez przypadku ,,online'')\n"
-	  "  - online - zmiana stanu z ,,niedostêpny'' na ,,dostêpny''\n"
-	  "  - descr - zmiana opisu\n"
-	  "  - blocked - zostali¶my zablokowani\n"
-	  "  - msg, chat - wiadomo¶æ\n"
-	  "  - query - nowa rozmowa\n"
-	  "  - delivered, queued - wiadomo¶æ dostarczona lub zakolejkowana na serwerze\n"
-	  "  - dcc - kto¶ przysy³a nam plik\n"
-	  "  - sigusr1, sigusr2 - otrzymanie przez ekg danego sygna³u\n"
-	  "  - newmail - otrzymanie nowej wiadomo¶ci e-mail\n"
+	  "Dostêpne zdarzenia mo¿na znale¼æ w pliku events.txt w dokumentacji programu.\n"
 	  "\n"
-	  "W przypadku sigusr i newmail nale¿y podaæ ,,%T*%n'' jako sprawcê zdarzenia\n"
+	  "W przypadkach, w których nie jest mo¿liwe okre¶lenie nadawcy lub chcemy, aby "
+	  "zdarzenie dotyczy³o wszystkich u¿ytkowników podajemy ,,%T*%n'' jako sprawcê zdarzenia. "
+	  "Zdarzenia mog± byæ ro¼dzielone przecinkiem.\n"
 	  "\n"
 	  "  - * - wszystkie zdarzenia\n"
 	  "\n"
-	  "Zdarzenia mo¿na ³±czyæ ze sob± za pomoc± przecinka lub ,,%T|%n''. Jako numer/alias "
-	  "mo¿na podaæ ,,%T*%n'', dziêki czemu zdarzenie bêdzie dotyczyæ ka¿dego u¿ytkownika. "
-	  "Je¶li kto¶ posiada indywidualn± akcjê na dane zdarzenie, to tylko ona zostanie "
-	  "wykonana. Mo¿na podaæ wiêcej komend, oddzielaj±c je ¶rednikiem. W komendzie, %T\\%1%n "
-	  "zostanie zast±pione numerkiem sprawcy zdarzenia, a je¶li istnieje on na naszej "
-	  "li¶cie kontaktów, %T\\%2%n bêdzie zast±pione jego pseudonimem. Zamiast %T\\%3%n i "
-	  "%T\\%4%n wpisana bêdzie tre¶æ wiadomo¶ci, opis u¿ytkownika, ca³kowita ilo¶æ "
-	  "nowych wiadomo¶ci e-mail lub nazwa pliku - w zale¿no¶ci od zdarzenia. "
-	  "Format %T\\%4%n ró¿ni siê od %T\\%3%n tym, ¿e wszystkie niebiezpieczne znaki, "
+	  "W przypadku gdy istnieje wiele zdarzeñ pasuj±cych do kryterium (np. * i nick) "
+	  "wykonywane bêdzie to z wiêkszym priorytetem. Mo¿na podaæ wiêcej komend, oddzielaj±c "
+	  "je ¶rednikiem. W komendzie, %T\\%1%n zostanie zast±pione numerkiem sprawcy zdarzenia, "
+	  "a je¶li istnieje on na naszej li¶cie kontaktów, %T\\%2%n bêdzie zast±pione jego "
+	  "pseudonimem. Zamiast %T\\%3%n i %T\\%4%n wpisana bêdzie tre¶æ wiadomo¶ci, opis "
+	  "u¿ytkownika, ca³kowita ilo¶æ nowych wiadomo¶ci e-mail lub nazwa pliku - w zale¿no¶ci "
+	  "od zdarzenia. Format %T\\%4%n ró¿ni siê od %T\\%3%n tym, ¿e wszystkie niebiezpieczne znaki, "
 	  "które mog³yby zostaæ zinterpretowane przez shell, zostan± poprzedzone backslashem. "
 	  "U¿ywanie %T\\%3%n w przypadku komendy ,,exec'' jest %Tniebezpieczne%n i, je¶li naprawdê "
 	  "musisz wykorzystaæ tre¶æ wiadomo¶ci lub opis, u¿yj %T\"\\%4\"%n (w cudzys³owach).", 
 	  possibilities("-a --add -d --del -l --list") );
-*/
+	
 	command_add(NULL, "play", params("f"), cmd_play, 0,
 	  " <plik>", "odtwarza plik d¼wiêkowy", "", NULL);
 

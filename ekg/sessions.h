@@ -21,7 +21,7 @@
 #ifndef __EKG_SESSIONS_H
 #define __EKG_SESSIONS_H
 
-#include <ekg/dynstuff.h>
+#include "dynstuff.h"
 
 list_t sessions;
 

@@ -1,7 +1,7 @@
 bin_PROGRAMS = ekg2
-ekg2_SOURCES = audio.c commands.c configfile.c dynstuff.c ekg.c emoticons.c log.c msgqueue.c \
+ekg2_SOURCES = audio.c commands.c configfile.c dynstuff.c ekg.c emoticons.c events.c log.c msgqueue.c \
        plugins.c protocol.c sessions.c stuff.c themes.c userlist.c vars.c windows.c xmalloc.c \
-       audio.h commands.h configfile.h debug.h dynstuff.h emoticons.h \
+       audio.h commands.h configfile.h debug.h dynstuff.h emoticons.h events.h\
        log.h msgqueue.h objects.h plugins.h protocol.h sessions.h stuff.h \
        themes.h userlist.h vars.h windows.h xmalloc.h
 ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ $(LIBLTDL)

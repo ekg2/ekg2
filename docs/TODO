@@ -9,6 +9,7 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
+  - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - metakontakty (*)
   - ró¿ne kolory ack ( w zale¿no¶ci czy przyszed³ nam komunikat czy te¿ wiadomo¶æ) (KKKas)
   - wykrywanie niewidocznych jako opcja (wielu)
@@ -39,7 +40,6 @@ rozwi±zanie.
   - dope³nianie themów (Arim)
   - dokumentacja do themes - opis ka¿dego formatu (del)
   - funkcje opakowywujace w plugins/{ioctld,gg}, compat/ (zdz)
-  - trzeba przystosowaæ cmd_on do EKG2 (zdz)
   - numerowanie sesji, potem odwo³ywanie sie do numerkow miast calych nazw (rmrmg)
   - duzo informacji w jabberowym /status
 

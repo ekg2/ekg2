@@ -60,6 +60,7 @@ COMMAND(cmd_exec);
 COMMAND(cmd_list);
 COMMAND(cmd_dcc);
 COMMAND(session_command);	/* sessions.c */
+COMMAND(cmd_on);	/* events.c */
 
 /*
  * jaka¶ malutka lista tych, do których by³y wysy³ane wiadomo¶ci.

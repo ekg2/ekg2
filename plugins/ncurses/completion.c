@@ -33,6 +33,7 @@
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
+#include <ekg/events.h>
 
 #include "old.h"
 
@@ -90,27 +91,11 @@ static void command_generator(const char *text, int len)
 
 static void events_generator(const char *text, int len)
 {
-#if 0
 	int i;
-	const char *tmp = NULL;
-	char *pre = NULL;
-
-	if ((tmp = xstrrchr(text, '|')) || (tmp = xstrrchr(text, ','))) {
-		char *foo;
-
-		pre = xstrdup(text);
-		foo = xstrrchr(pre, *tmp);
-		*(foo + 1) = 0;
-
-		len -= tmp - text + 1;
-		tmp = tmp + 1;
-	} else
-		tmp = text;
-
-	for (i = 0; event_labels[i].name; i++)
-		if (!xstrncasecmp(tmp, event_labels[i].name, len))
-			array_add(&completions, ((tmp == text) ? xstrdup(event_labels[i].name) : saprintf("%s%s", pre, event_labels[i].name)));
-#endif
+        
+	for (i = 0; events_all && events_all[i]; i++)
+                if (!xstrncasecmp(text, events_all[i], len))
+                        array_add(&completions, xstrdup(events_all[i]));
 }
 
 static void ignorelevels_generator(const char *text, int len)
