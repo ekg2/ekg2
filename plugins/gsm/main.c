@@ -101,7 +101,7 @@ static void *gsm_codec_init(const char *from, const char *to)
 static int gsm_codec_process(void *codec, char *in, int inlen, char **p_out, int *p_outlen)
 {
 	gsm_codec_t *c = codec;
-	int inpos = 0, outlen = 0;;
+	int inpos = 0, outlen = 0;
 	char *out = NULL;
 
 	if (!c || !in || !inlen || !p_out || !p_outlen)
