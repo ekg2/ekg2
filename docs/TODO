@@ -9,6 +9,12 @@ rozwi±zanie.
   - czas powrotu w stanach opisowych,
 
 * klient:
+  - poprawione warto¶ci zmiennych dla listy kontaktów (del)
+  - przy próbie wys³ania pustej lini wy¶wietla:
+    "::: Za ma³o parametrów. Spróbuj help chat", a po co ? (del)
+  - nie dzia³±j±ce list -d dla jabber'a (del)
+  - dope³nianie nazw sesji (del)
+  - dope³nienie funkcji np /command (bez pocz±tku przyk³adowo gg:) (del)
   - wykrywanie niewidocznych jako opcja (wielu)
   - czas powrotu w stanach opisowych (?)
   - zmienna wy³±czaj±ca pytanie o zapisanie konfiguracji (Tohver)
@@ -25,6 +31,7 @@ rozwi±zanie.
   - zapisywanie backlog'a z okna do pliku (G.Sulek)
   - zdarzenie dotycz±ce nowej konferencji (pmb)
   - /ignore dla u¿ytkowników spoza listy kontaktów (mateusza)
+  - obs³uga s³ownika aspell (del)
   - dalsza rozbudowa on (?) - zaprzeczenia i inne operatory (krzyk)
   - mo¿liwo¶æ definiowania kolorów p³ywaj±cych okien: t³o, ramka (w)
   - ,,wje¿d¿anie'' i automatyczne chowanie listy kontaktów, co¶ na wzór pasku
