@@ -3962,6 +3962,7 @@ int command_remove(plugin_t *plugin, const char *name)
  * 'r' - session description 
  * 'o' - directory
  * 'm' - metacontact
+ * 'w' - window name
  * 
  * je¿eli parametr == 'p' to 9 argument funkcji command_add() przyjmuje jako argument
  * tablicê z mo¿liwymi uzupe³nieniami 

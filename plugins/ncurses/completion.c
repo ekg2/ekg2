@@ -525,12 +525,17 @@ static void possibilities_generator(const char *text, int len)
 
 static void window_generator(const char *text, int len)
 {
-	const char *words[] = { "new", "kill", "move", "next", "resize", "prev", "switch", "clear", "refresh", "list", "active", "last", NULL };
-	int i;
+	window_t *w;
+	list_t l;
 
-	for (i = 0; words[i]; i++)
-		if (!xstrncasecmp(text, words[i], len))
-			array_add_check(&completions, xstrdup(words[i]), 1);
+	for (l = windows; l; l=l->next)	{
+		w = (window_t *)l->data;
+
+		if (!w->target || xstrncmp(text, w->target, len))
+			continue;
+
+		array_add_check(&completions, xstrdup(w->target), 0);
+	}
 }
 
 static void sessions_generator(const char *text, int len)
