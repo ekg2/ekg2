@@ -490,7 +490,7 @@ int protocol_message(void *data, va_list ap)
                                 list_remove(&autofinds, autofinds->data, 1);
                         }
 
-                        list_add(&autofinds, &uid, sizeof(uid));
+                        list_add(&autofinds, (void *) uid, xstrlen(uid) + 1);
 
                         tmp = saprintf("/find %s", uid);
                         command_exec(target, session_class, tmp, 0);

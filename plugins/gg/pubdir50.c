@@ -377,16 +377,16 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 
 		gender = format_string(format_find(__format("_unknown")), "");
 
-#if 0
 		for (l = autofinds; l; l = l->next) {
-			uin_t *d = l->data;
-
-			if (*d == atoi(uin)) {
+			char *d = (char *) l->data;
+			
+			if (!xstrcasecmp(d + 3, uin)) {
 				target = uin;
 				break;
 			}
+			
+			xfree(d);
 		}
-#endif
 		
 		print_window(target, s, 0, __format(""), uin, name, nickname, city, birthyear, gender, active);
 
