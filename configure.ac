@@ -68,6 +68,25 @@ PLUGINS="mail rc sms pcm"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
+
+mouse_lib="xterm only"
+AC_ARG_WITH(gpm-mouse,
+        [  --with-gpm-mouse         Compile with gpm mouse support (Linux only)])
+
+case $host_os in
+linux*)
+    if test x$with_gpm_mouse != xno; then
+        AC_CHECK_LIB(gpm, Gpm_GetEvent,
+            [AC_DEFINE(HAVE_LIBGPM, 1,
+                       [Define to enable gpm mouse support on Linux])
+            mouse_lib="gpm and xterm"
+            LIBGPM_LIBS="-lgpm"],
+            [AC_MSG_WARN([libgpm is missing])
+        ])
+    fi
+    ;;
+esac
+
 AC_ARG_WITH(ioctld,
   [  --without-ioctld        Disable ioctld plugin])
 
@@ -258,4 +277,6 @@ if test "x$have_libjpeg" = "xyes"; then
 else
         echo " - libjpeg: disabled"
 fi
+
+echo " - mouse support in $mouse_lib"
 

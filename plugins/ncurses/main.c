@@ -35,10 +35,11 @@
 #include "ecurses.h"
 #include "old.h"
 #include "contacts.h"
+#include "mouse.h"
 
 static int ncurses_plugin_destroy();
 
-static plugin_t ncurses_plugin = {
+plugin_t ncurses_plugin = {
 	name: "ncurses",
 	pclass: PLUGIN_UI,
 	destroy: ncurses_plugin_destroy
@@ -464,6 +465,8 @@ int ncurses_plugin_init()
 
 	ncurses_initialized = 1;
 
+	ncurses_enable_mouse();
+
 	return 0;
 }
 
@@ -471,6 +474,8 @@ static int ncurses_plugin_destroy()
 {
 	ncurses_plugin_destroyed = 1;
 	ncurses_initialized = 0;
+
+	ncurses_disable_mouse();
 
 	watch_remove(&ncurses_plugin, 0, WATCH_READ);
 	if (have_winch_pipe)
