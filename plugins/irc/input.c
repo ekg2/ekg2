@@ -285,7 +285,7 @@ switch (number) {
 	ta = (char *)session_get(s, "VERSION_NAME");
 	tb = (char *)session_get(s, "VERSION_NO");
 	tc = (char *)session_get(s, "VERSION_SYS");
-	if (uname(&un) || tc) {
+	if (tc || uname(&un) == -1) {
 		irc_write(j, "NOTICE %s :\01VERSION %s%s%s\01\r\n",
 				purename, ta?ta:"IRC plugin under EKG2:",
 				tb?tb:IRCVERSION":",
