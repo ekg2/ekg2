@@ -477,10 +477,12 @@ void jabber_handle(void *data, xmlnode_t *n)
 			return;
 		}
 
-		if (!type || (type && !xstrcmp(type, "unavailable")) ) {
+		if (!type || (type && 
+			(!xstrcmp(type, "unavailable") || !xstrcmp(type, "error"))) ) {
 			xmlnode_t *nshow = xmlnode_find_child(n, "show"); /* typ */
 			xmlnode_t *nstatus = xmlnode_find_child(n, "status"); /* opisowy */
 			xmlnode_t *xitem = xmlnode_find_child(n, "x"); 
+			xmlnode_t *nerr = xmlnode_find_child(n, "error");
 			char *session, *uid, *status = NULL, *descr = NULL, *host = NULL;
 			int port = 0;
 			time_t when = xitem ? jabber_try_xdelay(xitem, jabber_attr(xitem->atts, "xmlns")) : time(NULL);
@@ -497,6 +499,16 @@ void jabber_handle(void *data, xmlnode_t *n)
 
 			if (nstatus)
 				descr = jabber_unescape(nstatus->data);
+
+			if (nerr) {
+				char *ecode = jabber_attr(nerr->atts, "code");
+				char *etext = jabber_unescape(nerr->data);
+
+				descr = saprintf("(%s) %s", ecode, etext);
+				xfree(etext);
+				xfree(status);
+				status = xstrdup(EKG_STATUS_ERROR);
+			}
 
 			session = xstrdup(session_uid_get(s));
 			uid = saprintf("jid:%s", jabber_unescape(from));

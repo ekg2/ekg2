@@ -999,6 +999,8 @@ void theme_init()
 	format_add("list_away_descr", "%> %1 %G(zajêt%@2: %n%5%G)%n %b%3:%4%n\n", 1);
 	format_add("list_dnd", "%> %1 %n(nie przeszkadzaæ) %b%3:%4%n\n", 1);
 	format_add("list_dnd_descr", "%> %1 %n(nie przeszkadzaæ: %5) %b%3:%4%n\n", 1);
+	format_add("list_error", "%> %1 %m(b³±d) %b%3:%4%n\n", 1);
+	format_add("list_error", "%> %1 %m(b³±d: %5) %b%3:%4%n\n", 1);
 	format_add("list_xa", "%> %1 %B(bardzo zajêt%@2)%n %b%3:%4%n\n", 1);
 	format_add("list_xa_descr", "%> %1 %B(bardzo zajêt%@2: %n%5%B)%n %b%3:%4%n\n", 1);
 	format_add("list_notavail", "%> %1 %r(niedostêpn%@2)%n\n", 1);
@@ -1039,6 +1041,14 @@ void theme_init()
         format_add("contacts_dnd_descr_blink", "%K%ii%w%i%1%n", 1);
         format_add("contacts_dnd_descr_full_blink", "%K%ii%w%i%1%n %2", 1);
 	format_add("contacts_dnd_footer", "", 1);
+	format_add("contacts_error_header", "", 1);
+	format_add("contacts_error", " %m%1%n", 1);
+	format_add("contacts_error_descr", "%Ki%m%1%n", 1);
+	format_add("contacts_error_descr_full", "%Ki%m%1%n %2", 1);
+	format_add("contacts_error_blink", " %m%i%1%n", 1);
+	format_add("contacts_error_descr_blink", "%K%ii%m%i%1%n", 1);
+	format_add("contacts_error_descr_full_blink", "%K%ii%m%i%1%n %2", 1);
+	format_add("contacts_error_footer", "", 1);
 	format_add("contacts_xa_header", "", 1);
 	format_add("contacts_xa", " %B%1%n", 1);
 	format_add("contacts_xa_descr", "%Ki%B%1%n", 1);
@@ -1256,6 +1266,8 @@ void theme_init()
 	format_add("user_info_invisible_descr", "%cniewidoczn%@1%n %K(%n%2%K)%n", 1);
 	format_add("user_info_dnd", "%cnie przeszkadzaæ%n", 1);
 	format_add("user_info_dnd_descr", "%cnie przeszkadzaæ%n %K(%n%2%K)%n", 1);
+	format_add("user_info_error", "%m b³±d%n", 1);
+	format_add("user_info_error_descr", "%mb³±d%n %K(%n%2%K)%n", 1);
 	format_add("user_info_xa", "%cbardzo zajêt%@1%n", 1);
 	format_add("user_info_xa_descr", "%cbardzo zajêt%@1%n %K(%n%2%K)%n", 1);
 	format_add("user_info_blocked", "%mblokuj±c%@1%n", 1);
@@ -1539,6 +1551,8 @@ void theme_init()
         format_add("metacontact_info_invisible_descr", "%cniewidoczn%@1%n %K(%n%2%K)%n", 1);
         format_add("metacontact_info_dnd", "%cnie przeszkadzaæ%n", 1);
         format_add("metacontact_info_dnd_descr", "%cnie przeszkadzaæ%n %K(%n%2%K)%n", 1);
+        format_add("metacontact_info_error", "%mb³±d%n", 1);
+        format_add("metacontact_info_error_descr", "%mb³±d%n %K(%n%2%K)%n", 1);
         format_add("metacontact_info_xa", "%cbardzo zajêt%@1%n", 1);
         format_add("metacontact_info_xa_descr", "%cbardzo zajêt%@1%n %K(%n%2%K)%n", 1);
         format_add("metacontact_info_blocked", "%mblokuj±c%@1%n", 1);

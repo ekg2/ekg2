@@ -1243,7 +1243,7 @@ list_user:
 			printq("user_info_mobile", u->mobile);
 		if (xstrcmp(groups, ""))
 			printq("user_info_groups", groups);
-		if (!xstrcasecmp(u->status, EKG_STATUS_NA) || !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE)) {
+		if (!xstrcasecmp(u->status, EKG_STATUS_NA) || !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE) || !xstrcasecmp(u->status, EKG_STATUS_ERROR)) {
 			char buf[100];
 			struct tm *last_seen_time;
 			
@@ -1347,6 +1347,10 @@ list_user:
 			show = 1;
 
 		if (show_blocked && !xstrcasecmp(u->status, EKG_STATUS_BLOCKED))
+			show = 1;
+		
+		/* nie chcialo mi sie zmiennej robic */
+		if (!xstrcasecmp(u->status, EKG_STATUS_ERROR))
 			show = 1;
 
 		if (show_descr && !u->descr)

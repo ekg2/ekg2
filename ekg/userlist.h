@@ -95,6 +95,7 @@ PROPERTY_INT(userlist, last_seen, time_t);
 #define EKG_STATUS_DND "dnd"
 #define EKG_STATUS_BLOCKED "blocked"
 #define EKG_STATUS_UNKNOWN "unknown"
+#define EKG_STATUS_ERROR "error"
 
 struct group {
 	char *name;
