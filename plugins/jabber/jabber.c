@@ -1270,14 +1270,14 @@ COMMAND(jabber_command_auth)
 	}
 
 	if (params[0] && match_arg(params[0], 'c', "cancel", 2)) {
-		action = "unsubscribed";
+		action = "unsubscribe";
 		printq("jabber_auth_unsubscribed", uid, session_name(s));
 		goto success;
 	}
 
 	if (params[0] && match_arg(params[0], 'd', "deny", 2)) {
 		char *tmp;
-		action = "unsubscribe";
+		action = "unsubscribed";
 
 		tmp = saprintf("jid:%s", uid);
 		if (userlist_find(session, tmp))  // mamy w rosterze
