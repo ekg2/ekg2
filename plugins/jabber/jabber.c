@@ -1300,7 +1300,7 @@ int jabber_plugin_init()
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0);
 	plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0);
 	plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1);
-	plugin_var_add(&jabber_plugin, "port", VAR_INT, 5222, 0);
+	plugin_var_add(&jabber_plugin, "port", VAR_INT, itoa(5222), 0);
 	plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0);
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0);
 
