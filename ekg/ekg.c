@@ -533,42 +533,45 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 }
 
 struct option ekg_options[] = {
-        { "back", optional_argument, 0, 'b' },
+        { "user", required_argument, 0, 'u' },
+        { "theme", required_argument, 0, 't' },
+        { "no-auto", no_argument, 0, 'n' },
+        { "no-mouse", no_argument, 0, 'm' },
+        { "no-global-config", no_argument, 0, 'N' },
+
         { "away", optional_argument, 0, 'a' },
+        { "back", optional_argument, 0, 'b' },
         { "invisible", optional_argument, 0, 'i' },
         { "dnd", optional_argument, 0, 'd' },
-        { "chat", optional_argument, 0, 'f' },
+        { "free-for-chat", optional_argument, 0, 'f' },
         { "xa", optional_argument, 0, 'x' },
-        { "private", no_argument, 0, 'p' },
-        { "no-auto", no_argument, 0, 'n' },
-        { "frontend", required_argument, 0, 'f' },
+
         { "help", no_argument, 0, 'h' },
-        { "theme", required_argument, 0, 't' },
-        { "user", required_argument, 0, 'u' },
         { "version", no_argument, 0, 'v' },
-        { "no-global-config", no_argument, 0, 'N' },
-        { "no-mouse", no_argument, 0, 'm' },
         { 0, 0, 0, 0 }
 };
 
-#define EKG_USAGE \
+#define EKG_USAGE N_( \
 "u¿ycie: %s [OPCJE] [KOMENDY]\n" \
-"  -N, --no-global-config     ignoruje globalny plik konfiguracyjny\n" \
 "  -u, --user=NAZWA           korzysta z profilu o podanej nazwie\n" \
 "  -t, --theme=PLIK           ³aduje opis wygl±du z podanego pliku\n" \
 "  -n, --no-auto              nie ³±czy siê automatycznie z serwerem\n" \
 "  -m, --no-mouse             nie ³aduje obs³ugi myszki\n" \
+"  -N, --no-global-config     ignoruje globalny plik konfiguracyjny\n" \
+\
 "  -a, --away[=OPIS]          zmienia stan na ,,zajêty''\n" \
 "  -b, --back[=OPIS]          zmienia stan na ,,dostêpny''\n" \
 "  -i, --invisible[=OPIS]     zmienia stan na ,,niewidoczny''\n" \
 "  -d, --dnd[=OPIS]           zmienia stan na ,,nie przeszkadzaæ''\n" \
 "  -f, --free-for-chat[=OPIS] zmienia stan na ,,chêtny do rozmowy''\n" \
 "  -x, --xa[=OPIS]            zmienia stan na ,,bardzo zajêty''\n" \
+\
+"  -h, --help                 wy¶wietla ten tekst pomocy\n" \
 "  -v, --version              wy¶wietla wersje programu i wychodzi\n" \
 "\n" \
 "Opcje dotycz±ce stanu zale¿± od w³a¶ciwo¶ci protoko³u danej sesji --\n" \
 "niektóre sesje mog± nie obs³ugiwaæ stanu ,,nie przeszkadzaæ'' itp.\n" \
-"\n"
+"\n" )
 
 
 int main(int argc, char **argv)
@@ -616,9 +619,9 @@ int main(int argc, char **argv)
         signal(SIGALRM, SIG_IGN);
         signal(SIGPIPE, SIG_IGN);
 
-        while ((c = getopt_long(argc, argv, "b::a::i::d::x::f::pnc:hot:u:vNm", ekg_options, NULL)) != -1) {
+        while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:t:nmNhv", ekg_options, NULL)) != -1) {
                 switch (c) {
-                        case 'b':
+                        case 'a':
                                 if (!optarg && argv[optind] && argv[optind][0] != '-')
                                         optarg = argv[optind++];
 
@@ -627,7 +630,7 @@ int main(int argc, char **argv)
                                 new_descr = xstrdup(optarg);
                                 break;
 
-                        case 'a':
+                        case 'b':
                                 if (!optarg && argv[optind] && argv[optind][0] != '-')
                                         optarg = argv[optind++];
 
@@ -672,17 +675,6 @@ int main(int argc, char **argv)
                                 new_descr = xstrdup(optarg);
                                 break;
 
-                        case 'n':
-                                auto_connect = 0;
-                                break;
-
-                        case 'N':
-                                no_global_config = 1;
-                                break;
-
-                        case 'h':
-                                printf(EKG_USAGE, argv[0]);
-                                return 0;
 
                         case 'u':
                                 new_profile = optarg;
@@ -692,9 +684,22 @@ int main(int argc, char **argv)
                                 load_theme = optarg;
                                 break;
 
+                        case 'n':
+                                auto_connect = 0;
+                                break;
+
                         case 'm':
                                 no_mouse = 1;
                                 break;
+
+                        case 'N':
+                                no_global_config = 1;
+                                break;
+
+
+                        case 'h':
+                                printf(_(EKG_USAGE), argv[0]);
+                                return 0;
 
                         case 'v':
                                 printf("ekg-%s (compiled on %s)\n", VERSION, compile_time());

@@ -78,7 +78,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 #define PLUGIN_DEFINE(x, y, z)\
 	static int x##_plugin_destroy(); \
 	\
-	static plugin_t x##_plugin = { \
+	plugin_t x##_plugin = { \
 		name: #x, \
 		pclass: y, \
 		destroy: x##_plugin_destroy, \

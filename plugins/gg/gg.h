@@ -27,7 +27,7 @@
 
 COMMAND(gg_command_image); /* images.c */
 
-static plugin_t gg_plugin;
+plugin_t gg_plugin;
 int gg_userlist_put_config;
 char *last_tokenid;
 
