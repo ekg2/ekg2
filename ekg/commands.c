@@ -3934,7 +3934,9 @@ void command_init()
 	  "                     zmienia opcjê sesji\n"
 	  " [-s, --set] [<uid>] -<opcja>\n"
 	  "                     usuwa opcjê sesji\n"
-	  " [-w, --sw] <uid> zmienia aktualn± sesjê\n", 
+	  " [-w, --sw] <uid> zmienia aktualn± sesjê\n"
+	  "\n"
+	  "Pamiêtaj o tym, ¿e uid ma postaæ <prefix>:<uid> np. %Tgg:12345%n.\n", 
 	  possibilities("-a --add -d --del -l --list -g --get -s --set -w --sw") ); 
 #undef possibilities
 #undef params
