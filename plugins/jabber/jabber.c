@@ -282,7 +282,7 @@ void jabber_handle(session_t *s, xmlnode_t *n)
 		}
 
 		session = xstrdup(session_uid_get(s));
-		sender = saprintf("jid:%s", from);
+		sender = saprintf("jid:%s", jabber_unescape(from));
 		text = jabber_unescape(body->str);
 		string_free(body, 1);
 
