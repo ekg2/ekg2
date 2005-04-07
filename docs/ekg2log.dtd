@@ -1,0 +1,8 @@
+<!DOCTYPE ekg2log [
+<!ELEMENT message (#PCDATA)>
+<!ATTLIST message class (msgrecv|chatrecv|msgsend|chatsend|msgsystem)>
+<!ATTLIST message uid CDATA #required>
+<!ATTLIST message nick CDATA #required>
+<!ATTLIST message timestamp CDATA #required>
+<!ATTLIST message senttimestamp CDATA>
+]>
