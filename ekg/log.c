@@ -60,6 +60,26 @@ int config_log_status = 0;
 char *config_log_path = NULL;
 char *config_log_timestamp = NULL;
 
+static char *utf_ent[256] =
+{
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, "&quot;", 0, 0, 0, "&amp;", "&apos;", 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "&lt;", 0, "&gt;", 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
 /*
  * last_add()
  *
@@ -249,6 +269,44 @@ char *log_escape(const char *str)
 	}
 	*q++ = '"';
 	*q = 0;
+
+	return res;
+}
+
+/*
+ * xml_escape()
+ *
+ *    escapes text to be xml-compliant
+ *
+ *  - text
+ *
+ * allocated buffer
+ */
+char *xml_escape(const char *text)
+{
+	const unsigned char *p;
+	unsigned char *res, *q;
+	int len;
+
+	if (!text)
+		return NULL;
+
+	for (p = text, len = 0; *p; p++)
+		len += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
+
+	res = xmalloc(len + 1);
+	memset(res, 0, len + 1);
+
+	for (p = text, q = res; *p; p++) {
+		char *ent = utf_ent[*p];
+
+		if (ent)
+			xstrcpy(q, ent);
+		else
+			*q = *p;
+
+		q += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
+	}
 
 	return res;
 }

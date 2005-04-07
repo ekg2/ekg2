@@ -28,26 +28,6 @@ char *jabber_attr(char **atts, const char *att)
 
 char *config_jabber_console_charset = NULL;
 
-static char *utf_ent[256] =
-{
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, "&quot;", 0, 0, 0, "&amp;", "&apos;", 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "&lt;", 0, "&gt;", 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-
 /* Following two functions shamelessly ripped from mutt-1.4.2i 
  * (http://www.mutt.org, license: GPL)
  * 
@@ -188,25 +168,8 @@ char *jabber_escape(const char *text)
 		return NULL;
 	if ( !(utftext = mutt_convert_string(text, config_jabber_console_charset, "utf-8")) )
 		return NULL;
-		
-	for (p = utftext, len = 0; *p; p++)
-		len += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
-
-	res = xmalloc(len + 1);	
-	memset(res, 0, len + 1);
-
-	for (p = utftext, q = res; *p; p++) {
-		char *ent = utf_ent[*p];
-
-		if (ent)
-			xstrcpy(q, ent);
-		else
-			*q = *p;
-
-		q += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
-	}
-
-	xfree(utftext);
+	res = xml_escape(utftext);
+        xfree(utftext);
 	return res;
 }
 

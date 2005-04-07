@@ -295,15 +295,18 @@ void logs_handler(void *data, va_list ap)
 
 	debug("[logs] logging to file %s\n", path);
 
-	if (config_logs_log == 1 && xstrstr(log_formats, "simple"))
+	if (config_logs_log == 1 && xstrstr(log_formats, "simple")) {
+		debug("[logs] logging simple\n");
 		logs_simple(path, session, 
 			((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid), 
 			text, sent, class, seq);
-	else if (config_logs_log == 2 && xstrstr(log_formats, "xml"))
+	} else if (config_logs_log == 2 && xstrstr(log_formats, "xml")) {
+		debug("[logs] logging xml\n");
 		logs_xml(path, session, 
 			((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid), 
 			text, sent, class, seq);
-	
+	}
+
 
 	// itd. dla innych formatow logow
 
@@ -408,12 +411,12 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 void logs_xml(char *path, char *session, char *uid, char *text, time_t sent, int class, int seq)
 {
 	FILE *file;
-	char *textcopy = log_escape(text);
+	char *textcopy = xml_escape(text);
 	char *timestamp = prepare_timestamp((time_t)time(0));
 	char *senttimestamp = prepare_timestamp(sent);
 	session_t *s = session_find((const char*)session);
-	char *gotten_uid = get_uid(s, uid);
-	char *gotten_nickname = get_nickname(s, uid);
+	char *gotten_uid = xml_escape(get_uid(s, uid));
+	char *gotten_nickname = xml_escape(get_nickname(s, uid));
 
 	if (gotten_uid == NULL)
 		gotten_uid = uid;
@@ -428,8 +431,24 @@ void logs_xml(char *path, char *session, char *uid, char *text, time_t sent, int
 		return ;
 	}
 
-	fputs("  <message class=\"",file);
-		
+	/*
+	 * <message class="chatsend">
+	 * <time>
+	 *	<sent>...</sent>
+	 *	<received>...</received>
+	 * </time>
+	 * <sender>
+	 *	<uid>...</uid>
+	 *	<nick>...</nick>
+	 * </sender>
+	 * <body>
+	 *	(#PCDATA)
+	 * </body>
+	 * </message>
+	 */
+
+	fputs("<message class=\"",file);
+
 	switch ((enum msgclass_t)class) {
 		case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv", file);
 						  break;
@@ -445,30 +464,27 @@ void logs_xml(char *path, char *session, char *uid, char *text, time_t sent, int
 						  break;
 
 	};
-	
-	fputc('"', file);
 
-	/*
-	 * <message="chatsend" uid="&numer;" nick="&nick;" timestamp="&czas;">&tre¶æ</message>
-	 * <message="chatrecv" uid="&numer;" nick="&nick;" timestamp="&czas_otrzymania;" 
-	 * senttimestamp="&czas_nadania">&tre¶æ</message>
-	 */
+	fputs("\">\n", file);
 
-	fputs(" uid=\"", file);	fputs(gotten_uid, file);	fputc('"', file);
-	fputs(" nick=\"", file);	fputs(gotten_nickname, file);	fputc('"', file);
-
-	fputs(" timestamp=\"", file);	fputs(timestamp, file);	fputc('"', file);
-
+	fputs("\t<time>\n", file);
+	fputs("\t\t<received>", file); fputs(timestamp, file); fputs("</received>\n", file);
 	if (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_CHAT) {
-		fputs(" senttimestamp=\"", file);
-		fputs(senttimestamp, file);
-		fputc('"', file);
+		fputs("\t\t<sent>", file); fputs(timestamp, file); fputs("</sent>\n", file);
 	}
+	fputs("\t</time>\n", file);
 
-	fputc('>', file);
-	
+	fputs("\t<sender>\n", file);
+	fputs("\t\t<uid>", file);   fputs(gotten_uid, file);       fputs("</uid>\n", file);
+	fputs("\t\t<nick>", file);  fputs(gotten_nickname, file);  fputs("</nick>\n", file);
+	fputs("\t</sender>\n", file);
+
+	fputs("\t<body>\n", file);
 	fputs(textcopy, file);
+	fputs("\t</body>\n", file);
+
 	fputs("</message>\n", file);
+
 	fputs("</ekg2log>\n", file);
 
 	xfree(senttimestamp);
