@@ -284,6 +284,8 @@ void logs_handler(void *data, va_list ap)
 	/* well, 'format' is unused, so silence the warning */
 	format = NULL;
 
+	if (class & EKG_NO_THEMEBIT) class -= EKG_NO_THEMEBIT; /** stupid **/
+
 	if (!session)
 		return;
 
