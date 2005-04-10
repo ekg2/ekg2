@@ -448,6 +448,7 @@ int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "userlist-changed", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-added", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-removed", ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, "userlist-renamed", ncurses_userlist_changed, NULL);
 	query_connect(&ncurses_plugin, "binding-set", ncurses_binding_set_query, NULL);
 	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
 	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);

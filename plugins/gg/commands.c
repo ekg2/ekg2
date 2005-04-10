@@ -1193,13 +1193,21 @@ COMMAND(gg_command_modify)
 		if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1]) {
 			char *tmp1, *tmp2;
 
+			if (userlist_find(session, argv[i + 1])) {
+				printq("user_exists", argv[i + 1], session_name(session));
+				continue;
+			}
+
 			tmp1 = xstrdup(u->nickname);
 			tmp2 = xstrdup(argv[++i]);
+
 			query_emit(NULL, "userlist-renamed", &tmp1, &tmp2);
 			xfree(tmp1);
 				
 			xfree(u->nickname);
 			u->nickname = tmp2;
+
+			userlist_replace(session, u);
 			
 			modified = 1;
 			continue;
