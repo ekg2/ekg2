@@ -2035,9 +2035,9 @@ then:
 			p = ncurses_lines[lines_start + i];
 
 #ifdef WITH_ASPELL
-			if (config_aspell ) {
+			if (config_aspell) {
 				aspell_line = xmalloc(xstrlen(p));
-				memset(aspell_line, 32, xstrlen(aspell_line));
+				memset(aspell_line, 32, xstrlen(p));
 				if (line_start == 0) 
 					mispelling = 0;
 					    
