@@ -40,6 +40,7 @@ char *gg_config_dcc_ip;
 char *gg_config_dcc_limit;
 int gg_config_dcc_port;
 int gg_config_get_images;
+char *gg_config_images_dir;
 int gg_config_split_messages;
 
 typedef enum {

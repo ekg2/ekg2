@@ -57,7 +57,15 @@ get_images
 	domy¶lna warto¶æ: 0
 
 	przy ustawionej warto¶ci 1 je¶li w wiadomo¶ciach bêd± siê znajdowa³y
-	obrazki to bêd± one ¶ci±gane i zapisywane do .ekg2/images
+	obrazki to bêd± one ¶ci±gane i zapisywane do katalogu okre¶lonego 
+	przez images_dir
+
+images_dir
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	zmienna okre¶la katalog, do którego maj± byæ zapisywane obrazki 
+	przy ustawionej zmiennej get_images
 
 split_messages
 	typ: bool

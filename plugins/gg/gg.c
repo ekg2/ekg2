@@ -779,7 +779,52 @@ void gg_reconnect_handler(int type, void *data)
 	xfree(tmp);
 }
 
-/* 
+/*
+ * image_open_file()
+ *
+ * create and open file 
+ * for image
+ */
+
+FILE* image_open_file(const char *path)
+{
+	struct stat statbuf;
+	char *dir, *fullname, *slash;
+	int slash_pos = 0;
+	int makedir=1;
+	FILE* fdesc;
+
+        debug("[gg] opening image file\n");
+
+	while (makedir) {
+		if (!(slash = xstrchr(path + slash_pos, '/'))) {
+			// nie ma juz slashy - zostala tylko nazwa pliku
+			makedir = 0; // konczymy petle
+			continue;
+		};
+
+		slash_pos = slash - path + 1;
+		dir = xstrndup(path, slash_pos);
+
+		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
+			char *bo = saprintf("nie mo¿na %s bo %s", dir, strerror(errno));
+			print("generic",bo); // XXX usun±æ !! 
+			xfree(bo);
+			xfree(dir);
+			return NULL;
+		}
+		xfree(dir);
+	} // while mkdir
+
+	fullname = xstrdup(path);
+
+	fdesc = fopen(fullname, "w");
+	xfree(fullname);
+
+	return fdesc;
+};
+
+/*
  * gg_session_handler_image()
  *
  * support image request or reply
@@ -811,16 +856,9 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 		}
 		case GG_EVENT_IMAGE_REPLY:
 		{
-			/*
-			 * in future we should add varible with format
-			 * of name file
-			 */
-			unsigned int len = strlen(itoa(e->event.image_reply.sender)) + strlen(itoa(e->event.image_reply.crc32)) + strlen(e->event.image_reply.filename);
-			char *image_file = xmalloc(len+3+7);
+			char *image_file = NULL;
 			FILE *fp;
-			
-			sprintf(image_file, "images/%s_%s_%s", itoa(e->event.image_reply.sender), itoa(e->event.image_reply.crc32), e->event.image_reply.filename);
-		
+
                         if (e->event.image_request.crc32 == GG_CRC32_INVISIBLE) {
                                 char *tmp = saprintf("gg:%d", e->event.image_request.sender);
 				list_t l;
@@ -837,24 +875,25 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 				}
 
                                 xfree(tmp);
-				xfree(image_file);
                                 break;
-                        }
-	
-                        /* receiving messages */
-                        debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
-			
-			if ((fp = fopen(prepare_path(image_file, 1), "w")) == NULL) {
-				debug("can't open file for image \n");
-			} else {
-				int i;
+                        }else {
+				// TODO: file name format should be defined by user
+				image_file=saprintf("%s/%s_%s_%s", gg_config_images_dir, itoa(e->event.image_reply.sender), itoa(e->event.image_reply.crc32), e->event.image_reply.filename);
+
+
+ 			        debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
+
+				if ((fp = image_open_file(prepare_path(image_file, 1))) == NULL) {
+					debug("can't open file for image \n");
+				} else {
+					int i;
 				
-				for (i = 0; i<e->event.image_reply.size; i++) {
-					fputc(e->event.image_reply.image[i],fp);
+					for (i = 0; i<e->event.image_reply.size; i++) {
+						fputc(e->event.image_reply.image[i],fp);
+					}
+					fclose(fp);
 				}
-				fclose(fp);
 			}
-			
 			xfree(image_file);
 		}	
 		default:
@@ -1182,9 +1221,11 @@ void gg_setvar_default()
 	xfree(gg_config_dcc_dir);
 	xfree(gg_config_dcc_ip);
 	xfree(gg_config_dcc_limit);
+	xfree(gg_config_images_dir);
 
 	gg_config_display_token = 1;
 	gg_config_get_images = 0;
+	gg_config_images_dir = NULL;
 	gg_config_dcc = 0;
 	gg_config_dcc_dir = NULL;
 	gg_config_dcc_ip = NULL;
@@ -1222,6 +1263,7 @@ int gg_plugin_init(int prio)
 	variable_add(&gg_plugin, "dcc_limit", VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
 	variable_add(&gg_plugin, "dcc_port", VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
 	variable_add(&gg_plugin, "get_images", VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
+	variable_add(&gg_plugin, "images_dir", VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
         variable_add(&gg_plugin, "split_messages", VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
