@@ -233,6 +233,7 @@ int alias_add(const char *string, int quiet, int append)
 	list_t l;
 	struct alias a;
 	char **params = NULL;
+	char *array;
 
 	if (!string || !(cmd = xstrchr(string, ' ')))
 		return -1;
@@ -287,7 +288,9 @@ int alias_add(const char *string, int quiet, int append)
 	list_add(&a.commands, cmd, xstrlen(cmd) + 1);
 	list_add(&aliases, &a, sizeof(a));
 
-	command_add(NULL, a.name, ((params) ? array_join(params, " ") : "?"), cmd_alias_exec, 1, NULL);
+	array = (params) ? array_join(params, " ") : xstrdup("?");
+	command_add(NULL, a.name, array, cmd_alias_exec, 1, NULL);
+	xfree(array);
 	
 	printq("aliases_add", a.name, "");
 
