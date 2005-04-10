@@ -861,7 +861,7 @@ int main(int argc, char **argv)
                         cmd = s->status;
 
                 tmp = saprintf("/%s %s", cmd, (new_descr) ? new_descr : "");
-                command_exec(NULL, s, tmp, 1);
+                command_exec(NULL, s, tmp, 2);
                 xfree(tmp);
         }
 
