@@ -1,8 +1,9 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                     Tomasz Torcz <zdzichu@irc.pl>
+ *  (C) Copyright 2003-2005 Wojtek Kaniewski <wojtekka@irc.pl>
+ *                          Tomasz Torcz <zdzichu@irc.pl>
+ *                          Leszek Krupiñski <leafnode@pld-linux.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -226,6 +227,8 @@ void jabber_handle(void *data, xmlnode_t *n)
                 xmlnode_t *nsubject = xmlnode_find_child(n, "subject");
                 xmlnode_t *xitem = xmlnode_find_child(n, "x");
                 xmlnode_t *nerr = xmlnode_find_child(n, "error");
+                xmlnode_t *xurl = NULL;
+                xmlnode_t *xdesc = NULL;
                 string_t body = string_init("");
                 char *session, *sender, **rcpts = NULL, *text, *seq = NULL;
                 time_t sent = time(NULL);
@@ -292,9 +295,21 @@ void jabber_handle(void *data, xmlnode_t *n)
                                                 print("jabber_typing_notify", tmp);
 
                                         xfree(tmp);
-                                }; /* composing */
+                                } /* composing */
 
-                        }; /* jabber:x:event */
+                        } /* jabber:x:event */
+
+                        if (ns && !xstrncmp(ns, "jabber:x:oob", 12)) {
+                           if ( ( xurl = xmlnode_find_child(xitem, "url") ) ) {
+                              string_append(body, "\n\n");
+                              string_append(body, "URL: ");
+                              string_append(body, xurl->data);
+                              string_append(body, "\n");
+                              xdesc = xmlnode_find_child(xitem, "desc");
+                              string_append(body, xdesc->data);
+                              string_append(body, "\n");
+                           }
+                        } /* jabber:x:oob */
                 }
 
                 session = xstrdup(session_uid_get(s));
