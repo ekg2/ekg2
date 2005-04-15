@@ -203,3 +203,7 @@ who
 	Je¶li poleceniu nie podane zostan± ¿adne polecenia, to wy¶wietleni
 	zostan± u¿ytkownicy z bie¿±cego kana³u.
 
+names
+	parametry:
+	krótki opis: wy¶wietla nazwy u¿ytkowników z bie¿±cego kana³u
+

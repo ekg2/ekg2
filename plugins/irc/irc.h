@@ -107,6 +107,18 @@ void irc_handle_reconnect(int type, void *data);
 void irc_handle_disconnect(session_t *s, char *reason, int type);
 COMMAND(irc_command_disconnect);
 
+/* checks if name is in format irc:something
+ * checkcon is one of:
+ *   name is               channel   |  nick 
+ *   IRC_GC_CHAN 	-  channame  |  NULL
+ *   IRC_GC_NOT_CHAN	-  NULL      | nickname
+ *   IRC_GC_ANY		-  name if it's in proper format [irc:something]
+ */
+enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
+char *irc_getchan_int(session_t *s, const char *name, int checkchan);
+char *irc_getchan(session_t *s, const char **params, const char *name,
+      char ***v, int pr, int checkchan);
+
 #ifdef __GNU__
 int irc_write(irc_private_t *j, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 #else

@@ -982,6 +982,63 @@ COMMAND(irc_command_quote)
 	return 0;
 }
 
+COMMAND(irc_command_names)
+{
+	irc_private_t *j = irc_private(session);
+	list_t t1, t2;
+	people_t *per;
+	people_chan_t *chan;
+        int count = 1;
+	char * mode = NULL;
+	char * buf = xmalloc(150);
+
+	if (!session_check(session, 1, IRC3)) {
+		printq("invalid_session");
+		return -1;
+	}
+
+	if (!target) {
+		printq("wrong_window");
+		return -1;
+	}
+
+	for (t1 = j->people; t1; t1=t1->next) {
+		per = (people_t *)t1->data;
+		for (t2 = per->channels; t2; t2=t2->next)
+		{
+			chan = (people_chan_t *)t2->data;
+			if (!xstrcmp( chan->chanp->name, target)) {
+			   switch (chan->mode) {
+			      case 0:
+				 mode = " ";
+				 break;
+			      case 1:
+				 mode = "+";
+				 break;
+			      case 2:
+				 mode = "@";
+				 break;
+			   }
+
+			   sprintf(buf, "%s %s", buf, format_string(format_find("IRC_NAMES"), mode, (per->nick + 4)));
+
+			   count++;
+			   if (count == 7) {
+				   printq("generic", buf);
+				   xstrcpy(buf, "");
+				   count = 1;
+			   }
+                        }
+		}
+	}
+	if (count != 7) {
+		printq("generic", buf);
+	}
+
+	xfree(buf);
+	return 0;
+}
+
 COMMAND(irc_command_pipl)
 {
 	irc_private_t *j = irc_private(session);
@@ -1158,14 +1215,6 @@ int irc_topic_header(void *data, va_list ap)
 	return 0;
 }
 
-/* checks if name is in format irc:something
- * checkcon is one of:
- *   name is               channel   |  nick 
- *   IRC_GC_CHAN 	-  channame  |  NULL
- *   IRC_GC_NOT_CHAN	-  NULL      | nickname
- *   IRC_GC_ANY		-  name if it's in proper format [irc:something]
- */
-enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 {
 	char *ret, *tmp;
@@ -1651,6 +1700,8 @@ COMMAND(irc_command_whois)
 	debug("irc_command_whois(): %s\n", name);
 	if (!xstrcmp(name, "whowas"))
 		irc_write(irc_private(session),	"WHOWAS %s\r\n", person+4);
+        else if(!xstrcmp(name, "wii"))
+		irc_write(irc_private(session),	"WHOIS %s %s\r\n", person+4, person+4);
 	else
 		irc_write(irc_private(session),	"WHOIS %s\r\n",  person+4);
 
@@ -1819,6 +1870,8 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:nick", "?",	irc_command_nick, 0, NULL);
 	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 0, NULL);
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 0, NULL);
+	command_add(&irc_plugin, "irc:n", NULL,		irc_command_names, 0, NULL);
+	command_add(&irc_plugin, "irc:names", NULL,	irc_command_names, 0, NULL);
 	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 0, NULL);
 	command_add(&irc_plugin, "irc:msg", "uUw ?",	irc_command_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:notice", "uUw ?",	irc_command_msg, 0, NULL);
@@ -1827,6 +1880,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:ping", "uUw ?",	irc_command_ping, 0, NULL);
 	command_add(&irc_plugin, "irc:mode", "w ?",	irc_command_mode, 0, NULL);
 	command_add(&irc_plugin, "irc:umode", "?",	irc_command_umode, 0, NULL);
+	command_add(&irc_plugin, "irc:wii", "uU",	irc_command_whois, 0, NULL);
 	command_add(&irc_plugin, "irc:whois", "uU",	irc_command_whois, 0, NULL);
 	command_add(&irc_plugin, "irc:find", "uU",	irc_command_whois, 0, NULL); /* for auto_find */
 	command_add(&irc_plugin, "irc:whowas", "uU",	irc_command_whois, 0, NULL);
@@ -2086,7 +2140,10 @@ static int irc_theme_init()
 	format_add("IRC_NEWNICK", _("%> %g%2%n is now known as %G%4%n\n"), 1);
 	format_add("IRC_TRYNICK", _("%> Will try to use %G%2%n instead\n"), 1);
 	format_add("IRC_CHANNEL_SYNCED", "%> Join to %W%2%n was synced in %W%3.%4%n secs", 1);
-	
+
+        format_add("IRC_NAMES", _("%K[%W%1%w%[9]2%K]%n"), 1);
+        format_add("wrong_window", _("Wrong window"), 1);
+
 	return 0;
 }
 
@@ -2098,4 +2155,5 @@ static int irc_theme_init()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=0 noexpandtab sw=8
  */
