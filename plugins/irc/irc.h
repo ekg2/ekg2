@@ -69,15 +69,18 @@ typedef struct {
 
 /* data for private->channels */
 typedef struct {
-	char *name;
-	int    syncmode;
-	struct timeval syncstart;
-	int mode;
-	char *topic;
-	char *topicby;
-	char *mode_str;
-	window_t *window;
-	list_t onchan;
+	char		*name;
+	int		syncmode;
+	struct timeval	syncstart;
+	int		mode;
+	char		*topic, *topicby, *mode_str;
+	window_t	*window;
+	list_t		onchan;
+	list_t		banlist;
+	/* needed ?
+	list_t exclist;
+	list_t invlist; */
+
 } channel_t;
 
 /* data for private->people->channels */

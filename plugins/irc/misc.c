@@ -20,6 +20,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
@@ -287,7 +288,7 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
  *        1 (Nick)   - nick!*@*
  *        2 (User)   - *!*ident@*
  *        4 (Host)   - *!*@host.*
- *	  4 (IP)     - *!*@*.168.11.11 * bug, it bans @*.11 *
+ *	  4 (IP)     - *!*@*.168.11.11 - buggy, it bans @*.11 
  *        8 (Domain) - *!*@*.domain.net
  *        8 (IP)     - *!*@192.168.11.*
  */
@@ -320,7 +321,9 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
 #endif
 
 	/* G->dj: xrindex stinks as hell */
-	if (host && (temp=strrchr(host, ind)))
+	if (host && !family && (temp=xstrchr(host, ind)))
+		*temp = '\0';
+	if (host && family && (temp=xstrrchr(host, ind)))
 		*temp = '\0';
 
 	if (bantype > 15) bantype = 10;
@@ -329,8 +332,14 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
 #define getit(x) tmp[x]?tmp[x]:"*"
 	if (bantype & 1) tmp[0] = nick;
 	if (bantype & 2) tmp[1] = ident;
-	if (bantype & 4) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
-	if (bantype & 8) tmp[2] = host;
+	if (family) {
+		if (bantype & 8) tmp[2] = host;
+		if (bantype & 4) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
+	} else {
+		if (bantype & 4) tmp[2] = host;
+		if (bantype & 8) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
+	}
+
 
 	temp = saprintf("%s!*%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3));
  	xfree(host);
@@ -641,19 +650,20 @@ IRC_COMMAND(irc_c_list)
 {
 #define PRINT_WINDOW if (!kanal || !kanal->syncmode) print_window
 	char *dest, *t = NULL;
-	int tempf = irccommands[ecode].future;
+	int ltype = irccommands[ecode].future;
 
-	int endlist = tempf & IRC_LISTEND;
+	int endlist = ltype & IRC_LISTEND;
 	char *coloured = NULL;
 	char *realname;
 
 	window_t  *w     = NULL;
 	people_t  *osoba = NULL;
 	channel_t *kanal = NULL;
+	list_t    *tlist = NULL;
 
-	if (endlist) tempf -= IRC_LISTEND;
+	if (endlist) ltype -= IRC_LISTEND;
 
-	if (tempf == IRC_LISTWHO || tempf == IRC_LISTCHA || tempf == IRC_LISTSTA)
+	if (ltype == IRC_LISTWHO || ltype == IRC_LISTCHA || ltype == IRC_LISTSTA)
 		t = NULL;
 	else
 		t = saprintf("%s%s", IRC4, IOK(3));
@@ -661,46 +671,49 @@ IRC_COMMAND(irc_c_list)
 	w    = window_find_s(s, t);
 	dest = w?t:NULL;
 
-	if (tempf == IRC_LISTWHO) 
-		kanal = irc_find_channel(j->channels, IOK(3));
+	if (ltype == IRC_LISTWHO || ltype == IRC_LISTBAN) {
+ 		kanal = irc_find_channel(j->channels, IOK(3));
+		debug("!!!> %s %d %d\n", IOK(3), kanal, ltype);
+	}
 
-	if (!mode_act && tempf != IRC_LISTCHA) 
+	if (!mode_act && ltype != IRC_LISTCHA) 
 		PRINT_WINDOW(dest, s, 0, "RPL_LISTSTART", session_name(s));
 
 	if (endlist) {
 			if (!mode_act)
-				print_window(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
+				PRINT_WINDOW(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
 
-			if (tempf == IRC_LISTSTA) {
+			if (ltype == IRC_LISTSTA) {
 				print_window(dest, s, 0, "RPL_STATSEND", session_name(s), IOK2(4), IOK2(3)); 
-			} else if (tempf == IRC_LISTCHA) {
+			} else if (ltype == IRC_LISTCHA) {
 				print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(3));
 			} else {
 				PRINT_WINDOW(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
 			}
 			if (kanal) {
-				/* G->dj: I'm not commiting this stuff,
-				 * it just increases indents, which doesn't
-				 * seem cool to me ;)
+				/* G->dj: oh, I see, I haven't noticed
+				 * ok commiting, but take a look if this is
+				 * at it was supposed to be
 				 */
-				if (kanal->syncmode > 0) 
+				if (kanal->syncmode > 0)  {
 					kanal->syncmode--;
-				if (kanal->syncmode == 0) {
-					struct timeval tv;
-					gettimeofday(&tv, NULL);
-					tv.tv_usec+=(1000000-kanal->syncstart.tv_usec);
-					if (tv.tv_usec>1000000)
-						tv.tv_sec++, tv.tv_usec-=1000000;
-					tv.tv_sec-=kanal->syncstart.tv_sec;
+					if (kanal->syncmode == 0) {
+						struct timeval tv;
+						gettimeofday(&tv, NULL);
+						tv.tv_usec+=(1000000-kanal->syncstart.tv_usec);
+						if (tv.tv_usec>1000000)
+							tv.tv_sec++, tv.tv_usec-=1000000;
+						tv.tv_sec-=kanal->syncstart.tv_sec;
 
-					print_window(dest, s, 0, "IRC_CHANNEL_SYNCED", session_name(s), kanal->name+4, itoa(tv.tv_sec), itoa(tv.tv_usec));
+						print_window(dest, s, 0, "IRC_CHANNEL_SYNCED", session_name(s), kanal->name+4, itoa(tv.tv_sec), itoa(tv.tv_usec));
+					}
 				}
 			}
 			mode_act = 0; 
 	} else {
 		if (irccommands[ecode].num != 321)
 			mode_act++;
-		switch (tempf) {
+		switch (ltype) {
 			/* TODO: poprawic te 2 pierwsze... */
 			case (IRC_LISTSTA):
 				print_window(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
@@ -718,14 +731,33 @@ IRC_COMMAND(irc_c_list)
 					osoba->realname = xstrdup(realname);
 				}
 				break;
+			/*
 			case (IRC_LISTCHA):
 				// TODO: /join #number (?)
+ 				tlist = ...
+			case (IRC_LISTINV):
+				tlist = ...
+			case (IRC_LISTEXC):
+				tlist = ...
+*/
+			case (IRC_LISTBAN):
+				if (!tlist) 
+					tlist = &kanal->banlist;
+				if (kanal) {
+					if (mode_act == 1 && *tlist) {
+						debug("[IRC_LIST] Delete list 0x%x\n", *tlist);
+						list_destroy(*tlist, 0);
+						*tlist = NULL;
+					}
+					debug("[IRC_LIST] Add to list (id=%d; co=%s) 0x%x\n", mode_act, IOK2(4), tlist);
+					list_add(tlist, xstrdup(IOK2(4)) , 0);
+				}
 			default:
 				if (param[5] && *param[5] == ':') {
 					coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
-					print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, itoa(mode_act));
+					PRINT_WINDOW(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, itoa(mode_act));
 				} else {
-					print_window(dest, s, 0, irccommands[ecode].name, session_name(s), IOK2(3), IOK2(4), IOK2(5), itoa(mode_act));
+					PRINT_WINDOW(dest, s, 0, irccommands[ecode].name, session_name(s), IOK2(3), IOK2(4), IOK2(5), itoa(mode_act));
 				}
 				xfree(coloured);
 				break;
@@ -909,7 +941,7 @@ IRC_COMMAND(irc_c_msg)
 		/* TODO zda³oby siê jakie¶ sprawdzanie secure, ale nie wiem jak reagowaæ... */
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
-		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));
+		debug("<%c%s/%d%s> %s\n", perchn?*(perchn->sign):' ', !!perchn, param[0]+1, param[2], OMITCOLON(param[3]));
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
 		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
@@ -998,34 +1030,42 @@ IRC_COMMAND(irc_c_join)
 IRC_COMMAND(irc_c_part)
 {
 	char *channel, *tmp, *coloured;
-
+	int me = 0;
+	
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
-	/* we part */
+	me = !xstrcmp(j->nick, param[0]+1); /* we part ? */
+	
 	debug("[irc]_c_part: %s %s\n", j->nick, param[0]+1);
-	if (!xstrcmp(j->nick, param[0]+1)) {
+	/* Servers MUST be able to parse arguments in the form of
+	 * a list of target, but SHOULD NOT use lists when sending
+	 * PART messages to clients.
+	 * 
+	 * damn it I think rfc should rather say MUSTN'T instead of
+	 * SHOULD NOT ;/
+	 */
+	if (me) 
 		irc_del_channel(s, j, OMITCOLON(param[2]));
-	} else {
-		/* Servers MUST be able to parse arguments in the form of
-		 * a list of target, but SHOULD NOT use lists when sending
-		 * PART messages to clients.
-		 * 
-		 * damn it I think rfc should rather say MUSTN'T instead of
-		 * SHOULD NOT ;/
-		 */
+	else 
 		irc_del_person_channel(s, j, param[0]+1, OMITCOLON(param[2]));
-
-		channel = saprintf("irc:%s", param[2]);
 		
-		coloured = param[3]?xstrlen(OMITCOLON(param[3]))?
-			irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1)
-			:xstrdup("no reason"):xstrdup("no reason");
-		print_window(channel, s, 0, "irc_left", session_name(s),
-				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]),
+	channel = saprintf("irc:%s", param[2]);
+		
+	coloured = param[3]?xstrlen(OMITCOLON(param[3]))?
+		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1)
+		:xstrdup("no reason"):xstrdup("no reason");
+	
+	print_window(channel, s, 0, (me)?"irc_left":"irc_left_you", session_name(s),
+			param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]),
 				coloured);
-		if (tmp) *tmp='!';
-		xfree(coloured);
-		xfree(channel);
-	}
+	
+	if (tmp) *tmp='!'; /* G->dj: because in theory, there can be more than one
+			      handler for given action. This should also simplify
+			      scripting stuff
+			    */
+	
+	xfree(coloured);
+	xfree(channel);
+	
 	return 0;
 }
 
@@ -1200,7 +1240,7 @@ IRC_COMMAND(irc_c_invite)
 
 IRC_COMMAND(irc_c_mode)
 {
-	int i, k, len, val=0, act=1, is324=irccommands[ecode].num==324;
+	int i, k, len, val=0, act=1, wasb=0, is324=irccommands[ecode].num==324;
 	char *t, *bang, *add, **pars, *channame;
 	people_t *per;
 	people_chan_t *ch;
@@ -1213,11 +1253,9 @@ IRC_COMMAND(irc_c_mode)
 	 * <nick> <chan> <mode> <modeparams>
 	 */
 	/* GiM: FIXME TODO [this shouldn't be xstrcasecmp! user mode */
-	if (is324)
-	{
+	if (is324) {
 		param = &(param[1]);
-	} else if (!xstrcasecmp(param[2], j->nick))
-	{
+	} else if (!xstrcasecmp(param[2], j->nick)) {
 		print_window(window_current->target, s, 0, 
 				"IRC_MODE", session_name(s), 
 				param[0]+1, OMITCOLON(param[3]));
@@ -1232,12 +1270,15 @@ IRC_COMMAND(irc_c_mode)
 
 	t=param[3];
 	for (i=0,k=4; i<xstrlen(param[3]) && xstrlen(param[k]); i++, t++) {
-		if (*t=='+' || *t=='-')
+		if (*t=='+' || *t=='-') {
 			act=*t-'-';
+			continue;
+		}
 		if ((bang=xstrchr(add, *t))) {
 			/* 23:26:o2 CET 2oo5-22-o1 yet another ivil hack */
 			if (xstrchr(param[k], ' '))
 				*xstrchr(param[k], ' ') = '\0';
+			debug("operacja na: %s\n", param[k]);
 			per = irc_find_person(j->people, param[k]);
 			if (!per) goto notreallyok;
 			ch = irc_find_person_chan(per->channels, param[2]); 
@@ -1250,6 +1291,8 @@ IRC_COMMAND(irc_c_mode)
 
 			irc_nick_prefix(j, ch, irc_color_in_contacts(add, 
 						ch->mode, ul));
+		} else if (*t == 'b') {
+			debug("banujemy: %s\n", param[k]);
 		}
 notreallyok:
 		if (xstrchr(add, *t)) k++;
@@ -1271,6 +1314,11 @@ notreallyok:
 	if (!is324) {
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN_NEW", session_name(s),
 				param[0]+1, bang?bang+1:"", param[2], moderpl->str);
+		/*irc_write(j, "MODE %s +%c\r\n",  param[2], moderpl->str[1]);*/
+		/* tego na prawde nie powinno tutaj byc,
+		 * trzeba znalezc to i usuwac, ale /me lazy ;(
+		 * i znowu zrobie bugi
+		 */
 	} else {
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
 				param[2], moderpl->str);

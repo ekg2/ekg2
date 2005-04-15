@@ -1226,7 +1226,9 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 			return 0;
 		}
 		pr = !!pr;
-	} else pr = !!!pr;
+	} else {
+		pr = !!!pr;
+	}
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
@@ -1381,6 +1383,49 @@ COMMAND(irc_command_kick)
 	return 0;
 }
 
+COMMAND(irc_command_unban)
+{
+	irc_private_t	*j = irc_private(session);
+	char		*chan, **mp, *temp = NULL;
+	channel_t	*kanal = NULL;
+	list_t		banlist;
+	int		i, banid = 0;
+
+	if (!(chan=irc_getchan(session, params, name,
+					&mp, 0, IRC_GC_CHAN))) 
+		return -1;
+
+	debug("[irc]_command_unban(): chan: %s mp[0]:%s mp[1]:%s\n",
+			chan, mp[0], mp[1]);
+
+	if (!(*mp)) {
+		printq("not_enough_params", name);
+		xfree(chan);
+		return -1;
+	}
+	else {
+		if ( (banid = atoi(*mp)) ) {
+			kanal = irc_find_channel(j->channels, chan+4);
+			if (kanal && (banlist=(kanal->banlist)) ) {
+				for (i=1; banlist && i<banid; banlist = banlist->next, ++i);
+				if (banlist) /* fit or add  i<=banid) ? */
+					irc_write(j, "MODE %s -b %s\r\n", chan+4, banlist->data);
+				else 
+					debug("%d %d out of range or no such ban %08x\n", i, banid, banlist);
+			}
+			else
+				debug("Kanal || kanal->banlist not found -> channel not synced ?!\n");
+		}
+		else { 
+			irc_write(j, "MODE %s -b %s\r\n", chan+4, *mp);
+		}
+	}
+	irc_getchan_free(mp);
+	xfree(chan);
+	return 0;
+
+}
+
 COMMAND(irc_command_ban)
 {
 	irc_private_t *j = irc_private(session);
@@ -1395,16 +1440,16 @@ COMMAND(irc_command_ban)
 			chan, mp[0], mp[1]);
 
 	if (!(*mp))
-		irc_write(irc_private(session), "MODE %s +b \r\n", chan+4);
+		irc_write(j, "MODE %s +b \r\n", chan+4);
 	else {
 		person = irc_find_person(j->people, (char *) *mp);
 		if (person) 
 			temp = irc_make_banmask(session_int_get(session, "ban_type"), person->nick+4, person->ident, person->host);
 		if (temp) {
-			irc_write(irc_private(session), "MODE %s +b %s\r\n", chan+4, temp);
+			irc_write(j, "MODE %s +b %s\r\n", chan+4, temp);
 			xfree(temp);
 		} else
-			irc_write(irc_private(session), "MODE %s +b %s\r\n", chan+4, *mp);
+			irc_write(j, "MODE %s +b %s\r\n", chan+4, *mp);
 	}
 	irc_getchan_free(mp);
 	xfree(chan);
@@ -1559,7 +1604,7 @@ COMMAND(irc_command_mode)
 	char **mp, *chan;
 
 	if (!(chan=irc_getchan(session, params, name,
-					&mp, 1, IRC_GC_CHAN))) 
+					&mp, 0, IRC_GC_CHAN))) 
 		return -1;
 /* G->dj: I'm still leaving this 
 	if (!(*mp)) {
@@ -1568,6 +1613,7 @@ COMMAND(irc_command_mode)
 		return -1;
 	}
 */
+	debug("%s %s \n", chan, mp[0]);
 	if (!(*mp))
 		irc_write(irc_private(session), "MODE %s\r\n",
 				chan+4);
@@ -1583,16 +1629,14 @@ COMMAND(irc_command_mode)
 COMMAND(irc_command_umode)
 {
 	irc_private_t *j = irc_private(session);
-	char **mp, *umode;
 
-	if (!(umode = irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_ANY)))
+	if (!(*params)) {
+		print("not_enough_params", name);
 		return -1;
+	}
 
-	irc_write(j, "MODE %s %s\r\n", j->nick, umode+4);
+	irc_write(j, "MODE %s %s\r\n", j->nick, *params);
 
-	irc_getchan_free(mp);
-	xfree (umode);
 	return 0;
 }
 
@@ -1627,6 +1671,7 @@ int irc_status_show_handle(void *data, va_list ap)
 
 	j = irc_private(s);
 	p[0] = p[1] = j->nick;
+	p[2] = 0;
 
 	return irc_command_whois("whois", p, s, NULL, 0);
 }
@@ -1804,12 +1849,13 @@ int irc_plugin_init(int prio)
 	/* TODO 
 	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL);   q admin
 	*/
-	command_add(&irc_plugin, "irc:ban",  "uUw uU",        irc_command_ban, 0, NULL);
-	command_add(&irc_plugin, "irc:kick", "uUw uU ?",        irc_command_kick, 0, NULL);
-	command_add(&irc_plugin, "irc:kickban", "uUw uU ?", irc_command_kickban, 0, NULL);
-	command_add(&irc_plugin, "irc:bankick", "uUw uU ?", irc_command_kickban, 0, NULL);
-	command_add(&irc_plugin, "irc:invite", "uUw uUw", irc_command_invite, 0, NULL);
-	command_add(&irc_plugin, "irc:who", "uUw", irc_command_who, 0, NULL);
+	command_add(&irc_plugin, "irc:ban",  "uUw uU",		irc_command_ban, 0, NULL); 
+	command_add(&irc_plugin, "irc:kick", "uUw uU ?",	irc_command_kick, 0, NULL);
+	command_add(&irc_plugin, "irc:kickban", "uUw uU ?",	irc_command_kickban, 0, NULL);
+	command_add(&irc_plugin, "irc:bankick", "uUw uU ?",	irc_command_kickban, 0, NULL);
+	command_add(&irc_plugin, "irc:unban",  "uUw uU",	irc_command_unban, 0, NULL); 
+	command_add(&irc_plugin, "irc:invite", "uUw uUw",	irc_command_invite, 0, NULL);
+	command_add(&irc_plugin, "irc:who", "uUw",		irc_command_who, 0, NULL);
 
 /*
 	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL);   q map
@@ -1943,6 +1989,7 @@ static int irc_theme_init()
 	format_add("irc_joined", _("%> %Y%2%n has joined %4\n"), 1);
 	format_add("irc_joined_you", _("%> %RYou%n have joined %4\n"), 1);
 	format_add("irc_left", _("%> %g%2%n has left %4 (%5)\n"), 1);
+	format_add("irc_left_you", _("%> %RYou%n have left %4 (%5)\n"), 1);
 	format_add("irc_kicked", _("%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"), 1);
 	format_add("irc_kicked_you", _("%> You have been kicked out by %R%3%n from %5 (%6)\n"), 1);
 	format_add("irc_quit", _("%> %Y%2%n has quit irc (%4)\n"), 1);

@@ -332,11 +332,12 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 
 int irc_sync_channel(session_t *s, irc_private_t *j, channel_t *p) 
 {
-	p->syncmode = 1;
+	p->syncmode = 2;
 	/* to ma sie rownac ile ma byc roznych syncow narazie tylko WHO
 	 * ale moze bedziemy syncowac /mode +b, +e, +I) */
 	gettimeofday(&(p->syncstart), NULL);
 	irc_write(j, "WHO %s\r\n", p->name+4);
+	irc_write(j, "MODE %s +b\r\n", p->name+4);
 	return 0;
 }
 
