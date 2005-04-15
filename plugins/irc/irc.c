@@ -1324,6 +1324,21 @@ COMMAND(irc_command_topic)
 	return 0;
 }
 
+COMMAND(irc_command_who)
+{
+	irc_private_t *j = irc_private(session);
+	char **mp, *chan;
+
+	if (!(chan=irc_getchan(session, params, name,
+					&mp, 0, IRC_GC_CHAN)))
+		return -1;
+
+	irc_write(j, "WHO %s\r\n", chan+4);
+
+	xfree(chan);
+	return 0;
+}
+
 COMMAND(irc_command_invite)
 {
 	irc_private_t *j = irc_private(session);
@@ -1794,12 +1809,13 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:kickban", "uUw uU ?", irc_command_kickban, 0, NULL);
 	command_add(&irc_plugin, "irc:bankick", "uUw uU ?", irc_command_kickban, 0, NULL);
 	command_add(&irc_plugin, "irc:invite", "uUw uUw", irc_command_invite, 0, NULL);
+	command_add(&irc_plugin, "irc:who", "uUw", irc_command_who, 0, NULL);
+
 /*
 	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL);   q map
 	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); V q links
 	command_add(&irc_plugin, "irc:oper", "",	NULL, 0, NULL);   q oper %nick %pass
 	command_add(&irc_plugin, "irc:trace", "",	NULL, 0, NULL);   q trace %...
-	command_add(&irc_plugin, "irc:who", "",		NULL, 0, NULL); V q who %...
 	command_add(&irc_plugin, "irc:stats", "\"STATS\" ?",irc_command_quote, 0, NULL); V q stats
 	command:add(&irc_plugin, "irc:list", .....)			V q list 
 	*/
