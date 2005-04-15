@@ -1324,6 +1324,27 @@ COMMAND(irc_command_topic)
 	return 0;
 }
 
+COMMAND(irc_command_invite)
+{
+	irc_private_t *j = irc_private(session);
+	char **mp, *chan;
+
+	if (!(chan=irc_getchan(session, params, name,
+					&mp, 0, IRC_GC_CHAN)))
+		return -1;
+
+	if (!(*mp)) {
+		printq("not_enough_params", name);
+		xfree(chan);
+		return -1;
+	}
+	irc_write(j, "INVITE %s %s\r\n", *mp, chan+4);
+
+	irc_getchan_free(mp);
+	xfree(chan);
+	return 0;
+}
+
 COMMAND(irc_command_kick)
 {
 	irc_private_t *j = irc_private(session);
@@ -1768,14 +1789,14 @@ int irc_plugin_init(int prio)
 	/* TODO 
 	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL);   q admin
 	*/
-	command_add(&irc_plugin, "irc:ban",  "uUw uU",        irc_command_ban, 0, NULL); 
+	command_add(&irc_plugin, "irc:ban",  "uUw uU",        irc_command_ban, 0, NULL);
 	command_add(&irc_plugin, "irc:kick", "uUw uU ?",        irc_command_kick, 0, NULL);
 	command_add(&irc_plugin, "irc:kickban", "uUw uU ?", irc_command_kickban, 0, NULL);
 	command_add(&irc_plugin, "irc:bankick", "uUw uU ?", irc_command_kickban, 0, NULL);
+	command_add(&irc_plugin, "irc:invite", "uUw uUw", irc_command_invite, 0, NULL);
 /*
 	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL);   q map
 	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); V q links
-	command_add(&irc_plugin, "irc:invite", "",	NULL, 0, NULL);   q invite [who] <kanal>
 	command_add(&irc_plugin, "irc:oper", "",	NULL, 0, NULL);   q oper %nick %pass
 	command_add(&irc_plugin, "irc:trace", "",	NULL, 0, NULL);   q trace %...
 	command_add(&irc_plugin, "irc:who", "",		NULL, 0, NULL); V q who %...

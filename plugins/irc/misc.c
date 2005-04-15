@@ -531,7 +531,7 @@ IRC_COMMAND(irc_c_error)
 			break;
 
 		case 341:
-			print_window(dest, s, 0, irccommands[ecode].name, session_name(s), param[2], param[4]);
+			print_window(dest, s, 0, irccommands[ecode].name, session_name(s), param[3], param[4]);
 			break;
 		case 376:
 			/* first we join */

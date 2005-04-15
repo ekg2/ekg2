@@ -192,3 +192,7 @@ quote
 	parametry: [komendy]
 	krotki opis: wysy³a bezpo¶rednio tekst do serwera IRC
 
+invite
+	parametry: <kana³> [nick]
+	krótki opis: zaprasza u¿ytkownika na kana³
+
