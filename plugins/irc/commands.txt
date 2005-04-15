@@ -200,6 +200,6 @@ who
 	parametry: <kana³/maska>
 	krótki opis: wy¶wietla dane o u¿ytkownikach z danego kana³u/pasuj±cych do maski
 
-        Je¶li poleceniu nie podane zostan± ¿adne polecenia, to wy¶wietleni
-        zostan± u¿ytkownicy z bie¿±cego kana³u.
+	Je¶li poleceniu nie podane zostan± ¿adne polecenia, to wy¶wietleni
+	zostan± u¿ytkownicy z bie¿±cego kana³u.
 
