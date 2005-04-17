@@ -501,7 +501,11 @@ void jabber_handle(void *data, xmlnode_t *n)
                                                         u.nickname = xstrdup(u.uid);
 
                                                 u.status = xstrdup(EKG_STATUS_NA);
-                                                //XXX grupy
+						
+						xmlnode_t *group = xmlnode_find_child(item,"group");
+						for (; group ; group = group->next ) {
+						    ekg_group_add(&u, jabber_unescape(group->data));
+						}
 
 
                                                 /* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;

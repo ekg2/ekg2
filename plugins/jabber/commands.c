@@ -585,6 +585,8 @@ COMMAND(jabber_command_modify)
 	char *uid = NULL, *nickname = NULL;
 	char *tmp, **argv = NULL;
 	int ret = 0, i;
+	userlist_t *u;
+	list_t m;
 
         if (!session_check(session, 1, "jid")) {
                 printq("invalid_session");
@@ -600,11 +602,60 @@ COMMAND(jabber_command_modify)
                 printq("not_enough_params", name);
                 return -1;
         }
-	
+
+	if (!(u = userlist_find(session, params[0]))) {
+		if (!xstrcasecmp(name,"add")) {
+			u = xmalloc(sizeof(userlist_t));
+			u->groups = NULL;
+		} else {
+			printq("user_not_found", params[0]);
+			return -1;
+		}
+	}
+
+
 	if (params[1]) {
 		argv = array_make(params[1], " \t", 0, 1, 1);
 
 		for (i = 0; argv[i]; i++) {
+
+			if (match_arg(argv[i], 'g', "group", 2) && argv[i + 1]) {
+				char **tmp = array_make(argv[++i], ",", 0, 1, 1);
+				int x, off;	/* je¶li zaczyna siê od '@', pomijamy pierwszy znak */
+
+				for (x = 0; tmp[x]; x++)
+					switch (*tmp[x]) {
+						case '-':
+							off = (tmp[x][1] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
+
+							if (ekg_group_member(u, tmp[x] + 1 + off)) {
+								ekg_group_remove(u, tmp[x] + 1 + off);
+							} else {
+								printq("group_member_not_yet", format_user(session, u->uid), tmp[x] + 1);
+							}
+							break;
+						case '+':
+							off = (tmp[x][1] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
+
+							if (!ekg_group_member(u, tmp[x] + 1 + off)) {
+								ekg_group_add(u, tmp[x] + 1 + off);
+							} else {
+								printq("group_member_already", format_user(session, u->uid), tmp[x] + 1);
+							}
+							break;
+						default:
+							off = (tmp[x][0] == '@' && xstrlen(tmp[x]) > 1) ? 1 : 0;
+
+							if (!ekg_group_member(u, tmp[x] + off)) {
+								ekg_group_add(u, tmp[x] + off);
+							} else {
+								printq("group_member_already", format_user(session, u->uid), tmp[x]);
+							}
+					}
+
+				array_free(tmp);
+				continue;
+			}
 
 			if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1])
 				nickname = jabber_escape(argv[++i]);
@@ -617,7 +668,8 @@ COMMAND(jabber_command_modify)
 		
 		if (!nickname && params[1])
 			nickname = jabber_escape(params[1]);
-	}
+	} else if (!nickname && params[0])
+			nickname = jabber_escape(params[0]);
 
 	if (!(uid = get_uid(session, params[0]))) 
 		uid = (char *) params[0]; 
@@ -633,10 +685,22 @@ COMMAND(jabber_command_modify)
 
 	jabber_write(j, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
 
+	/* nickname always should be set */
 	if (nickname)
-		jabber_write(j, "<item jid=\"%s\" name=\"%s\"/>", uid, nickname);
+		jabber_write(j, "<item jid=\"%s\" name=\"%s\"%s>", uid, nickname, (u->groups ? "" : "/"));
 	else
-		jabber_write(j, "<item jid=\"%s\"/>", uid);
+		jabber_write(j, "<item jid=\"%s\"%s>", uid, (u->groups ? "" : "/"));
+
+	for (m = u->groups; m ; m = m->next) {
+		struct group *g = m->data;
+		char *gname = jabber_escape(g->name);
+
+		jabber_write(j,"<group>%s</group>", gname);
+		xfree(gname);
+	}
+
+	if (u->groups)
+		jabber_write(j,"</item>");
 
 	jabber_write(j, "</query></iq>");
 
@@ -646,6 +710,7 @@ COMMAND(jabber_command_modify)
 		tmp = saprintf("/auth --request jid:%s", uid);
 		ret = command_exec(target, session, tmp, 0);
 		xfree(tmp);
+		xfree(u);
 	}
 	
 	return (ret ? ret : 0);
@@ -850,7 +915,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:ffc", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:msg", "uU ?", jabber_command_msg, 0, NULL);
 	command_add(&jabber_plugin, "jid:modify", "Uu ?", jabber_command_modify, 0, 
-	  "-n --nickname");
+	  "-n --nickname -g --group");
 	command_add(&jabber_plugin, "jid:passwd", "?", jabber_command_passwd, 0, NULL);
 	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, 0, NULL);
 	command_add(&jabber_plugin, "jid:ver", "?u", jabber_command_ver, 0, NULL);
