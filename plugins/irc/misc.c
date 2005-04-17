@@ -1054,7 +1054,7 @@ IRC_COMMAND(irc_c_part)
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1)
 		:xstrdup("no reason"):xstrdup("no reason");
 	
-	print_window(channel, s, 0, (me)?"irc_left":"irc_left_you", session_name(s),
+	print_window(channel, s, 0, (!me)?"irc_left":"irc_left_you", session_name(s),
 			param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]),
 				coloured);
 	
