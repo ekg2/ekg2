@@ -10,5 +10,5 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/jabber/
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/jabber/commands.txt
+	$(INSTALL) -m 644 commands.txt session.txt vars.txt $(DESTDIR)$(pkgdatadir)/plugins/jabber/
 
