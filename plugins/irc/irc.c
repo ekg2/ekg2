@@ -985,56 +985,48 @@ COMMAND(irc_command_quote)
 COMMAND(irc_command_names)
 {
 	irc_private_t *j = irc_private(session);
-	list_t t1, t2;
+	list_t t1;
 	people_t *per;
 	people_chan_t *chan;
         int count = 1;
-	char * mode = NULL;
-	char * buf = xmalloc(150);
+	char *mode=NULL, *buf = xmalloc(1500), **mp, *channame;
 
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
+	if (!(channame=irc_getchan(session, params, name, 
+					&mp, 0, IRC_GC_CHAN))) 
 		return -1;
-	}
-
-	if (!target) {
-		printq("wrong_window");
-		return -1;
-	}
 
 	for (t1 = j->people; t1; t1=t1->next) {
-		per = (people_t *)t1->data;
-		for (t2 = per->channels; t2; t2=t2->next)
+		per=(people_t *)t1->data;
+		if ((chan = irc_find_person_chan(per->channels, channame)))
 		{
-			chan = (people_chan_t *)t2->data;
-			if (!xstrcmp( chan->chanp->name, target)) {
-			   switch (chan->mode) {
-			      case 0:
-				 mode = " ";
-				 break;
-			      case 1:
-				 mode = "+";
-				 break;
-			      case 2:
-				 mode = "@";
-				 break;
-			   }
+			switch (chan->mode) {
+				case 0:
+					mode = " "; break;
+				case 1:
+					mode = "+"; break;
+				case 2:
+					mode = "@"; break;
+				default:
+					mode = "?"; break;
+					
+			}
+		
+			strcat(buf, format_string(format_find("IRC_NAMES"), mode, (per->nick + 4)));
 
-			   sprintf(buf, "%s %s", buf, format_string(format_find("IRC_NAMES"), mode, (per->nick + 4)));
-
-			   count++;
-			   if (count == 7) {
-				   printq("generic", buf);
-				   xstrcpy(buf, "");
-				   count = 1;
-			   }
-                        }
+			count++;
+			if (count == 7) {
+				printq("generic", buf);
+				xstrcpy(buf, "");
+				count = 1;
+			}
 		}
 	}
 	if (count != 7) {
 		printq("generic", buf);
 	}
 
+	irc_getchan_free(mp);
+	xfree (channame);
 	xfree(buf);
 	return 0;
 }
@@ -1870,8 +1862,8 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:nick", "?",	irc_command_nick, 0, NULL);
 	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 0, NULL);
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 0, NULL);
-	command_add(&irc_plugin, "irc:n", NULL,		irc_command_names, 0, NULL);
-	command_add(&irc_plugin, "irc:names", NULL,	irc_command_names, 0, NULL);
+	command_add(&irc_plugin, "irc:n", "w?",		irc_command_names, 0, NULL);
+	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 0, NULL);
 	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 0, NULL);
 	command_add(&irc_plugin, "irc:msg", "uUw ?",	irc_command_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:notice", "uUw ?",	irc_command_msg, 0, NULL);
@@ -2133,6 +2125,8 @@ static int irc_theme_init()
 	format_add("IRC_MODE_CHAN_NEW", _("%> %2/%4 sets mode [%5]\n"), 1);
 	format_add("IRC_MODE_CHAN", _("%> %2 mode is [%3]\n"), 1);
 	format_add("IRC_MODE", _("%> (%1) %2 set mode %3 on You\n"), 1);
+	
+	format_add("IRC_NAMES", _("%K[%W%1%w%[9]2%K]%n"), 1);
 
 	format_add("IRC_INVITE", _("%> %W%2%n invites you to %W%5%n\n"), 1);
 	format_add("IRC_PINGPONG", _("%) (%1) ping/pong %c%2%n\n"), 1);
@@ -2140,9 +2134,6 @@ static int irc_theme_init()
 	format_add("IRC_NEWNICK", _("%> %g%2%n is now known as %G%4%n\n"), 1);
 	format_add("IRC_TRYNICK", _("%> Will try to use %G%2%n instead\n"), 1);
 	format_add("IRC_CHANNEL_SYNCED", "%> Join to %W%2%n was synced in %W%3.%4%n secs", 1);
-
-        format_add("IRC_NAMES", _("%K[%W%1%w%[9]2%K]%n"), 1);
-        format_add("wrong_window", _("Wrong window"), 1);
 
 	return 0;
 }

@@ -941,7 +941,7 @@ IRC_COMMAND(irc_c_msg)
 		/* TODO zda³oby siê jakie¶ sprawdzanie secure, ale nie wiem jak reagowaæ... */
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
-		debug("<%c%s/%d%s> %s\n", perchn?*(perchn->sign):' ', !!perchn, param[0]+1, param[2], OMITCOLON(param[3]));
+		debug("<%c%s/%d%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, !!perchn, param[2], OMITCOLON(param[3]));
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
 		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
