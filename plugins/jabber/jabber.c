@@ -964,7 +964,7 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
 #ifdef HAVE_GNUTLS
         if (use_ssl) {
-                int ret;
+                int ret = 0;
                 gnutls_certificate_allocate_credentials(&(j->xcred));
                 /* XXX - ~/.ekg/certs/server.pem */
                 gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
