@@ -630,15 +630,19 @@ void jabber_handle(void *data, xmlnode_t *n)
                         int port = 0;
                         time_t when = xitem ? jabber_try_xdelay(xitem, jabber_attr(xitem->atts, "xmlns")) : time(NULL);
                         char **res_arr = array_make(from, "/", 2, 0, 0);
+			char known_status = 0;
 
                         if (nshow)
                                 status = jabber_unescape(nshow->data);
-                        else
+                        else {
                                 status = xstrdup(EKG_STATUS_AVAIL);
+				known_status = 1;
+			}
 
                         if (!xstrcmp(status, "na") || !xstrcmp(type, "unavailable")) {
                                 xfree(status);
                                 status = xstrdup(EKG_STATUS_NA);
+				known_status = 1;
                         }
 
                         if (nstatus)
@@ -652,6 +656,7 @@ void jabber_handle(void *data, xmlnode_t *n)
                                 xfree(etext);
                                 xfree(status);
                                 status = xstrdup(EKG_STATUS_ERROR);
+				known_status = 1;
                         }
 
                         session = xstrdup(session_uid_get(s));
@@ -669,6 +674,18 @@ void jabber_handle(void *data, xmlnode_t *n)
                                         ut->resource = xstrdup(res_arr[1]);
                         }
                         array_free(res_arr);
+
+			if (!known_status && 
+					xstrcasecmp(status, EKG_STATUS_AWAY) &&
+					xstrcasecmp(status, EKG_STATUS_INVISIBLE) &&
+					xstrcasecmp(status, EKG_STATUS_XA) &&
+					xstrcasecmp(status, EKG_STATUS_DND) &&
+					xstrcasecmp(status, EKG_STATUS_FREE_FOR_CHAT) &&
+					xstrcasecmp(status, EKG_STATUS_BLOCKED)) {
+				debug("[jabber] Unknown presence: %s from %s. Please report!\n", status, uid);
+				xfree(status);
+				status = xstrdup(EKG_STATUS_AVAIL);
+			};
 
                         query_emit(NULL, "protocol-status", &session, &uid, &status, &descr, &host, &port, &when, NULL);
 
