@@ -1,10 +1,11 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2002-2004 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2002-2005 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Wojtek Bojdo³ <wojboj@htcon.pl>
  *                          Pawe³ Maziarz <drg@infomex.pl>
  *			    Piotr Kupisiewicz <deli@rzepaknet.us>
+ *			    Leszek Krupiñski <leafnode@pld-linux.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -503,6 +504,7 @@ group_cleanup:
 		int count = 0;
 		list_t l = (!all) ? session_current->userlist : sorted_all;
 		const char *footer_status = NULL;
+		fstring_t *string;
 		char *line;
 		char tmp[100];
 
@@ -513,7 +515,6 @@ group_cleanup:
 			userlist_t *u = l->data;
 			const char *format;
 			char *short_status;
-			fstring_t *string;
 
 			if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2) 
 				continue;
@@ -542,8 +543,12 @@ group_cleanup:
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
 				format = format_find(tmp);
+                                line = format_string(format);
+                                string = fstring_new(line);
 				if (xstrcmp(format, "") && count_all >= contacts_index) 
-					ncurses_backlog_add(w, fstring_new(format_string(format)));
+					ncurses_backlog_add(w, string);
+                                xfree(string);
+                                xfree(line);
 				footer_status = u->status;
 			}
 	
@@ -575,8 +580,13 @@ group_cleanup:
 			snprintf(tmp, sizeof(tmp), "contacts_%s_footer", footer_status);
 			format = format_find(tmp);
 		
-			if (xstrcmp(format, ""))
-				ncurses_backlog_add(w, fstring_new(format_string(format)));
+			if (xstrcmp(format, "")) {
+                                line = format_string(format);
+                                string = fstring_new(line);
+				ncurses_backlog_add(w, string);
+                                xfree(string);
+                                xfree(line);
+                        }
 		}
 
 		if (contacts_nosort) {
@@ -832,4 +842,5 @@ void ncurses_contacts_new(window_t *w)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=0 noexpandtab sw=8
  */
