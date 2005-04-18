@@ -103,9 +103,8 @@ static void binding_toggle_input(const char *arg)
 			string_append(s, "\r\n");
 		}
 
-		memcpy(line, s->str, xstrlen(s->str));
+		tmp = xstrdup(s->str);
 		string_free(s, 1);
-		tmp = xstrdup(line);
 
                 if (history[0] != line)
                         xfree(history[0]);
