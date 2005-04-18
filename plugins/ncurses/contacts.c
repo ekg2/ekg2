@@ -547,7 +547,6 @@ group_cleanup:
                                 string = fstring_new(line);
 				if (xstrcmp(format, "") && count_all >= contacts_index) 
 					ncurses_backlog_add(w, string);
-                                xfree(string);
                                 xfree(line);
 				footer_status = u->status;
 			}
@@ -584,7 +583,6 @@ group_cleanup:
                                 line = format_string(format);
                                 string = fstring_new(line);
 				ncurses_backlog_add(w, string);
-                                xfree(string);
                                 xfree(line);
                         }
 		}
