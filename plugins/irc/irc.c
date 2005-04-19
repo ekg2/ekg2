@@ -1008,9 +1008,8 @@ COMMAND(irc_command_names)
 					mode = "@"; break;
 				default:
 					mode = "?"; break;
-					
 			}
-		
+
 			strcat(buf, format_string(format_find("IRC_NAMES"), mode, (per->nick + 4)));
 
 			count++;
@@ -1021,7 +1020,7 @@ COMMAND(irc_command_names)
 			}
 		}
 	}
-	if (count != 7) {
+	if (count != 7 && count != 1) {
 		printq("generic", buf);
 	}
 
