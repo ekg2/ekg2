@@ -378,6 +378,7 @@ int ncurses_contacts_update(window_t *w)
 		}
 
 		if (contacts_group_index > 0) {
+                        all = config_contacts_groups_all_sessions ? 1 : 0;
 			group = groups[contacts_group_index - 1];
 			if (*group == '@')
 				group++;
@@ -536,9 +537,12 @@ group_cleanup:
 				continue;
 			}
 	
-			if (group && !ekg_group_member(u, group))
-				continue;
-			
+			if (group && (!u->private || u->private!=2)) {
+				userlist_t *tmp = userlist_find(u->private ? u->private : session_current, u->uid);
+				if ((group[0]=='!' && ekg_group_member(tmp, group+1)) ||
+						(group[0]!='!' && !ekg_group_member(tmp, group)))
+					continue;
+			}
 			
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);

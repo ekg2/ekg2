@@ -359,6 +359,7 @@ void ncurses_setvar_default()
 
 	config_contacts_options = NULL;   /* opcje listy kontaktów */
 	config_contacts_groups = NULL;    /* grupy listy kontaktów */
+	config_contacts_groups_all_sessions = 0;    /* all sessions ? */
 	config_contacts_metacontacts_swallow = 1;
 
 	config_backlog_size = 1000;         /* maksymalny rozmiar backloga */
@@ -468,6 +469,7 @@ int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	variable_add(&ncurses_plugin, "contacts", VAR_INT, 1, &config_contacts, ncurses_contacts_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, "contacts_groups", VAR_STR, 1, &config_contacts_groups, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, "contacts_groups_all_sessons", VAR_BOOL, 1, &config_contacts_groups_all_sessions, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "contacts_options", VAR_STR, 1, &config_contacts_options, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "contacts_size", VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "contacts_metacontacts_swallow", VAR_BOOL, 1, &config_contacts_metacontacts_swallow, ncurses_all_contacts_changed, NULL, dd_contacts);

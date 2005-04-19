@@ -41,7 +41,15 @@ contacts_groups
 	domy¶lna warto¶æ: brak
 
 	oddzielone przecinkiem grupy, które mo¿na prze³±czaæ w li¶cie
-	kontaktów klawiszem F4. domy¶lnie wy¶wietlani s± wszyscy u¿ytkownicy.
+	kontaktów klawiszem F4. Aby wy¶wietliæ u¿ytkowników z poza grupy: !grupa.
+	domy¶lnie wy¶wietlani s± wszyscy u¿ytkownicy.
+
+contacts_groups_all_sessions
+	typ: bool
+	domy¶lna warto¶æ: 0
+
+	Je¶li jest w³±czona, przy wy¶wietlaniu kontaktów z grupy brane s± pod
+	uwagê wszystkie sesje.
 
 contacts_metacontacts_swallow
 	typ: bool

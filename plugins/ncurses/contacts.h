@@ -3,6 +3,7 @@
 
 int config_contacts_size;
 int config_contacts;
+int config_contacts_groups_all_sessions;
 char *config_contacts_options;
 char *config_contacts_groups;
 int config_contacts_metacontacts_swallow;
