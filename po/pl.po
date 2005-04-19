@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-04-19 08:54+0200\n"
+"POT-Creation-Date: 2005-04-19 09:15+0200\n"
 "PO-Revision-Date: 2005-01-29 12:32+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -1410,8 +1410,8 @@ msgid "%) (%2) Finished query with %T%1%n\n"
 msgstr "%) (%2) Zakoñczono rozmowê z %T%1%n\n"
 
 #: ekg/themes.c:1494
-msgid "%! Query with %T%1%n already in window no %T%2%n\n"
-msgstr "%! Rozmowa z %T%1%n jest ju¿ prowadzona w okienku nr %T%2%n\n"
+msgid "%! (%3) Query with %T%1%n already in window no %T%2%n\n"
+msgstr "%! (%3) Rozmowa z %T%1%n jest ju¿ prowadzona w okienku nr %T%2%n\n"
 
 #: ekg/themes.c:1497
 msgid "%! No events\n"
@@ -1510,8 +1510,8 @@ msgid "%) %1: floating %4x%5 in %2,%3 %T%6%n\n"
 msgstr "%) %1: p³ywaj±ce %4x%5 w %2,%3 %T%6%n\n"
 
 #: ekg/themes.c:1533
-msgid "%) Query with %T%2%n started in %T%1%n\n"
-msgstr "%) Rozmowa z %T%2%n rozpoczêta w oknie %T%1%n\n"
+msgid "%) (%3) Query with %T%2%n started in %T%1%n\n"
+msgstr "%) (%3) Rozmowa z %T%2%n rozpoczêta w oknie %T%1%n\n"
 
 #: ekg/themes.c:1534
 msgid "%! Can't close status window!\n"

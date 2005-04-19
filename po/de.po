@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ekg2 CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-04-19 08:54+0200\n"
+"POT-Creation-Date: 2005-04-19 09:15+0200\n"
 "PO-Revision-Date: 2005-01-05 20:19+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polish\n"
@@ -1315,7 +1315,7 @@ msgid "%) (%2) Finished query with %T%1%n\n"
 msgstr ""
 
 #: ekg/themes.c:1494
-msgid "%! Query with %T%1%n already in window no %T%2%n\n"
+msgid "%! (%3) Query with %T%1%n already in window no %T%2%n\n"
 msgstr ""
 
 #: ekg/themes.c:1497
@@ -1415,7 +1415,7 @@ msgid "%) %1: floating %4x%5 in %2,%3 %T%6%n\n"
 msgstr ""
 
 #: ekg/themes.c:1533
-msgid "%) Query with %T%2%n started in %T%1%n\n"
+msgid "%) (%3) Query with %T%2%n started in %T%1%n\n"
 msgstr ""
 
 #: ekg/themes.c:1534

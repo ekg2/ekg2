@@ -1491,7 +1491,7 @@ void theme_init()
         format_add("query_started", _("%) (%2) Query with %T%1%n started\n"), 1);
         format_add("query_started_window", _("%) Press %TAlt-G%n to ignore, %TAlt-K%n to close window\n"), 1);
         format_add("query_finished", _("%) (%2) Finished query with %T%1%n\n"), 1);
-        format_add("query_exist", _("%! Query with %T%1%n already in window no %T%2%n\n"), 1);
+        format_add("query_exist", _("%! (%3) Query with %T%1%n already in window no %T%2%n\n"), 1);
 
         /* zdarzenia */
         format_add("events_list_empty", _("%! No events\n"), 1);
@@ -1530,7 +1530,7 @@ void theme_init()
         format_add("window_list_query", _("%) %1: query with %T%2%n\n"), 1);
         format_add("window_list_nothing", _("%) %1 no query\n"), 1);
         format_add("window_list_floating", _("%) %1: floating %4x%5 in %2,%3 %T%6%n\n"), 1);
-        format_add("window_id_query_started", _("%) Query with %T%2%n started in %T%1%n\n"), 1);
+        format_add("window_id_query_started", _("%) (%3) Query with %T%2%n started in %T%1%n\n"), 1);
         format_add("window_kill_status", _("%! Can't close status window!\n"), 1);
 	format_add("window_cannot_move_status", _("%! Can't move status window!\n"), 1);
 	format_add("window_invalid_move", _("%! Window %T%1%n can't be moved\n"), 1);
