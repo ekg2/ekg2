@@ -75,13 +75,15 @@ check_conn
 	
 	Sprawdza czy podana osoba jest po³±czona. Klient tej osoby musi 
 	obs³ugiwaæ obrazki. Przetestowane na GG 6.0 dla Windows. W przypadku 
-	klienta TLEN, kadu, ekg i ekg2 komenda nie dzia³a prawid³owo (osobie 
-	któr± sprawdzamy pojawia siê pusta wiadomo¶æ). Dziêki tej funkcji 
-	mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna jest 
-	niewidoczna. Je¿eli brak aliasu jako parametr sprawdzana jest osoba,
+	niektórych klientów jak np. tlen, ekg2 komenda nie dzia³a prawid³owo 
+	(osobie któr± sprawdzamy pojawia siê pusta wiadomo¶æ). Dziêki tej 
+	funkcji mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna 
+	jest niewidoczna. Je¿eli brak aliasu jako parametr sprawdzana jest osoba,
 	z któr± rozmowa znajdujê siê w aktualnym okienku.
 	
-	Po 15 sekundach u¿ytkownik uznawany jest za niepo³±czonego.
+	Po 15 sekundach u¿ytkownik uznawany jest za niepo³±czonego. W momencie
+	gdy u¿ytkownik zostanie po³±czony pojawi siê równie¿ komunikat
+	informuj±cy o tym.
 
 connect
 	parametry:  

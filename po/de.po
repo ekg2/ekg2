@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ekg2 CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-20 12:55+0100\n"
+"POT-Creation-Date: 2005-04-19 08:54+0200\n"
 "PO-Revision-Date: 2005-01-05 20:19+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polish\n"
@@ -1687,252 +1687,264 @@ msgstr ""
 msgid "%> Plugins prio setted to default\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1164
+#: plugins/gg/gg.c:1206
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1165
+#: plugins/gg/gg.c:1207
 msgid "%> Token: %T%1%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1167
+#: plugins/gg/gg.c:1209
 msgid "%! Error getting token: %1\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1168
+#: plugins/gg/gg.c:1210
 msgid "%! Token getting timeout\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1169
+#: plugins/gg/gg.c:1211
 msgid "%! Your operating system doesn't support tokens\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1170
+#: plugins/gg/gg.c:1212
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1171
-msgid "%> User %T%1%n is connected\n"
+#: plugins/gg/gg.c:1213
+msgid "%> (%1) User %T%2%n is connected\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1172
-msgid "%> User %T%1%n is not connected\n"
+#: plugins/gg/gg.c:1214
+msgid "%> (%1) User %T%2%n is not connected\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1173
+#: plugins/gg/gg.c:1215
 msgid "%! Error sending image\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1174
+#: plugins/gg/gg.c:1216
 msgid "%> Image sent properly\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1575
+#: plugins/irc/irc.c:2035
 msgid "%> %Y%2%n has joined %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1576
+#: plugins/irc/irc.c:2036
 msgid "%> %RYou%n have joined %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1577
+#: plugins/irc/irc.c:2037
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1578
+#: plugins/irc/irc.c:2038
+msgid "%> %RYou%n have left %4 (%5)\n"
+msgstr ""
+
+#: plugins/irc/irc.c:2039
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1579
+#: plugins/irc/irc.c:2040
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1580
+#: plugins/irc/irc.c:2041
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1581
+#: plugins/irc/irc.c:2042
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1582
+#: plugins/irc/irc.c:2043
 msgid "%> %y%e* %2%n %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1583
+#: plugins/irc/irc.c:2044
 msgid "%> %Y%e* %2%n %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1584
+#: plugins/irc/irc.c:2045
 msgid "%> %y%h* %2%n %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1585
+#: plugins/irc/irc.c:2046
 msgid "%> %Y%h* %2%n %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1586
+#: plugins/irc/irc.c:2047
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1587
+#: plugins/irc/irc.c:2048
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1588
+#: plugins/irc/irc.c:2049
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1603
+#: plugins/irc/irc.c:2064
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1632
+#: plugins/irc/irc.c:2099
 msgid "%G||%n away     : %2 - %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1634 plugins/irc/irc.c:1637
+#: plugins/irc/irc.c:2101 plugins/irc/irc.c:2104
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n realname : %6\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1640
+#: plugins/irc/irc.c:2113
 msgid "%G||%n %|channels : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1641
+#: plugins/irc/irc.c:2114
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1642
+#: plugins/irc/irc.c:2115
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1643
+#: plugins/irc/irc.c:2116
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1644 plugins/irc/irc.c:1645
+#: plugins/irc/irc.c:2117 plugins/irc/irc.c:2118
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1647
+#: plugins/irc/irc.c:2120
 msgid "%> Topic %2: %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1649
+#: plugins/irc/irc.c:2122
 msgid "%> set by %2 on %4"
 msgstr ""
 
-#: plugins/irc/irc.c:1650
+#: plugins/irc/irc.c:2123
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1651
+#: plugins/irc/irc.c:2124
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1652
+#: plugins/irc/irc.c:2125
 msgid "%> %2/%4 sets mode [%5]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1653
+#: plugins/irc/irc.c:2126
 msgid "%> %2 mode is [%3]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1654
+#: plugins/irc/irc.c:2127
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1656
+#: plugins/irc/irc.c:2129
+msgid "%K[%W%1%w%[9]2%K]%n"
+msgstr ""
+
+#: plugins/irc/irc.c:2131
+msgid "%> %W%2%n invites you to %W%5%n\n"
+msgstr ""
+
+#: plugins/irc/irc.c:2132
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1657
+#: plugins/irc/irc.c:2133
 msgid "%> You are now known as %G%3%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1658
+#: plugins/irc/irc.c:2134
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:1659
+#: plugins/irc/irc.c:2135
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:407 plugins/jabber/jabber.c:408
-#: plugins/jabber/jabber.c:409 plugins/jabber/jabber.c:410
-#: plugins/jabber/jabber.c:411 plugins/jabber/jabber.c:412
-#: plugins/jabber/jabber.c:435 plugins/jabber/jabber.c:436
-#: plugins/jabber/jabber.c:437 plugins/jabber/jabber.c:438
-#: plugins/jabber/jabber.c:467
+#: plugins/jabber/jabber.c:422 plugins/jabber/jabber.c:423
+#: plugins/jabber/jabber.c:424 plugins/jabber/jabber.c:425
+#: plugins/jabber/jabber.c:426 plugins/jabber/jabber.c:427
+#: plugins/jabber/jabber.c:450 plugins/jabber/jabber.c:451
+#: plugins/jabber/jabber.c:452 plugins/jabber/jabber.c:453
+#: plugins/jabber/jabber.c:482
 msgid "unknown"
 msgstr ""
 
-#: plugins/jabber/jabber.c:462
+#: plugins/jabber/jabber.c:477
 #, c-format
 msgid "%03dd %02dh %02dm %02ds ago"
 msgstr ""
 
-#: plugins/jabber/jabber.c:465
+#: plugins/jabber/jabber.c:480
 msgid "very long ago"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1061
+#: plugins/jabber/jabber.c:1097
 msgid ""
 "%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/"
 "auth -d %1\" to refuse.%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1062
+#: plugins/jabber/jabber.c:1098
 msgid "%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1063
+#: plugins/jabber/jabber.c:1099
 msgid "%! (%1) Error parsing XML%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1064
+#: plugins/jabber/jabber.c:1100
 msgid "%> (%2) Sent authorisation request to %T%1%n.\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1065
+#: plugins/jabber/jabber.c:1101
 msgid "%> (%2) Authorised %T%1%n.\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1066
+#: plugins/jabber/jabber.c:1102
 msgid "%> (%2) Asked %T%1%n to remove authorisation.\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1067
+#: plugins/jabber/jabber.c:1103
 msgid "%> (%2) Authorisation for %T%1%n revoked.\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1068
+#: plugins/jabber/jabber.c:1104
 msgid "%> (%2) Authorisation for %T%1%n denied.\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1069
+#: plugins/jabber/jabber.c:1105
 msgid "%> (%2) Sent presence probe to %T%1%n.\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1070
+#: plugins/jabber/jabber.c:1106
 msgid "%! (%1) Error connecting to Jabber server%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1071
+#: plugins/jabber/jabber.c:1107
 msgid "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1072
+#: plugins/jabber/jabber.c:1108
 msgid ""
 "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1073
+#: plugins/jabber/jabber.c:1109
 msgid ""
 "%> Jabber ID: %T%1%n\n"
 "%> Client name: %T%2%n\n"
@@ -1940,7 +1952,7 @@ msgid ""
 "%> Operating system: %T%4%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1074
+#: plugins/jabber/jabber.c:1110
 msgid ""
 "%> Jabber ID: %T%1%n\n"
 "%> Full Name: %T%2%n\n"
@@ -1950,27 +1962,27 @@ msgid ""
 "%> Desc: %T%6%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1075
+#: plugins/jabber/jabber.c:1111
 msgid ""
 "%> Jabber ID:  %T%1%n\n"
 "%> Logged out: %T%2%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1076
+#: plugins/jabber/jabber.c:1112
 msgid ""
 "%! (%1) User's resource unknown%n\n"
 "\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1077
+#: plugins/jabber/jabber.c:1113
 msgid "%! (%1) Unable to check version, because %2 is unavailable%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1078
+#: plugins/jabber/jabber.c:1114
 msgid "%> %T%1%n is typing to us ...%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1079
+#: plugins/jabber/jabber.c:1115
 msgid "%! Error initialising charset conversion (%1->%2): %3"
 msgstr ""
 
@@ -2010,51 +2022,47 @@ msgstr ""
 msgid "%! Script have to be in %T%1%n (don't add path)\n"
 msgstr ""
 
-#: plugins/sim/main.c:324
-msgid "%! This function works only in GG protocol\n"
-msgstr ""
-
-#: plugins/sim/main.c:325
+#: plugins/sim/main.c:319
 msgid "%> Please wait, generating keys...\n"
 msgstr ""
 
-#: plugins/sim/main.c:326
+#: plugins/sim/main.c:320
 msgid "%> Keys generated and saved\n"
 msgstr ""
 
-#: plugins/sim/main.c:327
+#: plugins/sim/main.c:321
 msgid "%! Error while generating keys: %1\n"
 msgstr ""
 
-#: plugins/sim/main.c:328
+#: plugins/sim/main.c:322
 msgid "%! You already own a key pair\n"
 msgstr ""
 
-#: plugins/sim/main.c:329
+#: plugins/sim/main.c:323
 msgid "%) Public key %1 removew\n"
 msgstr ""
 
-#: plugins/sim/main.c:330
+#: plugins/sim/main.c:324
 msgid "%! Can find %1's public key\n"
 msgstr ""
 
-#: plugins/sim/main.c:331
+#: plugins/sim/main.c:325
 msgid "%! No public keys\n"
 msgstr ""
 
-#: plugins/sim/main.c:332
+#: plugins/sim/main.c:326
 msgid "%> Received public key from %1\n"
 msgstr ""
 
-#: plugins/sim/main.c:333
+#: plugins/sim/main.c:327
 msgid "%! Error while saving public key: %1\n"
 msgstr ""
 
-#: plugins/sim/main.c:334
+#: plugins/sim/main.c:328
 msgid "%> Sent public key to %1\n"
 msgstr ""
 
-#: plugins/sim/main.c:335
+#: plugins/sim/main.c:329
 msgid "%! Error sending public key\n"
 msgstr ""
 

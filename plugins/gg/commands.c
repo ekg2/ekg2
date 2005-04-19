@@ -1369,12 +1369,10 @@ static void gg_checked_timer_handler(int type, void *data)
 		gg_currently_checked_t *c2 = l->data;
 
 		if (!session_compare(c2->session, c->session) && !xstrcmp(c2->uid, c->uid)) {
-			print("gg_user_is_not_connected", format_user(c->session, c->uid));
-			list_remove(&gg_currently_checked, c, 1);
+			print("gg_user_is_not_connected", session_name(c->session), format_user(c->session, c->uid));
 			return; 
 		}
 	}
-	
 }
 
 COMMAND(gg_command_check_conn)
@@ -1385,6 +1383,20 @@ COMMAND(gg_command_check_conn)
 	gg_currently_checked_t c, *c_timer;
 	const char *par;
 	list_t l;
+
+         struct gg_msg_richtext_format_img {
+                 struct gg_msg_richtext rt;
+                 struct gg_msg_richtext_format f;
+                 struct gg_msg_richtext_image image;
+         }msg;
+ 
+         msg.rt.flag = 2;
+         msg.rt.length = 13;
+         msg.f.position = 0;
+         msg.f.font = 0x80;
+         msg.image.unknown1 = 0x0109;
+         msg.image.size = 20;
+         msg.image.crc32 = GG_CRC32_INVISIBLE;
 
 	if (!session_check(session, 1, "gg")) {
 		printq("invalid_session");
@@ -1412,14 +1424,18 @@ COMMAND(gg_command_check_conn)
 		return -1;
 	}
 
-	if (gg_image_request(g->sess, atoi(u->uid + 3), 1, GG_CRC32_INVISIBLE) == -1)
-		return -1;
+        for (l = gg_currently_checked; l; l = l->next) {
+                gg_currently_checked_t *c = l->data;
 
-	for (l = gg_currently_checked; l; l = l->next) {
-		gg_currently_checked_t *c = l->data;
+                if (!xstrcmp(c->uid, u->uid) && c->session == session) {
+			debug("-- check_conn - we are already waiting for user to be connected\n");
+                        return 0;
+		}
+        }
 
-		if (!xstrcmp(c->uid, u->uid) && c->session == session)
-			return 0;
+	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
+                 debug("-- check_conn - shits happens\n");
+                 return -1;
 	}
 
         c_timer = xmalloc(sizeof(gg_currently_checked_t));
@@ -1439,6 +1455,7 @@ COMMAND(gg_command_check_conn)
 
 	return 0;
 }
+
 void gg_register_commands()
 {
 	command_add(&gg_plugin, "gg:connect", "?", gg_command_connect, 0, NULL);

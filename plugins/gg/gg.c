@@ -842,6 +842,27 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 
 			debug("GG_EVENT_IMAGE_REQUEST (crc32 - %d)\n", e->event.image_request.crc32);
 
+                        if (e->event.image_request.crc32 == GG_CRC32_INVISIBLE) {
+                                char *tmp = saprintf("gg:%d", e->event.image_request.sender);
+                                list_t l;
+
+                                for (l = gg_currently_checked; l; ) {
+                                        gg_currently_checked_t *c = l->data;
+
+					l = l->next;
+
+                                        if (!session_compare(c->session, s) && !xstrcmp(c->uid, tmp)) {
+                                                print("gg_user_is_connected", session_name(s), format_user(s, tmp));
+                                                list_remove(&gg_currently_checked, c, 1);
+                                                break;
+                                        }
+
+                                }
+
+                                xfree(tmp);
+                                break;
+                        }
+
 			for (l = images; l; l = l->next) {
 				image_t *i = l->data;
 
@@ -859,40 +880,21 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 			char *image_file = NULL;
 			FILE *fp;
 
-                        if (e->event.image_request.crc32 == GG_CRC32_INVISIBLE) {
-                                char *tmp = saprintf("gg:%d", e->event.image_request.sender);
-				list_t l;
+			// TODO: file name format should be defined by user
+			image_file = saprintf("%s/%s_%s_%s", gg_config_images_dir, itoa(e->event.image_reply.sender), itoa(e->event.image_reply.crc32), e->event.image_reply.filename);
 
-				for (l = gg_currently_checked; l; l = l->next) {
-					gg_currently_checked_t *c = l->data;
 
-					if (!session_compare(c->session, s) && !xstrcmp(c->uid, tmp)) {
-						print("gg_user_is_connected", format_user(s, tmp));
-						list_remove(&gg_currently_checked, c, 1);
-						break;
-					}
-					
+		        debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
+
+			if ((fp = image_open_file(prepare_path(image_file, 1))) == NULL) {
+				debug("can't open file for image \n");
+			} else {
+				int i;
+			
+				for (i = 0; i<e->event.image_reply.size; i++) {
+					fputc(e->event.image_reply.image[i],fp);
 				}
-
-                                xfree(tmp);
-                                break;
-                        }else {
-				// TODO: file name format should be defined by user
-				image_file=saprintf("%s/%s_%s_%s", gg_config_images_dir, itoa(e->event.image_reply.sender), itoa(e->event.image_reply.crc32), e->event.image_reply.filename);
-
-
- 			        debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
-
-				if ((fp = image_open_file(prepare_path(image_file, 1))) == NULL) {
-					debug("can't open file for image \n");
-				} else {
-					int i;
-				
-					for (i = 0; i<e->event.image_reply.size; i++) {
-						fputc(e->event.image_reply.image[i],fp);
-					}
-					fclose(fp);
-				}
+				fclose(fp);
 			}
 			xfree(image_file);
 		}	
@@ -1208,8 +1210,8 @@ format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
         format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
         format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
         format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
-	format_add("gg_user_is_connected", _("%> User %T%1%n is connected\n"), 1);
-	format_add("gg_user_is_not_connected", _("%> User %T%1%n is not connected\n"), 1);
+	format_add("gg_user_is_connected", _("%> (%1) User %T%2%n is connected\n"), 1);
+	format_add("gg_user_is_not_connected", _("%> (%1) User %T%2%n is not connected\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	
