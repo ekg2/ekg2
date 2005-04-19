@@ -81,7 +81,7 @@ AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
 
 mouse_lib="xterm only"
 AC_ARG_WITH(gpm-mouse,
-        [  --with-gpm-mouse         Compile with gpm mouse support (Linux only)])
+        [  --without-gpm-mouse         Compile without gpm mouse support (Linux only)])
 
 case $host_os in
 linux*)
@@ -121,7 +121,7 @@ dnl  Resolver libgadu oparty na pthread
 dnl
 
 AC_ARG_WITH(pthread,
-  [  --with-pthread          Use pthread in resolver])
+  [  --without-pthread          Don't use pthread in resolver])
 
 if test "x$with_pthread" != "xno"; then
         ACX_PTHREAD(
@@ -138,11 +138,11 @@ if test "x$with_pthread" != "xno"; then
 fi
 
 dnl
-dnl  sprawdzanie pisowni w ncurses
+dnl aspell dictionary
 dnl
 
 AC_ARG_WITH(aspell,
-  [  --with-aspell          Enable aspell support])
+  [  --without-aspell          Disable aspell support])
 
 if test "x$with_aspell" != "xno"; then
        AC_CHECK_HEADERS(aspell.h,
@@ -186,67 +186,114 @@ if test "x$with_libjpeg" != "xno"; then
         ])
 fi
 
-AC_CHECK_LIBGADU
+AC_ARG_WITH(libgadu,
+        [  --without-libgadu        Compile without libgadu (GG plugin)])
 
-if test "x$have_libgadu" = "xyes"; then
-	AC_CONFIG_FILES([plugins/gg/Makefile])
-	PLUGINS="$PLUGINS gg"
+if test "x$with_libgadu" != "xno"; then
+	AC_CHECK_LIBGADU
+	
+	if test "x$have_libgadu" = "xyes"; then
+		AC_CONFIG_FILES([plugins/gg/Makefile])
+		PLUGINS="$PLUGINS gg"
+	fi
 fi
 
-AC_CHECK_OPENSSL
+AC_ARG_WITH(openssl,
+        [  --without-openssl        Compile without OpenSSL support])
 
-if test "x$have_openssl" = "xyes"; then
-	AC_CONFIG_FILES([plugins/sim/Makefile])
-	PLUGINS="$PLUGINS sim"
+if test "x$with_openssl" != "xno"; then
+	AC_CHECK_OPENSSL
+
+	if test "x$have_openssl" = "xyes"; then
+		AC_CONFIG_FILES([plugins/sim/Makefile])
+		PLUGINS="$PLUGINS sim"
+	fi
 fi
 
-AC_CHECK_EXPAT
+AC_ARG_WITH(expat,
+        [  --without-expat        Compile without expat (jabber plugin)])
 
-if test "x$have_expat" = "xyes"; then
-	AC_CONFIG_FILES([plugins/jabber/Makefile])
-	PLUGINS="$PLUGINS jabber"
+if test "x$with_expat" != "xno"; then
+	AC_CHECK_EXPAT
+
+	if test "x$have_expat" = "xyes"; then
+		AC_CONFIG_FILES([plugins/jabber/Makefile])
+		PLUGINS="$PLUGINS jabber"
+	fi
 fi
 
-AC_CHECK_NCURSES
+AC_ARG_WITH(ncurses,
+        [  --without-ncurses        Compile without ncurses support (ncurses plugin) - program won't work])
 
-if test "x$have_ncurses" = "xyes"; then
-	AC_CONFIG_FILES([plugins/ncurses/Makefile])
-	PLUGINS="$PLUGINS ncurses"
-	AC_CHECK_HEADERS(curses.h ncurses.h ncurses/ncurses.h)
+if test "x$with_ncurses" != "xno"; then
+	AC_CHECK_NCURSES
+
+	if test "x$have_ncurses" = "xyes"; then
+		AC_CONFIG_FILES([plugins/ncurses/Makefile])
+		PLUGINS="$PLUGINS ncurses"
+		AC_CHECK_HEADERS(curses.h ncurses.h ncurses/ncurses.h)
+	fi
 fi
 
-AC_CHECK_LIBGSM
+AC_ARG_WITH(libgsm,
+        [  --without-libgsm        Compile without libgsm support (gsm plugin)])
 
-if test "x$have_libgsm" = "xyes"; then
-	AC_CONFIG_FILES([plugins/gsm/Makefile])
-	PLUGINS="$PLUGINS gsm"
+
+if test "x$with_libgsm" != "xno"; then
+	AC_CHECK_LIBGSM
+
+	if test "x$have_libgsm" = "xyes"; then
+		AC_CONFIG_FILES([plugins/gsm/Makefile])
+		PLUGINS="$PLUGINS gsm"
+	fi
 fi
 
-AM_CHECK_LIBXOSD
 
-if test "x$have_libxosd" = "xyes"; then
-	AC_CONFIG_FILES([plugins/xosd/Makefile])
-	PLUGINS="$PLUGINS xosd"
+AC_ARG_WITH(libxosd,
+        [  --without-libxosd        Compile without libxosd support (xosd plugin)])
+
+if test "x$with_libxosd" != "xno"; then
+	AM_CHECK_LIBXOSD
+
+	if test "x$have_libxosd" = "xyes"; then
+		AC_CONFIG_FILES([plugins/xosd/Makefile])
+		PLUGINS="$PLUGINS xosd"
+	fi
 fi
 
-AM_CHECK_PYTHON
+AC_ARG_WITH(python,
+        [  --without-python        Compile without python support (python plugin)])
 
-if test "x$have_python" = "xyes"; then
-	AC_CONFIG_FILES([plugins/python/Makefile])
-	PLUGINS="$PLUGINS python"
+if test "x$with_python" != "xno"; then
+	AM_CHECK_PYTHON
+
+	if test "x$have_python" = "xyes"; then
+		AC_CONFIG_FILES([plugins/python/Makefile])
+		PLUGINS="$PLUGINS python"
+	fi
 fi
 
-AC_CHECK_SQLITE
-if test "x$have_sqlite" = "xyes"; then
-	AC_CONFIG_FILES([plugins/logsqlite/Makefile])
-	PLUGINS="$PLUGINS logsqlite"
+AC_ARG_WITH(sqlite,
+        [  --without-sqlite        Compile without sqlite support (sqlite plugin)])
+
+if test "x$with_sqlite" != "xno"; then
+	AC_CHECK_SQLITE
+	if test "x$have_sqlite" = "xyes"; then
+		AC_CONFIG_FILES([plugins/logsqlite/Makefile])
+		PLUGINS="$PLUGINS logsqlite"
+	fi
 fi
 
-AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
+AC_ARG_WITH(libgnutls,
+        [  --without-libgnutls        Compile without libgnutls support (TLS in jabber)])
+
+if test "x$with_libgnutls" != "xno"; then
+	AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
 *** libgnutls was not found. You may want to get it from
 *** ftp://ftp.gnutls.org/pub/gnutls/
-]]))
+	]]))
+fi
 
 PLUGINS_LIBS=""
 
