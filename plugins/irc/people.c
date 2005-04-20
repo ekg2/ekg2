@@ -74,6 +74,7 @@ people_chan_t *irc_find_person_chan(list_t p, char *channame)
 	people_chan_t *ret = NULL;
 	channel_t *chan;
 	if (!(channame && p)) return NULL;
+
 	for (; p; p=p->next)
 	{
 		ret = (people_chan_t *)(p->data);
@@ -106,15 +107,15 @@ people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	ircnick = saprintf("%s%s", IRC4, nick);
 	w = window_find_s(s, chan->name);
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
-	/* add entry in window's userlist
-		debug("+userlisty, "); */
+	/* add entry in window's userlist */
+		debug("+userlisty, ");
 		ulist = userlist_add_u(&(w->userlist), ircnick, nick);
 		irccol = irc_color_in_contacts(modes, mode, ulist);
 	}
 
 	if (!(person = irc_find_person(j->people, nick))) {
-	/* add entry in private->people 
-		debug("+%s lista ludzi, ", nick); */
+	/* add entry in private->people  */
+		debug("+%s lista ludzi, ", nick); 
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
 		/* G: I know that in theory there can be machine
@@ -129,21 +130,22 @@ people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		list_add(&(j->people), person, 0);
 	}
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
-	/* add entry in private->channels->onchan
-		debug("+do kana³u, "); */
+	/* add entry in private->channels->onchan */
+		debug("+do kana³u, "); 
 		list_add(&(chan->onchan), person, 0);
 	}
 	xfree(ircnick);
 
 	if (!(pch_tmp = irc_find_person_chan(person->channels, chan->name)))
 	{
-	/* add entry in private->people->channels
-		debug("+lista kana³ów usera\n"); */
+	/* add entry in private->people->channels */
+		debug("+lista kana³ów usera %08X ", person->channels); 
 		pch_tmp = xmalloc(sizeof(people_chan_t));
 		pch_tmp->mode = mode;
 		pch_tmp->chanp = chan;
 		irc_nick_prefix(j, pch_tmp, irccol);
 		list_add(&(person->channels), pch_tmp, 0);
+		debug(" %08X\n", person->channels);
 	} //else { pch_tmp->mode = mode; }
 
 	xfree(modes);
@@ -158,7 +160,7 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 		return NULL;
 	
 	if (!(chan = irc_find_channel(j->channels, channame)))
-		/* GiM: if someone typed /names *
+		/* GiM: if someone typed /quote names *
 		 * and he's not on that channel... */
 		return NULL;
 
@@ -347,7 +349,7 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 	channel_t *p;
 	p = irc_find_channel(j->channels, name);
 	if (!p) {
-		p 			= xmalloc(sizeof(channel_t));
+		p		= xmalloc(sizeof(channel_t));
 		p->name		= saprintf("%s%s", IRC4, name);
 		p->mode		= 0;
 		p->window	= win;

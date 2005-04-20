@@ -32,48 +32,48 @@
 
 int irc_getircoldcol(char *org)
 {
-	char *p=org;
-	int ibg, ifg, isfg, isbg, isdel, i, ret;
+	char	*p = org;
+	int	ibg, ifg, isfg, isbg, isdel, i, ret;
 
 	if (!p || !*p) 
 		return 0;
 
-	isfg=isbg=isdel=0;
+	isfg = isbg = isdel = 0;
 
-	if (sscanf(p, "%02d", &ifg)==1) {
+	if (sscanf(p, "%02d", &ifg) == 1) {
 		p++; if (isdigit(*p)) p++;
-		isfg=1;
+		isfg = 1;
 	}
 	if (*p == ',') {
 		p++; isdel=1;
-		if (sscanf(p, "%02d", &ibg)==1) {
+		if (sscanf(p, "%02d", &ibg) == 1) {
 			p++; if(isdigit(*p)) p++; 
-			isbg=1;
+			isbg = 1;
 		}
 	}
 
 	i = ((p-org))&0xff;
-	ret=i<<24;
+	ret = i<<24;
 
 	if (isfg) {
-		ret|=(isfg<<17);
-		ret|=(ifg<<8);
+		ret |= (isfg<<17);
+		ret |= (ifg<<8);
 	} 
-	if (isdel && !isbg) { isbg=1; } /* ibg=DEFAULT_COLOR; } */
+	if (isdel && !isbg) { isbg = 1; } /* ibg=DEFAULT_COLOR; } */
 	if (isbg) {
-		ret|=(isbg<<16);
-		ret|=ibg;
+		ret |= (isbg<<16);
+		ret |= ibg;
 	}
 	return ret;
 }
 
 char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str, int strip)
 {
-	int  col, oldstrip = strip;
-	char mirc_sux_so_much[16]=  "WkbgrypRYGcCBPKw";
-	char mirc_sux_even_more[16]="xlehszqszhddeqlx";
-	char *p;
-	string_t s;
+	int		col, oldstrip = strip;
+	char		mirc_sux_so_much[16] =  "WkbgrypRYGcCBPKw";
+	char		mirc_sux_even_more[16] = "xlehszqszhddeqlx";
+	char		*p;
+	string_t	s;
 
 	if(!(str && xstrlen(str))) return xstrdup("");
 
@@ -87,7 +87,8 @@ char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str, int strip)
 		{
 			/* str++; */
 			col = irc_getircoldcol(str+1);
-		    	if (strip) goto coloring_finito;
+		    	if (strip)
+				goto coloring_finito;
 			if (!col) {
 				string_append(s, "%n");
 				goto coloring_finito;
@@ -142,11 +143,11 @@ int is_ctcp(char *mesg)
 	ctcp_t *ret;
 
 	if ((p = xstrchr(mesg, ' ')))
-		*p='\0';
+		*p = '\0';
 
-	for (i=0,ret=ctcps; (ret->name); i++,ret++)
+	for (i = 0,ret = ctcps;  (ret->name);  i++, ret++)
 		if (!xstrcmp(mesg, ret->name)) {
-			if (p) *p=' ';
+			if (p) *p = ' ';
 			return i+1;
 		}
 
@@ -155,10 +156,10 @@ int is_ctcp(char *mesg)
 
 char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s)
 {
-	irc_private_t *j = session_private_get(sess);
-	char *begin, *end, *winname, *p, *bang, *newsender, *coloured;
-	string_t ret;
-	int ctcp;
+	irc_private_t	*j = session_private_get(sess);
+	char		*begin, *end, *winname, *p, *bang, *newsender, *coloured;
+	string_t	ret;
+	int		ctcp;
 
 	if (!s || xstrlen(s) < 2)
 		return s?xstrdup(s):NULL;
@@ -175,7 +176,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 		*begin = '\0';
 		begin++;
 		*end = '\0';
-		if ((ctcp=is_ctcp(begin))) {
+		if ((ctcp = is_ctcp(begin))) {
 
 			if ((bang = xstrchr(sender+1, '!'))) 
 				*bang = '\0';
@@ -208,7 +209,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 			*/
 			irc_write(j, "NOTICE %s :\01ERRMSG %s :unknown ctcp\01\r\n",
 					sender+1, begin);
-			begin--; *begin=1; *end=1; 
+			begin--; *begin = 1; *end = 1; 
 		}
 		begin=end+1;
 	}
@@ -216,7 +217,8 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 	xfree(winname);
 	string_append(ret, p);
 	p = string_free(ret, 0);
-	if (xstrlen(p)) return p;
+	if (xstrlen(p))
+		return p;
 	xfree(p);
 	return NULL;
 }
@@ -227,14 +229,14 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
  */
 CTCP_COMMAND(ctcp_main_priv)
 {
-	char *ischn = xstrchr(SOP(_005_CHANTYPES), targ[4]);
-	char *space = xstrchr(ctcp, ' ');
-	int mw = session_int_get(s, "make_window");
-	char *ta, *tb, *tc;
-	char *purename=sender+4, *win;
-	struct utsname un;
-	time_t timek;
-	window_t *w;
+	char		*ischn = xstrchr(SOP(_005_CHANTYPES), targ[4]);
+	char		*space = xstrchr(ctcp, ' ');
+	int		mw = session_int_get(s, "make_window");
+	char		*ta, *tb, *tc;
+	char		*purename = sender+4, *win;
+	struct utsname	un;
+	time_t		timek;
+	window_t	*w;
 
 	if (space) while ((*space) && (*space == ' ')) space++;
 
@@ -375,12 +377,12 @@ switch (number) {
 
 CTCP_COMMAND(ctcp_main_noti)
 {
-	char *ischn = xstrchr(SOP(_005_CHANTYPES), targ[4]);
-	char *space = xstrchr(ctcp, ' ');
-	int mw = session_int_get(s, "make_window");
-	char *t, *win;
-	window_t *w;
-	struct timeval tv;
+	char		*ischn = xstrchr(SOP(_005_CHANTYPES), targ[4]);
+	char		*space = xstrchr(ctcp, ' ');
+	int		mw = session_int_get(s, "make_window");
+	char		*t, *win;
+	window_t	*w;
+	struct timeval	tv;
 
 	if (space) while ((*space) && (*space == ' ')) space++;
 
