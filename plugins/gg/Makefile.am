@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt commands.txt session.txt
+EXTRA_DIST = vars.txt commands.txt session.txt commands-en.txt vars-en.txt
 
 lib_LTLIBRARIES = gg.la
 gg_la_SOURCES = commands.c dcc.c gg.c images.c misc.c pubdir.c pubdir50.c \
@@ -11,7 +11,5 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/gg/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/vars.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/commands.txt
-	$(INSTALL) -m 644 session.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/session.txt
+	$(INSTALL) -m 644 vars.txt vars-en.txt commands.txt commands-en.txt session.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/
 

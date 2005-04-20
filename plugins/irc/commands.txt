@@ -4,8 +4,8 @@
 // + lub * oznacza, ¿e mo¿na podaæ wiêcej parametrów
 // danego typu
 
-
-	parametry: [tekst]
+  
+	parametry:  [tekst]
 	krotki opis: /help irc: by dostaæ pomoc na temat plugina
 	
 	[tekst] oznacza, ¿e parametr jest wymagany, <tekst>,
@@ -15,7 +15,7 @@
 	oznacza on, koniec komendy [nale¿y wcisn±æ enter ;>]
 
 connect
-	parametry: 
+	parametry:  
 	krotki opis: pod³±cza sesjê do sieci IRC
 	
 	Nale¿y wcze¶niej ustawiæ zmienn± sesyjn± server 
@@ -23,20 +23,20 @@ connect
 	oraz zmienn± nickname.
 
 disconnect
-	parametry: <tekst>
+	parametry:  <tekst>
 	krotki opis: od³±cza od servera sieci IRC
 
 	wysy³a <tekst> jako QUIT, je¶li nie podano wysy³a tekst:
 	"EKG2 - It's better than sex!"
 
 reconnect
-	parametry: <tekst>
+	parametry:  <tekst>
 	krotki opis: roz³±cza z serwerem i ³±czy ponownie
 
 	<tekst> jest przekazywany do polecenia disconnect
 
 join
-	parametry: <kana³>+
+	parametry:  <kana³>+
 	krotki opis: do³±cza u¿ytkownika do kana³u/ów
 	
 	W wypadku wiêkszej ilo¶ci parametrów, nazwy kana³ów
@@ -47,7 +47,7 @@ join
 	[np mo¿na zrobiæ: /window new irc:!6E6WPekg2; /join]
 
 part
-	parametry: <kana³> <powód>
+	parametry:  <kana³> <powód>
 	krotki opis: od³±cza u¿ytkownika od aktualnego lub podanego kana³u
 	
 	Je¶li podano powód i je¿eli serwer obs³uguje powody, zostanie on
@@ -56,18 +56,18 @@ part
 	okna.
 
 cycle
-	parametry: <kana³> <powód>
+	parametry:  <kana³> <powód>
 	krótki opis: robi /part i /join
 
 	je¿eli pierwszy argument nie jest kana³em, brana jest nazwa
 	aktualnego okna
 
 query
-	parametry: [nick]
+	parametry:  [nick]
 	krotki opis: otwiera okno rozmowy z osob±
 
 nick
-	parametry: [nowynick]
+	parametry:  [nowynick]
 	krotki opis: zmienia nick na nowy.
 	
 	Komenda ta zmienia tylko nicka, na IRCu, nie zmienia zmiennej
@@ -75,7 +75,7 @@ nick
 	bêdzie taki nick, jak± warto¶æ ma owa zmienna sesyjna.
 
 topic
-	parametry: <kana³> <:>|<nowy temat>
+	parametry:  <kana³> <:>|<nowy temat>
 	krotki opis: wy¶wietla/zmienia/usuwa topic kana³u
 	
 	-| bez parametrów - wy¶wietla topic aktualnego kana³u
@@ -95,15 +95,15 @@ add
 	krotki opis: nie robi nic ;-)
 
 msg
-	parametry: [nick|kana³] [wiadomo¶æ]
+	parametry:  [nick|kana³] [wiadomo¶æ]
 	krotki opis: no zgadnij ;-)
 
 me
-	parametry: [tekst]
+	parametry:  [tekst]
 	krotki opis: robi /me ;-)
 
 ctcp
-	parametry: <osoba|kana³> <rodzaj> <...>
+	parametry:  <osoba|kana³> <rodzaj> <...>
 	krotki opis: wysy³a zapytanie ctcp do osoby, kana³u.
 	
 	Rodzaj to: ACTION [/me], FINGER, VERSION, SOURCE,
@@ -117,7 +117,7 @@ ctcp
 	parametru, je¿eli tylko znajdujemy siê w oknie [kana³u|rozmowy]
 
 mode
-	parametry: <kana³> [tryby] <opcje...>
+	parametry:  <kana³> [tryby] <opcje...>
 	krotki opis: zobacz te¿ /help irc:umode
 	
 	ustawia MODE kana³u [poczytaj jaki¶ help o MODEach
@@ -126,7 +126,7 @@ mode
 	[je¶li oczywi¶cie jest to okno kana³u!]
 
 umode
-	parametry: [+|-][riws]
+	parametry:  [+|-][riws]
 	krotki opis: zmienia %TTWÓJ%n mode
 	
 	r - ustawia restricted [serwer raczej nie pozwoli zdj±æ ;>]
@@ -139,41 +139,41 @@ umode
 
 
 whois
-	parametry: [nick]
+	parametry:  [nick]
 	krotki opis: robi /whois na danej osobie
 
 op
-	parametry: <kana³> [nick]*
+	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 deop
-	parametry: <kana³> [nick]*
+	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 voice
-	parametry: <kana³> [nick]*
+	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :-)
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 devoice
-	parametry: <kana³> [nick]*
+	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 halfop
-	parametry: <kana³> [nick]*
+	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :-)
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 dehalfop
-	parametry: <kana³> [nick]*
+	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 away
-	parametry: <opis>
+	parametry:  <opis>
 	krotki opis: zmienia stan na zajêty
 
 _autoaway
@@ -189,21 +189,21 @@ _autoback
 	krotki opis: zmienia stan na zajêty
 
 quote
-	parametry: [komendy]
+	parametry:  [komendy]
 	krotki opis: wysy³a bezpo¶rednio tekst do serwera IRC
 
 invite
-	parametry: <kana³> [nick]
+	parametry:  <kana³> [nick]
 	krótki opis: zaprasza u¿ytkownika na kana³
 
 who
-	parametry: <kana³/maska>
+	parametry:  <kana³/maska>
 	krótki opis: wy¶wietla dane o u¿ytkownikach z danego kana³u/pasuj±cych do maski
 
 	Je¶li poleceniu nie podane zostan± ¿adne polecenia, to wy¶wietleni
 	zostan± u¿ytkownicy z bie¿±cego kana³u.
 
 names
-	parametry:
+	parametry: 
 	krótki opis: wy¶wietla nazwy u¿ytkowników z bie¿±cego kana³u
 

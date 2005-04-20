@@ -1046,7 +1046,8 @@ void theme_init()
         format_add("auto_back_descr", _("%> (%3) Auto back - %Yavailable%n: %T%1%n%2%n\n"), 1);
 
         /* pomoc */
-        format_add("help", "%> %T%1%n%2 - %3\n", 1);
+        format_add("help", "%> %T%1%n %2 - %3\n", 1);
+	format_add("help_no_params", "%> %T%1%n - %2\n", 1);
         format_add("help_more", "%) %|%1\n", 1);
         format_add("help_alias", _("%) %T%1%n is an alias and don't have description\n"), 1);
         format_add("help_footer", _("\n%> %|%Thelp <command>%n will show more details about command. Prepending %T^%n to command name will hide it's result. Instead of <uid/alias> one can use %T$%n, which means current query user.\n\n"), 1);

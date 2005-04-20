@@ -991,7 +991,7 @@ COMMAND(cmd_help)
 
 			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !c->alias) {
 				FILE *f; 
-				char *line, *params_help = NULL, *brief = NULL, *tmp = NULL, *filename;
+				char *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL, *filename;
 				const char *seeking_name;
 				string_t s = string_init(NULL);
 				int found = 0;
@@ -1067,7 +1067,9 @@ again:
 			        if ((tmp = xstrstr(line, ": ")))
 			                params_help = xstrdup(tmp + 2);
 			        else
-			                params_help = xstrdup("?");
+			                params_help = xstrdup("");
+
+				params_help_s = strip_spaces(params_help);
 
 			        xfree(line);
 
@@ -1085,7 +1087,15 @@ again:
 			        if (xstrstr(brief, "%"))
 			  		tmp = format_string(brief);
 
-				printq("help", c->name, params_help, (tmp) ? tmp : brief);
+	                        if (!xstrcmp(brief, "")) {
+	                                xfree(brief);
+	                                brief = xstrdup("?");
+	                        }
+
+	                        if (xstrcmp(params_help_s, ""))
+        	                        printq("help", (c->name) ? (c->name) : "", params_help_s, tmp ? tmp : brief, "");
+	                        else
+	                                printq("help_no_params", (c->name) ? (c->name) : "", tmp ? tmp : brief, "");
 
 				xfree(brief);
 				xfree(params_help);
@@ -1135,7 +1145,7 @@ again:
 		if (xisalnum(*c->name) && !c->alias) {
 		    	char *blah = NULL;
                         FILE *f;
-                        char *line, *params_help, *brief, *tmp = NULL, *filename;
+                        char *line, *params_help, *params_help_s, *brief, *tmp = NULL, *filename;
                         const char *seeking_name;
                         int found = 0;
 
@@ -1206,7 +1216,9 @@ again2:
 			if ((tmp = xstrstr(line, ": ")))
                                params_help = xstrdup(tmp + 2);
                         else
-                               params_help = xstrdup("?");
+                               params_help = xstrdup("");
+
+			params_help_s = strip_spaces(params_help);	
 
                         xfree(line);
 
@@ -1222,8 +1234,16 @@ again2:
 
 			if (xstrstr(brief, "%"))
 			    	blah = format_string(brief);
-	
-			printq("help", c->name, params_help, blah ? blah : brief, "");
+
+			if (!xstrcmp(brief, "")) {
+				xfree(brief);
+				brief = xstrdup("?");
+			}
+
+			if (xstrcmp(params_help_s, ""))	
+				printq("help", (c->name) ? (c->name) : "", params_help_s, blah ? blah : brief, "");
+			else
+				printq("help_no_params", (c->name) ? (c->name) : "", blah ? blah : brief, "");
 			xfree(blah);
 			xfree(brief);
 			xfree(params_help);

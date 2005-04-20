@@ -1,0 +1,231 @@
+// descripton for gg-plugin proceedings
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2005 mateusz samonek <m@batnet.pl>
+_autoaway
+	parameters: 
+	short description: automatically change status to away
+
+_autoback
+	parameters: 
+	short description: automatically change status to available
+
+_descr
+	parameters:  [description/-]
+	short description: change status description
+
+	If description won't be defined then ekg2 will use random description.
+	Giving ,,%T-%n'' instead of description will cause status without description.
+
+away
+	parameters:  [description/-]
+	short description: change status to away.
+
+	If description won't be defined then ekg2 will use random description.
+	Giving ,,%T-%n'' instead of description will cause status without description.
+
+back
+	parameters:  [description/-]
+	short description: change status to available.
+
+	If description won't be defined then ekg2 will use random description.
+	Giving ,,%T-%n'' instead of description will cause status without description.
+
+block
+	parameters:  [uid/alias]
+	short description: add to blocked users list
+
+change
+	parameters:  <options>
+	short description: change informations in public catalogue
+
+	  -f, --first <first name>
+
+	  -l, --last <surname>
+
+	  -n, --nick <nickname>
+
+	  -b, --born <birth date>
+
+	  -c, --city <city>
+
+	  -N, --familyname <surname>  maiden name
+
+	  -C, --familycity <city>    home town
+
+	  -F, --female		 sex: female
+
+	  -M, --male		   sex: male
+
+
+	If some option won't be defined, that value will be erased
+	in the public catalogue. Using option ,,%T-%n''
+	will erase %Tall%n values.
+
+chat
+	parameters:  <uin/alias/@group> <message>
+	short description: send message
+
+	Command is similar to %Tmsg%n, but it send message like dialogue,
+	not separately.
+
+check_conn
+	parameters:  <alias>
+	short description: check if person is connected
+
+	It checks if person is connected. That persons client must support images.
+	Tested on GG 6.0 for Windows. In case of using clients:
+	TLEN, kadu, ekg i ekg2 commend don't work propertly (person
+	will get empty message). With that command we can check
+	if the 'non available' person is disconnected or only invisible.	
+
+connect
+	parameters:  
+	short description: connect with server
+
+dcc
+	parameters: [options]
+	short description: support for p2p connections
+
+	  [r]send <uin/alias> <path>  	   sends specified file
+
+	  get [uin/alias/#id]	      get file.
+
+	  resume [uin/alias/#id]	   resume getting file
+
+	  [r]voice <uin/alias/#id>	 start voice dialogue
+
+	  close <uin/alias/#id>	    close connection
+
+	  list			     display connection list
+
+
+	P2P connections need %Tdcc%n option.
+	Commands %Trsend%n and %Trvoice%n sends request to connect other client
+	with our and it is usefull, when we can't connect on our own.
+
+disconnect
+	parameters:  [description/-]
+	short description: disconnect from server
+
+	If option %Tauto_reconnect%n is on, after using 
+	this command, program will try to connect automatically
+	after some time.
+
+find
+	parameters:  [uin|options]
+	short description: search users in public catalogue
+
+	  -u, --uin <uin>
+
+	  -f, --first <name>
+
+	  -l, --last <surname>
+
+	  -n, --nick <nickname>
+
+	  -c, --city <city>
+
+	  -b, --born <min:max>    birth date range
+
+	  -a, --active	    only with available status.
+
+	  -F, --female	    sex: female
+
+	  -M, --male	      sex: male
+
+	  -s, --start <n>	 display from n-number
+
+	  -A, --all	       display all
+
+	  -S, --stop	      stop all.
+
+image
+ 	parameters:  <alias> <image>
+	short description: send image to person
+
+	Picture will be send as a separate message. Recipients' client 
+	must support images.
+
+invisible
+ 	parameters:  [description/-]
+	short description: change status to invisible
+
+	If description won't be defined then ekg2 will use random description.
+	Giving ,,%T-%n'' instead of description will cause status without description.
+
+modify
+ 	parameters:  <alias> <options>
+	short description: change informations ni contact list
+
+	You can use options like:
+
+	  -f, --first <name>
+
+	  -l, --last <surname>
+
+	  -n, --nick <nickname>     nickname
+
+	  -d, --display <name>      displayed neme
+
+	  -u, --uin <uin>
+
+	  -g, --group [+/-]<@group>  add or remove from group
+
+	  -p, --phone <number>       mobile number
+
+	  -o, --offline	      be offline for that person
+
+	  -O, --online	       be online for that person
+
+
+	Two last options are working when 'only for friends' mode is on.
+
+msg
+ 	parameters: <uin/alias/@roup/*> <message>
+	short description: send message
+
+passwd
+	parameters:  <password>
+	short description: change user password
+
+	Changing password don't need %Temail%n variable any more.
+
+reconnect
+	parameters: 
+	short description: disconnect and connect to server.
+
+register
+	parameters:  <email> <password> <token>
+	short description: register new account
+
+	Before registration use command 'token'.
+
+remind
+	parameters:  [uin]
+	short description: send password on email
+
+token
+	parameters: 
+	short description: download token from server
+
+unblock
+	parameters:  <uin/alias>|*
+	short description: remove from blocked users list
+
+unregister
+	parameters:  <uin/alias> <password> <token>
+	short description: remove account from server
+
+userlist
+	parameters:  [option]
+	short description: contact list on server
+
+	Contact list on server "list [-p|-g|-c]":
+
+	  -c, --clear  remove list from server
+
+	  -g, --get    get list from server
+
+	  -p, --put    put list on server
+
