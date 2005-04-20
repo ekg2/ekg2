@@ -1379,16 +1379,15 @@ COMMAND(gg_command_check_conn)
 {
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
-	char *tmp;
 	gg_currently_checked_t c, *c_timer;
-	const char *par;
 	list_t l;
+	char *par, *tmp;
 
-         struct gg_msg_richtext_format_img {
-                 struct gg_msg_richtext rt;
-                 struct gg_msg_richtext_format f;
-                 struct gg_msg_richtext_image image;
-         }msg;
+	struct gg_msg_richtext_format_img {
+		struct gg_msg_richtext rt;
+		struct gg_msg_richtext_format f;
+		struct gg_msg_richtext_image image;
+         } msg;
  
          msg.rt.flag = 2;
          msg.rt.length = 13;
@@ -1413,16 +1412,19 @@ COMMAND(gg_command_check_conn)
 		return -1;
 	}
 
-	par = params[0] ? params[0] : window_current->target;
+	tmp = params[0] ? xstrdup(params[0]) : xstrdup(window_current->target);
 
-	tmp = xstrdup(par);
-        xfree((char *) par);
         par = xstrdup(strip_quotes(tmp));
+
+	xfree(tmp);	
 
 	if (!(u = userlist_find(session, par))) {
 		printq("user_not_found", par);
+		xfree(par);
 		return -1;
 	}
+
+	xfree(par);
 
         for (l = gg_currently_checked; l; l = l->next) {
                 gg_currently_checked_t *c = l->data;

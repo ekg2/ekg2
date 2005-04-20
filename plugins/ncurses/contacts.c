@@ -551,6 +551,8 @@ group_cleanup:
                                 string = fstring_new(line);
 				if (xstrcmp(format, "") && count_all >= contacts_index) 
 					ncurses_backlog_add(w, string);
+				else
+					fstring_free(string);
                                 xfree(line);
 				footer_status = u->status;
 			}
