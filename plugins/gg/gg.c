@@ -599,8 +599,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	int ekgbeep = EKG_TRY_BEEP;
 	time_t __sent;
 	int secure = 0;
-
-	int image=0;
+	int image = 0, check_inv = 0;
 
 	gg_private_t *g = session_private_get(s);
 
@@ -679,12 +678,15 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 			if ((p[i + 2] & GG_FONT_IMAGE))	{
 				image=1;
 
-				if(gg_config_get_images){
+				if (((struct gg_msg_richtext_image*)&p[i+3])->crc32 == GG_CRC32_INVISIBLE)
+					check_inv = 1;
+
+				if (gg_config_get_images){
 					gg_image_request(g->sess, e->event.msg.sender, ((struct gg_msg_richtext_image*)&p[i+3])->size, ((struct gg_msg_richtext_image*)&p[i+3])->crc32);
 				}
 				i+=10;
 
-			}else{
+			} else {
 				if ((p[i + 2] & GG_FONT_BOLD))
 					val |= EKG_FORMAT_BOLD;
 
@@ -708,11 +710,15 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		}
 	}
 	
-	if (image){
-		// TODO printq("generic", "image in message.\n"); - or something
-		query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+	if (image) {
+		if (check_inv)
+			print("gg_we_are_being_checked", session_name(s), format_user(s, __sender));
+		if (!check_inv || xstrcmp(__text, "")) {
+			// TODO printq("generic", "image in message.\n"); - or something
+			query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+		}
 
-	}else{
+	} else {
 		query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
 	}
 	
@@ -1214,7 +1220,7 @@ format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
 	format_add("gg_user_is_not_connected", _("%> (%1) User %T%2%n is not connected\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
-	
+	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);	
 	return 0;
 }
 

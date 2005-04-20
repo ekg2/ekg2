@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-04-19 09:15+0200\n"
+"POT-Creation-Date: 2005-04-20 12:11+0200\n"
 "PO-Revision-Date: 2005-01-29 12:32+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -1783,118 +1783,122 @@ msgstr "%> Priorytet plugin %T%1%n zosta³ ustawiony na%T%2%n\n"
 msgid "%> Plugins prio setted to default\n"
 msgstr "%> Priorytet pluginu zosta³ ustawiony na domy¶lny\n"
 
-#: plugins/gg/gg.c:1206
+#: plugins/gg/gg.c:1212
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr "%> Token zapisano do pliku %T%1%n\n"
 
-#: plugins/gg/gg.c:1207
+#: plugins/gg/gg.c:1213
 msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
-#: plugins/gg/gg.c:1209
+#: plugins/gg/gg.c:1215
 msgid "%! Error getting token: %1\n"
 msgstr "%! B³±d podczas pobierania tokena\n"
 
-#: plugins/gg/gg.c:1210
+#: plugins/gg/gg.c:1216
 msgid "%! Token getting timeout\n"
 msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
-#: plugins/gg/gg.c:1211
+#: plugins/gg/gg.c:1217
 msgid "%! Your operating system doesn't support tokens\n"
 msgstr ""
 "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
 
-#: plugins/gg/gg.c:1212
+#: plugins/gg/gg.c:1218
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
-#: plugins/gg/gg.c:1213
+#: plugins/gg/gg.c:1219
 msgid "%> (%1) User %T%2%n is connected\n"
 msgstr "%> (%1) U¿ytkownik %T%2%n jest po³±czony\n"
 
-#: plugins/gg/gg.c:1214
+#: plugins/gg/gg.c:1220
 msgid "%> (%1) User %T%2%n is not connected\n"
 msgstr "%> (%1) U¿ytkownik %T%2%n nie jest po³±czony\n"
 
-#: plugins/gg/gg.c:1215
+#: plugins/gg/gg.c:1221
 msgid "%! Error sending image\n"
 msgstr "%! B³±d podczas wysy³ania obrazka\n"
 
-#: plugins/gg/gg.c:1216
+#: plugins/gg/gg.c:1222
 msgid "%> Image sent properly\n"
 msgstr "%> Obrazek zosta³ wys³any prawid³owo\n"
 
-#: plugins/irc/irc.c:2035
+#: plugins/gg/gg.c:1223
+msgid "%> (%1) We are being checked by %T%2%n\n"
+msgstr "%> (%1) Jeste¶my sprawdzani przez %T%2%n\n"
+
+#: plugins/irc/irc.c:2034
 msgid "%> %Y%2%n has joined %4\n"
 msgstr "%> %Y%2%n do³±czy³ do %4\n"
 
-#: plugins/irc/irc.c:2036
+#: plugins/irc/irc.c:2035
 #, fuzzy
 msgid "%> %RYou%n have joined %4\n"
 msgstr "%> %Y%2%n do³±czy³ do %4\n"
 
-#: plugins/irc/irc.c:2037
+#: plugins/irc/irc.c:2036
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr "%> %g%2%n opu¶ci³ %4 (%5)\n"
 
-#: plugins/irc/irc.c:2038
+#: plugins/irc/irc.c:2037
 #, fuzzy
 msgid "%> %RYou%n have left %4 (%5)\n"
 msgstr "%> %g%2%n opu¶ci³ %4 (%5)\n"
 
-#: plugins/irc/irc.c:2039
+#: plugins/irc/irc.c:2038
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> %Y%2%n zosta³ wykopany przez %R%3%n z %5 (%6)\n"
 
-#: plugins/irc/irc.c:2040
+#: plugins/irc/irc.c:2039
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> Zosta³e¶ wykopany z %R%3%n przez %5 (%6)\n"
 
-#: plugins/irc/irc.c:2041
+#: plugins/irc/irc.c:2040
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr "%> %Y%2%n opu¶ci³ irc (%4)\n"
 
-#: plugins/irc/irc.c:2042
+#: plugins/irc/irc.c:2041
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr "%> %Y%2%n wys³a³ nieznany CTCP %3: (%4)\n"
 
-#: plugins/irc/irc.c:2043
+#: plugins/irc/irc.c:2042
 msgid "%> %y%e* %2%n %4\n"
 msgstr "%> %y%e* %2%n %4\n"
 
-#: plugins/irc/irc.c:2044
+#: plugins/irc/irc.c:2043
 msgid "%> %Y%e* %2%n %4\n"
 msgstr "%> %Y%e* %2%n %4\n"
 
-#: plugins/irc/irc.c:2045
+#: plugins/irc/irc.c:2044
 msgid "%> %y%h* %2%n %5\n"
 msgstr "%> %y%h* %2%n %5\n"
 
-#: plugins/irc/irc.c:2046
+#: plugins/irc/irc.c:2045
 msgid "%> %Y%h* %2%n %5\n"
 msgstr "%> %Y%h* %2%n %5\n"
 
-#: plugins/irc/irc.c:2047
+#: plugins/irc/irc.c:2046
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5 od %4\n"
 
-#: plugins/irc/irc.c:2048
+#: plugins/irc/irc.c:2047
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5\n"
 
-#: plugins/irc/irc.c:2049
+#: plugins/irc/irc.c:2048
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr "%> %Y%2%n odpowied¼ CTCP od %3: %5\n"
 
-#: plugins/irc/irc.c:2064
+#: plugins/irc/irc.c:2063
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr "%> Nie mo¿na pisaæ na kana³ %T%2%n\n"
 
-#: plugins/irc/irc.c:2099
+#: plugins/irc/irc.c:2098
 msgid "%G||%n away     : %2 - %3\n"
 msgstr "%G||%n zajêty     : %2 - %3\n"
 
-#: plugins/irc/irc.c:2101 plugins/irc/irc.c:2104
+#: plugins/irc/irc.c:2100 plugins/irc/irc.c:2103
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
@@ -1904,79 +1908,79 @@ msgstr ""
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n prawdziwa nazwa : %6\n"
 
-#: plugins/irc/irc.c:2113
+#: plugins/irc/irc.c:2112
 msgid "%G||%n %|channels : %3\n"
 msgstr "%G||%n %|kana³y : %3\n"
 
-#: plugins/irc/irc.c:2114
+#: plugins/irc/irc.c:2113
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr "%G||%n %|serwer   : %3 (%4)\n"
 
-#: plugins/irc/irc.c:2115
+#: plugins/irc/irc.c:2114
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr "%G||%n %|ircOp    : %3\n"
 
-#: plugins/irc/irc.c:2116
+#: plugins/irc/irc.c:2115
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr "%G||%n %|brak aktywno¶ci     : %3 (zalogowany: %4)\n"
 
-#: plugins/irc/irc.c:2117 plugins/irc/irc.c:2118
+#: plugins/irc/irc.c:2116 plugins/irc/irc.c:2117
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr "%G`+===%g-----\n"
 
-#: plugins/irc/irc.c:2120
+#: plugins/irc/irc.c:2119
 msgid "%> Topic %2: %3\n"
 msgstr "%> Temat %2: %3\n"
 
-#: plugins/irc/irc.c:2122
+#: plugins/irc/irc.c:2121
 msgid "%> set by %2 on %4"
 msgstr "%> ustawiony przez %2 dnia %4"
 
-#: plugins/irc/irc.c:2123
+#: plugins/irc/irc.c:2122
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr "%> %T%2%n zmieni³ temat na %T%4%n: %5\n"
 
-#: plugins/irc/irc.c:2124
+#: plugins/irc/irc.c:2123
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr "%> %T%2%n wyczy¶ci³ temat na %T%4%n\n"
 
-#: plugins/irc/irc.c:2125
+#: plugins/irc/irc.c:2124
 #, fuzzy
 msgid "%> %2/%4 sets mode [%5]\n"
 msgstr "%> %2/%4 ustawia tryb%5\n"
 
-#: plugins/irc/irc.c:2126
+#: plugins/irc/irc.c:2125
 #, fuzzy
 msgid "%> %2 mode is [%3]\n"
 msgstr "%> %2/%4 ustawia tryb%5\n"
 
-#: plugins/irc/irc.c:2127
+#: plugins/irc/irc.c:2126
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr "%> (%1) %2 ustawia tryb %3 na Tobie\n"
 
-#: plugins/irc/irc.c:2129
+#: plugins/irc/irc.c:2128
 msgid "%K[%W%1%w%[9]2%K]%n"
 msgstr ""
 
-#: plugins/irc/irc.c:2131
+#: plugins/irc/irc.c:2130
 #, fuzzy
 msgid "%> %W%2%n invites you to %W%5%n\n"
 msgstr "%> %T%2%n wyczy¶ci³ temat na %T%4%n\n"
 
-#: plugins/irc/irc.c:2132
+#: plugins/irc/irc.c:2131
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr "%) (%1) ping/pong %c%2%n\n"
 
-#: plugins/irc/irc.c:2133
+#: plugins/irc/irc.c:2132
 msgid "%> You are now known as %G%3%n\n"
 msgstr "%> Jeste¶ teraz znany jako %G%3%n\n"
 
-#: plugins/irc/irc.c:2134
+#: plugins/irc/irc.c:2133
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr "%> %g%2%n jest znany jako %G%4%n\n"
 
-#: plugins/irc/irc.c:2135
+#: plugins/irc/irc.c:2134
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 
