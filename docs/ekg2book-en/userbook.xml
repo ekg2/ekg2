@@ -1,0 +1,42 @@
+<!--
+   userbook.xml
+-->
+
+<chapter id="userbook">
+   <title>
+      Podrêcznik u¿ytkownika ekg2
+   </title>
+   <sect1 id="userbook-intro">
+      <title>Wstêp</title>
+   </sect1>
+   <sect1 id="userbook-sources">
+      <title>¬ród³a</title>
+   </sect1>
+   <sect1 id="userbook-install">
+      <title>Instalacja</title>
+   </sect1>
+   <sect1 id="userbook-sessions">
+      <title>Tworzenie sesji</title>
+   </sect1>
+   <sect1 id="userbook-networks">
+      <title>Obs³ugiwane sieci IM</title>
+   </sect1>
+   <sect1 id="userbook-connecting">
+      <title>Po³±czenie z serwerem</title>
+   </sect1>
+   <sect1 id="userbook-status">
+      <title>Zmiana stanu</title>
+   </sect1>
+   <sect1 id="userbook-userlist">
+      <title>Lista u¿ytkowników</title>
+   </sect1>
+   <sect1 id="userbook-user">
+      <title>Zarz±dzanie u¿ytkownikami</title>
+   </sect1>
+   <sect1 id="userbook-contacts">
+      <title>Pasek kontaktów</title>
+   </sect1>
+</chapter>
+<!--
+   vim: filetype=docbk encoding=iso-8859-2
+-->

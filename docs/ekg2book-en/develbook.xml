@@ -4,81 +4,82 @@
 
 <chapter id="develbook">
    <title>
-      Podrêcznik developera ekg2
+      EKG2 developer handbook 
    </title>
    <sect1 id="develbook-programming">
-      <title>Rozwijanie kodu ekg2</title>
+      <title>EKG2 developing</title>
       <sect2>
-         <title>Wskazówki dla programistów</title>
+         <title>Tips for coders</title>
          <itemizedlist>
             <listitem>
                <para>
-                  Gdy co¶ poprawiasz/dodajesz, zachowuj styl reszty kodu.
-                  Wciêcia rób znakami tabulacji, a nie spacjami. Stawiaj spacje
-                  po przecinkach i ¶rednikach. Je¶li masz inny styl, a
-                  podes³ane poprawki bêd± dobre i/lub potrzebne, nie zdziw siê,
-                  je¶li Twój kod zostanie przeregadowany.
+		  If you are fixing/adding something, keep style from rest of 
+		  the code. Make indentations by tab characters, not space.
+		  Make spaces after commas or semicolons. If you have other 
+		  style, but your patches will be good and/or nessesary 
+		  don't be suprise if Your code will be changed.
                </para>
             </listitem>
             <listitem>
                <para>
-                  Dopisuj siê do copyrightów na pocz±tku pliku. Inaczej
-                  zak³adam, ¿e zrzekasz siê praw do podes³anych kawa³ków kodu.
-                  Oczywi¶cie podsy³any kod musi byæ na takiej samej licencji,
-                  co reszta. W innym wypadku nie traæ czasu i go nie przysy³aj.
+		  Add yourself to copyrights at the beginning of the file. 
+		  If you don't do it I found that you relinquish your code.
+		  Of course sended code must be on the same licence as the 
+		  rest of the code. If not don't waste your time and don't 
+		  send it to us.
                </para>
             </listitem>
             <listitem>
                <para>
-                  Zachowuj przyjêt± konwencjê. Je¶li wszystkie zmienne danej
-                  struktury maj± nazwy typu <varname>foobar_count</varname>,
-                  nie dodawaj <varname>foocount</varname>, czy
-                  <varname>nfoo</varname>.
+		  Keep conventions. If all structure's variables have names
+		  like <varname>foobar_count</varname>, don't add 
+		  <varname>foocount</varname>, or <varname>nfoo</varname>.
                </para>
             </listitem>
             <listitem>
                <para>
-                  Nie zmieniaj api bez powodu. Nawet je¶li chcesz to zrobiæ,
-                  skonsultuj z reszt± developerów.
+		  Don't change api without reason. Even if you want to do it,
+		  consult with other developers.
                </para>
             </listitem>
             <listitem>
                <para>
-                  Tworz±c wiêkszy kawa³ek/modu³/plik przeznaczony do jakiej¶
-                  konkretnej funkcji, staraj siê nazywaæ funkcje i zmienne tak,
-                  by by³o wiadomo, do czego s³u¿±. Przyk³ad: funkcje dotycz±ce
-                  list zaczynaj± siê <function>list_*</function>, funkcje
-                  dotycz±ce userlisty to <function>userlist_*</function>,
-                  konfiguracja to <function>config_*</function>.
+		  If you are making some bigger part of the code/module/file
+		  designed to some function, try to call functions and vars
+		  in way that can be understandable by other developers.
+		  Example: function connected with list are beginning with
+	   	  <function>list_*</function>, userlist functions 
+		  <function>userlist_*</function>, configuration is something
+		  like <function>config_*</function>.
                </para>
             </listitem>
             <listitem>
                <para>
-                  Do alokacji pamiêci u¿ywaj funkcji
+		  For memory allocation use 
                   <function>xmalloc()</function>,
                   <function>xcalloc()</function>,
-                  <function>xrealloc()</function> i
-                  <function>xstrdup()</function>. Nie musisz sprawdzaæ
-                  zwracanej warto¶ci. Je¶li zabraknie pamiêci, funkcje te same
-                  zajm± siê grzecznym zamkniêciem programu.  Dbaj o zwalnianie
-                  buforów, gdy nie s± one ju¿ potrzebne.
+                  <function>xrealloc()</function> and
+                  <function>xstrdup()</function>. You don't have to check
+		  returned value. If there will be no memory, these functions
+		  will handle soft program close. Look after freeing buffors, 
+		  if they are not needed anymore.
                </para>
                <para>
-                  Zamiast <function>strncpy()</function> oraz
-                  <function>strncat()</function> u¿ywaj
-                  <function>strlcpy()</function> i
-                  <function>strlcat()</function>, które przyjmuj± jako parametr
-                  ca³kowity rozmiar bufora. Nie trzeba siê martwiæ o to, ile w
-                  buforze pozosta³o jeszcze miejsca, czy znak zerowy siê
-                  zmie¶ci, etc. Obie funkcje <emphasis>zawsze</emphasis>
-                  zwracaj± ilo¶æ znaków, jaka zosta³a(by) zapisana do bufora.
+                  Instead of <function>strncpy()</function> and
+                  <function>strncat()</function> use
+                  <function>strlcpy()</function> and
+                  <function>strlcat()</function>, which takes as a parametr
+		  full buffer size. You don't have to worry about how much 
+		  memory is left, if zero character will go, etc. Both 
+		  functions <emphasis>always</emphasis> return number of
+		  characters, which were saved to the buffer.
                </para>
             </listitem>
             <listitem>
                <para>
-                  Je¶li nie masz pojêcia o alokacji pamiêci i obs³udze stringów
-                  w C, najlepiej daj sobie spokój. Nawet je¶li kod dzia³a, ale
-                  nie trzyma siê kupy, zostanie odrzucony.
+		  If you don't know anything about memory allocation and 
+		  string support in C, better find something else to do. Even
+		  if code is correct, but it is disordered it will be refused.
                </para>
             </listitem>
             <listitem>
@@ -131,16 +132,17 @@
             </listitem>
          </itemizedlist>
          <para>
-	    Ka¿dy mo¿e podsy³ac patche, byle by³y zachowane pewne i nie by³o
-	    po miesi±cu ba³aganu w kodzie. Oczywi¶cie wszystkie zmiany bêd±
-	    przegl±dane i w razie czego autor dostanie po ³apach.
+	    Everyone can send patches, if they are respecting conventions.
+	    It is about saving our project from disorder after one month.
+	    Of course every change will be checked and if there is something
+	    wrong author will be rebuked.
          </para>
       </sect2>
       <sect2>
          <title>API</title>
          <para>
-            Dokumentacja API dostêpna jest na stronie domowej projektu: <ulink
-               url="http://www.ekg2.org/doxygen/">http://www.ekg2.org/doxygen/</ulink>
+            API documentation is avaiable on project homepage: <ulink
+               url="http://www.ekg2.org/en/doxygen/">http://www.ekg2.org/en/doxygen/</ulink>
          </para>
       </sect2>
    </sect1>
