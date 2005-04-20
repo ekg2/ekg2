@@ -907,9 +907,9 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:away", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:back", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:chat", "uU ?", jabber_command_msg, 0, NULL);
-	command_add(&jabber_plugin, "jid:connect", "?", jabber_command_connect, 0, NULL);
+	command_add(&jabber_plugin, "jid:connect", "r ?", jabber_command_connect, 0, NULL);
 	command_add(&jabber_plugin, "jid:del", "u", jabber_command_del, 0, NULL);
-	command_add(&jabber_plugin, "jid:disconnect", "?", jabber_command_disconnect, 0, NULL);
+	command_add(&jabber_plugin, "jid:disconnect", "r ?", jabber_command_disconnect, 0, NULL);
 	command_add(&jabber_plugin, "jid:dnd", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:invisible", "r", jabber_command_away, 0, NULL);
 	command_add(&jabber_plugin, "jid:ffc", "r", jabber_command_away, 0, NULL);

@@ -1458,8 +1458,8 @@ COMMAND(gg_command_check_conn)
 
 void gg_register_commands()
 {
-	command_add(&gg_plugin, "gg:connect", "?", gg_command_connect, 0, NULL);
-	command_add(&gg_plugin, "gg:disconnect", "?", gg_command_connect, 0, NULL);
+	command_add(&gg_plugin, "gg:connect", "r ?", gg_command_connect, 0, NULL);
+	command_add(&gg_plugin, "gg:disconnect", "r ?", gg_command_connect, 0, NULL);
 	command_add(&gg_plugin, "gg:reconnect", NULL, gg_command_connect, 0, NULL);
 	command_add(&gg_plugin, "gg:msg", "uUC ?", gg_command_msg, 0, NULL);
 	command_add(&gg_plugin, "gg:chat", "uUC ?", gg_command_msg, 0, NULL);

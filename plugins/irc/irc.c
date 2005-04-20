@@ -1851,8 +1851,8 @@ int irc_plugin_init(int prio)
 
 	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 0, NULL);
-	command_add(&irc_plugin, "irc:disconnect", "?",irc_command_disconnect, 0, NULL);
-	command_add(&irc_plugin, "irc:reconnect", "?",	irc_command_reconnect, 0, NULL);
+	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect, 0, NULL);
+	command_add(&irc_plugin, "irc:reconnect", "r ?",	irc_command_reconnect, 0, NULL);
 
 	command_add(&irc_plugin, "irc:join", "w", 	irc_command_jopacy, 0, NULL);
 	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 0, NULL);
