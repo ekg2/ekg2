@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ekg2 CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-04-20 17:04+0200\n"
+"POT-Creation-Date: 2005-04-24 17:27+0200\n"
 "PO-Revision-Date: 2005-01-05 20:19+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polish\n"
@@ -1731,151 +1731,151 @@ msgstr ""
 msgid "%> (%1) We are being checked by %T%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2034
+#: plugins/irc/irc.c:2033
 msgid "%> %Y%2%n has joined %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2035
+#: plugins/irc/irc.c:2034
 msgid "%> %RYou%n have joined %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2036
+#: plugins/irc/irc.c:2035
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2037
+#: plugins/irc/irc.c:2036
 msgid "%> %RYou%n have left %4 (%5)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2038
+#: plugins/irc/irc.c:2037
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2039
+#: plugins/irc/irc.c:2038
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2040
+#: plugins/irc/irc.c:2039
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2041
+#: plugins/irc/irc.c:2040
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2042
+#: plugins/irc/irc.c:2041
 msgid "%> %y%e* %2%n %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2043
+#: plugins/irc/irc.c:2042
 msgid "%> %Y%e* %2%n %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2044
+#: plugins/irc/irc.c:2043
 msgid "%> %y%h* %2%n %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2045
+#: plugins/irc/irc.c:2044
 msgid "%> %Y%h* %2%n %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2046
+#: plugins/irc/irc.c:2045
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2047
+#: plugins/irc/irc.c:2046
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2048
+#: plugins/irc/irc.c:2047
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2063
+#: plugins/irc/irc.c:2062
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2098
+#: plugins/irc/irc.c:2097
 msgid "%G||%n away     : %2 - %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2100 plugins/irc/irc.c:2103
+#: plugins/irc/irc.c:2099 plugins/irc/irc.c:2102
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n realname : %6\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2112
+#: plugins/irc/irc.c:2111
 msgid "%G||%n %|channels : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2113
+#: plugins/irc/irc.c:2112
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2114
+#: plugins/irc/irc.c:2113
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2115
+#: plugins/irc/irc.c:2114
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2116 plugins/irc/irc.c:2117
+#: plugins/irc/irc.c:2115 plugins/irc/irc.c:2116
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2119
+#: plugins/irc/irc.c:2118
 msgid "%> Topic %2: %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2121
+#: plugins/irc/irc.c:2120
 msgid "%> set by %2 on %4"
 msgstr ""
 
-#: plugins/irc/irc.c:2122
+#: plugins/irc/irc.c:2121
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2123
+#: plugins/irc/irc.c:2122
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2124
+#: plugins/irc/irc.c:2123
 msgid "%> %2/%4 sets mode [%5]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2125
+#: plugins/irc/irc.c:2124
 msgid "%> %2 mode is [%3]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2126
+#: plugins/irc/irc.c:2125
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2128
+#: plugins/irc/irc.c:2127
 msgid "%K[%W%1%w%[9]2%K]%n"
 msgstr ""
 
-#: plugins/irc/irc.c:2130
+#: plugins/irc/irc.c:2129
 msgid "%> %W%2%n invites you to %W%5%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2131
+#: plugins/irc/irc.c:2130
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2132
+#: plugins/irc/irc.c:2131
 msgid "%> You are now known as %G%3%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2133
+#: plugins/irc/irc.c:2132
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2134
+#: plugins/irc/irc.c:2133
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 
