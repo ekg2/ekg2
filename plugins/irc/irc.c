@@ -337,7 +337,6 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 		debug ("[irc] handle_stream(): ROZ£¡CZY£O\n");
 		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 		xfree(idta);
-		xfree(buf);
 		return;
 	}
 
@@ -354,7 +353,8 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 		 * REC_TIMERDEL in irc_handle_disconnect
 		 */
 		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK); 
-		goto fail;
+		watch_remove(&irc_plugin, fd, WATCH_READ);
+		return;
 	}
 
 	buf[len] = 0;
@@ -364,10 +364,6 @@ void irc_handle_stream(int type, int fd, int watch, void *data)
 
 	xfree(buf);
 
-	return;
-
-fail:
-	watch_remove(&irc_plugin, fd, WATCH_READ);
 	return;
 }
 
@@ -457,15 +453,15 @@ void irc_handle_resolver(int type, int fd, int watch, void *data)
 			lres = read(fd, &vhost4, sizeof(vhost4));
 		expectedres = sizeof(ipv4);
 	}
-#ifdef HAVE_GETADDRINFO
 	else if (family == PF_INET6) {
+#ifdef HAVE_GETADDRINFO
 		res = read(fd, &ipv6, sizeof(ipv6));
 		hasres = read(fd, &hasvhost, 1);
 		if (hasres == 1 && hasvhost == 1)
 			lres = read(fd, &vhost6, sizeof(vhost6));
 		expectedres = sizeof(ipv6);
-	}
 #endif
+	}
 	/* G->dj: imho impossible */
 	else {
 		print("generic_error", "[irc] family ?");
@@ -594,7 +590,7 @@ COMMAND(irc_command_connect)
 	const char	*server, *newnick;
 	const char	*hostname = session_get(session, "hostname");
 	int		prefer_family = session_int_get(session, "prefer_family");
-	int 		res, fd[2];
+	int 		res, fd[2], hasvhost = 0;
 	irc_private_t	*j = irc_private(session);
 
 	/* G->dj:
@@ -654,82 +650,80 @@ COMMAND(irc_command_connect)
 		/* TODO: make it prettier,
 		 *       
 		 *       searching in the list... [not what you - dj, did]
-		 *       (as hobbit noticed similiar problem in ClamAV)
+		 *       (as hobai_server_tmpt noticed similiar problem in ClamAV)
 		 */
-		struct	addrinfo *ai = NULL, *ai2 = NULL;
-		struct	addrinfo *ci = NULL, *ci2 = NULL;
-		struct	addrinfo *bi, *bi2;
+		struct	addrinfo *ai_server = NULL, *ai_vhost = NULL;
+		struct	addrinfo *ai_server_mem = NULL, *ai_vhost_mem = NULL;
+		struct	addrinfo *ai_server_tmp, *ai_vhost_tmp;
 
 		if (hostname)
-			getaddrinfo(hostname, NULL, NULL, &ai2);
+			getaddrinfo(hostname, NULL, NULL, &ai_vhost);
 
-		if (!getaddrinfo(server, NULL, NULL, &ai))
+		if (!getaddrinfo(server, NULL, NULL, &ai_server))
 		{
-			bi = ai;
-			bi2 = ai2;
+			ai_server_tmp = ai_server;
+			ai_vhost_tmp = ai_vhost;
 			family = 0;
-		/*              condition     | family    | DONE
-		 *ai2.family == ai.family     | ai.family | V (100 %)
-		 *(!ai2) && prefer_ipv6       | AF_INET6  | V (100 %)
-		 *(!ai2) && !prefer_ipv6      | AF_INET   | V (100 %)
-		 *(!ai2) && (!ai)	      | AF_DUPA   | V (100 %)
+		/*              condition              | family    | DONE
+		 *ai_vhost.family == ai_server.family  | ai.family | V (100 %)
+		 *(!ai_vhost) && prefer_ipv6           | AF_INET6  | V (100 %)
+		 *(!ai_vhost) && !prefer_ipv6          | AF_INET   | V (100 %)
+		 *(!ai_vhost) && (!ai_server)	       | AF_DUPA   | V (100 %)
 		 *
-		 * BUFOR -> family | server | hostname 
+		 * BUFOR -> family                     | server    | hostname 
 		 */
-			if (ai2) {
-				for(; bi && !family; bi = bi->ai_next) 
-					for (bi2 = ai2; !family && bi2; bi2 = bi2->ai_next) 
-						if (bi2->ai_family == bi->ai_family) {
-							if (prefer_family == bi2->ai_family) 
-								family = bi->ai_family;
+			if (ai_vhost) {
+				hasvhost = 1;
+				for(; !family && ai_server_tmp; ai_server_tmp = ai_server_tmp->ai_next) 
+					for (ai_vhost_tmp = ai_vhost; !family && ai_vhost_tmp; ai_vhost_tmp = ai_vhost_tmp->ai_next) 
+						if (ai_vhost_tmp->ai_family == ai_server_tmp->ai_family) {
+							if (prefer_family == ai_vhost_tmp->ai_family) 
+								family = ai_server_tmp->ai_family;
 							else {
-								ci = bi;
-								ci2= bi2;
+								ai_server_mem = ai_server_tmp;
+								ai_vhost_mem= ai_vhost_tmp;
 							}
 						}
-				if (!family && ci && ci2) {
-					bi2 = ci2;
-					bi  = ci;
-					family = bi->ai_family;
+				if (!family && ai_server_mem && ai_vhost_mem) {
+					ai_vhost_tmp = ai_vhost_mem;
+					ai_server_tmp  = ai_server_mem;
+					family = ai_server_tmp->ai_family;
 				}
 
-				/* ai2 && !family -> bad family... */
+				/* ai_vhost && !family -> bad fAMily... */
 				if (!family) {
-					freeaddrinfo(ai2);
-					ai2 = NULL;
-					bi  = ai;
+					hasvhost = 0;
+					freeaddrinfo(ai_vhost);
+					ai_vhost = NULL;
+					ai_server_tmp  = ai_server;
 				}
 			}
 
 			while (family == 0) {
-				if (prefer_family == bi->ai_family || !prefer_family) 
-					family = bi->ai_family;
-				if (family == 0)  {
-					if (bi->ai_next)  bi = bi->ai_next;
-					else { 
-						family = ai->ai_family;
-						bi = ai;
-					}
+				if (prefer_family == ai_server_tmp->ai_family || !prefer_family) {
+					family = ai_server_tmp->ai_family;
+					continue;
+				}
+				if (ai_server_tmp->ai_next) ai_server_tmp = ai_server_tmp->ai_next;
+				else {
+					family = ai_server->ai_family;
+					ai_server_tmp = ai_server;
 				}
 			}
 			len = family;
-			/* G->dj: ok seems ok to me, nice code :) */
 
 
 			memcpy(buf, &len, sizeof(long));
-			memcpy(buf+sizeof(long), bi->ai_addr, bi->ai_addrlen);
-			len = sizeof(long) + bi->ai_addrlen;
-			freeaddrinfo(ai);
+			memcpy(buf+sizeof(long), ai_server_tmp->ai_addr, ai_server_tmp->ai_addrlen);
+			len = sizeof(long) + ai_server_tmp->ai_addrlen;
+			freeaddrinfo(ai_server);
 
-			if (ai2) {
-				char one=1;
-				memcpy(buf+len, &one, 1);
-				memcpy(buf+len+1, bi2->ai_addr, bi2->ai_addrlen);
-				len += bi2->ai_addrlen+1;
-				freeaddrinfo(ai2);
+			memcpy(buf+len, &hasvhost, 1);
+			if (ai_vhost) {
+				memcpy(buf+len+1, ai_vhost_tmp->ai_addr, ai_vhost_tmp->ai_addrlen);
+				len += ai_vhost_tmp->ai_addrlen+1;
+				freeaddrinfo(ai_vhost);
 			} else {
-				char one=0;
-				memcpy(buf+len, &one, 1);
 				len++;
 			}
 		} else {
@@ -739,13 +733,16 @@ COMMAND(irc_command_connect)
 #else
 
 		if ((a.sin_addr.s_addr = inet_addr(server)) == INADDR_NONE) {
-			struct hostent *he = gethostbyname(server);
+			struct hostent *he4 = gethostbyname(server);
+			/* G->dj: non-portable:
+			struct hostnet *he6 = gethostbyname2(server, AF_INET6); */
 			/*if (prefer_ipv6) dj??? */
+			hasvhost = 0;
 
-			if (!he)
+			if (!he4)
 				a.sin_addr.s_addr = INADDR_NONE;
 			else
-				memcpy(&a.sin_addr, he->h_addr, sizeof(a));
+				memcpy(&a.sin_addr, he4->h_addr, sizeof(a));
 		}
 
 		len = PF_INET;
@@ -753,9 +750,11 @@ COMMAND(irc_command_connect)
 		close(fd[0]);
 		if (len == PF_INET)
 		{
+			a.sin_family = AF_INET;
 			memcpy(buf, &len, sizeof(long));
 			memcpy(buf+sizeof(long), &a, sizeof(a));
-			len = sizeof(long) + sizeof(a);
+			len = sizeof(long) + sizeof(a) + 1;
+			memcpy(buf+len-1, &hasvhost, 1);
 		}
 		write(fd[1], buf, len);
 
@@ -1294,41 +1293,49 @@ int irc_getchan_free(char **mp)
 COMMAND(irc_command_names)
 {
 	irc_private_t	*j = irc_private(session);
-	list_t		t1;
 	people_t	*per;
-	people_chan_t	*chan;
+	people_chan_t	*pchan;
+	channel_t       *chan;
+	userlist_t      *ulist;
         int		count = 1;
-	char		*mode=NULL, *buf = xmalloc(1500), **mp, *channame;
-
-	if (!(channame = irc_getchan(session, params, name, 
+	char		mode[2], *buf = xmalloc(1500), **mp, *channame;
+	list_t 		l;
+	char		*tmp;
+	const char      *sort_status[5]  = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY,
+					EKG_STATUS_XA, EKG_STATUS_INVISIBLE, NULL};
+	char            *sort_modes = xstrchr(SOP(_005_PREFIX), ')');
+	char lvl        = 0;
+	
+	if ((!sort_modes) ||  !(channame = irc_getchan(session, params, name,
 					&mp, 0, IRC_GC_CHAN))) 
-		return -1;
+	 		return -1;
 
-	for (t1 = j->people; t1; t1=t1->next) {
-		per=(people_t *)t1->data;
-		if ((chan = irc_find_person_chan(per->channels, channame)))
-		{
-			switch (chan->mode) {
-				case 0:
-					mode = " "; break;
-				case 1:
-					mode = "+"; break;
-				case 2:
-					mode = "@"; break;
-				default:
-					mode = "?"; break;
-			}
-		
-			strcat(buf, format_string(format_find("IRC_NAMES"), mode, (per->nick + 4)));
+	mode [1] = '\0';
+	chan = irc_find_channel(j->channels, channame);
+	if (chan) {
+		printq("generic", "OK");
+		while (*sort_modes) {
+			sort_modes++;
 
-			count++;
-			if (count == 7) {
-				printq("generic", buf);
-				xstrcpy(buf, "");
-				count = 1;
+			mode[0] = (*sort_modes)?(*sort_modes):' ';
+			
+			for (l = chan->window->userlist; l; l = l->next) {
+				ulist = l->data;
+				if (!ulist || xstrcmp(ulist->status, sort_status[lvl] ))
+					continue;
+				
+				strcat(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4)));
+				
+				count++;
+				if (count == 7) {
+					printq("generic", buf);
+					buf[0] = '\0';
+					count = 1;
+				}
 			}
+			lvl++;
 		}
-		debug(" person->channels: %08X %s %08X>\n", per->channels, channame, chan);
+		/*debug(" person->channels: %08X %s %08X>\n", per->channels, channame, chan);*/
 	}
 	if (count != 7 && count != 1) {
 		printq("generic", buf);

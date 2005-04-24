@@ -85,7 +85,7 @@ typedef struct {
 
 /* data for private->people->channels */
 typedef struct {
-	int mode; /* +v +o */
+	int mode; /* bitfield  */
 	char sign[2];
 	char *flags; /* G->dj: as above... */
 	channel_t *chanp;

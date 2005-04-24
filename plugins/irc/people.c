@@ -102,13 +102,15 @@ people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	modes[i-1] = '\0';
 	if ((t = xstrchr(modes, *nick)))
 		mode = 1<<(k-(t-modes)-2);
-	
+
+	debug("irc_add_person_int: %s %d %d\n", modes, mode, k);
 	if (mode) nick++;
+
 	ircnick = saprintf("%s%s", IRC4, nick);
 	w = window_find_s(s, chan->name);
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
 	/* add entry in window's userlist */
-		debug("+userlisty, ");
+		debug("+userlisty %d, ", mode);
 		ulist = userlist_add_u(&(w->userlist), ircnick, nick);
 		irccol = irc_color_in_contacts(modes, mode, ulist);
 	}
@@ -376,6 +378,8 @@ int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
 	/* GiM: this could be done much easier on intel ;/ */
 	for (i=0; i<len; i++)
 		if (mode & (1<<(len-1-i))) break;
+	
+
 	tmp=ul->status;
 	switch (i)
 	{

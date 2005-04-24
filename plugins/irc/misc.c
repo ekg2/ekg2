@@ -41,6 +41,9 @@
 
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
+#define GDEBUG
+#define MARLENE
+
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 /*
  * irc_handle_write()
