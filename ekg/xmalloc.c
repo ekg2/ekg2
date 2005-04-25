@@ -149,8 +149,8 @@ char *xstrndup(const char *s, size_t n)
         if (!s)
                 return NULL;
 
-       if (!(tmp = strndup((char *) s, n)))
-                ekg_oom_handler();
+	if (!(tmp = strndup((char *) s, n)))
+		ekg_oom_handler();
 
         return tmp;
 }
