@@ -594,7 +594,7 @@ COMMAND(jabber_command_modify)
         }
 
         if (!session_connected_get(session)) {
-                printq("not_connected");
+                printq("not_connected", session_name(session));
                 return -1;
         }
 
