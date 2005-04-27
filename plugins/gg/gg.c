@@ -469,7 +469,7 @@ static void gg_session_handler_success(session_t *s)
 
                 gg_change_status(g->sess, _status);
         }
-
+	xfree(descr);	
 }
 
 /*
@@ -1130,8 +1130,10 @@ void gg_changed_private(session_t *s, const char *var)
 	const char *status = session_status_get(s);
 	char *descr = xstrdup(session_descr_get(s));
 
-	if (!session_connected_get(s))
+	if (!session_connected_get(s)) {
+		xfree(descr);
 		return;
+	}
 
 	gg_iso_to_cp(descr);
 
@@ -1153,6 +1155,8 @@ void gg_changed_private(session_t *s, const char *var)
 
                 gg_change_status(g->sess, _status);
         }
+
+	xfree(descr);
 }
 
 /*

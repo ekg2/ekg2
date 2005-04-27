@@ -660,6 +660,7 @@ COMMAND(jabber_command_modify)
 			if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1])
 				nickname = jabber_escape(argv[++i]);
 		}
+		array_free(argv);
 	}
 	
 	if (!xstrcasecmp(name, "add")) {

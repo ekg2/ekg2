@@ -322,13 +322,17 @@ COMMAND(gg_command_away)
 		xfree(params0);
 		params0 = xstrdup(session_descr_get(session));
 		session->scroll_last = time(NULL);
+
 		if (!xstrlen(params0)) {
 			xfree(params0);
 			return -1;
 		}
+
 		debug("%s [%s] %d\n", session_name(session), fd, session->scroll_pos);
-		if (xstrlen(params0) < GG_STATUS_DESCR_MAXSIZE)
+		if (xstrlen(params0) < GG_STATUS_DESCR_MAXSIZE) {
+				xfree(params0);
 				return -1;
+		}
 		goto change;
 	}
 

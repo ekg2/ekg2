@@ -481,6 +481,7 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 			if (!s || !userlist_find(s, peer) || (ignored_check(s, peer) & IGNORE_DCC)) {
 				debug("[gg] unauthorized client (uin=%ld), closing connection\n", d->peer_uin);
 				gg_free_dcc(d);
+				gg_event_free(e);
 				return;
 			}
 			break;	
@@ -515,7 +516,7 @@ void gg_dcc_handler(int type, int fd, int watch, void *data)
 			if (!found) {
 				debug("[gg] connection from %d not found\n", d->peer_uin);
 				gg_dcc_free(d);
-			
+				gg_event_free(e);	
 				return;
 			}
 		}

@@ -789,7 +789,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
                 *(xstrchr(username, '@')) = 0;
 
                 if (!resource)
-                        resource = JABBER_DEFAULT_RESOURCE;
+                        resource = xstrdup(JABBER_DEFAULT_RESOURCE);
 
                 j->stream_id = xstrdup(jabber_attr((char **) atts, "id"));
 
