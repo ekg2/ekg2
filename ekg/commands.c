@@ -2277,7 +2277,7 @@ COMMAND(cmd_query)
 	char *tmp;
 
         /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session) {
+        if (!session) {
                 if(session_current)
                         session = session_current;
                 else
@@ -2321,13 +2321,16 @@ COMMAND(cmd_query)
 
 	if (params[0] && (tmp = xstrrchr(params[0], '/'))) {
 		char *session_name = xstrndup(params[0], xstrlen(params[0]) - xstrlen(tmp));
+		session_t *sess_tmp;
 
-		if (!(session = session_find(session_name))) {
+		if (!(sess_tmp = session_find(session_name))) {
 			xfree(session_name);
 			goto next;
-		}
-		tmp++;
-		if (!get_uid(session, tmp)) {
+		} 
+
+		session = sess_tmp;
+		
+		if (!get_uid(session, ++tmp)) {
 			printq("user_not_found", tmp);
 			xfree(session_name);
 		        res = -1;
