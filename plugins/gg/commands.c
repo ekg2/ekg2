@@ -328,7 +328,7 @@ COMMAND(gg_command_away)
 			return -1;
 		}
 
-		debug("%s [%s] %d\n", session_name(session), fd, session->scroll_pos);
+		/* debug("%s [%s] %d\n", session_name(session), fd, session->scroll_pos); */
 		if (xstrlen(params0) < GG_STATUS_DESCR_MAXSIZE) {
 				xfree(params0);
 				return -1;
