@@ -419,7 +419,7 @@ msgid "%> %1 %B(do not disturb)%n %b%3:%4%n\n"
 msgstr ""
 
 #: ekg/themes.c:1098
-msgid "%> %1 %G(do not disturb: %5%G)%n %b%3:%4%n\n"
+msgid "%> %1 %G(do not disturb:%n %5%G)%n %b%3:%4%n\n"
 msgstr ""
 
 #: ekg/themes.c:1099

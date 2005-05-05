@@ -1095,7 +1095,7 @@ void theme_init()
         format_add("list_away", _("%> %1 %G(away)%n %b%3:%4%n\n"), 1);
         format_add("list_away_descr", _("%> %1 %G(away: %n%5%G)%n %b%3:%4%n\n"), 1);
         format_add("list_dnd", _("%> %1 %B(do not disturb)%n %b%3:%4%n\n"), 1);
-        format_add("list_dnd_descr", _("%> %1 %G(do not disturb: %5%G)%n %b%3:%4%n\n"), 1);
+        format_add("list_dnd_descr", _("%> %1 %G(do not disturb:%n %5%G)%n %b%3:%4%n\n"), 1);
         format_add("list_chat", _("%> %1 %W(free for chat)%n %b%3:%4%n\n"), 1);
         format_add("list_chat_descr", _("%> %1 %W(free for chat%n: %5%W)%n %b%3:%4%n\n"), 1);
         format_add("list_error", _("%> %1 %m(error) %b%3:%4%n\n"), 1);
