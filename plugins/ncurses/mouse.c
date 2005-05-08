@@ -220,7 +220,7 @@ void ncurses_gpm_watch_handler(int last, int fd, int watch, void *data)
 void ncurses_enable_mouse()
 {
 #define xterm_mouse() mouseinterval(-1);\
-	if (xstrcasecmp(env, "xterm") && xstrcasecmp(env, "xterm-colour")) {\
+	if (xstrcasecmp(env, "xterm") && xstrcasecmp(env, "xterm-color")) {\
                         debug("Mouse in %s terminal is not supported\n", env);\
                         goto end;\
         }\
