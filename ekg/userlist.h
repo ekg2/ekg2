@@ -111,6 +111,7 @@ enum ignore_t {
 	IGNORE_DCC = 8,
 	IGNORE_EVENTS = 16,
 	IGNORE_NOTIFY = 32,
+	IGNORE_XOSD = 64,
 	
 	IGNORE_ALL = 255
 };
@@ -120,7 +121,7 @@ struct ignore_label {
 	char *name;
 };
 
-#define	IGNORE_LABELS_MAX 7
+#define	IGNORE_LABELS_MAX 8
 struct ignore_label ignore_labels[IGNORE_LABELS_MAX];
 
 //list_t userlist;

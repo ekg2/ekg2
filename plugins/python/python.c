@@ -677,6 +677,7 @@ int python_initialize()
 	PyModule_AddIntConstant(ekg, "IGNORE_DCC",          IGNORE_DCC);
 	PyModule_AddIntConstant(ekg, "IGNORE_EVENTS",       IGNORE_EVENTS);
 	PyModule_AddIntConstant(ekg, "IGNORE_NOTIFY",       IGNORE_NOTIFY);
+	PyModule_AddIntConstant(ekg, "IGNORE_XOSD",       IGNORE_XOSD);
 	PyModule_AddIntConstant(ekg, "IGNORE_ALL",          IGNORE_ALL);
 
 	return 0;

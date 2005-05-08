@@ -65,6 +65,7 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 	{ IGNORE_MSG, "msg" },
 	{ IGNORE_DCC, "dcc" },
 	{ IGNORE_EVENTS, "events" },
+	{ IGNORE_XOSD, "xosd" },
 	{ 0, NULL }
 };
 

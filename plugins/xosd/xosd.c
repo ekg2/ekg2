@@ -128,7 +128,7 @@ static int xosd_protocol_status(void *data, va_list ap)
 	
 	int level = ignored_check(s, uid);
 	
-	if ((level == IGNORE_ALL) || (level & IGNORE_STATUS))
+	if ((level == IGNORE_ALL) || (level & IGNORE_STATUS) || (level & IGNORE_XOSD))
 		return 0;
 
 	if (!xosd_display_notify || ((xosd_display_notify == 2) && (!session_int_get(s, "display_notify"))))
@@ -186,7 +186,7 @@ static int xosd_protocol_message(void *data, va_list ap)
 	
 	int level = ignored_check(s, uid);
 	
-	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
+	if ((level == IGNORE_ALL) || (level & IGNORE_MSG) || (level & IGNORE_XOSD))
 		return 0;
 
 	if (xosd_display_filter == 1 && window_current && window_current->target && !xstrcmp(get_uid(s, window_current->target), get_uid(s, uid)))
