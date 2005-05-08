@@ -1889,7 +1889,7 @@ COMMAND(cmd_quit)
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 		
-		tmp = saprintf("/disconnect %s", (params[0]) ? params[0] : (s->descr) ? s->descr : "");
+		tmp = saprintf("/disconnect \"%s\"", (params[0]) ? params[0] : (s->descr) ? s->descr : "");
 		command_exec(NULL, s, tmp, 3);
 		xfree(tmp);
 	}
