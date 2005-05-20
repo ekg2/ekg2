@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2003-2004 Leszek Krupiñski <leafnode@wafel.com>
+ *                     2005 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -27,7 +28,9 @@ FILE* logs_open_file(char *path, char *ext, int makedir);
 char * prepare_timestamp(time_t ts);
 void logs_handler(void *data, va_list ap);
 void logs_handler_newwin(void *data, va_list ap);
-void logs_simple();
+void logs_status_handler(void *data, va_list ap);
+void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, int seq, uint32_t ip, uint16_t port, char *status, char *descr);
+
 void logs_xml();
 void logs_gaim();
 

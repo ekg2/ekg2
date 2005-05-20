@@ -4,6 +4,7 @@
  *  (C) Copyright 2003-2005 Tomasz Torcz <zdzichu@irc.pl>
  *                          Leszek Krupiñski <leafnode@wafel.com>
  *                          Adam Kuczyñski <dredzik@ekg2.org>
+ *                          Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -75,6 +76,7 @@ int logs_plugin_init(int prio)
         query_connect(&logs_plugin, "set-vars-default", logs_setvar_default, NULL);
 	query_connect(&logs_plugin, "protocol-message-post",	logs_handler, NULL);
 	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);
+	query_connect(&logs_plugin, "protocol-status", logs_status_handler, NULL);
 	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
 	variable_add(&logs_plugin, "log", VAR_MAP, 1, &config_logs_log, NULL, variable_map(3, 0, 0, "none", 1, 2, "simple", 2, 1, "xml"), NULL);
 	variable_add(&logs_plugin, "log_ignored", VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
@@ -301,7 +303,7 @@ void logs_handler(void *data, va_list ap)
 		debug("[logs] logging simple\n");
 		logs_simple(path, session, 
 			((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid), 
-			text, sent, class, seq);
+			text, sent, class, seq, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL, (char*)NULL);
 	} else if (config_logs_log == 2 && xstrstr(log_formats, "xml")) {
 		debug("[logs] logging xml\n");
 		logs_xml(path, session, 
@@ -317,13 +319,63 @@ void logs_handler(void *data, va_list ap)
 
 
 /*
+ * status handler
+ */
+
+void logs_status_handler(void *data, va_list ap)
+{
+	char **__session = va_arg(ap, char**), *session = *__session; // session name
+	char     **__uid = va_arg(ap, char**), *uid = *__uid;
+        char **__status = va_arg(ap, char**), *status = *__status;
+        char **__descr = va_arg(ap, char**), *descr = *__descr;
+	session_t *session_class = session_find(session);
+	session_t *s = session_find(session); // session pointer
+	userlist_t *userlist = userlist_find(session_class, uid);
+	const char *log_formats;
+	char *path;
+
+	if (!config_logs_log_status)
+		return;
+	
+	debug("[logs] logging status\n");
+
+	if (descr == NULL)
+		descr = "";
+
+	if (!session)
+		return;
+
+	if (!(log_formats = session_get(s, "log_formats")))
+		return;
+
+	if (!(path = logs_prepare_path(s, uid, 0, descr, 0, 6)))
+		return;
+	
+	debug("[logs] logging to file %s\n", path);
+
+	if (config_logs_log == 1 && xstrstr(log_formats, "simple")) {
+		debug("[logs] logging simple\n");
+		logs_simple(path, session, uid, status, 0, 6, 0, userlist->ip, userlist->port, status, descr);
+	}/*TODO else if (config_logs_log == 2 && xstrstr(log_formats, "xml")) {
+		debug("[logs] logging xml\n");
+		logs_xml(path, session, 
+			((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid), 
+			text, sent, class, seq);
+	}*/
+
+
+	xfree(path);
+};
+
+
+/*
  * przypomina ostanie logs:remind_number wiadomosci
  * z najmlodszego logu
  */
 
 void logs_handler_newwin(void *data, va_list ap)
 {
-	window_t *__result = va_arg(ap, window_t*), result = *__result;
+	//window_t *__result = va_arg(ap, window_t*), result = *__result;
 
 	if (config_logs_remind_number <= 0)
 		return;
@@ -341,10 +393,12 @@ void logs_handler_newwin(void *data, va_list ap)
  * typ,uid,nickname,timestamp,{timestamp wyslania dla odleglych}, text
  */
 
-void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, int seq)
+void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, int seq, uint32_t ip, uint16_t port, char *status, char *descr)
 {
 	FILE *file;
 	char *textcopy = log_escape(text);
+	char *descrcopy = log_escape(descr);
+
 	char *timestamp = prepare_timestamp((time_t)time(0));
 	char *senttimestamp = prepare_timestamp(sent);
 	session_t *s = session_find((const char*)session);
@@ -363,45 +417,64 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 		xfree(textcopy);
 		return ;
 	}
+	
+	if (class!=6){
+		switch ((enum msgclass_t)class) {
+			case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv", file);
+							  break;
+			case EKG_MSGCLASS_CHAT		: fputs("chatrecv", file);
+							  break;
+			case EKG_MSGCLASS_SENT		: fputs("msgsend", file);
+							  break;
+			case EKG_MSGCLASS_SENT_CHAT	: fputs("chatsend", file);
+							  break;
+			case EKG_MSGCLASS_SYSTEM	: fputs("msgsystem", file);
+							  break;
+			default				: fputs("chatrecv", file);
+							  break;
 
-	switch ((enum msgclass_t)class) {
-		case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv", file);
-						  break;
-		case EKG_MSGCLASS_CHAT		: fputs("chatrecv", file);
-						  break;
-		case EKG_MSGCLASS_SENT		: fputs("msgsend", file);
-						  break;
-		case EKG_MSGCLASS_SENT_CHAT	: fputs("chatsend", file);
-						  break;
-		case EKG_MSGCLASS_SYSTEM	: fputs("msgsystem", file);
-						  break;
-		default				: fputs("chatrecv", file);
-						  break;
-
-	};
+		};
+	}else{
+		fputs("status",file);
+	}
+	
 	fputc(',', file);
 
 	/*
 	 * chatsend,<numer>,<nick>,<czas>,<tre¶æ>
 	 * chatrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
+	 * status,<numer>,<nick>,<ip>,<time>,<status>,<descr>
 	 */
 
 	fputs(gotten_uid, file);      fputc(',', file);
 	fputs(gotten_nickname, file); fputc(',', file);
+	if (class==6) {
+		fputs(inet_ntoa(ip), file);
+	       	fputc(':', file);
+		fputs(itoa(port), file); 
+	       	fputc(',', file);
+	}
 
 	fputs(timestamp, file); fputc(',', file);
-
+	
+	if (class==6) {
+		fputs(status, file); fputc(',', file);
+		fputs(descrcopy, file);
+	}
+	
 	if (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_CHAT) {
 		fputs(senttimestamp, file);
 		fputc(',', file);
 	}
-
-	fputs(textcopy, file);
+	
+	if (class!=6)
+		fputs(textcopy, file);
 	fputs("\n", file);
 
 	xfree(senttimestamp);
 	xfree(timestamp);
 	xfree(textcopy);
+	xfree(descrcopy);
 	fclose(file);
 };
 
