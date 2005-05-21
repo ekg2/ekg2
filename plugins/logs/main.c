@@ -348,14 +348,14 @@ void logs_status_handler(void *data, va_list ap)
 	if (!(log_formats = session_get(s, "log_formats")))
 		return;
 
-	if (!(path = logs_prepare_path(s, uid, 0, descr, 0, 6)))
+	if (!(path = logs_prepare_path(s, uid, 0, descr, time(NULL), 6)))
 		return;
 	
 	debug("[logs] logging to file %s\n", path);
 
 	if (config_logs_log == 1 && xstrstr(log_formats, "simple")) {
 		debug("[logs] logging simple\n");
-		logs_simple(path, session, uid, status, 0, 6, 0, userlist->ip, userlist->port, status, descr);
+		logs_simple(path, session, uid, status, time(NULL), 6, 0, userlist->ip, userlist->port, status, descr);
 	}/*TODO else if (config_logs_log == 2 && xstrstr(log_formats, "xml")) {
 		debug("[logs] logging xml\n");
 		logs_xml(path, session, 
