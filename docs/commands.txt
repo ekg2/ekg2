@@ -342,7 +342,7 @@ metacontact
 	
 	  -l, --list 		    wy¶wietla listê wszystkich metakontaktów
 	
-	  <nazwa> 			    wy¶weitla listê kontaktów danego metakontaktu
+	  <nazwa> 			    wy¶wietla listê kontaktów danego metakontaktu
 	
 	
 	Przyk³adowe dodanie metakontaktu mo¿e wygl±daæ nastêpuj±co:
