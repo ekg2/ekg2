@@ -333,6 +333,8 @@ void logs_status_handler(void *data, va_list ap)
 	userlist_t *userlist = userlist_find(session_class, uid);
 	const char *log_formats;
 	char *path;
+	uint32_t ip=userlist?userlist->ip:0;
+	uint16_t port=userlist?userlist->port:0;
 
 	if (!config_logs_log_status)
 		return;
@@ -355,7 +357,7 @@ void logs_status_handler(void *data, va_list ap)
 
 	if (config_logs_log == 1 && xstrstr(log_formats, "simple")) {
 		debug("[logs] logging simple\n");
-		logs_simple(path, session, uid, status, time(NULL), 6, 0, userlist->ip, userlist->port, status, descr);
+		logs_simple(path, session, uid, status, time(NULL), 6, 0, ip, port, status, descr);
 	}/*TODO else if (config_logs_log == 2 && xstrstr(log_formats, "xml")) {
 		debug("[logs] logging xml\n");
 		logs_xml(path, session, 
