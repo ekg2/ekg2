@@ -399,7 +399,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	BIO *mbio = NULL, *cbio = NULL, *bbio = NULL;
 	RSA *private = NULL;
 	unsigned char *buf = NULL, *res = NULL, *data;
-	int len;
+	int len, cx;
 
 	/* je¶li wiadomo¶æ jest krótsza ni¿ najkrótsza zaszyfrowana,
 	 * nie ma sensu siê bawiæ w próby odszyfrowania. */
@@ -497,6 +497,16 @@ cleanup:
 	if (buf)
 		free(buf);
 
+        for(cx = 0; cx < len; cx++)
+            switch(res[cx]) {
+                case 156: res[cx] = '¶'; break;
+                case 185: res[cx] = '±'; break;
+                case 159: res[cx] = '¼'; break;
+                case 140: res[cx] = '¦'; break;
+                case 165: res[cx] = '¡'; break;
+                case 143: res[cx] = '¬'; break;
+            }
+
 	return res;
 }
 
@@ -508,3 +518,5 @@ cleanup:
  * indent-tabs-mode: t
  * End:
  */
+
+
