@@ -485,6 +485,15 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	memcpy(res, data + sizeof(head), len);
 	res[len] = 0;
 
+        for(cx = 0; cx < len; cx++)
+            switch(res[cx]) {
+                case 156: res[cx] = '¶'; break;
+                case 185: res[cx] = '±'; break;
+                case 159: res[cx] = '¼'; break;
+                case 140: res[cx] = '¦'; break;
+                case 165: res[cx] = '¡'; break;
+                case 143: res[cx] = '¬'; break;
+            }
 cleanup:
 	if (cbio)
 		BIO_free(cbio);
@@ -496,17 +505,6 @@ cleanup:
 		RSA_free(private);
 	if (buf)
 		free(buf);
-
-        for(cx = 0; cx < len; cx++)
-            switch(res[cx]) {
-                case 156: res[cx] = '¶'; break;
-                case 185: res[cx] = '±'; break;
-                case 159: res[cx] = '¼'; break;
-                case 140: res[cx] = '¦'; break;
-                case 165: res[cx] = '¡'; break;
-                case 143: res[cx] = '¬'; break;
-            }
-
 	return res;
 }
 
