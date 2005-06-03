@@ -511,6 +511,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			if (ns && !xstrncmp(ns, "jabber:iq:roster", 16)) {
 				userlist_t u, *tmp;
 				char *ctmp;
+				xmlnode_t *group;
 
 				xmlnode_t *item = xmlnode_find_child(q, "item");
 				for (; item ; item = item->next) {
@@ -523,7 +524,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 					u.status = xstrdup(EKG_STATUS_NA);
 					
-					xmlnode_t *group = xmlnode_find_child(item,"group");
+					group = xmlnode_find_child(item,"group");
 					for (; group ; group = group->next ) {
 					    ekg_group_add(&u, jabber_unescape(group->data));
 					}
