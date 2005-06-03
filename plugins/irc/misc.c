@@ -861,6 +861,7 @@ IRC_COMMAND(irc_c_msg)
 	char		*t, *dest, *me, *form=NULL, *seq=NULL, *format;
 	char		*head, *xosd_nick, *xosd_chan, **rcpts = NULL;
 	char		*ctcpstripped, *coloured, *pubtous, tous, prefix[2];
+	char		*ignore_nick = NULL;
 	int		class, ekgbeep= EKG_NO_BEEP;
 	int		mw = 666, prv=0;
 	window_t	*w = NULL;
@@ -990,6 +991,7 @@ IRC_COMMAND(irc_c_msg)
 			query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head,
 					&form, &sent, &class, &seq, &ekgbeep, &secure);
 
+		xfree(ignore_nick);
 		xfree(head);
 	}	
 
