@@ -969,6 +969,7 @@ IRC_COMMAND(irc_c_msg)
 010539 <@dredzik> GiM, hm... jeszcze by siê przyda³a jedna rzecz - tak ¿eby
 010539 pierwszym argumentem by³a sesja
 	*/
+
 		query_emit(NULL, "irc-protocol-message",
 				&(s->uid), &xosd_nick, &coloured, 
 				&xosd_to_us, &xosd_is_priv, &xosd_chan);
@@ -981,7 +982,13 @@ IRC_COMMAND(irc_c_msg)
 		sent = time(NULL);
 		class |= EKG_NO_THEMEBIT;
 
-		query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head, &form, &sent, &class, &seq, &ekgbeep, &secure);
+		ignore_nick = saprintf("%s%s", IRC4, OMITCOLON(param[0]));                   
+
+		if (ignored_check(s, ignore_nick) & IGNORE_MSG)
+			debug("[IRC_IGNORE] OK WORKS\n");
+		else
+			query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head,
+					&form, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(head);
 	}	
