@@ -618,7 +618,6 @@ int python_initialize()
 		{
 			char *s = saprintf("PYTHONPATH=%s", tmp);
 			putenv(s);
-			xfree(s);
 		}
 #endif
 		xfree(tmp);
@@ -629,7 +628,6 @@ int python_initialize()
 		{
 			char *s = saprintf("PYTHONPATH=%s", prepare_path("scripts", 0));
 			putenv(s);
-			xfree(s);
 		}
 #endif
 	}
