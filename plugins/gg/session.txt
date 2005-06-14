@@ -116,7 +116,7 @@ private
 
 scroll_long_desc
 	typ: liczba
-	domy¶lna warto¶æ: 5
+	domy¶lna warto¶æ: 0
 
 	Okre¶la co ile sekund ma nast±piæ automagiczne scrollowanie
 	zbyt d³ugich statusów. Zero - brak scrollowania.

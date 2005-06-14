@@ -1293,7 +1293,7 @@ int gg_plugin_init(int prio)
 	plugin_var_add(&gg_plugin, "proxy", VAR_STR, 0, 0, gg_changed_proxy);
 	plugin_var_add(&gg_plugin, "proxy_forwarding", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "private", VAR_BOOL, "0", 0, gg_changed_private);
-	plugin_var_add(&gg_plugin, "scroll_long_desc", VAR_INT, "5", 0, NULL);
+	plugin_var_add(&gg_plugin, "scroll_long_desc", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "scroll_mode", VAR_STR, "bounce", 0, NULL);
 	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0, NULL);
 
