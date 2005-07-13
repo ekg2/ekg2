@@ -388,6 +388,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			query_emit(NULL, "protocol-connected", &__session);
 			xfree(__session);
 			jdh->roster_retrieved = 0;
+			userlist_free(s);
 			jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 			jabber_write_status(s);
 		}
