@@ -39,6 +39,10 @@
 #include "themes.h"
 #include "ltdl.h"
 
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy(DST,SRC) __va_copy(DST,SRC)
+#endif
+
 list_t plugins = NULL;
 list_t queries = NULL;
 
