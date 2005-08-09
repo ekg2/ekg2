@@ -7,7 +7,6 @@ rozwi±zanie.
 * przed wydaniem:
   - zmieniæ mylne nazwy plików np old.c w ncurses na co¶ sensownego
   - THANKS - chyba przydatny by³by taki plik
-  - porz±dek w docs
 
 * klient:
   - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
