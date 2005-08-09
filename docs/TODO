@@ -5,8 +5,6 @@ Zwykle im dana sprawa jest wy¿ej na li¶cie, tym wa¿niejsze jest jej
 rozwi±zanie.
 
 * przed wydaniem:
-  - ustawiæ 'debug' domyslnie na 0
-  - wywalic ustawianie ulimit -c na unlimited w ekg.c
   - zmieniæ mylne nazwy plików np old.c w ncurses na co¶ sensownego
   - THANKS - chyba przydatny by³by taki plik
   - porz±dek w docs
@@ -36,3 +34,19 @@ rozwi±zanie.
   - conference support (similar to gg_command_msg() in gg)
   - ignore support 
 
+*** Przed wydaniem wersji 1.0 ***
+
+[jabber]
+	- edycja oraz wyszukiwanie informacji osobistej w katalogu 
+	  u¿ytkowników
+	- rejestracja nowego konta jabberowego
+	
+[ekg2]
+	- poprawiæ wszelkie znane b³êdy
+	- kompilacja na FreeBSD
+	- poprawiæ /window move tak, aby dzia³a³o analogicznie do tego 
+	  znanego z irssi
+
+[irc]
+	- poprawiæ wszelkie znane b³êdy
+	- popracowaæ nad stabilno¶ci±
