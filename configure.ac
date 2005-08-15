@@ -273,15 +273,27 @@ if test "x$with_python" != "xno"; then
 	fi
 fi
 
+AC_ARG_WITH(sqlite3,
+        [  --without-sqlite3        Compile without sqlite3 support (sqlite plugin)])
+
+if test "x$with_sqlite3" != "xno"; then
+	AC_CHECK_SQLITE3
+	if test "x$have_sqlite3" = "xyes"; then
+		AC_DEFINE(HAVE_SQLITE3, 1, [define if you have libsqlite3])
+	fi
+fi
+
 AC_ARG_WITH(sqlite,
         [  --without-sqlite        Compile without sqlite support (sqlite plugin)])
 
-if test "x$with_sqlite" != "xno"; then
-	AC_CHECK_SQLITE
-	if test "x$have_sqlite" = "xyes"; then
-		AC_CONFIG_FILES([plugins/logsqlite/Makefile])
-		PLUGINS="$PLUGINS logsqlite"
-	fi
+if test "x$have_sqlite3" != "xyes"; then
+	if test "x$with_sqlite" != "xno"; then
+		AC_CHECK_SQLITE
+	fi	
+fi	
+if test "x$have_sqlite" = "xyes" || test "x$have_sqlite3" = "xyes" ; then
+	AC_CONFIG_FILES([plugins/logsqlite/Makefile])
+	PLUGINS="$PLUGINS logsqlite"
 fi
 
 AC_ARG_WITH(libgnutls,
@@ -373,7 +385,9 @@ fi
 
 if test "x$have_sqlite" = "xyes"; then
 	echo " - logsqlite: enabled"
-else
+elif test "x$have_sqlite3" = "xyes"; then
+	echo " - logsqlite: enabled (using sqlite3)"
+else	
 	echo " - logsqlite: disabled"
 fi
 

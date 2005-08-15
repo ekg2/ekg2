@@ -22,15 +22,22 @@
 
 #define __LOGSQLITE_H__
 
-#include <sqlite.h>
+
+#ifdef HAVE_SQLITE3
+# include <sqlite3.h>
+# define sqlite_t sqlite3
+#else
+# include <sqlite.h>
+# define sqlite_t sqlite
+#endif
 
 extern char *logsqlite_prepare_path();
 extern int logsqlite_msg_handler(void *data, va_list ap);
 extern int logsqlite_status_handler(void *data, va_list ap);
 extern int logsqlite_theme_init();
-extern sqlite * logsqlite_prepare_db(session_t * session, time_t sent);
-extern sqlite * logsqlite_open_db(session_t * session, time_t sent, char * path);
-extern void logsqlite_close_db(sqlite * db);
+extern sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent);
+extern sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path);
+extern void logsqlite_close_db(sqlite_t * db);
 extern void logsqlite_setvar_default();
 
 extern char *config_logsqlite_path;
