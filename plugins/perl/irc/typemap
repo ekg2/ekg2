@@ -1,0 +1,20 @@
+TYPEMAP
+
+Ekg2::Irc::Channel	T_Ekg2IrcCha
+Ekg2::Irc::User		T_Ekg2IrcPer
+
+INPUT
+
+T_Ekg2IrcCha
+	$var = (channel_t *) Ekg2_ref_object($arg)
+
+T_Ekg2IrcPer
+	$var = (people_t *) Ekg2_ref_object($arg)
+
+OUTPUT
+
+T_Ekg2IrcCha
+	$arg = (void *) bless_channel( (channel_t *) $var);
+
+T_Ekg2IrcPer
+	$arg = (void *) bless_channperson( (people_t *) $var);

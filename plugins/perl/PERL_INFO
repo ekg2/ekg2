@@ -1,0 +1,116 @@
+# TODO: zrobic to w docbooku albo czymstam...
+
+# TODO: wywalic wszystkie Ekg2::Session::Find itd.. zostawic tylko Ekg2::session_find() itd..
+
+# TODO: Userlista dziwnie jest zrobiona...
+
+# TODO: dokonczyc.
+
+#####################################################################################################################################
+
+Ekg2
+    EKG_MSGCLASS_SENT									(int)
+    EKG_MSGCLASS_SENT_CHAT								(int)
+    EKG_NO_THEMEBIT									(int)
+
+    -> session_find($nazwa)	- szuka sesji						(Ekg2::Session)
+    -> plugin_find($nazwa)	- szuka pluga						(Ekg2::Plugin)
+    -> variable_find($nazwa)	- szuka zmiennej					(Ekg2::Variable)
+
+    -> session_current()	- aktualna sesja.					(Ekg2::Session)
+    -> window_current()		- aktualne okno.					(Ekg2::Window)
+
+    -> plugins()	    - lista pluginow						(lista Ekg2::Plugin)
+    -> sessions()	    - lista sesji						(lista Ekg2::Session)
+    -> windows()	    - lista okine						(lista Ekg2::Window)
+    -> timers()		    - lista zegarkow						(lista Ekg2::Timer)
+    -> variables()	    - lista zmiennych						(lista Ekg2::Variable)
+    -> commands()	    - lista komend						(lista Ekg2::Command)
+
+    
+Ekg2::Command
+    {name}			- nazwa
+    
+    -> execute($param)		- wykonuje polecenie
+
+Ekg2::Plugin
+    {name}			- nazwa							(char *)
+    {prio}			- priorytet 						(int)
+    
+    -> unload()			- wyladowuje plugin.					(int)
+
+Ekg2::Session
+    {connected}			- czy polaczona.					(int)
+    {uid}			- nazwa.						(char *)
+    {status}			- status, tryb lub jaktotamsienazywa (avail,..)		(char *)
+#    {userlist}			- userlista.						(Ekg2::Userlist)
+
+    -> disconnect()
+    -> connect()
+    
+    -> params()			- lista zmiennych sesji					(lista Ekg2::Session::Param)
+
+Ekg2::Session::Param
+    -> set($value)
+    -> help()
+
+Ekg2::Window
+    -> kill()			- zabija okno.
+
+Ekg2::Timers
+
+Ekg2::Variable
+    -> set($value)
+    -> help()
+
+#####################################################################################################################################
+
+Ekg2::Irc
+    -> servers()		- zwraca liste sesji irc.				(Ekg2::Irc::Server)
+
+
+Ekg2::Irc::Server 
+#   {session} 		    - sesja							(Ekg2::Session)
+   {nick}		    - nick (j->nick albo session_get(... , "nick")		(char *)
+   {server}		    - nazwa serwera ()						(char *)
+   {ip}			    - jesli zresolvowano to adres ip, jesli nie to 0.0.0.0	(char *)
+
+  -> raw($co)			- wysyla do serwera.
+		    /quote $co
+  -> quit($reason)		- rozlacza sie z serwerem.
+		    /quote QUIT :$reason
+  -> newnick($nick)		- zmienia nick.
+		    /quote NICK $nick
+  -> setmode($mode)		- zmienia tryby.
+		    /quote MODE nasz_nick $mode
+  -> oper($nick, $haslo)	- identyfikuje sie jako operator.
+		    /quote OPER $nick $haslo
+  -> die($server, $reason)	- zabija serwer ircd.
+		    /quote DIE  $server :$reason (dobrze ?, rfc!)
+
+  -> channels()			- zwraca liste kanalow na jakich siedzimy.		(lista Ekg2::Irc::Channel)
+  -> people()			- zwraca liste userow  na kanalach na ktorych siedzimy. (lista Ekg2::Irc::User)
+  
+ 
+Ekg2::Irc::Channel
+   {name}                  -  nazwa kanalu (bez irc:)					(char *)
+   {mode}		   -  tryb kanalu						(char *)
+   {topic}		   -  topic.							(char *)
+   {topicby}		   -  autor topica.						(char *)
+#   {window}	           -  okno.							(Ekg2::Window)
+
+   {name_}		   -  nazwa kanalu (  z irc:) wyleci pewnie za niedlugo....	(char *)
+   {mode_}		   -  ? 							(char *)
+
+#  -> part($reason)		- wychodzi z kanalu 
+##  -> kick($user, $reason)	- 		    
+##  -> 
+  
+Ekg2::Irc::User
+#  -> kill($reason)		- zabija usera.    
+##  -> whois(
+
+Ekg2::Irc
+
+#####################################################################################################################################
+

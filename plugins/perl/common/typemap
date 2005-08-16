@@ -1,0 +1,68 @@
+TYPEMAP
+
+Ekg2::Command		T_Ekg2Comm
+Ekg2::Variable		T_Ekg2Var
+Ekg2::Session		T_Ekg2Ses
+Ekg2::Session::Param	T_Ekg2SesVar
+
+Ekg2::Window		T_Ekg2Win
+Ekg2::Plugin		T_Ekg2Plu
+Ekg2::User		T_Ekg2User
+Ekg2::Timer		T_Ekg2Time
+
+Ekg2::PTimer		T_PlainList
+Ekg2::STIMER		T_PlainList
+Ekg2::Userlist		T_PlainList
+
+INPUT
+
+T_PlainList
+	$var = (list_t ) INT2PTR(void *,SvIV(ST(0)));
+
+T_Ekg2User
+	$var = (userlist_t *) Ekg2_ref_object($arg)
+
+T_Ekg2Time
+	$var = (struct timer *) Ekg2_ref_object($arg)
+
+T_Ekg2Var
+	$var = (variable_t *) Ekg2_ref_object($arg)
+
+T_Ekg2Ses
+	$var = (session_t *) Ekg2_ref_object($arg)
+
+T_Ekg2SesVar
+	$var = (session_param_t *) Ekg2_ref_object($arg)
+
+T_Ekg2Comm
+	$var = (command_t *) Ekg2_ref_object($arg)
+
+T_Ekg2Win
+	$var = (window_t *) Ekg2_ref_object($arg)
+
+T_Ekg2Plu
+	$var = (plugin_t *) Ekg2_ref_object($arg)
+	
+OUTPUT
+
+T_Ekg2Var
+	$arg = (void *) bless_variable( (variable_t *) $var);
+
+T_Ekg2SesVar
+	$arg = (void *) bless_session_param( (session_param_t *) $var);
+
+T_Ekg2Ses
+	$arg = (void *) bless_session( (session_t *) $var);
+	
+T_Ekg2Comm
+	$arg = (void *) bless_command( (command_t *) $var);
+
+T_Ekg2Win
+	$arg = (void *) bless_window( (window_t *) $var);
+	
+T_Ekg2Plu
+	$arg = (void *) bless_plugin( (plugin_t *) $var);
+
+T_Ekg2Time
+	$arg = (void *) bless_timer( (struct timer *) $var);
+
