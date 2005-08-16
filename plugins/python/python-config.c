@@ -87,11 +87,12 @@ int ekg_config_len(ekg_configObj * self)
 PyObject *ekg_config_get(ekg_configObj * self, PyObject * key)
 {
     char *name = PyString_AsString(key);
-    debug("[python] Getting value for '%s' config option\n", name);
     list_t l;
+    variable_t *v;
+    debug("[python] Getting value for '%s' config option\n", name);
 
     for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
+		v = l->data;
 		
 		if (!strcmp(v->name, name)) {
 			if (v->type == VAR_BOOL || v->type == VAR_INT
@@ -116,9 +117,12 @@ PyObject *ekg_config_get(ekg_configObj * self, PyObject * key)
 int ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 {
 	char *name = PyString_AsString(key);
+	variable_t *v;
+
 	debug("[python] Setting '%s' config option to '%s'\n", name,
 		PyString_AsString(value));
-	variable_t *v = variable_find(name);
+
+	v = variable_find(name);
 
 	if (!v) {
 		PyErr_SetString(PyExc_LookupError, "unknown variable");

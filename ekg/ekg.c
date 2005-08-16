@@ -69,6 +69,7 @@
 #include "stuff.h"
 #include "themes.h"
 #include "userlist.h"
+#include "scripts.h"
 #include "vars.h"
 #include "windows.h"
 #include "xmalloc.h"
@@ -825,6 +826,7 @@ int main(int argc, char **argv)
         protocol_init();
         events_init();
         metacontact_init();
+	scripts_init();
 
         /* it has to be done after plugins are loaded, either we wouldn't know if we are
          * supporting some protocol in current build */

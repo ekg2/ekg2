@@ -35,6 +35,7 @@
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
+#include <ekg/scripts.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 
@@ -63,6 +64,31 @@ PyObject *ekg_cmd_command(PyObject * self, PyObject * args)
 	return NULL;
     }
     command_exec(NULL, NULL, command, 0);	// run command for current session
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+/**
+ * ekg_cmd_command_bind()
+ *
+ * run ekg command
+ *
+ */
+
+PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
+{
+    char *bind_command = NULL;
+    char *bind_handler = NULL;
+
+    script_t *scr = python_find_script(self);
+//    python_private_t *p = python_private(scr);
+
+    if (!PyArg_ParseTuple(args, "ss", &bind_command, &bind_handler)) {
+	return NULL;
+    }
+//    script_command_bind(&python_lang, scr, bind_command, python_get_func(p->module, bind_handler));
+    script_command_bind(&python_lang, scr, xstrdup(bind_command), xstrdup(bind_handler));
+
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -184,6 +210,7 @@ PyObject *ekg_cmd_sessions(PyObject * self, PyObject * pyargs)
 
     for (l = sessions; l; l = l->next) {
 		len++;
+    session_t *s;
     }
 
     list = PyList_New(len);
@@ -215,7 +242,7 @@ PyObject *ekg_cmd_getSession(PyObject * self, PyObject * pyargs)
 		return NULL;
 
     debug("[python] checking for  '%s' session\n", name);
-    session_t *s = session_find((const char *) name);
+    s = session_find((const char *) name);
 
     if (!s) {
 		snprintf(buf, 99, "Can't find session '%s'", name);

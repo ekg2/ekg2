@@ -673,6 +673,9 @@ def handle_connect(session):
 def handle_disconnect(session):
     ekg.echo("£o, sesja %s nam pad³a" % (session,))
     ekg.echo("Wysy³amy smsa ¿e nam cu¶ pad³o...")
+    
+def handle_keypress(ch)
+    ekg.echo("Nacisnales #" + str(ch));
 ]]>
    </programlisting>
 </sect2>

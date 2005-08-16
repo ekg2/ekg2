@@ -24,6 +24,7 @@
 #include <Python.h>
 
 PyObject * ekg_cmd_command(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_command_bind(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_echo(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_printf(PyObject *self, PyObject *pyargs);
 PyObject * ekg_cmd_debug(PyObject *self, PyObject *args);
@@ -37,6 +38,7 @@ PyObject * ekg_cmd_getSession(PyObject *self, PyObject *args);
 
 PyMethodDef ekg_methods[] = {
         { "command", ekg_cmd_command, METH_VARARGS, "" },
+	{ "command_bind", ekg_cmd_command_bind, METH_VARARGS, "" },
         { "echo", ekg_cmd_echo, METH_VARARGS, "" },
         { "printf", ekg_cmd_printf, METH_VARARGS, "" },
         { "debug", ekg_cmd_debug, METH_VARARGS, "" },

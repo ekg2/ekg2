@@ -37,16 +37,19 @@
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
+#include <ekg/scripts.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 
-int python_plugin_destroy();
 int python_theme_init();
 int python_exec(const char *);
 int python_run(const char *filename);
+int python_load(script_t *s);
+int python_unload(script_t *s);
+PyObject *python_get_func(PyObject *module, const char *name);
 
 /**
  * python_plugin
@@ -54,12 +57,8 @@ int python_run(const char *filename);
  * plugin definition
  */
 
-plugin_t python_plugin = {
-	name: "python",
-	pclass: PLUGIN_SCRIPTING,
-	destroy: python_plugin_destroy,
-	theme_init: python_theme_init,
-};
+PLUGIN_DEFINE(python, PLUGIN_SCRIPTING, python_theme_init);
+SCRIPT_DEFINE(python, ".py");
 
 // * ***************************************************************************
 // *
@@ -114,7 +113,8 @@ COMMAND(python_command_load)
 		print("not_enough_params", name);
 		return -1;
 	}
-	python_load(params[0], quiet);
+//	python_load(params[0], quiet);
+	script_load(&python_lang, (char *) params[0]);
 	return 0;
 }
 
@@ -127,11 +127,7 @@ COMMAND(python_command_load)
 
 COMMAND(python_command_unload)
 {
-	if (!params[0]) {
-		print("not_enough_params", name);
-		return -1;
-	}
-	python_unload(params[0], quiet);
+	script_unload_name(&python_lang, (char *) params[0]);
 	return 0;
 }
 
@@ -144,18 +140,7 @@ COMMAND(python_command_unload)
 
 COMMAND(python_command_list)
 {
-	list_t l;
-
-	if (!python_modules)
-		printq("python_list_empty");
-
-	for (l = python_modules; l; l = l->next) {
-		struct python_module *m = l->data;
-
-		printq("python_list", m->name);
-
-	}
-
+	script_list(&python_lang);
 	return 0;
 }
 
@@ -165,6 +150,38 @@ COMMAND(python_command_list)
 // *
 // * ***************************************************************************
 
+int python_commands(script_t *scr, script_command_t *comm, char **params)
+{
+	int python_handle_result;
+	python_private_t *p = python_private(scr);
+
+	if (!(p->handle_comm = python_get_func(p->module, comm->private))) {
+		debug("func %s in script %s not found, deleting comm \n", comm->private, scr->path);
+		return SCRIPT_COMMAND_DELETE;
+	}
+	PYTHON_HANDLE_HEADER(comm, "(ss)", comm->comm, 
+//					    params)
+					    params[0] ? params[0] : "")
+	;
+	PYTHON_HANDLE_FOOTER()
+	if (p->handle_comm) {
+		Py_XDECREF(p->handle_comm);
+	}
+	p->handle_comm = NULL;
+	return python_handle_result;
+}
+
+
+int python_keypressed(script_t *s, int *_ch)
+{
+	int ch = *_ch;
+	int python_handle_result;
+	python_private_t *p = python_private(s);
+
+	PYTHON_HANDLE_HEADER(keypress, "(i)", ch);
+	PYTHON_HANDLE_FOOTER()
+}
+
 /**
  * python_protocol_status()
  *
@@ -172,29 +189,18 @@ COMMAND(python_command_list)
  *
  */
 
-int python_protocol_status(void *data, va_list ap)
+int python_protocol_status(script_t *s, char **__session, char **__uid, char **__status, char **__descr)
 {
-	debug("[python] handling status\n");
-	char **__session = va_arg(ap, char**), *session = *__session;
-	char **__uid = va_arg(ap, char**), *uid = *__uid;
-	char **__status = va_arg(ap, char**), *status = *__status;
-	char **__descr = va_arg(ap, char**), *descr = *__descr;
+	char *session = *__session;
+	char *uid = *__uid;
+	char *status = *__status;
+	char *descr = *__descr;
 	int python_handle_result;
+	python_private_t *p = python_private(s);
 
-	debug("[python] running python scripts\n");
 	PYTHON_HANDLE_HEADER(status, "(ssss)", session, uid, status, descr)
 	;
 	PYTHON_HANDLE_FOOTER()
-
-
-	switch (python_handle_result) {
-		case 0:
-			return -1;
-			break;
-		default:
-			return 0;
-			break;
-	}
 }
 
 /**
@@ -204,20 +210,22 @@ int python_protocol_status(void *data, va_list ap)
  *
  */
 
-int python_protocol_message(void *data, va_list ap)
+int python_protocol_message(script_t *scr, char **__session, char **__uid, char ***__rcpts, char **__text, uint32_t **__format, time_t *__send, int  *__class)
 {
-	debug("[python] handling protocol message\n");
-	char **__session = va_arg(ap, char**), *session = *__session;
-	char **__uid = va_arg(ap, char**), *uid = *__uid;
-	char ***__rcpts = va_arg(ap, char***), **rcpts = *__rcpts;
-	char **__text = va_arg(ap, char**), *text = *__text;
-	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
-	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
-	int *__class = va_arg(ap, int*), class = *__class;
+	char *session = *__session;
+	char *uid = *__uid;
+	char **rcpts = *__rcpts;
+	char *text = *__text;
+	uint32_t *format = *__format;
+	time_t sent = *__send;
+	int class = *__class;
+	int level;
+
 	char * target;
 	userlist_t *u;
 	session_t *s;
 	int python_handle_result;
+	python_private_t *p = python_private(scr);
 
 	// silence warning
 	format = NULL;
@@ -227,30 +235,20 @@ int python_protocol_message(void *data, va_list ap)
 
 	u = userlist_find(s, uid);
 
-	int level = ignored_check(s, uid);
+	level = ignored_check(s, uid);
 
 	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
 		return 0;
 
-	debug("[python] running python scripts\n");
 	if (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) {
 		target = (rcpts) ? rcpts[0] : NULL;
 		PYTHON_HANDLE_HEADER(msg_own, "(sss)", session, target, text)
 		;
-		PYTHON_HANDLE_FOOTER()
+		PYTHON_HANDLE_FOOTER();
 	} else {
 		PYTHON_HANDLE_HEADER(msg, "(ssisii)", session, uid, class, text, (int) sent, level)
 		;
-		PYTHON_HANDLE_FOOTER()
-	}
-
-	switch (python_handle_result) {
-		case 0:
-			return -1;
-			break;
-		default:
-			return 0;
-			break;
+		PYTHON_HANDLE_FOOTER();
 	}
 }
 
@@ -261,26 +259,15 @@ int python_protocol_message(void *data, va_list ap)
  *
  */
 
-int python_protocol_connected(void *data, va_list ap)
+int python_protocol_connected(script_t *s, char **__session)
 {
-	debug("[python] handling connection\n");
-	char **__session = va_arg(ap, char**), *session = *__session;
+	char *session = *__session;
 	int python_handle_result;
-
-	debug("[python] running python scripts\n");
+	python_private_t *p = python_private(s);
 
 	PYTHON_HANDLE_HEADER(connect, "(s)", session)
 	;
 	PYTHON_HANDLE_FOOTER()
-
-	switch (python_handle_result) {
-		case 0:
-			return -1;
-			break;
-		default:
-			return 0;
-			break;
-	}
 }
 
 /**
@@ -290,26 +277,15 @@ int python_protocol_connected(void *data, va_list ap)
  *
  */
 
-int python_protocol_disconnected(void *data, va_list ap)
+int python_protocol_disconnected(script_t *s, char **__session)
 {
-	debug("[python] handling disconnection\n");
-	char **__session = va_arg(ap, char**), *session = *__session;
+	char *session = *__session;
 	int python_handle_result;
-
-	debug("[python] running python scripts\n");
+	python_private_t *p = python_private(s);
 
 	PYTHON_HANDLE_HEADER(disconnect, "(s)", session)
 	;
 	PYTHON_HANDLE_FOOTER()
-
-	switch (python_handle_result) {
-		case 0:
-			return -1;
-			break;
-		default:
-			return 0;
-			break;
-	}
 }
 
 /**
@@ -350,7 +326,7 @@ int python_exec(const char *command)
 	tmp = saprintf("import ekg\n%s\n", command);
 
 	if (PyRun_SimpleString(tmp) == -1) {
-		print("python_eval_error");
+		print("script_eval_error");
 		debug("[python] script evaluation failed\n");
 	}
 	xfree(tmp);
@@ -372,7 +348,7 @@ int python_run(const char *filename)
 	FILE *f = fopen(filename, "r");
 
 	if (!f) {
-		print("python_not_found", filename);
+		print("script_not_found", filename);
 		return -1;
 	}
 
@@ -401,43 +377,30 @@ PyObject *python_get_func(PyObject *module, const char *name)
 	return result;
 }
 
+script_t *python_find_script(PyObject *module)
+{
+	SCRIPT_FINDER(slang == &python_lang);
+}
+
 /*
  * python_load()
  *
- * load script with given name from ~/(etc/).ekg/scripts
+ * load script with given details
  *
- *  - name - script name
- *  - quiet.
+ *  - s - script_t * struct
  *
- * 0/-1
  */
-int python_load(const char *name, int quiet)
+int python_load(script_t *s)
 {
 	PyObject *module, *init;
-	struct python_module m;
-	char *name2;
+	python_private_t *p;
 
-	if (!name) {
-		printq("python_need_name");
-		return -1;
-	}
-
-	if (strchr(name, '/')) {
-		printq("python_wrong_location", prepare_path("scripts", 0));
-		return -1;
-	}
-
-	name2 = xstrdup(name);
-
-	if (strlen(name2) > 3 && !strcasecmp(name2 + strlen(name2) - 3, ".py"))
-		name2[strlen(name2) - 3] = 0;
-
-	module = PyImport_ImportModule(name2);
+	module = PyImport_ImportModule(s->name);
+	int mask = 0;
 
 	if (!module) {
-		printq("python_not_found", name2);
+		print("script_not_found", s->name);
 		PyErr_Print();
-		xfree(name2);
 		return -1;
 	}
 
@@ -459,28 +422,31 @@ int python_load(const char *name, int quiet)
 		Py_XDECREF(init);
 	}
 
-	memset(&m, 0, sizeof(m));
+	p = xmalloc(sizeof(python_private_t));
+	p->module                  = module;
+	
+	if ((p->deinit                  = python_get_func(module, "deinit")))
+		mask |= HAVE_DEINIT;
+	if ((p->handle_msg              = python_get_func(module, "handle_msg")))
+		mask |= HAVE_HANDLE_MSG;
+	if ((p->handle_msg_own          = python_get_func(module, "handle_msg_own")))
+		mask |= HAVE_HANDLE_MSG_OWN;
+	if ((p->handle_status           = python_get_func(module, "handle_status")))
+		mask |= HAVE_HANDLE_STATUS;
+	if ((p->handle_status_own       = python_get_func(module, "handle_status_own")))
+		mask |= HAVE_HANDLE_STATUS_OWN;
+	if ((p->handle_connect          = python_get_func(module, "handle_connect")))
+		mask |= HAVE_HANDLE_CONNECT;
+	if ((p->handle_disconnect       = python_get_func(module, "handle_disconnect")))
+		mask |= HAVE_HANDLE_DISCONNECT;
+	if ((p->handle_keypress         = python_get_func(module, "handle_keypress")))
+		mask |= HAVE_HANDLE_KEYPRESS;
 
-	m.name                    = xstrdup(name2);
-	m.module                  = module;
-	m.deinit                  = python_get_func(module, "deinit");
-	m.handle_msg              = python_get_func(module, "handle_msg");
-	m.handle_msg_own          = python_get_func(module, "handle_msg_own");
-	m.handle_status           = python_get_func(module, "handle_status");
-	m.handle_status_own       = python_get_func(module, "handle_status_own");
-	m.handle_connect          = python_get_func(module, "handle_connect");
-	m.handle_disconnect       = python_get_func(module, "handle_disconnect");
-//	m.handle_keypress         = python_get_func(module, "handle_keypress"); // TODO
+	script_private_set(s, p);
 
 	PyErr_Clear();
 
-	list_add(&python_modules, &m, sizeof(m));
-
-	xfree(name2);
-
-        printq("python_loaded");
-
-	return 0;
+	return mask;
 }
 
 /*
@@ -488,109 +454,29 @@ int python_load(const char *name, int quiet)
  *
  * remove script from memory
  *
- *  - name - nazwa skryptu,
- *  - quiet.
- *
  * 0/-1
  */
-int python_unload(const char *name, int quiet)
+int python_unload(script_t *s)
 {
-	list_t l;
-
-	if (!name) {
-		printq("python_need_name");
-		return -1;
+	python_private_t *p = python_private(s);
+	debug("m->deinit = %p, hmm?\n", p->deinit);
+	if (p->deinit) {
+		PyObject *res = PyObject_CallFunction(p->deinit, "()");
+		Py_XDECREF(res);
+		Py_XDECREF(p->deinit);
 	}
-
-	for (l = python_modules; l; l = l->next) {
-		struct python_module *m = l->data;
-
-		if (strcmp(m->name, name))
-			continue;
-
-		debug("m->deinit = %p, hmm?\n", m->deinit);
-		if (m->deinit) {
-			PyObject *res = PyObject_CallFunction(m->deinit, "()");
-			Py_XDECREF(res);
-			Py_XDECREF(m->deinit);
-		}
-
-		Py_XDECREF(m->handle_msg);
-		Py_XDECREF(m->handle_msg_own);
-		Py_XDECREF(m->handle_connect);
-		Py_XDECREF(m->handle_disconnect);
-		Py_XDECREF(m->handle_status);
-		Py_XDECREF(m->handle_status_own);
-//		Py_XDECREF(m->handle_keypress); // XXX do dodania pó¼niej
-		Py_XDECREF(m->module);
-
-		list_remove(&python_modules, m, 1);
-
-		printq("python_removed");
-
-		return 0;
-	}
-
-	printq("python_not_found", name);
-
-	return -1;
-}
-
-/*
- * python_autorun()
- *
- * load scripts from $CONFIG/scripts/autorun
- *
- */
-int python_autorun()
-{
-	const char *path = prepare_path("scripts/autorun", 0);
-	struct dirent *d;
-	struct stat st;
-	char *tmp;
-	DIR *dir;
-
-	if (!(dir = opendir(path)))
-		return 0;
-
-	// check if there's __init__.py in autorun dir
-
-	tmp = saprintf("%s/__init__.py", path);
-
-	if (stat(tmp, &st)) {
-		FILE *f = fopen(tmp, "w");
-		if (f)
-			fclose(f);
-	}
-
-	xfree(tmp);
-
-	while ((d = readdir(dir))) {
-		tmp = saprintf("%s/%s", path, d->d_name);
-
-		if (stat(tmp, &st) || S_ISDIR(st.st_mode)) {
-			xfree(tmp);
-			continue;
-		}
-
-		xfree(tmp);
-
-		if (!strcmp(d->d_name, "__init__.py"))
-			continue;
-
-		if (strlen(d->d_name) < 3 || strcmp(d->d_name + strlen(d->d_name) - 3, ".py"))
-			continue;
-
-		tmp = saprintf("autorun.%s", d->d_name);
-		tmp[strlen(tmp) - 3] = 0;
-
-		python_load(tmp, 0);
-
-		xfree(tmp);
-	}
-
-	closedir(dir);
-	return 1;
+	Py_XDECREF(p->handle_msg);
+	Py_XDECREF(p->handle_msg_own);
+	Py_XDECREF(p->handle_connect);
+	Py_XDECREF(p->handle_disconnect);
+	Py_XDECREF(p->handle_status);
+	Py_XDECREF(p->handle_status_own);
+	Py_XDECREF(p->handle_keypress); 
+	Py_XDECREF(p->module);
+	
+	xfree(p);
+	script_private_set(s, NULL);
+	return 0;
 }
 
 // ********************************************************************************
@@ -690,23 +576,7 @@ int python_initialize()
 
 int python_finalize()
 {
-	list_t l;
-
-	for (l = python_modules; l; l = l->next) {
-		struct python_module *m = l->data;
-
-		xfree(m->name);
-
-		if (m->deinit) {
-			PyObject *res = PyObject_CallFunction(m->deinit, "()");
-			Py_XDECREF(res);
-			Py_XDECREF(m->deinit);
-		}
-	}
-
-	list_destroy(python_modules, 1);
-	python_modules = NULL;
-        Py_Finalize();
+	Py_Finalize();
         return 0;
 }
 
@@ -723,7 +593,8 @@ int python_finalize()
  *
  */
 
-int python_theme_init() {
+int python_theme_init() { 
+#if 0
 	format_add("python_eval_error", _("%! Error running code\n"), 1);
 	format_add("python_list", _("%> %1\n"), 1);
 	format_add("python_list_empty", _("%! No scripts loaded\n"), 1);
@@ -733,6 +604,7 @@ int python_theme_init() {
 	format_add("python_error", _("%! Error %T%1%n\n"), 1);
 	format_add("python_not_found", _("%! Can't find script %T%1%n\n"), 1);
 	format_add("python_wrong_location", _("%! Script have to be in %T%1%n (don't add path)\n"), 1);
+#endif
         return 0;
 }
 
@@ -745,7 +617,7 @@ int python_theme_init() {
 
 int python_plugin_destroy()
 {
-	python_finalize();
+	scriptlang_unregister(&python_lang);
 	plugin_unregister(&python_plugin);
 	return 0;
 }
@@ -760,23 +632,15 @@ int python_plugin_destroy()
 int python_plugin_init(int prio)
 {
 	plugin_register(&python_plugin, prio);
-	python_theme_init();
-
+	scriptlang_register(&python_lang, 1);
+/* procedure wywolujaca formatki nie trzeba wywolywac z python_plugin_init() */
 	command_add(&python_plugin, "python:eval",   "?",  python_command_eval,   0, NULL);
 	command_add(&python_plugin, "python:run",    "?",  python_command_run,    0, NULL);
 	command_add(&python_plugin, "python:load",   "?",  python_command_load,   0, NULL);
 	command_add(&python_plugin, "python:unload", "?",  python_command_unload, 0, NULL);
 	command_add(&python_plugin, "python:list",    "",  python_command_list,   0, NULL);
 
-	query_connect(&python_plugin, "protocol-message",      python_protocol_message,      NULL);
-	query_connect(&python_plugin, "protocol-status",       python_protocol_status,       NULL);
-	query_connect(&python_plugin, "protocol-connected",    python_protocol_connected,    NULL);
-	query_connect(&python_plugin, "protocol-disconnected", python_protocol_disconnected, NULL);
-
 	timer_add(&python_plugin, "python:timer_hook", 1, 1, python_timer, NULL);
-
-	python_initialize();
-	python_autorun();
 	return 0;
 }
 

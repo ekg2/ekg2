@@ -154,13 +154,14 @@ PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key)
 int ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value)
 {
 	session_t * s;
-	s = session_find(self->name);
+	session_param_t * p;	
 	const char *name = PyString_AsString(key);
-	
+	s = session_find(self->name);
+
 	debug("[python] Setting '%s' option to '%s' for session %s\n", name,
 		PyString_AsString(value), self->name);
 	
-	session_param_t * p = session_var_find(s, name);
+	p = session_var_find(s, name);
 	
 	if (!p) {
 		PyErr_SetString(PyExc_LookupError, "unknown variable");
@@ -208,13 +209,15 @@ PyObject *ekg_session_getUser(ekg_sessionObj * self, PyObject * pyargs)
     ekg_userObj *pyuser;
     char buf[100];
     char *name = NULL;
+    session_t *s;
+    userlist_t *u;
 
     if (!PyArg_ParseTuple(pyargs, "s:getUser", &name))
 		return NULL;
 
     debug("[python] checking for user '%s' in session '%s'\n", name, self->name);
-    session_t *s = session_find(self->name);
-	userlist_t *u = userlist_find(s, name);
+    s = session_find(self->name);
+	u = userlist_find(s, name);
     if (!u) {
 		snprintf(buf, 99, "Can't find user '%s'", name);
 		PyErr_SetString(PyExc_KeyError, buf);
