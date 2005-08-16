@@ -460,7 +460,7 @@ int script_query_unbind(script_query_t *squery, int from)
 // TODO: tak jak w command_unbind jeden handler moze byc pod wiele skryptow.
 	query_disconnect(slang->plugin, squery->query_name);
 //	query_disconnect(NULL, squery->query_name);
-	list_remove(&script_queries, squery, 0);
+	return list_remove(&script_queries, squery, 0);
 }
 
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler)

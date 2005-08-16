@@ -443,15 +443,6 @@ COMMAND(cmd_alias)
 	return -1;
 }
 
-COMMAND(cmd_script)
-{
-	if (xstrlen(params[0]) < 1) 
-		return script_list(NULL);
-	else
-		return script_load(NULL, (char *) params[0]);
-
-}
-
 COMMAND(cmd_status)
 {
         struct tm *t;
@@ -4143,9 +4134,6 @@ void command_init()
 
 	command_add(NULL, "say", "?", cmd_say, 0,
 	  "-c --clear");
-	  
-	command_add(NULL, "script", "f", cmd_script, 0,
-	  ""); /* todo */
 	  
         command_add(NULL, "session", "psS psS sS ?", session_command, 0,
           "-a --add -d --del -l --list -g --get -s --set -w --sw");

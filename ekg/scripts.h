@@ -188,6 +188,7 @@ int scripts_init();
 
 script_t *script_find(scriptlang_t *s, char *name);
 
+int script_query_unbind(script_query_t *squery, int from);
 int script_command_unbind(script_command_t *scr_comm, int free);
 int script_timer_unbind(script_timer_t *stimer, int free);
 
