@@ -31,7 +31,7 @@ PyObject * ekg_cmd_debug(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_plugins(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_sessions(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_getSession(PyObject *self, PyObject *args);
-
+PyObject *ekg_cmd_script_bind(PyObject * self, PyObject * args);
 /**
  * metody modu³u ekg
  */
@@ -39,6 +39,7 @@ PyObject * ekg_cmd_getSession(PyObject *self, PyObject *args);
 PyMethodDef ekg_methods[] = {
         { "command", ekg_cmd_command, METH_VARARGS, "" },
 	{ "command_bind", ekg_cmd_command_bind, METH_VARARGS, "" },
+	{ "timer_bind", ekg_cmd_script_bind,  METH_VARARGS, "" },
         { "echo", ekg_cmd_echo, METH_VARARGS, "" },
         { "printf", ekg_cmd_printf, METH_VARARGS, "" },
         { "debug", ekg_cmd_debug, METH_VARARGS, "" },

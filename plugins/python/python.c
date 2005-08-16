@@ -150,6 +150,30 @@ COMMAND(python_command_list)
 // *
 // * ***************************************************************************
 
+int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
+{
+	return 0;
+}
+
+int python_timers(script_t *scr, script_timer_t *time, int type)
+{
+	int python_handle_result;
+	python_private_t *p = python_private(scr);
+
+	if (!(p->handle_comm = python_get_func(p->module, time->private))) {
+		debug("func %s in script %s not found, deleting comm \n", time->private, scr->path);
+		return SCRIPT_HANDLE_UNBIND;
+	}
+	PYTHON_HANDLE_HEADER(comm, "(s)", "dupa");
+	;
+	PYTHON_HANDLE_FOOTER()
+	if (p->handle_comm) {
+		Py_XDECREF(p->handle_comm);
+	}
+	p->handle_comm = NULL;
+	return python_handle_result;
+}
+
 int python_commands(script_t *scr, script_command_t *comm, char **params)
 {
 	int python_handle_result;
@@ -157,7 +181,7 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 
 	if (!(p->handle_comm = python_get_func(p->module, comm->private))) {
 		debug("func %s in script %s not found, deleting comm \n", comm->private, scr->path);
-		return SCRIPT_COMMAND_DELETE;
+		return SCRIPT_HANDLE_UNBIND;
 	}
 	PYTHON_HANDLE_HEADER(comm, "(ss)", comm->comm, 
 //					    params)
@@ -219,8 +243,8 @@ int python_protocol_message(script_t *scr, char **__session, char **__uid, char 
 	uint32_t *format = *__format;
 	time_t sent = *__send;
 	int class = *__class;
-	int level;
 
+        int level;
 	char * target;
 	userlist_t *u;
 	session_t *s;
@@ -288,17 +312,31 @@ int python_protocol_disconnected(script_t *s, char **__session)
 	PYTHON_HANDLE_FOOTER()
 }
 
-/**
- * python_timer()
- *
- * timer
- *
- */
-
-void python_timer()
+int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
-}
+#define ARG_CHARP(x)    *(char **) args[x]
+#define ARG_INTPP(x)    *(int  **) args[x]
+#define ARG_TIMEP(x)    *(time_t **) args[x]
 
+#define ARG_CHARPP(x)   *(char ***) args[x]
+#define ARG_INTPPP(x)   *(int  ***) args[x]
+#define ARG_VOIDPP(x)   *(void ***) args[x]
+#define ARG_UINTPPP(x)  *(uint32_t ***) args[x]
+
+#define ARG_CHARPPP(x)  *(char ****) args[x]
+#define SCRIPT_HANDLER_BACKWARD(x) \
+        char *name = scr_que->query_name;\
+        \
+	if (!xstrcmp(name, "protocol-message")) return x##_protocol_message(scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPPP(2), ARG_CHARPP(3), ARG_UINTPPP(4), ARG_TIMEP(5), ARG_INTPP(6));\
+        else if (!xstrcmp(name, "protocol-disconnected")) return x##_protocol_disconnected(scr, ARG_CHARPP(0));\
+        else if (!xstrcmp(name, "protocol-connected"))  return x##_protocol_connected(scr, ARG_CHARPP(0));\
+        else if (!xstrcmp(name, "protocol-status"))     return x##_protocol_status(scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPP(2), ARG_CHARPP(3));\
+        else if (!xstrcmp(name, "ui-keypress"))         return x##_keypressed(scr, ARG_INTPP(0));\
+        else
+
+	SCRIPT_HANDLER_BACKWARD(python)
+	return -1;
+}
 
 // ********************************************************************************
 // *
@@ -396,7 +434,6 @@ int python_load(script_t *s)
 	python_private_t *p;
 
 	module = PyImport_ImportModule(s->name);
-	int mask = 0;
 
 	if (!module) {
 		print("script_not_found", s->name);
@@ -425,28 +462,34 @@ int python_load(script_t *s)
 	p = xmalloc(sizeof(python_private_t));
 	p->module                  = module;
 	
-	if ((p->deinit                  = python_get_func(module, "deinit")))
-		mask |= HAVE_DEINIT;
+	if ((p->deinit                  = python_get_func(module, "deinit")));
+
 	if ((p->handle_msg              = python_get_func(module, "handle_msg")))
-		mask |= HAVE_HANDLE_MSG;
+		script_query_bind(&python_lang, s, "protocol-message",      &python_query);	
+		
 	if ((p->handle_msg_own          = python_get_func(module, "handle_msg_own")))
-		mask |= HAVE_HANDLE_MSG_OWN;
+		script_query_bind(&python_lang, s, "protocol-message",      &python_query);
+		
 	if ((p->handle_status           = python_get_func(module, "handle_status")))
-		mask |= HAVE_HANDLE_STATUS;
+		script_query_bind(&python_lang, s, "protocol-status",       &python_query);;
+		
 	if ((p->handle_status_own       = python_get_func(module, "handle_status_own")))
-		mask |= HAVE_HANDLE_STATUS_OWN;
+		script_query_bind(&python_lang, s, "protocol-status",       &python_query);
+		
 	if ((p->handle_connect          = python_get_func(module, "handle_connect")))
-		mask |= HAVE_HANDLE_CONNECT;
+		script_query_bind(&python_lang, s, "protocol-connected",    &python_query);
+		
 	if ((p->handle_disconnect       = python_get_func(module, "handle_disconnect")))
-		mask |= HAVE_HANDLE_DISCONNECT;
+		script_query_bind(&python_lang, s, "protocol-disconnected", &python_query);
+		
 	if ((p->handle_keypress         = python_get_func(module, "handle_keypress")))
-		mask |= HAVE_HANDLE_KEYPRESS;
+		script_query_bind(&python_lang, s, "ui-keypress",           &python_query);
 
 	script_private_set(s, p);
 
 	PyErr_Clear();
 
-	return mask;
+	return 1;
 }
 
 /*
@@ -504,6 +547,7 @@ int python_initialize()
 		{
 			char *s = saprintf("PYTHONPATH=%s", tmp);
 			putenv(s);
+			xfree(s);
 		}
 #endif
 		xfree(tmp);
@@ -514,6 +558,7 @@ int python_initialize()
 		{
 			char *s = saprintf("PYTHONPATH=%s", prepare_path("scripts", 0));
 			putenv(s);
+			xfree(s);
 		}
 #endif
 	}
@@ -639,8 +684,11 @@ int python_plugin_init(int prio)
 	command_add(&python_plugin, "python:load",   "?",  python_command_load,   0, NULL);
 	command_add(&python_plugin, "python:unload", "?",  python_command_unload, 0, NULL);
 	command_add(&python_plugin, "python:list",    "",  python_command_list,   0, NULL);
+	
+// int script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, int argc, void *handler)
 
-	timer_add(&python_plugin, "python:timer_hook", 1, 1, python_timer, NULL);
+
+
 	return 0;
 }
 

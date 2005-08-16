@@ -112,7 +112,7 @@ typedef struct {
                             } \
                     } \
                     Py_DECREF(pModule); \
-                    print("python_error", buffer); \
+                    print("script_error", buffer); \
                     PyErr_Restore(exc_typ, exc_val, exc_tb); \
                     PyErr_Clear(); \
             } \
