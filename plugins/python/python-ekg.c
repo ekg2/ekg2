@@ -210,7 +210,6 @@ PyObject *ekg_cmd_sessions(PyObject * self, PyObject * pyargs)
 
     for (l = sessions; l; l = l->next) {
 		len++;
-    session_t *s;
     }
 
     list = PyList_New(len);
@@ -237,6 +236,7 @@ PyObject *ekg_cmd_getSession(PyObject * self, PyObject * pyargs)
     ekg_sessionObj *pysession;
     char buf[100];
     char *name = NULL;
+    session_t *s;
 
     if (!PyArg_ParseTuple(pyargs, "s:getSession", &name))
 		return NULL;
