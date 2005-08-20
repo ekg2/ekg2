@@ -275,14 +275,14 @@ ZG£ASZANIE B£ÊDÓW
     gdzie <pid> to numer procesu ekg (uzyskasz go poleceniem ,,ps x'')
     i wy¶lij ostatnie 20 linii.
 
-    Informacjê o b³êdzie nale¿y przesy³aæ na listê ekg-users (nie trzeba
+    Informacjê o b³êdzie nale¿y przesy³aæ na listê ekg2-users (nie trzeba
     siê na ni± zapisywaæ, szczegó³y ni¿ej), poniewa¿ w ten sposób dostan±
     j± (prawie) wszyscy autorzy kodu. Mo¿liwe te¿, ¿e który¶ z u¿ytkowników
     natkn±³ siê na to samo i wie, jak sobie z tym poradziæ.
 
 ¬RÓD£A
 
-    Snapshoty kodu s± dostêpne pod adresem http://dev.null.pl/ekg/
+    Snapshoty kodu s± dostêpne pod adresem http://ekg2.org/download.php
     Je¶li nie wyst±pi ¿adne trzêsienie ziemi, brak pr±du ani barykady na
     drogach, powinny byæ robione co 24 godziny, wieczorem.
 
@@ -306,7 +306,7 @@ LISTA DYSKUSYJNA
     ekg-users@lists.ziew.org. Aby siê zapisaæ, nale¿y wej¶æ na 
     stronê o adresie:
 	    
-	http://lists.ziew.org/mailman/listinfo/ekg-users
+	http://lists.ziew.org/mailman/listinfo/ekg2-users
 	
     oraz postêpowaæ wed³ug instrukcji tam zawartych.
     

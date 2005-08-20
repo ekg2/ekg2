@@ -611,6 +611,7 @@ int main(int argc, char **argv)
         lt_dlinit();
 
         setlocale(LC_ALL, "");
+        bindtextdomain("ekg2",LOCALEDIR);
         textdomain("ekg2");
 
         srand(time(NULL));
