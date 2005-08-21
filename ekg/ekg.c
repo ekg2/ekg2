@@ -788,6 +788,7 @@ int main(int argc, char **argv)
 #endif
                 plugin_load("irc", -254, 1);
         }
+	scripts_init();
 
 	config_read(NULL);
 
@@ -979,13 +980,13 @@ void ekg_exit()
                         if (line[xstrlen(line) - 1] == '\n')
                                 line[xstrlen(line) - 1] = 0;
                         if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
-                                if (config_write(NULL) || session_write() || metacontact_write())
+                                if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
                                         printf(_("Error while saving.\n"));
                         }
                 } else
                         printf("\n");
         } else if (config_save_quit == 2) {
-                if (config_write(NULL) || session_write() || metacontact_write())
+                if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
                         printf(_("Error while saving.\n"));
 
         } else if (config_keep_reason && reason_changed && config_save_quit == 1) {
@@ -1023,6 +1024,7 @@ void ekg_exit()
         sessions_free();
         theme_free();
         variable_free();
+	script_variables_free(1);
         emoticon_free();
         command_free();
         timer_free();
@@ -1030,6 +1032,7 @@ void ekg_exit()
         last_free();
         buffer_free();
         event_free();
+	
 
         for (l = windows; l; l = l->next) {
                 window_t *w = l->data;

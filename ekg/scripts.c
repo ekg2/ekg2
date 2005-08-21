@@ -399,6 +399,10 @@ int script_variables_read() {
 
 int script_variables_free(int free) {
 	FILE *f = fopen(prepare_path("scripts-var", 0), "w");
+	
+	if (!f) 
+		return -1;
+	
 	list_t l;
 	debug("[script_variables_free()]%s saveing vars...\n", (free) ? " freeing &&" : "");
 

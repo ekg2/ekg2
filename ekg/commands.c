@@ -1716,7 +1716,7 @@ COMMAND(cmd_save)
 			return -1;
 	}
 
-	if (!config_write(params[0]) && !session_write() && !metacontact_write()) {
+	if (!config_write(params[0]) && !session_write() && !metacontact_write() && !script_variables_write() ) {
 		printq("saved");
 		config_changed = 0;
 		reason_changed = 0;

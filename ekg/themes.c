@@ -1689,7 +1689,10 @@ void theme_init()
         format_add("script_error", _("%! Error %T%1%n\n"), 1);
         format_add("script_not_found", _("%! Can't find script %T%1%n\n"), 1);
         format_add("script_wrong_location", _("%! Script have to be in %T%1%n (don't add path)\n"), 1);
-
+	format_add("script_generic", "%> [script,%2] (%1) %3\n", 1);
+	
+	format_add("script_varlist", _("%> %1 = %2 (%3)\n"), 1);
+	format_add("script_varlist_empty", _("%! No script vars!\n"), 1);
 
         theme_plugins_init();
 }
