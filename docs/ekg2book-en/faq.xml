@@ -4,73 +4,60 @@
 
 <chapter id="faq">
    <title>
-      Czêsto Zadawane Pytania
+      Frequently Asked Questions 
    </title>
    <sect1 id="faq-install">
-      <title>Instalacja</title>
+      <title>Installation</title>
       <qandaset>
          <qandaentry>
             <question>
                <para>
-                  Sk±d ¶ci±gn±æ ¼ród³a EKG2 ?
+                  Where can I find EKG2 sources ?
                </para>
             </question>
             <answer>
                <para>
-                  Zapraszam na <ulink url="http://ekg2.org">/http://ekg2.org/</ulink>
-                  do dzialu Pliki i stamt±d mo¿na ¶ciagaæ codzinne snapshoty. Mo¿na
-                  równie¿ skorzystaæ z CVS'a który pozwala byæ na bie¿±co z
-                  aktualizacjami (np. jak sie oka¿e ¿e 10 minut temu naprawiono b³±d
-                  powoduj±ce Segmentation Fault naszego EKG2). Sposób postêpowania
-                  jest oczywisty bo wszystko ³adnie zosta³o opisane na stronce, wiêc
-                  nie bêdê powiela³.
+	          You should visit <ulink url="http://ekg2.org">/http://ekg2.org</ulink>.
+		  There is some Files section and you can download from there everyday
+		  snapshots. You can also use CVS, which makes you able to have current
+		  version of program (for instance. if somebody fixed some segvault problem 
+		  with EKG2 10 minutes ago). Way of using CVS is described on webpage.
                </para>
             </answer>
          </qandaentry>
          <qandaentry>
             <question>
                <para>
-                  Mam wersjê CVS EKG2 ale przy wykonywaniu ./autogen.sh pojawiaja mi
-                  siê b³edy o brakuj±cym libtoolize, libtool, aclocal, autoheader,
-                  automake, autoconf, autom4te. Co z tym zrobic?
+  	          I have CVS EKG2, but when I'm doing ./autogen some errors about 
+		  missing libtoolize, libttol, aclocal, autoheader, automake, autoconf,
+		  autom4te appear. What should I do ?
                </para>
             </question>
             <answer>
                <para>
-                  Wpierw upewnij siê, ¿e masz zainstalowane w systemie najnowsze
-                  wersje tych¿e narzêdzi (proponuje przejrzeæ zawarto¶æ
-                  <filename>/usr/ports/devel</filename> w ich poszukiwaniu a je¶li
-                  nie umiesz instalowaæ z portsów to polecam <command>man
-                     ports</command>). Je¶li pomimo tego, i¿ masz zainstalowane te
-                  narzêdzia pojawiaj± Ci siê b³edy oznacza to, i¿ nie widzi ich w
-                  systemie. Jest to zapewne spowodowane tym, ¿e nie ma symlinków
-                  odnosz±cych sie do w/w narzêdzi. Wszystkie one znajduj± siê
-                  standardowo w katalogu <filename>/usr/local/bin</filename> i
-                  proponuje porobiæ symlinki do tych¿e narzêdzi. Np. <command>ln
-                     -s libtoolize19 libtoolize</command> i tak po kolei dla
-                  wszystkich innych narzêdzi. A najlepiej, na przysz³o¶æ, dla
-                  wszystkich narzêdzi zakoñczonych liczbami a nie maj±cych
-                  symlinków do wersji bez liczb, a w szczególno¶ci dla tych
-                  wszystkich auto-narzêdzi.   
+     		  First of all check if you have installed newest versions of 
+		  those tools (maybe you should browse <filename>/usr/ports/devel
+		  </filename>). If you have installed everything it means that 
+		  EKG2 can't find them. It is caused by missing simlinks connected
+		  with those tools. Usually they are in <filename>/usr/local/bin
+		  </filename> and I suggest to make some symlinks like <command>ln
+		    -s libtoolize19 libtoolize</command> and do this with every tool.
+	  	  I suggest to do it always with autotools.
                </para>
             </answer>
          </qandaentry>
          <qandaentry>
             <question>
                <para>
-                  W systemie BSD, przy wywo³aniu <command>./configure</command>
-                  jak i <command>./autogen.sh</command> pojawia mi siê, i¿ libgadu
-                  czy te¿ expat (biblioteka jabbera) sa wy³aczone (disabled).  Co
-                  robiæ?
+  	          In BSD system when I'm executing <command>./configure</command> libgadu
+		  or/and expat is disabled. What should I do ? 
                </para>
             </question>
             <answer>
                <para>
-                  Jako, ¿e FreeBSD ma inn± lokalizacjê plików bibliotecznych czasem,
-                  aczkolwiek nie zawsze, nie widzi odpowiednich bibliotek. Polecam
-                  wtedy dodac opcje --with-libgadu=/usr/local jak równie¿
-                  --with-expat=/usr/local. Oczywi¶cie powy¿sze tzreba mieæ w systemie
-                  skompilowane je¶li ich nie posiadamy.
+		  FreeBSD has other localization of library files and sometimes it is hard
+		  to find them. It is recommended to add arguments --with-libgadu=/usr/local
+		  or/and --with-expat=/usr/local. Of course you have to have them installed.
                </para>
                <programlisting role="shell">
 <![CDATA[
@@ -79,23 +66,22 @@ $ ./configure --with-libgadu=/usr/local --with-expat=/usr/local
 ]]>
                </programlisting>
                <para>
-                  <emphasis>libgadu</emphasis> znajdziemy na stronie <ulink
+                  <emphasis>libgadu</emphasis> can be found on <ulink
                      url="http://dev.null.pl/ekg/">http://dev.null.pl/ekg/</ulink>
-                  (libgadu powinni¶my oczywi¶cie skompilowaæ z opcj±
-                  <parameter>--enable-shared</parameter>).
+	          (libgadu should be compiled with <parameter>--enable-shared</parameter>
+	     	  parametr).
                </para>
                <para>
-                  <emphasis>expat</emphasis> znajdziemy w oficjalnym drzewie portów lub te¿, w
-                  najnowszych wersjach FreeBSD (FreeBSD 5.3.x), w ¼ród³ach
-                  systemu.
+		   <emphasis>expat</emphasis> can be found in official ports tree or in system
+		   sources (in newest versions like FreeBSD 5.3.x or newer).
                </para>
             </answer>
          </qandaentry>
          <qandaentry>
             <question>
                <para>
-                  W systemie BSD przy kompilacji pokazuje mi siê b³±d o braku
-                  libintl.h z pakietu gettext.h:
+		  In BSD system when I'm trying to compile program some errors about libintl.h
+		  from gettext.h apper.     
                </para>
                <screen>
 <![CDATA[
@@ -107,15 +93,14 @@ In file included from ../../ekg/themes.h:27,
 ]]>
                </screen>
                <para>
-                  gettext jest zainstalowany w systemie. Co robiæ?
+		  gettext is installed in system. What should I do ?
                </para>
             </question>
             <answer>
                <para>
-                  Niestety ale znowu jest to spowodowane tym, i¿ BSD maj± nieco
-                  inne po³o¿enie bibliotek systemowych ni¿ linuksy. Najprostszym
-                  rozwi±zaniem jest dopisaæ przy <command>./autogen.sh</command>
-                  lub <command>./configure opcji
+		  Unfortunatly it is caused by diffrent localization of libraries
+		  (diffrent then in Linux systems). The easier solution is to add
+		  to <command>./autogen.sh</command> or <command>./configure option
                      --with-libintl-prefix=/usr/local/include</command>
                </para>
                <programlisting role="shell">
@@ -129,55 +114,43 @@ $ ./configure --with-libintl-prefix=/usr/local/include
       </qandaset>
    </sect1>
    <sect1 id="faq-usage">
-      <title>U¿ytkowanie</title>
+      <title>Usage</title>
       <qandaset>
          <qandaentry>
             <question>
                <para>
-                  Gdzie podzia³y siê niektóre zmienne (proxy, server) ?
+		  Where are some variables like proxy, server etc ?     
                </para>
             </question>
             <answer>
                <para>
-                  Jako, ¿e s± to zmienne specyficzne dla ka¿dego protoko³u
-                  umieszczone s± w zmiennych sesyjnych.
+		  Variables like this ones are specific for every protocol and
+		  they are in session variables.     
                </para>
             </answer>
          </qandaentry>
          <qandaentry>
             <question>
                <para>
-                  Jak usun±æ zmienn±?
+                  How can I remove variable ?
                </para>
             </question>
             <answer>
                <para>
-                  <command>set -zmienna</command>
+                  <command>set -variable</command>
                </para>
             </answer>
          </qandaentry>
          <qandaentry>
             <question>
-               <para>
-                  ekg ¼le rozpoznaje p³eæ!
+	       <para>
+		  EKG2 doesn't show my nickname when I'm sending messages.
+      		  What should I do ?		  
                </para>
             </question>
             <answer>
                <para>
-                  Wpisz imiê do listy kontaktów.
-               </para>
-            </answer>
-         </qandaentry>
-         <qandaentry>
-            <question>
-               <para>
-                  Jak zrobiæ, ¿eby ekg pokazywa³o mój pseudonim przy wysy³aniu
-                  wiadomo¶ci?
-               </para>
-            </question>
-            <answer>
-               <para>
-                  Dopisaæ alias do sesji.
+                  You should add alias variable to session.
                </para>
             </answer>
          </qandaentry>
