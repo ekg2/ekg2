@@ -1,0 +1,138 @@
+// description of available in ncurses plugin
+// (c) cpopyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
+
+aspell 
+	type: bool
+	default value: 0
+
+	defines if dictionary should be turn on
+	more about dictionary in dictionary.txt
+
+aspell_lang
+	type: text
+	default value: "pl"
+
+	defines language to use by the dictionary
+
+aspell_encoding
+	type: text
+	default value: "iso8859-2"
+
+	defines encoding to use by the dictionary
+
+backlog_size
+	type: integer
+	default value: 1000
+
+	number of lines which will be save in screen buffor (those one which 
+	is scroll by Page Up and Page Down). Cann't be less than lines on screen.
+
+contacts
+	type: integer
+	default value: 2
+
+ 	defines if contact window shuold be displayed on the right side of the screen. 
+	If set on 2 information about status' change aren't displayed and ignore value of 
+	"display_notify" variable. 
+
+contacts_groups
+	type: text
+	default value: none
+
+	separeted by comma groups, which can be switched on contact list by F4. To display 
+	users out of group: !group. All users are displayed default. 
+
+contacts_groups_all_sessions
+	type: bool
+	defalut value: 0
+
+	If turn on - displaying group contacts means taking into consideration all sessions.
+
+conatcts_metacontacts_swallow
+	type: bool
+	default value: 1
+	
+	If turn on - displaying all users means that if on contact list is displayd metaconatct, 
+	all contacts belongs to it are hide.
+
+contacts_options
+	type: text
+	default value: none
+
+	options of contacts list separate by coma or space. Default settings is : 
+	,,right, margin=1, nowrap, nodescr, order='chavawxadninnoerr'
+
+	possible status:
+
+	ch - free for chat
+
+	av - available
+
+	aw - away
+
+	xa - extended away
+
+	dn - don't disturb
+
+	in - invisible
+
+	no - not available
+
+	err - illegal contac
+
+	it possible to skipp some of status -- they will be not displayed on contacts list.
+
+	list of available option:
+	- left, right, top, bottom - contacts list position on screen,
+	- frame, noframe - contact list separate from main window or not,
+	- margin=n, nomargin - margin between main window and contact list or not,
+	- wrap, nowrap - contact list wrap or not,
+	- descr, nodescr - desription of status will be displayed or not,
+	- order=n - order of status displaying
+	- nosort - alphabetic order on contact list, only status from 'order' option will be displayed
+
+contacts_size
+	type: integer
+	default value: 8
+
+	defines width of contacts list window
+
+display_crap
+	type: bool
+	default value: 1
+
+	defines if information which weren't connected with interlocutor will be displayed in chat window. 
+	If it's 0, in chat window information only about interlocutor status are displayed.
+
+display_transparent
+	type: bool
+	default value: 1
+
+	defines if background should be transparent.
+
+enter_scrools
+	type: bool
+	default value: 0
+
+	if turn on then pressing ENTER in empty line cause movement screen of one line
+
+header_size
+	type: integer
+	default value: 0
+
+	defines header size displayed on the top of the screen. Maximum value: 5.
+
+margin_size
+	type: integer
+	default value: 15 
+	
+	defines margin size used by /| with themes
+
+statusbar_size
+	type: integer
+	default value: 1
+	
+	defines statusbar size in lines form 1 to 5.
+
+
+
