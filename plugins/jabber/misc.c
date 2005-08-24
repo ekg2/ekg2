@@ -1,7 +1,6 @@
 /* $Id$ */
 
 #include <errno.h>
-#include <sched.h>
 #include <string.h>
 #include <unistd.h>
 #include <iconv.h>
@@ -206,9 +205,7 @@ void jabber_handle_write(int type, int fd, int watch, void *data)
 	if (j->using_ssl && j->ssl_session) {
 		do {
 			res = gnutls_record_send(j->ssl_session, j->obuf, j->obuf_len);	
-#ifdef _POSIX_PRIORITY_SCHEDULING
-			sched_yield();
-#endif
+			ekg_yield_cpu();
 		} while ((res == GNUTLS_E_INTERRUPTED) || (res == GNUTLS_E_AGAIN)); 
 		
 		if (res < 0) {

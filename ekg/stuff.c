@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sched.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -2352,6 +2353,18 @@ void xstrtr(char *text, char from, char to)
 			*text = to;
 }
 
+/*
+ * ekg_yield_cpu()
+ *
+ * releases cpu
+ * meant to be called while busy-looping
+ */
+void inline ekg_yield_cpu()
+{
+#ifdef _POSIX_PRIORITY_SCHEDULING
+	sched_yield();
+#endif
+}
 
 /*
  * Local Variables:

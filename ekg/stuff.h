@@ -355,6 +355,8 @@ void ekg_update_status(session_t *session);
 char *ekg_draw_descr(const char *status);
 uint32_t *ekg_sent_message_format(const char *text);
 
+void ekg_yield_cpu();
+
 /* funkcje poza stuff.c */
 void ekg_exit();
 void ekg_debug_handler(int level, const char *format, va_list ap);
