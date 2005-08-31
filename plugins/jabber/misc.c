@@ -203,11 +203,15 @@ void jabber_handle_write(int type, int fd, int watch, void *data)
 
 #ifdef HAVE_GNUTLS
 	if (j->using_ssl && j->ssl_session) {
-		do {
-			res = gnutls_record_send(j->ssl_session, j->obuf, j->obuf_len);	
+
+		res = gnutls_record_send(j->ssl_session, j->obuf, j->obuf_len);	
+
+		if ((res == GNUTLS_E_INTERRUPTED) || (res == GNUTLS_E_AGAIN)) {
 			ekg_yield_cpu();
-		} while ((res == GNUTLS_E_INTERRUPTED) || (res == GNUTLS_E_AGAIN)); 
-		
+
+			goto notyet;
+		}
+
 		if (res < 0) {
 			print("generic_error", gnutls_strerror(res));
 			return;
@@ -236,6 +240,7 @@ void jabber_handle_write(int type, int fd, int watch, void *data)
 	memmove(j->obuf, j->obuf + res, j->obuf_len - res);
 	j->obuf_len -= res;
 
+notyet:
 	watch_add(&jabber_plugin, j->fd, WATCH_WRITE, 0, jabber_handle_write, j);
 }
 
