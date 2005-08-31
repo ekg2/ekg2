@@ -11,6 +11,11 @@ PPCODE:
                 XPUSHs(sv_2mortal(bless_command( (command_t *) l->data)));
         }
 
+int command(char *what)
+CODE:
+	command_exec(NULL, NULL, what, 0);
+
+
 #*******************************
 MODULE = Ekg2::Command PACKAGE = Ekg2::Command PREFIX = command_
 #*******************************

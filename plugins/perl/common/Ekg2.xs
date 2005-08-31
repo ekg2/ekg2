@@ -18,12 +18,27 @@ void debug(char *debstr)
 CODE:
 	debug("(perldebug) %s", debstr);
 
+void print(int dest, char *str)
+CODE:
+	char *line;
+        while ((line = split_line(&str))) {
+                window_print("__status", NULL, 0, fstring_new(va_format_string(line)));
+        }
+
 void init()
 CODE:
 	initialized = 1;
 
 void deinit()
 CODE:
+
+int watch_add(int fd, int type, int persist, char *handler, void *data);
+CODE:
+	perl_watch_add(fd, type, persist, handler, data);
+
+int watch_remove(int fd, int type);
+CODE:	
+	watch_remove(&perl_plugin, fd, type);
 
 #> TIMERS
 
@@ -33,7 +48,6 @@ CODE:
 
 int timer_unbind(void * scr_time)
 CODE:
-//	debug("%d\n", scr_time);
 	perl_timer_unbind(scr_time);
 
 #> COMMANDS
@@ -56,6 +70,10 @@ CODE:
 	perl_variable_add(temp, value, handler);
 	xfree(temp);
 
+Ekg2::Variable variable_add(char *name, char *value)
+CODE:
+	perl_variable_add(name, value, NULL);
+
 Ekg2::Variable var_add(char *name, char *value)
 CODE:
 	char *temp = saprintf("%s%s", VAR_PREFIX,name);
@@ -68,6 +86,12 @@ CODE:
 //	RETVAL = (script_var_find(NULL, name)) ->var;
 	RETVAL = variable_find(temp);
 	xfree(temp);
+OUTPUT:
+	RETVAL
+
+char *get_ekg2_dir()
+CODE:
+	RETVAL = config_dir;
 OUTPUT:
 	RETVAL
 
@@ -91,6 +115,11 @@ CODE:
 OUTPUT:
         RETVAL
 
+int WATCH_READ()
+CODE:
+	RETVAL = WATCH_READ;
+OUTPUT:
+	RETVAL
 
 ##################################################################################
 

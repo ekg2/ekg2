@@ -789,7 +789,6 @@ int main(int argc, char **argv)
                 plugin_load("irc", -254, 1);
         }
 	scripts_init();
-
 	config_read(NULL);
 
         /* je¶li ma byæ theme, niech bêdzie theme */
@@ -828,7 +827,7 @@ int main(int argc, char **argv)
         protocol_init();
         events_init();
         metacontact_init();
-	scripts_init();
+//	scripts_init();
 
         /* it has to be done after plugins are loaded, either we wouldn't know if we are
          * supporting some protocol in current build */

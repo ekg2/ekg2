@@ -23,8 +23,8 @@ sub cmd_test {
         foreach my $server (Ekg2::Irc::servers) {
 		$server->oper('darkjames', 'dupa.8');
 
-#		$sess_ = $server->{session};
-#		$sess = \%sess_;
+		Ekg2::echo("$server->{session} uid: $server->{session}");
+		
 #		bless $sess, Ekg2::Session;
 #		Ekg2::echo("$sess $server->{session}  $sess->{status} ");
 
@@ -36,10 +36,10 @@ sub cmd_test {
 				Ekg2::echo("$user $user->{nick} $user->{channels}");
 				foreach my $kanuser ($user->channels()) {
 					Ekg2::echo("$kanuser $kanuser->{mode} $kanuser->{sign} $kanuser->{channel}");
+#					$kanuser->kick("lecisz z pokoju ;p");
 #					Ekg2::echo("$kanuser->{sign}$user->{nick}"); @$nick
 				}
-#			$chann->part("dupa!");
-			$user->kill("lecisz ;p");
+			$user->kill("lecisz z irca ;p");
 			Ekg2::echo("-");
 		}
 

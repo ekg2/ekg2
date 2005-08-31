@@ -30,7 +30,6 @@
 #include <ekg/dynstuff.h>
 #include <ekg/scripts.h>
 
-list_t python_modules;
 extern scriptlang_t python_lang;
 
 #define python_private(s) ((python_private_t*) script_private_get(s))

@@ -67,14 +67,17 @@ sub handle_message_own {
     Ekg2::echo("Sesja : ". $session);
     Ekg2::echo("Target: ". $target);
     Ekg2::echo("TxtLen: ". length($text));
-    return -(-11);
+    return -(-1);
 }
 
 sub ekg2_message {
 	my ($session, $uid, $rcpt, $text, $format, $send, $class) = @_;
 	
 	$tclass = $$class;
-	$$text   = "dupa";
+	
+#	$$text   = "dupa4";
+#	Ekg2::echo($$text);
+#	$$class -= EKG_NO_THEMEBIT;
 
 	if ($tclass & EKG_NO_THEMEBIT) { $tclass -= EKG_NO_THEMEBIT; };
 

@@ -4,7 +4,6 @@
 #include <ekg/xmalloc.h>
 #include <ekg/vars.h>
 
-
 extern void boot_DynaLoader(pTHX_ CV* cv);
 PerlInterpreter *my_perl;
 
@@ -28,7 +27,6 @@ int perl_timers(script_t *scr, script_timer_t *time, int type)
 	XPUSHs(sv_2mortal(create_sv_ptr(time->self)) );
 
 	PERL_HANDLER_FOOTER();
-
 }
 
 int perl_commands(script_t *scr, script_command_t *comm, char **params)
@@ -41,97 +39,62 @@ int perl_commands(script_t *scr, script_command_t *comm, char **params)
 	PERL_HANDLER_FOOTER();
 }
 
+int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch)
+{
+	if (type) return -1;
+	
+	PERL_HANDLER_HEADER((char *) scr_wat->private);
+	XPUSHs(sv_2mortal(newSViv(type)));
+	XPUSHs(sv_2mortal(newSViv(fd)));
+	XPUSHs(sv_2mortal(newSViv(watch)));
+//	XPUSHs(sv_2mortal(create_sv_ptr(scr_wat->data))); // zle.
+	XPUSHs(scr_wat->data);
+	
+	PERL_HANDLER_FOOTER();
+}
+
 int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 {
-	int i;
+	int i, j = 0;
 	SV *perlargs[MAX_ARGS];
 	SV *perlarg;
-	int change = 1;
-	
-	char *tmp;
 
-	PERL_HANDLER_HEADER(scr_que->private);
+	int change = 1;
+	string_t st;
+
+	PERL_HANDLER_HEADER((char *) scr_que->private);
 	
 	for (i=0; i < scr_que->argc; i++) {
 		perlarg = 0;
 		switch ( scr_que->argv_type[i] ) {
 			case (SCR_ARG_INT):
-			
-				if (change) perlarg = newRV_noinc ( newSViv( *(int  *) args[i] ) );
-				else        perlarg = newSViv( *(int  *) args[i] );
-				
+				perlarg = newSViv( *(int  *) args[i] );
 				break;
 			case (SCR_ARG_CHARP): 
-				tmp = *(char **) args[i];
-				
-				if (change) perlarg = newRV_noinc( new_pv(tmp) );
-				else        perlarg = new_pv(tmp);
-				
+				perlarg = new_pv(*(char **) args[i]);
 				break;
 			case (SCR_ARG_CHARPP): 
-				tmp = *(char **) args[i];
-				
-				if (tmp) {
-					if (change) perlarg = newRV_noinc( new_pv( *(char **) tmp) );
-					else        perlarg = new_pv( *(char **) tmp);
+				st = string_init(NULL);
+				while (((char **) args[i])[j]) {
+					string_append(st, ((char **) args[i])[j]);
+					string_append_c(st, ' ');
+					j++;
 				}
-
+				if (st->len) 
+					perlarg = new_pv(st->str);
+				string_free(st, 1);
 				break;
 			default:
 				debug("[NIMP] %s %d %d\n",scr_que->query_name, i, scr_que->argv_type[i]);
-
-		
 		}
-		if (!perlarg) perlarg = newSViv(0); // = new_pv( *ARG_CHARPP(i)); // TODO: zmienic.
-		if (change)   perlargs[i] = perlarg;
+
+		if (!perlarg) perlarg = newSViv(0); // TODO: zmienic. ?
+		if (change)   perlargs[i] = (perlarg = newRV_noinc(perlarg));
 		XPUSHs(sv_2mortal(perlarg));
 	}
 #define PERL_RESTORE_ARGS 1
-#if 1
-        PUTBACK;
-        perl_retcount = perl_call_pv(fullproc, G_EVAL);
-        SPAGAIN;
-        if (SvTRUE(ERRSV)) {
-                error = SvPV(ERRSV, PL_na);
-                print("script_error", error);
-                ret = SCRIPT_HANDLE_UNBIND;
-        }
-        else if (perl_retcount > 0)
-        {
-                perl_ret = POPs;
-                ret = SvIV(perl_ret);
-        }
-// tutaj przywrocic argumenty.
-
-if (change) {
-	for (i=0; i < scr_que->argc; i++) {
-		switch ( scr_que->argv_type[i] ) {
-			case (SCR_ARG_INT):
-				*( (int **) args[i]) = SvIV(SvRV(perlargs[i]));
-				break;
-
-			case (SCR_ARG_CHARP): 
-				xfree(*(char **) args[i]); // dobrze ? 
-				*( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;
-				break;
-			case (SCR_ARG_CHARPP): 
-				break;
-			default:
-				debug("dupa!\n");
-		
-		}
-	}
-}
-        PUTBACK;
-        FREETMPS;
-        LEAVE;
-        xfree(fullproc);
-        if (ret < 0) return -1;
-        else         return 0;
-#else 
+#include "perl_core.h"
 	PERL_HANDLER_FOOTER();
-#endif
-
 #undef PERL_RESTORE_ARGS
 }
 
@@ -162,7 +125,6 @@ int perl_load(script_t *scr)
 	XPUSHs(sv_2mortal(new_pv(scr->name)));
 	PUTBACK;
 	
-//	retcount = perl_call_pv(fullproc,
 	retcount = perl_call_pv("Ekg2::Core::eval_file",
 				G_EVAL|G_SCALAR);
 	SPAGAIN;
@@ -277,16 +239,16 @@ void *Ekg2_ref_object(SV *o)
 }
 /* <syf irssi */
 
-int perl_timer_bind(int freq, char *handler)
-{
-	char *script = SvPV(perl_eval_pv("caller", TRUE), PL_na);
-	char *mod    = script + 14; /* 14 stala -> `Ekg2::Script::` */
-	
-	script_t *scr = script_find(&perl_lang, (char *) mod);
-	debug("[perl_timer_bind] %s %s %x	%s \n", script, mod, scr, handler);
-	script_timer_bind(&perl_lang, scr, freq, xstrdup(handler));
+#define PERL_BIND_COMMON(x, args...)\
+	char *script = SvPV(perl_eval_pv("caller", TRUE), PL_na);\
+	char *mod    = script + 14; /* 14 stala -> `Ekg2::Script::` */\
+	script_t *scr = script_find(&perl_lang, (char *) mod);\
+/*	debug("[perl_%s] %s %s %x %s \n", #x, script, mod, scr, handler); */\
+	return x(&perl_lang, scr, args);
 
-	return 0;
+void *perl_timer_bind(int freq, char *handler)
+{
+	PERL_BIND_COMMON(script_timer_bind, freq, xstrdup(handler));
 }
 
 int perl_timer_unbind(script_timer_t *stimer)
@@ -294,44 +256,25 @@ int perl_timer_unbind(script_timer_t *stimer)
 	script_timer_unbind(stimer, 1);
 }
 
-int perl_variable_add(char *var, char *value, char *handler)
+void *perl_variable_add(char *var, char *value, char *handler)
 {
-	char *script = SvPV(perl_eval_pv("caller", TRUE), PL_na);
-	char *mod    = script + 14; /* 14 stala -> `Ekg2::Script::` */
-	
-	script_t *scr = script_find(&perl_lang, (char *) mod);
-	debug("[perl_variable_add] %s %s %x    %s\n", script, mod, scr, handler);
-	script_var_add(&perl_lang, scr, xstrdup(var), xstrdup(value), xstrdup(handler));
-
-	return 0;
-
+	PERL_BIND_COMMON(script_var_add, var, value, xstrdup(handler));
 }
 
-int perl_handler_bind(char *query_name, char *handler)
+void *perl_watch_add(int fd, int type, int persist, void *handler, void *data)
 {
-	char *script = SvPV(perl_eval_pv("caller", TRUE), PL_na);
-	char *mod    = script + 14; /* 14 stala -> `Ekg2::Script::` */
-	
-	script_t *scr = script_find(&perl_lang, (char *) mod);
-	debug("[perl_handler_bind] %s %s %x    %s\n", script, mod, scr, handler);
-	script_query_bind(&perl_lang, scr, xstrdup(query_name), xstrdup(handler));
-
-	return 0;
+	PERL_BIND_COMMON(script_watch_add, fd, type, persist, xstrdup(handler), data);
 }
 
-
-int perl_command_bind(char *command, char *handler)
+void *perl_handler_bind(char *query_name, char *handler)
 {
-	char *script = SvPV(perl_eval_pv("caller", TRUE), PL_na);
-	char *mod    = script + 14; /* 14 stala -> `Ekg2::Script::` */
-	
-	script_t *scr = script_find(&perl_lang, (char *) mod);
-	debug("[perl_command_bind] %s %s %x    %s\n", script, mod, scr, handler);
-	script_command_bind(&perl_lang, scr, xstrdup(command), xstrdup(handler));
-
-	return 0;
+	PERL_BIND_COMMON(script_query_bind, query_name, xstrdup(handler));
 }
 
+void *perl_command_bind(char *command, char *handler)
+{
+	PERL_BIND_COMMON(script_command_bind, command, xstrdup(handler));
+}
 
 int perl_finalize()
 {

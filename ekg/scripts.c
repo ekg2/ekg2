@@ -17,10 +17,16 @@
  * - wszystkie memleaki won!
  */
 
+
 COMMAND(script_command_handlers);
-int script_timer_handlers(int type, void *d);
+
+void script_timer_handlers(int type, void *d);
 void script_var_changed(const char *var);
 int script_query_handlers(void *data, va_list ap);
+void script_handle_watch(int type, int fd, int watch, void *data);
+
+
+int scripts_autoload(scriptlang_t *scr);
 
 /********************************************************************************** scriptlang */
 
@@ -53,6 +59,9 @@ int scriptlang_register(scriptlang_t *s, int prio)
 	list_add_sorted(&scriptlang, s, 0, script_register_compare);
 
 	s->init();
+	
+	if (!in_autoexec)
+		scripts_autoload(s);
 
 	return 0;
 }
@@ -141,9 +150,7 @@ char *script_find_path(char *name) {
 				path = saprintf("%s/%s", DATADIR, nametmp);
 				fajl = fopen(path, "r");
 			}
-
 // etc..
-
 			xfree(nametmp);
 			if (!fajl) {
 				xfree(path);
@@ -164,7 +171,7 @@ char *script_find_path(char *name) {
 
 int script_unload(script_t *scr)
 {
-	list_t l, prev;
+	list_t l;
 	
 	script_command_t *c;
 	script_timer_t   *t;
@@ -175,17 +182,17 @@ int script_unload(script_t *scr)
 	
 /* przeszukac liste timerow i komand, jak cos to je wywalic */
 
-	for (prev = l = script_timers; l; l = l->next, prev = l) { t = l->data; if (!t) continue;
-                if (t->scr == scr) { script_timer_unbind(t, 1);  l = prev; } }
+	for (l = script_timers; l;) 		{ t = l->data; l = l->next; if (!t) continue;
+                if (t->scr == scr) { script_timer_unbind(t, 1); } }
 
-	for (prev = l = script_commands_bindings; l; l = l->next, prev = l) { c = l->data; if (!c) continue;
-                if (c->scr == scr) { script_command_unbind(c, 1);  l = prev; } }
+	for (l = script_commands_bindings; l;)	{ c = l->data; l = l->next; if (!c) continue;
+                if (c->scr == scr) { script_command_unbind(c, 1); } }
 
-	for (prev = l = script_vars; l; l = l->next, prev = l) { v = l->data; if (!v) continue;
-                if (v->scr == scr) { v->scr = NULL; v->private = NULL; /* script_var_unbind(v, 1);   l = prev; */ } ; }
+	for (l = script_vars; l;)		{ v = l->data; l = l->next; if (!v) continue;
+                if (v->scr == scr) { script_var_unbind(v, 1); } }
 
-	for (prev = l = script_queries; l; l = l->next, prev = l) { q = l->data; if (!q) continue;
-                if (q->scr == scr) { script_query_unbind(q, 1); l = prev; } }
+	for (l = script_queries; l;) 		{ q = l->data; l = l->next; if (!q) continue;
+                if (q->scr == scr) { script_query_unbind(q, 1); } }
 		
 	if (slang->script_unload(scr))
 		return -1;
@@ -269,7 +276,7 @@ int script_load(scriptlang_t *s, char *name)
 	if ((path = script_find_path(name))) {
 		if (stat(path, &st) || S_ISDIR(st.st_mode)) {
 			// katalog ; zaladowac wszystkie skrypty z katalogu ?
-			// scripts_autoload(path) ?
+			// scripts_loaddir(path) ?
 			xfree(path);
 			print("generic_error", strerror(EISDIR));
 			return -1;
@@ -305,22 +312,15 @@ int script_load(scriptlang_t *s, char *name)
 		scr->lang = slang;
 		ret = slang->script_load(scr);
 
-		debug("[script] ret == %d\n", ret);
+/*		debug("[script] script_load ret == %d\n", ret); */
 		
 		if (ret < 1) {
 			if (ret == -1)
 				print("generic_error", "@script_load error");
 			else if (ret == 0)
 				print("generic_error", "@script_load script has no handler or error in getting handlers.");
-			script_unload(scr);
-			
-//			xfree(scr->path);
-//			xfree(scr->name);
-//			xfree(scr);
-//    			list_remove(&scripts, scr, 0);			
-
 			xfree(path);
-			
+			script_unload(scr);
 			return -1;
 		
 		}
@@ -338,7 +338,7 @@ int script_load(scriptlang_t *s, char *name)
 /******************************* VARIABLES ****************************/
 
 
-script_var_t *script_var_find(script_t *scr, const char *name)
+script_var_t *script_var_find(const char *name)
 {
 	list_t l;
         for (l = script_vars; l; l = l->next) {
@@ -350,13 +350,19 @@ script_var_t *script_var_find(script_t *scr, const char *name)
         return NULL;
 }
 
-
+int script_var_unbind(script_var_t *data, int free)
+{
+/* TODO, zwrolnic przynajmniej data->private. */
+	data->scr = NULL; 
+	data->private = NULL;
+	return 1;
+}
 
 script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *value, void *handler)
 {
 	script_var_t *tmp;
-	tmp = script_var_find(scr, name);
-	debug("[script_variable_add] (%s = %s) scr=%x tmp=%x\n", name, value, scr, tmp);
+	tmp = script_var_find(name);
+/*	debug("[script_variable_add] (%s = %s) scr=%x tmp=%x\n", name, value, scr, tmp); */
 
 	if (tmp) {
 		tmp->scr = scr;
@@ -366,8 +372,9 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 	else if (!tmp) {
 		SCRIPT_BIND_HEADER(script_var_t);
 	
-		temp->name  = name;
-		temp->value = value;
+		temp->name  = xstrdup(name);
+		temp->value = xstrdup(value);
+
 		variable_add(NULL, temp->name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
 
 		SCRIPT_BIND_FOOTER(script_vars);
@@ -376,9 +383,7 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 	return tmp;
 }
 
-
 int script_variables_read() {
-// czytamy z scripts-var
 	FILE *f;
         char *line;
 
@@ -388,7 +393,7 @@ int script_variables_read() {
 	}
 	
         while ((line = read_file(f))) {
-		script_var_add(NULL, NULL, xstrdup(line), NULL, NULL);
+		script_var_add(NULL, NULL, line, NULL, NULL);
                 xfree(line);
         }
 
@@ -396,15 +401,14 @@ int script_variables_read() {
 	return 0;
 }
 
-
 int script_variables_free(int free) {
 	FILE *f = fopen(prepare_path("scripts-var", 0), "w");
+	list_t l;
 	
 	if (!f) 
 		return -1;
 	
-	list_t l;
-	debug("[script_variables_free()]%s saveing vars...\n", (free) ? " freeing &&" : "");
+//	debug("[script_variables_free()]%s saveing vars...\n", (free) ? " freeing &&" : "");
 
         for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
@@ -427,6 +431,19 @@ int script_variables_write() {
 }
 
 /************** COMMANDS **********************************************************/
+
+script_command_t *script_command_find(const char *name)
+{
+	script_command_t *temp;
+	list_t l;
+	for (l = script_commands_bindings; l; l = l->next) {
+		temp = l->data;
+		if (!xstrcmp(name, temp->comm)) 
+			return temp;
+	
+	}
+	return NULL;
+}
 
 int script_command_unbind(script_command_t *scr_comm, int from)
 {
@@ -451,10 +468,22 @@ script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *comm
 {
 	SCRIPT_BIND_HEADER(script_command_t);
 	
-	temp->comm = command;
+	temp->comm = xstrdup(command);
 	command_add(NULL, temp->comm, "?", script_command_handlers, 0, NULL);
 	
 	SCRIPT_BIND_FOOTER(script_commands_bindings);
+}
+/************************************** WATCHES **********************************************/
+
+script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, int persist, void *handler, void *data)
+{
+
+	SCRIPT_BIND_HEADER(script_watch_t);
+	temp->data  = data;
+	debug("watch_add %d %d %d\n", fd, type, persist);
+	
+	temp->watch = watch_add(s->plugin, fd, type, persist, script_handle_watch, temp);
+	SCRIPT_BIND_FOOTER(script_watches);
 }
 
 /************************************* QUERIES ***********************************************/
@@ -462,43 +491,47 @@ int script_query_unbind(script_query_t *squery, int from)
 {
 	scriptlang_t *slang = squery->scr->lang;
 // TODO: tak jak w command_unbind jeden handler moze byc pod wiele skryptow.
-	query_disconnect(slang->plugin, squery->query_name);
-//	query_disconnect(NULL, squery->query_name);
+	query_disconnect(/* NULL */ slang->plugin, squery->query_name);
 	return list_remove(&script_queries, squery, 0);
 }
 
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler)
 {
 	SCRIPT_BIND_HEADER(script_query_t);
-	
-	temp->query_name	= query_name;
+	int num			= 0;
+	temp->query_name	= xstrdup(query_name);
 	
 // argc i argv_type uzupelnic... z czego ? xstrcmp() ? 
-
 #define CHECK(x) if (!xstrcmp(query_name, x)) 
-#define ARG(x, y) temp->argv_type[x] = y;
+#define CHECK_(x) if (!xstrncmp(query_name, x, xstrlen(x)))
+#define NEXT_ARG(y) temp->argv_type[num] = y; num++;
 
-	CHECK("protocol-disconnected")   { temp->argc = 1; ARG(0, SCR_ARG_CHARP); }
-	else CHECK("protocol-connected") { temp->argc = 1; ARG(0, SCR_ARG_CHARP); }
-	else CHECK("protocol-status")    { temp->argc = 4; ARG(0, SCR_ARG_CHARP); ARG(1, SCR_ARG_CHARP); ARG(2, SCR_ARG_CHARP); ARG(3, SCR_ARG_CHARP); }
-	else CHECK("protocol-message")   { temp->argc = 7; ARG(0, SCR_ARG_CHARP);
-							   ARG(1, SCR_ARG_CHARP);
-							   ARG(2, SCR_ARG_CHARPP);
-							   ARG(3, SCR_ARG_CHARP);
-//							   ARG(4, SCR_ARG_UNITPP);
-							   ARG(5, SCR_ARG_INT); // time_t
-							   ARG(6, SCR_ARG_INT); 
-					 }
-	else CHECK("ui-keypress")	 { temp->argc = 1; ARG(0, SCR_ARG_INT); }
-	else                             { temp->argc = 0; }
+	CHECK("protocol-disconnected")      { NEXT_ARG(SCR_ARG_CHARP); }
+	else CHECK("protocol-connected")    { NEXT_ARG(SCR_ARG_CHARP); }
+	else CHECK("protocol-status")       { NEXT_ARG(SCR_ARG_CHARP); NEXT_ARG(SCR_ARG_CHARP); NEXT_ARG(SCR_ARG_CHARP); NEXT_ARG(SCR_ARG_CHARP); }
+	else CHECK("protocol-message")      { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARPP);
+					      NEXT_ARG(SCR_ARG_CHARP);
+//					      ARG(4, SCR_ARG_UNITPP);
+					      NEXT_ARG(SCR_ARG_INT); // time_t
+					      NEXT_ARG(SCR_ARG_INT); 
+					    }
+	else CHECK("ui-keypress")	    { NEXT_ARG(SCR_ARG_INT); }
+	else CHECK_("irc-protocol-numeric") {
+					      NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARPP); }
+	
+	else                                { 
+	                                                                }
 
 #undef CHECK
-#undef ARG	
+#undef CHECK_
+#undef NEXT_ARG
+	temp->argc = num;
 
-//	query_connect(NULL, temp->query_name, script_query_handlers, temp);
 // TOD: jesli handler dla tego pluginu nie istnieje to dodac.
-	query_connect(s->plugin, temp->query_name, script_query_handlers, temp);
-
+	query_connect(/* NULL */ s->plugin, temp->query_name, script_query_handlers, temp);
 
 	SCRIPT_BIND_FOOTER(script_queries);
 }
@@ -542,7 +575,7 @@ script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void
 /******************************************************************** HANDLERY DO SKRYPTOW */
 
 void script_var_changed(const char *var) {
-	script_var_t     *temp = script_var_find(NULL, var);
+	script_var_t     *temp = script_var_find(var);
 	SCRIPT_HANDLER_HEADER(script_handler_var_t);
 	debug("[script_variable_changed] varname = %s newvalue = %s\n", var, temp->value);
 	SCRIPT_HANDLER_FOOTER(script_handler_var, temp->value);
@@ -550,49 +583,42 @@ void script_var_changed(const char *var) {
 	return;
 }
 
+void script_handle_watch(int type, int fd, int watch, void *data) {
+	script_watch_t *temp = data;
+/*	
+	char buf[1024];
+	buf[read(fd, &buf, 1023)] = 0;
+	debug("%s\n", buf);
+	return 0;
+*/	
+	SCRIPT_HANDLER_HEADER(script_handler_watch_t);
+	debug("[watch!] %d %d %d %s\n", type, fd, watch, 1 ? NULL : temp->scr->name);
+	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, watch);
+	
+}
+
 COMMAND(script_command_handlers)
 {
-	script_command_t *temp;
+	script_command_t *temp = script_command_find(name);
 	SCRIPT_HANDLER_HEADER(script_handler_command_t);
-	
-	list_t l;
-	int i = 0;
-	
-	debug("[script_command_handlers] %s %s\n", name, params[0]);
 
-	for (l = script_commands_bindings; l; l = l->next) {
-		temp = l->data;
-		
-		if (!xstrcmp(name, temp->comm)) {
-			debug("[script_command_handlers] found handler for %s\n", name);
-			
-			SCRIPT_HANDLER_FOOTER(script_handler_command, (char **) params)	{
-				if (script_command_unbind(temp, 1))
-					return ret; // TODO: powinnismy leciec z lista dalej....
-			}
-			i++;
-		}
-	
-	}
-	if (!i) {
-		debug("[script_command_handlers] no handlers for %s found, deleteing. ERROR ? fixed.\n", name);
-		command_remove(NULL, name);
-		return 0;
+	SCRIPT_HANDLER_MULTI_FOOTER(script_handler_command, (char **) params) {
+		script_command_unbind(temp, 1);
 	}
 	return ret;
 
 }
 
-int script_timer_handlers(int type, void *d)
+void script_timer_handlers(int type, void *d)
 {
 	script_timer_t	*temp	= d;
 	SCRIPT_HANDLER_HEADER(script_handler_timer_t);
 
 	if (!temp->removed && type) { // support na cos czego ekg2 nie ma. i beda memleaki !
 		script_timer_unbind(temp, 0);
-		return 0;
+		return;
 	} else if (temp->removed > 1) {
-		return -1;
+		return;
 	}
 
 	SCRIPT_HANDLER_FOOTER(script_handler_timer, type) {
@@ -603,7 +629,7 @@ int script_timer_handlers(int type, void *d)
 		}
 	}
 
-	return 0;
+	return;
 }
 
 
@@ -611,14 +637,13 @@ int script_query_handlers(void *data, va_list ap)
 {
 	script_query_t	*temp = data;
 	SCRIPT_HANDLER_HEADER(script_handler_query_t);
-	
 	void 		*args[MAX_ARGS];
 	int		i;
 	
 	for (i=0; i < temp->argc; i++) 
 		args[i] = (void *) va_arg(ap, void *);
 	
-	SCRIPT_HANDLER_FOOTER(script_handler_query, &args);
+	SCRIPT_HANDLER_MULTI_FOOTER(script_handler_query, (void **) &args);
 
 	return ret;
 }
@@ -628,15 +653,17 @@ int script_query_handlers(void *data, va_list ap)
 
 /* from python.c  python_autorun() 
  *
- * load scripts from $CONFIG/scripts/autorun
- * load scripts from $PREFIX/scripts/autorun
+ * load scripts from $CONFIGDIR/scripts/autorun ($CONFIGDIR - ~/.ekg2/        || ~/.ekg2/perl || ... )
+ * load scripts from $DATADIR/scripts/autorun   ($DATADIR   - /usr/share/ekg2 || /usr/local/share/ekg2 || ...)
  *
  */
-int scripts_autoload(const char *path)
+int scripts_loaddir(scriptlang_t *s, const char *path)
 {
 	struct dirent *d;
 	struct stat st;
 	char *tmp;
+	scriptlang_t *scr;
+	
 	DIR *dir;
 	if (!(dir = opendir(path)))
 		return 0;
@@ -644,15 +671,14 @@ int scripts_autoload(const char *path)
 		tmp = saprintf("%s/%s", path, d->d_name);
 
 		if (stat(tmp, &st) || S_ISDIR(st.st_mode)) {
-			// scripts_autoload(tmp) ?
 			xfree(tmp);
 			continue;
 		}
-		debug("[script] autoloading %s from %s\n", d->d_name, path);
-		if (!scriptlang_from_ext(xrindex(tmp, '.'))) { 
+		if (!(scr = scriptlang_from_ext(xrindex(tmp, '.'))) || (s != NULL && s != scr) ) { 
 			xfree(tmp);
 			continue;
 		}
+		debug("[script] autoloading %s from %s scr = %s\n", d->d_name, path, scr->name);
 		script_load(NULL, tmp);
 		xfree(tmp);
 	}
@@ -661,6 +687,22 @@ int scripts_autoload(const char *path)
 	return 0;
 }
 
+int script_reset(scriptlang_t *scr)
+{
+	list_t l;
+	scriptlang_t *s;
+	
+	for (l = scriptlang; l; l = l->next) {
+		s = l->data;
+
+		script_unload_lang(s);
+    		s->deinit();
+		
+		s->init();
+		scripts_autoload(s);
+	}
+	return 0;
+}
 
 COMMAND(script_cmd_load) { return script_load(NULL, (char *) params[0]); }
 COMMAND(script_cmd_list) { return script_list(NULL); /* param[0] - slang ? */ }
@@ -673,32 +715,49 @@ COMMAND(cmd_script)
         else {
 		if (!xstrcmp(params[0], "--load")) 
 			return script_load(NULL, (char *) params[1]);
-//            		return script_cmd_load(name, params[1], session, target, quiet);
-		if (!xstrcmp(params[0], "--list"))
+		else if (!xstrcmp(params[0], "--list"))
             		return script_list(NULL );
-		if (!xstrcmp(params[0], "--varlist"))
+		else if (!xstrcmp(params[0], "--varlist"))
 			return script_var_list(NULL  /* params[1] */);
+		else if (!xstrcmp(params[0], "--reset"))
+			return script_reset(NULL /* params[1] */);
 	}
 	return -1;
 }
 
-int scripts_init()
+int scripts_autoload(scriptlang_t *scr)
 {
 	char *pathtmp;
-        command_add(NULL, "script"        , "p ?", cmd_script, 0, "--list --load --varlist"); /* todo  ?!!? */
-	command_add(NULL, "script:load"   , "f"  , script_cmd_load, 0, "");
-	command_add(NULL, "script:list"   , "?"  , script_cmd_list, 0, "");
-	command_add(NULL, "script:varlist", "?"  , script_cmd_varlist, 0, "");
+	int i = 0;
 	
-	script_variables_read();
-
-	pathtmp = saprintf("%s/autorun", DATADIR);
-	scripts_autoload(pathtmp);
+	pathtmp = saprintf("%s/scripts/autorun", DATADIR);
+	i += scripts_loaddir(scr, pathtmp);
 	xfree(pathtmp);
 	
 	pathtmp = saprintf("%s/autorun", prepare_path("scripts", 0));
-	scripts_autoload(pathtmp);
+	i += scripts_loaddir(scr, pathtmp);
 	xfree(pathtmp);
+	return i;
+}
+
+int script_postinit(void *data, va_list ap)
+{
+	return scripts_autoload(NULL);
+}
+
+int scripts_init()
+{
+        command_add(NULL, "script"        , "p ?", cmd_script, 0, "--list --load --varlist --reset"); /* todo  ?!!? */
+	command_add(NULL, "script:load"   , "f"  , script_cmd_load, 0, "");
+	command_add(NULL, "script:list"   , "?"  , script_cmd_list, 0, "");
+	command_add(NULL, "script:varlist", "?"  , script_cmd_varlist, 0, "");
+#if 0
+	query_connect(NULL, "config-postinit",     script_postinit, NULL);
+#else
+	scripts_autoload(NULL);
+#endif
+
+	script_variables_read();
 	
 	return 0;
 }

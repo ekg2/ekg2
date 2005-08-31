@@ -1,0 +1,12 @@
+blib
+Makefile
+Makefile.old
+*.lo
+*.la
+*.swp
+*.prj
+*.pws
+*.cache
+*.c
+blibdirs
+Ekg2.bs

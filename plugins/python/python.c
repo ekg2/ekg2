@@ -37,12 +37,12 @@
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
-#include <ekg/scripts.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
+#include <ekg/scripts.h>
 
 int python_theme_init();
 int python_exec(const char *);
@@ -154,6 +154,10 @@ int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
 {
 	return 0;
 }
+int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch)
+{
+	return 0;
+}
 
 int python_timers(script_t *scr, script_timer_t *time, int type)
 {
@@ -196,9 +200,8 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 }
 
 
-int python_keypressed(script_t *s, int *_ch)
+int python_keypressed(script_t *s, int ch)
 {
-	int ch = *_ch;
 	int python_handle_result;
 	python_private_t *p = python_private(s);
 
@@ -213,12 +216,8 @@ int python_keypressed(script_t *s, int *_ch)
  *
  */
 
-int python_protocol_status(script_t *s, char **__session, char **__uid, char **__status, char **__descr)
+int python_protocol_status(script_t *s, char *session, char *uid, char *status, char *descr)
 {
-	char *session = *__session;
-	char *uid = *__uid;
-	char *status = *__status;
-	char *descr = *__descr;
 	int python_handle_result;
 	python_private_t *p = python_private(s);
 
@@ -234,16 +233,8 @@ int python_protocol_status(script_t *s, char **__session, char **__uid, char **_
  *
  */
 
-int python_protocol_message(script_t *scr, char **__session, char **__uid, char ***__rcpts, char **__text, uint32_t **__format, time_t *__send, int  *__class)
+int python_protocol_message(script_t *scr, char *session, char *uid, char **rcpts, char *text, uint32_t *format, time_t sent, int class)
 {
-	char *session = *__session;
-	char *uid = *__uid;
-	char **rcpts = *__rcpts;
-	char *text = *__text;
-	uint32_t *format = *__format;
-	time_t sent = *__send;
-	int class = *__class;
-
         int level;
 	char * target;
 	userlist_t *u;
@@ -283,9 +274,8 @@ int python_protocol_message(script_t *scr, char **__session, char **__uid, char 
  *
  */
 
-int python_protocol_connected(script_t *s, char **__session)
+int python_protocol_connected(script_t *s, char *session)
 {
-	char *session = *__session;
 	int python_handle_result;
 	python_private_t *p = python_private(s);
 
@@ -301,9 +291,8 @@ int python_protocol_connected(script_t *s, char **__session)
  *
  */
 
-int python_protocol_disconnected(script_t *s, char **__session)
+int python_protocol_disconnected(script_t *s, char *session)
 {
-	char *session = *__session;
 	int python_handle_result;
 	python_private_t *p = python_private(s);
 
@@ -314,28 +303,24 @@ int python_protocol_disconnected(script_t *s, char **__session)
 
 int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
-#define ARG_CHARP(x)    *(char **) args[x]
-#define ARG_INTPP(x)    *(int  **) args[x]
-#define ARG_TIMEP(x)    *(time_t **) args[x]
+#define ARG_INT(x)	(int) args[x]
+#define ARG_INTP(x)     *(int  *) args[x]
+#define ARG_TIMEP(x)    *(time_t *) args[x]
 
-#define ARG_CHARPP(x)   *(char ***) args[x]
-#define ARG_INTPPP(x)   *(int  ***) args[x]
-#define ARG_VOIDPP(x)   *(void ***) args[x]
-#define ARG_UINTPPP(x)  *(uint32_t ***) args[x]
+#define ARG_CHARPP(x)   *(char **) args[x]
+#define ARG_INTPP(x)   *(int  **) args[x]
+#define ARG_VOIDPP(x)   *(void **) args[x]
+#define ARG_UINTPPP(x)  *(uint32_t **) args[x]
 
-#define ARG_CHARPPP(x)  *(char ****) args[x]
-#define SCRIPT_HANDLER_BACKWARD(x) \
-        char *name = scr_que->query_name;\
-        \
-	if (!xstrcmp(name, "protocol-message")) return x##_protocol_message(scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPPP(2), ARG_CHARPP(3), ARG_UINTPPP(4), ARG_TIMEP(5), ARG_INTPP(6));\
-        else if (!xstrcmp(name, "protocol-disconnected")) return x##_protocol_disconnected(scr, ARG_CHARPP(0));\
-        else if (!xstrcmp(name, "protocol-connected"))  return x##_protocol_connected(scr, ARG_CHARPP(0));\
-        else if (!xstrcmp(name, "protocol-status"))     return x##_protocol_status(scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPP(2), ARG_CHARPP(3));\
-        else if (!xstrcmp(name, "ui-keypress"))         return x##_keypressed(scr, ARG_INTPP(0));\
-        else
+#define ARG_CHARPPP(x)  *(char ***) args[x]
 
-	SCRIPT_HANDLER_BACKWARD(python)
-	return -1;
+        char *name = scr_que->query_name;
+	if (!xstrcmp(name, "protocol-message")) return python_protocol_message(scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPPP(2) , ARG_CHARPP(3), ARG_UINTPPP(4), ARG_TIMEP(5), ARG_INT(6));
+        else if (!xstrcmp(name, "protocol-disconnected")) return python_protocol_disconnected(scr, ARG_CHARPP(0));
+        else if (!xstrcmp(name, "protocol-connected"))  return python_protocol_connected(scr, ARG_CHARPP(0));
+        else if (!xstrcmp(name, "protocol-status"))     return python_protocol_status(scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPP(2), ARG_CHARPP(3));
+        else if (!xstrcmp(name, "ui-keypress"))         return python_keypressed(scr, ARG_INTP(0));
+        else return -1;
 }
 
 // ********************************************************************************
@@ -417,7 +402,9 @@ PyObject *python_get_func(PyObject *module, const char *name)
 
 script_t *python_find_script(PyObject *module)
 {
-	SCRIPT_FINDER(slang == &python_lang);
+// TODO
+//	SCRIPT_FINDER(slang == &python_lang);
+	return NULL;
 }
 
 /*
@@ -463,27 +450,27 @@ int python_load(script_t *s)
 	p->module                  = module;
 	
 	if ((p->deinit                  = python_get_func(module, "deinit")));
-
-	if ((p->handle_msg              = python_get_func(module, "handle_msg")))
-		script_query_bind(&python_lang, s, "protocol-message",      &python_query);	
+/* MSG */
+	if ((p->handle_msg              = python_get_func(module, "handle_msg") ))
+		script_query_bind(&python_lang, s, "protocol-message",      NULL);
 		
-	if ((p->handle_msg_own          = python_get_func(module, "handle_msg_own")))
-		script_query_bind(&python_lang, s, "protocol-message",      &python_query);
-		
+	else if ((p->handle_msg_own          = python_get_func(module, "handle_msg_own")))
+		script_query_bind(&python_lang, s, "protocol-message",      NULL);
+/* STATUS */		
 	if ((p->handle_status           = python_get_func(module, "handle_status")))
-		script_query_bind(&python_lang, s, "protocol-status",       &python_query);;
+		script_query_bind(&python_lang, s, "protocol-status",       NULL); 
 		
-	if ((p->handle_status_own       = python_get_func(module, "handle_status_own")))
-		script_query_bind(&python_lang, s, "protocol-status",       &python_query);
-		
+	else if ((p->handle_status_own       = python_get_func(module, "handle_status_own")))
+		script_query_bind(&python_lang, s, "protocol-status",       NULL);
+/* CONNECT */		
 	if ((p->handle_connect          = python_get_func(module, "handle_connect")))
-		script_query_bind(&python_lang, s, "protocol-connected",    &python_query);
-		
+		script_query_bind(&python_lang, s, "protocol-connected",    NULL);
+/* DISCONNECT */		
 	if ((p->handle_disconnect       = python_get_func(module, "handle_disconnect")))
-		script_query_bind(&python_lang, s, "protocol-disconnected", &python_query);
-		
+		script_query_bind(&python_lang, s, "protocol-disconnected", NULL);
+/* KEYPRESS */		
 	if ((p->handle_keypress         = python_get_func(module, "handle_keypress")))
-		script_query_bind(&python_lang, s, "ui-keypress",           &python_query);
+		script_query_bind(&python_lang, s, "ui-keypress",           NULL);
 
 	script_private_set(s, p);
 
@@ -639,17 +626,7 @@ int python_finalize()
  */
 
 int python_theme_init() { 
-#if 0
-	format_add("python_eval_error", _("%! Error running code\n"), 1);
-	format_add("python_list", _("%> %1\n"), 1);
-	format_add("python_list_empty", _("%! No scripts loaded\n"), 1);
-	format_add("python_loaded", _("%) Script loaded\n"), 1);
-	format_add("python_removed", _("%) Script removed\n"), 1);
-	format_add("python_need_name", _("%! No filename given\n"), 1);
-	format_add("python_error", _("%! Error %T%1%n\n"), 1);
-	format_add("python_not_found", _("%! Can't find script %T%1%n\n"), 1);
-	format_add("python_wrong_location", _("%! Script have to be in %T%1%n (don't add path)\n"), 1);
-#endif
+	// other.
         return 0;
 }
 
@@ -660,7 +637,7 @@ int python_theme_init() {
  *
  */
 
-int python_plugin_destroy()
+static int python_plugin_destroy()
 {
 	scriptlang_unregister(&python_lang);
 	plugin_unregister(&python_plugin);
@@ -677,17 +654,13 @@ int python_plugin_destroy()
 int python_plugin_init(int prio)
 {
 	plugin_register(&python_plugin, prio);
+
 	scriptlang_register(&python_lang, 1);
-/* procedure wywolujaca formatki nie trzeba wywolywac z python_plugin_init() */
 	command_add(&python_plugin, "python:eval",   "?",  python_command_eval,   0, NULL);
 	command_add(&python_plugin, "python:run",    "?",  python_command_run,    0, NULL);
 	command_add(&python_plugin, "python:load",   "?",  python_command_load,   0, NULL);
 	command_add(&python_plugin, "python:unload", "?",  python_command_unload, 0, NULL);
 	command_add(&python_plugin, "python:list",    "",  python_command_list,   0, NULL);
-	
-// int script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, int argc, void *handler)
-
-
 
 	return 0;
 }

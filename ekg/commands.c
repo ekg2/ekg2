@@ -3876,7 +3876,8 @@ COMMAND(cmd_plugin)
 
 	if (params[0][0] == '+') {
 		ret = plugin_load(params[0] + 1, -254, 0);
-		changed_theme(NULL);
+		if (!ret) /* if plugin cannot be founded || loaded don't reload theme. */
+			changed_theme(NULL); 
 		return ret;
 	}
 

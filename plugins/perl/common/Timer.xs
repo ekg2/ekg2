@@ -20,6 +20,3 @@ MODULE = Ekg2::Timer	PACKAGE = Ekg2::Timer  PREFIX = timer_
 int timer_delete(Ekg2::PTimer timer)
 CODE:
 	timer_remove(timer->plugin, timer->name);
-
-
-	

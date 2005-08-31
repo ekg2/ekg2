@@ -303,9 +303,18 @@ void ncurses_changed_aspell(const char *var)
 {
 #ifdef WITH_ASPELL
         /* probujemy zainicjowac jeszcze raz aspell'a */
-        ncurses_spellcheck_init();
+	if (!in_autoexec)
+		ncurses_spellcheck_init();
 #endif
 }
+
+#ifdef WITH_ASPELL
+static int ncurses_postinit(void *data, va_list ap)
+{
+	ncurses_spellcheck_init();
+	return 0;
+}
+#endif
 
 static int ncurses_binding_set_query(void *data, va_list ap)
 {
@@ -462,6 +471,8 @@ int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "metacontact-item-removed", ncurses_all_contacts_changed, NULL);
 
 #ifdef WITH_ASPELL
+	query_connect(&ncurses_plugin, "config-postinit", ncurses_postinit, NULL);
+
 	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, "aspell_lang", VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, "aspell_encoding", VAR_STR, 1, &config_aspell_encoding, ncurses_changed_aspell, NULL, NULL);

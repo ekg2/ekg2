@@ -25,6 +25,6 @@ int variable_set(Ekg2::Variable var, const char *value)
 CODE:
 	variable_set(var->name, value, 0);
 
-int variable_new()
+int variable_new(char *name, char *value)
 CODE:
 	debug("[VARIABLE.XS] variable_new() TODO\n");

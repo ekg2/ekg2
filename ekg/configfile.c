@@ -112,6 +112,7 @@ void config_postread()
 			debug("default session not found\n");
 		}
 	}
+	query_emit(NULL, "config-postinit");
 }
 
 int config_read_plugins()

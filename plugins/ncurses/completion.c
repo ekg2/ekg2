@@ -927,7 +927,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	/* pocz±tek nicka, komendy? */
 	if (word == 0) {
 		/* dj's fixes... */
-		if (window_current && window_current->target) {
+		if (start[0] != '/' && window_current && window_current->target) {
 	                known_uin_generator(start, xstrlen(start));
 	                if (completions) {
 	                        for (j = 0; completions && completions[j]; j++) {

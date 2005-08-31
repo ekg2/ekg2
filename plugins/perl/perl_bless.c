@@ -2,23 +2,22 @@
 #include "perl_core.h"
 #include "perl_bless.h"
 
-#define debug_bless(args...) ;
-
-#define bless_struct(name, x) /* create_sv_ptr(x) TODO ! poczytac zrodla irssi ;> */\
-	sv_bless(newRV_noinc(newSViv((IV) x)), gv_stashpv(name, 0))
-
 #define HAVE_IRC 1
 
-// hv_store(hv, name, xstrlen(name), sv_bless(newRV_noinc(newSViv((IV) pointer)), stash), 0);
+#define debug_bless(args...) ;
+#define bless_struct(name, x) /* create_sv_ptr(x) TODO ! poczytac zrodla irssi ;> */\
+/*	sv_bless(newHV(), gv_stashpv(name, 0)) */\
+	sv_bless(newRV_noinc(newSViv((IV) x)), gv_stashpv(name, 0))
 
-#ifdef HAVE_IRC
-/* IRC */
+void ekg2_bless_session(HV *hv, session_t *session);
+
+#ifdef HAVE_IRC /* IRC */
 void ekg2_bless_irc_server(HV *hv, session_t *session)
 {
 	irc_private_t *j = irc_private(session);
 	connector_t   *s = NULL;
 	
-	debug_bless("blessing server %s\n", session->uid);
+	debug("blessing server %s\n", session->uid);
         if (j->conntmplist && j->conntmplist->data) s = j->conntmplist->data;
         
 	hv_store(hv, "session", 7, bless_struct("Ekg2::Session", session), 0);
@@ -36,9 +35,7 @@ void ekg2_bless_irc_server(HV *hv, session_t *session)
 	}
 #if 1
 // TODO: wywalic jak bless_struct() bedzie dzialac.
-        hv_store(hv, "connected", 9, newSViv(session->connected), 0);
-        hv_store(hv, "uid",       3, new_pv(session->uid), 0);
-	hv_store(hv, "status",	  6, new_pv(session->status), 0);
+	ekg2_bless_session(hv, session);
 #endif
 }
 
@@ -79,7 +76,7 @@ void ekg2_bless_irc_channuser(HV *hv, people_chan_t *ch)
 #endif
 }
 
-#endif
+#endif /* HAVE_IRC */
 
 
 void ekg2_bless_session_var(HV *hv, session_param_t *p)
@@ -88,7 +85,6 @@ void ekg2_bless_session_var(HV *hv, session_param_t *p)
         hv_store(hv, "key",      3, new_pv(p->key), 0);
 	hv_store(hv, "value",    5, new_pv(p->value), 0);
 }
-
 
 void ekg2_bless_var(HV *hv, variable_t *var)
 {
@@ -117,7 +113,11 @@ void ekg2_bless_command(HV *hv, command_t *command)
 void ekg2_bless_window(HV *hv, window_t *window)
 {
 	debug_bless("blessing window %s\n", window->target);
-	hv_store(hv, "target", 6, new_pv(window->target), 0);
+/* taki bajer, pytanie czy potrzebne... */
+	if (window->id == 1) 		hv_store(hv, "target", 6, new_pv("__status"), 0);
+	else if (window->id == 0) 	hv_store(hv, "target", 6, new_pv("__debug"), 0);
+	else 				hv_store(hv, "target", 6, new_pv(window->target), 0);
+
 	hv_store(hv, "id", 2, newSViv(window->id), 0);
 	hv_store(hv, "session", 7, bless_struct("Ekg2::Session", window->session), 0);
 	hv_store(hv, "userlist",  8, create_sv_ptr(window->userlist), 0); /* buggy ? */
@@ -132,7 +132,7 @@ void ekg2_bless_user(HV *hv, userlist_t *user)
 
 void ekg2_bless_session(HV *hv, session_t *session)
 {
-        debug_bless("blessing session %s\n", session->uid);
+        debug("blessing session %s\n", session->uid);
         hv_store(hv, "connected", 9, newSViv(session->connected), 0);
         hv_store(hv, "uid",       3, new_pv(session->uid), 0);
 	hv_store(hv, "status",	  6, new_pv(session->status), 0);
@@ -141,7 +141,7 @@ void ekg2_bless_session(HV *hv, session_t *session)
 
 void ekg2_bless_timer(HV *hv, struct timer *timer)
 {
-        debug("blessing timer %s\n", timer->name);
+        debug_bless("blessing timer %s\n", timer->name);
         hv_store(hv, "name", 4, new_pv(timer->name), 0);
 	hv_store(hv, "freq",  4, newSViv(timer->period), 0);
 }

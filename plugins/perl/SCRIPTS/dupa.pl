@@ -1,9 +1,8 @@
 # use strict;
-use vars qw($VERSION %EKG2);
 use Ekg2;
 
-$VERSION = "0.1";
-%EKG2 = (
+our $VERSION = "0.1";
+our %EKG2 = (
     authors     => 'Jakub Zawadzki',
     name        => 'dupa',
     description => '...',
@@ -67,19 +66,26 @@ sub cmd_evil {
 sub cmd_perl_list {
 	my ($params)   = @_;
 
-	foreach my $comm (Ekg2::commands) {
-		Ekg2::echo("$comm -> $comm->{name} = $comm->{params}");
-	}
-	Ekg2::echo("--------------------------------------------");
 
 	foreach my $wind (Ekg2::windows) {
 		Ekg2::echo("$wind -> $wind->{id} = $wind->{target}");
 		Ekg2::echo("WINDOW->USERSLIST:  ($wind->{userlist})");
+#		$wind->next()->switch();
+#		$wind->print("dupa!");
+#		$wind->print_format("generic_error", "zle!");
 			foreach my $user2  ( Ekg2::Userlist::users( $wind->{userlist} ) ) {
 				Ekg2::echo("$user2 -> $user2->{uid} $user2->{status}");
 			}
 	}
 	Ekg2::echo("--------------------------------------------");
+	
+	return 0;
+
+	foreach my $comm (Ekg2::commands) {
+		Ekg2::echo("$comm -> $comm->{name} = $comm->{params}");
+	}
+	Ekg2::echo("--------------------------------------------");
+
 
         foreach my $sess (Ekg2::sessions) {
                  Ekg2::echo("$sess -> $sess->{uid} $sess->{connected} ($sess->{status})");
@@ -180,15 +186,14 @@ sub cmd_timer {
 sub as {
 	my ($varname, $value) = @_;
 	Ekg2::echo("Zmieniles $varname na $value i ja o tym wiem!");
-	
-	
 }
 
 sub ekg2_autoreconnect { # autoreconnect. perl-side
         my ($sesja) = @_;
-        Ekg2::echo("rozlaczono! $sesja, laczenie.");
+        Ekg2::echo("rozlaczono! $$sesja, laczenie.");
 #       $sess = Ekg2::session_find($sesja);
 #       $sess->connect();
+	return 0;
 }
 
 sub ekg2_dupa {
@@ -196,10 +201,21 @@ sub ekg2_dupa {
         Ekg2::echo("rozlaczono! $sesja");
 }
 
+sub cmd_perl_scripts {
+    Ekg2::print(1,"%R/--[%nPERL PLUGIN%R]");
+    foreach (sort grep(s/::$//, keys %Ekg2::Script::)) {
+	my $name    = ${_};
+        my $name_   = ${ "Ekg2::Script::${_}::EKG2" }{name};
+	my $ver     = ${ "Ekg2::Script::${_}::VERSION" };
+	my $path    = "_TODO_";
+	Ekg2::print(1, "%R|%n %G$name\t%R$name_\t%B$ver\t%g$path");
+    }
+    Ekg2::print(1, "%R\`--<%nPERL PLUGIN LISTER%R>->");
+}
 
 Ekg2::command_bind('perl_list', 'cmd_perl_list');
+Ekg2::command_bind('perl_scr_list', 'cmd_perl_scripts');
 return 1;
-
 
 Ekg2::debug("(perl) Hello ekg2!\n");
 Ekg2::command_bind('test', 'cmd_test');

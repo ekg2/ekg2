@@ -510,15 +510,15 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 
                 if (u->nickname && !xstrcasecmp(u->nickname, uid))
                         return u;
-
-                /* porównujemy resource */
+		
+                /* porównujemy resource; if (len > 0) */
 
                 if (!(tmp = xstrchr(uid, '/')))
                         continue;
 
                 len = (int)(tmp - uid);
-
-                if (!xstrncasecmp(uid, u->uid, len))
+		
+                if (len > 0 && !xstrncasecmp(uid, u->uid, len))
                         return u;
 
         }

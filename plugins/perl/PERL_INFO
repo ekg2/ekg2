@@ -1,9 +1,10 @@
-# TODO: zrobic to w docbooku albo czymstam...
+# BUG : jak sie robi /script --reset kilka razy albo /plugin -perl /plugin +perl SIGSEGV @ perl_parse() 
 
 # TODO: wywalic wszystkie Ekg2::Session::Find itd.. zostawic tylko Ekg2::session_find() itd..
-
 # TODO: Userlista dziwnie jest zrobiona...
+# TODO: dokonczyc.
 
+# TODO: zrobic to w docbooku albo czymstam...
 # TODO: dokonczyc.
 
 #####################################################################################################################################
@@ -16,6 +17,9 @@ Ekg2
     -> session_find($nazwa)	- szuka sesji						(Ekg2::Session)
     -> plugin_find($nazwa)	- szuka pluga						(Ekg2::Plugin)
     -> variable_find($nazwa)	- szuka zmiennej					(Ekg2::Variable)
+    
+    -> window_findid($id)       - szuka okna o numerku					(Ekg2::Window)
+    -> window_find($nazwa)	- szuka okna o nazwie					(Ekg2::Window)
 
     -> session_current()	- aktualna sesja.					(Ekg2::Session)
     -> window_current()		- aktualne okno.					(Ekg2::Window)
@@ -51,13 +55,24 @@ Ekg2::Session
     -> params()			- lista zmiennych sesji					(lista Ekg2::Session::Param)
 
 Ekg2::Session::Param
-    -> set($value)
+    -> set($newvalue)
     -> help()
 
 Ekg2::Window
+    {target}
+    {id}
+    
     -> kill()			- zabija okno.
+    -> switch()			- przechodzi na okno
+    -> print_format($fmt,$line) - pisze do okna.
+    -> print($tekst)		= (print_format("generic", $tekst)
+    
+    -> next()			- nastepne okno						(Ekg2::Window)
+    -> prev()			- poprzednie okno.					(Ekg2::Window)
 
 Ekg2::Timers
+    {name}			- nazwa							(char *)
+    {freq}			- czestotliwosc						(int)
 
 Ekg2::Variable
     -> set($value)
@@ -67,7 +82,6 @@ Ekg2::Variable
 
 Ekg2::Irc
     -> servers()		- zwraca liste sesji irc.				(Ekg2::Irc::Server)
-
 
 Ekg2::Irc::Server 
 #   {session} 		    - sesja							(Ekg2::Session)
@@ -110,7 +124,10 @@ Ekg2::Irc::User
 #  -> kill($reason)		- zabija usera.    
 ##  -> whois(
 
-Ekg2::Irc
+Ekg2::Irc::Channel::User
+#    -> kick($reason);
+#    -> 
+
 
 #####################################################################################################################################
 

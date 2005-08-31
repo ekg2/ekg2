@@ -71,8 +71,6 @@ PyObject *ekg_cmd_command(PyObject * self, PyObject * args)
 /**
  * ekg_cmd_command_bind()
  *
- * run ekg command
- *
  */
 
 PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
@@ -86,12 +84,34 @@ PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "ss", &bind_command, &bind_handler)) {
 	return NULL;
     }
-//    script_command_bind(&python_lang, scr, bind_command, python_get_func(p->module, bind_handler));
-    script_command_bind(&python_lang, scr, xstrdup(bind_command), xstrdup(bind_handler));
+    script_command_bind(&python_lang, scr, bind_command, xstrdup(bind_handler));
 
     Py_INCREF(Py_None);
     return Py_None;
 }
+
+/**
+ * ekg_cmd_timer_bind()
+ *
+ */
+
+PyObject *ekg_cmd_timer_bind(PyObject * self, PyObject * args)
+{
+    char *handler = NULL;
+    int *freq = NULL;
+
+    script_t *scr = python_find_script(self);
+//    python_private_t *p = python_private(scr);
+
+    if (!PyArg_ParseTuple(args, "is", &freq, &handler)) {
+	return NULL;
+    }
+    script_timer_bind(&python_lang, scr, freq, xstrdup(handler));
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 /**
  * ekg_cmd_echo()

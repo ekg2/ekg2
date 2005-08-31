@@ -6,8 +6,6 @@
 #include "../perl_ekg.h"
 #include <XSUB.h>
 
-#undef _
-
 #include "../perl_bless.h"
 #include <ekg/dynstuff.h>
 

@@ -1,3 +1,6 @@
+#ifndef PERL_CORE_H
+#define PERL_CORE_H
+
 #include <ekg/scripts.h>
 #include <ekg/xmalloc.h>
 
@@ -11,7 +14,6 @@
 
 #define hvref(o) \
         (is_hvref(o) ? (HV *)SvRV(o) : NULL)
-
 
 
 static const char *ekg_core_code =
@@ -39,7 +41,7 @@ static const char *ekg_core_code =
 "  destroy(\"Ekg2::Script::$id\");\n"
 "\n"
 "  my $package = \"Ekg2::Script::$id\";\n"
-"  my $eval = qq{package $package; %s sub handler { $data; }};\n"
+"  my $eval = qq{package $package; %s sub handler { $data }};\n"
 "  {\n"
 "      # hide our variables within this block\n"
 "      my ($filename, $package, $data);\n"
@@ -50,6 +52,7 @@ static const char *ekg_core_code =
 "  my $ret;\n"
 "  eval { $ret = $package->handler; };\n"
 "  die $@ if $@;\n"
+
 "  return $ret;\n"
 "}\n"
 "\n"
@@ -66,14 +69,6 @@ static const char *ekg_core_code =
 "  eval_data($data, $id);\n"
 "}\n"
 ;
-// dla kazdego argumentu
-/*
-    perlarg = new_pv(arg);      // string
-    perlarg = newSViv((IV)arg); // integer
-itd...
-..zrob
-    XPUSHs(sv_2mortal(perlarg));
-*/
 
 #define PERL_HANDLER_HEADER(x) \
 	    if (!x)\
@@ -92,6 +87,47 @@ itd...
 	    SAVETMPS;\
 	    PUSHMARK(sp);
 
+
+#define fix(s) ((s) ? (s) : "") /* xmalloc.h */
+	    
+int perl_initialize();
+int perl_finalize();
+void ekg2_callXS(void (*subaddr)(pTHX_ CV* cv), CV *cv, SV **mark);
+SV *create_sv_ptr(void *object);
+
+#endif
+/* zrobic to jakos ladniej... hack.*/
+
+#undef RESTORE_ARGS
+#undef PERL_HANDLER_FOOTER
+
+#ifdef PERL_RESTORE_ARGS
+#define RESTORE_ARGS(x)\
+    if (change) {\
+        for (i=0; i < scr_que->argc; i++) {\
+                switch ( scr_que->argv_type[i] ) {\
+                        case (SCR_ARG_INT):\
+                                *( (int **) args[i]) = SvIV(SvRV(perlargs[i]));\
+                                break;\
+\
+                        case (SCR_ARG_CHARP):\
+ /* dobrze ? */\
+                                xfree(*(char **) args[i]); \
+                                *( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
+                                break;\
+                        case (SCR_ARG_CHARPP):\
+                                break;\
+                        default:\
+                                debug("_NIMPTYPE_ dupa!\n");\
+\
+                }\
+        }\
+    }
+    
+#else 
+#define RESTORE_ARGS(x) ;
+#endif
+
 #define PERL_HANDLER_FOOTER()\
 	    PUTBACK;\
 /*	    perl_retcount = perl_call_sv(func, G_EVAL|G_DISCARD);*/\
@@ -107,6 +143,7 @@ itd...
 		    perl_ret = POPs;\
 		    ret = SvIV(perl_ret);\
 	    }\
+	    RESTORE_ARGS(0);\
 /*	    debug("%d %d\n", ret, perl_retcount); */\
 	    \
 	    PUTBACK;\
@@ -115,13 +152,5 @@ itd...
 	    xfree(fullproc);\
 	    \
 	    if (ret < 0) return -1;\
-	    else         return 0;
-
-
-#define fix(s) ((s) ? (s) : "") /* xmalloc.h */
-	    
-int perl_initialize();
-int perl_finalize();
-void ekg2_callXS(void (*subaddr)(pTHX_ CV* cv), CV *cv, SV **mark);
-SV *create_sv_ptr(void *object);
+	    else         return ret;
 

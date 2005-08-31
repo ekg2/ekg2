@@ -463,7 +463,7 @@ int query_disconnect(plugin_t *plugin, const char *name)
 int query_emit(plugin_t *plugin, const char *name, ...)
 {
 	static int nested = 0;
-	int result = -1;
+	int result = -2;
 	va_list ap;
 	va_list ap_plugin;
 	list_t l;

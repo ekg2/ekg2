@@ -1281,7 +1281,7 @@ void theme_init()
         format_add("auto_reconnect_removed", _("%! (%1) EKG2 won't try to connect anymore - use /connect.%n\n"), 1);
 
         /* obs³uga motywów */
-        format_add("theme_loaded", "%> Loaded theme%T%1%n\n", 1);
+        format_add("theme_loaded", "%> Loaded theme %T%1%n\n", 1);
         format_add("theme_default", "%> Default theme selected\n", 1);
         format_add("error_loading_theme", "%! Error loading theme: %1\n", 1);
 
@@ -1693,6 +1693,13 @@ void theme_init()
 	
 	format_add("script_varlist", _("%> %1 = %2 (%3)\n"), 1);
 	format_add("script_varlist_empty", _("%! No script vars!\n"), 1);
+
+#ifdef WITH_ASPELL
+        /* aspell */
+        format_add("aspell_init", "%> Czekaj, inicjujê modu³ sprawdzania pisowni...\n", 1);
+        format_add("aspell_init_success", "%> Zainicjowano modu³ sprawdzania pisowni\n", 1);
+        format_add("aspell_init_error", "%! B³±d modu³u sprawdzania pisowni: %T%1%n\n", 1);
+#endif 
 
         theme_plugins_init();
 }

@@ -1,5 +1,9 @@
+#ifndef PERL_BLESS_H
+#define PERL_BLESS_H
+
 #include <ekg/debug.h>
 #include <ekg/sessions.h>
+#undef _
 #include <ekg/windows.h>
 #include <ekg/scripts.h>
 #include <ekg/stuff.h>
@@ -64,5 +68,5 @@
 
 #define bless_channperson(person)\
 	(SV *) ekg2_bless(BLESS_IRC_CHANNUSER, 0, person)
-	
-	
+
+#endif

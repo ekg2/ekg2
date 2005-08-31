@@ -24,7 +24,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/scripts.h>
 extern scriptlang_t perl_lang;
-
+extern plugin_t     perl_plugin;
 #define perl_private(s) (perl_private_t *) script_private_get(s)
 
 typedef struct {

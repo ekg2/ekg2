@@ -71,7 +71,7 @@ COMMAND(perl_command_test)
 	if (xstrlen(params[0]) < 1) 
 		return -1;
 		
-	code = saprintf("use Ekg2; Ekg2::debug(\"%s\n\");", params[0]);
+	code = saprintf("use Ekg2;\nuse Ekg2::%s Ekg2::debug(\"%s\n\");", params[0], params[1]);
 	
 	eval_pv(code, TRUE);
 	xfree(code);

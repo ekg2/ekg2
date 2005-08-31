@@ -10,6 +10,7 @@ logsqlite	leafnode	logowanie wiadomo¶ci do sqlite	sqlite < 3
 mail		szalik		sprawdzanie poczty		-
 ncurses		*		interfejs tekstowy		ncurses
 pcm		wojtekka	kodek PCM			-
+perl		darkjames	obsluga perla			perl
 python		leafnode	obsuga pythona			python
 rc		wojtekka	zdalne sterowanie ekg		-
 readline	*		interfejs tekstowy		readline
