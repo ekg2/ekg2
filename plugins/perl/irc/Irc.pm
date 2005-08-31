@@ -7,7 +7,9 @@ package Ekg2::Irc;
 use Ekg2;
 use strict;
 use Carp;
-use vars qw(@ISA @EXPORT @EXPORT_OK);
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+
+$VERSION = "0.1";
 
 require Exporter;
 require DynaLoader;

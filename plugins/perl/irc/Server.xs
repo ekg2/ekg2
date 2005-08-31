@@ -12,8 +12,13 @@ PPCODE:
             		XPUSHs(sv_2mortal(bless_server( (session_t *) l->data)));
 		}
         }
-
-
+	
+void session2server(Ekg2::Session s)
+PPCODE:
+	if (!xstrncasecmp( session_uid_get( (session_t *) s), IRC4, 4)) { 
+		XPUSHs(sv_2mortal(bless_server( (session_t *) s)));
+	}
+	
 MODULE = Ekg2::Irc::Server   PACKAGE = Ekg2::Irc::Server  PREFIX = server_
 
 void server_raw(Ekg2::Session s, char *str)
