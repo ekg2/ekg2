@@ -76,6 +76,7 @@ int jabber_write_status(session_t *s);
 
 void jabber_reconnect_handler(int type, void *data);
 void jabber_handle_resolver(int type, int fd, int watch, void *data);
+void jabber_handle_connect_tls(int type, int fd, int watch, void *data);
 
 time_t jabber_try_xdelay(xmlnode_t *xmlnode, const char *ns);
 

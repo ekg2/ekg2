@@ -1006,17 +1006,19 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 
 #ifdef HAVE_GNUTLS
         if (use_ssl) {
-                int ret = 0;
+		int ret = 0;
                 gnutls_certificate_allocate_credentials(&(j->xcred));
                 /* XXX - ~/.ekg/certs/server.pem */
                 gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
-		if (gnutls_init(&(j->ssl_session), GNUTLS_CLIENT)) {
+
+		if ((ret = gnutls_init(&(j->ssl_session), GNUTLS_CLIENT)) ) {
 			print("conn_failed_tls");
 			print("conn_failed", gnutls_strerror(ret), session_name(jdh->session));
 			jabber_handle_disconnect(jdh->session);
 			return;
 		}
-                gnutls_set_default_priority(j->ssl_session);
+
+		gnutls_set_default_priority(j->ssl_session);
                 gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
                 gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
                 gnutls_compression_set_priority(j->ssl_session, comp_type_priority);
@@ -1026,24 +1028,53 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
                 gnutls_transport_set_push_function(j->ssl_session, (gnutls_push_func)write);
                 gnutls_transport_set_ptr(j->ssl_session, (gnutls_transport_ptr)(j->fd));
 
-                do {
-                        ret = gnutls_handshake(j->ssl_session);
-			ekg_yield_cpu();
-                } while ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN));
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect_tls, jdh);
 
-                if (ret < 0) {
-                        debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
-                        print("conn_failed", gnutls_strerror(ret), session_name(jdh->session));
-                        gnutls_deinit(j->ssl_session);
-                        gnutls_certificate_free_credentials(j->xcred);
-                        jabber_handle_disconnect(jdh->session);
-                        return;
-                }
-                j->using_ssl = 1;
+		return;
         } // use_ssl
 #endif
         watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, jdh);
 }
+
+#ifdef HAVE_GNUTLS
+void jabber_handle_connect_tls(int type, int fd, int watch, void *data) {
+        jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
+        jabber_private_t *j = session_private_get(jdh->session);
+	int ret;
+
+	if (type)
+		return;
+
+	ret = gnutls_handshake(j->ssl_session);
+
+	debug("[jabber] jabber_handle_connect_tls, handshake = %d\n", ret);
+	if ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN)) {
+		debug("tls handler going to be set, way %d\n",
+			gnutls_record_get_direction(j->ssl_session));
+
+		watch_add(&jabber_plugin, (int) gnutls_transport_get_ptr(j->ssl_session),
+			gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ,
+			0, jabber_handle_connect_tls, jdh);
+
+		ekg_yield_cpu();
+		return;
+
+	} else if (ret < 0) {
+		debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
+		print("conn_failed", gnutls_strerror(ret), session_name(jdh->session));
+		gnutls_deinit(j->ssl_session);
+		gnutls_certificate_free_credentials(j->xcred);
+		jabber_handle_disconnect(jdh->session);
+		return;
+	}
+	debug("tls handshake OK, ret %d\n", ret);
+
+	// handshake successful
+	j->using_ssl = 1;
+
+	watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, jdh);
+}
+#endif
 
 int jabber_status_show_handle(void *data, va_list ap)
 {
