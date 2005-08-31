@@ -89,7 +89,7 @@ sub sig_userhost {
 
       $resolve_hosts{$host} = $resolve_nicks{$nick};
       delete $resolve_nicks{$nick};
-      $resolve_print{$host} = "[$nick!$user"."@"."$host]";
+      $resolve_print{$host} = "%n[%B$nick!$user"."@"."$host%n]";
     }
   }
   if (--$userhosts == 0 && %resolve_nicks) {
@@ -156,9 +156,9 @@ sub host_lookup {
 
     $print_name = $input_query if !$print_name;
     if (!$name) {
-      $text = "No information for $print_name";
+      $text = "%! %RNo information for %B$print_name";
     } else {
-      $text = "$print_name: $name";
+      $text = "%> %B$print_name%n: %W$name";
     }
   };
   $text = $! if (!$text);
@@ -175,15 +175,15 @@ sub pipe_input {
   my ($type, $rhfd, $watch, $rh) = @_;
   my $text = <$rh>;
   close($rh);
-#  Ekg2::watch_remove($pipe_tag);
+#  Ekg2::watch_remove($pipe_tag); # w sumie nie musimy wywalac tego bo watch nie jest staly..
   undef $pipe_tag;
   my ($server);
   
-#  my $server = Irssi::server_find_tag($print_server); # w sumie nie musimy wywalac tego bo watch nie jest staly..
+#  my $server = Irssi::server_find_tag($print_server); 
   if ($server) {
     $server->print('', $text);
   } else {
-    Ekg2::echo($text);
+    Ekg2::print(1, $text);
   }
 
   $lookup_waiting--;

@@ -489,6 +489,10 @@ int python_load(script_t *s)
 int python_unload(script_t *s)
 {
 	python_private_t *p = python_private(s);
+
+        if (!p)
+                return 0;
+
 	debug("m->deinit = %p, hmm?\n", p->deinit);
 	if (p->deinit) {
 		PyObject *res = PyObject_CallFunction(p->deinit, "()");

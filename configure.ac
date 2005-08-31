@@ -261,6 +261,20 @@ if test "x$with_libxosd" != "xno"; then
 	fi
 fi
 
+AC_ARG_WITH(perl,
+        [  --without-perl        Compile without perl support (perl plugin)])
+
+if test "x$with_perl" != "xno"; then
+	AM_CHECK_PERL
+
+	if test "x$have_perl" = "xyes"; then
+		AC_CONFIG_FILES([plugins/perl/Makefile])
+		AC_CONFIG_FILES([plugins/perl/SCRIPTS/Makefile])
+		PLUGINS="$PLUGINS perl"
+	fi
+fi
+
+
 AC_ARG_WITH(python,
         [  --without-python        Compile without python support (python plugin)])
 
@@ -369,6 +383,12 @@ if test "x$have_libgsm" = "xyes"; then
 	echo " - libgsm:    enabled"
 else
 	echo " - libgsm:    disabled"
+fi
+
+if test "x$have_perl" = "xyes"; then
+	echo " - perl:    enabled"
+else
+	echo " - perl:    disabled"
 fi
 
 if test "x$have_python" = "xyes"; then

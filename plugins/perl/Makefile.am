@@ -12,24 +12,24 @@ SUBDIRS   = SCRIPTS
 perl_dirs = common irc
 
 all-local:
-       for dir in $(perl_dirs); do \
-        cd $$dir && \
-        if [ ! -f Makefile ]; then \
-          $(PERL) Makefile.PL; \
-        fi && \
-        $(MAKE) && \
-        cd ..; \
-       done
+	for dir in $(perl_dirs); do \
+	 cd $$dir && \
+	 if [ ! -f Makefile ]; then \
+	   $(PERL) Makefile.PL; \
+	 fi && \
+	 $(MAKE) && \
+	 cd ..; \
+	done
 
 clean-generic:
-       for dir in $(perl_dirs); do \
-        cd $$dir; \
-        $(MAKE) clean; \
-        cd ..; \
-       done
+	for dir in $(perl_dirs); do \
+	 cd $$dir; \
+	 $(MAKE) clean; \
+	 cd ..; \
+	done
 
 
 install-exec-local:
-       for dir in $(perl_dirs); do \
-         cd $$dir && $(MAKE) install && cd ..; \
-       done
+	for dir in $(perl_dirs); do \
+	 cd $$dir && $(MAKE) install && cd ..; \
+	done

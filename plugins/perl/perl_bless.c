@@ -2,8 +2,6 @@
 #include "perl_core.h"
 #include "perl_bless.h"
 
-#define HAVE_IRC 1
-
 #define debug_bless(args...) ;
 #define bless_struct(name, x) /* create_sv_ptr(x) TODO ! poczytac zrodla irssi ;> */\
 /*	sv_bless(newHV(), gv_stashpv(name, 0)) */\
@@ -11,7 +9,7 @@
 
 void ekg2_bless_session(HV *hv, session_t *session);
 
-#ifdef HAVE_IRC /* IRC */
+#ifdef HAVE_IRC_NEW /* IRC */
 void ekg2_bless_irc_server(HV *hv, session_t *session)
 {
 	irc_private_t *j = irc_private(session);
@@ -76,7 +74,7 @@ void ekg2_bless_irc_channuser(HV *hv, people_chan_t *ch)
 #endif
 }
 
-#endif /* HAVE_IRC */
+#endif /* HAVE_IRC_NEW */
 
 
 void ekg2_bless_session_var(HV *hv, session_param_t *p)
@@ -198,7 +196,7 @@ SV *ekg2_bless(int flag, int flag2, void *object)
                         stash = gv_stashpv("Ekg2::Userlist::users", 1);
                         ekg2_bless_user(hv, object);
 			break;
-#ifdef HAVE_IRC
+#ifdef HAVE_IRC_NEW
 /* IRC */			
 		case BLESS_IRC_SERVER:
                         stash = gv_stashpv("Ekg2::Irc::Server", 1);

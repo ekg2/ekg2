@@ -281,16 +281,20 @@ int script_load(scriptlang_t *s, char *name)
 			print("generic_error", strerror(EISDIR));
 			return -1;
 		}
-		if (!s) 
+		if (!s)
 			slang = scriptlang_from_ext(xrindex(path, '.'));
-		else 
+                else
 			slang = s;
-			
+
 		if (!slang || xstrcmp(xrindex(path, '.'), slang->ext) /* na wszelki wypadek */ ) {
-			debug("[script_ierror] slang = 0x%x path = %s slang = %s slangext = %s\n", slang, path, slang->name, slang->ext);
-			print("generic_error", "internal script handling ERROR, script not loaded.");
+                        if (slang) {
+                                debug("[script_ierror] slang = 0x%x path = %s slang = %s slangext = %s\n", slang, path, slang->name, slang->ext);
+                                print("generic_error", _("internal script handling ERROR, script not loaded."));
+                        } else {
+                                debug("[script] extension = %s\n", xrindex(path, '.'));
+                                print("generic_error", _("Can't recognize script type"));
+                        }
 			xfree(path);
-			
 			return -1;
 		}
 
@@ -761,3 +765,14 @@ int scripts_init()
 	
 	return 0;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ * vim: sts=8 sw=8
+ */
+

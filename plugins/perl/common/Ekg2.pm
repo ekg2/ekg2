@@ -19,7 +19,7 @@ require DynaLoader;
 
 @ISA = qw(Exporter DynaLoader);
 @EXPORT = qw( EKG_MSGCLASS_SENT EKG_MSGCLASS_SENT_CHAT
-	      EKG_NO_THEMEBIT		
+	      EKG_NO_THEMEBIT WATCH_READ
 );
 
 my $static = 0;
