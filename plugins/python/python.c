@@ -150,6 +150,26 @@ COMMAND(python_command_list)
 // *
 // * ***************************************************************************
 
+int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie bedzie.. nie uzywac */, int type, void *private, ...)
+{
+	PyObject *handler = private;
+	switch (type) {
+		case(SCRIPT_VARTYPE):
+		case(SCRIPT_COMMANDTYPE):
+		case(SCRIPT_QUERYTYPE):
+		case(SCRIPT_TIMERTYPE):
+		    break;
+		case(SCRIPT_WATCHTYPE):
+		    
+/* 	va_start(ap, )
+ *	PyObject *data = va_arg(void *);
+ *      va_end(ap);
+ */
+		    break;
+	}
+	return 0;
+}
+
 int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
 {
 	return 0;

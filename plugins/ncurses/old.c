@@ -89,8 +89,17 @@ char *aspell_line;
 void ncurses_spellcheck_init(void)
 {
         AspellCanHaveError * possible_err;
-        if(config_aspell != 1 || !config_aspell_encoding || !config_aspell_lang)
-            return;
+        if (!config_aspell || !config_aspell_encoding || !config_aspell_lang) {
+/* jesli nie chcemy aspella to wywalamy go z pamieci */
+		delete_aspell_speller(spell_checker);
+		spell_checker = NULL;
+		return;
+	}
+	print("aspell_init");
+        if (spell_checker) {
+                delete_aspell_speller(spell_checker);
+                spell_checker = NULL;
+        }
 
         spell_config = new_aspell_config();
         aspell_config_replace(spell_config, "encoding", config_aspell_encoding);
@@ -99,11 +108,15 @@ void ncurses_spellcheck_init(void)
 
         if (aspell_error_number(possible_err) != 0)
         {
+	    spell_checker = NULL;
             debug("Aspell error: %s\n", aspell_error_message(possible_err));
+	    print("aspell_init_error", aspell_error_message(possible_err));
             config_aspell = 0;
         }
-        else
+        else {
             spell_checker = to_aspell_speller(possible_err);
+	    print("aspell_init_success");
+	}
 }
 #endif
 

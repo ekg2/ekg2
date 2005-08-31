@@ -9,10 +9,12 @@
 
 #define SCRIPT_HANDLE_UNBIND    -666
 
-#define SCRIPT_BIND_TIMER 1
-#define SCRIPT_BIND_COMMAND 2
-#define SCRIPT_BIND_VARIABLE 3
-#define SCRIPT_BIND_QUERY 4
+/* TODO: enums */
+#define SCRIPT_VARTYPE 1
+#define SCRIPT_COMMANDTYPE 2
+#define SCRIPT_QUERYTYPE 3
+#define SCRIPT_TIMERTYPE 4
+#define SCRIPT_WATCHTYPE 5
 
 // #define SCR_ARG_CHAR    1
 #define SCR_ARG_CHARP   2 
@@ -87,6 +89,8 @@ typedef int (script_handler_var_t)    (script_t *, script_var_t *,   char *);
 typedef int (script_handler_query_t)  (script_t *, script_query_t *, void **);
 typedef int (script_handler_watch_t)  (script_t *, script_watch_t *, int, int, int);
 
+typedef int (script_free_bind_t)      (script_t *, void *, int, void *, ...);
+
 typedef struct {
 	char *name;     // perl, python, php *g* and so on.
 	char *ext; 	//  .pl,    .py, .php ...
@@ -96,8 +100,9 @@ typedef struct {
 	scriptlang_initialize_t *init;
 	scriptlang_finalize_t   *deinit;
 
-	script_load_t *script_load;
-	script_unload_t *script_unload;
+	script_load_t 		*script_load;
+	script_unload_t 	*script_unload;
+	script_free_bind_t      *script_free_bind;
 
 	script_handler_query_t		*script_handler_query;
 	script_handler_command_t        *script_handler_command;
@@ -132,6 +137,8 @@ list_t scriptlang;
 	extern int x##_query(script_t *, script_query_t *, void **);\
 	extern int x##_watches(script_t *, script_watch_t *, int, int, int);\
 	\
+	extern int x##_bind_free(script_t *, void *, int type, void *, ...);\
+	\
         scriptlang_t x##_lang = { \
                 name: #x, \
 		plugin: &x##_plugin, \
@@ -142,6 +149,7 @@ list_t scriptlang;
 \
                 script_load: x##_load, \
 		script_unload: x##_unload, \
+		script_free_bind: x##_bind_free,\
 \
 		script_handler_query  : x##_query,\
 		script_handler_command: x##_commands,\
@@ -179,7 +187,14 @@ script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int typ
 
 int script_variables_free(int free);
 int script_variables_write();
+
+#define SCRIPT_UNBIND_HANDLER(type, args...)\
+	if (free) {\
+    		SCRIPT_HANDLER_HEADER(script_free_bind_t);\
+    		SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args); \
+	}
 #endif
+
 /* BINDING && UNBINDING */
 
 #define SCRIPT_UNBIND_HEADER(x)\
@@ -202,6 +217,8 @@ int script_variables_write();
 	scriptlang_t    *_slang;\
 	x		*_handler;\
 	int 		ret = SCRIPT_HANDLE_UNBIND;
+
+/* TODO: quietmode */
 
 #define SCRIPT_HANDLER_FOOTER(y, _args...) \
 	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\

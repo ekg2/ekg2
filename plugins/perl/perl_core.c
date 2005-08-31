@@ -239,6 +239,27 @@ void *Ekg2_ref_object(SV *o)
 }
 /* <syf irssi */
 
+int perl_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bedzie.. nie uzywac */ int type, void *private, ...)
+{
+        switch (type) {
+		case(SCRIPT_WATCHTYPE):
+/*      va_start(ap, )
+ *       *data = va_arg(void *);
+ * data ?
+ *      va_end(ap);
+ */
+                case(SCRIPT_VARTYPE):
+                case(SCRIPT_COMMANDTYPE):
+                case(SCRIPT_QUERYTYPE):
+                case(SCRIPT_TIMERTYPE):
+		    debug("[perl_bind_free] type %d funcname %s\n", type, private);
+		    xfree(private);
+                    break;
+        }
+        return 0;
+}
+
+
 #define PERL_BIND_COMMON(x, args...)\
 	char *script = SvPV(perl_eval_pv("caller", TRUE), PL_na);\
 	char *mod    = script + 14; /* 14 stala -> `Ekg2::Script::` */\

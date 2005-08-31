@@ -9,28 +9,33 @@
 
 void ekg2_bless_session(HV *hv, session_t *session);
 
-#ifdef HAVE_IRC_NEW /* IRC */
+#define HAVE_IRC 1
+
+#ifdef HAVE_IRC
 void ekg2_bless_irc_server(HV *hv, session_t *session)
 {
-	irc_private_t *j = irc_private(session);
+#ifdef HAVE_IRC_NEW
 	connector_t   *s = NULL;
-	
+#endif
+	irc_private_t *j = irc_private(session);
 	debug("blessing server %s\n", session->uid);
+#ifdef HAVE_IRC_NEW
         if (j->conntmplist && j->conntmplist->data) s = j->conntmplist->data;
-        
-	hv_store(hv, "session", 7, bless_struct("Ekg2::Session", session), 0);
-
-	if (j->nick)	hv_store(hv, "nick",    4, new_pv(j->nick), 0);
-	else 		hv_store(hv, "nick",    4, new_pv(session_get(session, "nickname")), 0);
-	
 	if (s) {
 		hv_store(hv, "server",  6, new_pv(s->hostname), 0);
 		hv_store(hv, "ip",      2, new_pv(s->adres), 0);
 	}
 	else {
+#elseif
+	{
 		hv_store(hv, "server",  6, new_pv(session_get(session, "server")), 0);
 		hv_store(hv, "ip",      2, new_pv("0.0.0.0"), 0);
 	}
+#endif
+	hv_store(hv, "session", 7, bless_struct("Ekg2::Session", session), 0);
+
+	if (j->nick)	hv_store(hv, "nick",    4, new_pv(j->nick), 0);
+	else 		hv_store(hv, "nick",    4, new_pv(session_get(session, "nickname")), 0);
 #if 1
 // TODO: wywalic jak bless_struct() bedzie dzialac.
 	ekg2_bless_session(hv, session);
@@ -74,8 +79,7 @@ void ekg2_bless_irc_channuser(HV *hv, people_chan_t *ch)
 #endif
 }
 
-#endif /* HAVE_IRC_NEW */
-
+#endif /* HAVE_IRC */
 
 void ekg2_bless_session_var(HV *hv, session_param_t *p)
 {
@@ -196,7 +200,7 @@ SV *ekg2_bless(int flag, int flag2, void *object)
                         stash = gv_stashpv("Ekg2::Userlist::users", 1);
                         ekg2_bless_user(hv, object);
 			break;
-#ifdef HAVE_IRC_NEW
+#ifdef HAVE_IRC
 /* IRC */			
 		case BLESS_IRC_SERVER:
                         stash = gv_stashpv("Ekg2::Irc::Server", 1);

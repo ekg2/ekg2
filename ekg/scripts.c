@@ -12,7 +12,7 @@
 
 /* TODO && BUGS 
  * - cleanup kodu!
- * - multiple handler for commands && var_changed.
+ * - multiple handler for commands && var_changed. && queries
  * - usuwanie listy list_remove()
  * - wszystkie memleaki won!
  */
@@ -354,11 +354,12 @@ script_var_t *script_var_find(const char *name)
         return NULL;
 }
 
-int script_var_unbind(script_var_t *data, int free)
+int script_var_unbind(script_var_t *temp, int free)
 {
-/* TODO, zwrolnic przynajmniej data->private. */
-	data->scr = NULL; 
-	data->private = NULL;
+	SCRIPT_UNBIND_HANDLER(SCRIPT_VARTYPE, temp->private);
+
+	temp->scr = NULL; 
+	temp->private = NULL;
 	return 1;
 }
 
@@ -449,23 +450,18 @@ script_command_t *script_command_find(const char *name)
 	return NULL;
 }
 
-int script_command_unbind(script_command_t *scr_comm, int from)
+int script_command_unbind(script_command_t *temp, int free)
 {
 	int notfound = 1;
 // TODO: powinnismy sprawdzic czy to polecenie wystepuje w innych handlerach.., jedno polecenie bedzie moze byc podbindowane pod wiele handlerow !
 	
-	if (notfound)
-		command_remove(NULL, scr_comm->comm);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_COMMANDTYPE, temp->private);
 
-	if (from) {
-		xfree(scr_comm->private);
-	}
-	xfree(scr_comm->comm);
-	xfree(scr_comm);
+	if (notfound)
+		command_remove(NULL, temp->comm);
 	
-	list_remove(&script_commands_bindings, scr_comm, 0);
-	return notfound;
-	
+	xfree(temp->comm);
+	return list_remove(&script_commands_bindings, temp, 1);
 }
 
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler) 
@@ -491,12 +487,15 @@ script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int typ
 }
 
 /************************************* QUERIES ***********************************************/
-int script_query_unbind(script_query_t *squery, int from)
+int script_query_unbind(script_query_t *temp, int free)
 {
-	scriptlang_t *slang = squery->scr->lang;
+	scriptlang_t *slang = temp->scr->lang;
+	SCRIPT_UNBIND_HANDLER(SCRIPT_QUERYTYPE, temp->private);
 // TODO: tak jak w command_unbind jeden handler moze byc pod wiele skryptow.
-	query_disconnect(/* NULL */ slang->plugin, squery->query_name);
-	return list_remove(&script_queries, squery, 0);
+	query_disconnect(/* NULL */ slang->plugin, temp->query_name);
+	
+	xfree(temp->query_name);
+	return list_remove(&script_queries, temp, 1);
 }
 
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler)
@@ -543,27 +542,28 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 /************************************ TIMERS ************************************************/
 
 
-int script_timer_unbind(script_timer_t *stimer, int from)
+int script_timer_unbind(script_timer_t *temp, int free)
 {
 // stimer->removed -> 1 - w trakcie usuwania ; 2 -> blad skryptu i usuwanie || usunieto 3 -> usunieto
 
 //	debug("[script_timer_unbind] %d %d\n", stimer, from );
-	if (stimer->removed > 2) { /* na wszelki wypadek */
-		debug("[script_ierror] stimer->removed = %d\n", stimer->removed);
+	if (temp->removed > 2) { /* na wszelki wypadek */
+		debug("[script_ierror] stimer->removed = %d\n", temp->removed);
 		return 0;
 	}
-	if (!stimer->removed) stimer->removed = 1;
+	if (!temp->removed) temp->removed = 1;
 	
-	script_timer_handlers(1, stimer);
-	if (from) 
-		timer_remove(NULL, stimer->self->name);
-	xfree(stimer->private);
-	xfree(stimer->name);
-//	xfree(stimer); // timer_remove() za nas to zwalnia.
-	stimer->removed = 3; /* na wszelki wypadek */
+	script_timer_handlers(1, temp);
+	if (free) 
+		timer_remove(NULL, temp->self->name);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
+
+	xfree(temp->name);
+/*	xfree(stimer); [1] */
+	temp->removed = 3; /* na wszelki wypadek */
 	
-	list_remove(&script_timers, stimer, 0);
-	return 0;
+	return list_remove(&script_timers, temp, 0); /* [1] */
+/* [1] - timer_remove frees temp (stimer) struct */
 }
 
 script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void *handler)
@@ -667,6 +667,7 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 	struct stat st;
 	char *tmp;
 	scriptlang_t *scr;
+	int i = 0;
 	
 	DIR *dir;
 	if (!(dir = opendir(path)))
@@ -683,12 +684,12 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 			continue;
 		}
 		debug("[script] autoloading %s from %s scr = %s\n", d->d_name, path, scr->name);
-		script_load(NULL, tmp);
+		if (!script_load(NULL, tmp)) i++;
 		xfree(tmp);
 	}
 
 	closedir(dir);
-	return 0;
+	return i;
 }
 
 int script_reset(scriptlang_t *scr)
@@ -741,6 +742,7 @@ int scripts_autoload(scriptlang_t *scr)
 	pathtmp = saprintf("%s/autorun", prepare_path("scripts", 0));
 	i += scripts_loaddir(scr, pathtmp);
 	xfree(pathtmp);
+	debug("[SCRIPTS_AUTOLOAD] DONE: (re)loaded %d scripts\n", i);
 	return i;
 }
 
@@ -755,14 +757,12 @@ int scripts_init()
 	command_add(NULL, "script:load"   , "f"  , script_cmd_load, 0, "");
 	command_add(NULL, "script:list"   , "?"  , script_cmd_list, 0, "");
 	command_add(NULL, "script:varlist", "?"  , script_cmd_varlist, 0, "");
+	script_variables_read();
 #if 0
 	query_connect(NULL, "config-postinit",     script_postinit, NULL);
 #else
 	scripts_autoload(NULL);
 #endif
-
-	script_variables_read();
-	
 	return 0;
 }
 
