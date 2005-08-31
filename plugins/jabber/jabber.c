@@ -855,10 +855,13 @@ void jabber_handle_stream(int type, int fd, int watch, void *data)
 
 #ifdef HAVE_GNUTLS
         if (j->using_ssl && j->ssl_session) {
-                do {
-                        len = gnutls_record_recv(j->ssl_session, buf, 4095);
+		len = gnutls_record_recv(j->ssl_session, buf, 4095);
+
+		if ((len == GNUTLS_E_INTERRUPTED) || (len == GNUTLS_E_AGAIN)) {
+			// will be called again
 			ekg_yield_cpu();
-                } while ((len == GNUTLS_E_INTERRUPTED) || (len == GNUTLS_E_AGAIN));
+			return;
+		}
 
                 if (len < 0) {
                         print("generic_error", gnutls_strerror(len));
