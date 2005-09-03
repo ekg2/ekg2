@@ -100,7 +100,7 @@ PROPERTY_INT(userlist, last_seen, time_t);
 #define EKG_STATUS_UNKNOWN "unknown"
 #define EKG_STATUS_ERROR "error"
 
-struct group {
+struct ekg_group {
 	char *name;
 };
 

@@ -162,7 +162,7 @@ PyObject *ekg_user_groups(ekg_userObj * self)
     len = 0;
 
     for (l = u->groups; l; l = l->next) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 		PyList_SetItem(list, len, PyString_FromString(g->name));
 		len++;
     }

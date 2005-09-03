@@ -693,7 +693,7 @@ COMMAND(jabber_command_modify)
 		jabber_write(j, "<item jid=\"%s\"%s>", uid, (u->groups ? "" : "/"));
 
 	for (m = u->groups; m ; m = m->next) {
-		struct group *g = m->data;
+		struct ekg_group *g = m->data;
 		char *gname = jabber_escape(g->name);
 
 		jabber_write(j,"<group>%s</group>", gname);

@@ -732,7 +732,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 						continue;
 
 					for (m = u->groups; m; m = m->next) {
-						struct group *g = m->data;
+						struct ekg_group *g = m->data;
 
 						if (!xstrcasecmp(gname, g->name)) {
 							if (first++)

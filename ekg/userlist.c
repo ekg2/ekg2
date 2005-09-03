@@ -252,7 +252,7 @@ void userlist_write_crash()
 			(u->mobile) ? u->mobile : "");
 		
 		for (m = u->groups; m; m = m->next) {
-			struct group *g = m->data;
+			struct ekg_group *g = m->data;
 
 			if (m != u->groups)
 				fprintf(f, ",");
@@ -338,7 +338,7 @@ void userlist_free_u (list_t *userlist)
                 xfree(u->resource);
 
                 for (lp = u->groups; lp; lp = lp->next) {
-                        struct group *g = lp->data;
+                        struct ekg_group *g = lp->data;
 
                         xfree(g->name);
                 }
@@ -436,7 +436,7 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
         xfree(u->resource);
 
         for (l = u->groups; l; l = l->next) {
-                struct group *g = l->data;
+                struct ekg_group *g = l->data;
 
                 xfree(g->name);
         }
@@ -777,7 +777,7 @@ int ignored_remove(session_t *session, const char *uid)
 		return -1;
 
 	for (l = u->groups; l; ) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 
 		l = l->next;
 
@@ -861,7 +861,7 @@ int ignored_check(session_t *session, const char *uid)
 		return 0;
 
 	for (l = u->groups; l; l = l->next) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 
 		if (!xstrcasecmp(g->name, "__ignored"))
 			return IGNORE_ALL;
@@ -944,7 +944,7 @@ const char *ignore_format(int level)
  */
 static int group_compare(void *data1, void *data2)
 {
-	struct group *a = data1, *b = data2;
+	struct ekg_group *a = data1, *b = data2;
 	
 	if (!a || !a->name || !b || !b->name)
 		return 0;
@@ -962,14 +962,14 @@ static int group_compare(void *data1, void *data2)
  */
 int ekg_group_add(userlist_t *u, const char *group)
 {
-	struct group g;
+	struct ekg_group g;
 	list_t l;
 
 	if (!u || !group)
 		return -1;
 
 	for (l = u->groups; l; l = l->next) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 
 		if (!xstrcasecmp(g->name, group))
 			return -1;
@@ -1000,7 +1000,7 @@ int ekg_group_remove(userlist_t *u, const char *group)
 		return -1;
 	
 	for (l = u->groups; l; l = l->next) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 
 		if (!xstrcasecmp(g->name, group)) {
 			xfree(g->name);
@@ -1028,7 +1028,7 @@ int ekg_group_member(userlist_t *u, const char *group)
 		return 0;
 
 	for (l = u->groups; l; l = l->next) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 
 		if (!xstrcasecmp(g->name, group))
 			return 1;
@@ -1059,7 +1059,7 @@ list_t group_init(const char *names)
 	groups = array_make(names, ",", 0, 1, 0);
 
 	for (i = 0; groups[i]; i++) {
-		struct group g;
+		struct ekg_group g;
 
 		g.name = xstrdup(groups[i]);
 		list_add_sorted(&l, &g, sizeof(g), group_compare);
@@ -1088,7 +1088,7 @@ char *group_to_string(list_t groups, int meta, int sep)
 	int comma = 0;
 
 	for (l = groups; l; l = l->next) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 
 		if (!meta && !strncmp(g->name, "__", 2)) {
 			comma = 0;

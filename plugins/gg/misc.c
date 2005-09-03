@@ -184,7 +184,7 @@ int gg_blocked_remove(session_t *s, const char *uid)
 		gg_remove_notify_ex(g->sess, atoi(u->uid + 3), gg_userlist_type(u));
 
 	for (l = u->groups; l; ) {
-		struct group *g = l->data;
+		struct ekg_group *g = l->data;
 
 		l = l->next;
 

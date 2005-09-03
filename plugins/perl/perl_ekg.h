@@ -20,6 +20,7 @@
 
 #include <EXTERN.h>
 #include <perl.h>
+#undef _
 #include <XSUB.h>
 #include <ekg/dynstuff.h>
 #include <ekg/scripts.h>

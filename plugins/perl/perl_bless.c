@@ -23,10 +23,10 @@ void ekg2_bless_irc_server(HV *hv, session_t *session)
         if (j->conntmplist && j->conntmplist->data) s = j->conntmplist->data;
 	if (s) {
 		hv_store(hv, "server",  6, new_pv(s->hostname), 0);
-		hv_store(hv, "ip",      2, new_pv(s->adres), 0);
+		hv_store(hv, "ip",      2, new_pv(s->address), 0);
 	}
-	else {
-#elseif
+	else 
+#elif
 	{
 		hv_store(hv, "server",  6, new_pv(session_get(session, "server")), 0);
 		hv_store(hv, "ip",      2, new_pv("0.0.0.0"), 0);
@@ -53,7 +53,7 @@ void ekg2_bless_irc_channel(HV *hv, channel_t *chan)
 	hv_store(hv, "topicby", 7, new_pv(chan->topicby), 0);
 
 	hv_store(hv, "name_", 5, new_pv(chan->name), 0); /* wywalic ? */
-	hv_store(hv, "mode_", 5, new_pv(chan->mode), 0); /* wywalic ? */
+//	hv_store(hv, "mode_", 5, new_pv(chan->mode), 0); /* wywalic ? */
 }
 
 void ekg2_bless_irc_user(HV *hv, people_t *person)

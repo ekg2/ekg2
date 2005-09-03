@@ -578,7 +578,7 @@ COMMAND(gg_command_msg)
 				list_t m;
 
 				for (m = u->groups; m; m = m->next) {
-					struct group *g = m->data;
+					struct ekg_group *g = m->data;
 
 					if (!xstrcasecmp(g->name, tmp[i] + 1)) {
 						if (u->nickname && !array_contains(nicks, u->nickname, 0))
