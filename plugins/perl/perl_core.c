@@ -1,8 +1,12 @@
-#include "perl_ekg.h"
-#include "perl_core.h"
+#include <stdarg.h>
+
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 #include <ekg/vars.h>
+
+#include "perl_ekg.h"
+#include "perl_core.h"
+
 
 extern void boot_DynaLoader(pTHX_ CV* cv);
 PerlInterpreter *my_perl;
@@ -47,7 +51,6 @@ int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int w
 	XPUSHs(sv_2mortal(newSViv(type)));
 	XPUSHs(sv_2mortal(newSViv(fd)));
 	XPUSHs(sv_2mortal(newSViv(watch)));
-//	XPUSHs(sv_2mortal(create_sv_ptr(scr_wat->data))); // zle.
 	XPUSHs(scr_wat->data);
 	
 	PERL_HANDLER_FOOTER();
@@ -241,13 +244,13 @@ void *Ekg2_ref_object(SV *o)
 
 int perl_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bedzie.. nie uzywac */ int type, void *private, ...)
 {
+	va_list ap;
+	SV *watchdata = NULL;
+	va_start(ap, private);
+
         switch (type) {
-		case(SCRIPT_WATCHTYPE):
-/*      va_start(ap, )
- *       *data = va_arg(void *);
- * data ?
- *      va_end(ap);
- */
+		case(SCRIPT_WATCHTYPE): 
+		    debug("[perl_bind_free] watch = %x\n", watchdata = va_arg(ap, void *));
                 case(SCRIPT_VARTYPE):
                 case(SCRIPT_COMMANDTYPE):
                 case(SCRIPT_QUERYTYPE):
@@ -256,45 +259,43 @@ int perl_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bed
 		    xfree(private);
                     break;
         }
+	va_end(ap);
         return 0;
 }
 
-
-#define PERL_BIND_COMMON(x, args...)\
-	char *script = SvPV(perl_eval_pv("caller", TRUE), PL_na);\
-	char *mod    = script + 14; /* 14 stala -> `Ekg2::Script::` */\
-	script_t *scr = script_find(&perl_lang, (char *) mod);\
-/*	debug("[perl_%s] %s %s %x %s \n", #x, script, mod, scr, handler); */\
-	return x(&perl_lang, scr, args);
+script_t *perl_caller() {
+	char *scriptname = SvPV(perl_eval_pv("caller", TRUE), PL_na)+14;
+	return script_find(&perl_lang, (char *) scriptname);
+}
 
 void *perl_timer_bind(int freq, char *handler)
 {
-	PERL_BIND_COMMON(script_timer_bind, freq, xstrdup(handler));
+	return script_timer_bind(&perl_lang, perl_caller(), freq, xstrdup(handler));
 }
 
 int perl_timer_unbind(script_timer_t *stimer)
 {
-	script_timer_unbind(stimer, 1);
+	return script_timer_unbind(stimer, 1);
 }
 
 void *perl_variable_add(char *var, char *value, char *handler)
 {
-	PERL_BIND_COMMON(script_var_add, var, value, xstrdup(handler));
+	return script_var_add(&perl_lang, perl_caller(), var, value, xstrdup(handler));
 }
 
 void *perl_watch_add(int fd, int type, int persist, void *handler, void *data)
 {
-	PERL_BIND_COMMON(script_watch_add, fd, type, persist, xstrdup(handler), data);
+	return script_watch_add(&perl_lang, perl_caller(), fd, type, persist, xstrdup(handler), data);
 }
 
 void *perl_handler_bind(char *query_name, char *handler)
 {
-	PERL_BIND_COMMON(script_query_bind, query_name, xstrdup(handler));
+	return script_query_bind(&perl_lang, perl_caller(), query_name, xstrdup(handler));
 }
 
 void *perl_command_bind(char *command, char *handler)
 {
-	PERL_BIND_COMMON(script_command_bind, command, xstrdup(handler));
+	return script_command_bind(&perl_lang, perl_caller(), command, xstrdup(handler));
 }
 
 int perl_finalize()

@@ -253,8 +253,6 @@ and the prefix.
 }
 
 /* yes, bloody globals... ;/ */
-char	irc_lastline[4096] = "";
-int	irc_lastline_start=0;
 int irc_input_parser(session_t *s, char *buf, int len)
 {
 	irc_private_t	*j = session_private_get(s);
@@ -267,21 +265,21 @@ int irc_input_parser(session_t *s, char *buf, int len)
 	}
 	fd=j->fd;
 
-	debug("[irc] input_parser() %d\n", irc_lastline_start);
-	for (i=0,l=irc_lastline_start,p=buf; i<len; i++,l++)
+	debug("[irc] input_parser() %d\n", j->irc_lastline_start);
+	for (i=0,l=j->irc_lastline_start,p=buf; i<len; i++,l++)
 	{
-		irc_lastline[l]=buf[i];
+		j->irc_lastline[l]=buf[i];
 		if ('\n' == buf[i] || '\r' == buf[i]) {
 			buf[i]='\0';
-			irc_lastline[l]='\0';
-			irc_parse_line(s, irc_lastline, l, fd, j);
+			j->irc_lastline[l]='\0';
+			irc_parse_line(s, j->irc_lastline, l, fd, j);
 			if (i+1<len) p=&(buf[i+1]);
 			l=-1;
 		} 
 	}
 	/* debug("irc_input_parser() %s || %s\n", p, irc_lastline); */
 	/* GiM: nasty hack to concatate splited messages... */
-	if (l!=-1) irc_lastline_start=l;
+	if (l!=-1) j->irc_lastline_start=l;
 	return 0;
 }
 

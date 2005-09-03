@@ -92,7 +92,7 @@ static const char *ekg_core_code =
 	    
 int perl_initialize();
 int perl_finalize();
-void ekg2_callXS(void (*subaddr)(pTHX_ CV* cv), CV *cv, SV **mark);
+
 SV *create_sv_ptr(void *object);
 
 #endif

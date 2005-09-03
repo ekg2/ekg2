@@ -17,13 +17,13 @@
 
 #ifndef __PERL_EKG_H_
 #define __PERL_EKG_H_
+#include <ekg/dynstuff.h>
+#include <ekg/scripts.h>
+#undef _
 
 #include <EXTERN.h>
 #include <perl.h>
-#undef _
 #include <XSUB.h>
-#include <ekg/dynstuff.h>
-#include <ekg/scripts.h>
 extern scriptlang_t perl_lang;
 extern plugin_t     perl_plugin;
 #define perl_private(s) (perl_private_t *) script_private_get(s)

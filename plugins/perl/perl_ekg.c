@@ -17,28 +17,18 @@
 
 #include "ekg2-config.h"
 
-#include "perl_ekg.h"
-#include "perl_core.h"
-
 #include <sys/types.h>
-
 #include <stdlib.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
 
 #include <ekg/commands.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/stuff.h>
-#include <ekg/scripts.h>
 #include <ekg/themes.h>
-#include <ekg/userlist.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
+#include <ekg/scripts.h>
+#include <ekg/plugins.h>
+
+#include "perl_ekg.h"
+#include "perl_core.h"
 
 int perl_theme_init();
 int auto_load;

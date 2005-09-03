@@ -14,24 +14,20 @@ void ekg2_bless_session(HV *hv, session_t *session);
 #ifdef HAVE_IRC
 void ekg2_bless_irc_server(HV *hv, session_t *session)
 {
-#ifdef HAVE_IRC_NEW
 	connector_t   *s = NULL;
-#endif
 	irc_private_t *j = irc_private(session);
 	debug("blessing server %s\n", session->uid);
-#ifdef HAVE_IRC_NEW
+
         if (j->conntmplist && j->conntmplist->data) s = j->conntmplist->data;
 	if (s) {
 		hv_store(hv, "server",  6, new_pv(s->hostname), 0);
 		hv_store(hv, "ip",      2, new_pv(s->address), 0);
 	}
-	else 
-#elif
-	{
+	else {
 		hv_store(hv, "server",  6, new_pv(session_get(session, "server")), 0);
 		hv_store(hv, "ip",      2, new_pv("0.0.0.0"), 0);
 	}
-#endif
+
 	hv_store(hv, "session", 7, bless_struct("Ekg2::Session", session), 0);
 
 	if (j->nick)	hv_store(hv, "nick",    4, new_pv(j->nick), 0);
@@ -53,7 +49,7 @@ void ekg2_bless_irc_channel(HV *hv, channel_t *chan)
 	hv_store(hv, "topicby", 7, new_pv(chan->topicby), 0);
 
 	hv_store(hv, "name_", 5, new_pv(chan->name), 0); /* wywalic ? */
-//	hv_store(hv, "mode_", 5, new_pv(chan->mode), 0); /* wywalic ? */
+//	hv_store(hv, "mode_int", 5, newSViv(chan->mode), 0); /* ? */
 }
 
 void ekg2_bless_irc_user(HV *hv, people_t *person)
