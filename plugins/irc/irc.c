@@ -139,11 +139,10 @@ static void irc_private_init(session_t *s)
 	/* G->dj: I've told you why this is here, not on every system NULL is 0x00000000
 	 * that's why I'm just commentig this out not removing...
 	memset(j, 0, sizeof(irc_private_t));
-	j->connecting = 0;
+	
 	j->nick = NULL;
 	j->host_ident = NULL;
 	j->obuf = NULL;
-	j->obuf_len = 0;
 	j->people = NULL;
 	j->channels = NULL;
 	for (i = 0; i<SERVOPTS; i++) 
@@ -337,20 +336,29 @@ void irc_changed_resolve(session_t *s, const char *var) {
  	
 	if (!xstrcmp((char *) var, "server")) rlist = &(j->connlist);
 	else if (!xstrcmp((char *) var, "hostname")) rlist = &(j->bindlist);
-	/* G->dj: what this is for, cause I don't get it ? */
+	/* G->dj: what this is for, cause I don't get it ?
+	 * dj->G: ? */
 	if (*rlist) {
 		for (tmplist=*rlist; tmplist; tmplist=tmplist->next) {
 			xfree( ((connector_t *)tmplist->data)->address);
 			xfree( ((connector_t *)tmplist->data)->hostname);
 		}
-		list_destroy(*rlist, 0);
+		list_destroy(*rlist, 1);
 		*rlist = NULL;
 	}
  
-	/* TODO: split tmp into parts.. so there could be serv1,serv2 and so on...
-	 */
-	if (rlist)
-		irc_resolver2(s, tmp, rlist, !xstrcmp(var, "hostname"));
+        if (rlist && tmp) {
+                char *tmp2;
+
+                while(tmp2 = xstrrchr(tmp, ',')) {
+                        irc_resolver2(s, tmp2+1, rlist, !xstrcmp(var, "hostname"));
+                        *tmp2 = 0;
+                }
+                irc_resolver2(s, tmp, rlist, !xstrcmp(var, "hostname"));
+        }
+        xfree(tmp);
+        return;
+
 	xfree(tmp);
 	return;
  }
@@ -466,6 +474,9 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 //		print("generic_error", strerror(res));
 		session_connected_set(idta->session, 0);
 		j->connecting = 0;
+// try next server.
+		j->conntmplist = j->conntmplist->next;
+
 		irc_handle_disconnect(idta->session, "conn_failed_connecting", 
 				EKG_DISCONNECT_FAILURE);
 		return;
@@ -481,7 +492,7 @@ void irc_handle_connect(int type, int fd, int watch, void *data)
 	if (j->bindtmplist)	
 		localhostname = ((connector_t *) j->bindtmplist->data)->hostname;
 	if (!xstrlen(localhostname))
-			localhostname = NULL;
+		localhostname = NULL;
 	pass = (char *)session_password_get(idta->session);
 	pass = xstrlen(strip_spaces(pass))?
 		saprintf("PASS %s\r\n", strip_spaces(pass)) : xstrdup("");
@@ -947,6 +958,7 @@ int irc_write_status(session_t *s, int quiet)
 	
 	/*xfree(descr); dj->G: bugfix
 	 *  G->dj: ?! what this causes, adn do we free this anywhere later ?
+	 * 
 	 */
 
 	return 0;

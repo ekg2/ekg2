@@ -1078,6 +1078,7 @@ IRC_COMMAND(irc_c_part)
 		print_window(channel, s, 0, (me)?"irc_left_you":"irc_left", session_name(s),
 				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]), coloured);
 	}
+	xfree(ignore_nick);
 	
 	if (tmp) *tmp='!';
 
