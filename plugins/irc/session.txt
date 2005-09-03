@@ -144,8 +144,8 @@ prefer_family
 	domy¶lna warto¶æ: 0
 
 	Jesli serwer ma rekordy A i AAAA to zostanie wybrany
-	rekord AAAA gdy prefer_family = 2
-	rekord A gdy prefer_family != 2
+	rekord AAAA gdy prefer_family = 10 (AF_INET6)
+	rekord A gdy prefer_family != 10
 
 realname
 	typ: tekst

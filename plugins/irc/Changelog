@@ -1,3 +1,10 @@
+stardate: 23:16:28 CEST 2oo5-o1-o9 version 0.8 (dj,GiM)
+  * new resolver [solid testing needed]
+  * ignore
+  * big code cleanup
+  * features in /names
+  * perl plugin support
+
 stardate: 15:44:24 CEST 2oo5-27-o3 version 0.7.65 (GiM)
   * new nice irc_getchan
   * applied dj's patches

@@ -353,14 +353,14 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 	if (!p) {
 		p		= xmalloc(sizeof(channel_t));
 		p->name		= saprintf("%s%s", IRC4, name);
-		p->mode		= 0;
 		p->window	= win;
+		/*p->mode		= 0;
 		p->topic	= NULL;
 		p->topicby	= NULL;
 		p->mode_str	= NULL;
-		debug("[irc] add_channel() WINDOW %08X\n", win);
 		p->onchan 	= NULL;
-		p->syncmode   = 0;
+		p->syncmode   = 0;*/
+		debug("[irc] add_channel() WINDOW %08X\n", win);
 		if (session_int_get(s, "auto_channel_sync") != 0)
 			irc_sync_channel(s, j, p);
 		list_add(&(j->channels), p, 0);
@@ -487,7 +487,6 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		xfree(per->realname);
 		xfree(per->host);
 		xfree(per->ident);
-		xfree(per->flags);
 	}
 	for (t1=j->channels; t1; t1=t1->next) {
 		xfree(((channel_t *)(t1->data))->name);

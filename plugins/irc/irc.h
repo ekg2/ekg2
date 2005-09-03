@@ -18,6 +18,12 @@
 #ifndef __EKG_PLUGINS_IRC_IRC_H
 #define __EKG_PLUGINS_IRC_IRC_H
 
+#define DOT(x,y,z) print_window(NULL, z, 0, "IRC_TEST", session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family))
+
+#define DOT_FAIL_EXT(x,y,z,res) print_window(NULL, z, 0, "IRC_TEST_FAIL", session_name(z), x, y->hostname, y->address, itoa(y->port), strerror(res))
+#define DOT_FAIL(x,y,z) DOT_FAIL_EXT(x,y,z,errno)
+#define HAVE_IRC_NEW
+
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
 
@@ -27,14 +33,18 @@ extern char *sopt_keys[];
 
 typedef struct {
 	int fd;				/* connection's fd */
-	char *server;			/* server name */
-	int port;			/* complicated, huh ? ;> */
 	int connecting;			/* are we connecting _now_ ? */
+
+	list_t bindlist, bindtmplist;
+	list_t connlist, conntmplist;
 
 	char *nick;			/* guess again ? ;> */
 	char *host_ident;		/* ident+host */
 	char *obuf;			/* output buffer */
 	int obuf_len;			/* size of above */
+
+	char irc_lastline[4096];	/* input buffer; */
+	int  irc_lastline_start;
 
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */
@@ -51,19 +61,7 @@ typedef struct {
 typedef struct {
 	char *nick;
 	char *realname;
-	/* G->dj: dya see any reason for keeping realname here ? */
-	/* Dj->G: yes. */
-	/* G->dj: WHAT reason ? */
 	char *host, *ident;
-	char *flags; /* G->dj: I think this isn't good place for this stuff
-	              * Dj->G: So where you want to do place it ? 
-		      * G->dj: have no f.ckin idea ;)
-		      *        but from simple reasons this can't be here
-			global-flags: auto-kick, auto-op, auto-unban, and so on ? :) */
-/* About flags one more time, if you don't want to place it in plugin so maybe python ?
- * G->dj: no no flags should be internal thing in irc plugin, but
- * this is definitely BAD place for this...
- */
 	list_t channels;
 } people_t;
 
@@ -80,16 +78,30 @@ typedef struct {
 	/* needed ?
 	list_t exclist;
 	list_t invlist; */
-
+	list_t          acclist;
 } channel_t;
 
 /* data for private->people->channels */
 typedef struct {
 	int mode; /* bitfield  */
 	char sign[2];
-	char *flags; /* G->dj: as above... */
 	channel_t *chanp;
 } people_chan_t;
+
+typedef struct {
+	char *mask;
+	int frmask;
+//      char frmask[100];
+} access_t;
+
+/* structure needed by resolver */
+typedef struct {
+	session_t *session;
+	char *hostname;
+	char *address;
+	int port;
+	int family;
+} connector_t;
 
 #define irc_private(s) ((irc_private_t*) session_private_get(s))
 

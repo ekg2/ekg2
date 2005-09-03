@@ -53,14 +53,16 @@ int irc_onkick_handler(session_t *s, irc_onkick_handler_t *data)
 void irc_autorejoin_timer(int type, void *d)
 {
 	irc_onkick_handler_t *data = d;
+	if (type == 1)
+		return;
 
-	debug("wykonujê timer\n");
+	debug("wykonujê timer %d %s\n", type, (data->chan+4));
 	irc_autorejoin(data->s, IRC_REJOIN_KICK, (data->chan)+4);
-/*
+
 	xfree(data->nick);
 	xfree(data->kickedby);
 	xfree(data->chan);
-	xfree(data);*/
+	xfree(data);
 }
 
 int irc_autorejoin(session_t *s, int when, char *chan)

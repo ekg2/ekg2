@@ -41,9 +41,6 @@
 
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
 
-#define GDEBUG
-#define MARLENE
-
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 /*
  * irc_handle_write()
@@ -58,26 +55,23 @@ void irc_handle_write(int type, int fd, int watch, void *data)
 
 	res = write(j->fd, j->obuf, j->obuf_len);
 
-	if (res == -1) {
+	if (res == -1)
 		debug("[irc] handle_write() failed: %s\n", strerror(errno));
-		xfree(j->obuf);
-		j->obuf = NULL;
-		j->obuf_len = 0;
-		return;
-	}
 
-	if (res == j->obuf_len) {
+	else if (res == j->obuf_len)
 		debug("[irc] handle_write() output buffer empty\n");
-		xfree(j->obuf);
-		j->obuf = NULL;
-		j->obuf_len = 0;
+
+	 else { /* OK PROCEED */
+		memmove(j->obuf, j->obuf + res, j->obuf_len - res);
+		j->obuf_len -= res;
+
+		watch_add(&irc_plugin, j->fd, WATCH_WRITE, 0, irc_handle_write, j);
 		return;
 	}
 
-	memmove(j->obuf, j->obuf + res, j->obuf_len - res);
-	j->obuf_len -= res;
-
-	watch_add(&irc_plugin, j->fd, WATCH_WRITE, 0, irc_handle_write, j);
+	xfree(j->obuf);
+	j->obuf = NULL;
+	j->obuf_len = 0;
 }
 
 /*
@@ -116,14 +110,13 @@ int irc_write(irc_private_t *j, const char *format, ...)
 		if (res == len) {
 			xfree(text);
 			return 0;
-		}
 
-		if (res == -1) {
+		} else 	if (res == -1) {
 			xfree(text);
 			return -1;
-		}
 
-		buf = text + res;
+		} else
+			buf = text + res;
 	} else
 		buf = text;
 
@@ -161,6 +154,8 @@ int irc_parse_line(session_t *s, char *buf, int len, int fd, irc_private_t *j)
 	int	i, c=0, ecode;
 	char	*p, *q[20];
 
+	char	*emitname;
+	
 	p=buf;
 	if(!p)
 		return -1;
@@ -210,6 +205,12 @@ and the prefix.
 
 	if (q[1] != NULL && strlen(q[1])>1) {
 		if(!gatoi(q[1], &ecode)) {
+			
+			/* for perl */
+			emitname = saprintf("irc-protocol-numeric %s", q[1]);
+			if (query_emit(NULL, emitname, &s->uid, &(q[2])) == -1) { xfree(emitname); return -1; }
+			xfree(emitname);
+			
 			c=0;
 			while(irccommands[c].type != -1) {
 				if (irccommands[c].type == 1 && irccommands[c].num == ecode) {
@@ -284,10 +285,9 @@ int irc_input_parser(session_t *s, char *buf, int len)
 	return 0;
 }
 
-char *irc_make_banmask(int bantype, const char *nick, const char *ident, const char *hostname) 
+char *irc_make_banmask(session_t *session, const char *nick, const char *ident, const char *hostname) 
 {
 /* 
- * 
  *        1 (Nick)   - nick!*@*
  *        2 (User)   - *!*ident@*
  *        4 (Host)   - *!*@host.*
@@ -301,6 +301,7 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
 
 	int		family = 0; 
 	char		ind = '.';
+	int		bantype = session_int_get(session, "ban_type");
 	
 #ifdef HAVE_INET_PTON
 	char		buf[33];
@@ -323,7 +324,6 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
 	debug("[IRC].... TODO\n");
 #endif
 
-	/* G->dj: xrindex stinks as hell */
 	if (host && !family && (temp=xstrchr(host, ind)))
 		*temp = '\0';
 	if (host && family && (temp=xstrrchr(host, ind)))
@@ -334,7 +334,7 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
 	memset(tmp, 0, sizeof(tmp));
 #define getit(x) tmp[x]?tmp[x]:"*"
 	if (bantype & 1) tmp[0] = nick;
-	if (bantype & 2) tmp[1] = ident;
+	if (bantype & 2 && (ident[0] != '~' || session_int_get(session, "dont_ban_user_on_noident") == 0 )) tmp[1] = ident;
 	if (family) {
 		if (bantype & 8) tmp[2] = host;
 		if (bantype & 4) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
@@ -344,7 +344,9 @@ char *irc_make_banmask(int bantype, const char *nick, const char *ident, const c
 	}
 
 
-	temp = saprintf("%s!*%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3));
+/*	temp = saprintf("%s!*%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3)); */
+	temp = saprintf("%s!%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3));
+	/* dj: better ban possibilities! */
  	xfree(host);
 	return temp;
 #undef getit
@@ -362,20 +364,20 @@ int irc_parse_identhost(char *identhost, char **ident, char **host)
 	*host  = tmp?xstrdup(tmp+1):NULL;
 	if (tmp) *tmp = '@';
 
-	debug("$ %s@%s \n", *ident, *host);
+	/* debug("$ %s@%s \n", *ident, *host); */
 	return 0;
 }
 
 IRC_COMMAND(irc_c_init)
 {
-	int	i, k;
-	char	*t;
-	char	*__session = xstrdup(session_uid_get(s));
+	int		i, k;
+	char		*t;
+	char		*__session = xstrdup(session_uid_get(s));
+	connector_t	*temp;
 	switch (irccommands[ecode].num)
 	{
-		/* hmm, sometimes server doesn't send RPL_WELCOME ? bug !? */
-		/* G->dj: are you joking ? */
 		case 1:
+			temp = j->conntmplist->data;
 			query_emit(NULL, "protocol-connected", &__session);
 			session_connected_set(s, 1);
 			session_unidle(s);
@@ -440,7 +442,7 @@ IRC_COMMAND(irc_c_init)
 IRC_COMMAND(irc_c_error)
 {
 	int		i;
-	char		*t, *dest = NULL, *coloured = NULL, *bang;
+	char		*t = NULL, *dest = NULL, *coloured = NULL, *bang;
 	time_t		try;
 	window_t	*w;
 	char		*altnick;
@@ -457,6 +459,7 @@ IRC_COMMAND(irc_c_error)
 				"IRC_ERR_FIRSTSECOND",
 				session_name(s), irccommands[ecode].comm, IOK2(2));
 		irc_command_disconnect(NULL, NULL, s, NULL, 0);
+/*		irc_handle_disconnect(s, param[0], EKG_DISCONNECT_USER);*/
 		return 0;
 	}
 	i = irccommands[ecode].future&0x100;
@@ -489,7 +492,6 @@ IRC_COMMAND(irc_c_error)
 			break;
 	}
 	i = irccommands[ecode].num;
-	t = NULL;
 	if (param[3]) {
 		t = saprintf("%s%s", IRC4, param[3]);
 		w = window_find_s(s, t);
@@ -556,13 +558,7 @@ IRC_COMMAND(irc_c_error)
 			/* first we join */
 			if (session_get(s, "AUTO_JOIN") && strlen(session_get(s, "AUTO_JOIN")))
 				irc_write(j, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
-			/* dj> htfcik ? :) 
-			 * dj> I want to make it in a different way, that's 
-			 *     why I haven't commited your patch
-			 *     [but still similar] 
-			 * SO DO IT!
-			 *
-			 * first I must to do some changes in ekg2
+			/* G->dj: someday, someday ;-) 
 			 */
 		case 372:
 		case 375:
@@ -683,7 +679,7 @@ IRC_COMMAND(irc_c_list)
 
 	if (ltype == IRC_LISTWHO || ltype == IRC_LISTBAN) {
  		chan = irc_find_channel(j->channels, IOK(3));
-		debug("!!!> %s %08X %d\n", IOK(3), chan, ltype);
+		/* debug("!!!> %s %08X %d\n", IOK(3), chan, ltype); */
 	}
 
 	if (!mode_act && ltype != IRC_LISTCHA) 
@@ -701,10 +697,6 @@ IRC_COMMAND(irc_c_list)
 				PRINT_WINDOW(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
 			}
 			if (chan) {
-				/* G->dj: oh, I see, I haven't noticed
-				 * ok commiting, but take a look if this is
-				 * at it was supposed to be
-				 */
 				if (chan->syncmode > 0)  {
 					chan->syncmode--;
 					if (chan->syncmode == 0) {
@@ -752,14 +744,14 @@ IRC_COMMAND(irc_c_list)
 */
 			case (IRC_LISTBAN):
 				if (!tlist) 
-					tlist = &chan->banlist;
+					tlist = &(chan->banlist);
 				if (chan) {
 					if (mode_act == 1 && *tlist) {
 						debug("[IRC_LIST] Delete list 0x%x\n", *tlist);
 						list_destroy(*tlist, 0);
 						*tlist = NULL;
 					}
-					debug("[IRC_LIST] Add to list (id=%d; co=%s) 0x%x\n", mode_act, IOK2(4), tlist);
+					/*debug("[IRC_LIST] Add to list (id=%d; co=%s) 0x%x\n", mode_act, IOK2(4), tlist);*/
 					list_add(tlist, xstrdup(IOK2(4)) , 0);
 				}
 			default:
@@ -834,16 +826,11 @@ IRC_COMMAND(irc_c_nick)
 
 		temp = saprintf("%s%s",IRC4, param[0]+1);
 		if ((w = window_find_s(s, temp))) {
-			/* dj: is it right ? */
-			/* G->dj: I'm quite suprised, but it seems
-			 * to be ok
-			 */
 			xfree(w->target);
 			w->target = saprintf("%s%s", IRC4, OMITCOLON(param[2]));
 			print_window(w->target,
 					s, 0, "IRC_NEWNICK", session_name(s),
 					param[0]+1, t?t+1:"", OMITCOLON(param[2]));
-			/* G->dj: I've deleted this window_kill stuff */
 		}
 		xfree(temp);
 	}
@@ -861,7 +848,6 @@ IRC_COMMAND(irc_c_msg)
 	char		*t, *dest, *me, *form=NULL, *seq=NULL, *format;
 	char		*head, *xosd_nick, *xosd_chan, **rcpts = NULL;
 	char		*ctcpstripped, *coloured, *pubtous, tous, prefix[2];
-	char		*ignore_nick = NULL;
 	int		class, ekgbeep= EKG_NO_BEEP;
 	int		mw = 666, prv=0;
 	window_t	*w = NULL;
@@ -869,6 +855,7 @@ IRC_COMMAND(irc_c_msg)
 	people_chan_t	*perchn = NULL;
 	time_t		sent;
 	int		secure = 0, xosd_to_us = 0, xosd_is_priv = 0;
+	char		*ignore_nick = NULL;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
@@ -985,7 +972,7 @@ IRC_COMMAND(irc_c_msg)
 
 		ignore_nick = saprintf("%s%s", IRC4, OMITCOLON(param[0]));                   
 
-		if (ignored_check(s, ignore_nick) & IGNORE_MSG)
+		if (xosd_is_priv || ignored_check(s, ignore_nick) & IGNORE_MSG)
 			debug("[IRC_IGNORE] OK WORKS\n");
 		else
 			query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head,
@@ -1015,30 +1002,36 @@ IRC_COMMAND(irc_c_join)
 	people_t	*person;
 	//int  __class = EKG_MSGCLASS_CHAT;
 	//time_t __sent = time(NULL);
+	int		me = 0;
+	char		*ignore_nick;
+
 	channel = saprintf("irc:%s", OMITCOLON(param[2]));
 	
-	/* We join ? */
 	if ((tmp = xstrchr(param[0], '!'))) *tmp='\0';
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
-	 * z tego jaka¶ kupa, ale na razie nie chce mi siê nad tym my¶leæ */
-	if (!xstrcmp(j->nick, param[0]+1)) {
+	 * but I have no head to this now... */
+	me = !xstrcmp(j->nick, param[0]+1); /* We join ? */
+	if (me) {
 		newwin = window_new(channel, s, 0);
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
 		ischan = irc_add_channel(s, j , OMITCOLON(param[2]), newwin);
-		print_window(channel, s, 0, "irc_joined_you", session_name(s),
-				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]));
-		if (tmp) *tmp='!';
 	/* someone joined */
 	} else {
 		person = irc_add_person(s, j, param[0]+1, OMITCOLON(param[2])); 
 		if (person && tmp && !(person->ident) && !(person->host))
 			irc_parse_identhost(tmp+1, &(person->ident), &(person->host));
-		print_window(channel, s, 0, "irc_joined", session_name(s),
-				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]));
-		if(tmp) *tmp='!';
 		
 	}
+
+	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
+	if (!(ignored_check(s, ignore_nick) & IGNORE_NOTIFY)) {
+		print_window(channel, s, 0, me ? "irc_joined_you" : "irc_joined",
+				session_name(s), param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]));
+	}
+	if (tmp) *tmp='!';
+
+	xfree(ignore_nick);
 	xfree(channel);
 	return 0;
 }
@@ -1050,7 +1043,7 @@ IRC_COMMAND(irc_c_join)
  */
 IRC_COMMAND(irc_c_part)
 {
-	char	*channel, *tmp, *coloured;
+	char	*channel, *tmp, *coloured, *ignore_nick;
 	int	me = 0;
 	
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
@@ -1069,21 +1062,25 @@ IRC_COMMAND(irc_c_part)
 	else 
 		irc_del_person_channel(s, j, param[0]+1, OMITCOLON(param[2]));
 		
-	channel = saprintf("irc:%s", param[2]);
+	channel = saprintf("%s%s", IRC4, param[2]);
 		
 	coloured = param[3]?xstrlen(OMITCOLON(param[3]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1)
 		:xstrdup("no reason"):xstrdup("no reason");
+	/* TODO: if channel window exists do print_window, else do nothing (?)
+	 * now after alt+k if user was on that channel-window, we recved info
+	 * about parting on __status window, is it right ?
+	 * G->dj: yep, but we can make this behaviour dependent on something
+	 * e.g: on my fave: DISPLAY_IN_CURRENT :)
+	 */
+	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
+	if (!(ignored_check(s, ignore_nick) & IGNORE_NOTIFY)) {
+		print_window(channel, s, 0, (me)?"irc_left_you":"irc_left", session_name(s),
+				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]), coloured);
+	}
 	
-	print_window(channel, s, 0, (!me)?"irc_left":"irc_left_you", session_name(s),
-			param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]),
-				coloured);
-	
-	if (tmp) *tmp='!'; /* G->dj: because in theory, there can be more than one
-			      handler for given action. This should also simplify
-			      scripting stuff
-			    */
-	
+	if (tmp) *tmp='!';
+
 	xfree(coloured);
 	xfree(channel);
 	
@@ -1099,18 +1096,16 @@ IRC_COMMAND(irc_c_part)
  */
 IRC_COMMAND(irc_c_kick)
 {
-	char			*channel, *tmp, *uid, *stajl, *coloured;
+	char			*channel, *tmp, *uid, *coloured;
 	irc_onkick_handler_t	*onkick;
+	int			me = !xstrcmp(j->nick, param[3]);
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 	/* we were kicked out */
-	if (!xstrcmp(j->nick, param[3])) {
+	if (me)
 		irc_del_channel(s, j, param[2]);
-		stajl = xstrdup("irc_kicked_you");
-	} else {
+	else
 		irc_del_person_channel(s, j, OMITCOLON(param[3]), param[2]);
-		stajl = xstrdup("irc_kicked");
-	}
 
 	uid = saprintf("%s%s", IRC4, param[0]+1);
 
@@ -1123,11 +1118,10 @@ IRC_COMMAND(irc_c_kick)
 				xstrdup("no reason"):xstrdup("no reason");
 
 	/* session, kicked_nick, kicker_nick, kicker_ident+host, chan, reason */
-	print_window(channel, s, 0, stajl, session_name(s), 
+	print_window(channel, s, 0, me ? "irc_kicked_you" : "irc_kicked",  session_name(s), 
 			OMITCOLON(param[3]), uid+4, tmp?tmp+1:"",
 			param[2], coloured);
 	xfree(coloured);
-	xfree(stajl);
 
 	onkick = xmalloc(sizeof(irc_onkick_handler_t));
 	onkick->s = s;
@@ -1135,7 +1129,8 @@ IRC_COMMAND(irc_c_kick)
 	onkick->chan = channel;
 	onkick->kickedby = uid;
 
-	irc_onkick_handler(s, onkick);
+	query_emit(NULL, "irc-kick", &onkick);
+	/* irc_onkick_handler(s, onkick); */
 	return 0;
 }
 
@@ -1316,7 +1311,7 @@ IRC_COMMAND(irc_c_mode)
 			val = 1<<(len-(bang-add)-1);
 			if (act) ch->mode |= val; else ch->mode-=val;
 			ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]);
-			if(!ul) goto notreallyok;
+			if (!ul) goto notreallyok;
 
 			irc_nick_prefix(j, ch, irc_color_in_contacts(add, 
 						ch->mode, ul));
@@ -1343,11 +1338,9 @@ notreallyok:
 	if (!is324) {
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN_NEW", session_name(s),
 				param[0]+1, bang?bang+1:"", param[2], moderpl->str);
-		/*irc_write(j, "MODE %s +%c\r\n",  param[2], moderpl->str[1]);*/
-		/* tego na prawde nie powinno tutaj byc,
-		 * trzeba znalezc to i usuwac, ale /me lazy ;(
-		 * i znowu zrobie bugi
-		 */
+/*		if (moderpl->str[1] == 'b')
+ *			irc_write(j, "MODE %s +%c\r\n",  param[2], moderpl->str[1]);
+ */
 	} else {
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
 				param[2], moderpl->str);

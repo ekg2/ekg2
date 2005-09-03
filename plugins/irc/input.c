@@ -369,7 +369,7 @@ switch (number) {
 	return 0;
 
 	
-} /* switch() */
+} /* switch(number) */
 
 	return (0);
 }
