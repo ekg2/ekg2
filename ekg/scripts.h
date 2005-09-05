@@ -1,83 +1,82 @@
 #ifndef EKG_SCRIPTS_H
 #define EKG_SCRIPTS_H
+#include <sys/types.h>
 
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/stuff.h>
 #include <ekg/vars.h>
-#include <sys/types.h>
 
 #define SCRIPT_HANDLE_UNBIND    -666
+#define MAX_ARGS 15
 
-/* TODO: enums */
-#define SCRIPT_VARTYPE 1
-#define SCRIPT_COMMANDTYPE 2
-#define SCRIPT_QUERYTYPE 3
-#define SCRIPT_TIMERTYPE 4
-#define SCRIPT_WATCHTYPE 5
+typedef enum {
+	SCRIPT_UNKNOWNTYPE,
+        SCRIPT_VARTYPE,
+        SCRIPT_COMMANDTYPE,
+        SCRIPT_QUERYTYPE,
+        SCRIPT_TIMERTYPE,
+	SCRIPT_WATCHTYPE,
+} script_type_t;
 
-// #define SCR_ARG_CHAR    1
-#define SCR_ARG_CHARP   2 
-#define SCR_ARG_CHARPP  3 
-#define SCR_ARG_INT     4
-
-#define MAX_ARGS 20
-
-// #define DEBUG(args...) debug(args); /* very verbose; szczegolnie keypress... */
-#define DEBUG(args...) ;
+typedef enum {
+	SCR_ARG_UNKNOWN,
+/*	SCR_ARG_CHAR, */ /* use SCR_ARG_INT */
+	SCR_ARG_CHARP,
+	SCR_ARG_CHARPP,
+	SCR_ARG_INT,
+} script_arg_type_t;
 
 typedef struct {
-	void *lang;
-	char *name;
-	char *path;
-	void *private;
+	void 		*lang;
+	char 		*name;
+	char 		*path;
+	void 		*private;
 } script_t;
-list_t scripts;
+list_t 		scripts;
 
 typedef struct {
 	script_t 	*scr;
 	struct timer 	*self;
-	char 		*name;
 	int 		removed;
 	void 		*private;
 } script_timer_t; 
-list_t script_timers;
+list_t 		script_timers;
 
 typedef struct {
 	script_t 	*scr;
-	variable_t 	*var;
-	char 		*name;
+	variable_t 	*self;
+
+	char		*name;
 	char 		*value;
 	void 		*private;
 } script_var_t; 
-list_t script_vars;
- 
+list_t 		script_vars;
+
 typedef struct {
 	script_t 	*scr;
 	char 		*query_name;
 	int 		argc;
 	int             argv_type[MAX_ARGS];
-
 	void 		*private;
 } script_query_t; 
-list_t script_queries;
+list_t 		script_queries;
 
 typedef struct {
-	script_t *scr; /* pointer to script struct */
-	char *comm;    /* for instance /np */
-
-	void *private; /* w perlu jest to char *, w pythonie ( !PyObject-= ; char *) .... */
-} script_command_t; /* multi */
-list_t script_commands_bindings; /* too long */
+	script_t 	*scr;
+	char 		*comm;
+	void 		*private; 
+} script_command_t;
+list_t 		script_commands;
 
 typedef struct {
-	script_t *scr;
-	void *watch; /* watch_t chyba */
-	void *data;
-	
-	void *private;
+	script_t 	*scr;
+	watch_t 	*self; 
+	int 		removed;
+	void 		*data;
+	void 		*private;
 } script_watch_t;
-list_t script_watches;
+list_t 		script_watches;
 
 typedef int (scriptlang_initialize_t)();
 typedef int (scriptlang_finalize_t)();
@@ -92,9 +91,9 @@ typedef int (script_handler_watch_t)  (script_t *, script_watch_t *, int, int, i
 typedef int (script_free_bind_t)      (script_t *, void *, int, void *, ...);
 
 typedef struct {
-	char *name;     // perl, python, php *g* and so on.
-	char *ext; 	//  .pl,    .py, .php ...
-	int  prio;
+	char  	 *name;     // perl, python, php *g* and so on.
+	char 	 *ext; 	//  .pl,    .py, .php ...
+	int  	 prio;
 	plugin_t *plugin;
 
 	scriptlang_initialize_t *init;
@@ -104,11 +103,11 @@ typedef struct {
 	script_unload_t 	*script_unload;
 	script_free_bind_t      *script_free_bind;
 
-	script_handler_query_t		*script_handler_query;
-	script_handler_command_t        *script_handler_command;
-	script_handler_timer_t 		*script_handler_timer;
-	script_handler_var_t		*script_handler_var;
-	script_handler_watch_t		*script_handler_watch;
+	script_handler_query_t	*script_handler_query;
+	script_handler_command_t*script_handler_command;
+	script_handler_timer_t 	*script_handler_timer;
+	script_handler_var_t	*script_handler_var;
+	script_handler_watch_t	*script_handler_watch;
 	
 	void *private;
 } scriptlang_t;
@@ -178,6 +177,7 @@ int script_query_unbind(script_query_t *squery, int from);
 int script_command_unbind(script_command_t *scr_comm, int free);
 int script_timer_unbind(script_timer_t *stimer, int free);
 int script_var_unbind(script_var_t *data, int free);
+int script_watch_unbind(script_watch_t *temp, int free);
 
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler);
 script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void *handler);
@@ -189,7 +189,7 @@ int script_variables_free(int free);
 int script_variables_write();
 
 #define SCRIPT_UNBIND_HANDLER(type, args...)\
-	if (free) {\
+	if (free || !free) {\
     		SCRIPT_HANDLER_HEADER(script_free_bind_t);\
     		SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args); \
 	}
@@ -197,17 +197,19 @@ int script_variables_write();
 
 /* BINDING && UNBINDING */
 
-#define SCRIPT_UNBIND_HEADER(x)\
-
 #define SCRIPT_BIND_HEADER(x) \
         x *temp = xmalloc(sizeof(x)); \
+	int ret = 0;\
 	\
-	debug("[script_bind] (struct %s) mem = 0x%x scr = 0x%x priv = 0x%x\n", #x, temp, scr, handler);\
         temp->scr  = scr;\
-/*	temp->name = name; */\
 	temp->private = handler;
 
 #define SCRIPT_BIND_FOOTER(y) \
+	if (!ret) {\
+		debug("[script_bind_error] (before adding to %s) ERROR! retcode = %d\n", #y, ret);\
+/*		xfree(temp); */\
+/*		return NULL; */\
+	}\
 	list_add(&y, temp, 0);\
 	return temp;
 
@@ -219,8 +221,8 @@ int script_variables_write();
 	int 		ret = SCRIPT_HANDLE_UNBIND;
 
 /* TODO: quietmode */
-
 #define SCRIPT_HANDLER_FOOTER(y, _args...) \
+	if (!scripts) return 1;\
 	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\
         else                                                _handler = temp->private;\
         if (_handler)\
@@ -235,6 +237,7 @@ int script_variables_write();
 
 #define SCRIPT_HANDLER_MULTI_FOOTER(y, _args...)\
 /* tutaj jakis cos moze, lista list_t * ? i potem jechanie po kolei ? albo arrayik ? */\
+	if (!scripts) return 1;\
 	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\
         else                                                _handler = temp->private;\
         if (_handler)\
@@ -245,4 +248,4 @@ int script_variables_write();
         }\
 	\
 	if (ret == SCRIPT_HANDLE_UNBIND) { debug("[%s] script or scriptlang want to delete this handler\n", #y); }\
-	if (ret == SCRIPT_HANDLE_UNBIND)
+	if (ret == SCRIPT_HANDLE_UNBIND) 
