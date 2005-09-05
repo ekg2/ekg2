@@ -47,8 +47,17 @@
 #include <unistd.h>
 
 #include <sys/utsname.h>
+
 #ifdef sun
 #include <procfs.h>
+#endif
+
+#ifdef freebsd
+#include <kvm.h>    /* kvm_ funcs */
+#include <limits.h> /* _POSIX2_LINE_MAX */
+#include <sys/param.h>
+#include <sys/sysctl.h> /* KERN_PROC_PID */
+#include <sys/user.h>
 #endif
 
 #include "commands.h"
@@ -2053,23 +2062,27 @@ COMMAND(cmd_debug_query)
 /* 
  * on Solaris files under /proc filesystem are in 
  * binary format, so this is not portable...
+ *
+ * it now supports linux, solaris, freebsd.
  */
 COMMAND(cmd_test_mem) 
 {
-	char *temp = saprintf("/proc/%d/status", getpid()), *p = NULL;
-	FILE *file = fopen(temp,"rb");
+	char *temp, *p = NULL;
+	FILE *file = NULL;
 	int rd = 0, rozmiar = 0;
 	struct utsname sys;
 
 	if (uname(&sys) == -1 || !strlen(sys.sysname))
 		return -1;
 
-	if (file) {
+	temp = saprintf("/proc/%d/status", getpid());
+
+	if ( (!xstrcmp(sys.sysname, "FreeBSD")) || (file  = fopen(temp,"rb")) ) {
+		xfree(temp);
 		if (!xstrcmp(sys.sysname, "Linux"))
 		{
 			char buf[1024];
 			
-			xfree(temp);
 			rd = fread(buf, 1, 1024, file);
 			fclose(file);
 			if (rd == 0)
@@ -2100,6 +2113,32 @@ COMMAND(cmd_test_mem)
 					sys.sysname, sys.release, 
 					sys.version, sys.machine);
 			printq("generic_error", p);
+			xfree(p);
+			return -1;
+#endif
+		} else if (!xstrcmp(sys.sysname, "FreeBSD")) {
+#ifdef freebsd /* link with -lkvm */
+		        char errbuf[_POSIX2_LINE_MAX];
+    			int nentries = -1;
+    			struct kinfo_proc *kp;
+			static kvm_t      *kd;
+
+			if (!(kd = kvm_openfiles(NULL /* "/dev/null" */, "/dev/null", NULL, /* O_RDONLY */0, errbuf))) {
+				printq("generic_error", "Internal error! (kvm_openfiles)");
+				return -1;
+			}
+			kp = kvm_getprocs(kd, KERN_PROC_PID, getpid(), &nentries);
+    			if (!kp || nentries != 1) {
+				printq("generic_error", "Internal error! (kvm_getprocs)");
+            			return -1; 
+    			}
+			rozmiar = (u_long) kp->ki_size/1024;
+#else
+			p = saprintf("'freebsd' not defined %s %s %s %s",
+					sys.sysname, sys.release, 
+					sys.version, sys.machine);
+			printq("generic_error", p);
+			xfree(p);
 			return -1;
 #endif
 		} else {
@@ -2111,9 +2150,10 @@ COMMAND(cmd_test_mem)
 		xfree(p);
 	} else {
 		printq("generic_error", "/proc not mounted, no permissions, or no proc filesystem support");
+		xfree(temp);
 		return -1;
 	}
-	return 0;
+	return rozmiar;
 
 }
 

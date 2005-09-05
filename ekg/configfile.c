@@ -146,6 +146,7 @@ int config_read_plugins()
                 }
 		xfree(buf);
 	}
+	fclose(f);
 
 	return 0;
 }
