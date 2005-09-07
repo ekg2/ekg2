@@ -74,8 +74,12 @@ AC_DEFUN([AC_CHECK_SQLITE3], [
       fi
       have_sqlite3="yes"
 
-      test "x$SQLITE_LIBS" = "x" && SQLITE_LIBS="-L$ac_sqlite3_libdir -lsqlite3"
-      test "x$SQLITE_CFLAGS" = "x" && SQLITE_INCLUDE=-I$ac_sqlite3_incdir
+      if test x"$ac_sqlite3_libdir" = xno; then
+          test "x$SQLITE_LIBS" = "x" && SQLITE_LIBS="-lsqlite3"
+      else
+          test "x$SQLITE_LIBS" = "x" && SQLITE_LIBS="-L$ac_sqlite3_libdir -lsqlite3"
+      fi
+      test x"$ac_sqlite3_incdir" = xno && test "x$SQLITE_CFLAGS" = "x" && SQLITE_INCLUDE=-I$ac_sqlite3_incdir
 
       AC_SUBST(SQLITE_LIBS)
       AC_SUBST(SQLITE_CFLAGS)

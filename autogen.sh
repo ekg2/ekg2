@@ -91,8 +91,7 @@ if test "$xgettext_ver" -gt 01200; then
 fi
 
 $XGETTEXT --keyword=_ --keyword=N_ --output=- $XGETTEXT_OPTIONS `find . -name '*.[ch]'` | \
-	sed -ne '/^#:/{s/#://;s/:[0-9]*/\
-		/g;s/ //g;p;}' | \
+	sed -ne '/^#:/{s/#://; s/:[0-9]*/\n/g; s/ //g; p;}' | \
 	grep -v '^$' | sort | uniq | grep -v 'regex.c' >po/POTFILES.in
 
 
