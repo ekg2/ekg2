@@ -97,7 +97,7 @@ IRC_COMMAND(irc_c_whois);
  */
 static IrcCommand irccommands[] =
 {
-	{ 1,	-1,	NULL,	NULL,				&irc_c_error,	IRC_ERR_NEW },
+	{ 1,	-1,	NULL,	NULL,			&irc_c_error,	IRC_ERR_NEW },
 	{ 1,	1,	NULL,	"RPL_WELCOME",		&irc_c_init,	0 },
 	{ 1,	2,	NULL,	"RPL_YOURHOST",		&irc_c_init,	0 },
 	{ 1,	3,	NULL, 	"RPL_CREATED",		&irc_c_init,	0 },

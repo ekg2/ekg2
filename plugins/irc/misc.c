@@ -319,7 +319,8 @@ char *irc_make_banmask(session_t *session, const char *nick, const char *ident, 
 	else if (inet_pton(AF_INET, host, &buf) > 0)
 		family = AF_INET;
 #else
-	debug("[IRC].... TODO\n");
+/* TODO */
+	print("generic_error", "It seem you don't have getaddrinfo() current version of resolver won't work without this function. If you want to get work it faster contact with developers ;>");
 #endif
 
 	if (host && !family && (temp=xstrchr(host, ind)))
@@ -456,8 +457,7 @@ IRC_COMMAND(irc_c_error)
 		print_window(NULL, s, 0,
 				"IRC_ERR_FIRSTSECOND",
 				session_name(s), irccommands[ecode].comm, IOK2(2));
-		irc_command_disconnect(NULL, NULL, s, NULL, 0);
-/*		irc_handle_disconnect(s, param[0], EKG_DISCONNECT_USER);*/
+		irc_handle_disconnect(s, param[0], EKG_DISCONNECT_NETWORK);
 		return 0;
 	}
 	i = irccommands[ecode].future&0x100;
@@ -968,15 +968,12 @@ IRC_COMMAND(irc_c_msg)
 		sent = time(NULL);
 		class |= EKG_NO_THEMEBIT;
 
-		ignore_nick = saprintf("%s%s", IRC4, OMITCOLON(param[0]));                   
-
-		if (xosd_is_priv || ignored_check(s, ignore_nick) & IGNORE_MSG)
-			debug("[IRC_IGNORE] OK WORKS\n");
-		else
+		ignore_nick = saprintf("%s%s", IRC4, OMITCOLON(param[0]));
+		if (xosd_is_priv || !(ignored_check(s, ignore_nick) & IGNORE_MSG))
 			query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head,
 					&form, &sent, &class, &seq, &ekgbeep, &secure);
-
 		xfree(ignore_nick);
+
 		xfree(head);
 	}	
 
@@ -1098,6 +1095,9 @@ IRC_COMMAND(irc_c_kick)
 	char			*channel, *tmp, *uid, *coloured;
 	irc_onkick_handler_t	*onkick;
 	int			me = !xstrcmp(j->nick, param[3]);
+	
+	char			*_session, *_nick;
+	
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 	/* we were kicked out */
@@ -1122,14 +1122,15 @@ IRC_COMMAND(irc_c_kick)
 			param[2], coloured);
 	xfree(coloured);
 
-	onkick = xmalloc(sizeof(irc_onkick_handler_t));
-	onkick->s = s;
-	onkick->nick = saprintf("%s%s", IRC4, OMITCOLON(param[3]));
-	onkick->chan = channel;
-	onkick->kickedby = uid;
+/*sending irc-kick event*/
+	_session = xstrdup(session_uid_get(s));
+	_nick = saprintf("%s%s", IRC4, OMITCOLON(param[3]));
+	query_emit(NULL, "irc-kick", &_session, &_nick, &channel, &uid);
+	xfree(_nick);
+	xfree(_session);
 
-	query_emit(NULL, "irc-kick", &onkick);
-	/* irc_onkick_handler(s, onkick); */
+	xfree(channel);
+	xfree(uid);
 	return 0;
 }
 

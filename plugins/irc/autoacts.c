@@ -26,26 +26,35 @@
 
 extern plugin_t irc_plugin; 
 
-int irc_onkick_handler(session_t *s, irc_onkick_handler_t *data)
+int irc_onkick_handler(void *data_, va_list ap)
 {
+	char *session	= *va_arg(ap, char **);
+	char *nick	= *va_arg(ap, char **);
+	char *chan	= *va_arg(ap, char **);
+	char *kickedby	= *va_arg(ap, char **);
+
+	session_t     *s = session_find(session);
 	irc_private_t *j = irc_private(s);
+	
 	int rejoin;
 
-	if (!xstrcmp(j->nick, (data->nick)+4))
+	if (!xstrcmp(j->nick, nick+4))
 	{
 		rejoin = session_int_get(s, "REJOIN");
 		if (rejoin&(1<<(IRC_REJOIN_KICK))) {
+			irc_onkick_handler_t *data = xmalloc(sizeof(irc_onkick_handler_t));
+
+			data->s		= s;
+			data->nick 	= xstrdup(nick);
+			data->kickedby 	= xstrdup(kickedby);
+			data->chan 	= xstrdup(chan);
+			
 			timer_add(&irc_plugin, NULL, 
 					session_int_get(s, "REJOIN_TIME"),
 					0, irc_autorejoin_timer, data);
 			return 0;
 		}
 	} 
-	
-	xfree(data->nick);
-	xfree(data->kickedby);
-	xfree(data->chan);
-	xfree(data);
 	
 	return 0;
 }
