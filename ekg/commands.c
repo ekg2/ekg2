@@ -3683,6 +3683,8 @@ COMMAND(cmd_last)
 	n = time(NULL);
 	now = localtime(&n);
 
+        printq("last_begin");
+
         for (l = lasts; l; l = l->next) {
                 struct last *ll = l->data;
 		struct tm *tm, *st;
@@ -3716,6 +3718,8 @@ COMMAND(cmd_last)
 			xfree(time_str);
 		}
         }
+
+        printq("last_end");
 
 	return 0;
 }
@@ -4251,4 +4255,5 @@ void command_free()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=8 sw=8
  */

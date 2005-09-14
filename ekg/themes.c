@@ -1578,6 +1578,8 @@ void theme_init()
         format_add("last_list_timestamp_today", "%H:%M", 1);
         format_add("last_clear_uin", _("%) Messages from %T%1%n cleared\n"), 1);
         format_add("last_clear", _("%) All messages cleared\n"), 1);
+        format_add("last_begin", _("%) Lastlog begin\n"), 1);
+        format_add("last_end", _("%) Lastlog end\n"), 1);
 
         /* queue */
         format_add("queue_list_timestamp", "%d-%m-%Y %H:%M", 1);

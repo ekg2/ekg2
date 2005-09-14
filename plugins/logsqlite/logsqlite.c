@@ -78,18 +78,18 @@ COMMAND(logsqlite_cmd_last)
 	sqlite_t * db;
 	char buf[100];
 	const char *last_direction;
-#ifdef HAVE_SQLITE3	
+#ifdef HAVE_SQLITE3
 	sqlite3_stmt *stmt;
 #else
 	char sql[200];
 	const char ** results;
 	const char ** fields;
 	sqlite_vm * vm;
-	
+
 	char *errors;
 	int count;
 #endif
-	
+
 	struct tm *tm;
 	time_t ts;
 	int count2 = 0;
@@ -120,7 +120,7 @@ COMMAND(logsqlite_cmd_last)
 
 	if (! (db = logsqlite_prepare_db(session, time(0))))
 		return 0;
-		
+
 	if (params[i]) {
 		nick = xstrdup(params[i]);
 		nick = strip_quotes(nick);
@@ -130,7 +130,7 @@ COMMAND(logsqlite_cmd_last)
 		}
 		if (config_logsqlite_last_in_window)
 			target_window = gotten_uid;
-			
+
 #ifdef HAVE_SQLITE3
 		sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = ?1 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
 		sqlite3_bind_text(stmt, 1, gotten_uid, -1, SQLITE_STATIC);
@@ -157,10 +157,13 @@ COMMAND(logsqlite_cmd_last)
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		ts = (time_t) atoi(results[2]);
 #endif
+		if (count2 == 0) {
+			print_window(target_window, session, config_logsqlite_last_open_window, "last_begin");
+		}
 		count2++;
 		tm = localtime(&ts);
 		strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm);
-#ifdef HAVE_SQLITE3		
+#ifdef HAVE_SQLITE3
 		if (sqlite3_column_int(stmt, 4) == 0)
 #else
 		if (!xstrcmp(results[4], "0"))
@@ -169,7 +172,7 @@ COMMAND(logsqlite_cmd_last)
 		else
 			last_direction = "last_list_out";
 
-		print_window(target_window, session, config_logsqlite_last_open_window, last_direction, buf, 
+		print_window(target_window, session, config_logsqlite_last_open_window, last_direction, buf,
 #ifdef HAVE_SQLITE3
 			sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3));
 #else
@@ -182,14 +185,17 @@ COMMAND(logsqlite_cmd_last)
 		} else {
 			print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty");
 		}
+	} else {
+		print_window(target_window, session, config_logsqlite_last_open_window, "last_end");
 	}
+
 	xfree(nick);
-	
-#ifdef HAVE_SQLITE3	
+
+#ifdef HAVE_SQLITE3
 	sqlite3_finalize(stmt);
 #else
 	sqlite_finalize(vm, &errors);
-#endif 
+#endif
 	logsqlite_close_db(db);
 	return 0;
 }
