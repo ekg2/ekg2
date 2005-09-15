@@ -213,6 +213,7 @@ char *script_find_path(char *name) {
 				fajl = fopen(path, "r");
 			}
 // etc..
+                        xfree(nametmp);
 			if (!fajl) {
 				xfree(path);
 				path = NULL;
