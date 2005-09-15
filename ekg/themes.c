@@ -1062,14 +1062,12 @@ void theme_init()
         format_add("help_command_file_not_found", _("%! Can't find commands descriptions (incomplete installation)\n"), 1);
         format_add("help_command_file_not_found_plugin", _("%! Can't find commands descriptions for %T%1%n plugin (incomplete installation)\n"), 1);
         format_add("help_command_not_found", _("%! Can't find command description: %T%1%n\n"), 1);
+	format_add("help_script", _("%) %T%1%n is an script command and don't have description. Try /%1 help\n"), 1);
         format_add("help_session_body", "%> %|%1\n", 1);
         format_add("help_session_file_not_found", _("%! Can't find variables descriptions for %T%1%n plugin (incomplete installation)\n"), 1);
         format_add("help_session_var_not_found", _("%! Cant find description of %T%1%n variable\n"), 1);
         format_add("help_session_header", _("%> %T%1%n (%2, default value: %3)\n%>\n"), 1);
         format_add("help_session_footer", "", 1);
-
-
-
 
         /* ignore, unignore, block, unblock */
         format_add("ignored_added", _("%> Ignoring %T%1%n\n"), 1);
@@ -1682,6 +1680,10 @@ void theme_init()
 	format_add("plugin_prio_set", _("%> Plugin %T%1%n prio is setted to %T%2%n\n"), 1);
 	format_add("plugin_default", _("%> Plugins prio setted to default\n"), 1);
 
+	format_add("script_autorun_succ", "%> script %1 successful %2 autorun dir \n", 1); /* DARK */
+	format_add("script_autorun_fail", "%! script %1 failed %2 autorun dir (%3)\n", 1); /* DARK */
+	format_add("script_autorun_unkn", "%! Error adding/removing script %1 from autorundir (%2)\n", 1); /* DARK */
+	format_add("script_autorun_list", "%) Script %1 -> %2\n", 1);
         format_add("script_eval_error", _("%! Error running code\n"), 1);
         format_add("script_list", _("%> %1 (%2, %3)\n"), 1);
         format_add("script_list_empty", _("%! No scripts loaded\n"), 1);
@@ -1692,7 +1694,6 @@ void theme_init()
         format_add("script_not_found", _("%! Can't find script %T%1%n\n"), 1);
         format_add("script_wrong_location", _("%! Script have to be in %T%1%n (don't add path)\n"), 1);
 	format_add("script_generic", "%> [script,%2] (%1) %3\n", 1);
-	
 	format_add("script_varlist", _("%> %1 = %2 (%3)\n"), 1);
 	format_add("script_varlist_empty", _("%! No script vars!\n"), 1);
 

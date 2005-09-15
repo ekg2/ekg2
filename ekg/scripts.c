@@ -1,20 +1,27 @@
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <stdio.h>
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
-#include <ekg/stuff.h>
-#include <ekg/windows.h>
-#include <ekg/scripts.h>
-#include <ekg/xmalloc.h>
+#include "stuff.h"
+#include "windows.h"
+#include "scripts.h"
+#include "xmalloc.h"
 
 /* TODO && BUGS 
  * - cleanup.
  * - multiple handler for commands && var_changed. && queries
  * - memleaks ?
  */
+
+/* czego nie ma w tree ekg2 a jest w moim, ble ;p */
+#ifndef COMMAND_ISSCRIPT
+#define COMMAND_ISSCRIPT 0 
+#endif
 
 COMMAND(script_command_handlers);
 void script_timer_handlers(int type, void *d);
@@ -23,7 +30,7 @@ int script_query_handlers(void *data, va_list ap);
 void script_handle_watch(int type, int fd, int watch, void *data);
 
 int scripts_autoload(scriptlang_t *scr);
-
+char *script_find_path(char *name);
 /****************************************************************************************************/
 
 scriptlang_t *scriptlang_from_ext(char *ext)
@@ -69,6 +76,61 @@ int scriptlang_unregister(scriptlang_t *s)
 }
 
 /**************************************************************************************/
+
+int script_autorun(char *scriptname, 
+		   int isautorun /* 0 - turn off ; 1 - turn on ; -1 off->on  on->off */) {
+/*
+ * yeah i know it could be faster, better and so on, but it was written for special event and it look's like like it look... ;>
+ * and it's short, easy to understand etc.. ;>
+ */
+	int ret = -1;
+
+	if (!scriptname) {
+// TODO: list script from autorun dir.
+// script_autorun_list
+//  %1 - filename
+//  %2 - readlink.
+		return 0;
+	}
+	if (isautorun) {
+		char *path = script_find_path(scriptname);
+		char *ext  = NULL;
+		if (!(xrindex(scriptname, '.')))
+			ext = xrindex(path, '.');
+/* TODO: maybe we should check if (ext) belongs to any scriptlang... ? and in script_find_path() ? 
+ * to avoid stupid user mistakes... but i don't think ;>
+ */
+		if (path) {
+			char *autorunpath = saprintf("%s/%s%s", prepare_path("scripts/autorun", 0), scriptname, (ext) ? ext : ""); 
+			debug("[SCRIPT_AUTORUN] makeing symlink from %s to %s ...", path, autorunpath);
+			ret = symlink(path, autorunpath);
+			debug("%d\n", ret);
+			xfree(autorunpath);
+		}
+		xfree(path);
+		if (ret && isautorun == -1)
+			isautorun = 0;
+		else    isautorun = 1;
+	}
+	if (!isautorun) {
+		char *path1 = saprintf("%s/%s", prepare_path("scripts/autorun", 0), scriptname);
+		char *path = script_find_path(path1); 
+		if (path && path1) {
+			debug("[SCRIPT_AUTORUN] unlinking %s... ", path);
+			ret = unlink(path);
+			debug("%d\n", ret);
+		} else isautorun = -1;
+		xfree(path);
+		xfree(path1);
+	}
+	if (!ret)
+		print("script_autorun_succ", scriptname, (isautorun == 1) ? "added to" : "removed from");
+	else if (isautorun == -1) 
+		print("script_autorun_unkn", scriptname, strerror(errno)); /* i think only when there isn't such a file but i'm not sure */
+	else
+		print("script_autorun_fail", scriptname, (isautorun == 1) ? "to add to" : "to remove from", strerror(errno));
+	return ret;
+}
 
 int script_reset(scriptlang_t *scr)
 {
@@ -135,26 +197,22 @@ char *script_find_path(char *name) {
 	scriptlang_t 	*s = NULL;
 	list_t 		l  = scriptlang;
 
-	if (name[0] == '/') {
-		if ((fajl = (fopen(name, "r")))) {
-			fclose(fajl);
-			return xstrdup(name);
-		}
-	}
 	nametmp = xstrdup(name);
-
 	while ((ext = xrindex(nametmp, '.')) || l) {
 		if (ext) {
+			if (nametmp[0] == '/' && (fajl = (fopen(nametmp, "r")))) {
+				fclose(fajl);
+				return nametmp;
+			}
 			path = saprintf("%s/%s",prepare_path("scripts", 0), nametmp);
 			fajl = fopen(path, "r");
-		
+
 			if (!fajl) {
 				xfree(path);
 				path = saprintf("%s/scripts/%s", DATADIR, nametmp);
 				fajl = fopen(path, "r");
 			}
 // etc..
-			xfree(nametmp);
 			if (!fajl) {
 				xfree(path);
 				path = NULL;
@@ -255,27 +313,28 @@ int script_unload_lang(scriptlang_t *s)
 	return 0;
 }
 
-int script_load(scriptlang_t *s, char *name)
+int script_load(scriptlang_t *s, char *tname)
 {
 	scriptlang_t	*slang;
 	script_t	*scr;
 	struct stat 	st;
-	char 		*path, *name2;
+	char 		*path, *name2, *name = NULL;
 	int 		ret;
 
-	if (!xstrlen(name)) {
+	if (!xstrlen(tname)) {
 		print("script_need_name");
 		return -1;
 	}
 
-	if (s && !xrindex(name, '.')) {
-// TODO dodac do name rozszerzenie `s->ext`
-	}
+	if (s && !xrindex(tname, '.'))
+		name = saprintf("%s%s", tname, s->ext);
+	else    name = xstrdup(tname);
 	
 	if ((path = script_find_path(name))) {
 		if (stat(path, &st) || S_ISDIR(st.st_mode)) {
 			// scripts_loaddir(path) (?)
 			xfree(path);
+			xfree(name);
 			print("generic_error", strerror(EISDIR));
 			return -1;
 		}
@@ -290,6 +349,7 @@ int script_load(scriptlang_t *s, char *name)
                                 print("generic_error", _("Can't recognize script type"));
                         }
 			xfree(path);
+			xfree(name);
 			return -1;
 		}
 
@@ -318,6 +378,7 @@ int script_load(scriptlang_t *s, char *name)
 			else if (ret == 0)
 				print("generic_error", "@script_load script has no handler or error in getting handlers.");
 			xfree(path);
+			xfree(name);
 			script_unload(scr);
 			return -1;
 		
@@ -328,6 +389,7 @@ int script_load(scriptlang_t *s, char *name)
 		print("script_not_found", name);
 	
 	xfree(path);
+	xfree(name);
 	return 0;
 }
 
@@ -363,7 +425,7 @@ int script_variables_free(int free) {
 			fprintf(f, "%s\n", v->name);
 		if (free) {
 /*			xfree(v->value); variables_free() free it. */
-			xfree(v->private); /* NULL */
+			xfree(v->private); /* should be NULL here. */
 			xfree(v->name);
 			xfree(v);
 		}
@@ -441,27 +503,27 @@ int script_query_unbind(script_query_t *temp, int free)
 	return list_remove(&script_queries, temp, 1);
 }
 
-int script_timer_unbind(script_timer_t *temp, int free)
+int script_timer_unbind(script_timer_t *temp, int remove)
 {
 	if (temp->removed) return -1;
-	if (free) { temp->removed = 1; script_timer_handlers(1, temp); }
+	if (remove) { temp->removed = 1; script_timer_handlers(1, temp); }
 
 	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
 
-	if (free) 
+	if (remove) 
 		timer_remove(NULL, temp->self->name);
 	return list_remove(&script_timers, temp, 0 /* 0 is ok */);
 }
 
-int script_watch_unbind(script_watch_t *temp, int free)
+int script_watch_unbind(script_watch_t *temp, int remove)
 {
 	if (temp->removed) return -1;
 	temp->removed = 1;
 	SCRIPT_UNBIND_HANDLER(SCRIPT_WATCHTYPE, temp->private, temp->data);
-	if (free)
+	if (remove)
 		watch_remove(((scriptlang_t *) 	temp->scr->lang)->plugin, 
 						temp->self->fd, 
-						temp->self->type);
+	    					temp->self->type);
 	return list_remove(&script_watches, temp, 1);
 }
 
@@ -507,7 +569,7 @@ script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *comm
 {
 	SCRIPT_BIND_HEADER(script_command_t);
 	temp->comm = xstrdup(command);
-	ret = !command_add(NULL, temp->comm, "?", script_command_handlers, 0, NULL);
+	ret = !command_add(NULL, temp->comm, "?", script_command_handlers, COMMAND_ISSCRIPT, NULL);
 	SCRIPT_BIND_FOOTER(script_commands);
 }
 
@@ -614,7 +676,7 @@ COMMAND(script_command_handlers)
 
 void script_timer_handlers(int type, void *d)
 {
-	script_timer_t	*temp	= d;
+	script_timer_t *temp = d;
 	SCRIPT_HANDLER_HEADER(script_handler_timer_t);
 	SCRIPT_HANDLER_FOOTER(script_handler_timer, type) {
 		if (!type) {
@@ -645,10 +707,7 @@ int script_query_handlers(void *data, va_list ap)
 /********************************************************************************/
 
 /* from python.c  python_autorun() 
- *
- * load scripts from $CONFIGDIR/scripts/autorun ($CONFIGDIR - ~/.ekg2/        || ~/.ekg2/perl || ... )
- * load scripts from $DATADIR/scripts/autorun   ($DATADIR   - /usr/share/ekg2 || /usr/local/share/ekg2 || ...)
- *
+ *  load  scripts from `path`
  */
 
 int scripts_loaddir(scriptlang_t *s, const char *path)
@@ -656,7 +715,7 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 	struct dirent *d;
 	struct stat st;
 	char *tmp;
-	scriptlang_t *scr;
+	scriptlang_t *slang;
 	int i = 0;
 	DIR *dir;
 	
@@ -670,11 +729,11 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 			xfree(tmp);
 			continue;
 		}
-		if (!(scr = scriptlang_from_ext(xrindex(tmp, '.'))) || (s != NULL && s != scr) ) { 
+		if (!(slang = scriptlang_from_ext(xrindex(tmp, '.'))) || (s != NULL && s != slang) ) { 
 			xfree(tmp);
 			continue;
 		}
-		debug("[script] autoloading %s from %s scr = %s\n", d->d_name, path, scr->name);
+		debug("[script] autoloading %s from %s scr = %s\n", d->d_name, path, slang->name);
 		if (!script_load(NULL, tmp)) i++;
 		xfree(tmp);
 	}
@@ -683,21 +742,21 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 	return i;
 }
 
-/* hm, przepisalem to ale i tak trzeba sie zastanowic czy nadal zostawiac oba sposoby... */
 COMMAND(cmd_script)
 {
 	scriptlang_t *s = NULL;
-	char 	     *tmp;
+	char 	     *tmp = NULL;
 	char	     *param0 = NULL;
 
 	if (xstrcmp(name, "script")) { /* script:*    */
 		tmp = (char *) name; 
 		param0 = (char *) params[0];
-	} else { 		       /* script --*  */
+	} else if (params[0]) {        /* script --*  */
 		tmp = (char *) params[0]+2;
 		param0 = (char *) params[1];
 	}
 /*	s = param0 ? */
+
         if (xstrlen(tmp) < 1)
                 return script_list(NULL); 
         else {
@@ -709,15 +768,22 @@ COMMAND(cmd_script)
 			return script_var_list(NULL /*s*/);
 		else if (!xstrcmp(tmp, "reset"))
 			return script_reset(s);
+		else if (!xstrcmp(tmp, "autorun"))
+			return script_autorun(param0, -1);
 	}
 	return -1;
 }
 
+/*
+ * load scripts from $CONFIGDIR/scripts/autorun ($CONFIGDIR - ~/.ekg2/        || ~/.ekg2/perl || ... )
+ * load scripts from $DATADIR/scripts/autorun   ($DATADIR   - /usr/share/ekg2 || /usr/local/share/ekg2 || ...) (Turned off ;>)
+ */
+
 int scripts_autoload(scriptlang_t *scr)
 {
 	int i = 0;
-	i += scripts_loaddir(scr, DATADIR"/scripts/autorun");
-	i += scripts_loaddir(scr, prepare_path("scripts/autorun", 0));
+/*	i += scripts_loaddir(scr, DATADIR"/scripts/autorun"); */       /* I don't think it will be useful */
+	i += scripts_loaddir(scr, prepare_path("scripts/autorun", 0)); /* we ought to load only scripts from home dir. */
 	debug("[SCRIPTS_AUTOLOAD] DONE: (re)loaded %d scripts\n", i);
 	return i;
 }
@@ -734,6 +800,7 @@ int scripts_init()
 	command_add(NULL, "script:list"   , "?"  , cmd_script, 0, "");
 	command_add(NULL, "script:reset"  , "?"  , cmd_script, 0, "");
 	command_add(NULL, "script:varlist", "?"  , cmd_script, 0, "");
+	command_add(NULL, "script:autorun", "?"	 , cmd_script, 0, "");
 	script_variables_read();
 #if 0
 	query_connect(NULL, "config-postinit",     script_postinit, NULL);

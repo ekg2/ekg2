@@ -2,10 +2,10 @@
 #define EKG_SCRIPTS_H
 #include <sys/types.h>
 
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/stuff.h>
-#include <ekg/vars.h>
+#include "plugins.h"
+#include "protocol.h"
+#include "stuff.h"
+#include "vars.h"
 
 #define SCRIPT_HANDLE_UNBIND    -666
 #define MAX_ARGS 15
@@ -189,10 +189,9 @@ int script_variables_free(int free);
 int script_variables_write();
 
 #define SCRIPT_UNBIND_HANDLER(type, args...)\
-	if (free || !free) {\
-    		SCRIPT_HANDLER_HEADER(script_free_bind_t);\
-    		SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args); \
-	}
+    	SCRIPT_HANDLER_HEADER(script_free_bind_t);\
+    	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);
+
 #endif
 
 /* BINDING && UNBINDING */
@@ -222,7 +221,6 @@ int script_variables_write();
 
 /* TODO: quietmode */
 #define SCRIPT_HANDLER_FOOTER(y, _args...) \
-	if (!scripts) return 1;\
 	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\
         else                                                _handler = temp->private;\
         if (_handler)\
@@ -237,7 +235,6 @@ int script_variables_write();
 
 #define SCRIPT_HANDLER_MULTI_FOOTER(y, _args...)\
 /* tutaj jakis cos moze, lista list_t * ? i potem jechanie po kolei ? albo arrayik ? */\
-	if (!scripts) return 1;\
 	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\
         else                                                _handler = temp->private;\
         if (_handler)\
