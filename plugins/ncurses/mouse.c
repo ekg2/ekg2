@@ -156,7 +156,7 @@ WATCHER(ncurses_gpm_watch_handler)
 {
         Gpm_Event event;
 
-        if (last)
+        if (type)
                 return;
 
         Gpm_GetEvent(&event);

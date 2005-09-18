@@ -95,7 +95,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 	\
 	plugin_t x##_plugin = { \
 		.name = #x, \
-		.pclas = y, \
+		.pclass = y, \
 		.destroy = x##_plugin_destroy, \
 		.theme_init = z \
 	}
