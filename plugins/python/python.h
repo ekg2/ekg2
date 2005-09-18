@@ -32,24 +32,7 @@
 
 extern scriptlang_t python_lang;
 
-#define python_private(s) ((python_private_t*) script_private_get(s))
-
-typedef struct {
-        PyObject *module;                  /* obiekt modu³u */
-
-        PyObject *deinit;                  /* funkcja deinicjalizacji */
-
-        PyObject *handle_msg;              /* obs³uga zdarzeñ... */
-        PyObject *handle_msg_own;
-        PyObject *handle_status;
-        PyObject *handle_status_own;
-        PyObject *handle_connect;
-        PyObject *handle_disconnect;
-        PyObject *handle_keypress;
-	
-	PyObject *handle_comm; /* temp */
-
-} python_private_t;
+#define python_module(s) ((PyObject *) script_private_get(s)) /* obiekt modu³u */
 
 #define PYTHON_HANDLE_HEADER(event, args...) \
 { \
@@ -58,10 +41,12 @@ typedef struct {
         char * buffer; \
 	\
 	python_handle_result = -1;\
+        pArgs = Py_BuildValue(args);\
 	\
 	PyObject *__py_r; \
 	\
-	__py_r = PyObject_CallFunction(p->handle_##event, args); \
+	__py_r = PyObject_Call((PyObject *)event, pArgs, NULL); \
+        Py_DECREF(pArgs);\
 	\
 	if (!__py_r) { \
                     buffer = xmalloc(1024); \
@@ -132,7 +117,7 @@ typedef struct {
 			PyErr_Print(); \
 		else
 
-#define PYTHON_HANDLE_FOOTER() \
+#define PYTHON_HANDLE_FOOTER(x) \
 	\
 	Py_XDECREF(__py_r); \
 	\
@@ -142,7 +127,6 @@ typedef struct {
 	}\
 }
 
-
 int python_run(const char *filename);
 int python_exec(const char *command);
 int python_run(const char *filename);
@@ -151,8 +135,6 @@ int python_initialize();
 int python_finalize();
 int python_plugin_init();
 script_t *python_find_script(PyObject *module);
-
-// PyObject *python_get_func(PyObject *module, const char *name); /* for command binding */
 
 #endif
 

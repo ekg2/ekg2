@@ -42,6 +42,7 @@
 #include "python.h"
 #include "python-config.h"
 #include "python-session.h"
+#include "python-plugin.h"
 
 // * ***************************************************************************
 // *
@@ -58,14 +59,14 @@
 
 PyObject *ekg_cmd_command(PyObject * self, PyObject * args)
 {
-    char *command = NULL;
+        char *command = NULL;
 
-    if (!PyArg_ParseTuple(args, "s", &command)) {
-	return NULL;
-    }
-    command_exec(NULL, NULL, command, 0);	// run command for current session
-    Py_INCREF(Py_None);
-    return Py_None;
+        if (!PyArg_ParseTuple(args, "s", &command)) {
+                return NULL;
+        }
+        command_exec(NULL, NULL, command, 0);	// run command for current session
+        Py_INCREF(Py_None);
+        return Py_None;
 }
 
 /**
@@ -75,19 +76,30 @@ PyObject *ekg_cmd_command(PyObject * self, PyObject * args)
 
 PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
 {
-    char *bind_command = NULL;
-    char *bind_handler = NULL;
+        char *bind_command = NULL;
+        PyObject *callback = NULL;
+        PyObject *module   = NULL;
+        script_t * scr;
 
-    script_t *scr = python_find_script(self);
-//    python_private_t *p = python_private(scr);
+        if (!PyArg_ParseTuple(args, "sO", &bind_command, &callback)) {
+                return NULL;
+        }
 
-    if (!PyArg_ParseTuple(args, "ss", &bind_command, &bind_handler)) {
-	return NULL;
-    }
-    script_command_bind(&python_lang, scr, bind_command, xstrdup(bind_handler));
+        if (!PyCallable_Check(callback)) {
+                print("generic-error", _("Second parameter to command_bind is not callable"));
+                PyErr_SetString(PyExc_TypeError, _("Parameter must be callable"));
+                return NULL;
+        }
+        Py_XINCREF(callback);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+        module = PyObject_GetAttrString(callback, "__module__");
+        scr = python_find_script(module);
+
+        debug("[python] binding command %s to python function\n", bind_command);
+        script_command_bind(&python_lang, scr, bind_command, callback);
+
+        Py_INCREF(Py_None);
+        return Py_None;
 }
 
 /**
@@ -97,19 +109,29 @@ PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
 
 PyObject *ekg_cmd_timer_bind(PyObject * self, PyObject * args)
 {
-    char *handler = NULL;
-    int freq;
+        PyObject *callback = NULL;
+        PyObject *module   = NULL;
+        script_t * scr;
+        int freq;
 
-    script_t *scr = python_find_script(self);
-//    python_private_t *p = python_private(scr);
+        if (!PyArg_ParseTuple(args, "iO", &freq, &callback)) {
+                return NULL;
+        }
 
-    if (!PyArg_ParseTuple(args, "is", &freq, &handler)) {
-	return NULL;
-    }
-    script_timer_bind(&python_lang, scr, freq, xstrdup(handler));
+        if (!PyCallable_Check(callback)) {
+                print("generic-error", _("Second parameter to command_bind is not callable"));
+                PyErr_SetString(PyExc_TypeError, _("Parameter must be callable"));
+                return NULL;
+        }
+        Py_XINCREF(callback);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+        module = PyObject_GetAttrString(callback, "__module__");
+        scr = python_find_script(module);
+
+        script_timer_bind(&python_lang, scr, freq, callback);
+
+        Py_INCREF(Py_None);
+        return Py_None;
 }
 
 
@@ -213,6 +235,49 @@ PyObject *ekg_cmd_plugins(PyObject * self, PyObject * pyargs)
     }
     Py_INCREF(list);
     return list;
+}
+
+/**
+ * ekg_cmd_getPlugin()
+ *
+ * return plugin object
+ *
+ */
+
+PyObject *ekg_cmd_getPlugin(PyObject * self, PyObject * pyargs)
+{
+    ekg_pluginObj *pyplugin;
+    char buf[100];
+    char *name = NULL;
+    list_t l;
+    int prio = -1;
+
+    if (!PyArg_ParseTuple(pyargs, "s:getPlugin", &name))
+		return NULL;
+
+    debug("[python] checking for plugin '%s'\n", name);
+
+    for (l = plugins; l; l = l->next) {
+		plugin_t *p = l->data;
+                if (!strcmp(p->name, name)) {
+                        prio = p->prio;
+                }
+    }
+
+    if (prio < 0) {
+		snprintf(buf, 99, "Can't find plugin '%s'", name);
+		PyErr_SetString(PyExc_KeyError, buf);
+		Py_INCREF(Py_None);
+		return Py_None;
+    }
+
+    debug("[python] Building object for plugin '%s'\n", name);
+	pyplugin = PyObject_New(ekg_pluginObj, &ekg_plugin_type);
+        pyplugin->prio = prio;
+	pyplugin->name = xmalloc(xstrlen(name)+1);
+	xstrcpy(pyplugin->name, name);
+    Py_INCREF(pyplugin);
+    return (PyObject *)pyplugin;
 }
 
 /**

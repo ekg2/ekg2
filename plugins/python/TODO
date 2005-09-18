@@ -1,7 +1,10 @@
-- hook status_own ?
+TODO:
+- przyk³adowe skrypty
+- sprawdziæ czemu po unload,load nie dzia³aj± bindingi
+
+Stare todo - raczej aktualne :>
 - dokoñczyæ modu³ ekg
 - podmiana statusów/msgów
 - sprawdziæ czemu po unload/load nie uaktualnia skryptów
-- timer
 - rzucanie wyj±tku do ekg_config_get
 - poprawna implementacja ekg_config_len
