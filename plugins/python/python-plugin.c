@@ -98,6 +98,56 @@ void ekg_plugin_dealloc(ekg_pluginObj * o)
 }
 
 /**
+ * ekg_plugin_load()
+ *
+ * load plugin
+ *
+ */
+
+PyObject *ekg_plugin_load(ekg_pluginObj * self, PyObject *args)
+{
+        int prio;
+
+        if (!PyArg_ParseTuple(args, "i", &prio))
+                return NULL;
+
+        debug("[python] Loading plugin '%s' with prio %i\n", self->name, prio);
+
+        if (plugin_find(self->name)) {
+                PyErr_SetString(PyExc_RuntimeError, "Plugin already loaded");
+                return NULL;
+        }
+        if (plugin_load(self->name, prio, 0) == -1) {
+                Py_RETURN_FALSE;
+        } else {
+                self->loaded = 1;
+                Py_RETURN_TRUE;
+        }
+
+        Py_INCREF(Py_None);
+        return Py_None;
+}
+
+/**
+ * ekg_plugin_is_loaded()
+ *
+ * load plugin
+ *
+ */
+
+PyObject *ekg_plugin_is_loaded(ekg_pluginObj * self, PyObject *args)
+{
+
+        debug("[python] Checking if '%s' plugin is loaded\n", self->name);
+
+        if (plugin_find(self->name)) {
+                Py_RETURN_TRUE;
+        } else {
+                Py_RETURN_FALSE;
+        }
+}
+
+/**
  * ekg_plugin_unload()
  *
  * unload plugin
@@ -110,10 +160,9 @@ PyObject *ekg_plugin_unload(ekg_pluginObj * self, PyObject *args)
         if (plugin_unload(xstrdup(self->name)) == -1) {
                 Py_RETURN_FALSE;
         } else {
+                self->loaded = 0;
                 Py_RETURN_TRUE;
         }
-        Py_INCREF(Py_None);
-        return Py_None;
 }
 
 /*

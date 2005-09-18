@@ -29,16 +29,21 @@ typedef struct
    PyObject_HEAD;
    char *name;
    int prio;
+   int loaded;
 } ekg_pluginObj;
 
 void ekg_plugin_dealloc(ekg_pluginObj *o);
 int ekg_plugin_init(ekg_pluginObj *self, PyObject *args, PyObject *kwds);
 PyObject* ekg_plugin_unload(ekg_pluginObj *self, PyObject *args);
+PyObject* ekg_plugin_load(ekg_pluginObj *self, PyObject *args);
+PyObject* ekg_plugin_is_loaded(ekg_pluginObj *self, PyObject *args);
 PyObject* ekg_plugin_get_attr(ekg_pluginObj * self, char * attr);
 
 staticforward PyMethodDef ekg_plugin_methods[] = {
+	{"load", (PyCFunction)ekg_plugin_load, METH_VARARGS, "Load plugin"},
 	{"unload", (PyCFunction)ekg_plugin_unload, METH_NOARGS, "Unload plugin"},
-    {NULL, NULL, 0, NULL}
+	{"isLoaded", (PyCFunction)ekg_plugin_is_loaded, METH_NOARGS, "Check if plugin is loaded"},
+        {NULL, NULL, 0, NULL}
 };
 
 static PyTypeObject ekg_plugin_type = {

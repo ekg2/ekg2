@@ -264,18 +264,12 @@ PyObject *ekg_cmd_getPlugin(PyObject * self, PyObject * pyargs)
                 }
     }
 
-    if (prio < 0) {
-		snprintf(buf, 99, "Can't find plugin '%s'", name);
-		PyErr_SetString(PyExc_KeyError, buf);
-		Py_INCREF(Py_None);
-		return Py_None;
-    }
-
     debug("[python] Building object for plugin '%s'\n", name);
-	pyplugin = PyObject_New(ekg_pluginObj, &ekg_plugin_type);
-        pyplugin->prio = prio;
-	pyplugin->name = xmalloc(xstrlen(name)+1);
-	xstrcpy(pyplugin->name, name);
+    pyplugin = PyObject_New(ekg_pluginObj, &ekg_plugin_type);
+    pyplugin->loaded = prio < 0 ? 0 : 1;
+    pyplugin->prio = prio < 0 ? 0 : prio;
+    pyplugin->name = xmalloc(xstrlen(name)+1);
+    xstrcpy(pyplugin->name, name);
     Py_INCREF(pyplugin);
     return (PyObject *)pyplugin;
 }
