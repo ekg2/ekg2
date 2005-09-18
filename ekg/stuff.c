@@ -24,9 +24,13 @@
 
 #include "ekg2-config.h"
 
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#define __USE_BSD
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -39,6 +43,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "commands.h"
@@ -58,7 +63,11 @@
 #include "xmalloc.h"
 
 #ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
 #  define PATH_MAX _POSIX_PATH_MAX
+# endif
 #endif
 
 struct gg_session *sess = NULL;

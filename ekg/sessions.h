@@ -21,6 +21,7 @@
 #ifndef __EKG_SESSIONS_H
 #define __EKG_SESSIONS_H
 
+#include <time.h>
 #include "dynstuff.h"
 
 list_t sessions;

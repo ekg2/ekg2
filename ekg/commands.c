@@ -28,6 +28,8 @@
 
 #include "ekg2-config.h"
 
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -48,7 +50,7 @@
 
 #include <sys/utsname.h>
 
-#ifdef sun
+#ifdef __sun
 #include <procfs.h>
 #endif
 

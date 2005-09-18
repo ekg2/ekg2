@@ -6,6 +6,7 @@ AC_CONFIG_HEADERS(ekg2-config.h)
 
 AM_INIT_AUTOMAKE(ekg2, CVS)
 
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
@@ -38,6 +39,7 @@ AC_NEED_STDINT_H
 dnl  SunOS
 AC_CHECK_FUNC(gethostbyname, [], [AC_CHECK_LIB(nsl, gethostbyname, LIBS="$LIBS -lnsl")])
 AC_CHECK_FUNC(socket, [], [AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")])
+AC_CHECK_FUNC(sched_yield, [], [AC_CHECK_LIB(rt, sched_yield, LIBS="$LIBS -lrt")])
 
 dnl  BeOS
 AC_CHECK_FUNC(inet_addr, [], [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")])
@@ -66,6 +68,8 @@ AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
+
+CFLAGS="$CFLAGS -Wall -std=c99"
 
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
@@ -326,8 +330,6 @@ PLUGINS_LIBS=""
 for i in $PLUGINS; do
 	PLUGINS_LIBS="$PLUGINS_LIBS \$(top_builddir)/plugins/$i/$i.la"
 done
-
-CFLAGS="$CFLAGS -Wall"
 
 plugindir=$libdir/ekg2/plugins
 AC_SUBST(plugindir)

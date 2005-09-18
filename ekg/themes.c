@@ -20,6 +20,7 @@
 
 #include "ekg2-config.h"
 
+#define _XOPEN_SOURCE 600
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -36,7 +37,11 @@
 #include "userlist.h"
 
 #ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
 #  define PATH_MAX _POSIX_PATH_MAX
+# endif
 #endif
 
 char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;

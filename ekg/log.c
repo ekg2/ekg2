@@ -23,6 +23,7 @@
 
 #include "ekg2-config.h"
 
+#define _XOPEN_SOURCE 600
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -47,7 +48,11 @@
 #include "xmalloc.h"
 
 #ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
 #  define PATH_MAX _POSIX_PATH_MAX
+# endif
 #endif
 
 list_t lasts = NULL;

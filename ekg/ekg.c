@@ -25,9 +25,12 @@
 
 #include "ekg2-config.h"
 
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#define __USE_BSD
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -76,7 +79,11 @@
 #include "ltdl.h"
 
 #ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
 #  define PATH_MAX _POSIX_PATH_MAX
+# endif
 #endif
 
 static pid_t ekg_pid = 0;

@@ -37,7 +37,8 @@
 #include <sys/utsname.h>
 #include <pwd.h>
 
-#ifdef sun	/* Solaris, thanks to Beeth */
+#ifdef __sun
+/* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif
 

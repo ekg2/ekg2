@@ -19,6 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define _XOPEN_SOURCE 600
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -27,7 +28,7 @@
 #ifdef __FreeBSD__
 #  include <sys/kbio.h>			
 #endif
-#ifdef sun /* Solaris */
+#ifdef __sun /* Solaris */
 #  include <sys/kbd.h>
 #  include <sys/kbio.h>
 #endif 
@@ -47,15 +48,20 @@
 #include "ioctld.h"
 
 #ifndef PATH_MAX
-#  define PATH_MAX _POSIX_PATH_MAX
+#  ifdef MAX_PATH
+#    define PATH_MAX MAX_PATH
+#  else
+#    define PATH_MAX _POSIX_PATH_MAX
+#  endif
 #endif
+
 
 char sock_path[PATH_MAX] = "";
 
 int blink_leds(int *flag, int *delay) 
 {
     	int s, fd;
-#ifdef sun 
+#ifdef __sun 
 	int restore_data;
 
 	if ((fd = open("/dev/kbd", O_RDONLY)) == -1)
@@ -68,7 +74,7 @@ int blink_leds(int *flag, int *delay)
 #endif
 
 	for (s = 0; flag[s] >= 0 && s <= IOCTLD_MAX_ITEMS; s++) {
-#ifdef sun
+#ifdef __sun
 		int leds = 0;
 		/* tak.. na sunach jest to troszkê inaczej */
 		if (flag[s] & 1) 
@@ -86,7 +92,7 @@ int blink_leds(int *flag, int *delay)
 			usleep(delay[s]);
 	}
 
-#ifdef sun
+#ifdef __sun
 	ioctl(fd, KIOCSLED, &restore_data);
 #else
 	ioctl(fd, KDSETLED, 8);
@@ -101,7 +107,7 @@ int blink_leds(int *flag, int *delay)
 int beeps_spk(int *tone, int *delay)
 {
     	int s;
-#ifndef sun
+#ifndef __sun
 	int fd;
 
     	if ((fd = open("/dev/console", O_WRONLY)) == -1)
@@ -114,7 +120,7 @@ int beeps_spk(int *tone, int *delay)
 		ioctl(fd, KIOCSOUND, 0);
 #endif
 
-#ifndef sun
+#ifndef __sun
 	    	ioctl(fd, KIOCSOUND, tone[s]);
 #else
 		/* ¿a³osna namiastka... */
@@ -125,7 +131,7 @@ int beeps_spk(int *tone, int *delay)
 			usleep(delay[s]);
 	}
 
-#ifndef sun
+#ifndef __sun
 	ioctl(fd, KIOCSOUND, 0);
 	
 	if (fd != STDOUT_FILENO)

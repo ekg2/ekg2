@@ -840,10 +840,10 @@ IRC_COMMAND(irc_c_msg)
 	xosd_chan = param[2];
 
 	/* probably message from server ... */
-	if (j->connecting && !xstrcmp(":_empty_", param[0]) && !prv) {
-		/* && !xstrcmp("AUTH", param[2] ) */
+	if (j->connecting && !prv) {
+		/* (!xstrcmp(":_empty_", param[0]) || !xstrcmp("AUTH", param[2])) */
 		class = (mw&16)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
-		dest = saprintf("__status");
+		dest = saprintf(param[2]);
 		format = xstrdup("irc_not_f_server");
 		/* WTF ? WHY this -1 ? insane ?
 		 * dj->G: because of it: (param[0]+1) 

@@ -23,6 +23,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define _XOPEN_SOURCE 600
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -40,8 +41,13 @@
 #include <ekg/xmalloc.h>
 
 #ifndef PATH_MAX
-#  define PATH_MAX _POSIX_PATH_MAX
+#  ifdef MAX_PATH
+#    define PATH_MAX MAX_PATH
+#  else
+#    define PATH_MAX _POSIX_PATH_MAX
+#  endif
 #endif
+
 
 char *sim_key_path = NULL;
 int sim_errno = 0;
