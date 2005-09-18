@@ -573,7 +573,7 @@ static void binding_toggle_contacts_wrapper(const char *arg)
 		config_contacts = 0;
 	}
 
-	ncurses_contacts_changed("contacts");
+	ncurses_contacts_changed("contacts", NULL);
 }
 
 static void binding_next_contacts_group(const char *arg)
@@ -1025,7 +1025,7 @@ void ncurses_binding_delete(const char *key, int quiet)
  *
  * ustawia lub przywraca domy¶lne ustawienia przypisanych klawiszy.
  */
-void ncurses_binding_default()
+QUERY(ncurses_binding_default)
 {
 	ncurses_binding_add("Alt-`", "/window switch 0", 1, 1);
 	ncurses_binding_add("Alt-1", "/window switch 1", 1, 1);
@@ -1094,6 +1094,7 @@ void ncurses_binding_default()
 	ncurses_binding_add("F11", "ui-ncurses-debug-toggle", 1, 1);
 	/* ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1); 
 	ncurses_binding_add("Ctrl-Up", "backward-contacts-page", 1, 1); */
+	return 0;
 }
 
 void ncurses_binding_init()
@@ -1101,7 +1102,7 @@ void ncurses_binding_init()
 	memset(ncurses_binding_map, 0, sizeof(ncurses_binding_map));
 	memset(ncurses_binding_map_meta, 0, sizeof(ncurses_binding_map_meta));
 
-	ncurses_binding_default();
+	ncurses_binding_default(NULL, NULL);
 	ncurses_binding_complete = binding_complete;
 }
 

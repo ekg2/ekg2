@@ -394,7 +394,7 @@ static dcc_t *gg_dcc_find(struct gg_dcc *d)
  *
  * obs³uga bezpo¶rednich po³±czeñ. w data jest przekazywana struct gg_dcc.
  */
-void gg_dcc_handler(int type, int fd, int watch, void *data)
+WATCHER(gg_dcc_handler)
 {
 	struct gg_event *e;
 	struct gg_dcc *d = data;

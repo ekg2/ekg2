@@ -551,8 +551,9 @@ typedef struct {
 	string_t buf;		/* je¶li buforujemy, to tutaj */
 } cmd_exec_info_t;
 
-void cmd_exec_watch_handler(int type, int fd, const char *line, cmd_exec_info_t *i)
+WATCHER(cmd_exec_watch_handler)
 {
+	cmd_exec_info_t *i = data;
 	int quiet = (i) ? i->quiet : 0;
 
 	if (!i)
@@ -571,15 +572,15 @@ void cmd_exec_watch_handler(int type, int fd, const char *line, cmd_exec_info_t 
 	}
 
 	if (!i->target) {
-		printq("exec", line);
+		printq("exec", watch);
 		return;
 	}
 
 	if (i->buf) {
-		string_append(i->buf, line);
+		string_append(i->buf, watch);
 		string_append(i->buf, "\r\n");
 	} else {
-		char *tmp = saprintf("/ %s", line);
+		char *tmp = saprintf("/ %s", watch);
 		command_exec(i->target, session_find(i->session), tmp, quiet);
 		xfree(tmp);
 	}

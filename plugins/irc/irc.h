@@ -18,11 +18,7 @@
 #ifndef __EKG_PLUGINS_IRC_IRC_H
 #define __EKG_PLUGINS_IRC_IRC_H
 
-#define DOT(x,y,z) print_window(NULL, z, 0, "IRC_TEST", session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family))
-
-#define DOT_FAIL_EXT(x,y,z,res) print_window(NULL, z, 0, "IRC_TEST_FAIL", session_name(z), x, y->hostname, y->address, itoa(y->port), strerror(res))
-#define DOT_FAIL(x,y,z) DOT_FAIL_EXT(x,y,z,errno)
-#define HAVE_IRC_NEW
+#define DOT(a,x,y,z,error) print_window("__status", z, 0, a, session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family), error ? strerror(error) : "")
 
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
@@ -34,17 +30,16 @@ extern char *sopt_keys[];
 typedef struct {
 	int fd;				/* connection's fd */
 	int connecting;			/* are we connecting _now_ ? */
-
+	int resolving;			/* count of resolver threads. */
 	list_t bindlist, bindtmplist;
 	list_t connlist, conntmplist;
+	
+	watch_t *recv_watch;
 
 	char *nick;			/* guess again ? ;> */
 	char *host_ident;		/* ident+host */
 	char *obuf;			/* output buffer */
 	int obuf_len;			/* size of above */
-
-	char irc_lastline[4096];	/* input buffer; */
-	int  irc_lastline_start;
 
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */
@@ -91,7 +86,7 @@ typedef struct {
 typedef struct {
 	char *mask;
 	int frmask;
-//      char frmask[100];
+/*      char frmask[100]; */
 } access_t;
 
 /* structure needed by resolver */
@@ -103,6 +98,11 @@ typedef struct {
 	int family;
 } connector_t;
 
+typedef struct {
+	char *session;
+	list_t *plist;
+} irc_resolver_t;
+
 #define irc_private(s) ((irc_private_t*) session_private_get(s))
 
 /* DO NOT TOUCH THIS! */
@@ -111,12 +111,7 @@ typedef struct {
 
 plugin_t irc_plugin;
 
-typedef struct {
-	session_t *session;
-} irc_handler_data_t;
-
-void irc_handle_reconnect(int type, void *data);
-void irc_handle_disconnect(session_t *s, char *reason, int type);
+void irc_handle_disconnect(session_t *s, const char *reason, int type);
 COMMAND(irc_command_disconnect);
 
 /* checks if name is in format irc:something

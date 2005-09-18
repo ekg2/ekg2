@@ -999,7 +999,7 @@ char *token_ocr(const char *ocr, int width, int height, int length)
 }
 
 
-static void gg_handle_token(int type, int fd, int watch, void *data)
+static WATCHER(gg_handle_token)
 {
         struct gg_http *h = data;
 	struct gg_token *t = NULL;

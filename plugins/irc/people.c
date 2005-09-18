@@ -457,7 +457,6 @@ int irc_free_people(session_t *s, irc_private_t *j)
 	list_t t1;
 	people_t *per;
 	channel_t *chan;
-	userlist_t *ulist;
 	window_t *w;
 
 	debug("[irc] free_people() %08X %s\n", s, s->uid);

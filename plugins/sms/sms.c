@@ -257,7 +257,7 @@ static int dd_sms(const char *name)
  *
  * obs³uga zmiany stanu sesji.
  */
-static int sms_session_status(void *data, va_list ap)
+static QUERY(sms_session_status)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__status = va_arg(ap, char**), *status = *__status;
@@ -275,7 +275,7 @@ static int sms_session_status(void *data, va_list ap)
  *
  * obs³uga przychodz±cych wiadomo¶ci.
  */
-static int sms_protocol_message(void *data, va_list ap)
+static QUERY(sms_protocol_message)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;

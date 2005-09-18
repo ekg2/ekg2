@@ -144,11 +144,11 @@ static int check_mail_update(const char *s, int more)
 	return 0;
 }
 
-static void mail_handler(int type, int fd, const char *line, void *data)
+static WATCHER(mail_handler)
 {
 	switch (type) {
 		case 0:
-			check_mail_update(line, 1);
+			check_mail_update(watch, 1);
 			break;
 		case 1:
 			check_mail_update("0,0", 0);	/* XXX paskuuudne! */
@@ -501,7 +501,7 @@ static int dd_check_mail(const char *name)
 	return (config_check_mail);
 }
 
-static int mail_count_query(void *data, va_list ap)
+static QUERY(mail_count_query)
 {
 	int *__count = va_arg(ap, int*);
 

@@ -150,8 +150,8 @@ int config_header_size;
 int config_margin_size;
 int config_statusbar_size;
 
-void ncurses_watch_stdin(int fd, int watch, void *data);
-void ncurses_watch_winch(int last, int fd, int watch, void *data);
+WATCHER(ncurses_watch_stdin);
+WATCHER(ncurses_watch_winch);
 int ncurses_command_window(void *data, va_list ap);
 
 extern int have_winch_pipe;

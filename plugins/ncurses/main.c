@@ -358,7 +358,7 @@ static int ncurses_binding_query(void *data, va_list ap)
         return 0;
 }
 
-void ncurses_setvar_default() 
+QUERY(ncurses_setvar_default)
 {
 	config_contacts_size = 9;         /* szeroko¶æ okna kontaktów */
 	config_contacts = 2;              /* czy ma byæ okno kontaktów */
@@ -385,6 +385,7 @@ void ncurses_setvar_default()
         config_aspell_lang = xstrdup("pl");
         config_aspell_encoding = xstrdup("iso8859-2");
 #endif
+	return 0;
 }
 
 /*
@@ -429,7 +430,7 @@ void ncurses_sigint_handler(int s)
 		 * but I think someone will solve how to do it better
 		 * G */
 		ungetch(3);
-		ncurses_watch_stdin(0, 0, NULL);
+		ncurses_watch_stdin(0, 0, 0, NULL);
 	}
 }
 
@@ -438,10 +439,10 @@ int ncurses_plugin_init(int prio)
 	list_t l;
 
 	plugin_register(&ncurses_plugin, prio);
-	
-	ncurses_setvar_default();
 
-	query_connect(&ncurses_plugin, "set-vars-default", ncurses_setvar_default, NULL);	
+	ncurses_setvar_default(NULL, NULL);
+
+	query_connect(&ncurses_plugin, "set-vars-default", ncurses_setvar_default, NULL);
 	query_connect(&ncurses_plugin, "ui-beep", ncurses_beep, NULL);
 	query_connect(&ncurses_plugin, "ui-is-initialized", ncurses_ui_is_initialized, NULL);
 	query_connect(&ncurses_plugin, "ui-window-switch", ncurses_ui_window_switch, NULL);
@@ -478,12 +479,15 @@ int ncurses_plugin_init(int prio)
         variable_add(&ncurses_plugin, "aspell_encoding", VAR_STR, 1, &config_aspell_encoding, ncurses_changed_aspell, NULL, NULL);
 #endif
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
-	variable_add(&ncurses_plugin, "contacts", VAR_INT, 1, &config_contacts, ncurses_contacts_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, "contacts_groups", VAR_STR, 1, &config_contacts_groups, ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_groups_all_sessons", VAR_BOOL, 1, &config_contacts_groups_all_sessions, ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_options", VAR_STR, 1, &config_contacts_options, ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_size", VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_metacontacts_swallow", VAR_BOOL, 1, &config_contacts_metacontacts_swallow, ncurses_all_contacts_changed, NULL, dd_contacts);
+	/* this isn't very nice solution, but other solutions would require _more_
+	 * changes...
+	 */
+	variable_add(&ncurses_plugin, "contacts", VAR_INT, 1, &config_contacts, (void (*)(const char *))ncurses_contacts_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, "contacts_groups", VAR_STR, 1, &config_contacts_groups, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, "contacts_groups_all_sessons", VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, "contacts_options", VAR_STR, 1, &config_contacts_options, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, "contacts_size", VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, "contacts_metacontacts_swallow", VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, "display_crap",  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "display_transparent", VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, "enter_scrolls", VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);

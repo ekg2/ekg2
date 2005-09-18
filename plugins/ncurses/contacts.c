@@ -537,7 +537,7 @@ group_cleanup:
 				continue;
 			}
 	
-			if (group && (!u->private || u->private!=2)) {
+			if (group && (!u->private || 2!=(int)u->private)) {
 				userlist_t *tmp = userlist_find(u->private ? u->private : session_current, u->uid);
 				if ((group[0]=='!' && ekg_group_member(tmp, group+1)) ||
 						(group[0]!='!' && !ekg_group_member(tmp, group)))
@@ -617,8 +617,9 @@ group_cleanup:
  *
  * wywo³ywane przy zmianach rozmiaru i w³±czeniu klienta.
  */
-void ncurses_contacts_changed(const char *name)
+QUERY(ncurses_contacts_changed)
 {
+	const char *name = data;
 	window_t *w = NULL;
 	list_t l;
 
@@ -747,6 +748,7 @@ void ncurses_contacts_changed(const char *name)
 	ncurses_contacts_update(NULL);
         ncurses_resize();
 	ncurses_commit();
+	return 0;
 }
 
 /*
@@ -756,11 +758,12 @@ void ncurses_contacts_changed(const char *name)
  * podkasowania sorted_all_cache (zmiany w metakontaktach 
  * i ncurses:contacts_metacontacts_swallow)
  */
-void ncurses_all_contacts_changed(const char *name)
+QUERY(ncurses_all_contacts_changed)
 {
 	list_destroy(sorted_all_cache, 1);
 	sorted_all_cache = NULL;
-	ncurses_contacts_changed(name);
+	ncurses_contacts_changed(data, NULL);
+	return 0;
 }
 
 /* 

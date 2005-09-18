@@ -25,7 +25,7 @@ static int sim_theme_init();
 
 PLUGIN_DEFINE(sim, PLUGIN_CRYPT, sim_theme_init);
 
-static int message_encrypt(void *data, va_list ap)
+static QUERY(message_encrypt)
 {
         char **session, **recipient, **message, *result;
         int *encrypted;
@@ -69,7 +69,7 @@ static int message_encrypt(void *data, va_list ap)
         return 0;
 }
 
-static int message_decrypt(void *data, va_list ap)
+static QUERY(message_decrypt)
 {
         char **session, **sender, **message, *result;
         int *decrypted;

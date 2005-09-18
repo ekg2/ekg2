@@ -111,7 +111,7 @@ COMMAND(xosd_command_msg)
 	return 0;
 }
 
-static int xosd_protocol_status(void *data, va_list ap)
+static QUERY(xosd_protocol_status)
 {
 	char **__session = va_arg(ap, char**), *session = *__session;
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -164,7 +164,7 @@ static int xosd_protocol_status(void *data, va_list ap)
 	return 0;
 }
 
-static int xosd_protocol_message(void *data, va_list ap)
+static QUERY(xosd_protocol_message)
 {
 	char **__session = va_arg(ap, char**), *session = *__session;
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -220,7 +220,7 @@ static int xosd_protocol_message(void *data, va_list ap)
 	return 0;
 }
 
-static int xosd_irc_protocol_message(void *data, va_list ap)
+static QUERY(xosd_irc_protocol_message)
 {
 	char **__session = va_arg(ap, char**), *session = *__session;
 	char **__uid = va_arg(ap, char**), *uid = *__uid;

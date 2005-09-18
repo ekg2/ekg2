@@ -494,9 +494,9 @@ static char *prepare_batch_line(int argc, char *argv[], int n)
  *
  * wy¶wietla to, co uzbiera siê na stderr.
  */
-static void handle_stderr(int type, int fd, char *buf, void *data)
+static WATCHER(handle_stderr)
 {
-        print("stderr", buf);
+        print("stderr", watch);
 }
 
 /*

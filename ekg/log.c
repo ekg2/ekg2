@@ -282,6 +282,7 @@ char *log_escape(const char *str)
  *
  * allocated buffer
  */
+extern char *utf_ent[];
 char *xml_escape(const char *text)
 {
 	const unsigned char *p;

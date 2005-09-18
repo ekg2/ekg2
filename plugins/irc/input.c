@@ -393,10 +393,10 @@ CTCP_COMMAND(ctcp_main_noti)
 	t = irc_ircoldcolstr_to_ekgcolstr(s, space,1);
 	if (number == CTCP_PING) {
 		gettimeofday(&tv, NULL);
+		
 		/* TODO, arraymake() ? */
 /*	GiM->dj: W!T!F! you want to do here ?
- * 
-		debug("%d, %d - %s\n", tv.tv_sec, tv.tv_usec, t);
+ *		debug("[IRC_PING] %d, %d - %s\n", tv.tv_sec, tv.tv_usec, t);
 		debug("%d\n", ((tv.tv_sec -t[0]) * 1000 + (tv.tv_usec -t[1])));
 */		
 	}

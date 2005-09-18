@@ -11,6 +11,7 @@
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/xmalloc.h>
+#include <ekg/log.h>
 
 #include "jabber.h"
 
@@ -147,6 +148,7 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
 
 /* End of code taken from mutt. */
 
+
 /*
  * jabber_escape()
  *
@@ -159,13 +161,11 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
  */
 char *jabber_escape(const char *text)
 {
-	const unsigned char *p;
-	unsigned char *res, *q, *utftext;
-	int len;
+	unsigned char *res, *utftext;
 
 	if (!text)
 		return NULL;
-	if ( !(utftext = mutt_convert_string(text, config_jabber_console_charset, "utf-8")) )
+	if ( !(utftext = mutt_convert_string((char *)text, config_jabber_console_charset, "utf-8")) )
 		return NULL;
 	res = xml_escape(utftext);
         xfree(utftext);
@@ -187,7 +187,7 @@ char *jabber_unescape(const char *text)
 	if (!text)
 		return NULL;
 
-	return mutt_convert_string(text, "utf-8", config_jabber_console_charset);
+	return mutt_convert_string((char *)text, "utf-8", config_jabber_console_charset);
 }
 
 /*
@@ -196,7 +196,7 @@ char *jabber_unescape(const char *text)
  * obs³uga mo¿liwo¶ci zapisu do socketa. wypluwa z bufora ile siê da
  * i je¶li co¶ jeszcze zostanie, ponawia próbê.
  */
-void jabber_handle_write(int type, int fd, int watch, void *data)
+WATCHER(jabber_handle_write)
 {
 	jabber_private_t *j = data;
 	int res;

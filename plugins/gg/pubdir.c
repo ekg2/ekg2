@@ -42,7 +42,7 @@ int gg_register_done = 0;
 char *gg_register_password = NULL;
 char *gg_register_email = NULL;
 
-static void gg_handle_register(int type, int fd, int watch, void *data)
+static WATCHER(gg_handle_register)
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *p;
@@ -149,7 +149,7 @@ COMMAND(gg_command_register)
 	return 0;
 }
 
-static void gg_handle_unregister(int type, int fd, int watch, void *data)
+static WATCHER(gg_handle_unregister)
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *s;
@@ -238,7 +238,7 @@ COMMAND(gg_command_unregister)
 	return 0;
 }
 
-static void gg_handle_passwd(int type, int fd, int watch, void *data)
+static WATCHER(gg_handle_passwd)
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *p = NULL;
@@ -347,7 +347,7 @@ COMMAND(gg_command_passwd)
 	return 0;
 }
 
-static void gg_handle_remind(int type, int fd, int watch, void *data)
+static WATCHER(gg_handle_remind)
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *s;

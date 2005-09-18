@@ -15,8 +15,8 @@ int contacts_group_index;
 #define CONTACTS_MAX_HEADERS 20
 
 int ncurses_contacts_update(window_t *w);
-void ncurses_contacts_changed(const char *name);
-void ncurses_all_contacts_changed(const char *name);
+int ncurses_contacts_changed(void *vname, va_list b);
+int ncurses_all_contacts_changed(void *vname, va_list b);
 void ncurses_contacts_new(window_t *w);
 
 void ncurses_backward_contacts_line(int arg);

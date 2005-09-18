@@ -27,7 +27,7 @@ COMMAND(script_command_handlers);
 void script_timer_handlers(int type, void *d);
 void script_var_changed(const char *var);
 int script_query_handlers(void *data, va_list ap);
-void script_handle_watch(int type, int fd, int watch, void *data);
+WATCHER(script_handle_watch);
 
 int scripts_autoload(scriptlang_t *scr);
 char *script_find_path(char *name);
@@ -646,11 +646,12 @@ void script_var_changed(const char *var) {
 	return;
 }
 
-void script_handle_watch(int type, int fd, int watch, void *data) {
+WATCHER(script_handle_watch)
+{
 	script_watch_t *temp = data;
 
 	SCRIPT_HANDLER_HEADER(script_handler_watch_t);
-	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, watch) {
+	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, (int)watch) {
 		if (!type) {
 			watch_remove(((scriptlang_t *) 	temp->scr->lang)->plugin, 
 							temp->self->fd, 

@@ -386,7 +386,7 @@ int events_init()
  * 
  * handler for protocol-message 
  */
-int event_protocol_message(void *data, va_list ap)
+QUERY(event_protocol_message)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -409,7 +409,7 @@ int event_protocol_message(void *data, va_list ap)
  *
  * handler for changing status on available
  */
-int event_avail(void *data, va_list ap)
+QUERY(event_avail)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -429,7 +429,7 @@ int event_avail(void *data, va_list ap)
  *
  * handler for changing status on away
  */
-int event_away(void *data, va_list ap)
+QUERY(event_away)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -449,7 +449,7 @@ int event_away(void *data, va_list ap)
  *
  * handler for changing status on NA
  */
-int event_na(void *data, va_list ap)
+QUERY(event_na)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -469,7 +469,7 @@ int event_na(void *data, va_list ap)
  *
  * handler for changing status from NA to avail
  */
-int event_online(void *data, va_list ap)
+QUERY(event_online)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -489,7 +489,7 @@ int event_online(void *data, va_list ap)
  *
  * handler for changing description
  */
-int event_descr(void *data, va_list ap)
+QUERY(event_descr)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;

@@ -48,7 +48,7 @@ char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "M
  * handles writing to socket, spit out from buffer 
  * as much as it can;
  */
-void irc_handle_write(int type, int fd, int watch, void *data)
+WATCHER(irc_handle_write)
 {
 	irc_private_t	*j = data;
 	int		res;
@@ -98,7 +98,7 @@ int irc_write(irc_private_t *j, const char *format, ...)
 	text = vsaprintf(format, ap);
 	va_end(ap);
 
-	debug("[irc]_send:  %s\n", text?xstrlen(text)?text:"[0LENGTH]":"[FAILED]");
+	debug("[irc]_send: %s\n", text?xstrlen(text)?text:"[0LENGTH]":"[FAILED]");
 	if (!text) return -1;
 
 	if (!j->obuf) {
@@ -155,7 +155,7 @@ int irc_parse_line(session_t *s, char *buf, int len, int fd, irc_private_t *j)
 	char	*p, *q[20];
 
 	char	*emitname;
-	
+
 	p=buf;
 	if(!p)
 		return -1;
@@ -252,37 +252,6 @@ and the prefix.
 	return 0;
 }
 
-/* yes, bloody globals... ;/ */
-int irc_input_parser(session_t *s, char *buf, int len)
-{
-	irc_private_t	*j = session_private_get(s);
-	char		*p;
-	int		i, l, fd;
-
-	if (!j) {
-		debug ("[irc] input_parser() : no private!");
-		return -1;
-	}
-	fd=j->fd;
-
-	debug("[irc] input_parser() %d\n", j->irc_lastline_start);
-	for (i=0,l=j->irc_lastline_start,p=buf; i<len; i++,l++)
-	{
-		j->irc_lastline[l]=buf[i];
-		if ('\n' == buf[i] || '\r' == buf[i]) {
-			buf[i]='\0';
-			j->irc_lastline[l]='\0';
-			irc_parse_line(s, j->irc_lastline, l, fd, j);
-			if (i+1<len) p=&(buf[i+1]);
-			l=-1;
-		} 
-	}
-	/* debug("irc_input_parser() %s || %s\n", p, irc_lastline); */
-	/* GiM: nasty hack to concatate splited messages... */
-	if (l!=-1) j->irc_lastline_start=l;
-	return 0;
-}
-
 char *irc_make_banmask(session_t *session, const char *nick, const char *ident, const char *hostname) 
 {
 /* 
@@ -320,7 +289,7 @@ char *irc_make_banmask(session_t *session, const char *nick, const char *ident, 
 		family = AF_INET;
 #else
 /* TODO */
-	print("generic_error", "It seem you don't have getaddrinfo() current version of resolver won't work without this function. If you want to get work it faster contact with developers ;>");
+	print("generic_error", "It seem you don't have inet_pton() current version of irc_make_banmask won't work without this function. If you want to get work it faster contact with developers ;>");
 #endif
 
 	if (host && !family && (temp=xstrchr(host, ind)))
@@ -457,7 +426,9 @@ IRC_COMMAND(irc_c_error)
 		print_window(NULL, s, 0,
 				"IRC_ERR_FIRSTSECOND",
 				session_name(s), irccommands[ecode].comm, IOK2(2));
-		irc_handle_disconnect(s, param[0], EKG_DISCONNECT_NETWORK);
+		if (j->connecting)
+			irc_handle_disconnect(s, param[0], EKG_DISCONNECT_NETWORK);
+		else    debug("!j->connecting\n");
 		return 0;
 	}
 	i = irccommands[ecode].future&0x100;
@@ -937,7 +908,9 @@ IRC_COMMAND(irc_c_msg)
 		else
 			query_emit(NULL, "message-decrypt", &dest, &(s->uid), &ctcpstripped, &secure , NULL);
 	
-		/* TODO 'secure' var checking, but still don't know how to react to it */
+		/* TODO 'secure' var checking, but still don't know how to react to it 
+		 * CHANNEL DONE.
+		 */
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
 		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));
 		prefix[1] = '\0';
@@ -1000,7 +973,7 @@ IRC_COMMAND(irc_c_join)
 	int		me = 0;
 	char		*ignore_nick;
 
-	channel = saprintf("irc:%s", OMITCOLON(param[2]));
+	channel = saprintf("%s:%s", IRC3, OMITCOLON(param[2]));
 	
 	if ((tmp = xstrchr(param[0], '!'))) *tmp='\0';
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
@@ -1023,6 +996,19 @@ IRC_COMMAND(irc_c_join)
 	if (!(ignored_check(s, ignore_nick) & IGNORE_NOTIFY)) {
 		print_window(channel, s, 0, me ? "irc_joined_you" : "irc_joined",
 				session_name(s), param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]));
+		if (me)	{
+			int __secure = 0;
+    			char *__sid      = xstrdup(session_uid_get(s));
+    			char *__uid_full = xstrdup(channel);
+			char *__msg	 = xstrdup("test");
+
+			if (query_emit(NULL, "message-encrypt", &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
+				print_window(channel, s, 0, "irc_channel_secure", session_name(s), OMITCOLON(param[2]));
+			else 	print_window(channel, s, 0, "irc_channel_unsecure", session_name(s), OMITCOLON(param[2]));
+			xfree(__msg);
+			xfree(__uid_full);
+			xfree(__sid);
+		}
 	}
 	if (tmp) *tmp='!';
 
@@ -1093,11 +1079,8 @@ IRC_COMMAND(irc_c_part)
 IRC_COMMAND(irc_c_kick)
 {
 	char			*channel, *tmp, *uid, *coloured;
-	irc_onkick_handler_t	*onkick;
-	int			me = !xstrcmp(j->nick, param[3]);
-	
 	char			*_session, *_nick;
-	
+	int			me = !xstrcmp(j->nick, param[3]);
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 	/* we were kicked out */
@@ -1110,7 +1093,7 @@ IRC_COMMAND(irc_c_kick)
 
 	if (tmp) *tmp='!';
 
-	channel = saprintf("irc:%s", param[2]);
+	channel = saprintf("%s:%s", IRC3, param[2]);
 	
 	coloured = param[4]?xstrlen(OMITCOLON(param[4]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4]), 1):
@@ -1256,7 +1239,7 @@ IRC_COMMAND(irc_c_invite)
 
 IRC_COMMAND(irc_c_mode)
 {
-	int		i, k, len, val=0, act=1, wasb=0, is324=irccommands[ecode].num==324;
+	int		i, k, len, val=0, act=1, is324=irccommands[ecode].num==324;
 	char		*t, *bang, *add, **pars, *channame, *mode_abc, *mode_c;
 	people_t	*per;
 	people_chan_t	*ch;

@@ -77,31 +77,49 @@ int have_plugin_of_class(int);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
 plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 
+#ifdef USINGANANTIQUECOMPILER
 #define PLUGIN_DEFINE(x, y, z)\
 	static int x##_plugin_destroy(); \
 	\
 	plugin_t x##_plugin = { \
-		name: #x, \
-		pclass: y, \
-		destroy: x##_plugin_destroy, \
-		theme_init: z \
+		#x, \
+		0, \
+		y, \
+		x##_plugin_destroy, \
+		NULL, NULL, \
+		z \
 	}
+#else
+#define PLUGIN_DEFINE(x, y, z)\
+	static int x##_plugin_destroy(); \
+	\
+	plugin_t x##_plugin = { \
+		.name = #x, \
+		.pclas = y, \
+		.destroy = x##_plugin_destroy, \
+		.theme_init = z \
+	}
+#endif /* USINGANANTIQUECOMPILER */
 
-typedef int (*query_handler_func_t)(void *data, va_list ap);
+#define QUERY(x) int x(void *data, va_list ap)
+typedef QUERY(query_handler_func_t);
 
 typedef struct {
 	char *name;
 	plugin_t *plugin;
 	void *data;
-	query_handler_func_t handler;
+	query_handler_func_t *handler;
 	int count;
 } query_t;
 
-int query_connect(plugin_t *, const char *, void *, void *);
+int query_connect(plugin_t *, const char *, query_handler_func_t *, void *);
 int query_disconnect(plugin_t *, const char *);
 query_t *query_find(const char *name);
 
 int query_emit(plugin_t *, const char *, ...);
+
+#define WATCHER(x) void x(int type, int fd, const char *watch, void *data)
+typedef WATCHER(watcher_handler_func_t);
 
 typedef enum {
 	WATCH_NONE = 0,
@@ -139,7 +157,7 @@ int watch_handler_set(watch_t *w, watch_handler_func_t h);
 watch_handler_func_t watch_handler_get(watch_t *w);
 time_t watch_started_get(watch_t *w);
 
-watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, int persist, void *handler, void *data);
+watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, int persist, watcher_handler_func_t *handler, void *data);
 int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
 void watch_handle(watch_t *w);

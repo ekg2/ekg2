@@ -57,7 +57,7 @@ static pcm_codec_t *pcm_codec_find(const char *cid)
 	return NULL;
 }
 
-static int pcm_codec_capabilities(void *data, va_list ap)
+static QUERY(pcm_codec_capabilities)
 {
 	char **p_caps = va_arg(ap, char**);
 
@@ -72,7 +72,7 @@ static int pcm_codec_capabilities(void *data, va_list ap)
 	return 0;
 }
 
-static int pcm_codec_init(void *data, va_list ap)
+static QUERY(pcm_codec_init)
 {
 	char **p_from = va_arg(ap, char**), *from = *p_from;
 	char **p_to = va_arg(ap, char**), *to = *p_to;
@@ -160,7 +160,7 @@ static void pcm_recode(const char *in, int ibps, int ich, char *out, int obps, i
 	}
 }
 
-static int pcm_codec_process(void *data, va_list ap)
+static QUERY(pcm_codec_process)
 {
 	char **p_cid = va_arg(ap, char**), *cid = *p_cid;
 	char **p_in = va_arg(ap, char**), *in = *p_in;
@@ -208,7 +208,7 @@ static int pcm_codec_process(void *data, va_list ap)
 	return 0;
 }
 
-static int pcm_codec_destroy(void *data, va_list ap)
+static QUERY(pcm_codec_destroy)
 {
 	char **p_cid = va_arg(ap, char**), *cid = *p_cid;
 	pcm_codec_t *c;

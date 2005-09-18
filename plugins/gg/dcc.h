@@ -13,7 +13,7 @@ COMMAND(gg_command_dcc);
 void gg_changed_dcc(const char *var);
 int gg_dcc_socket_open(int port);
 void gg_dcc_socket_close();
-void gg_dcc_handler(int type, int fd, int watch, void *data);
+WATCHER(gg_dcc_handler);
 
 #endif
 

@@ -152,7 +152,7 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
  * 
  * handler for gpm events etc
  */
-void ncurses_gpm_watch_handler(int last, int fd, int watch, void *data)
+WATCHER(ncurses_gpm_watch_handler)
 {
         Gpm_Event event;
 

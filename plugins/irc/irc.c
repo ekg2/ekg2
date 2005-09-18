@@ -30,6 +30,8 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#define __USE_POSIX
 #include <netdb.h>
 #include <sys/time.h>
 #include <sys/utsname.h>
@@ -73,29 +75,13 @@
 #define QUITMSG(x) (SGQUITMSG(x)?SGQUITMSG(x):DEFQUITMSG)
 #define KICKMSG(x,r) (r?r: SGKICKMSG(x)?SGKICKMSG(x):DEFKICKMSG)
 
-#define RECTIMERADD(s) if (session_int_get(s, "auto_reconnect")>0)\
-		timer_add(&irc_plugin, "reconnect", session_int_get(s, "auto_reconnect"), 0, irc_handle_reconnect, xstrdup(s->uid))
-#define RECTIMERDEL timer_remove(&irc_plugin, "reconnect")
-#define INVALID_SESSION \
-	if (xstrncasecmp(uid, IRC4, 4)) {\
-		if (xstrncasecmp(session_current->uid, IRC4, 4)) {\
-			printq("invalid_session");\
-			return -1;\
-		}\
-		else {\
-			uid = saprintf("%s%s", IRC4, uid);\
-		}\
-	}
-
-
 /* ************************ KNOWN BUGS ***********************
  *  OTHER LESS IMPORTANT BUGS
  *    -> somewhere with altnick sending
  *    G->dj: still not as I would like it to be
  *  !BUGS (?) TODO->check
- *    -> auto_reconnect timer handling 
- *    -> buggy auto_find. if smb write smth on the channel.
- *        *  10:58:27 ::: Nieprawidowe parametry. Sprobuj help find * (fix ?, darkjames)
+ *    -> buggy auto_find. if smb type smth on the channel.
+ *        *  10:58:27 ::: Nieprawidowe parametry. Sprobuj help find *
  *************************************************************
  */
 /* *************************** TODO **************************
@@ -109,11 +95,45 @@
  * *************************************************************
  */
 
+/* 
+ * Changelog:  (from last changes till todaj tj 13o9o5 ;p)
+ *  -> irc plugin multithreaded again ;p
+ *  -> names_total..
+ *  -> rewriten sending multiline params[0] in irc_command_msg
+ *  -> params in command_add() still not done fully. and is it worth to do it ?
+ *  
+ * F**k echelon! ;p
+ *  -> nice command generating encryption keys.. currently using only sim plugin.
+ *  
+ *  -> WATCH_READ -> WATCH_READ_LINE and cleanup ! ;p
+ *     we fallback on internal ekg2-side line parsing.
+ * CHANGELOG:  (today, tj o3o9o5)
+ *  -> autoreconnection works.
+ *  -> rewriten irc_handle_disconnect and function using it.
+ *  -> removed possible memleaks (ab 99 % ;> joke.) from irc_handle_disconnect
+ *  
+ * IDEAS: 
+ *  -> maybe some params in /connect command ?
+ *     for example if we have in /session server krakow.irc.pl,poznan.irc.pl
+ *     and we want connect to poznan.irc.pl (150.254.64.64) nor krakow... we type
+ *     /connect poznan.irc.pl
+ *     /connect #2
+ *     /connect 150.254.64.64
+ *     next, if we want to connect instead of default 6667 port to i.e 6665 we type
+ *     /connect :6665
+ *     or we can use both.
+ *     /connect poznan.irc.pl:6665 || /connect 150.254.64.64 6665.
+ * ---
+ *  G->dj: you have to, cause del will kill me for another comment in PL ;)
+ */
+
 /*                                                                       *
  * ======================================== STARTUP AND STANDARD FUNCS - *
  *                                                                       */
 
 static int irc_theme_init();
+WATCHER(irc_handle_resolver);
+int irc_really_connect(session_t *session);
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
@@ -138,8 +158,6 @@ static void irc_private_init(session_t *s)
 
 	/* G->dj: I've told you why this is here, not on every system NULL is 0x00000000
 	 * that's why I'm just commentig this out not removing...
-	memset(j, 0, sizeof(irc_private_t));
-	
 	j->nick = NULL;
 	j->host_ident = NULL;
 	j->obuf = NULL;
@@ -163,6 +181,8 @@ static void irc_private_destroy(session_t *s)
 	irc_private_t	*j = irc_private(s);
 	const char	*uid = session_uid_get(s);
 	int		i;
+	
+	list_t 		tmplist;
 
 	if (xstrncasecmp(uid, IRC4, 4) || !j)
 		return;
@@ -170,6 +190,18 @@ static void irc_private_destroy(session_t *s)
 	/*irc_free_people(s, j); wtf? */
 	xfree(j->host_ident);
 	xfree(j->nick);
+
+	for (tmplist=j->bindlist; tmplist; tmplist=tmplist->next) {
+		xfree( ((connector_t *)tmplist->data)->address);
+		xfree( ((connector_t *)tmplist->data)->hostname);
+	}
+	list_destroy(tmplist, 1);
+	for (tmplist=j->connlist; tmplist; tmplist=tmplist->next) {
+		xfree( ((connector_t *)tmplist->data)->address);
+		xfree( ((connector_t *)tmplist->data)->hostname);
+	}
+
+	list_destroy(tmplist, 1);
 
 	irc_free_people(s, j);
 
@@ -179,7 +211,7 @@ static void irc_private_destroy(session_t *s)
 	session_private_set(s, NULL);
 }
 
-int irc_postinit(void *data, va_list ap)
+QUERY(irc_postinit)
 {
 	list_t l;
 	for (l = sessions; l; l = l->next) {
@@ -189,7 +221,7 @@ int irc_postinit(void *data, va_list ap)
 					session_get( (session_t *) l->data, "alist"));
 		}
 	}
-        return 0;
+	return 0;
 }
 
 /*
@@ -197,7 +229,7 @@ int irc_postinit(void *data, va_list ap)
  *
  * adding and deleting a session
  */
-int irc_session(void *data, va_list ap)
+QUERY(irc_session)
 {
 	char		**session = va_arg(ap, char**);
 	session_t	*s = session_find(*session);
@@ -218,17 +250,16 @@ int irc_session(void *data, va_list ap)
  *
  * what the heck this can be ? ;)
  */
-int irc_print_version(void *data, va_list ap)
+QUERY(irc_print_version)
 {
 	print("generic", "IRC plugin by Michal 'GiM' Spadlinski, Jakub 'darkjames' Zawadzki v. "IRCVERSION);
 
 	return 0;
 }
 
-//int irc_resolver_sort(void *s1, void *s2)
 int irc_resolver_sort(void *s1, void *s2)
 {
-	connector_t *sort1 = s1, *sort2 = s2;
+	connector_t *sort1 = s1; /*, *sort2 = s2;*/
 	int prefer_family = AF_INET;
 /*	
 	if (sort1->session != sort2->session)
@@ -237,42 +268,39 @@ int irc_resolver_sort(void *s1, void *s2)
 	if (session_int_get(sort1->session, "prefer_family") == AF_INET6) 
 		prefer_family = AF_INET6;
 
-	debug("%d && %d -> %d\n", sort1->family, sort2->family, prefer_family);
-	
+/*	debug("%d && %d -> %d\n", sort1->family, sort2->family, prefer_family); */
+
 	if (prefer_family == sort1->family)
 		return 0;
 	else
 		return 1;
 }
 
-list_t irc_resolver2(session_t *session, char *hostname, list_t *lista, int dobind) 
+int irc_resolver2(session_t *session, int fd, char *hostname, int dobind) 
 {
-	connector_t *listelem;
 	int port = session_int_get(session, "port"); 
-	char *bufek = NULL;
 	void *tm = NULL;
+
 #ifdef HAVE_GETADDRINFO
 	struct  addrinfo *ai, *aitmp, hint;
 #endif	
 
 	/* G->dj: we're not allowing port part in hostname,
 	 * because of IPv6 format... [delimited with colon]
+	 *
+	 * dj->G: so maybe ' ' instead of ':' or ';' ?!?!? ;> *g*
 	 */
 
 	if (port < 1 ) 	port = DEFPORT;
 	if (dobind)	port = 0;
 
-	debug("[IRC] %s 0x%x\n", hostname, lista);
+/*	debug("[IRC] %s fd = %d\n", hostname, fd); */
 #ifdef HAVE_GETADDRINFO
 	memset(&hint, 0, sizeof(struct addrinfo));
 	hint.ai_socktype=SOCK_STREAM;
 	if (!getaddrinfo(hostname, NULL, &hint, &ai)) {
 		for (aitmp = ai; aitmp; aitmp = aitmp->ai_next) {
-			listelem = xmalloc(sizeof(connector_t));
-		
-			listelem->session = session;
-			listelem->family  = aitmp->ai_family;
-			listelem->hostname= xstrdup(hostname);
+			char *ip = NULL, *buf;
 
 			if (aitmp->ai_family == AF_INET6)
 				tm = &(((struct sockaddr_in6 *) aitmp->ai_addr)->sin6_addr);
@@ -280,34 +308,32 @@ list_t irc_resolver2(session_t *session, char *hostname, list_t *lista, int dobi
 				tm = &(((struct sockaddr_in *) aitmp->ai_addr)->sin_addr);
 
 #ifdef HAVE_INET_NTOP
-			bufek = xmalloc(100);
-			inet_ntop(aitmp->ai_family, tm, bufek, 100);
-			listelem->address   = bufek;
+			ip = xmalloc(100);
+			inet_ntop(aitmp->ai_family, tm, ip, 100);
 #else
 			if (aitmp->ai_family == AF_INET6) {
-				print("generic_error", "Nie masz inet_ntop() a family == AF_INET6. resolver nie bedzie dzialac"); /* jak nie mozliwe to wywalic */
-				listelem->address =  xstrdup("::");
-			}
-			else
-				listelem->address   = xstrdup(inet_ntoa(*(struct in_addr *)tm));
+				print("generic_error", "You don't have inet_ntop() and family == AF_INET6. Please contact with developers if it happens.");
+				ip =  xstrdup("::");
+			} else
+				ip   = xstrdup(inet_ntoa(*(struct in_addr *)tm));
 #endif 
-			listelem->port    = port;
-			debug("+ %s\n", listelem->address);
-
-			list_add_sorted(lista, listelem, 0, &irc_resolver_sort);
-			debug("%x %x\n", aitmp, aitmp->ai_next);
+			buf = saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, port);
+/*			debug("[irc_resolver] sending to main thread: %s\n", buf); */
+			write(fd, buf, xstrlen(buf));
+			xfree(buf);
+			xfree(ip);
 		}
 		freeaddrinfo(ai);
 	}
 #else 
-	    print("generic_error", "Nie masz getaddrinfo() na razie resolver nie bedzie dzialac");
+	    print("generic_error", "It seem you don't have getaddrinfo() current version of resolver won't work without this function. If you want to get work it faster contact with developers ;>");
 #endif
 
 /* G->dj: getaddrinfo was returninig 3 times, cause you haven't given hints...
+ * dj->G: thx ;>
  */
-	return (*lista);
+	return 0;
 }
-
 
 /*
  * irc_validate_uid()
@@ -315,7 +341,7 @@ list_t irc_resolver2(session_t *session, char *hostname, list_t *lista, int dobi
  * checks, if uid is proper, and if this is a plugin that
  * should deal with such a uid
  */
-int irc_validate_uid(void *data, va_list ap)
+QUERY(irc_validate_uid)
 {
 	char	**uid = va_arg(ap, char **);
 	int	*valid = va_arg(ap, int *);
@@ -331,34 +357,63 @@ int irc_validate_uid(void *data, va_list ap)
 
 void irc_changed_resolve(session_t *s, const char *var) {
 	irc_private_t	*j = irc_private(s);
-	list_t          *rlist = NULL, tmplist;
-	char            *tmp   = xstrdup(session_get(s, var));
- 	
-	if (!xstrcmp((char *) var, "server")) rlist = &(j->connlist);
-	else if (!xstrcmp((char *) var, "hostname")) rlist = &(j->bindlist);
+	list_t          *rlist = NULL;
+	char            *tmp;
+	int 		isbind = !xstrcmp((char *) var, "hostname");
+
+	irc_resolver_t *idta;
+	int 		res;
+	int		fd[2];
+
+	if (isbind) rlist = &(j->bindlist);
+	else        rlist = &(j->connlist);
 	/* G->dj: what this is for, cause I don't get it ?
 	 * dj->G: ? */
-	if (*rlist) {
-		for (tmplist=*rlist; tmplist; tmplist=tmplist->next) {
-			xfree( ((connector_t *)tmplist->data)->address);
-			xfree( ((connector_t *)tmplist->data)->hostname);
-		}
-		list_destroy(*rlist, 1);
-		*rlist = NULL;
+
+	if (pipe(fd) == -1) {
+		print("generic_error", strerror(errno));
+		return;
 	}
- 
-        if (rlist && tmp) {
-                char *tmp2;
 
-                while(tmp2 = xstrrchr(tmp, ',')) {
-                        irc_resolver2(s, tmp2+1, rlist, !xstrcmp(var, "hostname"));
-                        *tmp2 = 0;
-                }
-                irc_resolver2(s, tmp, rlist, !xstrcmp(var, "hostname"));
-        }
-        xfree(tmp);
-        return;
+	if ((res = fork()) < 0) {
+		print("generic_error", strerror(errno));
+		close(fd[0]);
+		close(fd[1]);
+		return;
+	}
+	j->resolving++;
+	if (res) {
+		close(fd[1]);
 
+		idta = xmalloc(sizeof(irc_resolver_t));
+		idta->session = xstrdup(s->uid);
+		idta->plist   = rlist;
+
+		watch_add (&irc_plugin, fd[0], WATCH_READ_LINE, 0, irc_handle_resolver, idta);
+		if (*rlist) {
+			list_t tmplist;
+			for (tmplist=*rlist; tmplist; tmplist=tmplist->next) {
+				xfree( ((connector_t *)tmplist->data)->address);
+				xfree( ((connector_t *)tmplist->data)->hostname);
+			}
+			list_destroy(*rlist, 1);
+			*rlist = NULL;
+		}
+	} 
+	tmp = xstrdup(session_get(s, var));
+	if (!res && rlist && tmp) {
+		char *tmp2;
+
+		close(fd[0]);
+		while ((tmp2 = xstrrchr(tmp, ','))) {
+				irc_resolver2(s, fd[1], tmp2+1, isbind);
+				*tmp2 = 0;
+		}
+
+		irc_resolver2(s, fd[1], tmp, isbind);
+		sleep(1);
+		exit(0);
+	}
 	xfree(tmp);
 	return;
  }
@@ -367,19 +422,58 @@ void irc_changed_resolve(session_t *s, const char *var) {
  * ======================================== HANDLERS ------------------- *
  *                                                                       */
 
-void irc_handle_disconnect(session_t *s, char *reason, int type)
+void irc_handle_disconnect(session_t *s, const char *reason, int type)
 {
+/* 
+ * EKG_DISCONNECT_NETWORK @ irc_handle_stream type == 1
+ * EKG_DISCONNECT_NETWORK @ irc_handle_stream read  < 1
+ * EKG_DISCONNECT_NETWORK @ irc_c_error(misc.c) when we recv ERROR message.
+ * EKG_DISCONNECT_FAILURE @ irc_command_connect when smth goes wrong.
+ * EKG_DISCONNECT_STOPPED @ irc_command_disconnect when we do /disconnect before connecting.
+ * EKG_DISCONNECT_USER    @ irc_command_disconnect when we do /disconnect when we are connected.
+ */
 	irc_private_t	*j = irc_private(s);
-        char		*__session = xstrdup(session_uid_get(s));
-        char		*__reason = xstrdup(reason);
+        char		*__session, *__reason;
         int		__type = type;
-
-	if (!j || session_connected_get(s) == 0)
+#if 0
+case(EKG_DISCONNECT_FAILURE):
+case(EKG_DISCONNECT_NETWORK):
+	if (reason) 
+		print("generic_error", reason);
+/* query_emit(NULL, "protocol-disconnected", ... ) do it */
+#endif
+	if (!j) {
+		debug("[irc_ierror] @irc_handle_disconnect j == NULL");
 		return;
+	}
 
-	debug("[irc]_handle_disconnect %d\n", type);
-	if (j->obuf || j->connecting)
-		watch_remove(&irc_plugin, j->fd, WATCH_WRITE);
+	session_connected_set(s, 0);
+	j->connecting = 0;
+	close(j->fd);
+	j->fd = -1;
+	irc_free_people(s, j);
+
+	switch (type) {
+		case(EKG_DISCONNECT_FAILURE):
+			break;
+		case(EKG_DISCONNECT_STOPPED):
+			/* if ,,reconnect'' timer exists we should stop doing */
+			if (timer_remove(&irc_plugin, "reconnect") == 0)
+				print("auto_reconnect_removed", session_name(s)); 
+			break;
+		case(EKG_DISCONNECT_NETWORK):
+		case(EKG_DISCONNECT_USER):
+			if (j->recv_watch) {
+/*				watch_remove(&irc_plugin, j->recv_watch->fd, j->recv_watch->type); */
+				watch_free(j->recv_watch);
+				j->recv_watch = NULL;
+			}
+			break;
+			/*
+			 * default:
+			 * 	debug("[irc_handle_disconnect] unknow || !handled type = %d %s", type, reason);
+			 */
+	}
 
 	if (j->obuf) {
 		xfree(j->obuf);
@@ -387,132 +481,137 @@ void irc_handle_disconnect(session_t *s, char *reason, int type)
 		j->obuf_len = 0;
 	}
 
-	session_connected_set(s, 0);
-	j->connecting = 0;
-	close(j->fd);
-	j->fd = -1;
-
-	irc_free_people(s, j);
-
+	__reason  = xstrdup(reason);
+	__session = xstrdup(session_uid_get(s));
 	query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
-
-	/* G->dj: I'm commenting out whole stuff 
-	 * with rectimeradd, because, as you've probably already noticed
-	 * timer handling is buggy   [iirc handler is called twice]
-	 * [I know about this since quite a long time]
-	 */
-	/*RECTIMERADD(s);*/
 	xfree(__reason);
 	xfree(__session);
 }
 
-void irc_handle_stream(int type, int fd, int watch, void *data)
+WATCHER(irc_handle_resolver)
 {
-	irc_handler_data_t *idta = (irc_handler_data_t *) data;
-	session_t *s = idta->session;
-	char *buf = NULL;
-	int len;
+	irc_resolver_t *resolv = (irc_resolver_t *) data;
+	session_t *s = session_find(resolv->session);
+	irc_private_t *j;
+	char **p;
 
-	/* ups, we get disconnected */
-	if (type == 1) {
-		debug ("[irc] handle_stream(): ROZ£¡CZY£O\n");
-		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
-		xfree(idta);
+	if (!s || !(j = irc_private(s)) ) return;
+
+	if (type) {
+		debug("[irc] resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, j->connecting);
+		xfree(resolv->session);
+		xfree(resolv);
+		if (j->resolving > 0)
+			j->resolving--;
+		if (j->resolving == 0 && j->connecting == 2) {
+			debug("[irc] connecting from resolver ;>!\n");
+			irc_really_connect(s);
+		}
 		return;
 	}
 
-	debug("[irc] handle_stream()");
-
-	buf = xmalloc(4096);
-
-	if ((len = read(fd, buf, 4095)) < 1) {
-		debug(" readerror %s\n", strerror(errno));
-		print("generic_error", strerror(errno));
-		/* GiM->dj: type 1 is just disconnection,
-		 * this is read data error,
-		 * besides this is needed since you put 
-		 * REC_TIMERDEL in irc_handle_disconnect
-		 */
-		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK); 
-		watch_remove(&irc_plugin, fd, WATCH_READ);
-	} else {
-		buf[len] = '\0';
-		debug(" recv %d\n", len);
-		irc_input_parser(s, buf, len);
+/* 
+ * hostname ip [family?] port 
+ */
+	if ((p = array_make(watch, " ", 4, 1, 0)) && p[0] && p[1] && p[2] && p[3]) {
+		connector_t *listelem = xmalloc(sizeof(connector_t));
+    		listelem->session = s;
+		listelem->hostname = xstrdup(p[0]);
+		listelem->address  = xstrdup(p[1]);
+		listelem->port     = atoi(p[3]);
+		listelem->family   = atoi(p[2]);
+		list_add_sorted((resolv->plist), listelem, 0, &irc_resolver_sort);
+/*		debug("%x %x\n", resolv->plist, listelem); */
 	}
-
-	xfree(buf);
-
+	array_free(p);
 	return;
 }
 
-void irc_handle_connect(int type, int fd, int watch, void *data)
+WATCHER(irc_handle_stream)
 {
-	irc_handler_data_t	*idta = (irc_handler_data_t *) data;
-	int			res = 0, res_size = sizeof(res);
-	irc_private_t		*j = irc_private(idta->session);
-	const char		*real = NULL, *localhostname = NULL;
-	char			*pass = NULL;
-	connector_t		*tmpcon = NULL;
+	session_t *s = session_find(data);
 
-	/* buggy timer-handling (?), check it! (darkjames) */	
+	/* ups, we get disconnected */
 	if (type == 1) {
-		debug ("[irc] handle_connect(): type %d\n",type);
-		/* debug("%d\n", session_int_get(idta->session, "auto_reconnect")); */
-		/*RECTIMERADD(idta->session);*/
-		/* this is called when we're connected so watch out! */
+		if (s) irc_private(s)->recv_watch = NULL;
+		debug ("[irc] handle_stream(): ROZ£¡CZY£O\n");
+
+		if (s && session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
+			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
+		xfree(data);
 		return;
 	}
-	/*RECTIMERDEL;*/
+
+	if (!s) { 
+		debug("The worst happen you've deleted Our Session (%s) ;(\n", data); 
+		watch_remove(&irc_plugin, fd, WATCH_WRITE); /* /plugin -irc makes it but when we delete only that specific session ? irc:test */ 
+		return;
+	}
+
+
+	/* this shouldn't be like that, it would be better to change
+	 * query_connect, so the handler should get char not
+	 * const char, so the queries could modify this param,
+	 * I'm not sure if this is good idea, just thinking...
+	 */
+	irc_parse_line(s, (char *)watch, xstrlen(watch), fd, s->priv);
+	return;
+}
+
+WATCHER(irc_handle_connect)
+{
+	session_t		*s = session_find(data);
+	int			res = 0; 
+	socklen_t		res_size = sizeof(res);
+	irc_private_t		*j = irc_private(s);
+	const char		*real = NULL, *localhostname = NULL;
+	char			*pass = NULL;
+
+	if (type == 1) {
+		debug ("[irc] handle_connect(): type %d\n",type);
+		xfree(data);
+		return;
+	}
+
+	if (!s) { 
+		debug("[irc] session %s deleted. :(\n", data);  
+		watch_remove(&irc_plugin, fd, WATCH_WRITE); /* look @ irc_handle_stream */ 
+		return;
+	}
+
 	debug ("[irc] handle_connect()\n");
 
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		debug("[irc] handle_connect(): SO_ERROR\n");
-		tmpcon = j->conntmplist->data;
-		
-		DOT_FAIL_EXT("Connect", tmpcon, idta->session,res);
-//		print("generic_error", strerror(res));
-		session_connected_set(idta->session, 0);
-		j->connecting = 0;
-// try next server.
-		j->conntmplist = j->conntmplist->next;
 
-		irc_handle_disconnect(idta->session, "conn_failed_connecting", 
+		DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res);
+		session_connected_set(s, 0);
+		j->connecting = 0;
+		/* try next server. */
+		j->conntmplist = j->conntmplist->next;
+		irc_handle_disconnect(s, strerror(res), 
 				EKG_DISCONNECT_FAILURE);
 		return;
 	}
+	timer_remove(&irc_plugin, "reconnect");
+	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
-	watch_add(&irc_plugin, fd, WATCH_READ, 1, irc_handle_stream, data);
+	j->recv_watch = watch_add(&irc_plugin, fd, WATCH_READ_LINE, 1, irc_handle_stream, xstrdup((char *) data));
 
-	idta->session->last_conn = time(NULL);
+	s->last_conn = time(NULL);
 
-	real = session_get(idta->session, "realname");
+	real = session_get(s, "realname");
 	real = real ? xstrlen(real) ? real : j->nick : j->nick;
-/*	localhostname = session_get(idta->session, "hostname");*/
 	if (j->bindtmplist)	
 		localhostname = ((connector_t *) j->bindtmplist->data)->hostname;
 	if (!xstrlen(localhostname))
 		localhostname = NULL;
-	pass = (char *)session_password_get(idta->session);
+	pass = (char *)session_password_get(s);
 	pass = xstrlen(strip_spaces(pass))?
 		saprintf("PASS %s\r\n", strip_spaces(pass)) : xstrdup("");
 	irc_write(j, "%sUSER %s %s unused_field :%s\r\nNICK %s\r\n",
 			pass, j->nick, localhostname?localhostname:"12", real, j->nick);
 	xfree(pass);
-}
-
-void irc_handle_reconnect(int type, void *data)
-{
-	session_t		*s = session_find((char*) data);
-	irc_private_t		*j = irc_private(s);
-	char *tmp;
-
-	if (type == 1 || !s || session_connected_get(s) == 1 || j->connecting)
-		return;
-
-	tmp = xstrdup("/connect");
-	command_exec(NULL, s, tmp, 0);
-	xfree(tmp);
 }
 
 /*                                                                       *
@@ -529,75 +628,41 @@ int irc_build_sin(connector_t *co, struct sockaddr **address)
 	struct sockaddr_in  *ipv4;
 	struct sockaddr_in6 *ipv6;
 	int len = 0;
-	
+
 	*address = NULL;
-	
+
 	if (!co) 
 		return 0;
-	
+
 	if (co->family == AF_INET) {
 		len = sizeof(struct sockaddr_in);
-	
+
 		ipv4 = xmalloc(len);
-		
+
 		ipv4->sin_family = AF_INET;
 		ipv4->sin_port   = htons(co->port);
 		inet_pton(AF_INET, co->address, &(ipv4->sin_addr));
 
 		*address = (struct sockaddr *) ipv4;
-
 	} else if (co->family == AF_INET6) {
 		len = sizeof(struct sockaddr_in6);
-	
+
 		ipv6 = xmalloc(len);
 		ipv6->sin6_family  = AF_INET6;
 		ipv6->sin6_port    = htons(co->port);
 		inet_pton(AF_INET6, co->address, &(ipv6->sin6_addr));
-		
+
 		*address = (struct sockaddr *) ipv6;
 	}
 	return len;
 }
- 
-COMMAND(irc_command_connect)
-{
-	irc_private_t		*j = irc_private(session);
-	irc_handler_data_t	*idta;
-	const char		*newnick;
-	int			one = 1, connret = -1, bindret = -1, err;
-	
+
+int irc_really_connect(session_t *session) {
+	irc_private_t *j = irc_private(session);
 	connector_t		*connco, *connvh = NULL;
 	struct sockaddr		*sinco,  *sinvh  = NULL;
 	int			sinlen, fd;
-
-/*
-	if (prefer_family == 2) prefer_family = PF_INET6;
-	else prefer_family = PF_INET;*/
-
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
-	if (!session_get(session, "server")) {
-		printq("generic_error", "gdzie lecimy ziom ?! [/session server]");
-		return -1;
-	}
-	if (j->connecting) {
-		printq("during_connect", session_name(session));
-		return -1;
-	}
-
-	if (session_connected_get(session)) {
-		printq("already_connected", session_name(session));
-		return -1;
-	}
-	if ((newnick = session_get(session, "nickname"))) {
-		xfree(j->nick);
-		j->nick = xstrdup(newnick);
-	} else {
-		printq("generic_error", "gdzie lecimy ziom ?! [/session nickname]");
-		return -1;
-	}
+	int			one = 1, connret = -1, bindret = -1, err;
 
 	if (!j->conntmplist) j->conntmplist = j->connlist;
 	if (!j->bindtmplist) j->bindtmplist = j->bindlist;
@@ -609,20 +674,18 @@ COMMAND(irc_command_connect)
  	}
 
 	connco = j->conntmplist->data;
+	
 	sinlen = irc_build_sin(connco, &sinco);
 	if (!sinco) {
 		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje (!sinco)"); 
 		return -1;
 	}
 
-	j->connecting = 1;
-
 	if ((fd = socket(connco->family, SOCK_STREAM, 0)) == -1) {
 		err = errno;
 		debug("[irc] handle_resolver() socket() failed: %s\n",
 				strerror(err));
-		print("generic_error", strerror(err));
-		irc_handle_disconnect(session, "conn_failed_connecting",
+		irc_handle_disconnect(session, strerror(err),
 				EKG_DISCONNECT_FAILURE);
 		goto irc_conn_error;
 	}
@@ -633,22 +696,21 @@ COMMAND(irc_command_connect)
 		err = errno;
 		debug("[irc] handle_resolver() ioctl() failed: %s\n",
 				strerror(err));
-		print("generic_error", strerror(err));
-		irc_handle_disconnect(session, "conn_failed_connecting", 
+		irc_handle_disconnect(session, strerror(err), 
 				EKG_DISCONNECT_FAILURE);
 		goto irc_conn_error;
 	}
 	
-	/* loop, optimaize... */
+	/* loop, optimize... */
 	if (j->bindtmplist) 
 		connvh = j->bindtmplist->data;	
 	irc_build_sin(connvh, &sinvh);
 	while (bindret && connvh) {
-		DOT("Bind", connvh, session);
+		DOT("IRC_TEST", "Bind", connvh, session, 0);
 		if (connvh->family == connco->family)  {
 			bindret = bind(fd, sinvh, sinlen);
 			if (bindret == -1)
-				DOT_FAIL("Bind", connvh, session);
+				DOT("IRC_TEST_FAIL", "Bind", connvh, session, errno);
  		}
 
 		if (bindret && j->bindtmplist->next) {
@@ -661,50 +723,73 @@ COMMAND(irc_command_connect)
 		} else
 			break;
 	}
-
-	/* connect */
-
-//	printq("connecting", session_name(session));	
-	DOT("Connecting", connco, session);
+	j->connecting = 1;
+	DOT("IRC_TEST", "Connecting", connco, session, 0);
 	connret = connect(fd, sinco, sinlen);
- 
+
 	xfree(sinco);
 	xfree(sinvh);
- 
+
 	if (connret && errno != EINPROGRESS) {
 		err = errno;
-		debug("[irc] handle_resolver() connect() failed: %s\n",
-				strerror(err));
-		print("generic_error", strerror(err));
-		irc_handle_disconnect(session, "conn_failed_connecting", 
-				EKG_DISCONNECT_FAILURE);
+		DOT("IRC_TEST_FAIL", "Connect", connco, session, err);
+		j->conntmplist = j->connlist->next;
+		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
 		return -1;
 
 	}
 	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
 
-	idta = (irc_handler_data_t *) xmalloc (sizeof(irc_handler_data_t));
-	idta->session = session;
-	watch_add(&irc_plugin, fd, WATCH_WRITE, 0, irc_handle_connect, idta);
+	watch_add(&irc_plugin, fd, WATCH_WRITE, 0, irc_handle_connect, xstrdup(session->uid) );
  	return 0;
 irc_conn_error: 
 	xfree(sinco);
 	xfree(sinvh);
 	return -1;
+
+}
+
+COMMAND(irc_command_connect)
+{
+	irc_private_t		*j = irc_private(session);
+	const char		*newnick;
+	
+	if (!session_check(session, 1, IRC3)) {
+		printq("invalid_session");
+		return -1;
+	}
+	if (!session_get(session, "server")) {
+		printq("generic_error", "gdzie lecimy ziom ?! [/session server]");
+		return -1;
+	}
+	if (j->connecting) {
+		printq("during_connect", session_name(session));
+		return -1;
+	}
+	if (session_connected_get(session)) {
+		printq("already_connected", session_name(session));
+		return -1;
+	}
+	if ((newnick = session_get(session, "nickname"))) {
+		xfree(j->nick);
+		j->nick = xstrdup(newnick);
+	} else {
+		printq("generic_error", "gdzie lecimy ziom ?! [/session nickname]");
+		return -1;
+	}
+	if (j->resolving) {
+		printq("generic", "irc resolver is working.. we will connect as soon as possible ;>");
+		j->connecting = 2;
+		return -1;
+	}
+	return irc_really_connect(session);
 }
 
 COMMAND(irc_command_disconnect)
 {
 	irc_private_t	*j = irc_private(session);
-	char		*reason = (char *)(params? params[0]?params[0]:QUITMSG(session): NULL);
-	int		fd = j->fd;
-	/* dj: we copy fd, because irc_handle_disconnect would change it
-	 * 
-	 * params can be NULL
-	 * [if we get ERROR from server, misc.c irc_c_error]
-	 */
-	
+	const char	*reason = params[0]?params[0]:QUITMSG(session);
 	debug("[irc] comm_disconnect() !!!\n");
 
 	if (!session_check(session, 1, IRC3)) {
@@ -712,27 +797,18 @@ COMMAND(irc_command_disconnect)
 		return -1;
 	}
 
-        /* if ,,reconnect'' timer exists we should stop doing */
-        if (timer_remove(&irc_plugin, "reconnect") == 0) {
-		printq("auto_reconnect_removed", session_name(session));
-		return 0;
+	if (!j->connecting && !session_connected_get(session)) {
+		printq("not_connected", session_name(session));
+		return -1;
 	}
 
-	if (!j->connecting && !session_connected_get(session)) {
-			printq("not_connected", session_name(session));
-			return -1;
-	}
-	
 	if (reason && session_connected_get(session))
 		irc_write (j, "QUIT :%s\r\n", reason);
 
-	if (j->connecting) {
-		j->connecting = 0;
+	if (j->connecting)
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
-	} else
+	else
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
-
-	watch_remove(&irc_plugin, fd, WATCH_READ);
 
 	return 0;
 }
@@ -745,10 +821,9 @@ COMMAND(irc_command_reconnect)
 		printq("invalid_session");
 		return -1;
 	}
-	
-	if (j->connecting || session_connected_get(session))
-		irc_command_disconnect(name, params, session, target, quiet);
 
+	if (j->connecting || session_connected_get(session)) 
+		irc_command_disconnect(name, params, session, target, quiet);
 	return irc_command_connect(name, params, session, target, quiet);
 }
 
@@ -757,19 +832,30 @@ COMMAND(irc_command_reconnect)
 COMMAND(irc_command_msg)
 {
 	irc_private_t	*j = irc_private(session);
-	const char	*uid=NULL;
-        window_t	*w;
-        int		class = EKG_MSGCLASS_SENT, ischn; 
-	int		ekgbeep = EKG_NO_BEEP;
-        char		*me, *format=NULL, *seq=NULL, *head, *chantypes, *coloured;
-        char		**rcpts, prefix[2], *mline[2], mlinechr;
-        const time_t	sent = time(NULL);					
-	people_t	*person;
 	people_chan_t	*perchn = NULL;
+	people_t	*person;
+        window_t	*w;
+
+	int		prv = 0; /* NOTICE | PRIVMSG */
+	
+	char		*mline[2];
+	char		*tmpbuf;
+	
+	int		ischn;  /* IS CHANNEL ? */
+	char            prefix[2] = {' ', '\0'};
+	char		*__msg = NULL;
+	char		*head, *coloured;
+	const char	*frname; /* formatname */
+
+        int		class = EKG_MSGCLASS_SENT | EKG_NO_THEMEBIT;
+	int		ekgbeep = EKG_NO_BEEP;
+	const time_t	sent = time(NULL);
+	char		*format=NULL, *seq=NULL;
 	int		secure = 0;
+	
+	char		**rcpts;
+	const char	*uid=NULL;
 	char		*sid = NULL, *uid_full = NULL;
-	unsigned char	*__msg = NULL;
-	int		prv = 0;
 
 	if (!session_check(session, 1, IRC3)) {
 		printq("invalid_session");
@@ -791,66 +877,54 @@ COMMAND(irc_command_msg)
 		printq("not_connected", session_name(session));
 		return -1;
 	}
+	w = window_find_s(session, uid);
 
 	prv = xstrcmp(name, "notice");
-	sid = xstrdup(session->uid);
-	uid_full = xstrdup(uid);
-	mline[0] = (char *)params[1];
-	while ( (mline[1]=xstrchr(mline[0], '\n')) )
-	{
-		mlinechr = *mline[1];
-		*mline[1]='\0';
-		__msg = xstrdup(mline[0]);
+	ischn = !!xstrchr(SOP(_005_CHANTYPES), uid[4]);
+/* PREFIX */
+	if ((ischn && (person = irc_find_person(j->people, j->nick)) && (perchn = irc_find_person_chan(person->channels, (char *)uid))))
+		prefix[0] = *(perchn->sign);
 
-		query_emit(NULL, "message-encrypt", &sid, &uid_full, &__msg, &secure);
-		irc_write(j, "%s %s :%s\r\n", prv?"PRIVMSG" : "NOTICE", uid+4, __msg);
-		xfree(__msg);
-
-		mline[0] = (char *)(mline[1]+1);
-		*mline[1] = mlinechr;
-	}
-	__msg = xstrdup(mline[0]);
-	query_emit(NULL, "message-encrypt", &sid, &uid_full, &__msg, &secure);
-	irc_write(j, "%s %s :%s\r\n", prv?"PRIVMSG" : "NOTICE", uid+4, __msg);
-	xfree(sid);
-	xfree(uid_full);
-	xfree(__msg);
-
-	chantypes = SOP(_005_CHANTYPES);
-	ischn = !!xstrchr(chantypes, uid[4]);
-	if ((person = irc_find_person(j->people, j->nick)))
-		perchn = irc_find_person_chan(person->channels, (char *)uid);
-
-	w = window_find_s(session, uid);
-	rcpts = xmalloc(sizeof(char *) * 2);
-	me = xstrdup(session_uid_get(session));
-
-	prefix[1] = '\0';
-	prefix[0] = perchn?*(perchn->sign):' ';
-	if (!session_int_get(session, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
+	if (!ischn || (!session_int_get(session, "SHOW_NICKMODE_EMPTY") && *prefix==' '))
 		*prefix='\0';
-	head = format_string(format_find(prv?
+
+	frname = format_find(prv?
 				ischn?"irc_msg_sent_chan":w?"irc_msg_sent_n":"irc_msg_sent":
-				ischn?"irc_not_sent_chan":w?"irc_not_sent_n":"irc_not_sent"),
-			session_name(session), prefix,
-			j->nick, j->nick, uid+4, params[1]);
+				ischn?"irc_not_sent_chan":w?"irc_not_sent_n":"irc_not_sent");
 
-	coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
-
+	sid 	 = xstrdup(session_uid_get(session));
+	uid_full = xstrdup(uid);
+	rcpts    = xmalloc(sizeof(char *) * 2);
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
 
-	class |= EKG_NO_THEMEBIT;
+	tmpbuf   = (mline[0] = xstrdup(params[1])); /* backup of params[1] when we change them is nessesary ? */
+	while ((mline[1] = split_line(&(mline[0])))) {
+		__msg = xstrdup((const char *)mline[1]);
 
-	query_emit(NULL, "protocol-message", &me, &me, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
-	xfree(me);
-	xfree(head);
+		head = format_string(frname, session_name(session), prefix,
+				j->nick, j->nick, uid+4, __msg);
+
+		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
+
+		query_emit(NULL, "message-encrypt", &sid, &uid_full, &__msg, &secure);
+		query_emit(NULL, "protocol-message", &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
+
+		irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __msg);
+
+		xfree(__msg);
+		xfree(coloured);
+		xfree(head);
+	}
+
 	xfree(rcpts[0]);
 	xfree(rcpts);
-	xfree(coloured);
 	
-	session_unidle(session);
+	xfree(sid);
+	xfree(uid_full);
+	xfree(tmpbuf);
 
+	session_unidle(session);
 	return 0;
 }
 
@@ -874,7 +948,7 @@ COMMAND(irc_command_quote)
 		printq("not_enough_params", name);
 		return -1;
 	}
-
+	
 	if (!session_connected_get(session)) {
 		printq("not_connected", session_name(session));
 		return -1;
@@ -955,11 +1029,6 @@ int irc_write_status(session_t *s, int quiet)
 		else
 			irc_write(j, "AWAY :%s\r\n", status);
 	}
-	
-	/*xfree(descr); dj->G: bugfix
-	 *  G->dj: ?! what this causes, adn do we free this anywhere later ?
-	 * 
-	 */
 
 	return 0;
 }
@@ -972,23 +1041,11 @@ COMMAND(irc_command_away)
 	}
 
 	if (!xstrcmp(name, "back")) {
-#if 0
-		if (!params[0]) {
-#endif
-			session_descr_set(session, NULL);
-			session_status_set(session, EKG_STATUS_AVAIL);
-			session_unidle(session);
-#if 0
-		} else {
-			printq("invalid_params", "irc:back");
-			return -1;
-		}
-#endif
+		session_descr_set(session, NULL);
+		session_status_set(session, EKG_STATUS_AVAIL);
+		session_unidle(session);
 	} else if (!xstrcmp(name, "away")) {
-		if (params[0]) 
-			session_descr_set(session, params[0]);
-		else 
-			session_descr_set(session, NULL);
+		session_descr_set(session, params[0]); /* if params[0] is NULL it'd be NULL too i think ;p */
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
 	} else if (!xstrcasecmp(name, "_autoaway")) {
@@ -1007,7 +1064,7 @@ COMMAND(irc_command_away)
 
 /*****************************************************************************/
 
-int irc_window_kill(void *data, va_list ap)
+QUERY(irc_window_kill)
 {
 	window_t	**xw = va_arg(ap, window_t **);
 	window_t	*w = *xw;
@@ -1028,7 +1085,7 @@ int irc_window_kill(void *data, va_list ap)
 	return 0;
 }
 
-int irc_topic_header(void *data, va_list ap)
+QUERY(irc_topic_header)
 {
 	char		**top   = va_arg(ap, char **);
 	char		**setby = va_arg(ap, char **);
@@ -1202,8 +1259,6 @@ int irc_getchan_free(char **mp)
 COMMAND(irc_command_names)
 {
 	irc_private_t	*j = irc_private(session);
-/*	people_t	*per;
-	people_chan_t	*pchan;*/
 	channel_t       *chan;
 	userlist_t      *ulist;
 	char		mode[2], *buf, **mp, *channame;
@@ -1214,40 +1269,43 @@ COMMAND(irc_command_names)
 	 * there would be more than 4 modes...
 	 */
 	char            *sort_modes	= xstrchr(SOP(_005_PREFIX), ')');
-	int             lvl_total[5]     = {0, 0, 0, 0, 0};
+	int             lvl_total[5]    = {0, 0, 0, 0, 0};
 	int		lvl   = 0;
 	int		count = 1;
-	
+
+	if (!session_check(session, 1, IRC3)) {
+		print("invalid_session");
+		return -1;
+	}
+
 	if ((!sort_modes) ||  !(channame = irc_getchan(session, params, name,
 					&mp, 0, IRC_GC_CHAN))) 
 	 		return -1;
 
-	mode [1] = '\0';
-	chan = irc_find_channel(j->channels, channame);
-	if (!chan) {
+	if (!(chan = irc_find_channel(j->channels, channame))) {
 		printq("generic", "irc_command_names: wtf?");
 		return -1;
 	}
+	buf 	= xmalloc(1550);
+	mode[1] = '\0';
 
-	buf = xmalloc(1550);
-	print_window(channame, session, 0, "irc_names_beg", session_name(session), channame+4);
-	while (*sort_modes || lvl == 5) {
-//	while (*sort_modes && lvl <=5 ) {
-		if (lvl < 5) {
+	print_window(channame, session, 0, "IRC_NAMES_NAME", session_name(session), channame+4);
+	
+	while ((*sort_modes || lvl == 4) && lvl < 5) {
+		if (lvl < 4) {
 			sort_modes++;
 			mode[0] = (*sort_modes)?(*sort_modes):' ';
 		}
-		else if (lvl == 5) {
-			 mode[0] = '?'; 
-			 /* TODO: znalezc ta osobe, i jej mode */
-		}
-		else break; /* tak cholernie na wszelki wypadek */
 		
 		for (l = chan->window->userlist; l; l = l->next) {
 			ulist = l->data;
 			if (!ulist || xstrcmp(ulist->status, sort_status[lvl]) )
 				continue;
 			lvl_total[lvl]++;
+			if (lvl == 4) { 
+				mode[0] = '?';
+				/* TODO: find that person, and his/her mode. */
+			}
 			strcat(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4)));
 
 			count++;
@@ -1263,14 +1321,19 @@ COMMAND(irc_command_names)
 	if (count != 7 && count != 1) {
 		printq("generic", buf);
 	}
-/*
-	if (lvl < 4) {
-		lvl_total[3] = lvl_total[2];
-		lvl_total[2] = lvl_total[1]; 
-		lvl_total[1] = 0;
-	}
-	print_window(channame, session, 0, "irc_names_tot", session_name(session), channame+4, itoa(list_count(chan->window->userlist)), itoa(lvl_total[0]), itoa(lvl_total[1]), itoa(lvl_total[2]), itoa(lvl_total[3]), itoa(lvl_total[4]));
-*/
+#define plvl(x) lvl_total[x] ? itoa(lvl_total[x]) : "0"
+/* normal network - 0: ops; 1:voices  2:normal			    (lvl = 3)
+ * with halfops   - 0: ops; 1:halfops 2:voices 3:normal		    (lvl = 5)
+ * strange network- 0: ops; 1:halfops 2:voices 3:normal 4:allother. (lvl = 5)
+ */
+	if (lvl > 3)	/* stange || with halfops */
+		print_window(channame, session, 0, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(list_count(chan->window->userlist)), plvl(0), plvl(2), plvl(3), plvl(1), plvl(4));
+	else		/* normal */
+		print_window(channame, session, 0, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(list_count(chan->window->userlist)), plvl(0), plvl(1), plvl(2), "0", "0");
+	debug("[IRC_NAMES] lvl = %d levelcounts = %d %d %d %d %d\n", 
+		lvl, 
+		lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3], lvl_total[4], lvl_total[5]);
+#undef plvl
 	irc_getchan_free(mp);
 	xfree (channame);
 	xfree(buf);
@@ -1378,8 +1441,7 @@ COMMAND(irc_command_unban)
 		printq("not_enough_params", name);
 		xfree(channame);
 		return -1;
-	}
-	else {
+	} else {
 		if ( (banid = atoi(*mp)) ) {
 			chan = irc_find_channel(j->channels, channame+4);
 			if (chan && (banlist = (chan->banlist)) ) {
@@ -1638,21 +1700,19 @@ COMMAND(irc_command_whois)
 	debug("irc_command_whois(): %s\n", name);
 	if (!xstrcmp(name, "whowas"))
 		irc_write(irc_private(session),	"WHOWAS %s\r\n", person+4);
-        else if(!xstrcmp(name, "wii"))
+        else if (!xstrcmp(name, "wii"))
 		irc_write(irc_private(session),	"WHOIS %s %s\r\n", person+4, person+4);
-	else
-		irc_write(irc_private(session),	"WHOIS %s\r\n",  person+4);
+	else	irc_write(irc_private(session),	"WHOIS %s\r\n",  person+4);
 
 	irc_getchan_free(mp);
 	xfree (person);
 	return 0;
 }
 
-int irc_status_show_handle(void *data, va_list ap)
+QUERY(irc_status_show_handle)
 {
 	char		**uid = va_arg(ap, char**);
 	session_t	*s = session_find(*uid);
-//	const char	*p[2];
 	const char	*p[1];
 
 	if (!s)
@@ -1787,27 +1847,54 @@ COMMAND(irc_command_nick)
 COMMAND(irc_command_test) {
 	irc_private_t	*j = irc_private(session);
 	list_t       tlist = j->connlist;
-	connector_t  *test = 0;
 	
-	for (tlist = j->connlist; tlist; tlist = tlist->next) {
-		test = tlist->data;
-		DOT("Connect to:", test, session);
+	for (tlist = j->connlist; tlist; tlist = tlist->next)
+		DOT("IRC_TEST", "Connect to:", ((connector_t *) tlist->data), session, 0);
+	for (tlist = j->bindlist; tlist; tlist = tlist->next)
+		DOT("IRC_TEST", "Bind to:", ((connector_t *) tlist->data), session, 0);
+
+	if (j->conntmplist && j->conntmplist->data) {
+		if (j->connecting)
+			DOT("IRC_TEST", "Connecting:", ((connector_t *) j->conntmplist->data), session, 0);
+		else if (session_connected_get(session))
+			DOT("IRC_TEST", "Connected:", ((connector_t *) j->conntmplist->data), session, 0);
+		else    DOT("IRC_TEST", "Will Connect to:", ((connector_t *) j->conntmplist->data), session, 0);
 	}
+	if (j->bindtmplist && j->bindtmplist->data)
+		DOT("IRC_TEST", "((Will Bind to) || (Binded)) :", ((connector_t *) j->bindtmplist->data), session, 0);
+	return 0;
+}
+
+COMMAND(irc_command_genkey) {
+	extern int sim_key_generate(const char *uid); /* sim plugin */
+	char *uid = NULL;
+
+	if (params[0]) 
+		uid = saprintf("%s:%s", IRC3, params[0]);
+	else    uid = xstrdup(target);
 	
-	for (tlist = j->bindlist; tlist; tlist = tlist->next) {
-		test = tlist->data;
-		DOT("Bind to:", test, session);
-	}
+	if (!uid) 
+		return -1;
 	
-	if (j->conntmplist && j->conntmplist->data)  {
-		test = j->conntmplist->data;
-		DOT("Connecting:", test, session);
+	if ((plugin_find("sim"))) {
+		struct stat st;
+		char *temp1, *temp2;
+		int  ret = 0;
+
+                temp1 = saprintf("%s/%s.pem", prepare_path("keys", 0), uid);
+                temp2 = saprintf("%s/private-%s.pem", prepare_path("keys", 0), uid);
+
+                if (!stat(temp1, &st) && !stat(temp2, &st)) {
+                        printq("key_private_exist");
+			ret = -1;
+                }
+		xfree(temp1); xfree(temp2);
+		
+		if (!ret) 
+			ret = sim_key_generate(uid);
 	}
-	
-	if (j->conntmplist && j->bindtmplist->data) {
-		test = j->bindtmplist->data;
-		DOT("Binding:", test, session);
-	}
+	// etc.. 	
+	xfree(uid);
 	return 0;
 }
 
@@ -1831,13 +1918,13 @@ int irc_plugin_init(int prio)
 	query_connect(&irc_plugin, "irc-topic",		irc_topic_header, (void*) 0);
 	query_connect(&irc_plugin, "status-show",	irc_status_show_handle, NULL);
 	query_connect(&irc_plugin, "irc-kick",		irc_onkick_handler, 0);
-	
+
 	query_connect(&irc_plugin, "config-postinit",	irc_postinit, 0);
 
-	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL);
+	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL); /*COMMAND_MUSTBECONNECTED, NULL);*/
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 0, NULL);
 	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect, 0, NULL);
-	command_add(&irc_plugin, "irc:reconnect", "r ?",	irc_command_reconnect, 0, NULL);
+	command_add(&irc_plugin, "irc:reconnect", "r ?",irc_command_reconnect, 0, NULL);
 
 	command_add(&irc_plugin, "irc:join", "w", 	irc_command_jopacy, 0, NULL);
 	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 0, NULL);
@@ -1846,7 +1933,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:nick", "?",	irc_command_nick, 0, NULL);
 	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 0, NULL);
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 0, NULL);
-	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 0, NULL);
+	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 0, NULL); /*COMMAND_MUSTBECONNECTED, NULL);*/
 	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 0, NULL);
 	command_add(&irc_plugin, "irc:msg", "uUw ?",	irc_command_msg, 0, NULL);
 	command_add(&irc_plugin, "irc:notice", "uUw ?",	irc_command_msg, 0, NULL);
@@ -1905,12 +1992,13 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:halfop", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
 	command_add(&irc_plugin, "irc:dehalfop", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
 	
-	command_add(&irc_plugin, "irc:away", "?",	irc_command_away, 0, NULL);
+	command_add(&irc_plugin, "irc:away", "?",	irc_command_away, 0, NULL); /*COMMAND_MUSTBECONNECTED, NULL);*/
 	command_add(&irc_plugin, "irc:_autoaway", NULL,	irc_command_away, 0, NULL);
 	command_add(&irc_plugin, "irc:back", NULL,	irc_command_away, 0, NULL);
 	command_add(&irc_plugin, "irc:_autoback", NULL,	irc_command_away, 0, NULL);
 	command_add(&irc_plugin, "irc:quote", "?",	irc_command_quote, 0, NULL);
 	command_add(&irc_plugin, "irc:_conntest", "?",	irc_command_test, 0, NULL);
+	command_add(&irc_plugin, "irc:_genkeys",  "?",  irc_command_genkey, 0, NULL);
 #ifdef IRC_BUILD_ALIAS
 // dj: I get sigsegv, and probably memleak
 /*	command_add(&irc_plugin, "irc:n", "w?",		irc_command_names, 0, NULL); */
@@ -1940,6 +2028,7 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
         plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "hostname", VAR_STR, 0, 0, irc_changed_resolve);
+/*	plugin_var_add(&irc_plugin, "lag_test */
 	plugin_var_add(&irc_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
 	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
 	plugin_var_add(&irc_plugin, "prefer_family", VAR_INT, "0", 0, NULL);
@@ -1973,16 +2062,14 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "VERSION_NO", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_SYS", VAR_STR, 0, 0, NULL);
 
-#if 0
-	for (l = sessions; l; l = l->next)
-		irc_private_init((session_t*) l->data);
-#endif
+/* irc_session by queries do it. */
 	return 0;
 }
 
 static int irc_plugin_destroy()
 {
-	list_t	l;
+/* plugin_unload @ plugins.c do it but when we type /quit ? */
+	list_t  l;
 
 	for (l = sessions; l; l = l->next)
 		irc_private_destroy((session_t*) l->data);
@@ -2024,8 +2111,9 @@ static int irc_theme_init()
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
 	format_add("irc_not_f_server",	"%g!%3%n %6", 1);
 
-	format_add("irc_names_beg",     "[%gUsers %G%2%n]", 1);
-	format_add("irc_names_tot",     "%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n", 1);
+	format_add("IRC_NAMES_NAME",   "[%gUsers %G%2%n]", 1);
+	format_add("IRC_NAMES",       _("%K[%W%1%w%[9]2%K]%n"), 1);
+	format_add("IRC_NAMES_TOTAL",   "%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%7%n halfops, %W%5%n voices, %W%6%n normal %W%8%n unknown]\n", 1);
 
 	format_add("irc_joined", _("%> %Y%2%n has joined %4\n"), 1);
 	format_add("irc_joined_you", _("%> %RYou%n have joined %4\n"), 1);
@@ -2122,8 +2210,6 @@ static int irc_theme_init()
 	format_add("IRC_MODE_CHAN", _("%> %2 mode is [%3]\n"), 1);
 	format_add("IRC_MODE", _("%> (%1) %2 set mode %3 on You\n"), 1);
 	
-	format_add("IRC_NAMES", _("%K[%W%1%w%[9]2%K]%n"), 1);
-
 	format_add("IRC_INVITE", _("%> %W%2%n invites you to %W%5%n\n"), 1);
 	format_add("IRC_PINGPONG", _("%) (%1) ping/pong %c%2%n\n"), 1);
 	format_add("IRC_YOUNEWNICK", _("%> You are now known as %G%3%n\n"), 1);
@@ -2133,8 +2219,12 @@ static int irc_theme_init()
 	/* %1 - sesja ; %2 - Connect, BIND, whatever, %3 - hostname %4 - adres %5 - port 
 	 * %6 - family (debug pursuit only) */
 	format_add("IRC_TEST", "%> (%1) %2 to %W%3%n [%4] port %W%5%n (%6)", 1);
-	/* j/w %6 - error */
-	format_add("IRC_TEST_FAIL", "%> (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%6)", 1);
+	format_add("IRC_CONN_ESTAB", "%> (%1) Connection to %W%3%n estabilished", 1);
+	/* j/w %7 - error */
+	format_add("IRC_TEST_FAIL", "%> (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
+	
+	format_add("irc_channel_secure", "%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
+	format_add("irc_channel_unsecure", "%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
 
 	return 0;
 }

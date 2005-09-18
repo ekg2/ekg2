@@ -45,12 +45,12 @@ int event_check(const char *session, const char *name, const char *target, const
 void event_free();
 int events_init();
 
-int event_protocol_message(void *data, va_list ap);
-int event_avail(void *data, va_list ap);
-int event_away(void *data, va_list ap);
-int event_na(void *data, va_list ap);
-int event_online(void *data, va_list ap);
-int event_descr(void *data, va_list ap);
+QUERY(event_protocol_message);
+QUERY(event_avail);
+QUERY(event_away);
+QUERY(event_na);
+QUERY(event_online);
+QUERY(event_descr);
 
 int event_target_check (char *buf);
 

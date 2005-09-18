@@ -45,7 +45,7 @@ void ncurses_binding_destroy();
 
 void ncurses_binding_add(const char *key, const char *action, int internal, int quiet);
 void ncurses_binding_delete(const char *key, int quiet);
-void ncurses_binding_default();
+int  ncurses_binding_default(void *, va_list);
 void ncurses_binding_set(int quiet, const char *key, const char *sequence);
 
 int bindings_added_max;

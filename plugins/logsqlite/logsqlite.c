@@ -398,7 +398,7 @@ void logsqlite_close_db(sqlite_t * db)
  * handler wiadomo¶ci
  */
 
-int logsqlite_msg_handler(void *data, va_list ap)
+QUERY(logsqlite_msg_handler)
 {
 	char    **__session = va_arg(ap, char**),    *session = *__session;
 	char        **__uid = va_arg(ap, char**),        *uid = *__uid;
@@ -518,7 +518,7 @@ int logsqlite_msg_handler(void *data, va_list ap)
 /**
  * handler statusów
  */
-int logsqlite_status_handler(void *data, va_list ap)
+QUERY(logsqlite_status_handler)
 {
         char **__session = va_arg(ap, char**), *session = *__session;
         char **__uid = va_arg(ap, char**), *uid = *__uid;

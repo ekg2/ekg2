@@ -32,8 +32,8 @@
 #endif
 
 extern char *logsqlite_prepare_path();
-extern int logsqlite_msg_handler(void *data, va_list ap);
-extern int logsqlite_status_handler(void *data, va_list ap);
+extern QUERY(logsqlite_msg_handler);
+extern QUERY(logsqlite_status_handler);
 extern int logsqlite_theme_init();
 extern sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent);
 extern sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path);

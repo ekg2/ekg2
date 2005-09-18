@@ -430,7 +430,7 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
         return 0;
 }
 
-int query_connect(plugin_t *plugin, const char *name, void *handler, void *data)
+int query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data)
 {
 	query_t q;
 
@@ -439,7 +439,7 @@ int query_connect(plugin_t *plugin, const char *name, void *handler, void *data)
 	q.name = xstrdup(name);
 	q.handler = handler;
 	q.data = data;
-	
+
 	return (list_add(&queries, &q, sizeof(q)) != NULL);
 }
 
@@ -487,7 +487,7 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 			int (*handler)(void *data, va_list ap) = q->handler;
 
 			q->count++;
-			
+
 			result = 0;
 			/*
 			 * pc and amd64: va_arg remove var from va_list when you use va_arg, 
@@ -673,7 +673,7 @@ void watch_handle(watch_t *w)
 	}
 }
 
-watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, int persist, void *handler, void *data)
+watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, int persist, watcher_handler_func_t *handler, void *data)
 {
 	watch_t *w = watch_new(plugin, fd, type);
 

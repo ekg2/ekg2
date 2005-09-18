@@ -50,6 +50,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <arpa/inet.h>
+
 #include <errno.h>
 #include <string.h>
 
@@ -59,24 +61,26 @@
 
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 
-void logs_setvar_default()
+QUERY(logs_setvar_default)
 {
 	xfree(config_logs_path);
 	xfree(config_logs_timestamp);
 	config_logs_path = xstrdup("~/.ekg2/logs/%S/%u");
 	config_logs_timestamp = NULL;
+	return 0;
 }
 
 int logs_plugin_init(int prio)
 {
 	plugin_register(&logs_plugin, prio);
 
-        logs_setvar_default();
+        logs_setvar_default(NULL, NULL);
 
         query_connect(&logs_plugin, "set-vars-default", logs_setvar_default, NULL);
-	query_connect(&logs_plugin, "protocol-message-post",	logs_handler, NULL);
+	query_connect(&logs_plugin, "protocol-message-post", logs_handler, NULL);
 	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);
 	query_connect(&logs_plugin, "protocol-status", logs_status_handler, NULL);
+
 	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
 	variable_add(&logs_plugin, "log", VAR_MAP, 1, &config_logs_log, NULL, variable_map(3, 0, 0, "none", 1, 2, "simple", 2, 1, "xml"), NULL);
 	variable_add(&logs_plugin, "log_ignored", VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
@@ -243,7 +247,7 @@ FILE* logs_open_file(char *path, char *ext, int makedir)
 	xfree(fullname);
 
 	return fdesc;
-};
+}
 
 /*
  * przygotowuje timstamp do wstawienia do logów
@@ -266,7 +270,7 @@ char * prepare_timestamp(time_t ts)
  * glowny handler
  */
 
-void logs_handler(void *data, va_list ap)
+QUERY(logs_handler)
 {
 	char **__session = va_arg(ap, char**), *session = *__session; // session name
 	char     **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -281,7 +285,7 @@ void logs_handler(void *data, va_list ap)
 	char *path;
 
 	if (config_logs_log == 0)
-		return;
+		return 0;
 
 	/* well, 'format' is unused, so silence the warning */
 	format = NULL;
@@ -289,13 +293,13 @@ void logs_handler(void *data, va_list ap)
 	if (class & EKG_NO_THEMEBIT) class -= EKG_NO_THEMEBIT; /** stupid **/
 
 	if (!session)
-		return;
+		return 0;
 
 	if (!(log_formats = session_get(s, "log_formats")))
-		return;
+		return 0;
 
 	if (!(path = logs_prepare_path(s, uid, rcpts, text, sent, class)))
-		return;
+		return 0;
 
 	debug("[logs] logging to file %s\n", path);
 
@@ -315,14 +319,15 @@ void logs_handler(void *data, va_list ap)
 	// itd. dla innych formatow logow
 
 	xfree(path);
-};
+	return 0;
+}
 
 
 /*
  * status handler
  */
 
-void logs_status_handler(void *data, va_list ap)
+QUERY(logs_status_handler)
 {
 	char **__session = va_arg(ap, char**), *session = *__session; // session name
 	char     **__uid = va_arg(ap, char**), *uid = *__uid;
@@ -337,7 +342,7 @@ void logs_status_handler(void *data, va_list ap)
 	uint16_t port=userlist?userlist->port:0;
 
 	if (!config_logs_log_status)
-		return;
+		return 0;
 	
 	debug("[logs] logging status\n");
 
@@ -345,13 +350,13 @@ void logs_status_handler(void *data, va_list ap)
 		descr = "";
 
 	if (!session)
-		return;
+		return 0;
 
 	if (!(log_formats = session_get(s, "log_formats")))
-		return;
+		return 0;
 
 	if (!(path = logs_prepare_path(s, uid, 0, descr, time(NULL), 6)))
-		return;
+		return 0;
 	
 	debug("[logs] logging to file %s\n", path);
 
@@ -367,7 +372,8 @@ void logs_status_handler(void *data, va_list ap)
 
 
 	xfree(path);
-};
+	return 0;
+}
 
 
 /*
@@ -375,12 +381,12 @@ void logs_status_handler(void *data, va_list ap)
  * z najmlodszego logu
  */
 
-void logs_handler_newwin(void *data, va_list ap)
+QUERY(logs_handler_newwin)
 {
 	//window_t *__result = va_arg(ap, window_t*), result = *__result;
 
 	if (config_logs_remind_number <= 0)
-		return;
+		return 0;
 
 	// otwarcie najm³odszego
 
@@ -388,14 +394,15 @@ void logs_handler_newwin(void *data, va_list ap)
 	// foreach list_add (logs_reminded)
 	// query_emit "protocol-message"
 	// usunac liste
-};
+	return 0;
+}
 
 /*
  * zapis w formacie znanym z ekg1
  * typ,uid,nickname,timestamp,{timestamp wyslania dla odleglych}, text
  */
 
-void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, int seq, uint32_t ip, uint16_t port, char *status, char *descr)
+void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, char *seq, uint32_t ip, uint16_t port, char *status, char *descr)
 {
 	FILE *file;
 	char *textcopy = log_escape(text);
@@ -417,7 +424,7 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 		xfree(senttimestamp);
 		xfree(timestamp);
 		xfree(textcopy);
-		return ;
+		return;
 	}
 	
 	if (class!=6){
@@ -451,7 +458,7 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 	fputs(gotten_uid, file);      fputc(',', file);
 	fputs(gotten_nickname, file); fputc(',', file);
 	if (class==6) {
-		fputs(inet_ntoa(ip), file);
+		fputs(inet_ntoa((struct in_addr){ip}), file);
 	       	fputc(':', file);
 		fputs(itoa(port), file); 
 	       	fputc(',', file);
@@ -478,7 +485,7 @@ void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, 
 	xfree(textcopy);
 	xfree(descrcopy);
 	fclose(file);
-};
+}
 
 
 /*
@@ -568,7 +575,7 @@ void logs_xml(char *path, char *session, char *uid, char *text, time_t sent, int
 	xfree(timestamp);
 	xfree(textcopy);
 	fclose(file);
-};
+}
 
 /*
  * zapis w formacie gaim'a
@@ -576,7 +583,7 @@ void logs_xml(char *path, char *session, char *uid, char *text, time_t sent, int
 
 void logs_gaim()
 {
-};
+}
 
 
 /* interesujace nas wydarzenia */

@@ -29,7 +29,7 @@ char *rc_paths = NULL;
  *
  * obs³uga przychodz±cych poleceñ.
  */
-void rc_input_handler_line(int type, int fd, char *line, void *data)
+WATCHER(rc_input_handler_line)
 {
 	rc_input_t *r = data;
 
@@ -38,7 +38,7 @@ void rc_input_handler_line(int type, int fd, char *line, void *data)
 		return;
 	}
 
-	command_exec(NULL, NULL, line, 0);
+	command_exec(NULL, NULL, watch, 0);
 }
 
 /*
@@ -46,7 +46,7 @@ void rc_input_handler_line(int type, int fd, char *line, void *data)
  *
  * obs³uga przychodz±cych datagramów.
  */
-void rc_input_handler_dgram(int type, int fd, int watch, void *data)
+WATCHER(rc_input_handler_dgram)
 {
 	rc_input_t *r = data;
 	char buf[2048];		/* powinno wystarczyæ dla sieci z MTU 1500 */
@@ -59,7 +59,7 @@ void rc_input_handler_dgram(int type, int fd, int watch, void *data)
 
 	len = read(fd, buf, sizeof(buf) - 1);
 	buf[len] = 0;
-	
+
 	command_exec(NULL, NULL, buf, 0);
 }
 
@@ -68,7 +68,7 @@ void rc_input_handler_dgram(int type, int fd, int watch, void *data)
  *
  * obs³uga przychodz±cych po³±czeñ.
  */
-void rc_input_handler_accept(int type, int fd, int watch, void *data)
+WATCHER(rc_input_handler_accept)
 {
 	rc_input_t *r = data, rn;
 	struct sockaddr sa;
@@ -83,7 +83,7 @@ void rc_input_handler_accept(int type, int fd, int watch, void *data)
 		debug("[rc] accept() failed: %s\n", strerror(errno));
 		rc_input_close(r);
 		list_remove(&rc_inputs, r, 1);
-		watch_remove(&rc_plugin, fd, watch);
+		watch_remove(&rc_plugin, fd, (int)watch);
 
 		return;
 	}
@@ -127,7 +127,7 @@ static void rc_paths_changed(const char *name)
 {
 	char **paths = array_make(rc_paths, ",; ", 0, 1, 1);
 	int (*rc_input_new)(const char *);
-	void *rc_input_handler;
+	watcher_handler_func_t *rc_input_handler;
 	list_t l;
 	int i;
 

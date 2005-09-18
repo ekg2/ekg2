@@ -26,7 +26,7 @@
 
 extern plugin_t irc_plugin; 
 
-int irc_onkick_handler(void *data_, va_list ap)
+QUERY(irc_onkick_handler)
 {
 	char *session	= *va_arg(ap, char **);
 	char *nick	= *va_arg(ap, char **);
@@ -62,16 +62,16 @@ int irc_onkick_handler(void *data_, va_list ap)
 void irc_autorejoin_timer(int type, void *d)
 {
 	irc_onkick_handler_t *data = d;
-	if (type == 1)
+	if (type == 1) {
+		xfree(data->nick);
+		xfree(data->kickedby);
+		xfree(data->chan);
+		xfree(data);
 		return;
+	}
 
 	debug("wykonujê timer %d %s\n", type, (data->chan+4));
 	irc_autorejoin(data->s, IRC_REJOIN_KICK, (data->chan)+4);
-
-	xfree(data->nick);
-	xfree(data->kickedby);
-	xfree(data->chan);
-	xfree(data);
 }
 
 int irc_autorejoin(session_t *s, int when, char *chan)

@@ -113,7 +113,7 @@ static void jabber_private_destroy(session_t *s)
  * obs³uguje dodawanie i usuwanie sesji -- inicjalizuje lub zwalnia
  * strukturê odpowiedzialn± za wnêtrzno¶ci jabberowej sesji.
  */
-int jabber_session(void *data, va_list ap)
+QUERY(jabber_session)
 {
         char **session = va_arg(ap, char**);
         session_t *s = session_find(*session);
@@ -134,7 +134,7 @@ int jabber_session(void *data, va_list ap)
  *
  * wy¶wietla wersjê pluginu i biblioteki.
  */
-int jabber_print_version(void *data, va_list ap)
+QUERY(jabber_print_version)
 {
         print("generic", XML_ExpatVersion());
 
@@ -146,7 +146,7 @@ int jabber_print_version(void *data, va_list ap)
  *
  * sprawdza, czy dany uid jest poprawny i czy plugin do obs³uguje.
  */
-int jabber_validate_uid(void *data, va_list ap)
+QUERY(jabber_validate_uid)
 {
         char **__uid = va_arg(ap, char **), *uid = *__uid, *m;
         int *valid = va_arg(ap, int *);
@@ -829,7 +829,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
         xmlnode_handle_start(data, name, atts);
 }
 
-void jabber_handle_stream(int type, int fd, int watch, void *data)
+WATCHER(jabber_handle_stream)
 {
         jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
         session_t *s = (session_t*) jdh->session;
@@ -889,7 +889,7 @@ fail:
         watch_remove(&jabber_plugin, fd, WATCH_READ);
 }
 
-void jabber_handle_connect(int type, int fd, int watch, void *data)
+WATCHER(jabber_handle_connect)
 {
         jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
         int res = 0, res_size = sizeof(res);
@@ -919,7 +919,7 @@ void jabber_handle_connect(int type, int fd, int watch, void *data)
         XML_SetCharacterDataHandler(j->parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
 }
 
-void jabber_handle_resolver(int type, int fd, int watch, void *data)
+WATCHER(jabber_handle_resolver)
 {
         jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
         session_t *s = jdh->session;
@@ -1037,7 +1037,8 @@ void jabber_handle_resolver(int type, int fd, int watch, void *data)
 }
 
 #ifdef HAVE_GNUTLS
-void jabber_handle_connect_tls(int type, int fd, int watch, void *data) {
+WATCHER(jabber_handle_connect_tls)
+{
         jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
         jabber_private_t *j = session_private_get(jdh->session);
 	int ret;
@@ -1076,7 +1077,7 @@ void jabber_handle_connect_tls(int type, int fd, int watch, void *data) {
 }
 #endif
 
-int jabber_status_show_handle(void *data, va_list ap)
+QUERY(jabber_status_show_handle)
 {
         char **uid = va_arg(ap, char**);
         session_t *s = session_find(*uid);

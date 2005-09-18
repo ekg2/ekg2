@@ -110,7 +110,7 @@ int gg_private_destroy(session_t *s)
 	return 0;
 }
 
-int gg_userlist_added_handle(void *data, va_list ap)
+QUERY(gg_userlist_added_handle)
 {
 	char **uid = va_arg(ap, char**);
 	char **params = va_arg(ap, char**);
@@ -124,7 +124,7 @@ int gg_userlist_added_handle(void *data, va_list ap)
 }
 
 
-int gg_session_handle(void *data, va_list ap)
+QUERY(gg_session_handle)
 {
 	char **uid = va_arg(ap, char**);
 	session_t *s = session_find(*uid);
@@ -140,7 +140,7 @@ int gg_session_handle(void *data, va_list ap)
 	return 0;
 }
 
-int gg_user_offline_handle(void *data, va_list ap)
+QUERY(gg_user_offline_handle)
 {
 	userlist_t **__u = va_arg(ap, userlist_t**), *u = *__u;
 	session_t **__session = va_arg(ap, session_t**), *session = *__session;
@@ -155,7 +155,7 @@ int gg_user_offline_handle(void *data, va_list ap)
 	return 0;
 }
 
-int gg_user_online_handle(void *data, va_list ap)
+QUERY(gg_user_online_handle)
 {
         userlist_t **__u = va_arg(ap, userlist_t**), *u = *__u;
         session_t **__session = va_arg(ap, session_t**), *session = *__session;
@@ -175,7 +175,7 @@ int gg_user_online_handle(void *data, va_list ap)
 	return 0;
 }
 
-int gg_status_show_handle(void *data, va_list ap)
+QUERY(gg_status_show_handle)
 {
         char **uid = va_arg(ap, char**);
         session_t *s = session_find(*uid);
@@ -287,7 +287,7 @@ uin_t str_to_uin(const char *text)
  * trzeba dodaæ numer u¿ytkownika do listy osób, o których
  * zmianach statusów chcemy byæ informowani 
  */
-int gg_add_notify_handle(void *data, va_list ap)
+QUERY(gg_add_notify_handle)
 {
 	char **session_uid = va_arg(ap, char**);
 	session_t *s = session_find(*session_uid);
@@ -309,7 +309,7 @@ int gg_add_notify_handle(void *data, va_list ap)
  * trzeba usun±ææ numer u¿ytkownika z listy osób, o których
  * zmianach statusów chcemy byæ informowani
  */
-int gg_remove_notify_handle(void *data, va_list ap)
+QUERY(gg_remove_notify_handle)
 {
         char **session_uid = va_arg(ap, char**);
         session_t *s = session_find(*session_uid);
@@ -332,7 +332,7 @@ int gg_remove_notify_handle(void *data, va_list ap)
  *
  * wy¶wietla wersjê pluginu i biblioteki.
  */
-int gg_print_version(void *data, va_list ap)
+QUERY(gg_print_version)
 {
 	char **tmp1 = array_make(GG_DEFAULT_CLIENT_VERSION, ", ", 0, 1, 0);
 	char *tmp2 = array_join(tmp1, ".");
@@ -352,7 +352,7 @@ int gg_print_version(void *data, va_list ap)
  *
  * sprawdza, czy dany uid jest poprawny i czy plugin do obs³uguje.
  */
-int gg_validate_uid(void *data, va_list ap)
+QUERY(gg_validate_uid)
 {
 	char **__uid = va_arg(ap, char **), *uid = *__uid;
 	int *valid = va_arg(ap, int *);
@@ -976,7 +976,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
  *
  * obs³uga zdarzeñ przy po³±czeniu gg.
  */
-void gg_session_handler(int type, int fd, int watch, void *data)
+WATCHER(gg_session_handler)
 {
 	gg_private_t *g = session_private_get((session_t*) data);
 	struct gg_event *e;
@@ -1228,7 +1228,7 @@ format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
 	return 0;
 }
 
-void gg_setvar_default() 
+QUERY(gg_setvar_default)
 {
 	xfree(gg_config_dcc_dir);
 	xfree(gg_config_dcc_ip);
@@ -1243,6 +1243,7 @@ void gg_setvar_default()
 	gg_config_dcc_ip = NULL;
 	gg_config_dcc_limit = xstrdup("30/30");
 	gg_config_dcc_port = 1550;
+	return 0;
 }
 
 int gg_plugin_init(int prio)
@@ -1251,7 +1252,7 @@ int gg_plugin_init(int prio)
 
 	plugin_register(&gg_plugin, prio);
 
-	gg_setvar_default();
+	gg_setvar_default(NULL, NULL);
 
 	query_connect(&gg_plugin, "set-vars-default", gg_setvar_default, NULL);
 	query_connect(&gg_plugin, "protocol-validate-uid", gg_validate_uid, NULL);

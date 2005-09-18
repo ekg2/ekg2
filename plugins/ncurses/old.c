@@ -1434,7 +1434,7 @@ void ncurses_init()
 
 #undef __init_bg
 
-	ncurses_contacts_changed("contacts");
+	ncurses_contacts_changed("contacts", NULL);
 	ncurses_commit();
 
 	/* deaktywujemy klawisze INTR, QUIT, SUSP i DSUSP */
@@ -1783,11 +1783,15 @@ int ekg_getch(int meta)
  * todo brzmi: dorobic do tego jakis typ (typedef watch_handler_t),
  * zeby nie bylo niejasnosci
  * (mp)
+ *
+ * I've changed the declaration of ncurses_watch_stdin,
+ * and added if (last) return; but I'm not sure how it is supposed to work...
+ *
  */
-void ncurses_watch_winch(int last, int fd, int watch, void *data)
+WATCHER(ncurses_watch_winch)
 {
 	char c;
-	if (last) return;
+	if (type) return;
 	read(winch_pipe[0], &c, 1);
 
 	/* skopiowalem ponizsze z ncurses_watch_stdin.
@@ -1887,13 +1891,19 @@ extern volatile int sigint_count;
  *
  * g³ówna pêtla interfejsu.
  */
-void ncurses_watch_stdin(int fd, int watch, void *data)
+WATCHER(ncurses_watch_stdin)
 {
 	struct binding *b = NULL;
 	int ch;
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
+
+	/* GiM: I'm not sure if this should be like that
+	 * deletek you should take a look at this.
+	 */
+	if (type)
+		return;
 
 	ch = ekg_getch(0);
 	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
@@ -1907,7 +1917,7 @@ void ncurses_watch_stdin(int fd, int watch, void *data)
 
 	if (ch == 0)		/* Ctrl-Space, g³upie to */
 		return;
-	
+
 	ekg_stdin_want_more = 1;
 
 	if (bindings_added && ch != KEY_MOUSE) {

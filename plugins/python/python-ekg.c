@@ -98,7 +98,7 @@ PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
 PyObject *ekg_cmd_timer_bind(PyObject * self, PyObject * args)
 {
     char *handler = NULL;
-    int *freq = NULL;
+    int freq;
 
     script_t *scr = python_find_script(self);
 //    python_private_t *p = python_private(scr);
