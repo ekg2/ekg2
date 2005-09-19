@@ -31,7 +31,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+
 #include <Python.h>
+#include <node.h>
 
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
@@ -149,11 +151,17 @@ COMMAND(python_command_list)
 // *
 // * ***************************************************************************
 
+QUERY(python_print_version) 
+{
+	print("generic", "Python plugin for ekg2 running under Python " PY_VERSION);
+	return 0;
+}
+
 int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie bedzie.. nie uzywac */, int type, void *private, ...)
 {
 	PyObject *handler = private;
 	switch (type) {
-		case(SCRIPT_QUERYTYPE): /* na razie tylko to zrobione tak jak byc powinno */
+		case(SCRIPT_QUERYTYPE):
 		case(SCRIPT_COMMANDTYPE):
 		case(SCRIPT_TIMERTYPE):
 		    Py_XDECREF(handler);
@@ -194,10 +202,10 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 	PyObject *obj = (PyObject *)comm->private;
 
         if (!PyCallable_Check(obj)) {
-		debug("[python] func %s not found, deleting comm\n", comm->self->name);
+		debug("[python] func %s not found, deleting comm\n", comm->comm);
 		return SCRIPT_HANDLE_UNBIND;
 	}
-        PYTHON_HANDLE_HEADER(obj, "(ss)", comm->self->name,
+        PYTHON_HANDLE_HEADER(obj, "(ss)", comm->comm,
 //				    	params)
 					params[0] ? params[0] : "")
 	;
@@ -261,9 +269,8 @@ int python_protocol_message(PyObject *obj, script_t *scr, char *session, char *u
 		PYTHON_HANDLE_HEADER(obj, "(sss)", session, target, text);
 		PYTHON_HANDLE_FOOTER(obj);
 	} else {
-		obj = python_get_func(python_module(scr), "handle_msg");
 		PYTHON_HANDLE_HEADER(obj, "(ssisii)", session, uid, class, text, (int) sent, level);
-		PYTHON_HANDLE_FOOTER(obj);
+		PYTHON_HANDLE_FOOTER(0);
 	}
 }
 
@@ -297,48 +304,51 @@ int python_protocol_disconnected(PyObject *obj, script_t *s, char *session)
 
 int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
+/* @ scr_que->private handler of function */
 #define ARG_INT(x)	(int) args[x]
 #define ARG_INTP(x)     *(int  *) args[x]
 #define ARG_TIMEP(x)    *(time_t *) args[x]
-
 #define ARG_CHARPP(x)   *(char **) args[x]
-#define ARG_INTPP(x)   *(int  **) args[x]
-#define ARG_VOIDPP(x)   *(void **) args[x]
+#define ARG_CHARPPP(x)  *(char ***) args[x]
 #define ARG_UINTPPP(x)  *(uint32_t **) args[x]
 
-#define ARG_CHARPPP(x)  *(char ***) args[x]
-
         char *name = scr_que->query_name;
-#if 0
-	int i;
-        for (i=0; i < scr_que->argc; i++) {
-                switch ( scr_que->argv_type[i] ) {
-                        case (SCR_ARG_INT):
-                                break;
-                        case (SCR_ARG_CHARP):
-                                break;
-                        case (SCR_ARG_CHARPP):
-                                st = string_init(NULL);
-                                while (((char **) args[i])[j]) {
-                                        string_append(st, ((char **) args[i])[j]);
-                                        string_append_c(st, ' ');
-                                        j++;
-                                }
-                                if (st->len) ;
-                                string_free(st, 1);
-                                break;
-                        default:
-                                debug("[NIMP] %s %d %d\n",scr_que->query_name, i, scr_que->argv_type[i]);
-                }
-        }
-#endif
 
 	if (!xstrcmp(name, "protocol-message")) return python_protocol_message(scr_que->private, scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPPP(2) , ARG_CHARPP(3), ARG_UINTPPP(4), ARG_TIMEP(5), ARG_INT(6));
+#if 1
         else if (!xstrcmp(name, "protocol-disconnected")) return python_protocol_disconnected(scr_que->private, scr, ARG_CHARPP(0));
         else if (!xstrcmp(name, "protocol-connected"))  return python_protocol_connected(scr_que->private, scr, ARG_CHARPP(0));
         else if (!xstrcmp(name, "protocol-status"))     return python_protocol_status(scr_que->private, scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPP(2), ARG_CHARPP(3));
         else if (!xstrcmp(name, "ui-keypress"))         return python_keypressed(scr_que->private, scr, ARG_INTP(0));
         else return -1;
+#else
+	else {
+/* i have no idea how to do it, sorry. */
+		int i;
+		int python_handle_result;
+		string_t st = string_init("(");
+	        for (i=0; i < scr_que->argc; i++) {
+        	        switch ( scr_que->argv_type[i] ) {
+                	        case (SCR_ARG_INT):
+					string_append_c(st, 'i');
+                        	        break;
+	                        case (SCR_ARG_CHARP):
+					string_append_c(st, 's');
+    	        	                break;
+/*
+        	                case (SCR_ARG_CHARPP):
+					break;
+*/
+                        default:
+                                debug("[NIMP] %s %d %d\n",scr_que->query_name, i, scr_que->argv_type[i]);
+            	    }
+		
+		}
+		string_append_c(st, ')');
+		PYTHON_HANDLE_HEADER(scr_que->private, st->str, /* ??? */);
+		string_free(st, 1);
+    	}
+#endif
 }
 
 // ********************************************************************************
@@ -434,6 +444,34 @@ script_t *python_find_script(PyObject *module)
 {
 	SCRIPT_FINDER(slang == &python_lang && !xstrcmp(scr->name, PyString_AsString(module)));
 }
+/* returns somethink like it after formatink.
+   20:47:56 ::: B³±d EOL while scanning single-quoted string @ /home/darkjames/.ekg2/python/scripts/autorun/sample.py:98
+ */
+char *python_geterror(script_t *s) {
+	PyObject *exception, *v, *tb, *hook;
+	string_t str = string_init(NULL);
+/* TODO: check if we have really exception from python */
+        PyErr_Fetch(&exception, &v, &tb);
+	PyErr_NormalizeException(&exception, &v, &tb);
+/*	PyErr_Display(exception, v, tb); */
+
+	hook = PyObject_GetAttrString(v, "msg");
+	string_append(str, PyString_AsString(hook));
+	Py_DECREF(hook);
+
+	string_append(str, " @ ");
+	string_append(str, s->path);
+	string_append_c(str, ':');
+
+	hook = PyObject_GetAttrString(v, "lineno");
+	string_append(str, itoa(PyInt_AsLong(hook)));
+	Py_DECREF(hook);
+
+	Py_DECREF(v);
+	
+	PyErr_Clear();
+	return string_free(str, 0);
+}
 
 /*
  * python_load()
@@ -445,15 +483,27 @@ script_t *python_find_script(PyObject *module)
  */
 int python_load(script_t *s)
 {
-	PyObject *module, *init, *temp;
-	module = PyImport_ImportModule(s->name);
-
-	if (!module) {
-		print("script_not_found", s->name);
-		PyErr_Print();
-		return -1;
+	PyObject *init, *temp, *module = NULL;
+#if 0	
+	module = PyImport_ImportModule(s->name); 
+#else
+	FILE *fp = fopen(s->path, "rb"); 
+        node *n;
+        if ((n = PyParser_SimpleParseFile(fp, s->path, Py_file_input))) {
+		PyCodeObject *co = PyNode_CompileFlags(n, s->path, NULL);
+	        PyNode_Free(n);
+		if (co)
+			module = PyImport_ExecCodeModuleEx(s->name, (PyObject *)co, s->path); 
 	}
-
+	fclose(fp);
+#endif
+	if (!module) {
+		char *err = python_geterror(s);
+		print("script_error", err);
+		xfree(err);
+		return 0;
+	}
+	debug("[python script loading] 0x%x\n", module);
 	if ((init = PyObject_GetAttrString(module, "init"))) {
 		if (PyCallable_Check(init)) {
 			PyObject *result = PyObject_CallFunction(init, "()");
@@ -471,10 +521,10 @@ int python_load(script_t *s)
 
 		Py_XDECREF(init);
 	}
-
+	script_private_set(s, module);
 /* MSG */
-	if (python_check_func(module, "handle_msg"))
-		script_query_bind(&python_lang, s, "protocol-message", NULL);
+	if ((temp = python_get_func(module, "handle_msg")))
+		script_query_bind(&python_lang, s, "protocol-message", temp);
 	else if (python_check_func(module, "handle_msg_own"))
 		script_query_bind(&python_lang, s, "protocol-message", NULL);
 /* STATUS */		
@@ -490,10 +540,7 @@ int python_load(script_t *s)
 	if ((temp = python_get_func(module, "handle_keypress")))
 		script_query_bind(&python_lang, s, "ui-keypress", temp);
 
-	script_private_set(s, module);
-
 	PyErr_Clear();
-
 	return 1;
 }
 
@@ -684,6 +731,8 @@ int python_plugin_init(int prio)
 	command_add(&python_plugin, "python:load",   "?",  python_command_load,   0, NULL);
 	command_add(&python_plugin, "python:unload", "?",  python_command_unload, 0, NULL);
 	command_add(&python_plugin, "python:list",    "",  python_command_list,   0, NULL);
+
+	query_connect(&python_plugin, "plugin-print-version", python_print_version, NULL);
 
 	return 0;
 }
