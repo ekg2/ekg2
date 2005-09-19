@@ -121,7 +121,9 @@ extern scriptlang_t python_lang;
 	\
 	Py_XDECREF(__py_r); \
 	\
-	{\
+        {\
+                if (x) { \
+                        Py_XDECREF((PyObject *) x); } \
 		if (python_handle_result == 0) return -1;\
 		else return 0;\
 	}\

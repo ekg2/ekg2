@@ -308,7 +308,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 
 #define ARG_CHARPPP(x)  *(char ***) args[x]
 
-        char *name = scr_que->self->name;
+        char *name = scr_que->query_name;
 #if 0
 	int i;
         for (i=0; i < scr_que->argc; i++) {
