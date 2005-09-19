@@ -185,7 +185,7 @@ int python_timers(script_t *scr, script_timer_t *time, int type)
 		return SCRIPT_HANDLE_UNBIND;
 	}
 	PYTHON_HANDLE_HEADER(obj, "()");
-	PYTHON_HANDLE_FOOTER(obj);
+	PYTHON_HANDLE_FOOTER(0);
 }
 
 int python_commands(script_t *scr, script_command_t *comm, char **params)
@@ -194,14 +194,14 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 	PyObject *obj = (PyObject *)comm->private;
 
         if (!PyCallable_Check(obj)) {
-		debug("[python] func %s not found, deleting comm\n", comm->comm);
+		debug("[python] func %s not found, deleting comm\n", comm->self->name);
 		return SCRIPT_HANDLE_UNBIND;
 	}
-        PYTHON_HANDLE_HEADER(obj, "(ss)", comm->comm,
+        PYTHON_HANDLE_HEADER(obj, "(ss)", comm->self->name,
 //				    	params)
 					params[0] ? params[0] : "")
 	;
-	PYTHON_HANDLE_FOOTER(obj)
+	PYTHON_HANDLE_FOOTER(0)
 	return python_handle_result;
 }
 
@@ -308,7 +308,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 
 #define ARG_CHARPPP(x)  *(char ***) args[x]
 
-        char *name = scr_que->query_name;
+        char *name = scr_que->self->name;
 #if 0
 	int i;
         for (i=0; i < scr_que->argc; i++) {
