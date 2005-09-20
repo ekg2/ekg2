@@ -1245,15 +1245,22 @@ COMMAND(irc_command_names)
 	const char      *sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, NULL};
 	int             lvl_total[5]    = {0, 0, 0, 0, 0};
 	int             lvl, count = 0;
-	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')')+1;
+	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')');
 
-	int		smlen = xstrlen(sort_modes) + 1, nplen = atoi(SOP(_005_NICKLEN)) + 1;
+	int		smlen = xstrlen(sort_modes), nplen = (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1;
 	char            mode[2], **mp, *channame, nickpad[nplen];
 
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
 		return -1;
 	}
+
+	if (!session_connected_get(session)) {
+		print("not_connected", session_name(session));
+		return 0;
+	}
+
+	++sort_modes;
 
 	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
 	 		return -1;
