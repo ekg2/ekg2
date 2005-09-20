@@ -5,14 +5,14 @@
 
 alias
 	typ: tekst
-	domyslna warto¶æ: brak
-
+	domy¶lna warto¶æ: brak
+	
 	krótka nazwa sesji
 
 auto_away
 	typ: liczba
 	domy¶lna warto¶æ: 600
-
+	
 	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
 	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
 	nie bêdzie automatycznej zmiany.
@@ -20,7 +20,7 @@ auto_away
 auto_back
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
 	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
 	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
@@ -29,28 +29,28 @@ auto_back
 auto_connect
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
 	programu
 
 auto_reconnect
 	typ: liczba
 	domy¶lna warto¶æ: 10
-
+	
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
 
 default
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
 	podczas uruchomienia programu)
 
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: -1
-
+	
 	warto¶æ -1 powoduje korzystanie z globalnej zmiennej.
 	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
 	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
@@ -61,7 +61,7 @@ display_notify
 log_formats
 	typ: tekst
 	domy¶lna warto¶æ: xml,simple
-
+	
 	Okre¶la formaty, w jakich zapisywane s± logi z rozmów.
 	W tej chwili zaimplementowany jest jedynie "simple", format z ekg1.
 	
@@ -76,7 +76,7 @@ password
 plaintext_passwd
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la, czy has³o ma byæ przesy³ane do serwera jawnym tekstem (1),
 	czy za pomoc± skrótu kryptograficznego (0).
 
@@ -89,56 +89,56 @@ port
 priority
 	typ: liczba
 	domy¶lna warto¶æ: 5
-
+	
 	priorytet po³±czenia z serwerem jabbera.
 
 resource
 	typ: tekst
 	domy¶lna warto¶æ: ekg2
-
+	
 	zasób jabberowy.
 
 server
 	typ: tekst
 	domy¶lna warto¶æ: brak 
-
+	
 	adres serwera, z którym nale¿y sie po³±czyæ, je¶li jest on inny ni¿
 	to wynika z Jabber ID u¿ytkownika.
 
 ssl_port
 	typ: liczba
 	domy¶lna warto¶æ: 5223
-
+	
 	port u¿ywany przy po³±czeniu szyfrowanym.
 
 show_typing_notify
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la, czy pokazywaæ informacjê, ¿e kto¶ w³a¶nie pisze do nas wiadomo¶æ.
 
 use_ssl
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la, czy nawi±zywaæ z serwerem po³±czenie szyfrowane.
 
 ver_client_name
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	nazwa klienta zwracana przy zapytaniach o wersjê
 
 ver_client_version
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	wersja klienta zwracana przy zapytaniach o wersjê
 
 ver_os
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	system operacyjny zwracany przy zapytaniach o wersjê
 
 $Id$

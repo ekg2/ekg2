@@ -4,15 +4,15 @@
 // + lub * oznacza, ¿e mo¿na podaæ wiêcej parametrów
 // danego typu
 
-  
+NIEZNANA_KOMENDA
 	parametry:  [tekst]
 	krotki opis: /help irc: by dostaæ pomoc na temat plugina
 	
 	[tekst] oznacza, ¿e parametr jest wymagany, <tekst>,
 	¿e parametr jest opcjonalny, + lub * po parametrze oznacza,
 	¿e mo¿e wystêpowaæ wiêcej parametrów danego typu
-	je¿eli w przyk³adach komend pojawia siê ¶rednik
-	oznacza on, koniec komendy [nale¿y wcisn±æ enter ;>]
+	je¿eli w przyk³adach komend pojawia siê ¶rednik,
+	oznacza on koniec komendy [nale¿y wcisn±æ enter ;>]
 
 connect
 	parametry:  
@@ -25,14 +25,14 @@ connect
 disconnect
 	parametry:  <tekst>
 	krotki opis: od³±cza od servera sieci IRC
-
+	
 	wysy³a <tekst> jako QUIT, je¶li nie podano wysy³a tekst:
 	"EKG2 - It's better than sex!"
 
 reconnect
 	parametry:  <tekst>
 	krotki opis: roz³±cza z serwerem i ³±czy ponownie
-
+	
 	<tekst> jest przekazywany do polecenia disconnect
 
 join
@@ -57,8 +57,8 @@ part
 
 cycle
 	parametry:  <kana³> <powód>
-	krótki opis: robi /part i /join
-
+	krotki opis: robi /part i /join
+	
 	je¿eli pierwszy argument nie jest kana³em, brana jest nazwa
 	aktualnego okna
 
@@ -88,7 +88,6 @@ topic
 
 people
 	parametry: 
-	 
 
 add
 	parametry: 
@@ -137,7 +136,6 @@ umode
 	
 	s - otrzymywanie notice'ów od serwera
 
-
 whois
 	parametry:  [nick]
 	krotki opis: robi /whois na danej osobie
@@ -145,31 +143,37 @@ whois
 op
 	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
+	
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 deop
 	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
+	
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 voice
 	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :-)
+	
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 devoice
 	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
+	
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 halfop
 	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :-)
+	
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 dehalfop
 	parametry:  <kana³> [nick]*
 	krotki opis: t³umaczy siê samo :)
+	
 	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
 
 away
@@ -194,16 +198,16 @@ quote
 
 invite
 	parametry:  <kana³> [nick]
-	krótki opis: zaprasza u¿ytkownika na kana³
+	krotki opis: zaprasza u¿ytkownika na kana³
 
 who
 	parametry:  <kana³/maska>
-	krótki opis: wy¶wietla dane o u¿ytkownikach z danego kana³u/pasuj±cych do maski
-
+	krotki opis: wy¶wietla dane o u¿ytkownikach z danego kana³u/pasuj±cych do maski
+	
 	Je¶li poleceniu nie podane zostan± ¿adne polecenia, to wy¶wietleni
 	zostan± u¿ytkownicy z bie¿±cego kana³u.
 
 names
 	parametry: 
-	krótki opis: wy¶wietla nazwy u¿ytkowników z bie¿±cego kana³u
+	krotki opis: wy¶wietla nazwy u¿ytkowników z bie¿±cego kana³u
 

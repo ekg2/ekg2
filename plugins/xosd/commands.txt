@@ -3,5 +3,5 @@
 
 msg
 	parametry: 
-	krótki opis: wy¶wietla wiadomo¶æ poprzez xosd
+	krotki opis: wy¶wietla wiadomo¶æ poprzez xosd
 

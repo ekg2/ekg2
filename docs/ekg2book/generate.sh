@@ -4,6 +4,7 @@ PREINPUTS="design/header.xml bookinfo.xml userbook.xml"
 POSTINPUTS="develbook.xml faq.xml design/footer.xml"
 OUTPUT="book.xml"
 GENPROG="./txt2docbook.py"
+set -e
 
 cat /dev/null > $OUTPUT
 

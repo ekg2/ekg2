@@ -5,7 +5,7 @@
 auto_away
 	typ: liczba
 	domy¶lna warto¶æ: 600
-
+	
 	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
 	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
 	nie bêdzie automatycznej zmiany.
@@ -13,7 +13,7 @@ auto_away
 auto_back
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
 	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
 	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
@@ -22,41 +22,41 @@ auto_back
 auto_connect
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
 	programu
 
 auto_find
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la, czy osoby, których nie mamy na li¶cie kontaktów, a wys³a³y
 	do nas wiadomo¶æ, maj± byæ automatycznie wyszukane w katalogu.
 
 auto_reconnect
 	typ: liczba
 	domy¶lna warto¶æ: 10
-
+	
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
 
 connection_save
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy adres serwera ma byæ zapisywany
 
 default
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
 	podczas uruchomienia programu)
 
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: -1
-
+	
 	warto¶æ -1 powoduje korzystanie z globalnej zmiennej. 
 	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
 	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
@@ -67,7 +67,7 @@ display_notify
 local_ip
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la adres IP, z którego nastêpuj± wszelkiego rodzaju po³±czenia,
 	na przyk³ad z serwerem GG. w przypadku b³êdnie wpisanej warto¶ci, 
 	zostanie ona usuniêta.
@@ -75,7 +75,7 @@ local_ip
 log_formats
 	typ: tekst
 	domy¶lna warto¶æ: xml,simple
-
+	
 	TODO
 
 password
@@ -90,7 +90,7 @@ port
 	domy¶lna warto¶æ: 8074
 	
 	port jakiego mamy u¿ywaæ przy ³±czeniu
-	
+
 proxy
 	typ: tekst
 	domy¶lna warto¶æ: brak 
@@ -99,11 +99,10 @@ proxy
 	dekodowaæ pliki JPEG. wy³±czenie jej spowoduje dzia³anie ekg tak,
 	jakby biblioteki nie by³o, tj. zapisywanie tokenów do pliku.
 
-
 proxy_forwarding
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	adres i port (oddzielone dwukropkiem) serwera po¶rednicz±cego
 	(routera, proxy lub czego¶ innego) przekierowany na port 1550
 	naszego komputera.
@@ -111,13 +110,13 @@ proxy_forwarding
 private
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	tryb tylko dla znajomych.
 
 scroll_long_desc
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	Okre¶la co ile sekund ma nast±piæ automagiczne scrollowanie
 	zbyt d³ugich statusów. Zero - brak scrollowania.
 	OSTRZE¯ENIE: u¿ywanie scrolla w statusach mo¿e doprowadziæ
@@ -129,7 +128,7 @@ scroll_long_desc
 scroll_mode
 	typ: tekst [bounce|simple]
 	domy¶lna warto¶æ: bounce
-
+	
 	okre¶la rodzaj scrollowania
 	bounce - odbijanie od 'koñców'
 	simple - przewija w lewo, a¿ widaæ do samego koñca, po osi±gniêciu
@@ -138,7 +137,7 @@ scroll_mode
 server
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	adresy IP serwerów, z którym klient powinien próbowaæ siê po³±czyæ,
 	pomijaj±c w³a¶ciw± procedurê ³±czenia siê. przydane podczas awarii
 	g³ównego serwera. adresy nale¿y oddzielaæ przecinkami, ¶rednikami
@@ -148,6 +147,3 @@ server
 	przypisze siê warto¶æ ,,tls'', spyta g³ówny serwer o adres serwera
 	obs³uguj±cego po³±czenia TLS i spróbuje siê z nim po³±czyæ.
 
-
-
-$Id$

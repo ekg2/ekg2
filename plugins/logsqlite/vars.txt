@@ -43,14 +43,14 @@ path
 last_limit
 	typ: liczba
 	domy¶lna warto¶æ: 10
-
+	
 	maksymalna ilo¶æ wiadomo¶ci wy¶wietlanych przez polecenie
 	logsqlite:last
 
 last_in_window
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy wiadomo¶ci wy¶wietlane przez polecenie bêd± wy¶wietlane w
 	oknie rozmowy z dan± osob±. To, czy nieistniej±ce okienko bêdzie
 	otwierane, okre¶la zmienna logsqlite:last_open_window
@@ -58,7 +58,8 @@ last_in_window
 last_open_window
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy w przypadku wy¶wietlania wiadomo¶ci danej osoby przez
 	lastlog w okienku rozmowy z ni±, to okienko bêdzie otwierane je¶li
 	jeszcze nie istnieje (kto¶ zrozumia³ co tu napisa³em?)
+

@@ -3,33 +3,32 @@
 
 font
 	typ: tekst
-	domy¶lna warto¶æ: 
-	"-adobe-helvetica-bold-r-normal-*-*-120-*-*-p-*-iso8859-2"
+	domy¶lna warto¶æ: "-adobe-helvetica-bold-r-normal-*-*-120-*-*-p-*-iso8859-2"
 	
 	czcionka, któr± maj± byæ wy¶wietlane komunikaty xosd.
 
 colour
 	typ: tekst
 	domy¶lna warto¶æ: "#00dd00"
-
+	
 	kolor czcionki, któr± maj± byæ wy¶wietlane komunikaty xosd.
 
 outline_colour
 	typ: tekst
 	domy¶lna warto¶æ: "#000000"
-
+	
 	okre¶la kolor jakim ma byæ rysowane obramowanie tekstu.
 
 shadow_colour
 	typ: tekst
 	domy¶lna warto¶æ: "#000000"
-
+	
 	okre¶la kolor cienia.
 
 display_filter
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la filtry wy¶wietlania nowych wiadomo¶ci. warto¶æ 0 wy¶wietla 
 	wszystkie wiadomo¶ci. warto¶æ 1 powoduje wy¶wietlanie wiadomo¶ci
 	tylko z okien nieaktywnych. warto¶æ 2 powoduje wy¶wietlanie
@@ -48,28 +47,28 @@ display_notify
 display_timeout
 	typ: liczba
 	domy¶lna warto¶æ: 6
-
+	
 	ilo¶æ czasu przez jak± xosd ma wy¶wietlaæ komunikat na ekranie
 	podana w sekundach.
 
 display_welcome
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la czy ma byæ wy¶wietlany komunikat pocz±tkowy. warto¶æ 0
 	wy³±cza go a warto¶æ 1 w³±cza.
 
 horizontal_offset
 	typ: liczba
 	domy¶lna warto¶æ: 48
-
+	
 	wielko¶æ wektora (podana w pikselach), o któy komunikat zostanie 
 	przesuniêty w poziomie.
 
 horizontal_position
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	pozioma pozycja komunikatu na ekranie. warto¶æ 0 powoduje
 	wy¶wietlanie komunikatu po lewej stronie ekranu, warto¶æ 1 na ¶rodku
 	a warto¶æ 2 po prawej.
@@ -77,7 +76,7 @@ horizontal_position
 outline_offset
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy tekst w xosd ma mieæ obramowanie. warto¶æ 0 powoduje 
 	jego brak. ka¿da inna warto¶æ wiêksza od zera ustawia grubo¶æ
 	obramowania na odpowiedni± liczbê pikseli.
@@ -85,37 +84,37 @@ outline_offset
 shadow_offset
 	typ: liczba
 	domy¶lna warto¶æ: 2
-
+	
 	wielko¶æ wektora (podana w pikselach), o który ma byæ przesuniêty 
 	cieñ komunikatu wzglêdem samego napisu. warto¶æ 0 wy³±cza cieñ.
 
 short_messages
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	gdy warto¶æ ustawiona na 1, xosd wy¶wietla tylko pierwsz± liniê
 	komunikatu, np ''u¿ytkownik zmieni³ stan na dostêpny'' lub
 	''u¿ytkownik wysy³a do nas wiadomo¶æ''. nie pokazuje natomiast
 	samej tre¶ci wiadomo¶ci czy opisu.
-	
+
 text_limit
 	typ: liczba
 	domy¶lna warto¶æ: 50
-
+	
 	maksymalna d³ugo¶æ tekstu, który ma zostaæ wy¶wietlony w drugiej 
 	linii komunikatu xosd.
 
 vertical_offset
 	typ: liczba
 	domy¶lna warto¶æ: 48
-
+	
 	wielko¶æ wektora (podana w pikselach), o który komunikat zostanie 
 	przesuniêty w pionie.
 
 vertical_position
 	typ: liczba
 	domy¶lna warto¶æ: 2
-
+	
 	pionowa pozycja komunikatu na ekranie. warto¶æ 0 powoduje 
 	wy¶wietlanie komunikatu na górze ekranu, warto¶æ 1 na ¶rodku ekranu
 	a warto¶æ 2 na dole.

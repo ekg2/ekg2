@@ -4,7 +4,7 @@
 log
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la, czy i w jaki sposób bêd± logowane wysy³ane i otrzymywane
 	wiadomo¶ci. dla 0, nie bêd±. Dla 1, bêd± logowane w formacie znanym z
 	ekg1. Dla 2 bêd± logowane w formacie XML (NFY).
@@ -12,20 +12,20 @@ log
 log_ignored
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la, czy logujemy ignorowane wiadomo¶ci (NFY).
 
 log_status
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la, czy bêd± logowane zmiany stanu ludzi z listy (zmienna
 	,,log'' musi byæ ró¿na od 0) (NFY)
-	
+
 path
 	typ: tekst
 	domy¶lna warto¶æ: ~/.ekg2/logs/%S/%u
-
+	
 	¶cie¿ka, gdzie bêd± zachowywane wysy³ane i otrzymane wiadomo¶ci.
 	Rozpoznawane znaki:
 	* %S - sesja nasza
@@ -47,7 +47,7 @@ path
 timestamp
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la format czasu zapisywanego w historii. w przypadku braku,
 	zmiennej, zapisuje w postaci ilo¶ci sekund od 1 stycznia 1970r.
 	UTC. dok³adny opis formatu zawiera strona manuala strftime(3).

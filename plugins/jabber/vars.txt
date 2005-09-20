@@ -3,8 +3,8 @@
 console_charset
 	typ: tekst
 	domy¶lna warto¶æ: iso-8859-2
-
+	
 	okre¶la zestaw znaków u¿ywany przez terminal, na który i z którego
 	bêdzie przekodowywana komunikacja z serwerem.
 
-$Id$
+// $Id$

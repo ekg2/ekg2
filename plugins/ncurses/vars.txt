@@ -17,7 +17,7 @@ aspell_lang
 aspell_encoding
 	typ: tekst
 	domy¶lna warto¶æ: "iso8859-2"
-
+	
 	okre¶la kodowanie u¿ywane przez s³ownik.
 
 backlog_size
@@ -31,7 +31,7 @@ backlog_size
 contacts
 	typ: liczba
 	domy¶lna warto¶æ: 2
-
+	
 	okre¶la, czy okienko z list± obecnych ma byæ wy¶wietlone z prawej
 	strony ekranu. je¶li jest równe 2, informacje o zmianie stanu nie
 	s± wy¶wietlane, ignoruj±c warto¶æ zmiennej ,,display_notify''.
@@ -39,7 +39,7 @@ contacts
 contacts_groups
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	oddzielone przecinkiem grupy, które mo¿na prze³±czaæ w li¶cie
 	kontaktów klawiszem F4. Aby wy¶wietliæ u¿ytkowników z poza grupy: !grupa.
 	domy¶lnie wy¶wietlani s± wszyscy u¿ytkownicy.
@@ -47,14 +47,14 @@ contacts_groups
 contacts_groups_all_sessions
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	Je¶li jest w³±czona, przy wy¶wietlaniu kontaktów z grupy brane s± pod
 	uwagê wszystkie sesje.
 
 contacts_metacontacts_swallow
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	Je¶li jest w³±czona, przy wy¶wietlaniu wszystkich u¿ytkowników gdy
 	w li¶cie kontaktów wy¶wietlany jest metakontakt, ukrywane s± poszczególne
 	kontakty do niego nale¿±ce.
@@ -62,7 +62,7 @@ contacts_metacontacts_swallow
 contacts_options
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	opcje listy kontaktów oddzielone przecinkiem lub spacj±. domy¶lne
 	ustawienia to ,,right, frame, margin=1, nowrap, nodescr, order='chavawxadninnoerr'
 	

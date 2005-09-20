@@ -6,7 +6,7 @@
 dcc
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	w³±cza lub wy³±cza bezpo¶rednie po³±czenia miêdzy klientami. zmiana
 	tej opcji wymaga ponownego po³±czenia z serwerem, by przes³aæ nowy
 	adres IP lub jego brak.
@@ -14,7 +14,7 @@ dcc
 dcc_ip
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la adres IP, który jest wysy³any serwerowi. je¶li przypisze
 	siê tej zmiennej warto¶æ ,,auto'', adres bêdzie ustalany 
 	automatycznie. je¶li chcemy bezproblemowo ³±czyæ siê z klientami
@@ -24,13 +24,13 @@ dcc_ip
 dcc_dir
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la katalog, do którego bêd± zapisywane pobierane pliki.
 
 dcc_limit
 	typ: tekst
 	domy¶lna warto¶æ: 30/30
-
+	
 	okre¶la limit bezpo¶rednich po³±czeñ w danym przedziale czasu.
 	liczba przed uko¶nikiem okre¶la maksymaln± ilo¶æ po³±czeñ, a liczba
 	po uko¶niku ilo¶æ sekund. po przekroczeniu tego progu bezpo¶rednie
@@ -41,7 +41,7 @@ dcc_limit
 dcc_port
 	typ: liczba
 	domy¶lna warto¶æ: 1550
-
+	
 	port, na którym ekg bêdzie oczekiwaæ na po³±czenia bezpo¶rednie.
 
 display_token
@@ -55,7 +55,7 @@ display_token
 get_images
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	przy ustawionej warto¶ci 1 je¶li w wiadomo¶ciach bêd± siê znajdowa³y
 	obrazki to bêd± one ¶ci±gane i zapisywane do katalogu okre¶lonego 
 	przez images_dir
@@ -63,7 +63,7 @@ get_images
 images_dir
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	zmienna okre¶la katalog, do którego maj± byæ zapisywane obrazki 
 	przy ustawionej zmiennej get_images
 

@@ -5,13 +5,13 @@
 alias
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	krótka nazwa sesji
 
 auto_away
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
 	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
 	nie bêdzie automatycznej zmiany.
@@ -19,7 +19,7 @@ auto_away
 auto_back
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
 	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
 	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
@@ -28,21 +28,21 @@ auto_back
 auto_connect
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
 	programu
 
 auto_reconnect
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
 
 ban_type
 	typ: liczba
 	domy¶lna warto¶æ: 10
-
+	
 	Typy banów: (irssi-like) tylko ze zamiast tekstu mamy numerki.
 	 1 (Nick)   - nick!*@*
 	 2 (User)   - *!*user@*
@@ -59,7 +59,7 @@ ban_type
 close_windows
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	plugin sam zamyka `niepotrzebne` okna. przy /quit usera
 	z ktorym mamy otwarte query, kiedy zostalismy wykopaniu
 	przez kogos z kanalu imho zbedny fjuczer. Zachowanie
@@ -68,20 +68,20 @@ close_windows
 dcc_port
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	póki co jeszcze nie u¿ywane...
 
 default
 	typ: bool
-	domyslna warto¶æ: false
-
+	domy¶lna warto¶æ: false
+	
 	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
 	podczas uruchomienia programu)
 
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	warto¶æ -1 powoduje korzystanie z globalnej zmiennej. 
 	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
 	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
@@ -92,19 +92,19 @@ display_notify
 hostname
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	pozwala na korzystanie z vhostów [opcja -h w irssi]
 
 log_formats
 	typ: tekst
-	domy¶lna waro¶æ: xml,simple
-
+	domy¶lna warto¶æ: xml,simple
+	
 	format logów
 
 make_window
 	typ: liczba
 	domy¶lna warto¶æ: 2
-
+	
 	suma bitowa, okre¶laj±ca czy nale¿y tworzyæ okna w danej sytuacji:
 	1 - nie u¿ywane
 	2 - tworzenie okna, gdy przychodzi do nas wiadomo¶æ od innego
@@ -122,27 +122,27 @@ make_window
 nickname
 	typ: tekst
 	domy¶lna warto¶æ: twoj login
-
+	
 	okre¶la domy¶lny nick, pod jakim bêdziemy starali siê po³±czyæ
 	z serwerem IRC
 	zmienna musi byæ ustawiona, ¿eby móc siê po³aczyæ
 
 password
 	typ: tekst
-	domy¶lna waro¶æ: brak
-
+	domy¶lna warto¶æ: brak
+	
 	has³o do serwera
 
 port
 	typ: liczba
 	domy¶lna warto¶æ: 6667
-
+	
 	port serwera, do którego bêdziemy siê pod³±czaæ
 
 prefer_family
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	Jesli serwer ma rekordy A i AAAA to zostanie wybrany
 	rekord AAAA gdy prefer_family = 10 (AF_INET6)
 	rekord A gdy prefer_family != 10
@@ -150,7 +150,7 @@ prefer_family
 realname
 	typ: tekst
 	domy¶lna warto¶æ: realname u¿yszkodnika
-
+	
 	dowolny tekst, który zostanie ustawiony jako nasz realname
 	[m.in. w odpowiedzi na /whois], by zmiany realname odnios³y skutek
 	nale¿y siê ponownie po³±czyæ
@@ -158,14 +158,14 @@ realname
 server
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	adres serwera irc, np: warszawa.irc.pl
 	zmienna musi byæ ustawiona, ¿eby móc siê po³±czyæ
 
 AUTO_JOIN
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	kana³y, do których klient ma siê pod³±czyæ po po³aczeniu, podane
 	w formie:
 	kana³1,kana³2,kana³3,kana³4, klucznakana³1,klucznakana³2
@@ -173,21 +173,21 @@ AUTO_JOIN
 DISPLAY_PONG
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la czy wy¶wietlaæ komunikat o odebraniu ping i wys³aniu pong
 	do serwera IRC. 1 - wy¶wietlaæ, 0 - nie.
 
 DISPLAY_AWAY_NOTIFICATION
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la czy wy¶wietlaæ czyje¶ away [np: je¶li kto¶ ma ustawione
 	away i zrobimy /msg kto¶ co¶tam]
 
 DISPLAY_IN_CURRENT
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	suma bitów, okre¶laj±ca, ¿e pewne rzeczy bêd± wy¶wietlane
 	w aktualnym oknie:
 	1 - wynik komendy /names [RACZEJ G£UPOTA!]
@@ -211,8 +211,8 @@ DISPLAY_QUIT
 
 REJOIN
 	typ: liczba
-	domyslna warto¶æ: 2
-
+	domy¶lna warto¶æ: 2
+	
 	suma bitowa, okre¶laj±ca kiedy robiæ autorejoin
 	1 - przy dostaniu kicka z kana³u
 	2 - przy [re]connec'cie, je¶li s± jakie¶ otwarte okienka z kana³ami
@@ -221,7 +221,7 @@ REJOIN
 REJOIN_TIME
 	typ: liczba
 	domy¶lna warto¶æ: 2
-
+	
 	ilo¶æ sekund jak± plugin ma odczekaæ, przed prób± ponownego
 	do³±czeniu do kana³u, je¶li zostali¶my wykopani
 	zmienna ta, nie ma ¿adnego znaczenia, je¶li zmienna %TREJOIN%n
@@ -230,20 +230,20 @@ REJOIN_TIME
 SHOW_NICKMODE_EMPTY
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	je¶li 0 spacja NIE jest wy¶wietlana przed nickiem je¿eli
 	ircownik nie ma +, @ ani %, je¶li 1 spacja bêdzie wy¶wietlana
 
 SHOW_MOTD
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	czy wy¶wietlaæ MOTD. 1 - tak, 0 - nie.
 
 STRIPMIRCCOL
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	czy stripowaæ wy¶wietlanie durnych kolorków na IRCu.
 	0 - kolorki bêd± wy¶wietlane. 1 - nie bêd±.
 	zmienna ta nie ma wp³ywu na wy¶wietlanie atryburów takich jak
@@ -252,15 +252,15 @@ STRIPMIRCCOL
 VERSION_NAME
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la pierwszy z ci±gów, którymi IRC plugin odpowiada na
 	zapytanie %Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest
 	ci±g: "IRC plugin for EKG2:"
-	
+
 VERSION_NO
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la drugi z ci±gów, którymi IRC plugin odpowiada na
 	zapytanie %Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest
 	ci±g: "numer_wersji_plugina:", mo¿na ustawiæ na pusty:
@@ -269,7 +269,7 @@ VERSION_NO
 VERSION_SYS
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la trzeci z ci±gów, którymi IRC plugin odpowiada na
 	zapytanie %Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest
 	ci±g: "System wersja_j±dra architektura", mo¿na ustawiæ na pusty:

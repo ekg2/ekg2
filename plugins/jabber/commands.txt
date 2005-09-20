@@ -90,7 +90,7 @@ lastseen
 msg
 	parametry: 
 	krotki opis: wysy³a pojedyncz± wiadomo¶æ
-
+	
 	Wszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomo¶ci 
 	wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje 
 	potraktowanie pierwszej linijki jako tematu.
@@ -129,8 +129,8 @@ xa
 xml
 	parametry: 
 	krotki opis: wysy³a polecenie xml
-
+	
 	Polecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML 
 	(" ' & < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.
 
-$Id$
+// $Id$

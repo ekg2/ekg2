@@ -3,7 +3,7 @@
 
 last
 	parametry: [opcje] [uid]
-	krótki opis: wy¶wietla ostatnie zalogowane wiadomo¶ci
+	krotki opis: wy¶wietla ostatnie zalogowane wiadomo¶ci
 	
 	  -n, --number <liczba>  Ilo¶æ wiadomo¶ci do wy¶wietlenia
 	
