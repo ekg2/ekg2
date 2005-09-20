@@ -24,7 +24,7 @@
 #include <ekg/sessions.h>
 
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
-	_005_CHANMODES, _005_MODES, SERVOPTS };
+	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, SERVOPTS };
 extern char *sopt_keys[];
 
 typedef struct {
@@ -33,7 +33,7 @@ typedef struct {
 	int resolving;			/* count of resolver threads. */
 	list_t bindlist, bindtmplist;
 	list_t connlist, conntmplist;
-	
+
 	watch_t *recv_watch;
 
 	char *nick;			/* guess again ? ;> */

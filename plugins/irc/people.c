@@ -38,7 +38,7 @@
 /* tmp = private->channels || private->people->channels->onchan */
 people_t *irc_find_person(list_t p, char *nick)
 {
-	people_t *person = NULL;
+	people_t *person;
 	if (!(nick && p)) return NULL;
 	if (*nick=='+' || *nick=='@') nick++;
 
@@ -55,9 +55,9 @@ people_t *irc_find_person(list_t p, char *nick)
 /* p = private->channel || */
 channel_t *irc_find_channel(list_t p, char *channame)
 {
-	channel_t *chan = NULL;
+	channel_t *chan;
 	if (!(channame && p)) return NULL;
-	
+
 	for (; p; p=p->next)
 	{
 		chan = (channel_t *)(p->data);
@@ -71,7 +71,7 @@ channel_t *irc_find_channel(list_t p, char *channame)
 /* p = private->people->channels */
 people_chan_t *irc_find_person_chan(list_t p, char *channame)
 {
-	people_chan_t *ret = NULL;
+	people_chan_t *ret;
 	channel_t *chan;
 	if (!(channame && p)) return NULL;
 
@@ -120,15 +120,7 @@ people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		debug("+%s lista ludzi, ", nick); 
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
-		/* G: I know that in theory there can be machine
-		 * where NULL != 0 but I haven't seen a onem so if
-		 * someone will write me nice mail I'll uncomment this
-		person->realname = NULL;
-		person->ident= NULL;
-		person->host = NULL;
-		person->flags= NULL;
-		person->channels = NULL;
-		 */
+		/* K&Rv2 5.4 */
 		list_add(&(j->people), person, 0);
 	}
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
@@ -160,7 +152,7 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 	channel_t *chan;
 	if (!nick)
 		return NULL;
-	
+
 	if (!(chan = irc_find_channel(j->channels, channame)))
 		/* GiM: if someone typed /quote names *
 		 * and he's not on that channel... */
@@ -174,7 +166,7 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 {
 	channel_t *chan;
 	char **nick=NULL, **save, *tmp;
-	
+
 	if (!(channame && names))
 		return -1;
 
@@ -354,12 +346,6 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 		p		= xmalloc(sizeof(channel_t));
 		p->name		= saprintf("%s%s", IRC4, name);
 		p->window	= win;
-		/*p->mode		= 0;
-		p->topic	= NULL;
-		p->topicby	= NULL;
-		p->mode_str	= NULL;
-		p->onchan 	= NULL;
-		p->syncmode   = 0;*/
 		debug("[irc] add_channel() WINDOW %08X\n", win);
 		if (session_int_get(s, "auto_channel_sync") != 0)
 			irc_sync_channel(s, j, p);
@@ -471,7 +457,7 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		chan = (channel_t *)t1->data;
 		list_destroy(chan->onchan, 0);
 		chan->onchan = NULL;
-		
+
 		/* GiM: check if window isn't allready destroyed */
 		w = window_find_s(s, chan->name);
 		if (w && w->userlist)

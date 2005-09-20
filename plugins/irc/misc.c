@@ -39,7 +39,7 @@
 #include "input.h"
 #include "autoacts.h"
 
-char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES" };
+char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES", "CHANLIMIT", "NICKLEN" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 /*
@@ -358,6 +358,7 @@ IRC_COMMAND(irc_c_init)
 			SOP(_005_PREFIX) = xstrdup("(ov)@+");
 			SOP(_005_CHANTYPES) = xstrdup("#!");
 			SOP(_005_MODES) = xstrdup("3");
+			SOP(_005_NICKLEN) = xstrdup("9");
 			/* ~~ kinda optimal: */
 			SOP(_005_CHANMODES) = xstrdup("b,k,l,imnpsta");
 			/* http://www.irc.org/tech_docs/005.html
@@ -383,8 +384,7 @@ IRC_COMMAND(irc_c_init)
 				{
 					if (sopt_keys[k] == NULL)
 						continue;
-					if (xstrncmp(param[i], sopt_keys[k],
-							xstrlen(sopt_keys[k])))
+					if (xstrncmp(param[i], sopt_keys[k], xstrlen(sopt_keys[k])))
 						continue;
 					xfree(SOP(k));
 					SOP(k) = xstrdup(xstrchr(param[i],
@@ -811,6 +811,7 @@ IRC_COMMAND(irc_c_nick)
  * p[1] - PRIVMSG | NOTICE
  * p[2] - destination (channel|nick)
  * p[3] - :message
+ * b
  */
 IRC_COMMAND(irc_c_msg)
 {
@@ -831,7 +832,7 @@ IRC_COMMAND(irc_c_msg)
 			return 0;
 
 	mw = session_int_get(s, "make_window");
-	
+
 	ctcpstripped = ctcp_parser(s, prv, param[0], param[2], OMITCOLON(param[3]));
 
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
@@ -974,7 +975,7 @@ IRC_COMMAND(irc_c_join)
 	char		*ignore_nick;
 
 	channel = saprintf("%s:%s", IRC3, OMITCOLON(param[2]));
-	
+
 	if ((tmp = xstrchr(param[0], '!'))) *tmp='\0';
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
 	 * but I have no head to this now... */
@@ -989,7 +990,7 @@ IRC_COMMAND(irc_c_join)
 		person = irc_add_person(s, j, param[0]+1, OMITCOLON(param[2])); 
 		if (person && tmp && !(person->ident) && !(person->host))
 			irc_parse_identhost(tmp+1, &(person->ident), &(person->host));
-		
+
 	}
 
 	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
@@ -1062,7 +1063,7 @@ IRC_COMMAND(irc_c_part)
 	xfree(ignore_nick);
 	
 	if (tmp) *tmp='!';
-
+	
 	xfree(coloured);
 	xfree(channel);
 	

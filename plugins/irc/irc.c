@@ -934,7 +934,7 @@ COMMAND(irc_command_quote)
 		printq("not_enough_params", name);
 		return -1;
 	}
-	
+
 	if (!session_connected_get(session)) {
 		printq("not_connected", session_name(session));
 		return -1;
@@ -1240,82 +1240,81 @@ COMMAND(irc_command_names)
 	irc_private_t	*j = irc_private(session);
 	channel_t       *chan;
 	userlist_t      *ulist;
-	char		mode[2], *buf, **mp, *channame;
-	list_t 		l;
-	const char      *sort_status[5]	= {EKG_STATUS_AVAIL, EKG_STATUS_AWAY,
-				EKG_STATUS_XA, EKG_STATUS_INVISIBLE, NULL};
-	/* G->dj: what do you need status_error ? I don't know network, where
-	 * there would be more than 4 modes...
-	 */
-	char            *sort_modes	= xstrchr(SOP(_005_PREFIX), ')');
+        list_t          l;
+	string_t	buf;
+	const char      *sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, NULL};
 	int             lvl_total[5]    = {0, 0, 0, 0, 0};
-	int		lvl   = 0;
-	int		count = 1;
+	int             lvl, count = 0;
+	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')')+1;
+
+	int		smlen = xstrlen(sort_modes) + 1, nplen = atoi(SOP(_005_NICKLEN)) + 1;
+	char            mode[2], **mp, *channame, nickpad[nplen];
 
 	if (!session_check(session, 1, IRC3)) {
 		print("invalid_session");
 		return -1;
 	}
 
-	if ((!sort_modes) ||  !(channame = irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_CHAN))) 
+	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
 	 		return -1;
 
 	if (!(chan = irc_find_channel(j->channels, channame))) {
 		printq("generic", "irc_command_names: wtf?");
 		return -1;
 	}
-	buf 	= xmalloc(1550);
+
+	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN)))
+		return -1;
+
+	if (!(chan = irc_find_channel(j->channels, channame))) {
+		printq("generic", "irc_command_names: wtf?");
+		return -1;
+	}
+
 	mode[1] = '\0';
 
+	for (lvl =0; lvl<nplen; lvl++)
+		nickpad[lvl] = 160;
+	nickpad[lvl] = '\0';
+
 	print_window(channame, session, 0, "IRC_NAMES_NAME", session_name(session), channame+4);
-	
-	while ((*sort_modes || lvl == 4) && lvl < 5) {
-		if (lvl < 4) {
-			sort_modes++;
-			mode[0] = (*sort_modes)?(*sort_modes):' ';
-		}
-		
-		for (l = chan->window->userlist; l; l = l->next) {
-			ulist = l->data;
+	buf = string_init(NULL);
+
+	for (lvl = 0; lvl<smlen; ++lvl, ++sort_modes)
+	{
+		mode[0] = (*sort_modes)?(*sort_modes):160; /* ivil hack*/
+		for (l = chan->window->userlist; l; l = l->next)
+		{
+			ulist = (userlist_t *)l->data;
+			debug("%s \n", ulist->uid);
 			if (!ulist || xstrcmp(ulist->status, sort_status[lvl]) )
 				continue;
-			lvl_total[lvl]++;
-			if (lvl == 4) { 
-				mode[0] = '?';
-				/* TODO: find that person, and his/her mode. */
-			}
-			strcat(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4)));
+			++lvl_total[lvl];
 
-			count++;
-			if (count == 7) {
-				printq("generic", buf);
-				buf[0] = '\0';
-				count = 1;
-			}
+			nickpad[nplen -1 -strlen((ulist->uid + 4))] = '\0';
+			string_append(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad));
+			nickpad[nplen -1 -strlen((ulist->uid + 4))] = 160;
+			++count;
 		}
-		lvl++;
+		debug("---separator---\n");
 	}
-	/*debug(" person->channels: %08X %s %08X>\n", per->channels, channame, chan);*/
-	if (count != 7 && count != 1) {
-		printq("generic", buf);
-	}
+
+	if (count)
+		printq("none", buf->str);
+
+	printq("none2", "");
 #define plvl(x) lvl_total[x] ? itoa(lvl_total[x]) : "0"
-/* normal network - 0: ops; 1:voices  2:normal			    (lvl = 3)
- * with halfops   - 0: ops; 1:halfops 2:voices 3:normal		    (lvl = 5)
- * strange network- 0: ops; 1:halfops 2:voices 3:normal 4:allother. (lvl = 5)
- */
-	if (lvl > 3)	/* stange || with halfops */
-		print_window(channame, session, 0, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(list_count(chan->window->userlist)), plvl(0), plvl(2), plvl(3), plvl(1), plvl(4));
-	else		/* normal */
-		print_window(channame, session, 0, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(list_count(chan->window->userlist)), plvl(0), plvl(1), plvl(2), "0", "0");
-	debug("[IRC_NAMES] lvl = %d levelcounts = %d %d %d %d %d\n", 
-		lvl, 
-		lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3], lvl_total[4], lvl_total[5]);
+	if (smlen > 3) /* has halfops */
+		print_window(channame, session, 0, "IRC_NAMES_TOTAL_H", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
+	else
+		print_window(channame, session, 0, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2));
+	debug("[IRC_NAMES] levelcounts = %d %d %d %d %d\n",
+			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3], lvl_total[4], lvl_total[5]);
 #undef plvl
+
 	irc_getchan_free(mp);
+	string_free (buf, 1);
 	xfree (channame);
-	xfree(buf);
 	return 0;
 }
 
@@ -2087,9 +2086,10 @@ static int irc_theme_init()
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
 	format_add("irc_not_f_server",	"%g!%3%n %6", 1);
 
-	format_add("IRC_NAMES_NAME",   "[%gUsers %G%2%n]", 1);
-	format_add("IRC_NAMES",       _("%K[%W%1%w%[9]2%K]%n"), 1);
-	format_add("IRC_NAMES_TOTAL",   "%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%7%n halfops, %W%5%n voices, %W%6%n normal %W%8%n unknown]\n", 1);
+	format_add("IRC_NAMES_NAME",	"[%gUsers %G%2%n]", 1);
+	format_add("IRC_NAMES",		"%K[%W%1%w%2%3%K]%n ", 1);
+	format_add("IRC_NAMES_TOTAL_H",	"%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n", 1);
+	format_add("IRC_NAMES_TOTAL",	"%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n voices, %W%6%n normal]\n", 1);
 
 	format_add("irc_joined", _("%> %Y%2%n has joined %4\n"), 1);
 	format_add("irc_joined_you", _("%> %RYou%n have joined %4\n"), 1);
@@ -2100,10 +2100,10 @@ static int irc_theme_init()
 	format_add("irc_quit", _("%> %Y%2%n has quit irc (%4)\n"), 1);
 	format_add("irc_split", "%> ", 1);
 	format_add("irc_unknown_ctcp", _("%> %Y%2%n sent unknown CTCP %3: (%4)\n"), 1);
-	format_add("irc_ctcp_action_y_pub", _("%> %y%e* %2%n %4\n"), 1);
-	format_add("irc_ctcp_action_y", _("%> %Y%e* %2%n %4\n"), 1);
-	format_add("irc_ctcp_action_pub", _("%> %y%h* %2%n %5\n"), 1);
-	format_add("irc_ctcp_action", _("%> %Y%h* %2%n %5\n"), 1);
+	format_add("irc_ctcp_action_y_pub", "%> %y%e* %2%n %4\n", 1);
+	format_add("irc_ctcp_action_y", "%> %Y%e* %2%n %4\n", 1);
+	format_add("irc_ctcp_action_pub", "%> %y%h* %2%n %5\n", 1);
+	format_add("irc_ctcp_action", "%> %Y%h* %2%n %5\n", 1);
 	format_add("irc_ctcp_request_pub", _("%> %Y%2%n requested ctcp %5 from %4\n"), 1);
 	format_add("irc_ctcp_request", _("%> %Y%2%n requested ctcp %5\n"), 1);
 	format_add("irc_ctcp_reply", _("%> %Y%2%n CTCP reply from %3: %5\n"), 1);
