@@ -27,12 +27,12 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 
 #include <Python.h>
+#include <compile.h> 
 #include <node.h>
 
 #include <ekg/commands.h>
@@ -484,9 +484,6 @@ char *python_geterror(script_t *s) {
 int python_load(script_t *s)
 {
 	PyObject *init, *temp, *module = NULL;
-#if 0	
-	module = PyImport_ImportModule(s->name); 
-#else
 	FILE *fp = fopen(s->path, "rb"); 
         node *n;
         if ((n = PyParser_SimpleParseFile(fp, s->path, Py_file_input))) {
@@ -496,7 +493,6 @@ int python_load(script_t *s)
 			module = PyImport_ExecCodeModuleEx(s->name, (PyObject *)co, s->path); 
 	}
 	fclose(fp);
-#endif
 	if (!module) {
 		char *err = python_geterror(s);
 		print("script_error", err);
@@ -596,30 +592,7 @@ without that works ? wtf ?!
 int python_initialize()
 {
 	PyObject *ekg, *ekg_config;
-
-	if (getenv("PYTHONPATH")) {
-		char *tmp = saprintf("%s:%s", getenv("PYTHONPATH"), prepare_path("scripts", 0));
-#ifdef HAVE_SETENV
-		setenv("PYTHONPATH", tmp, 1);
-#else
-		{
-			char *s = saprintf("PYTHONPATH=%s", tmp);
-			putenv(s);
-			xfree(s);
-		}
-#endif
-		xfree(tmp);
-	} else {
-#ifdef HAVE_SETENV
-		setenv("PYTHONPATH", prepare_path("scripts", 0), 1);
-#else
-		{
-			char *s = saprintf("PYTHONPATH=%s", prepare_path("scripts", 0));
-			putenv(s);
-			xfree(s);
-		}
-#endif
-	}
+	/* new way of script loading doesn't require this code. */
 
 	Py_Initialize();
 

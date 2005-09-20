@@ -157,7 +157,8 @@ PyObject *ekg_plugin_is_loaded(ekg_pluginObj * self, PyObject *args)
 PyObject *ekg_plugin_unload(ekg_pluginObj * self, PyObject *args)
 {
         debug("[python] Unloading plugin '%s'\n", self->name);
-        if (plugin_unload(xstrdup(self->name)) == -1) {
+
+        if (plugin_unload(plugin_find(self->name)) == -1) {
                 Py_RETURN_FALSE;
         } else {
                 self->loaded = 0;
