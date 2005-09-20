@@ -19,14 +19,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifdef __sun
 #define _XOPEN_SOURCE 600
+#endif
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 #ifdef __FreeBSD__
-#  include <sys/kbio.h>			
+#  include <sys/kbio.h>	
 #endif
 #ifdef __sun /* Solaris */
 #  include <sys/kbd.h>

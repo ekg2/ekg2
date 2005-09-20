@@ -38,6 +38,10 @@
 #include <arpa/inet.h>
 #include <sys/resource.h> // rlimit
 
+#ifdef __FreeBSD__
+#  include <sys/select.h>
+#endif
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
