@@ -35,6 +35,7 @@ AC_SUBST(PLUGINS_LIBS)
 
 dnl FreeBSD
 AC_NEED_STDINT_H
+AC_CHECK_FUNC(kvm_openfiles, [], [AC_CHECK_LIB(kvm, kvm_openfiles, LIBS="$LIBS -lkvm")])
 
 dnl  SunOS
 AC_CHECK_FUNC(gethostbyname, [], [AC_CHECK_LIB(nsl, gethostbyname, LIBS="$LIBS -lnsl")])

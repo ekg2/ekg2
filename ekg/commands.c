@@ -28,8 +28,10 @@
 
 #include "ekg2-config.h"
 
+#ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
+#endif
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -54,7 +56,7 @@
 #include <procfs.h>
 #endif
 
-#ifdef freebsd
+#ifdef __FreeBSD__
 #include <kvm.h>    /* kvm_ funcs */
 #include <limits.h> /* _POSIX2_LINE_MAX */
 #include <sys/param.h>
@@ -2072,20 +2074,18 @@ COMMAND(cmd_test_mem)
 {
 	char *temp, *p = NULL;
 	FILE *file = NULL;
-	int rd = 0, rozmiar = 0;
+	int rd = 0, rozmiar = 0, unmres;
 	struct utsname sys;
 
-	if (uname(&sys) == -1 || !strlen(sys.sysname))
-		return -1;
+	unmres = uname(&sys);
 
 	temp = saprintf("/proc/%d/status", getpid());
 
-	if ( (!xstrcmp(sys.sysname, "FreeBSD")) || (file  = fopen(temp,"rb")) ) {
+	if ( (unmres != -1 && !xstrcmp(sys.sysname, "FreeBSD")) || (file  = fopen(temp,"rb")) ) {
 		xfree(temp);
-		if (!xstrcmp(sys.sysname, "Linux"))
-		{
+#ifdef __linux__
 			char buf[1024];
-			
+
 			rd = fread(buf, 1, 1024, file);
 			fclose(file);
 			if (rd == 0)
@@ -2100,8 +2100,7 @@ COMMAND(cmd_test_mem)
 				printq("generic_error", "VmSize line not found!");
 				return -1;
 			}
-		} else if (!xstrcmp(sys.sysname, "SunOS")) {
-#ifdef sun
+#elif __sun
 			pstatus_t proc_stat;
 			rd = fread(&proc_stat, sizeof(proc_stat), 1, file);
 			fclose(file);
@@ -2111,16 +2110,7 @@ COMMAND(cmd_test_mem)
 				return -1;
 			}
 			rozmiar = proc_stat.pr_brksize + proc_stat.pr_stksize;
-#else
-			p = saprintf("'sun' not defined %s %s %s %s",
-					sys.sysname, sys.release, 
-					sys.version, sys.machine);
-			printq("generic_error", p);
-			xfree(p);
-			return -1;
-#endif
-		} else if (!xstrcmp(sys.sysname, "FreeBSD")) {
-#ifdef freebsd /* link with -lkvm */
+#elif __FreeBSD__ /* link with -lkvm */
 		        char errbuf[_POSIX2_LINE_MAX];
     			int nentries = -1;
     			struct kinfo_proc *kp;
@@ -2137,17 +2127,15 @@ COMMAND(cmd_test_mem)
     			}
 			rozmiar = (u_long) kp->ki_size/1024;
 #else
-			p = saprintf("'freebsd' not defined %s %s %s %s",
-					sys.sysname, sys.release, 
-					sys.version, sys.machine);
+			if (unmres != -1)
+				p = saprintf(" You seem to have /proc mounted, but I don't know how to deal with it. Authors would be very thankful, if you'd contac wit them, quoting this error message. [%s %s %s %s]", sys.sysname, sys.release, sys.version, sys.machine);
+			else
+				p = saprintf(" You seem to have /proc mounted, but I don't know how to deal with it. Authors would be very thankful, if you'd contac wit them, quoting this error message. uname() failed!");
+
 			printq("generic_error", p);
 			xfree(p);
 			return -1;
 #endif
-		} else {
-			printq("generic_error", "You seem to have /proc mounted, but I don't know how to deal with it. Authors would be very thankful, if you'd contact with them");
-			return -1;
-		}
 		p = saprintf("Memory used by ekg2: %d kB", rozmiar);
 		printq("generic", p);
 		xfree(p);

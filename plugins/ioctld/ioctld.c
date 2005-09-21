@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifdef __sun
+#ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #endif
 #include <sys/types.h>
