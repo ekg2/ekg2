@@ -1539,6 +1539,8 @@ void theme_init()
 	format_add("window_cannot_move_status", _("%! Can't move status window!\n"), 1);
 	format_add("window_invalid_move", _("%! Window %T%1%n can't be moved\n"), 1);
 
+        format_add("cant_kill_irc_window", _("Can't kill window. Use /window kill"), 1);
+
 	format_add("file_doesnt_exist", _("%! Can't open file %T%1%n\n"), 1);
 
         /* bind */

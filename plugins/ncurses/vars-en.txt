@@ -122,6 +122,13 @@ header_size
 	
 	defines header size displayed on the top of the screen. Maximum value: 5.
 
+kill_irc_window
+	type: bool
+	default value: 1
+	
+        if set to 0, you disables killing irc chat window with keystroke
+        binding.
+
 margin_size
 	type: integer
 	default value: 15 

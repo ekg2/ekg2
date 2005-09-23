@@ -149,6 +149,7 @@ int config_enter_scrolls;
 int config_header_size;
 int config_margin_size;
 int config_statusbar_size;
+int config_kill_irc_window;
 
 WATCHER(ncurses_watch_stdin);
 WATCHER(ncurses_watch_winch);

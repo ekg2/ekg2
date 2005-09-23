@@ -373,6 +373,7 @@ QUERY(ncurses_setvar_default)
 
 	config_backlog_size = 1000;         /* maksymalny rozmiar backloga */
 	config_display_transparent = 1;     /* czy chcemy przezroczyste t³o? */
+        config_kill_irc_window = 1;         /* czy zamykaæ kana³y ircowe przez alt-k? */
 	config_statusbar_size = 1;
 	config_header_size = 0;
 	config_enter_scrolls = 0;
@@ -492,6 +493,7 @@ int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, "display_transparent", VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, "enter_scrolls", VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "header_size", VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
+	variable_add(&ncurses_plugin, "kill_irc_window",  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
         variable_add(&ncurses_plugin, "margin_size", VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, "statusbar_size", VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
 	

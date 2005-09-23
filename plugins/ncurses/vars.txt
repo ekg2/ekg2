@@ -131,6 +131,13 @@ header_size
 	okre¶la rozmiar nag³ówka okna wy¶wietlanego na górze ekranu.
 	maksymalna ilo¶æ linii to 5.
 
+kill_irc_window
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	je¶li ustawiona na 0, nie mo¿na zamkn±æ okna kana³u ircowego przy
+        pomocy bindingu klawiaturowego.
+
 margin_size
 	typ: liczba
 	domy¶lna warto¶æ: 15

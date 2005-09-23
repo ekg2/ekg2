@@ -159,6 +159,24 @@ static void binding_backward_delete_char(const char *arg)
 	}
 }
 
+static void window_kill_binding(const char *arg)
+{
+        char * ptr;
+        ptr = xstrstr(window_current->target, "irc:");
+        if (ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') ) {
+                if (config_kill_irc_window) {
+                        goto kill;
+                } else {
+                        print("cant_kill_irc_window");
+                        return;
+                }
+        } else {
+                goto kill;
+        }
+kill:
+        command_exec(window_current->target, window_current->session, "/window kill", 0);
+}
+
 static void binding_kill_line(const char *arg)
 {
 	line[line_index] = 0;
@@ -649,6 +667,7 @@ static void binding_parse(struct binding *b, const char *action)
 	__action("backward-page", binding_backward_page);
 	__action("forward-page", binding_forward_page);
 	__action("kill-line", binding_kill_line);
+        __action("window-kill", window_kill_binding);
 	__action("yank", binding_yank);
 	__action("accept-line", binding_accept_line);
 	__action("line-discard", binding_line_discard);
@@ -1048,7 +1067,7 @@ QUERY(ncurses_binding_default)
 	ncurses_binding_add("Alt-I", "/window switch 18", 1, 1);
 	ncurses_binding_add("Alt-O", "/window switch 19", 1, 1);
 	ncurses_binding_add("Alt-P", "/window switch 20", 1, 1);
-	ncurses_binding_add("Alt-K", "/window kill", 1, 1);
+	ncurses_binding_add("Alt-K", "window-kill", 1, 1);
 	ncurses_binding_add("Alt-N", "/window new", 1, 1);
 	ncurses_binding_add("Alt-A", "/window active", 1, 1);
 	ncurses_binding_add("Alt-G", "ignore-query", 1, 1);
@@ -1119,4 +1138,5 @@ void ncurses_binding_destroy()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=8 sw=8
  */
