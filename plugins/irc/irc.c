@@ -274,7 +274,7 @@ int irc_resolver_sort(void *s1, void *s2)
 	return 0;
 }
 
-int irc_resolver2(session_t *session, int fd, char *hostname, int dobind) 
+int irc_resolver2(session_t *session, char ***arr, char *hostname, int dobind) 
 {
 	int port = session_int_get(session, "port"); 
 	void *tm = NULL;
@@ -282,12 +282,6 @@ int irc_resolver2(session_t *session, int fd, char *hostname, int dobind)
 #ifdef HAVE_GETADDRINFO
 	struct  addrinfo *ai, *aitmp, hint;
 #endif	
-
-	/* G->dj: we're not allowing port part in hostname,
-	 * because of IPv6 format... [delimited with colon]
-	 *
-	 * dj->G: so maybe ' ' instead of ':' or ';' ?!?!? ;> *g*
-	 */
 
 	if (port < 1 ) 	port = DEFPORT;
 	if (dobind)	port = 0;
@@ -310,21 +304,23 @@ int irc_resolver2(session_t *session, int fd, char *hostname, int dobind)
 			inet_ntop(aitmp->ai_family, tm, ip, 100);
 #else
 			if (aitmp->ai_family == AF_INET6) {
-				print("generic_error", "You don't have inet_ntop() and family == AF_INET6. Please contact with developers if it happens.");
+				/* G: this doesn't have a sense since we're in child */
+				/* print("generic_error", "You don't have inet_ntop() and family == AF_INET6. Please contact with developers if it happens."); */
 				ip =  xstrdup("::");
 			} else
 				ip   = xstrdup(inet_ntoa(*(struct in_addr *)tm));
 #endif 
 			buf = saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, port);
-/*			debug("[irc_resolver] sending to main thread: %s\n", buf); */
-			write(fd, buf, xstrlen(buf));
-			xfree(buf);
+			//write(fd, buf, xstrlen(buf));
+			array_add(arr, buf);
+			//xfree(buf);
 			xfree(ip);
 		}
 		freeaddrinfo(ai);
 	}
 #else 
-	    print("generic_error", "It seem you don't have getaddrinfo() current version of resolver won't work without this function. If you want to get work it faster contact with developers ;>");
+	/* G: also senseless in child */
+	/*print("generic_error", "It seem you don't have getaddrinfo() current version of resolver won't work without this function. If you want to get work it faster contact with developers ;>");*/
 #endif
 
 /* G->dj: getaddrinfo was returninig 3 times, cause you haven't given hints...
@@ -358,6 +354,7 @@ void irc_changed_resolve(session_t *s, const char *var) {
 	char            *tmp;
 	int		isbind;
 	int		res, fd[2];
+	list_t		*rlist = NULL;
 
 	if (pipe(fd) == -1) {
 		print("generic_error", strerror(errno));
@@ -365,6 +362,21 @@ void irc_changed_resolve(session_t *s, const char *var) {
 	}
 
 	isbind = !xstrcmp((char *) var, "hostname");
+	/* G->dj: THIS WAS VERY, VERY NASTY BUG... 
+	 *        SUCH A LITTLE ONE, AND SO TIME-CONSUMING ;/
+	 */
+	if (isbind) { rlist = &(j->bindlist); j->bindtmplist = NULL; }
+	else { rlist = &(j->connlist); j->conntmplist = NULL; }
+
+	if (*rlist) {
+		list_t tmplist;
+		for (tmplist=*rlist; tmplist; tmplist=tmplist->next) {
+			xfree( ((connector_t *)tmplist->data)->address);
+			xfree( ((connector_t *)tmplist->data)->hostname);
+		}
+		list_destroy(*rlist, 1);
+		*rlist = NULL;
+	}
 
 	if ((res = fork()) < 0) {
 		print("generic_error", strerror(errno));
@@ -374,41 +386,40 @@ void irc_changed_resolve(session_t *s, const char *var) {
 	}
 	j->resolving++;
 	if (res) {
-		irc_resolver_t *idta = xmalloc(sizeof(irc_resolver_t));
-		list_t *rlist = NULL;
+		irc_resolver_t *irdata = xmalloc(sizeof(irc_resolver_t));
 
 		close(fd[1]);
 
-		if (isbind) rlist = &(j->bindlist);
-		else        rlist = &(j->connlist);
+		irdata->session = xstrdup(s->uid);
+		irdata->plist   = rlist;
 
-		idta->session = xstrdup(s->uid);
-		idta->plist   = rlist;
-
-		watch_add (&irc_plugin, fd[0], WATCH_READ_LINE, 0, irc_handle_resolver, idta);
-		if (*rlist) {
-			list_t tmplist;
-			for (tmplist=*rlist; tmplist; tmplist=tmplist->next) {
-				xfree( ((connector_t *)tmplist->data)->address);
-				xfree( ((connector_t *)tmplist->data)->hostname);
-			}
-			list_destroy(*rlist, 1);
-			*rlist = NULL;
-		}
+		watch_add (&irc_plugin, fd[0], WATCH_READ_LINE, 0, irc_handle_resolver, irdata);
+		return;
 	} 
+	/* Child */
 	tmp = xstrdup(session_get(s, var));
-	if (!res && tmp) {
-		char *tmp2;
+	if (tmp) {
+		char *tmp1 = tmp, *tmp2;
+		char **arr = NULL;
 
 		close(fd[0]);
-		while ((tmp2 = xstrrchr(tmp, ','))) {
-			irc_resolver2(s, fd[1], tmp2+1, isbind);
-			*tmp2 = 0;
-		}
+		/* G->dj: I'm changing order, because
+		 * we should connect first to firs specified host from list...
+		 * Yeah I know code look worse ;)
+		 */
+		do {
+			if ((tmp2 = xstrchr(tmp1, ','))) *tmp2 = '\0';
+			irc_resolver2(s, &arr, tmp1, isbind);
+			tmp1 = tmp2+1;
+		} while (tmp2);
 
-		irc_resolver2(s, fd[1], tmp, isbind);
-		sleep(1);
+		tmp2 = array_join(arr, NULL);
+		array_free(arr);
+
+		write(fd[1], tmp2, xstrlen(tmp2));
+		sleep(3);
 		close(fd[1]);
+		xfree(tmp2);
 		exit(0);
 	}
 	xfree(tmp);
@@ -441,20 +452,31 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 
 	session_connected_set(s, 0);
 	j->connecting = 0;
+
+	// !!! 
+	watch_remove(&irc_plugin, j->fd, WATCH_WRITE);
+
 	close(j->fd);
 	j->fd = -1;
 	irc_free_people(s, j);
 
+	debug ("%d [%d:%d:%d,%d]\n", type, EKG_DISCONNECT_FAILURE, EKG_DISCONNECT_STOPPED, EKG_DISCONNECT_NETWORK, EKG_DISCONNECT_USER);
 	switch (type) {
-		case(EKG_DISCONNECT_FAILURE):
+		case EKG_DISCONNECT_FAILURE:
 			break;
-		case(EKG_DISCONNECT_STOPPED):
+		case EKG_DISCONNECT_STOPPED:
+			/* this is just in case somebody would add some servers that have given
+			 * port disabled so answer comes very fast and plug would think
+			 * he is 'disconnected' while in fact he would try many times to
+			 * reconnect to given host
+			 */
+			j->autoreconnecting = 0;
 			/* if ,,reconnect'' timer exists we should stop doing */
 			if (timer_remove(&irc_plugin, "reconnect") == 0)
 				print("auto_reconnect_removed", session_name(s)); 
 			break;
-		case(EKG_DISCONNECT_NETWORK):
-		case(EKG_DISCONNECT_USER):
+		case EKG_DISCONNECT_NETWORK:
+		case EKG_DISCONNECT_USER:
 			if (j->recv_watch) {
 /*				watch_remove(&irc_plugin, j->recv_watch->fd, j->recv_watch->type); */
 				watch_free(j->recv_watch);
@@ -478,6 +500,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
 	xfree(__reason);
 	xfree(__session);
+
 }
 
 WATCHER(irc_handle_resolver)
@@ -490,13 +513,13 @@ WATCHER(irc_handle_resolver)
 	if (!s || !(j = irc_private(s)) ) return;
 
 	if (type) {
-		debug("[irc] resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, j->connecting);
+		debug("[irc] handle_resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, j->connecting);
 		xfree(resolv->session);
 		xfree(resolv);
 		if (j->resolving > 0)
 			j->resolving--;
 		if (j->resolving == 0 && j->connecting == 2) {
-			debug("[irc] connecting from resolver ;>!\n");
+			debug("[irc] hadnle_resolver calling really_connect\n");
 			irc_really_connect(s);
 		}
 		return;
@@ -561,31 +584,34 @@ WATCHER(irc_handle_connect)
 	char			*pass = NULL;
 
 	if (type == 1) {
-		debug ("[irc] handle_connect(): type %d\n",type);
+		debug ("[irc] handle_connect(): type %d\n", type);
 		xfree(data);
 		return;
 	}
 
 	if (!s) { 
-		debug("[irc] session %s deleted. :(\n", data);  
-		watch_remove(&irc_plugin, fd, WATCH_WRITE); /* look @ irc_handle_stream */ 
+		debug("[irc] handle_connect(): session %s deleted. :(\n", data);  
+		watch_remove(&irc_plugin, fd, WATCH_WRITE);
 		return;
 	}
 
 	debug ("[irc] handle_connect()\n");
 
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-		debug("[irc] handle_connect(): SO_ERROR\n");
+		debug("[irc] handle_connect(): SO_ERROR %s\n", strerror(res));
 
-		DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res);
-		session_connected_set(s, 0);
-		j->connecting = 0;
 		/* try next server. */
-		j->conntmplist = j->conntmplist->next;
-		irc_handle_disconnect(s, strerror(res), 
-				EKG_DISCONNECT_FAILURE);
+		/* 'if' because someone can make: /session server blah and /reconnect
+		 * during already began process of connecting
+		 */
+		if (j->conntmplist) {
+			DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res); 
+			j->conntmplist = j->conntmplist->next;
+		}
+		irc_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
 		return;
 	}
+
 	timer_remove(&irc_plugin, "reconnect");
 	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
@@ -626,7 +652,6 @@ int irc_build_sin(connector_t *co, struct sockaddr **address)
 
 	if (!co) 
 		return 0;
-
 	if (co->family == AF_INET) {
 		len = sizeof(struct sockaddr_in);
 
@@ -651,7 +676,7 @@ int irc_build_sin(connector_t *co, struct sockaddr **address)
 }
 
 int irc_really_connect(session_t *session) {
-	irc_private_t *j = irc_private(session);
+	irc_private_t		*j = irc_private(session);
 	connector_t		*connco, *connvh = NULL;
 	struct sockaddr		*sinco,  *sinvh  = NULL;
 	int			sinlen, fd;
@@ -665,7 +690,8 @@ int irc_really_connect(session_t *session) {
  		return -1;
  	}
 
-	connco = j->conntmplist->data;
+	j->autoreconnecting = 1;
+	connco = (connector_t *)(j->conntmplist->data);
 	sinlen = irc_build_sin(connco, &sinco);
 	if (!sinco) {
 		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje (!sinco)"); 
@@ -676,8 +702,7 @@ int irc_really_connect(session_t *session) {
 		err = errno;
 		debug("[irc] handle_resolver() socket() failed: %s\n",
 				strerror(err));
-		irc_handle_disconnect(session, strerror(err),
-				EKG_DISCONNECT_FAILURE);
+		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
 		goto irc_conn_error;
 	}
 	j->fd = fd;
@@ -687,11 +712,10 @@ int irc_really_connect(session_t *session) {
 		err = errno;
 		debug("[irc] handle_resolver() ioctl() failed: %s\n",
 				strerror(err));
-		irc_handle_disconnect(session, strerror(err), 
-				EKG_DISCONNECT_FAILURE);
+		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
 		goto irc_conn_error;
 	}
-	
+
 	/* loop, optimize... */
 	if (j->bindtmplist) 
 		connvh = j->bindtmplist->data;	
@@ -717,11 +741,13 @@ int irc_really_connect(session_t *session) {
 	j->connecting = 1;
 	DOT("IRC_TEST", "Connecting", connco, session, 0);
 	connret = connect(fd, sinco, sinlen);
+	debug("connecting: %s %s\n", connco->hostname, connco->address);
 
 	xfree(sinco);
 	xfree(sinvh);
 
 	if (connret && errno != EINPROGRESS) {
+		debug("[irc] really_connect control point 1\n");
 		err = errno;
 		DOT("IRC_TEST_FAIL", "Connect", connco, session, err);
 		j->conntmplist = j->connlist->next;
@@ -745,7 +771,7 @@ COMMAND(irc_command_connect)
 {
 	irc_private_t		*j = irc_private(session);
 	const char		*newnick;
-	
+
 	if (!session_check(session, 1, IRC3)) {
 		printq("invalid_session");
 		return -1;
@@ -770,7 +796,7 @@ COMMAND(irc_command_connect)
 		return -1;
 	}
 	if (j->resolving) {
-		printq("generic", "irc resolver is working.. we will connect as soon as possible ;>");
+		printq("generic", "resolving in progress... you will be connected as soon as possible");
 		j->connecting = 2;
 		return -1;
 	}
@@ -788,7 +814,7 @@ COMMAND(irc_command_disconnect)
 		return -1;
 	}
 
-	if (!j->connecting && !session_connected_get(session)) {
+	if (!j->connecting && !session_connected_get(session) && !j->autoreconnecting) {
 		printq("not_connected", session_name(session));
 		return -1;
 	}
@@ -796,7 +822,7 @@ COMMAND(irc_command_disconnect)
 	if (reason && session_connected_get(session))
 		irc_write (j, "QUIT :%s\r\n", reason);
 
-	if (j->connecting)
+	if (j->connecting || j->autoreconnecting)
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
 	else
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
@@ -1819,13 +1845,15 @@ COMMAND(irc_command_nick)
 			j->nick = xstrdup(params[0]);
 		}
 	}
-	
+
 	return 0;
 }
 
 COMMAND(irc_command_test) {
 	irc_private_t	*j = irc_private(session);
-	list_t       tlist = j->connlist;
+	list_t		tlist = j->connlist;
+
+//#define DOT(a,x,y,z,error) print_window("__status", z, 0, a, session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family), error ? strerror(error) : "")
 	
 	for (tlist = j->connlist; tlist; tlist = tlist->next)
 		DOT("IRC_TEST", "Connect to:", ((connector_t *) tlist->data), session, 0);
@@ -2004,7 +2032,8 @@ int irc_plugin_init(int prio)
 	/* like channel_sync in irssi; better DO NOT turn it off! */
 	plugin_var_add(&irc_plugin, "auto_channel_sync", VAR_BOOL, "1", 0, NULL);
 	/* sync lusers, stupid ;(,  G->dj: well why ? */
-	plugin_var_add(&irc_plugin, "auto_lusers_sync", VAR_BOOL, "0", 0, NULL);	
+	plugin_var_add(&irc_plugin, "auto_lusers_sync", VAR_BOOL, "0", 0, NULL);
+        plugin_var_add(&irc_plugin, "auto_reconnect", VAR_INT, "-1", 0, NULL);
 	plugin_var_add(&irc_plugin, "ban_type", VAR_INT, "10", 0, NULL);
 	plugin_var_add(&irc_plugin, "close_windows", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
@@ -2093,82 +2122,82 @@ static int irc_theme_init()
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
 	format_add("irc_not_f_server",	"%g!%3%n %6", 1);
 
-	format_add("IRC_NAMES_NAME",	"[%gUsers %G%2%n]", 1);
+	format_add("IRC_NAMES_NAME",	_("[%gUsers %G%2%n]"), 1);
 	format_add("IRC_NAMES",		"%K[%W%1%w%2%3%K]%n ", 1);
-	format_add("IRC_NAMES_TOTAL_H",	"%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n", 1);
+	format_add("IRC_NAMES_TOTAL_H",	_("%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n"), 1);
 	format_add("IRC_NAMES_TOTAL",	"%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n voices, %W%6%n normal]\n", 1);
 
-	format_add("irc_joined", _("%> %Y%2%n has joined %4\n"), 1);
-	format_add("irc_joined_you", _("%> %RYou%n have joined %4\n"), 1);
-	format_add("irc_left", _("%> %g%2%n has left %4 (%5)\n"), 1);
-	format_add("irc_left_you", _("%> %RYou%n have left %4 (%5)\n"), 1);
-	format_add("irc_kicked", _("%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"), 1);
-	format_add("irc_kicked_you", _("%> You have been kicked out by %R%3%n from %5 (%6)\n"), 1);
-	format_add("irc_quit", _("%> %Y%2%n has quit irc (%4)\n"), 1);
-	format_add("irc_split", "%> ", 1);
-	format_add("irc_unknown_ctcp", _("%> %Y%2%n sent unknown CTCP %3: (%4)\n"), 1);
-	format_add("irc_ctcp_action_y_pub", "%> %y%e* %2%n %4\n", 1);
-	format_add("irc_ctcp_action_y", "%> %Y%e* %2%n %4\n", 1);
-	format_add("irc_ctcp_action_pub", "%> %y%h* %2%n %5\n", 1);
-	format_add("irc_ctcp_action", "%> %Y%h* %2%n %5\n", 1);
-	format_add("irc_ctcp_request_pub", _("%> %Y%2%n requested ctcp %5 from %4\n"), 1);
-	format_add("irc_ctcp_request", _("%> %Y%2%n requested ctcp %5\n"), 1);
-	format_add("irc_ctcp_reply", _("%> %Y%2%n CTCP reply from %3: %5\n"), 1);
+	format_add("irc_joined",	_("%> %Y%2%n has joined %4\n"), 1);
+	format_add("irc_joined_you",	_("%> %RYou%n have joined %4\n"), 1);
+	format_add("irc_left",		_("%> %g%2%n has left %4 (%5)\n"), 1);
+	format_add("irc_left_you",	_("%> %RYou%n have left %4 (%5)\n"), 1);
+	format_add("irc_kicked",	_("%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"), 1);
+	format_add("irc_kicked_you",	_("%> You have been kicked out by %R%3%n from %5 (%6)\n"), 1);
+	format_add("irc_quit",		_("%> %Y%2%n has quit irc (%4)\n"), 1);
+	format_add("irc_split",		"%> ", 1);
+	format_add("irc_unknown_ctcp",	_("%> %Y%2%n sent unknown CTCP %3: (%4)\n"), 1);
+	format_add("irc_ctcp_action_y_pub",	"%> %y%e* %2%n %4\n", 1);
+	format_add("irc_ctcp_action_y",		"%> %Y%e* %2%n %4\n", 1);
+	format_add("irc_ctcp_action_pub",	"%> %y%h* %2%n %5\n", 1);
+	format_add("irc_ctcp_action",		"%> %Y%h* %2%n %5\n", 1);
+	format_add("irc_ctcp_request_pub",	_("%> %Y%2%n requested ctcp %5 from %4\n"), 1);
+	format_add("irc_ctcp_request",		_("%> %Y%2%n requested ctcp %5\n"), 1);
+	format_add("irc_ctcp_reply",		_("%> %Y%2%n CTCP reply from %3: %5\n"), 1);
 
 
-	format_add("IRC_ERR_CANNOTSENDTOCHAN", "%! %2: %1\n", 1);
+	format_add("IRC_ERR_CANNOTSENDTOCHAN",	"%! %2: %1\n", 1);
 	
-	format_add("IRC_RPL_FIRSTSECOND", "%> (%1) %2 %3\n", 1);
-	format_add("IRC_RPL_SECONDFIRST", "%> (%1) %3 %2\n", 1);
-	format_add("IRC_RPL_JUSTONE", "%> (%1) %2\n", 1);
-	format_add("IRC_RPL_NEWONE", "%> (%1,%2) 1:%3 2:%4 3:%5 4:%6\n", 1);
+	format_add("IRC_RPL_FIRSTSECOND",	"%> (%1) %2 %3\n", 1);
+	format_add("IRC_RPL_SECONDFIRST",	"%> (%1) %3 %2\n", 1);
+	format_add("IRC_RPL_JUSTONE",		"%> (%1) %2\n", 1);
+	format_add("IRC_RPL_NEWONE",		"%> (%1,%2) 1:%3 2:%4 3:%5 4:%6\n", 1);
 
-	format_add("IRC_ERR_FIRSTSECOND", "%! (%1) %2 %3\n", 1);
-	format_add("IRC_ERR_SECONDFIRST", "%! (%1) %3 %2\n", 1);
-	format_add("IRC_ERR_JUSTONE", "%! (%1) %2\n", 1);
-	format_add("IRC_ERR_NEWONE", "%! (%1,%2) 1:%3 2:%4 3:%5 4:%6\n", 1);
+	format_add("IRC_ERR_FIRSTSECOND",	"%! (%1) %2 %3\n", 1);
+	format_add("IRC_ERR_SECONDFIRST",	"%! (%1) %3 %2\n", 1);
+	format_add("IRC_ERR_JUSTONE",		"%! (%1) %2\n", 1);
+	format_add("IRC_ERR_NEWONE",		"%! (%1,%2) 1:%3 2:%4 3:%5 4:%6\n", 1);
 	
-	format_add("IRC_RPL_CANTSEND", _("%> Cannot send to channel %T%2%n\n"), 1);
-	format_add("RPL_MOTDSTART", "%g,+=%G-----\n", 1);
-	format_add("RPL_MOTD",      "%g|| %n%2\n", 1);
-	format_add("RPL_ENDOFMOTD", "%g`+=%G-----\n", 1);
+	format_add("IRC_RPL_CANTSEND",	_("%> Cannot send to channel %T%2%n\n"), 1);
+	format_add("RPL_MOTDSTART",	"%g,+=%G-----\n", 1);
+	format_add("RPL_MOTD",		"%g|| %n%2\n", 1);
+	format_add("RPL_ENDOFMOTD",	"%g`+=%G-----\n", 1);
 
 	
-	format_add("RPL_INVITE",    "%> Inviting %W%2%n to %W%3%n\n", 1);
+	format_add("RPL_INVITE",	_("%> Inviting %W%2%n to %W%3%n\n"), 1);
  	/* Used in: /mode +b|e|I %2 - chan %3 - data from server */
 	/* THIS IS TEMPORARY AND WILL BE DONE OTHER WAY, DO NOT USE THIS STYLES
 	 */
-	format_add("RPL_LISTSTART",  "%g,+=%G-----\n", 1);
-	format_add("RPL_EXCEPTLIST", "%g|| %n %5 - %W%2%n: except %c%3\n", 1);
-	format_add("RPL_BANLIST",    "%g|| %n %5 - %W%2%n: ban %c%3\n", 1);
-	format_add("RPL_INVITELIST", "%g|| %n %5 - %W%2%n: invite %c%3\n", 1);;
-	format_add("RPL_EMPTYLIST" , "%g|| %n Empty list \n", 1);
-	format_add("RPL_LINKS",      "%g|| %n %5 - %2  %3  %4\n", 1);
-	format_add("RPL_ENDOFLIST",  "%g`+=%G----- %2%n\n", 1);
+	format_add("RPL_LISTSTART",	"%g,+=%G-----\n", 1);
+	format_add("RPL_EXCEPTLIST",	_("%g|| %n %5 - %W%2%n: except %c%3\n"), 1);
+	format_add("RPL_BANLIST",	_("%g|| %n %5 - %W%2%n: ban %c%3\n"), 1);
+	format_add("RPL_INVITELIST",	_("%g|| %n %5 - %W%2%n: invite %c%3\n"), 1);;
+	format_add("RPL_EMPTYLIST" ,	_("%g|| %n Empty list \n"), 1);
+	format_add("RPL_LINKS",		"%g|| %n %5 - %2  %3  %4\n", 1);
+	format_add("RPL_ENDOFLIST", 	"%g`+=%G----- %2%n\n", 1);
 
 	/* %2 - number; 3 - type of stats (I, O, K, etc..) ....*/
-	format_add("RPL_STATS",      "%g|| %3 %n %4 %5 %6 %7 %8\n", 1);
-	format_add("RPL_STATS_EXT",  "%g|| %3 %n %2 %4 %5 %6 %7 %8\n", 1);
-	format_add("RPL_STATSEND",   "%g`+=%G--%3--- %2\n", 1);
+	format_add("RPL_STATS",		"%g|| %3 %n %4 %5 %6 %7 %8\n", 1);
+	format_add("RPL_STATS_EXT",	"%g|| %3 %n %2 %4 %5 %6 %7 %8\n", 1);
+	format_add("RPL_STATSEND",	"%g`+=%G--%3--- %2\n", 1);
 	/*
 	format_add("RPL_CHLISTSTART",  "%g,+=%G lp %2\t%3\t%4\n", 1);
 	format_add("RPL_CHLIST",       "%g|| %n %5 %2\t%3\t%4\n", 1);
 	*/
-	format_add("RPL_CHLISTSTART","%g,+=%G lp %2\t%3\t%4\n", 1);
-	format_add("RPL_LIST",       "%g|| %n %5 %2\t%3\t%4\n", 1);
+	format_add("RPL_CHLISTSTART",	"%g,+=%G lp %2\t%3\t%4\n", 1);
+	format_add("RPL_LIST",		"%g|| %n %5 %2\t%3\t%4\n", 1);
 
 	/* 2 - number; 3 - chan; 4 - ident; 5 - host; 6 - server ; 7 - nick; 8 - mode; 9 -> realname
 	 * format_add("RPL_WHOREPLY",   "%g|| %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n", 1);
 	 */
-	format_add("RPL_WHOREPLY",   "%g|| %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n", 1);
+	format_add("RPL_WHOREPLY",	"%g|| %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n", 1);
 	/* delete those irssi-like styles */
 
-	format_add("RPL_AWAY", _("%G||%n away     : %2 - %3\n"), 1);
+	format_add("RPL_AWAY",		_("%G||%n away     : %2 - %3\n"), 1);
 	/* in whois %2 is always nick */
-	format_add("RPL_WHOISUSER", _("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
+	format_add("RPL_WHOISUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
 				"%G||%n realname : %6\n"), 1);
 
-	format_add("RPL_WHOWASUSER", _("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
+	format_add("RPL_WHOWASUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
 				"%G||%n realname : %6\n"), 1);
 
 /* %2 - nick %3 - there is/ was no such nickname / channel, and so on... */
@@ -2177,37 +2206,37 @@ static int irc_theme_init()
 	format_add("IRC_ERR_NOSUCHNICK", _("%n %3 (%2)\n"), 1);
 	*/
 
-	format_add("RPL_WHOISCHANNELS", _("%G||%n %|channels : %3\n"), 1);
-	format_add("RPL_WHOISSERVER", _("%G||%n %|server   : %3 (%4)\n"), 1);
-	format_add("RPL_WHOISOPERATOR", _("%G||%n %|ircOp    : %3\n"), 1);
-	format_add("RPL_WHOISIDLE", _("%G||%n %|idle     : %3 (signon: %4)\n"), 1);
-	format_add("RPL_ENDOFWHOIS", _("%G`+===%g-----\n"), 1);
-	format_add("RPL_ENDOFWHOWAS", _("%G`+===%g-----\n"), 1);
+	format_add("RPL_WHOISCHANNELS",	_("%G||%n %|channels : %3\n"), 1);
+	format_add("RPL_WHOISSERVER",	_("%G||%n %|server   : %3 (%4)\n"), 1);
+	format_add("RPL_WHOISOPERATOR",	_("%G||%n %|ircOp    : %3\n"), 1);
+	format_add("RPL_WHOISIDLE",	_("%G||%n %|idle     : %3 (signon: %4)\n"), 1);
+	format_add("RPL_ENDOFWHOIS",	_("%G`+===%g-----\n"), 1);
+	format_add("RPL_ENDOFWHOWAS",	_("%G`+===%g-----\n"), 1);
 
-	format_add("RPL_TOPIC", _("%> Topic %2: %3\n"), 1);
+	format_add("RPL_TOPIC",		_("%> Topic %2: %3\n"), 1);
 	/* \n not needed if you're including date [%4] */
-	format_add("IRC_RPL_TOPICBY", _("%> set by %2 on %4"), 1);
-	format_add("IRC_TOPIC_CHANGE", _("%> %T%2%n changed topic on %T%4%n: %5\n"), 1);
-	format_add("IRC_TOPIC_UNSET", _("%> %T%2%n unset topic on %T%4%n\n"), 1);
-	format_add("IRC_MODE_CHAN_NEW", _("%> %2/%4 sets mode [%5]\n"), 1);
-	format_add("IRC_MODE_CHAN", _("%> %2 mode is [%3]\n"), 1);
-	format_add("IRC_MODE", _("%> (%1) %2 set mode %3 on You\n"), 1);
+	format_add("IRC_RPL_TOPICBY",	_("%> set by %2 on %4"), 1);
+	format_add("IRC_TOPIC_CHANGE",	_("%> %T%2%n changed topic on %T%4%n: %5\n"), 1);
+	format_add("IRC_TOPIC_UNSET",	_("%> %T%2%n unset topic on %T%4%n\n"), 1);
+	format_add("IRC_MODE_CHAN_NEW",	_("%> %2/%4 sets mode [%5]\n"), 1);
+	format_add("IRC_MODE_CHAN",	_("%> %2 mode is [%3]\n"), 1);
+	format_add("IRC_MODE",		_("%> (%1) %2 set mode %3 on You\n"), 1);
 	
-	format_add("IRC_INVITE", _("%> %W%2%n invites you to %W%5%n\n"), 1);
-	format_add("IRC_PINGPONG", _("%) (%1) ping/pong %c%2%n\n"), 1);
-	format_add("IRC_YOUNEWNICK", _("%> You are now known as %G%3%n\n"), 1);
-	format_add("IRC_NEWNICK", _("%> %g%2%n is now known as %G%4%n\n"), 1);
-	format_add("IRC_TRYNICK", _("%> Will try to use %G%2%n instead\n"), 1);
+	format_add("IRC_INVITE",	_("%> %W%2%n invites you to %W%5%n\n"), 1);
+	format_add("IRC_PINGPONG",	_("%) (%1) ping/pong %c%2%n\n"), 1);
+	format_add("IRC_YOUNEWNICK",	_("%> You are now known as %G%3%n\n"), 1);
+	format_add("IRC_NEWNICK",	_("%> %g%2%n is now known as %G%4%n\n"), 1);
+	format_add("IRC_TRYNICK",	_("%> Will try to use %G%2%n instead\n"), 1);
 	format_add("IRC_CHANNEL_SYNCED", "%> Join to %W%2%n was synced in %W%3.%4%n secs", 1);
 	/* %1 - sesja ; %2 - Connect, BIND, whatever, %3 - hostname %4 - adres %5 - port 
 	 * %6 - family (debug pursuit only) */
-	format_add("IRC_TEST", "%> (%1) %2 to %W%3%n [%4] port %W%5%n (%6)", 1);
-	format_add("IRC_CONN_ESTAB", "%> (%1) Connection to %W%3%n estabilished", 1);
+	format_add("IRC_TEST",		"%> (%1) %2 to %W%3%n [%4] port %W%5%n (%6)", 1);
+	format_add("IRC_CONN_ESTAB",	"%> (%1) Connection to %W%3%n estabilished", 1);
 	/* j/w %7 - error */
-	format_add("IRC_TEST_FAIL", "%> (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
+	format_add("IRC_TEST_FAIL",	"%> (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
 	
-	format_add("irc_channel_secure", "%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
-	format_add("irc_channel_unsecure", "%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
+	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
+	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
 
 	return 0;
 }

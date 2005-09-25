@@ -140,7 +140,7 @@ int is_ctcp(char *mesg)
 {
 	int i;
 	char *p;
-	ctcp_t *ret;
+	const ctcp_t *ret;
 
 	if ((p = xstrchr(mesg, ' ')))
 		*p = '\0';

@@ -30,6 +30,7 @@ extern char *sopt_keys[];
 typedef struct {
 	int fd;				/* connection's fd */
 	int connecting;			/* are we connecting _now_ ? */
+	int autoreconnecting;		/* are we in reconnecting mode now? */
 	int resolving;			/* count of resolver threads. */
 	list_t bindlist, bindtmplist;
 	list_t connlist, conntmplist;

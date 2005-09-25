@@ -42,7 +42,7 @@ int is_ctcp(char *mesg);
 enum { CTCP_ACTION=1, CTCP_DCC, CTCP_SED, CTCP_FINGER, CTCP_VERSION, CTCP_SOURCE,
 	CTCP_USERINFO, CTCP_CLIENTINFO, CTCP_PING, CTCP_TIME, CTCP_ERRMSG };
 
-static ctcp_t ctcps[] = {
+const static ctcp_t ctcps[] = {
         { "ACTION",     1 },
         { "DCC",        0 },
         { "SED",        0 },
