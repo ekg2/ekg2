@@ -22,7 +22,7 @@ AC_SUBST(LIBTOOL_DEPS)
 
 dnl It's obsolete in current versions of gettext but it's needed in older
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.11.5)
+AM_GNU_GETTEXT_VERSION([0.14.3])
 
 ALL_LINGUAS="pl"
 
@@ -70,7 +70,13 @@ AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
 
-CFLAGS="$CFLAGS -Wall -std=c99"
+CFLAGS="$CFLAGS -Wall"
+
+AC_PROG_C_STR
+
+if test "x$C_STR" = "xyes"; then
+	CFLAGS="$CFLAGS -str=c99"
+fi
 
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
@@ -90,7 +96,7 @@ AC_ARG_WITH(gpm-mouse,
 
 case $host_os in
 linux*)
-    if test x$with_gpm_mouse != xno; then
+    if test x$with_gpm_mouse != no; then
         AC_CHECK_LIB(gpm, Gpm_GetEvent,
             [AC_DEFINE(HAVE_LIBGPM, 1,
                        [Define to enable gpm mouse support on Linux])
@@ -138,7 +144,7 @@ if test "x$with_pthread" != "xno"; then
 
                 have_pthread=yes
         ], [
-                AC_MSG_ERROR([Your system is not supporting pthreads])
+                AC_MSG_WARN([Your system is not supporting pthreads])
         ])
 fi
 
