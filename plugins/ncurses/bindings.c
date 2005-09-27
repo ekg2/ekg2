@@ -163,7 +163,7 @@ static void window_kill_binding(const char *arg)
 {
         char * ptr;
         ptr = xstrstr(window_current->target, "irc:");
-        if (ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') && !config_kill_irc_window ) {
+        if (ptr && ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') && !config_kill_irc_window ) {
                 print("cant_kill_irc_window");
                 return;
         }
