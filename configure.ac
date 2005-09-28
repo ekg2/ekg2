@@ -75,7 +75,7 @@ CFLAGS="$CFLAGS -Wall"
 AC_PROG_C_STR
 
 if test "x$C_STR" = "xyes"; then
-	CFLAGS="$CFLAGS -str=c99"
+	CFLAGS="$CFLAGS -std=c99"
 fi
 
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
