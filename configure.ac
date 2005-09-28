@@ -72,9 +72,9 @@ AC_CHECK_FUNCS(utimes)
 
 CFLAGS="$CFLAGS -Wall"
 
-AC_PROG_C_STR
+AC_PROG_C_STD
 
-if test "x$C_STR" = "xyes"; then
+if test "x$C_STD" = "xyes"; then
 	CFLAGS="$CFLAGS -std=c99"
 fi
 
