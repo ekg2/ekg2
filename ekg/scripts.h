@@ -17,6 +17,7 @@ typedef enum {
         SCRIPT_QUERYTYPE,
         SCRIPT_TIMERTYPE,
 	SCRIPT_WATCHTYPE,
+	SCRIPT_PLUGINTYPE, 
 } script_type_t;
 
 typedef enum {
@@ -25,6 +26,9 @@ typedef enum {
 	SCR_ARG_CHARP,
 	SCR_ARG_CHARPP,
 	SCR_ARG_INT,
+	
+	SCR_ARG_WINDOW = 100, 
+	SCR_ARG_FSTRING, 
 } script_arg_type_t;
 
 typedef struct {

@@ -305,7 +305,11 @@ script_t *perl_caller() {
 
 void *perl_plugin_register(char *name, int type, void *formatinit)
 {
+#ifdef SCRIPTS_NEW
 	return script_plugin_init(&perl_lang, perl_caller(), name, type, formatinit, 0);
+#else
+	return NULL;
+#endif
 }
 
 void *perl_timer_bind(int freq, char *handler)
@@ -335,7 +339,11 @@ void *perl_handler_bind(char *query_name, char *handler)
 
 void *perl_command_bind(char *command, char *params, char *poss, char *handler)
 {
+#ifdef SCRIPTS_NEW
 	return script_command_bind(&perl_lang, perl_caller(), command, params, poss, xstrdup(handler));
+#else
+	return script_command_bind(&perl_lang, perl_caller(), command, xstrdup(handler));
+#endif
 }
 
 int perl_finalize()
