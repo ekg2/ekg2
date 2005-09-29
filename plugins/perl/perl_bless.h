@@ -1,35 +1,39 @@
 #ifndef PERL_BLESS_H
 #define PERL_BLESS_H
 
-#include <ekg/debug.h>
-#include <ekg/sessions.h>
 #undef _
-#include <ekg/windows.h>
-#include <ekg/scripts.h>
-#include <ekg/stuff.h>
-#include <ekg/vars.h>
-#include <ekg/userlist.h>
-
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/scripts.h>
+#include <ekg/sessions.h>
+#include <ekg/stuff.h>
+#include <ekg/userlist.h>
+#include <ekg/windows.h>
+#include <ekg/vars.h>
 
 #include <plugins/irc/irc.h>
 
 /* TODO: enum */
+#define BLESS_SCRIPT 0
 #define BLESS_SESSION 1
 #define BLESS_VARIABLE 2
 #define BLESS_PLUGIN 3
 #define BLESS_WINDOW 4
+#define BLESS_FSTRING 10
 #define BLESS_COMMAND 5
 #define BLESS_SESSION_PARAM 6
 #define BLESS_TIMER 7
 #define BLESS_USER 8
+#define BLESS_LIST 11
 
 #define BLESS_IRC_SERVER 20
 #define BLESS_IRC_CHANNEL 21
 #define BLESS_IRC_USER 22
 #define BLESS_IRC_CHANNUSER 23
 // Ekg2
+
+#define bless_script(var)\
+	(SV *) ekg2_bless(BLESS_SCRIPT, 0, var)
 
 #define bless_variable(var)\
         (SV *) ekg2_bless(BLESS_VARIABLE, 0, var)
@@ -54,6 +58,8 @@
 	
 #define bless_user(user)\
 	(SV *) ekg2_bless(BLESS_USER, 0, user)
+#define bless_list(ptr, id)\
+	(SV *) ekg2_bless(BLESS_LIST, id, ptr);
 
 // Ekg2::Irc
 

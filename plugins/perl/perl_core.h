@@ -94,6 +94,7 @@ int perl_initialize();
 int perl_finalize();
 
 SV *create_sv_ptr(void *object);
+char *perl_array2str(char **arr);
 
 #endif
 /* zrobic to jakos ladniej... hack.*/
@@ -115,10 +116,8 @@ SV *create_sv_ptr(void *object);
                                 xfree(*(char **) args[i]); \
                                 *( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
                                 break;\
-                        case (SCR_ARG_CHARPP):\
+                        case (SCR_ARG_CHARPP): /* wazne, zrobic. */\
                                 break;\
-                        default:\
-                                debug("_NIMPTYPE_ dupa!\n");\
 \
                 }\
         }\

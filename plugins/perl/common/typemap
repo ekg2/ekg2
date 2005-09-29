@@ -4,7 +4,7 @@ Ekg2::Command		T_Ekg2Comm
 Ekg2::Variable		T_Ekg2Var
 Ekg2::Session		T_Ekg2Ses
 Ekg2::Session::Param	T_Ekg2SesVar
-
+Ekg2::Script		T_Ekg2Scr
 Ekg2::Window		T_Ekg2Win
 Ekg2::Plugin		T_Ekg2Plu
 Ekg2::User		T_Ekg2User
@@ -13,11 +13,12 @@ Ekg2::Timer		T_Ekg2Time
 Ekg2::PTimer		T_PlainList
 Ekg2::STIMER		T_PlainList
 Ekg2::Userlist		T_PlainList
+short *			T_PlainList
 
 INPUT
 
 T_PlainList
-	$var = (list_t ) INT2PTR(void *,SvIV(ST(0)));
+	$var = (list_t ) Ekg2_ref_object($arg);
 
 T_Ekg2User
 	$var = (userlist_t *) Ekg2_ref_object($arg)
@@ -34,6 +35,9 @@ T_Ekg2Ses
 T_Ekg2SesVar
 	$var = (session_param_t *) Ekg2_ref_object($arg)
 
+T_Ekg2Scr
+	$var = (script_t *) Ekg2_ref_object($arg)
+
 T_Ekg2Comm
 	$var = (command_t *) Ekg2_ref_object($arg)
 
@@ -44,6 +48,8 @@ T_Ekg2Plu
 	$var = (plugin_t *) Ekg2_ref_object($arg)
 	
 OUTPUT
+T_PlainList
+	$arg = (void *) bless_list($var, 1);
 
 T_Ekg2Var
 	$arg = (void *) bless_variable( (variable_t *) $var);
@@ -66,3 +72,8 @@ T_Ekg2Plu
 T_Ekg2Time
 	$arg = (void *) bless_timer( (struct timer *) $var);
 
+T_Ekg2Scr
+	$arg = (void *) bless_script( (script_t *) $var);
+	
+T_Ekg2User
+	$arg = (void *) bless_user( (userlist_t *) $var);

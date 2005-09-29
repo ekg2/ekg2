@@ -11,6 +11,15 @@ OUTPUT:
 
 Ekg2::Window window_find(const char *target)
 
+
+# sesja ? 
+Ekg2::Window window_new(const char *target, int new_id)
+CODE:
+	RETVAL = window_new(target, NULL, new_id);
+OUTPUT:
+	RETVAL
+
+
 Ekg2::Window window_current()
 CODE:
         RETVAL = window_current;
@@ -43,17 +52,19 @@ CODE:
 OUTPUT:
 	RETVAL
 
+Ekg2::Userlist window_userlist(Ekg2::Window wind)
+CODE:
+	RETVAL = &(wind->userlist);
+OUTPUT:
+	RETVAL
+
 void window_print_format(Ekg2::Window wind, char *format, char *line)
 CODE:
-	if (wind->id == 0) print_window("__debug", wind->session, 0, format, line);	
-	else if (wind->id == 1) print_window("__status", wind->session, 0, format, line);	
-	else print_window(wind->target, wind->session, 0, format, line);	
+	print_window(ekg2_window_target(wind), wind->session, 0, format, line);
 
 void window_print(Ekg2::Window wind, char *line)
 CODE:
-	if (wind->id == 0) print_window("__debug", wind->session, 0, "generic", line);	
-	else if (wind->id == 1) print_window("__status", wind->session, 0, "generic", line);	
-	else print_window(wind->target, wind->session, 0, "generic", line);	
+	print_window(ekg2_window_target(wind), wind->session, 0, "generic", line);
 
 void window_switch(Ekg2::Window wind)
 CODE:

@@ -1,13 +1,16 @@
 #include "module.h"
 
 static int initialized = 0;
-#define VAR_PREFIX ""
 
 MODULE = Ekg2  PACKAGE = Ekg2
 
 PROTOTYPES: ENABLE
 
 #> MAIN
+
+void exit()
+CODE:
+	ekg_exit();
 
 void echo(char *str)
 CODE:
@@ -18,11 +21,72 @@ void debug(char *debstr)
 CODE:
 	debug("(perldebug) %s", debstr);
 
+void format_add(char *str, char *value)
+CODE:
+	format_add(str, value, 1);
+
+char *format_string(char *str)
+CODE:
+	RETVAL = format_string(str);
+OUTPUT:
+	RETVAL	
+
+char *fstring2ascii(char *str, void *attr_)
+CODE:
+        string_t st = string_init(NULL);
+	short *attr = attr_;
+        int prev = -1, prevbold = 0, prevblink = 0;
+        int i;
+
+        for (i=0; i < strlen(str); i++) {
+                short chattr = attr[i];
+                int bold = 0, blink = 0;
+
+                if (chattr & 64)  bold = 1;
+		if (chattr & 256) blink = 1;
+/*
+		if (chattr & 512) underlinke = 1;
+		if (chattr & 1024) reverse = 1;
+*/
+		if (!blink && prevblink != blink && prev != -1) { /* turn off blinking */
+			prev = -1;
+			string_append(st, "%n");
+		}
+                if (blink && (prevblink != blink || prev == -1)) 
+			string_append(st, "%i"); /* turn on blinking */
+
+                if (!(chattr & 128) && (prev != (chattr & 7) || prevbold != bold)) { /* change color/bold */
+			string_append_c(st, '%');
+                        switch (chattr & 7) {
+				case (0): string_append_c(st, (bold) ? 'K' : 'k'); break;
+				case (1): string_append_c(st, (bold) ? 'R' : 'r'); break;
+				case (2): string_append_c(st, (bold) ? 'G' : 'g'); break;
+				case (3): string_append_c(st, (bold) ? 'Y' : 'y'); break;
+				case (4): string_append_c(st, (bold) ? 'B' : 'b'); break;
+				case (5): string_append_c(st, (bold) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
+				case (6): string_append_c(st, (bold) ? 'C' : 'c'); break;
+				case (7): string_append_c(st, (bold) ? 'W' : 'w'); break;
+                        }
+                        prev = (chattr & 7);
+                } else if ((chattr & 128) && prev != -1) { /* reset all attributes */
+                        string_append(st, "%n");
+                        prev = -1;
+                }
+                string_append_c(st, str[i]);
+
+		prevblink = blink;
+		prevbold  = bold;
+        }
+        RETVAL =  string_free(st, 0);
+OUTPUT:
+	RETVAL
+
+
 void print(int dest, char *str)
 CODE:
 	char *line;
         while ((line = split_line(&str))) {
-                window_print("__status", NULL, 0, fstring_new(va_format_string(line)));
+                window_print(ekg2_window_target(window_exist(dest)), NULL, 0, fstring_new((const char *) va_format_string(line)));
         }
 
 void init()
@@ -32,6 +96,8 @@ CODE:
 void deinit()
 CODE:
 
+#> WATCHE
+
 int watch_add(int fd, int type, int persist, char *handler, void *data);
 CODE:
 	perl_watch_add(fd, type, persist, handler, data);
@@ -40,52 +106,15 @@ int watch_remove(int fd, int type);
 CODE:	
 	watch_remove(&perl_plugin, fd, type);
 
-#> TIMERS
-
-int timer_bind(int freq, char *handler)
-CODE:
-	perl_timer_bind(freq, handler);
-
-int timer_unbind(void * scr_time)
-CODE:
-	perl_timer_unbind(scr_time);
-
-#> COMMANDS
-
-int command_bind(char *command, char *handler)
-CODE:
-	perl_command_bind(command, handler);
-
 #> QUERIES
 
 int handler_bind(char *query_name, char *handler)
 CODE:
 	perl_handler_bind(query_name, handler);
 
-#> VARIABLES
-
-Ekg2::Variable var_add_handler(char *name, char *value, char *handler)
+Ekg2::Script script_find(char *name)
 CODE:
-	char *temp = saprintf("%s%s", VAR_PREFIX, name);
-	perl_variable_add(temp, value, handler);
-	xfree(temp);
-
-Ekg2::Variable variable_add(char *name, char *value)
-CODE:
-	perl_variable_add(name, value, NULL);
-
-Ekg2::Variable var_add(char *name, char *value)
-CODE:
-	char *temp = saprintf("%s%s", VAR_PREFIX,name);
-	perl_variable_add(temp, value, NULL);
-	xfree(temp);
-
-Ekg2::Variable var_find(char *name)
-CODE:
-	char *temp = saprintf("%s%s", VAR_PREFIX,name);
-//	RETVAL = (script_var_find(NULL, name)) ->var;
-	RETVAL = variable_find(temp);
-	xfree(temp);
+	RETVAL = script_find(&perl_lang, name);
 OUTPUT:
 	RETVAL
 
@@ -115,12 +144,35 @@ CODE:
 OUTPUT:
         RETVAL
 
+int WATCH_READ_LINE()
+CODE:
+	RETVAL = WATCH_READ_LINE;
+OUTPUT:
+	RETVAL
+
 int WATCH_READ()
 CODE:
 	RETVAL = WATCH_READ;
 OUTPUT:
 	RETVAL
 
+int WATCH_WRITE()
+CODE:
+	RETVAL = WATCH_WRITE;
+OUTPUT:
+	RETVAL
+	
+int PLUGIN_UI()
+CODE:
+	RETVAL = PLUGIN_UI;
+OUTPUT:
+	RETVAL
+
+int PLUGIN_PROTOCOL()
+CODE:
+	RETVAL = PLUGIN_PROTOCOL;
+OUTPUT:
+	RETVAL
 ##################################################################################
 
 BOOT:

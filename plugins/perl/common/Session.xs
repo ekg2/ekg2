@@ -11,7 +11,13 @@ PPCODE:
                 XPUSHs(sv_2mortal(bless_session( (session_t *) l->data)));
         }
 
-############################################################################
+Ekg2::Session session(void *session)
+CODE:
+	RETVAL = bless_session(session);
+OUTPUT:
+	RETVAL
+
+
 Ekg2::Session session_find(const char *uid)
 
 Ekg2::Session session_current()
@@ -19,7 +25,6 @@ CODE:
 	RETVAL = session_current;
 OUTPUT:
 	RETVAL
-############################################################################
 
 
 #########   Ekg2::Session::Param #######################################################
@@ -36,9 +41,6 @@ CODE:
 	session_set(session, param->key, value);
 #	int session_set(session_t *s, const char *key, const char *value)
 
-####################################################
-
-
 ###########  EKG2::Session ##################################################################
 MODULE = Ekg2::Session	PACKAGE = Ekg2::Session  PREFIX = session_
 
@@ -50,6 +52,29 @@ PPCODE:
                 XPUSHs(sv_2mortal(bless_session_param( (session_param_t *) l->data)));
         }
 
+Ekg2::Userlist session_userlist(Ekg2::Session session)
+CODE:
+        RETVAL = &(session->userlist);
+OUTPUT:
+        RETVAL
+	
+# /session -w session ?
+int session_set(Ekg2::Session session)
+CODE:
+	window_current->session = session;
+	session_current = session;
+
+void session_connected_set(Ekg2::Session session, int val)
+
+# TODO think about that &perl_plugin...
+int  session_param_add(Ekg2::Session session, char *name)
+CODE:
+	plugin_var_add(&perl_plugin, name, VAR_STR, NULL, 0, NULL);
+
+
+int session_param_set(Ekg2::Session session, char *name, char *value)
+CODE:
+	session_set(session, name, value);
 
 int session_disconnect(Ekg2::Session session)
 CODE:

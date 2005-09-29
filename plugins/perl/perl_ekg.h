@@ -14,9 +14,14 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
 
 #ifndef __PERL_EKG_H_
 #define __PERL_EKG_H_
+
 #include <ekg/dynstuff.h>
 #include <ekg/scripts.h>
 #undef _

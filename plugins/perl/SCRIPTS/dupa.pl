@@ -67,6 +67,11 @@ sub cmd_perl_list {
 	my ($params)   = @_;
 
 
+	foreach my $timer (Ekg2::timers) {
+		Ekg2::echo("$timer -> $timer->{name} = $timer->{freq}");
+	}
+
+	return 0;
 	foreach my $wind (Ekg2::windows) {
 		Ekg2::echo("$wind -> $wind->{id} = $wind->{target}");
 		Ekg2::echo("WINDOW->USERSLIST:  ($wind->{userlist})");
@@ -110,10 +115,6 @@ sub cmd_perl_list {
 #		$var->help();
 	}
 	
-	foreach my $timer (Ekg2::timers) {
-		Ekg2::echo("$timer -> $timer->{name} = $timer->{freq}");
-#		$var->help();
-	}
 	
 #	Ekg2::echo("--------------------------------------------");
 }
@@ -132,7 +133,7 @@ sub cmd_connect_if_disconnected_disconnect_if_connected {
 }
 
 sub cmd_test {
-	$var =  Ekg2::var_find("dupus");
+	$var =  Ekg2::variable_find("dupus");
 	Ekg2::echo("$var $var->{value}");
 	
 	
@@ -215,7 +216,6 @@ sub cmd_perl_scripts {
 
 Ekg2::command_bind('perl_list', 'cmd_perl_list');
 Ekg2::command_bind('perl_scr_list', 'cmd_perl_scripts');
-return 1;
 
 Ekg2::debug("(perl) Hello ekg2!\n");
 Ekg2::command_bind('test', 'cmd_test');
@@ -227,8 +227,8 @@ Ekg2::handler_bind('protocol-disconnected', 'ekg2_autoreconnect');
 Ekg2::handler_bind('protocol-disconnected', 'ekg2_dupa');
 
 
-Ekg2::var_add_handler('dupa', 'temp', 'as');
-Ekg2::var_add('dupus', 'as');
+Ekg2::variable_add_ext('dupa', 'temp', 'as');
+Ekg2::variable_add('dupus', 'as');
 
 
 # cmd_timer_test(1, 0, 0); # testowanie obslugi timerow. 

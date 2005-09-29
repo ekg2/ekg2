@@ -13,6 +13,19 @@ PPCODE:
                 XPUSHs(sv_2mortal(bless_variable( (variable_t *) l->data)));
         }
 
+void variables_free()
+CODE:
+	variable_free();
+	
+Ekg2::Variable variable_add_ext(char *name, char *value, char *handler)
+CODE:
+        perl_variable_add(name, value, handler);
+	
+Ekg2::Variable variable_add(char *name, char *value)
+CODE:
+        perl_variable_add(name, value, NULL);
+		
+
 #*******************************
 MODULE = Ekg2::Variable	PACKAGE = Ekg2::Variable  PREFIX = variable_
 #*******************************
@@ -21,10 +34,11 @@ void variable_help(Ekg2::Variable var)
 CODE:
 	variable_help(var->name);
 
+void variable_remove(Ekg2::Variable var)
+CODE:
+	variable_remove(var->plugin, var->name);
+
 int variable_set(Ekg2::Variable var, const char *value)
 CODE:
 	variable_set(var->name, value, 0);
 
-int variable_new(char *name, char *value)
-CODE:
-	debug("[VARIABLE.XS] variable_new() TODO\n");

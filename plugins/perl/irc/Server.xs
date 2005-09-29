@@ -21,6 +21,12 @@ PPCODE:
 	
 MODULE = Ekg2::Irc::Server   PACKAGE = Ekg2::Irc::Server  PREFIX = server_
 
+Ekg2::Session server_session(Ekg2::Session s)
+CODE:
+	RETVAL = s;
+OUTPUT:
+	RETVAL
+
 void server_raw(Ekg2::Session s, char *str)
 CODE:
 	if (!xstrncasecmp( session_uid_get( (session_t *) s), IRC4, 4)) irc_write(irc_private(s), "%s\r\n", str);

@@ -173,6 +173,7 @@ sub host_lookup {
 
 sub pipe_input {
   my ($type, $rhfd, $watch, $rh) = @_;
+  return if ($type);
   my $text = <$rh>;
   close($rh);
 #  Ekg2::watch_remove($pipe_tag); # w sumie nie musimy wywalac tego bo watch nie jest staly..
