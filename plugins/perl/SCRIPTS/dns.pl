@@ -30,9 +30,10 @@ my $pipe_tag;
 sub cmd_dns {
   my ($name, $nicks) = @_;
   return if !$nicks;
-  my ($server) = (Ekg2::Irc::session2server(Ekg2::session_current) || Ekg2::session_current);
+  my ($server) = Ekg2::session_current;
+  my ($ircserver) = Ekg2::Irc::session2server($server);
   # get list of nicks/hosts we want to know
-  my $tag = !$server ? undef : $server->{server};
+  my $tag = !$ircserver ? undef : $ircserver->{server};
   my $ask_nicks = "";
   my $print_error = 0;
   foreach my $nick (split(" ", $nicks)) {
@@ -56,7 +57,7 @@ sub cmd_dns {
     # send the USERHOST query
     if (/irc:/) {
 	    $userhosts++;
-	    $server->raw("USERHOST :$nicks");
+	    $ircserver->raw("USERHOST :$nicks");
     }
     if (/gg:/ || /jid:/) {
 	      Ekg2::echo("TODO!");
@@ -183,7 +184,7 @@ sub pipe_input {
   if ($server) {
     $server->print('', $text);
   } else {
-    Ekg2::print(1, $text);
+    Ekg2::print(-1, $text);
   }
 
   $lookup_waiting--;

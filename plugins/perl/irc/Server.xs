@@ -13,6 +13,15 @@ PPCODE:
 		}
         }
 	
+Ekg2::Irc::Server session2server(Ekg2::Session s)
+CODE:
+	if (!xstrncasecmp( session_uid_get( (session_t *) s), IRC4, 4))
+		RETVAL = s;
+	else
+		RETVAL = NULL;
+OUTPUT:
+	RETVAL
+	
 MODULE = Ekg2::Irc::Server   PACKAGE = Ekg2::Irc::Server  PREFIX = server_
 
 Ekg2::Session server_session(Ekg2::Session s)

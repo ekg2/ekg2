@@ -23,4 +23,4 @@ T_Ekg2IrcPer
 	$arg = (void *) bless_channperson( (people_t *) $var);
 
 T_Ekg2IrcSer
-	$arg = (void *) bless_server((session_t *) $var)
+	$arg = (void *) bless_server((session_t *) $var);
