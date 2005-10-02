@@ -74,8 +74,7 @@ sub sig_failure {
 
 sub sig_userhost {
   my ($server_, $data_) = @_;
-  my $server = $$server_;
-  my $data   = $$data_;
+  my ($server, $data) = ($$server_, $$data_);
 
   $data =~ s/^[^ ]* :?//;
   my @hosts = split(/ +/, $data);

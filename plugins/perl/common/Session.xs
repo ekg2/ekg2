@@ -11,12 +11,7 @@ PPCODE:
                 XPUSHs(sv_2mortal(bless_session( (session_t *) l->data)));
         }
 
-Ekg2::Session session(void *session)
-CODE:
-	RETVAL = bless_session(session);
-OUTPUT:
-	RETVAL
-
+Ekg2::Session session_add(char *name)
 
 Ekg2::Session session_find(const char *uid)
 
@@ -39,7 +34,6 @@ CODE:
 int session_param_set(Ekg2::Session::Param param, Ekg2::Session session, const char *value)
 CODE:
 	session_set(session, param->key, value);
-#	int session_set(session_t *s, const char *key, const char *value)
 
 ###########  EKG2::Session ##################################################################
 MODULE = Ekg2::Session	PACKAGE = Ekg2::Session  PREFIX = session_

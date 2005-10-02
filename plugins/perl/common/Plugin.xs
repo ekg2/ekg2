@@ -9,8 +9,6 @@ int plugin_register(char *name, int type, void *formatinit)
 CODE:
         perl_plugin_register(name, type, formatinit);
 	
-Ekg2::Session session_add(char *name)
-
 void plugins()
 PREINIT:
         list_t l;

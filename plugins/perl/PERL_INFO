@@ -36,6 +36,7 @@ Ekg2::Command
 	{name}			- nazwa
     
 	-> execute($param)	- wykonuje polecenie
+	-> remove()		- usuwa polecenie.
 
 Ekg2::Plugin
 	{name}			- nazwa							(char *)
@@ -143,6 +144,7 @@ Ekg2::Irc::Channel
 ##  -> 
   
 Ekg2::Irc::User
+	-> channels		- lista kanalow na ktorych siedzi user			(lista Ekg2::Irc::Channel)
 #  -> kill($reason)		- zabija usera.    
 ##  -> whois(
 

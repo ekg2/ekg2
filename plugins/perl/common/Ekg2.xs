@@ -37,22 +37,20 @@ CODE:
 	short *attr = attr_;
         int prev = -1, prevbold = 0, prevblink = 0;
         int i;
-
+/* rewrite */
         for (i=0; i < strlen(str); i++) {
                 short chattr = attr[i];
                 int bold = 0, blink = 0;
 
                 if (chattr & 64)  bold = 1;
 		if (chattr & 256) blink = 1;
-/*
-		if (chattr & 512) underlinke = 1;
-		if (chattr & 1024) reverse = 1;
-*/
-		if (!blink && prevblink != blink && prev != -1) { /* turn off blinking */
+/*		if (chattr & 512) underline = 1;
+		if (chattr & 1024) reverse = 1;  */
+		if (!blink && prevblink != blink && prev != -1) {
 			prev = -1;
-			string_append(st, "%n");
+			string_append(st, "%n"); /* turn off blinking */
 		}
-                if (blink && (prevblink != blink || prev == -1)) 
+                if (blink && (prevblink != blink || prev == -1))
 			string_append(st, "%i"); /* turn on blinking */
 
                 if (!(chattr & 128) && (prev != (chattr & 7) || prevbold != bold)) { /* change color/bold */
@@ -80,7 +78,6 @@ CODE:
         RETVAL =  string_free(st, 0);
 OUTPUT:
 	RETVAL
-
 
 void print(int dest, char *str)
 CODE:

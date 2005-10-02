@@ -13,12 +13,6 @@ PPCODE:
 		}
         }
 	
-void session2server(Ekg2::Session s)
-PPCODE:
-	if (!xstrncasecmp( session_uid_get( (session_t *) s), IRC4, 4)) { 
-		XPUSHs(sv_2mortal(bless_server( (session_t *) s)));
-	}
-	
 MODULE = Ekg2::Irc::Server   PACKAGE = Ekg2::Irc::Server  PREFIX = server_
 
 Ekg2::Session server_session(Ekg2::Session s)
