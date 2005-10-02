@@ -905,7 +905,11 @@ COMMAND(irc_command_msg)
 				ischn?"irc_not_sent_chan":w?"irc_not_sent_n":"irc_not_sent");
 
 	sid 	 = xstrdup(session_uid_get(session));
-	uid_full = xstrdup(uid);
+	if (!xstrncasecmp(uid, IRC4, 4)) {
+		uid_full = xstrdup(uid);
+	} else {
+		uid_full = saprintf("%s:%s", IRC3, uid);
+	}
 	rcpts    = xmalloc(sizeof(char *) * 2);
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
@@ -915,14 +919,14 @@ COMMAND(irc_command_msg)
 		__msg = xstrdup((const char *)mline[1]);
 
 		head = format_string(frname, session_name(session), prefix,
-				j->nick, j->nick, uid+4, __msg);
+				j->nick, j->nick, uid_full+4, __msg);
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
 		query_emit(NULL, "message-encrypt", &sid, &uid_full, &__msg, &secure);
 		query_emit(NULL, "protocol-message", &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
-		irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __msg);
+		irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __msg);
 
 		xfree(__msg);
 		xfree(coloured);
