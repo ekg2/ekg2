@@ -76,16 +76,15 @@ void irc_autorejoin_timer(int type, void *d)
 
 int irc_autorejoin(session_t *s, int when, char *chan)
 {
-	irc_private_t *j;
+	irc_private_t *j = irc_private(s);
 	list_t l;
 	string_t st;
 	window_t *w;
 	char *chanprefix;
 	int rejoin;
 
-	if (!s) return -1;
-	j = irc_private(s);
-	if (!j) return -1;
+	if (!session_check(s, 1, IRC3))
+    		return -1;
 
 	chanprefix = SOP(_005_CHANTYPES);
 	rejoin = session_int_get(s, "REJOIN");
@@ -103,24 +102,16 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 					continue;
 				if (session_compare(w->session, s)) 
 					continue;
-				if (xstrncasecmp(IRC4, w->target, 4)) 
-					continue;
 				if (!xstrchr(chanprefix, (w->target)[4]))
 					continue;
-				if (st->len) {
+
+				if (st->len)
 					string_append_c(st, ',');
-					if ((w->target)[4] == '!')
-					{
-						string_append_c(st, '!');
-						string_append(st, w->target + 10);
-					} else
-						string_append(st, w->target + 4);
+				if ((w->target)[4] == '!') {
+					string_append_c(st, '!');
+					string_append(st, w->target + 10);
 				} else {
-					if ((w->target)[4] == '!') {
-						string_append_c(st, '!');
-						string_append(st, w->target + 10);
-					} else
-						string_append(st, w->target + 4);
+					string_append(st, w->target + 4);
 				}
 			}
 			if (st->len) 
