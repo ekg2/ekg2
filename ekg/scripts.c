@@ -1,3 +1,8 @@
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -14,20 +19,16 @@
 
 /* TODO && BUGS 
  * - cleanup.
- * - multiple handler for commands && var_changed. && queries
+ * - multiple handler for commands && var_changed. 
  * - memleaks ?
  */
-
-/* czego nie ma w tree ekg2 a jest w moim, ble ;p */
-#ifndef COMMAND_ISSCRIPT
-#define COMMAND_ISSCRIPT 0 
-#endif
 
 COMMAND(script_command_handlers);
 void script_timer_handlers(int type, void *d);
 void script_var_changed(const char *var);
 int script_query_handlers(void *data, va_list ap);
 WATCHER(script_handle_watch);
+int script_plugin_theme_init( /* plugin_t *p */ );
 
 int scripts_autoload(scriptlang_t *scr);
 char *script_find_path(char *name);
@@ -473,13 +474,15 @@ script_var_t *script_var_find(const char *name)
 
 int script_command_unbind(script_command_t *temp, int free)
 {
-	int notfound = 1;
-// [3]
+	int notfound = 1; /* TODO */
 	SCRIPT_UNBIND_HANDLER(SCRIPT_COMMANDTYPE, temp->private);
-
 	if (notfound)
+#ifdef SCRIPTS_NEW
+		command_freeone(temp->self);
+#else
 		command_remove(NULL, temp->comm);
 	xfree(temp->comm);
+#endif
 	return list_remove(&script_commands, temp, 1);
 }
 
@@ -487,22 +490,35 @@ int script_command_unbind(script_command_t *temp, int free)
 int script_query_unbind(script_query_t *temp, int free)
 {
 	scriptlang_t *slang = temp->scr->lang;
-	int notfound = 1;
-// [3]
 	SCRIPT_UNBIND_HANDLER(SCRIPT_QUERYTYPE, temp->private);
-	if (notfound)
-		query_disconnect(slang->plugin, temp->query_name);
-		/* QUERY_DISCONNECT() z nazwa jako parametrem nie jest najlepszym pomyslem... mozemy `zlikwidowac` zlego handlera 
-		 * dlatego to jako jedyny handler koniecznie musi byc multiple ! albo zrobic cos takiego jak w script_var_unbind() wyzerowac tylko...
-		 * lepsze cos takiego niz usunac zly handler. 
-		 * leafnode ? any ideas ? ;)
-		 * 
-		 * dj.
-		 */
-
+#ifdef SCRIPTS_NEW
+	query_free(temp->self);	
+#else
+	query_disconnect(slang->plugin, temp->query_name);
 	xfree(temp->query_name);
+#endif
 	return list_remove(&script_queries, temp, 1);
 }
+
+int script_plugin_destroy(/* plugin_t *p */ )
+/* and what i can do here ? */
+{
+/* ok somethink i can */
+        script_plugin_t *temp = NULL;
+        list_t l;
+        for (l = script_plugins; l; l = l->next) {
+		if (temp) {
+			debug("Err @ script_plugin_destroy more that 1 script as plugin, plugin_destroying must be rewritten!\n");
+			return -1;
+		} else temp = l->data;
+	}
+
+	plugin_unregister(temp->self);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_PLUGINTYPE, temp->private);
+	xfree(temp->self->name);
+	xfree(temp->self);
+	return 0;
+}								
 
 int script_timer_unbind(script_timer_t *temp, int remove)
 {
@@ -522,9 +538,7 @@ int script_watch_unbind(script_watch_t *temp, int remove)
 	temp->removed = 1;
 	SCRIPT_UNBIND_HANDLER(SCRIPT_WATCHTYPE, temp->private, temp->data);
 	if (remove)
-		watch_remove(((scriptlang_t *) 	temp->scr->lang)->plugin, 
-						temp->self->fd, 
-	    					temp->self->type);
+		watch_free(temp->self);
 	return list_remove(&script_watches, temp, 1);
 }
 
@@ -557,9 +571,11 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 		SCRIPT_BIND_HEADER(script_var_t);
 		temp->name  = xstrdup(name);
 		temp->value = xstrdup(value);
-
-		ret = !variable_add(NULL, name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
-
+#ifdef SCRIPTS_NEW
+		temp->self = variable_add(NULL, name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
+#else
+		temp->self = !variable_add(NULL, name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
+#endif
 		SCRIPT_BIND_FOOTER(script_vars);
 	} 
 	
@@ -569,9 +585,25 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler) 
 {
 	SCRIPT_BIND_HEADER(script_command_t);
+#ifdef SCRIPTS_NEW
+	temp->self = command_add(NULL, comm, "?", script_command_handlers, COMMAND_ISSCRIPT, NULL);
+#else
 	temp->comm = xstrdup(command);
-	ret = !command_add(NULL, temp->comm, "?", script_command_handlers, COMMAND_ISSCRIPT, NULL);
+	temp->self = !command_add(NULL, comm, "?", script_command_handlers, 0, NULL);
+#endif
 	SCRIPT_BIND_FOOTER(script_commands);
+}
+
+script_plugin_t *script_plugin_init(scriptlang_t *s, script_t *scr, char *name, plugin_class_t pclass, void *handler)
+{
+	SCRIPT_BIND_HEADER(script_plugin_t);
+	temp->self = xmalloc(sizeof(plugin_t));
+	temp->self->name = xstrdup(name);
+	temp->self->pclass = pclass;
+	temp->self->destroy = script_plugin_destroy;
+	temp->self->theme_init = script_plugin_theme_init; 
+	plugin_register(temp->self, -254 /* default */);							
+	SCRIPT_BIND_FOOTER(script_plugins);
 }
 
 script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void *handler)
@@ -581,7 +613,6 @@ script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void
 	tempname   = saprintf("scr_%x", (int) temp); /* truly unique ;p */
 	temp->self = timer_add(NULL, (const char *) tempname, freq, 1, &script_timer_handlers, (void *) temp);
 	xfree(tempname);
-	ret	   = (int) temp->self;
 	SCRIPT_BIND_FOOTER(script_timers);
 } 
 
@@ -590,8 +621,6 @@ script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int typ
 	SCRIPT_BIND_HEADER(script_watch_t);
 	temp->data = data;
 	temp->self = watch_add(s->plugin, fd, type, persist, script_handle_watch, temp);
-
-	ret	   = (int) temp->self;
 	SCRIPT_BIND_FOOTER(script_watches);
 }
 
@@ -599,7 +628,6 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 {
 	SCRIPT_BIND_HEADER(script_query_t);
 	int num			= 0;
-	temp->query_name	= xstrdup(query_name);
 	
 // argc i argv_type uzupelnic... z czego ? xstrcmp() ? 
 #define CHECK(x) if (!xstrcmp(query_name, x)) 
@@ -628,9 +656,12 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 #undef NEXT_ARG
 
 	temp->argc = num;
-
-// TOD: jesli handler dla tego pluginu nie istnieje to dodac.
-	ret = query_connect(s->plugin, temp->query_name, script_query_handlers, temp);
+#ifdef SCRIPTS_NEW
+	temp->self = query_connect(s->plugin, query_name, script_query_handlers, temp);
+#else
+	temp->query_name = xstrdup(query_name);
+	temp->self = !query_connect(s->plugin, query_name, script_query_handlers, temp);
+#endif
 
 	SCRIPT_BIND_FOOTER(script_queries);
 }
@@ -653,9 +684,7 @@ WATCHER(script_handle_watch)
 	SCRIPT_HANDLER_HEADER(script_handler_watch_t);
 	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, (int)watch) {
 		if (!type) {
-			watch_remove(((scriptlang_t *) 	temp->scr->lang)->plugin, 
-							temp->self->fd, 
-							temp->self->type);
+			watch_free(temp->self);
 			return;
 		}
 	}
@@ -673,7 +702,12 @@ COMMAND(script_command_handlers)
 		script_command_unbind(temp, 1);
 	}
 	return ret;
+}
 
+int script_plugin_theme_init( /* plugin_t *p */ ) 
+{
+/* TODO: it will be slow! foreach scriptplugin call format initializer.  (?) */
+	return 0;
 }
 
 void script_timer_handlers(int type, void *d)
@@ -701,7 +735,7 @@ int script_query_handlers(void *data, va_list ap)
 	for (i=0; i < temp->argc; i++) 
 		args[i] = (void *) va_arg(ap, void *);
 	
-	SCRIPT_HANDLER_MULTI_FOOTER(script_handler_query, (void **) &args);
+	SCRIPT_HANDLER_FOOTER(script_handler_query, (void **) &args);
 
 	return ret;
 }
@@ -811,8 +845,6 @@ int scripts_init()
 #endif
 	return 0;
 }
-
-/* [3] TODO: powinnismy sprawdzic czy to polecenie wystepuje w innych handlerach.., jedno polecenie bedzie moze byc podbindowane pod wiele handlerow ! */
 
 /*
  * Local Variables:

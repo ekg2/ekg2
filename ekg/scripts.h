@@ -2,6 +2,7 @@
 #define EKG_SCRIPTS_H
 #include <sys/types.h>
 
+#include "commands.h"
 #include "plugins.h"
 #include "protocol.h"
 #include "stuff.h"
@@ -48,6 +49,13 @@ typedef struct {
 list_t 		script_timers;
 
 typedef struct {
+	script_t        *scr;
+	plugin_t        *self;
+	void            *private;
+} script_plugin_t;
+list_t          script_plugins;
+
+typedef struct {
 	script_t 	*scr;
 	variable_t 	*self;
 
@@ -59,7 +67,10 @@ list_t 		script_vars;
 
 typedef struct {
 	script_t 	*scr;
+#ifndef SCRIPTS_NEW
 	char 		*query_name;
+#endif
+	query_t		*self;
 	int 		argc;
 	int             argv_type[MAX_ARGS];
 	void 		*private;
@@ -68,7 +79,10 @@ list_t 		script_queries;
 
 typedef struct {
 	script_t 	*scr;
+#ifndef SCRIPTS_NEW
 	char 		*comm;
+#endif
+	command_t	*self;
 	void 		*private; 
 } script_command_t;
 list_t 		script_commands;
@@ -188,30 +202,30 @@ script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler);
 script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *value, void *handler);
 script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, int persist, void *handler, void *data);
+script_plugin_t *script_plugin_init(scriptlang_t *s, script_t *scr, char *name, plugin_class_t pclass, void *handler);
 
 int script_variables_free(int free);
 int script_variables_write();
 
 #define SCRIPT_UNBIND_HANDLER(type, args...)\
+{\
     	SCRIPT_HANDLER_HEADER(script_free_bind_t);\
-    	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);
-
+    	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);\
+}
 #endif
 
 /* BINDING && UNBINDING */
 
 #define SCRIPT_BIND_HEADER(x) \
         x *temp = xmalloc(sizeof(x)); \
-	int ret = 0;\
-	\
         temp->scr  = scr;\
 	temp->private = handler;
 
 #define SCRIPT_BIND_FOOTER(y) \
-	if (!ret) {\
-		debug("[script_bind_error] (before adding to %s) ERROR! retcode = %d\n", #y, ret);\
-/*		xfree(temp); */\
-/*		return NULL; */\
+	if (!temp->self) {\
+		debug("[script_bind_error] (before adding to %s) ERROR! retcode = 0x%x\n", #y, temp->self);\
+		xfree(temp);\
+		return NULL;\
 	}\
 	list_add(&y, temp, 0);\
 	return temp;
@@ -238,15 +252,6 @@ int script_variables_write();
 	if (ret == SCRIPT_HANDLE_UNBIND)
 
 #define SCRIPT_HANDLER_MULTI_FOOTER(y, _args...)\
-/* tutaj jakis cos moze, lista list_t * ? i potem jechanie po kolei ? albo arrayik ? */\
-	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\
-        else                                                _handler = temp->private;\
-        if (_handler)\
-                ret = _handler(_scr, temp, _args); \
-        else {\
-                debug("[%s] (_handler == NULL)\n", #y);\
-                ret = SCRIPT_HANDLE_UNBIND;\
-        }\
-	\
-	if (ret == SCRIPT_HANDLE_UNBIND) { debug("[%s] script or scriptlang want to delete this handler\n", #y); }\
-	if (ret == SCRIPT_HANDLE_UNBIND) 
+/* foreach y->list->next do SCRIPT_HANDLER_FOOTER(y->list->data, _args); */\
+	SCRIPT_HANDLER_FOOTER(y, _args);
+
