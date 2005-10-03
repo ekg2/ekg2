@@ -586,10 +586,10 @@ script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *comm
 {
 	SCRIPT_BIND_HEADER(script_command_t);
 #ifdef SCRIPTS_NEW
-	temp->self = command_add(NULL, comm, "?", script_command_handlers, COMMAND_ISSCRIPT, NULL);
+	temp->self = command_add(NULL, command, "?", script_command_handlers, COMMAND_ISSCRIPT, NULL);
 #else
 	temp->comm = xstrdup(command);
-	temp->self = !command_add(NULL, comm, "?", script_command_handlers, 0, NULL);
+	temp->self = !command_add(NULL, command, "?", script_command_handlers, 0, NULL);
 #endif
 	SCRIPT_BIND_FOOTER(script_commands);
 }
