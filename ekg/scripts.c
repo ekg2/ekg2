@@ -450,7 +450,11 @@ script_command_t *script_command_find(const char *name)
 	list_t l;
 	for (l = script_commands; l; l = l->next) {
 		temp = l->data;
+#ifdef SCRIPTS_NEW
+		if (!xstrcmp(name, temp->self->name))
+#else
 		if (!xstrcmp(name, temp->comm)) 
+#endif
 			return temp;
 	
 	}
@@ -513,11 +517,11 @@ int script_plugin_destroy(/* plugin_t *p */ )
 		} else temp = l->data;
 	}
 
-	plugin_unregister(temp->self);
 	SCRIPT_UNBIND_HANDLER(SCRIPT_PLUGINTYPE, temp->private);
+	plugin_unregister(temp->self);
 	xfree(temp->self->name);
 	xfree(temp->self);
-	return 0;
+	return list_remove(&script_plugins, temp, 1);
 }								
 
 int script_timer_unbind(script_timer_t *temp, int remove)
@@ -545,10 +549,9 @@ int script_watch_unbind(script_watch_t *temp, int remove)
 int script_var_unbind(script_var_t *temp, int free)
 {
 	SCRIPT_UNBIND_HANDLER(SCRIPT_VARTYPE, temp->private);
-
 	temp->scr = NULL; 
 	temp->private = NULL;
-	return 1;
+	return 0;
 }
 
 /****************************************************************************************************/
@@ -557,17 +560,12 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 {
 	script_var_t *tmp;
 	tmp = script_var_find(name);
-/* FIXME: (kiedystam)
-	in_autoexec -> ladowanie skryptow... ladowanie domyslnych wartosci.. ladowanie wartosci z konfiga
-	!in_autoexec-> ladowanie prawidlowych wartosci... ladowanie skryptow... ladowanie domyslnych wartosci..
-     (?) 
-*/
 	if (tmp) {
 		tmp->scr = scr;
 		tmp->private = handler;
-		variable_set(name, value, 0);
-	}
-	else if (!tmp) {
+		if (in_autoexec) /* i think it is enough, not tested. */
+			variable_set(name, value, 0);
+	} else if (!tmp) {
 		SCRIPT_BIND_HEADER(script_var_t);
 		temp->name  = xstrdup(name);
 		temp->value = xstrdup(value);
@@ -627,35 +625,55 @@ script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int typ
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler)
 {
 	SCRIPT_BIND_HEADER(script_query_t);
-	int num			= 0;
-	
 // argc i argv_type uzupelnic... z czego ? xstrcmp() ? 
 #define CHECK(x) if (!xstrcmp(query_name, x)) 
 #define CHECK_(x) if (!xstrncmp(query_name, x, xstrlen(x)))
-#define NEXT_ARG(y) temp->argv_type[num] = y; num++;
+#define NEXT_ARG(y) temp->argv_type[temp->argc] = y; temp->argc++;
 
-	CHECK("protocol-disconnected")      { NEXT_ARG(SCR_ARG_CHARP); }
-	else CHECK("protocol-connected")    { NEXT_ARG(SCR_ARG_CHARP); }
-	else CHECK("protocol-status")       { NEXT_ARG(SCR_ARG_CHARP); NEXT_ARG(SCR_ARG_CHARP); NEXT_ARG(SCR_ARG_CHARP); NEXT_ARG(SCR_ARG_CHARP); }
+/* PROTOCOL */
+	CHECK("protocol-disconnected")      { NEXT_ARG(SCR_ARG_CHARP);	} /* XXX */
+	else CHECK("protocol-connected")    { NEXT_ARG(SCR_ARG_CHARP);	} /* XXX */
+	else CHECK("protocol-status")       { NEXT_ARG(SCR_ARG_CHARP); 
+					      NEXT_ARG(SCR_ARG_CHARP); 
+					      NEXT_ARG(SCR_ARG_CHARP); 
+					      NEXT_ARG(SCR_ARG_CHARP);	}
 	else CHECK("protocol-message")      { NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARPP);
 					      NEXT_ARG(SCR_ARG_CHARP);
-//					      ARG(4, SCR_ARG_UNITPP);
-					      NEXT_ARG(SCR_ARG_INT); // time_t
-					      NEXT_ARG(SCR_ARG_INT); 
-					    }
-	else CHECK("ui-keypress")	    { NEXT_ARG(SCR_ARG_INT); }
-	else CHECK_("irc-protocol-numeric") {
+//					      NEXT_ARG(SCR_ARG_UNITPP);
+					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
+					      NEXT_ARG(SCR_ARG_INT);	}
+	else CHECK("protocol-validate-uid") { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_INT);	} 
+/* USERLIST */
+	else CHECK("userlist-added")	    { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP); 
+					      NEXT_ARG(SCR_ARG_INT);	}
+	else CHECK("userlist-changed")      { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);	}
+	else CHECK("variable-changed")	    { NEXT_ARG(SCR_ARG_CHARP);	}
+/* UI */
+	else CHECK("ui-keypress")	    { NEXT_ARG(SCR_ARG_INT); 	}
+	else CHECK("ui-is-initialized")	    { NEXT_ARG(SCR_ARG_INT); 	}
+	else CHECK("ui-window-new")	    { NEXT_ARG(SCR_ARG_WINDOW); }
+	else CHECK("ui-window-switch")	    { NEXT_ARG(SCR_ARG_WINDOW); }
+	else CHECK("ui-window-print")	    { NEXT_ARG(SCR_ARG_WINDOW); 
+					      NEXT_ARG(SCR_ARG_FSTRING);}
+/* IRC */
+	else CHECK("irc-kick")		    { NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARPP); }
+					      NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);	}
+	else CHECK_("irc-protocol-numeric") { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARPP);	}
+/* other */
 	else                                {                           }
 
 #undef CHECK
 #undef CHECK_
 #undef NEXT_ARG
 
-	temp->argc = num;
 #ifdef SCRIPTS_NEW
 	temp->self = query_connect(s->plugin, query_name, script_query_handlers, temp);
 #else
