@@ -34,10 +34,11 @@ int scripts_autoload(scriptlang_t *scr);
 char *script_find_path(char *name);
 /****************************************************************************************************/
 
-scriptlang_t *scriptlang_from_ext(char *ext)
+scriptlang_t *scriptlang_from_ext(char *name)
 {
-	list_t l;
 	scriptlang_t *s;
+	list_t l;
+	char *ext = xrindex(name, '.');
 	
 	if (!ext) return NULL;
 	
@@ -214,7 +215,7 @@ char *script_find_path(char *name) {
 				fajl = fopen(path, "r");
 			}
 // etc..
-                        xfree(nametmp);
+			xfree(nametmp);
 			if (!fajl) {
 				xfree(path);
 				path = NULL;
@@ -340,7 +341,7 @@ int script_load(scriptlang_t *s, char *tname)
 			print("generic_error", strerror(EISDIR));
 			return -1;
 		}
-		slang = (s) ? s : scriptlang_from_ext(xrindex(path, '.'));
+		slang = (s) ? s : scriptlang_from_ext(path);
 
 		if (!slang || xstrcmp(xrindex(path, '.'), slang->ext)) {
                         if (slang) { /* internal error shouldn't happen */
@@ -358,9 +359,9 @@ int script_load(scriptlang_t *s, char *tname)
 		name2 = xstrdup(xrindex(path, '/')+1);
 		name2[xstrlen(name2) - xstrlen(slang->ext)] = 0;
 
-		if (script_find(slang, name2)) { /* if script with the same name is loaded then ...*/
+		if ((scr = script_find(slang, name2))) { /* if script with the same name is loaded then ...*/
 			debug("[script] the same script loaded unloading it!\n");
-			script_unload(script_find(slang, name2)); /*... unload old one. */
+			script_unload(scr); /*... unload old one. */
 		}
 
 		scr = xmalloc(sizeof(script_t));
@@ -464,7 +465,10 @@ script_command_t *script_command_find(const char *name)
 script_var_t *script_var_find(const char *name)
 {
 	list_t l;
-	
+#if 0 /* i don't remember that code... */
+	if (!variable_find(name))
+		return NULL;
+#endif	
         for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
                 if (!xstrcasecmp(v->name, name)) {
@@ -527,12 +531,18 @@ int script_plugin_destroy(/* plugin_t *p */ )
 int script_timer_unbind(script_timer_t *temp, int remove)
 {
 	if (temp->removed) return -1;
-	if (remove) { temp->removed = 1; script_timer_handlers(1, temp); }
+	temp->removed = 1;
+	if (remove) 
+		script_timer_handlers(1, temp);
 
 	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
 
 	if (remove) 
+#ifdef SCRIPTS_NEW
+		timer_freeone(temp->self);
+#else
 		timer_remove(NULL, temp->self->name);
+#endif
 	return list_remove(&script_timers, temp, 0 /* 0 is ok */);
 }
 
@@ -691,7 +701,7 @@ void script_var_changed(const char *var) {
 //	if (in_autoexec) ...
 	SCRIPT_HANDLER_HEADER(script_handler_var_t);
 //	debug("[script_variable_changed] varname = %s newvalue = %s\n", var, temp->value);
-	SCRIPT_HANDLER_FOOTER(script_handler_var, temp->value);
+	SCRIPT_HANDLER_MULTI_FOOTER(script_handler_var, temp->value);
 	return;
 }
 
@@ -700,7 +710,7 @@ WATCHER(script_handle_watch)
 	script_watch_t *temp = data;
 
 	SCRIPT_HANDLER_HEADER(script_handler_watch_t);
-	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, (int)watch) {
+	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, (int) watch) {
 		if (!type) {
 			watch_free(temp->self);
 			return;
@@ -783,7 +793,7 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 			xfree(tmp);
 			continue;
 		}
-		if (!(slang = scriptlang_from_ext(xrindex(tmp, '.'))) || (s != NULL && s != slang) ) { 
+		if (!(slang = scriptlang_from_ext(tmp)) || (s != NULL && s != slang) ) { 
 			xfree(tmp);
 			continue;
 		}
@@ -814,8 +824,17 @@ COMMAND(cmd_script)
         if (xstrlen(tmp) < 1)
                 return script_list(NULL); 
         else {
+		if (xstrlen(params[0]) > 0) { /* somethink like we have in /plugin ;> e.g /script +dns /script -irc */
+			if (params[0][0] == '+')
+				return script_load(NULL, (char *) params[0]+1);
+			else if (params[0][0] == '-' && params[0][1] != '-')
+				return script_unload_name(NULL, (char *) params[0]+1);
+		}
+
 		if (!xstrcmp(tmp, "load")) 
 			return script_load(NULL, param0);
+		else if (!xstrcmp(tmp, "unload"))
+			return script_unload_name(NULL, param0);
 		else if (!xstrcmp(tmp, "list"))
 			return script_list(s);
 		else if (!xstrcmp(tmp, "varlist"))
@@ -849,8 +868,9 @@ int script_postinit(void *data, va_list ap)
 #endif
 int scripts_init()
 {
-        command_add(NULL, "script"        , "p ?", cmd_script, 0, "--list --load --varlist --reset"); /* todo  ?!!? */
+	command_add(NULL, "script"        , "p ?", cmd_script, 0, "--list --load --unload --varlist --reset"); /* todo  ?!!? */
 	command_add(NULL, "script:load"   , "f"  , cmd_script, 0, "");
+	command_add(NULL, "script:unload" , "?"  , cmd_script, 0, "");
 	command_add(NULL, "script:list"   , "?"  , cmd_script, 0, "");
 	command_add(NULL, "script:reset"  , "?"  , cmd_script, 0, "");
 	command_add(NULL, "script:varlist", "?"  , cmd_script, 0, "");
