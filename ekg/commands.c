@@ -1714,6 +1714,7 @@ list_user:
 
 	if (!count && !(show_descr || show_group) && show_all)
 		printq("list_empty");
+	xfree(show_group);
 
 	return 0;
 }
