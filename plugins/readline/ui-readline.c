@@ -4,7 +4,7 @@
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Robert J. Wo¼ny <speedy@ziew.org>
  *                          Pawe³ Maziarz <drg@infomex.pl>
- *                          Adam Osuchowski <adwol@polsl.gliwice.pl>
+                           Adam Osuchowski <adwol@polsl.gliwice.pl>
  *                          Wojtek Bojdo³ <wojboj@htcon.pl>
  *                          Piotr Domagalski <szalik@szalik.net>
  *
@@ -24,6 +24,11 @@
 
 #include "ekg2-config.h"
 
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
 #include <sys/ioctl.h>
 
 #include <signal.h>
@@ -36,18 +41,23 @@
 #include <history.h>
 #include <readline.h>
 
-#include "commands.h"
-#include "mail.h"
+#include <ekg/commands.h>
 #ifndef HAVE_STRLCPY
-#  include "../compat/strlcpy.h"
+#  include <compat/strlcpy.h>
 #endif
-#include "stuff.h"
-#include "themes.h"
-#include "ui.h"
-#include "userlist.h"
-#include "vars.h"
-#include "xmalloc.h"
+#include <ekg/stuff.h>
+#include <ekg/themes.h>
+#include <ekg/windows.h>
+#include <ekg/userlist.h>
+#include <ekg/vars.h>
+#include <ekg/xmalloc.h>
+#include "ui-readline.h"
 
+#define HAVE_RL_BIND_KEY_IN_MAP
+#define HAVE_RL_GET_SCREEN_SIZE
+#define HAVE_RL_SET_KEY
+#define HAVE_RL_SET_PROMPT
+#define HAVE_RL_FILENAME_COMPLETION_FUNCTION
 /* podstawmy ewentualnie brakuj±ce funkcje i definicje readline */
 
 extern void rl_extend_line_buffer(int len);
@@ -81,7 +91,7 @@ int rl_get_screen_size(int *lines, int *columns)
 #endif
 
 #ifndef HAVE_RL_FILENAME_COMPLETION_FUNCTION
-static char *rl_filename_completion_function()
+char *rl_filename_completion_function()
 {
 	return NULL;
 }
@@ -101,42 +111,14 @@ int rl_set_key(const char *key, void *function, void *keymap)
 }
 #endif
 
-struct window {
-	int id, act;
-	char *query_nick;
-	char *line[MAX_LINES_PER_SCREEN];
-};
+int window_last_id = -1;
 
-static int window_last_id = -1;
-
-/* deklaracje funkcji interfejsu */
-static void ui_readline_loop();
-static void ui_readline_print(const char *target, int separate, const char *line);
-static void ui_readline_beep();
-static int ui_readline_event(const char *event, ...);
-static void ui_readline_deinit();
-static void ui_readline_postinit();
+int ui_need_refresh = 0; /* DARK */
+int ui_screen_width;     /* DARK */
+int ui_screen_height;    /* dark */
+void *userlist;
 
 static int in_readline = 0, no_prompt = 0, pager_lines = -1, screen_lines = 24, screen_columns = 80;
-static list_t windows = NULL;
-struct window *window_current = NULL;
-
-/* kod okienek napisany jest na podstawie ekg-windows nilsa */
-static struct window *window_add();
-static int window_remove(int id, int quiet);
-static int window_switch(int id, int quiet);
-static int window_refresh();
-static int window_write(int id, const char *line);
-static void window_clear();
-static void window_list();
-static int window_make_query(const char *nick);
-static void window_free();
-static struct window *window_find(int id);
-static int window_find_query(const char *qnick);
-static char *window_activity();
-
-static int bind_sequence(const char *seq, const char *command, int quiet);
-static int bind_handler_window(int a, int key);
 
 /*
  * sigcont_handler() //XXX mo¿e wywalaæ
@@ -146,7 +128,6 @@ static int bind_handler_window(int a, int key);
 static void sigcont_handler()
 {
 	rl_forced_update_display();
-	signal(SIGCONT, sigcont_handler);
 }
 
 /*
@@ -160,8 +141,8 @@ static void sigint_handler()
 	rl_point = rl_end = 0;
 	putchar('\n');
 	rl_forced_update_display();
-	signal(SIGINT, sigint_handler);
 }
+
 
 #ifdef SIGWINCH
 /*
@@ -171,8 +152,7 @@ static void sigint_handler()
  */
 static void sigwinch_handler()
 {
-	ui_resize_term = 1;
-	signal(SIGWINCH, sigwinch_handler);
+	ui_need_refresh = 1;
 }
 #endif
 
@@ -181,12 +161,10 @@ static void sigwinch_handler()
  *
  * pobiera znak z klawiatury obs³uguj±c w miêdzyczasie sieæ.
  */
-static int my_getc(FILE *f)
+int my_getc(FILE *f)
 {
-	ekg_wait_for_key();
-
-	if (ui_resize_term) {
-		ui_resize_term = 0;
+	if (ui_need_refresh) {
+		ui_need_refresh = 0;
 		rl_get_screen_size(&screen_lines, &screen_columns);
 		if (screen_lines < 1)
 			screen_lines = 24;
@@ -199,7 +177,7 @@ static int my_getc(FILE *f)
 	return rl_getc(f);
 }
 
-static char *command_generator(char *text, int state)
+char *command_generator(char *text, int state)
 {
 	static int len;
 	static list_t l;
@@ -215,11 +193,11 @@ static char *command_generator(char *text, int state)
 		if (state)
 			return NULL;
 		if (send_nicks_count < 1)
-			return saprintf((window_current->query_nick) ? "/%s" : "%s", (config_tab_command) ? config_tab_command : "msg");
+			return saprintf((window_current->target) ? "/%s" : "%s", (config_tab_command) ? config_tab_command : "msg");
 		send_nicks_index = (send_nicks_count > 1) ? 1 : 0;
 
 		nick = ((xstrchr(send_nicks[0], ' ')) ? saprintf("\"%s\"", send_nicks[0]) : xstrdup(send_nicks[0])); 
-		ret = saprintf((window_current->query_nick) ? "/%s %s" : "%s %s", (config_tab_command) ? config_tab_command : "chat", nick);
+		ret = saprintf((window_current->target) ? "/%s %s" : "%s %s", (config_tab_command) ? config_tab_command : "chat", nick);
 		xfree(nick);
 		return ret;
 	}
@@ -230,18 +208,18 @@ static char *command_generator(char *text, int state)
 	}
 
 	for (; l; l = l->next) {
-		struct command *c = l->data;
+		command_t *c = l->data;
 
 		if (!xstrncasecmp(text, c->name, len)) {
 			l = l->next;
-			return (window_current->query_nick) ? saprintf("/%s", c->name) : xstrdup(c->name);
+			return (window_current->target) ? saprintf("/%s", c->name) : xstrdup(c->name);
 		}
 	}
 
 	return NULL;
 }
 
-static char *known_uin_generator(char *text, int state)
+char *known_uin_generator(char *text, int state)
 {
 	static list_t l;
 	static int len;
@@ -252,18 +230,19 @@ static char *known_uin_generator(char *text, int state)
 	}
 
 	while (l) {
-		struct userlist *u = l->data;
+		userlist_t *u = l->data;
 
 		l = l->next;
-
-		if (u->display && !xstrncasecmp(text, u->display, len))
+#if 0 /* dark */
+		if (u && !xstrncasecmp(text, u->display, len))
 			return ((xstrchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
+#endif
 	}
 
 	return NULL;
 }
 
-static char *unknown_uin_generator(char *text, int state)
+char *unknown_uin_generator(char *text, int state)
 {
 	static int index = 0, len;
 
@@ -280,7 +259,7 @@ static char *unknown_uin_generator(char *text, int state)
 	return NULL;
 }
 
-static char *variable_generator(char *text, int state)
+char *variable_generator(char *text, int state)
 {
 	static list_t l;
 	static int len;
@@ -291,11 +270,11 @@ static char *variable_generator(char *text, int state)
 	}
 
 	while (l) {
-		ekg_var_t *v = l->data;
+		variable_t *v = l->data;
 		
 		l = l->next;
 		
-		if (v->type == VAR_FOREIGN)
+		if (v->type == VAR_FOREIGN || !v->ptr)
 			continue;
 
 		if (*text == '-') {
@@ -310,10 +289,13 @@ static char *variable_generator(char *text, int state)
 	return NULL;
 }
 
-static char *ignored_uin_generator(char *text, int state)
+char *ignored_uin_generator(char *text, int state)
 {
 	static list_t l;
 	static int len;
+
+	if (!session_current) 
+		return NULL;
 
 	if (!state) {
 		l = userlist;
@@ -321,26 +303,27 @@ static char *ignored_uin_generator(char *text, int state)
 	}
 
 	while (l) {
-		struct userlist *u = l->data;
+		userlist_t *u = l->data;
 
 		l = l->next;
 
-		if (!ignored_check(u->uin))
+		if (!ignored_check(session_current, u->uid))
 			continue;
-
+#if 0 /* dark */
 		if (!u->display) {
 			if (!xstrncasecmp(text, itoa(u->uin), len))
 				return xstrdup(itoa(u->uin));
 		} else {
-			if (u->display && !xstrncasecmp(text, u->display, len))
+			if (!xstrncasecmp(text, u->display, len))
 				return ((xstrchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
 		}
+#endif
 	}
 
 	return NULL;
 }
 
-static char *blocked_uin_generator(char *text, int state)
+char *blocked_uin_generator(char *text, int state)
 {
 	static list_t l;
 	static int len;
@@ -351,13 +334,13 @@ static char *blocked_uin_generator(char *text, int state)
 	}
 
 	while (l) {
-		struct userlist *u = l->data;
+		userlist_t *u = l->data;
 
 		l = l->next;
 
 		if (!ekg_group_member(u, "__blocked"))
 			continue;
-
+#if 0 /* dark */
 		if (!u->display) {
 			if (!xstrncasecmp(text, itoa(u->uin), len))
 				return xstrdup(itoa(u->uin));
@@ -365,12 +348,13 @@ static char *blocked_uin_generator(char *text, int state)
 			if (u->display && !xstrncasecmp(text, u->display, len))
 				return ((xstrchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
 		}
+#endif
 	}
 
 	return NULL;
 }
 
-static char *dcc_generator(char *text, int state)
+char *dcc_generator(char *text, int state)
 {
 	char *commands[] = { "close", "get", "send", "list", "resume", "rsend", "rvoice", "voice", NULL };
 	static int len, i;
@@ -389,7 +373,7 @@ static char *dcc_generator(char *text, int state)
 	return NULL;
 }
 
-static char *window_generator(char *text, int state)
+char *window_generator(char *text, int state)
 {
 	char *commands[] = { "new", "kill", "next", "prev", "switch", "clear", "refresh", "list", "last", "active", NULL };
 	static int len, i;
@@ -408,9 +392,9 @@ static char *window_generator(char *text, int state)
 	return NULL;
 }
 
-static char *python_generator(char *text, int state)
+char *python_generator(char *text, int state)
 {
-	char *commands[] = { "load", "unload", "run", "exec", "list", NULL };
+	char *commands[] = { "load", "unload", "run", "exec", "list", "restart", NULL };
 	static int len, i;
 
 	if (!state) {
@@ -427,12 +411,24 @@ static char *python_generator(char *text, int state)
 	return NULL;
 }
 
-static char *empty_generator(char *text, int state)
+char *reason_generator(char *text, int state)
+{
+	static int len;
+
+	if (!state) {
+		len = xstrlen(text);
+
+		if (config_reason_first && !xstrncasecmp(text, config_reason_first, len))
+			return xstrdup(config_reason_first);
+	}
+
+	return NULL;
+}
+char *empty_generator(char *text, int state)
 {
 	return NULL;
 }
-
-static char **my_completion(char *text, int start, int end)
+char **my_completion(char *text, int start, int end)
 {
 	char *params = NULL;
 	int word = 0, i, abbrs = 0;
@@ -473,7 +469,7 @@ static char **my_completion(char *text, int start, int end)
 					xfree(tmp);
 					send_nicks_index++;
 					rl_extend_line_buffer(xstrlen(buf));
-					xstrcpy(rl_line_buffer, buf);
+					strlcpy(rl_line_buffer, buf, xstrlen(buf) + 1);
 					rl_end = xstrlen(buf);
 					rl_point = rl_end;
 					rl_redisplay();
@@ -501,7 +497,7 @@ static char **my_completion(char *text, int start, int end)
 		word--;
 
 		for (l = commands; l; l = l->next) {
-			struct command *c = l->data;
+			command_t *c = l->data;
 			int len = xstrlen(c->name);
 			char *cmd = (*rl_line_buffer == '/') ? rl_line_buffer + 1 : rl_line_buffer;
 
@@ -559,6 +555,9 @@ static char **my_completion(char *text, int start, int end)
 					case 'w':
 						func = window_generator;
 						break;
+					case 'r':
+						func = reason_generator;
+						break;
 					default:
 						func = empty_generator;
 						break;
@@ -579,14 +578,16 @@ static char **my_completion(char *text, int start, int end)
  * wy¶wietla dany tekst na ekranie, uwa¿aj±c na trwaj±ce w danych chwili
  * readline().
  */
-static void ui_readline_print(const char *target, int separate, const char *xline)
+void ui_readline_print(window_t *w, int separate, const char *xline)
 {
-        int old_end = rl_end, id = 0;
+        int old_end = rl_end, id = w->id;
 	char *old_prompt = NULL, *line_buf = NULL;
 	const char *p, *line = NULL;
 	string_t s = NULL;
+	char *target = w->target;
+	char *linetmp;
 
-	if (target && !xstrcmp(target, "__debug"))
+	if (target && !strcmp(target, "__debug"))
 		return;
 
 	if (config_timestamp) {
@@ -598,12 +599,9 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 
 		t = time(NULL);
 		tm = localtime(&t);
-		/* I KNOW THIS PLUGIN IS UNUSED, BUT THIS PIECE
-		 * OF CODE IS SHITTY */
-		if (!strftime(buf, sizeof(buf), config_timestamp, tm) 
-				&& xstrlen(config_timestamp)>0)
-			xstrcpy(buf, "TOOLONG");
+		strftime(buf, sizeof(buf), format_string(config_timestamp), tm);
 
+		string_append(s, "\033[0m");
 		string_append(s, buf);
 		
 		while (*p) {
@@ -619,6 +617,10 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 		line = line_buf = string_free(s, 0);
 	} else
 		line = xline;
+/* awful */
+	linetmp = line;
+	line = line_buf = saprintf("%s\n", linetmp);
+	xfree(linetmp);
 
 	if (config_speech_app) {
 		int in_esc_code = 0;
@@ -639,14 +641,6 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 				string_append_c(s, *p);
 		}
 	}
-
-	/* znajd¼ odpowiednie okienko i ewentualnie je utwórz */
-	if (target && separate)
-		id = window_find_query(target);
-
-	if (config_make_window > 0 && !id && strncmp(target, "__", 2) && separate)
-		id = window_make_query(target);
-	
 	/* je¶li nie piszemy do aktualnego, to zapisz do bufora i wyjd¼ */
         if (id && id != window_current->id) {
                 window_write(id, line);
@@ -667,7 +661,11 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 
 		old_prompt = xstrdup(rl_prompt);
                 rl_end = 0;
+#ifdef HAVE_RL_SET_PROMPT
 /*		rl_set_prompt(NULL); */
+#else
+/*		rl_expand_prompt(NULL); */
+#endif
 		rl_redisplay();
 		printf("\r");
 		for (i = 0; i < xstrlen(old_prompt); i++)
@@ -685,7 +683,12 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 			char *tmp;
 			
 			in_readline++;
+/*		rl_set_prompt(NULL); */
+#ifdef HAVE_RL_SET_PROMPT
 		        rl_set_prompt((char *) prompt);
+#else
+		        rl_expand_prompt((char *) prompt);
+#endif
 			pager_lines = -1;
 			tmp = readline((char *) prompt);
 			in_readline--;
@@ -703,7 +706,11 @@ static void ui_readline_print(const char *target, int separate, const char *xlin
 	/* je¶li jeste¶my w readline, poka¿ z powrotem prompt */
 	if (in_readline) {
 		rl_end = old_end;
+#ifdef HAVE_RL_SET_PROMPT
 		rl_set_prompt(old_prompt);
+#else
+		rl_expand_prompt(old_prompt);
+#endif
 		xfree(old_prompt);
 		rl_forced_update_display();
 	}
@@ -718,44 +725,32 @@ done:
 		string_free(s, 1);
 	}
 }
-
-/*
- * ui_readline_beep()
- *
- * wydaje d¼wiêk na konsoli.
- */
-static void ui_readline_beep()
-{
-	printf("\a");
-	fflush(stdout);
-}
-
 /*
  * current_prompt()
  *
  * zwraca wska¼nik aktualnego prompta. statyczny bufor, nie zwalniaæ.
  */
-static const char *current_prompt()
+const char *current_prompt()
 {
 	static char buf[80];
 	const char *prompt = buf;
 	int count = list_count(windows);
 	char *tmp, *act = window_activity();
 
-        if (window_current->query_nick) {
+        if (window_current->target) {
 		if (count > 1 || window_current->id != 1) {
 			if (act) {
-				tmp = format_string(format_find("readline_prompt_query_win_act"), window_current->query_nick, itoa(window_current->id), act);
+				tmp = format_string(format_find("readline_prompt_query_win_act"), window_current->target, itoa(window_current->id), act);
 				xfree(act);
 			} else
-				tmp = format_string(format_find("readline_prompt_query_win"), window_current->query_nick, itoa(window_current->id));
+				tmp = format_string(format_find("readline_prompt_query_win"), window_current->target, itoa(window_current->id));
 		} else
-			tmp = format_string(format_find("readline_prompt_query"), window_current->query_nick, NULL);
+			tmp = format_string(format_find("readline_prompt_query"), window_current->target, NULL);
 		strlcpy(buf, tmp, sizeof(buf));
 		xfree(tmp);
         } else {
 		char *format_win = "readline_prompt_win", *format_nowin = "readline_prompt", *format_win_act = "readline_prompt_win_act";
-			
+#if 0 /* dark */
 		if (GG_S_B(config_status)) {
 			format_win = "readline_prompt_away_win";
 			format_nowin = "readline_prompt_away";
@@ -767,7 +762,7 @@ static const char *current_prompt()
 			format_nowin = "readline_prompt_invisible";
 			format_win_act = "readline_prompt_invisible_win_act";
 		}
-		
+#endif
 		if (count > 1 || window_current->id != 1) {
 			if (act) {
 				tmp = format_string(format_find(format_win_act), itoa(window_current->id), act);
@@ -785,7 +780,6 @@ static const char *current_prompt()
 
         return prompt;
 }
-
 /*
  * my_readline()
  *
@@ -794,13 +788,17 @@ static const char *current_prompt()
  * programu, ¿e jeste¶my w trakcie czytania linii i je¶li chc± wy¶wietlaæ,
  * powinny najpierw sprz±tn±æ.
  */
-static char *my_readline()
+char *my_readline()
 {
 	const char *prompt = current_prompt();
         char *res, *tmp;
 
         in_readline = 1;
+#ifdef HAVE_RL_SET_PROMPT
 	rl_set_prompt(prompt);
+#else
+	rl_expand_prompt(prompt);
+#endif
         res = readline((char *) prompt);
         in_readline = 0;
 
@@ -810,7 +808,6 @@ static char *my_readline()
 
         return res;
 }
-
 /*
  * ui_readline_init()
  *
@@ -819,17 +816,9 @@ static char *my_readline()
 void ui_readline_init()
 {
 	char c;
+	struct sigaction sa;
 
-        window_current = window_add();
-        window_refresh();
-
-	ui_print = ui_readline_print;
-	ui_postinit = ui_readline_postinit;
-	ui_loop = ui_readline_loop;
-	ui_beep = ui_readline_beep;
-	ui_event = ui_readline_event;
-	ui_deinit = ui_readline_deinit;
-		
+	window_refresh();
 	rl_initialize();
 	rl_getc_function = my_getc;
 	rl_readline_name = "gg";
@@ -849,12 +838,18 @@ void ui_readline_init()
 
 	for (c = '0'; c <= '9'; c++)
 		rl_bind_key_in_map(c, bind_handler_window, emacs_meta_keymap);
-	
-	signal(SIGINT, sigint_handler);
-	signal(SIGCONT, sigcont_handler);
+
+	memset(&sa, 0, sizeof(sa));
+
+	sa.sa_handler = sigint_handler;
+	sigaction(SIGINT, &sa, NULL);
+
+	sa.sa_handler = sigcont_handler;
+	sigaction(SIGCONT, &sa, NULL);
 
 #ifdef SIGWINCH
-	signal(SIGWINCH, sigwinch_handler);
+	sa.sa_handler = sigwinch_handler;
+	sigaction(SIGWINCH, &sa, NULL);
 #endif
 
 	rl_get_screen_size(&screen_lines, &screen_columns);
@@ -866,27 +861,7 @@ void ui_readline_init()
 
 	ui_screen_width = screen_columns;
 	ui_screen_height = screen_lines;
-	ui_resize_term = 0;
-}
-
-/*
- * ui_readline_postinit()
- *
- * funkcja uruchamiana po wczytaniu konfiguracji.
- */
-static void ui_readline_postinit()
-{
-
-}
-
-/*
- * ui_readline_deinit()
- *
- * zamyka to, co zwi±zane z interfejsem.
- */
-static void ui_readline_deinit()
-{
-	window_free();
+	ui_need_refresh = 0;
 }
 
 /*
@@ -895,443 +870,95 @@ static void ui_readline_deinit()
  * g³ówna pêtla programu. wczytuje dane z klawiatury w miêdzyczasie
  * obs³uguj±c sieæ i takie tam.
  */
-static void ui_readline_loop()
+void ui_readline_loop()
 {
-	for (;;) {
-		char *line = my_readline();
+	char *line;
+cont:
+	line = my_readline();
 
 		/* je¶li wci¶niêto Ctrl-D i jeste¶my w query, wyjd¼my */
-		if (!line && window_current->query_nick) {
-			ui_event("command", 0, "query", NULL);
-			continue;
+	if (!line && window_current->target) {
+//		ui_event("command", 0, "query", NULL); /* dark */
+		goto cont;
+	}
+
+	/* je¶li wci¶niêto Ctrl-D, to zamknij okienko */
+	if (!line && list_count(windows) > 1) {
+		window_kill(window_current, 0);
+		goto cont;
+	}
+
+	if (!line) {
+		if (config_ctrld_quits)	
+			return;
+		else {
+			printf("\n");
+			goto cont;
 		}
+	}
 
-		/* je¶li wci¶niêto Ctrl-D, to zamknij okienko */
-		if (!line && list_count(windows) > 1) {
-			window_remove(window_current->id, 0);
-			continue;
-		}
+	if (xstrlen(line) > 0 && line[xstrlen(line) - 1] == '\\') {
+		string_t s = string_init(NULL);
 
-		if (!line) {
-			if (config_ctrld_quits)	
-				break;
-			else {
-				printf("\n");
-				continue;
-			}
-		}
+		line[xstrlen(line) - 1] = 0;
 
-		if (xstrlen(line) > 0 && line[xstrlen(line) - 1] == '\\') {
-			string_t s = string_init(NULL);
-
-			line[xstrlen(line) - 1] = 0;
-
-			string_append(s, line);
-
-			xfree(line);
-
-			no_prompt = 1;
-			rl_bind_key(9, rl_insert);
-
-			while ((line = my_readline())) {
-				if (!xstrcmp(line, ".")) {
-					xfree(line);
-					break;
-				}
-				string_append(s, line);
-				string_append(s, "\r\n");
-				xfree(line);
-			}
-
-			rl_bind_key(9, rl_complete);
-
-			no_prompt = 0;
-
-			if (!line) {
-				printf("\n");
-				string_free(s, 1);
-				continue;
-			}
-
-			line = string_free(s, 0);
-		}
-		
-		/* je¶li linia nie jest pusta, dopisz do historii */
-		if (*line)
-			add_history(line);
-		
-		pager_lines = 0;
-		
-		command_exec(window_current->query_nick, line, 0);
-
-		pager_lines = -1;
+		string_append(s, line);
 
 		xfree(line);
-	}
 
-	if (!batch_mode && !quit_message_send) {
-		putchar('\n');
-		print("quit");
-		putchar('\n');
-		quit_message_send = 1;
-	}
+		no_prompt = 1;
+		rl_bind_key(9, rl_insert);
 
-}
-
-/*
- * ui_readline_event()
- *
- * obs³uga zdarzeñ wysy³anych z ekg do interfejsu.
- */
-static int ui_readline_event(const char *event, ...)
-{
-	va_list ap;
-	int result = 0;
-
-	va_start(ap, event);
-	
-        if (!xstrcmp(event, "variable_changed")) {
-		char *name = va_arg(ap, char*);
-
-		if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
-			list_t l;
-			int id = 1;
-
-			for (l = windows; l; l = l->next) {
-				struct window *w = l->data;
-
-				w->id = id++;
+		while ((line = my_readline())) {
+			if (!strcmp(line, ".")) {
+				xfree(line);
+				return;
 			}
+			string_append(s, line);
+			string_append(s, "\r\n");
+			xfree(line);
 		}
+
+		rl_bind_key(9, rl_complete);
+
+		no_prompt = 0;
+
+		if (!line) {
+			printf("\n");
+			string_free(s, 1);
+			goto cont;
+		}
+
+		line = string_free(s, 0);
 	}
-
-	if (!xstrcasecmp(event, "command")) {
-		int quiet = va_arg(ap, int);
-		char *command = va_arg(ap, char*);
-
-		if (!xstrcasecmp(command, "query-current")) {
-			int *param = va_arg(ap, uin_t*);
-
-			if (window_current->query_nick)
-				*param = get_uin(window_current->query_nick);
-			else
-				*param = 0;
-
-			goto cleanup;
-		}
-
-		if (!xstrcasecmp(command, "query-nicks")) {
-			char ***param = va_arg(ap, char***);
-			list_t l;
-
-			for (l = windows; l; l = l->next) {
-				struct window *w = l->data;
-
-				if (!w->query_nick)
-					continue;
-				else
-					array_add(param, xstrdup(w->query_nick));
-			}
-
-			goto cleanup;
-		}
-
-		if (!xstrcasecmp(command, "query")) {
-			char *param = va_arg(ap, char*);	
-			
-			if (!param && !window_current->query_nick)
-				goto cleanup;
-
-			if (param) {
-				int id;
-
-				if ((id = window_find_query(param))) {
-					printq("query_exist", param, itoa(id));
-					return 1;
-				}
-				
-				printq("query_started", param);
-				xfree(window_current->query_nick);
-				window_current->query_nick = xstrdup(param);
-
-			} else {
-				if (!quiet)
-					printf("\n");	/* XXX brzydkie */
-				printq("query_finished", window_current->query_nick);
-				xfree(window_current->query_nick);
-				window_current->query_nick = NULL;
-			}
-
-			result = 1;
-		}
-
-		if (!xstrcasecmp(command, "find")) {
-			char *tmp = NULL;
-			
-			if (window_current->query_nick) {
-				struct userlist *u = userlist_find(0, window_current->query_nick);
-				struct conference *c = conference_find(window_current->query_nick);
-				int uin;
-
-				if (u && u->uin)
-					tmp = saprintf("find %d", u->uin);
-
-				if (c && c->name)
-					tmp = saprintf("/conference --find %s", c->name);
-
-				if (!u && (uin = atoi(window_current->query_nick)))
-					tmp = saprintf("find %d", uin);
-			}
-
-			if (!tmp)
-				tmp = saprintf("find %d", config_uin);
-
-			command_exec(NULL, tmp, 0);
-
-			xfree(tmp);
-
-			goto cleanup;
-		}
-
-		if (!xstrcasecmp(command, "window")) {
-			char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*);
-
-			if (!p1 || !xstrcasecmp(p1, "list")) {
-				if (!quiet)
-					window_list();
-			} else if (!xstrcasecmp(p1, "last")) {
-				if (window_last_id != -1)
-					window_switch(window_last_id, quiet);
-			} else if (!xstrcasecmp(p1, "active")) {
-				list_t l;
-
-				for (l = windows; l; l = l->next) {
-					struct window *w = l->data;
-
-					if (w->act)
-						window_switch(w->id, quiet);
-				}
-
-		        } else if (!xstrcasecmp(p1, "new")) {
-		                window_add();
- 
-			} else if (!xstrcasecmp(p1, "next")) {
-		                window_switch(window_current->id + 1, quiet);
-
-			} else if (!xstrcasecmp(p1, "prev")) {
-		                window_switch(window_current->id - 1, quiet);
-				
-		        } else if (!xstrcasecmp(p1, "kill")) {
-		                int id = (p2) ? atoi(p2) : window_current->id;
-
-				window_remove(id, quiet);
-				
-		        } else if (!xstrcasecmp(p1, "switch")) {
-		                if (!p2) {
-		                        printq("not_enough_params", "window");
-		                } else
-		                	window_switch(atoi(p2), quiet);
-
-			} else if (!xstrcasecmp(p1, "refresh")) {
-		                window_refresh();
-
-			} else if (!xstrcasecmp(p1, "clear")) {
-		                window_clear();
-				window_refresh();
-
-			} else
-				printq("invalid_params", "window");
-
-			result = 1;
-		}
-
-		if (!xstrcasecmp(command, "bind")) {
-			char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
-			
-			if (p1 && (!xstrcasecmp(p1, "-a") || !xstrcasecmp(p1, "--add"))) {
-				if ((!p2 || !p3) && !quiet)
-					print("not_enough_params", "bind");
-				else
-					bind_sequence(p2, p3, quiet);
-			
-			} else if (p1 && (!xstrcasecmp(p1, "-d") || !xstrcasecmp(p1, "--del"))) {
-				if (!p2 && !quiet)
-					print("not_enough_params", "bind");
-				else
-					bind_sequence(p2, NULL, quiet);
-			
-			} else {
-				if (p1 && (!xstrcasecmp(p1, "-l") || !xstrcasecmp(p1, "--list")))
-					binding_list(quiet, p2, 0);
-				else
-					binding_list(quiet, p1, 0);
-			}
-
-			result = 1;
-		}
-	}
-
-	if (!xstrcasecmp(event, "check_mail"))
-		check_mail();
-
-cleanup:
-	va_end(ap);
-
-	return result;
-}
-
-/*
- * window_find()
- *
- * szuka struct window dla okna o podanym numerku.
- *
- *  - id - numer okna.
- *
- * struct window dla danego okna.
- */
-static struct window *window_find(int id)
-{
-	list_t l;
-
-	for (l = windows; l; l = l->next) {
-		struct window *w = l->data;
-
-		if (w->id == id)
-			return w;
-	}
-
-	return NULL;
-}
-
-/*
- * window_add()
- *
- * tworzy nowe okno.
- *
- * zwraca zaalokowan± struct window.
- */
-static struct window *window_add()
-{
-        struct window w;
-	int id = 1;
-
-	/* wyczy¶æ. */
-	memset(&w, 0, sizeof(w));
-
-	/* znajd¼ pierwszy wolny id okienka. */
-	while (window_find(id))
-		id++;
-	w.id = id;
-
-	/* dopisz, zwróæ. */
-        return list_add(&windows, &w, sizeof(w));
-}
-
-/*
- * window_remove()
- *
- * usuwa okno o podanym numerze.
- */
-static int window_remove(int id, int quiet)
-{
-	struct window *w;
-	int i;
-
-	/* je¶li zosta³o jedno okienko, nie usuwaj niczego. */
-        if (list_count(windows) < 2) {
-                printq("window_no_windows");
-                return -1;
-        }
-
-	/* je¶li nie ma takiego okienka, id¼ sobie. */
-	if (!(w = window_find(id))) {
-        	printq("window_noexist");
-		return -1;
-	}
-
-	/* je¶li usuwano aktualne okienko, nie kombinuj tylko ustaw 1-sze. */
-	if (window_current == w) {
-		struct window *newwin = windows->data;
-
-		/* je¶li usuwane jest pierwszy, we¼ drugie. */
-		if (newwin == w) 
-			newwin = windows->next->data;
 		
-		window_switch(newwin->id, 0);
-	}
-
-	/* i sortujemy okienka, w razie potrzeby... */
-	if (config_sort_windows) {
-		list_t l;
-		int wid = w->id;
-
-		for (l = windows; l; l = l->next) {
-			struct window *wtmp = l->data;
-			
-			if (wtmp->id > wid)
-				wtmp->id--;
-		}
-	}
-
-	/* usuñ dane zajmowane przez okno. */
-	for (i = 0; i < MAX_LINES_PER_SCREEN; i++) {
-		xfree(w->line[i]);
-		w->line[i] = NULL;
-	}
-	xfree(w->query_nick);
-	w->query_nick = NULL;
+	/* je¶li linia nie jest pusta, dopisz do historii */
+	if (*line)
+		add_history(line);
 	
-	list_remove(&windows, w, 1);
+	pager_lines = 0;
+		
+	command_exec(window_current->target, window_current->session, line, 0);
 
-        return 0;
+	pager_lines = -1;
+
+	xfree(line);
 }
 
 /*
- * window_switch()
- *
- * prze³±cza do okna o podanym id.
- */
-static int window_switch(int id, int quiet)
-{
-	struct window *w = window_find(id);
-
-	if (!w) {
-		printq("window_noexist");
-		return -1;
-	}
-
-	if (id != window_current->id)
-		window_last_id = window_current->id;
-
-	window_current = w;
-	w->act = 0;
-	window_refresh();
-#ifdef HAVE_RL_SET_PROMPT
-	rl_set_prompt((char *) current_prompt());
-#else
-	rl_expand_prompt((char *) current_prompt());
-#endif
-	rl_initialize();
-
-	return 0;
-}
-
-/*
- * window_refresh()
- *
  * wy¶wietla ponownie zawarto¶æ okna.
  *
  * XXX podpi±æ pod Ctrl-L.
  */
-static int window_refresh()
+int window_refresh()
 {
         int i;
 
         printf("\033[H\033[J"); /* XXX */
 
 	for (i = 0; i < MAX_LINES_PER_SCREEN; i++)
-		if (window_current->line[i])
-			printf("%s", window_current->line[i]);
+		if (readline_current->line[i])
+			printf("%s", readline_current->line[i]);
 
         return 0;
 }
@@ -1341,26 +968,27 @@ static int window_refresh()
  *
  * dopisuje liniê do bufora danego okna.
  */
-static int window_write(int id, const char *line)
+int window_write(int id, const char *line)
 {
-        struct window *w = window_find(id);
+        window_t *w = window_exist(id);
+	readline_window_t *r = readline_window(w);
         int i = 1;
 
         if (!line || !w)
                 return -1;
 
 	/* je¶li ca³y bufor zajêty, zwolnij pierwsz± liniê i przesuñ do góry */
-	if (w->line[MAX_LINES_PER_SCREEN - 1]) {
-		xfree(w->line[0]);
+	if (r->line[MAX_LINES_PER_SCREEN - 1]) {
+		xfree(r->line[0]);
 		for (i = 1; i < MAX_LINES_PER_SCREEN; i++)
-			w->line[i - 1] = w->line[i];
-		w->line[MAX_LINES_PER_SCREEN - 1] = NULL;
+			r->line[i - 1] = r->line[i];
+		r->line[MAX_LINES_PER_SCREEN - 1] = NULL;
 	}
 
 	/* znajd¼ pierwsz± woln± liniê i siê wpisz. */
 	for (i = 0; i < MAX_LINES_PER_SCREEN; i++)
-		if (!w->line[i]) {
-			w->line[i] = xstrdup(line);
+		if (!r->line[i]) {
+			r->line[i] = xstrdup(line);
 			break;
 		}
 
@@ -1377,79 +1005,18 @@ static int window_write(int id, const char *line)
         return 0;
 }
 
-/*
- * window_clear()
- *
- * czy¶ci zawarto¶æ aktualnego okna.
- */
-static void window_clear()
-{
-        int i;
-
-        for (i = 0; i < MAX_LINES_PER_SCREEN; i++) {
-		xfree(window_current->line[i]);
-                window_current->line[i] = NULL;
-	}
-}
-
-/*
- * window_find_query()
- *
- * znajduje id okna, w którym prowadzona jest rozmowa z dan± osob±. je¶li
- * nie ma takiego, zwraca zero.
- */
-static int window_find_query(const char *nick)
-{
-        list_t l;
-
-        if (!nick)
-                return 0;
-
-        for (l = windows; l; l = l->next) {
-                struct window *w = l->data;
-
-		if (w->query_nick && !xstrcasecmp(w->query_nick, nick))
-			return w->id;
-        }
-
-        return 0;
-}
-
-/*
- * window_list()
- *
- * wy¶wietla listê okien.
- */
-static void window_list()
-{
-	list_t l;
-
-	for (l = windows; l; l = l->next) {
-		struct window *w = l->data;
-
-		if (w->query_nick)
-			print("window_list_query", itoa(w->id), w->query_nick);
-		else
-			print("window_list_nothing", itoa(w->id));
-	}
-}		
-
-/*
- * window_make_query()
- *
- * tworzy nowe okno rozmowy w zale¿no¶ci od aktualnych ustawieñ.
- */
-static int window_make_query(const char *nick)
+#if 0
+int window_make_query(const char *nick)
 {
 	/* szuka pierwszego wolnego okienka i je zajmuje */
 	if (config_make_window == 1) {
 		list_t l;
 
 		for (l = windows; l; l = l->next) {
-			struct window *w = l->data;
+			window_t *w = l->data;
 			
-			if (!w->query_nick) {
-				w->query_nick = xstrdup(nick);
+			if (!w->target) {
+				w->target = xstrdup(nick);
 				
 				if (w == window_current) {
 					print("query_started", nick);
@@ -1461,66 +1028,20 @@ static int window_make_query(const char *nick)
 				} else
 					print("window_id_query_started", itoa(w->id), nick);
 
-				if (!(ignored_check(get_uin(nick)) & IGNORE_EVENTS))
-					event_check(EVENT_QUERY, get_uin(nick), nick);
-				
 				return w->id;
 			}
 		}
 	}
-	
-	if (config_make_window == 1 || config_make_window == 2) {
-		struct window *w;
-
-		if (!(w = window_add()))
-			return 0;
-		
-		w->query_nick = xstrdup(nick);
-		
-		print("window_id_query_started", itoa(w->id), nick);
-
-		if (!(ignored_check(get_uin(nick)) & IGNORE_EVENTS))
-			event_check(EVENT_QUERY, get_uin(nick), nick);
-			
-		return w->id;
-	}
-
 	return 0;
 }
+#endif
 
-/*
- * window_free()
- *
- * zwalnia pamiêæ po wszystkich strukturach okien.
- */
-static void window_free()
-{
-	list_t l;
-
-	window_current = NULL;
-
-	for (l = windows; l; l = l->next) {
-		struct window *w = l->data;
-		int i;
-
-		xfree(w->query_nick);
-		w->query_nick = NULL;
-
-		for (i = 0; i < MAX_LINES_PER_SCREEN; i++) {
-			xfree(w->line[i]);
-			w->line[i] = NULL;
-		}
-	}
-
-	list_destroy(windows, 1);
-	windows = NULL;
-}
 /*
  * window_activity()
  *
  * zwraca string z actywnymi oknami 
  */
-static char *window_activity() 
+char *window_activity() 
 {
 	string_t s = string_init("");
 	int first = 1;
@@ -1528,7 +1049,7 @@ static char *window_activity()
 	char *act = NULL;
 
 	for (l = windows; l; l = l->next) {
-		struct window *w = l->data;
+		window_t *w = l->data;
 		
 		if (w->act) {
 			if (!first)
@@ -1539,11 +1060,9 @@ static char *window_activity()
 	}
 
 	if (!first)
-		act = xstrdup(s->str);
+		return act = string_free(s, 0);
 	
-	string_free(s, 1);
-	
-	return act;
+	return NULL;
 }
 		
 /*
@@ -1551,7 +1070,7 @@ static char *window_activity()
  *
  * szuka komendy, któr± nale¿y wykonaæ dla danego klawisza.
  */
-static char *bind_find_command(const char *seq)
+char *bind_find_command(const char *seq)
 {
 	list_t l;
 
@@ -1573,14 +1092,14 @@ static char *bind_find_command(const char *seq)
  *
  * obs³uguje klawisze Ctrl-A do Ctrl-Z, wywo³uj±c przypisane im akcje.
  */
-static int bind_handler_ctrl(int a, int key)
+int bind_handler_ctrl(int a, int key)
 {
 	char *tmp = saprintf("Ctrl-%c", 'A' + key - 1);
 	int foo = pager_lines;
 
 	if (foo < 0)
 		pager_lines = 0;
-	command_exec(NULL, bind_find_command(tmp), 0);
+	command_exec(window_current->target, window_current->session, bind_find_command(tmp), 0);
 	if (foo < 0)
 		pager_lines = foo;
 	xfree(tmp);
@@ -1593,14 +1112,14 @@ static int bind_handler_ctrl(int a, int key)
  *
  * obs³uguje klawisze z Altem, wywo³uj±c przypisane im akcje.
  */
-static int bind_handler_alt(int a, int key)
+int bind_handler_alt(int a, int key)
 {
 	char *tmp = saprintf("Alt-%c", key);
 	int foo = pager_lines;
 
 	if (foo < 0)
 		pager_lines = 0;
-	command_exec(NULL, bind_find_command(tmp), 0);
+	command_exec(window_current->target, window_current->session, bind_find_command(tmp), 0);
 	if (foo < 0)
 		pager_lines = foo;
 	xfree(tmp);
@@ -1613,17 +1132,17 @@ static int bind_handler_alt(int a, int key)
  *
  * obs³uguje klawisze Alt-1 do Alt-0, zmieniaj±c okna na odpowiednie.
  */
-static int bind_handler_window(int a, int key)
+int bind_handler_window(int a, int key)
 {
 	if (key > '0' && key <= '9')
-		window_switch(key - '0', 0);
+		window_switch(key - '0');
 	else
-		window_switch(10, 0);
+		window_switch(10);
 
 	return 0;
 }
 		
-static int bind_sequence(const char *seq, const char *command, int quiet)
+int bind_sequence(const char *seq, const char *command, int quiet)
 {
 	char *nice_seq = NULL;
 	
@@ -1701,11 +1220,3 @@ static int bind_sequence(const char *seq, const char *command, int quiet)
 	return 1;
 }
 
-/*
- * Local Variables:
- * mode: c
- * c-file-style: "k&r"
- * c-basic-offset: 8
- * indent-tabs-mode: t
- * End:
- */
