@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ekg/windows.h>
 
 #define MAX_LINES_PER_SCREEN 300
 #define readline_current ((readline_window_t *) window_current->private)

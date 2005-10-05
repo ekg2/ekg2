@@ -162,11 +162,22 @@ char *command_generator(char *text, int state)
 
 	for (; l; l = l->next) {
 		command_t *c = l->data;
+		char *without_sess_id = NULL;
+		int plen = 0;
+		session_t *session = session_current;
+
+		if (session && !xstrncasecmp(c->name, session->uid, plen))
+			without_sess_id = xstrchr(c->name, ':');
 
 		if (!xstrncasecmp(text, c->name, len)) {
 			l = l->next;
 			return (window_current->target) ? saprintf("/%s", c->name) : xstrdup(c->name);
 		}
+		else if (without_sess_id && !xstrncasecmp(text, without_sess_id + 1, len)) {
+			l = l->next;
+			return (window_current->target) ? saprintf("%s", without_sess_id + 1) : xstrdup(without_sess_id + 1);
+		}
+			
 	}
 
 	return NULL;
@@ -307,25 +318,6 @@ char *blocked_uin_generator(char *text, int state)
 	return NULL;
 }
 
-char *dcc_generator(char *text, int state)
-{
-	char *commands[] = { "close", "get", "send", "list", "resume", "rsend", "rvoice", "voice", NULL };
-	static int len, i;
-
-	if (!state) {
-		i = 0;
-		len = xstrlen(text);
-	}
-
-	while (commands[i]) {
-		if (!xstrncasecmp(text, commands[i], len))
-			return xstrdup(commands[i++]);
-		i++;
-	}
-
-	return NULL;
-}
-
 char *window_generator(char *text, int state)
 {
 	char *commands[] = { "new", "kill", "next", "prev", "switch", "clear", "refresh", "list", "last", "active", NULL };
@@ -345,29 +337,10 @@ char *window_generator(char *text, int state)
 	return NULL;
 }
 
-char *python_generator(char *text, int state)
-{
-	char *commands[] = { "load", "unload", "run", "exec", "list", "restart", NULL };
-	static int len, i;
-
-	if (!state) {
-		i = 0;
-		len = xstrlen(text);
-	}
-
-	while (commands[i]) {
-		if (!xstrncasecmp(text, commands[i], len))
-			return xstrdup(commands[i++]);
-		i++;
-	}
-
-	return NULL;
-}
-
 char *reason_generator(char *text, int state)
 {
 	static int len;
-
+/* hm, look at ncurses/completion.c */
 	if (!state) {
 		len = xstrlen(text);
 
@@ -381,9 +354,41 @@ char *empty_generator(char *text, int state)
 {
 	return NULL;
 }
+
+char *possibilities_generator(char *text, int state)
+{
+	return NULL;
+}
+
+char *session_generator(char *text, int state)
+{
+	static list_t l;
+	static int len;
+
+	if (!state) {
+		l = sessions;
+		len = xstrlen(text);
+	}
+	while (l) {
+		session_t *s = l->data;
+		if (*text == '-') {
+			if (!xstrncasecmp(text+1, s->uid, len-1))
+				return saprintf("-%s", s->uid);
+			if (!xstrncasecmp(text+1, s->alias, len-1))
+				return saprintf("-%s", s->alias);
+		} else {
+			if (!xstrncasecmp(text, s->uid, len)) 
+				return xstrdup(s->uid);
+			if (!xstrncasecmp(text, s->alias, len)) 
+				return xstrdup(s->alias);
+		}
+	}
+
+}
+
 char **my_completion(char *text, int start, int end)
 {
-	char *params = NULL;
+	char **params = NULL;
 	int word = 0, i, abbrs = 0;
 	CPFunction *func = known_uin_generator;
 	list_t l;
@@ -471,10 +476,10 @@ char **my_completion(char *text, int start, int end)
 		}
 
 		if (params && abbrs == 1) {
-			if (word >= xstrlen(params))
+			if (word >= /* xstrlen(params) */ array_count(params))
 				func = empty_generator;
 			else {
-				switch (params[word]) {
+				switch (params[word][0]) {
 					case 'u':
 						func = known_uin_generator;
 	    					break;
@@ -484,8 +489,11 @@ char **my_completion(char *text, int start, int end)
 					case 'c':
 						func = command_generator;
 						break;
-					case 's':	/* XXX */
-						func = empty_generator;
+					case 'p':
+						func = possibilities_generator;
+						break;
+					case 's':
+						func = session_generator;
 						break;
 					case 'i':
 						func = ignored_uin_generator;
@@ -496,17 +504,8 @@ char **my_completion(char *text, int start, int end)
 					case 'v':
 						func = variable_generator;
 						break;
-					case 'd':
-						func = dcc_generator;
-						break;
 					case 'f':
 						func = rl_filename_completion_function;
-						break;
-					case 'p':
-						func = python_generator;
-						break;
-					case 'w':
-						func = window_generator;
 						break;
 					case 'r':
 						func = reason_generator;
@@ -571,7 +570,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	} else
 		line = xline;
 /* awful */
-	linetmp = line;
+	linetmp = (char *) line;
 	line = line_buf = saprintf("%s\n", linetmp);
 	xfree(linetmp);
 

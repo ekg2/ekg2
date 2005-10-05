@@ -148,8 +148,7 @@ QUERY(readline_ui_window_clear) {
 	return 0;
 }
 
-QUERY(readline_beep) {
-/* static void ui_readline_beep() */
+QUERY(readline_beep) { /* ui_readline_beep() */
 	printf("\a");
 	fflush(stdout);
 	return 0;
