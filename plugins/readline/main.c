@@ -1,5 +1,10 @@
 #include "ekg2-config.h"
 
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -18,8 +23,43 @@
 static int readline_theme_init();
 PLUGIN_DEFINE(readline, PLUGIN_UI, readline_theme_init);
 
+/*
+ * sigint_handler() //XXX może wywalać 
+ *
+ * obsługuje wciśnięcie Ctrl-C.
+ */
+static void sigint_handler()
+{
+	rl_delete_text(0, rl_end);
+	rl_point = rl_end = 0;
+	putchar('\n');
+	rl_forced_update_display();
+}
+
+/*
+ * sigcont_handler() //XXX może wywalać
+ *
+ * osługuje powrót z tła poleceniem ,,fg'', żeby odświeżyć ekran.
+ */
+static void sigcont_handler()
+{
+	rl_forced_update_display();
+}
+
+/*
+ * sigwinch_handler()
+ *
+ * obsługuje zmianę rozmiaru okna.
+ */
+#ifdef SIGWINCH
+static void sigwinch_handler()
+{
+	ui_need_refresh = 1;
+}
+#endif
+
 static int readline_theme_init() {
-//        /* prompty dla ui-readline */
+	/* prompty dla ui-readline */
 	format_add("readline_prompt", "% ", 1);
 	format_add("readline_prompt_away", "/ ", 1);
 	format_add("readline_prompt_invisible", ". ", 1);
@@ -36,8 +76,7 @@ static int readline_theme_init() {
 	return 0;
 }
 
-QUERY(readline_ui_window_new) {
-/* static window_t *window_add() */
+QUERY(readline_ui_window_new) { /* window_add() */
 	window_t *w = *(va_arg(ap, window_t **));
 	w->private = xmalloc(sizeof(readline_window_t));
 	return 0;
@@ -117,6 +156,8 @@ QUERY(readline_beep) {
 }
 	
 int readline_plugin_init(int prio) {
+	char c;
+	struct sigaction sa;
 	list_t l;
 	plugin_register(&readline_plugin, prio);
 
@@ -133,8 +174,51 @@ int readline_plugin_init(int prio) {
 		window_t *w = l->data;
 		w->private = xmalloc(sizeof(readline_window_t));
 	}
-	ui_readline_init();
 	
+	window_refresh();
+	rl_initialize();
+	rl_getc_function = my_getc;
+	rl_readline_name = "gg";
+	rl_attempted_completion_function = (CPPFunction *) my_completion;
+	rl_completion_entry_function = (void*) empty_generator;
+
+	rl_set_key("\033[[A", binding_help, emacs_standard_keymap);
+	rl_set_key("\033OP", binding_help, emacs_standard_keymap);
+	rl_set_key("\033[11~", binding_help, emacs_standard_keymap);
+	rl_set_key("\033[M", binding_help, emacs_standard_keymap);
+	rl_set_key("\033[[B", binding_quick_list, emacs_standard_keymap);
+	rl_set_key("\033OQ", binding_quick_list, emacs_standard_keymap);
+	rl_set_key("\033[12~", binding_quick_list, emacs_standard_keymap);
+	rl_set_key("\033[N", binding_quick_list, emacs_standard_keymap);
+	
+	//rl_set_key("\033[24~", binding_toggle_debug, emacs_standard_keymap);
+
+	for (c = '0'; c <= '9'; c++)
+		rl_bind_key_in_map(c, bind_handler_window, emacs_meta_keymap);
+
+	memset(&sa, 0, sizeof(sa));
+
+	sa.sa_handler = sigint_handler;
+	sigaction(SIGINT, &sa, NULL);
+
+	sa.sa_handler = sigcont_handler;
+	sigaction(SIGCONT, &sa, NULL);
+
+#ifdef SIGWINCH
+	sa.sa_handler = sigwinch_handler;
+	sigaction(SIGWINCH, &sa, NULL);
+#endif
+
+	rl_get_screen_size(&screen_lines, &screen_columns);
+
+	if (screen_lines < 1)
+		screen_lines = 24;
+	if (screen_columns < 1)
+		screen_columns = 80;
+
+	ui_screen_width = screen_columns;
+	ui_screen_height = screen_lines;
+	ui_need_refresh = 0;
 	return 0;
 }
 

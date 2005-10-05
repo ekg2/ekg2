@@ -53,11 +53,8 @@
 #include <ekg/xmalloc.h>
 #include "ui-readline.h"
 
-#define HAVE_RL_BIND_KEY_IN_MAP
-#define HAVE_RL_GET_SCREEN_SIZE
-#define HAVE_RL_SET_KEY
-#define HAVE_RL_SET_PROMPT
-#define HAVE_RL_FILENAME_COMPLETION_FUNCTION
+int in_readline = 0, no_prompt = 0, pager_lines = -1, screen_lines = 24, screen_columns = 80;
+
 /* podstawmy ewentualnie brakuj±ce funkcje i definicje readline */
 
 extern void rl_extend_line_buffer(int len);
@@ -111,50 +108,6 @@ int rl_set_key(const char *key, void *function, void *keymap)
 }
 #endif
 
-int window_last_id = -1;
-
-int ui_need_refresh = 0; /* DARK */
-int ui_screen_width;     /* DARK */
-int ui_screen_height;    /* dark */
-void *userlist;
-
-static int in_readline = 0, no_prompt = 0, pager_lines = -1, screen_lines = 24, screen_columns = 80;
-
-/*
- * sigcont_handler() //XXX mo¿e wywalaæ
- *
- * os³uguje powrót z t³a poleceniem ,,fg'', ¿eby od¶wie¿yæ ekran.
- */
-static void sigcont_handler()
-{
-	rl_forced_update_display();
-}
-
-/*
- * sigint_handler() //XXX mo¿e wywalaæ 
- *
- * obs³uguje wci¶niêcie Ctrl-C.
- */
-static void sigint_handler()
-{
-	rl_delete_text(0, rl_end);
-	rl_point = rl_end = 0;
-	putchar('\n');
-	rl_forced_update_display();
-}
-
-
-#ifdef SIGWINCH
-/*
- * sigwinch_handler()
- *
- * obs³uguje zmianê rozmiaru okna.
- */
-static void sigwinch_handler()
-{
-	ui_need_refresh = 1;
-}
-#endif
 
 /*
  * my_getc()
@@ -808,61 +761,6 @@ char *my_readline()
 
         return res;
 }
-/*
- * ui_readline_init()
- *
- * inicjalizacja interfejsu readline.
- */
-void ui_readline_init()
-{
-	char c;
-	struct sigaction sa;
-
-	window_refresh();
-	rl_initialize();
-	rl_getc_function = my_getc;
-	rl_readline_name = "gg";
-	rl_attempted_completion_function = (CPPFunction *) my_completion;
-	rl_completion_entry_function = (void*) empty_generator;
-
-	rl_set_key("\033[[A", binding_help, emacs_standard_keymap);
-	rl_set_key("\033OP", binding_help, emacs_standard_keymap);
-	rl_set_key("\033[11~", binding_help, emacs_standard_keymap);
-	rl_set_key("\033[M", binding_help, emacs_standard_keymap);
-	rl_set_key("\033[[B", binding_quick_list, emacs_standard_keymap);
-	rl_set_key("\033OQ", binding_quick_list, emacs_standard_keymap);
-	rl_set_key("\033[12~", binding_quick_list, emacs_standard_keymap);
-	rl_set_key("\033[N", binding_quick_list, emacs_standard_keymap);
-	
-	//rl_set_key("\033[24~", binding_toggle_debug, emacs_standard_keymap);
-
-	for (c = '0'; c <= '9'; c++)
-		rl_bind_key_in_map(c, bind_handler_window, emacs_meta_keymap);
-
-	memset(&sa, 0, sizeof(sa));
-
-	sa.sa_handler = sigint_handler;
-	sigaction(SIGINT, &sa, NULL);
-
-	sa.sa_handler = sigcont_handler;
-	sigaction(SIGCONT, &sa, NULL);
-
-#ifdef SIGWINCH
-	sa.sa_handler = sigwinch_handler;
-	sigaction(SIGWINCH, &sa, NULL);
-#endif
-
-	rl_get_screen_size(&screen_lines, &screen_columns);
-
-	if (screen_lines < 1)
-		screen_lines = 24;
-	if (screen_columns < 1)
-		screen_columns = 80;
-
-	ui_screen_width = screen_columns;
-	ui_screen_height = screen_lines;
-	ui_need_refresh = 0;
-}
 
 /*
  * ui_readline_loop()
@@ -873,19 +771,16 @@ void ui_readline_init()
 void ui_readline_loop()
 {
 	char *line;
-cont:
 	line = my_readline();
 
-		/* je¶li wci¶niêto Ctrl-D i jeste¶my w query, wyjd¼my */
+	/* je¶li wci¶niêto Ctrl-D i jeste¶my w query, wyjd¼my */
 	if (!line && window_current->target) {
 //		ui_event("command", 0, "query", NULL); /* dark */
-		goto cont;
 	}
 
 	/* je¶li wci¶niêto Ctrl-D, to zamknij okienko */
 	if (!line && list_count(windows) > 1) {
 		window_kill(window_current, 0);
-		goto cont;
 	}
 
 	if (!line) {
@@ -893,7 +788,6 @@ cont:
 			return;
 		else {
 			printf("\n");
-			goto cont;
 		}
 	}
 
@@ -926,7 +820,6 @@ cont:
 		if (!line) {
 			printf("\n");
 			string_free(s, 1);
-			goto cont;
 		}
 
 		line = string_free(s, 0);
