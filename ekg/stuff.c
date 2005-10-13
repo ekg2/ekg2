@@ -674,7 +674,7 @@ void changed_display_blinking(const char *var)
  */
 void changed_theme(const char *var)
 {
-	if (!in_autoexec)
+	if (in_autoexec)
 		return;
 	if (!config_theme) {
 		theme_free();
