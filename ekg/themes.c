@@ -742,7 +742,7 @@ int format_add(const char *name, const char *value, int replace)
         }
 
         f.name = xstrdup(name);
-        f.name_hash = ekg_hash(name);
+        f.name_hash = hash;
         f.value = xstrdup(value);
 
         return (list_add(&formats, &f, sizeof(f)) ? 0 : -1);
@@ -858,9 +858,10 @@ int theme_read(const char *filename, int replace)
                 if (!f)
                         return -1;
         }
-
-        theme_free();
-        theme_init();
+	if (!in_autoexec) {
+		theme_free();
+		theme_init();
+	}
 //      ui_event("theme_init");
 
         while ((buf = read_file(f))) {
@@ -960,22 +961,6 @@ void theme_init()
         format_add("error,speech", "b³±d!", 1);
         format_add("timestamp", "%T", 1);
         format_add("timestamp,speech", " ", 1);
-
-        /* prompty dla ui-readline */
-        format_add("readline_prompt", "% ", 1);
-        format_add("readline_prompt_away", "/ ", 1);
-        format_add("readline_prompt_invisible", ". ", 1);
-        format_add("readline_prompt_query", "%1> ", 1);
-        format_add("readline_prompt_win", "%1%% ", 1);
-        format_add("readline_prompt_away_win", "%1/ ", 1);
-        format_add("readline_prompt_invisible_win", "%1. ", 1);
-        format_add("readline_prompt_query_win", "%2:%1> ", 1);
-        format_add("readline_prompt_win_act", "%1 (act/%2)%% ", 1);
-        format_add("readline_prompt_away_win_act", "%1 (act/%2)/ ", 1);
-        format_add("readline_prompt_invisible_win_act", "%1 (act/%2). ", 1);
-        format_add("readline_prompt_query_win_act", "%2:%1 (act/%3)> ", 1);
-
-        format_add("readline_more", _("-- Press Enter to continue or Ctrl-D to break --"), 1);
 
         /* prompty i statusy dla ui-ncurses */
         format_add("ncurses_prompt_none", "", 1);

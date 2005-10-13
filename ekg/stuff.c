@@ -674,13 +674,14 @@ void changed_display_blinking(const char *var)
  */
 void changed_theme(const char *var)
 {
+	if (!in_autoexec)
+		return;
 	if (!config_theme) {
 		theme_free();
 		theme_init();
 	} else {
 		if (!theme_read(config_theme, 1)) {
-			if (!in_autoexec)
-				print("theme_loaded", config_theme);
+			print("theme_loaded", config_theme);
 		} else {
 			print("error_loading_theme", strerror(errno));
 			variable_set("theme", NULL, 0);
