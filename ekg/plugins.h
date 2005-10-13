@@ -60,7 +60,7 @@ typedef struct {
 	int prio;
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
-	lt_dlhandle dl;
+	/* lt_dlhandle */ void *dl;
 	plugins_params_t **params;
 	plugin_theme_init_func_t theme_init;
 } plugin_t;

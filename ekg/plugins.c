@@ -229,7 +229,7 @@ int plugin_unload(plugin_t *p)
 		p->destroy();
 
 	if (p->dl) {
-		lt_dlclose(p->dl);
+		lt_dlclose((lt_dlhandle) p->dl);
 	}
 
 	print("plugin_unloaded", name);
