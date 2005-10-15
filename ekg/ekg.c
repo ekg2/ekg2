@@ -807,8 +807,9 @@ int main(int argc, char **argv)
         if (load_theme)
                 theme_read(load_theme, 1);
         else {
-                if (config_theme)
-                        theme_read(config_theme, 1);
+		if (config_theme)
+			theme_read(config_theme, 1);
+		else	theme_plugins_init();
         }
 
         theme_cache_reset();

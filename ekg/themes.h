@@ -61,6 +61,7 @@ char *format_string(const char *format, ...);
 const char *format_ansi(char ch);
 
 void theme_init();
+void theme_plugins_init();
 int theme_read(const char *filename, int replace);
 void theme_cache_reset();
 void theme_free();
