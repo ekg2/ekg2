@@ -779,6 +779,7 @@ int main(int argc, char **argv)
                 config_read(SYSCONFDIR "/ekg2.conf");
 
 	config_read_plugins();
+	theme_plugins_init();
 
         if (!no_global_config)
                 config_read(SYSCONFDIR "/ekg2-override.conf");
@@ -809,7 +810,6 @@ int main(int argc, char **argv)
         else {
 		if (config_theme)
 			theme_read(config_theme, 1);
-		else	theme_plugins_init();
         }
 
         theme_cache_reset();
