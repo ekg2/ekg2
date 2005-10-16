@@ -202,10 +202,10 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 	PyObject *obj = (PyObject *)comm->private;
 
         if (!PyCallable_Check(obj)) {
-		debug("[python] func %s not found, deleting comm\n", comm->comm);
+		debug("[python] func %s not found, deleting comm\n", comm->self->name);
 		return SCRIPT_HANDLE_UNBIND;
 	}
-        PYTHON_HANDLE_HEADER(obj, "(ss)", comm->comm,
+        PYTHON_HANDLE_HEADER(obj, "(ss)", comm->self->name,
 //				    	params)
 					params[0] ? params[0] : "")
 	;
@@ -312,7 +312,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 #define ARG_CHARPPP(x)  *(char ***) args[x]
 #define ARG_UINTPPP(x)  *(uint32_t **) args[x]
 
-        char *name = scr_que->query_name;
+        char *name = scr_que->self->name;
 
 	if (!xstrcmp(name, "protocol-message")) return python_protocol_message(scr_que->private, scr, ARG_CHARPP(0), ARG_CHARPP(1), ARG_CHARPPP(2) , ARG_CHARPP(3), ARG_UINTPPP(4), ARG_TIMEP(5), ARG_INT(6));
 #if 1
