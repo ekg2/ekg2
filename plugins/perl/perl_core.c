@@ -45,11 +45,7 @@ int perl_commands(script_t *scr, script_command_t *comm, char **params)
 {
 	char *tmp;
 	PERL_HANDLER_HEADER((char *) comm->private);
-#ifdef SCRIPTS_NEW
 	XPUSHs(sv_2mortal(new_pv(comm->self->name)));
-#else
-	XPUSHs(sv_2mortal(new_pv(comm->comm)));
-#endif
 	tmp = perl_array2str(params);
 	XPUSHs(sv_2mortal(new_pv(tmp)));
 	xfree(tmp);
@@ -114,15 +110,11 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 			case (SCR_ARG_WINDOW): /* window_t */
 				perlarg = ekg2_bless(BLESS_WINDOW, 0, (*(window_t **) args[i]));
 				break;
-			case (SCR_ARG_FSTRING):
+			case (SCR_ARG_FSTRING): /* fstring_t */
 				perlarg = ekg2_bless(BLESS_FSTRING, 0, (*(fstring_t **) args[i]));
 				break;
 			default:
-#ifdef SCRIPTS_NEW
 				debug("[NIMP] %s %d %d\n",scr_que->self->name, i, scr_que->argv_type[i]);
-#else
-				debug("[NIMP] %s %d %d\n",scr_que->query_name, i, scr_que->argv_type[i]);
-#endif
 		}
 
 		if (!perlarg) perlarg = newSViv(0); // TODO: zmienic. ?
@@ -305,11 +297,7 @@ script_t *perl_caller() {
 
 void *perl_plugin_register(char *name, int type, void *formatinit)
 {
-#ifdef SCRIPTS_NEW
-	return script_plugin_init(&perl_lang, perl_caller(), name, type, formatinit, 0);
-#else
-	return NULL;
-#endif
+	return script_plugin_init(&perl_lang, perl_caller(), name, type, formatinit);
 }
 
 void *perl_timer_bind(int freq, char *handler)

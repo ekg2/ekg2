@@ -112,7 +112,6 @@ char *perl_array2str(char **arr);
                                 break;\
 \
                         case (SCR_ARG_CHARP):\
- /* dobrze ? */\
                                 xfree(*(char **) args[i]); \
                                 *( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
                                 break;\

@@ -12,11 +12,15 @@ SV *ekg2_bless(int flag, int flag2, void *object);
 #ifdef HAVE_IRC
 void ekg2_bless_irc_server(HV *hv, session_t *session)
 {
-	connector_t   *s = NULL;
 	irc_private_t *j = irc_private(session);
-	debug("blessing server %s\n", session->uid);
+	connector_t   *s = NULL;
+	if (xstrncasecmp( session_uid_get( (session_t *) s), IRC4, 4)) {
+		debug("[perl_ierror] not irc session in ekg2_bless_irc_server!\n");
+		return;
+	}
+	debug_bless("blessing server %s\n", session->uid);
 
-        if (j->conntmplist && j->conntmplist->data) s = j->conntmplist->data;
+	if (j->conntmplist && j->conntmplist->data) s = j->conntmplist->data;
 	if (s) {
 		hv_store(hv, "server",  6, new_pv(s->hostname), 0);
 		hv_store(hv, "ip",      2, new_pv(s->address), 0);
@@ -244,7 +248,7 @@ SV *ekg2_bless(int flag, int flag2, void *object)
 #endif
 /* ELSE */			
                 default:
-                        debug("@perl_bless.c ekg2_bless() unknown flag=%d\n", flag);
+                        debug("@perl_bless.c ekg2_bless() unknown flag=%d flag1=%d obj=0x%x\n", flag, flag2, object);
 //                      return create_sv_ptr(object);
                         return &PL_sv_undef;
         }

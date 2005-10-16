@@ -104,6 +104,7 @@ Ekg2::Variable
 #####################################################################################################################################
 
 Ekg2::Irc
+    -> session2server(sesja)	- zwraca zblessowana sesje ircowa ze `zwyklej`		(Ekg2::Irc::Server)
     -> servers()		- zwraca liste sesji irc.				(Ekg2::Irc::Server)
 
 Ekg2::Irc::Server 
@@ -127,6 +128,8 @@ Ekg2::Irc::Server
 
   -> channels()			- zwraca liste kanalow na jakich siedzimy.		(lista Ekg2::Irc::Channel)
   -> people()			- zwraca liste userow  na kanalach na ktorych siedzimy. (lista Ekg2::Irc::User)
+
+  -> session()			- zwraca zblessowana `zwykla` sesje			(Ekg2::Session)
   
  
 Ekg2::Irc::Channel
