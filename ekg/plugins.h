@@ -112,7 +112,7 @@ typedef struct {
 	int count;
 } query_t;
 
-int query_connect(plugin_t *, const char *, query_handler_func_t *, void *);
+query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
 int query_disconnect(plugin_t *, const char *);
 query_t *query_find(const char *name);
 

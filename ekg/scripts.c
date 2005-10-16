@@ -451,11 +451,7 @@ script_command_t *script_command_find(const char *name)
 	list_t l;
 	for (l = script_commands; l; l = l->next) {
 		temp = l->data;
-#ifdef SCRIPTS_NEW
 		if (!xstrcmp(name, temp->self->name))
-#else
-		if (!xstrcmp(name, temp->comm)) 
-#endif
 			return temp;
 	
 	}
@@ -488,8 +484,7 @@ int script_command_unbind(script_command_t *temp, int free)
 #ifdef SCRIPTS_NEW
 		command_freeone(temp->self);
 #else
-		command_remove(NULL, temp->comm);
-	xfree(temp->comm);
+		command_remove(NULL, temp->self->name);
 #endif
 	return list_remove(&script_commands, temp, 1);
 }
@@ -502,8 +497,7 @@ int script_query_unbind(script_query_t *temp, int free)
 #ifdef SCRIPTS_NEW
 	query_free(temp->self);	
 #else
-	query_disconnect(slang->plugin, temp->query_name);
-	xfree(temp->query_name);
+	query_disconnect(slang->plugin, temp->self->name);
 #endif
 	return list_remove(&script_queries, temp, 1);
 }
@@ -579,11 +573,7 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 		SCRIPT_BIND_HEADER(script_var_t);
 		temp->name  = xstrdup(name);
 		temp->value = xstrdup(value);
-#ifdef SCRIPTS_NEW
 		temp->self = variable_add(NULL, name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
-#else
-		temp->self = !variable_add(NULL, name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
-#endif
 		SCRIPT_BIND_FOOTER(script_vars);
 	} 
 	
@@ -593,12 +583,7 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler) 
 {
 	SCRIPT_BIND_HEADER(script_command_t);
-#ifdef SCRIPTS_NEW
 	temp->self = command_add(NULL, command, "?", script_command_handlers, COMMAND_ISSCRIPT, NULL);
-#else
-	temp->comm = xstrdup(command);
-	temp->self = !command_add(NULL, command, "?", script_command_handlers, 0, NULL);
-#endif
 	SCRIPT_BIND_FOOTER(script_commands);
 }
 
@@ -684,13 +669,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 #undef CHECK_
 #undef NEXT_ARG
 
-#ifdef SCRIPTS_NEW
 	temp->self = query_connect(s->plugin, query_name, script_query_handlers, temp);
-#else
-	temp->query_name = xstrdup(query_name);
-	temp->self = !query_connect(s->plugin, query_name, script_query_handlers, temp);
-#endif
-
 	SCRIPT_BIND_FOOTER(script_queries);
 }
 

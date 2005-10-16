@@ -47,9 +47,6 @@ void last_free();
 char *xml_escape(const char *text);
 char *log_escape(const char *str);
 
-void put_log(const char *uid, const char *format, ...);
-const char *log_timestamp(time_t t);
-
 #endif /* __EKG_LOG_H */
 
 /*

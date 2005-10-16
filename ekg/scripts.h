@@ -67,9 +67,6 @@ list_t 		script_vars;
 
 typedef struct {
 	script_t 	*scr;
-#ifndef SCRIPTS_NEW
-	char 		*query_name;
-#endif
 	query_t		*self;
 	int 		argc;
 	int             argv_type[MAX_ARGS];
@@ -79,9 +76,6 @@ list_t 		script_queries;
 
 typedef struct {
 	script_t 	*scr;
-#ifndef SCRIPTS_NEW
-	char 		*comm;
-#endif
 	command_t	*self;
 	void 		*private; 
 } script_command_t;

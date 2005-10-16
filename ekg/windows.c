@@ -234,7 +234,7 @@ static int window_new_compare(void *data1, void *data2)
  */
 window_t *window_new(const char *target, session_t *session, int new_id)
 {
-	window_t w, *result = NULL;
+	window_t *w;
 	int id = 1, done = 0;
 	list_t l;
 //	userlist_t *u = NULL;
@@ -272,24 +272,25 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 	if (id == -1)
 		id = 0;
 	
-	memset(&w, 0, sizeof(w));
 
-	w.id = id;
+	w = xmalloc(sizeof(window_t));
+
+	w->id = id;
 
 	/* domy¶lne rozmiary zostan± dostosowane przez ui */
-	w.top = 0;
-	w.left = 0;
-	w.width = 1;
-	w.height = 1;
-	w.target = xstrdup(target);
-	w.session = session;
-	w.userlist = NULL;
+	w->top = 0;
+	w->left = 0;
+	w->width = 1;
+	w->height = 1;
+	w->target = xstrdup(target);
+	w->session = session;
+	w->userlist = NULL;
 
-	result = list_add_sorted(&windows, &w, sizeof(w), window_new_compare);
+	list_add_sorted(&windows, w, 0, window_new_compare);
 
-	query_emit(NULL, "ui-window-new", &result);	/* XXX */
+	query_emit(NULL, "ui-window-new", &w);	/* XXX */
 
-	return result;
+	return w;
 }
 
 /*

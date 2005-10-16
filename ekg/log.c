@@ -99,7 +99,7 @@ static char *utf_ent[256] =
 void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 {
 	list_t l;
-	struct last ll;
+	struct last *ll;
 	int count = 0;
 
 	/* nic nie zapisujemy, je¿eli user sam nie wie czego chce. */
@@ -117,38 +117,38 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 		
 		/* najpierw j± znajdziemy... */
 		for (l = lasts; l; l = l->next) {
-			struct last *lll = l->data;
+			ll = l->data;
 
-			if (config_last & 2 && xstrcasecmp(lll->uid, uid))
+			if (config_last & 2 && xstrcasecmp(ll->uid, uid))
 				continue;
 
 			if (!tmp_time)
-				tmp_time = lll->time;
+				tmp_time = ll->time;
 			
-			if (lll->time <= tmp_time)
-				tmp_time = lll->time;
+			if (ll->time <= tmp_time)
+				tmp_time = ll->time;
 		}
 		
 		/* ...by teraz usun±æ */
 		for (l = lasts; l; l = l->next) {
-			struct last *lll = l->data;
+			ll = l->data;
 
-			if (lll->time == tmp_time && !xstrcasecmp(lll->uid, uid)) {
-				xfree(lll->message);
-				list_remove(&lasts, lll, 1);
+			if (ll->time == tmp_time && !xstrcasecmp(ll->uid, uid)) {
+				xfree(ll->message);
+				list_remove(&lasts, ll, 1);
 				break;
 			}
 		}
 
 	}
-
-	ll.type = type;
-	ll.uid = xstrdup(uid);
-	ll.time = t;
-	ll.sent_time = st;
-	ll.message = xstrdup(msg);
+	ll = xmalloc(sizeof(struct last));
+	ll->type = type;
+	ll->uid = xstrdup(uid);
+	ll->time = t;
+	ll->sent_time = st;
+	ll->message = xstrdup(msg);
 	
-	list_add(&lasts, &ll, sizeof(ll));
+	list_add(&lasts, ll, 0);
 
 	return;
 }
@@ -315,178 +315,6 @@ char *xml_escape(const char *text)
 	}
 
 	return res;
-}
-
-/*
- * put_log()
- *
- * wrzuca do logów informacjê od/do danego numerka. podaje siê go z tego
- * wzglêdu, ¿e gdy `log = 2', informacje lec± do $config_log_path/$uin.
- * automatycznie eskejpuje, co trzeba.
- *
- *  - uin - numer delikwenta,
- *  - format... - akceptuje tylko %s, %d i %ld.
- */
-void put_log(const char *uid, const char *format, ...)
-{
- 	char *lp = config_log_path;
-	char path[PATH_MAX], *buf;
-	const char *p;
-	size_t size = 0;
-	va_list ap;
-	FILE *f;
-
-	if (!config_log)
-		return;
-
-	/* oblicz d³ugo¶æ tekstu */
-	va_start(ap, format);
-	for (p = format; *p; p++) {
-		int long_int = 0;
-
-		if (*p == '%') {
-			p++;
-			if (!*p)
-				break;
-			
-			if (*p == 'l') {
-				p++;
-				long_int = 1;
-				if (!*p)
-					break;
-			}
-			
-			if (*p == 's') {
-				char *e, *tmp = va_arg(ap, char*);
-
-				e = log_escape(tmp);
-				size += xstrlen(e);
-				xfree(e);
-			}
-			
-			if (*p == 'd') {
-				int tmp = ((long_int) ? va_arg(ap, long) : va_arg(ap, int));
-
-				size += xstrlen(itoa(tmp));
-			}
-		} else
-			size++;
-	}
-	va_end(ap);
-
-	/* zaalokuj bufor */
-	buf = xmalloc(size + 1);
-	*buf = 0;
-
-	/* utwórz tekst z logiem */
-	va_start(ap, format);
-	for (p = format; *p; p++) {
-		int long_int = 0;
-
-		if (*p == '%') {
-			p++;
-			if (!*p)
-				break;
-			if (*p == 'l') {
-				p++;
-				long_int = 1;
-				if (!*p)
-					break;
-			}
-
-			if (*p == 's') {
-				char *e, *tmp = va_arg(ap, char*);
-
-				e = log_escape(tmp);
-				xstrcat(buf, e);
-				xfree(e);
-			}
-
-			if (*p == 'd') {
-				int tmp = ((long_int) ? va_arg(ap, long) : va_arg(ap, int));
-
-				xstrcat(buf, itoa(tmp));
-			}
-		} else {
-			buf[xstrlen(buf) + 1] = 0;
-			buf[xstrlen(buf)] = *p;
-		}
-	}
-
-	/* teraz skonstruuj ¶cie¿kê logów */
-	if (!lp)
-		lp = (config_log & 2) ? (char *) prepare_path("", 0) : (char *) prepare_path("history", 0);
-
-	if (*lp == '~')
-		snprintf(path, sizeof(path), "%s%s", home_dir, lp + 1);
-	else
-		strlcpy(path, lp, sizeof(path));
-
-	if ((config_log & 2)) {
-		if (mkdir(path, 0700) && errno != EEXIST)
-			goto cleanup;
-		snprintf(path + xstrlen(path), sizeof(path) - xstrlen(path), "/%s", uid);
-	}
-
-#ifdef HAVE_ZLIB
-	/* nawet je¶li chcemy gzipowane logi, a istnieje nieskompresowany log,
-	 * olewamy kompresjê. je¶li loga nieskompresowanego nie ma, dodajemy
-	 * rozszerzenie .gz i balujemy. */
-	if (config_log & 4) {
-		struct stat st;
-		
-		if (stat(path, &st) == -1) {
-			gzFile f;
-
-			snprintf(path + xstrlen(path), sizeof(path) - xstrlen(path), ".gz");
-
-			if (!(f = gzopen(path, "a")))
-				goto cleanup;
-
-			gzputs(f, buf);
-			gzclose(f);
-			chmod(path, 0600);
-
-			goto cleanup;
-		}
-	}
-#endif
-
-	if (!(f = fopen(path, "a")))
-		goto cleanup;
-	fputs(buf, f);
-	fclose(f);
-	chmod(path, 0600);
-
-cleanup:
-	xfree(buf);
-}
-
-/* 
- * log_timestamp()
- *
- * zwraca timestamp logów zgodnie z ¿yczeniem u¿ytkownika. 
- *
- *  - t - czas, który mamy zamieniæ.
- *
- * zwraca na przemian jeden z dwóch statycznych buforów, wiêc w obrêbie
- * jednego wyra¿enia mo¿na wywo³aæ tê funkcjê dwukrotnie.
- */
-const char *log_timestamp(time_t t)
-{
-	static char buf[2][100];
-	struct tm *tm = localtime(&t);
-	static int i = 0;
-
-	i = i % 2;
-
-	if (config_log_timestamp) {
-		if (!strftime(buf[i], sizeof(buf[0]), config_log_timestamp, tm)
-				&& xstrlen(config_log_timestamp)>0)
-			xstrcpy(buf[i], "TOOLONG");
-		return buf[i++];
-	} else
-		return itoa(t);
 }
 
 /*

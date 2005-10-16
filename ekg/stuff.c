@@ -284,7 +284,7 @@ int alias_add(const char *string, int quiet, int append)
 		command_t *c = l->data;
 		char *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
 
-		if (!xstrcasecmp(string, c->name) && !c->alias) {
+		if (!xstrcasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {
 			printq("aliases_command", string);
 			return -1;
 		}
@@ -299,7 +299,7 @@ int alias_add(const char *string, int quiet, int append)
 	list_add(&aliases, &a, sizeof(a));
 
 	array = (params) ? array_join(params, " ") : xstrdup("?");
-	command_add(NULL, a.name, array, cmd_alias_exec, 1, NULL);
+	command_add(NULL, a.name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
 	printq("aliases_add", a.name, "");
@@ -1465,7 +1465,7 @@ int on_off(const char *value)
  */
 struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persist, void (*function)(int, void *), void *data)
 {
-	struct timer t;
+	struct timer *t;
 	struct timeval tv;
 	struct timezone tz;
 
@@ -1490,20 +1490,18 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 				name = itoa(i);
 		}
 	}
-
-	memset(&t, 0, sizeof(t));
-
+	t = xmalloc(sizeof(struct timer));
 	gettimeofday(&tv, &tz);
 	tv.tv_sec += period;
-	memcpy(&t.ends, &tv, sizeof(tv));
-	t.name = xstrdup(name);
-	t.period = period;
-	t.persist = persist;
-	t.function = function;
-	t.data = data;
-	t.plugin = plugin;
+	memcpy(&(t->ends), &tv, sizeof(tv));
+	t->name = xstrdup(name);
+	t->period = period;
+	t->persist = persist;
+	t->function = function;
+	t->data = data;
+	t->plugin = plugin;
 
-	return list_add(&timers, &t, sizeof(t));
+	return list_add(&timers, t, 0);
 }
 
 /*

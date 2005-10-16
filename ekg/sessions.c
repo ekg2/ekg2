@@ -117,7 +117,7 @@ int session_var_default(session_t *s)
  */
 session_t *session_add(const char *uid)
 {
-	session_t s, *sp;
+	session_t *s;
 	char *tmp;
 	list_t l;
 
@@ -129,29 +129,28 @@ session_t *session_add(const char *uid)
 		return NULL;
 	}
 	
-	memset(&s, 0, sizeof(s));
-
-	s.uid = xstrdup(uid);
-	s.status = xstrdup(EKG_STATUS_NA);
+	s = xmalloc(sizeof(session_t));
+	s->uid = xstrdup(uid);
+	s->status = xstrdup(EKG_STATUS_NA);
 	
-	sp = list_add_sorted(&sessions, &s, sizeof(s), session_compare);
+	list_add_sorted(&sessions, s, 0, session_compare);
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 
 		if (!w->session)
-			w->session = sp;
+			w->session = s;
 	}
 	if (!session_current)
-		session_current = sp;
+		session_current = s;
 
-	session_var_default(sp);
+	session_var_default(s);
 
 	tmp = xstrdup(uid);
 	query_emit(NULL, "session-added", &tmp);
 	xfree(tmp);
 
-	return sp;
+	return s;
 }
 
 /*
@@ -407,8 +406,7 @@ static int session_set_compare(void *data1, void *data2)
  */
 int session_set(session_t *s, const char *key, const char *value)
 {
-        session_param_t *sp;
-	session_param_t v;
+	session_param_t *v;
         plugin_t *p = (s && s->uid) ? plugin_find_uid(s->uid) : NULL;
         plugins_params_t *pa = (p) ? plugin_var_find(p, key) : NULL; 
 	int ret = 0;
@@ -445,17 +443,17 @@ int session_set(session_t *s, const char *key, const char *value)
 	}
 
 
-	if ((sp = session_var_find(s, key))) {
-		xfree(sp->value);
-		sp->value = xstrdup(value);
+	if ((v = session_var_find(s, key))) {
+		xfree(v->value);
+		v->value = xstrdup(value);
 		goto notify;
 	}
 
-	memset(&v, 0, sizeof(v));
-	v.key = xstrdup(key);
-	v.value = xstrdup(value);
+	v = xmalloc(sizeof(session_param_t));
+	v->key = xstrdup(key);
+	v->value = xstrdup(value);
 
-	return (list_add_sorted(&s->params, &v, sizeof(v), session_set_compare) != NULL) ? 0 : -1;
+	return (list_add_sorted(&s->params, v, 0, session_set_compare) != NULL) ? 0 : -1;
 
 notify:
 	if (pa && pa->notify)

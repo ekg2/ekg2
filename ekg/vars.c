@@ -238,17 +238,17 @@ static int variable_add_compare(void *data1, void *data2)
  *  - map - mapa warto¶ci,
  *  - dyndisplay - funkcja sprawdzaj±ca czy wy¶wietliæ zmienn±.
  *
- * zwraca 0 je¶li siê uda³o, je¶li nie to -1.
+ * zwraca 0 je¶li siê nie uda³o, w przeciwnym wypadku adres do strutury.
  */
-int variable_add(plugin_t *plugin, const char *name, int type, int display, void *ptr, variable_notify_func_t *notify, variable_map_t *map, variable_display_func_t *dyndisplay)
+variable_t *variable_add(plugin_t *plugin, const char *name, int type, int display, void *ptr, variable_notify_func_t *notify, variable_map_t *map, variable_display_func_t *dyndisplay)
 {
-	variable_t v;
+	variable_t *v;
 	int hash;
 	char *__name;
 	list_t l;
 
 	if (!name)
-		return -1;
+		return NULL;
 
 	if (plugin)
 		__name = saprintf("%s:%s", plugin->name, name);
@@ -258,8 +258,7 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 	hash = variable_hash(__name);
 
 	for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
-
+		v = l->data;
 		if (v->name_hash != hash || xstrcasecmp(v->name, __name) || v->type != VAR_FOREIGN)
 			continue;
 
@@ -283,22 +282,20 @@ int variable_add(plugin_t *plugin, const char *name, int type, int display, void
 		xfree(__name);		
 		return 0;
 	}
-
-	memset(&v, 0, sizeof(v));
-
-	v.name = xstrdup(__name);
-	v.name_hash = variable_hash(__name);
-	v.type = type;
-	v.display = display;
-	v.ptr = ptr;
-	v.notify = notify;
-	v.map = map;
-	v.dyndisplay = dyndisplay;
-	v.plugin = plugin;
+	v = xmalloc(sizeof(variable_t));
+	v->name = xstrdup(__name);
+	v->name_hash = variable_hash(__name);
+	v->type = type;
+	v->display = display;
+	v->ptr = ptr;
+	v->notify = notify;
+	v->map = map;
+	v->dyndisplay = dyndisplay;
+	v->plugin = plugin;
 
 	xfree(__name);
 
-	return (list_add_sorted(&variables, &v, sizeof(v), variable_add_compare) != NULL) ? 0 : -1;
+	return list_add_sorted(&variables, v, 0, variable_add_compare);
 
 }
 

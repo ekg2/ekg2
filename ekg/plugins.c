@@ -430,17 +430,16 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
         return 0;
 }
 
-int query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data)
+query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data)
 {
-	query_t q;
+	query_t *q = xmalloc(sizeof(query_t));
 
-	memset(&q, 0, sizeof(q));
-	q.plugin = plugin;
-	q.name = xstrdup(name);
-	q.handler = handler;
-	q.data = data;
+	q->plugin = plugin;
+	q->name = xstrdup(name);
+	q->handler = handler;
+	q->data = data;
 
-	return (list_add(&queries, &q, sizeof(q)) != NULL);
+	return list_add(&queries, q, 0);
 }
 
 int query_disconnect(plugin_t *plugin, const char *name)

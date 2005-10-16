@@ -101,20 +101,19 @@ int userlist_compare(void *data1, void *data2)
 void userlist_add_entry(session_t *session, const char *line)
 {
 	char **entry = array_make(line, ";", 8, 0, 0);
-	userlist_t u;
+	userlist_t *u;
 	int count, i;
 
 	if ((count = array_count(entry)) < 7) {
 		array_free(entry);
 		return;
 	}
-
-	memset(&u, 0, sizeof(u)); 
-
+	
+	u = xmalloc(sizeof(userlist_t));
 	if (atoi(entry[6])) 
-		u.uid = saprintf("gg:%s", entry[6]);
+		u->uid = saprintf("gg:%s", entry[6]);
 	else
-		u.uid = xstrdup(entry[6]);
+		u->uid = xstrdup(entry[6]);
 
 	for (i = 0; i < 6; i++) {
 		if (!xstrcmp(entry[i], "(null)") || !xstrcmp(entry[i], "")) {
@@ -123,29 +122,29 @@ void userlist_add_entry(session_t *session, const char *line)
 		}
 	}
 			
-	u.first_name = xstrdup(entry[0]);
-	u.last_name = xstrdup(entry[1]);
+	u->first_name = xstrdup(entry[0]);
+	u->last_name = xstrdup(entry[1]);
 
 	if (entry[3] && !valid_nick(entry[3]))
-		u.nickname = saprintf("_%s", entry[3]);
+		u->nickname = saprintf("_%s", entry[3]);
 	else
-		u.nickname = xstrdup(entry[3]);
+		u->nickname = xstrdup(entry[3]);
 
-	u.mobile = xstrdup(entry[4]);
-	u.groups = group_init(entry[5]);
-	u.status = xstrdup(EKG_STATUS_NA);
+	u->mobile = xstrdup(entry[4]);
+	u->groups = group_init(entry[5]);
+	u->status = xstrdup(EKG_STATUS_NA);
 	
 	if (entry[7])
-		u.foreign = saprintf(";%s", entry[7]);
+		u->foreign = saprintf(";%s", entry[7]);
 	else
-		u.foreign = xstrdup("");
+		u->foreign = xstrdup("");
 
 	for (i = 0; i < count; i++)
 		xfree(entry[i]);
 
 	xfree(entry);
 
-	list_add_sorted(&(session->userlist), &u, sizeof(u), userlist_compare);
+	list_add_sorted(&(session->userlist), u, 0, userlist_compare);
 }
 
 /*
@@ -157,9 +156,12 @@ void userlist_add_entry(session_t *session, const char *line)
  */
 char *userlist_dump(session_t *session)
 {
-	string_t s = string_init(NULL);
+	string_t s;
 	list_t l;
-
+/*	if (!session->userlist) 
+ *		return NULL;	
+ */
+	s = string_init(NULL);
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		const char *uid;
@@ -967,22 +969,22 @@ static int group_compare(void *data1, void *data2)
  */
 int ekg_group_add(userlist_t *u, const char *group)
 {
-	struct ekg_group g;
+	struct ekg_group *g;
 	list_t l;
 
 	if (!u || !group)
 		return -1;
 
 	for (l = u->groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+		g = l->data;
 
 		if (!xstrcasecmp(g->name, group))
 			return -1;
 	}
-	
-	g.name = xstrdup(group);
+	g = xmalloc(sizeof(struct ekg_group));
+	g->name = xstrdup(group);
 
-	list_add_sorted(&u->groups, &g, sizeof(g), group_compare);
+	list_add_sorted(&u->groups, g, 0, group_compare);
 
 	return 0;
 }

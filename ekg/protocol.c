@@ -226,10 +226,6 @@ int protocol_status(void *data, va_list ap)
 
 	/* XXX dodaæ events_delay */
 	
-	/* zaloguj */
-	if (config_log_status)
-		put_log(uid, "status,%s,%s,%s:%d,%s,%s%s%s\n", uid, (u->nickname) ? u->nickname : "", inet_ntoa(*((struct in_addr*) &u->ip)), u->port, log_timestamp(time(NULL)), u->status, (u->descr) ? "," : "", (u->descr) ? u->descr : "");
-	
 	/* je¶li dostêpny lub zajêty, dopisz to taba. je¶li niedostêpny, usuñ */
 	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && config_completion_notify && u->nickname)
 		tabnick_add(u->nickname);

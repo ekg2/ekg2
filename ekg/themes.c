@@ -714,7 +714,7 @@ void theme_cache_reset()
  */
 int format_add(const char *name, const char *value, int replace)
 {
-        struct format f;
+        struct format *f;
         list_t l;
         int hash;
 
@@ -729,23 +729,22 @@ int format_add(const char *name, const char *value, int replace)
         }
 
         for (l = formats; l; l = l->next) {
-                struct format *g = l->data;
-
-                if (hash == g->name_hash && !xstrcasecmp(name, g->name)) {
+		f = l->data;
+                if (hash == f->name_hash && !xstrcasecmp(name, f->name)) {
                         if (replace) {
-                                xfree(g->value);
-                                g->value = xstrdup(value);
+                                xfree(f->value);
+                                f->value = xstrdup(value);
                         }
 
                         return 0;
                 }
         }
+	f = xmalloc(sizeof(struct format));
+        f->name = xstrdup(name);
+        f->name_hash = hash;
+        f->value = xstrdup(value);
 
-        f.name = xstrdup(name);
-        f.name_hash = hash;
-        f.value = xstrdup(value);
-
-        return (list_add(&formats, &f, sizeof(f)) ? 0 : -1);
+        return (list_add(&formats, f, 0) ? 0 : -1);
 }
 
 /*

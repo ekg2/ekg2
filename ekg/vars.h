@@ -70,7 +70,7 @@ variable_t *variable_find(const char *name);
 variable_map_t *variable_map(int count, ...);
 #define variable_hash ekg_hash
 
-int variable_add(
+variable_t *variable_add(
 	plugin_t *plugin,
 	const char *name,
 	int type,

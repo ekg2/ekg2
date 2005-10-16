@@ -29,6 +29,9 @@
 
 #define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
 
+#define COMMAND_ISALIAS  0x01
+#define COMMAND_ISSCRIPT 0x02
+
 typedef COMMAND(command_func_t);
 
 typedef struct {
@@ -39,13 +42,13 @@ typedef struct {
 	/* private: */
 	char **params;
 	command_func_t *function;
-	int alias;
+	int flags;
 	char **possibilities;
 } command_t;
 
 list_t commands;
 
-int command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int alias, char *possibilities);
+command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities);
 int command_remove(plugin_t *plugin, const char *name);
 command_t *command_find (const char *name);
 void command_init();

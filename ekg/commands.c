@@ -999,12 +999,16 @@ COMMAND(cmd_help)
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 			
-			if (!xstrcasecmp(c->name, p) && c->alias) {
+			if (!xstrcasecmp(c->name, p) && (c->flags & COMMAND_ISALIAS)) {
 				printq("help_alias", p);
 				return -1;
 			}
+			if (!xstrcasecmp(c->name, p) && (c->flags & COMMAND_ISSCRIPT)) {
+				printq("help_script", p);
+				return -1;
+			}
 
-			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !c->alias) {
+			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !(c->flags & COMMAND_ISALIAS) ) {
 				FILE *f; 
 				char *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL, *filename;
 				const char *seeking_name;
@@ -1157,7 +1161,7 @@ again:
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		if (xisalnum(*c->name) && !c->alias) {
+		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
 		    	char *blah = NULL;
                         FILE *f;
                         char *line, *params_help, *params_help_s, *brief, *tmp = NULL, *filename;
@@ -2575,8 +2579,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			if (!xstrcasecmp(c->name + plen, cmd)) {
 				last_abbr = c->function;
 				last_name = c->name;
-				last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
-				last_alias = (c->alias) ? 1 : 0;
+				last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
+				last_alias = (c->flags & COMMAND_ISALIAS) ? 1 : 0;
 				abbrs = 1;
 				goto exact_match;
 			}
@@ -2585,7 +2589,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				abbrs_plugins++;
 				last_abbr_plugins = c->function;
 				last_name = c->name;
-				last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
+				last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
 			} else {
 				if (last_abbr_plugins && abbrs_plugins == 1)
 					break;
@@ -2599,8 +2603,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (!xstrcasecmp(c->name, cmd)) {
 			last_abbr = c->function;
 			last_name = c->name;
-			last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
-			last_alias = (c->alias) ? 1 : 0;
+			last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
+			last_alias = (c->flags & COMMAND_ISALIAS) ? 1 : 0;
 			abbrs = 1;
 			/* if this is exact_match we should zero those below, they won't be used */
 			last_abbr_plugins = NULL; 
@@ -2611,7 +2615,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			abbrs++;
 			last_abbr = c->function;
 			last_name = c->name;
-			last_params = (c->alias) ? array_make("?", " ", 0, 1, 1) : c->params;
+			last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
 		} else {
 			if (last_abbr && abbrs == 1)
 				break;
@@ -4011,27 +4015,26 @@ static int command_add_compare(void *data1, void *data2)
  *  - help_long - szczegó³owy opis komendy.
  *  - possibilities - mo¿liwo¶ci tj ewentualne parametry - przy dope³nianiu przydatne 
  *
- * 0 je¶li siê uda³o, -1 je¶li b³±d.
+ * 0 je¶li siê nie uda³o, w przeciwnym razie adres do strukturki.
  */
-int command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int alias, char *possibilities)
+command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities)
 {
-	command_t c;
+	command_t *c = xmalloc(sizeof(command_t));
 
-	memset(&c, 0, sizeof(c));
-	c.name = xstrdup(name);
+	c->name = xstrdup(name);
 	if (params)
-		c.params = array_make(params, " ", 0, 1, 1);
+		c->params = array_make(params, " ", 0, 1, 1);
 	else 
-		c.params = NULL;
-	c.function = function;
-	c.alias = alias;
-	c.plugin = plugin;
+		c->params = NULL;
+	c->function = function;
+	c->flags = flags;
+	c->plugin = plugin;
         if (possibilities)
-                c.possibilities = array_make(possibilities, " ", 0, 1, 1);
+                c->possibilities = array_make(possibilities, " ", 0, 1, 1);
         else
-		c.possibilities = NULL;
+		c->possibilities = NULL;
 
-	return (list_add_sorted(&commands, &c, sizeof(c), command_add_compare) != NULL) ? 0 : -1;
+	return list_add_sorted(&commands, c, 0, command_add_compare);
 }
 
 /*
