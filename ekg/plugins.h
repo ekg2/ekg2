@@ -23,7 +23,6 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include "dynstuff.h"
-#include "ltdl.h"
 #include "sessions.h"
 
 list_t plugins;
@@ -162,6 +161,8 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
 void watch_handle(watch_t *w);
 void watch_handle_line(watch_t *w);
+
+int ekg2_dlinit();
 
 #endif /* __EKG_PLUGINS_H */
 

@@ -20,7 +20,7 @@ else
 fi
 
 echo "Running libtoolize..."
-$LIBTOOLIZE --force --automake --ltdl --copy || exit 1
+$LIBTOOLIZE --force --automake --copy || exit 1
 
 # We don't need missing in libltdl
 if test -x libltdl/missing; then

@@ -12,10 +12,13 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_C_CONST
 
+dnl sprawdzic czy sa dobre usuniete flagi jak cos to dodac/ zmienic/ usunac/ etc.. /me nie wie.
+
 AC_LIBTOOL_DLOPEN
-AC_LIBLTDL_CONVENIENCE
-AC_SUBST(LIBLTDL)
-AC_SUBST(LTDLINCL)
+dnl AC_LIBLTDL_CONVENIENCE
+dnl AC_SUBST(LIBLTDL)
+dnl AC_SUBST(LTDLINCL)
+
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
@@ -81,7 +84,8 @@ fi
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
-AC_CONFIG_SUBDIRS([libltdl])
+dnl AC_CONFIG_SUBDIRS([libltdl])
+AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, LIBS="$LIBS -ldl")])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in ])
 PLUGINS="logs mail rc sms pcm irc"

@@ -23,9 +23,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#ifdef HAVE_DLFCN_H
+
+// #ifdef HAVE_DLFCN_H
 #  include <dlfcn.h>
-#endif
+// #endif
 
 #include "commands.h"
 #include "events.h"
@@ -37,7 +38,6 @@
 #include "xmalloc.h"
 #include "userlist.h"
 #include "themes.h"
-#include "ltdl.h"
 
 #if !defined(va_copy) && defined(__va_copy)
 #define va_copy(DST,SRC) __va_copy(DST,SRC)
@@ -45,6 +45,29 @@
 
 list_t plugins = NULL;
 list_t queries = NULL;
+
+int ekg2_dlinit() {
+	return 0;
+/*	return lt_dlinit() */
+}
+
+/* it only support posix dlclose() but maybe in future... */
+int ekg2_dlclose(void *plugin) {
+	return dlclose(plugin);
+/*	return lt_dlclose(plugin); */
+}
+
+/* it only support posix dlopen() but maybe in future... */
+void *ekg2_dlopen(char *name) {
+	return dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
+/*	return lt_dlopen(lib); */
+}
+
+/* it only support posix dlsym() but maybe in future... */
+void *ekg2_dlsym(void *plugin, char *name) {
+	return dlsym(plugin, name);
+/*	return lt_dlsym( (lt_dlhandle) plugin, init); */
+}
 
 /*
  * plugin_load()
@@ -57,7 +80,8 @@ int plugin_load(const char *name, int prio, int quiet)
 {
 	char *lib = NULL;
 	char *env_ekg_plugins_path = NULL;
-	lt_dlhandle plugin = NULL;
+
+	void *plugin = NULL;
 	char *init = NULL;
 	int (*plugin_init)() = NULL;
 	list_t l;
@@ -72,35 +96,35 @@ int plugin_load(const char *name, int prio, int quiet)
 
         if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
                 lib = saprintf("%s/%s.la", env_ekg_plugins_path, name);
-                plugin = lt_dlopen(lib);
+                plugin = ekg2_dlopen(lib);
                 if (!plugin) {
                         xfree(lib);
                         lib = saprintf("%s/%s/%s.la", env_ekg_plugins_path, name, name);
-                        plugin = lt_dlopen(lib);
+                        plugin = ekg2_dlopen(lib);
                 }
         }
 	
 	if (!plugin) {
 		xfree(lib);
 		lib = saprintf("%s/%s.so", PLUGINDIR, name);
-		plugin = lt_dlopen(lib);
+		plugin = ekg2_dlopen(lib);
 	}
 
 	if (!plugin) {
 		xfree(lib);
 		lib = saprintf("plugins/%s/%s.la", name, name);
-		plugin = lt_dlopen(lib);
+		plugin = ekg2_dlopen(lib);
 	}
 
 	if (!plugin) {
 		xfree(lib);
 		lib = saprintf("../plugins/%s/%s.la", name, name);
-		plugin = lt_dlopen(lib);
+		plugin = ekg2_dlopen(lib);
 	}
 
 	if (!plugin) {
 		printq("plugin_doesnt_exist", name);
-		xfree(lib);	
+		xfree(lib);
 		return -1;
 	}
 
@@ -108,9 +132,11 @@ int plugin_load(const char *name, int prio, int quiet)
 
 	init = saprintf("%s_plugin_init", name);
 
-	if (!(plugin_init = lt_dlsym(plugin, init))) {
+
+	if (!(plugin_init = ekg2_dlsym(plugin, init))) {
 		printq("plugin_incorrect", name);
-		lt_dlclose(plugin);
+
+		ekg2_dlclose(plugin);
 		xfree(init);
 		return -1;
 	}
@@ -119,7 +145,7 @@ int plugin_load(const char *name, int prio, int quiet)
 	
 	if (plugin_init(prio) == -1) {
 		printq("plugin_not_initialized", name);
-		lt_dlclose(plugin);
+		ekg2_dlclose(plugin);
 		return -1;
 	}
 
@@ -216,9 +242,7 @@ int plugin_unload(plugin_t *p)
 			if (plugin_find_uid(s->uid) == p)
 				session_remove(s->uid);
 		}		
-	}
-
-	if (p->pclass == PLUGIN_UI) {
+	} else if (p->pclass == PLUGIN_UI) {
 		print("plugin_unload_ui", p->name);
 		return -1;
 	}
@@ -229,7 +253,7 @@ int plugin_unload(plugin_t *p)
 		p->destroy();
 
 	if (p->dl) {
-		lt_dlclose((lt_dlhandle) p->dl);
+		ekg2_dlclose(p->dl);
 	}
 
 	print("plugin_unloaded", name);

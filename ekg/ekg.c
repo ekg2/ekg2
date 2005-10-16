@@ -81,7 +81,6 @@
 #include "vars.h"
 #include "windows.h"
 #include "xmalloc.h"
-#include "ltdl.h"
 
 #ifndef PATH_MAX
 # ifdef MAX_PATH
@@ -620,7 +619,7 @@ int main(int argc, char **argv)
         ekg_started = time(NULL);
         ekg_pid = getpid();
 
-        lt_dlinit();
+        ekg2_dlinit();
 
         setlocale(LC_ALL, "");
         bindtextdomain("ekg2",LOCALEDIR);
@@ -732,7 +731,7 @@ int main(int argc, char **argv)
                                 return 0;
 
                         case 'v':
-                                printf("ekg-%s (compiled on %s)\n", VERSION, compile_time());
+                                printf("ekg2-%s (compiled on %s)\n", VERSION, compile_time());
                                 return 0;
 
                         case '?':
