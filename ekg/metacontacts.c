@@ -224,18 +224,15 @@ static int metacontact_add_compare(void *data1, void *data2)
  */
 metacontact_t *metacontact_add(const char *name) 
 {
-	metacontact_t m, *mp;
+	metacontact_t *m;
 
         if (!name)
                 return NULL;
 
-	memset(&m, 0, sizeof(m));
+	m = xmalloc(sizeof(metacontact_t));
+	m->name = xstrdup(name);
 
-	m.name = xstrdup(name);
-
-	mp = list_add_sorted(&metacontacts, &m, sizeof(m), metacontact_add_compare);
-
-	return mp;
+	return list_add_sorted(&metacontacts, m, 0, metacontact_add_compare);
 }
 
 /*
@@ -292,7 +289,7 @@ metacontact_item_t *metacontact_find_item(metacontact_t *m, const char *name, co
  */
 int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet)
 {
-	metacontact_item_t i;
+	metacontact_item_t *i;
 	session_t *s;
 
 	if (!m || !name || !session) {
@@ -311,13 +308,13 @@ int metacontact_add_item(metacontact_t *m, const char *session, const char *name
                 return 0;
         }
 
-	memset(&i, 0, sizeof(i));
+	i = xmalloc(sizeof(metacontact_item_t));
 	
-	i.name = xstrdup(name);
-	i.s_uid = xstrdup(s->uid);
-	i.prio = prio;
+	i->name = xstrdup(name);
+	i->s_uid = xstrdup(s->uid);
+	i->prio = prio;
 
-	list_add_sorted(&m->metacontact_items, &i, sizeof(i), metacontact_add_item_compare);
+	list_add_sorted(&m->metacontact_items, i, 0, metacontact_add_item_compare);
 
 	return 1;
 }

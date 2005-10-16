@@ -241,7 +241,7 @@ int alias_add(const char *string, int quiet, int append)
 {
 	char *cmd;
 	list_t l;
-	struct alias a;
+	struct alias *a;
 	char **params = NULL;
 	char *array;
 
@@ -292,17 +292,17 @@ int alias_add(const char *string, int quiet, int append)
 		if (!xstrcasecmp(tmp, c->name))
 			params = c->params;
 	}
-
-	a.name = xstrdup(string);
-	a.commands = NULL;
-	list_add(&a.commands, cmd, xstrlen(cmd) + 1);
-	list_add(&aliases, &a, sizeof(a));
+	a = xmalloc(sizeof(struct alias));
+	a->name = xstrdup(string);
+	a->commands = NULL;
+	list_add(&(a->commands), cmd, xstrlen(cmd) + 1);
+	list_add(&aliases, a, 0);
 
 	array = (params) ? array_join(params, " ") : xstrdup("?");
-	command_add(NULL, a.name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
+	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
-	printq("aliases_add", a.name, "");
+	printq("aliases_add", a->name, "");
 
 	return 0;
 }
@@ -463,20 +463,20 @@ void binding_free()
  */
 int buffer_add(int type, const char *target, const char *line, int max_lines)
 {
-	struct buffer b;
+	struct buffer *b;
 
 	if (max_lines && buffer_count(type) >= max_lines) {
-		struct buffer *foo = buffers->data;
+		b = buffers->data;
 
-		xfree(foo->line);
-		list_remove(&buffers, foo, 1);
+		xfree(b->line);
+		list_remove(&buffers, b, 1);
 	}
+	b = xmalloc(sizeof(struct buffer));
+	b->type = type;
+	b->target = xstrdup(target);
+	b->line = xstrdup(line);
 
-	b.type = type;
-	b.target = xstrdup(target);
-	b.line = xstrdup(line);
-
-	return ((list_add(&buffers, &b, sizeof(b)) ? 0 : -1));
+	return ((list_add(&buffers, b, 0) ? 0 : -1));
 }
 
 /* 
@@ -713,8 +713,6 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 	int i, count;
 	char **p;
 
-	memset(&c, 0, sizeof(c));
-
 	if (!name || !nicklist)
 		return NULL;
 
@@ -722,6 +720,8 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		printq("invalid_params", "chat");
 		return NULL;
 	}
+
+	memset(&c, 0, sizeof(c));
 
 	nicks = array_make(nicklist, " ,", 0, 1, 0);
 
@@ -1253,15 +1253,15 @@ int play_sound(const char *sound_path)
  */
 child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private)
 {
-	child_t c;
+	child_t *c = xmalloc(sizeof(child_t));
 
-	c.plugin = plugin;
-	c.pid = pid;
-	c.name = xstrdup(name);
-	c.handler = handler;
-	c.private = private;
+	c->plugin = plugin;
+	c->pid = pid;
+	c->name = xstrdup(name);
+	c->handler = handler;
+	c->private = private;
 	
-	return list_add(&children, &c, sizeof(c));
+	return list_add(&children, c, 0);
 }
 
 int child_pid_get(child_t *c)

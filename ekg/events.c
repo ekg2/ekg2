@@ -133,7 +133,7 @@ static int event_add_compare(void *data1, void *data2)
  */
 int event_add(const char *name, int prio, const char *target, const char *action, int quiet)
 {
-	event_t ev;
+	event_t *ev;
 	char *tmp;
 	int done = 0, id = 1;
 	list_t l;
@@ -147,8 +147,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
                 done = 1;
 
                 for (l = events; l; l = l->next) {
-                        event_t *ev = l->data;
-
+			ev = l->data;
                         if (ev->id == id) {
                                 done = 0;
                                 id++;
@@ -156,13 +155,13 @@ int event_add(const char *name, int prio, const char *target, const char *action
                         }
                 }
         }
-
-	ev.id = id;
-	ev.name = xstrdup(name);
-	ev.prio = prio;
-	ev.target = xstrdup(target);
-	ev.action = xstrdup(action);
-	list_add_sorted(&events, &ev, sizeof(ev), event_add_compare);
+	ev = xmalloc(sizeof(event_t));
+	ev->id = id;
+	ev->name = xstrdup(name);
+	ev->prio = prio;
+	ev->target = xstrdup(target);
+	ev->action = xstrdup(action);
+	list_add_sorted(&events, ev, 0, event_add_compare);
 
 	tmp = xstrdup(name);
 	query_emit(NULL, "event-added", &tmp);

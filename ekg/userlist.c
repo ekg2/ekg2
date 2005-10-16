@@ -382,25 +382,23 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
  */
 userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname)
 {
-        userlist_t u;
+        userlist_t *u = xmalloc(sizeof(userlist_t));
 
-        memset(&u, 0, sizeof(u));
-
-        u.uid = xstrdup(uid);
-        u.nickname = xstrdup(nickname);
-        u.status = xstrdup(EKG_STATUS_NA);
-
-        u.first_name = NULL;
-        u.last_name = NULL;
-        u.mobile = NULL;
-        u.descr = NULL;
-        u.authtype = NULL;
-        u.foreign = NULL;
-        u.last_status = NULL;
-        u.last_descr = NULL;
-        u.resource = NULL;
-
-        return list_add_sorted(userlist, &u, sizeof(u), userlist_compare);
+        u->uid = xstrdup(uid);
+        u->nickname = xstrdup(nickname);
+        u->status = xstrdup(EKG_STATUS_NA);
+#if 0 /* if 0 != NULL */
+        u->first_name = NULL;
+        u->last_name = NULL;
+        u->mobile = NULL;
+        u->descr = NULL;
+        u->authtype = NULL;
+        u->foreign = NULL;
+        u->last_status = NULL;
+        u->last_descr = NULL;
+        u->resource = NULL;
+#endif
+        return list_add_sorted(userlist, u, 0, userlist_compare);
 }
 
 /*
@@ -1066,10 +1064,10 @@ list_t group_init(const char *names)
 	groups = array_make(names, ",", 0, 1, 0);
 
 	for (i = 0; groups[i]; i++) {
-		struct ekg_group g;
+		struct ekg_group *g = xmalloc(sizeof(struct ekg_group));
 
-		g.name = xstrdup(groups[i]);
-		list_add_sorted(&l, &g, sizeof(g), group_compare);
+		g->name = xstrdup(groups[i]);
+		list_add_sorted(&l, g, 0, group_compare);
 	}
 	
 	array_free(groups);

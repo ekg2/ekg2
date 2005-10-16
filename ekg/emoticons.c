@@ -50,26 +50,25 @@ int config_emoticons = 1;
  */
 int emoticon_add(const char *name, const char *value)
 {
-	emoticon_t e;
+	emoticon_t *e;
 	list_t l;
 
 	if (!name || !value)
 		return -1;
 
 	for (l = emoticons; l; l = l->next) {
-		emoticon_t *g = l->data;
-
-		if (!xstrcasecmp(name, g->name)) {
-			xfree(g->value);
-			g->value = xstrdup(value);
+		e = l->data;
+		if (!xstrcasecmp(name, e->name)) {
+			xfree(e->value);
+			e->value = xstrdup(value);
 			return 0;
 		}
 	}
+	e = xmalloc(sizeof(emoticon_t));
+	e->name = xstrdup(name);
+	e->value = xstrdup(value);
 
-	e.name = xstrdup(name);
-	e.value = xstrdup(value);
-
-	return (list_add(&emoticons, &e, sizeof(e)) ? 0 : -1);
+	return (list_add(&emoticons, e, 0) ? 0 : -1);
 }
 
 /*
