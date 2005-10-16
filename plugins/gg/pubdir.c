@@ -474,7 +474,6 @@ COMMAND(gg_command_list)
                         xfree(contacts);
                         return -1;
                 }
-
 		gg_userlist_put_config = 0;
 
 		xfree(contacts);

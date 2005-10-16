@@ -348,6 +348,7 @@ IRC_COMMAND(irc_c_init)
 			temp = j->conntmplist->data;
 			query_emit(NULL, "protocol-connected", &__session);
 			session_connected_set(s, 1);
+			s->last_conn = time(NULL);
 			session_unidle(s);
 			t = xstrchr(param[3], '!');
 			if (t)  j->host_ident=xstrdup(++t); 
@@ -904,13 +905,12 @@ IRC_COMMAND(irc_c_msg)
 	}
 
 	if (ctcpstripped) {
-		if (xosd_is_priv)
+  		if (xosd_is_priv)
 			query_emit(NULL, "message-decrypt", &(s->uid), &dest, &ctcpstripped, &secure , NULL);
 		else
 			query_emit(NULL, "message-decrypt", &dest, &(s->uid), &ctcpstripped, &secure , NULL);
-	
-		/* TODO 'secure' var checking, but still don't know how to react to it 
-		 * CHANNEL DONE.
+
+		/* TODO 'secure' var checking, but still don't know how to react to it (GiM)
 		 */
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
 		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));

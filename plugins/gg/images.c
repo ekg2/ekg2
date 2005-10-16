@@ -117,18 +117,14 @@ COMMAND(gg_command_image)
  */
 image_t *image_add_queue(char *filename, char *data, uint32_t size, uint32_t crc32)
 {
-	image_t i, *ip;
+	image_t *i = xmalloc(sizeof(image_t));
 
-	memset(&i, 0, sizeof(i));
+	i->filename = xstrdup(filename);
+	i->data = data;
+	i->size = size;
+	i->crc32 = crc32; 
 
-	i.filename = xstrdup(filename);
-	i.data = data;
-	i.size = size;
-	i.crc32 = crc32; 
-
-	ip = list_add(&images, &i, sizeof(i));
-
-	return ip;
+	return list_add(&images, i, 0);
 }
 
 void image_remove_queue(image_t *i)

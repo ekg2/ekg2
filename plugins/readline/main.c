@@ -110,7 +110,7 @@ QUERY(readline_ui_window_switch) { /* window_switch */
 	return 0;
 }
 
-QUERY(readline_ekg2_loop) {
+void readline_ekg2_loop(int type, void *data) {
 	ui_readline_loop();
 	return 0;
 }
@@ -167,7 +167,9 @@ int readline_plugin_init(int prio) {
 	query_connect(&readline_plugin, "ui-window-print", readline_ui_window_print, NULL);
 	query_connect(&readline_plugin, "ui-window-clear", readline_ui_window_clear, NULL);
 	query_connect(&readline_plugin, "variable-changed", readline_variable_changed, NULL);
-	query_connect(&readline_plugin, "ekg2-loop", readline_ekg2_loop, NULL);
+/*	query_connect(&readline_plugin, "ekg2-loop", readline_ekg2_loop, NULL); */
+	timer_add(&readline_plugin, "dupa", 0.1,1, readline_ekg2_loop, NULL);
+		
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;

@@ -976,7 +976,6 @@ char *token_ocr(const char *ocr, int width, int height, int length)
         char *token;
 
         token = xmalloc(length + 1);
-        memset(token, 0, length + 1);
         for (x = 0; x < width; x++) {
                 for (y = 0; y < height - token_char_height; y++) {
                         int result = 0, token_part = 0;
@@ -1445,9 +1444,6 @@ COMMAND(gg_command_check_conn)
 	}
 
         c_timer = xmalloc(sizeof(gg_currently_checked_t));
-
-        memset(&c, 0, sizeof(c));
-
 	c_timer->uid = u->uid;
 	c_timer->session = session;
 

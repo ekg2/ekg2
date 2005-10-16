@@ -247,6 +247,10 @@ CTCP_COMMAND(ctcp_main_priv)
 switch (number) {
     case CTCP_ACTION:	/* ===== ===== ===== ===== ===== ACTION */
 	/* skip spaces... */
+/*
+ * leafnode idea: 07:47:38 <@leafnode> GiM: kolejna rzecz: żeby action (/me) powodował 'pełne' podświetlenie numerku okna
+ * now it depends on make_window value 
+ */
 	if (space && xstrlen(space)) {
 		print_window(win, s, ischn?(mw&1):!!(mw&4),
 				ischn?"irc_ctcp_action_pub":"irc_ctcp_action",

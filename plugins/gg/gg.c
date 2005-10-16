@@ -74,7 +74,6 @@ int gg_private_init(session_t *s)
 		return -1;
 
 	g = xmalloc(sizeof(gg_private_t));
-	memset(g, 0, sizeof(gg_private_t));
 
 	userlist_free(s);
 	userlist_read(s);
@@ -740,7 +739,7 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 
 	__session = xstrdup(session_uid_get(s));
 	__rcpt = saprintf("gg:%d", e->event.ack.recipient);
-	__seq = strdup(itoa(e->event.ack.seq));
+	__seq = xstrdup(itoa(e->event.ack.seq));
 
 	switch (e->event.ack.status) {
 		case GG_ACK_DELIVERED:
@@ -1212,14 +1211,14 @@ void gg_changed_proxy(session_t *s, const char *var)
 
 static int gg_theme_init()
 {
-        /* pobieranie tokenu */
-        format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
-        format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
-        format_add("gg_token_body", "%1\n", 1);
-format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
-        format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
-        format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
-        format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
+	/* pobieranie tokenu */
+	format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
+	format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
+	format_add("gg_token_body", "%1\n", 1);
+	format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
+	format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
+	format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
+	format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
 	format_add("gg_user_is_connected", _("%> (%1) User %T%2%n is connected\n"), 1);
 	format_add("gg_user_is_not_connected", _("%> (%1) User %T%2%n is not connected\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
@@ -1248,8 +1247,6 @@ QUERY(gg_setvar_default)
 
 int gg_plugin_init(int prio)
 {
-	list_t l;
-
 	plugin_register(&gg_plugin, prio);
 
 	gg_setvar_default(NULL, NULL);
@@ -1301,9 +1298,6 @@ int gg_plugin_init(int prio)
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;
 
-	for (l = sessions; l; l = l->next)
-		gg_private_init((session_t*) l->data);
-	
 	return 0;
 }
 

@@ -138,6 +138,42 @@ int irc_really_connect(session_t *session);
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
+int userlist_read(session_t *session)
+{
+	const char *filename;
+	char *buf;
+	FILE *f;
+	char *tmp=saprintf("%s-userlist", session->uid);
+
+	if (!(filename = prepare_path(tmp, 0))) {
+		xfree(tmp);
+		return -1;
+	}       
+	xfree(tmp);
+
+	if (!(f = fopen(filename, "r")))
+		return -1;
+                   
+	while ((buf = read_file(f))) {
+		userlist_t u;
+
+		memset(&u, 0, sizeof(u));
+
+		if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/')) {
+			xfree(buf);
+			continue;
+		}
+
+		userlist_add_entry(session,buf);
+
+		xfree(buf);
+	}
+
+	fclose(f);
+
+	return 0;
+} 
+
 /*
  * irc_private_init()
  *
@@ -152,6 +188,9 @@ static void irc_private_init(session_t *s)
 
 	if (irc_private(s))
 		return;
+
+	userlist_free(s);
+	userlist_read(s);
 
 	j = xmalloc(sizeof(irc_private_t));
 	j->fd = -1;
@@ -186,6 +225,8 @@ static void irc_private_destroy(session_t *s)
 	if (!session_check(s, 1, IRC3))
 		return;
 
+	userlist_write(s);
+
 	/*irc_free_people(s, j); wtf? */
 	xfree(j->host_ident);
 	xfree(j->nick);
@@ -208,19 +249,6 @@ static void irc_private_destroy(session_t *s)
                 xfree(j->sopt[i]);
 	xfree(j);
 	session_private_set(s, NULL);
-}
-
-QUERY(irc_postinit)
-{
-	list_t l;
-	for (l = sessions; l; l = l->next) {
-		if (!xstrncasecmp( session_uid_get( (session_t *) l->data), IRC4, 4)) {
-			debug("TODO: load alist session %s alist = %s\n",
-					session_uid_get( (session_t *) l->data),
-					session_get( (session_t *) l->data, "alist"));
-		}
-	}
-	return 0;
 }
 
 /*
@@ -343,8 +371,10 @@ QUERY(irc_validate_uid)
 	if (!*uid)
 		return 0;
 
-	if (!xstrncasecmp(*uid, IRC4, 4) && xstrlen(*uid)>4)
+	if (!xstrncasecmp(*uid, IRC4, 4) && xstrlen(*uid)>4) {
 		(*valid)++;
+		return -1; /* if it's correct uid for irc we don't need to send to others... */
+	}
 
 	return 0;
 }
@@ -560,7 +590,7 @@ WATCHER(irc_handle_stream)
 
 	if (!s) { 
 		debug("The worst happen you've deleted Our Session (%s) ;(\n", data); 
-		watch_remove(&irc_plugin, fd, WATCH_WRITE); /* /plugin -irc makes it but when we delete only that specific session ? irc:test */ 
+		watch_remove(&irc_plugin, fd, WATCH_READ); /* /plugin -irc makes it but when we delete only that specific session ? irc:test */ 
 		return;
 	}
 
@@ -616,8 +646,6 @@ WATCHER(irc_handle_connect)
 	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
 	j->recv_watch = watch_add(&irc_plugin, fd, WATCH_READ_LINE, 1, irc_handle_stream, xstrdup((char *) data));
-
-	s->last_conn = time(NULL);
 
 	real = session_get(s, "realname");
 	real = real ? xstrlen(real) ? real : j->nick : j->nick;
@@ -1003,20 +1031,60 @@ COMMAND(irc_command_pipl)
 	return 0;
 }
 
+int irc_access_add(session_t *s, char *uid, int flagsadd, int flagsdel) {
+/* channels */
+/* #define IRC_FLAG_AUTOJOIN   0x *//* auto_join to channel */
+#define IRC_FLAG_ISON	    0x02
+
+/* friends */
+#define IRC_FLAG_AUTOOP     0x04 /* auto op user */
+#define IRC_FLAG_AUTOHALFOP 0x08 /* auto halfop user */
+#define IRC_FLAG_AUTOVOICE  0x10 /* auto voice user */
+/* foos */
+#define IRC_FLAG_IGNORE     0x01
+#define IRC_FLAG_AUTOKICK   0x20
+#define IRC_FLAG_AUTOBAN    0x40
+
+#define IRC_FLAG_AUTOSHIT   (IRC_FLAG_AUTOKICK | IRC_FLAG_AUTOBAN)
+
+/* TODO: zrobic tablice 4 elementowa: 
+ *        (czy dot. kanal/user) bitmaska nazwa_grupy czy_wyswietlac_na_userliscie
+ * TODO: __$nazwa_grupy__$opcj_nazwa_kanalu
+ */
+
+#define CHECK(maska, grupa) \
+	if (flagsdel == -1 || flagsdel & maska)\
+		ekg_group_remove(u, grupa);    \
+	if (flagsadd == -1 || flagsadd & maska)   \
+		ekg_group_add(u, grupa);
+	
+	userlist_t *u = userlist_find(s, uid);
+
+	if (!u)
+		u = userlist_add(s, uid, NULL);
+	
+/*	CHECK(IRC_FLAG_AUTOJOIN, "__autojoin"); */
+
+	CHECK(IRC_FLAG_AUTOOP, "__autoop");
+	CHECK(IRC_FLAG_AUTOHALFOP, "__autohalfop");
+	CHECK(IRC_FLAG_AUTOVOICE, "__autovoice");
+
+	CHECK(IRC_FLAG_IGNORE, "__ignored");
+	CHECK(IRC_FLAG_AUTOKICK, "__autokick");
+	CHECK(IRC_FLAG_AUTOBAN, "__autoban");
+#undef CHECK
+	return 0;
+}
+
 COMMAND(irc_command_add)
 {
-	char *cmd = NULL;
 	int ret = 0;
-	
+
 	if (!session_check(session, 1, IRC3)) {
 		printq("invalid_session");
 		return -1;
 	}
-	cmd = saprintf("/access --add %s -", params[0] ? params[0] : target);
-	ret = command_exec(NULL, session, cmd, 0);
-
-	xfree(cmd);
-
+	irc_access_add(session, params[0] ? params[0] : target, IRC_FLAG_ISON, 0);
 	return ret;
 }
 
@@ -1933,8 +2001,6 @@ int irc_plugin_init(int prio)
 	query_connect(&irc_plugin, "status-show",	irc_status_show_handle, NULL);
 	query_connect(&irc_plugin, "irc-kick",		irc_onkick_handler, 0);
 
-	query_connect(&irc_plugin, "config-postinit",	irc_postinit, 0);
-
 	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL); /*COMMAND_MUSTBECONNECTED, NULL);*/
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 0, NULL);
 	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect, 0, NULL);
@@ -2245,13 +2311,3 @@ static int irc_theme_init()
 	return 0;
 }
 
-
-/*
- * Local Variables:
- * mode: c
- * c-file-style: "k&r"
- * c-basic-offset: 8
- * indent-tabs-mode: t
- * End:
- * vim: sts=0 noexpandtab sw=8
- */

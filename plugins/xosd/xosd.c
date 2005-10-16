@@ -31,6 +31,7 @@
 
 #include <xosd.h>
 #include <string.h>
+// #include <signal.h>
 
 static int xosd_theme_init();
 
@@ -40,9 +41,9 @@ xosd *osd;
 
 int xosd_show_message(char *line1, char *line2)
 {
-	if(xosd_font && xosd_set_font(osd, xosd_font)) {
+	if (xosd_font && xosd_set_font(osd, xosd_font)) {
 		debug("xosd: font error: %s\n", xosd_error);
-		return 0;
+		return -1;
 	}
 	
 	xosd_set_colour(osd, xosd_colour);
@@ -119,6 +120,12 @@ static QUERY(xosd_protocol_status)
 	char **__descr = va_arg(ap, char**), *descr = *__descr;
 	userlist_t *u;
 	session_t *s;
+
+	const char *sender;
+	char *msgLine1;
+	char *msgLine2;
+	char *format;
+	int level;
 	
 	if (!(s = session_find(session)))
                 return 0;
@@ -126,7 +133,7 @@ static QUERY(xosd_protocol_status)
         if (!(u = userlist_find(s, uid)))
                 return 0;
 	
-	int level = ignored_check(s, uid);
+	level = ignored_check(s, uid);
 	
 	if ((level == IGNORE_ALL) || (level & IGNORE_STATUS) || (level & IGNORE_XOSD))
 		return 0;
@@ -134,23 +141,19 @@ static QUERY(xosd_protocol_status)
 	if (!xosd_display_notify || ((xosd_display_notify == 2) && (!session_int_get(s, "display_notify"))))
 		return 0;
 
-	const char *sender;
-	char *msgLine1;
-	char *msgLine2;
-	char format[100];
 	
 	sender = (u->nickname) ? u->nickname : uid;
 
-	snprintf(format, sizeof(format), "xosd_status_change_%s", status );
+	format = saprintf("xosd_status_change_%s", status);
 
 	msgLine1 = format_string(format_find(format), sender);
 
-	if (xstrcmp(descr, "") && !(level & IGNORE_STATUS_DESCR))
+	if (xstrcmp(descr, "") && !(level & IGNORE_STATUS_DESCR)) {
 		if (xosd_text_limit && xstrlen(descr) > xosd_text_limit)
 			msgLine2 = format_string(format_find("xosd_status_change_description_long"), xstrmid(descr, 0, xosd_text_limit));
 		else
 			msgLine2 = format_string(format_find("xosd_status_change_description"), descr);
-	else
+	} else
 		msgLine2 = format_string(format_find("xosd_status_change_no_description"));
 
 	if (xosd_short_messages)
@@ -160,7 +163,8 @@ static QUERY(xosd_protocol_status)
 
 	xfree(msgLine1);
 	xfree(msgLine2);
-					
+	xfree(format);
+	
 	return 0;
 }
 
@@ -175,6 +179,7 @@ static QUERY(xosd_protocol_message)
 	int *__class = va_arg(ap, int*), class = *__class;
         userlist_t *u;
 	session_t *s;
+	int level;
 	
 	if (!(s = session_find(session)))
                 return 0;
@@ -184,7 +189,7 @@ static QUERY(xosd_protocol_message)
 		
 	u = userlist_find(s, uid);
 	
-	int level = ignored_check(s, uid);
+	level = ignored_check(s, uid);
 	
 	if ((level == IGNORE_ALL) || (level & IGNORE_MSG) || (level & IGNORE_XOSD))
 		return 0;
@@ -229,15 +234,15 @@ static QUERY(xosd_irc_protocol_message)
 	int **__private = va_arg(ap, int**), *private = *__private;
 	char **__channame = va_arg(ap, char**), *channame = *__channame;
 	session_t *s;
+
+	char *msgLine1;
+	char *msgLine2;
 	
 	if (!(s = session_find(session)))
                 return 0;
 	
 	if (!foryou)
 		return 0;
-	
-	char *msgLine1;
-	char *msgLine2;
 	
 	if (private)
 		msgLine1 = format_string(format_find("xosd_new_message_line_1"), uid);
@@ -260,8 +265,10 @@ static QUERY(xosd_irc_protocol_message)
 	return 0;
 }
 
-static void xosd_display_welcome_message()
+static void xosd_display_welcome_message(int type, void *data)
 {
+	if (type)
+		return;
 	if (xosd_display_welcome) { 
 		char *line1 = format_string(format_find("xosd_welcome_message_line_1"));
 		char *line2 = format_string(format_find("xosd_welcome_message_line_2"));
@@ -271,7 +278,6 @@ static void xosd_display_welcome_message()
 		xfree(line1);
 		xfree(line2);		
 	}
-	timer_remove(&xosd_plugin, "xosd:display_welcome_timer");
 }
 
 void xosd_setvar_default()
@@ -299,18 +305,22 @@ void xosd_setvar_default()
 	xosd_vertical_offset = 48;
 	xosd_vertical_position = 2;
 }
-
+#if 0
+static void xosd_killed() {
+	debug("xosd killed\n");
+	xosd_destroy(osd);
+	osd = NULL;
+}
+#endif
 
 int xosd_plugin_init(int prio)
 {
-	plugin_register(&xosd_plugin, prio);
-
-	osd = NULL;	
 	osd = xosd_create(2);
-	if (osd == NULL) {
+	if (!osd) {
 		debug("xosd: error creating osd: %s\n", xosd_error);
-		return 0;
+		return -1;
 	}
+	plugin_register(&xosd_plugin, prio);
 
 	xosd_setvar_default();
 
@@ -339,7 +349,6 @@ int xosd_plugin_init(int prio)
 	timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
 
 	command_add(&xosd_plugin, "xosd:msg", "?", xosd_command_msg, 0, NULL);
-	
 	return 0;
 }
 
