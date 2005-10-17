@@ -3666,7 +3666,7 @@ COMMAND(cmd_last)
 
 	array_free(arr);
 		
-	if (!((uid > 0) ? (count = last_count(uid)) : (count = list_count(lasts)))) {
+	if (!((uid) ? (count = last_count(uid)) : (count = list_count(lasts)))) {
 		if (uid) {
 			printq("last_list_empty_nick", format_user(session, uid));
 			return -1;

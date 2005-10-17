@@ -220,7 +220,7 @@ int session_remove(const char *uid)
 	return 0;
 }
 
-PROPERTY_STRING_GET(session, status);
+PROPERTY_STRING_GET(session, status)
 
 int session_status_set(session_t *s, const char *status)
 {
@@ -270,10 +270,10 @@ const char *session_password_get(session_t *s)
 }
 
 
-PROPERTY_STRING(session, descr);
-PROPERTY_STRING(session, alias);
-PROPERTY_PRIVATE(session);
-PROPERTY_INT_GET(session, connected, int);
+PROPERTY_STRING(session, descr)
+PROPERTY_STRING(session, alias)
+PROPERTY_PRIVATE(session)
+PROPERTY_INT_GET(session, connected, int)
 
 int session_connected_set(session_t *s, int connected)
 {
@@ -285,7 +285,7 @@ int session_connected_set(session_t *s, int connected)
 	return 0;
 }
 
-PROPERTY_STRING_GET(session, uid);
+PROPERTY_STRING_GET(session, uid)
 
 /* 
  * session_var_find()

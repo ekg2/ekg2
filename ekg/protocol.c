@@ -690,16 +690,16 @@ int dcc_close(dcc_t *d)
 	return 0;
 }
 
-PROPERTY_MISC(dcc, close_handler, dcc_close_handler_t, NULL);
-PROPERTY_STRING(dcc, filename);
-PROPERTY_INT(dcc, offset, int);
-PROPERTY_INT(dcc, size, int);
-PROPERTY_STRING_GET(dcc, uid);
-PROPERTY_INT_GET(dcc, id, int);
-PROPERTY_PRIVATE(dcc);
-PROPERTY_INT_GET(dcc, started, time_t);
-PROPERTY_INT(dcc, active, int);
-PROPERTY_INT(dcc, type, dcc_type_t);
+PROPERTY_MISC(dcc, close_handler, dcc_close_handler_t, NULL)
+PROPERTY_STRING(dcc, filename)
+PROPERTY_INT(dcc, offset, int)
+PROPERTY_INT(dcc, size, int)
+PROPERTY_STRING_GET(dcc, uid)
+PROPERTY_INT_GET(dcc, id, int)
+PROPERTY_PRIVATE(dcc)
+PROPERTY_INT_GET(dcc, started, time_t)
+PROPERTY_INT(dcc, active, int)
+PROPERTY_INT(dcc, type, dcc_type_t)
 
 
 /*

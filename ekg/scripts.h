@@ -201,7 +201,7 @@ script_plugin_t *script_plugin_init(scriptlang_t *s, script_t *scr, char *name, 
 int script_variables_free(int free);
 int script_variables_write();
 
-#define SCRIPT_UNBIND_HANDLER(type, args...)\
+#define SCRIPT_UNBIND_HANDLER(type, args...) \
 {\
     	SCRIPT_HANDLER_HEADER(script_free_bind_t);\
     	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);\

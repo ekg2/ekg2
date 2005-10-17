@@ -729,10 +729,10 @@ int have_plugin_of_class(int pclass) {
 	return 0;
 }
 
-PROPERTY_INT(watch, persist, int);
-PROPERTY_INT(watch, timeout, time_t);
-PROPERTY_DATA(watch);
-PROPERTY_MISC(watch, handler, watch_handler_func_t, NULL);
+PROPERTY_INT(watch, persist, int)
+PROPERTY_INT(watch, timeout, time_t)
+PROPERTY_DATA(watch)
+PROPERTY_MISC(watch, handler, watch_handler_func_t, NULL)
 
 
 

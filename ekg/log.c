@@ -59,11 +59,6 @@ list_t lasts = NULL;
 
 int config_last_size = 10;
 int config_last = 0;
-int config_log = 0;
-int config_log_ignored = 0;
-int config_log_status = 0;
-char *config_log_path = NULL;
-char *config_log_timestamp = NULL;
 
 static char *utf_ent[256] =
 {
