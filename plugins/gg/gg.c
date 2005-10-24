@@ -766,25 +766,6 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 }
 
 /*
- * gg_reconnect_handler()
- *
- * obs³uga powtórnego po³±czenia
- */
-
-void gg_reconnect_handler(int type, void *data)
-{
-	session_t* s = session_find((char*) data);
-	char *tmp;
-
-	if (!s || session_connected_get(s) == 1)
-		return;
-	
-	tmp = xstrdup("/connect");
-	command_exec(NULL, s, tmp, 0);
-	xfree(tmp);
-}
-
-/*
  * image_open_file()
  *
  * create and open file 
@@ -1349,51 +1330,6 @@ static int gg_plugin_destroy()
 
 	return 0;
 }
-
-/*
- * userlist_read()
- *
- * wczytuje listê kontaktów z pliku ~/.ekg/gg:NUMER-userlist w postaci eksportu
- * tekstowego listy kontaktów windzianego klienta.
- *
- * 0/-1
- */
-int userlist_read(session_t *session)
-{
-        const char *filename;
-        char *buf;
-        FILE *f;
-        char *tmp=saprintf("%s-userlist", session->uid);
-
-        if (!(filename = prepare_path(tmp, 0))) {
-                xfree(tmp);
-                return -1;
-        }       
-        xfree(tmp);
-        
-        if (!(f = fopen(filename, "r")))
-                return -1;
-                        
-        while ((buf = read_file(f))) {
-                userlist_t u;
-
-                memset(&u, 0, sizeof(u));
-                        
-                if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/')) {
-                        xfree(buf);
-                        continue;
-                }
-                
-                userlist_add_entry(session,buf);
-        
-                xfree(buf);
-        }
-
-        fclose(f);
-                
-        return 0;
-} 
-
 
 /*
  * Local Variables:
