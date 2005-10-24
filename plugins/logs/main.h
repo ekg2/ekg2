@@ -18,29 +18,68 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
 #ifndef __logs_h__
-
 #define __logs_h__
 
-char *logs_prepare_path(session_t *session, char *uid, char **rcpts, char *text, time_t sent, int class);
-FILE* logs_open_file(char *path, char *ext, int makedir);
-char * prepare_timestamp(time_t ts);
+#include <stdio.h>
+#include <ekg/sessions.h>
+#include <ekg/plugins.h>
+
+char *logs_prepare_path(session_t *session, char *uid, time_t sent);
+const char *prepare_timestamp_format(const char *format, time_t t);
+#define prepare_timestamp(t) \
+	prepare_timestamp_format(config_logs_timestamp, t)
+
+FILE *logs_open_file(char *path, int ff_);
 QUERY(logs_handler);
 QUERY(logs_handler_newwin);
 QUERY(logs_status_handler);
-void logs_simple(char *path, char *session, char *uid, char *text, time_t sent, int class, char *seq, uint32_t ip, uint16_t port, char *status, char *descr);
+QUERY(logs_handler_irc);
 
-void logs_xml();
+void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status);
+void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class);
+void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip);
+
 void logs_gaim();
 
+int config_away_log = 0;
 int config_logs_log;
 int config_logs_log_ignored;
 int config_logs_log_status;
 int config_logs_remind_number = 0;
-char * config_logs_path;
-char * config_logs_timestamp;
+int config_logs_max_files = 7;
+char *config_logs_path;
+char *config_logs_timestamp;
 
-list_t logs_reminded; /* lista z przypomnianymi wiadomosciami - nie logowac */
+list_t log_windows = NULL; 
+list_t log_awaylog = NULL;
+
+struct {
+/*	char *log_format;  */
+	int   logformat; 
+			/* 19:55:24 <@zdzichuBG> wtedy trzeba by jescze jakis callback na zmiane zmiennej logs_format 
+			 * callback zmiennych sesyjnych w ekg2 niet. jest cos takiego.
+			 */
+	char *session;	/* session name */
+	char *uid;	/* uid of user */
+
+	time_t t;	/* time for which we create path variable */
+	char *path;	/* path don't free it ! .... */
+	
+	FILE *file; 	/* file don't close it! it will be closed at unloading plugin. */
+} typedef log_window_t;
+
+struct {
+	char *chname;	/* channel name, (null if priv) */
+	char *uid;	/* user name kto do nas pisal */
+	char *msg;	/* msg */
+	time_t t;	/* czas o ktorej dostalismy wiadomosc */
+} typedef log_session_away_t;
+
+struct {
+	char	*sname;		/* session name */
+	list_t	messages; 	/* lista z log_session_away_t */
+} typedef log_away_t;
+
 
 #endif
