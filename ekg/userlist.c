@@ -191,6 +191,50 @@ char *userlist_dump(session_t *session)
 }
 
 /*
+ * userlist_read()
+ *
+ * wczytuje listê kontaktów z pliku ~/.ekg/nazwa_sesji-userlist w postaci eksportu
+ * tekstowego listy kontaktów windzianego klienta.
+ *
+ * 0/-1
+ */
+int userlist_read(session_t *session)
+{
+        const char *filename;
+        char *buf;
+        FILE *f;
+        char *tmp=saprintf("%s-userlist", session->uid);
+
+        if (!(filename = prepare_path(tmp, 0))) {
+                xfree(tmp);
+                return -1;
+        }       
+        xfree(tmp);
+        
+        if (!(f = fopen(filename, "r")))
+                return -1;
+                        
+        while ((buf = read_file(f))) {
+                userlist_t u;
+
+                memset(&u, 0, sizeof(u));
+                        
+                if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/')) {
+                        xfree(buf);
+                        continue;
+                }
+                
+                userlist_add_entry(session,buf);
+        
+                xfree(buf);
+        }
+
+        fclose(f);
+                
+        return 0;
+} 
+
+/*
  * userlist_write()
  *
  * zapisuje listê kontaktów w pliku ~/.ekg/gg:NUMER-userlist
@@ -1142,3 +1186,4 @@ int same_protocol(char **uids)
  * indent-tabs-mode: t
  * End:
  */
+
