@@ -138,42 +138,6 @@ int irc_really_connect(session_t *session);
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
-int userlist_read(session_t *session)
-{
-	const char *filename;
-	char *buf;
-	FILE *f;
-	char *tmp=saprintf("%s-userlist", session->uid);
-
-	if (!(filename = prepare_path(tmp, 0))) {
-		xfree(tmp);
-		return -1;
-	}       
-	xfree(tmp);
-
-	if (!(f = fopen(filename, "r")))
-		return -1;
-                   
-	while ((buf = read_file(f))) {
-		userlist_t u;
-
-		memset(&u, 0, sizeof(u));
-
-		if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/')) {
-			xfree(buf);
-			continue;
-		}
-
-		userlist_add_entry(session,buf);
-
-		xfree(buf);
-	}
-
-	fclose(f);
-
-	return 0;
-} 
-
 /*
  * irc_private_init()
  *
@@ -385,6 +349,8 @@ void irc_changed_resolve(session_t *s, const char *var) {
 	int		isbind;
 	int		res, fd[2];
 	list_t		*rlist = NULL;
+	if (!j)
+		return;
 
 	if (pipe(fd) == -1) {
 		print("generic_error", strerror(errno));
@@ -944,6 +910,10 @@ COMMAND(irc_command_msg)
 
 	tmpbuf   = (mline[0] = xstrdup(params[1])); /* backup of params[1] when we change them is nessesary ? */
 	while ((mline[1] = split_line(&(mline[0])))) {
+		int isour = 1;
+		int xosd_to_us = 0;
+		int xosd_is_priv = !ischn;
+		
 		__msg = xstrdup((const char *)mline[1]);
 
 		head = format_string(frname, session_name(session), prefix,
@@ -951,7 +921,11 @@ COMMAND(irc_command_msg)
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
+/* jak ktos zamieni te wartosci to zabije */
+		query_emit(NULL, "irc-protocol-message", &(sid), &(j->nick), &__msg, &isour, &xosd_to_us, &xosd_is_priv, &uid_full);
+
 		query_emit(NULL, "message-encrypt", &sid, &uid_full, &__msg, &secure);
+				
 		query_emit(NULL, "protocol-message", &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __msg);
@@ -1379,7 +1353,7 @@ COMMAND(irc_command_names)
 	mode[1] = '\0';
 
 	for (lvl =0; lvl<nplen; lvl++)
-		nickpad[lvl] = 160;
+		nickpad[lvl] = '\160';
 	nickpad[lvl] = '\0';
 
 	print_window(channame, session, 0, "IRC_NAMES_NAME", session_name(session), channame+4);
@@ -1398,7 +1372,7 @@ COMMAND(irc_command_names)
 
 			nickpad[nplen -1 -strlen((ulist->uid + 4))] = '\0';
 			string_append(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad));
-			nickpad[nplen -1 -strlen((ulist->uid + 4))] = 160;
+			nickpad[nplen -1 -strlen((ulist->uid + 4))] = '\160';
 			++count;
 		}
 		debug("---separator---\n");
@@ -2110,7 +2084,9 @@ int irc_plugin_init(int prio)
         plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "hostname", VAR_STR, 0, 0, irc_changed_resolve);
 /*	plugin_var_add(&irc_plugin, "lag_test */
-	plugin_var_add(&irc_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
+
+	plugin_var_add(&irc_plugin, "log_formats", VAR_STR, "irssi", 0, NULL);
+
 	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
 	plugin_var_add(&irc_plugin, "prefer_family", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "nickname", VAR_STR, pwd_entry ? pwd_entry->pw_name : NULL, 0, NULL);
