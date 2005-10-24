@@ -230,6 +230,7 @@ static QUERY(xosd_irc_protocol_message)
 	char **__session = va_arg(ap, char**), *session = *__session;
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
 	char **__text = va_arg(ap, char**), *text = *__text;
+	int **__isour  = va_arg(ap, int**), *isour  = *__isour;
 	int **__foryou = va_arg(ap, int**), *foryou = *__foryou;
 	int **__private = va_arg(ap, int**), *private = *__private;
 	char **__channame = va_arg(ap, char**), *channame = *__channame;
@@ -241,7 +242,7 @@ static QUERY(xosd_irc_protocol_message)
 	if (!(s = session_find(session)))
                 return 0;
 	
-	if (!foryou)
+	if (!foryou || isour)
 		return 0;
 	
 	if (private)
