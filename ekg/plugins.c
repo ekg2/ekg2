@@ -103,22 +103,22 @@ int plugin_load(const char *name, int prio, int quiet)
                         plugin = ekg2_dlopen(lib);
                 }
         }
+
+        if (!plugin) {
+                xfree(lib);
+                lib = saprintf("plugins/%s/%s.la", name, name);
+                plugin = ekg2_dlopen(lib);
+        }
+
+        if (!plugin) {
+                xfree(lib);
+                lib = saprintf("../plugins/%s/%s.la", name, name);
+                plugin = ekg2_dlopen(lib);
+        }
 	
 	if (!plugin) {
 		xfree(lib);
 		lib = saprintf("%s/%s.so", PLUGINDIR, name);
-		plugin = ekg2_dlopen(lib);
-	}
-
-	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("plugins/%s/%s.la", name, name);
-		plugin = ekg2_dlopen(lib);
-	}
-
-	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("../plugins/%s/%s.la", name, name);
 		plugin = ekg2_dlopen(lib);
 	}
 
