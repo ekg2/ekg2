@@ -66,8 +66,8 @@
 
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 
-log_window_t *log_curlog = NULL;
-/* log ff types */
+logs_log_t *log_curlog = NULL;
+/* log ff types... */
 #define LOG_FORMAT_NONE		0
 #define LOG_FORMAT_SIMPLE 	1
 #define LOG_FORMAT_XML   	2
@@ -79,6 +79,10 @@ log_window_t *log_curlog = NULL;
 #define LOG_IRSSI_STATUS	2
 #define LOG_IRSSI_INFO		3
 #define LOG_IRSSI_ACTION	4
+
+#define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y" 	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
+#define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
+#define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */ /* TODO, CHECK*/
 
 QUERY(logs_setvar_default)
 {
@@ -119,14 +123,15 @@ int logs_log_format(session_t *s) {
  *        -1 jesli cos sie zjebalo.
  */
 
-int logs_window_check(log_window_t *l, time_t t)
+int logs_window_check(logs_log_t *ll, time_t t)
 {
 	session_t *s;
+	log_window_t *l = ll->lw;
 	int chan = 0;
 	int _ychan = 0, _mchan = 0, _dchan = 0;
 	int tmp;
 
-	if (!l || !(s = session_find(l->session)))
+	if (!l || !(s = session_find(ll->session)))
 		return -1;	
 
 	if (l->logformat != (tmp = logs_log_format(s))) {
@@ -159,16 +164,14 @@ int logs_window_check(log_window_t *l, time_t t)
 		char *tmp = l->path;
 		l->t = t;
 
-		l->path = logs_prepare_path(s, l->uid, t);
+		l->path = logs_prepare_path(s, ll->uid, t);
 		debug("[logs] logs_window_check chan = %d oldpath = %s newpath = %s\n", chan, tmp, l->path);
 
 		if (tmp && chan == 3 && l->logformat == LOG_FORMAT_IRSSI) { /* yes i know it's wrong place for doing this but .... */
 			if (!(l->file)) 
 				l->file = logs_open_file(tmp, LOG_FORMAT_IRSSI);
-			logs_irssi(l->file, l->session, NULL,
-					prepare_timestamp_format(
-						"--- Day changed %a %b %d %Y", /* defaultowy log_day_changed irssi, jak cos to dodac zmienna... */
-						time(NULL)),
+			logs_irssi(l->file, ll->session, NULL,
+					prepare_timestamp_format(IRSSI_LOG_DAY_CHANGED, time(NULL)),
 					0, LOG_IRSSI_INFO, NULL);
 		}
 		if (chan != 3 && !xstrcmp(tmp, l->path))  /* jesli sciezka sie nie zmienila to nie otwieraj na nowo pliku */
@@ -185,95 +188,96 @@ int logs_window_check(log_window_t *l, time_t t)
 }
 
 
-log_window_t *logs_window_find(char *session, char *uid, int create) {
+logs_log_t *logs_log_find(const char *session, const char *uid, int create) {
 	list_t l;
+	logs_log_t *temp = NULL;
 
-	for (l=log_windows; l; l = l->next) {
-		log_window_t *lw = l->data;
-		if ( (!lw->session || !xstrcmp(lw->session, session)) && !xstrcmp(lw->uid, uid)) {
-			logs_window_check(lw, time(NULL)); /* tutaj ? */
-			return lw;
+	if (log_curlog && !xstrcmp(log_curlog->session, session) && !xstrcmp(log_curlog->uid, uid)) 
+		return log_curlog;
+
+	for (l=log_logs; l; l = l->next) {
+		logs_log_t *ll = l->data;
+		if ( (!ll->session || !xstrcmp(ll->session, session)) && !xstrcmp(ll->uid, uid)) {
+			log_window_t *lw = ll->lw;
+			if (lw || !create) {
+				if (lw) logs_window_check(ll, time(NULL)); /* tutaj ? */
+				return ll;
+			} else {
+				temp = ll;
+				break;
+			}
 		}
 	}
+	if (log_curlog && log_curlog->lw) {
+		log_window_t *lw = log_curlog->lw;
+		xfree(lw->path);
+		if (lw->file) /* w sumie jesli jest NULL to byl jakis blad przy fopen()... */
+			fclose(lw->file);
+		lw->file = NULL;
+		xfree(lw);
+		log_curlog->lw = NULL;
+	}
+
 	if (!create)
 		return NULL;
 
-	if (!xstrcmp(log_curlog->session, session) && !xstrcmp(log_curlog->uid, uid)) {
-		logs_window_check(log_curlog, time(NULL)); /* tutaj ? */
-		return log_curlog;
-	}
-
-/* statyczne dane logs_window_t */
-	if (log_curlog->session) {
-		xfree(log_curlog->session);
-		xfree(log_curlog->uid);
-		xfree(log_curlog->path);
-		if (log_curlog->file) /* w sumie jesli jest NULL to byl jakis blad przy fopen()... */
-			fclose(log_curlog->file);
-	}
-	memset(log_curlog, 0, sizeof(log_window_t));
-
-	log_curlog->session = xstrdup(session);
-	log_curlog->uid     = xstrdup(uid);
-
-	logs_window_check(log_curlog, time(NULL)); /* path, logformat, t */
-	log_curlog->file = logs_open_file(log_curlog->path, log_curlog->logformat);
-	
-	return log_curlog;
+	return (log_curlog = logs_log_new(temp, session, uid));
 }
 
-
-log_window_t *logs_window_new(window_t *w) {
-	log_window_t *l;
-
-	if (!w->target || !w->session || w->id == 1000)
-		return NULL;
-	/* zeby to dzialalo plugin musi tworzyc nazwy okien podobnie jak tworzy uidy czyli dla irca uid: irc:darkjames, okno: irc:darkjames */
-#if 0
-	if (!session_check(w->session, 0, "irc")) /* na razie supportujemy irca. reszty /me nie jest pewny... */
-		return;
-#endif
-	debug("[logs] creating data struct for window %d target = %s session %x\n", w->id, w->target, w->session);
+logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid) {
+	logs_log_t *ll;
+	int created = 0;
 		
-	l = xmalloc(sizeof(log_window_t));
-	l->session = xstrdup(session_uid_get(w->session));
-	l->uid= xstrdup(w->target);
+	debug("[logs] log_new uid = %s session %s", uid, session);
+	ll = l ? l : logs_log_find(session, uid, 0);
+	debug(" logs_log_t %x\n", ll);
 
-	logs_window_check(l, time(NULL)); /* l->log_format i l->path, l->t */
-
-	if (l->logformat == LOG_FORMAT_IRSSI) {
-		l->file = logs_open_file(l->path, l->logformat);
-		logs_irssi(l->file, l->session, NULL, 
-				prepare_timestamp_format(
-					"--- Log opened %a %b %d %H:%M:%S %Y", /* defaultowy open_string irssi, jak cos to dodac zmienna... */
-					time(NULL)),
-				0, LOG_IRSSI_INFO, NULL);
+	if (!ll) {
+		ll = xmalloc(sizeof(logs_log_t));
+		ll->session = xstrdup(session);
+		ll->uid = xstrdup(uid);
+		created = 1;
 	}
-	list_add(&log_windows, l, 0);
-	return l;
+	if (!(ll->lw)) {
+		ll->lw = xmalloc(sizeof(log_window_t));
+		logs_window_check(ll, time(NULL)); /* l->log_format i l->path, l->t */
+		ll->lw->file = logs_open_file(ll->lw->path, ll->lw->logformat);
+	}
+
+	if (created) {
+		time_t t = time(NULL);
+		if (ll->lw->logformat == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_OPENED)) {
+			logs_irssi(ll->lw->file, session, NULL,
+					prepare_timestamp_format(IRSSI_LOG_EKG2_OPENED, t),
+					0, LOG_IRSSI_INFO, NULL);
+		} 
+		list_add(&log_logs, ll, 0);
+	}
+	return ll;
 }
 
-void logs_window_close(window_t *w) {
-	log_window_t *lw = logs_window_find(w->session ? w->session->uid : NULL, w->target, 0);
-
-	if (!lw)
+void logs_window_new(window_t *w) {
+	if (!w->target || !w->session || w->id == 1000)
 		return;
+	logs_log_new(NULL, session_uid_get(w->session), get_uid(w->session, w->target));
+}
 
-	if (lw->logformat == LOG_FORMAT_IRSSI) {
-		if (!(lw->file))
-			lw->file = logs_open_file(lw->path, lw->logformat);
-		logs_irssi(lw->file, lw->session, NULL,
-				prepare_timestamp_format(
-					"--- Log closed %a %b %d %H:%M:%S %Y", /* defaultowy close_string irssi, jak cos to dodac zmienna... */
-					time(NULL)),
-				 0, LOG_IRSSI_INFO, NULL);
-	} 
-	if (lw->file)
-		fclose(lw->file);
-	xfree(lw->uid);
-	xfree(lw->session);
+FILE *logs_window_close(logs_log_t *l, int close) {
+	FILE *f;
+	log_window_t *lw;
+	if (!l || !(lw = l->lw))
+		return NULL;
+
+	f = lw->file;
+
 	xfree(lw->path);
-	list_remove(&log_windows, lw, 1);
+	xfree(lw);
+	l->lw = NULL;
+	if (close && f) {
+		fclose(f);
+		return NULL;
+	}
+	return f;
 }
 
 void logs_changed_maxfd(const char *var)
@@ -287,7 +291,7 @@ void logs_changed_maxfd(const char *var)
 
 void logs_changed_path(const char *var) 
 {
-	if (in_autoexec || !log_windows) 
+	if (in_autoexec || !log_logs) 
 		return;
 	debug("%s: %s\n", var, config_logs_path);
 /* TODO: przeleciec wszystkie okna i zrobic recreate */
@@ -434,7 +438,7 @@ QUERY(logs_sestatus_handler)
 QUERY(logs_handler_killwin) 
 {
 	window_t *w = *(va_arg(ap, window_t **));
-	logs_window_close(w);
+	logs_window_close(logs_log_find(w->session ? w->session->uid : NULL, w->target, 0), 1);
 	return 0;
 }
 
@@ -469,7 +473,6 @@ int logs_plugin_init(int prio)
 	variable_add(&logs_plugin, "timestamp", VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
 	debug("[logs] plugin registered\n");
-	log_curlog = xmalloc(sizeof(log_window_t));
 	logs_changed_awaylog(NULL); /* nie robi sie automagicznie to trzeba sila. */
 
 	return 0;
@@ -477,10 +480,30 @@ int logs_plugin_init(int prio)
 
 static int logs_plugin_destroy()
 {
-	list_t l = log_windows;
+	list_t l = log_logs;
 
-	for (l = windows; l; l = l->next) {
-		logs_window_close(l->data);
+	for (l = log_logs; l; l = l->next) {
+		logs_log_t *ll = l->data;
+		FILE *f = NULL;
+		char *path = NULL;
+		time_t t = time(NULL);
+		int ff;
+/* zrobic end session */
+		if (ll->lw)
+			f = logs_window_close(l->data, 0);
+		else if ((ff = logs_log_format(session_find(ll->session))) == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
+			path = logs_prepare_path(session_find(ll->session), ll->uid, t);
+			f = logs_open_file(path, ff);
+		}
+
+		logs_irssi(f, ll->session, NULL,
+				prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
+				LOG_IRSSI_INFO, NULL);
+		fclose(f);
+		xfree(path);
+
+		xfree(ll->session);
+		xfree(ll->uid);
 	}
 
 	for (l = log_awaylog; l;) {
@@ -488,7 +511,6 @@ static int logs_plugin_destroy()
 		l = l->next;	
 		logs_away_display(a, 1, 1);
 	}
-	xfree(log_curlog);
 
 	plugin_unregister(&logs_plugin);
 
@@ -507,7 +529,7 @@ static int logs_plugin_destroy()
  * zwraca ¶cie¿kê, która nale¿y rêcznie zwolniæ przez xfree()
  */
 
-char *logs_prepare_path(session_t *session, char *uid, time_t sent)
+char *logs_prepare_path(session_t *session, const char *uid, time_t sent)
 {
 	char *tmp, *uidtmp, datetime[5];
 	struct tm *tm = NULL;
@@ -655,7 +677,6 @@ FILE* logs_open_file(char *path, int ff)
 			fputs("<ekg2log xmlns=\"http://www.ekg2.org/DTD/\">\n", fdesc);
 			fputs("</ekg2log>\n", fdesc);
 		} 
-		fseek(fdesc, -11, SEEK_END); /* wracamy przed </ekg2log> */
 		return fdesc;
 	}
 
@@ -709,7 +730,7 @@ QUERY(logs_handler)
 
 	ruid = (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid;
 
-	lw = logs_window_find(session, ruid, 1);
+	lw = logs_log_find(session, ruid, 1)->lw;
 
 	if (!lw) /* nie powinno */
 		return 0;
@@ -755,7 +776,7 @@ QUERY(logs_status_handler)
 		return 0;
 */
 	
-	lw = logs_window_find(session, uid, 1);
+	lw = logs_log_find(session, uid, 1)->lw;
 	
 	if (!lw) /* nie powinno */
 		return 0;
@@ -812,7 +833,7 @@ QUERY(logs_handler_irc)
 	int  private	= *(va_arg(ap, int*));
 	char *channame	= *(va_arg(ap, char**));
 
-	log_window_t *lw = logs_window_find(session, channame, 1);
+	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
 
 	if (foryou) { /* only messages to us */
 		if (private) {
@@ -867,7 +888,7 @@ QUERY(logs_handler_newwin)
 
 	debug("LOGS_NEWWIN: PATH: %s %x\n", lw->path, lw->file);
 	if (!lw->file) 
-		return 0; /* TODO */
+		return 0; 
 
 	if (	lw->logformat == LOG_FORMAT_IRSSI ||  /* custom format, /me nie ma pomyslu jak to zczytywcac.. */
 		lw->logformat == LOG_FORMAT_XML   ||  /* TODO: xml nie jest w 1 linii w ogole ktos mial robic inny parser.. */
@@ -920,8 +941,7 @@ QUERY(logs_handler_newwin)
 				break;
  */
 			case (LOG_FORMAT_SIMPLE):
-/* TODO, niech ktos zrobi kto sie zna na charach w c... */
-/* ff  - file format
+/* TODO, niech ktos zrobi kto sie zna na charach w c... *
  *   * chatsend,<numer>,<nick>,<czas>,<tre¶æ>
  *      ok = 1 
  *     _class = EKG_MSGCLASS_SENT_CHAT 
@@ -959,10 +979,7 @@ QUERY(logs_handler_newwin)
 	munmap(mbuf, flen);
 
 /* na koniec pliku */
-	if (lw->logformat == LOG_FORMAT_XML)  /* jesli xml to wracamy przed </ekg2log> */
-		fseek(lw->file, -11, SEEK_END);
-	else 
-		fseek(lw->file, 0, SEEK_END);
+	fseek(lw->file, 0, SEEK_END);
 	/* lw->in_use = 0 */
 #endif
 	return 0;
