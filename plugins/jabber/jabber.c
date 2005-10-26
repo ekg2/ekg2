@@ -788,6 +788,11 @@ void jabber_reconnect_handler(int type, void *data)
         session_t *s = session_find((char*) data);
         char *tmp;
 
+	if (type) {
+		xfree(data);
+		return;
+	}
+
         if (!s || session_connected_get(s) == 1)
                 return;
 
