@@ -33,6 +33,7 @@ dnl little or big endian ?
 AC_C_BIGENDIAN
 
 AC_SUBST(COMPAT)
+AC_SUBST(DLLIB)
 AC_SUBST(PLUGINS)
 AC_SUBST(PLUGINS_LIBS)
 
@@ -85,7 +86,7 @@ dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
 dnl AC_CONFIG_SUBDIRS([libltdl])
-AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, LIBS="$LIBS -ldl")])
+AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in ])
 AC_CONFIG_FILES([ekg/ekg2-config])

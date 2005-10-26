@@ -6,7 +6,7 @@ ekg2_SOURCES = audio.c commands.c configfile.c dynstuff.c ekg.c emoticons.c even
        log.h metacontacts.h msgqueue.h objects.h plugins.h protocol.h scripts.c scripts.h sessions.h stuff.h \
        themes.h userlist.h vars.h windows.h xmalloc.h
 
-ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@
+ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ @DLLIB@
 ekg2_LDFLAGS = -export-dynamic
 ekg2_DEPENDENCIES = 
 
