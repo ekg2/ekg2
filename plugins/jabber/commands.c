@@ -232,7 +232,7 @@ COMMAND(jabber_command_reconnect)
 COMMAND(jabber_command_msg)
 {
 	jabber_private_t *j = session_private_get(session);
-	int chat = (strcasecmp(name, "msg"));
+	int chat = (xstrcasecmp(name, "msg"));
 	char *msg;
 	char *subject = NULL;
 	char *subtmp;
