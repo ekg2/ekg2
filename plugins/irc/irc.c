@@ -1353,7 +1353,7 @@ COMMAND(irc_command_names)
 	mode[1] = '\0';
 
 	for (lvl =0; lvl<nplen; lvl++)
-		nickpad[lvl] = '\160';
+		nickpad[lvl] = 160;
 	nickpad[lvl] = '\0';
 
 	print_window(channame, session, 0, "IRC_NAMES_NAME", session_name(session), channame+4);
@@ -1372,7 +1372,7 @@ COMMAND(irc_command_names)
 
 			nickpad[nplen -1 -strlen((ulist->uid + 4))] = '\0';
 			string_append(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad));
-			nickpad[nplen -1 -strlen((ulist->uid + 4))] = '\160';
+			nickpad[nplen -1 -strlen((ulist->uid + 4))] = 160;
 			++count;
 		}
 		debug("---separator---\n");
