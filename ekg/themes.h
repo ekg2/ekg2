@@ -49,7 +49,7 @@ typedef struct {
 
 list_t formats;
 
-#define print(x...) (config_default_status_window) ? print_window("__status", NULL, 0, x) : print_window("__current", NULL, 0, x) 
+#define print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x) 
 #define print_status(x...) print_window("__status", NULL, 0, x)
 
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
