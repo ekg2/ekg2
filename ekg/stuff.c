@@ -49,12 +49,6 @@
 #include "commands.h"
 #include "dynstuff.h"
 #include "protocol.h"
-#ifndef HAVE_STRLCAT
-#  include "compat/strlcat.h"
-#endif
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
-#endif
 #include "stuff.h"
 #include "themes.h"
 #include "userlist.h"
@@ -70,7 +64,6 @@
 # endif
 #endif
 
-struct gg_session *sess = NULL;
 list_t children = NULL;
 list_t aliases = NULL;
 list_t autofinds = NULL;
@@ -96,38 +89,28 @@ int config_display_pl_chars = 1;
 int config_events_delay = 3;
 char *config_sound_msg_file = NULL;
 char *config_sound_chat_file = NULL;
-char *config_sound_sysmsg_file = NULL;
 char *config_sound_notify_file = NULL;
+char *config_sound_sysmsg_file = NULL;
 char *config_sound_mail_file = NULL;
 char *config_sound_app = NULL;
-int config_last_sysmsg = 0;
-int config_last_sysmsg_changed = 0;
 int config_changed = 0;
 int config_display_ack = 3;
 int config_completion_notify = 1;
 char *config_completion_char = NULL;
-int connecting = 0;
 time_t ekg_started = 0;
 int config_display_notify = 1;
 char *config_theme = NULL;
 int config_default_status_window = 0;
-char *reg_password = NULL;
-char *reg_email = NULL;
 char *home_dir = NULL;
 char *config_quit_reason = NULL;
 char *config_away_reason = NULL;
 char *config_back_reason = NULL;
-int config_random_reason = 0;
 int config_query_commands = 0;
-char *config_server = NULL;
 int quit_message_send = 0;
-int registered_today = 0;
-int config_protocol = 0;
 int batch_mode = 0;
 char *batch_line = NULL;
 int config_make_window = 2;
 char *config_tab_command = NULL;
-int config_ctrld_quits = 1;
 int config_save_password = 1;
 int config_save_quit = 1;
 char *config_timestamp = NULL;
@@ -135,12 +118,8 @@ int config_timestamp_show = 1;
 int config_display_sent = 1;
 int config_sort_windows = 0;
 int config_keep_reason = 1;
-int server_index = 0;
 char *config_audio_device = NULL;
 char *config_speech_app = NULL;
-int config_encryption = 0;
-int config_server_save = 0;
-char *config_email = NULL;
 int config_time_deviation = 300;
 int config_mesg = MESG_DEFAULT;
 int config_display_welcome = 1;
@@ -150,7 +129,6 @@ int config_sessions_save = 0;
 int config_windows_save = 0;
 char *config_windows_layout = NULL;
 char *config_profile = NULL;
-char *config_interface = NULL;
 int config_reason_limit = 1;
 char *config_reason_first = NULL;
 int config_debug = 1;
@@ -1261,7 +1239,8 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 	c->handler = handler;
 	c->private = private;
 	
-	return list_add(&children, c, 0);
+	list_add(&children, c, 0);
+	return c;
 }
 
 int child_pid_get(child_t *c)
@@ -1501,7 +1480,8 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	t->data = data;
 	t->plugin = plugin;
 
-	return list_add(&timers, t, 0);
+	list_add(&timers, t, 0);
+	return t;
 }
 
 /*
@@ -1986,33 +1966,6 @@ const char *ekg_status_label(const char *status, const char *descr, const char *
 }
 
 /*
- * strtrim()
- *
- * usuwa spacje z pocz±tku i koñca tekstu.
- *
- *  - s - ci±g znaków.
- *
- * 0/-1
- */
-int strtrim(char *s)
-{
-	char *t;
-
-	if (!s)
-		return -1;
-	
-	while (xisspace(s[xstrlen(s) - 1]))
-		s[xstrlen(s) - 1] = 0;
-
-	for (t = s; xisspace(*t); t++)
-		;
-	
-	memmove(s, t, xstrlen(t) + 1);
-
-	return 0;
-}
-
-/*
  * ekg_draw_descr()
  *
  * losuje opis dla danego stanu lub pobiera ze zmiennej, lub cokolwiek
@@ -2052,7 +2005,7 @@ char *ekg_draw_descr(const char *status)
 /* 
  * ekg_update_status()
  *
- * updates our status, if we are on sessio contact list 
+ * updates our status, if we are on session contact list 
  * 
  */
 void ekg_update_status(session_t *session)
