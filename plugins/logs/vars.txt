@@ -7,7 +7,7 @@ log
 	
 	okre¶la, czy i w jaki sposób bêd± logowane wysy³ane i otrzymywane
 	wiadomo¶ci. dla 0, nie bêd±. Dla 1, bêd± logowane w formacie znanym z
-	ekg1. Dla 2 bêd± logowane w formacie XML (NFY).
+	ekg1. Dla 2 bêd± logowane w formacie XML.
 
 log_ignored
 	typ: liczba

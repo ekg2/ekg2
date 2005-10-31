@@ -23,6 +23,8 @@
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
+#else
+#include <limits.h>
 #endif
 
 #define REMIND_NUMBER_SUPPORT 0 /* support do logs:remind_number 1 aby wlaczyc */
@@ -118,7 +120,7 @@ int logs_log_format(session_t *s) {
 }
 
 
-/* zwraca 1 lub  2 lub 3 jesli cos sie zmienilo. (log_format, czy t jest ok) i zmienia path w log_window_t i jak cos zamyka plik / otwiera na nowo.
+/* zwraca 1 lub  2 lub 3 jesli cos sie zmienilo. (log_format, sciezka, t) i zmienia path w log_window_t i jak cos zamyka plik / otwiera na nowo.
  *        0 jesli nie.
  *        -1 jesli cos sie zjebalo.
  */
@@ -243,7 +245,6 @@ logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid) {
 		logs_window_check(ll, time(NULL)); /* l->log_format i l->path, l->t */
 		ll->lw->file = logs_open_file(ll->lw->path, ll->lw->logformat);
 	}
-
 	if (created) {
 		time_t t = time(NULL);
 		if (ll->lw->logformat == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_OPENED)) {
@@ -351,7 +352,6 @@ int logs_away_display(log_away_t *la, int quiet, int free) {
 					"%D %H:%M:%S",  /* variable ? */
 					lsa->t), 
 				lsa->chname, lsa->uid, lsa->msg);
-		// zwolnij pamiec...
 		if (free) {
 			xfree(lsa->chname);
 			xfree(lsa->uid);
@@ -362,7 +362,6 @@ int logs_away_display(log_away_t *la, int quiet, int free) {
 	if (free) {
 		list_destroy(la->messages, 1);
 		xfree(la->sname);
-
 		list_remove(&log_awaylog, la, 1);
 	}
 	return 0;
@@ -472,7 +471,6 @@ int logs_plugin_init(int prio)
 	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL); 
 	variable_add(&logs_plugin, "timestamp", VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
-	debug("[logs] plugin registered\n");
 	logs_changed_awaylog(NULL); /* nie robi sie automagicznie to trzeba sila. */
 
 	return 0;
@@ -487,11 +485,11 @@ static int logs_plugin_destroy()
 		FILE *f = NULL;
 		char *path = NULL;
 		time_t t = time(NULL);
-		int ff;
-/* zrobic end session */
+		int ff = (ll->lw) ? ll->lw->logformat : logs_log_format(session_find(ll->session));
+
 		if (ll->lw)
 			f = logs_window_close(l->data, 0);
-		else if ((ff = logs_log_format(session_find(ll->session))) == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
+		else if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
 			path = logs_prepare_path(session_find(ll->session), ll->uid, t);
 			f = logs_open_file(path, ff);
 		}
@@ -505,7 +503,6 @@ static int logs_plugin_destroy()
 		xfree(ll->session);
 		xfree(ll->uid);
 	}
-
 	for (l = log_awaylog; l;) {
 		log_away_t *a = l->data;
 		l = l->next;	
@@ -513,9 +510,6 @@ static int logs_plugin_destroy()
 	}
 
 	plugin_unregister(&logs_plugin);
-
-	debug("[logs] plugin unregistered\n");
-
 	return 0;
 }
 
@@ -632,33 +626,29 @@ FILE* logs_open_file(char *path, int ff)
 		xfree(dir);
 	} // while 1
 
-#ifdef HAVE_ZLIB /* z log.c i starego ekg1. Wypadaloby zaimplementowac... */
-	/* nawet je¶li chcemy gzipowane logi, a istnieje nieskompresowany log,
-	 * olewamy kompresjê. je¶li loga nieskompresowanego nie ma, dodajemy
-	 * rozszerzenie .gz i balujemy. */
-	if (config_log & 4) {
-		struct stat st;
-		
-		if (stat(path, &st) == -1) {
-			gzFile f;
-
-			if (!(f = gzopen(path, "a")))
-				goto cleanup;
-
-			gzputs(f, buf);
-			gzclose(f);
-
-			zlibmode = 1;
-		}
-	}
-#endif
-
 	if (len+5 < PATH_MAX) {
 		if (ff == LOG_FORMAT_IRSSI)		xstrcat(fullname, ".log");
 		else if (ff == LOG_FORMAT_SIMPLE)	xstrcat(fullname, ".txt");
 		else if (ff == LOG_FORMAT_XML)		xstrcat(fullname, ".xml");
 		len+=4;
-#ifdef HAVE_ZLIB
+#ifdef HAVE_ZLIB /* z log.c i starego ekg1. Wypadaloby zaimplementowac... */
+	/* nawet je¶li chcemy gzipowane logi, a istnieje nieskompresowany log,
+	 * olewamy kompresjê. je¶li loga nieskompresowanego nie ma, dodajemy
+	 * rozszerzenie .gz i balujemy. */
+		if (config_log & 4) {
+			struct stat st;
+			if (stat(fullname, &st) == -1) {
+				gzFile f;
+
+				if (!(f = gzopen(path, "a")))
+					goto cleanup;
+
+				gzputs(f, buf);
+				gzclose(f);
+
+				zlibmode = 1;
+			}
+		}
 		if (zlibmode && len+4 < PATH_MAX) {
 			ff |= LOG_GZIP;
 			xstrcat(fullname, ".gz");
@@ -726,8 +716,7 @@ QUERY(logs_handler)
 	if (session_check(s, 0, "irc") && logs_log_format(s) == LOG_FORMAT_IRSSI) 
 		return 0;
 
-	if (class & EKG_NO_THEMEBIT) class -= EKG_NO_THEMEBIT; /** stupid **/
-
+	class &= ~EKG_NO_THEMEBIT;
 	ruid = (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid;
 
 	lw = logs_log_find(session, ruid, 1)->lw;
@@ -738,7 +727,7 @@ QUERY(logs_handler)
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) )
 		return 0; /* jesli tutaj to blad przy otwieraniu pliku, moze cos wyswietlimy ? */
 	
-	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", ruid, lw->path, lw->logformat, lw->file);
+/*	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", ruid, lw->path, lw->logformat, lw->file); */
 
 /* uid = uid | ruid ? */
 	if (lw->logformat == LOG_FORMAT_IRSSI)
@@ -784,7 +773,7 @@ QUERY(logs_status_handler)
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) 
 		return 0; /* jesli tutaj to blad przy otwieraniu pliku, moze cos wyswietlimy ? */
 
-	debug("[LOGS_STATUS_HANDLER] %s : %s %d %x\n", uid, lw->path, lw->logformat, lw->file);
+/*	debug("[LOGS_STATUS_HANDLER] %s : %s %d %x\n", uid, lw->path, lw->logformat, lw->file); */
 
 /* jesli nie otwarl sie plik to po co mamy robic ? */
 	s = session_find(session);
@@ -848,7 +837,7 @@ QUERY(logs_handler_irc)
 	if (!lw) /* nie powinno .. */
 		return 0;
 
-	debug("[LOGS_MSG_IRC_HANDLER] %s: %s %d %x\n", uid, lw->path, lw->logformat, lw->file);
+/*	debug("[LOGS_MSG_IRC_HANDLER] %s: %s %d %x\n", uid, lw->path, lw->logformat, lw->file); */
 
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) )
 		return 0; /* jesli tutaj to blad przy otwieraniu pliku, moze cos wyswietlimy ? */
@@ -1005,7 +994,7 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 	if ( gotten_nickname == NULL )
 		gotten_nickname = uid;
 
-	if (class!=6){
+	if (class!=6) {
 		switch ((enum msgclass_t)class) {
 			case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv,", file);
 							  break;
