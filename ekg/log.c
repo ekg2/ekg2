@@ -38,12 +38,6 @@
 #endif
 
 #include "dynstuff.h"
-#ifndef HAVE_STRLCAT
-#  include "compat/strlcat.h"
-#endif
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
-#endif
 #include "stuff.h"
 #include "xmalloc.h"
 
@@ -296,8 +290,6 @@ char *xml_escape(const char *text)
 		len += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
 
 	res = xmalloc(len + 1);
-	memset(res, 0, len + 1);
-
 	for (p = text, q = res; *p; p++) {
 		char *ent = utf_ent[*p];
 
