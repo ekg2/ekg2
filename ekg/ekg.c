@@ -833,9 +833,6 @@ int main(int argc, char **argv)
         if (!batch_mode && config_display_welcome)
                 print("welcome", VERSION);
 
-        if (!config_log_path)
-                config_log_path = xstrdup(prepare_path("history", 0));
-
         protocol_init();
         events_init();
         metacontact_init();
