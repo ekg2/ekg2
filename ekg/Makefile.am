@@ -13,5 +13,10 @@ ekg2_DEPENDENCIES =
 localedir = $(datadir)/locale
 
 INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
-       -DPLUGINDIR=\"$(plugindir)\" $(LTDLINCL)
+       -DPLUGINDIR=\"$(plugindir)\"
 DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
+
+ekg2includedir = $(includedir)/ekg2
+ekg2include_HEADERS = audio.h configfile.h dynstuff.h events.h metacontacts.h objects.h protocol.h sessions.h themes.h vars.h xmalloc.h \
+	commands.h debug.h emoticons.h log.h msgqueue.h plugins.h scripts.h stuff.h userlist.h windows.h ../gettext.h ../ekg2-config.h
+

@@ -25,7 +25,7 @@ lib_dir_ekg2="@libdir@"
 plugin_dir="@plugindir@"
 version="@VERSION@"
 
-ekg2_include_dir="$include_dir/ekg2" # TODO: kopiowac tam *.h
+ekg2_include_dir="$include_dir/ekg2"
 
 usage()
 {
