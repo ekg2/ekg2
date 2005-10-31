@@ -2130,7 +2130,11 @@ COMMAND(cmd_test_mem)
 				printq("generic_error", "Internal error! (kvm_getprocs)");
             			return -1; 
     			}
-			rozmiar = (u_long) kp->ki_size/1024;
+#ifdef HAVE_STRUCT_KINFO_PROC_KI_SIZE
+			rozmiar = (u_long) kp->ki_size/1024; /* freebsd5 */
+#else
+			rozmiar = kp->kp_eproc.e_vm.vm_map.size/1024; /* freebsd4 */
+#endif /* HAVE_STRUCT_KINFO_PROC_KI_SIZE */
 #else
 			if (unmres != -1)
 				p = saprintf(" You seem to have /proc mounted, but I don't know how to deal with it. Authors would be very thankful, if you'd contac wit them, quoting this error message. [%s %s %s %s]", sys.sysname, sys.release, sys.version, sys.machine);

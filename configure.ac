@@ -84,6 +84,11 @@ fi
 
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
+dnl to chyba tak ma byc.
+AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
+#include <sys/param.h>
+#include <sys/user.h>
+])
 
 dnl AC_CONFIG_SUBDIRS([libltdl])
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
