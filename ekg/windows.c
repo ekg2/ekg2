@@ -63,7 +63,7 @@ window_t *window_find(const char *target)
 			status = 1;
 	}
 
-	if (target && strncmp(target, "__", 2)) {
+	if (xstrncmp(target, "__", 2)) {
 		list_t sl;
 		for (sl = sessions; sl; sl = sl->next) {
 			session_t *s = sl->data;

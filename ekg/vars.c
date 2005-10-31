@@ -29,12 +29,6 @@
 #include <unistd.h>
 
 #include "dynstuff.h"
-#ifndef HAVE_STRLCAT
-#  include "compat/strlcat.h"
-#endif
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
-#endif
 #include "stuff.h"
 #include "themes.h"
 #include "vars.h"
