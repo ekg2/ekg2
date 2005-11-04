@@ -213,10 +213,8 @@ char *home_dir;
 char *config_dir;
 int in_autoexec;
 int ekg_stdin_want_more;
-int reconnect_timer;
 time_t last_action;
 time_t ekg_started;
-char *config_reason_first;
 
 int quit_message_send;
 int batch_mode;

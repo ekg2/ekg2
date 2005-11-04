@@ -353,14 +353,11 @@ int variable_set(const char *name, const char *value, int allow_foreign)
 	variable_t *v = variable_find(name);
 	char *tmpname;
 
-	if (!v && allow_foreign) {
-		variable_add(NULL, name, VAR_FOREIGN, 2, xstrdup(value), NULL, NULL, NULL);
+	if (!v) {
+		if (allow_foreign)
+			variable_add(NULL, name, VAR_FOREIGN, 2, xstrdup(value), NULL, NULL, NULL);
 		return -1;
 	}
-
-	if (!v && !allow_foreign)
-		return -1;
-
 	switch (v->type) {
 		case VAR_INT:
 		case VAR_MAP:

@@ -74,7 +74,6 @@ list_t buffers = NULL;
 list_t searches = NULL;
 
 int in_autoexec = 0;
-int reconnect_timer = 0;
 int config_auto_save = 0;
 int config_auto_user_add = 0;
 time_t last_save = 0;
@@ -130,7 +129,6 @@ int config_windows_save = 0;
 char *config_windows_layout = NULL;
 char *config_profile = NULL;
 int config_reason_limit = 1;
-char *config_reason_first = NULL;
 int config_debug = 1;
 
 char *last_search_first_name = NULL;
@@ -193,7 +191,7 @@ void windows_save()
 		for (l = windows; l; l = l->next) {
 			window_t *w = l->data;
 
-			if (w->floating && (!w->target || strncmp(w->target, "__", 2))) {
+			if (w->floating && (!w->target || xstrncmp(w->target, "__", 2))) {
 				char *tmp = saprintf("|*%d,%d,%d,%d,%d,%s", w->left, w->top, w->width, w->height, w->frames, w->target);
 				string_append(s, tmp);
 				xfree(tmp);
@@ -371,7 +369,7 @@ void binding_list(int quiet, const char *name, int all)
 		struct binding *b = l->data;
 
 		if (name) {
-			if (strcasestr(b->key, name)) {
+			if (xstrcasestr(b->key, name)) {
 				printq("bind_seq_list", b->key, b->action);
 				found = 1;
 			}
@@ -386,7 +384,7 @@ void binding_list(int quiet, const char *name, int all)
 		for (l = bindings; l; l = l->next) {
 			struct binding *b = l->data;
 
-			if (strcasestr(b->action, name))
+			if (xstrcasestr(b->action, name))
 				printq("bind_seq_list", b->key, b->action);
 		}
 	}
