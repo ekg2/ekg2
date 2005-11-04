@@ -493,11 +493,12 @@ static int logs_plugin_destroy()
 			path = logs_prepare_path(session_find(ll->session), ll->uid, t);
 			f = logs_open_file(path, ff);
 		}
-
-		logs_irssi(f, ll->session, NULL,
-				prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
-				LOG_IRSSI_INFO, NULL);
-		fclose(f);
+		if (f) {
+				logs_irssi(f, ll->session, NULL,
+						prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
+						LOG_IRSSI_INFO, NULL);
+				fclose(f);
+		}
 		xfree(path);
 
 		xfree(ll->session);
