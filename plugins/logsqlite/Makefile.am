@@ -4,7 +4,7 @@ lib_LTLIBRARIES = logsqlite.la
 logsqlite_la_SOURCES = logsqlite.c logsqlite.h
 logsqlite_la_LDFLAGS = -module -avoid-version
 logsqlite_la_LIBADD = $(SQLITE_LIBS)
-logsqlite_la_CFLAGS = $(SQLITE_CFLAGS) $(LTDLINCL)
+logsqlite_la_CFLAGS = $(SQLITE_CFLAGS)
 
 libdir = $(plugindir)
 

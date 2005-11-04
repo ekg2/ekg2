@@ -6,7 +6,7 @@ dummy_la_LDFLAGS = -module -avoid-version
 dummy_la_LIBADD = 
 
 # tutaj dodajemy opcje kompilatora typu -I
-INCLUDES = $(LTDLINCL)
+INCLUDES = 
 
 libdir = $(plugindir)
 
