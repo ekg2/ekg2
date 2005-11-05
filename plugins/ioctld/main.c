@@ -25,6 +25,11 @@
 
 #include "ekg2-config.h"
 
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -37,9 +42,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#ifndef HAVE_STRLCAT
-#  include "compat/strlcat.h"
-#endif
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
 #endif
