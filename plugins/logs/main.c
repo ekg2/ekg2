@@ -130,7 +130,6 @@ int logs_window_check(logs_log_t *ll, time_t t)
 	session_t *s;
 	log_window_t *l = ll->lw;
 	int chan = 0;
-	int _ychan = 0, _mchan = 0, _dchan = 0;
 	int tmp;
 
 	if (!l || !(s = session_find(ll->session)))
@@ -145,39 +144,42 @@ int logs_window_check(logs_log_t *ll, time_t t)
 		chan = 2;
 
 	if (chan != 2) {
+		int _ychan = 0, _mchan = 0, _dchan = 0;
 /* czy warte zachodu ? */
 		_ychan = (int) xstrstr(config_logs_path, "%Y"); 
 		_mchan = (int) xstrstr(config_logs_path, "%M");
 		_dchan = (int) xstrstr(config_logs_path, "%D");
 /* sprawdzic czy dane z (tm == tm2) */
-		if (_ychan || _mchan || _dchan) {
-			struct tm *tm = localtime(&(l->t));
+		{
+			struct tm *tm = localtime(&(ll->t));
 			struct tm *tm2 = localtime(&t);
 
 			if  (	(tm->tm_mday != tm2->tm_mday && _dchan) || 
 				(tm->tm_mon != tm2->tm_mon   && _mchan) || 
 				(tm->tm_year != tm2->tm_year && _ychan)
 			    )
-				chan = 3;
-		}
-	}
-	
-	if (chan > 1) {
-		char *tmp = l->path;
-		l->t = t;
-
-		l->path = logs_prepare_path(s, ll->uid, t);
-		debug("[logs] logs_window_check chan = %d oldpath = %s newpath = %s\n", chan, tmp, l->path);
-
-		if (tmp && chan == 3 && l->logformat == LOG_FORMAT_IRSSI) { /* yes i know it's wrong place for doing this but .... */
+				if (_ychan || _mchan || _dchan) chan = 3;
+//				else				chan = -2; /* chan == -2 date changed */
+		 }
+		if (l->logformat == LOG_FORMAT_IRSSI) { /* yes i know it's wrong place for doing this but .... */
 			if (!(l->file)) 
-				l->file = logs_open_file(tmp, LOG_FORMAT_IRSSI);
+				l->file = logs_open_file(l->path, LOG_FORMAT_IRSSI); /* think */
 			logs_irssi(l->file, ll->session, NULL,
 					prepare_timestamp_format(IRSSI_LOG_DAY_CHANGED, time(NULL)),
 					0, LOG_IRSSI_INFO, NULL);
 		}
+	}
+
+	if (chan > 1) {
+		char *tmp = l->path;
+		ll->t = t;
+
+		l->path = logs_prepare_path(s, ll->uid, t);
+		debug("[logs] logs_window_check chan = %d oldpath = %s newpath = %s\n", chan, tmp, l->path);
+#if 0 /* TODO: nie moze byc - bo mogl logformat sie zmienic... */
 		if (chan != 3 && !xstrcmp(tmp, l->path))  /* jesli sciezka sie nie zmienila to nie otwieraj na nowo pliku */
-			chan = chan; /* TODO: nie moze byc - bo mogl logformat sie zmienic... */
+			chan = -chan; 
+#endif
 		xfree(tmp);
 	}
 	if (chan > 0) {
@@ -483,27 +485,34 @@ static int logs_plugin_destroy()
 	for (l = log_logs; l; l = l->next) {
 		logs_log_t *ll = l->data;
 		FILE *f = NULL;
-		char *path = NULL;
 		time_t t = time(NULL);
 		int ff = (ll->lw) ? ll->lw->logformat : logs_log_format(session_find(ll->session));
 
-		if (ll->lw)
-			f = logs_window_close(l->data, 0);
-		else if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
-			path = logs_prepare_path(session_find(ll->session), ll->uid, t);
-			f = logs_open_file(path, ff);
-		}
+		/* TODO: rewrite */
+		if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
+			char *path	= (ll->lw) ? xstrdup(ll->lw->path) : logs_prepare_path(session_find(ll->session), ll->uid, t);
+			f		= (ll->lw) ? logs_window_close(l->data, 0) : NULL; 
+			
+			if (!f) 
+				f = logs_open_file(path, ff);
+			xfree(path);
+		} else 
+			logs_window_close(l->data, 1);
+
 		if (f) {
+			if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
 				logs_irssi(f, ll->session, NULL,
 						prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
 						LOG_IRSSI_INFO, NULL);
-				fclose(f);
+			}
+			fclose(f);
 		}
-		xfree(path);
 
 		xfree(ll->session);
 		xfree(ll->uid);
 	}
+	list_destroy(log_logs, 1);
+
 	for (l = log_awaylog; l;) {
 		log_away_t *a = l->data;
 		l = l->next;	
@@ -991,11 +1000,11 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 	const char *gotten_uid = get_uid(s, uid);
 	const char *gotten_nickname = get_nickname(s, uid);
 
-	if ( gotten_uid == NULL )
-		gotten_uid = uid;
+	if (!file)
+		return;
 
-	if ( gotten_nickname == NULL )
-		gotten_nickname = uid;
+	if (!gotten_uid)	gotten_uid = uid;
+	if (!gotten_nickname)	gotten_nickname = uid;
 
 	if (class!=6) {
 		switch ((enum msgclass_t)class) {
@@ -1057,18 +1066,22 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 
 void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class)
 {
-	char *textcopy = xml_escape(text);
+	session_t *s;
+	char *textcopy;
 	const char *timestamp = prepare_timestamp((time_t)time(0));
 /*	const char *senttimestamp = prepare_timestamp(sent); */
-	session_t *s = session_find((const char*)session);
-	const char *gotten_uid = xml_escape(get_uid(s, uid));
-	const char *gotten_nickname = xml_escape(get_nickname(s, uid));
+	char *gotten_uid, *gotten_nickname;
+	const char *tmp;
 
-	if (gotten_uid == NULL)
-		gotten_uid = uid;
+	if (!file)
+		return;
 
-	if (gotten_nickname == NULL)
-		gotten_nickname = uid;
+	textcopy	= xml_escape( text);
+
+	s = session_find((const char*)session);
+	gotten_uid 	= xml_escape( (tmp = get_uid(s, uid)) 		? tmp : uid);
+	gotten_nickname = xml_escape( (tmp = get_nickname(s, uid)) 	? tmp : uid);
+
 	fseek(file, -11, SEEK_END); /* wracamy przed </ekg2log> */
 
 	/*
@@ -1127,6 +1140,8 @@ void logs_xml(FILE *file, const char *session, const char *uid, const char *text
 	fputs("</ekg2log>\n", file);
 
 	xfree(textcopy);
+	xfree(gotten_uid);
+	xfree(gotten_nickname);
 	fflush(file);
 }
 
@@ -1143,6 +1158,9 @@ void logs_gaim()
  */
 
 void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip) {
+	if (!file)
+		return;
+	
 	switch (type) {
 		/* just normal message */
 		case LOG_IRSSI_MESSAGE:	fprintf(file, "%s <%s> %s\n", prepare_timestamp(sent), uid, text);
