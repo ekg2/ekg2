@@ -774,7 +774,7 @@ QUERY(logs_status_handler)
 	if (session_check(s, 0, "irc") && !xstrcmp(logs_log_format(s), "irssi"))
 		return 0;
 */
-	if (config_logs_log_status < 0)
+	if (config_logs_log_status <= 0)
 		return 0;
 	
 	lw = logs_log_find(session, uid, 1)->lw;
