@@ -324,15 +324,17 @@ char *irc_make_banmask(session_t *session, const char *nick, const char *ident, 
 
 int irc_parse_identhost(char *identhost, char **ident, char **host) 
 {
-	char	*tmp = strchr(identhost, '@');
+	char	*tmp = xstrchr(identhost, '@');
 
 	xfree(*ident);
 	xfree(*host);
-
-	*ident = xstrndup(identhost, tmp-identhost);
-	*host  = tmp?xstrdup(tmp+1):NULL;
-
-	/* debug("$ %s@%s \n", *ident, *host); */
+	if (tmp) {
+		*ident = xstrndup(identhost, tmp-identhost);
+		*host  = xstrdup(tmp+1);
+	} else {
+		*ident = xstrdup(identhost);
+		*host = NULL;
+	}
 	return 0;
 }
 
