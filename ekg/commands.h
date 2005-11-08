@@ -29,8 +29,11 @@
 
 #define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
 
-#define COMMAND_ISALIAS  0x01
-#define COMMAND_ISSCRIPT 0x02
+#define COMMAND_ISALIAS		0x01
+#define COMMAND_ISSCRIPT	0x02
+#define SESSION_MUSTBECONNECTED	0x04
+#define SESSION_MUSTBELONG	0x08
+#define SESSION_MUSTHASPRIVATE	0x10
 
 typedef COMMAND(command_func_t);
 

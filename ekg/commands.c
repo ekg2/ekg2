@@ -2499,12 +2499,14 @@ COMMAND(cmd_bind)
  */
 int command_exec(const char *target, session_t *session, const char *xline, int quiet)
 {
-	char *cmd = NULL, *tmp, *p = NULL, short_cmd[2] = ".", *last_name = NULL, *line_save = NULL, *line = NULL;
-	char **last_params = NULL;
-	command_func_t *last_abbr = NULL;
+	char *cmd = NULL, *tmp, *p = NULL, short_cmd[2] = ".", *line_save = NULL, *line = NULL;
+
+	command_t *last_command = NULL;
+	command_t *last_command_plugin = NULL; /* niepotrzebne, ale ktos to napisal tak ze moze kiedys mialobyc potrzebne.. wiec zostaje. */
 	int abbrs = 0;
-        command_func_t *last_abbr_plugins = NULL;
-        int abbrs_plugins = 0, last_alias = 0;
+        int abbrs_plugins = 0;
+
+	int exact = 0;
 
 	list_t l;
 
@@ -2568,6 +2570,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		*tmp = 0;
 		p = strip_spaces(p);
 	}
+
 	/* poszukaj najpierw komendy dla danej sesji */
 	if (!session && session_current)
 		session = session_current;
@@ -2581,73 +2584,92 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				continue;
 		
 			if (!xstrcasecmp(c->name + plen, cmd)) {
-				last_abbr = c->function;
-				last_name = c->name;
-				last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
-				last_alias = (c->flags & COMMAND_ISALIAS) ? 1 : 0;
+				last_command = c;
 				abbrs = 1;
-				goto exact_match;
+				exact = 1;
+				break;
 			}
 
 			if (!xstrncasecmp(c->name + plen, cmd, xstrlen(cmd))) {
+				last_command_plugin = c;
 				abbrs_plugins++;
-				last_abbr_plugins = c->function;
-				last_name = c->name;
-				last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
 			} else {
-				if (last_abbr_plugins && abbrs_plugins == 1)
+				if (last_command_plugin && abbrs_plugins == 1)
 					break;
 			} 
 		}
 	}
+	if (!exact) {
+		for (l = commands; l; l = l->next) {
+			command_t *c = l->data;
 
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
-
-		if (!xstrcasecmp(c->name, cmd)) {
-			last_abbr = c->function;
-			last_name = c->name;
-			last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
-			last_alias = (c->flags & COMMAND_ISALIAS) ? 1 : 0;
-			abbrs = 1;
-			/* if this is exact_match we should zero those below, they won't be used */
-			last_abbr_plugins = NULL; 
-			abbrs_plugins = 0;
-			goto exact_match; /* could be break; but for better readable code i used this */
-		}
-		if (!xstrncasecmp(c->name, cmd, xstrlen(cmd))) {
-			abbrs++;
-			last_abbr = c->function;
-			last_name = c->name;
-			last_params = (c->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : c->params;
-		} else {
-			if (last_abbr && abbrs == 1)
+			if (!xstrcasecmp(c->name, cmd)) {
+				last_command = c;
+				abbrs = 1;
+				exact = 1;
+				/* if this is exact_match we should zero those below, they won't be used */
+			    	abbrs_plugins = 0; 
+				last_command_plugin = NULL;
 				break;
-		}
-	} 
+			}
+			if (!xstrncasecmp(c->name, cmd, xstrlen(cmd))) {
+				last_command = c;
+		    		abbrs++;
+			} else {
+				if (last_command && abbrs == 1)
+					break;
+			}
+		} 
+	}
+//	debug("%x %x\n", last_command, last_command_plugin);
 
-exact_match:
-	if ((last_abbr && abbrs == 1 && !last_abbr_plugins && !abbrs_plugins) || (last_abbr_plugins && abbrs_plugins == 1 && !last_abbr && !abbrs)) {
-		char **par, *tmp;
-		int res;
+	if ((last_command && abbrs == 1 && !abbrs_plugins) || ( (last_command = last_command_plugin) && abbrs_plugins == 1 && !abbrs)) {
+		session_t *s = session ? session : window_current->session;
+		char *last_name    = last_command->name;
+		int last_alias	   = 0;
+		char *tmp;
+		int res		   = 0;
 
-		if (last_abbr_plugins)
-			last_abbr = last_abbr_plugins;
-		if (abbrs_plugins)
-			abbrs = abbrs_plugins;
+		if (exact) 
+			last_alias = (last_command->flags & COMMAND_ISALIAS || last_command->flags & COMMAND_ISSCRIPT) ? 1 : 0;
 		
 		if (!last_alias && (tmp = xstrchr(last_name, ':')))
 			last_name = tmp + 1;
 		
-		window_lock_inc_n(target);
-		par = array_make(p, " \t", array_count(last_params), 1, 1);
-		res = (last_abbr)(last_name, (const char **) par, (session) ? session : window_current->session, target, (quiet & 1));
-		array_free(par);
+		if (last_command->flags & SESSION_MUSTHASPRIVATE) {
+			if (!s || !(s->priv)) {
+				printq("invalid_session");
+				res = -1;
+/*				debug("[command_exec] res = -1; SESSION_MUSTHASPRIVATE"); */
+			}
+		}
+		if (!res && (last_command->flags & SESSION_MUSTBECONNECTED)) {
+			if (!session_connected_get(s)) {
+				printq("not_connected", session_name(s));	
+				res = -1;
+			}
+		}
+		if (!res && (last_command->flags & SESSION_MUSTBELONG)) {
+			/* ok, it works but i still thinks that valid_plugin_uid sucks (too slow) */
+			if (valid_plugin_uid(last_command->plugin, session_uid_get(s)) != 1) {
+				printq("invalid_session");
+				res = -1;
+/*				debug("[command_exec] res = -1; SESSION_MUSTBELONG\n"); */
+			}
+		}
 
-		window_lock_dec_n(target);
+		if (!res) {
+/* TODO CHECK, btw. z tym last_params to nie ma jakiegos memleaka ? jesli jest alias to jest tworzony jakies arrayik, zwalniamy go gdzies ? */
+			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : last_command->params;
+			char **par = array_make(p, " \t", array_count(last_params), 1, 1);
+/* i think lockink window to display only 1 line is sensless.. */
+			window_lock_inc_n(target);
+			res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
+			window_lock_dec_n(target);
+			query_emit(NULL, "ui-window-refresh");
 
-		query_emit(NULL, "ui-window-refresh");
-
+			array_free(par);
+		}
 		xfree(line_save);
 
 		if (quit_command)
