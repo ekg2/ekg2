@@ -585,7 +585,7 @@ WATCHER(gg_dcc_handler)
 				path = xstrdup(dcc_filename_get(D));
 
 			if (!stat(path, &st) && st.st_size < d->file_info.size)
-				print("dcc_get_offer_resume", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), dcc_id_get(D));
+				print("dcc_get_offer_resume", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));
 			
 			xfree(path);
 
