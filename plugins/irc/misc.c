@@ -149,12 +149,14 @@ int gatoi(char *buf, int *a)
 /*
  */
 
-int irc_parse_line(session_t *s, char *buf, int len, int fd, irc_private_t *j)
+int irc_parse_line(session_t *s, char *buf, int fd)
 {
+	irc_private_t *j = s->priv;
 	int	i, c=0, ecode;
 	char	*p, *q[20];
 
 	char	*emitname;
+	int	len = xstrlen(buf);
 
 	p=buf;
 	if(!p)
@@ -327,10 +329,8 @@ int irc_parse_identhost(char *identhost, char **ident, char **host)
 	xfree(*ident);
 	xfree(*host);
 
-	if (tmp) *tmp = '\0';
-	*ident = xstrdup(identhost);
+	*ident = xstrndup(identhost, tmp-identhost);
 	*host  = tmp?xstrdup(tmp+1):NULL;
-	if (tmp) *tmp = '@';
 
 	/* debug("$ %s@%s \n", *ident, *host); */
 	return 0;

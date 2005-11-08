@@ -222,8 +222,8 @@ static void irc_private_destroy(session_t *s)
  */
 QUERY(irc_session)
 {
-	char		**session = va_arg(ap, char**);
-	session_t	*s = session_find(*session);
+	char		*session = *(va_arg(ap, char**));
+	session_t	*s = session_find(session);
 
 	if (!s)
 		return 0;
@@ -305,7 +305,7 @@ int irc_resolver2(session_t *session, char ***arr, char *hostname, int dobind)
 			buf = saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, port);
 			//write(fd, buf, xstrlen(buf));
 			array_add(arr, buf);
-			//xfree(buf);
+//			xfree(buf);
 			xfree(ip);
 		}
 		freeaddrinfo(ai);
@@ -329,13 +329,13 @@ int irc_resolver2(session_t *session, char ***arr, char *hostname, int dobind)
  */
 QUERY(irc_validate_uid)
 {
-	char	**uid = va_arg(ap, char **);
-	int	*valid = va_arg(ap, int *);
+	char	*uid 	= *(va_arg(ap, char **));
+	int	*valid 	= va_arg(ap, int *);
 
 	if (!*uid)
 		return 0;
 
-	if (!xstrncasecmp(*uid, IRC4, 4) && xstrlen(*uid)>4) {
+	if (!xstrncasecmp(uid, IRC4, 4) && xstrlen(uid)>4) {
 		(*valid)++;
 		return -1; /* if it's correct uid for irc we don't need to send to others... */
 	}
@@ -566,7 +566,7 @@ WATCHER(irc_handle_stream)
 	 * const char, so the queries could modify this param,
 	 * I'm not sure if this is good idea, just thinking...
 	 */
-	irc_parse_line(s, (char *)watch, xstrlen(watch), fd, s->priv);
+	irc_parse_line(s, (char *)watch, fd);
 	return;
 }
 
@@ -766,10 +766,6 @@ COMMAND(irc_command_connect)
 	irc_private_t		*j = irc_private(session);
 	const char		*newnick;
 
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
 	if (!session_get(session, "server")) {
 		printq("generic_error", "gdzie lecimy ziom ?! [/session server]");
 		return -1;
@@ -803,11 +799,6 @@ COMMAND(irc_command_disconnect)
 	const char	*reason = params[0]?params[0]:QUITMSG(session);
 	debug("[irc] comm_disconnect() !!!\n");
 
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
-
 	if (!j->connecting && !session_connected_get(session) && !j->autoreconnecting) {
 		printq("not_connected", session_name(session));
 		return -1;
@@ -827,11 +818,6 @@ COMMAND(irc_command_disconnect)
 COMMAND(irc_command_reconnect)
 {
 	irc_private_t	*j = irc_private(session);
-
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
 
 	if (j->connecting || session_connected_get(session)) 
 		irc_command_disconnect(name, params, session, target, quiet);
@@ -868,20 +854,11 @@ COMMAND(irc_command_msg)
 	const char	*uid=NULL;
 	char		*sid = NULL, *uid_full = NULL;
 
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
-
 	if (!params[0] || !params[1]) {
 		if (!params[0]) printq("not_enough_params", name);
 		return -1;
 	}
 
-	if (!session_connected_get(session)) {
-		printq("not_connected", session_name(session));
-		return -1;
-	}
 	uid = params[0];
 	w = window_find_s(session, uid);
 
@@ -957,18 +934,8 @@ COMMAND(irc_command_quote)
 {
 	irc_private_t	*j = irc_private(session);
 
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
-
 	if (!params[0]) {
 		printq("not_enough_params", name);
-		return -1;
-	}
-
-	if (!session_connected_get(session)) {
-		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -984,11 +951,6 @@ COMMAND(irc_command_pipl)
 	list_t		t1, t2;
 	people_t	*per;
 	people_chan_t	*chan;
-
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
 
 	debug("[irc] this is a secret command ;-)\n");
 
@@ -1054,10 +1016,6 @@ COMMAND(irc_command_add)
 {
 	int ret = 0;
 
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
 	irc_access_add(session, params[0] ? params[0] : target, IRC_FLAG_ISON, 0);
 	return ret;
 }
@@ -1067,11 +1025,6 @@ int irc_write_status(session_t *s, int quiet)
 	irc_private_t	*j = irc_private(s);
 	const char	*status;
 	char		*descr;
-
-	if (!session_connected_get(s)) {
-		printq("not_connected", session_name(s));
-		return -1;
-	}
 
 	status = session_status_get(s);
 	descr = (char *)session_descr_get(s);
@@ -1090,11 +1043,6 @@ int irc_write_status(session_t *s, int quiet)
 
 COMMAND(irc_command_away)
 {
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
-
 	if (!xstrcmp(name, "back")) {
 		session_descr_set(session, NULL);
 		session_status_set(session, EKG_STATUS_AVAIL);
@@ -1209,16 +1157,6 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 	int		i = 0, parnum = 0, argnum = 0, hasq = 0;
 	list_t		l;
 
-
-	if (!session_check(s, 1, IRC3)) {
-		print("invalid_session");
-		return 0;
-	}
-	if (!session_connected_get(s)) {
-		print("not_connected", session_name(s));
-		return 0;
-	}
-
 	if (params) tf = params[0];
 	else tf = NULL;
 	ts = window_current->target;
@@ -1297,14 +1235,6 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 
 	return chan;
 }
-
-int irc_getchan_free(char **mp)
-{
-	int i=0;
-	while (mp[i]) xfree(mp[i++]);
-	xfree(mp);
-	return 0;
-}
 /*****************************************************************************/
 
 COMMAND(irc_command_names)
@@ -1317,39 +1247,19 @@ COMMAND(irc_command_names)
 	const char      *sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, NULL};
 	int             lvl_total[5]    = {0, 0, 0, 0, 0};
 	int             lvl, count = 0;
-	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')');
+	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')')+1;
 
 	int		smlen = xstrlen(sort_modes), nplen = (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1;
 	char            mode[2], **mp, *channame, nickpad[nplen];
 
-	if (!session_check(session, 1, IRC3)) {
-		print("invalid_session");
-		return -1;
-	}
-
-	if (!session_connected_get(session)) {
-		print("not_connected", session_name(session));
-		return 0;
-	}
-
-	++sort_modes;
-
 	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
-	 		return -1;
-
-	if (!(chan = irc_find_channel(j->channels, channame))) {
-		printq("generic", "irc_command_names: wtf?");
-		return -1;
-	}
-
-	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	if (!(chan = irc_find_channel(j->channels, channame))) {
 		printq("generic", "irc_command_names: wtf?");
 		return -1;
 	}
-
+/* jaki jest cel tego ze to bylo robione 2 razy ? */
 	mode[1] = '\0';
 
 	for (lvl =0; lvl<nplen; lvl++)
@@ -1391,7 +1301,7 @@ COMMAND(irc_command_names)
 			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3], lvl_total[4], lvl_total[5]);
 #undef plvl
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	string_free (buf, 1);
 	xfree (channame);
 	return 0;
@@ -1416,7 +1326,7 @@ COMMAND(irc_command_topic)
 		newtop = saprintf("TOPIC %s\r\n", chan+4);
 
 	irc_write(j, newtop);
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree (newtop);
 	xfree (chan);
 	return 0;
@@ -1453,7 +1363,7 @@ COMMAND(irc_command_invite)
 	}
 	irc_write(j, "INVITE %s %s\r\n", *mp, chan+4);
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(chan);
 	return 0;
 }
@@ -1474,7 +1384,7 @@ COMMAND(irc_command_kick)
 	}
 	irc_write(j, "KICK %s %s :%s\r\n", chan+4, *mp, KICKMSG(session, mp[1]));
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(chan);
 	return 0;
 }
@@ -1515,7 +1425,7 @@ COMMAND(irc_command_unban)
 			irc_write(j, "MODE %s -b %s\r\n", channame+4, *mp);
 		}
 	}
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(channame);
 	return 0;
 
@@ -1556,7 +1466,7 @@ COMMAND(irc_command_ban)
 		} else
 			irc_write(j, "MODE %s +b %s\r\n", chan+4, *mp);
 	}
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(chan);
 	return 0;
 }
@@ -1625,7 +1535,7 @@ COMMAND(irc_command_devop)
 	chan-=4;
 	xfree(chan);
 	xfree(nicks);
-	irc_getchan_free(mp);
+	array_free(mp);
 	return 0;
 }
 
@@ -1653,7 +1563,7 @@ COMMAND(irc_command_ctcp)
 	irc_write(irc_private(session), "PRIVMSG %s :\01%s\01\r\n",
 			who+4, ctcps[i].name?ctcps[i].name:(*mp));
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(who);
 	return 0;
 }
@@ -1670,7 +1580,7 @@ COMMAND(irc_command_ping)
 	irc_write(irc_private(session), "PRIVMSG %s :\01PING %d %d\01\r\n",
 			who+4 ,tv.tv_sec, tv.tv_usec);
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(who);
 	return 0;
 }
@@ -1697,7 +1607,7 @@ COMMAND(irc_command_me)
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
 			session_name(session), j->nick, chan, col);
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(chan);
 	xfree(col);
 	xfree(str);
@@ -1714,7 +1624,7 @@ COMMAND(irc_command_mode)
 /* G->dj: I'm still leaving this 
 	if (!(*mp)) {
 		print("not_enough_params", name);
-		irc_getchan_free(mp);
+		array_free(mp);
 		xfree(chan);
 		return -1;
 	}
@@ -1727,7 +1637,7 @@ COMMAND(irc_command_mode)
 		irc_write(irc_private(session), "MODE %s %s\r\n",
 				chan+4, *mp);
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(chan);
 	return 0;
 }
@@ -1761,7 +1671,7 @@ COMMAND(irc_command_whois)
 		irc_write(irc_private(session),	"WHOIS %s %s\r\n", person+4, person+4);
 	else	irc_write(irc_private(session),	"WHOIS %s\r\n",  person+4);
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree (person);
 	return 0;
 }
@@ -1822,7 +1732,7 @@ COMMAND(irc_command_query)
 	window_switch(w->id);
 
 	xfree(tmp);
-	irc_getchan_free(mp);
+	array_free(mp);
         array_free(p);
 	xfree(tar);
 	return 0;
@@ -1857,7 +1767,7 @@ COMMAND(irc_command_jopacy)
 
 	irc_write(j, str);
 
-	irc_getchan_free(mp);
+	array_free(mp);
 	xfree(tar);
 	xfree(str);
 	xfree(tmp);
@@ -1869,11 +1779,6 @@ COMMAND(irc_command_nick)
 {
 	irc_private_t	*j = irc_private(session);
 
-	if (!session_check(session, 1, IRC3)) {
-		printq("invalid_session");
-		return -1;
-	}
-	
 	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
@@ -1963,7 +1868,6 @@ COMMAND(irc_command_genkey) {
 int irc_plugin_init(int prio)
 {
 	struct passwd	*pwd_entry = getpwuid(getuid());
-
 	plugin_register(&irc_plugin, prio);
 
 	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
@@ -1975,61 +1879,45 @@ int irc_plugin_init(int prio)
 	query_connect(&irc_plugin, "status-show",	irc_status_show_handle, NULL);
 	query_connect(&irc_plugin, "irc-kick",		irc_onkick_handler, 0);
 
-	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, 0, NULL); /*COMMAND_MUSTBECONNECTED, NULL);*/
-	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 0, NULL);
-	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect, 0, NULL);
-	command_add(&irc_plugin, "irc:reconnect", "r ?",irc_command_reconnect, 0, NULL);
+#define IRC_ONLY 	SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define IRC_FLAGS 	IRC_ONLY | SESSION_MUSTBECONNECTED
+	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect,IRC_ONLY, NULL);
+	command_add(&irc_plugin, "irc:reconnect", "r ?",irc_command_reconnect,	IRC_ONLY, NULL);
 
-	command_add(&irc_plugin, "irc:join", "w", 	irc_command_jopacy, 0, NULL);
-	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 0, NULL);
-	command_add(&irc_plugin, "irc:cycle", "w ?",	irc_command_jopacy, 0, NULL);
-	command_add(&irc_plugin, "irc:query", "uUw",	irc_command_query, 0, NULL);
-	command_add(&irc_plugin, "irc:nick", "?",	irc_command_nick, 0, NULL);
-	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 0, NULL);
-	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 0, NULL);
-	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 0, NULL); /*COMMAND_MUSTBECONNECTED, NULL);*/
-	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 0, NULL);
-	command_add(&irc_plugin, "irc:msg", "uUw ?",	irc_command_msg, 0, NULL);
-	command_add(&irc_plugin, "irc:notice", "uUw ?",	irc_command_msg, 0, NULL);
-	command_add(&irc_plugin, "irc:me", "uUw ?",	irc_command_me, 0, NULL);
-	command_add(&irc_plugin, "irc:ctcp", "uUw ?",	irc_command_ctcp, 0, NULL);
-	command_add(&irc_plugin, "irc:ping", "uUw ?",	irc_command_ping, 0, NULL);
-	command_add(&irc_plugin, "irc:mode", "w ?",	irc_command_mode, 0, NULL);
-	command_add(&irc_plugin, "irc:umode", "?",	irc_command_umode, 0, NULL);
-	command_add(&irc_plugin, "irc:wii", "uU",	irc_command_whois, 0, NULL);
-	command_add(&irc_plugin, "irc:whois", "uU",	irc_command_whois, 0, NULL);
-	command_add(&irc_plugin, "irc:find", "uU",	irc_command_whois, 0, NULL); /* for auto_find */
-	command_add(&irc_plugin, "irc:whowas", "uU",	irc_command_whois, 0, NULL);
+	command_add(&irc_plugin, "irc:join", "w", 	irc_command_jopacy, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:cycle", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:query", "uUw",	irc_command_query,	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:nick", "?",	irc_command_nick, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, "irc:msg", "uUw ?",	irc_command_msg, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:notice", "uUw ?",	irc_command_msg, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:me", "uUw ?",	irc_command_me, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:ctcp", "uUw ?",	irc_command_ctcp, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:ping", "uUw ?",	irc_command_ping, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:mode", "w ?",	irc_command_mode, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:umode", "?",	irc_command_umode, 	IRC_ONLY /* _FLAGS ? */, NULL);
+	command_add(&irc_plugin, "irc:wii", "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:whois", "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:find", "uU",	irc_command_whois, 	IRC_FLAGS, NULL); /* for auto_find */
+	command_add(&irc_plugin, "irc:whowas", "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
 
-	/* dj>
-	 * what about implementing something like that in command_add:
-	 * that whatever is in \" \" would be send to executed command
-	 * 
-	 * without that we have to make handler for each function
-	 * even if there is nothing interesting there ;/
-	 * PS: maybe such a thing is already implemented, and I don't know that
-	 *
-	 * g> I'm guessing you wan't to use it just with _some_ commands
-	 *    not all that are below...
-	 *
-	 * d> Why not ? ;)
-	 *    I think it could be aliases to command /quote ....
-	 *    I really don't like writing unnecessary code (thx crs) ;)
-	 */ 
-	/* TODO 
-	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL);   q admin
-	*/
-	command_add(&irc_plugin, "irc:access", "p ?",		irc_command_alist, 0, 
-				    "-a --add -d --delete -s --show -l --list");
-	command_add(&irc_plugin, "irc:ban",  "uUw uU",		irc_command_ban, 0, NULL); 
-	command_add(&irc_plugin, "irc:kick", "uUw uU ?",	irc_command_kick, 0, NULL);
-	command_add(&irc_plugin, "irc:kickban", "uUw uU ?",	irc_command_kickban, 0, NULL);
-	command_add(&irc_plugin, "irc:bankick", "uUw uU ?",	irc_command_kickban, 0, NULL);
-	command_add(&irc_plugin, "irc:unban",  "uUw uU",	irc_command_unban, 0, NULL); 
-	command_add(&irc_plugin, "irc:invite", "uUw uUw",	irc_command_invite, 0, NULL);
-	command_add(&irc_plugin, "irc:who", "uUw",		irc_command_who, 0, NULL);
+	command_add(&irc_plugin, "irc:access", "p ?",	irc_command_alist, 0, "-a --add -d --delete -s --show -l --list");
+	command_add(&irc_plugin, "irc:ban",  "uUw uU",	irc_command_ban, 	IRC_FLAGS, NULL); 
+	command_add(&irc_plugin, "irc:kick", "uUw uU ?",irc_command_kick, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:kickban", "uUw uU ?", irc_command_kickban,IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:bankick", "uUw uU ?", irc_command_kickban,IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:unban",  "uUw uU",irc_command_unban, 	IRC_FLAGS, NULL); 
+	command_add(&irc_plugin, "irc:invite", "uUw uUw",irc_command_invite, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:who", "uUw",	irc_command_who, 	IRC_FLAGS, NULL);
 
 /*
+	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL);   q admin
 	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL);   q map
 	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); V q links
 	command_add(&irc_plugin, "irc:oper", "",	NULL, 0, NULL);   q oper %nick %pass
@@ -2039,19 +1927,19 @@ int irc_plugin_init(int prio)
 	*/
 	/* G: Yeah I know it look shitty as hell
 	 */
-	command_add(&irc_plugin, "irc:op", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
-	command_add(&irc_plugin, "irc:deop", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
-	command_add(&irc_plugin, "irc:voice", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
-	command_add(&irc_plugin, "irc:devoice", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
-	command_add(&irc_plugin, "irc:halfop", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
-	command_add(&irc_plugin, "irc:dehalfop", "uUw uU uU uU uU uU uU ?",	irc_command_devop, 0, NULL);
+	command_add(&irc_plugin, "irc:op", "uUw uU uU uU uU uU uU ?",	irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:deop", "uUw uU uU uU uU uU uU ?",	irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:voice", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:devoice", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:halfop", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:dehalfop", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
 	
-	command_add(&irc_plugin, "irc:away", "?",	irc_command_away, 0, NULL); /*COMMAND_MUSTBECONNECTED, NULL);*/
-	command_add(&irc_plugin, "irc:_autoaway", NULL,	irc_command_away, 0, NULL);
-	command_add(&irc_plugin, "irc:back", NULL,	irc_command_away, 0, NULL);
-	command_add(&irc_plugin, "irc:_autoback", NULL,	irc_command_away, 0, NULL);
-	command_add(&irc_plugin, "irc:quote", "?",	irc_command_quote, 0, NULL);
-	command_add(&irc_plugin, "irc:_conntest", "?",	irc_command_test, 0, NULL);
+	command_add(&irc_plugin, "irc:away", "?",	irc_command_away,	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:_autoaway", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:back", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:_autoback", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:quote", "?",	irc_command_quote,	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:_conntest", "?",	irc_command_test, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:_genkeys",  "?",  irc_command_genkey, 0, NULL);
 #ifdef IRC_BUILD_ALIAS
 // dj: I get sigsegv, and probably memleak

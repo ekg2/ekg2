@@ -54,7 +54,7 @@ typedef struct {
 	int 		future;
 } IrcCommand;
 
-int irc_parse_line(session_t *s, char *buf, int len, int fd, irc_private_t *j);
+int irc_parse_line(session_t *s, char *buf, int fd);
 char *irc_make_banmask(session_t *session, const char *nick, 
 		const char *ident, const char *hostname);
 
