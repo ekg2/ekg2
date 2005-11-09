@@ -332,7 +332,7 @@ QUERY(irc_validate_uid)
 	char	*uid 	= *(va_arg(ap, char **));
 	int	*valid 	= va_arg(ap, int *);
 
-	if (!*uid)
+	if (!uid)
 		return 0;
 
 	if (!xstrncasecmp(uid, IRC4, 4) && xstrlen(uid)>4) {
@@ -1020,39 +1020,23 @@ COMMAND(irc_command_add)
 	return ret;
 }
 
-int irc_write_status(session_t *s, int quiet)
-{
-	irc_private_t	*j = irc_private(s);
-	const char	*status;
-	char		*descr;
-
-	status = session_status_get(s);
-	descr = (char *)session_descr_get(s);
-
-	if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
-		irc_write(j, "AWAY :\r\n");
-	} else {
-		if (descr)
-			irc_write(j, "AWAY :%s\r\n", descr);
-		else
-			irc_write(j, "AWAY :%s\r\n", status);
-	}
-
-	return 0;
-}
-
 COMMAND(irc_command_away)
 {
+	irc_private_t	*j = irc_private(session);
+	int 		isaway = 0;
+
 	if (!xstrcmp(name, "back")) {
 		session_descr_set(session, NULL);
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 	} else if (!xstrcmp(name, "away")) {
-		session_descr_set(session, params[0]); /* if params[0] is NULL it'd be NULL too i think ;p */
+		session_descr_set(session, params[0]);
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
+		isaway = 1;
 	} else if (!xstrcasecmp(name, "_autoaway")) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
+		isaway = 1;
 	} else if (!xstrcasecmp(name, "_autoback")) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
@@ -1061,7 +1045,16 @@ COMMAND(irc_command_away)
 		return -1;
 	}
 
-	irc_write_status(session, quiet);
+	if (!isaway) {
+		irc_write(j, "AWAY :\r\n");
+	} else {
+		const char *status = session_status_get(session);
+		const char *descr  = session_descr_get(session);
+		if (descr)
+			irc_write(j, "AWAY :%s\r\n", descr);
+		else
+			irc_write(j, "AWAY :%s\r\n", status);
+	}
 	return 0;
 }
 
@@ -1890,7 +1883,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:cycle", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:query", "uUw",	irc_command_query,	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:nick", "?",	irc_command_nick, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, "irc:nick", "!",	irc_command_nick, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 	IRC_FLAGS, NULL);
