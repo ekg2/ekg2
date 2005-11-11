@@ -247,5 +247,5 @@ int script_variables_write();
 
 #define SCRIPT_HANDLER_MULTI_FOOTER(y, _args...)\
 /* foreach y->list->next do SCRIPT_HANDLER_FOOTER(y->list->data, _args); */\
-	SCRIPT_HANDLER_FOOTER(y, _args);
+	SCRIPT_HANDLER_FOOTER(y, _args)
 
