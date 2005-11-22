@@ -25,15 +25,29 @@
 #include "plugins.h"
 #include "sessions.h"
 
+// #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 
 #define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
 
-#define COMMAND_ISALIAS		0x01
-#define COMMAND_ISSCRIPT	0x02
-#define SESSION_MUSTBECONNECTED	0x04
-#define SESSION_MUSTBELONG	0x08
-#define SESSION_MUSTHASPRIVATE	0x10
+/* INFORMATIONAL FLAGS */
+	/* command is binded by alias managment */
+#define COMMAND_ISALIAS 		0x01
+	/* command is binded by script mangament */
+#define COMMAND_ISSCRIPT		0x02
+/* .... */
+
+/* CONDITIONAL FLAGS */
+	/* '!' in params means that arg must exist in par[..] (?) */
+#define COMMAND_ENABLEREQPARAMS 	0x10
+	/* when par[0] != NULL, than target = par[0] and than par list moves up (par++ ; par[0] == par[1] and so on */
+#define COMMAND_PARAMASTARGET		0x20
+	/* session must be connected to execute that command */
+#define SESSION_MUSTBECONNECTED 	0x40
+	/* command must come from the same plugin as session (?) */
+#define SESSION_MUSTBELONG		0x80
+	/* session must exist and has private struct */
+#define SESSION_MUSTHASPRIVATE		0x100
 
 typedef COMMAND(command_func_t);
 

@@ -704,12 +704,6 @@ COMMAND(cmd_eval)
 	int ret = 0, argv_count, i;
 	char **argv;
 
-	if (!params[0]) {
-                printq("invalid_params", name);
-                ret = -1;
-                goto eval_end;
-	}
-
 	argv = array_make(params[0], " ", 0, 1, 1);
 	
 	argv_count = array_count(argv);
@@ -720,7 +714,6 @@ COMMAND(cmd_eval)
 
 	array_free(argv);
 
-eval_end:
 	return ret;
 }
 
@@ -728,12 +721,6 @@ COMMAND(cmd_for)
 {
 	int for_all = 0, ret = 0;
 
-	if (!params[0] || !params[1] || !params[2]) {
-		printq("invalid_params", name);
-		ret = -1;
-		goto for_end;
-	}
-	
 	if (!xstrcmp(params[1], "*")) 
 		for_all = 1; 
 
@@ -1959,25 +1946,19 @@ COMMAND(cmd_test_send)
 
 COMMAND(cmd_test_addtab)
 {
-	if (params[0])
-		tabnick_add(params[0]);
-
+	tabnick_add(params[0]);
 	return 0;
 }
 
 COMMAND(cmd_test_deltab)
 {
-	if (params[0])
-		tabnick_remove(params[0]);
-
+	tabnick_remove(params[0]);
 	return 0;
 }
 
 COMMAND(cmd_test_debug)
 {
-	if (params[0]) 
-		debug("%s\n", params[0]);
-
+	debug("%s\n", params[0]);
 	return 0;
 }
 
@@ -1994,8 +1975,9 @@ COMMAND(cmd_test_debug_dump)
 
 COMMAND(cmd_test_event_test)
 {
-	if (params[0])
-		event_target_check(xstrdup(params[0]));
+	char *tmp = xstrdup(params[0]);
+	event_target_check(tmp);
+	xfree(tmp);
 	return 0;
 }
 
@@ -2259,7 +2241,7 @@ COMMAND(cmd_beep)
 
 COMMAND(cmd_play)
 {
-	if (!params[0] || !config_sound_app) {
+	if (!config_sound_app) {
 		printq("not_enough_params", name);
 		return -1;
 	}
@@ -2269,7 +2251,7 @@ COMMAND(cmd_play)
 
 COMMAND(cmd_say)
 {
-	if (!params[0] || !config_speech_app) {
+	if (!config_speech_app) {
 		printq("not_enough_params", name);
 		return -1;
 	}
@@ -2284,35 +2266,26 @@ COMMAND(cmd_say)
 
 COMMAND(cmd_reload)
 {
-	int res = 0;
+	int res;
 
-	if ((res = config_read_plugins()))
-		printq("error_reading_config", strerror(errno));
+	if ((res = config_read_plugins())) printq("error_reading_config", strerror(errno));
+	if (res == -1) return -1;
 
-        if (res == -1)
-                goto end;
+	if ((res = config_read(NULL))) printq("error_reading_config", strerror(errno));
+	if (res == -1) return -1;
 
-	if ((res = config_read(NULL)))
-                printq("error_reading_config", strerror(errno));
+	if ((res = session_read())) printq("error_reading_config", strerror(errno));
+	if (res == -1) return -1;
 
-        if (res == -1)
-                goto end;
-
-        if ((res = session_read()))
-                printq("error_reading_config", strerror(errno));
-
-end:
-	if (res != -1) {
-		printq("config_read_success");
-		config_changed = 0;
-	}
+	printq("config_read_success");
+	config_changed = 0;
 
 	return res;
 }
 
 COMMAND(cmd_query)
 {
-	char **p = xcalloc(3, sizeof(char*));
+	char **p;
 	int i, res = 0;
 	metacontact_t *m;
 	char *tmp;
@@ -2324,6 +2297,7 @@ COMMAND(cmd_query)
                 else
                         return -1;
         }
+	p = xcalloc(3, sizeof(char*));
 
 	/* skopiuj argumenty dla wywo³ania /chat */
 	for (i = 0; params[i]; i++)
@@ -2661,12 +2635,39 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (!res) {
 /* TODO CHECK, btw. z tym last_params to nie ma jakiegos memleaka ? jesli jest alias to jest tworzony jakies arrayik, zwalniamy go gdzies ? */
 			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : last_command->params;
-			char **par = array_make(p, " \t", array_count(last_params), 1, 1);
-/* i think lockink window to display only 1 line is sensless.. */
-			window_lock_inc_n(target);
-			res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
-			window_lock_dec_n(target);
-			query_emit(NULL, "ui-window-refresh");
+			int parcount = array_count(last_params);
+			char **par = array_make(p, " \t", parcount, 1, 1);
+
+
+			if (last_command->flags & COMMAND_PARAMASTARGET) {
+				if (par[0]) {
+					debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]);
+					target = par[0];
+				}
+			}
+
+			if (/* !res && */ last_command->flags & COMMAND_ENABLEREQPARAMS) {
+				int i;
+				for (i=0; i < parcount; i++) {
+					char *p;
+					if (!(p = last_params[i])) break; /* rather impossible */
+					if (p[0] == '!' && !par[i]) {
+						if (i == 0 && (last_command->flags & COMMAND_PARAMASTARGET) && target) /* if params[0] already in target */
+							continue;	/* skip it */
+						debug("[command_exec,%s] res = -1; req params[%d] = NIL\n", last_name, i);
+						printq("not_enough_params", last_name);
+						res = -1;
+						break;
+					} else if (p[0] != '!') break;
+				}
+			}
+
+			if (!res) {
+				window_lock_inc_n(target);
+				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
+				window_lock_dec_n(target);
+				query_emit(NULL, "ui-window-refresh");
+			}
 
 			array_free(par);
 		}
@@ -4036,9 +4037,7 @@ static int command_add_compare(void *data1, void *data2)
  *  - name - nazwa komendy,
  *  - params - definicja parametrów (szczegó³y poni¿ej),
  *  - function - funkcja obs³uguj±ca komendê,
- *  - help_params - opis parametrów,
- *  - help_brief - krótki opis komendy,
- *  - help_long - szczegó³owy opis komendy.
+ *  - flags - bitmask. look @ commands.h
  *  - possibilities - mo¿liwo¶ci tj ewentualne parametry - przy dope³nianiu przydatne 
  *
  * 0 je¶li siê nie uda³o, w przeciwnym razie adres do strukturki.
@@ -4048,17 +4047,11 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 	command_t *c = xmalloc(sizeof(command_t));
 
 	c->name = xstrdup(name);
-	if (params)
-		c->params = array_make(params, " ", 0, 1, 1);
-	else 
-		c->params = NULL;
+	c->params = params ? array_make(params, " ", 0, 1, 1) : NULL;
 	c->function = function;
 	c->flags = flags;
 	c->plugin = plugin;
-        if (possibilities)
-                c->possibilities = array_make(possibilities, " ", 0, 1, 1);
-        else
-		c->possibilities = NULL;
+	c->possibilities = possibilities ? array_make(possibilities, " ", 0, 1, 1) : NULL;
 
 	return list_add_sorted(&commands, c, 0, command_add_compare);
 }
@@ -4113,7 +4106,7 @@ int command_remove(plugin_t *plugin, const char *name)
  * 'm' - metacontact
  * 'w' - window name
  * 
- * je¿eli parametr == 'p' to 9 argument funkcji command_add() przyjmuje jako argument
+ * je¿eli parametr == 'p' to 6 argument funkcji command_add() przyjmuje jako argument
  * tablicê z mo¿liwymi uzupe³nieniami 
  * 
  * parametry te¿ s± tablic±, dlatego u¿ywamy makr possibilities() i params() - najlepiej
@@ -4155,9 +4148,9 @@ void command_init()
 	command_add(NULL, "exec", "p UuC ?", cmd_exec, 0,
 	  "-m --msg -b --bmsg");
 	
-	command_add(NULL, "eval", "?", cmd_eval, 0, NULL);
+	command_add(NULL, "eval", "!", cmd_eval, COMMAND_ENABLEREQPARAMS, NULL);
  
-	command_add(NULL, "for", "p ? c", cmd_for, 0,
+	command_add(NULL, "for", "!p !? !c", cmd_for, COMMAND_ENABLEREQPARAMS,
           "-s --sessions -u --users -w --windows");
  
 	command_add(NULL, "!", "?", cmd_exec, 0, NULL);
@@ -4181,7 +4174,7 @@ void command_init()
 	command_add(NULL, "on", "p e ? UuC c", cmd_on, 0,
 	  "-a --add -d --del -l --list" );
 	
-	command_add(NULL, "play", "f", cmd_play, 0, NULL);
+	command_add(NULL, "play", "!f", cmd_play, COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(NULL, "plugin", "P ?", cmd_plugin, 0, NULL);
 
@@ -4198,7 +4191,7 @@ void command_init()
 	  
 	command_add(NULL, "save", NULL, cmd_save, 0, NULL);
 
-	command_add(NULL, "say", "?", cmd_say, 0,
+	command_add(NULL, "say", "!", cmd_say, COMMAND_ENABLEREQPARAMS,
 	  "-c --clear");
 	  
         command_add(NULL, "session", "psS psS sS ?", session_command, 0,
@@ -4227,9 +4220,9 @@ void command_init()
 
 	command_add(NULL, "_query", "? ? ? ? ? ? ? ? ? ?", cmd_debug_query, 0,NULL); 
 
-	command_add(NULL, "_addtab", "? ?", cmd_test_addtab, 0, NULL);
+	command_add(NULL, "_addtab", "!", cmd_test_addtab, COMMAND_ENABLEREQPARAMS, NULL);
  
-	command_add(NULL, "_deltab", "? ?", cmd_test_deltab, 0, NULL);
+	command_add(NULL, "_deltab", "!", cmd_test_deltab, COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(NULL, "_fds", NULL, cmd_test_fds, 0, NULL);
 
@@ -4239,11 +4232,11 @@ void command_init()
 
 	command_add(NULL, "_segv", NULL, cmd_test_segv, 0, NULL);
  
-	command_add(NULL, "_debug", "?", cmd_test_debug, 0, NULL);
+	command_add(NULL, "_debug", "!", cmd_test_debug, COMMAND_ENABLEREQPARAMS, NULL);
  
 	command_add(NULL, "_debug_dump", NULL, cmd_test_debug_dump, 0, NULL);
  
-	command_add(NULL, "_event_test", NULL, cmd_test_event_test, 0, NULL);
+	command_add(NULL, "_event_test", "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(NULL, "_desc", "r", cmd_desc, 0, NULL);
 }
