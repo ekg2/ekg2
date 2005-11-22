@@ -648,7 +648,9 @@ void ncurses_redraw(window_t *w)
 		if ((w->frames & WF_RIGHT) && (w->frames & WF_BOTTOM))
 			mvwaddch(n->window, w->height - 1, w->width - 1, ACS_LRCORNER);
 	}
-
+ 
+	if (n->start < 0) 
+		n->start = 0;
 	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
 		struct screen_line *l = &n->lines[n->start + y];
 		int x_real = 0;
@@ -686,8 +688,7 @@ void ncurses_redraw(window_t *w)
                                 ch = '?';
                                 attr |= A_REVERSE;
                         }
-
-                        wattrset(n->window, attr);
+			wattrset(n->window, attr);
 
 			mvwaddch(n->window, top + y, left + x, ch);
 		}
@@ -1142,13 +1143,11 @@ next:
 void update_statusbar(int commit)
 {
 	userlist_t *q = userlist_find(window_current->session, window_current->target);
-	struct format_data formats[40];	/* zwiêkszaæ! */
+	struct format_data formats[32];	/* if someone add his own format increment it. */
 	int formats_count = 0, i = 0, y;
-	int mail_count = -1;
 	session_t *sess = window_current->session;
 	userlist_t *u;
 	char *tmp;
-	char *t2, *t3; /* yeah, I know, shitty way */
 
 	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
 	if (ncurses_header)
@@ -1163,41 +1162,35 @@ void update_statusbar(int commit)
 		formats[formats_count].name = x; \
 		formats[formats_count].text = (y) ? xstrdup(z) : NULL; \
 		formats_count++; \
-		formats[formats_count].name = NULL; \
-		formats[formats_count].text = NULL; \
+/* jak robimy memset(&formats, 0, sizeof(formats)); to po co to ? */\
 	} 
 
-	{
-		time_t t = time(NULL);
-		struct tm *tm;
-		char tmpt[100];
-
-		tm = localtime(&t);
-
-		if (!strftime(tmpt, sizeof(tmpt), format_find("statusbar_timestamp"), tm)
-				&& xstrlen(format_find("statusbar_timestamp"))>0)
-			strcpy(tmpt, "TOOLONG!");
-		
-		__add_format("time", 1, tmpt);
-	}
+	__add_format("time", 1, timestamp(format_find("statusbar_timestamp")));
 
 	__add_format("window", window_current->id, itoa(window_current->id));
 	__add_format("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
 	tmp = (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : xstrdup(window_current->target);
 	__add_format("query", tmp, tmp);
-	xfree(tmp); tmp = t2 = t3 = NULL;
+	xfree(tmp); 
 
-	query_emit(NULL, "mail-count", &mail_count);
-	__add_format("mail", (mail_count > 0), itoa(mail_count));
-
-	query_emit(NULL, "irc-topic", &tmp, &t2, &t3);
-	__add_format("irctopic", tmp, tmp);
-	__add_format("irctopicby", t2, t2);
-	__add_format("ircmode", t3, t3);
-	xfree(tmp);
-	xfree(t2);
-	xfree(t3);
+	if (plugin_find("mail")) {
+		int mail_count = -1;
+		query_emit(NULL, "mail-count", &mail_count);
+		__add_format("mail", (mail_count > 0), itoa(mail_count));
+	}
+	if (session_check(window_current->session, 0, "irc")) {
+		/* yeah, I know, shitty way */
+		char *t2 = NULL;
+		char *t3 = NULL; 
+		query_emit(NULL, "irc-topic", &tmp, &t2, &t3);
+		__add_format("irctopic", tmp, tmp);
+		__add_format("irctopicby", t2, t2);
+		__add_format("ircmode", t3, t3);
+		xfree(tmp);
+		xfree(t2);
+		xfree(t3);
+	}
 
 	{
 		string_t s = string_init("");
@@ -1315,7 +1308,7 @@ void update_statusbar(int commit)
 		}
 	}
 
-	for (i = 0; formats[i].name; i++)
+	for (i = 0; i < formats_count; i++)
 		xfree(formats[i].text);
 
 	query_emit(NULL, "ui-redrawing-header");
@@ -1769,9 +1762,8 @@ int ekg_getch(int meta)
 		if (mouse_state)
 			ncurses_mouse_clicked_handler(x, y, mouse_state);
 	} 
-
-	query_emit(NULL, "ui-keypress", &ch, NULL);
-
+	if (query_emit(NULL, "ui-keypress", &ch, NULL) == -1)  
+		return -2; /* -2 - ignore that key */
 #undef GET_TIME
 #undef DIF_TIME
 
@@ -1828,7 +1820,6 @@ static void spellcheck(char *what, char *where)
 	    if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) { // separator/koniec lini/koniec stringu
 		size = strlen(what) + 1;
         	word = xmalloc(size);
-        	memset(word, 0, size); /* czyscimy pamiec */
 		
 		for (; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
 		    if(isalpha_pl(what[i])) /* szukamy jakiejs pierwszej literki */
@@ -2220,7 +2211,7 @@ int ncurses_window_new(window_t *w)
 
 	w->private = n = xmalloc(sizeof(ncurses_window_t));
 
-	if (w->target && !xstrcmp(w->target, "__contacts"))
+	if (!xstrcmp(w->target, "__contacts"))
 		ncurses_contacts_new(w);
 
 	if (w->target) {

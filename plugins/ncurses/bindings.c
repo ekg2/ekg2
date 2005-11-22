@@ -646,43 +646,44 @@ static void binding_parse(struct binding *b, const char *action)
 	if (!xstrcmp(args[0], x)) { \
 		b->function = y; \
 		b->arg = xstrdup(args[1]); \
-	} 
+	} else  
 
-	__action("backward-word", binding_backward_word);
-	__action("forward-word", binding_forward_word);
-	__action("kill-word", binding_kill_word);
-	__action("toggle-input", binding_toggle_input);
-	__action("cancel-input", binding_cancel_input);
-	__action("backward-delete-char", binding_backward_delete_char);
-	__action("beginning-of-line", binding_beginning_of_line);
-	__action("end-of-line", binding_end_of_line);
-	__action("delete-char", binding_delete_char);
-	__action("backward-page", binding_backward_page);
-	__action("forward-page", binding_forward_page);
-	__action("kill-line", binding_kill_line);
-        __action("window-kill", window_kill_binding);
-	__action("yank", binding_yank);
-	__action("accept-line", binding_accept_line);
-	__action("line-discard", binding_line_discard);
-	__action("quoted-insert", binding_quoted_insert);
-	__action("word-rubout", binding_word_rubout);
-	__action("backward-char", binding_backward_char);
-	__action("forward-char", binding_forward_char);
-	__action("previous-history", binding_previous_history);
-	__action("previous-only-history", binding_previous_only_history);
-	__action("next-history", binding_next_history);
-	__action("next-only-history", binding_next_only_history);
-	__action("complete", binding_complete);
-	__action("quick-list", binding_quick_list_wrapper);
-	__action("toggle-contacts", binding_toggle_contacts_wrapper);
-	__action("next-contacts-group", binding_next_contacts_group);
-	__action("ignore-query", binding_ignore_query);
-	__action("ui-ncurses-debug-toggle", binding_ui_ncurses_debug_toggle);
-	__action("cycle-sessions", binding_cycle_sessions);
-	__action("forward-contacts-page", binding_forward_contacts_page);
-	__action("backward-contacts-page", binding_backward_contacts_page);
-	__action("forward-contacts-line", binding_forward_contacts_line);
-	__action("backward-contacts-line", binding_backward_contacts_line);
+	__action("backward-word", binding_backward_word)
+	__action("forward-word", binding_forward_word)
+	__action("kill-word", binding_kill_word)
+	__action("toggle-input", binding_toggle_input)
+	__action("cancel-input", binding_cancel_input)
+	__action("backward-delete-char", binding_backward_delete_char)
+	__action("beginning-of-line", binding_beginning_of_line)
+	__action("end-of-line", binding_end_of_line)
+	__action("delete-char", binding_delete_char)
+	__action("backward-page", binding_backward_page)
+	__action("forward-page", binding_forward_page)
+	__action("kill-line", binding_kill_line)
+        __action("window-kill", window_kill_binding)
+	__action("yank", binding_yank)
+	__action("accept-line", binding_accept_line)
+	__action("line-discard", binding_line_discard)
+	__action("quoted-insert", binding_quoted_insert)
+	__action("word-rubout", binding_word_rubout)
+	__action("backward-char", binding_backward_char)
+	__action("forward-char", binding_forward_char)
+	__action("previous-history", binding_previous_history)
+	__action("previous-only-history", binding_previous_only_history)
+	__action("next-history", binding_next_history)
+	__action("next-only-history", binding_next_only_history)
+	__action("complete", binding_complete)
+	__action("quick-list", binding_quick_list_wrapper)
+	__action("toggle-contacts", binding_toggle_contacts_wrapper)
+	__action("next-contacts-group", binding_next_contacts_group)
+	__action("ignore-query", binding_ignore_query)
+	__action("ui-ncurses-debug-toggle", binding_ui_ncurses_debug_toggle)
+	__action("cycle-sessions", binding_cycle_sessions)
+	__action("forward-contacts-page", binding_forward_contacts_page)
+	__action("backward-contacts-page", binding_backward_contacts_page)
+	__action("forward-contacts-line", binding_forward_contacts_line)
+	__action("backward-contacts-line", binding_backward_contacts_line)
+	; /* no action */
 
 
 #undef __action
@@ -826,7 +827,7 @@ int binding_key(struct binding *b, const char *key, int add)
 void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 {
 	list_t l;
-	binding_added_t b;
+	binding_added_t *b;
 	struct binding *binding_orginal = NULL;
 	char **chars = NULL, ch, *joined = NULL;
 	int added = 0;
@@ -842,26 +843,21 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 
         if (!binding_orginal) {
                 printq("bind_doesnt_exist", key);
-                goto end;
+		return;
         }
 
-	if (sequence) {
+	if (!sequence) {
+		printq("bind_press_key");
+		nodelay(input, FALSE);
+		while ((ch = wgetch(input)) != ERR) {
+			array_add(&chars, xstrdup(itoa(ch)));
+			nodelay(input, TRUE);
+		}
+		joined = array_join(chars, " ");
+	} else
 		joined = xstrdup(sequence);
-		goto after_key;
-	}
 
-	printq("bind_press_key");
-
-	nodelay(input, FALSE);
-	while ((ch = wgetch(input)) != ERR) {
-		array_add(&chars, xstrdup(itoa(ch)));
-		nodelay(input, TRUE);
-	}
-	
-	joined = array_join(chars, " ");
-
-after_key:
-
+#if 0 /* hmm.. co sie zmienilo od ostatniego razu ? key jest taki sam... lista bindingow tez.. */
         for (l = bindings; l; l = l->next) {
                 struct binding *d = l->data;
 
@@ -875,7 +871,7 @@ after_key:
 		printq("bind_doesnt_exist", key);
 		goto end;
 	}
-
+#endif
 	
 	for (l = bindings_added; l; l = l->next) {
 		binding_added_t *d = l->data;
@@ -886,12 +882,11 @@ after_key:
 			goto end;
 		}
 	}
+	b = xmalloc(sizeof(binding_added_t));
 
-        memset(&b, 0, sizeof(binding_added_t));
-
-	b.sequence = joined;
-	b.binding = binding_orginal;
-	list_add(&bindings_added, &b, sizeof(binding_added_t));
+	b->sequence = joined;
+	b->binding = binding_orginal;
+	list_add(&bindings_added, b, 0);
 	added = 2;
 end:
 	if (added != 2)

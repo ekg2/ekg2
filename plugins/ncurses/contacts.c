@@ -337,17 +337,7 @@ int ncurses_contacts_update(window_t *w)
 	
 	if (!w) {
 		list_t l;
-
-		for (l = windows; l; l = l->next) {
-			window_t *v = l->data;
-			
-			if (v->target && !xstrcmp(v->target, "__contacts")) {
-				w = v;
-				break;
-			}
-		}
-
-		if (!w)
+		if (!(w = window_find("__contacts")))
 			return -1;
 	}
 
@@ -427,38 +417,36 @@ group_cleanup:
 				continue;
 
 			for (lp = s->userlist; lp; lp = lp->next) {
-				userlist_t u;
+				userlist_t *u;
 				userlist_t *up = lp->data;
 
 				if (!up)
 					continue;
-			
-				memset(&u, 0, sizeof(u));
-				u.uid = up->uid;
-				u.nickname = up->nickname;
-				u.descr = up->descr;
-				u.status = up->status;
-				u.private = (void *) s;
-				u.blink = up->blink;
-				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
+				u = xmalloc(sizeof(userlist_t));
+				u->uid = up->uid;
+				u->nickname = up->nickname;
+				u->descr = up->descr;
+				u->status = up->status;
+				u->private = (void *) s;
+				u->blink = up->blink;
+				list_add_sorted(&sorted_all, u, 0, contacts_compare);
 			}
 		}
 	
 		for (l = window_current->userlist; l; l = l->next) {
 			userlist_t *up = l->data;
-			userlist_t u;
+			userlist_t *u;
 
 			if (!up)
 				continue;
-
-			memset(&u, 0, sizeof(u));
-			u.uid = up->uid;
-			u.nickname = up->nickname;
-			u.descr = up->descr;
-			u.status = up->status;
-			u.private = (void *) w->session;
-			u.blink = up->blink;
-			list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
+			u = xmalloc(sizeof(userlist_t));
+			u->uid = up->uid;
+			u->nickname = up->nickname;
+			u->descr = up->descr;
+			u->status = up->status;
+			u->private = (void *) w->session;
+			u->blink = up->blink;
+			list_add_sorted(&sorted_all, u, 0, contacts_compare);
 		}	
 	}
 	if ((all == 1 && !sorted_all_cache) || all == 2) {
@@ -468,20 +456,19 @@ group_cleanup:
                                 metacontact_t *m = l->data;
                                 metacontact_item_t *i = metacontact_find_prio(m);
                                 userlist_t *uu, *up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
-				userlist_t u;
+				userlist_t *u;
 				list_t ml, sl;
 
 				if (!m || !i || !up)
 					continue;
-				
-				memset(&u, 0, sizeof(u));
-				u.status = up->status;
-				u.descr = up->descr;
-				u.nickname = m->name;
-				u.private = (void *) 2;
-				u.blink = up->blink;
+				u = xmalloc(sizeof(userlist_t));
+				u->status = up->status;
+				u->descr = up->descr;
+				u->nickname = m->name;
+				u->private = (void *) 2;
+				u->blink = up->blink;
 
-				list_add_sorted(&sorted_all, &u, sizeof(u), contacts_compare);
+				list_add_sorted(&sorted_all, u, 0, contacts_compare);
 
 				/* Remove contacts contained in this metacontact. */
 				if ( config_contacts_metacontacts_swallow )
@@ -621,7 +608,8 @@ QUERY(ncurses_contacts_changed)
 {
 	const char *name = data;
 	window_t *w = NULL;
-	list_t l;
+	if (in_autoexec)
+		return 0;
 
 	if (!xstrcasecmp(name, "ncurses:contacts_size"))
 		config_contacts = 1;
@@ -727,17 +715,7 @@ QUERY(ncurses_contacts_changed)
 
 		array_free(args);
 	}
-	
-	for (l = windows; l; l = l->next) {
-		window_t *v = l->data;
-
-		if (v->target && !xstrcmp(v->target, "__contacts")) {
-			w = v;
-			break;
-		}
-	}
-
-	if (w) {
+	if ((w = window_find("__contacts"))) {
 		window_kill(w, 1);
 		w = NULL;
 	}
