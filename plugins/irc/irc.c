@@ -43,6 +43,7 @@
 #endif
 
 #include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/log.h>
 #include <ekg/protocol.h>
@@ -706,6 +707,7 @@ int irc_really_connect(session_t *session) {
 	j->fd = fd;
 	debug("[irc] socket() = %d\n", fd);
 
+	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
 	if (ioctl(fd, FIONBIO, &one) == -1) {
 		err = errno;
 		debug("[irc] handle_resolver() ioctl() failed: %s\n",
@@ -858,12 +860,7 @@ COMMAND(irc_command_msg)
 	const char	*uid=NULL;
 	char		*sid = NULL, *uid_full = NULL;
 
-	if (!params[0] || !params[1]) {
-		if (!params[0]) printq("not_enough_params", name);
-		return -1;
-	}
-
-	uid = params[0];
+	uid = target;
 	w = window_find_s(session, uid);
 
 	prv = xstrcmp(name, "notice");
@@ -902,7 +899,6 @@ COMMAND(irc_command_msg)
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-/* jak ktos zamieni te wartosci to zabije */
 		query_emit(NULL, "irc-protocol-message", &(sid), &(j->nick), &__msg, &isour, &xosd_to_us, &xosd_is_priv, &uid_full);
 
 		query_emit(NULL, "message-encrypt", &sid, &uid_full, &__msg, &secure);
@@ -929,22 +925,14 @@ COMMAND(irc_command_msg)
 
 COMMAND(irc_command_inline_msg)
 {
-	const char	*p[2] = { target, params[0] };
+	const char	*p[2] = { NULL, params[0] };
 
 	return irc_command_msg("msg", p, session, target, quiet);
 }
 
 COMMAND(irc_command_quote)
 {
-	irc_private_t	*j = irc_private(session);
-
-	if (!params[0]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-
-	irc_write(j, "%s\r\n", params[0]);
-
+	irc_write(irc_private(session), "%s\r\n", params[0]);
 	return 0;
 }
 
@@ -1019,8 +1007,7 @@ int irc_access_add(session_t *s, char *uid, int flagsadd, int flagsdel) {
 COMMAND(irc_command_add)
 {
 	int ret = 0;
-
-	irc_access_add(session, params[0] ? params[0] : target, IRC_FLAG_ISON, 0);
+	irc_access_add(session, target, IRC_FLAG_ISON, 0);
 	return ret;
 }
 
@@ -1048,16 +1035,15 @@ COMMAND(irc_command_away)
 		printq("generic_error", "Ale o so chozi?");
 		return -1;
 	}
-
-	if (!isaway) {
-		irc_write(j, "AWAY :\r\n");
-	} else {
+	if (isaway) {
 		const char *status = session_status_get(session);
 		const char *descr  = session_descr_get(session);
 		if (descr)
 			irc_write(j, "AWAY :%s\r\n", descr);
 		else
 			irc_write(j, "AWAY :%s\r\n", status);
+	} else {
+		irc_write(j, "AWAY :\r\n");
 	}
 	return 0;
 }
@@ -1097,9 +1083,7 @@ QUERY(irc_topic_header)
 	char		*tmp	= NULL;
 
 	*top = *setby = *modes = NULL;
-	if (targ && session_check(window_current->session, 1, IRC3) &&
-			session_connected_get(window_current->session)
-			)
+	if ( targ && session_check(window_current->session, 1, IRC3) && session_connected_get(window_current->session) )
 	{ 
 		/* channel */
 		if ((tmp = SOP(_005_CHANTYPES)) && 
@@ -1108,13 +1092,15 @@ QUERY(irc_topic_header)
 			*top   = xstrdup(chanp->topic);
 			*setby = xstrdup(chanp->topicby);
 			*modes = xstrdup(chanp->mode_str);
+			return 1;
 		/* person */
 		} else if ((per = irc_find_person((j->people), targ))) { 
 			*top   = saprintf("%s@%s", per->ident, per->host);
 			*setby = xstrdup(per->realname);
-		}
+			return 2;
+		} else return 0;
 	}
-	return 0;
+	return -1;
 }
 
 char *irc_getchan_int(session_t *s, const char *name, int checkchan)
@@ -1776,11 +1762,6 @@ COMMAND(irc_command_nick)
 {
 	irc_private_t	*j = irc_private(session);
 
-	if (!params[0]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-
 	/* GiM: XXX FIXME TODO think more about j->connecting... */
 	if (j->connecting || session_connected_get(session)) {
 		irc_write(j, "NICK %s\r\n", params[0]);
@@ -1878,7 +1859,7 @@ int irc_plugin_init(int prio)
 
 #define IRC_ONLY 	SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS 	IRC_ONLY | SESSION_MUSTBECONNECTED
-	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, IRC4, "!",		irc_command_inline_msg, IRC_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect,IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:reconnect", "r ?",irc_command_reconnect,	IRC_ONLY, NULL);
@@ -1887,13 +1868,13 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:cycle", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:query", "uUw",	irc_command_query,	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:nick", "!",	irc_command_nick, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, "irc:nick", "!",	irc_command_nick, 	IRC_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 	IRC_ONLY, NULL);
-	command_add(&irc_plugin, "irc:msg", "uUw ?",	irc_command_msg, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:notice", "uUw ?",	irc_command_msg, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 	IRC_ONLY  | 				COMMAND_PARAMASTARGET, NULL);
+	command_add(&irc_plugin, "irc:msg", "!uUw !",	irc_command_msg, 	IRC_FLAGS | COMMAND_ENABLEREQPARAMS |	COMMAND_PARAMASTARGET, NULL);
+	command_add(&irc_plugin, "irc:notice", "!uUw !",irc_command_msg, 	IRC_FLAGS | COMMAND_ENABLEREQPARAMS |	COMMAND_PARAMASTARGET, NULL);
 	command_add(&irc_plugin, "irc:me", "uUw ?",	irc_command_me, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:ctcp", "uUw ?",	irc_command_ctcp, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:ping", "uUw ?",	irc_command_ping, 	IRC_FLAGS, NULL);
@@ -1935,16 +1916,9 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:_autoaway", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:back", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:_autoback", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:quote", "?",	irc_command_quote,	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, "irc:quote", "!",	irc_command_quote,	IRC_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&irc_plugin, "irc:_conntest", "?",	irc_command_test, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:_genkeys",  "?",  irc_command_genkey, 0, NULL);
-#ifdef IRC_BUILD_ALIAS
-// dj: I get sigsegv, and probably memleak
-/*	command_add(&irc_plugin, "irc:n", "w?",		irc_command_names, 0, NULL); */
-	/* if somebody wants /n->/names without aliases.... */
-	alias_add(xstrdup("irc:n ? irc:names"), 0, 0);
-
-#endif
 
 	/* lower case: names of variables that reffer to client itself */
 	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
@@ -2040,14 +2014,14 @@ static int irc_theme_init()
 	format_add("irc_not_sent_chan",	"%P(%w%{2@%+gcp}X%2%3%P)%n %6", 1);
 	format_add("irc_not_sent_chanh","%P(%W%{2@%+GCP}X%2%3%P)%n %6", 1);
 
-	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%3/%5%B>%n %6", 1); /* NOT USED */
-	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
+//	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%3/%5%B>%n %6", 1); /* NOT USED */
+//	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
 	format_add("irc_msg_f_chan_nh",	"%B<%W%{2@%+GCP}X%2%3%B>%n %6", 1);
 	format_add("irc_msg_f_some",	"%b<%n%3%b>%n %6", 1);
 
-	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%3/%5%B)%n %6", 1); /* NOT USED */
-	format_add("irc_not_f_chanh",	"%B(%W%{2@%+GCP}X%2%3/%5%B)%n %6", 1); /* NOT USED */
+//	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%3/%5%B)%n %6", 1); /* NOT USED */
+//	format_add("irc_not_f_chanh",	"%B(%W%{2@%+GCP}X%2%3/%5%B)%n %6", 1); /* NOT USED */
 	format_add("irc_not_f_chan_n",	"%B(%w%{2@%+gcp}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);

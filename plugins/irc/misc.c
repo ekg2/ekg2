@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 
 #include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
@@ -111,7 +112,7 @@ int irc_write(irc_private_t *j, const char *format, ...)
 			xfree(text);
 			return 0;
 
-		} else 	if (res == -1) {
+		} else if (res == -1) {
 			xfree(text);
 			return -1;
 
@@ -324,11 +325,11 @@ char *irc_make_banmask(session_t *session, const char *nick, const char *ident, 
 
 int irc_parse_identhost(char *identhost, char **ident, char **host) 
 {
-	char	*tmp = xstrchr(identhost, '@');
+	char	*tmp;
 
 	xfree(*ident);
 	xfree(*host);
-	if (tmp) {
+	if ((tmp = xstrchr(identhost, '@'))) {
 		*ident = xstrndup(identhost, tmp-identhost);
 		*host  = xstrdup(tmp+1);
 	} else {
@@ -832,7 +833,7 @@ IRC_COMMAND(irc_c_msg)
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
-			return 0;
+		return 0;
 
 	mw = session_int_get(s, "make_window");
 
@@ -847,7 +848,7 @@ IRC_COMMAND(irc_c_msg)
 	if (j->connecting && !prv) {
 		/* (!xstrcmp(":_empty_", param[0]) || !xstrcmp("AUTH", param[2])) */
 		class = (mw&16)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
-		dest = saprintf(param[2]);
+		dest = xstrdup(param[2]);
 		format = xstrdup("irc_not_f_server");
 		/* WTF ? WHY this -1 ? insane ?
 		 * dj->G: because of it: (param[0]+1) 
@@ -880,7 +881,7 @@ IRC_COMMAND(irc_c_msg)
 		class = EKG_MSGCLASS_CHAT;
 		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
 		dest = saprintf("%s%s", IRC4, param[2]);
-		if (ctcpstripped && (pubtous = strcasestr(ctcpstripped, j->nick))) {
+		if ((pubtous = xstrcasestr(ctcpstripped, j->nick))) {
 			tous = pubtous[xstrlen(j->nick)];
 			if (!isalnum(tous) && !isalpha_pl(tous))
 			{

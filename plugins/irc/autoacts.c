@@ -15,6 +15,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <ekg/debug.h>
 #include <ekg/stuff.h>
 #include <ekg/sessions.h>
 #include <ekg/windows.h>

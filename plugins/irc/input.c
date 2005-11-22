@@ -24,6 +24,7 @@
 
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
+#include <ekg/stuff.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 

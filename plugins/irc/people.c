@@ -19,21 +19,15 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include <ekg/xmalloc.h>
-
-//#include <ekg/commands.h>
-//#include <ekg/plugins.h>
-#include <ekg/protocol.h>
+#include <ekg/debug.h>
+#include <ekg/dynstuff.h>
 #include <ekg/sessions.h>
-//#include <ekg/stuff.h>
-//#include <ekg/themes.h>
+#include <ekg/stuff.h>
 #include <ekg/userlist.h>
-//#include <ekg/windows.h>
-
+#include <ekg/xmalloc.h>
 
 #include "people.h"
 #include "irc.h"
-
 
 /* tmp = private->channels || private->people->channels->onchan */
 people_t *irc_find_person(list_t p, char *nick)
