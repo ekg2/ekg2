@@ -491,8 +491,12 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 		j->obuf_len = 0;
 	}
 
-	__reason  = xstrdup(reason);
+	__reason  = xstrdup(format_find(reason));
 	__session = xstrdup(session_uid_get(s));
+	
+	if (!xstrcmp(__reason, ""))
+			__reason = reason;
+			
 	query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
 	xfree(__reason);
 	xfree(__session);
