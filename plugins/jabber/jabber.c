@@ -353,7 +353,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 		char *seq 	= NULL;
 		uint32_t *format = NULL;
 
-		ismuc = 1;
+		ismuc = 0;
 
 		if (ismuc) {
 			int prv = 0;
