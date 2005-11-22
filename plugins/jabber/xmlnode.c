@@ -49,7 +49,6 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
 	}
 
 	newnode = xmalloc(sizeof(xmlnode_t));
-	memset(newnode, 0, sizeof(xmlnode_t));
 	newnode->name = xstrdup(name);
 
 	if ((n = j->node)) {

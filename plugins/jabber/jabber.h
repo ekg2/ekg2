@@ -41,6 +41,7 @@ typedef struct {
 	int id;				/* id zapytañ */
 	XML_Parser parser;		/* instancja parsera expata */
 	char *server;			/* nazwa serwera */
+	int port;			/* numer portu */
 	int connecting;			/* czy siê w³a¶nie ³±czymy? */
 	char *stream_id;		/* id strumienia */
 
@@ -90,6 +91,8 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts);
 void xmlnode_handle_end(void *data, const char *name);
 void xmlnode_handle_cdata(void *data, const char *text, int len);
 xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name);
+
+void jabber_handle_disconnect(session_t *s, const char *reason, int type);
 
 #endif /* __EKG_JABBER_JABBER_H */
 

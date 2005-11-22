@@ -5,10 +5,10 @@
 #include <unistd.h>
 #include <iconv.h>
 
-#include <ekg2-config.h>
+#include "ekg2-config.h"
 
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
-#include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
@@ -64,7 +64,7 @@ size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
 	for (t = inrepls; *t; t++)
 	{
 	  char *ib1 = *t;
-	  size_t ibl1 = strlen (*t);
+	  size_t ibl1 = xstrlen (*t);
 	  char *ob1 = ob;
 	  size_t obl1 = obl;
 	  iconv (cd, &ib1, &ibl1, &ob1, &obl1);
@@ -82,7 +82,7 @@ size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
       if (outrepl)
       {
 	/* Try replacing the output */
-	int n = strlen (outrepl);
+	int n = xstrlen (outrepl);
 	if (n <= obl)
 	{
 	  memcpy (ob, outrepl, n);
@@ -129,7 +129,7 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
     else
       outrepl = "?";
       
-    len = strlen (s);
+    len = xstrlen (s);
     ib = s, ibl = len + 1;
     obl = 16 * ibl;
     ob = buf = xmalloc (obl + 1);
@@ -139,7 +139,7 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
 
     *ob = '\0';
 
-    buf = (char*)xrealloc((void*)buf, strlen(buf)+1);
+    buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
     return buf;
   }
   else
@@ -200,6 +200,8 @@ WATCHER(jabber_handle_write)
 {
 	jabber_private_t *j = data;
 	int res;
+	if (type)
+		return;
 
 #ifdef HAVE_GNUTLS
 	if (j->using_ssl && j->ssl_session) {
@@ -252,7 +254,6 @@ notyet:
  *
  *  - j
  *  - text
- *  - freetext - czy zwolniæ tekst po wys³aniu?
  */
 int jabber_write(jabber_private_t *j, const char *format, ...)
 {
@@ -268,7 +269,7 @@ int jabber_write(jabber_private_t *j, const char *format, ...)
 	text = vsaprintf(format, ap);
 	va_end(ap);
 
-	debug("[jabber] send %s\n", text);
+//	debug("[jabber] send %s\n", text);
 
 	if (!j->obuf) {
 		int res;
@@ -284,14 +285,10 @@ int jabber_write(jabber_private_t *j, const char *format, ...)
 		if (res == len) {
 			xfree(text);
 			return 0;
-		}
-
-		if (res == -1) {
+		} else if (res == -1) {
 			xfree(text);
 			return -1;
-		}
-
-		buf = text + res;
+		} else buf = text + res;
 	} else
 		buf = text;
 
