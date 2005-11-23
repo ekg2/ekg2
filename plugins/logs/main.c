@@ -992,7 +992,7 @@ QUERY(logs_handler_newwin)
 
 void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status)
 {
-	char *textcopy = log_escape(text);
+	char *textcopy;
 	const char *timestamp = prepare_timestamp((time_t)time(0));
 
 	session_t *s = session_find((const char*)session);
@@ -1001,6 +1001,7 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 
 	if (!file)
 		return;
+	textcopy = log_escape(text);
 
 	if (!gotten_uid)	gotten_uid = uid;
 	if (!gotten_nickname)	gotten_nickname = uid;
@@ -1050,8 +1051,7 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 		fputs(status, file); 
 		fputc(',', file);
 	}
-	
-	fputs(textcopy, file);
+	fputs(textcopy ? textcopy : "", file);
 	fputs("\n", file);
 
 	xfree(textcopy);
@@ -1132,7 +1132,7 @@ void logs_xml(FILE *file, const char *session, const char *uid, const char *text
 	fputs("\t</sender>\n", file);
 
 	fputs("\t<body>\n", file);
-	fputs(textcopy, file);
+	fputs(textcopy ? textcopy : "", file);
 	fputs("\t</body>\n", file);
 
 	fputs("</message>\n", file);
