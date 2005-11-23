@@ -183,7 +183,7 @@ int jabber_write_status(session_t *s)
 		xfree(descr);
 	}
 
-	if (!xstrcmp(status, EKG_STATUS_AVAIL))			jabber_write(j, "<presence>%s%s<priority>%d</priority></presence>", 			real ? real : "", priority);
+	if (!xstrcmp(status, EKG_STATUS_AVAIL))			jabber_write(j, "<presence>%s<priority>%d</priority></presence>", 			real ? real : "", priority);
 	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	jabber_write(j, "<presence type=\"invisible\">%s<priority>%d</priority></presence>", 	real ? real : "", priority);
 	else							jabber_write(j, "<presence><show>%s</show>%s<priority>%d</priority></presence>", 	status, real ? real : "", priority);
 
