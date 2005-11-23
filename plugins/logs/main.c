@@ -144,7 +144,6 @@ int logs_window_check(logs_log_t *ll, time_t t)
 		chan = 2;
 
 	if (chan != 2) {
-		int _ychan = 0, _mchan = 0, _dchan = 0;
 		int datechanged = 0;
 /* sprawdzic czy dane z (tm == tm2) */
 		struct tm *tm = localtime(&(ll->t));
@@ -1158,15 +1157,19 @@ void logs_gaim()
  */
 
 void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip) {
+	char *nuid;
+
 	if (!file)
 		return;
+
+	nuid = get_uid(session_find(session), uid);
 	
 	switch (type) {
 		/* just normal message */
-		case LOG_IRSSI_MESSAGE:	fprintf(file, "%s <%s> %s\n", prepare_timestamp(sent), uid, text);
+		case LOG_IRSSI_MESSAGE:	fprintf(file, "%s <%s> %s\n", prepare_timestamp(sent), nuid ? nuid : uid , text);
 			break;
 		/* status message (avalible -> unavalible (quit) ; na -> aval (join) */
-		case LOG_IRSSI_EVENT:	fprintf(file, "%s -!- %s [%s] has %s #%s\n", prepare_timestamp(sent), uid, ip, text /* join, part, quit */, session);
+		case LOG_IRSSI_EVENT:	fprintf(file, "%s -!- %s [%s] has %s #%s\n", prepare_timestamp(sent), nuid ? nuid : uid, ip, text /* join, part, quit */, session);
 			break;
 		/* other messages like session started, session closed and so on */
 		case LOG_IRSSI_INFO:	fprintf(file, "%s\n", text);
@@ -1174,7 +1177,7 @@ void logs_irssi(FILE *file, const char *session, const char *uid, const char *te
 		/* status message (other than @1) */
 		case LOG_IRSSI_STATUS:	text = saprintf("reports status: %s [%s] /* {status} */", text, ip);
 		/* irc ACTION messages */
-		case LOG_IRSSI_ACTION:	fprintf(file, "%s * %s %s\n", prepare_timestamp(sent), uid, text);
+		case LOG_IRSSI_ACTION:	fprintf(file, "%s * %s %s\n", prepare_timestamp(sent), nuid ? nuid : uid, text);
 			if (type == 2) xfree((char *) text);
 			break;
 		/* everythink else */
