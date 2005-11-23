@@ -145,23 +145,23 @@ int logs_window_check(logs_log_t *ll, time_t t)
 
 	if (chan != 2) {
 		int _ychan = 0, _mchan = 0, _dchan = 0;
-/* czy warte zachodu ? */
-		_ychan = (int) xstrstr(config_logs_path, "%Y"); 
-		_mchan = (int) xstrstr(config_logs_path, "%M");
-		_dchan = (int) xstrstr(config_logs_path, "%D");
+		int datechanged = 0;
 /* sprawdzic czy dane z (tm == tm2) */
-		{
-			struct tm *tm = localtime(&(ll->t));
-			struct tm *tm2 = localtime(&t);
+		struct tm *tm = localtime(&(ll->t));
+		struct tm *tm2 = localtime(&t);
 
-			if  (	(tm->tm_mday != tm2->tm_mday && _dchan) || 
-				(tm->tm_mon != tm2->tm_mon   && _mchan) || 
-				(tm->tm_year != tm2->tm_year && _ychan)
-			    )
-				if (_ychan || _mchan || _dchan) chan = 3;
-//				else				chan = -2; /* chan == -2 date changed */
-		 }
-		if (l->logformat == LOG_FORMAT_IRSSI) { /* yes i know it's wrong place for doing this but .... */
+		if  (	(tm->tm_mday != tm2->tm_mday) || 
+			(tm->tm_mon != tm2->tm_mon) || 
+			(tm->tm_year != tm2->tm_year)
+		    ) datechanged = 1;
+		if (datechanged &&     (xstrstr(config_logs_path, "%Y") || 
+					xstrstr(config_logs_path, "%M") || 
+					xstrstr(config_logs_path, "%D")
+					)) 
+			chan = 3;
+//		else	chan = -2; /* chan == -2 date changed */
+
+		if (datechanged && l->logformat == LOG_FORMAT_IRSSI) { /* yes i know it's wrong place for doing this but .... */
 			if (!(l->file)) 
 				l->file = logs_open_file(l->path, LOG_FORMAT_IRSSI); /* think */
 			logs_irssi(l->file, ll->session, NULL,
