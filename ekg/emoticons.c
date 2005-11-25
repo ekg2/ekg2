@@ -155,6 +155,9 @@ char *emoticon_expand(const char *s)
 	char *ms;
 	size_t n = 0;
 
+	if (!s)
+		return NULL;
+
 	for (ss = s; *ss; ss++) {
 		emoticon_t *e = NULL;
 		size_t ns = xstrlen(ss);
