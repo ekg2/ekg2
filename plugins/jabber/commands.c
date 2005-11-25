@@ -139,6 +139,7 @@ COMMAND(jabber_command_disconnect)
 {
 	jabber_private_t *j = session_private_get(session);
 	char *descr = NULL;
+	int fd = j->fd;
 
 	/* jesli istnieje timer reconnecta, to znaczy, ze przerywamy laczenie */
 	if (timer_remove(&jabber_plugin, "reconnect") == 0) {
@@ -173,13 +174,11 @@ COMMAND(jabber_command_disconnect)
 		j->connecting = 0;
 
 	userlist_free(session);
-
 	if (j->connecting)
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_STOPPED);
 	else
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_USER);
-	
-	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
+	watch_remove(&jabber_plugin, fd, WATCH_READ);
 	xfree(descr);
 	return 0;
 }
