@@ -709,6 +709,7 @@ COMMAND(jabber_muc_command_join)
 	jabber_write(j, "<presence to='%s/%s'> <x xmlns='http://jabber.org/protocol/muc#user'>%s</x> </presence>", 
 			params[0], username, password ? password : "");
 
+	xfree(username);
 	xfree(password);
 	return 0;
 }
