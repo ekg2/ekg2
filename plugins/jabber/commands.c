@@ -221,12 +221,14 @@ COMMAND(jabber_command_msg)
 {
 	jabber_private_t *j = session_private_get(session);
 	int chat = !xstrcasecmp(name, "chat");
+	int subjectlen = xstrlen(config_subject_prefix);
 	char *msg;
 	char *subject = NULL;
 	const char *uid;
-	int ismuc = 0; 			/* TODO, IS that multi user chat */
 
-	int subjectlen = xstrlen(config_subject_prefix);
+	window_t *w;
+	int ismuc = 0;
+
 
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
@@ -251,7 +253,12 @@ COMMAND(jabber_command_msg)
 		msg = jabber_escape(tmp ? tmp+1 : NULL);
 	} else 
 		msg = jabber_escape(params[1]); /* bez tematu */
-
+/* <TODO tag=clean> */
+	w = window_find_s(session, target);
+	debug("[jabber,msg, ismuc] %x %x\n", w, w ? w->userlist : NULL);
+	if ((w = window_find_s(session, target)) && (w->userlist))
+		ismuc = 1;
+/* </TODO> */
 	if (ismuc)
 		jabber_write(j, "<message to=\"%s/%s\" id=\"%d\" type=\"chat\">", uid+4, "darkjames", time(NULL));
 	else
@@ -671,7 +678,7 @@ COMMAND(jabber_command_register)
 	const char *server = params[0] ? params[0] : j->server;
 	if (!params[1])
 		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg\" > <query xmlns=\"jabber:iq:register\"/> </iq>", server);
-	else ;
+	else printq("generic_error", "not implemented. feel free to send patch...");
 	return 0;
 }
 
@@ -691,11 +698,16 @@ COMMAND(jabber_muc_command_join)
 	 * params[2] - password || none
 	 */
 	jabber_private_t *j = session_private_get(session);
+	char *tmp;
+	char *username = (params[1]) ? xstrdup(params[1]) : (tmp = xstrchr(session->uid, '@')) ? xstrndup(session->uid+4, tmp-session->uid-4) : NULL;
 	char *password = (params[1] && params[2]) ? saprintf(" <password>%s</password> ", params[2]) : NULL;
+
+	if (!username) { /* rather impossible */
+		return -1;
+	}
+
 	jabber_write(j, "<presence to='%s/%s'> <x xmlns='http://jabber.org/protocol/muc#user'>%s</x> </presence>", 
-			params[0],
-			params[1] ? params[1] : "darkjames",
-			password ? password : "");
+			params[0], username, password ? password : "");
 
 	xfree(password);
 	return 0;

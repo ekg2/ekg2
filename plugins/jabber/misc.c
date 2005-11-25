@@ -281,7 +281,6 @@ int jabber_write(jabber_private_t *j, const char *format, ...)
 		else
 #endif
 			res = write(j->fd, text, len);
-
 		if (res == len) {
 			xfree(text);
 			return 0;
