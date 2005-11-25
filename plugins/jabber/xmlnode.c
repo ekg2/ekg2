@@ -9,30 +9,19 @@
 
 static void xmlnode_free(xmlnode_t *n)
 {
-	int i;
+	xmlnode_t *m;
 
 	if (!n)
 		return;
 
-//	debug("[jabber] xmlnode_free()\n");
-
-	if (n->children) {
-		xmlnode_t *m = n->children;
-
-		while (m) {
-			xmlnode_t *next = m->next;
-
-			xmlnode_free(m);
-			m = next;
-		}
+	for (m = n->children; m;) {
+		xmlnode_t *cur = m;
+		m = m->next;
+		xmlnode_free(cur);
 	}
 
 	xfree(n->name);
-
-	for (i = 0; n->atts[i]; i++)
-		xfree(n->atts[i]);
-
-	xfree(n->atts);
+	array_free(n->atts);
 }
 
 void xmlnode_handle_start(void *data, const char *name, const char **atts)
@@ -42,6 +31,7 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
 	xmlnode_t *n, *newnode;
 	jabber_private_t *j;
 	int i;
+	int arrcount;
 
 	if (!s || !(j = session_private_get(s)) || !name) {
 		debug("[jabber] xmlnode_handle_end() invalid parameters\n");
@@ -67,20 +57,18 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
 			newnode->parent = n;
 		}
 	}
+	arrcount = array_count((char **) atts);
 
-	for (i = 0; atts[i]; i++)
-		;
+	newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
 
-	newnode->atts = xmalloc((i + 1) * sizeof(char*));
-
-	for (i = 0; atts[i]; i++)
+	for (i = 0; i < arrcount; i++)
 		newnode->atts[i] = xstrdup(atts[i]);
 
-	newnode->atts[i] = NULL;
+/*	newnode->atts[i] = NULL; */
 
 	j->node = newnode;
 }
-
+ 
 void xmlnode_handle_end(void *data, const char *name)
 {
 	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
@@ -132,7 +120,7 @@ void xmlnode_handle_cdata(void *data, const char *text, int len)
 		return;
 	}
 
-	oldlen = (n->data) ? xstrlen(n->data) : 0;
+	oldlen = xstrlen(n->data);
 	n->data = xrealloc(n->data, oldlen + len + 1);
 	memcpy(n->data + oldlen, text, len);
 	n->data[oldlen + len] = 0;
@@ -149,8 +137,6 @@ xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name)
 
 	return NULL;
 }
-
-
 
 /*
  * Local Variables:
