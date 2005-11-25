@@ -479,7 +479,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	
 	user = xstrcasecmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
 
-	if (config_emoticons)
+	if (config_emoticons && text)
 		emotted = emoticon_expand(text);
 
 	if (empty_theme)
