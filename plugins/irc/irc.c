@@ -928,7 +928,8 @@ COMMAND(irc_command_msg)
 COMMAND(irc_command_inline_msg)
 {
 	const char	*p[2] = { NULL, params[0] };
-
+	if (!params[0])
+		return -1;
 	return irc_command_msg("msg", p, session, target, quiet);
 }
 
@@ -1861,7 +1862,7 @@ int irc_plugin_init(int prio)
 
 #define IRC_ONLY 	SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS 	IRC_ONLY | SESSION_MUSTBECONNECTED
-	command_add(&irc_plugin, IRC4, "!",		irc_command_inline_msg, IRC_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect,IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:reconnect", "r ?",irc_command_reconnect,	IRC_ONLY, NULL);

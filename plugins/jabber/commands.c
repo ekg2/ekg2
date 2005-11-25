@@ -307,6 +307,8 @@ COMMAND(jabber_command_msg)
 COMMAND(jabber_command_inline_msg)
 {
 	const char *p[2] = { NULL, params[0] };
+	if (!params[0])
+		return -1;
 	return jabber_command_msg("chat", p, session, target, quiet);
 }
 
@@ -720,7 +722,7 @@ void jabber_register_commands()
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define JABBER_FLAGS        JABBER_ONLY  | SESSION_MUSTBECONNECTED
 #define JABBER_FLAGS_TARGET JABBER_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	command_add(&jabber_plugin, "jid:", "!", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "jid:", "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "jid:_autoaway", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "jid:_autoback", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "jid:add", "!U ?", jabber_command_modify, 	JABBER_FLAGS_TARGET, NULL); 
