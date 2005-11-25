@@ -253,10 +253,6 @@ COMMAND(jabber_command_msg)
 	} else 
 		msg = jabber_escape(params[1]); /* bez tematu */
 
-        if (!msg) {
-           return 0;
-        }
-
 	if (ismuc)
 		jabber_write(j, "<message to=\"%s/%s\" id=\"%d\" type=\"chat\">", uid+4, "darkjames", time(NULL));
 	else
