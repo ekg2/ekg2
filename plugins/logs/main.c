@@ -798,7 +798,6 @@ QUERY(logs_status_handler)
 	if (lw->logformat == LOG_FORMAT_IRSSI) {
 		char *_what = NULL;
 		char *_ip = saprintf("~%s@%s:%d", "notirc", inet_ntoa((struct in_addr) {ip}), port);
-		int type = 1;
 
 		/* user was notavail and now is avail -> join */
 		if ( (userlist && !xstrcmp(userlist->status, EKG_STATUS_NA)) && !xstrcmp(status, EKG_STATUS_AVAIL))
