@@ -1347,6 +1347,7 @@ notreallyok:
 
 	xfree(add);
 	xfree(channame);
+        xfree(mode_abc);
 	return 0;
 }
 
