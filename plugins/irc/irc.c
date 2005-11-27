@@ -416,6 +416,7 @@ void irc_changed_resolve(session_t *s, const char *var) {
 		write(fd[1], tmp2, xstrlen(tmp2));
 		sleep(3);
 		close(fd[1]);
+                xfree(tmp);
 		xfree(tmp2);
 		exit(0);
 	}
@@ -2149,3 +2150,13 @@ static int irc_theme_init()
 	return 0;
 }
 
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-file-style: "k&r"
+ * c-basic-offset: 8
+ * indent-tabs-mode: t
+ * End:
+ * vim: sts=8 sw=8
+ */
