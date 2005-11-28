@@ -1262,7 +1262,6 @@ COMMAND(irc_command_names)
 		for (l = chan->window->userlist; l; l = l->next)
 		{
 			ulist = (userlist_t *)l->data;
-			debug("%s \n", ulist->uid);
 			if (!ulist || xstrcmp(ulist->status, sort_status[lvl]) )
 				continue;
 			++lvl_total[lvl];
