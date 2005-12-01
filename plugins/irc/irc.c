@@ -1236,7 +1236,7 @@ COMMAND(irc_command_names)
 	int             lvl, count = 0;
 	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')')+1;
 
-	int		smlen = xstrlen(sort_modes), nplen = (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1;
+	int		smlen = xstrlen(sort_modes)+1, nplen = (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1;
 	char            mode[2], **mp, *channame, nickpad[nplen];
 
 	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
@@ -1860,8 +1860,9 @@ int irc_plugin_init(int prio)
 	query_connect(&irc_plugin, "status-show",	irc_status_show_handle, NULL);
 	query_connect(&irc_plugin, "irc-kick",		irc_onkick_handler, 0);
 
-#define IRC_ONLY 	SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
-#define IRC_FLAGS 	IRC_ONLY | SESSION_MUSTBECONNECTED
+#define IRC_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define IRC_FLAGS 		IRC_ONLY | SESSION_MUSTBECONNECTED
+#define IRC_FLAGS_TARGET	IRC_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect,IRC_ONLY, NULL);
@@ -1875,9 +1876,9 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 	IRC_ONLY  | 				COMMAND_PARAMASTARGET, NULL);
-	command_add(&irc_plugin, "irc:msg", "!uUw !",	irc_command_msg, 	IRC_FLAGS | COMMAND_ENABLEREQPARAMS |	COMMAND_PARAMASTARGET, NULL);
-	command_add(&irc_plugin, "irc:notice", "!uUw !",irc_command_msg, 	IRC_FLAGS | COMMAND_ENABLEREQPARAMS |	COMMAND_PARAMASTARGET, NULL);
+	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
+	command_add(&irc_plugin, "irc:msg", "!uUw !",	irc_command_msg, 	IRC_FLAGS_TARGET, NULL);
+	command_add(&irc_plugin, "irc:notice", "!uUw !",irc_command_msg, 	IRC_FLAGS_TARGET, NULL);
 	command_add(&irc_plugin, "irc:me", "uUw ?",	irc_command_me, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:ctcp", "uUw ?",	irc_command_ctcp, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, "irc:ping", "uUw ?",	irc_command_ping, 	IRC_FLAGS, NULL);
