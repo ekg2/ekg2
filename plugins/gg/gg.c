@@ -310,10 +310,11 @@ QUERY(gg_add_notify_handle)
  */
 QUERY(gg_remove_notify_handle)
 {
-        char **session_uid = va_arg(ap, char**);
-        session_t *s = session_find(*session_uid);
-        char *uid = *(va_arg(ap, char**));
-        gg_private_t *g;
+	char **session_uid = va_arg(ap, char**);
+	session_t *s = session_find(*session_uid);
+	char *uid = *(va_arg(ap, char**));
+	gg_private_t *g;
+	char *tmp;
 
         if (!s) {
                 debug("Function gg_remove_notify_handle() called with NULL data\n");
@@ -322,11 +323,11 @@ QUERY(gg_remove_notify_handle)
         if (!(g = session_private_get(s)))
                 return -1;
 
-	if (!xstrlen(uid))
+	if (!(tmp = xstrchr(uid, ':')))
 		return -1;
 
-        gg_remove_notify(g->sess, str_to_uin(strchr(uid, ':') + 1));
-        return 0;
+	gg_remove_notify(g->sess, str_to_uin(tmp+1));
+	return 0;
 }
 
 /*
