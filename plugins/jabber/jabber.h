@@ -26,7 +26,7 @@ struct xmlnode_s {
 	struct xmlnode_s *children;
 	
 	struct xmlnode_s *next;
-	struct xmlnode_s *prev;
+/*	struct xmlnode_s *prev; */
 };
 
 typedef struct xmlnode_s xmlnode_t;

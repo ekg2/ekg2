@@ -57,6 +57,8 @@
 
 #include "jabber.h"
 
+#define jabberfix(x,a) ((x) ? x : a)
+
 static int jabber_theme_init();
 
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
@@ -221,12 +223,12 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 	xmlnode_t *nsubject, *xitem;
 	
 	const char *from = jabber_attr(n->atts, "from");
+
 	char *juid 	= jabber_unescape(from); /* was tmp */
 	char *uid 	= saprintf("jid:%s", juid);
 
 	string_t body;
 	time_t sent;
-	int ismuc = 0;
 
 	xfree(juid);
 
@@ -325,24 +327,27 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 		} /* jabber:x:event */
 
 		if (!xstrncmp(ns, "jabber:x:oob", 12)) {
-			xmlnode_t *xdesc;
 			xmlnode_t *xurl;
+			xmlnode_t *xdesc;
 
 			if ( ( xurl = xmlnode_find_child(xitem, "url") ) ) {
 				string_append(body, "\n\n");
 				string_append(body, "URL: ");
 				string_append(body, xurl->data);
 				string_append(body, "\n");
-				xdesc = xmlnode_find_child(xitem, "desc");
-				string_append(body, xdesc->data);
-				string_append(body, "\n");
+				if ((xdesc = xmlnode_find_child(xitem, "desc"))) {
+					string_append(body, xdesc->data);
+					string_append(body, "\n");
+				}
 			}
 		} /* jabber:x:oob */
 	} /* if !nerr && <x>; TODO: split as functions */
 	else sent = time(NULL);
 
 	if (nbody || nsubject) {
-		char *me 	= xstrdup(session_uid_get(s));
+		const char *type = jabber_attr(n->atts, "type");
+
+		char *me	= xstrdup(session_uid_get(s));
 		char *text;	
 
 		int class 	= EKG_MSGCLASS_CHAT;
@@ -353,21 +358,15 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 		char *seq 	= NULL;
 		uint32_t *format = NULL;
 
-		ismuc = 0;
-
-		if (ismuc) {
+		debug("[jabber,message] type = %s\n", type);
+		if (!xstrcmp(type, "groupchat")) {
 			int prv = 0;
 			int isour = 0;
-			char *temp;
-			char *frname = format_find(isour ?
-					prv ? 
-					"jabber_muc_send_private" 
-					: "jabber_muc_send_public"  
-					: prv ? 
-					"jabber_muc_recv_private" 
-					: "jabber_muc_recv_public");
+			const char *frname = format_find(isour ? 
+				prv ? "jabber_muc_send_private" : "jabber_muc_send_public" : 
+				prv ? "jabber_muc_recv_private" : "jabber_muc_recv_public");
+			char *temp = jabber_unescape(body->str);
 			class |= EKG_NO_THEMEBIT;
-			temp = jabber_unescape(body->str);
 			text = format_string(frname, session_name(s), uid, temp);
 			xfree(temp);
 		} else {
@@ -437,9 +436,9 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			print("passwd");
 		} else if (!xstrcmp(type, "error")) {
 			xmlnode_t *e = xmlnode_find_child(n, "error");
-			char *reason = (e && e->data) ? jabber_unescape(e->data) : xstrdup("?");
+			char *reason = (e && e->data) ? jabber_unescape(e->data) : NULL;
 
-			print("passwd_failed", reason);
+			print("passwd_failed", jabberfix(reason, "?"));
 			xfree(reason);
 		}
 		session_set(s, "__new_password", NULL);
@@ -461,16 +460,17 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xmlnode_t *city = xmlnode_find_child(adr, "LOCALITY");
 				xmlnode_t *desc = xmlnode_find_child(q, "DESC");
 
-				char *from_str     = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
-				char *fullname_str = (fullname && fullname->data) ? jabber_unescape(fullname->data) : xstrdup(_("unknown"));
-				char *nickname_str = (nickname && nickname->data) ? jabber_unescape(nickname->data) : xstrdup(_("unknown"));
-				char *bday_str     = (birthday && birthday->data) ? jabber_unescape(birthday->data) : xstrdup(_("unknown"));
-				char *city_str     = (city && city->data) ? jabber_unescape(city->data) : xstrdup(_("unknown"));
-				char *desc_str     = (desc && desc->data) ? jabber_unescape(desc->data) : xstrdup(_("unknown"));
+				char *from_str     = (from) ? jabber_unescape(from) : NULL;
+				char *fullname_str = (fullname && fullname->data) ? jabber_unescape(fullname->data) : NULL;
+				char *nickname_str = (nickname && nickname->data) ? jabber_unescape(nickname->data) : NULL;
+				char *bday_str     = (birthday && birthday->data) ? jabber_unescape(birthday->data) : NULL;
+				char *city_str     = (city && city->data) ? jabber_unescape(city->data) : NULL;
+				char *desc_str     = (desc && desc->data) ? jabber_unescape(desc->data) : NULL;
 
-				print("jabber_userinfo_response", from_str, fullname_str,
-					nickname_str, bday_str, city_str,desc_str);
-
+				print("jabber_userinfo_response", 
+						jabberfix(from_str, _("unknown")), 	jabberfix(fullname_str, _("unknown")),
+						jabberfix(nickname_str, _("unknown")),	jabberfix(bday_str, _("unknown")),
+						jabberfix(city_str, _("unknown")),	jabberfix(desc_str, _("unknown")));
 				xfree(desc_str);
 				xfree(city_str);
 				xfree(bday_str);
@@ -582,9 +582,9 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					}
 				} else {
 					xmlnode_t *instr = xmlnode_find_child(q, "instructions");
-					char *instr_str = (instr && instr->data) ? jabber_unescape(instr->data) : "?";
+					char *instr_str = (instr && instr->data) ? jabber_unescape(instr->data) : NULL;
 
-					print("jabber_registration_instruction", session_name(s), from_str, instr_str);
+					print("jabber_registration_instruction", session_name(s), from_str, jabberfix(instr_str, "?"));
 					xfree(instr_str);
 
 					for (reg = q->children; reg; reg = reg->next) 
@@ -613,20 +613,21 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xmlnode_t *version = xmlnode_find_child(q, "version");
 				xmlnode_t *os = xmlnode_find_child(q, "os");
 
-				char *from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
-				char *name_str = (name && name->data) ? jabber_unescape(name->data) : xstrdup(_("unknown"));
-				char *version_str = (version && version->data) ? jabber_unescape(version->data) : xstrdup(_("unknown"));
-				char *os_str = (os && os->data) ? jabber_unescape(os->data) : xstrdup(_("unknown"));
+				char *from_str = (from) ? jabber_unescape(from) : NULL;
+				char *name_str = (name && name->data) ? jabber_unescape(name->data) : NULL;
+				char *version_str = (version && version->data) ? jabber_unescape(version->data) : NULL;
+				char *os_str = (os && os->data) ? jabber_unescape(os->data) : NULL;
 
-				print("jabber_version_response", from_str, name_str, version_str, os_str);
-
+				print("jabber_version_response",
+						jabberfix(from_str, "unknown"), jabberfix(name_str, "unknown"), 
+						jabberfix(version_str, "unknown"), jabberfix(os_str, "unknown"));
 				xfree(os_str);
 				xfree(version_str);
 				xfree(name_str);
 				xfree(from_str);
 			} else if (!xstrncmp(ns, "jabber:iq:last", 14)) {
-				int seconds = 0;
 				const char *last = jabber_attr(q->atts, "seconds");
+				int seconds = 0;
 				char buff[21];
 				char *from_str, *lastseen_str;
 
@@ -641,10 +642,10 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				else
 					strcpy (buff, _("very long ago"));
 
-				from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
+				from_str = (from) ? jabber_unescape(from) : NULL;
 				lastseen_str = xstrdup(buff);
 
-				print("jabber_lastseen_response", from_str, lastseen_str);
+				print("jabber_lastseen_response", jabberfix(from_str, "unknown"), lastseen_str);
 				xfree(lastseen_str);
 				xfree(from_str);
 			} else if (!xstrncmp(ns, "jabber:iq:roster", 16)) {
@@ -698,62 +699,39 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		if ((q = xmlnode_find_child(n, "query"))) {
 			const char *ns = jabber_attr(q->atts, "xmlns");
 
-			if (!xstrncmp(ns, "jabber:iq:version", 17)) {
-				/* 'id' powinno byc w <iq/> */
-				if (id && from) {
-					const char *ver_client_name, *ver_client_version, *ver_os;
-					char *escaped_client_name;
-					char *escaped_client_version;
-					char *osversion;
+			if (!xstrncmp(ns, "jabber:iq:version", 17) && id && from) {
+				const char *ver_os;
+				char *osversion;
+				const char *tmp;
 
-					if (!(ver_client_name = session_get(s, "ver_client_name")))
-						ver_client_name = DEFAULT_CLIENT_NAME;
-					if (!(ver_client_version = session_get(s, "ver_client_version")))
-						ver_client_version = VERSION;
+				char *escaped_client_name	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_name")), DEFAULT_CLIENT_NAME) );
+				char *escaped_client_version	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_version")), VERSION) );
 
-					escaped_client_name = jabber_escape(ver_client_name);
-					escaped_client_version = jabber_escape(ver_client_version);
+				if (!(ver_os = session_get(s, "ver_os"))) {
+					struct utsname buf;
 
-					jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">", from, id);
-					jabber_write(j, "<query xmlns=\"jabber:iq:version\"><name>%s</name>",
-						escaped_client_name);
-
-					jabber_write(j, "<version>%s</version>",
-						escaped_client_version);
-
-					xfree(escaped_client_name);
-					xfree(escaped_client_version);
-
-					if (!(ver_os = session_get(s, "ver_os"))) {
-						struct utsname buf;
-
-						if (uname(&buf) != -1) { /* hm, SunOS 5.10 afair returns 1 (dj) */
-							char *escaped_sysname;
-							char *escaped_release;
-							char *escaped_machine;
-
-							escaped_sysname = jabber_escape(buf.sysname);
-							escaped_release = jabber_escape(buf.release);
-							escaped_machine = jabber_escape(buf.machine);
-							osversion = saprintf("%s %s %s", /* uname and not ver_os session variable */
-								escaped_sysname,
-								escaped_release,
-								escaped_machine);
-
-							xfree(escaped_sysname);
-							xfree(escaped_release);
-							xfree(escaped_machine);
-						} else {
-							osversion = xstrdup("unknown"); /* uname failed and not ver_os session variable */
-						}
+					if (uname(&buf) != -1) {
+						char *osver = saprintf("%s %s %s", buf.sysname, buf.release, buf.machine);
+						osversion = jabber_escape(tmp);
+						xfree(osver);
 					} else {
-						osversion = jabber_escape(ver_os);	/* ver_os session variable */
+						osversion = xstrdup("unknown"); /* uname failed and not ver_os session variable */
 					}
-
-					jabber_write(j, "<os>%s</os></query></iq>", osversion);
-					xfree(osversion);
+				} else {
+					osversion = jabber_escape(ver_os);	/* ver_os session variable */
 				}
-			}; /* jabber:iq:version */
+
+				jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
+						"<query xmlns=\"jabber:iq:version\"><name>%s</name>"
+						"<version>%s</version>"
+						"<os>%s</os></query></iq>", 
+						from, id, 
+						escaped_client_name, escaped_client_version, osversion);
+
+				xfree(escaped_client_name);
+				xfree(escaped_client_version);
+				xfree(osversion);
+			} /* jabber:iq:version */
 		} /* if query */
 	} /* type == get */
 } /* iq */
@@ -761,87 +739,111 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	const char *from = jabber_attr(n->atts, "from");
 	const char *type = jabber_attr(n->atts, "type");
-	char *jid;
+	char *jid, *uid;
 	xmlnode_t *q;
+	int ismuc = 0;
 
-	if (!xstrcmp(type, "subscribe") && from) {
+	if (from && !xstrcmp(type, "subscribe")) {
 		print("jabber_auth_subscribe", from, session_name(s));
 		return;
 	}
 
 	jid = jabber_unescape(from);
 
-	if (!xstrcmp(type, "unsubscribe") && from) {
+	if (from && !xstrcmp(type, "unsubscribe")) {
 		print("jabber_auth_unsubscribe", jid, session_name(s));
 		xfree(jid);
 		return;
 	}
+	uid = saprintf("jid:%s", jid);
 
+	for (q = n->children; q; q = q->next) {
+		char *tmp	= xstrrchr(uid, '/');
+		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : xstrlen(uid));
+		if (!xstrcmp(q->name, "x") && !xstrcmp(jabber_attr(q->atts, "xmlns"), "http://jabber.org/protocol/muc#user")) {
+			xmlnode_t *child;
+			ismuc = 1;
 
-	if ((q = xmlnode_find_child(n, "x"))) {
-		char *ns = jabber_attr(q->atts, "xmlns");
-		if (!xstrcmp(ns, "http://jabber.org/protocol/muc#user")) {
-			print("generic", "muc");
-			/* part / join  etc... */
-			xfree(jid);
-			return;
+			for (child = q->children; child; child = child->next) {
+				if (!xstrcmp(child->name, "item")) { /* lista userow */
+					char *jid	  = jabber_unescape(jabber_attr(child->atts, "jid"));		/* jid */
+					char *role	  = jabber_unescape(jabber_attr(child->atts, "role"));		/* ? */
+					char *affiliation = jabber_unescape(jabber_attr(child->atts, "affiliation"));	/* ? */
+
+					char *uid; 
+					window_t *w;
+					userlist_t *ulist;
+
+					if (!(w = window_find_s(s, mucuid))) /* co robimy jak okno == NULL ? */
+						w = window_new(mucuid, s, 0); /* tworzymy ? */
+					uid = saprintf("jid:%s", jid);
+					ulist = userlist_add_u(&(w->userlist), uid, jid);
+					xfree(uid);
+
+					xfree(jid); xfree(role); xfree(affiliation);
+				} else { /* debug pursuit only */
+					char *s = saprintf("\tMUC: %s", child->name);
+					print("generic", s);
+					xfree(s);
+				}
+			}
 		}
+		xfree(mucuid);
+	}
+	if (ismuc) {
+		/* presence type = "unavalible" -> part...
+		 * 	 we recv join as item... look upper.. */
+		xfree(jid);
+		xfree(uid);
+		return;
 	}
 
-	if (!type || (type && (!xstrcmp(type, "unavailable") || !xstrcmp(type, "error") || !xstrcmp(type, "available"))) ) {
+	if (!type || ( !xstrcmp(type, "unavailable") || !xstrcmp(type, "error") || !xstrcmp(type, "available"))) {
 		xmlnode_t *nshow, *nstatus, *nerr;
-		char *uid, *status = NULL, *descr = NULL;
-		char known_status = 0;
+		char *status = NULL, *descr = NULL;
+		char *jstatus = NULL;
+		char *tmp2;
 
-		if ((nshow = xmlnode_find_child(n, "show"))) 	/* typ */
-			status = jabber_unescape(nshow->data);
-		else {
+		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
+			jstatus = jabber_unescape(nshow->data);
+			if (!xstrcmp(jstatus, "na") || !xstrcmp(type, "unavailable")) {
+				status = xstrdup(EKG_STATUS_NA);
+			}
+		} else {
 			status = xstrdup(EKG_STATUS_AVAIL);
-			known_status = 1;
 		}
 
-		if (!xstrcmp(status, "na") || !xstrcmp(type, "unavailable")) {
-			xfree(status);
-			status = xstrdup(EKG_STATUS_NA);
-			known_status = 1;
-		}
-
-		if ((nstatus = xmlnode_find_child(n, "status"))) /* opisowy */
-			descr = jabber_unescape(nstatus->data);
-
-		if ((nerr = xmlnode_find_child(n, "error"))) {
+		if ((nerr = xmlnode_find_child(n, "error"))) { /* bledny */
 			char *ecode = jabber_attr(nerr->atts, "code");
 			char *etext = jabber_unescape(nerr->data);
-
-			descr = saprintf("(%s) %s", ecode, etext);
-			xfree(etext);
 			xfree(status);
 			status = xstrdup(EKG_STATUS_ERROR);
-			known_status = 1;
+			descr = saprintf("(%s) %s", ecode, etext);
+			xfree(etext);
+		} 
+		if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
+			xfree(descr);
+			descr = jabber_unescape(nstatus->data);
 		}
 
-		uid = saprintf("jid:%s", jid);
-		{
-			char *tmp2 = xstrchr(uid, '/');
-			char *tmp = tmp2 ? xstrndup(uid, tmp2-uid) : xstrdup(uid);
-			userlist_t *ut = userlist_find(s, tmp);
-
-			xfree(tmp);
-			if (ut && tmp2)
+		if ((tmp2 = xstrchr(uid, '/'))) {
+			char *tmp = xstrndup(uid, tmp2-uid);
+			userlist_t *ut;
+			if ((ut = userlist_find(s, tmp)))
 				ut->resource = xstrdup(tmp2+1);
+			xfree(tmp);
 		}
-
-		if (!known_status && 
-				xstrcasecmp(status, EKG_STATUS_AWAY) &&
-				xstrcasecmp(status, EKG_STATUS_INVISIBLE) &&
-				xstrcasecmp(status, EKG_STATUS_XA) &&
-				xstrcasecmp(status, EKG_STATUS_DND) &&
-				xstrcasecmp(status, EKG_STATUS_FREE_FOR_CHAT) &&
-				xstrcasecmp(status, EKG_STATUS_BLOCKED)) {
-			debug("[jabber] Unknown presence: %s from %s. Please report!\n", status, uid);
-			xfree(status);
+		if (status) {
+			xfree(jstatus);
+		} else if (jstatus && (!xstrcasecmp(jstatus, EKG_STATUS_AWAY)		|| !xstrcasecmp(jstatus, EKG_STATUS_INVISIBLE)	||
+					!xstrcasecmp(jstatus, EKG_STATUS_XA)		|| !xstrcasecmp(jstatus, EKG_STATUS_DND) 	|| 
+					!xstrcasecmp(jstatus, EKG_STATUS_FREE_FOR_CHAT) || !xstrcasecmp(jstatus, EKG_STATUS_BLOCKED))) {
+			status = jstatus;
+		} else {
+			debug("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
+			xfree(jstatus);
 			status = xstrdup(EKG_STATUS_AVAIL);
-		};
+		}
 		
 		{
 			char *session 	= xstrdup(session_uid_get(s));
@@ -854,13 +856,12 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			xfree(session);
 /*			xfree(host); */
 		}
-		xfree(uid);
 		xfree(status);
 		xfree(descr);
 	}
+	xfree(uid);
 	xfree(jid);
 } /* <presence> */
-
 
 time_t jabber_try_xdelay(xmlnode_t *xitem, const char *ns_)
 {
@@ -919,7 +920,6 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 #endif
 
         userlist_clear_status(s, NULL);
-/* AUTORECONNECT EKG2-side, displayink errors ekg2-side, etc.. */
 	{
 		char *__session = xstrdup(session_uid_get(s));
 		char *__reason = xstrdup(reason);
@@ -1207,11 +1207,11 @@ WATCHER(jabber_handle_connect_tls)
 
 QUERY(jabber_status_show_handle)
 {
-        char *uid = *(va_arg(ap, char**));
-        session_t *s = session_find(uid);
+        char *uid	= *(va_arg(ap, char**));
+        session_t *s	= session_find(uid);
         jabber_private_t *j = session_private_get(s);
-        userlist_t *u;
         const char *resource = session_get(s, "resource");
+        userlist_t *u;
         char *fulluid;
         char *tmp;
 
@@ -1265,25 +1265,25 @@ QUERY(jabber_status_show_handle)
 
 static int jabber_theme_init()
 {
-        format_add("jabber_auth_subscribe", _("%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/auth -d %1\" to refuse.%n\n"), 1);
-        format_add("jabber_auth_unsubscribe", _("%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"), 1);
-        format_add("jabber_xmlerror", _("%! (%1) Error parsing XML%n\n"), 1);
-        format_add("jabber_auth_request", _("%> (%2) Sent authorisation request to %T%1%n.\n"), 1);
-        format_add("jabber_auth_accept", _("%> (%2) Authorised %T%1%n.\n"), 1);
-        format_add("jabber_auth_unsubscribed", _("%> (%2) Asked %T%1%n to remove authorisation.\n"), 1);
-        format_add("jabber_auth_cancel", _("%> (%2) Authorisation for %T%1%n revoked.\n"), 1);
-        format_add("jabber_auth_denied", _("%> (%2) Authorisation for %T%1%n denied.\n"), 1);
-        format_add("jabber_auth_probe", _("%> (%2) Sent presence probe to %T%1%n.\n"), 1);
-        format_add("jabber_generic_conn_failed", _("%! (%1) Error connecting to Jabber server%n\n"), 1);
-        format_add("jabber_msg_failed", _("%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"),1);
-        format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
-        format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
-        format_add("jabber_userinfo_response", _("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
-        format_add("jabber_lastseen_response", _("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2%n\n"), 1);
-        format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
-        format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
-        format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
-	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 3);
+	format_add("jabber_auth_subscribe", _("%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/auth -d %1\" to refuse.%n\n"), 1);
+	format_add("jabber_auth_unsubscribe", _("%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"), 1);
+	format_add("jabber_xmlerror", _("%! (%1) Error parsing XML%n\n"), 1);
+	format_add("jabber_auth_request", _("%> (%2) Sent authorisation request to %T%1%n.\n"), 1);
+	format_add("jabber_auth_accept", _("%> (%2) Authorised %T%1%n.\n"), 1);
+	format_add("jabber_auth_unsubscribed", _("%> (%2) Asked %T%1%n to remove authorisation.\n"), 1);
+	format_add("jabber_auth_cancel", _("%> (%2) Authorisation for %T%1%n revoked.\n"), 1);
+	format_add("jabber_auth_denied", _("%> (%2) Authorisation for %T%1%n denied.\n"), 1);
+	format_add("jabber_auth_probe", _("%> (%2) Sent presence probe to %T%1%n.\n"), 1);
+	format_add("jabber_generic_conn_failed", _("%! (%1) Error connecting to Jabber server%n\n"), 1);
+	format_add("jabber_msg_failed", _("%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"),1);
+	format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
+	format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
+	format_add("jabber_userinfo_response", _("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
+	format_add("jabber_lastseen_response", _("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2%n\n"), 1);
+	format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
+	format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
+	format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
+	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
 
 	format_add("jabber_transport_list", _("%> (%1) JID: %2 descr=%3"), 1);
 	format_add("jabber_registration_instruction", _("%> (%1,%2) instr=%3"), 1);
@@ -1293,7 +1293,6 @@ static int jabber_theme_init()
 	format_add("jabber_register_param_descr", "--%1 %2 [%3]", 1);
 	format_add("jabber_register_param_value", "--%1 %2", 1);
 	format_add("jabber_register_param", "--%1 [%2]", 1);
-
 
 	format_add("jabber_muc_send_public", _("<%2> %3"), 1);
 	format_add("jabber_muc_send_private", _("<%2> %3"), 1);

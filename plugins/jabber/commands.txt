@@ -42,6 +42,27 @@ back
 	
         Je�eli nie podano opisu to b�dzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+		
+change
+	parametry:  <opcje>
+	krotki opis: zmienia informacje w katalogu publicznym
+	
+	  -f, --fullname <imię i nazwisko>
+	
+	  -n, --nick <pseudonim>
+	
+	  -b, --born <rok urodzenia>
+	
+	  -c, --city <miasto>
+	
+	  -d, --description <opis>
+	
+	  -C, --country <kraj>
+	
+	
+	Jeśli któryś z parametrów nie zostanie podany, jego wartość zostanie 
+	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 
+	wyczyści %Twszystkie%n pola.
 
 chat
 	parametry: 

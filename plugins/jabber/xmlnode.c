@@ -53,7 +53,7 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
 				m = m->next;
 			
 			m->next = newnode;
-			newnode->prev = m;
+/*			newnode->prev = m; */
 			newnode->parent = n;
 		}
 	}

@@ -163,7 +163,7 @@ COMMAND(jabber_command_disconnect)
 
 	if (descr) {
 		char *tmp = jabber_escape(descr);
-		jabber_write(j, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp);
+		jabber_write(j, "<presence type=\"unavailable\"><status>%s</status></presence>");
 		xfree(tmp);
 	} else
 		jabber_write(j, "<presence type=\"unavailable\"/>");
@@ -651,6 +651,43 @@ COMMAND(jabber_command_userinfo)
 	return 0;
 }
 
+COMMAND(jabber_command_change)
+{
+#define pub_sz 6
+#define strfix(s) (s ? s : "")
+	jabber_private_t *j = session_private_get(session);
+	char *pub[pub_sz];
+	int i;
+
+	memset(&pub, 0, sizeof(pub));
+	
+	for (i = 0; params[i]; i++) {
+		if (match_arg(params[i], 'f', "fullname", 2) && params[i + 1]) {
+			pub[0] = (char *) params[++i];
+		} else if (match_arg(params[i], 'n', "nickname", 2) && params[i + 1]) {
+			pub[1] = (char *) params[++i];
+		} else if (match_arg(params[i], 'c', "city", 2) && params[i + 1]) {
+			pub[2] = (char *) params[++i];
+		} else if (match_arg(params[i], 'b', "born", 2) && params[i + 1]) {
+			pub[3] = (char *) params[++i];
+		} else if (match_arg(params[i], 'd', "description", 2) && params[i + 1]) {
+			pub[4] = (char *) params[++i];
+		} else if (match_arg(params[i], 'C', "country", 2) && params[i + 1]) {
+			pub[5] = (char *) params[++i];
+		}
+
+	}
+	for (i=0; i<pub_sz; i++) 
+		pub[i] = jabber_escape(pub[i]);
+			
+	jabber_write(j, "<iq type=\"set\"><vCard xmlns='vcard-temp'><FN>%s</FN><NICKNAME>%s</NICKNAME><ADR><LOCALITY>%s</LOCALITY><COUNTRY>%s</COUNTRY></ADR><BDAY>%s</BDAY><DESC>%s</DESC></vCard></iq>\n", 
+			strfix(pub[0]), strfix(pub[1]), strfix(pub[2]), strfix(pub[5]), strfix(pub[3]), strfix(pub[4]));
+
+	for (i=0; i<pub_sz; i++) 
+		xfree(pub[i]);
+	return 0;
+}
+
 COMMAND(jabber_command_lastseen)
 {
 	const char *uid;
@@ -717,9 +754,13 @@ COMMAND(jabber_muc_command_join)
 COMMAND(jabber_muc_command_part) 
 {
 	jabber_private_t *j = session_private_get(session);
+	window_t *w;
 	char *status;
 
-//	return -1;
+	if (!(w = window_find_s(session, target)) || !(w->userlist)) {
+		printq("generic_error", "Use /jid:mucpart only in valid MUC room/window");
+		return -1;
+	}
 
 	status = params[1] ? saprintf(" <status>%s</status> ", params[1]) : NULL;
 
@@ -742,6 +783,8 @@ void jabber_register_commands()
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, "jid:away", "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "jid:back", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "jid:change", "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
+			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, "jid:chat", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "jid:connect", "r ?", jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "jid:del", "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
