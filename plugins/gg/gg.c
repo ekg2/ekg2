@@ -365,18 +365,16 @@ QUERY(gg_validate_uid)
 
 	if (!xstrncasecmp(uid, "gg:", 3) && xstrlen(uid)>3)
 	{
-		(*valid)++;
 
 		/* sprawdzmy, czy w uidzie wystepuja tylko cyferki... */
 		uid+=3;
 		for (; *uid; uid++)
 			if (!isdigit(*uid))
-				break;
+				return 0;
 
-		if (*uid)
-			(*valid)--;
+		(*valid)++;
+		return -1;
 	}
-
 	return 0;
 }
 
@@ -394,17 +392,17 @@ static void gg_ping_timer_handler(int type, void *data)
 		xfree(data);
 		return;
 	}
-
-	if (!s || session_connected_get(s) != 1)
+	if (!s || !session_connected_get(s)) {
+		char *buf = saprintf("ping-%s", (char *) data+3);
+		timer_remove(&gg_plugin, buf);
+/* CHECK: buggy ekg2-side timer handling, afair it didn't send type == 1 to persist handler during removeint them.. */
+		/* xfree(data); */
+		xfree(buf);
 		return;
+	}
 
 	if ((g = session_private_get(s))) {
-		char buf[100];
-
 		gg_ping(g->sess);
-
-		snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
-		timer_add(&gg_plugin, buf, 180, 0, gg_ping_timer_handler, xstrdup(s->uid));
 	}
 }
 
@@ -420,6 +418,7 @@ static void gg_session_handler_success(session_t *s)
         const char *status;
 	char *descr;
 	char buf[100];
+	int _status;
 
 	if (!g || !g->sess) {
 		debug("[gg] gg_session_handler_success() called with null gg_private_t\n");
@@ -447,7 +446,7 @@ static void gg_session_handler_success(session_t *s)
 
 	/* pamiêtajmy, ¿eby pingowaæ */
 	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
-	timer_add(&gg_plugin, buf, 180, 0, gg_ping_timer_handler, xstrdup(s->uid));
+	timer_add(&gg_plugin, buf, 180, 1, gg_ping_timer_handler, xstrdup(s->uid));
 
  	descr = xstrdup(session_descr_get(s));
         status = session_status_get(s);
@@ -455,21 +454,13 @@ static void gg_session_handler_success(session_t *s)
 	gg_iso_to_cp(descr);
 
         /* ustawiamy swój status */
-        if (s->descr) {
-                int _status = gg_text_to_status(status, descr);
+	_status = GG_S(gg_text_to_status(status, s->descr ? descr : NULL));
+	if (session_int_get(s, "private")) 
+		_status |= GG_STATUS_FRIENDS_MASK;
 
-                _status = GG_S(_status);
-                if (session_int_get(s, "private")) 
-                        _status |= GG_STATUS_FRIENDS_MASK;
-
-               gg_change_status_descr(g->sess, _status, descr);
+	if (s->descr) {
+		gg_change_status_descr(g->sess, _status, descr);
         } else {
-                int _status = gg_text_to_status(status, NULL);
-
-                _status = GG_S(_status);
-                if (session_int_get(s, "private")) 
-                        _status |= GG_STATUS_FRIENDS_MASK;
-
                 gg_change_status(g->sess, _status);
         }
 	xfree(descr);	
@@ -565,20 +556,15 @@ static void gg_session_handler_disconnect(session_t *s)
  */
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port)
 {
-	char *__session, *__uid, *__status, *__descr, *__host = NULL;
-	int __port = 0;
-	time_t when = time(NULL);
+	char *__session	= xstrdup(session_uid_get(s));
+	char *__uid	= saprintf("gg:%d", uin);
+	char *__status	= xstrdup(gg_status_to_text(status));
+	char *__descr	= xstrdup(descr);
+	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
+	time_t when	= time(NULL);
+	int __port	= port;
 
-	__session = xstrdup(session_uid_get(s));
-	__uid = saprintf("gg:%d", uin);
-	__status = xstrdup(gg_status_to_text(status));
-	__descr = xstrdup(descr);
 	gg_cp_to_iso(__descr);
-
-	if (ip)
-		__host = xstrdup(inet_ntoa(*((struct in_addr*)(&ip))));
-
-	__port = port;
 
 	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
 
@@ -596,28 +582,12 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
  */
 void gg_session_handler_msg(session_t *s, struct gg_event *e)
 {
-	char *__session, *__sender, *__text, *__seq, **__rcpts = NULL;
-	uint32_t *__format;
-	int i, __class = 0;
-	int ekgbeep = EKG_TRY_BEEP;
-	time_t __sent;
-	int secure = 0;
+	char *__sender, *__text, **__rcpts = NULL;
+	uint32_t *__format = NULL;
 	int image = 0, check_inv = 0;
+	int i;
 
 	gg_private_t *g = session_private_get(s);
-
-
-	__session = xstrdup(session_uid_get(s));
-	__sender = saprintf("gg:%d", e->event.msg.sender);
-	__text = xstrdup(e->event.msg.message);
-	gg_cp_to_iso(__text);
-	__sent = e->event.msg.time;
-	__seq = NULL;
-	__format = NULL;
-	__class = EKG_MSGCLASS_CHAT;
-
-	if ((e->event.msg.msgclass & 0x0f) == GG_CLASS_CHAT || (e->event.msg.msgclass & GG_CLASS_QUEUED))
-		__class = EKG_MSGCLASS_CHAT;
 
 	if (gg_config_dcc && (e->event.msg.msgclass & GG_CLASS_CTCP)) {
 		char *__host = NULL, uid[16];
@@ -657,11 +627,11 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	if (e->event.msg.msgclass & GG_CLASS_CTCP)
 		return;
 
-	if (e->event.msg.sender == 0)
-		__class = EKG_MSGCLASS_SYSTEM;
-
 	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
+
+	__text = xstrdup(e->event.msg.message);
+	gg_cp_to_iso(__text);
 	
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
@@ -712,23 +682,29 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 				__format[j] = val;
 		}
 	}
+	__sender = saprintf("gg:%d", e->event.msg.sender);
 	
-	if (image) {
-		if (check_inv)
-			print("gg_we_are_being_checked", session_name(s), format_user(s, __sender));
-		if (!check_inv || xstrcmp(__text, "")) {
-			// TODO printq("generic", "image in message.\n"); - or something
-			query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
-		}
-
+	if (image && check_inv) {
+		print("gg_we_are_being_checked", session_name(s), format_user(s, __sender));
 	} else {
+		char *__session = xstrdup(session_uid_get(s));
+		char *__seq	= NULL;
+		time_t __sent	= e->event.msg.time;
+		int __class	= e->event.msg.sender ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_SYSTEM;
+		int ekgbeep	= EKG_TRY_BEEP;
+		int secure	= 0;
+
+/*		if (!check_inv || xstrcmp(__text, ""))
+			printq("generic", "image in message.\n"); - or something
+ */
 		query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+		xfree(__session);
+
+/*		xfree(__seq); */
 	}
 	
-	xfree(__seq);
 	xfree(__text);
 	xfree(__sender);
-	xfree(__session);
 	xfree(__format);
 }
 
@@ -739,11 +715,10 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
  */
 static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 {
-	char *__session, *__rcpt, *__seq, *__status;
-
-	__session = xstrdup(session_uid_get(s));
-	__rcpt = saprintf("gg:%d", e->event.ack.recipient);
-	__seq = xstrdup(itoa(e->event.ack.seq));
+	char *__session = xstrdup(session_uid_get(s));
+	char *__rcpt	= saprintf("gg:%d", e->event.ack.recipient);
+	char *__seq	= xstrdup(itoa(e->event.ack.seq));
+	char *__status;
 
 	switch (e->event.ack.status) {
 		case GG_ACK_DELIVERED:
@@ -779,18 +754,15 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 FILE* image_open_file(const char *path)
 {
 	struct stat statbuf;
-	char *dir, *fullname, *slash;
+	char *dir, *slash;
 	int slash_pos = 0;
-	int makedir=1;
-	FILE* fdesc;
 
         debug("[gg] opening image file\n");
 
-	while (makedir) {
+	while (1) {
 		if (!(slash = xstrchr(path + slash_pos, '/'))) {
 			// nie ma juz slashy - zostala tylko nazwa pliku
-			makedir = 0; // konczymy petle
-			continue;
+			break;		// konczymy petle
 		};
 
 		slash_pos = slash - path + 1;
@@ -804,14 +776,9 @@ FILE* image_open_file(const char *path)
 			return NULL;
 		}
 		xfree(dir);
-	} // while mkdir
+	} // while mkdir..
 
-	fullname = xstrdup(path);
-
-	fdesc = fopen(fullname, "w");
-	xfree(fullname);
-
-	return fdesc;
+	return fopen(path, "w");
 };
 
 /*
@@ -1113,6 +1080,7 @@ void gg_changed_private(session_t *s, const char *var)
 	gg_private_t *g = (s) ? session_private_get(s) : NULL;
 	const char *status = session_status_get(s);
 	char *descr = xstrdup(session_descr_get(s));
+	int _status;
 
 	if (!session_connected_get(s)) {
 		xfree(descr);
@@ -1121,24 +1089,13 @@ void gg_changed_private(session_t *s, const char *var)
 
 	gg_iso_to_cp(descr);
 
-	
-        if (s->descr) {
-                int _status = gg_text_to_status(status, descr);
-
-                _status = GG_S(_status);
-                if (session_int_get(s, "private"))
-                        _status |= GG_STATUS_FRIENDS_MASK;
-
-               gg_change_status_descr(g->sess, _status, descr);
-        } else {
-                int _status = gg_text_to_status(status, NULL);
-
-                _status = GG_S(_status);
-                if (session_int_get(s, "private"))
-                        _status |= GG_STATUS_FRIENDS_MASK;
-
-                gg_change_status(g->sess, _status);
-        }
+	_status = GG_S(gg_text_to_status(status, s->descr ? descr : NULL)); 
+	if (session_int_get(s, "private"))
+		_status |= GG_STATUS_FRIENDS_MASK;
+	if (s->descr)
+		gg_change_status_descr(g->sess, _status, descr);
+	else
+		gg_change_status(g->sess, _status);
 
 	xfree(descr);
 }
