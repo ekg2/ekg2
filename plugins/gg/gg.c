@@ -312,7 +312,7 @@ QUERY(gg_remove_notify_handle)
 {
         char **session_uid = va_arg(ap, char**);
         session_t *s = session_find(*session_uid);
-        char **uid = va_arg(ap, char**);
+        char *uid = *(va_arg(ap, char**));
         gg_private_t *g;
 
         if (!s) {
@@ -322,7 +322,10 @@ QUERY(gg_remove_notify_handle)
         if (!(g = session_private_get(s)))
                 return -1;
 
-        gg_remove_notify(g->sess, str_to_uin(strchr(*uid, ':') + 1));
+	if (!uid)
+		return -1;
+
+        gg_remove_notify(g->sess, str_to_uin(strchr(uid, ':') + 1));
         return 0;
 }
 
