@@ -47,7 +47,7 @@ change
 	parametry:  <opcje>
 	krotki opis: zmienia informacje w katalogu publicznym
 	
-	  -f, --fullname <imiƒô i nazwisko>
+	  -f, --fullname <imiÍ i nazwisko>
 	
 	  -n, --nick <pseudonim>
 	
@@ -60,9 +60,9 @@ change
 	  -C, --country <kraj>
 	
 	
-	Je≈õli kt√≥ry≈õ z parametr√≥w nie zostanie podany, jego warto≈õƒá zostanie 
+	Je∂li ktÛry∂ z parametrÛw nie zostanie podany, jego warto∂Ê zostanie 
 	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 
-	wyczy≈õci %Twszystkie%n pola.
+	wyczy∂ci %Twszystkie%n pola.
 
 chat
 	parametry: 
