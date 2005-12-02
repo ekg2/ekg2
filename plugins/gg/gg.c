@@ -322,7 +322,7 @@ QUERY(gg_remove_notify_handle)
         if (!(g = session_private_get(s)))
                 return -1;
 
-	if (!uid)
+	if (!xstrlen(uid))
 		return -1;
 
         gg_remove_notify(g->sess, str_to_uin(strchr(uid, ':') + 1));
