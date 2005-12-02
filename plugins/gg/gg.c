@@ -532,10 +532,10 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e)
  */
 static void gg_session_handler_disconnect(session_t *s)
 {
-	char *__session = xstrdup(session_uid_get(s));
-	char *__reason = NULL;
-	int __type = EKG_DISCONNECT_FORCED;
 	gg_private_t *g = session_private_get(s);
+	char *__session	= xstrdup(session_uid_get(s));
+	char *__reason	= NULL;
+	int __type	= EKG_DISCONNECT_FORCED;
 	
 	session_connected_set(s, 0);
 		
@@ -706,6 +706,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	xfree(__text);
 	xfree(__sender);
 	xfree(__format);
+	array_free(__rcpts);
 }
 
 /*
