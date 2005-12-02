@@ -93,8 +93,9 @@ COMMAND(logsqlite_cmd_last)
 	struct tm *tm;
 	time_t ts;
 	int count2 = 0;
-	char * gotten_uid;
+	char * gotten_uid = NULL;
 	char * nick = NULL;
+	char * keep_nick = NULL;
 	int limit = config_logsqlite_last_limit;
 	int i = 0;
 	char * target_window = "__current";
@@ -111,6 +112,10 @@ COMMAND(logsqlite_cmd_last)
 		i++;
 		if (params[i]) {
 			limit = atoi(params[i]);
+			if (limit == 0) {
+				printq("invalid_params", "logsqlite:last");
+				return 0;
+			}
 			i++;
 		} else {
 			printq("invalid_params", "logsqlite:last");
@@ -123,9 +128,10 @@ COMMAND(logsqlite_cmd_last)
 
 	if (params[i]) {
 		nick = xstrdup(params[i]);
+		keep_nick = nick;
 		nick = strip_quotes(nick);
-		gotten_uid = get_uid(session, nick);
-		if (! gotten_uid) {
+		gotten_uid = xstrdup(get_uid(session, nick));
+		if (!gotten_uid) {
 			gotten_uid = nick;
 		}
 		if (config_logsqlite_last_in_window)
@@ -189,7 +195,10 @@ COMMAND(logsqlite_cmd_last)
 		print_window(target_window, session, config_logsqlite_last_open_window, "last_end");
 	}
 
-	xfree(nick);
+	if (nick != gotten_uid) {
+		xfree(gotten_uid);
+	}
+	xfree(keep_nick);
 
 #ifdef HAVE_SQLITE3
 	sqlite3_finalize(stmt);
