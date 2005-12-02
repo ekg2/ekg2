@@ -25,6 +25,7 @@
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/themes.h>
+#include <ekg/stuff.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
@@ -199,11 +200,6 @@ COMMAND(gg_command_unregister)
 	watch_t *w;
 	uin_t uin;
 
-	if (!params[0] || !params[1] || !params[2]) {
-		printq("not_enough_params", name);
-		return -1;
-	} 
-
         if (!last_tokenid) {
                 printq("token_missing");
                 return -1;
@@ -314,16 +310,6 @@ COMMAND(gg_command_passwd)
 	struct gg_http *h;
 	watch_t *w;
 
-	if (!session_check(session, 1, "gg")) {
-		printq("invalid_session");
-		return -1;
-	}
-	
-	if (!params[0]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-
 	oldpasswd = xstrdup(session_get(session, "password"));
 	if (oldpasswd)
 		gg_iso_to_cp(oldpasswd);
@@ -429,26 +415,15 @@ COMMAND(gg_command_remind)
 
 COMMAND(gg_command_list)
 {
-	char *passwd;
-	gg_private_t *g;
-
-	if (!session_check(session, 1, "gg")) {
-		printq("invalid_session");
-		return -1;
-	}
-	
-	g = session_private_get(session);
-	passwd = xstrdup(session_get(session, "password"));
-	gg_iso_to_cp(passwd);
-		
+/* moze mi ktos qrwa powiedziec po co bylo to passwd ? tylko byly memleaki i jakies goto.... */
+	gg_private_t *g = session_private_get(session);
 	/* list --get */
 	if (params[0] && match_arg(params[0], 'g', "get", 2)) {
                 if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
                         printq("userlist_get_error", strerror(errno));
-			goto fail;
+			return -1;
 	        }
-
-		goto success;
+		return 0;
 	}
 
 	/* list --clear */
@@ -459,8 +434,7 @@ COMMAND(gg_command_list)
                 }
 
 		gg_userlist_put_config = 2;
-		
-		goto success;
+		return 0;
 	}
 	
 	/* list --put */
@@ -478,22 +452,9 @@ COMMAND(gg_command_list)
 
 		xfree(contacts);
 		
-		goto success;
+		return 0;
 	}
-
-	xfree(passwd);
-
 	return cmd_list(name, params, session, target, quiet);
-
-success:
-	xfree(passwd);
-
-	return 0;
-
-fail:
-	xfree(passwd);
-
-	return -1;
 }
 
 

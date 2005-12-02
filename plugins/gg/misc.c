@@ -1,7 +1,5 @@
 /* $Id$ */
 
-/* $Id$ */
-
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
  *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
@@ -91,9 +89,7 @@ void gg_iso_to_cp(unsigned char *buf)
  */
 const char *gg_status_to_text(int status)
 {
-	status = GG_S(status);
-
-	switch (status) {
+	switch (GG_S(status)) {
 		case GG_STATUS_AVAIL:
 		case GG_STATUS_AVAIL_DESCR:
 			return EKG_STATUS_AVAIL;
@@ -258,9 +254,9 @@ const char *gg_http_error_string(int h)
 			return format_find("http_failed_reading");
 		case GG_ERROR_WRITING:
 			return format_find("http_failed_writing");
+		default:
+			return "?";
 	}
-
-	return "?";
 }
 
 /*

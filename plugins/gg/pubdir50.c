@@ -1,7 +1,5 @@
 /* $Id$ */
 
-/* $Id$ */
-
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
  *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
@@ -27,6 +25,7 @@
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
+#include <ekg/stuff.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
@@ -39,11 +38,6 @@ COMMAND(gg_command_find)
 	char **argv = NULL, *user;
 	gg_pubdir50_t req;
 	int i, res = 0, all = 0;
-
-	if (!session || !g || xstrncasecmp(session_uid_get(session), "gg:", 3)) {
-		printq("invalid_session");
-		return -1;
-	}
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
 		printq("not_connected", session_name(session));
@@ -207,11 +201,6 @@ COMMAND(gg_command_change)
 	gg_private_t *g = session_private_get(session);
 	int i;
 	gg_pubdir50_t req;
-
-	if (!session_check(session, 1, "gg")) {
-		printq("invalid_session");
-		return -1;
-	}
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
 		printq("not_connected");

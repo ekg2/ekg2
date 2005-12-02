@@ -68,15 +68,8 @@ COMMAND(gg_command_connect)
 {
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
-	char *password = (char *) session_get(session, "password");
 	int ret = 0;
 	
-	if (!session_check(session, 0, "gg") || !g) {
-		printq("invalid_session");
-		ret = -1;
-		goto end;
-	}
-
 	if (!xstrcasecmp(name, "disconnect") || (!xstrcasecmp(name, "reconnect"))) {
 
 	        /* if ,,reconnect'' timer exists we should stop doing */
@@ -95,11 +88,10 @@ COMMAND(gg_command_connect)
 			if (__reason) {
                 		char *tmp = xstrdup(__reason);
 
-	                        if (tmp && !xstrcmp(tmp, "-")) {
+	                        if (!xstrcmp(tmp, "-")) {
         	                        xfree(tmp);
                 	                tmp = NULL;
-                        	}
-				else 
+                        	} else 
 	                		gg_iso_to_cp(tmp);
 
           			if (config_keep_reason)
@@ -119,8 +111,8 @@ COMMAND(gg_command_connect)
 
 			query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
 
-			xfree(__reason);
 			xfree(__session);
+			xfree(__reason);
 		}
 	}
 
@@ -131,6 +123,7 @@ COMMAND(gg_command_connect)
                 int _status = gg_text_to_status(session_status_get(session), session_descr_get(session));
                 const char *realserver = session_get(session, "server");
                 int port = session_int_get(session, "port");
+		char *password = (char *) session_get(session, "password");
 
 		if (g->sess) {
 			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", session_name(session));
@@ -227,13 +220,14 @@ COMMAND(gg_command_connect)
 		}
 		p.server_port = port;
 
-		gg_proxy_port = 0;
 		xfree(gg_proxy_host);
-		gg_proxy_host = NULL;
 		xfree(gg_proxy_username);
-		gg_proxy_username = NULL;
 		xfree(gg_proxy_password);
+
+		gg_proxy_host = NULL;
+		gg_proxy_username = NULL;
 		gg_proxy_password = NULL;
+		gg_proxy_port = 0;
 		gg_proxy_enabled = 0;	
 
 		if ((tmp = session_get(session, "proxy"))) {
@@ -304,11 +298,7 @@ COMMAND(gg_command_away)
 	const char *status;
 	int timeout = session_int_get(session, "scroll_long_desc");
 	int autoscroll = 0;
-
-	if (!session_check(session, 1, "gg")) {
-		printq("invalid_session");
-		return -1;
-	}
+	int _status;
 
 	if (xstrlen(params0))
 		session->scroll_pos = 0;
@@ -338,47 +328,30 @@ COMMAND(gg_command_away)
 				xfree(params0);
 				return -1;
 		}
-		goto change;
-	}
-
-	if (!xstrcasecmp(name, "away")) {
+	} else if (!xstrcasecmp(name, "away")) {
 		session_status_set(session, EKG_STATUS_AWAY);
 		df = "away"; f = "away"; fd = "away_descr";
 		session_unidle(session);
-		goto change;
-	}
-
-	if (!xstrcasecmp(name, "_autoaway")) {
+	} else if (!xstrcasecmp(name, "_autoaway")) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		df = "away"; f = "auto_away"; fd = "auto_away_descr";
-		goto change;
-	}
-
-	if (!xstrcasecmp(name, "back")) {
+	} else if (!xstrcasecmp(name, "back")) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 		df = "back"; f = "back"; fd = "back_descr";
 		session_unidle(session);
-		goto change;
-	}
-
-	if (!xstrcasecmp(name, "_autoback")) {
+	} else if (!xstrcasecmp(name, "_autoback")) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 		df = "back"; f = "auto_back"; fd = "auto_back_descr";
 		session_unidle(session);
-		goto change;
-	}
-
-	if (!xstrcasecmp(name, "invisible")) {
+	} else if (!xstrcasecmp(name, "invisible")) {
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		df = "quit"; f = "invisible"; fd = "invisible_descr";
 		session_unidle(session);
-		goto change;
+	} else {
+		xfree(params0);
+		return -1;
 	}
 
-	xfree(params0);
-	return -1;
-
-change:
 	if (params0) {
 		if (xstrlen(params0) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			if (!timeout) {
@@ -416,48 +389,48 @@ change:
 			autoscroll = timeout = 0;
 
 	if (autoscroll || (timeout && xstrlen(params0) > GG_STATUS_DESCR_MAXSIZE)) {
-			const char *mode = session_get(session, "scroll_mode");
-			char *desk;
+		const char *mode = session_get(session, "scroll_mode");
+		char *desk;
 
-			timeout = autoscroll;
-			autoscroll = session -> scroll_pos;
-			desk = xstrndup(session_descr_get(session) + autoscroll,
+		timeout = autoscroll;
+		autoscroll = session -> scroll_pos;
+		desk = xstrndup(session_descr_get(session) + autoscroll,
 							GG_STATUS_DESCR_MAXSIZE-1);
-			/* this is made especially to make other people happy ;)
-			 * and make it easy to ignore states with '>' at beginning
-			 */
-			if (autoscroll)
-					descr = saprintf("<%s", desk);
-			else 
-					descr = saprintf("%s>", desk);
-			xfree(desk);
+		/* this is made especially to make other people happy ;)
+		 * and make it easy to ignore states with '>' at beginning
+		 */
+		if (autoscroll)
+				descr = saprintf("<%s", desk);
+		else 
+				descr = saprintf("%s>", desk);
+		xfree(desk);
 
-			if (!xstrcmp(mode, "bounce")) {
-				if (!session->scroll_op) {
-					session->scroll_pos++;
-				} else {
-					session->scroll_pos--;
-				}
-				/* I've changed xor to simple setting to 0 and 1 because
-				 * it was possible to screw things up by playing with
-				 * scroll_mode session variable
-				 */
-				if (session->scroll_pos <= 0)
-						session->scroll_op=0;
-				else if (session->scroll_pos >=
-								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
-						session->scroll_op=1;
-			} else if (!xstrcmp(mode, "simple")) {
+		if (!xstrcmp(mode, "bounce")) {
+			if (!session->scroll_op) {
 				session->scroll_pos++;
-				if (session->scroll_pos >
-								xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
-					session->scroll_pos=0;
+			} else {
+				session->scroll_pos--;
 			}
-			/* I wanted to add one more 'constant' to the left [or right]
-			 * but I'd have to change some things, and I'm soooo lazy
+			/* I've changed xor to simple setting to 0 and 1 because
+			 * it was possible to screw things up by playing with
+			 * scroll_mode session variable
 			 */
+			if (session->scroll_pos <= 0)
+					session->scroll_op=0;
+			else if (session->scroll_pos >=
+							xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
+					session->scroll_op=1;
+		} else if (!xstrcmp(mode, "simple")) {
+			session->scroll_pos++;
+			if (session->scroll_pos >
+							xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
+				session->scroll_pos=0;
+		}
+		/* I wanted to add one more 'constant' to the left [or right]
+		 * but I'd have to change some things, and I'm soooo lazy
+		 */
 
-			autoscroll = timeout;
+		autoscroll = timeout;
 	} else
 		descr = xstrdup(session_descr_get(session));
 
@@ -480,24 +453,13 @@ change:
 	ekg_update_status(session);
 
 	gg_iso_to_cp(descr);
+	_status = GG_S(gg_text_to_status(status, descr)); /* descr can be NULL it doesn't matter... */
 
-	if (descr) {
-                int _status = gg_text_to_status(status, descr);
+	if (session_int_get(session, "private"))
+                _status |= GG_STATUS_FRIENDS_MASK;
 
-                _status = GG_S(_status);
-		if (session_int_get(session, "private"))
-	                _status |= GG_STATUS_FRIENDS_MASK;
-
-		gg_change_status_descr(g->sess, _status, descr);
-	} else {
-                int _status = gg_text_to_status(status, NULL);
-
-                _status = GG_S(_status);
-		if (session_int_get(session, "private"))
-	                _status |= GG_STATUS_FRIENDS_MASK;
-
-		gg_change_status(g->sess, _status);
-	}
+	if (descr)	gg_change_status_descr(g->sess, _status, descr);
+	else		gg_change_status(g->sess, _status);
 
 	xfree(params0);
 	xfree(descr);
@@ -517,16 +479,6 @@ COMMAND(gg_command_msg)
 
 	chat = (xstrcasecmp(name, "msg"));
 
-        if (!session_check(session, 1, "gg")) {
-                printq("invalid_session");
-                return -1;
-        }
-
-	if (!params[0] || !params[1]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-	
 	session_unidle(session);
 
         if (!xstrcmp(params[0], "*")) {
@@ -535,7 +487,7 @@ COMMAND(gg_command_msg)
 		return 0;
 	}
 	
-	nick = xstrdup(params[0]);
+	nick = xstrdup(target);
 
 	if ((*nick == '@' || xstrchr(nick, ',')) && chat) {
 		struct conference *c = conference_create(session, nick);
@@ -610,7 +562,7 @@ COMMAND(gg_command_msg)
 		
 		for (i = 1; i * 1989 <= len; i++) {
 			char *tmp = (i != len) ? xstrndup(params[1] + (i - 1) * 1989, 1989) : xstrdup(params[1] + (i - 1) * 1989);
-			char *cmd = saprintf("/%s %s %s", name, params[0], tmp);
+			char *cmd = saprintf("/%s %s %s", name, target, tmp);
 
 			command_exec(target, session, cmd, 0);
 			debug("cmd: %s\n", cmd);
@@ -748,8 +700,6 @@ COMMAND(gg_command_msg)
 		
 	        u = userlist_find(session, uid);
 
-//		put_log(uin, "%s,%s,%s,%s,%s\n", ((chat) ? "chatsend" : "msgsend"), uid, ((u && u->nickname) ? u->nickname : ""), log_timestamp(time(NULL)), raw_msg);
-
 		if (config_last & 4) 
 			last_add(1, uid, time(NULL), 0, msg);
 
@@ -771,7 +721,7 @@ COMMAND(gg_command_msg)
 			else
 				seq = "offline";
 
-			msg_queue_add(session_uid_get(session), params[0], params[1], seq);
+			msg_queue_add(session_uid_get(session), target, params[1], seq);
 			valid++;
 			xfree(__msg);
 		}
@@ -798,7 +748,7 @@ COMMAND(gg_command_msg)
 		else
 			seq = "offline";
 
-		msg_queue_add(session_uid_get(session), params[0], params[1], seq);
+		msg_queue_add(session_uid_get(session), target, params[1], seq);
 		valid++;
 
 		xfree(uins);
@@ -847,12 +797,11 @@ COMMAND(gg_command_msg)
 
 COMMAND(gg_command_inline_msg)
 {
-	const char *p[2] = { target, params[0] };
+	const char *p[2] = { NULL, params[0] };
 
-	if(p[1]) 
-		return gg_command_msg("chat", p, session, target, quiet);
-	else
-		return 0;
+	if (!params[0]) 
+		return -1;
+	return gg_command_msg("chat", p, session, target, quiet);
 }
 
 COMMAND(gg_command_block)
@@ -898,15 +847,9 @@ COMMAND(gg_command_block)
 
 COMMAND(gg_command_unblock)
 {
-	int unblock_all = (params[0] && !xstrcmp(params[0], "*"));
 	const char *uid;
 
-	if (!params[0]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-
-	if (unblock_all) {
+	if (!xstrcmp(params[0], "*")) {
 		list_t l;
 		int x = 0;
 
@@ -1169,11 +1112,6 @@ COMMAND(gg_command_modify)
 	char **argv = NULL;
 	int i, res = 0, modified = 0;
 
-	if (!params[0]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-
 	if (!(u = userlist_find(session, params[0]))) {
 		printq("user_not_found", params[0]);
 		return -1;
@@ -1369,7 +1307,7 @@ static void gg_checked_timer_handler(int type, void *data)
 	list_t l;
 
 	if (type == 1) {
-		xfree(c);
+		xfree(data);
 		return;
 	}
 
@@ -1385,46 +1323,27 @@ static void gg_checked_timer_handler(int type, void *data)
 
 COMMAND(gg_command_check_conn)
 {
-	userlist_t *u;
-	gg_private_t *g = session_private_get(session);
-	gg_currently_checked_t c, *c_timer;
-	list_t l;
-	char *par, *tmp;
-
 	struct gg_msg_richtext_format_img {
 		struct gg_msg_richtext rt;
 		struct gg_msg_richtext_format f;
 		struct gg_msg_richtext_image image;
-         } msg;
+	} msg;
+
+	userlist_t *u;
+	gg_private_t *g = session_private_get(session);
+	gg_currently_checked_t c, *c_timer;
+	list_t l;
+	char *par;
  
-         msg.rt.flag = 2;
-         msg.rt.length = 13;
-         msg.f.position = 0;
-         msg.f.font = 0x80;
-         msg.image.unknown1 = 0x0109;
-         msg.image.size = 20;
-         msg.image.crc32 = GG_CRC32_INVISIBLE;
+	msg.rt.flag = 2;
+	msg.rt.length = 13;
+	msg.f.position = 0;
+	msg.f.font = 0x80;
+	msg.image.unknown1 = 0x0109;
+	msg.image.size = 20;
+	msg.image.crc32 = GG_CRC32_INVISIBLE;
 
-	if (!session_check(session, 1, "gg")) {
-		printq("invalid_session");
-		return -1;
-	}
-
-	if (!params[0] && !window_current->target) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-	
-	if (!g->sess || !session_connected_get(session)) {
-		printq("not_connected", session_name(session));
-		return -1;
-	}
-
-	tmp = params[0] ? xstrdup(params[0]) : xstrdup(window_current->target);
-
-        par = xstrdup(strip_quotes(tmp));
-
-	xfree(tmp);	
+	par = strip_quotes(xstrdup(target));
 
 	if (!(u = userlist_find(session, par))) {
 		printq("user_not_found", par);
@@ -1465,39 +1384,39 @@ COMMAND(gg_command_check_conn)
 
 void gg_register_commands()
 {
-	command_add(&gg_plugin, "gg:connect", "r ?", gg_command_connect, 0, NULL);
-	command_add(&gg_plugin, "gg:disconnect", "r ?", gg_command_connect, 0, NULL);
-	command_add(&gg_plugin, "gg:reconnect", NULL, gg_command_connect, 0, NULL);
-	command_add(&gg_plugin, "gg:msg", "uUC ?", gg_command_msg, 0, NULL);
-	command_add(&gg_plugin, "gg:chat", "uUC ?", gg_command_msg, 0, NULL);
-	command_add(&gg_plugin, "gg:", "?", gg_command_inline_msg, 0, NULL);
-	command_add(&gg_plugin, "gg:_descr", "r", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:away", "r", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:_autoscroll", "?", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:check_conn", "uUC", gg_command_check_conn, 0, NULL);
-	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 0, NULL);
-	command_add(&gg_plugin, "gg:image", "u f", gg_command_image, 0, NULL);
+#define GG_ONLY        SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define GG_FLAGS       GG_ONLY | SESSION_MUSTBECONNECTED
+#define GG_FLAGS_TARGET GG_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+	command_add(&gg_plugin, "gg:connect", "r ?", gg_command_connect, 	GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:disconnect", "r ?", gg_command_connect, 	GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:reconnect", NULL, gg_command_connect, 	GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:msg", "!uUC !", gg_command_msg, 		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
+	command_add(&gg_plugin, "gg:chat", "!uUC !", gg_command_msg, 		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
+	command_add(&gg_plugin, "gg:", "?", gg_command_inline_msg, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:_descr", "r", gg_command_away, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:away", "r", gg_command_away, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:_autoaway", "?", gg_command_away, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:back", "r", gg_command_away, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:_autoback", "?", gg_command_away, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:_autoscroll", "?", gg_command_away, 	GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:check_conn", "!uUC", gg_command_check_conn,	GG_FLAGS_TARGET, NULL);
+	command_add(&gg_plugin, "gg:invisible", "r", gg_command_away, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, "gg:image", "!u !f", gg_command_image, 		COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, "gg:block", "uUC ?", gg_command_block, 0, NULL);
-	command_add(&gg_plugin, "gg:unblock", "b ?", gg_command_unblock, 0, NULL);
-	command_add(&gg_plugin, "gg:modify", "Uu ?", gg_command_modify, 0, NULL);
+	command_add(&gg_plugin, "gg:unblock", "!b ?", gg_command_unblock, 	COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, "gg:modify", "!Uu ?", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, "gg:remind", "?", gg_command_remind, 0, NULL);
 	command_add(&gg_plugin, "gg:register", "? ? ?", gg_command_register, 0, NULL);
         command_add(&gg_plugin, "gg:token", NULL, gg_command_token, 0, NULL);
-	command_add(&gg_plugin, "gg:unregister", "? ? ?", gg_command_unregister, 0, NULL);
-	command_add(&gg_plugin, "gg:passwd", "? ?", gg_command_passwd, 0, NULL);
-	command_add(&gg_plugin, "gg:userlist", "p ?", gg_command_list, 0,  
-	  "-c --clear -g --get -p --put");
-	command_add(&gg_plugin, "gg:find", "puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC",
-	 gg_command_find, 0, "-u --uin -f --first -l --last -n --nick -c --city -b --botn -a --active -F --female -M --male -s --start -A --all -S --stop");
-	
-	command_add(&gg_plugin, "gg:change", "p", gg_command_change, 0,
-	  "-f --first -l --last -n --nick -b --born -c --city -N --familyname -C --familycity -F --female -M --male");
-
-	command_add(&gg_plugin, "gg:dcc", "p uU f ?", gg_command_dcc, 0, 
-	 "send rsend get resume rvoice voice close list");
+	command_add(&gg_plugin, "gg:unregister", "! ! !", gg_command_unregister, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, "gg:passwd", "! ?", gg_command_passwd, 		GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, "gg:userlist", "p ?", gg_command_list, 		GG_ONLY, "-c --clear -g --get -p --put");
+	command_add(&gg_plugin, "gg:find", "puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC", 
+							gg_command_find, 	GG_ONLY, 
+			"-u --uin -f --first -l --last -n --nick -c --city -b --born -a --active -F --female -M --male -s --start -A --all -S --stop");
+	command_add(&gg_plugin, "gg:change", "p", gg_command_change, 		GG_ONLY, 
+			"-f --first -l --last -n --nick -b --born -c --city -N --familyname -C --familycity -F --female -M --male");
+	command_add(&gg_plugin, "gg:dcc", "p uU f ?", gg_command_dcc, 		GG_ONLY, "send rsend get resume rvoice voice close list");
 
 }
 

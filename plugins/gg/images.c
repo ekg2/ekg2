@@ -48,66 +48,62 @@ list_t images = NULL;
 COMMAND(gg_command_image)
 {
 	gg_private_t *g = session_private_get(session);
+	FILE *f;
+	uint32_t size, crc32;
+	int i;
+	char *filename, *data, *uid;
 
-	if (params[0] && params[1]) {
-		FILE *f = fopen(params[1], "r");
-		uint32_t size, crc32;
-		int i;
-		char *filename, *data, *uid;
+        struct gg_msg_richtext_format_img {
+                struct gg_msg_richtext rt;
+                struct gg_msg_richtext_format f;
+                struct gg_msg_richtext_image image;
+        } msg;
 
-	        struct gg_msg_richtext_format_img {
-	                struct gg_msg_richtext rt;
-	                struct gg_msg_richtext_format f;
-	                struct gg_msg_richtext_image image;
-	        } msg;
-
-		if (!(uid = get_uid(session, params[0]))) {
-			printq("user_not_found", params[0]);
-			return -1;
-		}
-
-		if (!f) {
-			printq("file_doesnt_exist", params[1]);
-			return -1;
-		}
+	if (!(uid = get_uid(session, params[0]))) {
+		printq("user_not_found", params[0]);
+		return -1;
+	}
+	if (!(f = fopen(params[1], "r"))) {
+		printq("file_doesnt_exist", params[1]);
+		return -1;
+	}
 	
-		/* finding size of file by seeking to the end and then 
-		   checking where we are */
-		fseek(f, 0, SEEK_END);
-		size = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		filename = xstrdup(params[1]);
+	/* finding size of file by seeking to the end and then 
+	   checking where we are */
+	fseek(f, 0, SEEK_END);
+	size = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	filename = xstrdup(params[1]);
 
-		data = xmalloc(size);
+	data = xmalloc(size);
 
-		for (i = 0; !feof(f); i++) {
-			data[i] = fgetc(f);
-		}
-
-		crc32 = gg_crc32(0, data, size);
-		
-	        msg.rt.flag=2;
-	        msg.rt.length=13;
-	        msg.f.position=0;
-	        msg.f.font=GG_FONT_IMAGE;
-	        msg.image.unknown1=0x0109;
-	        msg.image.size=size;
-	        msg.image.crc32=crc32;
-
-		image_add_queue(filename, data, size, crc32); 
-
-	        if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
-			printq("gg_image_error_send");
-	                return -1;
-	        }
-		
-		printq("gg_image_ok_send");
-
-		xfree(filename);
-		return 0;
+	for (i = 0; !feof(f); i++) {
+		data[i] = fgetc(f);
 	}
 
-	return 0;	
+	crc32 = gg_crc32(0, data, size);
+	
+        msg.rt.flag=2;
+        msg.rt.length=13;
+        msg.f.position=0;
+        msg.f.font=GG_FONT_IMAGE;
+        msg.image.unknown1=0x0109;
+        msg.image.size=size;
+        msg.image.crc32=crc32;
+
+	image_add_queue(filename, data, size, crc32); 
+
+        if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
+		printq("gg_image_error_send");
+		/* fclose(f)  ? */
+		xfree(filename);
+                return -1;
+        }
+		
+	printq("gg_image_ok_send");
+	xfree(filename);
+
+	return 0;
 }
 
 /* 

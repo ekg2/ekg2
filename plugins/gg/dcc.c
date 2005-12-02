@@ -51,7 +51,7 @@ void gg_changed_dcc(const char *var)
 		}
 	}
 
-	if (!strcmp(var, "dcc_ip")) {
+	if (!xstrcmp(var, "dcc_ip")) {
 		if (gg_config_dcc_ip) {
 			if (!xstrcasecmp(gg_config_dcc_ip, "auto")) {
 				gg_dcc_ip = inet_addr("255.255.255.255");
@@ -68,7 +68,7 @@ void gg_changed_dcc(const char *var)
 			gg_dcc_ip = 0;
 	}
 
-	if (!strcmp(var, "dcc_port")) {
+	if (!xstrcmp(var, "dcc_port")) {
 		if (gg_config_dcc && gg_config_dcc_port) {
 			gg_dcc_socket_close();
 			gg_dcc_ip = 0;
@@ -87,11 +87,6 @@ COMMAND(gg_command_dcc)
 {
 	uin_t uin = atoi(session->uid + 3);
 	gg_private_t *g = session_private_get(session);
-
-	if (!session_check(session, 1, "gg")) {
-		printq("invalid_session");
-		return -1;
-	}
 
 	/* send, rsend */
 	if (params[0] && (!xstrncasecmp(params[0], "se", 2) || !xstrncasecmp(params[0], "rse", 3))) {
@@ -125,14 +120,14 @@ COMMAND(gg_command_dcc)
 			printq("dcc_user_aint_dcc", format_user(session, u->uid));
 			return -1;
 		}
-
-		if ((fd = open(params[2], O_RDONLY)) == -1) {
-			printq("dcc_open_error", params[2], strerror(errno));
-			return -1;
-		}
-
+		
 		if (!stat(params[2], &st) && S_ISDIR(st.st_mode)) {
 			printq("dcc_open_error", params[2], strerror(EISDIR));
+			return -1;
+		}
+		
+		if ((fd = open(params[2], O_RDONLY)) == -1) {
+			printq("dcc_open_error", params[2], strerror(errno));
 			return -1;
 		}
 
