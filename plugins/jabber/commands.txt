@@ -42,7 +42,7 @@ back
 	
         Je¿eli nie podano opisu to bêdzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
-		
+
 change
 	parametry:  <opcje>
 	krotki opis: zmienia informacje w katalogu publicznym
