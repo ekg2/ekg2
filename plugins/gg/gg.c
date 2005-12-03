@@ -114,12 +114,9 @@ QUERY(gg_userlist_added_handle)
 	char **uid = va_arg(ap, char**);
 	char **params = va_arg(ap, char**);
 	int *quiet = va_arg(ap, int*);
-	
-	gg_command_modify("add", (const char **) params, session_current, NULL, *quiet);
-
-	uid = NULL;
-
-	return 0;
+/* TODO: CHANGE to command_exec() !!!!. buggy. */
+//	return command_exec(NULL, session_current, *params, *quiet);	
+	return gg_command_modify("add", (const char **) params, session_current, NULL, *quiet);
 }
 
 
@@ -162,7 +159,7 @@ QUERY(gg_user_online_handle)
 	int quiet = (int ) data;
         int uin = atoi(u->uid + 3);
 
-        if (!session_check(session, 0, "gg") || !g) {
+        if (!session_check(session, 1, "gg")) {
 		return 0;
         }
 
@@ -289,8 +286,8 @@ uin_t str_to_uin(const char *text)
 QUERY(gg_add_notify_handle)
 {
 	char **session_uid = va_arg(ap, char**);
-	session_t *s = session_find(*session_uid);
  	char **uid = va_arg(ap, char**);
+	session_t *s = session_find(*session_uid);
 	gg_private_t *g;
 
 	if (!s) {
@@ -413,9 +410,9 @@ static void gg_ping_timer_handler(int type, void *data)
  */
 static void gg_session_handler_success(session_t *s)
 {
-	char *__session = xstrdup(session_uid_get(s));
 	gg_private_t *g = session_private_get(s);
         const char *status;
+	char *__session;
 	char *descr;
 	char buf[100];
 	int _status;
@@ -428,6 +425,7 @@ static void gg_session_handler_success(session_t *s)
 	session_connected_set(s, 1);
 	session_unidle(s);
 
+	__session = xstrdup(session_uid_get(s));
 	query_emit(NULL, "protocol-connected", &__session);
 	xfree(__session);
 
