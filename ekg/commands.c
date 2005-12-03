@@ -11,6 +11,7 @@
  *                          Kuba Kowalski <qbq@kofeina.net>
  *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *			    Leszek Krupiñski <leafnode@wafel.com>
+ *			    Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -1566,6 +1567,53 @@ list_user:
 			printq("user_info_not_in_contacts");
 		if (u->port == 1)
 			printq("user_info_firewalled");
+		if ((u->protocol & 0x40000000)) // XXX: GG_HAS_AUDIO_MASK == 0x40000000 but this is in gg.h
+			printq("user_info_voip");
+		
+		if ((u->protocol & 0x00ffffff)) {
+			int v = u->protocol & 0x00ffffff;
+			const char *ver = NULL;
+
+			if (v < 0x0b)
+				ver = "<= 4.0.x";
+			if (v >= 0x0f && v <= 0x10)
+				ver = "4.5.x";
+			if (v == 0x11)
+				ver = "4.6.x";
+			if (v >= 0x14 && v <= 0x15)
+				ver = "4.8.x";
+			if (v >= 0x16 && v <= 0x17)
+				ver = "4.9.x";
+			if (v >= 0x18 && v <= 0x1b)
+				ver = "5.0.x";
+			if (v >= 0x1c && v <= 0x1e)
+				ver = "5.7";
+			if (v == 0x20)
+				ver = "6.0 (build >= 129)" ;
+			if (v == 0x21)
+				ver = "6.0 (build >= 133)";
+			if (v == 0x22)
+				ver = "6.0 (build >= 140)";
+			if (v == 0x24)
+				ver = "6.1 (build >= 155)";
+			if (v == 0x25)
+				ver = "7.0 (build >= 1)";
+			if (v == 0x26)
+				ver = "7.0 (build >= 20)";
+			if (v == 0x27)
+				ver = "7.0 (build >= 22)";
+
+			if (ver)
+				printq("user_info_version", ver);
+			
+			else {
+				char *tmp = saprintf("nieznana (%#.2x)", v);
+				printq("user_info_version", ver);
+			
+				xfree(tmp);
+			}
+		}
+
 		
 		if (u->ip)
 			printq("user_info_ip", ip_str);

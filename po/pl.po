@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-09-20 15:17+0200\n"
+"POT-Creation-Date: 2005-12-03 22:42+0100\n"
 "PO-Revision-Date: 2005-01-29 12:32+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -75,7 +75,7 @@ msgstr "%s: opcja `-W %s' jest dwuznaczna\n"
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr "%s: opcja `-W %s' nie dopuszcza argumentu\n"
 
-#: ekg/ekg.c:579
+#: ekg/ekg.c:583
 #, c-format
 msgid ""
 "Usage: %s [OPTIONS] [COMMANDS]\n"
@@ -117,73 +117,69 @@ msgstr ""
 "niektóre sesje mog± nie obs³ugiwaæ stanu ,,nie przeszkadzaæ'' itp.\n"
 "\n"
 
-#: ekg/ekg.c:633
+#: ekg/ekg.c:637
 #, c-format
 msgid "Can't find user's home directory. Ask administration to fix it.\n"
 msgstr ""
 "Nie mogê znale¼æ katalogu domowego. Popro¶ administratora, ¿eby to "
 "naprawi³.\n"
 
-#: ekg/ekg.c:735
+#: ekg/ekg.c:739
 #, c-format
 msgid "To get more information, start program with --help.\n"
 msgstr "Aby uzyskaæ wiêcej informacji, uruchom program z opcj± --help.\n"
 
-#: ekg/ekg.c:990 ekg/ekg.c:996 ekg/ekg.c:1008 ekg/ekg.c:1015
+#: ekg/ekg.c:991 ekg/ekg.c:997 ekg/ekg.c:1009 ekg/ekg.c:1016
 #, c-format
 msgid "Error while saving.\n"
 msgstr "Wyst±pi³ b³±d podczas zapisu.\n"
 
-#: ekg/scripts.c:347
+#: ekg/scripts.c:349
 msgid "internal script handling ERROR, script not loaded."
 msgstr ""
 
-#: ekg/scripts.c:350
+#: ekg/scripts.c:352
 #, fuzzy
 msgid "Can't recognize script type"
 msgstr "Nie mo¿na po³±czyæ siê z serwerem"
 
-#: ekg/themes.c:978
-msgid "-- Press Enter to continue or Ctrl-D to break --"
-msgstr "-- Wci¶nij Enter by kontynuowaæ lub Ctrl-D by przerwaæ --"
-
-#: ekg/themes.c:1002
+#: ekg/themes.c:987
 msgid "(none)"
 msgstr "(brak)"
 
-#: ekg/themes.c:1003
+#: ekg/themes.c:988
 msgid "%! Too few parameters. Try %Thelp %1%n\n"
 msgstr "%! Za ma³o parametrów. Spróbuj %Thelp %1%n\n"
 
-#: ekg/themes.c:1004
+#: ekg/themes.c:989
 msgid "%! Invalid parameters. Try %Thelp %1%n\n"
 msgstr "%! Nieprawid³owe parametry. Spróbuj %Thelp %1%n\n"
 
-#: ekg/themes.c:1005
+#: ekg/themes.c:990
 msgid "%! Invalid user id\n"
 msgstr "%! Nieprawid³owy identyfikator u¿ytkownika\n"
 
-#: ekg/themes.c:1006
+#: ekg/themes.c:991
 msgid "%! Invalid session\n"
 msgstr "%! Nieprawid³owa sesja\n"
 
-#: ekg/themes.c:1007
+#: ekg/themes.c:992
 msgid "%! Invalid username\n"
 msgstr "%! Nieprawid³owa nazwa u¿ytkownika\n"
 
-#: ekg/themes.c:1008
+#: ekg/themes.c:993
 msgid "%! User %T%1%n not found\n"
 msgstr "%! Nie znaleziono u¿ytkownika %T%1%n\n"
 
-#: ekg/themes.c:1009
+#: ekg/themes.c:994
 msgid "%! This function isn't ready yet\n"
 msgstr "%! Tej funkcji jeszcze nie ma\n"
 
-#: ekg/themes.c:1010
+#: ekg/themes.c:995
 msgid "%! Unknown command: %T%1%n\n"
 msgstr "%! Nieznane polecenie: %T%1%n\n"
 
-#: ekg/themes.c:1011
+#: ekg/themes.c:996
 msgid ""
 "%> %Tekg2-%1%n (%ge%Gk%gg %Gr%ge%Gl%go%Ga%gd%Ge%gd%n)\n"
 "%> Software licensed on GPL v2 terms\n"
@@ -193,115 +189,115 @@ msgstr ""
 "%> Program jest rozprowadzany na zasadach licencji GPL v2\n"
 "\n"
 
-#: ekg/themes.c:1012
+#: ekg/themes.c:997
 msgid "welcome in e k g 2."
 msgstr "witamy w e k g 2."
 
-#: ekg/themes.c:1013
+#: ekg/themes.c:998
 msgid "%) %Tekg2-%1%n (compiled %2)\n"
 msgstr "%) %Tekg2-%1%n (skompilowano %2)\n"
 
-#: ekg/themes.c:1014
+#: ekg/themes.c:999
 msgid "%Y(encrypted)%n"
 msgstr "%Y(szyfrowane)%n "
 
-#: ekg/themes.c:1017
+#: ekg/themes.c:1002
 msgid "%) You got one email\n"
 msgstr "%) Masz now± wiadomo¶æ email\n"
 
-#: ekg/themes.c:1018 ekg/themes.c:1019
+#: ekg/themes.c:1003 ekg/themes.c:1004
 msgid "%) You got %1 new emails\n"
 msgstr "%) Masz %1 nowe wiadomo¶ci email\n"
 
-#: ekg/themes.c:1022
+#: ekg/themes.c:1007
 msgid "%> (%2) Added %T%1%n to roster\n"
 msgstr "%> (%2) Dopisano %T%1%n do listy kontaktów\n"
 
-#: ekg/themes.c:1023
+#: ekg/themes.c:1008
 msgid "%) (%2) Removed %T%1%n from roster\n"
 msgstr "%) (%2) Usuniêto %T%1%n z listy kontaktów\n"
 
-#: ekg/themes.c:1024
+#: ekg/themes.c:1009
 msgid "%) (%1) Roster cleared\n"
 msgstr "%) (%1) Wyczyszczono listê kontaktów\n"
 
-#: ekg/themes.c:1025
+#: ekg/themes.c:1010
 msgid "%! (%2) %T%1%n already in roster\n"
 msgstr "%! (%2) %T%1%n ju¿ istnieje w li¶cie kontaktów\n"
 
-#: ekg/themes.c:1026
+#: ekg/themes.c:1011
 msgid "%! (%3) %T%1%n already in roster as %2\n"
 msgstr "%! (%3) %T%1%n ju¿ istnieje w li¶cie kontaktów jako %2\n"
 
-#: ekg/themes.c:1029
+#: ekg/themes.c:1014
 msgid "%> (%1) Status changed to %Gaway%n\n"
 msgstr "%> (%1) Zmieniono stan na %Gzajêty%n\n"
 
-#: ekg/themes.c:1030
+#: ekg/themes.c:1015
 msgid "%> (%3) Status changed to %Gaway%n: %T%1%n%2\n"
 msgstr "%> (%3) Zmieniono stan na %Gzajêty%n: %T%1%n%2\n"
 
-#: ekg/themes.c:1031
+#: ekg/themes.c:1016
 msgid "%> (%1) Status changed to %Yavailable%n\n"
 msgstr "%> (%1) Zmieniono stan na %Ydostêpny%n\n"
 
-#: ekg/themes.c:1032
+#: ekg/themes.c:1017
 msgid "%> (%3) Status changed to %Yavailable%n: %T%1%n%2%n\n"
 msgstr "%> (%3) Zmieniono stan na %Ydostêpny%n: %T%1%n%2%n\n"
 
-#: ekg/themes.c:1033
+#: ekg/themes.c:1018
 msgid "%> (%1) Status changed to %cinvisible%n\n"
 msgstr "%> (%1) Zmieniono stan na %cniewidoczny%n\n"
 
-#: ekg/themes.c:1034
+#: ekg/themes.c:1019
 msgid "%> (%3) Status changed to %cinvisible%n: %T%1%n%2\n"
 msgstr "%> (%3) Zmieniono stan na %cniewidoczny%n: %T%1%n%2\n"
 
-#: ekg/themes.c:1035
+#: ekg/themes.c:1020
 msgid "%> (%1) Status changed to %Bdo not disturb%n\n"
 msgstr "%> (%1) Zmieniono stan na %Bnie przeszkadzaæ%n\n"
 
-#: ekg/themes.c:1036
+#: ekg/themes.c:1021
 msgid "%> (%3) Status changed to %Bdo not disturb%n: %T%1%n%2\n"
 msgstr "%> (%3) Zmieniono stan na %Bnie przeszkadzaæ%n: %T%1%n%2%n\n"
 
-#: ekg/themes.c:1037
+#: ekg/themes.c:1022
 msgid "%> (%1) Status changed to %Wfree for chat%n\n"
 msgstr "%> (%1) Zmieniono stan na %Wchêtny do rozmowy%n\n"
 
-#: ekg/themes.c:1038
+#: ekg/themes.c:1023
 msgid "%> (%3) Status changed to %Wfree for chat%n: %T%1%n%2%n\n"
 msgstr "%> (%3) Zmieniono stan na %Wchêtny do rozmowy%n: %T%1%n%2%n\n"
 
-#: ekg/themes.c:1039
+#: ekg/themes.c:1024
 msgid "%> (%1) Status changed to %gextended away%n\n"
 msgstr "%> (%1) Zmieniono stan na %gextended away%n\n"
 
-#: ekg/themes.c:1040
+#: ekg/themes.c:1025
 msgid "%> (%3) Status changed to %gextended away%n: %T%1%n%2%n%n\n"
 msgstr "%> (%3) Zmieniono stan na %gextended away%n: %T%1%n%2%n%n\n"
 
-#: ekg/themes.c:1041
+#: ekg/themes.c:1026
 msgid "% (%1) Friends only mode is on\n"
 msgstr "%> (%1) Tryb ,,tylko dla znajomych'' jest w³±czony\n"
 
-#: ekg/themes.c:1042
+#: ekg/themes.c:1027
 msgid "%> (%1) Friends only mode is off\n"
 msgstr "%> (%1) Tryb ,,tylko dla znajomych'' jest wy³±czony\n"
 
-#: ekg/themes.c:1043
+#: ekg/themes.c:1028
 msgid "%) (%1) Turned on ,,friends only'' mode\n"
 msgstr "%> (%1) W³±czono tryb ,,tylko dla znajomych''\n"
 
-#: ekg/themes.c:1044
+#: ekg/themes.c:1029
 msgid "%> (%1) Turned off ,,friends only'' mode\n"
 msgstr "%> (%1) Wy³±czono tryb ,,tylko dla znajomych''\n"
 
-#: ekg/themes.c:1045
+#: ekg/themes.c:1030
 msgid "%! Invalid value'\n"
 msgstr "%! Nieprawid³owy identyfikator u¿ytkownika\n"
 
-#: ekg/themes.c:1046
+#: ekg/themes.c:1031
 msgid ""
 "%! Description longer than maximum %T%1%n characters\n"
 "Descr: %B%2%b%3%n\n"
@@ -309,27 +305,27 @@ msgstr ""
 "%! %|D³ugo¶æ opisu przekracza limit o %T%1%n znaków\n"
 "Opis:%B%2%b%3%n\n"
 
-#: ekg/themes.c:1048
+#: ekg/themes.c:1033
 msgid "%> (%1) Auto %Gaway%n\n"
 msgstr "%> (%1) Automagicznie zmieniono stan na %Gzajêty%n\n"
 
-#: ekg/themes.c:1049
+#: ekg/themes.c:1034
 msgid "%> (%3) Auto %Gaway%n: %T%1%n%2%n\n"
 msgstr "%> (%3) Automagicznie zmieniono stan na %Gzajêty%n: %T%1%n%2%n\n"
 
-#: ekg/themes.c:1050
+#: ekg/themes.c:1035
 msgid "%> (%1) Auto back - %Yavailable%n\n"
 msgstr "%> (%1) Automagicznie zmieniono stan na %Ydostêpny%n\n"
 
-#: ekg/themes.c:1051
+#: ekg/themes.c:1036
 msgid "%> (%3) Auto back - %Yavailable%n: %T%1%n%2%n\n"
 msgstr "%> (%3) Automagicznie zmieniono stan na %Ydostêpny%n: %T%1%n%2%n\n"
 
-#: ekg/themes.c:1057
+#: ekg/themes.c:1042
 msgid "%) %T%1%n is an alias and don't have description\n"
 msgstr "%) %T%1%n jest aliasem i nie posiada opisu\n"
 
-#: ekg/themes.c:1058
+#: ekg/themes.c:1043
 msgid ""
 "\n"
 "%> %|%Thelp <command>%n will show more details about command. Prepending %T^%"
@@ -344,7 +340,7 @@ msgstr ""
 "rozmówcê.\n"
 "\n"
 
-#: ekg/themes.c:1059
+#: ekg/themes.c:1044
 msgid ""
 "%> %|Before using consult the brochure. File %Tdocs/ULOTKA.en%n is a short "
 "guide on included documentation. If you don't have it, you can visit %"
@@ -354,11 +350,11 @@ msgstr ""
 "przewodnik po za³±czonej dokumentacji. Je¶li go nie masz, mo¿esz ¶ci±gn±æ "
 "pakiet ze strony %Thttp://www.ekg2.org/%n\n"
 
-#: ekg/themes.c:1060
+#: ekg/themes.c:1045
 msgid "%! Can't find variables descriptions (incomplete installation)\n"
 msgstr "%! Nie znaleziono opisu zmiennych (nieprawid³owa instalacja)\n"
 
-#: ekg/themes.c:1061 ekg/themes.c:1072
+#: ekg/themes.c:1046 ekg/themes.c:1057
 msgid ""
 "%! Can't find variables descriptions for %T%1%n plugin (incomplete "
 "installation)\n"
@@ -366,11 +362,11 @@ msgstr ""
 "%! Nie znaleziono opisu zmiennych dla pluginu %T%1%n (nieprawid³owa "
 "instalacja)\n"
 
-#: ekg/themes.c:1062 ekg/themes.c:1073
+#: ekg/themes.c:1047 ekg/themes.c:1058
 msgid "%! Cant find description of %T%1%n variable\n"
 msgstr "%! Nie znaleziono opisu zmiennej %T%1%n\n"
 
-#: ekg/themes.c:1063 ekg/themes.c:1074
+#: ekg/themes.c:1048 ekg/themes.c:1059
 msgid ""
 "%> %T%1%n (%2, default value: %3)\n"
 "%>\n"
@@ -378,11 +374,11 @@ msgstr ""
 "%> %T%1%n (%2, domy¶lna warto¶æ: %3)\n"
 "%>\n"
 
-#: ekg/themes.c:1067
+#: ekg/themes.c:1052
 msgid "%! Can't find commands descriptions (incomplete installation)\n"
 msgstr "%! Nie znaleziono opisu komend (nieprawid³owa instalacja)\n"
 
-#: ekg/themes.c:1068
+#: ekg/themes.c:1053
 msgid ""
 "%! Can't find commands descriptions for %T%1%n plugin (incomplete "
 "installation)\n"
@@ -390,165 +386,165 @@ msgstr ""
 "%! Nie znaleziono opisu komend dla pluginu %T%1%n (nieprawid³owa "
 "instalacja)\n"
 
-#: ekg/themes.c:1069
+#: ekg/themes.c:1054
 msgid "%! Can't find command description: %T%1%n\n"
 msgstr "%! Nie znaleziono opisu komendy %T%1%n\n"
 
-#: ekg/themes.c:1070
+#: ekg/themes.c:1055
 #, fuzzy
 msgid ""
 "%) %T%1%n is an script command and don't have description. Try /%1 help\n"
 msgstr "%) %T%1%n jest aliasem i nie posiada opisu\n"
 
-#: ekg/themes.c:1078
+#: ekg/themes.c:1063
 msgid "%> Ignoring %T%1%n\n"
 msgstr "%> Dodano %T%1%n do listy ignorowanych\n"
 
-#: ekg/themes.c:1079
+#: ekg/themes.c:1064
 msgid "%> Modified ignore level of %T%1%n\n"
 msgstr "%> Zmodyfikowano poziom ignorowania %T%1%n\n"
 
-#: ekg/themes.c:1080
+#: ekg/themes.c:1065
 msgid "%) Unignored %1\n"
 msgstr "%) Usuniêto %1 z listy ignorowanych\n"
 
-#: ekg/themes.c:1081
+#: ekg/themes.c:1066
 msgid "%) Ignore list cleared up\n"
 msgstr "%) Usuniêto wszystkich z listy ignorowanych\n"
 
-#: ekg/themes.c:1082
+#: ekg/themes.c:1067
 msgid "%! %1 already beeing ignored\n"
 msgstr "%! %1 jest ju¿ na li¶cie ignorowanych\n"
 
-#: ekg/themes.c:1084
+#: ekg/themes.c:1069
 msgid "%! Ignore list ist empty\n"
 msgstr "%! Lista ignorowanych u¿ytkowników jest pusta\n"
 
-#: ekg/themes.c:1085
+#: ekg/themes.c:1070
 msgid "%! %1 is not beeing ignored\n"
 msgstr "%! %1 nie jest na li¶cie ignorowanych\n"
 
-#: ekg/themes.c:1086
+#: ekg/themes.c:1071
 msgid "%> Blocking %T%1%n\n"
 msgstr "%> Dodano %T%1%n do listy blokowanych\n"
 
-#: ekg/themes.c:1087
+#: ekg/themes.c:1072
 msgid "%) Unblocking %1\n"
 msgstr "%) Usuniêto %1 z listy blokowanych\n"
 
-#: ekg/themes.c:1088
+#: ekg/themes.c:1073
 msgid "%) Block list cleared up\n"
 msgstr "%) Usuniêto wszystkich z listy blokowanych\n"
 
-#: ekg/themes.c:1089
+#: ekg/themes.c:1074
 msgid "%! %1 already beeing blocked\n"
 msgstr "%! %1 jest ju¿ na li¶cie blokowanych\n"
 
-#: ekg/themes.c:1091
+#: ekg/themes.c:1076
 msgid "%! Block list is empty\n"
 msgstr "%! Lista blokowanych u¿ytkowników jest pusta\n"
 
-#: ekg/themes.c:1092
+#: ekg/themes.c:1077
 msgid "%! %1 is not beeing blocked\n"
 msgstr "%! %1 nie jest na li¶cie blokowanych\n"
 
-#: ekg/themes.c:1095
+#: ekg/themes.c:1080
 msgid "%! Roster is empty\n"
 msgstr "%! Lista kontaktów jest pusta\n"
 
-#: ekg/themes.c:1096
+#: ekg/themes.c:1081
 msgid "%> %1 %Y(available)%n %b%3:%4%n\n"
 msgstr "%> %1 %Y(dostêpn%@2)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1097
+#: ekg/themes.c:1082
 msgid "%> %1 %Y(available: %n%5%Y)%n %b%3:%4%n\n"
 msgstr "%> %1 %Y(dostêpn%@2: %n%5%Y)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1098
+#: ekg/themes.c:1083
 msgid "%> %1 %G(away)%n %b%3:%4%n\n"
 msgstr "%> %1 %G(zajêt%@2)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1099
+#: ekg/themes.c:1084
 msgid "%> %1 %G(away: %n%5%G)%n %b%3:%4%n\n"
 msgstr "%> %1 %G(zajêt%@2: %n%5%G)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1100
+#: ekg/themes.c:1085
 msgid "%> %1 %B(do not disturb)%n %b%3:%4%n\n"
 msgstr "%> %1 %B(nie przeszkadzaæ)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1101
+#: ekg/themes.c:1086
 msgid "%> %1 %G(do not disturb:%n %5%G)%n %b%3:%4%n\n"
 msgstr "%> %1 %G(nie przeszkadzaæ%n: %5%G)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1102
+#: ekg/themes.c:1087
 msgid "%> %1 %W(free for chat)%n %b%3:%4%n\n"
 msgstr "%> %1 %W(chêtny do rozmowy)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1103
+#: ekg/themes.c:1088
 msgid "%> %1 %W(free for chat%n: %5%W)%n %b%3:%4%n\n"
 msgstr "%> %1 %W(chêtny do rozmowy%n: %5%W)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1104
+#: ekg/themes.c:1089
 msgid "%> %1 %m(error) %b%3:%4%n\n"
 msgstr "%> %1 %m(b³±d) %b%3:%4%n\n"
 
-#: ekg/themes.c:1105
+#: ekg/themes.c:1090
 msgid "%> %1 %m(error%n: %5%m)%n %b%3:%4%n\n"
 msgstr "%> %1 %m(b³±d%n: %5%m)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1106
+#: ekg/themes.c:1091
 msgid "%> %1 %g(extended away)%n %b%3:%4%n\n"
 msgstr "%> %1 %g(bardzo zajêt%@2)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1107
+#: ekg/themes.c:1092
 msgid "%> %1 %g(extended away: %n%5%g)%n %b%3:%4%n\n"
 msgstr "%> %1 %g(bardzo zajêt%@2: %n%5%g)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1108
+#: ekg/themes.c:1093
 msgid "%> %1 %r(offline)%n\n"
 msgstr "%> %1 %r(niedostêpn%@2)%n\n"
 
-#: ekg/themes.c:1109
+#: ekg/themes.c:1094
 msgid "%> %1 %r(offline: %n%5%r)%n\n"
 msgstr "%> %1 %r(niedostêpn%@2: %n%5%r)%n\n"
 
-#: ekg/themes.c:1110
+#: ekg/themes.c:1095
 msgid "%> %1 %c(invisible)%n %b%3:%4%n\n"
 msgstr "%> %1 %c(niewidoczn%@2)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1111
+#: ekg/themes.c:1096
 msgid "%> %1 %c(invisible: %n%5%c)%n %b%3:%4%n\n"
 msgstr "%> %1 %c(niewidoczn%@2: %n%5%c)%n %b%3:%4%n\n"
 
-#: ekg/themes.c:1112
+#: ekg/themes.c:1097
 msgid "%> %1 %m(blocking)%n\n"
 msgstr "%> %1 %m(blokuj±c%@2)%n\n"
 
-#: ekg/themes.c:1114
+#: ekg/themes.c:1099
 msgid "%> %1 will not see your status\n"
 msgstr "%> %1 nie bêdzie widzieæ naszego stanu\n"
 
-#: ekg/themes.c:1115
+#: ekg/themes.c:1100
 msgid "%> %1 will see your status\n"
 msgstr "%> %1 bêdzie widzieæ nasz stan\n"
 
-#: ekg/themes.c:1116
+#: ekg/themes.c:1101
 msgid "%> Modified item in roster\n"
 msgstr "%> Zmieniono wpis w li¶cie kontaktów\n"
 
-#: ekg/themes.c:1196
+#: ekg/themes.c:1181
 msgid "%> Bye\n"
 msgstr "%> Papa\n"
 
-#: ekg/themes.c:1197
+#: ekg/themes.c:1182
 msgid "%> Bye: %T%1%n%2\n"
 msgstr "%> Papa: %T%1%n%2\n"
 
-#: ekg/themes.c:1198
+#: ekg/themes.c:1183
 msgid "Save new configuration ? (t-yes/n-no) "
 msgstr "Zapisaæ now± konfiguracjê? (tak/nie) "
 
-#: ekg/themes.c:1199
+#: ekg/themes.c:1184
 msgid ""
 "You've set keep_reason to save status.\n"
 "Do you want to save current description to file (it will be restored upon "
@@ -558,19 +554,19 @@ msgstr ""
 "Czy chcesz zachowaæ aktualny opis do pliku (przy nastêpnym uruchomieniu EKG "
 "opis ten zostanie przywrócony)? (tak/nie) "
 
-#: ekg/themes.c:1200
+#: ekg/themes.c:1185
 msgid "%> Configuration saved\n"
 msgstr "%> Zapisano ustawienia\n"
 
-#: ekg/themes.c:1201
+#: ekg/themes.c:1186
 msgid "%! There was some error during save\n"
 msgstr "%! Podczas zapisu ustawieñ wyst±pi³ b³±d\n"
 
-#: ekg/themes.c:1208 ekg/themes.c:1216 ekg/themes.c:1222
+#: ekg/themes.c:1193 ekg/themes.c:1201 ekg/themes.c:1207
 msgid "message from %1: %3."
 msgstr "wiadomo¶æ od %1: %3."
 
-#: ekg/themes.c:1230
+#: ekg/themes.c:1215
 msgid ""
 "%m.-- %TSystem message%m --- -- -%n\n"
 "%m|%n %|%3%n\n"
@@ -580,23 +576,23 @@ msgstr ""
 "%m|%n %|%3%n\n"
 "%|%m`----- ---- --- -- -%n\n"
 
-#: ekg/themes.c:1231
+#: ekg/themes.c:1216
 msgid "system message: %3."
 msgstr "wiadomo¶æ systemowa: %3."
 
-#: ekg/themes.c:1234
+#: ekg/themes.c:1219
 msgid "%> Message to %1 will be delivered later\n"
 msgstr "%> Wiadomo¶æ do %1 zostanie dostarczona pó¼niej\n"
 
-#: ekg/themes.c:1235
+#: ekg/themes.c:1220
 msgid "%> Message to %1 delivered\n"
 msgstr "%> Wiadomo¶æ do %1 zosta³a dostarczona\n"
 
-#: ekg/themes.c:1236
+#: ekg/themes.c:1221
 msgid "%> Not clear what happened to message to %1\n"
 msgstr "%> Nie wiadomo, co siê sta³o z wiadomo¶ci± do %1\n"
 
-#: ekg/themes.c:1237
+#: ekg/themes.c:1222
 msgid ""
 "%! %|Message to %1 probably was not delivered. The person is unavailable, "
 "but server claims message is delivered. Message could been filtered out (e."
@@ -607,193 +603,193 @@ msgstr ""
 "Sytuacja taka ma miejsce, gdy wiadomo¶æ zosta³a odrzucona przez filtry "
 "serwera (np. zawiera adres strony WWW)\n"
 
-#: ekg/themes.c:1238
+#: ekg/themes.c:1223
 msgid "%! Message was too long and got shortened\n"
 msgstr "%! Wiadomo¶æ jest zbyt d³uga i zosta³a skrócona\n"
 
-#: ekg/themes.c:1241
+#: ekg/themes.c:1226
 msgid "%> (%3) %1 is %Yavailable%n\n"
 msgstr "%> (%3) %1 jest %Ydostêpn%@2%n\n"
 
-#: ekg/themes.c:1242
+#: ekg/themes.c:1227
 msgid "%> (%3) %1 is %Yavailable%n: %T%4%n\n"
 msgstr "%> (%3) %1 jest %Ydostêpn%@2%n: %T%4%n\n"
 
-#: ekg/themes.c:1243
+#: ekg/themes.c:1228
 msgid "%> (%3) %1 is %Gaway%n\n"
 msgstr "%> (%3) %1 jest %Gzajêt%@2%n\n"
 
-#: ekg/themes.c:1244
+#: ekg/themes.c:1229
 msgid "%> (%3) %1 is %Gaway%n: %T%4%n\n"
 msgstr "%> (%3) %1 jest %Gzajêt%@2%n: %T%4%n\n"
 
-#: ekg/themes.c:1245
+#: ekg/themes.c:1230
 msgid "%> (%3) %1 is %roffline%n\n"
 msgstr "%> (%3) %1 jest %rniedostêpn%@2%n\n"
 
-#: ekg/themes.c:1246
+#: ekg/themes.c:1231
 msgid "%> (%3) %1 is %roffline%n: %T%4%n\n"
 msgstr "%> (%3) %1 jest %rniedostêpn%@2%n: %T%4%n\n"
 
-#: ekg/themes.c:1247
+#: ekg/themes.c:1232
 msgid "%> (%3) %1 is %cinvisible%n\n"
 msgstr "%> (%3) %1 jest %cniewidoczn%@2%n\n"
 
-#: ekg/themes.c:1248
+#: ekg/themes.c:1233
 msgid "%> (%3) %1 is %cinvisible%n: %T%4%n\n"
 msgstr "%> (%3) %1 jest %cniewidoczn%@2%n: %T%4%n\n"
 
-#: ekg/themes.c:1249
+#: ekg/themes.c:1234
 msgid "%> (%3) %1 is %gextended away%n\n"
 msgstr "%> (%3) %1 jest %gbardzo zajêt%@2%n\n"
 
-#: ekg/themes.c:1250
+#: ekg/themes.c:1235
 msgid "%> (%3) %1 is %gextended away%n: %T%4%n\n"
 msgstr "%> (%3) %1 jest %gbardzo zajêt%@2%n: %T%4%n\n"
 
-#: ekg/themes.c:1251
+#: ekg/themes.c:1236
 msgid "%> (%3) %1 %Bdo not disturb%n\n"
 msgstr "%> (%3) %1 %Bnie przeszkadzaæ%n\n"
 
-#: ekg/themes.c:1252
+#: ekg/themes.c:1237
 msgid "%> (%3) %1 %Bdo not disturb%n: %T%4%n\n"
 msgstr "%> (%3) %1 %Bnie przeszkadzaæ%n: %T%4%n\n"
 
-#: ekg/themes.c:1253
+#: ekg/themes.c:1238
 msgid "%> (%3) %1 %merror fetching status%n\n"
 msgstr "%> (%3) %1 %mb³±d pobierania statusu%n\n"
 
-#: ekg/themes.c:1254
+#: ekg/themes.c:1239
 msgid "%> (%3) %1 %merror fetching status%n: %T%4%n\n"
 msgstr "%> (%3) %1 %mb³±d pobierania statusu%n: %T%4%n\n"
 
-#: ekg/themes.c:1255
+#: ekg/themes.c:1240
 msgid "%> (%3) %1 is %Wfree for chat%n\n"
 msgstr "%> (%3) %1 jest %Wchêtn%@2 do rozmowy%n\n"
 
-#: ekg/themes.c:1256
+#: ekg/themes.c:1241
 msgid "%> (%3) %1 is %Wfree for chat%n: %T%4%n\n"
 msgstr "%> (%3) %1 jest %Wchêtn%@2 do rozmowy%n: %T%4%n\n"
 
-#: ekg/themes.c:1259
+#: ekg/themes.c:1244
 msgid "%> (%1) Connecting to server %n\n"
 msgstr "%> (%1) £±czenie z serwerem %n\n"
 
-#: ekg/themes.c:1260
+#: ekg/themes.c:1245
 msgid "%! (%2) Connection failure: %1%n\n"
 msgstr "%! (%2) Po³±czenie nie powiod³o siê: %1%n\n"
 
-#: ekg/themes.c:1261 ekg/themes.c:1615
+#: ekg/themes.c:1246 ekg/themes.c:1603
 msgid "Server not found"
 msgstr "Nie znaleziono serwera"
 
-#: ekg/themes.c:1262
+#: ekg/themes.c:1247
 msgid "Can't connect to server"
 msgstr "Nie mo¿na po³±czyæ siê z serwerem"
 
-#: ekg/themes.c:1263
+#: ekg/themes.c:1248
 msgid "Invalid server response"
 msgstr "Nieprawid³owa odpowied¼ serwera"
 
-#: ekg/themes.c:1264 ekg/themes.c:1617 ekg/themes.c:1618
+#: ekg/themes.c:1249 ekg/themes.c:1605 ekg/themes.c:1606
 msgid "Server disconnected"
 msgstr "Serwer zerwa³ po³±czenie"
 
-#: ekg/themes.c:1265
+#: ekg/themes.c:1250
 msgid "Invalid password"
 msgstr "Nieprawid³owe has³o"
 
-#: ekg/themes.c:1266
+#: ekg/themes.c:1251
 msgid "HTTP server error"
 msgstr "B³±d serwera HTTP"
 
-#: ekg/themes.c:1267
+#: ekg/themes.c:1252
 msgid "Error negotiating TLS"
 msgstr "B³±d negocjacji TLS"
 
-#: ekg/themes.c:1268 ekg/themes.c:1619
+#: ekg/themes.c:1253 ekg/themes.c:1607
 msgid "No memory"
 msgstr "Brak pamiêci"
 
-#: ekg/themes.c:1269
+#: ekg/themes.c:1254
 msgid "%! (%1) Connection interrupted %n\n"
 msgstr "%! (%1) Przerwano ³±czenie %n\n"
 
-#: ekg/themes.c:1270
+#: ekg/themes.c:1255
 msgid "%! (%1) Connection timed out%n\n"
 msgstr "%! (%1) Przekroczono limit czasu operacji ³±czenia z serwerem%n\n"
 
-#: ekg/themes.c:1271
+#: ekg/themes.c:1256
 msgid "%> (%1) Connected%n\n"
 msgstr "%> (%1) Po³±czono%n\n"
 
-#: ekg/themes.c:1272
+#: ekg/themes.c:1257
 msgid "%> (%2) Connected: %T%1%n\n"
 msgstr "%> (%2) Po³±czono: %T%1%n\n"
 
-#: ekg/themes.c:1273
+#: ekg/themes.c:1258
 msgid "%> (%1) Disconnected%n\n"
 msgstr "%> (%1) Roz³±czono%n\n"
 
-#: ekg/themes.c:1274
+#: ekg/themes.c:1259
 msgid "%> (%2) Disconnected: %T%1%n\n"
 msgstr "%> (%2) Roz³±czono: %T%1%n\n"
 
-#: ekg/themes.c:1275
+#: ekg/themes.c:1260
 msgid "%! (%1) Already connected. Use %Treconnect%n to reconnect%n\n"
 msgstr ""
 "%! (%1) Klient jest ju¿ po³±czony. Wpisz %Treconnect%n aby po³±czyæ ponownie%"
 "n\n"
 
-#: ekg/themes.c:1276
+#: ekg/themes.c:1261
 msgid "%! (%1) Connecting in progress. Use %Tdisconnect%n to abort%n\n"
 msgstr "%! (%1) £±czenie trwa. Wpisz %Tdisconnect%n aby przerwaæ%n\n"
 
-#: ekg/themes.c:1277
+#: ekg/themes.c:1262
 msgid "%! (%1) Connection broken%n\n"
 msgstr "%! (%1) Po³±czenie zosta³o przerwane%n\n"
 
-#: ekg/themes.c:1278
+#: ekg/themes.c:1263
 msgid "%! (%1) Server disconnected%n\n"
 msgstr "%! (%1) Serwer zerwa³ po³±czenie%n\n"
 
-#: ekg/themes.c:1279
+#: ekg/themes.c:1264
 msgid "%! (%1) Not connected.%n\n"
 msgstr "%! (%1) Brak po³±czenia z serwerem.%n\n"
 
-#: ekg/themes.c:1280
+#: ekg/themes.c:1265
 msgid "%! (%1) Not connected. Message will be delivered when connected.%n\n"
 msgstr ""
 "%! (%1) Brak po³±czenia z serwerem. Wiadomo¶æ bêdzie wys³ana po po³±czeniu.%"
 "n\n"
 
-#: ekg/themes.c:1281
+#: ekg/themes.c:1266
 msgid "%! (%1) Wrong session id.%n\n"
 msgstr "%! (%1) Z³y id sesji.%n\n"
 
-#: ekg/themes.c:1282
+#: ekg/themes.c:1267
 msgid "%! (%1) Invalid \"server\".%n\n"
 msgstr "%! (%1) B³êdna warto¶æ zmiennej sesyjnej \"server\".%n\n"
 
-#: ekg/themes.c:1283
+#: ekg/themes.c:1268
 msgid ""
 "%! (%1) Invalid local address. I'm clearing %Tlocal_ip%n session variable\n"
 msgstr ""
 "%! (%1) Nieprawid³owy adres lokalny. Czyszczê zmienn± sesyjn± %Tlocal_ip%n\n"
 
-#: ekg/themes.c:1284
+#: ekg/themes.c:1269
 msgid "%! (%1) EKG2 won't try to connect anymore - use /connect.%n\n"
 msgstr "%! (%1) EKG2 nie bêdzie siê ju¿ wiêcej ³±czy³ - u¿yj /connect.%n\n"
 
-#: ekg/themes.c:1293
+#: ekg/themes.c:1278
 msgid "%! Unknown variable: %T%1%n\n"
 msgstr "%! Nieznana zmienna: %T%1%n\n"
 
-#: ekg/themes.c:1294
+#: ekg/themes.c:1279
 msgid "%! Invalid session variable value\n"
 msgstr "%! Nieprawid³owa warto¶æ zmiennej\n"
 
-#: ekg/themes.c:1295
+#: ekg/themes.c:1280
 msgid ""
 "%! Incomplete configuration. Use:\n"
 "%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n"
@@ -829,7 +825,7 @@ msgstr ""
 "ka¿dym UID'em, prawid³owy przyk³adowy UID ma postaæ: %Tgg:<nr>%n. \n"
 "\n"
 
-#: ekg/themes.c:1296
+#: ekg/themes.c:1281
 msgid ""
 "incomplete configuration. enter session -a, and then gg: gg-number, or jid: "
 "jabber id, then session password and your password. enter save to save. "
@@ -840,129 +836,129 @@ msgid ""
 "shortcuts are described in README file. There is also help command."
 msgstr ""
 
-#: ekg/themes.c:1297
+#: ekg/themes.c:1282
 msgid "%! Error reading configuration file: %1\n"
 msgstr "%! Nie mo¿na odczytaæ pliku konfiguracyjnego: %1\n"
 
-#: ekg/themes.c:1298
+#: ekg/themes.c:1283
 msgid "%> Configuratin read correctly.%n\n"
 msgstr "%> Zapisano ustawienia\n"
 
-#: ekg/themes.c:1299
+#: ekg/themes.c:1284
 msgid "%! Invalid line '%T%1%n', skipping\n"
 msgstr "%! Nieprawid³owa linia '%T%1%n', pomijam\n"
 
-#: ekg/themes.c:1300
+#: ekg/themes.c:1285
 msgid "%> Automatically saved settings\n"
 msgstr "%> Automatycznie zapisano ustawienia\n"
 
-#: ekg/themes.c:1303
+#: ekg/themes.c:1288
 msgid "%> Registration successful. Your number: %T%1%n\n"
 msgstr "%> Rejestracja poprawna. Wygrany numerek: %T%1%n\n"
 
-#: ekg/themes.c:1304
+#: ekg/themes.c:1289
 msgid "%! Error during registration: %1\n"
 msgstr "%! B³±d podczas rejestracji: %1\n"
 
-#: ekg/themes.c:1305
+#: ekg/themes.c:1290
 msgid "%! Registration in progress\n"
 msgstr "%! Rejestracja w toku\n"
 
-#: ekg/themes.c:1306
+#: ekg/themes.c:1291
 msgid "%! Registration timed out\n"
 msgstr "%! Przekroczono limit czasu operacji rejestrowania\n"
 
-#: ekg/themes.c:1307
+#: ekg/themes.c:1292
 msgid "%! Already registered. Do not abuse\n"
 msgstr "%! Ju¿ zarejestrowano jeden numer. Nie nadu¿ywaj\n"
 
-#: ekg/themes.c:1310
+#: ekg/themes.c:1295
 msgid "%> Account removed\n"
 msgstr "%> Konto %T%1%n zosta³o usuniête\n"
 
-#: ekg/themes.c:1311
+#: ekg/themes.c:1296
 msgid "%! Account removal timed out\n"
 msgstr "%! Przekroczono limit czasu operacji usuwania konta\n"
 
-#: ekg/themes.c:1312
+#: ekg/themes.c:1297
 msgid "%! Unknown uin: %T%1%n\n"
 msgstr "%! Niepoprawny numer: %T%1%n\n"
 
-#: ekg/themes.c:1313
+#: ekg/themes.c:1298
 msgid "%! Error while deleting account: %1\n"
 msgstr "%! B³±d podczas usuwania konta: %1\n"
 
-#: ekg/themes.c:1316
+#: ekg/themes.c:1301
 msgid "%> Password sent\n"
 msgstr "%> Has³o zosta³o wys³ane\n"
 
-#: ekg/themes.c:1317
+#: ekg/themes.c:1302
 msgid "%! Error while sending password: %1\n"
 msgstr "%! B³±d podczas wysy³ania has³a: %1\n"
 
-#: ekg/themes.c:1318
+#: ekg/themes.c:1303
 msgid "%! Password sending timed out\n"
 msgstr "%! Przekroczono limit czasu operacji wys³ania has³a\n"
 
-#: ekg/themes.c:1321
+#: ekg/themes.c:1306
 msgid "%> Password changed\n"
 msgstr "%> Has³o zosta³o zmienione\n"
 
-#: ekg/themes.c:1322
+#: ekg/themes.c:1307
 msgid "%! Error while changing password: %1\n"
 msgstr "%! B³±d podczas zmiany has³a: %1\n"
 
-#: ekg/themes.c:1323
+#: ekg/themes.c:1308
 msgid "%! Password changing timed out\n"
 msgstr "%! Przekroczono limit czasu operacji zmiany has³a\n"
 
-#: ekg/themes.c:1326
+#: ekg/themes.c:1311
 msgid "%> Informations in public directory chenged\n"
 msgstr "%> Informacje w katalogu publicznym zosta³y zmienione\n"
 
-#: ekg/themes.c:1327
+#: ekg/themes.c:1312
 msgid "%! Error while changing informations in public directory\n"
 msgstr "%! B³±d podczas zmiany informacji w katalogu publicznym\n"
 
-#: ekg/themes.c:1330
+#: ekg/themes.c:1315
 msgid "%! Error while search: %1\n"
 msgstr "%! Wyst±pi³ b³±d podczas szukania: %1\n"
 
-#: ekg/themes.c:1331
+#: ekg/themes.c:1316
 msgid "%! Not found\n"
 msgstr "%! Nie znaleziono\n"
 
-#: ekg/themes.c:1332
+#: ekg/themes.c:1317
 msgid "%! Last search returned no result\n"
 msgstr "%! Brak wyników ostatniego wyszukiwania\n"
 
-#: ekg/themes.c:1333
+#: ekg/themes.c:1318
 msgid "%! No nickname in last search\n"
 msgstr "%! Brak pseudonimu w ostatnim wyszukiwaniu\n"
 
-#: ekg/themes.c:1334
+#: ekg/themes.c:1319
 msgid "%> Search stopped\n"
 msgstr "%> Zatrzymano wyszukiwanie\n"
 
-#: ekg/themes.c:1346
+#: ekg/themes.c:1331
 msgid "%Y(available)%N"
 msgstr "%Y(dostêpn%@1)%n"
 
-#: ekg/themes.c:1347
+#: ekg/themes.c:1332
 #, fuzzy, c-format
 msgid "%G(away)%n"
 msgstr "%G(zajêt%@1)%n"
 
-#: ekg/themes.c:1348
+#: ekg/themes.c:1333
 msgid "%r(offline)%n"
 msgstr "%r(niedostêpn%@1)%n"
 
-#: ekg/themes.c:1349
+#: ekg/themes.c:1334
 #, fuzzy, c-format
 msgid "%c(invisible)%n"
 msgstr "%c(niewidoczn%@1)%n)"
 
-#: ekg/themes.c:1351
+#: ekg/themes.c:1336
 msgid ""
 "%) Nickname:  %T%3%n\n"
 "%) Number: %T%1%n %7\n"
@@ -976,295 +972,304 @@ msgstr ""
 "%) Miejscowo¶æ: %T%4%n\n"
 "%) Rok urodzenia: %T%5%n\n"
 
-#: ekg/themes.c:1355
+#: ekg/themes.c:1340
 msgid "%! There are no running procesees\n"
 msgstr "%! Nie ma dzia³aj±cych procesów\n"
 
-#: ekg/themes.c:1356
+#: ekg/themes.c:1341
 msgid "%> Proces %1 (%2) exited with %3 status\n"
 msgstr "%> Proces %1 (%2) zakoñczy³ dzia³anie z wynikiem %3\n"
 
-#: ekg/themes.c:1358
+#: ekg/themes.c:1343
 msgid "%! Error running process : %1\n"
 msgstr "%! B³±d uruchamiania procesu: %1\n"
 
-#: ekg/themes.c:1363
+#: ekg/themes.c:1348
 msgid "%K| %nNickname: %T%1%n\n"
 msgstr "%K| %nPseudonim: %T%1%n\n"
 
-#: ekg/themes.c:1364
+#: ekg/themes.c:1349
 msgid "%K| %nName: %T%1 %2%n\n"
 msgstr "%K| %nImiê i nazwisko: %T%1 %2%n\n"
 
-#: ekg/themes.c:1365
+#: ekg/themes.c:1350
 msgid "%K| %nStatus: %T%1%n\n"
 msgstr "%K| %nStan: %T%1%n\n"
 
-#: ekg/themes.c:1367
+#: ekg/themes.c:1352
 msgid "%K| %nCurrent status since: %T%1%n\n"
 msgstr "%K| %nAktualny stan od: %T%1%n\n"
 
-#: ekg/themes.c:1368
+#: ekg/themes.c:1353
 msgid "%K| %nSubscription type: %T%1%n\n"
 msgstr "%K| %nRodzaj autoryzacji: %T%1%n\n"
 
-#: ekg/themes.c:1369
+#: ekg/themes.c:1354
 msgid "%K| %nBlocked\n"
 msgstr "%K| %nBlokowan%@1\n"
 
-#: ekg/themes.c:1370
+#: ekg/themes.c:1355
 msgid "%K| %nCan't see our status\n"
 msgstr "%K| %nNie widzi naszego stanu\n"
 
-#: ekg/themes.c:1371
+#: ekg/themes.c:1356
 msgid "%K| %nDoesn't have us in roster\n"
 msgstr "%K| %nNie ma nas w swoich kontaktach\n"
 
-#: ekg/themes.c:1372
+#: ekg/themes.c:1357
 msgid "%K| %nFirewalled/NATed\n"
 msgstr "%K| %nZnajduje siê za firewall/NAT\n"
 
-#: ekg/themes.c:1373
+#: ekg/themes.c:1358
 msgid "%K| %nAddress: %T%1%n\n"
 msgstr "%K| %nAdres: %T%1%n\n"
 
-#: ekg/themes.c:1374
+#: ekg/themes.c:1359
 msgid "%K| %nTelephone: %T%1%n\n"
 msgstr "%K| %nTelefon: %T%1%n\n"
 
-#: ekg/themes.c:1375
+#: ekg/themes.c:1360
 msgid "%K| %nGroups: %T%1%n\n"
 msgstr "%K| %nGrupy: %T%1%n\n"
 
-#: ekg/themes.c:1376
+#: ekg/themes.c:1361
 msgid "%K| %nNever seen\n"
 msgstr "%K| %nNigdy nie widziano\n"
 
-#: ekg/themes.c:1377
+#: ekg/themes.c:1362
 msgid "%K| %nLast seen: %T%1%n\n"
 msgstr "%K| %nOstatnio widziano: %T%1%n\n"
 
-#: ekg/themes.c:1379
+#: ekg/themes.c:1364
 msgid "%K| %nLast address: %T%1%n\n"
 msgstr "%K| %nOstatni adres: %T%1%n\n"
 
-#: ekg/themes.c:1380
+#: ekg/themes.c:1365
 msgid "%K| %nLast status: %T%1%n\n"
 msgstr "%K| %nOstatni stan: %T%1%n\n"
 
-#: ekg/themes.c:1384 ekg/themes.c:1419 ekg/themes.c:1657
+#: ekg/themes.c:1366
+#, fuzzy
+msgid "%K| %nVersion: %T%1%n\n"
+msgstr "%K| %nWersja klienta: %T%1%n\n"
+
+#: ekg/themes.c:1367
+msgid "%K| %nHas voice talk\n"
+msgstr "%K| %nObs³uguje rozmowy g³osowe\n"
+
+#: ekg/themes.c:1370 ekg/themes.c:1405 ekg/themes.c:1645
 msgid "%Yavailable%n"
 msgstr "%Ydostêpn%@1%n"
 
-#: ekg/themes.c:1385 ekg/themes.c:1658
+#: ekg/themes.c:1371 ekg/themes.c:1646
 msgid "%Yavailable%n %K(%n%2%K)%n"
 msgstr "%Ydostêpn%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1386 ekg/themes.c:1421 ekg/themes.c:1659
+#: ekg/themes.c:1372 ekg/themes.c:1407 ekg/themes.c:1647
 #, fuzzy, c-format
 msgid "%Gaway%n"
 msgstr "%Gzajêt%@1%n"
 
-#: ekg/themes.c:1387 ekg/themes.c:1660
+#: ekg/themes.c:1373 ekg/themes.c:1648
 msgid "%Gaway%n %K(%n%2%K)%n"
 msgstr "%Gzajêt%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1388 ekg/themes.c:1431 ekg/themes.c:1661
+#: ekg/themes.c:1374 ekg/themes.c:1417 ekg/themes.c:1649
 msgid "%roffline%n"
 msgstr "%rniedostêpn%@1%n"
 
-#: ekg/themes.c:1389 ekg/themes.c:1662
+#: ekg/themes.c:1375 ekg/themes.c:1650
 msgid "%roffline%n %K(%n%2%K)%n"
 msgstr "%rniedostêpn%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1390 ekg/themes.c:1423 ekg/themes.c:1663
+#: ekg/themes.c:1376 ekg/themes.c:1409 ekg/themes.c:1651
 #, fuzzy, c-format
 msgid "%cinvisible%n"
 msgstr "%cniewidoczn%@1%n"
 
-#: ekg/themes.c:1391 ekg/themes.c:1664
+#: ekg/themes.c:1377 ekg/themes.c:1652
 msgid "%cinvisible%n %K(%n%2%K)%n"
 msgstr "%cniewidoczn%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1392 ekg/themes.c:1665
+#: ekg/themes.c:1378 ekg/themes.c:1653
 msgid "%Bdo not disturb%n"
 msgstr "%Bnie przeszkadzaæ%n"
 
-#: ekg/themes.c:1393 ekg/themes.c:1666
+#: ekg/themes.c:1379 ekg/themes.c:1654
 msgid "%Bdo not disturb%n %K(%n%2%K)%n"
 msgstr "%Bnie przeszkadzaæ%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1394 ekg/themes.c:1429 ekg/themes.c:1667
+#: ekg/themes.c:1380 ekg/themes.c:1415 ekg/themes.c:1655
 msgid "%Wfree for chat%n"
 msgstr "%Wchêtn%@1 do rozmowy%n"
 
-#: ekg/themes.c:1395 ekg/themes.c:1668
+#: ekg/themes.c:1381 ekg/themes.c:1656
 msgid "%Wfree for chat%n %K(%n%2%K)%n"
 msgstr "%Wchêtn%@1 do rozmowy%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1396
+#: ekg/themes.c:1382
 #, c-format
 msgid "%m error%n"
 msgstr "%m b³±d%n"
 
-#: ekg/themes.c:1397 ekg/themes.c:1670
+#: ekg/themes.c:1383 ekg/themes.c:1658
 msgid "%merror%n %K(%n%2%K)%n"
 msgstr "%mb³±d%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1398 ekg/themes.c:1425 ekg/themes.c:1671
+#: ekg/themes.c:1384 ekg/themes.c:1411 ekg/themes.c:1659
 #, fuzzy, c-format
 msgid "%gextended away%n"
 msgstr "%gbardzo zajêt%@1%n"
 
-#: ekg/themes.c:1399 ekg/themes.c:1672
+#: ekg/themes.c:1385 ekg/themes.c:1660
 msgid "%gextended away%n %K(%n%2%K)%n"
 msgstr "%gbardzo zajêt%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1400 ekg/themes.c:1673
+#: ekg/themes.c:1386 ekg/themes.c:1661
 #, fuzzy, c-format
 msgid "%mblocking%n"
 msgstr "%mblokuj±c%@1%n"
 
-#: ekg/themes.c:1401 ekg/themes.c:1674
+#: ekg/themes.c:1387 ekg/themes.c:1662
 msgid "%mblocking%n %K(%n%2%K)%n"
 msgstr "%mblokuj±c%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1402 ekg/themes.c:1675
+#: ekg/themes.c:1388 ekg/themes.c:1663
 msgid "%Munknown%n"
 msgstr "%Mnieznany%n"
 
-#: ekg/themes.c:1405
+#: ekg/themes.c:1391
 msgid "%> %|Group %T%1%n: %2\n"
 msgstr "%> %|Grupa %T%1%n: %2\n"
 
-#: ekg/themes.c:1406
+#: ekg/themes.c:1392
 msgid "%! %1 already in group %T%2%n\n"
 msgstr "%! %1 nale¿y ju¿ do grupy %T%2%n\n"
 
-#: ekg/themes.c:1407
+#: ekg/themes.c:1393
 msgid "%! %1 not in group %T%2%n\n"
 msgstr "%! %1 nie nale¿y do grupy %T%2%n\n"
 
-#: ekg/themes.c:1408
+#: ekg/themes.c:1394
 msgid "%! Group %T%1%n is empty\n"
 msgstr "%! Grupa %T%1%n jest pusta\n"
 
-#: ekg/themes.c:1411
+#: ekg/themes.c:1397
 msgid "%) Profile: %T%1%n\n"
 msgstr "%) Profil: %T%1%n\n"
 
-#: ekg/themes.c:1414
+#: ekg/themes.c:1400
 msgid "%) Current status: %T%1%2%n\n"
 msgstr "%) Aktualny stan: %T%1%2%n\n"
 
-#: ekg/themes.c:1415
+#: ekg/themes.c:1401
 msgid "%) Current status: %T%1%n\n"
 msgstr "%) Aktualny stan: %T%1%n\n"
 
-#: ekg/themes.c:1416
+#: ekg/themes.c:1402
 msgid "%) Current server: %T%1%n:%T%2%n\n"
 msgstr "%) Aktualny serwer: %T%1%n:%T%2%n\n"
 
-#: ekg/themes.c:1417
+#: ekg/themes.c:1403
 msgid "%) Current server: %T%1%n:%T%2%Y (connection encrypted)%n\n"
 msgstr "%) Aktualny serwer: %T%1%n:%T%2%Y (po³±czenie szyfrowane)%n\n"
 
-#: ekg/themes.c:1418
+#: ekg/themes.c:1404
 msgid "%) Connecting ..."
 msgstr "%) Trwa ³±czenie ..."
 
-#: ekg/themes.c:1420
+#: ekg/themes.c:1406
 msgid "%Yavailable%n (%T%1%n%2)"
 msgstr "%Ydostêpny%n (%T%1%n%2)"
 
-#: ekg/themes.c:1422
+#: ekg/themes.c:1408
 msgid "%Gaway%n (%T%1%n%2)"
 msgstr "%Gzajêty%n (%T%1%n%2)"
 
-#: ekg/themes.c:1424
+#: ekg/themes.c:1410
 msgid "%cinvisible%n (%T%1%n%2)"
 msgstr "%cniewidoczn%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1426
+#: ekg/themes.c:1412
 msgid "%gextended away%n (%T%1%n%2)"
 msgstr "%gbardzo zajêt%@1%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1427
+#: ekg/themes.c:1413
 #, fuzzy, c-format
 msgid "%cdo not disturb%n"
 msgstr "%Bnie przeszkadzaæ%n"
 
-#: ekg/themes.c:1428
+#: ekg/themes.c:1414
 msgid "%cdo not disturb%n (%T%1%n%2)"
 msgstr "%Bnie przeszkadzaæ%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1430
+#: ekg/themes.c:1416
 msgid "%Wfree for chat%n (%T%1%n%2)"
 msgstr "%Wchêtn%@1 do rozmowy%n %K(%n%2%K)%n"
 
-#: ekg/themes.c:1432
+#: ekg/themes.c:1418
 msgid ", for friends only"
 msgstr ", tylko dla znajomych"
 
-#: ekg/themes.c:1434
+#: ekg/themes.c:1420
 msgid "%) Connected since: %T%1%n\n"
 msgstr "%) Po³±czony od: %T%1%n\n"
 
-#: ekg/themes.c:1435
+#: ekg/themes.c:1421
 msgid "%) Disconnected since: %T%1%n\n"
 msgstr "%) Roz³±czony od: %T%1%n\n"
 
-#: ekg/themes.c:1438
+#: ekg/themes.c:1424
 msgid "%) Program started: %T%1%n\n"
 msgstr "%) Program dzia³a od: %T%1%n\n"
 
-#: ekg/themes.c:1441
+#: ekg/themes.c:1427
 msgid "%) Messages queued for delivery: %T%1%n\n"
 msgstr "%) Ilo¶æ wiadomo¶ci w kolejce do wys³ania: %T%1%n\n"
 
-#: ekg/themes.c:1444
+#: ekg/themes.c:1430
 msgid "%! No aliases\n"
 msgstr "%! Brak aliasów\n"
 
-#: ekg/themes.c:1447
+#: ekg/themes.c:1433
 msgid "%> Created alias %T%1%n\n"
 msgstr "%> Utworzono alias %T%1%n\n"
 
-#: ekg/themes.c:1448
+#: ekg/themes.c:1434
 msgid "%> Added to alias %T%1%n\n"
 msgstr "%> Dodano do aliasu %T%1%n\n"
 
-#: ekg/themes.c:1449
+#: ekg/themes.c:1435
 msgid "%) Removed alias %T%1%n\n"
 msgstr "%) Usuniêto alias %T%1%n\n"
 
-#: ekg/themes.c:1450
+#: ekg/themes.c:1436
 msgid "%) Removed all aliases\n"
 msgstr "%) Usuniêto wszystkie aliasy\n"
 
-#: ekg/themes.c:1451
+#: ekg/themes.c:1437
 msgid "%! Alias %T%1%n already exists\n"
 msgstr "%! Alias %T%1%n ju¿ istnieje\n"
 
-#: ekg/themes.c:1452
+#: ekg/themes.c:1438
 msgid "%! Alias %T%1%n doesn't exist\n"
 msgstr "%! Alias %T%1%n nie istnieje\n"
 
-#: ekg/themes.c:1453
+#: ekg/themes.c:1439
 msgid "%! %T%1%n is internal command\n"
 msgstr "%! %T%1%n jest wbudowan± komend±\n"
 
-#: ekg/themes.c:1454
+#: ekg/themes.c:1440
 msgid "%! Alias %T%1%n requires more parameters\n"
 msgstr "%! Alias %T%1%n wymaga wiêkszej ilo¶ci parametrów\n"
 
-#: ekg/themes.c:1457
+#: ekg/themes.c:1443
 msgid "%! To many direct connections, last from %1\n"
 msgstr ""
 "%! %|Program otrzyma³ zbyt wiele ¿±dañ bezpo¶rednich po³±czeñ, ostatnie od %"
 "1\n"
 
-#: ekg/themes.c:1458
+#: ekg/themes.c:1444
 msgid ""
 "%! %|Direct connections count over limit, so they got disabled. To enable "
 "them use %Tset dcc 1% and reconnect. Limit is controlled by %Tdcc_limit%n "
@@ -1275,91 +1280,91 @@ msgstr ""
 "n i po³±czyæ siê ponownie. Limit mo¿na zmieniæ za pomoc± zmiennej %Tdcc_limit"
 "%n.\n"
 
-#: ekg/themes.c:1459
+#: ekg/themes.c:1445
 msgid "%! Can't turn on direct connections: %1\n"
 msgstr "%! Nie mo¿na w³±czyæ po³±czeñ bezpo¶rednich: %1\n"
 
-#: ekg/themes.c:1460
+#: ekg/themes.c:1446
 msgid "%! Error transmitting with %1\n"
 msgstr "%! B³±d transmisji z %1\n"
 
-#: ekg/themes.c:1461
+#: ekg/themes.c:1447
 msgid "%! Connection to %1 refused\n"
 msgstr "%! Po³±czenie z %1 zosta³o odrzucone\n"
 
-#: ekg/themes.c:1462
+#: ekg/themes.c:1448
 msgid "%! Uknown direct connection error\n"
 msgstr "%! Nieznany b³±d po³±czenia bezpo¶redniego\n"
 
-#: ekg/themes.c:1463
+#: ekg/themes.c:1449
 msgid "%! Can't connect with %1\n"
 msgstr "%! Nie mo¿na nawi±zaæ po³±czenia z %1\n"
 
-#: ekg/themes.c:1464
+#: ekg/themes.c:1450
 msgid "%! %1 doesn't have direct connections enabled\n"
 msgstr "%! %1 nie ma w³±czonej obs³ugi po³±czeñ bezpo¶rednich\n"
 
-#: ekg/themes.c:1465
+#: ekg/themes.c:1451
 msgid "%! Direct connection to %1 timed out\n"
 msgstr "%! Przekroczono limit czasu operacji bezpo¶redniego po³±czenia z %1\n"
 
-#: ekg/themes.c:1466
+#: ekg/themes.c:1452
 msgid "%! Operation %T%1%n isn't supported yet\n"
 msgstr "%! Opcja %T%1%n nie jest jeszcze obs³ugiwana\n"
 
-#: ekg/themes.c:1467
+#: ekg/themes.c:1453
 msgid "%! Can't open %T%1%n: %2\n"
 msgstr "%! Nie mo¿na otworzyæ %T%1%n: %2\n"
 
-#: ekg/themes.c:1468
+#: ekg/themes.c:1454
 msgid "%> Pending connections:\n"
 msgstr "%> Po³±czenia oczekuj±ce:\n"
 
-#: ekg/themes.c:1469
+#: ekg/themes.c:1455
 msgid "%) #%1, %2, sending %T%3%n\n"
 msgstr "%) #%1, %2, wysy³anie %T%3%n\n"
 
-#: ekg/themes.c:1470
+#: ekg/themes.c:1456
 msgid "%) #%1, %2, receiving %T%3%n\n"
 msgstr "%) #%1, %2, odbiór %T%3%n\n"
 
-#: ekg/themes.c:1471 ekg/themes.c:1475
+#: ekg/themes.c:1457 ekg/themes.c:1461
 msgid "%) #%1, %2, chat\n"
 msgstr "%) #%1, %2, rozmowa\n"
 
-#: ekg/themes.c:1472
+#: ekg/themes.c:1458
 msgid "%> Active connections:\n"
 msgstr "%> Po³±czenia aktywne:\n"
 
-#: ekg/themes.c:1473
+#: ekg/themes.c:1459
 msgid "%) #%1, %2, sending %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 msgstr "%) #%1, %2, wysy³anie %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 
-#: ekg/themes.c:1474
+#: ekg/themes.c:1460
 msgid "%) #%1, %2, receiving %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 msgstr "%) #%1, %2, odbiór %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n"
 
-#: ekg/themes.c:1476
+#: ekg/themes.c:1462
 msgid "%! No direct connections\n"
 msgstr "%! Brak bezpo¶rednich po³±czeñ\n"
 
-#: ekg/themes.c:1477
+#: ekg/themes.c:1463
 msgid "%! File %T%1%n from %2 is being received\n"
 msgstr "%! Plik %T%1%n od u¿ytkownika %2 jest ju¿ pobierany\n"
 
-#: ekg/themes.c:1479
+#: ekg/themes.c:1465
 msgid "%> Finished receiving file %T%2%n from %1\n"
 msgstr "%> Zakoñczono pobieranie pliku %T%2%n od %1\n"
 
-#: ekg/themes.c:1480
+#: ekg/themes.c:1466
 msgid "%> Finished sending file %T%2%n to %1\n"
 msgstr "%> Zakoñczono wysy³anie pliku %T%2%n do %1\n"
 
-#: ekg/themes.c:1481
+#: ekg/themes.c:1467
 msgid "%) Connection with %1 closed\n"
 msgstr "%) Zamkniêto po³±czenie z %1\n"
 
-#: ekg/themes.c:1483
+#: ekg/themes.c:1469
 msgid ""
 "%) %1 wants to chat\n"
 "%) Use  %Tdcc voice #%2%n to start chat or %Tdcc close #%2%n to refuse\n"
@@ -1368,16 +1373,16 @@ msgstr ""
 "%) Wpisz %Tdcc voice #%2%n, by rozpocz±æ rozmowê, lub %Tdcc close #%2%n, by "
 "anulowaæ\n"
 
-#: ekg/themes.c:1484
+#: ekg/themes.c:1470
 msgid "%! Only one simultanous voice chat possible\n"
 msgstr "%! Mo¿na prowadziæ tylko jedn± rozmowê g³osow± na raz\n"
 
-#: ekg/themes.c:1485
+#: ekg/themes.c:1471
 msgid "%! Voice chat not compiled in. See %Tdocs/voip.txt%n\n"
 msgstr ""
 "%! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n"
 
-#: ekg/themes.c:1486
+#: ekg/themes.c:1472
 msgid ""
 "%) %1 sends %T%2%n (size %T%3b%n)\n"
 "%) Use %Tdcc get #%4%n to receive or %Tdcc close #%4%n to refuse\n"
@@ -1385,572 +1390,609 @@ msgstr ""
 "%) %1 przesy³a plik %T%2%n o rozmiarze %T%3b%n\n"
 "%) Wpisz %Tdcc get #%4%n, by go odebraæ, lub %Tdcc close #%4%n, by anulowaæ\n"
 
-#: ekg/themes.c:1487
+#: ekg/themes.c:1473
 msgid "%) File exist, you can resume with %Tdcc resume #%4%n\n"
 msgstr ""
 "%) Plik istnieje ju¿ na dysku, wiêc mo¿na wznowiæ pobieranie poleceniem %"
 "Tdcc resume #%4%n\n"
 
-#: ekg/themes.c:1488
+#: ekg/themes.c:1474
 msgid "%) Started receiving %T%2%n from %1\n"
 msgstr "%) Rozpoczêto pobieranie pliku %T%2%n od %1\n"
 
-#: ekg/themes.c:1489 ekg/themes.c:1542 ekg/themes.c:1551
+#: ekg/themes.c:1475 ekg/themes.c:1530 ekg/themes.c:1539
 msgid "%! Can't open file %T%1%n\n"
 msgstr "%! Nie mo¿na utworzyæ pliku %T%1%n\n"
 
-#: ekg/themes.c:1490
+#: ekg/themes.c:1476
 msgid "%! Connection not found: %T%1%n\n"
 msgstr "%! Nie znaleziono po³±czenia %T%1%n\n"
 
-#: ekg/themes.c:1491
+#: ekg/themes.c:1477
 msgid "%! Invalid IP address\n"
 msgstr "%! Nieprawid³owy adres IP\n"
 
-#: ekg/themes.c:1492
+#: ekg/themes.c:1478
 msgid "%! %1 has to available to connect\n"
 msgstr "%! %1 musi byæ dostêpn%@1, by móc nawi±zaæ po³±czenie\n"
 
-#: ekg/themes.c:1495
+#: ekg/themes.c:1481
 msgid "%) (%2) Query with %T%1%n started\n"
 msgstr "%) (%2) Rozpoczêto rozmowê z %T%1%n\n"
 
-#: ekg/themes.c:1496
+#: ekg/themes.c:1482
 msgid "%) Press %TAlt-G%n to ignore, %TAlt-K%n to close window\n"
 msgstr "%) Wci¶nij %TAlt-G%n by ignorowaæ, %TAlt-K%n by zamkn±æ okno\n"
 
-#: ekg/themes.c:1497
+#: ekg/themes.c:1483
 msgid "%) (%2) Finished query with %T%1%n\n"
 msgstr "%) (%2) Zakoñczono rozmowê z %T%1%n\n"
 
-#: ekg/themes.c:1498
+#: ekg/themes.c:1484
 msgid "%! (%3) Query with %T%1%n already in window no %T%2%n\n"
 msgstr "%! (%3) Rozmowa z %T%1%n jest ju¿ prowadzona w okienku nr %T%2%n\n"
 
-#: ekg/themes.c:1501
+#: ekg/themes.c:1487
 msgid "%! No events\n"
 msgstr "%! Brak zdarzeñ\n"
 
-#: ekg/themes.c:1504
+#: ekg/themes.c:1490
 msgid "%> Added event %T%1%n\n"
 msgstr "%> Dodano zdarzenie %T%1%n\n"
 
-#: ekg/themes.c:1505
+#: ekg/themes.c:1491
 msgid "%) Removed event %T%1%n\n"
 msgstr "%) Usuniêto zdarzenie %T%1%n\n"
 
-#: ekg/themes.c:1506
+#: ekg/themes.c:1492
 msgid "%) Removed all events\n"
 msgstr "%) Usuniêto wszystkie zdarzenia\n"
 
-#: ekg/themes.c:1507
+#: ekg/themes.c:1493
 msgid "%! Event %T%1%n exist for %2\n"
 msgstr "%! Zdarzenie %T%1%n istnieje dla %2\n"
 
-#: ekg/themes.c:1508
+#: ekg/themes.c:1494
 msgid "%! Event %T%1%n do not exist\n"
 msgstr "%! Zdarzenie %T%1%n nie istnieje\n"
 
-#: ekg/themes.c:1511
+#: ekg/themes.c:1497
 msgid "%> Roster saved on server\n"
 msgstr "%> Listê kontaktów zachowano na serwerze\n"
 
-#: ekg/themes.c:1512
+#: ekg/themes.c:1498
 msgid "%! Error sending roster\n"
 msgstr "%! B³±d podczas wysy³ania listy kontaktów\n"
 
-#: ekg/themes.c:1513
+#: ekg/themes.c:1499
 msgid "%> Roster read from server\n"
 msgstr "%> Listê kontaktów wczytano z serwera\n"
 
-#: ekg/themes.c:1514
+#: ekg/themes.c:1500
 msgid "%! Error getting roster\n"
 msgstr "%! B³±d podczas pobierania listy kontaktów\n"
 
-#: ekg/themes.c:1515
+#: ekg/themes.c:1501
 msgid "%) Removed roster from server\n"
 msgstr "%) Usuniêto listê kontaktów z serwera\n"
 
-#: ekg/themes.c:1516
+#: ekg/themes.c:1502
 msgid "%! Error removing roster from server\n"
 msgstr "%! B³±d podczas usuwania listy kontaktów\n"
 
-#: ekg/themes.c:1520
+#: ekg/themes.c:1506
 msgid "roster:"
 msgstr "lista kontaktów: "
 
-#: ekg/themes.c:1522
+#: ekg/themes.c:1508
 msgid "%1 is available"
 msgstr "%1 jest dostêpny, "
 
-#: ekg/themes.c:1524
+#: ekg/themes.c:1510
 msgid "%1 is away"
 msgstr "%1 jest zajêty, "
 
-#: ekg/themes.c:1528
+#: ekg/themes.c:1514
 msgid "%) New window created\n"
 msgstr "%) Utworzono nowe okno\n"
 
-#: ekg/themes.c:1529
+#: ekg/themes.c:1515
 msgid "%! Choosen window do not exist\n"
 msgstr "%! Wybrane okno nie istnieje\n"
 
-#: ekg/themes.c:1530
+#: ekg/themes.c:1516
 msgid "%! Window %T%1%n does not exist\n"
 msgstr "%! Okno %T%1%n nie istnieje\n"
 
-#: ekg/themes.c:1531
+#: ekg/themes.c:1517
 msgid "%! Can't close last window\n"
 msgstr "%! Nie mo¿na zamkn±æ ostatniego okna\n"
 
-#: ekg/themes.c:1532
+#: ekg/themes.c:1518
 msgid "%) Window closed\n"
 msgstr "%) Zamkniêto okno\n"
 
-#: ekg/themes.c:1533
+#: ekg/themes.c:1519
 msgid "%! Window limit exhausted\n"
 msgstr "%! Wyczerpano limit ilo¶ci okien\n"
 
-#: ekg/themes.c:1534
+#: ekg/themes.c:1520
 msgid "%) %1: query with %T%2%n\n"
 msgstr "%) %1: rozmowa z %T%2%n\n"
 
-#: ekg/themes.c:1535
+#: ekg/themes.c:1521
 msgid "%) %1 no query\n"
 msgstr "%) %1: brak rozmowy\n"
 
-#: ekg/themes.c:1536
+#: ekg/themes.c:1522
 msgid "%) %1: floating %4x%5 in %2,%3 %T%6%n\n"
 msgstr "%) %1: p³ywaj±ce %4x%5 w %2,%3 %T%6%n\n"
 
-#: ekg/themes.c:1537
+#: ekg/themes.c:1523
 msgid "%) (%3) Query with %T%2%n started in %T%1%n\n"
 msgstr "%) (%3) Rozmowa z %T%2%n rozpoczêta w oknie %T%1%n\n"
 
-#: ekg/themes.c:1538
+#: ekg/themes.c:1524
 msgid "%! Can't close status window!\n"
 msgstr "%! Nie mo¿na zamkn±æ okna stanu\n"
 
-#: ekg/themes.c:1539
+#: ekg/themes.c:1525
 msgid "%! Can't move status window!\n"
 msgstr "%! Nie mo¿na przesun±æ okna statusu!\n"
 
-#: ekg/themes.c:1540
+#: ekg/themes.c:1526
 msgid "%! Window %T%1%n can't be moved\n"
 msgstr "%! Okno %T%1%n nie mo¿e zostaæ przeniesione\n"
 
-#: ekg/themes.c:1545
+#: ekg/themes.c:1528
+msgid "Can't kill window. Use /window kill"
+msgstr ""
+
+#: ekg/themes.c:1533
 msgid "%! Sequence %T%1%n is invalid\n"
 msgstr "%! Sekwencja %T%1%n jest nieprawid³owa\n"
 
-#: ekg/themes.c:1546
+#: ekg/themes.c:1534
 msgid "%> Sequence %T%1%n added\n"
 msgstr "%> Dodano sekwencjê %T%1%n\n"
 
-#: ekg/themes.c:1547
+#: ekg/themes.c:1535
 msgid "%) Sequence %T%1%n removed\n"
 msgstr "%) Usuniêto sekwencjê %T%1%n\n"
 
-#: ekg/themes.c:1549
+#: ekg/themes.c:1537
 msgid "%! Sequence %T%1%n is already bound\n"
 msgstr "%! Sekwencja %T%1%n ma ju¿ przypisan± akcjê\n"
 
-#: ekg/themes.c:1550
+#: ekg/themes.c:1538
 msgid "%! No bound actions\n"
 msgstr "%! Brak przypisanych akcji\n"
 
-#: ekg/themes.c:1552
+#: ekg/themes.c:1540
 msgid "%! Press key(s) which should be bound\n"
 msgstr "%! Naci¶nij klawisz(e), które maj± byæ podbindowane\n"
 
-#: ekg/themes.c:1553
+#: ekg/themes.c:1541
 msgid "%> Binding added\n"
 msgstr "%> Bindowanie zakoñczono pomy¶lnie\n"
 
-#: ekg/themes.c:1557
+#: ekg/themes.c:1545
 msgid "%> Created plan %T%1%n\n"
 msgstr "%> Utworzono plan %T%1%n\n"
 
-#: ekg/themes.c:1558
+#: ekg/themes.c:1546
 msgid "%) Removed plan %T%1%n\n"
 msgstr "%) Usuniêto plan %T%1%n\n"
 
-#: ekg/themes.c:1559
+#: ekg/themes.c:1547
 msgid "%) Removed user's plans\n"
 msgstr "%) Usuniêto plany u¿ytkownika\n"
 
-#: ekg/themes.c:1560
+#: ekg/themes.c:1548
 msgid "%! Plan %T%1%n already exists\n"
 msgstr "%! Plan %T%1%n ju¿ istnieje\n"
 
-#: ekg/themes.c:1561
+#: ekg/themes.c:1549
 msgid "%! Plan %T%1%n do not exists\n"
 msgstr "%! Plan %T%1%n nie istnieje\n"
 
-#: ekg/themes.c:1562
+#: ekg/themes.c:1550
 msgid "%! No plans\n"
 msgstr "%! Brak planów\n"
 
-#: ekg/themes.c:1564
+#: ekg/themes.c:1552
 msgid "%! If time travels were possible...\n"
 msgstr "%! Gdyby mo¿na by³o cofn±æ czas...\n"
 
-#: ekg/themes.c:1568
+#: ekg/themes.c:1556
 msgid "%> Created timer %T%1%n\n"
 msgstr "%> Utworzono timer %T%1%n\n"
 
-#: ekg/themes.c:1569
+#: ekg/themes.c:1557
 msgid "%) Removed timer  %T%1%n\n"
 msgstr "%) Usuniêto timer %T%1%n\n"
 
-#: ekg/themes.c:1570
+#: ekg/themes.c:1558
 msgid "%) Removed user's timers\n"
 msgstr "%) Usuniêto timery u¿ytkownika\n"
 
-#: ekg/themes.c:1571
+#: ekg/themes.c:1559
 msgid "%! Timer %T%1%n already exists\n"
 msgstr "%! Timer %T%1%n ju¿ istnieje\n"
 
-#: ekg/themes.c:1572
+#: ekg/themes.c:1560
 msgid "%! Timer %T%1%n does not exists\n"
 msgstr "%! Timer %T%1%n nie istnieje\n"
 
-#: ekg/themes.c:1573
+#: ekg/themes.c:1561
 msgid "%! No timers\n"
 msgstr "%! Brak timerów\n"
 
-#: ekg/themes.c:1578
+#: ekg/themes.c:1566
 msgid "%! No messages logged\n"
 msgstr "%! Nie zalogowano ¿adnych wiadomo¶ci\n"
 
-#: ekg/themes.c:1579
+#: ekg/themes.c:1567
 msgid "%! No messages from %T%1%n logged\n"
 msgstr "%! Nie zalogowano ¿adnych wiadomo¶ci dla %T%1%n\n"
 
-#: ekg/themes.c:1582
+#: ekg/themes.c:1570
 msgid "%) Messages from %T%1%n cleared\n"
 msgstr "%) Wiadomo¶ci dla %T%1%n wyczyszczone\n"
 
-#: ekg/themes.c:1583
+#: ekg/themes.c:1571
 msgid "%) All messages cleared\n"
 msgstr "%) Wszystkie wiadomo¶ci wyczyszczone\n"
 
-#: ekg/themes.c:1584
+#: ekg/themes.c:1572
 msgid "%) Lastlog begin\n"
 msgstr ""
 
-#: ekg/themes.c:1585
+#: ekg/themes.c:1573
 msgid "%) Lastlog end\n"
 msgstr ""
 
-#: ekg/themes.c:1590
+#: ekg/themes.c:1578
 msgid "%) Message queue cleared\n"
 msgstr "%) Kolejka wiadomo¶ci wyczyszczona\n"
 
-#: ekg/themes.c:1591
+#: ekg/themes.c:1579
 msgid "%) Message queue for %T%1%n cleared\n"
 msgstr "%) Kolejka wiadomo¶ci wyczyszczona dla %T%1%n\n"
 
-#: ekg/themes.c:1592
+#: ekg/themes.c:1580
 msgid "%! Command works only when disconected\n"
 msgstr "%! Komenda dzia³a tylko przy braku po³±czenia z serwerem\n"
 
-#: ekg/themes.c:1593
+#: ekg/themes.c:1581
 msgid "%! Messaged queue is empty\n"
 msgstr "%! Kolejka wiadomo¶ci jest pusta\n"
 
-#: ekg/themes.c:1594
+#: ekg/themes.c:1582
 msgid "%! No messages to %T%1%n in queue\n"
 msgstr "%! Brak wiadomo¶ci w kolejce dla %T%1%n\n"
 
-#: ekg/themes.c:1595
+#: ekg/themes.c:1583
 msgid "%> (%1) Sent messages from queue\n"
 msgstr "%> (%1) Wys³ano zaleg³e wiadomo¶ci z kolejki\n"
 
-#: ekg/themes.c:1598
+#: ekg/themes.c:1586
 msgid "%! No conference\n"
 msgstr "%! Brak konferencji\n"
 
-#: ekg/themes.c:1600
+#: ekg/themes.c:1588
 msgid "%> %T%1%n: %2 (%yignored%n)\n"
 msgstr "%> %T%1%n: %2 (%yignorowana%n)\n"
 
-#: ekg/themes.c:1601
+#: ekg/themes.c:1589
 msgid "%> Created conference %T%1%n\n"
 msgstr "%> Utworzono konferencjê %T%1%n\n"
 
-#: ekg/themes.c:1602
+#: ekg/themes.c:1590
 msgid "%! Conference not created %T%1%n\n"
 msgstr "%! Nie utworzono konferencji %T%1%n\n"
 
-#: ekg/themes.c:1603
+#: ekg/themes.c:1591
 msgid "%) Removed conference %T%1%n\n"
 msgstr "%) Usuniêto konferencjê %T%1%n\n"
 
-#: ekg/themes.c:1604
+#: ekg/themes.c:1592
 msgid "%) Removed all conferences\n"
 msgstr "%) Usuniêto wszystkie konferencje\n"
 
-#: ekg/themes.c:1605
+#: ekg/themes.c:1593
 msgid "%! Conference %T%1%n already exists\n"
 msgstr "%! Konferencja %T%1%n ju¿ istnieje\n"
 
-#: ekg/themes.c:1606
+#: ekg/themes.c:1594
 msgid "%! Conference %T%1%n do not exists\n"
 msgstr "%! Konferencja %T%1%n nie istnieje\n"
 
-#: ekg/themes.c:1607
+#: ekg/themes.c:1595
 msgid "%! Conference name should start with %T#%n\n"
 msgstr "%! Nazwa konferencji powinna zaczynaæ siê od %T#%n\n"
 
-#: ekg/themes.c:1608
+#: ekg/themes.c:1596
 msgid "%> Conference renamed: %T%1%n --> %T%2%n\n"
 msgstr "%> Nazwa konferencji zmieniona: %T%1%n --> %T%2%n\n"
 
-#: ekg/themes.c:1609
+#: ekg/themes.c:1597
 msgid "%> Konference %T%1%n will be ignored\n"
 msgstr "%> Konferencja %T%1%n bêdzie ignorowana\n"
 
-#: ekg/themes.c:1610
+#: ekg/themes.c:1598
 msgid "%> Conference %T%1%n won't be ignored\n"
 msgstr "%> Konferencja %T%1%n nie bêdzie ignorowana\n"
 
-#: ekg/themes.c:1611
+#: ekg/themes.c:1599
 msgid "%> Joined %1 to conference %T%2%n\n"
 msgstr "%> Do³±czono %1 do konferencji %T%2%n\n"
 
-#: ekg/themes.c:1612
+#: ekg/themes.c:1600
 msgid "%> %1 already in conference %T%2%n\n"
 msgstr "%> %1 uczestniczy ju¿ w konferencji %T%2%n\n"
 
-#: ekg/themes.c:1616
+#: ekg/themes.c:1604
 msgid "Can not connect ro server"
 msgstr "Nie mo¿na po³±czyæ siê z serwerem"
 
-#: ekg/themes.c:1623
+#: ekg/themes.c:1611
 msgid "%> Removed  %T%1->%2%n\n"
 msgstr "%> Usuniêto %T%1->%2%n\n"
 
-#: ekg/themes.c:1624
+#: ekg/themes.c:1612
 msgid "%! Unknown variable: %T%1->%2%n\n"
 msgstr "%! Nieznana zmienna: %T%1->%2%n\n"
 
-#: ekg/themes.c:1627
+#: ekg/themes.c:1615
 msgid "%! Session list is empty\n"
 msgstr "%! Lista sesji jest pusta\n"
 
-#: ekg/themes.c:1632
+#: ekg/themes.c:1620
 msgid "%! Session %T%1%n already exists\n"
 msgstr "%! Sesja %T%1%n ju¿ istnieje\n"
 
-#: ekg/themes.c:1633
+#: ekg/themes.c:1621
 msgid "%! Sesion %T%1%n does not exist\n"
 msgstr "%! Sesja %T%1%n nie istnieje\n"
 
-#: ekg/themes.c:1634
+#: ekg/themes.c:1622
 msgid "%> Created session %T%1%n\n"
 msgstr "%> Utworzono sesjê %T%1%n\n"
 
-#: ekg/themes.c:1635
+#: ekg/themes.c:1623
 msgid "%> Removed session %T%1%n\n"
 msgstr "%> Usuniêto sesjê %T%1%n\n"
 
-#: ekg/themes.c:1638
+#: ekg/themes.c:1626
 msgid "%! Can't change session in query window%n\n"
 msgstr "%! Nie mo¿na zmieniæ sesji w okienku rozmowy%n\n"
 
-#: ekg/themes.c:1669
+#: ekg/themes.c:1657
 #, c-format
 msgid "%merror%n"
 msgstr "%mb³±d%n"
 
-#: ekg/themes.c:1677
+#: ekg/themes.c:1665
 msgid "%! Plugin %T%1%n already loaded%n.\n"
 msgstr "%! Plugin %T%1%n jest ju¿ za³adowany%n.\n"
 
-#: ekg/themes.c:1678
+#: ekg/themes.c:1666
 msgid "%! Plugin %T%1%n can not be found%n\n"
 msgstr "%! Plugin %T%1%n nie mo¿e zostaæ znaleziony%n\n"
 
-#: ekg/themes.c:1679
+#: ekg/themes.c:1667
 msgid "%! Plugin %T%1%n is not correct EKG2 plugin%n\n"
 msgstr "%! Plugin %T%1%n nie jest prawid³owym pluginem EKG2%n\n"
 
-#: ekg/themes.c:1680
+#: ekg/themes.c:1668
 msgid "%! Plugin %T%1%n not initialized correctly%n\n"
 msgstr "%! Plugin %T%1%n nie zosta³ wczytany poprawnie%n\n"
 
-#: ekg/themes.c:1681
+#: ekg/themes.c:1669
 msgid "%! Plugin %T%1%n is an UI plugin and can't be unloaded%n\n"
 msgstr "%! Plugin %T%1%n jest pluginem UI i nie mo¿e zostaæ wy³adowany%n\n"
 
-#: ekg/themes.c:1682
+#: ekg/themes.c:1670
 msgid "%> Plugin %T%1%n loaded%n\n"
 msgstr "%> Plugin %T%1%n zosta³ za³adowany%n\n"
 
-#: ekg/themes.c:1683
+#: ekg/themes.c:1671
 msgid "%> Plugin %T%1%n unloaded%n\n"
 msgstr "%> Plugin %T%1%n zosta³ wy³adowany%n\n"
 
-#: ekg/themes.c:1684
+#: ekg/themes.c:1672
 msgid "%> %T%1%n - %2%n\n"
 msgstr "%> %T%1%n - %2%n\n"
 
-#: ekg/themes.c:1685
+#: ekg/themes.c:1673
 msgid "%> Plugin %T%1%n prio is setted to %T%2%n\n"
 msgstr "%> Priorytet plugin %T%1%n zosta³ ustawiony na%T%2%n\n"
 
-#: ekg/themes.c:1686
+#: ekg/themes.c:1674
 msgid "%> Plugins prio setted to default\n"
 msgstr "%> Priorytet pluginu zosta³ ustawiony na domy¶lny\n"
 
-#: ekg/themes.c:1692
+#: ekg/themes.c:1680
 msgid "%! Error running code\n"
 msgstr "%! B³±d wykonywania kodu\n"
 
-#: ekg/themes.c:1693
+#: ekg/themes.c:1681
 #, fuzzy
 msgid "%> %1 (%2, %3)\n"
 msgstr "%> Temat %2: %3\n"
 
-#: ekg/themes.c:1694
+#: ekg/themes.c:1682
 msgid "%! No scripts loaded\n"
 msgstr "%! Brak za³adowanych skryptów\n"
 
-#: ekg/themes.c:1695
+#: ekg/themes.c:1683
 #, fuzzy
 msgid "%) Script %1 loaded (%2, %3)\n"
 msgstr "%) Skrypt zosta³ za³adowany\n"
 
-#: ekg/themes.c:1696
+#: ekg/themes.c:1684
 #, fuzzy
 msgid "%) Script %1 removed\n"
 msgstr "%) Skrypt zosta³ usuniêty\n"
 
-#: ekg/themes.c:1697
+#: ekg/themes.c:1685
 msgid "%! No filename given\n"
 msgstr "%! Nie podano nazwy pliku\n"
 
-#: ekg/themes.c:1698
+#: ekg/themes.c:1686
 msgid "%! Error %T%1%n\n"
 msgstr "%! B³±d %T%1%n\n"
 
-#: ekg/themes.c:1699
+#: ekg/themes.c:1687
 msgid "%! Can't find script %T%1%n\n"
 msgstr "%! Nie znaleziono skryptu %T%1%n\n"
 
-#: ekg/themes.c:1700
+#: ekg/themes.c:1688
 msgid "%! Script have to be in %T%1%n (don't add path)\n"
 msgstr "%! Skrypt musi siê znajdowaæ w katalogu %T%1%n (nie podawaj ¶cie¿ki)\n"
 
-#: ekg/themes.c:1702
+#: ekg/themes.c:1690
 #, fuzzy
 msgid "%> %1 = %2 (%3)\n"
 msgstr "%> %T%1%n - %2%n\n"
 
-#: ekg/themes.c:1703
+#: ekg/themes.c:1691
 #, fuzzy
 msgid "%! No script vars!\n"
 msgstr "%! Brak za³adowanych skryptów\n"
 
-#: plugins/gg/gg.c:1216
+#: plugins/gg/gg.c:1159
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr "%> Token zapisano do pliku %T%1%n\n"
 
-#: plugins/gg/gg.c:1217
+#: plugins/gg/gg.c:1160
 msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
-#: plugins/gg/gg.c:1219
+#: plugins/gg/gg.c:1162
 msgid "%! Error getting token: %1\n"
 msgstr "%! B³±d podczas pobierania tokena\n"
 
-#: plugins/gg/gg.c:1220
+#: plugins/gg/gg.c:1163
 msgid "%! Token getting timeout\n"
 msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
-#: plugins/gg/gg.c:1221
+#: plugins/gg/gg.c:1164
 msgid "%! Your operating system doesn't support tokens\n"
 msgstr ""
 "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
 
-#: plugins/gg/gg.c:1222
+#: plugins/gg/gg.c:1165
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
-#: plugins/gg/gg.c:1223
+#: plugins/gg/gg.c:1166
 msgid "%> (%1) User %T%2%n is connected\n"
 msgstr "%> (%1) U¿ytkownik %T%2%n jest po³±czony\n"
 
-#: plugins/gg/gg.c:1224
+#: plugins/gg/gg.c:1167
 msgid "%> (%1) User %T%2%n is not connected\n"
 msgstr "%> (%1) U¿ytkownik %T%2%n nie jest po³±czony\n"
 
-#: plugins/gg/gg.c:1225
+#: plugins/gg/gg.c:1168
 msgid "%! Error sending image\n"
 msgstr "%! B³±d podczas wysy³ania obrazka\n"
 
-#: plugins/gg/gg.c:1226
+#: plugins/gg/gg.c:1169
 msgid "%> Image sent properly\n"
 msgstr "%> Obrazek zosta³ wys³any prawid³owo\n"
 
-#: plugins/gg/gg.c:1227
+#: plugins/gg/gg.c:1170
 msgid "%> (%1) We are being checked by %T%2%n\n"
 msgstr "%> (%1) Jeste¶my sprawdzani przez %T%2%n\n"
 
-#: plugins/irc/irc.c:2122
+#: plugins/irc/irc.c:2034
+#, c-format
+msgid "[%gUsers %G%2%n]"
+msgstr ""
+
+#: plugins/irc/irc.c:2036
+msgid ""
+"%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n halfops, %W%6%n "
+"voices, %W%7%n normal]\n"
+msgstr ""
+
+#: plugins/irc/irc.c:2039
 msgid "%> %Y%2%n has joined %4\n"
 msgstr "%> %Y%2%n do³±czy³ do %4\n"
 
-#: plugins/irc/irc.c:2123
+#: plugins/irc/irc.c:2040
 msgid "%> %RYou%n have joined %4\n"
 msgstr "%> %YDo³±czy³e¶%n do %4\n"
 
-#: plugins/irc/irc.c:2124
+#: plugins/irc/irc.c:2041
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr "%> %g%2%n opu¶ci³ %4 (%5)\n"
 
-#: plugins/irc/irc.c:2125
+#: plugins/irc/irc.c:2042
 msgid "%> %RYou%n have left %4 (%5)\n"
 msgstr "%> %gOpu¶ci³e¶%n %4 (%5)\n"
 
-#: plugins/irc/irc.c:2126
+#: plugins/irc/irc.c:2043
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> %Y%2%n zosta³ wykopany przez %R%3%n z %5 (%6)\n"
 
-#: plugins/irc/irc.c:2127
+#: plugins/irc/irc.c:2044
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> Zosta³e¶ wykopany z %R%3%n przez %5 (%6)\n"
 
-#: plugins/irc/irc.c:2128
+#: plugins/irc/irc.c:2045
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr "%> %Y%2%n opu¶ci³ irc (%4)\n"
 
-#: plugins/irc/irc.c:2130
+#: plugins/irc/irc.c:2047
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr "%> %Y%2%n wys³a³ nieznany CTCP %3: (%4)\n"
 
-#: plugins/irc/irc.c:2135
+#: plugins/irc/irc.c:2052
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5 od %4\n"
 
-#: plugins/irc/irc.c:2136
+#: plugins/irc/irc.c:2053
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr "%> %Y%2%n zarz±da³ CTCP %5\n"
 
-#: plugins/irc/irc.c:2137
+#: plugins/irc/irc.c:2054
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr "%> %Y%2%n odpowied¼ CTCP od %3: %5\n"
 
-#: plugins/irc/irc.c:2152
+#: plugins/irc/irc.c:2069
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr "%> Nie mo¿na pisaæ na kana³ %T%2%n\n"
 
-#: plugins/irc/irc.c:2187
+#: plugins/irc/irc.c:2075
+#, fuzzy
+msgid "%> Inviting %W%2%n to %W%3%n\n"
+msgstr "%> %W%2%n zaprasza Ciê na %W%5%n\n"
+
+#: plugins/irc/irc.c:2080
+msgid "%g|| %n %5 - %W%2%n: except %c%3\n"
+msgstr ""
+
+#: plugins/irc/irc.c:2081
+msgid "%g|| %n %5 - %W%2%n: ban %c%3\n"
+msgstr ""
+
+#: plugins/irc/irc.c:2082
+msgid "%g|| %n %5 - %W%2%n: invite %c%3\n"
+msgstr ""
+
+#: plugins/irc/irc.c:2083
+#, c-format
+msgid "%g|| %n Empty list \n"
+msgstr ""
+
+#: plugins/irc/irc.c:2104
 msgid "%G||%n away     : %2 - %3\n"
 msgstr "%G||%n zajêty     : %2 - %3\n"
 
-#: plugins/irc/irc.c:2189 plugins/irc/irc.c:2192
+#: plugins/irc/irc.c:2106 plugins/irc/irc.c:2109
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
@@ -1960,94 +2002,90 @@ msgstr ""
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n prawdziwa nazwa : %6\n"
 
-#: plugins/irc/irc.c:2201
+#: plugins/irc/irc.c:2118
 msgid "%G||%n %|channels : %3\n"
 msgstr "%G||%n %|kana³y : %3\n"
 
-#: plugins/irc/irc.c:2202
+#: plugins/irc/irc.c:2119
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr "%G||%n %|serwer   : %3 (%4)\n"
 
-#: plugins/irc/irc.c:2203
+#: plugins/irc/irc.c:2120
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr "%G||%n %|ircOp    : %3\n"
 
-#: plugins/irc/irc.c:2204
+#: plugins/irc/irc.c:2121
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr "%G||%n %|brak aktywno¶ci     : %3 (zalogowany: %4)\n"
 
-#: plugins/irc/irc.c:2205 plugins/irc/irc.c:2206
+#: plugins/irc/irc.c:2122 plugins/irc/irc.c:2123
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr "%G`+===%g-----\n"
 
-#: plugins/irc/irc.c:2208
+#: plugins/irc/irc.c:2125
 msgid "%> Topic %2: %3\n"
 msgstr "%> Temat %2: %3\n"
 
-#: plugins/irc/irc.c:2210
+#: plugins/irc/irc.c:2127
 msgid "%> set by %2 on %4"
 msgstr "%> ustawiony przez %2 dnia %4"
 
-#: plugins/irc/irc.c:2211
+#: plugins/irc/irc.c:2128
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr "%> %T%2%n zmieni³ temat na %T%4%n: %5\n"
 
-#: plugins/irc/irc.c:2212
+#: plugins/irc/irc.c:2129
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr "%> %T%2%n wyczy¶ci³ temat na %T%4%n\n"
 
-#: plugins/irc/irc.c:2213
+#: plugins/irc/irc.c:2130
 msgid "%> %2/%4 sets mode [%5]\n"
 msgstr "%> %2/%4 ustawia tryb [%5]\n"
 
-#: plugins/irc/irc.c:2214
+#: plugins/irc/irc.c:2131
 msgid "%> %2 mode is [%3]\n"
 msgstr "%> %2 tryb jest [%3]\n"
 
-#: plugins/irc/irc.c:2215
+#: plugins/irc/irc.c:2132
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr "%> (%1) %2 ustawia tryb %3 na Tobie\n"
 
-#: plugins/irc/irc.c:2217
+#: plugins/irc/irc.c:2134
 msgid "%> %W%2%n invites you to %W%5%n\n"
 msgstr "%> %W%2%n zaprasza Ciê na %W%5%n\n"
 
-#: plugins/irc/irc.c:2218
+#: plugins/irc/irc.c:2135
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr "%) (%1) ping/pong %c%2%n\n"
 
-#: plugins/irc/irc.c:2219
+#: plugins/irc/irc.c:2136
 msgid "%> You are now known as %G%3%n\n"
 msgstr "%> Jeste¶ teraz znany jako %G%3%n\n"
 
-#: plugins/irc/irc.c:2220
+#: plugins/irc/irc.c:2137
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr "%> %g%2%n jest znany jako %G%4%n\n"
 
-#: plugins/irc/irc.c:2221
+#: plugins/irc/irc.c:2138
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:444 plugins/jabber/jabber.c:445
-#: plugins/jabber/jabber.c:446 plugins/jabber/jabber.c:447
-#: plugins/jabber/jabber.c:448 plugins/jabber/jabber.c:449
-#: plugins/jabber/jabber.c:473 plugins/jabber/jabber.c:474
-#: plugins/jabber/jabber.c:475 plugins/jabber/jabber.c:476
-#: plugins/jabber/jabber.c:503
+#: plugins/jabber/jabber.c:471 plugins/jabber/jabber.c:472
+#: plugins/jabber/jabber.c:473 plugins/jabber/jabber.c:500
 msgid "unknown"
 msgstr "nieznany"
 
-#: plugins/jabber/jabber.c:498
+#: plugins/jabber/jabber.c:640
 #, c-format
 msgid "%03dd %02dh %02dm %02ds ago"
 msgstr ""
 
-#: plugins/jabber/jabber.c:501
+#: plugins/jabber/jabber.c:643
 msgid "very long ago"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1152
+#: plugins/jabber/jabber.c:1268
 msgid ""
 "%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/"
 "auth -d %1\" to refuse.%n\n"
@@ -2055,56 +2093,56 @@ msgstr ""
 "%> (%2) %T%1%n prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby "
 "zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n"
 
-#: plugins/jabber/jabber.c:1153
+#: plugins/jabber/jabber.c:1269
 msgid "%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"
 msgstr ""
 "%> (%2) %T%1%n prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby "
 "usun±æ.%n\n"
 
-#: plugins/jabber/jabber.c:1154
+#: plugins/jabber/jabber.c:1270
 msgid "%! (%1) Error parsing XML%n\n"
 msgstr "%! (%1) B³±d parsowania XMLa%n\n"
 
-#: plugins/jabber/jabber.c:1155
+#: plugins/jabber/jabber.c:1271
 msgid "%> (%2) Sent authorisation request to %T%1%n.\n"
 msgstr "%> (%2) Wys³ano ¿±danie autoryzacji do %t%1%n.\n"
 
-#: plugins/jabber/jabber.c:1156
+#: plugins/jabber/jabber.c:1272
 msgid "%> (%2) Authorised %T%1%n.\n"
 msgstr "%> (%2) Autoryzowano %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1157
+#: plugins/jabber/jabber.c:1273
 msgid "%> (%2) Asked %T%1%n to remove authorisation.\n"
 msgstr "%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1158
+#: plugins/jabber/jabber.c:1274
 msgid "%> (%2) Authorisation for %T%1%n revoked.\n"
 msgstr "%> (%2) Cofniêto autoryzacjê %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1159
+#: plugins/jabber/jabber.c:1275
 msgid "%> (%2) Authorisation for %T%1%n denied.\n"
 msgstr "%> (%2) Odmówiona autoryzacji %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1160
+#: plugins/jabber/jabber.c:1276
 msgid "%> (%2) Sent presence probe to %T%1%n.\n"
 msgstr "%> (%2) Wys³ano pytanie o obecno¶æ do %T%1%n.\n"
 
-#: plugins/jabber/jabber.c:1161
+#: plugins/jabber/jabber.c:1277
 msgid "%! (%1) Error connecting to Jabber server%n\n"
 msgstr "%! (%1) B³±d ³±czenia siê z serwerem Jabbera%n\n"
 
-#: plugins/jabber/jabber.c:1162
+#: plugins/jabber/jabber.c:1278
 msgid "%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr "%! Wiadomo¶æ do %T%1%n nie mog³a byæ dostarczona: %R(%2) %r%3%n\n"
 
-#: plugins/jabber/jabber.c:1163
+#: plugins/jabber/jabber.c:1279
 msgid ""
 "%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"
 msgstr ""
 "%! Wiadomo¶æ do %T%1%n %y(%n%K%4(...)%y)%n nie mog³a byæ dostarczona: %R(%2) "
 "%r%3%n\n"
 
-#: plugins/jabber/jabber.c:1164
+#: plugins/jabber/jabber.c:1280
 msgid ""
 "%> Jabber ID: %T%1%n\n"
 "%> Client name: %T%2%n\n"
@@ -2116,7 +2154,7 @@ msgstr ""
 "%> Wersja programu: %T%3%n\n"
 "%> System operacyjny: %T%4%n\n"
 
-#: plugins/jabber/jabber.c:1165
+#: plugins/jabber/jabber.c:1281
 msgid ""
 "%> Jabber ID: %T%1%n\n"
 "%> Full Name: %T%2%n\n"
@@ -2132,31 +2170,62 @@ msgstr ""
 "%> Miasto: %T%5%n\n"
 "%> Opis: %T%6%n\n"
 
-#: plugins/jabber/jabber.c:1166
+#: plugins/jabber/jabber.c:1282
 msgid ""
 "%> Jabber ID:  %T%1%n\n"
 "%> Logged out: %T%2%n\n"
 msgstr ""
 
-#: plugins/jabber/jabber.c:1167
+#: plugins/jabber/jabber.c:1283
 msgid ""
 "%! (%1) User's resource unknown%n\n"
 "\n"
 msgstr "%! (%1) Nieznany resource u¿ytkownika%n\n"
 
-#: plugins/jabber/jabber.c:1168
+#: plugins/jabber/jabber.c:1284
 msgid "%! (%1) Unable to check version, because %2 is unavailable%n\n"
 msgstr ""
 "%! (%1) Nie mo¿na sprawdziæ wersji, poniewa¿ u¿ytkownik %2 nie jest dostêpny%"
 "n\n"
 
-#: plugins/jabber/jabber.c:1169
+#: plugins/jabber/jabber.c:1285
 msgid "%> %T%1%n is typing to us ...%n\n"
 msgstr "%> U¿ytkownik %T%1%n co¶ do nas pisze ...%n\n"
 
-#: plugins/jabber/jabber.c:1170
+#: plugins/jabber/jabber.c:1286
 msgid "%! Error initialising charset conversion (%1->%2): %3"
 msgstr "%! B³ad przy inicjalizacji kodowania(%1->%2): %3"
+
+#: plugins/jabber/jabber.c:1288
+#, fuzzy
+msgid "%> (%1) JID: %2 descr=%3"
+msgstr "%> %T%1%n - %2%n\n"
+
+#: plugins/jabber/jabber.c:1289
+msgid "%> (%1,%2) instr=%3"
+msgstr ""
+
+#: plugins/jabber/jabber.c:1290
+msgid "%> (%1) type \"/register %2 %3\" to register"
+msgstr ""
+
+#: plugins/jabber/jabber.c:1297 plugins/jabber/jabber.c:1298
+#: plugins/jabber/jabber.c:1299 plugins/jabber/jabber.c:1300
+#, fuzzy
+msgid "<%2> %3"
+msgstr "%> %1\n"
+
+#: plugins/python/python-ekg.c:89 plugins/python/python-ekg.c:122
+msgid "Second parameter to command_bind is not callable"
+msgstr ""
+
+#: plugins/python/python-ekg.c:90 plugins/python/python-ekg.c:123
+msgid "Parameter must be callable"
+msgstr ""
+
+#: plugins/readline/main.c:75
+msgid "-- Press Enter to continue or Ctrl-D to break --"
+msgstr "-- Wci¶nij Enter by kontynuowaæ lub Ctrl-D by przerwaæ --"
 
 #: plugins/sim/main.c:319
 msgid "%> Please wait, generating keys...\n"
@@ -2218,64 +2287,61 @@ msgstr "%> SMS do %T%1%n zosta³ wys³any\n"
 msgid "%! SMS to %T%1%n not sent\n"
 msgstr "%! SMS do %T%1%n nie zosta³ wys³any\n"
 
-#: plugins/xosd/xosd.c:348
+#: plugins/xosd/xosd.c:358
 msgid "new message from %1 at %2"
 msgstr "nowa wiadomo¶æ od %1 na %2"
 
-#: plugins/xosd/xosd.c:349
+#: plugins/xosd/xosd.c:359
 msgid "new message from %1"
 msgstr "nowa wiadomo¶æ od %1"
 
-#: plugins/xosd/xosd.c:352
+#: plugins/xosd/xosd.c:362
 msgid "%1 is online,"
 msgstr "%1 jest dostêpn%@1,"
 
-#: plugins/xosd/xosd.c:353
+#: plugins/xosd/xosd.c:363
 msgid "%1 is away,"
 msgstr "%1 jest zajêt%@1,"
 
-#: plugins/xosd/xosd.c:354
+#: plugins/xosd/xosd.c:364
 msgid "%1: do not disturb,"
 msgstr "%1: nie przeszkadzaæ,"
 
-#: plugins/xosd/xosd.c:355
+#: plugins/xosd/xosd.c:365
 msgid "%1 is extended away,"
 msgstr "%1 jest bardzo zajêt%@1,"
 
-#: plugins/xosd/xosd.c:356
+#: plugins/xosd/xosd.c:366
 msgid "%1 is offline,"
 msgstr "%1 jest niedostêpn%@1,"
 
-#: plugins/xosd/xosd.c:357
+#: plugins/xosd/xosd.c:367
 msgid "%1 is invisible,"
 msgstr "%1 jest niewidoczn%@1,"
 
-#: plugins/xosd/xosd.c:358
+#: plugins/xosd/xosd.c:368
 msgid "%1 is free for chat,"
 msgstr "%1 jest chêtn%@1 do rozmowy,"
 
-#: plugins/xosd/xosd.c:359
+#: plugins/xosd/xosd.c:369
 msgid "%1: status error,"
 msgstr "%1: b³±d pobierania statusu,"
 
-#: plugins/xosd/xosd.c:360
+#: plugins/xosd/xosd.c:370
 msgid "%1 is blocking us,"
 msgstr "%1 blokuje nas,"
 
-#: plugins/xosd/xosd.c:363
+#: plugins/xosd/xosd.c:373
 msgid "[no description]"
 msgstr "[brak opisu]"
 
-#: plugins/xosd/xosd.c:364
+#: plugins/xosd/xosd.c:374
 msgid "ekg2 XOnScreenDisplay plugin"
 msgstr "Wtyczka XOnScreenDisplay dla ekg2"
 
-#: plugins/xosd/xosd.c:365
+#: plugins/xosd/xosd.c:375
 msgid "Author: Adam 'dredzik' Kuczynski"
 msgstr "Autor: Adam 'dredzik' Kuczyñski"
-
-#~ msgid "%> %1\n"
-#~ msgstr "%> %1\n"
 
 #~ msgid "%! This function works only in GG protocol\n"
 #~ msgstr "%! Ta funkcja dzia³a tylko w protokole GG\n"

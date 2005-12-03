@@ -3,7 +3,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
  *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
- *		  2004 Adam Mikuta <adammikuta@poczta.onet.pl>
+ *		  2004 - 2005 Adam Mikuta <adamm@ekg2.org>
  *		  2005 Leszek Krupiñski <leafnode@wafel.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -552,7 +552,7 @@ static void gg_session_handler_disconnect(session_t *s)
  *
  * obs³uga zmiany stanu przez u¿ytkownika.
  */
-static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port)
+static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol)
 {
 	char *__session	= xstrdup(session_uid_get(s));
 	char *__uid	= saprintf("gg:%d", uin);
@@ -561,8 +561,12 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
 	int __port	= port;
+	userlist_t *u;
 
 	gg_cp_to_iso(__descr);
+	
+	if ((u = userlist_find(s, __uid)))
+		u->protocol = protocol;
 
 	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
 
@@ -1008,19 +1012,19 @@ WATCHER(gg_session_handler)
 			for (; n->uin; n++) {
 				char *descr = (e->type == GG_EVENT_NOTIFY_DESCR) ? e->event.notify_descr.descr : NULL;
 
-				gg_session_handler_status(data, n->uin, n->status, descr, n->remote_ip, n->remote_port);
+				gg_session_handler_status(data, n->uin, n->status, descr, n->remote_ip, n->remote_port, n->version);
 			}
 			
 			break;
 		}
 			
 		case GG_EVENT_STATUS:
-			gg_session_handler_status(data, e->event.status.uin, e->event.status.status, e->event.status.descr, 0, 0);
+			gg_session_handler_status(data, e->event.status.uin, e->event.status.status, e->event.status.descr, 0, 0, 0);
 			break;
 
 #ifdef GG_STATUS60
 		case GG_EVENT_STATUS60:
-			gg_session_handler_status(data, e->event.status60.uin, e->event.status60.status, e->event.status60.descr, e->event.status60.remote_ip, e->event.status60.remote_port);
+			gg_session_handler_status(data, e->event.status60.uin, e->event.status60.status, e->event.status60.descr, e->event.status60.remote_ip, e->event.status60.remote_port, e->event.status60.version);
 			break;
 #endif
 
@@ -1030,8 +1034,7 @@ WATCHER(gg_session_handler)
 			int i;
 
 			for (i = 0; e->event.notify60[i].uin; i++)
-				gg_session_handler_status(data, e->event.notify60[i].uin, e->event.notify60[i].status, e->event.notify60[i].descr, e->event.notify60[i].remote_ip, e->event.notify60[i].remote_port);
-
+				gg_session_handler_status(data, e->event.notify60[i].uin, e->event.notify60[i].status, e->event.notify60[i].descr, e->event.notify60[i].remote_ip, e->event.notify60[i].remote_port, e->event.notify60[i].version);
 			break;
 		}
 #endif

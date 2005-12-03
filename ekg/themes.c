@@ -1,8 +1,9 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2001-2004 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2001-2005 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Leszek Krupiñski <leafnode@wafel.com>
+ *                          Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -1362,7 +1363,8 @@ void theme_init()
         format_add("user_info_last_seen_time", "%Y-%m-%d %H:%M", 1);
         format_add("user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
         format_add("user_info_last_status", _("%K| %nLast status: %T%1%n\n"), 1);
-
+	format_add("user_info_version", _("%K| %nVersion: %T%1%n\n"),1);
+	format_add("user_info_voip", _("%K| %nHas voice talk\n"), 1);
         format_add("user_info_footer", "%K`----- ---- --- -- -%n\n", 1);
 
         format_add("user_info_avail", _("%Yavailable%n"), 1);
