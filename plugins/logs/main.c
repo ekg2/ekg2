@@ -69,19 +69,19 @@
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 
 logs_log_t *log_curlog = NULL;
-/* log ff types... */
+	/* log ff types... */
 #define LOG_FORMAT_NONE		0
 #define LOG_FORMAT_SIMPLE 	1
 #define LOG_FORMAT_XML   	2
 #define LOG_FORMAT_IRSSI 	3 
 #define LOG_GZIP		4  /* maska */
-/* irssi */
+	/* irssi types */
 #define LOG_IRSSI_MESSAGE	0
 #define LOG_IRSSI_EVENT		1
 #define LOG_IRSSI_STATUS	2
 #define LOG_IRSSI_INFO		3
 #define LOG_IRSSI_ACTION	4
-
+	/* irssi style info messages */
 #define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y" 	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
 #define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
 #define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */ /* TODO, CHECK*/
@@ -139,30 +139,30 @@ int logs_window_check(logs_log_t *ll, time_t t)
 		l->logformat = tmp;
 		chan = 1;
 	}
-
-	if (!(l->path)) 
+	if (!(l->path)) {
 		chan = 2;
-
-	if (chan != 2) {
-		int datechanged = 0;
-/* sprawdzic czy dane z (tm == tm2) */
-		struct tm *tm = localtime(&(ll->t));
+	} else { /* buggy ! TODO */
+		int datechanged = 0; /* bitmaska 0x01 (dzien) 0x02 (miesiac) 0x04 (rok) */
+		struct tm sttm;
+		struct tm *tm = localtime_r(&(ll->t), &sttm);
 		struct tm *tm2 = localtime(&t);
 
-		if  (	(tm->tm_mday != tm2->tm_mday) || 
-			(tm->tm_mon != tm2->tm_mon) || 
-			(tm->tm_year != tm2->tm_year)
-		    ) datechanged = 1;
-		if (datechanged &&     (xstrstr(config_logs_path, "%Y") || 
-					xstrstr(config_logs_path, "%M") || 
-					xstrstr(config_logs_path, "%D")
-					)) 
+		/* sprawdzic czy dane z (tm == tm2) */
+		if (tm->tm_mday != tm2->tm_mday)	datechanged |= 0x01;
+		if (tm->tm_mon != tm2->tm_mon)		datechanged |= 0x02;
+		if (tm->tm_year != tm2->tm_year)	datechanged |= 0x04;
+		if (
+				((datechanged & 0x04) && xstrstr(config_logs_path, "%Y")) ||
+				((datechanged & 0x02) && xstrstr(config_logs_path, "%M")) ||
+		   		((datechanged & 0x01) && xstrstr(config_logs_path, "%D"))
+				)
 			chan = 3;
 //		else	chan = -2; /* chan == -2 date changed */
 
+		/* zalogowac jak sie zmienila data */
 		if (datechanged && l->logformat == LOG_FORMAT_IRSSI) { /* yes i know it's wrong place for doing this but .... */
 			if (!(l->file)) 
-				l->file = logs_open_file(l->path, LOG_FORMAT_IRSSI); /* think */
+				l->file = logs_open_file(l->path, LOG_FORMAT_IRSSI);
 			logs_irssi(l->file, ll->session, NULL,
 					prepare_timestamp_format(IRSSI_LOG_DAY_CHANGED, time(NULL)),
 					0, LOG_IRSSI_INFO, NULL);
@@ -1161,7 +1161,7 @@ void logs_irssi(FILE *file, const char *session, const char *uid, const char *te
 	if (!file)
 		return;
 
-	nuid = get_uid(session_find(session), uid);
+	nuid = get_nickname(session_find(session), uid);
 	
 	switch (type) {
 		/* just normal message */
