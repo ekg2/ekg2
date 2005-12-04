@@ -74,12 +74,16 @@ check_conn
 	krotki opis: sprawdza czy podana osoba jest po³±czona 
 	
 	Sprawdza czy podana osoba jest po³±czona. Klient tej osoby musi 
-	obs³ugiwaæ obrazki. Przetestowane na GG 6.0 dla Windows. W przypadku 
-	niektórych klientów jak np. tlen, ekg2 komenda nie dzia³a prawid³owo 
+	obs³ugiwaæ obrazki. Przetestowane na GG 6.x dla Windows. W przypadku 
+	niektórych klientów jak np. tlen komenda nie dzia³a prawid³owo 
 	(osobie któr± sprawdzamy pojawia siê pusta wiadomo¶æ). Dziêki tej 
 	funkcji mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna 
 	jest niewidoczna. Je¿eli brak aliasu jako parametr sprawdzana jest osoba,
 	z któr± rozmowa znajdujê siê w aktualnym okienku.
+
+	Od wersji 7.0 nie jest mo¿liwe sprawdzenie w ten sposób czy kto¶ jest
+	niewidoczny. Wszystkie obrazki, a nawet tekst, do którego do³o±czony jest
+	obrazek nie jest pokazywany u¿ytkownikowi.
 	
 	Po 15 sekundach u¿ytkownik uznawany jest za niepo³±czonego. W momencie
 	gdy u¿ytkownik zostanie po³±czony pojawi siê równie¿ komunikat
