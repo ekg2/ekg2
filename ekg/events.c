@@ -43,6 +43,11 @@ char **events_all = NULL;
  */
 COMMAND(cmd_on)
 {
+	/* in command_exec() we've got somethink like that
+	 * session_t *s = session ? session : window_current->session;
+	 * (session_current == window_current->session) ?
+	 * if yes so maybe we'll remove this code.. it's in many other functions too..
+	 * or we can do another check in command_exec() (dj) */
         if(!session) {
                 if(session_current)
                         session = session_current;
@@ -478,11 +483,11 @@ QUERY(event_descr)
 int event_check(const char *session, const char *name, const char *uid, const char *data)
 {
 	session_t *__session;
-        char *action = NULL, **actions, *edata = NULL;
-	const char *target;
-	int i;
-	event_t *ev = NULL;
 	userlist_t *userlist;
+	event_t *ev;
+	const char *target;
+        char *action, **actions, *edata = NULL;
+	int i;
 
 	if (!events)
 		return 1;
@@ -543,13 +548,13 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 	for (i = 0; actions && actions[i]; i++) {
 	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
 
-		debug("// event_check() calling \"%s\"\n", tmp);		
-
-		command_exec(NULL, NULL, tmp, 0);
+		debug("// event_check() calling \"%s\"\n", tmp);
+		command_exec(NULL, NULL, tmp, 0); /* BUG? CHECK: hm, we've got specified session, not current one... target too.. so is it correct ? */
 		xfree(tmp);
 	}
 
 	array_free(actions);
+	xfree(edata);
 
         return 0;
 }
