@@ -225,10 +225,13 @@ char *logsqlite_prepare_path(session_t *session, time_t sent)
 {
 	char *path, *tmp, datetime[5];
 	struct tm *tm = localtime(&sent);
-	string_t buf = string_init(NULL);
+	string_t buf;
 
-	if (!(tmp = config_logsqlite_path))
+	if (!(tmp = config_logsqlite_path)) {
 		return NULL;
+	}
+
+	buf = string_init(NULL);
 
 	while (*tmp) {
 		if ((char)*tmp == '%' && (tmp+1) != NULL) {
@@ -419,7 +422,7 @@ QUERY(logsqlite_msg_handler)
 	session_t *s = session_find((const char*)session);
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
-	char * type = xmalloc(10);
+	char * type = NULL;
 	sqlite_t * db;
 #ifdef HAVE_SQLITE3	
 	sqlite3_stmt * stmt;
@@ -436,33 +439,32 @@ QUERY(logsqlite_msg_handler)
 
 	db = logsqlite_prepare_db(s, sent);
 	if (!db) {
-		xfree(type);
 		return 0;
 	}
 
 	switch ((enum msgclass_t)class) {
 		case EKG_MSGCLASS_MESSAGE:
-			xstrcpy(type, "msg");
+			type = xstrdup("msg");
 			is_sent = 0;
 			break;
 		case EKG_MSGCLASS_CHAT:
-			xstrcpy(type, "chat");
+			type = xstrdup("chat");
 			is_sent = 0;
 			break;
 		case EKG_MSGCLASS_SENT:
-			xstrcpy(type, "msg");
+			type = xstrdup("msg");
 			is_sent = 1;
 			break;
 		case EKG_MSGCLASS_SENT_CHAT:
-			xstrcpy(type, "chat");
+			type = xstrdup("chat");
 			is_sent = 1;
 			break;
 		case EKG_MSGCLASS_SYSTEM:
-			xstrcpy(type, "system");
+			type = xstrdup("system");
 			is_sent = 0;
 			break;
 		default:
-			xstrcpy(type, "chat");
+			type = xstrdup("chat");
 			is_sent = 0;
 			break;
 	};
