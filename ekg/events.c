@@ -387,19 +387,12 @@ int events_init()
  */
 QUERY(event_protocol_message)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        char ***__rcpts = va_arg(ap, char***), **rcpts = *__rcpts;
-        char **__text = va_arg(ap, char**), *text = *__text;
-        session_t *session_class = session_find(session);
-        userlist_t *userlist = userlist_find(session_class, uid);
+        char *session	= *(va_arg(ap, char**));
+        char *uid	= *(va_arg(ap, char**));
+        char **rcpts	= *(va_arg(ap, char***));
+        char *text	= *(va_arg(ap, char**));
 
-	rcpts = NULL;
-	if (userlist && userlist->nickname)
-		event_check(session, "protocol-message", userlist->nickname, text);
-	else
-		event_check(session, "protocol-message", uid, text);
-
+	event_check(session, "protocol-message", uid, text);
 	return 0;
 }
 
@@ -410,16 +403,10 @@ QUERY(event_protocol_message)
  */
 QUERY(event_avail)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        session_t *session_class = session_find(session);
-        userlist_t *userlist = userlist_find(session_class, uid);
+        char *session	= *(va_arg(ap, char**));
+        char *uid	= *(va_arg(ap, char**));
 
-	if (userlist && userlist->nickname)
-		event_check(session, "event_avail", userlist->nickname, NULL);
-	else
-		event_check(session, "event_avail", uid, NULL);
-
+	event_check(session, "event_avail", uid, NULL);
 	return 0;
 }
 
@@ -430,16 +417,10 @@ QUERY(event_avail)
  */
 QUERY(event_away)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        session_t *session_class = session_find(session);
-        userlist_t *userlist = userlist_find(session_class, uid);
+        char *session	= *(va_arg(ap, char**));
+        char *uid	= *(va_arg(ap, char**));
 
-        if (userlist && userlist->nickname)
-                event_check(session, "event_away", userlist->nickname, NULL);
-        else
-                event_check(session, "event_away", uid, NULL);
-
+	event_check(session, "event_away", uid, NULL);
         return 0;
 }
 
@@ -450,16 +431,10 @@ QUERY(event_away)
  */
 QUERY(event_na)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        session_t *session_class = session_find(session);
-        userlist_t *userlist = userlist_find(session_class, uid);
+        char *session	= *(va_arg(ap, char**));
+        char *uid	= *(va_arg(ap, char**));
 
-        if (userlist && userlist->nickname)
-                event_check(session, "event_na", userlist->nickname, NULL);
-        else
-                event_check(session, "event_na", uid, NULL);
-
+	event_check(session, "event_na", uid, NULL);
         return 0;
 }
 
@@ -470,16 +445,10 @@ QUERY(event_na)
  */
 QUERY(event_online)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        session_t *session_class = session_find(session);
-        userlist_t *userlist = userlist_find(session_class, uid);
+        char *session	= *(va_arg(ap, char**));
+        char *uid	= *(va_arg(ap, char**));
 
-        if (userlist && userlist->nickname)
-                event_check(session, "event_online", userlist->nickname, NULL);
-        else
-                event_check(session, "event_online", uid, NULL);
-
+	event_check(session, "event_online", uid, NULL);
         return 0;
 }
 
@@ -490,17 +459,11 @@ QUERY(event_online)
  */
 QUERY(event_descr)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-	char **__descr = va_arg(ap, char**), *descr = *__descr;
-        session_t *session_class = session_find(session);
-        userlist_t *userlist = userlist_find(session_class, uid);
-
-        if (userlist && userlist->nickname)
-                event_check(session, "event_descr", userlist->nickname, descr);
-        else
-                event_check(session, "event_descr", uid, descr);
-
+        char *session	= *(va_arg(ap, char**));
+        char *uid	= *(va_arg(ap, char**));
+	char *descr	= *(va_arg(ap, char**));
+	
+	event_check(session, "event_descr", uid, descr);
         return 0;
 }
 
@@ -512,28 +475,27 @@ QUERY(event_descr)
  * it also check target and if possible uid taken from target
  *
  */
-int event_check(const char *session, const char *name, const char *target, const char *data)
+int event_check(const char *session, const char *name, const char *uid, const char *data)
 {
 	session_t *__session;
         char *action = NULL, **actions, *edata = NULL;
-	char *uid;
+	const char *target;
 	int i;
 	event_t *ev = NULL;
+	userlist_t *userlist;
 
 	if (!events)
 		return 1;
-
+	
         if (!(__session = session_find(session)))
 		__session = session_current;
-
-	if (__session)
-                uid = get_uid(__session, target);
-        else
-                uid = NULL;
 
 	if (uid && ignored_check(__session, uid) & IGNORE_EVENTS) {
 		return -1;
 	}
+
+	userlist = userlist_find(__session, uid);
+	target = (userlist && userlist->nickname) ? userlist->nickname : uid;
 
 	if (!(ev = event_find_all(name, uid, target, data)))
 		return -1;

@@ -41,9 +41,11 @@ event_t *event_find_id(unsigned int id);
 event_t *event_find(const char *name, const char *target);
 
 void events_add_handler(char *name, void *function);
-int event_check(const char *session, const char *name, const char *target, const char *data);
+int event_check(const char *session, const char *name, const char *uid, const char *data);
 void event_free();
 int events_init();
+
+/* static void ekg_day_timer(int destroy, void *data); */
 
 QUERY(event_protocol_message);
 QUERY(event_avail);
