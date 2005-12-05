@@ -388,7 +388,8 @@ script_t *python_find_script(PyObject *module)
  */
 char *python_geterror(script_t *s) {
 	PyObject *exception, *v, *tb, *hook;
-	PyObject *pName, *pModule;
+	PyObject *pName = NULL;
+        PyObject *pModule = NULL;
 	string_t str;
 
         PyErr_Fetch(&exception, &v, &tb);
@@ -418,7 +419,7 @@ char *python_geterror(script_t *s) {
 
 	hook = PyObject_GetAttrString(v, "lineno");
 	string_append(str, itoa(PyInt_AsLong(hook)));
-	Py_DECREF(hook);
+	Py_XDECREF(hook);
 
 	if ((hook = PyObject_GetAttrString(v, "lineno"))) {
 		string_append_c(str, ':');
