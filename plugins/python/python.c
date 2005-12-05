@@ -415,11 +415,6 @@ char *python_geterror(script_t *s) {
 	} else string_append(str, "?) @ ");
 
 	string_append(str, s->path);
-	string_append_c(str, ':');
-
-	hook = PyObject_GetAttrString(v, "lineno");
-	string_append(str, itoa(PyInt_AsLong(hook)));
-	Py_XDECREF(hook);
 
 	if ((hook = PyObject_GetAttrString(v, "lineno"))) {
 		string_append_c(str, ':');
