@@ -86,7 +86,7 @@ PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
         }
 
         if (!PyCallable_Check(callback)) {
-                print("generic-error", _("Second parameter to command_bind is not callable"));
+                print("generic_error", _("Second parameter to command_bind is not callable"));
                 PyErr_SetString(PyExc_TypeError, _("Parameter must be callable"));
                 return NULL;
         }
@@ -96,7 +96,11 @@ PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
         scr = python_find_script(module);
 
         debug("[python] binding command %s to python function\n", bind_command);
-        script_command_bind(&python_lang, scr, bind_command, callback);
+#ifdef SCRIPTS_NEW
+        script_command_bind(&python_lang, scr, bind_command, NULL, NULL, callback);
+#else
+	script_command_bind(&python_lang, scr, bind_command, callback);
+#endif
 
         Py_INCREF(Py_None);
         return Py_None;
@@ -119,7 +123,7 @@ PyObject *ekg_cmd_timer_bind(PyObject * self, PyObject * args)
         }
 
         if (!PyCallable_Check(callback)) {
-                print("generic-error", _("Second parameter to command_bind is not callable"));
+                print("generic_error", _("Second parameter to timer_bind is not callable"));
                 PyErr_SetString(PyExc_TypeError, _("Parameter must be callable"));
                 return NULL;
         }
@@ -247,7 +251,6 @@ PyObject *ekg_cmd_plugins(PyObject * self, PyObject * pyargs)
 PyObject *ekg_cmd_getPlugin(PyObject * self, PyObject * pyargs)
 {
     ekg_pluginObj *pyplugin;
-    char buf[100];
     char *name = NULL;
     list_t l;
     int prio = -1;

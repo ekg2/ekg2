@@ -34,99 +34,36 @@ extern scriptlang_t python_lang;
 
 #define python_module(s) ((PyObject *) script_private_get(s)) /* obiekt modu³u */
 
-#define PYTHON_HANDLE_HEADER(event, args...) \
+#define PYTHON_HANDLE_HEADER(event, arg) \
 { \
-        PyObject *temp, *exc_typ, *exc_val, *exc_tb; \
-        PyObject *pName, *pModule, *pDict, *pFunc, *pArgs, *pValue; \
-        char * buffer; \
-	\
-	python_handle_result = -1;\
-        pArgs = Py_BuildValue(args);\
-	\
 	PyObject *__py_r; \
+	PyObject *pArgs = arg;\
+	python_handle_result = -1;\
 	\
-	__py_r = PyObject_Call((PyObject *)event, pArgs, NULL); \
-        Py_DECREF(pArgs);\
-	\
-	if (!__py_r) { \
-                    buffer = xmalloc(1024); \
-                    PyErr_Fetch(&exc_typ, &exc_val, &exc_tb); \
-                    PyErr_NormalizeException(&exc_typ, &exc_val, &exc_tb); \
-                    pName = PyString_FromString("traceback"); \
-                    pModule = PyImport_Import(pName); \
-                    Py_DECREF(pName); \
-                    \
-                    temp = PyObject_Str(exc_typ); \
-                    if (temp != NULL) { \
-                            strcat(buffer, PyString_AsString(temp)); \
-                            strcat(buffer, "\n"); \
-                    } \
-                    temp = PyObject_Str(exc_val); \
-                    if (temp != NULL) { \
-                            strcat(buffer, PyString_AsString(temp)); \
-                    } \
-                    Py_DECREF(temp); \
-                    strcat(buffer, "\n"); \
-                    \
-                    if (exc_tb != NULL && pModule != NULL ) { \
-                            pDict = PyModule_GetDict(pModule); \
-                            pFunc = PyDict_GetItemString(pDict, "format_tb"); \
-                            if (pFunc && PyCallable_Check(pFunc)) { \
-                                    pArgs = PyTuple_New(1); \
-                                    pArgs = PyTuple_New(1); \
-                                    PyTuple_SetItem(pArgs, 0, exc_tb); \
-                                    pValue = PyObject_CallObject(pFunc, pArgs); \
-                                    if (pValue != NULL) { \
-                                            int len = PyList_Size(pValue); \
-                                            if (len > 0) { \
-                                                    PyObject *t,*tt; \
-                                                    char * buffer2; \
-                                                    int i; \
-                                                    for (i = 0; i < len; i++) { \
-                                                            tt = PyList_GetItem(pValue,i); \
-                                                            t = Py_BuildValue("(O)",tt); \
-                                                            PyArg_ParseTuple(t,"s",&buffer2); \
-                                                            strcat(buffer,buffer2); \
-                                                            strcat(buffer, "\n"); \
-                                                    } \
-                                            } \
-                                    } \
-                                    Py_DECREF(pValue); \
-                                    Py_DECREF(pArgs); \
-                            } \
-                    } \
-                    Py_DECREF(pModule); \
-                    print("script_error", buffer); \
-                    PyErr_Restore(exc_typ, exc_val, exc_tb); \
-                    PyErr_Clear(); \
-            } \
-	\
-	python_handle_result = -1; \
+	__py_r = PyObject_Call(event, pArgs, NULL);\
 	\
 	if (__py_r && PyInt_Check(__py_r)) { \
 		int tmp = PyInt_AsLong(__py_r); \
 		\
-		if (python_handle_result != 2 && tmp != 1) \
+		if (/* python_handle_result != 2 && here -1 leafnode, check it. */ tmp != 1) \
 			python_handle_result = tmp; \
-	} \
-	\
-	if (__py_r && PyTuple_Check(__py_r))
-	
+	} else if (!__py_r) {\
+		char *buffer = python_geterror(scr);\
+                print("script_error", buffer);\
+		xfree(buffer);\
+	}
+
+
 #define PYTHON_HANDLE_RESULT(args...) \
 		if (!PyArg_ParseTuple(__py_r, args)) \
 			PyErr_Print(); \
 		else
 
 #define PYTHON_HANDLE_FOOTER(x) \
-	\
+/*	if (__py_r && PyTuple_Check(__py_r)) ; */\
 	Py_XDECREF(__py_r); \
+	Py_DECREF(pArgs);\
 	\
-        {\
-                if (x) { \
-                        Py_XDECREF((PyObject *) x); } \
-		if (python_handle_result == 0) return -1;\
-		else return 0;\
-	}\
 }
 
 int python_run(const char *filename);

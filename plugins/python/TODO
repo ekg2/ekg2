@@ -1,8 +1,12 @@
 TODO:
 - przyk³adowe skrypty
-
-Stare todo - raczej aktualne :>
+- skrypt jesli chce obslugiwac jakiegs query powinien zrobic ekg.query_connect("name", func) (?)
 - dokoñczyæ modu³ ekg
 - podmiana statusów/msgów
+/* 
+   dj: jak ?! 
+   ln: przebudowuj±c system sygna³ów tak, ¿eby ka¿dy element odbieraj±cy sygna³
+       móg³ podmieniaæ dane. Tak, wiem, kupa roboty.
+ */
 - rzucanie wyj±tku do ekg_config_get
 - poprawna implementacja ekg_config_len
