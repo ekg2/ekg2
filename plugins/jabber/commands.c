@@ -286,7 +286,7 @@ COMMAND(jabber_command_msg)
 		char *msg	= xstrdup(params[1]);
 		time_t sent 	= time(NULL);
 		int class 	= (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
-		int ekgbeep 	= EKG_NO_BEEP; /* bo co ma beepowac kiedy wysylamy ? */
+		int ekgbeep 	= EKG_NO_BEEP;
 		char *format 	= NULL;
 		char *seq 	= NULL;
 		int secure	= 0;
@@ -353,7 +353,7 @@ COMMAND(jabber_command_away)
 		session_status_set(session, EKG_STATUS_DND);
 		session_unidle(session);
 	} else if (!xstrcmp(name, "ffc")) {
-	        format = "chat";
+	        format = "ffc";
 	        session_status_set(session, EKG_STATUS_FREE_FOR_CHAT);
                 session_unidle(session);
         } else if (!xstrcmp(name, "xa")) {
