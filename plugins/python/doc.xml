@@ -73,6 +73,8 @@
             <term>timer_bind( czas, callback )</term>
             <listitem>
                <para>
+                  Wykonuje funkcjê callback co podany czas. Funkcja ta nie mo¿e
+                  przyjmowaæ argumentów.
                </para>
             </listitem>
          </varlistentry>
@@ -80,6 +82,9 @@
             <term>handler_bind( nazwa_sygna³u, callback )</term>
             <listitem>
                <para>
+                  £±czy funkcjê callback z sygna³em o podanej nazwie. Funkcja
+                  musi przyjmowaæ argumenty takie, jakie przesy³ane s± z
+                  sygna³em.
                </para>
             </listitem>
          </varlistentry>
@@ -87,6 +92,9 @@
             <term>command_bind( nazwa_polecenia, callback )</term>
             <listitem>
                <para>
+                  £±czy funkcjê callback z reakcj± na wykonanie polecenia.
+                  Funkcja musi przyjmowaæ dwa argumenty: nazwê wpisanego
+                  polecenia i argumenty mu przekazane.
                </para>
             </listitem>
          </varlistentry>
@@ -94,6 +102,7 @@
             <term>window_current()</term>
             <listitem>
                <para>
+                  Zwraca obiekt window reprezentuj±cy bie¿±ce okno
                </para>
             </listitem>
          </varlistentry>
@@ -101,6 +110,8 @@
             <term>window_get( nazwa )</term>
             <listitem>
                <para>
+                  Zwraca obiekt window reprezentuj±cy okno o podanej nazwie.
+                  Funkcja rozpoznaje tak¿e nazwy "__current" i "__status".
                </para>
             </listitem>
          </varlistentry>
