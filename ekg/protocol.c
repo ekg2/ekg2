@@ -326,7 +326,7 @@ notify_plugins:
  */
 char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure)
 {
-	char *class_str = "message", timestamp[100], *t = NULL, *text = xstrdup(__text), *emotted = NULL;
+	char *class_str, timestamp[100], *t = NULL, *text = xstrdup(__text), *emotted = NULL;
 	const char *target = sender, *user;
         time_t now;
 	session_t *s = session_find(session);
@@ -354,6 +354,8 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			class_str = "sent";
                         target = (rcpts) ? rcpts[0] : NULL;
         	        break;
+		default:
+			class_str = "message";
 	}
 
 	/* dodajemy kolorki do tekstu */
@@ -404,7 +406,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	/* wyznaczamy odstêp czasu miêdzy wys³aniem wiadomo¶ci, a chwil±
 	 * obecn±, ¿eby wybraæ odpowiedni format timestampu. */
 	{
-		char tmp[100], *timestamp_type = "timestamp";
+		char tmp[100], *timestamp_type;
 	        struct tm *tm_now, *tm_msg;
 
 		now = time(NULL);
@@ -415,6 +417,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			timestamp_type = "timestamp_now";
 		else if (tm_now->tm_yday == tm_msg->tm_yday)
 			timestamp_type = "timestamp_today";
+		else	timestamp_type = "timestamp";
 
 		snprintf(tmp, sizeof(tmp), "%s_%s", class_str, timestamp_type);
 		if (!strftime(timestamp, sizeof(timestamp), format_find(tmp), tm_msg)
@@ -498,20 +501,22 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
  */
 int protocol_message(void *data, va_list ap)
 {
-	char **__session = va_arg(ap, char**), *session = *__session;
-	char **__uid = va_arg(ap, char**), *uid = *__uid;
-	char ***__rcpts = va_arg(ap, char***), **rcpts = *__rcpts;
-	char **__text = va_arg(ap, char**), *text = *__text;
-	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
-	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
-	int *__class = va_arg(ap, int*), class = *__class;
-	char **__seq = va_arg(ap, char**), *seq = *__seq;
-	int *__dobeep = va_arg(ap, int*), dobeep = *__dobeep;
-	int *__secure = va_arg(ap, int*), secure = *__secure;
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	char **rcpts	= *(va_arg(ap, char***));
+	char *text	= *(va_arg(ap, char**));
+	uint32_t *format= *(va_arg(ap, uint32_t**));
+	time_t sent	= *(va_arg(ap, time_t*));
+	int class	= *(va_arg(ap, int*));
+	char *seq	= *(va_arg(ap, char**));
+	int dobeep	= *(va_arg(ap, int*));
+	int secure	= *(va_arg(ap, int*));
+
 	session_t *session_class = session_find(session);
 	userlist_t *userlist = userlist_find(session_class, uid);
 	char *target = NULL;
 	int empty_theme = 0;
+	int our_msg;
 
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
@@ -540,9 +545,10 @@ int protocol_message(void *data, va_list ap)
 		class &= ~EKG_NO_THEMEBIT;
 		empty_theme = 1;
 	}
+	our_msg = (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT);
 
 	/* there is no need to decode our messages */
-	if (class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
+	if (!our_msg) {
                 char *___session = xstrdup(session);
                 char *___sender = xstrdup(uid);
                 char *___message = xstrdup(text);
@@ -561,10 +567,13 @@ int protocol_message(void *data, va_list ap)
                 xfree(___message);
 	}
 
+	if (our_msg)	query_emit(NULL, "protocol-message-sent", &session, &(rcpts[0]), &text);
+	else		query_emit(NULL, "protocol-message-received", &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+
 	query_emit(NULL, "protocol-message-post", &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
 
 	/* show it ! */
-	if (!((class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) && !config_display_sent)) {
+	if (!(our_msg && !config_display_sent)) {
 		if (empty_theme)
 			class |= EKG_NO_THEMEBIT;
 	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep, secure);
