@@ -436,7 +436,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			print("passwd");
 		} else if (!xstrcmp(type, "error")) {
 			xmlnode_t *e = xmlnode_find_child(n, "error");
-			char *reason = (e && e->data) ? jabber_unescape(e->data) : NULL;
+			char *reason = (e) ? jabber_unescape(e->data) : NULL;
 
 			print("passwd_failed", jabberfix(reason, "?"));
 			xfree(reason);
@@ -456,16 +456,16 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xmlnode_t *fullname = xmlnode_find_child(q, "FN");
 				xmlnode_t *nickname = xmlnode_find_child(q, "NICKNAME");
 				xmlnode_t *birthday = xmlnode_find_child(q, "BDAY");
-				xmlnode_t *adr = xmlnode_find_child(q, "ADR");
+				xmlnode_t *adr  = xmlnode_find_child(q, "ADR");
 				xmlnode_t *city = xmlnode_find_child(adr, "LOCALITY");
 				xmlnode_t *desc = xmlnode_find_child(q, "DESC");
 
-				char *from_str     = (from) ? jabber_unescape(from) : NULL;
-				char *fullname_str = (fullname && fullname->data) ? jabber_unescape(fullname->data) : NULL;
-				char *nickname_str = (nickname && nickname->data) ? jabber_unescape(nickname->data) : NULL;
-				char *bday_str     = (birthday && birthday->data) ? jabber_unescape(birthday->data) : NULL;
-				char *city_str     = (city && city->data) ? jabber_unescape(city->data) : NULL;
-				char *desc_str     = (desc && desc->data) ? jabber_unescape(desc->data) : NULL;
+				char *from_str     = (from)	? jabber_unescape(from) : NULL;
+				char *fullname_str = (fullname) ? jabber_unescape(fullname->data) : NULL;
+				char *nickname_str = (nickname) ? jabber_unescape(nickname->data) : NULL;
+				char *bday_str     = (birthday) ? jabber_unescape(birthday->data) : NULL;
+				char *city_str     = (city)	? jabber_unescape(city->data) : NULL;
+				char *desc_str     = (desc)	? jabber_unescape(desc->data) : NULL;
 
 				print("jabber_userinfo_response", 
 						jabberfix(from_str, _("unknown")), 	jabberfix(fullname_str, _("unknown")),
@@ -582,7 +582,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					}
 				} else {
 					xmlnode_t *instr = xmlnode_find_child(q, "instructions");
-					char *instr_str = (instr && instr->data) ? jabber_unescape(instr->data) : NULL;
+					char *instr_str = (instr) ? jabber_unescape(instr->data) : NULL;
 
 					print("jabber_registration_instruction", session_name(s), from_str, jabberfix(instr_str, "?"));
 					xfree(instr_str);
@@ -613,10 +613,10 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xmlnode_t *version = xmlnode_find_child(q, "version");
 				xmlnode_t *os = xmlnode_find_child(q, "os");
 
-				char *from_str = (from) ? jabber_unescape(from) : NULL;
-				char *name_str = (name && name->data) ? jabber_unescape(name->data) : NULL;
-				char *version_str = (version && version->data) ? jabber_unescape(version->data) : NULL;
-				char *os_str = (os && os->data) ? jabber_unescape(os->data) : NULL;
+				char *from_str	= (from) ?	jabber_unescape(from) : NULL;
+				char *name_str	= (name) ?	jabber_unescape(name->data) : NULL;
+				char *version_str = (version) ? jabber_unescape(version->data) : NULL;
+				char *os_str	= (os) ?	jabber_unescape(os->data) : NULL;
 
 				print("jabber_version_response",
 						jabberfix(from_str, "unknown"), jabberfix(name_str, "unknown"), 
@@ -806,11 +806,13 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
 			jstatus = jabber_unescape(nshow->data);
-			if (!xstrcmp(jstatus, "na") || !xstrcmp(type, "unavailable")) {
+			if (!xstrcmp(jstatus, "na")) {
 				status = xstrdup(EKG_STATUS_NA);
 			}
 		} else {
-			status = xstrdup(EKG_STATUS_AVAIL);
+			if (!xstrcmp(type, "unavailable"))
+				status = xstrdup(EKG_STATUS_NA);
+			else	status = xstrdup(EKG_STATUS_AVAIL);
 		}
 
 		if ((nerr = xmlnode_find_child(n, "error"))) { /* bledny */
