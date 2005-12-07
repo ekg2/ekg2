@@ -192,50 +192,11 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 }
 
 /**
- * python_protocol_message_received()
+ * python_protocol_message_query()
  *
- * handle message events
- *
- */
-
-int python_protocol_message_received(PyObject *obj, script_t *scr, char *session, char *uid, char **rcpts, char *text, time_t sent, int class)
-{
-        int level;
-	char * target;
-	userlist_t *u;
-	session_t *s;
-	int python_handle_result;
-
-	if (!(s = session_find(session)))
-		return 0;
-
-	u = userlist_find(s, uid);
-
-	level = ignored_check(s, uid);
-
-	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
-		return 0;
-
-        target = (rcpts) ? rcpts[0] : NULL;
-        PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(sss)", session, target, text))
-        PYTHON_HANDLE_FOOTER()
-	return python_handle_result;
-}
-
-/**
- * python_protocol_message_sent()
- *
- * handle message events
+ * handle signals
  *
  */
-
-int python_protocol_message_sent(PyObject *obj, script_t *scr, char *session, char *rcpt, char *text)
-{
-	int python_handle_result;
-        PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(sss)", session, rcpt, text))
-        PYTHON_HANDLE_FOOTER()
-	return python_handle_result;
-}
 
 int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
