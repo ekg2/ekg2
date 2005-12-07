@@ -547,10 +547,23 @@ void window_move(int first, int second)
         list_remove(&windows, w2, 0);
 	w2->id = first;
 
-	list_add_sorted(&windows, w1, sizeof(window_t), window_new_compare);	
+	list_add_sorted(&windows, w1, sizeof(window_t), window_new_compare);
         list_add_sorted(&windows, w2, sizeof(window_t), window_new_compare);
 }
 
+/*
+ * window_target()
+ *
+ * return window target
+ */
+
+char *window_target(window_t *window) {
+	if (!window)			return "__current";
+	if (window->id == 1)		return "__status";
+	else if (window->id == 0)	return "__debug";
+	else if (window->target)        return window->target;
+        else                            return "";
+}
 
 /*
  *

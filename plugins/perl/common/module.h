@@ -40,5 +40,4 @@ void *perl_command_bind(char *command, char *params, char *poss, char *handler);
 void *perl_timer_bind(int freq, char *handler);
 int perl_timer_unbind(script_timer_t *stimer);
 void ekg2_callXS(void (*subaddr)(pTHX_ CV* cv), CV *cv, SV **mark);
-char *ekg2_window_target(window_t *window);
 

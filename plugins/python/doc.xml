@@ -5,7 +5,7 @@
       <variablelist>
          <title>Metody i atrybuty modu³u</title>
          <varlistentry>
-            <term>command(str)</term>
+            <term>command( str )</term>
             <listitem>
                <para>
                   Wywo³anie polecenia ekg
@@ -13,7 +13,7 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>printf(format, args ...)</term>
+            <term>printf( format, args ...)</term>
             <listitem>
                <para>
                   Wy¶wietlenie tekstu w podanym formacie.
@@ -21,7 +21,7 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>echo(str)</term>
+            <term>echo( str )</term>
             <listitem>
                <para>
                   Wy¶wietlenie tekstu w formacie generic
@@ -29,7 +29,7 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>debug(format, args ...)</term>
+            <term>debug( format, args ... )</term>
             <listitem>
                <para>
                   Zapisanie danych debugowych w podanym formacie (notacja printf).
@@ -40,7 +40,24 @@
             <term>sessions()</term>
             <listitem>
                <para>
-                  Zwraca listê zawieraj±c± dostêpne sesje.
+                  Zwraca listê obiektów typu session zawieraj±c± dostêpne sesje.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>session_get( nazwa )</term>
+            <listitem>
+               <para>
+                  Zwraca obiekt sesyjny sesji o podanej nazwie. Podnosi wyj±tek
+                  RuntimeException je¶li takiej sesji nie ma.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>session_current()</term>
+            <listitem>
+               <para>
+                  Zwraca obiekt reprezentuj±cy bie¿±c± sesjê.
                </para>
             </listitem>
          </varlistentry>
@@ -49,6 +66,41 @@
             <listitem>
                <para>
                   Zwraca listê zawieraj±ca za³adowane pluginy.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>timer_bind( czas, callback )</term>
+            <listitem>
+               <para>
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>handler_bind( nazwa_sygna³u, callback )</term>
+            <listitem>
+               <para>
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>command_bind( nazwa_polecenia, callback )</term>
+            <listitem>
+               <para>
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>window_current()</term>
+            <listitem>
+               <para>
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>window_get( nazwa )</term>
+            <listitem>
+               <para>
                </para>
             </listitem>
          </varlistentry>
@@ -358,13 +410,13 @@
             <term>users()</term>
             <listitem>
                <para>
-                  Zwraca listê identyfikatorów u¿ytkowników na li¶cie danej
+                  Zwraca listê obiektów u¿ytkowników na li¶cie danej
                   sesji.
                </para>
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>getUser(nazwa)</term>
+            <term>user_get(nazwa)</term>
             <listitem>
                <para>
                   Zwraca obiekt klasy user o danym identyfikatorze (gg:123,
@@ -523,9 +575,138 @@
          </listitem>
       </itemizedlist>
    </sect3>
+   <sect3>
+      <title>Klasa window</title>
+      <variablelist>
+         <title>Metody obiektu klasy window</title>
+         <varlistentry>
+            <term>switch_to()</term>
+            <listitem>
+               <para>
+                  Prze³±cza widok na dane okno.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>echo( str )</term>
+            <listitem>
+               <para>
+                  Wy¶wietla napis w danym oknie.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>echo_format( format, str )</term>
+            <listitem>
+               <para>
+                  Wy¶wietla napis w podanym formacie
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>next</term>
+            <listitem>
+               <para>
+                  Zwraca obiekt reprezentuj±cy nastêpne okno. Lista okien jest
+                  "zawijana", tzn. wywo³anie metody next() na ostatnim oknie
+                  zwróci obiekt pierwszego okna.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>prev</term>
+            <listitem>
+               <para>
+                  Zwraca obiekt reprezentuj±cy poprzednie okno. Lista okien jest
+                  "zawijana", tzn. wywo³anie metody prev() na pierwszym oknie
+                  zwróci obiekt ostatniego okna.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>kill</term>
+            <listitem>
+               <para>
+                  Zamyka okno. W tym momencie obiekt klasy window powinien byæ
+                  usuniêty, gdy¿ nie mo¿na ju¿ go u¿ywaæ.
+               </para>
+            </listitem>
+         </varlistentry>
+      </variablelist>
+   </sect3>
 </sect2>
 <sect2>
-   <title>Funkcje skryptów wywo³ywane przez ekg</title>
+   <title>Obs³uga poleceñ i sygna³ów</title>
+   <para>
+      Skrypty w pythonie mo¿na "podpinaæ" do ró¿nych zdarzeñ. Mo¿e to byæ
+      wykonanie funkcji co podany okres czasu (metoda timer_bind), poprzez
+      wykonanie polecenia (command_bind) lub reakcja na sygna³ wydany przez
+      ekg2 (handler_bind). We wszystkich przypadkach, drugim argumentem jest
+      funkcja (nie nazwa, lecz sama funkcja - por. przyk³ad), która ma byæ
+      wykonana. Pierwszym natomiast, odpowiednio interwa³, nazwa polecenia lub
+      nazwa sygna³u. Poni¿ej zamieszczona jest lista zawieraj±ca obs³ugiwane
+      obecnie sygna³y, oraz argumenty, które musi przyjmowaæ funkcja
+      obs³uguj±ca sygna³.
+   </para>
+   <variablelist>
+      <title>Sygna³y</title>
+      <varlistentry>
+         <term>protocol-message-received</term>
+         <listitem>
+            <para>
+               Argumenty: session, id, class, text, time, ignore_level
+            </para>
+            <para>
+               Wywo³ywana gdy ekg otrzymuje wiadomo¶æ.
+            </para>
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>protocol-message-sent</term>
+         <listitem>
+            <para>
+               Argumenty: session, rcpts, text)
+            </para>
+            <para>
+               Wywo³ywana gdy u¿ytkownik wysy³a wiadomo¶æ. rcpts jest
+               <emphasis>tekstow±</emphasis> reprezentacj± odbiorcy, dok³adnie
+               tak± jak poda³ u¿ytkownik (pierwszy argument /msg, /chat, /query
+               itd).
+            </para>
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>protocol-status</term>
+         <listitem>
+            <para>
+               Argumenty: session, from, type, desc
+            </para>
+            <para>
+               Wywo³ywana gdy kto¶ zmienia stan. nazwy parametrów powinny byæ
+               zrozumia³e.  je¶li zwróci 0, zmiana stanu zostanie zignorowana.
+               je¶li zwróci 2, zmiana stanu nie bêdzie ignorowana, ale nie
+               zostanie wy¶wietlona. je¶li zwróci krotkê o takich samych
+               argumentach jak funkcja, dane zostan± zmienione.
+            </para>  
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>protocol-status-own (NFY)</term>
+         <listitem>
+            <para>
+               Argumenty: status, desc
+            </para>
+            <para>
+               Wywo³ywana gdy klient zmienia stan. je¶li zwróci 0, stan nie
+               zostanie zmieniony.
+            </para>
+         </listitem>
+      </varlistentry>
+   </variablelist>
+   <para>
+      Oprócz sygna³ów, mo¿liwe jest zdefiniowanie dwóch funkcji, które s±
+      rozpoznawane przez ekg2.
+   </para>
    <variablelist>
       <varlistentry>
          <term>init()</term>
@@ -544,46 +725,6 @@
             </para>
          </listitem>
       </varlistentry>
-      <varlistentry>
-         <term>handle_msg(session, id, class, text, time, ignore_level)</term>
-         <listitem>
-            <para>
-               Wywo³ywana gdy ekg otrzymuje wiadomo¶æ.
-            </para>
-         </listitem>
-      </varlistentry>
-      <varlistentry>
-         <term>handle_msg_own(session, rcpts, text)</term>
-         <listitem>
-            <para>
-               Wywo³ywana gdy u¿ytkownik wysy³a wiadomo¶æ. rcpts jest
-               <emphasis>tekstow±</emphasis> reprezentacj± odbiorcy, dok³adnie
-               tak± jak poda³ u¿ytkownik (pierwszy argument /msg, /chat, /query
-               itd).
-            </para>
-         </listitem>
-      </varlistentry>
-      <varlistentry>
-         <term>handle_status(session, from, type, desc)</term>
-         <listitem>
-            <para>
-               Wywo³ywana gdy kto¶ zmienia stan. nazwy parametrów powinny byæ
-               zrozumia³e.  je¶li zwróci 0, zmiana stanu zostanie zignorowana.
-               je¶li zwróci 2, zmiana stanu nie bêdzie ignorowana, ale nie
-               zostanie wy¶wietlona. je¶li zwróci krotkê o takich samych
-               argumentach jak funkcja, dane zostan± zmienione.
-            </para>  
-         </listitem>
-      </varlistentry>
-      <varlistentry>
-         <term>handle_status_own(status, desc) (NFY)</term>
-         <listitem>
-            <para>
-               Wywo³ywana gdy klient zmienia stan. je¶li zwróci 0, stan nie
-               zostanie zmieniony.
-            </para>
-         </listitem>
-      </varlistentry>
    </variablelist>
 </sect2>
 <sect2>
@@ -595,14 +736,11 @@
 import ekg
 import time
 
-def handle_status(session, uid, status, desc):
-    for name in ekg.sessions():
-	sesja = ekg.getSession(name)
+def status_handler(session, uid, status, desc):
+    for sesja in ekg.sessions():
 	if sesja.connected():
 	    ekg.echo("sesja '%s' po³±czona" % (name,))
 	    ekg.echo("status: "+sesja['status'])
-	    ekg.echo("ustawiam t± sesjê jako domy¶ln±")
-	    sesja['default'] = "1"
 	else:
 	    ekg.echo("sesja '%s' nie jest po³±czona" % (name,))
     ekg.echo("Dosta³em status!")
@@ -611,9 +749,9 @@ def handle_status(session, uid, status, desc):
     ekg.echo("Status: "+status)
     if desc:
 	ekg.echo("Opis  : "+desc)
-    sesja = ekg.getSession(session)
+    sesja = ekg.session_get(session)
     ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
-    user = sesja.getUser(uid)
+    user = sesja.user_get(uid)
     if user.last_status:
 	ekg.echo(str(user.last_status))
 	stat, des = user.last_status
@@ -631,7 +769,7 @@ def handle_status(session, uid, status, desc):
 	return 0
     return 1
 
-def handle_msg(session, uid, type, text, sent_time, ignore_level):
+def message_handler(session, uid, type, text, sent_time, ignore_level):
     ekg.debug("[test script] some debug\n")
     ekg.echo("Dosta³em wiadomo¶æ!")
     ekg.echo("Sesja : "+session)
@@ -648,7 +786,7 @@ def handle_msg(session, uid, type, text, sent_time, ignore_level):
 	return 0
     return 1
 
-def handle_msg_own(session, target, text):
+def own_message_handler(session, target, text):
     ekg.debug("[test script] some debug\n")
     ekg.echo("Wysy³am wiadomo¶æ!")
     ekg.echo("Sesja : "+session)
@@ -656,26 +794,34 @@ def handle_msg_own(session, target, text):
     ekg.echo("TxtLen: "+str(len(text)))
     return 1
 
-def handle_connect(session):
+def connect_handler(session):
     ekg.echo("Po³±czono! Ale super! Mo¿na gadaæ!")
     ekg.echo("Sesja : "+session)
     if session[:3] == 'irc':
 	struct = time.gmtime()
 	if struct[3] >= 8 and struct[3] < 17:
 	    ekg.echo('£adnie to tak ircowaæ w pracy? ;)')
-    sesja = ekg.getSession(session)
+    sesja = ekg.session_get(session)
     if sesja.connected():
 	ekg.echo('Po³±czony!')
     else:
 	ekg.echo('W tym miejscu jeszcze nie po³±czony')
     ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
 
-def handle_disconnect(session):
+def disconnect_handler(session):
     ekg.echo("£o, sesja %s nam pad³a" % (session,))
     ekg.echo("Wysy³amy smsa ¿e nam cu¶ pad³o...")
-    
-def handle_keypress(ch):
-    ekg.echo("Nacisnales #" + str(ch));
+
+def foo_command(name, args):
+    ekg.echo("Wywo³ane polecenie foo!")
+
+ekg.command_bind('foo', foo_command)
+ekg.handler_bind('protocol-message-received', message_handler)
+ekg.handler_bind('protocol-message-sent', own_message_handler)
+ekg.handler_bind('protocol-status', status_handler)
+ekg.handler_bind('protocol-connected', connect_handler)
+ekg.handler_bind('protocol-disconnected', disconnect_handler)
+
 ]]>
    </programlisting>
 </sect2>

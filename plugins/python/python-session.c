@@ -58,7 +58,7 @@
 
 int ekg_session_init(ekg_sessionObj *self, PyObject *args, PyObject *kwds)
 {
-    PyObject * name;
+    char * name;
 
     static char *kwlist[] = {"name", NULL};
 
@@ -66,7 +66,7 @@ int ekg_session_init(ekg_sessionObj *self, PyObject *args, PyObject *kwds)
                                       &name))
         return -1;
 
-    self->name = PyString_AsString(name);
+    self->name = name;
 
     return 0;
 }
@@ -127,21 +127,21 @@ int ekg_session_len(ekg_sessionObj * self)
 
 PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key)
 {
-    const char * name = PyString_AsString(key);
-	const char * out;
-	char buf[100];
-	session_t * s;
-	s = session_find(self->name);
-    debug("[python] Getting '%s' value for '%s' session\n", name, self->name);
-	out = session_get(s, name);
-	if (out) {
-		return Py_BuildValue("s", out);
-	} else {
-		snprintf(buf, 99, "Can't find variable '%s'", name);
-		PyErr_SetString(PyExc_KeyError, buf);
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
+        const char * name = PyString_AsString(key);
+        const char * out;
+        char buf[100];
+        session_t * s;
+        s = session_find(self->name);
+        debug("[python] Getting '%s' value for '%s' session\n", name, self->name);
+        out = session_get(s, name);
+        if (out) {
+                return Py_BuildValue("s", out);
+        } else {
+                snprintf(buf, 99, "Can't find variable '%s'", name);
+                PyErr_SetString(PyExc_KeyError, buf);
+                Py_INCREF(Py_None);
+                return Py_None;
+        }
 }
 
 /**
@@ -151,21 +151,21 @@ PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key)
  *
  */
 
-int ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value)
+PyObject *ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value)
 {
 	session_t * s;
-	session_param_t * p;	
+	session_param_t * p;
 	const char *name = PyString_AsString(key);
 	s = session_find(self->name);
 
 	debug("[python] Setting '%s' option to '%s' for session %s\n", name,
 		PyString_AsString(value), self->name);
-	
+
 	p = session_var_find(s, name);
-	
+
 	if (!p) {
 		PyErr_SetString(PyExc_LookupError, "unknown variable");
-		return -1;
+		return NULL;
     }
 
     if (PyInt_Check(value)) {
@@ -175,7 +175,34 @@ int ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value)
     }
 	config_changed = 1;
 
-    return 0;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+/**
+ * ekg_session_repr()
+ *
+ * __repr__ method
+ *
+ */
+
+PyObject *ekg_session_repr(ekg_sessionObj *self)
+{
+        char buf[100];
+        snprintf(buf, 99, "<session %s>", self->name);
+        return PyString_FromString(buf);
+}
+
+/**
+ * ekg_session_str()
+ *
+ * __str__ method
+ *
+ */
+
+PyObject *ekg_session_str(ekg_sessionObj *self)
+{
+        return PyString_FromString(self->name);
 }
 
 /**
@@ -198,41 +225,20 @@ PyObject *ekg_session_connected(ekg_sessionObj * self)
 }
 
 /**
- * ekg_session_getUser()
+ * ekg_session_user_get()
  *
  * return user object
  *
  */
 
-PyObject *ekg_session_getUser(ekg_sessionObj * self, PyObject * pyargs)
+PyObject *ekg_session_user_get(ekg_sessionObj * self, PyObject * pyargs)
 {
-    ekg_userObj *pyuser;
-    char buf[100];
-    char *name = NULL;
-    session_t *s;
-    userlist_t *u;
+        char *name = NULL;
 
-    if (!PyArg_ParseTuple(pyargs, "s:getUser", &name))
-		return NULL;
+        if (!PyArg_ParseTuple(pyargs, "s", &name))
+                return NULL;
 
-    debug("[python] checking for user '%s' in session '%s'\n", name, self->name);
-    s = session_find(self->name);
-	u = userlist_find(s, name);
-    if (!u) {
-		snprintf(buf, 99, "Can't find user '%s'", name);
-		PyErr_SetString(PyExc_KeyError, buf);
-		Py_INCREF(Py_None);
-		return Py_None;
-    }
-
-    debug("[python] Building object for user '%s'\n", name);
-	pyuser = PyObject_New(ekg_userObj, &ekg_user_type);
-	pyuser->name = xmalloc(xstrlen(name)+1);
-	xstrcpy(pyuser->name, name);
-	pyuser->session = xmalloc(xstrlen(self->name)+1);
-	xstrcpy(pyuser->session, self->name);
-    Py_INCREF(pyuser);
-    return (PyObject *)pyuser;
+        return python_build_user(self->name, name);
 }
 
 /**
@@ -244,25 +250,25 @@ PyObject *ekg_session_getUser(ekg_sessionObj * self, PyObject * pyargs)
 
 PyObject *ekg_session_users(ekg_sessionObj * self)
 {
-	session_t * s = session_find(self->name);
-    PyObject *list;
-    list_t l;
-    int len = 0;
+        session_t * s = session_find(self->name);
+        PyObject *list;
+        list_t l;
+        int len = 0;
 
-    for (l = s->userlist; l; l = l->next) {
-		len++;
-    }
+        for (l = s->userlist; l; l = l->next) {
+                len++;
+        }
 
-    list = PyList_New(len);
-    len = 0;
+        list = PyList_New(len);
+        len = 0;
 
-    for (l = s->userlist; l; l = l->next) {
-		userlist_t * u = l->data;
-		PyList_SetItem(list, len, PyString_FromString(u->uid));
-		len++;
-    }
-    Py_INCREF(list);
-    return list;
+        for (l = s->userlist; l; l = l->next) {
+                userlist_t * u = l->data;
+                PyList_SetItem(list, len, python_build_user(self->name, u->uid));
+                len++;
+        }
+        Py_INCREF(list);
+        return list;
 }
 
 

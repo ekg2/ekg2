@@ -60,11 +60,11 @@ OUTPUT:
 
 void window_print_format(Ekg2::Window wind, char *format, char *line)
 CODE:
-	print_window(ekg2_window_target(wind), wind->session, 0, format, line);
+	print_window(window_target(wind), wind->session, 0, format, line);
 
 void window_print(Ekg2::Window wind, char *line)
 CODE:
-	print_window(ekg2_window_target(wind), wind->session, 0, "generic", line);
+	print_window(window_target(wind), wind->session, 0, "generic", line);
 
 void window_switch(Ekg2::Window wind)
 CODE:

@@ -142,8 +142,8 @@ int ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 		}
 		variable_set(name, PyString_AsString(value), 0);
     }
-
-    return 0;
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 /*

@@ -83,7 +83,7 @@ void print(int dest, char *str)
 CODE:
 	char *line;
         while ((line = split_line(&str))) {
-                window_print(ekg2_window_target(window_exist(dest)), NULL, 0, fstring_new((const char *) va_format_string(line)));
+                window_print(window_target(window_exist(dest)), NULL, 0, fstring_new((const char *) va_format_string(line)));
         }
 
 void init()

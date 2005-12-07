@@ -22,9 +22,22 @@
 
 #include <Python.h>
 
-#ifndef Py_RETURN_TRUE
-#define Py_RETURN_TRUE Py_INCREF(Py_True); return Py_True;
-#define Py_RETURN_FALSE Py_INCREF(Py_False); return Py_False;
+#if !defined(Py_RETURN_NONE) // New in Python 2.4
+inline PyObject* doPy_RETURN_NONE()
+{       Py_INCREF(Py_None); return Py_None; }
+#define Py_RETURN_NONE return doPy_RETURN_NONE()
+#endif
+
+#if !defined(Py_RETURN_TRUE) // New in Python 2.4
+inline PyObject* doPy_RETURN_TRUE()
+{Py_INCREF(Py_True); return Py_True;}
+#       define Py_RETURN_TRUE return doPy_RETURN_TRUE()
+#endif
+
+#if !defined(Py_RETURN_FALSE) // New in Python 2.4
+inline PyObject* doPy_RETURN_FALSE()
+{Py_INCREF(Py_False); return Py_False;}
+#define Py_RETURN_FALSE return doPy_RETURN_FALSE()
 #endif
 
 #include <ekg/dynstuff.h>
@@ -43,23 +56,14 @@ extern scriptlang_t python_lang;
 	__py_r = PyObject_Call(event, pArgs, NULL);\
 	\
 	if (__py_r && PyInt_Check(__py_r)) { \
-		int tmp = PyInt_AsLong(__py_r); \
-		\
-		if (/* python_handle_result != 2 && here -1 leafnode, check it. */ tmp != 1) \
-			python_handle_result = tmp; \
+		python_handle_result = PyInt_AsLong(__py_r); \
 	} else if (!__py_r) {\
-		char *buffer = python_geterror(scr);\
-                print("script_error", buffer);\
-		xfree(buffer);\
+		char *err = python_geterror(scr);\
+		print("script_error", err);\
+		xfree(err);\
 	}
 
-
-#define PYTHON_HANDLE_RESULT(args...) \
-		if (!PyArg_ParseTuple(__py_r, args)) \
-			PyErr_Print(); \
-		else
-
-#define PYTHON_HANDLE_FOOTER(x) \
+#define PYTHON_HANDLE_FOOTER() \
 /*	if (__py_r && PyTuple_Check(__py_r)) ; */\
 	Py_XDECREF(__py_r); \
 	Py_DECREF(pArgs);\

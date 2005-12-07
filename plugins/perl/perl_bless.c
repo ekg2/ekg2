@@ -102,14 +102,6 @@ void ekg2_bless_command(HV *hv, command_t *command)
 	temp = perl_array2str( command->possibilities);	hv_store(hv, "poss",  4, new_pv(temp), 0); xfree(temp);
 }
 
-char *ekg2_window_target(window_t *window) {
-/* taki bajer, pytanie czy potrzebne... */
-	if (!window)			return "__current";
-	if (window->id == 1) 		return "__status";
-	else if (window->id == 0) 	return "__debug";
-	else 				return window->target;
-}
-
 void ekg2_bless_fstring(HV *hv, fstring_t *fstr)
 {
 	hv_store(hv, "str", 3, new_pv(fstr->str), 0);
@@ -119,7 +111,7 @@ void ekg2_bless_fstring(HV *hv, fstring_t *fstr)
 
 void ekg2_bless_window(HV *hv, window_t *window)
 {
-	char *target = ekg2_window_target(window);
+	char *target = window_target(window);
 	debug_bless("blessing window %s\n", target);
 
 	hv_store(hv, "target", 6, new_pv(target), 0);

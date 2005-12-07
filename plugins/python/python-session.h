@@ -30,22 +30,22 @@ typedef struct {
 } ekg_sessionObj;
 
 void ekg_session_dealloc(ekg_sessionObj * o);
+PyObject * ekg_session_repr(ekg_sessionObj * self);
+PyObject * ekg_session_str(ekg_sessionObj * self);
 int ekg_session_init(ekg_sessionObj *self, PyObject *args, PyObject *kwds);
 int ekg_session_len(ekg_sessionObj * self);
-int ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value);
+PyObject *ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value);
 PyObject *ekg_session_connected(ekg_sessionObj * self);
 PyObject *ekg_session_get_attr(ekg_sessionObj * self, char * attr);
-PyObject *ekg_session_getUser(ekg_sessionObj * self, PyObject * pyargs);
+PyObject *ekg_session_user_get(ekg_sessionObj * self, PyObject * pyargs);
 PyObject *ekg_session_users(ekg_sessionObj * self);
 PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key);
 
-
-
 staticforward PyMethodDef ekg_session_methods[] = {
-    {"connected", (PyCFunction)ekg_session_connected, METH_NOARGS, "Check if session is connected"},
-	{"getUser", (PyCFunction)ekg_session_getUser, METH_VARARGS, "Return user object"},
-	{"users", (PyCFunction)ekg_session_users, METH_NOARGS, "Return userlist"},
-    {NULL, NULL, 0, NULL}
+        {"connected", (PyCFunction)ekg_session_connected, METH_NOARGS, "Check if session is connected"},
+        {"user_get", (PyCFunction)ekg_session_user_get, METH_VARARGS, "Return user object"},
+        {"users", (PyCFunction)ekg_session_users, METH_NOARGS, "Return userlist"},
+        {NULL, NULL, 0, NULL}
 };
 
 static PyMappingMethods ekg_session_mapping = {
@@ -56,34 +56,34 @@ static PyMappingMethods ekg_session_mapping = {
 
 static PyTypeObject ekg_session_type = {
     PyObject_HEAD_INIT(NULL)
-	0,
+    0,
     "session",
     sizeof(ekg_sessionObj),
-	0,
+    0,
     (destructor)ekg_session_dealloc,
     0,
     (getattrfunc)ekg_session_get_attr,
     0,
     0,
-    0,
+    (reprfunc)ekg_session_repr,
     0,
     0,
     &ekg_session_mapping,
-	0,							/*tp_hash */
+    0,							/*tp_hash */
     0,							/*tp_call*/
-    0,							/*tp_str*/
+    (reprfunc)ekg_session_str,				/*tp_str*/
     0,							/*tp_getattro*/
     0,							/*tp_setattro*/
     0,							/*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-    "Session object",			/* tp_doc */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,           /*tp_flags*/
+    "Session object",			                /* tp_doc */
     0,							/* tp_traverse */
     0,							/* tp_clear */
     0,							/* tp_richcompare */
     0,							/* tp_weaklistoffset */
     0,							/* tp_iter */
     0,							/* tp_iternext */
-    ekg_session_methods,		/* tp_methods */
+    ekg_session_methods,                                /* tp_methods */
     0,							/* tp_members */
     0,							/* tp_getset */
     0,							/* tp_base */
@@ -91,7 +91,7 @@ static PyTypeObject ekg_session_type = {
     0,							/* tp_descr_get */
     0,							/* tp_descr_set */
     0,							/* tp_dictoffset */
-    (initproc)ekg_session_init,	/* tp_init */
+    (initproc)ekg_session_init,                         /* tp_init */
     0,							/* tp_alloc */
     0,							/* tp_new */
 };

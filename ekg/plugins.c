@@ -123,6 +123,7 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 
 	if (!plugin) {
+                printq("generic_error", dlerror());
 		printq("plugin_doesnt_exist", name);
 		xfree(lib);
 		return -1;
@@ -743,4 +744,5 @@ PROPERTY_MISC(watch, handler, watch_handler_func_t, NULL)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=8 sw=8
  */

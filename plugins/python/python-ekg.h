@@ -22,32 +22,50 @@
 #define __PYTHON_EKG_H_
 
 #include <Python.h>
+#include <ekg/windows.h>
 
+PyObject * python_build_session(char * name);
+PyObject * python_build_window_id(int id);
+PyObject * python_build_window_w(window_t *w);
 PyObject * ekg_cmd_command(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_command_bind(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_handler_bind(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_timer_bind(PyObject * self, PyObject * args);
 PyObject * ekg_cmd_echo(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_printf(PyObject *self, PyObject *pyargs);
 PyObject * ekg_cmd_debug(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_plugins(PyObject *self, PyObject *args);
-PyObject * ekg_cmd_getPlugin(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_plugin_get(PyObject *self, PyObject *args);
 PyObject * ekg_cmd_sessions(PyObject *self, PyObject *args);
-PyObject * ekg_cmd_getSession(PyObject *self, PyObject *args);
-PyObject * ekg_cmd_timer_bind(PyObject * self, PyObject * args);
+PyObject * ekg_cmd_session_get(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_session_current(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_windows(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_window_get(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_window_new(PyObject *self, PyObject *args);
+PyObject * ekg_cmd_window_current(PyObject *self, PyObject *args);
+
+
 /**
  * metody modu³u ekg
  */
 
-PyMethodDef ekg_methods[] = {
+staticforward PyMethodDef ekg_methods[] = {
         { "command", ekg_cmd_command, METH_VARARGS, "" },
 	{ "command_bind", ekg_cmd_command_bind, METH_VARARGS, "" },
+	{ "handler_bind", ekg_cmd_handler_bind,  METH_VARARGS, "" },
 	{ "timer_bind", ekg_cmd_timer_bind,  METH_VARARGS, "" },
-        { "echo", ekg_cmd_echo, METH_VARARGS, "" },
+        { "echo", ekg_cmd_echo, METH_VARARGS, "Print string to current window" },
         { "printf", ekg_cmd_printf, METH_VARARGS, "" },
-        { "debug", ekg_cmd_debug, METH_VARARGS, "" },
-        { "plugins", ekg_cmd_plugins, METH_VARARGS, "" },
-        { "getPlugin", ekg_cmd_getPlugin, METH_VARARGS, "" },
-        { "sessions", ekg_cmd_sessions, METH_VARARGS, "" },
-        { "getSession", ekg_cmd_getSession, METH_VARARGS, "" },
+        { "debug", ekg_cmd_debug, METH_VARARGS, "Log debug data" },
+        { "plugins", ekg_cmd_plugins, METH_VARARGS, "Return list of plugins" },
+        { "plugin_get", ekg_cmd_plugin_get, METH_VARARGS, "Return plugin object" },
+        { "sessions", ekg_cmd_sessions, METH_VARARGS, "Return list of sessions" },
+        { "session_get", ekg_cmd_session_get, METH_VARARGS, "Return session object" },
+        { "session_current", ekg_cmd_session_current, METH_VARARGS, "Return session object" },
+        { "windows", ekg_cmd_windows, METH_VARARGS, "Return list of windows" },
+        { "window_get", ekg_cmd_window_get, METH_VARARGS, "Return window with given name" },
+        { "window_new", ekg_cmd_window_new, METH_VARARGS, "Create window" },
+        { "window_current", ekg_cmd_window_current, METH_VARARGS, "Return current window object" },
         { NULL, NULL, 0, NULL }
 };
 
