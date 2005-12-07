@@ -70,6 +70,7 @@ int config_logsqlite_remind_number = 0;
 static sqlite_t * logsqlite_current_db = NULL;
 static char * logsqlite_current_db_path = NULL;
 
+
 /*
  * last log
  */
@@ -81,7 +82,7 @@ COMMAND(logsqlite_cmd_last)
 #ifdef HAVE_SQLITE3
 	sqlite3_stmt *stmt;
 #else
-	char sql[200];
+	char *sql;
 	const char ** results;
 	const char ** fields;
 	sqlite_vm * vm;
@@ -99,6 +100,7 @@ COMMAND(logsqlite_cmd_last)
 	int limit = config_logsqlite_last_limit;
 	int i = 0;
 	char * target_window = "__current";
+	char *sql_search = NULL;
 
 	if (!session) {
 		if (session_current) {
@@ -107,50 +109,62 @@ COMMAND(logsqlite_cmd_last)
 			return -1;
 		}
 	}
+	
+	
+	for (i = 0; params[i]; i++) {
+		
+		if (match_arg(params[i], 'n', "number", 2) && params[i + 1]) {
+			limit = atoi(params[++i]);
 
-	if (params[i] && match_arg(params[i], 'n', "number", 2)) {
-		i++;
-		if (params[i]) {
-			limit = atoi(params[i]);
-			if (limit == 0) {
-				printq("invalid_params", "logsqlite:last");
+			if (limit <= 0) {
+				prinq("invalid_params", "logsqlite:last");
 				return 0;
 			}
-			i++;
-		} else {
-			printq("invalid_params", "logsqlite:last");
-			return 0;
+			continue;
 		}
+
+		if (match_arg(params[i], 's', "search", 2) && params[i + 1]) {
+			sql_search = (char *) params[++i];
+			continue;
+		}
+				
+		keep_nick = (char *) params[i];
 	}
 
 	if (! (db = logsqlite_prepare_db(session, time(0))))
-		return 0;
+		return -1;
 
-	if (params[i]) {
-		nick = xstrdup(params[i]);
-		keep_nick = nick;
-		nick = strip_quotes(nick);
-		gotten_uid = xstrdup(get_uid(session, nick));
-		if (!gotten_uid) {
+	keep_nick = xstrdup(keep_nick);
+	sql_search = sql_search ? sql_search : "";	/* XXX: use fix() */
+#ifdef HAVE_SQLITE3
+	sql_search = sqlite3_mprintf("%%%s%%", sql_search);
+#endif
+
+
+	if (keep_nick) {
+		nick = strip_quotes(keep_nick);
+		gotten_uid = get_uid(session, nick);
+		if (! gotten_uid) 
 			gotten_uid = nick;
-		}
 		if (config_logsqlite_last_in_window)
 			target_window = gotten_uid;
 
 #ifdef HAVE_SQLITE3
-		sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = ?1 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+		sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = ?1 AND body LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
 		sqlite3_bind_text(stmt, 1, gotten_uid, -1, SQLITE_STATIC);
+		sqlite3_bind_text(stmt, 3, sql_search, -1, SQLITE_STATIC);
 #else
-		snprintf(sql, sizeof(sql), "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = '%s' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, limit);
+		sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = '%q' AND body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit);
 #endif
 	} else {
 		if (config_logsqlite_last_in_window)
 			target_window = "__status";
 
 #ifdef HAVE_SQLITE3
-		sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+		sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+		sqlite3_bind_text(stmt, 3, sql_search, -1, SQLITE_STATIC);
 #else
-		snprintf(sql, sizeof(sql), "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", limit);
+		sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit);
 #endif
 	}
 
@@ -164,7 +178,10 @@ COMMAND(logsqlite_cmd_last)
 		ts = (time_t) atoi(results[2]);
 #endif
 		if (count2 == 0) {
-			print_window(target_window, session, config_logsqlite_last_open_window, "last_begin");
+			if (gotten_uid)
+				print_window(target_window, session, config_logsqlite_last_open_window, "last_begin_uin", gotten_uid);
+			else
+				print_window(target_window, session, config_logsqlite_last_open_window, "last_begin");
 		}
 		count2++;
 		tm = localtime(&ts);
@@ -195,14 +212,13 @@ COMMAND(logsqlite_cmd_last)
 		print_window(target_window, session, config_logsqlite_last_open_window, "last_end");
 	}
 
-	if (nick != gotten_uid) {
-		xfree(gotten_uid);
-	}
 	xfree(keep_nick);
 
 #ifdef HAVE_SQLITE3
+	xfree(sql_search);
 	sqlite3_finalize(stmt);
 #else
+	xfree(sql);
 	sqlite_finalize(vm, &errors);
 #endif
 	logsqlite_close_db(db);
@@ -621,7 +637,7 @@ int logsqlite_plugin_init(int prio)
 
 	logsqlite_setvar_default();
 
-	command_add(&logsqlite_plugin, "logsqlite:last", "puU uU uU", logsqlite_cmd_last, 0, "-n --number");
+	command_add(&logsqlite_plugin, "logsqlite:last", "puU puU puU puU puU", logsqlite_cmd_last, 0, "-n --number -s --search");
 
 	query_connect(&logsqlite_plugin, "protocol-message-post", logsqlite_msg_handler, NULL);
 	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);

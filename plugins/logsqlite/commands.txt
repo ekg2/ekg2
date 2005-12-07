@@ -7,6 +7,9 @@ last
 	
 	  -n, --number <liczba>  Ilo¶æ wiadomo¶ci do wy¶wietlenia
 	
-          <uid>                  UID u¿ytkownika którego wiadomo¶ci maj± byæ
-                                 wy¶wietlone
+	  -s, --search <tekst>   Wy¶wietl tylko wiadomo¶ci zawieraj±ce podany
+	                         tekst
+          
+	  <uid>                  UID u¿ytkownika którego wiadomo¶ci maj± byæ
+	                         wy¶wietlone
 
