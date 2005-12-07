@@ -123,7 +123,6 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 
 	if (!plugin) {
-                printq("generic_error", dlerror());
 		printq("plugin_doesnt_exist", name);
 		xfree(lib);
 		return -1;
