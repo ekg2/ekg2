@@ -806,7 +806,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
 			jstatus = jabber_unescape(nshow->data);
-			if (!xstrcmp(jstatus, "na")) {
+			if (!xstrcmp(jstatus, "na") || !xstrcmp(type, "unavailable")) {
 				status = xstrdup(EKG_STATUS_NA);
 			}
 		} else {
