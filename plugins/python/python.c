@@ -192,13 +192,13 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 }
 
 /**
- * python_protocol_message()
+ * python_protocol_message_received()
  *
  * handle message events
  *
  */
 
-int python_protocol_message(PyObject *obj, script_t *scr, char *session, char *uid, char **rcpts, char *text, time_t sent, int class)
+int python_protocol_message_received(PyObject *obj, script_t *scr, char *session, char *uid, char **rcpts, char *text, time_t sent, int class)
 {
         int level;
 	char * target;
@@ -216,70 +216,70 @@ int python_protocol_message(PyObject *obj, script_t *scr, char *session, char *u
 	if ((level == IGNORE_ALL) || (level & IGNORE_MSG))
 		return 0;
 
-	if (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) {
-		target = (rcpts) ? rcpts[0] : NULL;
-		PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(sss)", session, target, text))
-		PYTHON_HANDLE_FOOTER()
-	} else {
-		PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(ssisii)", session, uid, class, text, (int) sent, level))
-		PYTHON_HANDLE_FOOTER()
-	}
+        target = (rcpts) ? rcpts[0] : NULL;
+        PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(sss)", session, target, text))
+        PYTHON_HANDLE_FOOTER()
+	return python_handle_result;
+}
+
+/**
+ * python_protocol_message_sent()
+ *
+ * handle message events
+ *
+ */
+
+int python_protocol_message_sent(PyObject *obj, script_t *scr, char *session, char *rcpt, char *text)
+{
+	int python_handle_result;
+        PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(sss)", session, rcpt, text))
+        PYTHON_HANDLE_FOOTER()
 	return python_handle_result;
 }
 
 int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
-        char *name = scr_que->self->name;
-	int python_handle_result;
-	if (xstrcmp(name, "protocol-message")) {
-		PyObject *argz;
-		int i;
-		if (!(argz = PyTuple_New(scr_que->argc)))
-			return 1;
-	        for (i=0; i < scr_que->argc; i++) {
-			PyObject *w = NULL;
-        	        switch ( scr_que->argv_type[i] ) {
-                	        case (SCR_ARG_INT):
-					w = PyInt_FromLong((long) *(int *) args[i] );
-                        	        break;
-	                        case (SCR_ARG_CHARP): {
-					char *tmp = *(char **) args[i];
-					w = PyString_FromString(tmp);
-    	        	                break;
-				}
-        	                case (SCR_ARG_CHARPP): {
-					char *tmp = array_join((char **) args[i], " ");
-					w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
-                            		xfree(tmp);
-					break;
-				}
-				default:
-                            		debug("[NIMP] %s %d %d\n",scr_que->self->name, i, scr_que->argv_type[i]);
-			}
-			if (!w) {
-				Py_INCREF(Py_None);
-				w = Py_None;
-			} 
-			PyTuple_SetItem(argz, i, w);
-		}
-		PYTHON_HANDLE_HEADER(scr_que->private, argz)
-		for (i=0; i < scr_que->argc; i++) {
+        int python_handle_result;
+        PyObject *argz;
+        int i;
+        if (!(argz = PyTuple_New(scr_que->argc)))
+                return 1;
+        for (i=0; i < scr_que->argc; i++) {
+                PyObject *w = NULL;
+                switch ( scr_que->argv_type[i] ) {
+                        case (SCR_ARG_INT):
+                                w = PyInt_FromLong((long) *(int *) args[i] );
+                                break;
+                        case (SCR_ARG_CHARP): {
+                                char *tmp = *(char **) args[i];
+                                w = PyString_FromString(tmp);
+                                break;
+                        }
+                        case (SCR_ARG_CHARPP): {
+                                char *tmp = array_join((char **) args[i], " ");
+                                w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
+                                xfree(tmp);
+                                break;
+                        }
+                        default:
+                               debug("[NIMP] %s %d %d\n",scr_que->self->name, i, scr_que->argv_type[i]);
+                }
+                if (!w) {
+                        Py_INCREF(Py_None);
+                        w = Py_None;
+                }
+                PyTuple_SetItem(argz, i, w);
+        }
+        PYTHON_HANDLE_HEADER(scr_que->private, argz)
+        for (i=0; i < scr_que->argc; i++) {
 //			PyObject *w = PyTuple_GetItem(argz, i);
-			PyObject *w = PyTuple_GetItem(pArgs, i);
+                PyObject *w = PyTuple_GetItem(pArgs, i);
 /* TODO: restore args. GetItem not works. (it returns old value) */
-			if (scr_que->argv_type[i] == SCR_ARG_INT) {
-				debug("[recvback] 0x%x %d\n", w, PyInt_AsLong(w));
-			}
-		}
-		PYTHON_HANDLE_FOOTER()
-    	} else {
-#define ARG_INT(x)    (int) args[x]
-#define ARG_TIME(x)   *(time_t *) args[x]
-#define ARG_CHAR(x)   *(char **) args[x]
-#define ARG_CHARP(x)  *(char ***) args[x]
-		python_handle_result =
-			python_protocol_message(scr_que->private, scr, ARG_CHAR(0), ARG_CHAR(1), ARG_CHARP(2), ARG_CHAR(3), ARG_TIME(5), ARG_INT(6));
-	}
+                if (scr_que->argv_type[i] == SCR_ARG_INT) {
+                        debug("[recvback] 0x%x %d\n", w, PyInt_AsLong(w));
+                }
+        }
+        PYTHON_HANDLE_FOOTER()
         if (!python_handle_result) return -1;
         else return 0;
 }

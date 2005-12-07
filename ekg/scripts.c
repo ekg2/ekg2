@@ -639,6 +639,16 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 //					      NEXT_ARG(SCR_ARG_UNITPP);
 					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
 					      NEXT_ARG(SCR_ARG_INT);	}
+	else CHECK("protocol-message-received") { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARPP);
+					      NEXT_ARG(SCR_ARG_CHARP);
+//					      NEXT_ARG(SCR_ARG_UNITPP);
+					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
+					      NEXT_ARG(SCR_ARG_INT);	}
+	else CHECK("protocol-message-sent") { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);  }
 	else CHECK("protocol-validate-uid") { NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_INT);	} 
 /* USERLIST */
