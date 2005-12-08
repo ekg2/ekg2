@@ -744,14 +744,14 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	int ismuc = 0;
 
 	if (from && !xstrcmp(type, "subscribe")) {
-		print("jabber_auth_subscribe", from, session_name(s));
+		print("jabber_auth_subscribe", saprintf("jid:%s", from), session_name(s));
 		return;
 	}
 
 	jid = jabber_unescape(from);
 
 	if (from && !xstrcmp(type, "unsubscribe")) {
-		print("jabber_auth_unsubscribe", jid, session_name(s));
+		print("jabber_auth_unsubscribe", saprintf("jid:%s", jid), session_name(s));
 		xfree(jid);
 		return;
 	}
