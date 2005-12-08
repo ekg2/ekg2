@@ -23,7 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
+#include "debug.h"
 #include "events.h"
 #include "dynstuff.h"
 #include "sessions.h"
@@ -376,6 +378,8 @@ void events_add_handler(char *name, void *function)
  */
 int events_init()
 {
+	timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL);
+
 	events_add_handler("protocol-message", event_protocol_message);
 	events_add_handler("event_avail", event_avail);
 	events_add_handler("event_away", event_away);
@@ -383,6 +387,29 @@ int events_init()
 	events_add_handler("event_online", event_online);
 	events_add_handler("event_descr", event_descr);
 	return 0;
+}
+
+void ekg_day_timer(int destroy, void *data)
+{
+	static struct tm *oldtm = NULL;
+	struct tm *tm;
+	time_t now = time(NULL);
+	if (destroy) {
+		/* never here, buggy ekg2 side timer managment */
+		xfree(oldtm);
+		return;
+	}
+	tm = localtime(&now);
+#define dayischanged(x) (oldtm->tm_##x != tm->tm_##x)
+	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)  {
+		debug("[EKG] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
+		query_emit(NULL, "day-changed", &tm, &oldtm);
+#undef dayischanged
+	} else if (!oldtm) {
+		oldtm = xmalloc(sizeof(struct tm));
+	} else return;
+
+	memcpy(oldtm, tm, sizeof(struct tm));
 }
 
 /* 

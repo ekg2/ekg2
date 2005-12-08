@@ -45,7 +45,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 void event_free();
 int events_init();
 
-/* static void ekg_day_timer(int destroy, void *data); */
+static void ekg_day_timer(int destroy, void *data);
 
 QUERY(event_protocol_message);
 QUERY(event_avail);
