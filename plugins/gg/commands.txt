@@ -80,7 +80,7 @@ check_conn
 	funkcji mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna 
 	jest niewidoczna. Je¿eli brak aliasu jako parametr sprawdzana jest osoba,
 	z któr± rozmowa znajdujê siê w aktualnym okienku.
-
+	
 	Od wersji 7.0 nie jest mo¿liwe sprawdzenie w ten sposób czy kto¶ jest
 	niewidoczny. Wszystkie obrazki, a nawet tekst, do którego do³o±czony jest
 	obrazek nie jest pokazywany u¿ytkownikowi.
