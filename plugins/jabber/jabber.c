@@ -743,19 +743,22 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	xmlnode_t *q;
 	int ismuc = 0;
 
+	jid = jabber_unescape(from);
+	uid = saprintf("jid:%s", jid);
+	xfree(jid);
+
 	if (from && !xstrcmp(type, "subscribe")) {
-		print("jabber_auth_subscribe", saprintf("jid:%s", from), session_name(s));
+		print("jabber_auth_subscribe", uid, session_name(s));
+		xfree(uid);
 		return;
 	}
 
-	jid = jabber_unescape(from);
 
 	if (from && !xstrcmp(type, "unsubscribe")) {
-		print("jabber_auth_unsubscribe", saprintf("jid:%s", jid), session_name(s));
-		xfree(jid);
+		print("jabber_auth_unsubscribe", uid, session_name(s));
+		xfree(uid);
 		return;
 	}
-	uid = saprintf("jid:%s", jid);
 
 	for (q = n->children; q; q = q->next) {
 		char *tmp	= xstrrchr(uid, '/');
@@ -793,7 +796,6 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	if (ismuc) {
 		/* presence type = "unavalible" -> part...
 		 * 	 we recv join as item... look upper.. */
-		xfree(jid);
 		xfree(uid);
 		return;
 	}
@@ -862,7 +864,6 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		xfree(descr);
 	}
 	xfree(uid);
-	xfree(jid);
 } /* <presence> */
 
 time_t jabber_try_xdelay(xmlnode_t *xitem, const char *ns_)
