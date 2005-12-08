@@ -106,13 +106,13 @@ int plugin_load(const char *name, int prio, int quiet)
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("plugins/%s/%s.la", name, name);
+                lib = saprintf("plugins/%s/.libs/%s.so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("../plugins/%s/%s.la", name, name);
+                lib = saprintf("../plugins/%s/.libs/%s.so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 	
