@@ -95,11 +95,11 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 
         if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-                lib = saprintf("%s/%s.la", env_ekg_plugins_path, name);
+                lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
                 plugin = ekg2_dlopen(lib);
                 if (!plugin) {
                         xfree(lib);
-                        lib = saprintf("%s/%s/%s.la", env_ekg_plugins_path, name, name);
+                        lib = saprintf("%s/%s/.libs/%s.so", env_ekg_plugins_path, name, name);
                         plugin = ekg2_dlopen(lib);
                 }
         }
@@ -123,6 +123,7 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 
 	if (!plugin) {
+		printq("generic_error", dlerror());
 		printq("plugin_doesnt_exist", name);
 		xfree(lib);
 		return -1;
@@ -178,10 +179,8 @@ plugin_t *plugin_find(const char *name)
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 
-		if (!p || !p->name || xstrcmp(p->name, name))
-			continue;
-
-		return p;
+		if (p && !xstrcmp(p->name, name))
+			return p;
 	}
 
 	return NULL;
@@ -198,10 +197,8 @@ plugin_t *plugin_find_uid(const char *uid)
 
         for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
-                if (!p || !p->name || !valid_plugin_uid(p, uid))
-                        continue;
-
-                return p;
+                if (p && p->name && valid_plugin_uid(p, uid))
+                	return p;
         }
 
         return NULL;
@@ -338,10 +335,7 @@ int plugin_unregister(plugin_t *p)
 
 		l = l->next;
 
-		if (!v)
-			continue;
-
-		if (v->plugin == p) 
+		if (v && v->plugin == p) 
 			variable_remove(v->plugin, v->name);
 	}
 
@@ -503,9 +497,6 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
 
-		if (!q->name)
-			continue;
-
 		if (!xstrcmp(q->name, name) && (!plugin || (plugin == q->plugin))) {
 			int (*handler)(void *data, va_list ap) = q->handler;
 
@@ -542,9 +533,7 @@ query_t *query_find(const char *name)
         for (l = queries; l; l = l->next) {
                 query_t *q = l->data;
 
-                if (xstrcasecmp(q->name, name))
-                        continue;
-                else
+                if (!xstrcasecmp(q->name, name))
                         return q;
         }
 
@@ -564,7 +553,6 @@ watch_t *watch_new(plugin_t *plugin, int fd, watch_type_t type)
 {
 	watch_t *w = xmalloc(sizeof(watch_t));
 
-	memset(w, 0, sizeof(watch_t));
 	w->plugin = plugin;
 	w->fd = fd;
 	w->type = type;
