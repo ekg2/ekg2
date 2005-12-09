@@ -59,8 +59,11 @@ int ekg2_dlclose(void *plugin) {
 
 /* it only support posix dlopen() but maybe in future... */
 void *ekg2_dlopen(char *name) {
-	return dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
+	void *tmp = dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
+	if (!tmp)
+		debug("[plugin] Error loading plugin %s: %s\n", name, dlerror());
 /*	return lt_dlopen(lib); */
+	return tmp;
 }
 
 /* it only support posix dlsym() but maybe in future... */
@@ -123,7 +126,6 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 
 	if (!plugin) {
-		printq("generic_error", dlerror());
 		printq("plugin_doesnt_exist", name);
 		xfree(lib);
 		return -1;
