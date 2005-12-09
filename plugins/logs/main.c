@@ -168,10 +168,10 @@ int logs_window_check(logs_log_t *ll, time_t t)
 					0, LOG_IRSSI_INFO, NULL);
 		}
 	}
+	ll->t = t;
 
 	if (chan > 1) {
 		char *tmp = l->path;
-		ll->t = t;
 
 		l->path = logs_prepare_path(s, ll->uid, t);
 		debug("[logs] logs_window_check chan = %d oldpath = %s newpath = %s\n", chan, tmp, l->path);
