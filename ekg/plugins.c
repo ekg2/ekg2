@@ -60,8 +60,7 @@ int ekg2_dlclose(void *plugin) {
 /* it only support posix dlopen() but maybe in future... */
 void *ekg2_dlopen(char *name) {
 	void *tmp = dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
-	if (!tmp)
-		debug("[plugin] Error loading plugin %s: %s\n", name, dlerror());
+/*	if (!tmp && !in_autoexec) debug("[plugin] Error loading plugin %s: %s\n", name, dlerror()); */
 /*	return lt_dlopen(lib); */
 	return tmp;
 }
