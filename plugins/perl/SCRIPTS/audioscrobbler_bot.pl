@@ -10,7 +10,7 @@ our %EKG2 = (
     name        => 'audioscrobbler',
     description => 'Audioscrobbler BOT',
     license     => 'GPL',
-    changed     => 'Mon Jul 11 18:07 CET 2005'
+    changed     => 'Mon Dec 12 22:42:15 CET 2005'
 );
 
 use vars qw($VERSION %EKG2);
