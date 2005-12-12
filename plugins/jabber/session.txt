@@ -63,7 +63,6 @@ log_formats
 	domy¶lna warto¶æ: xml,simple
 	
 	Okre¶la formaty, w jakich zapisywane s± logi z rozmów.
-	W tej chwili zaimplementowany jest jedynie "simple", format z ekg1.
 	
 	Patrz tez: zmienna "log_path"
 
