@@ -1,0 +1,155 @@
+// opis komend dla protoko³u jabber
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2004 tomasz torcz <zdzichu@ekg2.org>
+
+_autoaway
+	parameters: 
+	short description: changes status to away
+
+_autoback
+	parameters: 
+	short description: changes status to available
+
+add
+	parameters: <JID> [name]
+	short description: adds user to our roster while asking for authorization
+
+auth
+	parameters: <options> <JID> 
+	short description: authorization support
+	
+	<action> <JID> 
+	
+	  -a, --accept <JID>    authorise JID
+	
+	  -d, --deny <JID>      deny JID authorization
+	
+	  -r, --request <JID>   send autorization request
+	
+	  -c, --cancel <JID>    cancel authorization
+
+away
+	parameters: [description/-]
+	short description: changes status to away
+	
+	If description wasn't given, random description will be looked for.
+	Giving ,,%T-%n'' instead of description will clear description.
+
+back
+	parameters: [description/-]
+	short description: changes status to available
+	
+	If description wasn't given, random description will be looked for.
+	Giving ,,%T-%n'' instead of description will clear description.
+
+change
+	parameters:  <options>
+	short description: changes data in vcard
+	
+	  -f, --fullname <full name>
+	
+	  -n, --nick <nickname>
+	
+	  -b, --born <birth year>
+	
+	  -c, --city <city>
+	
+	  -d, --description <description>
+	
+	  -C, --country <country>
+	
+	If any of these parameteres is not given, it's value will be cleared on
+	vCard. Giving ,,%T-%n'' will clear %Tall%n fields.
+
+chat
+	parameters: 
+	short description: sends chat message
+
+connect
+	parameters: 
+	short description: connects with server
+
+del
+	parameters: [name]
+	short description: removes user from roster
+
+disconnect
+	parameters:  [description/-]
+	short description: roz³±cza siê od serwera
+	
+	If description wasn't given, random description will be looked for.
+	Giving ,,%T-%n'' instead of description will clear description.
+
+dnd
+	parameters: [description/-]
+	short description: changes status to ,,do not disturb''
+	
+	If description wasn't given, random description will be looked for.
+	Giving ,,%T-%n'' instead of description will clear description.
+
+ffc
+	parameters: [description/-]
+	short description: changes status to ,,free for chat''
+	
+	If description wasn't given, random description will be looked for.
+	Giving ,,%T-%n'' instead of description will clear description.
+
+invisible
+	parameters: [description/-]
+	short description: changes status to invisible
+	
+	If description wasn't given, random description will be looked for.
+	Giving ,,%T-%n'' instead of description will clear description.
+
+lastseen
+	parameters: 
+	short description: retrieves information on last logout time for given jid
+
+msg
+	parameters: 
+	short description: sends message
+	
+	All receivers are marked by *. Preceding multiline message with string
+	set in subject_string variable will make this line subject of this
+	message.
+
+modify
+	parameters:  <alias> <options>
+	short description: changes roster entries
+	
+	Possible options:
+	
+	-n, --nickname <nickname>     contact nickname
+
+passwd
+	parameters: 
+	short description: changes password
+
+reconnect
+	parameters: 
+	short description: disconnects and connects again
+
+userinfo
+	parameters: 
+	short description: retrieves Jabber Directory info about given jid
+
+ver
+	parameters: 
+	short description: retrieves information about OS and client of given jid
+
+xa
+	parameters: [description/-]
+	short description: changes to status ,,extended away''
+	
+	If description wasn't given, random description will be looked for.
+	Giving ,,%T-%n'' instead of description will clear description.
+
+xml
+	parameters: 
+	short description: sends xml stream
+	
+	Command must be UTF-8 encoded, all XML special characters have to be
+	changed to XML entities (< > &).
+
+// $Id$
