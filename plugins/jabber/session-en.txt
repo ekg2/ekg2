@@ -1,0 +1,149 @@
+// ma³y opis dostêpnych zmiennych sesyjnych pluginu jabber
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
+
+alias
+	type: string
+	default value: none
+	
+	short session name
+
+auto_away
+	type: integer
+	default value: 600
+	
+	idle time in seconds after which status will be set to away. If set to 0,
+	auto-away will be disabled.
+
+auto_back
+	type: integer
+	default value: 0
+	
+	variable, which determines whether status should be automatically
+	changed to ,,available'' if current ,,away'' status was set
+	automatically.  If it's set to 1, status will be changed after sending
+	any message. If it's set to 2, it'll be changed after any keypress.
+
+auto_connect
+	type: bool
+	default value: 0
+	
+	variable, which determines whether given session should be connected
+	after program startup
+
+auto_reconnect
+	type: integer
+	default value: 10
+	
+	after unsuccesful connection, determines number of seconds after which
+	program will try again. If set to 0 there will be no automatical
+	reconnects.
+
+default
+	type: bool
+	default value: 0
+
+	determines whether session should be default (set as first after
+	program startup)
+
+display_notify
+	type: integer
+	default value: -1
+	
+	-1 - use global display_notify variable.
+	
+	 0 - ignore status changes
+	
+	 1 - show all changes
+	
+	 2 - show only changes from unavailable to available and vice versa
+	
+	Setting ,,contacts'' variable to 2 takes precendence (status changes
+	are hidden). 
+
+log_formats
+	type: string
+	default value: xml,simple
+	
+	Defines file formats to use when logging to file.
+	
+	See also: log_path variable
+
+password
+	type: string
+	default value: none
+	
+	User password.
+	
+	Necessary while connecting.
+
+plaintext_passwd
+	type: bool
+	default value: 0
+	
+	Determines whether password can be sent using plaintext (1) or digest (0)
+	method.
+
+port
+	type: integer
+	default value: 5222
+	
+	Server port.
+
+priority
+	type: integer
+	default value: 5
+	
+	Jabber server connection priority.
+
+resource
+	type: string
+	default value: ekg2
+	
+	Jabber resource.
+
+server
+	type: string
+	default value: none 
+	
+	Server address. Set only if it's other than server part of JID.
+
+ssl_port
+	type: integer
+	default value: 5223
+	
+	Ciphered connection port.
+
+show_typeing_notify
+	type: bool
+	default value: 1
+	
+	If set to 1 ekg2 will show information that someone is currently typing
+	a message to you.
+
+use_ssl
+	type: bool
+	default value: 1
+	
+	If set to 1 ekg2 will use ciphered connection.
+
+ver_client_name
+	type: string
+	default value: none
+	
+	Client name returned when being queried.
+
+ver_client_version
+	type: string
+	default value: none
+	
+	Client version returned when being queried.
+
+ver_os
+	type: string
+	default value: none
+	
+	OS information returned when being queried.
+
+$Id$
