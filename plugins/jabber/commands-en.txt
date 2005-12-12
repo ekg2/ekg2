@@ -21,7 +21,7 @@ auth
 	
 	<action> <JID> 
 	
-	  -a, --accept <JID>    authorise JID
+	  -a, --accept <JID>    authorize JID
 	
 	  -d, --deny <JID>      deny JID authorization
 	
