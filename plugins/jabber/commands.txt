@@ -33,15 +33,15 @@ away
 	parametry: [opis/-]
 	krotki opis: zmienia stan na zajêty
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
-        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 back
 	parametry: [opis/-]
 	krotki opis: zmienia stan na dostêpny
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
-        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 change
 	parametry:  <opcje>
@@ -80,29 +80,29 @@ disconnect
 	parametry:  [opis/-]
 	krotki opis: roz³±cza siê od serwera
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
-        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 dnd
 	parametry: [opis/-]
 	krotki opis: zmienia stan na nie przeszkadzaæ
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
-        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 ffc
 	parametry: [opis/-]
 	krotki opis: zmienia stan na chêtny do rozmowy
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
-        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 invisible
 	parametry: [opis/-]
 	krotki opis: zmienia stan na zajêty
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
-        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 lastseen
 	parametry: 
@@ -144,14 +144,14 @@ xa
 	parametry: [opis/-]
 	krotki opis: zmienia stan na bardzo zajêty
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
-        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 xml
 	parametry: 
 	krotki opis: wysy³a polecenie xml
 	
 	Polecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML 
-	(" ' & < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.
+	(& < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.
 
 // $Id$
