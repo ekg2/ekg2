@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt
+EXTRA_DIST = vars-pl.txt
 
 lib_LTLIBRARIES = logs.la
 logs_la_SOURCES = main.c main.h
@@ -9,4 +9,4 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/logs/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/logs/vars.txt
+	$(INSTALL) -m 644 vars-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/logs/vars-pl.txt

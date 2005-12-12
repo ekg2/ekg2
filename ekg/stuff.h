@@ -266,6 +266,8 @@ void ekg_reconnect();
 
 int ekg_hash(const char *name);
 
+char * help_path(char * name, char * plugin);
+
 int mesg_set(int what);
 void iso_to_ascii(unsigned char *buf);
 char *strip_quotes(char *line);

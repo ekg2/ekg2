@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt
+EXTRA_DIST = vars-pl.txt
 
 lib_LTLIBRARIES = readline.la
 readline_la_SOURCES = main.c ui-readline.c ui-readline.h
@@ -12,5 +12,5 @@ INCLUDES = -DDATADIR=\"$(datadir)/ekg\"
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/readline/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/readline/vars.txt
+	$(INSTALL) -m 644 vars-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/readline/
 

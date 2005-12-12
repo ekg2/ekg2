@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt commands.txt
+EXTRA_DIST = vars-pl.txt commands-pl.txt
 
 lib_LTLIBRARIES = logsqlite.la
 logsqlite_la_SOURCES = logsqlite.c logsqlite.h
@@ -10,5 +10,4 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/vars.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/commands.txt
+	$(INSTALL) -m 644 vars-pl.txt commands-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/

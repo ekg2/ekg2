@@ -1124,46 +1124,28 @@ void sessions_free()
  */
 void session_help(session_t *s, const char *name)
 {
-	FILE *f; 
-	char *line, *type = NULL, *def = NULL, *tmp, *filename, *plugin_name;
+	FILE *f;
+	char *line, *type = NULL, *def = NULL, *tmp, *plugin_name;
 	string_t str = string_init(NULL);
 	int found = 0;
 
 	if (!s)
 		return;
-	
+
 	if (!session_is_var(s, name)) {
 		print("session_variable_doesnt_exist", session_name(s), name);
 		return;
 	}	
 
 	plugin_name = plugin_find_uid(s->uid)->name;
-	if ((tmp = getenv("LANGUAGE"))) {
-		char *tmp_cutted = xstrndup(tmp, 2);
-		filename = saprintf("session-%s.txt", tmp_cutted);
-		xfree(tmp_cutted);
-	} else {
-		filename = xstrdup("session.txt");
-	}
-
-	
-	tmp = saprintf(DATADIR "/plugins/%s/%s", plugin_name, filename);
+        tmp = help_path("session", plugin_name);
 	f = fopen(tmp, "r");
 	xfree(tmp);
 
-again:
 	if (!f) {
- 	        if (xstrcasecmp(filename, "session.txt")) {
-        		xfree(filename);
-                        filename = xstrdup("session.txt");
-                        goto again;
-                }
                 print("help_session_file_not_found", plugin_name);
-		xfree(filename);
 	        return;
 	}
-		
-	xfree(filename);
 
 	while ((line = read_file(f))) {
 		if (!xstrcasecmp(line, name)) {
@@ -1179,19 +1161,19 @@ again:
 		fclose(f);
 		print("help_session_var_not_found", name);
 		return;
-	}	
+	}
 
 	line = read_file(f);
-	
+
 	if ((tmp = xstrstr(line, ": ")))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup("?");
-	
+
 	xfree(line);
 
 	tmp = NULL;
-	
+
 	line = read_file(f);
 	if ((tmp = xstrstr(line, ": ")))
 		def = xstrdup(tmp + 2);

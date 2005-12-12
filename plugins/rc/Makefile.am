@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt
+EXTRA_DIST = vars-pl.txt
 
 lib_LTLIBRARIES = rc.la
 rc_la_SOURCES = main.c inputs.c rc.h
@@ -8,5 +8,5 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/rc/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/rc/vars.txt
+	$(INSTALL) -m 644 vars-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/rc/
 

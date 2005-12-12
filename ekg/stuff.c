@@ -1063,6 +1063,48 @@ void conference_free()
 }
 
 /*
+ * help_path()
+ *
+ * zwraca ¶cie¿kê do pliku z pomoc± we w³a¶ciwym jêzyku lub null je¶li nie ma takiego pliku
+ *
+ */
+char * help_path(char * name, char * plugin) {
+
+        char * tmp;
+        char * base;
+        char * lang;
+        FILE * fp;
+
+        if (plugin) {
+                base = saprintf(DATADIR "/plugins/%s/%s", plugin, name);
+        } else {
+                base = saprintf(DATADIR "/%s", name);
+        }
+
+        tmp = getenv("LANGUAGE");
+        if (!tmp) {
+                lang = xstrdup("en");
+        } else {
+                lang = xstrdup(tmp);
+        }
+
+        tmp = saprintf("%s-%s.txt", base, lang);
+
+        // Temporary fallback - untill we don't have full en translation
+        fp = fopen(tmp, "r");
+        if (!fp) {
+                tmp = saprintf("%s-pl.txt", base);
+        } else {
+                fclose(fp);
+        }
+
+        xfree(base);
+        xfree(lang);
+        return tmp;
+}
+
+
+/*
  * ekg_hash()
  *
  * liczy prosty hash z nazwy, wykorzystywany przy przeszukiwaniu list
@@ -2332,4 +2374,5 @@ void inline ekg_yield_cpu()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
+ * vim: sts=8 sw=8
  */

@@ -998,60 +998,37 @@ COMMAND(cmd_help)
 
 			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !(c->flags & COMMAND_ISALIAS) ) {
 				FILE *f; 
-				char *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL, *filename;
+				char *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
 				const char *seeking_name;
 				string_t s = string_init(NULL);
 				int found = 0;
 
-			        if ((tmp = getenv("LANGUAGE"))) {
-				        char *tmp_cutted = xstrndup(tmp, 2);
-			                filename = saprintf("commands-%s.txt", tmp_cutted);
-			                xfree(tmp_cutted);
-			        } else {
-			                filename = xstrdup("commands.txt");
-			        }
-
-again:
 				if (c->plugin && c->plugin->name) {
-					char *tmp = saprintf(DATADIR "/plugins/%s/%s", c->plugin->name, filename);
+                                        char * tmp = help_path("commands", c->plugin->name);
 					f = fopen(tmp, "r");
 				        xfree(tmp);
 
 			                if (!f) {
-			                        if (xstrcasecmp(filename, "commands.txt")) {
-			                                xfree(filename);
-			                                filename = xstrdup("commands.txt");
-			                                goto again;
-			                        }
-                        			print("help_command_file_not_found_plugin", c->plugin->name);
-						xfree(filename);
+                                                print("help_command_file_not_found_plugin", c->plugin->name);
 						return -1;
 			                }
 					tmp = xstrchr(c->name, ':');
 					if (!tmp)
 						seeking_name = c->name;
-					else 
+					else
 				                seeking_name = tmp + 1;
 			        } else {
-					char *tmp = saprintf(DATADIR "/%s", filename);
+					char *tmp = help_path("commands", NULL);
 					f = fopen(tmp, "r");
 					xfree(tmp);
 
 			                if (!f) {
-			                        if (xstrcasecmp(filename, "commands.txt")) {
-			                                xfree(filename);
-			                                filename = xstrdup("commands.txt");
-			                                goto again;
-			                        }
 		                	        print("help_command_file_not_found");
-						xfree(filename);
 						return -1;
 			                }
 
 	                		seeking_name = c->name;
         			}
-
-				xfree(filename);
 
 			        while ((line = read_file(f))) {
 			                if (!xstrcasecmp(line, seeking_name)) {
@@ -1152,30 +1129,16 @@ again:
 		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
 		    	char *blah = NULL;
                         FILE *f;
-                        char *line, *params_help, *params_help_s, *brief, *tmp = NULL, *filename;
+                        char *line, *params_help, *params_help_s, *brief, *tmp = NULL;
                         const char *seeking_name;
                         int found = 0;
 
-		        if ((tmp = getenv("LANGUAGE"))) {
-		                char *tmp_cutted = xstrndup(tmp, 2);
-		                filename = saprintf("commands-%s.txt", tmp_cutted);
-		                xfree(tmp_cutted);
-		        } else {
-		                filename = xstrdup("commands.txt");
-		        }
-again2:
 		        if (c->plugin && c->plugin->name) {
-	                        char *tmp = saprintf(DATADIR "/plugins/%s/%s", c->plugin->name, filename);
+	                        char *tmp = help_path("commands", c->plugin->name);
                                 f = fopen(tmp, "r");
                                 xfree(tmp);
 
                                 if (!f) {
-		                        if (xstrcasecmp(filename, "commands.txt")) {
-		                                xfree(filename);
-		                                filename = xstrdup("commands.txt");
-		                                goto again2;
-		                        }
-					xfree(filename);
 					continue;
                                 }
 				tmp = xstrchr(c->name, ':');
@@ -1184,24 +1147,16 @@ again2:
 				else 
 	                                seeking_name = tmp + 1;
                         } else {
-				char *tmp = saprintf(DATADIR "/%s", filename);
+                                char *tmp = help_path("commands", NULL);
                                 f = fopen(tmp, "r");
 				xfree(tmp);
- 
+
 				if (!f) {
-                                        if (xstrcasecmp(filename, "commands.txt")) {
-                                                xfree(filename);
-                                                filename = xstrdup("commands.txt");
-                                                goto again2;
-                                        }
-                                        xfree(filename);
 					continue;
                                 }
 
                                 seeking_name = c->name;
                         }
-
-			xfree(filename);
 
                         while ((line = read_file(f))) {
                         	if (!xstrcasecmp(line, seeking_name)) {

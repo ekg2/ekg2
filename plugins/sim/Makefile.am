@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt commands.txt
+EXTRA_DIST = vars-pl.txt commands-pl.txt
 
 lib_LTLIBRARIES = sim.la
 sim_la_SOURCES = main.c simlite.c simlite.h
@@ -10,6 +10,5 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/sim/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/sim/vars.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/sim/commands.txt
+	$(INSTALL) -m 644 commands-pl.txt vars-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/sim/
 

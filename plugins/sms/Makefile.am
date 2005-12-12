@@ -1,4 +1,4 @@
-EXTRA_DIST = vars.txt commands.txt
+EXTRA_DIST = vars-pl.txt commands-pl.txt
 
 lib_LTLIBRARIES = sms.la
 sms_la_SOURCES = sms.c
@@ -8,6 +8,5 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/sms/
-	$(INSTALL) -m 644 vars.txt $(DESTDIR)$(pkgdatadir)/plugins/sms/vars.txt
-	$(INSTALL) -m 644 commands.txt $(DESTDIR)$(pkgdatadir)/plugins/sms/commands.txt
+	$(INSTALL) -m 644 commands-pl.txt vars-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/sms/
 
