@@ -342,7 +342,6 @@ int logs_away_append(log_away_t *la, const char *channel, const char *uid, const
 
 int logs_away_display(log_away_t *la, int quiet, int free) {
 	list_t l;
-	char * buf = xmalloc(100);
 	if (!la)
 		return 0;
 	debug("[AWAYLOG for %s BEGIN] f=%d q=%d\n", la->sname, free, quiet);
@@ -373,7 +372,6 @@ int logs_away_display(log_away_t *la, int quiet, int free) {
 		xfree(la->sname);
 		list_remove(&log_awaylog, la, 1);
 	}
-	xfree(buf);
 	return 0;
 }
 
