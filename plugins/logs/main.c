@@ -342,16 +342,23 @@ int logs_away_append(log_away_t *la, const char *channel, const char *uid, const
 
 int logs_away_display(log_away_t *la, int quiet, int free) {
 	list_t l;
+	char * buf = xmalloc(100);
 	if (!la)
 		return 0;
 	debug("[AWAYLOG for %s BEGIN] f=%d q=%d\n", la->sname, free, quiet);
+	print_window("__status", session_current, 0, "away_log_begin", la->sname);
 	for (l = la->messages; l; l = l->next) {
 		log_session_away_t *lsa = l->data;
 		// pokaz wszystkie wiadomosc zalogowane w aktualnym oknie
-		debug("[AWAYLOG for %s@%s]: %s: %s %s\n", la->sname, 
+		print_window("__status", session_current, 0, "away_log_msg",
 				prepare_timestamp_format(
-					"%D %H:%M:%S",  /* variable ? */
-					lsa->t), 
+					format_find("away_log_timestamp"),  /* variable ? */
+					lsa->t),
+				(lsa->chname)+4, (lsa->uid)+4, lsa->msg);
+		debug("[AWAYLOG for %s@%s]: %s: %s %s\n", la->sname,
+				prepare_timestamp_format(
+					format_find("away_log_timestamp"),  /* variable ? */
+					lsa->t),
 				lsa->chname, lsa->uid, lsa->msg);
 		if (free) {
 			xfree(lsa->chname);
@@ -360,11 +367,13 @@ int logs_away_display(log_away_t *la, int quiet, int free) {
 		}
 	}
 	debug("[AWAYLOG END]\n");
+	print_window("__status", session_current, 0, "away_log_end");
 	if (free) {
 		list_destroy(la->messages, 1);
 		xfree(la->sname);
 		list_remove(&log_awaylog, la, 1);
 	}
+	xfree(buf);
 	return 0;
 }
 

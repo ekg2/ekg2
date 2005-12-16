@@ -1573,6 +1573,12 @@ void theme_init()
         format_add("last_begin", _("%) Lastlog begin\n"), 1);
         format_add("last_end", _("%) Lastlog end\n"), 1);
 
+        /* away log */
+        format_add("away_log_begin", _("%) Logged messages for session %1:\n"), 1);
+        format_add("away_log_end", _("%) Away log end\n"), 1);
+        format_add("away_log_msg", "%) [%Y%1%n] [%G%2%n] <%W%3%n> %4\n", 1);
+        format_add("away_log_timestamp", "%d-%m-%Y %H:%M:%S", 1);
+
         /* queue */
         format_add("queue_list_timestamp", "%d-%m-%Y %H:%M", 1);
         format_add("queue_list_message", "%) %G >>%n [%1] %2 %3\n", 1);
