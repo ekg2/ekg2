@@ -344,19 +344,21 @@ int logs_away_display(log_away_t *la, int quiet, int free) {
 	list_t l;
 	if (!la)
 		return 0;
-	print_window("__status", session_current, 0, "away_log_begin", la->sname);
-	for (l = la->messages; l; l = l->next) {
-		log_session_away_t *lsa = l->data;
-		print_window("__status", session_current, 0, "away_log_msg",
-				prepare_timestamp_format(format_find("away_log_timestamp"), lsa->t),
-				(lsa->chname)+4, (lsa->uid)+4, lsa->msg);
-		if (free) {
-			xfree(lsa->chname);
-			xfree(lsa->uid);
-			xfree(lsa->msg);
+	if (list_count(la->messages) != 0) {
+		print_window("__status", session_current, 0, "away_log_begin", la->sname);
+		for (l = la->messages; l; l = l->next) {
+			log_session_away_t *lsa = l->data;
+			print_window("__status", session_current, 0, "away_log_msg",
+					prepare_timestamp_format(format_find("away_log_timestamp"), lsa->t),
+					(lsa->chname)+4, (lsa->uid)+4, lsa->msg);
+			if (free) {
+				xfree(lsa->chname);
+				xfree(lsa->uid);
+				xfree(lsa->msg);
+			}
 		}
+		print_window("__status", session_current, 0, "away_log_end");
 	}
-	print_window("__status", session_current, 0, "away_log_end");
 	if (free) {
 		list_destroy(la->messages, 1);
 		xfree(la->sname);
