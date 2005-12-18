@@ -1180,10 +1180,7 @@ WATCHER(jabber_handle_connect_tls)
 
 	ret = gnutls_handshake(j->ssl_session);
 
-	debug("[jabber] jabber_handle_connect_tls, handshake = %d\n", ret);
 	if ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN)) {
-		debug("tls handler going to be set, way %d\n",
-			gnutls_record_get_direction(j->ssl_session));
 
 		watch_add(&jabber_plugin, (int) gnutls_transport_get_ptr(j->ssl_session),
 			gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ,
@@ -1193,13 +1190,11 @@ WATCHER(jabber_handle_connect_tls)
 		return;
 
 	} else if (ret < 0) {
-		debug("[jabber] ssl handshake failed: %d - %s\n", ret, gnutls_strerror(ret));
 		gnutls_deinit(j->ssl_session);
 		gnutls_certificate_free_credentials(j->xcred);
 		jabber_handle_disconnect(jdh->session, gnutls_strerror(ret), EKG_DISCONNECT_FAILURE);
 		return;
 	}
-	debug("tls handshake OK, ret %d\n", ret);
 
 	// handshake successful
 	j->using_ssl = 1;
