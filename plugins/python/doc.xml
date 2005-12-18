@@ -676,7 +676,7 @@
          <term>protocol-message-sent</term>
          <listitem>
             <para>
-               Argumenty: session, rcpts, text)
+               Argumenty: session, rcpts, text
             </para>
             <para>
                Wywo³ywana gdy u¿ytkownik wysy³a wiadomo¶æ. rcpts jest
@@ -708,8 +708,20 @@
                Argumenty: status, desc
             </para>
             <para>
-               Wywo³ywana gdy klient zmienia stan. je¶li zwróci 0, stan nie
+               Wywo³ywana gdy klient zmienia stan. Je¶li zwróci 0, stan nie
                zostanie zmieniony.
+            </para>
+         </listitem>
+      </varlistentry>
+      <varlistentry>
+         <term>ui-keypress</term>
+         <listitem>
+            <para>
+               Argumenty: char
+            </para>
+            <para>
+               Wywo³ywane w momencie wci¶niêcia przycisku. Argumentem jest kod
+               wci¶niêtego klawisza.
             </para>
          </listitem>
       </varlistentry>
@@ -819,6 +831,9 @@ def connect_handler(session):
 	ekg.echo('W tym miejscu jeszcze nie po³±czony')
     ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
 
+def keypress(key):
+    ekg.echo('nacisnales #"+ str(key));
+    
 def disconnect_handler(session):
     ekg.echo("£o, sesja %s nam pad³a" % (session,))
     ekg.echo("Wysy³amy smsa ¿e nam cu¶ pad³o...")
@@ -832,6 +847,7 @@ ekg.handler_bind('protocol-message-sent', own_message_handler)
 ekg.handler_bind('protocol-status', status_handler)
 ekg.handler_bind('protocol-connected', connect_handler)
 ekg.handler_bind('protocol-disconnected', disconnect_handler)
+ekg.handler_bind('ui-keypress', keypress)
 
 ]]>
    </programlisting>
