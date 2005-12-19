@@ -24,7 +24,7 @@ do
       continue
    fi
 
-   if [ -f $i/doc.xml -o -f $i/commands.txt -o -f $i/vars.txt ]
+   if [ -f $i/doc.xml -o -f $i/commands-pl.txt -o -f $i/vars-pl.txt ]
    then
       cat "design/plugin_header.xml" | sed -e s/PLUGIN/`basename $i`/ >> $OUTPUT
       
@@ -33,17 +33,17 @@ do
          cat $i/doc.xml >> $OUTPUT
       fi
 
-      if [ -f $i/commands.txt ]
+      if [ -f $i/commands-pl.txt ]
       then
-         $GENPROG -c $i/commands.txt >> $OUTPUT
+         $GENPROG -c $i/commands-pl.txt >> $OUTPUT
       fi
-      if [ -f $i/vars.txt ]
+      if [ -f $i/vars-pl.txt ]
       then
-         $GENPROG -v $i/vars.txt >> $OUTPUT
+         $GENPROG -v $i/vars-pl.txt >> $OUTPUT
       fi
-      if [ -f $i/session.txt ]
+      if [ -f $i/session-pl.txt ]
       then
-         $GENPROG -s $i/session.txt >> $OUTPUT
+         $GENPROG -s $i/session-pl.txt >> $OUTPUT
       fi
 
       cat "design/plugin_footer.xml" >> $OUTPUT

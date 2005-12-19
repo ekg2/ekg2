@@ -43,7 +43,7 @@ auto_reconnect
 default
 	type: bool
 	default value: 0
-
+	
 	determines whether session should be default (set as first after
 	program startup)
 

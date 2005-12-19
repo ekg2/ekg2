@@ -25,7 +25,7 @@ auto_connect
 
 auto_find
 	type: bool
-	default_value: 0
+	default value: 0
 	
 	Variable determines if people we haven't got on userlist, but send us 
 	a message, should be checked in users catalog.
@@ -125,8 +125,8 @@ scroll_long_desc
 		   description change are NOT displayed.
 
 scroll_mode
-	typr: string [bounce|simple]
-	default calue: bounce
+	type: string [bounce|simple]
+	default value: bounce
 	
 	Variable determines type of scrolling.
 	bounce - bouncing from 'ends'.
