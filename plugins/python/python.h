@@ -23,19 +23,19 @@
 #include <Python.h>
 
 #if !defined(Py_RETURN_NONE) // New in Python 2.4
-inline PyObject* doPy_RETURN_NONE()
+static inline PyObject* doPy_RETURN_NONE()
 {       Py_INCREF(Py_None); return Py_None; }
 #define Py_RETURN_NONE return doPy_RETURN_NONE()
 #endif
 
 #if !defined(Py_RETURN_TRUE) // New in Python 2.4
-inline PyObject* doPy_RETURN_TRUE()
+static inline PyObject* doPy_RETURN_TRUE()
 {Py_INCREF(Py_True); return Py_True;}
 #       define Py_RETURN_TRUE return doPy_RETURN_TRUE()
 #endif
 
 #if !defined(Py_RETURN_FALSE) // New in Python 2.4
-inline PyObject* doPy_RETURN_FALSE()
+static inline PyObject* doPy_RETURN_FALSE()
 {Py_INCREF(Py_False); return Py_False;}
 #define Py_RETURN_FALSE return doPy_RETURN_FALSE()
 #endif
