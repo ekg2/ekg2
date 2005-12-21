@@ -21,13 +21,14 @@
 #include "osd.h"
 
 #include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/themes.h>
 #include <ekg/stuff.h>
 #include <ekg/vars.h>
-#include <ekg/xmalloc.h>
 #include <ekg/userlist.h>
 #include <ekg/protocol.h>
+#include <ekg/xmalloc.h>
 
 #include <xosd.h>
 #include <string.h>
@@ -102,22 +103,17 @@ int xosd_show_message(char *line1, char *line2)
 
 COMMAND(xosd_command_msg) 
 {
-	if (!params[0]) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-	
-	xosd_show_message((char *) params[0], "");
-
+	xosd_show_message((char *) params[0], NULL);
 	return 0;
 }
 
 static QUERY(xosd_protocol_status)
 {
-	char **__session = va_arg(ap, char**), *session = *__session;
-	char **__uid = va_arg(ap, char**), *uid = *__uid;
-	char **__status = va_arg(ap, char**), *status = *__status;
-	char **__descr = va_arg(ap, char**), *descr = *__descr;
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	char *status	= *(va_arg(ap, char**));
+	char *descr	= *(va_arg(ap, char**));
+
 	userlist_t *u;
 	session_t *s;
 
@@ -170,13 +166,14 @@ static QUERY(xosd_protocol_status)
 
 static QUERY(xosd_protocol_message)
 {
-	char **__session = va_arg(ap, char**), *session = *__session;
-	char **__uid = va_arg(ap, char**), *uid = *__uid;
-        char ***__rcpts = va_arg(ap, char***);
-	char **__text = va_arg(ap, char**), *text = *__text;
-	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
-	time_t *__sent = va_arg(ap, time_t*), sent = *__sent;
-	int *__class = va_arg(ap, int*), class = *__class;
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+        char **rcpts	= *(va_arg(ap, char***));
+	char *text	= *(va_arg(ap, char**));
+	uint32_t *format= *(va_arg(ap, uint32_t**));
+	time_t sent	= *(va_arg(ap, time_t*));
+	int class	= *(va_arg(ap, int*));
+	
         userlist_t *u;
 	session_t *s;
 	int level;
@@ -227,17 +224,19 @@ static QUERY(xosd_protocol_message)
 
 static QUERY(xosd_irc_protocol_message)
 {
-	char **__session = va_arg(ap, char**), *session = *__session;
-	char **__uid = va_arg(ap, char**), *uid = *__uid;
-	char **__text = va_arg(ap, char**), *text = *__text;
-	int **__isour  = va_arg(ap, int**), *isour  = *__isour;
-	int **__foryou = va_arg(ap, int**), *foryou = *__foryou;
-	int **__private = va_arg(ap, int**), *private = *__private;
-	char **__channame = va_arg(ap, char**), *channame = *__channame;
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	char *text	= *(va_arg(ap, char**));
+	int isour	= *(va_arg(ap, int*));
+	int foryou	= *(va_arg(ap, int*));
+	int private	= *(va_arg(ap, int*));
+	char *channame	= *(va_arg(ap, char**));
+	
 	session_t *s;
-
 	char *msgLine1;
 	char *msgLine2;
+
+	debug("[xosd_irc_protocol_message] %s %d %d\n", session, foryou, isour);
 	
 	if (!(s = session_find(session)))
                 return 0;
@@ -281,7 +280,7 @@ static void xosd_display_welcome_message(int type, void *data)
 	}
 }
 
-void xosd_setvar_default()
+QUERY(xosd_setvar_default)
 {
 	xfree(xosd_colour);
 	xfree(xosd_font);
@@ -305,6 +304,7 @@ void xosd_setvar_default()
 	xosd_text_limit = 50;
 	xosd_vertical_offset = 48;
 	xosd_vertical_position = 2;
+	return 0;
 }
 #if 0
 static void xosd_killed() {
@@ -323,25 +323,29 @@ int xosd_plugin_init(int prio)
 	}
 	plugin_register(&xosd_plugin, prio);
 
-	xosd_setvar_default();
+	xosd_setvar_default(NULL, NULL);
 
 	variable_add(&xosd_plugin, "colour", VAR_STR, 1, &xosd_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "font", VAR_STR, 1, &xosd_font, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "outline_colour", VAR_STR, 1, &xosd_outline_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "shadow_colour", VAR_STR, 1, &xosd_shadow_colour, NULL, NULL, NULL);
 	
-	variable_add(&xosd_plugin, "display_filter", VAR_MAP, 1, &xosd_display_filter, NULL, variable_map(3, 0, 0, "all", 1, 2, "only inactive", 2, 1, "only new"), NULL);
-	variable_add(&xosd_plugin, "display_notify", VAR_MAP, 1, &xosd_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "session-depend"), NULL);
+	variable_add(&xosd_plugin, "display_filter", VAR_MAP, 1, &xosd_display_filter, NULL,
+			variable_map(3, 0, 0, "all", 1, 2, "only inactive", 2, 1, "only new"), NULL);
+	variable_add(&xosd_plugin, "display_notify", VAR_MAP, 1, &xosd_display_notify, NULL,
+			variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "session-depend"), NULL);
 	variable_add(&xosd_plugin, "display_timeout", VAR_INT, 1, &xosd_display_timeout, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "display_welcome", VAR_BOOL, 1, &xosd_display_welcome, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "horizontal_offset", VAR_INT, 1, &xosd_horizontal_offset, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "horizontal_position", VAR_MAP, 1, &xosd_horizontal_position, NULL, variable_map(3, 0, 2, "left", 1, 0, "center", 2, 1, "right"), NULL);
+	variable_add(&xosd_plugin, "horizontal_position", VAR_MAP, 1, &xosd_horizontal_position, NULL,
+			variable_map(3, 0, 2, "left", 1, 0, "center", 2, 1, "right"), NULL);
 	variable_add(&xosd_plugin, "outline_offset", VAR_INT, 1, &xosd_outline_offset, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "shadow_offset", VAR_INT, 1, &xosd_shadow_offset, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "short_messages", VAR_BOOL, 1, &xosd_short_messages, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "text_limit", VAR_INT, 1, &xosd_text_limit, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, "vertical_offset", VAR_INT, 1, &xosd_vertical_offset, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "vertical_position", VAR_MAP, 1, &xosd_vertical_position, NULL, variable_map(3, 0, 2, "top", 1, 0, "center", 2, 1, "bottom"), NULL);
+	variable_add(&xosd_plugin, "vertical_position", VAR_MAP, 1, &xosd_vertical_position, NULL,
+			variable_map(3, 0, 2, "top", 1, 0, "center", 2, 1, "bottom"), NULL);
 	
 	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
 	query_connect(&xosd_plugin, "irc-protocol-message", xosd_irc_protocol_message, NULL);
@@ -349,7 +353,7 @@ int xosd_plugin_init(int prio)
 	
 	timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
 
-	command_add(&xosd_plugin, "xosd:msg", "?", xosd_command_msg, 0, NULL);
+	command_add(&xosd_plugin, "xosd:msg", "!", xosd_command_msg, COMMAND_ENABLEREQPARAMS, NULL);
 	return 0;
 }
 
