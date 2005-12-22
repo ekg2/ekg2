@@ -207,17 +207,14 @@ QUERY(gg_status_show_handle)
         strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t);
 
         if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-                char *tmp = format_string(format_find("show_status_notavail"));
-
-                print("show_status_status", tmp, "");
+		char *tmp = format_string(format_find("show_status_notavail"), "");
+                print("show_status_status_simple", tmp);
+                xfree(tmp);
 
                 if (s->last_conn)
                         print("show_status_disconnected_since", buf);
                 if ((mqc = msg_queue_count()))
                         print("show_status_msg_queue", itoa(mqc));
-
-                xfree(tmp);
-
                 return 0;
         }
 
@@ -592,7 +589,8 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	gg_private_t *g = session_private_get(s);
 
 	if (gg_config_dcc && (e->event.msg.msgclass & GG_CLASS_CTCP)) {
-		char *__host = NULL, uid[16];
+		char *__host = NULL;
+		char uid[16];
 		int __port = -1, __valid = 1;
 		struct gg_dcc *d;
 		userlist_t *u;
@@ -604,7 +602,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 			return;
 
 		query_emit(NULL, "protocol-dcc-validate", &__host, &__port, &__valid, NULL);
-		xfree(__host);
+/*		xfree(__host); */
 
 		if (!__valid) {
 			char *tmp = saprintf("/ignore %s", uid);
