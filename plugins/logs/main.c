@@ -27,8 +27,10 @@
 #include <limits.h>
 #endif
 
+/* fjuczery */
 #define REMIND_NUMBER_SUPPORT 0 /* support do logs:remind_number 1 aby wlaczyc */
 #define HAVE_ZLIB	      1 /* support for zlib */
+
 #undef HAVE_ZLIB		/* actually no avalible... */
 
 #include "ekg2-config.h"
@@ -84,7 +86,7 @@ logs_log_t *log_curlog = NULL;
 	/* irssi style info messages */
 #define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y" 	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
 #define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
-#define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */ /* TODO, CHECK*/
+#define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
 
 QUERY(logs_setvar_default)
 {
@@ -141,7 +143,7 @@ int logs_window_check(logs_log_t *ll, time_t t)
 	}
 	if (!(l->path)) {
 		chan = 2;
-	} else { /* buggy ! TODO */
+	} else {
 		int datechanged = 0; /* bitmaska 0x01 (dzien) 0x02 (miesiac) 0x04 (rok) */
 		struct tm sttm;
 		struct tm *tm = localtime_r(&(ll->t), &sttm);
@@ -157,8 +159,6 @@ int logs_window_check(logs_log_t *ll, time_t t)
 		   		((datechanged & 0x01) && xstrstr(config_logs_path, "%D"))
 				)
 			chan = 3;
-//		else	chan = -2; /* chan == -2 date changed */
-
 		/* zalogowac jak sie zmienila data */
 		if (datechanged && l->logformat == LOG_FORMAT_IRSSI) { /* yes i know it's wrong place for doing this but .... */
 			if (!(l->file)) 
@@ -293,10 +293,23 @@ void logs_changed_maxfd(const char *var)
 
 void logs_changed_path(const char *var) 
 {
+	list_t l;
 	if (in_autoexec || !log_logs) 
 		return;
-	debug("%s: %s\n", var, config_logs_path);
-/* TODO: przeleciec wszystkie okna i zrobic recreate */
+
+	for (l = log_logs; l; l = l->next) {
+		logs_log_t *ll = l->data;
+
+		if (ll->lw) {
+			FILE *f   = ll->lw->file;
+			char *tmp = ll->lw->path;
+			ll->lw->path = NULL;
+			ll->lw->file = NULL;
+			if (f) fclose(f);
+			xfree(tmp);
+/* We don't need reopening file../ recreate magic struct.. because it'd be done when we try log smth into it. */
+		}
+	}
 }
 
 QUERY(logs_postinit) 
@@ -989,7 +1002,7 @@ QUERY(logs_handler_newwin)
 void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status)
 {
 	char *textcopy;
-	const char *timestamp = prepare_timestamp((time_t)time(0));
+	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(0));
 
 	session_t *s = session_find((const char*)session);
 	const char *gotten_uid = get_uid(s, uid);
@@ -1040,14 +1053,14 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 	fputs(timestamp, file); fputc(',', file);
 	
 	if (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_CHAT) {
-		const char *senttimestamp = prepare_timestamp(sent);
+		const char *senttimestamp = prepare_timestamp_format(config_logs_timestamp, sent);
 		fputs(senttimestamp, file);
 		fputc(',', file);
 	} else if (class==6) {
 		fputs(status, file); 
 		fputc(',', file);
 	}
-	fputs(textcopy ? textcopy : "", file);
+	if (textcopy) fputs(textcopy, file);
 	fputs("\n", file);
 
 	xfree(textcopy);
@@ -1063,8 +1076,8 @@ void logs_xml(FILE *file, const char *session, const char *uid, const char *text
 {
 	session_t *s;
 	char *textcopy;
-	const char *timestamp = prepare_timestamp((time_t)time(0));
-/*	const char *senttimestamp = prepare_timestamp(sent); */
+	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(0));
+/*	const char *senttimestamp = prepare_timestamp_format(config_logs_timestamp, sent); */
 	char *gotten_uid, *gotten_nickname;
 	const char *tmp;
 
@@ -1128,7 +1141,7 @@ void logs_xml(FILE *file, const char *session, const char *uid, const char *text
 	fputs("\t</sender>\n", file);
 
 	fputs("\t<body>\n", file);
-	fputs(textcopy ? textcopy : "", file);
+	if (textcopy) fputs(textcopy, file);
 	fputs("\t</body>\n", file);
 
 	fputs("</message>\n", file);
@@ -1162,10 +1175,10 @@ void logs_irssi(FILE *file, const char *session, const char *uid, const char *te
 	
 	switch (type) {
 		/* just normal message */
-		case LOG_IRSSI_MESSAGE:	fprintf(file, "%s <%s> %s\n", prepare_timestamp(sent), nuid ? nuid : uid , text);
+		case LOG_IRSSI_MESSAGE:	fprintf(file, "%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : uid , text);
 			break;
 		/* status message (avalible -> unavalible (quit) ; na -> aval (join) */
-		case LOG_IRSSI_EVENT:	fprintf(file, "%s -!- %s [%s] has %s #%s\n", prepare_timestamp(sent), nuid ? nuid : uid, ip, text /* join, part, quit */, session);
+		case LOG_IRSSI_EVENT:	fprintf(file, "%s -!- %s [%s] has %s #%s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : uid, ip, text /* join, part, quit */, session);
 			break;
 		/* other messages like session started, session closed and so on */
 		case LOG_IRSSI_INFO:	fprintf(file, "%s\n", text);
@@ -1173,7 +1186,7 @@ void logs_irssi(FILE *file, const char *session, const char *uid, const char *te
 		/* status message (other than @1) */
 		case LOG_IRSSI_STATUS:	text = saprintf("reports status: %s [%s] /* {status} */", text, ip);
 		/* irc ACTION messages */
-		case LOG_IRSSI_ACTION:	fprintf(file, "%s * %s %s\n", prepare_timestamp(sent), nuid ? nuid : uid, text);
+		case LOG_IRSSI_ACTION:	fprintf(file, "%s * %s %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : uid, text);
 			if (type == 2) xfree((char *) text);
 			break;
 		/* everythink else */

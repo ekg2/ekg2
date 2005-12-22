@@ -31,7 +31,6 @@ struct {
 			 * callback zmiennych sesyjnych w ekg2 niet. jest cos takiego.
 			 */
 	char *path;	/* path don't free it ! .... */
-	
 	FILE *file; 	/* file don't close it! it will be closed at unloading plugin. */
 } typedef log_window_t;
 
@@ -56,8 +55,6 @@ struct {
 
 char *logs_prepare_path(session_t *session, const char *uid, time_t sent);
 const char *prepare_timestamp_format(const char *format, time_t t);
-#define prepare_timestamp(t) \
-	prepare_timestamp_format(config_logs_timestamp, t)
 
 logs_log_t *logs_log_find(const char *session, const char *uid, int create);
 logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid);
