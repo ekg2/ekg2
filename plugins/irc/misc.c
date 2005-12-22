@@ -1301,7 +1301,7 @@ IRC_COMMAND(irc_c_mode)
 			if (!ch) goto notreallyok;
 			/* GiM: ivil hack ;) */
 			val = 1<<(len-(bang-add)-1);
-			if (act) ch->mode |= val; else ch->mode-=val;
+			if (act) ch->mode |= val; else ch->mode&=~val;
 			ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]);
 			if (!ul) goto notreallyok;
 

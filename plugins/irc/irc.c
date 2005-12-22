@@ -80,7 +80,8 @@
 /* ************************ KNOWN BUGS ***********************
  *  OTHER LESS IMPORTANT BUGS
  *    -> somewhere with altnick sending
- *    G->dj: still not as I would like it to be
+ *      G->dj: still not as I would like it to be
+ *    -> 09/12/05 01:41:27 <Greyer> czemu nie dzia³a jednoczesne opowanie kilku osób ? (wczesniej zgloszone kiedystam, czekamy na rewrite irc_getchan() :)
  *  !BUGS (?) TODO->check
  *    -> buggy auto_find. if smb type smth on the channel.
  *        *  10:58:27 ::: Nieprawidowe parametry. Sprobuj help find *
@@ -98,22 +99,6 @@
  */
 
 /* 
- * Changelog:  (from last changes till todaj tj 13o9o5 ;p)
- *  -> irc plugin multithreaded again ;p
- *  -> names_total..
- *  -> rewriten sending multiline params[0] in irc_command_msg
- *  -> params in command_add() still not done fully. and is it worth to do it ?
- *  
- * F**k echelon! ;p
- *  -> nice command generating encryption keys.. currently using only sim plugin.
- *  
- *  -> WATCH_READ -> WATCH_READ_LINE and cleanup ! ;p
- *     we fallback on internal ekg2-side line parsing.
- * CHANGELOG:  (today, tj o3o9o5)
- *  -> autoreconnection works.
- *  -> rewriten irc_handle_disconnect and function using it.
- *  -> removed possible memleaks (ab 99 % ;> joke.) from irc_handle_disconnect
- *  
  * IDEAS: 
  *  -> maybe some params in /connect command ?
  *     for example if we have in /session server krakow.irc.pl,poznan.irc.pl
@@ -128,7 +113,6 @@
  * ---
  *  G->dj: you have to, cause del will kill me for another comment in PL ;)
  */
-
 /*                                                                       *
  * ======================================== STARTUP AND STANDARD FUNCS - *
  *                                                                       */
@@ -267,18 +251,12 @@ int irc_resolver_sort(void *s1, void *s2)
 	return 0;
 }
 
-int irc_resolver2(session_t *session, char ***arr, char *hostname, int dobind) 
+int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int dobind) 
 {
-	int port = session_int_get(session, "port"); 
 	void *tm = NULL;
-
 #ifdef HAVE_GETADDRINFO
 	struct  addrinfo *ai, *aitmp, hint;
 #endif	
-
-	if (port < 1 ) 	port = DEFPORT;
-	if (dobind)	port = 0;
-
 /*	debug("[IRC] %s fd = %d\n", hostname, fd); */
 #ifdef HAVE_GETADDRINFO
 	memset(&hint, 0, sizeof(struct addrinfo));
@@ -303,7 +281,7 @@ int irc_resolver2(session_t *session, char ***arr, char *hostname, int dobind)
 			} else
 				ip   = xstrdup(inet_ntoa(*(struct in_addr *)tm));
 #endif 
-			buf = saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, port);
+			buf = saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, (!dobind) ? port : 0);
 			//write(fd, buf, xstrlen(buf));
 			array_add(arr, buf);
 //			xfree(buf);
@@ -406,7 +384,7 @@ void irc_changed_resolve(session_t *s, const char *var) {
 		 */
 		do {
 			if ((tmp2 = xstrchr(tmp1, ','))) *tmp2 = '\0';
-			irc_resolver2(s, &arr, tmp1, isbind);
+			irc_resolver2(s, &arr, tmp1, -1, isbind);
 			tmp1 = tmp2+1;
 		} while (tmp2);
 
@@ -581,11 +559,11 @@ WATCHER(irc_handle_stream)
 WATCHER(irc_handle_connect)
 {
 	session_t		*s = session_find(data);
-	int			res = 0; 
-	socklen_t		res_size = sizeof(res);
 	irc_private_t		*j = irc_private(s);
 	const char		*real = NULL, *localhostname = NULL;
 	char			*pass = NULL;
+	int			res = 0; 
+	socklen_t		res_size = sizeof(res);
 
 	if (type == 1) {
 		debug ("[irc] handle_connect(): type %d\n", type);
@@ -601,18 +579,18 @@ WATCHER(irc_handle_connect)
 
 	debug ("[irc] handle_connect()\n");
 
-	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-		debug("[irc] handle_connect(): SO_ERROR %s\n", strerror(res));
+	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
+		if (type) debug("[irc] handle_connect(): SO_ERROR %s\n", strerror(res));
 
 		/* try next server. */
 		/* 'if' because someone can make: /session server blah and /reconnect
 		 * during already began process of connecting
 		 */
 		if (j->conntmplist) {
-			DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res); 
+			if (!type) DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res); 
 			j->conntmplist = j->conntmplist->next;
 		}
-		irc_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
+		irc_handle_disconnect(s, (type == 2) ? "Connection timed out" : strerror(res), EKG_DISCONNECT_FAILURE);
 		return;
 	}
 
@@ -644,23 +622,28 @@ void resolver_child_handler(child_t *c, int pid, const char *name, int status, v
 	debug("(%s) resolver [%d] exited with %d\n", name, pid, status);
 }
 
-int irc_build_sin(connector_t *co, struct sockaddr **address)
+int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address)
 {
 	struct sockaddr_in  *ipv4;
 	struct sockaddr_in6 *ipv6;
 	int len = 0;
+	int defport = session_int_get(s, "port");
+	int port;
 
 	*address = NULL;
 
 	if (!co) 
 		return 0;
+	port = co->port < 0 ? defport : co->port;
+	if (port < 0) port = DEFPORT;
+
 	if (co->family == AF_INET) {
 		len = sizeof(struct sockaddr_in);
 
 		ipv4 = xmalloc(len);
 
 		ipv4->sin_family = AF_INET;
-		ipv4->sin_port   = htons(co->port);
+		ipv4->sin_port   = htons(port);
 		inet_pton(AF_INET, co->address, &(ipv4->sin_addr));
 
 		*address = (struct sockaddr *) ipv4;
@@ -669,7 +652,7 @@ int irc_build_sin(connector_t *co, struct sockaddr **address)
 
 		ipv6 = xmalloc(len);
 		ipv6->sin6_family  = AF_INET6;
-		ipv6->sin6_port    = htons(co->port);
+		ipv6->sin6_port    = htons(port);
 		inet_pton(AF_INET6, co->address, &(ipv6->sin6_addr));
 
 		*address = (struct sockaddr *) ipv6;
@@ -681,8 +664,10 @@ int irc_really_connect(session_t *session) {
 	irc_private_t		*j = irc_private(session);
 	connector_t		*connco, *connvh = NULL;
 	struct sockaddr		*sinco,  *sinvh  = NULL;
-	int			sinlen, fd;
 	int			one = 1, connret = -1, bindret = -1, err;
+	int			sinlen, fd;
+	int 			timeout;
+	watch_t			*w;
 
 	if (!j->conntmplist) j->conntmplist = j->connlist;
 	if (!j->bindtmplist) j->bindtmplist = j->bindlist;
@@ -694,7 +679,7 @@ int irc_really_connect(session_t *session) {
 
 	j->autoreconnecting = 1;
 	connco = (connector_t *)(j->conntmplist->data);
-	sinlen = irc_build_sin(connco, &sinco);
+	sinlen = irc_build_sin(session, connco, &sinco);
 	if (!sinco) {
 		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje (!sinco)"); 
 		return -1;
@@ -722,7 +707,7 @@ int irc_really_connect(session_t *session) {
 	/* loop, optimize... */
 	if (j->bindtmplist) 
 		connvh = j->bindtmplist->data;	
-	irc_build_sin(connvh, &sinvh);
+	irc_build_sin(session, connvh, &sinvh);
 	while (bindret && connvh) {
 		DOT("IRC_TEST", "Bind", connvh, session, 0);
 		if (connvh->family == connco->family)  {
@@ -735,7 +720,7 @@ int irc_really_connect(session_t *session) {
 			xfree(sinvh);
 			j->bindtmplist = j->bindtmplist->next;
 			connvh = j->bindtmplist->data;
-			irc_build_sin(connvh, &sinvh);
+			irc_build_sin(session, connvh, &sinvh);
 			if (!sinvh)
 				continue;
 		} else
@@ -761,7 +746,10 @@ int irc_really_connect(session_t *session) {
 	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
 
-	watch_add(&irc_plugin, fd, WATCH_WRITE, 0, irc_handle_connect, xstrdup(session->uid) );
+	w = watch_add(&irc_plugin, fd, WATCH_WRITE, 0, irc_handle_connect, xstrdup(session->uid) );
+	if ((timeout = session_int_get(session, "connect_timeout") > 0)) 
+		watch_timeout_set(w, timeout);
+	
  	return 0;
 irc_conn_error: 
 	xfree(sinco);
@@ -929,7 +917,7 @@ COMMAND(irc_command_msg)
 COMMAND(irc_command_inline_msg)
 {
 	const char	*p[2] = { NULL, params[0] };
-	if (!params[0])
+	if (target || !params[0])
 		return -1;
 	return irc_command_msg("msg", p, session, target, quiet);
 }
@@ -963,7 +951,7 @@ COMMAND(irc_command_pipl)
 	return 0;
 }
 
-int irc_access_add(session_t *s, char *uid, int flagsadd, int flagsdel) {
+int irc_access_add(session_t *s, const char *uid, int flagsadd, int flagsdel) {
 /* channels */
 /* #define IRC_FLAG_AUTOJOIN   0x *//* auto_join to channel */
 #define IRC_FLAG_ISON	    0x02
@@ -1942,6 +1930,7 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "auto_lusers_sync", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&irc_plugin, "auto_reconnect", VAR_INT, "-1", 0, NULL);
 	plugin_var_add(&irc_plugin, "ban_type", VAR_INT, "10", 0, NULL);
+	plugin_var_add(&irc_plugin, "connect_timeout", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "close_windows", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
         plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
@@ -2142,7 +2131,7 @@ static int irc_theme_init()
 	format_add("IRC_TEST",		"%> (%1) %2 to %W%3%n [%4] port %W%5%n (%6)", 1);
 	format_add("IRC_CONN_ESTAB",	"%> (%1) Connection to %W%3%n estabilished", 1);
 	/* j/w %7 - error */
-	format_add("IRC_TEST_FAIL",	"%> (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
+	format_add("IRC_TEST_FAIL",	"%! (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
 	
 	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
 	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
