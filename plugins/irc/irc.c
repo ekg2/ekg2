@@ -917,7 +917,7 @@ COMMAND(irc_command_msg)
 COMMAND(irc_command_inline_msg)
 {
 	const char	*p[2] = { NULL, params[0] };
-	if (target || !params[0])
+	if (!target || !params[0])
 		return -1;
 	return irc_command_msg("msg", p, session, target, quiet);
 }
