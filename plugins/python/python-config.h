@@ -32,7 +32,7 @@ typedef struct
 void ekg_config_dealloc(PyObject *o);
 int ekg_config_len(ekg_configObj *self);
 PyObject* ekg_config_get(ekg_configObj * self, PyObject * key);
-int ekg_config_set(ekg_configObj * self, PyObject* key, PyObject* value);
+PyObject* ekg_config_set(ekg_configObj * self, PyObject* key, PyObject* value);
 
 static PyMappingMethods _config_mapping = {
         (inquiry)       ekg_config_len,

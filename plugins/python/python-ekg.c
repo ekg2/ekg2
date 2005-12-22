@@ -150,6 +150,40 @@ PyObject *ekg_cmd_command(PyObject * self, PyObject * args)
 }
 
 /**
+ * ekg_cmd_variable_add()
+ *
+ */
+
+PyObject *ekg_cmd_variable_add(PyObject * self, PyObject * args)
+{
+        PyObject *callback = NULL;
+        PyObject *module   = NULL;
+        char *name = NULL;
+        char *val  = NULL;
+        script_t * scr = NULL;
+
+        if (!PyArg_ParseTuple(args, "ss|O", &name, &val, &callback)) {
+                return NULL;
+        }
+
+        if (callback) {
+                if (!PyCallable_Check(callback)) {
+                        print("generic_error", _("Third parameter to variable_add, if given, must be callable"));
+                        PyErr_SetString(PyExc_TypeError, _("Third parameter to variable_add, if given, must be callable"));
+                        return NULL;
+                }
+                Py_XINCREF(callback);
+                module = PyObject_GetAttrString(callback, "__module__");
+                scr = python_find_script(module);
+        }
+
+        script_var_add(&python_lang, scr, name, val, callback);
+
+        Py_INCREF(Py_None);
+        return Py_None;
+}
+
+/**
  * ekg_cmd_handler_bind()
  *
  */

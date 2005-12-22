@@ -78,6 +78,11 @@ int python_initialize();
 int python_finalize();
 int python_plugin_init();
 script_t *python_find_script(PyObject *module);
+int python_load(script_t *s);
+int python_unload(script_t *s);
+char *python_geterror(script_t *s);
+PyObject *python_get_func(PyObject *module, const char *name); 
+
 
 #endif
 

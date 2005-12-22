@@ -47,13 +47,6 @@
 #include <ekg/xmalloc.h>
 #include <ekg/scripts.h>
 
-int python_exec(const char *);
-int python_run(const char *filename);
-int python_load(script_t *s);
-int python_unload(script_t *s);
-char *python_geterror(script_t *s);
-PyObject *python_get_func(PyObject *module, const char *name);
-
 /**
  * python_plugin
  *
@@ -157,7 +150,7 @@ int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie be
 		    break;
 		case(SCRIPT_WATCHTYPE):
 		case(SCRIPT_VARTYPE):
-                    xfree((char *)private);
+                    Py_XDECREF(handler);
 		    break;
 	}
 	return 0;
@@ -165,7 +158,11 @@ int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie be
 
 int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
 {
-	return 0;
+	int python_handle_result;
+	PyObject *obj = (PyObject *)scr_var->private;
+	PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(ss)", scr_var->name, newval))
+	PYTHON_HANDLE_FOOTER()
+	return python_handle_result;
 }
 
 int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch)
@@ -439,7 +436,7 @@ int python_load(script_t *s)
 		char *err = python_geterror(s);
 		print("script_error", err);
 		xfree(err);
-		return 0;
+		return -1;
 	}
 	debug("[python script loading] 0x%x\n", module);
 	if ((init = python_get_func(module, "init"))) {

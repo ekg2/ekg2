@@ -8,7 +8,7 @@
             <term>command( str )</term>
             <listitem>
                <para>
-                  Wywo³anie polecenia ekg
+                  Wywo³anie polecenia ekg2
                </para>
             </listitem>
          </varlistentry>
@@ -40,7 +40,7 @@
             <term>sessions()</term>
             <listitem>
                <para>
-                  Zwraca listê obiektów typu session zawieraj±c± dostêpne sesje.
+                  Zwraca listê obiektów typu <classname>session</classname> zawieraj±c± dostêpne sesje.
                </para>
             </listitem>
          </varlistentry>
@@ -49,7 +49,7 @@
             <listitem>
                <para>
                   Zwraca obiekt sesyjny sesji o podanej nazwie. Podnosi wyj±tek
-                  RuntimeException je¶li takiej sesji nie ma.
+                  <classname>RuntimeException</classname> je¶li takiej sesji nie ma.
                </para>
             </listitem>
          </varlistentry>
@@ -73,7 +73,7 @@
             <term>timer_bind( czas, callback )</term>
             <listitem>
                <para>
-                  Wykonuje funkcjê callback co podany czas. Funkcja ta nie mo¿e
+                  Wykonuje funkcjê <parameter>callback</parameter> co podany czas. Funkcja ta nie mo¿e
                   przyjmowaæ argumentów.
                </para>
             </listitem>
@@ -82,7 +82,7 @@
             <term>handler_bind( nazwa_sygna³u, callback )</term>
             <listitem>
                <para>
-                  £±czy funkcjê callback z sygna³em o podanej nazwie. Funkcja
+                  £±czy funkcjê <parameter>callback</parameter> z sygna³em o podanej nazwie. Funkcja
                   musi przyjmowaæ argumenty takie, jakie przesy³ane s± z
                   sygna³em.
                </para>
@@ -92,9 +92,28 @@
             <term>command_bind( nazwa_polecenia, callback )</term>
             <listitem>
                <para>
-                  £±czy funkcjê callback z reakcj± na wykonanie polecenia.
+                  £±czy funkcjê <parameter>callback</parameter> z reakcj± na wykonanie polecenia.
                   Funkcja musi przyjmowaæ dwa argumenty: nazwê wpisanego
                   polecenia i argumenty mu przekazane.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>variable_add( nazwa_zmiennej, pocz±tkowa_warto¶æ [, callback ])</term>
+            <listitem>
+               <para>
+                  Dodaje zmienn± skryptow±, która bêdzie zapisywana w pliku
+                  konfiguracyjnym ekg2. Opcjonalny parametr
+                  <parameter>callback</parameter> mo¿e
+                  zawieraæ funkcjê, która bêdzie wykonywana przy ka¿dej zmianie
+                  warto¶ci dodawanej zmiennej.
+                  Funkcja musi przyjmowaæ dwa argumenty: nazwê zmiennej i jej
+                  now± warto¶æ.
+               </para>
+               <para>
+                  Zmienne dodane metod± variable_add mo¿na odczytywaæ tak, jak
+                  wszystkie inne ustawienia konfiguracyjne, tj. za pomoc±
+                  s³ownika <varname>ekg.config</varname>
                </para>
             </listitem>
          </varlistentry>
@@ -102,7 +121,7 @@
             <term>window_current()</term>
             <listitem>
                <para>
-                  Zwraca obiekt window reprezentuj±cy bie¿±ce okno
+                  Zwraca obiekt <classname>window</classname> reprezentuj±cy bie¿±ce okno
                </para>
             </listitem>
          </varlistentry>
@@ -111,7 +130,8 @@
             <listitem>
                <para>
                   Zwraca obiekt window reprezentuj±cy okno o podanej nazwie.
-                  Funkcja rozpoznaje tak¿e nazwy "__current" i "__status".
+                  Funkcja rozpoznaje tak¿e nazwy <literal>__current</literal> i
+                  <literal>__status</literal>.
                </para>
             </listitem>
          </varlistentry>
@@ -405,7 +425,7 @@
             <term>disconnect() (NFY)</term>
             <listitem>
                <para>
-                  Roz³±cza sesjê().
+                  Roz³±cza sesjê.
                </para>
             </listitem>
          </varlistentry>
@@ -430,8 +450,9 @@
             <term>user_get(nazwa)</term>
             <listitem>
                <para>
-                  Zwraca obiekt klasy user o danym identyfikatorze (gg:123,
-                  jid:test@example.com itp.)
+                  Zwraca obiekt klasy <classname>user</classname> o danym
+                  identyfikatorze (<literal>gg:123</literal>,
+                  <literal>jid:test@example.com</literal> itp.)
                </para>
             </listitem>
          </varlistentry>
@@ -841,6 +862,9 @@ def disconnect_handler(session):
 def foo_command(name, args):
     ekg.echo("Wywo³ane polecenie foo!")
 
+def varchange(name, newval):
+    ekg.echo("Zmienna %s zmieni³a warto¶æ na %s" % (name, newval) )
+    
 ekg.command_bind('foo', foo_command)
 ekg.handler_bind('protocol-message-received', message_handler)
 ekg.handler_bind('protocol-message-sent', own_message_handler)
@@ -848,6 +872,7 @@ ekg.handler_bind('protocol-status', status_handler)
 ekg.handler_bind('protocol-connected', connect_handler)
 ekg.handler_bind('protocol-disconnected', disconnect_handler)
 ekg.handler_bind('ui-keypress', keypress)
+ekg.variable_add('zmienna_testowa', 'warto¶æ', varchange)
 
 ]]>
    </programlisting>

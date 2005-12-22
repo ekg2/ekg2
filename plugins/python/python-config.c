@@ -114,7 +114,7 @@ PyObject *ekg_config_get(ekg_configObj * self, PyObject * key)
  *
  */
 
-int ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
+PyObject *ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 {
 	char *name = PyString_AsString(key);
 	variable_t *v;
@@ -126,19 +126,19 @@ int ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 
 	if (!v) {
 		PyErr_SetString(PyExc_LookupError, "unknown variable");
-		return -1;
+		return NULL;
     }
 
     if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
 		if (!PyInt_Check(value)) {
 			PyErr_SetString(PyExc_TypeError, "invalid type");
-			return -1;
+			return NULL;
 		}
 		variable_set(name, itoa(PyInt_AsLong(value)), 0);
 	} else {
 		if (!PyString_Check(value)) {
 			PyErr_SetString(PyExc_TypeError, "invalid type");
-			return -1;
+			return NULL;
 		}
 		variable_set(name, PyString_AsString(value), 0);
     }
