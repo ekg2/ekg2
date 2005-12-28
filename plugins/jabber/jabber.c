@@ -744,6 +744,8 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	xmlnode_t *q;
 	int ismuc = 0;
 
+	int na = !xstrcmp(type, "unavailable");
+
 	jid = jabber_unescape(from);
 	uid = saprintf("jid:%s", jid);
 	xfree(jid);
@@ -785,7 +787,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 					if (!(ulist = userlist_find_u(&(w->userlist), uid)))
 						ulist = userlist_add_u(&(w->userlist), uid, jid);
 
-					if (ulist && !xstrcmp(type, "unavailable")) {
+					if (ulist && na) {
 							userlist_remove_u(&(w->userlist), ulist);
 							ulist = NULL;
 					}
@@ -808,7 +810,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		}
 		xfree(mucuid);
 	}
-	if (!ismuc && (!type || ( !xstrcmp(type, "unavailable") || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
+	if (!ismuc && (!type || ( na|| !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
 		xmlnode_t *nshow, *nstatus, *nerr;
 		char *status = NULL, *descr = NULL;
 		char *jstatus = NULL;
@@ -816,11 +818,11 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
 			jstatus = jabber_unescape(nshow->data);
-			if (!xstrcmp(jstatus, "na") || !xstrcmp(type, "unavailable")) {
+			if (!xstrcmp(jstatus, "na") || na) {
 				status = xstrdup(EKG_STATUS_NA);
 			}
 		} else {
-			if (!xstrcmp(type, "unavailable"))
+			if (na)
 				status = xstrdup(EKG_STATUS_NA);
 			else	status = xstrdup(EKG_STATUS_AVAIL);
 		}

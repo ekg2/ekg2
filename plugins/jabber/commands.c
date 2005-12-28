@@ -240,7 +240,7 @@ COMMAND(jabber_command_msg)
 	/* czy wiadomo¶æ ma mieæ temat? */
 	if (config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
 		char *subtmp = xstrdup((params[1]+subjectlen)); /* obcinamy prefix tematu */
-		char *tmp = NULL;
+		char *tmp;
 
 		/* je¶li ma wiêcej linijek, zostawiamu tylko pierwsz± */
 		if ((tmp = xstrchr(subtmp, 10)))
@@ -265,7 +265,6 @@ COMMAND(jabber_command_msg)
 		xfree(subject); 
 	}
 	if (msg) {
-		debug("[MSG] %s\n", msg);
 		jabber_write(j, "<body>%s</body>", msg);
         	if (config_last & 4) 
         		last_add(1, uid, time(NULL), 0, msg);
@@ -279,7 +278,7 @@ COMMAND(jabber_command_msg)
 
 	if (!quiet && !ismuc) { /* if (1) ? */ 
 		char *me 	= xstrdup(session_uid_get(session));
-		char **rcpts 	= xmalloc(sizeof(char *) * 2);
+		char **rcpts 	= xcalloc(2, sizeof(char *));
 		char *msg	= xstrdup(params[1]);
 		time_t sent 	= time(NULL);
 		int class 	= (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
@@ -298,8 +297,7 @@ COMMAND(jabber_command_msg)
 
 		xfree(msg);
 		xfree(me);
-		xfree(rcpts[0]);
-		xfree(rcpts);
+		array_free(rcpts);
 	}
 
 	session_unidle(session);
@@ -310,7 +308,7 @@ COMMAND(jabber_command_msg)
 COMMAND(jabber_command_inline_msg)
 {
 	const char *p[2] = { NULL, params[0] };
-	if (!params[0])
+	if (!params[0] || !target)
 		return -1;
 	return jabber_command_msg("chat", p, session, target, quiet);
 }
@@ -755,7 +753,7 @@ COMMAND(jabber_muc_command_part)
 	char *status;
 
 	if (!(w = window_find_s(session, target)) || !(w->userlist)) {
-		printq("generic_error", "Use /jid:mucpart only in valid MUC room/window");
+		printq("generic_error", "Use /jid:part only in valid MUC room/window");
 		return -1;
 	}
 
