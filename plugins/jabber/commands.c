@@ -240,27 +240,23 @@ COMMAND(jabber_command_msg)
 	/* czy wiadomo¶æ ma mieæ temat? */
 	if (config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
 		char *subtmp = xstrdup((params[1]+subjectlen)); /* obcinamy prefix tematu */
-		char *tmp;
+		char *tmp = NULL;
 
 		/* je¶li ma wiêcej linijek, zostawiamu tylko pierwsz± */
 		if ((tmp = xstrchr(subtmp, 10)))
 			*tmp = 0;
 
 		subject = jabber_escape(subtmp);
-		xfree(subtmp);
-
 		/* body of wiadomo¶æ to wszystko po koñcu pierwszej linijki */
-		msg = jabber_escape(tmp ? tmp+1 : NULL);
+		msg = (tmp) ? jabber_escape(tmp+1) : NULL;
+		xfree(subtmp);
 	} else 
 		msg = jabber_escape(params[1]); /* bez tematu */
-/* <TODO tag=clean> */
-	w = window_find_s(session, target);
-	debug("[jabber,msg, ismuc] %x %x\n", w, w ? w->userlist : NULL);
 	if ((w = window_find_s(session, target)) && (w->userlist))
 		ismuc = 1;
-/* </TODO> */
+
 	if (ismuc)
-		jabber_write(j, "<message to=\"%s/%s\" id=\"%d\" type=\"chat\">", uid+4, "darkjames", time(NULL));
+		jabber_write(j, "<message type=\"groupchat\" to=\"%s\" id=\"%d\">", uid+4, time(NULL));
 	else
 		jabber_write(j, "<message %sto=\"%s\" id=\"%d\">", chat ? "type=\"chat\" " : "", uid+4, time(NULL));
 
@@ -269,6 +265,7 @@ COMMAND(jabber_command_msg)
 		xfree(subject); 
 	}
 	if (msg) {
+		debug("[MSG] %s\n", msg);
 		jabber_write(j, "<body>%s</body>", msg);
         	if (config_last & 4) 
         		last_add(1, uid, time(NULL), 0, msg);
@@ -764,7 +761,7 @@ COMMAND(jabber_muc_command_part)
 
 	status = params[1] ? saprintf(" <status>%s</status> ", params[1]) : NULL;
 
-	jabber_write(j, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", target+4, "darkjames", status);
+	jabber_write(j, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", target+4, "darkjames", status ? status : "");
 
 	xfree(status);
 	return 0;
@@ -795,8 +792,8 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "jid:msg", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "jid:modify", "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
 			"-n --nickname -g --group");
-	command_add(&jabber_plugin, "jid:mucjoin", "! ? ?", jabber_muc_command_join, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&jabber_plugin, "jid:mucpart", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "jid:join", "! ? ?", jabber_muc_command_join, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, "jid:part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "jid:passwd", "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "jid:transports", "? ?", jabber_command_transports, JABBER_FLAGS, NULL);

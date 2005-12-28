@@ -360,14 +360,15 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 
 		debug("[jabber,message] type = %s\n", type);
 		if (!xstrcmp(type, "groupchat")) {
+			char *temp = jabber_unescape(body->str);
+			char *tuid = xstrrchr(uid, '/');
 			int prv = 0;
 			int isour = 0;
-			const char *frname = format_find(isour ? 
-				prv ? "jabber_muc_send_private" : "jabber_muc_send_public" : 
-				prv ? "jabber_muc_recv_private" : "jabber_muc_recv_public");
-			char *temp = jabber_unescape(body->str);
+			
+			const char *frname = format_find(isour ? "jabber_muc_send" : "jabber_muc_recv");
+
 			class |= EKG_NO_THEMEBIT;
-			text = format_string(frname, session_name(s), uid, temp);
+			text = format_string(frname, session_name(s), (tuid) ? tuid+1 : uid, temp);
 			xfree(temp);
 		} else {
 			text = jabber_unescape(body->str);
@@ -753,7 +754,6 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		return;
 	}
 
-
 	if (from && !xstrcmp(type, "unsubscribe")) {
 		print("jabber_auth_unsubscribe", uid, session_name(s));
 		xfree(uid);
@@ -765,7 +765,6 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : xstrlen(uid));
 		if (!xstrcmp(q->name, "x") && !xstrcmp(jabber_attr(q->atts, "xmlns"), "http://jabber.org/protocol/muc#user")) {
 			xmlnode_t *child;
-			ismuc = 1;
 
 			for (child = q->children; child; child = child->next) {
 				if (!xstrcmp(child->name, "item")) { /* lista userow */
@@ -774,33 +773,42 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 					char *affiliation = jabber_unescape(jabber_attr(child->atts, "affiliation"));	/* ? */
 
 					char *uid; 
+					char *tmp;
+
 					window_t *w;
 					userlist_t *ulist;
-
+	
 					if (!(w = window_find_s(s, mucuid))) /* co robimy jak okno == NULL ? */
 						w = window_new(mucuid, s, 0); /* tworzymy ? */
 					uid = saprintf("jid:%s", jid);
-					ulist = userlist_add_u(&(w->userlist), uid, jid);
+
+					if (!(ulist = userlist_find_u(&(w->userlist), uid)))
+						ulist = userlist_add_u(&(w->userlist), uid, jid);
+
+					if (ulist && !xstrcmp(type, "unavailable")) {
+							userlist_remove_u(&(w->userlist), ulist);
+							ulist = NULL;
+					}
+					if (ulist) {
+						tmp = ulist->status;
+						ulist->status = xstrdup(EKG_STATUS_AVAIL);
+						xfree(tmp);
+
+					}
 					xfree(uid);
 
 					xfree(jid); xfree(role); xfree(affiliation);
 				} else { /* debug pursuit only */
 					char *s = saprintf("\tMUC: %s", child->name);
 					print("generic", s);
-					xfree(s);
+				xfree(s);
 				}
 			}
+			ismuc = 1;
 		}
 		xfree(mucuid);
 	}
-	if (ismuc) {
-		/* presence type = "unavalible" -> part...
-		 * 	 we recv join as item... look upper.. */
-		xfree(uid);
-		return;
-	}
-
-	if (!type || ( !xstrcmp(type, "unavailable") || !xstrcmp(type, "error") || !xstrcmp(type, "available"))) {
+	if (!ismuc && (!type || ( !xstrcmp(type, "unavailable") || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
 		xmlnode_t *nshow, *nstatus, *nerr;
 		char *status = NULL, *descr = NULL;
 		char *jstatus = NULL;
@@ -1292,10 +1300,8 @@ static int jabber_theme_init()
 	format_add("jabber_register_param_value", "--%1 %2", 1);
 	format_add("jabber_register_param", "--%1 [%2]", 1);
 
-	format_add("jabber_muc_send_public", _("<%2> %3"), 1);
-	format_add("jabber_muc_send_private", _("<%2> %3"), 1);
-	format_add("jabber_muc_recv_public", _("<%2> %3"), 1);
-	format_add("jabber_muc_recv_private", _("<%2> %3"), 1);
+	format_add("jabber_muc_send", _("%B<%W%2%B>%n %3"), 1);
+	format_add("jabber_muc_recv", _("%b<%w%2%b>%n %3"), 1);
 	
         return 0;
 }
