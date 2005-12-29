@@ -165,6 +165,20 @@ QUERY(jabber_validate_uid)
         return 0;
 }
 
+QUERY(jabber_window_kill) 
+{
+	window_t        *w = *va_arg(ap, window_t **);
+	jabber_private_t *j;
+
+	char *status = NULL;
+
+	if (w && w->id && w->target && w->userlist && session_check(w->session, 1, "jid") && 
+			(j = jabber_private(w->session)) && session_connected_get(w->session))
+		jabber_write(j, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target+4, "darkjames", status ? status : "");
+
+	return 0;
+}
+
 int jabber_write_status(session_t *s)
 {
         jabber_private_t *j = session_private_get(s);
@@ -272,11 +286,17 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 		sent = jabber_try_xdelay(xitem, ns);
 
 		if (!xstrncmp(ns, "jabber:x:event", 14)) {
-			int acktype = 0; /* 2 - queued ; 1 - delivered */
+			int acktype = 0; /* bitmask: 2 - queued ; 1 - delivered */
+			int isack;
+
+			if (xmlnode_find_child(xitem, "delivered"))	acktype |= 1;	/* delivered */
+			if (xmlnode_find_child(xitem, "offline"))	acktype	|= 2;	/* queued */
+			if (xmlnode_find_child(xitem, "composing"))	acktype |= 4;	/* composing */
+
+			isack = (acktype & 1) || (acktype & 2);
 
 			/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
-			if (nbody && (xmlnode_find_child(xitem, "delivered") 
-						|| xmlnode_find_child(xitem, "displayed")) ) {
+			if (nbody && isack) {
 				char *id = jabber_attr(n->atts, "id");
 				const char *our_status = session_status_get(s);
 
@@ -286,33 +306,27 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 				if (!xstrcmp(our_status, EKG_STATUS_INVISIBLE)) {
 					jabber_write(j, "<offline/>");
 				} else {
-					if (xmlnode_find_child(xitem, "delivered"))
+					if (acktype & 1)
 						jabber_write(j, "<delivered/>");
-					if (xmlnode_find_child(xitem, "displayed"))
+					if (acktype & 2)
 						jabber_write(j, "<displayed/>");
 				};
-
 				jabber_write(j, "<id>%s</id></x></message>",id);
 			};
-
 			/* je¶li body nie ma, to odpowiedz na nasza prosbe */
-
-			acktype = xmlnode_find_child(xitem, "delivered") ? 1	/* delivered */
-				: xmlnode_find_child(xitem, "offline") ? 2	/* queued */
-				: 0;
-/* TODO: wbudowac composing w protocol-message-ack ? */
-			if (!nbody && acktype) {
+			if (!nbody && isack) {
 				char *__session = xstrdup(session_uid_get(s));
 				char *__rcpt	= xstrdup(uid); /* was uid+4 */
 				char *__status  = xstrdup(
-						acktype == 1 ? "delivered" : 
-						acktype == 2 ? "queued" : 
-/*						acktype == 3 ? "?" : */
+						(acktype & 1) ? "dlivered" : 
+						(acktype & 2) ? "queued" : 
+/* TODO: wbudowac composing w protocol-message-ack ? */
+/*						(acktype & 4) ? "compose" :  */
 						NULL);
-				char *__seq	= NULL;
+				char *__seq	= NULL; /* id ? */
 
 				/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
-				query_emit(NULL, "protocol-message-ack", &__session, &__rcpt, &__seq, &__status, NULL);
+				query_emit(NULL, "protocol-message-ack", &__session, &__rcpt, &__seq, &__status);
 				
 				xfree(__session);
 				xfree(__rcpt);
@@ -320,8 +334,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 				/* xfree(__seq); */
 			}
 
-			if (!nbody && xmlnode_find_child(xitem, "composing")) {
-				if (session_int_get(s, "show_typing_notify")) 
+			if (!nbody && (acktype & 4) && session_int_get(s, "show_typing_notify")) {
 					print("jabber_typing_notify", uid+4);
 			} /* composing */
 		} /* jabber:x:event */
@@ -348,21 +361,19 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 		const char *type = jabber_attr(n->atts, "type");
 
 		char *me	= xstrdup(session_uid_get(s));
-		char *text;	
-
 		int class 	= EKG_MSGCLASS_CHAT;
 		int ekgbeep 	= EKG_TRY_BEEP;
 		int secure	= 0;
-
 		char **rcpts 	= NULL;
 		char *seq 	= NULL;
 		uint32_t *format = NULL;
+
+		char *text;	
 
 		debug("[jabber,message] type = %s\n", type);
 		if (!xstrcmp(type, "groupchat")) {
 			char *temp = jabber_unescape(body->str);
 			char *tuid = xstrrchr(uid, '/');
-			int prv = 0;
 			int isour = 0;
 			
 			const char *frname = format_find(isour ? "jabber_muc_send" : "jabber_muc_recv");
@@ -1317,6 +1328,7 @@ int jabber_plugin_init(int prio)
         query_connect(&jabber_plugin, "session-added", jabber_session, (void*) 1);
         query_connect(&jabber_plugin, "session-removed", jabber_session, (void*) 0);
         query_connect(&jabber_plugin, "status-show", jabber_status_show_handle, NULL);
+	query_connect(&jabber_plugin, "ui-window-kill", jabber_window_kill, NULL);
 
         jabber_register_commands();
 
