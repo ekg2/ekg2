@@ -363,7 +363,7 @@ int logs_away_display(log_away_t *la, int quiet, int free) {
 			log_session_away_t *lsa = l->data;
 			print_window("__status", session_current, 0, "away_log_msg",
 					prepare_timestamp_format(format_find("away_log_timestamp"), lsa->t),
-					(lsa->chname)+4, (lsa->uid)+4, lsa->msg);
+					lsa->chname ? (lsa->chname)+4 : "", (lsa->uid)+4, lsa->msg);
 			if (free) {
 				xfree(lsa->chname);
 				xfree(lsa->uid);
@@ -1076,7 +1076,7 @@ void logs_xml(FILE *file, const char *session, const char *uid, const char *text
 {
 	session_t *s;
 	char *textcopy;
-	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(0));
+	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(NULL));
 /*	const char *senttimestamp = prepare_timestamp_format(config_logs_timestamp, sent); */
 	char *gotten_uid, *gotten_nickname;
 	const char *tmp;
