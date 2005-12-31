@@ -90,9 +90,9 @@ static void protocol_reconnect_handler(int type, void *data)
  */
 int protocol_disconnected(void *data, va_list ap)
 {
-	char **__session = va_arg(ap, char**), *session = *__session;
-	char **__reason = va_arg(ap, char**), *reason = *__reason;
-	int *__type = va_arg(ap, int*), type = *__type;
+	char *session	= *(va_arg(ap, char**));
+	char *reason	= *(va_arg(ap, char**));
+	int type	= *(va_arg(ap, int*));
 
 	userlist_clear_status(session_find(session), NULL);
 
@@ -172,15 +172,16 @@ int protocol_status(void *data, va_list ap)
 {
 	char **__session = va_arg(ap, char**), *session = *__session;
 	char **__uid = va_arg(ap, char**), *uid = *__uid;
-	char **__status = va_arg(ap, char**), *status = *__status;
+	char *status	= *(va_arg(ap, char**));
 	char **__descr = va_arg(ap, char**), *descr = *__descr;
-	char **__host = va_arg(ap, char**), *host = *__host;
-	int *__port = va_arg(ap, int*), port = *__port;
-	time_t *__when = va_arg(ap, time_t*), when = *__when;
+	char *host	= *(va_arg(ap, char**));
+	int port	= *(va_arg(ap, int*));
+	time_t when	= *(va_arg(ap, time_t*));
+
 	userlist_t *u;
 	session_t *s;
+	int ignore_level;
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
-
 
 	if (!(s = session_find(session)))
 		return 0;
@@ -194,11 +195,12 @@ int protocol_status(void *data, va_list ap)
 			return 0;
 		}
 	}
+	ignore_level = ignored_check(s, uid);
 
-        ignore_status = ignored_check(s, uid) & IGNORE_STATUS;
-        ignore_status_descr = ignored_check(s, uid) & IGNORE_STATUS_DESCR;
-	ignore_events = ignored_check(s, uid) & IGNORE_EVENTS;
-        ignore_notify = ignored_check(s, uid) & IGNORE_NOTIFY;
+	ignore_status = ignore_level & IGNORE_STATUS;
+	ignore_status_descr = ignore_level & IGNORE_STATUS_DESCR;
+	ignore_events = ignore_level & IGNORE_EVENTS;
+	ignore_notify = ignore_level & IGNORE_NOTIFY;
 
 	/* zapisz adres IP i port */
 	u->ip = (host) ? inet_addr(host) : 0;
@@ -621,14 +623,15 @@ int protocol_message(void *data, va_list ap)
  */
 int protocol_message_ack(void *data, va_list ap)
 {
-	char **p_session = va_arg(ap, char**), *session = *p_session;
-	char **p_rcpt = va_arg(ap, char**), *rcpt = *p_rcpt;
-	char **p_seq = va_arg(ap, char**), *seq = *p_seq;
-	char **p_status = va_arg(ap, char**), *status = *p_status;
-	char format[100];
+	char *session	= *(va_arg(ap, char**));
+	char *rcpt	= *(va_arg(ap, char**));
+	char *seq	= *(va_arg(ap, char**));
+	char *status	= *(va_arg(ap, char**));
+
 	userlist_t *u = userlist_find(session_find(session), rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
 	int display = 0;
+	char format[100];
 
 	snprintf(format, sizeof(format), "ack_%s", status);
 

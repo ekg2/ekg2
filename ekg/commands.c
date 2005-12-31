@@ -33,6 +33,9 @@
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
 #endif
+
+#define _BSD_SOURCE
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>

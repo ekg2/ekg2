@@ -127,6 +127,9 @@ int msg_queue_remove_seq(const char *seq)
 	int res = -1;
 	list_t l;
 
+	if (!seq) 
+		return -1;
+
 	for (l = msg_queue; l; ) {
 		msg_queue_t *m = l->data;
 
