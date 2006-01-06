@@ -210,7 +210,8 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
                                 break;
                         case (SCR_ARG_CHARP): {
                                 char *tmp = *(char **) args[i];
-                                w = PyString_FromString(tmp);
+				if (tmp)
+                                	w = PyString_FromString(tmp);
                                 break;
                         }
                         case (SCR_ARG_CHARPP): {
