@@ -750,11 +750,11 @@ QUERY(logs_handler)
 
 /* uid = uid | ruid ? */
 	if (lw->logformat == LOG_FORMAT_IRSSI)
-		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE, NULL);
+		logs_irssi(lw->file, session, ruid, text, sent, LOG_IRSSI_MESSAGE, NULL);
 	else if (lw->logformat == LOG_FORMAT_SIMPLE)
-		logs_simple(lw->file, session, uid, text, sent, class, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL);
+		logs_simple(lw->file, session, ruid, text, sent, class, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL);
 	else if (lw->logformat == LOG_FORMAT_XML)
-		logs_xml(lw->file, session, uid, text, sent, class);
+		logs_xml(lw->file, session, ruid, text, sent, class);
 	// itd. dla innych formatow logow
 
 	return 0;
