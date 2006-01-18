@@ -117,7 +117,7 @@ COMMAND(logsqlite_cmd_last)
 			limit = atoi(params[++i]);
 
 			if (limit <= 0) {
-				prinq("invalid_params", "logsqlite:last");
+				printq("invalid_params", "logsqlite:last");
 				return 0;
 			}
 			continue;
