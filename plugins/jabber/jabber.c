@@ -1256,11 +1256,12 @@ QUERY(jabber_status_show_handle)
 	xfree(tmp);
 
         // serwer
-	print(
 #ifdef HAVE_GNUTLS
-			j->using_ssl ? "show_status_server_tls" :
+	print(j->using_ssl ? "show_status_server_tls" : "show_status_server", j->server, itoa(j->port));
+#else
+	print("show_status_server", j->server, itoa(j->port));
 #endif
-			"show_status_server", j->server, itoa(j->port));
+			
         if (j->connecting)
                 print("show_status_connecting");
 	
