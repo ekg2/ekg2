@@ -30,6 +30,31 @@
          <qandaentry>
             <question>
                <para>
+                  Plugin gg/irca/jabbera mi nie dzia³a, co zrobiæ ?
+               </para>
+            </question>
+            <answer>
+               <para>
+                  Po pierwsze sprawd¼ czy komenda <command>/plugins</command>
+		  pokazuje odpowiedni plugin, je¶li tak, to co¶ krêcisz ;>
+		  Je¶li nie spróbuj <command>/plugins +nazwawtyczki</command>.
+		  Je¶li nie podawa³e¶ opcji --prefix do <command>./configure</command>
+		  czy <command>./autogen.sh</command> to sprawd¼, czy w katalogu
+		  <filename>/usr/local/lib/ekg2/plugins</filename> znajduj± siê pliki
+		  <filename>*.so</filename> i <filename>*.la</filename> dla odpowiedniego
+		  pluginu (np: <filename>gg.so</filename>, <filename>gg.la</filename>)
+		  Je¶li nie ma, to albo odpowiednie pluginy nie zosta³y skompilowane,
+		  albo co¶ ze ¶cie¿kami na tym systemie jest nie tak.
+		  Mo¿esz te¿ spróbowaæ dodaæ (jako root oczywi¶cie) do
+		  <filename>/etc/ld.so.conf</filename> ¶cie¿kê: 
+		  <filename>/usr/local/lib</filename> nastêpnie wydaæ komendê
+		  <command>ldconfig</command>.
+               </para>
+            </answer>
+         </qandaentry>
+         <qandaentry>
+            <question>
+               <para>
                   Mam wersjê CVS EKG2 ale przy wykonywaniu ./autogen.sh pojawiaja mi
                   siê b³edy o brakuj±cym libtoolize, libtool, aclocal, autoheader,
                   automake, autoconf, autom4te. Co z tym zrobic?
