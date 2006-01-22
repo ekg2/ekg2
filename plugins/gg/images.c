@@ -2,6 +2,7 @@
 
 /*
  *  (C) Copyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *  		  2006 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -44,6 +45,24 @@
 #include "gg.h"
 
 list_t images = NULL;
+
+/* 
+ * gg_changed_images()
+ *
+ * called when some images_* variables are changed
+ */
+void gg_changed_images(const char *var)
+{
+	if (gg_config_image_size > 255) {
+		gg_config_image_size = 255;
+	} else
+		if (gg_config_image_size < 20)
+			gg_config_image_size = 20;
+
+	print("config_must_reconnect");
+}
+
+
 
 COMMAND(gg_command_image)
 {

@@ -1,7 +1,7 @@
 // ma³y opis dostêpnych zmiennych pluginu gg
-// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
-// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
-// (c) copyright      2004 adam mikuta <adammikuta@poczta.onet.pl>
+// (c) copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 Piotr Kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2004-2006 Adam Mikuta <adamm@ekg2.org>
 
 dcc
 	typ: bool
@@ -66,6 +66,13 @@ images_dir
 	
 	zmienna okre¶la katalog, do którego maj± byæ zapisywane obrazki 
 	przy ustawionej zmiennej get_images
+
+images_size
+	typ: liczba
+	domy¶lna warto¶æ: 20
+	
+	zmienna okre¶la górn± granicê wielko¶ci rozmiaru przyjmowanych obrazków
+	w kB
 
 split_messages
 	typ: bool

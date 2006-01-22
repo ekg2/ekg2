@@ -1,8 +1,8 @@
 // ma³y opis dostêpnych zmiennych pluginu gg
-// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
-// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
-// (c) copyright      2004 adam mikuta <adammikuta@poczta.onet.pl>
-// (c) copyright      2005 mateusz samonek <m@batnet.pl>
+// (c) copyright 2001-2003 Wojtek Waniewski <wojtekka@irc.pl>
+// (c) copyright      2004 Piotr Kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2004-2006 Adam Mikuta <adamm@ekg2.org>
+// (c) copyright      2005 Mateusz Samonek <m@batnet.pl>
 
 dcc
         type: bool
@@ -38,7 +38,7 @@ dcc_limit
 dcc_port
         type: number
         default value: 1550
-	
+
         port, which ekg uses for p2p conections.
 
 display_token
@@ -54,9 +54,23 @@ get_images
         default value: 0
 	
         if value = 1 , images from chat will be downloaded
-	  and saved in .ekg2/images
+	  and saved in catalogue defined by images_dir
 
-split_images
+images_dir
+	type: text
+	default value: none
+	
+	set catalogue, in which images will be saved, when get_images is set.
+
+
+images_size
+	typ: liczba
+	domy¶lna warto¶æ: 20
+	
+	varible which define size of images in kB
+
+
+split_messages
         type: bool
         default value: 0
 	

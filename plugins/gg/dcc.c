@@ -80,7 +80,7 @@ void gg_changed_dcc(const char *var)
 		}
 	}
 
-	print("dcc_must_reconnect");
+	print("config_must_reconnect");
 }
 
 COMMAND(gg_command_dcc)

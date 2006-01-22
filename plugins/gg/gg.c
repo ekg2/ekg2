@@ -3,7 +3,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
  *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
- *		  2004 - 2005 Adam Mikuta <adamm@ekg2.org>
+ *		  2004 - 2006 Adam Mikuta <adamm@ekg2.org>
  *		  2005 Leszek Krupiñski <leafnode@wafel.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -299,7 +299,7 @@ QUERY(gg_add_notify_handle)
 }
 
 /*
- * trzeba usun±ææ numer u¿ytkownika z listy osób, o których
+ * trzeba usun±æ numer u¿ytkownika z listy osób, o których
  * zmianach statusów chcemy byæ informowani
  */
 QUERY(gg_remove_notify_handle)
@@ -845,7 +845,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 		        debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
 
 			if ((fp = image_open_file(prepare_path(image_file, 1))) == NULL) {
-				debug("can't open file for image \n");
+				print("gg_image_cant_open_file", image_file);
 			} else {
 				int i;
 			
@@ -853,6 +853,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 					fputc(e->event.image_reply.image[i],fp);
 				}
 				fclose(fp);
+				print("gg_image_ok_get", image_file);
 			}
 			xfree(image_file);
 		}	
@@ -1163,8 +1164,10 @@ static int gg_theme_init()
 	format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
 	format_add("gg_user_is_connected", _("%> (%1) User %T%2%n is connected\n"), 1);
 	format_add("gg_user_is_not_connected", _("%> (%1) User %T%2%n is not connected\n"), 1);
+	format_add("gg_image_cant_open_file", _("%! Can't open file for image %1\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
+	format_add("gg_image_ok_get", _("%> Image saved in %1\n"), 1);
 	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);	
 	return 0;
 }
@@ -1179,6 +1182,7 @@ QUERY(gg_setvar_default)
 	gg_config_display_token = 1;
 	gg_config_get_images = 0;
 	gg_config_images_dir = NULL;
+	gg_config_image_size = 20;
 	gg_config_dcc = 0;
 	gg_config_dcc_dir = NULL;
 	gg_config_dcc_ip = NULL;
@@ -1216,6 +1220,7 @@ int gg_plugin_init(int prio)
 	variable_add(&gg_plugin, "dcc_port", VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
 	variable_add(&gg_plugin, "get_images", VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
 	variable_add(&gg_plugin, "images_dir", VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
+	variable_add(&gg_plugin, "image_size", VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
         variable_add(&gg_plugin, "split_messages", VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
