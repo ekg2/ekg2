@@ -55,12 +55,12 @@ WINDOW *ncurses_status = NULL;		/* okno stanu */
 WINDOW *ncurses_header = NULL;		/* okno nag³ówka */
 WINDOW *ncurses_input = NULL;		/* okno wpisywania tekstu */
 
-char *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
+CHAR_T *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
 int ncurses_history_index = 0;		/* offset w historii */
 
-char *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
-char *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
-char **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
+CHAR_T *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
+CHAR_T *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
+CHAR_T **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
 int ncurses_line_start = 0;		/* od którego znaku wy¶wietlamy? */
 int ncurses_line_index = 0;		/* na którym znaku jest kursor? */
 int ncurses_lines_start = 0;		/* od której linii wy¶wietlamy? */
@@ -77,7 +77,7 @@ int have_winch_pipe = 0;
 #  define ASPELLCHAR 5
 AspellConfig * spell_config;
 AspellSpeller * spell_checker = 0;
-char *aspell_line;
+CHAR_T *aspell_line;
 #endif
 
 /*
@@ -294,7 +294,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
 		struct screen_line *l;
-		char *str; 
+		CHAR_T *str; 
 		short *attr;
 		int j, margin_left, wrapping = 0;
 		time_t ts;
@@ -335,7 +335,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			if (!w->floating && config_timestamp && config_timestamp_show) {
 				struct tm *tm = localtime(&ts);
-				char buf[100], *tmp = NULL, *format;
+				CHAR_T buf[100], *tmp = NULL, *format;
 				fstring_t *s = NULL;
 
 				if (xstrcmp(config_timestamp, "")) {
@@ -581,8 +581,8 @@ void ncurses_redraw(window_t *w)
 {
 	int x, y, left, top, height, width;
 	ncurses_window_t *n = w->private;
-	const char *vertical_line_char = format_find("contacts_vertical_line_char");
-	const char *horizontal_line_char = format_find("contacts_horizontal_line_char");
+	const CHAR_T *vertical_line_char = format_find("contacts_vertical_line_char");
+	const CHAR_T *horizontal_line_char = format_find("contacts_horizontal_line_char");
 	
 	if (!n)
 		return;
@@ -660,7 +660,7 @@ void ncurses_redraw(window_t *w)
 		for (x = 0; l->ts && l->ts[x] && x < l->ts_len; x++) { 
 			int attr = A_NORMAL;
 			short chattr = l->ts_attr[x];
-			unsigned char ch = (unsigned char) l->ts[x];
+			unsigned CHAR_T ch = (unsigned CHAR_T) l->ts[x];
 
                         if ((chattr & 64))
                                 attr |= A_BOLD;
@@ -695,7 +695,7 @@ void ncurses_redraw(window_t *w)
 
 		for (x = 0; x < l->prompt_len + l->len; x++) {
 			int attr = A_NORMAL;
-			unsigned char ch;
+			unsigned CHAR_T ch;
 			short chattr;
 			
 			if (x < l->prompt_len) {
@@ -922,12 +922,12 @@ void update_header(int commit)
  *
  * zwraca ilo¶æ dopisanych znaków.
  */
-int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, int fgcolor, int bold, int bgcolor, int status)
+int window_printat(WINDOW *w, int x, int y, const CHAR_T *format_, void *data_, int fgcolor, int bold, int bgcolor, int status)
 {
 	int orig_x = x;
 	int backup_display_color = config_display_color;
-	char *format = (char*) format_;
-	const char *p;
+	CHAR_T *format = (CHAR_T*) format_;
+	const CHAR_T *p;
 	struct format_data *data = data_;
 
 	if (!config_display_pl_chars) {
@@ -960,7 +960,7 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 		int i, nest;
 
 		if (*p != '%') {
-			waddch(w, (unsigned char) *p);
+			waddch(w, (unsigned CHAR_T) *p);
 			p++;
 			x++;
 			continue;
@@ -1023,7 +1023,7 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 			len = xstrlen(data[i].name);
 
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
-				char *text = data[i].text;
+				CHAR_T *text = data[i].text;
                              	
 				if (!config_display_pl_chars) {
                                 	text = xstrdup(text);
@@ -1032,7 +1032,7 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 
 				while (*text) {
 					if (*text != '%') {
-						waddch(w, (unsigned char) *text);
+						waddch(w, (unsigned CHAR_T) *text);
 						*text++;	
 						x++;
 						continue;
@@ -1147,7 +1147,7 @@ void update_statusbar(int commit)
 	int formats_count = 0, i = 0, y;
 	session_t *sess = window_current->session;
 	userlist_t *u;
-	char *tmp;
+	CHAR_T *tmp;
 
 	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
 	if (ncurses_header)
@@ -1181,8 +1181,8 @@ void update_statusbar(int commit)
 	}
 	if (session_check(window_current->session, 0, "irc")) {
 		/* yeah, I know, shitty way */
-		char *t2 = NULL;
-		char *t3 = NULL; 
+		CHAR_T *t2 = NULL;
+		CHAR_T *t3 = NULL; 
 		query_emit(NULL, "irc-topic", &tmp, &t2, &t3);
 		__add_format("irctopic", tmp, tmp);
 		__add_format("irctopicby", t2, t2);
@@ -1199,7 +1199,7 @@ void update_statusbar(int commit)
 
 		for (l = windows; l; l = l->next) {
 			window_t *w = l->data;
-			char *tmp;
+			CHAR_T *tmp;
 
 			if (!w->act || !w->id) 
 				continue;
@@ -1246,7 +1246,7 @@ void update_statusbar(int commit)
 #undef __add_format
 
 	for (y = 0; y < config_header_size; y++) {
-		const char *p;
+		const CHAR_T *p;
 
 		if (!y) {
 			p = format_find("header1");
@@ -1254,7 +1254,7 @@ void update_statusbar(int commit)
 			if (!xstrcmp(p, ""))
 				p = format_find("header");
 		} else {
-			char *tmp = saprintf("header%d", y + 1);
+			CHAR_T *tmp = saprintf("header%d", y + 1);
 			p = format_find(tmp);
 			xfree(tmp);
 		}
@@ -1263,7 +1263,7 @@ void update_statusbar(int commit)
 	}
 
 	for (y = 0; y < config_statusbar_size; y++) {
-		const char *p;
+		const CHAR_T *p;
 
 		if (!y) {
 			p = format_find("statusbar1");
@@ -1271,7 +1271,7 @@ void update_statusbar(int commit)
 			if (!xstrcmp(p, ""))
 				p = format_find("statusbar");
 		} else {
-			char *tmp = saprintf("statusbar%d", y + 1);
+			CHAR_T *tmp = saprintf("statusbar%d", y + 1);
 			p = format_find(tmp);
 			xfree(tmp);
 		}
@@ -1283,7 +1283,7 @@ void update_statusbar(int commit)
 				
 			case 1:
 			{
-				char *tmp = saprintf(" debug: lines_count=%d start=%d height=%d overflow=%d screen_width=%d", ncurses_current->lines_count, ncurses_current->start, window_current->height, ncurses_current->overflow, ncurses_screen_width);
+				CHAR_T *tmp = saprintf(" debug: lines_count=%d start=%d height=%d overflow=%d screen_width=%d", ncurses_current->lines_count, ncurses_current->start, window_current->height, ncurses_current->overflow, ncurses_screen_width);
 				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
 				xfree(tmp);
 				break;
@@ -1291,7 +1291,7 @@ void update_statusbar(int commit)
 
 			case 2:
 			{
-				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count(ncurses_lines), lines_start, lines_index, line_start, line_index);
+				CHAR_T *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count(ncurses_lines), lines_start, lines_index, line_start, line_index);
 				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
 				xfree(tmp);
 				break;
@@ -1300,7 +1300,7 @@ void update_statusbar(int commit)
 			case 3:
 			{
 				session_t *s = window_current->session;
-				char *tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s session_current->uid=%s", s, (s && s->uid) ? s->uid : "", (s && s->alias) ? s->alias : "", (window_current->target) ? window_current->target : "", (session_current && session_current->uid) ? session_current->uid : "");
+				CHAR_T *tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s session_current->uid=%s", s, (s && s->uid) ? s->uid : "", (s && s->alias) ? s->alias : "", (window_current->target) ? window_current->target : "", (session_current && session_current->uid) ? session_current->uid : "");
 				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
 				xfree(tmp);
 				break;
@@ -1364,7 +1364,7 @@ static void sigwinch_handler()
 {
 	signal(SIGWINCH, sigwinch_handler);
 	if (have_winch_pipe) {
-		char c = ' ';
+		CHAR_T c = ' ';
 		write(winch_pipe[1], &c, 1);
 	}
 }
@@ -1595,7 +1595,7 @@ void ncurses_input_update()
 		lines_start = 0;
 		lines_index = 0;
 	} else {
-		ncurses_lines = xmalloc(2 * sizeof(char*));
+		ncurses_lines = xmalloc(2 * sizeof(CHAR_T*));
 		ncurses_lines[0] = xmalloc(LINE_MAXLEN);
 		ncurses_lines[1] = NULL;
 		xstrcpy(ncurses_lines[0], ncurses_line);
@@ -1619,7 +1619,7 @@ void ncurses_input_update()
  *
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char(WINDOW *w, int y, int x, unsigned char ch)
+void print_char(WINDOW *w, int y, int x, unsigned CHAR_T ch)
 {
 	wattrset(w, A_NORMAL);
 
@@ -1642,7 +1642,7 @@ void print_char(WINDOW *w, int y, int x, unsigned char ch)
  *
  * wy¶wietla w danym okienku podkreslony znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char_underlined(WINDOW *w, int y, int x, unsigned char ch)
+void print_char_underlined(WINDOW *w, int y, int x, unsigned CHAR_T ch)
 {
         wattrset(w, A_UNDERLINE);
 
@@ -1782,7 +1782,7 @@ int ekg_getch(int meta)
  */
 WATCHER(ncurses_watch_winch)
 {
-	char c;
+	CHAR_T c;
 	if (type) return;
 	read(winch_pipe[0], &c, 1);
 
@@ -1805,9 +1805,9 @@ WATCHER(ncurses_watch_winch)
  * it checks if the given word is correct
  */
 #ifdef WITH_ASPELL
-static void spellcheck(char *what, char *where)
+static void spellcheck(CHAR_T *what, CHAR_T *where)
 {
-        char *word;             /* aktualny wyraz */
+        CHAR_T *word;             /* aktualny wyraz */
         register int i = 0;     /* licznik */
 	register int j = 0;     /* licznik */
 	int size;	/* zmienna tymczasowa */
@@ -1912,7 +1912,7 @@ WATCHER(ncurses_watch_stdin)
 	ekg_stdin_want_more = 1;
 
 	if (bindings_added && ch != KEY_MOUSE) {
-		char **chars = NULL, *joined, c;
+		CHAR_T **chars = NULL, *joined, c;
 		int i = 0, count = 0, success = 0;
 		list_t l;
 
@@ -1934,7 +1934,7 @@ WATCHER(ncurses_watch_stdin)
 	                        if (b->function)
 	                                b->function(b->arg);
 	                        else {
-	                                char *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+	                                CHAR_T *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
 	                                command_exec(window_current->target, window_current->session, tmp, 0);
 	                                xfree(tmp);
 	                        }
@@ -1986,7 +1986,7 @@ end:
 			if (b->function)
 				b->function(b->arg);
 			else {
-				char *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+				CHAR_T *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
 				command_exec(window_current->target, window_current->session, tmp, 0);
 				xfree(tmp);
 			}
@@ -2007,7 +2007,7 @@ end:
 			if (b->function)
 				b->function(b->arg);
 			else {
-				char *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+				CHAR_T *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
 				command_exec(window_current->target, window_current->session, tmp, 0);
 				xfree(tmp);
 			}
@@ -2041,7 +2041,7 @@ then:
 		int i;
 		
 		for (i = 0; i < 5; i++) {
-			unsigned char *p;
+			unsigned CHAR_T *p;
 			int j;
 
 			if (!ncurses_lines[lines_start + i])
@@ -2172,7 +2172,7 @@ void header_statusbar_resize()
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,backlog_size''.
  */
-void changed_backlog_size(const char *var)
+void changed_backlog_size(const CHAR_T *var)
 {
 	list_t l;
 
@@ -2215,12 +2215,12 @@ int ncurses_window_new(window_t *w)
 		ncurses_contacts_new(w);
 
 	if (w->target) {
-		const char *f = format_find("ncurses_prompt_query");
+		const CHAR_T *f = format_find("ncurses_prompt_query");
 
 		n->prompt = format_string(f, w->target);
 		n->prompt_len = xstrlen(n->prompt);
 	} else {
-		const char *f = format_find("ncurses_prompt_none");
+		const CHAR_T *f = format_find("ncurses_prompt_none");
 
 		if (xstrcmp(f, "")) {
 			n->prompt = format_string(f);

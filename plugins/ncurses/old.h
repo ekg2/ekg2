@@ -3,8 +3,9 @@
 
 #include "ecurses.h"
 
-#include <ekg/themes.h>
-#include <ekg/windows.h>
+#include "ekg/themes.h"
+#include "ekg/windows.h"
+#include "ekg/char.h"
 
 void ncurses_init();
 void ncurses_deinit();
@@ -27,14 +28,14 @@ void update_statusbar(int commit);
 struct screen_line {
 	int len;		/* d³ugo¶æ linii */
 	
-	char *str;		/* tre¶æ */
+	CHAR_T *str;		/* tre¶æ */
 	short *attr;		/* atrybuty */
 	
-	char *prompt_str;	/* tre¶æ promptu */
+	CHAR_T *prompt_str;	/* tre¶æ promptu */
 	short *prompt_attr;	/* atrybuty promptu */
 	int prompt_len;		/* d³ugo¶æ promptu */
 	
-	char *ts;		/* timestamp */
+	CHAR_T *ts;		/* timestamp */
 	int ts_len;		/* d³ugo¶æ timestampu */
 	short *ts_attr;		/* attributes of the timestamp */
 
@@ -53,7 +54,7 @@ enum window_frame_t {
 typedef struct {
 	WINDOW *window;		/* okno okna */
 
-	char *prompt;		/* sformatowany prompt lub NULL */
+	CHAR_T *prompt;		/* sformatowany prompt lub NULL */
 	int prompt_len;		/* d³ugo¶æ prompta lub 0 */
 
 	int margin_left, margin_right, margin_top, margin_bottom;
@@ -78,8 +79,8 @@ typedef struct {
 } ncurses_window_t;
 
 struct format_data {
-	char *name;			/* %{nazwa} */
-	char *text;			/* tre¶æ */
+	CHAR_T *name;			/* %{nazwa} */
+	CHAR_T *text;			/* tre¶æ */
 };
 
 int ncurses_debug;
@@ -119,11 +120,11 @@ int ncurses_window_new(window_t *w);
 #define yanked ncurses_yanked
 
 #define HISTORY_MAX 1000
-char *ncurses_history[HISTORY_MAX];
+CHAR_T *ncurses_history[HISTORY_MAX];
 int ncurses_history_index;
-char *ncurses_line;
-char *ncurses_yanked;
-char **ncurses_lines;
+CHAR_T *ncurses_line;
+CHAR_T *ncurses_yanked;
+CHAR_T **ncurses_lines;
 int ncurses_line_start;
 int ncurses_line_index;
 int ncurses_lines_start;
@@ -137,12 +138,12 @@ void header_statusbar_resize();
 void ncurses_spellcheck_init();
 
 int config_aspell;
-char *config_aspell_lang;
-char *config_aspell_encoding;
+CHAR_T *config_aspell_lang;
+CHAR_T *config_aspell_encoding;
 #endif
 
 int config_backlog_size;
-void changed_backlog_size(const char *var);
+void changed_backlog_size(const CHAR_T *var);
 int config_display_transparent;
 int config_display_crap;
 int config_enter_scrolls;

@@ -343,6 +343,15 @@ if test "x$with_libgnutls" != "xno"; then
 	]]))
 fi
 
+AC_ARG_ENABLE([unicode],
+    AC_HELP_STRING([--enable-unicode], [Enable unicode (EXPERIMENTAL)]),
+    [
+        if test "x$enable_unicode" = "xyes"; then
+            AC_DEFINE([USE_UNICODE], 1, [Use unicode (wide character strings)])
+        fi
+    ]
+)
+
 PLUGINS_LIBS=""
 
 for i in $PLUGINS; do
@@ -406,9 +415,9 @@ else
 fi
 
 if test "x$have_perl" = "xyes"; then
-	echo " - perl:    enabled"
+	echo " - perl:      enabled"
 else
-	echo " - perl:    disabled"
+	echo " - perl:      disabled"
 fi
 
 if test "x$have_python" = "xyes"; then
@@ -441,6 +450,12 @@ if test "x$have_libjpeg" = "xyes"; then
         echo " - libjpeg:   enabled"
 else
         echo " - libjpeg:   disabled"
+fi
+
+if test "x$enable_unicode" = "xyes"; then
+        echo " - unicode:   enabled"
+else
+        echo " - unicode:   disabled"
 fi
 
 echo " - mouse support in $mouse_lib"
