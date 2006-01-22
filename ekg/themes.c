@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2001-2005 Wojtek Kaniewski <wojtekka@irc.pl>
+ *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Leszek Krupiñski <leafnode@wafel.com>
  *                          Adam Mikuta <adamm@ekg2.org>
  *
@@ -1181,6 +1181,7 @@ void theme_init()
         format_add("quit", _("%> Bye\n"), 1);
         format_add("quit_descr", _("%> Bye: %T%1%n%2\n"), 1);
         format_add("config_changed", _("Save new configuration ? (t-yes/n-no) "), 1);
+	format_add("config_must_reconnect", _("%) You must reconnect for the changes to take effect\n"), 2);
         format_add("quit_keep_reason", _("You've set keep_reason to save status.\nDo you want to save current description to file (it will be restored upon next EKG exec)? (t-yes/n-no) "), 1);
         format_add("saved", _("%> Configuration saved\n"), 1);
         format_add("error_saving", _("%! There was some error during save\n"), 1);
