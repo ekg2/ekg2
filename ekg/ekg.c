@@ -128,9 +128,9 @@ void ekg_loop()
                         gettimeofday(&tv, &tz);
 
                         if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
-                                if (!t->persist)
-                                        list_remove(&timers, t, 0);
-                                else {
+				int ispersist = t->persist;
+				
+                                if (t->persist) {
                                         struct timeval tv;
                                         struct timezone tz;
 
@@ -141,10 +141,8 @@ void ekg_loop()
 
                                 t->function(0, t->data);
 
-                                if (!t->persist) {
-                                        t->function(1, t->data);
-                                        xfree(t->name);
-                                        xfree(t);
+                                if (!ispersist) {
+                                	timer_remove(t->plugin, t->name);
                                 }
                         }
                 }
