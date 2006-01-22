@@ -26,6 +26,11 @@ rozwi±zanie.
   - dokumentacja do themes - opis ka¿dego formatu (del)
 
 * gg 
+  - poprawiæ images_dir w tej chwili wystêpuj± problemy z definowaniem
+    katalogów poza ~/.ekg2 (adamm)
+  - dodawanie do tre¶ci wiadomo¶ci, w której jest obrazek informacji o tym 
+    (adamm)
+  - "rozs±dne" nazwy dla zapisywanych obrazków (adamm)
 
 * jabber
   - resolve SRV first
