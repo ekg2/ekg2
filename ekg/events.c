@@ -395,7 +395,6 @@ void ekg_day_timer(int destroy, void *data)
 	struct tm *tm;
 	time_t now = time(NULL);
 	if (destroy) {
-		/* never here, buggy ekg2 side timer managment */
 		xfree(oldtm);
 		return;
 	}

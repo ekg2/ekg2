@@ -527,16 +527,8 @@ int script_timer_unbind(script_timer_t *temp, int remove)
 	if (temp->removed) return -1;
 	temp->removed = 1;
 	if (remove) 
-		script_timer_handlers(1, temp);
-
-	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
-
-	if (remove) 
-#ifdef SCRIPTS_NEW
 		timer_freeone(temp->self);
-#else
-		timer_remove(NULL, temp->self->name);
-#endif
+	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
 	return list_remove(&script_timers, temp, 0 /* 0 is ok */);
 }
 
@@ -544,9 +536,10 @@ int script_watch_unbind(script_watch_t *temp, int remove)
 {
 	if (temp->removed) return -1;
 	temp->removed = 1;
-	SCRIPT_UNBIND_HANDLER(SCRIPT_WATCHTYPE, temp->private, temp->data);
 	if (remove)
 		watch_free(temp->self);
+/* TODO: testit */
+	SCRIPT_UNBIND_HANDLER(SCRIPT_WATCHTYPE, temp->private, temp->data);
 	return list_remove(&script_watches, temp, 1);
 }
 
@@ -731,14 +724,15 @@ void script_timer_handlers(int type, void *d)
 {
 	script_timer_t *temp = d;
 	SCRIPT_HANDLER_HEADER(script_handler_timer_t);
+	debug("::: -> %s %d\n", temp->private, type);
 	SCRIPT_HANDLER_FOOTER(script_handler_timer, type) {
 		if (!type) {
-			script_timer_handlers(2, d);
+			timer_freeone(temp->self);
 			return;
 		}
 	}
 	if (type)
-		script_timer_unbind(temp, (type == 2) ? 1 : 0);
+		script_timer_unbind(temp, 0);
 	return;
 }
 
