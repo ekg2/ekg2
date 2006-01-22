@@ -389,8 +389,6 @@ static void gg_ping_timer_handler(int type, void *data)
 	if (!s || !session_connected_get(s)) {
 		char *buf = saprintf("ping-%s", (char *) data+3);
 		timer_remove(&gg_plugin, buf);
-/* CHECK: buggy ekg2-side timer handling, afair it didn't send type == 1 to persist handler during removeint them.. */
-		/* xfree(data); */
 		xfree(buf);
 		return;
 	}

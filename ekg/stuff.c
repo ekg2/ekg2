@@ -1545,6 +1545,7 @@ int timer_remove(plugin_t *plugin, const char *name)
 		l = l->next;
 
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
+			t->function(1, t->data); 
 			xfree(t->name);
 			xfree(t->data);
 			list_remove(&timers, t, 1);
