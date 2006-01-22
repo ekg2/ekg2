@@ -142,7 +142,7 @@ void ekg_loop()
                                 t->function(0, t->data);
 
                                 if (!ispersist) {
-                                	timer_remove(t->plugin, t->name);
+                                	timer_freeone(t);
                                 }
                         }
                 }

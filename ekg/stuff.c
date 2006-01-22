@@ -1524,6 +1524,17 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	return t;
 }
 
+int timer_freeone(struct timer *t) 
+{
+	if (!t) 
+		return -1;
+
+	t->function(1, t->data); 
+	xfree(t->name);
+	list_remove(&timers, t, 1);
+	return 0;
+}
+
 /*
  * timer_remove()
  *
@@ -1545,11 +1556,8 @@ int timer_remove(plugin_t *plugin, const char *name)
 		l = l->next;
 
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
-			t->function(1, t->data); 
-			xfree(t->name);
-			xfree(t->data);
-			list_remove(&timers, t, 1);
-			removed = 1;
+			timer_freeone(t);
+			removed++;
 		}
 	}
 
