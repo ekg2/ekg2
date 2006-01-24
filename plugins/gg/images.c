@@ -59,7 +59,8 @@ void gg_changed_images(const char *var)
 		if (gg_config_image_size < 20)
 			gg_config_image_size = 20;
 
-	print("config_must_reconnect");
+	if (!in_autoexec) 
+		print("config_must_reconnect");
 }
 
 
