@@ -5,8 +5,7 @@
 # Displays notify bubble when someone writes to us or becomes available.
 # Ingredients needed: 
 #- dbus
-#- http://galago-project.org/files/releases/source/notify-daemon/notify-daemon-0.3.1.tar.gz
-#- libnotify from above address
+#- libnotify & notification-daemon from http://galago-project.org/ 
 #
 # This script is very basic - could use some more intelligence
 #
@@ -32,10 +31,10 @@ def status_handler(session, uid, status, desc):
 		else: desc = unicode(desc, current_encoding)
 		timeout = 2000 + len(desc)*50
 
-# (s appname, s icon, u id, s header, s string, as str_ret, a{sv} hints, i timeout_ms)
-		notif.Notify (dbus.String("ekg2"), "", dbus.UInt32(0), 
+# (s appname, u id, s icon, s header, s body, as actions a{sv} hints, i timeout_ms)
+		notif.Notify (dbus.String("ekg2"), dbus.UInt32(0), "",
 			dbus.String(htxt), dbus.String(desc),
-			dbus.String(""), {}, dbus.UInt32(timeout) )
+			dbus.String(""), {}, dbus.Int32(timeout) )
 
 		return 1
 
@@ -50,9 +49,9 @@ def message_handler(session, uid, type, text, sent_time, ignore_level):
 		
 	timeout = 2000 + len(msg)*50
 
-	notif.Notify (dbus.String("ekg2"), "", dbus.UInt32(0), 
+	notif.Notify (dbus.String("ekg2"), dbus.UInt32(0), "",
 		dbus.String(htxt), dbus.String(msg),
-		dbus.String(""), {}, dbus.UInt32(timeout) )
+		dbus.String(""), {}, dbus.Int32(timeout) )
 
 	return 1
 
