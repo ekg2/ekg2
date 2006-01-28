@@ -336,7 +336,6 @@ int ncurses_contacts_update(window_t *w)
 	list_t sorted_all = NULL;
 	
 	if (!w) {
-		list_t l;
 		if (!(w = window_find("__contacts")))
 			return -1;
 	}
@@ -773,10 +772,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 
 	name = n->backlog[n->backlog_size - y]->str;
 
-	tmp = saprintf("/query \"%s\"", (char *) n->backlog[n->backlog_size - y	]->private);
-	command_exec(NULL, NULL, tmp, 0);
-	xfree(tmp);
-
+	command_exec_format(NULL, NULL, 0, "/query \"%s\"", (char *) n->backlog[n->backlog_size - y ]->private);
 	return;
 }
 

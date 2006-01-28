@@ -35,9 +35,10 @@
 #ifdef WITH_ASPELL
 #       include <aspell.h>
 #endif
-
+#include <ekg/char.h>
 #include <ekg/commands.h>
 #include <ekg/sessions.h>
+#include <ekg/plugins.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
@@ -560,8 +561,11 @@ void ncurses_resize()
 
 		mvwin(n->window, w->top, w->left);
 
-		if (n->overflow)
+		if (n->overflow) {
 			n->start = n->lines_count - w->height + n->overflow;
+			if (n->start < 0)
+				n->start = 0;
+		}
 
 		n->redraw = 1;
 	}
@@ -1145,6 +1149,7 @@ void update_statusbar(int commit)
 	userlist_t *q = userlist_find(window_current->session, window_current->target);
 	struct format_data formats[32];	/* if someone add his own format increment it. */
 	int formats_count = 0, i = 0, y;
+	plugin_t *plug;
 	session_t *sess = window_current->session;
 	userlist_t *u;
 	CHAR_T *tmp;
@@ -1174,16 +1179,16 @@ void update_statusbar(int commit)
 	__add_format("query", tmp, tmp);
 	xfree(tmp); 
 
-	if (plugin_find("mail")) {
+	if ((plug = plugin_find("mail"))) {
 		int mail_count = -1;
-		query_emit(NULL, "mail-count", &mail_count);
+		query_emit(plug, "mail-count", &mail_count);
 		__add_format("mail", (mail_count > 0), itoa(mail_count));
 	}
-	if (session_check(window_current->session, 0, "irc")) {
+	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find("irc"))) {
 		/* yeah, I know, shitty way */
 		CHAR_T *t2 = NULL;
 		CHAR_T *t3 = NULL; 
-		query_emit(NULL, "irc-topic", &tmp, &t2, &t3);
+		query_emit(plug, "irc-topic", &tmp, &t2, &t3);
 		__add_format("irctopic", tmp, tmp);
 		__add_format("irctopicby", t2, t2);
 		__add_format("ircmode", t3, t3);
@@ -1934,9 +1939,8 @@ WATCHER(ncurses_watch_stdin)
 	                        if (b->function)
 	                                b->function(b->arg);
 	                        else {
-	                                CHAR_T *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
-	                                command_exec(window_current->target, window_current->session, tmp, 0);
-	                                xfree(tmp);
+	                                command_exec_format(window_current->target, window_current->session, 0, "%s%s", 
+							((b->action[0] == '/') ? "" : "/"), b->action);
 	                        }
 
 				success = 1;
@@ -1986,9 +1990,8 @@ end:
 			if (b->function)
 				b->function(b->arg);
 			else {
-				CHAR_T *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
-				command_exec(window_current->target, window_current->session, tmp, 0);
-				xfree(tmp);
+				command_exec_format(window_current->target, window_current->session, 0,
+						"%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
 			}
 		} else {
 			/* obs³uga Ctrl-F1 - Ctrl-F12 na FreeBSD */
@@ -2007,9 +2010,8 @@ end:
 			if (b->function)
 				b->function(b->arg);
 			else {
-				CHAR_T *tmp = saprintf("%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
-				command_exec(window_current->target, window_current->session, tmp, 0);
-				xfree(tmp);
+				command_exec_format(window_current->target, window_current->session, 0,
+						"%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
 			}
 		} else if (ch < 255 && xstrlen(ncurses_line) < LINE_MAXLEN - 1) {
 				

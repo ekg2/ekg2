@@ -103,8 +103,7 @@ static void binding_toggle_input(const char *arg)
 			string_append(s, "\r\n");
 		}
 
-		tmp = xstrdup(s->str);
-		string_free(s, 1);
+		tmp = string_free(s, 0);
 
                 if (history[0] != line)
                         xfree(history[0]);
@@ -557,14 +556,10 @@ static void binding_forward_contacts_page(const char *arg)
 
 static void binding_ignore_query(const char *arg)
 {
-	char *tmp;
-	
 	if (!window_current->target)
 		return;
 	
-	tmp = saprintf("/ignore %s", window_current->target);
-	command_exec(window_current->target, window_current->session, tmp, 0);
-	xfree(tmp);
+	command_exec_format(window_current->target, window_current->session, 0, "/ignore %s", window_current->target);
 }
 
 static void binding_quick_list_wrapper(const char *arg)
@@ -683,7 +678,7 @@ static void binding_parse(struct binding *b, const char *action)
 	__action("backward-contacts-page", binding_backward_contacts_page)
 	__action("forward-contacts-line", binding_forward_contacts_line)
 	__action("backward-contacts-line", binding_backward_contacts_line)
-	; /* no action */
+	; /* no/unknown action */
 
 
 #undef __action
@@ -829,8 +824,8 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 	list_t l;
 	binding_added_t *b;
 	struct binding *binding_orginal = NULL;
-	char **chars = NULL, ch, *joined = NULL;
-	int added = 0;
+	char *joined = NULL;
+	int count = 0;
 
         for (l = bindings; l; l = l->next) {
                 struct binding *d = l->data;
@@ -847,13 +842,17 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
         }
 
 	if (!sequence) {
+		char **chars = NULL;
+		char ch;
 		printq("bind_press_key");
 		nodelay(input, FALSE);
 		while ((ch = wgetch(input)) != ERR) {
 			array_add(&chars, xstrdup(itoa(ch)));
 			nodelay(input, TRUE);
+			count++;
 		}
 		joined = array_join(chars, " ");
+		array_free(chars);
 	} else
 		joined = xstrdup(sequence);
 
@@ -866,10 +865,10 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 			break;
                 }
         }
-	
 	if (!binding_orginal) {
 		printq("bind_doesnt_exist", key);
-		goto end;
+		xfree(joined);
+		return;
 	}
 #endif
 	
@@ -878,7 +877,7 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 
 		if (!xstrcasecmp(d->sequence, joined)) {
 			d->binding = binding_orginal;
-			added = 1;
+			xfree(joined);
 			goto end;
 		}
 	}
@@ -887,19 +886,12 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 	b->sequence = joined;
 	b->binding = binding_orginal;
 	list_add(&bindings_added, b, 0);
-	added = 2;
 end:
-	if (added != 2)
-		xfree(joined);
-	if (added) {
-		int count = array_count(chars);
-	        if (!in_autoexec)
-        	        config_changed = 1;
-	        printq("bind_added");
-		if (count > bindings_added_max)
-			bindings_added_max = count;
-	}
-	array_free(chars);
+	if (!in_autoexec)
+		config_changed = 1;
+	printq("bind_added");
+	if (count > bindings_added_max)
+		bindings_added_max = count;
 }
 
 /*
