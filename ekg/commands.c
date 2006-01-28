@@ -588,9 +588,7 @@ WATCHER(cmd_exec_watch_handler)
 		string_append(i->buf, watch);
 		string_append(i->buf, "\r\n");
 	} else {
-		char *tmp = saprintf("/ %s", watch);
-		command_exec(i->target, session_find(i->session), tmp, quiet);
-		xfree(tmp);
+		command_exec_format(i->target, session_find(i->session), quiet, "/ %s", watch);
 	}
 }
 
@@ -1225,7 +1223,6 @@ COMMAND(cmd_help)
 
 COMMAND(cmd_ignore)
 {
-	char *tmp;
 	const char *uid;
 
 	if (*name == 'i' || *name == 'I') {
@@ -1253,12 +1250,7 @@ COMMAND(cmd_ignore)
 		}
 
 		if (params[0][0] == '#') {
-			int res;
-			
-			tmp = saprintf("/conference --ignore %s", params[0]);
-			res = command_exec(NULL, NULL, tmp, quiet);
-			xfree(tmp);
-			return res;
+			return command_exec_format(NULL, NULL, quiet, "/conference --ignore %s", params[0]);
 		}
 
                 if ((flags = ignored_check(session, get_uid(session, params[0]))))
@@ -1302,12 +1294,7 @@ COMMAND(cmd_ignore)
 		}
 
 		if (params[0][0] == '#') {
-			int res;
-			
-			tmp = saprintf("/conference --unignore %s", params[0]);
-			res = command_exec(NULL, NULL, tmp, quiet);
-			xfree(tmp);
-			return res;
+			return command_exec_format(NULL, NULL, quiet, "/conference --unignore %s", params[0]);
 		}
 		
 		if (!unignore_all && !(uid = get_uid(session, params[0]))) {
@@ -1892,7 +1879,7 @@ COMMAND(cmd_set)
 
 COMMAND(cmd_quit)
 {
-    	char *reason, *tmp;
+    	char *reason;
 	list_t l;
 	
 	reason = xstrdup(params[0]);
@@ -1902,9 +1889,7 @@ COMMAND(cmd_quit)
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 		
-		tmp = saprintf("/disconnect \"%s\"", (params[0]) ? params[0] : (s->descr) ? s->descr : "");
-		command_exec(NULL, s, tmp, 3);
-		xfree(tmp);
+		command_exec_format(NULL, s, 3, "/disconnect \"%s\"", (params[0]) ? params[0] : (s->descr) ? s->descr : "");
 	}
 
 	/* nie wychodzimy tutaj, ¿eby command_exec() mia³o szansê zwolniæ
@@ -2436,9 +2421,7 @@ query:
 
 chat:
 	if (params[0] && params[1]) {
-		char *tmp = saprintf("/ %s", params[1]);
-		command_exec((p[0]) ? p[0] : params[0], session, tmp, quiet);
-		xfree(tmp);
+		command_exec_format((p[0]) ? p[0] : params[0], session, quiet, "/ %s", params[1]);
 	}
 
 cleanup:
@@ -2514,9 +2497,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 
 		if (!correct_command) {
-			char *tmp = saprintf("/ %s", xline);
-			command_exec(target, session, tmp, quiet);
-			xfree(tmp);
+			command_exec_format(target, session, quiet, "/ %s", xline);
 			return 0;
 		}
 	}
@@ -2693,6 +2674,24 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	xfree(line_save);
 
 	return -1;
+}
+
+int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...)
+{
+	va_list ap;
+	char *command;
+	int res;
+	
+	va_start(ap, format);
+	command = vsaprintf(format, ap);
+	va_end(ap);
+	
+	if (!command) 
+		return 0;
+/*	debug("[command_exec_format] %s\n", command); */
+	res = command_exec(target, session, command, quiet);
+	xfree(command);
+	return res;
 }
 
 int binding_help(int a, int b)  
@@ -3583,7 +3582,6 @@ COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'f', "find", 2)) {
 		struct conference *c;
-		char *tmp = NULL;
 		list_t l;
 
 		if (!params[1]) {
@@ -3600,9 +3598,7 @@ COMMAND(cmd_conference)
 
 		if (c) {
 			for (l = c->recipients; l; l = l->next) {
-				tmp = saprintf("/find %s", (char*) (l->data));
-				command_exec(target, session, tmp, quiet);
-				xfree(tmp);
+				command_exec_format(target, session, quiet, "/find %s\n", (char*) (l->data));
 			}
 		} else {
 			printq("conferences_noexist", params[1]);
@@ -3979,8 +3975,6 @@ COMMAND(cmd_plugin)
 COMMAND(cmd_desc)
 {
 	const char *status, *cmd;
-	char *command;
-	int ret;
 	
 	if (!session)
 		return -1;
@@ -4006,13 +4000,7 @@ COMMAND(cmd_desc)
 		return -2;
 	};
 	
-	command = saprintf("/%s %s", cmd, (params[0] ? params[0] : ""));
-
-	ret = command_exec(NULL, session, command, 0);
-
-	xfree(command);	
-
-	return ret;
+	return command_exec_format(NULL, session, 0, "/%s %s", cmd, (params[0] ? params[0] : ""));
 }
 
 /*

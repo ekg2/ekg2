@@ -856,7 +856,6 @@ int main(int argc, char **argv)
         for (l = sessions; l; l = l->next) {
                 session_t *s = l->data;
                 const char *cmd = NULL;
-                char *tmp;
 
                 if (new_status)
                         session_status_set(s, new_status);
@@ -870,9 +869,7 @@ int main(int argc, char **argv)
                 if (!cmd)
                         cmd = s->status;
 
-                tmp = saprintf("/%s %s", cmd, (new_descr) ? new_descr : "");
-                command_exec(NULL, s, tmp, 2);
-                xfree(tmp);
+                command_exec_format(NULL, s, 2, "/%s %s", cmd, (new_descr) ? new_descr : "");
         }
 
 

@@ -599,8 +599,6 @@ int protocol_message(void *data, va_list ap)
                 }
 
                 if (do_find) {
-                        char *tmp;
-
                         if (i == auto_find_limit) {
                                 debug("// autofind reached %d limit, removing the oldest uin: %d\n", auto_find_limit, *((char *)autofinds->data));
                                 list_remove(&autofinds, autofinds->data, 1);
@@ -608,9 +606,7 @@ int protocol_message(void *data, va_list ap)
 
                         list_add(&autofinds, (void *) uid, xstrlen(uid) + 1);
 
-                        tmp = saprintf("/find %s", uid);
-                        command_exec(target, session_class, tmp, 0);
-                        xfree(tmp);
+                        command_exec_format(target, session_class, 0, "/find %s", uid);
                 }
         }
 

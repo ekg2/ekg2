@@ -71,6 +71,7 @@ command_t *command_find (const char *name);
 void command_init();
 void command_free();
 int command_exec(const char *target, session_t *session, const char *line, int quiet);
+int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...);
 
 COMMAND(cmd_alias_exec);
 COMMAND(cmd_exec);

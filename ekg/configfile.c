@@ -227,12 +227,7 @@ int config_read(const char *filename)
                         char **pms = array_make(foo, " \t", 2, 1, 0);
 
                         if (array_count(pms) == 2) {
-                                char *tmp;
-
-                                tmp = saprintf("/bind --add %s %s",  pms[0], pms[1]);
-                                ret = command_exec(NULL, NULL, tmp, 1);
-
-                                xfree(tmp);
+                                ret = command_exec_format(NULL, NULL, 1, "/bind --add %s %s",  pms[0], pms[1]);
                         }
 
                         array_free(pms);
@@ -266,22 +261,20 @@ int config_read(const char *filename)
 			char **p = array_make(foo, " \t", 2, 1, 0);
 
 			if (array_count(p) == 2) {
-				char *name = NULL, *tmp;
+				char *name = NULL;
 
 				debug("  at %s %s\n", p[0], p[1]);
 
 				if (xstrcmp(p[0], "(null)"))
 					name = p[0];
 
-				tmp = saprintf("/at -a %s %s", ((name) ? name : ""), p[1]);
-				ret = command_exec(NULL, NULL, tmp, 1);
-				xfree(tmp);
+				ret = command_exec_format(NULL, NULL, 1, "/at -a %s %s", ((name) ? name : ""), p[1]);
 			}
 
 			array_free(p);
 		} else if (!xstrcasecmp(buf, "timer")) {
 			char **p = array_make(foo, " \t", 3, 1, 0);
-			char *tmp = NULL, *period_str = NULL, *name = NULL;
+			char *period_str = NULL, *name = NULL;
 			time_t period;
 
 			if (array_count(p) == 3) {
@@ -299,9 +292,7 @@ int config_read(const char *filename)
 				}
 		
 				if (period > 0) {
-					tmp = saprintf("/timer --add %s %s %s", (name) ? name : "", period_str, p[2]);
-					ret = command_exec(NULL, NULL, tmp, 1);
-					xfree(tmp);
+					ret = command_exec_format(NULL, NULL, 1, "/timer --add %s %s %s", (name) ? name : "", period_str, p[2]);
 				}
 
 				xfree(period_str);

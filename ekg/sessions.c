@@ -186,9 +186,7 @@ int session_remove(const char *uid)
 	}
 	
 	if(s->connected) {
-		tmp = saprintf("/disconnect %s", s->uid);
-		command_exec(NULL, s, tmp, 1);	
-		xfree(tmp);
+		command_exec_format(NULL, s, 1, "/disconnect %s", s->uid);
 	}
 	tmp = xstrdup(uid);
         query_emit(NULL, "session-changed");
@@ -855,13 +853,7 @@ COMMAND(session_command)
 		
 		if (!(s = session_find(params[1]))) {
 			if (window_current->session) {
-				int ret;
-                        	char *tmp = saprintf("%s --get %s %s", name, session->uid, params[1]);
-				
-				ret = command_exec(NULL, s, tmp, 0);
-				xfree(tmp);
-				
-				return ret;
+				return command_exec_format(NULL, s, 0, "%s --get %s %s", name, session->uid, params[1]);
 			} else
 				printq("invalid_session");
 			return -1;
@@ -925,15 +917,13 @@ COMMAND(session_command)
 		
 			if(params[2] && !params[3]) {
 				if (session) {
-					char *tmp = saprintf("%s --get %s %s", name, session->uid, params[1]);
 					if (!session_is_var(session, params[1])) {
                                                 printq("session_variable_doesnt_exist", session_name(session), params[1]);
                                                 return -1;
 					}
 					session_set_n(session->uid, params[1], params[2]);
 					config_changed = 1;
-					command_exec(NULL, s, tmp, 0);
-					xfree(tmp);
+					command_exec_format(NULL, s, 0, "%s --get %s %s", name, session->uid, params[1]);
 					return 0;
 				} else {
 					printq("invalid_session");
@@ -963,8 +953,6 @@ COMMAND(session_command)
 		}
 		
 		if(params[2] && params[3]) {
-			char *tmp = saprintf("%s --get %s %s", name, s->uid, params[2]);
-			
                         if (!session_is_var(s, params[2])) {
                                 printq("session_variable_doesnt_exist", session_name(session), params[2]);
                                 return -1;
@@ -972,8 +960,7 @@ COMMAND(session_command)
 
 			session_set_n(s->uid, params[2], params[3]);
 			config_changed = 1;
-			command_exec(NULL, s, tmp, 0);
-			xfree(tmp);
+			command_exec_format(NULL, s, 0, "%s --get %s %s", name, s->uid, params[2]);
 			return 0;
 		}
 		
@@ -989,29 +976,20 @@ COMMAND(session_command)
 		plugin_t *p = plugin_find_uid(s->uid);
 
 		if (params[1] && params[1][0] == '-') { 
-			tmp = saprintf("%s --set %s %s", name, params[0], params[1]);
 			config_changed = 1;
-			command_exec(NULL, s, tmp, 0);
-			xfree(tmp);
-			
+			command_exec_format(NULL, s, 0, "%s --set %s %s", name, params[0], params[1]);
 			return 0;
 		}
 
 		if(params[1] && params[2]) {
-			tmp = saprintf("%s --set %s %s %s", name, params[0], params[1], params[2]);
-			command_exec(NULL, s, tmp, 0);
+			command_exec_format(NULL, s, 0, "%s --set %s %s %s", name, params[0], params[1], params[2]);
 			config_changed = 1;
-			xfree(tmp);
-			
 			return 0;
 		}
 		
 		if(params[1]) {
-			tmp = saprintf("%s --get %s %s", name, params[0], params[1]);
-			command_exec(NULL, s, tmp, 0);
+			command_exec_format(NULL, s, 0, "%s --get %s %s", name, params[0], params[1]);
 			config_changed = 1;
-			xfree(tmp);
-			
 			return 0;		
 		}
 		
@@ -1039,23 +1017,17 @@ COMMAND(session_command)
 	}
 	
 	if (params[0] && params[0][0] != '-' && params[1] && session && session->uid) {
-		char *tmp = saprintf("%s --set %s %s %s", name, session_alias_uid(session), params[0], params[1]);
-		command_exec(NULL, s, tmp, 0);
-		xfree(tmp);
+		command_exec_format(NULL, s, 0, "%s --set %s %s %s", name, session_alias_uid(session), params[0], params[1]);
 		return 0;
         }
 	
 	if (params[0] && params[0][0] != '-' && session && session->uid) {
-		char *tmp = saprintf("%s --get %s %s", name, session_alias_uid(session), params[0]);
-		command_exec(NULL, s, tmp, 0);
-		xfree(tmp);
+		command_exec_format(NULL, s, 0, "%s --get %s %s", name, session_alias_uid(session), params[0]);
 		return 0;
 	}
 	
 	if (params[0] && params[0][0] == '-' && session && session->uid) {
-		char *tmp = saprintf("%s --set %s %s", name, session_alias_uid(session), params[0]);
-		command_exec(NULL, s, tmp, 0);
-		xfree(tmp);
+		command_exec_format(NULL, s, 0, "%s --set %s %s", name, session_alias_uid(session), params[0]);
 		return 0;
 	}
 

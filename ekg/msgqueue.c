@@ -190,7 +190,6 @@ int msg_queue_flush(const char *session)
 	for (l = msg_queue; l; l = l->next) {
 		msg_queue_t *m = l->data;
 		session_t *s;
-		char *tmp;
 
 		/* czy wiadomo¶æ dodano w trakcie opró¿niania kolejki? */
 		if (!m->mark)
@@ -205,9 +204,7 @@ int msg_queue_flush(const char *session)
 		if (session && xstrcmp(m->session, session)) 
 			continue;
 
-		tmp = saprintf("/msg \"%s\" %s", m->rcpts, m->message);
-		command_exec(NULL, s, tmp, 1);
-		xfree(tmp);
+		command_exec_format(NULL, s, 1, "/msg \"%s\" %s", m->rcpts, m->message);
 
 		msg_queue_remove(m);
 

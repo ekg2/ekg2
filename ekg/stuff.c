@@ -1781,14 +1781,11 @@ int msg_all(session_t *s, const char *function, const char *what)
 
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		char *tmp;
 
 		if (!u || !u->uid)
 			continue;
 
-		tmp = saprintf("%s \"%s\" %s", function, get_nickname(s, u->uid), what);
-		command_exec(NULL, s, tmp, 0);
-		xfree(tmp);
+		command_exec_format(NULL, s, 0, "%s \"%s\" %s", function, get_nickname(s, u->uid), what);
 	}
 
 	return 0;

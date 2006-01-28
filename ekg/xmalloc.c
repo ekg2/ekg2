@@ -43,6 +43,7 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
+#include "char.h"
 
 #include "configfile.h"
 #include "stuff.h"
