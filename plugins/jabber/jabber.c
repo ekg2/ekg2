@@ -692,9 +692,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						}
 
 						if (jdh->roster_retrieved) {
-							char *ctmp = saprintf("/auth --probe %s", uid);
-							command_exec(NULL, s, ctmp, 1);
-							xfree(ctmp);
+							command_exec_format(NULL, s, 1, "/auth --probe %s", uid);
 						}
 						xfree(nickname); 
 					}

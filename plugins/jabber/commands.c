@@ -563,10 +563,8 @@ COMMAND(jabber_command_modify)
 	xfree(nickname);
 	
 	if (addcomm) {
-		char *tmp = saprintf("/auth --request %s", uid);
-		ret = command_exec(target, session, tmp, 0);
-		xfree(tmp);
 		xfree(u);
+		return command_exec_format(target, session, 0, "/auth --request %s", uid);
 	}
 	
 	return ret;

@@ -587,10 +587,10 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	gg_private_t *g = session_private_get(s);
 
 	if (gg_config_dcc && (e->event.msg.msgclass & GG_CLASS_CTCP)) {
+		struct gg_dcc *d;
 		char *__host = NULL;
 		char uid[16];
 		int __port = -1, __valid = 1;
-		struct gg_dcc *d;
 		userlist_t *u;
 		watch_t *w;
 
@@ -603,11 +603,8 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 /*		xfree(__host); */
 
 		if (!__valid) {
-			char *tmp = saprintf("/ignore %s", uid);
 			print_status("dcc_attack", format_user(s, uid));
-			command_exec(NULL, s, tmp, 0);
-			xfree(tmp);
-
+			command_exec_format(NULL, s, 0, "/ignore %s", uid);
 			return;
 		}
 
@@ -635,7 +632,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		unsigned char *p = e->event.msg.formats;
 		int i, len = xstrlen(__text), ii;
 		
-		__format = xcalloc(1,len * sizeof(uint32_t));
+		__format = xcalloc(len, sizeof(uint32_t));
 		
 		gg_debug(GG_DEBUG_DUMP, "// formats:");
 		for (ii = 0; ii < e->event.msg.formats_length; ii++)

@@ -71,10 +71,7 @@ COMMAND(gg_command_find)
 	argv = (char **) params;
 
 	if (argv[0] && !argv[1] && argv[0][0] == '#') {
-		char *tmp = saprintf("/conference --find %s", argv[0]);
-		int res = command_exec(target, session, tmp, quiet);
-		xfree(tmp);
-		return res;
+		return command_exec_format(target, session, quiet, "/conference --find %s", argv[0]);
 	}
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH))) {
