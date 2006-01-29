@@ -2588,8 +2588,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		session_t *s = session ? session : window_current->session;
 		char *last_name    = last_command->name;
 		int last_alias	   = 0;
-		char *tmp;
 		int res		   = 0;
+		char *tmp;
 
 		if (exact) 
 			last_alias = (last_command->flags & COMMAND_ISALIAS || last_command->flags & COMMAND_ISSCRIPT) ? 1 : 0;
@@ -2624,13 +2624,20 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : last_command->params;
 			int parcount = array_count(last_params);
 			char **par = array_make(p, " \t", parcount, 1, 1);
+			if ((last_command->flags & COMMAND_PARAMASTARGET) && par[0]) {
+/*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]); */
+				target = strip_quotes(par[0]);
+			} else { /* TODO: check if target[0] == \" || target[len] == \" and only than strdup and remove quotes? */
 
-
-			if (last_command->flags & COMMAND_PARAMASTARGET) {
-				if (par[0]) {
-					debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]);
-					target = par[0];
-				}
+/* 
+ * safest version of striping quotes ...
+ * because we rather don't need copying target and than removing quotes.. 
+ * so if someone is sure.. than just normal target = strip_quotes(target) will work, ok, you can change it. 
+ * i'm not...
+ */
+				char *ntarget = xstrdup(target);
+				target = strip_quotes(ntarget);
+				xfree(ntarget);
 			}
 
 			if (/* !res && */ last_command->flags & COMMAND_ENABLEREQPARAMS) {
@@ -2650,12 +2657,13 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res) {
-				window_lock_inc_n(target);
+				window_t *w = window_find(target);
+
+				window_lock_inc(w);
 				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
-				window_lock_dec_n(target);
+				window_lock_dec(w);
 				query_emit(NULL, "ui-window-refresh");
 			}
-
 			array_free(par);
 		}
 		xfree(line_save);

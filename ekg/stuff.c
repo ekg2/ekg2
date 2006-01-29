@@ -1203,6 +1203,8 @@ void iso_to_ascii(unsigned char *buf)
 char *strip_quotes(char *line)
 {
         char *buf;
+	if (!line)
+		return NULL;
 
         for (buf = line; *buf == '\"'; buf++);
 
