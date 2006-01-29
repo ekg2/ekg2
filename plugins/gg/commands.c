@@ -1334,7 +1334,6 @@ COMMAND(gg_command_check_conn)
 	gg_private_t *g = session_private_get(session);
 	gg_currently_checked_t c, *c_timer;
 	list_t l;
-	char *par;
  
 	msg.rt.flag = 2;
 	msg.rt.length = 13;
@@ -1344,15 +1343,10 @@ COMMAND(gg_command_check_conn)
 	msg.image.size = 20;
 	msg.image.crc32 = GG_CRC32_INVISIBLE;
 
-	par = strip_quotes(xstrdup(target));
-
-	if (!(u = userlist_find(session, par))) {
-		printq("user_not_found", par);
-		xfree(par);
+	if (!(u = userlist_find(session, target))) {
+		printq("user_not_found", target);
 		return -1;
 	}
-
-	xfree(par);
 
         for (l = gg_currently_checked; l; l = l->next) {
                 gg_currently_checked_t *c = l->data;
