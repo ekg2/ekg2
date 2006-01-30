@@ -2624,21 +2624,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : last_command->params;
 			int parcount = array_count(last_params);
 			char **par = array_make(p, " \t", parcount, 1, 1);
+			char *ntarget;
+
 			if ((last_command->flags & COMMAND_PARAMASTARGET) && par[0]) {
 /*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]); */
-				target = strip_quotes(par[0]);
-			} else { /* TODO: check if target[0] == \" || target[len] == \" and only than strdup and remove quotes? */
+				ntarget = xstrdup(par[0]);
+			} else	ntarget = xstrdup(target);
 
-/* 
- * safest version of striping quotes ...
- * because we rather don't need copying target and than removing quotes.. 
- * so if someone is sure.. than just normal target = strip_quotes(target) will work, ok, you can change it. 
- * i'm not...
- */
-				char *ntarget = xstrdup(target);
-				target = strip_quotes(ntarget);
-				xfree(ntarget);
-			}
+			target = strip_quotes(ntarget);
 
 			if (/* !res && */ last_command->flags & COMMAND_ENABLEREQPARAMS) {
 				int i;
@@ -2665,6 +2658,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				query_emit(NULL, "ui-window-refresh");
 			}
 			array_free(par);
+			xfree(ntarget);
 		}
 		xfree(line_save);
 
