@@ -109,6 +109,67 @@ int gg_private_destroy(session_t *s)
 	return 0;
 }
 
+QUERY(gg_userlist_info_handle) 
+{
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int quiet	= *va_arg(ap, int *);
+	if (!u)
+		return 0;
+
+	if (valid_plugin_uid(&gg_plugin, u->uid) != 1) 
+		return 0;
+	
+	if (u->port == 2)
+		printq("user_info_not_in_contacts");
+	if (u->port == 1)
+		printq("user_info_firewalled");
+	if ((u->protocol & GG_HAS_AUDIO_MASK))
+		printq("user_info_voip");
+	
+	if ((u->protocol & 0x00ffffff)) {
+		int v = u->protocol & 0x00ffffff;
+		const char *ver = NULL;
+
+		if (v < 0x0b)
+			ver = "<= 4.0.x";
+		if (v >= 0x0f && v <= 0x10)
+			ver = "4.5.x";
+		if (v == 0x11)
+			ver = "4.6.x";
+		if (v >= 0x14 && v <= 0x15)
+			ver = "4.8.x";
+		if (v >= 0x16 && v <= 0x17)
+			ver = "4.9.x";
+		if (v >= 0x18 && v <= 0x1b)
+			ver = "5.0.x";
+		if (v >= 0x1c && v <= 0x1e)
+			ver = "5.7";
+		if (v == 0x20)
+			ver = "6.0 (build >= 129)" ;
+		if (v == 0x21)
+			ver = "6.0 (build >= 133)";
+		if (v == 0x22)
+			ver = "6.0 (build >= 140)";
+		if (v == 0x24)
+			ver = "6.1 (build >= 155)";
+		if (v == 0x25)
+			ver = "7.0 (build >= 1)";
+		if (v == 0x26)
+			ver = "7.0 (build >= 20)";
+		if (v == 0x27)
+			ver = "7.0 (build >= 22)";
+		if (ver)
+			printq("user_info_version", ver);
+		
+		else {
+			char *tmp = saprintf("nieznana (%#.2x)", v);
+			printq("user_info_version", tmp);
+			xfree(tmp);
+		}
+	}
+	return 0;
+}
+
 QUERY(gg_userlist_added_handle)
 {
 	char **uid = va_arg(ap, char**);
@@ -1204,6 +1265,7 @@ int gg_plugin_init(int prio)
 	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
         query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
 	query_connect(&gg_plugin, "userlist-added", gg_userlist_added_handle, NULL);
+	query_connect(&gg_plugin, "userlist-info", gg_userlist_info_handle, NULL);
 
 	gg_register_commands();
 	
