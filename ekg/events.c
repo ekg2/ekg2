@@ -45,18 +45,6 @@ char **events_all = NULL;
  */
 COMMAND(cmd_on)
 {
-	/* in command_exec() we've got somethink like that
-	 * session_t *s = session ? session : window_current->session;
-	 * (session_current == window_current->session) ?
-	 * if yes so maybe we'll remove this code.. it's in many other functions too..
-	 * or we can do another check in command_exec() (dj) */
-        if(!session) {
-                if(session_current)
-                        session = session_current;
-                else
-                        return -1;
-        }
-
 	if (match_arg(params[0], 'a', "add", 2)) {
 		int prio;
 

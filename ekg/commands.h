@@ -46,8 +46,11 @@
 #define SESSION_MUSTBECONNECTED 	0x40
 	/* command must come from the same plugin as session (?) */
 #define SESSION_MUSTBELONG		0x80
+	/* if session == NULL, we try session_current, if still NULL. we return -1... mh, i really don't know if this 
+	 * flag is obsolete... but we do simillar thing in many places in code, so implemented. */
+#define SESSION_MUSTHAS			0x100
 	/* session must exist and has private struct */
-#define SESSION_MUSTHASPRIVATE		0x100
+#define SESSION_MUSTHASPRIVATE		0x200
 
 typedef COMMAND(command_func_t);
 

@@ -1349,14 +1349,6 @@ COMMAND(cmd_list)
 	const char *tmp;
 	metacontact_t *m = NULL;
 
-	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ co¶ dalej ... */
-        if(!session) {
-                if(session_current)
-                        session = session_current;
-                else
-                        return -1;
-        }
-
         if (!params[0] && window_current->target) { 
                 params[0] = xstrdup(window_current->target);
 		params[1] = NULL;
@@ -1656,14 +1648,6 @@ COMMAND(cmd_save)
 {
 	last_save = time(NULL);
 	
-        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if (!session) {
-		if (session_current)
-			session = session_current;
-		else
-			return -1;
-	}
-
 	if (!config_write(params[0]) && !session_write() && !metacontact_write() && !script_variables_write() ) {
 		printq("saved");
 		config_changed = 0;
@@ -2225,19 +2209,10 @@ COMMAND(cmd_reload)
 
 COMMAND(cmd_query)
 {
-	char **p;
+	char **p = xcalloc(3, sizeof(char*));
 	int i, res = 0;
 	metacontact_t *m;
 	char *tmp;
-
-        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if (!session) {
-                if(session_current)
-                        session = session_current;
-                else
-                        return -1;
-        }
-	p = xcalloc(3, sizeof(char*));
 
 	/* skopiuj argumenty dla wywo³ania /chat */
 	for (i = 0; params[i]; i++)
@@ -2546,7 +2521,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (!last_alias && (tmp = xstrchr(last_name, ':')))
 			last_name = tmp + 1;
 		
-		if (last_command->flags & SESSION_MUSTHASPRIVATE) {
+        	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
+		/* nie obsolete ? nie robi tego samego co `session_t *s = session ? session : window_current->session;` (?) */
+		if (last_command->flags & SESSION_MUSTHAS) {
+			if (!s && !(s = session_current))
+				res = -1;
+		}
+
+		if (!res && last_command->flags & SESSION_MUSTHASPRIVATE) {
 			if (!s || !(s->priv)) {
 				printq("invalid_session");
 				res = -1;
@@ -3347,14 +3329,6 @@ COMMAND(cmd_timer)
 
 COMMAND(cmd_conference) 
 {
-        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if(!session) {
-                if(session_current)
-                        session = session_current;
-                else
-                        return -1;
-        }
-
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] == '#') {
 		list_t l, r;
 		int count = 0;
@@ -3574,14 +3548,6 @@ COMMAND(cmd_last)
 	const char *nick = NULL;
 	time_t n;
 	struct tm *now;
-
-        /* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
-        if (!session) {
-                if (session_current)
-                        session = session_current;
-                else
-                        return -1;
-        }
 
 	if (match_arg(params[0], 'c', "clear", 2)) {
 		if (params[1] && !(uid = get_uid(session, params[1]))) {
@@ -4080,7 +4046,7 @@ void command_init()
 
 	command_add(NULL, "clear", NULL, cmd_window, 0,	NULL);
  
-        command_add(NULL, "conference", "p C uU", cmd_conference, 0,
+        command_add(NULL, "conference", "p C uU", cmd_conference, SESSION_MUSTHAS,
           "-a --add -j --join -d --del -i --ignore -u --unignore -r --rename -f --find -l --list");
  
 	command_add(NULL, "dcc", "p u f ?", cmd_dcc, 0,
@@ -4107,23 +4073,23 @@ void command_init()
 	command_add(NULL, "ignore", "uUC I", cmd_ignore, 0,
 	  "status descr notify msg dcc events *");
 	  
-	command_add(NULL, "last", "CpuU CuU", cmd_last, 0,
+	command_add(NULL, "last", "CpuU CuU", cmd_last, SESSION_MUSTHAS,
 	  "-c --clear -s --stime -n --number");
 
         command_add(NULL, "metacontact", "mp m s uU ?", cmd_metacontact, 0,
           "-a --add -d --del -i --add-item -r --del-item -l --list");
 
-	command_add(NULL, "list", "CpuUsm", cmd_list, 0,
+	command_add(NULL, "list", "CpuUsm", cmd_list, SESSION_MUSTHAS,
 	  "-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online");
 	  
-	command_add(NULL, "on", "p e ? UuC c", cmd_on, 0,
+	command_add(NULL, "on", "p e ? UuC c", cmd_on, SESSION_MUSTHAS,
 	  "-a --add -d --del -l --list" );
 	
 	command_add(NULL, "play", "!f", cmd_play, COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(NULL, "plugin", "P ?", cmd_plugin, 0, NULL);
 
-	command_add(NULL, "query", "uUCms ?", cmd_query, 0,
+	command_add(NULL, "query", "uUCms ?", cmd_query, SESSION_MUSTHAS,
 	  "-c --clear");
 
 	command_add(NULL, "queue", "puUC uUC", cmd_queue, 0, 
@@ -4134,7 +4100,7 @@ void command_init()
 	  
 	command_add(NULL, "reload", NULL, cmd_reload, 0, NULL);
 	  
-	command_add(NULL, "save", NULL, cmd_save, 0, NULL);
+	command_add(NULL, "save", NULL, cmd_save, SESSION_MUSTHAS, NULL);
 
 	command_add(NULL, "say", "!", cmd_say, COMMAND_ENABLEREQPARAMS,
 	  "-c --clear");
