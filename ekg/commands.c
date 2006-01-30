@@ -1345,7 +1345,7 @@ COMMAND(cmd_list)
 {
 	list_t l;
 	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
-	char **argv = NULL, *show_group = NULL, *ip_str, *last_ip_str;
+	char **argv = NULL, *show_group = NULL;
 	const char *tmp;
 	metacontact_t *m = NULL;
 
@@ -1362,7 +1362,7 @@ COMMAND(cmd_list)
 	}
 
 	if (params[0] && (*params[0] != '-' || userlist_find(session, params[0]))) {
-		char *status, *groups, *last_status;
+		char *status, *last_status;
 		const char *group = params[0];
 		userlist_t *u;
 		int invert = 0;
@@ -1453,16 +1453,11 @@ next:
 		}
 
 list_user:
-		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
+		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), 
+				(u->first_name) ? u->first_name : u->nickname, u->descr);
 
-                last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), (u->first_name) ? u->first_name : u->nickname, u->last_descr);
-
-
-		groups = group_to_string(u->groups, 0, 1);
-
-		ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port));
-
-		last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
+                last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), 
+				(u->first_name) ? u->first_name : u->nickname, u->last_descr);
 
 		printq("user_info_header", u->nickname, u->uid);
 		if (u->nickname && xstrcmp(u->nickname, u->nickname)) 
@@ -1501,16 +1496,23 @@ list_user:
 
 		query_emit(NULL, "userlist-info", &u, &quiet);
 
-		if (u->ip)
+		if (u->ip) {
+			char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port));
 			printq("user_info_ip", ip_str);
-                else if (u->last_ip) {
+			xfree(ip_str);
+		} else if (u->last_ip) {
+			char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
                         printq("user_info_last_ip", last_ip_str);
+			xfree(last_ip_str);
 		}
 
 		if (u->mobile && xstrcmp(u->mobile, ""))
 			printq("user_info_mobile", u->mobile);
-		if (xstrcmp(groups, ""))
+		if (u->groups) {
+			char *groups = group_to_string(u->groups, 0, 1);
 			printq("user_info_groups", groups);
+			xfree(groups);
+		}
 		if (!xstrcasecmp(u->status, EKG_STATUS_NA) || !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE) || !xstrcasecmp(u->status, EKG_STATUS_ERROR)) {
 			char buf[100];
 			struct tm *last_seen_time;
@@ -1526,10 +1528,7 @@ list_user:
 			
 		printq("user_info_footer", u->nickname, u->uid);
 		
-		xfree(ip_str);
-		xfree(groups);
 		xfree(status);
-		xfree(last_ip_str);
 		xfree(last_status);
 		return 0;
 	}
