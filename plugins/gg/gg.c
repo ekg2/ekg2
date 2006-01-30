@@ -839,7 +839,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e)
 
 		        debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
 
-			if ((fp = image_open_file(prepare_path(image_file, 1))) == NULL) {
+			if ((fp = image_open_file(image_file)) == NULL) {
 				print("gg_image_cant_open_file", image_file);
 			} else {
 				int i;
