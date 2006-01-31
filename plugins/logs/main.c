@@ -391,7 +391,7 @@ log_away_t *logs_away_create(char *session)
 	if (logs_away_find(session))
 		return NULL;
 
-	debug("[logs] creating struct for session %s\n", session);
+	debug("[logs] turning awaylog on for session %s\n", session);
 
 	la = xmalloc(sizeof(log_away_t));
 	la->sname = xstrdup(session);
@@ -750,11 +750,11 @@ QUERY(logs_handler)
 
 /* uid = uid | ruid ? */
 	if (lw->logformat == LOG_FORMAT_IRSSI)
-		logs_irssi(lw->file, session, ruid, text, sent, LOG_IRSSI_MESSAGE, NULL);
+		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE, NULL);
 	else if (lw->logformat == LOG_FORMAT_SIMPLE)
-		logs_simple(lw->file, session, ruid, text, sent, class, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL);
+		logs_simple(lw->file, session, uid, text, sent, class, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL);
 	else if (lw->logformat == LOG_FORMAT_XML)
-		logs_xml(lw->file, session, ruid, text, sent, class);
+		logs_xml(lw->file, session, uid, text, sent, class);
 	// itd. dla innych formatow logow
 
 	return 0;
