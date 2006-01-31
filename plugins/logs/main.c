@@ -752,7 +752,7 @@ QUERY(logs_handler)
 	if (lw->logformat == LOG_FORMAT_IRSSI)
 		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE, NULL);
 	else if (lw->logformat == LOG_FORMAT_SIMPLE)
-		logs_simple(lw->file, session, uid, text, sent, class, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL);
+		logs_simple(lw->file, session, ruid, text, sent, class, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL);
 	else if (lw->logformat == LOG_FORMAT_XML)
 		logs_xml(lw->file, session, uid, text, sent, class);
 	// itd. dla innych formatow logow
@@ -1171,7 +1171,8 @@ void logs_irssi(FILE *file, const char *session, const char *uid, const char *te
 	if (!file)
 		return;
 
-	nuid = get_nickname(session_find(session), uid);
+//	nuid = get_nickname(session_find(session), uid);
+	nuid = uid;
 	
 	switch (type) {
 		/* just normal message */
