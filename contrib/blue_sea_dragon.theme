@@ -1,0 +1,722 @@
+# (c) dredzik 2004-2006
+# Blue Sea Dragon
+
+//Begin
+contacts_vertical_line_char  
+contacts_horizontal_line_char
+prompt %T--%b>%n
+prompt,speech  
+prompt2 %T--%b>%n
+prompt2,speech  
+error %T--%r>%n
+error,speech b³±d!
+timestamp %H%M%S
+timestamp,speech  
+ncurses_prompt_none [empty] 
+ncurses_prompt_query [%1] 
+statusbar %l%b[%n%B%l%{time}%b] [%n%B%l%{?session %{session}%b(%B%{?avail dostêpny}%{?away zajêty}%{?invisible ukryty}%{?notavail niedostêpny}%{?xa bardzo zajêty}%{?dnd nie przeszkadzaæ}%{?chat chêtny do rozmowy}%b)}%{?!session ---}%b] [%n%B%l%{?window %{window}}%{?query :%{query}}%{?debug debug}%{?activity %b] [%n%B%lact: }%{activity}%{?mail %b] [%n%B%l mail:}%{mail}%{?more %b] [%n%B%lmore}%b]%n%l                                                                                                                                                                                                           
+statusbar_act_important %B
+statusbar_act %b
+statusbar_timestamp %H%M%S
+header 
+known_user %1
+known_user,speech %1
+unknown_user %1
+none %1\n
+generic %> %1\n
+generic_bold %> %1%n\n
+generic2 %) %1\n
+generic2_bold %) %1%n\n
+generic_error %! %1\n
+debug %n%1\n
+not_enough_params %! %Bcommand: za ma³o parametrów dla komendy %b(%B%1%b)%n\n
+invalid_params %! %Bcommand: nieprawid³owe parametry dla komendy %b(%B%1%b)%n\n
+//End
+
+
+invalid_uid %! Nieprawid³owy identyfikator u¿ytkownika\n
+invalid_session %! Nieprawid³owa sesja\n
+invalid_nick %! Nieprawid³owa nazwa u¿ytkownika\n
+user_not_found %! Nie znaleziono u¿ytkownika %T%1%n\n
+not_implemented %! Tej funkcji jeszcze nie ma\n
+
+//Begin
+unknown_command %! %Bcommand: nieznane polecenie %b(%B%1%b)%n\n
+welcome %B,----- %b---- %B--- %b-- %B-%n\n%B| ekg2-%1%n %b(%be%Bk%bg %Br%be%Ba%bk%Bt%by%Bw%ba%Bc%bj%Ba%b)%B + BlueSeaDragon.theme by dredzik%n\n%B| program jest rozprowadzany na zasadach licencji GPL v2\n%B`----- %b---- %B--- %b-- %B-%n\n\n
+welcome,speech ekg2 + BlueSeaDragon 
+ekg_version %) %Tekg2-%1%n (skompilowano %2)\n
+//End
+
+secure %Y(szyfrowane)%n 
+new_mail_one %) Masz now± wiadomo¶æ email\n
+new_mail_two_four %) Masz %1 nowe wiadomo¶ci email\n
+new_mail_more %) Masz %1 nowych wiadomo¶ci email\n
+
+
+//Begin
+user_added %> %Bcontacts: dopisano %n%b(%n%B%1%n%b)%n%B do listy kontaktów dla sesji %n%b(%n%B%2%n%b)%n\n
+user_deleted %) %Bcontacts: usuniêto %n%b(%n%B%1%n%b)%n%B z listy kontaktów dla sesji %n%b(%n%B%2%n%b)%n\n
+user_cleared_list %) %Bcontacts: wyczyszczono listê kontaktów dla sesji %n%b(%n%B%2%n%b)%n\n
+user_exists %! %Bcontacts: wpis %n%b(%n%B%1%n%b)%n%B ju¿ istnieje w li¶cie kontaktów sesji %n%b(%n%B%2%n%b)%n\n
+user_exists_other %! %Bcontacts: wpis %n%b(%n%B%1%n%b)%n%B ju¿ istnieje w li¶cie kontaktów sesji %n%b(%n%B%3%n%b)%B jako %n%b(%n%B%2%n%b)%n\n
+away %> %Bstatus: zmieniono stan na zajêty%n\n
+away_descr %> %Bstatus: zmieniono stan na zajêty %n%b(%n%B%1%n%b)%n\n
+back %> %Bstatus: zmieniono stan na dostêpny\n
+back_descr %> %Bstatus: zmieniono stan na dostêpny %n%b(%n%B%1%n%b)%n\n
+invisible %> %Bstatus: zmieniono stan na niewidoczny\n
+invisible_descr %> %Bstatus: zmieniono stan na niewidoczny %n%b(%n%B%1%n%b)%n\n
+dnd %> %Bstatus: zmieniono stan na nie przeszkadzaæ%n\n
+dnd_descr %> %Bstatus: zmieniono stan na nie przeszkadzaæ %n%b(%n%B%1%n%b)%n\n
+chat %> %Bstatus: zmieniono stan na chêtny do rozmowy%n\n
+chat_descr %> %Bstatus: zmieniono stan na chêtny do rozmowy %n%b(%n%B%1%n%b)%n\n
+xa %> %Bstatus: zmieniono stan na bardzo zajêty%n\n
+xa_descr %> %Bstatus: zmieniono stan na bardzo zajêty %n%b(%n%B%1%n%b)%n\n
+//End
+
+
+private_mode_is_on %> %Bprivate: tryb %b(%Btylko dla znajomych%b)%B dla sesji %b(%B%1%b)%B jest w³±czony%n\n
+private_mode_is_off %> %Bprivate: tryb %b(%Btylko dla znajomych%b)%B dla sesji %b(%B%1%b)%B jest wy³±czony%n\n
+private_mode_on %> %Bprivate: w³±czono tryb %b(%Btylko dla znajomych%b)%B dla sesji %b(%B%1%b)%B\n
+private_mode_off %> %Bprivate: w³±czono tryb %b(%Btylko dla znajomych%b)%B dla sesji %b(%B%1%b)%B\n
+private_mode_invalid %! Nieprawid³owa warto¶æ\n
+descr_too_long %! D³ugo¶æ opisu przekracza limit. Ilo¶æ uciêtych znaków: %T%1%n\n
+auto_away %> (%1) Automagicznie zmieniono stan na zajêty\n
+auto_away_descr %> (%2) Automagicznie zmieniono stan na zajêty: %T%1%n\n
+auto_back %> (%1) Automagicznie zmieniono stan na dostêpny\n
+auto_back_descr %> (%2) Automagicznie zmieniono stan na dostêpny: %T%1%n\n
+help %> %T%1%n%2 - %3\n
+help_more %) %|%1\n
+help_alias %) %T%1%n jest aliasem i nie posiada opisu\n
+help_footer \n%> %|Wiêcej szczegó³ów na temat komend zwróci %Thelp <komenda>%n. Poprzedzenie komendy znakiem %T^%n spowoduje ukrycie jej wyniku. Zamiast parametru <numer/alias> mo¿na u¿yæ znaku %T$%n oznaczaj±cego aktualnego rozmówcê.\n\n
+help_quick %> %|Przed u¿yciem przeczytaj ulotkê. Plik %Tdocs/ULOTKA%n zawiera krótki przewodnik po za³±czonej dokumentacji. Je¶li go nie masz, mo¿esz ¶ci±gn±æ pakiet ze strony %Thttp://dev.null.pl/ekg2/%n\n
+help_set_file_not_found %! Nie znaleziono opisu zmiennych (nieprawid³owa instalacja)\n
+help_set_var_not_found %! Nie znaleziono opisu zmiennej %T%1%n\n
+help_set_header %> %T%1%n (%2, domy¶lna warto¶æ: %3)\n%>\n
+help_set_body %> %|%1\n
+help_set_footer 
+ignored_added %> Dodano %T%1%n do listy ignorowanych\n
+ignored_modified %> Zmodyfikowano poziom ignorowania %T%1%n\n
+ignored_deleted %) Usuniêto %1 z listy ignorowanych\n
+ignored_deleted_all %) Usuniêto wszystkich z listy ignorowanych\n
+ignored_exist %! %1 jest ju¿ na li¶cie ignorowanych\n
+ignored_list %> %1 %2\n
+ignored_list_empty %! Lista ignorowanych u¿ytkowników jest pusta\n
+error_not_ignored %! %1 nie jest na li¶cie ignorowanych\n
+blocked_added %> Dodano %T%1%n do listy blokowanych\n
+blocked_deleted %) Usuniêto %1 z listy blokowanych\n
+blocked_deleted_all %) Usuniêto wszystkich z listy blokowanych\n
+blocked_exist %! %1 jest ju¿ na li¶cie blokowanych\n
+blocked_list %> %1\n
+blocked_list_empty %! Lista blokowanych u¿ytkowników jest pusta\n
+error_not_blocked %! %1 nie jest na li¶cie blokowanych\n
+
+
+//Begin
+list_empty %! %Blist: lista jest pusta%n\n
+list_avail %c%[-25]1 %n%Bjest %n%cdostêpn%@2%n\n
+list_avail_descr %c%[-25]1 %n%Bjest %n%cdostêpn%@2 %n%b(%n%B%5%n%b)%n\n
+list_away %c%[-25]1 %n%Bjest %n%czajêt%@2%n\n
+list_away_descr %c%[-25]1 %n%Bjest %n%czajêt%@2 %n%b(%n%B%5%n%b)%n\n
+list_dnd %c%[-25]1 %n%cnie przeszkadzaæ%n\n
+list_dnd_descr %c%[-25]1 %n%cnie przeszkadzaæ %n%b(%n%B%5%n%b)%n\n
+list_chat %c%[-25]1 %n%Bjest %n%cchêtn%@2 do rozmowy%n\n
+list_chat_descr %c%[-25]1 %n%Bjest %n%cchêtn%@2 do rozmowy %n%b(%n%B%5%n%b)%n\n
+list_error %c%[-25]1 %n%cb³±d%n\n
+list_error %c%[-25]1 %n%cb³±d %n%b(%n%B%5%n%b)%n\n
+list_xa %c%[-25]1 %n%Bjest %n%cbardzo zajêt%@2%n\n
+list_xa_descr %c%[-25]1 %n%Bjest %n%cbardzo zajêt%@2 %n%b(%n%B%5%n%b)%n\n
+list_notavail %c%[-25]1 %n%Bjest %n%cniedostêpn%@2%n\n
+list_notavail_descr %c%[-25]1 %n%Bjest %n%cniedostêpn%@2 %n%b(%n%B%5%n%b)%n\n
+list_invisible %c%[-25]1 %n%Bjest %n%cniewidoczn%@2%n\n
+list_invisible_descr %c%[-25]1 %n%Bjest %n%cniewidoczn%@2 %n%b(%n%B%5%n%b)%n\n
+list_blocked %c%[-25]1 %n%Bjest %n%cblokuj±c%@2%n\n
+list_unknown %c%[-25]1\n
+//End
+
+
+modify_offline %> %1 nie bêdzie widzieæ naszego stanu\n
+modify_online %> %1 bêdzie widzieæ nasz stan\n
+modify_done %> Zmieniono wpis w li¶cie kontaktów\n
+
+
+//Begin
+contacts_header 
+contacts_header_group %Cgrupa %B%1%n
+contacts_metacontacts_header 
+contacts_avail_header %Cdostêpni:%n
+contacts_avail    %B%1%n
+contacts_avail_descr   %Ci%n%B%1%n
+contacts_avail_descr_full   %Ci%n%B%1%n %2
+contacts_avail_blink    %B%U%1%n
+contacts_avail_descr_blink   %Ci%n%B%U%1%n
+contacts_avail_descr_full_blink   %Ci%n%B%U%1%n %2
+contacts_avail_footer %n
+contacts_away_header %Czajêci:
+contacts_away    %B%1%n
+contacts_away_descr   %Ci%n%B%1%n
+contacts_away_descr_full   %Ci%n%B%1%n %2
+contacts_away_blink    %B%U%1%n
+contacts_away_descr_blink   %Ci%n%B%U%1%n
+contacts_away_descr_full_blink   %Ci%n%B%U%1%n %2
+contacts_away_footer %n
+contacts_dnd_header %Cnie przeszkadzaæ:%n
+contacts_dnd    %B%1%n
+contacts_dnd_descr   %Ci%n%B%1%n
+contacts_dnd_descr_full   %Ci%n%B%1%n %2
+contacts_dnd_blink    %B%U%1%n
+contacts_dnd_descr_blink   %Ci%n%B%U%1%n
+contacts_dnd_descr_full_blink   %Ci%n%B%U%1%n %2
+contacts_dnd_footer %n
+contacts_xa_header %Cbardzo zajêci:%n
+contacts_xa    %B%1%n
+contacts_xa_descr   %Ci%n%B%1%n
+contacts_xa_descr_full   %Ci%n%B%1%n %2
+contacts_xa_blink    %B%U%1%n
+contacts_xa_descr_blink   %Ci%n%B%U%1%n
+contacts_xa_descr_full_blink   %Ci%n%B%U%1%n %2
+contacts_xa_footer %n
+contacts_notavail_header %Cniedostêpni:%n
+contacts_notavail    %B%1%n
+contacts_notavail_descr   %Ci%n%B%1%n
+contacts_notavail_descr_full   %Ci%n%B%1%n %2
+contacts_notavail_blink    %B%U%1%n
+contacts_notavail_descr_blink   %Ci%n%B%U%1%n
+contacts_notavail_descr_full_blink   %Ci%n%B%U%1%n %2
+contacts_notavail_footer %n
+contacts_invisible_header %Cniewidoczni:%n 
+contacts_invisible    %B%1%n
+contacts_invisible_descr   %Ci%n%B%1%n
+contacts_invisible_descr_full   %Ci%n%B%1%n %2
+contacts_invisible_blink    %B%U%1%n
+contacts_invisible_descr_blink   %Ci%n%B%U%1%n
+contacts_invisible_descr_full_blink   %Ci%n%B%U%1%n %2
+contacts_invisible_footer %n
+contacts_chat_header %Cchêtni do rozmowy:%n
+contacts_chat    %B%1%n
+contacts_chat_descr   %Ci%n%B%1%n
+contacts_chat_descr_full   %Ci%n%B%1%n %2
+contacts_chat_blink    %B%U%1%n
+contacts_chat_descr_blink   %Ci%n%B%U%1%n
+contacts_chat_descr_full_blink   %Ci%n%B%U%1%n %2
+contacts_chat_footer %n
+contacts_error_header %Cb³êdne statusy:%n 
+contacts_error   %B%1%n
+contacts_error_descr  %Ci%n%B%1%n
+contacts_error_descr_full  %Ci%n%B%1%n %2
+contacts_error_blink   %B%U%1%n
+contacts_error_descr_blink  %Ci%n%B%U%1%n
+contacts_error_descr_full_blink  %Ci%n%B%U%1%n %2
+contacts_error_footer %n 
+contacts_blocking_header %Cblokuj±cy:%n
+contacts_blocking    %B%1%n
+contacts_blocking_footer %n
+contacts_footer 
+contacts_footer_group %n 
+contacts_metacontacts_footer 
+quit %> %Bquit: koniec programu%n\n
+quit_descr %> %Bquit: koniec programu %n%b(%n%B%1%2%n%b)%n\n
+config_changed quit: zapisaæ now± konfiguracjê? (tak/nie)
+quit_keep_reason quit: zapamiêtaæ opisy? (tak/nie) 
+saved %> %Bconfig: zapisano ustawienia%n\n
+error_saving %! %Bconfig: podczas zapisu ustawieñ wyst±pi³ b³±d\n
+message %b(%B%1%b)%n %3\n
+message_timestamp (%Y/%m/%d %H:%M) 
+message_timestamp_today (%H:%M) 
+message_timestamp_now 
+message,speech wiadomo¶æ od %1: %3
+chat %b(%B%4%b)%n %3\n
+chat_timestamp (%Y/%m/%d %H:%M) 
+chat_timestamp_today (%H:%M) 
+chat_timestamp_now 
+chat,speech wiadomo¶æ od %1: %3
+sent %b(%B%4%b)%n %3\n
+sent_timestamp (%Y/%m/%d %H:%M) 
+sent_timestamp_today (%H:%M) 
+sent_timestamp_now 
+sent,speech 
+system %b(%Bsystem%b)%n\n%n%3\n
+system,speech wiadomo¶æ systemowa: %3
+//End
+
+
+ack_queued %> Wiadomo¶æ do %1 zostanie dostarczona pó¼niej\n
+ack_delivered %> Wiadomo¶æ do %1 zosta³a dostarczona\n
+ack_unknown %> Nie wiadomo, co siê sta³o z wiadomo¶ci± do %1\n
+ack_filtered %! %|Wiadomo¶æ do %1 najprawdopodobniej nie zosta³a dostarczona, poniewa¿ dana osoba jest niedostêpna, a serwer twierdzi, ¿e dorêczy³ wiadomo¶æ. Sytuacja taka ma miejsce, gdy wiadomo¶æ zosta³a odrzucona przez filtry serwera (np. zawiera adres strony WWW)\n
+message_too_long %! Wiadomo¶æ jest zbyt d³uga i zosta³a skrócona\n
+
+
+//Begin
+status_avail %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest dostêpn%@2%n\n
+status_avail_descr %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest dostêpn%@2 %n%b(%n%B%4%n%b)%n\n
+status_away %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest zajêt%@2%n\n
+status_away_descr %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest zajêt%@2 %n%b(%n%B%4%n%b)%n\n
+status_xa %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest bardzo zajêt%@2%n\n
+status_xa_descr %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest bardzo zajêt%@2 %n%b(%n%B%4%n%b)%n\n
+status_dnd %> %Bstatus: %n%b(%n%B%1%n%b)%n%B nie przeszkadzaæ%n\n
+status_dnd_descr %> %Bstatus: %n%b(%n%B%1%n%b)%n%B nie przeszkadzaæ %n%b(%n%B%4%n%b)%n\n
+status_chat %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest chêtn%@2 do rozmowy%n\n
+status_chat_descr %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest chêtn%@2 do rozmowy %n%b(%n%B%4%n%b)%n\n
+status_notavail %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest niedostêpn%@2%n\n
+status_notavail_descr %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest niedostêpn%@2 %n%b(%n%B%4%n%b)%n\n
+status_invisible %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest niewidoczn%@2%n\n
+status_invisible_descr %> %Bstatus: %n%b(%n%B%1%n%b)%n%B jest niewidoczn%@2 %n%b(%n%B%4%n%b)%n\n
+connecting %> %Bconnect: ³±czenie z serwerem sesji %n%b(%n%B%1%n%b)%n\n
+conn_failed %! %Bconnect: po³±czenie z serwerem sesji %n%b(%n%B%2%n%b)%n%B nie powiod³o siê %n%b(%n%B%1%n%b)%n\n
+conn_failed_resolving Nie znaleziono serwera
+conn_failed_connecting Nie mo¿na po³±czyæ siê z serwerem
+conn_failed_invalid Nieprawid³owa odpowied¼ serwera
+conn_failed_disconnected Serwer zerwa³ po³±czenie
+conn_failed_password Nieprawid³owe has³o
+conn_failed_404 B³±d serwera HTTP
+conn_failed_tls B³±d negocjacji TLS
+conn_failed_memory Brak pamiêci
+conn_stopped %! %Bconnect: przerwano ³±czenie z serwerem sesji %n%b(%n%B%1%n%b)%n\n
+conn_timeout %! %Bconnect: przekroczono limit czasu operacji ³±czenia z serwerem sesji %n%b(%n%B%1%n%b)%n\n
+connected %> %Bconnect: po³±czono z serwerem sesji %n%b(%n%B%1%n%b)%n\n
+connected_descr %> %Bconnect: po³±czono z serwerem sesji %n%b(%n%B%2%n%b)%n%B i ustawiono opis %n%b(%n%B%1%n%b)%n\n
+disconnected %> %Bconnect: roz³±czono z serwerem sesji %n%b(%n%B%1%n%b)%n\n
+disconnected_descr %> %Bconnect: roz³±czono z serwerem sesji %n%b(%n%B%2%n%b)%n%B i ustawiono opis %n%b(%n%B%1%n%b)%n\n
+already_connected %! %Bconnect: po³±czenie z serwerem sesji %n%b(%n%B%1%n%b)%n%B jest ju¿ ustanowione%n\n
+during_connect %! %Bconnect: trwa ³±czenie z serwerem sesji %n%b(%n%B%1%n%b)%n%B u¿yj %n%b(%n%Bdisconnect%n%b)%n%B aby przerwaæ%n\n
+conn_broken %! %Bconnect: po³±czenie z serwerem sesji %n%b(%n%B%1%n%b)%n%B zosta³o przerwane%n\n
+conn_disconnected %! %Bconnect: serwer sesji %n%b(%n%B%1%n%b)%n%B przerwa³ po³±czenie%n\n
+not_connected %! %Bconnect: brak po³±czenia z serwerem sesji %n%b(%n%B%1%n%b)%n\n
+not_connected_msg_queued %! %Bconnect: brak po³±czenia z serwerem sesji %n%b(%n%B%1%n%b)%n%B wiadomo¶æ bêdzie wys³ana po po³±czeniu%n\n
+wrong_id %! %Bconnect: z³y id sesji %n%b(%n%B%1%n%b)%n\n
+inet_addr_failed %! %Bconnect: b³êdna warto¶æ zmiennej \"server\" w sesji %n%b(%n%B%1%n%b)%n%B%n\n
+invalid_local_ip %! %Bconnect: nieprawid³owy adres lokalny, czyszczê zmienn± \"local_ip\" w sesji %n%b(%n%B%1%n%b)%n\n
+theme_loaded %> %Btheme: wczytano motyw %n%b(%n%B%1%n%b)%n\n
+theme_default %> %Btheme: wczytano domy¶lny motyw%n\n
+error_loading_theme %! %Btheme: b³±d podczas ³adowania motywu %n%b(%n%B%1%n%b)%n\n
+variable %> %B%1 %n%b=%n%B %2%n\n
+variable_not_found %! %Bset: nieznana zmienna %n%b(%n%B%1%n%b)%n\n
+variable_invalid %! %Bset: nieprawid³owa warto¶æ zmiennej%n\n
+//End
+
+
+no_config %! Niekompletna konfiguracja. Wpisz:\n%!   %Tsession -a <gg:numerek-gg/jid:jabber-id>%n\n%!   %Tsession password <has³o>%n\n%!   %Tsave%n\n%! Nastêpnie wydaj polecenie:\n%!   %Tconnect%n\n%! Je¶li nie masz swojego numerka, wpisz:\n%!   %Tregister <e-mail> <has³o>%n\n\n%> %|Po po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie, gdy kto¶ przy¶le wiadomo¶æ. Aby przej¶æ do okna o podanym numerze nale¿y wcisn±æ %TAlt-numer%n lub %TEsc%n, a nastêpnie cyfrê. Aby rozpocz±æ rozmowê, nale¿y u¿yæ polecenia %Tquery%n. Aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ polecenia %Tadd%n. Wszystkie kombinacje klawiszy s± opisane w pliku %TREADME%n, a listê komend wy¶wietla polecenie %Thelp%n. Pamiêtaj o prefixie przed ka¿dym UID'em, prawid³owy przyk³adowy UID ma postaæ: %Tgg:<nr>%n. \n\n", 2);
+no_config,speech niekompletna konfiguracja. wpisz session -a, a za tym gg: nummerek-gg, jid: ewentualnie d¿aber id, a p, potem session pas³ord, za tym swoje has³o. wpisz sejf, ¿eby zapisaæ ustawienia. wpisz konekt by siê po³±czyæ. je¶li nie masz swojego numeru gadu-gadu, wpisz red¿ister, a po spacji imejl i has³o. po po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie, gdy kto¶ przy¶le wiadomo¶æ. aby przej¶æ do okna o podanym numerze, nale¿y wcisn±æ alt-numer lub eskejp, a nastêpnie cyfrê. aby rozpocz±æ rozmowê, nale¿y u¿yæ polecenia k³ery. aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ polecenia edd. wszystkie kombinacje klawiszy s± opisane w pliku ridmi, a listê komend wy¶wietla polecenie help. Pamiêtaj o prefixie przed ka¿dym uidem, prawid³owy przyk³adowy uid ma postaæ gg:<nr>
+error_reading_config %! Nie mo¿na odczytaæ pliku konfiguracyjnego: %1\n
+
+
+//Begin
+config_read_success %> %Bconfig: wczytano plik konfiguracyjny %n%b(%n%B%1%n%b)%n\n
+//End
+
+
+config_line_incorrect %! Nieprawid³owa linia '%T%1%n', pomijam\n
+autosaved %> Automatycznie zapisano ustawienia\n
+register %> Rejestracja poprawna. Wygrany numerek: %T%1%n\n
+register_failed %! B³±d podczas rejestracji: %1\n
+register_pending %! Rejestracja w toku\n
+register_timeout %! Przekroczono limit czasu operacji rejestrowania\n
+registered_today %! Ju¿ zarejestrowano jeden numer. Nie nadu¿ywaj\n
+unregister %> Konto %T%1%n zosta³o usuniête\n
+unregister_timeout %! Przekroczono limit czasu operacji usuwania konta\n
+unregister_bad_uin %! Niepoprawny numer: %T%1%n\n
+unregister_failed %! B³±d podczas usuwania konta: %1\n
+remind %> Has³o zosta³o wys³ane\n
+remind_failed %! B³±d podczas wysy³ania has³a: %1\n
+remind_timeout %! Przekroczono limit czasu operacji wys³ania has³a\n
+passwd %> Has³o zosta³o zmienione\n
+passwd_failed %! B³±d podczas zmiany has³a: %1\n
+passwd_timeout %! Przekroczono limit czasu operacji zmiany has³a\n
+change %> Informacje w katalogu publicznym zosta³y zmienione\n
+change_failed %! B³±d podczas zmiany informacji w katalogu publicznym\n
+search_failed %! Wyst±pi³ b³±d podczas szukania: %1\n
+search_not_found %! Nie znaleziono\n
+search_no_last %! Brak wyników ostatniego wyszukiwania\n
+search_no_last_nickname %! Brak pseudonimu w ostatnim wyszukiwaniu\n
+search_stopped %> Zatrzymano wyszukiwanie\n
+search_results_multi_avail %Y<>%n
+search_results_multi_away %G<>%n
+search_results_multi_invisible %c<>%n
+search_results_multi_notavail   
+search_results_multi_unknown -
+search_results_multi %7 %[-7]1 %K|%n %[12]3 %K|%n %[12]2 %K|%n %[4]5 %K|%n %[12]4\n
+
+
+//Begin
+search_results_single_avail %n%b(%n%Bdostêpn%@1%n%b)%n
+search_results_single_away %n%b(%n%Bzajêt%@1%n%b)%n
+search_results_single_notavail %n%b(%n%Bniedostêpn%@1%b)%n
+search_results_single_invisible %n%b(%n%Bniewidoczn%@1%b)%n
+search_results_single_unknown %C-%n
+search_results_single %b(%n%C(%n%B find start %n%C)%n%b)%n\n        %Bpseudo %n%c%3%n\n        %Bgg %n%c%1%n %7\n        %Bimiê i nazwisko %c%2%n\n        %Bmiejscowo¶æ %c%4%n\n        %Brok urodzenia %c%5%n\n%b(%n%C(%n%B find end %n%C)%n%b)%n\n
+process         %B%2 %n%b(%n%B%1%n%b)%n\n
+no_processes %> %Bexec: brak dzia³aj±cych procesów%n\n
+process_exit %> %Bexec: proces %n%b(%n%B%2%n%b) (%n%B%1%n%b)%n%B zakoñczy³ dzia³anie z wynikiem %n%b(%n%B%3%n%b)%n\n
+exec %1\n
+exec_error %! %Bexec: podczas uruchamiania procesu wyst±pi³ b³±d %n%b(%n%B%1%n%b)%n\n
+exec_prompt $ %1\n
+user_info_header %b(%C(%n%B userinfo start %C)%b)%n\n%> %c%1 %b(%B%2%b)%n\n
+user_info_nickname         %Bpseudo %c%1%n\n
+user_info_name         %Bimiê i nazwisko %c%1 %2%n\n
+user_info_status         %Bjest %n%1%n\n
+user_info_status_time_format %Y-%m-%d %H:%M
+user_info_status_time         %Bod %c%1%n\n
+user_info_auth_type         %Bautoryzacja %c%1%n\n
+user_info_block         %Bjest %cblokowan%@1\n
+user_info_offline         %Bnie widzi stanu\n
+user_info_not_in_contacts         %Bnie ma nas w swoich kontaktach\n
+user_info_firewalled         %Bjest za %cfirewall/NAT\n
+user_info_ip         %Badres %c%1%n\n
+user_info_mobile         %Btelefon %c%1%n\n
+user_info_groups         %Bgrupy %c%1%n\n
+user_info_never_seen         %Bnigdy %cnie widziano\n
+user_info_last_seen         %Bwidziano %c%1%n\n
+user_info_last_seen_time %Y-%m-%d %H:%M
+user_info_last_ip         %Bpoprzedni adres %c%1%n\n
+user_info_last_status         %Bostatnio %n%1%n\n
+user_info_footer %b(%C(%n%B userinfo end %n%C)%b)%n\n
+user_info_avail %cdostêpn%@1%n
+user_info_avail_descr %cdostêpn%@1%n %b(%n%B%2%n%b)%n
+user_info_away %czajêt%@1%n
+user_info_away_descr %czajêt%@1%n %b(%n%B%2%n%b)%n
+user_info_notavail %cniedostêpn%@1%n
+user_info_notavail_descr %cniedostêpn%@1%n %b(%n%B%2%n%b)%n
+user_info_invisible %cniewidoczn%@1%n
+user_info_invisible_descr %cniewidoczn%@1%n %b(%n%B%2%n%b)%n
+user_info_dnd %cnie przeszkadzaæ%n
+user_info_dnd_descr %cnie przeszkadzaæ%n %b(%n%B%2%n%b)%n
+user_info_chat %cchêtn%@1 do rozmowy%n
+user_info_chat_descr %cchêtn%@1 do rozmowy%n %b(%n%B%2%n%b)%n
+user_info_error %cb³±d%n
+user_info_error_descr %cb³±d%n %b(%n%B%2%n%b)%n
+user_info_xa %cbardzo zajêt%@1%n
+user_info_xa_descr %cbardzo zajêt%@1%n %b(%n%B%2%n%b)%n
+user_info_blocked %cblokuj±c%@1%n
+user_info_blocked_descr %cblokuj±c%@1%n %b(%n%B%2%n%b)%n
+user_info_unknown %cnieznany%n
+group_members %> %Bgroup: cz³onkowie grupy %n%b(%n%B%1%n%b)%n%B to %n%b(%n%B%2%n%b)%n\n
+group_member_already %! %Bgroup: %n%b(%n%B%1%n%b)%n%B nale¿y ju¿ do grupy %n%b(%n%B%2%n%b)%n\n
+group_member_not_yet %! %Bgroup: %n%b(%n%B%1%n%b)%n%B nie nale¿y do grupy %n%b(%n%B%2%n%b)%n\n
+group_empty %! %Bgroup: grupa %n%b(%n%B%1%n%b)%n%B jest pusta%n\n
+show_status_header %b(%n%C(%n%B status start %n%C)%n%b)%n\n
+show_status_profile         %Bprofil %n%c%1%n\n
+show_status_uid         %Buid %n%c%1%n\n
+show_status_uid_nick         %Buid %n%c%1 %n%b(%n%B%2%n%b)%n\n
+show_status_status         %Baktualny stan %n%1%2%n\n
+show_status_status_simple         %Baktualny stan %n%1%n\n
+show_status_server         %Baktualny serwer %n%c%1%n%B port %n%c%2%n\n
+show_status_server_tls         %Baktualny serwer %n%c%1%n%B port %n%c%2 %n%b(%n%Bpo³±czenie szyfrowane%n%b)%n\n
+show_status_connecting         %Btrwa ³±czenie ...%n\n
+show_status_avail %cdostêpny%n
+show_status_avail_descr %cdostêpny %n%b(%n%B%1%n%c%2%n%b)%n
+show_status_away %czajêty%n
+show_status_away_descr %czajêty%n %n%b(%n%B%1%n%c%2%n%b)%n
+show_status_invisible %cniewidoczny%n
+show_status_invisible_descr %cniewidoczny%n %n%b(%n%B%1%n%c%2%n%b)%n
+show_status_xa %cbardzo zajêty%n
+show_status_xa_descr %cbardzo zajêty%n %n%b(%n%B%1%n%c%2%n%b)%n
+show_status_dnd %cnie przeszkaæ%n
+show_status_dnd_descr %cnie przeszkadzaæ%n %n%b(%n%B%1%n%c%2%n%b)%n
+show_status_chat %cchêtny do rozmowy%n
+show_status_chat_descr %cchêtny do rozmowy%n %n%b(%n%B%1%n%c%2%n%b)%n
+show_status_notavail %cniedostêpny%n
+show_status_private_on %B, %ctylko dla znajomych%n
+show_status_private_off 
+show_status_connected_since         %Bpo³±czony od %n%c%1%n\n
+show_status_disconnected_since         %Broz³±czony od %n%c%1%n\n
+show_status_last_conn_event %Y-%m-%d %H:%M
+show_status_last_conn_event_today %H:%M
+show_status_ekg_started_since         %Bprogram dzia³a od %n%c%1%n\n
+show_status_ekg_started %Y-%m-%d %H:%M
+show_status_ekg_started_today %H:%M
+show_status_msg_queue         %Bilo¶æ wiadomo¶ci w kolejce do wys³ania %n%c%1%n\n
+show_status_footer %b(%n%C(%n%B status end %n%C)%n%b)%n\n
+//End
+
+
+aliases_list_empty %! Brak aliasów\n
+aliases_list %> %T%1%n: %2\n
+aliases_list_next %> %3  %2\n
+aliases_add %> Utworzono alias %T%1%n\n
+aliases_append %> Dodano do aliasu %T%1%n\n
+aliases_del %) Usuniêto alias %T%1%n\n
+aliases_del_all %) Usuniêto wszystkie aliasy\n
+aliases_exist %! Alias %T%1%n ju¿ istnieje\n
+aliases_noexist %! Alias %T%1%n nie istnieje\n
+aliases_command %! %T%1%n jest wbudowan± komend±\n
+aliases_not_enough_params %! Alias %T%1%n wymaga wiêkszej ilo¶ci parametrów\n
+dcc_attack %! %|Program otrzyma³ zbyt wiele ¿±dañ bezpo¶rednich po³±czeñ, ostatnie od %1\n
+dcc_limit %! %|Przekroczono limit bezpo¶rednich po³±czeñ i dla bezpieczeñstwa zosta³y one wy³±czone. Aby je w³±czyæ ponownie, nale¿y wpisaæ polecenie %Tset dcc 1%n i po³±czyæ siê ponownie. Limit mo¿na zmieniæ za pomoc± zmiennej %Tdcc_limit%n.\n
+dcc_create_error %! Nie mo¿na w³±czyæ po³±czeñ bezpo¶rednich: %1\n
+dcc_error_network %! B³±d transmisji z %1\n
+dcc_error_refused %! Po³±czenie z %1 zosta³o odrzucone\n
+dcc_error_unknown %! Nieznany b³±d po³±czenia bezpo¶redniego\n
+dcc_error_handshake %! Nie mo¿na nawi±zaæ po³±czenia z %1\n
+dcc_user_aint_dcc %! %1 nie ma w³±czonej obs³ugi po³±czeñ bezpo¶rednich\n
+dcc_timeout %! Przekroczono limit czasu operacji bezpo¶redniego po³±czenia z %1\n
+dcc_not_supported %! Opcja %T%1%n nie jest jeszcze obs³ugiwana\n
+dcc_open_error %! Nie mo¿na otworzyæ %T%1%n: %2\n
+dcc_show_pending_header %> Po³±czenia oczekuj±ce:\n
+dcc_show_pending_send %) #%1, %2, wysy³anie %T%3%n\n
+dcc_show_pending_get %) #%1, %2, odbiór %T%3%n\n
+dcc_show_pending_voice %) #%1, %2, rozmowa\n
+dcc_show_active_header %> Po³±czenia aktywne:\n
+dcc_show_active_send %) #%1, %2, wysy³anie %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n
+dcc_show_active_get %) #%1, %2, odbiór %T%3%n, %T%4b%n z %T%5b%n (%6%%)\n
+dcc_show_active_voice %) #%1, %2, rozmowa\n
+dcc_show_empty %! Brak bezpo¶rednich po³±czeñ\n
+dcc_receiving_already %! Plik %T%1%n od u¿ytkownika %2 jest ju¿ pobierany\n
+dcc_done_get %> Zakoñczono pobieranie pliku %T%2%n od %1\n
+dcc_done_send %> Zakoñczono wysy³anie pliku %T%2%n do %1\n
+dcc_close %) Zamkniêto po³±czenie z %1\n
+dcc_voice_offer %) %1 chce rozmawiaæ\n%) Wpisz %Tdcc voice #%2%n, by rozpocz±æ rozmowê, lub %Tdcc close #%2%n, by anulowaæ\n
+dcc_voice_running %! Mo¿na prowadziæ tylko jedn± rozmowê g³osow± na raz\n
+dcc_voice_unsupported %! Nie wkompilowano obs³ugi rozmów g³osowych. Przeczytaj %Tdocs/voip.txt%n\n
+dcc_get_offer %) %1 przesy³a plik %T%2%n o rozmiarze %T%3b%n\n%) Wpisz %Tdcc get #%4%n, by go odebraæ, lub %Tdcc close #%4%n, by anulowaæ\n
+dcc_get_offer_resume %) Plik istnieje ju¿ na dysku, wiêc mo¿na wznowiæ pobieranie poleceniem %Tdcc resume #%4%n\n
+dcc_get_getting %) Rozpoczêto pobieranie pliku %T%2%n od %1\n
+dcc_get_cant_create %! Nie mo¿na utworzyæ pliku %T%1%n\n
+dcc_not_found %! Nie znaleziono po³±czenia %T%1%n\n
+dcc_invalid_ip %! Nieprawid³owy adres IP\n
+dcc_user_notavail %! %1 musi byæ dostêpn%@1, by móc nawi±zaæ po³±czenie\n
+
+
+//Begin
+query_started %) %Brozmowa: rozpoczêto rozmowê z %n%b(%n%B%1%n%b)%n%B w sesji %n%b(%n%B%2%n%b)%n\n
+query_started_window %) %Brozmowa: %n%b(%n%BAlt-G%n%b)%n%B by ignorowaæ, %n%b(%n%BAlt-K%n%b)%n%B by zamkn±æ okno%n\n
+query_finished %) %Brozmowa: zakoñczono rozmowê z %n%b(%n%B%1%n%b)%n%B w sesji %n%b(%n%B%2%n%b)%n\n
+//End
+
+
+query_exist %! Rozmowa z %T%1%n jest ju¿ prowadzona w okienku nr %T%2%n\n
+events_list_empty %! Brak zdarzeñ\n
+events_list_header 
+events_list %> %5 on %1 %3 %4 - prio %2\n
+events_add %> Dodano zdarzenie %T%1%n\n
+events_del %) Usuniêto zdarzenie %T%1%n\n
+events_del_all %) Usuniêto wszystkie zdarzenia\n
+events_exist %! Zdarzenie %T%1%n istnieje dla %2\n
+events_del_noexist %! Zdarzenie %T%1%n nie istnieje\n
+userlist_put_ok %> Listê kontaktów zachowano na serwerze\n
+userlist_put_error %! B³±d podczas wysy³ania listy kontaktów\n
+userlist_get_ok %> Listê kontaktów wczytano z serwera\n
+userlist_get_error %! B³±d podczas pobierania listy kontaktów\n
+userlist_clear_ok %) Usuniêto listê kontaktów z serwera\n
+userlist_clear_error %! B³±d podczas usuwania listy kontaktów\n
+quick_list %)%1\n
+quick_list,speech lista kontaktów: 
+quick_list_avail  %Y%1%n
+quick_list_avail,speech %1 jest dostêpny, 
+quick_list_away  %G%1%n
+quick_list_away,speech %1 jest zajêty, 
+quick_list_invisible  %c%1%n
+window_add %) Utworzono nowe okno\n
+window_noexist %! Wybrane okno nie istnieje\n
+window_no_windows %! Nie mo¿na zamkn±æ ostatniego okna\n
+window_del %) Zamkniêto okno\n
+windows_max %! Wyczerpano limit ilo¶ci okien\n
+window_list_query %) %1: rozmowa z %T%2%n\n
+window_list_nothing %) %1: brak rozmowy\n
+window_list_floating %) %1: p³ywaj±ce %4x%5 w %2,%3 %T%6%n\n
+
+
+//Begin
+window_id_query_started %) %Brozmowa: rozpoczêto rozmowê z %n%b(%n%B%2%n%b)%n%B w oknie %n%b(%n%B%1%n%b)%n\n
+//End
+
+
+window_kill_status %! Nie mo¿na zamkn±æ okna stanu\n
+bind_seq_incorrect %! Sekwencja %T%1%n jest nieprawid³owa\n 
+bind_seq_add %> Dodano sekwencjê %T%1%n\n
+bind_seq_remove %) Usuniêto sekwencjê %T%1%n\n
+bind_seq_list %> %1: %T%2%n\n
+bind_seq_exist %! Sekwencja %T%1%n ma ju¿ przypisan± akcjê\n
+bind_seq_list_empty %! Brak przypisanych akcji\n
+at_list %> %1, %2, %3 %K(%4)%n %5\n
+at_added %> Utworzono plan %T%1%n\n
+at_deleted %) Usuniêto plan %T%1%n\n
+at_deleted_all %) Usuniêto plany u¿ytkownika\n
+at_exist %! Plan %T%1%n ju¿ istnieje\n
+at_noexist %! Plan %T%1%n nie istnieje\n
+at_empty %! Brak planów\n
+at_timestamp %d-%m-%Y %H:%M
+at_back_to_past %! Gdyby mo¿na by³o cofn±æ czas...\n
+timer_list %> %1, %2s, %3 %K(%4)%n %T%5%n\n
+timer_added %> Utworzono timer %T%1%n\n
+timer_deleted %) Usuniêto timer %T%1%n\n
+timer_deleted_all %) Usuniêto timery u¿ytkownika\n
+timer_exist %! Timer %T%1%n ju¿ istnieje\n
+timer_noexist %! Timer %T%1%n nie istnieje\n
+timer_empty %! Brak timerów\n
+last_list_in %) %Y <<%n [%1] %2 %3\n
+last_list_out %) %G >>%n [%1] %2 %3\n
+last_list_empty %! Nie zalogowano ¿adnych wiadomo¶ci\n
+last_list_empty_nick %! Nie zalogowano ¿adnych wiadomo¶ci dla %T%1%n\n
+last_list_timestamp %d-%m-%Y %H:%M
+last_list_timestamp_today %H:%M
+last_clear_uin %) Wiadomo¶ci dla %T%1%n wyczyszczone\n
+last_clear %) Wszystkie wiadomo¶ci wyczyszczone\n
+queue_list_timestamp %d-%m-%Y %H:%M
+queue_list_message %) %G >>%n [%1] %2 %3\n
+queue_clear","%) Kolejka wiadomo¶ci wyczyszczona\n
+queue_clear_uid","%) Kolejka wiadomo¶ci wyczyszczona dla %T%1%n\n
+queue_wrong_use %! Komenda dzia³a tylko przy braku po³±czenia z serwerem\n
+queue_empty %! Kolejka wiadomo¶ci jest pusta\n
+queue_empty_uid %! Brak wiadomo¶ci w kolejce dla %T%1%n\n
+queue_flush %> Wys³ano zaleg³e wiadomo¶ci z kolejki\n
+conferences_list_empty %! Brak konferencji\n
+conferences_list %> %T%1%n: %2\n
+conferences_list_ignored %> %T%1%n: %2 (%yingorowana%n)\n
+conferences_add %> Utworzono konferencjê %T%1%n\n
+conferences_not_added %! Nie utworzono konferencji %T%1%n\n
+conferences_del %) Usuniêto konferencjê %T%1%n\n
+conferences_del_all %) Usuniêto wszystkie konferencje\n
+conferences_exist %! Konferencja %T%1%n ju¿ istnieje\n
+conferences_noexist %! Konferencja %T%1%n nie istnieje\n
+conferences_name_error %! Nazwa konferencji powinna zaczynaæ siê od %T#%n\n
+conferences_rename %> Nazwa konferencji zmieniona: %T%1%n --> %T%2%n\n
+conferences_ignore %> Konferencja %T%1%n bêdzie ignorowana\n
+conferences_unignore %> Konferencja %T%1%n nie bêdzie ignorowana\n
+conferences_joined %> Do³±czono %1 do konferencji %T%2%n\n
+conferences_already_joined %> %1 uczestniczy ju¿ w konferencji %T%2%n\n
+http_failed_resolving Nie znaleziono serwera
+http_failed_connecting Nie mo¿na po³±czyæ siê z serwerem
+http_failed_reading Serwer zerwa³ po³±czenie
+http_failed_writing Serwer zerwa³ po³±czenie
+http_failed_memory Brak pamiêci
+key_generating %> Czekaj, generujê klucze...\n
+key_generating_success %> Wygenerowano i zapisano klucze\n
+key_generating_error %! Wyst±pi³ b³±d podczas generowania kluczy: %1\n
+key_private_exist %! Posiadasz ju¿ swoj± parê kluczy\n
+key_public_deleted %) Klucz publiczny %1 zosta³ usuniêty\n
+key_public_not_found %! Nie znaleziono klucza publicznego %1\n
+key_public_noexist %! Brak kluczy publicznych\n
+key_public_received %> Otrzymano klucz publiczny od %1\n
+key_public_write_failed %! B³±d podczas zapisu klucza publicznego: %1\n
+key_send_success %> Wys³ano klucz publiczny do %1\n
+key_send_error %! B³±d podczas wysy³ania klucza publicznego\n
+key_list %> %1 (%3)\n%) %2\n
+key_list_timestamp %Y-%m-%d %H:%M
+python_list %> %1\n
+python_list_empty %! Brak za³adowanych skryptów\n
+python_removed %) Skrypt zosta³ usuniêty\n
+python_need_name %! Nie podano nazwy skryptu\n
+python_not_found %! Nie znaleziono skryptu %T%1%n\n
+python_wrong_location %! Skrypt nale¿y umie¶ciæ w katalogu %T%1%n\n
+session_name %1%n
+session_variable %> %T%1->%2 = %R%3%n\n 
+session_variable_removed %> Usuniêto %T%1->%2%n\n 
+session_variable_doesnt_exist %! Nieznana zmienna: %T%1->%2%n\n 
+session_list %> %T%1%n %3\n 
+session_list_alias %> %T%2%n/%1 %3\n 
+session_list_empty %! Lista sesji jest pusta\n
+session_info_header %) %T%1%n %3\n 
+session_info_header_alias %) %T%2%n/%1 %3\n 
+session_info_param %)    %1 = %T%2%n\n 
+session_info_footer  
+session_exists %! Sesja %T%1%n ju¿ istnieje\n 
+session_doesnt_exist %! Sesja %T%1%n nie istnieje\n
+session_added %> Utworzono sesjê %T%1%n\n
+session_removed %> Usuniêto sesjê %T%1%n\n
+session_format %T%1%n
+session_format_alias %T%1%n/%2
+session_cannot_change %! Nie mo¿na zmieniæ sesji w okienku rozmowy%n\n
+metacontact_list %> %T%1%n
+metacontact_list_empty %! Nie ma ¿adnych metakontaktów\n
+metacontact_exists %! Metakontakt %T%1%n ju¿ istnieje\n
+metacontact_added %> Utworzono metakontakt %T%1%n\n
+metacontact_removed %> Usuniêto metakontakt %T%1%n\n
+metacontact_doesnt_exist %! Metakontakt %T%1%n nie istnieje\n
+metacontact_added_item %> Dodano %T%1/%2%n do %T%3%n\n
+metacontact_removed_item %> Usuniêto %T%1/%2%n z %T%3%n\n
+metacontact_item_list_header 
+metacontact_item_list %> %T%1/%2 (%3)%n - prio %T%4%n\n
+metacontact_item_list_empty %! Metakontakt jest pusty\n
+metacontact_item_list_footer 
+metacontact_item_doesnt_exist %! Kontakt %T%1/%2%n nie istnieje\n
+metacontact_info_header %K.--%n Metakontakt %T%1%n %K--- -- -%n\n
+metacontact_info_status %K| %nStan: %T%1%n\n
+metacontact_info_footer %K`----- ---- --- -- -%n\n
+metacontact_info_avail %Ydostêpn%@1%n
+metacontact_info_avail_descr %Ydostêpn%@1%n %K(%n%2%K)%n
+metacontact_info_away %Gzajêt%@1%n
+metacontact_info_away_descr %Gzajêt%@1%n %K(%n%2%K)%n
+metacontact_info_notavail %rniedostêpn%@1%n
+metacontact_info_notavail_descr %rniedostêpn%@1%n %K(%n%2%K)%n
+metacontact_info_invisible %cniewidoczn%@1%n
+metacontact_info_invisible_descr %cniewidoczn%@1%n %K(%n%2%K)%n
+metacontact_info_dnd %cnie przeszkadzaæ%n
+metacontact_info_dnd_descr %cnie przeszkadzaæ%n %K(%n%2%K)%n
+metacontact_info_chat %Ychêtn%@1 do rozmowy%n
+metacontact_info_chat_descr %Ychêtn%@1 do rozmowy%n %K(%n%2%K)%n
+metacontact_info_error %mb³±d%n
+metacontact_info_error_descr %mb³±d%n %K(%n%2%K)%n
+metacontact_info_xa %cbardzo zajêt%@1%n
+metacontact_info_xa_descr %cbardzo zajêt%@1%n %K(%n%2%K)%n
+metacontact_info_blocked %mblokuj±c%@1%n
+metacontact_info_blocked_descr %mblokuj±c%@1%n %K(%n%2%K)%n
+metacontact_info_unknown %Mnieznany%n
+
+plugin_already_loaded %! Plugin %T%1%n jest ju¿ za³adowany%n.\n
+plugin_doesnt_exist","%! Plugin %T%1%n nie mo¿e zostaæ znaleziony%n\n
+plugin_incorrect %! Plugin %T%1%n nie jest prawid³owym pluginem EKG2%n\n
+plugin_not_initialized %! Plugin %T%1%n nie zosta³ wczytany poprawnie%n\n
+
+readline_prompt % 
+readline_prompt_away / 
+readline_prompt_invisible . 
+readline_prompt_query %1> 
+readline_prompt_win %1%% 
+readline_prompt_away_win %1/ 
+readline_prompt_invisible_win %1. 
+readline_prompt_query_win %2:%1> 
+readline_prompt_win_act %1 (act/%2)%% 
+readline_prompt_away_win_act %1 (act/%2)/ 
+readline_prompt_invisible_win_act %1 (act/%2). 
+readline_prompt_query_win_act %2:%1 (act/%3)> 
+readline_more [-40]- Wci¶nij Enter by kontynuowaæ lub Ctrl-D by przerwaæ --
+
+//Begin
+irc_msg_sent %b(%B%3%b/%B%5%b)%n %6
+irc_msg_sent_n %b(%B%3%b)%n %6
+irc_msg_sent_chan %b(%C%2%B%3%b)%n %6
+irc_msg_sent_chanh %b(%C%2%W%3%b)%n %6
+irc_msg_f_chan %b(%C%2%B%3%b/%B%5%b)%n %6 
+irc_msg_f_chanh %b(%C%2%W%3%b/%W%5%b)%W %6
+irc_msg_f_chan_n %b(%C%2%B%3%b)%n %6
+irc_msg_f_chan_nh %b(%C%2%W%3%b)%W %6
+irc_msg_f_some %b(%B%3%b)%n %6
+irc_not_f_chan %B(%C%2%B%3%b/%B%5%b)%n %6
+irc_not_f_chanh %B(%C%2%W%3%b/%W%5%b)%W %6
+irc_not_f_chan_n %B(%C%2%B%3%b)%n %6
+irc_not_f_chan_nh %B(%C%2%W%3%b)%W %6
+irc_not_f_some %b(%B%3%b)%n %6
+irc_joined   %> %Bjoin: %b(%B%2%b)%B %b(%B%3%b)%n\n
+irc_left   %> %Bpart: %b(%B%2%b)%B %b(%B%3%b)%B %b(%B%5%b)%n\n
+irc_kicked   %> %Bkick: %b(%B%2%b)%B was kicked by %b(%B%3%b)%B %b(%B%6%b)%n\n
+irc_kicked_you   %> %Bkick: you were kicked by %b(%B%3%b)%B %b(%B%6%b)%n\n
+irc_quit   %> %Bquit: %b(%B%2%b)%B %b(%B%3%b)%B %b(%B%4%b)%n\n
+//End
+
+irc_unknown_ctcp %> %Y%2%n sent unknown CTCP %3: (%4)\n
+irc_ctcp_action_y_pub %> %y%e* %2%n %4\n
+irc_ctcp_action_y %> %Y%e* %2%n %4\n
+irc_ctcp_action_pub %> %y%h* %2%n %4\n
+irc_ctcp_action %> %Y%h* %2%n %4\n
+irc_ctcp_request_pub %> %Y%2%n requested ctcp %4 from %3\n
+irc_ctcp_request %> %Y%2%n requested ctcp %4\n
+irc_ctcp_reply %> %Y%2%n CTCP reply from %3: %4\n
+IRC_ERR_CANNOTSENDTOCHAN %! %2: %1\n
+IRC_RPL_FIRSTSECOND %> (%1) %2 %3\n
+IRC_RPL_SECONDFIRST %> (%1) %3 %2\n
+IRC_RPL_JUSTONE %> (%1) %2\n
+IRC_RPL_NEWONE %> (%1) 1:%2 2:%3 3:%4 4:%5\n
+IRC_ERR_FIRSTSECOND %! (%1) %2 %3\n
+IRC_ERR_SECONDFIRST %! (%1) %3 %2\n
+IRC_ERR_JUSTONE %! (%1) %2\n
+IRC_ERR_NEWONE %! (%1) 1:%2 2:%3 3:%4 4:%5\n
+IRC_RPL_CANTSEND %> Cannot send to channel %T%2%n\n
+RPL_WHOISOPERATOR %G||%n %|ircOp    : %3\n
+IRC_RPL_TOPICBY %> set by %2 on %3
+IRC_TOPIC_CHANGE %> %T%4%n changed topic on %T%2%n: %3\n
+IRC_TOPIC_UNSET %> %T%3%n unset topic on %T%2%n\n
+IRC_MODE_CHAN %> %2/%3 sets mode%4\n
+IRC_MODE %> %2 set mode %3 on You\n
+IRC_PINGPONG %) ping/pong %c%2%n\n
+IRC_YOUNEWNICK %> You are now known as %G%2%n\n
+IRC_NEWNICK %> %g%2%n is now known as %G%3%n\n
