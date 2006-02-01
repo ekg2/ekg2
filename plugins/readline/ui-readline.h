@@ -17,7 +17,7 @@ typedef struct {
 } readline_window_t;
 
 /* deklaracje funkcji interfejsu */
-void ui_readline_loop();
+int ui_readline_loop();
 void ui_readline_init();
 void ui_readline_print(window_t *w, int separate, const char *xline);
 int window_refresh();
@@ -28,11 +28,11 @@ char *window_activity();
 int bind_sequence(const char *seq, const char *command, int quiet);
 int bind_handler_window(int a, int key);
 int my_getc(FILE *f);
+int my_loop();
 char **my_completion(char *text, int start, int end);
 char *empty_generator(char *text, int state);
 
 /* vars remove some !*/
-
 int ui_need_refresh; /* DARK */
 int ui_screen_width;
 int ui_screen_height;

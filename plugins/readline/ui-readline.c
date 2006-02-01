@@ -126,7 +126,6 @@ int my_getc(FILE *f)
 		ui_screen_width = screen_columns;
 		ui_screen_height = screen_lines;
 	}
-
 	return rl_getc(f);
 }
 
@@ -343,9 +342,6 @@ char *reason_generator(char *text, int state)
 /* hm, look at ncurses/completion.c */
 	if (!state) {
 		len = xstrlen(text);
-
-		if (config_reason_first && !xstrncasecmp(text, config_reason_first, len))
-			return xstrdup(config_reason_first);
 	}
 
 	return NULL;
@@ -383,7 +379,7 @@ char *session_generator(char *text, int state)
 				return xstrdup(s->alias);
 		}
 	}
-
+	return NULL;
 }
 
 char **my_completion(char *text, int start, int end)
@@ -539,19 +535,13 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	char *target = w->target;
 	char *linetmp;
 
-	if (target && !strcmp(target, "__debug"))
+	if (!xstrcmp(target, "__debug"))
 		return;
 
 	if (config_timestamp) {
 		string_t s = string_init(NULL);
 		const char *p = xline;
-		char buf[80];
-		struct tm *tm;
-		time_t t;
-
-		t = time(NULL);
-		tm = localtime(&t);
-		strftime(buf, sizeof(buf), format_string(config_timestamp), tm);
+		const char *buf = timestamp(format_string(config_timestamp));
 
 		string_append(s, "\033[0m");
 		string_append(s, buf);
@@ -702,19 +692,18 @@ const char *current_prompt()
 		xfree(tmp);
         } else {
 		char *format_win = "readline_prompt_win", *format_nowin = "readline_prompt", *format_win_act = "readline_prompt_win_act";
-#if 0 /* dark */
-		if (GG_S_B(config_status)) {
+		if (/* GG_S_B(config_status) */ 1) {
 			format_win = "readline_prompt_away_win";
 			format_nowin = "readline_prompt_away";
 			format_win_act = "readline_prompt_away_win_act";
 		}
 
-		if (GG_S_I(config_status)) {
+		if (/* GG_S_I(config_status)*/ 0) {
 			format_win = "readline_prompt_invisible_win";
 			format_nowin = "readline_prompt_invisible";
 			format_win_act = "readline_prompt_invisible_win_act";
 		}
-#endif
+
 		if (count > 1 || window_current->id != 1) {
 			if (act) {
 				tmp = format_string(format_find(format_win_act), itoa(window_current->id), act);
@@ -732,6 +721,12 @@ const char *current_prompt()
 
         return prompt;
 }
+
+int my_loop() {
+	ekg_loop();
+	return 0;
+}
+
 /*
  * my_readline()
  *
@@ -767,7 +762,7 @@ char *my_readline()
  * g³ówna pêtla programu. wczytuje dane z klawiatury w miêdzyczasie
  * obs³uguj±c sieæ i takie tam.
  */
-void ui_readline_loop()
+int ui_readline_loop()
 {
 	char *line;
 	line = my_readline();
@@ -783,9 +778,10 @@ void ui_readline_loop()
 	}
 
 	if (!line) {
+/*
 		if (config_ctrld_quits)	
 			return;
-		else {
+		else */ {
 			printf("\n");
 		}
 	}
@@ -803,9 +799,9 @@ void ui_readline_loop()
 		rl_bind_key(9, rl_insert);
 
 		while ((line = my_readline())) {
-			if (!strcmp(line, ".")) {
+			if (!xstrcmp(line, ".")) {
 				xfree(line);
-				return;
+				return 1;
 			}
 			string_append(s, line);
 			string_append(s, "\r\n");
@@ -835,6 +831,7 @@ void ui_readline_loop()
 	pager_lines = -1;
 
 	xfree(line);
+	return 1;
 }
 
 /*
@@ -897,35 +894,14 @@ int window_write(int id, const char *line)
         return 0;
 }
 
-#if 0
-int window_make_query(const char *nick)
-{
-	/* szuka pierwszego wolnego okienka i je zajmuje */
-	if (config_make_window == 1) {
-		list_t l;
-
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-			
-			if (!w->target) {
-				w->target = xstrdup(nick);
-				
-				if (w == window_current) {
-					print("query_started", nick);
+#if 0 /* TODO */
+	/* nowe okno w == window_current ? */ {
 #ifdef HAVE_RL_SET_PROMPT
-					rl_set_prompt((char *) current_prompt());
+		rl_set_prompt((char *) current_prompt());
 #else
-					rl_expand_prompt((char *) current_prompt());
-#endif									
-				} else
-					print("window_id_query_started", itoa(w->id), nick);
-
-				return w->id;
-			}
-		}
-	}
-	return 0;
-}
+		rl_expand_prompt((char *) current_prompt());
+#endif
+		
 #endif
 
 /*

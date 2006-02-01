@@ -22,6 +22,7 @@
 
 static int readline_theme_init();
 PLUGIN_DEFINE(readline, PLUGIN_UI, readline_theme_init);
+extern void ekg_loop();
 
 /*
  * sigint_handler() //XXX może wywalać 
@@ -110,11 +111,6 @@ QUERY(readline_ui_window_switch) { /* window_switch */
 	return 0;
 }
 
-void readline_ekg2_loop(int type, void *data) {
-	ui_readline_loop();
-	return 0;
-}
-
 QUERY(readline_ui_window_print) {
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *l = *(va_arg(ap, fstring_t **));
@@ -148,10 +144,19 @@ QUERY(readline_ui_window_clear) {
 	return 0;
 }
 
+QUERY(ekg2_readline_loop) {
+	while(ui_readline_loop());
+	return -1;
+}
+
 QUERY(readline_beep) { /* ui_readline_beep() */
 	printf("\a");
 	fflush(stdout);
 	return 0;
+}
+
+WATCHER(readline_watch_stdin) {
+	return;
 }
 	
 int readline_plugin_init(int prio) {
@@ -167,9 +172,9 @@ int readline_plugin_init(int prio) {
 	query_connect(&readline_plugin, "ui-window-print", readline_ui_window_print, NULL);
 	query_connect(&readline_plugin, "ui-window-clear", readline_ui_window_clear, NULL);
 	query_connect(&readline_plugin, "variable-changed", readline_variable_changed, NULL);
-/*	query_connect(&readline_plugin, "ekg2-loop", readline_ekg2_loop, NULL); */
-	timer_add(&readline_plugin, "dupa", 0.1,1, readline_ekg2_loop, NULL);
-		
+	query_connect(&readline_plugin, "loop", ekg2_readline_loop, NULL);
+
+	watch_add(&readline_plugin, 0, WATCH_READ, 1, readline_watch_stdin, NULL);
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
@@ -178,8 +183,11 @@ int readline_plugin_init(int prio) {
 	
 	window_refresh();
 	rl_initialize();
+	
 	rl_getc_function = my_getc;
-	rl_readline_name = "gg";
+	rl_event_hook	 = my_loop;
+	rl_readline_name = "ekg2";
+	
 	rl_attempted_completion_function = (CPPFunction *) my_completion;
 	rl_completion_entry_function = (void*) empty_generator;
 
@@ -220,6 +228,7 @@ int readline_plugin_init(int prio) {
 	ui_screen_width = screen_columns;
 	ui_screen_height = screen_lines;
 	ui_need_refresh = 0;
+
 	return 0;
 }
 
