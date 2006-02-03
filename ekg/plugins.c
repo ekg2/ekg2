@@ -241,8 +241,17 @@ int plugin_unload(plugin_t *p)
 				session_remove(s->uid);
 		}		
 	} else if (p->pclass == PLUGIN_UI) {
-		print("plugin_unload_ui", p->name);
-		return -1;
+		list_t l;
+		int unloadable = 0;
+		for (l=plugins; l; l = l->next) {
+			plugin_t *plug = l->data;
+			if (plug->pclass == PLUGIN_UI && plug != p) 
+				unloadable = 1;
+		}
+		if (!unloadable) {
+			print("plugin_unload_ui", p->name);
+			return -1;
+		}
 	}
 
 	name = xstrdup(p->name);
