@@ -257,6 +257,19 @@ if test "x$with_ncurses" != "xno"; then
 	fi
 fi
 
+
+AC_ARG_WITH(gtk,
+	[ -- without-gtk	   Compile without gtk2 support (gtk plugin)])
+
+
+if test "x$with_gtk" != "xno"; then
+	AC_CHECK_GTK2
+	if test "x$have_gtk" = "xyes"; then
+		AC_CONFIG_FILES([plugins/gtk/Makefile])
+		PLUGINS="$PLUGINS gtk"
+	fi
+fi
+
 AC_ARG_WITH(libgsm,
         [  --without-libgsm        Compile without libgsm support (gsm plugin)])
 
