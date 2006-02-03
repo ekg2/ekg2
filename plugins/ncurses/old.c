@@ -1332,6 +1332,9 @@ int ncurses_window_kill(window_t *w)
 {
 	ncurses_window_t *n = w->private;
 
+	if (!n) 
+		return -1;
+
 	if (n->backlog) {
 		int i;
 
