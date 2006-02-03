@@ -99,10 +99,9 @@ static int ncurses_ui_window_switch(void *data, va_list ap)
 
 int ncurses_ui_window_print(void *data, va_list ap)
 {
-	window_t **W = va_arg(ap, window_t **);
-	window_t *w = *W;
-	fstring_t **Line = va_arg(ap, fstring_t **);
-	fstring_t *line = *Line;
+	window_t *w	= *(va_arg(ap, window_t **));
+	fstring_t *line = *(va_arg(ap, fstring_t **));
+
 	ncurses_window_t *n = w->private;
 	int bottom = 0, prev_count = n->lines_count, count = 0;
 
@@ -169,7 +168,7 @@ static int ncurses_ui_window_act_changed(void *data, va_list ap)
 
 static int ncurses_ui_window_target_changed(void *data, va_list ap)
 {
-	window_t **W = va_arg(ap, window_t **), *w = *W;
+	window_t *w = *(va_arg(ap, window_t **));
 	ncurses_window_t *n = w->private;
 	char *tmp;
 
@@ -236,7 +235,7 @@ static int ncurses_userlist_changed(void *data, va_list ap)
 
 static int ncurses_variable_changed(void *data, va_list ap)
 {
-	char **__name = va_arg(ap, char**), *name = *__name;
+	char *name = *(va_arg(ap, char**));
 
         if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
 	        list_t l;
@@ -271,8 +270,8 @@ static int ncurses_variable_changed(void *data, va_list ap)
 
 static int ncurses_conference_renamed(void *data, va_list ap)
 {
-	char **__oldname = va_arg(ap, char**), **__newname = va_arg(ap, char**);
-	char *oldname = *__oldname, *newname = *__newname;
+	char *oldname = *(va_arg(ap, char**));
+	char *newname = *(va_arg(ap, char**));
         list_t l;
 
         for (l = windows; l; l = l->next) {
@@ -433,6 +432,7 @@ void ncurses_sigint_handler(int s)
 		 * G */
 		ungetch(3);
 		ncurses_watch_stdin(0, 0, 0, NULL);
+		signal(SIGINT, ncurses_sigint_handler); /* odswiezenie handlera */
 	}
 }
 
