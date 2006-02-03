@@ -74,6 +74,7 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 
 	gtk_tree_model_get_iter (GTK_TREE_MODEL(list_store), &iter, path);
 	gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_NICK, &nick, -1);
+/* TODO, open query.. but first we need to implement windows !!! ;p */
 	printf("Selected: %s\n", nick);
 	return 0;
 }
@@ -227,6 +228,18 @@ QUERY(gtk_ui_window_print) {
 		GtkTextIter iter;
 
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+
+		if (config_timestamp && config_timestamp_show && xstrcmp(config_timestamp, "")) {
+			char *tmp = format_string(config_timestamp);
+			char *ts  = saprintf("%s ", timestamp(tmp));
+
+			gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
+			gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, ekg2_tags[0], ekg2_bold, NULL);
+			
+			xfree(tmp);
+			xfree(ts);
+		}
+		
 
 		gtk_process_str(buffer, line->str, line->attr);
 
