@@ -35,11 +35,15 @@
  * i think he won't be angry of it ;> 
  */
 
-GtkTextTag *ekg2_tags[8];
-GtkTextTag *ekg2_tag_bold;
+typedef struct {
+	GtkWidget *view;
+	GtkTextTag *ekg2_tags[8];
+	GtkTextTag *ekg2_tag_bold;
+} gtk_window_t;
 
-GtkWidget *view;			// tekst. tymczasowo tak.
+
 GtkTreeStore *list_store;		// userlista.
+GtkWidget *notebook;			// zarzadzanie okienkami.
 	
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
@@ -97,10 +101,7 @@ int gtk_loop() {
 int gtk_create() {
 	GtkWidget *win, *edit1, *tree, *status_bar;
 	GtkWidget *vbox, *hbox, *sw;
-	GtkTextBuffer *buffer;
-	GtkTextTagTable *table;
 	GtkCellRenderer *renderer;
-	int i;
 	
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title (GTK_WINDOW (win), "ekg2 p0wer!");
@@ -113,6 +114,12 @@ int gtk_create() {
 	vbox = gtk_vbox_new (FALSE, 2);
 	gtk_box_pack_start (GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
 
+	/* notebook */
+	notebook = gtk_notebook_new ();
+	gtk_widget_show (notebook);
+	gtk_box_pack_start (GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
+	gtk_widget_set_size_request(notebook, 505, 375);
+	
 	/* lista - przwewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw), GTK_SHADOW_ETCHED_IN);
@@ -131,8 +138,6 @@ int gtk_create() {
 	renderer = gtk_cell_renderer_text_new ();
 	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Nick", renderer, "text", COLUMN_NICK, NULL);
 //	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Uid", renderer, "text", COLUMN_UID, NULL);
-
-//	renderer = gtk_cell_renderer_text_new ();
 	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Session", renderer, "text", COLUMN_SESSION, NULL);
 	gtk_tree_view_column_set_visible( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_SESSION), FALSE);
 	
@@ -140,6 +145,12 @@ int gtk_create() {
 	g_signal_connect (G_OBJECT (tree), "row-activated", G_CALLBACK (on_list_select), NULL);
 	gtk_widget_set_size_request(tree, 165, 365);
 	
+	/* edit */
+	edit1 = gtk_entry_new ();
+	gtk_box_pack_start (GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
+	g_signal_connect (G_OBJECT (edit1),"activate",G_CALLBACK (on_enter), NULL);
+//	g_signal_connect (G_OBJECT (edit1),"key-press-event",G_CALLBACK (on_key_press), NULL);
+
 #if 0
 	/* popup menu */
 	menu = gtk_menu_new ();
@@ -153,32 +164,6 @@ int gtk_create() {
 	
 	g_signal_connect_swapped (tree, "button_press_event",G_CALLBACK (popup_handler), menu);
 #endif
-	/* tekst - przewijanie */
-	sw = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_box_pack_start (GTK_BOX(vbox), sw, TRUE, TRUE, 0);
-	/* tekst */
-	view = gtk_text_view_new ();
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
-	gtk_text_view_set_editable(GTK_TEXT_VIEW (view), FALSE);
-	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW (view), GTK_WRAP_WORD);
-
-	gtk_widget_set_size_request(view, 495, 365);
-	gtk_container_add (GTK_CONTAINER (sw), view);
-
-	/* atrybutu tekstu */
-	table = gtk_text_buffer_get_tag_table (buffer);
-	for (i=0; i < 8; i++) {
-		gtk_text_tag_table_add(table, ekg2_tags[i]); /* glowne kolorki */
-	}
-	gtk_text_tag_table_add(table, ekg2_tag_bold);
-
-	/* edit */
-	edit1 = gtk_entry_new ();
-	gtk_box_pack_start (GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
-	g_signal_connect (G_OBJECT (edit1),"activate",G_CALLBACK (on_enter), NULL);
-//	g_signal_connect (G_OBJECT (edit1),"key-press-event",G_CALLBACK (on_key_press), NULL);
-
 	/* statusbar */
 	status_bar = gtk_statusbar_new ();
 	gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(status_bar), FALSE);
@@ -190,13 +175,68 @@ int gtk_create() {
 	return 0;
 }
 
+GtkTextTag *ekg_gtk_duplciate_tag(GtkTextTag *tmp) {
+	return tmp;
+}
 
 void ekg_gtk_window_new(window_t *w) {
+	GtkWidget *sw, *view;
+	GtkTextBuffer *buffer;
+	GtkTextTagTable *table;
 	char *name = window_target(w);
-// TODO! to co ? robimy tak jak w xchacie? tryb detach / attach i jak cos to sie pojawia w tabach jak nie to w osobnych oknach?
-// 	ok, let's try. 
+	int i;
+	
+	gtk_window_t *n = xmalloc(sizeof(gtk_window_t));
+	w->private = n;
 
 	printf("WINDOW_NEW(): [%d,%s]\n", w->id, name);
+
+	/* tekst - przewijanie */
+	sw = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), sw,  gtk_label_new (name));
+	/* tekst */
+	view = gtk_text_view_new ();
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+	gtk_text_view_set_editable(GTK_TEXT_VIEW (view), FALSE);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW (view), GTK_WRAP_WORD);
+
+	gtk_widget_set_size_request(view, 395, 265);
+	gtk_container_add (GTK_CONTAINER (sw), view);
+	
+	/* atrybutu tekstu */
+	{
+		GtkTextTag *tmp = NULL;
+		int i = 0;
+	#define ekg2_create_tag(x) \
+		tmp = gtk_text_tag_new("FG_" #x); \
+		g_object_set(tmp, "foreground", #x, NULL); \
+		n->ekg2_tags[i++] = tmp;
+	
+		ekg2_create_tag(BLACK);	ekg2_create_tag(RED); ekg2_create_tag(GREEN);
+		ekg2_create_tag(YELLOW);ekg2_create_tag(BLUE); ekg2_create_tag(MAGENTA);
+		ekg2_create_tag(CYAN);	ekg2_create_tag(WHITE);
+	
+		n->ekg2_tag_bold = tmp = gtk_text_tag_new("BOLD");
+		g_object_set(tmp, "weight", PANGO_WEIGHT_BOLD, NULL);
+
+		tmp = gtk_text_tag_new("ITALICS");
+		g_object_set(tmp, "style", PANGO_STYLE_ITALIC, NULL);
+	
+//		gtk_text_buffer_create_tag(buffer, "FG_NAVY", "foreground", "navy", NULL);
+//		gtk_text_buffer_create_tag(buffer, "FG_DARKGREEN", "foreground", "darkgreen", NULL);
+//		gtk_text_buffer_create_tag(buffer, "FG_LIGHTGREEN", "foreground", "green", NULL);
+	}
+
+	table = gtk_text_buffer_get_tag_table (buffer);
+	for (i=0; i < 8; i++) { /* glowne kolorki */
+		gtk_text_tag_table_add(table, n->ekg2_tags[i] );
+	}
+	gtk_text_tag_table_add(table, n->ekg2_tag_bold);
+
+	
+	n->view = view;
+	gtk_widget_show_all (notebook);
 }
 
 /* TODO, zrobic ladniejsze.. */
@@ -263,9 +303,10 @@ void gtk_contacts_update(window_t *w) {
 	}
 }
 
-void gtk_process_str(GtkTextBuffer *buffer, char *str, short int *attr) {
+void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *attr) {
 	GtkTextIter iter;
 	int i;
+	gtk_window_t *n = w->private;
 /* i know ze tak nie moze wygladac, zrobione po prostu aby dzialalo. */
 	for (i=0; i < xstrlen(str); i++) {
 		GtkTextTag *tags[2] = {NULL, NULL};
@@ -273,8 +314,8 @@ void gtk_process_str(GtkTextBuffer *buffer, char *str, short int *attr) {
 
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 
-		if (!(att & 128))	tags[0] = ekg2_tags[att & 7];
-		if (att & 64)		tags[1] = ekg2_tag_bold;
+		if (!(att & 128))	tags[0] = n->ekg2_tags[att & 7];
+		if (att & 64)		tags[1] = n->ekg2_tag_bold;
 
 		gtk_text_buffer_insert_with_tags(buffer, &iter, str+i, 1, 
 				tags[0] ? tags[0] : tags[1], 
@@ -286,35 +327,38 @@ void gtk_process_str(GtkTextBuffer *buffer, char *str, short int *attr) {
 QUERY(gtk_ui_window_print) {
 	window_t *w     = *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
+	gtk_window_t *n = w->private;
 
-	if (w->id) { /* debug goes to /dev/null... ;> */
-		GtkTextBuffer *buffer;
-		GtkTextMark* mark;
-		GtkTextIter iter;
+	GtkTextBuffer *buffer;
+	GtkTextMark* mark;
+	GtkTextIter iter;
 
-		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+	if (!n)
+		return 1;
 
-		if (config_timestamp && config_timestamp_show && xstrcmp(config_timestamp, "")) {
-			char *tmp = format_string(config_timestamp);
-			char *ts  = saprintf("%s ", timestamp(tmp));
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (n->view));
 
-			gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-			gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, ekg2_tags[0], ekg2_tag_bold, NULL);
-			
-			xfree(tmp);
-			xfree(ts);
-		}
-		gtk_process_str(buffer, line->str, line->attr);
+	if (config_timestamp && config_timestamp_show && xstrcmp(config_timestamp, "")) {
+		char *tmp = format_string(config_timestamp);
+		char *ts  = saprintf("%s ", timestamp(tmp));
 
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-		gtk_text_buffer_insert_with_tags(buffer, &iter, "\n", -1, NULL);
-
-		/* scroll to end */
-		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-		mark = gtk_text_buffer_create_mark(buffer, NULL, &iter, 1);
-		gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), mark, 0.0, 0, 0.0, 1.0);
-		gtk_text_buffer_delete_mark (buffer, mark);
+		gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, n->ekg2_tags[0], n->ekg2_tag_bold, NULL);
+		
+		xfree(tmp);
+		xfree(ts);
 	}
+	gtk_process_str(w, buffer, line->str, line->attr);
+
+	gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
+	gtk_text_buffer_insert_with_tags(buffer, &iter, "\n", -1, NULL);
+
+	/* scroll to end */
+	gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
+	mark = gtk_text_buffer_create_mark(buffer, NULL, &iter, 1);
+	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(n->view), mark, 0.0, 0, 0.0, 1.0);
+	gtk_text_buffer_delete_mark (buffer, mark);
+
 	return 0;
 }
 
@@ -339,6 +383,7 @@ QUERY(gtk_ui_beep) {
 }
 
 QUERY(ekg2_gtk_loop) {
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 1);
 	gtk_contacts_update(NULL);
 	while (gtk_loop());
 	return -1;
@@ -352,8 +397,12 @@ QUERY(ekg2_gtk_pending) {
 
 QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. naprawde czysci okno. wiec nie myslec ze jest takie samo behavtior.. */
 	window_t *w = *(va_arg(ap, window_t **));
+	gtk_window_t *n = w->private;
 
-	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+	if (!n)
+		return 1;
+
+	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (n->view));
 	gtk_text_buffer_set_text (buffer, "", -1);
 	return 0;
 }
@@ -370,36 +419,6 @@ QUERY(gtk_userlist_changed) {
 /* jak jest jakies okno z *p1 to wtedy zamieniamy nazwe na *p2 */
 	gtk_contacts_update(NULL);
 	return 0;
-}
-
-int gtk_tags_init() {
-	GtkTextTag *tmp = NULL;
-	int i = 0;
-#define ekg2_create_tag(x) \
-	tmp = gtk_text_tag_new("FG_" #x); \
-	g_object_set(tmp, "foreground", #x, NULL); \
-	ekg2_tags[i++] = tmp;
-	
-	ekg2_create_tag(BLACK);
-	ekg2_create_tag(RED);
-	ekg2_create_tag(GREEN);
-	ekg2_create_tag(YELLOW);	// XXX: /brown
-	ekg2_create_tag(BLUE); 
-	ekg2_create_tag(MAGENTA);	// XXX ?
-	ekg2_create_tag(CYAN);
-	ekg2_create_tag(WHITE);
-	
-	ekg2_tag_bold = tmp = gtk_text_tag_new("BOLD");
-	g_object_set(tmp, "weight", PANGO_WEIGHT_BOLD, NULL);
-
-	tmp = gtk_text_tag_new("ITALICS");
-	g_object_set(tmp, "style", PANGO_STYLE_ITALIC, NULL);
-	
-//	gtk_text_buffer_create_tag(buffer, "FG_NAVY", "foreground", "navy", NULL);
-//	gtk_text_buffer_create_tag(buffer, "FG_DARKGREEN", "foreground", "darkgreen", NULL);
-//	gtk_text_buffer_create_tag(buffer, "FG_LIGHTGREEN", "foreground", "green", NULL);
-	return 0;
-	
 }
 
 int gtk_plugin_init(int prio) {
@@ -442,7 +461,6 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 	
 	gtk_init(0, NULL);
-	gtk_tags_init();
 
 	gtk_create();
 	

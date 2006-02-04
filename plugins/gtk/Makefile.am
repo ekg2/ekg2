@@ -7,5 +7,5 @@ gtk_la_LIBADD = $(GTK2_LIBS)
 gtk_la_CPPFLAGS = $(GTK2_CFLAGS) 
 
 libdir = $(plugindir)
-INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
+INCLUDES = -DDATADIR=\"$(datadir)/ekg2\" 
 
