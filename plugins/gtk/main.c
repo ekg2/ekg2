@@ -38,7 +38,7 @@
 GtkTextTag *ekg2_tags[8];
 GtkTextTag *ekg2_tag_bold;
 
-GtkWidget *view;
+GtkWidget *view;			// tekst. tymczasowo tak.
 GtkTreeStore *list_store;		// userlista.
 	
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
@@ -168,6 +168,7 @@ int gtk_create() {
 
 	/* statusbar */
 	status_bar = gtk_statusbar_new ();
+	gtk_statusbar_set_has_resize_grip(status_bar, FALSE);
 	gtk_box_pack_start (GTK_BOX (vbox), status_bar, FALSE, FALSE, 0);
 
 	gtk_widget_grab_focus(edit1);
@@ -257,9 +258,23 @@ QUERY(gtk_ui_window_print) {
 	return 0;
 }
 
+QUERY(gtk_print_version) {
+	char *ver = saprintf("GTK plugin for ekg2 comes to you with GTK version: %d.%d.%d.%d",
+/*			GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION GTK_BINARY_AGE, */
+			gtk_major_version, gtk_minor_version, gtk_micro_version, gtk_binary_age);
+	print("generic", ver);
+	xfree(ver);
+	return 0;
+}
+
 QUERY(gtk_ui_window_new) {
 	window_t *w = *(va_arg(ap, window_t **));
 	ekg_gtk_window_new(w);
+	return 0;
+}
+
+QUERY(gtk_ui_beep) {
+	gdk_beep();
 	return 0;
 }
 
@@ -275,10 +290,17 @@ QUERY(ekg2_gtk_pending) {
 	return -1;
 }
 
+QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. naprawde czysci okno. wiec nie myslec ze jest takie samo behavtior.. */
+	window_t *w = *(va_arg(ap, window_t **));
+
+	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+	gtk_text_buffer_set_text (buffer, "", -1);
+	return 0;
+}
+
 QUERY(gtk_ui_is_initialized) {
 	int *tmp = va_arg(ap, int *);
 	*tmp = !ui_quit;
-
 	return 0;
 }
 
@@ -335,10 +357,11 @@ int gtk_plugin_init(int prio) {
 	}
 	
 	plugin_register(&gtk_plugin, prio);
-
+/* glowne eventy ui */
+	query_connect(&gtk_plugin, "ui-beep", gtk_ui_beep, NULL);
 	query_connect(&gtk_plugin, "ui-window-new", gtk_ui_window_new, NULL);
 	query_connect(&gtk_plugin, "ui-window-print", gtk_ui_window_print, NULL);
-	query_connect(&gtk_plugin, "ui-is-initialized", gtk_ui_is_initialized, NULL);
+	query_connect(&gtk_plugin, "ui-window-clear", gtk_ui_window_clear, NULL);
 /* userlist */
 	query_connect(&gtk_plugin, "userlist-changed", gtk_userlist_changed, NULL);
 	query_connect(&gtk_plugin, "userlist-added", gtk_userlist_changed, NULL);
@@ -354,6 +377,9 @@ int gtk_plugin_init(int prio) {
 /* w/g developerow na !ekg2 `haki`  ;) niech im bedzie ... ;p */
 	query_connect(&gtk_plugin, "ui-loop", ekg2_gtk_loop, NULL);
 	query_connect(&gtk_plugin, "ui-pending", ekg2_gtk_pending, NULL);
+/* inne */
+	query_connect(&gtk_plugin, "ui-is-initialized", gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
+	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 	
 	gtk_init(0, NULL);
 	gtk_tags_init();
