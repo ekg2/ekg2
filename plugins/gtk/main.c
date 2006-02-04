@@ -26,6 +26,9 @@
 #include <ekg/userlist.h>
 #include <ekg/windows.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 /* 
  * a lot of code was gathered from `very good` program - gRiv (acronym comes from GTK RivChat)
  * main author and coder of program and gui was Artur Gajda so why he is in credits..
@@ -43,7 +46,7 @@ PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 extern void ekg_loop();
 int ui_quit;	// czy zamykamy ui..
 
-enum {	COLUMN_NICK, N_COLUMNS };
+enum {	COLUMN_STATUS, COLUMN_NICK, N_COLUMNS };
 
 /* sprawdzenie czy mozemy zamknac okno */
 gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
@@ -112,11 +115,12 @@ int gtk_create() {
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_box_pack_start (GTK_BOX (hbox), sw, TRUE, TRUE, 0);
 	/* lista */
-	list_store = gtk_tree_store_new (N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING);
+	list_store = gtk_tree_store_new (N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, NULL);
 	tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW (tree), TRUE);
 	gtk_tree_selection_set_mode (gtk_tree_view_get_selection (GTK_TREE_VIEW (tree)), GTK_SELECTION_MULTIPLE);
 	renderer = gtk_cell_renderer_text_new ();
+//	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "S", renderer, "text", COLUMN_STATUS, NULL);
 	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Nick", renderer, "text", COLUMN_NICK, NULL);
 //	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Uid", renderer, "text", COLUMN_UID, NULL);
 	gtk_container_add (GTK_CONTAINER (sw), tree);
@@ -156,7 +160,7 @@ int gtk_create() {
 	}
 	gtk_text_tag_table_add(table, ekg2_tag_bold);
 
-	/* edit1 */
+	/* edit */
 	edit1 = gtk_entry_new ();
 	gtk_box_pack_start (GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
 	g_signal_connect (G_OBJECT (edit1),"activate",G_CALLBACK (on_enter), NULL);
@@ -194,7 +198,7 @@ void gtk_contacts_update(window_t *w) {
 		GtkTreeIter liter;
 		userlist_t *u = l->data;
 		gtk_tree_store_append (list_store, &liter, NULL);
-		gtk_tree_store_set (list_store, &liter, COLUMN_NICK, u->nickname ? u->nickname : u->uid, -1);
+		gtk_tree_store_set (list_store, &liter, /* COLUMN_STATUS, gtk_image_new_from_pixbuf (NULL), */ COLUMN_NICK, u->nickname ? u->nickname : u->uid, -1);
 	}
 }
 
@@ -222,7 +226,7 @@ QUERY(gtk_ui_window_print) {
 	window_t *w     = *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
 
-	if (w->id) { /* debug only to STDOUT. */
+	if (w->id) { /* debug goes to /dev/null... ;> */
 		GtkTextBuffer *buffer;
 		GtkTextMark* mark;
 		GtkTextIter iter;
@@ -234,13 +238,11 @@ QUERY(gtk_ui_window_print) {
 			char *ts  = saprintf("%s ", timestamp(tmp));
 
 			gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-			gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, ekg2_tags[0], ekg2_bold, NULL);
+			gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, ekg2_tags[0], ekg2_tag_bold, NULL);
 			
 			xfree(tmp);
 			xfree(ts);
 		}
-		
-
 		gtk_process_str(buffer, line->str, line->attr);
 
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
@@ -319,7 +321,18 @@ int gtk_tags_init() {
 }
 
 int gtk_plugin_init(int prio) {
+#define EKG2_NO_DISPLAY "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa..." /* const char * ? */
 	list_t l;
+
+	if (!getenv("DISPLAY")) {
+		int tmp = 0;
+		if ((query_emit(NULL, "ui-is-initialized", &tmp) != -2) && tmp)
+			debug(EKG2_NO_DISPLAY);
+		else 	fprintf(stderr, EKG2_NO_DISPLAY);
+/* po czyms takim for sure bedzie initowane ncurses... no ale moze to jest wlasciwe zachowanie? jatam nie wiem.
+ * gorsze to ze ten komunikat nigdzie sie nie pojawi... */
+		return -1;
+	}
 	
 	plugin_register(&gtk_plugin, prio);
 
