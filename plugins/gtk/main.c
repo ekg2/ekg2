@@ -168,7 +168,7 @@ int gtk_create() {
 
 	/* statusbar */
 	status_bar = gtk_statusbar_new ();
-	gtk_box_pack_start (GTK_BOX (vbox), status_bar, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX (vbox), status_bar, FALSE, FALSE, 0);
 
 	gtk_widget_grab_focus(edit1);
 	gtk_widget_show_all (win);
