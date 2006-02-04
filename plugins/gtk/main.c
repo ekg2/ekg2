@@ -121,15 +121,18 @@ int gtk_create() {
 	/* lista */
 	list_store = gtk_tree_store_new (N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING, NULL);
 	tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
+
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW (tree), TRUE);
 	gtk_tree_selection_set_mode (gtk_tree_view_get_selection (GTK_TREE_VIEW (tree)), GTK_SELECTION_MULTIPLE);
 
-	renderer = gtk_cell_renderer_text_new ();
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_STATUS, NULL);
+	renderer = gtk_cell_renderer_pixbuf_new ();
+	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "", renderer, "pixbuf", COLUMN_STATUS, NULL);
+	
 	renderer = gtk_cell_renderer_text_new ();
 	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Nick", renderer, "text", COLUMN_NICK, NULL);
 //	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Uid", renderer, "text", COLUMN_UID, NULL);
 
+//	renderer = gtk_cell_renderer_text_new ();
 	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Session", renderer, "text", COLUMN_SESSION, NULL);
 	gtk_tree_view_column_set_visible( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_SESSION), FALSE);
 	
@@ -200,10 +203,13 @@ void ekg_gtk_window_new(window_t *w) {
 void gtk_contacts_add(session_t *s, userlist_t *u, GtkTreeIter *iter) 
 {
 	GtkTreeIter child_iter;
-	GdkPixbuf *pixbuf;
+	GdkPixbuf *pixbuf = NULL;
 	GError *error = NULL;
-	char *status_filename = saprintf("%s/plugins/gtk/%s.png", DATADIR, (u) ? u->status : s->status);
 	int isparent = (s && !u && iter);
+	
+	GtkTreeIter *tmp = (isparent) ? iter : &child_iter; /* jesli to jest parent - nie ma pointera do userlist_t - sesja, nazwa, cokolwiek... to wtedy zapisuje itera w iter */
+	
+	char *status_filename = saprintf("%s/plugins/gtk/%s.png", DATADIR, (u) ? u->status : s->status);
 
 	if (!s && !u) {
 		xfree(status_filename);
@@ -211,22 +217,20 @@ void gtk_contacts_add(session_t *s, userlist_t *u, GtkTreeIter *iter)
 		return;
 	}
 
-	pixbuf = gdk_pixbuf_new_from_file (status_filename, &error);
+//	pixbuf = gdk_pixbuf_new_from_file (status_filename, &error);
+
 	printf("CONTACTS_ADD() filename=%s; pixbuf=%x iter=%x;\n", status_filename, (int) pixbuf, (int) iter);
-
-	gtk_tree_store_append (list_store, 
-			(isparent) ? iter : &child_iter, 	/* jesli to jest parent - nie ma pointera do userlist_t - sesja, nazwa, cokolwiek... to wtedy zapisuje itera w iter */
+	gtk_tree_store_append (list_store, tmp,
 			(!isparent) ? iter : NULL);
-
-	gtk_tree_store_set (list_store, &child_iter, 
-//		COLUMN_STATUS, gtk_image_new_from_pixbuf (pixbuf), 
-		COLUMN_NICK, (isparent) ? (s->alias ? s->alias : s->uid) :	/* sesja  - parent  */
-			     (u->nickname ? u->nickname : u->uid),		/* useria - dziecko */
-		COLUMN_SESSION, (s) ? s->uid : "??", 
-		-1);
+	
+	gtk_tree_store_set (list_store, tmp,
+//			COLUMN_STATUS, gtk_image_new_from_pixbuf (pixbuf), 
+			COLUMN_NICK, (isparent) ? (s->alias ? s->alias : s->uid) :	/* sesja  - parent  */
+				     (u->nickname ? u->nickname : u->uid),		/* useria - dziecko */
+			COLUMN_SESSION, (s) ? s->uid : "??",
+			-1);
 
 	xfree(status_filename);
-
 	return;
 }
 
@@ -241,12 +245,11 @@ void gtk_contacts_update(window_t *w) {
 	for (l=sessions; l; l = l->next) {
 		GtkTreeIter iter; 
 		session_t *s = l->data;
-		list_t a;
+		list_t l;
 /* if( s == session_current) continue; ? */
-
-		gtk_contacts_add(l->data, NULL, &iter);
-		for (a=s->userlist; a; a = a->next)
-			gtk_contacts_add(s, a->data, &iter);
+		gtk_contacts_add(s, NULL, &iter);
+		for (l=s->userlist; l; l = l->next)
+			gtk_contacts_add(s, l->data, &iter);
 	}
 
 	if (window_current /* always point to smth ? */ && window_current->userlist) {
