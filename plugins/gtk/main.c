@@ -90,6 +90,15 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 	return 0;
 }
 
+/* zmiana strony - zmiana okna */
+gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data) {
+	if (in_autoexec) 
+		return 0;
+//	printf("[SWITCH_PAGE] page: %d\n", page_num);
+	window_switch(page_num); /* !!! to niekoniecznie musi byc numer okna, XXX */
+	return 0;
+}
+
 int gtk_loop() {
 	ekg_loop();
 	while (gtk_events_pending()) {
@@ -119,6 +128,7 @@ int gtk_create() {
 	gtk_widget_show (notebook);
 	gtk_box_pack_start (GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 	gtk_widget_set_size_request(notebook, 505, 375);
+	g_signal_connect (G_OBJECT(notebook), "switch-page", G_CALLBACK(on_switch_page), NULL);
 	
 	/* lista - przwewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
@@ -194,14 +204,13 @@ void ekg_gtk_window_new(window_t *w) {
 	/* tekst - przewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), sw,  gtk_label_new (name));
+	gtk_notebook_insert_page (GTK_NOTEBOOK (notebook), sw,  gtk_label_new (name), w->id);
 	/* tekst */
 	view = gtk_text_view_new ();
 	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
 	gtk_text_view_set_editable(GTK_TEXT_VIEW (view), FALSE);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW (view), GTK_WRAP_WORD);
 
-	gtk_widget_set_size_request(view, 395, 265);
 	gtk_container_add (GTK_CONTAINER (sw), view);
 	
 	/* atrybutu tekstu */
@@ -383,7 +392,7 @@ QUERY(gtk_ui_beep) {
 }
 
 QUERY(ekg2_gtk_loop) {
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 1);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id);
 	gtk_contacts_update(NULL);
 	while (gtk_loop());
 	return -1;
@@ -404,6 +413,13 @@ QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. napr
 
 	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (n->view));
 	gtk_text_buffer_set_text (buffer, "", -1);
+	return 0;
+}
+
+QUERY(gtk_ui_window_switch) {
+	window_t *w = *(va_arg(ap, window_t **));
+
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), w->id);
 	return 0;
 }
 
@@ -441,6 +457,7 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "ui-window-new", gtk_ui_window_new, NULL);
 	query_connect(&gtk_plugin, "ui-window-print", gtk_ui_window_print, NULL);
 	query_connect(&gtk_plugin, "ui-window-clear", gtk_ui_window_clear, NULL);
+	query_connect(&gtk_plugin, "ui-window-switch", gtk_ui_window_switch, NULL);
 /* userlist */
 	query_connect(&gtk_plugin, "userlist-changed", gtk_userlist_changed, NULL);
 	query_connect(&gtk_plugin, "userlist-added", gtk_userlist_changed, NULL);
