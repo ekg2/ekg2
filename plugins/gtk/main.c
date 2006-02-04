@@ -81,12 +81,14 @@ gint on_enter(GtkWidget *widget, gpointer data) {
 gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn *arg2, gpointer user_data) {
 	GtkTreeIter iter;
 	gchar *nick, *session;
+	session_t *s = session_find(session);
 
 	gtk_tree_model_get_iter (GTK_TREE_MODEL(list_store), &iter, path);
 	gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_NICK, &nick, -1);
 	gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_SESSION, &session, -1);
-/* TODO, open query.. but first we need to implement windows !!! ;p */
-	printf("[USERLIST_CLICK] Target: %s session: %s\n", nick, session);
+//	printf("[USERLIST_CLICK] Target: %s session: %s\n", nick, session);
+	
+	command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, "/query \"%s\"", nick);
 	return 0;
 }
 
@@ -125,10 +127,11 @@ int gtk_create() {
 
 	/* notebook */
 	notebook = gtk_notebook_new ();
-	gtk_widget_show (notebook);
+//	gtk_notebook_set_show_border (GTK_NOTEBOOK(notebook), FALSE);
 	gtk_box_pack_start (GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 	gtk_widget_set_size_request(notebook, 505, 375);
 	g_signal_connect (G_OBJECT(notebook), "switch-page", G_CALLBACK(on_switch_page), NULL);
+//	gtk_notebook_set_tab_pos (notebook, 4);
 	
 	/* lista - przwewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
@@ -183,10 +186,6 @@ int gtk_create() {
 	gtk_widget_show_all (win);
 
 	return 0;
-}
-
-GtkTextTag *ekg_gtk_duplciate_tag(GtkTextTag *tmp) {
-	return tmp;
 }
 
 void ekg_gtk_window_new(window_t *w) {
