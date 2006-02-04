@@ -136,12 +136,11 @@ int gtk_create() {
 	/* lista - przwewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw), GTK_SHADOW_ETCHED_IN);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_box_pack_start (GTK_BOX (hbox), sw, TRUE, TRUE, 0);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_box_pack_start (GTK_BOX (hbox), sw, FALSE, FALSE, 0);
 	/* lista */
 	list_store = gtk_tree_store_new (N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING, NULL);
 	tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
-
 	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW (tree), TRUE);
 	gtk_tree_selection_set_mode (gtk_tree_view_get_selection (GTK_TREE_VIEW (tree)), GTK_SELECTION_MULTIPLE);
 
@@ -177,11 +176,12 @@ int gtk_create() {
 	
 	g_signal_connect_swapped (tree, "button_press_event",G_CALLBACK (popup_handler), menu);
 #endif
+#if 0
 	/* statusbar */
 	status_bar = gtk_statusbar_new ();
 	gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(status_bar), FALSE);
 	gtk_box_pack_start (GTK_BOX (vbox), status_bar, FALSE, FALSE, 0);
-
+#endif
 	gtk_widget_grab_focus(edit1);
 	gtk_widget_show_all (win);
 
@@ -265,14 +265,13 @@ void gtk_contacts_add(session_t *s, userlist_t *u, GtkTreeIter *iter)
 		return;
 	}
 
-//	pixbuf = gdk_pixbuf_new_from_file (status_filename, &error);
+	pixbuf = gdk_pixbuf_new_from_file (status_filename, &error);
 
 	printf("CONTACTS_ADD() filename=%s; pixbuf=%x iter=%x;\n", status_filename, (int) pixbuf, (int) iter);
-	gtk_tree_store_append (list_store, tmp,
-			(!isparent) ? iter : NULL);
+	gtk_tree_store_append (list_store, tmp,	(!isparent) ? iter : NULL);
 	
 	gtk_tree_store_set (list_store, tmp,
-//			COLUMN_STATUS, gtk_image_new_from_pixbuf (pixbuf), 
+			COLUMN_STATUS, pixbuf, 
 			COLUMN_NICK, (isparent) ? (s->alias ? s->alias : s->uid) :	/* sesja  - parent  */
 				     (u->nickname ? u->nickname : u->uid),		/* useria - dziecko */
 			COLUMN_SESSION, (s) ? s->uid : "??",
@@ -289,7 +288,6 @@ void gtk_contacts_update(window_t *w) {
 
 	if (!sessions) 
 		return;
-
 	for (l=sessions; l; l = l->next) {
 		GtkTreeIter iter; 
 		session_t *s = l->data;
@@ -299,7 +297,6 @@ void gtk_contacts_update(window_t *w) {
 		for (l=s->userlist; l; l = l->next)
 			gtk_contacts_add(s, l->data, &iter);
 	}
-
 	if (window_current /* always point to smth ? */ && window_current->userlist) {
 		for (l=window_current->userlist; l; l = l->next)
 			gtk_contacts_add(window_current->session, l->data, NULL);
