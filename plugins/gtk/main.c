@@ -44,9 +44,9 @@ typedef struct {
 GtkTreeStore *list_store;		// userlista - elementy
 GtkWidget *tree;			// userlista - widget
 GtkWidget *notebook;			// zarzadzanie okienkami.
-
+#ifdef EKG2_TERM_COLORS
 GdkColor bgcolor, fgcolor;
-	
+#endif
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
 void gtk_contacts_update(window_t *w);
@@ -139,6 +139,34 @@ int gtk_loop() {
 	}
 	return (ui_quit == 0);
 }
+void ekg2_gtk_menu_url_click(char *user_data) {
+//	printf("menuitem = %x userdata = %x\n");
+	printf("[POMOC->WWW->CLICK] url = %s\n", user_data);
+// TODO: otwroz strone.
+}
+
+void ekg2_gtk_menu_session_add(void *user_data) {
+	printf("[EKG2->Sesje->Dodaj->CLICK]\n");
+/* TODO: stworzyc okienko:
+ *    1. wybor plugina ktory bedzie zarzadzal sesjami.. po prostu wyswietlamy pluginy z typem PROTOCOL
+ *    2. jesli plugin to:
+ *       a) irc: 
+ *           -> user ma wpisac nazwe serwera i swoj nickname.
+ *           -> nazwa sesji domyslna: irc:%NAZWA_USERA@%NAZWA_SERWERA chyba ze istnieje wtedy dodajemy numerki...
+ *       b) gg:
+ *           -> user ma wpisac numerek gg i swoje haslo.
+ *           -> nazwa sesji domyslna: gg:%NUMEREKUSERA jesli taka sesja istnieje to informujemy usera i czekamy az poda inny numerek.
+ *       c) jabber:
+ *           -> user ma podac swoj jid. i adres do serwera jesli jest rozny niz w jid.
+ *           -> user moze podac resource [domyslnie: EKG2]
+ *           -> nazwa sesji to jid:%JID jesli istnieje i ma taki sam resource to wtedy czekamy na inny... 
+ *   3. pokazac userowi uid sesji i pozwolic mu dodac alias do sesji.
+ *   4. tyle, enjoy ;)
+ *   --------
+ *   dodac sesje z parametrami podanymi przez usera. sprobowac nie przez command_exec_format() tylko przez natywne procedury...
+ *   to nie ma byc frontend do ekg2. tylko GUI.
+ */
+}
 
 void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, GtkTreeModel *model, GtkTreeIter *iter, gpointer data) {
 	gchar *nick;
@@ -146,9 +174,11 @@ void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, G
 	g_object_set (GTK_CELL_RENDERER (cell), "text", nick, NULL);
 }
 
-GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label) {
+GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function, void *data) {
 	GtkWidget *menu_item = gtk_menu_item_new_with_label(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(parentmenu), menu_item);
+	if (function)
+		g_signal_connect_swapped (G_OBJECT(menu_item),"activate",G_CALLBACK (function), data);
 	return menu_item;
 }
 
@@ -160,14 +190,13 @@ int gtk_create() {
 #ifdef EKG2_TERM_COLORS /* zmienia czesc kolorkow na czarno-szary.. nic ciekawego w sumie */
 #define ekg2_set_color(widget)		gtk_widget_modify_fg (widget, GTK_STATE_NORMAL, &fgcolor);	gtk_widget_modify_bg (widget, GTK_STATE_NORMAL, &bgcolor); 	
 #define ekg2_set_color_ext(widget)	gtk_widget_modify_text (widget, GTK_STATE_NORMAL, &fgcolor);	gtk_widget_modify_base (widget, GTK_STATE_NORMAL, &bgcolor); 
+	gdk_color_parse ("black", &bgcolor);
+	gdk_color_parse ("grey", &fgcolor);
 #else
 #define ekg2_set_color(widget) 
 #define ekg2_set_color_ext(widget)
 #endif
 
-	gdk_color_parse ("black", &bgcolor);
-	gdk_color_parse ("grey", &fgcolor);
-	
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title (GTK_WINDOW (win), "ekg2 p0wer!");
 
@@ -190,14 +219,14 @@ int gtk_create() {
 		/*  Ekg2 menu */
 		menu		= gtk_menu_new ();
 		menu_ekg	= gtk_menu_item_new_with_label("Ekg2");
-		mi_session	= ekg2_gtk_menu_new(menu, "Sesje");
+		mi_session	= ekg2_gtk_menu_new(menu, "Sesje", NULL, NULL);
 		{ /* session submenu */
 			GtkWidget *menu_sessions	= gtk_menu_new();
-			ekg2_gtk_menu_new(menu_sessions, "Dodaj");
+			ekg2_gtk_menu_new(menu_sessions, "Dodaj", ekg2_gtk_menu_session_add, NULL);
 			gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi_session), menu_sessions);
 		}
-		mi_settings	= ekg2_gtk_menu_new(menu, "Ustawienia");
-		ekg2_gtk_menu_new(menu, "Zakończ");
+		mi_settings	= ekg2_gtk_menu_new(menu, "Ustawienia", NULL, NULL);
+		ekg2_gtk_menu_new(menu, "Zakończ", NULL, "todo");
 		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_ekg), menu);
 		/* window menu */
 		menu		= gtk_menu_new ();
@@ -206,16 +235,17 @@ int gtk_create() {
 		/* help menu */
 		menu		= gtk_menu_new ();
 		menu_help	= gtk_menu_item_new_with_label("Pomoc");
-		mi_www		= ekg2_gtk_menu_new(menu, "WWW");
+		mi_www		= ekg2_gtk_menu_new(menu, "WWW", NULL, NULL);
 		{ /* www submenu */
 			GtkWidget *menu_www	= gtk_menu_new();
-			ekg2_gtk_menu_new(menu_www, "ekg2.org");
-			ekg2_gtk_menu_new(menu_www, "bugs.ekg2.org");
-			ekg2_gtk_menu_new(menu_www, "wiki.ekg2.org");
+			ekg2_gtk_menu_new(menu_www, "ekg2.org", 	ekg2_gtk_menu_url_click, "http://ekg2.org");
+			ekg2_gtk_menu_new(menu_www, "pl.ekg2.org",	ekg2_gtk_menu_url_click, "http://pl.ekg2.org");
+			ekg2_gtk_menu_new(menu_www, "bugs.ekg2.org",	ekg2_gtk_menu_url_click, "http://bugs.ekg2.org");
+			ekg2_gtk_menu_new(menu_www, "wiki.ekg2.org",	ekg2_gtk_menu_url_click, "http://ekg2.wafel.com");
 			gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi_www), menu_www);
 		}
-		ekg2_gtk_menu_new(menu, "Autorzy");
-		ekg2_gtk_menu_new(menu, "O EKG2..");
+		ekg2_gtk_menu_new(menu, "Autorzy", NULL, "todo");
+		ekg2_gtk_menu_new(menu, "O EKG2..", NULL, "todo");
 		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_help), menu);
 		/* itd... */
 		
