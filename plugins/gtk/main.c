@@ -44,6 +44,8 @@ typedef struct {
 GtkTreeStore *list_store;		// userlista - elementy
 GtkWidget *tree;			// userlista - widget
 GtkWidget *notebook;			// zarzadzanie okienkami.
+
+GdkColor bgcolor, fgcolor;
 	
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
@@ -96,7 +98,7 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 	s = session_find(session);
 	if (!s) return FALSE;
 	
-	if (uid) command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, "/%s \"%s\"", action, nick);
+	if (uid) command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, "/%s %s", action, uid);
 	else if (window_current->id == 0 || !window_current->target) { /* zmiana sesji... kod troche sciagniety z ncurses.. czy dobry? */
 //		window_session_cycle(window_current);
 		window_current->session = s;
@@ -138,21 +140,38 @@ int gtk_loop() {
 	return (ui_quit == 0);
 }
 
-void macro_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, GtkTreeModel *model, GtkTreeIter *iter, gpointer data) {
+void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, GtkTreeModel *model, GtkTreeIter *iter, gpointer data) {
 	gchar *nick;
 	gtk_tree_model_get (model, iter, COLUMN_NICK, &nick, -1);
 	g_object_set (GTK_CELL_RENDERER (cell), "text", nick, NULL);
 }
 
+GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label) {
+	GtkWidget *menu_item = gtk_menu_item_new_with_label(label);
+	gtk_menu_shell_append(GTK_MENU_SHELL(parentmenu), menu_item);
+	return menu_item;
+}
 
 int gtk_create() {
 	GtkWidget *win, *edit1, *status_bar;
 	GtkWidget *vbox, *hbox, *sw;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
+#ifdef EKG2_TERM_COLORS /* zmienia czesc kolorkow na czarno-szary.. nic ciekawego w sumie */
+#define ekg2_set_color(widget)		gtk_widget_modify_fg (widget, GTK_STATE_NORMAL, &fgcolor);	gtk_widget_modify_bg (widget, GTK_STATE_NORMAL, &bgcolor); 	
+#define ekg2_set_color_ext(widget)	gtk_widget_modify_text (widget, GTK_STATE_NORMAL, &fgcolor);	gtk_widget_modify_base (widget, GTK_STATE_NORMAL, &bgcolor); 
+#else
+#define ekg2_set_color(widget) 
+#define ekg2_set_color_ext(widget)
+#endif
+
+	gdk_color_parse ("black", &bgcolor);
+	gdk_color_parse ("grey", &fgcolor);
 	
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title (GTK_WINDOW (win), "ekg2 p0wer!");
+
+	ekg2_set_color(win);
   
 	g_signal_connect (G_OBJECT (win), "delete_event", G_CALLBACK (delete_event), NULL);
 	g_signal_connect (G_OBJECT (win), "destroy", G_CALLBACK (destroy), NULL);
@@ -162,30 +181,41 @@ int gtk_create() {
 	vbox = gtk_vbox_new (FALSE, 2);
 	gtk_box_pack_start (GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
 
-#if 0	
 	{ /* main menu */
-		GtkWidget *mmenu;
+		GtkWidget *menu;
 		GtkWidget *menu_bar;
 		GtkWidget *menu_ekg, *menu_window, *menu_help;
-		GtkWidget *mi_quit, *mi_about;
-
-		/*  Ekg menu */
-		menu = gtk_menu_new ();
-		menu_ekg = gtk_menu_item_new_with_label ("Ekg2");
-		mi_quit = gtk_menu_item_new_with_label ("Quit");
-		gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_quit);
-		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_ekg), menu);
-
+		GtkWidget *mi_session, *mi_settings;
+		GtkWidget *mi_www;
+		/*  Ekg2 menu */
+		menu		= gtk_menu_new ();
+		menu_ekg	= gtk_menu_item_new_with_label("Ekg2");
+		mi_session	= ekg2_gtk_menu_new(menu, "Sesje");
+		{ /* session submenu */
+			GtkWidget *menu_sessions	= gtk_menu_new();
+			ekg2_gtk_menu_new(menu_sessions, "Dodaj");
+			gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi_session), menu_sessions);
+		}
+		mi_settings	= ekg2_gtk_menu_new(menu, "Ustawienia");
+		ekg2_gtk_menu_new(menu, "Zakończ");
+		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_ekg), menu);
 		/* window menu */
-		menu = gtk_menu_new ();
-		menu_window = gtk_menu_item_new_with_label("Windows");
+		menu		= gtk_menu_new ();
+		menu_window	= gtk_menu_item_new_with_label("Okna");
 		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_window), menu);
-
 		/* help menu */
-		menu = gtk_menu_new ();
-		menu_help = gtk_menu_item_new_with_label("Help");
-		mi_about = gtk_menu_item_new_with_label ("About...");
-		gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_about);
+		menu		= gtk_menu_new ();
+		menu_help	= gtk_menu_item_new_with_label("Pomoc");
+		mi_www		= ekg2_gtk_menu_new(menu, "WWW");
+		{ /* www submenu */
+			GtkWidget *menu_www	= gtk_menu_new();
+			ekg2_gtk_menu_new(menu_www, "ekg2.org");
+			ekg2_gtk_menu_new(menu_www, "bugs.ekg2.org");
+			ekg2_gtk_menu_new(menu_www, "wiki.ekg2.org");
+			gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi_www), menu_www);
+		}
+		ekg2_gtk_menu_new(menu, "Autorzy");
+		ekg2_gtk_menu_new(menu, "O EKG2..");
 		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_help), menu);
 		/* itd... */
 		
@@ -195,9 +225,9 @@ int gtk_create() {
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), menu_window);
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), menu_help);
 		/* itd... */
+/*		ekg2_set_color(menu_bar); */
 		gtk_widget_show (menu_bar);
 	}
-#endif
 	
 	/* notebook */
 	notebook = gtk_notebook_new ();
@@ -206,6 +236,7 @@ int gtk_create() {
 	gtk_widget_set_size_request(notebook, 505, 375);
 	g_signal_connect (G_OBJECT(notebook), "switch-page", G_CALLBACK(on_switch_page), NULL);
 //	gtk_notebook_set_tab_pos (notebook, 4);
+/*	ekg2_set_color(notebook); */
 	
 	/* lista - przwewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
@@ -223,7 +254,7 @@ int gtk_create() {
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_STATUS);
 	gtk_tree_view_column_pack_start (column, renderer, TRUE);
-	gtk_tree_view_column_set_cell_data_func (column, renderer, macro_set_func_text, NULL, NULL);
+	gtk_tree_view_column_set_cell_data_func (column, renderer, uid_set_func_text, NULL, NULL);
 	
 	renderer = gtk_cell_renderer_text_new ();
 	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_NICK, NULL);
@@ -237,12 +268,14 @@ int gtk_create() {
 	g_signal_connect (G_OBJECT (tree), "row-activated", G_CALLBACK (on_list_select), NULL);
 	gtk_widget_set_size_request(tree, 165, 365);
 /*	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), FALSE); */ // czy wyswietlac nazwe kolumn ?
+	ekg2_set_color_ext(tree);
 	
 	/* edit */
 	edit1 = gtk_entry_new ();
 	gtk_box_pack_start (GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
 	g_signal_connect (G_OBJECT (edit1),"activate",G_CALLBACK (on_enter), NULL);
 //	g_signal_connect (G_OBJECT (edit1),"key-press-event",G_CALLBACK (on_key_press), NULL);
+	ekg2_set_color_ext(edit1);
 
 #if 0
 	GtkWidget *mi_info, *mi_priv;
@@ -327,6 +360,8 @@ void ekg_gtk_window_new(window_t *w) {
 	gtk_text_tag_table_add(table, n->ekg2_tag_bold);
 	
 	n->view = view;
+	ekg2_set_color_ext(view);
+
 	gtk_widget_show_all (notebook);
 }
 
