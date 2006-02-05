@@ -41,7 +41,8 @@ typedef struct {
 	GtkTextTag *ekg2_tag_bold;
 } gtk_window_t;
 
-GtkTreeStore *list_store;		// userlista.
+GtkTreeStore *list_store;		// userlista - elementy
+GtkWidget *tree;			// userlista - widget
 GtkWidget *notebook;			// zarzadzanie okienkami.
 	
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
@@ -76,41 +77,57 @@ gint on_enter(GtkWidget *widget, gpointer data) {
 	command_exec(window_current->target, window_current->session, txt, 0);
 
 	gtk_entry_set_text(GTK_ENTRY(widget), "");
-	return 0;
+	return TRUE;
 }
+
 /* klikniecie rowa userlisty */ 
 gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn *arg2, gpointer user_data) {
 	GtkTreeIter iter;
 	gchar *nick, *session, *uid;
 	session_t *s;
+	const char *action = "query";
 
 	gtk_tree_model_get_iter (GTK_TREE_MODEL(list_store), &iter, path);
 	gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_NICK, &nick, -1);
 	gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_SESSION, &session, -1);
 	gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_UID, &uid, -1);
-	printf("[USERLIST_CLICK] Target: %s session: %s uid: %s\n", nick, session, uid);
+	printf("USERLIST_ACTION (%s) Target: %s session: %s uid: %s\n", action, nick, session, uid);
 
 	s = session_find(session);
-	if (!s) return 0;
+	if (!s) return FALSE;
 	
-	if (uid) command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, "/query \"%s\"", nick);
+	if (uid) command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, "/%s \"%s\"", action, nick);
 	else if (window_current->id == 0 || !window_current->target) { /* zmiana sesji... kod troche sciagniety z ncurses.. czy dobry? */
 //		window_session_cycle(window_current);
 		window_current->session = s;
 		session_current = s;
 		query_emit(NULL, "session-changed");
 	} else print("session_cannot_change");
-	return 0;
+	return TRUE;
+}
+
+
+gint popup_handler(GtkWidget *widget, GdkEvent *event) {
+	GtkMenu *menu = GTK_MENU (widget);
+
+	if (event->type == GDK_BUTTON_PRESS) {
+		GdkEventButton *event_button = (GdkEventButton *) event;
+		if (event_button->button == 3) {
+			gtk_menu_popup (menu, NULL, NULL, NULL, NULL, event_button->button, event_button->time);
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 /* zmiana strony - zmiana okna */
 gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data) {
 	if (in_autoexec) 
-		return 0;
+		return FALSE;
 	if (window_current->id == page_num)
-		return 0;
+		return FALSE;
 	window_switch(page_num); /* !!! to niekoniecznie musi byc numer okna, XXX */
-	return 0;
+	return TRUE;
 }
 
 int gtk_loop() {
@@ -127,8 +144,9 @@ void macro_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
 	g_object_set (GTK_CELL_RENDERER (cell), "text", nick, NULL);
 }
 
+
 int gtk_create() {
-	GtkWidget *win, *edit1, *tree, *status_bar;
+	GtkWidget *win, *edit1, *status_bar;
 	GtkWidget *vbox, *hbox, *sw;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
@@ -144,6 +162,43 @@ int gtk_create() {
 	vbox = gtk_vbox_new (FALSE, 2);
 	gtk_box_pack_start (GTK_BOX(hbox), vbox, TRUE, TRUE, 0);
 
+#if 0	
+	{ /* main menu */
+		GtkWidget *mmenu;
+		GtkWidget *menu_bar;
+		GtkWidget *menu_ekg, *menu_window, *menu_help;
+		GtkWidget *mi_quit, *mi_about;
+
+		/*  Ekg menu */
+		menu = gtk_menu_new ();
+		menu_ekg = gtk_menu_item_new_with_label ("Ekg2");
+		mi_quit = gtk_menu_item_new_with_label ("Quit");
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_quit);
+		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_ekg), menu);
+
+		/* window menu */
+		menu = gtk_menu_new ();
+		menu_window = gtk_menu_item_new_with_label("Windows");
+		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_window), menu);
+
+		/* help menu */
+		menu = gtk_menu_new ();
+		menu_help = gtk_menu_item_new_with_label("Help");
+		mi_about = gtk_menu_item_new_with_label ("About...");
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_about);
+		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_help), menu);
+		/* itd... */
+		
+		menu_bar = gtk_menu_bar_new ();
+		gtk_box_pack_start (GTK_BOX (vbox), menu_bar, FALSE, FALSE, 2);
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), menu_ekg);
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), menu_window);
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu_bar), menu_help);
+		/* itd... */
+		gtk_widget_show (menu_bar);
+	}
+#endif
+	
 	/* notebook */
 	notebook = gtk_notebook_new ();
 //	gtk_notebook_set_show_border (GTK_NOTEBOOK(notebook), FALSE);
@@ -164,7 +219,7 @@ int gtk_create() {
 	gtk_tree_selection_set_mode (gtk_tree_view_get_selection (GTK_TREE_VIEW (tree)), GTK_SELECTION_MULTIPLE);
 
 	renderer = gtk_cell_renderer_pixbuf_new ();
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "Nick", renderer, "pixbuf", COLUMN_STATUS, NULL);
+	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "userlista", renderer, "pixbuf", COLUMN_STATUS, NULL); /* w column name jest nazwa sesji */
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_STATUS);
 	gtk_tree_view_column_pack_start (column, renderer, TRUE);
@@ -181,6 +236,7 @@ int gtk_create() {
 	gtk_container_add (GTK_CONTAINER (sw), tree);
 	g_signal_connect (G_OBJECT (tree), "row-activated", G_CALLBACK (on_list_select), NULL);
 	gtk_widget_set_size_request(tree, 165, 365);
+/*	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), FALSE); */ // czy wyswietlac nazwe kolumn ?
 	
 	/* edit */
 	edit1 = gtk_entry_new ();
@@ -189,15 +245,18 @@ int gtk_create() {
 //	g_signal_connect (G_OBJECT (edit1),"key-press-event",G_CALLBACK (on_key_press), NULL);
 
 #if 0
+	GtkWidget *mi_info, *mi_priv;
 	/* popup menu */
 	menu = gtk_menu_new ();
 	mi_priv = gtk_menu_item_new_with_label ("Query");
 	mi_info = gtk_menu_item_new_with_label ("Info");
 	
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_priv);
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_info);	
-	g_signal_connect_swapped (G_OBJECT(mi_priv),"activate",G_CALLBACK (on_mi_priv), NULL);
-	g_signal_connect_swapped (G_OBJECT(mi_info),"activate",G_CALLBACK (on_mi_info), NULL);
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_info);
+//	g_signal_connect_swapped (G_OBJECT(mi_priv),"activate",G_CALLBACK (on_mi_priv), NULL);
+//	g_signal_connect_swapped (G_OBJECT(mi_info),"activate",G_CALLBACK (on_mi_info), NULL);
+	
+	gtk_widget_show_all (menu);
 	
 	g_signal_connect_swapped (tree, "button_press_event",G_CALLBACK (popup_handler), menu);
 #endif
@@ -314,7 +373,10 @@ void gtk_contacts_update(window_t *w) {
 	printf("[CONTACTS_UPDATE()\n");
  	gtk_tree_store_clear(list_store);
 
-	if (!sessions) 
+	gtk_tree_view_column_set_title( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_STATUS), 
+			session_current ? session_current->alias ? session_current->alias : session_current->uid : "" /* "brak sesji ?" */); /* zmien nazwe kolumny na nazwe aktualnej sesji */
+
+	if (!sessions)
 		return;
 
 	for (l=sessions; l; l = l->next) {
@@ -337,7 +399,7 @@ void gtk_contacts_update(window_t *w) {
 	}
 }
 
-void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *attr) {
+void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *attr, int istimestamp) {
 	GtkTextIter iter;
 	int i;
 	gtk_window_t *n = w->private;
@@ -350,6 +412,8 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *a
 
 		if (!(att & 128))	tags[0] = n->ekg2_tags[att & 7];
 		if (att & 64)		tags[1] = n->ekg2_tag_bold;
+
+		if (istimestamp && (att & 7) == 0) tags[1] = n->ekg2_tag_bold;
 
 		gtk_text_buffer_insert_with_tags(buffer, &iter, str+i, 1, 
 				tags[0] ? tags[0] : tags[1], 
@@ -375,14 +439,17 @@ QUERY(gtk_ui_window_print) {
 	if (config_timestamp && config_timestamp_show && xstrcmp(config_timestamp, "")) {
 		char *tmp = format_string(config_timestamp);
 		char *ts  = saprintf("%s ", timestamp(tmp));
+		fstring_t *t = fstring_new(ts);
 
-		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-		gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, n->ekg2_tags[0], n->ekg2_tag_bold, NULL);
+//		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
+//		gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, n->ekg2_tags[0], n->ekg2_tag_bold, NULL);
+		gtk_process_str(w, buffer, t->str, t->attr, 1);
 		
 		xfree(tmp);
 		xfree(ts);
+		fstring_free(t);
 	}
-	gtk_process_str(w, buffer, line->str, line->attr);
+	gtk_process_str(w, buffer, line->str, line->attr, 0);
 
 	gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 	gtk_text_buffer_insert_with_tags(buffer, &iter, "\n", -1, NULL);
@@ -402,6 +469,13 @@ QUERY(gtk_print_version) {
 			gtk_major_version, gtk_minor_version, gtk_micro_version, gtk_binary_age);
 	print("generic", ver);
 	xfree(ver);
+	return 0;
+}
+
+QUERY(gtk_statusbar_query) { /* dodanie / usuniecie sesji... */
+	if (in_autoexec)
+		return 1;
+	gtk_contacts_update(NULL);
 	return 0;
 }
 
@@ -433,10 +507,11 @@ QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. napr
 	window_t *w = *(va_arg(ap, window_t **));
 	gtk_window_t *n = w->private;
 
+	GtkTextBuffer *buffer;
+
 	if (!n)
 		return 1;
-
-	GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (n->view));
+	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (n->view));
 	gtk_text_buffer_set_text (buffer, "", -1);
 	return 0;
 }
@@ -502,10 +577,8 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "userlist-removed", gtk_userlist_changed, NULL);
 	query_connect(&gtk_plugin, "userlist-renamed", gtk_userlist_changed, NULL);
 /* sesja */
-#if 0
 	query_connect(&gtk_plugin, "session-added", gtk_statusbar_query, NULL);
 	query_connect(&gtk_plugin, "session-removed", gtk_statusbar_query, NULL);
-#endif			
 	query_connect(&gtk_plugin, "session-changed", gtk_contacts_changed, NULL);
 
 /* w/g developerow na !ekg2 `haki`  ;) niech im bedzie ... ;p */
@@ -515,7 +588,7 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "ui-is-initialized", gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
 	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 
-	timer_add(&gtk_plugin, "gtk:clock", 1, 1, gtk_statusbar_timer, NULL);
+/*	timer_add(&gtk_plugin, "gtk:clock", 1, 1, gtk_statusbar_timer, NULL); */
 	
 	gtk_init(0, NULL);
 
