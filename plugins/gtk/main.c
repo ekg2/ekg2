@@ -53,6 +53,8 @@ void gtk_contacts_update(window_t *w);
 extern void ekg_loop();
 int ui_quit;	// czy zamykamy ui..
 
+extern GtkWidget *gtk_session_new(void *ptr); /* gtk-session.c */
+
 enum {	COLUMN_STATUS = 0, 
 	COLUMN_NICK,
 	COLUMN_UID,
@@ -142,7 +144,7 @@ int gtk_loop() {
 void ekg2_gtk_menu_url_click(char *user_data) {
 //	printf("menuitem = %x userdata = %x\n");
 	printf("[POMOC->WWW->CLICK] url = %s\n", user_data);
-// TODO: otwroz strone.
+// TODO: otworz strone.
 }
 
 void ekg2_gtk_menu_session_add(void *user_data) {
@@ -166,6 +168,7 @@ void ekg2_gtk_menu_session_add(void *user_data) {
  *   dodac sesje z parametrami podanymi przez usera. sprobowac nie przez command_exec_format() tylko przez natywne procedury...
  *   to nie ma byc frontend do ekg2. tylko GUI.
  */
+	gtk_session_new(NULL);
 }
 
 void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, GtkTreeModel *model, GtkTreeIter *iter, gpointer data) {
@@ -558,6 +561,9 @@ QUERY(gtk_ui_beep) {
 QUERY(ekg2_gtk_loop) {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id);
 	gtk_contacts_update(NULL);
+
+//	gtk_session_new(0);
+
 	while (gtk_loop());
 	return -1;
 }
