@@ -62,6 +62,26 @@ gint on_session_button_clicked(GtkWidget *widget, gpointer data) {
 	return TRUE;
 }
 
+/* TODO: stworzyc okienko:
+ *    1. wybor plugina ktory bedzie zarzadzal sesjami.. po prostu wyswietlamy pluginy z typem PROTOCOL
+ *    2. jesli plugin to:
+ *       a) irc: 
+ *           -> user ma wpisac nazwe serwera i swoj nickname.
+ *           -> nazwa sesji domyslna: irc:%NAZWA_USERA@%NAZWA_SERWERA chyba ze istnieje wtedy dodajemy numerki...
+ *       b) gg:
+ *           -> user ma wpisac numerek gg i swoje haslo.
+ *           -> nazwa sesji domyslna: gg:%NUMEREKUSERA jesli taka sesja istnieje to informujemy usera i czekamy az poda inny numerek.
+ *       c) jabber:
+ *           -> user ma podac swoj jid. i adres do serwera jesli jest rozny niz w jid.
+ *           -> user moze podac resource [domyslnie: EKG2]
+ *           -> nazwa sesji to jid:%JID jesli istnieje i ma taki sam resource to wtedy czekamy na inny... 
+ *   3. pokazac userowi uid sesji i pozwolic mu dodac alias do sesji.
+ *   4. tyle, enjoy ;)
+ *   --------
+ *   dodac sesje z parametrami podanymi przez usera. sprobowac nie przez command_exec_format() tylko przez natywne procedury...
+ *   to nie ma byc frontend do ekg2. tylko GUI.
+ */
+
 GtkWidget *gtk_session_step(int step) {
 	GtkWidget *vbox2;
 	GSList *group = NULL;
@@ -82,6 +102,7 @@ GtkWidget *gtk_session_step(int step) {
 	switch(step) {
 		case (0):	// ok
 			/* stworzyc sesje.  */
+			printf("TWORZENIE SESJI:....\n");
 			/* no break */
 		case (-1):	// canel.
 			 /* zniszczyc wszystko */
@@ -109,6 +130,23 @@ GtkWidget *gtk_session_step(int step) {
 			break;
 		case (3):	// uid / alias
 			instr = "Zmien uid / alias dla swojej sesji..";
+			vbox2 = gtk_vbox_new (FALSE, 10);
+			gtk_container_add (GTK_CONTAINER (frame), vbox2);
+			
+			{ /* TODO, zrobic jakos ladniej.... 
+			   * - > UID 	[EDIT_z_uidem]
+			   *  -> ALIAS	[EDIT_Z_aliasem]
+			   */
+				GtkWidget *label= gtk_label_new ("Uid");
+				GtkWidget *edit = gtk_entry_new ();
+				gtk_box_pack_start (GTK_BOX(vbox2), label, FALSE, TRUE, 0);
+				gtk_box_pack_start (GTK_BOX(vbox2), edit, FALSE, TRUE, 0);
+
+				label = gtk_label_new ("Alias");
+				edit = gtk_entry_new ();
+				gtk_box_pack_start (GTK_BOX(vbox2), label, FALSE, TRUE, 0);
+				gtk_box_pack_start (GTK_BOX(vbox2), edit, FALSE, TRUE, 0);
+			}
 			break;
 		case (4):	// autoconnect, autoreconnect, autoreconnect_time ? :>
 			instr = "Po kliknieciu na zakoncz Twoja sesja zostanie utworzona.. ;)";
@@ -128,8 +166,15 @@ GtkWidget *gtk_session_step(int step) {
 	return NULL;
 }
 
-GtkWidget *gtk_session_new(void *ptr) {
+GtkWidget *gtk_session_new_window(void *ptr) {
 	GtkWidget *hbox;
+
+	if (win) {
+		/* pozwolic na tworzenie kilku sesji at one time? 
+		 * moze, zrobic jakas strukturke z najwazniejszym widgetami.. TODO */
+		/* poka okno */
+		return win;
+	}
 
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	vbox = gtk_vbox_new (FALSE, 5);
@@ -139,7 +184,12 @@ GtkWidget *gtk_session_new(void *ptr) {
 	gtk_box_pack_start( GTK_BOX(vbox), slabel, TRUE, TRUE, 0);
 
 /* tutaj ramka.. przerzucono tworzenie do gtk_session_step() */
-	
+	frame = NULL;
+
+/* progressbar */
+	pbar = gtk_progress_bar_new ();
+	gtk_box_pack_end (GTK_BOX (vbox), pbar, FALSE, FALSE, 5);
+
 /* PRZYCISKI */
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_end(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -159,10 +209,8 @@ GtkWidget *gtk_session_new(void *ptr) {
 	done_button = gtk_button_new_from_stock( GTK_STOCK_OK);
 	gtk_container_add (GTK_CONTAINER (hbox), done_button);
 	g_signal_connect (G_OBJECT (done_button),"clicked",G_CALLBACK (on_session_button_clicked), (void *) EKG_SESSION_NEW_OK);
-/* progressbar */
-	pbar = gtk_progress_bar_new ();
-	gtk_box_pack_end (GTK_BOX (vbox), pbar, FALSE, FALSE, 5);
 
+/* ... */
 	gtk_widget_set_size_request(win, 300+117, 265);
 	gtk_session_step(1);
 	gtk_widget_show_all (win);

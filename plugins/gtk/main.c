@@ -51,9 +51,12 @@ PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
 void gtk_contacts_update(window_t *w);
 extern void ekg_loop();
-int ui_quit;	// czy zamykamy ui..
+int ui_quit = -1;	// -1: jeszcze nie wszedl do ui_loop()
+			//  0: normalny stan..
+			//  1: zamykamy ui.
 
-extern GtkWidget *gtk_session_new(void *ptr); /* gtk-session.c */
+extern GtkWidget *gtk_session_new_window(void *ptr);	/* gtk-session.c */
+extern GtkWidget *gtk_settings_window(void *ptr);	/* gtk-settings.c */
 
 enum {	COLUMN_STATUS = 0, 
 	COLUMN_NICK,
@@ -139,7 +142,7 @@ int gtk_loop() {
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
-	return (ui_quit == 0);
+	return (ui_quit != 1);
 }
 void ekg2_gtk_menu_url_click(char *user_data) {
 //	printf("menuitem = %x userdata = %x\n");
@@ -149,26 +152,17 @@ void ekg2_gtk_menu_url_click(char *user_data) {
 
 void ekg2_gtk_menu_session_add(void *user_data) {
 	printf("[EKG2->Sesje->Dodaj->CLICK]\n");
-/* TODO: stworzyc okienko:
- *    1. wybor plugina ktory bedzie zarzadzal sesjami.. po prostu wyswietlamy pluginy z typem PROTOCOL
- *    2. jesli plugin to:
- *       a) irc: 
- *           -> user ma wpisac nazwe serwera i swoj nickname.
- *           -> nazwa sesji domyslna: irc:%NAZWA_USERA@%NAZWA_SERWERA chyba ze istnieje wtedy dodajemy numerki...
- *       b) gg:
- *           -> user ma wpisac numerek gg i swoje haslo.
- *           -> nazwa sesji domyslna: gg:%NUMEREKUSERA jesli taka sesja istnieje to informujemy usera i czekamy az poda inny numerek.
- *       c) jabber:
- *           -> user ma podac swoj jid. i adres do serwera jesli jest rozny niz w jid.
- *           -> user moze podac resource [domyslnie: EKG2]
- *           -> nazwa sesji to jid:%JID jesli istnieje i ma taki sam resource to wtedy czekamy na inny... 
- *   3. pokazac userowi uid sesji i pozwolic mu dodac alias do sesji.
- *   4. tyle, enjoy ;)
- *   --------
- *   dodac sesje z parametrami podanymi przez usera. sprobowac nie przez command_exec_format() tylko przez natywne procedury...
- *   to nie ma byc frontend do ekg2. tylko GUI.
- */
-	gtk_session_new(NULL);
+	gtk_session_new_window(NULL);
+}
+
+void ekg2_gtk_menu_settings(void *user_data) {
+	printf("[EKG2->Ustawienia->CLICK]\n");
+	gtk_settings_window(NULL);
+}
+
+void ekg2_gtk_menu_quit(GtkWidget *window) {
+/* pytac? */
+	gtk_widget_destroy(window);
 }
 
 void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, GtkTreeModel *model, GtkTreeIter *iter, gpointer data) {
@@ -180,6 +174,7 @@ void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, G
 GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function, void *data) {
 	GtkWidget *menu_item = gtk_menu_item_new_with_label(label);
 	gtk_menu_shell_append(GTK_MENU_SHELL(parentmenu), menu_item);
+	gtk_widget_show(menu_item);
 	if (function)
 		g_signal_connect_swapped (G_OBJECT(menu_item),"activate",G_CALLBACK (function), data);
 	return menu_item;
@@ -228,8 +223,8 @@ int gtk_create() {
 			ekg2_gtk_menu_new(menu_sessions, "Dodaj", ekg2_gtk_menu_session_add, NULL);
 			gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi_session), menu_sessions);
 		}
-		mi_settings	= ekg2_gtk_menu_new(menu, "Ustawienia", NULL, NULL);
-		ekg2_gtk_menu_new(menu, "Zakończ", NULL, "todo");
+		mi_settings	= ekg2_gtk_menu_new(menu, "Ustawienia", ekg2_gtk_menu_settings, NULL);
+		ekg2_gtk_menu_new(menu, "Zakończ", ekg2_gtk_menu_quit, win);
 		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_ekg), menu);
 		/* window menu */
 		menu		= gtk_menu_new ();
@@ -309,23 +304,26 @@ int gtk_create() {
 	g_signal_connect (G_OBJECT (edit1),"activate",G_CALLBACK (on_enter), NULL);
 //	g_signal_connect (G_OBJECT (edit1),"key-press-event",G_CALLBACK (on_key_press), NULL);
 	ekg2_set_color_ext(edit1);
+	
+	{ /* popup menu, userlista */
+		GtkWidget *menu = gtk_menu_new();
 
-#if 0
-	GtkWidget *mi_info, *mi_priv;
-	/* popup menu */
-	menu = gtk_menu_new ();
-	mi_priv = gtk_menu_item_new_with_label ("Query");
-	mi_info = gtk_menu_item_new_with_label ("Info");
-	
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_priv);
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), mi_info);
-//	g_signal_connect_swapped (G_OBJECT(mi_priv),"activate",G_CALLBACK (on_mi_priv), NULL);
-//	g_signal_connect_swapped (G_OBJECT(mi_info),"activate",G_CALLBACK (on_mi_info), NULL);
-	
-	gtk_widget_show_all (menu);
-	
-	g_signal_connect_swapped (tree, "button_press_event",G_CALLBACK (popup_handler), menu);
-#endif
+		/* common */
+		ekg2_gtk_menu_new(menu, "Query", /* on_mi_priv */ NULL, NULL);
+//		ekg2_gtk_menu_new(menu, "Info",  /* on_mi_info */ NULL, NULL);
+		ekg2_gtk_menu_new(menu, "Usun", NULL, NULL);
+
+		g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), menu);
+	}
+	{ /* popup menu, okna */
+		GtkWidget *menu = gtk_menu_new();
+		
+		ekg2_gtk_menu_new(menu, "Rozlacz...", NULL, NULL); /* detach / attach */
+		ekg2_gtk_menu_new(menu, "Przelacz na", NULL, NULL);
+		ekg2_gtk_menu_new(menu, "Zamknij", NULL, NULL);
+
+		g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), menu);
+	}
 #if 0
 	/* statusbar */
 	status_bar = gtk_statusbar_new ();
@@ -541,7 +539,7 @@ QUERY(gtk_print_version) {
 }
 
 QUERY(gtk_statusbar_query) { /* dodanie / usuniecie sesji... */
-	if (in_autoexec)
+	if (ui_quit)
 		return 1;
 	gtk_contacts_update(NULL);
 	return 0;
@@ -559,10 +557,9 @@ QUERY(gtk_ui_beep) {
 }
 
 QUERY(ekg2_gtk_loop) {
+	ui_quit = 0;
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id);
 	gtk_contacts_update(NULL);
-
-//	gtk_session_new(0);
 
 	while (gtk_loop());
 	return -1;
@@ -574,7 +571,7 @@ QUERY(ekg2_gtk_pending) {
 	return -1;
 }
 
-QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. naprawde czysci okno. wiec nie myslec ze jest takie samo behavtior.. */
+QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. naprawde czysci okno. wiec nie myslec ze jest takie samo behavior.. */
 	window_t *w = *(va_arg(ap, window_t **));
 	gtk_window_t *n = w->private;
 
@@ -591,7 +588,7 @@ QUERY(gtk_ui_window_switch) {
 	window_t *w = *(va_arg(ap, window_t **));
 
 	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == w->id)
-		return 0;
+		return 1;
 
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), w->id);
 	gtk_contacts_update(NULL);
@@ -600,7 +597,7 @@ QUERY(gtk_ui_window_switch) {
 
 QUERY(gtk_ui_is_initialized) {
 	int *tmp = va_arg(ap, int *);
-	*tmp = !ui_quit;
+	*tmp = !(ui_quit == 1);
 	return 0;
 }
 
@@ -612,6 +609,9 @@ QUERY(gtk_contacts_changed) {
 QUERY(gtk_userlist_changed) {
 	char **p1 = va_arg(ap, char**);
 	char **p2 = va_arg(ap, char**);
+	if (ui_quit)
+		return 1;
+	
 /* jak jest jakies okno z *p1 to wtedy zamieniamy nazwe na *p2 */
 	gtk_contacts_update(NULL);
 	return 0;
