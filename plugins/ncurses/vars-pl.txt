@@ -64,7 +64,7 @@ contacts_options
 	domy¶lna warto¶æ: brak
 	
 	opcje listy kontaktów oddzielone przecinkiem lub spacj±. domy¶lne
-	ustawienia to ,,right, frame, margin=1, nowrap, nodescr, order='chavawxadninnoerr'
+	ustawienia to ,,right, frame, margin=1, nowrap, nodescr, order=chavawxadninnoerr''
 	
 	mo¿liwe stany to: 
 	
