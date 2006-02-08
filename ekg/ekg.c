@@ -180,21 +180,21 @@ void ekg_loop()
                                 command_exec(NULL, s, "/_autoaway", 0);
                 }
 
-				/* sprawd¼ scroll timeouty */
-				/* XXX: nie tworzyæ variabla globalnego! */
-				for (l = sessions; l; l = l->next) {
-						session_t *s = l->data;
-						int tmp;
+		/* sprawd¼ scroll timeouty */
+		/* XXX: nie tworzyæ variabla globalnego! */
+		for (l = sessions; l; l = l->next) {
+			session_t *s = l->data;
+			int tmp;
 
-						if (!s->connected)
-								continue;
+			if (!s->connected)
+				continue;
 
-						if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
-								continue;
+			if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
+				continue;
 
-						if (time(NULL) - s->scroll_last > tmp)
-								command_exec(NULL, s, "/_autoscroll", 0);
-				}
+			if (time(NULL) - s->scroll_last > tmp)
+				command_exec(NULL, s, "/_autoscroll", 0);
+		}
 
                 /* auto save */
                 if (config_auto_save && config_changed && (time(NULL) - last_save) > config_auto_save) {
