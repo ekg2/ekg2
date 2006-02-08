@@ -60,7 +60,7 @@ contacts_options
 	default value: none
 	
 	options of contacts list separate by coma or space. Default settings is : 
-	,,right, margin=1, nowrap, nodescr, order='chavawxadninnoerr'
+	,,right, margin=1, nowrap, nodescr, order=chavawxadninnoerr''
 	
 	possible status:
 	
