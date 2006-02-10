@@ -64,8 +64,8 @@ images_dir
 
 
 images_size
-	typ: liczba
-	domy¶lna warto¶æ: 20
+	type: liczba
+	default value: 20
 	
 	varible which define size of images in kB
 
