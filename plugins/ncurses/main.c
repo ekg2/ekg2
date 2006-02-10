@@ -312,7 +312,7 @@ static int ncurses_postinit(void *data, va_list ap)
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
 #endif
-	ncurses_contacts_changed("ncurses:contacts_size", NULL);
+	ncurses_contacts_changed(NULL, NULL);
 	return 0;
 }
 
