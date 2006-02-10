@@ -38,7 +38,7 @@ dcc_limit
 dcc_port
         type: number
         default value: 1550
-
+	
         port, which ekg uses for p2p conections.
 
 display_token
