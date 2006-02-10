@@ -111,7 +111,7 @@ msg
 	short description: sends message
 	
 	All receivers are marked by *. Preceding multiline message with string
-	set in subject_string variable will make this line subject of this
+	set in subject_prefix variable will make this line subject of this
 	message.
 
 modify

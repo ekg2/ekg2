@@ -113,7 +113,7 @@ msg
 	krotki opis: wysy³a pojedyncz± wiadomo¶æ
 	
 	Wszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomo¶ci 
-	wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_string spowoduje 
+	wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_prefix spowoduje 
 	potraktowanie pierwszej linijki jako tematu.
 
 modify
