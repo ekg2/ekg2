@@ -2550,7 +2550,6 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 
 		if (!res) {
-/* TODO CHECK, btw. z tym last_params to nie ma jakiegos memleaka ? jesli jest alias to jest tworzony jakies arrayik, zwalniamy go gdzies ? */
 			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : last_command->params;
 			int parcount = array_count(last_params);
 			char **par = array_make(p, " \t", parcount, 1, 1);
@@ -2587,6 +2586,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				window_lock_dec(w);
 				query_emit(NULL, "ui-window-refresh");
 			}
+			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
 			array_free(par);
 			xfree(ntarget);
 		}
