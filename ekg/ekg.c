@@ -130,7 +130,7 @@ void ekg_loop()
                         if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
 				int ispersist = t->persist;
 				
-                                if (t->persist) {
+                                if (ispersist) {
                                         struct timeval tv;
                                         struct timezone tz;
 
@@ -139,11 +139,8 @@ void ekg_loop()
                                         memcpy(&t->ends, &tv, sizeof(tv));
                                 }
 
-                                t->function(0, t->data);
-
-                                if (!ispersist) {
-                                	timer_freeone(t);
-                                }
+				if ((t->function(0, t->data) == -1) || !ispersist)
+					timer_freeone(t);
                         }
                 }
 
@@ -157,11 +154,13 @@ void ekg_loop()
                                 continue;
 
                         if (w->buf) {
-                                void (*handler)(int, int, char*, void*) = w->handler;
-                                handler(2, w->fd, NULL, w->data);
+                                int (*handler)(int, int, char*, void*) = w->handler;
+                                if (handler(2, w->fd, NULL, w->data) == -1)
+					watch_free(w);
                         } else {
-                                void (*handler)(int, int, int, void*) = w->handler;
-                                handler(2, w->fd, w->type, w->data);
+                                int (*handler)(int, int, int, void*) = w->handler;
+				if (handler(2, w->fd, w->type, w->data) == -1)
+					watch_free(w);
                         }
                 }
 
@@ -506,6 +505,7 @@ static char *prepare_batch_line(int argc, char *argv[], int n)
 static WATCHER(handle_stderr)
 {
         print("stderr", watch);
+	return 0;
 }
 
 /*
