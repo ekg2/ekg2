@@ -4124,7 +4124,7 @@ void command_init()
 	command_add(NULL, "version", NULL, cmd_version, 0, NULL);
 	  
 	command_add(NULL, "window", "p ? p", cmd_window, 0,
-	  "active clear kill last list new next prev switch refresh left right");
+	  "active clear kill last list move new next prev switch refresh left right");
 
 	command_add(NULL, "_watches", NULL, cmd_debug_watches, 0,NULL);
  
