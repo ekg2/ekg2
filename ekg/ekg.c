@@ -872,9 +872,6 @@ int main(int argc, char **argv)
                 command_exec_format(NULL, s, 2, "/%s %s", cmd, (new_descr) ? new_descr : "");
         }
 
-
-        if (!sessions)
-                goto no_sessions;
         /* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
          * wszystkim, co chce siê automagicznie ³±czyæ. */
         for (l = sessions; l; l = l->next) {
@@ -884,7 +881,6 @@ int main(int argc, char **argv)
                         command_exec(NULL, s, "/connect", 0);
         }
 
-no_sessions:
         if (config_auto_save)
                 last_save = time(NULL);
 
@@ -892,12 +888,14 @@ no_sessions:
                 print("no_config");
 
         reason_changed = 0;
-
-        /* krêæ imprezê */
-        while (1) {
-                ekg_loop();
-                debug("ekg_loop() exited. not good. big bada boom!\n");
-        }
+	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
+	 * to wywolujemy normalnie sami ekg_loop() w petelce */
+	if (query_emit(NULL, "ui-loop") != -1) {
+        	/* krêæ imprezê */
+		while (1) {
+			ekg_loop();
+		}
+	}
 
         ekg_exit();
 
