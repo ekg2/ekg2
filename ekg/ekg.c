@@ -114,7 +114,7 @@ void ekg_loop()
         fd_set rd, wd;
         int ret, maxfd, pid, status;
 
-        for (;;) {
+	{
                 watch_t *watch_last;
 
                 /* przejrzyj timery u¿ytkownika, ui, skryptów */
@@ -328,14 +328,9 @@ void ekg_loop()
 
                                         watch_free(w);
                                 }
-
-                                continue;
-                        }
-
-                        if (errno != EINTR)
+                        } else if (errno != EINTR)
                                 debug("select() failed: %s\n", strerror(errno));
-
-                        continue;
+                        return;
                 }
 
 watches_again:
