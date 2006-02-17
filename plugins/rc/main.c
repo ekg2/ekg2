@@ -35,10 +35,11 @@ WATCHER(rc_input_handler_line)
 
 	if (type == 1) {
 		rc_input_close(r);
-		return;
+		return 0;
 	}
 
 	command_exec(NULL, NULL, watch, 0);
+	return 0;
 }
 
 /*
@@ -54,13 +55,14 @@ WATCHER(rc_input_handler_dgram)
 
 	if (type == 1) {
 		rc_input_close(r);
-		return;
+		return 0;
 	}
 
 	len = read(fd, buf, sizeof(buf) - 1);
 	buf[len] = 0;
 
 	command_exec(NULL, NULL, buf, 0);
+	return 0;
 }
 
 /*
@@ -70,32 +72,30 @@ WATCHER(rc_input_handler_dgram)
  */
 WATCHER(rc_input_handler_accept)
 {
-	rc_input_t *r = data, rn;
+	rc_input_t *r = data, *rn;
 	struct sockaddr sa;
 	int salen = sizeof(sa), cfd;
 
 	if (type == 1) {
 		rc_input_close(r);
-		return;
+		return 0;
 	}
 
 	if ((cfd = accept(fd, &sa, &salen)) == -1) {
 		debug("[rc] accept() failed: %s\n", strerror(errno));
-		rc_input_close(r);
-		list_remove(&rc_inputs, r, 1);
-		watch_remove(&rc_plugin, fd, (int)watch);
-
-		return;
+		return -1;
 	}
 
+	rn = xmalloc(sizeof(rn));
 	memset(&rn, 0, sizeof(rn));
 
-	rn.fd = cfd;
-	rn.path = xstrdup(r->path);
-	rn.type = (r->type == RC_INPUT_TCP) ? RC_INPUT_TCP_CLIENT : RC_INPUT_UNIX_CLIENT;
-	rn.watch = WATCH_READ_LINE;
-	r = list_add(&rc_inputs, &rn, sizeof(rn));
-	watch_add(&rc_plugin, rn.fd, rn.watch, 1, rc_input_handler_line, r);
+	rn->fd = cfd;
+	rn->path = xstrdup(r->path);
+	rn->type = (r->type == RC_INPUT_TCP) ? RC_INPUT_TCP_CLIENT : RC_INPUT_UNIX_CLIENT;
+	rn->watch = WATCH_READ_LINE;
+	list_add(&rc_inputs, rn, 0);
+	watch_add(&rc_plugin, rn->fd, rn->watch, 1, rc_input_handler_line, rn);
+	return 0;
 }
 
 /*
