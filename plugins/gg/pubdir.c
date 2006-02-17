@@ -56,12 +56,12 @@ static WATCHER(gg_handle_register)
 		goto fail;
 	}
 
-	if (type != 0)
-		return;
+	if (type)
+		return 0;
 
 	if (!h) {
 		debug("[gg] gg_handle_register() called with NULL data\n");
-		return;
+		return -1;
 	}
 
 	if (gg_pubdir_watch_fd(h) || h->state == GG_STATE_ERROR) {
@@ -73,7 +73,7 @@ static WATCHER(gg_handle_register)
 		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_register, h);
 		watch_timeout_set(w, h->timeout);
 
-		return;
+		return 0;
 	}
 
 	if (!(p = h->data) || !p->success) {
@@ -99,6 +99,7 @@ static WATCHER(gg_handle_register)
 fail:
 	list_remove(&gg_registers, h, 0);
 	gg_free_pubdir(h);
+	return 0;
 }
 
 COMMAND(gg_command_register)
@@ -149,7 +150,7 @@ COMMAND(gg_command_register)
 
 	return 0;
 }
-
+/* zwalnianie w type == 1 */
 static WATCHER(gg_handle_unregister)
 {
 	struct gg_http *h = data;
@@ -161,12 +162,12 @@ static WATCHER(gg_handle_unregister)
 		goto fail;
 	}
 
-	if (type != 0)
-		return;
+	if (type)
+		return 0;
 
 	if (!h) {
 		debug("[gg] gg_handle_unregister() called with NULL data\n");
-		return;
+		return -1;
 	}
 
 	if (gg_pubdir_watch_fd(h) || h->state == GG_STATE_ERROR) {
@@ -178,7 +179,7 @@ static WATCHER(gg_handle_unregister)
 		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_unregister, h);
 		watch_timeout_set(w, h->timeout);
 
-		return;
+		return 0;
 	}
 
 	if (!(s = h->data) || !s->success) {
@@ -191,6 +192,7 @@ static WATCHER(gg_handle_unregister)
 fail:
 	list_remove(&gg_unregisters, h, 0);
 	gg_free_pubdir(h);
+	return 0;
 }
 
 COMMAND(gg_command_unregister)
@@ -246,12 +248,12 @@ static WATCHER(gg_handle_passwd)
 		goto fail;
 	}
 
-	if (type != 0)
-		return;
+	if (type)
+		return 0;
 
 	if (!h) {
 		debug("[gg] gg_handle_passwd() called with NULL data\n");
-		return;
+		return -1;
 	}
 
 	if (gg_pubdir_watch_fd(h) || h->state == GG_STATE_ERROR) {
@@ -263,7 +265,7 @@ static WATCHER(gg_handle_passwd)
 		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_passwd, h);
 		watch_timeout_set(w, h->timeout);
 		
-		return;
+		return 0;
 	}
 
 	if (!(p = h->data) || !p->success) {
@@ -301,6 +303,7 @@ fail:
 			gg_free_pubdir(h);
 		}
 	}
+	return 0;
 }
 
 COMMAND(gg_command_passwd)
@@ -344,12 +347,12 @@ static WATCHER(gg_handle_remind)
 		goto fail;
 	}
 
-	if (type != 0)
-		return;
+	if (type)
+		return 0;
 
 	if (!h) {
 		debug("[gg] gg_handle_remind() called with NULL data\n");
-		return;
+		return -1;
 	}
 
 	if (gg_pubdir_watch_fd(h) || h->state == GG_STATE_ERROR) {
@@ -361,7 +364,7 @@ static WATCHER(gg_handle_remind)
 		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_remind, h);
 		watch_timeout_set(w, h->timeout);
 
-		return;
+		return 0;
 	}
 
 	if (!(s = h->data) || !s->success) {
@@ -374,6 +377,7 @@ static WATCHER(gg_handle_remind)
 fail:
 	list_remove(&gg_reminds, h, 0);
 	gg_free_pubdir(h);
+	return 0;
 }
 
 COMMAND(gg_command_remind)

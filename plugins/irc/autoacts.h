@@ -19,7 +19,9 @@
 #ifndef __EKG_PLUGINS_IRC_AUTOACTS_H
 #define __EKG_PLUGINS_IRC_AUTOACTS_H
 
+#include <ekg/plugins.h>
 #include <ekg/sessions.h>
+#include <ekg/stuff.h>
 
 enum { IRC_REJOIN_KICK=0, IRC_REJOIN_CONNECT };
 
@@ -31,7 +33,7 @@ typedef struct {
 } irc_onkick_handler_t;
 
 int irc_autorejoin(session_t *s, int when, char *chan);
-void irc_autorejoin_timer(int type, void *data);
+TIMER(irc_autorejoin_timer);
 QUERY(irc_onkick_handler);
 
 #endif

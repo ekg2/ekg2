@@ -960,10 +960,10 @@ static WATCHER(gg_handle_token)
         }
 
         if (type != 0)
-                return;
+                return 0;
 
 	if (!h)
-		return;
+		return -1;
 	
 	if (gg_token_watch_fd(h) || h->state == GG_STATE_ERROR) {
 		print("gg_token_failed", gg_http_error_string(h->error));
@@ -974,7 +974,7 @@ static WATCHER(gg_handle_token)
                 watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_token, h);
                 watch_timeout_set(w, h->timeout);
 
-		return;
+		return 0;
 	}
 
 	if (!(t = h->data) || !h->body) {
@@ -1087,8 +1087,8 @@ static WATCHER(gg_handle_token)
 	xfree(file);
 
 fail:
-	watch_remove(&gg_plugin, h->fd, h->check);
 	gg_token_free(h);
+	return -1; /* watch_remove(&gg_plugin, h->fd, h->check); */
 }
 
 COMMAND(gg_command_token)
@@ -1302,14 +1302,16 @@ COMMAND(gg_command_modify)
 	return res;
 }
 
-static void gg_checked_timer_handler(int type, void *data)
+/* dj, nie rozumiem */
+
+static TIMER(gg_checked_timer_handler)
 {
         gg_currently_checked_t *c = (gg_currently_checked_t *) data;
 	list_t l;
 
 	if (type == 1) {
 		xfree(data);
-		return;
+		return -1;
 	}
 
 	for (l = gg_currently_checked; l; l = l->next) {
@@ -1317,9 +1319,10 @@ static void gg_checked_timer_handler(int type, void *data)
 
 		if (!session_compare(c2->session, c->session) && !xstrcmp(c2->uid, c->uid)) {
 			print("gg_user_is_not_connected", session_name(c->session), format_user(c->session, c->uid));
-			return; 
+			return -1; 
 		}
 	}
+	return -1; /* timer tymczasowy */
 }
 
 COMMAND(gg_command_check_conn)

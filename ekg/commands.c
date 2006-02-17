@@ -565,7 +565,7 @@ WATCHER(cmd_exec_watch_handler)
 	int quiet = (i) ? i->quiet : 0;
 
 	if (!i)
-		return;
+		return -1;
 
 	if (type == 1) {
 		if (i->buf) {
@@ -576,12 +576,12 @@ WATCHER(cmd_exec_watch_handler)
 		xfree(i->target);
 		xfree(i->session);
 		xfree(i);
-		return;
+		return 0;
 	}
 
 	if (!i->target) {
 		printq("exec", watch);
-		return;
+		return 0;
 	}
 
 	if (i->buf) {
@@ -590,6 +590,7 @@ WATCHER(cmd_exec_watch_handler)
 	} else {
 		command_exec_format(i->target, session_find(i->session), quiet, "/ %s", watch);
 	}
+	return 0;
 }
 
 void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, void *priv)

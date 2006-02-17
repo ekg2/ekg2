@@ -604,19 +604,19 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
  */
 void watch_free(watch_t *w)
 {
-	void (*handler)(int, int, int, void *);
-
 	if (!w)
 		return;
 
 	w->removed = 1;
 		
-	if (w->buf)
+	if (w->buf) {
+		int (*handler)(int, int, const char *, void *) = w->handler;
 		string_free(w->buf, 1);
-
-	handler = w->handler;
-	handler(1, w->fd, w->type, w->data);
-
+		handler(1, w->fd, NULL, w->data);
+	} else {
+		int (*handler)(int, int, int, void *) = w->handler;
+		handler(1, w->fd, w->type, w->data);
+	}
 	list_remove(&watches, w, 1);
 }
 
@@ -628,11 +628,8 @@ void watch_free(watch_t *w)
 void watch_handle_line(watch_t *w)
 {
 	char buf[1024], *tmp;
-	int ret;
-	void (*handler)(int, int, const char *, void *) = w->handler;
-
-	if (!w->persist)
-		list_remove(&watches, w, 0);
+	int ret, res;
+	int (*handler)(int, int, const char *, void *) = w->handler;
 
 	ret = read(w->fd, buf, sizeof(buf) - 1);
 
@@ -652,7 +649,10 @@ void watch_handle_line(watch_t *w)
 		if (xstrlen(line) > 1 && line[xstrlen(line) - 1] == '\r')
 			line[xstrlen(line) - 1] = 0;
 
-		handler(0, w->fd, line, w->data);
+		if ((res = handler(0, w->fd, line, w->data)) == -1) {
+			xfree(line);
+			break;
+		}
 					
 		new = string_init(w->buf->str + index + 1);
 		string_free(w->buf, 1);
@@ -662,13 +662,11 @@ void watch_handle_line(watch_t *w)
 
 	/* je¶li koniec strumienia, lub nie jest to ci±g³e przegl±danie,
 	 * zwolnij pamiêæ i usuñ z listy */
-	if (!w->persist || ret == 0 || (ret == -1 && errno != EAGAIN)) {
-		handler(1, w->fd, NULL, w->data);
-		string_free(w->buf, 1);
-		close(w->fd);
+	if (!w->persist || res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN)) {
+		int fd = w->fd;
 
-		if (w->persist)
-			list_remove(&watches, w, 1);
+		watch_free(w);
+		close(fd);
 	}
 }
 
@@ -681,15 +679,18 @@ void watch_handle_line(watch_t *w)
  */
 void watch_handle(watch_t *w)
 {
-	void (*handler)(int, int, int, void *) = w->handler;
+	int (*handler)(int, int, int, void *);
+	int res;
+	if (!w)
+		return;
 
-	if (!w->persist) {
-		list_remove(&watches, w, 0);
-		handler(0, w->fd, w->type, w->data);
-		handler(1, w->fd, w->type, w->data);
-		xfree(w);
+	handler = w->handler;
+		
+	res = handler(0, w->fd, w->type, w->data);
+
+	if (!w->persist || res == -1) {
+		watch_free(w);
 	} else {
-		handler(0, w->fd, w->type, w->data);
 		w->started = time(NULL);
 	}
 }

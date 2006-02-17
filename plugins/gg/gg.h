@@ -58,7 +58,7 @@ typedef struct {
 void gg_register_commands();
 
 void gg_session_handler_msg(session_t *s, struct gg_event *e);
-void gg_session_handler(int type, int fd, const char *watch, void *data);
+WATCHER(gg_session_handler);
 
 COMMAND(gg_command_modify);
 

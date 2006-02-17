@@ -492,7 +492,7 @@ WATCHER(irc_handle_resolver)
 	irc_private_t *j;
 	char **p;
 
-	if (!s || !(j = irc_private(s)) ) return;
+	if (!s || !(j = irc_private(s)) ) return -1;
 
 	if (type) {
 		debug("[irc] handle_resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, j->connecting);
@@ -504,7 +504,7 @@ WATCHER(irc_handle_resolver)
 			debug("[irc] hadnle_resolver calling really_connect\n");
 			irc_really_connect(s);
 		}
-		return;
+		return 0;
 	}
 
 /* 
@@ -522,7 +522,7 @@ WATCHER(irc_handle_resolver)
 	} else debug("[irc] received some kind of junk from resolver thread: %s\n", watch);
 
 	array_free(p);
-	return;
+	return 0;
 }
 
 WATCHER(irc_handle_stream)
@@ -537,13 +537,12 @@ WATCHER(irc_handle_stream)
 		if (s && session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
 			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 		xfree(data);
-		return;
+		return 0;
 	}
 
 	if (!s) { 
 		debug("The worst happen you've deleted Our Session (%s) ;(\n", data); 
-		watch_remove(&irc_plugin, fd, WATCH_READ); /* /plugin -irc makes it but when we delete only that specific session ? irc:test */ 
-		return;
+		return -1; /* watch_remove(&irc_plugin, fd, WATCH_READ); * /plugin -irc makes it but when we delete only that specific session ? irc:test * */ 
 	}
 
 
@@ -553,7 +552,7 @@ WATCHER(irc_handle_stream)
 	 * I'm not sure if this is good idea, just thinking...
 	 */
 	irc_parse_line(s, (char *)watch, fd);
-	return;
+	return 0;
 }
 
 WATCHER(irc_handle_connect)
@@ -568,13 +567,12 @@ WATCHER(irc_handle_connect)
 	if (type == 1) {
 		debug ("[irc] handle_connect(): type %d\n", type);
 		xfree(data);
-		return;
+		return 0;
 	}
 
 	if (!s) { 
 		debug("[irc] handle_connect(): session %s deleted. :(\n", data);  
-		watch_remove(&irc_plugin, fd, WATCH_WRITE);
-		return;
+		return -1; /* watch_remove(&irc_plugin, fd, WATCH_WRITE); */
 	}
 
 	debug ("[irc] handle_connect()\n");
@@ -591,7 +589,7 @@ WATCHER(irc_handle_connect)
 			j->conntmplist = j->conntmplist->next;
 		}
 		irc_handle_disconnect(s, (type == 2) ? "Connection timed out" : strerror(res), EKG_DISCONNECT_FAILURE);
-		return;
+		return 0; /* ? */
 	}
 
 	timer_remove(&irc_plugin, "reconnect");
@@ -611,6 +609,7 @@ WATCHER(irc_handle_connect)
 	irc_write(j, "%sUSER %s %s unused_field :%s\r\nNICK %s\r\n",
 			pass, j->nick, localhostname?localhostname:"12", real, j->nick);
 	xfree(pass);
+	return 0;
 }
 
 /*                                                                       *

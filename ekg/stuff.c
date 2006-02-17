@@ -1484,7 +1484,7 @@ int on_off(const char *value)
  *
  * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
  */
-struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persist, void (*function)(int, void *), void *data)
+struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persist, int (*function)(int, void *), void *data)
 {
 	struct timer *t;
 	struct timeval tv;
@@ -1571,12 +1571,15 @@ int timer_remove(plugin_t *plugin, const char *name)
  *
  * obs³uga timera wywo³uj±cego komendê.
  */
-void timer_handle_command(int destroy, void *data)
+TIMER(timer_handle_command)
 {
-	if (!destroy)
-		command_exec(NULL, NULL, (char*) data, 0);
-	else
+	if (type) {
 		xfree(data);
+		return 0;
+	}
+	
+	command_exec(NULL, NULL, (char*) data, 0);
+	return 0;
 }
 
 /*

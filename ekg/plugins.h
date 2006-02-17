@@ -117,7 +117,7 @@ query_t *query_find(const char *name);
 
 int query_emit(plugin_t *, const char *, ...);
 
-#define WATCHER(x) void x(int type, int fd, const char *watch, void *data)
+#define WATCHER(x) int x(int type, int fd, const char *watch, void *data)
 typedef WATCHER(watcher_handler_func_t);
 
 typedef enum {

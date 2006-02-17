@@ -377,14 +377,14 @@ int events_init()
 	return 0;
 }
 
-void ekg_day_timer(int destroy, void *data)
+TIMER(ekg_day_timer)
 {
 	static struct tm *oldtm = NULL;
 	struct tm *tm;
 	time_t now = time(NULL);
-	if (destroy) {
+	if (type) {
 		xfree(oldtm);
-		return;
+		return 0;
 	}
 	tm = localtime(&now);
 #define dayischanged(x) (oldtm->tm_##x != tm->tm_##x)
@@ -394,9 +394,10 @@ void ekg_day_timer(int destroy, void *data)
 #undef dayischanged
 	} else if (!oldtm) {
 		oldtm = xmalloc(sizeof(struct tm));
-	} else return;
+	} else return 0;
 
 	memcpy(oldtm, tm, sizeof(struct tm));
+	return 0;
 }
 
 /* 

@@ -37,11 +37,9 @@ QUERY(irc_onkick_handler)
 	session_t     *s = session_find(session);
 	irc_private_t *j = irc_private(s);
 	
-	int rejoin;
-
 	if (!xstrcmp(j->nick, nick+4))
 	{
-		rejoin = session_int_get(s, "REJOIN");
+		int rejoin = session_int_get(s, "REJOIN");
 		if (rejoin&(1<<(IRC_REJOIN_KICK))) {
 			irc_onkick_handler_t *data = xmalloc(sizeof(irc_onkick_handler_t));
 
@@ -60,19 +58,20 @@ QUERY(irc_onkick_handler)
 	return 0;
 }
 
-void irc_autorejoin_timer(int type, void *d)
+TIMER(irc_autorejoin_timer)
 {
-	irc_onkick_handler_t *data = d;
+	irc_onkick_handler_t *d = data;
 	if (type == 1) {
-		xfree(data->nick);
-		xfree(data->kickedby);
-		xfree(data->chan);
-		xfree(data);
-		return;
+		xfree(d->nick);
+		xfree(d->kickedby);
+		xfree(d->chan);
+		xfree(d);
+		return 0;
 	}
 
-	debug("wykonujê timer %d %s\n", type, (data->chan+4));
-	irc_autorejoin(data->s, IRC_REJOIN_KICK, (data->chan)+4);
+	debug("wykonujê timer %d %s\n", type, (d->chan)+4);
+	irc_autorejoin(d->s, IRC_REJOIN_KICK, (d->chan)+4);
+	return -1; /* timer tymczasowy */
 }
 
 int irc_autorejoin(session_t *s, int when, char *chan)

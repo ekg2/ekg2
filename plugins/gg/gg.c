@@ -438,25 +438,23 @@ QUERY(gg_validate_uid)
  *
  * pinguje serwer co jaki¶ czas, je¶li jest nadal po³±czony.
  */
-static void gg_ping_timer_handler(int type, void *data)
+static TIMER(gg_ping_timer_handler)
 {
 	session_t *s = session_find((char*) data);
 	gg_private_t *g;
 
 	if (type == 1) {
 		xfree(data);
-		return;
+		return 0;
 	}
 	if (!s || !session_connected_get(s)) {
-		char *buf = saprintf("ping-%s", (char *) data+3);
-		timer_remove(&gg_plugin, buf);
-		xfree(buf);
-		return;
+		return -1;
 	}
 
 	if ((g = session_private_get(s))) {
 		gg_ping(g->sess);
 	}
+	return 0;
 }
 
 /*
@@ -993,12 +991,12 @@ WATCHER(gg_session_handler)
 
 	if (type == 1) {
 		/* tutaj powinni¶my usun±æ dane watcha. nie, dziêkujê. */
-		return;
+		return 0;
 	}
 
 	if (!g || !g->sess) {
 		debug("[gg] gg_session_handler() called with NULL gg_session\n");
-		return;
+		return -1;
 	}
 
 	if (type == 2) {
@@ -1014,7 +1012,7 @@ WATCHER(gg_session_handler)
 			gg_free_session(g->sess);
 			g->sess = NULL;
 
-			return;
+			return 0;
 		}
 
 		/* je¶li jest GG_STATE_CONNECTING_GG to ka¿emy stwierdziæ
@@ -1036,7 +1034,7 @@ WATCHER(gg_session_handler)
 		gg_free_session(g->sess);
 		g->sess = NULL;
 		
-		return;
+		return 0;
 	}
 
 	switch (e->type) {
@@ -1130,6 +1128,7 @@ WATCHER(gg_session_handler)
 	}
 
 	gg_event_free(e);
+	return 0;
 }
 
 void gg_changed_private(session_t *s, const char *var)

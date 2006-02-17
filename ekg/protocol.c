@@ -65,22 +65,23 @@ void protocol_init()
  *
  * obs³uga timera reconnectu.
  */
-static void protocol_reconnect_handler(int type, void *data)
+static TIMER(protocol_reconnect_handler)
 {
 	char *session = (char*) data;
 	session_t *s = session_find(session);
 
 	if (type == 1) {
 		xfree(session);
-		return;
+		return 0;
 	}
 
         if (!s || session_connected_get(s) == 1)
-                return;
+                return -1;
 
 	debug("reconnecting session %s\n", session);
 
 	command_exec(NULL, s, "/connect", 0);
+	return 0;
 }
 
 /*

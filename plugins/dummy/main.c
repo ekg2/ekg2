@@ -19,6 +19,7 @@
 
 #include "ekg2-config.h"
 
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
 
 PLUGIN_DEFINE(dummy, PLUGIN_GENERIC, NULL);

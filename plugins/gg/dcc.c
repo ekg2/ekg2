@@ -398,7 +398,7 @@ WATCHER(gg_dcc_handler)
 	list_t l;
 
 	if (type != 0)
-		return;
+		return 0;
 
 	if (!(e = gg_dcc_watch_fd(d))) {
 		print("dcc_error", strerror(errno));
@@ -406,7 +406,7 @@ WATCHER(gg_dcc_handler)
 		if (d->type == GG_SESSION_DCC_SOCKET)
 			gg_dcc_socket_close();
 
-		return;
+		return 0;
 	}
 
 	switch (e->type) {
@@ -478,7 +478,7 @@ WATCHER(gg_dcc_handler)
 				debug("[gg] unauthorized client (uin=%ld), closing connection\n", d->peer_uin);
 				gg_free_dcc(d);
 				gg_event_free(e);
-				return;
+				return 0;
 			}
 			break;	
 		}
@@ -513,7 +513,7 @@ WATCHER(gg_dcc_handler)
 				debug("[gg] connection from %d not found\n", d->peer_uin);
 				gg_dcc_free(d);
 				gg_event_free(e);	
-				return;
+				return 0;
 			}
 		}
 
@@ -726,7 +726,7 @@ WATCHER(gg_dcc_handler)
 
 	gg_event_free(e);
 	
-	return;
+	return 0;
 }
 
 /*

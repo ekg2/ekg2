@@ -201,7 +201,7 @@ WATCHER(jabber_handle_write)
 	jabber_private_t *j = data;
 	int res;
 	if (type)
-		return;
+		return 0;
 
 #ifdef HAVE_GNUTLS
 	if (j->using_ssl && j->ssl_session) {
@@ -216,7 +216,7 @@ WATCHER(jabber_handle_write)
 
 		if (res < 0) {
 			print("generic_error", gnutls_strerror(res));
-			return;
+			return 0;
 		}
 			
 	} else
@@ -228,7 +228,7 @@ WATCHER(jabber_handle_write)
 		xfree(j->obuf);
 		j->obuf = NULL;
 		j->obuf_len = 0;
-		return;
+		return 0;
 	}
 
 	if (res == j->obuf_len) {
@@ -236,7 +236,7 @@ WATCHER(jabber_handle_write)
 		xfree(j->obuf);
 		j->obuf = NULL;
 		j->obuf_len = 0;
-		return;
+		return 0;
 	}
 	
 	memmove(j->obuf, j->obuf + res, j->obuf_len - res);
@@ -244,6 +244,7 @@ WATCHER(jabber_handle_write)
 
 notyet:
 	watch_add(&jabber_plugin, j->fd, WATCH_WRITE, 0, jabber_handle_write, j);
+	return 0;
 }
 
 /*

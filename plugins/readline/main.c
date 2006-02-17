@@ -156,7 +156,7 @@ QUERY(readline_beep) { /* ui_readline_beep() */
 }
 
 WATCHER(readline_watch_stdin) {
-	return;
+	return 0;
 }
 	
 int readline_plugin_init(int prio) {
@@ -172,7 +172,7 @@ int readline_plugin_init(int prio) {
 	query_connect(&readline_plugin, "ui-window-print", readline_ui_window_print, NULL);
 	query_connect(&readline_plugin, "ui-window-clear", readline_ui_window_clear, NULL);
 	query_connect(&readline_plugin, "variable-changed", readline_variable_changed, NULL);
-	query_connect(&readline_plugin, "loop", ekg2_readline_loop, NULL);
+	query_connect(&readline_plugin, "ui-loop", ekg2_readline_loop, NULL);
 
 	watch_add(&readline_plugin, 0, WATCH_READ, 1, readline_watch_stdin, NULL);
 

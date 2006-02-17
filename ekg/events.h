@@ -22,6 +22,7 @@
 
 #include "dynstuff.h"
 #include "plugins.h"
+#include "stuff.h"
 
 typedef struct event {
 	unsigned int id; /* identyficator */
@@ -45,7 +46,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 void event_free();
 int events_init();
 
-static void ekg_day_timer(int destroy, void *data);
+static TIMER(ekg_day_timer);
 
 QUERY(event_protocol_message);
 QUERY(event_avail);

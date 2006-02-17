@@ -38,6 +38,7 @@
 #include <time.h>
 
 #include "simlite.h"
+#include <ekg/debug.h>
 #include <ekg/xmalloc.h>
 
 #ifndef PATH_MAX

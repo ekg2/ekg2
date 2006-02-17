@@ -1002,14 +1002,14 @@ WATCHER(jabber_handle_stream)
 		/* todo, xfree data ? */
 		if (s && session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
 			jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
-                return;
+                return 0;
         }
 
         debug("[jabber] jabber_handle_stream()\n");
 
         if (!(buf = XML_GetBuffer(j->parser, 4096))) {
                 print("generic_error", "XML_GetBuffer failed");
-                goto fail;
+                return -1;
         }
 
 #ifdef HAVE_GNUTLS
@@ -1019,18 +1019,18 @@ WATCHER(jabber_handle_stream)
 		if ((len == GNUTLS_E_INTERRUPTED) || (len == GNUTLS_E_AGAIN)) {
 			// will be called again
 			ekg_yield_cpu();
-			return;
+			return 0;
 		}
 
                 if (len < 0) {
                         print("generic_error", gnutls_strerror(len));
-                        goto fail;
+                        return -1;
                 }
         } else
 #endif
                 if ((len = read(fd, buf, 4095)) < 1) {
                         print("generic_error", strerror(errno));
-                        goto fail;
+                        return -1;
                 }
 
         buf[len] = 0;
@@ -1039,31 +1039,49 @@ WATCHER(jabber_handle_stream)
 
         if (!XML_ParseBuffer(j->parser, len, (len == 0))) {
                 print("jabber_xmlerror", session_name(s));
-                goto fail;
+                return -1;
         }
 
-        return;
-
-fail:
-        watch_remove(&jabber_plugin, fd, WATCH_READ);
+        return 0;
 }
 
-WATCHER(jabber_handle_connect)
+TIMER(jabber_ping_timer_handler) {
+	session_t *s = session_find((char*) data);
+	jabber_private_t *j;
+
+	if (type == 1) {
+		xfree(data);
+		return 0;
+	}
+
+	if (!s || !session_connected_get(s)) {
+		return -1;
+	}
+	
+	if ((j = session_private_get(s))) {
+		jabber_write(j, "<iq/>"); /* leafnode idea */
+	}
+	return 0;
+}
+
+WATCHER(jabber_handle_connect) /* tymczasowy */
 {
         jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
         int res = 0, res_size = sizeof(res);
-        jabber_private_t *j = session_private_get(jdh->session);
+	session_t *s = jdh->session;
+        jabber_private_t *j = session_private_get(s);
+	char *tname;
 
         debug("[jabber] jabber_handle_connect()\n");
 
         if (type != 0) {
-                return;
+                return 0;
         }
 
         if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-                jabber_handle_disconnect(jdh->session, strerror(res), EKG_DISCONNECT_FAILURE);
+                jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
 		xfree(data);
-                return;
+                return -1;
         }
 
         watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_handle_stream, jdh);
@@ -1075,9 +1093,15 @@ WATCHER(jabber_handle_connect)
         XML_SetUserData(j->parser, (void*)data);
         XML_SetElementHandler(j->parser, (XML_StartElementHandler) jabber_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
         XML_SetCharacterDataHandler(j->parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
+
+	tname = saprintf("ping-%s", s->uid+4);
+	timer_add(&jabber_plugin, tname, 180, 1, jabber_ping_timer_handler, xstrdup(s->uid));
+	xfree(tname);
+
+	return -1;
 }
 
-WATCHER(jabber_handle_resolver)
+WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 {
 	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
 	session_t *s = jdh->session;
@@ -1094,7 +1118,7 @@ WATCHER(jabber_handle_resolver)
 	int use_ssl = session_int_get(s, "use_ssl");
 #endif
         if (type) {
-                return;
+                return 0;
 	}
 
         debug("[jabber] jabber_handle_resolver()\n", type);
@@ -1108,7 +1132,7 @@ WATCHER(jabber_handle_resolver)
                 print("conn_failed", format_find("conn_failed_resolving"), session_name(jdh->session));
                 /* no point in reconnecting by jabber_handle_disconnect() */
                 j->connecting = 0;
-                return;
+                return -1;
         }
 
         debug("[jabber] resolved to %s\n", inet_ntoa(a));
@@ -1118,7 +1142,7 @@ WATCHER(jabber_handle_resolver)
         if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                 debug("[jabber] socket() failed: %s\n", strerror(errno));
                 jabber_handle_disconnect(jdh->session, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return;
+                return -1;
         }
 
         debug("[jabber] socket() = %d\n", fd);
@@ -1128,7 +1152,7 @@ WATCHER(jabber_handle_resolver)
         if (ioctl(fd, FIONBIO, &one) == -1) {
                 debug("[jabber] ioctl() failed: %s\n", strerror(errno));
                 jabber_handle_disconnect(jdh->session, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return;
+                return -1;
         }
 
         /* failure here isn't fatal, don't bother with checking return code */
@@ -1152,7 +1176,7 @@ WATCHER(jabber_handle_resolver)
         if (res == -1 && errno != EINPROGRESS) {
                 debug("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
                 jabber_handle_disconnect(jdh->session, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return;
+                return -1;
         }
 
 #ifdef HAVE_GNUTLS
@@ -1165,7 +1189,7 @@ WATCHER(jabber_handle_resolver)
 		if ((ret = gnutls_init(&(j->ssl_session), GNUTLS_CLIENT)) ) {
 			print("conn_failed_tls");
 			jabber_handle_disconnect(jdh->session, gnutls_strerror(ret), EKG_DISCONNECT_FAILURE);
-			return;
+			return -1;
 		}
 
 		gnutls_set_default_priority(j->ssl_session);
@@ -1180,21 +1204,22 @@ WATCHER(jabber_handle_resolver)
 
 		watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect_tls, jdh);
 
-		return;
+		return -1;
         } // use_ssl
 #endif
         watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, jdh);
+	return -1;
 }
 
 #ifdef HAVE_GNUTLS
-WATCHER(jabber_handle_connect_tls)
+WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 {
         jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
         jabber_private_t *j = session_private_get(jdh->session);
 	int ret;
 
 	if (type) {
-		return;
+		return 0;
 	}
 
 	ret = gnutls_handshake(j->ssl_session);
@@ -1206,19 +1231,20 @@ WATCHER(jabber_handle_connect_tls)
 			0, jabber_handle_connect_tls, jdh);
 
 		ekg_yield_cpu();
-		return;
+		return -1;
 
 	} else if (ret < 0) {
 		gnutls_deinit(j->ssl_session);
 		gnutls_certificate_free_credentials(j->xcred);
 		jabber_handle_disconnect(jdh->session, gnutls_strerror(ret), EKG_DISCONNECT_FAILURE);
-		return;
+		return -1;
 	}
 
 	// handshake successful
 	j->using_ssl = 1;
 
 	watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, jdh);
+	return -1;
 }
 #endif
 

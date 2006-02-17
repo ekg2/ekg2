@@ -61,7 +61,7 @@ static char *config_check_mail_folders = NULL;
 static int mail_count = 0;
 static int last_mail_count = 0;
 
-static void check_mail();
+static TIMER(check_mail);
 static int check_mail_mbox();
 static int check_mail_maildir();
 static int check_mail_update(const char *, int);
@@ -74,16 +74,19 @@ PLUGIN_DEFINE(mail, PLUGIN_GENERIC, NULL);
  *
  * wywo³uje odpowiednie sprawdzanie poczty.
  */
-static void check_mail()
+static TIMER(check_mail)
 {
+	if (type)
+		return 0;
 	if (!config_check_mail)
-		return;
+		return -1;
 
 	if (config_check_mail & 1)
 		check_mail_mbox();
 	else
 		if (config_check_mail & 2)
 			check_mail_maildir();
+	return 0;
 }
 
 /*
@@ -155,6 +158,7 @@ static WATCHER(mail_handler)
 			close(fd);
 			break;
 	}
+	return 0;
 }
 
 /*

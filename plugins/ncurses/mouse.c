@@ -61,9 +61,10 @@ void show_mouse_pointer()
  * every second we should do something
  * it's done here
  */
-static void ncurses_mouse_timer(int destroy, void *data)
+static TIMER(ncurses_mouse_timer)
 {
 	show_mouse_pointer();
+	return 0;
 }
 
 /*
@@ -159,7 +160,7 @@ WATCHER(ncurses_gpm_watch_handler)
         Gpm_Event event;
 
         if (type)
-                return;
+                return 0;
 
         Gpm_GetEvent(&event);
 
@@ -210,6 +211,7 @@ WATCHER(ncurses_gpm_watch_handler)
 			break;
 	}
         /* debug("Event Type : %d at x=%d y=%d buttons=%d\n", event.type, event.x, event.y, event.buttons); */
+	return 0;
 }
 #endif
 

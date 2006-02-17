@@ -40,6 +40,7 @@
 #include "debug.h"
 #include "xmalloc.h"
 #include "sessions.h"
+#include "stuff.h"
 
 #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
 
@@ -98,13 +99,15 @@ enum mesg_t {
 	MESG_DEFAULT
 };
 
+#define TIMER(x) int x(int type, void *data)
+
 struct timer {
 	char *name;		/* nazwa timera */
 	plugin_t *plugin;	/* wtyczka obs³uguj±ca deksryptor */
 	struct timeval ends;	/* kiedy siê koñczy? */
 	time_t period;		/* ile sekund ma trwaæ czekanie */
 	int persist;		/* czy ma byæ na zawsze? */
-	void (*function)(int, void *);
+	int (*function)(int, void *);
 				/* funkcja do wywo³ania */
 	void *data;		/* dane dla funkcji */
 	int at;			/* /at? trzeba siê tego jako¶ pozbyæ
@@ -314,11 +317,11 @@ int isalpha_pl(unsigned char c);
 #define xtolower(c) tolower((int) (unsigned char) c)
 #define xtoupper(c) toupper((int) (unsigned char) c)
 
-struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persistent, void (*function)(int, void *), void *data);
+struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persistent, int (*function)(int, void *), void *data);
 int timer_freeone(struct timer *t);
 int timer_remove(plugin_t *plugin, const char *name);
 int timer_remove_user();
-void timer_handle_command();
+TIMER(timer_handle_command);
 void timer_free();
 
 const char *ekg_status_label(const char *status, const char *descr, const char *prefix);

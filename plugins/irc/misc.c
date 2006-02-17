@@ -62,17 +62,18 @@ WATCHER(irc_handle_write)
 	else if (res == j->obuf_len)
 		debug("[irc] handle_write() output buffer empty\n");
 
-	 else { /* OK PROCEED */
+	else { /* OK PROCEED */
 		memmove(j->obuf, j->obuf + res, j->obuf_len - res);
 		j->obuf_len -= res;
 
 		watch_add(&irc_plugin, j->fd, WATCH_WRITE, 0, irc_handle_write, j);
-		return;
+		return 0;
 	}
 
 	xfree(j->obuf);
 	j->obuf = NULL;
 	j->obuf_len = 0;
+	return 0;
 }
 
 /*

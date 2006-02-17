@@ -1791,7 +1791,7 @@ int ekg_getch(int meta)
 WATCHER(ncurses_watch_winch)
 {
 	CHAR_T c;
-	if (type) return;
+	if (type) return 0;
 	read(winch_pipe[0], &c, 1);
 
 	/* skopiowalem ponizsze z ncurses_watch_stdin.
@@ -1805,6 +1805,7 @@ WATCHER(ncurses_watch_winch)
 	/* wywo³a wszystko, co potrzebne */
 	header_statusbar_resize();
 	changed_backlog_size("backlog_size");
+	return 0;
 }
 
 /* 
@@ -1902,20 +1903,20 @@ WATCHER(ncurses_watch_stdin)
 	 * deletek you should take a look at this.
 	 */
 	if (type)
-		return;
+		return 0;
 
 	ch = ekg_getch(0);
 	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
-		return;
+		return 0;
 
 	if (ch == -2)		/* python ka¿e ignorowaæ */
-		return;
+		return 0;
 
 	if (ch != 3 && sigint_count)
 		sigint_count = 0;
 
 	if (ch == 0)		/* Ctrl-Space, g³upie to */
-		return;
+		return 0;
 
 	ekg_stdin_want_more = 1;
 
@@ -1964,7 +1965,7 @@ end:
 
 	if (ch == 27) {
 		if ((ch = ekg_getch(27)) == -2)
-			return;
+			return 0;
 
                 b = ncurses_binding_map_meta[ch];
 		
@@ -2025,7 +2026,7 @@ end:
 	}
 then:
 	if (ncurses_plugin_destroyed)
-		return;
+		return 0; /* -1 */
 
 	/* je¶li siê co¶ zmieni³o, wygeneruj dope³nienia na nowo */
 	if (!b || (b && b->function != ncurses_binding_complete))
@@ -2124,6 +2125,7 @@ i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
 	}
+	return 0;
 }
 
 /*

@@ -24,9 +24,9 @@
  */
 
 COMMAND(script_command_handlers);
-void script_timer_handlers(int type, void *d);
+TIMER(script_timer_handlers);
 void script_var_changed(const char *var);
-int script_query_handlers(void *data, va_list ap);
+QUERY(script_query_handlers);
 WATCHER(script_handle_watch);
 int script_plugin_theme_init( /* plugin_t *p */ );
 
@@ -694,13 +694,12 @@ WATCHER(script_handle_watch)
 	SCRIPT_HANDLER_HEADER(script_handler_watch_t);
 	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, (int) watch) {
 		if (!type) {
-			watch_free(temp->self);
-			return;
+			return -1; /* watch_free(temp->self); */
 		}
 	}
 	if (type)
 		script_watch_unbind(temp, 0);
-	return;
+	return 0;
 }
 
 COMMAND(script_command_handlers)
@@ -720,23 +719,22 @@ int script_plugin_theme_init( /* plugin_t *p */ )
 	return 0;
 }
 
-void script_timer_handlers(int type, void *d)
+TIMER(script_timer_handlers)
 {
-	script_timer_t *temp = d;
+	script_timer_t *temp = data;
 	SCRIPT_HANDLER_HEADER(script_handler_timer_t);
 	debug("::: -> %s %d\n", temp->private, type);
 	SCRIPT_HANDLER_FOOTER(script_handler_timer, type) {
 		if (!type) {
-			timer_freeone(temp->self);
-			return;
+			return -1; /* timer_freeone(temp->self); */
 		}
 	}
 	if (type)
 		script_timer_unbind(temp, 0);
-	return;
+	return 0;
 }
 
-int script_query_handlers(void *data, va_list ap)
+QUERY(script_query_handlers)
 {
 	script_query_t	*temp = data;
 	SCRIPT_HANDLER_HEADER(script_handler_query_t);
