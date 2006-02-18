@@ -2029,11 +2029,11 @@ msgstr ""
 
 #: plugins/irc/irc.c:2106
 msgid "%G||%n %|channels : %3\n"
-msgstr "%G||%n %|kana³y : %3\n"
+msgstr "%G||%n %|kana³y          : %3\n"
 
 #: plugins/irc/irc.c:2107
 msgid "%G||%n %|server   : %3 (%4)\n"
-msgstr "%G||%n %|serwer   : %3 (%4)\n"
+msgstr "%G||%n %|serwer          : %3 (%4)\n"
 
 #: plugins/irc/irc.c:2108
 msgid "%G||%n %|ircOp    : %3\n"
@@ -2041,7 +2041,7 @@ msgstr "%G||%n %|ircOp    : %3\n"
 
 #: plugins/irc/irc.c:2109
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
-msgstr "%G||%n %|brak aktywno¶ci     : %3 (zalogowany: %4)\n"
+msgstr "%G||%n %|brak aktywno¶ci : %3 (zalogowany: %4)\n"
 
 #: plugins/irc/irc.c:2110 plugins/irc/irc.c:2111
 #, c-format
