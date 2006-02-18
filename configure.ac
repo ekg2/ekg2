@@ -263,7 +263,7 @@ AC_ARG_WITH(gtk,
 
 
 if test "x$with_gtk" != "xno"; then
-	AC_CHECK_GTK2
+	AC_CHECK_GTK2([], [have_gtk="yes"], [have_gtk=x"no"], []) 
 	if test "x$have_gtk" = "xyes"; then
 		AC_CONFIG_FILES([plugins/gtk/Makefile])
 		PLUGINS="$PLUGINS gtk"
@@ -470,6 +470,13 @@ if test "x$enable_unicode" = "xyes"; then
 else
         echo " - unicode:   disabled"
 fi
+
+if test "x$have_gtk" = "xyes"; then
+        echo " - gtk:   enabled"
+else
+        echo " - gtk:   disabled"
+fi
+
 
 echo " - mouse support in $mouse_lib"
 
