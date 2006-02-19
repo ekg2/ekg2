@@ -532,7 +532,7 @@ WATCHER(irc_handle_stream)
 	/* ups, we get disconnected */
 	if (type == 1) {
 		if (s) irc_private(s)->recv_watch = NULL;
-		debug ("[irc] handle_stream(): ROZ£¡CZY£O\n");
+		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d\n", session_connected_get(s));
 
 		if (s && session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
 			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
@@ -876,8 +876,9 @@ COMMAND(irc_command_msg)
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
 
-	tmpbuf   = (mline[0] = xstrdup(params[1])); /* backup of params[1] when we change them is nessesary ? */
+	tmpbuf   = (mline[0] = xstrdup(params[1]));
 	while ((mline[1] = split_line(&(mline[0])))) {
+		char *__mtmp;
 		int isour = 1;
 		int xosd_to_us = 0;
 		int xosd_is_priv = !ischn;
@@ -895,7 +896,23 @@ COMMAND(irc_command_msg)
 				
 		query_emit(NULL, "protocol-message", &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
-		irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __msg);
+		/* "Thus, there are 510 characters maximum allowed for the command and its parameters." [rfc2812]
+		 * yes, I know it's a nasty variable reusing ;)
+		 */
+		__mtmp = __msg;
+		debug ("%s ! %s\n", j->nick, j->host_ident);
+		xosd_is_priv = xstrlen(__msg);
+		isour = 510 - (prv?7:6) - 6 - xstrlen(uid_full+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
+		/* 6 = 3xspace + '!' + 2xsemicolon; -> [:nick!ident@hostident PRIVMSG dest :mesg] */
+		while (strlen(__mtmp) > isour && __mtmp < __msg + xosd_is_priv)
+		{
+			xosd_to_us = __mtmp[isour];
+			__mtmp[isour] = '\0';
+			irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
+			__mtmp[isour] = xosd_to_us;
+			__mtmp += isour;
+		}
+		irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
 
 		xfree(__msg);
 		xfree(coloured);
@@ -1137,7 +1154,7 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 
 	if (pr) { tp=tf; tf=ts; ts=tp; }
 
-	if (!(chan=irc_getchan_int(s, tf, checkchan))) {
+	if (!(chan = irc_getchan_int(s, tf, checkchan))) {
 		if (!(chan = irc_getchan_int(s, ts, checkchan)))
 		{
 			print("invalid_params", name);
@@ -1466,7 +1483,7 @@ COMMAND(irc_command_devop)
 	int		modes, i;
 	char		**mp, *op, *nicks, *tmp, c, *chan, *p;
 
-	if (!(chan=irc_getchan(session, params, name,
+	if (!(chan = irc_getchan(session, params, name,
 					&mp, 0, IRC_GC_CHAN))) 
 		return -1;
 
@@ -1477,6 +1494,7 @@ COMMAND(irc_command_devop)
 	}
 
 	nicks = xstrdup(*mp);
+	debug("niki: %s\n", nicks);
 	p = nicks;
 
 	modes = atoi(j->sopt[_005_MODES]);
