@@ -19,6 +19,7 @@
 #include <ekg2-config.h>
 
 #include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
@@ -44,9 +45,11 @@ typedef struct {
 GtkTreeStore *list_store;		// userlista - elementy
 GtkWidget *tree;			// userlista - widget
 GtkWidget *notebook;			// zarzadzanie okienkami.
+
 #ifdef EKG2_TERM_COLORS
 GdkColor bgcolor, fgcolor;
 #endif
+
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
 void gtk_contacts_update(window_t *w);
@@ -137,6 +140,41 @@ gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num
 	return TRUE;
 }
 
+/* nacisniecie klawisza */
+gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
+	if (event->type == GDK_KEY_PRESS) { 
+		/* moze wypadaloby te znaki tlumaczyc.. na cos ala ncurses-like? */
+//		printf("Nacisnales: %d %c\n", event->keyval, event->keyval);
+
+// event->keyval != char .... IMPLEMENTATION BUG (?).
+		if (query_emit(NULL, "ui-keypress", &(event->keyval), NULL) == -1)
+			return TRUE; /* ignore this key */
+
+		if (event->keyval == GDK_Tab) {
+			/* TODO: uzupelnianie, poczekamy na przeeniesienie kodu ncurses.. */
+			gchar *complete =  gtk_entry_get_text(GTK_ENTRY(widget));
+			int pos = gtk_editable_get_position( GTK_EDITABLE(widget) );
+
+			printf("[uzupelnianie] TODO: complete = %s pozycja = %d\n", complete, pos);
+		} else if (event->keyval == GDK_Up || event->keyval == GDK_Down) {
+			/* To by wypadalo juz teraz zrobic... */
+		}
+		/* TODO, inne, bindlista klawiszy, etc.. 
+		 * moze zrobmy to tez po stronie ekg2 ? emitujemy ui-keypress w koncu... */
+		
+		switch (event->keyval) {
+			case (GDK_Tab): 	/* TAB-> complete */
+			case (GDK_Up):		/* bufor polecen w gore */
+			case (GDK_Down):	/* bufor polecen w dol */
+				return TRUE;
+			default:
+				return FALSE;
+				 
+		}
+	}
+	return FALSE;
+}
+
 int gtk_loop() {
 	ekg_loop();
 	while (gtk_events_pending()) {
@@ -164,6 +202,11 @@ void ekg2_gtk_menu_quit(GtkWidget *window) {
 /* pytac? */
 	gtk_widget_destroy(window);
 }
+
+void ekg2_gtk_userlist_menu(void *user_data) {
+	printf("[POPUP, USERLIST] action = %s\n", (char *) user_data);
+}
+
 
 void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, GtkTreeModel *model, GtkTreeIter *iter, gpointer data) {
 	gchar *nick;
@@ -301,17 +344,17 @@ int gtk_create() {
 	/* edit */
 	edit1 = gtk_entry_new ();
 	gtk_box_pack_start (GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
-	g_signal_connect (G_OBJECT (edit1),"activate",G_CALLBACK (on_enter), NULL);
-//	g_signal_connect (G_OBJECT (edit1),"key-press-event",G_CALLBACK (on_key_press), NULL);
+	g_signal_connect (G_OBJECT (edit1), "activate", G_CALLBACK (on_enter), NULL);
+	g_signal_connect (G_OBJECT (edit1), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
 	ekg2_set_color_ext(edit1);
 	
 	{ /* popup menu, userlista */
 		GtkWidget *menu = gtk_menu_new();
 
 		/* common */
-		ekg2_gtk_menu_new(menu, "Query", /* on_mi_priv */ NULL, NULL);
+		ekg2_gtk_menu_new(menu, "Query", ekg2_gtk_userlist_menu, "query");
 //		ekg2_gtk_menu_new(menu, "Info",  /* on_mi_info */ NULL, NULL);
-		ekg2_gtk_menu_new(menu, "Usun", NULL, NULL);
+		ekg2_gtk_menu_new(menu, "Usun", ekg2_gtk_userlist_menu, "del");
 
 		g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), menu);
 	}
@@ -364,10 +407,11 @@ void ekg_gtk_window_new(window_t *w) {
 	{
 		GtkTextTag *tmp = NULL;
 		int i = 0;
-	#define ekg2_create_tag(x) \
-		tmp = gtk_text_tag_new("FG_" #x); \
-		g_object_set(tmp, "foreground", #x, NULL); \
-		n->ekg2_tags[i++] = tmp;
+
+#define ekg2_create_tag(x) \
+	tmp = gtk_text_tag_new("FG_" #x); \
+	g_object_set(tmp, "foreground", #x, NULL); \
+	n->ekg2_tags[i++] = tmp;
 	
 		ekg2_create_tag(BLACK);	ekg2_create_tag(RED); ekg2_create_tag(GREEN);
 		ekg2_create_tag(YELLOW);ekg2_create_tag(BLUE); ekg2_create_tag(MAGENTA);
@@ -507,8 +551,6 @@ QUERY(gtk_ui_window_print) {
 		char *ts  = saprintf("%s ", timestamp(tmp));
 		fstring_t *t = fstring_new(ts);
 
-//		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-//		gtk_text_buffer_insert_with_tags(buffer, &iter, ts, -1, n->ekg2_tags[0], n->ekg2_tag_bold, NULL);
 		gtk_process_str(w, buffer, t->str, t->attr, 1);
 		
 		xfree(tmp);
