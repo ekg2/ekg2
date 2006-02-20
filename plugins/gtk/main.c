@@ -42,6 +42,11 @@ typedef struct {
 	GtkTextTag *ekg2_tag_bold;
 } gtk_window_t;
 
+typedef struct {
+	GtkWidget *menu;
+	GtkWidget *widget;
+} gtk_menu_click_t;
+
 GtkTreeStore *list_store;		// userlista - elementy
 GtkWidget *tree;			// userlista - widget
 GtkWidget *notebook;			// zarzadzanie okienkami.
@@ -117,14 +122,29 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 }
 
 
-gint popup_handler(GtkWidget *widget, GdkEvent *event) {
-	GtkMenu *menu = GTK_MENU (widget);
+gint popup_handler(gtk_menu_click_t *mclick, GdkEvent *event) {
+	GtkMenu *menu = GTK_MENU (mclick->menu);
+	GtkWidget *widget = mclick->widget;
 
 	if (event->type == GDK_BUTTON_PRESS) {
 		GdkEventButton *event_button = (GdkEventButton *) event;
 		if (event_button->button == 3) {
-			gtk_menu_popup (menu, NULL, NULL, NULL, NULL, event_button->button, event_button->time);
-			return TRUE;
+			int spopup = 1; /* show popup */
+/*			printf("%x %x %x\n", widget, tree, notebook); */
+			if (widget == tree) {
+				GtkTreePath *selection;
+				gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), event_button->x, event_button->y, &selection, NULL, NULL, NULL);
+				spopup = selection;
+				if (!selection)
+					printf("Jak nic nie zaznaczyles (/nad niczym nie jestes) to sie nie pokaze menu o! ;p\n");
+				printf("[debug] widget tree: selection = %x\n", selection);
+			}
+			if (spopup) {
+				gtk_menu_popup (menu, NULL, NULL, NULL, NULL, event_button->button, event_button->time);
+				return TRUE;
+			} else	return FALSE;
+
+			
 		}
 	}
 	return FALSE;
@@ -146,13 +166,13 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 		/* moze wypadaloby te znaki tlumaczyc.. na cos ala ncurses-like? */
 //		printf("Nacisnales: %d %c\n", event->keyval, event->keyval);
 
-// event->keyval != char .... IMPLEMENTATION BUG (?).
+// sizeof(event->keyval) != sizeof(char) .... IMPLEMENTATION BUG (?).
 		if (query_emit(NULL, "ui-keypress", &(event->keyval), NULL) == -1)
 			return TRUE; /* ignore this key */
 
 		if (event->keyval == GDK_Tab) {
 			/* TODO: uzupelnianie, poczekamy na przeeniesienie kodu ncurses.. */
-			gchar *complete =  gtk_entry_get_text(GTK_ENTRY(widget));
+			gchar *complete = gtk_entry_get_text(GTK_ENTRY(widget));
 			int pos = gtk_editable_get_position( GTK_EDITABLE(widget) );
 
 			printf("[uzupelnianie] TODO: complete = %s pozycja = %d\n", complete, pos);
@@ -351,21 +371,29 @@ int gtk_create() {
 	{ /* popup menu, userlista */
 		GtkWidget *menu = gtk_menu_new();
 
+		static gtk_menu_click_t uhelper;
+		uhelper.menu = menu;
+		uhelper.widget = tree;
+
 		/* common */
 		ekg2_gtk_menu_new(menu, "Query", ekg2_gtk_userlist_menu, "query");
 //		ekg2_gtk_menu_new(menu, "Info",  /* on_mi_info */ NULL, NULL);
 		ekg2_gtk_menu_new(menu, "Usun", ekg2_gtk_userlist_menu, "del");
 
-		g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), menu);
+		g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler),  &uhelper);
 	}
 	{ /* popup menu, okna */
 		GtkWidget *menu = gtk_menu_new();
+
+		static gtk_menu_click_t whelper;
+		whelper.menu = menu;
+		whelper.widget = notebook;
 		
 		ekg2_gtk_menu_new(menu, "Rozlacz...", NULL, NULL); /* detach / attach */
 		ekg2_gtk_menu_new(menu, "Przelacz na", NULL, NULL);
 		ekg2_gtk_menu_new(menu, "Zamknij", NULL, NULL);
 
-		g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), menu);
+		g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), &whelper);
 	}
 #if 0
 	/* statusbar */
