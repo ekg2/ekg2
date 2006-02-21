@@ -42,14 +42,11 @@ typedef struct {
 	GtkTextTag *ekg2_tag_bold;
 } gtk_window_t;
 
-typedef struct {
-	GtkWidget *menu;
-	GtkWidget *widget;
-} gtk_menu_click_t;
-
 GtkTreeStore *list_store;		// userlista - elementy
 GtkWidget *tree;			// userlista - widget
 GtkWidget *notebook;			// zarzadzanie okienkami.
+
+GtkWidget *popupmenu;			// popup menu.
 
 #ifdef EKG2_TERM_COLORS
 GdkColor bgcolor, fgcolor;
@@ -58,11 +55,13 @@ GdkColor bgcolor, fgcolor;
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
 void gtk_contacts_update(window_t *w);
-extern void ekg_loop();
-int ui_quit = -1;	// -1: jeszcze nie wszedl do ui_loop()
-			//  0: normalny stan..
-			//  1: zamykamy ui.
+GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function, void *data);
 
+extern void ekg_loop();
+int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
+			 *  0: normalny stan..
+			 *  1: zamykamy ui.
+			 */
 extern GtkWidget *gtk_session_new_window(void *ptr);	/* gtk-session.c */
 extern GtkWidget *gtk_settings_window(void *ptr);	/* gtk-settings.c */
 
@@ -108,8 +107,7 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 	gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_UID, &uid, -1);
 	printf("USERLIST_ACTION (%s) Target: %s session: %s uid: %s\n", action, nick, session, uid);
 
-	s = session_find(session);
-	if (!s) return FALSE;
+	if (!(s = session_find(session))) return FALSE;
 	
 	if (uid) command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, "/%s %s", action, uid);
 	else if (window_current->id == 0 || !window_current->target) { /* zmiana sesji... kod troche sciagniety z ncurses.. czy dobry? */
@@ -121,30 +119,64 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 	return TRUE;
 }
 
+void ekg2_gtk_userlist_menu_user(void *user_data) {
+	printf("[POPUP, USERLIST, USER] action = %s\n", (char *) user_data);
+}
 
-gint popup_handler(gtk_menu_click_t *mclick, GdkEvent *event) {
-	GtkMenu *menu = GTK_MENU (mclick->menu);
-	GtkWidget *widget = mclick->widget;
+void ekg2_gtk_userlist_menu_session(void *user_data) {
+	printf("[POPUP, USERLIST, SESSION] action = %s\n", (char *) user_data);
+}
 
+gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 	if (event->type == GDK_BUTTON_PRESS) {
 		GdkEventButton *event_button = (GdkEventButton *) event;
 		if (event_button->button == 3) {
-			int spopup = 1; /* show popup */
-/*			printf("%x %x %x\n", widget, tree, notebook); */
-			if (widget == tree) {
+			gtk_widget_destroy(popupmenu);
+			popupmenu = NULL;
+			if (widget == tree) { /* popup menu, userlista */
 				GtkTreePath *selection;
 				gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), event_button->x, event_button->y, &selection, NULL, NULL, NULL);
-				spopup = selection;
-				if (!selection)
+				if (!selection) {
 					printf("Jak nic nie zaznaczyles (/nad niczym nie jestes) to sie nie pokaze menu o! ;p\n");
-				printf("[debug] widget tree: selection = %x\n", selection);
+				} else {
+					GtkTreeIter iter;
+					gchar *nick, *session, *uid;
+					session_t *s;
+
+					gtk_tree_model_get_iter (GTK_TREE_MODEL(list_store), &iter, selection);
+					printf("[debug,popup] widget tree: selection = %x iter = %x\n", (int) selection, iter);
+					gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_NICK, &nick, -1);
+					gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_SESSION, &session, -1);
+					gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_UID, &uid, -1);
+/*					printf("[debug,popup] widget tree: nick = %s session = %s uid = %s\n", nick, session, uid); */
+
+					s = session_find(session);
+/* tworzenie menu... */
+					popupmenu = gtk_menu_new();
+
+					if (!uid) { /* if session ... */
+						ekg2_gtk_menu_new(popupmenu, s->connected ? "Rozłącz" : "Połącz", ekg2_gtk_userlist_menu_session, s->connected ? "disconnect" : "connect" );
+						// etc...
+					} else { /* if user... */
+						ekg2_gtk_menu_new(popupmenu, "Query", ekg2_gtk_userlist_menu_user, "query");
+//						ekg2_gtk_menu_new(popupmenu, "Info",  /* on_mi_info */ NULL, NULL);
+						ekg2_gtk_menu_new(popupmenu, "Usun", ekg2_gtk_userlist_menu_user, "del");
+						// etc...
+					}
+					// common... etc..
+				}
+			} else if (widget == notebook) { /* popup menu, okna */
+				// TODO, czek czy jestesmy nad jakims...
+				popupmenu = gtk_menu_new();
+				ekg2_gtk_menu_new(popupmenu, "Rozlacz okno..", NULL, NULL); /* detach / attach */
+				ekg2_gtk_menu_new(popupmenu, "Przelacz na", NULL, NULL);
+				ekg2_gtk_menu_new(popupmenu, "Zamknij", NULL, NULL);
 			}
-			if (spopup) {
-				gtk_menu_popup (menu, NULL, NULL, NULL, NULL, event_button->button, event_button->time);
+				
+			if (popupmenu) {
+				gtk_menu_popup (GTK_MENU(popupmenu), NULL, NULL, NULL, NULL, event_button->button, event_button->time);
 				return TRUE;
 			} else	return FALSE;
-
-			
 		}
 	}
 	return FALSE;
@@ -164,7 +196,13 @@ gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num
 gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 	if (event->type == GDK_KEY_PRESS) { 
 		/* moze wypadaloby te znaki tlumaczyc.. na cos ala ncurses-like? */
-//		printf("Nacisnales: %d %c\n", event->keyval, event->keyval);
+/* some state bitmasks: 
+ * 	SHIFT	1	SHIFT_MASK
+ * 	CTRL	4	CONTROL_MASK
+ * 	L-ALT	8	MOD1_MASK
+ * 	R-ALT 128	MOD2_MASK
+ */
+		printf("Nacisnales: %d (%d)\n", event->keyval, event->state);
 
 // sizeof(event->keyval) != sizeof(char) .... IMPLEMENTATION BUG (?).
 		if (query_emit(NULL, "ui-keypress", &(event->keyval), NULL) == -1)
@@ -172,7 +210,7 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 
 		if (event->keyval == GDK_Tab) {
 			/* TODO: uzupelnianie, poczekamy na przeeniesienie kodu ncurses.. */
-			gchar *complete = gtk_entry_get_text(GTK_ENTRY(widget));
+			gchar *complete = (gchar *) gtk_entry_get_text(GTK_ENTRY(widget));
 			int pos = gtk_editable_get_position( GTK_EDITABLE(widget) );
 
 			printf("[uzupelnianie] TODO: complete = %s pozycja = %d\n", complete, pos);
@@ -223,11 +261,6 @@ void ekg2_gtk_menu_quit(GtkWidget *window) {
 	gtk_widget_destroy(window);
 }
 
-void ekg2_gtk_userlist_menu(void *user_data) {
-	printf("[POPUP, USERLIST] action = %s\n", (char *) user_data);
-}
-
-
 void uid_set_func_text (GtkTreeViewColumn *tree_column, GtkCellRenderer *cell, GtkTreeModel *model, GtkTreeIter *iter, gpointer data) {
 	gchar *nick;
 	gtk_tree_model_get (model, iter, COLUMN_NICK, &nick, -1);
@@ -244,7 +277,7 @@ GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function,
 }
 
 int gtk_create() {
-	GtkWidget *win, *edit1, *status_bar;
+	GtkWidget *win, *edit1;
 	GtkWidget *vbox, *hbox, *sw;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
@@ -341,7 +374,8 @@ int gtk_create() {
 	gtk_tree_selection_set_mode (gtk_tree_view_get_selection (GTK_TREE_VIEW (tree)), GTK_SELECTION_MULTIPLE);
 
 	renderer = gtk_cell_renderer_pixbuf_new ();
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "userlista", renderer, "pixbuf", COLUMN_STATUS, NULL); /* w column name jest nazwa sesji */
+	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "userlista", renderer, "pixbuf", COLUMN_STATUS, NULL); 
+
 	renderer = gtk_cell_renderer_text_new ();
 	column = gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_STATUS);
 	gtk_tree_view_column_pack_start (column, renderer, TRUE);
@@ -358,7 +392,7 @@ int gtk_create() {
 	gtk_container_add (GTK_CONTAINER (sw), tree);
 	g_signal_connect (G_OBJECT (tree), "row-activated", G_CALLBACK (on_list_select), NULL);
 	gtk_widget_set_size_request(tree, 165, 365);
-/*	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), FALSE); */ // czy wyswietlac nazwe kolumn ?
+/*	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), FALSE); *//* czy wyswietlac nazwe kolumn ? *//* w column name jest nazwa sesji */
 	ekg2_set_color_ext(tree);
 	
 	/* edit */
@@ -368,39 +402,9 @@ int gtk_create() {
 	g_signal_connect (G_OBJECT (edit1), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
 	ekg2_set_color_ext(edit1);
 	
-	{ /* popup menu, userlista */
-		GtkWidget *menu = gtk_menu_new();
+	g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), tree); /* popup menu, userlista */
+	g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), notebook); /* popup menu, okna */
 
-		static gtk_menu_click_t uhelper;
-		uhelper.menu = menu;
-		uhelper.widget = tree;
-
-		/* common */
-		ekg2_gtk_menu_new(menu, "Query", ekg2_gtk_userlist_menu, "query");
-//		ekg2_gtk_menu_new(menu, "Info",  /* on_mi_info */ NULL, NULL);
-		ekg2_gtk_menu_new(menu, "Usun", ekg2_gtk_userlist_menu, "del");
-
-		g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler),  &uhelper);
-	}
-	{ /* popup menu, okna */
-		GtkWidget *menu = gtk_menu_new();
-
-		static gtk_menu_click_t whelper;
-		whelper.menu = menu;
-		whelper.widget = notebook;
-		
-		ekg2_gtk_menu_new(menu, "Rozlacz...", NULL, NULL); /* detach / attach */
-		ekg2_gtk_menu_new(menu, "Przelacz na", NULL, NULL);
-		ekg2_gtk_menu_new(menu, "Zamknij", NULL, NULL);
-
-		g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), &whelper);
-	}
-#if 0
-	/* statusbar */
-	status_bar = gtk_statusbar_new ();
-	gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(status_bar), FALSE);
-	gtk_box_pack_start (GTK_BOX (vbox), status_bar, FALSE, FALSE, 0);
-#endif
 	gtk_widget_grab_focus(edit1);
 	gtk_widget_show_all (win);
 
