@@ -692,6 +692,13 @@ void gtk_statusbar_timer() {
 }
 
 int gtk_plugin_init(int prio) {
+        int is_UI = 0;
+
+        query_emit(NULL, "ui-is-initialized", &is_UI);
+
+        if (is_UI)
+                return -1;
+
 #define EKG2_NO_DISPLAY "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa..." /* const char * ? */
 	list_t l;
 

@@ -163,6 +163,13 @@ int readline_plugin_init(int prio) {
 	char c;
 	struct sigaction sa;
 	list_t l;
+	int is_UI = 0;
+
+        query_emit(NULL, "ui-is-initialized", &is_UI);
+
+        if (is_UI)
+                return -1;
+
 	plugin_register(&readline_plugin, prio);
 
 	query_connect(&readline_plugin, "ui-beep", readline_beep, NULL);

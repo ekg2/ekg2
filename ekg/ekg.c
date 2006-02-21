@@ -559,6 +559,7 @@ struct option ekg_options[] = {
         { "no-auto", no_argument, 0, 'n' },
         { "no-mouse", no_argument, 0, 'm' },
         { "no-global-config", no_argument, 0, 'N' },
+	{ "frontend", required_argument, 0, 'F' },
 
         { "away", optional_argument, 0, 'a' },
         { "back", optional_argument, 0, 'b' },
@@ -579,6 +580,7 @@ struct option ekg_options[] = {
 "  -n, --no-auto               does not connect to server automatically\n" \
 "  -m, --no-mouse              does not load mouse support\n" \
 "  -N, --no-global-config      ignores global configuration file\n" \
+"  -F, --frontend=NAME         uses NAME frontend (default is ncurses)" \
 \
 "  -a, --away[=DESCRIPTION]    changes status to ``away''\n" \
 "  -b, --back[=DESCRIPTION]    changes status to ``available''\n" \
@@ -599,7 +601,7 @@ int main(int argc, char **argv)
 {
         int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0;
         char *tmp = NULL, *new_status = NULL, *new_descr = NULL;
-        char *load_theme = NULL, *new_profile = NULL;
+        char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
         struct passwd *pw;
         struct rlimit rlim;
         list_t l;
@@ -641,7 +643,7 @@ int main(int argc, char **argv)
         signal(SIGALRM, SIG_IGN);
         signal(SIGPIPE, SIG_IGN);
 
-        while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:t:nmNhv", ekg_options, NULL)) != -1) {
+        while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhv", ekg_options, NULL)) != -1) {
                 switch (c) {
                         case 'a':
                                 if (!optarg && argv[optind] && argv[optind][0] != '-')
@@ -701,7 +703,9 @@ int main(int argc, char **argv)
                         case 'u':
                                 new_profile = optarg;
                                 break;
-
+			case 'F':
+				frontend = optarg;
+				break;
                         case 't':
                                 load_theme = optarg;
                                 break;
@@ -769,6 +773,11 @@ int main(int argc, char **argv)
 
         if (!no_global_config)
                 config_read(SYSCONFDIR "/ekg2.conf");
+
+        if (frontend) {
+                plugin_load(frontend, -254, 1);
+		config_changed = 1;
+	}
 
 	config_read_plugins();
 	theme_plugins_init();

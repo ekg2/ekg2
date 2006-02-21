@@ -439,6 +439,12 @@ void ncurses_sigint_handler(int s)
 int ncurses_plugin_init(int prio)
 {
 	list_t l;
+	int is_UI = 0;
+
+        query_emit(NULL, "ui-is-initialized", &is_UI);
+
+        if (is_UI) 
+                return -1;
 
 	plugin_register(&ncurses_plugin, prio);
 
