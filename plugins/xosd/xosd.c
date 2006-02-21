@@ -265,10 +265,10 @@ static QUERY(xosd_irc_protocol_message)
 	return 0;
 }
 
-static void xosd_display_welcome_message(int type, void *data)
+static TIMER(xosd_display_welcome_message) /* temporary timer */
 {
 	if (type)
-		return;
+		return 0;
 	if (xosd_display_welcome) { 
 		char *line1 = format_string(format_find("xosd_welcome_message_line_1"));
 		char *line2 = format_string(format_find("xosd_welcome_message_line_2"));
@@ -278,6 +278,7 @@ static void xosd_display_welcome_message(int type, void *data)
 		xfree(line1);
 		xfree(line2);		
 	}
+	return -1;
 }
 
 QUERY(xosd_setvar_default)
