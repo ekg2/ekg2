@@ -195,7 +195,7 @@ GtkWidget *gtk_session_new_window(void *ptr) {
 
 /* PRZYCISKI */
 	hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_end(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	gtk_box_pack_end(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
 	cancel_button = gtk_button_new_from_stock( GTK_STOCK_CANCEL);
 	gtk_container_add (GTK_CONTAINER (hbox), cancel_button);
