@@ -52,9 +52,10 @@ static int dd_contacts(const char *name)
 	return (config_contacts);
 }
 
-static void ncurses_statusbar_timer(int destroy, void *data)
+static TIMER(ncurses_statusbar_timer)
 {
 	update_statusbar(1);
+	return 0;
 }
 
 static int ncurses_statusbar_query(void *data, va_list ap)
