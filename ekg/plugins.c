@@ -628,7 +628,7 @@ void watch_free(watch_t *w)
 void watch_handle_line(watch_t *w)
 {
 	char buf[1024], *tmp;
-	int ret, res;
+	int ret, res = 0;
 	int (*handler)(int, int, const char *, void *) = w->handler;
 
 	ret = read(w->fd, buf, sizeof(buf) - 1);
