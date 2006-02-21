@@ -580,7 +580,7 @@ struct option ekg_options[] = {
 "  -n, --no-auto               does not connect to server automatically\n" \
 "  -m, --no-mouse              does not load mouse support\n" \
 "  -N, --no-global-config      ignores global configuration file\n" \
-"  -F, --frontend=NAME         uses NAME frontend (default is ncurses)" \
+"  -F, --frontend=NAME         uses NAME frontend (default is ncurses)\n" \
 \
 "  -a, --away[=DESCRIPTION]    changes status to ``away''\n" \
 "  -b, --back[=DESCRIPTION]    changes status to ``available''\n" \
