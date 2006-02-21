@@ -25,6 +25,9 @@ int session_add_step = 0;
 
 extern GtkWidget *gtk_session_step(int step);
 
+#define gtk_widget_disable(x) gtk_widget_set_sensitive (GTK_WIDGET(x), FALSE)
+#define gtk_widget_enable(x) gtk_widget_set_sensitive (GTK_WIDGET(x), TRUE)
+
 gint on_session_button_clicked(GtkWidget *widget, gpointer data) {
 	int step = session_add_step;
 	switch ((int) data) {
@@ -54,8 +57,8 @@ gint on_session_button_clicked(GtkWidget *widget, gpointer data) {
 	gtk_session_step(step);		/* zmieniamy step */
 	gtk_widget_show_all (win);	/* uaktualniamy okienko */
 
-/* ukrywamy przyciski ktorych nie naciskamy.. lepsze by bylo wylaczanie ich.. XXX */
-	if (step < 2)	gtk_widget_hide(prev_button);
+	if (step < 2)	gtk_widget_disable(prev_button);
+	else		gtk_widget_enable(prev_button);
 /* zmiana przycisku 'Dalej' na 'Zakoncz'.. lub odwrotnie.. */
 	if (step == 4)	gtk_widget_hide(next_button);
 	else		gtk_widget_hide(done_button);
@@ -216,7 +219,7 @@ GtkWidget *gtk_session_new_window(void *ptr) {
 	gtk_widget_show_all (win);
 
 	gtk_widget_hide(done_button);
-	gtk_widget_hide(prev_button);
+	gtk_widget_disable(prev_button);
 
 	return win;
 }
