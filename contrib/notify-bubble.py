@@ -21,7 +21,8 @@ def status_handler(session, uid, status, desc):
 	if status == ekg.STATUS_AVAIL:
 		current_encoding = ekg.config["jabber:console_charset"] or "iso-8859-2"
 		
-		user = ekg.session_get(session).user_get(uid)
+		try: user = ekg.session_get(session).user_get(uid)
+		except exceptions.KeyError: pass
 		uname = unicode(user.nickname or uid, current_encoding)
 
 		htxt  = uname + u" jest dostepn"
@@ -41,7 +42,8 @@ def status_handler(session, uid, status, desc):
 def message_handler(session, uid, type, text, sent_time, ignore_level):
 	current_encoding = ekg.config["jabber:console_charset"] or "iso-8859-2"
 		
-	user = ekg.session_get(session).user_get(uid)
+	try: user = ekg.session_get(session).user_get(uid)
+	except exceptions.KeyError: pass
 	uname = unicode(user.nickname or uid, current_encoding)
 	
 	htxt = uname + ":"
