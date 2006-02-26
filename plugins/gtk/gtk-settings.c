@@ -1,6 +1,6 @@
 #include <gtk/gtk.h>
 
-GtkWidget *win;         /* okno */
+GtkWidget *settings_win;         /* okno */
 enum { 
 	COLUMN_ALL = 0, /* PIXBUF + COLUMN_NAME */
 	COLUMN_NAME,	/* NAZWA - */
@@ -28,10 +28,10 @@ GtkWidget *gtk_settings_window(void *ptr) {
 
 	GtkTreeViewColumn *column;
 
-	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	settings_win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
         hbox = gtk_hbox_new (FALSE, 5);
-        gtk_container_add (GTK_CONTAINER (win), hbox);
+        gtk_container_add (GTK_CONTAINER (settings_win), hbox);
 /* LISTA... */
 	list_store = gtk_tree_store_new (N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING);
 	tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
@@ -57,8 +57,8 @@ GtkWidget *gtk_settings_window(void *ptr) {
 	gtk_widget_set_size_request(tree, 165, 365);
 /* TODO */
 
-	gtk_window_set_resizable(GTK_WINDOW(win), FALSE);
-	gtk_widget_show_all (win);
-	return win;
+	gtk_window_set_resizable(GTK_WINDOW(settings_win), FALSE);
+	gtk_widget_show_all (settings_win);
+	return settings_win;
 }
 

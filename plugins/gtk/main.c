@@ -36,6 +36,28 @@
  * i think he won't be angry of it ;> 
  */
 
+#define EKG2_BGCOLOR "darkgrey"
+// #define EKG2_FGCOLOR "blue"
+
+#ifdef EKG2_BGCOLOR
+#define ekg2_set_color_bg_ext(widget)   gtk_widget_modify_base(widget, GTK_STATE_NORMAL, &bgcolor);
+#define ekg2_set_color_bg(widget)       gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, &bgcolor);
+#else
+#define ekg2_set_color_bg(widget)	;
+#define ekg2_set_color_bg_ext(widget)	;
+#endif
+
+#ifdef EKG2_FGCOLOR
+#define ekg2_set_color_fg_ext(widget)	gtk_widget_modify_text (widget, GTK_STATE_NORMAL, &fgcolor);
+#define ekg2_set_color_fg(widget)	gtk_widget_modify_fg (widget, GTK_STATE_NORMAL, &fgcolor);
+#else
+#define ekg2_set_color_fg_ext(widget)	;
+#define ekg2_set_color_fg(widget)	;
+#endif
+
+#define ekg2_set_color(widget)		{ ekg2_set_color_bg(widget)		ekg2_set_color_fg(widget) }
+#define ekg2_set_color_ext(widget)	{ ekg2_set_color_bg_ext(widget)		ekg2_set_color_fg_ext(widget) }
+
 typedef struct {
 	GtkWidget *view;
 	GtkTextTag *ekg2_tags[8];
@@ -48,8 +70,11 @@ GtkWidget *notebook;			// zarzadzanie okienkami.
 
 GtkWidget *popupmenu;			// popup menu.
 
-#ifdef EKG2_TERM_COLORS
-GdkColor bgcolor, fgcolor;
+#ifdef EKG2_BGCOLOR
+GdkColor bgcolor;			// background color
+#endif
+#ifdef EKG2_FGCOLOR
+GdkColor fgcolor;			// foreground color
 #endif
 
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
@@ -281,16 +306,12 @@ int gtk_create() {
 	GtkWidget *vbox, *hbox, *sw;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
-#ifdef EKG2_TERM_COLORS /* zmienia czesc kolorkow na czarno-szary.. nic ciekawego w sumie */
-#define ekg2_set_color(widget)		gtk_widget_modify_fg (widget, GTK_STATE_NORMAL, &fgcolor);	gtk_widget_modify_bg (widget, GTK_STATE_NORMAL, &bgcolor); 	
-#define ekg2_set_color_ext(widget)	gtk_widget_modify_text (widget, GTK_STATE_NORMAL, &fgcolor);	gtk_widget_modify_base (widget, GTK_STATE_NORMAL, &bgcolor); 
-	gdk_color_parse ("black", &bgcolor);
-	gdk_color_parse ("grey", &fgcolor);
-#else
-#define ekg2_set_color(widget) 
-#define ekg2_set_color_ext(widget)
+#ifdef EKG2_FGCOLOR
+	gdk_color_parse (EKG2_FGCOLOR, &fgcolor);
 #endif
-
+#ifdef EKG2_BGCOLOR
+	gdk_color_parse (EKG2_BGCOLOR, &bgcolor);
+#endif
 	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title (GTK_WINDOW (win), "ekg2 p0wer!");
 
@@ -696,26 +717,25 @@ void gtk_statusbar_timer() {
 }
 
 int gtk_plugin_init(int prio) {
+	const char *ekg2_another_ui = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
+	const char *ekg2_no_display = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
+	list_t l;
         int is_UI = 0;
 
         query_emit(NULL, "ui-is-initialized", &is_UI);
 
-        if (is_UI)
-                return -1;
-
-#define EKG2_NO_DISPLAY "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa..." /* const char * ? */
-	list_t l;
-
 	if (!getenv("DISPLAY")) {
-		int tmp = 0;
-		if ((query_emit(NULL, "ui-is-initialized", &tmp) != -2) && tmp)
-			debug(EKG2_NO_DISPLAY);
-		else 	fprintf(stderr, EKG2_NO_DISPLAY);
 /* po czyms takim for sure bedzie initowane ncurses... no ale moze to jest wlasciwe zachowanie? jatam nie wiem.
  * gorsze to ze ten komunikat nigdzie sie nie pojawi... */
+		if (is_UI) debug(ekg2_no_display);
+		else	   fprintf(stderr, ekg2_no_display);
 		return -1;
 	}
-	
+        if (is_UI) {
+		debug(ekg2_another_ui);
+                return -1;
+	}
+
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
 	query_connect(&gtk_plugin, "ui-beep", gtk_ui_beep, NULL);

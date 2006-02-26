@@ -12,7 +12,7 @@ enum {
 	EKG_SESSION_NEW_OK,		/* Zakoncz   	(GTK_STOCK_OK           gtk-ok)		*/
 } ;
 
-GtkWidget *win;		/* okno */
+GtkWidget *session_win;	/* okno */
 GtkWidget *slabel;	/* step label */
 GtkWidget *pbar;	/* progressbar */
 GtkWidget *frame;	/* frame */
@@ -25,8 +25,13 @@ int session_add_step = 0;
 
 extern GtkWidget *gtk_session_step(int step);
 
-#define gtk_widget_disable(x) gtk_widget_set_sensitive (GTK_WIDGET(x), FALSE)
-#define gtk_widget_enable(x) gtk_widget_set_sensitive (GTK_WIDGET(x), TRUE)
+#define gtk_widget_disable(x) gtk_widget_set_sensitive(GTK_WIDGET(x), FALSE)
+#define gtk_widget_enable(x) gtk_widget_set_sensitive(GTK_WIDGET(x), TRUE)
+
+void session_destroy(GtkWidget *widget, gpointer data) {
+	session_win	= NULL;
+	frame 		= NULL;
+}
 
 gint on_session_button_clicked(GtkWidget *widget, gpointer data) {
 	int step = session_add_step;
@@ -54,8 +59,8 @@ gint on_session_button_clicked(GtkWidget *widget, gpointer data) {
 	}
 	printf("[on_session_button_clicked] prev = %d curr = %d\n", session_add_step, step); 
 
-	gtk_session_step(step);		/* zmieniamy step */
-	gtk_widget_show_all (win);	/* uaktualniamy okienko */
+	gtk_session_step(step);			/* zmieniamy step */
+	gtk_widget_show_all (session_win);	/* uaktualniamy okienko */
 
 	if (step < 2)	gtk_widget_disable(prev_button);
 	else		gtk_widget_enable(prev_button);
@@ -109,9 +114,9 @@ GtkWidget *gtk_session_step(int step) {
 			/* no break */
 		case (-1):	// canel.
 			 /* zniszczyc wszystko */
-			gtk_widget_destroy(win);
-			win 	= NULL;
-			frame	= NULL;
+			gtk_widget_destroy(session_win);
+			session_win 	= NULL;
+			frame		= NULL;
 			return NULL;
 		case (1):	// plugin
 			instr = "Wybierz plugin pod ktorym sesja bedzie dzialac..";
@@ -158,7 +163,7 @@ GtkWidget *gtk_session_step(int step) {
 			return NULL;
 	}
 	title = saprintf("Tworzenie nowej sesji.. [krok %d z 4]", step);
-	gtk_window_set_title (GTK_WINDOW (win), title);
+	gtk_window_set_title (GTK_WINDOW (session_win), title);
 	xfree(title);
 
 	gtk_label_set_text(GTK_LABEL (slabel), instr);
@@ -172,19 +177,21 @@ GtkWidget *gtk_session_step(int step) {
 GtkWidget *gtk_session_new_window(void *ptr) {
 	GtkWidget *hbox;
 
-	if (win) {
+	if (session_win) {
 		/* pozwolic na tworzenie kilku sesji at one time? 
 		 * moze, zrobic jakas strukturke z najwazniejszym widgetami.. TODO */
 		/* poka okno */
-		return win;
+		return session_win;
 	}
 
-	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	session_win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	g_signal_connect (G_OBJECT(session_win), "destroy", G_CALLBACK (session_destroy), NULL);
+
 	vbox = gtk_vbox_new (FALSE, 5);
-	gtk_container_add (GTK_CONTAINER (win), vbox);
+	gtk_container_add (GTK_CONTAINER (session_win), vbox);
 
 	slabel = gtk_label_new (NULL);
-	gtk_box_pack_start( GTK_BOX(vbox), slabel, TRUE, TRUE, 0);
+	gtk_box_pack_start( GTK_BOX(vbox), slabel, FALSE, FALSE, 0);
 
 /* tutaj ramka.. przerzucono tworzenie do gtk_session_step() */
 	frame = NULL;
@@ -214,13 +221,13 @@ GtkWidget *gtk_session_new_window(void *ptr) {
 	g_signal_connect (G_OBJECT (done_button),"clicked",G_CALLBACK (on_session_button_clicked), (void *) EKG_SESSION_NEW_OK);
 
 /* ... */
-	gtk_widget_set_size_request(win, 300+117, 265);
+	gtk_widget_set_size_request(session_win, 300+117, 265);
 	gtk_session_step(1);
-	gtk_widget_show_all (win);
+	gtk_widget_show_all(session_win);
 
 	gtk_widget_hide(done_button);
 	gtk_widget_disable(prev_button);
 
-	return win;
+	return session_win;
 }
 
