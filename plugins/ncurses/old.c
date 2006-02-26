@@ -52,6 +52,12 @@
 #include "contacts.h"
 #include "mouse.h"
 
+#if USE_UNICODE
+# define unchar wchar_t 
+#else
+# define unchar unsigned char
+#endif
+
 WINDOW *ncurses_status = NULL;		/* okno stanu */
 WINDOW *ncurses_header = NULL;		/* okno nag³ówka */
 WINDOW *ncurses_input = NULL;		/* okno wpisywania tekstu */
@@ -664,7 +670,7 @@ void ncurses_redraw(window_t *w)
 		for (x = 0; l->ts && l->ts[x] && x < l->ts_len; x++) { 
 			int attr = A_NORMAL;
 			short chattr = l->ts_attr[x];
-			unsigned CHAR_T ch = (unsigned CHAR_T) l->ts[x];
+			unchar ch = (unchar) l->ts[x];
 
                         if ((chattr & 64))
                                 attr |= A_BOLD;
@@ -699,7 +705,7 @@ void ncurses_redraw(window_t *w)
 
 		for (x = 0; x < l->prompt_len + l->len; x++) {
 			int attr = A_NORMAL;
-			unsigned CHAR_T ch;
+			unchar ch;
 			short chattr;
 			
 			if (x < l->prompt_len) {
@@ -964,7 +970,7 @@ int window_printat(WINDOW *w, int x, int y, const CHAR_T *format_, void *data_, 
 		int i, nest;
 
 		if (*p != '%') {
-			waddch(w, (unsigned CHAR_T) *p);
+			waddch(w, (unchar) *p);
 			p++;
 			x++;
 			continue;
@@ -1036,7 +1042,7 @@ int window_printat(WINDOW *w, int x, int y, const CHAR_T *format_, void *data_, 
 
 				while (*text) {
 					if (*text != '%') {
-						waddch(w, (unsigned CHAR_T) *text);
+						waddch(w, (unchar) *text);
 						*text++;	
 						x++;
 						continue;
@@ -1627,7 +1633,7 @@ void ncurses_input_update()
  *
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char(WINDOW *w, int y, int x, unsigned CHAR_T ch)
+void print_char(WINDOW *w, int y, int x, unchar ch)
 {
 	wattrset(w, A_NORMAL);
 
@@ -1650,7 +1656,7 @@ void print_char(WINDOW *w, int y, int x, unsigned CHAR_T ch)
  *
  * wy¶wietla w danym okienku podkreslony znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char_underlined(WINDOW *w, int y, int x, unsigned CHAR_T ch)
+void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
 {
         wattrset(w, A_UNDERLINE);
 
@@ -2047,7 +2053,7 @@ then:
 		int i;
 		
 		for (i = 0; i < 5; i++) {
-			unsigned CHAR_T *p;
+			unchar *p;
 			int j;
 
 			if (!ncurses_lines[lines_start + i])
