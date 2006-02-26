@@ -60,6 +60,7 @@
 
 typedef struct {
 	GtkWidget *view;
+	GtkWidget *sw;			// zeby okreslic.
 } gtk_window_t;
 
 GtkTreeStore *list_store;		// userlista - elementy
@@ -223,6 +224,7 @@ gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num
 		return FALSE;
 	if (window_current->id == page_num)
 		return FALSE;
+	
 	window_switch(page_num); /* !!! to niekoniecznie musi byc numer okna, XXX */
 	return TRUE;
 }
@@ -537,6 +539,8 @@ void ekg_gtk_window_new(window_t *w) {
 	gtk_container_add (GTK_CONTAINER (sw), view);
 	
 	n->view = view;
+	n->sw	= sw;
+
 	ekg2_set_color_ext(view);
 
 	gtk_widget_show_all (notebook);
@@ -728,11 +732,19 @@ QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. napr
 
 QUERY(gtk_ui_window_switch) {
 	window_t *w = *(va_arg(ap, window_t **));
+	gtk_window_t *n = w->private;
+	int realid;
 
-	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == w->id)
+	if (!n)
+		return 1;
+	realid = gtk_notebook_page_num(GTK_NOTEBOOK(notebook), n->sw);
+
+	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == realid)
 		return 1;
 
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), w->id);
+	printf("[UI_WINDOW_SWITCH] gtk_notebook_page_num() = %d; w->id = %d\n", realid, w->id);
+
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), realid);
 	gtk_contacts_update(NULL);
 	return 0;
 }
@@ -740,8 +752,15 @@ QUERY(gtk_ui_window_switch) {
 QUERY(gtk_ui_window_kill) {
 	window_t *w = *(va_arg(ap, window_t **));
 	gtk_window_t *n = w->private;
-
-	printf("[UI_WINDOW_KILL] [%d,%s]\n", w->id, window_target(w));
+	int realid;
+	
+	if (!n) 
+		return 1;
+	realid = gtk_notebook_page_num(GTK_NOTEBOOK(notebook), n->sw);
+	printf("[UI_WINDOW_KILL] gtk_notebook_page_num() = %d; w->id = %d\n", realid, w->id);
+	
+	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), realid);
+	return 0;
 }
 
 QUERY(gtk_ui_is_initialized) {
