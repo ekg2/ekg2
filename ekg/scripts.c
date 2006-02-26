@@ -663,6 +663,13 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 					      NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARP);	}
+	else CHECK("irc-protocol-message")  { NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_CHARP);
+					      NEXT_ARG(SCR_ARG_INT);
+					      NEXT_ARG(SCR_ARG_INT);
+					      NEXT_ARG(SCR_ARG_INT);
+					      NEXT_ARG(SCR_ARG_CHARP);  }
 	else CHECK_("irc-protocol-numeric") { NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARPP);	}
 /* other */
