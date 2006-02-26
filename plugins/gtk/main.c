@@ -60,8 +60,6 @@
 
 typedef struct {
 	GtkWidget *view;
-	GtkTextTag *ekg2_tags[8];
-	GtkTextTag *ekg2_tag_bold;
 } gtk_window_t;
 
 GtkTreeStore *list_store;		// userlista - elementy
@@ -76,6 +74,11 @@ GdkColor bgcolor;			// background color
 #ifdef EKG2_FGCOLOR
 GdkColor fgcolor;			// foreground color
 #endif
+
+/* atrybuty tekstu... */
+GtkTextTagTable *ekg2_table;		// tablica z tagami... 	glowne kolorki + BOLD + inne...
+GtkTextTag *ekg2_tags[8];		// pomocnicze,		glowne kolorki
+GtkTextTag *ekg2_tag_bold;		// pomocnicze,		BOLD
 
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
@@ -419,8 +422,8 @@ int gtk_create() {
 	/* edit */
 	edit1 = gtk_entry_new ();
 	gtk_box_pack_start (GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
-	g_signal_connect (G_OBJECT (edit1), "activate", G_CALLBACK (on_enter), NULL);
-	g_signal_connect (G_OBJECT (edit1), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
+	g_signal_connect (G_OBJECT(edit1), "activate", G_CALLBACK (on_enter), NULL);
+	g_signal_connect (G_OBJECT(edit1), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
 	ekg2_set_color_ext(edit1);
 	
 	g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), tree); /* popup menu, userlista */
@@ -429,15 +432,40 @@ int gtk_create() {
 	gtk_widget_grab_focus(edit1);
 	gtk_widget_show_all (win);
 
+	/* atrybutu tekstu */
+	{
+		GtkTextTag *tmp = NULL;
+		int i = 0;
+		ekg2_table = gtk_text_tag_table_new();
+
+#define ekg2_create_tag(x) \
+	tmp = gtk_text_tag_new("FG_" #x); \
+	g_object_set(tmp, "foreground", #x, NULL); \
+	gtk_text_tag_table_add(ekg2_table, tmp); /* dodajemy do glownego TextTableTag... */\
+	ekg2_tags[i++] = tmp;
+	
+		ekg2_create_tag(BLACK);	ekg2_create_tag(RED); ekg2_create_tag(GREEN);
+		ekg2_create_tag(YELLOW);ekg2_create_tag(BLUE); ekg2_create_tag(MAGENTA);
+		ekg2_create_tag(CYAN);	ekg2_create_tag(WHITE);
+	
+		ekg2_tag_bold = tmp = gtk_text_tag_new("BOLD");
+		g_object_set(tmp, "weight", PANGO_WEIGHT_BOLD, NULL);
+		gtk_text_tag_table_add(ekg2_table, tmp);		/* dodajemy do glownego TextTableTag... */
+
+		tmp = gtk_text_tag_new("ITALICS");
+		g_object_set(tmp, "style", PANGO_STYLE_ITALIC, NULL);
+	
+//		gtk_text_buffer_create_tag(buffer, "FG_NAVY", "foreground", "navy", NULL);
+//		gtk_text_buffer_create_tag(buffer, "FG_DARKGREEN", "foreground", "darkgreen", NULL);
+//		gtk_text_buffer_create_tag(buffer, "FG_LIGHTGREEN", "foreground", "green", NULL);
+	}
 	return 0;
 }
 
 void ekg_gtk_window_new(window_t *w) {
 	GtkWidget *sw, *view;
 	GtkTextBuffer *buffer;
-	GtkTextTagTable *table;
 	char *name = window_target(w);
-	int i;
 	
 	gtk_window_t *n = xmalloc(sizeof(gtk_window_t));
 	w->private = n;
@@ -447,45 +475,14 @@ void ekg_gtk_window_new(window_t *w) {
 	/* tekst - przewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_notebook_insert_page (GTK_NOTEBOOK (notebook), sw,  gtk_label_new (name), w->id);
+	gtk_notebook_insert_page (GTK_NOTEBOOK (notebook), sw, gtk_label_new (name), w->id);
 	/* tekst */
-	view = gtk_text_view_new ();
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
+	buffer = gtk_text_buffer_new(ekg2_table);
+	view = gtk_text_view_new_with_buffer(buffer);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW (view), FALSE);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW (view), GTK_WRAP_WORD);
 
 	gtk_container_add (GTK_CONTAINER (sw), view);
-	
-	/* atrybutu tekstu */
-	{
-		GtkTextTag *tmp = NULL;
-		int i = 0;
-
-#define ekg2_create_tag(x) \
-	tmp = gtk_text_tag_new("FG_" #x); \
-	g_object_set(tmp, "foreground", #x, NULL); \
-	n->ekg2_tags[i++] = tmp;
-	
-		ekg2_create_tag(BLACK);	ekg2_create_tag(RED); ekg2_create_tag(GREEN);
-		ekg2_create_tag(YELLOW);ekg2_create_tag(BLUE); ekg2_create_tag(MAGENTA);
-		ekg2_create_tag(CYAN);	ekg2_create_tag(WHITE);
-	
-		n->ekg2_tag_bold = tmp = gtk_text_tag_new("BOLD");
-		g_object_set(tmp, "weight", PANGO_WEIGHT_BOLD, NULL);
-
-		tmp = gtk_text_tag_new("ITALICS");
-		g_object_set(tmp, "style", PANGO_STYLE_ITALIC, NULL);
-	
-//		gtk_text_buffer_create_tag(buffer, "FG_NAVY", "foreground", "navy", NULL);
-//		gtk_text_buffer_create_tag(buffer, "FG_DARKGREEN", "foreground", "darkgreen", NULL);
-//		gtk_text_buffer_create_tag(buffer, "FG_LIGHTGREEN", "foreground", "green", NULL);
-	}
-
-	table = gtk_text_buffer_get_tag_table (buffer);
-	for (i=0; i < 8; i++) { /* glowne kolorki */
-		gtk_text_tag_table_add(table, n->ekg2_tags[i] );
-	}
-	gtk_text_tag_table_add(table, n->ekg2_tag_bold);
 	
 	n->view = view;
 	ekg2_set_color_ext(view);
@@ -565,7 +562,6 @@ void gtk_contacts_update(window_t *w) {
 void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *attr, int istimestamp) {
 	GtkTextIter iter;
 	int i;
-	gtk_window_t *n = w->private;
 /* i know ze tak nie moze wygladac, zrobione po prostu aby dzialalo. */
 	for (i=0; i < xstrlen(str); i++) {
 		GtkTextTag *tags[2] = {NULL, NULL};
@@ -573,10 +569,10 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *a
 
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 
-		if (!(att & 128))	tags[0] = n->ekg2_tags[att & 7];
-		if (att & 64)		tags[1] = n->ekg2_tag_bold;
+		if (!(att & 128))	tags[0] = ekg2_tags[att & 7];
+		if (att & 64)		tags[1] = ekg2_tag_bold;
 
-		if (istimestamp && (att & 7) == 0) tags[1] = n->ekg2_tag_bold;
+		if (istimestamp && (att & 7) == 0) tags[1] = ekg2_tag_bold;
 
 		gtk_text_buffer_insert_with_tags(buffer, &iter, str+i, 1, 
 				tags[0] ? tags[0] : tags[1], 
