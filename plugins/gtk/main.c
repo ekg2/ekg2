@@ -155,6 +155,10 @@ void ekg2_gtk_userlist_menu_session(void *user_data) {
 	printf("[POPUP, USERLIST, SESSION] action = %s\n", (char *) user_data);
 }
 
+void ekg2_gtk_userlist_menu_common(void *user_data) {
+	printf("[POPUP, USERLIST, COMMON] action = %x\n", (int) user_data);
+}
+
 gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 	if (event->type == GDK_BUTTON_PRESS) {
 		GdkEventButton *event_button = (GdkEventButton *) event;
@@ -163,6 +167,7 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 			popupmenu = NULL;
 			if (widget == tree) { /* popup menu, userlista */
 				GtkTreePath *selection;
+
 				gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), event_button->x, event_button->y, &selection, NULL, NULL, NULL);
 				if (!selection) {
 					printf("Jak nic nie zaznaczyles (/nad niczym nie jestes) to sie nie pokaze menu o! ;p\n");
@@ -179,9 +184,8 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 /*					printf("[debug,popup] widget tree: nick = %s session = %s uid = %s\n", nick, session, uid); */
 
 					s = session_find(session);
-/* tworzenie menu... */
 					popupmenu = gtk_menu_new();
-
+/* tworzenie menu... */
 					if (!uid) { /* if session ... */
 						ekg2_gtk_menu_new(popupmenu, s->connected ? "Rozłącz" : "Połącz", ekg2_gtk_userlist_menu_session, s->connected ? "disconnect" : "connect" );
 						// etc...
@@ -193,6 +197,9 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 					}
 					// common... etc..
 				}
+				// common... etc..
+/*				ekg2_gtk_menu_new(popupmenu, "Odśwież userliste", ekg2_gtk_userlist_menu_common, (void *) 1); */
+
 			} else if (widget == notebook) { /* popup menu, okna */
 				// TODO, czek czy jestesmy nad jakims...
 				popupmenu = gtk_menu_new();
@@ -202,7 +209,7 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 			}
 				
 			if (popupmenu) {
-				gtk_menu_popup (GTK_MENU(popupmenu), NULL, NULL, NULL, NULL, event_button->button, event_button->time);
+				gtk_menu_popup(GTK_MENU(popupmenu), NULL, NULL, NULL, NULL, event_button->button, event_button->time);
 				return TRUE;
 			} else	return FALSE;
 		}
@@ -230,7 +237,6 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
  * 	L-ALT	8	MOD1_MASK
  * 	R-ALT 128	MOD2_MASK
  */
-		printf("Nacisnales: %d (%d)\n", event->keyval, event->state);
 
 // sizeof(event->keyval) != sizeof(char) .... IMPLEMENTATION BUG (?).
 		if (query_emit(NULL, "ui-keypress", &(event->keyval), NULL) == -1)
@@ -247,6 +253,50 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 		}
 		/* TODO, inne, bindlista klawiszy, etc.. 
 		 * moze zrobmy to tez po stronie ekg2 ? emitujemy ui-keypress w koncu... */
+
+		/* zanim zrobimy `pelna` obsluge bindingow, handlujmy bardziej defaultowe.. just for example */
+		/* TODO: przepisac obsluge bindingow? 
+		 * 	BO tak mamy niefajnie... */
+
+		if (event->keyval == GDK_F1) { command_exec(NULL, NULL, "/help", 0); return TRUE; }
+		if (event->keyval == GDK_F12) { command_exec(NULL, NULL, "/window switch 0", 0); return TRUE; }
+		if (event->state == GDK_CONTROL_MASK) { /* CTRL- */
+			switch (event->keyval) {
+				case(110): command_exec(NULL, NULL, "/window next", 0); return TRUE;
+				case(112): command_exec(NULL, NULL, "/window prev", 0); return TRUE;
+			}
+		}
+		if (event->state == GDK_MOD1_MASK) { /* LALT- */
+			int gotowindow = -1;
+			switch (event->keyval) {
+				/* przelaczanie okienek */
+				case(96): gotowindow = 0; break;
+				case(48): gotowindow = 10; break;
+				case(49): case(50): case(51): case(52): case(53): case(54): case(55): case(56): case(57): gotowindow = event->keyval-48; break;
+				case(113): gotowindow = 11; break;
+				case(119): gotowindow = 12; break;
+				case(101): gotowindow = 13; break;
+				case(114): gotowindow = 14; break;
+				case(116): gotowindow = 15; break;
+				case(121): gotowindow = 16; break;
+				case(117): gotowindow = 17; break;
+				case(105): gotowindow = 18; break;
+				case(111): gotowindow = 19; break;
+				case(112): gotowindow = 20; break;
+				/* inne */
+				case(110): command_exec(NULL, NULL, "/window new", 0); return TRUE;
+				case(107): command_exec(NULL, NULL, "/window kill", 0); return TRUE;
+				/* jeszcze inne */
+				case(GDK_Return): printf("[TEMP_BIND] ALT+ENTER!!!\n"); return TRUE; /* co robimy? */
+			}
+
+			if (gotowindow != -1) { 
+				printf("[window_temp_bind_switcher] gotowindow=%d\n", gotowindow);
+				window_switch(gotowindow);
+//				command_exec_format(NULL, NULL, 0, "/window switch %d", gotowindow);
+				return TRUE;
+			}
+		}
 		
 		switch (event->keyval) {
 			case (GDK_Tab): 	/* TAB-> complete */
@@ -254,6 +304,7 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 			case (GDK_Down):	/* bufor polecen w dol */
 				return TRUE;
 			default:
+				printf("[KEY_DEFAULT] Nacisnales: %d (%d) (widget=%x)\n", event->keyval, event->state, (int) widget);
 				return FALSE;
 				 
 		}
@@ -320,8 +371,9 @@ int gtk_create() {
 
 	ekg2_set_color(win);
   
-	g_signal_connect (G_OBJECT (win), "delete_event", G_CALLBACK (delete_event), NULL);
-	g_signal_connect (G_OBJECT (win), "destroy", G_CALLBACK (destroy), NULL);
+	g_signal_connect(G_OBJECT(win), "delete_event", G_CALLBACK (delete_event), NULL);
+	g_signal_connect(G_OBJECT(win), "destroy", G_CALLBACK (destroy), NULL);
+	g_signal_connect(G_OBJECT(win), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
 
 	hbox = gtk_hbox_new (FALSE, 2);
 	gtk_container_add (GTK_CONTAINER (win), hbox);
@@ -663,14 +715,13 @@ QUERY(ekg2_gtk_pending) {
 }
 
 QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. naprawde czysci okno. wiec nie myslec ze jest takie samo behavior.. */
+	GtkTextBuffer *buffer;
 	window_t *w = *(va_arg(ap, window_t **));
 	gtk_window_t *n = w->private;
 
-	GtkTextBuffer *buffer;
-
 	if (!n)
 		return 1;
-	buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (n->view));
+	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW (n->view));
 	gtk_text_buffer_set_text (buffer, "", -1);
 	return 0;
 }
@@ -684,6 +735,13 @@ QUERY(gtk_ui_window_switch) {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), w->id);
 	gtk_contacts_update(NULL);
 	return 0;
+}
+
+QUERY(gtk_ui_window_kill) {
+	window_t *w = *(va_arg(ap, window_t **));
+	gtk_window_t *n = w->private;
+
+	printf("[UI_WINDOW_KILL] [%d,%s]\n", w->id, window_target(w));
 }
 
 QUERY(gtk_ui_is_initialized) {
@@ -735,9 +793,10 @@ int gtk_plugin_init(int prio) {
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
 	query_connect(&gtk_plugin, "ui-beep", gtk_ui_beep, NULL);
+	query_connect(&gtk_plugin, "ui-window-clear", gtk_ui_window_clear, NULL);
+	query_connect(&gtk_plugin, "ui-window-kill", gtk_ui_window_kill, NULL);
 	query_connect(&gtk_plugin, "ui-window-new", gtk_ui_window_new, NULL);
 	query_connect(&gtk_plugin, "ui-window-print", gtk_ui_window_print, NULL);
-	query_connect(&gtk_plugin, "ui-window-clear", gtk_ui_window_clear, NULL);
 	query_connect(&gtk_plugin, "ui-window-switch", gtk_ui_window_switch, NULL);
 /* userlist */
 	query_connect(&gtk_plugin, "userlist-changed", gtk_userlist_changed, NULL);
