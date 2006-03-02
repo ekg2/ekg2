@@ -32,7 +32,7 @@ sub cogra
 {
 	$_ = shift;
 	$_ =~ s/[\%\\\/\..]//g;
-	
+
 	@table = ();
 	$grab = 0;
 
@@ -48,13 +48,16 @@ sub cogra
 
 	$parser->parse($resp->content);
 
-	return $table[13]?($table[5]." - ".$table[2]." - ".$table[13]):0;
+	return $table[13]?($table[5]." - ".$table[2].", ".localtime($table[13])):0;
 }
 
 sub start_handler
 {
-	shift; $_ = shift;
-	$grab++ if (/^track/);
+	shift; $a = shift;
+	$grab++ if ($a =~ /^track/);
+	shift;
+	# ivil hack ;)
+	push @table,shift() if (($grab == 1) and ($a =~ /^date/));
 }
 
 sub char_handler
