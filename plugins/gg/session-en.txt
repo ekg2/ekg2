@@ -38,6 +38,15 @@ auto_reconnect
 	after disconnect or invalid connection.
 	If 0, program won't try.
 
+concat_multiline_status
+	type: integer
+	default value: 3
+	
+	concatenates nasty-multiline status if number of lines is bigger, than
+	value set. if equals 0 no concatenation will be performed. to
+	distinguish multiline status will be prefixed with '[m]' (multiline)
+	if there is enough place for that.
+
 connection_save
 	type: integer
 	default value: 0

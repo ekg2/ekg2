@@ -40,6 +40,15 @@ auto_reconnect
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
 
+concat_multiline_status
+	typ: liczba
+	domy¶lna warto¶æ: 3
+	
+	powoduje ³±czenie wkur?aj±cych wielolinijkowych statusów o ile
+	tylko liczba linii przekracza warto¶æ zmiennej. je¶li równa 0 nie
+	bêdzie konkatenacji. dla odró¿nienia wielolinijkowy status poprzedzany
+	jest ci±giem '[m]' (od multiline :)) o ile pozwala na to miejsce.
+
 connection_save
 	typ: liczba
 	domy¶lna warto¶æ: 0

@@ -614,7 +614,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 	char *__descr	= xstrdup(descr);
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
-	int __port	= port;
+	int __port	= port, i, j, dlen, state = 0, m = 0;
 	userlist_t *u;
 
 	gg_cp_to_iso(__descr);
@@ -622,6 +622,34 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 	if ((u = userlist_find(s, __uid)))
 		u->protocol = protocol;
 
+	for (i = 0; i < xstrlen(__descr); i++)
+		if (__descr[i] == 10 || __descr[i] == 13)
+			m++;
+	dlen = i;
+	/* if it is not set it'll be -1 so, everythings ok */
+	if ( (i = session_int_get(s, "concat_multiline_status")) && m > i)
+	{
+		for (m = i = j = 0; i < dlen; i++) {
+			if (__descr[i] != 10 && __descr[i] != 13) {
+				__descr[j++] = __descr[i];
+				state = 0;
+			} else {
+				if (!state && __descr[i] == 10)
+					__descr[j++] = ' ';
+				else
+					m++;
+				if (__descr[i] == 10)
+					state++;
+			}
+		}
+		__descr[j] = '\0';
+		if (m > 3) {
+			memmove (__descr+4, __descr, j + 1);
+			/* multiline tag */
+			__descr[0] = '['; __descr[1] = 'm'; __descr[2] = ']'; __descr[3] = ' ';
+		}
+
+	}
 	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
 
 	xfree(__host);
@@ -1285,6 +1313,7 @@ int gg_plugin_init(int prio)
 	plugin_var_add(&gg_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "10", 0, NULL);
+	plugin_var_add(&gg_plugin, "concat_multiline_status", VAR_INT, "3", 0, NULL);
 	plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "-1", 0, NULL);
 	plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0, NULL);
