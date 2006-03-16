@@ -13,27 +13,27 @@ our %EKG2 = (
 my $i;
 
 sub window_switcher {
-	my ($type, $stimer, $timer) = @_;
+	my ($type, $timer) = @_;
 	if ($type) { return; }
-	Ekg2::Window::switch_id($i);
+	my ($wind) = Ekg2::window_findid($i);
 	
-	Ekg2::timer_unbind($stimer) if (Ekg2::window_current->{id} != $i);
+	$wind->switch() if ($wind);
+	
+	$timer->destroy() if (Ekg2::window_current->{id} != $i);
 	$i++;
 }
 
 
 sub iwil_wait {
-	my ($type, $stimer, $timer) = @_;
+	my ($type, $timer) = @_;
 	if ($type) { return; }
 	
-#	$timer->destroy();
+	$timer->destroy();
 
 #	$iwil_wind = Ekg2::window_current;
 	$i = 0;
 	
 	Ekg2::timer_bind(1, 'window_switcher');
-
-	Ekg2::timer_unbind($stimer);
 
 }
 
@@ -163,26 +163,26 @@ sub cmd_test {
 }
 
 sub cmd_timer_test { # testowanie obslugi timerow. powinno byc na przemian 0 i 1 z podobnymi adresami...
-	my ($type, $stimer, $timer) = @_;
+	my ($type, $timer) = @_;
 	
-	Ekg2::echo("$type $stimer $timer");
+	Ekg2::echo("$type $timer");
 	if ($type) {
 		Ekg2::timer_bind(0.001, 'cmd_timer_test');
 		return;
 	}
-	Ekg2::timer_unbind($stimer);
+	$timer->destroy();
 	return 0;
 }
 
 sub cmd_timer {
-	my ($type, $stimer, $timer) = @_;
+	my ($type, $timer) = @_;
 	if ($type) {
 		Ekg2::echo("Timer ($timer) zniknal");
 		return;
 	}
 	
 	Ekg2::echo("Timer ($timer) zaraz zniknie");
-	Ekg2::timer_unbind($stimer);
+	$timer->destroy();
 }
 sub as {
 	my ($varname, $value) = @_;
@@ -231,6 +231,6 @@ Ekg2::variable_add_ext('dupa', 'temp', 'as');
 Ekg2::variable_add('dupus', 'as');
 
 
-# cmd_timer_test(1, 0, 0); # testowanie obslugi timerow. 
+# cmd_timer_test(1, 0); # testowanie obslugi timerow. 
 
 return 1;

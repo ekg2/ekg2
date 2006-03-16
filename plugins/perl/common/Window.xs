@@ -54,7 +54,7 @@ OUTPUT:
 
 Ekg2::Userlist window_userlist(Ekg2::Window wind)
 CODE:
-	RETVAL = &(wind->userlist);
+	RETVAL = (wind->userlist);
 OUTPUT:
 	RETVAL
 

@@ -48,12 +48,12 @@ PPCODE:
 
 Ekg2::Userlist session_userlist(Ekg2::Session session)
 CODE:
-        RETVAL = &(session->userlist);
+        RETVAL = (session->userlist);
 OUTPUT:
         RETVAL
 	
 # /session -w session ?
-int session_set(Ekg2::Session session)
+void session_set(Ekg2::Session session)
 CODE:
 	window_current->session = session;
 	session_current = session;
@@ -61,12 +61,12 @@ CODE:
 void session_connected_set(Ekg2::Session session, int val)
 
 # TODO think about that &perl_plugin...
-int  session_param_add(Ekg2::Session session, char *name)
+int session_param_add(Ekg2::Session session, char *name)
 CODE:
 	plugin_var_add(&perl_plugin, name, VAR_STR, NULL, 0, NULL);
 
 
-int session_param_set(Ekg2::Session session, char *name, char *value)
+void session_param_set(Ekg2::Session session, char *name, char *value)
 CODE:
 	session_set(session, name, value);
 

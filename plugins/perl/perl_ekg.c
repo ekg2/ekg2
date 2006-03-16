@@ -48,11 +48,7 @@ COMMAND(perl_command_list)
 
 COMMAND(perl_command_eval)
 {
-	char *code;
-	if (xstrlen(params[0]) < 1) 
-		return -1;
-		
-	code = saprintf("use Ekg2; %s", params[0]);
+	char *code = saprintf("use Ekg2; %s", params[0]);
 	
 	eval_pv(code, TRUE);
 	xfree(code);
@@ -62,11 +58,7 @@ COMMAND(perl_command_eval)
 
 COMMAND(perl_command_test)
 {
-	char *code;
-	if (xstrlen(params[0]) < 1) 
-		return -1;
-		
-	code = saprintf("use Ekg2;\nuse Ekg2::%s Ekg2::debug(\"%s\n\");", params[0], params[1]);
+	char *code = saprintf("use Ekg2;\nuse Ekg2::%s Ekg2::debug(\"%s\n\");", params[0], params[1]);
 	
 	eval_pv(code, TRUE);
 	xfree(code);
@@ -97,13 +89,14 @@ int perl_plugin_init(int prio)
 	
 	plugin_register(&perl_plugin, prio);
 	scriptlang_register(&perl_lang, 0);
-
-	command_add(&perl_plugin, "perl:eval",   "?",  perl_command_eval,   0, NULL);
-	command_add(&perl_plugin, "perl:test",   "?",  perl_command_test,   0, NULL);
-//	command_add(&perl_plugin, "perl:run",    "?",  perl_command_run,    0, NULL);
-	command_add(&perl_plugin, "perl:load",   "?",  perl_command_load,   0, NULL);
-	command_add(&perl_plugin, "perl:unload", "?",  perl_command_unload, 0, NULL);
-	command_add(&perl_plugin, "perl:list",    "",  perl_command_list,   0, NULL);
+/* TODO
+ *	command_add(&perl_plugin, "perl:eval",   "!",  perl_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
+ *	command_add(&perl_plugin, "perl:test",   "!",  perl_command_test,   COMMAND_ENABLEREQPARAMS, NULL);
+ *	command_add(&perl_plugin, "perl:run",    "?",  perl_command_run,    0, NULL);
+ */
+	command_add(&perl_plugin, "perl:load",   "!",  perl_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&perl_plugin, "perl:unload", "!",  perl_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&perl_plugin, "perl:list",  NULL,  perl_command_list,   0, NULL);
 
 	variable_add(&perl_plugin, "autoload", VAR_BOOL, 1, &auto_load, NULL, NULL, NULL);
 

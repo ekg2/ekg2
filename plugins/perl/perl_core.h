@@ -6,7 +6,7 @@
 
 /* syfffff irssi */
 
-#define new_pv(a) newSVpv(fix(a), xstrlen(fix(a)))
+#define new_pv(a) newSVpv(fix(a), xstrlen(a))
 
 #define is_hvref(o) \
         ((o) && SvROK(o) && SvRV(o) && (SvTYPE(SvRV(o)) == SVt_PVHV))
@@ -94,7 +94,6 @@ int perl_initialize();
 int perl_finalize();
 
 SV *create_sv_ptr(void *object);
-char *perl_array2str(char **arr);
 
 #endif
 /* zrobic to jakos ladniej... hack.*/
@@ -108,15 +107,15 @@ char *perl_array2str(char **arr);
         for (i=0; i < scr_que->argc; i++) {\
                 switch ( scr_que->argv_type[i] ) {\
                         case (SCR_ARG_INT):\
-                                *( (int **) args[i]) = SvIV(SvRV(perlargs[i]));\
-                                break;\
+				*( (int *) args[i]) = SvIV(SvRV(perlargs[i]));\
+				break;\
 \
                         case (SCR_ARG_CHARP):\
-                                xfree(*(char **) args[i]); \
-                                *( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
-                                break;\
-                        case (SCR_ARG_CHARPP): /* wazne, zrobic. */\
-                                break;\
+/*				xfree(*(char **) args[i]);  */\
+				*( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
+				break;\
+			case (SCR_ARG_CHARPP): /* wazne, zrobic. */\
+				break;\
 \
                 }\
         }\

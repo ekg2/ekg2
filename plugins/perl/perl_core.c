@@ -35,8 +35,7 @@ int perl_timers(script_t *scr, script_timer_t *time, int type)
 	PERL_HANDLER_HEADER((char *) time->private);
 
 	XPUSHs(sv_2mortal(newSViv(type)));
-	XPUSHs(sv_2mortal(create_sv_ptr(time)) );
-	XPUSHs(sv_2mortal(create_sv_ptr(time->self)) );
+	XPUSHs(sv_2mortal(ekg2_bless(BLESS_TIMER, 0, time->self)) );
 
 	PERL_HANDLER_FOOTER();
 }
@@ -46,7 +45,7 @@ int perl_commands(script_t *scr, script_command_t *comm, char **params)
 	char *tmp;
 	PERL_HANDLER_HEADER((char *) comm->private);
 	XPUSHs(sv_2mortal(new_pv(comm->self->name)));
-	tmp = perl_array2str(params);
+	tmp = array_join(params, " ");
 	XPUSHs(sv_2mortal(new_pv(tmp)));
 	xfree(tmp);
 
@@ -68,19 +67,6 @@ int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int w
 	PERL_HANDLER_FOOTER();
 }
 
-char *perl_array2str(char **arr) {
-	string_t st;
-	int i = 0;
-	st = string_init("");
-	while (arr && arr[i]) {
-		if (i != 0)
-			string_append_c(st, ' ');
-		string_append(st, arr[i]);
-		i++;
-	}
-	return (char *) string_free(st, 0);
-}
-
 int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 {
 	int i;
@@ -91,22 +77,21 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 	
 	PERL_HANDLER_HEADER((char *) scr_que->private);
 	for (i=0; i < scr_que->argc; i++) {
-		char *tmp;
 		perlarg = NULL;
 		switch ( scr_que->argv_type[i] ) {
-			case (SCR_ARG_INT):   // int 
+			case (SCR_ARG_INT):   /* int */
 				perlarg = newSViv( *(int  *) args[i] );
 				break;
-			case (SCR_ARG_CHARP):  // char *
+			case (SCR_ARG_CHARP):  /* char * */
 				perlarg = new_pv(*(char **) args[i]);
 				break;
-			case (SCR_ARG_CHARPP): // char **
-				tmp = perl_array2str((char **) args[i]);
+			case (SCR_ARG_CHARPP): {/* char ** */
+				char *tmp = array_join((char **) args[i], " ");
 				if (xstrlen(tmp)) 
 					perlarg = new_pv(tmp);
 				xfree(tmp);
 				break;
-			
+				}
 			case (SCR_ARG_WINDOW): /* window_t */
 				perlarg = ekg2_bless(BLESS_WINDOW, 0, (*(window_t **) args[i]));
 				break;
@@ -300,7 +285,7 @@ void *perl_plugin_register(char *name, int type, void *formatinit)
 	return script_plugin_init(&perl_lang, perl_caller(), name, type, formatinit);
 }
 
-void *perl_timer_bind(int freq, char *handler)
+script_timer_t *perl_timer_bind(int freq, char *handler)
 {
 	return script_timer_bind(&perl_lang, perl_caller(), freq, xstrdup(handler));
 }
@@ -310,7 +295,7 @@ int perl_timer_unbind(script_timer_t *stimer)
 	return script_timer_unbind(stimer, 1);
 }
 
-void *perl_variable_add(char *var, char *value, char *handler)
+script_var_t *perl_variable_add(char *var, char *value, char *handler)
 {
 	return script_var_add(&perl_lang, perl_caller(), var, value, xstrdup(handler));
 }

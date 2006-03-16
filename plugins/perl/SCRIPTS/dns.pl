@@ -53,15 +53,17 @@ sub cmd_dns {
     }
   }
   if ($ask_nicks ne "") {
-    $_ = $server->{uid};
-    # send the USERHOST query
-    if (/irc:/) {
-	    $userhosts++;
-	    $ircserver->raw("USERHOST :$nicks");
-    }
-    if (/gg:/ || /jid:/) {
-	      Ekg2::echo("TODO!");
-    }
+	$_ = $server->{uid};
+	if (/irc:/) {
+    		# send the USERHOST query
+		$userhosts++;
+		$ircserver->raw("USERHOST :$nicks");
+	}
+	if (/gg:/) {
+# todo, inaczej
+		my ($ip) = $server->userlist()->find($nicks)->{ip};
+		Ekg2::print(-1, "%> %B$nicks%n: %W$ip");
+	}
   }
 
   # ask the IPs/hostnames immediately
@@ -191,7 +193,7 @@ sub pipe_input {
   host_lookup();
 }
 
-Ekg2::command_bind('dns', 'cmd_dns');
+Ekg2::command_bind_ext('dns', '!u', '', 'cmd_dns');
 Ekg2::handler_bind('irc-protocol-numeric 302', 'sig_userhost');
 ## Irssi::signal_add( {
 ##        'redir dns failure' => \&sig_failure,

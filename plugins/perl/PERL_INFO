@@ -1,12 +1,13 @@
-# BUG : jak sie robi /script --reset kilka razy albo /plugin -perl /plugin +perl SIGSEGV @ perl_parse() 
+# sprawdzic jak sie userlista zachowuje po zmianach.. (21.12.2005)
 
-# TODO: wywalic wszystkie Ekg2::Session::Find itd.. zostawic tylko Ekg2::session_find() itd..
-# TODO: Userlista dziwnie jest zrobiona...
-# TODO: 
-# TODO: dokonczyc.
+# BUG : jak sie robi /script --reset kilka razy albo /plugin -perl /plugin +perl SIGSEGV @ perl_parse() 
 
 # TODO: zrobic to w docbooku albo czymstam...
 # TODO: dokonczyc.
+
+# czw mar 16 22:31:19 CET 2006
+## Wywalono stimer z handlera timerow. (type, self)
+## zmiana timer->delete() na timer->destroy()
 
 #####################################################################################################################################
 
@@ -93,6 +94,8 @@ Ekg2::Window
 Ekg2::Timers
 	{name}			- nazwa							(char *)
 	{freq}			- czestotliwosc						(int)
+
+	-> destroy()		- nieszczy timer.					(void)
 
 Ekg2::Variable
 	{name}			- nazwa							(char *)

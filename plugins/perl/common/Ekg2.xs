@@ -1,5 +1,6 @@
 #include "module.h"
 
+extern char *va_format_string(const char *format, va_list ap);
 static int initialized = 0;
 
 MODULE = Ekg2  PACKAGE = Ekg2
@@ -75,7 +76,7 @@ CODE:
 		prevblink = blink;
 		prevbold  = bold;
         }
-        RETVAL =  string_free(st, 0);
+        RETVAL = string_free(st, 0);
 OUTPUT:
 	RETVAL
 
@@ -83,7 +84,7 @@ void print(int dest, char *str)
 CODE:
 	char *line;
         while ((line = split_line(&str))) {
-                window_print(window_target(window_exist(dest)), NULL, 0, fstring_new((const char *) va_format_string(line)));
+                window_print(window_target(window_exist(dest)), NULL, 0, fstring_new(va_format_string(line, NULL)));
         }
 
 void init()
@@ -99,7 +100,7 @@ int watch_add(int fd, int type, int persist, char *handler, void *data);
 CODE:
 	perl_watch_add(fd, type, persist, handler, data);
 
-int watch_remove(int fd, int type);
+void watch_remove(int fd, int type);
 CODE:	
 	watch_remove(&perl_plugin, fd, type);
 

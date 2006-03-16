@@ -54,8 +54,6 @@ void ekg2_bless_irc_user(HV *hv, people_t *person)
 	hv_store(hv, "ident",    5, new_pv(person->ident), 0);
 	
 //	hv_store(hv, "channels", 8, bless_struct("Ekg2::Irc::Channels", person->channels), 0);  
-	
-	
 	hv_store(hv, "nick_", 5, new_pv(person->nick), 0); /* wywalic ? */
 }
 
@@ -98,8 +96,8 @@ void ekg2_bless_command(HV *hv, command_t *command)
 	char *temp;
 	debug_bless("blessing command %s\n", command->name);
 	hv_store(hv, "name",  4, new_pv(command->name), 0);
-	temp = perl_array2str( command->params );	hv_store(hv, "param", 5, new_pv(temp), 0); xfree(temp);
-	temp = perl_array2str( command->possibilities);	hv_store(hv, "poss",  4, new_pv(temp), 0); xfree(temp);
+	temp = array_join(command->params, " ");	hv_store(hv, "param", 5, new_pv(temp), 0); xfree(temp);
+	temp = array_join(command->possibilities, " ");	hv_store(hv, "poss",  4, new_pv(temp), 0); xfree(temp);
 }
 
 void ekg2_bless_fstring(HV *hv, fstring_t *fstr)
@@ -127,6 +125,7 @@ void ekg2_bless_user(HV *hv, userlist_t *user)
 	hv_store(hv, "uid", 3, new_pv(user->uid), 0);
 	hv_store(hv, "nickname", 8, new_pv(user->nickname), 0);
 	hv_store(hv, "status", 6, new_pv(user->status), 0);
+	hv_store(hv, "ip", 2, 	  new_pv(inet_ntoa((struct in_addr) {user->ip})), 0);
 }
 
 void ekg2_bless_session(HV *hv, session_t *session)
@@ -174,6 +173,7 @@ SV *ekg2_bless(int flag, int flag2, void *object)
         hv_store(hv, "_ekg2", 4, create_sv_ptr(object), 0);
 
         switch(flag) {
+/* native ekg2 */
 		case BLESS_SCRIPT:
 			stash = gv_stashpv("Ekg2::Script", 1);
 			ekg2_bless_script(hv, object);
@@ -238,7 +238,9 @@ SV *ekg2_bless(int flag, int flag2, void *object)
 			break;
 
 #endif
-/* ELSE */			
+/* abstact script */
+		
+/* ELSE */
                 default:
                         debug("@perl_bless.c ekg2_bless() unknown flag=%d flag1=%d obj=0x%x\n", flag, flag2, object);
 //                      return create_sv_ptr(object);

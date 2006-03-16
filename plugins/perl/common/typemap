@@ -10,8 +10,6 @@ Ekg2::Plugin		T_Ekg2Plu
 Ekg2::User		T_Ekg2User
 Ekg2::Timer		T_Ekg2Time
 
-Ekg2::PTimer		T_PlainList
-Ekg2::STIMER		T_PlainList
 Ekg2::Userlist		T_PlainList
 short *			T_PlainList
 
@@ -71,7 +69,7 @@ T_Ekg2Plu
 
 T_Ekg2Time
 	$arg = (void *) bless_timer( (struct timer *) $var);
-
+	
 T_Ekg2Scr
 	$arg = (void *) bless_script( (script_t *) $var);
 	

@@ -19,11 +19,15 @@ CODE:
 	
 Ekg2::Variable variable_add_ext(char *name, char *value, char *handler)
 CODE:
-        perl_variable_add(name, value, handler);
+        RETVAL = perl_variable_add(name, value, handler)->self;
+OUTPUT:
+	RETVAL
 	
 Ekg2::Variable variable_add(char *name, char *value)
 CODE:
-        perl_variable_add(name, value, NULL);
+	RETVAL = perl_variable_add(name, value, NULL)->self;
+OUTPUT:
+	RETVAL
 		
 
 #*******************************

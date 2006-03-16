@@ -13,18 +13,18 @@ PPCODE:
 
 # Ekg2::Timer timer_find(const char *uid)
 
-int timer_bind(int freq, char *handler)
+Ekg2::Timer timer_bind(int freq, char *handler)
 CODE:
-        perl_timer_bind(freq, handler);
+	RETVAL = (perl_timer_bind(freq, handler)->self);
+OUTPUT:
+	RETVAL
 	
-int timer_unbind(void *scr_time)
-CODE:
-        perl_timer_unbind(scr_time);
-		
 #*******************************
 MODULE = Ekg2::Timer	PACKAGE = Ekg2::Timer  PREFIX = timer_
 #*******************************
 
-int timer_delete(Ekg2::PTimer timer)
+void timer_destroy(Ekg2::Timer timer)
 CODE:
 	timer_remove(timer->plugin, timer->name);
+
+

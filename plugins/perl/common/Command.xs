@@ -13,7 +13,9 @@ PPCODE:
 
 int command(char *what)
 CODE:
-	command_exec(window_current->target, window_current->session, what, 0);
+	RETVAL = command_exec(window_current->target, window_current->session, what, 0);
+OUTPUT:
+	RETVAL
 
 int command_bind(char *command, char *handler)
 CODE:
@@ -28,12 +30,13 @@ CODE:
 MODULE = Ekg2::Command PACKAGE = Ekg2::Command PREFIX = command_
 #*******************************
 
-void
-command_execute(Ekg2::Command comm, char *param)
+int command_execute(Ekg2::Command comm, char *param)
 CODE:
 	char *tmp = saprintf("%s %s", comm->name, param);
-        command_exec(window_current->target, window_current->session, comm->name, 0);
+        RETVAL = command_exec(window_current->target, window_current->session, comm->name, 0);
 	xfree(tmp);
+OUTPUT:
+	RETVAL
 
 void command_remove(Ekg2::Command comm)
 CODE:
