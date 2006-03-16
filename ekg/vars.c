@@ -79,6 +79,7 @@ void variable_init()
 	variable_add(NULL, "beep_chat", VAR_BOOL, 1, &config_beep_chat, NULL, NULL, dd_beep);
 	variable_add(NULL, "beep_notify", VAR_BOOL, 1, &config_beep_notify, NULL, NULL, dd_beep);
 	variable_add(NULL, "beep_mail", VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
+	variable_add(NULL, "console_charset", VAR_STR, 1, &config_console_charset, NULL, NULL, NULL);
 	variable_add(NULL, "completion_char", VAR_STR, 1, &config_completion_char, NULL, NULL, NULL);
 	variable_add(NULL, "completion_notify", VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 	variable_add(NULL, "debug", VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
@@ -120,6 +121,9 @@ void variable_init()
 	variable_add(NULL, "time_deviation", VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
 	variable_add(NULL, "timestamp", VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);
 	variable_add(NULL, "timestamp_show", VAR_BOOL, 1, &config_timestamp_show, NULL, NULL, NULL);
+#ifdef USE_UNICODE /* #if == 1 ? */
+	variable_add(NULL, "use_unicode", VAR_BOOL, 1, &config_use_unicode, NULL, NULL, NULL);
+#endif
 	variable_add(NULL, "windows_save", VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
 	variable_add(NULL, "windows_layout", VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
 }
@@ -134,10 +138,18 @@ void variable_set_default()
 {
 	xfree(config_timestamp);
 	xfree(config_display_color_map);
+	xfree(config_console_charset);
 
 	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
+#ifdef USE_UNICODE
+	config_console_charset	= xstrdup("UTF-8");
+	config_use_unicode	= 1;
+#else
+	/* TODO, nl_langinfo()  */
+	config_console_charset	= xstrdup("ISO-8859-2");
+#endif
 }
 
 /*

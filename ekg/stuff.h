@@ -209,6 +209,8 @@ char *config_theme;
 int config_time_deviation;
 char *config_timestamp;
 int config_timestamp_show;
+int config_use_unicode; 	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
+char *config_console_charset;	/* */
 char *config_windows_layout;
 int config_windows_save;
 
