@@ -91,6 +91,7 @@ int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
 			 *  0: normalny stan..
 			 *  1: zamykamy ui.
 			 */
+int was_unicode;	/* stara wartosc use_unicode... przy wlaczaniu ustawiamy na 1. */
 extern GtkWidget *gtk_session_new_window(void *ptr);	/* gtk-session.c */
 extern GtkWidget *gtk_settings_window(void *ptr);	/* gtk-settings.c */
 
@@ -705,6 +706,9 @@ QUERY(gtk_ui_beep) {
 
 QUERY(ekg2_gtk_loop) {
 	ui_quit = 0;
+	was_unicode = config_use_unicode;
+	config_use_unicode = 1;
+
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id);
 	gtk_contacts_update(NULL);
 
@@ -808,7 +812,6 @@ int gtk_plugin_init(int prio) {
 		debug(ekg2_another_ui);
                 return -1;
 	}
-
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
 	query_connect(&gtk_plugin, "ui-beep", gtk_ui_beep, NULL);
@@ -848,6 +851,7 @@ int gtk_plugin_init(int prio) {
 
 static int gtk_plugin_destroy() {
 	plugin_unregister(&gtk_plugin);
+	config_use_unicode = was_unicode;
 	return 0;
 }
 
