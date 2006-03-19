@@ -2584,7 +2584,11 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 				window_lock_inc(w);
 				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
-				window_lock_dec(w);
+				if ((w == window_find(target)))
+					window_lock_dec(w);
+				else {
+/* TODO: wyzeruj wszystkie locki. umarlo okno, zmienilo sie cos. lub smth... */
+				}
 				query_emit(NULL, "ui-window-refresh");
 			}
 			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
