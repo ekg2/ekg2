@@ -60,7 +60,7 @@
 
 typedef struct {
 	GtkWidget *view;
-	GtkWidget *sw;			// zeby okreslic.
+	GtkNotebookPage *page;		/* strona w notebooku */
 } gtk_window_t;
 
 GtkTreeStore *list_store;		// userlista - elementy
@@ -100,6 +100,25 @@ enum {	COLUMN_STATUS = 0,
 	COLUMN_UID,
 	COLUMN_SESSION, 
 	N_COLUMNS };
+
+
+int gtk_window_dump(GtkNotebookPage *page, int retrealid) {
+#define printf(args...) ;
+	int a = 0, b = 0;
+	int i;
+	list_t l;
+	printf("DUMP: 0x%x\n", page);
+	for (i = 0, l = windows; l; l = l->next, i++) {
+		window_t *w = l->data;
+		gtk_window_t *p = w->private;
+		if (page == p->page) { 	printf("* "); a = i; b = w->id; }
+		printf("%d\t%s\t\t0x%x 0x%x\n", w->id, window_target(w), p->page, 0);
+	}
+	printf("%d  %d ...\n", a, b);
+	if (retrealid)	return b;
+	else		return a;
+#undef printf
+}
 
 /* sprawdzenie czy mozemy zamknac okno */
 gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
@@ -161,6 +180,15 @@ void ekg2_gtk_userlist_menu_common(void *user_data) {
 	printf("[POPUP, USERLIST, COMMON] action = %x\n", (int) user_data);
 }
 
+void ekg2_gtk_window_menu_floating(void *user_data) {
+	window_t *w = user_data;
+	if (!w) return;
+	printf("[POPUP, WINDOWFLOATING, %s] wnd = %x name = %s\n", w->floating ? "ATTACH" : "DETACH", w, window_target(w));
+	w->floating = !(w->floating);
+	printf("OKNO FLOATING: %x\n", w->floating);
+/* TODO: rozlacz / przylacz okno... */
+}
+
 gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 	if (event->type == GDK_BUTTON_PRESS) {
 		GdkEventButton *event_button = (GdkEventButton *) event;
@@ -203,9 +231,10 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 /*				ekg2_gtk_menu_new(popupmenu, "Odśwież userliste", ekg2_gtk_userlist_menu_common, (void *) 1); */
 
 			} else if (widget == notebook) { /* popup menu, okna */
-				// TODO, czek czy jestesmy nad jakims...
+				window_t *w = window_current; /* TODO, zamiast aktualnego uzyc to nad ktorym jestesmy... jesli jestesmy.. */
 				popupmenu = gtk_menu_new();
-				ekg2_gtk_menu_new(popupmenu, "Rozlacz okno..", NULL, NULL); /* detach / attach */
+				
+				ekg2_gtk_menu_new(popupmenu, "Rozlacz okno..", ekg2_gtk_window_menu_floating, w); /* detach / attach */
 				ekg2_gtk_menu_new(popupmenu, "Przelacz na", NULL, NULL);
 				ekg2_gtk_menu_new(popupmenu, "Zamknij", NULL, NULL);
 			}
@@ -221,12 +250,14 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 
 /* zmiana strony - zmiana okna */
 gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data) {
+	int realid;
 	if (in_autoexec) 
 		return FALSE;
-	if (window_current->id == page_num)
+	realid = gtk_window_dump(page, 1);
+	if (window_current->id == realid)
 		return FALSE;
 	
-	window_switch(page_num); /* !!! to niekoniecznie musi byc numer okna, XXX */
+	window_switch(realid);
 	return TRUE;
 }
 
@@ -307,7 +338,7 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 			case (GDK_Down):	/* bufor polecen w dol */
 				return TRUE;
 			default:
-				printf("[KEY_DEFAULT] Nacisnales: %d (%d) (widget=%x)\n", event->keyval, event->state, (int) widget);
+//				printf("[KEY_DEFAULT] Nacisnales: %d (%d) (widget=%x)\n", event->keyval, event->state, (int) widget);
 				return FALSE;
 				 
 		}
@@ -438,6 +469,8 @@ int gtk_create() {
 	gtk_box_pack_start (GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 	gtk_widget_set_size_request(notebook, 505, 375);
 	g_signal_connect (G_OBJECT(notebook), "switch-page", G_CALLBACK(on_switch_page), NULL);
+	gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+/*	gtk_notebook_popup_enable(notebook); */ /* nic ciekawego... popup z lista okien - tyle i automagicznym przelaczaniem na nie. */
 //	gtk_notebook_set_tab_pos (notebook, 4);
 /*	ekg2_set_color(notebook); */
 	
@@ -480,7 +513,7 @@ int gtk_create() {
 	g_signal_connect (G_OBJECT(edit1), "activate", G_CALLBACK (on_enter), NULL);
 	g_signal_connect (G_OBJECT(edit1), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
 	ekg2_set_color_ext(edit1);
-	
+
 	g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), tree); /* popup menu, userlista */
 	g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), notebook); /* popup menu, okna */
 
@@ -520,17 +553,32 @@ int gtk_create() {
 void ekg_gtk_window_new(window_t *w) {
 	GtkWidget *sw, *view;
 	GtkTextBuffer *buffer;
+	GtkWidget *edit;
 	char *name = window_target(w);
-	
-	gtk_window_t *n = xmalloc(sizeof(gtk_window_t));
-	w->private = n;
+	gtk_window_t *n;
 
-	printf("WINDOW_NEW(): [%d,%s]\n", w->id, name);
+	printf("WINDOW_NEW(): [%d,%s,%d]\n", w->id, name, w->floating);
+
+	if (w->private) n = w->private;
+	else		n = xmalloc(sizeof(gtk_window_t));
+
+	w->private = n;
 
 	/* tekst - przewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_notebook_insert_page (GTK_NOTEBOOK (notebook), sw, gtk_label_new (name), w->id);
+
+	{
+		GList   *l;
+		int i;
+		for (l = GTK_NOTEBOOK(notebook)->children, i = 0; l; l = l->next, i++)
+			if (w->id == i) {
+				n->page = l->data;
+				break;
+			}
+	}
+	
 	/* tekst */
 	buffer = gtk_text_buffer_new(ekg2_table);
 	view = gtk_text_view_new_with_buffer(buffer);
@@ -540,8 +588,18 @@ void ekg_gtk_window_new(window_t *w) {
 	gtk_container_add (GTK_CONTAINER (sw), view);
 	
 	n->view = view;
-	n->sw	= sw;
 
+	if (w->floating) {
+#if 0
+	/* edit */
+		edit = gtk_entry_new ();
+		gtk_box_pack_start (GTK_BOX(vbox), edit, FALSE, TRUE, 0);
+		g_signal_connect (G_OBJECT(edit), "activate", G_CALLBACK (on_enter), w);
+		g_signal_connect (G_OBJECT(edit), "key-press-event", G_CALLBACK (gtk_key_press), w);
+		ekg2_set_color_ext(edit1);
+#endif
+	}
+	
 	ekg2_set_color_ext(view);
 
 	gtk_widget_show_all (notebook);
@@ -741,7 +799,7 @@ QUERY(gtk_ui_window_switch) {
 
 	if (!n)
 		return 1;
-	realid = gtk_notebook_page_num(GTK_NOTEBOOK(notebook), n->sw);
+	realid = gtk_window_dump(n->page, 0);
 
 	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == realid)
 		return 1;
@@ -760,7 +818,7 @@ QUERY(gtk_ui_window_kill) {
 	
 	if (!n) 
 		return 1;
-	realid = gtk_notebook_page_num(GTK_NOTEBOOK(notebook), n->sw);
+	realid = gtk_window_dump(n->page, 0);
 	printf("[UI_WINDOW_KILL] gtk_notebook_page_num() = %d; w->id = %d\n", realid, w->id);
 	
 	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), realid);
