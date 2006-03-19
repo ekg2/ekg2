@@ -124,6 +124,13 @@ int gtk_window_dump(GtkWidget *win, int retrealid) {
 
 /* sprawdzenie czy mozemy zamknac okno */
 gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
+	window_t *w = data;
+	printf("[DELETE_EVENT] 0x%x 0x%x\n", (int) w, (int) data);
+	if (w) { /* TODO, workaround. jesli zamykamy okno plywajace to na razie je przenosimy z powrotem do notebooka.
+		  * zrobic, extra przycisk ktory to bedzie robic. i przy zamykaniu naprawde zamykac. if we can ? */
+		w->floating = !w->floating;
+		ekg_gtk_window_new(w);
+	}
 // TRUE - zostawiamy okno.
 	return FALSE;
 }
@@ -578,6 +585,7 @@ void ekg_gtk_window_new(window_t *w) {
 	if (w->floating) {
 		win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 		gtk_window_set_title (GTK_WINDOW (win), name);
+		g_signal_connect(G_OBJECT(win), "delete_event", G_CALLBACK (delete_event), w);
 
 		vbox = gtk_vbox_new (FALSE, 2);
 		gtk_container_add (GTK_CONTAINER (win), vbox);
@@ -614,6 +622,9 @@ void ekg_gtk_window_new(window_t *w) {
 		ekg2_set_color_ext(edit);
 		gtk_box_pack_start (GTK_BOX (vbox), edit, FALSE, FALSE, 0);
 		gtk_widget_set_size_request(win, 505, 375);
+	}
+	if (w->floating && w->userlist) {
+/* TODO!!! */
 	}
 	
 	ekg2_set_color_ext(n->view);
