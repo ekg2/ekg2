@@ -60,7 +60,7 @@
 
 typedef struct {
 	GtkWidget *view;
-	GtkNotebookPage *page;		/* strona w notebooku */
+	GtkWidget *win;			/* strona w notebooku/ okienko (!w->floating)  */
 } gtk_window_t;
 
 GtkTreeStore *list_store;		// userlista - elementy
@@ -85,6 +85,7 @@ PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
 void gtk_contacts_update(window_t *w);
 GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function, void *data);
+void ekg_gtk_window_new(window_t *w);
 
 extern void ekg_loop();
 int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
@@ -102,17 +103,18 @@ enum {	COLUMN_STATUS = 0,
 	N_COLUMNS };
 
 
-int gtk_window_dump(GtkNotebookPage *page, int retrealid) {
+int gtk_window_dump(GtkWidget *win, int retrealid) {
 #define printf(args...) ;
 	int a = 0, b = 0;
 	int i;
 	list_t l;
-	printf("DUMP: 0x%x\n", page);
+	printf("DUMP: 0x%x\n", win);
 	for (i = 0, l = windows; l; l = l->next, i++) {
 		window_t *w = l->data;
 		gtk_window_t *p = w->private;
-		if (page == p->page) { 	printf("* "); a = i; b = w->id; }
-		printf("%d\t%s\t\t0x%x 0x%x\n", w->id, window_target(w), p->page, 0);
+		if (!p) continue;
+		if (win == p->win) { 	printf("* "); a = i; b = w->id; }
+		printf("%d\t%s\t\t0x%x 0x%x\n", w->id, window_target(w), p->win, 0);
 	}
 	printf("%d  %d ...\n", a, b);
 	if (retrealid)	return b;
@@ -135,9 +137,10 @@ void destroy(GtkWidget *widget, gpointer data) {
 /* <ENTER> editboxa */
 gint on_enter(GtkWidget *widget, gpointer data) {
 	const gchar *txt;
+	window_t *w = (data) ? data : window_current;
 	txt = gtk_entry_get_text(GTK_ENTRY(widget));
-
-	command_exec(window_current->target, window_current->session, txt, 0);
+	printf("[ON_ENTER] 0x%x %s %d\n", (int) w, window_target(w), w->id);
+	command_exec(w ? w->target : NULL, w ? w->session : NULL, txt, 0);
 
 	gtk_entry_set_text(GTK_ENTRY(widget), "");
 	return TRUE;
@@ -183,10 +186,11 @@ void ekg2_gtk_userlist_menu_common(void *user_data) {
 void ekg2_gtk_window_menu_floating(void *user_data) {
 	window_t *w = user_data;
 	if (!w) return;
-	printf("[POPUP, WINDOWFLOATING, %s] wnd = %x name = %s\n", w->floating ? "ATTACH" : "DETACH", w, window_target(w));
+	printf("[POPUP, WINDOWFLOATING, %s] wnd = %x name = %s\n", 
+			w->floating ? "ATTACH" : "DETACH", (int) w, window_target(w));
 	w->floating = !(w->floating);
 	printf("OKNO FLOATING: %x\n", w->floating);
-/* TODO: rozlacz / przylacz okno... */
+	ekg_gtk_window_new(w);
 }
 
 gint popup_handler(GtkWidget *widget, GdkEvent *event) {
@@ -253,7 +257,7 @@ gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num
 	int realid;
 	if (in_autoexec) 
 		return FALSE;
-	realid = gtk_window_dump(page, 1);
+	realid = gtk_window_dump(GTK_WIDGET(page), 1);
 	if (window_current->id == realid)
 		return FALSE;
 	
@@ -551,58 +555,72 @@ int gtk_create() {
 }
 
 void ekg_gtk_window_new(window_t *w) {
+	GtkWidget *win = NULL;
+	GtkNotebookPage *page = NULL;
+
 	GtkWidget *sw, *view;
-	GtkTextBuffer *buffer;
+	GtkTextBuffer *buffer = NULL;
 	GtkWidget *edit;
+	GtkWidget *vbox;
+	
 	char *name = window_target(w);
 	gtk_window_t *n;
 
 	printf("WINDOW_NEW(): [%d,%s,%d]\n", w->id, name, w->floating);
 
-	if (w->private) n = w->private;
-	else		n = xmalloc(sizeof(gtk_window_t));
-
-	w->private = n;
-
+	if (!w->private) w->private = xmalloc(sizeof(gtk_window_t));
+	n = w->private;
+	
 	/* tekst - przewijanie */
 	sw = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_notebook_insert_page (GTK_NOTEBOOK (notebook), sw, gtk_label_new (name), w->id);
 
-	{
-		GList   *l;
-		int i;
+	if (w->floating) {
+		win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+		gtk_window_set_title (GTK_WINDOW (win), name);
+
+		vbox = gtk_vbox_new (FALSE, 2);
+		gtk_container_add (GTK_CONTAINER (win), vbox);
+	
+		gtk_box_pack_start (GTK_BOX (vbox), sw, TRUE, TRUE, 0);		
+	} else {
+		GList *l;
+		int i, a;
+			/* TODO, w->id... w zlym miejscu moze sie stworzyc okienko. */
+		a = gtk_notebook_insert_page (GTK_NOTEBOOK (notebook), sw, gtk_label_new (name), w->id); 
 		for (l = GTK_NOTEBOOK(notebook)->children, i = 0; l; l = l->next, i++)
 			if (w->id == i) {
-				n->page = l->data;
+				page = l->data;
 				break;
 			}
 	}
-	
 	/* tekst */
-	buffer = gtk_text_buffer_new(ekg2_table);
-	view = gtk_text_view_new_with_buffer(buffer);
+	if (n->view) buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (n->view));
+	if (!buffer) buffer = gtk_text_buffer_new(ekg2_table);
+
+	n->view = view = gtk_text_view_new_with_buffer(buffer);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW (view), FALSE);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW (view), GTK_WRAP_WORD);
+	gtk_container_add (GTK_CONTAINER (sw), n->view);
 
-	gtk_container_add (GTK_CONTAINER (sw), view);
-	
-	n->view = view;
+	if (w->floating && n->win) gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), gtk_window_dump(n->win, 0));
+	if (!w->floating && n->win) ; /* TODO */
 
 	if (w->floating) {
-#if 0
-	/* edit */
+		/* edit */
 		edit = gtk_entry_new ();
-		gtk_box_pack_start (GTK_BOX(vbox), edit, FALSE, TRUE, 0);
 		g_signal_connect (G_OBJECT(edit), "activate", G_CALLBACK (on_enter), w);
-		g_signal_connect (G_OBJECT(edit), "key-press-event", G_CALLBACK (gtk_key_press), w);
-		ekg2_set_color_ext(edit1);
-#endif
+//		g_signal_connect (G_OBJECT(edit), "key-press-event", G_CALLBACK (gtk_key_press), w);
+		ekg2_set_color_ext(edit);
+		gtk_box_pack_start (GTK_BOX (vbox), edit, FALSE, FALSE, 0);
+		gtk_widget_set_size_request(win, 505, 375);
 	}
 	
-	ekg2_set_color_ext(view);
+	ekg2_set_color_ext(n->view);
+	gtk_widget_show_all(w->floating ? win : notebook);
 
-	gtk_widget_show_all (notebook);
+	if (w->floating)	n->win = win;
+	else			n->win = page;
 }
 
 /* TODO, zrobic ladniejsze.. */
@@ -796,16 +814,15 @@ QUERY(gtk_ui_window_switch) {
 	window_t *w = *(va_arg(ap, window_t **));
 	gtk_window_t *n = w->private;
 	int realid;
-
 	if (!n)
 		return 1;
-	realid = gtk_window_dump(n->page, 0);
+	realid = gtk_window_dump(n->win, 0);
 
 	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == realid)
 		return 1;
 
-	printf("[UI_WINDOW_SWITCH] gtk_notebook_page_num() = %d; w->id = %d\n", realid, w->id);
-
+	printf("[UI_WINDOW_SWITCH] gtk_window_dump() = %d; w->id = %d\n", realid, w->id);
+/* TODO: watch out on w->floating... */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), realid);
 	gtk_contacts_update(NULL);
 	return 0;
@@ -818,9 +835,9 @@ QUERY(gtk_ui_window_kill) {
 	
 	if (!n) 
 		return 1;
-	realid = gtk_window_dump(n->page, 0);
-	printf("[UI_WINDOW_KILL] gtk_notebook_page_num() = %d; w->id = %d\n", realid, w->id);
-	
+	realid = gtk_window_dump(n->win, 0);
+	printf("[UI_WINDOW_KILL] gtk_window_dump() = %d; w->id = %d\n", realid, w->id);
+/* TODO: watch out on w->floating... */
 	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), realid);
 	return 0;
 }
