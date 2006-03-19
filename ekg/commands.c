@@ -2587,7 +2587,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				if ((w == window_find(target)))
 					window_lock_dec(w);
 				else {
-/* TODO: wyzeruj wszystkie locki. umarlo okno, zmienilo sie cos. lub smth... */
+					list_t l;
+					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0\n");
+					/* may be faultly */
+					for (l=windows; l; l = l->next) {
+						window_t *w = l->data;
+						if ((!w) || !(w->lock)) continue;
+						w->lock = 0;
+					}
 				}
 				query_emit(NULL, "ui-window-refresh");
 			}
