@@ -431,10 +431,10 @@ IRC_COMMAND(irc_c_error)
 		print_window(NULL, s, 0,
 				"IRC_ERR_FIRSTSECOND",
 				session_name(s), irccommands[ecode].comm, IOK2(2));
-		if (j->connecting)
-			irc_handle_disconnect(s, param[0], EKG_DISCONNECT_NETWORK);
+		if (j->connecting) ;
+/*			irc_handle_disconnect(s, param[0], EKG_DISCONNECT_NETWORK);  */
 		else    debug("!j->connecting\n");
-		return 0;
+		return -1;
 	}
 	i = irccommands[ecode].future&0x100;
 	switch (irccommands[ecode].future&0xff)
