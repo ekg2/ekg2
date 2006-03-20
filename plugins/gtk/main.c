@@ -63,6 +63,7 @@ typedef struct {
 	GtkWidget *win;			/* strona w notebooku/ okienko (!w->floating)  */
 } gtk_window_t;
 
+GtkWidget *ekg_main_win;
 GtkTreeStore *list_store;		// userlista - elementy
 GtkWidget *tree;			// userlista - widget
 GtkWidget *notebook;			// zarzadzanie okienkami.
@@ -363,10 +364,16 @@ int gtk_loop() {
 	}
 	return (ui_quit != 1);
 }
-void ekg2_gtk_menu_url_click(char *user_data) {
-//	printf("menuitem = %x userdata = %x\n");
-	printf("[POMOC->WWW->CLICK] url = %s\n", user_data);
+
+int ekg2_open_url(char *url) {
+	printf("TODO, open url: %s\n", url);
 // TODO: otworz strone.
+	return -1;
+}
+
+
+void ekg2_gtk_menu_url_click(char *user_data) {
+	ekg2_open_url(user_data);
 }
 
 void ekg2_gtk_menu_session_add(void *user_data) {
@@ -377,6 +384,57 @@ void ekg2_gtk_menu_session_add(void *user_data) {
 void ekg2_gtk_menu_settings(void *user_data) {
 	printf("[EKG2->Ustawienia->CLICK]\n");
 	gtk_settings_window(NULL);
+}
+
+void ekg2_about_activate_url(GtkAboutDialog *about, const gchar *link, gpointer data) {
+	ekg2_open_url(link);
+}
+
+void ekg2_gtk_menu_about(void *user_data) {
+	const char *authors[] = { /* alphabetical order, from http://ekg2.org/authors.php */
+		"Leszek 'leafnode' Krupinski",
+		"Adam 'dredzik' Kuczynski",
+		"Piotr 'deletek' Kupisiewicz",
+		"Adam Mikuta",
+		"Grzegorz 'huwy' Moszumanski",
+		"Maciej Pietrzak",
+		"Mateusz 'miq' Samonek",
+		"Michal 'GiM' Spadlinski",
+		"Tomasz 'zdzichu' Torcz",
+		"Jakub 'darkjames' Zawadzki", 
+		NULL,
+	};
+	const char *docmakers[] = { /* alph order, from http://wafel.com/ekg2book/ */
+		"Leszek Krupinski",
+		"Adam Kuczynski",
+		"Piotr Kupisiewicz", 
+		"Sebastian Szary",
+		NULL,
+	};
+	const char *license = "This program is free software; you can redistribute it and/or modify\n"
+		"it under the terms of the GNU General Public License Version 2 as\n"
+		"published by the Free Software Foundation.\n"
+		"\n"
+		"This program is distributed in the hope that it will be useful,\n"
+		"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+		"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+		"GNU General Public License for more details.\n"
+		"\n"
+		"You should have received a copy of the GNU General Public License\n"
+		"along with this program; if not, write to the Free Software\n"
+		"Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.\n";
+
+	gtk_about_dialog_set_url_hook(ekg2_about_activate_url, NULL, NULL);
+/* TODO logo, wrzucic do cvs http://ekg2.org/logs/logob.gif ? */
+	gtk_show_about_dialog(GTK_WINDOW(ekg_main_win), 
+			"name", "Ekg2",
+			"version", VERSION, 
+			"copyright", "(C) 2004-2006 Grupa rozwijajaca ekg2",
+			"license", license, 
+			"website", "http://ekg2.org",
+			"authors", authors, 
+			"documenters", docmakers,
+			NULL);
 }
 
 void ekg2_gtk_menu_quit(GtkWidget *window) {
@@ -410,7 +468,7 @@ int gtk_create() {
 #ifdef EKG2_BGCOLOR
 	gdk_color_parse (EKG2_BGCOLOR, &bgcolor);
 #endif
-	win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	ekg_main_win = win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title (GTK_WINDOW (win), "ekg2 p0wer!");
 
 	ekg2_set_color(win);
@@ -458,8 +516,7 @@ int gtk_create() {
 			ekg2_gtk_menu_new(menu_www, "wiki.ekg2.org",	ekg2_gtk_menu_url_click, "http://ekg2.wafel.com");
 			gtk_menu_item_set_submenu(GTK_MENU_ITEM(mi_www), menu_www);
 		}
-		ekg2_gtk_menu_new(menu, "Autorzy", NULL, "todo");
-		ekg2_gtk_menu_new(menu, "O EKG2..", NULL, "todo");
+		ekg2_gtk_menu_new(menu, "O EKG2..", ekg2_gtk_menu_about, "about");
 		gtk_menu_item_set_submenu (GTK_MENU_ITEM (menu_help), menu);
 		/* itd... */
 		
