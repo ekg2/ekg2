@@ -60,7 +60,7 @@
 
 typedef struct {
 	GtkWidget *view;
-	GtkWidget *win;			/* strona w notebooku/ okienko (!w->floating)  */
+	void *win;			/* strona w notebooku/ okienko (!w->floating)  */
 } gtk_window_t;
 
 GtkWidget *ekg_main_win;
@@ -104,7 +104,7 @@ enum {	COLUMN_STATUS = 0,
 	N_COLUMNS };
 
 
-int gtk_window_dump(GtkWidget *win, int retrealid) {
+int gtk_window_dump(void *win, int retrealid) {
 #define printf(args...) ;
 	int a = 0, b = 0;
 	int i;
@@ -218,7 +218,7 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 					session_t *s;
 					gtk_tree_view_set_cursor(GTK_TREE_VIEW(widget), selection, NULL, FALSE); /* zaznacz! */
 					gtk_tree_model_get_iter (GTK_TREE_MODEL(list_store), &iter, selection);
-					printf("[debug,popup] widget tree: selection = %x iter = %x\n", (int) selection, iter);
+					printf("[debug,popup] widget tree: selection = %x iter = %x\n", (int) selection, (int) &iter);
 					gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_NICK, &nick, -1);
 					gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_SESSION, &session, -1);
 					gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_UID, &uid, -1);
@@ -387,7 +387,7 @@ void ekg2_gtk_menu_settings(void *user_data) {
 }
 
 void ekg2_about_activate_url(GtkAboutDialog *about, const gchar *link, gpointer data) {
-	ekg2_open_url(link);
+	ekg2_open_url((char *) link);
 }
 
 void ekg2_gtk_menu_about(void *user_data) {
@@ -759,23 +759,34 @@ void gtk_contacts_update(window_t *w) {
 
 void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *attr, int istimestamp) {
 	GtkTextIter iter;
+	GtkTextTag *tags[2] = {NULL, NULL};
+	int len = 0;
 	int i;
-/* i know ze tak nie moze wygladac, zrobione po prostu aby dzialalo. */
+/* jeszcze gorzej... ale unicode juz dziala ;)  i powinno byc `troche szybsze` */
 	for (i=0; i < xstrlen(str); i++) {
-		GtkTextTag *tags[2] = {NULL, NULL};
 		short att = attr[i];
+		GtkTextTag *newtags[2] = {NULL, NULL};
 
-		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-
-		if (!(att & 128))	tags[0] = ekg2_tags[att & 7];
-		if (att & 64)		tags[1] = ekg2_tag_bold;
+		if (!(att & 128))	newtags[0] = ekg2_tags[att & 7];
+		if (att & 64)		newtags[1] = ekg2_tag_bold;
 
 		if (istimestamp && (att & 7) == 0) tags[1] = ekg2_tag_bold;
 
-		gtk_text_buffer_insert_with_tags(buffer, &iter, str+i, 1, 
-				tags[0] ? tags[0] : tags[1], 
-				tags[0] ? tags[1] : NULL,
-				NULL);
+		if (len && ((tags[0] != newtags[0] || tags[1] != newtags[1]))) {
+			gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
+			gtk_text_buffer_insert_with_tags(buffer, &iter, 
+					str+i-len, len, 
+					tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
+			len = 0;
+		}
+
+		tags[0] = newtags[0];
+		tags[1] = newtags[1];
+		len++;
+	}
+	if (len) {
+		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
+		gtk_text_buffer_insert_with_tags(buffer, &iter, str+xstrlen(str)-len, len, tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
 	}
 }
 
@@ -858,12 +869,6 @@ QUERY(ekg2_gtk_loop) {
 	return -1;
 }
 
-QUERY(ekg2_gtk_pending) {
-	if (gtk_events_pending())
-		return -1;
-	return -1;
-}
-
 QUERY(gtk_ui_window_clear) { /* to w przeciwienstwie od ncursesowego clear. naprawde czysci okno. wiec nie myslec ze jest takie samo behavior.. */
 	GtkTextBuffer *buffer;
 	window_t *w = *(va_arg(ap, window_t **));
@@ -887,7 +892,6 @@ QUERY(gtk_ui_window_switch) {
 	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == realid)
 		return 1;
 
-	printf("[UI_WINDOW_SWITCH] gtk_window_dump() = %d; w->id = %d\n", realid, w->id);
 /* TODO: watch out on w->floating... */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), realid);
 	gtk_contacts_update(NULL);
@@ -902,7 +906,6 @@ QUERY(gtk_ui_window_kill) {
 	if (!n) 
 		return 1;
 	realid = gtk_window_dump(n->win, 0);
-	printf("[UI_WINDOW_KILL] gtk_window_dump() = %d; w->id = %d\n", realid, w->id);
 /* TODO: watch out on w->floating... */
 	gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), realid);
 	return 0;
@@ -932,9 +935,9 @@ QUERY(gtk_ui_window_act_changed) {
 		if ((!w) || !(n = w->private)) continue;
 		if (w->floating) continue; /* TODO! */
 
-		l = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), 
+		l = GTK_LABEL(gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), 
 				gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 
-					gtk_window_dump(n->win, 0)));
+					gtk_window_dump(n->win, 0))));
 		if (!l) continue;
 		printf("[ACT CHANGED] id=%d label=%x act=%d\n", w->id, l, w->act);
 		switch (w->act) {
@@ -983,6 +986,11 @@ int gtk_plugin_init(int prio) {
 		debug(ekg2_another_ui);
                 return -1;
 	}
+
+	if (!(gtk_init_check(0, NULL)))
+		return -1;
+
+/* 	bind_textdomain_codeset("ekg2", "UTF-8"); */ /* gtk robi za nas */
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
 	query_connect(&gtk_plugin, "ui-beep", gtk_ui_beep, NULL);
@@ -1001,18 +1009,14 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "session-added", gtk_statusbar_query, NULL);
 	query_connect(&gtk_plugin, "session-removed", gtk_statusbar_query, NULL);
 	query_connect(&gtk_plugin, "session-changed", gtk_contacts_changed, NULL);
-
-/* w/g developerow na !ekg2 `haki`  ;) niech im bedzie ... ;p */
+/* ui-loop */
 	query_connect(&gtk_plugin, "ui-loop", ekg2_gtk_loop, NULL);
-	query_connect(&gtk_plugin, "ui-pending", ekg2_gtk_pending, NULL);
 /* inne */
 	query_connect(&gtk_plugin, "ui-is-initialized", gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
 	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 
 /*	timer_add(&gtk_plugin, "gtk:clock", 1, 1, gtk_statusbar_timer, NULL); */
 	
-	gtk_init(0, NULL);
-
 	gtk_create();
 	
 	for (l = windows; l; l = l->next) {
