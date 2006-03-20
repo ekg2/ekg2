@@ -80,7 +80,6 @@ GdkColor fgcolor;			// foreground color
 GtkTextTagTable *ekg2_table;		// tablica z tagami... 	glowne kolorki + BOLD + inne...
 GtkTextTag *ekg2_tags[8];		// pomocnicze,		glowne kolorki
 GtkTextTag *ekg2_tag_bold;		// pomocnicze,		BOLD
-
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 
 void gtk_contacts_update(window_t *w);
@@ -95,6 +94,7 @@ int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
 int was_unicode;	/* stara wartosc use_unicode... przy wlaczaniu ustawiamy na 1. */
 extern GtkWidget *gtk_session_new_window(void *ptr);	/* gtk-session.c */
 extern GtkWidget *gtk_settings_window(void *ptr);	/* gtk-settings.c */
+QUERY(gtk_ui_window_act_changed);
 
 enum {	COLUMN_STATUS = 0, 
 	COLUMN_NICK,
@@ -128,7 +128,7 @@ gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
 	printf("[DELETE_EVENT] 0x%x 0x%x\n", (int) w, (int) data);
 	if (w) { /* TODO, workaround. jesli zamykamy okno plywajace to na razie je przenosimy z powrotem do notebooka.
 		  * zrobic, extra przycisk ktory to bedzie robic. i przy zamykaniu naprawde zamykac. if we can ? */
-		w->floating = !w->floating;
+		w->floating = 0;
 		ekg_gtk_window_new(w);
 	}
 // TRUE - zostawiamy okno.
@@ -196,7 +196,6 @@ void ekg2_gtk_window_menu_floating(void *user_data) {
 	printf("[POPUP, WINDOWFLOATING, %s] wnd = %x name = %s\n", 
 			w->floating ? "ATTACH" : "DETACH", (int) w, window_target(w));
 	w->floating = !(w->floating);
-	printf("OKNO FLOATING: %x\n", w->floating);
 	ekg_gtk_window_new(w);
 }
 
@@ -216,7 +215,7 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 					GtkTreeIter iter;
 					gchar *nick, *session, *uid;
 					session_t *s;
-
+					gtk_tree_view_set_cursor(GTK_TREE_VIEW(widget), selection, NULL, FALSE); /* zaznacz! */
 					gtk_tree_model_get_iter (GTK_TREE_MODEL(list_store), &iter, selection);
 					printf("[debug,popup] widget tree: selection = %x iter = %x\n", (int) selection, iter);
 					gtk_tree_model_get (GTK_TREE_MODEL(list_store), &iter, COLUMN_NICK, &nick, -1);
@@ -531,8 +530,7 @@ int gtk_create() {
 	gtk_widget_grab_focus(edit1);
 	gtk_widget_show_all (win);
 
-	/* atrybutu tekstu */
-	{
+	{/* atrybutu tekstu */
 		GtkTextTag *tmp = NULL;
 		int i = 0;
 		ekg2_table = gtk_text_tag_table_new();
@@ -594,8 +592,8 @@ void ekg_gtk_window_new(window_t *w) {
 	} else {
 		GList *l;
 		int i, a;
-			/* TODO, w->id... w zlym miejscu moze sie stworzyc okienko. */
-		a = gtk_notebook_insert_page (GTK_NOTEBOOK (notebook), sw, gtk_label_new (name), w->id); 
+	/* TODO, w->id... w zlym miejscu moze sie stworzyc okienko. */
+		a = gtk_notebook_insert_page(GTK_NOTEBOOK(notebook), sw, gtk_label_new(name), w->id); 
 		for (l = GTK_NOTEBOOK(notebook)->children, i = 0; l; l = l->next, i++)
 			if (w->id == i) {
 				page = l->data;
@@ -676,10 +674,9 @@ void gtk_contacts_update(window_t *w) {
 	list_t l;
 	printf("[CONTACTS_UPDATE()\n");
  	gtk_tree_store_clear(list_store);
-
+	/* zmien nazwe kolumny na nazwe aktualnej sesji */
 	gtk_tree_view_column_set_title( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_STATUS), 
-			session_current ? session_current->alias ? session_current->alias : session_current->uid : "" /* "brak sesji ?" */); /* zmien nazwe kolumny na nazwe aktualnej sesji */
-
+			session_current ? session_current->alias ? session_current->alias : session_current->uid : "" /* "brak sesji ?" */);
 	if (!sessions)
 		return;
 
@@ -796,8 +793,9 @@ QUERY(ekg2_gtk_loop) {
 	was_unicode = config_use_unicode;
 	config_use_unicode = 1;
 
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id);
-	gtk_contacts_update(NULL);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id); /* current page */
+	gtk_contacts_update(NULL);		/* userlist */
+	gtk_ui_window_act_changed(NULL, NULL);	/* act */
 
 	while (gtk_loop());
 	return -1;
@@ -864,6 +862,36 @@ QUERY(gtk_contacts_changed) {
 	return 0;
 }
 
+QUERY(gtk_ui_window_act_changed) {
+#define printf(args...) ;
+	list_t l;
+	if (ui_quit) return 1;
+	for (l=windows; l; l = l->next) {
+		window_t *w = l->data;
+		gtk_window_t *n;
+		GtkLabel *l;
+		GdkColor attr;
+
+		if ((!w) || !(n = w->private)) continue;
+		if (w->floating) continue; /* TODO! */
+
+		l = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), 
+				gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 
+					gtk_window_dump(n->win, 0)));
+		if (!l) continue;
+		printf("[ACT CHANGED] id=%d label=%x act=%d\n", w->id, l, w->act);
+		switch (w->act) {
+			case(2): gdk_color_parse ("blue", &attr); break;
+			case(1): gdk_color_parse ("green", &attr); break;
+			case(0): default: gdk_color_parse ("red", &attr);
+		}
+		gtk_widget_modify_fg (GTK_WIDGET(l), GTK_STATE_NORMAL, &attr);
+/* TODO, do dokonczenia. think about pango_color_copy() ? and making it once in gtk_create() ? */
+	}
+	return 0;
+#undef printf
+}
+
 QUERY(gtk_userlist_changed) {
 	char **p1 = va_arg(ap, char**);
 	char **p2 = va_arg(ap, char**);
@@ -906,6 +934,7 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "ui-window-new", gtk_ui_window_new, NULL);
 	query_connect(&gtk_plugin, "ui-window-print", gtk_ui_window_print, NULL);
 	query_connect(&gtk_plugin, "ui-window-switch", gtk_ui_window_switch, NULL);
+	query_connect(&gtk_plugin, "ui-window-act-changed", gtk_ui_window_act_changed, NULL);
 /* userlist */
 	query_connect(&gtk_plugin, "userlist-changed", gtk_userlist_changed, NULL);
 	query_connect(&gtk_plugin, "userlist-added", gtk_userlist_changed, NULL);
