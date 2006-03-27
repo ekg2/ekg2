@@ -2588,7 +2588,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 					window_lock_dec(w);
 				else {
 					list_t l;
-					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0\n");
+					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", target, last_name);
 					/* may be faultly */
 					for (l=windows; l; l = l->next) {
 						window_t *w = l->data;
