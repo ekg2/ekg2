@@ -18,8 +18,11 @@
 
 #include <ekg2-config.h>
 
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#include <gdk/gdkx.h>
 
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
@@ -29,6 +32,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* 
  * a lot of code was gathered from `very good` program - gRiv (acronym comes from GTK RivChat)
@@ -58,10 +62,24 @@
 #define ekg2_set_color(widget)		{ ekg2_set_color_bg(widget)		ekg2_set_color_fg(widget) }
 #define ekg2_set_color_ext(widget)	{ ekg2_set_color_bg_ext(widget)		ekg2_set_color_fg_ext(widget) }
 
+/* ikonka */ 
+#define SYSTEM_TRAY_REQUEST_DOCK    0
+#define SYSTEM_TRAY_BEGIN_MESSAGE   1
+#define SYSTEM_TRAY_CANCEL_MESSAGE  2
+
 typedef struct {
 	GtkWidget *view;
 	void *win;			/* strona w notebooku/ okienko (!w->floating)  */
 } gtk_window_t;
+
+typedef struct {
+	Window trayicon;
+	Atom trayso;
+	Atom trayop;
+	Atom traymgr;
+
+	Atom orientation;
+} ekg2_trayicon;
 
 GtkWidget *ekg_main_win;
 GtkTreeStore *list_store;		// userlista - elementy
@@ -77,6 +95,8 @@ GdkColor bgcolor;			// background color
 GdkColor fgcolor;			// foreground color
 #endif
 
+Display *xdisplay;			/* gdzie mamy okienko.. na jakim displayu. for trayicon */
+
 /* atrybuty tekstu... */
 GtkTextTagTable *ekg2_table;		// tablica z tagami... 	glowne kolorki + BOLD + inne...
 GtkTextTag *ekg2_tags[8];		// pomocnicze,		glowne kolorki
@@ -86,13 +106,14 @@ PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
 void gtk_contacts_update(window_t *w);
 GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function, void *data);
 void ekg_gtk_window_new(window_t *w);
+GdkFilterReturn ekg_trayicon_manager(GdkXEvent *xevent, GdkEvent *event, gpointer user_data);
 
 extern void ekg_loop();
 int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
 			 *  0: normalny stan..
 			 *  1: zamykamy ui.
 			 */
-int was_unicode;	/* stara wartosc use_unicode... przy wlaczaniu ustawiamy na 1. */
+int was_unicode;	/* stara wartosc use_unicode... */
 extern GtkWidget *gtk_session_new_window(void *ptr);	/* gtk-session.c */
 extern GtkWidget *gtk_settings_window(void *ptr);	/* gtk-settings.c */
 QUERY(gtk_ui_window_act_changed);
@@ -358,10 +379,19 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 }
 
 int gtk_loop() {
+	GdkEvent *ev;
 	ekg_loop();
+
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
+/* 	
+	while ((ev = gdk_event_get())) {
+		printf("EVENT: %x\n", ev);
+		gtk_main_do_event(ev);
+		gdk_event_free(ev);
+	}
+*/
 	return (ui_quit != 1);
 }
 
@@ -584,9 +614,6 @@ int gtk_create() {
 	g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), tree); /* popup menu, userlista */
 	g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), notebook); /* popup menu, okna */
 
-	gtk_widget_grab_focus(edit1);
-	gtk_widget_show_all (win);
-
 	{/* atrybutu tekstu */
 		GtkTextTag *tmp = NULL;
 		int i = 0;
@@ -613,7 +640,94 @@ int gtk_create() {
 //		gtk_text_buffer_create_tag(buffer, "FG_DARKGREEN", "foreground", "darkgreen", NULL);
 //		gtk_text_buffer_create_tag(buffer, "FG_LIGHTGREEN", "foreground", "green", NULL);
 	}
+#if 0
+	{ 	/* ikonka */
+		const char *iconfile = DATADIR"/plugins/gtk/ekg2.png";
+		GError *error = NULL;
+		GdkPixbuf *icon = gdk_pixbuf_new_from_file(iconfile, &error);
+		if (!icon) {
+			printf("LOAD_ICON() filename=%s; err=%x;\n", iconfile, (int) error);
+		}
+		gtk_window_set_icon(GTK_WINDOW(ekg_main_win), icon);
+
+		/* tray + TODO: ikonka w trayu*/
+/* egg_tray_icon_realize() */
+		ekg2_trayicon *tray = xmalloc(sizeof(ekg2_trayicon));
+
+		XClientMessageEvent ev;
+		Window trayicon;
+		xdisplay = XOpenDisplay(NULL); /* NULL == $DISPLAY */
+		Atom sel_atom;
+
+		memset(&ev, 0, sizeof(XClientMessageEvent));
+
+		sel_atom = XInternAtom (xdisplay, "_NET_SYSTEM_TRAY_S0", False);
+		trayicon = XGetSelectionOwner(xdisplay, sel_atom);
+
+		ev.type = ClientMessage;
+		ev.window = trayicon; /* GDK_WINDOW_XID(ekg_main_win->window), */
+		ev.message_type = XInternAtom (xdisplay, "_NET_SYSTEM_TRAY_OPCODE", False );
+		ev.format = 32;
+		ev.data.l[0] = time(NULL);
+		ev.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK;
+		ev.data.l[2] = gtk_widget_get_root_window(GTK_WIDGET(ekg_main_win));
+		/* TODO CHECK that values.! */
+		printf("[IKONKA] DISPLAY: 0x%x TICON: 0x%x\n", (int) xdisplay, (int) trayicon);
+		tray->trayicon	= trayicon;
+		tray->trayso	= sel_atom;					/* selection_atom */
+		tray->trayop	= ev.message_type;				/* system_tray_opcode_atom */
+		tray->traymgr	= XInternAtom (xdisplay, "MANAGER", False);	/* manager_atom */
+		tray->orientation = XInternAtom (xdisplay, "_NET_SYSTEM_TRAY_ORIENTATION", False); /* orientation_atom */
+		
+		gdk_window_add_filter(
+				gdk_window_lookup_for_display(gtk_widget_get_display(ekg_main_win), trayicon),
+				ekg_trayicon_manager, (void *) tray);
+		XSendEvent (xdisplay, trayicon, False, NoEventMask, (XEvent *) &ev);
+
+
+		int i;
+		int size = gdk_pixbuf_get_width(icon) * gdk_pixbuf_get_height(icon);
+		gulong *data = xmalloc(size * sizeof (gulong)+2);
+		for (i=0; i < size; i++) 
+			data[i] = rand() * 6666;
+		
+		XChangeProperty (xdisplay, trayicon, XInternAtom(xdisplay, "_NET_WM_ICON", False), XA_CARDINAL, 32, PropModeReplace, 
+				(guchar*) data, size+2);
+
+		XSync(xdisplay, False);
+
+/* *_unrealize() */
+#if 0
+	if (icon->manager_window != None) {
+		GdkWindow *gdkwin;
+		gdkwin = gdk_window_lookup_for_display (gtk_widget_get_display (widget), icon->manager_window);
+		gdk_window_remove_filter (gdkwin, egg_tray_icon_manager_filter, icon);
+	}
+	root_window = gdk_screen_get_root_window (gtk_widget_get_screen (widget));
+	gdk_window_remove_filter (root_window, egg_tray_icon_manager_filter, icon);
+#endif
+	}
+#endif
+	gtk_widget_grab_focus(edit1);
+	gtk_widget_show_all (win);
+
 	return 0;
+}
+
+GdkFilterReturn ekg_trayicon_manager(GdkXEvent *xevent, GdkEvent *event, gpointer user_data) {
+	XEvent *xev = (XEvent *) xevent;
+	ekg2_trayicon *tray = user_data;
+
+	if (xev->xany.type == ClientMessage && xev->xclient.message_type == tray->traymgr && xev->xclient.data.l[1] == tray->trayso)
+		printf("IKONKA MANAGER: UPDATE1\n");
+	else if (xev->xany.window == tray->traymgr) {
+		if (xev->xany.type == PropertyNotify && xev->xproperty.atom == tray->orientation)
+			printf("IKONKA MANAGER: GETORIENT\n");
+		if (xev->xany.type == DestroyNotify) {
+			printf("IKONKA MANAGER: UPDATE2\n");
+		}
+	}
+	return GDK_FILTER_CONTINUE;
 }
 
 void ekg_gtk_window_new(window_t *w) {
@@ -927,10 +1041,12 @@ QUERY(gtk_ui_window_act_changed) {
 	list_t l;
 	if (ui_quit) return 1;
 	for (l=windows; l; l = l->next) {
+		GdkColor sattr;
+		GdkColor *attr = &sattr; /* xmalloc(sizeof(GdkColor)); */
+
 		window_t *w = l->data;
 		gtk_window_t *n;
 		GtkLabel *l;
-		GdkColor attr;
 
 		if ((!w) || !(n = w->private)) continue;
 		if (w->floating) continue; /* TODO! */
@@ -940,12 +1056,15 @@ QUERY(gtk_ui_window_act_changed) {
 					gtk_window_dump(n->win, 0))));
 		if (!l) continue;
 		printf("[ACT CHANGED] id=%d label=%x act=%d\n", w->id, l, w->act);
-		switch (w->act) {
-			case(2): gdk_color_parse ("blue", &attr); break;
-			case(1): gdk_color_parse ("green", &attr); break;
-			case(0): default: gdk_color_parse ("red", &attr);
-		}
-		gtk_widget_modify_fg (GTK_WIDGET(l), GTK_STATE_NORMAL, &attr);
+		if (w != window_current) {
+			switch (w->act) {
+				case(2): gdk_color_parse ("blue", attr); break;
+				case(1): gdk_color_parse ("green", attr); break;
+				case(0): default: gdk_color_parse ("red", attr);
+			}
+		} else 
+			gdk_color_parse("yellow", attr);
+		gtk_widget_modify_fg (GTK_WIDGET(l), GTK_STATE_NORMAL, attr);
 /* TODO, do dokonczenia. think about pango_color_copy() ? and making it once in gtk_create() ? */
 	}
 	return 0;
@@ -989,8 +1108,12 @@ int gtk_plugin_init(int prio) {
 
 	if (!(gtk_init_check(0, NULL)))
 		return -1;
+/* hack, TODO, sprawdzic czy locale sa already UTF-8-friendly. i jesli sa to do nothing.. */
+#if 0
+	bind_textdomain_codeset("ekg2", "UTF-8"); /* gtk robi to za nas ?*/
+	changed_theme("theme");
+#endif
 
-/* 	bind_textdomain_codeset("ekg2", "UTF-8"); */ /* gtk robi za nas */
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
 	query_connect(&gtk_plugin, "ui-beep", gtk_ui_beep, NULL);
