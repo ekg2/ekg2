@@ -122,9 +122,9 @@ int ncurses_window_new(window_t *w);
 #define HISTORY_MAX 1000
 char *ncurses_history[HISTORY_MAX];
 int ncurses_history_index;
-char *ncurses_line;
+CHAR_T *ncurses_line;
 char *ncurses_yanked;
-char **ncurses_lines;
+CHAR_T **ncurses_lines;
 int ncurses_line_start;
 int ncurses_line_index;
 int ncurses_lines_start;
@@ -133,13 +133,14 @@ int ncurses_input_size;
 int ncurses_debug;
 
 void header_statusbar_resize();
-
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 void ncurses_spellcheck_init();
 
 int config_aspell;
 char *config_aspell_lang;
 char *config_aspell_encoding;
+#endif
 #endif
 
 int config_backlog_size;

@@ -301,17 +301,21 @@ static int ncurses_conference_renamed(void *data, va_list ap)
  */
 void ncurses_changed_aspell(const char *var)
 {
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
         /* probujemy zainicjowac jeszcze raz aspell'a */
 	if (!in_autoexec)
 		ncurses_spellcheck_init();
 #endif
+#endif
 }
 
 static int ncurses_postinit(void *data, va_list ap)
 {
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
+#endif
 #endif
 	ncurses_contacts_changed(NULL, NULL);
 	return 0;
@@ -379,13 +383,14 @@ QUERY(ncurses_setvar_default)
 	config_header_size = 0;
 	config_enter_scrolls = 0;
 	config_margin_size = 15;
-
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
         xfree(config_aspell_lang);
         xfree(config_aspell_encoding);
 
         config_aspell_lang = xstrdup("pl");
         config_aspell_encoding = xstrdup("iso8859-2");
+#endif
 #endif
 	return 0;
 }
@@ -480,11 +485,12 @@ int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "metacontact-item-added", ncurses_all_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "metacontact-item-removed", ncurses_all_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "config-postinit", ncurses_postinit, NULL);
-
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, "aspell_lang", VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, "aspell_encoding", VAR_STR, 1, &config_aspell_encoding, ncurses_changed_aspell, NULL, NULL);
+#endif
 #endif
 	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	/* this isn't very nice solution, but other solutions would require _more_

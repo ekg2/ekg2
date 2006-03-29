@@ -31,9 +31,12 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 #       include <aspell.h>
+#endif
+#else
+#warning ASPELL ISN'T CURRECTLY AVALIBLE IN UNICODE NCURSES PLUGIN SORRY... 
 #endif
 #include <ekg/char.h>
 #include <ekg/commands.h>
@@ -65,9 +68,9 @@ WINDOW *ncurses_input = NULL;		/* okno wpisywania tekstu */
 char *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
 int ncurses_history_index = 0;		/* offset w historii */
 
-char *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
+CHAR_T *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
 char *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
-char **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
+CHAR_T **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
 int ncurses_line_start = 0;		/* od którego znaku wy¶wietlamy? */
 int ncurses_line_index = 0;		/* na którym znaku jest kursor? */
 int ncurses_lines_start = 0;		/* od której linii wy¶wietlamy? */
@@ -79,12 +82,13 @@ static struct termios old_tio;
 
 int winch_pipe[2];
 int have_winch_pipe = 0;
-
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 #  define ASPELLCHAR 5
 AspellConfig * spell_config;
 AspellSpeller * spell_checker = 0;
 char *aspell_line;
+#endif
 #endif
 
 /*
@@ -92,6 +96,7 @@ char *aspell_line;
  * 
  * it inializes dictionary
  */
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 void ncurses_spellcheck_init(void)
 {
@@ -126,6 +131,7 @@ void ncurses_spellcheck_init(void)
 	    print("aspell_init_success");
 	}
 }
+#endif
 #endif
 
 /*
@@ -324,11 +330,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			l->str = str;
 			l->attr = attr;
-#if USE_UNICODE
-			l->len = wcslen(str);
-#else
-			l->len = xstrlen(str);
-#endif
+			l->len = xwcslen(str);
 			l->ts = NULL;
 			l->ts_len = 0;
 			l->ts_attr = NULL;
@@ -357,11 +359,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 					s = fstring_new(buf);
 
 					l->ts = s->str;
-#if USE_UNICODE
-					l->ts_len = wcslen(l->ts);
-#else
-					l->ts_len = xstrlen(l->ts);
-#endif
+					l->ts_len = xwcslen(l->ts);
 					l->ts_attr = s->attr;
 
 					xfree(s);
@@ -1308,7 +1306,7 @@ void update_statusbar(int commit)
 
 			case 2:
 			{
-				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count(ncurses_lines), lines_start, lines_index, line_start, line_index);
+				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count((char **) ncurses_lines), lines_start, lines_index, line_start, line_index);
 				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
 				xfree(tmp);
 				break;
@@ -1474,10 +1472,12 @@ void ncurses_init()
 	memset(ncurses_history, 0, sizeof(ncurses_history));
 
 	ncurses_binding_init();
-	
+
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	if (config_aspell)
 		ncurses_spellcheck_init();
+#endif
 #endif
 
 	ncurses_line = xmalloc(LINE_MAXLEN);
@@ -1544,8 +1544,10 @@ void ncurses_deinit()
 		ncurses_lines = NULL;
 	}
 
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
         delete_aspell_speller(spell_checker);
+#endif
 #endif
 
 	xfree(ncurses_line);
@@ -1563,11 +1565,11 @@ void ncurses_line_adjust()
 {
 	int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_len;
 
-	line_index = xstrlen(ncurses_line);
-	if (xstrlen(ncurses_line) < input->_maxx - 9 - prompt_len)
+	line_index = xwcslen(ncurses_line);
+	if (xwcslen(ncurses_line) < input->_maxx - 9 - prompt_len)
 		line_start = 0;
 	else
-		line_start = xstrlen(ncurses_line) - xstrlen(ncurses_line) % (input->_maxx - 9 - prompt_len);
+		line_start = xwcslen(ncurses_line) - xwcslen(ncurses_line) % (input->_maxx - 9 - prompt_len);
 }
 
 /*
@@ -1585,8 +1587,8 @@ void ncurses_lines_adjust()
 
 	ncurses_line = ncurses_lines[lines_index];
 
-	if (line_index > xstrlen(ncurses_line))
-		line_index = xstrlen(ncurses_line);
+	if (line_index > xwcslen(ncurses_line))
+		line_index = xwcslen(ncurses_line);
 }
 
 /*
@@ -1639,7 +1641,7 @@ void ncurses_input_update()
  *
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char(WINDOW *w, int y, int x, unsigned char ch)
+void print_char(WINDOW *w, int y, int x, unchar ch)
 {
 	wattrset(w, A_NORMAL);
 
@@ -1662,7 +1664,7 @@ void print_char(WINDOW *w, int y, int x, unsigned char ch)
  *
  * wy¶wietla w danym okienku podkreslony znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char_underlined(WINDOW *w, int y, int x, unsigned char ch)
+void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
 {
         wattrset(w, A_UNDERLINE);
 
@@ -1693,17 +1695,25 @@ void print_char_underlined(WINDOW *w, int y, int x, unsigned char ch)
 int ekg_getch(int meta)
 {
 	int ch;
-
-#define GET_TIME(tv)    (gettimeofday(&tv, (struct timezone *)NULL))
-#define DIF_TIME(t1,t2) ((t2.tv_sec -t1.tv_sec) *1000+ \
-                         (t2.tv_usec-t1.tv_usec)/1000)
-
+#if USE_UNICODE
+//	wint_t ch;
+	int retcode;
+	retcode = wget_wch(input, &ch);
+	if (retcode == ERR) ch = ERR;
+#else
 	ch = wgetch(input);
+#endif
 
 	/* 
 	 * conception is borrowed from Midnight Commander project 
 	 *    (www.ibiblio.org/mc/) 
 	 */	
+/* to dla utfa tez jest poprawne?  TODO */
+#ifndef USE_UNICODE
+
+#define GET_TIME(tv)    (gettimeofday(&tv, (struct timezone *)NULL))
+#define DIF_TIME(t1,t2) ((t2.tv_sec -t1.tv_sec) *1000+ \
+                         (t2.tv_usec-t1.tv_usec)/1000)
 	if (ch == KEY_MOUSE) {
 		int btn, mouse_state = 0, x, y;
 		static struct timeval tv1 = { 0, 0 }; 
@@ -1782,11 +1792,14 @@ int ekg_getch(int meta)
 		if (mouse_state)
 			ncurses_mouse_clicked_handler(x, y, mouse_state);
 	} 
-	if (query_emit(NULL, "ui-keypress", &ch, NULL) == -1)  
-		return -2; /* -2 - ignore that key */
 #undef GET_TIME
 #undef DIF_TIME
 
+#else
+#warning UNICODE TODO
+#endif
+	if (query_emit(NULL, "ui-keypress", &ch, NULL) == -1)  
+		return -2; /* -2 - ignore that key */
 	return ch;
 }
 
@@ -1825,6 +1838,7 @@ WATCHER(ncurses_watch_winch)
  *
  * it checks if the given word is correct
  */
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 static void spellcheck(char *what, char *where)
 {
@@ -1896,6 +1910,7 @@ aspell_loop_end:
 	}
 }
 #endif
+#endif
 
 extern volatile int sigint_count;
 /*
@@ -1907,8 +1922,10 @@ WATCHER(ncurses_watch_stdin)
 {
 	struct binding *b = NULL;
 	int ch;
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
+#endif
 #endif
 
 	/* GiM: I'm not sure if this should be like that
@@ -2029,7 +2046,7 @@ end:
 				command_exec_format(window_current->target, window_current->session, 0,
 						"%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
 			}
-		} else if (ch < 255 && xstrlen(ncurses_line) < LINE_MAXLEN - 1) {
+		} else if (ch < 255 && xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 				
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, LINE_MAXLEN - line_index - 1);
 
@@ -2059,18 +2076,17 @@ then:
 		int i;
 		
 		for (i = 0; i < 5; i++) {
-			unsigned char *p;
+			unchar *p;
 			int j;
 
 			if (!ncurses_lines[lines_start + i])
 				break;
 
 			p = ncurses_lines[lines_start + i];
-
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 			if (spell_checker) {
-				aspell_line = xmalloc(xstrlen(p));
-				memset(aspell_line, 32, xstrlen(p));
+				aspell_line = xmalloc(xwcslen(p));
 				if (line_start == 0) 
 					mispelling = 0;
 					    
@@ -2091,6 +2107,7 @@ then:
 			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
 #endif
+#endif
 		}
 
 		wmove(input, lines_index - lines_start, line_index - line_start);
@@ -2099,10 +2116,10 @@ then:
 
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
-
+#ifndef USE_UNICODE
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
-			aspell_line = xmalloc(xstrlen(ncurses_line) + 1);
+			aspell_line = xmalloc(xwcslen(ncurses_line) + 1);
 			memset(aspell_line, 32, xstrlen(aspell_line));
 			if(line_start == 0) 
 				mispelling = 0;
@@ -2110,7 +2127,7 @@ then:
 			spellcheck(ncurses_line, aspell_line);
 		}
 
-                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
+                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xwcslen(ncurses_line) - line_start; i++)
                 {
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start +
 i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
@@ -2125,14 +2142,14 @@ i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
  		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
 #endif
-
+#endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
 		if (ch == 3) ncurses_commit();
 		
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
 			mvwaddch(input, 0, ncurses_current->prompt_len, '<');
-		if (xstrlen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
+		if (xwcslen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
 			mvwaddch(input, 0, input->_maxx, '>');
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
