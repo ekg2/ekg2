@@ -431,7 +431,7 @@ static void handle_sigsegv()
 "Do pliku %s/debug.%d zapiszê ostatanie komunikaty\r\n"
 "z okna debugowania.\r\n"
 "\r\n"
-"Je¶li zostanie utworzony plik %s/core, spróbuj uruchomiæ\r\n"
+"Je¶li zostanie utworzony plik %s/core.%d, spróbuj uruchomiæ\r\n"
 "polecenie:\r\n"
 "\r\n"
 "    gdb %s %s/core.%d\r\n"
@@ -441,7 +441,7 @@ static void handle_sigsegv()
 "i najprawdopodobniej pozwoli to unikn±æ tego typu sytuacji w przysz³o¶ci.\r\n"
 "Wiêcej szczegó³ów w dokumentacji, w pliku ,,gdb.txt''.\r\n"
 "\r\n",
-config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, argv0, config_dir, (int) getpid());
+config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir,(int) getpid(), argv0, config_dir, (int) getpid());
 
         config_write_crash();
         userlist_write_crash();
