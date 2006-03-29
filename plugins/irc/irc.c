@@ -42,6 +42,7 @@
 #include <sys/filio.h>
 #endif
 
+#include <ekg/char.h>
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -1167,9 +1168,9 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		char *tmpname = saprintf("%s%s", IRC4, name);
+		char *tmpname = saprintf("irc:%s", name);
 
-		if (!xstrcasecmp(tmpname, c->name) && &irc_plugin == c->plugin)
+		if (!xwcscasecmp(tmpname, c->name) && &irc_plugin == c->plugin)
 			while (c->params[parnum])
 			{
 				if (!strcmp(c->params[parnum], "?"))
@@ -1820,7 +1821,7 @@ COMMAND(irc_command_genkey) {
 	if (!uid) 
 		return -1;
 	
-	if ((plugin_find("sim"))) {
+	if ((plugin_find(TEXT("sim")))) {
 		struct stat st;
 		char *temp1, *temp2;
 		int  ret = 0;
@@ -1868,66 +1869,66 @@ int irc_plugin_init(int prio)
 #define IRC_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS 		IRC_ONLY | SESSION_MUSTBECONNECTED
 #define IRC_FLAGS_TARGET	IRC_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	command_add(&irc_plugin, IRC4, "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:connect", NULL,	irc_command_connect, 	IRC_ONLY, NULL);
-	command_add(&irc_plugin, "irc:disconnect", "r ?",irc_command_disconnect,IRC_ONLY, NULL);
-	command_add(&irc_plugin, "irc:reconnect", "r ?",irc_command_reconnect,	IRC_ONLY, NULL);
+	command_add(&irc_plugin, TEXT("irc:"), "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:connect"), NULL,	irc_command_connect, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, TEXT("irc:disconnect"), "r ?",irc_command_disconnect,IRC_ONLY, NULL);
+	command_add(&irc_plugin, TEXT("irc:reconnect"), "r ?",irc_command_reconnect,	IRC_ONLY, NULL);
 
-	command_add(&irc_plugin, "irc:join", "w", 	irc_command_jopacy, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:part", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:cycle", "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:query", "uUw",	irc_command_query,	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:nick", "!",	irc_command_nick, 	IRC_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&irc_plugin, "irc:topic", "w ?",	irc_command_topic, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:people", NULL,	irc_command_pipl, 	IRC_ONLY, NULL);
-	command_add(&irc_plugin, "irc:names", "w?",	irc_command_names, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:add", NULL,	irc_command_add, 	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
-	command_add(&irc_plugin, "irc:msg", "!uUw !",	irc_command_msg, 	IRC_FLAGS_TARGET, NULL);
-	command_add(&irc_plugin, "irc:notice", "!uUw !",irc_command_msg, 	IRC_FLAGS_TARGET, NULL);
-	command_add(&irc_plugin, "irc:me", "uUw ?",	irc_command_me, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:ctcp", "uUw ?",	irc_command_ctcp, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:ping", "uUw ?",	irc_command_ping, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:mode", "w ?",	irc_command_mode, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:umode", "?",	irc_command_umode, 	IRC_ONLY /* _FLAGS ? */, NULL);
-	command_add(&irc_plugin, "irc:wii", "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:whois", "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:find", "uU",	irc_command_whois, 	IRC_FLAGS, NULL); /* for auto_find */
-	command_add(&irc_plugin, "irc:whowas", "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:join"), "w", 	irc_command_jopacy, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:part"), "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:cycle"), "w ?",	irc_command_jopacy, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:query"), "uUw",	irc_command_query,	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:nick"), "!",	irc_command_nick, 	IRC_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&irc_plugin, TEXT("irc:topic"), "w ?",	irc_command_topic, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:people"), NULL,	irc_command_pipl, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, TEXT("irc:names"), "w?",	irc_command_names, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:add"), NULL,	irc_command_add, 	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
+	command_add(&irc_plugin, TEXT("irc:msg"), "!uUw !",	irc_command_msg, 	IRC_FLAGS_TARGET, NULL);
+	command_add(&irc_plugin, TEXT("irc:notice"), "!uUw !",irc_command_msg, 	IRC_FLAGS_TARGET, NULL);
+	command_add(&irc_plugin, TEXT("irc:me"), "uUw ?",	irc_command_me, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:ctcp"), "uUw ?",	irc_command_ctcp, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:ping"), "uUw ?",	irc_command_ping, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:mode"), "w ?",	irc_command_mode, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:umode"), "?",	irc_command_umode, 	IRC_ONLY /* _FLAGS ? */, NULL);
+	command_add(&irc_plugin, TEXT("irc:wii"), "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:whois"), "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:find"), "uU",	irc_command_whois, 	IRC_FLAGS, NULL); /* for auto_find */
+	command_add(&irc_plugin, TEXT("irc:whowas"), "uU",	irc_command_whois, 	IRC_FLAGS, NULL);
 
-	command_add(&irc_plugin, "irc:access", "p ?",	irc_command_alist, 0, "-a --add -d --delete -s --show -l --list");
-	command_add(&irc_plugin, "irc:ban",  "uUw uU",	irc_command_ban, 	IRC_FLAGS, NULL); 
-	command_add(&irc_plugin, "irc:kick", "uUw uU ?",irc_command_kick, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:kickban", "uUw uU ?", irc_command_kickban,IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:bankick", "uUw uU ?", irc_command_kickban,IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:unban",  "uUw uU",irc_command_unban, 	IRC_FLAGS, NULL); 
-	command_add(&irc_plugin, "irc:invite", "uUw uUw",irc_command_invite, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:who", "uUw",	irc_command_who, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:access"), "p ?",	irc_command_alist, 0, "-a --add -d --delete -s --show -l --list");
+	command_add(&irc_plugin, TEXT("irc:ban"),  "uUw uU",	irc_command_ban, 	IRC_FLAGS, NULL); 
+	command_add(&irc_plugin, TEXT("irc:kick"), "uUw uU ?",irc_command_kick, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:kickban"), "uUw uU ?", irc_command_kickban,IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:bankick"), "uUw uU ?", irc_command_kickban,IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:unban"),  "uUw uU",irc_command_unban, 	IRC_FLAGS, NULL); 
+	command_add(&irc_plugin, TEXT("irc:invite"), "uUw uUw",irc_command_invite, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:who"), "uUw",	irc_command_who, 	IRC_FLAGS, NULL);
 
 /*
-	command_add(&irc_plugin, "irc:admin", "",       NULL, 0, NULL);   q admin
-	command_add(&irc_plugin, "irc:map",  "",        NULL, 0, NULL);   q map
-	command_add(&irc_plugin, "irc:links",  "",      NULL, 0, NULL); V q links
-	command_add(&irc_plugin, "irc:oper", "",	NULL, 0, NULL);   q oper %nick %pass
-	command_add(&irc_plugin, "irc:trace", "",	NULL, 0, NULL);   q trace %...
-	command_add(&irc_plugin, "irc:stats", "\"STATS\" ?",irc_command_quote, 0, NULL); V q stats
-	command:add(&irc_plugin, "irc:list", .....)			V q list 
+	command_add(&irc_plugin, TEXT("irc:admin"), "",       NULL, 0, NULL);   q admin
+	command_add(&irc_plugin, TEXT("irc:map"),  "",        NULL, 0, NULL);   q map
+	command_add(&irc_plugin, TEXT("irc:links"),  "",      NULL, 0, NULL); V q links
+	command_add(&irc_plugin, TEXT("irc:oper"), "",	NULL, 0, NULL);   q oper %nick %pass
+	command_add(&irc_plugin, TEXT("irc:trace"), "",	NULL, 0, NULL);   q trace %...
+	command_add(&irc_plugin, TEXT("irc:stats"), "\"STATS\" ?",irc_command_quote, 0, NULL); V q stats
+	command:add(&irc_plugin, TEXT("irc:list"), .....)			V q list 
 	*/
 	/* G: Yeah I know it look shitty as hell
 	 */
-	command_add(&irc_plugin, "irc:op", "uUw uU uU uU uU uU uU ?",	irc_command_devop, IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:deop", "uUw uU uU uU uU uU uU ?",	irc_command_devop, IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:voice", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:devoice", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:halfop", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:dehalfop", "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:op"), "uUw uU uU uU uU uU uU ?",	irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:deop"), "uUw uU uU uU uU uU uU ?",	irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:voice"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:devoice"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:halfop"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:dehalfop"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
 	
-	command_add(&irc_plugin, "irc:away", "?",	irc_command_away,	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:_autoaway", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:back", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:_autoback", NULL,	irc_command_away, 	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, "irc:quote", "!",	irc_command_quote,	IRC_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&irc_plugin, "irc:_conntest", "?",	irc_command_test, 	IRC_ONLY, NULL);
-	command_add(&irc_plugin, "irc:_genkeys",  "?",  irc_command_genkey, 0, NULL);
+	command_add(&irc_plugin, TEXT("irc:away"), "?",	irc_command_away,	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:_autoaway"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:back"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:_autoback"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
+	command_add(&irc_plugin, TEXT("irc:quote"), "!",	irc_command_quote,	IRC_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&irc_plugin, TEXT("irc:_conntest"), "?",	irc_command_test, 	IRC_ONLY, NULL);
+	command_add(&irc_plugin, TEXT("irc:_genkeys"),  "?",  irc_command_genkey, 0, NULL);
 
 	/* lower case: names of variables that reffer to client itself */
 	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
