@@ -139,6 +139,18 @@ char *xstrdup(const char *s)
 	return tmp;
 }
 
+CHAR_T *xwcsdup(const CHAR_T *s) 
+{
+#if USE_UNICODE
+	CHAR_T *tmp;
+	if (!s) return NULL;
+	if (!(tmp = wcsdup(s)))
+		ekg_oom_handler();
+#else
+	return xstrdup(s);
+#endif
+}
+
 size_t xstrnlen(const char *s, size_t n) 
 {
         return strnlen(fix(s), n);
@@ -194,6 +206,34 @@ char *vsaprintf(const char *format, va_list ap)
 #endif
 	
 	return res;
+}
+
+CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
+{
+#if USE_UNICODE
+	CHAR_T *res, tmp[2];
+	int size;
+
+#if defined(va_copy)
+	va_list aq;
+	va_copy(aq, ap);
+#elif defined(__va_copy)
+	va_list aq;
+	__va_copy(aq, ap);
+#endif
+	size = vswprintf(tmp, sizeof(tmp), format, ap);
+	res = xmalloc((size + 1)*sizeof(CHAR_T));
+
+#if defined(va_copy) || defined(__va_copy)
+	vswprintf(res, size + 1, format, aq);
+	va_end(aq);
+#else
+	vswprintf(res, size + 1, format, ap);
+#endif
+	return res;
+#else
+	return vsaprintf(format, ap);
+#endif
 }
 
 char *xstrstr(const char *haystack, const char *needle)

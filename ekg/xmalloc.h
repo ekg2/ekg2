@@ -34,6 +34,7 @@ void *xmalloc(size_t size);
 void xfree(void *ptr);
 void *xrealloc(void *ptr, size_t size);
 char *xstrdup(const char *s);
+CHAR_T *xwcsdup(const CHAR_T *s);
 size_t xstrnlen(const char *s, size_t n);
 char *xstrndup(const char *s, size_t n);
 void *xmemdup(void *ptr, size_t size);
@@ -67,6 +68,7 @@ char *xindex(const char *s, int c);
 char *xrindex(const char *s, int c);
 
 char *vsaprintf(const char *format, va_list ap);
+CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap);
 
 #endif /* __EKG_XMALLOC_H */
 
