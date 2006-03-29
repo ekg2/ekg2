@@ -40,9 +40,11 @@ char *xstrndup(const char *s, size_t n);
 void *xmemdup(void *ptr, size_t size);
 
 int xstrcasecmp(const char *s1, const char *s2);
+int xwcscasecmp(const CHAR_T *s1, const CHAR_T *s2);
 char *xstrcat(char *dest, const char *src);
 char *xstrchr(const char *s, int c);
 int xstrcmp(const char *s1, const char *s2);
+int xwcscmp(const CHAR_T *s1, const CHAR_T *s2);
 int xstrcoll(const char *s1, const char *s2);
 char *xstrcpy(char *dest, const char *src);
 size_t xstrcspn(const char *s, const char *reject);
@@ -54,6 +56,7 @@ char *xstrncat(char *dest, const char *src, size_t n);
 int xstrncmp(const char *s1, const char *s2, size_t n);
 char *xstrncpy(char *dest, const char *src, size_t n);
 int xstrncasecmp(const char *s1, const char *s2, size_t n);
+int xwcsncasecmp(const CHAR_T *s1, const CHAR_T *s2, size_t n);
 char *xstrpbrk(const char *s, const char *accept);
 char *xstrrchr(const char *s, int c);
 /*

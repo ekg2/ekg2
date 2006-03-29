@@ -68,6 +68,7 @@
 #include <sys/user.h>
 #endif
 
+#include "char.h"
 #include "commands.h"
 #include "events.h"
 #include "configfile.h"
@@ -588,7 +589,7 @@ WATCHER(cmd_exec_watch_handler)
 		string_append(i->buf, watch);
 		string_append(i->buf, "\r\n");
 	} else {
-		command_exec_format(i->target, session_find(i->session), quiet, "/ %s", watch);
+		command_exec_format(i->target, session_find(i->session), quiet, TEXT("/ %s"), watch);
 	}
 	return 0;
 }
@@ -1249,7 +1250,7 @@ COMMAND(cmd_ignore)
 		}
 
 		if (params[0][0] == '#') {
-			return command_exec_format(NULL, NULL, quiet, "/conference --ignore %s", params[0]);
+			return command_exec_format(NULL, NULL, quiet, TEXT("/conference --ignore %s"), params[0]);
 		}
 
                 if ((flags = ignored_check(session, get_uid(session, params[0]))))
@@ -1293,7 +1294,7 @@ COMMAND(cmd_ignore)
 		}
 
 		if (params[0][0] == '#') {
-			return command_exec_format(NULL, NULL, quiet, "/conference --unignore %s", params[0]);
+			return command_exec_format(NULL, NULL, quiet, TEXT("/conference --unignore %s"), params[0]);
 		}
 		
 		if (!unignore_all && !(uid = get_uid(session, params[0]))) {
@@ -1822,7 +1823,7 @@ COMMAND(cmd_quit)
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 		
-		command_exec_format(NULL, s, 3, "/disconnect \"%s\"", (params[0]) ? params[0] : (s->descr) ? s->descr : "");
+		command_exec_format(NULL, s, 3, TEXT("/disconnect \"%s\""), (params[0]) ? params[0] : (s->descr) ? s->descr : "");
 	}
 
 	/* nie wychodzimy tutaj, ¿eby command_exec() mia³o szansê zwolniæ
@@ -2345,7 +2346,7 @@ query:
 
 chat:
 	if (params[0] && params[1]) {
-		command_exec_format((p[0]) ? p[0] : params[0], session, quiet, "/ %s", params[1]);
+		command_exec_format((p[0]) ? p[0] : params[0], session, quiet, TEXT("/ %s"), params[1]);
 	}
 
 cleanup:
@@ -2384,9 +2385,11 @@ COMMAND(cmd_bind)
  *
  * 0/-1.
  */
-int command_exec(const char *target, session_t *session, const char *xline, int quiet)
+int command_exec(const char *target, session_t *session, const CHAR_T *xline, int quiet)
 {
-	char *cmd = NULL, *tmp, *p = NULL, short_cmd[2] = ".", *line_save = NULL, *line = NULL;
+	char *p = NULL, short_cmd[2] = ".";
+	CHAR_T *line_save = NULL, *line = NULL;
+	CHAR_T *cmd = NULL, *tmp;
 
 	command_t *last_command = NULL;
 	command_t *last_command_plugin = NULL; /* niepotrzebne, ale ktos to napisal tak ze moze kiedys mialobyc potrzebne.. wiec zostaje. */
@@ -2408,7 +2411,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (config_query_commands) {
 			for (l = commands; l; l = l->next) {
 				command_t *c = l->data;
-				int l = xstrlen(c->name);
+				int l = xwcslen(c->name);
 
 				if (l < 3 || xstrncasecmp(xline, c->name, l))
 					continue;
@@ -2421,13 +2424,13 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 
 		if (!correct_command) {
-			command_exec_format(target, session, quiet, "/ %s", xline);
+			command_exec_format(target, session, quiet, TEXT("/ %s"), xline);
 			return 0;
 		}
 	}
 	
 	send_nicks_index = 0;
-	line = line_save = xstrdup(xline);
+	line = line_save = xwcsdup(xline);
 
 	if (*line == '/')
 		line++;
@@ -2440,7 +2443,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		if (!isalpha_pl_PL(c->name[0]) && xstrlen(c->name) == 1 && line[0] == c->name[0]) {
+		if (!isalpha_pl_PL(c->name[0]) && xwcslen(c->name) == 1 && line[0] == c->name[0]) {
 			short_cmd[0] = c->name[0];
 			cmd = short_cmd;
 			p = line + 1;
@@ -2468,14 +2471,15 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			if (xstrncasecmp(c->name, session->uid, plen))
 				continue;
 		
-			if (!xstrcasecmp(c->name + plen, cmd)) {
+			if (!xwcscasecmp(c->name + plen, cmd)) {
+#warning UNICODE FIX!!!!
 				last_command = c;
 				abbrs = 1;
 				exact = 1;
 				break;
 			}
 
-			if (!xstrncasecmp(c->name + plen, cmd, xstrlen(cmd))) {
+			if (!xwcsncasecmp(c->name + plen, cmd, xwcslen(cmd))) {
 				last_command_plugin = c;
 				abbrs_plugins++;
 			} else {
@@ -2488,7 +2492,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 
-			if (!xstrcasecmp(c->name, cmd)) {
+			if (!xwcscasecmp(c->name, cmd)) {
 				last_command = c;
 				abbrs = 1;
 				exact = 1;
@@ -2497,7 +2501,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				last_command_plugin = NULL;
 				break;
 			}
-			if (!xstrncasecmp(c->name, cmd, xstrlen(cmd))) {
+			if (!xwcsncasecmp(c->name, cmd, xwcslen(cmd))) {
 				last_command = c;
 		    		abbrs++;
 			} else {
@@ -2610,7 +2614,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		return res;
 	}
 
-	if (xstrcmp(cmd, "")) {
+	if (xwcscmp(cmd, TEXT(""))) {
 		quiet = quiet & 2;
 		printq("unknown_command", cmd);
 	}
@@ -2620,20 +2624,22 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	return -1;
 }
 
-int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...)
+int command_exec_format(const char *target, session_t *session, int quiet, const CHAR_T *format, ...)
 {
+	CHAR_T *command;
 	va_list ap;
-	char *command;
 	int res;
 	
 	va_start(ap, format);
-	command = vsaprintf(format, ap);
+	command = vwcssaprintf(format, ap);
 	va_end(ap);
 	
 	if (!command) 
 		return 0;
 /*	debug("[command_exec_format] %s\n", command); */
-	res = command_exec(target, session, command, quiet);
+#ifndef USE_UNICODE
+	res = command_exec(target, session, command, quiet); /* segvuje na tym ? wtf ?! */
+#endif
 	xfree(command);
 	return res;
 }
@@ -3534,7 +3540,7 @@ COMMAND(cmd_conference)
 
 		if (c) {
 			for (l = c->recipients; l; l = l->next) {
-				command_exec_format(target, session, quiet, "/find %s\n", (char*) (l->data));
+				command_exec_format(target, session, quiet, TEXT("/find %s\n"), (char*) (l->data));
 			}
 		} else {
 			printq("conferences_noexist", params[1]);
@@ -3930,7 +3936,7 @@ COMMAND(cmd_desc)
 		return -2;
 	};
 	
-	return command_exec_format(NULL, session, 0, "/%s %s", cmd, (params[0] ? params[0] : ""));
+	return command_exec_format(NULL, session, 0, TEXT("/%s %s"), cmd, (params[0] ? params[0] : ""));
 }
 
 /*
@@ -3949,7 +3955,7 @@ static int command_add_compare(void *data1, void *data2)
 	if (!a || !a->name || !b || !b->name)
 		return 0;
 
-	return xstrcasecmp(a->name, b->name);
+	return xwcscasecmp((CHAR_T *) a->name, (CHAR_T *) b->name);
 }
 
 /*
@@ -3966,11 +3972,11 @@ static int command_add_compare(void *data1, void *data2)
  *
  * 0 je¶li siê nie uda³o, w przeciwnym razie adres do strukturki.
  */
-command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities)
+command_t *command_add(plugin_t *plugin, const CHAR_T *name, char *params, command_func_t function, int flags, char *possibilities)
 {
 	command_t *c = xmalloc(sizeof(command_t));
 
-	c->name = xstrdup(name);
+	c->name = xwcsdup(name);
 	c->params = params ? array_make(params, " ", 0, 1, 1) : NULL;
 	c->function = function;
 	c->flags = flags;
@@ -3988,14 +3994,14 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
  *  - plugin - plugin obs³uguj±cy,
  *  - name - nazwa komendy.
  */
-int command_remove(plugin_t *plugin, const char *name)
+int command_remove(plugin_t *plugin, const CHAR_T *name)
 {
 	list_t l;
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
+		if (!xwcscasecmp(name, c->name) && plugin == c->plugin) {
 			xfree(c->name);
 			array_free(c->params);
 			array_free(c->possibilities);
@@ -4044,125 +4050,125 @@ int command_remove(plugin_t *plugin, const char *name)
  */
 void command_init()
 {
-	command_add(NULL, "add", "U ? p", cmd_add, 0, "-f --find");
+	command_add(NULL, TEXT("add"), "U ? p", cmd_add, 0, "-f --find");
 
-	command_add(NULL, "alias", "p ?", cmd_alias, 0,
+	command_add(NULL, TEXT("alias"), "p ?", cmd_alias, 0,
 	 "-a --add -A --append -d --del -l --list");
 
-	command_add(NULL, "at", "p ? ? c", cmd_at, 0, 
+	command_add(NULL, TEXT("at"), "p ? ? c", cmd_at, 0, 
 	 "-a --add -d --del -l --list");
 
-	command_add(NULL, "beep", NULL, cmd_beep, 0, NULL);
+	command_add(NULL, TEXT("beep"), NULL, cmd_beep, 0, NULL);
 
-	command_add(NULL, "bind", "p ? ?", cmd_bind, 0,
+	command_add(NULL, TEXT("bind"), "p ? ?", cmd_bind, 0,
 	 "-a --add -d --del -l --list -L --list-default");
 
-	command_add(NULL, "clear", NULL, cmd_window, 0,	NULL);
+	command_add(NULL, TEXT("clear"), NULL, cmd_window, 0,	NULL);
  
-        command_add(NULL, "conference", "p C uU", cmd_conference, SESSION_MUSTHAS,
+        command_add(NULL, TEXT("conference"), "p C uU", cmd_conference, SESSION_MUSTHAS,
           "-a --add -j --join -d --del -i --ignore -u --unignore -r --rename -f --find -l --list");
  
-	command_add(NULL, "dcc", "p u f ?", cmd_dcc, 0,
+	command_add(NULL, TEXT("dcc"), "p u f ?", cmd_dcc, 0,
 	  "send rsend get resumce rvoice voice close list");
 
-	command_add(NULL, "del", "u ?", cmd_del, 0, NULL);
+	command_add(NULL, TEXT("del"), "u ?", cmd_del, 0, NULL);
 	
-	command_add(NULL, "echo", "?", cmd_echo, 0, NULL);
+	command_add(NULL, TEXT("echo"), "?", cmd_echo, 0, NULL);
 	  
-	command_add(NULL, "exec", "p UuC ?", cmd_exec, 0,
+	command_add(NULL, TEXT("exec"), "p UuC ?", cmd_exec, 0,
 	  "-m --msg -b --bmsg");
 	
-	command_add(NULL, "eval", "!", cmd_eval, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(NULL, TEXT("eval"), "!", cmd_eval, COMMAND_ENABLEREQPARAMS, NULL);
  
-	command_add(NULL, "for", "!p !? !c", cmd_for, COMMAND_ENABLEREQPARAMS,
+	command_add(NULL, TEXT("for"), "!p !? !c", cmd_for, COMMAND_ENABLEREQPARAMS,
           "-s --sessions -u --users -w --windows");
  
-	command_add(NULL, "!", "?", cmd_exec, 0, NULL);
+	command_add(NULL, TEXT("!"), "?", cmd_exec, 0, NULL);
 
-	command_add(NULL, "help", "c vS", cmd_help, 0, NULL);
+	command_add(NULL, TEXT("help"), "c vS", cmd_help, 0, NULL);
 	  
-	command_add(NULL, "?", "c vS", cmd_help, 0, NULL);
+	command_add(NULL, TEXT("?"), "c vS", cmd_help, 0, NULL);
 	 
-	command_add(NULL, "ignore", "uUC I", cmd_ignore, 0,
+	command_add(NULL, TEXT("ignore"), "uUC I", cmd_ignore, 0,
 	  "status descr notify msg dcc events *");
 	  
-	command_add(NULL, "last", "CpuU CuU", cmd_last, SESSION_MUSTHAS,
+	command_add(NULL, TEXT("last"), "CpuU CuU", cmd_last, SESSION_MUSTHAS,
 	  "-c --clear -s --stime -n --number");
 
-        command_add(NULL, "metacontact", "mp m s uU ?", cmd_metacontact, 0,
+        command_add(NULL, TEXT("metacontact"), "mp m s uU ?", cmd_metacontact, 0,
           "-a --add -d --del -i --add-item -r --del-item -l --list");
 
-	command_add(NULL, "list", "CpuUsm", cmd_list, SESSION_MUSTHAS,
+	command_add(NULL, TEXT("list"), "CpuUsm", cmd_list, SESSION_MUSTHAS,
 	  "-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online");
 	  
-	command_add(NULL, "on", "p e ? UuC c", cmd_on, SESSION_MUSTHAS,
+	command_add(NULL, TEXT("on"), "p e ? UuC c", cmd_on, SESSION_MUSTHAS,
 	  "-a --add -d --del -l --list" );
 	
-	command_add(NULL, "play", "!f", cmd_play, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(NULL, TEXT("play"), "!f", cmd_play, COMMAND_ENABLEREQPARAMS, NULL);
 
-	command_add(NULL, "plugin", "P ?", cmd_plugin, 0, NULL);
+	command_add(NULL, TEXT("plugin"), "P ?", cmd_plugin, 0, NULL);
 
-	command_add(NULL, "query", "uUCms ?", cmd_query, SESSION_MUSTHAS,
+	command_add(NULL, TEXT("query"), "uUCms ?", cmd_query, SESSION_MUSTHAS,
 	  "-c --clear");
 
-	command_add(NULL, "queue", "puUC uUC", cmd_queue, 0, 
+	command_add(NULL, TEXT("queue"), "puUC uUC", cmd_queue, 0, 
 	  "-c --clear");
 
  
-	command_add(NULL, "quit", "r", cmd_quit, 0, NULL);
+	command_add(NULL, TEXT("quit"), "r", cmd_quit, 0, NULL);
 	  
-	command_add(NULL, "reload", NULL, cmd_reload, 0, NULL);
+	command_add(NULL, TEXT("reload"), NULL, cmd_reload, 0, NULL);
 	  
-	command_add(NULL, "save", NULL, cmd_save, SESSION_MUSTHAS, NULL);
+	command_add(NULL, TEXT("save"), NULL, cmd_save, SESSION_MUSTHAS, NULL);
 
-	command_add(NULL, "say", "!", cmd_say, COMMAND_ENABLEREQPARAMS,
+	command_add(NULL, TEXT("say"), "!", cmd_say, COMMAND_ENABLEREQPARAMS,
 	  "-c --clear");
 	  
-        command_add(NULL, "session", "psS psS sS ?", session_command, 0,
+        command_add(NULL, TEXT("session"), "psS psS sS ?", session_command, 0,
           "-a --add -d --del -l --list -g --get -s --set -w --sw");
 
-	command_add(NULL, "set", "v ?s", cmd_set, 0, NULL);
+	command_add(NULL, TEXT("set"), "v ?s", cmd_set, 0, NULL);
 
-        command_add(NULL,  "status", "s", cmd_status, 0, NULL);
+        command_add(NULL, TEXT("status"), "s", cmd_status, 0, NULL);
 
-	command_add(NULL, "tabclear", "p", cmd_tabclear, 0,
+	command_add(NULL, TEXT("tabclear"), "p", cmd_tabclear, 0,
 	  "-o --offline");
 
-	command_add(NULL, "timer", "p ? ? c", cmd_timer, 0,
+	command_add(NULL, TEXT("timer"), "p ? ? c", cmd_timer, 0,
 	  "-a --add -d --del -l --list");
 
-	command_add(NULL, "unignore", "i ?", cmd_ignore, 0, NULL);
+	command_add(NULL, TEXT("unignore"), "i ?", cmd_ignore, 0, NULL);
 	  
-	command_add(NULL, "version", NULL, cmd_version, 0, NULL);
+	command_add(NULL, TEXT("version"), NULL, cmd_version, 0, NULL);
 	  
-	command_add(NULL, "window", "p ? p", cmd_window, 0,
+	command_add(NULL, TEXT("window"), "p ? p", cmd_window, 0,
 	  "active clear kill last list move new next prev switch refresh left right");
 
-	command_add(NULL, "_watches", NULL, cmd_debug_watches, 0,NULL);
+	command_add(NULL, TEXT("_watches"), NULL, cmd_debug_watches, 0,NULL);
  
-	command_add(NULL, "_queries", NULL, cmd_debug_queries, 0, NULL);
+	command_add(NULL, TEXT("_queries"), NULL, cmd_debug_queries, 0, NULL);
 
-	command_add(NULL, "_query", "? ? ? ? ? ? ? ? ? ?", cmd_debug_query, 0,NULL); 
+	command_add(NULL, TEXT("_query"), "? ? ? ? ? ? ? ? ? ?", cmd_debug_query, 0,NULL); 
 
-	command_add(NULL, "_addtab", "!", cmd_test_addtab, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(NULL, TEXT("_addtab"), "!", cmd_test_addtab, COMMAND_ENABLEREQPARAMS, NULL);
  
-	command_add(NULL, "_deltab", "!", cmd_test_deltab, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(NULL, TEXT("_deltab"), "!", cmd_test_deltab, COMMAND_ENABLEREQPARAMS, NULL);
 
-	command_add(NULL, "_fds", NULL, cmd_test_fds, 0, NULL);
+	command_add(NULL, TEXT("_fds"), NULL, cmd_test_fds, 0, NULL);
 
-	command_add(NULL, "_mem", NULL, cmd_test_mem, 0, NULL);
+	command_add(NULL, TEXT("_mem"), NULL, cmd_test_mem, 0, NULL);
 
-	command_add(NULL, "_msg", "uUC ?", cmd_test_send, 0, NULL);
+	command_add(NULL, TEXT("_msg"), "uUC ?", cmd_test_send, 0, NULL);
 
-	command_add(NULL, "_segv", NULL, cmd_test_segv, 0, NULL);
+	command_add(NULL, TEXT("_segv"), NULL, cmd_test_segv, 0, NULL);
  
-	command_add(NULL, "_debug", "!", cmd_test_debug, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(NULL, TEXT("_debug"), "!", cmd_test_debug, COMMAND_ENABLEREQPARAMS, NULL);
  
-	command_add(NULL, "_debug_dump", NULL, cmd_test_debug_dump, 0, NULL);
+	command_add(NULL, TEXT("_debug_dump"), NULL, cmd_test_debug_dump, 0, NULL);
  
-	command_add(NULL, "_event_test", "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(NULL, TEXT("_event_test"), "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
 
-	command_add(NULL, "_desc", "r", cmd_desc, 0, NULL);
+	command_add(NULL, TEXT("_desc"), "r", cmd_desc, 0, NULL);
 }
 
 /*

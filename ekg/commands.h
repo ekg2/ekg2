@@ -21,6 +21,7 @@
 #ifndef __EKG_COMMANDS_H
 #define __EKG_COMMANDS_H
 
+#include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
 #include "sessions.h"
@@ -56,7 +57,7 @@ typedef COMMAND(command_func_t);
 
 typedef struct {
 	/* public: */
-	char *name;
+	CHAR_T *name;
 	plugin_t *plugin;
 
 	/* private: */
@@ -68,13 +69,13 @@ typedef struct {
 
 list_t commands;
 
-command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities);
-int command_remove(plugin_t *plugin, const char *name);
+command_t *command_add(plugin_t *plugin, const CHAR_T *name, char *params, command_func_t function, int flags, char *possibilities);
+int command_remove(plugin_t *plugin, const CHAR_T *name);
 command_t *command_find (const char *name);
 void command_init();
 void command_free();
-int command_exec(const char *target, session_t *session, const char *line, int quiet);
-int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...);
+int command_exec(const char *target, session_t *session, const CHAR_T *line, int quiet);
+int command_exec_format(const char *target, session_t *session, int quiet, const CHAR_T *format, ...);
 
 COMMAND(cmd_alias_exec);
 COMMAND(cmd_exec);

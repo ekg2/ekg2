@@ -176,7 +176,7 @@ void ekg_loop()
                                 continue;
 
                         if (time(NULL) - s->activity > tmp)
-                                command_exec(NULL, s, "/_autoaway", 0);
+                                command_exec(NULL, s, TEXT("/_autoaway"), 0);
                 }
 
 		/* sprawd¼ scroll timeouty */
@@ -192,7 +192,7 @@ void ekg_loop()
 				continue;
 
 			if (time(NULL) - s->scroll_last > tmp)
-				command_exec(NULL, s, "/_autoscroll", 0);
+				command_exec(NULL, s, TEXT("/_autoscroll"), 0);
 		}
 
                 /* auto save */
@@ -256,53 +256,10 @@ void ekg_loop()
                         if ((w->type & WATCH_WRITE))
                                 FD_SET(w->fd, &wd);
                 }
-
-                /* domy¶lny timeout to 1s */
-
-                tv.tv_sec = 1;
-                tv.tv_usec = 0;
-
-                /* ale je¶li który¶ timer ma wyst±piæ wcze¶niej ni¿ za sekundê
-                 * to skróæmy odpowiednio czas oczekiwania */
-
-                for (l = timers; l; l = l->next) {
-                        struct timer *t = l->data;
-                        struct timeval tv2;
-                        struct timezone tz;
-                        int usec = 0;
-
-                        gettimeofday(&tv2, &tz);
-
-                        /* ¿eby unikn±æ przekrêcenia licznika mikrosekund przy
-                         * wiêkszych czasach, pomijamy d³ugie timery */
-
-                        if (t->ends.tv_sec - tv2.tv_sec > 5)
-                                continue;
-
-                        /* zobacz, ile zosta³o do wywo³ania timera */
-
-                        usec = (t->ends.tv_sec - tv2.tv_sec) * 1000000 + (t->ends.tv_usec - tv2.tv_usec);
-
-                        /* je¶li wiêcej ni¿ sekunda, to nie ma znacznia */
-
-                        if (usec >= 1000000)
-                                continue;
-
-                        /* je¶li mniej ni¿ aktualny timeout, zmniejsz */
-
-                        if (tv.tv_sec * 1000000 + tv.tv_usec > usec) {
-                                tv.tv_sec = 0;
-                                tv.tv_usec = usec;
-                        }
-                }
-
                 /* na wszelki wypadek sprawd¼ warto¶ci */
 
-                if (tv.tv_sec < 0)
-                        tv.tv_sec = 0;
-
-                if (tv.tv_usec < 0)
-                        tv.tv_usec = 1;
+		tv.tv_sec = 0;
+		tv.tv_usec = 10;
 
                 /* sprawd¼, co siê dzieje */
 
@@ -367,7 +324,7 @@ watches_again:
                                         if (session_int_get(s, "auto_back") != 2)
                                                 continue;
 
-                                        command_exec(NULL, s, "/_autoback", 2);
+                                        command_exec(NULL, s, TEXT("/_autoback"), 2);
                                 }
                         }
 
@@ -618,8 +575,7 @@ int main(int argc, char **argv)
 
         setlocale(LC_ALL, "");
         bindtextdomain("ekg2",LOCALEDIR);
-        textdomain("ekg2");
-
+	textdomain("ekg2");
         srand(time(NULL));
 
         strlcpy(argv0, argv[0], sizeof(argv0));
@@ -873,7 +829,7 @@ int main(int argc, char **argv)
                 if (!cmd)
                         cmd = s->status;
 
-                command_exec_format(NULL, s, 2, "/%s %s", cmd, (new_descr) ? new_descr : "");
+                command_exec_format(NULL, s, 2, TEXT("/%s %s"), cmd, (new_descr) ? new_descr : "");
         }
 
         /* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
@@ -882,7 +838,7 @@ int main(int argc, char **argv)
                 session_t *s = l->data;
 
                 if (auto_connect && session_int_get(s, "auto_connect") == 1)
-                        command_exec(NULL, s, "/connect", 0);
+                        command_exec(NULL, s, TEXT("/connect"), 0);
         }
 
         if (config_auto_save)

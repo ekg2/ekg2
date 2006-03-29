@@ -190,7 +190,9 @@ char *va_format_string(const char *format, va_list ap)
         string_t buf = string_init(NULL);
         const char *p, *args[9];
         int i, argc = 0;
-
+#if USE_UNICODE
+#warning TODO!, THE MOST IMPORTANT.
+#endif
         /* liczymy ilo¶æ argumentów */
         for (p = format; *p; p++) {
                 if (*p == '\\' && p[1] == '%') {

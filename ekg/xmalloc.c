@@ -208,6 +208,7 @@ char *vsaprintf(const char *format, va_list ap)
 	return res;
 }
 
+/* it's ok ? */
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
 {
 #if USE_UNICODE
@@ -251,6 +252,15 @@ int xstrcasecmp(const char *s1, const char *s2)
 	return strcasecmp(fix(s1), fix(s2));
 }
 
+int xwcscasecmp(const CHAR_T *s1, const CHAR_T *s2) 
+{
+#if USE_UNICODE
+	return wcscasecmp(s1, s2);
+#else
+	return xstrcasecmp(s1, s2);
+#endif
+}
+
 char *xstrcat(char *dest, const char *src) 
 {
 	return strcat(dest, fix(src));
@@ -264,6 +274,15 @@ char *xstrchr(const char *s, int c)
 int xstrcmp(const char *s1, const char *s2)
 {
 	return strcmp(fix(s1), fix(s2));
+}
+
+int xwcscmp(const CHAR_T *s1, const CHAR_T *s2) 
+{
+#if USE_UNICODE
+	return wcscmp(s1, s2);
+#else
+	return xstrcmp(s1, s2);
+#endif
 }
 
 int xstrcoll(const char *s1, const char *s2)
@@ -324,6 +343,15 @@ char *xstrncpy(char *dest, const char *src, size_t n)
 int xstrncasecmp(const char *s1, const char *s2, size_t n)
 {
 	return strncasecmp(fix(s1), fix(s2), n);
+}
+
+int xwcsncasecmp(const CHAR_T *s1, const CHAR_T *s2, size_t n)
+{
+#if USE_UNICODE
+	return wcsncasecmp(s1, s2, n);
+#else
+	return xstrncasecmp(s1, s2, n);
+#endif
 }
 
 char *xstrpbrk(const char *s, const char *accept) 
