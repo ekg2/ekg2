@@ -251,6 +251,16 @@ size_t xstrlen(const char *s)
 	return strlen(fix(s));
 }
 
+size_t xwcslen(const CHAR_T *s)
+{
+#if USE_UNICODE
+	if (!s) return 0; /* fix() ? */
+	return wcslen(s);
+#else
+	return xstrlen(s);
+#endif
+}
+
 int xstrncasecmp_pl(const char *s1, const char *s2, size_t n)
 {
 	return strncasecmp_pl(fix(s1), fix(s2), n);

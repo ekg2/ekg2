@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include "char.h"
 #include "stuff.h"
 
 void ekg_oom_handler();
@@ -46,6 +47,7 @@ char *xstrcpy(char *dest, const char *src);
 size_t xstrcspn(const char *s, const char *reject);
 char *xstrfry(char *string);
 size_t xstrlen(const char *s);
+size_t xwcslen(const CHAR_T *s);
 int xstrncasecmp_pl(const char *s1, const char *s2, size_t n);
 char *xstrncat(char *dest, const char *src, size_t n);
 int xstrncmp(const char *s1, const char *s2, size_t n);
