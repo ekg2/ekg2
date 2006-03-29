@@ -54,7 +54,7 @@ enum window_frame_t {
 typedef struct {
 	WINDOW *window;		/* okno okna */
 
-	CHAR_T *prompt;		/* sformatowany prompt lub NULL */
+	char *prompt;		/* sformatowany prompt lub NULL */
 	int prompt_len;		/* d³ugo¶æ prompta lub 0 */
 
 	int margin_left, margin_right, margin_top, margin_bottom;
@@ -79,8 +79,8 @@ typedef struct {
 } ncurses_window_t;
 
 struct format_data {
-	CHAR_T *name;			/* %{nazwa} */
-	CHAR_T *text;			/* tre¶æ */
+	char *name;			/* %{nazwa} */
+	char *text;			/* tre¶æ */
 };
 
 int ncurses_debug;
@@ -120,11 +120,11 @@ int ncurses_window_new(window_t *w);
 #define yanked ncurses_yanked
 
 #define HISTORY_MAX 1000
-CHAR_T *ncurses_history[HISTORY_MAX];
+char *ncurses_history[HISTORY_MAX];
 int ncurses_history_index;
-CHAR_T *ncurses_line;
-CHAR_T *ncurses_yanked;
-CHAR_T **ncurses_lines;
+char *ncurses_line;
+char *ncurses_yanked;
+char **ncurses_lines;
 int ncurses_line_start;
 int ncurses_line_index;
 int ncurses_lines_start;
@@ -138,12 +138,12 @@ void header_statusbar_resize();
 void ncurses_spellcheck_init();
 
 int config_aspell;
-CHAR_T *config_aspell_lang;
-CHAR_T *config_aspell_encoding;
+char *config_aspell_lang;
+char *config_aspell_encoding;
 #endif
 
 int config_backlog_size;
-void changed_backlog_size(const CHAR_T *var);
+void changed_backlog_size(const char *var);
 int config_display_transparent;
 int config_display_crap;
 int config_enter_scrolls;
