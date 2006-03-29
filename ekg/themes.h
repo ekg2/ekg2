@@ -20,6 +20,7 @@
 #ifndef __EKG_THEMES_H
 #define __EKG_THEMES_H
 
+#include <ekg/char.h>
 #include <ekg/sessions.h>
 
 #include "dynstuff.h"
@@ -36,7 +37,7 @@ struct format {
 };
 
 typedef struct {
-	char *str;	/* znaki, ci±g zakoñczony \0 */
+	CHAR_T *str;	/* znaki, ci±g zakoñczony \0 */
 	short *attr;	/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	int ts;		/* timestamp */
 

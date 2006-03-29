@@ -438,6 +438,7 @@ char *va_format_string(const char *format, va_list ap)
 fstring_t *fstring_new(const char *str)
 {
         fstring_t *res = xmalloc(sizeof(fstring_t));
+	char *tmpstr;
         short attr = 128;
         int i, j, len = 0, isbold = 0;
 
@@ -467,7 +468,7 @@ fstring_t *fstring_new(const char *str)
                 len++;
         }
 
-        res->str = xmalloc(len + 1);
+        tmpstr = xmalloc(len + 1);
         res->attr = xmalloc((len + 1) * sizeof(short));
         res->prompt_len = 0;
         res->prompt_empty = 0;
@@ -560,20 +561,27 @@ wedonthavem:
                         int k = 0, l = 8 - (j % 8);
 
                         for (k = 0; k < l; j++, k++) {
-                                res->str[j] = ' ';
+                                tmpstr[j] = ' ';
                                 res->attr[j] = attr;
                         }
 
                         continue;
                 }
 
-                res->str[j] = str[i];
+                tmpstr[j] = str[i];
                 res->attr[j] = attr;
                 j++;
         }
 
-        res->str[j] = 0;
+        tmpstr[j] = 0;
         res->attr[j] = 0;
+
+#if USE_UNICODE
+	res->str = xcalloc(len+1, sizeof(wchar_t));
+	mbstowcs(res->str, tmpstr, len);
+#else
+	res->str = tmpstr;
+#endif
 
         return res;
 }
