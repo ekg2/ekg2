@@ -35,9 +35,8 @@
 #ifdef WITH_ASPELL
 #       include <aspell.h>
 #endif
-#else
-#warning ASPELL ISN'T CURRECTLY AVALIBLE IN UNICODE NCURSES PLUGIN SORRY... 
 #endif
+
 #include <ekg/char.h>
 #include <ekg/commands.h>
 #include <ekg/sessions.h>
@@ -54,6 +53,14 @@
 #include "bindings.h"
 #include "contacts.h"
 #include "mouse.h"
+
+#ifdef USE_UNICODE
+#ifdef WITH_ASPELL
+#warning ASPELL ISN'T CURRECTLY AVALIBLE IN UNICODE NCURSES PLUGIN SORRY... 
+#undef WITH_ASPELL
+#endif
+#endif
+
 
 #if USE_UNICODE
 # define unchar wchar_t
@@ -82,13 +89,11 @@ static struct termios old_tio;
 
 int winch_pipe[2];
 int have_winch_pipe = 0;
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 #  define ASPELLCHAR 5
 AspellConfig * spell_config;
 AspellSpeller * spell_checker = 0;
 char *aspell_line;
-#endif
 #endif
 
 /*
@@ -96,7 +101,6 @@ char *aspell_line;
  * 
  * it inializes dictionary
  */
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 void ncurses_spellcheck_init(void)
 {
@@ -131,7 +135,6 @@ void ncurses_spellcheck_init(void)
 	    print("aspell_init_success");
 	}
 }
-#endif
 #endif
 
 /*
@@ -1473,11 +1476,9 @@ void ncurses_init()
 
 	ncurses_binding_init();
 
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	if (config_aspell)
 		ncurses_spellcheck_init();
-#endif
 #endif
 
 	ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unchar));
@@ -1544,10 +1545,8 @@ void ncurses_deinit()
 		ncurses_lines = NULL;
 	}
 
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
         delete_aspell_speller(spell_checker);
-#endif
 #endif
 
 	xfree(ncurses_line);
@@ -1843,7 +1842,6 @@ WATCHER(ncurses_watch_winch)
  *
  * it checks if the given word is correct
  */
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 static void spellcheck(char *what, char *where)
 {
@@ -1915,7 +1913,6 @@ aspell_loop_end:
 	}
 }
 #endif
-#endif
 
 extern volatile int sigint_count;
 /*
@@ -1927,10 +1924,8 @@ WATCHER(ncurses_watch_stdin)
 {
 	struct binding *b = NULL;
 	int ch;
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
-#endif
 #endif
 
 	/* GiM: I'm not sure if this should be like that
@@ -2088,7 +2083,6 @@ then:
 				break;
 
 			p = ncurses_lines[lines_start + i];
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 			if (spell_checker) {
 				aspell_line = xmalloc(xwcslen(p));
@@ -2111,17 +2105,14 @@ then:
 #else
 			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
-#endif
-#endif
 		}
-
+#endif
 		wmove(input, lines_index - lines_start, line_index - line_start);
 	} else {
 		int i;
 
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
 			aspell_line = xmalloc(xwcslen(ncurses_line) + 1);
@@ -2144,9 +2135,8 @@ i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 		if (spell_checker)
 			xfree(aspell_line);
 #else
- 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
+ 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xwcslen(ncurses_line) - line_start; i++)
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
-#endif
 #endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
 		if (ch == 3) ncurses_commit();
