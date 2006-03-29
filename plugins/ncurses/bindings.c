@@ -61,15 +61,15 @@ static void binding_backward_word(const char *arg)
 
 static void binding_forward_word(const char *arg)
 {
-	while (line_index < xstrlen(line) && line[line_index] == ' ')
+	while (line_index < xwcslen(line) && line[line_index] == ' ')
 		line_index++;
-	while (line_index < xstrlen(line) && line[line_index] != ' ')
+	while (line_index < xwcslen(line) && line[line_index] != ' ')
 		line_index++;
 }
 
 static void binding_kill_word(const char *arg)
 {
-	char *p = line + line_index;
+	CHAR_T *p = line + line_index;
 	int eaten = 0;
 
 	while (*p && *p == ' ') {
@@ -82,7 +82,7 @@ static void binding_kill_word(const char *arg)
 		eaten++;
 	}
 
-	memmove(line + line_index, line + line_index + eaten, xstrlen(line) - line_index - eaten + 1);
+	memmove(line + line_index, line + line_index + eaten, xwcslen(line) - line_index - eaten + 1);
 }
 
 static void binding_toggle_input(const char *arg)
@@ -96,7 +96,7 @@ static void binding_toggle_input(const char *arg)
 		int i;
 	
 		for (i = 0; lines[i]; i++) {
-			if (!xstrcmp(lines[i], "") && !lines[i + 1])
+			if (!xwcscmp(lines[i], TEXT("")) && !lines[i + 1])
 				break;
 
 			string_append(s, lines[i]);
@@ -132,11 +132,11 @@ static void binding_cancel_input(const char *arg)
 
 static void binding_backward_delete_char(const char *arg)
 {
-	if (lines && line_index == 0 && lines_index > 0 && xstrlen(lines[lines_index]) + xstrlen(lines[lines_index - 1]) < LINE_MAXLEN) {
+	if (lines && line_index == 0 && lines_index > 0 && xwcslen(lines[lines_index]) + xwcslen(lines[lines_index - 1]) < LINE_MAXLEN) {
 		int i;
 
-		line_index = xstrlen(lines[lines_index - 1]);
-		xstrcat(lines[lines_index - 1], lines[lines_index]);
+		line_index = xwcslen(lines[lines_index - 1]);
+		xwcscat(lines[lines_index - 1], lines[lines_index]);
 		
 		xfree(lines[lines_index]);
 
@@ -151,7 +151,7 @@ static void binding_backward_delete_char(const char *arg)
 		return;
 	}
 
-	if (xstrlen(line) > 0 && line_index > 0) {
+	if (xwcslen(line) > 0 && line_index > 0) {
 		memmove(line + line_index - 1, line + line_index, LINE_MAXLEN - line_index);
 		line[LINE_MAXLEN - 1] = 0;
 		line_index--;
@@ -166,7 +166,7 @@ static void window_kill_binding(const char *arg)
                 print("cant_kill_irc_window");
                 return;
         }
-        command_exec(window_current->target, window_current->session, "/window kill", 0);
+        command_exec(window_current->target, window_current->session, TEXT("/window kill"), 0);
 }
 
 static void binding_kill_line(const char *arg)
@@ -176,7 +176,7 @@ static void binding_kill_line(const char *arg)
 
 static void binding_yank(const char *arg)
 {
-	if (yanked && xstrlen(yanked) + xstrlen(line) + 1 < LINE_MAXLEN) {
+	if (yanked && xstrlen(yanked) + xwcslen(line) + 1 < LINE_MAXLEN) {
 		memmove(line + line_index + xstrlen(yanked), line + line_index, LINE_MAXLEN - line_index - xstrlen(yanked));
 		memcpy(line + line_index, yanked, xstrlen(yanked));
 		line_index += xstrlen(yanked);
@@ -185,7 +185,7 @@ static void binding_yank(const char *arg)
 
 static void binding_delete_char(const char *arg)
 {
-	if (line_index == xstrlen(line) && lines_index < array_count(lines) - 1 && xstrlen(line) + xstrlen(lines[lines_index + 1]) < LINE_MAXLEN) {
+	if (line_index == xwcslen(line) && lines_index < array_count(lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
 		int i;
 
 		xstrcat(line, lines[lines_index + 1]);
@@ -202,7 +202,7 @@ static void binding_delete_char(const char *arg)
 		return;
 	}
 				
-	if (line_index < xstrlen(line)) {
+	if (line_index < xwcslen(line)) {
 		memmove(line + line_index, line + line_index + 1, LINE_MAXLEN - line_index - 1);
 		line[LINE_MAXLEN - 1] = 0;
 	}
@@ -213,13 +213,13 @@ static void binding_accept_line(const char *arg)
 	if (lines) {
 		int i;
 
-		lines = xrealloc(lines, (array_count(lines) + 2) * sizeof(char*));
+		lines = xrealloc(lines, (array_count(lines) + 2) * sizeof(CHAR_T *));
 
 		for (i = array_count(lines); i > lines_index; i--)
 			lines[i + 1] = lines[i];
 
-		lines[lines_index + 1] = xmalloc(LINE_MAXLEN);
-		xstrcpy(lines[lines_index + 1], line + line_index);
+		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
+		xwcscpy(lines[lines_index + 1], line + line_index);
 		line[line_index] = 0;
 		
 		line_index = 0;
@@ -236,10 +236,10 @@ static void binding_accept_line(const char *arg)
 	if (ncurses_plugin_destroyed)
 		return;
 
-	if (xstrcmp(line, "")) {
+	if (xwcscmp(line, TEXT(""))) {
 		if (history[0] != line)
 			xfree(history[0]);
-		history[0] = xstrdup(line);
+		history[0] = xwcsdup(line);
 		xfree(history[HISTORY_MAX - 1]);
 		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 	} else {
@@ -256,7 +256,7 @@ static void binding_accept_line(const char *arg)
 static void binding_line_discard(const char *arg)
 {
 	xfree(yanked);
-	yanked = xstrdup(line);
+	yanked = xwcsdup(line);
 	line[0] = 0;
 	line_adjust();
 
@@ -315,7 +315,7 @@ static void binding_word_rubout(const char *arg)
 	yanked = xmalloc(eaten + 1);
 	strlcpy(yanked, p, eaten + 1);
 
-	memmove(p, line + line_index, xstrlen(line) - line_index + 1);
+	memmove(p, line + line_index, xwcslen(line) - line_index + 1);
 	line_index -= eaten;
 }
 
@@ -326,7 +326,7 @@ static void binding_complete(const char *arg)
 	else {
 		int i, count = 8 - (line_index % 8);
 
-		if (xstrlen(line) + count >= LINE_MAXLEN - 1)
+		if (xwcslen(line) + count >= LINE_MAXLEN - 1)
 			return;
 
 		memmove(line + line_index + count, line + line_index, LINE_MAXLEN - line_index - count);
@@ -361,7 +361,7 @@ static void binding_backward_char(const char *arg)
 static void binding_forward_char(const char *arg)
 {
 	if (lines) {
-		if (line_index < xstrlen(line))
+		if (line_index < xwcslen(line))
 			line_index++;
 		else {
 			if (lines_index < array_count(lines) - 1) {
@@ -375,7 +375,7 @@ static void binding_forward_char(const char *arg)
 		return;
 	}
 
-	if (line_index < xstrlen(line))
+	if (line_index < xwcslen(line))
 		line_index++;
 }
 
@@ -394,7 +394,7 @@ static void binding_previous_only_history(const char *arg)
 {
         if (history[history_index + 1]) {
                 if (history_index == 0)
-                        history[0] = xstrdup(line);
+                        history[0] = xwcsdup(line);
                 history_index++;
 		if (xstrchr(history[history_index], '\015')) {
 			char **tmp;
@@ -408,11 +408,11 @@ static void binding_previous_only_history(const char *arg)
                         tmp = array_make(history[history_index], "\015", 0, 0, 0);
 
 			array_free((char **) lines);
-			lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
+			lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
 
 			for (i = 0; i < array_count(tmp); i++) {
-				lines[i] = xmalloc(LINE_MAXLEN);
-				xstrcpy(lines[i], tmp[i]);
+				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+				xwcscpy(lines[i], tmp[i]);
 			}
 
 			array_free((char **) tmp);
@@ -422,7 +422,7 @@ static void binding_previous_only_history(const char *arg)
 		                input_size = 1;
 		                ncurses_input_update();
 		        }
-			xstrcpy(line, history[history_index]);
+			xwcscpy(line, history[history_index]);
 	                line_adjust();
 		}
         }
@@ -432,7 +432,7 @@ static void binding_next_only_history(const char *arg)
 {
         if (history_index > 0) {
                 if (history_index == 0)
-                        history[0] = xstrdup(line);
+                        history[0] = xwcsdup(line);
                 history_index--;
                 if (xstrchr(history[history_index], '\015')) {
                         char **tmp;
@@ -446,11 +446,11 @@ static void binding_next_only_history(const char *arg)
                         tmp = array_make(history[history_index], "\015", 0, 0, 0);
 
                         array_free(lines);
-                        lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
+                        lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
 
                         for (i = 0; i < array_count(tmp); i++) {
-                                lines[i] = xmalloc(LINE_MAXLEN);
-                                xstrcpy(lines[i], tmp[i]);
+                                lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+                                xwcscpy(lines[i], tmp[i]);
                         }
 
                         array_free(tmp);
@@ -460,7 +460,7 @@ static void binding_next_only_history(const char *arg)
                                 input_size = 1;
                                 ncurses_input_update();
                         }
-                        xstrcpy(line, history[history_index]);
+                        xwcscpy(line, history[history_index]);
                         line_adjust();
                 }
         }
@@ -559,7 +559,7 @@ static void binding_ignore_query(const char *arg)
 	if (!window_current->target)
 		return;
 	
-	command_exec_format(window_current->target, window_current->session, 0, "/ignore %s", window_current->target);
+	command_exec_format(window_current->target, window_current->session, 0, TEXT("/ignore %s"), window_current->target);
 }
 
 static void binding_quick_list_wrapper(const char *arg)

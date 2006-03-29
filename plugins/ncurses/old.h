@@ -144,7 +144,7 @@ char *config_aspell_encoding;
 #endif
 
 int config_backlog_size;
-void changed_backlog_size(const char *var);
+void changed_backlog_size(const CHAR_T *var);
 int config_display_transparent;
 int config_display_crap;
 int config_enter_scrolls;

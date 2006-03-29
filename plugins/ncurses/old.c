@@ -1192,12 +1192,12 @@ void update_statusbar(int commit)
 	__add_format("query", tmp, tmp);
 	xfree(tmp); 
 
-	if ((plug = plugin_find("mail"))) {
+	if ((plug = plugin_find(TEXT("mail")))) {
 		int mail_count = -1;
 		query_emit(plug, "mail-count", &mail_count);
 		__add_format("mail", (mail_count > 0), itoa(mail_count));
 	}
-	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find("irc"))) {
+	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(TEXT("irc")))) {
 		/* yeah, I know, shitty way */
 		char *t2 = NULL;
 		char *t3 = NULL; 
@@ -1481,8 +1481,8 @@ void ncurses_init()
 		ncurses_spellcheck_init();
 #endif
 
-	ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unchar));
-	xstrcpy(ncurses_line, "");
+	ncurses_line = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+	xwcscpy(ncurses_line, TEXT(""));
 
 	ncurses_history[0] = ncurses_line;
 }
@@ -1606,7 +1606,7 @@ void ncurses_input_update()
 		xfree(ncurses_lines);
 		ncurses_lines = NULL;
 		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unchar));
-		xstrcpy(ncurses_line, "");
+		xwcscpy(ncurses_line, TEXT(""));
 
 		ncurses_history[0] = ncurses_line;
 
@@ -1618,7 +1618,7 @@ void ncurses_input_update()
 		ncurses_lines = xmalloc(2 * sizeof(CHAR_T*));
 		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(unchar));
 		ncurses_lines[1] = NULL;
-		xstrcpy(ncurses_lines[0], ncurses_line);
+		xwcscpy(ncurses_lines[0], ncurses_line);
 		xfree(ncurses_line);
 		ncurses_line = ncurses_lines[0];
 		ncurses_history[0] = NULL;
@@ -1833,7 +1833,7 @@ WATCHER(ncurses_watch_winch)
 	keypad(input, TRUE);
 	/* wywo³a wszystko, co potrzebne */
 	header_statusbar_resize();
-	changed_backlog_size("backlog_size");
+	changed_backlog_size(TEXT("backlog_size"));
 	return 0;
 }
 
@@ -1972,7 +1972,7 @@ WATCHER(ncurses_watch_stdin)
 	                        if (b->function)
 	                                b->function(b->arg);
 	                        else {
-	                                command_exec_format(window_current->target, window_current->session, 0, "%s%s", 
+	                                command_exec_format(window_current->target, window_current->session, 0, TEXT("%s%s"), 
 							((b->action[0] == '/') ? "" : "/"), b->action);
 	                        }
 
@@ -2024,7 +2024,7 @@ end:
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-						"%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action);
 			}
 		} else {
 			/* obs³uga Ctrl-F1 - Ctrl-F12 na FreeBSD */
@@ -2044,7 +2044,7 @@ end:
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-						"%s%s", ((b->action[0] == '/') ? "" : "/"), b->action);
+						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action);
 			}
 		} else if (ch < 255 && xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 				
@@ -2103,10 +2103,10 @@ then:
 			if (spell_checker)	
 				xfree(aspell_line);
 #else
-			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
+			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
-		}
 #endif
+		}
 		wmove(input, lines_index - lines_start, line_index - line_start);
 	} else {
 		int i;
@@ -2202,7 +2202,7 @@ void header_statusbar_resize()
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,backlog_size''.
  */
-void changed_backlog_size(const char *var)
+void changed_backlog_size(const CHAR_T *var)
 {
 	list_t l;
 
