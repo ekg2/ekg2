@@ -62,6 +62,7 @@
 #endif
 
 #define fix(s) ((s) ? (s) : "")
+#define ufix(s) ((s) ? (s) : TEXT(""))
 
 void ekg_oom_handler()
 {
@@ -146,6 +147,7 @@ CHAR_T *xwcsdup(const CHAR_T *s)
 	if (!s) return NULL;
 	if (!(tmp = wcsdup(s)))
 		ekg_oom_handler();
+	return tmp;
 #else
 	return xstrdup(s);
 #endif
@@ -212,26 +214,33 @@ char *vsaprintf(const char *format, va_list ap)
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
 {
 #if USE_UNICODE
+#warning TODO!!!!! 
+#if 1
 	CHAR_T *res, tmp[2];
 	int size;
-
-#if defined(va_copy)
+#if defined(va_copy) || defined(__va_copy)
 	va_list aq;
+#endif
+#if defined(va_copy)
 	va_copy(aq, ap);
 #elif defined(__va_copy)
-	va_list aq;
 	__va_copy(aq, ap);
 #endif
 	size = vswprintf(tmp, sizeof(tmp), format, ap);
 	res = xmalloc((size + 1)*sizeof(CHAR_T));
 
-#if defined(va_copy) || defined(__va_copy)
 	vswprintf(res, size + 1, format, aq);
+#if defined(va_copy) || defined(__va_copy)
 	va_end(aq);
-#else
-	vswprintf(res, size + 1, format, ap);
 #endif
 	return res;
+#else /* #if 0 */
+	char *s = vsaprintf(format, ap);
+	CHAR_T *tm = normal_to_wcs(s);
+	xfree(s);
+	return tm;
+#endif
+	
 #else
 	return vsaprintf(format, ap);
 #endif
@@ -266,6 +275,15 @@ char *xstrcat(char *dest, const char *src)
 	return strcat(dest, fix(src));
 }
 
+CHAR_T *xwcscat(CHAR_T *dest, const CHAR_T *src)
+{
+#if USE_UNICODE
+	return wcscat(dest, ufix(src));
+#else
+	return xstrcat(dest, src);
+#endif
+}
+
 char *xstrchr(const char *s, int c) 
 {
 	return strchr(fix(s), c);
@@ -279,7 +297,7 @@ int xstrcmp(const char *s1, const char *s2)
 int xwcscmp(const CHAR_T *s1, const CHAR_T *s2) 
 {
 #if USE_UNICODE
-	return wcscmp(s1, s2);
+	return wcscmp(ufix(s1), ufix(s2));
 #else
 	return xstrcmp(s1, s2);
 #endif
@@ -293,6 +311,15 @@ int xstrcoll(const char *s1, const char *s2)
 char *xstrcpy(char *dest, const char *src) 
 {
 	return strcpy(dest, fix(src));
+}
+
+CHAR_T *xwcscpy(CHAR_T *dest, const CHAR_T *src)
+{
+#if USE_UNICODE
+	return wcscpy(dest, ufix(src));
+#else
+	return xstrcpy(dest, src);
+#endif
 }
 
 size_t xstrcspn(const char *s, const char *reject)
@@ -313,8 +340,7 @@ size_t xstrlen(const char *s)
 size_t xwcslen(const CHAR_T *s)
 {
 #if USE_UNICODE
-	if (!s) return 0; /* fix() ? */
-	return wcslen(s);
+	return wcslen(ufix(s));
 #else
 	return xstrlen(s);
 #endif
@@ -348,7 +374,7 @@ int xstrncasecmp(const char *s1, const char *s2, size_t n)
 int xwcsncasecmp(const CHAR_T *s1, const CHAR_T *s2, size_t n)
 {
 #if USE_UNICODE
-	return wcsncasecmp(s1, s2, n);
+	return wcsncasecmp(ufix(s1), ufix(s2), n);
 #else
 	return xstrncasecmp(s1, s2, n);
 #endif
