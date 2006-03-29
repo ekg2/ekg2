@@ -256,10 +256,43 @@ void ekg_loop()
                         if ((w->type & WATCH_WRITE))
                                 FD_SET(w->fd, &wd);
                 }
+
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		
+		for (l = timers; l; l = l->next) {
+			struct timer *t = l->data;
+			struct timeval tv2;
+			struct timezone tz;
+			int usec = 0;
+
+			gettimeofday(&tv2, &tz);
+
+			/* zeby uniknac przekrecenia licznika mikrosekund przy
+			 * wiekszych czasach, pomijamy dlugie timery */
+			if (t->ends.tv_sec - tv2.tv_sec > 1)
+				continue;
+
+			/* zobacz, ile zostalo do wywolania timera */
+			usec = (t->ends.tv_sec - tv2.tv_sec) * 1000000 + (t->ends.tv_usec - tv2.tv_usec);
+
+			/* jesli wiecej niz sekunda, to nie ma znacznia */
+			if (usec >= 1000000)
+				continue;
+			
+			/* jesli mniej niz aktualny timeout, zmniejsz */
+			if (tv.tv_sec * 1000000 + tv.tv_usec > usec) {
+				tv.tv_sec = 0;
+				tv.tv_usec = usec;
+			}
+		}
+	
                 /* na wszelki wypadek sprawd¼ warto¶ci */
 
-		tv.tv_sec = 0;
-		tv.tv_usec = 10;
+		if (tv.tv_usec != 1) 
+			tv.tv_sec = 0;
+		if (tv.tv_usec < 0)
+			tv.tv_usec = 1;
 
                 /* sprawd¼, co siê dzieje */
 
