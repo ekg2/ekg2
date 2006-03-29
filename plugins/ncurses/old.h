@@ -120,7 +120,7 @@ int ncurses_window_new(window_t *w);
 #define yanked ncurses_yanked
 
 #define HISTORY_MAX 1000
-char *ncurses_history[HISTORY_MAX];
+CHAR_T *ncurses_history[HISTORY_MAX];
 int ncurses_history_index;
 CHAR_T *ncurses_line;
 char *ncurses_yanked;

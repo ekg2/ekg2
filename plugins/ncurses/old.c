@@ -65,7 +65,7 @@ WINDOW *ncurses_status = NULL;		/* okno stanu */
 WINDOW *ncurses_header = NULL;		/* okno nag³ówka */
 WINDOW *ncurses_input = NULL;		/* okno wpisywania tekstu */
 
-char *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
+CHAR_T *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
 int ncurses_history_index = 0;		/* offset w historii */
 
 CHAR_T *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
@@ -1480,7 +1480,7 @@ void ncurses_init()
 #endif
 #endif
 
-	ncurses_line = xmalloc(LINE_MAXLEN);
+	ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unchar));
 	xstrcpy(ncurses_line, "");
 
 	ncurses_history[0] = ncurses_line;
@@ -1606,8 +1606,7 @@ void ncurses_input_update()
 			xfree(ncurses_lines[i]);
 		xfree(ncurses_lines);
 		ncurses_lines = NULL;
-
-		ncurses_line = xmalloc(LINE_MAXLEN);
+		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unchar));
 		xstrcpy(ncurses_line, "");
 
 		ncurses_history[0] = ncurses_line;
@@ -1617,8 +1616,8 @@ void ncurses_input_update()
 		lines_start = 0;
 		lines_index = 0;
 	} else {
-		ncurses_lines = xmalloc(2 * sizeof(char*));
-		ncurses_lines[0] = xmalloc(LINE_MAXLEN);
+		ncurses_lines = xmalloc(2 * sizeof(CHAR_T*));
+		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(unchar));
 		ncurses_lines[1] = NULL;
 		xstrcpy(ncurses_lines[0], ncurses_line);
 		xfree(ncurses_line);
@@ -1654,8 +1653,11 @@ void print_char(WINDOW *w, int y, int x, unchar ch)
 		ch = '?';
 		wattrset(w, A_REVERSE);
 	}
-
+#if USE_UNICODE
+	mvwaddnwstr(w, y, x, &ch, 1);
+#else
 	mvwaddch(w, y, x, ch);
+#endif
 	wattrset(w, A_NORMAL);
 }
 
@@ -1677,8 +1679,11 @@ void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
                 ch = '?';
                 wattrset(w, A_REVERSE | A_UNDERLINE);
         }
-
+#if USE_UNICODE
+	mvwaddnwstr(w, y, x, &ch, 1);
+#else
         mvwaddch(w, y, x, ch);
+#endif
         wattrset(w, A_NORMAL);
 }
 
@@ -2145,7 +2150,6 @@ i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 #endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
 		if (ch == 3) ncurses_commit();
-		
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
 			mvwaddch(input, 0, ncurses_current->prompt_len, '<');

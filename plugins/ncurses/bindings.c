@@ -407,7 +407,7 @@ static void binding_previous_only_history(const char *arg)
 
                         tmp = array_make(history[history_index], "\015", 0, 0, 0);
 
-			array_free(lines);
+			array_free((char **) lines);
 			lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
 
 			for (i = 0; i < array_count(tmp); i++) {
@@ -415,7 +415,7 @@ static void binding_previous_only_history(const char *arg)
 				xstrcpy(lines[i], tmp[i]);
 			}
 
-			array_free(tmp);
+			array_free((char **) tmp);
 			lines_adjust();
 		} else {
 			if (input_size != 1) {
