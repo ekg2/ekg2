@@ -214,8 +214,6 @@ char *vsaprintf(const char *format, va_list ap)
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
 {
 #if USE_UNICODE
-#warning TODO!!!!! 
-#if 1
 	CHAR_T *res, tmp[2];
 	int size;
 #if defined(va_copy) || defined(__va_copy)
@@ -234,13 +232,6 @@ CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap)
 	va_end(aq);
 #endif
 	return res;
-#else /* #if 0 */
-	char *s = vsaprintf(format, ap);
-	CHAR_T *tm = normal_to_wcs(s);
-	xfree(s);
-	return tm;
-#endif
-	
 #else
 	return vsaprintf(format, ap);
 #endif
@@ -389,6 +380,15 @@ int xstrncmp(const char *s1, const char *s2, size_t n)
 	return strncmp(fix(s1), fix(s2), n);
 }
 
+int xwcsncmp(const CHAR_T *s1, const CHAR_T *s2, size_t n)
+{
+#if USE_UNICODE
+	return wcsncmp(ufix(s1), ufix(s2), n);
+#else
+	return xstrncmp(s1, s2, n);
+#endif
+}
+
 char *xstrncpy(char *dest, const char *src, size_t n)
 {
 	return strncpy(dest, fix(src), n);
@@ -425,6 +425,15 @@ char *xstrpbrk(const char *s, const char *accept)
 char *xstrrchr(const char *s, int c) 
 {
 	return strrchr(fix(s), c);
+}
+CHAR_T *xwcsrchr(const CHAR_T *s, int c)
+{
+#if USE_UNICODE
+#warning BAD PROTOTYPE
+	return wcsrchr(s, c);
+#else
+	return xstrrchr(s, c);
+#endif
 }
 #if 0
 nic tego nie u¿ywa, a to nie jest zaimplementowane na wszystkich systemach

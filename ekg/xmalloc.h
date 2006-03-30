@@ -58,12 +58,14 @@ int xstrncasecmp_pl(const char *s1, const char *s2, size_t n);
 char *xstrncat(char *dest, const char *src, size_t n);
 CHAR_T *xwcsncat(CHAR_T *dest, const CHAR_T *src, size_t n);
 int xstrncmp(const char *s1, const char *s2, size_t n);
+int xwcsncmp(const CHAR_T *s1, const CHAR_T *s2, size_t n);
 char *xstrncpy(char *dest, const char *src, size_t n);
 CHAR_T *xwcsncpy(CHAR_T *dest, const CHAR_T *src, size_t n);
 int xstrncasecmp(const char *s1, const char *s2, size_t n);
 int xwcsncasecmp(const CHAR_T *s1, const CHAR_T *s2, size_t n);
 char *xstrpbrk(const char *s, const char *accept);
 char *xstrrchr(const char *s, int c);
+CHAR_T *xwcsrchr(const CHAR_T *s, int c);
 /*
 char *xstrsep(char **stringp, const char *delim);
 */
