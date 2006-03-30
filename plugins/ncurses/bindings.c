@@ -107,7 +107,7 @@ static void binding_toggle_input(const char *arg)
 
                 if (history[0] != line)
                         xfree(history[0]);
-                history[0] = array_join(lines, "\015");
+                history[0] = wcs_array_join(lines, TEXT("\015"));
                 xfree(history[HISTORY_MAX - 1]);
                 memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 
@@ -230,7 +230,7 @@ static void binding_accept_line(const char *arg)
 	
 		return;
 	}
-				
+
 	command_exec(window_current->target, window_current->session, line, 0);
 
 	if (ncurses_plugin_destroyed)
@@ -398,7 +398,7 @@ static void binding_previous_only_history(const char *arg)
                 if (history_index == 0)
                         history[0] = xwcsdup(line);
                 history_index++;
-		if (xstrchr(history[history_index], '\015')) {
+		if (xwcschr(history[history_index], TEXT('\015'))) {
 			char **tmp;
 			int i;
 			
@@ -436,7 +436,7 @@ static void binding_next_only_history(const char *arg)
                 if (history_index == 0)
                         history[0] = xwcsdup(line);
                 history_index--;
-                if (xstrchr(history[history_index], '\015')) {
+                if (xwcschr(history[history_index], TEXT('\015'))) {
                         char **tmp;
                         int i;
 

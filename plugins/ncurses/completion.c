@@ -54,45 +54,52 @@ session_t *session_in_line;
 
 static void command_generator(const CHAR_T *text, int len)
 {
-	const char *slash = "", *dash = "";
+	const CHAR_T *slash = TEXT(""), *dash = TEXT("");
 	list_t l;
 	session_t *session = session_current;
-#if USE_UNICODE
-#warning unicodowe cus leakuje tutaj i to calkiem niezle... TODO
-#endif
-	if (*text == '/') {
-		slash = "/";
+	if (*text == TEXT('/')) {
+		slash = TEXT("/");
 		text++;
 		len--;
 	}
 
-	if (*text == '^') {
-		dash = "^";
+	if (*text == TEXT('^')) {
+		dash = TEXT("^");
 		text++;
 		len--;
 	}
 
 	if (window_current->target)
-		slash = "/";
+		slash = TEXT("/");
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 		CHAR_T *without_sess_id = NULL;
+		char *cname = wcs_to_normal(c->name);
 		int plen = 0;
 		if (session && session->uid)
 			plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
-                if (session && !xstrncasecmp(c->name, session->uid, plen))
+                if (session && !xstrncasecmp(cname, session->uid, plen))
 			without_sess_id = xwcschr(c->name, ':');
 
 		if (!xwcsncasecmp(text, c->name, len) && !wcs_array_item_contains(completions, c->name, 1))
 			wcs_array_add_check(&completions, 
-					normal_to_wcs(saprintf("%s%s%s", slash, dash, wcs_to_normal(c->name))),
+#if USE_UNICODE
+					wcsprintf(TEXT("%ls%ls%ls"), slash, dash, c->name),
+#else
+					wcsprintf(TEXT("%s%s%s"), slash, dash, c->name),
+#endif
 					1);
 		else if (without_sess_id && !wcs_array_item_contains(completions, without_sess_id + 1, 1) && !xwcsncasecmp(text, without_sess_id + 1, len))
 			wcs_array_add_check(&completions, 
-					normal_to_wcs(saprintf("%s%s%s", slash, dash, wcs_to_normal(without_sess_id + 1))),
+#if USE_UNICODE
+					wcsprintf(TEXT("%ls%ls%ls"), slash, dash, without_sess_id + 1),
+#else
+					wcsprintf(TEXT("%s%s%s"), slash, dash, without_sess_id + 1),
+#endif
 					1);
+		free_utf(cname);
 	}
 }
 
@@ -238,10 +245,8 @@ static void plugin_generator(const CHAR_T *text, int len)
 			free_utf(pname);
 		}
 		if ((stext[0] == '+' || stext[0] == '-') && !xstrncasecmp(stext + 1, p->name, len - 1)) {
-			char *tmp2 = saprintf("%c%s", stext[0], p->name);
-			CHAR_T *tmp = normal_to_wcs(tmp2);
+			CHAR_T *tmp = wcsprintf("%c%s", stext[0], p->name);
 			wcs_array_add_check(&completions, tmp, 1);
-			free_utf(tmp);
 		}
         }
 	free_utf(stext);
@@ -950,10 +955,13 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 				*line_index = xwcslen(line) + 1;
 			} else {
 				if(xwcschr(words[i], TEXT(' '))) {
-					char *tmp = saprintf("\"%s\"", words[i]);
-					CHAR_T *tmp2 = normal_to_wcs(tmp);
-					xwcscat(line, tmp2);
-					free_utf(tmp2);
+					CHAR_T *tmp = 
+#if USE_UNICODE
+						wcsprintf(TEXT("\"%ls\""), words[i]);
+#else
+						wcsprintf(TEXT("\"%s\""), words[i]);
+#endif
+					xwcscat(line, tmp);
 					xfree(tmp);
 				} else 
 					xwcscat(line, words[i]);
@@ -969,17 +977,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
                 last_pos = *line_index;
 		goto cleanup;
 	}
-#if USE_UNICODE
-#warning BLE HACK
-	{
-		char *tmp = saprintf("/%s ", (config_tab_command) ? config_tab_command : "chat");
-		cmd = normal_to_wcs(tmp);
-		xfree(tmp);
-	}
-#else
-	cmd = saprintf("/%s ", (config_tab_command) ? config_tab_command : "chat");
-#endif
-
+	cmd = wcsprintf(TEXT("/%s "), (config_tab_command) ? config_tab_command : "chat");
 	/* nietypowe dope³nienie nicków przy rozmowach */
 	if (!xwcscmp(line, TEXT("")) || (!xwcsncasecmp(line, cmd, xwcslen(cmd)) && word == 2 && send_nicks_count > 0) || (!xwcscasecmp(line, cmd) && send_nicks_count > 0)) {
 		if (send_nicks_index >= send_nicks_count)
@@ -988,7 +986,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		if (send_nicks_count) {
 			char *nick = send_nicks[send_nicks_index++];
 #if USE_UNICODE
-			swprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
+			swprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%ls\"%s\" " : "%ls%s ", cmd, nick);
 #else
 			snprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
 #endif
@@ -1166,16 +1164,14 @@ exact_match:
 				*line_index = xwcslen(line) + 1;
 			} else {
 				if (xwcschr(words[i], TEXT(' '))) {
-#warning BLEEE
-					char *swords = wcs_to_normal(words[i]);
-					char *tmp2 = saprintf("\"%s\"", swords);
-					CHAR_T *tmp = normal_to_wcs(tmp2);
-
+					CHAR_T *tmp = 
+#if USE_UNICODE
+						wcsprintf("\"%ls\"", words[i]);
+#else
+						wcsprintf("\"%s\"", words[i]);
+#endif
 					xwcscat(line, tmp);
-
-					xfree(tmp2);
-					free_utf(tmp);
-					free_utf(swords);
+					xfree(tmp);
 				} else
 					xwcscat(line, words[i]);
 			}
@@ -1245,13 +1241,14 @@ exact_match:
 					*line_index = xwcslen(line);
 				} else {
 					if (xwcsrchr(words[i], TEXT(' '))) {
-						char *sword = wcs_to_normal(words[i]);
-						char *tmp2 = saprintf("\"%s\"", sword);
-						CHAR_T *tmp = normal_to_wcs(tmp2);
+						CHAR_T *tmp = 
+#if USE_UNICODE
+							wcsprintf("\"%ls\"", words[i]);
+#else
+							wcsprintf("\"%s\"", words[i]);
+#endif
 						xwcscat(line, tmp);
-						xfree(tmp2);
-						free_utf(sword);
-						free_utf(tmp);
+						xfree(tmp);
 					} else
 						xwcscat(line, words[i]);
 				}
