@@ -2471,7 +2471,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 	if (session && session->uid) {
 		CHAR_T *suid = normal_to_wcs(session->uid);
 #ifndef USE_UNICODE
-		int plen = (int)(xwcschr(suid, ':')) - suid + 1;
+		int plen = (int)(xwcschr(suid, ':') - suid) + 1;
 #else
 #warning UNICODE FIX!!!!
 		int plen = 3;

@@ -245,6 +245,21 @@ int string_append_c(string_t s, char c)
 	return 0;
 }
 
+int wcs_string_append_c(wcs_string_t s, CHAR_T c)
+{
+	if (!s) {
+		errno = EFAULT;
+		return -1;
+	}
+	
+	wcs_string_realloc(s, s->len + 1);
+
+	s->str[s->len + 1] = 0;
+	s->str[s->len++] = c;
+
+	return 0;
+}
+
 /*
  * string_append_n()
  *

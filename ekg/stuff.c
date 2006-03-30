@@ -2397,7 +2397,7 @@ CHAR_T *normal_to_wcs(const char *str)
 	mbstowcs(tmp, str, len);
 	return tmp;
 #else
-	return str;
+	return (char *) str;
 #endif
 }
 
@@ -2410,7 +2410,7 @@ char *wcs_to_normal(const CHAR_T *str)
 	wcstombs(tmp, str, len);
 	return tmp;
 #else
-	return str;
+	return (char *) str;
 #endif
 }
 

@@ -93,6 +93,7 @@ int string_append(string_t s, const char *str);
 int wcs_string_append(wcs_string_t s, const CHAR_T *str);
 int string_append_n(string_t s, const char *str, int count);
 int string_append_c(string_t s, char ch);
+int wcs_string_append_c(wcs_string_t s, CHAR_T c);
 void string_insert(string_t s, int index, const char *str);
 void string_insert_n(string_t s, int index, const char *str, int count);
 void string_clear(string_t s);

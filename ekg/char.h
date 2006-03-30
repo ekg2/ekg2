@@ -41,7 +41,7 @@
 #	define CHAR_T	char
 #	define free_utf(x) 
 #endif
-char *wcs_to_normal(const wchar_t *str);
+char *wcs_to_normal(const CHAR_T *str);
 CHAR_T *normal_to_wcs(const char *str);
 
 
