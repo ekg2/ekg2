@@ -204,7 +204,7 @@ int msg_queue_flush(const char *session)
 		if (session && xstrcmp(m->session, session)) 
 			continue;
 
-		command_exec_format(NULL, s, 1, "/msg \"%s\" %s", m->rcpts, m->message);
+		command_exec_format(NULL, s, 1, TEXT("/msg \"%s\" %s"), m->rcpts, m->message);
 
 		msg_queue_remove(m);
 

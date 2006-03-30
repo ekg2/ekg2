@@ -190,9 +190,6 @@ char *va_format_string(const char *format, va_list ap)
         string_t buf = string_init(NULL);
         const char *p, *args[9];
         int i, argc = 0;
-#if USE_UNICODE
-#warning TODO!, THE MOST IMPORTANT.
-#endif
         /* liczymy ilo¶æ argumentów */
         for (p = format; *p; p++) {
                 if (*p == '\\' && p[1] == '%') {
@@ -428,6 +425,18 @@ char *va_format_string(const char *format, va_list ap)
         return string_free(buf, 0);
 }
 
+CHAR_T *wcs_va_format_string(const char *data, va_list ap)
+{
+#warning UNICODE TODO
+	CHAR_T *tmp;
+	char *tmp2;
+		
+	tmp2 = va_format_string(data, ap);
+	tmp = normal_to_wcs(tmp2);
+	xfree(tmp2);
+	return tmp;
+}
+
 /*
  * fstring_new()
  *
@@ -623,6 +632,18 @@ char *format_string(const char *format, ...)
         va_end(ap);
 
         return tmp;
+}
+
+CHAR_T *wcs_format_string(const CHAR_T *format, ...)
+{
+	va_list ap;
+	CHAR_T *tmp;
+
+	va_start(ap, format);
+	tmp = wcs_va_format_string(format, ap);
+	va_end(ap);
+
+	return tmp;
 }
 
 /*

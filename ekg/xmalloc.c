@@ -251,6 +251,15 @@ char *xstrstr(const char *haystack, const char *needle)
 	return strstr(fix(haystack), fix(needle));		
 }
 
+CHAR_T *xwcsstr(const CHAR_T *haystack, const CHAR_T *needle)
+{
+#if USE_UNICODE
+	return wcsstr(ufix(haystack), ufix(needle));
+#else
+	return xstrstr(haystack, needle);
+#endif
+}
+
 char *xstrcasestr(const char *haystack, const char *needle)
 {
         return strcasestr(fix(haystack), fix(needle));
@@ -287,6 +296,16 @@ CHAR_T *xwcscat(CHAR_T *dest, const CHAR_T *src)
 char *xstrchr(const char *s, int c) 
 {
 	return strchr(fix(s), c);
+}
+
+CHAR_T *xwcschr(const CHAR_T *s, int c)
+{
+#if USE_UNICODE
+#warning BAD PROTOTYPE.
+	return wcschr(ufix(s), c);
+#else
+	return xstrchr(s, c);
+#endif
 }
 
 int xstrcmp(const char *s1, const char *s2)
@@ -356,6 +375,15 @@ char *xstrncat(char *dest, const char *src, size_t n)
 	return strncat(dest, fix(src), n);
 }
 
+CHAR_T *xwcsncat(CHAR_T *dest, const CHAR_T *src, size_t n)
+{
+#if USE_UNICODE
+	return wcsncat(dest, ufix(src), n);
+#else
+	return xstrncat(dest, src, n);
+#endif
+}
+
 int xstrncmp(const char *s1, const char *s2, size_t n)
 {
 	return strncmp(fix(s1), fix(s2), n);
@@ -364,6 +392,15 @@ int xstrncmp(const char *s1, const char *s2, size_t n)
 char *xstrncpy(char *dest, const char *src, size_t n)
 {
 	return strncpy(dest, fix(src), n);
+}
+
+CHAR_T *xwcsncpy(CHAR_T *dest, const CHAR_T *src, size_t n)
+{
+#if USE_UNICODE
+	return wcsncpy(dest, ufix(src), n);
+#else
+	return xstrncpy(dest, src, n);
+#endif
 }
 
 int xstrncasecmp(const char *s1, const char *s2, size_t n)

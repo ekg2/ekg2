@@ -561,7 +561,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 	actions = array_make(action, ";", 0, 0, 1);
 
 	for (i = 0; actions && actions[i]; i++) {
-	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
+	        CHAR_T *tmp = wcs_format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
 
 		debug("// event_check() calling \"%s\"\n", tmp);
 		command_exec(NULL, NULL, tmp, 0); /* BUG? CHECK: hm, we've got specified session, not current one... target too.. so is it correct ? */

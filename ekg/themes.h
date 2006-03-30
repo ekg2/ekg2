@@ -59,6 +59,7 @@ int format_add(const char *name, const char *value, int replace);
 int format_remove(const char *name);
 const char *format_find(const char *name);
 char *format_string(const char *format, ...);
+CHAR_T *wcs_format_string(const CHAR_T *format, ...);
 const char *format_ansi(char ch);
 
 void theme_init();

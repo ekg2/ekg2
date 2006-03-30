@@ -2348,6 +2348,16 @@ char *saprintf(const char *format, ...)
         return res;
 }
 
+CHAR_T *wcsprintf(const CHAR_T *format, ...)
+{
+	va_list ap;
+	CHAR_T *res;
+
+	va_start(ap, format);
+	res = vwcssaprintf(format, ap);
+	va_end(ap);
+	return res;
+}
 /*
  * xstrtr()
  *
@@ -2375,6 +2385,32 @@ void inline ekg_yield_cpu()
 {
 #ifdef _POSIX_PRIORITY_SCHEDULING
 	sched_yield();
+#endif
+}
+
+CHAR_T *normal_to_wcs(const char *str)
+{
+#if USE_UNICODE
+	CHAR_T *tmp;
+	int len = mbstowcs(NULL, str, 0)+1;
+	tmp = xcalloc(len+1, sizeof(wchar_t));
+	mbstowcs(tmp, str, len);
+	return tmp;
+#else
+	return str;
+#endif
+}
+
+char *wcs_to_normal(const CHAR_T *str)
+{
+#if USE_UNICODE
+	char *tmp;
+	int len = wcstombs(NULL,str,0)+1;
+	tmp = xmalloc(len+1);
+	wcstombs(tmp, str, len);
+	return tmp;
+#else
+	return str;
 #endif
 }
 

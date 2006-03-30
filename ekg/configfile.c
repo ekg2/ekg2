@@ -227,7 +227,7 @@ int config_read(const char *filename)
                         char **pms = array_make(foo, " \t", 2, 1, 0);
 
                         if (array_count(pms) == 2) {
-                                ret = command_exec_format(NULL, NULL, 1, "/bind --add %s %s",  pms[0], pms[1]);
+                                ret = command_exec_format(NULL, NULL, 1, TEXT("/bind --add %s %s"),  pms[0], pms[1]);
                         }
 
                         array_free(pms);
@@ -268,7 +268,7 @@ int config_read(const char *filename)
 				if (xstrcmp(p[0], "(null)"))
 					name = p[0];
 
-				ret = command_exec_format(NULL, NULL, 1, "/at -a %s %s", ((name) ? name : ""), p[1]);
+				ret = command_exec_format(NULL, NULL, 1, TEXT("/at -a %s %s"), ((name) ? name : ""), p[1]);
 			}
 
 			array_free(p);
@@ -292,7 +292,7 @@ int config_read(const char *filename)
 				}
 		
 				if (period > 0) {
-					ret = command_exec_format(NULL, NULL, 1, "/timer --add %s %s %s", (name) ? name : "", period_str, p[2]);
+					ret = command_exec_format(NULL, NULL, 1, TEXT("/timer --add %s %s %s"), (name) ? name : "", period_str, p[2]);
 				}
 
 				xfree(period_str);

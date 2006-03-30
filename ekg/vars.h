@@ -72,7 +72,7 @@ variable_map_t *variable_map(int count, ...);
 
 variable_t *variable_add(
 	plugin_t *plugin,
-	const char *name,
+	const CHAR_T *name_,
 	int type,
 	int display,
 	void *ptr,

@@ -35,10 +35,14 @@
 #	include <wchar.h>
 #	define TEXT(x)	L##x
 #	define CHAR_T	wchar_t
+#	define free_utf(x) xfree(x)
 #else
 #	define TEXT(x)	x
 #	define CHAR_T	char
+#	define free_utf(x) 
 #endif
+char *wcs_to_normal(const wchar_t *str);
+CHAR_T *normal_to_wcs(const char *str);
 
 
 #endif /* EKG2__CHAR_H__ */

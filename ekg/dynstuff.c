@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "char.h"
 #include "stuff.h"
 #include "dynstuff.h"
 #include "xmalloc.h"
@@ -204,6 +205,21 @@ static void string_realloc(string_t s, int count)
 	s->size = count + 81;
 	s->str = tmp;
 }
+
+static void wcs_string_realloc(wcs_string_t s, int count)
+{
+	CHAR_T *tmp;
+	
+	if (s->str && (count + 1) <= s->size)
+		return;
+	
+	tmp = xrealloc(s->str, count + 81);
+	if (!s->str)
+		*tmp = 0;
+	tmp[count + 80] = 0;
+	s->size = count + 81;
+	s->str = tmp;
+}
 	
 /*
  * string_append_c()
@@ -258,9 +274,33 @@ int string_append_n(string_t s, const char *str, int count)
 	return 0;
 }
 
+int wcs_string_append_n(wcs_string_t s, const CHAR_T *str, int count)
+{
+	if (!s || !str) {
+		errno = EFAULT;
+		return -1;
+	}
+	if (count == -1)
+		count = xwcslen(str);
+
+	wcs_string_realloc(s, s->len + count);
+
+	s->str[s->len + count] = 0;
+	xwcsncpy(s->str + s->len, str, count);
+
+	s->len += count;
+
+	return 0;
+}
+
 int string_append(string_t s, const char *str)
 {
 	return string_append_n(s, str, -1);
+}
+
+int wcs_string_append(wcs_string_t s, const CHAR_T *str) 
+{
+	return wcs_string_append_n(s, str, -1);
 }
 
 /*
@@ -320,6 +360,18 @@ string_t string_init(const char *value)
 	return tmp;
 }
 
+wcs_string_t wcs_string_init(const CHAR_T *value)
+{
+	wcs_string_t tmp = xmalloc(sizeof(struct wcs_string));
+	if (!value)
+		value = TEXT("");
+
+	tmp->str = xwcsdup(value);
+	tmp->len = xwcslen(value);
+	tmp->size = xwcslen(value) + 1;
+	return tmp;
+}
+
 /*
  * string_clear()
  *
@@ -366,6 +418,20 @@ char *string_free(string_t s, int free_string)
 
 	xfree(s);
 
+	return tmp;
+}
+
+CHAR_T *wcs_string_free(wcs_string_t s, int free_string)
+{
+	CHAR_T *tmp = NULL;
+	if (!s) 
+		return NULL;
+	if (free_string)
+		xfree(s->str);
+	else
+		tmp = s->str;
+
+	xfree(s);
 	return tmp;
 }
 
@@ -528,6 +594,21 @@ int array_count(char **array)
 	return result;
 }
 
+int wcs_array_count(CHAR_T **array)
+{
+	int result = 0;
+
+	if (!array)
+		return 0;
+
+	while (*array) {
+		result++;
+		array++;
+	}
+
+	return result;
+}
+
 /* 
  * array_add()
  *
@@ -538,6 +619,15 @@ void array_add(char ***array, char *string)
 	int count = array_count(*array);
 
 	*array = xrealloc(*array, (count + 2) * sizeof(char*));
+	(*array)[count + 1] = NULL;
+	(*array)[count] = string;
+}
+
+void wcs_array_add(CHAR_T ***array, CHAR_T *string)
+{
+	int count = wcs_array_count(*array);
+
+	*array = xrealloc(*array, (count + 2) * sizeof(CHAR_T*));
 	(*array)[count + 1] = NULL;
 	(*array)[count] = string;
 }
@@ -556,6 +646,14 @@ void array_add_check(char ***array, char *string, int casesensitive)
 {
 	if (!array_item_contains(*array, string, casesensitive))
 		array_add(array, string);
+	else
+		xfree(string);
+}
+
+void wcs_array_add_check(CHAR_T ***array, CHAR_T *string, int casesensitive)
+{
+	if (!wcs_array_item_contains(*array, string, casesensitive))
+		wcs_array_add(array, string);
 	else
 		xfree(string);
 }
@@ -617,6 +715,22 @@ int array_contains(char **array, const char *string, int casesensitive)
 	return 0;
 }
 
+int wcs_array_contains(CHAR_T **array, const CHAR_T *string, int casesensitive)
+{
+	int i;
+
+	if (!array || !string)
+		return 0;
+
+	for (i = 0; array[i]; i++) {
+		if (casesensitive && !xwcscmp(array[i], string))
+			return 1;
+		if (!casesensitive && !xwcscasecmp(array[i], string))
+			return 1;
+	}
+
+	return 0;
+}
 /*
  * array_item_contains()
  *
@@ -645,6 +759,26 @@ int array_item_contains(char **array, const char *string, int casesensitive)
         return 0;
 }
 
+int wcs_array_item_contains(CHAR_T **array, const CHAR_T *string, int casesensitive)
+{
+        int i;
+#ifndef USE_UNICODE
+	casesensitive = 1; /* !@!#@#$#$ */
+#endif
+
+        if (!array || !string)
+                return 0;
+        for (i = 0; array[i]; i++) {
+                if (casesensitive && xwcsstr(array[i], string))
+                        return 1;
+#warning NOT UNICODE FRIENDLY.
+                if (!casesensitive && strcasestr(array[i], string))
+                        return 1;
+        }
+
+        return 0;
+}
+
 	
 /*
  * array_free()
@@ -654,6 +788,19 @@ int array_item_contains(char **array, const char *string, int casesensitive)
 void array_free(char **array)
 {
 	char **tmp;
+
+	if (!array)
+		return;
+
+	for (tmp = array; *tmp; tmp++)
+		xfree(*tmp);
+
+	xfree(array);
+}
+
+void wcs_array_free(CHAR_T **array)
+{
+	CHAR_T **tmp;
 
 	if (!array)
 		return;

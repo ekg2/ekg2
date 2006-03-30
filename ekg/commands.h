@@ -29,7 +29,7 @@
 // #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 
-#define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
+#define COMMAND(x) int x(const CHAR_T *name, const char **params, session_t *session, const char *target, int quiet)
 
 /* INFORMATIONAL FLAGS */
 	/* command is binded by alias managment */
