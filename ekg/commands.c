@@ -972,6 +972,7 @@ COMMAND(cmd_help)
 	if (params[0]) {
 		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
 		int plen;
+		CHAR_T *putf;
 
 		if (!xstrcasecmp(p, "set") && params[1]) {
 			if (!quiet)
@@ -990,8 +991,8 @@ COMMAND(cmd_help)
 		} else
 			plen = 0;
 	
+		putf = normal_to_wcs(p); /* memleak */
 		for (l = commands; l; l = l->next) {
-			CHAR_T *putf = normal_to_wcs(p); /* memeleak */
 			command_t *c = l->data;
 			
 			if (!xwcscasecmp(c->name, putf) && (c->flags & COMMAND_ISALIAS)) {
@@ -1137,23 +1138,24 @@ COMMAND(cmd_help)
 		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
 		    	char *blah = NULL;
                         FILE *f;
-                        char *line, *params_help, *params_help_s, *brief, *tmp = NULL;
-                        const char *seeking_name;
+                        CHAR_T *line, *params_help, *params_help_s, *brief, *tmp = NULL;
+                        const CHAR_T *seeking_name;
                         int found = 0;
 
 		        if (c->plugin && c->plugin->name) {
 	                        char *tmp = help_path("commands", c->plugin->name);
+				CHAR_T *tmp2;
                                 f = fopen(tmp, "r");
                                 xfree(tmp);
 
                                 if (!f) {
 					continue;
                                 }
-				tmp = xstrchr(c->name, ':');
-				if (!tmp)
+				tmp2 = xwcschr(c->name, TEXT(':'));
+				if (!tmp2)
 					seeking_name = c->name;
 				else 
-	                                seeking_name = tmp + 1;
+	                                seeking_name = tmp2 + 1;
                         } else {
                                 char *tmp = help_path("commands", NULL);
                                 f = fopen(tmp, "r");
@@ -1166,8 +1168,8 @@ COMMAND(cmd_help)
                                 seeking_name = c->name;
                         }
 
-                        while ((line = read_file(f))) {
-                        	if (!xstrcasecmp(line, seeking_name)) {
+                        while ((line = wcs_read_file(f))) {
+                        	if (!xwcscasecmp(line, seeking_name)) {
                                 	found = 1;
                                         xfree(line);
                                         break;
@@ -1181,39 +1183,52 @@ COMMAND(cmd_help)
 				continue;
                         }
 
-			line = read_file(f);
+			line = wcs_read_file(f);
 		
-			if ((tmp = xstrstr(line, ": ")))
-                               params_help = xstrdup(tmp + 2);
+			if ((tmp = xwcsstr(line, TEXT(": "))))
+                               params_help = xwcsdup(tmp + 2);
                         else
-                               params_help = xstrdup("");
+                               params_help = xwcsdup(TEXT(""));
 
-			params_help_s = strip_spaces(params_help);	
+			params_help_s = wcs_strip_spaces(params_help);	
 
                         xfree(line);
 
-                        line = read_file(f);
+                        line = wcs_read_file(f);
 
-                        if ((tmp = xstrstr(line, ": ")))
- 	                       brief = xstrdup(tmp + 2);
+                        if ((tmp = xwcsstr(line, TEXT(": "))))
+ 	                       brief = xwcsdup(tmp + 2);
                         else
-                               brief = xstrdup("?");
+                               brief = xwcsdup(TEXT("?"));
 
                         xfree(line);
 
-
-			if (xstrstr(brief, "%"))
-			    	blah = format_string(brief);
-
-			if (!xstrcmp(brief, "")) {
-				xfree(brief);
-				brief = xstrdup("?");
+			if (xwcsstr(brief, TEXT("%"))) {
+				char *br = wcs_to_normal(brief);
+			    	blah = format_string(br);
+				free_utf(br);
 			}
 
-			if (xstrcmp(params_help_s, ""))	
-				printq("help", (c->name) ? (c->name) : "", params_help_s, blah ? blah : brief, "");
-			else
-				printq("help_no_params", (c->name) ? (c->name) : "", blah ? blah : brief, "");
+			if (!xwcscmp(brief, TEXT(""))) {
+				xfree(brief);
+				brief = xwcsdup(TEXT("?"));
+			}
+
+			{
+				char *cname	= wcs_to_normal(c->name);
+				char *phs	= wcs_to_normal(params_help_s);
+				char *br	= wcs_to_normal(brief);
+
+				if (xwcscmp(params_help_s, TEXT("")))
+					printq("help", cname ? (cname) : "", phs, blah ? blah : br, "");
+				else
+					printq("help_no_params", (cname) ? (cname) : "", blah ? blah : br, "");
+
+				free_utf(cname);
+				free_utf(phs);
+				free_utf(br);
+
+			}
 			xfree(blah);
 			xfree(brief);
 			xfree(params_help);
@@ -2470,12 +2485,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		session = session_current;
 	if (session && session->uid) {
 		CHAR_T *suid = normal_to_wcs(session->uid);
-#ifndef USE_UNICODE
 		int plen = (int)(xwcschr(suid, ':') - suid) + 1;
-#else
-#warning UNICODE FIX!!!!
-		int plen = 3;
-#endif
 		
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;

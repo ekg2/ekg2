@@ -587,13 +587,10 @@ wedonthavem:
         tmpstr[j] = 0;
         res->attr[j] = 0;
 
+	res->str = normal_to_wcs(tmpstr);
 #if USE_UNICODE
-	res->str = xcalloc(len+1, sizeof(wchar_t));
-	mbstowcs(res->str, tmpstr, len);
-#else
-	res->str = tmpstr;
+	xfree(tmpstr);
 #endif
-
         return res;
 }
 
@@ -720,6 +717,62 @@ void print_window(const char *target, session_t *session, int separate, const ch
         xfree(newtarget);
 }
 
+void wcs_print_window(const char *target, session_t *session, int separate, const char *theme, ...)
+{
+        char *tmp, *stmp, *line, *prompt = NULL, *newtarget = NULL;
+        va_list ap;
+        if (!window_find_s(session, target)) {
+                const char *res;
+                userlist_t *u;
+
+                if ((res = xstrchr(target, '/'))) {
+                        newtarget = xstrdup(target);
+                        *(xstrchr(newtarget, '/')) = 0;
+                        u = userlist_find(session, target);
+                } else {
+                        u = userlist_find(session, target);
+
+                        if (u && window_find_s(session, u->uid))
+                                newtarget = xstrdup(u->uid);
+                        else if (u && u->nickname)
+                                newtarget = xstrdup(u->nickname);
+                }
+        }
+
+        if (newtarget)
+                target = newtarget;
+
+        if (!target)
+                target = "__current";
+
+        va_start(ap, theme);
+        tmp = stmp = wcs_va_format_string(format_find(theme), ap);
+        va_end(ap);
+
+        while ((line = split_line(&tmp))) {
+                char *p;
+
+                if ((p = xstrstr(line, "\033[00m"))) {
+                        xfree(prompt);
+                        if (p != line)
+                                prompt = xstrmid(line, 0, (int) (p - line) + 5);
+                        else
+                                prompt = NULL;
+                        line = p;
+                }
+
+                if (prompt) {
+                        char *tmp = saprintf("%s%s", prompt, line);
+                        window_print(target, session, separate, fstring_new(tmp));
+                        xfree(tmp);
+                } else
+                        window_print(target, session, separate, fstring_new(line));
+        }
+
+        xfree(prompt);
+        xfree(stmp);
+        xfree(newtarget);
+}
 /*
  * theme_cache_reset()
  *

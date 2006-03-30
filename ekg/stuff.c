@@ -1231,6 +1231,18 @@ char *strip_spaces(char *line)
 	return buf;
 }
 
+CHAR_T *wcs_strip_spaces(CHAR_T *line)
+{
+	CHAR_T *buf;
+
+	for (buf = line; *buf == TEXT(' '); buf++);
+
+	while (line[xwcslen(line) - 1] == TEXT(' '))
+		line[xwcslen(line) - 1] = 0;
+
+	return buf;
+}
+
 /*
  * play_sound()
  *
@@ -1414,6 +1426,18 @@ char *read_file(FILE *f)
 		res[xstrlen(res) - 1] = 0;
 
 	return res;
+}
+
+CHAR_T *wcs_read_file(FILE *f)
+{
+	char *tmp = read_file(f);
+	CHAR_T *t;
+
+	if (!tmp)
+		return NULL;
+	t = normal_to_wcs(tmp);
+	xfree(tmp);
+	return t;
 }
 
 /*
@@ -1774,7 +1798,7 @@ char *strcasestr(const char *haystack, const char *needle)
  * msg to all users in session's userlist
  * it uses function to do it
  */
-int msg_all(session_t *s, const char *function, const char *what)
+int msg_all(session_t *s, const CHAR_T *function, const char *what)
 {
 	list_t l;
 
@@ -1790,7 +1814,7 @@ int msg_all(session_t *s, const char *function, const char *what)
 		if (!u || !u->uid)
 			continue;
 
-		command_exec_format(NULL, s, 0, "%s \"%s\" %s", function, get_nickname(s, u->uid), what);
+		command_exec_format(NULL, s, 0, TEXT("%s \"%s\" %s"), function, get_nickname(s, u->uid), what);
 	}
 
 	return 0;

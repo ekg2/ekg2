@@ -571,7 +571,7 @@ char *window_target(window_t *window) {
  */
 COMMAND(cmd_window)
 {
-	if (!xstrcmp(name, "clear") || (params[0] && !xstrcasecmp(params[0], "clear"))) {
+	if (!xwcscmp(name, TEXT("clear")) || (params[0] && !xstrcasecmp(params[0], "clear"))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
 		query_emit(NULL, "ui-window-clear", &w);
 		xfree(w);

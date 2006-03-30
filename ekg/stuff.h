@@ -277,6 +277,7 @@ int mesg_set(int what);
 void iso_to_ascii(unsigned char *buf);
 char *strip_quotes(char *line);
 char *strip_spaces(char *line);
+CHAR_T *wcs_strip_spaces(CHAR_T *line);
 char *str_tolower(const char *text);
 char *strip_pl_chars(const char *text);
 int tolower_pl(const unsigned char c);
@@ -290,6 +291,7 @@ char *saprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 #else
 char *saprintf(const char *format, ...);
 #endif
+CHAR_T *wcsprintf(const CHAR_T *format, ...);
 
 
 int play_sound(const char *sound_path);
@@ -297,6 +299,7 @@ int play_sound(const char *sound_path);
 const char *prepare_path(const char *filename, int do_mkdir);
 char *random_line(const char *path);
 char *read_file(FILE *f);
+CHAR_T *wcs_read_file(FILE *f);
 
 const char *timestamp(const char *format);
 void unidle();
@@ -305,7 +308,7 @@ char *xstrmid(const char *str, int start, int length);
 void xstrtr(char *text, char from, char to);
 char color_map(unsigned char r, unsigned char g, unsigned char b);
 char *strcasestr(const char *haystack, const char *needle);
-int msg_all(session_t *s, const char *function, const char *what);
+int msg_all(session_t *s, const CHAR_T *function, const char *what);
 int say_it(const char *str);
 char *split_line(char **ptr);
 

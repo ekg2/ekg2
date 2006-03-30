@@ -80,7 +80,7 @@ static TIMER(protocol_reconnect_handler)
 
 	debug("reconnecting session %s\n", session);
 
-	command_exec(NULL, s, "/connect", 0);
+	command_exec(NULL, s, TEXT("/connect"), 0);
 	return 0;
 }
 
@@ -607,7 +607,7 @@ int protocol_message(void *data, va_list ap)
 
                         list_add(&autofinds, (void *) uid, xstrlen(uid) + 1);
 
-                        command_exec_format(target, session_class, 0, "/find %s", uid);
+                        command_exec_format(target, session_class, 0, TEXT("/find %s"), uid);
                 }
         }
 
