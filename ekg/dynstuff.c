@@ -690,7 +690,7 @@ char *array_join(char **array, const char *sep)
 	int i;
 
 	if (!array)
-		return xstrdup("");
+		return string_free(s, 0);
 
 	for (i = 0; array[i]; i++) {
 		if (i)
@@ -700,6 +700,25 @@ char *array_join(char **array, const char *sep)
 	}
 
 	return string_free(s, 0);
+}
+
+CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep)
+{
+	wcs_string_t s = wcs_string_init(NULL);
+	int i;
+
+	if (!array)
+		return wcs_string_free(s, 0);
+
+	for (i = 0; array[i]; i++) {
+		if (i)
+			wcs_string_append(s, sep);
+
+		wcs_string_append(s, array[i]);
+	}
+
+	return wcs_string_free(s, 0);
+
 }
 
 /*

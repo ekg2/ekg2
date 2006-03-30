@@ -104,6 +104,7 @@ CHAR_T *wcs_string_free(wcs_string_t s, int free_string);
 
 char **array_make(const char *string, const char *sep, int max, int trim, int quotes);
 char *array_join(char **array, const char *sep);
+CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep);
 
 void array_add(char ***array, char *string);
 void wcs_array_add(CHAR_T ***array, CHAR_T *string);
