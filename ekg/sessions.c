@@ -186,7 +186,7 @@ int session_remove(const char *uid)
 	}
 	
 	if(s->connected) {
-		command_exec_format(NULL, s, 1, "/disconnect %s", s->uid);
+		command_exec_format(NULL, s, 1, TEXT("/disconnect %s"), s->uid);
 	}
 	tmp = xstrdup(uid);
         query_emit(NULL, "session-changed");
@@ -489,7 +489,7 @@ int session_read()
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
 
-			command_exec(NULL, s, "disconnect", 1);	
+			command_exec(NULL, s, TEXT("disconnect"), 1);
 		}
 		sessions_free();
 		debug("	 flushed sessions\n");
@@ -716,7 +716,7 @@ int session_unidle(session_t *s)
 	s->activity = time(NULL);
 
 	if (s->autoaway)
-		command_exec(NULL, s, "/_autoback", 0);
+		command_exec(NULL, s, TEXT("/_autoback"), 0);
 
 	return 0;
 }
@@ -853,7 +853,7 @@ COMMAND(session_command)
 		
 		if (!(s = session_find(params[1]))) {
 			if (window_current->session) {
-				return command_exec_format(NULL, s, 0, "%s --get %s %s", name, session->uid, params[1]);
+				return command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, session->uid, params[1]);
 			} else
 				printq("invalid_session");
 			return -1;
@@ -923,7 +923,7 @@ COMMAND(session_command)
 					}
 					session_set_n(session->uid, params[1], params[2]);
 					config_changed = 1;
-					command_exec_format(NULL, s, 0, "%s --get %s %s", name, session->uid, params[1]);
+					command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, session->uid, params[1]);
 					return 0;
 				} else {
 					printq("invalid_session");
@@ -960,7 +960,7 @@ COMMAND(session_command)
 
 			session_set_n(s->uid, params[2], params[3]);
 			config_changed = 1;
-			command_exec_format(NULL, s, 0, "%s --get %s %s", name, s->uid, params[2]);
+			command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, s->uid, params[2]);
 			return 0;
 		}
 		
@@ -977,18 +977,18 @@ COMMAND(session_command)
 
 		if (params[1] && params[1][0] == '-') { 
 			config_changed = 1;
-			command_exec_format(NULL, s, 0, "%s --set %s %s", name, params[0], params[1]);
+			command_exec_format(NULL, s, 0, TEXT("%s --set %s %s"), name, params[0], params[1]);
 			return 0;
 		}
 
 		if(params[1] && params[2]) {
-			command_exec_format(NULL, s, 0, "%s --set %s %s %s", name, params[0], params[1], params[2]);
+			command_exec_format(NULL, s, 0, TEXT("%s --set %s %s %s"), name, params[0], params[1], params[2]);
 			config_changed = 1;
 			return 0;
 		}
 		
 		if(params[1]) {
-			command_exec_format(NULL, s, 0, "%s --get %s %s", name, params[0], params[1]);
+			command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, params[0], params[1]);
 			config_changed = 1;
 			return 0;		
 		}
@@ -1017,17 +1017,17 @@ COMMAND(session_command)
 	}
 	
 	if (params[0] && params[0][0] != '-' && params[1] && session && session->uid) {
-		command_exec_format(NULL, s, 0, "%s --set %s %s %s", name, session_alias_uid(session), params[0], params[1]);
+		command_exec_format(NULL, s, 0, TEXT("%s --set %s %s %s"), name, session_alias_uid(session), params[0], params[1]);
 		return 0;
         }
 	
 	if (params[0] && params[0][0] != '-' && session && session->uid) {
-		command_exec_format(NULL, s, 0, "%s --get %s %s", name, session_alias_uid(session), params[0]);
+		command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, session_alias_uid(session), params[0]);
 		return 0;
 	}
 	
 	if (params[0] && params[0][0] == '-' && session && session->uid) {
-		command_exec_format(NULL, s, 0, "%s --set %s %s", name, session_alias_uid(session), params[0]);
+		command_exec_format(NULL, s, 0, TEXT("%s --set %s %s"), name, session_alias_uid(session), params[0]);
 		return 0;
 	}
 
