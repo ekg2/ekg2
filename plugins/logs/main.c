@@ -36,7 +36,7 @@
 #include "ekg2-config.h"
 
 #include <stdint.h>
-
+#include <ekg/char.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/log.h>
@@ -467,20 +467,20 @@ int logs_plugin_init(int prio)
 	query_connect(&logs_plugin, "config-postinit", logs_postinit, NULL);
 	query_connect(&logs_plugin, "session-status", logs_sestatus_handler, NULL);
 	/* TODO: moze zmienna sesyjna ? ;> */
-	variable_add(&logs_plugin, "away_log", VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
+	variable_add(&logs_plugin, TEXT("away_log"), VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
-	variable_add(&logs_plugin, "log_max_open_files", VAR_INT, 1, &config_logs_max_files, &logs_changed_maxfd, NULL, NULL); 
-	variable_add(&logs_plugin, "log", VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
+	variable_add(&logs_plugin, TEXT("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, &logs_changed_maxfd, NULL, NULL); 
+	variable_add(&logs_plugin, TEXT("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
 			variable_map(3, 
 				LOG_FORMAT_NONE, 0, "none", 
 				LOG_FORMAT_SIMPLE, LOG_FORMAT_XML, "simple", 
 				LOG_FORMAT_XML, LOG_FORMAT_SIMPLE, "xml"), 
 			NULL);
-	variable_add(&logs_plugin, "log_ignored", VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
-	variable_add(&logs_plugin, "log_status", VAR_BOOL, 1, &config_logs_log_status, &logs_changed_path, NULL, NULL);
-	variable_add(&logs_plugin, "path", VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
-	variable_add(&logs_plugin, "remind_number", VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL); 
-	variable_add(&logs_plugin, "timestamp", VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
+	variable_add(&logs_plugin, TEXT("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
+	variable_add(&logs_plugin, TEXT("log_status"), VAR_BOOL, 1, &config_logs_log_status, &logs_changed_path, NULL, NULL);
+	variable_add(&logs_plugin, TEXT("path"), VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
+	variable_add(&logs_plugin, TEXT("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL); 
+	variable_add(&logs_plugin, TEXT("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
 	logs_changed_awaylog(NULL); /* nie robi sie automagicznie to trzeba sila. */
 
@@ -1166,7 +1166,7 @@ void logs_gaim()
  */
 
 void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip) {
-	char *nuid;
+	const char *nuid;
 
 	if (!file)
 		return;

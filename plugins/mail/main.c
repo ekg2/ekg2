@@ -520,9 +520,9 @@ int mail_plugin_init(int prio)
 
 	query_connect(&mail_plugin, "mail-count", mail_count_query, NULL);
 
-	variable_add(&mail_plugin, "check_mail", VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);
-	variable_add(&mail_plugin, "check_mail_frequency", VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
-	variable_add(&mail_plugin, "check_mail_folders", VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);
+	variable_add(&mail_plugin, TEXT("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);
+	variable_add(&mail_plugin, TEXT("check_mail_frequency"), VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
+	variable_add(&mail_plugin, TEXT("check_mail_folders"), VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);
 
 	return 0;
 }

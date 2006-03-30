@@ -177,7 +177,7 @@ QUERY(gg_userlist_added_handle)
 	int *quiet = va_arg(ap, int*);
 /* TODO: CHANGE to command_exec() !!!!. buggy. */
 //	return command_exec(NULL, session_current, *params, *quiet);	
-	return gg_command_modify("add", (const char **) params, session_current, NULL, *quiet);
+	return gg_command_modify(TEXT("add"), (const char **) params, session_current, NULL, *quiet);
 }
 
 
@@ -691,7 +691,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 
 		if (!__valid) {
 			print_status("dcc_attack", format_user(s, uid));
-			command_exec_format(NULL, s, 0, "/ignore %s", uid);
+			command_exec_format(NULL, s, 0, TEXT("/ignore %s"), uid);
 			return;
 		}
 
@@ -1296,16 +1296,16 @@ int gg_plugin_init(int prio)
 
 	gg_register_commands();
 	
-        variable_add(&gg_plugin, "display_token", VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
-	variable_add(&gg_plugin, "dcc", VAR_BOOL, 1, &gg_config_dcc, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, "dcc_dir", VAR_STR, 1, &gg_config_dcc_dir, NULL, NULL, NULL);
-	variable_add(&gg_plugin, "dcc_ip", VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, "dcc_limit", VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
-	variable_add(&gg_plugin, "dcc_port", VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, "get_images", VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
-	variable_add(&gg_plugin, "images_dir", VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
-	variable_add(&gg_plugin, "image_size", VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
-        variable_add(&gg_plugin, "split_messages", VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
+        variable_add(&gg_plugin, TEXT("display_token"), VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("dcc"), VAR_BOOL, 1, &gg_config_dcc, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("dcc_dir"), VAR_STR, 1, &gg_config_dcc_dir, NULL, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("dcc_ip"), VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("dcc_limit"), VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("dcc_port"), VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("get_images"), VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("images_dir"), VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
+	variable_add(&gg_plugin, TEXT("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
+        variable_add(&gg_plugin, TEXT("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);
