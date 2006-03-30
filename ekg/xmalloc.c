@@ -214,23 +214,10 @@ char *vsaprintf(const char *format, va_list ap)
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
 {
 #if USE_UNICODE
-	CHAR_T *res, tmp[2];
-	int size;
-#if defined(va_copy) || defined(__va_copy)
-	va_list aq;
-#endif
-#if defined(va_copy)
-	va_copy(aq, ap);
-#elif defined(__va_copy)
-	__va_copy(aq, ap);
-#endif
-	size = vswprintf(tmp, sizeof(tmp), format, ap);
-	res = xmalloc((size + 1)*sizeof(CHAR_T));
-
-	vswprintf(res, size + 1, format, aq);
-#if defined(va_copy) || defined(__va_copy)
-	va_end(aq);
-#endif
+	int size = 1000;
+	CHAR_T *res;
+	res = xmalloc(size+1);
+	vswprintf(res, size, format, ap);
 	return res;
 #else
 	return vsaprintf(format, ap);
