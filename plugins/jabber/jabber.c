@@ -368,29 +368,36 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 		char *seq 	= NULL;
 		uint32_t *format = NULL;
 
-		char *text;	
+		char *text = jabber_unescape(body->str);
 
 		debug("[jabber,message] type = %s\n", type);
 		if (!xstrcmp(type, "groupchat")) {
-			char *temp = jabber_unescape(body->str);
 			char *tuid = xstrrchr(uid, '/');
 			int isour = 0;
-			
-			const char *frname = format_find(isour ? "jabber_muc_send" : "jabber_muc_recv");
+			char *proto = xstrdup("jabber_");
+			char *proto_ext = NULL;
+			int proto_imp = 0;
+			int priv = 0;
+			int tous = 0;
 
-			class |= EKG_NO_THEMEBIT;
-			text = format_string(frname, session_name(s), (tuid) ? tuid+1 : uid, temp);
-			xfree(temp);
+			char *uid2 = (tuid) ? xstrndup(uid, tuid-uid) : xstrdup(uid);
+			char *uuid = (tuid) ? xstrdup(tuid+1) : uid;
+
+			rcpts = xcalloc(2, sizeof(char *));
+			rcpts[0] = xstrdup(uid2);
+			
+			query_emit(NULL, "multi-protocol-message", &me, &uuid, &rcpts, &uid2, &proto, &proto_ext, &proto_imp, 
+					&isour, &priv, &tous, &sent, &secure, &text, NULL);
+			xfree(proto);
 		} else {
-			text = jabber_unescape(body->str);
+			query_emit(NULL, "protocol-message", &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
 		}
 
-		query_emit(NULL, "protocol-message", &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(me);
 		xfree(text);
-/*
 		array_free(rcpts);
+/*
 		xfree(seq);
 		xfree(format);
 */
@@ -812,7 +819,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 				} else { /* debug pursuit only */
 					char *s = saprintf("\tMUC: %s", child->name);
 					print("generic", s);
-				xfree(s);
+					xfree(s);
 				}
 			}
 			ismuc = 1;
@@ -1074,7 +1081,7 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
 
         debug("[jabber] jabber_handle_connect()\n");
 
-        if (type != 0) {
+        if (type) {
                 return 0;
         }
 
@@ -1338,9 +1345,11 @@ static int jabber_theme_init()
 	format_add("jabber_register_param_value", "--%1 %2", 1);
 	format_add("jabber_register_param", "--%1 [%2]", 1);
 
-	format_add("jabber_muc_send", _("%B<%W%2%B>%n %3"), 1);
-	format_add("jabber_muc_recv", _("%b<%w%2%b>%n %3"), 1);
-	
+	format_add("jabber_send_chan", _("%B<%W%2%B>%n %5"), 1);
+	format_add("jabber_send_chan_n", _("%B<%W%2%B>%n %5"), 1);
+
+	format_add("jabber_recv_chan", _("%b<%w%2%b>%n %5"), 1);
+	format_add("jabber_recv_chan_n", _("%b<%w%2%b>%n %5"), 1);
         return 0;
 }
 
@@ -1377,9 +1386,6 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0, NULL);
-
-	config_jabber_console_charset = xstrdup("iso-8859-2");
-	variable_add(&jabber_plugin, "console_charset", VAR_STR, 1, &config_jabber_console_charset, NULL, NULL, NULL);
 #ifdef HAVE_GNUTLS
         gnutls_global_init();
 #endif

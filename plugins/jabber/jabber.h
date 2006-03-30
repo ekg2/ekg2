@@ -69,7 +69,6 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
 void jabber_handle_presence(xmlnode_t *n, session_t *s);
 void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
 
-extern char *config_jabber_console_charset;
 void jabber_initialize_conversions(char *varname);
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);

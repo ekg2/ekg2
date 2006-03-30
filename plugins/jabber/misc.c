@@ -10,6 +10,7 @@
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/themes.h>
+#include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
 
@@ -25,8 +26,6 @@ char *jabber_attr(char **atts, const char *att)
 		
 	return NULL;
 }
-
-char *config_jabber_console_charset = NULL;
 
 /* Following two functions shamelessly ripped from mutt-1.4.2i 
  * (http://www.mutt.org, license: GPL)
@@ -162,10 +161,11 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
 char *jabber_escape(const char *text)
 {
 	unsigned char *res, *utftext;
-
+	if (config_use_unicode)
+		return xml_escape(text);
 	if (!text)
 		return NULL;
-	if ( !(utftext = mutt_convert_string((char *)text, config_jabber_console_charset, "utf-8")) )
+	if ( !(utftext = mutt_convert_string((char *)text, config_console_charset, "utf-8")) )
 		return NULL;
 	res = xml_escape(utftext);
         xfree(utftext);
@@ -186,8 +186,10 @@ char *jabber_unescape(const char *text)
 {
 	if (!text)
 		return NULL;
+	if (config_use_unicode)
+		return xstrdup(text);
 
-	return mutt_convert_string((char *)text, "utf-8", config_jabber_console_charset);
+	return mutt_convert_string((char *)text, "utf-8", config_console_charset);
 }
 
 /*
@@ -196,7 +198,7 @@ char *jabber_unescape(const char *text)
  * obs³uga mo¿liwo¶ci zapisu do socketa. wypluwa z bufora ile siê da
  * i je¶li co¶ jeszcze zostanie, ponawia próbê.
  */
-WATCHER(jabber_handle_write)
+WATCHER(jabber_handle_write) /* watch tymczasowy; todo, zamienic na staly z wyjatkami usuwajacymi. */
 {
 	jabber_private_t *j = data;
 	int res;
@@ -216,7 +218,7 @@ WATCHER(jabber_handle_write)
 
 		if (res < 0) {
 			print("generic_error", gnutls_strerror(res));
-			return 0;
+			return -1;
 		}
 			
 	} else
@@ -228,7 +230,7 @@ WATCHER(jabber_handle_write)
 		xfree(j->obuf);
 		j->obuf = NULL;
 		j->obuf_len = 0;
-		return 0;
+		return -1;
 	}
 
 	if (res == j->obuf_len) {
@@ -236,7 +238,7 @@ WATCHER(jabber_handle_write)
 		xfree(j->obuf);
 		j->obuf = NULL;
 		j->obuf_len = 0;
-		return 0;
+		return -1;
 	}
 	
 	memmove(j->obuf, j->obuf + res, j->obuf_len - res);
