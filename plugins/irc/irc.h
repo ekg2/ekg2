@@ -128,7 +128,7 @@ COMMAND(irc_command_disconnect);
  */
 enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 char *irc_getchan_int(session_t *s, const char *name, int checkchan);
-char *irc_getchan(session_t *s, const char **params, const char *name,
+char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
       char ***v, int pr, int checkchan);
 
 #ifdef __GNU__

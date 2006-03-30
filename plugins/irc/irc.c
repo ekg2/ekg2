@@ -854,7 +854,7 @@ COMMAND(irc_command_msg)
 	uid = target;
 	w = window_find_s(session, uid);
 
-	prv = xstrcmp(name, "notice");
+	prv = xwcscmp(name, TEXT("notice"));
 	ischn = !!xstrchr(SOP(_005_CHANTYPES), uid[4]);
 /* PREFIX */
 	if ((ischn && (person = irc_find_person(j->people, j->nick)) && (perchn = irc_find_person_chan(person->channels, (char *)uid))))
@@ -936,7 +936,7 @@ COMMAND(irc_command_inline_msg)
 	const char	*p[2] = { NULL, params[0] };
 	if (!target || !params[0])
 		return -1;
-	return irc_command_msg("msg", p, session, target, quiet);
+	return irc_command_msg(TEXT("msg"), p, session, target, quiet);
 }
 
 COMMAND(irc_command_quote)
@@ -1025,19 +1025,19 @@ COMMAND(irc_command_away)
 	irc_private_t	*j = irc_private(session);
 	int 		isaway = 0;
 
-	if (!xstrcmp(name, "back")) {
+	if (!xwcscmp(name, TEXT("back"))) {
 		session_descr_set(session, NULL);
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
-	} else if (!xstrcmp(name, "away")) {
+	} else if (!xwcscmp(name, TEXT("away"))) {
 		session_descr_set(session, params[0]);
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
 		isaway = 1;
-	} else if (!xstrcasecmp(name, "_autoaway")) {
+	} else if (!xwcscasecmp(name, TEXT("_autoaway"))) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		isaway = 1;
-	} else if (!xstrcasecmp(name, "_autoback")) {
+	} else if (!xwcscasecmp(name, TEXT("_autoback"))) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 	} else {
@@ -1141,7 +1141,7 @@ char *irc_getchan_int(session_t *s, const char *name, int checkchan)
  *   1 - reverse
  * as side effect it adjust table passed as v argument
  */
-char *irc_getchan(session_t *s, const char **params, const char *name,
+char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 		char ***v, int pr, int checkchan)
 {
 	char		*chan;
@@ -1168,7 +1168,9 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		char *tmpname = saprintf("irc:%s", name);
+		char *sname = wcs_to_normal(name);
+		char *tmpname2 = saprintf("irc:%s", sname);
+		CHAR_T *tmpname = normal_to_wcs(tmpname2);
 
 		if (!xwcscasecmp(tmpname, c->name) && &irc_plugin == c->plugin)
 			while (c->params[parnum])
@@ -1177,7 +1179,10 @@ char *irc_getchan(session_t *s, const char **params, const char *name,
 					hasq = 1;
 				parnum++;
 			}
-		xfree(tmpname);
+		
+		xfree(tmpname2);
+		free_utf(tmpname);
+		free_utf(sname);
 	}
 
 	do {
@@ -1465,13 +1470,13 @@ COMMAND(irc_command_ban)
 COMMAND(irc_command_kickban) {
 	const char	*p[4] = { params[0], params[1], params[2], NULL };
 
-	if (!xstrcmp(name, "kickban"))
+	if (!xwcscmp(name, TEXT("kickban")))
 	{
-		irc_command_kick("kick", params, session, target, quiet);
-		irc_command_ban("ban", params, session, target, quiet);
+		irc_command_kick(TEXT("kick"), params, session, target, quiet);
+		irc_command_ban(TEXT("ban"), params, session, target, quiet);
 	} else {
-		irc_command_ban("ban", params, session, target, quiet);
-		irc_command_kick("kick", params, session, target, quiet);
+		irc_command_ban(TEXT("ban"), params, session, target, quiet);
+		irc_command_kick(TEXT("kick"), params, session, target, quiet);
 	}
 	if (p) ;
 	return 0;
@@ -1500,7 +1505,7 @@ COMMAND(irc_command_devop)
 
 	modes = atoi(j->sopt[_005_MODES]);
 	op = xmalloc((modes+2) * sizeof(char));
-	c=xstrchr(name, 'p')?'o':xstrchr(name, 'h')?'h':'v';
+	c=xwcschr(name, 'p')?'o':xwcschr(name, 'h')?'h':'v';
 	/* Yes, I know there is such a function as memset() ;> */
 	for (i=0, tmp=op+1; i<modes; i++, tmp++) *tmp=c;
 	op[0]=*name=='d'?'-':'+';
@@ -1657,9 +1662,9 @@ COMMAND(irc_command_whois)
 		return -1;
 
 	debug("irc_command_whois(): %s\n", name);
-	if (!xstrcmp(name, "whowas"))
+	if (!xwcscmp(name, TEXT("whowas")))
 		irc_write(irc_private(session),	"WHOWAS %s\r\n", person+4);
-        else if (!xstrcmp(name, "wii"))
+        else if (!xwcscmp(name, TEXT("wii")))
 		irc_write(irc_private(session),	"WHOIS %s %s\r\n", person+4, person+4);
 	else	irc_write(irc_private(session),	"WHOIS %s\r\n",  person+4);
 
@@ -1680,7 +1685,7 @@ QUERY(irc_status_show_handle)
 	p[0] = irc_private(s)->nick;
 	p[1] = 0;
 
-	return irc_command_whois("wii", p, s, NULL, 0);
+	return irc_command_whois(TEXT("wii"), p, s, NULL, 0);
 }
 
 COMMAND(irc_command_query)
@@ -1740,7 +1745,7 @@ COMMAND(irc_command_jopacy)
 					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
-	if (!xstrcmp(name, "cycle")) {
+	if (!xwcscmp(name, TEXT("cycle"))) {
 		chan = irc_find_channel(j->channels, tar);
 		if (chan && (pass = xstrchr(chan->mode_str, 'k')))
 			pass+=2;
@@ -1748,11 +1753,11 @@ COMMAND(irc_command_jopacy)
 	}
 
 	tmp = saprintf("JOIN %s%s\r\n", tar+4, pass ? pass : "");
-	if (!xstrcmp(name, "part") || !xstrcmp(name, "cycle")) {
+	if (!xwcscmp(name, TEXT("part")) || !xwcscmp(name, TEXT("cycle"))) {
 		str = saprintf("PART %s :%s\r\n%s", tar+4,
 				PARTMSG(session,(*mp)),
-				!xstrcmp(name, "cycle")?tmp:"");
-	} else if (!xstrcmp(name, "join")) {
+				!xwcscmp(name, TEXT("cycle"))?tmp:"");
+	} else if (!xwcscmp(name, TEXT("join"))) {
 		str = tmp; tmp=NULL;
 	} else
 		return 0;
