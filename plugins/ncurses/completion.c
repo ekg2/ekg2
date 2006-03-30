@@ -245,7 +245,7 @@ static void plugin_generator(const CHAR_T *text, int len)
 			free_utf(pname);
 		}
 		if ((stext[0] == '+' || stext[0] == '-') && !xstrncasecmp(stext + 1, p->name, len - 1)) {
-			CHAR_T *tmp = wcsprintf("%c%s", stext[0], p->name);
+			CHAR_T *tmp = wcsprintf(TEXT("%c%s"), stext[0], p->name);
 			wcs_array_add_check(&completions, tmp, 1);
 		}
         }
@@ -986,13 +986,13 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		if (send_nicks_count) {
 			char *nick = send_nicks[send_nicks_index++];
 #if USE_UNICODE
-			swprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%ls\"%s\" " : "%ls%s ", cmd, nick);
+			swprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? TEXT("%ls\"%s\" ") : TEXT("%ls%s "), cmd, nick);
 #else
 			snprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
 #endif
 		} else
 #if USE_UNICODE
-			swprintf(line, LINE_MAXLEN, "%ls", cmd);
+			swprintf(line, LINE_MAXLEN, TEXT("%ls"), cmd);
 #else
 			snprintf(line, LINE_MAXLEN, "%s", cmd);
 #endif
@@ -1166,9 +1166,9 @@ exact_match:
 				if (xwcschr(words[i], TEXT(' '))) {
 					CHAR_T *tmp = 
 #if USE_UNICODE
-						wcsprintf("\"%ls\"", words[i]);
+						wcsprintf(TEXT("\"%ls\""), words[i]);
 #else
-						wcsprintf("\"%s\"", words[i]);
+						wcsprintf(TEXT("\"%s\""), words[i]);
 #endif
 					xwcscat(line, tmp);
 					xfree(tmp);
@@ -1243,9 +1243,9 @@ exact_match:
 					if (xwcsrchr(words[i], TEXT(' '))) {
 						CHAR_T *tmp = 
 #if USE_UNICODE
-							wcsprintf("\"%ls\"", words[i]);
+							wcsprintf(TEXT("\"%ls\""), words[i]);
 #else
-							wcsprintf("\"%s\"", words[i]);
+							wcsprintf(TEXT("\"%s\""), words[i]);
 #endif
 						xwcscat(line, tmp);
 						xfree(tmp);
