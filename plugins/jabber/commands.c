@@ -153,7 +153,7 @@ COMMAND(jabber_command_disconnect)
 	}
 
 	/* je¶li jest /reconnect, nie mieszamy z opisami */
-	if (xstrcmp(name, "reconnect")) {
+	if (xwcscmp(name, TEXT("reconnect"))) {
 		if (params[0])
 			descr = xstrdup(params[0]);
 		else
@@ -220,7 +220,7 @@ const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 COMMAND(jabber_command_msg)
 {
 	jabber_private_t *j = session_private_get(session);
-	int chat = !xstrcasecmp(name, "chat");
+	int chat = !xwcscasecmp(name, TEXT("chat"));
 	int subjectlen = xstrlen(config_subject_prefix);
 	char *msg;
 	char *subject = NULL;
@@ -310,7 +310,7 @@ COMMAND(jabber_command_inline_msg)
 	const char *p[2] = { NULL, params[0] };
 	if (!params[0] || !target)
 		return -1;
-	return jabber_command_msg("chat", p, session, target, quiet);
+	return jabber_command_msg(TEXT("chat"), p, session, target, quiet);
 }
 
 COMMAND(jabber_command_xml)
@@ -328,34 +328,34 @@ COMMAND(jabber_command_away)
 		session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
 		reason_changed = 1;
 	} 
-	if (!xstrcmp(name, "_autoback")) {
+	if (!xwcscmp(name, TEXT("_autoback"))) {
 		format = "auto_back";
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
-	} else if (!xstrcmp(name, "back")) {
+	} else if (!xwcscmp(name, TEXT("back"))) {
 		format = "back";
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
-	} else if (!xstrcmp(name, "_autoaway")) {
+	} else if (!xwcscmp(name, TEXT("_autoaway"))) {
 		format = "auto_away";
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
-	} else if (!xstrcmp(name, "away")) {
+	} else if (!xwcscmp(name, TEXT("away"))) {
 		format = "away"; 
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
-	} else if (!xstrcmp(name, "dnd")) {
+	} else if (!xwcscmp(name, TEXT("dnd"))) {
 		format = "dnd";
 		session_status_set(session, EKG_STATUS_DND);
 		session_unidle(session);
-	} else if (!xstrcmp(name, "ffc")) {
+	} else if (!xwcscmp(name, TEXT("ffc"))) {
 	        format = "ffc";
 	        session_status_set(session, EKG_STATUS_FREE_FOR_CHAT);
                 session_unidle(session);
-        } else if (!xstrcmp(name, "xa")) {
+        } else if (!xwcscmp(name, TEXT("xa"))) {
 		format = "xa";
 		session_status_set(session, EKG_STATUS_XA);
 		session_unidle(session);
-	} else if (!xstrcmp(name, "invisible")) {
+	} else if (!xwcscmp(name, TEXT("invisible"))) {
 		format = "invisible";
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		session_unidle(session);
@@ -464,7 +464,7 @@ COMMAND(jabber_command_modify)
 	userlist_t *u;
 	list_t m;
 	
-	int addcomm = !xstrcasecmp(name, "add");
+	int addcomm = !xwcscasecmp(name, TEXT("add"));
 
 	if (!(u = userlist_find(session, target))) {
 		if (!addcomm) {
@@ -564,7 +564,7 @@ COMMAND(jabber_command_modify)
 	
 	if (addcomm) {
 		xfree(u);
-		return command_exec_format(target, session, 0, "/auth --request %s", uid);
+		return command_exec_format(target, session, 0, TEXT("/auth --request %s"), uid);
 	}
 	
 	return ret;
@@ -768,37 +768,37 @@ void jabber_register_commands()
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define JABBER_FLAGS        JABBER_ONLY  | SESSION_MUSTBECONNECTED
 #define JABBER_FLAGS_TARGET JABBER_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	command_add(&jabber_plugin, "jid:", "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:_autoaway", "r", jabber_command_away,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:_autoback", "r", jabber_command_away,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:add", "!U ?", jabber_command_modify, 	JABBER_FLAGS_TARGET, NULL); 
-	command_add(&jabber_plugin, "jid:auth", "!p !uU", jabber_command_auth, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, 
+	command_add(&jabber_plugin, TEXT("jid:"), "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:_autoaway"), "r", jabber_command_away,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:_autoback"), "r", jabber_command_away,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:add"), "!U ?", jabber_command_modify, 	JABBER_FLAGS_TARGET, NULL); 
+	command_add(&jabber_plugin, TEXT("jid:auth"), "!p !uU", jabber_command_auth, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, 
 			"-a --accept -d --deny -r --request -c --cancel");
-	command_add(&jabber_plugin, "jid:away", "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:back", "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:change", "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
+	command_add(&jabber_plugin, TEXT("jid:away"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:back"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
-	command_add(&jabber_plugin, "jid:chat", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, "jid:connect", "r ?", jabber_command_connect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:del", "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, "jid:disconnect", "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:dnd", "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:invisible", "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:ffc", "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:msg", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, "jid:modify", "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
+	command_add(&jabber_plugin, TEXT("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:disconnect"), "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:ffc"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:msg"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:modify"), "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
 			"-n --nickname -g --group");
-	command_add(&jabber_plugin, "jid:join", "! ? ?", jabber_muc_command_join, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&jabber_plugin, "jid:part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, "jid:passwd", "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&jabber_plugin, "jid:reconnect", NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:transports", "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, "jid:ver", "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
-	command_add(&jabber_plugin, "jid:userinfo", "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, "jid:lastseen", "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, "jid:register", "? ?", jabber_command_register, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, "jid:xa", "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "jid:xml", "!", jabber_command_xml, 	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
+	command_add(&jabber_plugin, TEXT("jid:userinfo"), "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:lastseen"), "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:register"), "? ?", jabber_command_register, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:xa"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:xml"), "!", jabber_command_xml, 	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 };
 
 /*
