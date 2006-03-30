@@ -299,7 +299,7 @@ static int ncurses_conference_renamed(void *data, va_list ap)
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,aspell'' lub ,,aspell_lang'' lub ,,aspell_encoding''.
  */
-void ncurses_changed_aspell(const char *var)
+void ncurses_changed_aspell(const CHAR_T *var)
 {
 #ifndef USE_UNICODE
 #ifdef WITH_ASPELL
@@ -423,7 +423,7 @@ void ncurses_display_transparent_changed(const char *var)
         refresh();
         /* it will call what's needed */
 	header_statusbar_resize();
-        changed_backlog_size("backlog_size");
+        changed_backlog_size(TEXT("backlog_size"));
 
 }
 
@@ -487,28 +487,28 @@ int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "config-postinit", ncurses_postinit, NULL);
 #ifndef USE_UNICODE
 #ifdef WITH_ASPELL
-	variable_add(&ncurses_plugin, "aspell", VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
-        variable_add(&ncurses_plugin, "aspell_lang", VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
-        variable_add(&ncurses_plugin, "aspell_encoding", VAR_STR, 1, &config_aspell_encoding, ncurses_changed_aspell, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
+        variable_add(&ncurses_plugin, TEXT("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
+        variable_add(&ncurses_plugin, TEXT("aspell_encoding"), VAR_STR, 1, &config_aspell_encoding, ncurses_changed_aspell, NULL, NULL);
 #endif
 #endif
-	variable_add(&ncurses_plugin, "backlog_size", VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("backlog_size"), VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	/* this isn't very nice solution, but other solutions would require _more_
 	 * changes...
 	 */
-	variable_add(&ncurses_plugin, "contacts", VAR_INT, 1, &config_contacts, (void (*)(const char *))ncurses_contacts_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, "contacts_groups", VAR_STR, 1, &config_contacts_groups, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_groups_all_sessons", VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_options", VAR_STR, 1, &config_contacts_options, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_size", VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "contacts_metacontacts_swallow", VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, "display_crap",  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
-	variable_add(&ncurses_plugin, "display_transparent", VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, "enter_scrolls", VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
-	variable_add(&ncurses_plugin, "header_size", VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
-	variable_add(&ncurses_plugin, "kill_irc_window",  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
-        variable_add(&ncurses_plugin, "margin_size", VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
-	variable_add(&ncurses_plugin, "statusbar_size", VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("contacts"), VAR_INT, 1, &config_contacts, (void (*)(const char *))ncurses_contacts_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("contacts_groups"), VAR_STR, 1, &config_contacts_groups, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("kill_irc_window"),  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
+        variable_add(&ncurses_plugin, TEXT("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
 	
 	have_winch_pipe = 0;
 #ifdef SIGWINCH

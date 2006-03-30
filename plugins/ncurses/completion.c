@@ -57,7 +57,9 @@ static void command_generator(const CHAR_T *text, int len)
 	const char *slash = "", *dash = "";
 	list_t l;
 	session_t *session = session_current;
-
+#if USE_UNICODE
+#warning unicodowe cus leakuje tutaj i to calkiem niezle... TODO
+#endif
 	if (*text == '/') {
 		slash = "/";
 		text++;
@@ -75,18 +77,22 @@ static void command_generator(const CHAR_T *text, int len)
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		char *without_sess_id = NULL;
+		CHAR_T *without_sess_id = NULL;
 		int plen = 0;
 		if (session && session->uid)
 			plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
                 if (session && !xstrncasecmp(c->name, session->uid, plen))
-			without_sess_id = xstrchr(c->name, ':');
+			without_sess_id = xwcschr(c->name, ':');
 
-		if (!xstrncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
-			array_add_check(&completions, saprintf("%s%s%s", slash, dash, c->name), 1);
-		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !xstrncasecmp(text, without_sess_id + 1, len))
-			array_add_check(&completions, saprintf("%s%s%s", slash, dash, without_sess_id + 1), 1);
+		if (!xwcsncasecmp(text, c->name, len) && !wcs_array_item_contains(completions, c->name, 1))
+			wcs_array_add_check(&completions, 
+					normal_to_wcs(saprintf("%s%s%s", slash, dash, wcs_to_normal(c->name))),
+					1);
+		else if (without_sess_id && !wcs_array_item_contains(completions, without_sess_id + 1, 1) && !xwcsncasecmp(text, without_sess_id + 1, len))
+			wcs_array_add_check(&completions, 
+					normal_to_wcs(saprintf("%s%s%s", slash, dash, wcs_to_normal(without_sess_id + 1))),
+					1);
 	}
 }
 
@@ -220,26 +226,31 @@ static void conference_generator(const CHAR_T *text, int len)
 
 static void plugin_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
         list_t l;
+	char *stext = wcs_to_normal(text);
 
         for (l = plugins; l; l = l->next) {
                 plugin_t *p = l->data;
 
-                if (!xstrncasecmp(text, p->name, len))
-                        array_add_check(&completions, xstrdup(p->name), 1);
-		if ((text[0] == '+' || text[0] == '-') && !xstrncasecmp(text + 1, p->name, len - 1)) {
-			char *tmp = saprintf("%c%s", text[0], p->name);
-			array_add_check(&completions, tmp, 1);
+                if (!xstrncasecmp(stext, p->name, len)) {
+			CHAR_T *pname = normal_to_wcs(p->name);
+                        wcs_array_add_check(&completions, xwcsdup(pname), 1);
+			free_utf(pname);
+		}
+		if ((stext[0] == '+' || stext[0] == '-') && !xstrncasecmp(stext + 1, p->name, len - 1)) {
+			char *tmp2 = saprintf("%c%s", stext[0], p->name);
+			CHAR_T *tmp = normal_to_wcs(tmp2);
+			wcs_array_add_check(&completions, tmp, 1);
+			free_utf(tmp);
 		}
         }
-#endif
+	free_utf(stext);
 }
 
 static void variable_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
 	list_t l;
+	char *stext = wcs_to_normal(text);
 
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
@@ -248,14 +259,21 @@ static void variable_generator(const CHAR_T *text, int len)
 			continue;
 
 		if (*text == '-') {
-			if (!xstrncasecmp(text + 1, v->name, len - 1))
+			if (!xstrncasecmp(stext + 1, v->name, len - 1))
+#ifndef USE_UNICODE
 				array_add_check(&completions, saprintf("-%s", v->name), 1);
+#else
+;
+#endif
 		} else {
-			if (!xstrncasecmp(text, v->name, len))
-				array_add_check(&completions, xstrdup(v->name), 1);
+			if (!xstrncasecmp(stext, v->name, len)) {
+				CHAR_T *tmp = normal_to_wcs(v->name);
+				wcs_array_add_check(&completions, xwcsdup(tmp), 1);
+				free_utf(tmp);
+			}
 		}
 	}
-#endif
+	free_utf(stext);
 }
 
 static void ignored_uin_generator(const CHAR_T *text, int len)
@@ -566,17 +584,20 @@ static void theme_generator(const CHAR_T *text, int len)
 
 static void possibilities_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
 	int i;
 	command_t *c = actual_completed_command;
+	char *stext;
 
 	if (!c)
 		return;
+	stext = wcs_to_normal(text);
 
 	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
-		if (!xstrncmp(text, c->possibilities[i], len)) 
-			array_add_check(&completions, xstrdup(c->possibilities[i]), 1);
-#endif
+		if (!xstrncmp(stext, c->possibilities[i], len)) {
+			CHAR_T *cpos = normal_to_wcs(c->possibilities[i]);
+			wcs_array_add_check(&completions, xwcsdup(cpos), 1);
+			free_utf(cpos);
+		}
 }
 
 static void window_generator(const CHAR_T *text, int len)
@@ -717,8 +738,8 @@ static struct {
  */
 void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 {
-	CHAR_T *start, **words;
-	char *cmd, *separators;
+	CHAR_T *start, **words, *separators;
+	CHAR_T *cmd;
 	int i, count, word, j, words_count, word_current, open_quote, lenght;
 
 	/* 
@@ -736,7 +757,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	 */
 	if (completions && !continue_complete) {
 		int maxlen = 0, cols, rows;
-		char *tmp;
+		CHAR_T *tmp;
 
 		for (i = 0; completions[i]; i++)
 			if (xwcslen(completions[i]) + 2 > maxlen)
@@ -746,37 +767,39 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		if (cols == 0)
 			cols = 1;
 
-		rows = array_count(completions) / cols + 1;
+		rows = wcs_array_count(completions) / cols + 1;
 
-		tmp = xmalloc(cols * maxlen + 2);
+		tmp = xmalloc((cols * maxlen + 2)*sizeof(CHAR_T));
 
 		for (i = 0; i < rows; i++) {
 			int j;
 
-			xstrcpy(tmp, "");
+			xwcscpy(tmp, TEXT(""));
 
 			for (j = 0; j < cols; j++) {
 				int cell = j * rows + i;
 
-				if (cell < array_count(completions)) {
+				if (cell < wcs_array_count(completions)) {
 					int k;
 
-					xstrcat(tmp, completions[cell]);
+					xwcscat(tmp, completions[cell]);
 
 					for (k = 0; k < maxlen - xwcslen(completions[cell]); k++)
-						xstrcat(tmp, " ");
+						xwcscat(tmp, TEXT(" "));
 				}
 			}
 
-			if (xstrcmp(tmp, "")) {
-				print("none", tmp);
+			if (xwcscmp(tmp, TEXT(""))) {
+				char *tmp2 = wcs_to_normal(tmp);
+				print("none", tmp2);
+				free_utf(tmp2);
 			}
 		}
 		
 		/* w³±czamy nastêpny etap dope³nienia - przeskakiwanie miêdzy dope³nianymi wyrazami */
 		continue_complete = 1;
 		continue_complete_count = 0;
-		last_line = xwcslen(line);
+		last_line = xwcsdup(line);
 		last_pos = *line_index;
 		xfree(last_line_without_complete);
 		last_line_without_complete = xwcsdup(line);
@@ -809,19 +832,19 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		/* "przewijamy" wiêksz± ilo¶æ spacji */
 		for(i++; i < xwcslen(line) && (xisspace(line[i]) || line[i] == ','); i++);
 		i--;
-		array_add(&words, xwcsdup(start));
+		wcs_array_add(&words, xwcsdup(start));
 	}
 
 	/* je¿eli ostatnie znaki to spacja, albo przecinek to trzeba dodaæ jeszcze pusty wyraz do words */
 	if (xwcslen(line) > 1 && (line[xwcslen(line) - 1] == ' ' || line[xwcslen(line) - 1] == ',') && !open_quote)
-		array_add(&words, xstrdup(""));
+		wcs_array_add(&words, xwcsdup(TEXT("")));
 
 /*	 for(i = 0; i < array_count(words); i++)
 		debug("words[i = %d] = \"%s\"\n", i, words[i]);     */
 
 	/* inicjujemy pamiêc dla separators */
 	if (words != NULL)
-		separators = xmalloc(array_count(words) * sizeof(char) + 1);
+		separators = xmalloc(wcs_array_count(words) * sizeof(CHAR_T) + 1);
 	else
 		separators = NULL;
 
@@ -882,12 +905,12 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
                 if(i >= *line_index)
                         break;
 	}
-	words_count = array_count(words);
+	words_count = wcs_array_count(words);
 	lenght = xwcslen(line);
 	/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
         if (xisspace(line[lenght - 1]))
                 word_current++;
-	if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== array_count(words) -1 )
+	if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== wcs_array_count(words) -1 )
 		word++;
 	if (xisspace(line[lenght - 1]))
 		words_count++;
@@ -906,7 +929,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	if (continue_complete && completions) {
 		int cnt = continue_complete_count;
 
-		count = array_count(completions);
+		count = wcs_array_count(completions);
 		line[0] = '\0';
 		if (continue_complete_count >= count - 1)
 			continue_complete_count = 0;
@@ -915,28 +938,30 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		if (!completions[cnt]) /* nigdy nie powinno siê zdarzyæ, ale na wszelki ... */
 			goto cleanup;
 			
-		for(i = 0; i < array_count(words); i++) {
+		for(i = 0; i < wcs_array_count(words); i++) {
 			if(i == word) {
-				if(xstrchr(completions[cnt],  '\001')) {
+				if(xwcschr(completions[cnt],  TEXT('\001'))) {
 					if(completions[cnt][0] == '"')
-						xstrncat(line, completions[cnt] + 2, xwcslen(completions[cnt]) - 2 - 1 );
+						xwcsncat(line, completions[cnt] + 2, xwcslen(completions[cnt]) - 2 - 1 );
 					else
-						xstrncat(line, completions[cnt] + 1, xwcslen(completions[cnt]) - 1);
+						xwcsncat(line, completions[cnt] + 1, xwcslen(completions[cnt]) - 1);
 				} else
 			    		xwcscat(line, completions[cnt]);
 				*line_index = xwcslen(line) + 1;
 			} else {
-				if(xstrchr(words[i], ' ')) {
+				if(xwcschr(words[i], TEXT(' '))) {
 					char *tmp = saprintf("\"%s\"", words[i]);
-					xstrcat(line, tmp);
+					CHAR_T *tmp2 = normal_to_wcs(tmp);
+					xwcscat(line, tmp2);
+					free_utf(tmp2);
 					xfree(tmp);
 				} else 
 					xwcscat(line, words[i]);
 			}
-			if((i == array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
+			if((i == wcs_array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
 				xwcscat(line, TEXT(" "));
 			else if (line[xwcslen(line) - 1] != ' ') 
-				xstrncat(line, separators + i, 1);
+				xwcsncat(line, separators + i, 1);
 		}
 		/* ustawiamy dane potrzebne do nastêpnego dope³nienia */
 		xfree(last_line);
@@ -944,25 +969,40 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
                 last_pos = *line_index;
 		goto cleanup;
 	}
-
+#if USE_UNICODE
+#warning BLE HACK
+	{
+		char *tmp = saprintf("/%s ", (config_tab_command) ? config_tab_command : "chat");
+		cmd = normal_to_wcs(tmp);
+		xfree(tmp);
+	}
+#else
 	cmd = saprintf("/%s ", (config_tab_command) ? config_tab_command : "chat");
+#endif
 
 	/* nietypowe dope³nienie nicków przy rozmowach */
-	if (!xwcscmp(line, TEXT("")) || (!xstrncasecmp(line, cmd, xstrlen(cmd)) && word == 2 && send_nicks_count > 0) || (!xstrcasecmp(line, cmd) && send_nicks_count > 0)) {
+	if (!xwcscmp(line, TEXT("")) || (!xwcsncasecmp(line, cmd, xwcslen(cmd)) && word == 2 && send_nicks_count > 0) || (!xwcscasecmp(line, cmd) && send_nicks_count > 0)) {
 		if (send_nicks_index >= send_nicks_count)
 			send_nicks_index = 0;
 
 		if (send_nicks_count) {
 			char *nick = send_nicks[send_nicks_index++];
-
+#if USE_UNICODE
+			swprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
+#else
 			snprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
+#endif
 		} else
+#if USE_UNICODE
+			swprintf(line, LINE_MAXLEN, "%ls", cmd);
+#else
 			snprintf(line, LINE_MAXLEN, "%s", cmd);
+#endif
 		*line_start = 0;
 		*line_index = xwcslen(line);
 
-                array_free(completions);
-                array_free(words);
+                wcs_array_free(completions);
+                wcs_array_free(words);
 		xfree(start);
 		xfree(separators);
 		xfree(cmd);
@@ -977,25 +1017,25 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	                known_uin_generator(start, xwcslen(start));
 	                if (completions) {
 	                        for (j = 0; completions && completions[j]; j++) {
-	                                string_t s;
+	                                wcs_string_t s;
 	
-	                                if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' ')) {
-						s = string_init("");
-						string_append(s, completions[j]);
+	                                if (!xwcschr(completions[j], TEXT('"')) && !xwcschr(completions[j], TEXT('\\')) && !xwcschr(completions[j], TEXT(' '))) {
+						s = wcs_string_init(TEXT(""));
+						wcs_string_append(s, completions[j]);
 						if (config_completion_char && strlen(config_completion_char))
 							string_append_c(s, *config_completion_char);
 						else
-							string_append_c(s, ':');
+							wcs_string_append_c(s, TEXT(':'));
 						xfree(completions[j]);
-						completions[j] = string_free(s, 0);
+						completions[j] = wcs_string_free(s, 0);
 	                                        continue;
 					}
-	                                s = string_init("\"");
-	                                string_append(s, completions[j]);
-	                                string_append_c(s, '\"');
-					string_append_c(s, ':');
+	                                s = wcs_string_init(TEXT("\""));
+	                                wcs_string_append(s, completions[j]);
+	                                wcs_string_append_c(s, TEXT('\"'));
+					wcs_string_append_c(s, TEXT(':'));
 	                                xfree(completions[j]);
-	                                completions[j] = string_free(s, 0);
+	                                completions[j] = wcs_string_free(s, 0);
 	                        }
 	                }
 
@@ -1008,7 +1048,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		char **params = NULL;
 		int abbrs = 0, i;
 		list_t l;
-                char *cmd = (line[0] == '/') ? line + 1 : line;
+                CHAR_T *cmd = (line[0] == '/') ? line + 1 : line;
 		int len;
 
 		for (len = 0; cmd[len] && !xisspace(cmd[len]); len++);
@@ -1016,27 +1056,30 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		/* first we look for some session complete */
 		if (session_current) {
 			session_t *session = session_current;
+			CHAR_T *suid = normal_to_wcs(session->uid);
 			int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
 			for (l = commands; l; l = l->next) {
 				command_t *c = l->data;
 
-	                        if (xstrncasecmp(c->name, session->uid, plen))
+	                        if (xwcsncasecmp(c->name, suid, plen))
 	                                continue;
 
-                	        if (!xstrncasecmp(c->name + plen, cmd, len)) {
+                	        if (!xwcsncasecmp(c->name + plen, cmd, len)) {
 	                                params = c->params;
 	                                abbrs = 1;
 	                                actual_completed_command = c;
+					free_utf(suid);
 	                                goto exact_match;
 	                        }
 			}
+			free_utf(suid);
 		}
 
         	for (l = commands; l; l = l->next) {
 	                command_t *c = l->data;
 
-	                if (!xstrncasecmp(c->name, cmd, len)) {
+	                if (!xwcsncasecmp(c->name, cmd, len)) {
 	                        params = c->params;
 	                        abbrs = 1;
 	                        actual_completed_command = c;
@@ -1046,7 +1089,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 exact_match: 
 		/* for /set maybe we want to complete the file path */
-		if (!xstrncmp(cmd, "set", xstrlen("set")) && words[1] && words[2] && word_current == 3) {
+		if (!xwcsncmp(cmd, TEXT("set"), xwcslen(TEXT("set"))) && words[1] && words[2] && word_current == 3) {
 			variable_t *v;
 
 			if ((v = variable_find(words[1]))) {
@@ -1090,19 +1133,19 @@ exact_match:
 	
 		if (completions) {
 			for (j = 0; completions && completions[j]; j++) {
-				string_t s;
+				wcs_string_t s;
 	
-				if (!xstrchr(completions[j], '"') && !xstrchr(completions[j], '\\') && !xstrchr(completions[j], ' '))
+				if (!xwcschr(completions[j], TEXT('"')) && !xwcschr(completions[j], TEXT('\\')) && !xwcschr(completions[j], TEXT(' ')))
 					continue;
-				s = string_init("\"");
-				string_append(s, completions[j]);				
-				string_append_c(s, '\"');
+				s = wcs_string_init(TEXT("\""));
+				wcs_string_append(s, completions[j]);				
+				wcs_string_append_c(s, TEXT('\"'));
 				xfree(completions[j]);
-				completions[j] = string_free(s, 0);
+				completions[j] = wcs_string_free(s, 0);
 			}
 		}	 
 	}
-	count = array_count(completions);
+	count = wcs_array_count(completions);
 	
 	/* 
 	 * je¶li jest tylko jedna mo¿lwio¶æ na dope³nienie to drukujemy co mamy,
@@ -1111,30 +1154,37 @@ exact_match:
 	 */
 	if (count == 1) {
 		line[0] = '\0';
-		for(i = 0; i < array_count(words); i++) {
+		for(i = 0; i < wcs_array_count(words); i++) {
 			if(i == word) {
-				if (xstrchr(completions[0],  '\001')) {
+				if (xwcschr(completions[0],  '\001')) {
 					if(completions[0][0] == '"')
-						xstrncat(line, completions[0] + 2, xwcslen(completions[0]) - 2 - 1 );
+						xwcsncat(line, completions[0] + 2, xwcslen(completions[0]) - 2 - 1 );
 					else
-						xstrncat(line, completions[0] + 1, xwcslen(completions[0]) - 1);
+						xwcsncat(line, completions[0] + 1, xwcslen(completions[0]) - 1);
 				} else
 			    		xwcscat(line, completions[0]);
 				*line_index = xwcslen(line) + 1;
 			} else {
-				if (xstrchr(words[i], ' ')) {
-					CHAR_T *tmp = wcsprintf(TEXT("\"%s\""), words[i]);
+				if (xwcschr(words[i], TEXT(' '))) {
+#warning BLEEE
+					char *swords = wcs_to_normal(words[i]);
+					char *tmp2 = saprintf("\"%s\"", swords);
+					CHAR_T *tmp = normal_to_wcs(tmp2);
+
 					xwcscat(line, tmp);
-					xfree(tmp);
+
+					xfree(tmp2);
+					free_utf(tmp);
+					free_utf(swords);
 				} else
 					xwcscat(line, words[i]);
 			}
-			if((i == array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
+			if((i == wcs_array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
 				xwcscat(line, TEXT(" "));
 			else if (line[xwcslen(line) - 1] != ' ')
-                                xstrncat(line, separators + i, 1);
+                                xwcsncat(line, separators + i, 1);
 		}
-		array_free(completions);
+		wcs_array_free(completions);
 		completions = NULL;
 	}
 
@@ -1147,7 +1197,7 @@ exact_match:
 		int common = 0;
 		int tmp = 0;
 		int quotes = 0;
-		char *s1  = completions[0];
+		CHAR_T *s1  = completions[0];
 
                 if (*s1 =='"')
 	                s1++;
@@ -1160,14 +1210,14 @@ exact_match:
 		 */
 		for (i=1, j = 0; ; i++, common++) {
 			for (j=0; j < count; j++) {
-				char *s2;
+				CHAR_T *s2;
 
 				s2 = completions[j];
 				if (*s2 == '"') {
 					quotes = 1;
 					s2++;
 				}
-				tmp = xstrncasecmp(s1, s2, i);
+				tmp = xwcsncasecmp(s1, s2, i);
 				/* debug("xstrncasecmp(\"%s\", \"%s\", %d) = %d\n", s1, s2, i, xstrncasecmp(s1, s2, i)); */
 				if (tmp)
 					break;
@@ -1179,9 +1229,8 @@ exact_match:
 		/* debug("common :%d\t\n", common); */
 
 		if (xwcslen(line) + common < LINE_MAXLEN) {
-		
 			line[0] = '\0';
-			for(i = 0; i < array_count(words); i++) {
+			for(i = 0; i < wcs_array_count(words); i++) {
 				if (i == word) {
 					if (quotes == 1 && completions[0][0] != '"') 
 						xwcscat(line, TEXT("\""));
@@ -1192,25 +1241,29 @@ exact_match:
 					if (completions[0][common - 1] == '"')
 						common--;
 
-					xstrncat(line, completions[0], common);
+					xwcsncat(line, completions[0], common);
 					*line_index = xwcslen(line);
 				} else {
-					if (xstrrchr(words[i], ' ')) {
-						CHAR_T *tmp = wcsprintf(TEXT("\"%s\""), words[i]);
+					if (xwcsrchr(words[i], TEXT(' '))) {
+						char *sword = wcs_to_normal(words[i]);
+						char *tmp2 = saprintf("\"%s\"", sword);
+						CHAR_T *tmp = normal_to_wcs(tmp2);
 						xwcscat(line, tmp);
-						xfree(tmp);
+						xfree(tmp2);
+						free_utf(sword);
+						free_utf(tmp);
 					} else
 						xwcscat(line, words[i]);
 				}
 
 				if(separators[i]) 
-					xstrncat(line, separators + i, 1);
+					xwcsncat(line, separators + i, 1);
 			}
 		}
 	}
 
 cleanup:
-	array_free(words);
+	wcs_array_free(words);
 	xfree(start);
 	xfree(separators);
 	return;
@@ -1218,7 +1271,7 @@ cleanup:
 
 void ncurses_complete_clear()
 {
-	array_free(completions);
+	wcs_array_free(completions);
 	completions = NULL;
         continue_complete = 0;
         continue_complete_count = 0;

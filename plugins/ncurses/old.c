@@ -76,7 +76,7 @@ CHAR_T *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
 int ncurses_history_index = 0;		/* offset w historii */
 
 CHAR_T *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
-char *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
+CHAR_T *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
 CHAR_T **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
 int ncurses_line_start = 0;		/* od którego znaku wy¶wietlamy? */
 int ncurses_line_index = 0;		/* na którym znaku jest kursor? */
@@ -1309,7 +1309,7 @@ void update_statusbar(int commit)
 
 			case 2:
 			{
-				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count((char **) ncurses_lines), lines_start, lines_index, line_start, line_index);
+				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", wcs_array_count(ncurses_lines), lines_start, lines_index, line_start, line_index);
 				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
 				xfree(tmp);
 				break;
