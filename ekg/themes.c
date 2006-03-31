@@ -451,7 +451,7 @@ CHAR_T *wcs_va_format_string(const char *data, va_list ap)
 		
 	tmp2 = va_format_string(data, ap, 1);
 	tmp = normal_to_wcs(tmp2);
-	xfree(tmp2);
+	free_utf(tmp2);
 	return tmp;
 }
 

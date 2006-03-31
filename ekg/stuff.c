@@ -1436,7 +1436,7 @@ CHAR_T *wcs_read_file(FILE *f)
 	if (!tmp)
 		return NULL;
 	t = normal_to_wcs(tmp);
-	xfree(tmp);
+	free_utf(tmp);
 	return t;
 }
 
