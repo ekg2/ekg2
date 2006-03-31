@@ -220,9 +220,6 @@ if test "x$with_libgadu" != "xno"; then
 	fi
 fi
 
-AC_CONFIG_FILES([plugins/tlen/Makefile])
-PLUGINS="$PLUGINS tlen"
-
 AC_ARG_WITH(openssl,
         [  --without-openssl        Compile without OpenSSL support])
 
