@@ -214,9 +214,9 @@ char *vsaprintf(const char *format, va_list ap)
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
 {
 #if USE_UNICODE
-	int size = 1000;
+	int size = 400;
 	CHAR_T *res;
-	res = xmalloc(size+1);
+	res = xmalloc((size+1)*sizeof(CHAR_T));
 	vswprintf(res, size, format, ap);
 	return res;
 #else
@@ -241,6 +241,15 @@ CHAR_T *xwcsstr(const CHAR_T *haystack, const CHAR_T *needle)
 char *xstrcasestr(const char *haystack, const char *needle)
 {
         return strcasestr(fix(haystack), fix(needle));
+}
+
+CHAR_T *xwcscasestr(const CHAR_T *haystack, const CHAR_T *needle)
+{
+#if USE_UNICODE
+	return wcscasestr(ufix(haystack), ufix(needle));
+#else
+	return xstrcasestr(haystack, needle);
+#endif
 }
 
 int xstrcasecmp(const char *s1, const char *s2) 

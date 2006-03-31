@@ -1263,7 +1263,7 @@ int play_sound(const char *sound_path)
 	params[0] = saprintf("^%s %s", config_sound_app, sound_path);
 	params[1] = NULL;
 
-	res = cmd_exec("exec", (const char**) params, NULL, NULL, 1);
+	res = cmd_exec(TEXT("exec"), (const char**) params, NULL, NULL, 1);
 
 	xfree(params[0]);
 
@@ -1694,6 +1694,36 @@ char *xstrmid(const char *str, int start, int length)
 	return res;
 }
 
+CHAR_T *xwcsmid(const CHAR_T *str, int start, int length)
+{
+	CHAR_T *res, *q;
+	const CHAR_T *p;
+
+	if (!str)
+		return xwcsdup(TEXT(""));
+
+	if (start > xwcslen(str))
+		start = xwcslen(str);
+
+	if (length == -1)
+		length = xwcslen(str) - start;
+
+	if (length < 1)
+		return xwcsdup(TEXT(""));
+
+	if (length > xwcslen(str) - start)
+		length = xwcslen(str) - start;
+	
+	res = xmalloc((length + 1)*sizeof(CHAR_T));
+	
+	for (p = str + start, q = res; length; p++, q++, length--)
+		*q = *p;
+
+	*q = 0;
+
+	return res;
+}
+
 struct color_map color_map_default[26] = {
 	{ 'k', 0, 0, 0 },
 	{ 'r', 168, 0, 0, },
@@ -1790,6 +1820,22 @@ char *strcasestr(const char *haystack, const char *needle)
 	}
 
 	return NULL;
+}
+
+CHAR_T *wcscasestr(const CHAR_T *haystack, const CHAR_T *needle)
+{
+#if USE_UNICODE
+	int i, hlen = xwcslen(haystack), nlen = xwcslen(needle);
+
+	for (i = 0; i <= hlen - nlen; i++) {
+		if (!xwcsncasecmp(haystack + i, needle, nlen))
+			return (CHAR_T*) (haystack + i);
+	}
+
+	return NULL;
+#else
+	return strcasestr(haystack, needle);
+#endif
 }
 
 /*
@@ -2024,6 +2070,27 @@ char *split_line(char **ptr)
         }
 
         return res;
+}
+
+CHAR_T *wcs_split_line(CHAR_T **ptr) {
+	CHAR_T *foo, *res;
+
+        if (!ptr || !*ptr || !xwcscmp(*ptr, TEXT("")))
+                return NULL;
+
+        res = *ptr;
+
+        if (!(foo = xwcschr(*ptr, '\n')))
+                *ptr += xwcslen(*ptr);
+        else {
+                *ptr = foo + 1;
+                *foo = 0;
+                if (xwcslen(res) > 1 && res[xwcslen(res) - 1] == TEXT('\r'))
+                        res[xwcslen(res) - 1] = 0;
+        }
+
+        return res;
+
 }
 
 /*
@@ -2414,6 +2481,8 @@ void inline ekg_yield_cpu()
 
 CHAR_T *normal_to_wcs(const char *str)
 {
+	if (!str)
+		return NULL;
 #if USE_UNICODE
 	CHAR_T *tmp;
 	int len = mbstowcs(NULL, str, 0)+1;
@@ -2427,6 +2496,8 @@ CHAR_T *normal_to_wcs(const char *str)
 
 char *wcs_to_normal(const CHAR_T *str)
 {
+	if (!str)
+		return NULL;
 #if USE_UNICODE
 	char *tmp;
 	int len = wcstombs(NULL,str,0)+1;

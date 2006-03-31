@@ -73,6 +73,7 @@ size_t xstrspn(const char *s, const char *accept);
 char *xstrstr(const char *haystack, const char *needle);
 CHAR_T *xwcsstr(const CHAR_T *haystack, const CHAR_T *needle);
 char *xstrcasestr(const char *haystack, const char *needle);
+CHAR_T *xwcscasestr(const CHAR_T *haystack, const CHAR_T *needle);
 char *xstrtok(char *s, const char *delim);
 size_t xstrxfrm(char *dest, const char *src, size_t n);
 char *xindex(const char *s, int c);

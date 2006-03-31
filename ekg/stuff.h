@@ -305,12 +305,15 @@ const char *timestamp(const char *format);
 void unidle();
 int on_off(const char *value);
 char *xstrmid(const char *str, int start, int length);
+CHAR_T *xwcsmid(const CHAR_T *str, int start, int length);
 void xstrtr(char *text, char from, char to);
 char color_map(unsigned char r, unsigned char g, unsigned char b);
 char *strcasestr(const char *haystack, const char *needle);
+CHAR_T *wcscasestr(const CHAR_T *haystack, const CHAR_T *needle);
 int msg_all(session_t *s, const CHAR_T *function, const char *what);
 int say_it(const char *str);
 char *split_line(char **ptr);
+CHAR_T *wcs_split_line(CHAR_T **ptr);
 
 int isalpha_pl(unsigned char c);
 /* makra, dziêki którym pozbywamy siê warning'ów */

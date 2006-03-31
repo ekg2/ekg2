@@ -49,12 +49,12 @@ COMMAND(cmd_on)
 		int prio;
 
                 if (!params[1] || !params[2] || !params[3] || !params[4]) {
-                        printq("not_enough_params", name);
+                        wcs_printq("not_enough_params", name);
                         return -1;
                 }
 
 		if (!(prio = atoi(params[2])) || !array_contains(events_all, params[1], 0)) {
-			printq("invalid_params", name);
+			wcs_printq("invalid_params", name);
 			return -1;
 		}
 		
@@ -69,7 +69,7 @@ COMMAND(cmd_on)
 		int par;
 
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -77,7 +77,7 @@ COMMAND(cmd_on)
 			par = 0;
 		else {
 			if (!(par = atoi(params[1]))) {
-				printq("invalid_params", name);			
+				wcs_printq("invalid_params", name);			
 				return -1;
 			}
 		}
@@ -94,7 +94,7 @@ COMMAND(cmd_on)
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	wcs_printq("invalid_params", name);
 
 	return -1;
 }
@@ -162,7 +162,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	query_emit(NULL, "event-added", &tmp);
 	xfree(tmp);
 
-	printq("events_add", name);
+	wcs_printq("events_add", name);
 
 	return 0;
 }
@@ -561,11 +561,13 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 	actions = array_make(action, ";", 0, 0, 1);
 
 	for (i = 0; actions && actions[i]; i++) {
-	        CHAR_T *tmp = wcs_format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
+	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
+		CHAR_T *tmp2 = normal_to_wcs(tmp);
 
 		debug("// event_check() calling \"%s\"\n", tmp);
-		command_exec(NULL, NULL, tmp, 0); /* BUG? CHECK: hm, we've got specified session, not current one... target too.. so is it correct ? */
+		command_exec(NULL, NULL, tmp2, 0); /* BUG? CHECK: hm, we've got specified session, not current one... target too.. so is it correct ? */
 		xfree(tmp);
+		free_utf(tmp2);
 	}
 
 	array_free(actions);

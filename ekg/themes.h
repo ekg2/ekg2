@@ -55,13 +55,14 @@ list_t formats;
 #define print_status(x...) print_window("__status", NULL, 0, x)
 
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
+void wcs_print_window(const char *target, session_t *session, int separate, const char *theme, ...);
 
 int format_add(const char *name, const char *value, int replace);
 int format_remove(const char *name);
 const char *format_find(const char *name);
 char *format_string(const char *format, ...);
 CHAR_T *wcs_format_string(const CHAR_T *format, ...);
-const char *format_ansi(char ch);
+const CHAR_T *format_ansi(char ch);
 
 void theme_init();
 void theme_plugins_init();

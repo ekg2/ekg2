@@ -796,17 +796,12 @@ int array_item_contains(char **array, const char *string, int casesensitive)
 int wcs_array_item_contains(CHAR_T **array, const CHAR_T *string, int casesensitive)
 {
         int i;
-#ifndef USE_UNICODE
-	casesensitive = 1; /* !@!#@#$#$ */
-#endif
-
         if (!array || !string)
                 return 0;
         for (i = 0; array[i]; i++) {
                 if (casesensitive && xwcsstr(array[i], string))
                         return 1;
-#warning NOT UNICODE FRIENDLY.
-                if (!casesensitive && strcasestr(array[i], string))
+                if (!casesensitive && wcscasestr(array[i], string))
                         return 1;
         }
 

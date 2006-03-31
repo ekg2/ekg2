@@ -110,70 +110,70 @@ const char *format_find(const char *name)
  *
  * zwraca sekwencjê ansi odpowiadaj±c± danemu kolorkowi z thememów ekg.
  */
-const char *format_ansi(char ch)
+const CHAR_T *format_ansi(char ch)
 {
         if (ch == 'k')
-                return "\033[2;30m";
+                return TEXT("\033[2;30m");
         if (ch == 'K')
-                return "\033[1;30m";
+                return TEXT("\033[1;30m");
         if (ch == 'l')
-                return "\033[40m";
+                return TEXT("\033[40m");
         if (ch == 'r')
-                return "\033[2;31m";
+                return TEXT("\033[2;31m");
         if (ch == 'R')
-                return "\033[1;31m";
+                return TEXT("\033[1;31m");
         if (ch == 's')
-                return "\033[41m";
+                return TEXT("\033[41m");
         if (ch == 'g')
-                return "\033[2;32m";
+                return TEXT("\033[2;32m");
         if (ch == 'G')
-                return "\033[1;32m";
+                return TEXT("\033[1;32m");
         if (ch == 'h')
-                return "\033[42m";
+                return TEXT("\033[42m");
         if (ch == 'y')
-                return "\033[2;33m";
+                return TEXT("\033[2;33m");
         if (ch == 'Y')
-                return "\033[1;33m";
+                return TEXT("\033[1;33m");
         if (ch == 'z')
-                return "\033[43m";
+                return TEXT("\033[43m");
         if (ch == 'b')
-                return "\033[2;34m";
+                return TEXT("\033[2;34m");
         if (ch == 'B')
-                return "\033[1;34m";
+                return TEXT("\033[1;34m");
         if (ch == 'e')
-                return "\033[44m";
+                return TEXT("\033[44m");
         if (ch == 'm' || ch == 'p')
-                return "\033[2;35m";
+                return TEXT("\033[2;35m");
         if (ch == 'M' || ch == 'P')
-                return "\033[1;35m";
+                return TEXT("\033[1;35m");
         if (ch == 'q')
-                return "\033[45m";
+                return TEXT("\033[45m");
         if (ch == 'c')
-                return "\033[2;36m";
+                return TEXT("\033[2;36m");
         if (ch == 'C')
-                return "\033[1;36m";
+                return TEXT("\033[1;36m");
         if (ch == 'd')
-                return "\033[46m";
+                return TEXT("\033[46m");
         if (ch == 'w')
-                return "\033[2;37m";
+                return TEXT("\033[2;37m");
         if (ch == 'W')
-                return "\033[1;37m";
+                return TEXT("\033[1;37m");
         if (ch == 'x')
-                return "\033[47m";
+                return TEXT("\033[47m");
         if (ch == 'n')                  /* clear all attributes */
-                return "\033[0m";
+                return TEXT("\033[0m");
         if (ch == 'T')                  /* bold */
-                return "\033[1m";
+                return TEXT("\033[1m");
         if (ch == 'N')                  /* clears all attr exc for bkgd */
-                return "\033[2m";
+                return TEXT("\033[2m");
         if (ch == 'U')                  /* underline */
-                return "\033[4m";
+                return TEXT("\033[4m");
         if (ch == 'i')                  /* blink */
-                return "\033[5m";
+                return TEXT("\033[5m");
         if (ch == 'V')                  /* reverse */
-                return "\033[7m";
+                return TEXT("\033[7m");
 
-        return "";
+        return TEXT("");
 }
 
 /*
@@ -184,11 +184,13 @@ const char *format_ansi(char ch)
  *  - format - warto¶æ, nie nazwa formatu,
  *  - ap - argumenty.
  */
-char *va_format_string(const char *format, va_list ap)
+char *va_format_string(const char *format, va_list ap, int isunicode)
 {
         static int dont_resolve = 0;
         string_t buf = string_init(NULL);
-        const char *p, *args[9];
+        const char *p;
+	char *args[9];
+	const CHAR_T *uargs[9];
         int i, argc = 0;
         /* liczymy ilo¶æ argumentów */
         for (p = format; *p; p++) {
@@ -237,11 +239,16 @@ char *va_format_string(const char *format, va_list ap)
                 }
         }
 
-        for (i = 0; i < 9; i++)
+        for (i = 0; i < 9; i++) {
                 args[i] = NULL;
+		uargs[i] = NULL;
+	}
 
         for (i = 0; i < argc; i++)
-                args[i] = va_arg(ap, char*);
+                uargs[i] = va_arg(ap, CHAR_T *);
+	for (i = 0; i < argc; i++)
+		if (isunicode) args[i] = wcs_to_normal(uargs[i]);
+		else args[i] = (char *) uargs[i];
 
         if (!dont_resolve) {
                 dont_resolve = 1;
@@ -325,7 +332,9 @@ char *va_format_string(const char *format, va_list ap)
                         if (*p == '#')
                                 string_append(buf, timestamp(timestamp_cache));
                         else if (config_display_color) {
-                                string_append(buf, format_ansi(*p));
+				char *tmp = wcs_to_normal(format_ansi(*p));
+                                string_append(buf, tmp);
+				free_utf(tmp);
                         }
 
                         if (*p == '@') {
@@ -422,16 +431,19 @@ char *va_format_string(const char *format, va_list ap)
         if (!config_display_pl_chars)
                 iso_to_ascii(buf->str);
 
+	if (isunicode)
+		for (i = 0; i < 9; i++)
+			free_utf(args[i]);
+
         return string_free(buf, 0);
 }
 
 CHAR_T *wcs_va_format_string(const char *data, va_list ap)
 {
-#warning UNICODE TODO
 	CHAR_T *tmp;
 	char *tmp2;
 		
-	tmp2 = va_format_string(data, ap);
+	tmp2 = va_format_string(data, ap, 1);
 	tmp = normal_to_wcs(tmp2);
 	xfree(tmp2);
 	return tmp;
@@ -625,7 +637,7 @@ char *format_string(const char *format, ...)
         char *tmp;
 
         va_start(ap, format);
-        tmp = va_format_string(format, ap);
+        tmp = va_format_string(format, ap, 0);
         va_end(ap);
 
         return tmp;
@@ -633,12 +645,15 @@ char *format_string(const char *format, ...)
 
 CHAR_T *wcs_format_string(const CHAR_T *format, ...)
 {
+	char *sformat = wcs_to_normal(format);
 	va_list ap;
 	CHAR_T *tmp;
 
 	va_start(ap, format);
-	tmp = wcs_va_format_string(format, ap);
+	tmp = wcs_va_format_string((char *) sformat, ap);
 	va_end(ap);
+
+	free_utf(sformat);
 
 	return tmp;
 }
@@ -689,7 +704,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
                 target = "__current";
 
         va_start(ap, theme);
-        tmp = stmp = va_format_string(format_find(theme), ap);
+        tmp = stmp = va_format_string(format_find(theme), ap, 0);
         va_end(ap);
 
         while ((line = split_line(&tmp))) {
@@ -719,7 +734,8 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 void wcs_print_window(const char *target, session_t *session, int separate, const char *theme, ...)
 {
-        char *tmp, *stmp, *line, *prompt = NULL, *newtarget = NULL;
+        CHAR_T *tmp, *stmp, *line, *prompt = NULL;
+	char *newtarget = NULL;
         va_list ap;
         if (!window_find_s(session, target)) {
                 const char *res;
@@ -749,24 +765,29 @@ void wcs_print_window(const char *target, session_t *session, int separate, cons
         tmp = stmp = wcs_va_format_string(format_find(theme), ap);
         va_end(ap);
 
-        while ((line = split_line(&tmp))) {
-                char *p;
+        while ((line = wcs_split_line(&tmp))) {
+                CHAR_T *p;
 
-                if ((p = xstrstr(line, "\033[00m"))) {
+                if ((p = xwcsstr(line, TEXT("\033[00m")))) {
                         xfree(prompt);
                         if (p != line)
-                                prompt = xstrmid(line, 0, (int) (p - line) + 5);
+                                prompt = xwcsmid(line, 0, (int) (p - line) + 5);
                         else
                                 prompt = NULL;
                         line = p;
                 }
 
                 if (prompt) {
-                        char *tmp = saprintf("%s%s", prompt, line);
-                        window_print(target, session, separate, fstring_new(tmp));
+                        CHAR_T *tmp = 
+#if USE_UNICODE
+				wcsprintf(TEXT("%ls%ls"), prompt, line);
+#else
+				wcsprintf("%s%s", prompt, line);
+#endif
+                        window_print(target, session, separate, fstring_new(wcs_to_normal(tmp)));
                         xfree(tmp);
                 } else
-                        window_print(target, session, separate, fstring_new(line));
+                        window_print(target, session, separate, fstring_new(wcs_to_normal(line)));
         }
 
         xfree(prompt);

@@ -476,7 +476,7 @@ void window_kill(window_t *w, int quiet)
 	}
 	
 	if (id == 1) {
-		printq("window_kill_status");
+		wcs_printq("window_kill_status");
 		return;
 	}
 
@@ -638,7 +638,7 @@ COMMAND(cmd_window)
 
 	if (!xstrcasecmp(params[0], "switch")) {
 		if (!params[1] || (!atoi(params[1]) && xstrcmp(params[1], "0")))
-			printq("not_enough_params", "window");
+			wcs_printq("not_enough_params", name);
 		else
 			window_switch(atoi(params[1]));
 		
@@ -666,7 +666,7 @@ COMMAND(cmd_window)
 			}
 
 			if (!w) {
-				printq("window_noexist");
+				wcs_printq("window_noexist");
 				goto cleanup;
 			}
 		}
@@ -694,7 +694,7 @@ COMMAND(cmd_window)
 			goto cleanup;
 
 		if (!params[1]) {
-			printq("invalid_params", name);
+			wcs_printq("invalid_params", name);
 			goto cleanup;
 		}
 
@@ -711,7 +711,7 @@ COMMAND(cmd_window)
 		}
 
 		if (source == 1) {
-			printq("window_cannot_move_status");
+			wcs_printq("window_cannot_move_status");
 			goto cleanup;
 		}
 
@@ -731,7 +731,7 @@ COMMAND(cmd_window)
 		}
 
                 if (dest == 1) {
-                        printq("window_cannot_move_status");
+                        wcs_printq("window_cannot_move_status");
                         goto cleanup;
                 }
 
@@ -754,7 +754,7 @@ COMMAND(cmd_window)
 	}
 
 
-	printq("invalid_params", "window");
+	wcs_printq("invalid_params", name);
 
 cleanup:
 	return 0;
