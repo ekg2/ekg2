@@ -47,7 +47,7 @@ static int ncurses_beep(void *data, va_list ap)
 	return 0;
 }
 
-static int dd_contacts(const char *name)
+static int dd_contacts(const CHAR_T *name)
 {
 	return (config_contacts);
 }
@@ -400,7 +400,7 @@ QUERY(ncurses_setvar_default)
  *
  * called when var display_transparent is changed 
  */
-void ncurses_display_transparent_changed(const char *var)
+void ncurses_display_transparent_changed(const CHAR_T *var)
 {
 	int background;
 
@@ -496,12 +496,12 @@ int ncurses_plugin_init(int prio)
 	/* this isn't very nice solution, but other solutions would require _more_
 	 * changes...
 	 */
-	variable_add(&ncurses_plugin, TEXT("contacts"), VAR_INT, 1, &config_contacts, (void (*)(const char *))ncurses_contacts_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, TEXT("contacts_groups"), VAR_STR, 1, &config_contacts_groups, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts"), VAR_INT, 1, &config_contacts, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, TEXT("contacts_groups"), VAR_STR, 1, &config_contacts_groups, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, TEXT("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const CHAR_T *))ncurses_all_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, TEXT("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, TEXT("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, TEXT("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);

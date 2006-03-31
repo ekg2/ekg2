@@ -255,8 +255,6 @@ static void plugin_generator(const CHAR_T *text, int len)
 static void variable_generator(const CHAR_T *text, int len)
 {
 	list_t l;
-	char *stext = wcs_to_normal(text);
-
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
 
@@ -264,21 +262,20 @@ static void variable_generator(const CHAR_T *text, int len)
 			continue;
 
 		if (*text == '-') {
-			if (!xstrncasecmp(stext + 1, v->name, len - 1))
-#ifndef USE_UNICODE
-				array_add_check(&completions, saprintf("-%s", v->name), 1);
+			if (!xwcsncasecmp(text + 1, v->name, len - 1))
+				wcs_array_add_check(&completions, 
+#if USE_UNICODE
+				wcsprintf(TEXT("-%ls"), v->name),
 #else
-;
+				wcsprintf("-%s", v->name),
 #endif
+				1);
 		} else {
-			if (!xstrncasecmp(stext, v->name, len)) {
-				CHAR_T *tmp = normal_to_wcs(v->name);
-				wcs_array_add_check(&completions, xwcsdup(tmp), 1);
-				free_utf(tmp);
+			if (!xwcsncasecmp(text, v->name, len)) {
+				wcs_array_add_check(&completions, xwcsdup(v->name), 1);
 			}
 		}
 	}
-	free_utf(stext);
 }
 
 static void ignored_uin_generator(const CHAR_T *text, int len)
