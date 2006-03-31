@@ -795,9 +795,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 			}
 
 			if (xwcscmp(tmp, TEXT(""))) {
-				char *tmp2 = wcs_to_normal(tmp);
-				print("none", tmp2);
-				free_utf(tmp2);
+				wcs_print("none", tmp);
 			}
 		}
 		
