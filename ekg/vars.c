@@ -45,17 +45,17 @@ list_t variables = NULL;
  * byæ ró¿na od zera, ale dziêki funkcjom nie trzeba bêdzie mieszaæ w 
  * przysz³o¶ci.
  */
-static int dd_beep(const char *name)
+static int dd_beep(const CHAR_T *name)
 {
 	return (config_beep);
 }
 
-static int dd_sound(const char *name)
+static int dd_sound(const CHAR_T *name)
 {
 	return (config_sound_app != NULL);
 }
 
-static int dd_color(const char *name)
+static int dd_color(const CHAR_T *name)
 {
 	return (config_display_color);
 }
@@ -163,17 +163,20 @@ variable_t *variable_find(const char *name)
 {
 	list_t l;
 	int hash;
+	CHAR_T *sname;
 
 	if (!name)
 		return NULL;
 
-	hash = variable_hash(name);
+	sname = normal_to_wcs(name);
+	hash = variable_hash(sname);
 
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
-		if (v->name_hash == hash && !xstrcasecmp(v->name, name))
+		if (v->name_hash == hash && !xwcscasecmp(v->name, sname))
 			return v;
 	}
+	free_utf(sname);
 
 	return NULL;
 }
@@ -227,7 +230,7 @@ static int variable_add_compare(void *data1, void *data2)
         if (!a || !a->name || !b || !b->name)
                 return 0;
 
-        return xstrcasecmp(a->name, b->name);
+        return xwcscasecmp(a->name, b->name);
 }
 
 /*
@@ -246,27 +249,30 @@ static int variable_add_compare(void *data1, void *data2)
  *
  * zwraca 0 je¶li siê nie uda³o, w przeciwnym wypadku adres do strutury.
  */
-variable_t *variable_add(plugin_t *plugin, const CHAR_T *name_, int type, int display, void *ptr, variable_notify_func_t *notify, variable_map_t *map, variable_display_func_t *dyndisplay)
+variable_t *variable_add(plugin_t *plugin, const CHAR_T *name, int type, int display, void *ptr, variable_notify_func_t *notify, variable_map_t *map, variable_display_func_t *dyndisplay)
 {
-	char *name = wcs_to_normal(name_);
 	variable_t *v;
 	int hash;
-	char *__name;
+	CHAR_T *__name;
 	list_t l;
 
 	if (!name)
 		return NULL;
 
 	if (plugin)
-		__name = saprintf("%s:%s", plugin->name, name);
+#if USE_UNICODE
+		__name = wcsprintf(TEXT("%s:%ls"), plugin->name, name);
+#else
+		__name = wcsprintf("%s:%s", plugin->name, name);
+#endif
 	else
-		__name = xstrdup(name);
+		__name = xwcsdup(name);
 
 	hash = variable_hash(__name);
 
 	for (l = variables; l; l = l->next) {
 		v = l->data;
-		if (v->name_hash != hash || xstrcasecmp(v->name, __name) || v->type != VAR_FOREIGN)
+		if (v->name_hash != hash || xwcscasecmp(v->name, __name) || v->type != VAR_FOREIGN)
 			continue;
 
 		if (type == VAR_INT || type == VAR_BOOL || type == VAR_MAP) {
@@ -276,7 +282,7 @@ variable_t *variable_add(plugin_t *plugin, const CHAR_T *name_, int type, int di
 			*(char**)(ptr) = (char*)(v->ptr);
 	
 		xfree(v->name);
-		v->name = xstrdup(__name);
+		v->name = xwcsdup(__name);
 		v->name_hash = hash;
 		v->type = type;
 		v->plugin = plugin;
@@ -290,7 +296,7 @@ variable_t *variable_add(plugin_t *plugin, const CHAR_T *name_, int type, int di
 		return 0;
 	}
 	v = xmalloc(sizeof(variable_t));
-	v->name = xstrdup(__name);
+	v->name = xwcsdup(__name);
 	v->name_hash = variable_hash(__name);
 	v->type = type;
 	v->display = display;
@@ -301,7 +307,6 @@ variable_t *variable_add(plugin_t *plugin, const CHAR_T *name_, int type, int di
 	v->plugin = plugin;
 
 	xfree(__name);
-	free_utf(name);
 
 	return list_add_sorted(&variables, v, 0, variable_add_compare);
 
@@ -316,11 +321,13 @@ int variable_remove(plugin_t *plugin, const char *name)
 {
 	list_t l;
 	int hash;
+	CHAR_T *sname;
 
 	if (!name)
 		return -1;
 
-	hash = variable_hash(name);
+	sname = normal_to_wcs(name);
+	hash = variable_hash(sname);
 	
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
@@ -328,7 +335,7 @@ int variable_remove(plugin_t *plugin, const char *name)
 		if (!v->name)
 			continue;
 		
-		if (hash == v->name_hash && plugin == v->plugin && !xstrcasecmp(name, v->name)) {
+		if (hash == v->name_hash && plugin == v->plugin && !xwcscasecmp(sname, v->name)) {
 			char *tmp;
 
 			if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
@@ -342,10 +349,12 @@ int variable_remove(plugin_t *plugin, const char *name)
 			}
 
 			v->type = VAR_FOREIGN;
+			free_utf(sname);
 
 			return 0;
 		}
 	}
+	free_utf(sname);
 
 	return -1;
 }
@@ -365,11 +374,14 @@ int variable_remove(plugin_t *plugin, const char *name)
 int variable_set(const char *name, const char *value, int allow_foreign)
 {
 	variable_t *v = variable_find(name);
-	char *tmpname;
+	CHAR_T *tmpname;
 
 	if (!v) {
-		if (allow_foreign)
-			variable_add(NULL, name, VAR_FOREIGN, 2, xstrdup(value), NULL, NULL, NULL);
+		if (allow_foreign) {
+			CHAR_T *sname = normal_to_wcs(name);
+			variable_add(NULL, sname, VAR_FOREIGN, 2, xstrdup(value), NULL, NULL, NULL);
+			free_utf(sname);
+		}
 		return -1;
 	}
 	switch (v->type) {
@@ -506,7 +518,7 @@ notify:
 	if (v->notify)
 		(v->notify)(v->name);
 
-	tmpname = xstrdup(v->name);
+	tmpname = xwcsdup(v->name);
 	query_emit(NULL, "variable-changed", &tmpname);
 	xfree(tmpname);
 			

@@ -351,20 +351,40 @@ static void config_write_variable(FILE *f, variable_t *v)
 		case VAR_FILE:
 		case VAR_STR:
 			if (*(char**)(v->ptr))
+#if USE_UNICODE
+				fwprintf(f, TEXT("%ls %s\n"), v->name, *(char**)(v->ptr));
+#else
 				fprintf(f, "%s %s\n", v->name, *(char**)(v->ptr));
+#endif
 			else 
+#if USE_UNICODE
+				fwprintf(f, TEXT("%ls %s\n"), v->name, TEXT(""));
+#else
                                 fprintf(f, "%s %s\n", v->name, "");
+#endif
 			break;
 
 		case VAR_FOREIGN:
 			if (v->ptr)
+#if USE_UNICODE
+				fwprintf(f, TEXT("%ls %s\n"), v->name, (char*) v->ptr);
+#else
 				fprintf(f, "%s %s\n", v->name, (char*) v->ptr);
+#endif
 			else
+#if USE_UNICODE
+                                fwprintf(f, TEXT("%ls %ls\n"), v->name, TEXT(""));
+#else
                                 fprintf(f, "%s %s\n", v->name, "");
+#endif
 			break;
 			
 		default:
+#if USE_UNICODE
+			fwprintf(f, TEXT("%ls %d\n"), v->name, *(int*)(v->ptr));
+#else
 			fprintf(f, "%s %d\n", v->name, *(int*)(v->ptr));
+#endif
 	}
 }
 

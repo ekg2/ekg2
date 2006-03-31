@@ -40,12 +40,12 @@ typedef struct {
 	int conflicts;		/* warto¶ci, z którymi koliduje */
 } variable_map_t;
 
-typedef void (variable_notify_func_t)(const char *);
+typedef void (variable_notify_func_t)(const CHAR_T *);
 typedef void (variable_check_func_t)(const char *, const char *);
-typedef int (variable_display_func_t)(const char *);
+typedef int (variable_display_func_t)(const CHAR_T *);
 
 typedef struct {
-	char *name;		/* nazwa zmiennej */
+	CHAR_T *name;		/* nazwa zmiennej */
 	plugin_t *plugin;	/* wstyczka obs³uguj±ca zmienn± */
 	int name_hash;		/* hash nazwy zmiennej */
 	int type;		/* rodzaj */
@@ -72,7 +72,7 @@ variable_map_t *variable_map(int count, ...);
 
 variable_t *variable_add(
 	plugin_t *plugin,
-	const CHAR_T *name_,
+	const CHAR_T *name,
 	int type,
 	int display,
 	void *ptr,

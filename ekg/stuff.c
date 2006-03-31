@@ -603,7 +603,7 @@ void changed_var_default(session_t *s, const char *var)
  *
  * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,mesg''.
  */
-void changed_mesg(const char *var)
+void changed_mesg(const CHAR_T *var)
 {
 	if (config_mesg == MESG_DEFAULT)
 		mesg_set(mesg_startup);
@@ -616,7 +616,7 @@ void changed_mesg(const char *var)
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,auto_save''.
  */
-void changed_auto_save(const char *var)
+void changed_auto_save(const CHAR_T *var)
 {
 	/* oszukujemy, ale takie zachowanie wydaje siê byæ
 	 * bardziej ,,naturalne'' */
@@ -628,7 +628,7 @@ void changed_auto_save(const char *var)
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,display_blinking''.
  */
-void changed_display_blinking(const char *var)
+void changed_display_blinking(const CHAR_T *var)
 {
 	list_t sl;
 
@@ -648,7 +648,7 @@ void changed_display_blinking(const char *var)
  *
  * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,theme''.
  */
-void changed_theme(const char *var)
+void changed_theme(const CHAR_T *var)
 {
 	if (in_autoexec)
 		return;

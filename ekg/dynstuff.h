@@ -123,6 +123,7 @@ void wcs_array_free(CHAR_T **array);
 /* rozszerzenia libców */
 
 const char *itoa(long int i);
+const CHAR_T *wcs_itoa(long int i);
 
 #endif /* __EKG_DYNSTUFF_H */
 

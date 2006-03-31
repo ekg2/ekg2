@@ -694,7 +694,7 @@ COMMAND(cmd_exec)
 		for (l = children; l; l = l->next) {
 			child_t *c = l->data;
 			
-			wcs_printq("process", normal_to_wcs(itoa(c->pid)), (c->name) ? (c->name) : TEXT("?"));
+			wcs_printq("process", wcs_itoa(c->pid), (c->name) ? (c->name) : TEXT("?"));
 		}
 
 		if (!children) {
@@ -1038,7 +1038,7 @@ COMMAND(cmd_help)
 					xfree(tmp);
 
 			                if (!f) {
-		                	        print("help_command_file_not_found");
+		                	        wcs_print("help_command_file_not_found");
 						return -1;
 			                }
 
@@ -1711,11 +1711,12 @@ COMMAND(cmd_set)
 
 	if ((!arg || !val) && !unset) {
 		int displayed = 0;
+		CHAR_T *sarg = normal_to_wcs(arg);
 
 		for (l = variables; l; l = l->next) {
 			variable_t *v = l->data;
 			
-			if ((!arg || !xstrcasecmp(arg, v->name)) && (v->display != 2 || xwcscmp(name, TEXT("set")))) {
+			if ((!arg || !xwcscasecmp(sarg, v->name)) && (v->display != 2 || xwcscmp(name, TEXT("set")))) {
 				char *string = *(char**)(v->ptr);
 				int value = *(int*)(v->ptr);
 
@@ -1723,40 +1724,40 @@ COMMAND(cmd_set)
 					continue;
 
 				if (!v->display) {
-					printq("variable", v->name, "(...)");
+					wcs_printq("variable", v->name, TEXT("(...)"));
 					displayed = 1;
 					continue;
 				}
 
 				if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
-					char *tmp = (string) ? saprintf("\"%s\"", string) : "(none)";
+					CHAR_T *tmp = (string) ? wcsprintf(TEXT("\"%s\""), string) : TEXT("(none)");
 
-					printq("variable", v->name, tmp);
+					wcs_printq("variable", v->name, tmp);
 					
 					if (string)
 						xfree(tmp);
 				}
 
 				if (v->type == VAR_BOOL)
-					printq("variable", v->name, (value) ? "1 (on)" : "0 (off)");
+					wcs_printq("variable", v->name, (value) ? TEXT("1 (on)") : TEXT("0 (off)"));
 				
 				if ((v->type == VAR_INT || v->type == VAR_MAP) && !v->map)
-					printq("variable", v->name, itoa(value));
+					wcs_printq("variable", v->name, wcs_itoa(value));
 
 				if (v->type == VAR_INT && v->map) {
-					char *tmp = NULL;
+					CHAR_T *tmp = NULL;
 					int i;
 
 					for (i = 0; v->map[i].label; i++)
 						if (v->map[i].value == value) {
-							tmp = saprintf("%d (%s)", value, v->map[i].label);
+							tmp = wcsprintf(TEXT("%d (%s)"), value, v->map[i].label);
 							break;
 						}
 
 					if (!tmp)
-						tmp = saprintf("%d", value);
+						tmp = wcsprintf(TEXT("%d"), value);
 
-					printq("variable", v->name, tmp);
+					wcs_printq("variable", v->name, tmp);
 
 					xfree(tmp);
 				}
@@ -1784,6 +1785,7 @@ COMMAND(cmd_set)
 				displayed = 1;
 			}
 		}
+		free_utf(sarg);
 
 		if (!displayed && params[0]) {
 			printq("variable_not_found", params[0]);
@@ -2771,7 +2773,7 @@ COMMAND(cmd_alias_exec)
 			int i;
 
 			if (!params[0]) {
-				printq("aliases_not_enough_params", name);
+				wcs_printq("aliases_not_enough_params", name);
 				wcs_string_free(str, 1);
 				list_destroy(m, 1);
 				return -1;
@@ -2780,7 +2782,7 @@ COMMAND(cmd_alias_exec)
 			arr = array_make(params[0], "\t ", need_args, 1, 1);
 
 			if (array_count(arr) < need_args) {
-				printq("aliases_not_enough_params", name);
+				wcs_printq("aliases_not_enough_params", name);
 				wcs_string_free(str, 1);
 				array_free(arr);
 				list_destroy(m, 1);
@@ -3361,7 +3363,7 @@ COMMAND(cmd_timer)
 				printq("timer_noexist", t_name);
 				return -1;
 			} else
-				printq("timer_empty");
+				wcs_printq("timer_empty");
 		}
 
 		return 0;
@@ -3422,7 +3424,7 @@ COMMAND(cmd_conference)
 				printq("conferences_noexist", params[0]);
 				return -1;
 			} else
-				printq("conferences_list_empty");
+				wcs_printq("conferences_list_empty");
 		}
 
 		return 0;
@@ -3433,7 +3435,7 @@ COMMAND(cmd_conference)
 		const char *uid;
 
 		if (!params[1] || !params[2]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3466,13 +3468,13 @@ COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'a', "add", 2)) {
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[2]) {
 			if (params[1][0] != '#') {
-				printq("conferences_name_error");
+				wcs_printq("conferences_name_error");
 				return -1;
 			} else
 				conference_add(session, params[1], params[2], quiet);
@@ -3484,7 +3486,7 @@ COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'd', "del", 2)) {
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3492,7 +3494,7 @@ COMMAND(cmd_conference)
 			conference_remove(NULL, quiet);
 		else {
 			if (params[1][0] != '#') {
-				printq("conferences_name_error");
+				wcs_printq("conferences_name_error");
 				return -1;
 			}
 
@@ -3504,12 +3506,12 @@ COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'r', "rename", 2)) {
 		if (!params[1] || !params[2]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#' || params[2][0] != '#') {
-			printq("conferences_name_error");
+			wcs_printq("conferences_name_error");
 			return -1;
 		}
 
@@ -3520,12 +3522,12 @@ COMMAND(cmd_conference)
 	
 	if (match_arg(params[0], 'i', "ignore", 2)) {
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#') {
-			printq("conferences_name_error");
+			wcs_printq("conferences_name_error");
 			return -1;
 		}
 
@@ -3536,12 +3538,12 @@ COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'u', "unignore", 2)) {
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#') {
-			printq("conferences_name_error");
+			wcs_printq("conferences_name_error");
 			return -1;
 		}
 
@@ -3555,12 +3557,12 @@ COMMAND(cmd_conference)
 		list_t l;
 
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#') {
-			printq("conferences_name_error");
+			wcs_printq("conferences_name_error");
 			return -1;
 		}
 

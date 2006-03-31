@@ -476,6 +476,11 @@ const char *itoa(long int i)
 	return tmp;
 }
 
+const CHAR_T *wcs_itoa(long int i)
+{
+	return normal_to_wcs(itoa(i));
+}
+
 /*
  * array_make()
  *

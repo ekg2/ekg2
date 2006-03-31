@@ -246,13 +246,10 @@ void buffer_free();
 
 void changed_var_default(session_t *s, const char *var);
 
-void changed_auto_save(const char *var);
-void changed_display_blinking(const char *var);
-void changed_mesg(const char *var);
-void changed_proxy(const char *var);
-void changed_theme(const char *var);
-void changed_uin(const char *var);
-void changed_xxx_reason(const char *var);
+void changed_auto_save(const CHAR_T *var);
+void changed_display_blinking(const CHAR_T *var);
+void changed_mesg(const CHAR_T *var);
+void changed_theme(const CHAR_T *var);
 
 const char *compile_time();
 
