@@ -220,6 +220,9 @@ if test "x$with_libgadu" != "xno"; then
 	fi
 fi
 
+AC_CONFIG_FILES([plugins/tlen/Makefile])
+PLUGINS="$PLUGINS tlen"
+
 AC_ARG_WITH(openssl,
         [  --without-openssl        Compile without OpenSSL support])
 
@@ -244,6 +247,15 @@ if test "x$with_expat" != "xno"; then
 	fi
 fi
 
+AC_ARG_ENABLE([unicode],
+    AC_HELP_STRING([--enable-unicode], [Enable unicode (EXPERIMENTAL)]),
+    [
+        if test "x$enable_unicode" = "xyes"; then
+            AC_DEFINE([USE_UNICODE], 1, [Use unicode (wide character strings)])
+        fi
+    ]
+)
+
 AC_ARG_WITH(ncurses,
         [  --without-ncurses        Compile without ncurses support (ncurses plugin) - program won't work])
 
@@ -259,7 +271,7 @@ fi
 
 
 AC_ARG_WITH(gtk,
-	[ -- without-gtk	   Compile without gtk2 support (gtk plugin)])
+	[ --without-gtk        Compile without gtk2 support (gtk plugin)])
 
 
 if test "x$with_gtk" != "xno"; then
@@ -355,15 +367,6 @@ if test "x$with_libgnutls" != "xno"; then
 *** ftp://ftp.gnutls.org/pub/gnutls/
 	]]))
 fi
-
-AC_ARG_ENABLE([unicode],
-    AC_HELP_STRING([--enable-unicode], [Enable unicode (EXPERIMENTAL)]),
-    [
-        if test "x$enable_unicode" = "xyes"; then
-            AC_DEFINE([USE_UNICODE], 1, [Use unicode (wide character strings)])
-        fi
-    ]
-)
 
 PLUGINS_LIBS=""
 

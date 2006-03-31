@@ -1,4 +1,5 @@
 dnl $Id$
+dnl in unicode check ncursesw/ncurses.h
 
 AC_DEFUN([AC_CHECK_NCURSES],
 [
@@ -19,7 +20,9 @@ AC_DEFUN([AC_CHECK_NCURSES],
 		save_LDFLAGS="$LDFLAGS"
 		CPPFLAGS="$CPPFLAGS $NCURSES_CPPFLAGS"
 		LDFLAGS="$LDFLAGS $NCURSES_LIBS"
+		NLIBRARY=""
 		have_ncurses_h=""
+		opt=ncurses.h
 		AC_CHECK_HEADERS([ncurses.h],
 		[
 			have_ncurses_h="yes"
@@ -29,12 +32,16 @@ AC_DEFUN([AC_CHECK_NCURSES],
 				have_ncurses_h="yes"
 			])
 		])
-
 		if test "x$have_ncurses_h" = "xyes"; then
-			AC_CHECK_LIB([ncurses], [initscr],
+			if test "x$enable_unicode" != "xyes"; then
+				NLIBRARY="ncurses"
+			else
+				NLIBRARY="ncursesw"
+			fi
+			AC_CHECK_LIB([$NLIBRARY], [initscr],
 			[
 				AC_DEFINE([HAVE_NCURSES], 1, [define if you have ncurses])
-				NCURSES_LIBS="$NCURSES_LIBS -lncurses $ASPELL_LIBS $LIBGPM_LIBS"
+				NCURSES_LIBS="$NCURSES_LIBS -l$NLIBRARY $ASPELL_LIBS $LIBGPM_LIBS"
 				have_ncurses="yes"
 			])
 		fi
