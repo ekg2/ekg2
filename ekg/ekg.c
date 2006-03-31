@@ -150,8 +150,10 @@ void ekg_loop()
 
                         l = l->next;
 
-			if (w->removed == 1)
+			if (w->removed == 1) {
 				watch_free(w);
+				continue;
+			}
 
                         if (w->timeout < 1 || (time(NULL) - w->started) < w->timeout)
                                 continue;
