@@ -144,24 +144,32 @@ void ekg_loop()
                         }
                 }
 
-                /* sprawd¼ timeouty ró¿nych deskryptorów */
+                /* sprawd¼ timeouty ró¿nych deskryptorów, oraz przy okazji w->removed jesli rowne 1, to timer powinien zostac usuniety. */
                 for (l = watches; l; ) {
                         watch_t *w = l->data;
 
                         l = l->next;
 
+			if (w->removed == 1)
+				watch_free(w);
+
                         if (w->timeout < 1 || (time(NULL) - w->started) < w->timeout)
                                 continue;
-
+			w->removed = -1;
                         if (w->buf) {
                                 int (*handler)(int, int, char*, void*) = w->handler;
-                                if (handler(2, w->fd, NULL, w->data) == -1)
+                                if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
+					w->removed = 0;
 					watch_free(w);
+				}
                         } else {
                                 int (*handler)(int, int, int, void*) = w->handler;
-				if (handler(2, w->fd, w->type, w->data) == -1)
+				if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
+					w->removed = 0;
 					watch_free(w);
+				}
                         }
+			w->removed = 0;
                 }
 
                 /* sprawd¼ autoawaye ró¿nych sesji */
@@ -360,7 +368,6 @@ watches_again:
                                         command_exec(NULL, s, TEXT("/_autoback"), 2);
                                 }
                         }
-
                         if (!w->buf) {
                                 ekg_stdin_want_more = 0;
 

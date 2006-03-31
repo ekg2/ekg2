@@ -590,7 +590,7 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-		if (w->plugin == plugin && w->fd == fd && w->type == type && !w->removed)
+		if (w->plugin == plugin && w->fd == fd && w->type == type && !(w->removed > 0))
 			return w;
 	}
 
@@ -606,8 +606,13 @@ void watch_free(watch_t *w)
 {
 	if (!w)
 		return;
+	if (w->removed == -1) { /* watch is running.. we cannot remove it */
+		w->removed = 1;
+		return;
+	} else if (w->removed == 2) /* watch is already removed, from other thread? */
+		return;
 
-	w->removed = 1;
+	w->removed = 2;
 		
 	if (w->buf) {
 		int (*handler)(int, int, const char *, void *) = w->handler;
@@ -630,7 +635,7 @@ void watch_handle_line(watch_t *w)
 	char buf[1024], *tmp;
 	int ret, res = 0;
 	int (*handler)(int, int, const char *, void *) = w->handler;
-
+	w->removed = -1;
 	ret = read(w->fd, buf, sizeof(buf) - 1);
 
 	if (ret > 0) {
@@ -662,12 +667,14 @@ void watch_handle_line(watch_t *w)
 
 	/* je¶li koniec strumienia, lub nie jest to ci±g³e przegl±danie,
 	 * zwolnij pamiêæ i usuñ z listy */
-	if (!w->persist || res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN)) {
+	if (!w->persist || res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN) || w->removed == 1) {
 		int fd = w->fd;
+		w->removed = 0;
 
 		watch_free(w);
 		close(fd);
-	}
+	} 
+	w->removed = 0;
 }
 
 /*
@@ -683,16 +690,18 @@ void watch_handle(watch_t *w)
 	int res;
 	if (!w)
 		return;
-
+	w->removed = -1;
 	handler = w->handler;
 		
 	res = handler(0, w->fd, w->type, w->data);
 
-	if (!w->persist || res == -1) {
+	if (!w->persist || res == -1 || w->removed == 1) {
+		w->removed = 0;
 		watch_free(w);
 	} else {
 		w->started = time(NULL);
 	}
+	w->removed = 0;
 }
 
 watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, int persist, watcher_handler_func_t *handler, void *data)
