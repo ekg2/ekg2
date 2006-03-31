@@ -594,6 +594,27 @@ failure:
 	return result;
 }
 
+CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes)  /* just hack.. */
+{
+#if USE_UNICODE
+#warning ZROBIC PRAWDZIWE.. A NIE JAKIES FORWARD DECLARATION. ;p
+	char *str  = wcs_to_normal(string);
+	char *sp   = wcs_to_normal(sep);
+	char **tab = array_make(str, sp, max, trim, quotes);
+	int tablen = array_count(tab);
+	CHAR_T **stab = xcalloc(tablen, sizeof(CHAR_T *));
+	int i;
+	for (i=0; i < tablen; i++) 
+		stab[i] = normal_to_wcs(tab[i]);
+	array_free(tab);
+	
+	free_utf(str);
+	free_utf(sp);
+#else
+	return array_make(string, sep, max, trim, quotes);
+#endif
+}
+
 /*
  * array_count()
  *

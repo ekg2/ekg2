@@ -213,15 +213,15 @@ void windows_save()
  *
  * 0/-1
  */
-int alias_add(const char *string, int quiet, int append)
+int alias_add(const CHAR_T *string, int quiet, int append)
 {
-	char *cmd;
+	CHAR_T *cmd;
 	list_t l;
 	struct alias *a;
 	char **params = NULL;
 	char *array;
 
-	if (!string || !(cmd = xstrchr(string, ' ')))
+	if (!string || !(cmd = xwcschr(string, ' ')))
 		return -1;
 
 	*cmd++ = 0;
@@ -229,27 +229,27 @@ int alias_add(const char *string, int quiet, int append)
 	for (l = aliases; l; l = l->next) {
 		struct alias *j = l->data;
 
-		if (!xstrcasecmp(string, j->name)) {
+		if (!xwcscasecmp(string, j->name)) {
 			if (!append) {
-				printq("aliases_exist", string);
+				wcs_printq("aliases_exist", string);
 				return -1;
 			} else {
 				list_t l;
 
-				list_add(&j->commands, cmd, xstrlen(cmd) + 1);
+				list_add(&j->commands, cmd, xwcslen(cmd) + 1);
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
 				for (l = commands; l; l = l->next) {
 					command_t *c = l->data;
 
-					if (!xstrcasecmp(c->name, j->name)) {
+					if (!xwcscasecmp(c->name, j->name)) {
 						xfree(c->params);
 						c->params = array_make("?", " ", 0, 1, 1);
 						break;
 					}
 				}
 			
-				printq("aliases_append", string);
+				wcs_printq("aliases_append", string);
 
 				return 0;
 			}
@@ -258,27 +258,27 @@ int alias_add(const char *string, int quiet, int append)
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		char *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
+		CHAR_T *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
 
-		if (!xstrcasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {
-			printq("aliases_command", string);
+		if (!xwcscasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {
+			wcs_printq("aliases_command", string);
 			return -1;
 		}
 
-		if (!xstrcasecmp(tmp, c->name))
+		if (!xwcscasecmp(tmp, c->name))
 			params = c->params;
 	}
 	a = xmalloc(sizeof(struct alias));
-	a->name = xstrdup(string);
+	a->name = xwcsdup(string);
 	a->commands = NULL;
-	list_add(&(a->commands), cmd, xstrlen(cmd) + 1);
+	list_add(&(a->commands), cmd, xwcslen(cmd) + 1);
 	list_add(&aliases, a, 0);
 
 	array = (params) ? array_join(params, " ") : xstrdup("?");
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
-	printq("aliases_add", a->name, "");
+	wcs_printq("aliases_add", a->name, TEXT(""));
 
 	return 0;
 }
@@ -293,7 +293,7 @@ int alias_add(const char *string, int quiet, int append)
  *
  * 0/-1
  */
-int alias_remove(const char *name, int quiet)
+int alias_remove(const CHAR_T *name, int quiet)
 {
 	list_t l;
 	int removed = 0;
@@ -303,7 +303,7 @@ int alias_remove(const char *name, int quiet)
 
 		l = l->next;
 
-		if (!name || !xstrcasecmp(a->name, name)) {
+		if (!name || !xwcscasecmp(a->name, name)) {
 			if (name)
 				printq("aliases_del", name);
 			command_remove(NULL, a->name);
@@ -1112,7 +1112,7 @@ char * help_path(char * name, char * plugin) {
  *
  *  - name - nazwa.
  */
-int ekg_hash(const char *name)
+int ekg_hash(const CHAR_T *name)
 {
 	int hash = 0;
 

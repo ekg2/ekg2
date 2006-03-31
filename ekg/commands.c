@@ -365,16 +365,19 @@ cleanup:
 
 COMMAND(cmd_alias)
 {
+	CHAR_T *sname;
 	if (match_arg(params[0], 'a', "add", 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
-		if (!alias_add(params[1], quiet, 0)) {
+		if (!alias_add((sname = normal_to_wcs(params[1])), quiet, 0)) {
 			config_changed = 1;
+			free_utf(sname);
 			return 0;
 		}
+		free_utf(sname);
 
 		return -1;
 	}
@@ -385,10 +388,12 @@ COMMAND(cmd_alias)
 			return -1;
 		}
 
-		if (!alias_add(params[1], quiet, 1)) {
+		if (!alias_add((sname = normal_to_wcs(params[1])), quiet, 1)) {
 			config_changed = 1;
+			free_utf(sname);
 			return 0;
 		}
+		free_utf(sname);
 
 		return -1;
 	}
@@ -403,8 +408,10 @@ COMMAND(cmd_alias)
 
 		if (!xstrcmp(params[1], "*"))
 			ret = alias_remove(NULL, quiet);
-		else
-			ret = alias_remove(params[1], quiet);
+		else {
+			ret = alias_remove((sname = normal_to_wcs(params[1])), quiet);
+			free_utf(sname);
+		}
 
 		if (!ret) {
 			config_changed = 1;
@@ -417,12 +424,12 @@ COMMAND(cmd_alias)
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
 		list_t l;
 		int count = 0;
-		const char *aname = NULL;
+		CHAR_T *aname = NULL;
 
 		if (params[0] && match_arg(params[0], 'l', "list", 2))
-			aname = params[1];
+			aname = normal_to_wcs(params[1]);
 		else if (params[0])
-			aname = params[0];
+			aname = normal_to_wcs(params[0]);
 
 		for (l = aliases; l; l = l->next) {
 			struct alias *a = l->data;
@@ -430,12 +437,12 @@ COMMAND(cmd_alias)
 			int first = 1, i;
 			char *tmp;
 			
-			if (aname && xstrcasecmp(aname, a->name))
+			if (aname && xwcscasecmp(aname, a->name))
 				continue;
 
-			tmp = xcalloc(xstrlen(a->name) + 1, 1);
+			tmp = xcalloc(xwcslen(a->name) + 1, 1);
 
-			for (i = 0; i < xstrlen(a->name); i++)
+			for (i = 0; i < xwcslen(a->name); i++)
 				xstrcat(tmp, " ");
 
 			for (m = a->commands; m; m = m->next) {
@@ -455,6 +462,7 @@ COMMAND(cmd_alias)
 
 			wcs_printq("aliases_list_empty");
 		}
+		free_utf(aname);
 
 		return 0;
 	}
@@ -2718,17 +2726,15 @@ COMMAND(cmd_alias_exec)
 {	
 	list_t l, tmp = NULL, m = NULL;
 	int need_args = 0;
-	char *lname = wcs_to_normal(name);
 
 	for (l = aliases; l; l = l->next) {
 		struct alias *a = l->data;
 
-		if (!xstrcasecmp(lname, a->name)) {
+		if (!xwcscasecmp(name, a->name)) {
 			tmp = a->commands;
 			break;
 		}
 	}
-	free_utf(lname);
 
 	for (; tmp; tmp = tmp->next) {
 		char *p;

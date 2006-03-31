@@ -70,7 +70,7 @@ void *child_private_get(child_t *c);
 child_handler_t child_handler_get(child_t *c);
 
 struct alias {
-	char *name;		/* nazwa aliasu */
+	CHAR_T *name;		/* nazwa aliasu */
 	list_t commands;	/* commands->data to (char*) */
 };
 
@@ -228,8 +228,8 @@ struct color_map default_color_map[16+10];
 
 void windows_save();
 
-int alias_add(const char *string, int quiet, int append);
-int alias_remove(const char *name, int quiet);
+int alias_add(const CHAR_T *string, int quiet, int append);
+int alias_remove(const CHAR_T *name, int quiet);
 void alias_free();
 
 char *base64_encode(const char *buf);
@@ -266,7 +266,7 @@ void conference_free();
 void ekg_connect();
 void ekg_reconnect();
 
-int ekg_hash(const char *name);
+int ekg_hash(const CHAR_T *name);
 
 char * help_path(char * name, char * plugin);
 

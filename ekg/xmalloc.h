@@ -37,6 +37,7 @@ char *xstrdup(const char *s);
 CHAR_T *xwcsdup(const CHAR_T *s);
 size_t xstrnlen(const char *s, size_t n);
 char *xstrndup(const char *s, size_t n);
+CHAR_T *xwcsndup(const CHAR_T *s, size_t n);
 void *xmemdup(void *ptr, size_t size);
 
 int xstrcasecmp(const char *s1, const char *s2);

@@ -172,6 +172,21 @@ char *xstrndup(const char *s, size_t n)
         return tmp;
 }
 
+CHAR_T *xwcsndup(const CHAR_T *s, size_t n)
+{
+#if USE_UNICODE
+	CHAR_T *tmp;
+	if (!s)
+		return NULL;
+	if (!(tmp = wcsndup(s, n)))
+		ekg_oom_handler();
+
+	return tmp;
+#else
+	return xstrndup(s, n);
+#endif
+}
+
 void *xmemdup(void *ptr, size_t size)
 {
 	void *tmp = xmalloc(size);

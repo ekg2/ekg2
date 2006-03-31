@@ -171,7 +171,7 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	if (tmp && tmp + 1) {
 		tmp++;
 		tmp_len = xwcslen(tmp);
-		session_name = xwcsdup(text, xwcslen(text) - tmp_len - 1);
+		session_name = xwcsndup(text, xwcslen(text) - tmp_len - 1);
 		if (session_find(session_name))
 			s = session_find(session_name);
 	}

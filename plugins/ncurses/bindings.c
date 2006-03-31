@@ -399,7 +399,7 @@ static void binding_previous_only_history(const char *arg)
                         history[0] = xwcsdup(line);
                 history_index++;
 		if (xwcschr(history[history_index], TEXT('\015'))) {
-			char **tmp;
+			CHAR_T **tmp;
 			int i;
 			
                         if (input_size == 1) {
@@ -407,17 +407,17 @@ static void binding_previous_only_history(const char *arg)
                                 ncurses_input_update();
                         }
 
-                        tmp = array_make(history[history_index], "\015", 0, 0, 0);
+                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
-			array_free((char **) lines);
-			lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
+			wcs_array_free(lines);
+			lines = xmalloc((wcs_array_count(tmp) + 2) * sizeof(CHAR_T *));
 
-			for (i = 0; i < array_count(tmp); i++) {
+			for (i = 0; i < wcs_array_count(tmp); i++) {
 				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
 				xwcscpy(lines[i], tmp[i]);
 			}
 
-			array_free((char **) tmp);
+			wcs_array_free(tmp);
 			lines_adjust();
 		} else {
 			if (input_size != 1) {
@@ -437,7 +437,7 @@ static void binding_next_only_history(const char *arg)
                         history[0] = xwcsdup(line);
                 history_index--;
                 if (xwcschr(history[history_index], TEXT('\015'))) {
-                        char **tmp;
+                        CHAR_T **tmp;
                         int i;
 
                         if (input_size == 1) {
@@ -445,17 +445,17 @@ static void binding_next_only_history(const char *arg)
                                 ncurses_input_update();
 			}
 
-                        tmp = array_make(history[history_index], "\015", 0, 0, 0);
+                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
                         wcs_array_free(lines);
-                        lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
+                        lines = xmalloc((wcs_array_count(tmp) + 2) * sizeof(CHAR_T *));
 
-                        for (i = 0; i < array_count(tmp); i++) {
+                        for (i = 0; i < wcs_array_count(tmp); i++) {
                                 lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
                                 xwcscpy(lines[i], tmp[i]);
                         }
 
-                        array_free(tmp);
+                        wcs_array_free(tmp);
                         lines_adjust();
                 } else {
                         if (input_size != 1) {

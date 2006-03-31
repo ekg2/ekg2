@@ -241,9 +241,10 @@ int config_read(const char *filename)
 
                         array_free(pms);
                 } else if (!xstrcasecmp(buf, "alias")) {
+			CHAR_T *sfoo = normal_to_wcs(foo);
 			debug("  alias %s\n", foo);
-			ret = alias_add(foo, 1, 1);
-		
+			ret = alias_add(sfoo, 1, 1);
+			free_utf(sfoo);
 		} else if (!xstrcasecmp(buf, "on")) {
                         char **pms = array_make(foo, " \t", 4, 1, 0);
 
@@ -434,7 +435,11 @@ static void config_write_main(FILE *f)
 		list_t m;
 
 		for (m = a->commands; m; m = m->next)
+#if USE_UNICODE
+			fwprintf(f, TEXT("alias %ls %s\n"), a->name, (char *) m->data);
+#else
 			fprintf(f, "alias %s %s\n", a->name, (char*) m->data);
+#endif
 	}
 
         for (l = events; l; l = l->next) {

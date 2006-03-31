@@ -31,7 +31,7 @@
 #define N_(a) gettext_noop(a)
 
 struct format {
-	char *name;
+	CHAR_T *name;
 	int name_hash;
 	char *value;
 };

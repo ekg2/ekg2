@@ -62,6 +62,7 @@ list_t formats = NULL;
  */
 const char *format_find(const char *name)
 {
+	CHAR_T *sname;
         const char *tmp;
         int hash;
         list_t l;
@@ -69,7 +70,8 @@ const char *format_find(const char *name)
         if (!name)
                 return "";
 
-        hash = ekg_hash(name);
+	sname = normal_to_wcs(name);
+        hash = ekg_hash(sname);
 
         if (config_speech_app && !xstrchr(name, ',')) {
                 char *name2 = saprintf("%s,speech", name);
@@ -77,6 +79,7 @@ const char *format_find(const char *name)
 
                 if (xstrcmp((tmp = format_find(name2)), "")) {
                         xfree(name2);
+			free_utf(sname);
                         return tmp;
                 }
 
@@ -89,6 +92,7 @@ const char *format_find(const char *name)
 
                 if (xstrcmp((tmp = format_find(name2)), "")) {
                         xfree(name2);
+			free_utf(sname);
                         return tmp;
                 }
 
@@ -98,10 +102,12 @@ const char *format_find(const char *name)
         for (l = formats; l; l = l->next) {
                 struct format *f = l->data;
 
-                if (hash == f->name_hash && !xstrcasecmp(f->name, name))
+                if (hash == f->name_hash && !xwcscasecmp(f->name, sname)) {
+			free_utf(sname);
                         return f->value;
+		}
         }
-
+	free_utf(sname);
         return "";
 }
 
@@ -650,7 +656,7 @@ CHAR_T *wcs_format_string(const CHAR_T *format, ...)
 	CHAR_T *tmp;
 
 	va_start(ap, format);
-	tmp = wcs_va_format_string((char *) sformat, ap);
+	tmp = wcs_va_format_string(sformat, ap);
 	va_end(ap);
 
 	free_utf(sformat);
@@ -820,6 +826,7 @@ void theme_cache_reset()
  */
 int format_add(const char *name, const char *value, int replace)
 {
+	CHAR_T *sname = normal_to_wcs(name);
         struct format *f;
         list_t l;
         int hash;
@@ -827,16 +834,15 @@ int format_add(const char *name, const char *value, int replace)
         if (!name || !value)
                 return -1;
 
-        hash = ekg_hash(name);
-
-        if (hash == ekg_hash("no_prompt_cache") && !xstrcasecmp(name, "no_prompt_cache")) {
+        if (!xstrcasecmp(name, "no_prompt_cache")) {
                 no_prompt_cache = 1;
                 return 0;
         }
+        hash = ekg_hash(sname);
 
         for (l = formats; l; l = l->next) {
 		f = l->data;
-                if (hash == f->name_hash && !xstrcasecmp(name, f->name)) {
+                if (hash == f->name_hash && !xwcscasecmp(sname, f->name)) {
                         if (replace) {
                                 xfree(f->value);
                                 f->value = xstrdup(value);
@@ -846,7 +852,7 @@ int format_add(const char *name, const char *value, int replace)
                 }
         }
 	f = xmalloc(sizeof(struct format));
-        f->name = xstrdup(name);
+        f->name = xwcsdup(sname);
         f->name_hash = hash;
         f->value = xstrdup(value);
 
@@ -862,15 +868,17 @@ int format_add(const char *name, const char *value, int replace)
  */
 int format_remove(const char *name)
 {
+	CHAR_T *sname;
         list_t l;
 
         if (!name)
                 return -1;
+	sname = normal_to_wcs(name);
 
         for (l = formats; l; l = l->next) {
                 struct format *f = l->data;
 
-                if (!xstrcasecmp(f->name, name)) {
+                if (!xwcscasecmp(f->name, sname)) {
                         xfree(f->value);
                         xfree(f->name);
                         list_remove(&formats, f, 1);
