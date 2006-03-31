@@ -178,9 +178,10 @@ CHAR_T *xwcsndup(const CHAR_T *s, size_t n)
 	CHAR_T *tmp;
 	if (!s)
 		return NULL;
-	if (!(tmp = wcsndup(s, n)))
+	if (!(tmp = xcalloc(n+1, sizeof(CHAR_T))))
 		ekg_oom_handler();
-
+	xwcsncpy(tmp, s, n);
+	tmp[n] = (wchar_t) 0;
 	return tmp;
 #else
 	return xstrndup(s, n);

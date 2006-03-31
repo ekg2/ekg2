@@ -606,9 +606,7 @@ wedonthavem:
         res->attr[j] = 0;
 
 	res->str = normal_to_wcs(tmpstr);
-#if USE_UNICODE
-	xfree(tmpstr);
-#endif
+	free_utf(tmpstr);
         return res;
 }
 
