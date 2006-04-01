@@ -98,6 +98,7 @@ int wcs_string_append_c(wcs_string_t s, CHAR_T c);
 void string_insert(string_t s, int index, const char *str);
 void string_insert_n(string_t s, int index, const char *str, int count);
 void string_clear(string_t s);
+void wcs_string_clear(wcs_string_t s);
 char *string_free(string_t s, int free_string);
 CHAR_T *wcs_string_free(wcs_string_t s, int free_string);
 

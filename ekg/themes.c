@@ -464,10 +464,10 @@ CHAR_T *wcs_va_format_string(const char *data, va_list ap)
  *
  * zwraca zaalokowan± fstring_t.
  */
-fstring_t *fstring_new(const char *str)
+fstring_t *wcs_fstring_new(const CHAR_T *str)
 {
         fstring_t *res = xmalloc(sizeof(fstring_t));
-	char *tmpstr;
+	CHAR_T *tmpstr;
         short attr = 128;
         int i, j, len = 0, isbold = 0;
 
@@ -497,7 +497,7 @@ fstring_t *fstring_new(const char *str)
                 len++;
         }
 
-        tmpstr = xmalloc(len + 1);
+        tmpstr = xmalloc((len + 1) * sizeof(CHAR_T));
         res->attr = xmalloc((len + 1) * sizeof(short));
         res->prompt_len = 0;
         res->prompt_empty = 0;
@@ -506,25 +506,29 @@ fstring_t *fstring_new(const char *str)
                 if (str[i] == 27) {
                         int tmp = 0;
                         int m, ism, once=1, deli;
-                        char *p;
+                        CHAR_T *p;
 
-                        if (str[i + 1] != '[')
+                        if (str[i + 1] != TEXT('['))
                                 continue;
 
                         i += 2;
 
                         /* obs³uguje tylko "\033[...m", tak ma byæ */
-                        p=(char *)&(str[i]);
+                        p=(CHAR_T *)&(str[i]);
                         while (1) {
                                 ism=deli=0;
+#if USE_UNICODE
+				ism = swscanf(p, TEXT("%02d"), &m);
+#else
                                 ism=sscanf(p, "%02d", &m);
+#endif
                                 if (ism) {
                                         p++; deli++; i++;
                                         if(isdigit(*p)) { p++; deli++; i++; }
                                         if(once && isdigit(*p)) { p++; deli++; i++; }
                                 }
                                 once = 0;
-                                if (*p == ';' || *p == 'm') {
+                                if (*p == TEXT(';') || *p == TEXT('m')) {
                                         if (!ism)
                                                 goto wedonthavem;
                                         if (m == 0) {
@@ -537,9 +541,9 @@ fstring_t *fstring_new(const char *str)
                                         }
                                         else if (m == 1) /* bold */
                                         {
-                                                if (*p == 'm' && !isbold)
+                                                if (*p == TEXT('m') && !isbold)
                                                         attr ^= 64;
-                                                if (*p == ';')  {
+                                                if (*p == TEXT(';'))  {
                                                         attr |= 64;
                                                         isbold = 1;
                                                 }
@@ -565,7 +569,7 @@ wedonthavem:
                                                 attr &= ~(128+8+16+32);
                                                 attr |= (tmp - 40) << 3;
                                         }
-                                        if (*p == ';') { i++; p++; }
+                                        if (*p == TEXT(';')) { i++; p++; }
                                 }
                                 if (*p == 'm') break;
                                 tmp = 0;
@@ -577,8 +581,8 @@ wedonthavem:
                 if (str[i] == 13)
                         continue;
 
-                if (str[i + 1] && str[i] == '/' && str[i + 1] == '|') {
-                        if ((i != 0 && str[i - 1] != '/') || i == 0) {
+                if (str[i + 1] && str[i] == TEXT('/') && str[i + 1] == TEXT('|')) {
+                        if ((i != 0 && str[i - 1] != TEXT('/')) || i == 0) {
                                 res->margin_left = j;
                                 i++;
                                 continue;
@@ -590,7 +594,7 @@ wedonthavem:
                         int k = 0, l = 8 - (j % 8);
 
                         for (k = 0; k < l; j++, k++) {
-                                tmpstr[j] = ' ';
+                                tmpstr[j] = TEXT(' ');
                                 res->attr[j] = attr;
                         }
 
@@ -601,13 +605,20 @@ wedonthavem:
                 res->attr[j] = attr;
                 j++;
         }
+        tmpstr[j] = (CHAR_T) 0;
 
-        tmpstr[j] = 0;
         res->attr[j] = 0;
+	res->str = tmpstr;
 
-	res->str = normal_to_wcs(tmpstr);
-	free_utf(tmpstr);
         return res;
+}
+
+fstring_t *fstring_new(const char *str) {
+	fstring_t *fstr;
+	CHAR_T *tmp = normal_to_wcs(str);
+	fstr = wcs_fstring_new(tmp);
+	free_utf(tmp);
+	return fstr;
 }
 
 /*
@@ -788,10 +799,10 @@ void wcs_print_window(const char *target, session_t *session, int separate, cons
 #else
 				wcsprintf("%s%s", prompt, line);
 #endif
-                        window_print(target, session, separate, fstring_new(wcs_to_normal(tmp)));
+                        window_print(target, session, separate, wcs_fstring_new(tmp));
                         xfree(tmp);
                 } else
-                        window_print(target, session, separate, fstring_new(wcs_to_normal(line)));
+                        window_print(target, session, separate, wcs_fstring_new(line));
         }
 
         xfree(prompt);
@@ -845,7 +856,7 @@ int format_add(const char *name, const char *value, int replace)
                                 xfree(f->value);
                                 f->value = xstrdup(value);
                         }
-
+			free_utf(sname);
                         return 0;
                 }
         }
@@ -853,6 +864,7 @@ int format_add(const char *name, const char *value, int replace)
         f->name = xwcsdup(sname);
         f->name_hash = hash;
         f->value = xstrdup(value);
+	free_utf(sname);
 
         return (list_add(&formats, f, 0) ? 0 : -1);
 }

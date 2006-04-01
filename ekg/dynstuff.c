@@ -252,7 +252,7 @@ int wcs_string_append_c(wcs_string_t s, CHAR_T c)
 		return -1;
 	}
 	
-	wcs_string_realloc(s, (s->len + 1)*sizeof(CHAR_T));
+	wcs_string_realloc(s, s->len + 1);
 
 	s->str[s->len + 1] = 0;
 	s->str[s->len++] = c;
@@ -298,7 +298,7 @@ int wcs_string_append_n(wcs_string_t s, const CHAR_T *str, int count)
 	if (count == -1)
 		count = xwcslen(str);
 
-	wcs_string_realloc(s, (s->len + count)*sizeof(CHAR_T));
+	wcs_string_realloc(s, s->len + count);
 
 	s->str[s->len + count] = (CHAR_T) 0;
 
