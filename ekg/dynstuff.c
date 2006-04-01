@@ -213,7 +213,7 @@ static void wcs_string_realloc(wcs_string_t s, int count)
 	if (s->str && (count + 1) <= s->size)
 		return;
 	
-	tmp = xrealloc(s->str, count + 81);
+	tmp = xrealloc(s->str, (count + 81)*sizeof(CHAR_T));
 	if (!s->str)
 		*tmp = 0;
 	tmp[count + 80] = 0;
@@ -252,7 +252,7 @@ int wcs_string_append_c(wcs_string_t s, CHAR_T c)
 		return -1;
 	}
 	
-	wcs_string_realloc(s, s->len + 1);
+	wcs_string_realloc(s, (s->len + 1)*sizeof(CHAR_T));
 
 	s->str[s->len + 1] = 0;
 	s->str[s->len++] = c;
@@ -298,9 +298,10 @@ int wcs_string_append_n(wcs_string_t s, const CHAR_T *str, int count)
 	if (count == -1)
 		count = xwcslen(str);
 
-	wcs_string_realloc(s, s->len + count);
+	wcs_string_realloc(s, (s->len + count)*sizeof(CHAR_T));
 
-	s->str[s->len + count] = 0;
+	s->str[s->len + count] = (CHAR_T) 0;
+
 	xwcsncpy(s->str + s->len, str, count);
 
 	s->len += count;
@@ -398,7 +399,6 @@ void string_clear(string_t s)
 {
 	if (!s)
 		return;
-
 	if (s->size > 160) {
 		s->str = xrealloc(s->str, 80);
 		s->size = 80;
@@ -414,7 +414,7 @@ void wcs_string_clear(wcs_string_t s)
 		return;
 
 	if (s->size > 160) {
-		s->str = xrealloc(s->str, 80);
+		s->str = xrealloc(s->str, 80*sizeof(CHAR_T));
 		s->size = 80;
 	}
 
@@ -499,7 +499,7 @@ const CHAR_T *wcs_itoa(long int i)
 	if (index > 9)
 		index = 0;
 #if USE_UNICODE
-	swprintf(tmp, 16, "%ld", i);
+	swprintf(tmp, 16, TEXT("%ld"), i);
 #else
 	snprintf(tmp, 16, "%ld", i);
 #endif
@@ -636,6 +636,7 @@ CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int tr
 	
 	free_utf(str);
 	free_utf(sp);
+	return stab;
 #else
 	return array_make(string, sep, max, trim, quotes);
 #endif

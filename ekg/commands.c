@@ -456,7 +456,7 @@ COMMAND(cmd_alias)
 
 		if (!count) {
 			if (aname) {
-				printq("aliases_noexist", aname);
+				wcs_printq("aliases_noexist", aname);
 				return -1;
 			}
 
@@ -702,7 +702,7 @@ COMMAND(cmd_exec)
 		for (l = children; l; l = l->next) {
 			child_t *c = l->data;
 			
-			wcs_printq("process", wcs_itoa(c->pid), (c->name) ? (c->name) : TEXT("?"));
+			wcs_printq("process", wcs_itoa(c->pid), ((c->name) ? (c->name) : TEXT("?")));
 		}
 
 		if (!children) {
@@ -1022,7 +1022,7 @@ COMMAND(cmd_help)
 				FILE *f; 
 				CHAR_T *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
 				const CHAR_T *seeking_name;
-				wcs_string_t s = wcs_string_init(NULL);
+				wcs_string_t s;
 				int found = 0;
 
 				if (c->plugin && c->plugin->name) {
@@ -1105,33 +1105,32 @@ COMMAND(cmd_help)
 
 				xfree(brief);
 				xfree(params_help);
-				xfree(tmp);	
+				xfree(tmp);
+
+				s = wcs_string_init(NULL);
 			        while ((line = wcs_read_file(f))) {
 			                if (line[0] != TEXT('\t')) {
 			                        xfree(line);
 			                        break;
 			                }
-
+					
 			                if (!xwcsncmp(line, TEXT("\t- "), 3) && xwcscmp(s->str, TEXT(""))) {
 			                        wcs_print("help_command_body", line);
 			                        wcs_string_clear(s);
 			                }
-
+					
 					if (!xwcsncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
 						wcs_string_append(s, TEXT("\n\r"));
 						continue;
 					}
-#if USE_UNICODE
-					wcs_string_append(s, TEXT("SEGV HERE"));
-#else
+					
 			                wcs_string_append(s, line + 1);
-#endif
+
 			                if (line[xwcslen(line) - 1] != TEXT(' '))
 			                        wcs_string_append_c(s, TEXT(' '));
-
 			                xfree(line);
 			        }
-
+				
 				if (xwcscmp(s->str, TEXT(""))) {
 					CHAR_T *tmp = wcs_format_string(s->str);
                                         wcs_printq("help_command_body", tmp);
@@ -1752,7 +1751,9 @@ COMMAND(cmd_set)
 
 					for (i = 0; v->map[i].label; i++)
 						if (v->map[i].value == value) {
-							tmp = wcsprintf(TEXT("%d (%s)"), value, v->map[i].label);
+							CHAR_T *vmaplabel = normal_to_wcs(v->map[i].label);
+							tmp = wcsprintf(TEXT("%d (%s)"), value, vmaplabel);
+							free_utf(vmaplabel);
 							break;
 						}
 
@@ -2008,6 +2009,7 @@ COMMAND(cmd_debug_query)
 COMMAND(cmd_test_mem) 
 {
 	char *temp, *p = NULL;
+	CHAR_T *txt;
 	FILE *file = NULL;
 	int rd = 0, rozmiar = 0, unmres;
 	struct utsname sys;
@@ -2075,9 +2077,9 @@ COMMAND(cmd_test_mem)
 			xfree(p);
 			return -1;
 #endif
-		p = wcsprintf(TEXT("Memory used by ekg2: %d kB"), rozmiar);
-		wcs_printq("generic", p);
-		xfree(p);
+		txt = wcsprintf(TEXT("Memory used by ekg2: %d kB"), rozmiar);
+		wcs_printq("generic", txt);
+		xfree(txt);
 	} else {
 		wcs_printq("generic_error", TEXT("/proc not mounted, no permissions, or no proc filesystem support"));
 		xfree(temp);
@@ -2448,7 +2450,11 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		}
 
 		if (!correct_command) {
+#if USE_UNICODE
+			command_exec_format(target, session, quiet, TEXT("/ %ls"), xline);
+#else
 			command_exec_format(target, session, quiet, TEXT("/ %s"), xline);
+#endif
 			return 0;
 		}
 	}
