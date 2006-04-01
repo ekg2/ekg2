@@ -143,19 +143,22 @@ static void ignorelevels_generator(const CHAR_T *text, int len)
 
 static void unknown_uin_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
 	int i;
+	char *stext = wcs_to_normal(text);
 	
 	for (i = 0; i < send_nicks_count; i++) {
-		if (send_nicks[i] && xstrchr(send_nicks[i], ':') && xisdigit(xstrchr(send_nicks[i], ':')[1]) && !xstrncasecmp(text, send_nicks[i], len))
-			array_add_check(&completions, xstrdup(send_nicks[i]), 1);
+		if (send_nicks[i] && xstrchr(send_nicks[i], ':') && xisdigit(xstrchr(send_nicks[i], ':')[1]) && !xstrncasecmp(stext, send_nicks[i], len)) {
+			CHAR_T *snick = normal_to_wcs(send_nicks[i]);
+			wcs_array_add_check(&completions, xwcsdup(snick), 1);
+			free_utf(snick);
+		}
 	}
-#endif
+	free_utf(stext);
 }
 
 static void known_uin_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
+	char *stext;
 	int done = 0;
 	list_t l;
 	session_t *s;
@@ -165,26 +168,29 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	if (!session_current)
 		return;
 
+	stext = wcs_to_normal(text);
 	s  = session_current;
 
-	tmp = xstrrchr(text, '/');
+	tmp = xstrrchr(stext, '/');
 	if (tmp && tmp + 1) {
 		tmp++;
-		tmp_len = xwcslen(tmp);
-		session_name = xwcsndup(text, xwcslen(text) - tmp_len - 1);
+		tmp_len = xstrlen(tmp);
+		session_name = xstrndup(stext, xstrlen(stext) - tmp_len - 1);
 		if (session_find(session_name))
 			s = session_find(session_name);
 	}
 
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
-			array_add_check(&completions, xstrdup(u->nickname), 1);
+		if (u->nickname && !xstrncasecmp(stext, u->nickname, len)) {
+			CHAR_T *unickname = normal_to_wcs(u->nickname);
+			wcs_array_add_check(&completions, xwcsdup(unickname), 1);
+			free_utf(unickname);
 			done = 1;
 		}
 		
 		if (u->nickname && tmp && !xstrncasecmp(tmp, u->nickname, tmp_len)) { 
-                        array_add_check(&completions, saprintf("%s/%s", session_name, u->nickname), 1);
+                        wcs_array_add_check(&completions, wcsprintf(TEXT("%s/%s"), session_name, u->nickname), 1);
                         done = 1;
 		}
 	}
@@ -192,10 +198,13 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 
-		if (!done && !xstrncasecmp(text, u->uid, len))
-			array_add_check(&completions, xstrdup(u->uid), 1);
+		if (!done && !xstrncasecmp(stext, u->uid, len)) {
+			CHAR_T *uuid = normal_to_wcs(u->uid);
+			wcs_array_add_check(&completions, xwcsdup(uuid), 1);
+			free_utf(uuid);
+		}
 		if (!done && tmp && !xstrncasecmp(tmp, u->uid, tmp_len)) 
-                        array_add_check(&completions, saprintf("%s/%s", session_name, u->uid), 1);
+                       wcs_array_add_check(&completions, wcsprintf(TEXT("%s/%s"), session_name, u->uid), 1);
 	}
 
 	if (!window_current) 
@@ -204,17 +213,23 @@ static void known_uin_generator(const CHAR_T *text, int len)
         for (l = window_current->userlist; l; l = l->next) {
                 userlist_t *u = l->data;
 
-                if (u->uid && !xstrncasecmp(text, u->uid, len))
-                        array_add_check(&completions, xstrdup(u->uid), 1);
+                if (u->uid && !xstrncasecmp(stext, u->uid, len)) {
+			CHAR_T *uuid = normal_to_wcs(u->uid);
+                        wcs_array_add_check(&completions, xwcsdup(uuid), 1);
+			free_utf(uuid);
+		}
 
-                if (u->nickname && !xstrncasecmp(text, u->nickname, len)) 
-                        array_add_check(&completions, xstrdup(u->nickname), 1);
+                if (u->nickname && !xstrncasecmp(stext, u->nickname, len)) {
+			CHAR_T *unickname = normal_to_wcs(u->nickname);
+			wcs_array_add_check(&completions, xwcsdup(unickname), 1);
+			free_utf(unickname);
+		}
         } 
 
 end:
 	if (session_name)
 		xfree(session_name);
-#endif
+	free_utf(stext);
 }
 
 static void conference_generator(const CHAR_T *text, int len)
@@ -657,7 +672,7 @@ static void metacontacts_generator(const CHAR_T *text, int len)
 
 static void sessions_var_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
+	char *stext;
         int i;
         plugin_t *p;
 
@@ -667,16 +682,21 @@ static void sessions_var_generator(const CHAR_T *text, int len)
         if (!(p = plugin_find_uid(session_in_line->uid)))
                 return;
 
+	stext = wcs_to_normal(text);
+
 	for (i = 0; p->params[i]; i++) {
-		if(*text == '-') {
-                        if (!xstrncasecmp(text + 1, p->params[i]->key, len - 1))
-                                array_add_check(&completions, saprintf("-%s", p->params[i]->key), 1);
+		if(*stext == '-') {
+                        if (!xstrncasecmp(stext + 1, p->params[i]->key, len - 1))
+                                wcs_array_add_check(&completions, wcsprintf(TEXT("-%s"), p->params[i]->key), 1);
                 } else {
-                        if (!xstrncasecmp(text, p->params[i]->key, len))
-                                array_add_check(&completions, xstrdup(p->params[i]->key), 1);
+                        if (!xstrncasecmp(stext, p->params[i]->key, len)) {
+				CHAR_T *pparamskey = normal_to_wcs(p->params[i]->key);
+                                wcs_array_add_check(&completions, xwcsdup(pparamskey), 1);
+				free_utf(pparamskey);
+			}
                 }
         }
-#endif
+	free_utf(stext);
 }
 
 void reason_generator(const CHAR_T *text, int len)
