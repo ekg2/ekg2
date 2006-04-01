@@ -752,7 +752,7 @@ COMMAND(session_command)
 		}
 
 		if (!sessions)
-			printq("session_list_empty");
+			wcs_printq("session_list_empty");
 
 		return 0;
 	}
@@ -847,15 +847,19 @@ COMMAND(session_command)
 		const char *var;
 		
 		if (!params[1]) {
-			printq("invalid_params", name);
+			wcs_printq("invalid_params", name);
 			return -1;
 		}	
 		
 		if (!(s = session_find(params[1]))) {
 			if (window_current->session) {
+#if USE_UNICODE
+				return command_exec_format(NULL, s, 0, TEXT("%ls --get %s %s"), name, session->uid, params[1]);
+#else
 				return command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, session->uid, params[1]);
+#endif
 			} else
-				printq("invalid_session");
+				wcs_printq("invalid_session");
 			return -1;
 		}
 		 
@@ -887,14 +891,14 @@ COMMAND(session_command)
 			return -1;
 		}
 
-		printq("invalid_params", name);
+		wcs_printq("invalid_params", name);
 		return -1;
 	}
 
 	if (match_arg(params[0], 's', "set", 2)) {
 		
 		if (!params[1]) {
-			printq("invalid_params", name);
+			wcs_printq("invalid_params", name);
 			return -1;
 		}	
 		
@@ -923,7 +927,11 @@ COMMAND(session_command)
 					}
 					session_set_n(session->uid, params[1], params[2]);
 					config_changed = 1;
+#if USE_UNICODE
+					command_exec_format(NULL, s, 0, TEXT("%ls --get %s %s"), name, session->uid, params[1]);
+#else
 					command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, session->uid, params[1]);
+#endif
 					return 0;
 				} else {
 					printq("invalid_session");
@@ -936,7 +944,7 @@ COMMAND(session_command)
 				return -1;
 			}
 			
-    		    	printq("invalid_params", name);
+    		    	wcs_printq("invalid_params", name);
 			return -1;
 		}
 		
@@ -960,11 +968,15 @@ COMMAND(session_command)
 
 			session_set_n(s->uid, params[2], params[3]);
 			config_changed = 1;
+#if USE_UNICODE
+			command_exec_format(NULL, s, 0, TEXT("%ls --get %s %s"), name, s->uid, params[2]);
+#else
 			command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, s->uid, params[2]);
+#endif
 			return 0;
 		}
 		
-		printq("invalid_params", name);
+		wcs_printq("invalid_params", name);
 		return -1;
 	}
 
@@ -977,18 +989,30 @@ COMMAND(session_command)
 
 		if (params[1] && params[1][0] == '-') { 
 			config_changed = 1;
+#if USE_UNICODE
+			command_exec_format(NULL, s, 0, TEXT("%ls --set %s %s"), name, params[0], params[1]);
+#else
 			command_exec_format(NULL, s, 0, TEXT("%s --set %s %s"), name, params[0], params[1]);
+#endif
 			return 0;
 		}
 
 		if(params[1] && params[2]) {
+#if USE_UNICODE
+			command_exec_format(NULL, s, 0, TEXT("%ls --set %s %s %s"), name, params[0], params[1], params[2]);
+#else
 			command_exec_format(NULL, s, 0, TEXT("%s --set %s %s %s"), name, params[0], params[1], params[2]);
+#endif
 			config_changed = 1;
 			return 0;
 		}
 		
 		if(params[1]) {
+#if USE_UNICODE
+			command_exec_format(NULL, s, 0, TEXT("%ls --get %s %s"), name, params[0], params[1]);
+#else
 			command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, params[0], params[1]);
+#endif
 			config_changed = 1;
 			return 0;		
 		}
@@ -1017,21 +1041,33 @@ COMMAND(session_command)
 	}
 	
 	if (params[0] && params[0][0] != '-' && params[1] && session && session->uid) {
+#if USE_UNICODE
+		command_exec_format(NULL, s, 0, TEXT("%ls --set %s %s %s"), name, session_alias_uid(session), params[0], params[1]);
+#else
 		command_exec_format(NULL, s, 0, TEXT("%s --set %s %s %s"), name, session_alias_uid(session), params[0], params[1]);
+#endif
 		return 0;
         }
 	
 	if (params[0] && params[0][0] != '-' && session && session->uid) {
+#if USE_UNICODE
+		command_exec_format(NULL, s, 0, TEXT("%ls --get %s %s"), name, session_alias_uid(session), params[0]);
+#else
 		command_exec_format(NULL, s, 0, TEXT("%s --get %s %s"), name, session_alias_uid(session), params[0]);
+#endif
 		return 0;
 	}
 	
 	if (params[0] && params[0][0] == '-' && session && session->uid) {
+#if USE_UNICODE
+		command_exec_format(NULL, s, 0, TEXT("%ls --set %s %s"), name, session_alias_uid(session), params[0]);
+#else
 		command_exec_format(NULL, s, 0, TEXT("%s --set %s %s"), name, session_alias_uid(session), params[0]);
+#endif
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	wcs_printq("invalid_params", name);
 	
 	return -1;
 }

@@ -609,7 +609,7 @@ void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, v
 {
 	int quiet = (name && name[0] == '^');
 
-	printq("process_exit", itoa(pid), name, itoa(status));
+	wcs_printq("process_exit", wcs_itoa(pid), name, wcs_itoa(status));
 }
 
 COMMAND(cmd_exec)
@@ -825,7 +825,7 @@ COMMAND(cmd_for)
 		}
 
 		if (!session->userlist) {
-			printq("list_empty");
+			wcs_printq("list_empty");
 			ret = -1;
 			goto for_end;
 		}
@@ -1052,7 +1052,6 @@ COMMAND(cmd_help)
 
 	                		seeking_name = c->name;
         			}
-
 			        while ((line = wcs_read_file(f))) {
 			                if (!xwcscasecmp(line, seeking_name)) {
 			                        found = 1;
@@ -1107,7 +1106,6 @@ COMMAND(cmd_help)
 				xfree(brief);
 				xfree(params_help);
 				xfree(tmp);	
-
 			        while ((line = wcs_read_file(f))) {
 			                if (line[0] != TEXT('\t')) {
 			                        xfree(line);
@@ -1116,21 +1114,19 @@ COMMAND(cmd_help)
 
 			                if (!xwcsncmp(line, TEXT("\t- "), 3) && xwcscmp(s->str, TEXT(""))) {
 			                        wcs_print("help_command_body", line);
-#if USE_UNICODE
-//						s->str = TEXT("");
-#else
-			                        string_clear(s);
-#endif
+			                        wcs_string_clear(s);
 			                }
 
 					if (!xwcsncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
 						wcs_string_append(s, TEXT("\n\r"));
 						continue;
 					}
-
+#if USE_UNICODE
+					wcs_string_append(s, TEXT("SEGV HERE"));
+#else
 			                wcs_string_append(s, line + 1);
-
-			                if (line[xwcslen(line) - 1] != ' ')
+#endif
+			                if (line[xwcslen(line) - 1] != TEXT(' '))
 			                        wcs_string_append_c(s, TEXT(' '));
 
 			                xfree(line);
@@ -1141,10 +1137,8 @@ COMMAND(cmd_help)
                                         wcs_printq("help_command_body", tmp);
 					xfree(tmp);
 				}
-
 				fclose(f);
 			        wcs_string_free(s, 1);
-
 				return 0;
 			}
 		}
@@ -1270,7 +1264,7 @@ COMMAND(cmd_ignore)
 			}
 
 			if (!i)
-				printq("ignored_list_empty");
+				wcs_printq("ignored_list_empty");
 
 			return 0;
 		}
@@ -1315,7 +1309,7 @@ COMMAND(cmd_ignore)
 		int level;
 
 		if (!params[0]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -1344,10 +1338,10 @@ COMMAND(cmd_ignore)
 			}
 
 			if (x) {
-				printq("ignored_deleted_all");
+				wcs_printq("ignored_deleted_all");
 				config_changed = 1;
 			} else {
-				printq("ignored_list_empty");
+				wcs_printq("ignored_list_empty");
 				return -1;
 			}
 			
@@ -1458,7 +1452,7 @@ next:
 	                i = metacontact_find_prio(m);
 
 	                if (!i) {
-	                        printq("metacontact_item_list_empty");
+	                        wcs_printq("metacontact_item_list_empty");
 				return -1;
 	               	} 
 		
@@ -1550,7 +1544,7 @@ list_user:
 					xstrcpy(buf, "TOOLONG");
 				printq("user_info_last_seen", buf);
 			} else
-				printq("user_info_never_seen");
+				wcs_printq("user_info_never_seen");
 		}
 			
 		printq("user_info_footer", u->nickname, u->uid);
@@ -1771,23 +1765,25 @@ COMMAND(cmd_set)
 				}
 
 				if (v->type == VAR_MAP && v->map) {
-					string_t s = string_init(itoa(value));
+					wcs_string_t s = wcs_string_init(wcs_itoa(value));
 					int i, first = 1;
 
 					for (i = 0; v->map[i].label; i++) {
 						if ((value & v->map[i].value) || (!value && !v->map[i].value)) {
-							string_append(s, (first) ? " (" : ",");
+							CHAR_T *vmaplabel = normal_to_wcs(v->map[i].label);
+							wcs_string_append(s, (first) ? TEXT(" (") : TEXT(","));
 							first = 0;
-							string_append(s, v->map[i].label);
+							wcs_string_append(s, vmaplabel);
+							free_utf(vmaplabel);
 						}
 					}
 
 					if (!first)
-						string_append_c(s, ')');
+						wcs_string_append_c(s, TEXT(')'));
 
-					printq("variable", v->name, s->str);
+					wcs_printq("variable", v->name, s->str);
 
-					string_free(s, 1);
+					wcs_string_free(s, 1);
 				}
 
 				displayed = 1;
@@ -1916,10 +1912,10 @@ COMMAND(cmd_test_debug)
 
 COMMAND(cmd_test_debug_dump)
 {
-	char *tmp = saprintf("Zapisa³em debug do pliku debug.%d", (int) getpid());
+	CHAR_T *tmp = wcsprintf(TEXT("Zapisalem debug do pliku debug.%d"), (int) getpid());
 
 	debug_write_crash();
-	printq("generic", tmp);
+	wcs_printq("generic", tmp);
 	xfree(tmp);
 
 	return 0;
@@ -2079,8 +2075,8 @@ COMMAND(cmd_test_mem)
 			xfree(p);
 			return -1;
 #endif
-		p = saprintf("Memory used by ekg2: %d kB", rozmiar);
-		printq("generic", p);
+		p = wcsprintf(TEXT("Memory used by ekg2: %d kB"), rozmiar);
+		wcs_printq("generic", p);
 		xfree(p);
 	} else {
 		wcs_printq("generic_error", TEXT("/proc not mounted, no permissions, or no proc filesystem support"));
@@ -2194,7 +2190,7 @@ COMMAND(cmd_beep)
 COMMAND(cmd_play)
 {
 	if (!config_sound_app) {
-		printq("not_enough_params", name);
+		wcs_printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -2204,7 +2200,7 @@ COMMAND(cmd_play)
 COMMAND(cmd_say)
 {
 	if (!config_speech_app) {
-		printq("not_enough_params", name);
+		wcs_printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -2675,7 +2671,7 @@ int command_exec_format(const char *target, session_t *session, int quiet, const
 
 int binding_help(int a, int b)  
 {
-	print("help_quick");  
+	wcs_print("help_quick");  
 
 	return 0;  
 }
@@ -3247,14 +3243,14 @@ COMMAND(cmd_timer)
 			t_command = strip_spaces(t_command);
 
 			if (!xstrcmp(t_command, "")) {
-				printq("not_enough_params", name);
+				wcs_printq("not_enough_params", name);
 				xfree(tmp);
 				return -1;
 			}
 
 			t_command = tmp;
 		} else {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3272,7 +3268,7 @@ COMMAND(cmd_timer)
 		int del_all = 0, ret;
 
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3612,7 +3608,7 @@ COMMAND(cmd_last)
 			if (uid)
 				printq("last_list_empty_nick", format_user(session, uid));
 			else
-				printq("last_list_empty");
+				wcs_printq("last_list_empty");
 
 			return -1;
 		}
@@ -3622,7 +3618,7 @@ COMMAND(cmd_last)
 			printq("last_clear_uin", format_user(session, uid));
 		} else {
 			last_free();
-			printq("last_clear");
+			wcs_printq("last_clear");
 		}
 
 		return 0;
@@ -3671,7 +3667,7 @@ COMMAND(cmd_last)
 			return -1;
 		}
 
-		printq("last_list_empty");
+		wcs_printq("last_list_empty");
 		return 0;
 	}
 
@@ -3714,7 +3710,7 @@ COMMAND(cmd_last)
 		}
         }
 
-        printq("last_end");
+        wcs_printq("last_end");
 
 	return 0;
 }
@@ -3728,7 +3724,7 @@ COMMAND(cmd_queue)
 			if (params[1])
 				printq("queue_empty_uid", format_user(session, params[1]));
 			else
-				printq("queue_empty");
+				wcs_printq("queue_empty");
 
 			return 0;
 		}
@@ -3738,7 +3734,7 @@ COMMAND(cmd_queue)
 			printq("queue_clear_uid", format_user(session, params[1]));
 		} else {
 			msg_queue_free();
-			printq("queue_clear");
+			wcs_printq("queue_clear");
 		}
 
 		return 0;
@@ -3748,7 +3744,7 @@ COMMAND(cmd_queue)
 		if (params[0])
 			printq("queue_empty_uid", format_user(session, params[0]));
 		else
-			printq("queue_empty");
+			wcs_printq("queue_empty");
 
 		return 0;
 	}
@@ -3787,7 +3783,7 @@ COMMAND(cmd_dcc)
 			empty = 0;
 			
 			if (!passed++)
-				printq("dcc_show_pending_header");
+				wcs_printq("dcc_show_pending_header");
 
 			switch (d->type) {
 				case DCC_SEND:
@@ -3815,7 +3811,7 @@ COMMAND(cmd_dcc)
 			empty = 0;
 
 			if (!passed++)
-				printq("dcc_show_active_header");
+				wcs_printq("dcc_show_active_header");
 
 			switch (d->type) {
 				case DCC_SEND:
@@ -3835,7 +3831,7 @@ COMMAND(cmd_dcc)
 		}
 
 		if (empty)
-			printq("dcc_show_empty");
+			wcs_printq("dcc_show_empty");
 		
 		return 0;
 	}
@@ -3845,7 +3841,7 @@ COMMAND(cmd_dcc)
 		const char *uid;
 
 		if (!params[1]) {
-			printq("not_enough_params", name);
+			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3912,7 +3908,7 @@ COMMAND(cmd_plugin)
                 }
 
 		config_changed = 1;
-                printq("plugin_default");
+                wcs_printq("plugin_default");
         }
 
 	if (params[0][0] == '+') {

@@ -305,7 +305,7 @@ int alias_remove(const CHAR_T *name, int quiet)
 
 		if (!name || !xwcscasecmp(a->name, name)) {
 			if (name)
-				printq("aliases_del", name);
+				wcs_printq("aliases_del", name);
 			command_remove(NULL, a->name);
 			xfree(a->name);
 			list_destroy(a->commands, 1);
@@ -316,15 +316,15 @@ int alias_remove(const CHAR_T *name, int quiet)
 
 	if (!removed) {
 		if (name)
-			printq("aliases_noexist", name);
+			wcs_printq("aliases_noexist", name);
 		else
-			printq("aliases_list_empty");
+			wcs_printq("aliases_list_empty");
 
 		return -1;
 	}
 
 	if (removed && !name)
-		printq("aliases_del_all");
+		wcs_printq("aliases_del_all");
 
 	return 0;
 }
@@ -363,7 +363,7 @@ void binding_list(int quiet, const char *name, int all)
 	int found = 0;
 
 	if (!bindings)
-		printq("bind_seq_list_empty");
+		wcs_printq("bind_seq_list_empty");
 
 	for (l = bindings; l; l = l->next) {
 		struct binding *b = l->data;
@@ -693,7 +693,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		return NULL;
 
 	if (nicklist[0] == ',' || nicklist[xstrlen(nicklist) - 1] == ',') {
-		printq("invalid_params", "chat");
+		wcs_printq("invalid_params", TEXT("chat"));
 		return NULL;
 	}
 
@@ -827,13 +827,13 @@ int conference_remove(const char *name, int quiet)
 		if (name)
 			printq("conferences_noexist", name);
 		else
-			printq("conferences_list_empty");
+			wcs_printq("conferences_list_empty");
 		
 		return -1;
 	}
 
 	if (removed && !name)
-		printq("conferences_del_all");
+		wcs_printq("conferences_del_all");
 
 	return 0;
 }
@@ -1087,17 +1087,32 @@ char * help_path(char * name, char * plugin) {
         } else {
                 lang = xstrdup(tmp);
         }
-
+#if USE_UNICODE
+        tmp = saprintf("%s-%s-utf.txt", base, lang);
+	if (!(fp = fopen(tmp, "r"))) {
+		xfree(tmp);
+		tmp = saprintf("%s-%s.txt", base, lang);
+	} else { 
+		fclose(fp);
+		goto end;
+	}
+#else
         tmp = saprintf("%s-%s.txt", base, lang);
+#endif
 
         // Temporary fallback - untill we don't have full en translation
         fp = fopen(tmp, "r");
         if (!fp) {
+		xfree(tmp);
+#if USE_UNICODE
+                tmp = saprintf("%s-pl-utf.txt", base);
+#else
                 tmp = saprintf("%s-pl.txt", base);
+#endif
         } else {
                 fclose(fp);
         }
-
+end:
         xfree(base);
         xfree(lang);
         return tmp;

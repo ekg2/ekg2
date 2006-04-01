@@ -182,12 +182,12 @@ int event_remove(unsigned int id, int quiet)
 	
 	if (id == 0) {
 		event_free();
-		printq("events_del_all");
+		wcs_printq("events_del_all");
 		goto cleanup;
 	}
 	
 	if (!(ev = event_find_id(id))) {
-		printq("events_del_noexist", itoa(id));
+		wcs_printq("events_del_noexist", wcs_itoa(id));
 		return -1;
 	}
 	
@@ -215,11 +215,11 @@ int events_list(int id, int quiet)
         list_t l;
 
 	if (!events) {
-        	printq("events_list_empty");
+        	wcs_printq("events_list_empty");
 		return 0;
 	}
 
-	printq("events_list_header");
+	wcs_printq("events_list_header");
 
 	for (l = events; l; l = l->next) {
 	        event_t *ev = l->data;

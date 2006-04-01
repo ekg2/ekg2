@@ -591,7 +591,7 @@ COMMAND(cmd_window)
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
 				} else
-					printq("window_list_nothing", itoa(w->id));
+					wcs_printq("window_list_nothing", itoa(w->id));
 			}
 		}
 
@@ -701,12 +701,12 @@ COMMAND(cmd_window)
 		source = (params[2]) ? atoi(params[2]) : window_current->id;
 
 		if (!source) {
-                        printq("window_invalid_move", itoa(source));
+                        wcs_printq("window_invalid_move", wcs_itoa(source));
                         goto cleanup;
 		}
 
 		if (!window_exist(source)) {
-			printq("window_doesnt_exist", itoa(source));
+			wcs_printq("window_doesnt_exist", wcs_itoa(source));
 			goto cleanup;
 		}
 
@@ -726,7 +726,7 @@ COMMAND(cmd_window)
 
 
 		if (!dest) {
-			printq("window_invalid_move", itoa(dest));
+			wcs_printq("window_invalid_move", wcs_itoa(dest));
 			goto cleanup;
 		}
 

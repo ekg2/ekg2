@@ -408,6 +408,20 @@ void string_clear(string_t s)
 	s->len = 0;
 }
 
+void wcs_string_clear(wcs_string_t s)
+{
+	if (!s)
+		return;
+
+	if (s->size > 160) {
+		s->str = xrealloc(s->str, 80);
+		s->size = 80;
+	}
+
+	s->str[0] = 0;
+	s->len = 0;
+}
+
 /*
  * string_free()
  *
@@ -478,7 +492,19 @@ const char *itoa(long int i)
 
 const CHAR_T *wcs_itoa(long int i)
 {
-	return normal_to_wcs(itoa(i));
+	static CHAR_T bufs[10][16];
+	static int index = 0;
+	CHAR_T *tmp = bufs[index++];
+
+	if (index > 9)
+		index = 0;
+#if USE_UNICODE
+	swprintf(tmp, 16, "%ld", i);
+#else
+	snprintf(tmp, 16, "%ld", i);
+#endif
+
+	return tmp;
 }
 
 /*

@@ -213,9 +213,9 @@ void ekg_loop()
                         if (!config_write(NULL) && !session_write()) {
                                 config_changed = 0;
                                 reason_changed = 0;
-                                print("autosaved");
+                                wcs_print("autosaved");
                         } else
-                                print("error_saving");
+                                wcs_print("error_saving");
                 }
 
                 /* przegl±danie zdech³ych dzieciaków */
@@ -548,7 +548,11 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
         tmp[xstrlen(tmp) - 1] = 0;
 
         buffer_add(BUFFER_DEBUG, NULL, tmp, DEBUG_MAX_LINES);
-        print_window("__debug", NULL, 0, "debug", tmp);
+	{
+		CHAR_T *tmp2 = normal_to_wcs(tmp);
+        	wcs_print_window("__debug", NULL, 0, "debug", tmp2);
+		free_utf(tmp2);
+	}
         xfree(tmp);
 }
 
@@ -887,7 +891,7 @@ int main(int argc, char **argv)
                 last_save = time(NULL);
 
         if (no_config)
-                print("no_config");
+                wcs_print("no_config");
 
         reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
