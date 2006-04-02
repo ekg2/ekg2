@@ -45,7 +45,7 @@ char **events_all = NULL;
  */
 COMMAND(cmd_on)
 {
-	if (match_arg(params[0], 'a', "add", 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		int prio;
 
                 if (!params[1] || !params[2] || !params[3] || !params[4]) {
@@ -65,7 +65,7 @@ COMMAND(cmd_on)
 			return -1;
 	}
 
-	if (match_arg(params[0], 'd', "del", 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int par;
 
 		if (!params[1]) {
@@ -89,7 +89,7 @@ COMMAND(cmd_on)
 			return -1;
 	}
 
-	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		events_list((params[0] && params[1] && atoi(params[1])) ? atoi(params[1]) : 0, 0);
 		return 0;
 	}

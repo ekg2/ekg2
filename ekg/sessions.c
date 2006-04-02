@@ -730,7 +730,7 @@ COMMAND(session_command)
 {
 	session_t *s;
 
-	if (!params[0] || match_arg(params[0], 'l', "list", 2)) {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2)) {
 		list_t l;
 
 		for (l = sessions; l; l = l->next) {
@@ -782,7 +782,7 @@ COMMAND(session_command)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'a', "add", 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		if (!valid_uid(params[1])) {
 			printq("invalid_uid", params[1]);
 			return -1;
@@ -805,7 +805,7 @@ COMMAND(session_command)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', "del", 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		if (!session_find(params[1])) {
 			printq("session_doesnt_exist", params[1]);
 			return -1;
@@ -819,7 +819,7 @@ COMMAND(session_command)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'w', "sw", 2)) {
+	if (match_arg(params[0], 'w', TEXT("sw"), 2)) {
 		session_t *s;
 		
 		if (!params[1]) {
@@ -843,7 +843,7 @@ COMMAND(session_command)
 		return 0;
 	}
 	
-	if (match_arg(params[0], 'g', "get", 2)) {
+	if (match_arg(params[0], 'g', TEXT("get"), 2)) {
 		const char *var;
 		
 		if (!params[1]) {
@@ -895,7 +895,7 @@ COMMAND(session_command)
 		return -1;
 	}
 
-	if (match_arg(params[0], 's', "set", 2)) {
+	if (match_arg(params[0], 's', TEXT("set"), 2)) {
 		
 		if (!params[1]) {
 			wcs_printq("invalid_params", name);

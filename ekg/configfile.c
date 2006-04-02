@@ -121,7 +121,7 @@ void config_postread()
 
 int config_read_plugins()
 {
-        char *buf, *foo;
+        CHAR_T*buf, *foo;
 	const char *filename;
 	FILE *f;
         struct stat st;
@@ -132,21 +132,21 @@ int config_read_plugins()
 	
 	check_file();
 
-	while ((buf = read_file(f))) {
-                if (!(foo = xstrchr(buf, ' '))) {
+	while ((buf = wcs_read_file(f))) {
+                if (!(foo = xwcschr(buf, TEXT(' ')))) {
                         xfree(buf);
                         continue;
                 }
 
                 *foo++ = 0;
 
-		if (!xstrcasecmp(buf, "plugin")) {
-                        char **p = array_make(foo, " \t", 3, 1, 0);
+		if (!xwcscasecmp(buf, TEXT("plugin"))) {
+                        CHAR_T **p = wcs_array_make(foo, TEXT(" \t"), 3, 1, 0);
 
-                                if (array_count(p) == 2)
-                                        plugin_load(p[0], atoi(p[1]), 1);
+			if (wcs_array_count(p) == 2)
+				plugin_load(p[0], wcs_atoi(p[1]), 1);
 
-                                array_free(p);
+			wcs_array_free(p);
                 }
 		xfree(buf);
 	}
@@ -217,12 +217,12 @@ int config_read(const char *filename)
                                 debug("  unknown variable %s\n", foo);
 
                 } else if (!xstrcasecmp(buf, "plugin")) {
-                        char **p = array_make(foo, " \t", 3, 1, 0);
+                        CHAR_T **p = wcs_array_make(normal_to_wcs(foo), TEXT(" \t"), 3, 1, 0);
 
-                                if (array_count(p) == 2)
-                                        plugin_load(p[0], atoi(p[1]), 1);
+                                if (wcs_array_count(p) == 2)
+                                        plugin_load(p[0], wcs_atoi(p[1]), 1);
 
-                                array_free(p);
+                                wcs_array_free(p);
 		} else if (!xstrcasecmp(buf, "bind")) {
                         char **pms = array_make(foo, " \t", 2, 1, 0);
 

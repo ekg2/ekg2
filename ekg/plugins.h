@@ -65,7 +65,7 @@ typedef struct {
 	plugin_theme_init_func_t theme_init;
 } plugin_t;
 
-int plugin_load(const char *name, int prio, int quiet);
+int plugin_load(const CHAR_T *name_, int prio, int quiet);
 int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);

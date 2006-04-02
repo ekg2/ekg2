@@ -78,7 +78,7 @@ void *ekg2_dlsym(void *plugin, char *name) {
  * 
  * 0/-1
  */
-int plugin_load(const char *name, int prio, int quiet)
+int plugin_load(const CHAR_T *name_, int prio, int quiet)
 {
 	char *lib = NULL;
 	char *env_ekg_plugins_path = NULL;
@@ -88,7 +88,9 @@ int plugin_load(const char *name, int prio, int quiet)
 	int (*plugin_init)() = NULL;
 	list_t l;
 
-	if (!name)
+	char *name = wcs_to_normal(name_);
+
+	if (!name_)
 		return -1;
 
 	if (plugin_find(name)) {

@@ -503,8 +503,14 @@ const CHAR_T *wcs_itoa(long int i)
 #else
 	snprintf(tmp, 16, "%ld", i);
 #endif
-
 	return tmp;
+}
+
+int wcs_atoi(const CHAR_T *nptr) {
+	char *tmp = wcs_to_normal(nptr);
+	int at = atoi(tmp);
+	free_utf(tmp);
+	return at;
 }
 
 /*

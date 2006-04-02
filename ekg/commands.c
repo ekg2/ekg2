@@ -92,6 +92,8 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+#define unpar(x) normal_to_wcs(x)
+
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
@@ -103,22 +105,25 @@ list_t commands = NULL;
  *
  * sprawdza, czy dany argument funkcji pasuje do podanego.
  */
-int match_arg(const char *arg, char shortopt, const char *longopt, int longoptlen)
+int match_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen)
 {
+	CHAR_T *uarg = NULL;
 	if (!arg || *arg != '-')
 		return 0;
 
-	arg++;
-
-	if (*arg == '-') {
-		int len = xstrlen(++arg);
+	uarg = unpar(arg);
+	uarg++;
+	if (*uarg == '-') {
+		int len = xwcslen(++uarg);
 
 		if (longoptlen > len)
 			len = longoptlen;
 
-		return !strncmp(arg, longopt, len);
+		return !xwcsncmp(uarg, longopt, len);
+		free_utf(uarg);
 	}
 	
+	free_utf(uarg);
 	return (*arg == shortopt) && (*(arg + 1) == 0);
 }
 
@@ -228,7 +233,7 @@ COMMAND(cmd_tabclear)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'o', "offline", 2)) {
+	if (match_arg(params[0], 'o', TEXT("offline"), 2)) {
 		for (i = 0; i < send_nicks_count; i++) {
 			userlist_t *u = NULL;
 
@@ -270,7 +275,7 @@ COMMAND(cmd_add)
 		params[3] = NULL;
 	}
 
-	if (params[0] && match_arg(params[0], 'f', "find", 2)) {
+	if (params[0] && match_arg(params[0], 'f', TEXT("find"), 2)) {
 		int nonick = 0;
 		char *nickname, *tmp;
 
@@ -366,7 +371,7 @@ cleanup:
 COMMAND(cmd_alias)
 {
 	CHAR_T *sname;
-	if (match_arg(params[0], 'a', "add", 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -382,7 +387,7 @@ COMMAND(cmd_alias)
 		return -1;
 	}
 
-	if (match_arg(params[0], 'A', "append", 2)) {
+	if (match_arg(params[0], 'A', TEXT("append"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -398,7 +403,7 @@ COMMAND(cmd_alias)
 		return -1;
 	}
 
-	if (match_arg(params[0], 'd', "del", 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int ret;
 
 		if (!params[1]) {
@@ -421,12 +426,12 @@ COMMAND(cmd_alias)
 		return -1;
 	}
 	
-	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		list_t l;
 		int count = 0;
 		CHAR_T *aname = NULL;
 
-		if (params[0] && match_arg(params[0], 'l', "list", 2))
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			aname = normal_to_wcs(params[1]);
 		else if (params[0])
 			aname = normal_to_wcs(params[0]);
@@ -628,10 +633,10 @@ COMMAND(cmd_exec)
 			int big_match = 0;
 			args = (char **) params;
 
-			if (match_arg(args[0], 'M', "MSG", 2) || (buf = match_arg(args[0], 'B', "BMSG", 2)))
+			if (match_arg(args[0], 'M', TEXT("MSG"), 2) || (buf = match_arg(args[0], 'B', TEXT("BMSG"), 2)))
 				big_match = add_commandline = 1;
 
-			if (big_match || match_arg(args[0], 'm', "msg", 2) || (buf = match_arg(args[0], 'b', "bmsg", 2))) {
+			if (big_match || match_arg(args[0], 'm', TEXT("msg"), 2) || (buf = match_arg(args[0], 'b', TEXT("bmsg"), 2))) {
 				const char *uid;
 
 				if (!args[1] || !args[2]) {
@@ -738,7 +743,7 @@ COMMAND(cmd_for)
 	if (!xstrcmp(params[1], "*")) 
 		for_all = 1; 
 
-	if (match_arg(params[0], 's', "sessions", 2)) {
+	if (match_arg(params[0], 's', TEXT("sessions"), 2)) {
 		char *param = (char *) params[2];
 		int next_is_for = 0;
 
@@ -809,7 +814,7 @@ COMMAND(cmd_for)
 	
 			xfree(s);
 		}
-	} else if (match_arg(params[0], 'u', "users", 2)) {
+	} else if (match_arg(params[0], 'u', TEXT("users"), 2)) {
 		char *param = (char *) params[2];
                 int next_is_for = 0;
 
@@ -883,7 +888,7 @@ COMMAND(cmd_for)
 
                         xfree(u);
                 }
-	} else if (match_arg(params[0], 'w', "windows", 2)) {
+	} else if (match_arg(params[0], 'w', TEXT("windows"), 2)) {
                 char *param = (char *) params[2];
                 int next_is_for = 0;
 
@@ -1560,37 +1565,37 @@ list_user:
 		argv = array_make(params[j], " \t", 0, 1, 1);
 
 	 	for (i = 0; argv[i]; i++) {
-			if (match_arg(argv[i], 'a', "active", 2)) {
+			if (match_arg(argv[i], 'a', TEXT("active"), 2)) {
 				show_all = 0;
 				show_active = 1;
 			}
 				
-			if (match_arg(argv[i], 'i', "inactive", 2) || match_arg(argv[i], 'n', "notavail", 2)) {
+			if (match_arg(argv[i], 'i', TEXT("inactive"), 2) || match_arg(argv[i], 'n', TEXT("notavail"), 2)) {
 				show_all = 0;
 				show_inactive = 1;
 			}
 			
-			if (match_arg(argv[i], 'A', "away", 2)) {
+			if (match_arg(argv[i], 'A', TEXT("away"), 2)) {
 				show_all = 0;
 				show_away = 1;
 			}
 			
-			if (match_arg(argv[i], 'I', "invisible", 2)) {
+			if (match_arg(argv[i], 'I', TEXT("invisible"), 2)) {
 				show_all = 0;
 				show_invisible = 1;
 			}
 
-			if (match_arg(argv[i], 'B', "blocked", 2)) {
+			if (match_arg(argv[i], 'B', TEXT("blocked"), 2)) {
 				show_all = 0;
 				show_blocked = 1;
 			}
 
-			if (match_arg(argv[i], 'o', "offline", 2)) {
+			if (match_arg(argv[i], 'o', TEXT("offline"), 2)) {
 				show_all = 0;
 				show_offline = 1;
 			}
 
-			if (match_arg(argv[i], 'm', "member", 2)) {
+			if (match_arg(argv[i], 'm', TEXT("member"), 2)) {
 				if (j && argv[i+1]) {
 					int off = (argv[i+1][0] == '@' && xstrlen(argv[i+1]) > 1) ? 1 : 0;
 
@@ -1605,7 +1610,7 @@ list_user:
 					}
 			}
 
-			if (match_arg(argv[i], 'd', "description", 2))
+			if (match_arg(argv[i], 'd', TEXT("description"), 2))
 				show_descr = 1;
 		}
 		array_free(argv);
@@ -1686,7 +1691,7 @@ COMMAND(cmd_set)
 	char *value = NULL;
 	list_t l;
 
-	if (match_arg(params[0], 'a', "all", 1)) {
+	if (match_arg(params[0], 'a', TEXT("all"), 1)) {
 		show_all = 1;
 		arg = params[1];
 		if (arg)
@@ -2206,7 +2211,7 @@ COMMAND(cmd_say)
 		return -1;
 	}
 
-	if (match_arg(params[0], 'c', "clear", 2)) {
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {
 		xfree(buffer_flush(BUFFER_SPEECH, NULL));
 		return 0;
 	}
@@ -2838,7 +2843,7 @@ COMMAND(cmd_at)
 {
 	list_t l;
 
-	if (match_arg(params[0], 'a', "add", 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		const char *p, *a_name = NULL;
 		char *a_command = NULL;
 		time_t period = 0, freq = 0;
@@ -3036,7 +3041,7 @@ COMMAND(cmd_at)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', "del", 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int del_all = 0;
 		int ret = 1;
 
@@ -3070,11 +3075,11 @@ COMMAND(cmd_at)
 		return 0;
 	}
 
-	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		const char *a_name = NULL;
 		int count = 0;
 
-		if (params[0] && match_arg(params[0], 'l', "list", 2))
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			a_name = params[1];
 		else if (params[0])
 			a_name = params[0];
@@ -3165,7 +3170,7 @@ COMMAND(cmd_timer)
 {
 	list_t l;
 
-	if (match_arg(params[0], 'a', "add", 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		const char *t_name = NULL, *p;
 		char *t_command = NULL;
 		time_t period = 0;
@@ -3270,7 +3275,7 @@ COMMAND(cmd_timer)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', "del", 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int del_all = 0, ret;
 
 		if (!params[1]) {
@@ -3303,11 +3308,11 @@ COMMAND(cmd_timer)
 		return 0;
 	}
 
-	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		const char *t_name = NULL;
 		int count = 0;
 
-		if (params[0] && match_arg(params[0], 'l', "list", 2))
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			t_name = params[1];
 		else if (params[0])
 			t_name = params[0];
@@ -3384,12 +3389,12 @@ COMMAND(cmd_timer)
 
 COMMAND(cmd_conference) 
 {
-	if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] == '#') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] == '#') {
 		list_t l, r;
 		int count = 0;
 		const char *cname = NULL;
 	
-		if (params[0] && match_arg(params[0], 'l', "list", 2))
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			cname = params[1];
 		else if (params[0])
 			cname = params[0];
@@ -3438,7 +3443,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'j', "join", 2)) {
+	if (match_arg(params[0], 'j', TEXT("join"), 2)) {
 		struct conference *c;
 		const char *uid;
 
@@ -3474,7 +3479,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'a', "add", 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3492,7 +3497,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', "del", 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3512,7 +3517,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'r', "rename", 2)) {
+	if (match_arg(params[0], 'r', TEXT("rename"), 2)) {
 		if (!params[1] || !params[2]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3528,7 +3533,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 	
-	if (match_arg(params[0], 'i', "ignore", 2)) {
+	if (match_arg(params[0], 'i', TEXT("ignore"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3544,7 +3549,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'u', "unignore", 2)) {
+	if (match_arg(params[0], 'u', TEXT("unignore"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3560,7 +3565,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'f', "find", 2)) {
+	if (match_arg(params[0], 'f', TEXT("find"), 2)) {
 		struct conference *c;
 		list_t l;
 
@@ -3604,7 +3609,7 @@ COMMAND(cmd_last)
 	time_t n;
 	struct tm *now;
 
-	if (match_arg(params[0], 'c', "clear", 2)) {
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {
 		if (params[1] && !(uid = get_uid(session, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
@@ -3631,7 +3636,7 @@ COMMAND(cmd_last)
 	}		
 
 	if (params[0]) {
-		show_sent = match_arg(params[0], 's', "stime", 2);
+		show_sent = match_arg(params[0], 's', TEXT("stime"), 2);
 
 		if (!show_sent)
 			nick = params[0];
@@ -3641,15 +3646,15 @@ COMMAND(cmd_last)
 
 			nick = arr[0];
 			
-			if (match_arg(params[0], 'n', "number", 2)) {
+			if (match_arg(params[0], 'n', TEXT("number"), 2)) {
 				last_n = strtol(arr[0], NULL, 0);
 				nick = arr[1];
 				
-				if (arr[1] && (show_sent = match_arg(arr[1], 's', "stime", 2)))
+				if (arr[1] && (show_sent = match_arg(arr[1], 's', TEXT("stime"), 2)))
 					nick = arr[2];
 			}
 
-			if (arr[1] && show_sent && match_arg(arr[0], 'n', "number", 2)) {
+			if (arr[1] && show_sent && match_arg(arr[0], 'n', TEXT("number"), 2)) {
 				last_n = atoi(arr[1]);
 				nick = arr[2];
 			}
@@ -3725,7 +3730,7 @@ COMMAND(cmd_queue)
 {
 	list_t l;
 	
-	if (match_arg(params[0], 'c', "clear", 2)) {
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {
 		if ((params[1] && !msg_queue_count_uid(params[1])) || !msg_queue_count()) {
 			if (params[1])
 				printq("queue_empty_uid", format_user(session, params[1]));
@@ -3901,7 +3906,7 @@ COMMAND(cmd_plugin)
 		return 0;
 	}
 
-        if (match_arg(params[0], 'd', "default", 2)) {
+        if (match_arg(params[0], 'd', TEXT("default"), 2)) {
                 list_t l;
 
                 for (l = plugins; l;) {
@@ -3918,7 +3923,7 @@ COMMAND(cmd_plugin)
         }
 
 	if (params[0][0] == '+') {
-		ret = plugin_load(params[0] + 1, -254, 0);
+		ret = plugin_load(unpar(params[0] + 1), -254, 0);
 		if (!ret) /* if plugin cannot be founded || loaded don't reload theme. */
 			changed_theme(NULL); 
 		return ret;

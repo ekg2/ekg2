@@ -126,6 +126,7 @@ void wcs_array_free(CHAR_T **array);
 
 const char *itoa(long int i);
 const CHAR_T *wcs_itoa(long int i);
+int wcs_atoi(const CHAR_T *nptr);
 
 #endif /* __EKG_DYNSTUFF_H */
 

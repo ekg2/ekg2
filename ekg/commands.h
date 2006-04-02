@@ -102,7 +102,7 @@ int binding_help(int a, int b);
 int binding_quick_list(int a, int b);
 int binding_toggle_contacts(int a, int b);
 
-int match_arg(const char *arg, char shortopt, const char *longopt, int longoptlen);
+int match_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
 
 /* wyniki ostatniego szukania */
 char *last_search_first_name;

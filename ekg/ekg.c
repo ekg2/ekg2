@@ -777,7 +777,7 @@ int main(int argc, char **argv)
                 config_read(SYSCONFDIR "/ekg2.conf");
 
         if (frontend) {
-                plugin_load(frontend, -254, 1);
+                plugin_load(normal_to_wcs(frontend), -254, 1);
 		config_changed = 1;
 	}
 
@@ -792,17 +792,17 @@ int main(int argc, char **argv)
         msg_queue_read();
 
 #ifdef HAVE_NCURSES
-        if (!have_plugin_of_class(PLUGIN_UI)) plugin_load("ncurses", -254, 1);
+        if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("ncurses"), -254, 1);
 #endif
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
-                plugin_load("jabber", -254, 1);
+                plugin_load(TEXT("jabber"), -254, 1);
 #endif
 #ifdef HAVE_LIBGADU
-                plugin_load("gg", -254, 1);
+                plugin_load(TEXT("gg"), -254, 1);
 #endif
-                plugin_load("irc", -254, 1);
+                plugin_load(TEXT("irc"), -254, 1);
         }
 	scripts_init();
 	config_read(NULL);
