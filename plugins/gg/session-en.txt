@@ -1,0 +1,157 @@
+// Little hint of session variables for gg plugin.
+// (c) copyright      2005 sebastian szary <greyer@ekg2.org>
+
+auto_away
+	type: integer
+	default value: 600
+	
+	Idle time in seconds after which status will be set 'away'.
+	If 0, auto_away will be disabled.
+
+auto_back
+	type: integer
+	default value: 0
+	
+	Variable determines that status will be change to 'available', if current
+	away status was set automatically.
+	If 1, status is changed whenever user send any message.
+	If 2, status is changed after keypressed.
+
+auto_connect
+	type: bool
+	default value: 0
+	
+	Variable determines session should be connected after program startup.
+
+auto_find
+	type: bool
+	default value: 0
+	
+	Variable determines if people we haven't got on userlist, but send us 
+	a message, should be checked in users catalog.
+
+auto_reconnect
+	type: integer
+	default value: 10
+	
+	Variable determines, that how long program need to wait to reconnect, 
+	after disconnect or invalid connection.
+	If 0, program won't try.
+
+concat_multiline_status
+	type: integer
+	default value: 3
+	
+	concatenates nasty-multiline status if number of lines is bigger, than
+	value set. if equals 0 no concatenation will be performed. to
+	distinguish multiline status will be prefixed with '[m]' (multiline)
+	if there is enough place for that.
+
+connection_save
+	type: integer
+	default value: 0
+	
+	Variable determines that server adres should be saved.
+
+default
+	type: bool
+	default value: 0
+	
+	Variable determines that session should be default (first at program
+	startup)
+
+display_notify
+	type: integer
+	default value: -1
+	
+	Value -1 determines using global variables.
+	Value 0 determines ignoring friends status change.
+	Value 1 determines displaying all the changes.
+	Value 2 determines displaying changes from inavailable to available
+	and reversed.
+	Higher priority have variable 'contacts', which hides status change if
+	set 2.
+
+local_ip
+	type: string
+	default value: (none)
+	
+	Variable determines IP address, from where any connections are made
+	(example: with GG server). If value is incorect, will be deleted.
+
+log_formats
+	type: string
+	default value: xml,simple
+	
+	Variable determines logging format (?!).
+
+password
+	type: string
+	default value: (none)
+	
+	Variable keeps users password. It's needed to connect to server.
+	Automatically set after sucsesful registration, if where blank.
+
+port
+	type: integer
+	default value: 8074
+	
+	Variable keeps port number, which program uses to connect to GaduGadu
+	server.
+
+proxy
+	type: string
+	default value: (none) 
+	
+	Variable available only when libjpeg is compiled, turning variable off
+	causes program like the library doesn't exists, that means tokens are
+	save to file.
+
+proxy_forwarding
+	type: string
+	default value: (none)
+	
+	Variable keeps address and port (with : beetween them) of forwarding server
+	(router, proxy or sth :-)) which forwards on port 1550 on our
+	computer.
+
+private
+	type: bool
+	default value: 0
+	
+	Variable set 'only for friends' mode.
+
+scroll_long_desc
+	type: integer
+	default value: 0
+	
+	Variable determines scrolling of too long descriptions in
+	seconds.
+	If 0, no scrolling.
+	WARNING: using scrolling my cause removing gg user account.
+	ATTENTION: when description is scrolling in information is only
+		   displayed 'cuted' description. Information about 
+		   description change are NOT displayed.
+
+scroll_mode
+	type: string [bounce|simple]
+	default value: bounce
+	
+	Variable determines type of scrolling.
+	bounce - bouncing from 'ends'.
+	simple - scrolling to left, until ends displayed, after reaching end
+		 return to beginning
+
+server
+	type: string
+	default value: (none)
+	
+	Variable keeps IP addresses of servers, which program tries to
+	connect, avoiding normal connection procedure. Can be useful when
+	main server crashes. Addresses should be seperated by commas,
+	semicolons or spaces. After colon we can write server port. If server
+	and port are prefixed by 'tls:' string, program will try to negotiate
+	secure TLS connection to server. If variable is set to 'tls', program
+	asks main server about server address which provide TLS connections
+	and will try to connect with that server.
+
