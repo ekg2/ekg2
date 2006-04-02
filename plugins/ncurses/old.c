@@ -31,10 +31,8 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 #       include <aspell.h>
-#endif
 #endif
 
 #include <ekg/char.h>
@@ -53,14 +51,6 @@
 #include "bindings.h"
 #include "contacts.h"
 #include "mouse.h"
-
-#ifdef USE_UNICODE
-#ifdef WITH_ASPELL
-#warning ASPELL ISN'T CURRECTLY AVALIBLE IN UNICODE NCURSES PLUGIN SORRY... 
-#undef WITH_ASPELL
-#endif
-#endif
-
 
 #if USE_UNICODE
 # define unchar wchar_t
@@ -105,15 +95,15 @@ char *aspell_line;
 void ncurses_spellcheck_init(void)
 {
         AspellCanHaveError * possible_err;
-        if (!config_aspell || !config_aspell_encoding || !config_aspell_lang) {
+        if (!config_aspell || !config_console_charset || !config_aspell_lang) {
 	/* jesli nie chcemy aspella to wywalamy go z pamieci */
 		delete_aspell_speller(spell_checker);
 		spell_checker = NULL;
-		debug("Maybe aspell_encoding, aspell_lang or aspell variable is not set?\n");
+		debug("Maybe config_console_charset, aspell_lang or aspell variable is not set?\n");
 		return;
 	}
 	
-	print("aspell_init");
+	wcs_print("aspell_init");
 	
         if (spell_checker) {
                 delete_aspell_speller(spell_checker);
@@ -121,7 +111,7 @@ void ncurses_spellcheck_init(void)
         }
 
         spell_config = new_aspell_config();
-        aspell_config_replace(spell_config, "encoding", config_aspell_encoding);
+        aspell_config_replace(spell_config, "encoding", config_console_charset);
         aspell_config_replace(spell_config, "lang", config_aspell_lang);
         possible_err = new_aspell_speller(spell_config);
 
@@ -132,7 +122,7 @@ void ncurses_spellcheck_init(void)
             config_aspell = 0;
         } else {
             spell_checker = to_aspell_speller(possible_err);
-	    print("aspell_init_success");
+	    wcs_print("aspell_init_success");
 	}
 }
 #endif
@@ -1700,9 +1690,9 @@ int ekg_getch(int meta)
 {
 	int ch;
 #if USE_UNICODE
-//	wint_t ch;
 	int retcode;
 	retcode = wget_wch(input, &ch);
+/*	debug("[wget_wch] retcode = %d ch = 0x%x\n", retcode, ch); */
 	if (retcode == ERR) ch = ERR;
 #else
 	ch = wgetch(input);
@@ -1712,9 +1702,6 @@ int ekg_getch(int meta)
 	 * conception is borrowed from Midnight Commander project 
 	 *    (www.ibiblio.org/mc/) 
 	 */	
-/* to dla utfa tez jest poprawne?  TODO */
-#ifndef USE_UNICODE
-
 #define GET_TIME(tv)    (gettimeofday(&tv, (struct timezone *)NULL))
 #define DIF_TIME(t1,t2) ((t2.tv_sec -t1.tv_sec) *1000+ \
                          (t2.tv_usec-t1.tv_usec)/1000)
@@ -1798,10 +1785,6 @@ int ekg_getch(int meta)
 	} 
 #undef GET_TIME
 #undef DIF_TIME
-
-#else
-#warning UNICODE TODO
-#endif
 	if (query_emit(NULL, "ui-keypress", &ch, NULL) == -1)  
 		return -2; /* -2 - ignore that key */
 	return ch;
@@ -1843,9 +1826,9 @@ WATCHER(ncurses_watch_winch)
  * it checks if the given word is correct
  */
 #ifdef WITH_ASPELL
-static void spellcheck(char *what, char *where)
+static void spellcheck(CHAR_T *what, char *where)
 {
-        char *word;             /* aktualny wyraz */
+        CHAR_T *word;             /* aktualny wyraz */
         register int i = 0;     /* licznik */
 	register int j = 0;     /* licznik */
 	int size;	/* zmienna tymczasowa */
@@ -1856,8 +1839,8 @@ static void spellcheck(char *what, char *where)
 	    
 	for (i = 0; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
 	    if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) { // separator/koniec lini/koniec stringu
-		size = strlen(what) + 1;
-        	word = xmalloc(size);
+		size = xwcslen(what) + 1;
+        	word = xmalloc(size*sizeof(CHAR_T));
 		
 		for (; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
 		    if(isalpha_pl(what[i])) /* szukamy jakiejs pierwszej literki */
@@ -1893,20 +1876,23 @@ static void spellcheck(char *what, char *where)
 		    	} else 
 				break;
 		}
-		word[j] = '\0';
+		word[j] = (CHAR_T) 0;
 		if (i > 0)
 		    i--;
 
 /*		debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
 
 		/* sprawdzamy pisownie tego wyrazu */
-        	if (aspell_speller_check(spell_checker, word, xstrlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
-			for (j = xstrlen(word) - 1; j >= 0; j--)
+		char *sword = wcs_to_normal(word);
+		
+        	if (aspell_speller_check(spell_checker, sword, xwcslen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
+			for (j = xwcslen(word) - 1; j >= 0; j--)
 				where[i - j] = ASPELLCHAR;
         	} else { /* jesli wyraz jest napisany poprawnie */
-			for (j = xstrlen(word) - 1; j >= 0; j--)
+			for (j = xwcslen(word) - 1; j >= 0; j--)
 				where[i - j] = ' ';
         	}
+		free_utf(sword);
 aspell_loop_end:
 		xfree(word);
 	    }	
@@ -2092,7 +2078,7 @@ then:
 				spellcheck(p, aspell_line);
 	                }
 
-			for (j = 0; j + line_start < strlen(p) && j < input->_maxx + 1; j++)
+			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
                         {                                 
 			    if (spell_checker && aspell_line[line_start + j] == ASPELLCHAR && p[line_start + j] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 	                            print_char_underlined(input, i, j, p[line_start + j]);
@@ -2116,8 +2102,7 @@ then:
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
 			aspell_line = xmalloc(xwcslen(ncurses_line) + 1);
-			memset(aspell_line, 32, xstrlen(aspell_line));
-			if(line_start == 0) 
+			if (line_start == 0) 
 				mispelling = 0;
 	
 			spellcheck(ncurses_line, aspell_line);

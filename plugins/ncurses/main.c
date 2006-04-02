@@ -301,21 +301,17 @@ static int ncurses_conference_renamed(void *data, va_list ap)
  */
 void ncurses_changed_aspell(const CHAR_T *var)
 {
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
         /* probujemy zainicjowac jeszcze raz aspell'a */
 	if (!in_autoexec)
 		ncurses_spellcheck_init();
 #endif
-#endif
 }
 
 static int ncurses_postinit(void *data, va_list ap)
 {
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
-#endif
 #endif
 	ncurses_contacts_changed(NULL, NULL);
 	return 0;
@@ -335,23 +331,24 @@ static int ncurses_binding_query(void *data, va_list ap)
 {
         char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
         int quiet = va_arg(ap, int);
+	char *pp = p1;
 
-        if (match_arg(p1, 'a', "add", 2)) {
+        if (match_arg(pp, 'a', TEXT("add"), 2)) {
 	        if (!p2 || !p3)
-        	        printq("not_enough_params", "bind");
+        	        wcs_printq("not_enough_params", TEXT("bind"));
                 else
                         ncurses_binding_add(p2, p3, 0, quiet);
-        } else if (match_arg(p1, 'd', "delete", 2)) {
+        } else if (match_arg(pp, 'd', TEXT("delete"), 2)) {
         	if (!p2)
-                	printq("not_enough_params", "bind");
+                	wcs_printq("not_enough_params", TEXT("bind"));
                 else
                         ncurses_binding_delete(p2, quiet);
-        } else if (match_arg(p1, 'L', "list-default", 5)) {
+        } else if (match_arg(pp, 'L', TEXT("list-default"), 5)) {
         	binding_list(quiet, p2, 1);
-	} else if (match_arg(p1, 'S', "set", 2)) {
+	} else if (match_arg(pp, 'S', TEXT("set"), 2)) {
 		ncurses_binding_set(quiet, p2, NULL);
         } else {
-        	if (match_arg(p1, 'l', "list", 2))
+        	if (match_arg(pp, 'l', TEXT("list"), 2))
                 	binding_list(quiet, p2, 0);
                 else
                         binding_list(quiet, p1, 0);
@@ -383,14 +380,10 @@ QUERY(ncurses_setvar_default)
 	config_header_size = 0;
 	config_enter_scrolls = 0;
 	config_margin_size = 15;
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
         xfree(config_aspell_lang);
-        xfree(config_aspell_encoding);
 
         config_aspell_lang = xstrdup("pl");
-        config_aspell_encoding = xstrdup("iso8859-2");
-#endif
 #endif
 	return 0;
 }
@@ -485,12 +478,9 @@ int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "metacontact-item-added", ncurses_all_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "metacontact-item-removed", ncurses_all_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "config-postinit", ncurses_postinit, NULL);
-#ifndef USE_UNICODE
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, TEXT("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, TEXT("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
-        variable_add(&ncurses_plugin, TEXT("aspell_encoding"), VAR_STR, 1, &config_aspell_encoding, ncurses_changed_aspell, NULL, NULL);
-#endif
 #endif
 	variable_add(&ncurses_plugin, TEXT("backlog_size"), VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	/* this isn't very nice solution, but other solutions would require _more_
