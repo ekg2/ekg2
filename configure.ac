@@ -208,6 +208,18 @@ if test "x$with_libjpeg" != "xno"; then
         ])
 fi
 
+AC_ARG_WITH(libgadu,
+        [  --without-libgadu        Compile without libgadu (GG plugin)])
+
+if test "x$with_libgadu" != "xno"; then
+	AC_CHECK_LIBGADU
+	
+	if test "x$have_libgadu" = "xyes"; then
+		AC_CONFIG_FILES([plugins/gg/Makefile])
+		PLUGINS="$PLUGINS gg"
+	fi
+fi
+
 AC_ARG_WITH(openssl,
         [  --without-openssl        Compile without OpenSSL support])
 
