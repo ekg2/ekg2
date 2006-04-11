@@ -137,6 +137,7 @@ COMMAND(jabber_command_connect)
 
 COMMAND(jabber_command_disconnect)
 {
+	PARASC
 	jabber_private_t *j = session_private_get(session);
 	char *descr = NULL;
 	int fd = j->fd;
@@ -185,6 +186,7 @@ COMMAND(jabber_command_disconnect)
 
 COMMAND(jabber_command_reconnect)
 {
+	PARUNI
 	jabber_private_t *j = session_private_get(session);
 
 	if (j->connecting || session_connected_get(session)) {
@@ -219,6 +221,7 @@ const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 
 COMMAND(jabber_command_msg)
 {
+	PARASC;
 	jabber_private_t *j = session_private_get(session);
 	int chat = !xwcscasecmp(name, TEXT("chat"));
 	int subjectlen = xstrlen(config_subject_prefix);
@@ -228,7 +231,6 @@ COMMAND(jabber_command_msg)
 
 	window_t *w;
 	int ismuc = 0;
-
 
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
@@ -307,7 +309,8 @@ COMMAND(jabber_command_msg)
 
 COMMAND(jabber_command_inline_msg)
 {
-	const char *p[2] = { NULL, params[0] };
+	PARUNI
+	const CHAR_T *p[2] = { NULL, params[0] };
 	if (!params[0] || !target)
 		return -1;
 	return jabber_command_msg(TEXT("chat"), p, session, target, quiet);
@@ -315,6 +318,7 @@ COMMAND(jabber_command_inline_msg)
 
 COMMAND(jabber_command_xml)
 {
+	PARASC
 	jabber_private_t *j = session_private_get(session);
 	jabber_write(j, "%s", params[0]);
 	return 0;
@@ -322,6 +326,7 @@ COMMAND(jabber_command_xml)
 
 COMMAND(jabber_command_away)
 {
+	PARASC
 	const char *descr, *format;
 	
 	if (params[0]) {
@@ -393,6 +398,7 @@ COMMAND(jabber_command_away)
 
 COMMAND(jabber_command_passwd)
 {
+	PARASC
 	jabber_private_t *j = session_private_get(session);
 	char *username, *passwd;
 
@@ -414,6 +420,7 @@ COMMAND(jabber_command_passwd)
 
 COMMAND(jabber_command_auth) 
 {
+	PARUNI
 	jabber_private_t *j = session_private_get(session);
 	session_t *s = session;
 	const char *action;
@@ -424,16 +431,16 @@ COMMAND(jabber_command_auth)
 	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
 	tabnick_add(uid);
 
-	if (match_arg(params[0], 'r', "request", 2)) {
+	if (match_arg(params[0], 'r', TEXT("request"), 2)) {
 		action = "subscribe";
 		printq("jabber_auth_request", uid+4, session_name(s));
-	} else if (match_arg(params[0], 'a', "accept", 2)) {
+	} else if (match_arg(params[0], 'a', TEXT("accept"), 2)) {
 		action = "subscribed";
 		printq("jabber_auth_accept", uid+4, session_name(s));
-	} else if (match_arg(params[0], 'c', "cancel", 2)) {
+	} else if (match_arg(params[0], 'c', TEXT("cancel"), 2)) {
 		action = "unsubscribe";
 		printq("jabber_auth_unsubscribed", uid+4, session_name(s));
-	} else if (match_arg(params[0], 'd', "deny", 2)) {
+	} else if (match_arg(params[0], 'd', TEXT("deny"), 2)) {
 		action = "unsubscribed";
 
 		if (userlist_find(session, uid))  // mamy w rosterze
@@ -441,13 +448,13 @@ COMMAND(jabber_command_auth)
 		else // nie mamy w rosterze
 			printq("jabber_auth_denied", uid+4, session_name(s));
 	
-	} else if (match_arg(params[0], 'p', "probe", 2)) {
+	} else if (match_arg(params[0], 'p', TEXT("probe"), 2)) {
 	/* ha! undocumented :-); bo 
 	   [Used on server only. Client authors need not worry about this.] */
 		action = "probe";
 		printq("jabber_auth_probe", uid+4, session_name(s));
 	} else {
-		printq("invalid_params", name);
+		wcs_printq("invalid_params", name);
 		return -1;
 	}
 
@@ -457,6 +464,7 @@ COMMAND(jabber_command_auth)
 
 COMMAND(jabber_command_modify)
 {
+	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *uid = NULL;
 	char *nickname = NULL;
@@ -482,7 +490,7 @@ COMMAND(jabber_command_modify)
 
 		for (i = 0; argv[i]; i++) {
 
-			if (match_arg(argv[i], 'g', "group", 2) && argv[i + 1]) {
+			if (nmatch_arg(argv[i], 'g', TEXT("group"), 2) && argv[i + 1]) {
 				char **tmp = array_make(argv[++i], ",", 0, 1, 1);
 				int x, off;	/* je¶li zaczyna siê od '@', pomijamy pierwszy znak */
 
@@ -520,7 +528,7 @@ COMMAND(jabber_command_modify)
 				continue;
 			}
 
-			if (match_arg(argv[i], 'n', "nickname", 2) && argv[i + 1]) {
+			if (nmatch_arg(argv[i], 'n', TEXT("nickname"), 2) && argv[i + 1]) {
 				xfree(nickname);
 				nickname = jabber_escape(argv[++i]);
 			}
@@ -646,34 +654,39 @@ COMMAND(jabber_command_userinfo)
 
 COMMAND(jabber_command_change)
 {
+	PARUNI
 #define pub_sz 6
-#define strfix(s) (s ? s : "")
+#define strfix(s) (s ? s : TEXT(""))
 	jabber_private_t *j = session_private_get(session);
-	char *pub[pub_sz];
+	CHAR_T *pub[pub_sz];
 	int i;
 
 	memset(&pub, 0, sizeof(pub));
 	
 	for (i = 0; params[i]; i++) {
-		if (match_arg(params[i], 'f', "fullname", 2) && params[i + 1]) {
-			pub[0] = (char *) params[++i];
-		} else if (match_arg(params[i], 'n', "nickname", 2) && params[i + 1]) {
-			pub[1] = (char *) params[++i];
-		} else if (match_arg(params[i], 'c', "city", 2) && params[i + 1]) {
-			pub[2] = (char *) params[++i];
-		} else if (match_arg(params[i], 'b', "born", 2) && params[i + 1]) {
-			pub[3] = (char *) params[++i];
-		} else if (match_arg(params[i], 'd', "description", 2) && params[i + 1]) {
-			pub[4] = (char *) params[++i];
-		} else if (match_arg(params[i], 'C', "country", 2) && params[i + 1]) {
-			pub[5] = (char *) params[++i];
+		if (match_arg(params[i], 'f', TEXT("fullname"), 2) && params[i + 1]) {
+			pub[0] = (CHAR_T *) params[++i];
+		} else if (match_arg(params[i], 'n', TEXT("nickname"), 2) && params[i + 1]) {
+			pub[1] = (CHAR_T *) params[++i];
+		} else if (match_arg(params[i], 'c', TEXT("city"), 2) && params[i + 1]) {
+			pub[2] = (CHAR_T *) params[++i];
+		} else if (match_arg(params[i], 'b', TEXT("born"), 2) && params[i + 1]) {
+			pub[3] = (CHAR_T *) params[++i];
+		} else if (match_arg(params[i], 'd', TEXT("description"), 2) && params[i + 1]) {
+			pub[4] = (CHAR_T *) params[++i];
+		} else if (match_arg(params[i], 'C', TEXT("country"), 2) && params[i + 1]) {
+			pub[5] = (CHAR_T *) params[++i];
 		}
 
 	}
 	for (i=0; i<pub_sz; i++) 
 		pub[i] = jabber_escape(pub[i]);
-			
-	jabber_write(j, "<iq type=\"set\"><vCard xmlns='vcard-temp'><FN>%s</FN><NICKNAME>%s</NICKNAME><ADR><LOCALITY>%s</LOCALITY><COUNTRY>%s</COUNTRY></ADR><BDAY>%s</BDAY><DESC>%s</DESC></vCard></iq>\n", 
+	jabber_write(j, 
+#if USE_UNICODE
+		"<iq type=\"set\"><vCard xmlns='vcard-temp'><FN>%ls</FN><NICKNAME>%ls</NICKNAME><ADR><LOCALITY>%ls</LOCALITY><COUNTRY>%ls</COUNTRY></ADR><BDAY>%ls</BDAY><DESC>%ls</DESC></vCard></iq>\n", 
+#else
+		"<iq type=\"set\"><vCard xmlns='vcard-temp'><FN>%s</FN><NICKNAME>%s</NICKNAME><ADR><LOCALITY>%s</LOCALITY><COUNTRY>%s</COUNTRY></ADR><BDAY>%s</BDAY><DESC>%s</DESC></vCard></iq>\n", 
+#endif
 			strfix(pub[0]), strfix(pub[1]), strfix(pub[2]), strfix(pub[5]), strfix(pub[3]), strfix(pub[4]));
 
 	for (i=0; i<pub_sz; i++) 
@@ -704,6 +717,7 @@ COMMAND(jabber_command_lastseen)
 
 COMMAND(jabber_command_register)
 {
+	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	if (!params[1])
@@ -714,6 +728,7 @@ COMMAND(jabber_command_register)
 
 COMMAND(jabber_command_transports) 
 {
+	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	
@@ -723,6 +738,7 @@ COMMAND(jabber_command_transports)
 
 COMMAND(jabber_muc_command_join) 
 {
+	PARASC
 	/* params[0] - full channel name, 
 	 * params[1] - nickname || default 
 	 * params[2] - password || none
@@ -746,6 +762,7 @@ COMMAND(jabber_muc_command_join)
 
 COMMAND(jabber_muc_command_part) 
 {
+	PARASC
 	jabber_private_t *j = session_private_get(session);
 	window_t *w;
 	char *status;
@@ -768,6 +785,11 @@ void jabber_register_commands()
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define JABBER_FLAGS        JABBER_ONLY  | SESSION_MUSTBECONNECTED
 #define JABBER_FLAGS_TARGET JABBER_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+
+#if USE_UNICODE
+#define LNULL NULL
+#define command_add(x, y, par, a, b, c) command_add(x, y, L##par, a, b, c)
+#endif
 	command_add(&jabber_plugin, TEXT("jid:"), "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:_autoaway"), "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:_autoback"), "r", jabber_command_away,	JABBER_ONLY, NULL);

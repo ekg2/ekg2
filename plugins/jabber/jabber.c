@@ -317,16 +317,22 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 			if (!nbody && isack) {
 				char *__session = xstrdup(session_uid_get(s));
 				char *__rcpt	= xstrdup(uid); /* was uid+4 */
-				char *__status  = xstrdup(
-						(acktype & 1) ? "dlivered" : 
-						(acktype & 2) ? "queued" : 
+				CHAR_T *__status  = xwcsdup(
+						(acktype & 1) ? EKG_ACK_DELIVERED : 
+						(acktype & 2) ? EKG_ACK_QUEUED : 
 /* TODO: wbudowac composing w protocol-message-ack ? */
 /*						(acktype & 4) ? "compose" :  */
 						NULL);
-				char *__seq	= NULL; /* id ? */
+				CHAR_T *__seq	= NULL; /* id ? */
 
 				/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
-				query_emit(NULL, "protocol-message-ack", &__session, &__rcpt, &__seq, &__status);
+				{
+					CHAR_T *session = normal_to_wcs(__session);
+					CHAR_T *rcpt = normal_to_wcs(__rcpt);
+					query_emit(NULL, "protocol-message-ack", &__session, &rcpt, &__seq, &__status);
+					free_utf(session);
+					free_utf(rcpt);
+				}
 				
 				xfree(__session);
 				xfree(__rcpt);
@@ -699,7 +705,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						}
 
 						if (jdh->roster_retrieved) {
-							command_exec_format(NULL, s, 1, "/auth --probe %s", uid);
+							command_exec_format(NULL, s, 1, TEXT("/auth --probe %s"), uid);
 						}
 						xfree(nickname); 
 					}
