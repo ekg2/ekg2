@@ -792,6 +792,7 @@ COMMAND(irc_command_connect)
 
 COMMAND(irc_command_disconnect)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	const char	*reason = params[0]?params[0]:QUITMSG(session);
 	debug("[irc] comm_disconnect() !!!\n");
@@ -814,6 +815,7 @@ COMMAND(irc_command_disconnect)
 
 COMMAND(irc_command_reconnect)
 {
+	PARUNI
 	irc_private_t	*j = irc_private(session);
 
 	if (j->connecting || session_connected_get(session)) 
@@ -825,6 +827,7 @@ COMMAND(irc_command_reconnect)
 
 COMMAND(irc_command_msg)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	people_chan_t	*perchn = NULL;
 	people_t	*person;
@@ -933,7 +936,8 @@ COMMAND(irc_command_msg)
 
 COMMAND(irc_command_inline_msg)
 {
-	const char	*p[2] = { NULL, params[0] };
+	PARUNI
+	const CHAR_T	*p[2] = { NULL, params[0] };
 	if (!target || !params[0])
 		return -1;
 	return irc_command_msg(TEXT("msg"), p, session, target, quiet);
@@ -941,6 +945,7 @@ COMMAND(irc_command_inline_msg)
 
 COMMAND(irc_command_quote)
 {
+	PARASC
 	irc_write(irc_private(session), "%s\r\n", params[0]);
 	return 0;
 }
@@ -1022,6 +1027,7 @@ COMMAND(irc_command_add)
 
 COMMAND(irc_command_away)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	int 		isaway = 0;
 
@@ -1175,7 +1181,7 @@ char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 		if (!xwcscasecmp(tmpname, c->name) && &irc_plugin == c->plugin)
 			while (c->params[parnum])
 			{
-				if (!strcmp(c->params[parnum], "?"))
+				if (!xwcscmp(c->params[parnum], TEXT("?")))
 					hasq = 1;
 				parnum++;
 			}
@@ -1236,6 +1242,7 @@ char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 
 COMMAND(irc_command_names)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	channel_t       *chan;
 	userlist_t      *ulist;
@@ -1305,6 +1312,7 @@ COMMAND(irc_command_names)
 
 COMMAND(irc_command_topic)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan, *newtop;
 
@@ -1330,6 +1338,7 @@ COMMAND(irc_command_topic)
 
 COMMAND(irc_command_who)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
 
@@ -1345,6 +1354,7 @@ COMMAND(irc_command_who)
 
 COMMAND(irc_command_invite)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
 
@@ -1366,6 +1376,7 @@ COMMAND(irc_command_invite)
 
 COMMAND(irc_command_kick)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
 
@@ -1387,6 +1398,7 @@ COMMAND(irc_command_kick)
 
 COMMAND(irc_command_unban)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		*channame, **mp;
 	channel_t	*chan = NULL;
@@ -1429,6 +1441,7 @@ COMMAND(irc_command_unban)
 
 COMMAND(irc_command_alist)
 {
+	PARASC
 /*
  *	if (params[1] == NULL && target) 
  *		params[1] = target;
@@ -1439,6 +1452,7 @@ COMMAND(irc_command_alist)
 
 COMMAND(irc_command_ban)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		*chan, **mp, *temp = NULL;
 	people_t	*person;
@@ -1468,7 +1482,8 @@ COMMAND(irc_command_ban)
 }
 
 COMMAND(irc_command_kickban) {
-	const char	*p[4] = { params[0], params[1], params[2], NULL };
+	PARUNI
+	const CHAR_T	*p[4] = { params[0], params[1], params[2], NULL };
 
 	if (!xwcscmp(name, TEXT("kickban")))
 	{
@@ -1485,6 +1500,7 @@ COMMAND(irc_command_kickban) {
 
 COMMAND(irc_command_devop)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	int		modes, i;
 	char		**mp, *op, *nicks, *tmp, c, *chan, *p;
@@ -1538,6 +1554,7 @@ COMMAND(irc_command_devop)
 
 COMMAND(irc_command_ctcp)
 {
+	PARASC
 	int		i;
 	char		*who;
 	char		**mp;
@@ -1567,6 +1584,7 @@ COMMAND(irc_command_ctcp)
 
 COMMAND(irc_command_ping)
 {
+	PARASC
 	char		**mp, *who;
 	struct timeval	tv;
 
@@ -1584,6 +1602,7 @@ COMMAND(irc_command_ping)
 
 COMMAND(irc_command_me)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan, *chantypes = SOP(_005_CHANTYPES), *str, *col;
 	int		mw = session_int_get(session, "make_window"), ischn;
@@ -1613,6 +1632,7 @@ COMMAND(irc_command_me)
 
 COMMAND(irc_command_mode)
 {
+	PARASC
 	char	**mp, *chan;
 
 	if (!(chan=irc_getchan(session, params, name,
@@ -1641,6 +1661,7 @@ COMMAND(irc_command_mode)
 
 COMMAND(irc_command_umode)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 
 	if (!(*params)) {
@@ -1655,6 +1676,7 @@ COMMAND(irc_command_umode)
 
 COMMAND(irc_command_whois)
 {
+	PARASC
 	char	**mp, *person;
 
 	if (!(person = irc_getchan(session, params, name,
@@ -1677,12 +1699,12 @@ QUERY(irc_status_show_handle)
 {
 	char		**uid = va_arg(ap, char**);
 	session_t	*s = session_find(*uid);
-	const char	*p[1];
+	const CHAR_T	*p[1];
 
 	if (!s)
 		return -1;
 
-	p[0] = irc_private(s)->nick;
+	p[0] = normal_to_wcs(irc_private(s)->nick); /* UUU */
 	p[1] = 0;
 
 	return irc_command_whois(TEXT("wii"), p, s, NULL, 0);
@@ -1690,6 +1712,7 @@ QUERY(irc_status_show_handle)
 
 COMMAND(irc_command_query)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	window_t	*w;
 	char		**mp, *tar, **p = xcalloc(3, sizeof(char*)), *tmp;
@@ -1737,6 +1760,7 @@ COMMAND(irc_command_query)
 
 COMMAND(irc_command_jopacy)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *tar = NULL, *pass = NULL, *str, *tmp;
 	channel_t	*chan;
@@ -1774,6 +1798,7 @@ COMMAND(irc_command_jopacy)
 
 COMMAND(irc_command_nick)
 {
+	PARASC
 	irc_private_t	*j = irc_private(session);
 
 	/* GiM: XXX FIXME TODO think more about j->connecting... */
@@ -1816,6 +1841,7 @@ COMMAND(irc_command_test) {
 }
 
 COMMAND(irc_command_genkey) {
+	PARASC
 	extern int sim_key_generate(const char *uid); /* sim plugin */
 	char *uid = NULL;
 
@@ -1874,6 +1900,11 @@ int irc_plugin_init(int prio)
 #define IRC_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS 		IRC_ONLY | SESSION_MUSTBECONNECTED
 #define IRC_FLAGS_TARGET	IRC_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+	
+#if USE_UNICODE
+# define LNULL NULL
+# define command_add(a, b, par, c, d, e) command_add(a, b, L##par, c, d, e)	
+#endif
 	command_add(&irc_plugin, TEXT("irc:"), "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, TEXT("irc:connect"), NULL,	irc_command_connect, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, TEXT("irc:disconnect"), "r ?",irc_command_disconnect,IRC_ONLY, NULL);
