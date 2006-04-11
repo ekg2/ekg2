@@ -30,7 +30,15 @@
 #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 #define wcs_printq(x...) do { if (!quiet) { wcs_print(x); } } while(0)
 
-#define COMMAND(x) int x(const CHAR_T *name, const char **params, session_t *session, const char *target, int quiet)
+#if USE_UNICODE
+#define COMMAND(x) int x(const CHAR_T *name, const CHAR_T **params_, session_t *session, const char *target, int quiet)
+#define PARASC 		const char **params = (const char **) wcs_array_to_str((CHAR_T **) params_);
+#define PARUNI		const CHAR_T **params = params_;
+#else
+#define COMMAND(x) int x(const CHAR_T *name, const CHAR_T **params, session_t *session, const char *target, int quiet)
+#define PARASC 
+#define PARUNI
+#endif
 
 /* INFORMATIONAL FLAGS */
 	/* command is binded by alias managment */
@@ -62,7 +70,7 @@ typedef struct {
 	plugin_t *plugin;
 
 	/* private: */
-	char **params;
+	CHAR_T**params;
 	command_func_t *function;
 	int flags;
 	char **possibilities;
@@ -70,9 +78,10 @@ typedef struct {
 
 list_t commands;
 
-command_t *command_add(plugin_t *plugin, const CHAR_T *name, char *params, command_func_t function, int flags, char *possibilities);
+command_t *command_add(plugin_t *plugin, const CHAR_T *name, CHAR_T *params, command_func_t function, int flags, char *possibilities);
+void command_freeone(command_t *c);
 int command_remove(plugin_t *plugin, const CHAR_T *name);
-command_t *command_find (const char *name);
+command_t *command_find (const CHAR_T *name);
 void command_init();
 void command_free();
 int command_exec(const char *target, session_t *session, const CHAR_T *line, int quiet);
@@ -102,7 +111,8 @@ int binding_help(int a, int b);
 int binding_quick_list(int a, int b);
 int binding_toggle_contacts(int a, int b);
 
-int match_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
+int match_arg(const CHAR_T *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
+int nmatch_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
 
 /* wyniki ostatniego szukania */
 char *last_search_first_name;

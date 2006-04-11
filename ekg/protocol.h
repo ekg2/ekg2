@@ -22,6 +22,7 @@
 
 #include "ekg2-config.h"
 
+#include "char.h"
 #include <stdarg.h>
 #include <stdint.h>
 #include <time.h>
@@ -38,10 +39,10 @@
 
 #define EKG_NO_THEMEBIT	256
 
-#define EKG_ACK_DELIVERED "delivered"	/* wiadomo¶æ dostarczono */
-#define EKG_ACK_QUEUED "queued"		/* wiadomo¶æ zakolejkowano */
-#define EKG_ACK_DROPPED "dropped"	/* wiadomo¶æ odrzucono */
-#define EKG_ACK_UNKNOWN "unknown"	/* nie wiadomo, co siê z ni± sta³o */
+#define EKG_ACK_DELIVERED	TEXT("delivered")	/* wiadomo¶æ dostarczono */
+#define EKG_ACK_QUEUED		TEXT("queued")		/* wiadomo¶æ zakolejkowano */
+#define EKG_ACK_DROPPED		TEXT("dropped")		/* wiadomo¶æ odrzucono */
+#define EKG_ACK_UNKNOWN 	TEXT("unknown")		/* nie wiadomo, co siê z ni± sta³o */
 
 #define EKG_DISCONNECT_USER 0		/* u¿ytkownik wpisa³ /disconnect */
 #define EKG_DISCONNECT_NETWORK 1	/* problemy z sieci± */
@@ -65,7 +66,6 @@ void protocol_init();
 int protocol_connected(void *data, va_list ap);
 int protocol_failed(void *data, va_list ap);
 int protocol_disconnected(void *data, va_list ap);
-int protocol_status(void *data, va_list ap);
 int protocol_status(void *data, va_list ap);
 int protocol_message(void *data, va_list ap);
 int protocol_message_ack(void *data, va_list ap);

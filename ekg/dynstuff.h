@@ -103,6 +103,7 @@ char *string_free(string_t s, int free_string);
 CHAR_T *wcs_string_free(wcs_string_t s, int free_string);
 
 /* tablice stringów */
+char **wcs_array_to_str(CHAR_T **arr);
 
 char **array_make(const char *string, const char *sep, int max, int trim, int quotes);
 CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes);

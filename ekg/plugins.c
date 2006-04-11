@@ -357,7 +357,7 @@ int plugin_unregister(plugin_t *p)
 		l = l->next;
 
 		if (c->plugin == p)
-			command_remove(c->plugin, c->name);
+			command_freeone(c);
 	}
 
         for (l = watches; l; ) {

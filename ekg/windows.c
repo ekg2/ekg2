@@ -571,14 +571,15 @@ char *window_target(window_t *window) {
  */
 COMMAND(cmd_window)
 {
-	if (!xwcscmp(name, TEXT("clear")) || (params[0] && !xstrcasecmp(params[0], "clear"))) {
+	PARUNI
+	if (!xwcscmp(name, TEXT("clear")) || (params[0] && !xwcscasecmp(params[0], TEXT("clear")))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
 		query_emit(NULL, "ui-window-clear", &w);
 		xfree(w);
 		goto cleanup;
 	}
 
-	if (!params[0] || !xstrcasecmp(params[0], "list")) {
+	if (!params[0] || !xwcscasecmp(params[0], TEXT("list"))) {
 		list_t l;
 
 		for (l = windows; l; l = l->next) {
@@ -591,14 +592,14 @@ COMMAND(cmd_window)
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
 				} else
-					wcs_printq("window_list_nothing", itoa(w->id));
+					wcs_printq("window_list_nothing", wcs_itoa(w->id));
 			}
 		}
 
 		goto cleanup;
 	}
 
-	if (!xstrcasecmp(params[0], "active")) {
+	if (!xwcscasecmp(params[0], TEXT("active"))) {
 		list_t l;
 		int id = 0;
 
@@ -617,8 +618,8 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}
 
-	if (!xstrcasecmp(params[0], "new")) {
-		window_t *w = window_new(params[1], session, 0);
+	if (!xwcscasecmp(params[0], TEXT("new"))) {
+		window_t *w = window_new(wcs_to_normal(params[1]), session, 0); /* UUU */
 
 		w->session = window_current->session;
 
@@ -631,26 +632,26 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}
 
-	if (atoi(params[0])) {
-		window_switch(atoi(params[0]));
+	if (wcs_atoi(params[0])) {
+		window_switch(wcs_atoi(params[0]));
 		goto cleanup;
 	}
 
-	if (!xstrcasecmp(params[0], "switch")) {
-		if (!params[1] || (!atoi(params[1]) && xstrcmp(params[1], "0")))
+	if (!xwcscasecmp(params[0], TEXT("switch"))) {
+		if (!params[1] || (!wcs_atoi(params[1]) && xwcscmp(params[1], TEXT("0"))))
 			wcs_printq("not_enough_params", name);
 		else
-			window_switch(atoi(params[1]));
+			window_switch(wcs_atoi(params[1]));
 		
 		goto cleanup;
 	}			
 
-	if (!xstrcasecmp(params[0], "last")) {
+	if (!xwcscasecmp(params[0], TEXT("last"))) {
 		window_switch(window_last_id);
 		goto cleanup;
 	}
 	
-	if (!xstrcasecmp(params[0], "kill")) {
+	if (!xwcscasecmp(params[0], TEXT("kill"))) {
 		window_t *w = window_current;
 
 		if (params[1]) {
@@ -659,7 +660,7 @@ COMMAND(cmd_window)
 			for (w = NULL, l = windows; l; l = l->next) {
 				window_t *ww = l->data;
 
-				if (ww->id == atoi(params[1])) {
+				if (ww->id == wcs_atoi(params[1])) {
 					w = ww;
 					break;
 				}
@@ -677,17 +678,17 @@ COMMAND(cmd_window)
 		goto cleanup;
 	}
 
-	if (!xstrcasecmp(params[0], "next")) {
+	if (!xwcscasecmp(params[0], TEXT("next"))) {
 		window_next();
 		goto cleanup;
 	}
 	
-	if (!xstrcasecmp(params[0], "prev")) {
+	if (!xwcscasecmp(params[0], TEXT("prev"))) {
 		window_prev();
 		goto cleanup;
 	}
 
-        if (!xstrcasecmp(params[0], "move")) {
+        if (!xwcscasecmp(params[0], TEXT("move"))) {
 		int source, dest;
 
 		if (!window_current)
@@ -698,7 +699,7 @@ COMMAND(cmd_window)
 			goto cleanup;
 		}
 
-		source = (params[2]) ? atoi(params[2]) : window_current->id;
+		source = (params[2]) ? wcs_atoi(params[2]) : window_current->id;
 
 		if (!source) {
                         wcs_printq("window_invalid_move", wcs_itoa(source));
@@ -717,12 +718,12 @@ COMMAND(cmd_window)
 
 		/* source is okey, now we are checking destination window */
 		
-		if (!xstrcasecmp(params[1], "left"))
+		if (!xwcscasecmp(params[1], TEXT("left")))
 			dest = source - 1;
-		else if (!xstrcasecmp(params[1], "right")) 
+		else if (!xwcscasecmp(params[1], TEXT("right")))
 			dest = source + 1;
 		else
-			dest = atoi(params[1]);
+			dest = wcs_atoi(params[1]);
 
 
 		if (!dest) {
@@ -748,7 +749,7 @@ COMMAND(cmd_window)
         }
 
 	
-	if (!xstrcasecmp(params[0], "refresh")) {
+	if (!xwcscasecmp(params[0], TEXT("refresh"))) {
 		query_emit(NULL, "ui-window-refresh");
 		goto cleanup;
 	}

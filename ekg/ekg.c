@@ -237,7 +237,7 @@ void ekg_loop()
                                                 xfree(buffer_flush(BUFFER_SPEECH, NULL));
 
                                         if (buffer_count(BUFFER_SPEECH) && !WEXITSTATUS(status)) {
-                                                char *str = buffer_tail(BUFFER_SPEECH);
+                                                CHAR_T *str = buffer_tail(BUFFER_SPEECH);
                                                 say_it(str);
                                                 xfree(str);
                                         }
@@ -547,9 +547,9 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
         tmp[xstrlen(tmp) - 1] = 0;
 
-        buffer_add(BUFFER_DEBUG, NULL, tmp, DEBUG_MAX_LINES);
 	{
 		CHAR_T *tmp2 = normal_to_wcs(tmp);
+        	buffer_add(BUFFER_DEBUG, NULL, tmp2, DEBUG_MAX_LINES);
         	wcs_print_window("__debug", NULL, 0, "debug", tmp2);
 		free_utf(tmp2);
 	}

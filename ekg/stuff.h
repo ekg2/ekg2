@@ -88,7 +88,7 @@ struct binding {
 };
 
 typedef struct {
-        char *sequence;
+        CHAR_T *sequence;
         struct binding *binding;
 } binding_added_t;
 
@@ -129,7 +129,7 @@ enum buffer_t {
 struct buffer {
 	int type;
 	char *target;
-	char *line;
+	CHAR_T *line;
 };
 
 struct color_map {
@@ -238,10 +238,10 @@ char *base64_decode(const char *buf);
 void binding_list(int quiet, const char *name, int all);
 void binding_free();
 
-int buffer_add(int type, const char *target, const char *line, int max_lines);
+int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines);
 int buffer_count(int type);
-char *buffer_flush(int type, const char *target);
-char *buffer_tail(int type);
+CHAR_T *buffer_flush(int type, const char *target);
+CHAR_T *buffer_tail(int type);
 void buffer_free();
 
 void changed_var_default(session_t *s, const char *var);
@@ -307,8 +307,8 @@ void xstrtr(char *text, char from, char to);
 char color_map(unsigned char r, unsigned char g, unsigned char b);
 char *strcasestr(const char *haystack, const char *needle);
 CHAR_T *wcscasestr(const CHAR_T *haystack, const CHAR_T *needle);
-int msg_all(session_t *s, const CHAR_T *function, const char *what);
-int say_it(const char *str);
+int msg_all(session_t *s, const CHAR_T *function, const CHAR_T *what);
+int say_it(const CHAR_T *str);
 char *split_line(char **ptr);
 CHAR_T *wcs_split_line(CHAR_T **ptr);
 
@@ -334,7 +334,7 @@ void ekg_update_status(session_t *session);
 #define ekg_update_status_n(a) ekg_update_status(session_find(a))
 
 char *ekg_draw_descr(const char *status);
-uint32_t *ekg_sent_message_format(const char *text);
+uint32_t *ekg_sent_message_format(const CHAR_T *text);
 
 void ekg_yield_cpu();
 

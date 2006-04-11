@@ -218,8 +218,8 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 	CHAR_T *cmd;
 	list_t l;
 	struct alias *a;
-	char **params = NULL;
-	char *array;
+	CHAR_T **params = NULL;
+	CHAR_T *array;
 
 	if (!string || !(cmd = xwcschr(string, ' ')))
 		return -1;
@@ -244,7 +244,7 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 
 					if (!xwcscasecmp(c->name, j->name)) {
 						xfree(c->params);
-						c->params = array_make("?", " ", 0, 1, 1);
+						c->params = wcs_array_make(TEXT("?"), TEXT(" "), 0, 1, 1);
 						break;
 					}
 				}
@@ -271,10 +271,10 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 	a = xmalloc(sizeof(struct alias));
 	a->name = xwcsdup(string);
 	a->commands = NULL;
-	list_add(&(a->commands), cmd, xwcslen(cmd) + 1);
+	list_add(&(a->commands), cmd, (xwcslen(cmd) + 1) * sizeof(CHAR_T));
 	list_add(&aliases, a, 0);
 
-	array = (params) ? array_join(params, " ") : xstrdup("?");
+	array = (params) ? wcs_array_join(params, TEXT(" ")) : xwcsdup(TEXT("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
@@ -437,7 +437,7 @@ void binding_free()
  *
  * 0/-1
  */
-int buffer_add(int type, const char *target, const char *line, int max_lines)
+int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines)
 {
 	struct buffer *b;
 
@@ -450,7 +450,7 @@ int buffer_add(int type, const char *target, const char *line, int max_lines)
 	b = xmalloc(sizeof(struct buffer));
 	b->type = type;
 	b->target = xstrdup(target);
-	b->line = xstrdup(line);
+	b->line = xwcsdup(line);
 
 	return ((list_add(&buffers, b, 0) ? 0 : -1));
 }
@@ -464,9 +464,9 @@ int buffer_add(int type, const char *target, const char *line, int max_lines)
  *  - type,
  *  - target - dla kogo by³ bufor? NULL, je¶li olewamy.
  */
-char *buffer_flush(int type, const char *target)
+CHAR_T *buffer_flush(int type, const char *target)
 {
-	string_t str = string_init(NULL);
+	wcs_string_t str = wcs_string_init(NULL);
 	list_t l;
 
 	for (l = buffers; l; ) {
@@ -480,16 +480,16 @@ char *buffer_flush(int type, const char *target)
 		if (target && b->target && xstrcmp(target, b->target))
 			continue;
 
-		string_append(str, b->line);
-		string_append_c(str, '\n');
-		string_append_c(str, '\r');
+		wcs_string_append(str, b->line);
+		wcs_string_append_c(str, '\n');
+		wcs_string_append_c(str, '\r');
 
 		xfree(b->line);
 		xfree(b->target);
 		list_remove(&buffers, b, 1);
 	}
 
-	return string_free(str, 0);
+	return wcs_string_free(str, 0);
 }
 
 /*
@@ -519,9 +519,9 @@ int buffer_count(int type)
  * nale¿y zwolniæ. usuwa go z kolejki. zwraca NULL,
  * gdy kolejka jest pusta.
  */
-char *buffer_tail(int type)
+CHAR_T *buffer_tail(int type)
 {
-	char *str = NULL;
+	CHAR_T *str = NULL;
 	list_t l;
 
 	for (l = buffers; l; l = l->next) {
@@ -530,7 +530,7 @@ char *buffer_tail(int type)
 		if (type != b->type)
 			continue;
 		
-		str = xstrdup(b->line);
+		str = xwcsdup(b->line);
 
 		xfree(b->target);
 		list_remove(&buffers, b, 1);
@@ -1267,7 +1267,7 @@ CHAR_T *wcs_strip_spaces(CHAR_T *line)
  */
 int play_sound(const char *sound_path)
 {
-	char *params[2];
+	CHAR_T *params[2];
 	int res;
 
 	if (!config_sound_app || !sound_path) {
@@ -1275,10 +1275,10 @@ int play_sound(const char *sound_path)
 		return -1;
 	}
 
-	params[0] = saprintf("^%s %s", config_sound_app, sound_path);
+	params[0] = wcsprintf(TEXT("^%s %s"), config_sound_app, sound_path);
 	params[1] = NULL;
 
-	res = cmd_exec(TEXT("exec"), (const char**) params, NULL, NULL, 1);
+	res = cmd_exec(TEXT("exec"), (const CHAR_T **) params, NULL, NULL, 1);
 
 	xfree(params[0]);
 
@@ -1617,7 +1617,7 @@ TIMER(timer_handle_command)
 		return 0;
 	}
 	
-	command_exec(NULL, NULL, (char*) data, 0);
+	command_exec(NULL, NULL, (CHAR_T *) data, 0);
 	return 0;
 }
 
@@ -1859,7 +1859,7 @@ CHAR_T *wcscasestr(const CHAR_T *haystack, const CHAR_T *needle)
  * msg to all users in session's userlist
  * it uses function to do it
  */
-int msg_all(session_t *s, const CHAR_T *function, const char *what)
+int msg_all(session_t *s, const CHAR_T *function, const CHAR_T *what)
 {
 	list_t l;
 
@@ -1874,8 +1874,11 @@ int msg_all(session_t *s, const CHAR_T *function, const char *what)
 
 		if (!u || !u->uid)
 			continue;
-
+#if USE_UNICODE
+		command_exec_format(NULL, s, 0, TEXT("%ls \"%s\" %ls"), function, get_nickname(s, u->uid), what);
+#else
 		command_exec_format(NULL, s, 0, TEXT("%s \"%s\" %s"), function, get_nickname(s, u->uid), what);
+#endif
 	}
 
 	return 0;
@@ -1888,11 +1891,11 @@ int msg_all(session_t *s, const CHAR_T *function, const char *what)
  *
  * 0/-1/-2. -2 w przypadku, gdy dodano do bufora.
  */
-int say_it(const char *str)
+int say_it(const CHAR_T *str)
 {
 	pid_t pid;
 
-	if (!config_speech_app || !str || !xstrcmp(str, ""))
+	if (!config_speech_app || !str || !xwcscmp(str, TEXT("")))
 		return -1;
 
 	if (speech_pid) {
@@ -1913,7 +1916,11 @@ int say_it(const char *str)
 		xfree(tmp);
 
 		if (f) {
+#if USE_UNICODE
+			fprintf(f, "%ls.", str);
+#else
 			fprintf(f, "%s.", str);
+#endif
 			status = pclose(f);	/* dzieciak czeka na dzieciaka */
 		}
 
@@ -2190,11 +2197,11 @@ void ekg_update_status(session_t *session)
  * tekstu wycina kolorki i zwraca informacje o formatowaniu tekstu bez
  * kolorków.
  */
-uint32_t *ekg_sent_message_format(const char *text)
+uint32_t *ekg_sent_message_format(const CHAR_T *text)
 {
 	uint32_t *format, attr;
 	char *newtext, *q;
-	const char *p, *end;
+	const CHAR_T *p, *end;
 	int len;
 
 	/* je¶li nie stwierdzono znaków kontrolnych, spadamy */
@@ -2203,17 +2210,17 @@ uint32_t *ekg_sent_message_format(const char *text)
 
 	/* oblicz d³ugo¶æ tekstu bez znaczków formatuj±cych */
 	for (p = text, len = 0; *p; p++) {
-		if (!xstrchr("\x02\x03\x12\x14\x1f", *p))
+		if (!xwcschr(TEXT("\x02\x03\x12\x14\x1f"), *p))
 			len++;
 	}
 
-	if (len == xstrlen(text))
+	if (len == xwcslen(text))
 		return NULL;
 	
 	newtext = xmalloc(len + 1);
 	format = xmalloc(len * 4);
 
-	end = text + xstrlen(text);
+	end = text + xwcslen(text);
 
 	for (p = text, q = newtext, attr = 0; p < end; ) {
 		int j;
@@ -2222,7 +2229,7 @@ uint32_t *ekg_sent_message_format(const char *text)
 			p++;
 
 			if (xisdigit(*p)) {
-				int num = atoi(p);
+				int num = wcs_atoi(p);
 				
 				if (num < 0 || num > 15)
 					num = 0;

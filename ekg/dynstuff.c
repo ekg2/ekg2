@@ -629,20 +629,98 @@ failure:
 CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes)  /* just hack.. */
 {
 #if USE_UNICODE
-#warning ZROBIC PRAWDZIWE.. A NIE JAKIES FORWARD DECLARATION. ;p
-	char *str  = wcs_to_normal(string);
-	char *sp   = wcs_to_normal(sep);
-	char **tab = array_make(str, sp, max, trim, quotes);
-	int tablen = array_count(tab);
-	CHAR_T **stab = xcalloc(tablen, sizeof(CHAR_T *));
-	int i;
-	for (i=0; i < tablen; i++) 
-		stab[i] = normal_to_wcs(tab[i]);
-	array_free(tab);
-	
-	free_utf(str);
-	free_utf(sp);
-	return stab;
+	const CHAR_T *p, *q;
+	CHAR_T **result = NULL;
+	int items = 0, last = 0;
+
+	if (!string || !sep)
+		goto failure;
+
+	for (p = string; ; ) {
+		int len = 0;
+		CHAR_T *token = NULL;
+
+		if (max && items >= max - 1)
+			last = 1;
+		
+		if (trim) {
+			while (*p && xwcschr(sep, *p))
+				p++;
+			if (!*p)
+				break;
+		}
+
+		if (!last && quotes && (*p == '\'' || *p == '\"')) {
+			CHAR_T sep = *p;
+
+			for (q = p + 1, len = 0; *q; q++, len++) {
+				if (*q == '\\') {
+					q++;
+					if (!*q)
+						break;
+				} else if (*q == sep)
+					break;
+			}
+
+                        len++;
+
+			if ((token = xcalloc(len + 1, sizeof(CHAR_T)))) {
+				CHAR_T *r = token;
+			
+				for (q = p + 1; *q; q++, r++) {
+					if (*q == '\\') {
+						q++;
+						
+						if (!*q)
+							break;
+						
+						switch (*q) {
+							case 'n':
+								*r = '\n';
+								break;
+							case 'r':
+								*r = '\r';
+								break;
+							case 't':
+								*r = '\t';
+								break;
+							default:
+								*r = *q;
+						}
+					} else if (*q == sep) {
+						break;
+					} else 
+						*r = *q;
+				}
+				
+				*r = 0;
+			}
+			
+			p = (*q) ? q + 1 : q;
+
+		} else {
+			for (q = p, len = 0; *q && (last || !xwcschr(sep, *q)); q++, len++);
+			token = xcalloc(len + 1, sizeof(CHAR_T));
+			xwcsncpy(token, p, len);
+			token[len] = 0;
+			p = q;
+		}
+		
+		result = xrealloc(result, (items + 2) * sizeof(CHAR_T *));
+		result[items] = token;
+		result[++items] = NULL;
+
+		if (!*p)
+			break;
+
+		p++;
+	}
+
+failure:
+	if (!items)
+		result = xcalloc(1, sizeof(CHAR_T *));
+
+	return result;
 #else
 	return array_make(string, sep, max, trim, quotes);
 #endif
@@ -681,6 +759,15 @@ int wcs_array_count(CHAR_T **array)
 	}
 
 	return result;
+}
+
+char **wcs_array_to_str(CHAR_T **arr)
+{
+	char **tab = xcalloc(wcs_array_count(arr)+1, sizeof(char *));
+	int i;
+	for (i=0; i < wcs_array_count(arr); i++)
+		tab[i] = wcs_to_normal(arr[i]);
+	return tab;
 }
 
 /* 

@@ -236,7 +236,7 @@ int config_read(const char *filename)
 
                         if (array_count(pms) == 2) {
 
-                                query_emit(NULL, "binding-set", pms[0], pms[1], 1);
+                                query_emit(NULL, "binding-set", pms[0], normal_to_wcs(pms[1]), 1);
                         }
 
                         array_free(pms);
@@ -436,7 +436,7 @@ static void config_write_main(FILE *f)
 
 		for (m = a->commands; m; m = m->next)
 #if USE_UNICODE
-			fwprintf(f, TEXT("alias %ls %s\n"), a->name, (char *) m->data);
+			fwprintf(f, TEXT("alias %ls %ls\n"), a->name, (CHAR_T *) m->data);
 #else
 			fprintf(f, "alias %s %s\n", a->name, (char*) m->data);
 #endif
@@ -459,8 +459,11 @@ static void config_write_main(FILE *f)
 
         for (l = bindings_added; l; l = l->next) {
                 binding_added_t *d = l->data;
-
+#if USE_UNICODE
+                fprintf(f, "bind-set %s %ls\n", d->binding->key, d->sequence);
+#else
                 fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
+#endif
         }
 
 	for (l = timers; l; l = l->next) {
@@ -780,7 +783,11 @@ void debug_write_crash()
 		struct buffer *b = l->data;
 
 		if (b->type == BUFFER_DEBUG)
+#if USE_UNICODE
+			fprintf(f, "%ls\n", b->line);
+#else
 			fprintf(f, "%s\n", b->line);
+#endif
 	}
 	
 	fclose(f);

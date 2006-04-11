@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <time.h>
 
+#include "char.h"
 #include "dynstuff.h"
 #include "objects.h"
 #include "sessions.h"
@@ -99,6 +100,19 @@ PROPERTY_INT(userlist, last_seen, time_t);
 #define EKG_STATUS_BLOCKED "blocked"
 #define EKG_STATUS_UNKNOWN "unknown"
 #define EKG_STATUS_ERROR "error"
+
+/* WCS VERSION */
+#define WCS_EKG_STATUS_NA TEXT("notavail")
+#define WCS_EKG_STATUS_AVAIL TEXT("avail")
+#define WCS_EKG_STATUS_AWAY TEXT("away")
+#define WCS_EKG_STATUS_AUTOAWAY TEXT("autoaway")	/* tylko dla session_status_set() */
+#define WCS_EKG_STATUS_INVISIBLE TEXT("invisible")
+#define WCS_EKG_STATUS_XA TEXT("xa")
+#define WCS_EKG_STATUS_DND TEXT("dnd")
+#define WCS_EKG_STATUS_FREE_FOR_CHAT TEXT("chat")
+#define WCS_EKG_STATUS_BLOCKED TEXT("blocked")
+#define WCS_EKG_STATUS_UNKNOWN TEXT("unknown")
+#define WCS_EKG_STATUS_ERROR TEXT("error")
 
 struct ekg_group {
 	char *name;

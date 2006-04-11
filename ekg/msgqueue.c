@@ -52,13 +52,13 @@ list_t msg_queue = NULL;
  *
  * 0/-1
  */
-int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq)
+int msg_queue_add(const char *session, const char *rcpts, const CHAR_T *message, const char *seq)
 {
 	msg_queue_t *m = xmalloc(sizeof(msg_queue_t));
 
 	m->session = xstrdup(session);
 	m->rcpts = xstrdup(rcpts);
-	m->message = xstrdup(message);
+	m->message = xstrdup(wcs_to_normal(message));
 	m->seq = xstrdup(seq);
 	m->time = time(NULL);
 

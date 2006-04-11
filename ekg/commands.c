@@ -105,26 +105,28 @@ list_t commands = NULL;
  *
  * sprawdza, czy dany argument funkcji pasuje do podanego.
  */
-int match_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen)
+int match_arg(const CHAR_T *arg, char shortopt, const CHAR_T *longopt, int longoptlen)
 {
-	CHAR_T *uarg = NULL;
 	if (!arg || *arg != '-')
 		return 0;
 
-	uarg = unpar(arg);
-	uarg++;
-	if (*uarg == '-') {
-		int len = xwcslen(++uarg);
+	arg++;
+	if (*arg == '-') {
+		int len = xwcslen(++arg);
 
 		if (longoptlen > len)
 			len = longoptlen;
 
-		return !xwcsncmp(uarg, longopt, len);
-		free_utf(uarg);
+		return !xwcsncmp(arg, longopt, len);
 	}
-	
-	free_utf(uarg);
 	return (*arg == shortopt) && (*(arg + 1) == 0);
+}
+
+int nmatch_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen) {
+	CHAR_T *uarg = normal_to_wcs(arg);
+	int ret = match_arg(uarg, shortopt, longopt, longoptlen);
+	free_utf(uarg);
+	return ret;
 }
 
 /*
@@ -203,29 +205,26 @@ void tabnick_flush()
  *
  * szuka podanej komendy.
  */
-command_t *command_find(const char *name)
+command_t *command_find(const CHAR_T *name)
 {
-	CHAR_T *aname;
         list_t l;
 
         if (!name)
                 return NULL;
-	aname = normal_to_wcs(name);
         for (l = commands; l; l = l->next) {
                 command_t *c = l->data;
 
-                if (!xwcscasecmp(c->name, aname)) {
-			free_utf(aname);
+                if (!xwcscasecmp(c->name, name)) {
                         return c;
 		}
         }
-	free_utf(aname);
         return NULL;
 }
 
 
 COMMAND(cmd_tabclear)
 {
+	PARASC
 	int i;
 
 	if (!params[0]) {
@@ -233,7 +232,7 @@ COMMAND(cmd_tabclear)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'o', TEXT("offline"), 2)) {
+	if (nmatch_arg(params[0], 'o', TEXT("offline"), 2)) {
 		for (i = 0; i < send_nicks_count; i++) {
 			userlist_t *u = NULL;
 
@@ -256,6 +255,7 @@ COMMAND(cmd_tabclear)
 
 COMMAND(cmd_add)
 {
+	PARASC
 	int params_free = 0;	/* zmienili¶my params[] i trzeba zwolniæ */
 	int result = 0;
 	userlist_t *u = NULL;
@@ -275,7 +275,7 @@ COMMAND(cmd_add)
 		params[3] = NULL;
 	}
 
-	if (params[0] && match_arg(params[0], 'f', TEXT("find"), 2)) {
+	if (params[0] && nmatch_arg(params[0], 'f', TEXT("find"), 2)) {
 		int nonick = 0;
 		char *nickname, *tmp;
 
@@ -370,8 +370,9 @@ cleanup:
 
 COMMAND(cmd_alias)
 {
+	PARASC
 	CHAR_T *sname;
-	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -387,7 +388,7 @@ COMMAND(cmd_alias)
 		return -1;
 	}
 
-	if (match_arg(params[0], 'A', TEXT("append"), 2)) {
+	if (nmatch_arg(params[0], 'A', TEXT("append"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -403,7 +404,7 @@ COMMAND(cmd_alias)
 		return -1;
 	}
 
-	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
 		int ret;
 
 		if (!params[1]) {
@@ -426,12 +427,12 @@ COMMAND(cmd_alias)
 		return -1;
 	}
 	
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		list_t l;
 		int count = 0;
 		CHAR_T *aname = NULL;
 
-		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
+		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
 			aname = normal_to_wcs(params[1]);
 		else if (params[0])
 			aname = normal_to_wcs(params[0]);
@@ -440,18 +441,18 @@ COMMAND(cmd_alias)
 			struct alias *a = l->data;
 			list_t m;
 			int first = 1, i;
-			char *tmp;
+			CHAR_T *tmp;
 			
 			if (aname && xwcscasecmp(aname, a->name))
 				continue;
 
-			tmp = xcalloc(xwcslen(a->name) + 1, 1);
+			tmp = xcalloc(xwcslen(a->name) + 1, sizeof(CHAR_T));
 
 			for (i = 0; i < xwcslen(a->name); i++)
-				xstrcat(tmp, " ");
+				xwcscat(tmp, TEXT(" "));
 
 			for (m = a->commands; m; m = m->next) {
-				printq((first) ? "aliases_list" : "aliases_list_next", a->name, (char*) m->data, tmp);
+				wcs_printq((first) ? "aliases_list" : "aliases_list_next", a->name, (CHAR_T *) m->data, tmp);
 				first = 0;
 				count++;
 			}
@@ -479,6 +480,7 @@ COMMAND(cmd_alias)
 
 COMMAND(cmd_status)
 {
+	PARASC
         struct tm *t;
         time_t n;
         int now_days;
@@ -513,6 +515,7 @@ COMMAND(cmd_status)
 
 COMMAND(cmd_del)
 {
+	PARASC
 	userlist_t *u;
 	char *tmp;
 	int del_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
@@ -619,6 +622,7 @@ void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, v
 
 COMMAND(cmd_exec)
 {
+	PARASC
 	list_t l;
 	int pid;
 
@@ -633,10 +637,10 @@ COMMAND(cmd_exec)
 			int big_match = 0;
 			args = (char **) params;
 
-			if (match_arg(args[0], 'M', TEXT("MSG"), 2) || (buf = match_arg(args[0], 'B', TEXT("BMSG"), 2)))
+			if (nmatch_arg(args[0], 'M', TEXT("MSG"), 2) || (buf = nmatch_arg(args[0], 'B', TEXT("BMSG"), 2)))
 				big_match = add_commandline = 1;
 
-			if (big_match || match_arg(args[0], 'm', TEXT("msg"), 2) || (buf = match_arg(args[0], 'b', TEXT("bmsg"), 2))) {
+			if (big_match || nmatch_arg(args[0], 'm', TEXT("msg"), 2) || (buf = nmatch_arg(args[0], 'b', TEXT("bmsg"), 2))) {
 				const char *uid;
 
 				if (!args[1] || !args[2]) {
@@ -721,29 +725,31 @@ COMMAND(cmd_exec)
 
 COMMAND(cmd_eval)
 {
+	PARUNI
 	int ret = 0, i;
-	char **argv;
+	CHAR_T **argv;
 
-	argv = array_make(params[0], " ", 0, 1, 1);
+	argv = wcs_array_make(params[0], TEXT(" "), 0, 1, 1);
 	
 	for (i = 0; argv[i]; i++) {
 		command_exec(NULL, session, argv[i], 0);
 	}
 
-	array_free(argv);
+	wcs_array_free(argv);
 
 	return 0;
 }
 
 COMMAND(cmd_for)
 {
+	PARASC
 	char *nname = wcs_to_normal(name);
 	int for_all = 0, ret = 0;
 
 	if (!xstrcmp(params[1], "*")) 
 		for_all = 1; 
 
-	if (match_arg(params[0], 's', TEXT("sessions"), 2)) {
+	if (nmatch_arg(params[0], 's', TEXT("sessions"), 2)) {
 		char *param = (char *) params[2];
 		int next_is_for = 0;
 
@@ -814,7 +820,7 @@ COMMAND(cmd_for)
 	
 			xfree(s);
 		}
-	} else if (match_arg(params[0], 'u', TEXT("users"), 2)) {
+	} else if (nmatch_arg(params[0], 'u', TEXT("users"), 2)) {
 		char *param = (char *) params[2];
                 int next_is_for = 0;
 
@@ -888,7 +894,7 @@ COMMAND(cmd_for)
 
                         xfree(u);
                 }
-	} else if (match_arg(params[0], 'w', TEXT("windows"), 2)) {
+	} else if (nmatch_arg(params[0], 'w', TEXT("windows"), 2)) {
                 char *param = (char *) params[2];
                 int next_is_for = 0;
 
@@ -986,8 +992,8 @@ for_end:
 
 COMMAND(cmd_help)
 {
+	PARASC
 	list_t l;
-	
 	if (params[0]) {
 		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
 		int plen;
@@ -1247,6 +1253,7 @@ COMMAND(cmd_help)
 
 COMMAND(cmd_ignore)
 {
+	PARASC
 	const char *uid;
 
 	if (*name == 'i' || *name == 'I') {
@@ -1368,6 +1375,7 @@ COMMAND(cmd_ignore)
 
 COMMAND(cmd_list)
 {
+	PARASC
 	list_t l;
 	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
 	char **argv = NULL, *show_group = NULL;
@@ -1565,37 +1573,37 @@ list_user:
 		argv = array_make(params[j], " \t", 0, 1, 1);
 
 	 	for (i = 0; argv[i]; i++) {
-			if (match_arg(argv[i], 'a', TEXT("active"), 2)) {
+			if (nmatch_arg(argv[i], 'a', TEXT("active"), 2)) {
 				show_all = 0;
 				show_active = 1;
 			}
 				
-			if (match_arg(argv[i], 'i', TEXT("inactive"), 2) || match_arg(argv[i], 'n', TEXT("notavail"), 2)) {
+			if (nmatch_arg(argv[i], 'i', TEXT("inactive"), 2) || nmatch_arg(argv[i], 'n', TEXT("notavail"), 2)) {
 				show_all = 0;
 				show_inactive = 1;
 			}
 			
-			if (match_arg(argv[i], 'A', TEXT("away"), 2)) {
+			if (nmatch_arg(argv[i], 'A', TEXT("away"), 2)) {
 				show_all = 0;
 				show_away = 1;
 			}
 			
-			if (match_arg(argv[i], 'I', TEXT("invisible"), 2)) {
+			if (nmatch_arg(argv[i], 'I', TEXT("invisible"), 2)) {
 				show_all = 0;
 				show_invisible = 1;
 			}
 
-			if (match_arg(argv[i], 'B', TEXT("blocked"), 2)) {
+			if (nmatch_arg(argv[i], 'B', TEXT("blocked"), 2)) {
 				show_all = 0;
 				show_blocked = 1;
 			}
 
-			if (match_arg(argv[i], 'o', TEXT("offline"), 2)) {
+			if (nmatch_arg(argv[i], 'o', TEXT("offline"), 2)) {
 				show_all = 0;
 				show_offline = 1;
 			}
 
-			if (match_arg(argv[i], 'm', TEXT("member"), 2)) {
+			if (nmatch_arg(argv[i], 'm', TEXT("member"), 2)) {
 				if (j && argv[i+1]) {
 					int off = (argv[i+1][0] == '@' && xstrlen(argv[i+1]) > 1) ? 1 : 0;
 
@@ -1610,7 +1618,7 @@ list_user:
 					}
 			}
 
-			if (match_arg(argv[i], 'd', TEXT("description"), 2))
+			if (nmatch_arg(argv[i], 'd', TEXT("description"), 2))
 				show_descr = 1;
 		}
 		array_free(argv);
@@ -1670,6 +1678,7 @@ list_user:
 
 COMMAND(cmd_save)
 {
+	PARASC
 	last_save = time(NULL);
 	
 	if (!config_write(params[0]) && !session_write() && !metacontact_write() && !script_variables_write() ) {
@@ -1686,12 +1695,13 @@ COMMAND(cmd_save)
 
 COMMAND(cmd_set)
 {
+	PARASC
 	const char *arg = NULL, *val = NULL;
 	int unset = 0, show_all = 0, res = 0;
 	char *value = NULL;
 	list_t l;
 
-	if (match_arg(params[0], 'a', TEXT("all"), 1)) {
+	if (nmatch_arg(params[0], 'a', TEXT("all"), 1)) {
 		show_all = 1;
 		arg = params[1];
 		if (arg)
@@ -1817,9 +1827,9 @@ COMMAND(cmd_set)
 		switch (variable_set(arg, (unset) ? NULL : value, 0)) {
 			case 0:
 			{
-				const char *my_params[2] = { (!unset) ? params[0] : params[0] + 1, NULL };
+				const CHAR_T *my_params[2] = { (!unset) ? params[0] : params[0] + 1, NULL };
 
-				cmd_set(TEXT("set-show"), my_params, NULL, NULL, quiet);
+				cmd_set(TEXT("set-show"), (const CHAR_T **) my_params, NULL, NULL, quiet);
 				config_changed = 1;
 				last_save = time(NULL);
 				break;
@@ -1842,6 +1852,7 @@ COMMAND(cmd_set)
 
 COMMAND(cmd_quit)
 {
+	PARASC
     	char *reason;
 	list_t l;
 	
@@ -1881,6 +1892,7 @@ COMMAND(cmd_test_segv)
 
 COMMAND(cmd_test_send)
 {
+	PARASC
 	const char *sender, *rcpts[2] = { NULL, NULL };
 
 	if (!params[0] || !params[1] || !window_current || !window_current->session)
@@ -1900,19 +1912,26 @@ COMMAND(cmd_test_send)
 
 COMMAND(cmd_test_addtab)
 {
+	PARASC
 	tabnick_add(params[0]);
 	return 0;
 }
 
 COMMAND(cmd_test_deltab)
 {
+	PARASC
 	tabnick_remove(params[0]);
 	return 0;
 }
 
 COMMAND(cmd_test_debug)
 {
+	PARUNI
+#if USE_UNICODE
+	debug("%ls\n", params[0]);
+#else
 	debug("%s\n", params[0]);
+#endif
 	return 0;
 }
 
@@ -1929,6 +1948,7 @@ COMMAND(cmd_test_debug_dump)
 
 COMMAND(cmd_test_event_test)
 {
+	PARASC
 	char *tmp = xstrdup(params[0]);
 	event_target_check(tmp);
 	xfree(tmp);
@@ -1989,6 +2009,7 @@ COMMAND(cmd_debug_queries)
 
 COMMAND(cmd_debug_query)
 {
+	PARASC
 	char *p[10];
 	int i;
 
@@ -2196,6 +2217,7 @@ COMMAND(cmd_beep)
 
 COMMAND(cmd_play)
 {
+	PARASC
 	if (!config_sound_app) {
 		wcs_printq("not_enough_params", name);
 		return -1;
@@ -2206,6 +2228,7 @@ COMMAND(cmd_play)
 
 COMMAND(cmd_say)
 {
+	PARUNI
 	if (!config_speech_app) {
 		wcs_printq("not_enough_params", name);
 		return -1;
@@ -2240,6 +2263,7 @@ COMMAND(cmd_reload)
 
 COMMAND(cmd_query)
 {
+	PARASC
 	char **p = xcalloc(3, sizeof(char*));
 	int i, res = 0;
 	metacontact_t *m;
@@ -2390,13 +2414,15 @@ cleanup:
 
 COMMAND(cmd_echo)
 {
-	printq("generic", (params && params[0]) ? params[0] : "");
+	PARUNI
+	wcs_printq("generic", (params && params[0]) ? params[0] : TEXT(""));
 
 	return 0;
 }
 
 COMMAND(cmd_bind)
 {
+	PARASC
 	window_lock_dec_n(target); /* this is interactive command */
 	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
 
@@ -2418,7 +2444,7 @@ COMMAND(cmd_bind)
 int command_exec(const char *target, session_t *session, const CHAR_T *xline, int quiet)
 {
 	CHAR_T short_cmd[2] = TEXT(".");
-	char *p = NULL;
+	CHAR_T *p = NULL;
 	CHAR_T *line_save = NULL, *line = NULL;
 	CHAR_T *cmd = NULL, *tmp;
 
@@ -2481,7 +2507,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		if (!isalpha_pl_PL(c->name[0]) && xwcslen(c->name) == 1 && line[0] == c->name[0]) {
 			short_cmd[0] = c->name[0];
 			cmd = short_cmd;
-			p = wcs_to_normal(line + 1);
+			p = line + 1;
 		}
 	}
 
@@ -2489,9 +2515,9 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		tmp = cmd = line;
 		while (*tmp && !xisspace(*tmp))
 			tmp++;
-		p = wcs_to_normal( (*tmp) ? tmp + 1 : tmp );
+		p = (*tmp) ? tmp + 1 : tmp;
 		*tmp = 0;
-		p = strip_spaces(p);
+		p = wcs_strip_spaces(p);
 	}
 
 	/* poszukaj najpierw komendy dla danej sesji */
@@ -2591,14 +2617,14 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		}
 
 		if (!res) {
-			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make("?", " ", 0, 1, 1) : last_command->params;
-			int parcount = array_count(last_params);
-			char **par = array_make(p, " \t", parcount, 1, 1);
+			CHAR_T **last_params = (last_command->flags & COMMAND_ISALIAS) ? wcs_array_make(TEXT("?"), TEXT(" "), 0, 1, 1) : last_command->params;
+			int parcount = wcs_array_count(last_params);
+			CHAR_T **par = wcs_array_make(p, TEXT(" \t"), parcount, 1, 1);
 			char *ntarget;
 
 			if ((last_command->flags & COMMAND_PARAMASTARGET) && par[0]) {
 /*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]); */
-				ntarget = xstrdup(par[0]);
+				ntarget = xstrdup(wcs_to_normal(par[0]));
 			} else	ntarget = xstrdup(target);
 
 			target = strip_quotes(ntarget);
@@ -2606,7 +2632,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 			if (/* !res && */ last_command->flags & COMMAND_ENABLEREQPARAMS) {
 				int i;
 				for (i=0; i < parcount; i++) {
-					char *p;
+					CHAR_T *p;
 					if (!(p = last_params[i])) break; /* rather impossible */
 					if (p[0] == '!' && !par[i]) {
 						if (i == 0 && (last_command->flags & COMMAND_PARAMASTARGET) && target) /* if params[0] already in target */
@@ -2623,7 +2649,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 				window_t *w = window_find(target);
 
 				window_lock_inc(w);
-				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
+				res = (last_command->function)(last_name, (const CHAR_T **) par, s, target, (quiet & 1));
 				if ((w == window_find(target)))
 					window_lock_dec(w);
 				else {
@@ -2638,11 +2664,10 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 				}
 				query_emit(NULL, "ui-window-refresh");
 			}
-			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
-			array_free(par);
+			if (last_command->flags & COMMAND_ISALIAS) wcs_array_free(last_params);
+			wcs_array_free(par);
 			xfree(ntarget);
 		}
-		free_utf(p);
 		xfree(line_save);
 
 		if (quit_command)
@@ -2650,7 +2675,6 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 
 		return res;
 	}
-	free_utf(p);
 
 	if (xwcscmp(cmd, TEXT(""))) {
 		quiet = quiet & 2;
@@ -2731,6 +2755,7 @@ int binding_quick_list(int a, int b)
 
 COMMAND(cmd_alias_exec)
 {	
+	PARUNI
 	list_t l, tmp = NULL, m = NULL;
 	int need_args = 0;
 
@@ -2744,12 +2769,12 @@ COMMAND(cmd_alias_exec)
 	}
 
 	for (; tmp; tmp = tmp->next) {
-		char *p;
+		CHAR_T *p;
 		int __need = 0;
 
 		for (p = tmp->data; *p; p++) {
 
-			if (*p == '\\' && p[1] == '%') {
+			if (*p == '\\' && p[1] == TEXT('%')) {
 				p += 2;
 				continue;
 			}
@@ -2769,20 +2794,19 @@ COMMAND(cmd_alias_exec)
 				need_args = __need;
 		}
 
-		list_add(&m, tmp->data, xstrlen(tmp->data) + 1);
+		list_add(&m, tmp->data, (xwcslen(tmp->data) + 1)*sizeof(CHAR_T));
 	}
 	
 	for (tmp = m; tmp; tmp = tmp->next) {
 		wcs_string_t str;
 
-		if (*((char *) tmp->data) == '/')
+		if (*((CHAR_T *) tmp->data) == '/')
 			str = wcs_string_init(NULL);
 		else
 			str = wcs_string_init(TEXT("/"));
 
 		if (need_args) {
-			char *args[9], **arr, *s;
-			CHAR_T *s2;
+			CHAR_T *args[9], **arr, *s; 
 			int i;
 
 			if (!params[0]) {
@@ -2792,12 +2816,12 @@ COMMAND(cmd_alias_exec)
 				return -1;
 			}
 
-			arr = array_make(params[0], "\t ", need_args, 1, 1);
+			arr = wcs_array_make(params[0], TEXT("\t "), need_args, 1, 1);
 
-			if (array_count(arr) < need_args) {
+			if (wcs_array_count(arr) < need_args) {
 				wcs_printq("aliases_not_enough_params", name);
 				wcs_string_free(str, 1);
-				array_free(arr);
+				wcs_array_free(arr);
 				list_destroy(m, 1);
 				return -1;
 			}
@@ -2809,24 +2833,18 @@ COMMAND(cmd_alias_exec)
 					args[i] = NULL;
 			}
 
-			s = format_string((char *) tmp->data, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-			s2 = normal_to_wcs(s);
-			wcs_string_append(str, s2);
-			free_utf(s2);
+			s = wcs_format_string((CHAR_T *) tmp->data, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+			wcs_string_append(str, s);
 			xfree(s);
 
-			array_free(arr);
+			wcs_array_free(arr);
 
 		} else {
-			CHAR_T *tmp2 = normal_to_wcs((char *) tmp->data);
-			wcs_string_append(str, tmp2);
-			free_utf(tmp2);
+			wcs_string_append(str, tmp->data);
 			
 			if (params[0]) {
-				CHAR_T *p0 = normal_to_wcs(params[0]);
 				wcs_string_append(str, TEXT(" "));
-				wcs_string_append(str, p0);
-				free_utf(p0);
+				wcs_string_append(str, params[0]);
 			}
 		}
 
@@ -2841,9 +2859,10 @@ COMMAND(cmd_alias_exec)
 
 COMMAND(cmd_at)
 {
+	PARASC
 	list_t l;
 
-	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
 		const char *p, *a_name = NULL;
 		char *a_command = NULL;
 		time_t period = 0, freq = 0;
@@ -3041,7 +3060,7 @@ COMMAND(cmd_at)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
 		int del_all = 0;
 		int ret = 1;
 
@@ -3075,11 +3094,11 @@ COMMAND(cmd_at)
 		return 0;
 	}
 
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		const char *a_name = NULL;
 		int count = 0;
 
-		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
+		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
 			a_name = params[1];
 		else if (params[0])
 			a_name = params[0];
@@ -3168,9 +3187,10 @@ COMMAND(cmd_at)
 
 COMMAND(cmd_timer)
 {
+	PARASC
 	list_t l;
 
-	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
 		const char *t_name = NULL, *p;
 		char *t_command = NULL;
 		time_t period = 0;
@@ -3275,7 +3295,7 @@ COMMAND(cmd_timer)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
 		int del_all = 0, ret;
 
 		if (!params[1]) {
@@ -3308,11 +3328,11 @@ COMMAND(cmd_timer)
 		return 0;
 	}
 
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		const char *t_name = NULL;
 		int count = 0;
 
-		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
+		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
 			t_name = params[1];
 		else if (params[0])
 			t_name = params[0];
@@ -3389,12 +3409,13 @@ COMMAND(cmd_timer)
 
 COMMAND(cmd_conference) 
 {
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] == '#') {
+	PARASC
+	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] == '#') {
 		list_t l, r;
 		int count = 0;
 		const char *cname = NULL;
 	
-		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
+		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
 			cname = params[1];
 		else if (params[0])
 			cname = params[0];
@@ -3443,7 +3464,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'j', TEXT("join"), 2)) {
+	if (nmatch_arg(params[0], 'j', TEXT("join"), 2)) {
 		struct conference *c;
 		const char *uid;
 
@@ -3479,7 +3500,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3497,7 +3518,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3517,7 +3538,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'r', TEXT("rename"), 2)) {
+	if (nmatch_arg(params[0], 'r', TEXT("rename"), 2)) {
 		if (!params[1] || !params[2]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3533,7 +3554,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 	
-	if (match_arg(params[0], 'i', TEXT("ignore"), 2)) {
+	if (nmatch_arg(params[0], 'i', TEXT("ignore"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3549,7 +3570,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'u', TEXT("unignore"), 2)) {
+	if (nmatch_arg(params[0], 'u', TEXT("unignore"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3565,7 +3586,7 @@ COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'f', TEXT("find"), 2)) {
+	if (nmatch_arg(params[0], 'f', TEXT("find"), 2)) {
 		struct conference *c;
 		list_t l;
 
@@ -3601,6 +3622,7 @@ COMMAND(cmd_conference)
 
 COMMAND(cmd_last)
 {
+	PARASC
         list_t l;
 	const char *uid = NULL;
 	int show_sent = 0, last_n = 0, count = 0, i = 0, show_all = 0;
@@ -3609,7 +3631,7 @@ COMMAND(cmd_last)
 	time_t n;
 	struct tm *now;
 
-	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {
+	if (nmatch_arg(params[0], 'c', TEXT("clear"), 2)) {
 		if (params[1] && !(uid = get_uid(session, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
@@ -3636,7 +3658,7 @@ COMMAND(cmd_last)
 	}		
 
 	if (params[0]) {
-		show_sent = match_arg(params[0], 's', TEXT("stime"), 2);
+		show_sent = nmatch_arg(params[0], 's', TEXT("stime"), 2);
 
 		if (!show_sent)
 			nick = params[0];
@@ -3646,15 +3668,15 @@ COMMAND(cmd_last)
 
 			nick = arr[0];
 			
-			if (match_arg(params[0], 'n', TEXT("number"), 2)) {
+			if (nmatch_arg(params[0], 'n', TEXT("number"), 2)) {
 				last_n = strtol(arr[0], NULL, 0);
 				nick = arr[1];
 				
-				if (arr[1] && (show_sent = match_arg(arr[1], 's', TEXT("stime"), 2)))
+				if (arr[1] && (show_sent = nmatch_arg(arr[1], 's', TEXT("stime"), 2)))
 					nick = arr[2];
 			}
 
-			if (arr[1] && show_sent && match_arg(arr[0], 'n', TEXT("number"), 2)) {
+			if (arr[1] && show_sent && nmatch_arg(arr[0], 'n', TEXT("number"), 2)) {
 				last_n = atoi(arr[1]);
 				nick = arr[2];
 			}
@@ -3728,9 +3750,10 @@ COMMAND(cmd_last)
 
 COMMAND(cmd_queue)
 {
+	PARASC
 	list_t l;
 	
-	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {
+	if (nmatch_arg(params[0], 'c', TEXT("clear"), 2)) {
 		if ((params[1] && !msg_queue_count_uid(params[1])) || !msg_queue_count()) {
 			if (params[1])
 				printq("queue_empty_uid", format_user(session, params[1]));
@@ -3780,6 +3803,7 @@ COMMAND(cmd_queue)
 
 COMMAND(cmd_dcc)
 {
+	PARASC
 	list_t l;
 
 	if (!params[0] || !xstrncasecmp(params[0], "li", 2)) {	/* list */
@@ -3891,6 +3915,7 @@ COMMAND(cmd_dcc)
 
 COMMAND(cmd_plugin)
 {
+	PARASC
 	int ret;
 	plugin_t *pl;
 
@@ -3906,7 +3931,7 @@ COMMAND(cmd_plugin)
 		return 0;
 	}
 
-        if (match_arg(params[0], 'd', TEXT("default"), 2)) {
+        if (nmatch_arg(params[0], 'd', TEXT("default"), 2)) {
                 list_t l;
 
                 for (l = plugins; l;) {
@@ -3953,6 +3978,7 @@ COMMAND(cmd_plugin)
 
 COMMAND(cmd_desc)
 {
+	PARASC
 	const char *status, *cmd;
 	
 	if (!session)
@@ -4015,12 +4041,12 @@ static int command_add_compare(void *data1, void *data2)
  *
  * 0 je¶li siê nie uda³o, w przeciwnym razie adres do strukturki.
  */
-command_t *command_add(plugin_t *plugin, const CHAR_T *name, char *params, command_func_t function, int flags, char *possibilities)
+command_t *command_add(plugin_t *plugin, const CHAR_T *name, CHAR_T *params, command_func_t function, int flags, char *possibilities)
 {
 	command_t *c = xmalloc(sizeof(command_t));
 
 	c->name = xwcsdup(name);
-	c->params = params ? array_make(params, " ", 0, 1, 1) : NULL;
+	c->params = params ? wcs_array_make(params, TEXT(" "), 0, 1, 1) : NULL;
 	c->function = function;
 	c->flags = flags;
 	c->plugin = plugin;
@@ -4037,6 +4063,17 @@ command_t *command_add(plugin_t *plugin, const CHAR_T *name, char *params, comma
  *  - plugin - plugin obs³uguj±cy,
  *  - name - nazwa komendy.
  */
+
+void command_freeone(command_t *c)
+{
+	if (!c)
+		return;
+	xfree(c->name);
+	wcs_array_free(c->params);
+	array_free(c->possibilities);
+	list_remove(&commands, c, 1);
+}
+
 int command_remove(plugin_t *plugin, const CHAR_T *name)
 {
 	list_t l;
@@ -4045,10 +4082,7 @@ int command_remove(plugin_t *plugin, const CHAR_T *name)
 		command_t *c = l->data;
 
 		if (!xwcscasecmp(name, c->name) && plugin == c->plugin) {
-			xfree(c->name);
-			array_free(c->params);
-			array_free(c->possibilities);
-			list_remove(&commands, c, 1);
+			command_freeone(c);
 			return 0;
 		}
 	}
@@ -4093,6 +4127,11 @@ int command_remove(plugin_t *plugin, const CHAR_T *name)
  */
 void command_init()
 {
+#if USE_UNICODE
+#define LNULL NULL
+#define command_add(x, y, par, a, b, c) command_add(x, y, L##par, a, b, c)
+#endif
+
 	command_add(NULL, TEXT("add"), "U ? p", cmd_add, 0, "-f --find");
 
 	command_add(NULL, TEXT("alias"), "p ?", cmd_alias, 0,
@@ -4227,7 +4266,7 @@ void command_free()
 		command_t *c = l->data;
 
 		xfree(c->name);
-		array_free(c->params);
+		wcs_array_free(c->params);
 		array_free(c->possibilities);
 	}
 

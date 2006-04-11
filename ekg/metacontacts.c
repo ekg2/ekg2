@@ -42,9 +42,10 @@ list_t metacontacts = NULL;
  */
 COMMAND(cmd_metacontact)
 {
+	PARASC
         metacontact_t *m;
 
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2)) {
+	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2)) {
                 list_t l;
 
                 for (l = metacontacts; l; l = l->next) {
@@ -59,7 +60,7 @@ COMMAND(cmd_metacontact)
                 return 0;
         }
 
-	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
                 if (!params[1])
                         goto invalid_params;
 
@@ -80,7 +81,7 @@ COMMAND(cmd_metacontact)
 		return 0;	
 	}
 
-        if (match_arg(params[0], 'd', TEXT("del"), 2)) {
+        if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
 		if (!params[1])
 			goto invalid_params;
 
@@ -101,7 +102,7 @@ COMMAND(cmd_metacontact)
                 return 0;
 	}
 
-	if (match_arg(params[0], 'i', TEXT("add-item"), 2)) {
+	if (nmatch_arg(params[0], 'i', TEXT("add-item"), 2)) {
                 if (!params[1] || !params[2] || !params[3] || !params[4])
                         goto invalid_params;
 
@@ -123,7 +124,7 @@ COMMAND(cmd_metacontact)
 		return 0;
 	}
 
-        if (match_arg(params[0], 'r', TEXT("del-item"), 2)) {
+        if (nmatch_arg(params[0], 'r', TEXT("del-item"), 2)) {
                 if (!params[1] || !params[2] || !params[3])
                         goto invalid_params;
 
