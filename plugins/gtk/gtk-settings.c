@@ -57,6 +57,8 @@ GtkWidget *gtk_settings_window(void *ptr) {
 	gtk_widget_set_size_request(tree, 165, 365);
 /* TODO */
 
+
+	
 	gtk_window_set_resizable(GTK_WINDOW(settings_win), FALSE);
 	gtk_widget_show_all (settings_win);
 	return settings_win;

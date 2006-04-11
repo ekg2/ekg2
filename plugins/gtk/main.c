@@ -24,6 +24,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gdk/gdkx.h>
 
+#include <ekg/char.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
 #include <ekg/sessions.h>
@@ -124,7 +125,6 @@ enum {	COLUMN_STATUS = 0,
 	COLUMN_SESSION, 
 	N_COLUMNS };
 
-
 int gtk_window_dump(void *win, int retrealid) {
 #define printf(args...) ;
 	int a = 0, b = 0;
@@ -165,13 +165,14 @@ void destroy(GtkWidget *widget, gpointer data) {
 
 /* <ENTER> editboxa */
 gint on_enter(GtkWidget *widget, gpointer data) {
-	const gchar *txt;
+	CHAR_T *txt;
 	window_t *w = (data) ? data : window_current;
-	txt = gtk_entry_get_text(GTK_ENTRY(widget));
+	txt = normal_to_wcs(gtk_entry_get_text(GTK_ENTRY(widget)));
 	printf("[ON_ENTER] 0x%x %s %d\n", (int) w, window_target(w), w->id);
 	command_exec(w ? w->target : NULL, w ? w->session : NULL, txt, 0);
 
 	gtk_entry_set_text(GTK_ENTRY(widget), "");
+	free_utf(txt);
 	return TRUE;
 }
 
@@ -190,7 +191,7 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 
 	if (!(s = session_find(session))) return FALSE;
 	
-	if (uid) command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, "/%s %s", action, uid);
+	if (uid) command_exec_format((window_current->session == s) ? window_current->target : nick /* hmmm.. TODO */, s, 0, TEXT("/%s %s"), action, uid);
 	else if (window_current->id == 0 || !window_current->target) { /* zmiana sesji... kod troche sciagniety z ncurses.. czy dobry? */
 //		window_session_cycle(window_current);
 		window_current->session = s;
@@ -283,7 +284,7 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 /* zmiana strony - zmiana okna */
 gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data) {
 	int realid;
-	if (in_autoexec) 
+	if (ui_quit) 
 		return FALSE;
 	realid = gtk_window_dump(GTK_WIDGET(page), 1);
 	if (window_current->id == realid)
@@ -324,12 +325,12 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 		/* TODO: przepisac obsluge bindingow? 
 		 * 	BO tak mamy niefajnie... */
 
-		if (event->keyval == GDK_F1) { command_exec(NULL, NULL, "/help", 0); return TRUE; }
-		if (event->keyval == GDK_F12) { command_exec(NULL, NULL, "/window switch 0", 0); return TRUE; }
+		if (event->keyval == GDK_F1) { command_exec(NULL, NULL, TEXT("/help"), 0); return TRUE; }
+		if (event->keyval == GDK_F12) { command_exec(NULL, NULL, TEXT("/window switch 0"), 0); return TRUE; }
 		if (event->state == GDK_CONTROL_MASK) { /* CTRL- */
 			switch (event->keyval) {
-				case(110): command_exec(NULL, NULL, "/window next", 0); return TRUE;
-				case(112): command_exec(NULL, NULL, "/window prev", 0); return TRUE;
+				case(110): command_exec(NULL, NULL, TEXT("/window next"), 0); return TRUE;
+				case(112): command_exec(NULL, NULL, TEXT("/window prev"), 0); return TRUE;
 			}
 		}
 		if (event->state == GDK_MOD1_MASK) { /* LALT- */
@@ -350,8 +351,8 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 				case(111): gotowindow = 19; break;
 				case(112): gotowindow = 20; break;
 				/* inne */
-				case(110): command_exec(NULL, NULL, "/window new", 0); return TRUE;
-				case(107): command_exec(NULL, NULL, "/window kill", 0); return TRUE;
+				case(110): command_exec(NULL, NULL, TEXT("/window new"), 0); return TRUE;
+				case(107): command_exec(NULL, NULL, TEXT("/window kill"), 0); return TRUE;
 				/* jeszcze inne */
 				case(GDK_Return): printf("[TEMP_BIND] ALT+ENTER!!!\n"); return TRUE; /* co robimy? */
 			}
@@ -640,7 +641,6 @@ int gtk_create() {
 //		gtk_text_buffer_create_tag(buffer, "FG_DARKGREEN", "foreground", "darkgreen", NULL);
 //		gtk_text_buffer_create_tag(buffer, "FG_LIGHTGREEN", "foreground", "green", NULL);
 	}
-#if 0
 	{ 	/* ikonka */
 		const char *iconfile = DATADIR"/plugins/gtk/ekg2.png";
 		GError *error = NULL;
@@ -649,7 +649,7 @@ int gtk_create() {
 			printf("LOAD_ICON() filename=%s; err=%x;\n", iconfile, (int) error);
 		}
 		gtk_window_set_icon(GTK_WINDOW(ekg_main_win), icon);
-
+#if 0
 		/* tray + TODO: ikonka w trayu*/
 /* egg_tray_icon_realize() */
 		ekg2_trayicon *tray = xmalloc(sizeof(ekg2_trayicon));
@@ -706,8 +706,9 @@ int gtk_create() {
 	root_window = gdk_screen_get_root_window (gtk_widget_get_screen (widget));
 	gdk_window_remove_filter (root_window, egg_tray_icon_manager_filter, icon);
 #endif
-	}
+
 #endif
+	}
 	gtk_widget_grab_focus(edit1);
 	gtk_widget_show_all (win);
 
@@ -871,13 +872,13 @@ void gtk_contacts_update(window_t *w) {
 	}
 }
 
-void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *attr, int istimestamp) {
+void gtk_process_str(window_t *w, GtkTextBuffer *buffer, const CHAR_T *str, const short int *attr, int istimestamp) {
 	GtkTextIter iter;
 	GtkTextTag *tags[2] = {NULL, NULL};
 	int len = 0;
 	int i;
 /* jeszcze gorzej... ale unicode juz dziala ;)  i powinno byc `troche szybsze` */
-	for (i=0; i < xstrlen(str); i++) {
+	for (i=0; i < xwcslen(str); i++) {
 		short att = attr[i];
 		GtkTextTag *newtags[2] = {NULL, NULL};
 
@@ -887,11 +888,14 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *a
 		if (istimestamp && (att & 7) == 0) tags[1] = ekg2_tag_bold;
 
 		if (len && ((tags[0] != newtags[0] || tags[1] != newtags[1]))) {
+			char *tmp = wcs_to_normal_n(str+i-len, len);
 			gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 			gtk_text_buffer_insert_with_tags(buffer, &iter, 
-					str+i-len, len, 
+					tmp, len,
+//					str+i-len, len, 
 					tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
 			len = 0;
+			free_utf(tmp);
 		}
 
 		tags[0] = newtags[0];
@@ -899,8 +903,10 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, char *str, short int *a
 		len++;
 	}
 	if (len) {
+		char *tmp = wcs_to_normal_n(str+xwcslen(str)-len, len);
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-		gtk_text_buffer_insert_with_tags(buffer, &iter, str+xstrlen(str)-len, len, tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
+		gtk_text_buffer_insert_with_tags(buffer, &iter, tmp, len, tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
+		free_utf(tmp);
 	}
 }
 
@@ -920,11 +926,9 @@ QUERY(gtk_ui_window_print) {
 
 	if (config_timestamp && config_timestamp_show && xstrcmp(config_timestamp, "")) {
 		char *tmp = format_string(config_timestamp);
-		char *ts  = saprintf("%s ", timestamp(tmp));
-		fstring_t *t = fstring_new(ts);
-
+		CHAR_T *ts  = wcsprintf(TEXT("%s "), timestamp(tmp));
+		fstring_t *t = wcs_fstring_new(ts);
 		gtk_process_str(w, buffer, t->str, t->attr, 1);
-		
 		xfree(tmp);
 		xfree(ts);
 		fstring_free(t);
@@ -1001,14 +1005,19 @@ QUERY(gtk_ui_window_switch) {
 	int realid;
 	if (!n)
 		return 1;
-	realid = gtk_window_dump(n->win, 0);
+	if (w->floating) {
+		/* TODO: show window: n->win */
+		return 2;
+	} else {
+		realid = gtk_window_dump(n->win, 0);
 
-	if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == realid)
-		return 1;
+		if (gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook)) == realid)
+			return 1;
 
-/* TODO: watch out on w->floating... */
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), realid);
-	gtk_contacts_update(NULL);
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), realid);
+		gtk_contacts_update(NULL);
+		gtk_ui_window_act_changed(NULL, NULL); /* ? */
+	}
 	return 0;
 }
 
@@ -1064,8 +1073,8 @@ QUERY(gtk_ui_window_act_changed) {
 			}
 		} else 
 			gdk_color_parse("yellow", attr);
-		gtk_widget_modify_fg (GTK_WIDGET(l), GTK_STATE_NORMAL, attr);
-/* TODO, do dokonczenia. think about pango_color_copy() ? and making it once in gtk_create() ? */
+		gtk_widget_modify_fg (GTK_WIDGET(l), GTK_STATE_NORMAL, gdk_color_copy(attr));
+/* TODO, do dokonczenia. think about gdk_color_copy() ? and making it once in gtk_create() ? */
 	}
 	return 0;
 #undef printf
