@@ -34,8 +34,10 @@
 
 COMMAND(gg_command_find)
 {
+	PARUNI
 	gg_private_t *g = session_private_get(session);
-	char **argv = NULL, *user;
+	CHAR_T **argv = NULL, *user;
+	char **uargv = NULL;
 	gg_pubdir50_t req;
 	int i, res = 0, all = 0;
 
@@ -55,33 +57,39 @@ COMMAND(gg_command_find)
 			list_remove(&g->searches, s, 0);
 		}
 		
-		printq("search_stopped");
+		wcs_printq("search_stopped");
 
 		return 0;
 	}
 	
 	if (!params[0]) {
-		if (!(params[0] = xstrdup(window_current->target))) {
+		if (!(params[0] = xwcsdup(normal_to_wcs(window_current->target)))) {
 			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 		params[1] = NULL;
 	}
 
-	argv = (char **) params;
+	argv = (CHAR_T **) params;
 
 	if (argv[0] && !argv[1] && argv[0][0] == '#') {
+#if USE_UNICODE
+		return command_exec_format(target, session, quiet, TEXT("/conference --find %ls"), argv[0]);
+#else
 		return command_exec_format(target, session, quiet, TEXT("/conference --find %s"), argv[0]);
+#endif
 	}
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH))) {
 		return -1;
 	}
 
-	user = xstrdup(argv[0]);
+	uargv = xcalloc(wcs_array_count(argv)+1, sizeof(CHAR_T **));
+
+	user = xwcsdup(argv[0]);
 	
 	if (argv[0] && argv[0][0] != '-') {
-		const char *uid = get_uid(session, argv[0]);
+		const char *uid = get_uid(session, wcs_to_normal(argv[0])); /* UUU */
 
 		if (!uid) {
 			printq("user_not_found", user);
@@ -90,7 +98,7 @@ COMMAND(gg_command_find)
 		}
 
 		if (xstrncasecmp(uid, "gg:", 3)) {
-			printq("generic_error", "Tylko GG");
+			wcs_printq("generic_error", TEXT("Tylko GG"));
 			xfree(user);
 			return -1;
 		}
@@ -98,12 +106,12 @@ COMMAND(gg_command_find)
 		gg_pubdir50_add(req, GG_PUBDIR50_UIN, uid + 3);
 
 		for (i = 1; argv[i]; i++)
-			gg_iso_to_cp(argv[i]);
+			uargv[i] = gg_locale_to_cp(argv[i]);
 
 		i = 1;
 	} else {
 		for (i = 0; argv[i]; i++)
-			gg_iso_to_cp(argv[i]);
+			uargv[i] = gg_locale_to_cp(argv[i]);
 		
 		i = 0;
 	}
@@ -111,35 +119,35 @@ COMMAND(gg_command_find)
 	xfree(user);
 
 	for (; argv[i]; i++) {
-		char *arg = argv[i];
+		CHAR_T *arg = argv[i];
 				
 		if (match_arg(arg, 'f', TEXT("first"), 2) && argv[i + 1]) {
-			gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, argv[++i]);
+			gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, uargv[++i]);
 			continue;
 		}
 
 		if (match_arg(arg, 'l', TEXT("last"), 2) && argv[i + 1]) {
-			gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, argv[++i]);
+			gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, uargv[++i]);
 			continue;
 		}
 
 		if (match_arg(arg, 'n', TEXT("nickname"), 2) && argv[i + 1]) {
-			gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, argv[++i]);
+			gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, uargv[++i]);
 			continue;
 		}
 		
 		if (match_arg(arg, 'c', TEXT("city"), 2) && argv[i + 1]) {
-			gg_pubdir50_add(req, GG_PUBDIR50_CITY, argv[++i]);
+			gg_pubdir50_add(req, GG_PUBDIR50_CITY, uargv[++i]);
 			continue;
 		}
 
 		if (match_arg(arg, 'u', TEXT("uin"), 2) && argv[i + 1]) {
-			gg_pubdir50_add(req, GG_PUBDIR50_UIN, argv[++i]);
+			gg_pubdir50_add(req, GG_PUBDIR50_UIN, uargv[++i]);
 			continue;
 		}
 		
 		if (match_arg(arg, 's', TEXT("start"), 3) && argv[i + 1]) {
-			gg_pubdir50_add(req, GG_PUBDIR50_START, argv[++i]);
+			gg_pubdir50_add(req, GG_PUBDIR50_START, uargv[++i]);
 			continue;
 		}
 		
@@ -159,12 +167,12 @@ COMMAND(gg_command_find)
 		}
 
 		if (match_arg(arg, 'b', TEXT("born"), 2) && argv[i + 1]) {
-			char *foo = xstrchr(argv[++i], ':');
+			char *foo = xstrchr(uargv[++i], ':');
 		
 			if (foo)
 				*foo = ' ';
 
-			gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, argv[i]);
+			gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, uargv[i]);
 			continue;
 		}
 
@@ -177,8 +185,18 @@ COMMAND(gg_command_find)
 
 		wcs_printq("invalid_params", name);
 		gg_pubdir50_free(req);
+#if USE_UNICODE
+		array_free(uargv);
+#else
+		xfree(uargv);
+#endif
 		return -1;
 	}
+#if USE_UNICODE
+		array_free(uargv);
+#else
+		xfree(uargv);
+#endif
 
 	if (!gg_pubdir50(g->sess, req)) {
 		wcs_printq("search_failed", TEXT("Nie wiem o co chodzi"));
@@ -195,6 +213,7 @@ COMMAND(gg_command_find)
 
 COMMAND(gg_command_change)
 {
+	PARUNI
 	gg_private_t *g = session_private_get(session);
 	int i;
 	gg_pubdir50_t req;
@@ -212,45 +231,47 @@ COMMAND(gg_command_change)
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_WRITE)))
 		return -1;
 
-	if (xstrcmp(params[0], "-")) {
-		char **argv = array_make(params[0], " \t", 0, 1, 1);
+	if (xwcscmp(params[0], TEXT("-"))) {
+		CHAR_T **argv = wcs_array_make(params[0], TEXT(" \t"), 0, 1, 1);
+		char **uargv = xcalloc(wcs_array_count(argv)+1, sizeof(char *));
 		
-		for (i = 0; argv[i]; i++)
-			gg_iso_to_cp(argv[i]);
+		for (i = 0; argv[i]; i++) {
+			uargv[i] = gg_locale_to_cp(argv[i]);
+		}
 
 		for (i = 0; argv[i]; i++) {
 			if (match_arg(argv[i], 'f', TEXT("first"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, argv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, uargv[++i]);
 				continue;
 			}
 
 			if (match_arg(argv[i], 'N', TEXT("familyname"), 7) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, argv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, uargv[++i]);
 				continue;
 			}
 		
 			if (match_arg(argv[i], 'l', TEXT("last"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, argv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, uargv[++i]);
 				continue;
 			}
 		
 			if (match_arg(argv[i], 'n', TEXT("nickname"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, argv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, uargv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'c', TEXT("city"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_CITY, argv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_CITY, uargv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'C', TEXT("familycity"), 7) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, argv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, uargv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'b', TEXT("born"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, argv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, uargv[++i]);
 				continue;
 			}
 			
@@ -266,11 +287,16 @@ COMMAND(gg_command_change)
 
 			wcs_printq("invalid_params", name);
 			gg_pubdir50_free(req);
-			array_free(argv);
+			wcs_array_free(argv);
 			return -1;
 		}
 
-		array_free(argv);
+		wcs_array_free(argv);
+#if USE_UNICODE
+		array_free(uargv);
+#else
+		xfree(uargv);
+#endif
 	}
 
 	if (!gg_pubdir50(g->sess, req)) {

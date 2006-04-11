@@ -175,9 +175,10 @@ QUERY(gg_userlist_added_handle)
 	char **uid = va_arg(ap, char**);
 	char **params = va_arg(ap, char**);
 	int *quiet = va_arg(ap, int*);
+
+	CHAR_T *par = normal_to_wcs(array_join(params, " "));
 /* TODO: CHANGE to command_exec() !!!!. buggy. */
-//	return command_exec(NULL, session_current, *params, *quiet);	
-	return gg_command_modify(TEXT("add"), (const char **) params, session_current, NULL, *quiet);
+	return command_exec(NULL, session_current, par, *quiet);
 }
 
 
@@ -609,48 +610,58 @@ static void gg_session_handler_disconnect(session_t *s)
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol)
 {
 	char *__session	= xstrdup(session_uid_get(s));
-	char *__uid	= saprintf("gg:%d", uin);
-	char *__status	= xstrdup(gg_status_to_text(status));
+	CHAR_T *__uid	= wcsprintf(TEXT("gg:%d"), uin);
+	CHAR_T *__status= xwcsdup(gg_status_to_text(status));
 	char *__descr	= xstrdup(descr);
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
 	int __port	= port, i, j, dlen, state = 0, m = 0;
 	userlist_t *u;
+	CHAR_T *sdescr;
 
-	gg_cp_to_iso(__descr);
+	sdescr = gg_cp_to_locale(__descr);
 	
-	if ((u = userlist_find(s, __uid)))
+	if ((u = userlist_find(s, wcs_to_normal(__uid)))) /* UUU */
 		u->protocol = protocol;
 
-	for (i = 0; i < xstrlen(__descr); i++)
-		if (__descr[i] == 10 || __descr[i] == 13)
+	for (i = 0; i < xwcslen(sdescr); i++)
+		if (sdescr[i] == 10 || sdescr[i] == 13)
 			m++;
 	dlen = i;
 	/* if it is not set it'll be -1 so, everythings ok */
 	if ( (i = session_int_get(s, "concat_multiline_status")) && m > i)
 	{
 		for (m = i = j = 0; i < dlen; i++) {
-			if (__descr[i] != 10 && __descr[i] != 13) {
-				__descr[j++] = __descr[i];
+			if (sdescr[i] != 10 && sdescr[i] != 13) {
+				sdescr[j++] = sdescr[i];
 				state = 0;
 			} else {
-				if (!state && __descr[i] == 10)
-					__descr[j++] = ' ';
+				if (!state && sdescr[i] == 10)
+					sdescr[j++] = ' ';
 				else
 					m++;
-				if (__descr[i] == 10)
+				if (sdescr[i] == 10)
 					state++;
 			}
 		}
-		__descr[j] = '\0';
+		sdescr[j] = '\0';
 		if (m > 3) {
 			memmove (__descr+4, __descr, j + 1);
 			/* multiline tag */
-			__descr[0] = '['; __descr[1] = 'm'; __descr[2] = ']'; __descr[3] = ' ';
+			sdescr[0] = '['; sdescr[1] = 'm'; sdescr[2] = ']'; sdescr[3] = ' ';
 		}
 
 	}
-	query_emit(NULL, "protocol-status", &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
+	{
+		CHAR_T *session	= normal_to_wcs(__session);
+		CHAR_T *host	= normal_to_wcs(__host);
+
+		query_emit(NULL, "wcs_protocol-status", &session, &__uid, &__status, &sdescr, &host, &__port, &when, NULL);
+
+		free_utf(session);
+		free_utf(host);
+	}
+	free_utf(sdescr);
 
 	xfree(__host);
 	xfree(__descr);
@@ -666,7 +677,9 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
  */
 void gg_session_handler_msg(session_t *s, struct gg_event *e)
 {
-	char *__sender, *__text, **__rcpts = NULL;
+	char *__sender, **__rcpts = NULL;
+	char *__text;
+	CHAR_T *ltext;
 	uint32_t *__format = NULL;
 	int image = 0, check_inv = 0;
 	int i;
@@ -713,7 +726,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
 
 	__text = xstrdup(e->event.msg.message);
-	gg_cp_to_iso(__text);
+	ltext = gg_cp_to_locale(__text);
 	
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
@@ -779,7 +792,11 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 /*		if (!check_inv || xstrcmp(__text, ""))
 			printq("generic", "image in message.\n"); - or something
  */
-		query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+		{
+			char *text = wcs_to_normal(ltext);
+			query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+			free_utf(text);
+		}
 		xfree(__session);
 
 /*		xfree(__seq); */
@@ -789,6 +806,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 	xfree(__sender);
 	xfree(__format);
 	array_free(__rcpts);
+	free_utf(ltext);
 }
 
 /*
@@ -799,27 +817,30 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 {
 	char *__session = xstrdup(session_uid_get(s));
-	char *__rcpt	= saprintf("gg:%d", e->event.ack.recipient);
-	char *__seq	= xstrdup(itoa(e->event.ack.seq));
-	char *__status;
+	CHAR_T *__rcpt	= wcsprintf(TEXT("gg:%d"), e->event.ack.recipient);
+	CHAR_T *__seq	= xwcsdup(wcs_itoa(e->event.ack.seq));
+	CHAR_T *__status;
 
 	switch (e->event.ack.status) {
 		case GG_ACK_DELIVERED:
-			__status = xstrdup(EKG_ACK_DELIVERED);
+			__status = xwcsdup(EKG_ACK_DELIVERED);
 			break;
 		case GG_ACK_QUEUED:
-			__status = xstrdup(EKG_ACK_QUEUED);
+			__status = xwcsdup(EKG_ACK_QUEUED);
 			break;
 		case GG_ACK_NOT_DELIVERED:
-			__status = xstrdup(EKG_ACK_DROPPED);
+			__status = xwcsdup(EKG_ACK_DROPPED);
 			break;
 		default:
 			debug("[gg] unknown message ack status. consider upgrade\n");
-			__status = xstrdup(EKG_ACK_UNKNOWN);
+			__status = xwcsdup(EKG_ACK_UNKNOWN);
 			break;
 	}
-
-	query_emit(NULL, "protocol-message-ack", &__session, &__rcpt, &__seq, &__status, NULL);
+	{
+		CHAR_T *session = normal_to_wcs(__session);
+		query_emit(NULL, "protocol-message-ack", &session, &__rcpt, &__seq, &__status, NULL);
+		free_utf(session);
+	}
 	
 	xfree(__status);
 	xfree(__seq);

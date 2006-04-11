@@ -104,7 +104,9 @@ fail:
 
 COMMAND(gg_command_register)
 {
+	PARASC
 	struct gg_http *h;
+	CHAR_T *upasswd;
 	char *passwd;
 	watch_t *w;
 
@@ -129,16 +131,18 @@ COMMAND(gg_command_register)
         }
 
 
-	passwd = xstrdup(params[1]);
-	gg_iso_to_cp(passwd);
+	upasswd = xwcsdup(normal_to_wcs(params[1])); /* UUU */
+	passwd = gg_locale_to_cp(upasswd);
 	
 	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[2], 1))) {
-		xfree(passwd);
+		free_utf(passwd);
+		xfree(upasswd);
 		printq("register_failed", strerror(errno));
 		return -1;
 	}
 
-	xfree(passwd);
+	free_utf(passwd);
+	xfree(upasswd);
 
 	w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_register, h); 
 	watch_timeout_set(w, h->timeout);
@@ -197,6 +201,7 @@ fail:
 
 COMMAND(gg_command_unregister)
 {
+	PARASC
 	struct gg_http *h;
 	char *passwd;
 	watch_t *w;
@@ -308,6 +313,7 @@ fail:
 
 COMMAND(gg_command_passwd)
 {
+	PARASC
 	gg_private_t *g = session_private_get(session);
 	char *oldpasswd, *newpasswd;
 	struct gg_http *h;
@@ -382,6 +388,7 @@ fail:
 
 COMMAND(gg_command_remind)
 {
+	PARASC
 	gg_private_t *g = session_private_get(session);
 	struct gg_http *h;
 	watch_t *w;
@@ -419,6 +426,7 @@ COMMAND(gg_command_remind)
 
 COMMAND(gg_command_list)
 {
+	PARUNI
 /* moze mi ktos qrwa powiedziec po co bylo to passwd ? tylko byly memleaki i jakies goto.... */
 	gg_private_t *g = session_private_get(session);
 	/* list --get */

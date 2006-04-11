@@ -24,7 +24,7 @@
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
 
-const char *gg_status_to_text(int status);
+const CHAR_T *gg_status_to_text(int status);
 int gg_text_to_status(const char *text, const char *descr);
 unsigned char *gg_locale_to_cp(CHAR_T *buf);
 CHAR_T *gg_cp_to_locale(unsigned char *buf);

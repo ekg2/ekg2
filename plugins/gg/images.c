@@ -60,13 +60,14 @@ void gg_changed_images(const CHAR_T *var)
 			gg_config_image_size = 20;
 
 	if (!in_autoexec) 
-		print("config_must_reconnect");
+		wcs_print("config_must_reconnect");
 }
 
 
 
 COMMAND(gg_command_image)
 {
+	PARASC
 	gg_private_t *g = session_private_get(session);
 	FILE *f;
 	uint32_t size, crc32;

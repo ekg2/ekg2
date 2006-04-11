@@ -34,6 +34,7 @@
 
 #include "gg.h"
 
+CHAR_T *gg_cp_to_locale(unsigned char *buf_);
 #if USE_UNICODE
 struct table_entry {
 	unsigned char 	ch;
@@ -60,6 +61,7 @@ struct table_entry table_cp1250 [] = {
 	{ 0xF0, 0x0111 }, { 0xF1, 0x0144 }, { 0xF2, 0x0148 }, { 0xF3, 0x00F3 }, { 0xF4, 0x00F4 }, { 0xF5, 0x0151 }, { 0xF6, 0x00F6 },
 	{ 0xF7, 0x00F7 }, { 0xF8, 0x0159 }, { 0xF9, 0x016F }, { 0xFA, 0x00FA }, { 0xFB, 0x0171 }, { 0xFC, 0x00FC }, { 0xFD, 0x00FD }, 
 	{ 0xFE, 0x0163 }, { 0xFF, 0x02D9 }, { 0x00, 0x0000 }, };
+
 #endif
 
 /*
@@ -114,28 +116,30 @@ unsigned char *gg_iso_to_cp(unsigned char *buf)
 }
 
 unsigned char *gg_locale_to_cp(CHAR_T *buf_) {
+	if (!buf_)
+		return NULL;
 #if USE_UNICODE
 	unsigned char *buf = xmalloc(xwcslen(buf_) * sizeof(unsigned char));
 	unsigned char *tmp = buf;
 
 	while (*buf_) {
 		struct table_entry *enc = (struct table_entry *) &(table_cp1250);
-		if (*buf_ >= 80) {
-			while (enc) {
+		if (*buf_ >= 0x80) {
+			unsigned char a = '?'; /* jesli nie mozemy przekonwertowac znaczka unicodowego na cp1250 - nie mamy czegos takiego w tablicy to dajemy '?' ? :>*/
+			while (enc->ch) {
 				if (enc->wc == *buf_) {
-					*buf = enc->ch;
+					a = enc->ch;
 					break;
 				}
 				enc++;
 			}
-			*buf = '?'; /* jesli nie mozemy przekonwertowac znaczka unicodowego na cp1250 - nie mamy czegos takiego w tablicy to dajemy '?' ? :>*/
+			*buf = a;
 		} else {
 			*buf = *buf_;
 		}
 		buf_++;
 		buf++;
 	}
-	
 	return tmp;
 #else
 	return gg_iso_to_cp(buf_);
@@ -170,30 +174,30 @@ CHAR_T *gg_cp_to_locale(unsigned char *buf_) {
  *  
  *  - status
  */
-const char *gg_status_to_text(int status)
+const CHAR_T *gg_status_to_text(int status)
 {
 	switch (GG_S(status)) {
 		case GG_STATUS_AVAIL:
 		case GG_STATUS_AVAIL_DESCR:
-			return EKG_STATUS_AVAIL;
+			return WCS_EKG_STATUS_AVAIL;
 
 		case GG_STATUS_NOT_AVAIL:
 		case GG_STATUS_NOT_AVAIL_DESCR:
-			return EKG_STATUS_NA;
+			return WCS_EKG_STATUS_NA;
 
 		case GG_STATUS_BUSY:
 		case GG_STATUS_BUSY_DESCR:
-			return EKG_STATUS_AWAY;
+			return WCS_EKG_STATUS_AWAY;
 				
 		case GG_STATUS_INVISIBLE:
 		case GG_STATUS_INVISIBLE_DESCR:
-			return EKG_STATUS_INVISIBLE;
+			return WCS_EKG_STATUS_INVISIBLE;
 
 		case GG_STATUS_BLOCKED:
-			return EKG_STATUS_BLOCKED;
+			return WCS_EKG_STATUS_BLOCKED;
 	}
 
-	return EKG_STATUS_UNKNOWN;
+	return WCS_EKG_STATUS_UNKNOWN;
 }
 
 /*

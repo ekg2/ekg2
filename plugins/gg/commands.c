@@ -67,6 +67,7 @@
 
 COMMAND(gg_command_connect)
 {
+	PARUNI
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
 	int ret = 0;
@@ -83,23 +84,27 @@ COMMAND(gg_command_connect)
 			printq("not_connected", session_name(session));
 		} else {
 			char *__session = xstrdup(session->uid);
-			char *__reason = xstrdup(params[0]);
+			CHAR_T *__reason = xwcsdup(params[0]);
 			int __type = EKG_DISCONNECT_USER;
 
 			if (__reason) {
-                		char *tmp = xstrdup(__reason);
+                		CHAR_T *tmp = xwcsdup(__reason);
+				char *sreason = wcs_to_normal(tmp);
+				char *tmp_ = NULL;		/* znaczki w cp1250 */
 
-	                        if (!xstrcmp(tmp, "-")) {
+	                        if (!xwcscmp(tmp, TEXT("-"))) {
         	                        xfree(tmp);
                 	                tmp = NULL;
                         	} else 
-	                		gg_iso_to_cp(tmp);
+	                		tmp_ = gg_locale_to_cp(tmp);
 
           			if (config_keep_reason)
-					session_descr_set(session, __reason);
+					session_descr_set(session, sreason);
 				
-				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
+				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp_);
                 		xfree(tmp);
+				free_utf(sreason);
+				free_utf(tmp_);
         		} else
   			        gg_change_status(g->sess, GG_STATUS_NOT_AVAIL);
 
@@ -110,7 +115,11 @@ COMMAND(gg_command_connect)
 			g->sess = NULL;
 			session_connected_set(session, 0);
 
-			query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+			{
+				CHAR_T *session = normal_to_wcs(__session);
+				query_emit(NULL, "wcs_protocol-disconnected", &session, &__reason, &__type, NULL);
+				free_utf(session);
+			}
 
 			xfree(__session);
 			xfree(__reason);
@@ -294,6 +303,7 @@ end:
 
 COMMAND(gg_command_away)
 {
+	PARASC
 	gg_private_t *g = session_private_get(session);
 	char *descr, *f = NULL, *fd = NULL, *df = NULL, *params0 = xstrdup(params[0]);
 	const char *status;
@@ -434,8 +444,11 @@ COMMAND(gg_command_away)
 		autoscroll = timeout;
 	} else
 		descr = xstrdup(session_descr_get(session));
-
+#if USE_UNICODE
+	debug("%ls - %s\n", name, descr);
+#else
 	debug("%s - %s\n", name, descr);
+#endif
 	status = session_status_get(session);
 
 	if (!autoscroll) {
@@ -470,9 +483,15 @@ COMMAND(gg_command_away)
 	
 COMMAND(gg_command_msg)
 {
+	PARUNI
 	int count, valid = 0, chat, secure = 0, formatlen = 0;
 	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL;
-	unsigned char *msg = NULL, *raw_msg = NULL, *format = NULL;
+#if USE_UNICODE
+	CHAR_T *msg = NULL, *raw_msg = NULL;
+#else
+	unsigned char *msg = NULL, *raw_msg = NULL;
+#endif
+	unsigned char *cpmsg = NULL, *format = NULL;
 	const char *seq;
 	uint32_t *ekg_format = NULL;
 	userlist_t *u;
@@ -482,7 +501,7 @@ COMMAND(gg_command_msg)
 
 	session_unidle(session);
 
-        if (!xstrcmp(params[0], "*")) {
+        if (!xwcscmp(params[0], TEXT("*"))) {
 		if (msg_all(session, name, params[1]) == -1)
 			wcs_printq("list_empty");
 		return 0;
@@ -558,29 +577,32 @@ COMMAND(gg_command_msg)
 		return 0;
 	}
 
-	if (gg_config_split_messages && xstrlen(params[1]) > 1989) {
-		int i, len = xstrlen(params[1]);
+	if (gg_config_split_messages && xwcslen(params[1]) > 1989) {
+		int i, len = xwcslen(params[1]);
 		
 		for (i = 1; i * 1989 <= len; i++) {
-			char *tmp = (i != len) ? xstrndup(params[1] + (i - 1) * 1989, 1989) : xstrdup(params[1] + (i - 1) * 1989);
-
+			CHAR_T *tmp = (i != len) ? xwcsndup(params[1] + (i - 1) * 1989, 1989) : xwcsdup(params[1] + (i - 1) * 1989);
+#if USE_UNICODE
+			command_exec_format(target, session, 0, TEXT("/%ls %s %ls"), name, target, tmp);
+#else
 			command_exec_format(target, session, 0, TEXT("/%s %s %s"), name, target, tmp);
+#endif
 			xfree(tmp);
 		}
 	
 		return 0;
 
-	} else if (xstrlen(params[1]) > 1989) {
+	} else if (xwcslen(params[1]) > 1989) {
               wcs_printq("message_too_long");
 	}
 
-	msg = xstrmid(params[1], 0, 1989);
+	msg = xwcsmid(params[1], 0, 1989);
 	ekg_format = ekg_sent_message_format(msg);
 
 	/* analizê tekstu zrobimy w osobnym bloku dla porz±dku */
 	{
 		unsigned char attr = 0, last_attr = 0;
-		const unsigned char *p = msg, *end = p + xstrlen(p);
+		const CHAR_T *p = msg, *end = p + xwcslen(p);
 		int msglen = 0;
 		unsigned char rgb[3], last_rgb[3];
 
@@ -589,7 +611,7 @@ COMMAND(gg_command_msg)
 				p++;
 
 				if (xisdigit(*p)) {
-					int num = atoi(p);
+					int num = wcs_atoi(p);
 					
 					if (num < 0 || num > 15)
 						num = 0;
@@ -679,8 +701,8 @@ COMMAND(gg_command_msg)
 		}
 	}
 
-	raw_msg = xstrdup(msg);
-	gg_iso_to_cp(msg);
+	raw_msg = xwcsdup(msg);
+	cpmsg = gg_locale_to_cp(msg);
 
 	count = array_count(nicks);
 
@@ -701,7 +723,7 @@ COMMAND(gg_command_msg)
 			last_add(1, uid, time(NULL), 0, msg);
 
 		if (!chat || count == 1) {
-			unsigned char *__msg = xstrdup(msg);
+			char *__msg = xstrdup(cpmsg);
 			char *sid = xstrdup(session->uid);
 			char *uid_tmp = xstrdup(uid);
 			uin_t uin = atoi(uid + 3);
@@ -741,7 +763,7 @@ COMMAND(gg_command_msg)
 		}
 
 		if (g->sess) 
-			seq = itoa(gg_send_message_confer_richtext(g->sess, GG_CLASS_CHAT, realcount, uins, msg, format, formatlen));
+			seq = itoa(gg_send_message_confer_richtext(g->sess, GG_CLASS_CHAT, realcount, uins, cpmsg, format, formatlen));
 		else
 			seq = "offline";
 
@@ -771,8 +793,11 @@ COMMAND(gg_command_msg)
 		
 		rcpts[0] = xstrdup(nick);
 		rcpts[1] = NULL;
-		
-		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
+		{
+			char *rmsg = wcs_to_normal(raw_msg);
+			query_emit(NULL, "protocol-message", &me, &me, &rcpts, &rmsg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
+			free_utf(rmsg);
+		}
 
 		xfree(me);
 		xfree(rcpts[0]);
@@ -794,7 +819,8 @@ COMMAND(gg_command_msg)
 
 COMMAND(gg_command_inline_msg)
 {
-	const char *p[2] = { NULL, params[0] };
+	PARUNI
+	const CHAR_T *p[2] = { NULL, params[0] };
 
 	if (!target || !params[0]) 
 		return -1;
@@ -803,6 +829,7 @@ COMMAND(gg_command_inline_msg)
 
 COMMAND(gg_command_block)
 {
+	PARASC
 	const char *uid;
 
 	if (!params[0]) {
@@ -844,6 +871,7 @@ COMMAND(gg_command_block)
 
 COMMAND(gg_command_unblock)
 {
+	PARASC
 	const char *uid;
 
 	if (!xstrcmp(params[0], "*")) {
@@ -1105,6 +1133,7 @@ COMMAND(gg_command_token)
 
 COMMAND(gg_command_modify)
 {
+	PARASC
 	userlist_t *u;
 	char **argv = NULL;
 	int i, res = 0, modified = 0;
@@ -1381,6 +1410,11 @@ void gg_register_commands()
 #define GG_ONLY        SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define GG_FLAGS       GG_ONLY | SESSION_MUSTBECONNECTED
 #define GG_FLAGS_TARGET GG_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+
+#if USE_UNICODE
+#define LNULL NULL
+#define command_add(x, y, par, a, b, c) command_add(x, y, L##par, a, b, c)
+#endif
 	command_add(&gg_plugin, TEXT("gg:connect"), "r ?", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, TEXT("gg:disconnect"), "r ?", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, TEXT("gg:reconnect"), NULL, gg_command_connect, 	GG_ONLY, NULL);

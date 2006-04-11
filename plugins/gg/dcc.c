@@ -81,11 +81,12 @@ void gg_changed_dcc(const CHAR_T *var)
 	}
 
 	if (!in_autoexec)
-		print("config_must_reconnect");
+		wcs_print("config_must_reconnect");
 }
 
 COMMAND(gg_command_dcc)
 {
+	PARASC
 	uin_t uin = atoi(session->uid + 3);
 	gg_private_t *g = session_private_get(session);
 
@@ -353,7 +354,7 @@ COMMAND(gg_command_dcc)
 		return 0;
 	}
 
-	return cmd_dcc(name, params, session, target, quiet);
+	return cmd_dcc(name, params_, session, target, quiet);
 }
 
 void gg_dcc_close_handler(dcc_t *d)
@@ -435,7 +436,7 @@ WATCHER(gg_dcc_handler)
                                 dcc_limit_count++;
 
                                 if (dcc_limit_count > c) {
-                                        print("dcc_limit");
+                                        wcs_print("dcc_limit");
                                         gg_config_dcc = 0;
                                         gg_changed_dcc(TEXT("dcc"));
 
