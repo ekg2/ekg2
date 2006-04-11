@@ -1095,10 +1095,18 @@ void gtk_statusbar_timer() {
 /*	gtk_contacts_update(NULL); */
 }
 
+WATCHER(ekg2_xorg_watcher) {
+/* do nothing.. successfully. it's just like readline_watch_stdin() to don't matter about select() latency... default 1s. yeah I know it's only for
+ * communication between x'org server and gtk... gtk maybe want to do somethink else.. but we can provide it only by decreasing latency from 1s to for instance
+ * 0.1s in select() or by creating another thread.. */
+	return 0;
+}
+
 int gtk_plugin_init(int prio) {
 	const char *ekg2_another_ui = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
 	const char *ekg2_no_display = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
 	list_t l;
+	int xfd;
         int is_UI = 0;
 
         query_emit(NULL, "ui-is-initialized", &is_UI);
@@ -1150,6 +1158,11 @@ int gtk_plugin_init(int prio) {
 /*	timer_add(&gtk_plugin, "gtk:clock", 1, 1, gtk_statusbar_timer, NULL); */
 	
 	gtk_create();
+	xfd = XConnectionNumber(gdk_x11_display_get_xdisplay(gtk_widget_get_display(ekg_main_win))); /* pobiera fd */
+	printf("[HELLO ekg2-GTK] XFD: %d\n", xfd);
+	if (xfd != -1) {
+		watch_add(&gtk_plugin, xfd, WATCH_READ, 1, ekg2_xorg_watcher, NULL);
+	}
 	
 	for (l = windows; l; l = l->next) {
 		ekg_gtk_window_new(l->data);	
