@@ -463,6 +463,7 @@ COMMAND(jabber_command_auth)
 }
 
 COMMAND(jabber_command_modify)
+/* XXX REWRITE IT */
 {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
@@ -482,6 +483,9 @@ COMMAND(jabber_command_modify)
 			/* khm ? a nie powinnismy userlist_add() ? */
 			u = xmalloc(sizeof(userlist_t));
 		}
+	} else if (addcomm) {
+		printq("user_exists_other", params[0], format_user(session, u->uid), session_name(session));
+		return -1;
 	}
 
 	if (params[1]) {
