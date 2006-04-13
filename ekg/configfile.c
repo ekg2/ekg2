@@ -204,17 +204,19 @@ int config_read(const char *filename)
 
 		*foo++ = 0;
                 if (!xstrcasecmp(buf, "set")) {
-                        char *bar;
+			CHAR_T *ufoo = normal_to_wcs(foo);
+                        CHAR_T *bar;
 
-                        if (!(bar = xstrchr(foo, ' ')))
-                                ret = variable_set(foo, NULL, 0);
+                        if (!(bar = xwcschr(ufoo, ' ')))
+                                ret = variable_set(ufoo, NULL, 0);
                         else {
                                 *bar++ = 0;
-                                ret = variable_set(foo, bar, 0);
+                                ret = variable_set(ufoo, bar, 0);
                         }
 
                         if (ret)
                                 debug("  unknown variable %s\n", foo);
+			free_utf(ufoo);
 
                 } else if (!xstrcasecmp(buf, "plugin")) {
                         CHAR_T **p = wcs_array_make(normal_to_wcs(foo), TEXT(" \t"), 3, 1, 0);
@@ -588,7 +590,7 @@ int config_write()
  * 
  * 0/-1
  */
-int config_write_partly(const char *filename, char **vars)
+int config_write_partly(const char *filename, CHAR_T **vars)
 {
 	char *newfn, *line;
 	FILE *fi, *fo;
@@ -612,12 +614,12 @@ int config_write_partly(const char *filename, char **vars)
 		return -1;
 	}
 	
-	wrote = xcalloc(array_count(vars) + 1, sizeof(int));
+	wrote = xcalloc(wcs_array_count(vars) + 1, sizeof(int));
 	
 	fchmod(fileno(fo), 0600);
 
 	while ((line = read_file(fi))) {
-		char *tmp;
+		CHAR_T *tmp;
 
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
 			goto pass;
@@ -640,12 +642,12 @@ int config_write_partly(const char *filename, char **vars)
 			tmp += 4;
 		
 		for (i = 0; vars[i]; i++) {
-			int len = xstrlen(vars[i]);
+			int len = xwcslen(vars[i]);
 
-			if (xstrlen(tmp) < len + 1)
+			if (xwcslen(tmp) < len + 1)
 				continue;
 
-			if (xstrncasecmp(tmp, vars[i], len) || tmp[len] != ' ')
+			if (xwcsncasecmp(tmp, vars[i], len) || tmp[len] != ' ')
 				continue;
 			
 			config_write_variable(fo, variable_find(vars[i]));

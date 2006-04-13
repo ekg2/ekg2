@@ -992,20 +992,19 @@ for_end:
 
 COMMAND(cmd_help)
 {
-	PARASC
+	PARUNI
 	list_t l;
 	if (params[0]) {
-		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
+		const CHAR_T *p = (params[0][0] == '/' && xwcslen(params[0]) > 1) ? params[0] + 1 : params[0];
 		int plen;
-		CHAR_T *putf;
 
-		if (!xstrcasecmp(p, "set") && params[1]) {
+		if (!xwcscasecmp(p, TEXT("set")) && params[1]) {
 			if (!quiet)
 				variable_help(params[1]);
 			return 0;
 		}
 
-                if (!xstrcasecmp(p, "session") && params[1]) {
+                if (!xwcscasecmp(p, TEXT("session")) && params[1]) {
                         if (!quiet)
                                 session_help(session, params[1]);
                         return 0;
@@ -1016,20 +1015,19 @@ COMMAND(cmd_help)
 		} else
 			plen = 0;
 	
-		putf = normal_to_wcs(p); /* memleak */
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 			
-			if (!xwcscasecmp(c->name, putf) && (c->flags & COMMAND_ISALIAS)) {
+			if (!xwcscasecmp(c->name, p) && (c->flags & COMMAND_ISALIAS)) {
 				printq("help_alias", p);
 				return -1;
 			}
-			if (!xwcscasecmp(c->name, putf) && (c->flags & COMMAND_ISSCRIPT)) {
+			if (!xwcscasecmp(c->name, p) && (c->flags & COMMAND_ISSCRIPT)) {
 				printq("help_script", p);
 				return -1;
 			}
 
-			if ((!xwcscasecmp(c->name, putf) || !xwcscasecmp(c->name + plen, putf)) && !(c->flags & COMMAND_ISALIAS) ) {
+			if ((!xwcscasecmp(c->name, p) || !xwcscasecmp(c->name + plen, p)) && !(c->flags & COMMAND_ISALIAS) ) {
 				FILE *f; 
 				CHAR_T *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
 				const CHAR_T *seeking_name;
@@ -1695,13 +1693,13 @@ COMMAND(cmd_save)
 
 COMMAND(cmd_set)
 {
-	PARASC
-	const char *arg = NULL, *val = NULL;
+	PARUNI
+	const CHAR_T *arg = NULL, *val = NULL;
 	int unset = 0, show_all = 0, res = 0;
-	char *value = NULL;
+	CHAR_T *value = NULL;
 	list_t l;
 
-	if (nmatch_arg(params[0], 'a', TEXT("all"), 1)) {
+	if (match_arg(params[0], 'a', TEXT("all"), 1)) {
 		show_all = 1;
 		arg = params[1];
 		if (arg)
@@ -1718,21 +1716,20 @@ COMMAND(cmd_set)
 	}
 
 	if (arg && val) {
-		char **tmp = array_make(val, "", 0, 0, 1);
+		CHAR_T **tmp = wcs_array_make(val, TEXT(""), 0, 0, 1);
 
 		value = tmp[0];
 		tmp[0] = NULL;
-		array_free(tmp);
+		wcs_array_free(tmp);
 	}
 
 	if ((!arg || !val) && !unset) {
 		int displayed = 0;
-		CHAR_T *sarg = normal_to_wcs(arg);
 
 		for (l = variables; l; l = l->next) {
 			variable_t *v = l->data;
 			
-			if ((!arg || !xwcscasecmp(sarg, v->name)) && (v->display != 2 || xwcscmp(name, TEXT("set")))) {
+			if ((!arg || !xwcscasecmp(arg, v->name)) && (v->display != 2 || xwcscmp(name, TEXT("set")))) {
 				char *string = *(char**)(v->ptr);
 				int value = *(int*)(v->ptr);
 
@@ -1805,7 +1802,6 @@ COMMAND(cmd_set)
 				displayed = 1;
 			}
 		}
-		free_utf(sarg);
 
 		if (!displayed && params[0]) {
 			printq("variable_not_found", params[0]);
@@ -1815,12 +1811,12 @@ COMMAND(cmd_set)
 		variable_t *v = variable_find(arg);
 		theme_cache_reset();
 
-		if (!unset && !xstrcasecmp(value, "t")) {
+		if (!unset && !xwcscasecmp(value, TEXT("t"))) {
 			if (v->type == VAR_BOOL) {
 				int t_value = *(int*)(v->ptr);
 			
 				xfree(value);
-				value = (t_value) ? xstrdup("0") : xstrdup("1");
+				value = (t_value) ? xwcsdup(TEXT("0")) : xwcsdup(TEXT("1"));
 			}
 		} 
 

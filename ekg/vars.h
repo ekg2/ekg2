@@ -66,7 +66,7 @@ list_t variables;
 
 void variable_init();
 void variable_set_default();
-variable_t *variable_find(const char *name);
+variable_t *variable_find(const CHAR_T *name);
 variable_map_t *variable_map(int count, ...);
 #define variable_hash ekg_hash
 
@@ -80,10 +80,10 @@ variable_t *variable_add(
 	variable_map_t *map,
 	variable_display_func_t *dyndisplay);
 
-int variable_remove(plugin_t *plugin, const char *name);
+int variable_remove(plugin_t *plugin, const CHAR_T *name);
 
-int variable_set(const char *name, const char *value, int allow_foreign);
-void variable_help(const char *name);
+int variable_set(const CHAR_T *name, const char *value, int allow_foreign);
+void variable_help(const CHAR_T *name);
 void variable_free();
 
 #endif /* __EKG_VARS_H */

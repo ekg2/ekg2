@@ -159,24 +159,21 @@ void variable_set_default()
  *
  * - name.
  */
-variable_t *variable_find(const char *name)
+variable_t *variable_find(const CHAR_T *name)
 {
 	list_t l;
 	int hash;
-	CHAR_T *sname;
 
 	if (!name)
 		return NULL;
 
-	sname = normal_to_wcs(name);
-	hash = variable_hash(sname);
+	hash = variable_hash(name);
 
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
-		if (v->name_hash == hash && !xwcscasecmp(v->name, sname))
+		if (v->name_hash == hash && !xwcscasecmp(v->name, name))
 			return v;
 	}
-	free_utf(sname);
 
 	return NULL;
 }
@@ -317,25 +314,22 @@ variable_t *variable_add(plugin_t *plugin, const CHAR_T *name, int type, int dis
  *
  * usuwa zmienn±.
  */
-int variable_remove(plugin_t *plugin, const char *name)
+int variable_remove(plugin_t *plugin, const CHAR_T *name)
 {
 	list_t l;
 	int hash;
-	CHAR_T *sname;
 
 	if (!name)
 		return -1;
+	hash = ekg_hash(name);
 
-	sname = normal_to_wcs(name);
-	hash = variable_hash(sname);
-	
 	for (l = variables; l; l = l->next) {
 		variable_t *v = l->data;
 		
 		if (!v->name)
 			continue;
 		
-		if (hash == v->name_hash && plugin == v->plugin && !xwcscasecmp(sname, v->name)) {
+		if (hash == v->name_hash && plugin == v->plugin && !xwcscasecmp(name, v->name)) {
 			char *tmp;
 
 			if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
@@ -349,12 +343,10 @@ int variable_remove(plugin_t *plugin, const char *name)
 			}
 
 			v->type = VAR_FOREIGN;
-			free_utf(sname);
 
 			return 0;
 		}
 	}
-	free_utf(sname);
 
 	return -1;
 }
@@ -371,16 +363,14 @@ int variable_remove(plugin_t *plugin, const char *name)
  *  - value - nowa warto¶æ,
  *  - allow_foreign - czy ma pozwalaæ dopisywaæ obce zmienne.
  */
-int variable_set(const char *name, const char *value, int allow_foreign)
+int variable_set(const CHAR_T *name, const char *value, int allow_foreign)
 {
 	variable_t *v = variable_find(name);
 	CHAR_T *tmpname;
 
 	if (!v) {
 		if (allow_foreign) {
-			CHAR_T *sname = normal_to_wcs(name);
-			variable_add(NULL, sname, VAR_FOREIGN, 2, xstrdup(value), NULL, NULL, NULL);
-			free_utf(sname);
+			variable_add(NULL, name, VAR_FOREIGN, 2, xstrdup(value), NULL, NULL, NULL);
 		}
 		return -1;
 	}
@@ -580,23 +570,29 @@ void variable_free()
  *
  * name - name of the variable
  */
-void variable_help(const char *name)
+void variable_help(const CHAR_T *name)
 {
 	FILE *f; 
-	char *line, *type = NULL, *def = NULL, *tmp, *filename;
-	const char *seeking_name;
-	string_t s = string_init(NULL);
+	CHAR_T *line, *type = NULL, *def = NULL, *tmp;
+	char *filename;
+	const CHAR_T *seeking_name;
+	char *tmplang;
+	wcs_string_t s;
 	int found = 0;
 	variable_t *v = variable_find(name);
 
 	if (!v) {
-		print("variable_not_found", name);
+		wcs_print("variable_not_found", name);
 		return;
 	}	
 
-	if ((tmp = getenv("LANGUAGE"))) {
-		char *tmp_cutted = xstrndup(tmp, 2);
+	if ((tmplang = getenv("LANGUAGE"))) {
+		char *tmp_cutted = xstrndup(tmplang, 2);
+#if USE_UNICODE
+		filename = saprintf("vars-%s-utf.txt", tmp_cutted);
+#else
 		filename = saprintf("vars-%s.txt", tmp_cutted);
+#endif
 		xfree(tmp_cutted);
 	} else {
 		filename = xstrdup("vars.txt");
@@ -619,7 +615,7 @@ again:
 	                return;
 		}
 		
-		seeking_name = xstrchr(name, ':') + 1;
+		seeking_name = xwcschr(name, ':') + 1;
 	} else {
 		char *tmp = saprintf(DATADIR "/%s", filename);
 		f = fopen(tmp, "r");
@@ -631,7 +627,7 @@ again:
                                 filename = xstrdup("vars.txt");
 				goto again;
                         }
-                        print("help_set_file_not_found");
+                        wcs_print("help_set_file_not_found");
 			xfree(filename);
                         return;
                 }
@@ -641,8 +637,8 @@ again:
 
 	xfree(filename);
 
-	while ((line = read_file(f))) {
-		if (!xstrcasecmp(line, seeking_name)) {
+	while ((line = wcs_read_file(f))) {
+		if (!xwcscasecmp(line, seeking_name)) {
 			found = 1;
 			xfree(line);
 			break;
@@ -653,67 +649,67 @@ again:
 
 	if (!found) {
 		fclose(f);
-		print("help_set_var_not_found", name);
+		wcs_print("help_set_var_not_found", name);
 		return;
 	}
 
-	line = read_file(f);
+	line = wcs_read_file(f);
 	
-	if ((tmp = xstrstr(line, ": ")))
-		type = xstrdup(tmp + 2);
+	if ((tmp = xwcsstr(line, TEXT(": "))))
+		type = xwcsdup(tmp + 2);
 	else
-		type = xstrdup("?");
+		type = xwcsdup(TEXT("?"));
 	
 	xfree(line);
 
 	tmp = NULL;
 	
-	line = read_file(f);
-	if ((tmp = xstrstr(line, ": ")))
-		def = xstrdup(tmp + 2);
+	line = wcs_read_file(f);
+	if ((tmp = xwcsstr(line, TEXT(": "))))
+		def = xwcsdup(tmp + 2);
 	else
-		def = xstrdup("?");
+		def = xwcsdup(TEXT("?"));
 	xfree(line);
 
-	print("help_set_header", name, type, def);
+	wcs_print("help_set_header", name, type, def);
 
 	xfree(type);
 	xfree(def);
 
 	if (tmp)			/* je¶li nie jest to ukryta zmienna... */
-		xfree(read_file(f));	/* ... pomijamy liniê */
-
-	while ((line = read_file(f))) {
+		xfree(wcs_read_file(f));	/* ... pomijamy liniê */
+	s = wcs_string_init(NULL);
+	while ((line = wcs_read_file(f))) {
 		if (line[0] != '\t') {
 			xfree(line);
 			break;
 		}
 
-		if (!xstrncmp(line, "\t- ", 3) && xstrcmp(s->str, "")) {
-			print("help_set_body", s->str);
-			string_clear(s);
+		if (!xwcsncmp(line, TEXT("\t- "), 3) && xwcscmp(s->str, TEXT(""))) {
+			wcs_print("help_set_body", s->str);
+			wcs_string_clear(s);
 		}
 
-                if (!xstrncmp(line, "\t", 1) && xstrlen(line) == 1) {
-	                string_append(s, "\n\r");
+                if (!xwcsncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
+	                wcs_string_append(s, TEXT("\n\r"));
                         continue;
                 }
 	
-		string_append(s, line + 1);
+		wcs_string_append(s, line + 1);
 
-		if (line[xstrlen(line) - 1] != ' ')
-			string_append_c(s, ' ');
+		if (line[xwcslen(line) - 1] != ' ')
+			wcs_string_append_c(s, ' ');
 
 		xfree(line);
 	}
 
-	if (xstrcmp(s->str, ""))
-		print("help_set_body", s->str);
+	if (xwcscmp(s->str, TEXT("")))
+		wcs_print("help_set_body", s->str);
 
-	string_free(s, 1);
+	wcs_string_free(s, 1);
 	
 	if (xstrcmp(format_find("help_set_footer"), ""))
-		print("help_set_footer", name);
+		wcs_print("help_set_footer", name);
 
 	fclose(f);
 }
