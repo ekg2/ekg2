@@ -41,8 +41,12 @@
 #	define CHAR_T	char
 #	define free_utf(x) 
 #endif
+
 char *wcs_to_normal(const CHAR_T *str);
+char *wcs_to_normal_n(const CHAR_T *str, int len);
+
 CHAR_T *normal_to_wcs(const char *str);
+CHAR_T *normal_to_wcs_n(const char *str, int len);
 
 
 #endif /* EKG2__CHAR_H__ */

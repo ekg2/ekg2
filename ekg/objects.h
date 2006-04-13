@@ -84,7 +84,7 @@
 			return -1; \
 		\
 		xfree(o->property); \
-		o->property = xstrdup(v); \
+		o->property = xwcsdup(v); \
 		\
 		return 0; \
 	}

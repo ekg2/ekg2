@@ -71,6 +71,7 @@ void theme_cache_reset();
 void theme_free();
 
 fstring_t *fstring_new(const char *str);
+fstring_t *wcs_fstring_new(const CHAR_T *str);
 void fstring_free(fstring_t *str);
 
 /*
