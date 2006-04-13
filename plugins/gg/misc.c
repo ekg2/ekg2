@@ -119,7 +119,7 @@ unsigned char *gg_locale_to_cp(CHAR_T *buf_) {
 	if (!buf_)
 		return NULL;
 #if USE_UNICODE
-	unsigned char *buf = xmalloc(xwcslen(buf_) * sizeof(unsigned char));
+	unsigned char *buf = xmalloc((xwcslen(buf_) * sizeof(unsigned char)+1));
 	unsigned char *tmp = buf;
 
 	while (*buf_) {

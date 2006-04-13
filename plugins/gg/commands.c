@@ -1148,21 +1148,21 @@ COMMAND(gg_command_modify)
 
 	for (i = 0; argv && argv[i]; i++) {
 		
-		if (match_arg(argv[i], 'f', TEXT("first"), 2) && argv[i + 1]) {
+		if (nmatch_arg(argv[i], 'f', TEXT("first"), 2) && argv[i + 1]) {
 			xfree(u->first_name);
 			u->first_name = xstrdup(argv[++i]);
 			modified = 1;
 			continue;
 		}
 		
-		if (match_arg(argv[i], 'l', TEXT("last"), 2) && argv[i + 1]) {
+		if (nmatch_arg(argv[i], 'l', TEXT("last"), 2) && argv[i + 1]) {
 			xfree(u->last_name);
 			u->last_name = xstrdup(argv[++i]);
 			modified = 1;
 			continue;
 		}
 		
-		if (match_arg(argv[i], 'n', TEXT("nickname"), 2) && argv[i + 1]) {
+		if (nmatch_arg(argv[i], 'n', TEXT("nickname"), 2) && argv[i + 1]) {
 			char *tmp1, *tmp2;
 
 			if (userlist_find(session, argv[i + 1])) {
@@ -1185,14 +1185,14 @@ COMMAND(gg_command_modify)
 			continue;
 		}
 		
-		if ((match_arg(argv[i], 'p', TEXT("phone"), 2) || match_arg(argv[i], 'm', TEXT("mobile"), 2)) && argv[i + 1]) {
+		if ((nmatch_arg(argv[i], 'p', TEXT("phone"), 2) || nmatch_arg(argv[i], 'm', TEXT("mobile"), 2)) && argv[i + 1]) {
 			xfree(u->mobile);
 			u->mobile = xstrdup(argv[++i]);
 			modified = 1;
 			continue;
 		}
 		
-		if (match_arg(argv[i], 'g', TEXT("group"), 2) && argv[i + 1]) {
+		if (nmatch_arg(argv[i], 'g', TEXT("group"), 2) && argv[i + 1]) {
 			char **tmp = array_make(argv[++i], ",", 0, 1, 1);
 			int x, off;	/* je¶li zaczyna siê od '@', pomijamy pierwszy znak */
 			
@@ -1239,7 +1239,7 @@ COMMAND(gg_command_modify)
 			continue;
 		}
 		
-		if (match_arg(argv[i], 'u', TEXT("uid"), 2) && argv[i + 1]) {
+		if (nmatch_arg(argv[i], 'u', TEXT("uid"), 2) && argv[i + 1]) {
 			userlist_t *existing;
 			char *tmp1, *tmp2;
 			int q = 1;
@@ -1290,13 +1290,13 @@ COMMAND(gg_command_modify)
 			continue;
 		}
 
-		if (match_arg(argv[i], 'o', TEXT("offline"), 2)) {
+		if (nmatch_arg(argv[i], 'o', TEXT("offline"), 2)) {
 			query_emit(NULL, "user-offline", &u, &session);
 			modified = 2;
 			continue;
 		}
 
-		if (match_arg(argv[i], 'O', TEXT("online"), 2)) {
+		if (nmatch_arg(argv[i], 'O', TEXT("online"), 2)) {
 			query_emit(NULL, "user-online", &u, &session);
 			modified = 2;
 			continue;

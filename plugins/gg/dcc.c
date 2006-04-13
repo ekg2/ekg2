@@ -353,8 +353,11 @@ COMMAND(gg_command_dcc)
 
 		return 0;
 	}
-
+#if USE_UNICODE
 	return cmd_dcc(name, params_, session, target, quiet);
+#else
+	return cmd_dcc(name, params, session, target, quiet);
+#endif
 }
 
 void gg_dcc_close_handler(dcc_t *d)
