@@ -114,7 +114,6 @@ int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
 			 *  0: normalny stan..
 			 *  1: zamykamy ui.
 			 */
-int was_unicode;	/* stara wartosc use_unicode... */
 extern GtkWidget *gtk_session_new_window(void *ptr);	/* gtk-session.c */
 extern GtkWidget *gtk_settings_window(void *ptr);	/* gtk-settings.c */
 QUERY(gtk_ui_window_act_changed);
@@ -159,6 +158,7 @@ gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
 
 /* niszczecie okienka */
 void destroy(GtkWidget *widget, gpointer data) {
+/* TODO ask && save config */
 	gtk_main_quit ();
 	ui_quit = 1;
 }
@@ -578,42 +578,42 @@ int gtk_create() {
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_box_pack_start (GTK_BOX (hbox), sw, FALSE, FALSE, 0);
 	/* lista */
-	list_store = gtk_tree_store_new (N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+	list_store = gtk_tree_store_new(N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 	tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
-	gtk_tree_view_set_rules_hint (GTK_TREE_VIEW (tree), TRUE);
-	gtk_tree_selection_set_mode (gtk_tree_view_get_selection (GTK_TREE_VIEW (tree)), GTK_SELECTION_MULTIPLE);
+	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tree), TRUE);
+	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(tree)), GTK_SELECTION_MULTIPLE);
 
 	renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "userlista", renderer, "pixbuf", COLUMN_STATUS, NULL); 
 
 	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_STATUS);
-	gtk_tree_view_column_pack_start (column, renderer, TRUE);
-	gtk_tree_view_column_set_cell_data_func (column, renderer, uid_set_func_text, NULL, NULL);
+	column = gtk_tree_view_get_column(GTK_TREE_VIEW(tree), COLUMN_STATUS);
+	gtk_tree_view_column_pack_start(column, renderer, TRUE);
+	gtk_tree_view_column_set_cell_data_func(column, renderer, uid_set_func_text, NULL, NULL);
 	
 	renderer = gtk_cell_renderer_text_new();
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_NICK, NULL);
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_UID, NULL);
-	gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_SESSION, NULL);
-	gtk_tree_view_column_set_visible( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_NICK), FALSE);
-	gtk_tree_view_column_set_visible( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_UID), FALSE);
-	gtk_tree_view_column_set_visible( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_SESSION), FALSE);
+	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_NICK, NULL);
+	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_UID, NULL);
+	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW (tree), -1, "", renderer, "text", COLUMN_SESSION, NULL);
+	gtk_tree_view_column_set_visible(gtk_tree_view_get_column(GTK_TREE_VIEW(tree), COLUMN_NICK), FALSE);
+	gtk_tree_view_column_set_visible(gtk_tree_view_get_column(GTK_TREE_VIEW(tree), COLUMN_UID), FALSE);
+	gtk_tree_view_column_set_visible(gtk_tree_view_get_column(GTK_TREE_VIEW(tree), COLUMN_SESSION), FALSE);
 	
-	gtk_container_add (GTK_CONTAINER (sw), tree);
-	g_signal_connect (G_OBJECT (tree), "row-activated", G_CALLBACK (on_list_select), NULL);
+	gtk_container_add(GTK_CONTAINER(sw), tree);
+	g_signal_connect(G_OBJECT(tree), "row-activated", G_CALLBACK (on_list_select), NULL);
 	gtk_widget_set_size_request(tree, 165, 365);
 /*	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), FALSE); *//* czy wyswietlac nazwe kolumn ? *//* w column name jest nazwa sesji */
 	ekg2_set_color_ext(tree);
 	
 	/* edit */
-	edit1 = gtk_entry_new ();
-	gtk_box_pack_start (GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
-	g_signal_connect (G_OBJECT(edit1), "activate", G_CALLBACK (on_enter), NULL);
-	g_signal_connect (G_OBJECT(edit1), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
+	edit1 = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(vbox), edit1, FALSE, TRUE, 0);
+	g_signal_connect(G_OBJECT(edit1), "activate", G_CALLBACK (on_enter), NULL);
+	g_signal_connect(G_OBJECT(edit1), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
 	ekg2_set_color_ext(edit1);
 
-	g_signal_connect_swapped (tree, "button_press_event", G_CALLBACK (popup_handler), tree); /* popup menu, userlista */
-	g_signal_connect_swapped (notebook, "button_press_event", G_CALLBACK (popup_handler), notebook); /* popup menu, okna */
+	g_signal_connect_swapped(tree,		"button_press_event", G_CALLBACK(popup_handler), tree);		/* popup menu, userlista */
+	g_signal_connect_swapped(notebook,	"button_press_event", G_CALLBACK(popup_handler), notebook);	/* popup menu, okna */
 
 	{/* atrybutu tekstu */
 		GtkTextTag *tmp = NULL;
@@ -847,7 +847,7 @@ void gtk_contacts_update(window_t *w) {
 	printf("[CONTACTS_UPDATE()\n");
  	gtk_tree_store_clear(list_store);
 	/* zmien nazwe kolumny na nazwe aktualnej sesji */
-	gtk_tree_view_column_set_title( gtk_tree_view_get_column (GTK_TREE_VIEW(tree), COLUMN_STATUS), 
+	gtk_tree_view_column_set_title(gtk_tree_view_get_column(GTK_TREE_VIEW(tree), COLUMN_STATUS), 
 			session_current ? session_current->alias ? session_current->alias : session_current->uid : "" /* "brak sesji ?" */);
 	if (!sessions)
 		return;
@@ -891,8 +891,12 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, const CHAR_T *str, cons
 			char *tmp = wcs_to_normal_n(str+i-len, len);
 			gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 			gtk_text_buffer_insert_with_tags(buffer, &iter, 
+#if USE_UNICODE
+					tmp, -1,
+#else
 					tmp, len,
 //					str+i-len, len, 
+#endif
 					tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
 			len = 0;
 			free_utf(tmp);
@@ -903,9 +907,9 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, const CHAR_T *str, cons
 		len++;
 	}
 	if (len) {
-		char *tmp = wcs_to_normal_n(str+xwcslen(str)-len, len);
+		char *tmp = wcs_to_normal_n(str+xwcslen(str)-len, -1);
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
-		gtk_text_buffer_insert_with_tags(buffer, &iter, tmp, len, tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
+		gtk_text_buffer_insert_with_tags(buffer, &iter, tmp, -1, tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
 		free_utf(tmp);
 	}
 }
@@ -976,7 +980,6 @@ QUERY(gtk_ui_beep) {
 
 QUERY(ekg2_gtk_loop) {
 	ui_quit = 0;
-	was_unicode = config_use_unicode;
 	config_use_unicode = 1;
 
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id); /* current page */
@@ -1064,6 +1067,7 @@ QUERY(gtk_ui_window_act_changed) {
 				gtk_notebook_get_nth_page(GTK_NOTEBOOK(notebook), 
 					gtk_window_dump(n->win, 0))));
 		if (!l) continue;
+/*		gtk_widget_set_sensitive(GTK_WIDGET(l), TRUE); */
 		printf("[ACT CHANGED] id=%d label=%x act=%d\n", w->id, l, w->act);
 		if (w != window_current) {
 			switch (w->act) {
@@ -1125,11 +1129,12 @@ int gtk_plugin_init(int prio) {
 
 	if (!(gtk_init_check(0, NULL)))
 		return -1;
-/* hack, TODO, sprawdzic czy locale sa already UTF-8-friendly. i jesli sa to do nothing.. */
-#if 0
-	bind_textdomain_codeset("ekg2", "UTF-8"); /* gtk robi to za nas ?*/
-	changed_theme("theme");
-#endif
+
+	if (!config_use_unicode) {
+		int la = in_autoexec;
+		bind_textdomain_codeset("ekg2", "UTF-8");
+		in_autoexec = 0;	changed_theme(TEXT("theme"));	in_autoexec = la; /* gettext + themes... */
+	}
 
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
@@ -1172,7 +1177,6 @@ int gtk_plugin_init(int prio) {
 
 static int gtk_plugin_destroy() {
 	plugin_unregister(&gtk_plugin);
-	config_use_unicode = was_unicode;
 	return 0;
 }
 
