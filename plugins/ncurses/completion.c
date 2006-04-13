@@ -1058,7 +1058,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 	}
 	else {
-		char **params = NULL;
+		CHAR_T **params = NULL;
 		int abbrs = 0, i;
 		list_t l;
                 CHAR_T *cmd = (line[0] == '/') ? line + 1 : line;
@@ -1123,8 +1123,8 @@ exact_match:
 
 		}
 
-		if (word_current > array_count(params) + 1) 
-			word_current = array_count(params) + 2;
+		if (word_current > wcs_array_count(params) + 1) 
+			word_current = wcs_array_count(params) + 2;
 
 		if (params && abbrs == 1 && params[word_current - 2]) {
 			int j;

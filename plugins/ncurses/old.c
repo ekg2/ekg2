@@ -1686,16 +1686,17 @@ void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
  *
  * zwraca kod klawisza lub -2, je¶li nale¿y go pomin±æ.
  */
-int ekg_getch(int meta)
+#if USE_UNICODE
+int ekg_getch(int meta, wint_t *ch)
+#else
+int ekg_getch(int meta, int *ch)
+#endif
 {
-	int ch;
 #if USE_UNICODE
 	int retcode;
-	retcode = wget_wch(input, &ch);
-/*	debug("[wget_wch] retcode = %d ch = 0x%x\n", retcode, ch); */
-	if (retcode == ERR) ch = ERR;
+	retcode = wget_wch(input, ch);
 #else
-	ch = wgetch(input);
+	*ch = wgetch(input);
 #endif
 
 	/* 
@@ -1705,7 +1706,7 @@ int ekg_getch(int meta)
 #define GET_TIME(tv)    (gettimeofday(&tv, (struct timezone *)NULL))
 #define DIF_TIME(t1,t2) ((t2.tv_sec -t1.tv_sec) *1000+ \
                          (t2.tv_usec-t1.tv_usec)/1000)
-	if (ch == KEY_MOUSE) {
+	if (*ch == KEY_MOUSE) {
 		int btn, mouse_state = 0, x, y;
 		static struct timeval tv1 = { 0, 0 }; 
 		static struct timeval tv2;
@@ -1785,9 +1786,13 @@ int ekg_getch(int meta)
 	} 
 #undef GET_TIME
 #undef DIF_TIME
-	if (query_emit(NULL, "ui-keypress", &ch, NULL) == -1)  
+	if (query_emit(NULL, "ui-keypress", ch, NULL) == -1)  
 		return -2; /* -2 - ignore that key */
-	return ch;
+#if USE_UNICODE
+	return retcode;
+#else
+	return *ch;
+#endif
 }
 
 /* XXX: deklaracja ncurses_watch_stdin nie zgadza sie ze
@@ -1909,7 +1914,12 @@ extern volatile int sigint_count;
 WATCHER(ncurses_watch_stdin)
 {
 	struct binding *b = NULL;
+	int tmp;
+#if USE_UNICODE
+	wint_t ch;
+#else
 	int ch;
+#endif
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
@@ -1920,39 +1930,48 @@ WATCHER(ncurses_watch_stdin)
 	if (type)
 		return 0;
 
-	ch = ekg_getch(0);
-	if (ch == -1)		/* dziwna kombinacja, która by blokowa³a */
-		return 0;
-
-	if (ch == -2)		/* python ka¿e ignorowaæ */
-		return 0;
-
-	if (ch != 3 && sigint_count)
-		sigint_count = 0;
-
-	if (ch == 0)		/* Ctrl-Space, g³upie to */
-		return 0;
-
+	switch ((tmp = ekg_getch(0, &ch))) {
+		case(-1):	/* dziwna kombinacja, która by blokowa³a */
+		case(-2):	/* przeszlo przez query_emit i mamy zignorowac (pytthon, perl) */
+#ifndef USE_UNICODE
+		case(0):	/* Ctrl-Space, g³upie to */
+#endif
+			return 0;
+		case(3):
+		default:
+			if (ch != 3) sigint_count = 0;
+	}
 	ekg_stdin_want_more = 1;
 
 	if (bindings_added && ch != KEY_MOUSE) {
-		char **chars = NULL, *joined, c;
+		CHAR_T **chars = NULL, *joined;
 		int i = 0, count = 0, success = 0;
 		list_t l;
+#if USE_UNICODE
+		int retcode;
+		wint_t c;
+#else
+		int c;
+#endif
+		wcs_array_add(&chars, xwcsdup(wcs_itoa(ch)));
 
-		array_add(&chars, xstrdup(itoa(ch)));
-
-        	while (count <= bindings_added_max && (c = wgetch(input)) != ERR) {
-	                array_add(&chars, xstrdup(itoa(c)));
+        	while (count <= bindings_added_max && 
+#if USE_UNICODE
+				(retcode = wget_wch(input, &c)) != ERR
+#else
+				(c = wgetch(input)) != ERR
+#endif
+				) {
+	                wcs_array_add(&chars, xwcsdup(wcs_itoa(c)));
 			count++;
 	        }
 
-		joined = array_join(chars, " ");
+		joined = wcs_array_join(chars, TEXT(" "));
 
 		for (l = bindings_added; l; l = l->next) {
 			binding_added_t *d = l->data;
 
-			if (!xstrcasecmp(d->sequence, joined)) {
+			if (!xwcscasecmp(d->sequence, joined)) {
 				struct binding *b = d->binding;
 
 	                        if (b->function)
@@ -1968,18 +1987,22 @@ WATCHER(ncurses_watch_stdin)
 		}
 
                 for (i = count; i > 0; i--) {
-                        ungetch(atoi(chars[i]));
+#if USE_UNICODE
+			unget_wch(wcs_atoi(chars[i]));
+#else
+                        ungetch(wcs_atoi(chars[i]));
+#endif
                 }
 
 end:
 		xfree(joined);
-		array_free(chars);
+		wcs_array_free(chars);
 		if (success)
 			goto then;
 	} 
 
 	if (ch == 27) {
-		if ((ch = ekg_getch(27)) == -2)
+		if ((ekg_getch(27, &ch)) == -2)
 			return 0;
 
                 b = ncurses_binding_map_meta[ch];
@@ -1992,17 +2015,23 @@ end:
 		 * ogólnie rzecz bior±c, nieciekawa sytuacja ;) */
 
 		if (ch == 'O') {
-			int tmp = ekg_getch(ch);
-			if (tmp >= 'P' && tmp <= 'S')
-				b = ncurses_binding_map[KEY_F(tmp - 'P' + 1)];
-			else if (tmp == 'H')
-				b = ncurses_binding_map[KEY_HOME];
-			else if (tmp == 'F')
-				b = ncurses_binding_map[KEY_END];
-			else if (tmp == 'M')
-				b = ncurses_binding_map[13];
-			else
-				ungetch(tmp);
+			int tmp;
+			if ((ekg_getch(ch, &tmp)) > -1) {
+				if (tmp >= 'P' && tmp <= 'S')
+					b = ncurses_binding_map[KEY_F(tmp - 'P' + 1)];
+				else if (tmp == 'H')
+					b = ncurses_binding_map[KEY_HOME];
+				else if (tmp == 'F')
+					b = ncurses_binding_map[KEY_END];
+				else if (tmp == 'M')
+					b = ncurses_binding_map[13];
+				else
+#if USE_UNICODE
+					unget_wch(tmp);
+#else
+					ungetch(tmp);
+#endif
+			}
 		}
 
 		if (b && b->action) {
@@ -2025,14 +2054,24 @@ end:
 			}
 		}
 	} else {
-		if ((b = ncurses_binding_map[ch]) && b->action) {
+		if (
+#if USE_UNICODE
+		(tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */) && 
+#endif
+		(b = ncurses_binding_map[ch]) && b->action) {
 			if (b->function)
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
 						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action);
 			}
-		} else if (ch < 255 && xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
+		} else if (
+#if USE_UNICODE
+				ch != KEY_MOUSE &&
+#else
+				ch < 255 && 
+#endif
+				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 				
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, LINE_MAXLEN - line_index - 1);
 

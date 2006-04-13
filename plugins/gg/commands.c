@@ -602,7 +602,11 @@ COMMAND(gg_command_msg)
 	/* analizê tekstu zrobimy w osobnym bloku dla porz±dku */
 	{
 		unsigned char attr = 0, last_attr = 0;
+#if USE_UNICODE
 		const CHAR_T *p = msg, *end = p + xwcslen(p);
+#else
+		const unsigned char *p = msg, *end = p + xwcslen(p);
+#endif
 		int msglen = 0;
 		unsigned char rgb[3], last_rgb[3];
 

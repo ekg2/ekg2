@@ -283,8 +283,7 @@ static void binding_quoted_insert(const char *arg)
 
 static void binding_word_rubout(const char *arg)
 {
-#ifndef USE_UNICODE
-	char *p;
+	CHAR_T *p;
 	int eaten = 0;
 
 	if (!line_index)
@@ -313,12 +312,15 @@ static void binding_word_rubout(const char *arg)
 		}
 	}
 
-	yanked = xmalloc(eaten + 1);
+	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
+#if USE_UNICODE
+	xwcsncpy(yanked, p, eaten + 1);
+#else
 	strlcpy(yanked, p, eaten + 1);
+#endif
 
 	memmove(p, line + line_index, xwcslen(line) - line_index + 1);
 	line_index -= eaten;
-#endif
 }
 
 static void binding_complete(const char *arg)
@@ -821,12 +823,12 @@ int binding_key(struct binding *b, const char *key, int add)
  *
  * it sets some sequence to the given key
  */
-void ncurses_binding_set(int quiet, const char *key, const char *sequence)
+void ncurses_binding_set(int quiet, const char *key, const CHAR_T *sequence)
 {
 	list_t l;
 	binding_added_t *b;
 	struct binding *binding_orginal = NULL;
-	char *joined = NULL;
+	CHAR_T *joined = NULL;
 	int count = 0;
 
         for (l = bindings; l; l = l->next) {
@@ -844,19 +846,19 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
         }
 
 	if (!sequence) {
-		char **chars = NULL;
+		CHAR_T **chars = NULL;
 		char ch;
 		printq("bind_press_key");
 		nodelay(input, FALSE);
 		while ((ch = wgetch(input)) != ERR) {
-			array_add(&chars, xstrdup(itoa(ch)));
+			wcs_array_add(&chars, xwcsdup(wcs_itoa(ch)));
 			nodelay(input, TRUE);
 			count++;
 		}
-		joined = array_join(chars, " ");
-		array_free(chars);
+		joined = wcs_array_join(chars, TEXT(" "));
+		wcs_array_free(chars);
 	} else
-		joined = xstrdup(sequence);
+		joined = xwcsdup(sequence);
 
 #if 0 /* hmm.. co sie zmienilo od ostatniego razu ? key jest taki sam... lista bindingow tez.. */
         for (l = bindings; l; l = l->next) {
@@ -877,7 +879,7 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 	for (l = bindings_added; l; l = l->next) {
 		binding_added_t *d = l->data;
 
-		if (!xstrcasecmp(d->sequence, joined)) {
+		if (!xwcscasecmp(d->sequence, joined)) {
 			d->binding = binding_orginal;
 			xfree(joined);
 			goto end;
