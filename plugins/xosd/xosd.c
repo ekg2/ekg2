@@ -18,7 +18,6 @@
  */
 
 #include "ekg2-config.h"
-#include "osd.h"
 
 #include <ekg/commands.h>
 #include <ekg/debug.h>
@@ -37,6 +36,25 @@
 static int xosd_theme_init();
 
 PLUGIN_DEFINE(xosd, PLUGIN_GENERIC, xosd_theme_init);
+
+/* variables from xosd.h*/
+char	*xosd_colour;
+char 	*xosd_font;
+char 	*xosd_outline_colour;
+char 	*xosd_shadow_colour;
+
+int 	xosd_display_filter;
+int 	xosd_display_notify;
+int 	xosd_display_timeout;
+int 	xosd_display_welcome;
+int 	xosd_horizontal_offset;
+int	xosd_horizontal_position;
+int 	xosd_outline_offset;
+int 	xosd_shadow_offset;
+int 	xosd_short_messages;
+int 	xosd_text_limit;
+int 	xosd_vertical_offset;
+int 	xosd_vertical_position;
 
 xosd *osd;
 
@@ -103,6 +121,7 @@ int xosd_show_message(char *line1, char *line2)
 
 COMMAND(xosd_command_msg) 
 {
+	PARASC
 	xosd_show_message((char *) params[0], NULL);
 	return 0;
 }
@@ -326,26 +345,26 @@ int xosd_plugin_init(int prio)
 
 	xosd_setvar_default(NULL, NULL);
 
-	variable_add(&xosd_plugin, "colour", VAR_STR, 1, &xosd_colour, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "font", VAR_STR, 1, &xosd_font, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "outline_colour", VAR_STR, 1, &xosd_outline_colour, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "shadow_colour", VAR_STR, 1, &xosd_shadow_colour, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("colour"), VAR_STR, 1, &xosd_colour, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("font"), VAR_STR, 1, &xosd_font, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("outline_colour"), VAR_STR, 1, &xosd_outline_colour, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("shadow_colour"), VAR_STR, 1, &xosd_shadow_colour, NULL, NULL, NULL);
 	
-	variable_add(&xosd_plugin, "display_filter", VAR_MAP, 1, &xosd_display_filter, NULL,
+	variable_add(&xosd_plugin, TEXT("display_filter"), VAR_MAP, 1, &xosd_display_filter, NULL,
 			variable_map(3, 0, 0, "all", 1, 2, "only inactive", 2, 1, "only new"), NULL);
-	variable_add(&xosd_plugin, "display_notify", VAR_MAP, 1, &xosd_display_notify, NULL,
+	variable_add(&xosd_plugin, TEXT("display_notify"), VAR_MAP, 1, &xosd_display_notify, NULL,
 			variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "session-depend"), NULL);
-	variable_add(&xosd_plugin, "display_timeout", VAR_INT, 1, &xosd_display_timeout, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "display_welcome", VAR_BOOL, 1, &xosd_display_welcome, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "horizontal_offset", VAR_INT, 1, &xosd_horizontal_offset, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "horizontal_position", VAR_MAP, 1, &xosd_horizontal_position, NULL,
+	variable_add(&xosd_plugin, TEXT("display_timeout"), VAR_INT, 1, &xosd_display_timeout, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("display_welcome"), VAR_BOOL, 1, &xosd_display_welcome, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("horizontal_offset"), VAR_INT, 1, &xosd_horizontal_offset, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("horizontal_position"), VAR_MAP, 1, &xosd_horizontal_position, NULL,
 			variable_map(3, 0, 2, "left", 1, 0, "center", 2, 1, "right"), NULL);
-	variable_add(&xosd_plugin, "outline_offset", VAR_INT, 1, &xosd_outline_offset, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "shadow_offset", VAR_INT, 1, &xosd_shadow_offset, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "short_messages", VAR_BOOL, 1, &xosd_short_messages, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "text_limit", VAR_INT, 1, &xosd_text_limit, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "vertical_offset", VAR_INT, 1, &xosd_vertical_offset, NULL, NULL, NULL);
-	variable_add(&xosd_plugin, "vertical_position", VAR_MAP, 1, &xosd_vertical_position, NULL,
+	variable_add(&xosd_plugin, TEXT("outline_offset"), VAR_INT, 1, &xosd_outline_offset, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("shadow_offset"), VAR_INT, 1, &xosd_shadow_offset, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("short_messages"), VAR_BOOL, 1, &xosd_short_messages, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("text_limit"), VAR_INT, 1, &xosd_text_limit, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("vertical_offset"), VAR_INT, 1, &xosd_vertical_offset, NULL, NULL, NULL);
+	variable_add(&xosd_plugin, TEXT("vertical_position"), VAR_MAP, 1, &xosd_vertical_position, NULL,
 			variable_map(3, 0, 2, "top", 1, 0, "center", 2, 1, "bottom"), NULL);
 	
 	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
@@ -354,7 +373,7 @@ int xosd_plugin_init(int prio)
 	
 	timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
 
-	command_add(&xosd_plugin, "xosd:msg", "!", xosd_command_msg, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&xosd_plugin, TEXT("xosd:msg"), TEXT("!"), xosd_command_msg, COMMAND_ENABLEREQPARAMS, NULL);
 	return 0;
 }
 
@@ -387,6 +406,11 @@ static int xosd_plugin_destroy()
 	xosd_destroy(osd);
 	
 	plugin_unregister(&xosd_plugin);
+
+	xfree(xosd_colour);
+	xfree(xosd_font);
+	xfree(xosd_outline_colour);
+	xfree(xosd_shadow_colour);
 
 	return 0;
 }
