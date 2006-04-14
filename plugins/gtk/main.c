@@ -63,10 +63,13 @@
 #define ekg2_set_color(widget)		{ ekg2_set_color_bg(widget)		ekg2_set_color_fg(widget) }
 #define ekg2_set_color_ext(widget)	{ ekg2_set_color_bg_ext(widget)		ekg2_set_color_fg_ext(widget) }
 
-/* ikonka */ 
+/* trayikonka */ 
 #define SYSTEM_TRAY_REQUEST_DOCK    0
 #define SYSTEM_TRAY_BEGIN_MESSAGE   1
 #define SYSTEM_TRAY_CANCEL_MESSAGE  2
+
+/* ikonka */
+const char *iconfile = DATADIR"/plugins/gtk/ekg2.png";
 
 typedef struct {
 	GtkWidget *view;
@@ -74,6 +77,7 @@ typedef struct {
 } gtk_window_t;
 
 typedef struct {
+	GtkWidget *gtk_ticon;
 	Window trayicon;
 	Atom trayso;
 	Atom trayop;
@@ -96,13 +100,15 @@ GdkColor bgcolor;			// background color
 GdkColor fgcolor;			// foreground color
 #endif
 
-Display *xdisplay;			/* gdzie mamy okienko.. na jakim displayu. for trayicon */
+Display *xdisplay;			/* gdzie mamy okienko.. na jakim displayu. */
 
 /* atrybuty tekstu... */
 GtkTextTagTable *ekg2_table;		// tablica z tagami... 	glowne kolorki + BOLD + inne...
 GtkTextTag *ekg2_tags[8];		// pomocnicze,		glowne kolorki
 GtkTextTag *ekg2_tag_bold;		// pomocnicze,		BOLD
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
+
+int mwin_hide = 0;
 
 void gtk_contacts_update(window_t *w);
 GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function, void *data);
@@ -222,6 +228,35 @@ void ekg2_gtk_window_menu_floating(void *user_data) {
 	ekg_gtk_window_new(w);
 }
 
+/* tray-button-click */
+gint gtk_tray_button_press(GtkWidget *widget, GdkEventKey *event, void *data) {
+	if (event->type == GDK_BUTTON_PRESS) {
+		GdkEventButton *event_button = (GdkEventButton *) event;
+		if (event_button->button == 3) {
+			printf("[TRAY] RCLICK\n");
+			/* TODO, popup menu */
+			return TRUE;
+		}
+	}
+	if (event->type == GDK_2BUTTON_PRESS) {
+		GdkEventButton *event_button = (GdkEventButton *) event;
+		if (event_button->button == 1) {
+			mwin_hide = !mwin_hide;
+			if (mwin_hide) {
+				printf("[TRAY] hiding..\n");
+				gtk_widget_hide(ekg_main_win);
+			} else {
+				printf("[TRAY] restoring..\n");
+				gtk_widget_show(ekg_main_win);
+				gtk_window_present(GTK_WINDOW(ekg_main_win));
+				gtk_window_deiconify(GTK_WINDOW(ekg_main_win));
+			}
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+/* popup-click */
 gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 	if (event->type == GDK_BUTTON_PRESS) {
 		GdkEventButton *event_button = (GdkEventButton *) event;
@@ -281,6 +316,27 @@ gint popup_handler(GtkWidget *widget, GdkEvent *event) {
 	return FALSE;
 }
 
+gint gtk_on_minimize(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+	if (event->type == GDK_WINDOW_STATE) {
+		GdkEventWindowState *event_window = (GdkEventWindowState *) event;
+
+		printf("[TRAY+minimize] ");
+		if (event_window->new_window_state	& GDK_WINDOW_STATE_ICONIFIED) printf("I");
+		if (event_window->new_window_state	& GDK_WINDOW_STATE_WITHDRAWN) printf("W");
+		if (event_window->changed_mask		& GDK_WINDOW_STATE_ICONIFIED) printf("i");
+		if (event_window->changed_mask		& GDK_WINDOW_STATE_WITHDRAWN) printf("w");
+		printf("\n");
+
+		if (!mwin_hide && event_window->new_window_state & GDK_WINDOW_STATE_ICONIFIED && event_window->changed_mask & GDK_WINDOW_STATE_ICONIFIED) {
+			printf("[TRAY+minimize] hiding.. %d\n", event_window->send_event);
+			gtk_window_deiconify(GTK_WINDOW(ekg_main_win));
+			gtk_widget_hide(ekg_main_win);
+			mwin_hide = 1;
+		}
+	}
+	return FALSE;
+}
+
 /* zmiana strony - zmiana okna */
 gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num, gpointer user_data) {
 	int realid;
@@ -304,8 +360,6 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
  * 	L-ALT	8	MOD1_MASK
  * 	R-ALT 128	MOD2_MASK
  */
-
-// sizeof(event->keyval) != sizeof(char) .... IMPLEMENTATION BUG (?).
 		if (query_emit(NULL, "ui-keypress", &(event->keyval), NULL) == -1)
 			return TRUE; /* ignore this key */
 
@@ -507,6 +561,7 @@ int gtk_create() {
 	g_signal_connect(G_OBJECT(win), "delete_event", G_CALLBACK (delete_event), NULL);
 	g_signal_connect(G_OBJECT(win), "destroy", G_CALLBACK (destroy), NULL);
 	g_signal_connect(G_OBJECT(win), "key-press-event", G_CALLBACK (gtk_key_press), NULL);
+	g_signal_connect(G_OBJECT(win), "window-state-event", G_CALLBACK(gtk_on_minimize), NULL);
 
 	hbox = gtk_hbox_new (FALSE, 2);
 	gtk_container_add (GTK_CONTAINER (win), hbox);
@@ -642,72 +697,12 @@ int gtk_create() {
 //		gtk_text_buffer_create_tag(buffer, "FG_LIGHTGREEN", "foreground", "green", NULL);
 	}
 	{ 	/* ikonka */
-		const char *iconfile = DATADIR"/plugins/gtk/ekg2.png";
 		GError *error = NULL;
 		GdkPixbuf *icon = gdk_pixbuf_new_from_file(iconfile, &error);
 		if (!icon) {
 			printf("LOAD_ICON() filename=%s; err=%x;\n", iconfile, (int) error);
 		}
 		gtk_window_set_icon(GTK_WINDOW(ekg_main_win), icon);
-#if 0
-		/* tray + TODO: ikonka w trayu*/
-/* egg_tray_icon_realize() */
-		ekg2_trayicon *tray = xmalloc(sizeof(ekg2_trayicon));
-
-		XClientMessageEvent ev;
-		Window trayicon;
-		xdisplay = XOpenDisplay(NULL); /* NULL == $DISPLAY */
-		Atom sel_atom;
-
-		memset(&ev, 0, sizeof(XClientMessageEvent));
-
-		sel_atom = XInternAtom (xdisplay, "_NET_SYSTEM_TRAY_S0", False);
-		trayicon = XGetSelectionOwner(xdisplay, sel_atom);
-
-		ev.type = ClientMessage;
-		ev.window = trayicon; /* GDK_WINDOW_XID(ekg_main_win->window), */
-		ev.message_type = XInternAtom (xdisplay, "_NET_SYSTEM_TRAY_OPCODE", False );
-		ev.format = 32;
-		ev.data.l[0] = time(NULL);
-		ev.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK;
-		ev.data.l[2] = gtk_widget_get_root_window(GTK_WIDGET(ekg_main_win));
-		/* TODO CHECK that values.! */
-		printf("[IKONKA] DISPLAY: 0x%x TICON: 0x%x\n", (int) xdisplay, (int) trayicon);
-		tray->trayicon	= trayicon;
-		tray->trayso	= sel_atom;					/* selection_atom */
-		tray->trayop	= ev.message_type;				/* system_tray_opcode_atom */
-		tray->traymgr	= XInternAtom (xdisplay, "MANAGER", False);	/* manager_atom */
-		tray->orientation = XInternAtom (xdisplay, "_NET_SYSTEM_TRAY_ORIENTATION", False); /* orientation_atom */
-		
-		gdk_window_add_filter(
-				gdk_window_lookup_for_display(gtk_widget_get_display(ekg_main_win), trayicon),
-				ekg_trayicon_manager, (void *) tray);
-		XSendEvent (xdisplay, trayicon, False, NoEventMask, (XEvent *) &ev);
-
-
-		int i;
-		int size = gdk_pixbuf_get_width(icon) * gdk_pixbuf_get_height(icon);
-		gulong *data = xmalloc(size * sizeof (gulong)+2);
-		for (i=0; i < size; i++) 
-			data[i] = rand() * 6666;
-		
-		XChangeProperty (xdisplay, trayicon, XInternAtom(xdisplay, "_NET_WM_ICON", False), XA_CARDINAL, 32, PropModeReplace, 
-				(guchar*) data, size+2);
-
-		XSync(xdisplay, False);
-
-/* *_unrealize() */
-#if 0
-	if (icon->manager_window != None) {
-		GdkWindow *gdkwin;
-		gdkwin = gdk_window_lookup_for_display (gtk_widget_get_display (widget), icon->manager_window);
-		gdk_window_remove_filter (gdkwin, egg_tray_icon_manager_filter, icon);
-	}
-	root_window = gdk_screen_get_root_window (gtk_widget_get_screen (widget));
-	gdk_window_remove_filter (root_window, egg_tray_icon_manager_filter, icon);
-#endif
-
-#endif
 	}
 	gtk_widget_grab_focus(edit1);
 	gtk_widget_show_all (win);
@@ -715,17 +710,108 @@ int gtk_create() {
 	return 0;
 }
 
+void ekg_tray_icon_send_manager_message(const ekg2_trayicon *icon, const long message, const Window window, const long data1, const long data2, const long data3)
+{
+	XClientMessageEvent ev;
+	memset(&ev, 0, sizeof(XClientMessageEvent));
+
+	ev.type		= ClientMessage;
+	ev.window	= window;
+	ev.message_type = icon->trayop;
+	ev.format	= 32;
+	ev.data.l[0]	= gdk_x11_get_server_time(GTK_WIDGET(icon->gtk_ticon)->window);
+	ev.data.l[1]	= message;
+	ev.data.l[2]	= data1;
+	ev.data.l[3]	= data2;
+	ev.data.l[4]	= data3;
+	printf("[ICON] ICON: %lx Sending: 0:%lx 1:%lx 2:%lx 3:%lx\n", window, ev.data.l[0], ev.data.l[1], ev.data.l[2], ev.data.l[3]);
+
+	gdk_error_trap_push();
+	XSendEvent(xdisplay, icon->trayicon, False, NoEventMask, (XEvent *) & ev);
+	XSync(xdisplay, False);
+	gdk_error_trap_pop();
+}
+
+void ekg_tray_icon_update_manager_window(ekg2_trayicon *icon) {
+	if (icon->trayicon != None) {
+		GdkWindow *gdkwin;
+		gdkwin = gdk_window_lookup_for_display(gtk_widget_get_display(icon->gtk_ticon), icon->trayicon);
+		gdk_window_remove_filter(gdkwin, ekg_trayicon_manager, icon);
+	}
+
+	XGrabServer(xdisplay);
+	icon->trayicon = XGetSelectionOwner(xdisplay, icon->trayso);
+	if (icon->trayicon != None)
+		XSelectInput(xdisplay, icon->trayicon, StructureNotifyMask | PropertyChangeMask);
+	XUngrabServer(xdisplay);
+	XFlush(xdisplay);
+	if (icon->trayicon != None) {
+		GdkWindow *gdkwin = gdk_window_lookup_for_display(gtk_widget_get_display(icon->gtk_ticon), icon->trayicon);
+		gdk_window_add_filter(gdkwin, ekg_trayicon_manager, icon);
+
+		/* Send a request that we'd like to dock */
+  		ekg_tray_icon_send_manager_message(icon, SYSTEM_TRAY_REQUEST_DOCK, icon->trayicon, 
+			gtk_plug_get_id(GTK_PLUG(icon->gtk_ticon)), 0, 0);
+/*		egg_tray_icon_get_orientation_property(icon); */
+	}
+}
+
+ekg2_trayicon *gtk_icon_create() {
+	ekg2_trayicon *tray = NULL;
+	GtkWidget *image, *ebox;
+
+	tray 		= xmalloc(sizeof(ekg2_trayicon));
+	tray->gtk_ticon = gtk_widget_new(GTK_TYPE_PLUG, /* "screen", gdk_screen_get_default(), */ "title", "ekg2-icon0", NULL);
+
+	ebox	= gtk_event_box_new();
+	image	= gtk_image_new_from_file(iconfile);
+	g_signal_connect(G_OBJECT(ebox), "button-press-event", G_CALLBACK(gtk_tray_button_press), NULL);
+	gtk_container_add((GTK_CONTAINER(ebox)), image);
+
+	gtk_container_add((GTK_CONTAINER(tray->gtk_ticon)), ebox);
+	gtk_widget_add_events(GTK_WIDGET(tray->gtk_ticon), GDK_PROPERTY_CHANGE_MASK);
+	gtk_widget_show_all(tray->gtk_ticon);
+
+	tray->trayso	= XInternAtom(xdisplay, "_NET_SYSTEM_TRAY_S0", False);			/* selection_atom */
+	tray->trayicon	= XGetSelectionOwner(xdisplay, tray->trayso);				/* manager_window */
+	tray->trayop	= XInternAtom(xdisplay, "_NET_SYSTEM_TRAY_OPCODE", False ); 		/* system_tray_opcode_atom */
+	tray->traymgr	= XInternAtom(xdisplay, "MANAGER", False);				/* manager_atom */
+	tray->orientation = XInternAtom(xdisplay, "_NET_SYSTEM_TRAY_ORIENTATION", False);	/* orientation_atom */
+
+	ekg_tray_icon_update_manager_window(tray);
+
+	gdk_window_add_filter(
+			gdk_screen_get_root_window(gtk_widget_get_screen(tray->gtk_ticon)), ekg_trayicon_manager, (void *) tray);
+	return tray;
+}
+
+void gtk_icon_destroy(ekg2_trayicon *icon) {
+	GdkWindow *root_window;
+
+	if (icon->trayicon != None) {
+		GdkWindow *gdkwin;
+		gdkwin = gdk_window_lookup_for_display(gtk_widget_get_display(icon->gtk_ticon), icon->trayicon);
+		gdk_window_remove_filter (gdkwin, ekg_trayicon_manager, icon);
+	}
+	root_window = gdk_screen_get_root_window(gtk_widget_get_screen(icon->gtk_ticon));
+	gdk_window_remove_filter(root_window, ekg_trayicon_manager, icon);
+}
+
 GdkFilterReturn ekg_trayicon_manager(GdkXEvent *xevent, GdkEvent *event, gpointer user_data) {
 	XEvent *xev = (XEvent *) xevent;
 	ekg2_trayicon *tray = user_data;
 
-	if (xev->xany.type == ClientMessage && xev->xclient.message_type == tray->traymgr && xev->xclient.data.l[1] == tray->trayso)
-		printf("IKONKA MANAGER: UPDATE1\n");
-	else if (xev->xany.window == tray->traymgr) {
-		if (xev->xany.type == PropertyNotify && xev->xproperty.atom == tray->orientation)
-			printf("IKONKA MANAGER: GETORIENT\n");
+	if (xev->xany.type == ClientMessage && xev->xclient.message_type == tray->traymgr && xev->xclient.data.l[1] == tray->trayso) {
+		printf("[trayicon, manager] up1 0x%x\n", (int) tray);
+		ekg_tray_icon_update_manager_window(tray);
+	} else if (xev->xany.window == tray->trayicon) {
+		if (xev->xany.type == PropertyNotify && xev->xproperty.atom == tray->orientation) {
+			printf("[trayicon, manager] orprop\n");
+/*			egg_tray_icon_get_orientation_property(icon); */
+		}
 		if (xev->xany.type == DestroyNotify) {
-			printf("IKONKA MANAGER: UPDATE2\n");
+			printf("[trayicon, manager] up2\n");
+			ekg_tray_icon_update_manager_window(tray);
 		}
 	}
 	return GDK_FILTER_CONTINUE;
@@ -982,9 +1068,11 @@ QUERY(ekg2_gtk_loop) {
 	ui_quit = 0;
 	config_use_unicode = 1;
 
+
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id); /* current page */
 	gtk_contacts_update(NULL);		/* userlist */
 	gtk_ui_window_act_changed(NULL, NULL);	/* act */
+
 
 	while (gtk_loop());
 	return -1;
@@ -1161,10 +1249,13 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 
 /*	timer_add(&gtk_plugin, "gtk:clock", 1, 1, gtk_statusbar_timer, NULL); */
-	
+	xdisplay = gdk_x11_get_default_xdisplay();
 	gtk_create();
-	xfd = XConnectionNumber(gdk_x11_display_get_xdisplay(gtk_widget_get_display(ekg_main_win))); /* pobiera fd */
+//	xdisplay = gdk_x11_display_get_xdisplay(gtk_widget_get_display(ekg_main_win));
+
+	xfd = XConnectionNumber(xdisplay); /* pobiera fd */
 	printf("[HELLO ekg2-GTK] XFD: %d\n", xfd);
+	gtk_icon_create();
 	if (xfd != -1) {
 		watch_add(&gtk_plugin, xfd, WATCH_READ, 1, ekg2_xorg_watcher, NULL);
 	}
