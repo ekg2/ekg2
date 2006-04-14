@@ -1820,7 +1820,7 @@ COMMAND(cmd_set)
 			}
 		} 
 
-		switch (variable_set(arg, (unset) ? NULL : value, 0)) {
+		switch (variable_set(arg, (unset) ? NULL : wcs_to_normal(value), 0)) {
 			case 0:
 			{
 				const CHAR_T *my_params[2] = { (!unset) ? params[0] : params[0] + 1, NULL };

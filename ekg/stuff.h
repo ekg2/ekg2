@@ -137,94 +137,94 @@ struct color_map {
 	unsigned char r, g, b;
 };
 
-list_t children;
-list_t autofinds;
-list_t aliases;
-list_t bindings;
-list_t bindings_added;
-list_t timers;
-list_t conferences;
-list_t buffers;
-list_t searches;
+extern list_t children;
+extern list_t autofinds;
+extern list_t aliases;
+extern list_t bindings;
+extern list_t bindings_added;
+extern list_t timers;
+extern list_t conferences;
+extern list_t buffers;
+extern list_t searches;
 
-time_t last_save;
-char *config_profile;
-int config_changed;
-int reason_changed;
+extern time_t last_save;
+extern char *config_profile;
+extern int config_changed;
+extern int reason_changed;
 
-pid_t speech_pid;
+extern pid_t speech_pid;
 
-int no_mouse;
+extern int no_mouse;
 
-int old_stderr;
-int mesg_startup;
+extern int old_stderr;
+extern int mesg_startup;
 
-char *config_audio_device;
-char *config_away_reason;
-int config_auto_save;
-int config_auto_user_add;
-char *config_back_reason;
-int config_beep;
-int config_beep_msg;
-int config_beep_chat;
-int config_beep_notify;
-int config_beep_mail;
-int config_completion_notify;
-char *config_completion_char;
-int config_debug;
-int config_default_status_window;
-int config_display_ack;
-int config_display_blinking;
-int config_display_color;
-char *config_display_color_map;
-int config_display_notify;
-int config_display_pl_chars;
-int config_display_sent;
-int config_display_welcome;
-int config_emoticons;
-int config_events_delay;
-int config_keep_reason;
-int config_last;
-int config_last_size;
-int config_make_window;
-int config_mesg;
-int config_query_commands;
-char *config_quit_reason;
-int config_reason_limit;
-int config_save_password;
-int config_save_quit;
-char *config_session_default;
-int config_sessions_save;
-int config_sort_windows;
-char *config_sound_app;
-char *config_sound_chat_file;
-char *config_sound_msg_file;
-char *config_sound_sysmsg_file;
-char *config_sound_notify_file;
-char *config_sound_mail_file;
-char *config_speech_app;
-char *config_subject_prefix;
-char *config_tab_command;
-char *config_theme;
-int config_time_deviation;
-char *config_timestamp;
-int config_timestamp_show;
-int config_use_unicode; 	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
-char *config_console_charset;	/* */
-char *config_windows_layout;
-int config_windows_save;
+extern char *config_audio_device;
+extern char *config_away_reason;
+extern int config_auto_save;
+extern int config_auto_user_add;
+extern char *config_back_reason;
+extern int config_beep;
+extern int config_beep_msg;
+extern int config_beep_chat;
+extern int config_beep_notify;
+extern int config_beep_mail;
+extern int config_completion_notify;
+extern char *config_completion_char;
+extern int config_debug;
+extern int config_default_status_window;
+extern int config_display_ack;
+extern int config_display_blinking;
+extern int config_display_color;
+extern char *config_display_color_map;
+extern int config_display_notify;
+extern int config_display_pl_chars;
+extern int config_display_sent;
+extern int config_display_welcome;
+extern int config_emoticons;
+extern int config_events_delay;
+extern int config_keep_reason;
+extern int config_last;
+extern int config_last_size;
+extern int config_make_window;
+extern int config_mesg;
+extern int config_query_commands;
+extern char *config_quit_reason;
+extern int config_reason_limit;
+extern int config_save_password;
+extern int config_save_quit;
+extern char *config_session_default;
+extern int config_sessions_save;
+extern int config_sort_windows;
+extern char *config_sound_app;
+extern char *config_sound_chat_file;
+extern char *config_sound_msg_file;
+extern char *config_sound_sysmsg_file;
+extern char *config_sound_notify_file;
+extern char *config_sound_mail_file;
+extern char *config_speech_app;
+extern char *config_subject_prefix;
+extern char *config_tab_command;
+extern char *config_theme;
+extern int config_time_deviation;
+extern char *config_timestamp;
+extern int config_timestamp_show;
+extern int config_use_unicode; 	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
+extern char *config_console_charset;	/* */
+extern char *config_windows_layout;
+extern int config_windows_save;
 
-char *home_dir;
-char *config_dir;
-int in_autoexec;
-int ekg_stdin_want_more;
-time_t last_action;
-time_t ekg_started;
+extern char *home_dir;
+extern char *config_dir;
+extern int in_autoexec;
+extern int ekg_stdin_want_more;
+extern time_t last_action;
+extern time_t ekg_started;
 
-int quit_message_send;
-int batch_mode;
-char *batch_line;
-struct color_map default_color_map[16+10];
+extern int quit_message_send;
+extern int batch_mode;
+extern char *batch_line;
+extern struct color_map default_color_map[16+10];
 
 void windows_save();
 
@@ -268,7 +268,7 @@ void ekg_reconnect();
 
 int ekg_hash(const CHAR_T *name);
 
-char * help_path(char * name, char * plugin);
+char *help_path(char *name, char *plugin);
 
 int mesg_set(int what);
 void iso_to_ascii(unsigned char *buf);

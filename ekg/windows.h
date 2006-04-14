@@ -52,8 +52,8 @@ typedef struct {
 	void *private;		/* prywatne informacje ui */
 } window_t;
 
-list_t windows;
-window_t *window_current;
+extern list_t windows;
+extern window_t *window_current;
 
 window_t *window_find(const char *target);
 window_t *window_find_s(session_t *session, const char *target);

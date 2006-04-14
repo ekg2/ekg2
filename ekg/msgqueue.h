@@ -35,7 +35,7 @@ typedef struct {
 	int mark;
 } msg_queue_t;
 
-list_t msg_queue;
+extern list_t msg_queue;
 
 int msg_queue_add(const char *session, const char *rcpts, const CHAR_T *message, const char *seq);
 void msg_queue_remove(msg_queue_t *m);

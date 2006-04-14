@@ -37,7 +37,7 @@ struct last {
 	unsigned char *message;	/* wiadomo¶æ */
 };
 
-list_t lasts;
+extern list_t lasts;
 
 void last_add(int type, const char *uid, time_t t, time_t st, const char *msg);
 void last_del(const char *uid);

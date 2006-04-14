@@ -24,7 +24,7 @@
 #include <time.h>
 #include "dynstuff.h"
 
-list_t sessions;
+extern list_t sessions;
 
 typedef struct {
 	char *key;			/* nazwa parametru */
@@ -52,7 +52,7 @@ typedef struct {
 	list_t params;
 } session_t;
 
-session_t *session_current;
+extern session_t *session_current;
 
 session_t *session_find(const char *uid);
 session_param_t *session_var_find(session_t *s, const char *key);

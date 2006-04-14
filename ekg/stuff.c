@@ -73,6 +73,10 @@ list_t conferences = NULL;
 list_t buffers = NULL;
 list_t searches = NULL;
 
+list_t bindings_added;
+int old_stderr;
+char *config_subject_prefix;
+
 int in_autoexec = 0;
 int config_auto_save = 0;
 int config_auto_user_add = 0;
@@ -83,6 +87,7 @@ int config_beep_msg = 1;
 int config_beep_chat = 1;
 int config_beep_notify = 1;
 int config_beep_mail = 1;
+char *config_console_charset;
 int config_display_blinking = 1;
 int config_display_pl_chars = 1;
 int config_events_delay = 3;
@@ -92,6 +97,7 @@ char *config_sound_notify_file = NULL;
 char *config_sound_sysmsg_file = NULL;
 char *config_sound_mail_file = NULL;
 char *config_sound_app = NULL;
+int config_use_unicode;
 int config_changed = 0;
 int config_display_ack = 3;
 int config_completion_notify = 1;
@@ -1087,28 +1093,28 @@ char * help_path(char * name, char * plugin) {
         } else {
                 lang = xstrdup(tmp);
         }
-#if USE_UNICODE
-        tmp = saprintf("%s-%s-utf.txt", base, lang);
-	if (!(fp = fopen(tmp, "r"))) {
-		xfree(tmp);
-		tmp = saprintf("%s-%s.txt", base, lang);
-	} else { 
-		fclose(fp);
-		goto end;
+	if (config_use_unicode) {
+	        tmp = saprintf("%s-%s-utf.txt", base, lang);
+		if (!(fp = fopen(tmp, "r"))) {
+			xfree(tmp);
+			tmp = saprintf("%s-%s.txt", base, lang);
+		} else { 
+			fclose(fp);
+			goto end;
+		}
+	} else {
+        	tmp = saprintf("%s-%s.txt", base, lang);
 	}
-#else
-        tmp = saprintf("%s-%s.txt", base, lang);
-#endif
 
         // Temporary fallback - untill we don't have full en translation
         fp = fopen(tmp, "r");
         if (!fp) {
 		xfree(tmp);
-#if USE_UNICODE
-                tmp = saprintf("%s-pl-utf.txt", base);
-#else
-                tmp = saprintf("%s-pl.txt", base);
-#endif
+		if (config_use_unicode) {
+                	tmp = saprintf("%s-pl-utf.txt", base);
+		} else {
+                	tmp = saprintf("%s-pl.txt", base);
+		}
         } else {
                 fclose(fp);
         }

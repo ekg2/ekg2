@@ -21,7 +21,7 @@
 #define __EKG_METACONTACTS_H
 #include "dynstuff.h" 
 
-list_t metacontacts;
+extern list_t metacontacts;
 
 typedef struct {
 	char *name; /* uid or name */

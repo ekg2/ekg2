@@ -24,6 +24,16 @@
  * - memleaks ?
  */
 
+list_t	scripts;
+list_t	script_timers;
+list_t	script_plugins;
+list_t	script_vars;
+list_t	script_queries;
+list_t	script_commands;
+list_t	script_watches;
+list_t	scriptlang;
+
+
 COMMAND(script_command_handlers);
 TIMER(script_timer_handlers);
 void script_var_changed(const CHAR_T *var);

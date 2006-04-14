@@ -607,11 +607,11 @@ void variable_help(const CHAR_T *name)
 
 	if ((tmplang = getenv("LANGUAGE"))) {
 		char *tmp_cutted = xstrndup(tmplang, 2);
-#if USE_UNICODE
-		filename = saprintf("vars-%s-utf.txt", tmp_cutted);
-#else
-		filename = saprintf("vars-%s.txt", tmp_cutted);
-#endif
+		if (config_use_unicode) {
+			filename = saprintf("vars-%s-utf.txt", tmp_cutted);
+		} else {
+			filename = saprintf("vars-%s.txt", tmp_cutted);
+		}
 		xfree(tmp_cutted);
 	} else {
 		filename = xstrdup("vars.txt");

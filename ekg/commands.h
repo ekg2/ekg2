@@ -76,7 +76,7 @@ typedef struct {
 	char **possibilities;
 } command_t;
 
-list_t commands;
+extern list_t commands;
 
 command_t *command_add(plugin_t *plugin, const CHAR_T *name, CHAR_T *params, command_func_t function, int flags, char *possibilities);
 void command_freeone(command_t *c);
@@ -100,8 +100,8 @@ COMMAND(cmd_metacontact); /* metacontacts.c */
  */
 #define SEND_NICKS_MAX 100
 
-char *send_nicks[SEND_NICKS_MAX];
-int send_nicks_count, send_nicks_index;
+extern char *send_nicks[SEND_NICKS_MAX];
+extern int send_nicks_count, send_nicks_index;
 
 void tabnick_add(const char *nick);
 void tabnick_remove(const char *nick);
@@ -115,10 +115,10 @@ int match_arg(const CHAR_T *arg, char shortopt, const CHAR_T *longopt, int longo
 int nmatch_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
 
 /* wyniki ostatniego szukania */
-char *last_search_first_name;
-char *last_search_last_name;
-char *last_search_nickname;
-char *last_search_uid;
+extern char *last_search_first_name;
+extern char *last_search_last_name;
+extern char *last_search_nickname;
+extern char *last_search_uid;
 
 
 #endif /* __EKG_COMMANDS_H */

@@ -29,7 +29,7 @@ typedef struct {
         char *value;
 } emoticon_t;
 
-list_t emoticons;
+extern list_t emoticons;
 
 int emoticon_read();
 char *emoticon_expand(const char *s);

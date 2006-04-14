@@ -117,7 +117,7 @@ int dcc_filename_set(dcc_t *, const char *);
 const char *dcc_filename_get(dcc_t *);
 dcc_type_t dcc_type_get(dcc_t *);
 
-list_t dccs;
+extern list_t dccs;
 
 #endif /* __EKG_PROTOCOL_H */
 

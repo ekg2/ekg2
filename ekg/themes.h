@@ -48,7 +48,7 @@ typedef struct {
 	void *private;          /* can be helpfull */
 } fstring_t;
 
-list_t formats;
+extern list_t formats;
 
 #define print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x) 
 #define wcs_print(x...) wcs_print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x)

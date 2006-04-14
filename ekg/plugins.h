@@ -26,9 +26,9 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-list_t plugins;
-list_t queries;
-list_t watches;
+extern list_t plugins;
+extern list_t queries;
+extern list_t watches;
 
 typedef enum {
 	PLUGIN_ANY = 0,

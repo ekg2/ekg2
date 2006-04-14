@@ -32,8 +32,8 @@ typedef struct event {
 	int prio;	/* priority of this event */
 }event_t;
 
-list_t events;
-char **events_all; /* it may be help for tab complete */
+extern list_t events;
+extern char **events_all; /* it may be help for tab complete */
 
 int event_add(const char *name, int prio, const char *target, const char *action, int quiet);
 int event_remove(unsigned int id, int quiet);

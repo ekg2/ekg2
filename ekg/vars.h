@@ -62,7 +62,7 @@ typedef struct {
 				 * wy¶wietliæ na li¶cie zmiennych */
 } variable_t;
 
-list_t variables;
+extern list_t variables;
 
 void variable_init();
 void variable_set_default();

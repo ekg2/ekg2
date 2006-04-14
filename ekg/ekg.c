@@ -90,6 +90,10 @@
 # endif
 #endif
 
+char *config_dir;
+int mesg_startup;
+int ekg_stdin_want_more;
+
 static pid_t ekg_pid = 0;
 static char argv0[PATH_MAX];
 

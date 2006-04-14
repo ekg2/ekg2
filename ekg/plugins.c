@@ -45,6 +45,7 @@
 
 list_t plugins = NULL;
 list_t queries = NULL;
+list_t watches = NULL;
 
 int ekg2_dlinit() {
 	return 0;

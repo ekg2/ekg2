@@ -42,6 +42,7 @@
 #include "xmalloc.h"
 
 static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
+list_t dccs = NULL;
 
 /*
  * protocol_init()

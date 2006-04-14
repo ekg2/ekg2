@@ -38,7 +38,7 @@ typedef struct {
 	char 		*path;
 	void 		*private;
 } script_t;
-list_t 		scripts;
+extern list_t 		scripts;
 
 typedef struct {
 	script_t 	*scr;
@@ -46,14 +46,14 @@ typedef struct {
 	int 		removed;
 	void 		*private;
 } script_timer_t; 
-list_t 		script_timers;
+extern list_t 		script_timers;
 
 typedef struct {
 	script_t        *scr;
 	plugin_t        *self;
 	void            *private;
 } script_plugin_t;
-list_t          script_plugins;
+extern list_t          script_plugins;
 
 typedef struct {
 	script_t 	*scr;
@@ -63,7 +63,7 @@ typedef struct {
 	char 		*value;
 	void 		*private;
 } script_var_t; 
-list_t 		script_vars;
+extern list_t 		script_vars;
 
 typedef struct {
 	script_t 	*scr;
@@ -72,14 +72,14 @@ typedef struct {
 	int             argv_type[MAX_ARGS];
 	void 		*private;
 } script_query_t; 
-list_t 		script_queries;
+extern list_t 		script_queries;
 
 typedef struct {
 	script_t 	*scr;
 	command_t	*self;
 	void 		*private; 
 } script_command_t;
-list_t 		script_commands;
+extern list_t 		script_commands;
 
 typedef struct {
 	script_t 	*scr;
@@ -88,7 +88,7 @@ typedef struct {
 	void 		*data;
 	void 		*private;
 } script_watch_t;
-list_t 		script_watches;
+extern list_t 		script_watches;
 
 typedef int (scriptlang_initialize_t)();
 typedef int (scriptlang_finalize_t)();
@@ -123,7 +123,7 @@ typedef struct {
 	
 	void *private;
 } scriptlang_t;
-list_t scriptlang;
+extern list_t scriptlang;
 
 #define SCRIPT_FINDER(bool)\
 	script_t *scr = NULL;\
