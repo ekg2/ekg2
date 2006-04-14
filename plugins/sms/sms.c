@@ -222,11 +222,12 @@ static void sms_away_free()
 
 static COMMAND(sms_command_sms)
 {
+	PARASC
         userlist_t *u;
         const char *number = NULL;
 
         if (!params[0] || !params[1] || !config_sms_app) {
-                printq("not_enough_params", name);
+                wcs_printq("not_enough_params", name);
                 return -1;
         }
 
@@ -247,7 +248,7 @@ static COMMAND(sms_command_sms)
         return 0;
 }
 
-static int dd_sms(const char *name)
+static int dd_sms(const CHAR_T *name)
 {
         return (config_sms_app != NULL);
 }
@@ -259,10 +260,8 @@ static int dd_sms(const char *name)
  */
 static QUERY(sms_session_status)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__status = va_arg(ap, char**), *status = *__status;
-
-        if (session);   /* warning */
+        char *session	= *(va_arg(ap, char**));
+        char *status	= *(va_arg(ap, char**));
 
         if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
                 sms_away_free();
@@ -277,10 +276,10 @@ static QUERY(sms_session_status)
  */
 static QUERY(sms_protocol_message)
 {
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        char ***__rcpts = va_arg(ap, char***);
-        char **__text = va_arg(ap, char**), *text = *__text;
+        char *session	= *(va_arg(ap, char**));
+        char *uid	= *(va_arg(ap, char**));
+        char ***rcpts	= va_arg(ap, char***);
+        char *text	= *(va_arg(ap, char**));
         const char *status = session_status_get_n(session);
 
         if (!status || !config_sms_away || !config_sms_app || !config_sms_number)
@@ -312,12 +311,10 @@ static QUERY(sms_protocol_message)
                 xfree(msg);
         }
 
-        if (__rcpts);   /* warning */
-
         return 0;
 }
 
-static void sms_changed_sms_away(const char *name)
+static void sms_changed_sms_away(const CHAR_T *name)
 {
         static int last = -1;
 
@@ -336,16 +333,15 @@ int sms_plugin_init(int prio)
 {
         plugin_register(&sms_plugin, prio);
 
-        command_add(&sms_plugin, "sms:sms", "u ?", sms_command_sms, 0, NULL);
+        command_add(&sms_plugin, TEXT("sms:sms"), TEXT("u ?"), sms_command_sms, 0, NULL);
 
-        variable_add(&sms_plugin, "sms_send_app", VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
-        variable_add(&sms_plugin, "sms_away", VAR_MAP, 1, &config_sms_away, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
-        variable_add(&sms_plugin, "sms_away_limit", VAR_INT, 1, &config_sms_away_limit, sms_changed_sms_away, NULL, dd_sms);
-        variable_add(&sms_plugin, "sms_max_length", VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
-        variable_add(&sms_plugin, "sms_number", VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
+        variable_add(&sms_plugin, TEXT("sms_send_app"), VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
+        variable_add(&sms_plugin, TEXT("sms_away"), VAR_MAP, 1, &config_sms_away, sms_changed_sms_away, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
+        variable_add(&sms_plugin, TEXT("sms_away_limit"), VAR_INT, 1, &config_sms_away_limit, NULL, NULL, dd_sms);
+        variable_add(&sms_plugin, TEXT("sms_max_length"), VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
+        variable_add(&sms_plugin, TEXT("sms_number"), VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
 
-        if (config_sms_away)
-                query_connect(&sms_plugin, "protocol-message", sms_protocol_message, NULL);
+        /* senseless, cause it'd be default value... this variable isn't loaded yet. */
 
         query_connect(&sms_plugin, "session-status", sms_session_status, NULL);
 
