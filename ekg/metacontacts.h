@@ -19,6 +19,7 @@
 
 #ifndef __EKG_METACONTACTS_H
 #define __EKG_METACONTACTS_H
+#include "dynstuff.h" 
 
 list_t metacontacts;
 
