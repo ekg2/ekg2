@@ -135,7 +135,8 @@ static QUERY(message_decrypt)
  */
 static COMMAND(command_key)
 {
-        if (match_arg(params[0], 'g', "generate", 2)) {
+	PARUNI
+        if (match_arg(params[0], 'g', TEXT("generate"), 2)) {
                 char *tmp, *tmp2;
                 struct stat st;
                 const char *uid;
@@ -174,8 +175,8 @@ static COMMAND(command_key)
                 return 0;
         }
 
-        if (match_arg(params[0], 's', "send", 2)) {
-                string_t s = NULL;
+        if (match_arg(params[0], 's', TEXT("send"), 2)) {
+                wcs_string_t s = NULL;
                 char *tmp, buf[128];
                 FILE *f;
 
@@ -196,22 +197,25 @@ static COMMAND(command_key)
                         return -1;
                 }
 
-                s = string_init("/ ");
+                s = wcs_string_init(TEXT("/ "));
 
-                while (fgets(buf, sizeof(buf), f))
-                        string_append(s, buf);
+                while (fgets(buf, sizeof(buf), f)) {
+			CHAR_T *sbuf = normal_to_wcs(buf);
+                        wcs_string_append(s, sbuf);
+			free_utf(sbuf);
+		}
 
                 fclose(f);
 
-                command_exec(params[1], session, s->str, quiet);
+                command_exec(wcs_to_normal(params[1]), session, s->str, quiet);
 
-                printq("key_send_success", format_user(session, get_uid(session, params[1])));
-                string_free(s, 1);
+                printq("key_send_success", format_user(session, get_uid(session, wcs_to_normal(params[1]))));
+                wcs_string_free(s, 1);
 
                 return 0;
         }
 
-        if (match_arg(params[0], 'd', "delete", 2)) {
+        if (match_arg(params[0], 'd', TEXT("delete"), 2)) {
                 char *tmp;
                 char *uid;
 
@@ -220,7 +224,7 @@ static COMMAND(command_key)
                         return -1;
                 }
 
-                if (!(uid = get_uid(session_current, params[1]))) {
+                if (!(uid = get_uid(session_current, wcs_to_normal(params[1])))) {
                         printq("user_not_found", params[1]);
                         return -1;
                 }
@@ -243,12 +247,13 @@ static COMMAND(command_key)
                 return 0;
         }
 
-        if (!params[0] || match_arg(params[0], 'l', "list", 2) || params[0][0] != '-') {
+        if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
                 DIR *dir;
                 struct dirent *d;
                 int count = 0;
                 const char *path = prepare_path("keys", 0);
-		const char *x = NULL, *list_uid = NULL;
+		const CHAR_T *x = NULL;
+		const char *list_uid = NULL;
 
                 if (!(dir = opendir(path))) {
                         printq("key_public_noexist");
@@ -257,10 +262,10 @@ static COMMAND(command_key)
 
                 if (params[0] && params[0][0] != '-')
                         x = params[0];
-                else if (params[0] && match_arg(params[0], 'l', "list", 2))
+                else if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
                         x = params[1];
 
-                if (x && !(list_uid = get_uid(session, x))) {
+                if (x && !(list_uid = get_uid(session, wcs_to_normal(x)))) {
                         printq("user_not_found", x);
                         closedir(dir);
                         return -1;
@@ -345,10 +350,10 @@ int sim_plugin_init(int prio)
         query_connect(&sim_plugin, "message-encrypt", message_encrypt, NULL);
         query_connect(&sim_plugin, "message-decrypt", message_decrypt, NULL);
 
-        command_add(&sim_plugin, "sim:key", "puUC uUC", command_key, 0,
+        command_add(&sim_plugin, TEXT("sim:key"), TEXT("puUC uUC"), command_key, 0,
           "-g --generate -s --send -d --delete -l --list");
 
-        variable_add(&sim_plugin, "encryption", VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
+        variable_add(&sim_plugin, TEXT("encryption"), VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
 
         sim_key_path = xstrdup(prepare_path("keys/", 0));
 
@@ -362,13 +367,6 @@ int sim_plugin_init(int prio)
  */
 static int sim_plugin_destroy()
 {
-        query_disconnect(&sim_plugin, "message-encrypt");
-        query_disconnect(&sim_plugin, "message-decrypt");
-
-        command_remove(&sim_plugin, "key");
-
-        variable_remove(&sim_plugin, "encryption");
-
         plugin_unregister(&sim_plugin);
 
         xfree(sim_key_path);
