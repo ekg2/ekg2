@@ -25,10 +25,13 @@
 #include <gdk/gdkx.h>
 
 #include <ekg/char.h>
+#include <ekg/configfile.h>
+#include <ekg/metacontacts.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
+#include <ekg/scripts.h>
 #include <ekg/windows.h>
 
 #include <stdio.h>
@@ -164,7 +167,34 @@ gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
 
 /* niszczecie okienka */
 void destroy(GtkWidget *widget, gpointer data) {
-/* TODO ask && save config */
+	GtkWidget *dialog;
+	int err = 0;
+
+        if (config_changed && !config_speech_app && config_save_quit == 1) {
+		dialog = gtk_message_dialog_new(GTK_WINDOW(ekg_main_win), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, format_find("config_changed"));
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_YES) {
+			if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write()) err = 1;
+		}
+
+        } else if (config_save_quit == 2) {
+               	if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write()) err = 1;
+
+        } else if (config_keep_reason && reason_changed && config_save_quit == 1) {
+		dialog = gtk_message_dialog_new(GTK_WINDOW(ekg_main_win), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, format_find("quit_keep_reason"));
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_YES) {
+			if (session_write()) err = 1;
+		}
+
+        } else if (config_keep_reason && reason_changed && config_save_quit == 2) {
+                if (session_write()) err = 1;
+        }
+
+	if (err)
+		printf(_("Error while saving.\n"));
+
+	config_changed = 0;
+	reason_changed = 0;
+
 	gtk_main_quit ();
 	ui_quit = 1;
 }
@@ -1076,11 +1106,9 @@ QUERY(ekg2_gtk_loop) {
 	ui_quit = 0;
 	config_use_unicode = 1;
 
-
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id); /* current page */
 	gtk_contacts_update(NULL);		/* userlist */
 	gtk_ui_window_act_changed(NULL, NULL);	/* act */
-
 
 	while (gtk_loop());
 	return -1;
