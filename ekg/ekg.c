@@ -303,7 +303,7 @@ void ekg_loop()
 	
                 /* na wszelki wypadek sprawd¼ warto¶ci */
 
-		if (tv.tv_usec != 1) 
+		if (tv.tv_sec != 1) 
 			tv.tv_sec = 0;
 		if (tv.tv_usec < 0)
 			tv.tv_usec = 1;
