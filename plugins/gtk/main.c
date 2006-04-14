@@ -171,14 +171,22 @@ void destroy(GtkWidget *widget, gpointer data) {
 
 /* <ENTER> editboxa */
 gint on_enter(GtkWidget *widget, gpointer data) {
-	CHAR_T *txt;
-	window_t *w = (data) ? data : window_current;
-	txt = normal_to_wcs(gtk_entry_get_text(GTK_ENTRY(widget)));
-	printf("[ON_ENTER] 0x%x %s %d\n", (int) w, window_target(w), w->id);
-	command_exec(w ? w->target : NULL, w ? w->session : NULL, txt, 0);
+	window_t *oldw	= window_current;
+	session_t *olds	= session_current;
+	CHAR_T *txt = normal_to_wcs(gtk_entry_get_text(GTK_ENTRY(widget)));
+
+	if (data) {
+		window_current = data;
+		session_current = window_current->session;
+	}
+
+	command_exec(NULL, NULL, txt, 0);
 
 	gtk_entry_set_text(GTK_ENTRY(widget), "");
 	free_utf(txt);
+
+	window_current = oldw;
+	session_current = olds;
 	return TRUE;
 }
 
