@@ -184,6 +184,7 @@ static int ioctld_send(const char *seq, int act, int quiet)
 
 static COMMAND(command_beeps_spk)
 {
+	PARASC
 	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
@@ -194,6 +195,7 @@ static COMMAND(command_beeps_spk)
 
 static COMMAND(command_blink_leds)
 {
+	PARASC
 	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
@@ -217,8 +219,8 @@ int ioctld_plugin_init(int prio)
 	
 	atexit(ioctld_kill);
 
-	command_add(&ioctld_plugin, "ioctld:beeps_spk", "?", command_beeps_spk, 0, NULL);
-	command_add(&ioctld_plugin, "ioctld:blink_leds", "?", command_blink_leds, 0, NULL);
+	command_add(&ioctld_plugin, TEXT("ioctld:beeps_spk"), TEXT("?"), command_beeps_spk, 0, NULL);
+	command_add(&ioctld_plugin, TEXT("ioctld:blink_leds"), TEXT("?"), command_blink_leds, 0, NULL);
 	
 	return 0;
 }
