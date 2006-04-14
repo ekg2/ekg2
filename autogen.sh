@@ -22,12 +22,6 @@ fi
 echo "Running libtoolize..."
 $LIBTOOLIZE --force --automake --copy || exit 1
 
-# We don't need missing in libltdl
-if test -x libltdl/missing; then
-	echo "#! /bin/bash" > libltdl/missing
-fi
-
-
 echo "Running gettextize..."
 # Ensure that gettext is reasonably new.
 gettext_ver=`$GETTEXTIZE --version | \
