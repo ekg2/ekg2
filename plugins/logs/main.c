@@ -282,7 +282,7 @@ FILE *logs_window_close(logs_log_t *l, int close) {
 	return f;
 }
 
-void logs_changed_maxfd(const char *var)
+void logs_changed_maxfd(const CHAR_T *var)
 {
 	int maxfd = config_logs_max_files;
 	if (in_autoexec) 
@@ -291,7 +291,7 @@ void logs_changed_maxfd(const char *var)
 /* TODO: sprawdzic ile fd aktualnie jest otwartych jak cos to zamykac najstarsze... dodac kiedy otwarlismy plik i zapisalismy ostatnio cos do log_window_t ? */
 }
 
-void logs_changed_path(const char *var) 
+void logs_changed_path(const CHAR_T *var)
 {
 	list_t l;
 	if (in_autoexec || !log_logs) 
@@ -398,12 +398,16 @@ log_away_t *logs_away_create(char *session)
 	return list_add(&log_awaylog, la, 0);
 }
 
-void logs_changed_awaylog(const char *var)
+void logs_changed_awaylog(const CHAR_T *var)
 {
 	list_t l;
 	if (in_autoexec)
 		return;
+#if USE_UNICODE
+	debug("%ls: %d\n", var, config_away_log);
+#else
 	debug("%s: %d\n", var, config_away_log);
+#endif
 
 	if (config_away_log) {
 		for (l = sessions; l; l = l->next) {
