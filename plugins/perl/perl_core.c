@@ -181,8 +181,10 @@ int perl_initialize()
 	char *code = NULL, *sub_code = NULL;
 	
 	my_perl = perl_alloc();
+	PL_perl_destruct_level = 1;
 	perl_construct(my_perl);
 	perl_parse(my_perl, xs_init, 3, args, NULL);
+/* 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END; */
 /*
 	sub_code = saprintf("use lib qw(%s %s/autorun %s);\n"
 			    "use Ekg2;",                 prepare_path("scripts", 0), prepare_path("scripts", 0), "/usr/local/share/ekg2/scripts");
@@ -323,6 +325,7 @@ int perl_finalize()
 {
 	if (!my_perl)
 		return -1;
+	PL_perl_destruct_level = 1;
 	perl_destruct(my_perl);
 	perl_free(my_perl);
 	my_perl = NULL;
