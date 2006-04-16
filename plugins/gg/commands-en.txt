@@ -75,7 +75,7 @@ check_conn
 	
 	It checks if person is connected. That persons client must support images.
 	Tested on GG 6.0 for Windows. In case of using clients:
-	TLEN, kadu, ekg i ekg2 commend don't work propertly (person
+	TLEN, kadu, ekg i ekg2 command don't work propertly (person
 	will get empty message). With that command we can check
 	if the 'non available' person is disconnected or only invisible.	
 
