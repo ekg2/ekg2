@@ -22,6 +22,7 @@ static void xmlnode_free(xmlnode_t *n)
 
 	xfree(n->name);
 	array_free(n->atts);
+	xfree(n);
 }
 
 void xmlnode_handle_start(void *data, const char *name, const char **atts)
