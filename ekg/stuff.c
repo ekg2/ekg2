@@ -144,6 +144,8 @@ char *last_search_uid = 0;
 
 int reason_changed = 0;
 
+struct color_map default_color_map[16+10];
+
 /* 
  * windows_save()
  *
@@ -1427,6 +1429,8 @@ char *random_line(const char *path)
 char *read_file(FILE *f)
 {
 	char buf[1024], *res = NULL;
+	if (!f)
+		return NULL;
 
 	while (fgets(buf, sizeof(buf), f)) {
 		int first = (res) ? 0 : 1;
