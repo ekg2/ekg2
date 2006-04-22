@@ -20,8 +20,8 @@
 #ifndef __EKG_THEMES_H
 #define __EKG_THEMES_H
 
-#include <ekg/char.h>
-#include <ekg/sessions.h>
+#include "char.h"
+#include "sessions.h"
 
 #include "dynstuff.h"
 
