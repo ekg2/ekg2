@@ -195,8 +195,8 @@ logs_log_t *logs_log_find(const char *session, const char *uid, int create) {
 	list_t l;
 	logs_log_t *temp = NULL;
 
-	if (log_curlog && !xstrcmp(log_curlog->session, session) && !xstrcmp(log_curlog->uid, uid)) 
-		return log_curlog;
+	if (log_curlog && !xstrcmp(log_curlog->session, session) && !xstrcmp(log_curlog->uid, uid))
+		return log_curlog->lw ? log_curlog : logs_log_new(log_curlog, session, uid);
 
 	for (l=log_logs; l; l = l->next) {
 		logs_log_t *ll = l->data;
