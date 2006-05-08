@@ -9,15 +9,15 @@ vCVS 2005-04-05
 	* internationalization
 	* loggin plugin (plugins/logs/README)
 	* new function ,,eval''
-	* window can be splitted and then text can be justified (see themes.txt) 
+	* window can be split and then text can be justified (see themes.txt) 
 	* coloured timestamp
 	* new function ,,for''
-	* possibility of split big messages to small 
+	* possibility of splitting big messages to small 
 	* aspell dictionary
 	* viewing all contacts in contacts window 
 	* metacontacts
 	* events based on conditions 
-	* diffrent colours of act in statusbar
+	* different colours of act in statusbar
 	* session variables have their defaults settings 
 	* showing name of the session when status are changing or in other commands
 	* added session variable auto_find
