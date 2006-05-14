@@ -1,4 +1,4 @@
-EXTRA_DIST = commands-pl.txt session-pl.txt
+EXTRA_DIST = commands-pl.txt session-pl.txt commands-pl-utf.txt session-pl-utf.txt
 
 lib_LTLIBRARIES = irc.la
 irc_la_SOURCES = irc.c misc.c people.c input.c misc.h irc.h people.h \
@@ -10,4 +10,5 @@ libdir = $(plugindir)
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/irc/
 	$(INSTALL) -m 644 commands-pl.txt session-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/irc/
+	$(INSTALL) -m 644 commands-pl-utf.txt session-pl-utf.txt $(DESTDIR)$(pkgdatadir)/plugins/irc/
 

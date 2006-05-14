@@ -1,0 +1,303 @@
+// IRC protocol session variables description
+// (c) 2004-2005 Michal 'GiM' Spadlinski
+//		Jakub 'darkjames' Zawadzki
+
+alias
+	typ: tekst
+	domyślna wartość: brak
+	
+	krótka nazwa sesji
+
+auto_away
+	typ: liczba
+	domyślna wartość: 0
+	
+	wartość określająca, po jakim czasie stan użytkownika zostanie
+	zmieniony na ,,zajęty''. podaje się w sekundach. jeśli równa 0,
+	nie będzie automatycznej zmiany.
+
+auto_back
+	typ: liczba
+	domyślna wartość: 0
+	
+	wartość określająca, czy stan ma być automatycznie zmieniany na
+	dostępny, jeśli obecny stan ,,zajęty'' został ustawiony automatycznie.
+	jeśli równa 1, stan jest zmieniany na dostępny przy wysłaniu
+	jakiejkolwiek wiadomości. jeśli równa 2, przy wciśnięciu klawisza.
+
+auto_connect
+	typ: bool
+	domyślna wartość: 0
+	
+	wartość określająca, czy dana sesja ma się łączyć wraz z uruchomieniem
+	programu
+
+auto_reconnect
+	typ: liczba
+	domyślna wartość: 0
+	
+	w przypadku nieudanego połączenia, określa po ilu sekundach program
+	ma ponowić próbę. jeśli równa 0, nie próbuje więcej.
+
+ban_type
+	typ: liczba
+	domyślna wartość: 10
+	
+	Typy banów: (irssi-like) tylko ze zamiast tekstu mamy numerki.
+	
+	 1 (Nick)   - nick!*@*
+	 
+	 2 (User)   - *!*user@*
+	 
+	 4 (Host)   - *!*@host.* (to jest troche inne niz w irssi
+	jak chcesz irssi-like to ustaw 12)
+	 
+	 8 (Domain) - *!*@*.domain.net
+	 
+	 8 (IP)     - *!*@192.168.11.*
+	 
+	i po dodaniu mamy np:
+	
+	 3 (Nick|User)   - nick!user@*
+	 
+	10 (User|Domain) - *!*user@*.domain.net
+	
+	Zmienna uzywana przy /ban oraz /kickban
+	Wiecej /help ban (@irssi)
+
+close_windows
+	typ: bool
+	domyślna wartość: 0
+	
+	plugin sam zamyka `niepotrzebne` okna. przy /quit usera z ktorym mamy
+	otwarte query, kiedy zostalismy wykopaniu przez kogos z kanalu imho
+	zbedny fjuczer. Zachowanie kompatylibnosci z GiMem ;>
+
+dcc_port
+	typ: liczba
+	domyślna wartość: 0
+	
+	póki co jeszcze nie używane...
+
+default
+	typ: bool
+	domyślna wartość: false
+	
+	określa czy dana sesja ma być sesją domyślną (ustawianą jako pierwsza
+	podczas uruchomienia programu)
+
+display_notify
+	typ: liczba
+	domyślna wartość: 0
+	
+	wartość -1 powoduje korzystanie z globalnej zmiennej. 
+	
+	wartość 0 powoduje ignorowanie zmian stanu znajomych, wartość
+	1 powoduje wyświetlanie wszystkich zmian, wartość 2 wyświetla
+	tylko zmiany z niedostępnego na dostępny i na odwrót. większy 
+	priorytet ma zmienna ,,contacts'', która przy wartości 2 
+	ukrywa zmiany stanu.
+
+hostname
+	typ: tekst
+	domyślna wartość: brak
+	
+	pozwala na korzystanie z vhostów [opcja -h w irssi]
+
+log_formats
+	typ: tekst
+	domyślna wartość: xml,simple
+	
+	format logów
+
+make_window
+	typ: liczba
+	domyślna wartość: 2
+	
+	suma bitowa, określająca czy należy tworzyć okna w danej sytuacji:
+	
+	1 - nie używane
+	
+	2 - tworzenie okna, gdy przychodzi do nas wiadomość od innego
+	użytkownika
+	
+	4 - tworzenie okna rozmowy z użytkownikiem, jeśli ten wysłał do nas
+	zapytanie ctcp
+	
+	8 - tworzenie okna rozmowy z użytkownikiem, jeśli przyszła od niego
+	odpowiedź, na wysłane przez nas zapytanie ctcp
+	
+	16 - tworzenie okienka, jeżeli dostajemy dostajemy NOTICE od serwera
+	przy łaczeniu... [AUTH mesejgi itp]
+	
+	Czyli np: ustawienie na 10 spowoduje otwieranie okienka rozmowy
+	przy przychodzeniu wiadomości i przy odpowiedzi na /ctcp
+	[jeżeli tylko okienko jeszcze nie istnieje]
+
+nickname
+	typ: tekst
+	domyślna wartość: twoj login
+	
+	określa domyślny nick, pod jakim będziemy starali się połączyć
+	z serwerem IRC
+	
+	zmienna musi być ustawiona, żeby móc się połaczyć
+
+password
+	typ: tekst
+	domyślna wartość: brak
+	
+	hasło do serwera
+
+port
+	typ: liczba
+	domyślna wartość: 6667
+	
+	port serwera, do którego będziemy się podłączać
+
+prefer_family
+	typ: liczba
+	domyślna wartość: 0
+	
+	Jesli serwer ma rekordy A i AAAA to zostanie wybrany rekord AAAA gdy
+	prefer_family = 10 (AF_INET6) rekord A gdy prefer_family != 10
+
+realname
+	typ: tekst
+	domyślna wartość: realname użyszkodnika
+	
+	dowolny tekst, który zostanie ustawiony jako nasz realname [m.in. w
+	odpowiedzi na /whois], by zmiany realname odniosły skutek należy się
+	ponownie połączyć
+
+server
+	typ: tekst
+	domyślna wartość: brak
+	
+	adres serwera irc, np: warszawa.irc.pl
+	
+	zmienna musi być ustawiona, żeby móc się połączyć
+
+AUTO_JOIN
+	typ: tekst
+	domyślna wartość: brak
+	
+	kanały, do których klient ma się podłączyć po połaczeniu, podane
+	w formie:
+	
+	kanał1,kanał2,kanał3,kanał4, klucznakanał1,klucznakanał2
+
+DISPLAY_PONG
+	typ: liczba
+	domyślna wartość: 1
+	
+	określa czy wyświetlać komunikat o odebraniu ping i wysłaniu pong
+	do serwera IRC. 1 - wyświetlać, 0 - nie.
+
+DISPLAY_AWAY_NOTIFICATION
+	typ: liczba
+	domyślna wartość: 1
+	
+	określa czy wyświetlać czyjeś away [np: jeśli ktoś ma ustawione
+	away i zrobimy /msg ktoś cośtam]
+
+DISPLAY_IN_CURRENT
+	typ: liczba
+	domyślna wartość: 0
+	
+	suma bitów, określająca, że pewne rzeczy będą wyświetlane
+	w aktualnym oknie:
+	
+	1 - wynik komendy /names [RACZEJ GŁUPOTA!]
+	
+	2 - wynik /whois jeżeli nie ma otwartego okna rozmowy z danym
+	uzytkownikiem będzie wyświetlony w aktualnym oknie zamiast w oknie
+	statusu
+
+DISPLAY_NICKCHANGE
+	typ: liczba
+	domyślna wartość: 0
+	
+	gdzie wyświetlać zmiany nicków [zobacz opis DISPLAY_QUIT
+
+DISPLAY_QUIT
+	typ: liczba
+	domyślna wartość: 0
+	
+	0 - we wszystkich kanałach, na których był użytkownik
+	
+	1 - tylko w oknie statusu
+	
+	2 - tylko w aktualnym oknie
+
+REJOIN
+	typ: liczba
+	domyślna wartość: 2
+	
+	suma bitowa, określająca kiedy robić autorejoin
+	
+	1 - przy dostaniu kicka z kanału
+	
+	2 - przy [re]connec'cie, jeśli są jakieś otwarte okienka z kanałami
+
+REJOIN_TIME
+	typ: liczba
+	domyślna wartość: 2
+	
+	ilość sekund jaką plugin ma odczekać, przed próbą ponownego dołączeniu
+	do kanału, jeśli zostaliśmy wykopani zmienna ta, nie ma żadnego
+	znaczenia, jeśli zmienna %TREJOIN%n nie jest ustawiona tak, by klient
+	robił autorejoin po kicku
+
+SHOW_NICKMODE_EMPTY
+	typ: liczba
+	domyślna wartość: 1
+	
+	jeśli 0 spacja NIE jest wyświetlana przed nickiem jeżeli ircownik nie
+	ma +, @ ani %, jeśli 1 spacja będzie wyświetlana
+
+SHOW_MOTD
+	typ: liczba
+	domyślna wartość: 1
+	
+	czy wyświetlać MOTD. 1 - tak, 0 - nie.
+
+STRIPMIRCCOL
+	typ: liczba
+	domyślna wartość: 0
+	
+	czy stripować wyświetlanie durnych kolorków na IRCu.
+	
+	0 - kolorki będą wyświetlane
+	
+	1 - nie będą.
+	
+	zmienna ta nie ma wpływu na wyświetlanie atryburów takich jak
+	%Tbold%T, %Uunderline%U i %Vreverse%V...
+
+VERSION_NAME
+	typ: tekst
+	domyślna wartość: brak
+	
+	określa pierwszy z ciągów, którymi IRC plugin odpowiada na zapytanie
+	%Tctcp VERSION%n, jeżeli nie ustawione używany jest ciąg: "IRC plugin
+	for EKG2:"
+
+VERSION_NO
+	typ: tekst
+	domyślna wartość: brak
+	
+	określa drugi z ciągów, którymi IRC plugin odpowiada na zapytanie
+	%Tctcp VERSION%n, jeżeli nie ustawione używany jest ciąg:
+	"numer_wersji_plugina:", można ustawić na pusty: /session -s
+	irc:nazwasesji VERSION_NO ""
+
+VERSION_SYS
+	typ: tekst
+	domyślna wartość: brak
+	
+	określa trzeci z ciągów, którymi IRC plugin odpowiada na
+	zapytanie %Tctcp VERSION%n, jeżeli nie ustawione używany jest
+	ciąg: "System wersja_jądra architektura", można ustawić na pusty:
+	/session -s irc:nazwasesji VERSION_SYS ""
+
