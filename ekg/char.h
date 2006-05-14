@@ -35,9 +35,11 @@
 #	include <wchar.h>
 #	define TEXT(x)	L##x
 #	define CHAR_T	wchar_t
+#	define CHARF	"%ls"
 #	define free_utf(x) xfree(x)
 #else
 #	define TEXT(x)	x
+#	define CHARF	"%s"
 #	define CHAR_T	char
 #	define free_utf(x) 
 #endif
