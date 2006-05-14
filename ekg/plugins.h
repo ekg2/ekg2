@@ -56,7 +56,7 @@ typedef struct {
 
 
 typedef struct {
-	char *name;
+	CHAR_T *name;
 	int prio;
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
@@ -65,12 +65,12 @@ typedef struct {
 	plugin_theme_init_func_t theme_init;
 } plugin_t;
 
-int plugin_load(const CHAR_T *name_, int prio, int quiet);
+int plugin_load(const CHAR_T *name, int prio, int quiet);
 int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);
 int plugin_theme_reload(plugin_t *);
-plugin_t *plugin_find(const char *name);
+plugin_t *plugin_find(const CHAR_T *name);
 plugin_t *plugin_find_uid(const char *uid);
 #define plugin_find_s(a) plugin_find_uid(a->uid)
 int have_plugin_of_class(int);
@@ -82,7 +82,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 	static int x##_plugin_destroy(); \
 	\
 	plugin_t x##_plugin = { \
-		#x, \
+		TEXT(#x), \
 		0, \
 		y, \
 		x##_plugin_destroy, \
@@ -94,7 +94,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 	static int x##_plugin_destroy(); \
 	\
 	plugin_t x##_plugin = { \
-		.name = #x, \
+		.name = TEXT(#x), \
 		.pclass = y, \
 		.destroy = x##_plugin_destroy, \
 		.theme_init = z \

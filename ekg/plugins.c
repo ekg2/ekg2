@@ -79,7 +79,7 @@ void *ekg2_dlsym(void *plugin, char *name) {
  * 
  * 0/-1
  */
-int plugin_load(const CHAR_T *name_, int prio, int quiet)
+int plugin_load(const CHAR_T *name, int prio, int quiet)
 {
 	char *lib = NULL;
 	char *env_ekg_plugins_path = NULL;
@@ -89,9 +89,7 @@ int plugin_load(const CHAR_T *name_, int prio, int quiet)
 	int (*plugin_init)() = NULL;
 	list_t l;
 
-	char *name = wcs_to_normal(name_);
-
-	if (!name_)
+	if (!name)
 		return -1;
 
 	if (plugin_find(name)) {
@@ -100,30 +98,30 @@ int plugin_load(const CHAR_T *name_, int prio, int quiet)
 	}
 
         if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-                lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
+                lib = saprintf("%s/" CHARF ".so", env_ekg_plugins_path, name);
                 plugin = ekg2_dlopen(lib);
                 if (!plugin) {
                         xfree(lib);
-                        lib = saprintf("%s/%s/.libs/%s.so", env_ekg_plugins_path, name, name);
+                        lib = saprintf("%s/" CHARF "/.libs/" CHARF ".so", env_ekg_plugins_path, name, name);
                         plugin = ekg2_dlopen(lib);
                 }
         }
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("plugins/%s/.libs/%s.so", name, name);
+                lib = saprintf("plugins/" CHARF "/.libs/" CHARF ".so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("../plugins/%s/.libs/%s.so", name, name);
+                lib = saprintf("../plugins/" CHARF "/.libs/" CHARF ".so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 	
 	if (!plugin) {
 		xfree(lib);
-		lib = saprintf("%s/%s.so", PLUGINDIR, name);
+		lib = saprintf("%s/" CHARF ".so", PLUGINDIR, name);
 		plugin = ekg2_dlopen(lib);
 	}
 
@@ -135,11 +133,11 @@ int plugin_load(const CHAR_T *name_, int prio, int quiet)
 
 	xfree(lib);
 
-	init = saprintf("%s_plugin_init", name);
+	init = saprintf(CHARF "_plugin_init", name);
 
 
 	if (!(plugin_init = ekg2_dlsym(plugin, init))) {
-		printq("plugin_incorrect", name);
+		wcs_printq("plugin_incorrect", name);
 
 		ekg2_dlclose(plugin);
 		xfree(init);
@@ -149,7 +147,7 @@ int plugin_load(const CHAR_T *name_, int prio, int quiet)
 	xfree(init);
 	
 	if (plugin_init(prio) == -1) {
-		printq("plugin_not_initialized", name);
+		wcs_printq("plugin_not_initialized", name);
 		ekg2_dlclose(plugin);
 		return -1;
 	}
@@ -157,13 +155,13 @@ int plugin_load(const CHAR_T *name_, int prio, int quiet)
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 
-		if (!xstrcasecmp(p->name, name)) {
+		if (!xwcscasecmp(p->name, name)) {
 			p->dl = plugin;
 			break;
 		}
 	}
 
-	printq("plugin_loaded", name);
+	wcs_printq("plugin_loaded", name);
 
 	if (!in_autoexec)
 		config_changed = 1;
@@ -176,14 +174,14 @@ int plugin_load(const CHAR_T *name_, int prio, int quiet)
  *
  * odnajduje plugin_t odpowiadaj±ce wtyczce o danej nazwie.
  */
-plugin_t *plugin_find(const char *name)
+plugin_t *plugin_find(const CHAR_T *name)
 {
 	list_t l;
 
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 
-		if (p && !xstrcmp(p->name, name))
+		if (p && !xwcscmp(p->name, name))
 			return p;
 	}
 
@@ -218,7 +216,7 @@ plugin_t *plugin_find_uid(const char *uid)
  */
 int plugin_unload(plugin_t *p)
 {
-	char *name; 
+	CHAR_T *name; 
 
 	if (!p)
 		return -1;
@@ -257,7 +255,7 @@ int plugin_unload(plugin_t *p)
 		}
 	}
 
-	name = xstrdup(p->name);
+	name = xwcsdup(p->name);
 
 	if (p->destroy)
 		p->destroy();
@@ -266,7 +264,7 @@ int plugin_unload(plugin_t *p)
 		ekg2_dlclose(p->dl);
 	}
 
-	print("plugin_unloaded", name);
+	wcs_print("plugin_unloaded", name);
 
         if (!in_autoexec)
                 config_changed = 1;
