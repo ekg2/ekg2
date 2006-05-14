@@ -44,7 +44,8 @@ void last_del(const char *uid);
 int last_count(const char *uid);
 void last_free();
 
-char *xml_escape(const char *text);
+CHAR_T *xml_uescape(const CHAR_T *text);
+CHAR_T *xml_escape(const char *text);
 char *log_escape(const char *str);
 
 #endif /* __EKG_LOG_H */

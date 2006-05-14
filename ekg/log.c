@@ -54,12 +54,12 @@ list_t lasts = NULL;
 int config_last_size = 10;
 int config_last = 0;
 
-static char *utf_ent[256] =
+static CHAR_T *utf_ent[256] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, "&quot;", 0, 0, 0, "&amp;", "&apos;", 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "&lt;", 0, "&gt;", 0,
+	0, 0, TEXT("&quot;"), 0, 0, 0, TEXT("&amp;"), TEXT("&apos;"), 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("&lt;"), 0, TEXT("&gt;"), 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -276,31 +276,41 @@ char *log_escape(const char *str)
  *
  * allocated buffer
  */
-extern char *utf_ent[];
-char *xml_escape(const char *text)
+CHAR_T *xml_uescape(const CHAR_T *text)
 {
-	const unsigned char *p;
-	unsigned char *res, *q;
+	const CHAR_T *p;
+	CHAR_T *res, *q;
 	int len;
 
 	if (!text)
 		return NULL;
 
-	for (p = text, len = 0; *p; p++)
-		len += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
+	for (p = text, len = 0; *p; p++) 
+		if (*p >= sizeof(utf_ent)/sizeof(CHAR_T)) len += 1;
+		else len += utf_ent[*p] ? xwcslen(utf_ent[*p]) : 1;
 
-	res = xmalloc(len + 1);
+	res = xmalloc((len + 1)*sizeof(CHAR_T));
 	for (p = text, q = res; *p; p++) {
-		char *ent = utf_ent[*p];
+		CHAR_T *ent = utf_ent[*p];
+		if (*p >= sizeof(utf_ent)/sizeof(CHAR_T)) ent = NULL;
 
 		if (ent)
-			xstrcpy(q, ent);
+			xwcscpy(q, ent);
 		else
 			*q = *p;
 
-		q += utf_ent[*p] ? strlen(utf_ent[*p]) : 1;
+		q += ent ? xwcslen(ent) : 1;
 	}
 
+	return res;
+}
+
+CHAR_T *xml_escape(const char *text) {
+	CHAR_T *stext = normal_to_wcs(text);
+	CHAR_T *res;
+
+	res = xml_uescape(stext);
+	free_utf(stext);
 	return res;
 }
 

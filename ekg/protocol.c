@@ -55,6 +55,7 @@ void protocol_init()
 	query_connect(NULL, "protocol-status", protocol_status, NULL);
 	query_connect(NULL, "wcs_protocol-status", protocol_status, (void *) 1);
 	query_connect(NULL, "protocol-message", protocol_message, NULL);
+	query_connect(NULL, "wcs_protocol-message", protocol_message, (void *) 1);
 	query_connect(NULL, "protocol-message-ack", protocol_message_ack, NULL);
 
 	query_connect(NULL, "protocol-connected", protocol_connected, NULL);
@@ -555,6 +556,26 @@ int protocol_message(void *data, va_list ap)
 	char *target = NULL;
 	int empty_theme = 0;
 	int our_msg;
+
+#if USE_UNICODE
+	if (data == (void *) 1) {
+		char *ssession	= wcs_to_normal( (CHAR_T *) session);
+		char *suid	= wcs_to_normal( (CHAR_T *) uid);
+		char *stext	= wcs_to_normal( (CHAR_T *) text);
+		char *sseq	= wcs_to_normal( (CHAR_T *) seq);
+		char **srcpts   = wcs_array_to_str( (CHAR_T **) rcpts);
+		int ret;
+
+		ret = query_emit(NULL, "protocol-message", &ssession, &suid, &srcpts, &stext, &format, &sent, &class, &sseq, &dobeep, &secure);
+
+		free_utf(ssession);
+		free_utf(suid);
+		free_utf(stext);
+		free_utf(sseq);
+		array_free(srcpts);
+		return ret;
+	}
+#endif
 
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
