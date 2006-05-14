@@ -1,0 +1,153 @@
+// opis dostępnych zmiennych w pluginie ncurses
+// (c) copyright 2004 piotr kupisiewicz <deletek@ekg2.org>
+
+aspell
+	typ: bool
+	domyślna wartość: 0
+	
+	określa, czy słownik ma zostać włączony.
+	więcej o samym słowniku w slownik.txt.
+
+aspell_lang
+	typ: tekst
+	domyślna wartość: "pl"
+	
+	określa język wykorzystywany przez słownik.
+
+aspell_encoding
+	typ: tekst
+	domyślna wartość: "iso8859-2"
+	
+	określa kodowanie używane przez słownik.
+
+backlog_size
+	typ: liczba
+	domyślna wartość: 1000
+	
+	ilość linii, która będzie zapisywana w buforze ekranu (tym, który
+	jest przewijany klawiszami Page Up i Page Down). nie może być
+	mniejsza niż ilość linii na ekranie. 
+
+contacts
+	typ: liczba
+	domyślna wartość: 2
+	
+	określa, czy okienko z listą obecnych ma być wyświetlone z prawej
+	strony ekranu. jeśli jest równe 2, informacje o zmianie stanu nie
+	są wyświetlane, ignorując wartość zmiennej ,,display_notify''.
+
+contacts_groups
+	typ: tekst
+	domyślna wartość: brak
+	
+	oddzielone przecinkiem grupy, które można przełączać w liście
+	kontaktów klawiszem F4. Aby wyświetlić użytkowników z poza grupy: !grupa.
+	domyślnie wyświetlani są wszyscy użytkownicy.
+
+contacts_groups_all_sessions
+	typ: bool
+	domyślna wartość: 0
+	
+	Jeśli jest włączona, przy wyświetlaniu kontaktów z grupy brane są pod
+	uwagę wszystkie sesje.
+
+contacts_metacontacts_swallow
+	typ: bool
+	domyślna wartość: 1
+	
+	Jeśli jest włączona, przy wyświetlaniu wszystkich użytkowników gdy
+	w liście kontaktów wyświetlany jest metakontakt, ukrywane są poszczególne
+	kontakty do niego należące.
+
+contacts_options
+	typ: tekst
+	domyślna wartość: brak
+	
+	opcje listy kontaktów oddzielone przecinkiem lub spacją. domyślne
+	ustawienia to ,,right, frame, margin=1, nowrap, nodescr, order=chavawxadninnoerr''
+	
+	możliwe stany to: 
+	
+	  ch - free for chat - chętny do rozmowy
+	
+	  av - dostępny
+	
+	  aw - zajęty 
+	
+	  xa - extended away - bardzo zajęty
+	
+	  dn - nie przeszkadzać
+	
+	  in - niewidoczny
+	
+	  no - niedostępny
+	
+	  err - niepoprawny kontakt
+	
+	można pominąć niektóre stany -- nie będą po prostu wyświetlane na liście.
+	
+	
+	lista dostępnych opcji:
+	- left, right, top, bottom - położenie listy kontaktów na ekranie,
+	- frame, noframe - lista oddzielona ramką od głównego okna lub nie,
+	- margin=n, nomargin - margines między listą a głównym oknem lub brak,
+	- wrap, nowrap - treść listy będzie zawijana lub ucinana,
+	- descr, nodescr - opisy stanu będą lub nie będą wyświetlane,
+	- order=n - kolejność wyświetlanych stanów.
+	- nosort - kolejność listy jest alfabetyczna, wyświetlane są jednak
+	tylko statusy pojawiające się w opcji order
+
+contacts_size
+	typ: liczba
+	domyślna wartość: 8
+	
+	określa szerokość okienka z listą kontaktów.
+
+display_crap
+	typ: bool
+	domyślna wartość: 1
+	
+	mówi, czy w oknie rozmowy mają być wyświetlane komunikaty niezwiązane
+	z rozmówcą. jeśli jest równe 0, w oknie rozmowy są wyświetlane tylko
+	wiadomości i informacje o zmianie stanu rozmówcy. 
+
+display_transparent
+	typ: bool
+	domyślna wartość: 1
+	
+	mówi, czy w tło ma być przezroczyste. 
+
+enter_scrolls
+	typ: bool
+	domyślna wartość: 0
+	
+	jeśli włączone, wciśnięcie klawisza Enter w pustej linii spowoduje
+	przesunięcie ekranu o jedną linię. 
+
+header_size
+	typ: liczba
+	domyślna wartość: 0
+	
+	określa rozmiar nagłówka okna wyświetlanego na górze ekranu.
+	maksymalna ilość linii to 5.
+
+kill_irc_window
+	typ: bool
+	domyślna wartość: 1
+	
+	jeśli ustawiona na 0, nie można zamknąć okna kanału ircowego przy
+        pomocy bindingu klawiaturowego.
+
+margin_size
+	typ: liczba
+	domyślna wartość: 15
+	
+	określa rozmiar marginesu wykorzystywanego przy /| w themach
+
+statusbar_size
+	typ: liczba
+	domyślna wartość: 1
+	
+	określa rozmiar paska stanu w liniach w zakresie od 1 do 5.
+
+$Id$
