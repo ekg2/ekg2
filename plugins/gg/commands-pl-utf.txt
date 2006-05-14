@@ -1,0 +1,259 @@
+// opis komend dla protokołu gg
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+
+_autoaway
+	parametry: 
+	krotki opis: automatycznie zmienia stan na zajęty
+
+_autoback
+	parametry: 
+	krotki opis: automatycznie zmienia stan na dostępny
+
+_descr
+	parametry:  [opis/-]
+	krotki opis: zmienia opis stanu
+	
+        Jeżeli nie podano opisu to będzie szukany losowy opis.
+        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+away
+	parametry:  [opis/-]
+	krotki opis: zmienia stan na zajęty
+	
+        Jeżeli nie podano opisu to będzie szukany losowy opis.
+        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+back
+	parametry:  [opis/-]
+	krotki opis: zmienia stan na dostępny
+	
+        Jeżeli nie podano opisu to będzie szukany losowy opis.
+        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+block
+	parametry:  [numer/alias]
+	krotki opis: dodaje do listy blokowanych
+
+change
+	parametry:  <opcje>
+	krotki opis: zmienia informacje w katalogu publicznym
+	
+	  -f, --first <imię>
+	
+	  -l, --last <nazwisko>
+	
+	  -n, --nick <pseudonim>
+	
+	  -b, --born <rok urodzenia>
+	
+	  -c, --city <miasto>
+	
+	  -N, --familyname <nazwisko>  nazwisko panieńskie
+	
+	  -C, --familycity <miasto>    miasto rodzinne
+	
+	  -F, --female                 kobieta
+	
+	  -M, --male                   mężczyzna
+	
+	
+	Jeśli któryś z parametrów nie zostanie podany, jego wartość zostanie 
+	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 
+	wyczyści %Twszystkie%n pola.
+
+chat
+	parametry:  <numer/alias/@grupa> <wiadomość>
+	krotki opis: wysyła wiadomość
+	
+	Polecenie jest podobne do %Tmsg%n, ale wysyła wiadomość w ramach rozmowy, 
+	a nie jako pojedynczą.
+
+check_conn
+	parametry:  [alias]
+	krotki opis: sprawdza czy podana osoba jest połączona 
+	
+	Sprawdza czy podana osoba jest połączona. Klient tej osoby musi 
+	obsługiwać obrazki. Przetestowane na GG 6.x dla Windows. W przypadku 
+	niektórych klientów jak np. tlen komenda nie działa prawidłowo 
+	(osobie którą sprawdzamy pojawia się pusta wiadomość). Dzięki tej 
+	funkcji można sprawdzić czy osoba, którą widzimy jako niedostępna 
+	jest niewidoczna. Jeżeli brak aliasu jako parametr sprawdzana jest osoba,
+	z którą rozmowa znajduję się w aktualnym okienku.
+	
+	Od wersji 7.0 nie jest możliwe sprawdzenie w ten sposób czy ktoś jest
+	niewidoczny. Wszystkie obrazki, a nawet tekst, do którego dołoączony jest
+	obrazek nie jest pokazywany użytkownikowi.
+	
+	Po 15 sekundach użytkownik uznawany jest za niepołączonego. W momencie
+	gdy użytkownik zostanie połączony pojawi się również komunikat
+	informujący o tym.
+
+connect
+	parametry:  
+	krotki opis: łączy się z serwerem
+
+dcc
+	parametry:  [opcje]
+	krotki opis: obsługa bezpośrednich połączeń
+	
+	  [r]send <numer/alias> <ścieżka>  wysyła podany plik
+	
+	  get [numer/alias/#id]            akceptuje przysyłany plik
+	
+	  resume [numer/alias/#id]         wznawia pobieranie pliku
+	
+	  [r]voice <numer/alias/#id>       rozpoczyna rozmowę głosową
+	
+	  close <numer/alias/#id>          zamyka połączenie
+	
+	  list                             wyświetla listę połączeń
+	
+	
+	Połączenia bezpośrednie wymagają włączonej opcji %Tdcc%n. 
+	Komendy %Trsend%n i %Trvoice%n wysyłają żądanie połączenia się 
+	drugiego klienta z naszym i są przydatne, gdy nie jesteśmy w stanie
+	się z nim sami połączyć.
+
+disconnect
+	parametry:  [powód/-]
+	krotki opis: rozłącza się od serwera
+	
+	Jeśli włączona jest opcja %Tauto_reconnect%n, po wywołaniu 
+	tej komendy, program nadal będzie próbował się automatycznie 
+	łączyć po określonym czasie.
+
+find
+	parametry:  [numer|opcje]
+	krotki opis: przeszukiwanie katalogu publicznego
+	
+	  -u, --uin <numerek>
+	
+	  -f, --first <imię>
+	
+	  -l, --last <nazwisko>
+	
+	  -n, --nick <pseudonim>
+	
+	  -c, --city <miasto>
+	
+	  -b, --born <min:max>    zakres roku urodzenia
+	
+	  -a, --active            tylko dostępni
+	
+	  -F, --female            kobiety
+	
+	  -M, --male              mężczyźni
+	
+	  -s, --start <n>         wyświetla od n-tego numeru
+	
+	  -A, --all               wyświetla wszystkich
+	
+	  -S, --stop              zatrzymuje wszystkie poszukiwania
+
+image
+	parametry:  <alias> <obrazek>
+	krotki opis: wysyła obrazek do podanej osoby
+	
+	Obrazek zostanie wysłany jako osobna wiadomość. Klient adresata 
+	musi obsługiwać	obrazki.
+
+invisible
+	parametry:  [opis/-]
+	krotki opis: zmienia stan na niewidoczny
+	
+        Jeżeli nie podano opisu to będzie szukany losowy opis.
+        Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+modify
+	parametry:  <alias> <opcje>
+	krotki opis: zmienia wpisy w liście kontaktów
+	
+	Opcje mogą być następujące:
+	
+	  -f, --first <imię>
+	
+	  -l, --last <nazwisko>
+	
+	  -n, --nick <pseudonim>     pseudonim (nie jest używany)
+	
+	  -d, --display <nazwa>      wyświetlana nazwa
+	
+	  -u, --uin <numerek>
+	
+	  -g, --group [+/-]<@grupa>  dodaje lub usuwa z grupy
+	
+	                             można podać więcej grup po przecinku
+	
+	  -p, --phone <numer>        numer telefonu komórkowego
+	
+	  -o, --offline              bądź niedostępny dla danej osoby
+	
+	  -O, --online               bądź widoczny dla danej osoby
+	
+	
+	Dwie ostatnie opcje działają tylko, gdy włączony jest tryb ,,tylko dla znajomych''.
+
+msg
+	parametry:  <numer/alias/@grupa/*> <wiadomość>
+	krotki opis: wysyła wiadomość
+	
+	Można podać większą ilość odbiorców oddzielając ich numery lub pseudonimy 
+	przecinkiem (ale bez odstępów). Jeśli zamiast odbiorcy podany zostanie znak 
+	,,%T*%n'', to wiadomość będzie wysłana do wszystkich aktualnych rozmówców.
+
+passwd
+	parametry:  <hasło>
+	krotki opis: zmienia hasło użytkownika
+	
+	Zmiana hasła nie wymaga już ustawienia zmiennej %Temail%n.
+
+reconnect
+	parametry: 
+	krotki opis: rozłącza i łączy się ponownie
+
+register
+	parametry:  <email> <hasło> <token>
+	krotki opis: rejestruje nowe konto
+	
+	Przed rejestracją należy pobrać token komendą token.
+
+remind
+	parametry:  [numer]
+	krotki opis: wysyła hasło na skrzynkę pocztową
+
+token
+	parametry: 
+	krotki opis: pobiera z serwera token
+	
+	Komenda ta jest niezbędna do rejestracji i zmiany hasła. Ma na celu 
+	zapewnienie serwera, że operację przeprowadza użytkownik, a nie automat. 
+	Jeśli system zawiera odpowiednie biblioteki, token zostanie wyświetlony 
+	na ekranie. W przeciwnym wypadku zostanie podana ścieżka, pod którą 
+	zapisano plik graficzny zawierający token.
+
+unblock
+	parametry:  <numer/alias>|*
+	krotki opis: usuwa z listy blokowanych
+
+unregister
+	parametry:  <uin/alias> <hasło> <token>
+	krotki opis: usuwa konto z serwera
+	
+	Podanie numeru i hasła jest niezbędne ze względów bezpieczeństwa. Nikt 
+	nie chciałby chyba usunąć konta przypadkowo, bez żadnego potwierdzenia. 
+	Przed rejestracją należy pobrać token komendą token.
+
+userlist
+	parametry:  [opcje]
+	krotki opis: lista kontaktów na serwerze
+	
+	Lista kontaktów na serwerze "list [-p|-g|-c]":
+	
+	  -c, --clear  usuwa listę z serwera
+	
+	  -g, --get    pobiera listę z serwera
+	
+	  -p, --put    umieszcza listę na serwerze
+
+$Id$
