@@ -163,8 +163,8 @@ COMMAND(jabber_command_disconnect)
 		descr = xstrdup(session_descr_get(session));
 
 	if (descr) {
-		char *tmp = jabber_escape(descr);
-		jabber_write(j, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp ? tmp : "");
+		CHAR_T *tmp = jabber_escape(descr);
+		jabber_write(j, "<presence type=\"unavailable\"><status>" CHARF "</status></presence>", tmp ? tmp : TEXT(""));
 		xfree(tmp);
 	} else
 		jabber_write(j, "<presence type=\"unavailable\"/>");
@@ -219,15 +219,19 @@ const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 	return uid;
 }
 
+const CHAR_T *jid_utarget2uid(session_t *s, const char *target, int quiet) {
+	return normal_to_wcs(jid_target2uid(s, target, quiet));
+}
+
 COMMAND(jabber_command_msg)
 {
-	PARASC;
+	PARUNI
 	jabber_private_t *j = session_private_get(session);
 	int chat = !xwcscasecmp(name, TEXT("chat"));
 	int subjectlen = xstrlen(config_subject_prefix);
-	char *msg;
+	CHAR_T *msg;
 	char *subject = NULL;
-	const char *uid;
+	const CHAR_T *uid;
 
 	window_t *w;
 	int ismuc = 0;
@@ -237,9 +241,10 @@ COMMAND(jabber_command_msg)
 			printq("list_empty");
 		return 0;
 	}
-	if (!(uid = jid_target2uid(session, target, quiet)))
+	if (!(uid = jid_utarget2uid(session, target, quiet)))
 		return -1;
 	/* czy wiadomo¶æ ma mieæ temat? */
+#ifndef USE_UNICODE
 	if (config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
 		char *subtmp = xstrdup((params[1]+subjectlen)); /* obcinamy prefix tematu */
 		char *tmp;
@@ -253,21 +258,24 @@ COMMAND(jabber_command_msg)
 		msg = (tmp) ? jabber_escape(tmp+1) : NULL;
 		xfree(subtmp);
 	} else 
-		msg = jabber_escape(params[1]); /* bez tematu */
+#else
+#warning TOPIC NOT SUPPORTED IN UNICODE VERSION.
+#endif
+		msg = jabber_uescape(params[1]); /* bez tematu */
 	if ((w = window_find_s(session, target)) && (w->userlist))
 		ismuc = 1;
 
 	if (ismuc)
-		jabber_write(j, "<message type=\"groupchat\" to=\"%s\" id=\"%d\">", uid+4, time(NULL));
+		jabber_write(j, "<message type=\"groupchat\" to=\"" CHARF "\" id=\"%d\">", uid+4, time(NULL));
 	else
-		jabber_write(j, "<message %sto=\"%s\" id=\"%d\">", chat ? "type=\"chat\" " : "", uid+4, time(NULL));
+		jabber_write(j, "<message %sto=\"" CHARF"\" id=\"%d\">", chat ? "type=\"chat\" " : "", uid+4, time(NULL));
 
 	if (subject) {
 		jabber_write(j, "<subject>%s</subject>", subject); 
 		xfree(subject); 
 	}
 	if (msg) {
-		jabber_write(j, "<body>%s</body>", msg);
+		jabber_write(j, "<body>" CHARF "</body>", msg);
         	if (config_last & 4) 
         		last_add(1, uid, time(NULL), 0, msg);
 		xfree(msg);
@@ -279,27 +287,27 @@ COMMAND(jabber_command_msg)
 	jabber_write(j, "</message>");
 
 	if (!quiet && !ismuc) { /* if (1) ? */ 
-		char *me 	= xstrdup(session_uid_get(session));
-		char **rcpts 	= xcalloc(2, sizeof(char *));
-		char *msg	= xstrdup(params[1]);
+		CHAR_T *me 	= xwcsdup( normal_to_wcs(  session_uid_get(session)  ));
+		CHAR_T **rcpts 	= xcalloc(2, sizeof(CHAR_T *));
+		CHAR_T *msg	= xwcsdup(params[1]);
 		time_t sent 	= time(NULL);
 		int class 	= (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
 		int ekgbeep 	= EKG_NO_BEEP;
-		char *format 	= NULL;
-		char *seq 	= NULL;
+		CHAR_T *format 	= NULL;
+		CHAR_T *seq 	= NULL;
 		int secure	= 0;
 
-		rcpts[0] 	= xstrdup(uid);
+		rcpts[0] 	= xwcsdup(uid);
 		rcpts[1] 	= NULL;
 
 		if (ismuc)
 			class |= EKG_NO_THEMEBIT;
 		
-		query_emit(NULL, "protocol-message", &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		query_emit(NULL, "wcs_protocol-message", &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(msg);
 		xfree(me);
-		array_free(rcpts);
+		wcs_array_free(rcpts);
 	}
 
 	session_unidle(session);
@@ -318,9 +326,9 @@ COMMAND(jabber_command_inline_msg)
 
 COMMAND(jabber_command_xml)
 {
-	PARASC
+	PARUNI
 	jabber_private_t *j = session_private_get(session);
-	jabber_write(j, "%s", params[0]);
+	jabber_write(j, CHARF, params[0]);
 	return 0;
 }
 
@@ -398,16 +406,17 @@ COMMAND(jabber_command_away)
 
 COMMAND(jabber_command_passwd)
 {
-	PARASC
+	PARUNI
 	jabber_private_t *j = session_private_get(session);
-	char *username, *passwd;
+	char *username;
+	CHAR_T *passwd;
 
 	username = xstrdup(session->uid + 4);
 	*(xstrchr(username, '@')) = 0;
 
 //	username = xstrndup(session->uid + 4, xstrchr(session->uid+4, '@') - session->uid+4);
 
-	passwd = jabber_escape(params[0]);
+	passwd = jabber_uescape(params[0]);
 	jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", j->server, j->id++, username, passwd);
 	
 	session_set(session, "__new_password", params[0]);
@@ -468,7 +477,7 @@ COMMAND(jabber_command_modify)
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *uid = NULL;
-	char *nickname = NULL;
+	CHAR_T *nickname = NULL;
 	int ret = 0;
 	userlist_t *u;
 	list_t m;
@@ -556,14 +565,14 @@ COMMAND(jabber_command_modify)
 	jabber_write(j, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
 
 	/* nickname always should be set */
-	if (nickname)	jabber_write(j, "<item jid=\"%s\" name=\"%s\"%s>", uid+4, nickname, (u->groups ? "" : "/"));
+	if (nickname)	jabber_write(j, "<item jid=\"%s\" name=\"" CHARF "\"%s>", uid+4, nickname, (u->groups ? "" : "/"));
 	else		jabber_write(j, "<item jid=\"%s\"%s>", uid+4, (u->groups ? "" : "/"));
 
 	for (m = u->groups; m ; m = m->next) {
 		struct ekg_group *g = m->data;
-		char *gname = jabber_escape(g->name);
+		CHAR_T *gname = jabber_escape(g->name);
 
-		jabber_write(j,"<group>%s</group>", gname);
+		jabber_write(j,"<group>"CHARF"</group>", gname);
 		xfree(gname);
 	}
 
@@ -589,9 +598,9 @@ COMMAND(jabber_command_del)
 		return -1;
 	{
 		jabber_private_t *j = session_private_get(session);
-		char *xuid = jabber_escape(uid+4);
+		CHAR_T *xuid = jabber_escape(uid+4);
 		jabber_write(j, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
-		jabber_write(j, "<item jid=\"%s\" subscription=\"remove\"/></query></iq>", xuid);
+		jabber_write(j, "<item jid=\"" CHARF "\" subscription=\"remove\"/></query></iq>", xuid);
 		xfree(xuid);
 	}
 	print("user_deleted", target, session_name(session));
@@ -629,9 +638,9 @@ COMMAND(jabber_command_ver)
 	}
 	{
 		jabber_private_t *j = session_private_get(session);
-		char *xuid = jabber_escape(uid+4);
-		char *xquery_res = jabber_escape(query_res);
-       		jabber_write(j, "<iq id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
+		CHAR_T *xuid = jabber_escape(uid+4);
+		CHAR_T *xquery_res = jabber_escape(query_res);
+       		jabber_write(j, "<iq id='%d' to='" CHARF"/"CHARF "' type='get'><query xmlns='jabber:iq:version'/></iq>", \
 			     j->id++, xuid, xquery_res);
 		xfree(xuid);
 		xfree(xquery_res);
@@ -648,8 +657,8 @@ COMMAND(jabber_command_userinfo)
 		return -1;
 	{ 
 		jabber_private_t *j = session_private_get(session);
-		char *xuid = jabber_escape(uid+4);
-       		jabber_write(j, "<iq id='%d' to='%s' type='get'><vCard xmlns='vcard-temp'/></iq>", \
+		CHAR_T *xuid = jabber_escape(uid+4);
+       		jabber_write(j, "<iq id='%d' to='" CHARF "' type='get'><vCard xmlns='vcard-temp'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
 	}
@@ -684,7 +693,7 @@ COMMAND(jabber_command_change)
 
 	}
 	for (i=0; i<pub_sz; i++) 
-		pub[i] = jabber_escape(pub[i]);
+		pub[i] = jabber_uescape(pub[i]);
 	jabber_write(j, 
 #if USE_UNICODE
 		"<iq type=\"set\"><vCard xmlns='vcard-temp'><FN>%ls</FN><NICKNAME>%ls</NICKNAME><ADR><LOCALITY>%ls</LOCALITY><COUNTRY>%ls</COUNTRY></ADR><BDAY>%ls</BDAY><DESC>%ls</DESC></vCard></iq>\n", 
@@ -711,8 +720,8 @@ COMMAND(jabber_command_lastseen)
 #endif
 	{
 		jabber_private_t *j = session_private_get(session);
-		char *xuid = jabber_escape(uid+4);
-	       	jabber_write(j, "<iq id='%d' to='%s' type='get'><query xmlns='jabber:iq:last'/></iq>", \
+		CHAR_T *xuid = jabber_escape(uid+4);
+	       	jabber_write(j, "<iq id='%d' to='" CHARF "' type='get'><query xmlns='jabber:iq:last'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
 	}

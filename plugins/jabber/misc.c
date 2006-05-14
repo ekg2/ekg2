@@ -158,9 +158,25 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
  *
  * zaalokowany bufor
  */
-char *jabber_escape(const char *text)
+
+CHAR_T *jabber_uescape(const CHAR_T *text) {
+	unsigned char *utftext;
+	CHAR_T *res;
+	if (config_use_unicode)
+		return xml_uescape(text);
+	if (!text)
+		return NULL;
+	if ( !(utftext = mutt_convert_string((char *)text, config_console_charset, "utf-8")) )
+		return NULL;
+	res = xml_escape(utftext);
+        xfree(utftext);
+	return res;
+}
+
+CHAR_T *jabber_escape(const char *text)
 {
-	unsigned char *res, *utftext;
+	unsigned char *utftext;
+	CHAR_T *res;
 	if (config_use_unicode)
 		return xml_escape(text);
 	if (!text)

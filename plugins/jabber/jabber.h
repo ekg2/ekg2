@@ -5,6 +5,7 @@
 
 #include <ekg2-config.h>
 
+#include <ekg/char.h>
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
 
@@ -15,7 +16,7 @@
 #endif
 
 #define DEFAULT_CLIENT_NAME "EKG2 -- http://www.ekg2.org"
-#define JABBER_DEFAULT_RESOURCE "ekg2"
+#define JABBER_DEFAULT_RESOURCE TEXT("ekg2")
 
 struct xmlnode_s {
 	char *name;
@@ -70,7 +71,8 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s);
 void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
 
 void jabber_initialize_conversions(char *varname);
-char *jabber_escape(const char *text);
+CHAR_T *jabber_escape(const char *text);
+CHAR_T *jabber_uescape(const CHAR_T *text);
 char *jabber_unescape(const char *text);
 int jabber_write_status(session_t *s);
 

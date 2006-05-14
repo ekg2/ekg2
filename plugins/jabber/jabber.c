@@ -184,7 +184,7 @@ int jabber_write_status(session_t *s)
         jabber_private_t *j = session_private_get(s);
         int priority = session_int_get(s, "priority");
         const char *status;
-        char *descr;
+        CHAR_T *descr;
 	char *real = NULL;
 
         if (!s || !j)
@@ -195,7 +195,7 @@ int jabber_write_status(session_t *s)
 
         status = session_status_get(s);
 	if ((descr = jabber_escape(session_descr_get(s)))) {
-		real = saprintf("<status>%s</status>", descr);
+		real = saprintf("<status>" CHARF "</status>", descr);
 		xfree(descr);
 	}
 
@@ -724,11 +724,11 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 			if (!xstrncmp(ns, "jabber:iq:version", 17) && id && from) {
 				const char *ver_os;
-				char *osversion;
 				const char *tmp;
 
-				char *escaped_client_name	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_name")), DEFAULT_CLIENT_NAME) );
-				char *escaped_client_version	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_version")), VERSION) );
+				CHAR_T *escaped_client_name	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_name")), DEFAULT_CLIENT_NAME) );
+				CHAR_T *escaped_client_version	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_version")), VERSION) );
+				CHAR_T *osversion;
 
 				if (!(ver_os = session_get(s, "ver_os"))) {
 					struct utsname buf;
@@ -738,16 +738,17 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						osversion = jabber_escape(tmp);
 						xfree(osver);
 					} else {
-						osversion = xstrdup("unknown"); /* uname failed and not ver_os session variable */
+						osversion = xwcsdup(TEXT("unknown")); /* uname failed and not ver_os session variable */
 					}
 				} else {
 					osversion = jabber_escape(ver_os);	/* ver_os session variable */
 				}
 
 				jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
-						"<query xmlns=\"jabber:iq:version\"><name>%s</name>"
-						"<version>%s</version>"
-						"<os>%s</os></query></iq>", 
+						"<query xmlns=\"jabber:iq:version\">"
+						"<name>"CHARF"/name>"
+						"<version>"CHARF"/version>"
+						"<os>"CHARF"</os></query></iq>", 
 						from, id, 
 						escaped_client_name, escaped_client_version, osversion);
 
@@ -975,7 +976,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 
         if (!xstrcmp(name, "stream:stream")) {
                 char *password = (char *) session_get(s, "password");
-                char *resource = jabber_escape(session_get(s, "resource"));
+                CHAR_T *resource = jabber_escape(session_get(s, "resource"));
                 const char *uid = session_uid_get(s);
                 char *username;
 		char *authpass;
@@ -984,14 +985,14 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
                 *(xstrchr(username, '@')) = 0;
 
                 if (!resource)
-                        resource = xstrdup(JABBER_DEFAULT_RESOURCE);
+                        resource = xwcsdup(JABBER_DEFAULT_RESOURCE);
 
                 j->stream_id = xstrdup(jabber_attr((char **) atts, "id"));
 
 		authpass = (session_int_get(s, "plaintext_passwd")) ? 
 			saprintf("<password>%s</password>", password) :  				/* plaintext */
 			saprintf("<digest>%s</digest>", jabber_digest(j->stream_id, password));		/* hash */
-		jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", j->server, username, authpass, resource);
+		jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", j->server, username, authpass, resource);
                 xfree(username);
 		xfree(resource);
 		xfree(authpass);
