@@ -1,0 +1,143 @@
+// mały opis dostępnych zmiennych sesyjnych pluginu jabber
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
+
+alias
+	typ: tekst
+	domyślna wartość: brak
+	
+	krótka nazwa sesji
+
+auto_away
+	typ: liczba
+	domyślna wartość: 600
+	
+	wartość określająca, po jakim czasie stan użytkownika zostanie
+	zmieniony na ,,zajęty''. podaje się w sekundach. jeśli równa 0,
+	nie będzie automatycznej zmiany.
+
+auto_back
+	typ: liczba
+	domyślna wartość: 0
+	
+	wartość określająca, czy stan ma być automatycznie zmieniany na
+	dostępny, jeśli obecny stan ,,zajęty'' został ustawiony automatycznie.
+	jeśli równa 1, stan jest zmieniany na dostępny przy wysłaniu
+	jakiejkolwiek wiadomości. jeśli równa 2, przy wciśnięciu klawisza.
+
+auto_connect
+	typ: bool
+	domyślna wartość: 0
+	
+	wartość określająca, czy dana sesja ma się łączyć wraz z uruchomieniem
+	programu
+
+auto_reconnect
+	typ: liczba
+	domyślna wartość: 10
+	
+	w przypadku nieudanego połączenia, określa po ilu sekundach program
+	ma ponowić próbę. jeśli równa 0, nie próbuje więcej.
+
+default
+	typ: bool
+	domyślna wartość: 0
+	
+	określa czy dana sesja ma być sesją domyślną (ustawianą jako pierwsza
+	podczas uruchomienia programu)
+
+display_notify
+	typ: liczba
+	domyślna wartość: -1
+	
+	wartość -1 powoduje korzystanie z globalnej zmiennej.
+	wartość 0 powoduje ignorowanie zmian stanu znajomych, wartość
+	1 powoduje wyświetlanie wszystkich zmian, wartość 2 wyświetla
+	tylko zmiany z niedostępnego na dostępny i na odwrót. większy
+	priorytet ma zmienna ,,contacts'', która przy wartości 2
+	ukrywa zmiany stanu.
+
+log_formats
+	typ: tekst
+	domyślna wartość: xml,simple
+	
+	Określa formaty, w jakich zapisywane są logi z rozmów.
+	
+	Patrz tez: zmienna "log_path"
+
+password
+	typ: tekst
+	domyślna wartość: brak
+	
+	hasło użytkownika. niezbędne do połączenia z serwerem.
+
+plaintext_passwd
+	typ: bool
+	domyślna wartość: 0
+	
+	określa, czy hasło ma być przesyłane do serwera jawnym tekstem (1),
+	czy za pomocą skrótu kryptograficznego (0).
+
+port
+	typ: liczba
+	domyślna wartość: 5222
+	
+	port jakiego mamy używać przy łączeniu
+
+priority
+	typ: liczba
+	domyślna wartość: 5
+	
+	priorytet połączenia z serwerem jabbera.
+
+resource
+	typ: tekst
+	domyślna wartość: ekg2
+	
+	zasób jabberowy.
+
+server
+	typ: tekst
+	domyślna wartość: brak 
+	
+	adres serwera, z którym należy sie połączyć, jeśli jest on inny niż
+	to wynika z Jabber ID użytkownika.
+
+ssl_port
+	typ: liczba
+	domyślna wartość: 5223
+	
+	port używany przy połączeniu szyfrowanym.
+
+show_typing_notify
+	typ: bool
+	domyślna wartość: 1
+	
+	określa, czy pokazywać informację, że ktoś właśnie pisze do nas wiadomość.
+
+use_ssl
+	typ: bool
+	domyślna wartość: 1
+	
+	określa, czy nawiązywać z serwerem połączenie szyfrowane.
+
+ver_client_name
+	typ: tekst
+	domyślna wartość: brak
+	
+	nazwa klienta zwracana przy zapytaniach o wersję
+
+ver_client_version
+	typ: tekst
+	domyślna wartość: brak
+	
+	wersja klienta zwracana przy zapytaniach o wersję
+
+ver_os
+	typ: tekst
+	domyślna wartość: brak
+	
+	system operacyjny zwracany przy zapytaniach o wersję
+
+$Id$

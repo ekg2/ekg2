@@ -1,0 +1,157 @@
+// opis komend dla protokołu jabber
+// (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
+// (c) copyright      2004 tomasz torcz <zdzichu@ekg2.org>
+
+_autoaway
+	parametry: 
+	krotki opis: zmienia stan na zajęty
+
+_autoback
+	parametry: 
+	krotki opis: zmienia stan na dostępny
+
+add
+	parametry: <JID> [nazwa]
+	krotki opis: dodaje użytkownika do naszego rostera, jednocześnie prosząc o autoryzację
+
+auth
+	parametry: <opcje> <JID> 
+	krotki opis: obsługa autoryzacji
+	
+	<akcja> <JID> 
+	
+	  -a, --accept <JID>    autoryzuje JID
+	
+	  -d, --deny <JID>      odmawia udzielenia autoryzacji
+	
+	  -r, --request <JID>   wysyła żądanie autoryzacji
+	
+	  -c, --cancel <JID>    wysyła żądanie cofnięcia autoryzacji
+
+away
+	parametry: [opis/-]
+	krotki opis: zmienia stan na zajęty
+	
+	Jeżeli nie podano opisu to będzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+back
+	parametry: [opis/-]
+	krotki opis: zmienia stan na dostępny
+	
+	Jeżeli nie podano opisu to będzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+change
+	parametry:  <opcje>
+	krotki opis: zmienia informacje w katalogu publicznym
+	
+	  -f, --fullname <imię i nazwisko>
+	
+	  -n, --nick <pseudonim>
+	
+	  -b, --born <rok urodzenia>
+	
+	  -c, --city <miasto>
+	
+	  -d, --description <opis>
+	
+	  -C, --country <kraj>
+	
+	
+	Jeśli któryś z parametrów nie zostanie podany, jego wartość zostanie 
+	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 
+	wyczyści %Twszystkie%n pola.
+
+chat
+	parametry: 
+	krotki opis: wysyła wiadomość w ramach rozmowy
+
+connect
+	parametry: 
+	krotki opis: łączy się z serwerem
+
+del
+	parametry: [nazwa]
+	krotki opis: usuwa z naszego rostera
+
+disconnect
+	parametry:  [opis/-]
+	krotki opis: rozłącza się od serwera
+	
+	Jeżeli nie podano opisu to będzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+dnd
+	parametry: [opis/-]
+	krotki opis: zmienia stan na nie przeszkadzać
+	
+	Jeżeli nie podano opisu to będzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+ffc
+	parametry: [opis/-]
+	krotki opis: zmienia stan na chętny do rozmowy
+	
+	Jeżeli nie podano opisu to będzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+invisible
+	parametry: [opis/-]
+	krotki opis: zmienia stan na zajęty
+	
+	Jeżeli nie podano opisu to będzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+lastseen
+	parametry: 
+	krotki opis: pobiera informację o czasie wylogowania się danego jid
+
+msg
+	parametry: 
+	krotki opis: wysyła pojedynczą wiadomość
+	
+	Wszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomości 
+	wielolinijkowej ciągiem zdefiniowanym w zmiennej subject_prefix spowoduje 
+	potraktowanie pierwszej linijki jako tematu.
+
+modify
+	parametry:  <alias> <opcje>
+	krotki opis: zmienia wpisy w liście kontaktów
+	
+	Opcje mogą być następujące:
+	
+	-n, --nickname <pseudonim>     wpis w liście kontaktów
+
+passwd
+	parametry: 
+	krotki opis: zmienia hasło
+
+reconnect
+	parametry: 
+	krotki opis: rozłącza i łączy się ponownie
+
+userinfo
+	parametry: 
+	krotki opis: pobiera informacje z katalogu Jabbera o danym jid
+
+ver
+	parametry: 
+	krotki opis: pobiera informację o sytemie operacyjnym i wersji klienta Jabbera danego jid
+
+xa
+	parametry: [opis/-]
+	krotki opis: zmienia stan na bardzo zajęty
+	
+	Jeżeli nie podano opisu to będzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+xml
+	parametry: 
+	krotki opis: wysyła polecenie xml
+	
+	Polecenie musi być zakodowanie w UTF-8, a wszystkie znaki specjalne używane w XML 
+	(& < >) muszą być zamienione na odpowiadające im sekwencje.
+
+// $Id$
