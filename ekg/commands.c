@@ -576,7 +576,7 @@ typedef struct {
 	char *target;		/* je¶li wysy³amy wynik, to do kogo? */
 	char *session;		/* jaka sesja? */
 	int quiet;		/* czy mamy byæ cicho? */
-	string_t buf;		/* je¶li buforujemy, to tutaj */
+	wcs_string_t buf;	/* je¶li buforujemy, to tutaj */
 } cmd_exec_info_t;
 
 WATCHER(cmd_exec_watch_handler)
@@ -589,9 +589,9 @@ WATCHER(cmd_exec_watch_handler)
 
 	if (type == 1) {
 		if (i->buf) {
-			string_insert(i->buf, 0, "/ ");
+			string_insert(i->buf, 0, TEXT("/ ")); /* UUU */
 			command_exec(i->target, session_find(i->session), i->buf->str, quiet);
-			string_free(i->buf, 1);
+			wcs_string_free(i->buf, 1);
 		}
 		xfree(i->target);
 		xfree(i->session);
@@ -605,8 +605,10 @@ WATCHER(cmd_exec_watch_handler)
 	}
 
 	if (i->buf) {
-		string_append(i->buf, watch);
-		string_append(i->buf, "\r\n");
+		CHAR_T *watch_wcs = normal_to_wcs(watch);
+		wcs_string_append(i->buf, watch_wcs);
+		wcs_string_append(i->buf, TEXT("\r\n"));
+		free_utf(watch_wcs);
 	} else {
 		command_exec_format(i->target, session_find(i->session), quiet, TEXT("/ %s"), watch);
 	}
@@ -691,7 +693,7 @@ COMMAND(cmd_exec)
 		i->session = xstrdup(session_uid_get(session));
 
 		if (buf)
-			i->buf = string_init(NULL);
+			i->buf = wcs_string_init(NULL);
 
 		w = watch_add(NULL, fd[0], WATCH_READ_LINE, 1, cmd_exec_watch_handler, i);
 
@@ -1041,7 +1043,7 @@ COMMAND(cmd_help)
 				        xfree(tmp);
 
 			                if (!f) {
-                                                print("help_command_file_not_found_plugin", c->plugin->name);
+                                                wcs_print("help_command_file_not_found_plugin", c->plugin->name);
 						return -1;
 			                }
 					tmp2 = xwcschr(c->name, ':');
@@ -1923,11 +1925,7 @@ COMMAND(cmd_test_deltab)
 COMMAND(cmd_test_debug)
 {
 	PARUNI
-#if USE_UNICODE
-	debug("%ls\n", params[0]);
-#else
-	debug("%s\n", params[0]);
-#endif
+	debug(CHARF "\n", params[0]);
 	return 0;
 }
 
@@ -1960,7 +1958,8 @@ COMMAND(cmd_debug_watches)
 	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-		char wa[4], *plugin;
+		char wa[4];
+		CHAR_T *plugin;
 
 		xstrcpy(wa, "");
 
@@ -1974,9 +1973,12 @@ COMMAND(cmd_debug_watches)
 		if (w->plugin)
 			plugin = w->plugin->name;
 		else
-			plugin = "-";
-
+			plugin = TEXT("-");
+#if USE_UNICODE
+		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8ls  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, w->persist, w->timeout, w->started, w->removed);
+#else
 		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8s  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, w->persist, w->timeout, w->started, w->removed);
+#endif
 		printq("generic", buf);
 	}
 
@@ -1992,11 +1994,15 @@ COMMAND(cmd_debug_queries)
 	
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
-		char buf[256], *plugin;
+		char buf[256];
+		CHAR_T *plugin;
 
-		plugin = (q->plugin) ? q->plugin->name : "-";
-
+		plugin = (q->plugin) ? q->plugin->name : TEXT("-");
+#if USE_UNICODE
+		snprintf(buf, sizeof(buf), "%-32s | %-8ls | %d", q->name, plugin, q->count);
+#else
 		snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", q->name, plugin, q->count);
+#endif
 		printq("generic", buf);
 	}
 
@@ -3911,7 +3917,7 @@ COMMAND(cmd_dcc)
 
 COMMAND(cmd_plugin)
 {
-	PARASC
+	PARUNI
 	int ret;
 	plugin_t *pl;
 
@@ -3921,13 +3927,13 @@ COMMAND(cmd_plugin)
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
 
-			printq("plugin_list", (p && p->name) ? p->name : "?", itoa(p->prio));
+			wcs_printq("plugin_list", (p && p->name) ? p->name : TEXT("?"), wcs_itoa(p->prio));
 		}
 
 		return 0;
 	}
 
-        if (nmatch_arg(params[0], 'd', TEXT("default"), 2)) {
+        if (match_arg(params[0], 'd', TEXT("default"), 2)) {
                 list_t l;
 
                 for (l = plugins; l;) {
@@ -3944,7 +3950,7 @@ COMMAND(cmd_plugin)
         }
 
 	if (params[0][0] == '+') {
-		ret = plugin_load(unpar(params[0] + 1), -254, 0);
+		ret = plugin_load(params[0] + 1, -254, 0);
 		if (!ret) /* if plugin cannot be founded || loaded don't reload theme. */
 			changed_theme(NULL); 
 		return ret;
@@ -3955,10 +3961,10 @@ COMMAND(cmd_plugin)
 
 	if (params[1] && (pl = plugin_find(params[0]))) {
 		list_remove(&plugins, pl, 0);
-		plugin_register(pl, atoi(params[1])); 
+		plugin_register(pl, wcs_atoi(params[1])); 
 
 		config_changed = 1;
-		printq("plugin_prio_set", pl->name, params[1]);
+		wcs_printq("plugin_prio_set", pl->name, params[1]);
 
 		return 0;
 	}

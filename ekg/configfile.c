@@ -166,7 +166,7 @@ int config_read_plugins()
  */
 int config_read(const char *filename)
 {
-	char *buf, *foo;
+	CHAR_T *buf, *foo;
 	FILE *f;
 	list_t l;
 	int i = 0, good_file = 0, first = (filename) ? 0 : 1, ret = 1;
@@ -188,7 +188,7 @@ int config_read(const char *filename)
 		debug("  flushed previous config\n");
 	} 
 
-	while ((buf = read_file(f))) {
+	while ((buf = wcs_read_file(f))) {
 		ret = 0;
 		i++;
 
@@ -197,115 +197,109 @@ int config_read(const char *filename)
 			continue;
 		}
 
-		if (!(foo = xstrchr(buf, ' '))) {
+		if (!(foo = xwcschr(buf, ' '))) {
 			xfree(buf);
 			continue;
 		}
 
 		*foo++ = 0;
-                if (!xstrcasecmp(buf, "set")) {
-			CHAR_T *ufoo = normal_to_wcs(foo);
+                if (!xwcscasecmp(buf, TEXT("set"))) {
                         CHAR_T *bar;
 
-                        if (!(bar = xwcschr(ufoo, ' ')))
-                                ret = variable_set(ufoo, NULL, 0);
+                        if (!(bar = xwcschr(foo, ' ')))
+                                ret = variable_set(foo, NULL, 0);
                         else {
                                 *bar++ = 0;
-                                ret = variable_set(ufoo, bar, 0);
+                                ret = variable_set(foo, wcs_to_normal(bar), 0);
                         }
 
                         if (ret)
-                                debug("  unknown variable %s\n", foo);
-			free_utf(ufoo);
+                                debug("  unknown variable " CHARF "\n", foo);
 
-                } else if (!xstrcasecmp(buf, "plugin")) {
-                        CHAR_T **p = wcs_array_make(normal_to_wcs(foo), TEXT(" \t"), 3, 1, 0);
+                } else if (!xwcscasecmp(buf, TEXT("plugin"))) {
+                        CHAR_T **p = wcs_array_make(foo, TEXT(" \t"), 3, 1, 0);
+			if (wcs_array_count(p) == 2) 
+				plugin_load(p[0], wcs_atoi(p[1]), 1);
+			wcs_array_free(p);
+		} else if (!xwcscasecmp(buf, TEXT("bind"))) {
+                        CHAR_T **pms = wcs_array_make(foo, TEXT(" \t"), 2, 1, 0);
 
-                                if (wcs_array_count(p) == 2)
-                                        plugin_load(p[0], wcs_atoi(p[1]), 1);
-
-                                wcs_array_free(p);
-		} else if (!xstrcasecmp(buf, "bind")) {
-                        char **pms = array_make(foo, " \t", 2, 1, 0);
-
-                        if (array_count(pms) == 2) {
-                                ret = command_exec_format(NULL, NULL, 1, TEXT("/bind --add %s %s"),  pms[0], pms[1]);
+                        if (wcs_array_count(pms) == 2) {
+                                ret = command_exec_format(NULL, NULL, 1, TEXT("/bind --add "CHARF" "CHARF),  pms[0], pms[1]);
                         }
 
-                        array_free(pms);
-                } else if (!xstrcasecmp(buf, "bind-set")) {
-                        char **pms = array_make(foo, " \t", 2, 1, 0);
+                        wcs_array_free(pms);
+                } else if (!xwcscasecmp(buf, TEXT("bind-set"))) {
+                        CHAR_T **pms = wcs_array_make(foo, TEXT(" \t"), 2, 1, 0);
 
-                        if (array_count(pms) == 2) {
-
-                                query_emit(NULL, "binding-set", pms[0], normal_to_wcs(pms[1]), 1);
+                        if (wcs_array_count(pms) == 2) {
+                                query_emit(NULL, "binding-set", pms[0], pms[1], 1);
                         }
 
-                        array_free(pms);
-                } else if (!xstrcasecmp(buf, "alias")) {
-			CHAR_T *sfoo = normal_to_wcs(foo);
-			debug("  alias %s\n", foo);
-			ret = alias_add(sfoo, 1, 1);
-			free_utf(sfoo);
-		} else if (!xstrcasecmp(buf, "on")) {
-                        char **pms = array_make(foo, " \t", 4, 1, 0);
+                        wcs_array_free(pms);
+                } else if (!xwcscasecmp(buf, TEXT("alias"))) {
+			debug("  alias " CHARF "\n", foo);
+			ret = alias_add(foo, 1, 1);
+		} else if (!xwcscasecmp(buf, TEXT("on"))) {
+                        CHAR_T **pms = wcs_array_make(foo, TEXT(" \t"), 4, 1, 0);
 
-                        if (array_count(pms) == 4) {
-				debug("  on %s %s %s\n", pms[0], pms[1], pms[2]);
-                                ret = event_add(pms[0], atoi(pms[1]), pms[2], pms[3], 1);
+                        if (wcs_array_count(pms) == 4) {
+				debug("  on "CHARF" "CHARF" "CHARF"\n", pms[0], pms[1], pms[2]);
+                                ret = event_add(pms[0], wcs_atoi(pms[1]), pms[2], pms[3], 1);
 			}
 
-			array_free(pms);
+			wcs_array_free(pms);
 
-		} else if (!xstrcasecmp(buf, "bind")) {
+		} else if (!xwcscasecmp(buf, TEXT("bind"))) {
 			xfree(buf);
 			continue;
-		} else if (!xstrcasecmp(buf, "at")) {
-			char **p = array_make(foo, " \t", 2, 1, 0);
+		} else if (!xwcscasecmp(buf, TEXT("at"))) {
+			CHAR_T **p = wcs_array_make(foo, TEXT(" \t"), 2, 1, 0);
 
-			if (array_count(p) == 2) {
-				char *name = NULL;
+			if (wcs_array_count(p) == 2) {
+				CHAR_T *name = NULL;
 
-				debug("  at %s %s\n", p[0], p[1]);
+				debug("  at "CHARF" "CHARF"\n", p[0], p[1]);
 
-				if (xstrcmp(p[0], "(null)"))
+				if (xwcscmp(p[0], TEXT("(null)")))
 					name = p[0];
 
-				ret = command_exec_format(NULL, NULL, 1, TEXT("/at -a %s %s"), ((name) ? name : ""), p[1]);
+				ret = command_exec_format(NULL, NULL, 1, TEXT("/at -a "CHARF" "CHARF), ((name) ? name : TEXT("")), p[1]);
 			}
 
-			array_free(p);
-		} else if (!xstrcasecmp(buf, "timer")) {
-			char **p = array_make(foo, " \t", 3, 1, 0);
-			char *period_str = NULL, *name = NULL;
+			wcs_array_free(p);
+		} else if (!xwcscasecmp(buf, TEXT("timer"))) {
+			CHAR_T **p = wcs_array_make(foo, TEXT(" \t"), 3, 1, 0);
+			char *period_str = NULL;
+			CHAR_T *name = NULL;
 			time_t period;
 
-			if (array_count(p) == 3) {
+			if (wcs_array_count(p) == 3) {
 				debug("  timer %s %s %s\n", p[0], p[1], p[2]);
 
-				if (xstrcmp(p[0], "(null)"))
+				if (xwcscmp(p[0], TEXT("(null)")))
 					name = p[0];
 
-				if (!strncmp(p[1], "*/", 2)) {
-					period = atoi(p[1] + 2);
+				if (!xwcsncmp(p[1], TEXT("*/"), 2)) {
+					period = wcs_atoi(p[1] + 2);
 					period_str = saprintf("*/%ld", (long) period);
 				} else {
-					period = atoi(p[1]) - time(NULL);
+					period = wcs_atoi(p[1]) - time(NULL);
 					period_str = saprintf("%ld", (long) period);
 				}
 		
 				if (period > 0) {
-					ret = command_exec_format(NULL, NULL, 1, TEXT("/timer --add %s %s %s"), (name) ? name : "", period_str, p[2]);
+					ret = command_exec_format(NULL, NULL, 1, TEXT("/timer --add "CHARF" %s "CHARF), (name) ? name : TEXT(""), period_str, p[2]);
 				}
 
 				xfree(period_str);
 			}
-				array_free(p);
+			wcs_array_free(p);
 		} else {
-                        ret = variable_set(buf, (xstrcmp(foo, "")) ? foo : NULL, 0);
+                        ret = variable_set(buf, (xwcscmp(foo, TEXT(""))) ? wcs_to_normal(foo) : NULL, 0);
 
                         if (ret)
-                                debug("  unknown variable %s\n", buf);
+                                debug("  unknown variable " CHARF "\n", buf);
                 }
 
 
@@ -325,7 +319,7 @@ int config_read(const char *filename)
 	if (first) {
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
-			char *tmp = saprintf("config-%s", p->name);
+			char *tmp = saprintf("config-" CHARF, p->name);
 	
 			config_read(prepare_path(tmp, 0));
 			xfree(tmp);
@@ -353,41 +347,14 @@ static void config_write_variable(FILE *f, variable_t *v)
 		case VAR_THEME:
 		case VAR_FILE:
 		case VAR_STR:
-			if (*(char**)(v->ptr))
-#if USE_UNICODE
-				fwprintf(f, TEXT("%ls %s\n"), v->name, *(char**)(v->ptr));
-#else
-				fprintf(f, "%s %s\n", v->name, *(char**)(v->ptr));
-#endif
-			else 
-#if USE_UNICODE
-				fwprintf(f, TEXT("%ls %s\n"), v->name, TEXT(""));
-#else
-                                fprintf(f, "%s %s\n", v->name, "");
-#endif
+			fprintf(f, CHARF" %s\n", v->name, (*(char**)(v->ptr)) ? *(char**)(v->ptr) : "");
 			break;
-
 		case VAR_FOREIGN:
-			if (v->ptr)
-#if USE_UNICODE
-				fwprintf(f, TEXT("%ls %s\n"), v->name, (char*) v->ptr);
-#else
-				fprintf(f, "%s %s\n", v->name, (char*) v->ptr);
-#endif
-			else
-#if USE_UNICODE
-                                fwprintf(f, TEXT("%ls %ls\n"), v->name, TEXT(""));
-#else
-                                fprintf(f, "%s %s\n", v->name, "");
-#endif
+			fprintf(f, CHARF" %s\n", v->name, (v->ptr) ? (char *) v->ptr : "");
 			break;
 			
 		default:
-#if USE_UNICODE
-			fwprintf(f, TEXT("%ls %d\n"), v->name, *(int*)(v->ptr));
-#else
-			fprintf(f, "%s %d\n", v->name, *(int*)(v->ptr));
-#endif
+			fprintf(f, CHARF" %d\n", v->name, *(int*)(v->ptr));
 	}
 }
 
@@ -407,7 +374,7 @@ static void config_write_plugins(FILE *f)
 
         for (l = plugins; l; l = l->next) {
                 plugin_t *p = l->data;
-                if (p && p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
+                if (p && p->name) fprintf(f, "plugin " CHARF " %d\n", p->name, p->prio);
         }
 }
 
@@ -437,11 +404,7 @@ static void config_write_main(FILE *f)
 		list_t m;
 
 		for (m = a->commands; m; m = m->next)
-#if USE_UNICODE
-			fwprintf(f, TEXT("alias %ls %ls\n"), a->name, (CHAR_T *) m->data);
-#else
-			fprintf(f, "alias %s %s\n", a->name, (char*) m->data);
-#endif
+			fprintf(f, "alias " CHARF" "CHARF"\n", a->name, (CHAR_T *) m->data);
 	}
 
         for (l = events; l; l = l->next) {
@@ -461,11 +424,7 @@ static void config_write_main(FILE *f)
 
         for (l = bindings_added; l; l = l->next) {
                 binding_added_t *d = l->data;
-#if USE_UNICODE
-                fprintf(f, "bind-set %s %ls\n", d->binding->key, d->sequence);
-#else
-                fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
-#endif
+                fprintf(f, "bind-set %s "CHARF"\n", d->binding->key, d->sequence);
         }
 
 	for (l = timers; l; l = l->next) {
@@ -553,7 +512,7 @@ int config_write()
 	for (l = plugins; l; l = l->next) {
 		list_t lv;
 		plugin_t *p = l->data;
-		char *tmp = saprintf("config-%s", p->name);
+		char *tmp = saprintf("config-" CHARF, p->name);
 
 		if (!(filename = prepare_path(tmp, 1))) {
 			xfree(tmp);
@@ -592,7 +551,8 @@ int config_write()
  */
 int config_write_partly(const char *filename, CHAR_T **vars)
 {
-	char *newfn, *line;
+	char *newfn;
+	CHAR_T *line;
 	FILE *fi, *fo;
 	int *wrote, i, first = (filename) ? 0 : 1;
 	list_t l;
@@ -618,27 +578,27 @@ int config_write_partly(const char *filename, CHAR_T **vars)
 	
 	fchmod(fileno(fo), 0600);
 
-	while ((line = read_file(fi))) {
+	while ((line = wcs_read_file(fi))) {
 		CHAR_T *tmp;
 
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
 			goto pass;
 
-		if (!xstrchr(line, ' '))
+		if (!xwcschr(line, ' '))
 			goto pass;
 
-		if (!xstrncasecmp(line, "alias ", 6))
+		if (!xwcsncasecmp(line, TEXT("alias "), 6))
 			goto pass;
 
-		if (!xstrncasecmp(line, "on ", 3))
+		if (!xwcsncasecmp(line, TEXT("on "), 3))
 			goto pass;
 
-		if (!xstrncasecmp(line, "bind ", 5))
+		if (!xwcsncasecmp(line, TEXT("bind "), 5))
 			goto pass;
 
 		tmp = line;
 
-		if (!xstrncasecmp(tmp, "set ", 4))
+		if (!xwcsncasecmp(tmp, TEXT("set "), 4))
 			tmp += 4;
 		
 		for (i = 0; vars[i]; i++) {
@@ -664,7 +624,7 @@ int config_write_partly(const char *filename, CHAR_T **vars)
 			continue;
 
 pass:
-		fprintf(fo, "%s\n", line);
+		fprintf(fo, CHARF "\n", line);
 		xfree(line);
 	}
 
@@ -687,7 +647,7 @@ pass:
 	if (first) {
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
-			char *tmp = saprintf("config-%s", p->name);
+			char *tmp = saprintf("config-" CHARF, p->name);
 	
 			config_write_partly(prepare_path(tmp, 1), vars);
 	
@@ -742,7 +702,7 @@ void config_write_crash()
                 list_t lv;
                 plugin_t *p = l->data;
 
-		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());
+		snprintf(name, sizeof(name), "config-" CHARF ".%d", p->name, (int) getpid());
 
                 if (!(f = fopen(name, "w")))
 			continue;	

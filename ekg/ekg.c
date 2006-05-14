@@ -328,7 +328,7 @@ void ekg_loop()
                                         if (!fstat(w->fd, &st))
                                                 continue;
 
-                                        debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : "none");
+                                        debug("select(): bad file descriptor: fd=%d, type=%d, plugin="CHARF"\n", w->fd, w->type, (w->plugin) ? w->plugin->name : TEXT("none"));
 
                                         watch_free(w);
                                 }

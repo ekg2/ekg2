@@ -277,7 +277,7 @@ variable_t *variable_add(plugin_t *plugin, const CHAR_T *name, int type, int dis
 
 	if (plugin)
 #if USE_UNICODE
-		__name = wcsprintf(TEXT("%s:%ls"), plugin->name, name);
+		__name = wcsprintf(TEXT("%ls:%ls"), plugin->name, name);
 #else
 		__name = wcsprintf("%s:%s", plugin->name, name);
 #endif
@@ -619,7 +619,7 @@ void variable_help(const CHAR_T *name)
 
 again:
 	if (v->plugin && v->plugin->name) {
-		char *tmp = saprintf(DATADIR "/plugins/%s/%s", v->plugin->name, filename);
+		char *tmp = saprintf(DATADIR "/plugins/"CHARF"/%s", v->plugin->name, filename);
 		f = fopen(tmp, "r");
 		xfree(tmp);
 

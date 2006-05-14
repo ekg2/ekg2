@@ -502,7 +502,7 @@ int session_read()
 		if (!p || p->pclass != PLUGIN_PROTOCOL)
 			continue;
 
-		tmp = saprintf("sessions-%s", p->name);
+		tmp = saprintf("sessions-" CHARF, p->name);
 
 	        if (!(f = fopen(prepare_path(tmp, 0), "r"))) {
 			debug("Error opening file %s\n", tmp);
@@ -572,7 +572,7 @@ int session_write()
 
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
-		char *tmp = saprintf("sessions-%s", p->name);
+		char *tmp = saprintf("sessions-" CHARF, p->name);
 
                 if (!(f = fopen(prepare_path(tmp, 1), "w"))) {
                         debug("Error opening file %s\n", tmp);
