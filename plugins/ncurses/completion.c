@@ -249,22 +249,18 @@ static void conference_generator(const CHAR_T *text, int len)
 static void plugin_generator(const CHAR_T *text, int len)
 {
         list_t l;
-	char *stext = wcs_to_normal(text);
 
         for (l = plugins; l; l = l->next) {
                 plugin_t *p = l->data;
 
-                if (!xstrncasecmp(stext, p->name, len)) {
-			CHAR_T *pname = normal_to_wcs(p->name);
-                        wcs_array_add_check(&completions, xwcsdup(pname), 1);
-			free_utf(pname);
+                if (!xwcsncasecmp(text, p->name, len)) {
+                        wcs_array_add_check(&completions, xwcsdup(p->name), 1);
 		}
-		if ((stext[0] == '+' || stext[0] == '-') && !xstrncasecmp(stext + 1, p->name, len - 1)) {
-			CHAR_T *tmp = wcsprintf(TEXT("%c%s"), stext[0], p->name);
+		if ((text[0] == '+' || text[0] == '-') && !xwcsncasecmp(text + 1, p->name, len - 1)) {
+			CHAR_T *tmp = wcsprintf(TEXT("%c" CHARF), text[0], p->name);
 			wcs_array_add_check(&completions, tmp, 1);
 		}
         }
-	free_utf(stext);
 }
 
 static void variable_generator(const CHAR_T *text, int len)
