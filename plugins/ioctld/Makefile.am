@@ -1,4 +1,4 @@
-EXTRA_DIST = commands-pl.txt
+EXTRA_DIST = commands-pl.txt commands-pl-utf.txt
 
 lib_LTLIBRARIES = ioctld.la
 ioctld_la_SOURCES = main.c ioctld.h
@@ -14,4 +14,5 @@ INCLUDES = -DIOCTLD_PATH=\"$(libexecdir)/ioctld\"
 install-data-am:
 	mkdir -p  $(DESTDIR)$(pkgdatadir)/plugins/ioctld/
 	$(INSTALL) -m 644 commands-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/ioctld/commands-pl.txt
+	$(INSTALL) -m 644 commands-pl-utf.txt $(DESTDIR)$(pkgdatadir)/plugins/ioctld/commands-pl-utf.txt
 
