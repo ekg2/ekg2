@@ -1,9 +1,0 @@
-// ma³y opis dostêpnych zmiennych pluginu jabber
-
-console_charset
-	type: string
-	default value: iso-8859-2
-	
-        sets console charset
-
-// $Id$

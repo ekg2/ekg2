@@ -198,11 +198,11 @@ char *jabber_digest(const char *sid, const char *password)
 
 	SHA1Init(&ctx);
 	
-	tmp = jabber_escape(sid);
+	tmp = wcs_to_normal(jabber_escape(sid)); /* UUU */
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
-	tmp = jabber_escape(password);
+	tmp = wcs_to_normal(jabber_escape(password)); /* UUU */
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
