@@ -505,6 +505,38 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			}
 		}
 
+		if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
+			xmlnode_t *p;
+			if ((p = xmlnode_find_child(q, "file"))) { /* JEP-0096: File Transfer */
+/* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
+				dcc_t *D;
+				char *uin = jabber_unescape(from);
+				char *uid;
+				char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
+				char *size 	= jabber_attr(p->atts, "size");
+				xmlnode_t *range;
+
+				uid = saprintf("jid:%s", uin);
+
+				D = dcc_add(uin, DCC_GET, NULL);
+				dcc_filename_set(D, filename);
+				dcc_size_set(D, atoi(size));
+
+				if ((range = xmlnode_find_child(p, "range"))) {
+					char *off = jabber_attr(range->atts, "offset");
+					char *len = jabber_attr(range->atts, "length");
+					if (off) dcc_offset_set(D, atoi(off));
+					if (len) dcc_size_set(D, atoi(len));
+				}
+
+				print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
+
+				xfree(uin);
+				xfree(uid);
+				xfree(filename);
+			}
+		}
+
 		if ((q = xmlnode_find_child(n, "query"))) {
 			const char *ns = jabber_attr(q->atts, "xmlns");
 			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#items")) {
