@@ -63,6 +63,7 @@ static int jabber_theme_init();
 
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
+
 /*
  * jabber_private_destroy()
  *
@@ -106,6 +107,25 @@ static void jabber_private_destroy(session_t *s)
         xfree(j);
 
         session_private_set(s, NULL);
+}
+
+void jabber_dcc_close_handler(struct dcc_s *d) {
+	jabber_dcc_t *p = d->priv;
+	if (!d->active && d->type == DCC_GET) {
+		session_t *s = p->session;
+		jabber_private_t *j;
+		
+		if (!s || !(j= session_private_get(s))) return;
+
+		jabber_write(j, "<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"403\">Declined</error></iq>", 
+			d->uid+4, p->req);
+	}
+	if (p) {
+		xfree(p->req);
+		xfree(p->sid);
+		xfree(p);
+	}
+	d->priv = NULL;
 }
 
 /*
@@ -419,6 +439,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 	session_t *s = jdh->session;
 	jabber_private_t *j = jabber_private(s);
+	xmlnode_t *q;
 
 	if (!type) {
 		debug("[jabber] <iq> without type!\n");
@@ -468,6 +489,79 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		}
 		session_set(s, "__new_password", NULL);
 	}
+
+
+	if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
+/* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
+		xmlnode_t *p;
+		if (!xstrcmp(type, "result")) {
+/*
+<iq type="set" to="%s" id=...>
+<query xmlns="http://jabber.org/protocol/bytestreams" mode="tcp" sid="...">
+	<streamhost port="port" host="ip" jid="naszjid/resource"/>
+	<fast xmlns="http://affinix.com/jabber/stream"/>
+</query></iq>
+*/
+		} 
+
+		if (!xstrcmp(type, "set") && ((p = xmlnode_find_child(q, "file")))) {  /* JEP-0096: File Transfer */
+			dcc_t *D;
+			char *uin = jabber_unescape(from);
+			char *uid;
+			char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
+			char *size 	= jabber_attr(p->atts, "size");
+			xmlnode_t *range;
+			jabber_dcc_t *jdcc;
+
+			uid = saprintf("jid:%s", uin);
+
+			jdcc = xmalloc(sizeof(jabber_dcc_t));
+			jdcc->session	= s;
+			jdcc->req 	= xstrdup(id);
+			jdcc->sid	= jabber_unescape(jabber_attr(q->atts, "id"));
+
+			D = dcc_add(uid, DCC_GET, NULL);
+			dcc_filename_set(D, filename);
+			dcc_size_set(D, atoi(size));
+			dcc_private_set(D, jdcc);
+			dcc_close_handler_set(D, jabber_dcc_close_handler);
+/* XXX, result
+			if ((range = xmlnode_find_child(p, "range"))) {
+				char *off = jabber_attr(range->atts, "offset");
+				char *len = jabber_attr(range->atts, "length");
+				if (off) dcc_offset_set(D, atoi(off));
+				if (len) dcc_size_set(D, atoi(len));
+			}
+*/
+			print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
+
+			xfree(uin);
+			xfree(uid);
+			xfree(filename);
+		}
+	}
+	if (!xstrcmp(type, "error") && !xstrncmp(id, "offer", 5)) {
+		char *uin = jabber_unescape(from);
+		int number;
+		if (sscanf(id, "offer%d", &number)) {
+			dcc_t *D = NULL;
+			list_t l;
+
+			for (l = dccs; l; l = l->next) {
+				dcc_t *d = l->data;
+				if (d->id == number && d->type == DCC_SEND && !xstrncmp(d->uid, "jid:", 4) && !xstrncmp(d->uid+4, uin, xstrlen(d->uid+4))) {
+					D = d;
+					break;
+				}
+			}
+			if (dcc_close(D)); /* possible abuse attempt */	
+			/* XXX, informujemy usera o zamknieciu po³±czenia? */
+
+		}
+		xfree(uin);
+	}
+/* FILETRANSFER */
+
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
 	if (!xstrncmp(type, "result", 6) || !xstrncmp(type, "set", 3)) {
@@ -502,38 +596,6 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xfree(nickname_str);
 				xfree(fullname_str);
 				xfree(from_str);
-			}
-		}
-
-		if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
-			xmlnode_t *p;
-			if ((p = xmlnode_find_child(q, "file"))) { /* JEP-0096: File Transfer */
-/* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
-				dcc_t *D;
-				char *uin = jabber_unescape(from);
-				char *uid;
-				char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
-				char *size 	= jabber_attr(p->atts, "size");
-				xmlnode_t *range;
-
-				uid = saprintf("jid:%s", uin);
-
-				D = dcc_add(uin, DCC_GET, NULL);
-				dcc_filename_set(D, filename);
-				dcc_size_set(D, atoi(size));
-
-				if ((range = xmlnode_find_child(p, "range"))) {
-					char *off = jabber_attr(range->atts, "offset");
-					char *len = jabber_attr(range->atts, "length");
-					if (off) dcc_offset_set(D, atoi(off));
-					if (len) dcc_size_set(D, atoi(len));
-				}
-
-				print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
-
-				xfree(uin);
-				xfree(uid);
-				xfree(filename);
 			}
 		}
 
@@ -865,7 +927,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		}
 		xfree(mucuid);
 	}
-	if (!ismuc && (!type || ( na|| !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
+	if (!ismuc && (!type || ( na || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
 		xmlnode_t *nshow, *nstatus, *nerr;
 		char *status = NULL, *descr = NULL;
 		char *jstatus = NULL;

@@ -50,7 +50,135 @@
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "jabber.h"
+
+COMMAND(jabber_command_dcc) {
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+
+	if (!xstrncasecmp(params[0], "se", 2)) { /* send */
+		struct stat st;
+		userlist_t *u;
+		dcc_t *d;
+		int fd;
+
+		if (!params[1] || !params[2]) {
+			wcs_printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!(u = userlist_find(session, get_uid(session, params[1])))) {
+			printq("user_not_found", params[1]);
+			return -1;
+		}
+
+		if (!session_connected_get(session)) {
+			wcs_printq("not_connected");
+			return -1;
+		}
+
+		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
+			printq("dcc_user_not_avail", format_user(session, u->uid));
+			return -1;
+		}
+
+		if (!stat(params[2], &st) && S_ISDIR(st.st_mode)) {
+			printq("dcc_open_error", params[2], strerror(EISDIR));
+			return -1;
+		}
+		
+		if ((fd = open(params[2], O_RDONLY)) == -1) {
+			printq("dcc_open_error", params[2], strerror(errno));
+			return -1;
+		}
+
+		close(fd);
+
+		{
+			char *filename;
+			d = dcc_add(u->uid, DCC_SEND, NULL);
+			dcc_filename_set(d, params[2]);
+			dcc_size_set(d, st.st_size);
+
+			filename = jabber_escape(params[2]); /* mo¿e obetniemy path? */
+
+			jabber_write(j, "<iq type=\"set\" id=\"offer%d\" to=\"%s/%s\">"
+					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%d\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
+					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"%s\">"
+					"<range/></file>"
+					"<feature xmlns=\"http://jabber.org/protocol/feature-neg\"><x xmlns=\"jabber:x:data\" type=\"form\">"
+					"<field type=\"list-single\" var=\"stream-method\">"
+					"<option><value>http://jabber.org/protocol/bytestreams</value></option>"
+					"</field></x></feature></si></iq>", dcc_id_get(d), u->uid+4, u->resource, j->id, st.st_size, filename);
+			xfree(filename);
+		}
+		return 0;
+	}
+	if (!xstrncasecmp(params[0], "g", 1) || !xstrncasecmp(params[0], "re", 2)) { /* get, resume */
+		dcc_t *d = NULL;
+		list_t l;
+		
+		for (l = dccs; l; l = l->next) {
+			dcc_t *D = l->data;
+			userlist_t *u;
+
+			if (!dcc_filename_get(D) || dcc_type_get(D) != DCC_GET)
+				continue;
+			
+			if (!params[1]) {
+				if (dcc_active_get(D))
+					continue;
+				d = D;
+				break;
+			}
+
+			if (params[1][0] == '#' && xstrlen(params[1]) > 1 && atoi(params[1] + 1) == dcc_id_get(D)) {
+				d = D;
+				break;
+			}
+
+			if ((u = userlist_find(session, dcc_uid_get(D)))) {
+				if (!xstrcasecmp(params[1], u->uid) || (u->nickname && !xstrcasecmp(params[1], u->nickname))) {
+					d = D;
+					break;
+				}
+			}
+		}
+
+		if (!d || !d->priv) {
+			printq("dcc_not_found", (params[1]) ? params[1] : "");
+			return -1;
+		}
+		if (dcc_active_get(d)) {
+			printq("dcc_receiving_already", dcc_filename_get(d), format_user(session, dcc_uid_get(d)));
+			return -1;
+		}
+
+		{
+			jabber_dcc_t *p = d->priv;
+			session_t *s = p->session;
+			jabber_private_t *j = jabber_private(s);
+
+			jabber_write(j, "<iq type=\"result\" to=\"%s\" id=\"%s\">"
+					"<si xmlns=\"http://jabber.org/protocol/si\"><feature xmlns=\"http://jabber.org/protocol/feature-neg\">"
+					"<x xmlns=\"jabber:x:data\" type=\"submit\"><field var=\"stream-method\"><value>http://jabber.org/protocol/bytestreams</value></field>"
+					"</x></feature></si></iq>", d->uid+4, p->req);
+		}
+		/* TODO */
+		return -1;
+#if 0
+		printq("dcc_get_getting", format_user(session, dcc_uid_get(d)), dcc_filename_get(d));
+		dcc_active_set(d, 1);
+		
+		return 0;
+#endif
+	}
+	return cmd_dcc(name, params, session, target, quiet);
+}
 
 COMMAND(jabber_command_connect)
 {
@@ -805,6 +933,7 @@ void jabber_register_commands()
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, TEXT("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, "send get resume close list");
 	command_add(&jabber_plugin, TEXT("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:disconnect"), "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);

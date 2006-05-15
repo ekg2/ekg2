@@ -33,6 +33,12 @@ struct xmlnode_s {
 typedef struct xmlnode_s xmlnode_t;
 
 typedef struct {
+	session_t *session;
+	char *req;
+	char *sid;
+} jabber_dcc_t; 
+
+typedef struct {
 	int fd;				/* deskryptor po³±czenia */
 #ifdef HAVE_GNUTLS
 	gnutls_session ssl_session;	/* sesja ssla */
