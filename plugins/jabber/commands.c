@@ -196,7 +196,7 @@ COMMAND(jabber_command_connect)
 		return -1;
 	}
 
-	if (!(session_get(session, "password"))) {
+	if (!session_get(session, "__new_acount") && !(session_get(session, "password"))) {
 		printq("no_config");
 		return -1;
 	}
@@ -851,6 +851,18 @@ COMMAND(jabber_command_register)
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
+	const char *passwd = session_get(session, "password");
+
+	if (!session_connected_get(session) && (!passwd || !xstrcmp(passwd, "foo"))) {
+		session_set(session, "__new_acount", "1");
+		if (params[0]) session_set(session, "password", params[0]);
+		jabber_command_connect(TEXT("connect"), NULL, session, target, quiet);
+		return 0;
+	} else {
+		printq("not_connected", session_name(session));
+		return -1;
+	}
+
 	if (!params[1])
 		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg\" > <query xmlns=\"jabber:iq:register\"/> </iq>", server);
 	else printq("generic_error", "not implemented. feel free to send patch...");
@@ -950,7 +962,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	command_add(&jabber_plugin, TEXT("jid:userinfo"), "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:lastseen"), "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, TEXT("jid:register"), "? ?", jabber_command_register, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:xa"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:xml"), "!", jabber_command_xml, 	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 };

@@ -458,6 +458,12 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				query_emit(NULL, "protocol-connected", &__session);
 				xfree(__session);
 			}
+			if (session_get(s, "__new_acount")) {
+				print("register", session_uid_get(s));
+				if (!xstrcmp(session_get(s, "password"), "foo")) print("register_change_passwd", session_uid_get(s), "foo");
+				session_set(s, "__new_acount", NULL);
+			}
+
 			jdh->roster_retrieved = 0;
 			userlist_free(s);
 			jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
@@ -478,7 +484,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			char *new_passwd = (char *) session_get(s, "__new_password");
 
 			session_set(s, "password", new_passwd);
-			xfree(new_passwd);
+			session_set(s, "__new_password", NULL);
 			print("passwd");
 		} else if (!xstrcmp(type, "error")) {
 			xmlnode_t *e = xmlnode_find_child(n, "error");
@@ -488,6 +494,12 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			xfree(reason);
 		}
 		session_set(s, "__new_password", NULL);
+	}
+
+	if (!xstrncmp(id, "register", 8)) {
+		if (!xstrcmp(type, "error")) {
+			print("register_failed", "NOERROR"); /* XXX, TODO */
+		}
 	}
 
 
@@ -1075,6 +1087,16 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
                 char *username;
 		char *authpass;
 
+		if (session_get(s, "__new_acount")) {
+			char *passwd = jabber_escape(session_get(s, "password"));
+			char *username = xstrdup(s->uid + 4);
+			*(xstrchr(username, '@')) = 0;
+
+			jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"register%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", 
+				j->server, j->id++, username, passwd ? passwd : "foo");
+			xfree(passwd);
+		}
+
                 username = xstrdup(uid + 4);
                 *(xstrchr(username, '@')) = 0;
 
@@ -1436,6 +1458,7 @@ static int jabber_theme_init()
 	format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
 	format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
+	format_add("register_change_passwd", _("%> Your password for acount %T%1 is '%T%2%n' change it as fast as you can using command /jid:passwd <newpassword>"), 1);
 
 	format_add("jabber_transport_list", _("%> (%1) JID: %2 descr=%3"), 1);
 	format_add("jabber_registration_instruction", _("%> (%1,%2) instr=%3"), 1);
