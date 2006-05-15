@@ -37,7 +37,7 @@ static int xosd_theme_init();
 
 PLUGIN_DEFINE(xosd, PLUGIN_GENERIC, xosd_theme_init);
 
-/* variables from xosd.h*/
+/* variables from xosd.h */
 char	*xosd_colour;
 char 	*xosd_font;
 char 	*xosd_outline_colour;
@@ -406,12 +406,6 @@ static int xosd_plugin_destroy()
 	xosd_destroy(osd);
 	
 	plugin_unregister(&xosd_plugin);
-
-	xfree(xosd_colour);
-	xfree(xosd_font);
-	xfree(xosd_outline_colour);
-	xfree(xosd_shadow_colour);
-
 	return 0;
 }
 
