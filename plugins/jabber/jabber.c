@@ -1081,24 +1081,19 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
         session_t *s = jdh->session;
 
         if (!xstrcmp(name, "stream:stream")) {
-                char *password = (char *) session_get(s, "password");
-                CHAR_T *resource = jabber_escape(session_get(s, "resource"));
+		CHAR_T *passwd		= jabber_escape(session_get(s, "password"));
+                CHAR_T *resource	= jabber_escape(session_get(s, "resource"));
                 const char *uid = session_uid_get(s);
                 char *username;
 		char *authpass;
 
+		username = xstrdup(s->uid + 4);
+		*(xstrchr(username, '@')) = 0;
+	
 		if (session_get(s, "__new_acount")) {
-			char *passwd = jabber_escape(session_get(s, "password"));
-			char *username = xstrdup(s->uid + 4);
-			*(xstrchr(username, '@')) = 0;
-
-			jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"register%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", 
-				j->server, j->id++, username, passwd ? passwd : "foo");
-			xfree(passwd);
+			jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"register%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>" CHARF "</password></query></iq>", 
+				j->server, j->id++, username, passwd ? passwd : TEXT("foo"));
 		}
-
-                username = xstrdup(uid + 4);
-                *(xstrchr(username, '@')) = 0;
 
                 if (!resource)
                         resource = xwcsdup(JABBER_DEFAULT_RESOURCE);
@@ -1106,12 +1101,13 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
                 j->stream_id = xstrdup(jabber_attr((char **) atts, "id"));
 
 		authpass = (session_int_get(s, "plaintext_passwd")) ? 
-			saprintf("<password>%s</password>", password) :  				/* plaintext */
-			saprintf("<digest>%s</digest>", jabber_digest(j->stream_id, password));		/* hash */
+			saprintf("<password>" CHARF "</password>", passwd) :  				/* plaintext */
+			saprintf("<digest>%s</digest>", jabber_digest(j->stream_id, passwd));		/* hash */
 		jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", j->server, username, authpass, resource);
                 xfree(username);
 		xfree(resource);
 		xfree(authpass);
+		xfree(passwd);
         } else
 		xmlnode_handle_start(data, name, atts);
 }

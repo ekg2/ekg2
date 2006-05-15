@@ -69,7 +69,7 @@ plugin_t jabber_plugin;
 void jabber_register_commands(void);
 
 char *jabber_attr(char **atts, const char *att);
-char *jabber_digest(const char *sid, const char *password);
+char *jabber_digest(const char *sid, const CHAR_T *password);
 
 void jabber_handle(void *data, xmlnode_t *n);
 void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
