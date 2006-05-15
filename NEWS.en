@@ -7,7 +7,7 @@ vCVS 2005-04-05
 	* irc plugin
 	* possiblity of manual binding keys (bind --set)
 	* internationalization
-	* loggin plugin (plugins/logs/README)
+	* logging plugin (plugins/logs/README)
 	* new function ,,eval''
 	* window can be split and then text can be justified (see themes.txt) 
 	* coloured timestamp
