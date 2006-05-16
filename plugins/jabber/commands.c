@@ -870,8 +870,12 @@ char **jabber_params_split(const char *line)
 		if (!z) {
 			if (arr[i][0] == '-' && arr[i][1] == '-' && xstrlen(arr[i]) > 2)
 				ret[num++] = xstrdup (arr[i]+2);
-			else
-				ret[num++] = xstrdup ("");
+			else {
+				array_free (arr);
+				array_free (ret);
+				return NULL;
+				//ret[num++] = xstrdup ("");
+			}
 			i++;
 		} else {
 			// this is the name of next param, so use "" as value and 
