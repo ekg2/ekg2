@@ -613,17 +613,64 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 		if ((q = xmlnode_find_child(n, "query"))) {
 			const char *ns = jabber_attr(q->atts, "xmlns");
-			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#items")) {
-				xmlnode_t *item;
-				print("generic", "Poczatek!");
-				for (item = xmlnode_find_child(q, "item"); item; item = item->next) {
-					char *sdesc = jabber_unescape(jabber_attr(item->atts, "name"));
-					char *sjid  = jabber_unescape(jabber_attr(item->atts, "jid"));
-					print("jabber_transport_list", session_name(s), sjid, sdesc);
-					xfree(sdesc);
-					xfree(sjid);
+			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
+				xmlnode_t *node;
+				char *uid = jabber_unescape(from);
+				print("jabber_transinfo_begin", session_name(s), uid);
+
+				for (node = q->children; node; node = node->next) {
+					if (!xstrcmp(node->name, "identity")) {
+						char *cat	= jabber_attr(node->atts, "category");			/* server, gateway, directory */
+						char *name	= jabber_unescape(jabber_attr(node->atts, "name"));	/* nazwa */
+						char *type	= jabber_attr(node->atts, "type");			/* typ: im */
+						
+						if (name) /* jesli nie ma nazwy don't display it. */
+							print("jabber_transinfo_identify" /* _server, _gateway... ? */, session_name(s), uid, name);
+
+						xfree(name);
+					} else if (!xstrcmp(node->name, "feature")) {
+						char *var = jabber_attr(node->atts, "var");
+						char *tvar = NULL; /* translated */
+						int user_command = 0;
+
+/* dj, jakas glupota... ale ma ktos pomysl zeby to inaczej zrobic?... jeszcze istnieje pytanie czy w ogole jest sens to robic.. */
+						if (!xstrcmp(var, "http://jabber.org/protocol/disco#info")) 		tvar = "/jid:transpinfo";
+						else if (!xstrcmp(var, "http://jabber.org/protocol/disco#items")) 	tvar = "/jid:transports";
+						else if (!xstrcmp(var, "http://jabber.org/protocol/disco"))		tvar = "/jid:transports && /jid:transpinfo";
+						else if (!xstrcmp(var, "jabber:iq:register"))		    		tvar = "/jid:register";
+						else if (!xstrcmp(var, "jabber:iq:search"))				tvar = "/jid:search";
+
+						else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/jid:ver"; }
+						else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/jid:msg"; }
+						else if (!xstrcmp(var, "jabber:iq:last"))	{ user_command = 1;	tvar = "/jid:lastseen"; }
+
+						if (tvar)	print(user_command ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
+									session_name(s), uid, tvar, var);
+						else		print("jabber_transinfo_feature", session_name(s), uid, var, var);
+					}
+
 				}
-				print("generic", "Koniec!");
+				print("jabber_transinfo_end", session_name(s), uid);
+				xfree(uid);
+			} else if (!xstrcmp(ns, "http://jabber.org/protocol/disco#items")) {
+				xmlnode_t *item = xmlnode_find_child(q, "item");
+				char *uid = jabber_unescape(from);
+
+				if (!item) print("jabber_transport_list_nolist", session_name(s), uid);
+				else {
+					int i = 1;
+					print("jabber_transport_list_begin", session_name(s), uid);
+					for (; item; item = item->next, i++) {
+						char *sdesc = jabber_unescape(jabber_attr(item->atts, "name"));
+						char *sjid  = jabber_unescape(jabber_attr(item->atts, "jid"));
+						print("jabber_transport_list_item", session_name(s), uid, sjid, sdesc, itoa(i));
+						xfree(sdesc);
+						xfree(sjid);
+					}
+					print("jabber_transport_list_end", session_name(s), uid);
+				}
+			} else if (!xstrcmp(ns, "jabber:iq:search")) {
+				/* XXX, try to merge some code with jabber:iq:register and rewrite it. */
 			} else if (!xstrcmp(ns, "jabber:iq:register")) {
 				xmlnode_t *reg;
 				xmlnode_t *xdata = NULL;
@@ -1456,7 +1503,20 @@ static int jabber_theme_init()
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
 	format_add("register_change_passwd", _("%> Your password for acount %T%1 is '%T%2%n' change it as fast as you can using command /jid:passwd <newpassword>"), 1);
 
-	format_add("jabber_transport_list", _("%> (%1) JID: %2 descr=%3"), 1);
+/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
+	format_add("jabber_transport_list_begin", _("%g,+=%G----- Avalible agents on: %T%2%n"), 1);
+	format_add("jabber_transport_list_item",  _("%g|| %n %5 - %W%3%n (%4)"), 1);
+	format_add("jabber_transport_list_end",   _("%g`+=%G----- End of the agents list%n\n"), 1);
+	format_add("jabber_transport_list_nolist", _("%! No agents @ %T%2%n"), 1);
+
+	format_add("jabber_transinfo_begin",	_("%g,+=%G----- Information about: %T%2%n"), 1);
+	format_add("jabber_transinfo_identify",	_("%g|| %G --== %g%3 %G==--%n"), 1);
+/* %4 - real fjuczer name  %3 - translated fjuczer name. */
+	format_add("jabber_transinfo_feature",	_("%g|| %n %W%2%n feauture: %n%3"), 1);
+	format_add("jabber_transinfo_comm_ser",	_("%g|| %n %W%2%n can: %n%3 %2 (%4)"), 1);
+	format_add("jabber_transinfo_comm_use",	_("%g|| %n %W%2%n can: %n%3 $uid (%4)"), 1);
+	format_add("jabber_transinfo_end",	_("%g`+=%G----- End of the infomations%n\n"), 1);
+
 	format_add("jabber_registration_instruction", _("%> (%1,%2) instr=%3"), 1);
 	format_add("jabber_ekg2_registration_instruction", _("%> (%1) type \"/register %2 %3\" to register"), 1);
 

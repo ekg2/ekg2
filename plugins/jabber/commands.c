@@ -846,6 +846,19 @@ COMMAND(jabber_command_lastseen)
 	return 0;
 }
 
+COMMAND(jabber_command_search) {
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */
+/* XXX, made (session?) variable: jabber:default_search_server */
+
+	if (!params[1])
+		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\"/></iq>", server, j->id++);
+	else 
+		printq("generic_error", "not implemented. feel free to send patch...");
+	return -1;
+}
+
 COMMAND(jabber_command_register)
 {
 	PARASC
@@ -858,15 +871,25 @@ COMMAND(jabber_command_register)
 		if (params[0]) session_set(session, "password", params[0]);
 		jabber_command_connect(TEXT("connect"), NULL, session, target, quiet);
 		return 0;
-	} else {
+	} else if (!session_connected_get(session)) {
 		printq("not_connected", session_name(session));
 		return -1;
 	}
 
 	if (!params[1])
-		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg\" > <query xmlns=\"jabber:iq:register\"/> </iq>", server);
+		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg%d\" > <query xmlns=\"jabber:iq:register\"/> </iq>", server, j->id++);
 	else printq("generic_error", "not implemented. feel free to send patch...");
 	return 0;
+}
+
+COMMAND(jabber_command_transpinfo) {
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+	const char *server = params[0] ? params[0] : j->server;
+
+	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>", server, j->id++);
+	return 0;
+
 }
 
 COMMAND(jabber_command_transports) 
@@ -875,7 +898,7 @@ COMMAND(jabber_command_transports)
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	
-	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transplist\" > <query xmlns=\"http://jabber.org/protocol/disco#items\"/> </iq>", server);
+	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>", server, j->id++);
 	return 0;
 }
 
@@ -958,7 +981,9 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, TEXT("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:transpinfo"), "?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:transports"), "?", jabber_command_transports, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	command_add(&jabber_plugin, TEXT("jid:userinfo"), "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:lastseen"), "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
