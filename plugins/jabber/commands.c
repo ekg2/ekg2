@@ -846,16 +846,65 @@ COMMAND(jabber_command_lastseen)
 	return 0;
 }
 
+char **jabber_params_split(char *line)
+{
+	char **arr, **ret = NULL;
+	int num = 0, i = 0, z = 0;
+
+	if (!line)
+		return 0;
+
+	arr = array_make(line, " ", 0, 1, 1);
+	while (arr[i]) {
+		ret = (char **)xrealloc (ret, (num + 2)*sizeof (char *));
+
+		if (!z) {
+			if (arr[i][0] == '-' && arr[i][1] == '-' && strlen(arr[i]) > 2)
+				ret[num++] = xstrdup (arr[i]+2);
+			else
+				ret[num++] = xstrdup ("");
+			i++;
+		} else {
+			// this is the name of next param, so use "" as value and 
+			// do not increment i, so we'll parse it in next loop
+			if (arr[i][0] == '-' && arr[i][1] == '-' && strlen(arr[i]) > 2)
+				ret[num++] = xstrdup("");
+			else {
+				ret[num++] = xstrdup(arr[i]);
+				i++;
+			}
+		}
+		z^=1;
+	}
+	// if the last is --param
+	if (z) {
+		ret = (char **)xrealloc (ret, (num + 2)*sizeof (char *));
+		ret[num++] = xstrdup("");
+	}
+	ret [num] = NULL;
+
+	array_free (arr);
+	i = 0;
+	while (ret[i]) {
+		debug (" *** %s\n", ret[i++]);
+	}
+	return ret;
+}
+
 COMMAND(jabber_command_search) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	char *sparams = NULL;		/* search params */
 	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ /* XXX, made (session?) variable: jabber:default_search_server */
+	char **splitted;
 
+	splitted = jabber_params_split(params[1]);
 	if (params[1]) {
 		
 	}
 	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">%s</query></iq>", server, sparams ? sparams : "", j->id++);
+	array_free (splitted);
+
 	return -1;
 }
 
