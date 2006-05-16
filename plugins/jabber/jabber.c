@@ -947,7 +947,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 					if (uname(&buf) != -1) {
 						char *osver = saprintf("%s %s %s", buf.sysname, buf.release, buf.machine);
-						osversion = jabber_escape(tmp);
+						osversion = jabber_escape(osver);
 						xfree(osver);
 					} else {
 						osversion = xwcsdup(TEXT("unknown")); /* uname failed and not ver_os session variable */
