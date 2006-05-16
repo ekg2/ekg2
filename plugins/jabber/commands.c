@@ -954,7 +954,7 @@ COMMAND(jabber_command_register)
 		return -1;
 	}
 	
-	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", server, j->id++);
+	jabber_write(j, "<iq type=\"%s\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", params[1] ? "set" : "get", server, j->id++);
 	if (splitted) {
 		int i;
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {

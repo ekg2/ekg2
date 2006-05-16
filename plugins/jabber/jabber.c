@@ -448,6 +448,73 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 	string_free(body, 1);
 	xfree(uid);
 } /* */
+/* idea and some code copyrighted by Marek Marczykowski jid:marmarek@jabberpl.org */
+void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *command, xmlnode_t *form) { /* JEP-0004: Data Forms */
+	xmlnode_t *node;
+	int fieldcount = 0;
+	for (node = form; node; node = node->next) {
+		if (!xstrcmp(node->name, "title")) {
+			char *title = jabber_unescape(node->data);
+			print("jabber_form_title", session_name(s), uid, title);
+			xfree(title);
+		} else if (!xstrcmp(node->name, "instructions")) {
+			char *inst = jabber_unescape(node->data);
+			print("jabber_form_instructions", session_name(s), uid, inst);
+			xfree(inst);
+		} else if (!xstrcmp(node->name, "field")) {
+			xmlnode_t *child;
+			char *label	= jabber_unescape(jabber_attr(node->atts, "label"));
+			char *var	= jabber_unescape(jabber_attr(node->atts, "var"));
+			char *def_option = NULL;
+			string_t sub = NULL;
+			int subcount = 0;
+
+			int isreq = 0;	/* -1 - optional; 1 - required */
+			
+			if (!fieldcount) print("jabber_form_command", session_name(s), uid, command);
+
+			for (child = node->children; child; child = child->next) {
+				if (!xstrcmp(child->name, "required")) isreq = 1;
+				else if (!xstrcmp(child->name, "value")) { xfree(def_option); def_option = jabber_unescape(child->data); } 
+				else if (!xstrcmp(child->name, "option")) {
+					xmlnode_t *tmp;
+					char *opt_value = jabber_unescape( (tmp = xmlnode_find_child(child, "value")) ? tmp->data : NULL);
+					char *opt_label = jabber_unescape(jabber_attr(child->atts, "label"));
+					char *fritem;
+
+					fritem = format_string(format_find("jabber_form_item_val"), session_name(s), uid, opt_value, opt_label);
+					if (!sub)	sub = string_init(fritem);
+					else		string_append(sub, fritem);
+					xfree(fritem);
+
+/*					print("jabber_form_item_sub", session_name(s), uid, opt_label, opt_value); */
+/*					debug("[[option]] [value] %s [label] %s\n", opt_value, opt_label); */
+
+					xfree(opt_value);
+					xfree(opt_label);
+					subcount++;
+					if (!(subcount % 4)) string_append(sub, "\n\t");
+				} 
+				else debug("[FIELD->CHILD] %s\n", child->name);
+
+			}
+			print("jabber_form_item", session_name(s), uid, label, var, def_option, 
+				isreq == -1 ? "X" : isreq == 1 ? "V" : " ");
+			if (sub) {
+				int len = xstrlen(sub->str);
+				if (sub->str[len-1] == '\t' && sub->str[len-2] == '\n') sub->str[len-2] = 0;
+				print("jabber_form_item_sub", session_name(s), uid, sub->str);
+				string_free(sub, 1);
+			}
+			fieldcount++;
+
+			xfree(var);
+			xfree(label);
+		}
+	}
+	if (!fieldcount) print("jabber_form_command", session_name(s), uid, command);
+	print("jabber_form_end", session_name(s), uid, command);
+}
 
 void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	const char *type = jabber_attr(n->atts, "type");
@@ -594,7 +661,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		xfree(uin);
 	}
 /* FILETRANSFER */
-
+	
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
 	if (!xstrncmp(type, "result", 6) || !xstrncmp(type, "set", 3)) {
@@ -665,6 +732,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/jid:ver"; }
 						else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/jid:msg"; }
 						else if (!xstrcmp(var, "jabber:iq:last"))	{ user_command = 1;	tvar = "/jid:lastseen"; }
+/*						else if (!xstrcmp(var, "vcard-temp"))		{ user_command = 1;	tvar = "/jid:change && /jid:userinfo"; } */
 
 						if (tvar)	print(user_command ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
 									session_name(s), uid, tvar, var);
@@ -693,9 +761,9 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xfree(uid);
 			} else if (!xstrcmp(ns, "jabber:iq:search")) {
 				xmlnode_t *node;
-				int i;
 				int rescount = 0;
 				char *uid = jabber_unescape(from);
+				int formdone = 0;
 
 				for (node = q->children; node; node = node->next) {
 					if (!xstrcmp(node->name, "item")) rescount++;
@@ -712,18 +780,29 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						char *email	= jabber_unescape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
 
 						/* idea about displaink user in depend of number of users founded gathered from gg plugin */
-						if (rescount > 1) {
-							print("jabber_search_items", session_name(s), uid, jid, nickname, fn, lastname, email);
-						} else {
-							print("jabber_search_item", session_name(s), uid, jid, nickname, fn, lastname, email);
-						}
+						print(rescount > 1 ? "jabber_search_items" : "jabber_search_item", 
+							session_name(s), uid, jid, nickname, fn, lastname, email);
 						xfree(nickname);
 						xfree(fn);
 						xfree(lastname);
 						xfree(email);
 					} else {
+						xmlnode_t *reg;
 						if (rescount == 0) rescount = -1;
-						/* XXX, try to merge some code with jabber:iq:register and rewrite it. */
+						if (formdone) continue;
+
+						for (reg = q->children; reg; reg = reg->next) {
+							if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns")) && !xstrcmp("form", jabber_attr(reg->atts, "type")))
+							{
+								formdone = 1;
+								jabber_handle_xmldata_form(s, uid, "search", reg->children);
+								break;
+							}
+						}
+
+						if (!formdone) {
+							/* XXX */
+						}
 					}
 				}
 				if (rescount > 1) print("jabber_search_end", session_name(s), uid);
@@ -731,119 +810,41 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xfree(uid);
 			} else if (!xstrcmp(ns, "jabber:iq:register")) {
 				xmlnode_t *reg;
-				xmlnode_t *xdata = NULL;
-				
 				char *from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
-				string_t str = string_init(NULL);
+				int done = 0;
 
 				for (reg = q->children; reg; reg = reg->next) {
-					if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns"))) {
-						xdata = reg->children;
+					if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns")) && !xstrcmp("form", jabber_attr(reg->atts, "type")))
+					{
+						done = 1;
+						jabber_handle_xmldata_form(s, from_str, "register", reg->children);
 						break;
 					}
 				}
-				if (xdata) {
-					while (xdata) {
-						char *sname = jabber_unescape(xdata->name);
-						char *sdata = jabber_unescape(xdata->data);
-
-						if (!xstrcmp(xdata->name, "title")) {
-							char *s = saprintf("%s %s", sname, sdata);
-							print("generic", s);
-							xfree(s);
-						} else if (!xstrcmp(xdata->name, "instructions")) {
-							char *s = saprintf("%s %s", sname, sdata);
-							print("generic", s);
-							xfree(s);
-						} else if (!xstrcmp(xdata->name, "field")) {
-							char *type = jabber_attr(xdata->atts, "type");				/* typ zmiennej */
-							char *var  = jabber_attr(xdata->atts, "var");				/* nazwa zmiennej */
-							char *label= jabber_unescape(jabber_attr(xdata->atts, "label"));	/* etykietka */
-							char *poss = NULL;
-
-							char required = 0;	/* czy wymagane */
-							char *value = NULL;	/* domyslna wartosc dla tego pola... */
-
-							xmlnode_t *child;
-							char *fstr = NULL;
-
-							if (!xstrcmp(type, "text-single"))	/* zwykly tekst */;
-							if (!xstrcmp(type, "text-private")) 	/* ***** */;
-							if (!xstrcmp(type, "boolean"))		/* 0/1 */
-								poss = xstrdup("0/1");
-							if (!xstrcmp(type, "list-single"))	/* lista mozliwosci */;
-
-							for (child = xdata->children; child; child = child->next) {
-								char *sname = jabber_unescape(child->name);
-								if (!xstrcmp(sname, "required"))
-									required = 1;
-								else if (!xstrcmp(sname, "value")) {
-									xfree(value);
-									value = jabber_unescape(child->data);
-								} else if (!xstrcmp(sname, "option")) { /* type == list-single */
-									xmlnode_t *val = xmlnode_find_child(child, "value");
-									char *jlabel = jabber_unescape(jabber_attr(child->atts, "label"));
-									char *poss_ = saprintf("%s%s [%s] ", 
-											poss ? poss : "", 
-											val ? val->data : "",
-											jlabel ? jlabel : "");
-									xfree(poss);
-									poss = poss_;
-
-									xfree(jlabel);
-								} else { /* debug pursuit only */
-									char *sdata = jabber_unescape(child->data);
-									debug("[jabber,iq] %d NOT_IMPLEMENT %s %s\n", __LINE__, sname, sdata);
-									xfree(sdata);
-								}
-								xfree(sname);
-							}
-							fstr = format_string(format_find("jabber_register_param_ext"), var, value, label, 
-									poss, required ? "tak" : "nie");
-
-							string_append(str, fstr);
-							if (xdata->next)
-								string_append_c(str, ' ');
-							xfree(fstr);
-
-							xfree(label);
-							xfree(value);
-							xfree(poss);
-						} else
-							debug("[jabber,iq] %d NOT_IMPLEMENT %s %s\n", __LINE__, sname, sdata); /* debug only */
-						xfree(sdata);
-						xfree(sname);
-
-						xdata = xdata->next;
-					}
-				} else {
+				if (!done) {
 					xmlnode_t *instr = xmlnode_find_child(q, "instructions");
-					char *instr_str = (instr) ? jabber_unescape(instr->data) : NULL;
+					print("jabber_form_title", session_name(s), from_str, from_str);
 
-					print("jabber_registration_instruction", session_name(s), from_str, jabberfix(instr_str, "?"));
-					xfree(instr_str);
+					if (instr->data) {
+						char *instr_str = (instr) ? jabber_unescape(instr->data) : NULL;
+						print("jabber_form_instructions", session_name(s), from_str, instr_str);
+						xfree(instr_str);
+					}
+					print("jabber_form_command", session_name(s), from_str, "register");
 
-					for (reg = q->children; reg; reg = reg->next) 
-						if (xstrcmp(reg->name, "instructions")) {
-							char *jname = jabber_unescape(reg->name);
-							char *fstr;
-							if (reg->data) { /* with value */
-								char *jdata = jabber_unescape(reg->data);
-								fstr = format_string(format_find("jabber_register_param_value"), jname, jdata);
-								xfree(jdata);
-							} else {
-								fstr = format_string(format_find("jabber_register_param"), jname, jname);
-							}
-							string_append(str, fstr);
-							xfree(fstr);
-							if (reg->next)
-								string_append_c(str, ' ');
-							xfree(jname);
-						}
+					for (reg = q->children; reg; reg = reg->next) {
+						char *jname, *jdata;
+						if (!xstrcmp(reg->name, "instructions")) continue;
+
+						jname = jabber_unescape(reg->name);
+						jdata = jabber_unescape(reg->data);
+						print("jabber_registration_item", session_name(s), from_str, jname, jdata);
+						xfree(jname);
+						xfree(jdata);
+					}
+					print("jabber_form_end", session_name(s), from_str, "register");
 				}
-				print("jabber_ekg2_registration_instruction", session_name(s), from_str, str->str);
 				xfree(from_str);
-				string_free(str, 1);
 			} else if (!xstrncmp(ns, "jabber:iq:version", 17)) {
 				xmlnode_t *name = xmlnode_find_child(q, "name");
 				xmlnode_t *version = xmlnode_find_child(q, "version");
@@ -1188,7 +1189,6 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
         if (!xstrcmp(name, "stream:stream")) {
 		CHAR_T *passwd		= jabber_escape(session_get(s, "password"));
                 CHAR_T *resource	= jabber_escape(session_get(s, "resource"));
-                const char *uid = session_uid_get(s);
                 char *username;
 		char *authpass;
 
@@ -1579,16 +1579,21 @@ static int jabber_theme_init()
 		/* %3 - jid %4 - nickname %5 - firstname %6 - surname %7 - email */
 	format_add("jabber_search_begin",	_("%g,+=%G----- Search on %T%2%n"), 1);
 //	format_add("jabber_search_items", 	  "%g||%n %[-24]3 %K|%n %[10]5 %K|%n %[10]6 %K|%n %[12]4 %K|%n %[16]7\n", 1);		/* like gg-search_results_multi. TODO */
-	format_add("jabber_search_items",	 "%g||%n %3 - %5 '%4' %6 <%7>", 1);
+	format_add("jabber_search_items",	  "%g||%n %3 - %5 '%4' %6 <%7>", 1);
 	format_add("jabber_search_end",		_("%g`+=%G-----"), 1);
+	format_add("jabber_search_error",	_("%! Error while searching: %3\n"), 1);
 
-	format_add("jabber_registration_instruction", _("%> (%1,%2) instr=%3"), 1);
-	format_add("jabber_ekg2_registration_instruction", _("%> (%1) type \"/register %2 %3\" to register"), 1);
+	format_add("jabber_form_title",		  "%g,+=%G----- %3 %n(%T%2%n)", 1);
+	format_add("jabber_form_item",		  "%g|| %n%(21)3 (%6) %K|%n --%4 %(20)5", 1); 	/* %3 - label %4 - keyname %5 - value %6 - req; optional */
 
-	format_add("jabber_register_param_ext", "\n--%1 %2 [%3, opcje: %4, wymagane: %5]", 1);
-	format_add("jabber_register_param_descr", "--%1 %2 [%3]", 1);
-	format_add("jabber_register_param_value", "--%1 %2", 1);
-	format_add("jabber_register_param", "--%1 [%2]", 1);
+	format_add("jabber_form_item_val",	  "%K[%b%3%n %g%4%K]%n", 1);			/* %3 - value %4 - label */
+	format_add("jabber_form_item_sub",        "%g|| %|%n\t%3", 1);			/* %3 formated jabber_form_item_val */
+
+	format_add("jabber_form_command",	_("%g|| %nType %T/%3 %g%2%n"), 1);
+	format_add("jabber_form_instructions", 	  "%g|| %n%|%3", 1);
+	format_add("jabber_form_end",		_("%g`+=%G----- End of this %3 form ;)%n"), 1);
+
+	format_add("jabber_registration_item", 	  "%g|| %n            --%3 %4%n", 1); /* %3 - keyname %4 - value */ /* XXX, merge */
 
 	format_add("jabber_send_chan", _("%B<%W%2%B>%n %5"), 1);
 	format_add("jabber_send_chan_n", _("%B<%W%2%B>%n %5"), 1);
