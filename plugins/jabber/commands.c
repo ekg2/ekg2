@@ -855,20 +855,20 @@ COMMAND(jabber_command_lastseen)
 	return 0;
 }
 
-char **jabber_params_split(char *line)
+char **jabber_params_split(const char *line)
 {
 	char **arr, **ret = NULL;
 	int num = 0, i = 0, z = 0;
 
 	if (!line)
-		return 0;
+		return NULL;
 
 	arr = array_make(line, " ", 0, 1, 1);
 	while (arr[i]) {
 		ret = (char **)xrealloc (ret, (num + 2)*sizeof (char *));
 
 		if (!z) {
-			if (arr[i][0] == '-' && arr[i][1] == '-' && strlen(arr[i]) > 2)
+			if (arr[i][0] == '-' && arr[i][1] == '-' && xstrlen(arr[i]) > 2)
 				ret[num++] = xstrdup (arr[i]+2);
 			else
 				ret[num++] = xstrdup ("");
@@ -876,7 +876,7 @@ char **jabber_params_split(char *line)
 		} else {
 			// this is the name of next param, so use "" as value and 
 			// do not increment i, so we'll parse it in next loop
-			if (arr[i][0] == '-' && arr[i][1] == '-' && strlen(arr[i]) > 2)
+			if (arr[i][0] == '-' && arr[i][1] == '-' && xstrlen(arr[i]) > 2)
 				ret[num++] = xstrdup("");
 			else {
 				ret[num++] = xstrdup(arr[i]);
@@ -895,7 +895,8 @@ char **jabber_params_split(char *line)
 	array_free (arr);
 	i = 0;
 	while (ret[i]) {
-		debug (" *** %s\n", ret[i++]);
+		debug (" *[%d]* %s\n", i, ret[i]);
+		i++;
 	}
 	return ret;
 }
@@ -903,15 +904,18 @@ char **jabber_params_split(char *line)
 COMMAND(jabber_command_search) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
-	char *sparams = NULL;		/* search params */
 	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ /* XXX, made (session?) variable: jabber:default_search_server */
 	char **splitted;
 
-	splitted = jabber_params_split(params[1]);
-	if (params[1]) {
-		
+	jabber_write(j, "<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
+
+	if ((splitted = jabber_params_split(params[1]))) {
+		int i;
+		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
+			jabber_write(j, "<%s>%s</%s>\n", splitted[i], splitted[i+1], splitted[i]);
+		}
 	}
-	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">%s</query></iq>", server, sparams ? sparams : "", j->id++);
+	jabber_write(j, "</query></iq>");
 	array_free (splitted);
 
 	return -1;
