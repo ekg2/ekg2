@@ -706,10 +706,10 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					if (!xstrcmp(node->name, "item")) {
 						xmlnode_t *tmp;
 						char *jid 	= jabber_attr(node->atts, "jid");
-						char *nickname	= jabber_escape( (tmp = xmlnode_find_child(node, "nick"))  ? tmp->data : NULL);
-						char *fn	= jabber_escape( (tmp = xmlnode_find_child(node, "first")) ? tmp->data : NULL);
-						char *lastname	= jabber_escape( (tmp = xmlnode_find_child(node, "last"))  ? tmp->data : NULL);
-						char *email	= jabber_escape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
+						char *nickname	= jabber_unescape( (tmp = xmlnode_find_child(node, "nick"))  ? tmp->data : NULL);
+						char *fn	= jabber_unescape( (tmp = xmlnode_find_child(node, "first")) ? tmp->data : NULL);
+						char *lastname	= jabber_unescape( (tmp = xmlnode_find_child(node, "last"))  ? tmp->data : NULL);
+						char *email	= jabber_unescape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
 
 						/* idea about displaink user in depend of number of users founded gathered from gg plugin */
 						if (rescount > 1) {
@@ -1578,7 +1578,8 @@ static int jabber_theme_init()
 	format_add("jabber_search_item",	_("%) JID: %T%3%n\n%) Nickname:  %T%4%n\n%) Name: %T%5 %6%n\n%) Email: %T%7%n\n"), 1);	/* like gg-search_results_single */
 		/* %3 - jid %4 - nickname %5 - firstname %6 - surname %7 - email */
 	format_add("jabber_search_begin",	_("%g,+=%G----- Search on %T%2%n"), 1);
-	format_add("jabber_search_items", 	  "%g|| %n %[-20]3 %K|%n %[12]5 %K|%n %[12]6 %K|%n %[12]4 %K|%n %[16]7\n", 1);		/* like gg-search_results_multi. TODO */
+//	format_add("jabber_search_items", 	  "%g||%n %[-24]3 %K|%n %[10]5 %K|%n %[10]6 %K|%n %[12]4 %K|%n %[16]7\n", 1);		/* like gg-search_results_multi. TODO */
+	format_add("jabber_search_items",	 "%g||%n %3 - %5 '%4' %6 <%7>", 1);
 	format_add("jabber_search_end",		_("%g`+=%G-----"), 1);
 
 	format_add("jabber_registration_instruction", _("%> (%1,%2) instr=%3"), 1);
