@@ -912,9 +912,14 @@ COMMAND(jabber_command_search) {
 	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ /* XXX, made (session?) variable: jabber:default_search_server */
 	char **splitted;
 
+	if (!(splitted = jabber_params_split(params[1])) && params[1]) {
+		printq("invalid_params", name);
+		return -1;
+	}
+
 	jabber_write(j, "<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
 
-	if ((splitted = jabber_params_split(params[1]))) {
+	if (splitted) {
 		int i;
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
 			jabber_write(j, "<%s>%s</%s>\n", splitted[i], splitted[i+1], splitted[i]);
@@ -932,6 +937,7 @@ COMMAND(jabber_command_register)
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *passwd = session_get(session, "password");
+	char **splitted;
 
 	if (!session_connected_get(session) && (!passwd || !xstrcmp(passwd, "foo"))) {
 		session_set(session, "__new_acount", "1");
@@ -943,9 +949,20 @@ COMMAND(jabber_command_register)
 		return -1;
 	}
 
-	if (!params[1])
-		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg%d\" ><query xmlns=\"jabber:iq:register\"/></iq>", server, j->id++);
-	else printq("generic_error", "not implemented. feel free to send patch...");
+	if (!(splitted = jabber_params_split(params[1])) && params[1]) {
+		printq("invalid_params", name);
+		return -1;
+	}
+	
+	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", server, j->id++);
+	if (splitted) {
+		int i;
+		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
+			jabber_write(j, "<%s>%s</%s>\n", splitted[i], splitted[i+1], splitted[i]);
+		}
+	}
+	jabber_write(j, "</query></iq>");
+	array_free (splitted);
 	return 0;
 }
 
