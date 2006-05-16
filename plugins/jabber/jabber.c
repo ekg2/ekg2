@@ -109,6 +109,15 @@ static void jabber_private_destroy(session_t *s)
         session_private_set(s, NULL);
 }
 
+
+WATCHER(jabber_dcc_handle_recv) {
+	debug("jabber_dcc_handle_recv() type = %d\n", type);
+	if (type) {
+		return 0;
+	}
+	return 0;
+}
+
 void jabber_dcc_close_handler(struct dcc_s *d) {
 	jabber_dcc_t *p = d->priv;
 	if (!d->active && d->type == DCC_GET) {
@@ -128,20 +137,39 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 	d->priv = NULL;
 }
 
-dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id) {
+dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const char *sid) {
 	int number;
-	if (sscanf(id, "offer%d", &number)) {
+#define DCC_RULE(x) (!xstrncmp(x->uid, "jid:", 4) && !xstrncmp(x->uid+4, uin, xstrlen(x->uid+4)))
+
+	if (id && sscanf(id, "offer%d", &number)) {
 		list_t l;
 		for (l = dccs; l; l = l->next) {
 			dcc_t *d = l->data;
-			if (d->id == number && d->type == DCC_SEND && !xstrncmp(d->uid, "jid:", 4) && !xstrncmp(d->uid+4, uin, xstrlen(d->uid+4))) {
-				debug("jabber_dcc_find() %s %s founded: 0x%x\n", uin, id, d);
-				return d;
-				break;
+			if (d->id == number) {
+				if (DCC_RULE(d)) { 
+					debug("jabber_dcc_find() %s %s founded: 0x%x\n", uin, id, d);
+					return d;
+				}
+				continue;
 			}
 		}
+		debug("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", uin, id);
+		return NULL;
 	}
-	debug("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", uin, id);
+	if (sid) {
+		list_t l;
+		for (l = dccs; l; l = l->next) {
+			dcc_t *d = l->data;
+			jabber_dcc_t *p = d->priv;
+
+			if (DCC_RULE(d) && !xstrcmp(p->sid, sid)) {
+				debug("jabber_dcc_find() %s %s founded: 0x%x\n", uin, sid, d);
+				return d;
+			}
+		}
+		debug("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", uin, sid);
+		return NULL;
+	}
 	return NULL;
 }
 
@@ -585,36 +613,23 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			print("register_failed", "NOERROR"); /* XXX, TODO */
 		}
 	}
-
-
+#if 0
 	if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
 /* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
 		xmlnode_t *p;
+#define JABBER_DCC_PORT 6000	/* XXX */
 		if (!xstrcmp(type, "result")) {
-/* Eh... */
-#if 0
 			char *uin = jabber_unescape(from);
 			dcc_t *d;
-			if ((d = jabber_dcc_find(uin, id))) {
+			if ((d = jabber_dcc_find(uin, id, NULL))) {
 				jabber_dcc_t *p = d->priv;
-				char *protstr;
-
-				switch(p->protocol) {
-					case(1): protstr = saprintf(
-							"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">",
-							p->sid); 
-						break;
-					case(2): ;
-				}
 
 				jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"%d\">"
-						"<query xmlns=%s>",
-						"<streamhost port=\"8010\" host=\"ip\" jid=\"%s/%s\"/>"
+						"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">"
+						"<streamhost port=\"%d\" host=\"%s\" jid=\"%s/%s\"/>"
 						"<fast xmlns=\"http://affinix.com/jabber/stream\"/></query></iq>",
-						d->uid+4, j->id++, p->sid);
-				xfree(protstr);
+						d->uid+4, j->id++, p->sid, JABBER_DCC_PORT, "127.0.0.1", s->uid+4, "ekg2" /* XXX */);
 			}
-#endif
 		} 
 
 		if (!xstrcmp(type, "set") && ((p = xmlnode_find_child(q, "file")))) {  /* JEP-0096: File Transfer */
@@ -655,13 +670,13 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	}
 	if (!xstrcmp(type, "error") && !xstrncmp(id, "offer", 5)) {
 		char *uin = jabber_unescape(from);
-		if (dcc_close(jabber_dcc_find(uin, id))); /* possible abuse attempt */
+		if (dcc_close(jabber_dcc_find(uin, id, NULL))); /* possible abuse attempt */
 		/* XXX, informujemy usera o zamknieciu po³±czenia? */
 
 		xfree(uin);
 	}
 /* FILETRANSFER */
-	
+#endif	
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
 	if (!xstrncmp(type, "result", 6) || !xstrncmp(type, "set", 3)) {
@@ -845,6 +860,58 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					print("jabber_form_end", session_name(s), from_str, "register");
 				}
 				xfree(from_str);
+#if 0
+			} else if (!xstrcmp(ns, "http://jabber.org/protocol/bytestreams")) { /* JEP-0065: SOCKS5 Bytestreams */
+				struct jabber_streamhost_item {
+					char *ip;
+					int port;
+				};
+
+				char *uid = jabber_unescape(from);		/* jid */
+				char *sid = jabber_attr(q->atts, "sid");	/* session id */
+				char *smode = jabber_attr(q->atts, "mode"); 	/* tcp, udp */
+				dcc_t *d;
+
+				if ((d = jabber_dcc_find(uid, NULL, sid))) {
+					/* w sumie jak nie mamy nawet tego dcc.. to mozemy kontynuowac ;) */
+					/* problem w tym czy user chce ten plik.. etc.. */
+					/* i tak to na razie jest jeden wielki hack, trzeba sprawdzac czy to dobry typ dcc. etc, XXX */
+					xmlnode_t *node;
+
+					list_t host_list = NULL;
+					struct jabber_streamhost_item *streamhost = NULL;
+
+					for (node = q->children; node; node = node->next) {
+						if (!xstrcmp(node->name, "streamhost")) {
+							struct jabber_streamhost_item *newstreamhost = xmalloc(sizeof(struct jabber_streamhost_item));
+
+							newstreamhost->ip	= xstrdup(jabber_attr(node->atts, "host"));
+							newstreamhost->port	= atoi(jabber_attr(node->atts, "port"));
+							list_add(&host_list, newstreamhost, 0);
+						}
+					}
+
+					if ((list_count(host_list)) == 1) streamhost = host_list->data;
+					else {
+						streamhost = host_list->data;	/* XXX, select best one/chosen one */
+					}
+					
+					if (streamhost) {
+						struct sockaddr_in sin;
+						int fd;
+						fd = socket(AF_INET, SOCK_STREAM, 0);
+
+						sin.sin_family = AF_INET;
+						sin.sin_port	= htons(streamhost->port);
+						inet_pton(AF_INET, streamhost->ip, &(sin.sin_addr));
+
+						connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
+						watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_dcc_handle_recv, NULL);
+						/* XXX */ 
+					}
+				}
+				debug("[FILE - BYTESTREAMS] 0x%x\n", d);
+#endif
 			} else if (!xstrncmp(ns, "jabber:iq:version", 17)) {
 				xmlnode_t *name = xmlnode_find_child(q, "name");
 				xmlnode_t *version = xmlnode_find_child(q, "version");

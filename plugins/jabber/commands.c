@@ -100,8 +100,9 @@ COMMAND(jabber_command_dcc) {
 
 		{
 			char *filename;
+			char *touid = saprintf("%s/%s", u->uid, u->resource);
 			jabber_dcc_t *p;
-			d = dcc_add(u->uid, DCC_SEND, NULL);
+			d = dcc_add(touid, DCC_SEND, NULL);
 			dcc_filename_set(d, params[2]);
 			dcc_size_set(d, st.st_size);
 
@@ -113,7 +114,7 @@ COMMAND(jabber_command_dcc) {
 
 			filename = jabber_escape(params[2]); /* mo¿e obetniemy path? */
 
-			jabber_write(j, "<iq type=\"set\" id=\"offer%d\" to=\"%s/%s\">"
+			jabber_write(j, "<iq type=\"set\" id=\"offer%d\" to=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%s\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
 					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"%s\">"
 					"<range/></file>"
@@ -121,8 +122,9 @@ COMMAND(jabber_command_dcc) {
 					"<field type=\"list-single\" var=\"stream-method\">"
 					"<option><value>http://jabber.org/protocol/bytestreams</value></option>"
 /*					"<option><value>http://jabber.org/protocol/ibb</value></option>" */
-					"</field></x></feature></si></iq>", dcc_id_get(d), u->uid+4, u->resource, p->sid, st.st_size, filename);
+					"</field></x></feature></si></iq>", dcc_id_get(d), d->uid+4, p->sid, st.st_size, filename);
 			xfree(filename);
+			xfree(touid);
 		}
 		return 0;
 	}
@@ -958,7 +960,7 @@ COMMAND(jabber_command_register)
 	if (splitted) {
 		int i;
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
-			jabber_write(j, "<%s>%s</%s>\n", splitted[i], splitted[i+1], splitted[i]);
+			jabber_write(j, "<%s>%s</%s>", splitted[i], splitted[i+1], splitted[i]);
 		}
 	}
 	jabber_write(j, "</query></iq>");
