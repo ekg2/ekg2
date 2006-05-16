@@ -639,6 +639,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						else if (!xstrcmp(var, "http://jabber.org/protocol/disco"))		tvar = "/jid:transports && /jid:transpinfo";
 						else if (!xstrcmp(var, "jabber:iq:register"))		    		tvar = "/jid:register";
 						else if (!xstrcmp(var, "jabber:iq:search"))				tvar = "/jid:search";
+						else if (!xstrcmp(var, "http://jabber.org/protocol/muc"))		tvar = "/jid:mucjoin && /jid:mucpart";
 
 						else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/jid:ver"; }
 						else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/jid:msg"; }
@@ -656,8 +657,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xmlnode_t *item = xmlnode_find_child(q, "item");
 				char *uid = jabber_unescape(from);
 
-				if (!item) print("jabber_transport_list_nolist", session_name(s), uid);
-				else {
+				if (item) {
 					int i = 1;
 					print("jabber_transport_list_begin", session_name(s), uid);
 					for (; item; item = item->next, i++) {
@@ -668,7 +668,8 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						xfree(sjid);
 					}
 					print("jabber_transport_list_end", session_name(s), uid);
-				}
+				} else	print("jabber_transport_list_nolist", session_name(s), uid);
+				xfree(uid);
 			} else if (!xstrcmp(ns, "jabber:iq:search")) {
 				/* XXX, try to merge some code with jabber:iq:register and rewrite it. */
 			} else if (!xstrcmp(ns, "jabber:iq:register")) {

@@ -849,13 +849,13 @@ COMMAND(jabber_command_lastseen)
 COMMAND(jabber_command_search) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
-	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */
-/* XXX, made (session?) variable: jabber:default_search_server */
+	char *sparams = NULL;		/* search params */
+	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ /* XXX, made (session?) variable: jabber:default_search_server */
 
-	if (!params[1])
-		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\"/></iq>", server, j->id++);
-	else 
-		printq("generic_error", "not implemented. feel free to send patch...");
+	if (params[1]) {
+		
+	}
+	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">%s</query></iq>", server, sparams ? sparams : "", j->id++);
 	return -1;
 }
 
@@ -877,7 +877,7 @@ COMMAND(jabber_command_register)
 	}
 
 	if (!params[1])
-		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg%d\" > <query xmlns=\"jabber:iq:register\"/> </iq>", server, j->id++);
+		jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpreg%d\" ><query xmlns=\"jabber:iq:register\"/></iq>", server, j->id++);
 	else printq("generic_error", "not implemented. feel free to send patch...");
 	return 0;
 }
