@@ -958,7 +958,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 				jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
 						"<query xmlns=\"jabber:iq:version\">"
-						"<name>"CHARF"/name>"
+						"<name>"CHARF"</name>"
 						"<version>"CHARF"/version>"
 						"<os>"CHARF"</os></query></iq>", 
 						from, id, 
