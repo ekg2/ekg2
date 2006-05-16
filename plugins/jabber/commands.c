@@ -872,6 +872,7 @@ char **jabber_params_split(const char *line)
 				ret[num++] = xstrdup (arr[i]+2);
 			else {
 				array_free (arr);
+				ret[num] = NULL;
 				array_free (ret);
 				return NULL;
 				//ret[num++] = xstrdup ("");
