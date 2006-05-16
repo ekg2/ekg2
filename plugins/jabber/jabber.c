@@ -692,7 +692,43 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				} else	print("jabber_transport_list_nolist", session_name(s), uid);
 				xfree(uid);
 			} else if (!xstrcmp(ns, "jabber:iq:search")) {
-				/* XXX, try to merge some code with jabber:iq:register and rewrite it. */
+				xmlnode_t *node;
+				int i;
+				int rescount = 0;
+				char *uid = jabber_unescape(from);
+
+				for (node = q->children; node; node = node->next) {
+					if (!xstrcmp(node->name, "item")) rescount++;
+				}
+				if (rescount > 1) print("jabber_search_begin", session_name(s), uid);
+
+				for (node = q->children; node; node = node->next) {
+					if (!xstrcmp(node->name, "item")) {
+						xmlnode_t *tmp;
+						char *jid 	= jabber_attr(node->atts, "jid");
+						char *nickname	= jabber_escape( (tmp = xmlnode_find_child(node, "nick"))  ? tmp->data : NULL);
+						char *fn	= jabber_escape( (tmp = xmlnode_find_child(node, "first")) ? tmp->data : NULL);
+						char *lastname	= jabber_escape( (tmp = xmlnode_find_child(node, "last"))  ? tmp->data : NULL);
+						char *email	= jabber_escape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
+
+						/* idea about displaink user in depend of number of users founded gathered from gg plugin */
+						if (rescount > 1) {
+							print("jabber_search_items", session_name(s), uid, jid, nickname, fn, lastname, email);
+						} else {
+							print("jabber_search_item", session_name(s), uid, jid, nickname, fn, lastname, email);
+						}
+						xfree(nickname);
+						xfree(fn);
+						xfree(lastname);
+						xfree(email);
+					} else {
+						if (rescount == 0) rescount = -1;
+						/* XXX, try to merge some code with jabber:iq:register and rewrite it. */
+					}
+				}
+				if (rescount > 1) print("jabber_search_end", session_name(s), uid);
+				if (rescount == 0) print("search_not_found"); /* not found */
+				xfree(uid);
 			} else if (!xstrcmp(ns, "jabber:iq:register")) {
 				xmlnode_t *reg;
 				xmlnode_t *xdata = NULL;
@@ -1525,7 +1561,7 @@ static int jabber_theme_init()
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
 	format_add("register_change_passwd", _("%> Your password for acount %T%1 is '%T%2%n' change it as fast as you can using command /jid:passwd <newpassword>"), 1);
 
-/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
+	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
 	format_add("jabber_transport_list_begin", _("%g,+=%G----- Avalible agents on: %T%2%n"), 1);
 	format_add("jabber_transport_list_item",  _("%g|| %n %5 - %W%3%n (%4)"), 1);
 	format_add("jabber_transport_list_end",   _("%g`+=%G----- End of the agents list%n\n"), 1);
@@ -1533,11 +1569,17 @@ static int jabber_theme_init()
 
 	format_add("jabber_transinfo_begin",	_("%g,+=%G----- Information about: %T%2%n"), 1);
 	format_add("jabber_transinfo_identify",	_("%g|| %G --== %g%3 %G==--%n"), 1);
-/* %4 - real fjuczer name  %3 - translated fjuczer name. */
+		/* %4 - real fjuczer name  %3 - translated fjuczer name. */
 	format_add("jabber_transinfo_feature",	_("%g|| %n %W%2%n feauture: %n%3"), 1);
 	format_add("jabber_transinfo_comm_ser",	_("%g|| %n %W%2%n can: %n%3 %2 (%4)"), 1);
 	format_add("jabber_transinfo_comm_use",	_("%g|| %n %W%2%n can: %n%3 $uid (%4)"), 1);
 	format_add("jabber_transinfo_end",	_("%g`+=%G----- End of the infomations%n\n"), 1);
+
+	format_add("jabber_search_item",	_("%) JID: %T%3%n\n%) Nickname:  %T%4%n\n%) Name: %T%5 %6%n\n%) Email: %T%7%n\n"), 1);	/* like gg-search_results_single */
+		/* %3 - jid %4 - nickname %5 - firstname %6 - surname %7 - email */
+	format_add("jabber_search_begin",	_("%g,+=%G----- Search on %T%2%n"), 1);
+	format_add("jabber_search_items", 	  "%g|| %n %[-20]3 %K|%n %[12]5 %K|%n %[12]6 %K|%n %[12]4 %K|%n %[16]7\n", 1);		/* like gg-search_results_multi. TODO */
+	format_add("jabber_search_end",		_("%g`+=%G-----"), 1);
 
 	format_add("jabber_registration_instruction", _("%> (%1,%2) instr=%3"), 1);
 	format_add("jabber_ekg2_registration_instruction", _("%> (%1) type \"/register %2 %3\" to register"), 1);
