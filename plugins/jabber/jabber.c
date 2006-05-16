@@ -128,6 +128,23 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 	d->priv = NULL;
 }
 
+dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id) {
+	int number;
+	if (sscanf(id, "offer%d", &number)) {
+		list_t l;
+		for (l = dccs; l; l = l->next) {
+			dcc_t *d = l->data;
+			if (d->id == number && d->type == DCC_SEND && !xstrncmp(d->uid, "jid:", 4) && !xstrncmp(d->uid+4, uin, xstrlen(d->uid+4))) {
+				debug("jabber_dcc_find() %s %s founded: 0x%x\n", uin, id, d);
+				return d;
+				break;
+			}
+		}
+	}
+	debug("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", uin, id);
+	return NULL;
+}
+
 /*
  * jabber_session()
  *
@@ -507,13 +524,30 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 /* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
 		xmlnode_t *p;
 		if (!xstrcmp(type, "result")) {
-/*
-<iq type="set" to="%s" id=...>
-<query xmlns="http://jabber.org/protocol/bytestreams" mode="tcp" sid="...">
-	<streamhost port="port" host="ip" jid="naszjid/resource"/>
-	<fast xmlns="http://affinix.com/jabber/stream"/>
-</query></iq>
-*/
+/* Eh... */
+#if 0
+			char *uin = jabber_unescape(from);
+			dcc_t *d;
+			if ((d = jabber_dcc_find(uin, id))) {
+				jabber_dcc_t *p = d->priv;
+				char *protstr;
+
+				switch(p->protocol) {
+					case(1): protstr = saprintf(
+							"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">",
+							p->sid); 
+						break;
+					case(2): ;
+				}
+
+				jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"%d\">"
+						"<query xmlns=%s>",
+						"<streamhost port=\"8010\" host=\"ip\" jid=\"%s/%s\"/>"
+						"<fast xmlns=\"http://affinix.com/jabber/stream\"/></query></iq>",
+						d->uid+4, j->id++, p->sid);
+				xfree(protstr);
+			}
+#endif
 		} 
 
 		if (!xstrcmp(type, "set") && ((p = xmlnode_find_child(q, "file")))) {  /* JEP-0096: File Transfer */
@@ -554,22 +588,9 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	}
 	if (!xstrcmp(type, "error") && !xstrncmp(id, "offer", 5)) {
 		char *uin = jabber_unescape(from);
-		int number;
-		if (sscanf(id, "offer%d", &number)) {
-			dcc_t *D = NULL;
-			list_t l;
+		if (dcc_close(jabber_dcc_find(uin, id))); /* possible abuse attempt */
+		/* XXX, informujemy usera o zamknieciu po³±czenia? */
 
-			for (l = dccs; l; l = l->next) {
-				dcc_t *d = l->data;
-				if (d->id == number && d->type == DCC_SEND && !xstrncmp(d->uid, "jid:", 4) && !xstrncmp(d->uid+4, uin, xstrlen(d->uid+4))) {
-					D = d;
-					break;
-				}
-			}
-			if (dcc_close(D)); /* possible abuse attempt */	
-			/* XXX, informujemy usera o zamknieciu po³±czenia? */
-
-		}
 		xfree(uin);
 	}
 /* FILETRANSFER */

@@ -100,20 +100,28 @@ COMMAND(jabber_command_dcc) {
 
 		{
 			char *filename;
+			jabber_dcc_t *p;
 			d = dcc_add(u->uid, DCC_SEND, NULL);
 			dcc_filename_set(d, params[2]);
 			dcc_size_set(d, st.st_size);
 
+			p = xmalloc(sizeof(jabber_dcc_t));
+			p->session = session;
+			p->req = saprintf("offer%d", dcc_id_get(d));
+			p->sid = xstrdup(itoa(j->id++));
+			dcc_private_set(d, p);
+
 			filename = jabber_escape(params[2]); /* mo¿e obetniemy path? */
 
 			jabber_write(j, "<iq type=\"set\" id=\"offer%d\" to=\"%s/%s\">"
-					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%d\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
+					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%s\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
 					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"%s\">"
 					"<range/></file>"
 					"<feature xmlns=\"http://jabber.org/protocol/feature-neg\"><x xmlns=\"jabber:x:data\" type=\"form\">"
 					"<field type=\"list-single\" var=\"stream-method\">"
 					"<option><value>http://jabber.org/protocol/bytestreams</value></option>"
-					"</field></x></feature></si></iq>", dcc_id_get(d), u->uid+4, u->resource, j->id, st.st_size, filename);
+/*					"<option><value>http://jabber.org/protocol/ibb</value></option>" */
+					"</field></x></feature></si></iq>", dcc_id_get(d), u->uid+4, u->resource, p->sid, st.st_size, filename);
 			xfree(filename);
 		}
 		return 0;
@@ -165,7 +173,8 @@ COMMAND(jabber_command_dcc) {
 
 			jabber_write(j, "<iq type=\"result\" to=\"%s\" id=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\"><feature xmlns=\"http://jabber.org/protocol/feature-neg\">"
-					"<x xmlns=\"jabber:x:data\" type=\"submit\"><field var=\"stream-method\"><value>http://jabber.org/protocol/bytestreams</value></field>"
+					"<x xmlns=\"jabber:x:data\" type=\"submit\">"
+					"<field var=\"stream-method\"><value>http://jabber.org/protocol/bytestreams</value></field>"
 					"</x></feature></si></iq>", d->uid+4, p->req);
 		}
 		/* TODO */

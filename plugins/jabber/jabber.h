@@ -32,10 +32,18 @@ struct xmlnode_s {
 
 typedef struct xmlnode_s xmlnode_t;
 
+
+enum jabber_dcc_protocol_type_t {
+	JABBER_DCC_PROTOCOL_UNKNOWN	= 0,
+	JABBER_DCC_PROTOCOL_BYTESTREAMS,	/* http://www.jabber.org/jeps/jep-0065.html */
+	JABBER_DCC_PROTOCOL_IBB, 		/* http://www.jabber.org/jeps/jep-0047.html */
+};
+
 typedef struct {
 	session_t *session;
 	char *req;
 	char *sid;
+	enum jabber_dcc_protocol_type_t protocol;
 } jabber_dcc_t; 
 
 typedef struct {
