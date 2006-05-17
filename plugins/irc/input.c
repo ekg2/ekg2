@@ -208,7 +208,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 					spc+1);
 			*spc = ' ';
 			*/
-			irc_write(j, "NOTICE %s :\01ERRMSG %s :unknown ctcp\01\r\n",
+			irc_write(sess, "NOTICE %s :\01ERRMSG %s :unknown ctcp\01\r\n",
 					sender+1, begin);
 			begin--; *begin = 1; *end = 1; 
 		}
@@ -261,13 +261,13 @@ switch (number) {
 
 	
     case CTCP_DCC:		/* ===== ===== ===== ===== ===== DCC */
-	irc_write(j, "NOTICE %s :\01ERRMSG %s :not handled\01\r\n", 
+	irc_write(s, "NOTICE %s :\01ERRMSG %s :not handled\01\r\n", 
 			purename, ctcp);
 	return 0;
 
 	
     case CTCP_SED:		/* ===== ===== ===== ===== ===== SED */
-	irc_write(j, "NOTICE %s :\01ERRMSG %s :not handled\01\r\n", 
+	irc_write(s, "NOTICE %s :\01ERRMSG %s :not handled\01\r\n", 
 			purename, ctcp);
 	return 0;
 
@@ -280,7 +280,7 @@ switch (number) {
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
 			session_name(s), purename, idhost, targ+4, ctcp);
 
-	irc_write(j, "NOTICE %s :\01FINGER :%s connected since %s\01\r\n",
+	irc_write(s, "NOTICE %s :\01FINGER :%s connected since %s\01\r\n",
 			purename, j->nick, ta);
 	xfree(ta);
 	return 0;
@@ -295,13 +295,13 @@ switch (number) {
 	tb = (char *)session_get(s, "VERSION_NO");
 	tc = (char *)session_get(s, "VERSION_SYS");
 	if (tc || uname(&un) == -1) {
-		irc_write(j, "NOTICE %s :\01VERSION %s%s%s\01\r\n",
+		irc_write(s, "NOTICE %s :\01VERSION %s%s%s\01\r\n",
 				purename, ta?ta:"IRC plugin under EKG2:",
 				tb?tb:IRCVERSION":",
 				tc?tc:"unknown OS");
 		return 0;
 	}
-	irc_write(j, "NOTICE %s :\01VERSION %s%s%s %s %s\01\r\n",
+	irc_write(s, "NOTICE %s :\01VERSION %s%s%s %s %s\01\r\n",
 			purename, ta?ta:"IRC plugin under EKG2:",
 			tb?tb:IRCVERSION":",
 			un.sysname, un.release, un.machine);
@@ -313,7 +313,7 @@ switch (number) {
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
 			session_name(s), purename, idhost, targ+4, ctcp);
 
-	irc_write(j, "NOTICE %s :\01SOURCE \02\x1fhttp://ekg2.org/ekg2-current.tar.gz\x1f\02\01\r\n",
+	irc_write(s, "NOTICE %s :\01SOURCE \02\x1fhttp://ekg2.org/ekg2-current.tar.gz\x1f\02\01\r\n",
 			purename);
 	return 0;
 
@@ -324,7 +324,7 @@ switch (number) {
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
 			session_name(s), purename, idhost, targ+4, ctcp);
 
-	irc_write(j, "NOTICE %s :\01USERINFO :%s\01\r\n",
+	irc_write(s, "NOTICE %s :\01USERINFO :%s\01\r\n",
 			purename, ta?ta:"no userinfo set");
 	return 0;
 
@@ -334,7 +334,7 @@ switch (number) {
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
 			session_name(s), purename, idhost, targ+4, ctcp);
 
-	irc_write(j, "NOTICE %s :\01CLIENTINFO \01\r\n",
+	irc_write(s, "NOTICE %s :\01CLIENTINFO \01\r\n",
 			purename);
 	return 0;
 
@@ -344,7 +344,7 @@ switch (number) {
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
 			session_name(s), purename, idhost, targ+4, ctcp);
 
-	irc_write(j, "NOTICE %s :\01PING %s\01\r\n",
+	irc_write(s, "NOTICE %s :\01PING %s\01\r\n",
 			purename, space?space:"");
 	return 0;
 
@@ -358,7 +358,7 @@ switch (number) {
 	ta = xstrdup(ctime(&timek));
 	if (ta[xstrlen(ta)-1] == '\n') ta[xstrlen(ta)-1]='\0';
 
-	irc_write(j, "NOTICE %s :\01TIME %s\01\r\n",
+	irc_write(s, "NOTICE %s :\01TIME %s\01\r\n",
 			purename, ta);
 	xfree(ta);
 	return 0;
@@ -369,7 +369,7 @@ switch (number) {
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
 			session_name(s), purename, idhost, targ+4, ctcp);
 
-	irc_write(j, "NOTICE %s :\01ERRMSG %s\01\r\n",
+	irc_write(s, "NOTICE %s :\01ERRMSG %s\01\r\n",
 			purename, space?space:"");
 	return 0;
 

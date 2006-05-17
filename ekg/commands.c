@@ -1965,11 +1965,10 @@ COMMAND(cmd_debug_watches)
 
 		if ((w->type & WATCH_READ))
 			xstrcat(wa, "R");
-		if (w->buf)
-			xstrcat(wa, "L");
 		if ((w->type & WATCH_WRITE))
 			xstrcat(wa, "W");
-
+		if (w->buf)
+			xstrcat(wa, "L");
 		if (w->plugin)
 			plugin = w->plugin->name;
 		else

@@ -267,8 +267,10 @@ void ekg_loop()
                                 maxfd = w->fd;
                         if ((w->type & WATCH_READ))
                                 FD_SET(w->fd, &rd);
-                        if ((w->type & WATCH_WRITE))
-                                FD_SET(w->fd, &wd);
+                        if ((w->type & WATCH_WRITE)) {
+				if (w->buf && !xstrlen(w->buf->str)) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
+				FD_SET(w->fd, &wd); 
+			}
                 }
 
 		tv.tv_sec = 1;
@@ -384,10 +386,10 @@ watches_again:
                                 if (ekg_stdin_want_more && w->fd == 0)
                                         goto watches_again;
                         }
-                        else
-                                if (FD_ISSET(w->fd, &rd))
-                                        watch_handle_line(w);
-
+                        else {
+                                if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
+				else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
+			}
                 }
         }
 

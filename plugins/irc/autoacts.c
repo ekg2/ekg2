@@ -115,11 +115,11 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 				}
 			}
 			if (st->len) 
-				irc_write(j, "JOIN %s\r\n", st->str);
+				watch_write(j->send_watch, "JOIN %s\r\n", st->str);
 			string_free(st, 1);
 			break;
 		case IRC_REJOIN_KICK:
-			irc_write(j, "JOIN %s\r\n", chan);
+			watch_write(j->send_watch, "JOIN %s\r\n", chan);
 			break;
 		default:
 			return -1;

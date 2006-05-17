@@ -571,6 +571,9 @@ watch_t *watch_new(plugin_t *plugin, int fd, watch_type_t type)
 	if (w->type == WATCH_READ_LINE) {
 		w->type = WATCH_READ;
 		w->buf = string_init(NULL);
+	} else if (w->type == WATCH_WRITE_LINE) {
+		w->type = WATCH_WRITE;
+		w->buf = string_init(NULL);
 	}
 	
 	w->started = time(NULL);
@@ -613,15 +616,22 @@ void watch_free(watch_t *w)
 	} else if (w->removed == 2) /* watch is already removed, from other thread? */
 		return;
 
+	if (w->type == WATCH_WRITE && w->buf && !w->handler) { 
+		debug("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
+		return;
+	}
+
 	w->removed = 2;
 		
 	if (w->buf) {
 		int (*handler)(int, int, const char *, void *) = w->handler;
 		string_free(w->buf, 1);
-		handler(1, w->fd, NULL, w->data);
+		if (handler)
+			handler(1, w->fd, NULL, w->data);
 	} else {
 		int (*handler)(int, int, int, void *) = w->handler;
-		handler(1, w->fd, w->type, w->data);
+		if (handler)
+			handler(1, w->fd, w->type, w->data);
 	}
 	list_remove(&watches, w, 1);
 }
@@ -676,6 +686,63 @@ void watch_handle_line(watch_t *w)
 		close(fd);
 	} 
 	w->removed = 0;
+}
+
+/* ripped from irc plugin */
+int watch_handle_write(watch_t *w) {
+	int (*handler)(int, int, const char *, void *) = w->handler;
+	int res = -1;
+	int len = (w && w->buf) ? xstrlen(w->buf->str) : 0;
+
+	debug("[watch_handle_write] fd: %d in queue: %d bytes\n", w->fd, len);
+	if (!len) return -1;
+
+	w->removed = -1;
+
+	if (handler) {
+		res = handler(0, w->fd, w->buf->str, w->data);
+	} else {
+		res = write(w->fd, w->buf->str, len);
+	}
+
+	if (res == -1) {
+		debug("handle_write() failed: %s\n", strerror(errno));
+		w->removed = 0;
+		watch_free(w);
+		return 0;
+	} else if (res == len) {
+		debug("handle_write() output buffer empty\n");
+		string_clear(w->buf);
+	} else {
+		memmove(w->buf->str, w->buf->str + res, len - res);
+	}
+
+	w->removed = 0;
+	return res;
+}
+
+int watch_write(watch_t *w, const char *format, ...) {
+	char		*text;
+	int		len;
+	va_list		ap;
+
+	if (!w || !format)
+		return -1;
+
+	va_start(ap, format);
+	text = vsaprintf(format, ap);
+	va_end(ap);
+
+	debug("[watch]_send: %s\n", text?xstrlen(text)?text:"[0LENGTH]":"[FAILED]");
+	if (!text) return -1;
+
+	len = xstrlen(w->buf->str);
+	string_append(w->buf, text);
+
+	xfree(text);
+
+	if (!len) return watch_handle_write(w); /* let's try to write somethink ? */
+	return 0;
 }
 
 /*

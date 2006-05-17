@@ -309,8 +309,6 @@ const static IrcCommand irccommands[] =
 	{ 1,	372, "RPL_MOTD",		irc_c_motd, 1, NULL },
 	{ 1,	376, "RPL_ENDOFMOTD",		irc_c_motd, 1, NULL }
 */
-
-
 #endif /* __EKG_PLUGINS_IRC_MISC_H */
 
 /*

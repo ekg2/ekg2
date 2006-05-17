@@ -37,6 +37,7 @@ enum jabber_dcc_protocol_type_t {
 	JABBER_DCC_PROTOCOL_UNKNOWN	= 0,
 	JABBER_DCC_PROTOCOL_BYTESTREAMS,	/* http://www.jabber.org/jeps/jep-0065.html */
 	JABBER_DCC_PROTOCOL_IBB, 		/* http://www.jabber.org/jeps/jep-0047.html */
+	JABBER_DCC_PROTOCOL_WEBDAV,		/* http://www.jabber.org/jeps/jep-0129.html */ /* DON'T IMPLEMENT IT UNTILL IT WILL BE STARNDARD DRAFT */
 };
 
 typedef struct {
@@ -60,8 +61,7 @@ typedef struct {
 	int connecting;			/* czy siê w³a¶nie ³±czymy? */
 	char *stream_id;		/* id strumienia */
 
-	char *obuf;			/* bufor wyj¶ciowy */
-	int obuf_len;			/* rozmiar bufora wyj¶ciowego */
+	watch_t *send_watch;
 
 	xmlnode_t *node;		/* aktualna ga³±¼ xmla */
 } jabber_private_t;
@@ -96,10 +96,9 @@ WATCHER(jabber_handle_connect_tls);
 
 time_t jabber_try_xdelay(xmlnode_t *xmlnode, const char *ns);
 
-#ifdef __GNU__
-int jabber_write(jabber_private_t *j, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-#else
-int jabber_write(jabber_private_t *j, const char *format, ...);
+#define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
+#ifdef HAVE_GNUTLS
+WATCHER(jabber_handle_write);
 #endif
 
 void xmlnode_handle_start(void *data, const char *name, const char **atts);

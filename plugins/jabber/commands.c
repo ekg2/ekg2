@@ -114,7 +114,7 @@ COMMAND(jabber_command_dcc) {
 
 			filename = jabber_escape(params[2]); /* mo¿e obetniemy path? */
 
-			jabber_write(j, "<iq type=\"set\" id=\"offer%d\" to=\"%s\">"
+			watch_write(j->send_watch, "<iq type=\"set\" id=\"offer%d\" to=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%s\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
 					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"%s\">"
 					"<range/></file>"
@@ -173,7 +173,7 @@ COMMAND(jabber_command_dcc) {
 			session_t *s = p->session;
 			jabber_private_t *j = jabber_private(s);
 
-			jabber_write(j, "<iq type=\"result\" to=\"%s\" id=\"%s\">"
+			watch_write(j->send_watch, "<iq type=\"result\" to=\"%s\" id=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\"><feature xmlns=\"http://jabber.org/protocol/feature-neg\">"
 					"<x xmlns=\"jabber:x:data\" type=\"submit\">"
 					"<field var=\"stream-method\"><value>http://jabber.org/protocol/bytestreams</value></field>"
@@ -303,12 +303,12 @@ COMMAND(jabber_command_disconnect)
 
 	if (descr) {
 		CHAR_T *tmp = jabber_escape(descr);
-		jabber_write(j, "<presence type=\"unavailable\"><status>" CHARF "</status></presence>", tmp ? tmp : TEXT(""));
+		watch_write(j->send_watch, "<presence type=\"unavailable\"><status>" CHARF "</status></presence>", tmp ? tmp : TEXT(""));
 		xfree(tmp);
 	} else
-		jabber_write(j, "<presence type=\"unavailable\"/>");
+		watch_write(j->send_watch, "<presence type=\"unavailable\"/>");
 
-	jabber_write(j, "</stream:stream>");
+	watch_write(j->send_watch, "</stream:stream>");
 
 	if (j->connecting) 
 		j->connecting = 0;
@@ -401,25 +401,25 @@ COMMAND(jabber_command_msg)
 		ismuc = 1;
 
 	if (ismuc)
-		jabber_write(j, "<message type=\"groupchat\" to=\"%s\" id=\"%d\">", uid+4, time(NULL));
+		watch_write(j->send_watch, "<message type=\"groupchat\" to=\"%s\" id=\"%d\">", uid+4, time(NULL));
 	else
-		jabber_write(j, "<message %sto=\"%s\" id=\"%d\">", chat ? "type=\"chat\" " : "", uid+4, time(NULL));
+		watch_write(j->send_watch, "<message %sto=\"%s\" id=\"%d\">", chat ? "type=\"chat\" " : "", uid+4, time(NULL));
 
 	if (subject) {
-		jabber_write(j, "<subject>%s</subject>", subject); 
+		watch_write(j->send_watch, "<subject>%s</subject>", subject); 
 		xfree(subject); 
 	}
 	if (msg) {
-		jabber_write(j, "<body>" CHARF "</body>", msg);
+		watch_write(j->send_watch, "<body>" CHARF "</body>", msg);
         	if (config_last & 4) 
         		last_add(1, uid, time(NULL), 0, msg);
 		xfree(msg);
 	}
 
-	jabber_write(j, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
+	watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
 		( config_display_ack == 1 || config_display_ack == 2 ? "<delivered/>" : ""),
 		( config_display_ack == 1 || config_display_ack == 3 ? "<offline/>"   : "") );
-	jabber_write(j, "</message>");
+	watch_write(j->send_watch, "</message>");
 
 	if (!quiet && !ismuc) { /* if (1) ? */ 
 		CHAR_T *me 	= xwcsdup( normal_to_wcs(  session_uid_get(session)  ));
@@ -463,7 +463,7 @@ COMMAND(jabber_command_xml)
 {
 	PARUNI
 	jabber_private_t *j = session_private_get(session);
-	jabber_write(j, CHARF, params[0]);
+	watch_write(j->send_watch, CHARF, params[0]);
 	return 0;
 }
 
@@ -552,7 +552,7 @@ COMMAND(jabber_command_passwd)
 //	username = xstrndup(session->uid + 4, xstrchr(session->uid+4, '@') - session->uid+4);
 
 	passwd = jabber_escape(params[0]);
-	jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", j->server, j->id++, username, passwd);
+	watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", j->server, j->id++, username, passwd);
 	
 	session_set(session, "__new_password", params[0]);
 
@@ -602,7 +602,7 @@ COMMAND(jabber_command_auth)
 		return -1;
 	}
 
-	jabber_write(j, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+4, action);
+	watch_write(j->send_watch, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+4, action);
 	return 0;
 }
 
@@ -697,24 +697,24 @@ COMMAND(jabber_command_modify)
 	if (!(uid = jid_target2uid(session, target, quiet))) 
 		return -1;
 
-	jabber_write(j, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
+	watch_write(j->send_watch, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
 
 	/* nickname always should be set */
-	if (nickname)	jabber_write(j, "<item jid=\"%s\" name=\"" CHARF "\"%s>", uid+4, nickname, (u->groups ? "" : "/"));
-	else		jabber_write(j, "<item jid=\"%s\"%s>", uid+4, (u->groups ? "" : "/"));
+	if (nickname)	watch_write(j->send_watch, "<item jid=\"%s\" name=\"" CHARF "\"%s>", uid+4, nickname, (u->groups ? "" : "/"));
+	else		watch_write(j->send_watch, "<item jid=\"%s\"%s>", uid+4, (u->groups ? "" : "/"));
 
 	for (m = u->groups; m ; m = m->next) {
 		struct ekg_group *g = m->data;
 		CHAR_T *gname = jabber_escape(g->name);
 
-		jabber_write(j,"<group>"CHARF"</group>", gname);
+		watch_write(j->send_watch, "<group>"CHARF"</group>", gname);
 		xfree(gname);
 	}
 
 	if (u->groups)
-		jabber_write(j,"</item>");
+		watch_write(j->send_watch, "</item>");
 
-	jabber_write(j, "</query></iq>");
+	watch_write(j->send_watch, "</query></iq>");
 
 	xfree(nickname);
 	
@@ -734,8 +734,8 @@ COMMAND(jabber_command_del)
 	{
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
-		jabber_write(j, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
-		jabber_write(j, "<item jid=\"" CHARF "\" subscription=\"remove\"/></query></iq>", xuid);
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
+		watch_write(j->send_watch, "<item jid=\"" CHARF "\" subscription=\"remove\"/></query></iq>", xuid);
 		xfree(xuid);
 	}
 	print("user_deleted", target, session_name(session));
@@ -773,7 +773,7 @@ COMMAND(jabber_command_ver)
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
 		CHAR_T *xquery_res = jabber_escape(query_res);
-       		jabber_write(j, "<iq id='%d' to='" CHARF"/"CHARF "' type='get'><query xmlns='jabber:iq:version'/></iq>", \
+       		watch_write(j->send_watch, "<iq id='%d' to='" CHARF"/"CHARF "' type='get'><query xmlns='jabber:iq:version'/></iq>", \
 			     j->id++, xuid, xquery_res);
 		xfree(xuid);
 		xfree(xquery_res);
@@ -791,7 +791,7 @@ COMMAND(jabber_command_userinfo)
 	{ 
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
-       		jabber_write(j, "<iq id='%d' to='" CHARF "' type='get'><vCard xmlns='vcard-temp'/></iq>", \
+       		watch_write(j->send_watch, "<iq id='%d' to='" CHARF "' type='get'><vCard xmlns='vcard-temp'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
 	}
@@ -825,7 +825,7 @@ COMMAND(jabber_command_change)
 	}
 	for (i=0; i<pub_sz; i++) 
 		pub[i] = jabber_uescape(pub[i]);
-	jabber_write(j, "<iq type=\"set\"><vCard xmlns='vcard-temp'>"
+	watch_write(j->send_watch, "<iq type=\"set\"><vCard xmlns='vcard-temp'>"
 			"<FN>" CHARF "</FN>" "<NICKNAME>" CHARF "</NICKNAME>"
 			"<ADR><LOCALITY>" CHARF "</LOCALITY><COUNTRY>" CHARF "</COUNTRY></ADR>"
 			"<BDAY>" CHARF "</BDAY><DESC>" CHARF "</DESC></vCard></iq>\n", 
@@ -850,7 +850,7 @@ COMMAND(jabber_command_lastseen)
 	{
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
-	       	jabber_write(j, "<iq id='%d' to='" CHARF "' type='get'><query xmlns='jabber:iq:last'/></iq>", \
+	       	watch_write(j->send_watch, "<iq id='%d' to='" CHARF "' type='get'><query xmlns='jabber:iq:last'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
 	}
@@ -919,15 +919,15 @@ COMMAND(jabber_command_search) {
 		return -1;
 	}
 
-	jabber_write(j, "<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
+	watch_write(j->send_watch, "<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
 
 	if (splitted) {
 		int i;
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
-			jabber_write(j, "<%s>%s</%s>\n", splitted[i], splitted[i+1], splitted[i]);
+			watch_write(j->send_watch, "<%s>%s</%s>\n", splitted[i], splitted[i+1], splitted[i]);
 		}
 	}
-	jabber_write(j, "</query></iq>");
+	watch_write(j->send_watch, "</query></iq>");
 	array_free (splitted);
 
 	return -1;
@@ -956,14 +956,14 @@ COMMAND(jabber_command_register)
 		return -1;
 	}
 	
-	jabber_write(j, "<iq type=\"%s\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", params[1] ? "set" : "get", server, j->id++);
+	watch_write(j->send_watch, "<iq type=\"%s\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", params[1] ? "set" : "get", server, j->id++);
 	if (splitted) {
 		int i;
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
-			jabber_write(j, "<%s>%s</%s>", splitted[i], splitted[i+1], splitted[i]);
+			watch_write(j->send_watch, "<%s>%s</%s>", splitted[i], splitted[i+1], splitted[i]);
 		}
 	}
-	jabber_write(j, "</query></iq>");
+	watch_write(j->send_watch, "</query></iq>");
 	array_free (splitted);
 	return 0;
 }
@@ -973,7 +973,7 @@ COMMAND(jabber_command_transpinfo) {
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 
-	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>", server, j->id++);
+	watch_write(j->send_watch, "<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>", server, j->id++);
 	return 0;
 
 }
@@ -984,7 +984,7 @@ COMMAND(jabber_command_transports)
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	
-	jabber_write(j, "<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>", server, j->id++);
+	watch_write(j->send_watch, "<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>", server, j->id++);
 	return 0;
 }
 
@@ -1004,7 +1004,7 @@ COMMAND(jabber_muc_command_join)
 		return -1;
 	}
 
-	jabber_write(j, "<presence to='%s/%s'> <x xmlns='http://jabber.org/protocol/muc#user'>%s</x> </presence>", 
+	watch_write(j->send_watch, "<presence to='%s/%s'> <x xmlns='http://jabber.org/protocol/muc#user'>%s</x> </presence>", 
 			params[0], username, password ? password : "");
 
 	xfree(username);
@@ -1026,7 +1026,7 @@ COMMAND(jabber_muc_command_part)
 
 	status = params[1] ? saprintf(" <status>%s</status> ", params[1]) : NULL;
 
-	jabber_write(j, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", target+4, "darkjames", status ? status : "");
+	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", target+4, "darkjames", status ? status : "");
 
 	xfree(status);
 	return 0;

@@ -431,6 +431,16 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	j->connecting = 0;
 
 	// !!! 
+	if (j->send_watch) {
+		j->send_watch->type = WATCH_NONE;
+		watch_free(j->send_watch);	
+		j->send_watch = NULL;
+	}
+	if (j->recv_watch) {
+		watch_free(j->recv_watch);
+		j->recv_watch = NULL;
+	}
+
 	watch_remove(&irc_plugin, j->fd, WATCH_WRITE);
 
 	close(j->fd);
@@ -452,26 +462,11 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 			if (timer_remove(&irc_plugin, "reconnect") == 0)
 				print("auto_reconnect_removed", session_name(s)); 
 			break;
-		case EKG_DISCONNECT_NETWORK:
-		case EKG_DISCONNECT_USER:
-			if (j->recv_watch) {
-/*				watch_remove(&irc_plugin, j->recv_watch->fd, j->recv_watch->type); */
-				watch_free(j->recv_watch);
-				j->recv_watch = NULL;
-			}
-			break;
 			/*
 			 * default:
 			 * 	debug("[irc_handle_disconnect] unknow || !handled type = %d %s", type, reason);
 			 */
 	}
-
-	if (j->obuf) {
-		xfree(j->obuf);
-		j->obuf = NULL;
-		j->obuf_len = 0;
-	}
-
 	__reason  = xstrdup(format_find(reason));
 	__session = xstrdup(session_uid_get(s));
 	
@@ -597,6 +592,7 @@ WATCHER(irc_handle_connect)
 	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
 	j->recv_watch = watch_add(&irc_plugin, fd, WATCH_READ_LINE, 1, irc_handle_stream, xstrdup((char *) data));
+	j->send_watch = watch_add(&irc_plugin, fd, WATCH_WRITE_LINE, 1, NULL, NULL);
 
 	real = session_get(s, "realname");
 	real = real ? xstrlen(real) ? real : j->nick : j->nick;
@@ -607,7 +603,7 @@ WATCHER(irc_handle_connect)
 	pass = (char *)session_password_get(s);
 	pass = xstrlen(strip_spaces(pass))?
 		saprintf("PASS %s\r\n", strip_spaces(pass)) : xstrdup("");
-	irc_write(j, "%sUSER %s %s unused_field :%s\r\nNICK %s\r\n",
+	watch_write(j->send_watch, "%sUSER %s %s unused_field :%s\r\nNICK %s\r\n",
 			pass, j->nick, localhostname?localhostname:"12", real, j->nick);
 	xfree(pass);
 	return 0;
@@ -803,7 +799,7 @@ COMMAND(irc_command_disconnect)
 	}
 
 	if (reason && session_connected_get(session))
-		irc_write (j, "QUIT :%s\r\n", reason);
+		watch_write(j->send_watch, "QUIT :%s\r\n", reason);
 
 	if (j->connecting || j->autoreconnecting)
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
@@ -912,11 +908,11 @@ COMMAND(irc_command_msg)
 		{
 			xosd_to_us = __mtmp[isour];
 			__mtmp[isour] = '\0';
-			irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
+			watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
 			__mtmp[isour] = xosd_to_us;
 			__mtmp += isour;
 		}
-		irc_write(j, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
+		watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
 
 		xfree(__msg);
 		xfree(coloured);
@@ -946,7 +942,7 @@ COMMAND(irc_command_inline_msg)
 COMMAND(irc_command_quote)
 {
 	PARASC
-	irc_write(irc_private(session), "%s\r\n", params[0]);
+	watch_write(irc_private(session)->send_watch, "%s\r\n", params[0]);
 	return 0;
 }
 
@@ -1054,11 +1050,11 @@ COMMAND(irc_command_away)
 		const char *status = session_status_get(session);
 		const char *descr  = session_descr_get(session);
 		if (descr)
-			irc_write(j, "AWAY :%s\r\n", descr);
+			watch_write(j->send_watch, "AWAY :%s\r\n", descr);
 		else
-			irc_write(j, "AWAY :%s\r\n", status);
+			watch_write(j->send_watch, "AWAY :%s\r\n", status);
 	} else {
-		irc_write(j, "AWAY :\r\n");
+		watch_write(j->send_watch, "AWAY :\r\n");
 	}
 	return 0;
 }
@@ -1079,7 +1075,7 @@ QUERY(irc_window_kill)
 			session_connected_get(w->session)
 			)
 	{
-		irc_write(j, "PART %s :%s\r\n", (w->target)+4, PARTMSG(w->session, NULL));
+		watch_write(j->send_watch, "PART %s :%s\r\n", (w->target)+4, PARTMSG(w->session, NULL));
 	}
 	return 0;
 }
@@ -1329,7 +1325,7 @@ COMMAND(irc_command_topic)
 	else
 		newtop = saprintf("TOPIC %s\r\n", chan+4);
 
-	irc_write(j, newtop);
+	watch_write(j->send_watch, newtop);
 	array_free(mp);
 	xfree (newtop);
 	xfree (chan);
@@ -1346,7 +1342,7 @@ COMMAND(irc_command_who)
 					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
-	irc_write(j, "WHO %s\r\n", chan+4);
+	watch_write(j->send_watch, "WHO %s\r\n", chan+4);
 
 	xfree(chan);
 	return 0;
@@ -1367,7 +1363,7 @@ COMMAND(irc_command_invite)
 		xfree(chan);
 		return -1;
 	}
-	irc_write(j, "INVITE %s %s\r\n", *mp, chan+4);
+	watch_write(j->send_watch, "INVITE %s %s\r\n", *mp, chan+4);
 
 	array_free(mp);
 	xfree(chan);
@@ -1389,7 +1385,7 @@ COMMAND(irc_command_kick)
 		xfree(chan);
 		return -1;
 	}
-	irc_write(j, "KICK %s %s :%s\r\n", chan+4, *mp, KICKMSG(session, mp[1]));
+	watch_write(j->send_watch, "KICK %s %s :%s\r\n", chan+4, *mp, KICKMSG(session, mp[1]));
 
 	array_free(mp);
 	xfree(chan);
@@ -1422,7 +1418,7 @@ COMMAND(irc_command_unban)
 			if (chan && (banlist = (chan->banlist)) ) {
 				for (i=1; banlist && i<banid; banlist = banlist->next, ++i);
 				if (banlist) /* fit or add  i<=banid) ? */
-					irc_write(j, "MODE %s -b %s\r\n", channame+4, banlist->data);
+					watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, banlist->data);
 				else 
 					debug("%d %d out of range or no such ban %08x\n", i, banid, banlist);
 			}
@@ -1430,7 +1426,7 @@ COMMAND(irc_command_unban)
 				debug("Chanell || chan->banlist not found -> channel not synced ?!Try /mode +b \n");
 		}
 		else { 
-			irc_write(j, "MODE %s -b %s\r\n", channame+4, *mp);
+			watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, *mp);
 		}
 	}
 	array_free(mp);
@@ -1465,16 +1461,16 @@ COMMAND(irc_command_ban)
 			chan, mp[0], mp[1]);
 
 	if (!(*mp))
-		irc_write(j, "MODE %s +b \r\n", chan+4);
+		watch_write(j->send_watch, "MODE %s +b \r\n", chan+4);
 	else {
 		person = irc_find_person(j->people, (char *) *mp);
 		if (person) 
 			temp = irc_make_banmask(session, person->nick+4, person->ident, person->host);
 		if (temp) {
-			irc_write(j, "MODE %s +b %s\r\n", chan+4, temp);
+			watch_write(j->send_watch, "MODE %s +b %s\r\n", chan+4, temp);
 			xfree(temp);
 		} else
-			irc_write(j, "MODE %s +b %s\r\n", chan+4, *mp);
+			watch_write(j->send_watch, "MODE %s +b %s\r\n", chan+4, *mp);
 	}
 	array_free(mp);
 	xfree(chan);
@@ -1539,7 +1535,7 @@ COMMAND(irc_command_devop)
 
 		if (tmp) *(--tmp) = '\0';
 		op[i+2]='\0';
-		irc_write(j, "MODE %s %s %s\r\n", chan, op, p);
+		watch_write(j->send_watch, "MODE %s %s %s\r\n", chan, op, p);
 		if (!tmp) break;
 		*tmp = ' ';
 		tmp++;
@@ -1574,7 +1570,7 @@ COMMAND(irc_command_ctcp)
 		return -1;
 	}*/
 
-	irc_write(irc_private(session), "PRIVMSG %s :\01%s\01\r\n",
+	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01%s\01\r\n",
 			who+4, ctcps[i].name?ctcps[i].name:(*mp));
 
 	array_free(mp);
@@ -1592,7 +1588,7 @@ COMMAND(irc_command_ping)
 		return -1;
 
 	gettimeofday(&tv, NULL);
-	irc_write(irc_private(session), "PRIVMSG %s :\01PING %d %d\01\r\n",
+	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01PING %d %d\01\r\n",
 			who+4 ,tv.tv_sec, tv.tv_usec);
 
 	array_free(mp);
@@ -1615,7 +1611,7 @@ COMMAND(irc_command_me)
 	
 	str = xstrdup(*mp);
 
-	irc_write(irc_private(session), "PRIVMSG %s :\01ACTION %s\01\r\n",
+	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01ACTION %s\01\r\n",
 			chan+4, str?str:"");
 
 	col = irc_ircoldcolstr_to_ekgcolstr(session, str, 1);
@@ -1648,10 +1644,10 @@ COMMAND(irc_command_mode)
 */
 	debug("%s %s \n", chan, mp[0]);
 	if (!(*mp))
-		irc_write(irc_private(session), "MODE %s\r\n",
+		watch_write(irc_private(session)->send_watch, "MODE %s\r\n",
 				chan+4);
 	else
-		irc_write(irc_private(session), "MODE %s %s\r\n",
+		watch_write(irc_private(session)->send_watch, "MODE %s %s\r\n",
 				chan+4, *mp);
 
 	array_free(mp);
@@ -1669,7 +1665,7 @@ COMMAND(irc_command_umode)
 		return -1;
 	}
 
-	irc_write(j, "MODE %s %s\r\n", j->nick, *params);
+	watch_write(j->send_watch, "MODE %s %s\r\n", j->nick, *params);
 
 	return 0;
 }
@@ -1685,10 +1681,10 @@ COMMAND(irc_command_whois)
 
 	debug("irc_command_whois(): %s\n", name);
 	if (!xwcscmp(name, TEXT("whowas")))
-		irc_write(irc_private(session),	"WHOWAS %s\r\n", person+4);
+		watch_write(irc_private(session)->send_watch, "WHOWAS %s\r\n", person+4);
         else if (!xwcscmp(name, TEXT("wii")))
-		irc_write(irc_private(session),	"WHOIS %s %s\r\n", person+4, person+4);
-	else	irc_write(irc_private(session),	"WHOIS %s\r\n",  person+4);
+		watch_write(irc_private(session)->send_watch, "WHOIS %s %s\r\n", person+4, person+4);
+	else	watch_write(irc_private(session)->send_watch, "WHOIS %s\r\n",  person+4);
 
 	array_free(mp);
 	xfree (person);
@@ -1746,7 +1742,7 @@ COMMAND(irc_command_query)
 	if (!w) {
 		w = window_new(tmp, session, 0);
 		if (session_int_get(session, "auto_lusers_sync") > 0)
-			irc_write(j, "USERHOST %s\r\n", tmp+4);
+			watch_write(j->send_watch, "USERHOST %s\r\n", tmp+4);
 	}
 
 	window_switch(w->id);
@@ -1786,7 +1782,7 @@ COMMAND(irc_command_jopacy)
 	} else
 		return 0;
 
-	irc_write(j, str);
+	watch_write(j->send_watch, str);
 
 	array_free(mp);
 	xfree(tar);
@@ -1803,7 +1799,7 @@ COMMAND(irc_command_nick)
 
 	/* GiM: XXX FIXME TODO think more about j->connecting... */
 	if (j->connecting || session_connected_get(session)) {
-		irc_write(j, "NICK %s\r\n", params[0]);
+		watch_write(j->send_watch, "NICK %s\r\n", params[0]);
 		/* this is needed, couse, when connecting and server will
 		 * respond, nickname is already in use, and user
 		 * will type /nick somethin', server doesn't send respond

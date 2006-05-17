@@ -126,7 +126,7 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 		
 		if (!s || !(j= session_private_get(s))) return;
 
-		jabber_write(j, "<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"403\">Declined</error></iq>", 
+		watch_write(j->send_watch, "<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"403\">Declined</error></iq>", 
 			d->uid+4, p->req);
 	}
 	if (p) {
@@ -239,7 +239,7 @@ QUERY(jabber_window_kill)
 
 	if (w && w->id && w->target && w->userlist && session_check(w->session, 1, "jid") && 
 			(j = jabber_private(w->session)) && session_connected_get(w->session))
-		jabber_write(j, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target+4, "darkjames", status ? status : "");
+		watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target+4, "darkjames", status ? status : "");
 
 	return 0;
 }
@@ -264,9 +264,9 @@ int jabber_write_status(session_t *s)
 		xfree(descr);
 	}
 
-	if (!xstrcmp(status, EKG_STATUS_AVAIL))			jabber_write(j, "<presence>%s<priority>%d</priority></presence>", 			real ? real : "", priority);
-	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	jabber_write(j, "<presence type=\"invisible\">%s<priority>%d</priority></presence>", 	real ? real : "", priority);
-	else							jabber_write(j, "<presence><show>%s</show>%s<priority>%d</priority></presence>", 	status, real ? real : "", priority);
+	if (!xstrcmp(status, EKG_STATUS_AVAIL))			watch_write(j->send_watch, "<presence>%s<priority>%d</priority></presence>", 			real ? real : "", priority);
+	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	watch_write(j->send_watch, "<presence type=\"invisible\">%s<priority>%d</priority></presence>", 	real ? real : "", priority);
+	else							watch_write(j->send_watch, "<presence><show>%s</show>%s<priority>%d</priority></presence>", 	status, real ? real : "", priority);
 
         xfree(real);
         return 0;
@@ -365,18 +365,18 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 				char *id = jabber_attr(n->atts, "id");
 				const char *our_status = session_status_get(s);
 
-				jabber_write(j, "<message to=\"%s\">", from);
-				jabber_write(j, "<x xmlns=\"jabber:x:event\">");
+				watch_write(j->send_watch, "<message to=\"%s\">", from);
+				watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">");
 
 				if (!xstrcmp(our_status, EKG_STATUS_INVISIBLE)) {
-					jabber_write(j, "<offline/>");
+					watch_write(j->send_watch, "<offline/>");
 				} else {
 					if (acktype & 1)
-						jabber_write(j, "<delivered/>");
+						watch_write(j->send_watch, "<delivered/>");
 					if (acktype & 2)
-						jabber_write(j, "<displayed/>");
+						watch_write(j->send_watch, "<displayed/>");
 				};
-				jabber_write(j, "<id>%s</id></x></message>",id);
+				watch_write(j->send_watch, "<id>%s</id></x></message>",id);
 			};
 			/* je¶li body nie ma, to odpowiedz na nasza prosbe */
 			if (!nbody && isack) {
@@ -578,7 +578,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 			jdh->roster_retrieved = 0;
 			userlist_free(s);
-			jabber_write(j, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
+			watch_write(j->send_watch, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 			jabber_write_status(s);
 		} else if (!xstrcmp(type, "error")) { /* TODO: try to merge with <message>'s <error> parsing */
 			xmlnode_t *e = xmlnode_find_child(n, "error");
@@ -624,7 +624,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			if ((d = jabber_dcc_find(uin, id, NULL))) {
 				jabber_dcc_t *p = d->priv;
 
-				jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"%d\">"
+				watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"%d\">"
 						"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">"
 						"<streamhost port=\"%d\" host=\"%s\" jid=\"%s/%s\"/>"
 						"<fast xmlns=\"http://affinix.com/jabber/stream\"/></query></iq>",
@@ -1023,7 +1023,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					osversion = jabber_escape(ver_os);	/* ver_os session variable */
 				}
 
-				jabber_write(j, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
+				watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
 						"<query xmlns=\"jabber:iq:version\">"
 						"<name>"CHARF"</name>"
 						"<version>"CHARF"/version>"
@@ -1208,14 +1208,14 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
         if (!j)
                 return;
 
-        if (j->obuf || j->connecting)
+        if (j->connecting)
                 watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
 
-        if (j->obuf) {
-                xfree(j->obuf);
-                j->obuf = NULL;
-                j->obuf_len = 0;
-        }
+	if (j->send_watch) {
+		j->send_watch->type = WATCH_NONE;
+		watch_free(j->send_watch);
+		j->send_watch = NULL;
+	}
 
 #ifdef HAVE_GNUTLS
         if (j->using_ssl && j->ssl_session)
@@ -1263,7 +1263,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		*(xstrchr(username, '@')) = 0;
 	
 		if (session_get(s, "__new_acount")) {
-			jabber_write(j, "<iq type=\"set\" to=\"%s\" id=\"register%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>" CHARF "</password></query></iq>", 
+			watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"register%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>" CHARF "</password></query></iq>", 
 				j->server, j->id++, username, passwd ? passwd : TEXT("foo"));
 		}
 
@@ -1275,7 +1275,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		authpass = (session_int_get(s, "plaintext_passwd")) ? 
 			saprintf("<password>" CHARF "</password>", passwd) :  				/* plaintext */
 			saprintf("<digest>%s</digest>", jabber_digest(j->stream_id, passwd));		/* hash */
-		jabber_write(j, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", j->server, username, authpass, resource);
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", j->server, username, authpass, resource);
                 xfree(username);
 		xfree(resource);
 		xfree(authpass);
@@ -1345,7 +1345,6 @@ WATCHER(jabber_handle_stream)
 
 TIMER(jabber_ping_timer_handler) {
 	session_t *s = session_find((char*) data);
-	jabber_private_t *j;
 
 	if (type == 1) {
 		xfree(data);
@@ -1356,9 +1355,7 @@ TIMER(jabber_ping_timer_handler) {
 		return -1;
 	}
 	
-	if ((j = session_private_get(s))) {
-		jabber_write(j, "<iq/>"); /* leafnode idea */
-	}
+	jabber_write(s, "<iq/>"); /* leafnode idea */
 	return 0;
 }
 
@@ -1383,8 +1380,12 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
         }
 
         watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_handle_stream, jdh);
-
-        jabber_write(j, "<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\">", j->server);
+#ifdef HAVE_GNUTLS
+	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, 1, j->using_ssl ? jabber_handle_write : NULL, j);
+#else
+	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, 1, NULL, NULL);
+#endif
+        watch_write(j->send_watch, "<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\">", j->server);
 
         j->id = 1;
         j->parser = XML_ParserCreate("UTF-8");

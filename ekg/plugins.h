@@ -125,7 +125,8 @@ typedef enum {
 	WATCH_NONE = 0,
 	WATCH_WRITE = 1,
 	WATCH_READ = 2,
-	WATCH_READ_LINE = 4
+	WATCH_READ_LINE = 4,
+	WATCH_WRITE_LINE = 0,
 } watch_type_t;
 
 typedef struct {
@@ -140,6 +141,12 @@ typedef struct {
 	time_t started;		/* kiedy zaczêto obserwowaæ */
 	int removed;		/* wywo³ano ju¿ watch_remove() */
 } watch_t;
+
+#ifdef __GNU__
+int watch_write(watch_t *w, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+#else
+int watch_write(watch_t *w, const char *format, ...);
+#endif
 
 watch_t *watch_new(plugin_t *plugin, int fd, watch_type_t type);
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type);
@@ -162,6 +169,7 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
 void watch_handle(watch_t *w);
 void watch_handle_line(watch_t *w);
+int watch_handle_write(watch_t *w);
 
 int ekg2_dlinit();
 

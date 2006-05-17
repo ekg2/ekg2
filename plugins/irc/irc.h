@@ -40,11 +40,10 @@ typedef struct {
 	list_t connlist, conntmplist;
 
 	watch_t *recv_watch;
+	watch_t *send_watch;
 
 	char *nick;			/* guess again ? ;> */
 	char *host_ident;		/* ident+host */
-	char *obuf;			/* output buffer */
-	int obuf_len;			/* size of above */
 
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */
@@ -131,11 +130,7 @@ char *irc_getchan_int(session_t *s, const char *name, int checkchan);
 char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
       char ***v, int pr, int checkchan);
 
-#ifdef __GNU__
-int irc_write(irc_private_t *j, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-#else
-int irc_write(irc_private_t *j, const char *format, ...);
-#endif
+#define irc_write(s, args...) watch_write((s && s->priv) ? irc_private(s)->send_watch : NULL, args);
 
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
 

@@ -214,115 +214,31 @@ char *jabber_unescape(const char *text)
  * obs³uga mo¿liwo¶ci zapisu do socketa. wypluwa z bufora ile siê da
  * i je¶li co¶ jeszcze zostanie, ponawia próbê.
  */
-WATCHER(jabber_handle_write) /* watch tymczasowy; todo, zamienic na staly z wyjatkami usuwajacymi. */
+#ifdef HAVE_GNUTLS
+WATCHER(jabber_handle_write) /* tylko dla ssla. dla zwyklych polaczen jest watch_handle_write() */
 {
 	jabber_private_t *j = data;
 	int res;
-	if (type)
+
+	if (type) {
+		/* XXX, do we need to make jabber_handle_disconnect() or smth simillar? */
+		j->send_watch = NULL;
 		return 0;
-
-#ifdef HAVE_GNUTLS
-	if (j->using_ssl && j->ssl_session) {
-
-		res = gnutls_record_send(j->ssl_session, j->obuf, j->obuf_len);	
-
-		if ((res == GNUTLS_E_INTERRUPTED) || (res == GNUTLS_E_AGAIN)) {
-			ekg_yield_cpu();
-
-			goto notyet;
-		}
-
-		if (res < 0) {
-			print("generic_error", gnutls_strerror(res));
-			return -1;
-		}
-			
-	} else
-#endif
-		res = write(j->fd, j->obuf, j->obuf_len);
-
-	if (res == -1) {
-		debug("[jabber] write() failed: %s\n", strerror(errno));
-		xfree(j->obuf);
-		j->obuf = NULL;
-		j->obuf_len = 0;
-		return -1;
 	}
 
-	if (res == j->obuf_len) {
-		debug("[jabber] output buffer empty\n");
-		xfree(j->obuf);
-		j->obuf = NULL;
-		j->obuf_len = 0;
-		return -1;
+	res = gnutls_record_send(j->ssl_session, watch, xstrlen(watch));	
+
+	if ((res == GNUTLS_E_INTERRUPTED) || (res == GNUTLS_E_AGAIN)) {
+		ekg_yield_cpu();
+		return 0;
 	}
-	
-	memmove(j->obuf, j->obuf + res, j->obuf_len - res);
-	j->obuf_len -= res;
 
-notyet:
-	watch_add(&jabber_plugin, j->fd, WATCH_WRITE, 0, jabber_handle_write, j);
-	return 0;
+	if (res < 0) {
+		print("generic_error", gnutls_strerror(res));
+	}
+	return res;
 }
-
-/*
- * jabber_write()
- *
- * wysy³a tekst do serwera, a je¶li nie da siê ca³ego wys³aæ, zapisuje
- * resztê do bufora i wy¶le przy najbli¿szej okazji.
- *
- *  - j
- *  - text
- */
-int jabber_write(jabber_private_t *j, const char *format, ...)
-{
-	const char *buf;
-	char *text;
-	int len;
-	va_list ap;
-
-	if (!j || !format)
-		return -1;
-
-	va_start(ap, format);
-	text = vsaprintf(format, ap);
-	va_end(ap);
-
-//	debug("[jabber] send %s\n", text);
-
-	if (!j->obuf) {
-		int res;
-
-		len = xstrlen(text);
-#ifdef HAVE_GNUTLS
-		if (j->using_ssl)
-			res = gnutls_record_send(j->ssl_session, text, len);
-		else
 #endif
-			res = write(j->fd, text, len);
-		if (res == len) {
-			xfree(text);
-			return 0;
-		} else if (res == -1) {
-			xfree(text);
-			return -1;
-		} else buf = text + res;
-	} else
-		buf = text;
-
-	len = xstrlen(buf);
-
-	if (!j->obuf)
-		watch_add(&jabber_plugin, j->fd, WATCH_WRITE, 0, jabber_handle_write, j);
-
-	j->obuf = xrealloc(j->obuf, j->obuf_len + len);
-	memcpy(j->obuf + j->obuf_len, buf, len);
-	j->obuf_len += len;
-
-	xfree(text);
-
-	return 0;
-}
 
 /*
  * Local Variables:

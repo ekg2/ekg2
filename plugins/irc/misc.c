@@ -43,98 +43,6 @@
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES", "CHANLIMIT", "NICKLEN" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
-/*
- * irc_handle_write()
- *
- * handles writing to socket, spit out from buffer 
- * as much as it can;
- */
-WATCHER(irc_handle_write)
-{
-	irc_private_t	*j = data;
-	int		res;
-
-	res = write(j->fd, j->obuf, j->obuf_len);
-
-	if (res == -1)
-		debug("[irc] handle_write() failed: %s\n", strerror(errno));
-
-	else if (res == j->obuf_len)
-		debug("[irc] handle_write() output buffer empty\n");
-
-	else { /* OK PROCEED */
-		memmove(j->obuf, j->obuf + res, j->obuf_len - res);
-		j->obuf_len -= res;
-
-		watch_add(&irc_plugin, j->fd, WATCH_WRITE, 0, irc_handle_write, j);
-		return 0;
-	}
-
-	xfree(j->obuf);
-	j->obuf = NULL;
-	j->obuf_len = 0;
-	return 0;
-}
-
-/*
- * irc_write()
- *
- * sends text to server, and if it's unable to send everything,
- * it saves the rest to the buffer and it'll send as soon as
- * it'll be able to.
- *
- *  - j - session's private data
- *  - text - how do you think ?
- */
-int irc_write(irc_private_t *j, const char *format, ...)
-{
-	const char	*buf;
-	char		*text;
-	int		len;
-	va_list		ap;
-
-	if (!j || !format)
-		return -1;
-
-	va_start(ap, format);
-	text = vsaprintf(format, ap);
-	va_end(ap);
-
-	debug("[irc]_send: %s\n", text?xstrlen(text)?text:"[0LENGTH]":"[FAILED]");
-	if (!text) return -1;
-
-	if (!j->obuf) {
-		int	res;
-
-		len = strlen(text);
-		res = write(j->fd, text, len);
-
-		if (res == len) {
-			xfree(text);
-			return 0;
-
-		} else if (res == -1) {
-			xfree(text);
-			return -1;
-
-		} else
-			buf = text + res;
-	} else
-		buf = text;
-
-	len = strlen(buf);
-
-	if (!j->obuf)
-		watch_add(&irc_plugin, j->fd, WATCH_WRITE, 0, irc_handle_write, j);
-
-	j->obuf = xrealloc(j->obuf, j->obuf_len + len);
-	memcpy(j->obuf + j->obuf_len, buf, len);
-	j->obuf_len += len;
-
-	xfree(text);
-
-	return 0;
-}
 
 int gatoi(char *buf, int *a)
 {
@@ -485,7 +393,7 @@ IRC_COMMAND(irc_c_error)
 							session_name(s), altnick);
 					xfree(j->nick);
 					j->nick = xstrdup(altnick);
-					irc_write(j, "NICK %s\r\n", j->nick);
+					watch_write(j->send_watch, "NICK %s\r\n", j->nick);
 				}
 			}
 			break;
@@ -531,7 +439,7 @@ IRC_COMMAND(irc_c_error)
 		case 376:
 			/* first we join */
 			if (session_get(s, "AUTO_JOIN") && strlen(session_get(s, "AUTO_JOIN")))
-				irc_write(j, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
+				watch_write(j->send_watch, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
 			/* G->dj: someday, someday ;-) 
 			 */
 		case 372:
@@ -753,7 +661,7 @@ IRC_COMMAND(irc_c_list)
  */
 IRC_COMMAND(irc_c_ping)
 {
-	irc_write(j, "PONG %s\r\n", param[2]);
+	watch_write(j->send_watch, "PONG %s\r\n", param[2]);
 	if (session_int_get(s, "DISPLAY_PONG"))
 		print_window("__status", s, 0, "IRC_PINGPONG", session_name(s), OMITCOLON(param[2]));
 	return 0;
@@ -1240,7 +1148,7 @@ IRC_COMMAND(irc_c_invite)
 			param[2], OMITCOLON(param[3]));
 
 	if (session_int_get(s, "AUTO_JOIN_CHANS_ON_INVITE") == 1)
-		irc_write(j, "JOIN %s\r\n", OMITCOLON(param[3]));
+		watch_write(j->send_watch, "JOIN %s\r\n", OMITCOLON(param[3]));
 
 	if (tmp) *tmp = '!';
 
@@ -1332,7 +1240,7 @@ notreallyok:
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN_NEW", session_name(s),
 				param[0]+1, bang?bang+1:"", param[2], moderpl->str);
 /*		if (moderpl->str[1] == 'b')
- *			irc_write(j, "MODE %s +%c\r\n",  param[2], moderpl->str[1]);
+ *			watch_write(j->send_watch, "MODE %s +%c\r\n",  param[2], moderpl->str[1]);
  */
 	} else {
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
