@@ -126,7 +126,7 @@ typedef enum {
 	WATCH_WRITE = 1,
 	WATCH_READ = 2,
 	WATCH_READ_LINE = 4,
-	WATCH_WRITE_LINE = 0,
+	WATCH_WRITE_LINE = 8,
 } watch_type_t;
 
 typedef struct {
