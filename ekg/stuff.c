@@ -668,7 +668,7 @@ void changed_theme(const CHAR_T *var)
 			print("theme_loaded", config_theme);
 		} else {
 			print("error_loading_theme", strerror(errno));
-			variable_set("theme", NULL, 0);
+			variable_set(TEXT("theme"), NULL, 0);
 		}
 	}
 }
@@ -1076,15 +1076,15 @@ void conference_free()
  * zwraca ¶cie¿kê do pliku z pomoc± we w³a¶ciwym jêzyku lub null je¶li nie ma takiego pliku
  *
  */
-char * help_path(char * name, char * plugin) {
+char *help_path(char *name, CHAR_T *plugin) {
 
-        char * tmp;
-        char * base;
-        char * lang;
-        FILE * fp;
+        char *tmp;
+        char *base;
+        char *lang;
+        FILE *fp;
 
         if (plugin) {
-                base = saprintf(DATADIR "/plugins/%s/%s", plugin, name);
+                base = saprintf(DATADIR "/plugins/"CHARF"/%s", plugin, name);
         } else {
                 base = saprintf(DATADIR "/%s", name);
         }
@@ -1926,11 +1926,7 @@ int say_it(const CHAR_T *str)
 		xfree(tmp);
 
 		if (f) {
-#if USE_UNICODE
-			fprintf(f, "%ls.", str);
-#else
-			fprintf(f, "%s.", str);
-#endif
+			fprintf(f, CHARF".", str);
 			status = pclose(f);	/* dzieciak czeka na dzieciaka */
 		}
 
@@ -2148,14 +2144,15 @@ const char *ekg_status_label(const char *status, const char *descr, const char *
 char *ekg_draw_descr(const char *status)
 {
 	const char *value;
-	char var[100], file[100];
+	char file[100];
+	CHAR_T var[100];
 	variable_t *v;	
 
 	if (!xstrcmp(status, EKG_STATUS_NA) || !xstrcmp(status, EKG_STATUS_INVISIBLE)) {
-		xstrcpy(var, "quit_reason");
+		xwcscpy(var, TEXT("quit_reason"));
 		xstrcpy(file, "quit.reasons");
 	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
-		xstrcpy(var, "back_reason");
+		xwcscpy(var, TEXT("back_reason"));
 		xstrcpy(file, "back.reasons");
 	} else {
 		snprintf(var, sizeof(var), "%s_reason", status);

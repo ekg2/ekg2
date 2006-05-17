@@ -1134,7 +1134,8 @@ void sessions_free()
 void session_help(session_t *s, const char *name)
 {
 	FILE *f;
-	char *line, *type = NULL, *def = NULL, *tmp, *plugin_name;
+	char *line, *type = NULL, *def = NULL, *tmp;
+	CHAR_T *plugin_name;
 	string_t str = string_init(NULL);
 	int found = 0;
 
