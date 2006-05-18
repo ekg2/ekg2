@@ -4,7 +4,7 @@
 # SSS - short, small and simple 
 #
 
-use IO::Socket;
+use Socket;
 
 our $VERSION = "0.1";
 our %EKG2 = (
