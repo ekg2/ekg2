@@ -58,6 +58,9 @@
 #include "jabber.h"
 
 #define jabberfix(x,a) ((x) ? x : a)
+#define WITH_JABBER_DCC 0
+
+#define JABBER_DCC_PORT 6000	/* XXX */
 
 static int jabber_theme_init();
 
@@ -109,12 +112,78 @@ static void jabber_private_destroy(session_t *s)
         session_private_set(s, NULL);
 }
 
-
+#if WITH_JABBER_DCC
 WATCHER(jabber_dcc_handle_recv) {
-	debug("jabber_dcc_handle_recv() type = %d\n", type);
+	dcc_t *d = data;
+	jabber_dcc_t *p;
+
+	debug("jabber_dcc_handle_recv() data = %x type = %d\n", data, type);
 	if (type) {
 		return 0;
 	}
+	if (!d || !(p = d->priv)) return 0;
+
+	switch(p->protocol) {
+		case (JABBER_DCC_PROTOCOL_BYTESTREAMS): {
+			char buf[4096];
+			int len;
+			jabber_dcc_bytestream_t *b = p->private;
+
+			if (b->validate != JABBER_DCC_PROTOCOL_BYTESTREAMS) return -1;	/* someone is doing mess with memory ? */
+		
+			len = read(fd, &buf, sizeof(buf)-1);
+			buf[len] = 0;
+			debug("jabber_dcc_handle_recv() SOCKS5: len = %d data = %s\n", len, buf);
+			if (len == 0) return 0;
+
+			if (buf[0] != 5) { debug("SOCKS5: protocol mishmash\n"); return 0; }
+			if (buf[1] != 0) { debug("SOCKS5: reply error: %x\n", buf[1]); return 0; }
+
+			switch (b->step) {
+				case (SOCKS5_CONNECT): {
+					char req[47];
+					req[0] = 0x05;	/* version */
+					req[1] = 0x01;	/* req connect */
+					req[2] = 0x00;	/* RSV */
+					req[3] = 0x03;	/* ATYPE: 0x01-ipv4 0x03-DOMAINNAME 0x04-ipv6 */
+					req[4] = 0x28;	/* mh? */
+
+					int i;
+					char *dig = jabber_dcc_digest(p->sid, d->uid+4, "darkjames@darkjames.ath.cx/ekg2");
+					for (i=0; i < 40; i++) req[5+i] = dig[i];
+
+					/* port = 0 */
+					req[45] = 0x00;	
+					req[46] = 0x00;
+
+					debug("SOCKS5: ATYPE: %s REQ[3]=%x\n", b->streamhost->ip, req[3]);
+					write(fd, &req, sizeof(req));
+					b->step = SOCKS5_AUTH;
+					break;
+				}
+				case (SOCKS5_AUTH): {
+					jabber_write(p->session, 
+						"<iq type=\"result\" to=\"%s\" id=\"initiate%d\">"
+						"<query xmlns=\"http://jabber.org/protocol/bytestreams\">"
+						"<streamhost-used jid=\"%s\"/>"
+						"</query></iq>", d->uid+4, 0 /* j->id++ */, b->streamhost->jid);
+
+					b->step = SOCKS5_DATA;
+					/* smth */
+					break;
+				}
+				case (SOCKS5_DATA):
+					debug("SOCKS5_DATA\n");
+					break;
+				default:
+					debug("SOCKS5: UNKNOWN STATE: %x\n", b->step);
+			}
+			break;
+		}
+		default:
+			debug("jabber_dcc_handle_recv() UNIMPLEMENTED PROTOTYPE: %x\n", p->protocol);
+	}
+
 	return 0;
 }
 
@@ -172,6 +241,8 @@ dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const
 	}
 	return NULL;
 }
+
+#endif
 
 /*
  * jabber_session()
@@ -613,11 +684,10 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			print("register_failed", "NOERROR"); /* XXX, TODO */
 		}
 	}
-#if 0
+#if WITH_JABBER_DCC
 	if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
 /* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
 		xmlnode_t *p;
-#define JABBER_DCC_PORT 6000	/* XXX */
 		if (!xstrcmp(type, "result")) {
 			char *uin = jabber_unescape(from);
 			dcc_t *d;
@@ -675,8 +745,8 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 		xfree(uin);
 	}
-/* FILETRANSFER */
-#endif	
+#endif	/* FILETRANSFER */
+
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
 	if (!xstrncmp(type, "result", 6) || !xstrncmp(type, "set", 3)) {
@@ -747,7 +817,10 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/jid:ver"; }
 						else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/jid:msg"; }
 						else if (!xstrcmp(var, "jabber:iq:last"))	{ user_command = 1;	tvar = "/jid:lastseen"; }
-/*						else if (!xstrcmp(var, "vcard-temp"))		{ user_command = 1;	tvar = "/jid:change && /jid:userinfo"; } */
+						else if (!xstrcmp(var, "vcard-temp"))		{ user_command = 1;	tvar = "/jid:change && /jid:userinfo"; }
+
+						else if (!xstrcmp(var, "http://jabber.org/protocol/bytestreams")) { user_command = 1; tvar = "/jid:dcc (PROT: BYTESTREAMS)"; }
+						else if (!xstrcmp(var, "http://jabber.org/protocol/si/profile/file-transfer")) { user_command = 1; tvar = "/jid:dcc"; }
 
 						if (tvar)	print(user_command ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
 									session_name(s), uid, tvar, var);
@@ -860,13 +933,8 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					print("jabber_form_end", session_name(s), from_str, "register");
 				}
 				xfree(from_str);
-#if 0
+#if WITH_JABBER_DCC
 			} else if (!xstrcmp(ns, "http://jabber.org/protocol/bytestreams")) { /* JEP-0065: SOCKS5 Bytestreams */
-				struct jabber_streamhost_item {
-					char *ip;
-					int port;
-				};
-
 				char *uid = jabber_unescape(from);		/* jid */
 				char *sid = jabber_attr(q->atts, "sid");	/* session id */
 				char *smode = jabber_attr(q->atts, "mode"); 	/* tcp, udp */
@@ -877,16 +945,21 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					/* problem w tym czy user chce ten plik.. etc.. */
 					/* i tak to na razie jest jeden wielki hack, trzeba sprawdzac czy to dobry typ dcc. etc, XXX */
 					xmlnode_t *node;
+					jabber_dcc_t *p = d->priv;
+					jabber_dcc_bytestream_t *b = NULL;
 
 					list_t host_list = NULL;
 					struct jabber_streamhost_item *streamhost = NULL;
+
+					p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS;
 
 					for (node = q->children; node; node = node->next) {
 						if (!xstrcmp(node->name, "streamhost")) {
 							struct jabber_streamhost_item *newstreamhost = xmalloc(sizeof(struct jabber_streamhost_item));
 
-							newstreamhost->ip	= xstrdup(jabber_attr(node->atts, "host"));
+							newstreamhost->ip	= xstrdup(jabber_attr(node->atts, "host"));	/* XXX in host can be hostname */
 							newstreamhost->port	= atoi(jabber_attr(node->atts, "port"));
+							newstreamhost->jid	= xstrdup(jabber_attr(node->atts, "jid"));
 							list_add(&host_list, newstreamhost, 0);
 						}
 					}
@@ -899,6 +972,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					if (streamhost) {
 						struct sockaddr_in sin;
 						int fd;
+						char socks5[4];
 						fd = socket(AF_INET, SOCK_STREAM, 0);
 
 						sin.sin_family = AF_INET;
@@ -906,7 +980,18 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						inet_pton(AF_INET, streamhost->ip, &(sin.sin_addr));
 
 						connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
-						watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_dcc_handle_recv, NULL);
+						watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_dcc_handle_recv, d);
+						
+						p->private = b = xmalloc(sizeof(jabber_dcc_bytestream_t));
+						b->validate	= JABBER_DCC_PROTOCOL_BYTESTREAMS;
+						b->step		= SOCKS5_CONNECT;
+						b->streamhost	= streamhost;
+
+						socks5[0] = 0x05;	/* socks version 5 */
+						socks5[1] = 0x02;	/* number of methods */
+						socks5[2] = 0x00;	/* no auth */
+						socks5[3] = 0x02;	/* username */
+						write(fd, (char *) &socks5, sizeof(socks5));
 						/* XXX */ 
 					}
 				}
@@ -1000,8 +1085,18 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 		if ((q = xmlnode_find_child(n, "query"))) {
 			const char *ns = jabber_attr(q->atts, "xmlns");
+			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
+				/* XXX, zaimplementowac te standardy o ktorych mowimy ze umiemy. */
+				watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">"
+#if WITH_JABBER_DCC
+						"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
+						"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
+						"<feature var=\"http://jabber.org/protocol/si\"/>"
+						"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
+#endif
+						"</query></iq>", from, id);
 
-			if (!xstrncmp(ns, "jabber:iq:version", 17) && id && from) {
+			} else if (!xstrncmp(ns, "jabber:iq:version", 17) && id && from) {
 				const char *ver_os;
 				const char *tmp;
 

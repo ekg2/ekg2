@@ -40,11 +40,36 @@ enum jabber_dcc_protocol_type_t {
 	JABBER_DCC_PROTOCOL_WEBDAV,		/* http://www.jabber.org/jeps/jep-0129.html */ /* DON'T IMPLEMENT IT UNTILL IT WILL BE STARNDARD DRAFT */
 };
 
+enum jabber_socks5_step_t {
+	SOCKS5_UNKNOWN = 0,
+	SOCKS5_CONNECT, 
+	SOCKS5_AUTH,
+	SOCKS5_DATA,
+};
+
+/* <JABBER_DCC_PROTOCOL_BYTESTREAMS> */
+struct jabber_streamhost_item {
+	char *jid;
+	char *ip;
+	int port;
+};
+
+typedef struct {
+	int validate;		/* should be: JABBER_DCC_PROTOCOL_BYTESTREAMS */
+	enum jabber_socks5_step_t step;
+
+	struct jabber_streamhost_item *streamhost;
+	list_t streamlist;
+} jabber_dcc_bytestream_t;
+
+/* </JABBER_DCC_PROTOCOL_BYTESTREAMS> */
+
 typedef struct {
 	session_t *session;
 	char *req;
 	char *sid;
 	enum jabber_dcc_protocol_type_t protocol;
+	void *private;	/* private data based on protocol */ /* for JABBER_DCC_PROTOCOL_BYTESTREAMS it's jabber_dcc_bytestream_t */
 } jabber_dcc_t; 
 
 typedef struct {
@@ -78,6 +103,7 @@ void jabber_register_commands(void);
 
 char *jabber_attr(char **atts, const char *att);
 char *jabber_digest(const char *sid, const CHAR_T *password);
+char *jabber_dcc_digest(char *sid, char *initiator, char *target);
 
 void jabber_handle(void *data, xmlnode_t *n);
 void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);

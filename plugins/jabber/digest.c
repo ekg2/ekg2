@@ -183,6 +183,26 @@ unsigned char finalcount[8];
 #endif
 }
 
+/* XXX, do universtal jabber_digest(int count, ...) */
+char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
+	static char result[41];
+	SHA1_CTX ctx;
+	unsigned char digest[20];
+	int i;
+	debug("jabber_dcc_digest() 1:%s 2:%s 3:%s\n", sid, initiator, target);
+
+	SHA1Init(&ctx);
+	SHA1Update(&ctx, sid, xstrlen(sid));
+	SHA1Update(&ctx, initiator, xstrlen(initiator));
+	SHA1Update(&ctx, target, xstrlen(target));
+	SHA1Final(digest, &ctx);
+
+	for (i = 0; i < 20; i++)
+		sprintf(result + i * 2, "%.2x", digest[i]);
+
+	return result;
+}
+
 /*
  * jabber_digest()
  *
