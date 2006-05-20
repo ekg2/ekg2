@@ -406,7 +406,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 
 	body = string_init("");
 
-	if ((nsubject = xmlnode_find_child(n, "subject"))) {
+	if ((nsubject = xmlnode_find_child(n, "subject")) && nsubject->data) {
 		string_append(body, "Subject: ");
 		string_append(body, nsubject->data);
 		string_append(body, "\n\n");
@@ -825,8 +825,18 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						if (tvar)	print(user_command ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
 									session_name(s), uid, tvar, var);
 						else		print("jabber_transinfo_feature", session_name(s), uid, var, var);
+					} else if (!xstrcmp(node->name, "x") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "jabber:x:data")) {
+/* XXX, ESCAPE IT AND DISPLAY. */
+						xmlnode_t *q;
+						debug("FORMULARZYK ;)\n");
+						for (q = node->children; q; q = q->next) {
+							if (!xstrcmp(q->name, "field")) {
+								xmlnode_t *child = xmlnode_find_child(q, "value");
+								/* label: value (var) */
+								debug("%s: %s\n", jabber_attr(q->atts, "label"), child && child->data ? child->data : "MMH?");
+							}
+						}
 					}
-
 				}
 				print("jabber_transinfo_end", session_name(s), uid);
 				xfree(uid);
@@ -1192,15 +1202,12 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 						tmp = ulist->status;
 						ulist->status = xstrdup(EKG_STATUS_AVAIL);
 						xfree(tmp);
-
 					}
 					xfree(uid);
 
 					xfree(jid); xfree(role); xfree(affiliation);
-				} else { /* debug pursuit only */
-					char *s = saprintf("\tMUC: %s", child->name);
-					print("generic", s);
-					xfree(s);
+				} else {
+					debug("[MUC, PRESENCE] child->name: %s\n", child->name);
 				}
 			}
 			ismuc = 1;
