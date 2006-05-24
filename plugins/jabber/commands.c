@@ -114,7 +114,7 @@ COMMAND(jabber_command_dcc) {
 
 			filename = jabber_escape(params[2]); /* mo¿e obetniemy path? */
 
-			watch_write(j->send_watch, "<iq type=\"set\" id=\"offer%d\" to=\"%s\">"
+			watch_write(j->send_watch, "<iq type=\"set\" id=\"%s\" to=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%s\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
 					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"%s\">"
 					"<range/></file>"
@@ -122,7 +122,7 @@ COMMAND(jabber_command_dcc) {
 					"<field type=\"list-single\" var=\"stream-method\">"
 					"<option><value>http://jabber.org/protocol/bytestreams</value></option>"
 /*					"<option><value>http://jabber.org/protocol/ibb</value></option>" */
-					"</field></x></feature></si></iq>", dcc_id_get(d), d->uid+4, p->sid, st.st_size, filename);
+					"</field></x></feature></si></iq>", p->req, d->uid+4, p->sid, st.st_size, filename);
 			xfree(filename);
 			xfree(touid);
 		}
@@ -220,7 +220,7 @@ COMMAND(jabber_command_connect)
 	}
 
 	xfree(j->server);
-	j->server = xstrdup(++server);
+	j->server	= xstrdup(++server);
 
 	debug("[jabber] resolving %s\n", (realserver ? realserver : server));
 
@@ -254,15 +254,10 @@ COMMAND(jabber_command_connect)
 
 		exit(0);
 	} else {
-                jabber_handler_data_t *jdta = xmalloc(sizeof(jabber_handler_data_t));
-
 		close(fd[1]);
 		
-		jdta->session = session;
-		jdta->roster_retrieved = 0;
 		/* XXX dodaæ dzieciaka do przegl±dania */
-
-		watch_add(&jabber_plugin, fd[0], WATCH_READ, 0, jabber_handle_resolver, jdta);
+		watch_add(&jabber_plugin, fd[0], WATCH_READ, 0, jabber_handle_resolver, session);
 	}
 
 	j->connecting = 1;
@@ -968,23 +963,59 @@ COMMAND(jabber_command_register)
 	return 0;
 }
 
+COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERRED) */
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+	CHAR_T *message = jabber_escape(params[0]);
+/* XXX, wysylac id: vacation%d... porobic potwierdzenia ustawiania/ usuwania. oraz jesli nie ma statusu to wyswylic jakies 'no vacation status'... */
+
+	if (!params[0]) watch_write(j->send_watch, "<iq type=\"get\" id=\"%d\"><query xmlns=\"http://jabber.org/protocol/vacation\"/></iq>", j->id++);
+	else if (xstrlen(params[0]) == 1 && params[0][0] == '-') 
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"%d\"><query xmlns=\"http://jabber.org/protocol/vacation\"/></iq>", j->id++);
+	else	watch_write(j->send_watch, 
+			"<iq type=\"set\" id=\"%d\"><query xmlns=\"http://jabber.org/protocol/vacation\">"
+			"<start/><end/>" /* XXX, startdate, enddate */
+			"<message>" CHARF "</message>"
+			"</query></iq>", 
+			j->id++, message);
+	xfree(message);
+	return 0;
+}
+
 COMMAND(jabber_command_transpinfo) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
+	const char *node   = (params[0] && params[1]) ? params[1] : NULL;
 
-	watch_write(j->send_watch, "<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>", server, j->id++);
+	if (node) {
+		watch_write(j->send_watch,
+			"<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\" node=\"%s\"/></iq>",
+			server, j->id++, node);
+	} else {
+		watch_write(j->send_watch, 
+			"<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>", 
+			server, j->id++);
+	}
 	return 0;
 
 }
 
-COMMAND(jabber_command_transports) 
-{
+COMMAND(jabber_command_transports) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
+	const char *node   = (params[0] && params[1]) ? params[1] : NULL;
 	
-	watch_write(j->send_watch, "<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>", server, j->id++);
+	if (node) {
+		watch_write(j->send_watch,
+			"<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"%s\"/></iq>",
+			server, j->id++, node);
+	} else {
+		watch_write(j->send_watch,
+			"<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>",
+			server, j->id++);
+	}
 	return 0;
 }
 
@@ -994,6 +1025,10 @@ COMMAND(jabber_muc_command_join)
 	/* params[0] - full channel name, 
 	 * params[1] - nickname || default 
 	 * params[2] - password || none
+	 *
+	 * XXX: make (session) variable jabber:default_muc && then if exists and params[0] has not specific server than append '@' jabber:default_muc and use it.
+	 * XXX: make (session) variable jabber:default_nickname.
+	 * XXX: history requesting, none history requesting.. etc
 	 */
 	jabber_private_t *j = session_private_get(session);
 	char *tmp;
@@ -1001,11 +1036,14 @@ COMMAND(jabber_muc_command_join)
 	char *password = (params[1] && params[2]) ? saprintf(" <password>%s</password> ", params[2]) : NULL;
 
 	if (!username) { /* rather impossible */
+		wcs_printq("invalid_params", name);
 		return -1;
 	}
 
-	watch_write(j->send_watch, "<presence to='%s/%s'> <x xmlns='http://jabber.org/protocol/muc#user'>%s</x> </presence>", 
-			params[0], username, password ? password : "");
+	if (!xstrncmp(target, "jid:", 4)) target += 4; /* remove jid: */
+
+	watch_write(j->send_watch, "<presence to='%s/%s'><x xmlns='http://jabber.org/protocol/muc#user'>%s</x></presence>", 
+			target, username, password ? password : "");
 
 	xfree(username);
 	xfree(password);
@@ -1063,13 +1101,14 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:msg"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:modify"), "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
 			"-n --nickname -g --group");
-	command_add(&jabber_plugin, TEXT("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, TEXT("jid:transpinfo"), "?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, TEXT("jid:transports"), "?", jabber_command_transports, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:transpinfo"), "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:vacation"), "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	command_add(&jabber_plugin, TEXT("jid:userinfo"), "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:lastseen"), "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);

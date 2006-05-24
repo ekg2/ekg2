@@ -84,7 +84,7 @@ typedef struct {
 	char *server;			/* nazwa serwera */
 	int port;			/* numer portu */
 	int connecting;			/* czy siê w³a¶nie ³±czymy? */
-	char *stream_id;		/* id strumienia */
+	CHAR_T *resource;		/* resource jakie uzylismy przy laczeniu sie do jabberd */
 
 	watch_t *send_watch;
 

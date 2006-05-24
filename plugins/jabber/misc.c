@@ -20,6 +20,9 @@ char *jabber_attr(char **atts, const char *att)
 {
 	int i;
 
+	if (!atts)
+		return NULL;
+
 	for (i = 0; atts[i]; i += 2)
 		if (!xstrcmp(atts[i], att))
 			return atts[i + 1];

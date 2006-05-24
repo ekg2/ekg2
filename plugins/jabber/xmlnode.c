@@ -31,8 +31,8 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
 	session_t *s = jdh->session;
 	xmlnode_t *n, *newnode;
 	jabber_private_t *j;
-	int i;
 	int arrcount;
+	int i;
 
 	if (!s || !(j = session_private_get(s)) || !name) {
 		debug("[jabber] xmlnode_handle_end() invalid parameters\n");
@@ -60,12 +60,12 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
 	}
 	arrcount = array_count((char **) atts);
 
-	newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
-
-	for (i = 0; i < arrcount; i++)
-		newnode->atts[i] = xstrdup(atts[i]);
-
-/*	newnode->atts[i] = NULL; */
+	if (arrcount > 0) {
+		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
+		for (i = 0; i < arrcount; i++)
+			newnode->atts[i] = xstrdup(atts[i]);
+	/*	newnode->atts[i] = NULL; */
+	} else	newnode->atts = NULL; /* we don't need to allocate table if arrcount = 0 */
 
 	j->node = newnode;
 }
