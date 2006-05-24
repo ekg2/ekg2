@@ -669,7 +669,7 @@ void watch_handle_line(watch_t *w)
 			xfree(line);
 			break;
 		}
-					
+
 		new = string_init(w->buf->str + index + 1);
 		string_free(w->buf, 1);
 		w->buf = new;
@@ -694,7 +694,7 @@ int watch_handle_write(watch_t *w) {
 	int res = -1;
 	int len = (w && w->buf) ? xstrlen(w->buf->str) : 0;
 
-	debug("[watch_handle_write] fd: %d in queue: %d bytes\n", w->fd, len);
+	debug("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
 	if (!len) return -1;
 
 	w->removed = -1;
@@ -705,17 +705,19 @@ int watch_handle_write(watch_t *w) {
 		res = write(w->fd, w->buf->str, len);
 	}
 
+	debug(" ... wrote:%d bytes (handler: 0x%x) ", res, handler);
+
 	if (res == -1) {
-		debug("handle_write() failed: %s\n", strerror(errno));
+		debug("Error: %s\n", strerror(errno));
 		w->removed = 0;
 		watch_free(w);
-		return 0;
+		return -1;
 	} else if (res == len) {
-		debug("handle_write() output buffer empty\n");
 		string_clear(w->buf);
 	} else {
 		memmove(w->buf->str, w->buf->str + res, len - res);
 	}
+	debug("left: %d bytes\n", len-res);
 
 	w->removed = 0;
 	return res;

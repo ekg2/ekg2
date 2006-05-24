@@ -167,12 +167,14 @@ void ekg_loop()
                                 if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
 					w->removed = 0;
 					watch_free(w);
+					continue;
 				}
                         } else {
                                 int (*handler)(int, int, int, void*) = w->handler;
 				if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
 					w->removed = 0;
 					watch_free(w);
+					continue;
 				}
                         }
 			w->removed = 0;
@@ -355,7 +357,7 @@ watches_again:
                          * koñczymy pracê. */
                         l = (w != watch_last) ? l->next : NULL;
 
-                        if ((!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
+                        if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
                                 continue;
 
                         if (w->fd == 0) {
@@ -385,8 +387,7 @@ watches_again:
 
                                 if (ekg_stdin_want_more && w->fd == 0)
                                         goto watches_again;
-                        }
-                        else {
+                        } else {
                                 if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
 				else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
 			}
