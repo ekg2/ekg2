@@ -1042,16 +1042,50 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 				for (node = q->children; node; node = node->next) {
 					if (!xstrcmp(node->name, "list")) {
-						if (node->children) {
-							/* display details */
+						if (node->children) {	/* Display all details */
+							xmlnode_t *temp;
 							i = -1;
-						}
-						else {
+							print("jabber_privacy_item_header", session_name(s), j->server, jabber_attr(node->atts, "name"));
+
+							for (temp=node->children; temp; temp = temp->next) {	
+								if (!xstrcmp(temp->name, "item")) {
+									/* (we should sort it by order! XXX) (server send like it was set) */
+									/* a lot TODO */
+									char *value = jabber_attr(temp->atts, "value");
+									char *type  = jabber_attr(temp->atts, "type");
+									char *action = jabber_attr(temp->atts, "action");
+									char *jid, *formated;
+
+									if (!xstrcmp(type, "jid")) 		jid = saprintf("jid:%s", value);
+									else if (!xstrcmp(type, "group")) 	jid = saprintf("@%s", value);
+									else					jid = xstrdup(value);
+
+									formated = format_string(
+										format_find(!xstrcmp(action,"allow") ? "jabber_privacy_item_allow" : "jabber_privacy_item_deny"), jid);
+
+									print("jabber_privacy_item", session_name(s), j->server, 
+										jabber_attr(temp->atts, "order"), formated, 
+										xmlnode_find_child(temp, "message")		? "X" : " ",
+										xmlnode_find_child(temp, "presence-in")		? "X" : " ", 
+										xmlnode_find_child(temp, "presence-out")	? "X" : " ", 
+										xmlnode_find_child(temp, "iq") 			? "X" : " ");
+
+
+									xfree(formated);
+									xfree(jid);
+								}
+							}
+							{	/* just help... */
+								char *allowed = format_string(format_find("jabber_privacy_item_allow"), "jid:allowed - JID ALLOWED");
+								char *denied  = format_string(format_find("jabber_privacy_item_deny"), "@denied - GROUP DENIED");
+								print("jabber_privacy_item_footer", session_name(s), j->server, allowed, denied);
+								xfree(allowed); xfree(denied);
+							}
+						} else { 		/* Display only name */
 							/* rekurencja, ask for this item (?) */
 							if (!i) print("jabber_privacy_list_begin", session_name(s), j->server);
 							if (i != -1) i++;
 
-							/* Display only name */
 							print("jabber_privacy_list_item", session_name(s), j->server, itoa(i), jabber_attr(node->atts, "name")); 
 						}
 					}
@@ -1107,7 +1141,14 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						else if (!xstrcmp(var, "http://jabber.org/protocol/bytestreams")) { user_command = 1; tvar = "/jid:dcc (PROT: BYTESTREAMS)"; }
 						else if (!xstrcmp(var, "http://jabber.org/protocol/si/profile/file-transfer")) { user_command = 1; tvar = "/jid:dcc"; }
 
-						if (tvar)	print(user_command ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
+						else if (!xstrcmp(var, "jabber:iq:privacy"))	{ user_command = 2;	tvar = "/jid:privacy"; }
+						else if (!xstrcmp(var, "presence-invisible"))	{ user_command = 2;	tvar = "/invisible"; } /* we ought use jabber:iq:privacy */
+
+						else if (!xstrcmp(var, "http://jabber.org/protocol/vacation"))	{ user_command = 2;	tvar = "/jid:vacation"; }
+
+						if (tvar)	print(	user_command == 2 ? "jabber_transinfo_comm_not" : 
+									user_command == 1 ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
+
 									session_name(s), uid, tvar, var);
 						else		print("jabber_transinfo_feature", session_name(s), uid, var, var);
 					} else if (!xstrcmp(node->name, "x") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "jabber:x:data")) {
@@ -2058,6 +2099,14 @@ static int jabber_theme_init()
 	format_add("jabber_privacy_list_end",	  _("%g`+=%G----- End of the privacy list%n"), 1);
 	format_add("jabber_privacy_list_noitem",  _("%! No privacy list in %T%2%n"), 1);
 
+	format_add("jabber_privacy_item_header", _("%g,+=%G----- Details for: %T%3%n\n%g||%n JID\t\t\t\t\t  MSG  PIN POUT IQ%n"), 1);
+	format_add("jabber_privacy_item",	   "%g||%n %[-44]4 \t%K|%n %[2]5 %K|%n %[2]6 %K|%n %[2]7 %K|%n %[2]8\n", 1);
+	format_add("jabber_privacy_item_footer", _("%g`+=%G----- Legend: %n[%3] [%4]%n"), 1);
+
+	/* %1 - item [group, jid, subscri*] */
+	format_add("jabber_privacy_item_allow",  "%G%1%n", 1);
+	format_add("jabber_privacy_item_deny",   "%R%1%n", 1);
+
 	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
 	format_add("jabber_transport_list_begin", _("%g,+=%G----- Avalible agents on: %T%2%n"), 1);
 	format_add("jabber_transport_list_item",  _("%g|| %n %5 - %W%3%n (%4)"), 1);
@@ -2071,6 +2120,7 @@ static int jabber_theme_init()
 	format_add("jabber_transinfo_feature",	_("%g|| %n %W%2%n feature: %n%3"), 1);
 	format_add("jabber_transinfo_comm_ser",	_("%g|| %n %W%2%n can: %n%3 %2 (%4)"), 1);
 	format_add("jabber_transinfo_comm_use",	_("%g|| %n %W%2%n can: %n%3 $uid (%4)"), 1);
+	format_add("jabber_transinfo_comm_not",	_("%g|| %n %W%2%n can: %n%3 (%4)"), 1);
 	format_add("jabber_transinfo_end",	_("%g`+=%G----- End of the infomations%n\n"), 1);
 
 	format_add("jabber_search_item",	_("%) JID: %T%3%n\n%) Nickname:  %T%4%n\n%) Name: %T%5 %6%n\n%) Email: %T%7%n\n"), 1);	/* like gg-search_results_single */
