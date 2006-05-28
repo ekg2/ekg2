@@ -747,6 +747,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 	string_free(body, 1);
 	xfree(uid);
 } /* */
+
 /* idea and some code copyrighted by Marek Marczykowski jid:marmarek@jabberpl.org */
 void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *command, xmlnode_t *form) { /* JEP-0004: Data Forms */
 	xmlnode_t *node;
@@ -1035,7 +1036,30 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 		if ((q = xmlnode_find_child(n, "query"))) {
 			const char *ns = jabber_attr(q->atts, "xmlns");
-			if (!xstrcmp(ns, "http://jabber.org/protocol/vacation")) { /* JEP-0109: Vacation Messages */
+			if (!xstrcmp(ns, "jabber:iq:privacy")) {
+				xmlnode_t *node;
+				int i = 0;
+
+				for (node = q->children; node; node = node->next) {
+					if (!xstrcmp(node->name, "list")) {
+						if (node->children) {
+							/* display details */
+							i = -1;
+						}
+						else {
+							/* rekurencja, ask for this item (?) */
+							if (!i) print("jabber_privacy_list_begin", session_name(s), j->server);
+							if (i != -1) i++;
+
+							/* Display only name */
+							print("jabber_privacy_list_item", session_name(s), j->server, itoa(i), jabber_attr(node->atts, "name")); 
+						}
+					}
+				}
+				if (i > 0)  print("jabber_privacy_list_end", session_name(s), j->server);
+				if (i == 0) print("jabber_privacy_list_noitem", session_name(s), j->server);
+
+			} else if (!xstrcmp(ns, "http://jabber.org/protocol/vacation")) { /* JEP-0109: Vacation Messages */
 				xmlnode_t *temp;
 
 				char *message	= jabber_unescape( (temp = xmlnode_find_child(q, "message")) ? temp->data : NULL);
@@ -2027,6 +2051,12 @@ static int jabber_theme_init()
 	format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
 	format_add("register_change_passwd", _("%> Your password for acount %T%1 is '%T%2%n' change it as fast as you can using command /jid:passwd <newpassword>"), 1);
+
+	/* %1 - session_name, %2 - server/ uid */
+	format_add("jabber_privacy_list_begin",   _("%g,+=%G----- Privacy list on %T%2%n"), 1);
+	format_add("jabber_privacy_list_item",	  _("%g|| %n %3 - %W%4%n"), 1);					/* %3 - lp %4 - itemname */
+	format_add("jabber_privacy_list_end",	  _("%g`+=%G----- End of the privacy list%n"), 1);
+	format_add("jabber_privacy_list_noitem",  _("%! No privacy list in %T%2%n"), 1);
 
 	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
 	format_add("jabber_transport_list_begin", _("%g,+=%G----- Avalible agents on: %T%2%n"), 1);
