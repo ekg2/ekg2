@@ -1,0 +1,7 @@
+ <chapter>
+   <title>Configuration options</title>
+   <para>
+      Below you have list of configuration options, which can be set using command
+      <emphasis>/set</emphasis>. Plugins commands should be written with plugins name
+      prefix, for instance <userinput>/set gg:dcc 1></userinput>
+   </para>
