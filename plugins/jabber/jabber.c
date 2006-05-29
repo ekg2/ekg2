@@ -410,7 +410,6 @@ QUERY(jabber_dcc_postinit) {
 	return 0;
 }
 
-
 void jabber_dcc_close_handler(struct dcc_s *d) {
 	jabber_dcc_t *p = d->priv;
 	if (!d->active && d->type == DCC_GET) {
@@ -1052,7 +1051,14 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 		if ((q = xmlnode_find_child(n, "query"))) {
 			const char *ns = jabber_attr(q->atts, "xmlns");
-			if (!xstrcmp(ns, "jabber:iq:privacy")) {
+#if WITH_JABBER_JINGLE
+			if (!xstrcmp(ns, "session")) {
+				/*   id == still the same through the session */
+				/* type == [initiate, candidates, terminate] */
+
+			} else 
+#endif
+			if (!xstrcmp(ns, "jabber:iq:privacy")) { /* RFC 3921 (10th: privacy) */
 				xmlnode_t *node;
 				int i = 0;
 

@@ -32,20 +32,16 @@ struct xmlnode_s {
 
 typedef struct xmlnode_s xmlnode_t;
 
-
 enum jabber_dcc_protocol_type_t {
 	JABBER_DCC_PROTOCOL_UNKNOWN	= 0,
 	JABBER_DCC_PROTOCOL_BYTESTREAMS,	/* http://www.jabber.org/jeps/jep-0065.html */
 	JABBER_DCC_PROTOCOL_IBB, 		/* http://www.jabber.org/jeps/jep-0047.html */
 	JABBER_DCC_PROTOCOL_WEBDAV,		/* http://www.jabber.org/jeps/jep-0129.html */ /* DON'T IMPLEMENT IT UNTILL IT WILL BE STARNDARD DRAFT */
+	JABBER_DCC_JINGLE,			/* */
 };
 
-enum jabber_socks5_step_t {
-	SOCKS5_UNKNOWN = 0,
-	SOCKS5_CONNECT, 
-	SOCKS5_AUTH,
-	SOCKS5_DATA,
-};
+enum jabber_socks5_step_t { SOCKS5_UNKNOWN = 0, SOCKS5_CONNECT, SOCKS5_AUTH, SOCKS5_DATA, };
+enum jabber_jingle_step_t { JINGLE_UNKNOWN = 0, };
 
 /* <JABBER_DCC_PROTOCOL_BYTESTREAMS> */
 struct jabber_streamhost_item {
@@ -65,11 +61,20 @@ typedef struct {
 /* </JABBER_DCC_PROTOCOL_BYTESTREAMS> */
 
 typedef struct {
+	int validate;		/* should be: JABBER_DCC_JINGLE */
+	enum jabber_jingle_step_t step;
+
+	char *sid;		/* <session id=...> */
+} jabber_dcc_jingle_t;
+
+typedef struct {
 	session_t *session;
 	char *req;
 	char *sid;
 	enum jabber_dcc_protocol_type_t protocol;
-	void *private;	/* private data based on protocol */ /* for JABBER_DCC_PROTOCOL_BYTESTREAMS it's jabber_dcc_bytestream_t */
+	void *private;	/* private data based on protocol */ 
+				/* for: JABBER_DCC_PROTOCOL_BYTESTREAMS it's: jabber_dcc_bytestream_t	*/
+				/* for: JABBER_DCC_JINGLE		it's: jabber_dcc_jingle_t	*/ 
 } jabber_dcc_t; 
 
 typedef struct {

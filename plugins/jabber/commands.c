@@ -188,6 +188,10 @@ COMMAND(jabber_command_dcc) {
 		return 0;
 #endif
 	}
+	if (!xstrncasecmp(params[0], "vo", 2)) { /* voice */
+		return -1;
+	}
+
 	return cmd_dcc(name, params, session, target, quiet);
 }
 
@@ -547,7 +551,9 @@ COMMAND(jabber_command_passwd)
 //	username = xstrndup(session->uid + 4, xstrchr(session->uid+4, '@') - session->uid+4);
 
 	passwd = jabber_escape(params[0]);
-	watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", j->server, j->id++, username, passwd);
+	watch_write(j->send_watch, 
+		"<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>",
+		j->server, j->id++, username, passwd);
 	
 	session_set(session, "__new_password", params[0]);
 
@@ -906,7 +912,8 @@ char **jabber_params_split(const char *line)
 COMMAND(jabber_command_search) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
-	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ /* XXX, made (session?) variable: jabber:default_search_server */
+	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ 
+	/* XXX, made (session?) variable: jabber:default_search_server */
 	char **splitted;
 
 	if (!(splitted = jabber_params_split(params[1])) && params[1]) {
@@ -914,7 +921,8 @@ COMMAND(jabber_command_search) {
 		return -1;
 	}
 
-	watch_write(j->send_watch, "<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
+	watch_write(j->send_watch, 
+		"<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
 
 	if (splitted) {
 		int i;
@@ -1260,7 +1268,7 @@ void jabber_register_commands()
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, TEXT("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, "send get resume close list");
+	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, "send get resume voice close list");
 	command_add(&jabber_plugin, TEXT("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:disconnect"), "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
