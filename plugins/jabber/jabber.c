@@ -59,6 +59,7 @@
 
 #define jabberfix(x,a) ((x) ? x : a)
 #define WITH_JABBER_DCC 0
+#define WITH_JABBER_JINGLE 0
 
 #define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
 
@@ -203,6 +204,12 @@ WATCHER(jabber_dcc_handle_recv) {
 			fclose(f);
 
 			d->offset += len;
+			if (d->offset == d->size) {
+				print("dcc_done_get", format_user(p->session, d->uid), d->filename);
+				dcc_close(d);
+				close(fd);
+				return -1;
+			}
 
 			break;
 		}
@@ -273,7 +280,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 		char req[2];
 		req[0] = 0x05;
 		req[1] = 0x00;
-		write(fd, &req, sizeof(req));
+		write(fd, (char *) &req, sizeof(req));
 	}
 
 	if (buf[1] == 0x01 /* REQ CONNECT */ && buf[2] == 0x00 /* RSVD */ && buf[3] == 0x03 /* DOMAINNAME */ && len == 47 /* plen == 47 */ ) {
@@ -337,7 +344,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 		req[45] = 0x00; 
 		req[46] = 0x00;
 	/* LET'S SEND IWIL (OK, AUTH NOT IWIL) PACKET: */
-		write(fd, &req, sizeof(req));
+		write(fd, (char *) &req, sizeof(req));
 
 		watch_add(&jabber_plugin, fd, WATCH_WRITE, 1, jabber_dcc_handle_send, d);
 		return -1;
@@ -522,6 +529,13 @@ int jabber_write_status(session_t *s)
         CHAR_T *descr;
 	char *real = NULL;
 
+#if WITH_JABBER_JINGLE
+/* This is only to enable 'call' button in GTalk .... */
+#define JINGLE_CAPS "<c xmlns=\"http://jabber.org/protocol/caps\" ext=\"voice-v1\" ver=\"0.1\" node=\"http://www.google.com/xmpp/client/caps\"/>"
+#else 
+#define JINGLE_CAPS ""
+#endif
+
         if (!s || !j)
                 return -1;
 
@@ -534,10 +548,12 @@ int jabber_write_status(session_t *s)
 		xfree(descr);
 	}
 
-	if (!xstrcmp(status, EKG_STATUS_AVAIL))			watch_write(j->send_watch, "<presence>%s<priority>%d</priority></presence>", 			real ? real : "", priority);
-	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	watch_write(j->send_watch, "<presence type=\"invisible\">%s<priority>%d</priority></presence>", 	real ? real : "", priority);
-	else							watch_write(j->send_watch, "<presence><show>%s</show>%s<priority>%d</priority></presence>", 	status, real ? real : "", priority);
-
+	if (!xstrcmp(status, EKG_STATUS_AVAIL))
+		watch_write(j->send_watch, "<presence>%s<priority>%d</priority>%s</presence>", real ? real : "", priority, JINGLE_CAPS);
+	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))
+		watch_write(j->send_watch, "<presence type=\"invisible\">%s<priority>%d</priority></presence>", real ? real : "", priority);
+	else
+		watch_write(j->send_watch, "<presence><show>%s</show>%s<priority>%d</priority>%s</presence>", status, real ? real : "", priority, JINGLE_CAPS);
         xfree(real);
         return 0;
 }
@@ -1129,22 +1145,21 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						if (!xstrcmp(var, "http://jabber.org/protocol/disco#info")) 		tvar = "/jid:transpinfo";
 						else if (!xstrcmp(var, "http://jabber.org/protocol/disco#items")) 	tvar = "/jid:transports";
 						else if (!xstrcmp(var, "http://jabber.org/protocol/disco"))		tvar = "/jid:transpinfo && /jid:transports";
+						else if (!xstrcmp(var, "http://jabber.org/protocol/muc"))		tvar = "/jid:mucpart && /jid:mucjoin";
+						else if (!xstrcmp(var, "http://jabber.org/protocol/stats"))		tvar = "/jid:stats";
 						else if (!xstrcmp(var, "jabber:iq:register"))		    		tvar = "/jid:register";
 						else if (!xstrcmp(var, "jabber:iq:search"))				tvar = "/jid:search";
-						else if (!xstrcmp(var, "http://jabber.org/protocol/muc"))		tvar = "/jid:mucpart && /jid:mucjoin";
-
-						else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/jid:ver"; }
-						else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/jid:msg"; }
-						else if (!xstrcmp(var, "jabber:iq:last"))	{ user_command = 1;	tvar = "/jid:lastseen"; }
-						else if (!xstrcmp(var, "vcard-temp"))		{ user_command = 1;	tvar = "/jid:change && /jid:userinfo"; }
 
 						else if (!xstrcmp(var, "http://jabber.org/protocol/bytestreams")) { user_command = 1; tvar = "/jid:dcc (PROT: BYTESTREAMS)"; }
 						else if (!xstrcmp(var, "http://jabber.org/protocol/si/profile/file-transfer")) { user_command = 1; tvar = "/jid:dcc"; }
-
-						else if (!xstrcmp(var, "jabber:iq:privacy"))	{ user_command = 2;	tvar = "/jid:privacy"; }
-						else if (!xstrcmp(var, "presence-invisible"))	{ user_command = 2;	tvar = "/invisible"; } /* we ought use jabber:iq:privacy */
+						else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/jid:ver"; }
+						else if (!xstrcmp(var, "jabber:iq:last"))	{ user_command = 1;	tvar = "/jid:lastseen"; }
+						else if (!xstrcmp(var, "vcard-temp"))		{ user_command = 1;	tvar = "/jid:change && /jid:userinfo"; }
+						else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/jid:msg"; }
 
 						else if (!xstrcmp(var, "http://jabber.org/protocol/vacation"))	{ user_command = 2;	tvar = "/jid:vacation"; }
+						else if (!xstrcmp(var, "presence-invisible"))	{ user_command = 2;	tvar = "/invisible"; } /* we ought use jabber:iq:privacy */
+						else if (!xstrcmp(var, "jabber:iq:privacy"))	{ user_command = 2;	tvar = "/jid:privacy"; }
 
 						if (tvar)	print(	user_command == 2 ? "jabber_transinfo_comm_not" : 
 									user_command == 1 ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
@@ -1252,7 +1267,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					print("jabber_form_title", session_name(s), from_str, from_str);
 
 					if (instr && instr->data) {
-						char *instr_str = (instr) ? jabber_unescape(instr->data) : NULL;
+						char *instr_str = jabber_unescape(instr->data);
 						print("jabber_form_instructions", session_name(s), from_str, instr_str);
 						xfree(instr_str);
 					}
@@ -1732,7 +1747,11 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		authpass = (session_int_get(s, "plaintext_passwd")) ? 
 			saprintf("<password>" CHARF "</password>", passwd) :  				/* plaintext */
 			saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd));		/* hash */
-		watch_write(j->send_watch, "<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", j->server, username, authpass, resource);
+
+		watch_write(j->send_watch, 
+			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", 
+			j->server, username, authpass, resource);
+
                 xfree(username);
 		xfree(authpass);
 		xfree(passwd);

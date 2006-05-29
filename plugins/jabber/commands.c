@@ -1019,6 +1019,26 @@ COMMAND(jabber_command_transports) {
 	return 0;
 }
 
+COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERRED) */
+	PARASC
+	jabber_private_t *j = jabber_private(session);
+	const char *server = params[0] ? params[0] : j->server;
+	const char *items   = (params[0] && params[1]) ? params[1] : NULL;
+
+	if (items) {
+	/* XXX */
+		char *itemp = NULL;
+		watch_write(j->send_watch,
+			"<iq type=\"get\" to=\"%s\" id=\"stats%d\"><query xmlns=\"http://jabber.org/protocol/stats\">%s</query></iq>",
+			server, j->id++, itemp);
+	} else {
+		watch_write(j->send_watch,
+			"<iq type=\"get\" to=\"%s\" id=\"stats%d\"><query xmlns=\"http://jabber.org/protocol/stats\"/></iq>",
+			server, j->id++);
+	}
+	return 0;
+}
+
 COMMAND(jabber_command_privacy) {
 	PARASC
 	/* XXX, wstepna implementacja jabber:iq:privacy w/g RFC #3921 */
@@ -1066,7 +1086,13 @@ COMMAND(jabber_command_privacy) {
 			{ type = "jid"; value = params[0]+4; }
 		else if (!xstrcmp(params[0], "none") || !xstrcmp(params[0], "both") || !xstrcmp(params[0], "from") || !xstrcmp(params[0], "to"))
 			{ type = "subscription"; value = params[0]; }
-		else	{ type = "group"; value = params[0]; }	/* XXX, search for this group... cause it maybe is user in userlist XXX */
+		else if (params[0][0] == '@') 
+			{ type = "group"; value = params[0]+1; }
+		else {
+			/* XXX */
+			wcs_printq("invalid_params", name);
+			return -1;
+		}
 		
 		if (params[1]) { /* parsing params[1] made in separate block */
 			char **p = array_make(params[1], " ", 0, 1, 0);
@@ -1104,11 +1130,6 @@ COMMAND(jabber_command_privacy) {
 		ename = jabber_escape(lname);
 		xfree(lname);
 
-#if 0
-		for (i=0; i < PRIVACY_LIST_COUNT; i++)
-			debug("[%d] ALIST: %d BLIST:%d\n", i, alist[i], blist[i]);
-#endif
-
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\">"
 			"<list name=\"%s\">", j->id++, ename);
@@ -1141,11 +1162,15 @@ COMMAND(jabber_command_privacy) {
 			{ type = "jid"; value = params[0]+4; }
 		else if (!xstrcmp(params[0], "none") || !xstrcmp(params[0], "both") || !xstrcmp(params[0], "from") || !xstrcmp(params[0], "to"))
 			{ type = "subscription"; value = params[0]; }
-
+		else if (params[0][0] == '@') 
+			{ type = "group"; value = params[0]+1; }
 		else if (!xstrncmp(params[0], "__ekg2_", 7))
 			{ type = NULL; value = NULL; ename = jabber_escape(params[0]); } 
-
-		else	{ type = "group"; value = params[0]; }	/* XXX, search for this group... cause it maybe is user in userlist XXX */
+		else {
+			/* XXX */
+			wcs_printq("invalid_params", name);
+			return -1;
+		}
 
 		if (type && value) {
 			lname = saprintf("__ekg2_%s__%s", type, value);	/* nicely generated name */
@@ -1176,7 +1201,7 @@ COMMAND(jabber_muc_command_join)
 	jabber_private_t *j = session_private_get(session);
 	char *tmp;
 	char *username = (params[1]) ? xstrdup(params[1]) : (tmp = xstrchr(session->uid, '@')) ? xstrndup(session->uid+4, tmp-session->uid-4) : NULL;
-	char *password = (params[1] && params[2]) ? saprintf(" <password>%s</password> ", params[2]) : NULL;
+	char *password = (params[1] && params[2]) ? saprintf("<password>%s</password>", params[2]) : NULL;
 
 	if (!username) { /* rather impossible */
 		wcs_printq("invalid_params", name);
@@ -1250,6 +1275,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:privacy"), "? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("jid:stats"), "? ?", jabber_command_stats, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:transpinfo"), "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:vacation"), "?", jabber_command_vacation, JABBER_FLAGS, NULL);
