@@ -1144,7 +1144,7 @@ COMMAND(jabber_command_privacy) {
 
 		for (i=0; i < PRIVACY_LIST_COUNT; i++) {
 			if ( (alist[i] && done != 0x01) || (blist[i] && done != 0x02)) {
-				int *clist = (alist[i]) ? &alist : &blist;
+				int *clist = (alist[i]) ? (int *) &alist : (int *) &blist;
 
 				watch_write(j->send_watch,
 					"<item type=\"%s\" value=\"%s\" action=\"%s\" order=\"%d\">%s%s%s%s</item>", type, value,
@@ -1164,7 +1164,7 @@ COMMAND(jabber_command_privacy) {
 	} else {
 		const char *type, *value;
 		char *lname;
-		CHAR_T *ename;
+		CHAR_T *ename = NULL;
 
 		if (!xstrncmp(params[0], "jid:", 4))
 			{ type = "jid"; value = params[0]+4; }
@@ -1246,7 +1246,7 @@ COMMAND(jabber_muc_command_part)
 	return 0;
 }
 
-COMMAND(jabber_command_conifg) {
+COMMAND(jabber_command_config) {
 	PARUNI
 	jabber_private_t *j = jabber_private(session);
 
@@ -1293,7 +1293,7 @@ back:
 					case(VAR_BOOL):
 						watch_write(j->send_watch, "<%s>%d</%s>", tname, *(int *) v->ptr, tname);
 						break;
-					case(VAR_MAP):
+					case(VAR_MAP):	/* XXX TODO */
 					default:
 						break;
 				}
@@ -1307,7 +1307,7 @@ back:
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
 			list_t n;
-			watch_write(j->send_watch, "<session xmlns=\"ekg2:session\" uid=\"%s\">", s->uid);
+			watch_write(j->send_watch, "<session xmlns=\"ekg2:session\" uid=\"%s\" password=\"%s\">", s->uid, s->password);
 
 			for (n = session->params; n; n = n->next) {
 				session_param_t *v = n->data;
@@ -1352,7 +1352,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, TEXT("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, TEXT("jid:config"), "!p ?", jabber_command_conifg,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-c --clear -g --get -p --put");
+	command_add(&jabber_plugin, TEXT("jid:config"), "!p ?", jabber_command_config,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-c --clear -g --get -p --put");
 	command_add(&jabber_plugin, TEXT("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, "send get resume voice close list");
 	command_add(&jabber_plugin, TEXT("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
