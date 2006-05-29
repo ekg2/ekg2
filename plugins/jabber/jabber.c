@@ -1115,6 +1115,52 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				if (i > 0)  print("jabber_privacy_list_end", session_name(s), j->server);
 				if (i == 0) print("jabber_privacy_list_noitem", session_name(s), j->server);
 
+			} else if (!xstrcmp(ns, "jabber:iq:private")) {
+				xmlnode_t *node;
+
+				for (node = q->children; node; node = node->next) {
+					char *lname	= jabber_unescape(node->name);
+					char *ns	= jabber_attr(node->atts, "xmlns");
+
+					int quiet = 0;
+					xmlnode_t *child;
+
+					if (!xstrcmp(node->name, "ekg2")) quiet = 1;	/* internal ekg2 database. (DON'T DISPLAY IT?!) */
+
+					quiet = 0; /* XXX */
+
+					if (node->children) printq("jabber_private_list_header", session_name(s), lname, ns);
+					if (!xstrcmp(node->name, "ekg2") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "ekg2:prefs")) {
+						for (child = node->children; child; child = child->next) {
+							char *cname	= jabber_unescape(child->name);
+							char *cvalue	= jabber_unescape(child->data);
+							if (!xstrcmp(child->name, "plugin")) {
+								xmlnode_t *temp;
+								printq("jabber_private_list_plugin", session_name(s), lname, ns, jabber_attr(child->atts, "name"), jabber_attr(child->atts, "prio"));
+								for (temp = child->children; temp; temp = temp->next) {
+									char *snname = jabber_unescape(temp->name);
+									char *svalue = jabber_unescape(temp->data);
+									printq("jabber_private_list_subitem", session_name(s), lname, ns, snname, svalue);
+									xfree(snname);
+									xfree(svalue);
+								}
+							} else if (!xstrcmp(child->name, "session")) {
+								xmlnode_t *temp;
+								printq("jabber_private_list_session", session_name(s), lname, ns, jabber_attr(child->atts, "uid"));
+								for (temp = child->children; temp; temp = temp->next) {
+									char *snname = jabber_unescape(temp->name);
+									char *svalue = jabber_unescape(temp->data);
+									printq("jabber_private_list_subitem", session_name(s), lname, ns, snname, svalue);
+									xfree(snname);
+									xfree(svalue);
+								}
+							} else	printq("jabber_private_list_item", session_name(s), lname, ns, cname, cvalue);
+							xfree(cname); xfree(cvalue);
+						}
+						if (node->children) printq("jabber_private_list_footer", session_name(s), lname, ns);
+						else 		    printq("jabber_private_list_empty", session_name(s), lname, ns);
+					}
+				}
 			} else if (!xstrcmp(ns, "http://jabber.org/protocol/vacation")) { /* JEP-0109: Vacation Messages */
 				xmlnode_t *temp;
 
@@ -2131,6 +2177,18 @@ static int jabber_theme_init()
 	/* %1 - item [group, jid, subscri*] */
 	format_add("jabber_privacy_item_allow",  "%G%1%n", 1);
 	format_add("jabber_privacy_item_deny",   "%R%1%n", 1);
+
+	/* %1 - session_name %2 - list_name %3 xmlns */
+	format_add("jabber_private_list_header",  _("%g,+=%G----- Private list: %T%2/%3%n"), 1);
+	format_add("jabber_private_list_item",	    "%g|| %n %4: %W%5%n",  1);			/* %4 - item %5 - value */
+
+	format_add("jabber_private_list_session",   "%g|| + %n Session: %W%4%n",  1);		/* %4 - uid */
+	format_add("jabber_private_list_plugin",    "%g|| + %n Plugin: %W%4 (%5)%n",  1);	/* %4 - name %5 - prio*/
+
+	format_add("jabber_private_list_subitem",   "%g||  - %n %4: %W%5%n",  1);               /* %4 - item %5 - value */
+
+	format_add("jabber_private_list_footer",  _("%g`+=%G----- End of the private list%n"), 1);
+	format_add("jabber_private_list_empty",	  _("%! No list: %T%2/%3%n"), 1);
 
 	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
 	format_add("jabber_transport_list_begin", _("%g,+=%G----- Avalible agents on: %T%2%n"), 1);

@@ -1246,6 +1246,91 @@ COMMAND(jabber_muc_command_part)
 	return 0;
 }
 
+COMMAND(jabber_command_conifg) {
+	PARUNI
+	jabber_private_t *j = jabber_private(session);
+
+	const CHAR_T *namespace = params[1] ? params[1] : TEXT("ekg2:prefs");	/* <ekg2 xmlns=...> */
+
+	if (match_arg(params[0], 'g', TEXT("get"), 2)) {	/* getconfig */
+		watch_write(j->send_watch,
+			"<iq type=\"get\" id=\"config%d\">"
+			"<query xmlns=\"jabber:iq:private\">"
+			"<ekg2 xmlns=\"" CHARF "\"/>"
+			"</query></iq>", j->id++, namespace);
+		return 0;
+	} 
+	if (match_arg(params[0], 'p', TEXT("put"), 2)) {	/* putconfig */
+		list_t l;
+		watch_write(j->send_watch, 
+			"<iq type=\"set\" id=\"config%d\">"
+			"<query xmlns=\"jabber:iq:private\">"
+			"<ekg2 xmlns=\"" CHARF "\">", j->id++, namespace);
+		for (l = plugins; l; l = l->next) {
+			plugin_t *p = l->data;
+			list_t n;
+			watch_write(j->send_watch, "<plugin xmlns=\"ekg2:plugin\" name=\"%s\" prio=\"%d\">", p->name, p->prio);
+back:
+			for (n = variables; n; n = n->next) {
+				variable_t *v = n->data;
+				CHAR_T *vname, *tname;
+				if (v->plugin != p) continue;
+				tname = vname = jabber_escape(v->name);
+
+				if (p && !xstrncmp(tname, p->name, xstrlen(p->name))) tname += xstrlen(p->name);
+				if (tname[0] == ':') tname++;
+				
+				switch (v->type) {
+					case(VAR_STR):
+					case(VAR_FOREIGN):
+					case(VAR_FILE):
+					case(VAR_DIR):
+					case(VAR_THEME):
+						if (*(char **) v->ptr)	watch_write(j->send_watch, "<%s>%s</%s>", tname, *(char **) v->ptr, tname);
+						else			watch_write(j->send_watch, "<%s/>", tname);
+						break;
+					case(VAR_INT):
+					case(VAR_BOOL):
+						watch_write(j->send_watch, "<%s>%d</%s>", tname, *(int *) v->ptr, tname);
+						break;
+					case(VAR_MAP):
+					default:
+						break;
+				}
+				xfree(vname);
+			}
+			if (p) watch_write(j->send_watch, "</plugin>");
+
+			if (p && !l->next) { p = NULL; goto back; }
+		}
+
+		for (l = sessions; l; l = l->next) {
+			session_t *s = l->data;
+			list_t n;
+			watch_write(j->send_watch, "<session xmlns=\"ekg2:session\" uid=\"%s\">", s->uid);
+
+			for (n = session->params; n; n = n->next) {
+				session_param_t *v = n->data;
+				if (v->value)	watch_write(j->send_watch, "<%s>%s</%s>", v->key, v->value, v->key);
+				else		watch_write(j->send_watch, "<%s/>", v->key);
+			}
+
+			watch_write(j->send_watch, "</session>");
+		}
+		watch_write(j->send_watch, "</ekg2></query></iq>");
+		return 0;
+	}
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {	/* clear config */
+		watch_write(j->send_watch,
+			"<iq type=\"set\" id=\"config%d\">"
+			"<query xmlns=\"jabber:iq:private\">"
+			"<ekg2 xmlns=\"" CHARF "\"/></query></iq>", j->id++, namespace);
+		return 0;
+	}
+	wcs_printq("invalid_params", name);
+	return -1;
+}
+
 void jabber_register_commands()
 {
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
@@ -1267,6 +1352,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, TEXT("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:config"), "!p ?", jabber_command_conifg,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-c --clear -g --get -p --put");
 	command_add(&jabber_plugin, TEXT("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, "send get resume voice close list");
 	command_add(&jabber_plugin, TEXT("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
