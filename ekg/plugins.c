@@ -634,6 +634,7 @@ void watch_free(watch_t *w)
 			handler(1, w->fd, w->type, w->data);
 	}
 	list_remove(&watches, w, 1);
+	ekg_watches_removed++;
 }
 
 /*

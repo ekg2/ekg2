@@ -218,6 +218,7 @@ extern char *home_dir;
 extern char *config_dir;
 extern int in_autoexec;
 extern int ekg_stdin_want_more;
+extern int ekg_watches_removed;
 extern time_t last_action;
 extern time_t ekg_started;
 

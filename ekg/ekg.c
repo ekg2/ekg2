@@ -93,7 +93,7 @@
 char *config_dir;
 int mesg_startup;
 int ekg_stdin_want_more;
-
+int ekg_watches_removed;
 static pid_t ekg_pid = 0;
 static char argv0[PATH_MAX];
 
@@ -342,6 +342,7 @@ void ekg_loop()
                 }
 
 watches_again:
+		ekg_watches_removed = 0;
                 /* zapamiêtaj ostatni deskryptor */
                 for (watch_last = NULL, l = watches; l; l = l->next) {
                         if (!l->next)
@@ -352,6 +353,8 @@ watches_again:
                 for (l = watches; l; ) {
                         watch_t *w = l->data;
 
+			if (ekg_watches_removed > 1)
+				goto watches_again;
                         /* handlery mog± dodawaæ kolejne watche, wiêc je¶li
                          * dotrzemy do ostatniego sprzed wywo³ania pêtli,
                          * koñczymy pracê. */
