@@ -928,13 +928,13 @@ COMMAND(gg_command_unblock)
 /*
  * token_gif_load()
  *
- * Wczytuje token z pliku gif. Zwraca -1 jeli si�nie uda (wtedy w token->data 
- * b�zie komunikat o b�zie) lub 0. Jeli token->pal_sz != 0 to znaczy, e 
- * token zawiera palet�barw, w kt�ej naley sprawdza�piksele (w kolejnoci 
- * r, g i b). Rozmiar palety w bajtach to pal_sz * 3.
+ * Reads token from a gif file. Returns -1 if error occurs (in token->data then
+ * we will have error message) or 0. If token->pal_sz != 0 it means, that
+ * token has some colours pallet, in which we have to check pixels (r.g.b)
+ * order. Size of pallet in bites pal_sz * 3
  *
- *  - fname - nazwa pliku z gifem do wczytania
- *  - token - wskanik do struktury na token
+ *  - fname - name of the gif file to load 
+ *  - token - pointer to structure token
  */
 
 int token_gif_load (char *fname, struct token_t *token)
@@ -1001,9 +1001,10 @@ err:
 /*
  * token_gif_free()
  *
- * Zwalnia struktury zajmowane przez token (NIE sam token_t).
+ * Frees structures occupies by token (not token_t)
+ * 
+ *  - token - pointer to structure with data to be freed
  *
- *  - token - wskanik do struktury z danymi do zwolnienia
  */
 
 void token_gif_free (struct token_t *token)
@@ -1026,12 +1027,12 @@ void token_gif_free (struct token_t *token)
 /*
  * token_gif_get_pixel()
  *
- * Pobiera piksel z podanej pozycji. Jeli pozycja jest poza zakresem, zwraca 
- * podany kolor ta.
+ * Gets pixel from given position. If the position is out of range it returns
+ * given coulour of background.
  *
- *  - token - wskanik na struktur�opisujc token
- *  - x, y - pozyzja piksela
- *  - backgr_color - numer koloru ta
+ *  - token - pointer to structure, describing token 
+ *  - x, y - pixel position
+ *  - backgr_color - number of background colour
  */
 
 char token_gif_get_pixel (struct token_t *token, size_t x, size_t y, unsigned char backgr_color)
@@ -1043,10 +1044,10 @@ char token_gif_get_pixel (struct token_t *token, size_t x, size_t y, unsigned ch
 /*
  * token_gif_strip()
  *
- * Usuwa z obrazka wszystko, czego nie potrzebujemy (linie, pojedyncze 
- * piksele i antyaliasing czcionki).
+ * It removes from the image everything that is not needed (lines, single
+ * pixel and anyaliasing of the font).
  *
- *  - token - wskanik na struktur�opisujc token
+ *  - token - pointer to structure, debribing token 
  */
 
 void token_gif_strip (struct token_t *token)
@@ -1111,10 +1112,10 @@ void token_gif_strip (struct token_t *token)
 /*
  * token_gif_strip_txt
  *
- * Usuwa z podanego bufora tekstowego puste linie na g�ze i na dole. 
- * Zwraca nowo zaalokowany bufor.
+ * It removes from given text buffer empty lines up and down. 
+ * Return newly allocated buffer.
  *
- *  - buf - bufor do stripni�ia
+ *  - buf - buffer to be stripped
  */
 
 char *token_gif_strip_txt (char *buf)
@@ -1157,10 +1158,10 @@ char *token_gif_strip_txt (char *buf)
 /*
  * token_gif_to_txt()
  *
- * Konwertuje token do postaci tekstowej. Zwraca bufor tekstowy z tokenem 
- * obr�onym tak, eby lepiej zmieci�si�na ekranie.
+ * Converts token to text. Returns text buffer with token stripped in that 
+ * way to match the screen.
  *
- *  - token - wskanik na struktur�opisujc token
+ *  - token - pointer to token structure 
  */
 
 char *token_gif_to_txt (struct token_t *token)
@@ -1253,11 +1254,11 @@ char *token_gif_to_txt (struct token_t *token)
 
 /*
  * token_check()
+ *
+ * function checks if in the given place exists proposed character 
  * 
- * funkcja sprawdza czy w danym miejscu znajduje si�zaproponowany znaczek
- * 
- *  - n - numer od 0 do 15 (znaczki od 0 do f)
- *  - x, y - wsp�z�ne znaczka w tablicy ocr
+ *  - n - number from 0 to 15 (char from 0 to f)
+ *  - x, y - coordinates in ocr table
  */
 static int token_check(int nr, int x, int y, const char *ocr, int maxx, int maxy)
 {
@@ -1280,7 +1281,7 @@ static int token_check(int nr, int x, int y, const char *ocr, int maxx, int maxy
 /*
  * token_ocr()
  *
- * zwraca tre�tokenu
+ * returns text of the token
  */
 char *token_ocr(const char *ocr, int width, int height, int length)
 {
