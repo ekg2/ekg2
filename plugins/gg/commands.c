@@ -40,9 +40,14 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <unistd.h>
+#include <setjmp.h>
 
 #ifdef HAVE_JPEGLIB_H
 #  include <jpeglib.h>
+#endif
+#ifdef HAVE_GIF_LIB_H
+#  include <fcntl.h>    /* open() */
+#  include <gif_lib.h>
 #endif
 
 #include <ekg/commands.h>
@@ -90,7 +95,7 @@ COMMAND(gg_command_connect)
 			if (__reason) {
                 		CHAR_T *tmp = xwcsdup(__reason);
 				char *sreason = wcs_to_normal(tmp);
-				char *tmp_ = NULL;		/* znaczki w cp1250 */
+				unsigned char *tmp_ = NULL;		/* znaczki w cp1250 */
 
 	                        if (!xwcscmp(tmp, TEXT("-"))) {
         	                        xfree(tmp);
@@ -599,7 +604,7 @@ COMMAND(gg_command_msg)
 	msg = xwcsmid(params[1], 0, 1989);
 	ekg_format = ekg_sent_message_format(msg);
 
-	/* analizê tekstu zrobimy w osobnym bloku dla porz±dku */
+	/* analizï¿½tekstu zrobimy w osobnym bloku dla porzdku */
 	{
 		unsigned char attr = 0, last_attr = 0;
 #if USE_UNICODE
@@ -918,62 +923,406 @@ COMMAND(gg_command_unblock)
 	return 0;
 }
 
+#ifdef HAVE_LIBUNGIF
+
+/*
+ * token_gif_load()
+ *
+ * Wczytuje token z pliku gif. Zwraca -1 jeli siï¿½nie uda (wtedy w token->data 
+ * bï¿½zie komunikat o bï¿½zie) lub 0. Jeli token->pal_sz != 0 to znaczy, e 
+ * token zawiera paletï¿½barw, w ktï¿½ej naley sprawdzaï¿½piksele (w kolejnoci 
+ * r, g i b). Rozmiar palety w bajtach to pal_sz * 3.
+ *
+ *  - fname - nazwa pliku z gifem do wczytania
+ *  - token - wskanik do struktury na token
+ */
+
+int token_gif_load (char *fname, struct token_t *token)
+{
+	char errbuf[512];
+	GifFileType *file;
+#ifdef TOKEN_GIF_PAL
+	ColorMapObject *pal;
+#endif
+	int fd;
+	fd = open(fname, O_RDONLY);
+	if (fd == -1) {
+		snprintf (errbuf, sizeof(errbuf), "open(%s): %m", fname);
+		goto err;
+	}
+	
+	if (!(file = DGifOpenFileHandle(fd))) {
+		snprintf (errbuf, sizeof(errbuf), "DGifOpenFileHandle(): %d", 
+		    GifLastError());
+		goto err2;
+	}
+	
+	if (DGifSlurp(file) != GIF_OK) {
+		snprintf (errbuf, sizeof(errbuf), "DGifSlurp(): %d", GifLastError());
+		goto err3;
+	}
+
+	if (file->ImageCount != 1) {
+		snprintf (errbuf, sizeof(errbuf), "ImageCount = %d", file->ImageCount);
+		goto err3;
+	}
+#ifdef TOKEN_GIF_PAL
+	token->pal = NULL;
+	token->pal_sz = 0;
+	pal = file->SavedImages[0].ImageDesc.ColorMap;
+	if (!pal)
+		pal = file->SColorMap;
+
+	if (pal) {
+		token->pal_sz = pal->ColorCount;
+		token->pal = (unsigned char *) xmalloc(token->pal_sz * 3);
+		memcpy (token->pal, pal->Colors, pal->ColorCount);
+	}
+#endif
+
+	token->sx = file->SavedImages[0].ImageDesc.Width;
+	token->sy = file->SavedImages[0].ImageDesc.Height;
+	token->data = (unsigned char *) xmalloc(token->sx * token->sy);
+
+	memcpy (token->data, file->SavedImages[0].RasterBits, token->sx * token->sy);
+	DGifCloseFile (file);
+
+	return 0;
+
+err3:
+	DGifCloseFile (file);
+err2:
+	close (fd);
+err:
+	token->data = (unsigned char *) xstrdup(errbuf);
+	return -1;
+}
+
+/*
+ * token_gif_free()
+ *
+ * Zwalnia struktury zajmowane przez token (NIE sam token_t).
+ *
+ *  - token - wskanik do struktury z danymi do zwolnienia
+ */
+
+void token_gif_free (struct token_t *token)
+{
+	if (token->data)
+		xfree (token->data);
+
+#ifdef TOKEN_GIF_PAL
+	if (token->pal)
+		xfree (token->pal);
+#endif
+
+	token->data = NULL;
+
+#ifdef TOKEN_GIF_PAL
+	token->pal = NULL;
+#endif
+}
+
+/*
+ * token_gif_get_pixel()
+ *
+ * Pobiera piksel z podanej pozycji. Jeli pozycja jest poza zakresem, zwraca 
+ * podany kolor ta.
+ *
+ *  - token - wskanik na strukturï¿½opisujc token
+ *  - x, y - pozyzja piksela
+ *  - backgr_color - numer koloru ta
+ */
+
+char token_gif_get_pixel (struct token_t *token, size_t x, size_t y, unsigned char backgr_color)
+{
+	return (x < 0 || y < 0 || x >= token->sx || y >= token->sy) ? 
+	    backgr_color : token->data[y * token->sx + x];
+}
+
+/*
+ * token_gif_strip()
+ *
+ * Usuwa z obrazka wszystko, czego nie potrzebujemy (linie, pojedyncze 
+ * piksele i antyaliasing czcionki).
+ *
+ *  - token - wskanik na strukturï¿½opisujc token
+ */
+
+void token_gif_strip (struct token_t *token)
+{
+	unsigned char *new_data;
+	size_t i;
+	size_t x, y;
+	unsigned char backgr_color = 0;
+	size_t backgr_counts[256];
+
+	/* Usuwamy wszystkie samotne piksele. Piksel jest uznawany za samotny 
+	 * wtedy, kiedy nie ma w jego najbliszym otoczeniu, obejmujcym 8 
+	 * pikseli dookoa niego, przynajmniej trzech pikseli o tym samym 
+	 * kolorze. To usuwa kropki i pojedyncze linie dodawane w celu 
+	 * zaciemnienia obrazu tokena oraz anty-aliasing czcionek w znakach. 
+	 * Otoczenie pikseli brzegowych jest uznawane za kolor ta tak, jakby 
+	 * to zostao rozszerzone.
+	 */
+
+	/* Najpierw sprawdzamy kolor ta. To piksel, ktï¿½ego jest najwiï¿½ej. */
+
+	for (i = 0; i < 256; i++)
+		backgr_counts[i] = 0;
+
+	for (i = 0; i < token->sx * token->sy; i++) {
+		unsigned char pixel = token->data[i];
+		if (++backgr_counts[pixel] > backgr_counts[backgr_color])
+			backgr_color = pixel;
+	}
+
+	new_data = (unsigned char *) xmalloc(token->sx * token->sy);
+	for (y = 0; y < token->sy; y++)
+		for (x = 0; x < token->sx; x++) {
+			int dx, dy;
+			char new_pixel = backgr_color;
+
+			if (token->data[y * token->sx + x] != backgr_color) {
+				int num_pixels = 0;
+
+				/* num_pixels przechowuje liczbï¿½pikseli w otoczeniu 
+				 * badanego piksela (wliczajc sam badany piksel) 
+				 * o tym samym kolorze, co badany piksel.
+				 */
+
+				for (dy = -1; dy <= 1; dy++)
+					for (dx = -1; dx <= 1; dx++)
+						if (token_gif_get_pixel(token, x + dx, y + dy, 
+						    backgr_color) == token->data[y * token->sx + x])
+							num_pixels++;
+
+				if (num_pixels >= 4)	/* 4, bo razem z badanym */
+					new_pixel = token->data[y * token->sx + x];
+			}
+
+			new_data[y * token->sx + x] = new_pixel;	// ? 1 : 0;
+	}
+
+	xfree (token->data);
+	token->data = new_data;
+}
+
+/*
+ * token_gif_strip_txt
+ *
+ * Usuwa z podanego bufora tekstowego puste linie na gï¿½ze i na dole. 
+ * Zwraca nowo zaalokowany bufor.
+ *
+ *  - buf - bufor do stripniï¿½ia
+ */
+
+char *token_gif_strip_txt (char *buf)
+{
+	char *new_buf = NULL;
+	size_t start, end, len;
+
+	len = strlen(buf);
+	for (start = 0; start < len; start++)
+		if (buf[start] != 0x20 && buf[start] != '\n')
+			break;
+
+	if (!buf[start])
+		return NULL;
+
+	while (start && buf[start] != '\n')
+		start--;
+
+	if (start)
+		start++;
+
+	for (end = 0; end < len; end++)
+		if (buf[len - 1 - end] != 0x20 && buf[len - 1 - end] != '\n')
+			break;
+
+	end = len - 1 - end;
+	end--;
+
+	if (end < start)
+		return NULL;
+
+	new_buf = (char *) xmalloc(end - start + 2);
+	memcpy (new_buf, buf + start, end - start);
+	new_buf[end - start - 1] = '\n';
+	new_buf[end - start] = 0;
+
+	return new_buf;
+}
+
+/*
+ * token_gif_to_txt()
+ *
+ * Konwertuje token do postaci tekstowej. Zwraca bufor tekstowy z tokenem 
+ * obrï¿½onym tak, eby lepiej zmieciï¿½siï¿½na ekranie.
+ *
+ *  - token - wskanik na strukturï¿½opisujc token
+ */
+
+char *token_gif_to_txt (struct token_t *token)
+{
+	char *buf, *bptr;
+	size_t x, y;
+#ifdef TOKEN_GIF_PAL
+	size_t i;
+	unsigned char min_rgb[3] = {255, 255, 255};
+	unsigned char max_rgb[3] = {0, 0, 0};
+	unsigned char delta_rgb[3] = {255, 255, 255};
+#endif
+	static const char chars[] = " !@#$&*:;-=+?";
+	char mappings[256];
+	int cur_char = 0;	/* Kolejny znaczek z chars[]. */
+
+	memset (mappings, 0, sizeof(mappings));
+	buf = bptr = (char *) xmalloc(token->sx * (token->sy + 1));
+
+#ifdef TOKEN_GIF_PAL
+	for (i = 0; i < token->sx * token->sy; i++) {
+		unsigned char ofs = token->data[i];
+		unsigned char *pent;
+		size_t pent_i;
+
+		if (ofs >= token->pal_sz)
+			continue;
+
+		pent = token->pal + ofs * 3;
+		for (pent_i = 0; pent_i < 3; pent_i++) {
+			if (pent[pent_i] < min_rgb[pent_i])
+				min_rgb[pent_i] = pent[pent_i];
+
+			if (pent[pent_i] > max_rgb[pent_i])
+				max_rgb[pent_i] = pent[pent_i];
+		}
+	}
+
+	for (i = 0; i < 3; i++)
+		delta_rgb[i] = max_rgb[i] - min_rgb[i];
+
+	for (i = 0; i < ((token->pal_sz < 256) ? token->pal_sz : 256); i++) {
+		char rgb[3];
+		size_t ri;
+
+		for (ri = 0; ri < 3; ri++)
+			rgb[ri] = ((int) token->pal[i * 3 + ri] - min_rgb[ri]) 
+			    * 255 / delta_rgb[ri];
+
+		intens[i] = (33 * rgb[0] + 
+		    59 * rgb[1] + 
+		    11 * rgb[2]) >= 50 ? 0 : 1;
+	}
+#endif
+
+	for (x = 0; x < token->sx; x++) {
+		for (y = 0; y < token->sy; y++) {
+			unsigned char reg;
+
+			reg = token->data[y * token->sx + (token->sx - 1 - x)];
+
+			/* Mamy ju mapowanie dla tego koloru? */
+			if (reg && !mappings[reg]) {
+				mappings[reg] = ++cur_char;
+				/* Podzielenie przez drugi sizeof nie jest 
+				 * potrzebne, ale gdyby kto kiedy chcia 
+				 * wpaï¿½na pomys zmiany typu draw_chars, 
+				 * to dla bezpieczeï¿½twa lepiej daï¿½ */
+				cur_char %= sizeof(chars) / sizeof(*chars) - 1;
+			}
+
+			*bptr++ = reg ? chars[(size_t) mappings[(size_t) reg]] : 0x20;
+		}
+		*bptr++ = '\n';
+	}
+
+	*bptr = 0;
+
+	bptr = token_gif_strip_txt(buf);
+	if (bptr) {
+		xfree (buf);
+		return bptr;
+	}
+
+	return buf;
+}
+#endif
+
+#ifdef HAVE_LIBJPEG
+
 /*
  * token_check()
- *
- * funkcja sprawdza czy w danym miejscu znajduje siê zaproponowany znaczek
- *
+ * 
+ * funkcja sprawdza czy w danym miejscu znajduje siï¿½zaproponowany znaczek
+ * 
  *  - n - numer od 0 do 15 (znaczki od 0 do f)
- *  - x, y - wspó³rzêdne znaczka w tablicy ocr
+ *  - x, y - wspï¿½zï¿½ne znaczka w tablicy ocr
  */
 static int token_check(int nr, int x, int y, const char *ocr, int maxx, int maxy)
 {
-        int i;
+	int i;
 
-        for (i = nr * token_char_height; i < (nr + 1) * token_char_height; i++, y++) {
-                int j, xx = x;
+	for (i = nr * token_char_height; i < (nr + 1) * token_char_height; i++, y++) {
+		int j, xx = x;
 
-                for (j = 0; token_id[i][j] && j + xx < maxx; j++, xx++) {
-                        if (token_id[i][j] != ocr[y * (maxx + 1) + xx])
-                                return 0;
-                }
-        }
+		for (j = 0; token_id[i][j] && j + xx < maxx; j++, xx++) {
+			if (token_id[i][j] != ocr[y * (maxx + 1) + xx])
+				return 0;
+		}
+	}
 
-        return 1;
+	debug("token_check(nr=%d,x=%d,y=%d,ocr=%p,maxx=%d,maxy=%d\n", nr, x, y, ocr, maxx, maxy);
+
+	return 1;
 }
 
 /*
  * token_ocr()
  *
- * zwraca tre¶æ tokenu
+ * zwraca treï¿½tokenu
  */
 char *token_ocr(const char *ocr, int width, int height, int length)
 {
-        int x, y, count = 0;
-        char *token;
+	int x, y, count = 0;
+	char *token;
 
-        token = xmalloc(length + 1);
-        for (x = 0; x < width; x++) {
-                for (y = 0; y < height - token_char_height; y++) {
-                        int result = 0, token_part = 0;
+	token = xmalloc(length + 1);
+	memset(token, 0, length + 1);
+		
+	for (x = 0; x < width; x++) {
+		for (y = 0; y < height - token_char_height; y++) {
+			int result = 0, token_part = 0;
+		      
+			do
+				result = token_check(token_part++, x, y, ocr, width, height);
+			while (!result && token_part < 16);
+			
+			if (result && count < length)
+				token[count++] = token_id_char[token_part - 1];
+		}
+	}
 
-                        do
-                                result = token_check(token_part++, x, y, ocr, width, height);
-                        while (!result && token_part < 16);
+	if (count == length)
+		return token;
+	
+	xfree(token);
 
-                        if (result && count < length)
-                                token[count++] = token_id_char[token_part - 1];
-                }
-        }
-
-        if (count == length)
-                return token;
-
-        xfree(token);
-
-        return NULL;
+	return NULL;
 }
 
+struct ekg_jpeg_error_mgr {
+	struct jpeg_error_mgr pub;
+	jmp_buf setjmp_buffer;
+};
+
+void ekg_jpeg_error_exit(j_common_ptr j)
+{
+	struct ekg_jpeg_error_mgr *e = (struct ekg_jpeg_error_mgr *) j->err;
+	/* Return control to the setjmp point */
+	longjmp(e->setjmp_buffer, 1);
+}
+#endif
 
 static WATCHER(gg_handle_token)
 {
@@ -1022,6 +1371,7 @@ static WATCHER(gg_handle_token)
 		goto fail;
 	}
 
+
 	if ((write(fd, h->body, h->body_size) != h->body_size) || (close(fd) != 0)) {
 		print("gg_token_failed", strerror(errno));
 		close(fd);
@@ -1029,10 +1379,31 @@ static WATCHER(gg_handle_token)
 		goto fail;
 	}
 
+#ifdef HAVE_LIBUNGIF
+	if (gg_config_display_token) {
+		struct token_t token;
+		char *buf;
+		if (token_gif_load(file, &token) == -1) {
+			print("gg_token_failed", token.data);
+			xfree (token.data);
+			goto fail;
+		}
+		token_gif_strip (&token);
+		buf = token_gif_to_txt(&token);
+		print("gg_token_start");
+		print("gg_token_body", buf);
+		print("gg_token_end");
+		xfree (buf);
+		token_gif_free (&token);
+
+		goto fail;
+	}
+#endif
+
 #ifdef HAVE_LIBJPEG
 	if (gg_config_display_token) {
 		struct jpeg_decompress_struct j;
-		struct jpeg_error_mgr e;
+		struct ekg_jpeg_error_mgr e;
 		JSAMPROW buf[1];
 		int size;
 		char *token, *tmp;
@@ -1044,7 +1415,18 @@ static WATCHER(gg_handle_token)
 			goto fail;
 		}
 
-		j.err = jpeg_std_error(&e);
+		j.err = jpeg_std_error(&e.pub);
+		e.pub.error_exit = ekg_jpeg_error_exit;
+		/* Establish the setjmp return context for ekg_jpeg_error_exit to use. */
+		if (setjmp(e.setjmp_buffer)) {
+			char buf[JMSG_LENGTH_MAX];
+			/* If we ended up over here, then it means some call below called longjmp. */
+			(e.pub.format_message)((j_common_ptr)&j, buf);
+			print("gg_token_failed", buf);
+			jpeg_destroy_decompress(&j);
+			fclose(f);
+			goto fail;
+		}
 		jpeg_create_decompress(&j);
 		jpeg_stdio_src(&j, f);
 		jpeg_read_header(&j, TRUE);
@@ -1070,7 +1452,7 @@ static WATCHER(gg_handle_token)
 			int i;
 
 			for (i = 0; i < j.output_height; i++)
-				print("token_body", &token[i * (j.output_width + 1)]);
+				print("gg_token_body", &token[i * (j.output_width + 1)]);
 		} else {
 			print("gg_token_ocr", tmp);
 			xfree(tmp);
@@ -1085,19 +1467,10 @@ static WATCHER(gg_handle_token)
 		fclose(f);
 		
 		unlink(file);
-	} else {
-                char *file2 = saprintf("%s.jpg", file);
-
-                if (rename(file, file2) == -1)
-                        print("gg_token", file);
-                else
-                        print("gg_token", file2);
-
-                xfree(file2);
-	}
-#else	/* HAVE_LIBJPEG */
+	} else
+#endif	/* HAVE_LIBJPEG */
 	{
-		char *file2 = saprintf("%s.jpg", file);
+		char *file2 = saprintf("%s.gif", file);
 
 		if (rename(file, file2) == -1)
 			print("gg_token", file);
@@ -1106,15 +1479,18 @@ static WATCHER(gg_handle_token)
 
 		xfree(file2);
 	}
-#endif	/* HAVE_LIBJPEG */
 
 #else	/* HAVE_MKSTEMP */
 	print("gg_token_unsupported");
 #endif	/* HAVE_MKSTEMP */
 
-	xfree(file);
+
 
 fail:
+#ifdef HAVE_MKSTEMP
+	unlink(file);
+	xfree(file);
+#endif
 	gg_token_free(h);
 	return -1; /* watch_remove(&gg_plugin, h->fd, h->check); */
 }
@@ -1198,7 +1574,7 @@ COMMAND(gg_command_modify)
 		
 		if (nmatch_arg(argv[i], 'g', TEXT("group"), 2) && argv[i + 1]) {
 			char **tmp = array_make(argv[++i], ",", 0, 1, 1);
-			int x, off;	/* je¶li zaczyna siê od '@', pomijamy pierwszy znak */
+			int x, off;	/* jeli zaczyna siï¿½od '@', pomijamy pierwszy znak */
 			
 			for (x = 0; tmp[x]; x++)
 				switch (*tmp[x]) {

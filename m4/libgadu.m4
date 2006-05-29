@@ -35,7 +35,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
     ## is sed really necessary?
     incl=`echo "$with_arg" | sed 's/:.*//'`
     lib=`echo "$with_arg" | sed 's/.*://'`
-    LIBGADU_LIBS="$lib -lgadu -lcrypto -lssl $PTHREAD_LIBS $LIBJPEG_LIBS"
+    LIBGADU_LIBS="$lib -lgadu -lcrypto -lssl $PTHREAD_LIBS"
     LIBGADU_CPPFLAGS="$incl"
   fi
 
@@ -49,7 +49,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
       AC_CHECK_LIB([gadu], [gg_logoff],
       [
         AC_DEFINE([HAVE_LIBGADU], 1, [define if you have libgadu])
-        LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS $LIBJPEG_LIBS"
+        LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS"
         have_libgadu="yes"
       ])
     ])

@@ -90,7 +90,8 @@ COMMAND(logsqlite_cmd_last)
 	char *errors;
 	int count;
 #endif
-
+	PARUNI
+	
 	struct tm *tm;
 	time_t ts;
 	int count2 = 0;

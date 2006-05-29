@@ -190,7 +190,28 @@ if test "x$with_aspell" != "xno"; then
 fi
 
 dnl
-dnl  Sprawdzamy libjpeg.so i <jpeglib.h>
+dnl  Checking libungif.so i <gif_lib.h>
+dnl
+
+AC_ARG_WITH(libungif,
+        [  --without-libungif      Compile without GIF token support])
+
+if test "x$with_libungif" != "xno"; then
+        AC_CHECK_LIB(ungif, DGifSlurp,
+        [
+                AC_CHECK_HEADERS(gif_lib.h,
+                [
+                        AC_DEFINE(HAVE_LIBUNGIF, 1, [define if you have libungif])
+			AC_SUBST([LIBUNGIF_LIBS])
+                        LIBUNGIF_LIBS="-lungif"
+                        have_libungif=yes
+                ])
+        ])
+fi
+
+
+dnl
+dnl  Checking libjpeg.so i <jpeglib.h>
 dnl
 
 AC_ARG_WITH(libjpeg,
@@ -202,6 +223,7 @@ if test "x$with_libjpeg" != "xno"; then
                 AC_CHECK_HEADERS(jpeglib.h,
                 [
                         AC_DEFINE(HAVE_LIBJPEG, 1, [define if you have libjpeg])
+			AC_SUBST([LIBJPEG_LIBS])
                         LIBJPEG_LIBS="-ljpeg"
                         have_libjpeg=yes
                 ])
@@ -463,6 +485,12 @@ if test "x$have_libjpeg" = "xyes"; then
         echo " - libjpeg:   enabled"
 else
         echo " - libjpeg:   disabled"
+fi
+
+if test "x$have_libungif" = "xyes"; then
+        echo " - libungif:   enabled"
+else
+        echo " - libungif:   disabled"
 fi
 
 if test "x$enable_unicode" = "xyes"; then
