@@ -1121,15 +1121,19 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				for (node = q->children; node; node = node->next) {
 					char *lname	= jabber_unescape(node->name);
 					char *ns	= jabber_attr(node->atts, "xmlns");
-
-					int quiet = 0;
 					xmlnode_t *child;
 
-					if (!xstrcmp(node->name, "ekg2")) quiet = 1;	/* internal ekg2 database. (DON'T DISPLAY IT?!) */
+					int config_display = 1;
+					int quiet = 0;
 
-					quiet = 0; /* XXX */
+					if (!xstrcmp(node->name, "ekg2")) {
+						if (!xstrcmp(jabber_attr(node->atts, "xmlns"), "ekg2:prefs") && !xstrncmp(id, "config", 6)) config_display = 0; /* do we want to display / get config ? */ 
+						/* XXX, other */
+					}
 
-					if (node->children) printq("jabber_private_list_header", session_name(s), lname, ns);
+					if (!config_display) quiet = 1;
+
+					if (node->children)	printq("jabber_private_list_header", session_name(s), lname, ns);
 					if (!xstrcmp(node->name, "ekg2") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "ekg2:prefs")) {
 						for (child = node->children; child; child = child->next) {
 							char *cname	= jabber_unescape(child->name);
@@ -1157,9 +1161,18 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 							} else	printq("jabber_private_list_item", session_name(s), lname, ns, cname, cvalue);
 							xfree(cname); xfree(cvalue);
 						}
-						if (node->children) printq("jabber_private_list_footer", session_name(s), lname, ns);
-						else 		    printq("jabber_private_list_empty", session_name(s), lname, ns);
+					} else {
+						/* DISPLAY IT ? w jakim formacie?
+						 * + CHILD item=value item2=value2
+						 *  - SUBITEM .....
+						 *  - SUBITEM........
+						 *  + SUBCHILD ......
+						 *   - SUBITEM
+						 * ? XXX
+						 */
 					}
+					if (node->children)	printq("jabber_private_list_footer", session_name(s), lname, ns);
+					else 			printq("jabber_private_list_empty", session_name(s), lname, ns);
 				}
 			} else if (!xstrcmp(ns, "http://jabber.org/protocol/vacation")) { /* JEP-0109: Vacation Messages */
 				xmlnode_t *temp;
