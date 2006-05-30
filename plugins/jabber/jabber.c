@@ -1225,7 +1225,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						else if (!xstrcmp(var, "http://jabber.org/protocol/vacation"))	{ user_command = 2;	tvar = "/jid:vacation"; }
 						else if (!xstrcmp(var, "presence-invisible"))	{ user_command = 2;	tvar = "/invisible"; } /* we ought use jabber:iq:privacy */
 						else if (!xstrcmp(var, "jabber:iq:privacy"))	{ user_command = 2;	tvar = "/jid:privacy"; }
-						else if (!xstrcmp(var, "jabber:iq:private"))	{ user_command = 2;	tvar = "/jid:config"; }
+						else if (!xstrcmp(var, "jabber:iq:private"))	{ user_command = 2;	tvar = "/jid:private && /jid:config"; }
 
 						if (tvar)	print(	user_command == 2 ? "jabber_transinfo_comm_not" : 
 									user_command == 1 ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
