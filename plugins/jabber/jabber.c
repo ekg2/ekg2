@@ -1959,6 +1959,8 @@ TIMER(jabber_ping_timer_handler) {
 	if (!s || !session_connected_get(s)) {
 		return -1;
 	}
+
+	if (session_int_get(s, "ping-server") == 0) return -1;
 	
 	jabber_write(s, "<iq/>"); /* leafnode idea */
 	return 0;
@@ -2003,9 +2005,11 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
         XML_SetElementHandler(j->parser, (XML_StartElementHandler) jabber_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
         XML_SetCharacterDataHandler(j->parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
 
-	tname = saprintf("ping-%s", s->uid+4);
-	timer_add(&jabber_plugin, tname, 180, 1, jabber_ping_timer_handler, xstrdup(s->uid));
-	xfree(tname);
+	if (session_int_get(s, "ping-server") != 0) {
+		tname = saprintf("ping-%s", s->uid+4);
+		timer_add(&jabber_plugin, tname, 180, 1, jabber_ping_timer_handler, xstrdup(s->uid));
+		xfree(tname);
+	}
 
 	return -1;
 }
@@ -2347,6 +2351,7 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
         plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "ping-server", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "port", VAR_INT, "5222", 0, NULL);
         plugin_var_add(&jabber_plugin, "priority", VAR_INT, "5", 0, NULL);
         plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
