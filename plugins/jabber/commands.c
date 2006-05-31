@@ -858,7 +858,7 @@ COMMAND(jabber_command_lastseen)
 	return 0;
 }
 
-char **jabber_params_split(const char *line)
+char **jabber_params_split(const char *line, int allow_empty)
 {
 	char **arr, **ret = NULL;
 	int num = 0, i = 0, z = 0;
@@ -873,7 +873,9 @@ char **jabber_params_split(const char *line)
 		if (!z) {
 			if (arr[i][0] == '-' && arr[i][1] == '-' && xstrlen(arr[i]) > 2)
 				ret[num++] = xstrdup (arr[i]+2);
-			else {
+			else if (allow_empty) {
+				ret[num++] = xstrdup("");
+			} else {
 				array_free (arr);
 				ret[num] = NULL;
 				array_free (ret);
@@ -916,7 +918,7 @@ COMMAND(jabber_command_search) {
 	/* XXX, made (session?) variable: jabber:default_search_server */
 	char **splitted;
 
-	if (!(splitted = jabber_params_split(params[1])) && params[1]) {
+	if (!(splitted = jabber_params_split(params[1], 0)) && params[1]) {
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -954,7 +956,7 @@ COMMAND(jabber_command_register)
 		return -1;
 	}
 
-	if (!(splitted = jabber_params_split(params[1])) && params[1]) {
+	if (!(splitted = jabber_params_split(params[1], 0)) && params[1]) {
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -1252,23 +1254,95 @@ COMMAND(jabber_command_private) {
 	CHAR_T *namespace; 	/* <nazwa> */
 
 	int config = 0;			/* 1 if name == jid:config */
-	if (!xstrcmp(name, "config")) config = 1; 
-	
-	if (config)	namespace = TEXT("ekg2 xmlns=\"ekg2:prefs\"");
-	else		namespace = (CHAR_T *) params[1];
+	int bookmark = 0;		/* 1 if name == jid:bookmark */
 
-	if (match_arg(params[0], 'g', TEXT("get"), 2) || match_arg(params[0], 'd', TEXT("display"), 2)) {	/* get */
+	if (!xstrcmp(name, "config"))	config = 1;
+	if (!xstrcmp(name, "bookmark")) bookmark = 1;
+	
+	if (config)		namespace = TEXT("ekg2 xmlns=\"ekg2:prefs\"");
+	else if (bookmark)	namespace = TEXT("storage xmlns=\"storage:bookmarks\"");
+	else			namespace = (CHAR_T *) params[1];
+
+	if (bookmark) {				/* bookmark-only-commands */
+		int bookmark_sync	= 0;			/* 0 - no sync; 1 - sync (item added); 2 - sync (item modified) 3 - sync (item removed)	*/
+	
+		if (match_arg(params[0], 'a', TEXT("add"), 2))		bookmark_sync = 1;	/* add item */
+		if (match_arg(params[0], 'm', TEXT("modify"), 2))	bookmark_sync = 2; 	/* modify item */
+		if (match_arg(params[0], 'r', TEXT("remove"), 2))	bookmark_sync = 3; 	/* remove item */
+
+		if (bookmark_sync) {
+			const CHAR_T *p[2]	= {TEXT("-p"), NULL};	/* --put */
+			char **splitted		= NULL;
+			
+			splitted = jabber_params_split(params[1], 1);
+
+			if (bookmark_sync && (!splitted && params[1])) {
+				wcs_printq("invalid_params", name);
+				return -1;
+			}
+
+			switch (bookmark_sync) {
+				case (1):	{	/* add item */
+						/* Usage: 
+						 *	/jid:bookmark --add --url url [-- name]
+						 * 	/jid:bookmark --add --conf jid [--autojoin 1] [--nick cos] [--pass cos] [-- name] 
+						 */
+						jabber_bookmark_t *book = NULL;
+
+						if (!xstrcmp(splitted[0], "url")) {
+							book		= xmalloc(sizeof(jabber_bookmark_t));
+							book->type	= JABBER_BOOKMARK_URL;
+
+							book->private.url = xmalloc(sizeof(jabber_bookmark_url_t));
+							book->private.url->name = xstrdup(jabber_attr(splitted, ""));
+							book->private.url->url	= xstrdup(splitted[1]);
+
+						} else if (!xstrcmp(splitted[0], "conf")) {
+							book		= xmalloc(sizeof(jabber_bookmark_t));
+							book->type	= JABBER_BOOKMARK_CONFERENCE;
+
+							book->private.conf = xmalloc(sizeof(jabber_bookmark_conference_t));
+							book->private.conf->name = xstrdup(jabber_attr(splitted, ""));
+							book->private.conf->jid	= xstrdup(splitted[1]);
+							book->private.conf->nick= xstrdup(jabber_attr(splitted, "nick")); 
+							book->private.conf->pass= xstrdup(jabber_attr(splitted, "pass"));
+
+							if (jabber_attr(splitted, "autojoin") && atoi(jabber_attr(splitted, "autojoin")))	book->private.conf->autojoin = 1;
+/*							else											book->private.conf->autojoin = 0; */
+						} else bookmark_sync = -1;
+						if (book) list_add(&(j->bookmarks), book, 0);
+					}
+					break;
+				case (2):		/* modify item XXX */
+				case (3):		/* remove item XXX */
+				default:	/* error */
+					bookmark_sync = -bookmark_sync;		/* make it negative -- error */
+					debug("[JABBER, BOOKMARKS] switch(bookmark_sync) sync=%d ?!\n", bookmark_sync);
+			}
+
+			array_free(splitted);
+			if (bookmark_sync > 0) {
+				return jabber_command_private(name, (const CHAR_T **) p, session, target, quiet); /* synchronize db */
+			} else if (bookmark_sync < 0) {
+				debug("[JABBER, BOOKMARKS] sync=%d\n", bookmark_sync);
+				wcs_printq("invalid_params", name);
+				return -1;
+			}
+		}
+	}
+
+	if (match_arg(params[0], 'g', TEXT("get"), 2) || match_arg(params[0], 'd', TEXT("display"), 2)) {	/* get/display */
 		watch_write(j->send_watch,
 			"<iq type=\"get\" id=\"%s%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
 			"<" CHARF "/>"
 			"</query></iq>", 
-			(match_arg(params[0], 'g', TEXT("get"), 2) && config) ? "config" : "private", 
+			(match_arg(params[0], 'g', TEXT("get"), 2) && (config || bookmark) ) ? "config" : "private", 
 			j->id++, namespace);
 		return 0;
 	}
 
-	if (match_arg(params[0], 'p', TEXT("put"), 2)) {	/* put */
+	if (match_arg(params[0], 'p', TEXT("put"), 2)) {							/* put */
 		list_t l;
 
 		watch_write(j->send_watch, 
@@ -1325,6 +1399,26 @@ back:
 				}
 				watch_write(j->send_watch, "</session>");
 			}
+		} else if (bookmark) {	/* synchronize with j->bookmarks using JEP-0048 */
+			list_t l;
+			for (l = j->bookmarks; l; l = l->next) {
+				jabber_bookmark_t *book = l->data;
+
+				switch (book->type) {
+					case (JABBER_BOOKMARK_URL):
+						watch_write(j->send_watch, "<url name=\"%s\" url=\"%s\"/>", book->private.url->name, book->private.url->url);
+						break;
+					case (JABBER_BOOKMARK_CONFERENCE):
+						watch_write(j->send_watch, "<conference name=\"%s\" autojoin=\"%s\" jid=\"%s\">", book->private.conf->name, 
+							book->private.conf->autojoin ? "true" : "false", book->private.conf->jid);
+						if (book->private.conf->nick) watch_write(j->send_watch, "<nick>%s</nick>", book->private.conf->nick);
+						if (book->private.conf->pass) watch_write(j->send_watch, "<password>%s</password>", book->private.conf->pass);
+						watch_write(j->send_watch, "</conference>");
+						break;
+					default:
+						debug("[JABBER, BOOKMARK] while syncing j->bookmarks... book->type = %d wtf?\n", book->type);
+				}
+			}
 		} else {
 			watch_write(j->send_watch, params[2]);
 		}
@@ -1344,7 +1438,8 @@ back:
 		return 0;
 	}
 
-	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {	/* clear */
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {						/* clear */
+/*		if (bookmark)  destory j->bookmarks ? */
 		watch_write(j->send_watch,
 			"<iq type=\"set\" id=\"private%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
@@ -1373,6 +1468,7 @@ void jabber_register_commands()
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, TEXT("jid:away"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:back"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:bookmark"), "!p ?", jabber_command_private, JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-a --add -c --clear -d --display -m --modify -r --remove");
 	command_add(&jabber_plugin, TEXT("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, TEXT("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
@@ -1391,7 +1487,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:privacy"), "? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, TEXT("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-c --clear -g --get -p --put");
+	command_add(&jabber_plugin, TEXT("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-c --clear -d --display -p --put");
 	command_add(&jabber_plugin, TEXT("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:stats"), "? ?", jabber_command_stats, JABBER_FLAGS, NULL);

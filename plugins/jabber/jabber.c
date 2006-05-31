@@ -134,7 +134,7 @@ WATCHER(jabber_dcc_handle_recv) {
 
 	switch (p->protocol) {
 		case (JABBER_DCC_PROTOCOL_BYTESTREAMS): {
-			jabber_dcc_bytestream_t *b = p->private;
+			jabber_dcc_bytestream_t *b = p->private.bytestream;
 			char buf[16384];	/* dla data transfer */
 			int len;
 
@@ -867,6 +867,9 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			userlist_free(s);
 			watch_write(j->send_watch, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 			jabber_write_status(s);
+
+			if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, TEXT("/jid:bookmark --get"), 1);
+
 		} else if (!xstrcmp(type, "error")) { /* TODO: try to merge with <message>'s <error> parsing */
 			xmlnode_t *e = xmlnode_find_child(n, "error");
 
@@ -931,7 +934,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					jabber_dcc_bytestream_t *b;
 					list_t l;
 
-					b = p->private = xmalloc(sizeof(jabber_dcc_bytestream_t));
+					b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
 					b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
 
 					if (jabber_dcc_ip) {
@@ -1124,21 +1127,27 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					xmlnode_t *child;
 
 					int config_display = 1;
+					int bookmark_display = 1;
 					int quiet = 0;
 
 					if (!xstrcmp(node->name, "ekg2")) {
-						if (!xstrcmp(jabber_attr(node->atts, "xmlns"), "ekg2:prefs") && !xstrncmp(id, "config", 6)) config_display = 0; /* do we want to display / get config ? */ 
+						if (!xstrcmp(ns, "ekg2:prefs") && !xstrncmp(id, "config", 6)) 
+							config_display = 0;	/* if it's /jid:config --get (not --display) we don't want to display it */ 
 						/* XXX, other */
 					}
+					if (!xstrcmp(node->name, "storage")) {
+						if (!xstrcmp(ns, "storage:bookmarks") && !xstrncmp(id, "config", 6))
+							bookmark_display = 0;	/* if it's /jid:bookmark --get (not --display) we don't want to display it (/jid:bookmark --get performed @ connect) */
+					}
 
-					if (!config_display) quiet = 1;
+					if (!config_display || !bookmark_display) quiet = 1;
 
 					if (node->children)	printq("jabber_private_list_header", session_name(s), lname, ns);
-					if (!xstrcmp(node->name, "ekg2") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "ekg2:prefs")) {
+					if (!xstrcmp(node->name, "ekg2") && !xstrcmp(ns, "ekg2:prefs")) { 	/* our private struct, containing `full` configuration of ekg2 */
 						for (child = node->children; child; child = child->next) {
 							char *cname	= jabber_unescape(child->name);
 							char *cvalue	= jabber_unescape(child->data);
-							if (!xstrcmp(child->name, "plugin")) {
+							if (!xstrcmp(child->name, "plugin") && !xstrcmp(jabber_attr(child->atts, "xmlns"), "ekg2:plugin")) {
 								xmlnode_t *temp;
 								printq("jabber_private_list_plugin", session_name(s), lname, ns, jabber_attr(child->atts, "name"), jabber_attr(child->atts, "prio"));
 								for (temp = child->children; temp; temp = temp->next) {
@@ -1148,7 +1157,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 									xfree(snname);
 									xfree(svalue);
 								}
-							} else if (!xstrcmp(child->name, "session")) {
+							} else if (!xstrcmp(child->name, "session") && !xstrcmp(jabber_attr(child->atts, "xmlns"), "ekg2:session")) {
 								xmlnode_t *temp;
 								printq("jabber_private_list_session", session_name(s), lname, ns, jabber_attr(child->atts, "uid"));
 								for (temp = child->children; temp; temp = temp->next) {
@@ -1160,6 +1169,56 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 								}
 							} else	printq("jabber_private_list_item", session_name(s), lname, ns, cname, cvalue);
 							xfree(cname); xfree(cvalue);
+						}
+					} else if (!xstrcmp(node->name, "storage") && !xstrcmp(ns, "storage:bookmarks")) { /* JEP-0048: Bookmark Storage */
+						/* destroy previously-saved list */
+						list_t l;
+						for (l = j->bookmarks; l; l = l->next) {
+							jabber_bookmark_t *book = l->data;
+							if (!book) continue;
+
+							if (book->type == JABBER_BOOKMARK_URL) { xfree(book->private.url->name); xfree(book->private.url->url); }
+							else if (book->type == JABBER_BOOKMARK_CONFERENCE) { 
+								xfree(book->private.conf->name); xfree(book->private.conf->jid);
+								xfree(book->private.conf->nick); xfree(book->private.conf->pass);
+							}
+							xfree(book->private.other);
+							xfree(book);
+							l->data = NULL;
+						}
+						list_destroy(j->bookmarks, 0); j->bookmarks = NULL;
+
+						/* create new-one */
+						for (child = node->children; child; child = child->next) {
+							jabber_bookmark_t *book = xmalloc(sizeof(jabber_bookmark_t));
+
+							debug("[JABBER:IQ:PRIVATE BOOKMARK item=%s\n", child->name);
+							if (!xstrcmp(child->name, "conference")) {
+								xmlnode_t *temp;
+
+								book->type	= JABBER_BOOKMARK_CONFERENCE;
+								book->private.conf		= xmalloc(sizeof(jabber_bookmark_conference_t));
+								book->private.conf->name	= jabber_unescape(jabber_attr(child->atts, "name"));
+								book->private.conf->jid		= jabber_unescape(jabber_attr(child->atts, "jid"));
+								book->private.conf->autojoin	= !xstrcmp(jabber_attr(child->atts, "autojoin"), "true");
+
+								book->private.conf->nick	= jabber_unescape( (temp = xmlnode_find_child(child, "nick")) ? temp->data : NULL);
+								book->private.conf->pass        = jabber_unescape( (temp = xmlnode_find_child(child, "password")) ? temp->data : NULL);
+
+								printq("jabber_bookmark_conf", session_name(s), book->private.conf->name, book->private.conf->jid,
+									book->private.conf->autojoin ? "X" : " ", book->private.conf->nick, book->private.conf->pass);
+
+							} else if (!xstrcmp(child->name, "url")) {
+								book->type	= JABBER_BOOKMARK_URL;
+								book->private.url	= xmalloc(sizeof(jabber_bookmark_url_t));
+								book->private.url->name	= jabber_unescape(jabber_attr(child->atts, "name"));
+								book->private.url->url	= jabber_unescape(jabber_attr(child->atts, "url"));
+
+								printq("jabber_bookmark_url", session_name(s), book->private.url->name, book->private.url->url);
+
+							} else { debug("[JABBER:IQ:PRIVATE:BOOKMARK UNKNOWNITEM=%s\n", child->name); xfree(book); book = NULL; }
+
+							if (book) list_add(&j->bookmarks, book, 0);
 						}
 					} else {
 						/* DISPLAY IT ? w jakim formacie?
@@ -1225,7 +1284,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						else if (!xstrcmp(var, "http://jabber.org/protocol/vacation"))	{ user_command = 2;	tvar = "/jid:vacation"; }
 						else if (!xstrcmp(var, "presence-invisible"))	{ user_command = 2;	tvar = "/invisible"; } /* we ought use jabber:iq:privacy */
 						else if (!xstrcmp(var, "jabber:iq:privacy"))	{ user_command = 2;	tvar = "/jid:privacy"; }
-						else if (!xstrcmp(var, "jabber:iq:private"))	{ user_command = 2;	tvar = "/jid:private && /jid:config"; }
+						else if (!xstrcmp(var, "jabber:iq:private"))	{ user_command = 2;	tvar = "/jid:private && /jid:config && /jid:bookmark"; }
 
 						if (tvar)	print(	user_command == 2 ? "jabber_transinfo_comm_not" : 
 									user_command == 1 ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
@@ -1404,7 +1463,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
 						watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_dcc_handle_recv, d);
 						
-						p->private = b = xmalloc(sizeof(jabber_dcc_bytestream_t));
+						p->private.bytestream = b = xmalloc(sizeof(jabber_dcc_bytestream_t));
 						b->validate	= JABBER_DCC_PROTOCOL_BYTESTREAMS;
 						b->step		= SOCKS5_CONNECT;
 						b->streamhost	= streamhost;
@@ -1424,7 +1483,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					if ((d = jabber_dcc_find(uid, id, NULL))) {
 						char *usedjid = (used) ? jabber_attr(used->atts, "jid") : NULL;
 						p = d->priv;
-						b = p->private;
+						b = p->private.bytestream;
 
 						for (l = b->streamlist; l; l = l->next) {
 							struct jabber_streamhost_item *item = l->data;
@@ -2194,11 +2253,15 @@ static int jabber_theme_init()
 
 	/* %1 - session_name %2 - list_name %3 xmlns */
 	format_add("jabber_private_list_header",  _("%g,+=%G----- Private list: %T%2/%3%n"), 1);
-	format_add("jabber_private_list_item",	    "%g|| %n %4: %W%5%n",  1);			/* %4 - item %5 - value */
 
+	/* BOOKMARKS */
+	format_add("jabber_bookmark_url",	_("%g|| %n URL: %W%3%n (%2)"), 1);		/* %1 - session_name, bookmark  url item: %2 - name %3 - url */
+	format_add("jabber_bookmark_conf",	_("%g|| %n MUC: %W%3%n (%2)"), 1);	/* %1 - session_name, bookmark conf item: %2 - name %3 - jid %4 - autojoin %5 - nick %6 - password */
+
+	/* XXX not private_list but CONFIG ? */
+	format_add("jabber_private_list_item",	    "%g|| %n %4: %W%5%n",  1);			/* %4 - item %5 - value */
 	format_add("jabber_private_list_session",   "%g|| + %n Session: %W%4%n",  1);		/* %4 - uid */
 	format_add("jabber_private_list_plugin",    "%g|| + %n Plugin: %W%4 (%5)%n",  1);	/* %4 - name %5 - prio*/
-
 	format_add("jabber_private_list_subitem",   "%g||  - %n %4: %W%5%n",  1);               /* %4 - item %5 - value */
 
 	format_add("jabber_private_list_footer",  _("%g`+=%G----- End of the private list%n"), 1);
@@ -2276,6 +2339,7 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "alias", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "auto_bookmark_sync", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
