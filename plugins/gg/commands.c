@@ -310,7 +310,8 @@ COMMAND(gg_command_away)
 {
 	PARASC
 	gg_private_t *g = session_private_get(session);
-	char *descr, *f = NULL, *fd = NULL, *df = NULL, *params0 = xstrdup(params[0]);
+	CHAR_T *descr;
+	char *cpdescr, *f = NULL, *fd = NULL, *df = NULL, *params0 = xstrdup(params[0]);
 	const char *status;
 	int timeout = session_int_get(session, "scroll_long_desc");
 	int autoscroll = 0;
@@ -416,9 +417,9 @@ COMMAND(gg_command_away)
 		 * and make it easy to ignore states with '>' at beginning
 		 */
 		if (autoscroll)
-				descr = saprintf("<%s", desk);
+				descr = wcsprintf(TEXT("<%s"), desk);
 		else 
-				descr = saprintf("%s>", desk);
+				descr = wcsprintf(TEXT("%s>"), desk);
 		xfree(desk);
 
 		if (!xstrcmp(mode, "bounce")) {
@@ -447,13 +448,15 @@ COMMAND(gg_command_away)
 		 */
 
 		autoscroll = timeout;
-	} else
-		descr = xstrdup(session_descr_get(session));
+	} else {
 #if USE_UNICODE
-	debug("%ls - %s\n", name, descr);
+		descr = normal_to_wcs(session_descr_get(session));
 #else
-	debug("%s - %s\n", name, descr);
+		descr = xstrdup(session_descr_get(session));
 #endif
+	}
+	debug(CHARF " - %s\n", name, descr);
+
 	status = session_status_get(session);
 
 	if (!autoscroll) {
@@ -471,17 +474,20 @@ COMMAND(gg_command_away)
 
 	ekg_update_status(session);
 
-	gg_iso_to_cp(descr);
-	_status = GG_S(gg_text_to_status(status, descr)); /* descr can be NULL it doesn't matter... */
+	cpdescr = gg_locale_to_cp(descr);
+	_status = GG_S(gg_text_to_status(status, cpdescr)); /* descr can be NULL it doesn't matter... */
 
 	if (session_int_get(session, "private"))
                 _status |= GG_STATUS_FRIENDS_MASK;
 
-	if (descr)	gg_change_status_descr(g->sess, _status, descr);
+	if (descr)	gg_change_status_descr(g->sess, _status, cpdescr);
 	else		gg_change_status(g->sess, _status);
 
 	xfree(params0);
+	xfree(cpdescr);
+#if USE_UNICODE
 	xfree(descr);
+#endif
 
 	return 0;
 }

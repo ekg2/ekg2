@@ -468,9 +468,10 @@ static void gg_session_handler_success(session_t *s)
 	gg_private_t *g = session_private_get(s);
         const char *status;
 	char *__session;
-	char *descr;
 	char buf[100];
 	int _status;
+	CHAR_T *descr;
+	char *cpdescr; 
 
 	if (!g || !g->sess) {
 		debug("[gg] gg_session_handler_success() called with null gg_private_t\n");
@@ -500,23 +501,29 @@ static void gg_session_handler_success(session_t *s)
 	/* pamiêtajmy, ¿eby pingowaæ */
 	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
 	timer_add(&gg_plugin, buf, 180, 1, gg_ping_timer_handler, xstrdup(s->uid));
-
+#if USE_UNICODE
+	descr = normal_to_wcs(session_descr_get(s));
+#else
  	descr = xstrdup(session_descr_get(s));
+#endif
         status = session_status_get(s);
 
-	gg_iso_to_cp(descr);
+	cpdescr = gg_locale_to_cp(descr);
 
         /* ustawiamy swój status */
-	_status = GG_S(gg_text_to_status(status, s->descr ? descr : NULL));
+	_status = GG_S(gg_text_to_status(status, s->descr ? cpdescr : NULL));
 	if (session_int_get(s, "private")) 
 		_status |= GG_STATUS_FRIENDS_MASK;
 
 	if (s->descr) {
-		gg_change_status_descr(g->sess, _status, descr);
+		gg_change_status_descr(g->sess, _status, cpdescr);
         } else {
                 gg_change_status(g->sess, _status);
         }
-	xfree(descr);	
+	xfree(cpdescr);	
+#if USE_UNICODE
+	xfree(descr);
+#endif
 }
 
 /*
@@ -982,6 +989,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
 	                print("userlist_get_ok");
 
                         if (e->event.userlist.reply) {
+				CHAR_T *reply;
 				list_t l;
 				gg_private_t *g = session_private_get(s);
 
@@ -995,9 +1003,8 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
 
                                         gg_remove_notify_ex(g->sess, str_to_uin(parsed + 1), gg_userlist_type(u));
                                 }
-
-                                gg_cp_to_iso(e->event.userlist.reply);
-				userlist_set(s, e->event.userlist.reply);
+				reply = gg_cp_to_locale(e->event.userlist.reply);
+				userlist_set(s, reply);
 		                gg_userlist_send(g->sess, s->userlist);
 
                                 config_changed = 1;
@@ -1184,25 +1191,34 @@ void gg_changed_private(session_t *s, const char *var)
 {
 	gg_private_t *g = (s) ? session_private_get(s) : NULL;
 	const char *status = session_status_get(s);
-	char *descr = xstrdup(session_descr_get(s));
+	CHAR_T *descr;
+	char *cpdescr;
 	int _status;
 
 	if (!session_connected_get(s)) {
-		xfree(descr);
 		return;
 	}
 
-	gg_iso_to_cp(descr);
+#if USE_UNICODE
+	descr = normal_to_wcs(session_descr_get(s));
+#else
+	descr = xstrdup(session_descr_get(s));
+#endif
 
-	_status = GG_S(gg_text_to_status(status, s->descr ? descr : NULL)); 
+	cpdescr = gg_locale_to_cp(descr);
+
+	_status = GG_S(gg_text_to_status(status, s->descr ? cpdescr : NULL)); 
 	if (session_int_get(s, "private"))
 		_status |= GG_STATUS_FRIENDS_MASK;
 	if (s->descr)
-		gg_change_status_descr(g->sess, _status, descr);
+		gg_change_status_descr(g->sess, _status, cpdescr);
 	else
 		gg_change_status(g->sess, _status);
 
+	xfree(cpdescr);
+#if USE_UNICODE
 	xfree(descr);
+#endif
 }
 
 /*

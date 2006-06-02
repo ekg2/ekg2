@@ -347,47 +347,57 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 	}
 
 	for (i = 0; i < count; i++) {
-		const char *__fmnumber = gg_pubdir50_get(res, i, "fmnumber");
-		const char *uin = (__fmnumber) ? __fmnumber : "?";
+		char   *cpfirstname, *cplastname, *cpnickname, *cpcity;
+		CHAR_T *firstname, *lastname, *nickname, *city;
 
+		const char *__fmnumber	= gg_pubdir50_get(res, i, "fmnumber");
 		const char *__firstname = gg_pubdir50_get(res, i, "firstname");
-		char *firstname = xstrdup((__firstname) ? __firstname : "");
-
-		const char *__lastname = gg_pubdir50_get(res, i, "lastname");
-		char *lastname = xstrdup((__lastname) ? __lastname : "");
-		
-		const char *__nickname = gg_pubdir50_get(res, i, "nickname");
-		char *nickname = xstrdup((__nickname) ? __nickname : "");
-
-		const char *__fmstatus = gg_pubdir50_get(res, i, "fmstatus");
-		int status = (__fmstatus) ? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
-
+		const char *__lastname	= gg_pubdir50_get(res, i, "lastname");
+		const char *__nickname	= gg_pubdir50_get(res, i, "nickname");
+		const char *__fmstatus	= gg_pubdir50_get(res, i, "fmstatus");
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
-		const char *birthyear = (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : "-";
-
-		const char *__city = gg_pubdir50_get(res, i, "city");
-		char *city = xstrdup((__city) ? __city : "");
+		const char *__city	= gg_pubdir50_get(res, i, "city");
 
 		char *name, *active, *gender;
-
 		const char *target = NULL;
 
-		gg_cp_to_iso(firstname);
-		gg_cp_to_iso(lastname);
-		gg_cp_to_iso(nickname);
-		gg_cp_to_iso(city);
+		const char *uin, *birthyear;
+		int status;
+#if USE_UNICODE
+# warning gg: gg_session_handler_search50() It maybe faulty in unicode version.
+/* we don't need to duplicate string if it's unicode ... */
+#define unistrdup(x) (char *) x
+#else
+#define unistrdup(x) xstrdup(x) 
+#endif
+
+		uin 		= (__fmnumber)	? __fmnumber : NULL;		/* '?' */
+		cpfirstname 	= (__firstname) ? unistrdup(__firstname): NULL; /* '' */
+		cplastname 	= (__lastname)  ? unistrdup(__lastname) : NULL;	/* '' */
+		cpnickname 	= (__nickname)	? unistrdup(__nickname) : NULL;	/* '' */
+		cpcity 		= (__city)	? unistrdup(__city) : NULL;	/* '' */
+
+		status 		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
+		birthyear 	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : "-";
+
+		firstname 	= gg_cp_to_locale(cpfirstname);
+		lastname 	= gg_cp_to_locale(cplastname);
+		nickname 	= gg_cp_to_locale(cpnickname);
+		city		= gg_cp_to_locale(cpcity);
 
 		if (count == 1 && !all) {
 			xfree(last_search_first_name);
 			xfree(last_search_last_name);
 			xfree(last_search_nickname);
-			last_search_first_name = xstrdup(firstname);
-			last_search_last_name = xstrdup(lastname);
-			last_search_nickname = xstrdup(nickname);
-			last_search_uid = saprintf("gg:%s", uin);
+			last_search_first_name	= xwcsdup(firstname);
+			last_search_last_name	= xwcsdup(lastname);
+			last_search_nickname	= xwcsdup(nickname);
+			last_search_uid 	= saprintf("gg:%s", uin);
 		}
 
-		name = saprintf("%s %s", firstname, lastname);
+		name = saprintf(CHARF" "CHARF, 
+					firstname ? firstname : TEXT(""), 
+					lastname ? lastname : TEXT(""));
 
 #define __format(x) ((count == 1 && !all) ? "search_results_single" x : "search_results_multi" x)
 
@@ -419,7 +429,10 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			}
 		}
 		
-		print_window(target, s, 0, __format(""), uin, name, nickname, city, birthyear, gender, active);
+		wcs_print_window(target, s, 0, __format(""), 
+			uin 		? uin : TEXT("?"), name, 
+			nickname 	? nickname : TEXT(""), 
+			city		? city : TEXT(""), birthyear, gender, active);
 
 #undef __format
 

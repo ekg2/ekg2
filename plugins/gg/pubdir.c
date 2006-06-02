@@ -203,9 +203,10 @@ COMMAND(gg_command_unregister)
 {
 	PARASC
 	struct gg_http *h;
-	char *passwd;
 	watch_t *w;
 	uin_t uin;
+	CHAR_T *passwd;
+	char *cppasswd;
 
         if (!last_tokenid) {
                 wcs_printq("token_missing");
@@ -221,17 +222,23 @@ COMMAND(gg_command_unregister)
 		printq("unregister_bad_uin", params[0]);
 		return -1;
 	}
-
+#if USE_UNICODE
+#warning gg_command_unregister() not work with unicode version.
+	passwd = normal_to_wcs(params[1]);
+#else
 	passwd = xstrdup(params[1]);
-	gg_iso_to_cp(passwd);
+#endif
+	cppasswd = gg_locale_to_cp(passwd);
 
-	if (!(h = gg_unregister3(uin, passwd, last_tokenid, params[2], 1))) {
+	if (!(h = gg_unregister3(uin, cppasswd, last_tokenid, params[2], 1))) {
 		printq("unregister_failed", strerror(errno));
 		xfree(passwd);
 		return -1;
 	}
-
+	xfree(cppasswd);
+#if USE_UNICODE
 	xfree(passwd);
+#endif
 
 	w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_unregister, h); 
 	watch_timeout_set(w, h->timeout);
@@ -315,19 +322,29 @@ COMMAND(gg_command_passwd)
 {
 	PARASC
 	gg_private_t *g = session_private_get(session);
-	char *oldpasswd, *newpasswd;
 	struct gg_http *h;
 	watch_t *w;
 
-	oldpasswd = xstrdup(session_get(session, "password"));
-	if (oldpasswd)
-		gg_iso_to_cp(oldpasswd);
-	newpasswd = xstrdup(params[0]);
-	gg_iso_to_cp(newpasswd);
+	CHAR_T *newpasswd, *oldpasswd;
+	char *cppasswd, *cpoldpasswd;
 
-	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? oldpasswd : "", newpasswd, "", 1))) {
+#if USE_UNICODE
+	oldpasswd = normal_to_wcs(session_get(session, "password"));
+	newpasswd = normal_to_wcs(params[0]);
+#else
+	oldpasswd = xstrdup(session_get(session, "password"));
+	newpasswd = xstrdup(params[0]);
+#endif
+	cppasswd	= gg_locale_to_cp(newpasswd);
+	cpoldpasswd	= gg_locale_to_cp(oldpasswd);
+
+	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? cpoldpasswd : "", cppasswd, "", 1))) {
+#if USE_UNICODE
 		xfree(newpasswd);
 		xfree(oldpasswd);
+#endif
+		xfree(cppasswd);
+		xfree(cpoldpasswd);
 		printq("passwd_failed", strerror(errno));
 		return -1;
 	}
@@ -338,6 +355,16 @@ COMMAND(gg_command_passwd)
 	watch_timeout_set(w, h->timeout);
 
 	list_add(&g->passwds, h, 0);
+#if USE_UNICODE
+	xfree(newpasswd);
+	xfree(oldpasswd);
+#endif
+
+	/* memleaks ? ... mh, if gg_change_passwd3 fails... we have freeing it.. why here was not? it's ok or not? libgadu/we frees it ?*/
+#if 0
+	xfree(cppasswd);
+	xfree(cpoldpasswd);
+#endif
 
 	return 0;
 }
@@ -451,18 +478,19 @@ COMMAND(gg_command_list)
 	
 	/* list --put */
 	if (params[0] && (match_arg(params[0], 'p', TEXT("put"), 2))) {
-		char *contacts = userlist_dump(session);
+		CHAR_T *contacts = userlist_dump(session);
+		char *cpcontacts;
 
-		gg_iso_to_cp(contacts);
+		cpcontacts = gg_locale_to_cp(contacts);
 
-                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, contacts) == -1) {
+                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
                         printq("userlist_put_error", strerror(errno));
-                        xfree(contacts);
+                        xfree(cpcontacts);
                         return -1;
                 }
 		gg_userlist_put_config = 0;
 
-		xfree(contacts);
+		xfree(cpcontacts);
 		
 		return 0;
 	}
