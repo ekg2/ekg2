@@ -137,9 +137,9 @@ char *config_profile = NULL;
 int config_reason_limit = 1;
 int config_debug = 1;
 
-char *last_search_first_name = NULL;
-char *last_search_last_name = NULL;
-char *last_search_nickname = NULL;
+CHAR_T *last_search_first_name = NULL;
+CHAR_T *last_search_last_name = NULL;
+CHAR_T *last_search_nickname = NULL;
 char *last_search_uid = 0;
 
 int reason_changed = 0;
