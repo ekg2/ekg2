@@ -71,22 +71,16 @@ static const char *ekg_core_code =
 ;
 
 #define PERL_HANDLER_HEADER(x) \
-	    if (!x)\
-		    return -1;\
-	    \
-	    char *fullproc = saprintf("Ekg2::Script::%s::%s", scr->name,  x);\
-	    int perl_retcount;\
-	    SV *perl_ret;\
-	    int ret = 0;\
-	    \
-	    /* SV *func = new_pv(fullproc); */\
-	    \
-	    char *error;\
-	    dSP;\
-	    ENTER;\
-	    SAVETMPS;\
-	    PUSHMARK(sp);
-
+	char *fullproc, *error; \
+	int perl_retcount, ret = 0;\
+	SV *perl_ret;\
+	if (!x) return -1;\
+	fullproc = saprintf("Ekg2::Script::%s::%s", scr->name,  x);\
+	{	/* tag will be closed in PERL_HANDLER_FOOTER macro */ \
+		dSP;\
+		ENTER;\
+		SAVETMPS;\
+		PUSHMARK(sp);
 
 #define fix(s) ((s) ? (s) : "") /* xmalloc.h */
 	    
@@ -126,28 +120,29 @@ SV *create_sv_ptr(void *object);
 #endif
 
 #define PERL_HANDLER_FOOTER()\
-	    PUTBACK;\
-/*	    perl_retcount = perl_call_sv(func, G_EVAL|G_DISCARD);*/\
-	    perl_retcount = perl_call_pv(fullproc, G_EVAL);\
-	    SPAGAIN;\
-	    if (SvTRUE(ERRSV)) {\
-		    error = SvPV(ERRSV, PL_na);\
-		    print("script_error", error);\
-		    ret = SCRIPT_HANDLE_UNBIND;\
-	    }\
-	    else if (perl_retcount > 0)\
-	    {\
-		    perl_ret = POPs;\
-		    ret = SvIV(perl_ret);\
-	    }\
-	    RESTORE_ARGS(0);\
-/*	    debug("%d %d\n", ret, perl_retcount); */\
-	    \
-	    PUTBACK;\
-	    FREETMPS;\
-	    LEAVE;\
-	    xfree(fullproc);\
-	    \
-	    if (ret < 0) return -1;\
-	    else         return ret;
+		PUTBACK;\
+/*		perl_retcount = perl_call_sv(func, G_EVAL|G_DISCARD);*/\
+		perl_retcount = perl_call_pv(fullproc, G_EVAL);\
+		SPAGAIN;\
+		if (SvTRUE(ERRSV)) {\
+			error = SvPV(ERRSV, PL_na);\
+			print("script_error", error);\
+			ret = SCRIPT_HANDLE_UNBIND;\
+		}\
+		else if (perl_retcount > 0)\
+		{\
+			perl_ret = POPs;\
+			ret = SvIV(perl_ret);\
+		}\
+		RESTORE_ARGS(0);\
+/*		debug("%d %d\n", ret, perl_retcount); */\
+		\
+		PUTBACK;\
+		FREETMPS;\
+		LEAVE;\
+		\
+		if (ret < 0) return -1;\
+		else         return ret; \
+	} /* closing tag defined in PERL_HANDLER_HEADER() macro */ \
+	xfree(fullproc);
 
