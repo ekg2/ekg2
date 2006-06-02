@@ -115,9 +115,9 @@ int match_arg(const CHAR_T *arg, char shortopt, const CHAR_T *longopt, int longo
 int nmatch_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
 
 /* wyniki ostatniego szukania */
-extern char *last_search_first_name;
-extern char *last_search_last_name;
-extern char *last_search_nickname;
+extern CHAR_T *last_search_first_name;
+extern CHAR_T *last_search_last_name;
+extern CHAR_T *last_search_nickname;
 extern char *last_search_uid;
 
 
