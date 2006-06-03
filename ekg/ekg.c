@@ -313,11 +313,11 @@ void ekg_loop()
 			tv.tv_usec = 1;
 
                 /* sprawd¼, co siê dzieje */
-
-                ret = select(maxfd + 1, &rd, &wd, NULL, &tv);
+		ret = select(maxfd + 1, &rd, &wd, NULL, &tv);
+watches_once_again:
+		ekg_watches_removed = 0;
 
                 /* je¶li wyst±pi³ b³±d, daj znaæ */
-
                 if (ret == -1) {
                         /* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
                          * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
@@ -326,6 +326,11 @@ void ekg_loop()
                                 for (l = watches; l; ) {
                                         watch_t *w = l->data;
                                         struct stat st;
+
+					if (ekg_watches_removed > 1) {
+						debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
+						goto watches_once_again;
+					}
 
                                         l = l->next;
 
@@ -353,8 +358,10 @@ watches_again:
                 for (l = watches; l; ) {
                         watch_t *w = l->data;
 
-			if (ekg_watches_removed > 1)
+			if (ekg_watches_removed > 1) {
+				debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
 				goto watches_again;
+			}
                         /* handlery mog± dodawaæ kolejne watche, wiêc je¶li
                          * dotrzemy do ostatniego sprzed wywo³ania pêtli,
                          * koñczymy pracê. */

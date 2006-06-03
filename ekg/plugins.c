@@ -635,6 +635,7 @@ void watch_free(watch_t *w)
 	}
 	list_remove(&watches, w, 1);
 	ekg_watches_removed++;
+	debug("watch_free() REMOVED WATCH, watches removed this loop: %d oldwatch: 0x%x\n", ekg_watches_removed, w);
 }
 
 /*
