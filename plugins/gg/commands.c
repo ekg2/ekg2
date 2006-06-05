@@ -1066,14 +1066,14 @@ void token_gif_strip (struct token_t *token)
 
 	/* Usuwamy wszystkie samotne piksele. Piksel jest uznawany za samotny 
 	 * wtedy, kiedy nie ma w jego najbliszym otoczeniu, obejmujcym 8 
-	 * pikseli dookoa niego, przynajmniej trzech pikseli o tym samym 
+	 * pikseli dookola niego, przynajmniej trzech pikseli o tym samym 
 	 * kolorze. To usuwa kropki i pojedyncze linie dodawane w celu 
 	 * zaciemnienia obrazu tokena oraz anty-aliasing czcionek w znakach. 
 	 * Otoczenie pikseli brzegowych jest uznawane za kolor ta tak, jakby 
 	 * to zostao rozszerzone.
 	 */
 
-	/* Najpierw sprawdzamy kolor ta. To piksel, kt�ego jest najwi�ej. */
+	/* Najpierw sprawdzamy kolor ta. To piksel, ktoego jest najwiecej. */
 
 	for (i = 0; i < 256; i++)
 		backgr_counts[i] = 0;
@@ -1093,7 +1093,7 @@ void token_gif_strip (struct token_t *token)
 			if (token->data[y * token->sx + x] != backgr_color) {
 				int num_pixels = 0;
 
-				/* num_pixels przechowuje liczb�pikseli w otoczeniu 
+				/* num_pixels przechowuje liczbe pikseli w otoczeniu 
 				 * badanego piksela (wliczajc sam badany piksel) 
 				 * o tym samym kolorze, co badany piksel.
 				 */
@@ -1337,6 +1337,9 @@ static WATCHER(gg_handle_token)
 	struct gg_token *t = NULL;
 	char *file = NULL;
 
+	if (!h)
+		return -1;
+	
        if (type == 2) {
                 debug("[gg] gg_handle_token() timeout\n");
                 print("register_timeout");
@@ -1346,19 +1349,21 @@ static WATCHER(gg_handle_token)
         if (type != 0)
                 return 0;
 
-	if (!h)
-		return -1;
-	
 	if (gg_token_watch_fd(h) || h->state == GG_STATE_ERROR) {
 		print("gg_token_failed", gg_http_error_string(h->error));
 		goto fail;
 	}
 
 	if (h->state != GG_STATE_DONE) {
-                watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_token, h);
-                watch_timeout_set(w, h->timeout);
+		watch_t *w;
+		if (fd == h->fd && (int) watch == h->check) return 0;	/* if this is the same watch... we leave it */
 
-		return 0;
+		/* otherwise we delete old one (return -1) and create new one .... 
+		 * XXX, should we copy data from gg_http *h ? and free them in type == 1 ? */
+
+		w = watch_add(&gg_plugin, h->fd, h->check, 1, gg_handle_token, h);
+		watch_timeout_set(w, h->timeout);
+		return -1;
 	}
 
 	if (!(t = h->data) || !h->body) {
@@ -1370,7 +1375,6 @@ static WATCHER(gg_handle_token)
 	last_tokenid = xstrdup(t->tokenid);
 
 #ifdef HAVE_MKSTEMP
-
 	file = saprintf("%s/token.XXXXXX", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
 
 	if ((fd = mkstemp(file)) == -1) {
@@ -1391,7 +1395,7 @@ static WATCHER(gg_handle_token)
 		struct token_t token;
 		char *buf;
 		if (token_gif_load(file, &token) == -1) {
-			print("gg_token_failed", token.data);
+			print("gg_token_failed_saved", token.data, file);
 			xfree (token.data);
 			goto fail;
 		}
@@ -1418,7 +1422,7 @@ static WATCHER(gg_handle_token)
 		int h = 0;
 
 		if (!(f = fopen(file, "rb"))) {
-			print("gg_token_failed", strerror(errno));
+			print("gg_token_failed_saved", strerror(errno), file);
 			goto fail;
 		}
 
@@ -1429,7 +1433,7 @@ static WATCHER(gg_handle_token)
 			char buf[JMSG_LENGTH_MAX];
 			/* If we ended up over here, then it means some call below called longjmp. */
 			(e.pub.format_message)((j_common_ptr)&j, buf);
-			print("gg_token_failed", buf);
+			print("gg_token_failed_saved", buf, file);
 			jpeg_destroy_decompress(&j);
 			fclose(f);
 			goto fail;
@@ -1486,6 +1490,7 @@ static WATCHER(gg_handle_token)
 
 		xfree(file2);
 	}
+	/* here success... let's create some struct with token and use if they needed? XXX */
 
 #else	/* HAVE_MKSTEMP */
 	print("gg_token_unsupported");
@@ -1493,13 +1498,26 @@ static WATCHER(gg_handle_token)
 
 
 
-fail:
 #ifdef HAVE_MKSTEMP
 	unlink(file);
+fail:
 	xfree(file);
 #endif
+
+	/* if we free token... we must search for it in all watches, and point data to NULL */
+	/* XXX, hack... let's copy token data to all watch ? */
+
+	list_t l;
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+		if (w && w->data == h) {
+			w->data = NULL;
+			/* maybe we call remove here ? */
+		}
+	}
+
 	gg_token_free(h);
-	return -1; /* watch_remove(&gg_plugin, h->fd, h->check); */
+	return -1;		/* watch_remove(&gg_plugin, h->fd, h->check); */
 }
 
 COMMAND(gg_command_token)
@@ -1512,7 +1530,7 @@ COMMAND(gg_command_token)
                 return -1;
         }
 
-        w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_token, h);
+        w = watch_add(&gg_plugin, h->fd, h->check, 1, gg_handle_token, h);
         watch_timeout_set(w, h->timeout);
 
         return 0;

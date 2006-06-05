@@ -1279,6 +1279,7 @@ static int gg_theme_init()
 	format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
 	format_add("gg_token_body", "%1\n", 1);
 	format_add("gg_token_failed", _("%! Error getting token: %1\n"), 1);
+	format_add("gg_token_failed_saved", _("%! Error reading token: %1 (saved@%2)\n"), 1);
 	format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
 	format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
 	format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
@@ -1313,8 +1314,21 @@ QUERY(gg_setvar_default)
 
 int gg_plugin_init(int prio)
 {
-	plugin_register(&gg_plugin, prio);
+/* before loading plugin, do some sanity check */
+#ifdef USE_UNICODE
+	if (!config_use_unicode)
+#else
+	if (config_use_unicode)
+#endif
+	{	debug("plugin gg cannot be loaded because of mishmashed compilation...\n"
+			"	 plugin compilated with: --%s-unicode\n"
+			"	program compilated with: --%s-unicode\n",
+				config_use_unicode ? "enable" : "disable",
+				config_use_unicode ? "disable": "enable");
+		return -1;
+	}
 
+	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, NULL);
 
 	query_connect(&gg_plugin, "set-vars-default", gg_setvar_default, NULL);
