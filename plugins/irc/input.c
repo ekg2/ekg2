@@ -15,11 +15,14 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <ekg/win32.h>
 
 #include <ctype.h>
 #include <stdio.h>
 #include <time.h>
+#ifndef NO_POSIX_SYSTEM
 #include <sys/utsname.h>
+#endif
 #include <sys/time.h>
 
 #include <ekg/sessions.h>

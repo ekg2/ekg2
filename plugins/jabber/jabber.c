@@ -20,13 +20,17 @@
  */
 
 #include "ekg2-config.h"
+#include <ekg/win32.h>
 
 #include <sys/types.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h> /* dla jabber:iq:version */
+#endif
 
 #include <errno.h>
 #include <stdio.h>
@@ -34,7 +38,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <netdb.h>
+#endif
 
 #ifdef HAVE_EXPAT_H
 #  include <expat.h>
@@ -69,6 +76,9 @@ char *jabber_dcc_ip = NULL;
 static int jabber_theme_init();
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
+#ifdef EKG2_WIN32_SHARED_LIB
+	EKG2_WIN32_SHARED_LIB_HELPER
+#endif
 
 /*
  * jabber_private_destroy()
@@ -1931,7 +1941,11 @@ WATCHER(jabber_handle_stream)
                 }
         } else
 #endif
+#ifdef NO_POSIX_SYSTEM
+                if ((len = recv(fd, buf, 4095, 0)) < 1) {
+#else
                 if ((len = read(fd, buf, 4095)) < 1) {
+#endif
                         print("generic_error", strerror(errno));
                         return -1;
                 }
@@ -2034,8 +2048,12 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 	}
 
         debug("[jabber] jabber_handle_resolver()\n", type);
-
-        if ((res = read(fd, &a, sizeof(a))) != sizeof(a) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
+#ifdef NO_POSIX_SYSTEM
+	int ret = ReadFile(fd, &a, sizeof(a), &res, NULL);
+#else
+	res = read(fd, &a, sizeof(a));
+#endif
+	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
                 if (res == -1)
                         debug("[jabber] unable to read data from resolver: %s\n", strerror(errno));
                 else
@@ -2048,8 +2066,11 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
         }
 
         debug("[jabber] resolved to %s\n", inet_ntoa(a));
-
+#ifdef NO_POSIX_SYSTEM
+	CloseHandle((HANDLE) fd);
+#else
         close(fd);
+#endif
 
         if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                 debug("[jabber] socket() failed: %s\n", strerror(errno));
@@ -2085,7 +2106,13 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 
         res = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
-        if (res == -1 && errno != EINPROGRESS) {
+        if (res == -1 &&
+#ifdef NO_POSIX_SYSTEM
+		(WSAGetLastError() != WSAEWOULDBLOCK)
+#else
+		errno != EINPROGRESS
+#endif
+		) {
                 debug("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
                 return -1;

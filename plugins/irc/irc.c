@@ -17,6 +17,7 @@
  */
 
 #include "ekg2-config.h"
+#include <ekg/win32.h>
 
 #include <errno.h>
 #include <stdarg.h>
@@ -25,17 +26,31 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
+#endif
+
 #include <sys/types.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
+#endif
+
 #include <sys/stat.h>
 #define __USE_POSIX
+#ifndef NO_POSIX_SYSTEM
 #include <netdb.h>
+#endif
+
 #include <sys/time.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/utsname.h>
 #include <pwd.h>
+#endif
 
 #ifdef __sun
 /* Solaris, thanks to Beeth */
@@ -123,6 +138,10 @@ WATCHER(irc_handle_resolver);
 int irc_really_connect(session_t *session);
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
+
+#ifdef EKG2_WIN32_SHARED_LIB
+	EKG2_WIN32_SHARED_LIB_HELPER
+#endif
 
 /*
  * irc_private_init()
@@ -254,10 +273,14 @@ int irc_resolver_sort(void *s1, void *s2)
 
 int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int dobind) 
 {
-	void *tm = NULL;
 #ifdef HAVE_GETADDRINFO
 	struct  addrinfo *ai, *aitmp, hint;
+	void *tm = NULL;
+#else
+#warning "irc: You don't have getaddrinfo() resolver may not work! (ipv6 for sure)"
+	struct hostent *he4;
 #endif	
+
 /*	debug("[IRC] %s fd = %d\n", hostname, fd); */
 #ifdef HAVE_GETADDRINFO
 	memset(&hint, 0, sizeof(struct addrinfo));
@@ -270,7 +293,6 @@ int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int
 				tm = &(((struct sockaddr_in6 *) aitmp->ai_addr)->sin6_addr);
 			if (aitmp->ai_family == AF_INET) 
 				tm = &(((struct sockaddr_in *) aitmp->ai_addr)->sin_addr);
-
 #ifdef HAVE_INET_NTOP
 			ip = xmalloc(100);
 			inet_ntop(aitmp->ai_family, tm, ip, 100);
@@ -280,7 +302,7 @@ int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int
 				/* print("generic_error", "You don't have inet_ntop() and family == AF_INET6. Please contact with developers if it happens."); */
 				ip =  xstrdup("::");
 			} else
-				ip   = xstrdup(inet_ntoa(*(struct in_addr *)tm));
+				ip = xstrdup(inet_ntoa(*(struct in_addr *)tm));
 #endif 
 			buf = saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, (!dobind) ? port : 0);
 			//write(fd, buf, xstrlen(buf));
@@ -291,8 +313,12 @@ int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int
 		freeaddrinfo(ai);
 	}
 #else 
-	/* G: also senseless in child */
-	/*print("generic_error", "It seem you don't have getaddrinfo() current version of resolver won't work without this function. If you want to get work it faster contact with developers ;>");*/
+	if ((he4 = gethostbyname(hostname))) {
+		/* copied from http://webcvs.ekg2.org/ekg2/plugins/irc/irc.c.diff?r1=1.79&r2=1.80 OLD RESOLVER VERSION...
+		 * .. huh, it was 8 months ago..*/
+		char *ip = xstrdup(inet_ntoa(*(struct in_addr *) he4->h_addr));
+		array_add(arr, saprintf("%s %s %d %d\n", hostname, ip, AF_INET, (!dobind) ? port : 0));
+	} else array_add(arr, saprintf("%s : no_host_get_addrinfo()\n", hostname));
 #endif
 
 /* G->dj: getaddrinfo was returninig 3 times, cause you haven't given hints...
@@ -323,9 +349,69 @@ QUERY(irc_validate_uid)
 	return 0;
 }
 
+#ifdef NO_POSIX_SYSTEM
+void irc_changed_resolve_child(session_t *s, const char *var, HANDLE fd) {
+#else
+void irc_changed_resolve_child(session_t *s, const char *var, int fd) {
+#endif
+	int isbind	= !xstrcmp((char *) var, "hostname");
+	char *tmp	= xstrdup(session_get(s, var));
+
+	if (tmp) {
+		char *tmp1 = tmp, *tmp2;
+		char **arr = NULL;
+
+		/* G->dj: I'm changing order, because
+		 * we should connect first to first specified host from list...
+		 * Yeah I know code look worse ;)
+		 */
+		do {
+			if ((tmp2 = xstrchr(tmp1, ','))) *tmp2 = '\0';
+			irc_resolver2(s, &arr, tmp1, -1, isbind);
+			tmp1 = tmp2+1;
+		} while (tmp2);
+
+		tmp2 = array_join(arr, NULL);
+		array_free(arr);
+#ifdef NO_POSIX_SYSTEM
+		DWORD written;
+		WriteFile(fd, tmp2, xstrlen(tmp2), &written, NULL);
+#else
+		write(fd, tmp2, xstrlen(tmp2));
+#endif
+		sleep(3);
+#ifdef NO_POSIX_SYSTEM
+		CloseHandle(fd);
+#else
+		close(fd);
+#endif
+		xfree(tmp2);
+	}
+	xfree(tmp);
+}
+
+#ifdef NO_POSIX_SYSTEM
+struct win32_tmp {	char session[100]; 
+			char var[11]; 
+			HANDLE fd; 
+			HANDLE fd2; 
+		};
+
+THREAD(irc_changed_resolve_child_win32) {
+	struct win32_tmp *helper = data;
+
+	CloseHandle(helper->fd);
+
+	irc_changed_resolve_child(session_find(helper->session), helper->var, helper->fd2);
+	xfree(helper);
+
+/*	TerminateThread(GetCurrentThread(), 1); */
+	return 0;
+}
+#endif
+
 void irc_changed_resolve(session_t *s, const char *var) {
 	irc_private_t	*j = irc_private(s);
-	char            *tmp;
 	int		isbind;
 	int		res, fd[2];
 	list_t		*rlist = NULL;
@@ -353,8 +439,21 @@ void irc_changed_resolve(session_t *s, const char *var) {
 		list_destroy(*rlist, 1);
 		*rlist = NULL;
 	}
+#ifdef NO_POSIX_SYSTEM
+	struct win32_tmp *helper = xmalloc(sizeof(struct win32_tmp));
 
-	if ((res = fork()) < 0) {
+	strncpy((char *) &helper->session, s->uid, sizeof(helper->session)-1);
+	strncpy((char *) &helper->var, var, sizeof(helper->var)-1);
+
+	DuplicateHandle(GetCurrentProcess(), (HANDLE) fd[1], GetCurrentProcess(), &(helper->fd2), DUPLICATE_SAME_ACCESS, TRUE, DUPLICATE_SAME_ACCESS);
+	DuplicateHandle(GetCurrentProcess(), (HANDLE) fd[0], GetCurrentProcess(), &(helper->fd), DUPLICATE_SAME_ACCESS, TRUE, DUPLICATE_SAME_ACCESS);
+	debug("[fds] after dupliaction: [0, %d] [1, %d]\n", helper->fd, helper->fd2);
+
+	if ((res = (int) win32_fork(irc_changed_resolve_child_win32, helper)) == 0)
+#else
+	if ((res = fork()) < 0)
+#endif
+	{
 		print("generic_error", strerror(errno));
 		close(fd[0]);
 		close(fd[1]);
@@ -363,43 +462,24 @@ void irc_changed_resolve(session_t *s, const char *var) {
 	j->resolving++;
 	if (res) {
 		irc_resolver_t *irdata = xmalloc(sizeof(irc_resolver_t));
-
-		close(fd[1]);
-
 		irdata->session = xstrdup(s->uid);
 		irdata->plist   = rlist;
 
-		watch_add (&irc_plugin, fd[0], WATCH_READ_LINE, 0, irc_handle_resolver, irdata);
+#ifndef NO_POSIX_SYSTEM
+		close(fd[1]);
+#else
+		CloseHandle(fd[1]);
+#endif
+		watch_add(&irc_plugin, fd[0], WATCH_READ_LINE, 0, irc_handle_resolver, irdata);
+
 		return;
 	} 
 	/* Child */
-	tmp = xstrdup(session_get(s, var));
-	if (tmp) {
-		char *tmp1 = tmp, *tmp2;
-		char **arr = NULL;
-
-		close(fd[0]);
-		/* G->dj: I'm changing order, because
-		 * we should connect first to firs specified host from list...
-		 * Yeah I know code look worse ;)
-		 */
-		do {
-			if ((tmp2 = xstrchr(tmp1, ','))) *tmp2 = '\0';
-			irc_resolver2(s, &arr, tmp1, -1, isbind);
-			tmp1 = tmp2+1;
-		} while (tmp2);
-
-		tmp2 = array_join(arr, NULL);
-		array_free(arr);
-
-		write(fd[1], tmp2, xstrlen(tmp2));
-		sleep(3);
-		close(fd[1]);
-                xfree(tmp);
-		xfree(tmp2);
-		exit(0);
-	}
-	xfree(tmp);
+#ifndef NO_POSIX_SYSTEM
+	close(fd[0]);
+	irc_changed_resolve_child(s, var, fd[1]);
+	exit(0);
+#endif
 	return;
  }
 
@@ -640,7 +720,22 @@ int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address)
 
 		ipv4->sin_family = AF_INET;
 		ipv4->sin_port   = htons(port);
+#ifdef HAVE_INET_PTON
 		inet_pton(AF_INET, co->address, &(ipv4->sin_addr));
+#else
+#warning "irc: You don't have inet_pton() connecting to ipv4 hosts may not work"
+#ifdef HAVE_INET_ATON /* XXX */
+		if (!inet_aton(co->address, &(ipv4->sin_addr))) {
+			debug("inet_aton() failed on addr: %s.\n", co->address);
+		}
+#else
+#warning "irc: You don't have inet_aton() connecting to ipv4 hosts may not work"
+#endif
+#warning "irc: Yeah, You have inet_addr() connecting to ipv4 hosts may work :)"
+		if ((ipv4->sin_addr.s_addr = inet_addr(co->address)) == -1) {
+			debug("inet_addr() failed or returns 255.255.255.255? on %s\n", co->address);
+		}
+#endif
 
 		*address = (struct sockaddr *) ipv4;
 	} else if (co->family == AF_INET6) {
@@ -649,7 +744,11 @@ int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address)
 		ipv6 = xmalloc(len);
 		ipv6->sin6_family  = AF_INET6;
 		ipv6->sin6_port    = htons(port);
+#ifdef HAVE_INET_PTON
 		inet_pton(AF_INET6, co->address, &(ipv6->sin6_addr));
+#else
+#warning "irc: You don't have inet_pton() connecting to ipv6 hosts may not work "
+#endif
 
 		*address = (struct sockaddr *) ipv6;
 	}
@@ -730,7 +829,13 @@ int irc_really_connect(session_t *session) {
 	xfree(sinco);
 	xfree(sinvh);
 
-	if (connret && errno != EINPROGRESS) {
+	if (connret &&
+#ifdef NO_POSIX_SYSTEM
+		(WSAGetLastError() != WSAEWOULDBLOCK)
+#else
+		(errno != EINPROGRESS)
+#endif
+		) {
 		debug("[irc] really_connect control point 1\n");
 		err = errno;
 		DOT("IRC_TEST_FAIL", "Connect", connco, session, err);
@@ -1837,6 +1942,7 @@ COMMAND(irc_command_test) {
 }
 
 COMMAND(irc_command_genkey) {
+#ifndef NO_POSIX_SYSTEM
 	PARASC
 	extern int sim_key_generate(const char *uid); /* sim plugin */
 	char *uid = NULL;
@@ -1871,6 +1977,9 @@ COMMAND(irc_command_genkey) {
 	// etc.. 	
 	xfree(uid);
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 /*                                                                       *
@@ -1881,7 +1990,9 @@ COMMAND(irc_command_genkey) {
 
 int irc_plugin_init(int prio)
 {
+#ifndef NO_POSIX_SYSTEM
 	struct passwd	*pwd_entry = getpwuid(getuid());
+#endif
 	plugin_register(&irc_plugin, prio);
 
 	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
@@ -1991,10 +2102,22 @@ int irc_plugin_init(int prio)
 
 	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
 	plugin_var_add(&irc_plugin, "prefer_family", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "nickname", VAR_STR, pwd_entry ? pwd_entry->pw_name : NULL, 0, NULL);
+	plugin_var_add(&irc_plugin, "nickname", VAR_STR, 
+#ifdef NO_POSIX_SYSTEM
+		NULL,
+#else
+		pwd_entry ? pwd_entry->pw_name : NULL, 
+#endif
+		0, NULL);
 	plugin_var_add(&irc_plugin, "password", VAR_STR, 0, 1, NULL);
 	plugin_var_add(&irc_plugin, "port", VAR_INT, "6667", 0, NULL);
-	plugin_var_add(&irc_plugin, "realname", VAR_STR, pwd_entry ? pwd_entry->pw_gecos : NULL, 0, NULL);
+	plugin_var_add(&irc_plugin, "realname", VAR_STR, 
+#ifdef NO_POSIX_SYSTEM
+		NULL,
+#else
+		pwd_entry ? pwd_entry->pw_gecos : NULL, 
+#endif
+		0, NULL);
 	plugin_var_add(&irc_plugin, "server", VAR_STR, 0, 0, irc_changed_resolve);
 
 	/* upper case: names of variables, that reffer to protocol stuff */

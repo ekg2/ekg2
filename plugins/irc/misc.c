@@ -14,13 +14,18 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <ekg/win32.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
+#endif
 
 #include <ekg/commands.h>
 #include <ekg/debug.h>

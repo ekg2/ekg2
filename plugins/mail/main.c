@@ -20,6 +20,7 @@
  */
 
 #include "ekg2-config.h"
+#include <ekg/win32.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -28,7 +29,11 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <pwd.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +73,10 @@ static int check_mail_update(const char *, int);
 static void check_mail_free();
 
 PLUGIN_DEFINE(mail, PLUGIN_GENERIC, NULL);
+
+#ifdef EKG2_WIN32_SHARED_LIB
+	EKG2_WIN32_SHARED_LIB_HELPER
+#endif
 
 /*
  * check_mail()
@@ -173,6 +182,7 @@ static WATCHER(mail_handler)
  */
 static int check_mail_mbox()
 {
+#ifndef NO_POSIX_SYSTEM
 	int fd[2], pid, to_check = 0;
 	list_t l;
 
@@ -307,8 +317,10 @@ static int check_mail_mbox()
 
 	watch_add(&mail_plugin, fd[0], WATCH_READ_LINE, 1, mail_handler, NULL);
 	/* XXX czy tutaj potrzebny jest timeout? */
-
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 /*
@@ -322,6 +334,7 @@ static int check_mail_mbox()
  */
 static int check_mail_maildir()
 {
+#ifndef NO_POSIX_SYSTEM
 	int fd[2], pid;
 
 	if (pipe(fd))
@@ -400,8 +413,10 @@ static int check_mail_maildir()
 	watch_add(&mail_plugin, fd[0], WATCH_READ_LINE, 1, mail_handler, NULL);
 	/* XXX timeout */
 
-
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 /*
@@ -439,9 +454,9 @@ static void changed_check_mail_folders(const char *var)
 		xfree(f);
 	}
 
+#ifndef NO_POSIX_SYSTEM
 	if (config_check_mail & 1) {
 		char *inbox = xstrdup(getenv("MAIL"));
-
 		if (!inbox) {
 			struct passwd *pw = getpwuid(getuid());
 
@@ -467,6 +482,7 @@ static void changed_check_mail_folders(const char *var)
 			list_add(&mail_folders, &foo, sizeof(foo));
 		}
 	}
+#endif
 }
 
 /*

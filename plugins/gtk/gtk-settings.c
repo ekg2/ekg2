@@ -1,5 +1,4 @@
 #include <gtk/gtk.h>
-
 GtkWidget *settings_win;         /* okno */
 enum { 
 	COLUMN_ALL = 0, /* PIXBUF + COLUMN_NAME */

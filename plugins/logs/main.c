@@ -20,12 +20,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
-#define __EXTENSIONS__
-#else
-#include <limits.h>
-#endif
+#include "ekg2-config.h"
+#include <ekg/win32.h>
 
 /* fjuczery */
 #define REMIND_NUMBER_SUPPORT 0 /* support do logs:remind_number 1 aby wlaczyc */
@@ -33,7 +29,14 @@
 
 #undef HAVE_ZLIB		/* actually no avalible... */
 
-#include "ekg2-config.h"
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
+#if defined(__MINGW32__) || defined(__FreeBSD__)
+#include <limits.h>
+#endif
 
 #include <stdint.h>
 #include <ekg/char.h>
@@ -50,9 +53,10 @@
 #include <ekg/userlist.h>
 
 #include <sys/stat.h>
+#ifndef NO_POSIX_SYSTEM
 #include <sys/mman.h>
-
 #include <arpa/inet.h>
+#endif
 
 #include <errno.h>
 #include <string.h>
@@ -69,6 +73,10 @@
 
 
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
+
+#ifdef EKG2_WIN32_SHARED_LIB
+	EKG2_WIN32_SHARED_LIB_HELPER
+#endif
 
 logs_log_t *log_curlog = NULL;
 	/* log ff types... */
@@ -145,9 +153,8 @@ int logs_window_check(logs_log_t *ll, time_t t)
 		chan = 2;
 	} else {
 		int datechanged = 0; /* bitmaska 0x01 (dzien) 0x02 (miesiac) 0x04 (rok) */
-		struct tm sttm;
-		struct tm *tm = localtime_r(&(ll->t), &sttm);
-		struct tm *tm2 = localtime(&t);
+		struct tm *tm	= xmemdup(localtime(&(ll->t)), sizeof(struct tm));
+		struct tm *tm2	= localtime(&t);
 
 		/* sprawdzic czy dane z (tm == tm2) */
 		if (tm->tm_mday != tm2->tm_mday)	datechanged |= 0x01;
@@ -167,6 +174,7 @@ int logs_window_check(logs_log_t *ll, time_t t)
 					prepare_timestamp_format(IRSSI_LOG_DAY_CHANGED, time(NULL)),
 					0, LOG_IRSSI_INFO, NULL);
 		}
+		xfree(tm);
 	}
 	ll->t = t;
 
@@ -639,7 +647,14 @@ FILE* logs_open_file(char *path, int ff)
 		slash_pos = slash - path + 1;
 		dir = xstrndup(path, slash_pos);
 
-		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
+		if (stat(dir, &statbuf) != 0 && 
+#ifndef NO_POSIX_SYSTEM
+			mkdir(dir, 0700) == -1
+#else
+			mkdir(dir) == -1
+#endif
+			) {
+
 			char *bo = saprintf("[logs_mkdir]: nie mo¿na %s bo %s", dir, strerror(errno));
 			print("generic_error",bo); // XXX usun±æ !! 
 			xfree(bo);

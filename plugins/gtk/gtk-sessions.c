@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
-
+#undef DATADIR
+#include <ekg/win32.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
 

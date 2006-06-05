@@ -16,13 +16,29 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <ekg2-config.h>
+const char *_DATADIR = DATADIR;
 
+#include <ekg2-config.h>
+#undef DATADIR
+#include <ekg/win32.h>
+
+#define WITH_X_WINDOWS
+
+#ifdef NO_POSIX_SYSTEM
+# undef WITH_X_WINDOWS
+#endif
+
+#ifdef WITH_X_WINDOWS
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#endif
+
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+
+#ifdef WITH_X_WINDOWS
 #include <gdk/gdkx.h>
+#endif
 
 #include <ekg/char.h>
 #include <ekg/configfile.h>
@@ -44,8 +60,15 @@
  * i think he won't be angry of it ;> 
  */
 
-#define EKG2_BGCOLOR "darkgrey"
+#define COLOR_EMULATE_CONSOLE
+
+#ifdef COLOR_EMULATE_CONSOLE
+# define EKG2_BGCOLOR "black"
+# define EKG2_FGCOLOR "grey"
+#else
+# define EKG2_BGCOLOR "darkgrey"
 // #define EKG2_FGCOLOR "blue"
+#endif
 
 #ifdef EKG2_BGCOLOR
 #define ekg2_set_color_bg_ext(widget)   gtk_widget_modify_base(widget, GTK_STATE_NORMAL, &bgcolor);
@@ -72,7 +95,7 @@
 #define SYSTEM_TRAY_CANCEL_MESSAGE  2
 
 /* ikonka */
-const char *iconfile = DATADIR"/plugins/gtk/ekg2.png";
+char *iconfile;
 
 typedef struct {
 	GtkWidget *view;
@@ -81,12 +104,14 @@ typedef struct {
 
 typedef struct {
 	GtkWidget *gtk_ticon;
+#ifdef WITH_X_WINDOWS
 	Window trayicon;
 	Atom trayso;
 	Atom trayop;
 	Atom traymgr;
 
 	Atom orientation;
+#endif
 } ekg2_trayicon;
 
 GtkWidget *ekg_main_win;
@@ -103,7 +128,9 @@ GdkColor bgcolor;			// background color
 GdkColor fgcolor;			// foreground color
 #endif
 
+#ifdef WITH_X_WINDOWS
 Display *xdisplay;			/* gdzie mamy okienko.. na jakim displayu. */
+#endif
 
 /* atrybuty tekstu... */
 GtkTextTagTable *ekg2_table;		// tablica z tagami... 	glowne kolorki + BOLD + inne...
@@ -118,7 +145,10 @@ GtkWidget *ekg2_gtk_menu_new(GtkWidget *parentmenu, char *label, void *function,
 void ekg_gtk_window_new(window_t *w);
 GdkFilterReturn ekg_trayicon_manager(GdkXEvent *xevent, GdkEvent *event, gpointer user_data);
 
+#ifndef EKG2_WIN32_NOFUNCTION
 extern void ekg_loop();
+#endif
+
 int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
 			 *  0: normalny stan..
 			 *  1: zamykamy ui.
@@ -133,6 +163,11 @@ enum {	COLUMN_STATUS = 0,
 	COLUMN_SESSION, 
 	N_COLUMNS };
 
+
+#ifdef EKG2_WIN32_NOFUNCTION
+	EKG2_WIN32_SHARED_LIB_HELPER
+#endif
+
 int gtk_window_dump(void *win, int retrealid) {
 #define printf(args...) ;
 	int a = 0, b = 0;
@@ -145,6 +180,8 @@ int gtk_window_dump(void *win, int retrealid) {
 		if (!p) continue;
 		if (win == p->win) { 	printf("* "); a = i; b = w->id; }
 		printf("%d\t%s\t\t0x%x 0x%x\n", w->id, window_target(w), p->win, 0);
+
+/*		if (!win && retrealid == */
 	}
 	printf("%d  %d ...\n", a, b);
 	if (retrealid)	return b;
@@ -203,15 +240,14 @@ void destroy(GtkWidget *widget, gpointer data) {
 gint on_enter(GtkWidget *widget, gpointer data) {
 	window_t *oldw	= window_current;
 	session_t *olds	= session_current;
-	CHAR_T *txt = normal_to_wcs(gtk_entry_get_text(GTK_ENTRY(widget)));
+	CHAR_T *txt;
 
 	if (data) {
 		window_current = data;
 		session_current = window_current->session;
 	}
-
-	command_exec(NULL, NULL, txt, 0);
-
+	txt = normal_to_wcs(gtk_entry_get_text(GTK_ENTRY(widget)));
+	command_exec(window_current->target, session_current, txt, 0);
 	gtk_entry_set_text(GTK_ENTRY(widget), "");
 	free_utf(txt);
 
@@ -380,7 +416,7 @@ gint on_switch_page(GtkNotebook *notebook, GtkNotebookPage *page, guint page_num
 	int realid;
 	if (ui_quit) 
 		return FALSE;
-	realid = gtk_window_dump(GTK_WIDGET(page), 1);
+	realid = gtk_window_dump((GtkWidget *) page, 1);
 	if (window_current->id == realid)
 		return FALSE;
 	
@@ -736,7 +772,10 @@ int gtk_create() {
 	}
 	{ 	/* ikonka */
 		GError *error = NULL;
-		GdkPixbuf *icon = gdk_pixbuf_new_from_file(iconfile, &error);
+		GdkPixbuf *icon = NULL;
+#ifdef WITH_X_WINDOWS
+		icon = gdk_pixbuf_new_from_file(iconfile, &error);
+#endif
 		if (!icon) {
 			printf("LOAD_ICON() filename=%s; err=%x;\n", iconfile, (int) error);
 		}
@@ -748,6 +787,7 @@ int gtk_create() {
 	return 0;
 }
 
+#ifdef WITH_X_WINDOWS
 void ekg_tray_icon_send_manager_message(const ekg2_trayicon *icon, const long message, const Window window, const long data1, const long data2, const long data3)
 {
 	XClientMessageEvent ev;
@@ -769,7 +809,9 @@ void ekg_tray_icon_send_manager_message(const ekg2_trayicon *icon, const long me
 	XSync(xdisplay, False);
 	gdk_error_trap_pop();
 }
+#endif
 
+#ifdef WITH_X_WINDOWS
 void ekg_tray_icon_update_manager_window(ekg2_trayicon *icon) {
 	if (icon->trayicon != None) {
 		GdkWindow *gdkwin;
@@ -793,8 +835,10 @@ void ekg_tray_icon_update_manager_window(ekg2_trayicon *icon) {
 /*		egg_tray_icon_get_orientation_property(icon); */
 	}
 }
+#endif
 
 ekg2_trayicon *gtk_icon_create() {
+#ifdef WITH_X_WINDOWS
 	ekg2_trayicon *tray = NULL;
 	GtkWidget *image, *ebox;
 
@@ -821,11 +865,14 @@ ekg2_trayicon *gtk_icon_create() {
 	gdk_window_add_filter(
 			gdk_screen_get_root_window(gtk_widget_get_screen(tray->gtk_ticon)), ekg_trayicon_manager, (void *) tray);
 	return tray;
+#else
+	return NULL;
+#endif
 }
 
 void gtk_icon_destroy(ekg2_trayicon *icon) {
+#ifdef WITH_X_WINDOWS
 	GdkWindow *root_window;
-
 	if (icon->trayicon != None) {
 		GdkWindow *gdkwin;
 		gdkwin = gdk_window_lookup_for_display(gtk_widget_get_display(icon->gtk_ticon), icon->trayicon);
@@ -833,8 +880,10 @@ void gtk_icon_destroy(ekg2_trayicon *icon) {
 	}
 	root_window = gdk_screen_get_root_window(gtk_widget_get_screen(icon->gtk_ticon));
 	gdk_window_remove_filter(root_window, ekg_trayicon_manager, icon);
+#endif
 }
 
+#ifdef WITH_X_WINDOWS
 GdkFilterReturn ekg_trayicon_manager(GdkXEvent *xevent, GdkEvent *event, gpointer user_data) {
 	XEvent *xev = (XEvent *) xevent;
 	ekg2_trayicon *tray = user_data;
@@ -854,6 +903,7 @@ GdkFilterReturn ekg_trayicon_manager(GdkXEvent *xevent, GdkEvent *event, gpointe
 	}
 	return GDK_FILTER_CONTINUE;
 }
+#endif
 
 void ekg_gtk_window_new(window_t *w) {
 	GtkWidget *win = NULL;
@@ -941,15 +991,16 @@ void gtk_contacts_add(session_t *s, userlist_t *u, GtkTreeIter *iter)
  *      jesli user  to user_avail, user_invisible, etc... 
  *      bo teraz w sumie to nie wiadomo co do czego jest.. ;p 
  */
-	char *status_filename = saprintf("%s/plugins/gtk/%s.png", DATADIR, (u) ? u->status : s->status);
+	char *status_filename = saprintf("%s/plugins/gtk/%s.png", _DATADIR, (u) ? u->status : s->status);
 
 	if (!s && !u) {
 		xfree(status_filename);
 		// INTERNAL ERROR.
 		return;
 	}
-
+#ifdef WITH_X_WINDOWS
 	pixbuf = gdk_pixbuf_new_from_file (status_filename, &error);
+#endif
 	if (!pixbuf)
 		printf("CONTACTS_ADD() filename=%s; pixbuf=%x iter=%x;\n", status_filename, (int) pixbuf, (int) iter);
 	gtk_tree_store_append (list_store, tmp,	(!isparent) ? iter : NULL);
@@ -1175,7 +1226,9 @@ QUERY(gtk_contacts_changed) {
 QUERY(gtk_ui_window_act_changed) {
 #define printf(args...) ;
 	list_t l;
+
 	if (ui_quit) return 1;
+
 	for (l=windows; l; l = l->next) {
 		GdkColor sattr;
 		GdkColor *attr = &sattr; /* xmalloc(sizeof(GdkColor)); */
@@ -1224,6 +1277,7 @@ void gtk_statusbar_timer() {
 }
 
 WATCHER(ekg2_xorg_watcher) {
+	if (type || ui_quit == 1) return -1;
 /* do nothing.. successfully. it's just like readline_watch_stdin() to don't matter about select() latency... default 1s. yeah I know it's only for
  * communication between x'org server and gtk... gtk maybe want to do somethink else.. but we can provide it only by decreasing latency from 1s to for instance
  * 0.1s in select() or by creating another thread.. */
@@ -1234,11 +1288,11 @@ int gtk_plugin_init(int prio) {
 	const char *ekg2_another_ui = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
 	const char *ekg2_no_display = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
 	list_t l;
-	int xfd;
+	int xfd = -1;
         int is_UI = 0;
 
         query_emit(NULL, "ui-is-initialized", &is_UI);
-
+#ifdef WITH_X_WINDOWS
 	if (!getenv("DISPLAY")) {
 /* po czyms takim for sure bedzie initowane ncurses... no ale moze to jest wlasciwe zachowanie? jatam nie wiem.
  * gorsze to ze ten komunikat nigdzie sie nie pojawi... */
@@ -1246,6 +1300,7 @@ int gtk_plugin_init(int prio) {
 		else	   fprintf(stderr, ekg2_no_display);
 		return -1;
 	}
+#endif
         if (is_UI) {
 		debug(ekg2_another_ui);
                 return -1;
@@ -1259,6 +1314,7 @@ int gtk_plugin_init(int prio) {
 		bind_textdomain_codeset("ekg2", "UTF-8");
 		in_autoexec = 0;	changed_theme(TEXT("theme"));	in_autoexec = la; /* gettext + themes... */
 	}
+	iconfile = saprintf("%s/plugins/gtk/ekg2.png", _DATADIR);
 
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
@@ -1285,11 +1341,14 @@ int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 
 /*	timer_add(&gtk_plugin, "gtk:clock", 1, 1, gtk_statusbar_timer, NULL); */
+#ifdef WITH_X_WINDOWS
 	xdisplay = gdk_x11_get_default_xdisplay();
+#endif
 	gtk_create();
 //	xdisplay = gdk_x11_display_get_xdisplay(gtk_widget_get_display(ekg_main_win));
-
+#ifdef WITH_X_WINDOWS
 	xfd = XConnectionNumber(xdisplay); /* pobiera fd */
+#endif
 	printf("[HELLO ekg2-GTK] XFD: %d\n", xfd);
 	gtk_icon_create();
 	if (xfd != -1) {

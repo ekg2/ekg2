@@ -53,6 +53,9 @@ static char *config_sms_app = NULL;
 static int config_sms_max_length = 100;
 
 PLUGIN_DEFINE(sms, PLUGIN_GENERIC, NULL);
+#ifdef EKG2_WIN32_SHARED_LIB
+	EKG2_WIN32_SHARED_LIB_HELPER
+#endif
 
 static void sms_child_handler(child_t *c, int pid, const char *name, int status, void *data)
 {

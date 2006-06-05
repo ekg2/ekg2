@@ -19,13 +19,16 @@
  */
 
 #include "ekg2-config.h"
+#include <ekg/win32.h>
 
 #include <sys/types.h>
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h> /* dla jabber:iq:version */
+#endif
 
 #include <errno.h>
 #include <stdio.h>
@@ -33,7 +36,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <netdb.h>
+#endif
 
 #ifdef HAVE_EXPAT_H
 #  include <expat.h>
@@ -195,6 +201,47 @@ COMMAND(jabber_command_dcc) {
 	return cmd_dcc(name, params, session, target, quiet);
 }
 
+void jabber_command_connect_child(
+	const char *server, 
+#ifdef NO_POSIX_SYSTEM
+	HANDLE fd	/* fd[1] */
+#else
+	int fd		/* fd[1]*/
+#endif
+	) {
+	struct in_addr a;
+
+	if ((a.s_addr = inet_addr(server)) == INADDR_NONE) {
+		struct hostent *he = gethostbyname(server);
+
+		if (!he)
+			a.s_addr = INADDR_NONE;
+		else
+			memcpy(&a, he->h_addr, sizeof(a));
+	}
+#ifdef NO_POSIX_SYSTEM
+	DWORD written = 0;
+	WriteFile(fd, &a, sizeof(a), &written, NULL);
+#else
+	write(fd, &a, sizeof(a));
+#endif
+	sleep(1);
+}
+
+#ifdef NO_POSIX_SYSTEM
+struct win32_temp { char server[100]; HANDLE fd; HANDLE fd2; };
+
+int jabber_command_connect_child_win32(void *data) {
+	struct win32_temp *helper = data;
+	
+	CloseHandle(helper->fd2);
+	jabber_command_connect_child(helper->server, helper->fd);
+	xfree(helper);
+	return 0;
+}
+
+#endif
+
 COMMAND(jabber_command_connect)
 {
 	const char *server, *realserver = session_get(session, "server"); 
@@ -225,8 +272,9 @@ COMMAND(jabber_command_connect)
 
 	xfree(j->server);
 	j->server	= xstrdup(++server);
+	if (!realserver) realserver = server;
 
-	debug("[jabber] resolving %s\n", (realserver ? realserver : server));
+	debug("[jabber] resolving %s\n", server);
 
 	if (pipe(fd) == -1) {
 		printq("generic_error", strerror(errno));
@@ -234,34 +282,38 @@ COMMAND(jabber_command_connect)
 	}
 
 	debug("[jabber] resolver pipes = { %d, %d }\n", fd[0], fd[1]);
+#ifdef NO_POSIX_SYSTEM
+	struct win32_temp *helper = xmalloc(sizeof(struct win32_temp));
 
-	if ((res = fork()) == -1) {
+	xstrncpy((char *) &helper->server, realserver, sizeof(helper->server));
+	DuplicateHandle(GetCurrentProcess(), (HANDLE) fd[1], GetCurrentProcess(), &(helper->fd), DUPLICATE_SAME_ACCESS, TRUE, DUPLICATE_SAME_ACCESS);
+	DuplicateHandle(GetCurrentProcess(), (HANDLE) fd[0], GetCurrentProcess(), &(helper->fd2), DUPLICATE_SAME_ACCESS, TRUE, DUPLICATE_SAME_ACCESS);
+
+	if ((res = win32_fork(&jabber_command_connect_child_win32, helper)) == -1)
+#else
+	if ((res = fork()) == -1) 
+#endif
+	{
 		printq("generic_error", strerror(errno));
 		close(fd[0]);
 		close(fd[1]);
 		return -1;
 	}
 
-	if (!res) {
-		struct in_addr a;
-		if ((a.s_addr = inet_addr(server)) == INADDR_NONE) {
-			struct hostent *he = gethostbyname(realserver ? realserver : server);
-
-			if (!he)
-				a.s_addr = INADDR_NONE;
-			else
-				memcpy(&a, he->h_addr, sizeof(a));
-		}
-		write(fd[1], &a, sizeof(a));
-
-		sleep(1);
-
-		exit(0);
-	} else {
+	if (res) {
+#ifdef NO_POSIX_SYSTEM
+		CloseHandle((HANDLE) fd[1]);
+#else
 		close(fd[1]);
-		
+#endif
 		/* XXX dodaæ dzieciaka do przegl±dania */
 		watch_add(&jabber_plugin, fd[0], WATCH_READ, 0, jabber_handle_resolver, session);
+	} else {
+#ifndef NO_POSIX_SYSTEM
+		close(fd[0]);
+		jabber_command_connect_child(realserver, fd[1]);
+		exit(0);
+#endif
 	}
 
 	j->connecting = 1;

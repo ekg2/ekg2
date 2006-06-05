@@ -1,8 +1,13 @@
 /* $Id */
 
+#include <ekg/win32.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/un.h>
+#endif
+
 #include <sys/stat.h>
 
 #include <stdlib.h>
@@ -91,6 +96,7 @@ int rc_input_new_udp(const char *path)
  */
 int rc_input_new_pipe(const char *path)
 {
+#ifndef NO_POSIX_SYSTEM
 	struct stat st;
 	int fd;
 
@@ -110,6 +116,9 @@ int rc_input_new_pipe(const char *path)
 	}
 
 	return fd;
+#else
+	return -1;
+#endif
 }
 
 /*
@@ -119,6 +128,7 @@ int rc_input_new_pipe(const char *path)
  */
 int rc_input_new_unix(const char *path)
 {
+#ifndef NO_POSIX_SYSTEM
 	struct sockaddr_un beeth;
 	int fd;
 
@@ -141,6 +151,9 @@ int rc_input_new_unix(const char *path)
 	}
 
 	return fd;
+#else
+	return -1;
+#endif
 }
 
 /*

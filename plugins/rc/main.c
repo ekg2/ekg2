@@ -1,5 +1,7 @@
 /* $Id */
 
+#include <ekg/win32.h>
+
 #include <sys/stat.h>
 
 #include <stdlib.h>
@@ -19,6 +21,9 @@
 #include "rc.h"
 
 PLUGIN_DEFINE(rc, PLUGIN_UI, NULL);
+#ifdef EKG2_WIN32_SHARED_LIB
+	EKG2_WIN32_SHARED_LIB_HELPER
+#endif
 
 list_t rc_inputs = NULL;
 
