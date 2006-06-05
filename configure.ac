@@ -49,6 +49,9 @@ AC_CHECK_FUNC(sched_yield, [], [AC_CHECK_LIB(rt, sched_yield, LIBS="$LIBS -lrt")
 dnl  BeOS
 AC_CHECK_FUNC(inet_addr, [], [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")])
 
+dnl windows
+AC_CHECK_LIB(wsock32, main, LIBS="$LIBS -lwsock32")
+
 dnl  sprawdzamy, czy system ma getopt_long
 AC_CHECK_FUNC(getopt_long, , [COMPAT="$COMPAT getopt.o getopt1.o"])
 
@@ -411,8 +414,6 @@ done
 plugindir=$libdir/ekg2/plugins
 AC_SUBST(plugindir)
 
-AC_OUTPUT
-
 echo
 echo "configured options:"
 
@@ -521,3 +522,28 @@ fi
 
 echo " - mouse support in $mouse_lib"
 
+AC_SUBST(COMMON_PLUGINS_CFLAGS)
+AC_SUBST(STATIC_PLUGINS_LIB)
+COMMON_PLUGIN_CFLAGS=""
+STATIC_PLUGINS_LIB=""
+
+echo 
+echo -n "ekg2 plugins will be compilated: "
+if test "x$enable_static" = "xyes"; then
+	AC_DEFINE_UNQUOTED(STATIC_LIBS, "${PLUGINS}", [define here plugins which will be compilated staticly!])
+	echo "as static libs: $PLUGINS"
+ 
+	STATIC_PLUGINS_LIB="$STATIC_PLUGINS_LIB $PLUGINS_LIBS"
+ 	for i in $PLUGINS; do 
+ 		STATIC_PLUGINS_LIB="$STATIC_PLUGINS_LIB \$(top_builddir)/plugins/$i/.libs/*.o"
+ 	done
+else
+ 	AC_DEFINE(SHARED_LIBS, 1, [define if you want shared plugins (in .so or .dll)])
+ 	COMMON_PLUGINS_CFLAGS="-DPLUGIN_SHARED_LIBS"
+dnl 	LIBS="$LIBS -no-undefined"
+ 
+ 	echo "as shared libs"
+fi
+ 
+AC_OUTPUT
+ 
