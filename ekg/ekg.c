@@ -385,6 +385,7 @@ void ekg_loop()
 		}
 #endif
 watches_once_again:
+		ekg_watches_removed = 0;
                 /* je¶li wyst±pi³ b³±d, daj znaæ */
                 if (ret == -1) {
                         /* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
@@ -416,6 +417,7 @@ watches_once_again:
                 }
 
 watches_again:
+		ekg_watches_removed = 0;
                 /* zapamiêtaj ostatni deskryptor */
                 for (watch_last = NULL, l = watches; l; l = l->next) {
                         if (!l->next)
@@ -1078,6 +1080,7 @@ void ekg_exit()
         }
 
 watches_again:
+	ekg_watches_removed = 0;
         for (l = watches; l; ) {
                 watch_t *w = l->data;
 
