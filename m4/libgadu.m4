@@ -48,6 +48,8 @@ AC_DEFUN([AC_CHECK_LIBGADU],
     [
       AC_CHECK_LIB([gadu], [gg_logoff],
       [
+	AC_CHECK_LIB([gadu], [gg_change_passwd4], [ AC_DEFINE(HAVE_GG_CHANGE_PASSWD4, 1, [define if libgadu have HAVE_GG_CHANGE_PASSWD4 since LIBGADU ~20030930 ])])
+
         AC_DEFINE([HAVE_LIBGADU], 1, [define if you have libgadu])
         LIBGADU_LIBS="$LIBGADU_LIBS -lgadu -lcrypto -lssl $PTHREAD_LIBS"
         have_libgadu="yes"
