@@ -190,23 +190,38 @@ if test "x$with_aspell" != "xno"; then
 fi
 
 dnl
-dnl  Checking libungif.so i <gif_lib.h>
+dnl  Checking libungif.so & <gif_lib.h> or
+dnl  Checking libgif.so   & <gif_lib.h>
 dnl
 
-AC_ARG_WITH(libungif,
-        [  --without-libungif      Compile without GIF token support])
+AC_ARG_WITH(gif,	[  --without-gif         Compile without GIF token support])
+AC_ARG_WITH(libgif,	[  --without-libgif      Compile without libgif token support])
+AC_ARG_WITH(libungif,	[  --without-libungif    Compile without libungif token support])
 
-if test "x$with_libungif" != "xno"; then
-        AC_CHECK_LIB(ungif, DGifSlurp,
-        [
-                AC_CHECK_HEADERS(gif_lib.h,
-                [
-                        AC_DEFINE(HAVE_LIBUNGIF, 1, [define if you have libungif])
-			AC_SUBST([LIBUNGIF_LIBS])
-                        LIBUNGIF_LIBS="-lungif"
-                        have_libungif=yes
-                ])
-        ])
+
+if test "x$with_gif" != "xno"; then
+	if test "x$with_libgif" != "xno"; then
+		AC_CHECK_LIB(gif, DGifSlurp, [
+			AC_CHECK_HEADERS(gif_lib.h, [
+				AC_DEFINE(HAVE_LIBGIF, 1, [define if you have libgif])
+				AC_SUBST(GG_TOKENGIF_LIBS)
+				GG_TOKENGIF_LIBS="-lgif"
+				have_gif=yes
+			])
+		])
+	fi
+	if test "x$with_libungif" != "xno"; then
+	        AC_CHECK_LIB(ungif, DGifSlurp,
+        	[
+	                AC_CHECK_HEADERS(gif_lib.h,
+        	        [
+	                        AC_DEFINE(HAVE_LIBUNGIF, 1, [define if you have libungif])
+				AC_SUBST(GG_TOKENGIF_LIBS)
+	                        GG_TOKENGIF_LIBS="-lungif"
+        	                have_gif=yes
+	                ])
+	        ])
+	fi
 fi
 
 
@@ -290,7 +305,7 @@ fi
 
 
 AC_ARG_WITH(gtk,
-	[ --without-gtk        Compile without gtk2 support (gtk plugin)])
+	[  --without-gtk        Compile without gtk2 support (gtk plugin)])
 
 
 if test "x$with_gtk" != "xno"; then
@@ -409,6 +424,16 @@ fi
 
 if test "x$have_libgadu" = "xyes"; then
 	echo " - libgadu:   enabled"
+	echo -n " - GG Tokens: saving to file"
+
+	if test "x$have_libjpeg" = "xyes"; then
+	        echo -n ", JPEG OCR (using: -ljpeg)"
+	fi
+
+	if test "x$have_gif" = "xyes"; then
+		echo -n ", GIF OCR (using: $GG_TOKENGIF_LIBS)"
+	fi
+	echo ""
 else
 	echo " - libgadu:   disabled"
 fi
@@ -481,18 +506,6 @@ else
         echo " - aspell:    disabled"
 fi
 
-if test "x$have_libjpeg" = "xyes"; then
-        echo " - libjpeg:   enabled"
-else
-        echo " - libjpeg:   disabled"
-fi
-
-if test "x$have_libungif" = "xyes"; then
-        echo " - libungif:   enabled"
-else
-        echo " - libungif:   disabled"
-fi
-
 if test "x$enable_unicode" = "xyes"; then
         echo " - unicode:   enabled"
 else
@@ -500,9 +513,9 @@ else
 fi
 
 if test "x$have_gtk" = "xyes"; then
-        echo " - gtk:   enabled"
+        echo " - gtk:       enabled"
 else
-        echo " - gtk:   disabled"
+        echo " - gtk:       disabled"
 fi
 
 

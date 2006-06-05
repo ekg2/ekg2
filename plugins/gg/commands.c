@@ -22,6 +22,13 @@
 
 #include "ekg2-config.h"
 
+#ifdef HAVE_LIBGIF
+# define GIF_OCR
+#endif
+#ifdef HAVE_LIBUNGIF
+# define GIF_OCR
+#endif
+
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
@@ -929,7 +936,7 @@ COMMAND(gg_command_unblock)
 	return 0;
 }
 
-#ifdef HAVE_LIBUNGIF
+#ifdef GIF_OCR
 
 /*
  * token_gif_load()
@@ -1390,7 +1397,7 @@ static WATCHER(gg_handle_token)
 		goto fail;
 	}
 
-#ifdef HAVE_LIBUNGIF
+#ifdef GIF_OCR
 	if (gg_config_display_token) {
 		struct token_t token;
 		char *buf;

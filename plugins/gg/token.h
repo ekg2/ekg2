@@ -20,7 +20,7 @@
 #ifndef __TOKEN_H
 #define __TOKEN_H
 
-#ifdef HAVE_LIBJPEG
+#ifdef GIF_OCR
 const int token_char_height = 12; 
 const char token_id_char[] = {"0123456789abcdef"};
 const char token_id[][15] = {
@@ -233,7 +233,7 @@ const char token_id[][15] = {
 "..#.."};
 #endif
 
-#ifdef HAVE_LIBUNGIF
+#ifdef GIF_OCR
 
 /* Wy³±czone, bo teraz nie u¿ywamy palety, ale je¶li kto¶ wymy¶li lepszy 
  * algorytm wy¶wietlania obrazka (ten jest beznadziejnie prosty) to mo¿e 
