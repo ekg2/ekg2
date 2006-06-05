@@ -1491,7 +1491,7 @@ back:
 	}
 
 	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {						/* clear */
-/*		if (bookmark)  destory j->bookmarks ? */
+		if (bookmark) jabber_bookmarks_free(j);			/* let's destroy previously saved bookmarks */
 		watch_write(j->send_watch,
 			"<iq type=\"set\" id=\"private%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
@@ -1520,13 +1520,16 @@ void jabber_register_commands()
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, TEXT("jid:away"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:back"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, TEXT("jid:bookmark"), "!p ?", jabber_command_private, JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-a --add -c --clear -d --display -m --modify -r --remove");
+	command_add(&jabber_plugin, TEXT("jid:bookmark"), "!p ?", jabber_command_private, JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
+			"-a --add -c --clear -d --display -m --modify -r --remove");
 	command_add(&jabber_plugin, TEXT("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, TEXT("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, TEXT("jid:config"), "!p", jabber_command_private,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-c --clear -d --display -g --get -p --put");
+	command_add(&jabber_plugin, TEXT("jid:config"), "!p", jabber_command_private,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
+			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, TEXT("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, "send get resume voice close list");
+	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
+			"send get resume voice close list");
 	command_add(&jabber_plugin, TEXT("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:disconnect"), "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
@@ -1539,7 +1542,8 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:privacy"), "? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, TEXT("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, "-c --clear -d --display -p --put");
+	command_add(&jabber_plugin, TEXT("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
+			"-c --clear -d --display -p --put");
 	command_add(&jabber_plugin, TEXT("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:stats"), "? ?", jabber_command_stats, JABBER_FLAGS, NULL);

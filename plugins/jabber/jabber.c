@@ -65,7 +65,7 @@
 #include "jabber.h"
 
 #define jabberfix(x,a) ((x) ? x : a)
-#define WITH_JABBER_DCC 0
+#define WITH_JABBER_DCC 1
 #define WITH_JABBER_JINGLE 0
 
 #define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
@@ -119,6 +119,7 @@ static void jabber_private_destroy(session_t *s)
 
         if (j->parser)
                 XML_ParserFree(j->parser);
+	jabber_bookmarks_free(j);
 
         xfree(j);
 
@@ -459,6 +460,29 @@ dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const
 }
 #endif
 
+/* destory all previously saved bookmarks... we DON'T DELETE LIST on jabberd server... only list saved @ j->bookamarks */
+int jabber_bookmarks_free(jabber_private_t *j) {
+	list_t l;
+	if (!j || !j->bookmarks) return -1;
+
+	for (l = j->bookmarks; l; l = l->next) {
+		jabber_bookmark_t *book = l->data;
+		if (!book) continue;
+
+		if (book->type == JABBER_BOOKMARK_URL) { xfree(book->private.url->name); xfree(book->private.url->url); }
+		else if (book->type == JABBER_BOOKMARK_CONFERENCE) { 
+			xfree(book->private.conf->name); xfree(book->private.conf->jid);
+			xfree(book->private.conf->nick); xfree(book->private.conf->pass);
+		}
+		xfree(book->private.other);
+		xfree(book);
+		l->data = NULL;
+	}
+	list_destroy(j->bookmarks, 0); 
+	j->bookmarks = NULL;
+	return 0;
+}
+
 /*
  * jabber_session()
  *
@@ -540,9 +564,9 @@ int jabber_write_status(session_t *s)
 
 #if WITH_JABBER_JINGLE
 /* This is only to enable 'call' button in GTalk .... */
-#define JINGLE_CAPS "<c xmlns=\"http://jabber.org/protocol/caps\" ext=\"voice-v1\" ver=\"0.1\" node=\"http://www.google.com/xmpp/client/caps\"/>"
+# define JINGLE_CAPS "<c xmlns=\"http://jabber.org/protocol/caps\" ext=\"voice-v1\" ver=\"0.1\" node=\"http://www.google.com/xmpp/client/caps\"/>"
 #else 
-#define JINGLE_CAPS ""
+# define JINGLE_CAPS ""
 #endif
 
         if (!s || !j)
@@ -855,6 +879,41 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		return;
 	}
 
+
+	if (!xstrcmp(type, "error")) {
+		xmlnode_t *e = xmlnode_find_child(n, "error");
+		char *reason = (e) ? jabber_unescape(e->data) : NULL;
+
+		if (!xstrncmp(id, "register", 8)) {
+			print("register_failed", jabberfix(reason, "?"));
+		} else if (!xstrcmp(id, "auth")) {
+			if (reason) {
+				print("conn_failed", reason, session_name(s));
+			} else {
+				print("jabber_generic_conn_failed", session_name(s));
+			}
+			j->connecting = 0;
+		} else if (!xstrncmp(id, "passwd", 6)) {
+			print("passwd_failed", jabberfix(reason, "?"));
+			session_set(s, "__new_password", NULL);
+		} else if (!xstrncmp(id, "search", 6)) {
+			debug("[JABBER] search failed: %s\n", reason);
+		}
+#if WITH_JABBER_DCC
+		else if (!xstrncmp(id, "offer", 5)) {
+			char *uin = jabber_unescape(from);
+			if (dcc_close(jabber_dcc_find(uin, id, NULL))) {
+				/* XXX, possible abuse attempt */
+			}
+			xfree(uin);
+		}
+#endif
+		else debug("[JABBER] GENERIC IQ ERROR: %s\n", reason);
+
+		xfree(reason);
+		return;			/* we don't need to go down */
+	}
+
 	if (!xstrcmp(id, "auth")) {
 		s->last_conn = time(NULL);
 		j->connecting = 0;
@@ -879,16 +938,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			jabber_write_status(s);
 
 			if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, TEXT("/jid:bookmark --get"), 1);
-
-		} else if (!xstrcmp(type, "error")) { /* TODO: try to merge with <message>'s <error> parsing */
-			xmlnode_t *e = xmlnode_find_child(n, "error");
-
-			if (e && e->data) {
-				char *data = jabber_unescape(e->data);
-				print("conn_failed", data, session_name(s));
-			} else
-				print("jabber_generic_conn_failed", session_name(s));
-		}
+		} 
 	}
 
 	if (!xstrncmp(id, "passwd", 6)) {
@@ -898,21 +948,10 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			session_set(s, "password", new_passwd);
 			session_set(s, "__new_password", NULL);
 			wcs_print("passwd");
-		} else if (!xstrcmp(type, "error")) {
-			xmlnode_t *e = xmlnode_find_child(n, "error");
-			char *reason = (e) ? jabber_unescape(e->data) : NULL;
-
-			print("passwd_failed", jabberfix(reason, "?"));
-			xfree(reason);
-		}
+		} 
 		session_set(s, "__new_password", NULL);
 	}
 
-	if (!xstrncmp(id, "register", 8)) {
-		if (!xstrcmp(type, "error")) {
-			print("register_failed", "NOERROR"); /* XXX, TODO */
-		}
-	}
 #if WITH_JABBER_DCC
 	if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
 /* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
@@ -1013,15 +1052,6 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			xfree(uid);
 			xfree(filename);
 		}
-	}
-
-	if (!xstrcmp(type, "error") && !xstrncmp(id, "offer", 5)) {
-		char *uin = jabber_unescape(from);
-		if (dcc_close(jabber_dcc_find(uin, id, NULL))) {
-			/* XXX, possible abuse attempt */
-		}
-
-		xfree(uin);
 	}
 #endif	/* FILETRANSFER */
 
@@ -1182,21 +1212,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						}
 					} else if (!xstrcmp(node->name, "storage") && !xstrcmp(ns, "storage:bookmarks")) { /* JEP-0048: Bookmark Storage */
 						/* destroy previously-saved list */
-						list_t l;
-						for (l = j->bookmarks; l; l = l->next) {
-							jabber_bookmark_t *book = l->data;
-							if (!book) continue;
-
-							if (book->type == JABBER_BOOKMARK_URL) { xfree(book->private.url->name); xfree(book->private.url->url); }
-							else if (book->type == JABBER_BOOKMARK_CONFERENCE) { 
-								xfree(book->private.conf->name); xfree(book->private.conf->jid);
-								xfree(book->private.conf->nick); xfree(book->private.conf->pass);
-							}
-							xfree(book->private.other);
-							xfree(book);
-							l->data = NULL;
-						}
-						list_destroy(j->bookmarks, 0); j->bookmarks = NULL;
+						jabber_bookmarks_free(j);
 
 						/* create new-one */
 						for (child = node->children; child; child = child->next) {
@@ -1716,10 +1732,12 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		xfree(mucuid);
 	}
 	if (!ismuc && (!type || ( na || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
-		xmlnode_t *nshow, *nstatus, *nerr;
+		xmlnode_t *nshow, *nstatus, *nerr, *temp;
 		char *status = NULL, *descr = NULL;
 		char *jstatus = NULL;
 		char *tmp2;
+
+		int prio = (temp = xmlnode_find_child(n, "priority")) ? atoi(temp->data) : 10;
 
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
 			jstatus = jabber_unescape(nshow->data);
@@ -1749,6 +1767,10 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		if ((tmp2 = xstrchr(uid, '/'))) {
 			char *tmp = xstrndup(uid, tmp2-uid);
 			userlist_t *ut;
+
+			if (!xstrcmp(tmp, s->uid))
+				print("jabber_resource_another", session_name(s), tmp, tmp2+1, itoa(prio), status ? status : jstatus, descr); /* makes it more colorful ? */
+
 			if ((ut = userlist_find(s, tmp)))
 				ut->resource = xstrdup(tmp2+1);
 			xfree(tmp);
@@ -2257,6 +2279,7 @@ static int jabber_theme_init()
 	format_add("jabber_auth_denied", _("%> (%2) Authorisation for %T%1%n denied.\n"), 1);
 	format_add("jabber_auth_probe", _("%> (%2) Sent presence probe to %T%1%n.\n"), 1);
 	format_add("jabber_generic_conn_failed", _("%! (%1) Error connecting to Jabber server%n\n"), 1);
+	format_add("jabber_resource_another", _("%> (%1) Another resource changed status: %2/%3 (%4) is %5: %6"), 1); /* %1 session, %2: jid:cos %3: resource %4 priority %5 status %6 descr */
 	format_add("jabber_msg_failed", _("%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"),1);
 	format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
 	format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
