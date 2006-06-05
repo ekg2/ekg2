@@ -37,6 +37,7 @@ struct last {
 	unsigned char *message;	/* wiadomo¶æ */
 };
 
+#ifndef EKG2_WIN32_NOFUNCTION
 extern list_t lasts;
 
 void last_add(int type, const char *uid, time_t t, time_t st, const char *msg);
@@ -47,6 +48,8 @@ void last_free();
 CHAR_T *xml_uescape(const CHAR_T *text);
 CHAR_T *xml_escape(const char *text);
 char *log_escape(const char *str);
+
+#endif
 
 #endif /* __EKG_LOG_H */
 

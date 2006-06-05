@@ -116,7 +116,9 @@ int script_autorun(char *scriptname,
 		if (path) {
 			char *autorunpath = saprintf("%s/%s%s", prepare_path("scripts/autorun", 0), scriptname, (ext) ? ext : ""); 
 			debug("[SCRIPT_AUTORUN] makeing symlink from %s to %s ...", path, autorunpath);
+#ifndef NO_POSIX_SYSTEM
 			ret = symlink(path, autorunpath);
+#endif
 			debug("%d\n", ret);
 			xfree(autorunpath);
 		}

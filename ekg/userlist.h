@@ -22,10 +22,14 @@
 #define __EKG_USERLIST_H
 
 #include "ekg2-config.h"
+#include <ekg/win32.h>
 
 #include <sys/types.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -138,7 +142,7 @@ struct ignore_label {
 #define	IGNORE_LABELS_MAX 8
 struct ignore_label ignore_labels[IGNORE_LABELS_MAX];
 
-//list_t userlist;
+#ifndef EKG2_WIN32_NOFUNCTION
 
 int userlist_read(session_t* session);
 int userlist_write(session_t *session);
@@ -184,6 +188,7 @@ char *get_uid_all(const char *text);
 char *get_nickname(session_t *session, const char *text);
 int check_uid_nick(const char *text);
 
+#endif
 
 #endif /* __EKG_USERLIST_H */
 

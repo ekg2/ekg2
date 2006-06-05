@@ -26,9 +26,11 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
+#ifndef EKG2_WIN32_NOFUNCTION
 extern list_t plugins;
 extern list_t queries;
 extern list_t watches;
+#endif
 
 typedef enum {
 	PLUGIN_ANY = 0,
@@ -65,6 +67,8 @@ typedef struct {
 	plugin_theme_init_func_t theme_init;
 } plugin_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
+
 int plugin_load(const CHAR_T *name, int prio, int quiet);
 int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *, int prio);
@@ -76,6 +80,8 @@ plugin_t *plugin_find_uid(const char *uid);
 int have_plugin_of_class(int);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
 plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
+
+#endif
 
 #ifdef USINGANANTIQUECOMPILER
 #define PLUGIN_DEFINE(x, y, z)\
@@ -112,11 +118,15 @@ typedef struct {
 	int count;
 } query_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
+
 query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
 int query_disconnect(plugin_t *, const char *);
 query_t *query_find(const char *name);
 
 int query_emit(plugin_t *, const char *, ...);
+
+#endif
 
 #define WATCHER(x) int x(int type, int fd, const char *watch, void *data)
 typedef WATCHER(watcher_handler_func_t);
@@ -141,6 +151,8 @@ typedef struct {
 	time_t started;		/* kiedy zaczêto obserwowaæ */
 	int removed;		/* wywo³ano ju¿ watch_remove() */
 } watch_t;
+
+#ifndef EKG2_WIN32_NOFUNCTION
 
 #ifdef __GNU__
 int watch_write(watch_t *w, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
@@ -172,6 +184,8 @@ void watch_handle_line(watch_t *w);
 int watch_handle_write(watch_t *w);
 
 int ekg2_dlinit();
+
+#endif
 
 #endif /* __EKG_PLUGINS_H */
 

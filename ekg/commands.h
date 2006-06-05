@@ -76,6 +76,7 @@ typedef struct {
 	char **possibilities;
 } command_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
 extern list_t commands;
 
 command_t *command_add(plugin_t *plugin, const CHAR_T *name, CHAR_T *params, command_func_t function, int flags, char *possibilities);
@@ -94,7 +95,7 @@ COMMAND(cmd_dcc);
 COMMAND(session_command);	/* sessions.c */
 COMMAND(cmd_on);	/* events.c */
 COMMAND(cmd_metacontact); /* metacontacts.c */
-
+#endif
 /*
  * jaka¶ malutka lista tych, do których by³y wysy³ane wiadomo¶ci.
  */
@@ -103,6 +104,7 @@ COMMAND(cmd_metacontact); /* metacontacts.c */
 extern char *send_nicks[SEND_NICKS_MAX];
 extern int send_nicks_count, send_nicks_index;
 
+#ifndef EKG2_WIN32_NOFUNCTION
 void tabnick_add(const char *nick);
 void tabnick_remove(const char *nick);
 void tabnick_flush();
@@ -119,7 +121,7 @@ extern CHAR_T *last_search_first_name;
 extern CHAR_T *last_search_last_name;
 extern CHAR_T *last_search_nickname;
 extern char *last_search_uid;
-
+#endif
 
 #endif /* __EKG_COMMANDS_H */
 

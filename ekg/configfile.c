@@ -23,6 +23,7 @@
  */
 
 #include "ekg2-config.h"
+#include "win32.h"
 
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600

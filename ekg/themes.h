@@ -54,6 +54,8 @@ extern list_t formats;
 #define wcs_print(x...) wcs_print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x)
 #define print_status(x...) print_window("__status", NULL, 0, x)
 
+#ifndef EKG2_WIN32_NOFUNCTION
+
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
 void wcs_print_window(const char *target, session_t *session, int separate, const char *theme, ...);
 
@@ -73,6 +75,8 @@ void theme_free();
 fstring_t *fstring_new(const char *str);
 fstring_t *wcs_fstring_new(const CHAR_T *str);
 void fstring_free(fstring_t *str);
+
+#endif
 
 /*
  * makro udaj±ce isalpha() z LC_CTYPE="pl_PL". niestety ncurses co¶ psuje

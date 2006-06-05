@@ -20,6 +20,7 @@
  */
 
 #include "ekg2-config.h"
+#include "win32.h"
 
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
@@ -28,9 +29,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include <errno.h>
 #include <limits.h>

@@ -27,6 +27,8 @@
 #include "char.h"
 #include "stuff.h"
 
+#ifndef EKG2_WIN32_NOFUNCTION
+
 void ekg_oom_handler();
 
 void *xcalloc(size_t nmemb, size_t size);
@@ -82,6 +84,8 @@ char *xrindex(const char *s, int c);
 
 char *vsaprintf(const char *format, va_list ap);
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap);
+
+#endif
 
 #endif /* __EKG_XMALLOC_H */
 

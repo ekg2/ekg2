@@ -263,10 +263,12 @@ int msg_queue_write()
 		return -1;
 
 	path = prepare_path("queue", 1);
-
+#ifndef NO_POSIX_SYSTEM
 	if (mkdir(path, 0700) && errno != EEXIST)
+#else
+	if (mkdir(path) && errno != EEXIST) 
+#endif
 		return -1;
-
 	for (l = msg_queue; l; l = l->next) {
 		msg_queue_t *m = l->data;
 		char *fn;

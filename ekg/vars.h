@@ -62,6 +62,8 @@ typedef struct {
 				 * wy¶wietliæ na li¶cie zmiennych */
 } variable_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
+
 extern list_t variables;
 
 void variable_init();
@@ -85,6 +87,8 @@ int variable_remove(plugin_t *plugin, const CHAR_T *name);
 int variable_set(const CHAR_T *name, const char *value, int allow_foreign);
 void variable_help(const CHAR_T *name);
 void variable_free();
+
+#endif
 
 #endif /* __EKG_VARS_H */
 

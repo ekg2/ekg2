@@ -28,6 +28,7 @@
  */
 
 #include "ekg2-config.h"
+#include "win32.h"
 
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
@@ -37,13 +38,20 @@
 #define _BSD_SOURCE
 
 #include <sys/types.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#endif
+
 #include <sys/stat.h>
 #include <sys/time.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include <dirent.h>
 #include <errno.h>
@@ -54,7 +62,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifndef NO_POSIX_SYSTEM
 #include <sys/utsname.h>
+#endif
 
 #ifdef __sun
 #include <procfs.h>
@@ -668,6 +678,7 @@ COMMAND(cmd_exec)
 			return -1;
 		}
 
+#ifndef NO_POSIX_SYSTEM
 		if (!(pid = fork())) {
 			dup2(open("/dev/null", O_RDONLY), 0);
 			dup2(fd[1], 1);
@@ -680,9 +691,15 @@ COMMAND(cmd_exec)
 
 			exit(1);
 		}
+#else
+/* XXX, fork and execute cmd /C $command */
+		pid = -1;
+#endif
 
 		if (pid < 0) {
 			printq("exec_error", strerror(errno));
+			close(fd[0]);
+			close(fd[1]);
 			return -1;
 		}
 	
@@ -2035,6 +2052,7 @@ COMMAND(cmd_debug_query)
  */
 COMMAND(cmd_test_mem) 
 {
+#ifndef NO_POSIX_SYSTEM
 	char *temp, *p = NULL;
 	CHAR_T *txt;
 	FILE *file = NULL;
@@ -2113,11 +2131,14 @@ COMMAND(cmd_test_mem)
 		return -1;
 	}
 	return rozmiar;
-
+#else
+	return -1;
+#endif
 }
 
 COMMAND(cmd_test_fds)
 {
+#ifndef NO_POSIX_SYSTEM
 	struct stat st;
 	char buf[1000];
 	int i;
@@ -2207,6 +2228,9 @@ COMMAND(cmd_test_fds)
 	}
 
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 COMMAND(cmd_beep)
@@ -2482,11 +2506,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		}
 
 		if (!correct_command) {
-#if USE_UNICODE
-			command_exec_format(target, session, quiet, TEXT("/ %ls"), xline);
-#else
-			command_exec_format(target, session, quiet, TEXT("/ %s"), xline);
-#endif
+			command_exec_format(target, session, quiet, TEXT("/ " CHARF), xline);
 			return 0;
 		}
 	}

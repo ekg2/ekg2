@@ -17,6 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include "win32.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -24,9 +25,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-// #ifdef HAVE_DLFCN_H
+#ifndef NO_POSIX_SYSTEM
 #  include <dlfcn.h>
-// #endif
+#else 
+#  include <winbase.h>
+#endif
 
 #include "commands.h"
 #include "events.h"
@@ -47,20 +50,47 @@ list_t plugins = NULL;
 list_t queries = NULL;
 list_t watches = NULL;
 
+#ifdef EKG2_WIN32_HELPERS
+# define WIN32_REQUEST_HELPER
+# include "win32_helper.h"
+#endif
+
 int ekg2_dlinit() {
+#ifdef EKG2_WIN32_HELPERS
+	INIT_HELPER_FUNC(&win32_helper);
+
+	int i;
+	for (i = 0; i < (sizeof(win32_helper) / sizeof(void *)); i++) {
+		void **cur = & ((void **) &win32_helper)[i];
+		if (!*cur) {
+			*cur = (void *) &win32_stub_function;
+			printf("Making evil thing on element: %d\n", i);
+		}
+	}
+#endif
+
 	return 0;
 /*	return lt_dlinit() */
 }
 
 /* it only support posix dlclose() but maybe in future... */
 int ekg2_dlclose(void *plugin) {
+#ifndef NO_POSIX_SYSTEM
 	return dlclose(plugin);
+#else
+	return FreeLibrary(plugin);
+#endif
 /*	return lt_dlclose(plugin); */
 }
 
 /* it only support posix dlopen() but maybe in future... */
 void *ekg2_dlopen(char *name) {
-	void *tmp = dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
+	void *tmp = NULL;
+#ifdef NO_POSIX_SYSTEM
+	tmp = LoadLibraryA(name);
+#else
+	tmp = dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
+#endif
 /*	if (!tmp && !in_autoexec) debug("[plugin] Error loading plugin %s: %s\n", name, dlerror()); */
 /*	return lt_dlopen(lib); */
 	return tmp;
@@ -68,7 +98,11 @@ void *ekg2_dlopen(char *name) {
 
 /* it only support posix dlsym() but maybe in future... */
 void *ekg2_dlsym(void *plugin, char *name) {
+#ifndef NO_POSIX_SYSTEM
 	return dlsym(plugin, name);
+#else
+	return GetProcAddress(plugin, name);
+#endif
 /*	return lt_dlsym( (lt_dlhandle) plugin, init); */
 }
 
@@ -81,11 +115,13 @@ void *ekg2_dlsym(void *plugin, char *name) {
  */
 int plugin_load(const CHAR_T *name, int prio, int quiet)
 {
+#ifdef SHARED_LIBS
 	char *lib = NULL;
 	char *env_ekg_plugins_path = NULL;
+	char *init = NULL;
+#endif
 
 	void *plugin = NULL;
-	char *init = NULL;
 	int (*plugin_init)() = NULL;
 	list_t l;
 
@@ -96,7 +132,8 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 		printq("plugin_already_loaded", name); 
 		return -1;
 	}
-
+#ifdef SHARED_LIBS
+#ifndef NO_POSIX_SYSTEM
         if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
                 lib = saprintf("%s/" CHARF ".so", env_ekg_plugins_path, name);
                 plugin = ekg2_dlopen(lib);
@@ -118,13 +155,19 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
                 lib = saprintf("../plugins/" CHARF "/.libs/" CHARF ".so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
-	
+
 	if (!plugin) {
 		xfree(lib);
 		lib = saprintf("%s/" CHARF ".so", PLUGINDIR, name);
 		plugin = ekg2_dlopen(lib);
 	}
-
+#else	/* NO_POSIX_SYSTEM */
+	if (!plugin) {
+		xfree(lib);
+		lib = saprintf("c:\\ekg2\\plugins\\%s.dll", name);
+		plugin = ekg2_dlopen(lib);
+	}
+#endif /* SHARED_LIBS */
 	if (!plugin) {
 		printq("plugin_doesnt_exist", name);
 		xfree(lib);
@@ -132,20 +175,53 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 	}
 
 	xfree(lib);
+#endif
 
-	init = saprintf(CHARF "_plugin_init", name);
+#ifdef STATIC_LIBS
+/* first let's try to load static plugin... */
+	extern int jabber_plugin_init(int prio);
+	extern int irc_plugin_init(int prio);
+	extern int gtk_plugin_init(int prio);
 
+	debug("searching for name: %s in STATICLIBS: %s\n", name, STATIC_LIBS);
 
-	if (!(plugin_init = ekg2_dlsym(plugin, init))) {
-		wcs_printq("plugin_incorrect", name);
+	if (!xstrcmp(name, "jabber")) plugin_init = &jabber_plugin_init;
+	if (!xstrcmp(name, "irc")) plugin_init = &irc_plugin_init;
+	if (!xstrcmp(name, "gtk")) plugin_init = &gtk_plugin_init;
+//	if (!xstrcmp(name, "miranda")) plugin_init = &miranda_plugin_init;
+#endif
 
-		ekg2_dlclose(plugin);
+#ifdef SHARED_LIBS
+	if (!plugin_init) {
+# ifdef EKG2_WIN32_HELPERS
+		void (*plugin_preinit)(void *);
+		char *preinit = saprintf("win32_plugin_init");
+		if (!(plugin_preinit = ekg2_dlsym(plugin, preinit))) {
+			debug("NO_POSIX_SYSTEM, PLUGIN:%s NOT COMPILATED WITH EKG2_WIN32_SHARED_LIB?!\n", name);
+			wcs_printq("plugin_incorrect", name);
+			xfree(preinit);
+			return -1;
+		}
+		xfree(preinit);
+		plugin_preinit(&win32_helper);
+# endif
+/* than if we don't have static plugin... let's try to load it dynamicly */
+		init = saprintf(CHARF "_plugin_init", name);
+
+		if (!(plugin_init = ekg2_dlsym(plugin, init))) {
+			wcs_printq("plugin_incorrect", name);
+			ekg2_dlclose(plugin);
+			xfree(init);
+			return -1;
+		}
 		xfree(init);
+	}
+#endif
+	if (!plugin_init) {
+		printq("plugin_doesnt_exist", name);
 		return -1;
 	}
-		
-	xfree(init);
-	
+
 	if (plugin_init(prio) == -1) {
 		wcs_printq("plugin_not_initialized", name);
 		ekg2_dlclose(plugin);
@@ -649,11 +725,24 @@ void watch_handle_line(watch_t *w)
 	int ret, res = 0;
 	int (*handler)(int, int, const char *, void *) = w->handler;
 	w->removed = -1;
+#ifndef NO_POSIX_SYSTEM
 	ret = read(w->fd, buf, sizeof(buf) - 1);
+#else
+	ret = recv(w->fd, buf, sizeof(buf) - 1, 0);
+	if (ret == -1 && WSAGetLastError() == WSAENOTSOCK) {
+		printf("recv() failed Error: %d, using ReadFile()", WSAGetLastError());
+		res = ReadFile(w->fd, &buf, sizeof(buf)-1, &ret, NULL);
+		printf(" res=%d ret=%d\n", res, ret);
+	}
+	res = 0;
+#endif
 
 	if (ret > 0) {
 		buf[ret] = 0;
 		string_append(w->buf, buf);
+#ifdef NO_POSIX_SYSTEM
+		printf("RECV: %s\n", buf);
+#endif
 	}
 
 	if (ret == 0 || (ret == -1 && errno != EAGAIN))
@@ -704,15 +793,29 @@ int watch_handle_write(watch_t *w) {
 	if (handler) {
 		res = handler(0, w->fd, w->buf->str, w->data);
 	} else {
+#ifdef NO_POSIX_SYSTEM
+		res = send(w->fd, w->buf->str, len, 0 /* MSG_NOSIGNAL */);
+#else
 		res = write(w->fd, w->buf->str, len);
+#endif
 	}
 
 	debug(" ... wrote:%d bytes (handler: 0x%x) ", res, handler);
 
-	if (res == -1) {
-		debug("Error: %s\n", strerror(errno));
+	if (res == -1 &&
+#ifdef NO_POSIX_SYSTEM
+			(WSAGetLastError() != 666)
+#else
+			1
+#endif
+		) {
+#ifdef NO_POSIX_SYSTEM
+		debug("WSAError: %d\n", WSAGetLastError());
+#else
+		debug("Error: %s %d\n", strerror(errno), errno);
 		w->removed = 0;
 		watch_free(w);
+#endif
 		return -1;
 	} else if (res == len) {
 		string_clear(w->buf);

@@ -51,11 +51,13 @@ struct list {
 
 typedef struct list *list_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
 void *list_add(list_t *list, void *data, int alloc_size);
 void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *));
 int list_remove(list_t *list, void *data, int free_data);
 int list_count(list_t list);
 int list_destroy(list_t list, int free_data);
+#endif
 
 /*
  * typedef string_t
@@ -86,6 +88,8 @@ struct wcs_string {
 
 typedef struct string *string_t;
 typedef struct wcs_string *wcs_string_t;
+
+#ifndef EKG2_WIN32_NOFUNCTION
 
 string_t string_init(const char *str);
 wcs_string_t wcs_string_init(const CHAR_T *value);
@@ -128,6 +132,8 @@ void wcs_array_free(CHAR_T **array);
 const char *itoa(long int i);
 const CHAR_T *wcs_itoa(long int i);
 int wcs_atoi(const CHAR_T *nptr);
+
+#endif
 
 #endif /* __EKG_DYNSTUFF_H */
 

@@ -21,11 +21,15 @@
  */
 
 #include "ekg2-config.h"
+#include "win32.h"
 
 #include <sys/types.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include <string.h>
 

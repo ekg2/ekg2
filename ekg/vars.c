@@ -21,7 +21,11 @@
  */
 
 #include "ekg2-config.h"
+#include "win32.h"
+
+#ifndef NO_POSIX_SYSTEM
 #define HAVE_NL_LANGINFO 1 /* jak ktos bedzie narzekac to przerzucic do configure */ /* CONFORMING TO: The Single UNIX Specification, Version 2 */
+#endif
 
 #include <stdarg.h>
 #include <stdio.h>

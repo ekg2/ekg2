@@ -31,6 +31,7 @@
 #define _GNU_SOURCE
 
 #include "ekg2-config.h"
+#include "win32.h"
 
 #define __EXTENSIONS__
 #include <sys/types.h>
@@ -40,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -48,6 +50,12 @@
 #include "configfile.h"
 #include "stuff.h"
 #include "userlist.h"
+
+#ifdef NO_POSIX_SYSTEM
+#include <winbase.h>
+
+#define strcasecmp(s1, s2) lstrcmpiA(s1, s2)
+#endif
 
 #ifndef HAVE_STRNDUP
 #  include "compat/strndup.h"
@@ -134,7 +142,7 @@ char *xstrdup(const char *s)
 	if (!s)
 		return NULL;
 
-	if (!(tmp = strdup(s)))
+	if (!(tmp = (char *) strdup(s)))
 		ekg_oom_handler();
 
 	return tmp;
@@ -202,27 +210,30 @@ void *xmemdup(void *ptr, size_t size)
  */
 char *vsaprintf(const char *format, va_list ap)
 {
-	char *res, tmp[2];
+#ifdef NO_POSIX_SYSTEM
+	char tmp[10000];
+#else
+	char tmp[2];
+#endif
+#if defined(va_copy) || defined(__va_copy)
+	va_list aq;
+#endif
+	char *res;
 	int size;
 
 #if defined(va_copy)
-	va_list aq;
 	va_copy(aq, ap);
 #elif defined(__va_copy)
-	va_list aq;
 	__va_copy(aq, ap);
 #endif
-	
 	size = vsnprintf(tmp, sizeof(tmp), format, ap);
 	res = xmalloc(size + 1);
-
 #if defined(va_copy) || defined(__va_copy)
 	vsnprintf(res, size + 1, format, aq);
 	va_end(aq);
 #else
 	vsnprintf(res, size + 1, format, ap);
 #endif
-	
 	return res;
 }
 
@@ -417,7 +428,18 @@ CHAR_T *xwcsncpy(CHAR_T *dest, const CHAR_T *src, size_t n)
 
 int xstrncasecmp(const char *s1, const char *s2, size_t n)
 {
+#ifdef NO_POSIX_SYSTEM
+	if (n == 0) return 0;
+	while (n-- != 0 && tolower(*s1) == tolower(*s2)) {
+		if (n == 0 || *s1 == '\0' || *s2 == '\0')
+			break;
+		s1++;
+		s2++;
+	}
+	return tolower(*(unsigned char *) s1) - tolower(*(unsigned char *) s2);
+#else
 	return strncasecmp(fix(s1), fix(s2), n);
+#endif
 }
 
 int xwcsncasecmp(const CHAR_T *s1, const CHAR_T *s2, size_t n)
@@ -469,12 +491,20 @@ char *xstrtok(char *s, const char *delim)
 
 char *xindex(const char *s, int c)
 {
+#ifdef NO_POSIX_SYSTEM
+	return xstrchr(s, c);
+#else
 	return index(fix(s), c);
+#endif
 }
 
 char *xrindex(const char *s, int c)
 {
+#ifdef NO_POSIX_SYSTEM
+	return xstrrchr(s, c);
+#else
 	return rindex(fix(s), c);
+#endif
 }
 
 

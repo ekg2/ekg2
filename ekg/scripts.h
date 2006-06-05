@@ -172,6 +172,7 @@ extern list_t scriptlang;
 #define script_private_get(s) (s->private)
 #define script_private_set(s, p) (s->private = p)
 
+#ifndef EKG2_WIN32_NOFUNCTION
 int script_unload_lang(scriptlang_t *s);
 
 int script_list(scriptlang_t *s);
@@ -200,6 +201,7 @@ script_plugin_t *script_plugin_init(scriptlang_t *s, script_t *scr, char *name, 
 
 int script_variables_free(int free);
 int script_variables_write();
+#endif
 
 #define SCRIPT_UNBIND_HANDLER(type, args...) \
 {\

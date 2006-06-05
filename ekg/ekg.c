@@ -24,20 +24,29 @@
  */
 
 #include "ekg2-config.h"
+#include "win32.h"
+
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
 #endif
 #include <sys/types.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/ioctl.h>
+#endif
+
 #include <sys/stat.h>
 #define __USE_BSD
 #include <sys/time.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/resource.h> // rlimit
+#endif
 
 #ifdef __FreeBSD__
 #  include <sys/select.h>
@@ -53,7 +62,19 @@
 #endif
 #include <limits.h>
 #include <locale.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <pwd.h>
+#else
+#include <lm.h>
+#endif
+
+#ifdef NO_POSIX_SYSTEM
+#include <winbase.h>
+#include <wingdi.h>
+#include <winuser.h>
+#endif
+
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -225,6 +246,7 @@ void ekg_loop()
                 }
 
                 /* przegl±danie zdech³ych dzieciaków */
+#ifndef NO_POSIX_SYSTEM
                 while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
                         debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
 
@@ -256,7 +278,7 @@ void ekg_loop()
                                 list_remove(&children, c, 1);
                         }
                 }
-
+#endif
                 /* zerknij na wszystkie niezbêdne deskryptory */
 
                 FD_ZERO(&rd);
@@ -277,7 +299,6 @@ void ekg_loop()
 
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
-		
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
 			struct timeval tv2;
@@ -313,10 +334,57 @@ void ekg_loop()
 			tv.tv_usec = 1;
 
                 /* sprawd¼, co siê dzieje */
-		ret = select(maxfd + 1, &rd, &wd, NULL, &tv);
-watches_once_again:
-		ekg_watches_removed = 0;
+/* XXX, on win32 we must do select() on only SOCKETS.
+ *    , on files we must do "WaitForSingleObjectEx() 
+ *    , REWRITE.
+ *    modify w->type to support WATCH_PIPE? on windows it's bitmask. on other systen it;s 0.
+ */
+#ifdef NO_POSIX_SYSTEM
+		ret = 0;
+		if (watches) {
+			struct timeval tv = { 0, 0 };
+			WSASetLastError(0);
+#endif
+                	ret = select(maxfd + 1, &rd, &wd, NULL, &tv);
+#ifdef NO_POSIX_SYSTEM
+			if (ret != 0) printf("select() ret = %d WSAErr: %d.\n", ret, WSAGetLastError());
+		}
+		{ 
+			HANDLE rwat[5] = {0, 0, 0, 0, 0};
+			HANDLE wwat[5] = {0, 0, 0, 0, 0};
+			HANDLE wat;
+			int rcur = 0, wcur = 0;
+			int res;
+			int i;
 
+			if (ret == -1) for (i = 0; i < rd.fd_count; i++) rwat[rcur++] = rd.fd_array[i];
+			if (ret == -1) for (i = 0; i < wd.fd_count; i++) wwat[wcur++] = wd.fd_array[i];
+			if (ret == -1) { FD_ZERO(&rd); FD_ZERO(&wd); }
+			if (ret == -1) ret = 0;
+
+			for (i = 0; i < rcur; i++) {
+				res = WaitForSingleObjectEx(rwat[i], 0, FALSE);
+				if (res != -1) {
+					debug("WaitForSingleObjectEx(): rwat[%d]: %d = %d\n", i, rwat[i], res);
+					FD_SET(rwat[i], &rd);
+					ret++;
+				}
+			}
+			for (i = 0; i < wcur; i++) {
+				res = WaitForSingleObjectEx(wwat[i], 0, FALSE);
+				if (res != -1) {
+					debug("WaitForSingleObjectEx(): wwat[%d]: %d = %d\n", i, wwat[i], res);
+					FD_SET(wwat[i], &wd);
+					ret++;
+				}
+			}
+			if (!ret) {
+/*				debug("Waiting max... %d\n", tv.tv_sec * 1000 + (tv.tv_usec / 1000)); */
+				MsgWaitForMultipleObjects(0, &wat, FALSE, tv.tv_sec * 1000 + (tv.tv_usec / 1000), QS_ALLEVENTS);
+			}
+		}
+#endif
+watches_once_again:
                 /* je¶li wyst±pi³ b³±d, daj znaæ */
                 if (ret == -1) {
                         /* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
@@ -331,6 +399,7 @@ watches_once_again:
 						debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
 						goto watches_once_again;
 					}
+					ekg_watches_removed = 0;
 
                                         l = l->next;
 
@@ -347,7 +416,6 @@ watches_once_again:
                 }
 
 watches_again:
-		ekg_watches_removed = 0;
                 /* zapamiêtaj ostatni deskryptor */
                 for (watch_last = NULL, l = watches; l; l = l->next) {
                         if (!l->next)
@@ -362,6 +430,7 @@ watches_again:
 				debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
 				goto watches_again;
 			}
+			ekg_watches_removed = 0;
                         /* handlery mog± dodawaæ kolejne watche, wiêc je¶li
                          * dotrzemy do ostatniego sprzed wywo³ania pêtli,
                          * koñczymy pracê. */
@@ -406,7 +475,7 @@ watches_again:
 
         return;
 }
-
+#ifndef NO_POSIX_SYSTEM
 static void handle_sigusr1()
 {
         debug("sigusr1 received\n");
@@ -475,6 +544,7 @@ config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid
 
         raise(SIGSEGV);                 /* niech zrzuci core */
 }
+#endif
 
 /*
  * prepare_batch_line()
@@ -537,6 +607,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
         if (!is_UI) {
                 /* printf(format, ap); */ /* uncomment for debuging */
+		vprintf(format, ap);
                 return;
         }
 
@@ -623,45 +694,70 @@ int main(int argc, char **argv)
         char *tmp = NULL, *new_status = NULL, *new_descr = NULL;
         char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
         struct passwd *pw;
+#ifndef NO_POSIX_SYSTEM
         struct rlimit rlim;
+#else
+	WSADATA wsaData;
+#endif
         list_t l;
 
+#ifndef NO_POSIX_SYSTEM
         /* zostaw po sobie core */
         rlim.rlim_cur = RLIM_INFINITY;
         rlim.rlim_max = RLIM_INFINITY;
         setrlimit(RLIMIT_CORE, &rlim);
+#endif
+#ifdef NO_POSIX_SYSTEM
+	if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
+		fprintf(stderr, "WSAStartup() failed? wtf?!.. Oh, I see windows ;>");
+	}
+#endif
 
         ekg_started = time(NULL);
         ekg_pid = getpid();
 
         ekg2_dlinit();
-
         setlocale(LC_ALL, "");
+#ifdef ENABLE_NLS
         bindtextdomain("ekg2",LOCALEDIR);
 	textdomain("ekg2");
+#endif
         srand(time(NULL));
 
         strlcpy(argv0, argv[0], sizeof(argv0));
 
+#ifdef NO_POSIX_SYSTEM
+	{
+#if 0
+		USER_INFO_1 *user = NULL;
+		if (NetUserGetInfo(NULL /* for localhost? */, (LPCWSTR) TEXT("darkjames"), 1, (LPBYTE *) &user) == NERR_Success) {
+			debug("%ls\n", user->usri1_home_dir);
+			home_dir = saprintf("%ls", user->usri1_home_dir);
+		}
+		if (user) NetApiBufferFree(user);
+#endif
+		home_dir = xstrdup("c:\\");
+	}
+#else
         if (!(home_dir = xstrdup(getenv("HOME")))) {
                 if ((pw = getpwuid(getuid())))
                         home_dir = xstrdup(pw->pw_dir);
-
-                if (!home_dir) {
-                        fprintf(stderr, _("Can't find user's home directory. Ask administration to fix it.\n"));
-                        return 1;
-                }
-        }
+	}
+#endif
+	if (!home_dir) {
+		fprintf(stderr, _("Can't find user's home directory. Ask administration to fix it.\n"));
+		return 1;
+	}
 
         command_init();
-
+#ifndef NO_POSIX_SYSTEM
         signal(SIGSEGV, handle_sigsegv);
         signal(SIGHUP, handle_sighup);
         signal(SIGUSR1, handle_sigusr1);
         signal(SIGUSR2, handle_sigusr2);
         signal(SIGALRM, SIG_IGN);
         signal(SIGPIPE, SIG_IGN);
-
+#endif
         while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhv", ekg_options, NULL)) != -1) {
                 switch (c) {
                         case 'a':
@@ -799,8 +895,6 @@ int main(int argc, char **argv)
 	}
 
 	config_read_plugins();
-	theme_plugins_init();
-
         if (!no_global_config)
                 config_read(SYSCONFDIR "/ekg2-override.conf");
 
@@ -811,6 +905,8 @@ int main(int argc, char **argv)
 #ifdef HAVE_NCURSES
         if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("ncurses"), -254, 1);
 #endif
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("gtk"), -254, 1);	/* XXX, HAVE_GTK ? */
+	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
@@ -821,6 +917,8 @@ int main(int argc, char **argv)
 #endif
                 plugin_load(TEXT("irc"), -254, 1);
         }
+	theme_plugins_init();
+
 	scripts_init();
 	config_read(NULL);
 
@@ -840,6 +938,7 @@ int main(int argc, char **argv)
 
         /* wypada³oby obserwowaæ stderr */
         if (!batch_mode) {
+#ifndef NO_POSIX_SYSTEM
                 int fd[2];
 
                 if (!pipe(fd)) {
@@ -849,6 +948,7 @@ int main(int argc, char **argv)
                         stderr_backup = fcntl(2, F_DUPFD, 0);
                         dup2(fd[1], 2);
                 }
+#endif
         }
 
         if (!batch_mode && config_display_welcome)
@@ -969,13 +1069,23 @@ void ekg_exit()
         for (l = children; l; l = l->next) {
                 child_t *c = l->data;
 
+#ifndef NO_POSIX_SYSTEM
                 kill(c->pid, SIGTERM);
+#else
+		/* TerminateProcess / TerminateThread */
+#endif
                 xfree(c->name);
         }
 
+watches_again:
         for (l = watches; l; ) {
                 watch_t *w = l->data;
 
+		if (ekg_watches_removed > 1) {
+			debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
+			goto watches_again;
+		}
+		ekg_watches_removed = 0;
                 l = l->next;
 
                 watch_free(w);
@@ -1073,7 +1183,9 @@ void ekg_exit()
         xfree(config_dir);
 
         mesg_set(mesg_startup);
-
+#ifdef NO_POSIX_SYSTEM
+	WSACleanup();
+#endif
         exit(0);
 }
 

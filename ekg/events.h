@@ -46,7 +46,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 void event_free();
 int events_init();
 
-static TIMER(ekg_day_timer);
+TIMER(ekg_day_timer);
 
 QUERY(event_protocol_message);
 QUERY(event_avail);

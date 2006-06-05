@@ -285,13 +285,14 @@ CHAR_T *xml_uescape(const CHAR_T *text)
 	if (!text)
 		return NULL;
 
-	for (p = text, len = 0; *p; p++) 
+	for (p = text, len = 0; *p; p++) {
 		if (*p >= sizeof(utf_ent)/sizeof(CHAR_T)) len += 1;
-		else len += utf_ent[*p] ? xwcslen(utf_ent[*p]) : 1;
+		else len += (utf_ent[(int) *p] ? xwcslen(utf_ent[(int) *p]) : 1);
+	}
 
 	res = xmalloc((len + 1)*sizeof(CHAR_T));
 	for (p = text, q = res; *p; p++) {
-		CHAR_T *ent = utf_ent[*p];
+		const CHAR_T *ent = utf_ent[(int) *p];
 		if (*p >= sizeof(utf_ent)/sizeof(CHAR_T)) ent = NULL;
 
 		if (ent)

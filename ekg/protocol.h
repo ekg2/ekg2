@@ -61,6 +61,7 @@ enum msgclass_t {
 	EKG_MSGCLASS_SYSTEM		/* wiadomo¶æ systemowa */
 };
 
+#ifndef EKG2_WIN32_NOFUNCTION
 void protocol_init();
 
 int protocol_connected(void *data, va_list ap);
@@ -71,6 +72,7 @@ int protocol_message(void *data, va_list ap);
 int protocol_message_ack(void *data, va_list ap);
 
 char *message_print(const char *session, const char *sender, const char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure);
+#endif
 
 typedef enum {
 	DCC_NONE = 0,
@@ -97,6 +99,7 @@ typedef struct dcc_s {
 	int offset;			/* ile ju¿ wykonano */
 } dcc_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
 dcc_t *dcc_add(const char *uid, dcc_type_t type, void *priv);
 int dcc_close(dcc_t *d);
 
@@ -118,6 +121,8 @@ const char *dcc_filename_get(dcc_t *);
 dcc_type_t dcc_type_get(dcc_t *);
 
 extern list_t dccs;
+
+#endif
 
 #endif /* __EKG_PROTOCOL_H */
 

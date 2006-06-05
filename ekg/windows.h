@@ -52,6 +52,8 @@ typedef struct {
 	void *private;		/* prywatne informacje ui */
 } window_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
+
 extern list_t windows;
 extern window_t *window_current;
 
@@ -81,6 +83,7 @@ int window_lock_inc(window_t *w);
 #define window_lock_inc_n(a) window_lock_inc(window_find(a))
 int window_lock_dec(window_t *w);
 #define window_lock_dec_n(a) window_lock_dec(window_find(a))
+#endif
 
 COMMAND(cmd_window);
 

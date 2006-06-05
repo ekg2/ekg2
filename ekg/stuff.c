@@ -23,21 +23,34 @@
  */
 
 #include "ekg2-config.h"
+#include "win32.h"
 
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
+#endif
+
 #define __USE_BSD
 #include <sys/time.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+
+#ifndef NO_POSIX_SYSTEM
 #include <sched.h>
+#endif
+
 #include <signal.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -1158,6 +1171,7 @@ int ekg_hash(const CHAR_T *name)
 */
 int mesg_set(int what)
 {
+#ifndef NO_POSIX_SYSTEM
 	const char *tty;
 	struct stat s;
 
@@ -1178,6 +1192,9 @@ int mesg_set(int what)
 	}
 	
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 /*
@@ -1363,16 +1380,22 @@ const char *prepare_path(const char *filename, int do_mkdir)
 
 			if ((tmp = xstrrchr(cd, '/')))
 				*tmp = 0;
-
+#ifndef NO_POSIX_SYSTEM
 			if (mkdir(cd, 0700) && errno != EEXIST) {
+#else
+			if (mkdir(cd) && errno != EEXIST) {
+#endif
 				xfree(cd);
 				return NULL;
 			}
 
 			xfree(cd);
 		}
-
+#ifndef NO_POSIX_SYSTEM
 		if (mkdir(config_dir, 0700) && errno != EEXIST)
+#else
+		if (mkdir(config_dir) && errno != EEXIST)
+#endif
 			return NULL;
 	}
 	
@@ -1903,6 +1926,7 @@ int msg_all(session_t *s, const CHAR_T *function, const CHAR_T *what)
  */
 int say_it(const CHAR_T *str)
 {
+#ifndef NO_POSIX_SYSTEM
 	pid_t pid;
 
 	if (!config_speech_app || !str || !xwcscmp(str, TEXT("")))
@@ -1935,6 +1959,9 @@ int say_it(const CHAR_T *str)
 
 	child_add(NULL, pid, NULL, NULL, NULL);
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 /*
@@ -2549,12 +2576,11 @@ char *wcs_to_normal_n(const CHAR_T *str, int len)
 			if (str[i] > 0x00FFFFFF) tuptus++;
 		}
 		tmp = xmalloc(tuptus+1);
-		if (tuptus != len)
-			printf("[wcs_to_normal_n, info] tuptus = %d len = %d\n", tuptus, len);
+//		if (tuptus != len) printf("[wcs_to_normal_n, info] tuptus = %d len = %d\n", tuptus, len);
 		len = tuptus;
 	}
 	ret = wcstombs(tmp, str, len);
-	if (ret != len) printf("[wcs_to_normal_n, err] len = %d wcstombs = %d\n", ret, len);
+//	if (ret != len) printf("[wcs_to_normal_n, err] len = %d wcstombs = %d\n", ret, len);
 	return tmp;
 #else
 	return (char *) str;

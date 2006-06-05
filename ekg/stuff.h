@@ -27,8 +27,13 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+
+#include "win32.h"
+
+#ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -62,17 +67,22 @@ typedef struct child_s {
 	void *private;			/* dane procesu */
 } child_t;
 
+#ifndef EKG2_WIN32_NOFUNCTION
 child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private);
 int child_pid_get(child_t *c);
 const char *child_name_get(child_t *c);
 plugin_t *child_plugin_get(child_t *c);
 void *child_private_get(child_t *c);
 child_handler_t child_handler_get(child_t *c);
+#endif
 
+
+#ifndef EKG2_WIN32_NOFUNCTION
 struct alias {
 	CHAR_T *name;		/* nazwa aliasu */
 	list_t commands;	/* commands->data to (char*) */
 };
+#endif
 
 struct binding {
 	char *key;
@@ -137,6 +147,7 @@ struct color_map {
 	unsigned char r, g, b;
 };
 
+#ifndef EKG2_WIN32_NOFUNCTION
 extern list_t children;
 extern list_t autofinds;
 extern list_t aliases;
@@ -342,6 +353,8 @@ void ekg_yield_cpu();
 /* funkcje poza stuff.c */
 void ekg_exit();
 void ekg_debug_handler(int level, const char *format, va_list ap);
+
+#endif
 	
 #endif /* __EKG_STUFF_H */
 

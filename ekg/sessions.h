@@ -24,8 +24,6 @@
 #include <time.h>
 #include "dynstuff.h"
 
-extern list_t sessions;
-
 typedef struct {
 	char *key;			/* nazwa parametru */
 	char *value;			/* warto¶æ parametru */
@@ -51,6 +49,9 @@ typedef struct {
 	time_t last_conn;               /* kiedy siê po³±czyli¶my */
 	list_t params;
 } session_t;
+
+#ifndef EKG2_WIN32_NOFUNCTION
+extern list_t sessions;
 
 extern session_t *session_current;
 
@@ -132,6 +133,8 @@ int session_write();
 void sessions_free();
 
 void session_help(session_t *s, const char *name);
+#endif
+
 #endif /* __EKG_SESSIONS_H */
 
 /*
