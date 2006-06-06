@@ -981,6 +981,8 @@ COMMAND(irc_command_msg)
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
 
+	debug ("%s - %s\n", uid_full, rcpts[0]);
+
 	tmpbuf   = (mline[0] = xstrdup(params[1]));
 	while ((mline[1] = split_line(&(mline[0])))) {
 		char *__mtmp;
