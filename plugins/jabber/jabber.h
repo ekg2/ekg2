@@ -18,6 +18,11 @@
 #define DEFAULT_CLIENT_NAME "EKG2 -- http://www.ekg2.org"
 #define JABBER_DEFAULT_RESOURCE TEXT("ekg2")
 
+/* some tlen constants */
+#define TLEN_HUB "idi.tlen.pl"			/* hub 			*/
+#define TLEN_FALLBACK_SERVER "s1.tlen.pl"	/* fallback server 	*/
+#define TLEN_FALLBACK_PORT 443			/* fallback port 	*/
+
 struct xmlnode_s {
 	char *name;
 	char *data;
@@ -104,6 +109,7 @@ typedef struct {
 
 typedef struct {
 	int fd;				/* deskryptor po³±czenia */
+	int istlen;			/* czy to tlen? */
 #ifdef HAVE_GNUTLS
 	gnutls_session ssl_session;	/* sesja ssla */
 	gnutls_certificate_credentials xcred;

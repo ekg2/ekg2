@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *		       Tomasz Torcz <zdzichu@irc.pl>	
+ *		       Libtlen developers (http://libtlen.sourceforge.net/index.php?theme=teary&page=authors)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -264,14 +265,15 @@ COMMAND(jabber_command_connect)
 	}
 
 	debug("session->uid = %s\n", session->uid);
-	
+		/* XXX, nie wymagac od usera podania calego uida w postaci: tlen:ktostam@tlen.pl tylko samo tlen:ktostam? */
 	if (!(server = xstrchr(session->uid, '@'))) {
 		printq("wrong_id", session->uid);
 		return -1;
 	}
-
 	xfree(j->server);
 	j->server	= xstrdup(++server);
+
+	if (j->istlen) server = TLEN_HUB;
 	if (!realserver) realserver = server;
 
 	debug("[jabber] resolving %s\n", server);
@@ -352,6 +354,8 @@ COMMAND(jabber_command_disconnect)
 	} else
 		descr = xstrdup(session_descr_get(session));
 
+/* w libtlenie jest <show>unavailable</show> + eskejpiete tlen_encode() */
+
 	if (descr) {
 		CHAR_T *tmp = jabber_escape(descr);
 		watch_write(j->send_watch, "<presence type=\"unavailable\"><status>" CHARF "</status></presence>", tmp ? tmp : TEXT(""));
@@ -359,7 +363,8 @@ COMMAND(jabber_command_disconnect)
 	} else
 		watch_write(j->send_watch, "<presence type=\"unavailable\"/>");
 
-	watch_write(j->send_watch, "</stream:stream>");
+	if (!j->istlen) watch_write(j->send_watch, "</stream:stream>");
+	else		watch_write(j->send_watch, "</s>");
 
 	if (j->connecting) 
 		j->connecting = 0;
@@ -990,6 +995,82 @@ COMMAND(jabber_command_search) {
 	return -1;
 }
 
+COMMAND(tlen_command_search) {
+	PARASC
+	/* execute jabber_command_search.. */
+	/* params[0] == "tuba" */
+	/* params[1] == parsed params[0] */
+
+	if (params[0]) {
+		int res;
+		char **splitted;
+		string_t str;
+		int i;
+
+		if (!(splitted = jabber_params_split(params[0], 1))) {
+			printq("invalid_params", name);
+			return -1;
+		}
+
+		str = string_init("/jid:search tuba ");
+
+		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
+			char *valname = 0;
+			if (!xstrcmp(splitted[i], "first") || !xstrcmp(splitted[i], "last") || !xstrcmp(splitted[i], "nick") || !xstrcmp(splitted[i], "email")) 
+				valname = splitted[i];
+
+			/* translated varsname from libtlen (http://libtlen.sourceforge.net/) */
+			else if (!xstrcmp(splitted[i], "id")) 		valname = "i";
+			else if (!xstrcmp(splitted[i], "city")) 	valname = "c";
+			else if (!xstrcmp(splitted[i], "school")) 	valname = "e";
+			else if (!xstrcmp(splitted[i], "gender")) 	valname = "s";
+			else if (!xstrcmp(splitted[i], "status")) 	valname = "m";
+			else if (!xstrcmp(splitted[i], "age_min")) 	valname = "d";
+			else if (!xstrcmp(splitted[i], "age_max"))	valname = "u";
+			else if (!xstrcmp(splitted[i], "job"))		valname = "j";
+			else if (!xstrcmp(splitted[i], "look-for"))	valname = "r";
+			else if (!xstrcmp(splitted[i], "voice"))	valname = "g";
+			else if (!xstrcmp(splitted[i], "plans"))	valname = "p";
+
+			if (valname) {
+				string_append(str, "--");
+				string_append(str, valname);
+				string_append_c(str, ' ');
+				string_append(str, splitted[i+1]);
+			} else debug("option --%s not supported in /tlen:search! skipping.\n", splitted[i]);
+		}
+		array_free(splitted);
+
+		res = command_exec(target, session, str->str, quiet);
+		string_free(str, 1);
+
+		return res;
+	}
+/* if we don't want search... show help with params avalibity... XXX */
+	printq("jabber_form_title", session_name(session), "tuba", "Szukanie w katalogu tlena");
+	printq("jabber_form_command", session_name(session), "", "tlen:search");
+#define show_field(x) printq("jabber_form_item", session_name(session), "tuba", x, x, "", "", " ")
+	show_field("first");
+	show_field("last");
+	show_field("nick");
+	show_field("email");
+	show_field("id");
+	show_field("city");
+	show_field("school");
+	show_field("gender");
+	show_field("status");
+	show_field("age_min");
+	show_field("age_max");
+	show_field("job");
+	show_field("look-for");
+	show_field("voice");
+	show_field("plans");
+#undef show_field
+	printq("jabber_form_end", session_name(session), "", "tlen:search");
+	return 0;
+}
+
+
 COMMAND(jabber_command_register)
 {
 	PARASC
@@ -1556,6 +1637,13 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:xa"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:xml"), "!", jabber_command_xml, 	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+
+	command_add(&jabber_plugin, TEXT("tlen:auth"), "!p !uU", 	jabber_command_auth,		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS,
+			"-a --accept -d --deny -r --request -c --cancel");
+	command_add(&jabber_plugin, TEXT("tlen:connect"), "r ?",	jabber_command_connect,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:disconnect"), "r ?",	jabber_command_disconnect,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:reconnect"), NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:search"), "?",		tlen_command_search, 		JABBER_FLAGS, NULL);
 };
 
 /*

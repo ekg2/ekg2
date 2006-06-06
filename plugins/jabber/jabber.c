@@ -4,6 +4,7 @@
  *  (C) Copyright 2003-2005 Wojtek Kaniewski <wojtekka@irc.pl>
  *                          Tomasz Torcz <zdzichu@irc.pl>
  *                          Leszek Krupiñski <leafnode@pld-linux.org>
+ *                          Piotr Paw³ow and other libtlen developers (http://libtlen.sourceforge.net/index.php?theme=teary&page=authors)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -88,16 +89,19 @@ PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 static void jabber_private_init(session_t *s)
 {
         const char *uid = session_uid_get(s);
-        jabber_private_t *j;
+        jabber_private_t *j = s->priv;
 
-        if (xstrncasecmp(uid, "jid:", 4))
-                return;
+	if ((xstrncasecmp(uid, "tlen:", 5) && xstrncasecmp(uid, "jid:", 4)) || j)
+		return;
 
         if (session_private_get(s))
                 return;
 
         j = xmalloc(sizeof(jabber_private_t));
         j->fd = -1;
+
+	j->istlen = !xstrncasecmp(uid, "tlen:", 5);
+
         session_private_set(s, j);
 }
 
@@ -111,7 +115,7 @@ static void jabber_private_destroy(session_t *s)
         jabber_private_t *j = session_private_get(s);
         const char *uid = session_uid_get(s);
 
-        if (xstrncasecmp(uid, "jid:", 4) || !j)
+	if ((xstrncasecmp(uid, "tlen:", 5) && xstrncasecmp(uid, "jid:", 4)) || !j)
                 return;
 
         xfree(j->server);
@@ -534,6 +538,11 @@ QUERY(jabber_validate_uid)
         if (!xstrncasecmp(uid, "jid:", 4) && (m=xstrchr(uid, '@')) &&
 			((uid+4)<m) && xstrlen(m+1)) {
                 (*valid)++;
+		return -1;
+	}
+
+	if (!xstrncasecmp(uid, "tlen:", 5)) {
+		(*valid)++;
 		return -1;
 	}
 
@@ -1879,14 +1888,14 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
         jabber_private_t *j = session_private_get(jdh->session);
         session_t *s = jdh->session;
 
-        if (!xstrcmp(name, "stream:stream")) {
+        if (!session_connected_get(s) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		CHAR_T *passwd		= jabber_escape(session_get(s, "password"));
                 CHAR_T *resource	= jabber_escape(session_get(s, "resource"));
                 char *username;
 		char *authpass;
 		char *stream_id;
-
-		username = xstrdup(s->uid + 4);
+		if (!j->istlen) username = xstrdup(s->uid + 4);
+		else 		username = xstrdup(s->uid + 5);
 		*(xstrchr(username, '@')) = 0;
 	
 		if (session_get(s, "__new_acount")) {
@@ -1899,16 +1908,33 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
                 if (!resource)
                         resource = xwcsdup(JABBER_DEFAULT_RESOURCE);
 
-		stream_id = jabber_attr((char **) atts, "id");
+		stream_id = jabber_attr((char **) atts, 
+					j->istlen ? "i" : "id");
 
-		authpass = (session_int_get(s, "plaintext_passwd")) ? 
+		/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
+		if (j->istlen) {
+			const char *tmp = session_get(s, "password");
+			int     magic1 = 0x50305735, magic2 = 0x12345671, sum = 7;
+			char    z;
+			while ((z = *tmp++) != 0) {
+				if (z == ' ' || z == '\t') continue;
+				magic1 ^= (((magic1 & 0x3f) + sum) * z) + (magic1 << 8);
+				magic2 += (magic2 << 8) ^ magic1;
+				sum += z;
+			}
+			magic1 &= 0x7fffffff;
+			magic2 &= 0x7fffffff;
+
+			xfree(passwd);
+			passwd = saprintf("%08x%08x", magic1, magic2);
+		}
+
+		authpass = (!j->istlen && session_int_get(s, "plaintext_passwd")) ? 
 			saprintf("<password>" CHARF "</password>", passwd) :  				/* plaintext */
 			saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd));		/* hash */
-
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", 
 			j->server, username, authpass, resource);
-
                 xfree(username);
 		xfree(authpass);
 		xfree(passwd);
@@ -1996,10 +2022,36 @@ TIMER(jabber_ping_timer_handler) {
 		return -1;
 	}
 
-	if (session_int_get(s, "ping-server") == 0) return -1;
+	if (jabber_private(s)->istlen) {
+		jabber_write(s, "  \t  ");	/* ping according to libtlen */
+		return 0;
+	}
 	
+	if (session_int_get(s, "ping-server") == 0) return -1;
+
 	jabber_write(s, "<iq/>"); /* leafnode idea */
 	return 0;
+}
+
+WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
+	int res = 0;
+	int res_size = sizeof(res);
+
+	session_t *s = (session_t *) data;
+
+	if (type) {
+		return 0;
+	}
+	
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
+		jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
+		return -1;
+	}
+	
+	/* XXX */
+	debug("Connecting to HUB, currectly not works ;/");
+	jabber_handle_disconnect(s, "Unimplemented do: /eval \"/session server s1.tlen.pl\" \"/session port 443\" \"/connect\" sorry.", EKG_DISCONNECT_FAILURE);
+	return -1;
 }
 
 WATCHER(jabber_handle_connect) /* tymczasowy */
@@ -2019,7 +2071,6 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
 
         if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
                 jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
-		xfree(data);
                 return -1;
         }
 
@@ -2033,7 +2084,13 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
 #else
 	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, 1, NULL, NULL);
 #endif
-        watch_write(j->send_watch, "<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\">", j->server);
+	if (!(j->istlen))
+		watch_write(j->send_watch, 
+			"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\">", 
+			j->server);
+	else {
+		watch_write(j->send_watch, "<s v=\'2\'>");
+	}
 
         j->id = 1;
         j->parser = XML_ParserCreate("UTF-8");
@@ -2041,9 +2098,10 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
         XML_SetElementHandler(j->parser, (XML_StartElementHandler) jabber_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
         XML_SetCharacterDataHandler(j->parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
 
-	if (session_int_get(s, "ping-server") != 0) {
+	if (j->istlen || (session_int_get(s, "ping-server") != 0)) {
 		tname = saprintf("ping-%s", s->uid+4);
-		timer_add(&jabber_plugin, tname, 180, 1, jabber_ping_timer_handler, xstrdup(s->uid));
+		timer_add(&jabber_plugin, tname, j->istlen ? 60 : 180, 1, jabber_ping_timer_handler, xstrdup(s->uid));
+		/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
 		xfree(tname);
 	}
 
@@ -2065,6 +2123,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 	int ssl_port = session_int_get(s, "ssl_port");
 	int use_ssl = session_int_get(s, "use_ssl");
 #endif
+	int tlenishub = !session_get(s, "server") && j->istlen;
         if (type) {
                 return 0;
 	}
@@ -2122,6 +2181,9 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
         else
 #endif
 		j->port = port < 1 ? 5222 : port;
+
+	if (tlenishub) j->port = 80; 
+
 	sin.sin_port = htons(j->port);
 
         debug("[jabber] connecting to %s:%d\n", inet_ntoa(sin.sin_addr), j->port);
@@ -2168,7 +2230,8 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 		return -1;
         } // use_ssl
 #endif
-        watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, s);
+	if (j->istlen && tlenishub)	watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect_tlen_hub, s);
+	else				watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, s);
 	return -1;
 }
 
