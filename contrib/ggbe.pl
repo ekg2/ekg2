@@ -28,7 +28,7 @@ sub ekg2_message {
   $text = $$ttext;
   if ($session =~ $myggnum && !($uid =~ $myggnum))
   {
-    if (time() - $persony{$uid} > 5)
+    if (time() - $persony{$uid} > $time)
     {
       $persony{$uid} = time();
       my ($wind) = Ekg2::window_current;
