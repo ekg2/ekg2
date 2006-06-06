@@ -153,7 +153,7 @@ WATCHER(jabber_handle_resolver);
 WATCHER(jabber_handle_connect_tls);
 
 int jabber_bookmarks_free(jabber_private_t *j);
-time_t jabber_try_xdelay(xmlnode_t *xmlnode, const char *ns);
+time_t jabber_try_xdelay(const char *stamp);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
 #ifdef HAVE_GNUTLS
