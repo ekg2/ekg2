@@ -1398,6 +1398,96 @@ COMMAND(jabber_muc_command_part)
 	return 0;
 }
 
+COMMAND(jabber_command_control) {
+	/* w params[0] full uid albo samo resource....						*/
+	/* w params[1] polecenie... jesli nie ma to chcemy dostac liste dostepnych polecen 	*/
+	/* w params[2] polecenia do sparsowania 						*/
+
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+	char *resource, *uid;
+	char *tmp;
+	char *nodename = NULL;
+
+/* if !params[0] display list of all our resources? */
+
+	if ((tmp = xstrchr(params[0], '/'))) {
+		uid		= xstrndup(params[0], tmp-params[0]);
+		resource	= xstrdup(tmp+1);
+	} else {
+		uid		= xstrdup(session->uid+4);
+		resource	= xstrdup(params[0]);
+	}
+	debug("jabber_command_control() uid: %s res: %s\n", uid, resource);
+	
+	if (params[1]) {
+		/* short param to long nodename :) */
+		if (!xstrcmp(params[1], "set-status"))		nodename = saprintf("http://jabber.org/protocol/rc#set-status");
+		else if (!xstrcmp(params[1], "forward")) 	nodename = saprintf("http://jabber.org/protocol/rc#forward");
+		else if (!xstrcmp(params[1], "set-options"))	nodename = saprintf("http://jabber.org/protocol/rc#set-options");
+		else if (!xstrcmp(params[1], "ekg-set-all-options"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-set-all-options");
+		else if (!xstrcmp(params[1], "ekg-command-execute"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-command-execute");
+		else if (!xstrcmp(params[1], "ekg-manage-plugins"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-manage-plugins");
+		else if (!xstrcmp(params[1], "ekg-manage-sessions"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-manage-sesions");
+	}
+	if (!params[1]) {
+		watch_write(j->send_watch, 
+			"<iq type=\"get\" to=\"%s/%s\" id=\"control%d\">"
+			"<query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"http://jabber.org/protocol/commands\"/></iq>",
+			uid, resource, j->id++);
+
+/* wrapper to jid:transports ? */
+/*		return command_format_exec(target, session, quiet, "/jid:transports %s http://jabber.org/protocol/commands"); */
+
+	} else if (!params[2]) {
+		/* .... */
+		
+		watch_write(j->send_watch,
+			"<iq type=\"set\" to=\"%s/%s\" id=\"control%d\">"
+			"<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\"/></iq>",
+			uid, resource, j->id++, nodename ? nodename : params[1]);
+
+	} else {
+		char **splitted;
+		char *fulluid = saprintf("%s/%s", uid, resource); 
+		int i;
+		char *FORM_TYPE = xstrdup(nodename ? nodename : params[1]), *tmp;
+		if ((tmp = xstrchr(FORM_TYPE, '#'))) *tmp = '\0';
+
+		if (!(splitted = jabber_params_split(params[2], 0))) {
+			printq("invalid_params", name);
+			return -1;
+		}
+		printq("jabber_remotecontrols_executing", session_name(session), fulluid, nodename ? nodename : params[1], params[2]) ;
+
+		watch_write(j->send_watch, 
+			"<iq type=\"set\" to=\"%s\" id=\"control%d\">"
+			"<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\">"
+			"<x xmlns=\"jabber:x:data\" type=\"submit\">"
+			"<field var=\"FORM_TYPE\" type=\"hidden\"><value>%s</value></field>",
+			fulluid, j->id++, nodename ? nodename : params[1], FORM_TYPE);
+
+		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
+			char *varname = jabber_escape(splitted[i]);
+			char *varval = jabber_escape(splitted[i+1]); /* ? */
+
+			watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", varname, varval);
+
+			xfree(varname); xfree(varval);
+		}
+		watch_write(j->send_watch, "</x></command></iq>");
+		array_free(splitted);
+		xfree(fulluid);
+		xfree(FORM_TYPE);
+	}
+	xfree(nodename);
+
+	xfree(uid);
+	xfree(resource);
+	return 0;
+}
+
+
 COMMAND(jabber_command_private) {
 	PARUNI
 	jabber_private_t *j = jabber_private(session);
@@ -1626,6 +1716,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:config"), "!p", jabber_command_private,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
 			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, TEXT("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
 			"send get resume voice close list");
 	command_add(&jabber_plugin, TEXT("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
