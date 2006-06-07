@@ -632,7 +632,10 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 	const char *from = jabber_attr(n->atts, "from");
 
 	char *juid 	= jabber_unescape(from); /* was tmp */
-	char *uid 	= saprintf("jid:%s", juid);
+	char *uid;
+	
+	if (j->istlen)	uid = saprintf("tlen:%s", juid);
+	else		uid = saprintf("jid:%s", juid);
 
 	string_t body;
 	time_t sent = 0;
@@ -751,7 +754,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 				}
 /* jabber:x:oob */	} else if (!xstrncmp(ns, "jabber:x:delay", 14)) {
 				sent = jabber_try_xdelay(jabber_attr(xitem->atts, "stamp"));
-			}
+			} else debug("[JABBER, MESSAGE]: <x xmlns=%s\n", ns);
 		}	/* <x> */
 	}
 	if (nbody || nsubject) {
@@ -1574,8 +1577,10 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xmlnode_t *item = xmlnode_find_child(q, "item");
 
 				for (; item ; item = item->next) {
-					char *uid 	= saprintf("jid:%s",jabber_attr(item->atts, "jid"));
 					userlist_t *u;
+					char *uid;
+					if (j->istlen)	uid = saprintf("tlen:%s", jabber_attr(item->atts, "jid"));
+					else 		uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
 
 					/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
 					w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
@@ -1677,7 +1682,10 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	int na = !xstrcmp(type, "unavailable");
 
 	jid = jabber_unescape(from);
-	uid = saprintf("jid:%s", jid);
+
+	if (jabber_private(s)->istlen)	uid = saprintf("tlen:%s", jid);
+	else				uid = saprintf("jid:%s", jid);
+
 	xfree(jid);
 
 	if (from && !xstrcmp(type, "subscribe")) {
@@ -1743,7 +1751,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 				debug("[JABBER] XXX, SIGNED PRESENCE? uid: %s data: %s\n", mucuid, q->data);
 			} else if (!xstrncmp(ns, "jabber:x:delay", 14)) {
 				when = jabber_try_xdelay(jabber_attr(q->atts, "stamp"));
-			}
+			} else debug("[JABBER, PRESENCE]: <x xmlns=%s\n", ns);
 		}		/* <x> */
 		xfree(mucuid);
 	}

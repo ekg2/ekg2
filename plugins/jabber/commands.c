@@ -276,7 +276,7 @@ COMMAND(jabber_command_connect)
 	if (j->istlen) server = TLEN_HUB;
 	if (!realserver) realserver = server;
 
-	debug("[jabber] resolving %s\n", server);
+	debug("[jabber] resolving %s\n", realserver);
 
 	if (pipe(fd) == -1) {
 		printq("generic_error", strerror(errno));
@@ -393,6 +393,8 @@ COMMAND(jabber_command_reconnect)
 
 const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 	const char *uid;
+	int istlen = jabber_private(s)->istlen;
+
 /* CHECK: po co my wlasciwcie robimy to get_uid ? */
 /* a) jak target jest '$' to zwraca aktualne okienko... 	(niepotrzebne raczej, CHECK)
    b) szuka targeta na userliscie 				(w sumie to trzeba jeszcze)
@@ -403,7 +405,7 @@ const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 		uid = target;
 #endif
 /* CHECK: i think we can omit it */
-	if (xstrncasecmp(uid, "jid:", 4)) {
+	if (((!istlen && xstrncasecmp(uid, "jid:", 4)) || (istlen && xstrncasecmp(uid, "tlen:", 5)))) {
 		printq("invalid_session");
 		return NULL;
 	}
@@ -627,40 +629,44 @@ COMMAND(jabber_command_auth)
 	session_t *s = session;
 	const char *action;
 	const char *uid;
+	int payload;
+
 
 	if (!(uid = jid_target2uid(session, params[1], quiet)))
 		return -1;
 	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
 	tabnick_add(uid);
 
+	payload = 4 + j->istlen;
+
 	if (match_arg(params[0], 'r', TEXT("request"), 2)) {
 		action = "subscribe";
-		printq("jabber_auth_request", uid+4, session_name(s));
+		printq("jabber_auth_request", uid+payload, session_name(s));
 	} else if (match_arg(params[0], 'a', TEXT("accept"), 2)) {
 		action = "subscribed";
-		printq("jabber_auth_accept", uid+4, session_name(s));
+		printq("jabber_auth_accept", uid+payload, session_name(s));
 	} else if (match_arg(params[0], 'c', TEXT("cancel"), 2)) {
 		action = "unsubscribe";
-		printq("jabber_auth_unsubscribed", uid+4, session_name(s));
+		printq("jabber_auth_unsubscribed", uid+payload, session_name(s));
 	} else if (match_arg(params[0], 'd', TEXT("deny"), 2)) {
 		action = "unsubscribed";
 
 		if (userlist_find(session, uid))  // mamy w rosterze
-			printq("jabber_auth_cancel", uid+4, session_name(s));
+			printq("jabber_auth_cancel", uid+payload, session_name(s));
 		else // nie mamy w rosterze
-			printq("jabber_auth_denied", uid+4, session_name(s));
+			printq("jabber_auth_denied", uid+payload, session_name(s));
 	
 	} else if (match_arg(params[0], 'p', TEXT("probe"), 2)) {
 	/* ha! undocumented :-); bo 
 	   [Used on server only. Client authors need not worry about this.] */
 		action = "probe";
-		printq("jabber_auth_probe", uid+4, session_name(s));
+		printq("jabber_auth_probe", uid+payload, session_name(s));
 	} else {
 		wcs_printq("invalid_params", name);
 		return -1;
 	}
 
-	watch_write(j->send_watch, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+4, action);
+	watch_write(j->send_watch, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+payload, action);
 	return 0;
 }
 
@@ -995,12 +1001,12 @@ COMMAND(jabber_command_search) {
 	return -1;
 }
 
-COMMAND(tlen_command_search) {
+COMMAND(tlen_command_pubdir) {
 	PARASC
-	/* execute jabber_command_search.. */
-	/* params[0] == "tuba" */
-	/* params[1] == parsed params[0] */
+	int issearch = !xstrcmp(name, "search");
 
+	if (!issearch && !xstrcmp(params[0], "show")) 
+		return command_exec(target, session, "/jid:register tuba", quiet);
 	if (params[0]) {
 		int res;
 		char **splitted;
@@ -1011,8 +1017,12 @@ COMMAND(tlen_command_search) {
 			printq("invalid_params", name);
 			return -1;
 		}
-
-		str = string_init("/jid:search tuba ");
+			
+			/* execute jabber_command_search.. | _register */
+				/* params[0] == "tuba" */
+				/* params[1] == parsed params[0] */
+		if (issearch)	str = string_init("/jid:search tuba ");
+		else		str = string_init("/jid:register tuba ");
 
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
 			char *valname = 0;
@@ -1020,24 +1030,26 @@ COMMAND(tlen_command_search) {
 				valname = splitted[i];
 
 			/* translated varsname from libtlen (http://libtlen.sourceforge.net/) */
-			else if (!xstrcmp(splitted[i], "id")) 		valname = "i";
-			else if (!xstrcmp(splitted[i], "city")) 	valname = "c";
-			else if (!xstrcmp(splitted[i], "school")) 	valname = "e";
-			else if (!xstrcmp(splitted[i], "gender")) 	valname = "s";
-			else if (!xstrcmp(splitted[i], "status")) 	valname = "m";
-			else if (!xstrcmp(splitted[i], "age_min")) 	valname = "d";
-			else if (!xstrcmp(splitted[i], "age_max"))	valname = "u";
-			else if (!xstrcmp(splitted[i], "job"))		valname = "j";
-			else if (!xstrcmp(splitted[i], "look-for"))	valname = "r";
-			else if (!xstrcmp(splitted[i], "voice"))	valname = "g";
-			else if (!xstrcmp(splitted[i], "plans"))	valname = "p";
+			else if (!xstrcmp(splitted[i], "id")) 			valname = "i";
+			else if (!xstrcmp(splitted[i], "city")) 		valname = "c";
+			else if (!xstrcmp(splitted[i], "school")) 		valname = "e";
+			else if (!xstrcmp(splitted[i], "gender")) 		valname = "s";
+			else if (!xstrcmp(splitted[i], "job"))			valname = "j";
+			else if (!xstrcmp(splitted[i], "look-for"))		valname = "r";
+			else if (!xstrcmp(splitted[i], "voice"))		valname = "g";
+			else if (!xstrcmp(splitted[i], "plans"))		valname = "p";
+			else if (issearch && !xstrcmp(splitted[i], "status")) 	valname = "m";
+			else if (issearch && !xstrcmp(splitted[i], "age_min")) 	valname = "d";
+			else if (issearch && !xstrcmp(splitted[i], "age_max"))	valname = "u";
+			else if (!issearch && !xstrcmp(splitted[i], "visible")) valname = "v";
+			else if (!issearch && !xstrcmp(splitted[i], "birthyear")) valname = "b";
 
 			if (valname) {
 				string_append(str, "--");
 				string_append(str, valname);
 				string_append_c(str, ' ');
 				string_append(str, splitted[i+1]);
-			} else debug("option --%s not supported in /tlen:search! skipping.\n", splitted[i]);
+			} else debug("option --%s not supported in /tlen:%s! skipping.\n", splitted[i], name);
 		}
 		array_free(splitted);
 
@@ -1046,9 +1058,9 @@ COMMAND(tlen_command_search) {
 
 		return res;
 	}
-/* if we don't want search... show help with params avalibity... XXX */
-	printq("jabber_form_title", session_name(session), "tuba", "Szukanie w katalogu tlena");
-	printq("jabber_form_command", session_name(session), "", "tlen:search");
+
+	printq("jabber_form_title", session_name(session), "tuba", issearch ? "Szukanie w katalogu tlena" : "Rejestracja w katalogu tlena");
+	printq("jabber_form_command", session_name(session), "", issearch ? "tlen:search" : "tlen:change");
 #define show_field(x) printq("jabber_form_item", session_name(session), "tuba", x, x, "", "", " ")
 	show_field("first");
 	show_field("last");
@@ -1058,15 +1070,20 @@ COMMAND(tlen_command_search) {
 	show_field("city");
 	show_field("school");
 	show_field("gender");
-	show_field("status");
-	show_field("age_min");
-	show_field("age_max");
+	if (issearch) {
+		show_field("status");
+		show_field("age_min");
+		show_field("age_max");
+	} else {
+		show_field("visible");
+		show_field("birthyear");
+	}
 	show_field("job");
 	show_field("look-for");
 	show_field("voice");
 	show_field("plans");
 #undef show_field
-	printq("jabber_form_end", session_name(session), "", "tlen:search");
+	printq("jabber_form_end", session_name(session), "", issearch ? "tlen:search" : "tlen:change");
 	return 0;
 }
 
@@ -1643,7 +1660,9 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("tlen:connect"), "r ?",	jabber_command_connect,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("tlen:disconnect"), "r ?",	jabber_command_disconnect,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("tlen:reconnect"), NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, TEXT("tlen:search"), "?",		tlen_command_search, 		JABBER_FLAGS, NULL);
+
+	command_add(&jabber_plugin, TEXT("tlen:change"), "?",		tlen_command_pubdir, 		JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:search"), "?",		tlen_command_pubdir, 		JABBER_FLAGS, NULL);
 };
 
 /*
