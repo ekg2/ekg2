@@ -96,9 +96,9 @@ CODE:
 
 #> WATCHE
 
-int watch_add(int fd, int type, int persist, char *handler, void *data);
+int watch_add(int fd, int type, char *handler, void *data);
 CODE:
-	perl_watch_add(fd, type, persist, handler, data);
+	perl_watch_add(fd, type, handler, data);
 
 void watch_remove(int fd, int type);
 CODE:	

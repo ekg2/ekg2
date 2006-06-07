@@ -769,7 +769,7 @@ void watch_handle_line(watch_t *w)
 
 	/* je¶li koniec strumienia, lub nie jest to ci±g³e przegl±danie,
 	 * zwolnij pamiêæ i usuñ z listy */
-	if (!w->persist || res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN) || w->removed == 1) {
+	if (res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN) || w->removed == 1) {
 		int fd = w->fd;
 		w->removed = 0;
 
@@ -870,7 +870,7 @@ void watch_handle(watch_t *w)
 		
 	res = handler(0, w->fd, w->type, w->data);
 
-	if (!w->persist || res == -1 || w->removed == 1) {
+	if (res == -1 || w->removed == 1) {
 		w->removed = 0;
 		watch_free(w);
 	} else {
@@ -879,11 +879,10 @@ void watch_handle(watch_t *w)
 	w->removed = 0;
 }
 
-watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, int persist, watcher_handler_func_t *handler, void *data)
+watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data)
 {
 	watch_t *w = watch_new(plugin, fd, type);
 
-	watch_persist_set(w, persist);
 	watch_handler_set(w, handler);
 	watch_data_set(w, data);
 	
@@ -912,7 +911,6 @@ int have_plugin_of_class(int pclass) {
 	return 0;
 }
 
-PROPERTY_INT(watch, persist, int)
 PROPERTY_INT(watch, timeout, time_t)
 PROPERTY_DATA(watch)
 PROPERTY_MISC(watch, handler, watch_handler_func_t, NULL)

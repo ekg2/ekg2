@@ -1580,6 +1580,7 @@ rc_forbidden:
 					}
 					if (node->children)	printq("jabber_private_list_footer", session_name(s), lname, ns);
 					else 			printq("jabber_private_list_empty", session_name(s), lname, ns);
+					xfree(lname);
 				}
 			} else if (!xstrcmp(ns, "http://jabber.org/protocol/vacation")) { /* JEP-0109: Vacation Messages */
 				xmlnode_t *temp;
@@ -2425,12 +2426,12 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
 	jdh = xmalloc(sizeof(jabber_handler_data_t));
 	jdh->session = s;
 /*	jdh->roster_retrieved = 0; */
-	watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_handle_stream, jdh);
+	watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_stream, jdh);
 
 #ifdef HAVE_GNUTLS
-	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, 1, j->using_ssl ? jabber_handle_write : NULL, j);
+	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, j->using_ssl ? jabber_handle_write : NULL, j);
 #else
-	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, 1, NULL, NULL);
+	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
 #endif
 	if (!(j->istlen))
 		watch_write(j->send_watch, 
@@ -2573,13 +2574,13 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
                 gnutls_transport_set_push_function(j->ssl_session, (gnutls_push_func)write);
                 gnutls_transport_set_ptr(j->ssl_session, (gnutls_transport_ptr)(j->fd));
 
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect_tls, s);
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_tls, s);
 
 		return -1;
         } // use_ssl
 #endif
-	if (j->istlen && tlenishub)	watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect_tlen_hub, s);
-	else				watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, s);
+	if (j->istlen && tlenishub)	watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_tlen_hub, s);
+	else				watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
 	return -1;
 }
 
@@ -2600,7 +2601,7 @@ WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 
 		watch_add(&jabber_plugin, (int) gnutls_transport_get_ptr(j->ssl_session),
 			gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ,
-			0, jabber_handle_connect_tls, s);
+			jabber_handle_connect_tls, s);
 
 		ekg_yield_cpu();
 		return -1;
@@ -2615,7 +2616,7 @@ WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 	// handshake successful
 	j->using_ssl = 1;
 
-	watch_add(&jabber_plugin, fd, WATCH_WRITE, 0, jabber_handle_connect, s);
+	watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
 	return -1;
 }
 #endif

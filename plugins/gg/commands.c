@@ -304,7 +304,7 @@ noproxy:
 		if (!g->sess)	
 			printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
 		else {
-			watch_t *w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, 0, gg_session_handler, session);
+			watch_t *w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, gg_session_handler, session);
 			watch_timeout_set(w, g->sess->timeout);
 		}
 	}
@@ -1368,7 +1368,7 @@ static WATCHER(gg_handle_token)
 		/* otherwise we delete old one (return -1) and create new one .... 
 		 * XXX, should we copy data from gg_http *h ? and free them in type == 1 ? */
 
-		w = watch_add(&gg_plugin, h->fd, h->check, 1, gg_handle_token, h);
+		w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_token, h);
 		watch_timeout_set(w, h->timeout);
 		return -1;
 	}
@@ -1537,7 +1537,7 @@ COMMAND(gg_command_token)
                 return -1;
         }
 
-        w = watch_add(&gg_plugin, h->fd, h->check, 1, gg_handle_token, h);
+        w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_token, h);
         watch_timeout_set(w, h->timeout);
 
         return 0;

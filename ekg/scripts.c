@@ -617,11 +617,11 @@ script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void
 	SCRIPT_BIND_FOOTER(script_timers);
 } 
 
-script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, int persist, void *handler, void *data)
+script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, void *handler, void *data)
 {
 	SCRIPT_BIND_HEADER(script_watch_t);
 	temp->data = data;
-	temp->self = watch_add(s->plugin, fd, type, persist, script_handle_watch, temp);
+	temp->self = watch_add(s->plugin, fd, type, script_handle_watch, temp);
 	SCRIPT_BIND_FOOTER(script_watches);
 }
 

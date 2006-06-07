@@ -145,7 +145,6 @@ typedef struct {
 	plugin_t *plugin;	/* wtyczka obs³uguj±ca deskryptor */
 	void *handler;		/* funkcja wywo³ywana je¶li s± dane itp. */
 	void *data;		/* dane przekazywane powy¿szym funkcjom. */
-	int persist;		/* czy ma byæ na zawsze? */
 	string_t buf;		/* bufor na liniê */
 	time_t timeout;		/* timeout */
 	time_t started;		/* kiedy zaczêto obserwowaæ */
@@ -166,8 +165,6 @@ void watch_free(watch_t *w);
 
 typedef void *watch_handler_func_t;
 
-int watch_persist_set(watch_t *w, int value);
-int watch_persist_get(watch_t *w);
 int watch_data_set(watch_t *w, void *priv);
 void *watch_data_get(watch_t *w);
 int watch_timeout_set(watch_t *w, time_t timeout);
@@ -176,7 +173,7 @@ int watch_handler_set(watch_t *w, watch_handler_func_t h);
 watch_handler_func_t watch_handler_get(watch_t *w);
 time_t watch_started_get(watch_t *w);
 
-watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, int persist, watcher_handler_func_t *handler, void *data);
+watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data);
 int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
 void watch_handle(watch_t *w);

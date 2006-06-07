@@ -155,7 +155,7 @@ COMMAND(gg_command_dcc)
 		dcc_filename_set(d, params[2]);
 
 		if (gd)
-			watch_add(&gg_plugin, gd->fd, gd->check, 0, gg_dcc_handler, gd);
+			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc_handler, gd);
 
 		return 0;
 	}
@@ -349,7 +349,7 @@ COMMAND(gg_command_dcc)
 		printq("dcc_get_getting", format_user(session, dcc_uid_get(d)), dcc_filename_get(d));
 		dcc_active_set(d, 1);
 		
-		watch_add(&gg_plugin, g->fd, g->check, 0, gg_dcc_handler, g);
+		watch_add(&gg_plugin, g->fd, g->check, gg_dcc_handler, g);
 
 		return 0;
 	}
@@ -394,7 +394,7 @@ static dcc_t *gg_dcc_find(struct gg_dcc *d)
  *
  * obs³uga bezpo¶rednich po³±czeñ. w data jest przekazywana struct gg_dcc.
  */
-WATCHER(gg_dcc_handler)
+WATCHER(gg_dcc_handler)	/* tymczasowy */
 {
 	struct gg_event *e;
 	struct gg_dcc *d = data;
@@ -410,7 +410,7 @@ WATCHER(gg_dcc_handler)
 		if (d->type == GG_SESSION_DCC_SOCKET)
 			gg_dcc_socket_close();
 
-		return 0;
+		return -1;
 	}
 
 	switch (e->type) {
@@ -457,7 +457,7 @@ WATCHER(gg_dcc_handler)
 			query_emit(NULL, "protocol-dcc-validate", &__host, &__port, &__valid, NULL);
 
 			if (__valid)
-				watch_add(&gg_plugin, d->fd, d->check, 0, gg_dcc_handler, d);
+				watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);
 			else
 				gg_dcc_free(d);
 
@@ -482,7 +482,7 @@ WATCHER(gg_dcc_handler)
 				debug("[gg] unauthorized client (uin=%ld), closing connection\n", d->peer_uin);
 				gg_free_dcc(d);
 				gg_event_free(e);
-				return 0;
+				return -1;
 			}
 			break;	
 		}
@@ -517,7 +517,7 @@ WATCHER(gg_dcc_handler)
 				debug("[gg] connection from %d not found\n", d->peer_uin);
 				gg_dcc_free(d);
 				gg_event_free(e);	
-				return 0;
+				return -1;
 			}
 		}
 
@@ -726,10 +726,15 @@ WATCHER(gg_dcc_handler)
 	}
 
 	if (d && d->type != GG_SESSION_DCC_SOCKET && again)
-		watch_add(&gg_plugin, d->fd, d->check, 0, gg_dcc_handler, d);
+		watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);
 
 	gg_event_free(e);
 	
+	return -1;
+}
+
+WATCHER(gg_dcc_handler_open) {	/* wrapper */
+	gg_dcc_handler(type, fd, watch, data);
 	return 0;
 }
 
@@ -744,7 +749,7 @@ int gg_dcc_socket_open(int port)
 	if (!(gg_dcc_socket = gg_dcc_socket_create(1, port)))
 		return -1;
 	
-	watch_add(&gg_plugin, gg_dcc_socket->fd, gg_dcc_socket->check, 1, gg_dcc_handler, gg_dcc_socket);
+	watch_add(&gg_plugin, gg_dcc_socket->fd, gg_dcc_socket->check, gg_dcc_handler_open, gg_dcc_socket);
 
 	return 0;
 }

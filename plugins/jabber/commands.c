@@ -309,7 +309,7 @@ COMMAND(jabber_command_connect)
 		close(fd[1]);
 #endif
 		/* XXX dodaæ dzieciaka do przegl±dania */
-		watch_add(&jabber_plugin, fd[0], WATCH_READ, 0, jabber_handle_resolver, session);
+		watch_add(&jabber_plugin, fd[0], WATCH_READ, jabber_handle_resolver, session);
 	} else {
 #ifndef NO_POSIX_SYSTEM
 		close(fd[0]);

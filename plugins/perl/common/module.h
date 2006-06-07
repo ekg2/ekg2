@@ -33,7 +33,7 @@ typedef script_t	*Ekg2__Script;
 SV *ekg2_bless(int flag, int flag2, void *object);
 void *Ekg2_ref_object(SV *o);
 script_var_t *perl_variable_add(char *var, char *value, char *handler);
-void *perl_watch_add(int fd, int type, int persist, void *handler, void *data);
+void *perl_watch_add(int fd, int type, void *handler, void *data);
 void *perl_handler_bind(char *query_name, char *handler);
 void *perl_command_bind(char *command, char *params, char *poss, char *handler);
 void *perl_plugin_register(char *name, int type, void *formatinit);

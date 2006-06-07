@@ -43,7 +43,7 @@ int gg_register_done = 0;
 char *gg_register_password = NULL;
 char *gg_register_email = NULL;
 
-static WATCHER(gg_handle_register)
+static WATCHER(gg_handle_register)	/* tymczasowy */
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *p;
@@ -57,7 +57,7 @@ static WATCHER(gg_handle_register)
 	}
 
 	if (type)
-		return 0;
+		return -1;
 
 	if (!h) {
 		debug("[gg] gg_handle_register() called with NULL data\n");
@@ -70,10 +70,12 @@ static WATCHER(gg_handle_register)
 	}
 
 	if (h->state != GG_STATE_DONE) {
-		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_register, h);
-		watch_timeout_set(w, h->timeout);
+		watch_t *w;
+		if ((int) watch == h->check && h->fd == fd) return 0;
 
-		return 0;
+		w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_register, h);
+		watch_timeout_set(w, h->timeout);
+		return -1;
 	}
 
 	if (!(p = h->data) || !p->success) {
@@ -99,7 +101,7 @@ static WATCHER(gg_handle_register)
 fail:
 	list_remove(&gg_registers, h, 0);
 	gg_free_pubdir(h);
-	return 0;
+	return -1;
 }
 
 COMMAND(gg_command_register)
@@ -144,7 +146,7 @@ COMMAND(gg_command_register)
 	free_utf(passwd);
 	xfree(upasswd);
 
-	w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_register, h); 
+	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_register, h); 
 	watch_timeout_set(w, h->timeout);
 
 	list_add(&gg_registers, h, 0);
@@ -155,7 +157,7 @@ COMMAND(gg_command_register)
 	return 0;
 }
 /* zwalnianie w type == 1 */
-static WATCHER(gg_handle_unregister)
+static WATCHER(gg_handle_unregister)	/* tymczasowy */
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *s;
@@ -180,10 +182,10 @@ static WATCHER(gg_handle_unregister)
 	}
 
 	if (h->state != GG_STATE_DONE) {
-		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_unregister, h);
+		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_unregister, h);
 		watch_timeout_set(w, h->timeout);
 
-		return 0;
+		return -1;
 	}
 
 	if (!(s = h->data) || !s->success) {
@@ -196,7 +198,7 @@ static WATCHER(gg_handle_unregister)
 fail:
 	list_remove(&gg_unregisters, h, 0);
 	gg_free_pubdir(h);
-	return 0;
+	return -1;
 }
 
 COMMAND(gg_command_unregister)
@@ -240,7 +242,7 @@ COMMAND(gg_command_unregister)
 	xfree(passwd);
 #endif
 
-	w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_unregister, h); 
+	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_unregister, h); 
 	watch_timeout_set(w, h->timeout);
 
 	list_add(&gg_unregisters, h, 0);
@@ -248,7 +250,7 @@ COMMAND(gg_command_unregister)
 	return 0;
 }
 
-static WATCHER(gg_handle_passwd)
+static WATCHER(gg_handle_passwd)	/* tymczasowy */
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *p = NULL;
@@ -274,10 +276,10 @@ static WATCHER(gg_handle_passwd)
 	}
 
 	if (h->state != GG_STATE_DONE) {
-		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_passwd, h);
+		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_passwd, h);
 		watch_timeout_set(w, h->timeout);
 		
-		return 0;
+		return -1;
 	}
 
 	if (!(p = h->data) || !p->success) {
@@ -315,7 +317,7 @@ fail:
 			gg_free_pubdir(h);
 		}
 	}
-	return 0;
+	return -1;
 }
 
 COMMAND(gg_command_passwd)
@@ -338,7 +340,12 @@ COMMAND(gg_command_passwd)
 	cppasswd	= gg_locale_to_cp(newpasswd);
 	cpoldpasswd	= gg_locale_to_cp(oldpasswd);
 
-	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? cpoldpasswd : "", cppasswd, "", 1))) {
+#ifdef HAVE_GG_CHANGE_PASSWD4 /* gg_change_passwd4 since ~ LIBGADU 20030930 */
+	if (!(h = gg_change_passwd4(atoi(session->uid + 3), "email", (cpoldpasswd) ? cpoldpasswd : "", cppasswd, "tokenid", "tokenval", 1)))
+#else 
+	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? cpoldpasswd : "", cppasswd, "", 1)))
+#endif 
+	{
 #if USE_UNICODE
 		xfree(newpasswd);
 		xfree(oldpasswd);
@@ -351,7 +358,7 @@ COMMAND(gg_command_passwd)
 
 	session_set(session, "new_password", params[0]);
 
-	w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_passwd, h); 
+	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_passwd, h); 
 	watch_timeout_set(w, h->timeout);
 
 	list_add(&g->passwds, h, 0);
@@ -369,7 +376,7 @@ COMMAND(gg_command_passwd)
 	return 0;
 }
 
-static WATCHER(gg_handle_remind)
+static WATCHER(gg_handle_remind)	/* tymczasowy */
 {
 	struct gg_http *h = data;
 	struct gg_pubdir *s;
@@ -394,10 +401,10 @@ static WATCHER(gg_handle_remind)
 	}
 
 	if (h->state != GG_STATE_DONE) {
-		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_remind, h);
+		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_remind, h);
 		watch_timeout_set(w, h->timeout);
 
-		return 0;
+		return -1;
 	}
 
 	if (!(s = h->data) || !s->success) {
@@ -410,7 +417,7 @@ static WATCHER(gg_handle_remind)
 fail:
 	list_remove(&gg_reminds, h, 0);
 	gg_free_pubdir(h);
-	return 0;
+	return -1;
 }
 
 COMMAND(gg_command_remind)
@@ -443,7 +450,7 @@ COMMAND(gg_command_remind)
 		return -1;
 	}
 
-	w = watch_add(&gg_plugin, h->fd, h->check, 0, gg_handle_remind, h); 
+	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_remind, h); 
 	watch_timeout_set(w, h->timeout);
 
 	list_add(&gg_reminds, h, 0);

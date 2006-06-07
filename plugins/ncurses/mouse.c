@@ -252,7 +252,7 @@ void ncurses_enable_mouse()
 		debug("Gpm at fd no %d\n", gpm_fd);
 
 	if (gpm_fd != -2) {
-	        watch_add(&ncurses_plugin, gpm_fd, WATCH_READ, 1, ncurses_gpm_watch_handler, NULL);
+	        watch_add(&ncurses_plugin, gpm_fd, WATCH_READ, ncurses_gpm_watch_handler, NULL);
 		gpm_visiblepointer = 1;
 		mouse_initialized = 1;
 	} else { /* xterm */

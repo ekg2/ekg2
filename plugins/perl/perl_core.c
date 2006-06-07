@@ -302,9 +302,9 @@ script_var_t *perl_variable_add(char *var, char *value, char *handler)
 	return script_var_add(&perl_lang, perl_caller(), var, value, xstrdup(handler));
 }
 
-void *perl_watch_add(int fd, int type, int persist, void *handler, void *data)
+void *perl_watch_add(int fd, int type, void *handler, void *data)
 {
-	return script_watch_add(&perl_lang, perl_caller(), fd, type, persist, xstrdup(handler), data);
+	return script_watch_add(&perl_lang, perl_caller(), fd, type, xstrdup(handler), data);
 }
 
 void *perl_handler_bind(char *query_name, char *handler)

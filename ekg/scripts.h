@@ -196,7 +196,7 @@ script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *comm
 script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void *handler);
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler);
 script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *value, void *handler);
-script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, int persist, void *handler, void *data);
+script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, void *handler, void *data);
 script_plugin_t *script_plugin_init(scriptlang_t *s, script_t *scr, char *name, plugin_class_t pclass, void *handler);
 
 int script_variables_free(int free);

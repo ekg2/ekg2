@@ -272,6 +272,7 @@ IRC_COMMAND(irc_c_init)
 			else j->host_ident=NULL;
 			debug("\nspoko miejscówka ziom!...[%s:%s]\n", j->nick, j->host_ident);
 			j->connecting = 0;
+			j->autoreconnecting = 0;
 
 			SOP(_005_PREFIX) = xstrdup("(ov)@+");
 			SOP(_005_CHANTYPES) = xstrdup("#!");

@@ -25,7 +25,7 @@
 
 struct xmlnode_s {
 	char *name;
-	char *data;
+	char *data; 
 	char **atts;
 
 	struct xmlnode_s *parent;

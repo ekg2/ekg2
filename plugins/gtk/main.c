@@ -1352,7 +1352,7 @@ int gtk_plugin_init(int prio) {
 	printf("[HELLO ekg2-GTK] XFD: %d\n", xfd);
 	gtk_icon_create();
 	if (xfd != -1) {
-		watch_add(&gtk_plugin, xfd, WATCH_READ, 1, ekg2_xorg_watcher, NULL);
+		watch_add(&gtk_plugin, xfd, WATCH_READ, ekg2_xorg_watcher, NULL);
 	}
 	
 	for (l = windows; l; l = l->next) {

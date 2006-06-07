@@ -720,7 +720,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 			return;
 		}
 
-		w = watch_add(&gg_plugin, d->fd, d->check, 0, gg_dcc_handler, d);
+		w = watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);
 		watch_timeout_set(w, d->timeout);
 
 		return;
@@ -1039,7 +1039,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
  *
  * obs³uga zdarzeñ przy po³±czeniu gg.
  */
-WATCHER(gg_session_handler)
+WATCHER(gg_session_handler)		/* tymczasowe */
 {
 	gg_private_t *g = session_private_get((session_t*) data);
 	struct gg_event *e;
@@ -1068,7 +1068,7 @@ WATCHER(gg_session_handler)
 			gg_free_session(g->sess);
 			g->sess = NULL;
 
-			return 0;
+			return -1;
 		}
 
 		/* je¶li jest GG_STATE_CONNECTING_GG to ka¿emy stwierdziæ
@@ -1090,7 +1090,7 @@ WATCHER(gg_session_handler)
 		gg_free_session(g->sess);
 		g->sess = NULL;
 		
-		return 0;
+		return -1;
 	}
 
 	switch (e->type) {
@@ -1179,12 +1179,15 @@ WATCHER(gg_session_handler)
 	}
 
 	if (!broken && g->sess->state != GG_STATE_IDLE && g->sess->state != GG_STATE_ERROR) {
-		watch_t *w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, 0, gg_session_handler, data);
+		watch_t *w;
+		if (((int) watch == g->sess->check) && g->sess->fd == fd) return 0;
+
+		w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, gg_session_handler, data);
 		watch_timeout_set(w, g->sess->timeout);
 	}
 
 	gg_event_free(e);
-	return 0;
+	return -1;
 }
 
 void gg_changed_private(session_t *s, const char *var)

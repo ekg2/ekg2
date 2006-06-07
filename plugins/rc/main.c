@@ -99,7 +99,7 @@ WATCHER(rc_input_handler_accept)
 	rn->type = (r->type == RC_INPUT_TCP) ? RC_INPUT_TCP_CLIENT : RC_INPUT_UNIX_CLIENT;
 	rn->watch = WATCH_READ_LINE;
 	list_add(&rc_inputs, rn, 0);
-	watch_add(&rc_plugin, rn->fd, rn->watch, 1, rc_input_handler_line, rn);
+	watch_add(&rc_plugin, rn->fd, rn->watch, rc_input_handler_line, rn);
 	return 0;
 }
 
@@ -202,7 +202,7 @@ static void rc_paths_changed(const char *name)
 			
 			rr = list_add(&rc_inputs, &r, sizeof(r));
 
-			watch_add(&rc_plugin, r.fd, r.watch, 1, rc_input_handler, rr);
+			watch_add(&rc_plugin, r.fd, r.watch, rc_input_handler, rr);
 
 			continue;
 		}

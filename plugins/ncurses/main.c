@@ -521,12 +521,11 @@ int ncurses_plugin_init(int prio)
 		watch_add(&ncurses_plugin,
 				winch_pipe[0],
 				WATCH_READ,
-				1,			/* persistent */
 				ncurses_watch_winch,	/* handler */
 				NULL);			/* data */
 	}
 #endif
-	watch_add(&ncurses_plugin, 0, WATCH_READ, 1, ncurses_watch_stdin, NULL);
+	watch_add(&ncurses_plugin, 0, WATCH_READ, ncurses_watch_stdin, NULL);
 	signal(SIGINT, ncurses_sigint_handler);
 	timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL);
 

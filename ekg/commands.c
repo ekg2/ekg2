@@ -589,7 +589,7 @@ typedef struct {
 	wcs_string_t buf;	/* je¶li buforujemy, to tutaj */
 } cmd_exec_info_t;
 
-WATCHER(cmd_exec_watch_handler)
+WATCHER(cmd_exec_watch_handler)	/* sta³y */
 {
 	cmd_exec_info_t *i = data;
 	int quiet = (i) ? i->quiet : 0;
@@ -712,7 +712,7 @@ COMMAND(cmd_exec)
 		if (buf)
 			i->buf = wcs_string_init(NULL);
 
-		w = watch_add(NULL, fd[0], WATCH_READ_LINE, 1, cmd_exec_watch_handler, i);
+		w = watch_add(NULL, fd[0], WATCH_READ_LINE, cmd_exec_watch_handler, i);
 
 		if (add_commandline) {
 			char *tmp = format_string(format_find("exec_prompt"), ((command[0] == '^') ? command + 1 : command));
@@ -1991,9 +1991,9 @@ COMMAND(cmd_debug_watches)
 		else
 			plugin = TEXT("-");
 #if USE_UNICODE
-		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8ls  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, w->persist, w->timeout, w->started, w->removed);
+		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8ls  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, 1, w->timeout, w->started, w->removed);
 #else
-		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8s  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, w->persist, w->timeout, w->started, w->removed);
+		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8s  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, 1, w->timeout, w->started, w->removed);
 #endif
 		printq("generic", buf);
 	}

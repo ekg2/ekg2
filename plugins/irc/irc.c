@@ -376,8 +376,10 @@ void irc_changed_resolve_child(session_t *s, const char *var, int fd) {
 #ifdef NO_POSIX_SYSTEM
 		DWORD written;
 		WriteFile(fd, tmp2, xstrlen(tmp2), &written, NULL);
+		WriteFile(fd, "EOR\n", 4, &written, NULL);
 #else
 		write(fd, tmp2, xstrlen(tmp2));
+		write(fd, "EOR\n", 4);
 #endif
 		sleep(3);
 #ifdef NO_POSIX_SYSTEM
@@ -470,7 +472,7 @@ void irc_changed_resolve(session_t *s, const char *var) {
 #else
 		CloseHandle(fd[1]);
 #endif
-		watch_add(&irc_plugin, fd[0], WATCH_READ_LINE, 0, irc_handle_resolver, irdata);
+		watch_add(&irc_plugin, fd[0], WATCH_READ_LINE, irc_handle_resolver, irdata);
 
 		return;
 	} 
@@ -580,12 +582,12 @@ WATCHER(irc_handle_resolver)
 			debug("[irc] hadnle_resolver calling really_connect\n");
 			irc_really_connect(s);
 		}
-		return 0;
+		return -1;
 	}
-
 /* 
  * %s %s %d %d hostname ip family port\n
  */
+	if (!xstrcmp(watch, "EOR")) return -1;	/* koniec resolvowania */
 	if ((p = array_make(watch, " ", 4, 1, 0)) && p[0] && p[1] && p[2] && p[3]) {
 		connector_t *listelem = xmalloc(sizeof(connector_t));
     		listelem->session = s;
@@ -595,9 +597,12 @@ WATCHER(irc_handle_resolver)
 		listelem->family   = atoi(p[2]);
 		list_add_sorted((resolv->plist), listelem, 0, &irc_resolver_sort);
 		debug("%s (%s %s) %x %x\n", p[0], p[1], p[3], resolv->plist, listelem); 
-	} else debug("[irc] received some kind of junk from resolver thread: %s\n", watch);
-
-	array_free(p);
+		array_free(p);
+	} else { 
+		debug("[irc] received some kind of junk from resolver thread: %s\n", watch);
+		array_free(p);
+		return -1;
+	}
 	return 0;
 }
 
@@ -631,7 +636,7 @@ WATCHER(irc_handle_stream)
 	return 0;
 }
 
-WATCHER(irc_handle_connect)
+WATCHER(irc_handle_connect) /* tymczasowy */
 {
 	session_t		*s = session_find(data);
 	irc_private_t		*j = irc_private(s);
@@ -665,14 +670,14 @@ WATCHER(irc_handle_connect)
 			j->conntmplist = j->conntmplist->next;
 		}
 		irc_handle_disconnect(s, (type == 2) ? "Connection timed out" : strerror(res), EKG_DISCONNECT_FAILURE);
-		return 0; /* ? */
+		return -1; /* ? */
 	}
 
 	timer_remove(&irc_plugin, "reconnect");
 	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
-	j->recv_watch = watch_add(&irc_plugin, fd, WATCH_READ_LINE, 1, irc_handle_stream, xstrdup((char *) data));
-	j->send_watch = watch_add(&irc_plugin, fd, WATCH_WRITE_LINE, 1, NULL, NULL);
+	j->recv_watch = watch_add(&irc_plugin, fd, WATCH_READ_LINE, irc_handle_stream, xstrdup((char *) data));
+	j->send_watch = watch_add(&irc_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
 
 	real = session_get(s, "realname");
 	real = real ? xstrlen(real) ? real : j->nick : j->nick;
@@ -686,7 +691,7 @@ WATCHER(irc_handle_connect)
 	watch_write(j->send_watch, "%sUSER %s %s unused_field :%s\r\nNICK %s\r\n",
 			pass, j->nick, localhostname?localhostname:"12", real, j->nick);
 	xfree(pass);
-	return 0;
+	return -1;
 }
 
 /*                                                                       *
@@ -847,7 +852,7 @@ int irc_really_connect(session_t *session) {
 	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
 
-	w = watch_add(&irc_plugin, fd, WATCH_WRITE, 0, irc_handle_connect, xstrdup(session->uid) );
+	w = watch_add(&irc_plugin, fd, WATCH_WRITE, irc_handle_connect, xstrdup(session->uid) );
 	if ((timeout = session_int_get(session, "connect_timeout") > 0)) 
 		watch_timeout_set(w, timeout);
 	
