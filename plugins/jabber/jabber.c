@@ -66,7 +66,7 @@
 #include "jabber.h"
 
 #define jabberfix(x,a) ((x) ? x : a)
-#define WITH_JABBER_DCC 1
+#define WITH_JABBER_DCC 0
 #define WITH_JABBER_JINGLE 0
 
 #define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
@@ -1305,7 +1305,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					} 
 					watch_write(j->send_watch, 
 						"<value>%d</value></field>"
-						"<field label=\"Quiet mode? (Won't display result off command on screen)\" type=\"boolean\" var=\"command-quiet\"><value>0</value></field>"
+						"<field label=\"Quiet mode? (Won't display *results of command handler* on screen)\" type=\"boolean\" var=\"command-quiet\"><value>0</value></field>"
 						"</x></command></iq>", window_current->id);
 					xfree(session_cur);
 				} else {
@@ -2851,7 +2851,6 @@ static int jabber_plugin_destroy()
 
         for (l = sessions; l; l = l->next)
                 jabber_private_destroy((session_t*) l->data);
-
         plugin_unregister(&jabber_plugin);
 
         return 0;
