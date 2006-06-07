@@ -20,7 +20,7 @@
 #ifndef __TOKEN_H
 #define __TOKEN_H
 
-#ifdef GIF_OCR
+#ifdef HAVE_LIBJPEG
 const int token_char_height = 12; 
 const char token_id_char[] = {"0123456789abcdef"};
 const char token_id[][15] = {
