@@ -745,7 +745,7 @@ COMMAND(cmd_exec)
 COMMAND(cmd_eval)
 {
 	PARUNI
-	int ret = 0, i;
+	int i;
 	CHAR_T **argv;
 
 	argv = wcs_array_make(params[0], TEXT(" "), 0, 1, 1);
