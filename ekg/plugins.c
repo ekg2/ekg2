@@ -832,7 +832,8 @@ int watch_handle_write(watch_t *w) {
 
 int watch_write(watch_t *w, const char *format, ...) {
 	char		*text;
-	int		len;
+	int		was_empty = 0;
+	int		textlen;
 	va_list		ap;
 
 	if (!w || !format)
@@ -841,16 +842,18 @@ int watch_write(watch_t *w, const char *format, ...) {
 	va_start(ap, format);
 	text = vsaprintf(format, ap);
 	va_end(ap);
+	
+	textlen = xstrlen(text); 
 
-	debug("[watch]_send: %s\n", text?xstrlen(text)?text:"[0LENGTH]":"[FAILED]");
+	debug("[watch]_send: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
 	if (!text) return -1;
-
-	len = xstrlen(w->buf->str);
-	string_append(w->buf, text);
+		/* we don't really need full length of string... so we check if it's NULL or first letter is NUL. */ 
+	was_empty = (!w->buf->str || !(*w->buf->str));	
+	string_append_n(w->buf, text, textlen);
 
 	xfree(text);
 
-	if (!len) return watch_handle_write(w); /* let's try to write somethink ? */
+	if (was_empty) return watch_handle_write(w); /* let's try to write somethink ? */
 	return 0;
 }
 
