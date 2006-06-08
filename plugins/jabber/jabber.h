@@ -139,6 +139,8 @@ typedef struct {
 plugin_t jabber_plugin;
 void jabber_register_commands(void);
 
+int JABBER_COMMIT_DATA(watch_t *w);
+
 char *jabber_attr(char **atts, const char *att);
 char *jabber_digest(const char *sid, const CHAR_T *password);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);

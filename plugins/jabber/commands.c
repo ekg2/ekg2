@@ -1585,6 +1585,7 @@ COMMAND(jabber_command_private) {
 	if (match_arg(params[0], 'p', TEXT("put"), 2)) {							/* put */
 		list_t l;
 
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"private%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
@@ -1675,6 +1676,7 @@ back:
 
 			xfree(beg);
 		}
+		JABBER_COMMIT_DATA(j->send_watch);
 		return 0;
 	}
 
@@ -1686,6 +1688,7 @@ back:
 			"<" CHARF "/></query></iq>", j->id++, namespace);
 		return 0;
 	}
+
 	wcs_printq("invalid_params", name);
 	return -1;
 }

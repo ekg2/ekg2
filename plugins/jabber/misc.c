@@ -16,6 +16,14 @@
 
 #include "jabber.h"
 
+int JABBER_COMMIT_DATA(watch_t *w) {
+	if (w) { 
+		w->transfer_limit = 0;
+		return watch_handle_write(w); 
+	}
+	return -1;
+}
+
 char *jabber_attr(char **atts, const char *att)
 {
 	int i;
