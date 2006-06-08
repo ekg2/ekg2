@@ -149,6 +149,15 @@ typedef struct {
 	time_t timeout;		/* timeout */
 	time_t started;		/* kiedy zaczêto obserwowaæ */
 	int removed;		/* wywo³ano ju¿ watch_remove() */
+
+	int transfer_limit;	/* XXX, requested by GiM to limit data transmitted to ircd server... currently only to send all data
+					done by serveral calls of watch_write() in one packet... by setting it to -1 and than changing it back to 0
+					if we really want to send packet in that function we ought to do by calling watch_handle_write() 
+						[PLEASE NOTE, THAT YOU CANNOT DO watch_write().. cause it will check if there is somethink in write buffor...
+						and if it is, it won't call watch_handle_write()] 
+					or it will be 
+					executed in next ekg_loop() loop.
+				*/
 } watch_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION

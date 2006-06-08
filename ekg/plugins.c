@@ -702,6 +702,7 @@ void watch_free(watch_t *w)
 	if (w->buf) {
 		int (*handler)(int, int, const char *, void *) = w->handler;
 		string_free(w->buf, 1);
+		/* DO WE WANT TO SEND ALL TEXT IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
 		if (handler)
 			handler(1, w->fd, NULL, w->data);
 	} else {
@@ -785,6 +786,7 @@ int watch_handle_write(watch_t *w) {
 	int res = -1;
 	int len = (w && w->buf) ? xstrlen(w->buf->str) : 0;
 
+	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
 	debug("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
 	if (!len) return -1;
 
