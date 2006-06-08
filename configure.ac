@@ -353,7 +353,7 @@ if test "x$with_perl" != "xno"; then
 
 	if test "x$have_perl" = "xyes"; then
 		AC_CONFIG_FILES([plugins/perl/Makefile])
-		AC_CONFIG_FILES([plugins/perl/SCRIPTS/Makefile])
+		AC_CONFIG_FILES([contrib/perl/Makefile])
 		PLUGINS="$PLUGINS perl"
 	fi
 fi
@@ -367,6 +367,7 @@ if test "x$with_python" != "xno"; then
 
 	if test "x$have_python" = "xyes"; then
 		AC_CONFIG_FILES([plugins/python/Makefile])
+		AC_CONFIG_FILES([contrib/python/Makefile])
 		PLUGINS="$PLUGINS python"
 	fi
 fi
