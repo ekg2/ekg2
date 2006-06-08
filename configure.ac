@@ -6,7 +6,6 @@ AC_CONFIG_HEADERS(ekg2-config.h)
 
 AM_INIT_AUTOMAKE(ekg2, CVS)
 
-
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
@@ -35,7 +34,6 @@ AC_C_BIGENDIAN
 AC_SUBST(COMPAT)
 AC_SUBST(DLLIB)
 AC_SUBST(PLUGINS)
-AC_SUBST(PLUGINS_LIBS)
 
 dnl FreeBSD
 AC_NEED_STDINT_H
@@ -57,9 +55,6 @@ AC_CHECK_FUNC(getopt_long, , [COMPAT="$COMPAT getopt.o getopt1.o"])
 
 dnl  na SunOSach nie ma scandir()
 AC_CHECK_FUNCS(scandir, , [COMPAT="$COMPAT scandir.o"])
-
-dnl  setenv dla pythona
-AC_CHECK_FUNCS(setenv)
 
 dnl inet_pton
 AC_CHECK_FUNCS(inet_pton)
