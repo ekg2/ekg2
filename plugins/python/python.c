@@ -153,6 +153,7 @@ int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie be
 		    Py_XDECREF(handler);
 		    break;
 		case(SCRIPT_WATCHTYPE):
+                    Py_XDECREF(handler);
 		case(SCRIPT_VARTYPE):
                     Py_XDECREF(handler);
 		    break;
@@ -171,7 +172,18 @@ int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
 
 int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch)
 {
-	return 0;
+	int python_handle_result;
+        PyObject * args;
+
+	PyObject *obj = (PyObject *)scr_wat->private;
+        if (scr_wat->self->buf) {
+                args = Py_BuildValue("(Ois)", (PyObject *)scr_wat->data, type, (char *)watch);
+        } else {
+                args = Py_BuildValue("(Oii)", (PyObject *)scr_wat->data, type, watch);
+        }
+	PYTHON_HANDLE_HEADER(obj, args)
+	PYTHON_HANDLE_FOOTER()
+	return python_handle_result;
 }
 
 int python_timers(script_t *scr, script_timer_t *time, int type)
@@ -215,7 +227,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
                         case (SCR_ARG_CHARP): {
                                 char *tmp = *(char **) args[i];
 				if (tmp)
-                                	w = PyString_FromString(tmp);
+                                        w = PyString_FromString(tmp);
                                 break;
                         }
                         case (SCR_ARG_CHARPP): {
@@ -233,15 +245,28 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
                 }
                 PyTuple_SetItem(argz, i, w);
         }
-        PYTHON_HANDLE_HEADER(scr_que->private, argz)
-        for (i=0; i < scr_que->argc; i++) {
-//			PyObject *w = PyTuple_GetItem(argz, i);
-                PyObject *w = PyTuple_GetItem(pArgs, i);
-/* TODO: restore args. GetItem not works. (it returns old value) */
-                if (scr_que->argv_type[i] == SCR_ARG_INT) {
-                        debug("[recvback] 0x%x %d\n", w, PyInt_AsLong(w));
-                }
-        }
+	PYTHON_HANDLE_HEADER(scr_que->private, argz)
+	if (__py_r && PyTuple_Check(__py_r)) { /* __py_r - return value */
+		for (i=0; i < scr_que->argc; i++) {
+			PyObject *w = PyTuple_GetItem(__py_r, i);
+			switch (scr_que->argv_type[i]) {
+				case (SCR_ARG_INT):
+					if (PyInt_Check(w)) *( (int *) args[i]) = PyInt_AsLong(w);
+					else debug("[recvback,script error] not int ?!\n");
+					break;
+				case (SCR_ARG_CHARP):
+					if (PyString_Check(w)) {
+						xfree(*(char **) args[i]);
+						*( (char **) args[i]) = xstrdup(PyString_AsString(w));
+					} else debug("[recvback,script error] not string?!\n");
+					break;
+				case (SCR_ARG_CHARPP): /* wazne, zrobic. */
+				default:
+					debug("[NIMP, recvback] %d %d -> 0x%x\n", i, scr_que->argv_type[i], w);
+			}
+		}
+		python_handle_result = 1;
+	}
         PYTHON_HANDLE_FOOTER()
         if (!python_handle_result) return -1;
         else return 0;
@@ -552,6 +577,12 @@ int python_initialize()
 	PyModule_AddIntConstant(ekg, "IGNORE_NOTIFY",		IGNORE_NOTIFY);
 	PyModule_AddIntConstant(ekg, "IGNORE_XOSD",		IGNORE_XOSD);
 	PyModule_AddIntConstant(ekg, "IGNORE_ALL",		IGNORE_ALL);
+
+        // Const - watch types
+	PyModule_AddIntConstant(ekg, "WATCH_READ",		WATCH_READ);
+	PyModule_AddIntConstant(ekg, "WATCH_READ_LINE",		WATCH_READ_LINE);
+	PyModule_AddIntConstant(ekg, "WATCH_WRITE",		WATCH_WRITE);
+
 
 	return 0;
 }

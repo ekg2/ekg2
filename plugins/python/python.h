@@ -64,7 +64,6 @@ extern scriptlang_t python_lang;
 	}
 
 #define PYTHON_HANDLE_FOOTER() \
-/*	if (__py_r && PyTuple_Check(__py_r)) ; */\
 	Py_XDECREF(__py_r); \
 	Py_DECREF(pArgs);\
 	\

@@ -399,6 +399,39 @@
                </formalpara>
             </listitem>
          </varlistentry>
+         <varlistentry>
+            <term>WATCH_READ</term>
+            <listitem>
+               <formalpara>
+                  <title>watche</title>
+                  <para>
+                     odczyt
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>WATCH_READ_LINE</term>
+            <listitem>
+               <formalpara>
+                  <title>watche</title>
+                  <para>
+                     odczyt po lini
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>WATCH_WRITE</term>
+            <listitem>
+               <formalpara>
+                  <title>watche</title>
+                  <para>
+                     zapis
+                  </para>
+               </formalpara>
+            </listitem>
+         </varlistentry>
       </variablelist>
    </sect3>
    <sect3>
@@ -414,18 +447,10 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>connect() (NFY)</term>
+            <term>connect()</term>
             <listitem>
                <para>
                   £±czy sesjê.
-               </para>
-            </listitem>
-         </varlistentry>
-         <varlistentry>
-            <term>disconnect() (NFY)</term>
-            <listitem>
-               <para>
-                  Roz³±cza sesjê.
                </para>
             </listitem>
          </varlistentry>
@@ -434,6 +459,14 @@
             <listitem>
                <para>
                   Zwraca True je¶li sesja jest po³±czona, False wpp.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>disconnect()</term>
+            <listitem>
+               <para>
+                  Roz³±cza sesjê.
                </para>
             </listitem>
          </varlistentry>
@@ -457,11 +490,21 @@
             </listitem>
          </varlistentry>
          <varlistentry>
-            <term>status() (NFY)</term>
+            <term>status()</term>
             <listitem>
                <para>
-                  Zwraca tuple [ status, opis ], gdzie status jest jedn± ze
-                  sta³ych okre¶laj±cych typ stanu.
+                  Zwraca tuple ( status, opis ), gdzie status jest jedn± ze
+                  sta³ych okre¶laj±cych typ stanu. W przypadku braku opisu,
+                  drug± warto¶ci± bêdzie None.
+               </para>
+            </listitem>
+         </varlistentry>
+         <varlistentry>
+            <term>status_set( status [, opis ] )</term>
+            <listitem>
+               <para>
+                  Ustawia status i ewentualnie opis. Status musi byæ jedn± ze
+                  sta³ych opisuj±cych stan.
                </para>
             </listitem>
          </varlistentry>

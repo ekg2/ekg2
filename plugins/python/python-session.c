@@ -206,6 +206,32 @@ PyObject *ekg_session_str(ekg_sessionObj *self)
 }
 
 /**
+ * ekg_session_connect()
+ *
+ * connect session
+ *
+ */
+
+PyObject *ekg_session_connect(ekg_sessionObj *self)
+{
+        command_exec(NULL, session_find(self->name), "/connect", 0);
+        Py_RETURN_NONE;
+}
+
+/**
+ * ekg_session_disconnect()
+ *
+ * disconnect session
+ *
+ */
+
+PyObject *ekg_session_disconnect(ekg_sessionObj *self)
+{
+        command_exec(NULL, session_find(self->name), "/disconnect", 0);
+        Py_RETURN_NONE;
+}
+
+/**
  * ekg_session_connected()
  *
  * return true if session is connected
@@ -271,6 +297,48 @@ PyObject *ekg_session_users(ekg_sessionObj * self)
         return list;
 }
 
+/**
+ * ekg_session_status_set()
+ *
+ * set status for session
+ *
+ */
+
+PyObject *ekg_session_status_set(ekg_sessionObj * self, PyObject * pyargs)
+{
+        char *status = NULL;
+        char *descr = NULL;
+        char *command = NULL;
+
+        if (!PyArg_ParseTuple(pyargs, "s|s", &status, &descr))
+                return NULL;
+
+        if (xstrcmp(status, EKG_STATUS_AVAIL) == 0) {
+                command = xstrdup("back");
+        } else if (xstrcmp(status, EKG_STATUS_FREE_FOR_CHAT) == 0) {
+                command = xstrdup("ffc");
+        } else {
+                command = xstrdup(status);
+        }
+        if (descr == NULL) {
+                descr = xstrdup("-");
+        }
+        command_exec(NULL, session_find(self->name), saprintf("/%s %s", command, descr), 0);
+        Py_RETURN_TRUE;
+}
+
+/**
+ * ekg_session_status()
+ *
+ * return status tuple for session
+ *
+ */
+
+PyObject *ekg_session_status(ekg_sessionObj * self)
+{
+        session_t * s = session_find(self->name);
+        return Py_BuildValue("(ss)", session_status_get(s), session_descr_get(s));
+}
 
 /*
  * Local Variables:

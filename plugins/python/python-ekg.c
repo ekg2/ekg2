@@ -22,6 +22,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -281,6 +282,43 @@ PyObject *ekg_cmd_timer_bind(PyObject * self, PyObject * args)
         scr = python_find_script(module);
 
         script_timer_bind(&python_lang, scr, freq, callback);
+
+        Py_INCREF(Py_None);
+        return Py_None;
+}
+
+/**
+ * ekg_cmd_watch_add()
+ *
+ */
+
+PyObject *ekg_cmd_watch_add(PyObject * self, PyObject * args)
+{
+        PyObject *callback = NULL;
+        PyObject *module   = NULL;
+        PyObject *fileobj  = NULL;
+        script_t * scr;
+        int type;
+        FILE * fd;
+
+        if (!PyArg_ParseTuple(args, "O!iiO", &PyFile_Type, &fileobj, &type, &callback)) {
+                return NULL;
+        }
+
+        if (!PyCallable_Check(callback)) {
+                print("generic_error", _("Second parameter to timer_bind is not callable"));
+                PyErr_SetString(PyExc_TypeError, _("Parameter must be callable"));
+                return NULL;
+        }
+        Py_XINCREF(callback);
+
+        fd = PyFile_AsFile(fileobj);
+        Py_INCREF(fileobj);
+
+        module = PyObject_GetAttrString(callback, "__module__");
+        scr = python_find_script(module);
+
+        script_watch_add(&python_lang, scr, fileno(fd), type, callback, fileobj);
 
         Py_INCREF(Py_None);
         return Py_None;
