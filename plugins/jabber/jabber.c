@@ -892,32 +892,46 @@ next:
 int jabber_handle_xmldata_form_submit(session_t *s, xmlnode_t *form, const char *FORM_TYPE, int alloc, ...) {
 	char **atts	= NULL;
 	int valid	= 0;
+	int count	= 0;
+	char *vatmp;
 	va_list ap;
-	char **vatmp;
 
 	va_start(ap, alloc);
-	if (alloc) atts = *(va_arg(ap, char ***));
-	while ((vatmp = va_arg(ap, char **))) { debug("JABBER, RC, ADDING ATTR TO ATTS: 0x%x\n", vatmp); } 
-	va_end(ap);
+
+	if (!alloc) while ((vatmp = va_arg(ap, char *))) { 
+		atts		= (char **) xrealloc(atts, sizeof(char *) * (count + 3));
+		atts[count]	= xstrdup(vatmp);
+		atts[count+1]	= (char *) va_arg(ap, char **);					/* here is char ** */
+		atts[count+2]	= NULL;
+		count += 2;
+	}
 
 	for (; form; form = form->next) {
 		if (!xstrcmp(form->name, "field")) {
+			int quiet = 0;
 			const char *vartype	= jabber_attr(form->atts, "type"); 
 			const char *varname	= jabber_attr(form->atts, "var");
 			char *value		= jabber_unescape(form->children ? form->children->data : NULL);
-			char *tmp; 
+			char **tmp; 
 							
-			if (FORM_TYPE && (!xstrcmp(varname, "FORM_TYPE") && !xstrcmp(vartype, "hidden") && !xstrcmp(value, FORM_TYPE))) 
-				valid = 1;
-			if ((tmp = jabber_attr(atts, varname))) {
-				xfree(tmp);
-				tmp	= value;
+			if (FORM_TYPE && (!xstrcmp(varname, "FORM_TYPE") && !xstrcmp(vartype, "hidden") && !xstrcmp(value, FORM_TYPE))) { valid = 1; quiet = 1;	}
+			if ((tmp = (char **) jabber_attr(atts, varname))) {
+				if (!alloc)	{ xfree(*tmp);		*tmp = value; }			/* here is char ** */
+				else 		{ xfree((char *) tmp);	 tmp = (char **) value; }	/* here is char * */
 				value	= NULL;
-			} else if (alloc) { 
-				debug("JABBER, RC, FORM_TYPE: %s ADDING ATTR TO ATTS: %s\n", FORM_TYPE, varname);
-			} else 	debug("JABBER, RC, FORM_TYPE: %s ATTR NOT IN ATTS: %s (SOMEONE IS DOING MESS WITH FORM_TYPE?)\n", FORM_TYPE, varname);
+			} else if (alloc) {
+				atts            = (char **) xrealloc(atts, sizeof(char *) * (count + 3));
+				atts[count]     = xstrdup(varname);					
+				atts[count+1]	= value;						/* here is char * */
+				atts[count+2]	= NULL;
+				count += 2;
+				value = NULL;
+			} else if (!quiet) debug("JABBER, RC, FORM_TYPE: %s ATTR NOT IN ATTS: %s (SOMEONE IS DOING MESS WITH FORM_TYPE?)\n", FORM_TYPE, varname);
+			xfree(value);
 		}
 	}
+	if (alloc)	(*(va_arg(ap, char ***))) = atts;
+	va_end(ap);
 	return valid;
 }
 
@@ -1144,9 +1158,12 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			
 			int iscancel = !xstrcmp(jabber_attr(q->atts, "action"), "cancel");
 
-
-			if (x && !xstrcmp(jabber_attr(x->atts, "xmlns"), "jabber:x:data") && !xstrcmp(jabber_attr(x->atts, "type"), "submit"))
-				goto rc_invalid;
+			if (x) { 
+				if (!xstrcmp(jabber_attr(x->atts, "xmlns"), "jabber:x:data") && !xstrcmp(jabber_attr(x->atts, "type"), "submit")); 
+				else goto rc_invalid;
+			} else { 
+					print("jabbre_remotecontrols_preparing", session_name(s), uid, node);
+			}
 			
 			/* CHECK IF HE CAN DO IT */
 			switch (session_int_get(s, "allow_remote_control"))  {
@@ -1184,7 +1201,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	watch_write(j->send_watch, "<field var=\"%s\" label=\"%s\" type=\"text-single\"><value>%d</value></field>", name, label, value)
 
 #define EXECUTING_SUBOPTION_STR(label, value) \
-	watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>")
+	watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>", label, value)
 
 #define EXECUTING_FOOTER() watch_write(j->send_watch, "</x></command></iq>")
 
@@ -1212,26 +1229,25 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					EXECUTING_FOOTER();
 					xfree(descr);
 				} else {
-					if (!xstrcmp(jabber_attr(x->atts, "xmlns"), "jabber:x:data") && !xstrcmp(jabber_attr(x->atts, "type"), "submit")) {
-						char *status	= NULL;
-						char *descr	= NULL;
-						char *prio	= NULL;
-						int priority	= session_int_get(s, "priority");
+					char *status	= NULL;
+					char *descr	= NULL;
+					char *prio	= NULL;
+					int priority	= session_int_get(s, "priority");
 
-						is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://jabber.org/protocol/rc", 0,
-								"status-priority", &status, "status-message", &descr, "status-priority", &prio);
-						if (is_valid) {
-							if (prio) priority = atoi(prio);
-							if (!xstrcmp(status, "online")) { xfree(status); status = xstrdup(EKG_STATUS_AVAIL); } 
+					is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://jabber.org/protocol/rc", 0,
+							"status", &status, "status-priority", &prio, "status-message", 
+							&descr, "status-priority", &prio, NULL);
+					if (is_valid) {
+						if (prio) priority = atoi(prio);
+						if (!xstrcmp(status, "online")) { xfree(status); status = xstrdup(EKG_STATUS_AVAIL); } 
 
-							if (status)	session_status_set(s, status);
-							if (descr)	session_descr_set(s, descr);
-							session_int_set(s, "priority", priority);
-							print("jabber_remotecontrols_commited_status", session_name(s), uid, status, descr, itoa(priority));
-							jabber_write_status(s);
-						}
-						xfree(status); xfree(descr);
+						if (status)	session_status_set(s, status);
+						if (descr)	session_descr_set(s, descr);
+						session_int_set(s, "priority", priority);
+						print("jabber_remotecontrols_commited_status", session_name(s), uid, status, descr, itoa(priority));
+						jabber_write_status(s);
 					}
+					xfree(status); xfree(descr);
 				}
 			} else if (!xstrcmp(node, "http://jabber.org/protocol/rc#set-options") || !xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-set-all-options")) {
 				int alloptions = !xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-set-all-options");
@@ -1243,12 +1259,14 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						list_t l;
 						for (l = variables; l; l = l->next) {
 							variable_t *v = l->data;
-							if (v->type == VAR_STR || v->type == VAR_FOREIGN || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
+							if (v->type == VAR_STR || v->type == VAR_FOREIGN || v->type == VAR_FILE || 
+									v->type == VAR_DIR || v->type == VAR_THEME) 
+							{
 								char *value = jabber_unescape(*(char **) v->ptr);
 								EXECUTING_FIELD_STR(v->name, v->name, value ? value : "");
 								xfree(value);
 							} else if (v->type == VAR_INT || v->type == VAR_BOOL) {
-								EXECUTING_FIELD_BOOL(v->name, v->name, itoa(*(int *) v->ptr));
+								EXECUTING_FIELD_BOOL(v->name, v->name, *(int *) v->ptr);
 							} else { 	/* XXX */
 								continue;
 							}
@@ -1267,9 +1285,12 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://ekg2.org/jabber/rc", 1, &atts, NULL);
 						if (is_valid && atts) {
 							int i;
-							for (i=0; (atts[i] && atts[i+1]); i+=2) {
+							debug("[VALID]\n");
+							for (i=0; atts[i]; i+=2) {
+								debug("[%d] atts: %s %s\n", i, atts[i], atts[i+1]);
 								variable_set(atts[i], atts[i+1], 0);
 							}
+							print("jabbre_remotecontrols_executed", session_name(s), uid, node);
 						}
 						array_free(atts);
 					} else { 
@@ -1280,7 +1301,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						char *auto_auth		= NULL;
 						is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://jabber.org/protocol/rc", 0, 
 							"sounds", &sounds, "auto-offline", &auto_offline, "auto-msg", &auto_msg, "auto-files", &auto_files, 
-							"auto-auth", &auto_auth);
+							"auto-auth", &auto_auth, NULL);
 						/* parse */
 						debug("[JABBER, RC] sounds: %s [AUTO] off: %s msg: %s files: %s auth: %s\n", sounds, 
 							auto_offline, auto_msg, auto_files, auto_auth);
@@ -1346,13 +1367,13 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					char *command		= NULL;
 					char *params		= NULL;
 					char *window		= NULL;
-					char *quiet		= 0;
+					char *quiet		= NULL;
 
 					int windowid = 1, isquiet = 0;
 
 					is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://ekg2.org/jabber/rc", 0, 
 							"command-name", &command, "params-line", &params, "session-name", &sessionname,
-							"window-name", &window, "command-quiet", &quiet);
+							"window-name", &window, "command-quiet", &quiet, NULL);
 					if (quiet)	isquiet  = atoi(quiet);
 					if (window)	windowid = atoi(window);
 
@@ -2769,11 +2790,14 @@ static int jabber_theme_init()
 	format_add("jabber_remotecontrols_list_item",  _("%g|| %n %6 - %W%4%n (%5)"), 1);		/* %3 - jid %4 - node %5 - descr %6 - seqid */
 	format_add("jabber_remotecontrols_list_end",   _("%g`+=%G----- End of the remote controls list%n\n"), 1);
 	format_add("jabber_remotecontrols_list_nolist", _("%! No remote controls @ %T%2%n"), 1);
-	format_add("jabber_remotecontrols_executing",	_("%> (%1) Executing command: %3 @ %2 (%4)"), 1);
-	format_add("jabber_remotecontrols_completed",	_("%> (%1) Command: %3 @ %2 completed"), 1);
+	format_add("jabber_remotecontrols_executing",	_("%> (%1) Executing command: %W%3%n @ %W%2%n (%4)"), 1);
+	format_add("jabber_remotecontrols_completed",	_("%> (%1) Command: %W%3%n @ %W%2 %gcompleted"), 1);
 
-	format_add("jabber_remotecontrols_commited_status", _("%> (%1) RC %2: requested changing status to: %3 %4 with priority: %5"), 1);	/* %3 - status %4 - descr %5 - prio */
-	format_add("jabber_remotecontrols_commited_command",_("%> (%1) RC %2: requested command: %3 @ session: %4 window: %5 quiet: %6"), 1);	/* %3 - command+params %4 - sessionname %5 - target %6 - quiet */
+	format_add("jabbre_remotecontrols_preparing",	_("%> (%1) Remote client: %W%2%n is preparing to execute command @node: %W%3"), 1);	/* %2 - uid %3 - node */
+	format_add("jabbre_remotecontrols_commited",	_("%> (%1) Remote client: %W%2%n executed command @node: %W%3", 1);			/* %2 - uid %3 - node */
+	format_add("jabber_remotecontrols_commited_status", _("%> (%1) RC %W%2%n: requested changing status to: %3 %4 with priority: %5"), 1);	/* %3 - status %4 - descr %5 - prio */
+		/* %3 - command+params %4 - sessionname %5 - target %6 - quiet */
+	format_add("jabber_remotecontrols_commited_command",_("%> (%1) RC %W%2%n: requested command: %W%3%n @ session: %4 window: %5 quiet: %6"), 1);	
 
 	format_add("jabber_transinfo_begin",	_("%g,+=%G----- Information about: %T%2%n"), 1);
 	format_add("jabber_transinfo_begin_node",_("%g,+=%G----- Information about: %T%2%n (%3)"), 1);
