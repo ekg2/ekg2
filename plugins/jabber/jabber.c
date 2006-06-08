@@ -2794,7 +2794,7 @@ static int jabber_theme_init()
 	format_add("jabber_remotecontrols_completed",	_("%> (%1) Command: %W%3%n @ %W%2 %gcompleted"), 1);
 
 	format_add("jabbre_remotecontrols_preparing",	_("%> (%1) Remote client: %W%2%n is preparing to execute command @node: %W%3"), 1);	/* %2 - uid %3 - node */
-	format_add("jabbre_remotecontrols_commited",	_("%> (%1) Remote client: %W%2%n executed command @node: %W%3", 1);			/* %2 - uid %3 - node */
+	format_add("jabbre_remotecontrols_commited",	_("%> (%1) Remote client: %W%2%n executed command @node: %W%3"), 1);			/* %2 - uid %3 - node */
 	format_add("jabber_remotecontrols_commited_status", _("%> (%1) RC %W%2%n: requested changing status to: %3 %4 with priority: %5"), 1);	/* %3 - status %4 - descr %5 - prio */
 		/* %3 - command+params %4 - sessionname %5 - target %6 - quiet */
 	format_add("jabber_remotecontrols_commited_command",_("%> (%1) RC %W%2%n: requested command: %W%3%n @ session: %4 window: %5 quiet: %6"), 1);	
