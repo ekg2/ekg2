@@ -1184,7 +1184,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	watch_write(j->send_watch, "<field var=\"%s\" label=\"%s\" type=\"text-single\"><value>%d</value></field>", name, label, value)
 
 #define EXECUTING_SUBOPTION_STR(label, value) \
-	watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>"
+	watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>")
 
 #define EXECUTING_FOOTER() watch_write(j->send_watch, "</x></command></iq>")
 

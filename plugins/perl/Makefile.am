@@ -11,8 +11,6 @@ perl_la_CPPFLAGS = $(PERL_CFLAGS)
 libdir = $(plugindir)
 
 perl_dirs = common irc
-# SUBDIRS   = SCRIPTS 
-# SUBDIRS   = SCRIPTS $(perl_dirs)
 
 all-local:
 	for dir in $(perl_dirs); do \
