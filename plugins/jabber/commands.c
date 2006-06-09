@@ -409,10 +409,6 @@ const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 		printq("invalid_session");
 		return NULL;
 	}
-	if (!xstrchr(uid, '@') || xstrchr(uid, '@') > xstrrchr(uid, '.')) {
-		printq("invalid_uid", uid);
-		return NULL;
-	}
 	return uid;
 }
 
