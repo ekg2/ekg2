@@ -1958,19 +1958,19 @@ rc_forbidden:
 
 				seconds = atoi(last);
 
-				/*TODO If user is online: display user's status; */
-
 				if ((seconds>=0) && (seconds < 999 * 24 * 60 * 60  - 1) )
 					/* days, hours, minutes, seconds... */
-					snprintf (buff, 21, _("%03dd %02dh %02dm %02ds ago"),seconds / 86400 , \
+					snprintf (buff, 21, _("%03dd %02dh %02dm %02ds"),seconds / 86400 , \
 						(seconds / 3600) % 24, (seconds / 60) % 60, seconds % 60);
 				else
-					strcpy (buff, _("very long ago"));
+					strcpy (buff, _("very long"));
 
 				from_str = (from) ? jabber_unescape(from) : NULL;
 				lastseen_str = xstrdup(buff);
-
-				print("jabber_lastseen_response", jabberfix(from_str, "unknown"), lastseen_str);
+				print( (xstrchr(from_str, '/') ? "jabber_lastseen_idle" :	/* if we have resource than display -> user online+idle		*/
+					xstrchr(from_str, '@') ? "jabber_lastseen_response" :	/* if we have '@' in jid: than display ->  user logged out	*/
+								 "jabber_lastseen_uptime"),	/* otherwise we have server -> server up for: 			*/
+					jabberfix(from_str, "unknown"), lastseen_str);
 				xfree(lastseen_str);
 				xfree(from_str);
 			} else if (!xstrncmp(ns, "jabber:iq:roster", 16)) {
@@ -2805,7 +2805,9 @@ static int jabber_theme_init()
 	format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
 	format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
 	format_add("jabber_userinfo_response", _("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
-	format_add("jabber_lastseen_response", _("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2%n\n"), 1);
+	format_add("jabber_lastseen_response",	_("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2 ago%n\n"), 1);
+	format_add("jabber_lastseen_uptime",	_("%> Jabber ID: %T%1%n\n%> Server up: %T%2 ago%n\n"), 1);
+	format_add("jabber_lastseen_idle",      _("%> Jabber ID: %T%1%n\n%> Idle for:  %T%2%n\n"), 1);
 	format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
 	format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
 	format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
