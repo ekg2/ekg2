@@ -4,7 +4,7 @@ protocol-validate-uid(char *uid, int valid)
 	sprawdza, czy podany protokó³ jest obs³ugiwany. ka¿dy obs³uguj±cy
 	plugin powinien zwiêkszyæ `valid' o 1.
 
-protocol-ignore(char *uid, int prevlevel, int newlevel)
+protocol-ignore(char *session, char *uid, int prevlevel, int newlevel)
 	zmieniono poziom ignorowania osoby z `prevlevel' do `newlevel'.
 
 userlist-changed(char *session, *uid)
