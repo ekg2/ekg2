@@ -361,7 +361,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 	/* LET'S SEND IWIL (OK, AUTH NOT IWIL) PACKET: */
 		write(fd, (char *) &req, sizeof(req));
 
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, 1, jabber_dcc_handle_send, d);
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_dcc_handle_send, d);
 		return -1;
 	}
 	return 0;
@@ -381,7 +381,7 @@ WATCHER(jabber_dcc_handle_accept) {
 	}
 
 	debug("jabber_dcc_handle_accept() accept() fd: %d\n", newfd);
-	watch_add(&jabber_plugin, newfd, WATCH_READ, 1, jabber_dcc_handle_accepted, NULL);
+	watch_add(&jabber_plugin, newfd, WATCH_READ, jabber_dcc_handle_accepted, NULL);
 	return 0;
 }
 
@@ -412,7 +412,7 @@ int jabber_dcc_init(int port) {
 	}
 	debug("jabber_dcc_init() SUCCESSED fd:%d port:%d\n", fd, port);
 
-	watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_dcc_handle_accept, NULL);
+	watch_add(&jabber_plugin, fd, WATCH_READ, jabber_dcc_handle_accept, NULL);
 
 	jabber_dcc_port = port;
 	return fd;
@@ -625,20 +625,21 @@ void jabber_handle(void *data, xmlnode_t *n)
 };
 
 void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
-	xmlnode_t *nbody = xmlnode_find_child(n, "body");
-	xmlnode_t *nerr = xmlnode_find_child(n, "error");
-	xmlnode_t *nsubject, *xitem;
+	xmlnode_t *nerr		= xmlnode_find_child(n, "error");
+	xmlnode_t *nbody   	= xmlnode_find_child(n, "body");
+	xmlnode_t *nsubject	= NULL;
+	xmlnode_t *xitem;
 	
 	const char *from = jabber_attr(n->atts, "from");
 
 	char *juid 	= jabber_unescape(from); /* was tmp */
 	char *uid;
+	time_t sent = 0;
+	string_t body;
+	int new_line = 0;	/* if there was headlines do we need to display seperator between them and body? */
 	
 	if (j->istlen)	uid = saprintf("tlen:%s", juid);
 	else		uid = saprintf("jid:%s", juid);
-
-	string_t body;
-	time_t sent = 0;
 
 	xfree(juid);
 
@@ -666,23 +667,15 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 
 	body = string_init("");
 
-	if ((nsubject = xmlnode_find_child(n, "subject")) && nsubject->data) {
-		string_append(body, "Subject: ");
-		string_append(body, nsubject->data);
-		string_append(body, "\n\n");
-	}
-
-	if (nbody)
-		string_append(body, nbody->data);
-
 	for (xitem = n->children; xitem; xitem = xitem->next) {
 		if (!xstrcmp(xitem->name, "x")) {
 			const char *ns = jabber_attr(xitem->atts, "xmlns");
 			
 			if (!xstrcmp(ns, "jabber:x:encrypted")) {	/* JEP-0027 */
 				/* XXX, encrypted message. It's only limited to OpenPGP */
-				string_append(body, "\n\n[EKG2]: Encrypted message:\n");
-				string_append(body, "XXX, Sorry, decrypting message not works now :(");
+				string_append(body, "Encrypted message:");
+				string_append(body, "\tXXX, Sorry, decrypting message not works now :(\n");
+				new_line = 1;
 			} else if (!xstrncmp(ns, "jabber:x:event", 14)) {
 				int acktype = 0; /* bitmask: 2 - queued ; 1 - delivered */
 				int isack;
@@ -741,8 +734,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 				xmlnode_t *xurl;
 				xmlnode_t *xdesc;
 
-				if ( ( xurl = xmlnode_find_child(xitem, "url") ) ) {
-					string_append(body, "\n\n");
+				if ((xurl = xmlnode_find_child(xitem, "url"))) {
 					string_append(body, "URL: ");
 					string_append(body, xurl->data);
 					if ((xdesc = xmlnode_find_child(xitem, "desc"))) {
@@ -751,12 +743,45 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 						string_append(body, ")");
 					}
 					string_append(body, "\n");
+					new_line = 1;
 				}
 /* jabber:x:oob */	} else if (!xstrncmp(ns, "jabber:x:delay", 14)) {
 				sent = jabber_try_xdelay(jabber_attr(xitem->atts, "stamp"));
+#if 0		/* XXX, fjuczer? */
+				if (nazwa_zmiennej_do_formatowania_czasu) {
+					/* some people don't have time in formats... and if we really do like in emails (first headlines than body) so display it too.. */
+					stuct tm *tm = localtime(&sent);
+					char buf[100];
+					string_append(body, "Sent: ");
+					if (!strftime(buf, sizeof(buf), nazwa_zmiennej_do_formatowania_czasu, tm) 
+						string_append(body, itoa(sent);	/* if too long display seconds since the Epoch */
+					else	string_append(body, buf);	/* otherwise display formatted time */
+					new_line = 1;
+				}
+#endif
 			} else debug("[JABBER, MESSAGE]: <x xmlns=%s\n", ns);
-		}	/* <x> */
+/* x */		} else if (!xstrcmp(xitem->name, "subject")) {
+			nsubject = xitem;
+			if (nsubject->data) {
+				string_append(body, "Subject: ");
+				string_append(body, nsubject->data);
+				string_append(body, "\n");
+				new_line = 1;
+			}
+/* subject */	} else if (!xstrcmp(xitem->name, "body")) {
+		} /* XXX, JEP-0085 here */
+		else if (!xstrcmp(jabber_attr(xitem->atts, "xmlns"), "http://jabber.org/protocol/chatstates")) {
+			if (!xstrcmp(xitem->name, "active"))		{ }
+			else if (!xstrcmp(xitem->name, "composing"))	{ } 
+			else if (!xstrcmp(xitem->name, "paused"))	{ } 
+			else if (!xstrcmp(xitem->name, "inactive"))	{ } 
+			else if (!xstrcmp(xitem->name, "gone")) 	{ } 
+			else debug("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
+		} else debug("[JABBER, MESSAGE]: <%s\n", xitem->name);
 	}
+	if (new_line) string_append(body, "\n\n"); 	/* let's seperate headlines from message */
+	if (nbody)    string_append(body, nbody->data);	/* here message */
+
 	if (nbody || nsubject) {
 		const char *type = jabber_attr(n->atts, "type");
 
@@ -1033,24 +1058,29 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			if ((d = jabber_dcc_find(uin, id, NULL))) {
 				xmlnode_t *node;
 				jabber_dcc_t *p = d->priv;
+				char *stream_method = NULL;
 
 				for (node = q->children; node; node = node->next) {
-					/* sprawdzic co my mamy w tym fjuczer... itd............... XXX XXX XXX !!!!
-						<feature xmlns='http://jabber.org/protocol/feature-neg'>
-							<x xmlns='jabber:x:data' type='submit'>
-							<field var='stream-method'>
-								<value>http://jabber.org/protocol/bytestreams</value>
-							</field>
-							</x>
-						</feature>
-					*/
+					if (!xstrcmp(node->name, "feature") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "http://jabber.org/protocol/feature-neg")) {
+						xmlnode_t *subnode;
+						for (subnode = node->children; subnode; subnode = subnode->next) {
+							if (!xstrcmp(subnode->name, "x") && !xstrcmp(jabber_attr(subnode->atts, "xmlns"), "jabber:x:data") && 
+								!xstrcmp(jabber_attr(subnode->atts, "type"), "submit")) {
+									/* var stream-method == http://jabber.org/protocol/bytestreams */
+								jabber_handle_xmldata_form_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);
+							}
+						}
+					}
 				}
-				p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS; /* XXX jw */
-
+				if (!xstrcmp(stream_method, "http://jabber.org/protocol/bytestreams")) 	p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS; 
+				else debug("[JABBER] JEP-0095: ERROR, stream_method XYZ error: %s\n", stream_method);
+				xfree(stream_method);
 				if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
 					struct jabber_streamhost_item streamhost;
 					jabber_dcc_bytestream_t *b;
 					list_t l;
+
+					debug("p->protocol: OK\n");
 
 					b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
 					b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
@@ -1829,7 +1859,7 @@ rc_forbidden:
 					jabber_dcc_t *p = d->priv;
 					jabber_dcc_bytestream_t *b = NULL;
 
-					list_t host_list = NULL;
+					list_t host_list = NULL, l;
 					struct jabber_streamhost_item *streamhost = NULL;
 
 					p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS;
@@ -1847,12 +1877,15 @@ rc_forbidden:
 							list_add(&host_list, newstreamhost, 0);
 						}
 					}
-
-					if ((list_count(host_list)) == 1) streamhost = host_list->data;
-					else {
-						streamhost = host_list->data;	/* XXX, select best one/chosen one */
+					for (l = host_list; l; l = l->next) {
+						struct jabber_streamhost_item *item = l->data;
+						struct sockaddr_in sin;
+						/* let's search the list for ipv4 address... for now only this we can handle */
+						if ((inet_pton(AF_INET, item->ip, &(sin.sin_addr)) > 0)) {
+							streamhost = host_list->data;
+							break;
+						}
 					}
-					
 					if (streamhost) {
 						struct sockaddr_in sin;
 						int fd;
@@ -1864,7 +1897,7 @@ rc_forbidden:
 						inet_pton(AF_INET, streamhost->ip, &(sin.sin_addr));
 
 						connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
-						watch_add(&jabber_plugin, fd, WATCH_READ, 1, jabber_dcc_handle_recv, d);
+						watch_add(&jabber_plugin, fd, WATCH_READ, jabber_dcc_handle_recv, d);
 						
 						p->private.bytestream = b = xmalloc(sizeof(jabber_dcc_bytestream_t));
 						b->validate	= JABBER_DCC_PROTOCOL_BYTESTREAMS;
@@ -1876,7 +1909,7 @@ rc_forbidden:
 						socks5[2] = 0x00;	/* no auth */
 						socks5[3] = 0x02;	/* username */
 						write(fd, (char *) &socks5, sizeof(socks5));
-					}
+					} else debug("[jabber] Not found any streamhost with ipv4 address.. sorry");
 				} else if (!xstrcmp(type, "result")) {
 					xmlnode_t *used = xmlnode_find_child(q, "streamhost-used");
 					jabber_dcc_t *p;
@@ -2011,16 +2044,23 @@ rc_forbidden:
 						s->uid+4, j->resource);
 				}
 			}
-			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
+			else if (!xstrcmp(ns, "jabber:iq:last")) {
+				/* XXX, buggy cause i think we don't want to do s->activity = time(NULL) in stream handler... just only when we type command or smth? */
+				watch_write(j->send_watch, 
+					"<iq to=\"%s\" type=\"result\" id=\"%s\">"
+					"<query xmlns=\"jabber:iq:last\" seconds=\"%d\">"
+					"</query></iq>", from, id, (time(NULL)-s->activity));
+
+			} else if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
 				watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">"
-						"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
-						"<feature var=\"http://jabber.org/protocol/commands\"/>"
+					"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
+					"<feature var=\"http://jabber.org/protocol/commands\"/>"
 #if WITH_JABBER_DCC
-						"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
-						"<feature var=\"http://jabber.org/protocol/si\"/>"
-						"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
+					"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
+					"<feature var=\"http://jabber.org/protocol/si\"/>"
+					"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
 #endif
-						"</query></iq>", from, id);
+					"</query></iq>", from, id);
 
 			} else if (!xstrncmp(ns, "jabber:iq:version", 17) && id && from) {
 				const char *ver_os;
@@ -2183,8 +2223,11 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 #if 0
 			if (!xstrcmp(tmp, s->uid)) print("jabber_resource_another", session_name(s), tmp, tmp2+1, itoa(prio), status ? status : jstatus, descr); /* makes it more colorful ? */
 #endif
-			if ((ut = userlist_find(s, tmp)))
+			if ((ut = userlist_find(s, tmp))) {
+				char *tmp = ut->resource;
 				ut->resource = xstrdup(tmp2+1);
+				xfree(tmp);
+			}
 			xfree(tmp);
 		}
 		if (status) {
