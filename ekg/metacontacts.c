@@ -161,11 +161,11 @@ COMMAND(cmd_metacontact)
                         metacontact_item_t *i = l->data;
 			userlist_t *u = userlist_find_n(i->s_uid, i->name);
 			char *tmp;
-		       
-			if (!u)
-				continue;
 
-			tmp = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
+			if (!u) 
+				tmp = format_string(format_find("metacontact_info_unknown"));
+			else    
+				tmp = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
                         printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, tmp, itoa(i->prio));
 			xfree(tmp);

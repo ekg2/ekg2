@@ -818,7 +818,7 @@ const char *format_user(session_t *session, const char *uid)
 int ignored_remove(session_t *session, const char *uid)
 {
 	userlist_t *u = userlist_find(session, uid);
-	char *tmp;
+	char *tmps, *tmp;
 	list_t l;
 	int level, tmp2 = 0;
 
@@ -845,8 +845,10 @@ int ignored_remove(session_t *session, const char *uid)
 		return 0;
 	}
 
-	tmp = xstrdup(u->uid);
-	query_emit(NULL, "protocol-ignore", &tmp, &level, &tmp2);
+	tmps	= xstrdup(session->uid);
+	tmp	= xstrdup(u->uid);
+	query_emit(NULL, "protocol-ignore", &tmps, &tmp, &level, &tmp2);
+	xfree(tmps);
 	xfree(tmp);
 	
 	if ((level & IGNORE_STATUS || level & IGNORE_STATUS_DESCR)) {
@@ -867,7 +869,7 @@ int ignored_remove(session_t *session, const char *uid)
 int ignored_add(session_t *session, const char *uid, int level)
 {
 	userlist_t *u;
-	char *tmp;
+	char *tmps, *tmp;
 	int oldlevel = 0;
 
 	if (ignored_check(session, uid))
@@ -890,8 +892,10 @@ int ignored_add(session_t *session, const char *uid, int level)
 		u->descr = NULL;
 	}
 
-	tmp = xstrdup(u->uid);
-	query_emit(NULL, "protocol-ignore", &tmp, &oldlevel, &level);
+	tmps	= xstrdup(session->uid);
+	tmp	= xstrdup(u->uid);
+	query_emit(NULL, "protocol-ignore", &tmps, &tmp, &oldlevel, &level);
+	xfree(tmps);
 	xfree(tmp);
 	
 	return 0;
