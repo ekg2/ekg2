@@ -691,7 +691,6 @@ COMMAND(jabber_command_modify)
 		printq("user_exists_other", params[0], format_user(session, u->uid), session_name(session));
 		return -1;
 	}
-
 	if (params[1]) {
 		char **argv = array_make(params[1], " \t", 0, 1, 1);
 		int i;
@@ -757,6 +756,8 @@ COMMAND(jabber_command_modify)
 	if (!(uid = jid_target2uid(session, target, quiet))) 
 		return -1;
 
+	if (j->send_watch) j->send_watch->transfer_limit = -1;	/* let's send this in one/two packets not in 7 or more. */
+
 	watch_write(j->send_watch, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
 
 	/* nickname always should be set */
@@ -775,6 +776,7 @@ COMMAND(jabber_command_modify)
 		watch_write(j->send_watch, "</item>");
 
 	watch_write(j->send_watch, "</query></iq>");
+	JABBER_COMMIT_DATA(j->send_watch); 
 
 	xfree(nickname);
 	

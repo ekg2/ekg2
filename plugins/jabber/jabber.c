@@ -2711,6 +2711,25 @@ WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 }
 #endif
 
+QUERY(jabber_protocol_ignore) {
+	char *sesion	= *(va_arg(ap, char **));
+	char *uid 	= *(va_arg(ap, char **));
+/*
+	int oldlvl 	= *(va_arg(ap, int *));
+	int newlvl 	= *(va_arg(ap, int *));
+*/ 
+	session_t *s	= session_find(sesion);
+
+	/* check this just to be sure... */
+	if (!(session_check(s, 1, "jid"))) return 0;
+		/* SPOT rule, first of all here was code to check sesion, valid user, etc... 
+		 * 	then send jabber:iq:roster request... with all new & old group...
+		 * 	but it was code copied from modify command handler... so here it is.
+		 */
+	command_exec_format(NULL, s, 0, "/jid:modify %s -x", uid);
+	return 0;
+}
+
 QUERY(jabber_status_show_handle)
 {
         char *uid	= *(va_arg(ap, char**));
@@ -2897,6 +2916,7 @@ int jabber_plugin_init(int prio)
         query_connect(&jabber_plugin, "session-removed", jabber_session, (void*) 0);
         query_connect(&jabber_plugin, "status-show", jabber_status_show_handle, NULL);
 	query_connect(&jabber_plugin, "ui-window-kill", jabber_window_kill, NULL);
+	query_connect(&jabber_plugin, "protocol-ignore", jabber_protocol_ignore, NULL);
 #if WITH_JABBER_DCC
 	query_connect(&jabber_plugin, "config-postinit", jabber_dcc_postinit, NULL);
 #endif
