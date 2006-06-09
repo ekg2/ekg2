@@ -1290,7 +1290,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 								debug("[%d] atts: %s %s\n", i, atts[i], atts[i+1]);
 								variable_set(atts[i], atts[i+1], 0);
 							}
-							print("jabbre_remotecontrols_executed", session_name(s), uid, node);
+							print("jabber_remotecontrols_executed", session_name(s), uid, node);
 						}
 						array_free(atts);
 					} else { 
