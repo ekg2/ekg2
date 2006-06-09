@@ -746,7 +746,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 					string_append(body, "URL: ");
 					string_append(body, xurl->data);
 					if ((xdesc = xmlnode_find_child(xitem, "desc"))) {
-						string_append(body, "(");
+						string_append(body, " (");
 						string_append(body, xdesc->data);
 						string_append(body, ")");
 					}
