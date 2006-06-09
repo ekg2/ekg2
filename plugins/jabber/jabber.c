@@ -1162,7 +1162,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				if (!xstrcmp(jabber_attr(x->atts, "xmlns"), "jabber:x:data") && !xstrcmp(jabber_attr(x->atts, "type"), "submit")); 
 				else goto rc_invalid;
 			} else { 
-					print("jabbre_remotecontrols_preparing", session_name(s), uid, node);
+					print("jabber_remotecontrols_preparing", session_name(s), uid, node);
 			}
 			
 			/* CHECK IF HE CAN DO IT */
