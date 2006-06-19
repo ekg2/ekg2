@@ -1397,6 +1397,8 @@ static WATCHER(gg_handle_token)
 		goto fail;
 	}
 
+	if (query_emit(NULL, "gg-display-token", &file) == -1) goto fail;
+
 #ifdef GIF_OCR
 	if (gg_config_display_token) {
 		struct token_t token;

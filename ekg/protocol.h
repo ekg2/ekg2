@@ -23,6 +23,7 @@
 #include "ekg2-config.h"
 
 #include "char.h"
+#include <ekg/dynstuff.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <time.h>
