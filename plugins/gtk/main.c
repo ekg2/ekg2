@@ -148,6 +148,7 @@ GdkFilterReturn ekg_trayicon_manager(GdkXEvent *xevent, GdkEvent *event, gpointe
 #ifndef EKG2_WIN32_NOFUNCTION
 extern void ekg_loop();
 #endif
+extern int gtk_misc_handlers_init();	/* gtk-misc-handlers.c */
 
 int ui_quit = -1;	/* -1: jeszcze nie wszedl do ui_loop()
 			 *  0: normalny stan..
@@ -1339,6 +1340,9 @@ int gtk_plugin_init(int prio) {
 /* inne */
 	query_connect(&gtk_plugin, "ui-is-initialized", gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
 	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
+
+/* wszystkie inne x 2 */
+	gtk_misc_handlers_init(); 
 
 /*	timer_add(&gtk_plugin, "gtk:clock", 1, 1, gtk_statusbar_timer, NULL); */
 #ifdef WITH_X_WINDOWS
