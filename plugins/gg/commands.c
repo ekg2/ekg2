@@ -1547,16 +1547,34 @@ COMMAND(gg_command_modify)
 {
 	PARASC
 	userlist_t *u;
+	const char **par;
 	char **argv = NULL;
 	int i, res = 0, modified = 0;
 
-	if (!(u = userlist_find(session, params[0]))) {
-		printq("user_not_found", params[0]);
+	if (!xstrcmp(name, "add")) {
+		int ret;
+	/* we overlap /add command, so we need to execute it... maybe let's move it here? */
+#if USE_UNICODE
+		ret = cmd_add(name, params_, session, target, quiet);
+#else
+		ret = cmd_add(name, params, session, target, quiet);
+#endif
+		/* if adding fails, quit */
+		if (ret != 0) return ret;
+	/* params[1] cause of: in commands.c, 
+	 *	 	query_emit(NULL, "userlist-added", &uid, &params[1], &quiet);
+	 *	and we emulate old behavior (via query handler executing command) with command handler... rewrite ? 
+	 */
+		par = &(params[1]);
+	} else	par = params;
+
+	if (!(u = userlist_find(session, par[0]))) {
+		printq("user_not_found", par[0]);
 		return -1;
 	}
 
-	if (params[1])
-		argv = array_make(params[1], " \t", 0, 1, 1);
+	if (par[1])
+		argv = array_make(par[1], " \t", 0, 1, 1);
 
 	for (i = 0; argv && argv[i]; i++) {
 		
@@ -1726,7 +1744,7 @@ COMMAND(gg_command_modify)
 				res = -1;
 				break;
 			case 1:
-				printq("modify_done", params[0]);
+				printq("modify_done", par[0]);
 			case 2:
 				config_changed = 1;
 				break;
@@ -1827,6 +1845,7 @@ void gg_register_commands()
 #define LNULL NULL
 #define command_add(x, y, par, a, b, c) command_add(x, y, L##par, a, b, c)
 #endif
+	command_add(&gg_plugin, TEXT("gg:add"), "U ? p", gg_command_modify, 0, "-f --find");
 	command_add(&gg_plugin, TEXT("gg:connect"), "r ?", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, TEXT("gg:disconnect"), "r ?", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, TEXT("gg:reconnect"), NULL, gg_command_connect, 	GG_ONLY, NULL);

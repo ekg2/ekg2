@@ -170,18 +170,6 @@ QUERY(gg_userlist_info_handle)
 	return 0;
 }
 
-QUERY(gg_userlist_added_handle)
-{
-	char **uid = va_arg(ap, char**);
-	char **params = va_arg(ap, char**);
-	int *quiet = va_arg(ap, int*);
-
-	CHAR_T *par = normal_to_wcs(array_join(params, " "));
-/* TODO: CHANGE to command_exec() !!!!. buggy. */
-	return command_exec(NULL, session_current, par, *quiet);
-}
-
-
 QUERY(gg_session_handle)
 {
 	char **uid = va_arg(ap, char**);
@@ -1349,7 +1337,6 @@ int gg_plugin_init(int prio)
 	query_connect(&gg_plugin, "user-offline", gg_user_offline_handle, NULL);
 	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
         query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
-	query_connect(&gg_plugin, "userlist-added", gg_userlist_added_handle, NULL);
 	query_connect(&gg_plugin, "userlist-info", gg_userlist_info_handle, NULL);
 
 	gg_register_commands();
