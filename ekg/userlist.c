@@ -157,24 +157,25 @@ void userlist_add_entry(session_t *session, const char *line)
  *
  * zwraca zaalokowany bufor, który nale¿y zwolniæ.
  */
-char *userlist_dump(session_t *session)
+CHAR_T *userlist_dump(session_t *session)
 {
-	string_t s;
+	wcs_string_t s;
 	list_t l;
 /*	if (!session->userlist) 
  *		return NULL;	
  */
-	s = string_init(NULL);
+	s = wcs_string_init(NULL);
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
+		CHAR_T *line;
 		const char *uid;
-		char *groups, *line;
+		char *groups;
 
 		uid = (!strncmp(u->uid, "gg:", 3)) ? u->uid + 3 : u->uid;
 
 		groups = group_to_string(u->groups, 1, 0);
 		
-		line = saprintf("%s;%s;%s;%s;%s;%s;%s%s\r\n",
+		line = wcsprintf(TEXT("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
 			(u->first_name) ? u->first_name : "",
 			(u->last_name) ? u->last_name : "",
 			(u->nickname) ? u->nickname : "",
@@ -184,13 +185,13 @@ char *userlist_dump(session_t *session)
 			uid,
 			(u->foreign) ? u->foreign : "");
 		
-		string_append(s, line);
+		wcs_string_append(s, line);
 
 		xfree(line);
 		xfree(groups);
 	}	
 
-	return string_free(s, 0);
+	return wcs_string_free(s, 0);
 }
 
 /*
@@ -245,7 +246,7 @@ int userlist_read(session_t *session)
 int userlist_write(session_t *session)
 {
 	const char *filename;
-	char *contacts;
+	CHAR_T *contacts;
 	FILE *f;
 	char *tmp = saprintf("%s-userlist", session->uid); 
 
@@ -265,7 +266,11 @@ int userlist_write(session_t *session)
 		return -2;
 	}
 	fchmod(fileno(f), 0600);
+#if USE_UNICODE
+	fprintf(f, "%ls", contacts);
+#else
 	fputs(contacts, f);
+#endif
 	fclose(f);
 	
 	xfree(contacts);
