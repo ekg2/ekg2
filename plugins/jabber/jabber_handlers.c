@@ -180,9 +180,9 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 					CHAR_T *__seq	= NULL; /* id ? */
 					/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
 					{
-//						CHAR_T *session = normal_to_wcs(__session);
+						CHAR_T *session = normal_to_wcs(__session);
 						CHAR_T *rcpt = normal_to_wcs(__rcpt);
-						query_emit(NULL, "protocol-message-ack", &__session, &rcpt, &__seq, &__status);
+						query_emit(NULL, "protocol-message-ack", &session, &rcpt, &__seq, &__status);
 						free_utf(session);
 						free_utf(rcpt);
 					}
