@@ -20,19 +20,66 @@
 #ifndef __EKG_AUDIO_H
 #define __EKG_AUDIO_H
 
-typedef char *codec_cap_t[2];
+#include "dynstuff.h"
+#include "plugins.h"
 
 typedef struct {
-	char *name;		/* nazwa codeca */
-	codec_cap_t *caps; 	/* tablica dostêpnych formatów */
-	void *(*init)(const char *from, const char *to);
-				/* inicjalizacja codeca */
-	int (*process)(void *codec, char *in, int inlen, char **out, int *outlen);
-				/* przetwarza blok danych */
-	void (*destroy)(void *codec);
-				/* zwalnia zasoby codeca */
+	char *buf;
+	int buflen;
+} stream_buffer_t;
+
+typedef struct {
+	char *name;	/* nazwa urzadzenia */
+	
+	void *managment_handler;	/* initing / checking if audio_io_t is correct / deiniting */
+	watcher_handler_func_t *read_handler;
+	watcher_handler_func_t *write_handler;
+
+	void *private;
+} audio_t;
+
+typedef struct {
+	audio_t *a;
+	int fd;
+	stream_buffer_t *buffer;
+	void *private;
+} audio_io_t;
+
+typedef struct {
+	char *name;	/* nazwa codeca */
+
+	void *managment_handler;	/* ^^ */
+	void *code_handler;
+	void *decode_handler;
+	void *private;
 } codec_t;
 
+typedef struct {
+	codec_t *c;		/* codec_t * */
+	int way;		/* CODEC_CODE CODEC_DECODE */
+	
+	void *private;
+} audio_codec_t;
+
+typedef struct {
+	char *stream_name;
+	audio_io_t	*input;
+	audio_codec_t	*codec;
+	audio_io_t	*output;
+
+	void *private;
+} stream_t;
+
+list_t audio_codecs;
+list_t audio_inputs;
+list_t streams;
+
+/* managment handler: (int INIT_DEINIT, int READ_WRITE, char **initializing_data, void **private)  */
+
+/* 
+int audio_register(audio_t *audio);
+void audio_unregister(audio_t *audio);
+*/ 
 int codec_register(codec_t *codec);
 void codec_unregister(codec_t *codec);
 

@@ -36,7 +36,9 @@
 #include <ekg/xmalloc.h>
 
 PLUGIN_DEFINE(gsm, PLUGIN_CODEC, NULL);
+codec_t gsm_codec;
 
+#if 0
 static void *gsm_codec_init(const char *, const char *);
 static int gsm_codec_process(void *, char *, int, char **, int *);
 static void gsm_codec_destroy(void *);
@@ -148,6 +150,8 @@ static void gsm_codec_destroy(void *codec)
 
 	xfree(c);
 }
+
+#endif
 
 int gsm_plugin_init(int prio)
 {
