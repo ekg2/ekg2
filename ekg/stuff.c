@@ -691,6 +691,59 @@ const char *compile_time()
 	return __DATE__ " " __TIME__;
 }
 
+/* NEW CONFERENCE API HERE, WHEN OLD CONFERENCE API BECOME OBSOLETE CHANGE FUNCTION NAME, ETC.... */
+#if 0
+typedef struct {
+	const char *name;
+	list_t participants;
+	void *private;
+} newconference_t;
+
+	/* search for uid in conference just wrapper */
+userlist_t *newconference_find(newconference_t *conf, const char *uid) {
+	if (!conf || !uid) return NULL;
+	return userlist_find_u(&(conf->participants), uid);
+}
+
+	/* add uid to conference, first check if user exists. just wrapper too..  */
+userlist_t *newconference_add(newconference_t *conf, const char *uid, const char *nick) {
+	userlist_t *u;
+	if (!conf || !uid) return NULL;
+
+	if (!(u = conference_find(conf, uid)))
+		u = userlist_add_u(&(conf->participants), uid, nick);
+	return u;
+}
+
+newconference_t *newconference_create(session_t *s, const char *name, int create) {
+	newconference_t *c;
+	window_t *w;
+
+	if (!s || !name) return NULL;
+
+	if ((c = newconference_find(s, name))) return c;
+
+	if (!(w = window_find_s(s, name)) && create) {
+		w = window_new(s, name, 0);
+	}
+
+	if (!w) return NULL;
+
+	c	= xmalloc(sizeof(newconference_t));
+	c->name	= xstrdup(name);
+/*	CONNECT w->userlist with c->participants ?*/
+	
+	newconference_add(c, s->uid, "__CONFERENCE"); /* let's add us to the userlist */
+	return list_add(&newconferences, 0, c);
+}
+
+void newconference_destroy(newconference_t *conf, int quiet) {
+
+
+}
+/* OLD CONFERENCE API HERE, REQUEST REWRITING/USING NEW-ONE */
+#endif
+
 /*
  * conference_add()
  *

@@ -76,9 +76,6 @@ static int dd_color(const CHAR_T *name)
  */
 void variable_init()
 {
-#ifdef HAVE_VOIP
-	variable_add(NULL, TEXT("audio_device"), VAR_STR, 1, &config_audio_device, NULL, NULL, NULL);
-#endif
 	variable_add(NULL, TEXT("auto_save"), VAR_INT, 1, &config_auto_save, changed_auto_save, NULL, NULL);
 	variable_add(NULL, TEXT("away_reason"), VAR_STR, 1, &config_away_reason, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("auto_user_add"), VAR_BOOL, 1, &config_auto_user_add, NULL, NULL, NULL);
