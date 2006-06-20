@@ -23,6 +23,8 @@
 #define TLEN_FALLBACK_SERVER "s1.tlen.pl"	/* fallback server 	*/
 #define TLEN_FALLBACK_PORT 443			/* fallback port 	*/
 
+#define tlenjabber_uescape(str) (j->istlen ? tlen_decode(str) : jabber_uescape(str)) 
+
 struct xmlnode_s {
 	char *name;
 	char *data; 
@@ -154,6 +156,7 @@ void jabber_initialize_conversions(char *varname);
 CHAR_T *jabber_escape(const char *text);
 CHAR_T *jabber_uescape(const CHAR_T *text);
 char *jabber_unescape(const char *text);
+char *tlen_decode(const char *what);
 int jabber_write_status(session_t *s);
 
 void jabber_reconnect_handler(int type, void *data);

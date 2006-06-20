@@ -795,24 +795,60 @@ TIMER(jabber_ping_timer_handler) {
 }
 
 WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
-	int res = 0;
-	int res_size = sizeof(res);
-
 	session_t *s = (session_t *) data;
 
-	if (type) {
-		return 0;
-	}
-	
-	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-		jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
-		return -1;
-	}
-	
-	/* XXX */
 	debug("Connecting to HUB, currectly not works ;/");
 	jabber_handle_disconnect(s, "Unimplemented do: /eval \"/session server s1.tlen.pl\" \"/session port 443\" \"/connect\" sorry.", EKG_DISCONNECT_FAILURE);
 	return -1;
+
+#if 0
+	if (type) {
+		close(fd);
+		if (type == 2) debug("TIMEOUT\n");
+		return 0;
+	}
+	
+	if ((int) watch == WATCH_WRITE) {
+		char *req, *esc; 
+		int res = 0, res_size = sizeof(res);
+		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
+			jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
+			return -1;
+		}
+		esc = tlen_encode(s->uid+4);
+		req = saprintf("GET /4starters.php?u=%s&v=10 HTTP/1.0\r\nHost: %s\r\n\r\n", esc, TLEN_HUB);	/* libtlen */
+		write(fd, req, xstrlen(req));
+		xfree(req);
+		xfree(esc);
+
+		/* XXX, timeout? */
+		watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_connect_tlen_hub, data);	/* WATCH_READ_LINE? */
+		return -1;
+	} else if ((int) watch == WATCH_READ) {	/* libtlen */
+		char *header, *body;
+		char buf[1024];
+		int len;
+
+		len = read(fd, buf, sizeof(buf));
+		buf[len] = 0;
+
+		header	= xstrstr(buf, "\r\n");
+		body	= xstrstr(buf, "\r\n\r\n");
+		if (header && body) {
+			xmlnode_t *rv;
+
+			*header = '\0';
+			body += 4;
+			if (xstrstr(buf, " 200 ")) {
+				debug("[TLEN, HUB]: %s\n", body);
+				return -1;
+			}
+		} else debug("[TLEN, HUB]: FAILED\n");
+
+		if (len == 0)	return -1;
+		else		return 0;
+	} else return -1;
+#endif
 }
 
 WATCHER(jabber_handle_connect) /* tymczasowy */

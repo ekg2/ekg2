@@ -1236,10 +1236,10 @@ rc_forbidden:
 					if (!xstrcmp(node->name, "item")) {
 						xmlnode_t *tmp;
 						char *jid 	= jabber_attr(node->atts, "jid");
-						char *nickname	= jabber_unescape( (tmp = xmlnode_find_child(node, "nick"))  ? tmp->data : NULL);
-						char *fn	= jabber_unescape( (tmp = xmlnode_find_child(node, "first")) ? tmp->data : NULL);
-						char *lastname	= jabber_unescape( (tmp = xmlnode_find_child(node, "last"))  ? tmp->data : NULL);
-						char *email	= jabber_unescape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
+						char *nickname	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "nick"))  ? tmp->data : NULL);
+						char *fn	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "first")) ? tmp->data : NULL);
+						char *lastname	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "last"))  ? tmp->data : NULL);
+						char *email	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
 
 						/* idea about displaink user in depend of number of users founded gathered from gg plugin */
 						print(rescount > 1 ? "jabber_search_items" : "jabber_search_item", 

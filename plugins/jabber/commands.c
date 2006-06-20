@@ -1057,7 +1057,7 @@ COMMAND(tlen_command_pubdir) {
 	}
 
 	printq("jabber_form_title", session_name(session), "tuba", issearch ? "Szukanie w katalogu tlena" : "Rejestracja w katalogu tlena");
-	printq("jabber_form_command", session_name(session), "", issearch ? "tlen:search" : "tlen:change");
+	printq("jabber_form_command", session_name(session), "", issearch ? "tlen:search" : "tlen:change", "");
 #define show_field(x) printq("jabber_form_item", session_name(session), "tuba", x, x, "", "", " ")
 	show_field("first");
 	show_field("last");

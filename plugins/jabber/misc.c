@@ -219,6 +219,53 @@ char *jabber_unescape(const char *text)
 	return mutt_convert_string((char *)text, "utf-8", config_console_charset);
 }
 
+/* tlen_encode() & tlen_decode() ripped from libtlen. XXX, try to rewrite some code */
+
+/* tlen_encode() - Koduje tekst przy pomocy urlencode */
+char *tlen_encode(const char *what) {
+	const unsigned char *s = what;
+	unsigned char *ptr, *str;
+
+	if (!what) return NULL;
+
+	str = ptr = (unsigned char *) xcalloc(3 * xstrlen(s) + 1, 1);
+	while (*s) {
+		if (*s == ' ')
+			*ptr++ = '+';
+		else if ((*s < '0' && *s != '-' && *s != '.')
+			 || (*s < 'A' && *s > '9') || (*s > 'Z' && *s < 'a' && *s != '_')
+			 || (*s > 'z')) {
+			sprintf(ptr, "%%%02X", *s);
+			ptr += 3;
+		} else
+			*ptr++ = *s;
+		s++;
+	}
+	return str;
+}
+
+/* tlen_decode() - Dekoduje tekst przy pomocy urldecode */
+char *tlen_decode(const char *what) {
+	unsigned char *dest, *data, *retval;
+	if (!what) return NULL;
+	dest = data = retval = xstrdup(what);
+	while (*data) {
+		if (*data == '+')
+			*dest++ = ' ';
+		else if ((*data == '%') && isxdigit((int)data[1]) && isxdigit((int)data[2])) {
+			int     code;
+			sscanf(data + 1, "%2x", &code);
+			if (code != '\r')
+				*dest++ = (unsigned char)code;
+			data += 2;
+		} else
+			*dest++ = *data;
+		data++;
+	}
+	*dest = '\0';
+	return retval;
+}
+
 /*
  * jabber_handle_write()
  *
