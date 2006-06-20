@@ -83,6 +83,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "audio.h"
 #include "commands.h"
 #include "events.h"
 #include "configfile.h"
@@ -959,6 +960,7 @@ int main(int argc, char **argv)
         protocol_init();
         events_init();
         metacontact_init();
+	audio_initialize();
 //	scripts_init();
 
         /* it has to be done after plugins are loaded, either we wouldn't know if we are

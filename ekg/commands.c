@@ -4259,6 +4259,8 @@ void command_init()
 
 	command_add(NULL, TEXT("_fds"), NULL, cmd_test_fds, 0, NULL);
 
+	command_add(NULL, TEXT("_streams"), NULL, cmd_streams, 0, NULL);
+
 	command_add(NULL, TEXT("_mem"), NULL, cmd_test_mem, 0, NULL);
 
 	command_add(NULL, TEXT("_msg"), "uUC ?", cmd_test_send, 0, NULL);

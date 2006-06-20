@@ -23,6 +23,22 @@
 #include "dynstuff.h"
 #include "plugins.h"
 
+typedef enum { AUDIO_CONTROL_INIT = 0, AUDIO_CONTROL_MODIFY, AUDIO_CONTROL_DEINIT, AUDIO_CONTROL_CHECK, AUDIO_CONTROL_HELP }	
+			audio_control_t;
+typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, } 
+			audio_way_t;
+
+#define AUDIO_DEFINE(x)\
+	extern audio_io_t *x##_audio_control(audio_control_t, audio_way_t,  ... ); \
+	extern WATCHER(x##_audio_read);		\
+	extern WATCHER(x##_audio_write);	\
+	audio_t x##_audio = { \
+		.name = #x, \
+		.control_handler= x##_audio_control, \
+		.read_handler	= x##_audio_read, \
+		.write_handler  = x##_audio_write, \
+	}
+
 typedef struct {
 	char *buf;
 	int buflen;
@@ -31,7 +47,7 @@ typedef struct {
 typedef struct {
 	char *name;	/* nazwa urzadzenia */
 	
-	void *managment_handler;	/* initing / checking if audio_io_t is correct / deiniting */
+	void *(*control_handler)(audio_control_t, audio_way_t, ...);	/* initing / checking if audio_io_t is correct / deiniting */
 	watcher_handler_func_t *read_handler;
 	watcher_handler_func_t *write_handler;
 
@@ -48,7 +64,7 @@ typedef struct {
 typedef struct {
 	char *name;	/* nazwa codeca */
 
-	void *managment_handler;	/* ^^ */
+	void *control_handler;	/* ^^ */
 	void *code_handler;
 	void *decode_handler;
 	void *private;
@@ -76,12 +92,13 @@ list_t streams;
 
 /* managment handler: (int INIT_DEINIT, int READ_WRITE, char **initializing_data, void **private)  */
 
-/* 
 int audio_register(audio_t *audio);
 void audio_unregister(audio_t *audio);
-*/ 
+
 int codec_register(codec_t *codec);
 void codec_unregister(codec_t *codec);
+
+int audio_initialize();
 
 #endif /* __EKG_AUDIO_H */
 
