@@ -41,7 +41,7 @@ typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, }
 
 typedef struct {
 	char *buf;
-	int buflen;
+	int len;
 } stream_buffer_t;
 
 typedef struct {
