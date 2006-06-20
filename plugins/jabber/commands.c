@@ -28,7 +28,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
-#include <sys/utsname.h> /* dla jabber:iq:version */
 #endif
 
 #include <errno.h>
