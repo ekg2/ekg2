@@ -974,8 +974,8 @@ char **jabber_params_split(const char *line, int allow_empty)
 COMMAND(jabber_command_search) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
-	const char *server = params[0] ? params[0] : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ 
-	/* XXX, made (session?) variable: jabber:default_search_server */
+		/* XXX implementation bug ? should server be last variable? */
+	const char *server = params[0] ? params[0] : jabber_default_search_server ? jabber_default_search_server : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ 
 	char **splitted;
 
 	if (!(splitted = jabber_params_split(params[1], 0)) && params[1]) {
@@ -987,10 +987,21 @@ COMMAND(jabber_command_search) {
 		"<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
 
 	if (splitted) {
-		int i;
-		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
-			watch_write(j->send_watch, "<%s>%s</%s>\n", splitted[i], splitted[i+1], splitted[i]);
+		int i = 0;
+		int use_x_data = 0;
+
+		if (!xstrcmp(splitted[0], "jabber_x_data")) { 
+			use_x_data = 1; i = 2; 
+			watch_write(j->send_watch, "<x xmlns=\"jabber:x:data\" type=\"submit\">");
+		} 
+
+		for (; (splitted[i] && splitted[i+1]); i+=2) {
+			if (use_x_data)
+				watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", splitted[i], splitted[i+1]);
+			else	watch_write(j->send_watch, "<%s>%s</%s>", splitted[i], splitted[i+1], splitted[i]);
 		}
+
+		if (use_x_data) watch_write(j->send_watch, "</x>");
 	}
 	watch_write(j->send_watch, "</query></iq>");
 	array_free (splitted);
@@ -1103,20 +1114,35 @@ COMMAND(jabber_command_register)
 		return -1;
 	}
 
+	if (!j->send_watch) return -1;
+	j->send_watch->transfer_limit = -1;
+
 	if (!(splitted = jabber_params_split(params[1], 0)) && params[1]) {
 		printq("invalid_params", name);
 		return -1;
 	}
-	
 	watch_write(j->send_watch, "<iq type=\"%s\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", params[1] ? "set" : "get", server, j->id++);
 	if (splitted) {
-		int i;
-		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
-			watch_write(j->send_watch, "<%s>%s</%s>", splitted[i], splitted[i+1], splitted[i]);
+		int i = 0;
+		int use_x_data = 0;
+
+		if (!xstrcmp(splitted[0], "jabber_x_data")) { 
+			use_x_data = 1; i = 2; 
+			watch_write(j->send_watch, "<x xmlns=\"jabber:x:data\" type=\"submit\">");
+		} 
+
+		for (; (splitted[i] && splitted[i+1]); i+=2) {
+			if (use_x_data)
+				watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", splitted[i], splitted[i+1]);
+			else	watch_write(j->send_watch, "<%s>%s</%s>", splitted[i], splitted[i+1], splitted[i]);
 		}
+
+		if (use_x_data) watch_write(j->send_watch, "</x>");
 	}
 	watch_write(j->send_watch, "</query></iq>");
 	array_free (splitted);
+
+	JABBER_COMMIT_DATA(j->send_watch);
 	return 0;
 }
 
@@ -1727,6 +1753,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:msg"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:modify"), "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
 			"-n --nickname -g --group");
+/*	command_add(&jabber_plugin, TEXT("jid:muc"),  */
 	command_add(&jabber_plugin, TEXT("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);

@@ -69,7 +69,9 @@
 #define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
 
 int jabber_dcc_port = 0;
+
 char *jabber_dcc_ip = NULL;
+char *jabber_default_search_server = NULL;
 
 static int jabber_theme_init();
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
@@ -1242,6 +1244,10 @@ static int jabber_theme_init()
 	format_add("jabber_form_title",		  "%g,+=%G----- %3 %n(%T%2%n)", 1);
 	format_add("jabber_form_item",		  "%g|| %n%(21)3 (%6) %K|%n --%4 %(20)5", 1); 	/* %3 - label %4 - keyname %5 - value %6 - req; optional */
 
+	format_add("jabber_form_item_beg",	  "%g|| ,+=%G-----%n", 1);
+	format_add("jabber_form_item_plain",	  "%g|| | %n %3: %5", 1);			/* %3 - label %4 - keyname %5 - value */
+	format_add("jabber_form_item_end",	  "%g|| `+=%G-----%n", 1);
+
 	format_add("jabber_form_item_val",	  "%K[%b%3%n %g%4%K]%n", 1);			/* %3 - value %4 - label */
 	format_add("jabber_form_item_sub",        "%g|| %|%n\t%3", 1);			/* %3 formated jabber_form_item_val */
 
@@ -1282,6 +1288,7 @@ int jabber_plugin_init(int prio)
 #endif
 
 	variable_add(&jabber_plugin, TEXT("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, TEXT("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
 
         jabber_register_commands();
 

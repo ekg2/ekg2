@@ -297,6 +297,8 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 } /* */
 
 /* idea and some code copyrighted by Marek Marczykowski jid:marmarek@jabberpl.org */
+
+/* handlue <x xmlns=jabber:x:data type=form */
 void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *command, xmlnode_t *form, const char *param) { /* JEP-0004: Data Forms */
 	xmlnode_t *node;
 	int fieldcount = 0;
@@ -326,15 +328,6 @@ void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *comma
 			for (child = node->children; child; child = child->next) {
 				if (!xstrcmp(child->name, "required")) isreq = 1;
 				else if (!xstrcmp(child->name, "value")) {
-/* 
-					if (!xstrcmp(var, "FORM_TYPE")) {
-						FORM_TYPE = xstrdup(var); 
-						if (!xstrcmp(FORM_TYPE, "http://jabber.org/protocol/rc")) {
-							print("jabber_form_command_ext", session_name(s), uid, "control", 
-						}
-						goto next; 
-					}
-*/
 					xfree(def_option); 
 					def_option	= jabber_unescape(child->data); 
 				} 
@@ -367,7 +360,6 @@ void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *comma
 				print("jabber_form_item_sub", session_name(s), uid, sub->str);
 				string_free(sub, 1);
 			}
-// next:
 			fieldcount++;
 			xfree(var);
 			xfree(label);
@@ -378,7 +370,7 @@ void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *comma
 }
 
 /* handluje <x xmlns=jabber:x:data type=submit */
-int jabber_handle_xmldata_form_submit(session_t *s, xmlnode_t *form, const char *FORM_TYPE, int alloc, ...) {
+int jabber_handle_xmldata_submit(session_t *s, xmlnode_t *form, const char *FORM_TYPE, int alloc, ...) {
 	char **atts	= NULL;
 	int valid	= 0;
 	int count	= 0;
@@ -422,6 +414,58 @@ int jabber_handle_xmldata_form_submit(session_t *s, xmlnode_t *form, const char 
 	if (alloc)	(*(va_arg(ap, char ***))) = atts;
 	va_end(ap);
 	return valid;
+}
+
+/* handlue <x xmlns=jabber:x:data type=result */
+void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const char *uid) {
+	int print_end = 0;
+	char **labels = NULL;
+	int labels_count = 0;
+
+	for (; form; form = form->next) {
+		if (!xstrcmp(form->name, "title")) {
+			char *title = jabber_unescape(form->data);
+			print("jabber_form_title", session_name(s), uid, title);
+			print_end = 1;
+			xfree(title);
+		} else if (!xstrcmp(form->name, "item")) {
+			xmlnode_t *q;
+			print("jabber_form_item_beg", session_name(s), uid);
+			for (q = form->children; q; q = q->next) {
+				if (!xstrcmp(q->name, "field")) {
+					xmlnode_t *temp;
+					char *var = jabber_attr(q->atts, "var");
+					char *tmp = jabber_attr(labels, var);
+					char *val = ((temp = xmlnode_find_child(q, "value"))) ? jabber_unescape(temp->data) : NULL;
+
+					print("jabber_form_item_plain", session_name(s), uid, tmp ? tmp : var, var, val);
+					xfree(val);
+				}
+			}
+			print("jabber_form_item_end", session_name(s), uid);
+		} else if (!xstrcmp(form->name, "reported")) {
+			xmlnode_t *q;
+			for (q = form->children; q; q = q->next) {
+				if (!xstrcmp(q->name, "field")) {
+					labels				= (char **) xrealloc(labels, (sizeof(char *) * ((labels_count+1) * 2)) + 1);
+					labels[labels_count*2]		= xstrdup(jabber_attr(q->atts, "var"));
+					labels[labels_count*2+1]	= jabber_unescape(jabber_attr(q->atts,"label"));
+					labels[labels_count*2+2]	= NULL;
+					labels_count++;
+				}
+			}
+		} else if (!xstrcmp(form->name, "field")) {
+			xmlnode_t *temp;
+			char *var	= jabber_attr(form->atts, "var");
+			char *label	= jabber_unescape(jabber_attr(form->atts, "label"));
+			char *val	= jabber_unescape(((temp = xmlnode_find_child(form, "value"))) ? temp->data : NULL);
+
+			print("jabber_privacy_list_item" /* XXX */, session_name(s), uid, label ? label : var, val);
+			xfree(label); xfree(val);
+		} else debug("jabber_handle_xmldata_result() name: %s\n", form->name);
+	}
+	if (print_end) print("jabber_form_end", session_name(s), uid, "");
+	array_free(labels);
 }
 
 void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
@@ -531,7 +575,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 							if (!xstrcmp(subnode->name, "x") && !xstrcmp(jabber_attr(subnode->atts, "xmlns"), "jabber:x:data") && 
 								!xstrcmp(jabber_attr(subnode->atts, "type"), "submit")) {
 									/* var stream-method == http://jabber.org/protocol/bytestreams */
-								jabber_handle_xmldata_form_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);
+								jabber_handle_xmldata_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);
 							}
 						}
 					}
@@ -728,7 +772,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					char *prio	= NULL;
 					int priority	= session_int_get(s, "priority");
 
-					is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://jabber.org/protocol/rc", 0,
+					is_valid = jabber_handle_xmldata_submit(s, x->children, "http://jabber.org/protocol/rc", 0,
 							"status", &status, "status-priority", &prio, "status-message", 
 							&descr, "status-priority", &prio, NULL);
 					if (is_valid) {
@@ -776,7 +820,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				} else {
 					if (alloptions) {
 						char **atts = NULL;
-						is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://ekg2.org/jabber/rc", 1, &atts, NULL);
+						is_valid = jabber_handle_xmldata_submit(s, x->children, "http://ekg2.org/jabber/rc", 1, &atts, NULL);
 						if (is_valid && atts) {
 							int i;
 							debug("[VALID]\n");
@@ -793,7 +837,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						char *auto_msg		= NULL;
 						char *auto_files	= NULL;
 						char *auto_auth		= NULL;
-						is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://jabber.org/protocol/rc", 0, 
+						is_valid = jabber_handle_xmldata_submit(s, x->children, "http://jabber.org/protocol/rc", 0, 
 							"sounds", &sounds, "auto-offline", &auto_offline, "auto-msg", &auto_msg, "auto-files", &auto_files, 
 							"auto-auth", &auto_auth, NULL);
 						/* parse */
@@ -864,7 +908,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 					int windowid = 1, isquiet = 0;
 
-					is_valid = jabber_handle_xmldata_form_submit(s, x->children, "http://ekg2.org/jabber/rc", 0, 
+					is_valid = jabber_handle_xmldata_submit(s, x->children, "http://ekg2.org/jabber/rc", 0, 
 							"command-name", &command, "params-line", &params, "session-name", &sessionname,
 							"window-name", &window, "command-quiet", &quiet, NULL);
 					if (quiet)	isquiet  = atoi(quiet);
@@ -1181,19 +1225,8 @@ rc_forbidden:
 
 									session_name(s), uid, tvar, var);
 						else		print("jabber_transinfo_feature", session_name(s), uid, var, var);
-					} else if (!xstrcmp(node->name, "x") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "jabber:x:data")) {
-/* XXX, ESCAPE IT AND DISPLAY. */
-						xmlnode_t *q;
-						debug("FORMULARZYK ;)\n");
-#if 1
-						for (q = node->children; q; q = q->next) {
-							if (!xstrcmp(q->name, "field")) {
-								xmlnode_t *child = xmlnode_find_child(q, "value");
-								/* label: value (var) */
-								debug("%s: %s\n", jabber_attr(q->atts, "label"), child && child->data ? child->data : "MMH?");
-							}
-						}
-#endif
+					} else if (!xstrcmp(node->name, "x") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "jabber:x:data") && !xstrcmp(jabber_attr(node->atts, "type"), "result")) {
+						jabber_handle_xmldata_result(s, node->children, uid);
 					}
 				}
 				print("jabber_transinfo_end", session_name(s), uid);
@@ -1254,11 +1287,16 @@ rc_forbidden:
 						if (formdone) continue;
 
 						for (reg = q->children; reg; reg = reg->next) {
-							if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns")) && !xstrcmp("form", jabber_attr(reg->atts, "type")))
-							{
-								formdone = 1;
-								jabber_handle_xmldata_form(s, uid, "search", reg->children, NULL);
-								break;
+							if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns"))) {
+								if (!xstrcmp(jabber_attr(reg->atts, "type"), "form")) {
+									formdone = 1;
+									jabber_handle_xmldata_form(s, uid, "search", reg->children, "--jabber_x_data");
+									break;
+								} else if (!xstrcmp(jabber_attr(reg->atts, "type"), "result")) {
+									formdone = 1;
+									jabber_handle_xmldata_result(s, reg->children, uid);
+									break;
+								}
 							}
 						}
 
@@ -1276,12 +1314,17 @@ rc_forbidden:
 				int done = 0;
 
 				for (reg = q->children; reg; reg = reg->next) {
-					if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns")) && !xstrcmp("form", jabber_attr(reg->atts, "type")))
+					if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns")) && 
+						( !xstrcmp("form", jabber_attr(reg->atts, "type")) || !jabber_attr(reg->atts, "type")))
 					{
 						done = 1;
-						jabber_handle_xmldata_form(s, from_str, "register", reg->children, NULL);
+						jabber_handle_xmldata_form(s, from_str, "register", reg->children, "--jabber_x_data");
 						break;
 					}
+				}
+				if (!done && !q->children) { 
+					/* XXX */
+					done = 1;
 				}
 				if (!done) {
 					xmlnode_t *instr = xmlnode_find_child(q, "instructions");
@@ -1292,7 +1335,7 @@ rc_forbidden:
 						print("jabber_form_instructions", session_name(s), from_str, instr_str);
 						xfree(instr_str);
 					}
-					print("jabber_form_command", session_name(s), from_str, "register");
+					print("jabber_form_command", session_name(s), from_str, "register", "");
 
 					for (reg = q->children; reg; reg = reg->next) {
 						char *jname, *jdata;
