@@ -28,25 +28,16 @@
 #include "commands.h"
 #include "dynstuff.h"
 #include "plugins.h"
+#include "themes.h"
 #include "xmalloc.h"
 
 AUDIO_DEFINE(stream);
 
 COMMAND(cmd_streams) {
+	PARASC
+	const char **create = NULL;
+	int display = 0;
 	list_t l;
-	// _debug only (only temporary)
-	
-	for (l = streams; l; l = l->next) {
-		stream_t *s = l->data;
-		debug("[STREAM] name: %s IN: 0x%x CODEC: 0x%x OUT: 0x%x\n", s->stream_name, s->input, s->codec, s->output);
-		if (s->input)	debug("	 IN, fd: %d\n", s->input->fd);
-		if (s->output)	debug("	OUT, fd: %d\n", s->output->fd);
-	}
-
-	for (l = audio_inputs; l; l = l->next) {
-		audio_t *a = l->data;
-		debug("[AUDIO_CODEC] name: %s\n", a->name);
-	}
 
 /* /_stream --create "INPUT inputparams"    "CODEC codecparams"			"OUTPUT outputparams" */
 
@@ -55,13 +46,59 @@ COMMAND(cmd_streams) {
 /* /_stream --create "STREAM file:/dev/tcp host:jakishost port:port http:radio" "STREAM file:radio.raw"		*/ /* and download files too? :) */
 
 /* i think that api if i (we?) write it... will be nice, but code can be obscure... sorry */
+
+	if (match_arg(params[0], 'c', TEXT("create"), 2)) {		/* --create */
+		create = &params[1];
+	} else if (match_arg(params[0], 'l', TEXT("list"), 2) || !params[0]) {	/* list if --list. default action is --list (if we don't have params)  */
+		display = 1;
+	} else {							/* default action is --create (if we have params) */
+		create = &params[0];
+	}
+
+	if (create) {
+		const char *input, *codec, *output;
+
+		if (create[0] && create[1] && create[2]) 	{ input = create[0]; codec = create[1]; output = create[2]; } 
+		else if (create[0] && create[1])		{ input = create[0]; codec = NULL;	output = create[2]; } 
+		else {
+			wcs_printq("invali_params", name);
+			return -1; 
+		}
+		/* XXX here, we ought to build arrays with INPUT name && paramas CODEC name && params OUTPUT name && params */
+	} else if (!params[0]) {	/* no params, display list */
+		display = 1;
+	} else {
+		wcs_printq("invalid_params", name);
+		return -1;
+	}
+
+	if (display) { 
+		/* XXX, display nice info to __status/__current window */
+		/* XXX, add more debug info */
+		for (l = streams; l; l = l->next) {
+			stream_t *s = l->data;
+			debug("[STREAM] name: %s IN: 0x%x CODEC: 0x%x OUT: 0x%x\n", s->stream_name, s->input, s->codec, s->output);
+			if (s->input)	debug("	 IN, AUDIO: %s fd: %d bufferlen: %d\n", s->input->a->name, s->input->fd, s->input->buffer->len);
+			if (s->output)	debug("	OUT, AUDIO: %s fd: %d bufferlen: %d\n", s->output->a->name, s->output->fd, s->output->buffer->len);
+		}
+
+		for (l = audio_inputs; l; l = l->next) {
+			audio_t *a = l->data;
+			debug("[AUDIO_INPUT] name: %s\n", a->name);
+		}
+
+		for (l = audio_codecs; l; l = l->next) {
+			codec_t *c = l->data;
+			debug("[AUDIO_CODEC] name: %s\n", c->name);
+		}
+	} 
 	return 0;
 }
 
-int codec_register(codec_t *codec)
-{
-
-	return -1;
+int codec_register(codec_t *codec) {
+/* XXX check if we already codec->name on the list */
+	list_add(&audio_codecs, codec, 0);
+	return 0;
 }
 
 void codec_unregister(codec_t *codec)
@@ -70,8 +107,9 @@ void codec_unregister(codec_t *codec)
 }
 
 int audio_register(audio_t *audio) {
+/* XXX check if we already audio->name on the list */
 	list_add(&audio_inputs, audio, 0);
-	return -1;
+	return 0;
 }
 
 void audio_unregister(audio_t *audio) {
@@ -161,10 +199,10 @@ WATCHER(stream_handle) {
 	return 0;
 }
 
-int stream_create(char *name, audio_io_t *in, audio_codec_t *c, audio_io_t *out) {
+int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out) {
 	stream_t *s;
 
-	debug("stream_create() name: %s in: 0x%x codec: 0x%x output: 0x%x\n", name, in, c, out);
+	debug("stream_create() name: %s in: 0x%x codec: 0x%x output: 0x%x\n", name, in, co, out);
 
 	if (!in /* !out */) goto fail;	/* from? where? */
 
@@ -176,7 +214,7 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *c, audio_io_t *out)
 	s = xmalloc(sizeof(stream_t));
 	s->stream_name	= xstrdup(name);
 	s->input	= in;
-	s->codec	= c;
+	s->codec	= co;
 	s->output	= out;
 
 	list_add(&streams, s, 0);
@@ -188,17 +226,16 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *c, audio_io_t *out)
 	watch_add(NULL, in->fd, WATCH_READ, stream_handle, s);
 	if (out->fd != -1) watch_add(NULL, out->fd, WATCH_WRITE, stream_handle, s);
 
-
 	return 1;
 fail:
 	/* deinit */
-	if (in)		in->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_READ, NULL);
-/*	if (c)		c->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, NULL); */
-	if (out)	out->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_WRITE, NULL);
+	if (in)		in->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_READ, &in);
+	if (co)		co->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, &co); 
+	if (out)	out->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_WRITE, &out);
 	return 0;
 }
 
-audio_io_t *stream_audio_control(audio_control_t type, audio_way_t way, ...) {
+AUDIO_CONTROL(stream_audio_control) {
 	char *file = NULL;
 	audio_io_t *aio = NULL;
 	va_list ap;
@@ -221,8 +258,9 @@ audio_io_t *stream_audio_control(audio_control_t type, audio_way_t way, ...) {
 			debug("[stream_audio_control] attr: %s value: %s\n", attr, val);
 			if (!xstrcmp(attr, "file")) file = xstrdup(val);
 		}
-
 	} else if (type == AUDIO_CONTROL_DEINIT) {
+		/* closing fd && freeing buffer in API ? */
+		xfree(aio);
 		aio = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		debug("[stream_audio_control] known atts:\n"
@@ -262,7 +300,7 @@ int audio_initialize() {
 			NULL, /* no codec */
 			stream_audio_control(AUDIO_CONTROL_INIT, AUDIO_WRITE, "file", "/dev/dsp")	/* writing to /dev/dsp */
 		     );
-#endif			
+#endif
 	return 0;
 }
 

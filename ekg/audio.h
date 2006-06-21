@@ -27,9 +27,15 @@ typedef enum { AUDIO_CONTROL_INIT = 0, AUDIO_CONTROL_MODIFY, AUDIO_CONTROL_DEINI
 			audio_control_t;
 typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, } 
 			audio_way_t;
+typedef enum { CODEC_UNKNOWN = 0, CODEC_CODE, CODEC_DECODE, } 
+			codec_way_t;
+
+#define CODEC_RECODE(x) int x(int type, stream_buffer_t *input, stream_buffer_t *output, void *data)
+#define AUDIO_CONTROL(x) audio_io_t	*x(audio_control_t type, audio_way_t way,  ...)
+#define CODEC_CONTROL(x) audio_codec_t	*x(audio_control_t type, audio_way_t way,  ...)
 
 #define AUDIO_DEFINE(x)\
-	extern audio_io_t *x##_audio_control(audio_control_t, audio_way_t,  ... ); \
+	extern AUDIO_CONTROL(x##_audio_control);\
 	extern WATCHER(x##_audio_read);		\
 	extern WATCHER(x##_audio_write);	\
 	audio_t x##_audio = { \
@@ -37,6 +43,17 @@ typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, }
 		.control_handler= x##_audio_control, \
 		.read_handler	= x##_audio_read, \
 		.write_handler  = x##_audio_write, \
+	}
+
+#define CODEC_DEFINE(x)\
+	extern CODEC_CONTROL(x##_codec_control);\
+	extern CODEC_RECODE(x##_codec_code);	\
+	extern CODEC_RECODE(x##_codec_decode);	\
+	codec_t x##_codec = { \
+		.name = #x, \
+		.control_handler= x##_codec_control,	\
+		.code_handler	= x##_codec_code,	\
+		.decode_handler = x##_codec_decode,	\
 	}
 
 typedef struct {
@@ -64,15 +81,18 @@ typedef struct {
 typedef struct {
 	char *name;	/* nazwa codeca */
 
-	void *control_handler;	/* ^^ */
-	void *code_handler;
-	void *decode_handler;
+	void *(*control_handler)(audio_control_t, audio_way_t, ...);    /* initing / checking if audio_codec_t is correct / deiniting */
+
+		/* IN: int type, stream_buffer_t *input, stream_buffer_t *output, void *private 
+		 * OUT: how many bytes he code/decode */
+	int (*code_handler)(int, stream_buffer_t, stream_buffer_t, void *);
+	int (*decode_handler)(int, stream_buffer_t, stream_buffer_t, void *);
 	void *private;
 } codec_t;
 
 typedef struct {
 	codec_t *c;		/* codec_t * */
-	int way;		/* CODEC_CODE CODEC_DECODE */
+	codec_way_t way;		/* CODEC_CODE CODEC_DECODE */
 	
 	void *private;
 } audio_codec_t;
@@ -89,8 +109,6 @@ typedef struct {
 list_t audio_codecs;
 list_t audio_inputs;
 list_t streams;
-
-/* managment handler: (int INIT_DEINIT, int READ_WRITE, char **initializing_data, void **private)  */
 
 int audio_register(audio_t *audio);
 void audio_unregister(audio_t *audio);
