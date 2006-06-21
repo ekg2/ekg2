@@ -36,122 +36,155 @@
 #include <ekg/xmalloc.h>
 
 PLUGIN_DEFINE(gsm, PLUGIN_CODEC, NULL);
-codec_t gsm_codec;
+CODEC_DEFINE(gsm); 
 
-#if 0
-static void *gsm_codec_init(const char *, const char *);
-static int gsm_codec_process(void *, char *, int, char **, int *);
-static void gsm_codec_destroy(void *);
-
-static codec_cap_t gsm_codec_caps[3] = {
-	{ "gsm:*", "pcm:8000,16,1" },
-	{ "pcm:8000,16,1", "gsm:*" },
-	{ NULL, NULL }
-};
-
-static codec_t gsm_codec = {
-	name: "gsm",
-	init: gsm_codec_init,
-	process: gsm_codec_process,
-	destroy: gsm_codec_destroy,
-	caps: gsm_codec_caps
-};
-
+/* prywatna strukturka audio_codec_t */
 typedef struct {
 	gsm codec;	/* w³a¶ciwa struktura libgsm */
-	int encoder;	/* je¶li kodujemy do gsm to równe 1 */
 	int msgsm;	/* > 0 je¶li mamy do czynienia z msgsm */
-} gsm_codec_t;
+} gsm_private_t;
 
-static void *gsm_codec_init(const char *from, const char *to)
-{
-	gsm_codec_t *c;
-	int value = 1;
-	gsm codec;
+CODEC_CONTROL(gsm_codec_control) {
+	audio_codec_t *ac = NULL;
+	va_list ap;
+	va_start(ap, way);
 
-	if (!from || !to)
-		return NULL;
+	if (way == AUDIO_CONTROL_INIT) {			/* gsm_codec_init() */
+		char *attr;
+		char *from = NULL, *to = NULL;
+		int with_ms = 0;
+		codec_way_t cway = CODEC_UNKNOWN;
 
-	if (!((!xstrncasecmp(from, "gsm:", 3) && !xstrcasecmp(to, "pcm:8000,16,1")) || (!xstrcasecmp(from, "pcm:8000,16,1") && !xstrncasecmp(to, "gsm:", 3))))
-		return NULL;
+		gsm_private_t *priv;
+		gsm codec;
+		int value = 1;
 
-	if (!(codec = gsm_create()))
-		return NULL;
+		while ((attr = va_arg(ap, char *))) {
+			char *val = va_arg(ap, char *);
+			debug("[gsm_codec_control] attr: %s value: %s\n", attr, val);
+			if (!xstrcmp(attr, "from"))		from	= xstrdup(val);
+			else if (!xstrcmp(attr, "to"))		to	= xstrdup(val);
+			else if (!xstrcmp(attr, "with-ms"))	with_ms = 1;
+			/* XXX birate, channels */
+		}
 
-	c = xmalloc(sizeof(gsm_codec_t));
+		if (!((!xstrncasecmp(from, "gsm:", 3) && !xstrcasecmp(to, "pcm:8000,16,1")) || (!xstrcasecmp(from, "pcm:8000,16,1") && !xstrncasecmp(to, "gsm:", 3)))) {
+			debug("gsm_codec_control() wrong from/to. from: %s to: %s\n", from, to);
+			goto fail;
+		
+		}
+		if (!xstrncasecmp(from, "pcm:", 3))	cway = CODEC_CODE;
+		else if (!!xstrncasecmp(to, "pcm:", 3)) cway = CODEC_DECODE;
+		else { debug("NEITHER CODEING, NEIHER DECODING ? WHOA THERE...\n"); goto fail; }
 
-	gsm_option(codec, GSM_OPT_FAST, &value);
-	gsm_option(codec, GSM_OPT_LTP_CUT, &value);
+		if (!(codec = gsm_create())) {
+			debug("gsm_create() fails\n");
+			goto fail;
+		}
 
-	c->codec = codec;
-	c->encoder = (!xstrncasecmp(from, "pcm:", 3));
+		gsm_option(codec, GSM_OPT_FAST, &value);
+		gsm_option(codec, GSM_OPT_LTP_CUT, &value);
 
-	if (!xstrcasecmp(from, "gsm:ms") || !xstrcasecmp(to, "gsm:ms")) {
-		gsm_option(codec, GSM_OPT_WAV49, &value);
-		c->msgsm = 1;
-	}
+		priv		= xmalloc(sizeof(gsm_private_t));
+		priv->codec	= codec;
+		priv->msgsm	= with_ms;
 
-	return c;
+		if (priv->msgsm) {
+			gsm_option(codec, GSM_OPT_WAV49, &value);
+		}
+
+		ac		= xmalloc(sizeof(audio_codec_t));
+		ac->c		= &gsm_codec;
+		ac->way		= cway;
+		ac->private	= priv;
+fail:
+		xfree(from); xfree(to);
+	} else if (way == AUDIO_CONTROL_DEINIT) {		/* gsm_codec_destroy() */
+		gsm_private_t *priv = NULL;
+
+		ac = *(va_arg(ap, audio_codec_t **));
+		if (ac && ac->private) priv = ac->private;
+
+		if (priv && priv->codec) gsm_destroy(priv->codec);
+		xfree(priv);
+		xfree(ac);
+		ac = NULL;
+	} else if (way == AUDIO_CONTROL_HELP) {
+		debug("[gsm_codec_control] known atts:\n"
+			"CODE: 		--from pcm:8000,16,1	--to gsm:*\n"
+			"DECODE:	--from gsm:*		--to pcm:8000,16,1\n"
+			"	--with-ms\n"
+			"	this codec_t can work in two ways (code/ decode)\n");
+	} else { debug("[gsm_codec_control] UNIMP\n"); } 
+	va_end(ap); 
+	return ac;
 }
 
-static int gsm_codec_process(void *codec, char *in, int inlen, char **p_out, int *p_outlen)
-{
-	gsm_codec_t *c = codec;
+/* way: 0 - code ; 1 - decode */
+int gsm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
+	gsm_private_t *c = data;
+
+	if (!c || !input || !output) 
+		return -1;
+
+	char *in	= input->buf;
+	int inlen	= input->len;
+
+	char **p_out	= &output->buf;
+	int *p_outlen	= &output->len;
+
+
+	if (!input->buf || !input->len) /* we have nothing to code? */
+		return 0;
+
+	/* XXX here */
+	return -1;
+
 	int inpos = 0, outlen = 0;
 	char *out = NULL;
 
-	if (!c || !in || !inlen || !p_out || !p_outlen)
-		return -1;
-	
 	for (;;) {
 		int inchunklen, outchunklen;
 		
-		if (c->encoder) {
+		if (way == CODEC_CODE) {
 			inchunklen = 320;
 			outchunklen = (c->msgsm == 1) ? 32 : 33;
-		} else {
+		} else if (way == CODEC_DECODE) {
 			inchunklen = (c->msgsm == 2) ? 32 : 33;
 			outchunklen = 320;
 		}
-
 		if ((inlen - inpos) < inchunklen)
 			break;
 
 		out = xrealloc(out, outlen + outchunklen);
 
-		if (c->encoder)
+		if (way == CODEC_CODE)
 			gsm_encode(c->codec, (gsm_signal*) (in + inpos), out + outlen);
-		else
+		else if (way == CODEC_DECODE) 
 			gsm_decode(c->codec, in + inpos, (gsm_signal*) (out + outlen));
 
 		outlen += outchunklen;
-
-		if (c->msgsm == 1)
-			c->msgsm = 2;
-		else if (c->msgsm == 2)
-			c->msgsm = 1;
+		if (c->msgsm == 1)	c->msgsm = 2;
+		else if (c->msgsm == 2) c->msgsm = 1;
 
 		inpos += inchunklen;
 	}
-	
 	/* zwróæ wyniki */
 	*p_out = out;
 	*p_outlen = outlen;
 
 	return inpos;
+
+	return -1;
 }
 
-static void gsm_codec_destroy(void *codec)
-{
-	gsm_codec_t *c = codec;
-
-	if (c && c->codec)
-		gsm_destroy(c->codec);
-
-	xfree(c);
+CODEC_RECODE(gsm_codec_code) {
+	return gsm_codec_process(type, CODEC_CODE, input, output, data);
 }
 
-#endif
+CODEC_RECODE(gsm_codec_decode) {
+	return gsm_codec_process(type, CODEC_DECODE, input, output, data);
+}
 
 int gsm_plugin_init(int prio)
 {
