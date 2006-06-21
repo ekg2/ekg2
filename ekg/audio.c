@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 
 #include "audio.h"
 #include "commands.h"
@@ -106,8 +107,23 @@ void codec_unregister(codec_t *codec)
 
 }
 
+audio_t *audio_find(const char *name) {
+	list_t l;
+	if (!name) 
+		return NULL;
+	for (l = audio_inputs; l; l = l->next) {
+		audio_t *a = l->data;
+		if (!xstrcmp(a->name, name)) 
+			return a;
+
+	}
+	return NULL;
+}
+
 int audio_register(audio_t *audio) {
-/* XXX check if we already audio->name on the list */
+	if (!audio)			return -1;
+	if (audio_find(audio->name))	return -2;
+
 	list_add(&audio_inputs, audio, 0);
 	return 0;
 }
@@ -120,16 +136,30 @@ char *stream_buffer_resize(stream_buffer_t *b, char *buf, int len) {
 	int oldlen;
 	if (!b) return NULL;
 
+	if (!buf && len > 0) {
+		debug("ERR stream_buffer_resize() len > 0 but buf NULL....\n"); 
+		return b->buf;
+	}
+
 	oldlen = b->len;
 /* len can be < 0. if it's we remove len bytes from b->buf */
 /* else we add len bytes to b->buf */
 	b->len += len;
 
 	if (b->len <= 0) { b->len = 0; xfree(b->buf); b->buf = NULL; } 
-	else		 b->buf = (char *) xrealloc(b->buf, b->len); 
+	else {
+		if (len < 0) { 
+			int move = -len;
+
+			if (b->len - move < 0) move = b->len;
+			memmove(b->buf, b->buf+move, b->len-move);	/* iwil! */
+		}
+		b->buf = (char *) xrealloc(b->buf, b->len);
+	}
 
 	if (len > 0) memcpy(b->buf+oldlen, buf, len);
-	debug("stream_buffer_resize() oldlen: %d bytes newlen: %d bytes\n", oldlen, b->len);
+
+	debug("stream_buffer_resize() b: 0x%x oldlen: %d bytes newlen: %d bytes\n", b, oldlen, b->len);
 	return b->buf;
 }
 		/* READING / WRITING FROM FILEs */
@@ -144,6 +174,7 @@ WATCHER(stream_audio_read) {
 	xfree(buf);
 
 	debug("stream_audio_read() read: %d bytes from fd: %d\n", len, fd);
+	if (len == 0) return -1;
 	return len;
 }
 
@@ -151,12 +182,14 @@ WATCHER(stream_audio_write) {
 	stream_buffer_t *buffer = (stream_buffer_t *) watch;
 	int len;
 
-	debug("stream_audio_write() buffer: 0x%x in buffer: %d bytes... writting to fd: %d.... ", buffer, buffer->len, fd);
+	debug("stream_audio_write() buffer: 0x%x in buffer: %d bytes... writting to fd: %d....\n", buffer, buffer->len, fd);
 	len = write(fd, buffer->buf, buffer->len);
-	stream_buffer_resize(buffer, NULL, -len);
 
-	debug("written %d bytes left: %d\n", len, buffer->len);
-	return 0;
+	if (len > 0) 	stream_buffer_resize(buffer, NULL, -len);
+	else 		debug("write() failed: %d %s", errno, strerror(errno));
+
+	debug(".... written %d bytes left: %d\n", len, buffer->len);
+	return len;
 }
 
 WATCHER(stream_handle) {
@@ -165,18 +198,25 @@ WATCHER(stream_handle) {
 	watcher_handler_func_t *w = NULL;
 	int len;
 
-	debug("stream_handle() name: %s type: %d wtype: %d\n", s->stream_name, type, watch);
+//	debug("stream_handle() name: %s type: %d wtype: %d\n", s->stream_name, type, watch);
 	
 	if ((int) watch == WATCH_READ)		audio = s->input;
 	else if ((int) watch == WATCH_WRITE)	audio = s->output;
 
-	debug("stream_handle() audio_t: 0x%x\n", audio);
+	if (!audio) debug("stream_handle() audio_t: 0x%x\n", audio);
 	if (!audio) return -1;
+
+
+	if ((int) watch == WATCH_WRITE && !audio->buffer->len) {
+		/* XXX, we should set w->type to 0... and only to WATCH_WRITE when we have smth to write... */
+		if (s->input->fd == -1) return -1;
+		return 0;
+	}
 
 	if ((int) watch == WATCH_READ)		w = audio->a->read_handler;
 	else if ((int) watch == WATCH_WRITE)	w = audio->a->write_handler;
 
-	debug("stream_handle() watch_t: 0x%x\n", w);
+	if (!w) debug("stream_handle() watch_t: 0x%x\n", w);
 	if (!w) return -1;
 
 	len = w(type, fd, (char *) audio->buffer, audio->private);
@@ -193,8 +233,11 @@ WATCHER(stream_handle) {
 		/* XXX, if this is read handler, and we don't have watch handler for writing stream->out->fd == -1 then we don't need to wait for WATCH_WRITE and we here do it */
 	}
 
-
-	if (len < 0) return -1;
+	if (len < 0) { 
+		close(fd);
+		audio->fd = -1;
+		return -1;
+	}
 
 	return 0;
 }
@@ -204,9 +247,9 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 
 	debug("stream_create() name: %s in: 0x%x codec: 0x%x output: 0x%x\n", name, in, co, out);
 
-	if (!in /* !out */) goto fail;	/* from? where? */
+	if (!in || !out) goto fail;	/* from? where? */
 
-	debug("stream_create() infd: %d\n", in->fd);
+	debug("stream_create() infd: %d outfd: %d\n", in->fd, out->fd);
 
 	if (in->fd == -1) goto fail; /* reading from fd == -1? i don't think so... */
 
@@ -236,7 +279,6 @@ fail:
 }
 
 AUDIO_CONTROL(stream_audio_control) {
-	char *file = NULL;
 	audio_io_t *aio = NULL;
 	va_list ap;
 
@@ -244,21 +286,41 @@ AUDIO_CONTROL(stream_audio_control) {
 
 	va_start(ap, way);
 
-	if (type == AUDIO_CONTROL_MODIFY || type == AUDIO_CONTROL_DEINIT) {
-		aio = *(va_arg(ap, audio_io_t **));
-	} else if (type == AUDIO_CONTROL_INIT) {
-		aio = xmalloc(sizeof(audio_io_t));
-	}
-
-	if (type == AUDIO_CONTROL_CHECK || type == AUDIO_CONTROL_INIT || type == AUDIO_CONTROL_MODIFY) {
+	if (type == AUDIO_CONTROL_INIT) {
 		char *attr;
+		char *file = NULL;
+
+		int fd = -1;
 
 		while ((attr = va_arg(ap, char *))) {
 			char *val = va_arg(ap, char *);
 			debug("[stream_audio_control] attr: %s value: %s\n", attr, val);
 			if (!xstrcmp(attr, "file")) file = xstrdup(val);
 		}
+			/* if no file specified, continue with strange defaults ;) */
+		if (!file && way == AUDIO_READ)		file = xstrdup("/dev/urandom");
+		else if (!file && way == AUDIO_WRITE)	file = xstrdup("/dev/null");
+
+
+		if (file) {
+			fd = open(file, O_CREAT | (
+				way == AUDIO_READ 	? O_RDONLY : 
+				way == AUDIO_WRITE 	? O_WRONLY : O_RDWR), S_IRUSR | S_IWUSR);
+			if (fd == -1) { 
+				debug("[stream_audio_control] OPENING FILE FAILED %d %s!\n", errno, strerror(errno));
+				goto fail;
+			}
+		}
+
+		aio = xmalloc(sizeof(audio_io_t));
+		aio->a  = &stream_audio;
+		aio->fd = fd;
+fail:
+		xfree(file);
 	} else if (type == AUDIO_CONTROL_DEINIT) {
+		aio = *(va_arg(ap, audio_io_t **));
+
+
 		/* closing fd && freeing buffer in API ? */
 		xfree(aio);
 		aio = NULL;
@@ -272,35 +334,41 @@ AUDIO_CONTROL(stream_audio_control) {
 			"this audio_t can WORK in two-ways READ/WRITE\n");
 	}
 
-/* if no file specified, continue with strange defaults ;) */
-	if (!file && way == AUDIO_READ)		file = xstrdup("/dev/urandom");
-	else if (!file && way == AUDIO_WRITE)	file = xstrdup("/dev/null");
-
-	aio->a  = &stream_audio;
-	aio->fd = -1;
-
-	if (type == AUDIO_CONTROL_INIT && file) {
-		aio->fd = open(file, 
-			way == AUDIO_READ 	? O_RDONLY : 
-			way == AUDIO_WRITE 	? O_WRONLY : 
-						  O_RDWR);
+	if (type == AUDIO_CONTROL_INIT) {
 	}
-
-	xfree(file);
 
 	va_end(ap);
 	return aio;
 }
 
 int audio_initialize() {
+	audio_t *inp, *out;
+	audio_codec_t *co = NULL;;
 	audio_register(&stream_audio);
-#if 0
-	stream_create("Now playing: /dev/urandom",
-			stream_audio_control(AUDIO_CONTROL_INIT, AUDIO_READ, "file", "/dev/urandom"),	/* reading from /dev/urandom */
-			NULL, /* no codec */
-			stream_audio_control(AUDIO_CONTROL_INIT, AUDIO_WRITE, "file", "/dev/dsp")	/* writing to /dev/dsp */
-		     );
-#endif
+
+	if (0 && (inp = audio_find("stream"))) {
+		out = inp;
+		stream_create("Now playing: /dev/urandom",
+				inp->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, "file", "/dev/urandom", NULL), 	/* reading from /dev/urandom */
+				NULL, /* no codec */
+				out->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, "file", "/dev/dsp", NULL)		/* writing to /dev/dsp */
+			     );
+	}
+	if (0 && (inp = audio_find("oss")) && (out = audio_find("stream"))) {
+		stream_create("Now recording: /dev/dsp",
+				inp->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, /* "device", "/dev/dsp", */ "birate", "8000", "sample", "16", "channels", "1", NULL),
+				co,
+				out->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, "file", "plik.raw", NULL)
+			      );
+	}
+	if (0 &&  (out = audio_find("oss")) && (inp = audio_find("stream"))) {
+		stream_create("Now playing to: /dev/dsp",
+				inp->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, "file", "plik.raw", NULL),
+				co,
+				out->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, "birate", "8000", "sample", "16", "channels", "1", NULL)
+			      );
+	}
+
 	return 0;
 }
 

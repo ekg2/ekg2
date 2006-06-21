@@ -110,6 +110,8 @@ list_t audio_codecs;
 list_t audio_inputs;
 list_t streams;
 
+char *stream_buffer_resize(stream_buffer_t *b, char *buf, int len);
+
 int audio_register(audio_t *audio);
 void audio_unregister(audio_t *audio);
 
