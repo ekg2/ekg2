@@ -22,107 +22,109 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <ekg/audio.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/xmalloc.h>
 
 PLUGIN_DEFINE(pcm, PLUGIN_CODEC, NULL);
+CODEC_DEFINE(pcm);
+
 #ifdef EKG2_WIN32_SHARED_LIB
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
 
+/* prywatna strukturka audio_codec_t */
 typedef struct {
-	int id;			/* numer instancji codeca */
-
 	int ifreq, ofreq;	/* czêstotliwo¶æ */
 	int ibps, obps;		/* bps */
 	int ich, och;		/* ilo¶æ kana³ów */
-} pcm_codec_t;
+} pcm_private_t; 
 
-static int pcm_codec_id = 1;
-static list_t pcm_codecs = NULL;
 
-static pcm_codec_t *pcm_codec_find(const char *cid)
-{
-	list_t l;
-	int id;
+CODEC_CONTROL(pcm_codec_control) {
+	audio_codec_t *ac = NULL;
+	va_list ap;
 
-	if (xstrncasecmp(cid, "pcm:", 4) || !(id = atoi(cid + 4)))
-		return NULL;
+	va_start(ap, way);
 
-	for (l = pcm_codecs; l; l = l->next) {
-		pcm_codec_t *c = l->data;
+	if (way == AUDIO_CONTROL_INIT) {		/* pcm_codec_init() */
+		char *from, *to;
+		char *attr;
+		int valid = 1;
 
-		if (c->id == id)
-			return c;
-	}
+		pcm_private_t *priv = xmalloc(sizeof(pcm_private_t));
 
-	return NULL;
+		while ((attr = va_arg(ap, char *))) {
+			char *val = va_arg(ap, char *);
+			int v = 0;
+
+			debug("[pcm_codec_control] attr: %s value: %s\n", attr, val);
+			if (!xstrcmp(attr, "from"))		from	= xstrdup(val);
+			else if (!xstrcmp(attr, "to"))		to	= xstrdup(val);
+
+			else if (!xstrcmp(attr, "freq"))	{ v = atoi(val); 	priv->ifreq = v;	priv->ofreq = v;	}
+			else if (!xstrcmp(attr, "bps"))		{ v = atoi(val);	priv->ibps = v;		priv->obps = v;		}
+			else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->ich = v;		priv->och = v;		}
+
+			else if (!xstrcmp(attr, "ifreq"))	{ v = atoi(val); 	priv->ifreq = v; 				}
+			else if (!xstrcmp(attr, "ibps"))	{ v = atoi(val);	priv->ibps = v;					} 
+			else if (!xstrcmp(attr, "ichannels"))	{ v = atoi(val);	priv->ich = v;					} 
+
+			else if (!xstrcmp(attr, "ofreq"))	{ v = atoi(val);  				priv->ofreq = v;	}
+			else if (!xstrcmp(attr, "obps"))	{ v = atoi(val);				priv->obps = v;		}
+			else if (!xstrcmp(attr, "ochannels"))	{ v = atoi(val);				priv->och = v;		}
+		}
+
+		debug("[pcm_codec_control] TER from: %s to: %s Ifreq: %d Ofreq: %d Ibps: %d Obps: %d Ichannels: %d Ochannels: %d\n",
+			from, to, priv->ifreq, priv->ofreq, priv->ibps, priv->obps, priv->ich, priv->och);
+
+	/* CHECK ALL ATTS: */
+		if (xstrncasecmp(from, "pcm:", 4) || xstrncasecmp(to, "pcm:", 4)) 			valid = 0;	/* CHECK NAME */
+		if (!priv->ifreq || !priv->ofreq) 							valid = 0;	/* CHECK FREQ */
+		if ((priv->ibps != 8 && priv->ibps != 16) || (priv->obps != 8 && priv->obps != 16))	valid = 0;	/* CHECK BPS */
+		if (priv->ich < 1 || priv->ich > 2 || priv->och < 1 || priv->och > 2)			valid = 0;	/* CHECK CHANNELS */
+	/* IF CHECK FAILS: */
+		if (!valid) { xfree(priv); goto fail; } 
+
+		ac		= xmalloc(sizeof(audio_codec_t));
+		ac->c		= &pcm_codec;
+		ac->way		 = 0;
+		ac->private 	= priv;
+fail:
+		xfree(from); xfree(to);
+	} else if (way == AUDIO_CONTROL_DEINIT) {	/* pcm_codec_destroy() */
+		ac = *(va_arg(ap, audio_codec_t **));
+		if (ac) {
+			xfree(ac->private);
+			xfree(ac);
+		}
+		ac = NULL;
+	} else if (way == AUDIO_CONTROL_HELP) {		/* pcm_codec_capabilities() */ 
+		debug("[pcm_codec_control] known atts:\n"
+			"CODE: 		--from pcm --to pcm\n"
+			"DECODE:	--from pcm --to pcm\n"
+
+			"	--freq		[CODE/DECODE]\n"
+			"	--ifreq 	[CODE]\n"
+			"	--ofreq		[DECODE]\n"
+
+			"	--bps   8 16	[CODE/DECODE]\n"
+			"	--ibps  8 16	[CODE]\n"
+			"	--obps  8 16	[DECODE]\n"
+
+			"	--channels 1 2	[CODE/DECODE]\n"
+			"	--ichannels 1 2 [CODE]\n"
+			"	--ochannels 1 2 [DECODE]\n"
+
+			"	this codec_t can work in two ways (code/ decode)\n");
+	} 
+	va_end(ap);
+	return ac;
 }
 
-static QUERY(pcm_codec_capabilities)
-{
-	char **p_caps = va_arg(ap, char**);
-
-	xfree(*p_caps);
-
-	*p_caps = xstrdup(
-	"pcm:*,8,1-pcm:*,8,2 pcm:*,8,1-pcm:*,16,1 pcm:*,8,1-pcm:*,16,2 "
-	"pcm:*,8,2-pcm:*,8,1 pcm:*,8,2-pcm:*,16,1 pcm:*,8,2-pcm:*,16,2 "
-	"pcm:*,16,1-pcm:*,16,2 pcm:*,16,1-pcm:*,8,1 pcm:*,16,1-pcm:*,8,2 "
-	"pcm:*,16,2-pcm:*,16,1 pcm:*,16,2-pcm:*,8,1 pcm:*,16,2-pcm:*,8,2 ");
-
-	return 0;
-}
-
-static QUERY(pcm_codec_init)
-{
-	char **p_from = va_arg(ap, char**), *from = *p_from;
-	char **p_to = va_arg(ap, char**), *to = *p_to;
-	char **p_cid = va_arg(ap, char**);
-	char **ato, **afrom;
-	pcm_codec_t c;
-
-	/* je¶li ju¿ inny codec siê za to zabra³, zapomnij */
-	if (*p_cid)
-		return 0;
-
-	if (xstrncasecmp(from, "pcm:", 4) || xstrncasecmp(to, "pcm:", 4))
-		return 0;
-
-	afrom = array_make(from + 4, ",", 0, 0, 0);
-	ato = array_make(to + 4, ",", 0, 0, 0);
-
-	memset(&c, 0, sizeof(c));
-	c.id = pcm_codec_id;
-	c.ifreq = atoi(afrom[0]);
-	c.ibps = atoi(afrom[1]);
-	c.ich = atoi(afrom[2]);
-	c.ofreq = atoi(ato[0]);
-	c.obps = atoi(ato[1]);
-	c.och = atoi(ato[2]);
-
-	if ((c.ibps != 8 && c.ibps != 16) || (c.obps != 8 && c.obps != 16))
-		goto cleanup;
-
-	if (c.ich < 1 || c.ich > 2 || c.och < 1 || c.och > 2)
-		goto cleanup;
-
-	if (!c.ifreq || !c.ofreq)
-		goto cleanup;
-
-	list_add(&pcm_codecs, &c, sizeof(c));
-
-	xfree(*p_cid);
-	*p_cid = saprintf("pcm:%d", pcm_codec_id++);
-
-cleanup:
-	array_free(afrom);
-	array_free(ato);
-
-	return 0;
-}
-
+int pcm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
+#if 0
 static void pcm_recode(const char *in, int ibps, int ich, char *out, int obps, int och)
 {
 	int l, r;
@@ -210,38 +212,29 @@ static QUERY(pcm_codec_process)
 
 	return 0;
 }
+#endif
+	return -1;
+}
 
-static QUERY(pcm_codec_destroy)
-{
-	char **p_cid = va_arg(ap, char**), *cid = *p_cid;
-	pcm_codec_t *c;
+CODEC_RECODE(gsm_codec_code) {
+	return pcm_codec_process(type, CODEC_CODE, input, output, data);
+}
 
-	if (!(c = pcm_codec_find(cid)))
-		return 0;
-
-	list_remove(&pcm_codecs, c, 1);
-
-	return 0;
+CODEC_RECODE(gsm_codec_decode) {
+	return pcm_codec_process(type, CODEC_DECODE, input, output, data);
 }
 
 int pcm_plugin_init(int prio)
 {
 	plugin_register(&pcm_plugin, prio);
-
-	query_connect(&pcm_plugin, "codec-capabilities", pcm_codec_capabilities, NULL);
-	query_connect(&pcm_plugin, "codec-init", pcm_codec_init, NULL);
-	query_connect(&pcm_plugin, "codec-destroy", pcm_codec_destroy, NULL);
-	query_connect(&pcm_plugin, "codec-process", pcm_codec_process, NULL);
-
+	codec_register(&pcm_codec);
 	return 0;
 }
 
 static int pcm_plugin_destroy()
 {
+	codec_unregister(&pcm_codec);
 	plugin_unregister(&pcm_plugin);
-	
-	list_destroy(pcm_codecs, 1);
-
 	return 0;
 }
 
