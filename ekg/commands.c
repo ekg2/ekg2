@@ -80,6 +80,7 @@
 
 #include "char.h"
 #include "commands.h"
+#include "debug.h"
 #include "events.h"
 #include "configfile.h"
 #include "dynstuff.h"

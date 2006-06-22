@@ -58,6 +58,7 @@ static const char *ekg_core_code =
 
 #include <stdarg.h>
 
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/scripts.h>
 #include <ekg/windows.h>

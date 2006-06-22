@@ -84,7 +84,15 @@ char *xrindex(const char *s, int c);
 char *vsaprintf(const char *format, va_list ap);
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap);
 
+	/* stuff.h */
+#ifdef __GNUC__
+char *saprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+#else
+char *saprintf(const char *format, ...);
 #endif
+CHAR_T *wcsprintf(const CHAR_T *format, ...);
+#endif
+
 
 #endif /* __EKG_XMALLOC_H */
 

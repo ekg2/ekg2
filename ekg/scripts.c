@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "char.h"
+#include "debug.h"
 #include "dynstuff.h"
 #include "scripts.h"
 #include "xmalloc.h"

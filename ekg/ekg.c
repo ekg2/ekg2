@@ -85,6 +85,7 @@
 
 #include "audio.h"
 #include "commands.h"
+#include "debug.h"
 #include "events.h"
 #include "configfile.h"
 #include "emoticons.h"

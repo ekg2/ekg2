@@ -42,10 +42,7 @@
 
 #include "dynstuff.h"
 #include "plugins.h"
-#include "debug.h"
-#include "xmalloc.h"
 #include "sessions.h"
-#include "stuff.h"
 
 #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
 

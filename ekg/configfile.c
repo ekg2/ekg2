@@ -40,6 +40,7 @@
 #include <errno.h>
 
 #include "commands.h"
+#include "debug.h"
 #include "dynstuff.h"
 #include "events.h"
 #include "metacontacts.h"

@@ -3,6 +3,7 @@
 #include <ekg/win32.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
+#include <ekg/xmalloc.h>
 
 #include <stdio.h>
 

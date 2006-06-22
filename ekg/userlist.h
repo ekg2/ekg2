@@ -22,7 +22,7 @@
 #define __EKG_USERLIST_H
 
 #include "ekg2-config.h"
-#include <ekg/win32.h>
+#include "win32.h"
 
 #include <sys/types.h>
 
@@ -37,7 +37,6 @@
 
 #include "char.h"
 #include "dynstuff.h"
-#include "objects.h"
 #include "sessions.h"
 #include "plugins.h"
 #include "windows.h"
@@ -77,21 +76,6 @@ typedef struct {
 	time_t status_time;	/* kiedy w³±czyli¶my aktualny status */
 	void *private;          /* sometimes can be helpfull */
 } userlist_t;
-
-#if 0
-PROPERTY_STRING(userlist, uid);
-PROPERTY_STRING(userlist, nickname);
-PROPERTY_STRING(userlist, first_name);
-PROPERTY_STRING(userlist, last_name);
-PROPERTY_STRING(userlist, mobile);
-PROPERTY_STRING(userlist, status);
-PROPERTY_STRING(userlist, descr);
-PROPERTY_INT(userlist, ip, uint32_t);
-PROPERTY_INT(userlist, port, uint16_t);
-PROPERTY_INT(userlist, last_ip, uint32_t);
-PROPERTY_INT(userlist, last_port, uint16_t);
-PROPERTY_INT(userlist, last_seen, time_t);
-#endif
 
 #define EKG_STATUS_NA "notavail"
 #define EKG_STATUS_AVAIL "avail"

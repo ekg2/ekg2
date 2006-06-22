@@ -42,6 +42,7 @@ const char *_DATADIR = DATADIR;
 
 #include <ekg/char.h>
 #include <ekg/configfile.h>
+#include <ekg/debug.h>
 #include <ekg/metacontacts.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
@@ -49,6 +50,7 @@ const char *_DATADIR = DATADIR;
 #include <ekg/userlist.h>
 #include <ekg/scripts.h>
 #include <ekg/windows.h>
+#include <ekg/xmalloc.h>
 
 #include <stdio.h>
 #include <stdlib.h>

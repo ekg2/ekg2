@@ -24,6 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "dynstuff.h"
 #include "sessions.h"
 #include "themes.h"

@@ -28,6 +28,7 @@
 
 #include "audio.h"
 #include "commands.h"
+#include "debug.h"
 #include "dynstuff.h"
 #include "plugins.h"
 #include "themes.h"

@@ -33,6 +33,7 @@
 
 #include "char.h"
 #include "commands.h"
+#include "debug.h"
 #include "dynstuff.h"
 #include "objects.h"
 #include "plugins.h"

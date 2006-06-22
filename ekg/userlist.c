@@ -43,6 +43,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "char.h"
 #include "commands.h"
 #include "dynstuff.h"
 #ifndef HAVE_STRLCAT
@@ -59,6 +60,8 @@
 #include "windows.h"
 #include "xmalloc.h"
 #include "log.h"
+
+#include "objects.h"
 
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX

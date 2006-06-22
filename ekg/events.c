@@ -25,17 +25,18 @@
 #include <unistd.h>
 #include <time.h>
 
+#include "char.h"
+#include "commands.h"
 #include "debug.h"
 #include "events.h"
-#include "dynstuff.h"
-#include "sessions.h"
-#include "stuff.h"
-#include "themes.h"
 #include "plugins.h"
+#include "sessions.h"
 #include "userlist.h"
-#include "vars.h"
-#include "windows.h"
+#include "stuff.h"
 #include "xmalloc.h"
+
+#include "themes.h"
+#include "windows.h"
 
 list_t events = NULL;
 char **events_all = NULL;

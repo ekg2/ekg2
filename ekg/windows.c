@@ -29,13 +29,13 @@
 #include <unistd.h>
 
 #include "commands.h"
-#include "stuff.h"
+#include "dynstuff.h"
+#include "windows.h"
+#include "userlist.h"
 #include "sessions.h"
 #include "themes.h"
-#include "userlist.h"
-#include "vars.h"
+#include "stuff.h"
 #include "xmalloc.h"
-#include "windows.h"
 
 list_t windows = NULL;			/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */

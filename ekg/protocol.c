@@ -33,17 +33,22 @@
 
 #include <string.h>
 
+#include "char.h"
+#include "debug.h"
+#include "dynstuff.h"
+#include "xmalloc.h"
+
 #include "commands.h"
-#include "log.h"
 #include "emoticons.h"
-#include "msgqueue.h"
 #include "objects.h"
+#include "userlist.h"
+#include "windows.h"
+
+#include "log.h"
+#include "msgqueue.h"
 #include "protocol.h"
 #include "stuff.h"
-#include "userlist.h"
 #include "themes.h"
-#include "windows.h"
-#include "xmalloc.h"
 
 static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
 list_t dccs = NULL;

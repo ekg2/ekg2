@@ -10,11 +10,13 @@
 
 #include <ekg/scripts.h>
 
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/windows.h>
+#include <ekg/xmalloc.h>
 #include <ekg/vars.h>
 
 #undef _

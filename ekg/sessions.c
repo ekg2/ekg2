@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "dynstuff.h"
 #include "sessions.h"
 #include "stuff.h"
@@ -33,6 +34,8 @@
 #include "vars.h"
 #include "windows.h"
 #include "xmalloc.h"
+
+#include "objects.h"
 
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"

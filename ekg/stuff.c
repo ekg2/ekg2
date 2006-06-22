@@ -59,6 +59,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "commands.h"
 #include "dynstuff.h"
 #include "protocol.h"
