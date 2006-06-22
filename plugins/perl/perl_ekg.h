@@ -14,29 +14,19 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
-#define __EXTENSIONS__
-#endif
-
 #ifndef __PERL_EKG_H_
 #define __PERL_EKG_H_
 
-#include <ekg/dynstuff.h>
+#include <ekg/plugins.h>
 #include <ekg/scripts.h>
-#undef _
 
-#include <EXTERN.h>
-#include <perl.h>
-#include <XSUB.h>
 extern scriptlang_t perl_lang;
 extern plugin_t     perl_plugin;
-#define perl_private(s) (perl_private_t *) script_private_get(s)
 
 typedef struct {
-	void *tmp;
-
+	char tmp;
 } perl_private_t;
+#define perl_private(s) (perl_private_t *) script_private_get(s)
 
 /*
  * Local Variables:

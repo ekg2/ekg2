@@ -1,11 +1,30 @@
-#include "perl_ekg.h"
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
+#include <ekg/debug.h>
+#include <ekg/dynstuff.h>
+#include <ekg/scripts.h>
+#include <ekg/sessions.h>
+#include <ekg/stuff.h>
+#include <ekg/userlist.h>
+#include <ekg/windows.h>
+#include <ekg/vars.h>
+
+#include <plugins/irc/irc.h>
+#undef _
+
 #include "perl_core.h"
 #include "perl_bless.h"
+
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
 
 #define debug_bless(args...) ;
 
 void ekg2_bless_session(HV *hv, session_t *session);
-SV *ekg2_bless(int flag, int flag2, void *object);
 
 #define HAVE_IRC 1
 
@@ -161,7 +180,7 @@ void ekg2_bless_script(HV *hv, script_t *scr)
 }
 
 
-SV *ekg2_bless(int flag, int flag2, void *object)
+SV *ekg2_bless(perl_bless_t flag, int flag2, void *object)
 {
         HV *stash, *hv;
         debug_bless("BLESS: OK %d %d %x\n",  flag, flag2, object);

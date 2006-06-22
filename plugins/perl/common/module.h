@@ -3,12 +3,28 @@
 
 #undef VERSION
 
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
+#include <ekg/scripts.h>
+
+#include <ekg/dynstuff.h>
+#include <ekg/sessions.h>
+#include <ekg/stuff.h>
+#include <ekg/userlist.h>
+#include <ekg/windows.h>
+#include <ekg/vars.h>
+
+#undef _
 #include "../perl_ekg.h"
+
+#include <EXTERN.h>
+#include <perl.h>
 #include <XSUB.h>
 
 #include "../perl_bless.h"
-#include <ekg/dynstuff.h>
-#include <ekg/scripts.h>
 
 #define ekg2_boot(x) { \
         extern void boot_Ekg2__##x(pTHX_ CV *cv); \
@@ -30,8 +46,6 @@ typedef struct list	*Ekg2__Userlist;
 typedef session_param_t *Ekg2__Session__Param;
 typedef script_t	*Ekg2__Script;
 
-SV *ekg2_bless(int flag, int flag2, void *object);
-void *Ekg2_ref_object(SV *o);
 script_var_t *perl_variable_add(char *var, char *value, char *handler);
 void *perl_watch_add(int fd, int type, void *handler, void *data);
 void *perl_handler_bind(char *query_name, char *handler);
@@ -41,3 +55,4 @@ script_timer_t *perl_timer_bind(int freq, char *handler);
 int perl_timer_unbind(script_timer_t *stimer);
 void ekg2_callXS(void (*subaddr)(pTHX_ CV* cv), CV *cv, SV **mark);
 
+void *Ekg2_ref_object(SV *o);

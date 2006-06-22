@@ -25,14 +25,16 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
+#include <ekg/plugins.h>
+#include <ekg/scripts.h>
+
 #include <ekg/commands.h>
 #include <ekg/themes.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
-#include <ekg/scripts.h>
-#include <ekg/plugins.h>
+#undef _
 
-#include "perl_ekg.h"
+// #include "perl_ekg.h"
 #include "perl_core.h"
 
 int perl_theme_init();

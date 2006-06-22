@@ -1,35 +1,37 @@
 #ifndef PERL_BLESS_H
 #define PERL_BLESS_H
 
-#undef _
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/scripts.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/userlist.h>
-#include <ekg/windows.h>
-#include <ekg/vars.h>
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
 
-#include <plugins/irc/irc.h>
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
 
-/* TODO: enum */
-#define BLESS_SCRIPT 0
-#define BLESS_SESSION 1
-#define BLESS_VARIABLE 2
-#define BLESS_PLUGIN 3
-#define BLESS_WINDOW 4
-#define BLESS_FSTRING 10
-#define BLESS_COMMAND 5
-#define BLESS_SESSION_PARAM 6
-#define BLESS_TIMER 7
-#define BLESS_USER 8
-#define BLESS_LIST 11
+typedef enum {
+	BLESS_SCRIPT = 0,
+	BLESS_SESSION,
+	BLESS_VARIABLE,
+	BLESS_PLUGIN,
+	BLESS_WINDOW,
+	BLESS_COMMAND,
+	BLESS_SESSION_PARAM,
+	BLESS_TIMER,
+	BLESS_USER,
 
-#define BLESS_IRC_SERVER 20
-#define BLESS_IRC_CHANNEL 21
-#define BLESS_IRC_USER 22
-#define BLESS_IRC_CHANNUSER 23
+	BLESS_FSTRING = 10,
+	BLESS_LIST,
+
+	BLESS_IRC_SERVER = 20,
+	BLESS_IRC_CHANNEL,
+	BLESS_IRC_USER,
+	BLESS_IRC_CHANNUSER,
+} perl_bless_t;
+
+SV *ekg2_bless(perl_bless_t flag, int flag2, void *object);
+
 // Ekg2
 
 #define bless_script(var)\

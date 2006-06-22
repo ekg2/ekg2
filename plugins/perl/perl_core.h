@@ -1,9 +1,18 @@
 #ifndef PERL_CORE_H
 #define PERL_CORE_H
 
-#include <ekg/scripts.h>
-#include <ekg/xmalloc.h>
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
 
+#include <ekg/xmalloc.h>
+#define fix(s) ((s) ? (s) : "") /* xmalloc.h */
+
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
+	    
 /* syfffff irssi */
 
 #define new_pv(a) newSVpv(fix(a), xstrlen(a))
@@ -11,64 +20,10 @@
 #define is_hvref(o) \
         ((o) && SvROK(o) && SvRV(o) && (SvTYPE(SvRV(o)) == SVt_PVHV))
 
-
 #define hvref(o) \
         (is_hvref(o) ? (HV *)SvRV(o) : NULL)
 
-
-static const char *ekg_core_code =
-"# NOTE: this is printed through printf()-like function,\n"
-"# so no extra percent characters.\n"
-"\n"
-"# %%d : must be first - 1 if perl libraries are to be linked \n"
-"#       statically with irssi binary, 0 if not\n"
-"# %%s : must be second - use Irssi; use Irssi::Irc; etc..\n"
-"package Ekg2::Core;\n"
-"\n"
-"use Symbol;\n"
-"\n"
-"sub is_static {\n"
-"  return %d;\n"
-"}\n"
-"\n"
-"sub destroy {\n"
-"  eval { $_[0]->UNLOAD() if $_[0]->can('UNLOAD'); };\n"
-"  Symbol::delete_package($_[0]);\n"
-"}\n"
-"\n"
-"sub eval_data {\n"
-"  my ($data, $id) = @_;\n"
-"  destroy(\"Ekg2::Script::$id\");\n"
-"\n"
-"  my $package = \"Ekg2::Script::$id\";\n"
-"  my $eval = qq{package $package; %s sub handler { $data }};\n"
-"  {\n"
-"      # hide our variables within this block\n"
-"      my ($filename, $package, $data);\n"
-"      eval $eval;\n"
-"  }\n"
-"  die $@ if $@;\n"
-"\n"
-"  my $ret;\n"
-"  eval { $ret = $package->handler; };\n"
-"  die $@ if $@;\n"
-
-"  return $ret;\n"
-"}\n"
-"\n"
-"sub eval_file {\n"
-"  my ($filename, $id) = @_;\n"
-"\n"
-"  local *FH;\n"
-"  open FH, $filename or die \"File not found: $filename\";\n"
-"  local($/) = undef;\n"
-"  my $data = <FH>;\n"
-"  close FH;\n"
-"  local($/) = \"\\n\";\n"
-"\n"
-"  eval_data($data, $id);\n"
-"}\n"
-;
+/* syfffff ekg2 */
 
 #define PERL_HANDLER_HEADER(x) \
 	char *fullproc, *error; \
@@ -82,8 +37,6 @@ static const char *ekg_core_code =
 		SAVETMPS;\
 		PUSHMARK(sp);
 
-#define fix(s) ((s) ? (s) : "") /* xmalloc.h */
-	    
 int perl_initialize();
 int perl_finalize();
 
