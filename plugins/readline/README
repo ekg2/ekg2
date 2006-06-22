@@ -10,7 +10,6 @@ porting status
 	-> completion: +session generator.
 /* maybe let's port ncurses/completion.c to readline ? it'd be faster.. */
  -> ui: 
-   -> NO COLORS
    -> WRONG PROMPT ?
    -> and a lot of other bugs..
 away.

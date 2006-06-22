@@ -532,8 +532,8 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	char *old_prompt = NULL, *line_buf = NULL;
 	const char *p, *line = NULL;
 	string_t s = NULL;
-	char *target = w->target;
 	char *linetmp;
+	char *target = window_target(w);
 
 	if (!xstrcmp(target, "__debug"))
 		return;

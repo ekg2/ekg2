@@ -110,11 +110,74 @@ QUERY(readline_ui_window_switch) { /* window_switch */
 	return 0;
 }
 
+char *readline_change_string_t_back_to_char(char *str, short *attr) {
+        string_t st = string_init(NULL);
+        int prev = -1, prevbold = 0, prevblink = 0;
+        int i;
+
+/* ripped from perl plugin */
+/* rewrite */
+        for (i=0; i < strlen(str); i++) {
+                short chattr = attr[i];
+                int bold = 0, blink = 0;
+
+                if (chattr & 64)  bold = 1;
+		if (chattr & 256) blink = 1;
+
+/*		if (chattr & 512) underline = 1;
+		if (chattr & 1024) reverse = 1;  */
+		if (!blink && prevblink != blink && prev != -1) {
+			prev = -1;
+			string_append(st, "%n"); /* turn off blinking */
+		}
+                if (blink && (prevblink != blink || prev == -1))
+			string_append(st, "%i"); /* turn on blinking */
+
+                if (!(chattr & 128) && (prev != (chattr & 7) || prevbold != bold)) { /* change color/bold */
+			string_append_c(st, '%');
+                        switch (chattr & 7) {
+				case (0): string_append_c(st, (bold) ? 'K' : 'k'); break;
+				case (1): string_append_c(st, (bold) ? 'R' : 'r'); break;
+				case (2): string_append_c(st, (bold) ? 'G' : 'g'); break;
+				case (3): string_append_c(st, (bold) ? 'Y' : 'y'); break;
+				case (4): string_append_c(st, (bold) ? 'B' : 'b'); break;
+				case (5): string_append_c(st, (bold) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
+				case (6): string_append_c(st, (bold) ? 'C' : 'c'); break;
+				case (7): string_append_c(st, (bold) ? 'W' : 'w'); break;
+                        }
+                        prev = (chattr & 7);
+                } else if ((chattr & 128) && (prev != -1 || (!bold && prevbold != bold))) { /* reset all attributes */
+                       	string_append(st, "%n");
+			prev = -1;
+                }
+
+		if (prev == -1 && bold && bold != prevbold) {	/* mh ? */
+			string_append(st, "%T");
+		}
+
+                string_append_c(st, str[i]);
+		prevblink = blink;
+		prevbold  = bold;
+        }
+	string_append(st, "%n");	/* reset at end ? */
+	return string_free(st, 0);
+}
+
+char *readline_ui_window_print_helper(char *str, short *attr) {
+	char *ascii = readline_change_string_t_back_to_char(str, attr);
+	char *colorful = format_string(ascii);
+
+	xfree(ascii);
+	return colorful;
+}
+
 QUERY(readline_ui_window_print) {
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *l = *(va_arg(ap, fstring_t **));
+	char *str = readline_ui_window_print_helper(l->str, l->attr);
 
-	ui_readline_print(w, 1, l->str);
+	ui_readline_print(w, 1, str);
+	xfree(str);
 	return 0;
 }
 QUERY(readline_variable_changed) {
