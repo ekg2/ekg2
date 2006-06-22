@@ -30,7 +30,7 @@ typedef struct event {
         char *target;   /* uid(s), alias(es), group(s) */
         char *action;   /* action to do */
 	int prio;	/* priority of this event */
-}event_t;
+} event_t;
 
 extern list_t events;
 extern char **events_all; /* it may be help for tab complete */

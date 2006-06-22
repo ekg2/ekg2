@@ -31,6 +31,7 @@
 #include "dynstuff.h"
 #include "plugins.h"
 #include "themes.h"
+#include "stuff.h"
 #include "xmalloc.h"
 
 AUDIO_DEFINE(stream);

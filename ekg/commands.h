@@ -24,6 +24,7 @@
 #include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
+#include "themes.h"
 #include "sessions.h"
 
 // #define printq(x...) do { if (!quiet) { print(x); } } while(0)

@@ -13,10 +13,14 @@
 #include <unistd.h>
 
 #include "char.h"
-#include "stuff.h"
-#include "windows.h"
+#include "dynstuff.h"
 #include "scripts.h"
 #include "xmalloc.h"
+
+#include "commands.h"	/* commands */
+#include "protocol.h"	/* queries */
+#include "stuff.h"	/* timer */
+#include "vars.h"	/* vars */
 
 /* TODO && BUGS 
  * - cleanup.

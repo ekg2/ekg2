@@ -24,6 +24,8 @@
 #ifndef __EKG_EMOTICONS_H
 #define __EKG_EMOTICONS_H
 
+#include "dynstuff.h"
+
 typedef struct {
         char *name;
         char *value;

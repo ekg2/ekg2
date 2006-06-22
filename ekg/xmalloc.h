@@ -25,7 +25,6 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include "char.h"
-#include "stuff.h"
 
 #ifndef EKG2_WIN32_NOFUNCTION
 

@@ -20,6 +20,7 @@
 #ifndef __EKG_VARS_H
 #define __EKG_VARS_H
 
+#include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
 

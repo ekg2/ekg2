@@ -26,11 +26,11 @@
 
 #include "dynstuff.h"
 #include "sessions.h"
-#include "stuff.h"
 #include "themes.h"
+#include "stuff.h"
 #include "userlist.h"
-#include "vars.h"
-#include "windows.h"
+// #include "vars.h"
+// #include "windows.h"
 #include "xmalloc.h"
 
 #include "metacontacts.h"

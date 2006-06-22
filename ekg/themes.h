@@ -20,15 +20,14 @@
 #ifndef __EKG_THEMES_H
 #define __EKG_THEMES_H
 
-#include "char.h"
-#include "sessions.h"
-
-#include "dynstuff.h"
-
 #include "gettext.h" 
-
 #define _(a) gettext(a)
 #define N_(a) gettext_noop(a)
+
+#include "char.h"
+#include "dynstuff.h"
+#include "sessions.h"
+#include "stuff.h"
 
 struct format {
 	CHAR_T *name;

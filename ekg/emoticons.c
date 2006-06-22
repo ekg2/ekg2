@@ -24,14 +24,11 @@
 #include "ekg2-config.h"
 
 #include <sys/types.h>
-
 #include <stdio.h>
-#include <string.h>
 
 #include "dynstuff.h"
 #include "emoticons.h"
 #include "stuff.h"
-#include "userlist.h"
 #include "xmalloc.h"
 
 list_t emoticons = NULL;
@@ -169,7 +166,7 @@ char *emoticon_expand(const char *s)
 			e = l->data;
 			nn = xstrlen(e->name);
 			if (ns >= nn)
-				ret = strncmp(ss, e->name, nn);
+				ret = xstrncmp(ss, e->name, nn);
 		}
 
 		if (l) {
@@ -193,7 +190,7 @@ char *emoticon_expand(const char *s)
 			e = l->data;
 			n = xstrlen(e->name);
 			if (ns >= n)
-				ret = strncmp(ss, e->name, n);
+				ret = xstrncmp(ss, e->name, n);
 		}
 
 		if (l) {

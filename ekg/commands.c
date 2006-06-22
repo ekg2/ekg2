@@ -71,11 +71,11 @@
 #endif
 
 #ifdef __FreeBSD__
-#include <kvm.h>    /* kvm_ funcs */
-#include <limits.h> /* _POSIX2_LINE_MAX */
-#include <sys/param.h>
-#include <sys/sysctl.h> /* KERN_PROC_PID */
-#include <sys/user.h>
+# include <kvm.h>		/* kvm_ funcs */
+# include <limits.h>		/* _POSIX2_LINE_MAX */
+# include <sys/param.h>
+# include <sys/sysctl.h>	/* KERN_PROC_PID */
+# include <sys/user.h>
 #endif
 
 #include "char.h"

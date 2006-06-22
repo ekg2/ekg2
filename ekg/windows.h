@@ -24,6 +24,7 @@
 #include "ekg2-config.h"
 
 #include "commands.h"
+#include "dynstuff.h"
 #include "sessions.h"
 #include "themes.h"
 
