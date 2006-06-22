@@ -18,6 +18,7 @@
 #ifndef __IRC_PIPL_H
 #define __IRC_PIPL_H
 
+#include <ekg/sessions.h>
 #include "irc.h"
 
 people_t *irc_find_person(list_t p, char *nick);

@@ -23,7 +23,6 @@
 #include <ekg/xmalloc.h>
 
 #include "irc.h"
-#include "misc.h"
 #include "autoacts.h"
 
 extern plugin_t irc_plugin; 

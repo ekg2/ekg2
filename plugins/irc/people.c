@@ -19,10 +19,11 @@
 #include <time.h>
 #include <sys/time.h>
 
+#define __EKG_STUFF_H
+
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/sessions.h>
-#include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 

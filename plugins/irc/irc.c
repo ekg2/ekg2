@@ -71,7 +71,6 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
-#include "misc.h"
 #include "irc.h"
 #include "people.h"
 #include "input.h"
@@ -1016,7 +1015,7 @@ COMMAND(irc_command_msg)
 		xosd_is_priv = xstrlen(__msg);
 		isour = 510 - (prv?7:6) - 6 - xstrlen(uid_full+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
 		/* 6 = 3xspace + '!' + 2xsemicolon; -> [:nick!ident@hostident PRIVMSG dest :mesg] */
-		while (strlen(__mtmp) > isour && __mtmp < __msg + xosd_is_priv)
+		while (xstrlen(__mtmp) > isour && __mtmp < __msg + xosd_is_priv)
 		{
 			xosd_to_us = __mtmp[isour];
 			__mtmp[isour] = '\0';
@@ -1391,9 +1390,9 @@ COMMAND(irc_command_names)
 				continue;
 			++lvl_total[lvl];
 
-			nickpad[nplen -1 -strlen((ulist->uid + 4))] = '\0';
+			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = '\0';
 			string_append(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad));
-			nickpad[nplen -1 -strlen((ulist->uid + 4))] = 160;
+			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = 160;
 			++count;
 		}
 		debug("---separator---\n");

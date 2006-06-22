@@ -120,7 +120,7 @@ and the prefix.
 	debug("\n");
 #endif
 
-	if (q[1] != NULL && strlen(q[1])>1) {
+	if (xstrlen(q[1]) > 1) {
 		if(!gatoi(q[1], &ecode)) {
 			
 			/* for perl */
@@ -195,7 +195,7 @@ char *irc_make_banmask(session_t *session, const char *nick, const char *ident, 
 		 *  dot_in_ip6_addr = yes;
 		 */ 
 		if (host[xstrlen(host)-1] == '.') 
-			host[strlen(host)-1] = 0;
+			host[xstrlen(host)-1] = 0;
 			
 		if (inet_pton(AF_INET6, host, &buf) > 0) {
 			family = AF_INET6;
@@ -308,7 +308,7 @@ IRC_COMMAND(irc_c_init)
 					xfree(SOP(k));
 					SOP(k) = xstrdup(xstrchr(param[i],
 								'=')+1);
-					if (strlen(SOP(k))==0) {
+					if (xstrlen(SOP(k))==0) {
 						xfree(SOP(k));
 						SOP(k) = NULL;
 					}
@@ -444,7 +444,7 @@ IRC_COMMAND(irc_c_error)
 			break;
 		case 376:
 			/* first we join */
-			if (session_get(s, "AUTO_JOIN") && strlen(session_get(s, "AUTO_JOIN")))
+			if (xstrlen(session_get(s, "AUTO_JOIN")))
 				watch_write(j->send_watch, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
 			/* G->dj: someday, someday ;-) 
 			 */

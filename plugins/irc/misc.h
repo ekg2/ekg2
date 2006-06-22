@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include <ekg/plugins.h>
+#include <ekg/sessions.h>
 
 #include "irc.h"
 
@@ -53,10 +54,6 @@ typedef struct {
 	Irc_Cmd		handler;
 	int 		future;
 } IrcCommand;
-
-int irc_parse_line(session_t *s, char *buf, int fd);
-char *irc_make_banmask(session_t *session, const char *nick, 
-		const char *ident, const char *hostname);
 
 IRC_COMMAND(irc_c_init);
 IRC_COMMAND(irc_c_invite);

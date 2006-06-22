@@ -24,8 +24,10 @@
 				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
 			itoa(y->family), error ? strerror(error) : "")
 
+#include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
+#include <ekg/windows.h>
 
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, SERVOPTS };
@@ -113,7 +115,7 @@ typedef struct {
 #define IRC4 "irc:"
 #define IRC3 "irc"
 
-plugin_t irc_plugin;
+extern plugin_t irc_plugin;
 
 void irc_handle_disconnect(session_t *s, const char *reason, int type);
 COMMAND(irc_command_disconnect);
@@ -131,6 +133,11 @@ char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
       char ***v, int pr, int checkchan);
 
 #define irc_write(s, args...) watch_write((s && s->priv) ? irc_private(s)->send_watch : NULL, args);
+
+/* misc.c */
+int irc_parse_line(session_t *s, char *buf, int fd);
+char *irc_make_banmask(session_t *session, const char *nick, 
+		const char *ident, const char *hostname);
 
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
 
