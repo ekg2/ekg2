@@ -909,6 +909,9 @@ int main(int argc, char **argv)
         if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("ncurses"), -254, 1);
 #endif
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("gtk"), -254, 1);	/* XXX, HAVE_GTK ? */
+#ifdef HAVE_READLINE
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("readline"), -254, 1);
+#endif
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
