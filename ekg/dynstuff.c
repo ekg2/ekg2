@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "char.h"
-#include "stuff.h"
 #include "dynstuff.h"
 #include "xmalloc.h"
 
@@ -932,7 +931,7 @@ int array_item_contains(char **array, const char *string, int casesensitive)
         for (i = 0; array[i]; i++) {
                 if (casesensitive && xstrstr(array[i], string))
                         return 1;
-                if (!casesensitive && strcasestr(array[i], string))
+                if (!casesensitive && xstrcasestr(array[i], string))
                         return 1;
         }
 
@@ -947,7 +946,7 @@ int wcs_array_item_contains(CHAR_T **array, const CHAR_T *string, int casesensit
         for (i = 0; array[i]; i++) {
                 if (casesensitive && xwcsstr(array[i], string))
                         return 1;
-                if (!casesensitive && wcscasestr(array[i], string))
+                if (!casesensitive && xwcscasestr(array[i], string))
                         return 1;
         }
 

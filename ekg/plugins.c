@@ -31,16 +31,17 @@
 #  include <winbase.h>
 #endif
 
+#include "char.h"
 #include "commands.h"
-#include "events.h"
 #include "dynstuff.h"
 #include "objects.h"
 #include "plugins.h"
+#include "userlist.h"
 #include "stuff.h"
 #include "vars.h"
-#include "xmalloc.h"
-#include "userlist.h"
 #include "themes.h"
+#include "xmalloc.h"
+
 
 #if !defined(va_copy) && defined(__va_copy)
 #define va_copy(DST,SRC) __va_copy(DST,SRC)

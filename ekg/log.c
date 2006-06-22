@@ -23,22 +23,12 @@
 
 #include "ekg2-config.h"
 
-#define _XOPEN_SOURCE 600
 #include <sys/types.h>
-#include <sys/stat.h>
+#include <time.h>
 
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include "log.h"
-#ifdef HAVE_ZLIB_H
-#  include <zlib.h>
-#endif
-
+#include "char.h"
 #include "dynstuff.h"
-#include "stuff.h"
+#include "log.h"
 #include "xmalloc.h"
 
 #ifndef PATH_MAX

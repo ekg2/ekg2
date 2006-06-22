@@ -31,12 +31,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ekg/commands.h>
-#include <ekg/dynstuff.h>
-#include <ekg/msgqueue.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/xmalloc.h>
+#include "char.h"
+#include "dynstuff.h"
+#include "commands.h"
+#include "msgqueue.h"
+#include "sessions.h"
+#include "stuff.h"
+#include "xmalloc.h"
 
 list_t msg_queue = NULL;
 

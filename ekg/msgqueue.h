@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include "char.h"
 #include "dynstuff.h"
 
 typedef struct {

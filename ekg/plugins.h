@@ -22,6 +22,7 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+
 #include "char.h"
 #include "dynstuff.h"
 #include "sessions.h"
