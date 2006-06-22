@@ -18,11 +18,9 @@
  */
 
 #ifndef __PYTHON_CONFIG_H_
-
 #define __PYTHON_CONFIG_H_
 
 #include <Python.h>
-#include <ekg/dynstuff.h>
 
 typedef struct
 {

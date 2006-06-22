@@ -34,11 +34,12 @@
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
 #include <ekg/userlist.h>
-#include <ekg/vars.h>
 #include <ekg/xmalloc.h>
+#include <ekg/stuff.h>
+#include <ekg/vars.h>
+
+#include <ekg/themes.h>
 
 typedef struct {
         char *uid;
@@ -52,7 +53,8 @@ static char *config_sms_number = NULL;
 static char *config_sms_app = NULL;
 static int config_sms_max_length = 100;
 
-PLUGIN_DEFINE(sms, PLUGIN_GENERIC, NULL);
+static int sms_theme_init();
+PLUGIN_DEFINE(sms, PLUGIN_GENERIC, sms_theme_init);
 #ifdef EKG2_WIN32_SHARED_LIB
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
@@ -348,12 +350,6 @@ int sms_plugin_init(int prio)
 
         query_connect(&sms_plugin, "session-status", sms_session_status, NULL);
 
-        format_add("sms_error", _("%! Error sending SMS: %1\n"), 1);
-        format_add("sms_unknown", _("%! %1 not a cellphone number\n"), 1);
-        format_add("sms_sent", _("%> SMS to %T%1%n sent\n"), 1);
-        format_add("sms_failed", _("%! SMS to %T%1%n not sent\n"), 1);
-        format_add("sms_away", "<ekg:%1> %2", 1);
-
         return 0;
 }
 
@@ -362,6 +358,15 @@ static int sms_plugin_destroy()
         plugin_unregister(&sms_plugin);
 
         return 0;
+}
+
+static int sms_theme_init() {
+        format_add("sms_error", _("%! Error sending SMS: %1\n"), 1);
+        format_add("sms_unknown", _("%! %1 not a cellphone number\n"), 1);
+        format_add("sms_sent", _("%> SMS to %T%1%n sent\n"), 1);
+        format_add("sms_failed", _("%! SMS to %T%1%n not sent\n"), 1);
+        format_add("sms_away", "<ekg:%1> %2", 1);
+	return 0;
 }
 
 

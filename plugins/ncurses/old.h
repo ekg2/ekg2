@@ -3,9 +3,10 @@
 
 #include "ecurses.h"
 
-#include "ekg/themes.h"
-#include "ekg/windows.h"
-#include "ekg/char.h"
+#include <ekg/char.h>
+#include <ekg/plugins.h>
+#include <ekg/themes.h>
+#include <ekg/windows.h>
 
 void ncurses_init();
 void ncurses_deinit();

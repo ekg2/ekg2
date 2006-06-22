@@ -50,6 +50,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
+#include <ekg/xmalloc.h>
 
 #include "ioctld.h"
 

@@ -6,13 +6,16 @@
 #include <ekg2-config.h>
 
 #include <ekg/char.h>
+#include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
 
-#include <expat.h>
+#ifdef HAVE_EXPAT_H
+ #include <expat.h>
+#endif
 
 #ifdef HAVE_GNUTLS
-#include <gnutls/gnutls.h>
+# include <gnutls/gnutls.h>
 #endif
 
 #define DEFAULT_CLIENT_NAME "EKG2 -- http://www.ekg2.org"
@@ -135,12 +138,10 @@ typedef struct {
 	session_t *session;
 	char roster_retrieved;
 } jabber_handler_data_t;
-
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
 
-plugin_t jabber_plugin;
+extern plugin_t jabber_plugin;
 extern char *jabber_default_search_server;
-
 
 void jabber_register_commands(void);
 
@@ -171,7 +172,7 @@ time_t jabber_try_xdelay(const char *stamp);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
 #ifdef HAVE_GNUTLS
-WATCHER(jabber_handle_write);
+ WATCHER(jabber_handle_write);
 #endif
 
 void xmlnode_handle_start(void *data, const char *name, const char **atts);

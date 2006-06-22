@@ -23,11 +23,14 @@
 #include <ekg/win32.h>
 
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #ifndef NO_POSIX_SYSTEM
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/ioctl.h>
+ #include <sys/socket.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <sys/ioctl.h>
 #endif
 
 #include <errno.h>
@@ -41,24 +44,20 @@
 #include <netdb.h>
 #endif
 
-#ifdef HAVE_EXPAT_H
-#  include <expat.h>
-#endif
-
+#include <ekg/char.h>
 #include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
-#include <ekg/protocol.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
 #include <ekg/userlist.h>
+#include <ekg/sessions.h>
+#include <ekg/xmalloc.h>
+
+/* ... */
+#include <ekg/protocol.h>
+#include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/vars.h>
-#include <ekg/xmalloc.h>
 #include <ekg/log.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "jabber.h"
 

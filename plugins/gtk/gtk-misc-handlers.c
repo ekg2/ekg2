@@ -6,6 +6,9 @@
  */
 
 #include <ekg2-config.h>
+
+#include <stdio.h>
+
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 

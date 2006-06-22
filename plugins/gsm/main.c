@@ -31,6 +31,7 @@
 #endif
 
 #include <ekg/audio.h>
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/xmalloc.h>
@@ -120,6 +121,7 @@ fail:
 			">gsm:__XXXIN",		"gsm:*",
 			">GSM:__XXXOUT",	"pcm:8000,16,1",
 			NULL, }; 
+		return arr;
 	} else { debug("[gsm_codec_control] UNIMP\n"); } 
 	va_end(ap); 
 	return ac;

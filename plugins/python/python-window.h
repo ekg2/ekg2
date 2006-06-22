@@ -22,7 +22,7 @@
 #define __PYTHON_WINDOW_H_
 
 #include <Python.h>
-#include <ekg/dynstuff.h>
+#include <ekg/windows.h>
 
 typedef struct
 {

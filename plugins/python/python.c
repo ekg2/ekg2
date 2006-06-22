@@ -37,15 +37,17 @@
 #include <node.h>
 
 #include <ekg/commands.h>
-#include <ekg/dynstuff.h>
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
+#include <ekg/scripts.h>
+#include <ekg/xmalloc.h>
+
+#include <ekg/dynstuff.h>
 #include <ekg/protocol.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
-#include <ekg/xmalloc.h>
-#include <ekg/scripts.h>
 
 /**
  * python_plugin

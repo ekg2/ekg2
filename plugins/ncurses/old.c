@@ -36,6 +36,10 @@
 #endif
 
 #include <ekg/char.h>
+#include <ekg/debug.h>
+#include <ekg/windows.h>
+#include <ekg/xmalloc.h>
+
 #include <ekg/commands.h>
 #include <ekg/sessions.h>
 #include <ekg/plugins.h>
@@ -43,8 +47,6 @@
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
 
 #include "old.h"
 #include "completion.h"

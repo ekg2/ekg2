@@ -39,6 +39,7 @@
 #endif
 
 #include <stdint.h>
+
 #include <ekg/char.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -51,6 +52,7 @@
 #include <ekg/vars.h>
 #include <ekg/windows.h>
 #include <ekg/userlist.h>
+#include <ekg/xmalloc.h>
 
 #include <sys/stat.h>
 #ifndef NO_POSIX_SYSTEM

@@ -22,7 +22,6 @@
 #define __PYTHON_PLUGIN_H_
 
 #include <Python.h>
-#include <ekg/dynstuff.h>
 
 typedef struct
 {

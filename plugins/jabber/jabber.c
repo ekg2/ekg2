@@ -43,10 +43,6 @@
 #include <netdb.h>
 #endif
 
-#ifdef HAVE_EXPAT_H
-#  include <expat.h>
-#endif
-
 #ifdef __sun      /* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif

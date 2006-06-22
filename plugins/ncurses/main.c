@@ -25,15 +25,16 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
-#include <ekg/stuff.h>
-#include <ekg/vars.h>
 #include <ekg/windows.h>
+#include <ekg/vars.h>
+#include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/xmalloc.h>
 
-#include "bindings.h"
 #include "ecurses.h"
+#include "bindings.h"
 #include "old.h"
 #include "contacts.h"
 #include "mouse.h"

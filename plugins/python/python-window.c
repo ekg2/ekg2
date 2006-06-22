@@ -29,15 +29,17 @@
 #include <string.h>
 #include <Python.h>
 
-#include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
+#include <ekg/windows.h>
+
+#include <ekg/commands.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
-#include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
 #include "python.h"

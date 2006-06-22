@@ -22,11 +22,11 @@
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
+#include <ekg/userlist.h>
+#include <ekg/protocol.h>
 #include <ekg/themes.h>
 #include <ekg/stuff.h>
 #include <ekg/vars.h>
-#include <ekg/userlist.h>
-#include <ekg/protocol.h>
 #include <ekg/xmalloc.h>
 
 #include <xosd.h>
@@ -408,9 +408,6 @@ static int xosd_plugin_destroy()
 	plugin_unregister(&xosd_plugin);
 	return 0;
 }
-
-
-
 
 /*
  * Local Variables:

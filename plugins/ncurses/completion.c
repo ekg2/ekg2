@@ -25,18 +25,21 @@
 #include <dirent.h>
 
 #include "ekg2-config.h"
+
 #ifndef HAVE_SCANDIR
 #  include "compat/scandir.h"
 #endif
 
-#include <ekg/dynstuff.h>
-#include <ekg/xmalloc.h>
+#include <ekg/char.h>
 #include <ekg/commands.h>
-#include <ekg/stuff.h>
+#include <ekg/debug.h>
+#include <ekg/dynstuff.h>
+#include <ekg/events.h>
 #include <ekg/metacontacts.h>
+#include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
-#include <ekg/events.h>
+#include <ekg/xmalloc.h>
 
 #include "old.h"
 

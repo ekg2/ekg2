@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>

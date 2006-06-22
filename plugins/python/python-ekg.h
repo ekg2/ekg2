@@ -18,7 +18,6 @@
  */
 
 #ifndef __PYTHON_EKG_H_
-
 #define __PYTHON_EKG_H_
 
 #include <Python.h>

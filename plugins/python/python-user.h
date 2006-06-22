@@ -22,7 +22,6 @@
 #define __PYTHON_USER_H_
 
 #include <Python.h>
-#include <ekg/dynstuff.h>
 
 typedef struct {
 	PyObject_HEAD

@@ -29,8 +29,10 @@
 #include <string.h>
 #include <Python.h>
 
-#include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
+
+#include <ekg/commands.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/stuff.h>
@@ -43,7 +45,6 @@
 
 #include "python.h"
 #include "python-ekg.h"
-#include "python-config.h"
 #include "python-session.h"
 #include "python-plugin.h"
 #include "python-window.h"

@@ -21,6 +21,7 @@
 #define __PYTHON_H_
 
 #include <Python.h>
+#include <ekg/scripts.h>
 
 #if !defined(Py_RETURN_NONE) // New in Python 2.4
 static inline PyObject* doPy_RETURN_NONE()
@@ -39,9 +40,6 @@ static inline PyObject* doPy_RETURN_FALSE()
 {Py_INCREF(Py_False); return Py_False;}
 #define Py_RETURN_FALSE return doPy_RETURN_FALSE()
 #endif
-
-#include <ekg/dynstuff.h>
-#include <ekg/scripts.h>
 
 extern scriptlang_t python_lang;
 

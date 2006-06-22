@@ -29,9 +29,11 @@
 #include <string.h>
 #include <Python.h>
 
+#include <ekg/debug.h>
+#include <ekg/plugins.h>
+
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>

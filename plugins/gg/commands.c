@@ -58,6 +58,7 @@
 #endif
 
 #include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/msgqueue.h>
 #include <ekg/protocol.h>
