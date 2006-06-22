@@ -723,6 +723,7 @@ const char *current_prompt()
 }
 
 int my_loop() {
+	extern void ekg_loop();
 	ekg_loop();
 	return 0;
 }

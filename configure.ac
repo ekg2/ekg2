@@ -91,9 +91,9 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 dnl AC_CONFIG_SUBDIRS([libltdl])
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in plugins/readline/Makefile])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in])
 AC_CONFIG_FILES([ekg/ekg2-config])
-PLUGINS="logs mail rc sms pcm irc readline"
+PLUGINS="logs mail rc sms pcm irc"
 
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
@@ -305,12 +305,23 @@ fi
 AC_ARG_WITH(gtk,
 	[  --without-gtk        Compile without gtk2 support (gtk plugin)])
 
-
 if test "x$with_gtk" != "xno"; then
 	AC_CHECK_GTK2([], [have_gtk="yes"], [have_gtk=x"no"], []) 
 	if test "x$have_gtk" = "xyes"; then
 		AC_CONFIG_FILES([plugins/gtk/Makefile])
 		PLUGINS="$PLUGINS gtk"
+	fi
+fi
+
+AC_ARG_WITH(readline,
+	[  --without-readline  Compile without readline support (readline plugin)])
+
+if test "x$with_readline" != "no"; then
+	AC_CHECK_READLINE
+
+	if test "x$have_readline" = "xyes"; then
+		AC_CONFIG_FILES([plugins/readline/Makefile])
+		PLUGINS="$PLUGINS readline"
 	fi
 fi
 
@@ -463,6 +474,12 @@ if test "x$have_ncurses" = "xyes"; then
 	echo " - ncurses:   enabled"
 else
 	echo " - ncurses:   disabled"
+fi
+
+if test "x$have_readline" = "xyes"; then
+	echo " - readline:  enabled";
+else
+	echo " - readline:  disabled";
 fi
 
 if test "x$have_libgsm" = "xyes"; then
