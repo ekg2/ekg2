@@ -148,6 +148,12 @@ QUERY(ekg2_readline_loop) {
 	return -1;
 }
 
+QUERY(readline_ui_is_initialized) {
+	int *tmp = va_arg(ap, int *);
+	*tmp = 1;
+	return 0;
+}
+
 QUERY(readline_beep) { /* ui_readline_beep() */
 	printf("\a");
 	fflush(stdout);
@@ -172,6 +178,7 @@ int readline_plugin_init(int prio) {
 	plugin_register(&readline_plugin, prio);
 
 	query_connect(&readline_plugin, "ui-beep", readline_beep, NULL);
+	query_connect(&readline_plugin, "ui-is-initialized", readline_ui_is_initialized, NULL);
 	query_connect(&readline_plugin, "ui-window-new", readline_ui_window_new, NULL);
 	query_connect(&readline_plugin, "ui-window-switch", readline_ui_window_switch, NULL);
 	query_connect(&readline_plugin, "ui-window-kill", readline_ui_window_kill, NULL);

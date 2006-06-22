@@ -822,7 +822,7 @@ int ui_readline_loop()
 	}
 		
 	/* je¶li linia nie jest pusta, dopisz do historii */
-	if (*line)
+	if (line && *line)
 		add_history(line);
 	
 	pager_lines = 0;
