@@ -48,7 +48,7 @@ CODEC_CONTROL(pcm_codec_control) {
 
 	va_start(ap, way);
 
-	if (way == AUDIO_CONTROL_INIT) {		/* pcm_codec_init() */
+	if (type == AUDIO_CONTROL_INIT) {	/* pcm_codec_init() */
 		char *from, *to;
 		char *attr;
 		int valid = 1;
@@ -93,31 +93,32 @@ CODEC_CONTROL(pcm_codec_control) {
 		ac->private 	= priv;
 fail:
 		xfree(from); xfree(to);
-	} else if (way == AUDIO_CONTROL_DEINIT) {	/* pcm_codec_destroy() */
+	} else if (type == AUDIO_CONTROL_DEINIT) {	/* pcm_codec_destroy() */
 		ac = *(va_arg(ap, audio_codec_t **));
 		if (ac) {
 			xfree(ac->private);
 			xfree(ac);
 		}
 		ac = NULL;
-	} else if (way == AUDIO_CONTROL_HELP) {		/* pcm_codec_capabilities() */ 
-		debug("[pcm_codec_control] known atts:\n"
-			"CODE: 		--from pcm --to pcm\n"
-			"DECODE:	--from pcm --to pcm\n"
+	} else if (type == AUDIO_CONTROL_HELP) {		/* pcm_codec_capabilities() */ 
+		
+		static char *arr[] = { 
+			">pcm",	"pcm:ifreq pcm:ibps pcm:ichannels",	/* if INPUT we request for:  ifreq, ibps & ichannels */
+			"<pcm", "pcm:ofreq pcm:obps pcm:ochannels",	/* if OUTPUT we request for: ofreq, obps & ochannels */
 
-			"	--freq		[CODE/DECODE]\n"
-			"	--ifreq 	[CODE]\n"
-			"	--ofreq		[DECODE]\n"
+			"-pcm:freq",		"",
+			"-pcm:bps",		"8 16",
+			"-pcm:channels", 	"1 2",
+			
+			">pcm:ifreq",		"",
+			">pcm:ibps",		"8 16",
+			">pcm:ichannels",	"1 2",
 
-			"	--bps   8 16	[CODE/DECODE]\n"
-			"	--ibps  8 16	[CODE]\n"
-			"	--obps  8 16	[DECODE]\n"
-
-			"	--channels 1 2	[CODE/DECODE]\n"
-			"	--ichannels 1 2 [CODE]\n"
-			"	--ochannels 1 2 [DECODE]\n"
-
-			"	this codec_t can work in two ways (code/ decode)\n");
+			"<pcm:ofreq",		"",
+			"<pcm:obps",		"8 16",
+			"<pcm:ochannels",	"1 2",
+			NULL, };
+		return arr;
 	} 
 	va_end(ap);
 	return ac;
@@ -216,11 +217,11 @@ static QUERY(pcm_codec_process)
 	return -1;
 }
 
-CODEC_RECODE(gsm_codec_code) {
+CODEC_RECODE(pcm_codec_code) {
 	return pcm_codec_process(type, CODEC_CODE, input, output, data);
 }
 
-CODEC_RECODE(gsm_codec_decode) {
+CODEC_RECODE(pcm_codec_decode) {
 	return pcm_codec_process(type, CODEC_DECODE, input, output, data);
 }
 

@@ -49,7 +49,7 @@ CODEC_CONTROL(gsm_codec_control) {
 	va_list ap;
 	va_start(ap, way);
 
-	if (way == AUDIO_CONTROL_INIT) {			/* gsm_codec_init() */
+	if (type == AUDIO_CONTROL_INIT) {			/* gsm_codec_init() */
 		char *attr;
 		char *from = NULL, *to = NULL;
 		int with_ms = 0;
@@ -64,7 +64,7 @@ CODEC_CONTROL(gsm_codec_control) {
 			debug("[gsm_codec_control] attr: %s value: %s\n", attr, val);
 			if (!xstrcmp(attr, "from"))		from	= xstrdup(val);
 			else if (!xstrcmp(attr, "to"))		to	= xstrdup(val);
-			else if (!xstrcmp(attr, "with-ms"))	with_ms = 1;
+			else if (!xstrcmp(attr, "with-ms") && atoi(val)) with_ms = 1;
 			/* XXX birate, channels */
 		}
 
@@ -99,7 +99,7 @@ CODEC_CONTROL(gsm_codec_control) {
 		ac->private	= priv;
 fail:
 		xfree(from); xfree(to);
-	} else if (way == AUDIO_CONTROL_DEINIT) {		/* gsm_codec_destroy() */
+	} else if (type == AUDIO_CONTROL_DEINIT) {		/* gsm_codec_destroy() */
 		gsm_private_t *priv = NULL;
 
 		ac = *(va_arg(ap, audio_codec_t **));
@@ -109,12 +109,17 @@ fail:
 		xfree(priv);
 		xfree(ac);
 		ac = NULL;
-	} else if (way == AUDIO_CONTROL_HELP) {
-		debug("[gsm_codec_control] known atts:\n"
-			"CODE: 		--from pcm:8000,16,1	--to gsm:*\n"
-			"DECODE:	--from gsm:*		--to pcm:8000,16,1\n"
-			"	--with-ms\n"
-			"	this codec_t can work in two ways (code/ decode)\n");
+	} else if (type == AUDIO_CONTROL_HELP) {
+		static char *arr[] = { 
+			"-gsm",			"",
+			"-gsm:with-ms",		"0 1",
+					/* THINK ABOUT NAMING CONVINECE? */
+			"<gsm:__XXXIN",		"pcm:8000,16,1",
+			"<gsm:__XXXOUT",	"gsm:*",
+
+			">gsm:__XXXIN",		"gsm:*",
+			">GSM:__XXXOUT",	"pcm:8000,16,1",
+			NULL, }; 
 	} else { debug("[gsm_codec_control] UNIMP\n"); } 
 	va_end(ap); 
 	return ac;

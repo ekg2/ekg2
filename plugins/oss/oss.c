@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <linux/soundcard.h>
 #include <unistd.h>
@@ -14,8 +15,6 @@ int oss_voice_fd = -1;
 int usage = 0;
 int loop_usage;
 
-char oss_buf_loop[4097];
-
 PLUGIN_DEFINE(oss, PLUGIN_AUDIO, NULL);
 AUDIO_DEFINE(oss);
 
@@ -30,13 +29,25 @@ typedef struct {
 } oss_private_t;
 
 WATCHER(oss_audio_read) {
-	int len;
+	char *buf;
+
+	oss_private_t *priv = data;
+	int len, maxlen;
+
 	if (type == 1) {
 		return 0;
 	}
-	len = read(fd, oss_buf_loop, 4096);
+
+	if (!data) return -1;
+	maxlen = priv->bufsize;
+
+	buf = xmalloc(maxlen);
+
+	len = read(fd, buf, maxlen);
 	debug("OSS READ: %d bytes from %d\n", len, fd);
-	stream_buffer_resize((stream_buffer_t *) watch, oss_buf_loop, len);
+	stream_buffer_resize((stream_buffer_t *) watch, buf, len);
+
+	xfree(buf);
 	return len;
 }
 
@@ -46,9 +57,8 @@ WATCHER(oss_audio_write) {
 	int len, maxlen;
 	if (type == 1) return 0;
 
-	if (!data)	maxlen = buf->len; 	/* FUUUJ */
-	else		maxlen = priv->bufsize;
-
+	if (!data) return -1;
+	maxlen = priv->bufsize;
 	if (maxlen > buf->len) maxlen = buf->len;
 
 	len = write(fd, buf->buf, maxlen);
@@ -65,25 +75,65 @@ AUDIO_CONTROL(oss_audio_control) {
 	if (type == AUDIO_CONTROL_MODIFY) { debug("stream_audio_control() AUDIO_CONTROL_MODIFY called but we not support it right now, sorry\n"); return NULL; }
 
 	va_start(ap, way);
+	if (type == AUDIO_CONTROL_SET) {
+		audio_codec_t *co;
+		audio_io_t *out;
+		char *directory = NULL;
 
-	if (type == AUDIO_CONTROL_INIT) {
+		aio	= *(va_arg(ap, audio_io_t **));
+		co	= *(va_arg(ap, audio_codec_t **));
+		out	= *(va_arg(ap, audio_io_t **));
+
+		if (!aio || !out) return NULL;
+
+		if (way == AUDIO_READ)	directory = "__input";
+		if (way == AUDIO_WRITE) directory = "__output";
+	/* :) */
+		if (co) 
+			co->c->control_handler(AUDIO_CONTROL_MODIFY, AUDIO_RDWR, &co, directory, "oss");
+			out->a->control_handler(AUDIO_CONTROL_MODIFY, AUDIO_WRITE, &out, directory, "oss");
+
+		return (void *) 1;
+	}
+
+	if (type == AUDIO_CONTROL_INIT || type == AUDIO_CONTROL_GET) {
 		char *attr;
 		char *device = NULL;
 
 		char *pathname;
 		int voice_fd, value;
-		oss_private_t *priv = xmalloc(sizeof(oss_private_t));
+		oss_private_t *priv = NULL; 
+		
+		if (type == AUDIO_CONTROL_GET) {
+			 aio = *(va_arg(ap, audio_io_t **));
+			 if (!aio) goto fail;
+			 priv = aio->private;
+
+		} else	 priv = xmalloc(sizeof(oss_private_t));
 
 		while ((attr = va_arg(ap, char *))) {
-			char *val = va_arg(ap, char *);
-			int v;
+			if (type == AUDIO_CONTROL_GET) {
+				char **value = va_arg(ap, char **);
+				debug("[oss_audio_control AUDIO_CONTROL_GET] attr: %s poi: 0x%x\n", attr, value);
 
-			debug("[oss_audio_control] attr: %s value: %s\n", attr, val);
-			if (!xstrcmp(attr, "device")) device = xstrdup(val);
-			else if (!xstrcmp(attr, "freq"))	{ v = atoi(val);	priv->freq = v;		} 
-			else if (!xstrcmp(attr, "sample"))	{ v = atoi(val);	priv->sample = v;	} 
-			else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->channels = v;	} 
+				if (!xstrcmp(attr, "freq"))		*value = xstrdup(itoa(priv->freq));
+				else if (!xstrcmp(attr, "sample"))	*value = xstrdup(itoa(priv->sample));
+				else if (!xstrcmp(attr, "channels"))	*value = xstrdup(itoa(priv->channels));
+				else					*value = NULL;
+			} else { 
+				char *val = va_arg(ap, char *);
+				int v;
+				debug("[oss_audio_control AUDIO_CONTROL_INIT] attr: %s value: %s\n", attr, val);
+
+				if (!xstrcmp(attr, "device"))		device = xstrdup(val);
+				else if (!xstrcmp(attr, "freq"))	{ v = atoi(val);	priv->freq = v;		} 
+				else if (!xstrcmp(attr, "sample"))	{ v = atoi(val);	priv->sample = v;	} 
+				else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->channels = v;	} 
+			}
 		}
+
+		if (type == AUDIO_CONTROL_GET) return aio;
+
 		pathname = (device) ? device : config_audio_device;
 
 		if (!device && (oss_voice_fd != -1)) { 
@@ -141,10 +191,14 @@ fail:
 		xfree(aio);
 		aio = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {
-		debug("[stream_audio_control] known atts:\n"
-			"	--device <DEV>>\n"
-			" ....\n"
-			"this audio_t can WORK in two-ways READ/WRITE\n");
+		static char *arr[] = { 
+			"-oss",		"",	/* bidirectional, no required params	*/
+			"-oss:device",	"*",	/* bidirectional, name of device	*/
+			"-oss:freq",	"*",	/* bidirectional, freq.			*/
+			"-oss:sample",	"*",	/* bidirectional, sample		*/
+			"-oss:channels","*",	/* bidirectional, number of channels	*/
+			NULL, };
+		return arr;
 	}
 
 	va_end(ap);
