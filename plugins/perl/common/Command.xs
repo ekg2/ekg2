@@ -17,6 +17,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
+int command_exec(Ekg2::Window window, Ekg2::Session session, char *what)
+CODE:
+	RETVAL = command_exec(window ? window->target : NULL, session, what, 0);
+OUTPUT:
+	RETVAL
+
+
 int command_bind(char *command, char *handler)
 CODE:
         perl_command_bind(command, NULL, NULL, handler);
