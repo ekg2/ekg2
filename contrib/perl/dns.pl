@@ -136,7 +136,7 @@ sub host_lookup {
     # parent, wait for reply
     close($wh);
 #    Irssi::pidwait_add($pid);
-    $pipe_tag = Ekg2::watch_add(fileno($rh), WATCH_READ, 0, 'pipe_input', $rh);
+    $pipe_tag = Ekg2::watch_add(fileno($rh), WATCH_READ, 'pipe_input', $rh);
     return;
   }
   close($rh);
@@ -191,6 +191,7 @@ sub pipe_input {
 
   $lookup_waiting--;
   host_lookup();
+  return -1;
 }
 
 Ekg2::command_bind_ext('dns', '!u', '', 'cmd_dns');

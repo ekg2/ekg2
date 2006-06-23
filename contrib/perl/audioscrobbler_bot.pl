@@ -153,6 +153,53 @@ sub ewelize {
 }
 ### END code stoling from: Ewelinker [ewelirssi.pl] by Maciek 'japhy' Pasternacki
 
+sub cogra_common {
+	my ($session, $uid, $txt) = @_;
+	Ekg2::debug("cogra_common() $session $uid $txt\n");
+## if uid undef. cogra_common executed from command.
+
+	if ($txt =~ /(cogra|cogr4|c0gr4) ([a-zA-Z0-9_\-^]*)/)
+	{
+		pipe($rh, $wh);
+		$pid = fork();
+
+		if (!defined($pid))
+		{
+			Ekg2::echo("fork failed");
+			close($rh); close($wh);
+			return 1;
+		}
+		if ($pid > 0)
+		{
+    			close($wh);
+    			$watch = Ekg2::watch_add(fileno($rh), WATCH_READ, 'pipe_watcher', $rh);
+			return;
+		}
+		close($rh);
+		$juzer = $2;
+		$z = cogra($2);
+		if ($z) {
+			srand ($$ ^ time());
+			if ($1 =~ /(cogr4|c0gr4)/) { $z = ewelize($z); }
+			if ($1 =~ /c0gr4/) {
+				$z =~ s/./sprintf "\003%02d$&\003", rand(15)/eg;
+				$z =~ s/,/,,/g;
+			}
+# XXX, GiM, append session to print()
+			if ($uid) { 
+				print($wh "/msg ". $from ." $juzer playz: $z");
+			} else {
+				print($wh "/echo $juzer playz: $z");
+			}
+		} else {
+			print($wh 0);
+		}
+		close($wh);
+  		exit(1);
+
+	}
+}
+
 #bindings for ekg2
 sub handle_message {
 	my ($session, $uid, $rcpt, $text, $format, $send, $class) = @_;
@@ -169,40 +216,7 @@ sub handle_message {
 	# which can contain some ugly characters and cause errors
 	# I'm currently disconnected from network so cannot check
 	# which characters are allowed.
-	if ($txt =~ /(cogra|cogr4|c0gr4) ([a-zA-Z0-9_\-^]*)/)
-	{
-		pipe($rh, $wh);
-		$pid = fork();
-		if (!defined($pid))
-		{
-			Ekg2::echo("fork failed");
-			close($rh); close($wh);
-			return 1;
-		}
-		if ($pid > 0)
-		{
-    			close($wh);
-    			$watch = Ekg2::watch_add(fileno($rh), WATCH_READ, 0, 'pipe_watcher', $rh);
-			return;
-		}
-		close($rh);
-		$juzer = $2;
-		$z = cogra($2);
-		if ($z) {
-			srand ($$ ^ time());
-			if ($1 =~ /(cogr4|c0gr4)/) { $z = ewelize($z); }
-			if ($1 =~ /c0gr4/) {
-        	               $z =~ s/./sprintf "\003%02d$&\003", rand(15)/eg;
-                	       $z =~ s/,/,,/g;
-			}
-			print($wh $$uid." $juzer playz: $z");
-		} else {
-			print($wh 0);
-		}
-		close($wh);
-  		exit(1);
-
-	}
+	cogra_common($$session, $$uid, $txt);
 	return 1
 }
 
@@ -215,16 +229,24 @@ sub pipe_watcher {
 
   my $text = <$rh>;
   close($rh);
-  
   undef $watch;
   
+ ## XXX, Ekg2::command_exec() 
   if ($text) {
-    Ekg2::command("/msg $text");
+    Ekg2::command("$text");
   } else {
     Ekg2::echo("user's not listening!");
   }
+  return -1;
+}
+
+sub cmd_cogra {
+	my ($name, $args) = @_;
+	cogra_common(Ekg2::session_current->{uid}, undef, "$name $args");
 }
 
 Ekg2::handler_bind('protocol-message', 'handle_message');
+Ekg2::command_bind('cogra', 'cmd_cogra');
+Ekg2::command_bind('c0gr4', 'cmd_cogra');
 
 1;
