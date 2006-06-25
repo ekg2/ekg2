@@ -425,8 +425,12 @@ done
 plugindir=$libdir/ekg2/plugins
 AC_SUBST(plugindir)
 
-
 # STATIC / DYNAMIC plugins 
+
+AC_SUBST(COMMON_PLUGINS_CFLAGS)
+AC_SUBST(STATIC_PLUGINS_LIB)
+COMMON_PLUGIN_CFLAGS=""
+STATIC_PLUGINS_LIB=""
 
 if test "x$enable_static" = "xyes"; then
 	AC_DEFINE_UNQUOTED(STATIC_LIBS, "${PLUGINS}", [define here plugins which will be compilated staticly!])
@@ -466,6 +470,34 @@ echo -en " - Interface:\t "
 	fi
 echo ""
 
+# - PROTOCOL PLUGINS
+echo -en " - Protocols:\t irc "
+	if test "x$have_expat" = "xyes"; then
+		echo -n "jabber "
+
+		if test "x$have_gnutls" = "xyes"; then
+			echo -n "(with ssl support in -lgnutls) "
+		fi
+	fi
+
+	if test "x$have_libgadu" = "xyes"; then
+		echo -n "gg "
+
+		if test "x$have_pthread" = "xyes"; then
+			echo -n "(with pthread resolver) "
+		fi
+	fi 
+echo ""
+
+# - LOGGING PLUGINS
+echo -en " - Logging:\t logs "
+	if test "x$have_sqlite" = "xyes"; then
+		echo -n "logsqlite "
+	elif test "x$have_sqlite3" = "xyes"; then
+		echo -n "logsqlite (using sqlite3) "
+	fi
+echo ""
+
 # - AUDIO PLUGINS
 echo -en " - Audio:\t pcm "
 	if test "x$have_libgsm" = "xyes"; then
@@ -484,24 +516,6 @@ echo -en " - Scripting:\t "
 	fi
 echo ""
 
-# - PROTOCOL PLUGINS
-echo -en " - Protocols:\t irc "
-	if test "x$have_expat" = "xyes"; then
-		echo -n "jabber "
-		if test "x$have_gnutls" = "xyes"; then
-			echo -n "(with ssl support in -lgnutls) "
-		fi
-	fi
-
-	if test "x$have_libgadu" = "xyes"; then
-		echo -n "gg "
-
-		if test "x$have_pthread" = "xyes"; then
-			echo -n "(with pthread resolver) "
-		fi
-	fi 
-echo ""
-
 # - MISC PLUGINS
 echo -en " - Misc:\t mail rc sms "
 	if test "x$have_ioctld_includes" = "xyes"; then
@@ -514,15 +528,6 @@ echo -en " - Misc:\t mail rc sms "
 
 	if test "x$have_openssl" = "xyes"; then
 		echo -n "sim "
-	fi
-echo ""
-
-# - MISC/LOGGING PLUGINS
-echo -en " - Logging:\t logs "
-	if test "x$have_sqlite" = "xyes"; then
-		echo -n "logsqlite "
-	elif test "x$have_sqlite3" = "xyes"; then
-		echo -n "logsqlite (using sqlite3) "
 	fi
 echo ""
 
@@ -547,20 +552,18 @@ if test "x$have_ncurses" = "xyes"; then
 fi
 
 echo -en " - Charset:\t "
-
-if test "x$enable_unicode" = "xyes"; then
-        echo "unicode (EXPERIMENTAL, won't work)"
-else
-        echo "ascii"
-fi
+	if test "x$enable_unicode" = "xyes"; then
+	        echo "unicode (EXPERIMENTAL, won't work)"
+	else
+	        echo "ascii"
+	fi
 
 echo -en " - Plugins:\t "
-
-if test "x$enable_static" = "xyes"; then
-	echo "as static libs: $PLUGINS"
-else
- 	echo "as shared libs"
-fi
+	if test "x$enable_static" = "xyes"; then
+		echo "as static libs"
+	else
+	 	echo "as shared libs"
+	fi
  
 echo 
  
