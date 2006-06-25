@@ -425,130 +425,11 @@ done
 plugindir=$libdir/ekg2/plugins
 AC_SUBST(plugindir)
 
-echo
-echo "configured options:"
 
-if test "x$have_ioctld_includes" = "xyes"; then
- 	echo " - ioctld:    enabled"
-else
-	echo " - ioctld:    disabled"
-fi
+# STATIC / DYNAMIC plugins 
 
-if test "x$have_libgadu" = "xyes"; then
-	echo " - libgadu:   enabled"
-	echo -n " - GG Tokens: saving to file"
-
-	if test "x$have_libjpeg" = "xyes"; then
-	        echo -n ", JPEG OCR (using: -ljpeg)"
-	fi
-
-	if test "x$have_gif" = "xyes"; then
-		echo -n ", GIF OCR (using: $GG_TOKENGIF_LIBS)"
-	fi
-	echo ""
-else
-	echo " - libgadu:   disabled"
-fi
-
-if test "x$have_pthread" = "xyes"; then
-	echo " - pthread:   enabled"
-else
-	echo " - pthread:   disabled"
-fi
-
-if test "x$have_openssl" = "xyes"; then
-	echo " - openssl:   enabled"
-else
-	echo " - openssl:   disabled"
-fi
-
-if test "x$have_gnutls" = "xyes"; then
-	echo " - gnutls:    enabled"
-else
-	echo " - gnutls:    disabled"
-fi
-
-if test "x$have_expat" = "xyes"; then
-	echo " - expat:     enabled"
-else
-	echo " - expat:     disabled"
-fi
-
-if test "x$have_ncurses" = "xyes"; then
-	echo " - ncurses:   enabled"
-else
-	echo " - ncurses:   disabled"
-fi
-
-if test "x$have_readline" = "xyes"; then
-	echo " - readline:  enabled";
-else
-	echo " - readline:  disabled";
-fi
-
-if test "x$have_libgsm" = "xyes"; then
-	echo " - libgsm:    enabled"
-else
-	echo " - libgsm:    disabled"
-fi
-
-if test "x$have_perl" = "xyes"; then
-	echo " - perl:      enabled"
-else
-	echo " - perl:      disabled"
-fi
-
-if test "x$have_python" = "xyes"; then
-	echo " - python:    enabled"
-else
-	echo " - python:    disabled"
-fi
-
-if test "x$have_libxosd" = "xyes"; then
-	echo " - libxosd:   enabled"
-else
-	echo " - libxosd:   disabled"
-fi
-
-if test "x$have_sqlite" = "xyes"; then
-	echo " - logsqlite: enabled"
-elif test "x$have_sqlite3" = "xyes"; then
-	echo " - logsqlite: enabled (using sqlite3)"
-else	
-	echo " - logsqlite: disabled"
-fi
-
-if test "x$have_aspell" = "xyes"; then
-        echo " - aspell:    enabled"
-else
-        echo " - aspell:    disabled"
-fi
-
-if test "x$enable_unicode" = "xyes"; then
-        echo " - unicode:   enabled"
-else
-        echo " - unicode:   disabled"
-fi
-
-if test "x$have_gtk" = "xyes"; then
-        echo " - gtk:       enabled"
-else
-        echo " - gtk:       disabled"
-fi
-
-
-echo " - mouse support in $mouse_lib"
-
-AC_SUBST(COMMON_PLUGINS_CFLAGS)
-AC_SUBST(STATIC_PLUGINS_LIB)
-COMMON_PLUGIN_CFLAGS=""
-STATIC_PLUGINS_LIB=""
-
-echo 
-echo -n "ekg2 plugins will be compilated: "
 if test "x$enable_static" = "xyes"; then
 	AC_DEFINE_UNQUOTED(STATIC_LIBS, "${PLUGINS}", [define here plugins which will be compilated staticly!])
-	echo "as static libs: $PLUGINS"
  
 	STATIC_PLUGINS_LIB="$STATIC_PLUGINS_LIB $PLUGINS_LIBS"
  	for i in $PLUGINS; do 
@@ -558,9 +439,128 @@ else
  	AC_DEFINE(SHARED_LIBS, 1, [define if you want shared plugins (in .so or .dll)])
  	COMMON_PLUGINS_CFLAGS="-DPLUGIN_SHARED_LIBS"
 dnl 	LIBS="$LIBS -no-undefined"
- 
- 	echo "as shared libs"
 fi
  
 AC_OUTPUT
+
+echo
+echo "configured options: "
+
+echo "PLUGINS: "
+# - UI PLUGINS
+echo -en " - Interface:\t "
+	if test "x$have_ncurses" = "xyes"; then
+		echo -n "ncurses "
+
+		if test "x$have_aspell" = "xyes"; then
+		        echo -n "(with aspell) "
+		fi
+	fi
+
+	if test "x$have_gtk" = "xyes"; then
+	        echo -n "gtk "
+	fi
+
+	if test "x$have_readline" = "xyes"; then
+		echo -n "readline "
+	fi
+echo ""
+
+# - AUDIO PLUGINS
+echo -en " - Audio:\t pcm "
+	if test "x$have_libgsm" = "xyes"; then
+		echo -n "libgsm "
+	fi
+echo ""
+
+# - SCRIPTING PLUGINS
+echo -en " - Scripting:\t "
+	if test "x$have_python" = "xyes"; then
+		echo -n "python "
+	fi
+
+	if test "x$have_perl" = "xyes"; then
+		echo -n "perl "
+	fi
+echo ""
+
+# - PROTOCOL PLUGINS
+echo -en " - Protocols:\t irc "
+	if test "x$have_expat" = "xyes"; then
+		echo -n "jabber "
+		if test "x$have_gnutls" = "xyes"; then
+			echo -n "(with ssl support in -lgnutls) "
+		fi
+	fi
+
+	if test "x$have_libgadu" = "xyes"; then
+		echo -n "gg "
+
+		if test "x$have_pthread" = "xyes"; then
+			echo -n "(with pthread resolver) "
+		fi
+	fi 
+echo ""
+
+# - MISC PLUGINS
+echo -en " - Misc:\t mail rc sms "
+	if test "x$have_ioctld_includes" = "xyes"; then
+	 	echo -n "ioctld "
+	fi
+
+	if test "x$have_libxosd" = "xyes"; then
+		echo -n "xosd "
+	fi
+
+	if test "x$have_openssl" = "xyes"; then
+		echo -n "sim "
+	fi
+echo ""
+
+# - MISC/LOGGING PLUGINS
+echo -en " - Logging:\t logs "
+	if test "x$have_sqlite" = "xyes"; then
+		echo -n "logsqlite "
+	elif test "x$have_sqlite3" = "xyes"; then
+		echo -n "logsqlite (using sqlite3) "
+	fi
+echo ""
+
+#########################
+echo ""
+
+if test "x$have_libgadu" = "xyes"; then
+	echo -en " - GG Tokens:\t saving to file"
+
+	if test "x$have_libjpeg" = "xyes"; then
+	        echo -n ", JPEG OCR (using: -ljpeg)"
+	fi
+
+	if test "x$have_gif" = "xyes"; then
+		echo -n ", GIF OCR (using: $GG_TOKENGIF_LIBS)"
+	fi
+	echo ""
+fi
+
+if test "x$have_ncurses" = "xyes"; then
+	echo -e " - Mouse support:in $mouse_lib"
+fi
+
+echo -en " - Charset:\t "
+
+if test "x$enable_unicode" = "xyes"; then
+        echo "unicode (EXPERIMENTAL, won't work)"
+else
+        echo "ascii"
+fi
+
+echo -en " - Plugins:\t "
+
+if test "x$enable_static" = "xyes"; then
+	echo "as static libs: $PLUGINS"
+else
+ 	echo "as shared libs"
+fi
+ 
+echo 
  
