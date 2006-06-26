@@ -68,7 +68,7 @@ void protocol_init()
 	query_connect(NULL, "protocol-message-ack", protocol_message_ack, NULL);
 
 	query_connect(NULL, "protocol-connected", protocol_connected, NULL);
-	query_connect(NULL, "wcs_protocol_disconnected", protocol_disconnected, (void *) 1);
+	query_connect(NULL, "wcs_protocol-disconnected", protocol_disconnected, (void *) 1);
 	query_connect(NULL, "protocol-disconnected", protocol_disconnected, NULL);
 }
 
