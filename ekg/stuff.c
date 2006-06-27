@@ -1329,6 +1329,8 @@ CHAR_T *wcs_strip_spaces(CHAR_T *line)
 {
 	CHAR_T *buf;
 
+	if (!xwcslen(line)) return line;
+
 	for (buf = line; *buf == TEXT(' '); buf++);
 
 	while (line[xwcslen(line) - 1] == TEXT(' '))
