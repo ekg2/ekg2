@@ -778,6 +778,7 @@ void watch_handle_line(watch_t *w)
 
 		watch_free(w);
 		close(fd);
+		return;
 	} 
 	w->removed = 0;
 }
