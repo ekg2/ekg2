@@ -881,6 +881,7 @@ void watch_handle(watch_t *w)
 	if (res == -1 || w->removed == 1) {
 		w->removed = 0;
 		watch_free(w);
+		return;
 	} else {
 		w->started = time(NULL);
 	}
