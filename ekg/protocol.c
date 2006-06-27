@@ -108,8 +108,8 @@ int protocol_disconnected(void *data, va_list ap)
 	char *reason	= *(va_arg(ap, char **));
 	int type	= *(va_arg(ap, int*));
 
-#if USE_UNICODE
 	if (data == (void *) 1) {
+#if USE_UNICODE
 		int ret;
 		char *__session = wcs_to_normal((CHAR_T *) session);
 		char *__reason	= wcs_to_normal((CHAR_T *) reason);
@@ -119,8 +119,10 @@ int protocol_disconnected(void *data, va_list ap)
 		free_utf(__session);
 		free_utf(__reason);
 		return ret;
-	}
+#else
+		return query_emit(NULL, "protocol-disconnected", &session, &reason, &type);
 #endif
+	}
 	
 	userlist_clear_status(session_find(session), NULL);
 
@@ -210,8 +212,8 @@ int protocol_status(void *data, va_list ap)
 	session_t *s;
 	int ignore_level;
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
-#if USE_UNICODE
 	if (data == (void *) 1) {
+#if USE_UNICODE
 		char *ssession	= wcs_to_normal( (CHAR_T *) session);
 		char *suid	= wcs_to_normal( (CHAR_T *) uid);
 		char *sstatus	= wcs_to_normal( (CHAR_T *) status);
@@ -227,8 +229,10 @@ int protocol_status(void *data, va_list ap)
 		free_utf(sdescr);
 		free_utf(shost);
 		return ret;
-	}
+#else
+		return query_emit(NULL, "protocol-status", __session, __uid, &status, __descr, &host, &port, &when);
 #endif
+	}
 	if (!(s = session_find(session)))
 		return 0;
 
@@ -566,8 +570,8 @@ int protocol_message(void *data, va_list ap)
 	int empty_theme = 0;
 	int our_msg;
 
-#if USE_UNICODE
 	if (data == (void *) 1) {
+#if USE_UNICODE
 		char *ssession	= wcs_to_normal( (CHAR_T *) session);
 		char *suid	= wcs_to_normal( (CHAR_T *) uid);
 		char *stext	= wcs_to_normal( (CHAR_T *) text);
@@ -583,8 +587,10 @@ int protocol_message(void *data, va_list ap)
 		free_utf(sseq);
 		array_free(srcpts);
 		return ret;
-	}
+#else
+		return query_emit(NULL, "protocol-message", &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &dobeep, &secure);
 #endif
+	}
 
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
