@@ -727,6 +727,9 @@ void watch_handle_line(watch_t *w)
 	char buf[1024], *tmp;
 	int ret, res = 0;
 	int (*handler)(int, int, const char *, void *) = w->handler;
+
+	if (w || w->removed == -1);	/* watch is running in another thread / context */
+
 	w->removed = -1;
 #ifndef NO_POSIX_SYSTEM
 	ret = read(w->fd, buf, sizeof(buf) - 1);
@@ -789,6 +792,7 @@ int watch_handle_write(watch_t *w) {
 	int res = -1;
 	int len = (w && w->buf) ? xstrlen(w->buf->str) : 0;
 
+	if (!w || w->removed == -1) return -1;	/* watch is running in another thread / context */
 	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
 	debug("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
 	if (!len) return -1;
@@ -871,8 +875,9 @@ void watch_handle(watch_t *w)
 {
 	int (*handler)(int, int, int, void *);
 	int res;
-	if (!w)
+	if (!w || w->removed == -1)	/* watch is running in another thread / context */
 		return;
+
 	w->removed = -1;
 	handler = w->handler;
 		
