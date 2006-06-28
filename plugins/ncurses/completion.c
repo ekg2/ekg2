@@ -582,6 +582,7 @@ static void theme_generator_adding(const CHAR_T *text, int len, const char *dnam
 		
 		if (!xstrncmp(text, name, len) || (!xstrncmp(text, tmp2, len) && !themes_only) )
 			array_add_check(&completions, tmp2, 1);
+		else	xfree(tmp2);
 
 		xfree(namelist[i]);
 	}
