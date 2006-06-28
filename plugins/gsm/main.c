@@ -41,90 +41,124 @@ CODEC_DEFINE(gsm);
 
 /* prywatna strukturka audio_codec_t */
 typedef struct {
-	gsm codec;	/* w³a¶ciwa struktura libgsm */
+	char *from, *to;
 	int msgsm;	/* > 0 je¶li mamy do czynienia z msgsm */
+
+	gsm codec;	/* w³a¶ciwa struktura libgsm */
 } gsm_private_t;
 
 CODEC_CONTROL(gsm_codec_control) {
-	audio_codec_t *ac = NULL;
 	va_list ap;
-	va_start(ap, way);
 
-	if (type == AUDIO_CONTROL_INIT) {			/* gsm_codec_init() */
-		char *attr;
-		char *from = NULL, *to = NULL;
-		int with_ms = 0;
-		codec_way_t cway = CODEC_UNKNOWN;
+	if (type == AUDIO_CONTROL_INIT && aco) {
+		gsm_private_t *priv = aco->private;
+		char **inpque = NULL, **outque = NULL, **tmp;	/* we create array with vals... (XXX, to query only once.) */
+		audio_io_t *inp, *out;
+		codec_way_t cway = -1;
 
-		gsm_private_t *priv;
-		gsm codec;
 		int value = 1;
+		gsm codec;
 
-		while ((attr = va_arg(ap, char *))) {
-			char *val = va_arg(ap, char *);
-			debug("[gsm_codec_control] attr: %s value: %s\n", attr, val);
-			if (!xstrcmp(attr, "from"))		from	= xstrdup(val);
-			else if (!xstrcmp(attr, "to"))		to	= xstrdup(val);
-			else if (!xstrcmp(attr, "with-ms") && atoi(val)) with_ms = 1;
-			/* XXX birate, channels */
+		va_start(ap, aco);
+		inp     = va_arg(ap, audio_io_t *);
+		out	= va_arg(ap, audio_io_t *);
+		va_end(ap);
+	/* ;) */
+		inp->a->control_handler(AUDIO_CONTROL_SET, AUDIO_READ, inp, "__codec", "gsm", NULL);
+		out->a->control_handler(AUDIO_CONTROL_SET, AUDIO_WRITE, out, "__codec", "gsm", NULL);
+
+	/* QUERY FOR I/O if we don't have.. */
+		/* CACHE QUERY */
+	#define QUERY_INPUT_ADD(attr, val) if (!val) { array_add(&inpque, attr); array_add(&inpque, (char *) &val);	}
+	#define QUERY_OUTPUT_ADD(attr, val) if (!val) { array_add(&outque, attr); array_add(&outque, (char *) &val);	}
+
+		QUERY_INPUT_ADD("format", priv->from);
+		QUERY_OUTPUT_ADD("format", priv->to);
+
+		/* EXECUTE QUERIES */
+		if ((tmp = inpque)) {
+			while (*tmp) { inp->a->control_handler(AUDIO_CONTROL_GET, AUDIO_READ, inp, tmp[0], tmp[1]); tmp++; tmp++; }
 		}
-
-		if (!((!xstrncasecmp(from, "gsm:", 3) && !xstrcasecmp(to, "pcm:8000,16,1")) || (!xstrcasecmp(from, "pcm:8000,16,1") && !xstrncasecmp(to, "gsm:", 3)))) {
-			debug("gsm_codec_control() wrong from/to. from: %s to: %s\n", from, to);
-			goto fail;
-		
+		if ((tmp = outque)) {
+			while (*tmp) { out->a->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, out, tmp[0], tmp[1]); tmp++; tmp++; }
 		}
-		if (!xstrncasecmp(from, "pcm:", 3))	cway = CODEC_CODE;
-		else if (!!xstrncasecmp(to, "pcm:", 3)) cway = CODEC_DECODE;
-		else { debug("NEITHER CODEING, NEIHER DECODING ? WHOA THERE...\n"); goto fail; }
+		xfree(inpque); xfree(outque);
+	
+		debug("[gsm_codec_control] INIT (INP: 0x%x, 0x%x OUT: 0x%x, 0x%x) \n", inp, inpque, out, outque, 0);
+	/* CHECK ALL ATTS: */
+		if ((!xstrcmp(priv->from, "pcm") || !xstrcmp(priv->from, "raw")) && !xstrcmp(priv->to, "gsm"))	cway = CODEC_CODE;
+		if ((!xstrcmp(priv->from, "gsm")) && (!xstrcmp(priv->to, "pcm") || !xstrcmp(priv->to, "raw")))	cway = CODEC_DECODE;
 
+		if (cway == -1) {
+			debug("NEITHER CODEING, NEIHER DECODING ? WHOA THERE... (from: %s to:%s)\n", priv->from, priv->to);
+			return NULL;
+		}
+	/* INIT CODEC */
 		if (!(codec = gsm_create())) {
 			debug("gsm_create() fails\n");
-			goto fail;
+			return NULL;
 		}
-
 		gsm_option(codec, GSM_OPT_FAST, &value);
 		gsm_option(codec, GSM_OPT_LTP_CUT, &value);
 
-		priv		= xmalloc(sizeof(gsm_private_t));
-		priv->codec	= codec;
-		priv->msgsm	= with_ms;
-
-		if (priv->msgsm) {
+		if (priv->msgsm) 
 			gsm_option(codec, GSM_OPT_WAV49, &value);
+
+		priv->codec	= codec;
+		aco->way	= cway;
+
+	/* return 1 - succ ; 0 - failed*/
+		return (void *) 1;
+	} else if (type == AUDIO_CONTROL_SET && !aco) {			/* gsm_codec_init() */
+		char *attr;
+		const char *from = NULL, *to = NULL;
+		int with_ms = 0;
+
+		gsm_private_t *priv;
+
+		va_start(ap, aco);
+		while ((attr = va_arg(ap, char *))) {
+			char *val = va_arg(ap, char *);
+			debug("[gsm_codec_control] attr: %s value: %s\n", attr, val);
+			if (!xstrcmp(attr, "from"))				from	= val;
+			else if (!xstrcmp(attr, "to"))				to	= val;
+			else if (!xstrcmp(attr, "with-ms") && atoi(val)) 	with_ms = 1;
+			/* XXX birate, channels */
 		}
+		va_end(ap); 
 
-		ac		= xmalloc(sizeof(audio_codec_t));
-		ac->c		= &gsm_codec;
-		ac->way		= cway;
-		ac->private	= priv;
-fail:
-		xfree(from); xfree(to);
-	} else if (type == AUDIO_CONTROL_DEINIT) {		/* gsm_codec_destroy() */
-		gsm_private_t *priv = NULL;
+		priv		= xmalloc(sizeof(gsm_private_t));
+		priv->msgsm	= with_ms;
+		priv->from	= xstrdup(from);
+		priv->to	= xstrdup(to);
 
-		ac = *(va_arg(ap, audio_codec_t **));
-		if (ac && ac->private) priv = ac->private;
+		aco		= xmalloc(sizeof(audio_codec_t));
+		aco->c		= &gsm_codec;
+		aco->private	= priv;
+	} else if (type == AUDIO_CONTROL_DEINIT && aco) {		/* gsm_codec_destroy() */
+		gsm_private_t *priv = priv = aco->private;
 
 		if (priv && priv->codec) gsm_destroy(priv->codec);
 		xfree(priv);
-		xfree(ac);
-		ac = NULL;
+		aco = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		static char *arr[] = { 
 			"-gsm",			"",
 			"-gsm:with-ms",		"0 1",
-					/* THINK ABOUT NAMING CONVINECE? */
-			"<gsm:__XXXIN",		"pcm:8000,16,1",
-			"<gsm:__XXXOUT",	"gsm:*",
 
-			">gsm:__XXXIN",		"gsm:*",
-			">GSM:__XXXOUT",	"pcm:8000,16,1",
+			"-gsm:birate",		"8000",
+			"-gsm:sample",		"16",
+			"-gsm:channels",	"1",
+
+			"<gsm:from",		"pcm raw",
+			"<gsm:to",		"gsm",
+
+			">gsm:from",		"gsm",
+			">gsm:to",		"pcm raw",
 			NULL, }; 
 		return arr;
 	} else { debug("[gsm_codec_control] UNIMP\n"); } 
-	va_end(ap); 
-	return ac;
+	return aco;
 }
 
 /* way: 0 - code ; 1 - decode */
