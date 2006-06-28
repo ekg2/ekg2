@@ -37,72 +37,132 @@ CODEC_DEFINE(pcm);
 
 /* prywatna strukturka audio_codec_t */
 typedef struct {
+	char *from, *to;	/* form format, to format */
 	int ifreq, ofreq;	/* czêstotliwo¶æ */
 	int ibps, obps;		/* bps */
 	int ich, och;		/* ilo¶æ kana³ów */
 } pcm_private_t; 
 
-
 CODEC_CONTROL(pcm_codec_control) {
-	audio_codec_t *ac = NULL;
 	va_list ap;
 
-	va_start(ap, way);
-
-	if (type == AUDIO_CONTROL_INIT) {	/* pcm_codec_init() */
-		char *from, *to;
-		char *attr;
+	if (type == AUDIO_CONTROL_INIT && aco) {
+		pcm_private_t *priv = aco->private;
+		audio_io_t *inp, *out;
+		char **inpque = NULL, **outque = NULL, **tmp;	/* we create array with vals... (XXX, to query only once.) */
 		int valid = 1;
 
-		pcm_private_t *priv = xmalloc(sizeof(pcm_private_t));
+		va_start(ap, aco);
+		inp     = va_arg(ap, audio_io_t *);
+		out	= va_arg(ap, audio_io_t *);
+		va_end(ap);
+	/* ;) */
+		inp->a->control_handler(AUDIO_CONTROL_SET, AUDIO_READ, inp, "__codec", "pcm", NULL);
+		out->a->control_handler(AUDIO_CONTROL_SET, AUDIO_WRITE, out, "__codec", "pcm", NULL);
 
-		while ((attr = va_arg(ap, char *))) {
-			char *val = va_arg(ap, char *);
-			int v = 0;
+	/* QUERY FOR I/O if we don't have.. */
+		/* CACHE QUERY */
+	#define QUERY_INPUT_ADD(attr, val) if (!val) { array_add(&inpque, attr); array_add(&inpque, (char *) &val);	}
+	#define QUERY_OUTPUT_ADD(attr, val) if (!val) { array_add(&outque, attr); array_add(&outque, (char *) &val);	}
 
-			debug("[pcm_codec_control] attr: %s value: %s\n", attr, val);
-			if (!xstrcmp(attr, "from"))		from	= xstrdup(val);
-			else if (!xstrcmp(attr, "to"))		to	= xstrdup(val);
-
-			else if (!xstrcmp(attr, "freq"))	{ v = atoi(val); 	priv->ifreq = v;	priv->ofreq = v;	}
-			else if (!xstrcmp(attr, "bps"))		{ v = atoi(val);	priv->ibps = v;		priv->obps = v;		}
-			else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->ich = v;		priv->och = v;		}
-
-			else if (!xstrcmp(attr, "ifreq"))	{ v = atoi(val); 	priv->ifreq = v; 				}
-			else if (!xstrcmp(attr, "ibps"))	{ v = atoi(val);	priv->ibps = v;					} 
-			else if (!xstrcmp(attr, "ichannels"))	{ v = atoi(val);	priv->ich = v;					} 
-
-			else if (!xstrcmp(attr, "ofreq"))	{ v = atoi(val);  				priv->ofreq = v;	}
-			else if (!xstrcmp(attr, "obps"))	{ v = atoi(val);				priv->obps = v;		}
-			else if (!xstrcmp(attr, "ochannels"))	{ v = atoi(val);				priv->och = v;		}
+		QUERY_INPUT_ADD("format", priv->from);
+		QUERY_INPUT_ADD("freq", priv->ifreq);
+		QUERY_INPUT_ADD("bps", priv->ibps);
+		QUERY_INPUT_ADD("channels", priv->ich);
+	
+		QUERY_OUTPUT_ADD("format", priv->to);
+		QUERY_OUTPUT_ADD("freq", priv->ofreq);
+		QUERY_OUTPUT_ADD("bps", priv->obps);
+		QUERY_OUTPUT_ADD("channels", priv->och);
+		/* EXECUTE QUERIES */
+		if ((tmp = inpque)) {
+			while (*tmp) { inp->a->control_handler(AUDIO_CONTROL_GET, AUDIO_READ, inp, tmp[0], tmp[1]); tmp++; tmp++; }
 		}
-
-		debug("[pcm_codec_control] TER from: %s to: %s Ifreq: %d Ofreq: %d Ibps: %d Obps: %d Ichannels: %d Ochannels: %d\n",
-			from, to, priv->ifreq, priv->ofreq, priv->ibps, priv->obps, priv->ich, priv->och);
-
+		if ((tmp = outque)) {
+			while (*tmp) { out->a->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, out, tmp[0], tmp[1]); tmp++; tmp++; }
+		}
+		xfree(inpque); xfree(outque);
+	
 	/* CHECK ALL ATTS: */
-		if (xstrncasecmp(from, "pcm:", 4) || xstrncasecmp(to, "pcm:", 4)) 			valid = 0;	/* CHECK NAME */
+		debug("[pcm_codec_control] INIT (INP: 0x%x, 0x%x OUT: 0x%x, 0x%x) from: %s to: %s Ifreq: %d Ofreq: %d Ibps: %d Obps: %d Ichannels: %d Ochannels: %d\n",
+			inp, inpque, out, outque, 
+			priv->from, priv->to, priv->ifreq, priv->ofreq, priv->ibps, priv->obps, priv->ich, priv->och);
+	
+		if (xstrcmp(priv->from, "pcm") && xstrcmp(priv->from, "raw"))		valid = 0;	/* CHECK INPUT FORMAT */
+		if (xstrcmp(priv->to, "pcm") && xstrcmp(priv->to, "raw"))		valid = 0;	/* CHECK OUTPUT FORMAT */
+
 		if (!priv->ifreq || !priv->ofreq) 							valid = 0;	/* CHECK FREQ */
 		if ((priv->ibps != 8 && priv->ibps != 16) || (priv->obps != 8 && priv->obps != 16))	valid = 0;	/* CHECK BPS */
 		if (priv->ich < 1 || priv->ich > 2 || priv->och < 1 || priv->och > 2)			valid = 0;	/* CHECK CHANNELS */
-	/* IF CHECK FAILS: */
-		if (!valid) { xfree(priv); goto fail; } 
 
-		ac		= xmalloc(sizeof(audio_codec_t));
-		ac->c		= &pcm_codec;
-		ac->way		 = 0;
-		ac->private 	= priv;
-fail:
-		xfree(from); xfree(to);
-	} else if (type == AUDIO_CONTROL_DEINIT) {	/* pcm_codec_destroy() */
-		ac = *(va_arg(ap, audio_codec_t **));
-		if (ac) {
-			xfree(ac->private);
-			xfree(ac);
+	/* return valid 	1 - succ ; 0 - failed*/
+		return (void *) valid;
+
+	} else if ((type == AUDIO_CONTROL_SET && !aco) || (type == AUDIO_CONTROL_GET && aco)) {	/* pcm_codec_init()  | _get() */
+		const char *from = NULL, *to = NULL;
+		char *attr;
+
+		pcm_private_t *priv;
+
+		va_start(ap, aco);
+
+		if (type == AUDIO_CONTROL_SET)	priv = xmalloc(sizeof(pcm_private_t));
+		else				if (!(priv = aco->private)) return NULL;
+
+		while ((attr = va_arg(ap, char *))) {
+			if (type == AUDIO_CONTROL_SET) {
+				char *val = va_arg(ap, char *);
+				int v = 0;
+
+				debug("[pcm_codec_control] AUDIO_CONTROL_SET attr: %s value: %s\n", attr, val);
+				if (!xstrcmp(attr, "from"))		from	= val;
+				else if (!xstrcmp(attr, "to"))		to	= val;
+
+				else if (!xstrcmp(attr, "freq"))	{ v = atoi(val); 	priv->ifreq = v;	priv->ofreq = v;	}
+				else if (!xstrcmp(attr, "bps"))		{ v = atoi(val);	priv->ibps = v;		priv->obps = v;		}
+				else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->ich = v;		priv->och = v;		}
+
+				else if (!xstrcmp(attr, "ifreq"))	{ v = atoi(val); 	priv->ifreq = v; 				}
+				else if (!xstrcmp(attr, "ibps"))	{ v = atoi(val);	priv->ibps = v;					} 
+				else if (!xstrcmp(attr, "ichannels"))	{ v = atoi(val);	priv->ich = v;					} 
+
+				else if (!xstrcmp(attr, "ofreq"))	{ v = atoi(val);  				priv->ofreq = v;	}
+				else if (!xstrcmp(attr, "obps"))	{ v = atoi(val);				priv->obps = v;		}
+				else if (!xstrcmp(attr, "ochannels"))	{ v = atoi(val);				priv->och = v;		}
+			} else if (type == AUDIO_CONTROL_GET) {
+				char **val = va_arg(ap, char **);
+
+				debug("[pcm_codec_control] AUDIO_CONTROL_GET attr: %s value: 0x%x\n", attr, val);
+				if (!xstrcmp(attr, "format"))		*val = xstrdup("pcm");
+				else if (way == AUDIO_READ) {
+					if (!xstrcmp(attr, "freq"))		*val = xstrdup(itoa(priv->ifreq));
+					else if (!xstrcmp(attr, "sample"))	*val = xstrdup(itoa(priv->ibps));
+					else if (!xstrcmp(attr, "channels"))	*val = xstrdup(itoa(priv->ich));
+				} else if (way == AUDIO_WRITE) {
+					if (!xstrcmp(attr, "freq"))		*val = xstrdup(itoa(priv->ofreq));
+					else if (!xstrcmp(attr, "sample"))	*val = xstrdup(itoa(priv->obps));
+					else if (!xstrcmp(attr, "channels"))	*val = xstrdup(itoa(priv->och));
+				} else					*val = NULL;
+
+			}
 		}
-		ac = NULL;
+		va_end(ap);
+
+		debug("[pcm_codec_control] SET from: %s to: %s Ifreq: %d Ofreq: %d Ibps: %d Obps: %d Ichannels: %d Ochannels: %d\n",
+			from, to, priv->ifreq, priv->ofreq, priv->ibps, priv->obps, priv->ich, priv->och);
+	
+		priv->from	= xstrdup(from);
+		priv->to	= xstrdup(to);
+
+		aco		= xmalloc(sizeof(audio_codec_t));
+		aco->c		= &pcm_codec;
+		aco->way	= 0;
+		aco->private 	= priv;
+	} else if (type == AUDIO_CONTROL_DEINIT) {	/* pcm_codec_destroy() */
+		if (aco) 
+			xfree(aco->private);
+		aco = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {		/* pcm_codec_capabilities() */ 
-		
 		static char *arr[] = { 
 			">pcm",	"pcm:ifreq pcm:ibps pcm:ichannels",	/* if INPUT we request for:  ifreq, ibps & ichannels */
 			"<pcm", "pcm:ofreq pcm:obps pcm:ochannels",	/* if OUTPUT we request for: ofreq, obps & ochannels */
@@ -121,11 +181,25 @@ fail:
 			NULL, };
 		return arr;
 	} 
-	va_end(ap);
-	return ac;
+	return aco;
 }
 
 int pcm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
+	pcm_private_t *c = data;
+	debug("pcm_codec_process() type=%d input: 0x%x inplen: %d output: 0x%x data: 0x%x\n",
+		type, 
+		input, input ? input->len : 0, 
+		output, output ? output->len : 0,
+		data);
+
+	int inchunklen = (c->ibps / 8) * c->ich;
+	int outchunklen = (c->obps / 8) * c->och;
+
+/*
+	int inchunks = inlen / inchunklen;
+	int outchunks = (int) ((double) c->ofreq / (double) c->ifreq * (double) inchunks);
+*/
+
 #if 0
 static void pcm_recode(const char *in, int ibps, int ich, char *out, int obps, int och)
 {
@@ -174,16 +248,9 @@ static QUERY(pcm_codec_process)
 	int *p_inlen = va_arg(ap, int*), inlen = *p_inlen;
 	char **p_out = va_arg(ap, char**), *out = *p_out;
 	int *p_outlen = va_arg(ap, int*), outlen = *p_outlen;
-	pcm_codec_t *c;
-	int i, outpos, inchunklen, inchunks, outchunklen, outchunks;
+	int i;
 	
-	if (!(c = pcm_codec_find(cid)))
-		return 0;
-
-	inchunklen = (c->ibps / 8) * c->ich;
-	inchunks = inlen / inchunklen;
-	outchunklen = (c->obps / 8) * c->och;
-	outchunks = (int) ((double) c->ofreq / (double) c->ifreq * (double) inchunks);
+[CIACHED]
 
 	outpos = outlen;
 	outlen += inchunks * outchunklen;
