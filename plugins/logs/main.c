@@ -761,11 +761,15 @@ QUERY(logs_handler)
 
 	lw = logs_log_find(session, ruid, 1)->lw;
 
-	if (!lw) /* nie powinno */
+	if (!lw) {
+		debug("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
 		return 0;
+	}
 
-	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) )
-		return 0; /* jesli tutaj to blad przy otwieraniu pliku, moze cos wyswietlimy ? */
+	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
+		debug("[LOGS:%d] logs_handler Cannot open/create file: %s\n", __LINE__, lw->path);
+		return 0;
+	}
 	
 /*	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", ruid, lw->path, lw->logformat, lw->file); */
 
@@ -809,11 +813,15 @@ QUERY(logs_status_handler)
 	
 	lw = logs_log_find(session, uid, 1)->lw;
 	
-	if (!lw) /* nie powinno */
+	if (!lw) {
+		debug("[LOGS:%d] logs_status_handler, shit happen\n", __LINE__);
 		return 0;
+	}
 
-	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) 
-		return 0; /* jesli tutaj to blad przy otwieraniu pliku, moze cos wyswietlimy ? */
+	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
+		debug("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, lw->path);
+		return 0;
+	}
 
 /*	debug("[LOGS_STATUS_HANDLER] %s : %s %d %x\n", uid, lw->path, lw->logformat, lw->file); */
 
@@ -830,13 +838,6 @@ QUERY(logs_status_handler)
 		char *_what = NULL;
 		char *_ip = saprintf("~%s@%s:%d", "notirc", inet_ntoa((struct in_addr) {ip}), port);
 
-		/* user was notavail and now is avail -> join */
-		if ( (userlist && !xstrcmp(userlist->status, EKG_STATUS_NA)) && !xstrcmp(status, EKG_STATUS_AVAIL))
-			logs_irssi(lw->file, session, uid, "joined", time(NULL), LOG_IRSSI_EVENT, _ip);
-		/* user was avail and now is notavail -> quit */
-		else if ( (userlist && !xstrcmp(userlist->status, EKG_STATUS_AVAIL)) && !xstrcmp(status, EKG_STATUS_NA))
-			logs_irssi(lw->file, session, uid, "quit", time(NULL), LOG_IRSSI_EVENT, _ip);
-		
 		_what = saprintf("%s (%s)", descr, status);
 		
 		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS, _ip);
@@ -875,13 +876,17 @@ QUERY(logs_handler_irc)
 		}
 	}
 
-	if (!lw) /* nie powinno .. */
+	if (!lw) {
+		debug("[LOGS:%d] logs_handler_irc, shit happen\n", __LINE__);
 		return 0;
+	}
 
 /*	debug("[LOGS_MSG_IRC_HANDLER] %s: %s %d %x\n", uid, lw->path, lw->logformat, lw->file); */
 
-	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) )
-		return 0; /* jesli tutaj to blad przy otwieraniu pliku, moze cos wyswietlimy ? */
+	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) { 
+		debug("[LOGS:%d] logs_handler_irc Cannot open/create file: %s\n", __LINE__, lw->path);
+		return 0;
+	}
 
 	if (lw->logformat == LOG_FORMAT_IRSSI) 
 		logs_irssi(lw->file, session, uid, text, time(NULL), LOG_IRSSI_MESSAGE, NULL);
