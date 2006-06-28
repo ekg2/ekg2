@@ -1033,9 +1033,10 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
 				char *text = data[i].text;
+				char *ftext = NULL;
                              	
 				if (!config_display_pl_chars) {
-                                	text = xstrdup(text);
+                                	ftext = text = xstrdup(text);
                                 	iso_to_ascii(text);
                               	}
 
@@ -1077,12 +1078,12 @@ int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, in
 					
 					*text++;
 		                        wattrset(w, color_pair(fgcolor, bold, bgcolor));
-				}			
+				}
 
 //				waddstr(w, text);
 				
 				p += len;
-				
+				xfree(ftext);
 				goto next;
 			}
 		}
