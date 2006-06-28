@@ -23,16 +23,16 @@
 #include "dynstuff.h"
 #include "plugins.h"
 
-typedef enum { AUDIO_CONTROL_INIT = 0, AUDIO_CONTROL_MODIFY, AUDIO_CONTROL_DEINIT, AUDIO_CONTROL_GET, AUDIO_CONTROL_SET, AUDIO_CONTROL_HELP }
+typedef enum { AUDIO_CONTROL_INIT = 0, AUDIO_CONTROL_SET, AUDIO_CONTROL_GET, AUDIO_CONTROL_DEINIT, AUDIO_CONTROL_HELP }
 			audio_control_t;
 typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, } 
 			audio_way_t;
-typedef enum { CODEC_UNKNOWN = 0, CODEC_CODE, CODEC_DECODE, } 
+typedef enum { CODEC_CODE = 0, CODEC_DECODE, } 
 			codec_way_t;
 
 #define CODEC_RECODE(x) int x(int type, stream_buffer_t *input, stream_buffer_t *output, void *data)
-#define AUDIO_CONTROL(x) audio_io_t	*x(audio_control_t type, audio_way_t way,  ...)
-#define CODEC_CONTROL(x) audio_codec_t	*x(audio_control_t type, audio_way_t way,  ...)
+#define AUDIO_CONTROL(x) audio_io_t	*x(audio_control_t type, audio_way_t way, audio_io_t *aio, ...)
+#define CODEC_CONTROL(x) audio_codec_t	*x(audio_control_t type, audio_way_t way, audio_codec_t *aco, ...)
 
 #define AUDIO_DEFINE(x)\
 	extern AUDIO_CONTROL(x##_audio_control);\
@@ -64,7 +64,7 @@ typedef struct {
 typedef struct {
 	char *name;	/* nazwa urzadzenia */
 	
-	void *(*control_handler)(audio_control_t, audio_way_t, ...);	/* initing / checking if audio_io_t is correct / deiniting */
+	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_io_t is correct / deiniting */
 	watcher_handler_func_t *read_handler;
 	watcher_handler_func_t *write_handler;
 
@@ -81,12 +81,12 @@ typedef struct {
 typedef struct {
 	char *name;	/* nazwa codeca */
 
-	void *(*control_handler)(audio_control_t, audio_way_t, ...);    /* initing / checking if audio_codec_t is correct / deiniting */
+	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);    /* initing / checking if audio_codec_t is correct / deiniting */
 
 		/* IN: int type, stream_buffer_t *input, stream_buffer_t *output, void *private 
 		 * OUT: how many bytes he code/decode */
-	int (*code_handler)(int, stream_buffer_t, stream_buffer_t, void *);
-	int (*decode_handler)(int, stream_buffer_t, stream_buffer_t, void *);
+	int (*code_handler)(int, stream_buffer_t *, stream_buffer_t *, void *);
+	int (*decode_handler)(int, stream_buffer_t *, stream_buffer_t *, void *);
 	void *private;
 } codec_t;
 

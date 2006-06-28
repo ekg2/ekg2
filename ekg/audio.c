@@ -168,8 +168,22 @@ COMMAND(cmd_streams) {
 	return 0;
 }
 
+codec_t *codec_find(const char *name) {
+	list_t l;
+	if (!name) 
+		return NULL;
+	for (l = audio_codecs; l; l = l->next) {
+		codec_t *c = l->data;
+		if (!xstrcmp(c->name, name)) 
+			return c;
+
+	}
+	return NULL;
+}
+
 int codec_register(codec_t *codec) {
-/* XXX check if we already codec->name on the list */
+	if (!codec)			return -1;
+	if (codec_find(codec->name))	return -2;
 	list_add(&audio_codecs, codec, 0);
 	return 0;
 }
@@ -238,7 +252,6 @@ char *stream_buffer_resize(stream_buffer_t *b, char *buf, int len) {
 WATCHER(stream_audio_read) {
 	int maxlen = 4096, len;
 	char *buf;
-	/* XXX, w private (data) moze byc ile maks. mozemy przeczytac itd... */
 	
 	buf = xmalloc(maxlen);
 	len = read(fd, buf, maxlen);
@@ -285,14 +298,9 @@ WATCHER(stream_audio_write) {
 }
 
 AUDIO_CONTROL(stream_audio_control) {
-	audio_io_t *aio = NULL;
 	va_list ap;
 
-	if (type == AUDIO_CONTROL_MODIFY) { debug("stream_audio_control() AUDIO_CONTROL_MODIFY called but we not support it right now, sorry\n"); return NULL; }
-
-	va_start(ap, way);
-
-	if (type == AUDIO_CONTROL_SET) {
+	if (type == AUDIO_CONTROL_INIT) {
 		stream_private_t *priv;
 
 		audio_codec_t *co;
@@ -301,9 +309,10 @@ AUDIO_CONTROL(stream_audio_control) {
 
 		void *succ = (void *) 1;
 
-		aio	= *(va_arg(ap, audio_io_t **));
-		co	= *(va_arg(ap, audio_codec_t **));
-		out	= *(va_arg(ap, audio_io_t **));
+		va_start(ap, aio);
+		co	= va_arg(ap, audio_codec_t *);
+		out	= va_arg(ap, audio_io_t *);
+		va_end(ap);
 
 		if (!aio || !out) return NULL;
 		if (!(priv = aio->private)) return NULL;
@@ -313,19 +322,23 @@ AUDIO_CONTROL(stream_audio_control) {
 
 	/* :) */
 		if (co) 
-			co->c->control_handler(AUDIO_CONTROL_MODIFY, AUDIO_RDWR, &co, directory, "stream", NULL);
-			out->a->control_handler(AUDIO_CONTROL_MODIFY, !way, &out, directory, "stream", NULL);
+			co->c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, directory, "stream", NULL);
+			out->a->control_handler(AUDIO_CONTROL_SET, !way, out, directory, "stream", NULL);
 
 		if (!xstrcmp(priv->format, "wave")) {
 			if (way == AUDIO_READ) {
-				/* here we SHOULD read header from file and with MODIFY set --frequence, etc... */
+#define __SET(args...) 	  (co) ? co->c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, args) : \
+				out->a->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, args)
+				/* here we SHOULD read header from wave file and with MODIFY set --frequence, etc... */
+/*				__SET("freq", "1", "sample", "1", "channels", "1", NULL); */
 
-
+#undef __SET
 			} else if (way == AUDIO_WRITE) {
 				char *freq = NULL, *sample = NULL, *channels = NULL;
 
-				out->a->control_handler(AUDIO_CONTROL_GET, AUDIO_READ, &out, "freq", &freq, "sample", &sample, "channels", &channels, NULL);
-				debug("[stream_audio_control] WAVE: AUDIO_CONTROL_GET freq: %s sample: %s channels: %s\n", freq, sample, channels);
+				if (co) co->c->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, co, "freq", &freq, "sample", &sample, "channels", &channels, NULL);
+				else	out->a->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, out, "freq", &freq, "sample", &sample, "channels", &channels, NULL);
+				debug("[stream_audio_control] WAVE: AUDIO_CONTROL_SET freq: %s sample: %s channels: %s\n", freq, sample, channels);
 
 				if (freq && sample && channels) {
 					WAVEHDR *fileheader	= xmalloc(sizeof(WAVEHDR));
@@ -353,9 +366,11 @@ AUDIO_CONTROL(stream_audio_control) {
 					fileheader->chkData.dwSize  = cpu_to_le32(0 /* data length */);
 
 					lseek(aio->fd, 0, SEEK_SET);
-					if ((write(aio->fd, fileheader, sizeof(WAVEHDR)) == sizeof(WAVEHDR)))
+					if ((write(aio->fd, fileheader, sizeof(WAVEHDR)) == sizeof(WAVEHDR))) {
 						debug("[stream_audio_control] WAVE: SUCC write WAVE HEADER\n");
-					else {
+						xfree(priv->format);
+						priv->format = xstrdup("pcm");
+					} else {
 						debug("[stream_audio_control] WAVE: writting WAVE HEADER failed... mhh... FALLBACK on raw format\n");
 						lseek(aio->fd, 0, SEEK_SET);
 						xfree(fileheader);
@@ -371,89 +386,94 @@ AUDIO_CONTROL(stream_audio_control) {
 			}
 		}
 		return succ;
-	}
-
-	if (type == AUDIO_CONTROL_INIT) {
-		stream_private_t *priv;
+	} else if ((type == AUDIO_CONTROL_SET && !aio) || (type == AUDIO_CONTROL_GET && aio)) {
+		stream_private_t *priv = NULL;
 
 		char *attr;
-		char *file = NULL, *format = NULL;
+		const char *file = NULL, *format = NULL;
 
 		int fd = -1;
 		int suc = 1;
 
-/*		if (type == AUDIO_CONTROL_GET) aio = *(va_arg(ap, audio_io_t **)); */
+		if (type == AUDIO_CONTROL_GET && !(priv = aio->private)) return NULL;
 
+		va_start(ap, aio);
 		while ((attr = va_arg(ap, char *))) {
-			char *val = va_arg(ap, char *);
-			debug("[stream_audio_control] attr: %s value: %s\n", attr, val);
-			if (!xstrcmp(attr, "file"))		file	= xstrdup(val);
-			else if (!xstrcmp(attr, "format"))	format	= xstrdup(val);
+			if (type == AUDIO_CONTROL_GET) {
+				char **val = va_arg(ap, char **);
+				debug("[stream_audio_control] AUDIO_CONTROL_GET attr: %s value: 0x%x\n", attr, val);
+				if (!xstrcmp(attr, "format"))	*val = xstrdup(priv->format);
+				else				*val = NULL;
+			} else {
+				char *val = va_arg(ap, char *);
+				debug("[stream_audio_control] AUDIO_CONTROL_SET attr: %s value: %s\n", attr, val);
+				if (!xstrcmp(attr, "file"))		file	= val;
+				else if (!xstrcmp(attr, "format"))	format	= val;
+			}
 		}
+		va_end(ap);
+		if (type == AUDIO_CONTROL_GET) return aio;
+
 			/* if no file specified, continue with strange defaults ;) */
-		if (!file && way == AUDIO_READ)		file = xstrdup("/dev/urandom");
-		else if (!file && way == AUDIO_WRITE)	file = xstrdup("/dev/null");
+		if (!file && way == AUDIO_READ)		file = "/dev/urandom";
+		else if (!file && way == AUDIO_WRITE)	file = "/dev/null";
 
-		if (!format)				format = xstrdup("raw");
+		if (!format)				format = "raw";
 
-		if (xstrcmp(format, "raw") && xstrcmp(format, "wave")) { 
+		if (xstrcmp(format, "raw") && xstrcmp(format, "pcm") && xstrcmp(format, "wave")) { 
 			debug("[stream_audio_control] WRONG FORMAT: %s\n", format);
-			suc = 0;
+			return NULL;
 		}
 
 		if (suc && file) {
-			fd = open(file, O_CREAT | O_TRUNC | (
+			fd = open(file, (
 				way == AUDIO_READ 	? O_RDONLY : 
-				way == AUDIO_WRITE 	? O_WRONLY : O_RDWR), S_IRUSR | S_IWUSR);
+				way == AUDIO_WRITE 	? O_CREAT | O_TRUNC | O_WRONLY : O_CREAT | O_TRUNC | O_RDWR), S_IRUSR | S_IWUSR);
+
+			if (fd == -1 && way == AUDIO_WRITE) 
+				fd = open(file, (
+					way == AUDIO_READ       ? O_RDONLY :
+					way == AUDIO_WRITE      ? O_CREAT | O_WRONLY : O_CREAT | O_RDWR), S_IRUSR | S_IWUSR);
+
 			if (fd == -1) { 
-				debug("[stream_audio_control] OPENING FILE FAILED %d %s!\n", errno, strerror(errno));
-				suc = 0;
+				debug("[stream_audio_control] OPENING FILE: %s FAILED %d %s!\n", file, errno, strerror(errno));
+				return NULL;
 			}
 		}
+		priv		= xmalloc(sizeof(stream_private_t));
+		priv->file	= xstrdup(file);
+		priv->format	= xstrdup(format);
 
-		if (suc) {
-			priv		= xmalloc(sizeof(stream_private_t));
-			priv->file	= file;
-			priv->format	= format;
+		aio		= xmalloc(sizeof(audio_io_t));
+		aio->a 		= &stream_audio;
+		aio->fd		= fd;
+		aio->private	= priv;
 
-			aio		= xmalloc(sizeof(audio_io_t));
-			aio->a 		= &stream_audio;
-			aio->fd		= fd;
-			aio->private	= priv;
-		} else {
-			xfree(file);
-			xfree(format);
-		}
-	} else if (type == AUDIO_CONTROL_DEINIT) {
-		aio = *(va_arg(ap, audio_io_t **));
-		
-		if (aio && aio->private) {
+	} else if (type == AUDIO_CONTROL_DEINIT && aio) {
+		if (aio->private) {
 			stream_private_t *priv = aio->private;
 			xfree(priv->file);
 			xfree(priv->format);
 
 			xfree(priv->wave);
 		}
-
-		/* closing fd && freeing buffer in API ? */
-		xfree(aio);
 		aio = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		static char *arr[] = { 
 			"-stream",			"", 		/* bidirectional, no required params */
 			"-stream:file", 		"*",		/* bidirectional, file, everythink can be passed as param */
-			"-stream:format", 		"raw wave",	/* bidirectional, format, possible vars: 'raw' 'wave' */
+			"-stream:format", 		"raw pcm wave",	/* bidirectional, format, possible vars: 'raw' 'pcm' 'wave' */
 			NULL, };
 		return arr;
 	}
 
-	va_end(ap);
 	return aio;
 }
 
 WATCHER(stream_handle) {
 	stream_t *s = data;
 	audio_io_t *audio = NULL;
+	audio_codec_t *codec;
 	watcher_handler_func_t *w = NULL;
 	int len;
 
@@ -461,13 +481,14 @@ WATCHER(stream_handle) {
 
 	if ((int) watch == WATCH_READ)		audio = s->input;
 	else if ((int) watch == WATCH_WRITE)	audio = s->output;
+						codec = s->codec;
 
 	if (!audio) debug("stream_handle() audio_t: 0x%x\n", audio);
 	if (!audio) return -1;
 
 	if (type == 0 && (int) watch == WATCH_WRITE && !audio->buffer->len) {
-		if (s->input->fd == -1) return -1;	/* we won't receive any data from watcher with fd == -1 */
-		return 0;				/* XXX, we should set w->type to 0... and only to WATCH_WRITE when we have smth to write... */
+		if (s->input->fd == -1 && !s->input->buffer->len) return -1;	/* we won't receive any NEW data from watcher with fd == -1 */
+		return 0;							/* XXX, we should set w->type to 0... and only to WATCH_WRITE when we have smth to write... */
 	}
 
 	if ((int) watch == WATCH_READ)		w = audio->a->read_handler;
@@ -484,7 +505,12 @@ WATCHER(stream_handle) {
 			stream_buffer_resize(s->output->buffer, s->input->buffer->buf, s->input->buffer->len);
 			stream_buffer_resize(s->input->buffer, NULL, -s->input->buffer->len);
 		} else {
-			/* XXX send data to codec! */
+			int len;
+			if (codec->way == CODEC_CODE) {
+				len = codec->c->code_handler(type, s->input->buffer, s->output->buffer, codec->private);
+			} else if (s->codec->way == CODEC_DECODE) {
+				len = codec->c->decode_handler(type, s->input->buffer, s->output->buffer, codec->private);
+			}
 		}
 
 		/* XXX, if this is read handler, and we don't have watch handler for writing stream->out->fd == -1 then we don't need to wait for WATCH_WRITE and we here do it */
@@ -509,20 +535,9 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 
 	if (in->fd == -1) goto fail; /* reading from fd == -1? i don't think so... */
 
-	/* try reinit codecs / audio... */
-	/* IDEA: 
-	 * 	we call AUDIO_CONTROL_SET @ creating stream...
-	 * 		p: audio_io_t *cur, codec_t *codec, audio_io_t *sec 
-	 * 			cur -- thisone, codec - codec, sec second one... 
-	 *
-	 * 		here we can call AUDIO_CONTROL_GET and *eventually* modify params with AUDIO_CONTROL_MODIFY
-	 *
-	 * 		@ SUCCESS RETURN NOT NULL. 
-	 */
-
-	if (!in->a->control_handler(AUDIO_CONTROL_SET, AUDIO_READ, &in, &co, &out))		goto fail;
-	if (co && !co->c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, &in, &co, &out))	goto fail;
-	if (!out->a->control_handler(AUDIO_CONTROL_SET, AUDIO_WRITE, &out, &co, &in))		goto fail;
+	if (!in->a->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, in, co, out))		goto fail;
+	if (!out->a->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, out, co, in))		goto fail;
+	if (co && !co->c->control_handler(AUDIO_CONTROL_INIT, AUDIO_RDWR, co, in, out))		goto fail;
 
 	s = xmalloc(sizeof(stream_t));
 	s->stream_name	= xstrdup(name);
@@ -542,9 +557,9 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 	return 1;
 fail:
 	/* deinit */
-	if (in)		in->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_READ, &in);
-	if (co)		co->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, &co); 
-	if (out)	out->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_WRITE, &out);
+	if (in)		{ in->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_READ, in);		close(in->fd);	xfree(in); }
+	if (co)		{ co->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, co); 	;		xfree(co); }
+	if (out)	{ out->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_WRITE, out);	close(out->fd);	xfree(out); }
 	return 0;
 }
 
@@ -555,39 +570,51 @@ audio_io_t *stream_as_audio() {
 
 int audio_initialize() {
 	audio_t *inp, *out;
-	audio_codec_t *co = NULL;;
+	codec_t *co;
 	audio_register(&stream_audio);
+
+#define __AINIT(a, way, args...) a->control_handler(AUDIO_CONTROL_SET, way, NULL, args, NULL)
+#define __CINIT(c, args...) c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, NULL, args, NULL)
 
 	if (0 && (inp = audio_find("stream"))) {
 		out = inp;
 		stream_create("Now playing: /dev/urandom",
-				inp->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, "file", "/dev/urandom", NULL), 	/* reading from /dev/urandom */
+				__AINIT(inp, AUDIO_READ, "file", "/dev/urandom"),	/* reading from /dev/urandom */
 				NULL, /* no codec */
-				out->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, "file", "/dev/dsp", NULL)		/* writing to /dev/dsp */
+				__AINIT(out, AUDIO_WRITE, "file", "/dev/dsp")		/* writing to /dev/dsp */
 			     );
 	}
 	if (0 && (inp = audio_find("oss")) && (out = audio_find("stream"))) {
 		stream_create("Now recording: /dev/dsp",
-				inp->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, /* "device", "/dev/dsp", */ "freq", "8000", "sample", "16", "channels", "1", NULL),
-				co,
-				out->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, "file", "plik.wav", "format", "wave", NULL)
+				__AINIT(inp, AUDIO_READ, "freq", "8000", "sample", "16", "channels", "1"),
+				NULL,
+				__AINIT(out, AUDIO_WRITE, "file", "plik.raw", "format", "raw")
 			      );
 	}
 	if (0 &&  (out = audio_find("oss")) && (inp = audio_find("stream"))) {
 		stream_create("Now playing to: /dev/dsp",
-				inp->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, "file", "plik.raw", NULL),
-				co,
-				out->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, "freq", "8000", "sample", "16", "channels", "1", NULL)
+				__AINIT(inp, AUDIO_READ, "file", "plik.raw"),
+				NULL,
+				__AINIT(out, AUDIO_WRITE, "freq", "8000", "sample", "16", "channels", "1")
 			      );
 	}
 	if (0 && (out = audio_find("stream")) && (inp = audio_find("oss"))) {
 		stream_create("Now recoring /dev/dsp to WAVE file.",
-				inp->control_handler(AUDIO_CONTROL_INIT, AUDIO_READ, "freq", "44100", "sample", "16", "channels", "2", NULL),
-				co,
-				out->control_handler(AUDIO_CONTROL_INIT, AUDIO_WRITE, "file", "plik.wav", "format", "wave", NULL));
+				__AINIT(inp, AUDIO_READ, "freq", "44100", "sample", "16", "channels", "2"),
+				NULL,
+				__AINIT(out, AUDIO_WRITE, "file", "plik.wav", "format", "wave"));
+	}
+	if (0 && (out = audio_find("stream")) && (inp = audio_find("stream")) && (co = codec_find("pcm"))) {
+		stream_create("Now let's recode some pcm data...",
+				__AINIT(inp, AUDIO_READ, "file", "plik.raw", "format", "raw"),
+				__CINIT(co, "bps", "16", "ifreq", "8000", "ofreq", "8000", "sample", "16", "channels", "1"),
+				__AINIT(out, AUDIO_WRITE, "file", "recoded.wav", "format", "wave"));
+
 	}
 
 	return 0;
+#undef __AINIT
+#undef __CINIT
 }
 
 /*
