@@ -5,6 +5,7 @@
 #include <fcntl.h>
 
 #include <ekg/audio.h>
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
@@ -69,48 +70,44 @@ WATCHER(oss_audio_write) {
 }
 
 AUDIO_CONTROL(oss_audio_control) {
-	audio_io_t *aio = NULL;
 	va_list ap;
 
-	if (type == AUDIO_CONTROL_MODIFY) { debug("stream_audio_control() AUDIO_CONTROL_MODIFY called but we not support it right now, sorry\n"); return NULL; }
-
-	va_start(ap, way);
-	if (type == AUDIO_CONTROL_SET) {
+	if (type == AUDIO_CONTROL_INIT) {
 		audio_codec_t *co;
 		audio_io_t *out;
 		char *directory = NULL;
 
-		aio	= *(va_arg(ap, audio_io_t **));
-		co	= *(va_arg(ap, audio_codec_t **));
-		out	= *(va_arg(ap, audio_io_t **));
-
-		if (!aio || !out) return NULL;
+		va_start(ap, aio);
+		co	= va_arg(ap, audio_codec_t *);
+		out	= va_arg(ap, audio_io_t *);
+		va_end(ap);
 
 		if (way == AUDIO_READ)	directory = "__input";
 		if (way == AUDIO_WRITE) directory = "__output";
+
 	/* :) */
 		if (co) 
-			co->c->control_handler(AUDIO_CONTROL_MODIFY, AUDIO_RDWR, &co, directory, "oss");
-			out->a->control_handler(AUDIO_CONTROL_MODIFY, AUDIO_WRITE, &out, directory, "oss");
+			co->c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, directory, "oss");
+			out->a->control_handler(AUDIO_CONTROL_SET, AUDIO_WRITE, out, directory, "oss");
 
 		return (void *) 1;
 	}
 
-	if (type == AUDIO_CONTROL_INIT || type == AUDIO_CONTROL_GET) {
+	if ((type == AUDIO_CONTROL_SET && !aio) || type == AUDIO_CONTROL_GET) {
 		char *attr;
-		char *device = NULL;
+		const char *device = NULL;
 
 		char *pathname;
 		int voice_fd, value;
 		oss_private_t *priv = NULL; 
 		
 		if (type == AUDIO_CONTROL_GET) {
-			 aio = *(va_arg(ap, audio_io_t **));
-			 if (!aio) goto fail;
+			 if (!aio) return NULL;
 			 priv = aio->private;
 
 		} else	 priv = xmalloc(sizeof(oss_private_t));
 
+		va_start(ap, aio);
 		while ((attr = va_arg(ap, char *))) {
 			if (type == AUDIO_CONTROL_GET) {
 				char **value = va_arg(ap, char **);
@@ -119,18 +116,20 @@ AUDIO_CONTROL(oss_audio_control) {
 				if (!xstrcmp(attr, "freq"))		*value = xstrdup(itoa(priv->freq));
 				else if (!xstrcmp(attr, "sample"))	*value = xstrdup(itoa(priv->sample));
 				else if (!xstrcmp(attr, "channels"))	*value = xstrdup(itoa(priv->channels));
+				else if (!xstrcmp(attr, "format"))	*value = xstrdup("pcm");
 				else					*value = NULL;
 			} else { 
 				char *val = va_arg(ap, char *);
 				int v;
 				debug("[oss_audio_control AUDIO_CONTROL_INIT] attr: %s value: %s\n", attr, val);
 
-				if (!xstrcmp(attr, "device"))		device = xstrdup(val);
+				if (!xstrcmp(attr, "device"))		device = val;
 				else if (!xstrcmp(attr, "freq"))	{ v = atoi(val);	priv->freq = v;		} 
 				else if (!xstrcmp(attr, "sample"))	{ v = atoi(val);	priv->sample = v;	} 
 				else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->channels = v;	} 
 			}
 		}
+		va_end(ap);
 
 		if (type == AUDIO_CONTROL_GET) return aio;
 
@@ -139,7 +138,8 @@ AUDIO_CONTROL(oss_audio_control) {
 		if (!device && (oss_voice_fd != -1)) { 
 			usage++;
 			voice_fd = oss_voice_fd;
-		} else if ((voice_fd = open(pathname, O_RDWR)) == -1) goto fail;
+		} else if ((voice_fd = open(pathname, O_RDWR)) == -1) return NULL;
+
 		if (!device) { 
 			if (usage > 0) { 
 				debug("SORRY, currently only once oss stream can be used..\n");
@@ -170,11 +170,7 @@ AUDIO_CONTROL(oss_audio_control) {
 		aio->fd = voice_fd;
 		aio->private = priv;
 
-fail:
-		xfree(device);
-	} else if (type == AUDIO_CONTROL_DEINIT) {
-		aio = *(va_arg(ap, audio_io_t **));
-
+	} else if (type == AUDIO_CONTROL_DEINIT && aio) {
 #if 0
 		if (fd == -1) return -1;
 		usage--;
@@ -185,10 +181,7 @@ fail:
 		}
 		return usage;
 #endif
-		if (aio && aio->private) {
-			xfree(aio->private);
-		}
-		xfree(aio);
+		xfree(aio->private);
 		aio = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		static char *arr[] = { 
@@ -201,7 +194,6 @@ fail:
 		return arr;
 	}
 
-	va_end(ap);
 	return aio;
 }
 
