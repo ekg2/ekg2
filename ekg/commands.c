@@ -4100,8 +4100,9 @@ int command_remove(plugin_t *plugin, const CHAR_T *name)
 {
 	list_t l;
 
-	for (l = commands; l; l = l->next) {
+	for (l = commands; l;) {
 		command_t *c = l->data;
+		l = l->next;
 
 		if (!xwcscasecmp(name, c->name) && plugin == c->plugin) {
 			command_freeone(c);

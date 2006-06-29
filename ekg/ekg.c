@@ -124,7 +124,7 @@ time_t last_action = 0;
 
 pid_t speech_pid = 0;
 
-static int stderr_backup = 0;
+static int stderr_backup = -1;
 
 int no_mouse = 0;
 
@@ -505,7 +505,7 @@ static void handle_sigsegv()
 
         signal(SIGSEGV, SIG_DFL);
 
-        if (stderr_backup)
+        if (stderr_backup && stderr_backup != -1)
                 dup2(stderr_backup, 2);
 
         /* wy³±cz pluginy ui, ¿eby odda³y terminal */
@@ -1175,7 +1175,6 @@ watches_again:
         buffer_free();
         event_free();
 	
-
         for (l = windows; l; l = l->next) {
                 window_t *w = l->data;
 
@@ -1195,6 +1194,7 @@ watches_again:
 #ifdef NO_POSIX_SYSTEM
 	WSACleanup();
 #endif
+	close(stderr_backup);
         exit(0);
 }
 
