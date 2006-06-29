@@ -1563,7 +1563,7 @@ COMMAND(gg_command_modify)
 		ret = cmd_add(name, params, session, target, quiet);
 #endif
 		/* if adding fails, quit */
-		if (ret != 0) return ret;
+		if (ret != 0 || !params[1]) return ret;
 	/* params[1] cause of: in commands.c, 
 	 *	 	query_emit(NULL, "userlist-added", &uid, &params[1], &quiet);
 	 *	and we emulate old behavior (via query handler executing command) with command handler... rewrite ? 
