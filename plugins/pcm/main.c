@@ -67,12 +67,12 @@ CODEC_CONTROL(pcm_codec_control) {
 
 		QUERY_INPUT_ADD("format", priv->from);
 		QUERY_INPUT_ADD("freq", priv->ifreq);
-		QUERY_INPUT_ADD("bps", priv->ibps);
+		QUERY_INPUT_ADD("sample", priv->ibps);
 		QUERY_INPUT_ADD("channels", priv->ich);
 	
 		QUERY_OUTPUT_ADD("format", priv->to);
 		QUERY_OUTPUT_ADD("freq", priv->ofreq);
-		QUERY_OUTPUT_ADD("bps", priv->obps);
+		QUERY_OUTPUT_ADD("sample", priv->obps);
 		QUERY_OUTPUT_ADD("channels", priv->och);
 		/* EXECUTE QUERIES */
 		if ((tmp = inpque)) {
@@ -119,7 +119,7 @@ CODEC_CONTROL(pcm_codec_control) {
 				else if (!xstrcmp(attr, "to"))		to	= val;
 
 				else if (!xstrcmp(attr, "freq"))	{ v = atoi(val); 	priv->ifreq = v;	priv->ofreq = v;	}
-				else if (!xstrcmp(attr, "bps"))		{ v = atoi(val);	priv->ibps = v;		priv->obps = v;		}
+				else if (!xstrcmp(attr, "sample"))	{ v = atoi(val);	priv->ibps = v;		priv->obps = v;		}
 				else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->ich = v;		priv->och = v;		}
 
 				else if (!xstrcmp(attr, "ifreq"))	{ v = atoi(val); 	priv->ifreq = v; 				}
@@ -168,7 +168,7 @@ CODEC_CONTROL(pcm_codec_control) {
 			"<pcm", "pcm:ofreq pcm:obps pcm:ochannels",	/* if OUTPUT we request for: ofreq, obps & ochannels */
 
 			"-pcm:freq",		"",
-			"-pcm:bps",		"8 16",
+			"-pcm:sample",		"8 16",
 			"-pcm:channels", 	"1 2",
 			
 			">pcm:ifreq",		"",
@@ -184,23 +184,6 @@ CODEC_CONTROL(pcm_codec_control) {
 	return aco;
 }
 
-int pcm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
-	pcm_private_t *c = data;
-	debug("pcm_codec_process() type=%d input: 0x%x inplen: %d output: 0x%x data: 0x%x\n",
-		type, 
-		input, input ? input->len : 0, 
-		output, output ? output->len : 0,
-		data);
-
-	int inchunklen = (c->ibps / 8) * c->ich;
-	int outchunklen = (c->obps / 8) * c->och;
-
-/*
-	int inchunks = inlen / inchunklen;
-	int outchunks = (int) ((double) c->ofreq / (double) c->ifreq * (double) inchunks);
-*/
-
-#if 0
 static void pcm_recode(const char *in, int ibps, int ich, char *out, int obps, int och)
 {
 	int l, r;
@@ -241,48 +224,32 @@ static void pcm_recode(const char *in, int ibps, int ich, char *out, int obps, i
 	}
 }
 
-static QUERY(pcm_codec_process)
-{
-	char **p_cid = va_arg(ap, char**), *cid = *p_cid;
-	char **p_in = va_arg(ap, char**), *in = *p_in;
-	int *p_inlen = va_arg(ap, int*), inlen = *p_inlen;
-	char **p_out = va_arg(ap, char**), *out = *p_out;
-	int *p_outlen = va_arg(ap, int*), outlen = *p_outlen;
+int pcm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
+	pcm_private_t *c = data;
+	debug("pcm_codec_process() type=%d input: 0x%x inplen: %d output: 0x%x data: 0x%x\n",
+		type, 
+		input, input ? input->len : 0, 
+		output, output ? output->len : 0,
+		data);
+
+	int inchunklen = (c->ibps / 8) * c->ich;
+	int outchunklen = (c->obps / 8) * c->och;
+
+	int inchunks = input->len / inchunklen;
+	int outchunks = (int) ((double) c->ofreq / (double) c->ifreq * (double) inchunks);
 	int i;
 	
-[CIACHED]
-
-	outpos = outlen;
-	outlen += inchunks * outchunklen;
-	out = xrealloc(out, outlen);
-
 	for (i = 0; i < outchunks; i++) {	
 		int j = (int) ((double) i / (double) outchunks * (double) inchunks);
 
-		pcm_recode(in + j * inchunklen, c->ibps, c->ich, out + outpos + i * outchunklen, c->obps, c->och);
+		char *out = xmalloc(outchunklen);						/* tymczasowy bufor z danymi wyjsciowymi */
+		pcm_recode(input->buf + j * inchunklen, c->ibps, c->ich, out, c->obps, c->och);		/* zrekoduj to co mamy zrekodowac */
+		stream_buffer_resize(output, out, outchunklen);						/* dopisz */
+		xfree(out);									/* zwolnij bufor */
 	}
-	
 	/* przesuñ pozosta³o¶æ na pocz±tek bufora i go zmniejsz */
-	if (inlen > inchunks * inchunklen) {
-		memmove(in, in + inchunks * inchunklen, inlen - inchunks * inchunklen);
-		inlen -= inchunks * inchunklen;
-		in = xrealloc(in, inlen);
-	} else {
-		xfree(in);
-		in = NULL;
-		inlen = 0;
-	}
-
-	/* zwróæ wyniki */
-	*p_in = in;
-	*p_inlen = inlen;
-	*p_out = out;
-	*p_outlen = outlen;
-
-	return 0;
-}
-#endif
-	return -1;
+	stream_buffer_resize(input, NULL, -(inchunks * inchunklen));
+	return (inchunks * inchunklen);
 }
 
 CODEC_RECODE(pcm_codec_code) {
