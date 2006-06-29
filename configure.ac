@@ -416,6 +416,18 @@ if test "x$with_libgnutls" != "xno"; then
 	]]))
 fi
 
+AC_ARG_WITH(gpg,
+	[  --without-gpg              Compile without gpg support])
+
+if test "x$with_gpg" != "xno"; then
+	AC_CHECK_GPG
+fi
+
+if test "x$have_gpg" = "xyes"; then
+dnl	AC_CONFIG_FILES([plugins/gpg/Makefile])
+	PLUGINS="$PLUGINS gpg"
+fi
+
 PLUGINS_LIBS=""
 
 for i in $PLUGINS; do
@@ -505,6 +517,17 @@ echo -en " - Audio:\t pcm "
 	fi
 echo ""
 
+# - ENCRYPTION PLUGINS
+echo -en " - Encryption:\t "
+	if test "x$have_openssl" = "xyes"; then
+		echo -n "sim "
+	fi
+
+	if test "x$have_gpg" = "xyes"; then
+		echo -n "gpg "
+	fi
+echo ""
+
 # - SCRIPTING PLUGINS
 echo -en " - Scripting:\t "
 	if test "x$have_python" = "xyes"; then
@@ -524,10 +547,6 @@ echo -en " - Misc:\t mail rc sms "
 
 	if test "x$have_libxosd" = "xyes"; then
 		echo -n "xosd "
-	fi
-
-	if test "x$have_openssl" = "xyes"; then
-		echo -n "sim "
 	fi
 echo ""
 
