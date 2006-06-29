@@ -200,7 +200,6 @@ AC_ARG_WITH(gif,	[  --without-gif         Compile without GIF token support])
 AC_ARG_WITH(libgif,	[  --without-libgif      Compile without libgif token support])
 AC_ARG_WITH(libungif,	[  --without-libungif    Compile without libungif token support])
 
-
 if test "x$with_gif" != "xno"; then
 	if test "x$with_libgif" != "xno"; then
 		AC_CHECK_LIB(gif, DGifSlurp, [
@@ -416,6 +415,20 @@ if test "x$with_libgnutls" != "xno"; then
 	]]))
 fi
 
+AC_ARG_WITH(zlib,
+	[  --without-zlib             Compile without zlib support (logs plugin)])
+
+if test "x$with_zlib" != "xno"; then
+	AC_CHECK_LIB(z, gzopen, [
+		AC_CHECK_HEADERS(zlib.h, [
+			AC_DEFINE(HAVE_ZLIB, 1, [define if you want compressed logs])
+			AC_SUBST(ZLIB_LIBS)
+			ZLIB_LIBS="-lz"
+			have_zlib=yes
+		])
+	])
+fi
+
 AC_ARG_WITH(gpg,
 	[  --without-gpg              Compile without gpg support])
 
@@ -502,7 +515,12 @@ echo -en " - Protocols:\t irc "
 echo ""
 
 # - LOGGING PLUGINS
-echo -en " - Logging:\t logs "
+echo -en " - Logging:\t "
+	echo -n "logs "
+	if test "x$have_zlib" = "xyes"; then
+		echo -n "(with support for zlib compression) "
+	fi
+
 	if test "x$have_sqlite" = "xyes"; then
 		echo -n "logsqlite "
 	elif test "x$have_sqlite3" = "xyes"; then
