@@ -164,28 +164,15 @@ CODEC_CONTROL(gsm_codec_control) {
 /* way: 0 - code ; 1 - decode */
 int gsm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
 	gsm_private_t *c = data;
+	int inpos = 0;
 
-	if (!c || !input || !output) 
-		return -1;
-
-	char *in	= input->buf;
-	int inlen	= input->len;
-
-	char **p_out	= &output->buf;
-	int *p_outlen	= &output->len;
-
-
-	if (!input->buf || !input->len) /* we have nothing to code? */
-		return 0;
-
-	/* XXX here */
-	return -1;
-
-	int inpos = 0, outlen = 0;
-	char *out = NULL;
+	if (type)			return 0;
+	if (!c || !input || !output) 	return -1;
+	if (!input->buf || !input->len)	return 0;	 /* we have nothing to code? */
 
 	for (;;) {
 		int inchunklen, outchunklen;
+		char *out;
 		
 		if (way == CODEC_CODE) {
 			inchunklen = 320;
@@ -193,30 +180,26 @@ int gsm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_
 		} else if (way == CODEC_DECODE) {
 			inchunklen = (c->msgsm == 2) ? 32 : 33;
 			outchunklen = 320;
-		}
-		if ((inlen - inpos) < inchunklen)
+		} else	return -1;	/* neither code neither decode? wtf? */
+
+		if ((input->len - inpos) < inchunklen)
 			break;
 
-		out = xrealloc(out, outlen + outchunklen);
+		out = xmalloc(outchunklen);
 
-		if (way == CODEC_CODE)
-			gsm_encode(c->codec, (gsm_signal*) (in + inpos), out + outlen);
-		else if (way == CODEC_DECODE) 
-			gsm_decode(c->codec, in + inpos, (gsm_signal*) (out + outlen));
+		if (way == CODEC_CODE)		gsm_encode(c->codec, (gsm_signal *) (input->buf + inpos), out);
+		else if (way == CODEC_DECODE) 	gsm_decode(c->codec, input->buf + inpos, (gsm_signal *) out);
 
-		outlen += outchunklen;
+		stream_buffer_resize(output, out, outchunklen);
+		xfree(out);
+
 		if (c->msgsm == 1)	c->msgsm = 2;
 		else if (c->msgsm == 2) c->msgsm = 1;
 
 		inpos += inchunklen;
 	}
-	/* zwróæ wyniki */
-	*p_out = out;
-	*p_outlen = outlen;
-
+	stream_buffer_resize(input, NULL, -inpos);
 	return inpos;
-
-	return -1;
 }
 
 CODEC_RECODE(gsm_codec_code) {
