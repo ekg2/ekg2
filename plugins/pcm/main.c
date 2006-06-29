@@ -226,28 +226,29 @@ static void pcm_recode(const char *in, int ibps, int ich, char *out, int obps, i
 
 int pcm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
 	pcm_private_t *c = data;
-	debug("pcm_codec_process() type=%d input: 0x%x inplen: %d output: 0x%x data: 0x%x\n",
-		type, 
-		input, input ? input->len : 0, 
-		output, output ? output->len : 0,
-		data);
-
 	int inchunklen = (c->ibps / 8) * c->ich;
 	int outchunklen = (c->obps / 8) * c->och;
 
 	int inchunks = input->len / inchunklen;
 	int outchunks = (int) ((double) c->ofreq / (double) c->ifreq * (double) inchunks);
 	int i;
+	char *out;									/* tymczasowy bufor */
 	
-	for (i = 0; i < outchunks; i++) {	
+//	debug("pcm_codec_process() type=%d input: 0x%x inplen: %d output: 0x%x outlen: %d data: 0x%x\n", 
+//		type, input, input ? input->len : 0, output, output ? output->len : 0, data);
+	if (type) return 0; 
+	if (!input || !output) return -1;
+
+	debug("pcm_codec_process() inchunks: %d inchunklen: %d outchunks: %d outchunklen: %d\n", inchunks, inchunklen, outchunks, outchunklen);
+
+	out = xmalloc(outchunklen);
+	for (i = 0; i < outchunks; i++) {
 		int j = (int) ((double) i / (double) outchunks * (double) inchunks);
 
-		char *out = xmalloc(outchunklen);						/* tymczasowy bufor z danymi wyjsciowymi */
 		pcm_recode(input->buf + j * inchunklen, c->ibps, c->ich, out, c->obps, c->och);		/* zrekoduj to co mamy zrekodowac */
 		stream_buffer_resize(output, out, outchunklen);						/* dopisz */
-		xfree(out);									/* zwolnij bufor */
 	}
-	/* przesuñ pozosta³o¶æ na pocz±tek bufora i go zmniejsz */
+	xfree(out);									/* zwolnij bufor */
 	stream_buffer_resize(input, NULL, -(inchunks * inchunklen));
 	return (inchunks * inchunklen);
 }
