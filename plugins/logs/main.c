@@ -23,11 +23,6 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
-/* fjuczery */
-
-#define HAVE_ZLIB	      1 /* support for zlib */
-#undef HAVE_ZLIB		/* actually no avalible... */
-
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
@@ -78,6 +73,9 @@ PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 #ifdef EKG2_WIN32_SHARED_LIB
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
+
+/* fjuczery */
+#undef HAVE_ZLIB		/* actually no avalible... */
 
 logs_log_t *log_curlog = NULL;
 	/* log ff types... */
