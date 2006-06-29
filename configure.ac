@@ -98,7 +98,7 @@ AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in])
 AC_CONFIG_FILES([ekg/ekg2-config])
 PLUGINS="logs mail rc sms pcm irc"
-
+AC_CONFIG_FILES([plugins/feed/Makefile])
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
@@ -438,7 +438,7 @@ fi
 
 if test "x$have_gpg" = "xyes"; then
 dnl	AC_CONFIG_FILES([plugins/gpg/Makefile])
-	PLUGINS="$PLUGINS gpg"
+dnl	PLUGINS="$PLUGINS gpg"
 fi
 
 PLUGINS_LIBS=""
