@@ -30,6 +30,14 @@ typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, }
 typedef enum { CODEC_CODE = 0, CODEC_DECODE, } 
 			codec_way_t;
 
+
+#define __AINIT(a, way, args...) a ? a->control_handler(AUDIO_CONTROL_SET, way, NULL, args, NULL) : NULL
+#define __CINIT(c, args...) c ? c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, NULL, args, NULL) : NULL
+
+#define __AINIT_F(name, way, args...) __AINIT((audio_find(name)), way, args)
+#define __CINIT_F(name, args...) __CINIT((codec_find(name)), args)
+
+
 #define CODEC_RECODE(x) int x(int type, stream_buffer_t *input, stream_buffer_t *output, void *data)
 #define AUDIO_CONTROL(x) audio_io_t	*x(audio_control_t type, audio_way_t way, audio_io_t *aio, ...)
 #define CODEC_CONTROL(x) audio_codec_t	*x(audio_control_t type, audio_way_t way, audio_codec_t *aco, ...)
@@ -112,13 +120,18 @@ list_t streams;
 
 char *stream_buffer_resize(stream_buffer_t *b, char *buf, int len);
 
+int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out);
+
 int audio_register(audio_t *audio);
+audio_t *audio_find(const char *name);
 void audio_unregister(audio_t *audio);
 
 int codec_register(codec_t *codec);
+codec_t *codec_find(const char *name);
 void codec_unregister(codec_t *codec);
 
 int audio_initialize();
+
 
 #endif /* __EKG_AUDIO_H */
 

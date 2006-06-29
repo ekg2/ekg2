@@ -590,9 +590,6 @@ int audio_initialize() {
 	codec_t *co;
 	audio_register(&stream_audio);
 
-#define __AINIT(a, way, args...) a->control_handler(AUDIO_CONTROL_SET, way, NULL, args, NULL)
-#define __CINIT(c, args...) c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, NULL, args, NULL)
-
 	if (0 && (inp = audio_find("stream") && (out = audio_find("stream"))))
 		stream_create("Now playing: /dev/urandom",
 				__AINIT(inp, AUDIO_READ, "file", "/dev/urandom"),	/* reading from /dev/urandom */
