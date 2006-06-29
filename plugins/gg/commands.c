@@ -200,6 +200,8 @@ COMMAND(gg_command_connect)
                                         gg_dcc_ip = 0;
                                 }
                         }
+			if (gg_config_audio)
+				p.has_audio = 1;
 
 			gg_dcc_port = gg_config_dcc_port;
 			

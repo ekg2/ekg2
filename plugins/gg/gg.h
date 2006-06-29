@@ -35,6 +35,7 @@ char *last_tokenid;
 /* variables */
 int gg_config_display_token;
 int gg_config_dcc;
+int gg_config_audio;
 char *gg_config_dcc_dir;
 char *gg_config_dcc_ip;
 char *gg_config_dcc_limit;

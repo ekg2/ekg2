@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <ekg/audio.h>
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/protocol.h>
@@ -26,19 +27,118 @@
 #include "dcc.h"
 #include "gg.h"
 
+AUDIO_DEFINE(gg_dcc);
+
 struct gg_dcc *gg_dcc_socket = NULL;
 
 static int dcc_limit_time = 0;  /* time from the first connection */
 static int dcc_limit_count = 0; /* how many connections from the last time */
+
+typedef struct {
+	dcc_t *dcc;
+
+} gg_audio_private_t;
+
+/* some audio stuff */
+AUDIO_CONTROL(gg_dcc_audio_control) {
+	va_list ap;
+	if (type == AUDIO_CONTROL_INIT) {
+		va_start(ap, aio);
+
+		va_end(ap);
+		return (void *) 1;
+	} else if ((type == AUDIO_CONTROL_SET && !aio) || (type == AUDIO_CONTROL_GET && aio)) {
+		gg_audio_private_t *priv;
+		char *attr;
+		int dccid = -1;
+
+		if (type == AUDIO_CONTROL_GET)	priv = aio->private;
+		else				priv= xmalloc(sizeof(gg_audio_private_t));
+
+		va_start(ap, aio);
+
+		while ((attr = va_arg(ap, char *))) {
+			if (type == AUDIO_CONTROL_GET) {
+				char **val = va_arg(ap, char **);
+				debug("[gg_dcc_audio_control AUDIO_CONTROL_GET] attr: %s value: 0x%x\n", attr, val);
+
+				if (!xstrcmp(attr, "format"))		*val = xstrdup("gsm");
+				else					*val = NULL;
+			} else {
+				char *val = va_arg(ap, char *);
+				debug("[gg_dcc_audio_control AUDIO_CONTROL_SET] attr: %s value: %s\n", attr, val);
+
+				if (!xstrcmp(attr, "dccid")) dccid = atoi(val);
+			}
+		}
+		va_end(ap);
+		{ 
+			list_t l;
+			for (l = dccs; l; l = l->next) {
+				dcc_t *d = l->data;
+				if (d->id == dccid) {
+					priv->dcc = d;
+					break;
+				}
+			}
+		}
+		if (!priv->dcc) { xfree(priv); return NULL; }
+
+		aio		= xmalloc(sizeof(audio_io_t));
+		aio->a		= &gg_dcc_audio;
+		aio->private 	= priv;
+		aio->fd 	= -1;
+	} else if (type == AUDIO_CONTROL_HELP) {
+		return NULL;
+	}
+	return aio;
+} 
+
+WATCHER(gg_dcc_audio_read) {
+
+	return -1;
+}
+
+WATCHER(gg_dcc_audio_write) {
+#if 0
+	stream_buffer_t *buffer = (stream_buffer_t *) watch;
+	gg_audio_private_t *priv = data;
+	int len = 0; 
+
+	debug("gg_dcc_audio_write type: %d\n", type);
+	if (type) return 0;
+
+	if (!dccs || !priv->dcc) {
+		debug("gg_dcc_audio_write DCC NOT FOUND\n");
+		return -1;
+	}
+
+	if (!priv->dcc->active) goto fail;
+	if (!buffer || !buffer->buf || !buffer->len) goto fail;
+
+	debug("gg_dcc_voice_send() len: %d ", buffer->len);
+	if (buffer->len < 160) return 0;
+	
+	len = gg_dcc_voice_send(priv->dcc->priv, buffer->buf, 160);
+	debug("len: %d\n", len);
+fail:
+	/* discard all data */
+	stream_buffer_resize(buffer, NULL, -buffer->len);
+	return len;
+#endif
+	return -1;
+}
 
 /* 
  * gg_changed_dcc()
  *
  * called when some dcc_* variables are changed
  */
+
+/* khem, var jest gg:*.... byl kod ktory nie dzialal... tak?  */
 void gg_changed_dcc(const CHAR_T *var)
 {
-	if (!xwcscmp(var, TEXT("dcc"))) {
+	if (!xwcscmp(var, TEXT("gg:dcc"))) {
 		if (!gg_config_dcc) {
 			gg_dcc_socket_close();
 			gg_dcc_ip = 0;
@@ -49,9 +149,7 @@ void gg_changed_dcc(const CHAR_T *var)
 			if (gg_dcc_socket_open(gg_config_dcc_port) == -1)
 				print("dcc_create_error", strerror(errno));
 		}
-	}
-
-	if (!xwcscmp(var, TEXT("dcc_ip"))) {
+	} else if (!xwcscmp(var, TEXT("gg:dcc_ip"))) {
 		if (gg_config_dcc_ip) {
 			if (!xstrcasecmp(gg_config_dcc_ip, "auto")) {
 				gg_dcc_ip = inet_addr("255.255.255.255");
@@ -66,9 +164,7 @@ void gg_changed_dcc(const CHAR_T *var)
 			}
 		} else
 			gg_dcc_ip = 0;
-	}
-
-	if (!xwcscmp(var, TEXT("dcc_port"))) {
+	} else if (!xwcscmp(var, TEXT("gg:dcc_port"))) {
 		if (gg_config_dcc && gg_config_dcc_port) {
 			gg_dcc_socket_close();
 			gg_dcc_ip = 0;
@@ -78,6 +174,13 @@ void gg_changed_dcc(const CHAR_T *var)
                                 print("dcc_create_error", strerror(errno));
 	
 		}
+	} else if (!xwcscmp(var, TEXT("gg:audio"))) {
+		if (gg_config_audio && (!audio_find("oss") || !codec_find("gsm"))) {
+			gg_config_audio = 0;
+			debug("[gg_config_audio] failed to set gg:audio to 1 cause not found oss audio or gsm codec...\n");
+			return;
+		} else if (gg_config_audio)	gg_dcc_audio_init();
+		else				gg_dcc_audio_close();
 	}
 
 	if (!in_autoexec)
@@ -160,17 +263,44 @@ COMMAND(gg_command_dcc)
 		return 0;
 	}
 
-#if 0
-	if (params[0][0] == 'v' || !xstrncasecmp(params[0], "rvo", 3)) {			/* voice, rvoice */
-#ifdef HAVE_VOIP
-		struct userlist *u = NULL;
-		struct transfer *t, tt;
+	if (params[0] && (params[0][0] == 'v' || !xstrncasecmp(params[0], "rvo", 3))) {			/* voice, rvoice */
+		struct gg_dcc *gd = NULL;
+		dcc_t *d;
+		userlist_t *u;
+		list_t l;
 
 		if (!params[1]) {
 			printq("not_enough_params", name);
 			return -1;
 		}
+
+		if (!gg_config_audio) {
+			wcs_printq("dcc_voice_unsupported");
+			return -1;
+		}
+
+		if (!(u = userlist_find(session, get_uid(session, params[1])))) {
+			printq("user_not_found", params[1]);
+			return -1;
+		}
+
+		if (!session_connected_get(session)) {
+			wcs_printq("not_connected");
+			return -1;
+		}
+
+		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
+			printq("dcc_user_not_avail", format_user(session, u->uid));
+			return -1;
+		}
+
+		if (!u->ip) {
+			printq("dcc_user_aint_dcc", format_user(session, u->uid));
+			return -1;
+		}
 		
+#if 0
+		struct transfer *t, tt;
 		/* sprawdzamy najpierw przychodz±ce po³±czenia */
 		
 		for (t = NULL, l = transfers; l; l = l->next) {
@@ -203,82 +333,42 @@ COMMAND(gg_command_dcc)
 			voice_open();
 			return 0;
 		}
-
-		/* sprawd¼, czy ju¿ nie wo³ano o rozmowê g³osow± */
-
-#if 0
-		for (l = transfers; l; l = l->next) {
-			struct transfer *t = l->data;
-
-			if (t->type == GG_SESSION_DCC_VOICE) {
-				wcs_printq("dcc_voice_running");
-				return 0;
-			}
-		}
-
-		for (l = watches; l; l = l->next) {
-			struct gg_session *s = l->data;
-
-			if (s->type == GG_SESSION_DCC_VOICE) {
-				wcs_printq("dcc_voice_running");
-				return 0;
-			}
-		}
 #endif
-		/* je¶li nie by³o, to próbujemy sami zainicjowaæ */
+		for (l = dccs; l; l = l->next) {
+			dcc_t *d = l->data;
 
-		uin = get_uin(params[1]);
-
-		if (!(u = userlist_find(uin, params[1]))) {
-			printq("user_not_found", params[1]);
-			return -1;
+			if (d->type == DCC_VOICE) {
+				wcs_printq("dcc_voice_running");
+				return 0;
+			}
 		}
-
-		if (!sess || sess->state != GG_STATE_CONNECTED) {
-			wcs_printq("not_connected");
-			return -1;
-		}
-
-		if (!(GG_S_A(u->status) || GG_S_B(u->status)) && !(ignored_check(uin) & IGNORE_STATUS)) {
-			printq("dcc_user_not_avail", format_user(u->uin));
-			return -1;
-		}
-
-		if (!u->ip.s_addr) {
-			printq("dcc_user_aint_dcc", format_user(u->uin));
-			return -1;
-		}
-
-		memset(&tt, 0, sizeof(tt));
-		tt.uin = uin;
-		tt.id = transfer_id();
-		tt.type = GG_SESSION_DCC_VOICE;
-		tt.protocol = u->protocol;
 
 		if (u->port < 10 || !xstrncasecmp(params[0], "rvo", 3)) {
 			/* nie mo¿emy siê z nim po³±czyæ, wiêc on spróbuje */
-			gg_dcc_request(sess, uin);
+			gg_dcc_request(g->sess, atoi(u->uid + 3));
 		} else {
-			struct gg_dcc *d;
-			
-			if (!(d = gg_dcc_voice_chat(u->ip.s_addr, u->port, config_uin, uin))) {
+			if (!(gd = gg_dcc_voice_chat(u->ip, u->port, uin, atoi(u->uid + 3)))) {
 				printq("dcc_error", strerror(errno));
 				return -1;
 			}
-
-			list_add(&watches, d, 0);
-
-			tt.dcc = d;
 		}
+		if (!(d = dcc_add(u->uid, DCC_VOICE, gd))) return -1;
 
-		list_add(&transfers, &tt, sizeof(tt));
-		voice_open();
-#else
-		wcs_printq("dcc_voice_unsupported");
-#endif
-		return -1;
+
+		if (gd)
+			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc_handler, gd);
+
+		stream_create("Gygy audio OUTPUT",
+				__AINIT_F("oss", AUDIO_READ, "freq", "8000", "sample", "16", "channels", "1"),
+				__CINIT_F("gsm", "with-ms", "1"),
+				__AINIT_F("gg_dcc", AUDIO_WRITE, "dccuid", u->uid, "dccid", itoa(d->id)));
+
+//		stream_create("Gygy audio INPUT",
+//				__AINIT_F("gg_dcc", AUDIO_READ, "uid", u->uid), 
+//				__CINIT_F("gsm", "with-ms", "1"),
+//				__AINIT_F("oss", AUDIO_WRITE, "freq", "8000", "sample", "16", "channels", "1"));
+		return 0;
 	}
-#endif
 	
 	/* get, resume */
 	if (params[0] && (!xstrncasecmp(params[0], "g", 1) || !xstrncasecmp(params[0], "re", 2))) {
@@ -519,6 +609,8 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 				gg_event_free(e);	
 				return -1;
 			}
+
+			break;	/* w ekg jest break... byl bug? */
 		}
 
 		case GG_EVENT_DCC_NEED_FILE_INFO:
@@ -592,45 +684,45 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			break;
 		}
 			
-#if 0
 		case GG_EVENT_DCC_NEED_VOICE_ACK:
 			debug("[gg] GG_EVENT_DCC_NEED_VOICE_ACK\n");
-#ifdef HAVE_VOIP
-			/* ¿eby nie sprawdza³o, póki luser nie odpowie */
-			list_remove(&watches, d, 0);
+#if 0
+			if (gg_config_audio && 0) {
+				/* ¿eby nie sprawdza³o, póki luser nie odpowie */
+				list_remove(&watches, d, 0);
 
-			if (!(t = find_transfer(d))) {
-				tt.uin = d->peer_uin;
-				tt.type = GG_SESSION_DCC_VOICE;
-				tt.filename = NULL;
-				tt.dcc = d;
-				tt.id = transfer_id();
-				if (!(t = list_add(&transfers, &tt, sizeof(tt)))) {
-					gg_free_dcc(d);
-					break;
+				if (!(t = find_transfer(d))) {
+					tt.uin = d->peer_uin;
+					tt.type = GG_SESSION_DCC_VOICE;
+					tt.filename = NULL;
+					tt.dcc = d;
+					tt.id = transfer_id();
+					if (!(t = list_add(&transfers, &tt, sizeof(tt)))) {
+						gg_free_dcc(d);
+						break;
+					}
 				}
-			}
 			
-			t->type = GG_SESSION_DCC_VOICE;
+				t->type = GG_SESSION_DCC_VOICE;
 
-			print("dcc_voice_offer", format_user(t->uin), itoa(t->id));
-#else
-			list_remove(&watches, d, 0);
-			remove_transfer(d);
-			gg_free_dcc(d);
+				print("dcc_voice_offer", format_user(t->uin), itoa(t->id));
+			} else { 
+				list_remove(&watches, d, 0);
+				remove_transfer(d);
+				gg_free_dcc(d);
+			}
 #endif
 			break;
 
 		case GG_EVENT_DCC_VOICE_DATA:
 			debug("[gg] GG_EVENT_DCC_VOICE_DATA\n");
-
-#ifdef HAVE_VOIP
-			voice_open();
-			voice_play(e->event.dcc_voice_data.data, e->event.dcc_voice_data.length, 0);
+#if 0
+			if (gg_config_audio && 0) {
+				voice_open();
+				voice_play(e->event.dcc_voice_data.data, e->event.dcc_voice_data.length, 0);
+			}
 #endif
 			break;
-#endif
-
 		case GG_EVENT_DCC_DONE:
 		{
 			dcc_t *D;
@@ -694,11 +786,11 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			}
 
 			xfree(tmp);
-
-#ifdef HAVE_VOIP
-			if (d->type == GG_SESSION_DCC_VOICE)
-				voice_close();
-#endif  /* HAVE_VOIP */
+#if 0
+			if (gg_config_audio && 0) 
+				if (d->type == GG_SESSION_DCC_VOICE)
+					voice_close();
+#endif
 
 			dcc_close(gg_dcc_find(d));
 			gg_free_dcc(d);
@@ -720,13 +812,17 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 
 		if (d->state == GG_STATE_SENDING_FILE_HEADER || d->state == GG_STATE_READING_FILE_HEADER)
 			dcc_active_set(D, 1);
+		if (d->state == GG_STATE_READING_VOICE_HEADER)
+			dcc_active_set(D, 1);
 
 		if (d->state == GG_STATE_SENDING_FILE || d->state == GG_STATE_GETTING_FILE)
 			dcc_offset_set(D, d->offset);
 	}
 
-	if (d && d->type != GG_SESSION_DCC_SOCKET && again)
+	if (d && d->type != GG_SESSION_DCC_SOCKET && again) {
+		if (d->fd == fd && d->check == (int) watch) return 0;
 		watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);
+	}
 
 	gg_event_free(e);
 	
@@ -770,6 +866,13 @@ void gg_dcc_socket_close()
 	gg_dcc_socket = NULL;
 }
 
+void gg_dcc_audio_init() {
+	if (gg_config_audio) audio_register(&gg_dcc_audio);
+}
+
+void gg_dcc_audio_close() {
+	if (!gg_config_audio) audio_unregister(&gg_dcc_audio);
+}
 
 /*
  * Local Variables:

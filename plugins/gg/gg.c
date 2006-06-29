@@ -1342,6 +1342,7 @@ int gg_plugin_init(int prio)
 
 	gg_register_commands();
 	
+	variable_add(&gg_plugin, TEXT("audio"), VAR_BOOL, 1, &gg_config_audio, gg_changed_dcc, NULL, NULL);
         variable_add(&gg_plugin, TEXT("display_token"), VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
 	variable_add(&gg_plugin, TEXT("dcc"), VAR_BOOL, 1, &gg_config_dcc, gg_changed_dcc, NULL, NULL);
 	variable_add(&gg_plugin, TEXT("dcc_dir"), VAR_STR, 1, &gg_config_dcc_dir, NULL, NULL, NULL);
@@ -1375,6 +1376,7 @@ int gg_plugin_init(int prio)
 
 	gg_debug_handler = ekg_debug_handler;
 	gg_debug_level = 255;
+//	gg_debug_handler = NULL;
 
 	return 0;
 }
