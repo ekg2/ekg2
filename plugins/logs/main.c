@@ -24,9 +24,8 @@
 #include <ekg/win32.h>
 
 /* fjuczery */
-#define REMIND_NUMBER_SUPPORT 0 /* support do logs:remind_number 1 aby wlaczyc */
-#define HAVE_ZLIB	      1 /* support for zlib */
 
+#define HAVE_ZLIB	      1 /* support for zlib */
 #undef HAVE_ZLIB		/* actually no avalible... */
 
 #ifndef __FreeBSD__
@@ -493,7 +492,6 @@ int logs_plugin_init(int prio)
 	variable_add(&logs_plugin, TEXT("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
 	variable_add(&logs_plugin, TEXT("log_status"), VAR_BOOL, 1, &config_logs_log_status, &logs_changed_path, NULL, NULL);
 	variable_add(&logs_plugin, TEXT("path"), VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
-	variable_add(&logs_plugin, TEXT("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL); 
 	variable_add(&logs_plugin, TEXT("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
 	logs_changed_awaylog(NULL); /* nie robi sie automagicznie to trzeba sila. */
@@ -629,7 +627,14 @@ FILE* logs_open_file(char *path, int ff)
 #ifdef HAVE_ZLIB
 	int zlibmode = 0;
 #endif
-        debug("[logs] opening log file %s\n", path);
+	if (ff != LOG_FORMAT_IRSSI && ff != LOG_FORMAT_SIMPLE && ff != LOG_FORMAT_XML) {
+		if (ff == LOG_FORMAT_NONE)
+			debug("[logs] opening log file %s with ff == LOG_FORMAT_NONE CANCELLED\n", path, ff);
+		else	debug("[logs] opening log file %s with ff == %d CANCELED\n", path, ff);
+		return NULL;
+	}
+
+        debug("[logs] opening log file %s ff:%d\n", path, ff);
 
 	if (!path) {
 		errno = EACCES; /* = 0 ? */
@@ -894,129 +899,10 @@ QUERY(logs_handler_irc)
 	return 0;
 }
 
-/*
- * przypomina ostanie logs:remind_number wiadomosci
- * z najmlodszego logu
- */
-
 QUERY(logs_handler_newwin)
 {
 	window_t *w = *(va_arg(ap, window_t **));
-#if REMIND_NUMBER_SUPPORT==1
-	char **buf, **tmpbuf;
-	int flen;
-	int i;
-	char *mbuf;
-	char *_session;
-
-	log_window_t *lw = 
-#endif
 	logs_window_new(w);
-
-#if REMIND_NUMBER_SUPPORT==1 /* logs:remind_number support */
-
-	if (config_logs_remind_number <= 0)
-		return 0;
-
-	if (!lw) 
-		return 0;
-
-	debug("LOGS_NEWWIN: PATH: %s %x\n", lw->path, lw->file);
-	if (!lw->file) 
-		return 0; 
-
-	if (	lw->logformat == LOG_FORMAT_IRSSI ||  /* custom format, /me nie ma pomyslu jak to zczytywcac.. */
-		lw->logformat == LOG_FORMAT_XML   ||  /* TODO: xml nie jest w 1 linii w ogole ktos mial robic inny parser.. */
-		lw->logformat == LOG_FORMAT_NONE)
-		return 0; 
-
-	flen = ftell(lw->file);
-	/* lw->in_use = 1 */
-
-/* na poczatek pliku */
-	fseek(lw->file, 0L, SEEK_SET);
-
-	mbuf = mmap(0, flen, PROT_READ | PROT_WRITE, MAP_PRIVATE, fileno(lw->file), 0);
-	tmpbuf = buf = xcalloc(config_logs_remind_number, sizeof(char *));
-
-	// wczytanie wiadomosci
-	for (i = 1; i <= config_logs_remind_number;) {
-		char *lbuf = xrindex(mbuf, '\n');
-
-		if (!lbuf)
-			break;
-
-		*lbuf = 0;
-		lbuf++;
-		if (!xstrlen(lbuf) || lbuf[0] == '-' || lbuf[0] == '#') /* if empty line or comment... */
-			continue;
-		buf[config_logs_remind_number-i] = lbuf;
-		i++; 
-	}
-	_session = xstrdup(w->session ? w->session->uid : NULL);
-	while (*tmpbuf) {
-		char *text = *tmpbuf;
-
-		char *_uid, *_text; 		/* both ok 1, 2 */
-		time_t sent; 			/* only ok == 1 */
-		int _class = EKG_MSGCLASS_CHAT; /* only ok == 1 */
-		char *_status; 			/* only ok == 2 */
-
-		int ok = 0; /* 0 - unknown ; 1 -pm ; 2 - status */
-
-		// parsowanie buf w/g lf.
-		switch (lw->logformat) {
-/*
-			case (LOG_FORMAT_IRSSI):
-				debug("buf -> %s\n", text);
-				_uid = xstrdup("log:test");
-				_text = xstrdup("ziupa!");
-				_class |= EKG_NO_THEMEBIT;
-				ok = 1;
-				break;
- */
-			case (LOG_FORMAT_SIMPLE):
-/* TODO, niech ktos zrobi kto sie zna na charach w c... *
- *   * chatsend,<numer>,<nick>,<czas>,<tre¶æ>
- *      ok = 1 
- *     _class = EKG_MSGCLASS_SENT_CHAT 
- *     ....
- *   * chatrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
- *   * status,<numer>,<nick>,<ip>,<time>,<status>,<descr>
- */
-/* 
-			case (LOG_FORMAT_XML):
- */
-			default: 
-				debug("TODO logline: %s\n", text);
-		}
-		// dont_log = (ptr do text) albo (1);
-		if (ok == 1) {
-			debug("[LOGS_NEWWIN] protocol-message: SESSION:%s UID:%s TEXT:%s SENT=%d CLASS:%d\n", _session, _uid, _text, sent, _class);
-			// query 
-			xfree(_uid);
-			xfree(_text);
-		} else if (ok == 2) {
-			debug("[LOGS_NEWWIN] protocol-status SESSION:%s UID:%s STATUS:%s DESCR:%s\n", _session, _uid, _status, _text);
-			// query
-			xfree(_uid);
-			xfree(_text);
-
-			xfree(_status);
-		}
-		// dont_log = 0;
-
-		tmpbuf++;
-	}
-	xfree(_session);
-
-	xfree(buf);
-	munmap(mbuf, flen);
-
-/* na koniec pliku */
-	fseek(lw->file, 0, SEEK_END);
-	/* lw->in_use = 0 */
-#endif
 	return 0;
 }
 
