@@ -224,7 +224,7 @@ static void pcm_recode(const char *in, int ibps, int ich, char *out, int obps, i
 	}
 }
 
-int pcm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
+int pcm_codec_process(int type, codec_way_t way, string_t input, string_t output, void *data) {
 	pcm_private_t *c = data;
 	int inchunklen = (c->ibps / 8) * c->ich;
 	int outchunklen = (c->obps / 8) * c->och;
@@ -245,11 +245,10 @@ int pcm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_
 	for (i = 0; i < outchunks; i++) {
 		int j = (int) ((double) i / (double) outchunks * (double) inchunks);
 
-		pcm_recode(input->buf + j * inchunklen, c->ibps, c->ich, out, c->obps, c->och);		/* zrekoduj to co mamy zrekodowac */
-		stream_buffer_resize(output, out, outchunklen);						/* dopisz */
+		pcm_recode(input->str + j * inchunklen, c->ibps, c->ich, out, c->obps, c->och);		/* zrekoduj to co mamy zrekodowac */
+		string_append_raw(output, out, outchunklen);
 	}
 	xfree(out);									/* zwolnij bufor */
-	stream_buffer_resize(input, NULL, -(inchunks * inchunklen));
 	return (inchunks * inchunklen);
 }
 

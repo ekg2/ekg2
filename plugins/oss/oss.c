@@ -46,7 +46,7 @@ WATCHER(oss_audio_read) {
 
 	len = read(fd, buf, maxlen);
 	debug("OSS READ: %d bytes from %d\n", len, fd);
-	stream_buffer_resize((stream_buffer_t *) watch, buf, len);
+	string_append_raw((string_t) watch, buf, len);
 
 	xfree(buf);
 	return len;
@@ -54,7 +54,7 @@ WATCHER(oss_audio_read) {
 
 WATCHER(oss_audio_write) {
 	oss_private_t *priv = data;
-	stream_buffer_t *buf = (stream_buffer_t *) watch;
+	string_t buf = (string_t) watch;
 	int len, maxlen;
 	if (type == 1) return 0;
 
@@ -62,11 +62,7 @@ WATCHER(oss_audio_write) {
 	maxlen = priv->bufsize;
 	if (maxlen > buf->len) maxlen = buf->len;
 
-	len = write(fd, buf->buf, maxlen);
-	debug("OSS WRITE: %d bytes from %d\n", len, fd);
-	stream_buffer_resize(buf, NULL, -len);
-	return len;
-
+	return write(fd, buf->str, maxlen);
 }
 
 AUDIO_CONTROL(oss_audio_control) {

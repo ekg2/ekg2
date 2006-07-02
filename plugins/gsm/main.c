@@ -157,18 +157,18 @@ CODEC_CONTROL(gsm_codec_control) {
 			">gsm:to",		"pcm raw",
 			NULL, }; 
 		return arr;
-	} else { debug("[gsm_codec_control] UNIMP\n"); } 
+	}
 	return aco;
 }
 
 /* way: 0 - code ; 1 - decode */
-int gsm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_buffer_t *output, void *data) {
+int gsm_codec_process(int type, codec_way_t way, string_t input, string_t output, void *data) {
 	gsm_private_t *c = data;
 	int inpos = 0;
 
 	if (type)			return 0;
 	if (!c || !input || !output) 	return -1;
-	if (!input->buf || !input->len)	return 0;	 /* we have nothing to code? */
+	if (!input->str || !input->len)	return 0;	 /* we have nothing to code? */
 
 	for (;;) {
 		int inchunklen, outchunklen;
@@ -187,10 +187,10 @@ int gsm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_
 
 		out = xmalloc(outchunklen);
 
-		if (way == CODEC_CODE)		gsm_encode(c->codec, (gsm_signal *) (input->buf + inpos), out);
-		else if (way == CODEC_DECODE) 	gsm_decode(c->codec, input->buf + inpos, (gsm_signal *) out);
+		if (way == CODEC_CODE)		gsm_encode(c->codec, (gsm_signal *) (input->str + inpos), out);
+		else if (way == CODEC_DECODE) 	gsm_decode(c->codec, input->str + inpos, (gsm_signal *) out);
 
-		stream_buffer_resize(output, out, outchunklen);
+		string_append_raw(output, out, outchunklen);
 		xfree(out);
 
 		if (c->msgsm == 1)	c->msgsm = 2;
@@ -198,7 +198,6 @@ int gsm_codec_process(int type, codec_way_t way, stream_buffer_t *input, stream_
 
 		inpos += inchunklen;
 	}
-	stream_buffer_resize(input, NULL, -inpos);
 	return inpos;
 }
 
