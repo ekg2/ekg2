@@ -927,13 +927,15 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	}
 	words_count = wcs_array_count(words);
 	lenght = xwcslen(line);
-	/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
-        if (xisspace(line[lenght - 1]))
-                word_current++;
-	if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== wcs_array_count(words) -1 )
-		word++;
-	if (xisspace(line[lenght - 1]))
-		words_count++;
+	if (lenght) {
+		/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
+	        if (xisspace(line[lenght - 1]))
+        	        word_current++;
+		if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== wcs_array_count(words) -1 )
+			word++;
+		if (xisspace(line[lenght - 1]))
+			words_count++;
+	}
 
 /*
 	debug("word = %d\n", word);
