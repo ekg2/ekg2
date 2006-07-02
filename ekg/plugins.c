@@ -790,7 +790,7 @@ void watch_handle_line(watch_t *w)
 int watch_handle_write(watch_t *w) {
 	int (*handler)(int, int, const char *, void *) = w->handler;
 	int res = -1;
-	int len = (w && w->buf) ? xstrlen(w->buf->str) : 0;
+	int len = (w && w->buf) ? w->buf->len : 0;
 
 	if (!w || w->removed == -1) return -1;	/* watch is running in another thread / context */
 	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
@@ -830,8 +830,9 @@ int watch_handle_write(watch_t *w) {
 		string_clear(w->buf);
 	} else {
 		memmove(w->buf->str, w->buf->str + res, len - res);
+		w->buf->len -= res;
 	}
-	debug("left: %d bytes\n", len-res);
+	debug("left: %d bytes\n", w->buf->len);
 
 	w->removed = 0;
 	return res;

@@ -308,6 +308,24 @@ int wcs_string_append_n(wcs_string_t s, const CHAR_T *str, int count)
 	return 0;
 }
 
+int string_append_raw(string_t s, const char *str, int count) {
+	if (!s || !str) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	if (count == -1) return string_append_n(s, str, -1);
+
+	string_realloc(s, s->len + count);
+
+	s->str[s->len + count] = 0;
+	memcpy(s->str + s->len, str, count);
+
+	s->len += count;
+
+	return 0;
+}
+
 int string_append(string_t s, const char *str)
 {
 	return string_append_n(s, str, -1);

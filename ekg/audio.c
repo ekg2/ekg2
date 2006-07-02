@@ -217,37 +217,6 @@ int audio_register(audio_t *audio) {
 void audio_unregister(audio_t *audio) {
 
 }
-
-char *stream_buffer_resize(stream_buffer_t *b, char *buf, int len) {
-	int oldlen;
-	if (!b) return NULL;
-
-	if (!buf && len > 0) {
-		debug("ERR stream_buffer_resize() len > 0 but buf NULL....\n"); 
-		return b->buf;
-	}
-
-	oldlen = b->len;
-/* len can be < 0. if it's we remove len bytes from b->buf */
-/* else we add len bytes to b->buf */
-	b->len += len;
-
-	if (b->len <= 0) { b->len = 0; xfree(b->buf); b->buf = NULL; } 
-	else {
-		if (len < 0) { 
-			int move = -len;
-
-			if (b->len - move < 0) move = b->len;
-			memmove(b->buf, b->buf+move, b->len-move);	/* iwil! */
-		}
-		b->buf = (char *) xrealloc(b->buf, b->len);
-	}
-
-	if (len > 0) memcpy(b->buf+oldlen, buf, len);
-
-//	debug("stream_buffer_resize() b: 0x%x oldlen: %d bytes newlen: %d bytes\n", b, oldlen, b->len);
-	return b->buf;
-}
 		/* READING / WRITING FROM FILEs */
 WATCHER(stream_audio_read) {
 	int maxlen = 4096, len;
@@ -255,7 +224,9 @@ WATCHER(stream_audio_read) {
 	
 	buf = xmalloc(maxlen);
 	len = read(fd, buf, maxlen);
-	stream_buffer_resize((stream_buffer_t *) watch, buf, len);
+
+	string_append_raw((string_t) watch, buf, len);
+
 	xfree(buf);
 
 	debug("stream_audio_read() read: %d bytes from fd: %d\n", len, fd);
@@ -264,9 +235,8 @@ WATCHER(stream_audio_read) {
 }
 
 WATCHER(stream_audio_write) {
-	stream_buffer_t *buffer = (stream_buffer_t *) watch;
+	string_t buffer = (string_t) watch;
 	stream_private_t *priv = data;
-	int len;
 
 	if (!data) {
 		debug("[stream_audio_write] GENERALERROR: DATA MUST BE NOT NULL\n");
@@ -287,14 +257,7 @@ WATCHER(stream_audio_write) {
 		return 0;
 	}
 
-	debug("stream_audio_write() buffer: 0x%x in buffer: %d bytes... writting to fd: %d....\n", buffer, buffer->len, fd);
-	len = write(fd, buffer->buf, buffer->len);
-
-	if (len > 0) 	{ stream_buffer_resize(buffer, NULL, -len);	priv->size += len; } 
-	else 		debug("write() failed: %d %s", errno, strerror(errno));
-
-	debug(".... written %d bytes left: %d\n", len, buffer->len);
-	return len;
+	return write(fd, buffer->str, buffer->len);
 }
 
 AUDIO_CONTROL(stream_audio_control) {
@@ -483,8 +446,42 @@ AUDIO_CONTROL(stream_audio_control) {
 			NULL, };
 		return arr;
 	}
-
 	return aio;
+}
+
+WATCHER(stream_handle_write) {
+	stream_t *s = data;
+	audio_io_t *audio = NULL;
+	watcher_handler_func_t *w = NULL;
+	int len;
+
+//	debug("stream_handle_write() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch);
+
+	audio = s->output;
+
+	if (!audio) debug("stream_handle_write() audio_t: 0x%x\n", audio);
+	if (!audio) return -1;
+
+	if (type == 0 && !audio->buffer->len) {	/* oldcode, shouldn't happen */
+		debug("stream_handle_write() ERROR ?\n");
+		if (s->input->fd == -1 && !s->input->buffer->len) return -1;	/* we won't receive any NEW data from watcher with fd == -1 */
+		return 0;							/* we should set w->type to 0... and only to WATCH_WRITE when we have smth to write... */
+	}
+
+	w = audio->a->write_handler;
+
+	if (!w) debug("stream_handle() watch_t: 0x%x\n", w);
+	if (!w) return -1;
+
+	len = w(type, fd, (char *) audio->buffer, audio->private);
+
+	if (type) {
+		close(fd);
+		audio->fd = fd		= -1;
+		audio->buffer		= string_init(NULL);
+	}
+	if (len == -1) return 0;
+	return len;
 }
 
 WATCHER(stream_handle) {
@@ -496,41 +493,39 @@ WATCHER(stream_handle) {
 
 //	debug("stream_handle() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch);
 
-	if ((int) watch == WATCH_READ)		audio = s->input;
-	else if ((int) watch == WATCH_WRITE)	audio = s->output;
-						codec = s->codec;
+	audio = s->input;
+	codec = s->codec;
 
 	if (!audio) debug("stream_handle() audio_t: 0x%x\n", audio);
 	if (!audio) return -1;
 
-	if (type == 0 && (int) watch == WATCH_WRITE && !audio->buffer->len) {
-		if (s->input->fd == -1 && !s->input->buffer->len) return -1;	/* we won't receive any NEW data from watcher with fd == -1 */
-		return 0;							/* XXX, we should set w->type to 0... and only to WATCH_WRITE when we have smth to write... */
-	}
-
-	if ((int) watch == WATCH_READ)		w = audio->a->read_handler;
-	else if ((int) watch == WATCH_WRITE)	w = audio->a->write_handler;
+	w = audio->a->read_handler;
 
 	if (!w) debug("stream_handle() watch_t: 0x%x\n", w);
 	if (!w) return -1;
 
 	len = w(type, fd, (char *) audio->buffer, audio->private);
 
-	if ((int) watch == WATCH_READ && s->output) {	/* if watch write do nothing */
-		if (!s->codec) {
+	if (s->output) {	/* if watch write do nothing */
+		if (!codec) {
 			/* we just copy data from input->buf */
-			stream_buffer_resize(s->output->buffer, s->input->buffer->buf, s->input->buffer->len);
-			stream_buffer_resize(s->input->buffer, NULL, -s->input->buffer->len);
+			string_append_raw(s->output->buffer, audio->buffer->str, audio->buffer->len);
+			string_clear(s->input->buffer);
 		} else {
-			int len;
+			int res;
 			if (codec->way == CODEC_CODE) {
-				len = codec->c->code_handler(type, s->input->buffer, s->output->buffer, codec->private);
+				res = codec->c->code_handler(type, audio->buffer, s->output->buffer, codec->private);
 			} else if (s->codec->way == CODEC_DECODE) {
-				len = codec->c->decode_handler(type, s->input->buffer, s->output->buffer, codec->private);
+				res = codec->c->decode_handler(type, audio->buffer, s->output->buffer, codec->private);
+			}
+			if (res > 0) {
+				memmove(audio->buffer->str, audio->buffer->str + res, audio->buffer->len - res);
+				audio->buffer->len -= res;
 			}
 		}
 		/* if this is read handler, and we don't have watch handler for writing stream->out->fd == -1 then we don't need to wait for WATCH_WRITE and we here do it */
-		s->output->a->write_handler(type, -1, (char *) s->output->buffer, s->output->private);
+		if (s->output->fd == -1)
+			s->output->a->write_handler(type, -1, (char *) s->output->buffer, s->output->private);
 	}
 
 	if (type) {
@@ -564,12 +559,15 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 
 	list_add(&streams, s, 0);
 
-	/* allocate buffors */
-	if (in)		in->buffer	= xmalloc(sizeof(stream_buffer_t));
-	if (out)	out->buffer 	= xmalloc(sizeof(stream_buffer_t));
-
 	watch_add(NULL, in->fd, WATCH_READ, stream_handle, s);
-	if (out->fd != -1) watch_add(NULL, out->fd, WATCH_WRITE, stream_handle, s);
+/* allocate buffers */
+	in->buffer	= string_init(NULL);
+	out->buffer 	= string_init(NULL);
+
+	if (out->fd != -1) {
+		watch_t *tmp	= watch_add(NULL, out->fd, WATCH_WRITE, stream_handle_write, s);
+		tmp->buf	= out->buffer;
+	} 
 
 	return 1;
 fail:

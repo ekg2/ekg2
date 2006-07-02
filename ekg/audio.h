@@ -38,7 +38,7 @@ typedef enum { CODEC_CODE = 0, CODEC_DECODE, }
 #define __CINIT_F(name, args...) __CINIT((codec_find(name)), args)
 
 
-#define CODEC_RECODE(x) int x(int type, stream_buffer_t *input, stream_buffer_t *output, void *data)
+#define CODEC_RECODE(x) int x(int type, string_t input, string_t output, void *data)
 #define AUDIO_CONTROL(x) audio_io_t	*x(audio_control_t type, audio_way_t way, audio_io_t *aio, ...)
 #define CODEC_CONTROL(x) audio_codec_t	*x(audio_control_t type, audio_way_t way, audio_codec_t *aco, ...)
 
@@ -65,11 +65,6 @@ typedef enum { CODEC_CODE = 0, CODEC_DECODE, }
 	}
 
 typedef struct {
-	char *buf;
-	int len;
-} stream_buffer_t;
-
-typedef struct {
 	char *name;	/* nazwa urzadzenia */
 	
 	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_io_t is correct / deiniting */
@@ -82,7 +77,7 @@ typedef struct {
 typedef struct {
 	audio_t *a;
 	int fd;
-	stream_buffer_t *buffer;
+	string_t buffer;
 	void *private;
 } audio_io_t;
 
@@ -91,10 +86,10 @@ typedef struct {
 
 	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);    /* initing / checking if audio_codec_t is correct / deiniting */
 
-		/* IN: int type, stream_buffer_t *input, stream_buffer_t *output, void *private 
+		/* IN: int type, string_t input, string_t output, void *private 
 		 * OUT: how many bytes he code/decode */
-	int (*code_handler)(int, stream_buffer_t *, stream_buffer_t *, void *);
-	int (*decode_handler)(int, stream_buffer_t *, stream_buffer_t *, void *);
+	int (*code_handler)(int, string_t, string_t, void *);
+	int (*decode_handler)(int, string_t, string_t, void *);
 	void *private;
 } codec_t;
 
@@ -117,8 +112,6 @@ typedef struct {
 list_t audio_codecs;
 list_t audio_inputs;
 list_t streams;
-
-char *stream_buffer_resize(stream_buffer_t *b, char *buf, int len);
 
 int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out);
 
