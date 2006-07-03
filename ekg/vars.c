@@ -97,6 +97,7 @@ void variable_init()
         variable_add(NULL, TEXT("display_blinking"), VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
 	variable_add(NULL, TEXT("display_color"), VAR_INT, 1, &config_display_color, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("display_color_map"), VAR_STR, 1, &config_display_color_map, NULL, NULL, dd_color);
+	variable_add(NULL, TEXT("display_day_changed"), VAR_BOOL, 1, &config_display_day_changed, NULL, NULL , NULL);
 	variable_add(NULL, TEXT("display_notify"), VAR_INT, 1, &config_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "significant"), NULL);
 	variable_add(NULL, TEXT("display_pl_chars"), VAR_BOOL, 1, &config_display_pl_chars, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("display_sent"), VAR_BOOL, 1, &config_display_sent, NULL, NULL, NULL);

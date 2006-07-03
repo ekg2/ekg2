@@ -1120,6 +1120,7 @@ void theme_init()
         format_add("welcome,speech", _("welcome in e k g 2."), 1);
         format_add("ekg_version", _("%) %Tekg2-%1%n (compiled %2)\n"), 1);
         format_add("secure", _("%Y(encrypted)%n"), 1);
+	format_add("day_changed", _("%) Day changed to: %W%1"), 1);
 
         /* mail */
         format_add("new_mail_one", _("%) You got one email\n"), 1);

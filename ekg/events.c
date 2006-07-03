@@ -41,6 +41,8 @@
 list_t events = NULL;
 char **events_all = NULL;
 
+int config_display_day_changed = 1;
+
 /* 
  * on function 
  */
@@ -391,7 +393,9 @@ TIMER(ekg_day_timer)
 	tm = localtime(&now);
 #define dayischanged(x) (oldtm->tm_##x != tm->tm_##x)
 	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)  {
-		debug("[EKG] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
+		if (config_display_day_changed) {
+			print("day_changed", timestamp("%d %b %Y"));
+		} else debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
 		query_emit(NULL, "day-changed", &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
