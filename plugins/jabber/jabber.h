@@ -28,6 +28,10 @@
 
 #define tlenjabber_uescape(str) (j->istlen ? tlen_decode(str) : jabber_uescape(str)) 
 
+#define WITH_JABBER_DCC 0
+#define WITH_JABBER_JINGLE 1
+#define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
+
 struct xmlnode_s {
 	char *name;
 	char *data; 

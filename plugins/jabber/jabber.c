@@ -60,10 +60,6 @@
 
 #include "jabber.h"
 
-#define WITH_JABBER_DCC 0
-#define WITH_JABBER_JINGLE 0
-#define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
-
 int jabber_dcc_port = 0;
 
 char *jabber_dcc_ip = NULL;

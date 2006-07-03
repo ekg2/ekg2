@@ -863,7 +863,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			} else if (!xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-command-execute")) {
 				if (!x) {
 					list_t l;
-					char *session_cur = jabber_escape(session_current->uid);
+					CHAR_T *session_cur = jabber_escape(session_current->uid);
 
 					EXECUTING_HEADER("EXECUTE COMMAND IN EKG2", "Do what you want, but be carefull", "http://ekg2.org/jabber/rc");
 					watch_write(j->send_watch, 
@@ -880,13 +880,13 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	
 					for (l = sessions; l; l = l->next) {
 						session_t *s = l->data;
-						char *alias	= jabber_escape(s->alias);
-						char *uid	= jabber_escape(s->uid);
-						watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>", alias ? alias : uid, uid);
+						CHAR_T *alias	= jabber_escape(s->alias);
+						CHAR_T *uid	= jabber_escape(s->uid);
+						watch_write(j->send_watch, "<option label=\"" CHARF "\"><value>" CHARF "</value></option>", alias ? alias : uid, uid);
 						xfree(alias); xfree(uid);
 					}
 					watch_write(j->send_watch, 
-						"<value>%s</value></field>"
+						"<value>" CHARF "</value></field>"
 						"<field label=\"Window name (leave empty for current)\" type=\"list-single\" var=\"window-name\">", session_cur);
 
 					for (l = windows; l; l = l->next) {
@@ -915,7 +915,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					if (window)	windowid = atoi(window);
 
 					if (is_valid) { 
-						char *fullcommand = saprintf("/%s %s", command, params ? params : "");
+						CHAR_T *fullcommand = wcsprintf(TEXT("/%s %s"), command, params ? params : "");
 						window_t  *win;
 						session_t *ses;
 						int ret;

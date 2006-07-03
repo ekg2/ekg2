@@ -104,7 +104,7 @@ COMMAND(jabber_command_dcc) {
 		close(fd);
 
 		{
-			char *filename;
+			CHAR_T *filename;
 			char *touid = saprintf("%s/%s", u->uid, u->resource);
 			jabber_dcc_t *p;
 			d = dcc_add(touid, DCC_SEND, NULL);
@@ -121,7 +121,7 @@ COMMAND(jabber_command_dcc) {
 
 			watch_write(j->send_watch, "<iq type=\"set\" id=\"%s\" to=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%s\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
-					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"%s\">"
+					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"" CHARF "\">"
 					"<range/></file>"
 					"<feature xmlns=\"http://jabber.org/protocol/feature-neg\"><x xmlns=\"jabber:x:data\" type=\"form\">"
 					"<field type=\"list-single\" var=\"stream-method\">"
@@ -196,8 +196,11 @@ COMMAND(jabber_command_dcc) {
 	if (!xstrncasecmp(params[0], "vo", 2)) { /* voice */
 		return -1;
 	}
-
+#if USE_UNICODE
+	return cmd_dcc(name, params_, session, target, quiet);
+#else
 	return cmd_dcc(name, params, session, target, quiet);
+#endif
 }
 
 void jabber_command_connect_child(
@@ -1010,14 +1013,14 @@ COMMAND(jabber_command_search) {
 
 COMMAND(tlen_command_pubdir) {
 	PARASC
-	int issearch = !xstrcmp(name, "search");
+	int issearch = !xwcscmp(name, TEXT("search"));
 
 	if (!issearch && !xstrcmp(params[0], "show")) 
-		return command_exec(target, session, "/jid:register tuba", quiet);
+		return command_exec(target, session, TEXT("/jid:register tuba"), quiet);
 	if (params[0]) {
 		int res;
 		char **splitted;
-		string_t str;
+		wcs_string_t str;
 		int i;
 
 		if (!(splitted = jabber_params_split(params[0], 1))) {
@@ -1028,8 +1031,8 @@ COMMAND(tlen_command_pubdir) {
 			/* execute jabber_command_search.. | _register */
 				/* params[0] == "tuba" */
 				/* params[1] == parsed params[0] */
-		if (issearch)	str = string_init("/jid:search tuba ");
-		else		str = string_init("/jid:register tuba ");
+		if (issearch)	str = wcs_string_init(TEXT("/jid:search tuba "));
+		else		str = wcs_string_init(TEXT("/jid:register tuba "));
 
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
 			char *valname = 0;
@@ -1052,16 +1055,16 @@ COMMAND(tlen_command_pubdir) {
 			else if (!issearch && !xstrcmp(splitted[i], "birthyear")) valname = "b";
 
 			if (valname) {
-				string_append(str, "--");
-				string_append(str, valname);
-				string_append_c(str, ' ');
-				string_append(str, splitted[i+1]);
+				wcs_string_append(str, TEXT("--"));
+				wcs_string_append(str, valname);
+				wcs_string_append_c(str, ' ');
+				wcs_string_append(str, splitted[i+1]);
 			} else debug("option --%s not supported in /tlen:%s! skipping.\n", splitted[i], name);
 		}
 		array_free(splitted);
 
 		res = command_exec(target, session, str->str, quiet);
-		string_free(str, 1);
+		wcs_string_free(str, 1);
 
 		return res;
 	}
@@ -1252,7 +1255,7 @@ COMMAND(jabber_command_privacy) {
 			"<iq type=\"get\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"/></iq>", j->id++);
 	} else if (req || params[1]) {	/* (req || params[1]); (target -- params[0]) XXX */
 		char *lname = NULL;	/* list name, if not passed. generate random one. */
-		char *ename;
+		CHAR_T *ename;
 
 		const char *type;		/* <item type */
 		const char *value;		/* <item value */
@@ -1314,7 +1317,7 @@ COMMAND(jabber_command_privacy) {
 
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\">"
-			"<list name=\"%s\">", j->id++, ename);
+			"<list name=\"" CHARF "\">", j->id++, ename);
 
 		for (i=0; i < PRIVACY_LIST_COUNT; i++) {
 			if ( (alist[i] && done != 0x01) || (blist[i] && done != 0x02)) {
@@ -1490,10 +1493,10 @@ COMMAND(jabber_command_control) {
 			fulluid, j->id++, nodename ? nodename : params[1], FORM_TYPE);
 
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
-			char *varname = jabber_escape(splitted[i]);
-			char *varval = jabber_escape(splitted[i+1]); /* ? */
+			CHAR_T *varname = jabber_escape(splitted[i]);
+			CHAR_T *varval = jabber_escape(splitted[i+1]); /* ? */
 
-			watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", varname, varval);
+			watch_write(j->send_watch, "<field var=\"" CHARF "\"><value>" CHARF "</value></field>", varname, varval);
 
 			xfree(varname); xfree(varval);
 		}
@@ -1511,15 +1514,15 @@ COMMAND(jabber_command_control) {
 
 
 COMMAND(jabber_command_private) {
-	PARUNI
+	PARASC
 	jabber_private_t *j = jabber_private(session);
 	CHAR_T *namespace; 	/* <nazwa> */
 
 	int config = 0;			/* 1 if name == jid:config */
 	int bookmark = 0;		/* 1 if name == jid:bookmark */
 
-	if (!xstrcmp(name, "config"))	config = 1;
-	if (!xstrcmp(name, "bookmark")) bookmark = 1;
+	if (!xwcscmp(name, TEXT("config")))	config = 1;
+	if (!xwcscmp(name, TEXT("bookmark")))	bookmark = 1;
 	
 	if (config)		namespace = TEXT("ekg2 xmlns=\"ekg2:prefs\"");
 	else if (bookmark)	namespace = TEXT("storage xmlns=\"storage:bookmarks\"");
@@ -1528,9 +1531,9 @@ COMMAND(jabber_command_private) {
 	if (bookmark) {				/* bookmark-only-commands */
 		int bookmark_sync	= 0;			/* 0 - no sync; 1 - sync (item added); 2 - sync (item modified) 3 - sync (item removed)	*/
 	
-		if (match_arg(params[0], 'a', TEXT("add"), 2))		bookmark_sync = 1;	/* add item */
-		if (match_arg(params[0], 'm', TEXT("modify"), 2))	bookmark_sync = 2; 	/* modify item */
-		if (match_arg(params[0], 'r', TEXT("remove"), 2))	bookmark_sync = 3; 	/* remove item */
+		if (nmatch_arg(params[0], 'a', TEXT("add"), 2))		bookmark_sync = 1;	/* add item */
+		if (nmatch_arg(params[0], 'm', TEXT("modify"), 2))	bookmark_sync = 2; 	/* modify item */
+		if (nmatch_arg(params[0], 'r', TEXT("remove"), 2))	bookmark_sync = 3; 	/* remove item */
 
 		if (bookmark_sync) {
 			const CHAR_T *p[2]	= {TEXT("-p"), NULL};	/* --put */
@@ -1593,18 +1596,18 @@ COMMAND(jabber_command_private) {
 		}
 	}
 
-	if (match_arg(params[0], 'g', TEXT("get"), 2) || match_arg(params[0], 'd', TEXT("display"), 2)) {	/* get/display */
+	if (nmatch_arg(params[0], 'g', TEXT("get"), 2) || nmatch_arg(params[0], 'd', TEXT("display"), 2)) {	/* get/display */
 		watch_write(j->send_watch,
 			"<iq type=\"get\" id=\"%s%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
 			"<" CHARF "/>"
 			"</query></iq>", 
-			(match_arg(params[0], 'g', TEXT("get"), 2) && (config || bookmark) ) ? "config" : "private", 
+			(nmatch_arg(params[0], 'g', TEXT("get"), 2) && (config || bookmark) ) ? "config" : "private", 
 			j->id++, namespace);
 		return 0;
 	}
 
-	if (match_arg(params[0], 'p', TEXT("put"), 2)) {							/* put */
+	if (nmatch_arg(params[0], 'p', TEXT("put"), 2)) {							/* put */
 		list_t l;
 
 		if (j->send_watch) j->send_watch->transfer_limit = -1;
@@ -1623,9 +1626,9 @@ back:
 					variable_t *v = n->data;
 					CHAR_T *vname, *tname;
 					if (v->plugin != p) continue;
-					tname = vname = jabber_escape(v->name);
+					tname = vname = jabber_uescape(v->name);
 
-					if (p && !xstrncmp(tname, p->name, xstrlen(p->name))) tname += xstrlen(p->name);
+					if (p && !xwcsncmp(tname, p->name, xwcslen(p->name))) tname += xwcslen(p->name);
 					if (tname[0] == ':') tname++;
 				
 					switch (v->type) {
@@ -1683,7 +1686,7 @@ back:
 				}
 			}
 		} else {
-			watch_write(j->send_watch, params[2]);
+			watch_write(j->send_watch, CHARF, params[2]);
 		}
 		{
 			CHAR_T *beg = namespace;
@@ -1691,8 +1694,8 @@ back:
 
 /*			if (end) *end = '\0'; */	/* SEGV? where? why? :( */
 
-			if (end) beg = xstrndup(namespace, end-namespace);
-			else	 beg = xstrdup(namespace);
+			if (end) beg = xwcsndup(namespace, end-namespace);
+			else	 beg = xwcsdup(namespace);
 
 			watch_write(j->send_watch, "</" CHARF "></query></iq>", beg);
 
@@ -1702,7 +1705,7 @@ back:
 		return 0;
 	}
 
-	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {						/* clear */
+	if (nmatch_arg(params[0], 'c', TEXT("clear"), 2)) {						/* clear */
 		if (bookmark) jabber_bookmarks_free(j);			/* let's destroy previously saved bookmarks */
 		watch_write(j->send_watch,
 			"<iq type=\"set\" id=\"private%d\">"
