@@ -174,12 +174,6 @@ int config_read(const char *filename)
 	int i = 0, good_file = 0, first = (filename) ? 0 : 1, ret = 1;
 	struct stat st;
 
-	/* then global and plugins variables */
-        if (!filename && !(filename = prepare_path("config", 0)))
-                return -1;
-
-        check_file();
-
 	if (!in_autoexec && !filename) {
 		alias_free();
 		timer_remove_user(-1);
@@ -189,6 +183,12 @@ int config_read(const char *filename)
 		query_emit(NULL, "binding-default");
 		debug("  flushed previous config\n");
 	} 
+
+	/* then global and plugins variables */
+        if (!filename && !(filename = prepare_path("config", 0)))
+                return -1;
+
+        check_file();
 
 	while ((buf = wcs_read_file(f))) {
 		ret = 0;
