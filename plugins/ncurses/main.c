@@ -320,7 +320,7 @@ static int ncurses_postinit(void *data, va_list ap)
 
 static int ncurses_binding_set_query(void *data, va_list ap)
 {
-        char *p1 = va_arg(ap, char *);
+        CHAR_T *p1 = va_arg(ap, CHAR_T *);
 	CHAR_T *p2 = va_arg(ap, CHAR_T *);
         int quiet = va_arg(ap, int);
 
@@ -331,34 +331,36 @@ static int ncurses_binding_set_query(void *data, va_list ap)
 
 static int ncurses_binding_query(void *data, va_list ap)
 {
-        char *p1 = va_arg(ap, char*), *p2 = va_arg(ap, char*), *p3 = va_arg(ap, char*);
-        int quiet = va_arg(ap, int);
+	CHAR_T *p1 = va_arg(ap, CHAR_T *);
+	CHAR_T *p2 = va_arg(ap, CHAR_T *);
+	CHAR_T *p3 = va_arg(ap, CHAR_T *);
+	int quiet = va_arg(ap, int);
 
-        if (match_arg(p1, 'a', TEXT("add"), 2)) {
-	        if (!p2 || !p3)
-        	        wcs_printq("not_enough_params", TEXT("bind"));
-                else
-                        ncurses_binding_add(p2, p3, 0, quiet);
-        } else if (match_arg(p1, 'd', TEXT("delete"), 2)) {
-        	if (!p2)
-                	wcs_printq("not_enough_params", TEXT("bind"));
-                else
-                        ncurses_binding_delete(p2, quiet);
-        } else if (match_arg(p1, 'L', TEXT("list-default"), 5)) {
-        	binding_list(quiet, p2, 1);
+	if (match_arg(p1, 'a', TEXT("add"), 2)) {
+		if (!p2 || !p3)
+			wcs_printq("not_enough_params", TEXT("bind"));
+		else
+			ncurses_binding_add(p2, p3, 0, quiet);
+	} else if (match_arg(p1, 'd', TEXT("delete"), 2)) {
+		if (!p2)
+			wcs_printq("not_enough_params", TEXT("bind"));
+		else
+			ncurses_binding_delete(p2, quiet);
+	} else if (match_arg(p1, 'L', TEXT("list-default"), 5)) {
+		binding_list(quiet, p2, 1);
 	} else if (match_arg(p1, 'S', TEXT("set"), 2)) {
 		ncurses_binding_set(quiet, p2, NULL);
-        } else {
-        	if (match_arg(p1, 'l', TEXT("list"), 2))
-                	binding_list(quiet, p2, 0);
-                else
-                        binding_list(quiet, p1, 0);
-        }
+	} else {
+		if (match_arg(p1, 'l', TEXT("list"), 2))
+			binding_list(quiet, p2, 0);
+		else
+			binding_list(quiet, p1, 0);
+	}
 
-        ncurses_contacts_update(NULL);
-        update_statusbar(1);
+	ncurses_contacts_update(NULL);
+	update_statusbar(1);
 
-        return 0;
+	return 0;
 }
 
 QUERY(ncurses_setvar_default)
@@ -448,8 +450,8 @@ int ncurses_plugin_init(int prio)
 	if (config_use_unicode)
 #endif
 	{	debug("plugin ncurses cannot be loaded because of mishmashed compilation...\n"
-			"	 plugin compilated with: --%s-unicode\n"
-			"	program compilated with: --%s-unicode\n",
+			"	program compilated with: --%s-unicode\n"
+			"	 plugin compilated with: --%s-unicode\n",
 				config_use_unicode ? "enable" : "disable",
 				config_use_unicode ? "disable": "enable");
 		return -1;
