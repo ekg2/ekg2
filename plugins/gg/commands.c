@@ -1556,7 +1556,7 @@ COMMAND(gg_command_modify)
 	char **argv = NULL;
 	int i, res = 0, modified = 0;
 
-	if (!xstrcmp(name, "add")) {
+	if (!xwcscmp(name, TEXT("add"))) {
 		int ret;
 	/* we overlap /add command, so we need to execute it... maybe let's move it here? */
 #if USE_UNICODE
