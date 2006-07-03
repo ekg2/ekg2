@@ -50,6 +50,7 @@
 #include "configfile.h"
 #include "stuff.h"
 #include "userlist.h"
+#include "xmalloc.h"
 
 #ifdef NO_POSIX_SYSTEM
 #include <winbase.h>
