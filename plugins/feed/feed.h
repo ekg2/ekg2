@@ -1,0 +1,30 @@
+#include "ekg2-config.h"
+#include <ekg/plugins.h>
+#include <ekg/sessions.h>
+
+#define RSS_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define RSS_FLAGS        RSS_ONLY  | SESSION_MUSTBECONNECTED
+#define RSS_FLAGS_TARGET RSS_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+
+#define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->private : NULL)
+
+extern plugin_t feed_plugin;
+
+typedef struct {
+#ifdef HAVE_EXPAT
+	int isrss;
+#endif
+	void *private;
+} feed_private_t;
+
+extern void *nntp_protocol_init();		/* nntp.c */
+extern void nntp_protocol_deinit(void *);	/* nntp.c */
+extern void nntp_init();			/* nntp.c */
+
+#ifdef HAVE_EXPAT
+extern void *rss_protocol_init();		/* rss.c */
+extern void rss_protocol_deinit(void *);	/* rss.c */
+extern void rss_init();				/* rss.c */
+#endif
+
+
