@@ -402,7 +402,9 @@ group_cleanup:
 	}
 	
 	if (xstrcmp(header, "")) {
-		ncurses_backlog_add(w, fstring_new(format_string(header, group)));
+		char *tmp = format_string(header, group);
+		ncurses_backlog_add(w, fstring_new(tmp));
+		xfree(tmp);
 	}
 
 	if (all == 1 && !sorted_all_cache) {
@@ -584,8 +586,11 @@ group_cleanup:
 		}
 	}
 
-	if (xstrcmp(footer, "")) 
-		ncurses_backlog_add(w, fstring_new(format_string(footer, group)));
+	if (xstrcmp(footer, "")) {
+		char *tmp = format_string(footer, group);
+		ncurses_backlog_add(w, fstring_new(tmp));
+		xfree(tmp);
+	}
 
 	if (sorted_all && !sorted_all_cache && all != 2) {
 		sorted_all_cache = sorted_all;
