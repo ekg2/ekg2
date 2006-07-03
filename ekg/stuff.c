@@ -379,7 +379,7 @@ void alias_free()
  *
  * wy¶wietla listê przypisanych komend.
  */
-void binding_list(int quiet, const char *name, int all) 
+void binding_list(int quiet, const CHAR_T *name, int all) 
 {
 	list_t l;
 	int found = 0;
@@ -391,23 +391,23 @@ void binding_list(int quiet, const char *name, int all)
 		struct binding *b = l->data;
 
 		if (name) {
-			if (xstrcasestr(b->key, name)) {
-				printq("bind_seq_list", b->key, b->action);
+			if (xwcscasestr(b->key, name)) {
+				wcs_printq("bind_seq_list", b->key, b->action);
 				found = 1;
 			}
 			continue;
 		}
 
 		if (!b->internal || (all && b->internal)) 
-			printq("bind_seq_list", b->key, b->action);
+			wcs_printq("bind_seq_list", b->key, b->action);
 	}
 
 	if (name && !found) {
 		for (l = bindings; l; l = l->next) {
 			struct binding *b = l->data;
 
-			if (xstrcasestr(b->action, name))
-				printq("bind_seq_list", b->key, b->action);
+			if (xwcscasestr(b->action, name))
+				wcs_printq("bind_seq_list", b->key, b->action);
 		}
 	}
 }

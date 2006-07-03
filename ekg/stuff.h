@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
 #include "sessions.h"
@@ -81,17 +82,19 @@ struct alias {
 };
 #endif
 
+#define BINDING_FUNCTION(x) void x(const CHAR_T *arg) 
+
 struct binding {
-	char *key;
+	CHAR_T *key;
 
-	char *action;			/* akcja */
-	int internal;			/* czy domy¶lna kombinacja? */
-	void (*function)(const char *arg);	/* funkcja obs³uguj±ca */
-	char *arg;			/* argument funkcji */
+	CHAR_T *action;					/* akcja */
+	int internal;					/* czy domy¶lna kombinacja? */
+	void (*function)(const CHAR_T *arg);		/* funkcja obs³uguj±ca */
+	CHAR_T *arg;					/* argument funkcji */
 
-	char *default_action;		/* domy¶lna akcja */
-	void (*default_function)(const char *arg);	/* domy¶lna funkcja */
-	char *default_arg;		/* domy¶lny argument */
+	CHAR_T *default_action;				/* domy¶lna akcja */
+	void (*default_function)(const CHAR_T *arg);	/* domy¶lna funkcja */
+	CHAR_T *default_arg;				/* domy¶lny argument */
 };
 
 typedef struct {
@@ -245,7 +248,7 @@ void alias_free();
 char *base64_encode(const char *buf);
 char *base64_decode(const char *buf);
 
-void binding_list(int quiet, const char *name, int all);
+void binding_list(int quiet, const CHAR_T *name, int all);
 void binding_free();
 
 int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines);

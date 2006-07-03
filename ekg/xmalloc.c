@@ -288,7 +288,7 @@ int xstrcasecmp(const char *s1, const char *s2)
 int xwcscasecmp(const CHAR_T *s1, const CHAR_T *s2) 
 {
 #if USE_UNICODE
-	return wcscasecmp(s1, s2);
+	return wcscasecmp(ufix(s1), ufix(s2));
 #else
 	return xstrcasecmp(s1, s2);
 #endif

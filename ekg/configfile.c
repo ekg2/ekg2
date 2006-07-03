@@ -412,7 +412,7 @@ static void config_write_main(FILE *f)
         for (l = events; l; l = l->next) {
                 event_t *e = l->data;
 
-                fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
+                fprintf(f, "on " CHARF " %d "CHARF" "CHARF"\n", e->name, e->prio, e->target, e->action);
         }
 
 	for (l = bindings; l; l = l->next) {
@@ -421,12 +421,12 @@ static void config_write_main(FILE *f)
 		if (b->internal)
 			continue;
 
-		fprintf(f, "bind %s %s\n", b->key, b->action);
+		fprintf(f, "bind " CHARF " " CHARF "\n", b->key, b->action);
 	}
 
         for (l = bindings_added; l; l = l->next) {
                 binding_added_t *d = l->data;
-                fprintf(f, "bind-set %s "CHARF"\n", d->binding->key, d->sequence);
+                fprintf(f, "bind-set " CHARF " "CHARF"\n", d->binding->key, d->sequence);
         }
 
 	for (l = timers; l; l = l->next) {

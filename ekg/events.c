@@ -39,7 +39,7 @@
 #include "windows.h"
 
 list_t events = NULL;
-char **events_all = NULL;
+CHAR_T **events_all = NULL;
 
 int config_display_day_changed = 1;
 
@@ -48,8 +48,8 @@ int config_display_day_changed = 1;
  */
 COMMAND(cmd_on)
 {
-	PARASC
-	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
+	PARUNI
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		int prio;
 
                 if (!params[1] || !params[2] || !params[3] || !params[4]) {
@@ -57,7 +57,7 @@ COMMAND(cmd_on)
                         return -1;
                 }
 
-		if (!(prio = atoi(params[2])) || !array_contains(events_all, params[1], 0)) {
+		if (!(prio = wcs_atoi(params[2])) || !wcs_array_contains(events_all, params[1], 0)) {
 			wcs_printq("invalid_params", name);
 			return -1;
 		}
@@ -69,7 +69,7 @@ COMMAND(cmd_on)
 			return -1;
 	}
 
-	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int par;
 
 		if (!params[1]) {
@@ -77,10 +77,10 @@ COMMAND(cmd_on)
 			return -1;
 		}
 
-		if (!xstrcmp(params[1], "*"))
+		if (!xwcscmp(params[1], TEXT("*")))
 			par = 0;
 		else {
-			if (!(par = atoi(params[1]))) {
+			if (!(par = wcs_atoi(params[1]))) {
 				wcs_printq("invalid_params", name);			
 				return -1;
 			}
@@ -93,8 +93,8 @@ COMMAND(cmd_on)
 			return -1;
 	}
 
-	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
-		events_list((params[0] && params[1] && atoi(params[1])) ? atoi(params[1]) : 0, 0);
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+		events_list((params[0] && params[1] && wcs_atoi(params[1])) ? wcs_atoi(params[1]) : 0, 0);
 		return 0;
 	}
 
@@ -130,10 +130,10 @@ static int event_add_compare(void *data1, void *data2)
  *
  * 0/-1
  */
-int event_add(const char *name, int prio, const char *target, const char *action, int quiet)
+int event_add(const CHAR_T *name, int prio, const CHAR_T *target, const CHAR_T *action, int quiet)
 {
 	event_t *ev;
-	char *tmp;
+	CHAR_T *tmp;
 	int done = 0, id = 1;
 	list_t l;
 
@@ -154,15 +154,15 @@ int event_add(const char *name, int prio, const char *target, const char *action
                         }
                 }
         }
-	ev = xmalloc(sizeof(event_t));
-	ev->id = id;
-	ev->name = xstrdup(name);
-	ev->prio = prio;
-	ev->target = xstrdup(target);
-	ev->action = xstrdup(action);
+	ev	= xmalloc(sizeof(event_t));
+	ev->id		= id;
+	ev->name 	= xwcsdup(name);
+	ev->prio 	= prio;
+	ev->target 	= xwcsdup(target);
+	ev->action 	= xwcsdup(action);
 	list_add_sorted(&events, ev, 0, event_add_compare);
 
-	tmp = xstrdup(name);
+	tmp = xwcsdup(name);
 	query_emit(NULL, "event-added", &tmp);
 	xfree(tmp);
 
@@ -242,45 +242,45 @@ int events_list(int id, int quiet)
  * to event
  *
  */
-event_t *event_find(const char *name, const char *target)
+event_t *event_find(const CHAR_T *name, const CHAR_T *target)
 {
-        list_t l;
+	list_t l;
 	event_t *ev_max = NULL;
 	int ev_max_prio = 0;
-	char **b, **c;
+	CHAR_T **b, **c;
 
-        debug("// event_find (name (%s), target (%s)\n", name, target);
-	b = array_make(target, "|,;", 0, 1, 0);
-	c = array_make(name, "|,;", 0, 1, 0);
-        for (l = events; l; l = l->next) {
-                event_t *ev = l->data;
-                char **a, **d;
-                int i, j, k, m;
+	debug("// event_find (name (%s), target (%s)\n", name, target);
+	b = wcs_array_make(target, TEXT("|,;"), 0, 1, 0);
+	c = wcs_array_make(name, TEXT("|,;"), 0, 1, 0);
+	for (l = events; l; l = l->next) {
+		event_t *ev = l->data;
+		CHAR_T **a, **d;
+		int i, j, k, m;
 
-                a = array_make(ev->target, "|,;", 0, 1, 0);
-		d = array_make(ev->name, "|,;", 0, 1, 0);
-                for (i = 0; a[i]; i++) {
+		a = wcs_array_make(ev->target, TEXT("|,;"), 0, 1, 0);
+		d = wcs_array_make(ev->name, TEXT("|,;"), 0, 1, 0);
+		for (i = 0; a[i]; i++) {
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-				                if (xstrcasecmp(d[m], c[k]) || xstrcasecmp(a[i], b[j]))
-        		        	                continue;
-                		        	else if (ev->prio > ev_max_prio){
-	                        	        	ev_max = ev;
+						if (xwcscasecmp(d[m], c[k]) || xwcscasecmp(a[i], b[j]))
+							continue;
+						else if (ev->prio > ev_max_prio){
+							ev_max = ev;
 							ev_max_prio = ev->prio;
 						}
 					}
 				}
 			}
-                }
-                array_free(a);
-		array_free(d);
-        }
+		}
+		wcs_array_free(a);
+		wcs_array_free(d);
+	}
 
-	array_free(b);
-	array_free(c);
+	wcs_array_free(b);
+	wcs_array_free(c);
 
-        return (ev_max) ? ev_max : NULL;
+	return (ev_max) ? ev_max : NULL;
 }
 
 /*
@@ -290,48 +290,48 @@ event_t *event_find(const char *name, const char *target)
  * descriptor to event
  *
  */
-event_t *event_find_all(const char *name, const char *uid, const char *target, const char *data)
+event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR_T *target, const CHAR_T *data)
 {
-        list_t l;
+	list_t l;
 	event_t *ev_max = NULL;
 	int ev_max_prio = 0;
-	char **b, **c;
+	CHAR_T **b, **c;
 
-        debug("// event_find_all (name (%s), target (%s)\n", name, target);
-	b = array_make(target, "|,;", 0, 1, 0);
-	c = array_make(name, "|,;", 0, 1, 0);
-        for (l = events; l; l = l->next) {
-                event_t *ev = l->data;
-                char **a, **d;
-                int i, j, k, m;
+	debug("// event_find_all (name (%s), target (%s)\n", name, target);
+	b = wcs_array_make(target, TEXT("|,;"), 0, 1, 0);
+	c = wcs_array_make(name, TEXT("|,;"), 0, 1, 0);
+	for (l = events; l; l = l->next) {
+		event_t *ev = l->data;
+		CHAR_T **a, **d;
+		int i, j, k, m;
 
-                a = array_make(ev->target, "|,;", 0, 1, 0);
-		d = array_make(ev->name, "|,;", 0, 1, 0);
-                for (i = 0; a[i]; i++) {
+		a = wcs_array_make(ev->target, TEXT("|,;"), 0, 1, 0);
+		d = wcs_array_make(ev->name, TEXT("|,;"), 0, 1, 0);
+		for (i = 0; a[i]; i++) {
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
 						char *tmp = format_string(a[i], uid, target, data);
-						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], "*")) || (!event_target_check(tmp) && xstrcasecmp(a[i], "*") && xstrcasecmp(a[i], b[j]))) {
+						if ((xwcscasecmp(d[m], c[k]) && xwcscasecmp(d[m], "*")) || (!event_target_check(tmp) && xwcscasecmp(a[i], "*") && xwcscasecmp(a[i], b[j]))) {
 							xfree(tmp);
-        		        	                continue;
+							continue;
 						} else if (ev->prio > ev_max_prio){
-	                        	        	ev_max = ev;
+							ev_max = ev;
 							ev_max_prio = ev->prio;
 						}
 						xfree(tmp);
 					}
 				}
 			}
-                }
-                array_free(a);
-		array_free(d);
-        }
+		}
+		wcs_array_free(a);
+		wcs_array_free(d);
+	}
 
-	array_free(b);
-	array_free(c);
+	wcs_array_free(b);
+	wcs_array_free(c);
 
-        return (ev_max) ? ev_max : NULL;
+	return (ev_max) ? ev_max : NULL;
 }
 
 /*
@@ -357,10 +357,10 @@ event_t *event_find_id(unsigned int id)
         return 0;
 }
 
-void events_add_handler(char *name, void *function)
+void events_add_handler(CHAR_T *name, void *function)
 {
         query_connect(NULL, name, function, NULL);
-        array_add(&events_all, name);
+        wcs_array_add(&events_all, name);
 }
 
 /* 
@@ -372,12 +372,12 @@ int events_init()
 {
 	timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL);
 
-	events_add_handler("protocol-message", event_protocol_message);
-	events_add_handler("event_avail", event_avail);
-	events_add_handler("event_away", event_away);
-	events_add_handler("event_na", event_na);
-	events_add_handler("event_online", event_online);
-	events_add_handler("event_descr", event_descr);
+	events_add_handler(TEXT("protocol-message"), event_protocol_message);
+	events_add_handler(TEXT("event_avail"), event_avail);
+	events_add_handler(TEXT("event_away"), event_away);
+	events_add_handler(TEXT("event_na"), event_na);
+	events_add_handler(TEXT("event_online"), event_online);
+	events_add_handler(TEXT("event_descr"), event_descr);
 	return 0;
 }
 

@@ -288,16 +288,17 @@ COMMAND(cmd_add)
 
 	if (params[0] && nmatch_arg(params[0], 'f', TEXT("find"), 2)) {
 		int nonick = 0;
-		char *nickname, *tmp;
+		char *nickname;
+		CHAR_T *tmp;
 
 		if (!last_search_uid || !last_search_nickname) {
 			wcs_printq("search_no_last");
 			return -1;
 		}
 
-		tmp = strip_spaces(last_search_nickname);
+		tmp = wcs_strip_spaces(last_search_nickname);
 
-		if ((nonick = !xstrcmp(tmp, "")) && !params[1]) {
+		if ((nonick = !xwcscmp(tmp, TEXT(""))) && !params[1]) {
 			wcs_printq("search_no_last_nickname");
 			return -1;
 		}
@@ -2448,7 +2449,7 @@ COMMAND(cmd_echo)
 
 COMMAND(cmd_bind)
 {
-	PARASC
+	PARUNI
 	window_lock_dec_n(target); /* this is interactive command */
 	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
 

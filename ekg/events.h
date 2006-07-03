@@ -20,28 +20,29 @@
 #ifndef __EKG_EVENTS_H
 #define __EKG_EVENTS_H
 
+#include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
 #include "stuff.h"
 
 typedef struct event {
 	unsigned int id; /* identyficator */
-        char *name;     /* name of the event */
-        char *target;   /* uid(s), alias(es), group(s) */
-        char *action;   /* action to do */
+	CHAR_T *name;     /* name of the event */
+	CHAR_T *target;   /* uid(s), alias(es), group(s) */
+	CHAR_T *action;   /* action to do */
 	int prio;	/* priority of this event */
 } event_t;
 
 extern list_t events;
-extern char **events_all; /* it may be help for tab complete */
+extern CHAR_T **events_all; /* it may be help for tab complete */
 
-int event_add(const char *name, int prio, const char *target, const char *action, int quiet);
+int event_add(const CHAR_T *name, int prio, const CHAR_T *target, const CHAR_T *action, int quiet);
 int event_remove(unsigned int id, int quiet);
 int events_list(int id, int quiet);
 event_t *event_find_id(unsigned int id);
-event_t *event_find(const char *name, const char *target);
+event_t *event_find(const CHAR_T *name, const CHAR_T *target);
 
-void events_add_handler(char *name, void *function);
+void events_add_handler(CHAR_T *name, void *function);
 int event_check(const char *session, const char *name, const char *uid, const char *data);
 void event_free();
 int events_init();
