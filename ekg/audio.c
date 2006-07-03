@@ -506,26 +506,36 @@ WATCHER(stream_handle) {
 
 	len = w(type, fd, (char *) audio->buffer, audio->private);
 
-	if (s->output) {	/* if watch write do nothing */
+	if (len > 0 && s->output) {	/* if watch write do nothing */
 		if (!codec) {
 			/* we just copy data from input->buf */
 			string_append_raw(s->output->buffer, audio->buffer->str, audio->buffer->len);
 			string_clear(s->input->buffer);
 		} else {
-			int res;
+			int res = -1;
 			if (codec->way == CODEC_CODE) {
 				res = codec->c->code_handler(type, audio->buffer, s->output->buffer, codec->private);
 			} else if (s->codec->way == CODEC_DECODE) {
 				res = codec->c->decode_handler(type, audio->buffer, s->output->buffer, codec->private);
 			}
+//			debug("[AUDIO, CODEC, RECODE]: %d\n", res);
 			if (res > 0) {
 				memmove(audio->buffer->str, audio->buffer->str + res, audio->buffer->len - res);
 				audio->buffer->len -= res;
 			}
 		}
 		/* if this is read handler, and we don't have watch handler for writing stream->out->fd == -1 then we don't need to wait for WATCH_WRITE and we here do it */
-		if (s->output->fd == -1)
-			s->output->a->write_handler(type, -1, (char *) s->output->buffer, s->output->private);
+		if (s->output->fd == -1) {
+			int res;
+			debug("[audio_handle_write] in queue: %d bytes.... ", s->output->buffer->len);
+			res = s->output->a->write_handler(type, -1, (char *) s->output->buffer, s->output->private);
+			debug(" ... wrote:%d bytes (handler: 0x%x) ", res, s->output->a->write_handler);
+			if (res > 0) {
+				memmove(s->output->buffer->str, s->output->buffer->str + res, s->output->buffer->len - res);
+				s->output->buffer->len -= res;
+			}
+			debug(" ... left:%d bytes\n", s->output->buffer->len);
+		}
 	}
 
 	if (type) {

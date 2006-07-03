@@ -185,6 +185,7 @@ extern int config_display_ack;
 extern int config_display_blinking;
 extern int config_display_color;
 extern char *config_display_color_map;
+extern int config_display_day_changed;
 extern int config_display_notify;
 extern int config_display_pl_chars;
 extern int config_display_sent;

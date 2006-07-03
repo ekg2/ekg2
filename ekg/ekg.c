@@ -294,7 +294,7 @@ void ekg_loop()
                         if ((w->type & WATCH_READ))
                                 FD_SET(w->fd, &rd);
                         if ((w->type & WATCH_WRITE)) {
-				if (w->buf && !xstrlen(w->buf->str)) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
+				if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
 				FD_SET(w->fd, &wd); 
 			}
                 }
