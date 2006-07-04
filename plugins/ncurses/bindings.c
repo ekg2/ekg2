@@ -860,22 +860,6 @@ void ncurses_binding_set(int quiet, const CHAR_T *key, const CHAR_T *sequence)
 	} else
 		joined = xwcsdup(sequence);
 
-#if 0 /* hmm.. co sie zmienilo od ostatniego razu ? key jest taki sam... lista bindingow tez.. */
-        for (l = bindings; l; l = l->next) {
-                struct binding *d = l->data;
-
-                if (!xstrcasecmp(key, d->key)) {
-			binding_orginal = d;
-			break;
-                }
-        }
-	if (!binding_orginal) {
-		printq("bind_doesnt_exist", key);
-		xfree(joined);
-		return;
-	}
-#endif
-	
 	for (l = bindings_added; l; l = l->next) {
 		binding_added_t *d = l->data;
 

@@ -2042,7 +2042,12 @@ end:
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action);
+#if USE_UNICODE
+						TEXT("%s%ls"), ((b->action[0] == '/') ? "" : "/"), b->action
+#else
+						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
+#endif
+						);
 			}
 		} else {
 			/* obs³uga Ctrl-F1 - Ctrl-F12 na FreeBSD */
@@ -2066,7 +2071,12 @@ end:
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action);
+#if USE_UNICODE
+						TEXT("%s%ls"), ((b->action[0] == '/') ? "" : "/"), b->action
+#else
+						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
+#endif
+						);
 			}
 		} else if (
 #if USE_UNICODE

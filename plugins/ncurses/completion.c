@@ -108,13 +108,10 @@ static void command_generator(const CHAR_T *text, int len)
 
 static void events_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
 	int i;
-        
 	for (i = 0; events_all && events_all[i]; i++)
-                if (!xstrncasecmp(text, events_all[i], len))
-                        array_add_check(&completions, xstrdup(events_all[i]), 1);
-#endif
+		if (!xwcsncasecmp(text, events_all[i], len))
+			wcs_array_add_check(&completions, xwcsdup(events_all[i]), 1);
 }
 
 static void ignorelevels_generator(const CHAR_T *text, int len)
