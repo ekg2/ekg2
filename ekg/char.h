@@ -27,9 +27,7 @@
 #ifndef EKG2__CHAR_H__
 #define EKG2__CHAR_H__
 
-
 #include "ekg2-config.h"
-
 
 #if USE_UNICODE
 #	include <wchar.h>
@@ -51,6 +49,14 @@ char *wcs_to_normal_n(const CHAR_T *str, int len);
 CHAR_T *normal_to_wcs(const char *str);
 CHAR_T *normal_to_wcs_n(const char *str, int len);
 #endif
+
+struct table_entry {
+	unsigned char 	ch;
+	unsigned short 	wc;
+};
+
+extern struct table_entry table_cp1250[];
+
 
 #endif /* EKG2__CHAR_H__ */
 

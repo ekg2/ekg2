@@ -61,6 +61,7 @@ void wcs_print_window(const char *target, session_t *session, int separate, cons
 int format_add(const char *name, const char *value, int replace);
 int format_remove(const char *name);
 const char *format_find(const char *name);
+CHAR_T *wcs_format_find(const char *name);
 char *format_string(const char *format, ...);
 CHAR_T *wcs_format_string(const CHAR_T *format, ...);
 const CHAR_T *format_ansi(char ch);
