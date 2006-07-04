@@ -1,4 +1,5 @@
 #include "char.h"
+#include "xmalloc.h"
 
 /* ripperd from http://interif.org/links/download/old-patches/links-1.00pre12.diff.gz patch (c Jakub Bogusz <qboosh@pld-linux.org> ) */
 struct table_entry table_cp1250 [] = {
@@ -42,4 +43,62 @@ struct table_entry table_iso8859_2 [] = {
 	{ 0xF0, 0x0111 }, { 0xF1, 0x0144 }, { 0xF2, 0x0148 }, { 0xF3, 0x00F3 }, { 0xF4, 0x00F4 }, { 0xF5, 0x0151 }, { 0xF6, 0x00F6 },
 	{ 0xF7, 0x00F7 }, { 0xF8, 0x0159 }, { 0xF9, 0x016F }, { 0xFA, 0x00FA }, { 0xFB, 0x0171 }, { 0xFC, 0x00FC }, { 0xFD, 0x00FD },
 	{ 0xFE, 0x0163 }, { 0xFF, 0x02D9 }, { 0x00, 0x0000 }, };
+
+
+CHAR_T *normal_to_wcs_n(const char *str, int len) 
+{
+	if (!str)
+		return NULL;
+#if USE_UNICODE
+	CHAR_T *tmp;
+	if (len == -1)
+		len = mbstowcs(NULL, str, 0)+1;
+	tmp = xcalloc(len+1, sizeof(wchar_t));
+	mbstowcs(tmp, str, len);
+	return tmp;
+#else
+	return (char *) str;
+#endif
+}
+
+CHAR_T *normal_to_wcs(const char *str)
+{
+	return normal_to_wcs_n(str, -1);
+}
+
+char *wcs_to_normal_n(const CHAR_T *str, int len) 
+{
+	if (!str)
+		return NULL;
+#if USE_UNICODE
+	char *tmp;
+	int ret;
+	if (len == -1) {
+		len = wcstombs(NULL,str,0);
+		tmp = xmalloc(len+1);
+	} else { 
+		int tuptus = 0;
+		int i;
+		for (i=0; i < len; i++) {
+			tuptus++;
+			if (str[i] > 0x000000FF) tuptus++;
+			if (str[i] > 0x0000FFFF) tuptus++;
+			if (str[i] > 0x00FFFFFF) tuptus++;
+		}
+		tmp = xmalloc(tuptus+1);
+//		if (tuptus != len) printf("[wcs_to_normal_n, info] tuptus = %d len = %d\n", tuptus, len);
+		len = tuptus;
+	}
+	ret = wcstombs(tmp, str, len);
+//	if (ret != len) printf("[wcs_to_normal_n, err] len = %d wcstombs = %d\n", ret, len);
+	return tmp;
+#else
+	return (char *) str;
+#endif
+}
+
+char *wcs_to_normal(const CHAR_T *str)
+{
+	return wcs_to_normal_n(str, -1);
+}
 
