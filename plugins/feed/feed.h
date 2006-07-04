@@ -25,6 +25,7 @@ extern void nntp_init();			/* nntp.c */
 extern void *rss_protocol_init();		/* rss.c */
 extern void rss_protocol_deinit(void *);	/* rss.c */
 extern void rss_init();				/* rss.c */
+extern void rss_deinit();			/* rss.c */
 #endif
 
 /* some sad helpers */

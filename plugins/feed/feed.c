@@ -26,7 +26,6 @@ QUERY(feed_validate_uid)
 		return -1;
 	}
 #endif
-
 	if (!xstrncasecmp(uid, "nntp:", 5)) {
 		(*valid)++;
 		return -1;
@@ -52,8 +51,6 @@ QUERY(feed_session) {
 
 	if (data && !s->priv) {
 		feed_private_t *j 	= xmalloc(sizeof(feed_private_t));
-	/* ... */
-
 #ifdef HAVE_EXPAT
 		j->isrss		= !xstrncasecmp(session, "rss:", 4);
 		if (j->isrss)		j->private = rss_protocol_init();
@@ -76,9 +73,30 @@ QUERY(feed_session) {
 	return 0;
 }
 
+QUERY(rss_message) {
+	char *session	= *(va_arg(ap, char **));
+	char *uid	= *(va_arg(ap, char **));
+
+	char *headers	= *(va_arg(ap, char **));
+	char *title	= *(va_arg(ap, char **));
+	char *url	= *(va_arg(ap, char **));
+	char *body	= *(va_arg(ap, char **));
+
+	int *new	= va_arg(ap, int *); 
+
+	session_t *s	= session_find(session);
+
+	print_window(uid, s, 1, "feed_message_header", title, url);
+	print_window(uid, s, 1, "feed_message_body", body);
+	print_window(uid, s, 1, "feed_message_footer");
+
+	*new = 0;
+	return 0;
+}
+
 void feed_set_status(userlist_t *u, char *status) {
 	char *tmp;
-	if (!u) return;
+	if (!u || !status) return;
 
 	tmp 		= u->status;
 	u->status	= status;
@@ -87,7 +105,7 @@ void feed_set_status(userlist_t *u, char *status) {
 
 void feed_set_descr(userlist_t *u, char *descr) {
 	char *tmp;
-	if (!u) return;
+	if (!u || !descr) return;
 
 	tmp 		= u->descr;
 	u->descr	= descr;
@@ -105,6 +123,9 @@ int feed_plugin_init(int prio) {
 	query_connect(&feed_plugin, "session-added", feed_session, (void*) 1);
 	query_connect(&feed_plugin, "session-removed", feed_session, (void*) 0);
         query_connect(&feed_plugin, "protocol-validate-uid", feed_validate_uid, NULL);
+			/* common - rss, nntp */
+	query_connect(&feed_plugin, "rss-message", rss_message, NULL);
+//	query_connect(&feed_plugin, "nntp-message", nntp_message, NULL);
 			/* common - vars */
 	plugin_var_add(&feed_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&feed_plugin, "alias", VAR_STR, NULL, 0, NULL);
@@ -117,10 +138,17 @@ int feed_plugin_init(int prio) {
 
 static int feed_plugin_destroy() {
 	plugin_unregister(&feed_plugin);
+#ifdef HAVE_EXPAT
+	rss_deinit();	/* rss */
+#endif
 	return 0;
 }
 
 static int feed_theme_init() {
+	format_add("feed_message_header",	_("%g,+=%G-----%W  %1 %n(Url: %W%2%n)"), 1);
+	format_add("feed_message_body",		_("%g||%n%| %1"), 1);
+	format_add("feed_message_footer",	_("%g|+=%G----- End of message...%n\n"), 1);
+
 	format_add("nntp_command_help_header",	_("%g,+=%G----- %2 %n(%T%1%n)"), 1);
 	format_add("nntp_command_help_item",	_("%g|| %W%1: %n%2"), 1);
 	format_add("nntp_command_help_footer",	_("%g`+=%G----- End of 100%n\n"), 1);

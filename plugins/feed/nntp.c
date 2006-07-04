@@ -152,6 +152,7 @@ NNTP_HANDLER(nntp_message_process) {	/* 220, 222 */
 	int article_headers	= (code == 220);
 	char *mbody, **tmpbody;
 
+
 	if (!(mbody = split_line(&str))) return 0; /* header [id <message-id> type] */
 
 	char *target = (j->newsgroup) ? j->newsgroup->uid : NULL;
@@ -161,7 +162,12 @@ NNTP_HANDLER(nntp_message_process) {	/* 220, 222 */
 	if (tmpbody && tmpbody[0] && tmpbody[1] && tmpbody[2]) {
 		print_window(target, s, 1, "nntp_message_body_header", tmpbody[0], tmpbody[1]);
 	}
+/*
+	char *headers = NULL;
+	int new = 1;
 
+	query_emit(NULL, "rss-message", &(s->uid), &(target), &headers, &(tmpbody[0]), &(tmpbody[1]), &(item->descr), &(new));
+*/
 	while ((tmp = split_line(&str))) {
 		char *formated = NULL;
 
