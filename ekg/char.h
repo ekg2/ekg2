@@ -56,6 +56,7 @@ struct table_entry {
 };
 
 extern struct table_entry table_cp1250[];
+extern struct table_entry table_iso8859_2[];
 
 
 #endif /* EKG2__CHAR_H__ */
