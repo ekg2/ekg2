@@ -85,9 +85,55 @@ QUERY(rss_message) {
 	int *new	= va_arg(ap, int *); 
 
 	session_t *s	= session_find(session);
+	char *tmp;
 
 	print_window(uid, s, 1, "feed_message_header", title, url);
-	print_window(uid, s, 1, "feed_message_body", body);
+
+	if (headers) {
+		char *str = xstrdup(headers);
+		char *formated = NULL;
+		while ((tmp = split_line(&str))) {
+			formated = format_string(format_find("feed_message_headers"), tmp);
+			print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
+		}
+	}
+
+	if (session_check(s, 0, "nntp")) {
+		int article_signature	= 0;
+		char *str		= xstrdup(body);
+
+		while ((tmp = split_line(&str))) {
+			char *formated = NULL;
+
+			if (!xstrcmp(tmp, "-- ")) article_signature = 1;
+			if (article_signature) {
+				formated = format_string(format_find("nntp_message_signature"), tmp);
+			} else {
+				int i;
+				char *quote_name = NULL;
+				const char *f = NULL;
+				for (i = 0; i < xstrlen(tmp) && tmp[i] == '>'; i++);
+
+//				if (i > 0 && tmp[i] == ' ') 		/* normal clients quote >>>> aaaa */
+				if (i > 0) 				/* buggy clients quote  >>>>>aaaa */
+				{
+					quote_name = saprintf("nntp_message_quote_level%d", i+1);
+					if (!xstrcmp(f = format_find(quote_name), "")) {
+						debug("[NNTP, QUOTE] format: %s not found, using global one...\n", quote_name);
+						f = format_find("nntp_message_quote_level");
+					}
+					xfree(quote_name);
+				}
+				if (f)	formated = format_string(f, tmp);
+			}
+
+			print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
+			xfree(formated);
+		}
+	} else {
+		print_window(uid, s, 1, "feed_message_body", body);
+	}
+
 	print_window(uid, s, 1, "feed_message_footer");
 
 	*new = 0;
@@ -145,21 +191,17 @@ static int feed_plugin_destroy() {
 }
 
 static int feed_theme_init() {
-	format_add("feed_message_header",	_("%g,+=%G-----%W  %1 %n(Url: %W%2%n)"), 1);
+	format_add("feed_message_header",	_("%g,+=%G-----%W  %1 %n(ID: %W%2%n)"), 1);
 	format_add("feed_message_body",		_("%g||%n%| %1"), 1);
 	format_add("feed_message_footer",	_("%g|+=%G----- End of message...%n\n"), 1);
+
+//	format_add("feed_message_headers",	_("%g|| %r %1"), 1);
+	format_add("feed_message_headers",	_("%r %1"), 1);
 
 	format_add("nntp_command_help_header",	_("%g,+=%G----- %2 %n(%T%1%n)"), 1);
 	format_add("nntp_command_help_item",	_("%g|| %W%1: %n%2"), 1);
 	format_add("nntp_command_help_footer",	_("%g`+=%G----- End of 100%n\n"), 1);
 
-//	format_add("nntp_message_header",	_("%g|| %r %1"), 1);
-	format_add("nntp_message_header",	_("%r %1"), 1);
-
-	format_add("nntp_message_body_header",	_("%g,+=%G-----%W  %1 %n(ID: %W%2%n)"), 1);
-	format_add("nntp_message_body",		_("%g|| %n%1"), 1);
-	format_add("nntp_message_body_end",	_("%g|+=%G----- End of message...%n\n"), 1);
-	
 	format_add("nntp_message_quote_level1",	"%g%1", 1);
 	format_add("nntp_message_quote_level2", "%y%1", 1);
 	format_add("nntp_message_quote_level",	"%B%1", 1);	/* upper levels.. */

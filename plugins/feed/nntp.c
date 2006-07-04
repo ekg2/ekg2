@@ -44,6 +44,15 @@ typedef enum {
 } nntp_newsgroup_state_t;
 
 typedef struct {
+	int artid;
+	char *msgid;
+	int new;
+
+	string_t header;
+	string_t body;
+} nntp_article_t;
+
+typedef struct {
 	char *uid;
 	char *name;
 	nntp_newsgroup_state_t state;
@@ -53,6 +62,7 @@ typedef struct {
 	int fart;
 	int cart;
 	int lart;
+	list_t articles;
 } nntp_newsgroup_t;
 
 typedef struct {
@@ -71,20 +81,41 @@ typedef struct {
 	list_t newsgroups;
 } nntp_private_t;
 
+nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid, char *msgid) {
+	nntp_article_t *article;
+	list_t l;
+
+	for (l = group->articles; l; l = l->next) {
+		article = l->data;
+
+		if (article->artid == articleid) 
+			return article;
+	}
+
+	article		= xmalloc(sizeof(nntp_article_t));
+	article->artid 	= articleid;
+	article->msgid	= xstrdup(msgid);
+	article->new	= 1;
+	article->header	= string_init(NULL);
+	article->body	= string_init(NULL);
+
+	list_add(&group->articles, article, 0);
+	return article;
+}
+
 nntp_newsgroup_t *nntp_newsgroup_find(session_t *s, const char *name) {
 	nntp_private_t *j = feed_private(s);
-	list_t newsgroups = j->newsgroups;
 	list_t l;
 	nntp_newsgroup_t *newsgroup;
 
-	for (l = newsgroups; l; l = l->next) {
+	for (l = j->newsgroups; l; l = l->next) {
 		newsgroup = l->data;
 
 		debug("nntp_newsgroup_find() %s %s\n", newsgroup->name, name);
 		if (!xstrcmp(newsgroup->name, name)) 
 			return newsgroup;
 	}
-	debug("nntp_newsgroup_find() 0x%x NEW %s\n", newsgroups, name);
+	debug("nntp_newsgroup_find() 0x%x NEW %s\n", j->newsgroups, name);
 
 	newsgroup	= xmalloc(sizeof(nntp_newsgroup_t));
 	newsgroup->uid	= saprintf("nntp:%s", name);
@@ -131,6 +162,48 @@ void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 
 }
 
+typedef enum {
+	char *session;
+	char *filename;
+	char *newsgroup;
+	char *subject;
+
+	time_t last_mtime;
+} nntp_children_t;
+
+void nntp_children_died(struct child_s *c, int pid, const char *name, int status, void *data) {
+	nntp_children_t *d = data;
+	FILE *f;
+	session_t *s = session_find(d->session);
+	struct stat st;
+
+	if (!s) {
+		print("none", "session not found?!");
+		goto fail;
+
+	}
+
+	if ((fstat(d->filename, &st) != 0)) {
+		print("none", "fstat failed with errno: %d");
+		goto fail;
+	}
+
+	if (st->st_ctime <= d->last_mtime) {
+		print("none", "NNTP, mtime not changed... Post saved in:");
+		goto fail;
+	}
+	
+	print("none", "posting article to");
+
+	nntp_private_t *j 	= feed_private(s);	
+
+fail:
+	xfree(d->session);
+	xfree(d->filename);
+	xfree(d->newsgroup);
+	xfree(d->subject);
+}
+
 #define NNTP_HANDLER(x) int x(session_t *s, int code, char *str, void *data) 
 typedef int (*nntp_handler) (session_t *, int, char *, void *);
 
@@ -146,68 +219,55 @@ NNTP_HANDLER(nntp_help_process) {	/* 100 */
 
 NNTP_HANDLER(nntp_message_process) {	/* 220, 222 */
 	nntp_private_t *j 	= feed_private(s);
-	char *tmp; 
-
-	int article_signature	= 0;
 	int article_headers	= (code == 220);
+	int article_body	= 1;
 	char *mbody, **tmpbody;
 
-
+	nntp_article_t *art = NULL;
+	
 	if (!(mbody = split_line(&str))) return 0; /* header [id <message-id> type] */
-
-	char *target = (j->newsgroup) ? j->newsgroup->uid : NULL;
 
 	tmpbody = array_make(mbody, " ", 3, 1, 0);
 	
-	if (tmpbody && tmpbody[0] && tmpbody[1] && tmpbody[2]) {
-		print_window(target, s, 1, "nntp_message_body_header", tmpbody[0], tmpbody[1]);
+	if (tmpbody && tmpbody[0] && tmpbody[1] && tmpbody[2]);
+
+	if (!(art = nntp_article_find(j->newsgroup, atoi(tmpbody[0]), tmpbody[1]))) {
+		debug("nntp_message_process nntp_article_find() failed\n");
+		array_free(tmpbody);
+		return -1;
 	}
-/*
-	char *headers = NULL;
-	int new = 1;
+	
+	if (article_headers) 	string_clear(art->header);
+	if (article_body)	string_clear(art->body);
 
-	query_emit(NULL, "rss-message", &(s->uid), &(target), &headers, &(tmpbody[0]), &(tmpbody[1]), &(item->descr), &(new));
-*/
-	while ((tmp = split_line(&str))) {
-		char *formated = NULL;
+	if (article_headers) {
+		char *tmp;
 
-		if (!xstrcmp(tmp, "-- ")) article_signature = 1;
-
-		if (article_headers) {
-			if (!xstrcmp(tmp, "\r")) article_headers = 0;
-			formated = format_string(format_find("nntp_message_header"), tmp);
-		} else if (article_signature) {
-			formated = format_string(format_find("nntp_message_signature"), tmp);
+		if ((tmp = xstrchr(str, '\r'))) {
+			string_append_n(art->header, str, tmp-str);
+			str = tmp + 1;	
 		} else {
-			int i;
-			char *quote_name = NULL;
-			const char *f = NULL;
-			for (i = 0; i < xstrlen(tmp) && tmp[i] == '>'; i++);
-
-//			if (i > 0 && tmp[i] == ' ') 		/* normal clients quote >>>> aaaa */
-			if (i > 0) 				/* buggy clients quote  >>>>>aaaa */
-			{
-				quote_name = saprintf("nntp_message_quote_level%d", i+1);
-				if (!xstrcmp(f = format_find(quote_name), "")) {
-					debug("[NNTP, QUOTE] format: %s not found, using global one...\n", quote_name);
-					f = format_find("nntp_message_quote_level");
-				}
-				xfree(quote_name);
-			}
-			if (f)	formated = format_string(f, tmp);
+			debug("ERROR, It's really article_headers?!\n");
 		}
+	}
+	if (article_body)
+		string_append(art->body, str);
 
-		print_window(target, s, 1, "nntp_message_body", formated ? formated : tmp);
-		xfree(formated);
+	{
+		char *uid	= j->newsgroup		? j->newsgroup->uid 	: NULL;
+		char *headers	= article_headers	? art->header->str 	: NULL;
+		char *body	= article_body		? art->body->str	: NULL;
+		char *artid	= (char *) itoa(art->artid);
+
+		query_emit(NULL, "rss-message", &(s->uid), &uid, &headers, &artid, &(art->msgid), &body, &(art->new));
 	}
 
 	if (j->newsgroup) {
-		if (tmpbody) j->newsgroup->cart = atoi(tmpbody[0]);
+		if (tmpbody) j->newsgroup->cart = art->artid;
 		j->newsgroup->state = NNTP_IDLE;
 	} else debug("nntp_message_process() j->newsgroup == NULL!!!!\n");
 
 	array_free(tmpbody);
-	print_window(target, s, 1, "nntp_message_body_end");
 	return 0;
 }
 
