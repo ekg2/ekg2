@@ -257,8 +257,7 @@ NNTP_HANDLER(nntp_group_process) {
 
 	if ((u = userlist_find(s, group->uid))) {
 		if (!xstrcmp(u->status, EKG_STATUS_AWAY)) {
-			xfree(u->descr);
-			u->descr = saprintf("First article: %d Last article: %d", group->fart, group->lart);
+			feed_set_descr(u, saprintf("First article: %d Last article: %d", group->fart, group->lart));
 		}
 	}
 
@@ -294,14 +293,6 @@ NNTP_HANDLER(nntp_group_error) {
 	return 0;
 }
 
-void nntp_string_append(session_t *s, const char *str) {
-	nntp_private_t *j 	= feed_private(s);
-	string_t buf		= j->buf;
-
-	string_append(buf, str);
-	string_append_c(buf, '\n');
-}
-
 /* IDEA ABOUT s->status.... 
  * XXX, 
  * 	s->status powinien byc wykorzystany nie jak (patrz na dol) przy okreslaniu czy mozna wysylac czy nie...
@@ -330,6 +321,14 @@ nntp_handler_t nntp_handlers[] = {
 	{411, nntp_group_error,		0, NULL}, 
 	{-1, NULL, 			0, NULL},
 }; 
+
+void nntp_string_append(session_t *s, const char *str) {
+	nntp_private_t *j       = feed_private(s);
+	string_t buf            = j->buf;
+
+	string_append(buf, str);
+	string_append_c(buf, '\n');
+}
 
 nntp_handler_t *nntp_handler_find(int code) {
 	int i;
@@ -412,7 +411,9 @@ WATCHER(nntp_handle_connect) {
 		return -1;
 	}
 
+	j->connecting = 0;
 	session_connected_set(s, 1);
+	query_emit(NULL, "protocol-connected", &data);
 
 	watch_add(&feed_plugin, fd, WATCH_READ_LINE, nntp_handle_stream, xstrdup(data));
 	j->send_watch = watch_add(&feed_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
@@ -462,6 +463,15 @@ COMMAND(nntp_command_connect) {
 	const char *ip = session_get(session, "server");
 	int one = 1;
 
+	if (j->connecting) {
+		printq("during_connect", session_name(session));
+		return -1;
+	}
+	if (session_connected_get(session)) {
+		printq("already_connected", session_name(session));
+		return -1;
+	}
+
 	j->fd = fd = socket(AF_INET, SOCK_STREAM, 0);
 
         sin.sin_family		= AF_INET;
@@ -470,6 +480,7 @@ COMMAND(nntp_command_connect) {
 
         ioctl(fd, FIONBIO, &one);
 
+	j->connecting = 1;
         res = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
 	if (res && (errno != EINPROGRESS)) {
@@ -477,7 +488,6 @@ COMMAND(nntp_command_connect) {
 		return -1;
 	}
 
-	query_emit(NULL, "protocol-connected", &session->uid);
 	watch_add(&feed_plugin, fd, WATCH_WRITE, nntp_handle_connect, xstrdup(session->uid));
 	return 0;
 }
@@ -542,13 +552,14 @@ COMMAND(nntp_command_check) {
 
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u 		= l->data;
-		nntp_newsgroup_t *n	= nntp_newsgroup_find(session, u->uid+5);
+		nntp_newsgroup_t *n;
 		int i, cart;
 
 		if (params[0] && xstrcmp(params[0], u->uid)) continue;
 
-		xfree(u->status);	u->status	= xstrdup(EKG_STATUS_AWAY);
-		xfree(u->descr);	u->descr	= xstrdup("Checking...");
+		n = nntp_newsgroup_find(session, u->uid+5);
+	
+		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AWAY), xstrdup("Checking..."));
 
 		j->newsgroup	= n;
 
@@ -559,24 +570,22 @@ COMMAND(nntp_command_check) {
 		if (!xstrcmp(u->status, EKG_STATUS_ERROR)) continue;
 
 		if (n->cart == n->lart) {
-			xfree(u->status);
-			u->status = xstrdup(EKG_STATUS_DND);
+			feed_set_status(u, xstrdup(EKG_STATUS_DND));
 
 			continue;
 		}
 
 		cart = n->cart;
 		for (i = n->cart+1; i <= n->lart; i++) {
-			xfree(u->descr);	u->descr = saprintf("Downloading %d article from %d", i, n->lart);
+			feed_set_descr(u, saprintf("Downloading %d article from %d", i, n->lart));
 			n->state	= NNTP_DOWNLOADING;
 			j->newsgroup	= n;
 			watch_write(j->send_watch, "BODY %d\r\n", i);
 			while (n->state == NNTP_DOWNLOADING) ekg_loop();
 		}
 		n->state		= NNTP_IDLE;
-
-		xfree(u->status);	u->status	= xstrdup(EKG_STATUS_AVAIL);
-		xfree(u->descr);	u->descr	= saprintf("%d new articles", n->lart - cart);
+		
+		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AVAIL), saprintf("%d new articles", n->lart - cart));
 
 		if (params[0]) break;
 	}

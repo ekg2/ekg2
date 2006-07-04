@@ -76,6 +76,29 @@ QUERY(feed_session) {
 	return 0;
 }
 
+void feed_set_status(userlist_t *u, char *status) {
+	char *tmp;
+	if (!u) return;
+
+	tmp 		= u->status;
+	u->status	= status;
+	xfree(tmp);
+}
+
+void feed_set_descr(userlist_t *u, char *descr) {
+	char *tmp;
+	if (!u) return;
+
+	tmp 		= u->descr;
+	u->descr	= descr;
+	xfree(tmp);
+}
+
+void feed_set_statusdescr(userlist_t *u, char *status, char *descr) {
+	feed_set_status(u, status);
+	feed_set_descr(u, descr);
+}
+
 int feed_plugin_init(int prio) {
 	plugin_register(&feed_plugin, prio);
 			/* common */
