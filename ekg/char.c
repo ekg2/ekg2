@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "char.h"
 #include "xmalloc.h"
 
