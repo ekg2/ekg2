@@ -296,6 +296,7 @@ int metacontact_add_item(metacontact_t *m, const char *session, const char *name
 {
 	metacontact_item_t *i;
 	session_t *s;
+	char *uid;
 
 	if (!m || !name || !session) {
 		debug("! metacontact_add_item: NULL data on input\n");
@@ -307,7 +308,7 @@ int metacontact_add_item(metacontact_t *m, const char *session, const char *name
 		return 0;
 	}
 
-        if (!get_uid(s, name)) {
+        if (!(uid = get_uid(s, name))) {
 		printq("user_not_found", name);
                 debug("! metacontact_add_item: UID is not on our contact lists: %s\n", name);
                 return 0;
@@ -315,9 +316,9 @@ int metacontact_add_item(metacontact_t *m, const char *session, const char *name
 
 	i = xmalloc(sizeof(metacontact_item_t));
 	
-	i->name = xstrdup(name);
-	i->s_uid = xstrdup(s->uid);
-	i->prio = prio;
+	i->name		= xstrdup(uid);
+	i->s_uid	= xstrdup(s->uid);
+	i->prio		= prio;
 
 	list_add_sorted(&m->metacontact_items, i, 0, metacontact_add_item_compare);
 
