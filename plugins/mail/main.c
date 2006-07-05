@@ -72,7 +72,8 @@ static int check_mail_maildir();
 static int check_mail_update(const char *, int);
 static void check_mail_free();
 
-PLUGIN_DEFINE(mail, PLUGIN_GENERIC, NULL);
+static int mail_theme_init();
+PLUGIN_DEFINE(mail, PLUGIN_GENERIC, mail_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
 	EKG2_WIN32_SHARED_LIB_HELPER
@@ -540,6 +541,13 @@ int mail_plugin_init(int prio)
 	variable_add(&mail_plugin, TEXT("check_mail_frequency"), VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
 	variable_add(&mail_plugin, TEXT("check_mail_folders"), VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);
 
+	return 0;
+}
+
+static int mail_theme_init() {
+        format_add("new_mail_one", _("%) You got one email\n"), 1);
+        format_add("new_mail_two_four", _("%) You got %1 new emails\n"), 1);
+        format_add("new_mail_more", _("%) You got %1 new emails\n"), 1);
 	return 0;
 }
 
