@@ -700,6 +700,15 @@ const char *session_name(session_t *s)
 	return buf;
 }
 
+const CHAR_T *wcs_session_name(session_t *s) {
+	static CHAR_T buf[150];
+	CHAR_T *tmp = normal_to_wcs(session_name(s));
+
+	xwcscpy(&buf[0], tmp);		/* it's not xwcsncpy() cause session_name returns string with maxlen 150 */
+	xfree(tmp);
+	return buf;
+}
+
 /*
  * session_unidle()
  *
@@ -1151,13 +1160,13 @@ void session_help(session_t *s, const char *name)
 	}	
 
 	plugin_name = plugin_find_uid(s->uid)->name;
-        tmp = help_path("session", plugin_name);
+	tmp = help_path("session", plugin_name);
 	f = fopen(tmp, "r");
 	xfree(tmp);
 
 	if (!f) {
-                print("help_session_file_not_found", plugin_name);
-	        return;
+		wcs_print("help_session_file_not_found", plugin_name);
+		return;
 	}
 
 	while ((line = read_file(f))) {
@@ -1213,11 +1222,11 @@ void session_help(session_t *s, const char *name)
 			string_clear(str);
 		}
 
-                if (!xstrncmp(line, "\t", 1) && xstrlen(line) == 1) {
-	                string_append(str, "\n\r");
-                        continue;
-                }
-	
+		if (!xstrncmp(line, "\t", 1) && xstrlen(line) == 1) {
+			string_append(str, "\n\r");
+			continue;
+		}
+
 		string_append(str, line + 1);
 
 		if (line[xstrlen(line) - 1] != ' ')
@@ -1230,7 +1239,7 @@ void session_help(session_t *s, const char *name)
 		print("help_session_body", str->str);
 
 	string_free(str, 1);
-	
+
 	if (xstrcmp(format_find("help_session_footer"), ""))
 		print("help_session_footer", name);
 
