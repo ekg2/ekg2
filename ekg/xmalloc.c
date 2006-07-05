@@ -238,14 +238,32 @@ char *vsaprintf(const char *format, va_list ap)
 	return res;
 }
 
-/* it's ok ? */
 CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
 {
 #if USE_UNICODE
-	int size = 400;
-	CHAR_T *res;
-	res = xmalloc((size+1)*sizeof(CHAR_T));
-	vswprintf(res, size, format, ap);
+#if defined(va_copy) || defined(__va_copy)
+	va_list aq;
+#endif
+	int size = 512, len = -1;
+	CHAR_T *res = NULL;
+
+	do {
+		res = (CHAR_T *) xrealloc(res, (size+1)*sizeof(CHAR_T));	/* allocate buffer */
+	/* copy va_list, some system need it */
+#if defined(va_copy)
+		va_copy(aq, ap);
+#elif defined(__va_copy)
+		__va_copy(aq, ap);
+#endif
+	/* format string */
+#if defined(va_copy) || defined(__va_copy)
+		len = vswprintf(res, size, format, aq);
+		va_end(aq);
+#else
+		len = vswprintf(res, size, format, ap);
+#endif
+		size += 1024;
+	} while (len == -1 && size < 1666666);		/* if formating fails, try do to it once more time, untill magic length 1'666'666 B */
 	return res;
 #else
 	return vsaprintf(format, ap);
