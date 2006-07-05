@@ -42,7 +42,7 @@ COMMAND(gg_command_find)
 	int i, res = 0, all = 0;
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		printq("not_connected", session_name(session));
+		wcs_printq("not_connected", wcs_session_name(session));
 		return -1;
 	}
 

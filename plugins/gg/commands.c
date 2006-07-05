@@ -89,12 +89,12 @@ COMMAND(gg_command_connect)
 
 	        /* if ,,reconnect'' timer exists we should stop doing */
 	        if (timer_remove(&gg_plugin, "reconnect") == 0) {
-			printq("auto_reconnect_removed", session_name(session));
+			wcs_printq("auto_reconnect_removed", wcs_session_name(session));
 	                return 0;
 		}
 
 		if (!g->sess) {
-			printq("not_connected", session_name(session));
+			wcs_printq("not_connected", wcs_session_name(session));
 		} else {
 			char *__session = xstrdup(session->uid);
 			CHAR_T *__reason = xwcsdup(params[0]);
@@ -143,33 +143,34 @@ COMMAND(gg_command_connect)
 		struct gg_login_params p;
 		const char *tmp, *local_ip = session_get(session, "local_ip");
 		int tmpi;
-                int _status = gg_text_to_status(session_status_get(session), session_descr_get(session));
-                const char *realserver = session_get(session, "server");
-                int port = session_int_get(session, "port");
+		int _status = gg_text_to_status(session_status_get(session), session_descr_get(session));
+		const char *realserver = session_get(session, "server");
+		int port = session_int_get(session, "port");
 		char *password = (char *) session_get(session, "password");
 
 		if (g->sess) {
-			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", session_name(session));
+			wcs_printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", 
+					wcs_session_name(session));
 			ret = -1;
 			goto end;
 		}
-		
-	        if (local_ip == NULL)
+
+		if (local_ip == NULL)
 			gg_local_ip = htonl(INADDR_ANY);
-   	        else {
+		else {
 #ifdef HAVE_INET_PTON
-	                int tmp = inet_pton(AF_INET, local_ip, &gg_local_ip);
-	
+			int tmp = inet_pton(AF_INET, local_ip, &gg_local_ip);
+
 			if (tmp == 0 || tmp == -1) {
-	               		print("invalid_local_ip", session_name(session));
-                        	session_set(session, "local_ip", NULL);
+				wcs_print("invalid_local_ip", wcs_session_name(session));
+				session_set(session, "local_ip", NULL);
 				config_changed = 1;
-                        	gg_local_ip = htonl(INADDR_ANY);
-                	}
+				gg_local_ip = htonl(INADDR_ANY);
+			}
 #else
-                 	gg_local_ip = inet_addr(local_ip);
+			gg_local_ip = inet_addr(local_ip);
 #endif
-        	}
+		}
 
 
 		if (!uin || !password) {
@@ -178,7 +179,7 @@ COMMAND(gg_command_connect)
 			goto end;
 		}
 
-		printq("connecting", session_name(session));
+		wcs_printq("connecting", wcs_session_name(session));
 
 		memset(&p, 0, sizeof(p));
 
@@ -232,14 +233,14 @@ COMMAND(gg_command_connect)
 			if ((tmp_in = inet_addr(realserver)) != INADDR_NONE)
 				p.server_addr = inet_addr(realserver);
 			else {
-				print("inet_addr_failed", session_name(session));
+				wcs_print("inet_addr_failed", wcs_session_name(session));
 				ret = -1;
 				goto end;
 			}
 		}
 
 		if ((port < 1) || (port > 65535)) {
-			print("port_number_error", session_name(session));
+			wcs_print("port_number_error", wcs_session_name(session));
 			ret = -1;
 			goto end;
 		}
@@ -305,7 +306,7 @@ noproxy:
 		g->sess = gg_login(&p);
 
 		if (!g->sess)	
-			printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
+			wcs_printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
 		else {
 			watch_t *w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, gg_session_handler, session);
 			watch_timeout_set(w, g->sess->timeout);
@@ -471,9 +472,9 @@ COMMAND(gg_command_away)
 
 	if (!autoscroll) {
 		if (descr)
-			printq(fd, descr, "", session_name(session));
+			wcs_printq(fd, descr, TEXT(""), wcs_session_name(session));
 		else
-			printq(f, session_name(session));
+			wcs_printq(f, wcs_session_name(session));
 	}
 
 	if (!g->sess || !session_connected_get(session)) {
@@ -807,7 +808,7 @@ COMMAND(gg_command_msg)
 	xfree(add_send);
 
 	if (valid && (!g->sess || g->sess->state != GG_STATE_CONNECTED))
-		printq("not_connected_msg_queued", session_name(session));
+		wcs_printq("not_connected_msg_queued", wcs_session_name(session));
 
 	if (valid && !quiet) {
 		char **rcpts = xmalloc(sizeof(char *) * 2);
