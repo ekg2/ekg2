@@ -99,9 +99,9 @@ QUERY(rss_message) {
 	session_t *s	= session_find(session);
 	char *tmp;
 
-	int dmode	= session_int_get(s, "display_mode");
-	char *dheaders	= session_get(s, "display_headers");
-	char *dsheaders = session_get(s, "display_server_headers");
+	const char *dheaders	= session_get(s, "display_headers");
+	const char *dsheaders	= session_get(s, "display_server_headers");
+	int dmode		= session_int_get(s, "display_mode");
 
 //	if (*new == 0) return 0;		XXX
 
@@ -157,41 +157,42 @@ QUERY(rss_message) {
 		}
 		if (body) print_window(uid, s, 1, "feed_message_body", "");	/* rozdziel */
 	}
+	if (body) {
+		if (session_check(s, 0, "nntp")) {
+			int article_signature	= 0;
+			char *str		= xstrdup(body);
 
-	if (session_check(s, 0, "nntp")) {
-		int article_signature	= 0;
-		char *str		= xstrdup(body);
+			while ((tmp = split_line(&str))) {
+				char *formated = NULL;
 
-		while ((tmp = split_line(&str))) {
-			char *formated = NULL;
+				if (!xstrcmp(tmp, "-- ")) article_signature = 1;
+				if (article_signature) {
+					formated = format_string(format_find("nntp_message_signature"), tmp);
+				} else {
+					int i;
+					char *quote_name = NULL;
+					const char *f = NULL;
+					for (i = 0; i < xstrlen(tmp) && tmp[i] == '>'; i++);
 
-			if (!xstrcmp(tmp, "-- ")) article_signature = 1;
-			if (article_signature) {
-				formated = format_string(format_find("nntp_message_signature"), tmp);
-			} else {
-				int i;
-				char *quote_name = NULL;
-				const char *f = NULL;
-				for (i = 0; i < xstrlen(tmp) && tmp[i] == '>'; i++);
-
-//				if (i > 0 && tmp[i] == ' ') 		/* normal clients quote >>>> aaaa */
-				if (i > 0) 				/* buggy clients quote  >>>>>aaaa */
-				{
-					quote_name = saprintf("nntp_message_quote_level%d", i+1);
-					if (!xstrcmp(f = format_find(quote_name), "")) {
-						debug("[NNTP, QUOTE] format: %s not found, using global one...\n", quote_name);
-						f = format_find("nntp_message_quote_level");
+//					if (i > 0 && tmp[i] == ' ') 	/* normal clients quote:  >>>> aaaa */
+					if (i > 0) 			/* buggy clients quote:   >>>>>aaaa */
+					{
+						quote_name = saprintf("nntp_message_quote_level%d", i+1);
+						if (!xstrcmp(f = format_find(quote_name), "")) {
+							debug("[NNTP, QUOTE] format: %s not found, using global one...\n", quote_name);
+							f = format_find("nntp_message_quote_level");
+						}
+						xfree(quote_name);
 					}
-					xfree(quote_name);
+					if (f)	formated = format_string(f, tmp);
 				}
-				if (f)	formated = format_string(f, tmp);
-			}
 
-			print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
-			xfree(formated);
+				print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
+				xfree(formated);
+			}
+		} else {
+			print_window(uid, s, 1, "feed_message_body", body);
 		}
-	} else {
-		print_window(uid, s, 1, "feed_message_body", body);
 	}
 
 	print_window(uid, s, 1, "feed_message_footer");

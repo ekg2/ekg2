@@ -49,7 +49,6 @@ typedef struct {
 	int artid;
 	char *msgid;
 	int new;
-
 	string_t header;
 	string_t body;
 } nntp_article_t;
@@ -61,26 +60,25 @@ typedef struct {
 
 	int article;	/* current */
 
-	int fart;
-	int cart;
-	int lart;
-	list_t articles;
+	int fart;	/* first article in the group		*/
+	int cart;	/* current artcile (downloading)	*/
+	int lart;	/* last article 			*/
+	list_t articles;/* list of articles, nntp_article_t	*/
 } nntp_newsgroup_t;
 
 typedef struct {
 	int connecting;
 	int fd;
 	int lock;
-
-	watch_t *send_watch;
-	int last_code;
-
-	string_t buf;
-
 	int authed;
 
-	nntp_newsgroup_t *newsgroup;
+	int last_code;			/* last code */
+	nntp_newsgroup_t *newsgroup;	/* current newsgroup */
+
+	string_t buf;
 	list_t newsgroups;
+
+	watch_t *send_watch;
 } nntp_private_t;
 
 nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid, char *msgid) {
@@ -93,11 +91,10 @@ nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid, char *
 		if (article->artid == articleid) 
 			return article;
 	}
-
 	article		= xmalloc(sizeof(nntp_article_t));
+	article->new	= 1;
 	article->artid 	= articleid;
 	article->msgid	= xstrdup(msgid);
-	article->new	= 1;
 	article->header	= string_init(NULL);
 	article->body	= string_init(NULL);
 
@@ -161,7 +158,6 @@ void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 		xfree(__session);
 		xfree(__reason);
 	}
-
 }
 
 typedef struct {
@@ -203,6 +199,7 @@ fail:
 	xfree(d->filename);
 	xfree(d->newsgroup);
 	xfree(d->subject);
+	xfree(d);
 }
 
 #define NNTP_HANDLER(x) int x(session_t *s, int code, char *str, void *data) 
@@ -218,9 +215,9 @@ NNTP_HANDLER(nntp_help_process) {			/* 100 */
 	return 0;
 }
 
-NNTP_HANDLER(nntp_message_process) {			/* 220, 222 */
+NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 	nntp_private_t *j 	= feed_private(s);
-	int article_headers	= (code == 220);
+	int article_headers	= (code == 220 || code == 221);
 	int article_body	= (code == 220 || code == 222);
 	char *mbody, **tmpbody;
 
@@ -245,18 +242,19 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 222 */
 	if (article_headers) 	string_clear(art->header);
 	if (article_body)	string_clear(art->body);
 
-	if (article_headers) {
+	if (article_headers && article_body) {
 		char *tmp;
-
 		if ((tmp = xstrchr(str, '\r'))) {
-			string_append_n(art->header, str, tmp-str);
-			str = tmp + 1;	
+			string_append_n(art->header, str, tmp-str-1);
+			str = tmp + 2;		/* +\r\n */
 		} else {
-			debug("ERROR, It's really article_headers?!\n");
+			debug("ERROR, It's really article_headers with article_body?!\n");
 		}
-	}
+	} else if (article_headers) 
+		string_append_n(art->header, str, xstrlen(str)-1);	/* don't add ending \n */
+
 	if (article_body)
-		string_append(art->body, str);
+		string_append_n(art->body, str, xstrlen(str)-1);	/* don't add ending \n */
 
 	{
 		char *uid	= j->newsgroup		? j->newsgroup->uid 	: NULL;
@@ -270,7 +268,6 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 222 */
 	}
 
 	if (j->newsgroup) {
-		if (tmpbody) j->newsgroup->cart = art->artid;
 		j->newsgroup->state = NNTP_IDLE;
 	} else debug("nntp_message_process() j->newsgroup == NULL!!!!\n");
 
@@ -280,30 +277,31 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 222 */
 
 NNTP_HANDLER(nntp_auth_process) {
 	nntp_private_t *j 	= feed_private(s);
+	char *tmp;
+
 	switch(code) {
 		case 200: 
-		case 201: {
-			char *tmp = s->status;
-
+		case 201: 
+			tmp = s->status;
 			if (code == 200)	s->status = xstrdup(EKG_STATUS_AVAIL);
 			else			s->status = xstrdup(EKG_STATUS_AWAY);
-
 			xfree(tmp);
 
 			tmp = s->descr;
 			s->descr = xstrdup(str);
 			xfree(tmp);
 
-			if (j->last_code == -1 || !j->last_code) {
+			if (!j->authed && session_get(s, "username"))
 				watch_write(j->send_watch, "AUTHINFO USER %s\r\n", session_get(s, "username"));
-			}
-		}
-		break;
-
-		case 281:	j->authed = 1; 
-				break;
-		case 381:	watch_write(j->send_watch, "AUTHINFO PASS %s\r\n", session_get(s, "password"));		
-				break;
+			break;
+		case 381:	
+			watch_write(j->send_watch, "AUTHINFO PASS %s\r\n", session_get(s, "password"));		
+			break;
+		case 281:	
+			j->authed = 1; 
+			break;
+		case 480:		/* XXX, auth required */
+			break;
 	}
 	return 0;
 }
@@ -352,25 +350,21 @@ NNTP_HANDLER(nntp_message_error) {
 
 NNTP_HANDLER(nntp_group_error) {
 	nntp_private_t *j       = feed_private(s);
-	userlist_t *u;
 
 	if (!j->newsgroup) return -1;
 
-	if ((u = userlist_find(s, j->newsgroup->uid))) {
-		xfree(u->status);		u->status  = xstrdup(EKG_STATUS_ERROR);
-		xfree(u->descr);		u->descr = saprintf("Generic error %d: %s", code, str);
-	}
+	feed_set_statusdescr(userlist_find(s, j->newsgroup->uid), xstrdup(EKG_STATUS_ERROR), saprintf("Generic error %d: %s", code, str));
+
 	j->newsgroup->state	= NNTP_IDLE;
 	j->newsgroup		= NULL;
 
 	return 0;
 }
 
-/* IDEA ABOUT s->status.... 
- * XXX, 
- * 	s->status powinien byc wykorzystany nie jak (patrz na dol) przy okreslaniu czy mozna wysylac czy nie...
- * 	tylko jesli cos sie dzieje na sesji to wtedy jest AVAIL, jesli nic to jest AWAY
- */
+NNTP_HANDLER(nntp_xover_process) {
+	debug("xover: %s\n", str);
+	return 0;
+}
 
 typedef	struct {
 	int 		num;
@@ -385,13 +379,19 @@ nntp_handler_t nntp_handlers[] = {
 	{201, nntp_auth_process,	0, NULL},
 	{281, nntp_auth_process,	0, NULL}, 
 	{381, nntp_auth_process,	0, NULL}, 
+	{480, nntp_auth_process,	0, NULL}, 
+
 	{220, nntp_message_process, 	1, NULL},
+	{221, nntp_message_process,	1, NULL}, 
 	{222, nntp_message_process,	1, NULL},
 	{423, nntp_message_error,	0, NULL}, 
-	{224, nntp_null_process,	1, "xover"}, 
-	{282, nntp_null_process,	1, "xgitle"}, 
+
 	{211, nntp_group_process,	0, NULL}, 
 	{411, nntp_group_error,		0, NULL}, 
+
+	{224, nntp_xover_process,	1, "xover"}, 
+
+	{282, nntp_null_process,	1, "xgitle"}, 
 	{-1, NULL, 			0, NULL},
 }; 
 
@@ -493,20 +493,6 @@ WATCHER(nntp_handle_connect) {
 	return -1;
 }
 
-COMMAND(nntp_command_nextprev) {
-	nntp_private_t *j = feed_private(session);
-
-	if (!j->newsgroup) {
-		wcs_printq("invalid_params", name);
-		return -1;
-	}
-	if (!xstrcmp(name, "next")) 	j->newsgroup->article++;
-	else				j->newsgroup->article--;
-
-	watch_write(j->send_watch, "%s %d\r\n", "BODY", j->newsgroup->article);
-	return 0;
-}
-
 COMMAND(nntp_command_disconnect)
 {
 	PARASC
@@ -571,38 +557,50 @@ COMMAND(nntp_command_raw) {
 	return 0;
 }
 
-COMMAND(nntp_command_get) {
+COMMAND(nntp_command_nextprev) {
 	nntp_private_t *j = feed_private(session);
 
+	if (!j->newsgroup) {
+		wcs_printq("invalid_params", name);
+		return -1;
+	}
+	if (!xstrcmp(name, "next")) 	j->newsgroup->article++;
+	else				j->newsgroup->article--;
+
+	watch_write(j->send_watch, "%s %d\r\n", "BODY", j->newsgroup->article);
+	return 0;
+}
+
+COMMAND(nntp_command_get) {
+	nntp_private_t *j = feed_private(session);
 	const char *comm = "ARTICLE";
 	const char *group = NULL, *article = NULL;
 
 	if (params[0] && params[1])	{ group = params[0]; article = params[1]; }
 	else 				{ article = params[0]; }
 
+	if (!group && target) 		group = target;
+	if (!group && j->newsgroup)	group = j->newsgroup->uid;
+
 	if (!article) {
 		wcs_printq("invalid_params", name);
 		return -1;
 	}
-	if (!group && target) {
-		if (!xstrncmp(target, "nntp:", 5))
-			group = target+5;
-	}
 
-	if (!group && j->newsgroup) group = j->newsgroup->name;
-
-	if (!j->newsgroup || xstrcmp(j->newsgroup->name, group)) {
-/* zmienic grupe na target jesli != aktualnej .. */
-		j->newsgroup = nntp_newsgroup_find(session, group);
-
-		watch_write(j->send_watch, "GROUP %s\r\n", group);
-	}
-
-	if (!j->newsgroup) {
+	if (!group) {
 		/* no group */
 		wcs_printq("invalid_params", name);
 		return -1;
 	}
+
+	if (!xstrncmp(group, "nntp:", 5)) group = target+5;	/* skip nntp: if exists */
+
+	if (!j->newsgroup || xstrcmp(j->newsgroup->name, group)) {
+/* zmienic grupe na target jesli != aktualnej .. */
+		j->newsgroup = nntp_newsgroup_find(session, group);
+		watch_write(j->send_watch, "GROUP %s\r\n", group);
+	}
+
 	j->newsgroup->article = atoi(article);
 
 	if (!xstrcmp(name, "body")) comm = "BODY";
@@ -626,7 +624,7 @@ COMMAND(nntp_command_check) {
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u 		= l->data;
 		nntp_newsgroup_t *n;
-		int i, cart;
+		int i;
 
 		if (params[0] && xstrcmp(params[0], u->uid)) continue;
 
@@ -646,7 +644,6 @@ COMMAND(nntp_command_check) {
 			continue;
 		}
 
-		cart = n->cart;
 		for (i = n->cart+1; i <= n->lart; i++) {
 			int mode = session_int_get(session, "display_mode");
 
@@ -656,14 +653,15 @@ COMMAND(nntp_command_check) {
 
 			if (mode == 2)				watch_write(j->send_watch, "HEAD %d\r\n", i);
 			else if (mode == 3 || mode == 4)	watch_write(j->send_watch, "ARTICLE %d\r\n", i);
-			else if (mode == 0)			;
+			else if (mode == 0 || mode == -1)	;
 			else					watch_write(j->send_watch, "BODY %d\r\n", i);
 
 			while (n->state == NNTP_DOWNLOADING) ekg_loop();
 		}
 		n->state		= NNTP_IDLE;
 		
-		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AVAIL), saprintf("%d new articles", n->lart - cart));
+		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AVAIL), saprintf("%d new articles", n->lart - n->cart));
+		j->newsgroup->cart = n->lart;
 
 		if (params[0]) break;
 	}
@@ -675,7 +673,7 @@ COMMAND(nntp_command_subscribe) {
 	userlist_t *u;
 
 	if ((u = userlist_find(session, target))) {
-		printq("none", "You already subscribe this group");
+		printq("feed_subcribe_already", target);
 		return -1;
 	}
 

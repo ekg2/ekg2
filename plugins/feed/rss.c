@@ -518,8 +518,8 @@ void rss_fetch_process(rss_feed_t *f, const char *str) {
 
 		for (k = channel->rss_items; k; k = k->next) {
 			rss_item_t *item 	= k->data;
-			char *proto_headers	= f->headers		? f->headers->str	: NULL;
-			char *headers		= item->other_tags 	? item->other_tags->str : NULL;
+			char *proto_headers	= f->headers->len	? f->headers->str	: NULL;
+			char *headers		= item->other_tags->len	? item->other_tags->str : NULL;
 			int modify		= 0;			/* XXX */
 
 //			if (channel->new)	item->new = 0;
@@ -558,8 +558,10 @@ WATCHER(rss_fetch_handler) {
 		if (xstrcmp(watch, ""))
 			rss_string_append(f, watch);
 	} else {
-		if (!xstrcmp(watch, "\r")) f->headers_done = 1;
-	
+		if (!xstrcmp(watch, "\r")) {
+			f->headers_done = 1;
+			return 1;
+		}
 	/* append headers */
 		if (!f->headers)	f->headers = string_init(watch);
 		else			string_append(f->headers, watch);
