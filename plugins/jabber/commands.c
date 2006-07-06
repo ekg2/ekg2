@@ -407,9 +407,18 @@ const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 #endif
 /* CHECK: i think we can omit it */
 	if (((!istlen && xstrncasecmp(uid, "jid:", 4)) || (istlen && xstrncasecmp(uid, "tlen:", 5)))) {
-		printq("invalid_session");
+		wcs_printq("invalid_session");
 		return NULL;
 	}
+	return uid;
+}
+
+const char *jid_wcstarget2uid(session_t *s, const CHAR_T *target, int quiet) {
+	char *temp = wcs_to_normal(target);
+	const char *uid = jid_target2uid(s, temp, quiet);
+
+	if (uid == temp) return uid;				/* UUU */
+	free_utf(temp);
 	return uid;
 }
 
@@ -629,7 +638,7 @@ COMMAND(jabber_command_auth)
 	int payload;
 
 
-	if (!(uid = jid_target2uid(session, params[1], quiet)))
+	if (!(uid = jid_wcstarget2uid(session, params[1], quiet)))
 		return -1;
 	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
 	tabnick_add(uid);

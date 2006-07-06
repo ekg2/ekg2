@@ -681,7 +681,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 			magic2 &= 0x7fffffff;
 
 			xfree(passwd);
-			passwd = saprintf("%08x%08x", magic1, magic2);
+			passwd = wcsprintf(TEXT("%08x%08x"), magic1, magic2);
 		}
 
 		authpass = (!j->istlen && session_int_get(s, "plaintext_passwd")) ? 
@@ -1078,7 +1078,7 @@ QUERY(jabber_protocol_ignore) {
 		 * 	then send jabber:iq:roster request... with all new & old group...
 		 * 	but it was code copied from modify command handler... so here it is.
 		 */
-	command_exec_format(NULL, s, 0, "/jid:modify %s -x", uid);
+	command_exec_format(NULL, s, 0, TEXT("/jid:modify %s -x"), uid);
 	return 0;
 }
 
