@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <ekg/commands.h>
 #include <ekg/debug.h>
@@ -162,7 +164,7 @@ void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 
 }
 
-typedef enum {
+typedef struct {
 	char *session;
 	char *filename;
 	char *newsgroup;
@@ -180,15 +182,14 @@ void nntp_children_died(struct child_s *c, int pid, const char *name, int status
 	if (!s) {
 		print("none", "session not found?!");
 		goto fail;
-
 	}
 
-	if ((fstat(d->filename, &st) != 0)) {
+	if ((stat(d->filename, &st) != 0)) {
 		print("none", "fstat failed with errno: %d");
 		goto fail;
 	}
 
-	if (st->st_ctime <= d->last_mtime) {
+	if (st.st_ctime <= d->last_mtime) {
 		print("none", "NNTP, mtime not changed... Post saved in:");
 		goto fail;
 	}
@@ -208,7 +209,7 @@ fail:
 typedef int (*nntp_handler) (session_t *, int, char *, void *);
 
 
-NNTP_HANDLER(nntp_help_process) {	/* 100 */
+NNTP_HANDLER(nntp_help_process) {			/* 100 */
 	debug("nntp_help_process() %s\n", str);
 
 //	format_add("nntp_command_help_header",	_("%g,+=%G----- %2 %n(%T%1%n)"), 1);
@@ -217,19 +218,23 @@ NNTP_HANDLER(nntp_help_process) {	/* 100 */
 	return 0;
 }
 
-NNTP_HANDLER(nntp_message_process) {	/* 220, 222 */
+NNTP_HANDLER(nntp_message_process) {			/* 220, 222 */
 	nntp_private_t *j 	= feed_private(s);
 	int article_headers	= (code == 220);
-	int article_body	= 1;
+	int article_body	= (code == 220 || code == 222);
 	char *mbody, **tmpbody;
 
 	nntp_article_t *art = NULL;
 	
-	if (!(mbody = split_line(&str))) return 0; /* header [id <message-id> type] */
+	if (!(mbody = split_line(&str))) return -1;
 
-	tmpbody = array_make(mbody, " ", 3, 1, 0);
+	tmpbody = array_make(mbody, " ", 3, 1, 0);		/* header [id <message-id> type] */
 	
-	if (tmpbody && tmpbody[0] && tmpbody[1] && tmpbody[2]);
+	if (!tmpbody || !tmpbody[0] || !tmpbody[1] || !tmpbody[2]) {
+		debug("nntp_message_process() tmpbody? mbody: %s\n", mbody);
+		array_free(tmpbody);
+		return -1;
+	}
 
 	if (!(art = nntp_article_find(j->newsgroup, atoi(tmpbody[0]), tmpbody[1]))) {
 		debug("nntp_message_process nntp_article_find() failed\n");
@@ -255,11 +260,13 @@ NNTP_HANDLER(nntp_message_process) {	/* 220, 222 */
 
 	{
 		char *uid	= j->newsgroup		? j->newsgroup->uid 	: NULL;
+		char *sheaders	= NULL;
 		char *headers	= article_headers	? art->header->str 	: NULL;
 		char *body	= article_body		? art->body->str	: NULL;
 		char *artid	= (char *) itoa(art->artid);
+		int modify	= 0;						/* XXX */
 
-		query_emit(NULL, "rss-message", &(s->uid), &uid, &headers, &artid, &(art->msgid), &body, &(art->new));
+		query_emit(NULL, "rss-message", &(s->uid), &uid, &sheaders, &headers, &artid, &(art->msgid), &body, &(art->new), &modify);
 	}
 
 	if (j->newsgroup) {
@@ -628,25 +635,30 @@ COMMAND(nntp_command_check) {
 		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AWAY), xstrdup("Checking..."));
 
 		j->newsgroup	= n;
-
 		n->state 	= NNTP_CHECKING;
 		watch_write(j->send_watch, "GROUP %s\r\n", n->name);
 
 		while (n->state == NNTP_CHECKING) ekg_loop();
 		if (!xstrcmp(u->status, EKG_STATUS_ERROR)) continue;
 
-		if (n->cart == n->lart) {
+		if (n->cart == n->lart) {	/* nothing new */
 			feed_set_status(u, xstrdup(EKG_STATUS_DND));
-
 			continue;
 		}
 
 		cart = n->cart;
 		for (i = n->cart+1; i <= n->lart; i++) {
-			feed_set_descr(u, saprintf("Downloading %d article from %d", i, n->lart));
+			int mode = session_int_get(session, "display_mode");
+
 			n->state	= NNTP_DOWNLOADING;
 			j->newsgroup	= n;
-			watch_write(j->send_watch, "BODY %d\r\n", i);
+			feed_set_descr(u, saprintf("Downloading %d article from %d", i, n->lart));
+
+			if (mode == 2)				watch_write(j->send_watch, "HEAD %d\r\n", i);
+			else if (mode == 3 || mode == 4)	watch_write(j->send_watch, "ARTICLE %d\r\n", i);
+			else if (mode == 0)			;
+			else					watch_write(j->send_watch, "BODY %d\r\n", i);
+
 			while (n->state == NNTP_DOWNLOADING) ekg_loop();
 		}
 		n->state		= NNTP_IDLE;
@@ -674,7 +686,7 @@ COMMAND(nntp_command_subscribe) {
 COMMAND(nntp_command_unsubscribe) {
 	userlist_t *u; 
 	if (!(u = userlist_find(session, target))) {
-		printq("none", "Subscribtion not found, cannot unsubscribe");
+		printq("feed_subscribe_no", target);
 		return -1;
 	}
 	userlist_remove(session, u);
