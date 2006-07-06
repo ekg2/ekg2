@@ -705,7 +705,7 @@ const CHAR_T *wcs_session_name(session_t *s) {
 	CHAR_T *tmp = normal_to_wcs(session_name(s));
 
 	xwcscpy(&buf[0], tmp);		/* it's not xwcsncpy() cause session_name returns string with maxlen 150 */
-	xfree(tmp);
+	free_utf(tmp);
 	return buf;
 }
 
