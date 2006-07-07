@@ -224,9 +224,11 @@ static QUERY(xosd_protocol_message)
 		sender = (u && u->nickname) ? u->nickname : uid;
 		msgLine1 = format_string(format_find("xosd_new_message_line_1"), sender);
 
-		if (xosd_text_limit && xstrlen(text) > xosd_text_limit)
-			msgLine2 = format_string(format_find("xosd_new_message_line_2_long"), xstrmid(text, 0, xosd_text_limit));
-		else
+		if (xosd_text_limit && xstrlen(text) > xosd_text_limit) {
+			char *tmp = xstrmid(text, 0, xosd_text_limit);
+			msgLine2 = format_string(format_find("xosd_new_message_line_2_long"), tmp);
+			xfree(tmp);
+		} else
 			msgLine2 = format_string(format_find("xosd_new_message_line_2"), text);
 
 		if (xosd_short_messages)
