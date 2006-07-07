@@ -163,8 +163,8 @@ QUERY(gg_userlist_info_handle)
 			wcs_printq("user_info_version", ver);
 		
 		else {
-			char *tmp = saprintf("nieznana (%#.2x)", v);
-			printq("user_info_version", tmp);
+			CHAR_T *tmp = wcsprintf(TEXT("nieznana (%#.2x)"), v);
+			wcs_printq("user_info_version", tmp);
 			xfree(tmp);
 		}
 	}
@@ -240,7 +240,6 @@ QUERY(gg_status_show_handle)
         }
         if (!(g = session_private_get(s)))
                 return -1;
-
 
         if (config_profile)
                 print("show_status_profile", config_profile);
@@ -384,9 +383,9 @@ QUERY(gg_print_version)
 {
 	char **tmp1 = array_make(GG_DEFAULT_CLIENT_VERSION, ", ", 0, 1, 0);
 	char *tmp2 = array_join(tmp1, ".");
-	char *tmp3 = saprintf("libgadu %s (headers %s), protocol %s (0x%.2x)", gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
+	CHAR_T *tmp3 = wcsprintf(TEXT("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
 
-	print("generic", tmp3);
+	wcs_print("generic", tmp3);
 
 	xfree(tmp3);
 	xfree(tmp2);
@@ -869,8 +868,8 @@ FILE* image_open_file(const char *path)
 		dir = xstrndup(path, slash_pos);
 
 		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
-			char *bo = saprintf("nie mo¿na %s bo %s", dir, strerror(errno));
-			print("generic",bo); // XXX usun±æ !! 
+			CHAR_T *bo = wcsprintf(TEXT("nie mozna %s bo %s"), dir, strerror(errno));
+			wcs_print("generic",bo); // XXX usun±æ !! 
 			xfree(bo);
 			xfree(dir);
 			return NULL;
@@ -975,7 +974,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
         switch (e->event.userlist.type) {
                 case GG_USERLIST_GET_REPLY:
                 {
-	                print("userlist_get_ok");
+	                wcs_print("userlist_get_ok");
 
                         if (e->event.userlist.reply) {
 				CHAR_T *reply;
@@ -1006,16 +1005,16 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e)
                 {
                         switch (gg_userlist_put_config) {
                                 case 0:
-                                        print("userlist_put_ok");
+                                        wcs_print("userlist_put_ok");
                                         break;
                                 case 1:
-                                        print("userlist_config_put_ok");
+                                        wcs_print("userlist_config_put_ok");
                                         break;
                                 case 2:
-                                        print("userlist_clear_ok");
+                                        wcs_print("userlist_clear_ok");
                                         break;
                                 case 3:
-                                        print("userlist_config_clear_ok");
+                                        wcs_print("userlist_config_clear_ok");
                                         break;
                         }
                         break;
@@ -1317,8 +1316,8 @@ int gg_plugin_init(int prio)
 	if (config_use_unicode)
 #endif
 	{	debug("plugin gg cannot be loaded because of mishmashed compilation...\n"
-			"	 plugin compilated with: --%s-unicode\n"
-			"	program compilated with: --%s-unicode\n",
+			"	program compilated with: --%s-unicode\n"
+			"	 plugin compilated with: --%s-unicode\n",
 				config_use_unicode ? "enable" : "disable",
 				config_use_unicode ? "disable": "enable");
 		return -1;

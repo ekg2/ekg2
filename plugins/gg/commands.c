@@ -466,7 +466,7 @@ COMMAND(gg_command_away)
 		descr = xstrdup(session_descr_get(session));
 #endif
 	}
-	debug(CHARF " - %s\n", name, descr);
+	debug(CHARF " - " CHARF "\n", name, descr);
 
 	status = session_status_get(session);
 
