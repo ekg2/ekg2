@@ -2005,7 +2005,7 @@ int irc_plugin_init(int prio)
 #else
 	if (config_use_unicode)
 #endif
-	{	debug("plugin ncurses cannot be loaded because of mishmashed compilation...\n"
+	{	debug("plugin irc cannot be loaded because of mishmashed compilation...\n"
 			"	program compilated with: --%s-unicode\n"
 			"	 plugin compilated with: --%s-unicode\n",
 				config_use_unicode ? "enable" : "disable",
