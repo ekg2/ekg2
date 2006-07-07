@@ -304,6 +304,8 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	xfree(chan->topic);
 	xfree(chan->topicby);
 	xfree(chan->mode_str);
+	list_destroy(chan->banlist, 1);
+
 	/* GiM: because we check j->channels in our kill-window handler
 	 * this must be done, before, we'll try to kill_window.... */
 	list_remove(&(j->channels), chan, 1);

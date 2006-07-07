@@ -1455,6 +1455,7 @@ COMMAND(irc_command_who)
 
 	watch_write(j->send_watch, "WHO %s\r\n", chan+4);
 
+	array_free(mp);
 	xfree(chan);
 	return 0;
 }
