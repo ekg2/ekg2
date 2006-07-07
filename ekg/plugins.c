@@ -436,28 +436,35 @@ int plugin_unregister(plugin_t *p)
 		if (c->plugin == p)
 			command_freeone(c);
 	}
+plugin_watches_again:
+	ekg_watches_removed = 0;
+	for (l = watches; l; ) {
+		watch_t *w = l->data;
 
-        for (l = watches; l; ) {
-                watch_t *w = l->data;
+		l = l->next;
 
-                l = l->next;
-
-                if (w->plugin == p)
-                        watch_free(w);
-        }
-
-        for (l = timers; l; ) {
-                struct timer *t = l->data;
-
-                l = l->next;
-
-                if (t->plugin == p) {
-			list_remove(&timers, t, 0);
-                        xfree(t->name);
-			xfree(t->data);
-                        xfree(t);
+		if (ekg_watches_removed > 1) {
+			debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
+			goto plugin_watches_again;
 		}
-        }
+		ekg_watches_removed = 0;
+
+		if (w->plugin == p)
+			watch_free(w);
+	}
+
+	for (l = timers; l; ) {
+		struct timer *t = l->data;
+
+		l = l->next;
+
+		if (t->plugin == p) {
+			list_remove(&timers, t, 0);
+			xfree(t->name);
+			xfree(t->data);
+			xfree(t);
+		}
+	}
 
 	list_remove(&plugins, p, 0);
 
