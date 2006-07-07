@@ -406,6 +406,9 @@ int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
 	}
 	return 0;
 }
+void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
+	debug("rss_parsexml_atom() sorry, atom not implemented\n");
+}
 
 void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 	debug("rss_parsexml_rss (channels oldcount: %d)\n", list_count(f->rss_channels));
@@ -500,6 +503,7 @@ void rss_fetch_process(rss_feed_t *f, const char *str) {
 	if (XML_Parse(parser, str, xstrlen(str), 1) == XML_STATUS_OK) {
 		for (node = priv->node; node; node = node->next) {
 			if (!xstrcmp(node->name, "rss")) rss_parsexml_rss(f, node->children);
+			else if (!xstrcmp(node->name, "feed")) rss_parsexml_atom(f, node->children); /* xmlns */
 			else {
 				debug("UNKNOWN node->name: %s\n", node->name);
 				goto fail;
@@ -692,6 +696,7 @@ int rss_url_fetch(rss_feed_t *f, int quiet) {
 			/* some static IPs */
 			if (!xstrcmp(f->host, "rss.7thguard.net"))	f->ip = xstrdup("83.145.128.5");
 			if (!xstrcmp(f->host, "jogger.pl"))		f->ip = xstrdup("212.14.32.26");
+			if (!xstrcmp(f->host, "www.evhead.com"))	f->ip = xstrdup("207.7.108.85");
 		}
 
 		if (f->ip) {

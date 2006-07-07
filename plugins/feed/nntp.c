@@ -88,8 +88,10 @@ nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid, char *
 	for (l = group->articles; l; l = l->next) {
 		article = l->data;
 
-		if (article->artid == articleid) 
+		if (article->artid == articleid) {
+			if (!article->msgid && msgid) article->msgid = xstrdup(msgid);
 			return article;
+		}
 	}
 	article		= xmalloc(sizeof(nntp_article_t));
 	article->new	= 1;
@@ -575,6 +577,7 @@ COMMAND(nntp_command_get) {
 	nntp_private_t *j = feed_private(session);
 	const char *comm = "ARTICLE";
 	const char *group = NULL, *article = NULL;
+	nntp_article_t *art = NULL;
 
 	if (params[0] && params[1])	{ group = params[0]; article = params[1]; }
 	else 				{ article = params[0]; }
@@ -602,6 +605,10 @@ COMMAND(nntp_command_get) {
 	}
 
 	j->newsgroup->article = atoi(article);
+
+				art = nntp_article_find(j->newsgroup, j->newsgroup->article, NULL);
+	if (!art->new)		art->new = 3;	/* turn on display flag. */
+			/* XXX, wyswietlic artykul z kesza ? */
 
 	if (!xstrcmp(name, "body")) comm = "BODY";
 

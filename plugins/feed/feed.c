@@ -103,7 +103,7 @@ QUERY(rss_message) {
 	const char *dsheaders	= session_get(s, "display_server_headers");
 	int dmode		= session_int_get(s, "display_mode");
 
-//	if (*new == 0) return 0;		XXX
+	if (*new == 0) return 0;
 
 	switch (dmode) {
 		case 0:	 print("none", "new message");		/* only notify */
