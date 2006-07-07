@@ -1056,6 +1056,7 @@ void ekg_exit()
         xfree(last_search_first_name);
         xfree(last_search_last_name);
         xfree(last_search_nickname);
+	xfree(last_search_uid);
 
         windows_save();
 
