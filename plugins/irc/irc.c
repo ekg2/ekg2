@@ -1999,6 +1999,20 @@ int irc_plugin_init(int prio)
 #ifndef NO_POSIX_SYSTEM
 	struct passwd	*pwd_entry = getpwuid(getuid());
 #endif
+/* before loading plugin, do some sanity check */
+#ifdef USE_UNICODE
+	if (!config_use_unicode)
+#else
+	if (config_use_unicode)
+#endif
+	{	debug("plugin ncurses cannot be loaded because of mishmashed compilation...\n"
+			"	program compilated with: --%s-unicode\n"
+			"	 plugin compilated with: --%s-unicode\n",
+				config_use_unicode ? "enable" : "disable",
+				config_use_unicode ? "disable": "enable");
+		return -1;
+	}
+
 	plugin_register(&irc_plugin, prio);
 
 	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
