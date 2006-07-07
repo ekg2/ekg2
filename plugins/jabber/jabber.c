@@ -1266,6 +1266,20 @@ static int jabber_theme_init()
 
 int jabber_plugin_init(int prio)
 {
+/* before loading plugin, do some sanity check */
+#ifdef USE_UNICODE
+	if (!config_use_unicode)
+#else
+	if (config_use_unicode)
+#endif
+	{	debug("plugin jabbers cannot be loaded because of mishmashed compilation...\n"
+			"	program compilated with: --%s-unicode\n"
+			"	 plugin compilated with: --%s-unicode\n",
+				config_use_unicode ? "enable" : "disable",
+				config_use_unicode ? "disable": "enable");
+		return -1;
+	}
+
         plugin_register(&jabber_plugin, prio);
 
         query_connect(&jabber_plugin, "protocol-validate-uid", jabber_validate_uid, NULL);
