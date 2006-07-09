@@ -698,14 +698,12 @@ static void sessions_var_generator(const CHAR_T *text, int len)
 
 void reason_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
-        if (session_current && session_current->descr  && !xstrncasecmp(text, session_current->descr, len)) {
-                char *descr;
-                /* not to good solution to avoid descr changing by complete */
-		descr = saprintf("\001%s", session_current->descr);
-                array_add_check(&completions, descr, 1);
-        } 
-#endif
+	CHAR_T *descr = session_current ? normal_to_wcs(session_current->descr) : NULL;
+	if (descr && !xwcsncasecmp(text, descr, len)) {
+		/* not to good solution to avoid descr changing by complete */
+		wcs_array_add_check(&completions, wcsprintf(TEXT("\001%s"), session_current->descr), 1);
+	}
+	free_utf(descr);
 }
 
 
