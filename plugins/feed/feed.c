@@ -102,19 +102,36 @@ QUERY(rss_message) {
 	const char *dheaders	= session_get(s, "display_headers");
 	const char *dsheaders	= session_get(s, "display_server_headers");
 	int dmode		= session_int_get(s, "display_mode");
+	int mw			= session_int_get(s, "make_window");
+
+	char *target		= NULL;
 
 	if (*new == 0) return 0;
 
 	switch (dmode) {
-		case 0:	 print("none", "new message");		/* only notify */
-		case -1: return 0;				/* do nothing */
+		case 0:	 print_window(uid, s, 1, "none", "new message");	/* only notify */
+		case -1: return 0;						/* do nothing */
 
-		case 2:	body		= NULL;			/* only headers */
-		case 1:	if (dmode == 1) headers = NULL;		/* only body */
-		default:					/* default: 3 (body+headers) */
-		case 3:	sheaders = NULL;			/* headers+body */
-		case 4:	break;					/* shreaders+headers+body */
+		case 2:	body		= NULL;					/* only headers */
+		case 1:	if (dmode == 1) headers = NULL;				/* only body */
+		default:							/* default: 3 (body+headers) */
+		case 3:	sheaders = NULL;					/* headers+body */
+		case 4:	break;							/* shreaders+headers+body */
 	}
+
+	switch (mw) {			/* XXX, __current ? */
+		case 0: 
+			target = "__status";
+			break;
+		case 1:
+			target = session;
+			break;
+		case 2:
+		default:
+			target = uid;
+			break;
+	}
+
 	print_window(uid, s, 1, "feed_message_header", title, url);
 
 	if (sheaders) {
@@ -244,6 +261,8 @@ int feed_plugin_init(int prio) {
 		/* NNTP: */ 
 			"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
 		0, NULL);
+			/* 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
+	plugin_var_add(&feed_plugin, "make_window", VAR_INT, "2", 0, NULL);
 #ifdef HAVE_EXPAT
 	rss_init();	/* rss */
 #endif
