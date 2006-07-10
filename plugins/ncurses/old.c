@@ -1187,14 +1187,14 @@ void update_statusbar(int commit)
 
 	if ((plug = plugin_find(TEXT("mail")))) {
 		int mail_count = -1;
-		query_emit(plug, "mail-count", &mail_count);
+		query_emit(plug, TEXT("mail-count"), &mail_count);
 		__add_format("mail", (mail_count > 0), itoa(mail_count));
 	}
 	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(TEXT("irc")))) {
 		/* yeah, I know, shitty way */
 		char *t2 = NULL;
 		char *t3 = NULL; 
-		query_emit(plug, "irc-topic", &tmp, &t2, &t3);
+		query_emit(plug, TEXT("irc-topic"), &tmp, &t2, &t3);
 		__add_format("irctopic", tmp, tmp);
 		__add_format("irctopicby", t2, t2);
 		__add_format("ircmode", t3, t3);
@@ -1322,8 +1322,8 @@ void update_statusbar(int commit)
 	for (i = 0; i < formats_count; i++)
 		xfree(formats[i].text);
 
-	query_emit(NULL, "ui-redrawing-header");
-	query_emit(NULL, "ui-redrawing-statusbar");
+	query_emit(NULL, TEXT("ui-redrawing-header"));
+	query_emit(NULL, TEXT("ui-redrawing-statusbar"));
 	
 	if (commit)
 		ncurses_commit();
@@ -1789,7 +1789,7 @@ int ekg_getch(int meta, int *ch)
 	} 
 #undef GET_TIME
 #undef DIF_TIME
-	if (query_emit(NULL, "ui-keypress", ch, NULL) == -1)  
+	if (query_emit(NULL, TEXT("ui-keypress"), ch, NULL) == -1)  
 		return -2; /* -2 - ignore that key */
 #if USE_UNICODE
 	return retcode;

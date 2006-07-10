@@ -208,9 +208,9 @@ WATCHER(ncurses_gpm_watch_handler)
                         }
                         break;
 		default:
+         debug("Event Type : %d at x=%d y=%d buttons=%d\n", event.type, event.x, event.y, event.buttons); 
 			break;
 	}
-        /* debug("Event Type : %d at x=%d y=%d buttons=%d\n", event.type, event.x, event.y, event.buttons); */
 	return 0;
 }
 #endif

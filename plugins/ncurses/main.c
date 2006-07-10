@@ -457,7 +457,7 @@ int ncurses_plugin_init(int prio)
 		return -1;
 	}
 
-        query_emit(NULL, "ui-is-initialized", &is_UI);
+        query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
 
         if (is_UI) 
                 return -1;
@@ -466,35 +466,35 @@ int ncurses_plugin_init(int prio)
 
 	ncurses_setvar_default(NULL, NULL);
 
-	query_connect(&ncurses_plugin, "set-vars-default", ncurses_setvar_default, NULL);
-	query_connect(&ncurses_plugin, "ui-beep", ncurses_beep, NULL);
-	query_connect(&ncurses_plugin, "ui-is-initialized", ncurses_ui_is_initialized, NULL);
-	query_connect(&ncurses_plugin, "ui-window-switch", ncurses_ui_window_switch, NULL);
-	query_connect(&ncurses_plugin, "ui-window-print", ncurses_ui_window_print, NULL);
-	query_connect(&ncurses_plugin, "ui-window-new", ncurses_ui_window_new, NULL);
-	query_connect(&ncurses_plugin, "ui-window-kill", ncurses_ui_window_kill, NULL);
-	query_connect(&ncurses_plugin, "ui-window-target-changed", ncurses_ui_window_target_changed, NULL);
-	query_connect(&ncurses_plugin, "ui-window-act-changed", ncurses_ui_window_act_changed, NULL);
-	query_connect(&ncurses_plugin, "ui-window-refresh", ncurses_ui_window_refresh, NULL);
-	query_connect(&ncurses_plugin, "ui-window-clear", ncurses_ui_window_clear, NULL);
-	query_connect(&ncurses_plugin, "session-added", ncurses_statusbar_query, NULL);
-	query_connect(&ncurses_plugin, "session-removed", ncurses_statusbar_query, NULL);
-	query_connect(&ncurses_plugin, "session-changed", ncurses_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, "userlist-changed", ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, "userlist-added", ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, "userlist-removed", ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, "userlist-renamed", ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, "binding-set", ncurses_binding_set_query, NULL);
-	query_connect(&ncurses_plugin, "binding-command", ncurses_binding_query, NULL);
-	query_connect(&ncurses_plugin, "binding-default", ncurses_binding_default, NULL);
-	query_connect(&ncurses_plugin, "variable-changed", ncurses_variable_changed, NULL);
-	query_connect(&ncurses_plugin, "conference-renamed", ncurses_conference_renamed, NULL);
+	query_connect(&ncurses_plugin, TEXT("set-vars-default"), ncurses_setvar_default, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-beep"), ncurses_beep, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-is-initialized"), ncurses_ui_is_initialized, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-switch"), ncurses_ui_window_switch, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-print"), ncurses_ui_window_print, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-new"), ncurses_ui_window_new, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-kill"), ncurses_ui_window_kill, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-target-changed"), ncurses_ui_window_target_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-act-changed"), ncurses_ui_window_act_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-refresh"), ncurses_ui_window_refresh, NULL);
+	query_connect(&ncurses_plugin, TEXT("ui-window-clear"), ncurses_ui_window_clear, NULL);
+	query_connect(&ncurses_plugin, TEXT("session-added"), ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, TEXT("session-removed"), ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, TEXT("session-changed"), ncurses_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("userlist-changed"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("userlist-added"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("userlist-removed"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("userlist-renamed"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("binding-set"), ncurses_binding_set_query, NULL);
+	query_connect(&ncurses_plugin, TEXT("binding-command"), ncurses_binding_query, NULL);
+	query_connect(&ncurses_plugin, TEXT("binding-default"), ncurses_binding_default, NULL);
+	query_connect(&ncurses_plugin, TEXT("variable-changed"), ncurses_variable_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("conference-renamed"), ncurses_conference_renamed, NULL);
 
-	query_connect(&ncurses_plugin, "metacontact-added", ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, "metacontact-removed", ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, "metacontact-item-added", ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, "metacontact-item-removed", ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, "config-postinit", ncurses_postinit, NULL);
+	query_connect(&ncurses_plugin, TEXT("metacontact-added"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("metacontact-removed"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("metacontact-item-added"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("metacontact-item-removed"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, TEXT("config-postinit"), ncurses_postinit, NULL);
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, TEXT("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, TEXT("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
