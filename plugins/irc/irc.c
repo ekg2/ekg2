@@ -556,7 +556,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 		__reason = xstrdup(reason);
 	}
 			
-	query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+	query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 	xfree(__reason);
 	xfree(__session);
 
@@ -1001,11 +1001,11 @@ COMMAND(irc_command_msg)
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-		query_emit(NULL, "irc-protocol-message", &(sid), &(j->nick), &__msg, &isour, &xosd_to_us, &xosd_is_priv, &uid_full);
+		query_emit(NULL, TEXT("irc-protocol-message"), &(sid), &(j->nick), &__msg, &isour, &xosd_to_us, &xosd_is_priv, &uid_full);
 
-		query_emit(NULL, "message-encrypt", &sid, &uid_full, &__msg, &secure);
+		query_emit(NULL, TEXT("message-encrypt"), &sid, &uid_full, &__msg, &secure);
 				
-		query_emit(NULL, "protocol-message", &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		query_emit(NULL, TEXT("protocol-message"), &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		/* "Thus, there are 510 characters maximum allowed for the command and its parameters." [rfc2812]
 		 * yes, I know it's a nasty variable reusing ;)
@@ -2016,14 +2016,14 @@ int irc_plugin_init(int prio)
 
 	plugin_register(&irc_plugin, prio);
 
-	query_connect(&irc_plugin, "protocol-validate-uid", irc_validate_uid, NULL);
-	query_connect(&irc_plugin, "plugin-print-version", irc_print_version, NULL);
-	query_connect(&irc_plugin, "ui-window-kill",	irc_window_kill, NULL);
-	query_connect(&irc_plugin, "session-added",	irc_session, (void*) 1);
-	query_connect(&irc_plugin, "session-removed",	irc_session, (void*) 0);
-	query_connect(&irc_plugin, "irc-topic",		irc_topic_header, (void*) 0);
-	query_connect(&irc_plugin, "status-show",	irc_status_show_handle, NULL);
-	query_connect(&irc_plugin, "irc-kick",		irc_onkick_handler, 0);
+	query_connect(&irc_plugin, TEXT("protocol-validate-uid"),irc_validate_uid, NULL);
+	query_connect(&irc_plugin, TEXT("plugin-print-version"),irc_print_version, NULL);
+	query_connect(&irc_plugin, TEXT("ui-window-kill"),	irc_window_kill, NULL);
+	query_connect(&irc_plugin, TEXT("session-added"),	irc_session, (void*) 1);
+	query_connect(&irc_plugin, TEXT("session-removed"),	irc_session, (void*) 0);
+	query_connect(&irc_plugin, TEXT("irc-topic"),		irc_topic_header, (void*) 0);
+	query_connect(&irc_plugin, TEXT("status-show"),		irc_status_show_handle, NULL);
+	query_connect(&irc_plugin, TEXT("irc-kick"),		irc_onkick_handler, 0);
 
 #define IRC_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS 		IRC_ONLY | SESSION_MUSTBECONNECTED

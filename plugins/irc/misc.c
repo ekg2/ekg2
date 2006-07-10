@@ -70,7 +70,6 @@ int irc_parse_line(session_t *s, char *buf, int fd)
 	int	i, c=0, ecode;
 	char	*p, *q[20];
 
-	char	*emitname;
 	int	len = xstrlen(buf);
 
 	p=buf;
@@ -122,9 +121,8 @@ and the prefix.
 
 	if (xstrlen(q[1]) > 1) {
 		if(!gatoi(q[1], &ecode)) {
-			
-			/* for perl */
-			emitname = saprintf("irc-protocol-numeric %s", q[1]);
+			/* for scripts */
+			CHAR_T *emitname = wcsprintf(TEXT("irc-protocol-numeric %s"), q[1]);
 			if (query_emit(NULL, emitname, &s->uid, &(q[2])) == -1) { xfree(emitname); return -1; }
 			xfree(emitname);
 			
@@ -263,7 +261,7 @@ IRC_COMMAND(irc_c_init)
 	{
 		case 1:
 			temp = j->conntmplist->data;
-			query_emit(NULL, "protocol-connected", &__session);
+			query_emit(NULL, TEXT("protocol-connected"), &__session);
 			session_connected_set(s, 1);
 			s->last_conn = time(NULL);
 			session_unidle(s);
@@ -825,9 +823,9 @@ IRC_COMMAND(irc_c_msg)
 	if (ctcpstripped) {
 		int isour = 0;
   		if (xosd_is_priv) /* @ wrong place */
-			query_emit(NULL, "message-decrypt", &(s->uid), &dest, &ctcpstripped, &secure , NULL);
+			query_emit(NULL, TEXT("message-decrypt"), &(s->uid), &dest, &ctcpstripped, &secure , NULL);
 		else
-			query_emit(NULL, "message-decrypt", &dest, &(s->uid), &ctcpstripped, &secure , NULL);
+			query_emit(NULL, TEXT("message-decrypt"), &dest, &(s->uid), &ctcpstripped, &secure , NULL);
 
 		/* TODO 'secure' var checking, but still don't know how to react to it (GiM)
 		 */
@@ -853,7 +851,7 @@ isour - 0 tutaj czy wiadomosc jest od nas.
 irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 	*/
 
-		query_emit(NULL, "irc-protocol-message",
+		query_emit(NULL, TEXT("irc-protocol-message"),
 				&(s->uid), &xosd_nick, &coloured, &isour,
 				&xosd_to_us, &xosd_is_priv, &dest);
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
@@ -867,7 +865,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 
 		ignore_nick = saprintf("%s%s", IRC4, OMITCOLON(param[0]));
 		if (xosd_is_priv || !(ignored_check(s, ignore_nick) & IGNORE_MSG))
-			query_emit(NULL, "protocol-message", &me, &dest, &rcpts, &head,
+			query_emit(NULL, TEXT("protocol-message"), &me, &dest, &rcpts, &head,
 					&form, &sent, &class, &seq, &ekgbeep, &secure);
 		xfree(ignore_nick);
 
@@ -926,7 +924,7 @@ IRC_COMMAND(irc_c_join)
     			char *__uid_full = xstrdup(channel);
 			char *__msg	 = xstrdup("test");
 
-			if (query_emit(NULL, "message-encrypt", &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
+			if (query_emit(NULL, TEXT("message-encrypt"), &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
 				print_window(channel, s, 0, "irc_channel_secure", session_name(s), OMITCOLON(param[2]));
 			else 	print_window(channel, s, 0, "irc_channel_unsecure", session_name(s), OMITCOLON(param[2]));
 			xfree(__msg);
@@ -1032,7 +1030,7 @@ IRC_COMMAND(irc_c_kick)
 /*sending irc-kick event*/
 	_session = xstrdup(session_uid_get(s));
 	_nick = saprintf("%s%s", IRC4, OMITCOLON(param[3]));
-	query_emit(NULL, "irc-kick", &_session, &_nick, &channel, &uid);
+	query_emit(NULL, TEXT("irc-kick"), &_session, &_nick, &channel, &uid);
 	xfree(_nick);
 	xfree(_session);
 
