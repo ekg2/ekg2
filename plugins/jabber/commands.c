@@ -502,7 +502,7 @@ COMMAND(jabber_command_msg)
 		if (ismuc)
 			class |= EKG_NO_THEMEBIT;
 		
-		query_emit(NULL, "wcs_protocol-message", &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		query_emit(NULL, TEXT("wcs_protocol-message"), &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(msg);
 		xfree(me);

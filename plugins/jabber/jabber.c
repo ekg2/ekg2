@@ -629,7 +629,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 		char *__session = xstrdup(session_uid_get(s));
 		char *__reason = xstrdup(reason);
 		
-		query_emit(NULL, "protocol-disconnected", &__session, &__reason, &type, NULL);
+		query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &type, NULL);
 
 		xfree(__session);
 		xfree(__reason);
@@ -1272,7 +1272,7 @@ int jabber_plugin_init(int prio)
 #else
 	if (config_use_unicode)
 #endif
-	{	debug("plugin jabbers cannot be loaded because of mishmashed compilation...\n"
+	{	debug("plugin jabber cannot be loaded because of mishmashed compilation...\n"
 			"	program compilated with: --%s-unicode\n"
 			"	 plugin compilated with: --%s-unicode\n",
 				config_use_unicode ? "enable" : "disable",
@@ -1282,15 +1282,15 @@ int jabber_plugin_init(int prio)
 
         plugin_register(&jabber_plugin, prio);
 
-        query_connect(&jabber_plugin, "protocol-validate-uid", jabber_validate_uid, NULL);
-        query_connect(&jabber_plugin, "plugin-print-version", jabber_print_version, NULL);
-        query_connect(&jabber_plugin, "session-added", jabber_session, (void*) 1);
-        query_connect(&jabber_plugin, "session-removed", jabber_session, (void*) 0);
-        query_connect(&jabber_plugin, "status-show", jabber_status_show_handle, NULL);
-	query_connect(&jabber_plugin, "ui-window-kill", jabber_window_kill, NULL);
-	query_connect(&jabber_plugin, "protocol-ignore", jabber_protocol_ignore, NULL);
+        query_connect(&jabber_plugin, TEXT("protocol-validate-uid"), jabber_validate_uid, NULL);
+        query_connect(&jabber_plugin, TEXT("plugin-print-version"), jabber_print_version, NULL);
+        query_connect(&jabber_plugin, TEXT("session-added"), jabber_session, (void*) 1);
+        query_connect(&jabber_plugin, TEXT("session-removed"), jabber_session, (void*) 0);
+        query_connect(&jabber_plugin, TEXT("status-show"), jabber_status_show_handle, NULL);
+	query_connect(&jabber_plugin, TEXT("ui-window-kill"), jabber_window_kill, NULL);
+	query_connect(&jabber_plugin, TEXT("protocol-ignore"), jabber_protocol_ignore, NULL);
 #if WITH_JABBER_DCC
-	query_connect(&jabber_plugin, "config-postinit", jabber_dcc_postinit, NULL);
+	query_connect(&jabber_plugin, TEXT("config-postinit"), jabber_dcc_postinit, NULL);
 #endif
 
 	variable_add(&jabber_plugin, TEXT("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);

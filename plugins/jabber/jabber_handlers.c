@@ -182,7 +182,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 					{
 						CHAR_T *session = normal_to_wcs(__session);
 						CHAR_T *rcpt = normal_to_wcs(__rcpt);
-						query_emit(NULL, "protocol-message-ack", &session, &rcpt, &__seq, &__status);
+						query_emit(NULL, TEXT("protocol-message-ack"), &session, &rcpt, &__seq, &__status);
 						free_utf(session);
 						free_utf(rcpt);
 					}
@@ -275,13 +275,13 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 			formatted = format_string(format_find("jabber_muc"), session_name(s), uid2, nick ? nick : uid2+4, text);
 			
 			debug("[MUC,MESSAGE] uid2:%s uuid:%s message:%s\n", uid2, nick, text);
-			query_emit(NULL, "protocol-message", &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			query_emit(NULL, TEXT("protocol-message"), &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 			xfree(uid2);
 			xfree(nick);
 			xfree(formatted);
 		} else {
-			query_emit(NULL, "protocol-message", &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			query_emit(NULL, TEXT("protocol-message"), &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
 		}
 
 		xfree(me);
@@ -525,7 +525,7 @@ void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			session_unidle(s);
 			{
 				char *__session = xstrdup(session_uid_get(s));
-				query_emit(NULL, "protocol-connected", &__session);
+				query_emit(NULL, TEXT("protocol-connected"), &__session);
 				xfree(__session);
 			}
 			if (session_get(s, "__new_acount")) {
@@ -1754,7 +1754,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			int port 	= 0;
 
 			if (!when) when = time(NULL);
-			query_emit(NULL, "protocol-status", &session, &uid, &status, &descr, &host, &port, &when, NULL);
+			query_emit(NULL, TEXT("protocol-status"), &session, &uid, &status, &descr, &host, &port, &when, NULL);
 			
 			xfree(session);
 /*			xfree(host); */
