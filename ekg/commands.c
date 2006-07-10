@@ -313,8 +313,10 @@ COMMAND(cmd_add)
 		params = xmalloc(4 * sizeof(char *));
 		params[0] = last_search_uid;
 		params[1] = nickname;
-		params[2] = saprintf("-f \"%s\" -l \"%s\"", ((last_search_first_name) ? last_search_first_name : ""), ((last_search_last_name) ? last_search_last_name : ""));
-		params[3] = NULL;
+		params[2] = saprintf("-f \"" CHARF "\" -l \"" CHARF "\"", 
+				((last_search_first_name) ? last_search_first_name : TEXT("")), 
+				((last_search_last_name) ? last_search_last_name : TEXT("")));
+/*		params[3] = NULL; */
 	}
 
 	if (!params[0] || !params[1]) {
@@ -360,8 +362,8 @@ COMMAND(cmd_add)
 	if (u || userlist_add(session_current, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
-		query_emit(NULL, "userlist-added", &uid, &params[1], &quiet);
-                query_emit(NULL, "add-notify", &session_current->uid, &uid);
+		query_emit(NULL, TEXT("userlist-added"), &uid, &params[1], &quiet);
+                query_emit(NULL, TEXT("add-notify"), &session_current->uid, &uid);
                 xfree(uid);
 
 		printq("user_added", params[1], session_name(session_current));
@@ -503,12 +505,12 @@ COMMAND(cmd_status)
         wcs_printq("show_status_header");
 
 	if (!params[0] && session)
-		query_emit(plugin_find_uid(session->uid), "status-show", &session->uid);
+		query_emit(plugin_find_uid(session->uid), TEXT("status-show"), &session->uid);
 	else if (!(s = session_find(params[0]))) {
 		printq("invalid_uid", params[0]);
 		return -1;
 	} else
-		query_emit(plugin_find_uid(s->uid), "status-show", &s->uid);
+		query_emit(plugin_find_uid(s->uid), TEXT("status-show"), &s->uid);
 
         n = time(NULL);
         t = localtime(&n);
@@ -549,13 +551,13 @@ COMMAND(cmd_del)
 			l = l->next;
 
 			tmp = xstrdup(u->uid);
-			query_emit(NULL, "userlist-removed", &tmp);
+			query_emit(NULL, TEXT("userlist-removed"), &tmp);
 			xfree(tmp);
 
 			userlist_remove(session, u);
 		}
 
-		printq("user_cleared_list", session_name(session));
+		wcs_printq("user_cleared_list", wcs_session_name(session));
 		tabnick_flush();
 		config_changed = 1;
 
@@ -568,8 +570,8 @@ COMMAND(cmd_del)
 	}
 
 	tmp = xstrdup(u->uid);
-	query_emit(NULL, "userlist-removed", &params[0], &tmp);
-	query_emit(NULL, "remove-notify", &session->uid, &tmp);
+	query_emit(NULL, TEXT("userlist-removed"), &params[0], &tmp);
+	query_emit(NULL, TEXT("remove-notify"), &session->uid, &tmp);
 
         printq("user_deleted", params[0], session_name(session));
 	xfree(tmp);
@@ -601,7 +603,7 @@ WATCHER(cmd_exec_watch_handler)	/* sta³y */
 
 	if (type == 1) {
 		if (i->buf) {
-			string_insert(i->buf, 0, TEXT("/ ")); /* UUU */
+			string_insert(i->buf, 0, TEXT("/ ")); 
 			command_exec(i->target, session_find(i->session), i->buf->str, quiet);
 			wcs_string_free(i->buf, 1);
 		}
@@ -825,6 +827,7 @@ COMMAND(cmd_for)
 			}		
 			
 			for (i = 0; tmp[i]; i++) {
+				CHAR_T *ffor_command;
 				char *for_command;
 				
 				if (!s[i] || !s[i]->uid)
@@ -835,7 +838,9 @@ COMMAND(cmd_for)
 				else
 					for_command = xstrdup(params[2]);
 
-				command_exec(NULL, s[i], for_command, 0);
+				ffor_command = normal_to_wcs(for_command);
+				command_exec(NULL, s[i], ffor_command, 0);
+				free_utf(ffor_command);
 				xfree(for_command);
 			}
 	
@@ -868,6 +873,7 @@ COMMAND(cmd_for)
 			for (l = session->userlist; l; l = l->next) {
 				userlist_t *u = l->data;
 				char *for_command;
+				CHAR_T *ffor_command;
 
 				if (!u || !u->uid)
 					continue;
@@ -877,7 +883,9 @@ COMMAND(cmd_for)
 				else
 					for_command = xstrdup(params[2]);
 
-				command_exec(NULL, session, for_command, 0);
+				ffor_command = normal_to_wcs(for_command);
+				command_exec(NULL, session, ffor_command, 0);
+				free_utf(ffor_command);
 				xfree(for_command);
 			}
 				
@@ -900,6 +908,7 @@ COMMAND(cmd_for)
 
                         for (i = 0; tmp[i]; i++) {
                                 char *for_command;
+				CHAR_T *ffor_command;
 
                                 if (!u[i] || !u[i]->uid)
                                         continue;
@@ -909,7 +918,9 @@ COMMAND(cmd_for)
 				else
 					for_command = xstrdup(params[2]);
 
-                                command_exec(NULL, session, for_command, 0);
+				ffor_command = normal_to_wcs(for_command);
+                                command_exec(NULL, session, ffor_command, 0);
+				free_utf(ffor_command);
                                 xfree(for_command);
                         }
 
@@ -986,6 +997,7 @@ COMMAND(cmd_for)
 
                         for (i = 0; tmp[i]; i++) {
                                 char *for_command;
+				CHAR_T *ffor_command;
 
                                 if (!w[i] || !w[i]->target || !w[i]->session)
                                         continue;
@@ -994,8 +1006,9 @@ COMMAND(cmd_for)
                                         for_command = format_string(params[2], get_nickname(w[i]->session, w[i]->target), get_uid(w[i]->session, w[i]->target));
                                 else
                                         for_command = xstrdup(params[2]);
-
-                                command_exec(NULL, session, for_command, 0);
+				ffor_command = normal_to_wcs(for_command);
+                                command_exec(NULL, session, ffor_command, 0);
+				free_utf(ffor_command);
                                 xfree(for_command);
                         }
 
@@ -1545,7 +1558,7 @@ list_user:
 		if (ekg_group_member(u, "__offline"))
 			printq("user_info_offline", ((u->first_name) ? u->first_name : u->nickname));
 
-		query_emit(NULL, "userlist-info", &u, &quiet);
+		query_emit(NULL, TEXT("userlist-info"), &u, &quiet);
 
 		if (u->ip) {
 			char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port));
@@ -1874,7 +1887,7 @@ COMMAND(cmd_quit)
 	list_t l;
 	
 	reason = xstrdup(params[0]);
-	query_emit(NULL, "quitting", &reason);
+	query_emit(NULL, TEXT("quitting"), &reason);
 	xfree(reason);
 
 	for (l = sessions; l; l = l->next) {
@@ -1893,7 +1906,7 @@ COMMAND(cmd_quit)
 COMMAND(cmd_version) 
 {
     	printq("ekg_version", VERSION, compile_time());
-	query_emit(NULL, "plugin-print-version");
+	query_emit(NULL, TEXT("plugin-print-version"));
 
 	return 0;
 }
@@ -2017,7 +2030,7 @@ COMMAND(cmd_debug_queries)
 
 		plugin = (q->plugin) ? q->plugin->name : TEXT("-");
 #if USE_UNICODE
-		snprintf(buf, sizeof(buf), "%-32s | %-8ls | %d", q->name, plugin, q->count);
+		snprintf(buf, sizeof(buf), "%-32ls | %-8ls | %d", q->name, plugin, q->count);
 #else
 		snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", q->name, plugin, q->count);
 #endif
@@ -2029,14 +2042,14 @@ COMMAND(cmd_debug_queries)
 
 COMMAND(cmd_debug_query)
 {
-	PARASC
-	char *p[10];
+	PARUNI
+	CHAR_T *p[10];
 	int i;
 
 	memset(p, 0, sizeof(p));
 
 	for (i = 0; params[i] && i < 10; i++)
-		p[i] = xstrdup(params[i]);
+		p[i] = xwcsdup(params[i]);
 
 	query_emit(NULL, p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6], &p[7], &p[8], &p[9]);
 
@@ -2237,7 +2250,7 @@ COMMAND(cmd_test_fds)
 
 COMMAND(cmd_beep)
 {
-	query_emit(NULL, "ui-beep", NULL);
+	query_emit(NULL, TEXT("ui-beep"), NULL);
 
 	return 0;
 }
@@ -2415,14 +2428,14 @@ query:
 
 		xfree(window_current->target);
 		window_current->target = xstrdup(p[0]);
-		query_emit(NULL, "ui-window-target-changed", &window_current);
+		query_emit(NULL, TEXT("ui-window-target-changed"), &window_current);
 
 		if (!quiet) {
 			print_window(p[0], session, 0, "query_started", p[0], session_name(session));
 			print_window(p[0], session, 0, "query_started_window", p[0], session_name(session));
 		}
 	} else {
-		query_emit(NULL, "ui-window-target-changed", &window_current);
+		query_emit(NULL, TEXT("ui-window-target-changed"), &window_current);
 	}
 
 chat:
@@ -2451,7 +2464,7 @@ COMMAND(cmd_bind)
 {
 	PARUNI
 	window_lock_dec_n(target); /* this is interactive command */
-	query_emit(NULL, "binding-command", (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
+	query_emit(NULL, TEXT("binding-command"), (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
 
 	return 0;
 }
@@ -2626,7 +2639,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		}
 		if (!res && (last_command->flags & SESSION_MUSTBECONNECTED)) {
 			if (!session_connected_get(s)) {
-				printq("not_connected", session_name(s));	
+				wcs_printq("not_connected", wcs_session_name(s));	
 				res = -1;
 			}
 		}
@@ -2685,7 +2698,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 						w->lock = 0;
 					}
 				}
-				query_emit(NULL, "ui-window-refresh");
+				query_emit(NULL, TEXT("ui-window-refresh"));
 			}
 			if (last_command->flags & COMMAND_ISALIAS) wcs_array_free(last_params);
 			wcs_array_free(par);

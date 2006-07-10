@@ -150,7 +150,7 @@ session_t *session_add(const char *uid)
 	session_var_default(s);
 
 	tmp = xstrdup(uid);
-	query_emit(NULL, "session-added", &tmp);
+	query_emit(NULL, TEXT("session-added"), &tmp);
 	xfree(tmp);
 
 	return s;
@@ -192,8 +192,8 @@ int session_remove(const char *uid)
 		command_exec_format(NULL, s, 1, TEXT("/disconnect %s"), s->uid);
 	}
 	tmp = xstrdup(uid);
-        query_emit(NULL, "session-changed");
-	query_emit(NULL, "session-removed", &tmp);
+        query_emit(NULL, TEXT("session-changed"));
+	query_emit(NULL, TEXT("session-removed"), &tmp);
 	xfree(tmp);
 
 /*	for (i = 0; s->params && s->params[i]; i++) {
@@ -233,7 +233,7 @@ int session_status_set(session_t *s, const char *status)
 	__session = xstrdup(s->uid);
 	__status = xstrdup(status);
 
-	query_emit(NULL, "session-status", &__session, &__status);
+	query_emit(NULL, TEXT("session-status"), &__session, &__status);
 
 	xfree(s->status);
 
@@ -422,7 +422,7 @@ int session_set(session_t *s, const char *key, const char *value)
 		char *tmp = xstrdup(value);
 		ret = session_alias_set(s, value);
 
-		query_emit(NULL, "session-renamed", &tmp);
+		query_emit(NULL, TEXT("session-renamed"), &tmp);
 		xfree(tmp);
 
 		goto notify;
@@ -851,7 +851,7 @@ COMMAND(session_command)
 		window_current->session = s;
 		session_current = s;
 
-		query_emit(NULL, "session-changed");
+		query_emit(NULL, TEXT("session-changed"));
 
 		return 0;
 	}
@@ -1143,34 +1143,40 @@ void sessions_free()
  * s - session
  * name - name of the variable
  */
-void session_help(session_t *s, const char *name)
+void session_help(session_t *s, const CHAR_T *name)
 {
 	FILE *f;
-	char *line, *type = NULL, *def = NULL, *tmp;
+	CHAR_T *line, *type = NULL, *def = NULL, *tmp;
 	CHAR_T *plugin_name;
-	string_t str = string_init(NULL);
+	char *tmppath;
+
+	wcs_string_t str;
 	int found = 0;
 
 	if (!s)
 		return;
-
-	if (!session_is_var(s, name)) {
-		print("session_variable_doesnt_exist", session_name(s), name);
-		return;
-	}	
+	{
+		char *tmp = wcs_to_normal(name);
+		if (!session_is_var(s, tmp)) {
+			wcs_print("session_variable_doesnt_exist", wcs_session_name(s), name);
+			free_utf(tmp);
+			return;
+		}
+		free_utf(tmp);
+	}
 
 	plugin_name = plugin_find_uid(s->uid)->name;
-	tmp = help_path("session", plugin_name);
-	f = fopen(tmp, "r");
-	xfree(tmp);
+	tmppath = help_path("session", plugin_name);
+	f = fopen(tmppath, "r");
+	xfree(tmppath);
 
 	if (!f) {
 		wcs_print("help_session_file_not_found", plugin_name);
 		return;
 	}
 
-	while ((line = read_file(f))) {
-		if (!xstrcasecmp(line, name)) {
+	while ((line = wcs_read_file(f))) {
+		if (!xwcscasecmp(line, name)) {
 			found = 1;
 			xfree(line);
 			break;
@@ -1181,67 +1187,68 @@ void session_help(session_t *s, const char *name)
 
 	if (!found) {
 		fclose(f);
-		print("help_session_var_not_found", name);
+		wcs_print("help_session_var_not_found", name);
 		return;
 	}
 
-	line = read_file(f);
+	line = wcs_read_file(f);
 
-	if ((tmp = xstrstr(line, ": ")))
-		type = xstrdup(tmp + 2);
+	if ((tmp = xwcsstr(line, TEXT(": "))))
+		type = xwcsdup(tmp + 2);
 	else
-		type = xstrdup("?");
+		type = xwcsdup(TEXT("?"));
 
 	xfree(line);
 
 	tmp = NULL;
 
-	line = read_file(f);
-	if ((tmp = xstrstr(line, ": ")))
-		def = xstrdup(tmp + 2);
+	line = wcs_read_file(f);
+	if ((tmp = xwcsstr(line, TEXT(": "))))
+		def = xwcsdup(tmp + 2);
 	else
-		def = xstrdup("?");
+		def = xwcsdup(TEXT("?"));
 	xfree(line);
 
-	print("help_session_header", session_name(s), name, type, def);
+	wcs_print("help_session_header", wcs_session_name(s), name, type, def);
 
 	xfree(type);
 	xfree(def);
 
 	if (tmp)			/* je¶li nie jest to ukryta zmienna... */
-		xfree(read_file(f));	/* ... pomijamy liniê */
+		xfree(wcs_read_file(f));	/* ... pomijamy liniê */
 
-	while ((line = read_file(f))) {
+	str = wcs_string_init(NULL);
+	while ((line = wcs_read_file(f))) {
 		if (line[0] != '\t') {
 			xfree(line);
 			break;
 		}
 
-		if (!xstrncmp(line, "\t- ", 3) && xstrcmp(str->str, "")) {
-			print("help_session_body", str->str);
-			string_clear(str);
+		if (!xwcsncmp(line, TEXT("\t- "), 3) && xwcscmp(str->str, TEXT(""))) {
+			wcs_print("help_session_body", str->str);
+			wcs_string_clear(str);
 		}
 
-		if (!xstrncmp(line, "\t", 1) && xstrlen(line) == 1) {
-			string_append(str, "\n\r");
+		if (!xwcsncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
+			wcs_string_append(str, TEXT("\n\r"));
 			continue;
 		}
 
-		string_append(str, line + 1);
+		wcs_string_append(str, line + 1);
 
-		if (line[xstrlen(line) - 1] != ' ')
-			string_append_c(str, ' ');
+		if (line[xwcslen(line) - 1] != ' ')
+			wcs_string_append_c(str, ' ');
 
 		xfree(line);
 	}
 
-	if (xstrcmp(str->str, ""))
-		print("help_session_body", str->str);
+	if (xwcscmp(str->str, TEXT("")))
+		wcs_print("help_session_body", str->str);
 
-	string_free(str, 1);
+	wcs_string_free(str, 1);
 
 	if (xstrcmp(format_find("help_session_footer"), ""))
-		print("help_session_footer", name);
+		wcs_print("help_session_footer", name);
 
 	fclose(f);
 }

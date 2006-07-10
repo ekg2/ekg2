@@ -113,12 +113,12 @@ void config_postread()
 			debug("setted default session to %s\n", s->uid);
 			session_current = s;
 			window_current->session = s;
-			query_emit(NULL, "session-changed");
+			query_emit(NULL, TEXT("session-changed"));
 		} else {
 			debug("default session not found\n");
 		}
 	}
-	query_emit(NULL, "config-postinit");
+	query_emit(NULL, TEXT("config-postinit"));
 }
 
 int config_read_plugins()
@@ -179,8 +179,8 @@ int config_read(const char *filename)
 		timer_remove_user(-1);
 		event_free();
 		variable_set_default();
-		query_emit(NULL, "set-vars-default");
-		query_emit(NULL, "binding-default");
+		query_emit(NULL, TEXT("set-vars-default"));
+		query_emit(NULL, TEXT("binding-default"));
 		debug("  flushed previous config\n");
 	} 
 
@@ -235,7 +235,7 @@ int config_read(const char *filename)
                         CHAR_T **pms = wcs_array_make(foo, TEXT(" \t"), 2, 1, 0);
 
                         if (wcs_array_count(pms) == 2) {
-                                query_emit(NULL, "binding-set", pms[0], pms[1], 1);
+                                query_emit(NULL, TEXT("binding-set"), pms[0], pms[1], 1);
                         }
 
                         wcs_array_free(pms);
@@ -291,7 +291,8 @@ int config_read(const char *filename)
 				}
 		
 				if (period > 0) {
-					ret = command_exec_format(NULL, NULL, 1, TEXT("/timer --add "CHARF" %s "CHARF), (name) ? name : TEXT(""), period_str, p[2]);
+					ret = command_exec_format(NULL, NULL, 1, 
+						TEXT("/timer --add "CHARF" %s "CHARF), (name) ? name : TEXT(""), period_str, p[2]);
 				}
 
 				xfree(period_str);

@@ -138,7 +138,7 @@ int event_add(const CHAR_T *name, int prio, const CHAR_T *target, const CHAR_T *
 	list_t l;
 
 	if (event_find(name, target)) {
-		printq("events_exist", name, target);
+		wcs_printq("events_exist", name, target);
 		return -1;
 	}
 	
@@ -163,7 +163,7 @@ int event_add(const CHAR_T *name, int prio, const CHAR_T *target, const CHAR_T *
 	list_add_sorted(&events, ev, 0, event_add_compare);
 
 	tmp = xwcsdup(name);
-	query_emit(NULL, "event-added", &tmp);
+	query_emit(NULL, TEXT("event-added"), &tmp);
 	xfree(tmp);
 
 	wcs_printq("events_add", name);
@@ -201,10 +201,10 @@ int event_remove(unsigned int id, int quiet)
 	
 	list_remove(&events, ev, 1);
 
-	printq("events_del", itoa(id));
+	wcs_printq("events_del", wcs_itoa(id));
 
 cleanup:	
-        query_emit(NULL, "event-removed", itoa(id));
+        query_emit(NULL, TEXT("event-removed"), itoa(id));
 
 	return 0;
 }
@@ -249,7 +249,7 @@ event_t *event_find(const CHAR_T *name, const CHAR_T *target)
 	int ev_max_prio = 0;
 	CHAR_T **b, **c;
 
-	debug("// event_find (name (%s), target (%s)\n", name, target);
+	debug("// event_find (name (" CHARF "), target (" CHARF ")\n", name, target);
 	b = wcs_array_make(target, TEXT("|,;"), 0, 1, 0);
 	c = wcs_array_make(name, TEXT("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {
@@ -297,7 +297,7 @@ event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR_T *tar
 	int ev_max_prio = 0;
 	CHAR_T **b, **c;
 
-	debug("// event_find_all (name (%s), target (%s)\n", name, target);
+	debug("// event_find_all (name (" CHARF "), target (" CHARF ")\n", name, target);
 	b = wcs_array_make(target, TEXT("|,;"), 0, 1, 0);
 	c = wcs_array_make(name, TEXT("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {
@@ -396,7 +396,7 @@ TIMER(ekg_day_timer)
 		if (config_display_day_changed) {
 			print("day_changed", timestamp("%d %b %Y"));
 		} else debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
-		query_emit(NULL, "day-changed", &tm, &oldtm);
+		query_emit(NULL, TEXT("day-changed"), &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
 		oldtm = xmalloc(sizeof(struct tm));
@@ -507,7 +507,8 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 	userlist_t *userlist;
 	event_t *ev;
 	const char *target;
-        char *action, **actions, *edata = NULL;
+        CHAR_T *action, **actions;
+	char *edata = NULL;
 	int i;
 
 	if (!events)
@@ -564,10 +565,10 @@ int event_check(const char *session, const char *name, const char *uid, const ch
                 *q = 0;
         }
 
-	actions = array_make(action, ";", 0, 0, 1);
+	actions = wcs_array_make(action, TEXT(";"), 0, 0, 1);
 
 	for (i = 0; actions && actions[i]; i++) {
-	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
+	        char *tmp = format_string(wcs_strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
 		CHAR_T *tmp2 = normal_to_wcs(tmp);
 
 		debug("// event_check() calling \"%s\"\n", tmp);
@@ -576,7 +577,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 		free_utf(tmp2);
 	}
 
-	array_free(actions);
+	wcs_array_free(actions);
 	xfree(edata);
 
         return 0;

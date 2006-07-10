@@ -61,15 +61,15 @@ list_t dccs = NULL;
  */
 void protocol_init()
 {
-	query_connect(NULL, "protocol-status", protocol_status, NULL);
-	query_connect(NULL, "wcs_protocol-status", protocol_status, (void *) 1);
-	query_connect(NULL, "protocol-message", protocol_message, NULL);
-	query_connect(NULL, "wcs_protocol-message", protocol_message, (void *) 1);
-	query_connect(NULL, "protocol-message-ack", protocol_message_ack, NULL);
+	query_connect(NULL, TEXT("protocol-status"), protocol_status, NULL);
+	query_connect(NULL, TEXT("wcs_protocol-status"), protocol_status, (void *) 1);
+	query_connect(NULL, TEXT("protocol-message"), protocol_message, NULL);
+	query_connect(NULL, TEXT("wcs_protocol-message"), protocol_message, (void *) 1);
+	query_connect(NULL, TEXT("protocol-message-ack"), protocol_message_ack, NULL);
 
-	query_connect(NULL, "protocol-connected", protocol_connected, NULL);
-	query_connect(NULL, "wcs_protocol-disconnected", protocol_disconnected, (void *) 1);
-	query_connect(NULL, "protocol-disconnected", protocol_disconnected, NULL);
+	query_connect(NULL, TEXT("protocol-connected"), protocol_connected, NULL);
+	query_connect(NULL, TEXT("wcs_protocol-disconnected"), protocol_disconnected, (void *) 1);
+	query_connect(NULL, TEXT("protocol-disconnected"), protocol_disconnected, NULL);
 }
 
 
@@ -114,13 +114,13 @@ int protocol_disconnected(void *data, va_list ap)
 		char *__session = wcs_to_normal((CHAR_T *) session);
 		char *__reason	= wcs_to_normal((CHAR_T *) reason);
 
-		ret = query_emit(NULL, "protocol-disconnected", &__session, &__reason, &type);
+		ret = query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &type);
 
 		free_utf(__session);
 		free_utf(__reason);
 		return ret;
 #else
-		return query_emit(NULL, "protocol-disconnected", &session, &reason, &type);
+		return query_emit(NULL, TEXT("protocol-disconnected"), &session, &reason, &type);
 #endif
 	}
 	
@@ -185,10 +185,10 @@ int protocol_connected(void *data, va_list ap)
 	if (descr)
 		print("connected_descr", descr, session_name(s));
 	else
-		print("connected", session_name(s));
+		wcs_print("connected", wcs_session_name(s));
 
 	if (!msg_queue_flush(*session))
-		print("queue_flush", session_name(s));
+		wcs_print("queue_flush", wcs_session_name(s));
 
 	return 0;
 }
@@ -221,7 +221,7 @@ int protocol_status(void *data, va_list ap)
 		char *shost	= wcs_to_normal( (CHAR_T *) host);
 		int ret;
 
-		ret = query_emit(NULL, "protocol-status", &ssession, &suid, &sstatus, &sdescr, &shost, &port, &when);
+		ret = query_emit(NULL, TEXT("protocol-status"), &ssession, &suid, &sstatus, &sdescr, &shost, &port, &when);
 
 		free_utf(ssession);
 		free_utf(suid);
@@ -230,7 +230,7 @@ int protocol_status(void *data, va_list ap)
 		free_utf(shost);
 		return ret;
 #else
-		return query_emit(NULL, "protocol-status", __session, __uid, &status, __descr, &host, &port, &when);
+		return query_emit(NULL, TEXT("protocol-status"), __session, __uid, &status, __descr, &host, &port, &when);
 #endif
 	}
 	if (!(s = session_find(session)))
@@ -308,7 +308,7 @@ int protocol_status(void *data, va_list ap)
 
 	/* daj znaæ d¼wiêkiem... */
 	if (config_beep && config_beep_notify)
-		query_emit(NULL, "ui-beep");
+		query_emit(NULL, TEXT("ui-beep"));
 
 	/* ...i muzyczk± */
 	if (config_sound_notify_file)
@@ -341,7 +341,7 @@ notify_plugins:
 	}
 
 	if (!xstrcasecmp(u->status, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-		query_emit(NULL, "event_online", __session, __uid);
+		query_emit(NULL, TEXT("event_online"), __session, __uid);
 
 	if (!ignore_status) {
 		xfree(u->status);
@@ -349,7 +349,7 @@ notify_plugins:
 	}
 
 	if (xstrcasecmp(u->descr, descr) && !ignore_events)
-		query_emit(NULL, "event_descr", __session, __uid, __descr);
+		query_emit(NULL, TEXT("event_descr"), __session, __uid, __descr);
 
 	if (!ignore_status && !ignore_status_descr) {
 		xfree(u->descr);
@@ -357,14 +357,14 @@ notify_plugins:
 		u->status_time = time(NULL);
 	}
 	
-	query_emit(NULL, "userlist-changed", __session, __uid);
+	query_emit(NULL, TEXT("userlist-changed"), __session, __uid);
 
 	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && !ignore_events)
-		query_emit(NULL, "event_avail", __session, __uid);
+		query_emit(NULL, TEXT("event_avail"), __session, __uid);
 	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && !ignore_events)
-                query_emit(NULL, "event_away", __session, __uid);
+                query_emit(NULL, TEXT("event_away"), __session, __uid);
         if (!xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-                query_emit(NULL, "event_na", __session, __uid);
+                query_emit(NULL, TEXT("event_na"), __session, __uid);
 
 	return 0;
 }
@@ -514,7 +514,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (class == EKG_MSGCLASS_CHAT) {
 
 		if (config_beep && config_beep_chat && dobeep)
-			query_emit(NULL, "ui-beep");
+			query_emit(NULL, TEXT("ui-beep"));
 	
 		if (config_sound_chat_file && dobeep)
 			play_sound(config_sound_chat_file);
@@ -522,7 +522,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_MESSAGE) {
 
 		if (config_beep && config_beep_msg && dobeep)
-			query_emit(NULL, "ui-beep");
+			query_emit(NULL, TEXT("ui-beep"));
 		if (config_sound_msg_file && dobeep)
 			play_sound(config_sound_chat_file);
 
@@ -579,7 +579,7 @@ int protocol_message(void *data, va_list ap)
 		char **srcpts   = wcs_array_to_str( (CHAR_T **) rcpts);
 		int ret;
 
-		ret = query_emit(NULL, "protocol-message", &ssession, &suid, &srcpts, &stext, &format, &sent, &class, &sseq, &dobeep, &secure);
+		ret = query_emit(NULL, TEXT("protocol-message"), &ssession, &suid, &srcpts, &stext, &format, &sent, &class, &sseq, &dobeep, &secure);
 
 		free_utf(ssession);
 		free_utf(suid);
@@ -588,7 +588,7 @@ int protocol_message(void *data, va_list ap)
 		array_free(srcpts);
 		return ret;
 #else
-		return query_emit(NULL, "protocol-message", &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &dobeep, &secure);
+		return query_emit(NULL, TEXT("protocol-message"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &dobeep, &secure);
 #endif
 	}
 
@@ -628,7 +628,7 @@ int protocol_message(void *data, va_list ap)
                 char *___message = xstrdup(text);
                 int ___decrypted = 0;
 
-                query_emit(NULL, "message-decrypt", &___session, &___sender, &___message, &___decrypted, NULL);
+                query_emit(NULL, TEXT("message-decrypt"), &___session, &___sender, &___message, &___decrypted, NULL);
 
                 if (___decrypted) {
                         text = ___message;
@@ -641,10 +641,10 @@ int protocol_message(void *data, va_list ap)
                 xfree(___message);
 	}
 
-	if (our_msg)	query_emit(NULL, "protocol-message-sent", &session, &(rcpts[0]), &text);
-	else		query_emit(NULL, "protocol-message-received", &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+	if (our_msg)	query_emit(NULL, TEXT("protocol-message-sent"), &session, &(rcpts[0]), &text);
+	else		query_emit(NULL, TEXT("protocol-message-received"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
 
-	query_emit(NULL, "protocol-message-post", &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+	query_emit(NULL, TEXT("protocol-message-post"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
 
 	/* show it ! */
 	if (!(our_msg && !config_display_sent)) {

@@ -646,7 +646,7 @@ int valid_uid(const char *uid)
 	char *tmp;
 	tmp = xstrdup(uid);
 
-	query_emit(NULL, "protocol-validate-uid", &tmp, &valid);
+	query_emit(NULL, TEXT("protocol-validate-uid"), &tmp, &valid);
 	xfree(tmp);
 
 	return (valid > 0);
@@ -673,7 +673,7 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid)
 
         tmp = xstrdup(uid);
 
-        query_emit(plugin, "protocol-validate-uid", &tmp, &valid);
+        query_emit(plugin, TEXT("protocol-validate-uid"), &tmp, &valid);
         xfree(tmp);
 
         return (valid > 0);
@@ -855,12 +855,12 @@ int ignored_remove(session_t *session, const char *uid)
 
 	tmps	= xstrdup(session->uid);
 	tmp	= xstrdup(u->uid);
-	query_emit(NULL, "protocol-ignore", &tmps, &tmp, &level, &tmp2);
+	query_emit(NULL, TEXT("protocol-ignore"), &tmps, &tmp, &level, &tmp2);
 	xfree(tmps);
 	xfree(tmp);
 	
 	if ((level & IGNORE_STATUS || level & IGNORE_STATUS_DESCR)) {
-		query_emit(NULL, "protocol-unignore", &u, &session);
+		query_emit(NULL, TEXT("protocol-unignore"), &u, &session);
 	}
 
 	return 0;
@@ -902,7 +902,7 @@ int ignored_add(session_t *session, const char *uid, int level)
 
 	tmps	= xstrdup(session->uid);
 	tmp	= xstrdup(u->uid);
-	query_emit(NULL, "protocol-ignore", &tmps, &tmp, &oldlevel, &level);
+	query_emit(NULL, TEXT("protocol-ignore"), &tmps, &tmp, &oldlevel, &level);
 	xfree(tmps);
 	xfree(tmp);
 	

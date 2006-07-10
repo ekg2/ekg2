@@ -1106,7 +1106,7 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	tmp1 = xstrdup(oldname);
 	tmp2 = xstrdup(newname);
 
-	query_emit(NULL, "conference-renamed", &tmp1, &tmp2);
+	query_emit(NULL, TEXT("conference-renamed"), &tmp1, &tmp2);
 
 	xfree(tmp1);
 	xfree(tmp2);

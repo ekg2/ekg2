@@ -544,19 +544,19 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
         return 0;
 }
 
-query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data)
+query_t *query_connect(plugin_t *plugin, const CHAR_T *name, query_handler_func_t *handler, void *data)
 {
 	query_t *q = xmalloc(sizeof(query_t));
 
-	q->plugin = plugin;
-	q->name = xstrdup(name);
-	q->handler = handler;
-	q->data = data;
+	q->plugin	= plugin;
+	q->name		= xwcsdup(name);
+	q->handler	= handler;
+	q->data		= data;
 
 	return list_add(&queries, q, 0);
 }
 
-int query_disconnect(plugin_t *plugin, const char *name)
+int query_disconnect(plugin_t *plugin, const CHAR_T *name)
 {
 	list_t l;
 
@@ -573,7 +573,7 @@ int query_disconnect(plugin_t *plugin, const char *name)
 	return -1;
 }
 
-int query_emit(plugin_t *plugin, const char *name, ...)
+int query_emit(plugin_t *plugin, const CHAR_T *name, ...)
 {
 	static int nested = 0;
 	int result = -2;
@@ -593,7 +593,7 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
 
-		if (!xstrcmp(q->name, name) && (!plugin || (plugin == q->plugin))) {
+		if ((!plugin || (plugin == q->plugin)) && !xwcscmp(q->name, name)) {
 			int (*handler)(void *data, va_list ap) = q->handler;
 
 			q->count++;
@@ -622,14 +622,14 @@ cleanup:
 	return result;
 }
 
-query_t *query_find(const char *name)
+query_t *query_find(const CHAR_T *name)
 {
         list_t l;
 
         for (l = queries; l; l = l->next) {
                 query_t *q = l->data;
 
-                if (!xstrcasecmp(q->name, name))
+                if (!xwcscasecmp(q->name, name))
                         return q;
         }
 

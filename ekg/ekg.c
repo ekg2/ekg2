@@ -483,14 +483,14 @@ watches_again:
 static void handle_sigusr1()
 {
         debug("sigusr1 received\n");
-        query_emit(NULL, "sigusr1");
+        query_emit(NULL, TEXT("sigusr1"));
         signal(SIGUSR1, handle_sigusr1);
 }
 
 static void handle_sigusr2()
 {
         debug("sigusr2 received\n");
-        query_emit(NULL, "sigusr2");
+        query_emit(NULL, TEXT("sigusr2"));
         signal(SIGUSR2, handle_sigusr2);
 }
 
@@ -607,7 +607,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
         if (!config_debug)
                 return;
 
-        query_emit(NULL, "ui-is-initialized", &is_UI);
+        query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
 
         if (!is_UI) {
                 /* printf(format, ap); */ /* uncomment for debuging */
@@ -1021,7 +1021,7 @@ int main(int argc, char **argv)
         reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
-	if (query_emit(NULL, "ui-loop") != -1) {
+	if (query_emit(NULL, TEXT("ui-loop")) != -1) {
         	/* krêæ imprezê */
 		while (1) {
 			ekg_loop();

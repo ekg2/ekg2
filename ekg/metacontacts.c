@@ -74,7 +74,7 @@ COMMAND(cmd_metacontact)
 	                config_changed = 1;
 	                printq("metacontact_added", params[1]);
 
-	                query_emit(NULL, "metacontact-added", &tmp);
+	                query_emit(NULL, TEXT("metacontact-added"), &tmp);
 			xfree(tmp);
 		}
 		return 0;	
@@ -95,7 +95,7 @@ COMMAND(cmd_metacontact)
 	                config_changed = 1;
 	                printq("metacontact_removed", params[1]);
 			
-	                query_emit(NULL, "metacontact-removed", &tmp);
+	                query_emit(NULL, TEXT("metacontact-removed"), &tmp);
 			xfree(tmp);
 		}
                 return 0;
@@ -115,7 +115,7 @@ COMMAND(cmd_metacontact)
 
 			printq("metacontact_added_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-	                query_emit(NULL, "metacontact-item-added", &tmp1, &tmp2, &tmp3);
+	                query_emit(NULL, TEXT("metacontact-item-added"), &tmp1, &tmp2, &tmp3);
 			xfree(tmp1);
 			xfree(tmp2);
 			xfree(tmp3);
@@ -137,7 +137,7 @@ COMMAND(cmd_metacontact)
 
                         printq("metacontact_removed_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-                        query_emit(NULL, "metacontact-item-removed", &tmp1, &tmp2, &tmp3);
+                        query_emit(NULL, TEXT("metacontact-item-removed"), &tmp1, &tmp2, &tmp3);
                         xfree(tmp1);
                         xfree(tmp2);
                         xfree(tmp3);
@@ -535,8 +535,8 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
  */
 void metacontact_init()
 {
-        query_connect(NULL, "session-renamed", metacontact_session_renamed_handler, NULL);
-	query_connect(NULL, "userlist-removed", metacontact_userlist_removed_handler, NULL);
+        query_connect(NULL, TEXT("session-renamed"), metacontact_session_renamed_handler, NULL);
+	query_connect(NULL, TEXT("userlist-removed"), metacontact_userlist_removed_handler, NULL);
 }
 
 /* 

@@ -530,7 +530,7 @@ notify:
 		(v->notify)(v->name);
 
 	tmpname = xwcsdup(v->name);
-	query_emit(NULL, "variable-changed", &tmpname);
+	query_emit(NULL, TEXT("variable-changed"), &tmpname);
 	xfree(tmpname);
 			
 	return 0;
@@ -631,11 +631,11 @@ again:
 				filename = xstrdup("vars.txt");
 				goto again;
 			}
-        	        print("help_set_file_not_found_plugin", v->plugin->name);
+			wcs_print("help_set_file_not_found_plugin", v->plugin->name);
 			xfree(filename);
-	                return;
+			return;
 		}
-		
+
 		seeking_name = xwcschr(name, ':') + 1;
 	} else {
 		char *tmp = saprintf(DATADIR "/%s", filename);

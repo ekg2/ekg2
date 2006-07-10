@@ -57,7 +57,6 @@ typedef struct {
 	plugin_notify_func_t *notify;	/* notify */
 } plugins_params_t;
 
-
 typedef struct {
 	CHAR_T *name;
 	int prio;
@@ -112,7 +111,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 typedef QUERY(query_handler_func_t);
 
 typedef struct {
-	char *name;
+	CHAR_T *name;
 	plugin_t *plugin;
 	void *data;
 	query_handler_func_t *handler;
@@ -121,11 +120,11 @@ typedef struct {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
-int query_disconnect(plugin_t *, const char *);
-query_t *query_find(const char *name);
+query_t *query_connect(plugin_t *plugin, const CHAR_T *name, query_handler_func_t *handler, void *data);
+int query_disconnect(plugin_t *, const CHAR_T *);
+query_t *query_find(const CHAR_T *name);
 
-int query_emit(plugin_t *, const char *, ...);
+int query_emit(plugin_t *, const CHAR_T *, ...);
 
 #endif
 
