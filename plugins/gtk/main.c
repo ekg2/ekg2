@@ -279,7 +279,7 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 //		window_session_cycle(window_current);
 		window_current->session = s;
 		session_current = s;
-		query_emit(NULL, "session-changed");
+		query_emit(NULL, TEXT("session-changed"));
 	} else print("session_cannot_change");
 	return TRUE;
 }
@@ -437,7 +437,7 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
  * 	L-ALT	8	MOD1_MASK
  * 	R-ALT 128	MOD2_MASK
  */
-		if (query_emit(NULL, "ui-keypress", &(event->keyval), NULL) == -1)
+		if (query_emit(NULL, TEXT("ui-keypress"), &(event->keyval), NULL) == -1)
 			return TRUE; /* ignore this key */
 
 		if (event->keyval == GDK_Tab) {
@@ -1308,7 +1308,7 @@ int gtk_plugin_init(int prio) {
 		return -1;
 	}
 
-        query_emit(NULL, "ui-is-initialized", &is_UI);
+        query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
 #ifdef WITH_X_WINDOWS
 	if (!getenv("DISPLAY")) {
 /* po czyms takim for sure bedzie initowane ncurses... no ale moze to jest wlasciwe zachowanie? jatam nie wiem.
@@ -1335,27 +1335,27 @@ int gtk_plugin_init(int prio) {
 
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
-	query_connect(&gtk_plugin, "ui-beep", gtk_ui_beep, NULL);
-	query_connect(&gtk_plugin, "ui-window-clear", gtk_ui_window_clear, NULL);
-	query_connect(&gtk_plugin, "ui-window-kill", gtk_ui_window_kill, NULL);
-	query_connect(&gtk_plugin, "ui-window-new", gtk_ui_window_new, NULL);
-	query_connect(&gtk_plugin, "ui-window-print", gtk_ui_window_print, NULL);
-	query_connect(&gtk_plugin, "ui-window-switch", gtk_ui_window_switch, NULL);
-	query_connect(&gtk_plugin, "ui-window-act-changed", gtk_ui_window_act_changed, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-beep"), gtk_ui_beep, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-window-clear"), gtk_ui_window_clear, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-window-kill"), gtk_ui_window_kill, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-window-new"), gtk_ui_window_new, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-window-print"), gtk_ui_window_print, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-window-switch"), gtk_ui_window_switch, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-window-act-changed"), gtk_ui_window_act_changed, NULL);
 /* userlist */
-	query_connect(&gtk_plugin, "userlist-changed", gtk_userlist_changed, NULL);
-	query_connect(&gtk_plugin, "userlist-added", gtk_userlist_changed, NULL);
-	query_connect(&gtk_plugin, "userlist-removed", gtk_userlist_changed, NULL);
-	query_connect(&gtk_plugin, "userlist-renamed", gtk_userlist_changed, NULL);
+	query_connect(&gtk_plugin, TEXT("userlist-changed"), gtk_userlist_changed, NULL);
+	query_connect(&gtk_plugin, TEXT("userlist-added"), gtk_userlist_changed, NULL);
+	query_connect(&gtk_plugin, TEXT("userlist-removed"), gtk_userlist_changed, NULL);
+	query_connect(&gtk_plugin, TEXT("userlist-renamed"), gtk_userlist_changed, NULL);
 /* sesja */
-	query_connect(&gtk_plugin, "session-added", gtk_statusbar_query, NULL);
-	query_connect(&gtk_plugin, "session-removed", gtk_statusbar_query, NULL);
-	query_connect(&gtk_plugin, "session-changed", gtk_contacts_changed, NULL);
+	query_connect(&gtk_plugin, TEXT("session-added"), gtk_statusbar_query, NULL);
+	query_connect(&gtk_plugin, TEXT("session-removed"), gtk_statusbar_query, NULL);
+	query_connect(&gtk_plugin, TEXT("session-changed"), gtk_contacts_changed, NULL);
 /* ui-loop */
-	query_connect(&gtk_plugin, "ui-loop", ekg2_gtk_loop, NULL);
+	query_connect(&gtk_plugin, TEXT("ui-loop"), ekg2_gtk_loop, NULL);
 /* inne */
-	query_connect(&gtk_plugin, "ui-is-initialized", gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
-	query_connect(&gtk_plugin, "plugin-print-version", gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
+	query_connect(&gtk_plugin, TEXT("ui-is-initialized"), gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
+	query_connect(&gtk_plugin, TEXT("plugin-print-version"), gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 
 /* wszystkie inne x 2 */
 	gtk_misc_handlers_init(); 

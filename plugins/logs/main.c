@@ -469,14 +469,14 @@ int logs_plugin_init(int prio)
 
         logs_setvar_default(NULL, NULL);
 
-	query_connect(&logs_plugin, "set-vars-default", logs_setvar_default, NULL);
-	query_connect(&logs_plugin, "protocol-message-post", logs_handler, NULL);
-	query_connect(&logs_plugin, "irc-protocol-message", logs_handler_irc, NULL);
-	query_connect(&logs_plugin, "ui-window-new", logs_handler_newwin, NULL);
-	query_connect(&logs_plugin, "ui-window-kill",logs_handler_killwin, NULL);
-	query_connect(&logs_plugin, "protocol-status", logs_status_handler, NULL);
-	query_connect(&logs_plugin, "config-postinit", logs_postinit, NULL);
-	query_connect(&logs_plugin, "session-status", logs_sestatus_handler, NULL);
+	query_connect(&logs_plugin, TEXT("set-vars-default"), logs_setvar_default, NULL);
+	query_connect(&logs_plugin, TEXT("protocol-message-post"), logs_handler, NULL);
+	query_connect(&logs_plugin, TEXT("irc-protocol-message"), logs_handler_irc, NULL);
+	query_connect(&logs_plugin, TEXT("ui-window-new"), logs_handler_newwin, NULL);
+	query_connect(&logs_plugin, TEXT("ui-window-kill"),logs_handler_killwin, NULL);
+	query_connect(&logs_plugin, TEXT("protocol-status"), logs_status_handler, NULL);
+	query_connect(&logs_plugin, TEXT("config-postinit"), logs_postinit, NULL);
+	query_connect(&logs_plugin, TEXT("session-status"), logs_sestatus_handler, NULL);
 	/* TODO: moze zmienna sesyjna ? ;> */
 	variable_add(&logs_plugin, TEXT("away_log"), VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
@@ -985,10 +985,10 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class)
 {
 	session_t *s;
-	char *textcopy;
+	CHAR_T *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(NULL));
 /*	const char *senttimestamp = prepare_timestamp_format(config_logs_timestamp, sent); */
-	char *gotten_uid, *gotten_nickname;
+	CHAR_T *gotten_uid, *gotten_nickname;
 	const char *tmp;
 
 	if (!file)

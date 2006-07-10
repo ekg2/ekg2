@@ -640,15 +640,15 @@ int logsqlite_plugin_init(int prio)
 
 	command_add(&logsqlite_plugin, "logsqlite:last", "puU puU puU puU puU", logsqlite_cmd_last, 0, "-n --number -s --search");
 
-	query_connect(&logsqlite_plugin, "protocol-message-post", logsqlite_msg_handler, NULL);
-	query_connect(&logsqlite_plugin, "protocol-status", logsqlite_status_handler, NULL);
-	variable_add(&logsqlite_plugin, "last_open_window", VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "last_in_window", VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "last_limit", VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "log_ignored", VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "log_status", VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "log", VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, "path", VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
+	query_connect(&logsqlite_plugin, TEXT("protocol-message-post"), logsqlite_msg_handler, NULL);
+	query_connect(&logsqlite_plugin, TEXT("protocol-status"), logsqlite_status_handler, NULL);
+	variable_add(&logsqlite_plugin, TEXT("last_open_window"), VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, TEXT("last_in_window"), VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, TEXT("last_limit"), VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, TEXT("log_ignored"), VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, TEXT("log_status"), VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, TEXT("log"), VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, TEXT("path"), VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
 
 	debug("[logsqlite] plugin registered\n");
 

@@ -24,7 +24,7 @@ QUERY(gtk_gg_display_token) {
 
 int gtk_misc_handlers_init() {
 #ifdef HAVE_LIBGADU
-	query_connect(&gtk_plugin, "gg-display-token", gtk_gg_display_token, NULL); 
+	query_connect(&gtk_plugin, TEXT("gg-display-token"), gtk_gg_display_token, NULL); 
 #endif
 	return 0;
 }
