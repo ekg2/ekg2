@@ -43,8 +43,12 @@ WATCHER(rc_input_handler_line)
 		rc_input_close(r);
 		return 0;
 	}
-
-	command_exec(NULL, NULL, watch, 0);
+	{
+		CHAR_T *tmp = normal_to_wcs(watch);
+			/* XXX, input must be unicode to do it... */
+		command_exec(NULL, NULL, tmp, 0);
+		free_utf(tmp);
+	}
 	return 0;
 }
 
@@ -55,6 +59,7 @@ WATCHER(rc_input_handler_line)
  */
 WATCHER(rc_input_handler_dgram)
 {
+	CHAR_T *tmp;
 	rc_input_t *r = data;
 	char buf[2048];		/* powinno wystarczyæ dla sieci z MTU 1500 */
 	int len;
@@ -67,7 +72,10 @@ WATCHER(rc_input_handler_dgram)
 	len = read(fd, buf, sizeof(buf) - 1);
 	buf[len] = 0;
 
-	command_exec(NULL, NULL, buf, 0);
+	tmp = normal_to_wcs(buf);
+			/* XXX, input must be unicode to do it... */
+	command_exec(NULL, NULL, tmp, 0);
+	free_utf(tmp);
 	return 0;
 }
 
@@ -129,7 +137,7 @@ static rc_input_t *rc_input_find(const char *path)
  * zmieniono zmienn± remote_control. dodaj nowe kana³y wej¶ciowe, usuñ te,
  * których ju¿ nie ma.
  */
-static void rc_paths_changed(const char *name)
+static void rc_paths_changed(const CHAR_T *name)
 {
 	char **paths = array_make(rc_paths, ",; ", 0, 1, 1);
 	int (*rc_input_new)(const char *);
@@ -230,7 +238,7 @@ int rc_plugin_init(int prio)
 {
 	plugin_register(&rc_plugin, prio);
 
-	variable_add(&rc_plugin, "remote_control", VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
+	variable_add(&rc_plugin, TEXT("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
 
 	return 0;
 }
