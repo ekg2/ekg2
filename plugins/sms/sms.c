@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <string.h>
 
+#include <ekg/char.h>
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
@@ -327,9 +328,9 @@ static void sms_changed_sms_away(const CHAR_T *name)
                 return;
 
         if (config_sms_away)
-                query_connect(&sms_plugin, "protocol-message", sms_protocol_message, NULL);
+                query_connect(&sms_plugin, TEXT("protocol-message"), sms_protocol_message, NULL);
         else
-                query_disconnect(&sms_plugin, "protocol-message");
+                query_disconnect(&sms_plugin, TEXT("protocol-message"));
 
         last = config_sms_away;
 }
@@ -348,7 +349,7 @@ int sms_plugin_init(int prio)
 
         /* senseless, cause it'd be default value... this variable isn't loaded yet. */
 
-        query_connect(&sms_plugin, "session-status", sms_session_status, NULL);
+        query_connect(&sms_plugin, TEXT("session-status"), sms_session_status, NULL);
 
         return 0;
 }
