@@ -470,7 +470,7 @@ static void gg_session_handler_success(session_t *s)
 	session_unidle(s);
 
 	__session = xstrdup(session_uid_get(s));
-	query_emit(NULL, "protocol-connected", &__session);
+	query_emit(NULL, TEXT("protocol-connected"), &__session);
 	xfree(__session);
 
 	gg_userlist_send(g->sess, s->userlist);
@@ -566,7 +566,7 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e)
 		char *__reason = xstrdup(format_find(reason));
 		int __type = EKG_DISCONNECT_FAILURE;
 
-		query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+		query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 
 		xfree(__reason);
 		xfree(__session);
@@ -587,7 +587,7 @@ static void gg_session_handler_disconnect(session_t *s)
 	
 	session_connected_set(s, 0);
 		
-	query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+	query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 
 	xfree(__session);
 	xfree(__reason);
@@ -651,7 +651,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		CHAR_T *session	= normal_to_wcs(__session);
 		CHAR_T *host	= normal_to_wcs(__host);
 
-		query_emit(NULL, "wcs_protocol-status", &session, &__uid, &__status, &sdescr, &host, &__port, &when, NULL);
+		query_emit(NULL, TEXT("wcs_protocol-status"), &session, &__uid, &__status, &sdescr, &host, &__port, &when, NULL);
 
 		free_utf(session);
 		free_utf(host);
@@ -694,7 +694,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
 		if (!(u = userlist_find(s, uid)))
 			return;
 
-		query_emit(NULL, "protocol-dcc-validate", &__host, &__port, &__valid, NULL);
+		query_emit(NULL, TEXT("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
 /*		xfree(__host); */
 
 		if (!__valid) {
@@ -789,7 +789,7 @@ void gg_session_handler_msg(session_t *s, struct gg_event *e)
  */
 		{
 			char *text = wcs_to_normal(ltext);
-			query_emit(NULL, "protocol-message", &__session, &__sender, &__rcpts, &text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+			query_emit(NULL, TEXT("protocol-message"), &__session, &__sender, &__rcpts, &text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
 			free_utf(text);
 		}
 		xfree(__session);
@@ -833,7 +833,7 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e)
 	}
 	{
 		CHAR_T *session = normal_to_wcs(__session);
-		query_emit(NULL, "protocol-message-ack", &session, &__rcpt, &__seq, &__status, NULL);
+		query_emit(NULL, TEXT("protocol-message-ack"), &session, &__rcpt, &__seq, &__status, NULL);
 		free_utf(session);
 	}
 	
@@ -1049,7 +1049,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 	                char *__reason = NULL;
 	                int __type = EKG_DISCONNECT_FAILURE;
 
-	                query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+	                query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 
 		        xfree(__reason);
                 	xfree(__session);
@@ -1070,7 +1070,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 
 		session_connected_set((session_t*) data, 0);
 		
-		query_emit(NULL, "protocol-disconnected", &__session, &__reason, &__type, NULL);
+		query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 			
 		xfree(__reason);
 		xfree(__session);
@@ -1326,18 +1326,18 @@ int gg_plugin_init(int prio)
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, NULL);
 
-	query_connect(&gg_plugin, "set-vars-default", gg_setvar_default, NULL);
-	query_connect(&gg_plugin, "protocol-validate-uid", gg_validate_uid, NULL);
-	query_connect(&gg_plugin, "plugin-print-version", gg_print_version, NULL);
-	query_connect(&gg_plugin, "session-added", gg_session_handle, (void *)1);
-	query_connect(&gg_plugin, "session-removed", gg_session_handle, (void *)0);
-	query_connect(&gg_plugin, "add-notify", gg_add_notify_handle, NULL);
-	query_connect(&gg_plugin, "remove-notify", gg_remove_notify_handle, NULL);
-	query_connect(&gg_plugin, "status-show", gg_status_show_handle, NULL);
-	query_connect(&gg_plugin, "user-offline", gg_user_offline_handle, NULL);
-	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
-        query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
-	query_connect(&gg_plugin, "userlist-info", gg_userlist_info_handle, NULL);
+	query_connect(&gg_plugin, TEXT("set-vars-default"), gg_setvar_default, NULL);
+	query_connect(&gg_plugin, TEXT("protocol-validate-uid"), gg_validate_uid, NULL);
+	query_connect(&gg_plugin, TEXT("plugin-print-version"), gg_print_version, NULL);
+	query_connect(&gg_plugin, TEXT("session-added"), gg_session_handle, (void *)1);
+	query_connect(&gg_plugin, TEXT("session-removed"), gg_session_handle, (void *)0);
+	query_connect(&gg_plugin, TEXT("add-notify"), gg_add_notify_handle, NULL);
+	query_connect(&gg_plugin, TEXT("remove-notify"), gg_remove_notify_handle, NULL);
+	query_connect(&gg_plugin, TEXT("status-show"), gg_status_show_handle, NULL);
+	query_connect(&gg_plugin, TEXT("user-offline"), gg_user_offline_handle, NULL);
+	query_connect(&gg_plugin, TEXT("user-online"), gg_user_online_handle, NULL);
+        query_connect(&gg_plugin, TEXT("protocol-unignore"), gg_user_online_handle, (void *)1);
+	query_connect(&gg_plugin, TEXT("userlist-info"), gg_userlist_info_handle, NULL);
 
 	gg_register_commands();
 	

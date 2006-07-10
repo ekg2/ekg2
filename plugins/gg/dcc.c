@@ -574,7 +574,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 
 			__host = inet_ntoa(*((struct in_addr*) &d->remote_addr));
 			__port = d->remote_port;
-			query_emit(NULL, "protocol-dcc-validate", &__host, &__port, &__valid, NULL);
+			query_emit(NULL, TEXT("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
 
 			if (__valid)
 				watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);

@@ -130,7 +130,7 @@ COMMAND(gg_command_connect)
 
 			{
 				CHAR_T *session = normal_to_wcs(__session);
-				query_emit(NULL, "wcs_protocol-disconnected", &session, &__reason, &__type, NULL);
+				query_emit(NULL, TEXT("wcs_protocol-disconnected"), &session, &__reason, &__type, NULL);
 				free_utf(session);
 			}
 
@@ -756,7 +756,7 @@ COMMAND(gg_command_msg)
 
 			secure = 0;
 			
-			query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
+			query_emit(NULL, TEXT("message-encrypt"), &sid, &uid_tmp, &__msg, &secure);
 
 			xfree(sid);
 			xfree(uid_tmp);
@@ -821,7 +821,7 @@ COMMAND(gg_command_msg)
 		rcpts[1] = NULL;
 		{
 			char *rmsg = wcs_to_normal(raw_msg);
-			query_emit(NULL, "protocol-message", &me, &me, &rcpts, &rmsg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
+			query_emit(NULL, TEXT("protocol-message"), &me, &me, &rcpts, &rmsg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
 			free_utf(rmsg);
 		}
 
@@ -1401,7 +1401,7 @@ static WATCHER(gg_handle_token)
 		goto fail;
 	}
 
-	if (query_emit(NULL, "gg-display-token", &file) == -1) goto fail;
+	if (query_emit(NULL, TEXT("gg-display-token"), &file) == -1) goto fail;
 
 #ifdef GIF_OCR
 	if (gg_config_display_token) {
@@ -1568,7 +1568,7 @@ COMMAND(gg_command_modify)
 		/* if adding fails, quit */
 		if (ret != 0 || !params[1]) return ret;
 	/* params[1] cause of: in commands.c, 
-	 *	 	query_emit(NULL, "userlist-added", &uid, &params[1], &quiet);
+	 *	 	query_emit(NULL, TEXT("userlist-added"), &uid, &params[1], &quiet);
 	 *	and we emulate old behavior (via query handler executing command) with command handler... rewrite ? 
 	 */
 		par = &(params[1]);
@@ -1609,7 +1609,7 @@ COMMAND(gg_command_modify)
 			tmp1 = xstrdup(u->nickname);
 			tmp2 = xstrdup(argv[++i]);
 
-			query_emit(NULL, "userlist-renamed", &tmp1, &tmp2);
+			query_emit(NULL, TEXT("userlist-renamed"), &tmp1, &tmp2);
 			xfree(tmp1);
 				
 			xfree(u->nickname);
@@ -1710,14 +1710,14 @@ COMMAND(gg_command_modify)
 
 			tmp1 = xstrdup(u->uid);
 			tmp2 = xstrdup(argv[i + 1]);
-			query_emit(NULL, "userlist-removed", &tmp1, &tmp2, &q);
+			query_emit(NULL, TEXT("userlist-removed"), &tmp1, &tmp2, &q);
 			xfree(tmp1);
 			xfree(tmp2);
 
 			userlist_clear_status(session, u->uid);
 
 			tmp1 = xstrdup(argv[++i]);
-			query_emit(NULL, "userlist-added", &tmp1, &tmp1, &q);
+			query_emit(NULL, TEXT("userlist-added"), &tmp1, &tmp1, &q);
 
 			xfree(u->uid);
 			u->uid = tmp1;
@@ -1727,13 +1727,13 @@ COMMAND(gg_command_modify)
 		}
 
 		if (nmatch_arg(argv[i], 'o', TEXT("offline"), 2)) {
-			query_emit(NULL, "user-offline", &u, &session);
+			query_emit(NULL, TEXT("user-offline"), &u, &session);
 			modified = 2;
 			continue;
 		}
 
 		if (nmatch_arg(argv[i], 'O', TEXT("online"), 2)) {
-			query_emit(NULL, "user-online", &u, &session);
+			query_emit(NULL, TEXT("user-online"), &u, &session);
 			modified = 2;
 			continue;
 		} 
