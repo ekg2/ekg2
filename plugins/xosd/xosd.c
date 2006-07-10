@@ -369,9 +369,9 @@ int xosd_plugin_init(int prio)
 	variable_add(&xosd_plugin, TEXT("vertical_position"), VAR_MAP, 1, &xosd_vertical_position, NULL,
 			variable_map(3, 0, 2, "top", 1, 0, "center", 2, 1, "bottom"), NULL);
 	
-	query_connect(&xosd_plugin, "protocol-message", xosd_protocol_message, NULL);
-	query_connect(&xosd_plugin, "irc-protocol-message", xosd_irc_protocol_message, NULL);
-	query_connect(&xosd_plugin, "protocol-status", xosd_protocol_status, NULL);
+	query_connect(&xosd_plugin, TEXT("protocol-message"), xosd_protocol_message, NULL);
+	query_connect(&xosd_plugin, TEXT("irc-protocol-message"), xosd_irc_protocol_message, NULL);
+	query_connect(&xosd_plugin, TEXT("protocol-status"), xosd_protocol_status, NULL);
 	
 	timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
 
