@@ -1041,157 +1041,164 @@ int main(int argc, char **argv)
  */
 void ekg_exit()
 {
-        char **vars = NULL;
-        list_t l;
-        int i;
+	extern int ekg2_dlclose(void *plugin);
 
-        msg_queue_write();
+	char **vars = NULL;
+	list_t l;
+	int i;
 
-        /* setting default session */
-        if (config_sessions_save && session_current) {
-                session_int_set(session_current, "default", 1);
+	msg_queue_write();
+
+	/* setting default session */
+	if (config_sessions_save && session_current) {
+		session_int_set(session_current, "default", 1);
 //		config_changed = 1;
 	}
 
-        xfree(last_search_first_name);
-        xfree(last_search_last_name);
-        xfree(last_search_nickname);
+	xfree(last_search_first_name);
+	xfree(last_search_last_name);
+	xfree(last_search_nickname);
 	xfree(last_search_uid);
 
-        windows_save();
+	windows_save();
 
-        if (config_windows_save) {
-                array_add(&vars, xstrdup("windows_layout"));
+	if (config_windows_save) {
+		array_add(&vars, xstrdup("windows_layout"));
 	}
 
-        if (vars) {
-                config_write_partly(NULL, vars);
-                array_free(vars);
-        }
+	if (vars) {
+		config_write_partly(NULL, vars);
+		array_free(vars);
+	}
 
-        for (i = 0; i < SEND_NICKS_MAX; i++) {
-                xfree(send_nicks[i]);
-                send_nicks[i] = NULL;
-        }
-        send_nicks_count = 0;
+	for (i = 0; i < SEND_NICKS_MAX; i++) {
+		xfree(send_nicks[i]);
+		send_nicks[i] = NULL;
+	}
+	send_nicks_count = 0;
 
-        for (l = children; l; l = l->next) {
-                child_t *c = l->data;
+	for (l = children; l; l = l->next) {
+		child_t *c = l->data;
 
 #ifndef NO_POSIX_SYSTEM
-                kill(c->pid, SIGTERM);
+		kill(c->pid, SIGTERM);
 #else
 		/* TerminateProcess / TerminateThread */
 #endif
-                xfree(c->name);
-        }
+		xfree(c->name);
+	}
 
 watches_again:
 	ekg_watches_removed = 0;
-        for (l = watches; l; ) {
-                watch_t *w = l->data;
+	for (l = watches; l; ) {
+		watch_t *w = l->data;
 
 		if (ekg_watches_removed > 1) {
 			debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
 			goto watches_again;
 		}
 		ekg_watches_removed = 0;
-                l = l->next;
+		l = l->next;
 
-                watch_free(w);
-        }
+		watch_free(w);
+	}
 
-        for (l = plugins; l; ) {
-                plugin_t *p = l->data;
+	for (l = plugins; l; ) {
+		plugin_t *p = l->data;
 
-                l = l->next;
+		l = l->next;
 
-                if (p->pclass != PLUGIN_UI)
-                        continue;
+		if (p->pclass != PLUGIN_UI)
+			continue;
 
-                p->destroy();
-        }
+		p->destroy();
 
-        list_destroy(watches, 0);
+		if (p->dl) ekg2_dlclose(p->dl);
+	}
 
-        if (config_changed && !config_speech_app && config_save_quit == 1) {
-                char line[80];
+	list_destroy(watches, 0);
 
-                printf("%s", format_find("config_changed"));
-                fflush(stdout);
-                if (fgets(line, sizeof(line), stdin)) {
-                        if (line[xstrlen(line) - 1] == '\n')
-                                line[xstrlen(line) - 1] = 0;
-                        if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
-                                if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
-                                        printf(_("Error while saving.\n"));
-                        }
-                } else
-                        printf("\n");
-        } else if (config_save_quit == 2) {
-                if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
-                        printf(_("Error while saving.\n"));
+	if (config_changed && !config_speech_app && config_save_quit == 1) {
+		char line[80];
 
-        } else if (config_keep_reason && reason_changed && config_save_quit == 1) {
-                char line[80];
+		printf("%s", format_find("config_changed"));
+		fflush(stdout);
+		if (fgets(line, sizeof(line), stdin)) {
+			if (line[xstrlen(line) - 1] == '\n')
+				line[xstrlen(line) - 1] = 0;
+			if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
+				if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
+					printf(_("Error while saving.\n"));
+			}
+		} else
+			printf("\n");
+	} else if (config_save_quit == 2) {
+		if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
+			printf(_("Error while saving.\n"));
 
-                printf("%s", format_find("quit_keep_reason"));
-                fflush(stdout);
-                if (fgets(line, sizeof(line), stdin)) {
-                        if (line[xstrlen(line) - 1] == '\n')
-                                line[xstrlen(line) - 1] = 0;
-                        if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
-                                if (session_write())
-                                        printf(_("Error while saving.\n"));
-                        }
-                } else
-                        printf("\n");
+	} else if (config_keep_reason && reason_changed && config_save_quit == 1) {
+		char line[80];
 
-        } else if (config_keep_reason && reason_changed && config_save_quit == 2) {
-                if (session_write())
-                        printf(_("Error while saving.\n"));
-        }
+		printf("%s", format_find("quit_keep_reason"));
+		fflush(stdout);
+		if (fgets(line, sizeof(line), stdin)) {
+			if (line[xstrlen(line) - 1] == '\n')
+				line[xstrlen(line) - 1] = 0;
+			if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
+				if (session_write())
+					printf(_("Error while saving.\n"));
+			}
+		} else
+			printf("\n");
 
-        for (l = plugins; l; ) {
-                plugin_t *p = l->data;
+	} else if (config_keep_reason && reason_changed && config_save_quit == 2) {
+		if (session_write())
+			printf(_("Error while saving.\n"));
+	}
 
-                l = l->next;
+	for (l = plugins; l; ) {
+		plugin_t *p = l->data;
 
-                p->destroy();
-        }
+		l = l->next;
+		/* if (plugin_find_uid(s->uid) == p) session_remove(s->uid);	XXX, plugin_unload() */
 
-        msg_queue_free();
-        alias_free();
-        conference_free();
-        metacontact_free();
-        sessions_free();
-        theme_free();
-        variable_free();
+		p->destroy();
+
+		if (p->dl) ekg2_dlclose(p->dl);
+	}
+
+	msg_queue_free();
+	alias_free();
+	conference_free();
+	metacontact_free();
+	sessions_free();
+	theme_free();
+	variable_free();
 	script_variables_free(1);
-        emoticon_free();
-        command_free();
-        timer_free();
-        binding_free();
-        last_free();
-        buffer_free();
-        event_free();
-	
-        for (l = windows; l; l = l->next) {
-                window_t *w = l->data;
+	emoticon_free();
+	command_free();
+	timer_free();
+	binding_free();
+	last_free();
+	buffer_free();
+	event_free();
 
-                if (!w)
-                        continue;
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
 
-                xfree(w->target);
-        }
+		if (!w)
+			continue;
 
-        list_destroy(windows, 1);
+		xfree(w->target);
+	}
 
-        xfree(home_dir);
+	list_destroy(windows, 1);
 
-        xfree(config_dir);
+	xfree(home_dir);
 
-        mesg_set(mesg_startup);
+	xfree(config_dir);
+
+	mesg_set(mesg_startup);
 #ifdef NO_POSIX_SYSTEM
 	WSACleanup();
 #endif
