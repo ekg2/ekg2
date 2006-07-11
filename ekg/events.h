@@ -56,7 +56,7 @@ QUERY(event_na);
 QUERY(event_online);
 QUERY(event_descr);
 
-int event_target_check (char *buf);
+int event_target_check(CHAR_T *buf);
 
 #endif /* __EKG_EVENTS_H */
 
