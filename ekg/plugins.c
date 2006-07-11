@@ -404,6 +404,7 @@ int plugin_register(plugin_t *p, int prio)
  */
 int plugin_unregister(plugin_t *p)
 {
+	plugins_params_t **par;
 	list_t l;
 
 	if (!p)
@@ -464,6 +465,16 @@ plugin_watches_again:
 			xfree(t->data);
 			xfree(t);
 		}
+	}
+
+	if ((par = p->params)) {
+		while (*par) {
+			xfree((*par)->key);
+			xfree((*par)->value);
+			xfree((*par));
+			par++;
+		}
+		xfree(p->params);
 	}
 
 	list_remove(&plugins, p, 0);
