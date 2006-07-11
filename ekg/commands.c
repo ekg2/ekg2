@@ -1974,8 +1974,8 @@ COMMAND(cmd_test_debug_dump)
 
 COMMAND(cmd_test_event_test)
 {
-	PARASC
-	char *tmp = xstrdup(params[0]);
+	PARUNI
+	CHAR_T *tmp = xwcsdup(params[0]);
 	event_target_check(tmp);
 	xfree(tmp);
 	return 0;

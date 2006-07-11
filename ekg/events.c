@@ -311,8 +311,10 @@ event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR_T *tar
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-						char *tmp = format_string(a[i], uid, target, data);
-						if ((xwcscasecmp(d[m], c[k]) && xwcscasecmp(d[m], "*")) || (!event_target_check(tmp) && xwcscasecmp(a[i], "*") && xwcscasecmp(a[i], b[j]))) {
+						CHAR_T *tmp = wcs_format_string(a[i], uid, target, data);
+						if ((xwcscasecmp(d[m], c[k]) && xwcscasecmp(d[m], TEXT("*"))) || 
+								(!event_target_check(tmp) && xwcscasecmp(a[i], TEXT("*")) && 
+								 xwcscasecmp(a[i], b[j]))) {
 							xfree(tmp);
 							continue;
 						} else if (ev->prio > ev_max_prio){
@@ -616,111 +618,111 @@ void event_free()
  *
  * returns logical value
  */
-int event_target_check_compare(char *buf)
+int event_target_check_compare(CHAR_T *buf)
 {
-        string_t s;
+	wcs_string_t s;
 
-        s = string_init("");
+	s = wcs_string_init(TEXT(""));
 
-        while(*buf) {
-                if (*buf == '/') {
-                        *buf++;
-                        if (!*buf)
-                                break;
-                        *buf++;
-                        if (!*buf)
-                                break;
-                        continue;
-                }
+	while(*buf) {
+		if (*buf == '/') {
+			*buf++;
+			if (!*buf)
+				break;
+			*buf++;
+			if (!*buf)
+				break;
+			continue;
+		}
 
-                if (*buf == '=') {
-                        *buf++;
+		if (*buf == '=') {
+			*buf++;
 
-                        if (!*buf)
-                                break;
+			if (!*buf)
+				break;
 
-                        if (*buf == '=') /* '==' */ {
-                                *buf++;
+			if (*buf == '=') /* '==' */ {
+				*buf++;
 				if (!*buf)
 					break;
 
-				return (!xstrcmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+				return (!xwcscmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
 			}
 
-                        /* '=' */
-                	return (!xstrcasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+			/* '=' */
+			return (!xwcscasecmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
 		}
 
-                if (*buf == '!') {
-                        *buf++;
+		if (*buf == '!') {
+			*buf++;
 
-                        if (!*buf)
-                                break;
+			if (!*buf)
+				break;
 
-                        if (*buf == '=') {
-                                *buf++;
+			if (*buf == '=') {
+				*buf++;
 
-                                if (!*buf)
-                                        break;
+				if (!*buf)
+					break;
 
-                                if (*buf == '=') { /* '!==' */
-        	                        *buf++;
-	                                if (!*buf)
-                	                        break;
+				if (*buf == '=') { /* '!==' */
+					*buf++;
+					if (!*buf)
+						break;
 
-					return (xstrcmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
-                                }
-
-                                /* '!=' */
-				return (xstrcasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
-                        }
-
-                        if (*buf == '+') {
-                                *buf++;
-
-                                if (!*buf)
-                                        break;
-
-                                if (*buf == '+') { /* '!++' */
-                                        *buf++;
-                                        if (!*buf)
-                                                break;
-
-                	                return (!xstrstr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
+					return (xwcscmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
 				}
 
-			
-				/* '!+' */
-	                        return (!xstrcasestr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
+				/* '!=' */
+				return (xwcscasecmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
 			}
 
-                        continue;
-                }
+			if (*buf == '+') {
+				*buf++;
+
+				if (!*buf)
+					break;
+
+				if (*buf == '+') { /* '!++' */
+					*buf++;
+					if (!*buf)
+						break;
+
+					return (!xwcsstr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
+				}
+
+
+				/* '!+' */
+				return (!xwcscasestr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
+			}
+
+			continue;
+		}
 
 		if (*buf == '+') {
 			*buf++;
 
-                        if (!*buf)
-                                break;
-			
-			if (*buf == '+') { /* '++' */
-	                        *buf++;
-        
-	                        if (!*buf)
-        	                        break;
+			if (!*buf)
+				break;
 
-				return (xstrstr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
- 			}
+			if (*buf == '+') { /* '++' */
+				*buf++;
+
+				if (!*buf)
+					break;
+
+				return (xwcsstr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
+			}
 
 			/* '+' */
-			return (xstrcasestr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
+			return (xwcscasestr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
 		}
 
-                string_append_c(s, *buf);
-                *buf++;
-        }
-	
-	string_free(s, 1);
+		wcs_string_append_c(s, *buf);
+		*buf++;
+	}
+
+	wcs_string_free(s, 1);
 	return 0;
 }
 
@@ -732,11 +734,11 @@ int event_target_check_compare(char *buf)
  * returns logical value of given expression
  */
 
-int event_target_check(char *buf)
+int event_target_check(CHAR_T *buf)
 {
-	char **params = array_make(buf, "&|", 0, 1, 1);
+	CHAR_T **params = wcs_array_make(buf, TEXT("&|"), 0, 1, 1);
 	int i = 1;
-	char *separators;
+	CHAR_T *separators;
 	char last_returned = 0;
 	int first = 1;
 	
@@ -745,7 +747,7 @@ int event_target_check(char *buf)
 	if (!params)
 		return -1;
 	
-	separators = xmalloc(array_count(params) * sizeof(char) + 1);
+	separators = xmalloc(wcs_array_count(params) * sizeof(CHAR_T) + 1);
 	
 	while (*buf) {
 		if (*buf == '&' || *buf == '|') {
@@ -779,7 +781,7 @@ int event_target_check(char *buf)
 #undef s
 
 	xfree(separators);
-	array_free(params);
+	wcs_array_free(params);
 
 	return last_returned;
 }
