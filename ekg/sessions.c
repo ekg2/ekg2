@@ -172,7 +172,7 @@ int session_remove(const char *uid)
 
 	if (!(s = session_find(uid)))
 		return -1;
-	if (session_current && !xstrcasecmp(s->uid, session_current->uid))
+	if (s == session_current)
 		session_current = NULL;
 
 	count = list_count(sessions);
@@ -180,7 +180,7 @@ int session_remove(const char *uid)
 	for (l = windows; windows && l; l = l->next) {
 		window_t *w = l->data;
 
-		if (w && w->session && w->session == s) {
+		if (w && w->session == s) {
 			if (count > 1)
 				window_session_cycle(w);
 			else
@@ -188,20 +188,13 @@ int session_remove(const char *uid)
 		} 
 	}
 	
-	if(s->connected) {
+	if (s->connected) {
 		command_exec_format(NULL, s, 1, TEXT("/disconnect %s"), s->uid);
 	}
 	tmp = xstrdup(uid);
         query_emit(NULL, TEXT("session-changed"));
 	query_emit(NULL, TEXT("session-removed"), &tmp);
 	xfree(tmp);
-
-/*	for (i = 0; s->params && s->params[i]; i++) {
-		xfree(s->params[i]->key);
-		xfree(s->params[i]->value);
-	}
-
-	xfree(s->params); */
 
         for (l = s->params; l; l = l->next) {
                 session_param_t *v = l->data;
