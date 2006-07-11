@@ -1413,12 +1413,13 @@ COMMAND(cmd_list)
 	char **argv = NULL, *show_group = NULL;
 	const char *tmp;
 	metacontact_t *m = NULL;
-	char *params0	= xstrdup(params[0]);		/* XXX, target */
+	char *tparams0	= xstrdup(params[0]);		/* XXX, target */
+	char *params0;
 
-        if (!params0 && window_current->target) { 
-                params0 = xstrdup(window_current->target);
+        if (!tparams0 && window_current->target) { 
+		tparams0 = xstrdup(window_current->target);
 	}
-	strip_quotes(params0);
+	params0 = strip_quotes(tparams0);
 
 	if (params0 && (*params0 != '-' || userlist_find(session, params0))) {
 		char *status, *last_status;
@@ -1461,7 +1462,7 @@ COMMAND(cmd_list)
 
 			string_free(members, 1);
 			
-			xfree(params0);
+			xfree(tparams0);
 			return 0;
 		}
 
@@ -1476,7 +1477,7 @@ COMMAND(cmd_list)
 	        	if (!(u = userlist_find(session, tmp)) || !u->nickname) {
 	                        printq("user_not_found", tmp);
 				xfree(session_name);
-				xfree(params0);
+				xfree(tparams0);
 	                	return -1;
 			}
 	
@@ -1493,7 +1494,7 @@ next:
 
 	                if (!i) {
 	                        wcs_printq("metacontact_item_list_empty");
-				xfree(params0);
+				xfree(tparams0);
 				return -1;
 	               	} 
 		
@@ -1506,13 +1507,13 @@ next:
 	                printq("metacontact_info_footer", params0);
 
 			xfree(status);
-			xfree(params0);
+			xfree(tparams0);
 			return 0;
 		}
 	
 		if (!(u = userlist_find(session, params0)) || !u->nickname) {
 			printq("user_not_found", params0);
-			xfree(params0);
+			xfree(tparams0);
 			return -1;
 		}
 
@@ -1594,7 +1595,7 @@ list_user:
 		
 		xfree(status);
 		xfree(last_status);
-		xfree(params0);
+		xfree(tparams0);
 		return 0;
 	}
 	
@@ -1704,7 +1705,7 @@ list_user:
 	if (!count && !(show_descr || show_group) && show_all)
 		wcs_printq("list_empty");
 	xfree(show_group);
-	xfree(params0);
+	xfree(tparams0);
 	return 0;
 }
 
