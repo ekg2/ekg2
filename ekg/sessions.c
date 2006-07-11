@@ -141,7 +141,7 @@ session_t *session_add(const char *uid)
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 
-		if (!w->session)
+		if (!w->session && !w->floating)	/* remove this? if user want to change session he should press ctrl+x in that window ? */
 			w->session = s;
 	}
 	if (!session_current)
