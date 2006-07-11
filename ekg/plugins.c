@@ -415,7 +415,7 @@ int plugin_unregister(plugin_t *p)
 		l = l->next;
 
 		if (q->plugin == p)
-			query_disconnect(q->plugin, q->name);
+			query_free(q);
 	}
 
 
@@ -556,6 +556,14 @@ query_t *query_connect(plugin_t *plugin, const CHAR_T *name, query_handler_func_
 	return list_add(&queries, q, 0);
 }
 
+int query_free(query_t *q) {
+	if (!q) return -1;
+
+	xfree(q->name);
+	list_remove(&queries, q, 1);
+	return 0;
+}
+
 int query_disconnect(plugin_t *plugin, const CHAR_T *name)
 {
 	list_t l;
@@ -564,9 +572,7 @@ int query_disconnect(plugin_t *plugin, const CHAR_T *name)
 		query_t *q = l->data;
 
 		if (q->plugin == plugin && q->name == name) {
-			xfree(q->name);
-			list_remove(&queries, q, 1);
-			return 0;
+			return query_free(q);
 		}
 	}
 

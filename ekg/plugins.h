@@ -122,6 +122,7 @@ typedef struct {
 
 query_t *query_connect(plugin_t *plugin, const CHAR_T *name, query_handler_func_t *handler, void *data);
 int query_disconnect(plugin_t *, const CHAR_T *);
+int query_free(query_t *q);
 query_t *query_find(const CHAR_T *name);
 
 int query_emit(plugin_t *, const CHAR_T *, ...);

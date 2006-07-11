@@ -1192,6 +1192,14 @@ watches_again:
 		xfree(w->target);
 	}
 
+	for (l = queries; l; ) {	/* free other queries... connected by protocol_init() for example */
+		query_t *q = l->data;
+
+		l = l->next;
+
+		query_free(q);
+	}
+
 	list_destroy(windows, 1);
 
 	xfree(home_dir);

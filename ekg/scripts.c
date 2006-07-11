@@ -506,13 +506,8 @@ int script_command_unbind(script_command_t *temp, int free)
 
 int script_query_unbind(script_query_t *temp, int free)
 {
-	scriptlang_t *slang = temp->scr->lang;
 	SCRIPT_UNBIND_HANDLER(SCRIPT_QUERYTYPE, temp->private);
-#ifdef SCRIPTS_NEW
 	query_free(temp->self);	
-#else
-	query_disconnect(slang->plugin, temp->self->name);
-#endif
 	return list_remove(&script_queries, temp, 1);
 }
 
