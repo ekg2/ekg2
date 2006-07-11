@@ -203,13 +203,13 @@ static void irc_private_destroy(session_t *s)
 		xfree( ((connector_t *)tmplist->data)->address);
 		xfree( ((connector_t *)tmplist->data)->hostname);
 	}
-	list_destroy(tmplist, 1);
+	list_destroy(j->bindlist, 1);
+
 	for (tmplist=j->connlist; tmplist; tmplist=tmplist->next) {
 		xfree( ((connector_t *)tmplist->data)->address);
 		xfree( ((connector_t *)tmplist->data)->hostname);
 	}
-
-	list_destroy(tmplist, 1);
+	list_destroy(j->connlist, 1);
 
 	irc_free_people(s, j);
 
@@ -2169,9 +2169,8 @@ int irc_plugin_init(int prio)
 	return 0;
 }
 
-static int irc_plugin_destroy()
+static int irc_plugin_destroy() 
 {
-/* plugin_unload @ plugins.c do it but when we type /quit ? */
 	list_t  l;
 
 	for (l = sessions; l; l = l->next)
