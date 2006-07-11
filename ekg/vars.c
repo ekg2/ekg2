@@ -147,6 +147,7 @@ void variable_set_default()
 {
 	xfree(config_timestamp);
 	xfree(config_display_color_map);
+	xfree(config_subject_prefix);
 	xfree(config_console_charset);
 
 	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
