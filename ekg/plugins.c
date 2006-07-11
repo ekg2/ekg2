@@ -475,6 +475,7 @@ plugin_watches_again:
 			par++;
 		}
 		xfree(p->params);
+		p->params = NULL;
 	}
 
 	list_remove(&plugins, p, 0);
