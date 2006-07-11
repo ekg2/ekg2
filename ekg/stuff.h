@@ -228,6 +228,7 @@ extern int config_windows_save;
 
 extern char *home_dir;
 extern char *config_dir;
+extern char *console_charset;
 extern int in_autoexec;
 extern int ekg_stdin_want_more;
 extern int ekg_watches_removed;

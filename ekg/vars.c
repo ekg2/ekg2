@@ -45,6 +45,7 @@
 #include "plugins.h"
 
 list_t variables = NULL;
+char *console_charset;
 
 /*
  * dd_*()
@@ -85,9 +86,10 @@ void variable_init()
 	variable_add(NULL, TEXT("beep_chat"), VAR_BOOL, 1, &config_beep_chat, NULL, NULL, dd_beep);
 	variable_add(NULL, TEXT("beep_notify"), VAR_BOOL, 1, &config_beep_notify, NULL, NULL, dd_beep);
 	variable_add(NULL, TEXT("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
-#ifndef USE_UNICODE
-/*	variable_add(NULL, TEXT("console_charset"), VAR_STR, 1, &config_console_charset, NULL, NULL, NULL); */
-#endif
+		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
+		 * 	encoding... and give some tip how to correct this... it's just temporary
+		 */
+	variable_add(NULL, TEXT("console_charset"), VAR_STR, 1, &config_console_charset, NULL, NULL, NULL); 
 	variable_add(NULL, TEXT("completion_char"), VAR_STR, 1, &config_completion_char, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("completion_notify"), VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 	variable_add(NULL, TEXT("debug"), VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
@@ -150,28 +152,32 @@ void variable_set_default()
 	xfree(config_subject_prefix);
 	xfree(config_console_charset);
 
+	xfree(console_charset);
+
 	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
+#if HAVE_NL_LANGINFO
+	console_charset = xstrdup(nl_langinfo(CODESET));
+#endif
+
 #if USE_UNICODE
-	config_console_charset	= xstrdup("UTF-8");
+	if (xstrcmp(console_charset, "UTF-8")) {
+		/* XXX, warn here: ekg2 compilated with USE_UNICODE but not in unicode enviroment */
+		xfree(console_charset);
+		console_charset	= xstrdup("UTF-8");
+	}
 	config_use_unicode	= 1;
-#if HAVE_NL_LANGINFO
-	if (!xstrcmp(nl_langinfo(CODESET), config_console_charset)) /* BLE? */ ;
-#endif
-
 #else
-
-#if HAVE_NL_LANGINFO
-	config_console_charset = xstrdup(nl_langinfo(CODESET));
-	if (!xstrcmp(config_console_charset, "UTF-8"))
-		/* display warning about: --enable-unicode */
+	if (!xstrcmp(console_charset, "UTF-8")) {
+		/* XXX, warn here. user should compile ekg2 with --enable-unicode */
 		config_use_unicode = 1;
-#else
-	config_console_charset	= xstrdup("ISO-8859-2");
+	}
 #endif
-
-#endif
+	if (console_charset) 
+		config_console_charset = xstrdup(console_charset);
+	else
+		config_console_charset = xstrdup("ISO-8859-2"); /* Default: ISO-8859-2 */
 }
 
 /*
