@@ -556,11 +556,12 @@ QUERY(jabber_window_kill)
 
 int jabber_write_status(session_t *s)
 {
-        jabber_private_t *j = session_private_get(s);
-        int priority = session_int_get(s, "priority");
-        const char *status;
-        CHAR_T *descr;
+	jabber_private_t *j = session_private_get(s);
+	int prio = session_int_get(s, "priority");
+	const char *status;
+	CHAR_T *descr;
 	char *real = NULL;
+	char *priority = NULL;
 
 #if WITH_JABBER_JINGLE
 /* This is only to enable 'call' button in GTalk .... */
@@ -569,26 +570,31 @@ int jabber_write_status(session_t *s)
 # define JINGLE_CAPS ""
 #endif
 
-        if (!s || !j)
-                return -1;
+	if (!s || !j)
+		return -1;
 
-        if (!session_connected_get(s))
-                return 0;
+	if (!session_connected_get(s))
+		return 0;
 
-        status = session_status_get(s);
-	if ((descr = jabber_escape(session_descr_get(s)))) {
+	status = session_status_get(s);
+	if ((descr = tlenjabber_escape(session_descr_get(s)))) {
 		real = saprintf("<status>" CHARF "</status>", descr);
 		xfree(descr);
 	}
+	if (!j->istlen) priority = saprintf("<priority>%d</priority>", prio); /* priority only in real jabber session */
 
-	if (!xstrcmp(status, EKG_STATUS_AVAIL))
-		watch_write(j->send_watch, "<presence>%s<priority>%d</priority>%s</presence>", real ? real : "", priority, JINGLE_CAPS);
+	if (!j->istlen && !xstrcmp(status, EKG_STATUS_AVAIL))
+		watch_write(j->send_watch, "<presence>%s%s%s</presence>", real ? real : "", priority ? priority : "", JINGLE_CAPS);
 	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))
-		watch_write(j->send_watch, "<presence type=\"invisible\">%s<priority>%d</priority></presence>", real ? real : "", priority);
-	else
-		watch_write(j->send_watch, "<presence><show>%s</show>%s<priority>%d</priority>%s</presence>", status, real ? real : "", priority, JINGLE_CAPS);
-        xfree(real);
-        return 0;
+		watch_write(j->send_watch, "<presence type=\"invisible\">%s%s</presence>", real ? real : "", priority ? priority : "");
+	else {
+		if (j->istlen && !xstrcmp(status, EKG_STATUS_AVAIL)) status = "available";
+		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s</presence>", status, real ? real : "", priority ? priority : "", JINGLE_CAPS);
+	}
+
+	xfree(priority);
+	xfree(real);
+	return 0;
 }
 
 void jabber_handle_disconnect(session_t *s, const char *reason, int type)
@@ -790,7 +796,7 @@ TIMER(jabber_ping_timer_handler) {
 
 WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 	session_t *s = (session_t *) data;
-
+	if (type) return 0;
 	debug("Connecting to HUB, currectly not works ;/");
 	jabber_handle_disconnect(s, "Unimplemented do: /eval \"/session server s1.tlen.pl\" \"/session port 443\" \"/connect\" sorry.", EKG_DISCONNECT_FAILURE);
 	return -1;

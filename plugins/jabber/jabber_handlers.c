@@ -257,7 +257,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 		char *seq 	= NULL;
 		uint32_t *format = NULL;
 
-		char *text = jabber_unescape(body->str);
+		char *text = tlenjabber_unescape(body->str);
 
 		if (!sent) sent = time(NULL);
 
@@ -1269,10 +1269,10 @@ rc_forbidden:
 					if (!xstrcmp(node->name, "item")) {
 						xmlnode_t *tmp;
 						char *jid 	= jabber_attr(node->atts, "jid");
-						char *nickname	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "nick"))  ? tmp->data : NULL);
-						char *fn	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "first")) ? tmp->data : NULL);
-						char *lastname	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "last"))  ? tmp->data : NULL);
-						char *email	= tlenjabber_uescape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
+						char *nickname	= tlenjabber_unescape( (tmp = xmlnode_find_child(node, "nick"))  ? tmp->data : NULL);
+						char *fn	= tlenjabber_unescape( (tmp = xmlnode_find_child(node, "first")) ? tmp->data : NULL);
+						char *lastname	= tlenjabber_unescape( (tmp = xmlnode_find_child(node, "last"))  ? tmp->data : NULL);
+						char *email	= tlenjabber_unescape( (tmp = xmlnode_find_child(node, "email")) ? tmp->data : NULL);
 
 						/* idea about displaink user in depend of number of users founded gathered from gg plugin */
 						print(rescount > 1 ? "jabber_search_items" : "jabber_search_item", 
@@ -1607,12 +1607,14 @@ rc_forbidden:
 } /* iq */
 
 void jabber_handle_presence(xmlnode_t *n, session_t *s) {
+	jabber_private_t *j = jabber_private(s);
 	const char *from = jabber_attr(n->atts, "from");
 	const char *type = jabber_attr(n->atts, "type");
 	char *jid, *uid;
 	time_t when = 0;
 	xmlnode_t *q;
 	int ismuc = 0;
+	int istlen = j ? j->istlen : 0;
 
 	int na = !xstrcmp(type, "unavailable");
 
@@ -1742,6 +1744,8 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 					!xstrcasecmp(jstatus, EKG_STATUS_XA)		|| !xstrcasecmp(jstatus, EKG_STATUS_DND) 	|| 
 					!xstrcasecmp(jstatus, EKG_STATUS_FREE_FOR_CHAT) || !xstrcasecmp(jstatus, EKG_STATUS_BLOCKED))) {
 			status = jstatus;
+		} else if (istlen && !xstrcmp(jstatus, "available")) {
+			status = EKG_STATUS_AVAIL;
 		} else {
 			debug("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
 			xfree(jstatus);

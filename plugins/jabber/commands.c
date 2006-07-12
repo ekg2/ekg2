@@ -431,6 +431,7 @@ COMMAND(jabber_command_msg)
 	CHAR_T *msg;
 	char *subject = NULL;
 	const char *uid;
+	int payload = 4 + j->istlen;
 
 	window_t *w;
 	int ismuc = 0;
@@ -444,7 +445,7 @@ COMMAND(jabber_command_msg)
 		return -1;
 	/* czy wiadomo¶æ ma mieæ temat? */
 #ifndef USE_UNICODE
-	if (config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
+	if (!j->istlen && config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
 		char *subtmp = xstrdup((params[1]+subjectlen)); /* obcinamy prefix tematu */
 		char *tmp;
 
@@ -460,14 +461,19 @@ COMMAND(jabber_command_msg)
 #else
 #warning TOPIC NOT SUPPORTED IN UNICODE VERSION.
 #endif
-		msg = jabber_uescape(params[1]); /* bez tematu */
+		msg = tlenjabber_uescape(params[1]); /* bez tematu */
 	if ((w = window_find_s(session, target)) && (w->userlist))
 		ismuc = 1;
 
+	if (j->send_watch) j->send_watch->transfer_limit = -1;
+
 	if (ismuc)
-		watch_write(j->send_watch, "<message type=\"groupchat\" to=\"%s\" id=\"%d\">", uid+4, time(NULL));
+		watch_write(j->send_watch, "<message type=\"groupchat\" to=\"%s\" id=\"%d\">", uid+payload, time(NULL));
 	else
-		watch_write(j->send_watch, "<message %sto=\"%s\" id=\"%d\">", chat ? "type=\"chat\" " : "", uid+4, time(NULL));
+		watch_write(j->send_watch, "<message %sto=\"%s\" id=\"%d\">", 
+			chat ? "type=\"chat\" " : "",
+/*				j->istlen ? "type=\"normal\" " : "",  */
+			uid+payload, time(NULL));
 
 	if (subject) {
 		watch_write(j->send_watch, "<subject>%s</subject>", subject); 
@@ -479,11 +485,14 @@ COMMAND(jabber_command_msg)
         		last_add(1, uid, time(NULL), 0, msg);
 		xfree(msg);
 	}
+	if (!j->istlen) 
+		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
+			( config_display_ack == 1 || config_display_ack == 2 ? "<delivered/>" : ""),
+			( config_display_ack == 1 || config_display_ack == 3 ? "<offline/>"   : "") );
+	else ;
 
-	watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
-		( config_display_ack == 1 || config_display_ack == 2 ? "<delivered/>" : ""),
-		( config_display_ack == 1 || config_display_ack == 3 ? "<offline/>"   : "") );
 	watch_write(j->send_watch, "</message>");
+	JABBER_COMMIT_DATA(j->send_watch);
 
 	if (!quiet && !ismuc) { /* if (1) ? */ 
 		CHAR_T *me 	= xwcsdup( normal_to_wcs(  session_uid_get(session)  ));
@@ -1792,8 +1801,19 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("tlen:disconnect"), "r ?",	jabber_command_disconnect,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("tlen:reconnect"), NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
 
+	command_add(&jabber_plugin, TEXT("tlen:"), "?",			jabber_command_inline_msg, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:msg"), "!uU !",		jabber_command_msg, 		JABBER_FLAGS_TARGET, NULL);
+
 	command_add(&jabber_plugin, TEXT("tlen:change"), "?",		tlen_command_pubdir, 		JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("tlen:search"), "?",		tlen_command_pubdir, 		JABBER_FLAGS, NULL);
+
+	command_add(&jabber_plugin, TEXT("jid:_autoaway"), "r", jabber_command_away,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("jid:_autoback"), "r", jabber_command_away,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:away"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:back"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:dnd"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, TEXT("tlen:ffc"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
 };
 
 /*
