@@ -30,6 +30,8 @@ typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, }
 typedef enum { CODEC_CODE = 0, CODEC_DECODE, } 
 			codec_way_t;
 
+#define WATCHER_AUDIO(x) int x(int type, int fd, string_t buf, void *data)
+typedef WATCHER_AUDIO(audio_handler_func_t);
 
 #define __AINIT(a, way, args...) a ? a->control_handler(AUDIO_CONTROL_SET, way, NULL, args, NULL) : NULL
 #define __CINIT(c, args...) c ? c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, NULL, args, NULL) : NULL
@@ -44,8 +46,8 @@ typedef enum { CODEC_CODE = 0, CODEC_DECODE, }
 
 #define AUDIO_DEFINE(x)\
 	extern AUDIO_CONTROL(x##_audio_control);\
-	extern WATCHER(x##_audio_read);		\
-	extern WATCHER(x##_audio_write);	\
+	extern WATCHER_AUDIO(x##_audio_read);		\
+	extern WATCHER_AUDIO(x##_audio_write);	\
 	audio_t x##_audio = { \
 		.name = #x, \
 		.control_handler= x##_audio_control, \
@@ -68,8 +70,8 @@ typedef struct {
 	char *name;	/* nazwa urzadzenia */
 	
 	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_io_t is correct / deiniting */
-	watcher_handler_func_t *read_handler;
-	watcher_handler_func_t *write_handler;
+	audio_handler_func_t *read_handler;
+	audio_handler_func_t *write_handler;
 
 	void *private;
 } audio_t;

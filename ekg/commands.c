@@ -593,7 +593,7 @@ typedef struct {
 	wcs_string_t buf;	/* je¶li buforujemy, to tutaj */
 } cmd_exec_info_t;
 
-WATCHER(cmd_exec_watch_handler)	/* sta³y */
+WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 {
 	cmd_exec_info_t *i = data;
 	int quiet = (i) ? i->quiet : 0;
@@ -716,7 +716,7 @@ COMMAND(cmd_exec)
 		if (buf)
 			i->buf = wcs_string_init(NULL);
 
-		w = watch_add(NULL, fd[0], WATCH_READ_LINE, cmd_exec_watch_handler, i);
+		w = watch_add_line(NULL, fd[0], WATCH_READ_LINE, cmd_exec_watch_handler, i);
 
 		if (add_commandline) {
 			char *tmp = format_string(format_find("exec_prompt"), ((command[0] == '^') ? command + 1 : command));

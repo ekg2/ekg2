@@ -218,24 +218,23 @@ void audio_unregister(audio_t *audio) {
 
 }
 		/* READING / WRITING FROM FILEs */
-WATCHER(stream_audio_read) {
+WATCHER_AUDIO(stream_audio_read) {
 	int maxlen = 4096, len;
-	char *buf;
+	char *sbuf;
 	
-	buf = xmalloc(maxlen);
-	len = read(fd, buf, maxlen);
+	sbuf = xmalloc(maxlen);
+	len = read(fd, sbuf, maxlen);
 
-	string_append_raw((string_t) watch, buf, len);
+	string_append_raw(buf, sbuf, len);
 
-	xfree(buf);
+	xfree(sbuf);
 
 	debug("stream_audio_read() read: %d bytes from fd: %d\n", len, fd);
 	if (len == 0) return -1;
 	return len;
 }
 
-WATCHER(stream_audio_write) {
-	string_t buffer = (string_t) watch;
+WATCHER_AUDIO(stream_audio_write) {
 	stream_private_t *priv = data;
 
 	if (!data) {
@@ -257,7 +256,7 @@ WATCHER(stream_audio_write) {
 		return 0;
 	}
 
-	return write(fd, buffer->str, buffer->len);
+	return write(fd, buf->str, buf->len);
 }
 
 AUDIO_CONTROL(stream_audio_control) {
@@ -449,10 +448,10 @@ AUDIO_CONTROL(stream_audio_control) {
 	return aio;
 }
 
-WATCHER(stream_handle_write) {
+WATCHER_LINE(stream_handle_write) {
 	stream_t *s = data;
 	audio_io_t *audio = NULL;
-	watcher_handler_func_t *w = NULL;
+	audio_handler_func_t *w = NULL;
 	int len;
 
 //	debug("stream_handle_write() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch);
@@ -473,7 +472,7 @@ WATCHER(stream_handle_write) {
 	if (!w) debug("stream_handle() watch_t: 0x%x\n", w);
 	if (!w) return -1;
 
-	len = w(type, fd, (char *) audio->buffer, audio->private);
+	len = w(type, fd, audio->buffer, audio->private);
 
 	if (type) {
 		close(fd);
@@ -488,7 +487,7 @@ WATCHER(stream_handle) {
 	stream_t *s = data;
 	audio_io_t *audio = NULL;
 	audio_codec_t *codec;
-	watcher_handler_func_t *w = NULL;
+	audio_handler_func_t *w = NULL;
 	int len;
 
 //	debug("stream_handle() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch);
@@ -504,7 +503,7 @@ WATCHER(stream_handle) {
 	if (!w) debug("stream_handle() watch_t: 0x%x\n", w);
 	if (!w) return -1;
 
-	len = w(type, fd, (char *) audio->buffer, audio->private);
+	len = w(type, fd, audio->buffer, audio->private);
 
 	if (len > 0 && s->output) {	/* if watch write do nothing */
 		if (!codec) {
@@ -528,7 +527,7 @@ WATCHER(stream_handle) {
 		if (s->output->fd == -1) {
 			int res;
 			debug("[audio_handle_write] in queue: %d bytes.... ", s->output->buffer->len);
-			res = s->output->a->write_handler(type, -1, (char *) s->output->buffer, s->output->private);
+			res = s->output->a->write_handler(type, -1, s->output->buffer, s->output->private);
 			debug(" ... wrote:%d bytes (handler: 0x%x) ", res, s->output->a->write_handler);
 			if (res > 0) {
 				memmove(s->output->buffer->str, s->output->buffer->str + res, s->output->buffer->len - res);
@@ -575,7 +574,7 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 	out->buffer 	= string_init(NULL);
 
 	if (out->fd != -1) {
-		watch_t *tmp	= watch_add(NULL, out->fd, WATCH_WRITE, stream_handle_write, s);
+		watch_t *tmp	= watch_add_line(NULL, out->fd, WATCH_WRITE, stream_handle_write, s);
 		tmp->buf	= out->buffer;
 	} 
 

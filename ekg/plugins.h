@@ -129,9 +129,6 @@ int query_emit(plugin_t *, const CHAR_T *, ...);
 
 #endif
 
-#define WATCHER(x) int x(int type, int fd, const char *watch, void *data)
-typedef WATCHER(watcher_handler_func_t);
-
 typedef enum {
 	WATCH_NONE = 0,
 	WATCH_WRITE = 1,
@@ -139,6 +136,11 @@ typedef enum {
 	WATCH_READ_LINE = 4,
 	WATCH_WRITE_LINE = 8,
 } watch_type_t;
+
+#define WATCHER(x) int x(int type, int fd, watch_type_t watch, void *data)
+#define WATCHER_LINE(x) int x(int type, int fd, const char *watch, void *data)
+typedef WATCHER(watcher_handler_func_t);
+typedef WATCHER(watcher_handler_line_func_t);
 
 typedef struct {
 	int fd;			/* obserwowany deskryptor */
@@ -184,6 +186,7 @@ watch_handler_func_t watch_handler_get(watch_t *w);
 time_t watch_started_get(watch_t *w);
 
 watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data);
+#define watch_add_line(p, fd, type, handler, data) watch_add(p, fd, type, (watcher_handler_func_t *) (handler), data)
 int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
 void watch_handle(watch_t *w);

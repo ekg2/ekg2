@@ -721,7 +721,7 @@ WATCHER(script_handle_watch)
 	script_watch_t *temp = data;
 
 	SCRIPT_HANDLER_HEADER(script_handler_watch_t);
-	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, (int) watch) {
+	SCRIPT_HANDLER_FOOTER(script_handler_watch, type, fd, watch) {
 		if (!type) {
 			return -1; /* watch_free(temp->self); */
 		}

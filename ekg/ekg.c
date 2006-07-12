@@ -587,7 +587,7 @@ static char *prepare_batch_line(int argc, char *argv[], int n)
  *
  * wy¶wietla to, co uzbiera siê na stderr.
  */
-static WATCHER(handle_stderr)	/* sta³y */
+static WATCHER_LINE(handle_stderr)	/* sta³y */
 {
         print("stderr", watch);
 	return 0;
@@ -951,7 +951,7 @@ int main(int argc, char **argv)
                 if (!pipe(fd)) {
                         fcntl(fd[0], F_SETFL, O_NONBLOCK);
                         fcntl(fd[1], F_SETFL, O_NONBLOCK);
-                        watch_add(NULL, fd[0], WATCH_READ_LINE, handle_stderr, NULL);
+                        watch_add_line(NULL, fd[0], WATCH_READ_LINE, handle_stderr, NULL);
                         stderr_backup = fcntl(2, F_DUPFD, 0);
                         dup2(fd[1], 2);
                 }
