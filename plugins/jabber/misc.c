@@ -273,7 +273,7 @@ char *tlen_decode(const char *what) {
  * i je¶li co¶ jeszcze zostanie, ponawia próbê.
  */
 #ifdef HAVE_GNUTLS
-WATCHER(jabber_handle_write) /* tylko dla ssla. dla zwyklych polaczen jest watch_handle_write() */
+WATCHER_LINE(jabber_handle_write) /* tylko dla ssla. dla zwyklych polaczen jest watch_handle_write() */
 {
 	jabber_private_t *j = data;
 	int res;

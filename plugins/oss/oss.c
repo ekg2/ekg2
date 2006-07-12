@@ -67,7 +67,7 @@ WATCHER(oss_write) {
 }
 #endif
 
-WATCHER(oss_audio_read) {
+WATCHER_AUDIO(oss_audio_read) {
 	oss_private_t *priv	= data;
 	oss_device_t *dev	= priv->dev;
 
@@ -79,16 +79,15 @@ WATCHER(oss_audio_read) {
 		return 0;
 	}
 
-	string_append_raw((string_t) watch, dev->buf->str, dev->buf->len);
+	string_append_raw(buf, dev->buf->str, dev->buf->len);
 
 	return dev->buf->len;
 }
 
-WATCHER(oss_audio_write) {
+WATCHER_AUDIO(oss_audio_write) {
 	oss_private_t *priv	= data;
 	oss_device_t *dev	= priv->dev;
 
-	string_t buf = (string_t) watch;
 	int len, maxlen;
 	if (type == 1) return 0;
 

@@ -545,7 +545,7 @@ fail:
 	return;
 }
 
-WATCHER(rss_fetch_handler) {
+WATCHER_LINE(rss_fetch_handler) {
 	rss_feed_t      *f = data;
 
 	if (type) {
@@ -617,7 +617,7 @@ WATCHER(rss_fetch_handler_connect) {
 	}
 	f->getting = 1;
 	f->headers_done = 0;
-	watch_add(&feed_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
+	watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
 	return -1;
 }
 
@@ -684,7 +684,7 @@ int rss_url_fetch(rss_feed_t *f, int quiet) {
 		close(fds[1]);
 
 		fd = fds[0];
-		watch_add(&feed_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
+		watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
 	}
 
 	if (f->proto == RSS_PROTO_HTTP) {

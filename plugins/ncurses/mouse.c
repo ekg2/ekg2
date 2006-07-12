@@ -63,6 +63,7 @@ void show_mouse_pointer()
  */
 static TIMER(ncurses_mouse_timer)
 {
+	if (type) return 0;
 	show_mouse_pointer();
 	return 0;
 }
@@ -278,14 +279,13 @@ void ncurses_disable_mouse()
 	if (!mouse_initialized)
 		return;
 
+	timer_remove(&ncurses_plugin, "ncurses:mouse");
 #ifdef HAVE_LIBGPM
-	Gpm_Close();
-
 	if (gpm_fd != 2) {
 		watch_remove(&ncurses_plugin, gpm_fd, WATCH_READ);
 	}
+	Gpm_Close();
 #endif
-	timer_remove(&ncurses_plugin, "ncurses:mouse");
 }
 
 

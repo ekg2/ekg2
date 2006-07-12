@@ -99,7 +99,7 @@ CODEC_CONTROL(gsm_codec_control) {
 			return NULL;
 		}
 		gsm_option(codec, GSM_OPT_FAST, &value);
-		gsm_option(codec, GSM_OPT_LTP_CUT, &value);
+		if (way == CODEC_DECODE) gsm_option(codec, GSM_OPT_LTP_CUT, &value);
 
 		if (priv->msgsm) 
 			gsm_option(codec, GSM_OPT_WAV49, &value);

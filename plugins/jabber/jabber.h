@@ -176,7 +176,7 @@ time_t jabber_try_xdelay(const char *stamp);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
 #ifdef HAVE_GNUTLS
- WATCHER(jabber_handle_write);
+ WATCHER_LINE(jabber_handle_write);
 #endif
 
 void xmlnode_handle_start(void *data, const char *name, const char **atts);

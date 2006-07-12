@@ -71,8 +71,8 @@ static WATCHER(gg_handle_register)	/* tymczasowy */
 
 	if (h->state != GG_STATE_DONE) {
 		watch_t *w;
-		if ((int) watch == h->check && h->fd == fd) { 
-			if ((w = watch_find(&gg_plugin, fd, (int) watch))) 
+		if (watch == h->check && h->fd == fd) { 
+			if ((w = watch_find(&gg_plugin, fd, watch))) 
 				watch_timeout_set(w, h->timeout);
 			else debug("[gg] watches managment went to hell?\n");
 			return 0;

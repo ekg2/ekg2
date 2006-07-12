@@ -1367,7 +1367,7 @@ static WATCHER(gg_handle_token)
 
 	if (h->state != GG_STATE_DONE) {
 		watch_t *w;
-		if (fd == h->fd && (int) watch == h->check) return 0;	/* if this is the same watch... we leave it */
+		if (fd == h->fd && watch == h->check) return 0;	/* if this is the same watch... we leave it */
 
 		/* otherwise we delete old one (return -1) and create new one .... 
 		 * XXX, should we copy data from gg_http *h ? and free them in type == 1 ? */

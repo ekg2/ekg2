@@ -413,7 +413,7 @@ nntp_handler_t *nntp_handler_find(int code) {
 	return NULL;
 }
 
-WATCHER(nntp_handle_stream) {
+WATCHER_LINE(nntp_handle_stream) {
 	session_t *s = session_find(data);
 	nntp_private_t *j = feed_private(s);
 
@@ -490,8 +490,8 @@ WATCHER(nntp_handle_connect) {
 	session_connected_set(s, 1);
 	query_emit(NULL, "protocol-connected", &data);
 
-	watch_add(&feed_plugin, fd, WATCH_READ_LINE, nntp_handle_stream, xstrdup(data));
-	j->send_watch = watch_add(&feed_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
+	watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, nntp_handle_stream, xstrdup(data));
+	j->send_watch = watch_add_line(&feed_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
 	return -1;
 }
 

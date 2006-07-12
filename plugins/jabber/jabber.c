@@ -871,9 +871,9 @@ WATCHER(jabber_handle_connect) /* tymczasowy */
 	watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_stream, jdh);
 
 #ifdef HAVE_GNUTLS
-	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, j->using_ssl ? jabber_handle_write : NULL, j);
+	j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, j->using_ssl ? jabber_handle_write : NULL, j);
 #else
-	j->send_watch = watch_add(&jabber_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
+	j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
 #endif
 	if (!(j->istlen))
 		watch_write(j->send_watch, 

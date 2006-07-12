@@ -35,7 +35,7 @@ char *rc_paths = NULL;
  *
  * obs³uga przychodz±cych poleceñ.
  */
-WATCHER(rc_input_handler_line)
+WATCHER_LINE(rc_input_handler_line)
 {
 	rc_input_t *r = data;
 
@@ -108,7 +108,7 @@ WATCHER(rc_input_handler_accept)
 	rn->type = (r->type == RC_INPUT_TCP) ? RC_INPUT_TCP_CLIENT : RC_INPUT_UNIX_CLIENT;
 	rn->watch = WATCH_READ_LINE;
 	list_add(&rc_inputs, rn, 0);
-	watch_add(&rc_plugin, rn->fd, rn->watch, rc_input_handler_line, rn);
+	watch_add_line(&rc_plugin, rn->fd, rn->watch, rc_input_handler_line, rn);
 	return 0;
 }
 
@@ -207,7 +207,7 @@ static void rc_paths_changed(const CHAR_T *name)
 			r.mark = 1;
 			r.path = xstrdup(paths[i]);
 			r.type = type;
-			r.watch = (rc_input_handler != rc_input_handler_line) ? WATCH_READ : WATCH_READ_LINE;
+			r.watch = ((void *) rc_input_handler != (void *) rc_input_handler_line) ? WATCH_READ : WATCH_READ_LINE;
 			
 			rr = list_add(&rc_inputs, &r, sizeof(r));
 

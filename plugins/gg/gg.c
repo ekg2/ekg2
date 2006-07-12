@@ -1168,7 +1168,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 
 	if (!broken && g->sess->state != GG_STATE_IDLE && g->sess->state != GG_STATE_ERROR) {
 		watch_t *w;
-		if (((int) watch == g->sess->check) && g->sess->fd == fd) { 
+		if ((watch == g->sess->check) && g->sess->fd == fd) { 
 			if ((w = watch_find(&gg_plugin, fd, (int) watch))) 
 				watch_timeout_set(w, g->sess->timeout);
 			else debug("[gg] watches managment went to hell?\n");

@@ -101,27 +101,26 @@ AUDIO_CONTROL(gg_dcc_audio_control) {
 	return aio;
 } 
 
-WATCHER(gg_dcc_audio_read) {
-	char buf[GG_DCC_VOICE_FRAME_LENGTH_505];
+WATCHER_AUDIO(gg_dcc_audio_read) {
+	char sbuf[GG_DCC_VOICE_FRAME_LENGTH_505];
 	int len;
 
 	if (type) return -1;
 	
-	len = read(fd, buf, sizeof(buf));
-	buf[len] = 0;
+	len = read(fd, sbuf, sizeof(buf));
+	sbuf[len] = 0;
 
 	if (len > 0) {
 		if (len == GG_DCC_VOICE_FRAME_LENGTH_505)
-			string_append_raw((string_t) watch, buf+1, len-1);
-		else	string_append_raw((string_t) watch, buf, len);
+			string_append_raw(buf, sbuf+1, len-1);
+		else	string_append_raw(buf, sbuf, len);
 	}
 
 	debug("gg_dcc_audio_read() %d\n", len);
 	return len;
 }
 
-WATCHER(gg_dcc_audio_write) {
-	string_t buffer = (string_t) watch;
+WATCHER_AUDIO(gg_dcc_audio_write) {
 	gg_audio_private_t *priv = data;
 	int len = -1; 
 	int rlen;
@@ -136,17 +135,17 @@ WATCHER(gg_dcc_audio_write) {
 		return -1;
 	}
 
-	if (!priv->dcc->active) return buffer->len;
+	if (!priv->dcc->active) return buf->len;
 
 	if (priv->len == GG_DCC_VOICE_FRAME_LENGTH_505) rlen = GG_DCC_VOICE_FRAME_LENGTH_505 - 1;
 	else						rlen = priv->len;
 
-	if (buffer->len < rlen) return 0;
+	if (buf->len < rlen) return 0;
 
 	if (priv->len == GG_DCC_VOICE_FRAME_LENGTH_505) {
 		output[0] = 0;
-		memcpy(&(output[1]), buffer->str, rlen);
-	} else	memcpy(&(output[0]), buffer->str, rlen);
+		memcpy(&(output[1]), buf->str, rlen);
+	} else	memcpy(&(output[0]), buf->str, rlen);
 
 	if (!(gg_dcc_voice_send(priv->dcc->priv, output, priv->len)))
 		len = rlen;
@@ -849,7 +848,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 	}
 
 	if (d && d->type != GG_SESSION_DCC_SOCKET && again) {
-		if (d->fd == fd && d->check == (int) watch) return 0;
+		if (d->fd == fd && d->check == watch) return 0;
 		watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);
 	}
 
@@ -897,8 +896,8 @@ void gg_dcc_socket_close()
 
 void gg_dcc_audio_init() {
 	if (gg_config_audio) {
-		close(audiofds[0]);
-		close(audiofds[1]);
+		if (audiofds[0] != -1) close(audiofds[0]);
+		if (audiofds[1] != -1) close(audiofds[1]);
 		audiofds[0] = -1;
 		audiofds[1] = -1;
 		audio_register(&gg_dcc_audio);
@@ -907,8 +906,8 @@ void gg_dcc_audio_init() {
 
 void gg_dcc_audio_close() {
 	if (!gg_config_audio) {
-		close(audiofds[0]);
-		close(audiofds[1]);
+		if (audiofds[0] != -1) close(audiofds[0]);
+		if (audiofds[1] != -1) close(audiofds[1]);
 		audiofds[0] = -1;
 		audiofds[1] = -1;
 		audio_unregister(&gg_dcc_audio);

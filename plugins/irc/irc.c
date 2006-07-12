@@ -133,7 +133,7 @@
  *                                                                       */
 
 static int irc_theme_init();
-WATCHER(irc_handle_resolver);
+WATCHER_LINE(irc_handle_resolver);
 int irc_really_connect(session_t *session);
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
@@ -471,7 +471,7 @@ void irc_changed_resolve(session_t *s, const char *var) {
 #else
 		CloseHandle(fd[1]);
 #endif
-		watch_add(&irc_plugin, fd[0], WATCH_READ_LINE, irc_handle_resolver, irdata);
+		watch_add_line(&irc_plugin, fd[0], WATCH_READ_LINE, irc_handle_resolver, irdata);
 
 		return;
 	} 
@@ -562,7 +562,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 
 }
 
-WATCHER(irc_handle_resolver)
+WATCHER_LINE(irc_handle_resolver)
 {
 	irc_resolver_t *resolv = (irc_resolver_t *) data;
 	session_t *s = session_find(resolv->session);
@@ -605,7 +605,7 @@ WATCHER(irc_handle_resolver)
 	return 0;
 }
 
-WATCHER(irc_handle_stream)
+WATCHER_LINE(irc_handle_stream)
 {
 	session_t *s = session_find(data);
 
@@ -675,8 +675,8 @@ WATCHER(irc_handle_connect) /* tymczasowy */
 	timer_remove(&irc_plugin, "reconnect");
 	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
-	j->recv_watch = watch_add(&irc_plugin, fd, WATCH_READ_LINE, irc_handle_stream, xstrdup((char *) data));
-	j->send_watch = watch_add(&irc_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
+	j->recv_watch = watch_add_line(&irc_plugin, fd, WATCH_READ_LINE, irc_handle_stream, xstrdup((char *) data));
+	j->send_watch = watch_add_line(&irc_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
 
 	real = session_get(s, "realname");
 	real = real ? xstrlen(real) ? real : j->nick : j->nick;

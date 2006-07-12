@@ -33,5 +33,3 @@ void feed_set_statusdescr(userlist_t *u, char *status, char *descr);
 void feed_set_descr(userlist_t *u, char *descr);
 void feed_set_status(userlist_t *u, char *status);
 
-
-
