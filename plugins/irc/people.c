@@ -443,14 +443,13 @@ int irc_free_people(session_t *s, irc_private_t *j)
 	window_t *w;
 
 	debug("[irc] free_people() %08X %s\n", s, s->uid);
-	for (t1=j->people; t1; t1=t1->next)
-	{
+	for (t1=j->people; t1; t1=t1->next) {
 		per = (people_t *)t1->data;
 		list_destroy(per->channels, 1);
 		per->channels=NULL;
 	}
-	for (t1=j->channels; t1; t1=t1->next)
-	{
+
+	for (t1=j->channels; t1; t1=t1->next) {
 		chan = (channel_t *)t1->data;
 		list_destroy(chan->onchan, 0);
 		chan->onchan = NULL;
@@ -463,6 +462,7 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		 * window_kill(chan->window, 1);
 		 */
 	}
+
 	for (t1=j->people; t1; t1=t1->next) {
 		per = (people_t *) t1->data;
 		xfree(per->nick);
@@ -470,12 +470,17 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		xfree(per->host);
 		xfree(per->ident);
 	}
-	for (t1=j->channels; t1; t1=t1->next) {
-		xfree(((channel_t *)(t1->data))->name);
-	}
-
 	list_destroy(j->people, 1);
 	j->people = NULL;
+
+	for (t1=j->channels; t1; t1=t1->next) {
+		chan = t1->data;
+		xfree(chan->name);
+		xfree(chan->topic);
+		xfree(chan->topicby);
+		xfree(chan->mode_str);
+		list_destroy(chan->banlist, 1);
+	}
 	list_destroy(j->channels, 1);
 	j->channels = NULL;
 
