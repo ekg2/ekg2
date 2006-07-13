@@ -23,17 +23,13 @@
 #include "ekg2-config.h"
 #include "win32.h"
 
-#ifndef NO_POSIX_SYSTEM
-#define HAVE_NL_LANGINFO 1 /* jak ktos bedzie narzekac to przerzucic do configure */ /* CONFORMING TO: The Single UNIX Specification, Version 2 */
-#endif
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#if HAVE_NL_LANGINFO
+#if HAVE_LANGINFO_CODESET
 #include <langinfo.h>
 #endif
 
@@ -157,7 +153,7 @@ void variable_set_default()
 	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
-#if HAVE_NL_LANGINFO
+#if HAVE_LANGINFO_CODESET
 	console_charset = xstrdup(nl_langinfo(CODESET));
 #endif
 
