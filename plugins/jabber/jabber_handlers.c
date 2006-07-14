@@ -155,6 +155,8 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 					char *id = jabber_attr(n->atts, "id");
 					const char *our_status = session_status_get(s);
 
+					if (j->send_watch) j->send_watch->transfer_limit = -1;
+
 					watch_write(j->send_watch, "<message to=\"%s\"><x xmlns=\"jabber:x:event\">", from);
 
 					if (!xstrcmp(our_status, EKG_STATUS_INVISIBLE)) {
@@ -166,6 +168,8 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 							watch_write(j->send_watch, "<displayed/>");
 					};
 					watch_write(j->send_watch, "<id>%s</id></x></message>", id);
+
+					JABBER_COMMIT_DATA(j->send_watch);
 				}
 				/* je¶li body nie ma, to odpowiedz na nasza prosbe */
 				if (!nbody && isack) {
