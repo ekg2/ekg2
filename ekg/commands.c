@@ -603,8 +603,7 @@ WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 
 	if (type == 1) {
 		if (i->buf) {
-			string_insert(i->buf, 0, TEXT("/ ")); 
-			command_exec(i->target, session_find(i->session), i->buf->str, quiet);
+			command_exec_format(i->target, session_find(i->session), quiet, TEXT("/ " CHARF), i->buf->str);
 			wcs_string_free(i->buf, 1);
 		}
 		xfree(i->target);
@@ -629,7 +628,7 @@ WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 	return 0;
 }
 
-void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, void *priv)
+void cmd_exec_child_handler(child_t *c, int pid, const CHAR_T *name, int status, void *priv)
 {
 	int quiet = (name && name[0] == '^');
 
@@ -727,8 +726,11 @@ COMMAND(cmd_exec)
 		fcntl(fd[0], F_SETFL, O_NONBLOCK);
 
 		close(fd[1]);
-		
-		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
+		{
+			CHAR_T *ucommand = normal_to_wcs(command);
+			child_add(NULL, pid, ucommand, cmd_exec_child_handler, NULL);
+			free_utf(ucommand);
+		}
 			
 	} else {
 		for (l = children; l; l = l->next) {

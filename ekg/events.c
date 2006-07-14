@@ -604,11 +604,11 @@ void event_free()
 
 		event_remove(e->id, 1);
 	}
-
 	list_destroy(events, 1);
+	events = NULL;
+
 	xfree(events_all);
 	events_all = NULL;
-	events = NULL;
 }
 
 /*

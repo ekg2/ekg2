@@ -1379,15 +1379,15 @@ int play_sound(const char *sound_path)
  *
  * 0/-1
  */
-child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private)
+child_t *child_add(plugin_t *plugin, int pid, const CHAR_T *name, child_handler_t handler, void *private)
 {
 	child_t *c = xmalloc(sizeof(child_t));
 
-	c->plugin = plugin;
-	c->pid = pid;
-	c->name = xstrdup(name);
-	c->handler = handler;
-	c->private = private;
+	c->plugin	= plugin;
+	c->pid		= pid;
+	c->name		= xwcsdup(name);
+	c->handler	= handler;
+	c->private	= private;
 	
 	list_add(&children, c, 0);
 	return c;
@@ -1398,7 +1398,7 @@ int child_pid_get(child_t *c)
 	return (c) ? c->pid : -1;
 }
 
-const char *child_name_get(child_t *c)
+const CHAR_T *child_name_get(child_t *c)
 {
 	return (c) ? c->name : NULL;
 }

@@ -55,20 +55,20 @@
 
 struct child_s;
 
-typedef void (*child_handler_t)(struct child_s *c, int pid, const char *name, int status, void *data);
+typedef void (*child_handler_t)(struct child_s *c, int pid, const CHAR_T *name, int status, void *data);
 
 typedef struct child_s {
 	int pid;			/* id procesu */
 	plugin_t *plugin;		/* obs³uguj±cy plugin */
-	char *name;			/* nazwa, wy¶wietlana przy /exec */
+	CHAR_T *name;			/* nazwa, wy¶wietlana przy /exec */
 	child_handler_t handler;	/* zak³ad pogrzebowy */
 	void *private;			/* dane procesu */
 } child_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private);
+child_t *child_add(plugin_t *plugin, int pid, const CHAR_T *name, child_handler_t handler, void *private);
 int child_pid_get(child_t *c);
-const char *child_name_get(child_t *c);
+const CHAR_T *child_name_get(child_t *c);
 plugin_t *child_plugin_get(child_t *c);
 void *child_private_get(child_t *c);
 child_handler_t child_handler_get(child_t *c);
