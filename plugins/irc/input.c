@@ -34,6 +34,8 @@
 #include "input.h"
 #include "IRCVERSION.h"
 
+#define DEFAULT_COLOR 0
+
 int irc_getircoldcol(char *org)
 {
 	char	*p = org;
@@ -63,7 +65,7 @@ int irc_getircoldcol(char *org)
 		ret |= (isfg<<17);
 		ret |= (ifg<<8);
 	} 
-	if (isdel && !isbg) { isbg = 1; } /* ibg=DEFAULT_COLOR; } */
+	if (isdel && !isbg) { isbg = 1;  ibg=DEFAULT_COLOR; }
 	if (isbg) {
 		ret |= (isbg<<16);
 		ret |= ibg;
