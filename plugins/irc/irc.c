@@ -1656,6 +1656,7 @@ COMMAND(irc_command_devop)
 	chan-=4;
 	xfree(chan);
 	xfree(nicks);
+	xfree(op);
 	array_free(mp);
 	return 0;
 }
