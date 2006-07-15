@@ -211,8 +211,11 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
  *
  * zwraca skrót has³a dla jabber:iq:auth.
  */
-char *jabber_digest(const char *sid, const CHAR_T *password)
+char *jabber_digest(const char *sid, const char *password)
 {
+	extern char *mutt_convert_string (char *ps, const char *from, const char *to);	/* jabber/misc.c */
+	extern char *config_console_charset;						/* ekg/stuff.h */
+
 	SHA1_CTX ctx;
 	char *tmp;
 	unsigned char digest[20];
@@ -220,14 +223,14 @@ char *jabber_digest(const char *sid, const CHAR_T *password)
 	static char result[41];
 
 	SHA1Init(&ctx);
-	
-	tmp = wcs_to_normal(jabber_escape(sid)); /* UUU */
+
+	tmp = mutt_convert_string((char *) sid, config_console_charset, "utf-8");
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
-	tmp = wcs_to_normal(password);
+	tmp = mutt_convert_string((char *) password, config_console_charset, "utf-8");
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
-	free_utf(tmp);
+	xfree(tmp);
 
 	SHA1Final(digest, &ctx);
 

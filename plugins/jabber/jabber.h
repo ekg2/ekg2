@@ -154,7 +154,7 @@ void jabber_register_commands(void);
 int JABBER_COMMIT_DATA(watch_t *w);
 
 char *jabber_attr(char **atts, const char *att);
-char *jabber_digest(const char *sid, const CHAR_T *password);
+char *jabber_digest(const char *sid, const char *password);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
 
 void jabber_handle(void *data, xmlnode_t *n);

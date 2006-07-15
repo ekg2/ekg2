@@ -650,8 +650,10 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
         session_t *s = jdh->session;
 
         if (!session_connected_get(s) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
-		CHAR_T *passwd		= jabber_escape(session_get(s, "password"));
+		const char *passwd	= session_get(s, "password");
                 CHAR_T *resource	= jabber_escape(session_get(s, "resource"));
+		CHAR_T *epasswd		= NULL;
+
                 char *username;
 		char *authpass;
 		char *stream_id;
@@ -660,10 +662,11 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		*(xstrchr(username, '@')) = 0;
 	
 		if (session_get(s, "__new_acount")) {
+			epasswd		= jabber_escape(passwd);
 			watch_write(j->send_watch, 
 				"<iq type=\"set\" to=\"%s\" id=\"register%d\">"
 				"<query xmlns=\"jabber:iq:register\"><username>%s</username><password>" CHARF "</password></query></iq>", 
-				j->server, j->id++, username, passwd ? passwd : TEXT("foo"));
+				j->server, j->id++, username, epasswd ? epasswd : TEXT("foo"));
 		}
 
                 if (!resource)
@@ -674,10 +677,9 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 
 		/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
 		if (j->istlen) {
-			const char *tmp = session_get(s, "password");
 			int     magic1 = 0x50305735, magic2 = 0x12345671, sum = 7;
 			char    z;
-			while ((z = *tmp++) != 0) {
+			while ((z = *passwd++) != 0) {
 				if (z == ' ' || z == '\t') continue;
 				magic1 ^= (((magic1 & 0x3f) + sum) * z) + (magic1 << 8);
 				magic2 += (magic2 << 8) ^ magic1;
@@ -686,19 +688,22 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 			magic1 &= 0x7fffffff;
 			magic2 &= 0x7fffffff;
 
-			xfree(passwd);
-			passwd = wcsprintf(TEXT("%08x%08x"), magic1, magic2);
+			passwd = saprintf("%08x%08x", magic1, magic2);
+		} else if (session_int_get(s, "plaintext_passwd") && !epasswd) {
+			epasswd = jabber_escape(passwd);
 		}
 
 		authpass = (!j->istlen && session_int_get(s, "plaintext_passwd")) ? 
-			saprintf("<password>" CHARF "</password>", passwd) :  				/* plaintext */
-			saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd));		/* hash */
+			saprintf("<password>" CHARF "</password>", epasswd) :			/* plaintext */
+			saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd));	/* hash */
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", 
 			j->server, username, authpass, resource);
                 xfree(username);
 		xfree(authpass);
-		xfree(passwd);
+
+		if (j->istlen) xfree((char *) passwd);
+		xfree(epasswd);
 
 		xfree(j->resource);
 		j->resource = resource;
