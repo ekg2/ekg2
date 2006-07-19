@@ -250,7 +250,7 @@ static int rc_plugin_destroy()
 	for (l = rc_inputs; l;) {
 		rc_input_t *r = l->data;
 
-		l = l->next
+		l = l->next;
 
 		rc_input_close(r, 1);
 	}
