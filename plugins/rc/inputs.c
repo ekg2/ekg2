@@ -162,10 +162,16 @@ int rc_input_new_unix(const char *path)
  *
  * zamyka kana³ wej¶ciowy.
  */
-void rc_input_close(rc_input_t *r)
+void rc_input_close(rc_input_t *r, int onlyclosefd)
 {
-	if (!r || r->fd == -1)
+	if (!r)
 		return;
+
+	if (onlyclosefd) {
+		close(r->fd);
+		r->fd = -1;
+		return;
+	}
 
 	debug("[rc] closing %s\n", r->path);
 
@@ -173,8 +179,7 @@ void rc_input_close(rc_input_t *r)
 		unlink(r->path);
 
 	xfree(r->path);
-	close(r->fd);
-	r->fd = -1;
+	if (r->fd != -1) close(r->fd);
 
 	list_remove(&rc_inputs, r, 1);
 }

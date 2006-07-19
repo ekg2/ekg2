@@ -28,7 +28,7 @@ int rc_input_new_tcp(const char *path);
 int rc_input_new_udp(const char *path);
 int rc_input_new_pipe(const char *path);
 int rc_input_new_unix(const char *path);
-void rc_input_close(rc_input_t *r);
+void rc_input_close(rc_input_t *r, int onlyclosefd);
 
 #endif /* __EKG_RC_RC_H */
 

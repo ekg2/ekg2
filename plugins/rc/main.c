@@ -40,7 +40,7 @@ WATCHER_LINE(rc_input_handler_line)
 	rc_input_t *r = data;
 
 	if (type == 1) {
-		rc_input_close(r);
+		rc_input_close(r, 0);
 		return 0;
 	}
 	{
@@ -65,7 +65,7 @@ WATCHER(rc_input_handler_dgram)
 	int len;
 
 	if (type == 1) {
-		rc_input_close(r);
+		rc_input_close(r, 0);
 		return 0;
 	}
 
@@ -91,7 +91,7 @@ WATCHER(rc_input_handler_accept)
 	int salen = sizeof(sa), cfd;
 
 	if (type == 1) {
-		rc_input_close(r);
+		rc_input_close(r, 0);
 		return 0;
 	}
 
@@ -250,10 +250,8 @@ static int rc_plugin_destroy()
 	for (l = rc_inputs; l; l = l->next) {
 		rc_input_t *r = l->data;
 
-		rc_input_close(r);
+		rc_input_close(r, 1);
 	}
-
-	list_destroy(rc_inputs, 1);
 
 	plugin_unregister(&rc_plugin);
 
