@@ -247,8 +247,10 @@ static int rc_plugin_destroy()
 {
 	list_t l;
 
-	for (l = rc_inputs; l; l = l->next) {
+	for (l = rc_inputs; l;) {
 		rc_input_t *r = l->data;
+
+		l = l->next
 
 		rc_input_close(r, 1);
 	}
