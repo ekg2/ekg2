@@ -164,7 +164,7 @@ int rc_input_new_unix(const char *path)
  */
 void rc_input_close(rc_input_t *r)
 {
-	if (!r)
+	if (!r || r->fd == -1)
 		return;
 
 	debug("[rc] closing %s\n", r->path);
@@ -174,6 +174,7 @@ void rc_input_close(rc_input_t *r)
 
 	xfree(r->path);
 	close(r->fd);
+	r->fd = -1;
 
 	list_remove(&rc_inputs, r, 1);
 }
