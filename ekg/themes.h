@@ -27,7 +27,6 @@
 #include "char.h"
 #include "dynstuff.h"
 #include "sessions.h"
-#include "stuff.h"
 
 struct format {
 	CHAR_T *name;
@@ -48,6 +47,10 @@ typedef struct {
 } fstring_t;
 
 extern list_t formats;
+
+#ifndef __EKG_STUFF_H
+extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo includowac calego stuff.c */
+#endif
 
 #define print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x) 
 #define wcs_print(x...) wcs_print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x)
