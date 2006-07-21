@@ -26,7 +26,7 @@ AC_DEFUN([AC_CHECK_SQLITE3], [
   AC_ARG_WITH(sqlite3,
       AC_HELP_STRING( [--with-sqlite3[=dir]] , [Compile with libsqlite3 at given dir] ),
       [ ac_sqlite3="$withval" 
-        if test "x$withval" != "xno" -a test "x$withval" != "xyes"; then
+        if test "x$withval" != "xno" -a "x$withval" != "xyes"; then
             ac_sqlite3="yes"
             ac_sqlite3_incdir="$withval"/include
             ac_sqlite3_libdir="$withval"/lib
