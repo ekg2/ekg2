@@ -280,7 +280,7 @@ COMMAND(gg_command_dcc)
 		
 		d = dcc_add(u->uid, DCC_SEND, gd);
 		dcc_filename_set(d, params[2]);
-
+		dcc_size_set(d, st.st_size);
 		if (gd)
 			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc_handler, gd);
 
