@@ -28,6 +28,7 @@ path
 	
 	ścieżka, gdzie będą zachowywane wysyłane i otrzymane wiadomości.
 	Rozpoznawane znaki:
+	* %P - profil
 	* %S - sesja nasza
 	* %u - uid użytkownika, z którym piszemy
 	* %U - nick rozmówcy

@@ -28,6 +28,7 @@ path
 	
 	¶cie¿ka, gdzie bêd± zachowywane wysy³ane i otrzymane wiadomo¶ci.
 	Rozpoznawane znaki:
+	* %P - profil
 	* %S - sesja nasza
 	* %u - uid u¿ytkownika, z którym piszemy
 	* %U - nick rozmówcy

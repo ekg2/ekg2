@@ -21,6 +21,7 @@
 #ifndef __logs_h__
 #define __logs_h__
 
+#include "ekg2-config.h"
 #include <stdio.h>
 #include <ekg/sessions.h>
 #include <ekg/plugins.h>
@@ -53,17 +54,18 @@ struct {
 	list_t	messages; 	/* lista z log_session_away_t */
 } typedef log_away_t;
 
-char *logs_prepare_path(session_t *session, const char *uid, time_t sent);
+char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
 const char *prepare_timestamp_format(const char *format, time_t t);
 
 logs_log_t *logs_log_find(const char *session, const char *uid, int create);
 logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid);
 
-FILE *logs_open_file(char *path, int ff_);
+FILE *logs_open_file(char *path, int ff);
 QUERY(logs_handler);
 QUERY(logs_handler_newwin);
 QUERY(logs_status_handler);
 QUERY(logs_handler_irc);
+QUERY(logs_handler_raw);
 
 void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status);
 void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class);
@@ -75,6 +77,7 @@ list_t log_awaylog = NULL;
 
 int config_away_log = 0;
 int config_logs_log;
+int config_logs_log_raw;
 int config_logs_log_ignored;
 int config_logs_log_status;
 int config_logs_remind_number = 0;
