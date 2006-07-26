@@ -463,16 +463,58 @@ int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines)
 {
 	struct buffer *b;
 
-	if (max_lines && buffer_count(type) >= max_lines) {
-		b = buffers->data;
-
-		xfree(b->line);
-		list_remove(&buffers, b, 1);
+	if (max_lines) {
+		int bcount = buffer_count(type);
+		
+		while (bcount >= max_lines) {
+			b = buffers->data;
+			xfree(b->line);
+			xfree(b->target);
+			list_remove(&buffers, b, 1);
+			bcount--;
+		}
 	}
 	b = xmalloc(sizeof(struct buffer));
+	b->ts	= time(NULL);
 	b->type = type;
 	b->target = xstrdup(target);
 	b->line = xwcsdup(line);
+
+	return ((list_add(&buffers, b, 0) ? 0 : -1));
+}
+
+int buffer_add_str(int type, const char *target, const char *str, int max_lines) {
+	struct buffer *b;
+	CHAR_T *line;
+
+	time_t ts = 0;
+
+	if (sscanf(str, "%d ", &ts) != 1) {
+		debug("buffer_add_str() parsing str: %s failed\n", str);
+		return -1;
+	}
+
+	if (max_lines) {
+		int bcount = buffer_count(type);
+		
+		while (bcount >= max_lines) {
+			b = buffers->data;
+			xfree(b->line);
+			xfree(b->target);
+			list_remove(&buffers, b, 1);
+			bcount--;
+		}
+	}
+
+	line	= normal_to_wcs(xstrchr(str, ' ')+1);
+
+	b	= xmalloc(sizeof(struct buffer));
+	b->ts		= ts;
+	b->type		= type;
+	b->target	= xstrdup(target);
+	b->line		= xwcsdup(line);
+
+	free_utf(line);
 
 	return ((list_add(&buffers, b, 0) ? 0 : -1));
 }
@@ -502,9 +544,10 @@ CHAR_T *buffer_flush(int type, const char *target)
 		if (target && b->target && xstrcmp(target, b->target))
 			continue;
 
+		wcs_string_append(str, itoa(b->ts));
+		wcs_string_append_c(str, ' ');
 		wcs_string_append(str, b->line);
 		wcs_string_append_c(str, '\n');
-		wcs_string_append_c(str, '\r');
 
 		xfree(b->line);
 		xfree(b->target);
@@ -552,7 +595,8 @@ CHAR_T *buffer_tail(int type)
 		if (type != b->type)
 			continue;
 		
-		str = xwcsdup(b->line);
+		str = b->line;
+		b->line = NULL;
 
 		xfree(b->target);
 		list_remove(&buffers, b, 1);

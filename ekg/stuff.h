@@ -133,11 +133,13 @@ struct conference {
 enum buffer_t {
 	BUFFER_DEBUG,	/* na zapisanie n ostatnich linii debug */
 	BUFFER_EXEC,	/* na buforowanie tego, co wypluwa exec */
-	BUFFER_SPEECH	/* na wymawiany tekst */
+	BUFFER_SPEECH,	/* na wymawiany tekst */
+	BUFFER_LOGRAW, 	/* plugins/logs uses it */
 };
 
 struct buffer {
 	int type;
+	time_t ts;
 	char *target;
 	CHAR_T *line;
 };
@@ -253,6 +255,7 @@ void binding_list(int quiet, const CHAR_T *name, int all);
 void binding_free();
 
 int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines);
+int buffer_add_str(int type, const char *target, const char *str, int max_lines);
 int buffer_count(int type);
 CHAR_T *buffer_flush(int type, const char *target);
 CHAR_T *buffer_tail(int type);

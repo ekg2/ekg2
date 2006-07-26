@@ -49,7 +49,7 @@ typedef struct {
 extern list_t formats;
 
 #ifndef __EKG_STUFF_H
-extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo includowac calego stuff.c */
+extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo includowac calego stuff.h */
 #endif
 
 #define print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x) 
