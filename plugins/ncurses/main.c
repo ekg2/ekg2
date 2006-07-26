@@ -104,8 +104,20 @@ int ncurses_ui_window_print(void *data, va_list ap)
 	window_t *w	= *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
 
-	ncurses_window_t *n = w->private;
-	int bottom = 0, prev_count = n->lines_count, count = 0;
+	ncurses_window_t *n;
+	int bottom = 0, prev_count, count = 0;
+
+	if (!(n = w->private)) { 
+		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
+		 * 	plugin may call print_window() 
+		 */
+		ncurses_window_new(w);	
+		if (!(n = w->private)) {
+			debug("ncurses_ui_window_print() IInd CC still not w->private, quitting...\n");
+			return -1;
+		}
+	}
+	prev_count = n->lines_count;
 
 	if (n->start == n->lines_count - w->height || (n->start == 0 && n->lines_count <= w->height))
 		bottom = 1;
