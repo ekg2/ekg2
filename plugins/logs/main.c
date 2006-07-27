@@ -477,8 +477,8 @@ int logs_print_window(session_t *s, const char *target, const CHAR_T *line, time
 	fstring_t *fstr;
 	
 /* it's enough to look for ui_plugin once */
-	if (!ui_plugin) ui_plugin = plugin_find("ncurses");
-	if (!ui_plugin) ui_plugin = plugin_find("gtk");
+	if (!ui_plugin) ui_plugin = plugin_find(TEXT("ncurses"));
+	if (!ui_plugin) ui_plugin = plugin_find(TEXT("gtk"));
 	if (!ui_plugin) {
 		debug("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
 		return -1;
@@ -494,7 +494,7 @@ int logs_print_window(session_t *s, const char *target, const CHAR_T *line, time
 	fstr = wcs_fstring_new(fline);				/* create fstring */
 
 	fstr->ts = ts;						/* sync timestamp */
-	query_emit(ui_plugin, "ui-window-print", &w, &fstr);	/* let's rock */
+	query_emit(ui_plugin, TEXT("ui-window-print"), &w, &fstr);	/* let's rock */
 
 	xfree(fline);						/* cleanup */
 
@@ -534,10 +534,14 @@ int logs_buffer_raw_display(const char *file, int items) {
 		struct buffer *b = l->data;
 		if (b->type != BUFFER_LOGRAW) continue;
 		if (!xstrcmp(b->target, file)) {
+		/* we asume that (b->ts < (b->next)->ts, it's quite correct unless other plugin do this trick... */
 			if (items == -1) { 
 				logs_print_window(session_find(sesja), target, b->line, b->ts);
-				/* we asume that (b->ts < (b->next)->ts, it's quite correct if no other plugin do this trick... */
-			} else	array_add(&bs, (char *) b);
+			} else {
+				bs		= (struct buffer **) xrealloc(bs, (item+2) * sizeof(struct buffer *));
+				bs[item + 1]	= NULL;
+				bs[item]	= b;
+			}
 			item++;
 		}
 	}
@@ -551,7 +555,7 @@ int logs_buffer_raw_display(const char *file, int items) {
 	return item;
 }
 
-int logs_buffer_raw_add(const char *file, const char *str) {
+int logs_buffer_raw_add(const char *file, const CHAR_T *str) {
 	/* XXX, get global maxsize variable and if > than current ..... */
 
 	return buffer_add(BUFFER_LOGRAW, file, str, 0);
@@ -698,7 +702,7 @@ static int logs_plugin_destroy()
 			}
 
 			if (f) {
-				fprintf(f, "%i %s\n", (unsigned int) b->ts, b->line);
+				fprintf(f, "%i " CHARF "\n", (unsigned int) b->ts, b->line);
 			} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, b->target);
 
 			xfree(b->line);
@@ -1068,11 +1072,11 @@ QUERY(logs_handler_irc)
 	return 0;
 }
 
-char *logs_fstring_to_string(const char *str, const short *attr) {
+CHAR_T *logs_fstring_to_string(const CHAR_T *str, const short *attr) {
 	int i;
-	string_t asc = string_init(NULL);
+	wcs_string_t asc = wcs_string_init(NULL);
 
-	for (i = 0; i < xstrlen(str); i++) {
+	for (i = 0; i < xwcslen(str); i++) {
 #define ISBOLD(x)	(x & 64)
 #define ISBLINK(x)	(x & 256) 
 #define ISUNDERLINE(x)	(x & 512)
@@ -1094,56 +1098,56 @@ char *logs_fstring_to_string(const char *str, const short *attr) {
 		else if (i && BGCOLOR(cur) == -1 && BGCOLOR(prev) != -1);/* NO BGCOLOR */
 		else reset = 0;
 		
-		if (reset) string_append(asc, "%n");
+		if (reset) wcs_string_append(asc, TEXT("%n"));
 
 		if (ISBOLD(cur)	&& (!i || reset || ISBOLD(cur) != ISBOLD(prev)) && FGCOLOR(cur) == -1)
-			string_append(asc, "%T");		/* no color + bold. */
+			wcs_string_append(asc, TEXT("%T"));		/* no color + bold. */
 
-		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, "%i");
-//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, "%");
-//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, "%");
+		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		wcs_string_append(asc, TEXT("%i"));
+//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	wcs_string_append(asc, TEXT("%"));
+//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		wcs_string_append(asc, TEXT("%"));
 
 		if (BGCOLOR(cur) != -1 && ((!i || reset || BGCOLOR(cur) != BGCOLOR(prev)))) {	/* if there's a background color... add it */
-			string_append_c(asc, '%');
+			wcs_string_append_c(asc, '%');
 			switch (BGCOLOR(cur)) {
-				case (0): string_append_c(asc, 'l'); break;
-				case (1): string_append_c(asc, 's'); break;
-				case (2): string_append_c(asc, 'h'); break;
-				case (3): string_append_c(asc, 'z'); break;
-				case (4): string_append_c(asc, 'e'); break;
-				case (5): string_append_c(asc, 'q'); break;
-				case (6): string_append_c(asc, 'd'); break;
-				case (7): string_append_c(asc, 'x'); break;
+				case (0): wcs_string_append_c(asc, 'l'); break;
+				case (1): wcs_string_append_c(asc, 's'); break;
+				case (2): wcs_string_append_c(asc, 'h'); break;
+				case (3): wcs_string_append_c(asc, 'z'); break;
+				case (4): wcs_string_append_c(asc, 'e'); break;
+				case (5): wcs_string_append_c(asc, 'q'); break;
+				case (6): wcs_string_append_c(asc, 'd'); break;
+				case (7): wcs_string_append_c(asc, 'x'); break;
 			}
 		}
 
 		if (FGCOLOR(cur) != -1 && ((!i || reset || FGCOLOR(cur) != FGCOLOR(prev)) || (i && ISBOLD(prev) != ISBOLD(cur)))) {	/* if there's a foreground color... add it */
-			string_append_c(asc, '%');
+			wcs_string_append_c(asc, '%');
 			switch (FGCOLOR(cur)) {
-				 case (0): string_append_c(asc, ISBOLD(cur) ? 'K' : 'k'); break;
-				 case (1): string_append_c(asc, ISBOLD(cur) ? 'R' : 'r'); break;
-				 case (2): string_append_c(asc, ISBOLD(cur) ? 'G' : 'g'); break;
-				 case (3): string_append_c(asc, ISBOLD(cur) ? 'Y' : 'y'); break;
-				 case (4): string_append_c(asc, ISBOLD(cur) ? 'B' : 'b'); break;
-				 case (5): string_append_c(asc, ISBOLD(cur) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
-				 case (6): string_append_c(asc, ISBOLD(cur) ? 'C' : 'c'); break;
-				 case (7): string_append_c(asc, ISBOLD(cur) ? 'W' : 'w'); break;
+				 case (0): wcs_string_append_c(asc, ISBOLD(cur) ? 'K' : 'k'); break;
+				 case (1): wcs_string_append_c(asc, ISBOLD(cur) ? 'R' : 'r'); break;
+				 case (2): wcs_string_append_c(asc, ISBOLD(cur) ? 'G' : 'g'); break;
+				 case (3): wcs_string_append_c(asc, ISBOLD(cur) ? 'Y' : 'y'); break;
+				 case (4): wcs_string_append_c(asc, ISBOLD(cur) ? 'B' : 'b'); break;
+				 case (5): wcs_string_append_c(asc, ISBOLD(cur) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
+				 case (6): wcs_string_append_c(asc, ISBOLD(cur) ? 'C' : 'c'); break;
+				 case (7): wcs_string_append_c(asc, ISBOLD(cur) ? 'W' : 'w'); break;
 			}
 		}
 
 	/* str */
-		if (str[i] == '%') string_append_c(asc, '%');	/* escape char.. XXX, tak sie eskejpuje? */
-		string_append_c(asc, str[i]);			/* append current char */
+		if (str[i] == '%') wcs_string_append_c(asc, '%');	/* escape char.. XXX, tak sie eskejpuje? */
+		wcs_string_append_c(asc, str[i]);			/* append current char */
 	}
-	string_append(asc, "%n");	/* reset */
-	return string_free(asc, 0);
+	wcs_string_append(asc, TEXT("%n"));	/* reset */
+	return wcs_string_free(asc, 0);
 }
 
 QUERY(logs_handler_raw) {
 	window_t *w	= *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
 	char *path;
-	char *str;
+	CHAR_T *str;
 
 	if (!config_logs_log_raw) return 0;
 	if (!w || !line || w->id == 0) return 0;	/* don't log debug window */
