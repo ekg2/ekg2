@@ -464,10 +464,15 @@ int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines)
 	struct buffer *b;
 
 	if (max_lines) {
+		list_t l = buffers;
 		int bcount = buffer_count(type);
 		
-		while (bcount >= max_lines) {
-			b = buffers->data;
+		while (bcount >= max_lines && l) {
+			b = l->data;
+			l = l->next;
+
+			if (b->type != type) continue;
+
 			xfree(b->line);
 			xfree(b->target);
 			list_remove(&buffers, b, 1);
@@ -486,19 +491,26 @@ int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines)
 int buffer_add_str(int type, const char *target, const char *str, int max_lines) {
 	struct buffer *b;
 	CHAR_T *line;
+	char *sep;
 
 	time_t ts = 0;
 
-	if (sscanf(str, "%d ", &ts) != 1) {
+
+	if (!(sep = xstrchr(str, ' '))) {
 		debug("buffer_add_str() parsing str: %s failed\n", str);
 		return -1;
 	}
+	ts = atoi(str);
 
 	if (max_lines) {
+		list_t l = buffers;
 		int bcount = buffer_count(type);
 		
-		while (bcount >= max_lines) {
-			b = buffers->data;
+		while (bcount >= max_lines && l) {
+			b = l->data;
+			l = l->next;
+			if (b->type != type) continue;
+
 			xfree(b->line);
 			xfree(b->target);
 			list_remove(&buffers, b, 1);
@@ -506,7 +518,7 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
 		}
 	}
 
-	line	= normal_to_wcs(xstrchr(str, ' ')+1);
+	line	= normal_to_wcs(sep+1);
 
 	b	= xmalloc(sizeof(struct buffer));
 	b->ts		= ts;
