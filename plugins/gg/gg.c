@@ -339,10 +339,13 @@ QUERY(gg_add_notify_handle)
 
 	if (!s) {
 		debug("Function gg_add_notify_handle() called with NULL data\n");
-		return -1;
+		return 1;
 	}
+
+	if (!session_check(s, 0, "gg")) return 1;	/* not gg session. */
+
         if (!(g = session_private_get(s)))
-		return -1;
+		return 1;
 
 	gg_add_notify_ex(g->sess, str_to_uin(strchr(*uid, ':') + 1), gg_userlist_type(userlist_find(s, s->uid))); 
 	return 0;
