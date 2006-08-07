@@ -1,5 +1,5 @@
 EXTRA_DIST = config.rpath mkinstalldirs  m4 gettext.h
-SUBDIRS = plugins compat ekg docs contrib po
+SUBDIRS = plugins compat ekg docs contrib po $(subdirs)
 ACLOCAL_AMFLAGS = -I m4
 INCLUDES = $(top_builddir) $(LTDLINCL)
 
