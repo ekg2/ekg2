@@ -555,35 +555,35 @@ userlist_t *userlist_find(session_t *session, const char *uid)
  */
 userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 {
-        list_t l;
+	list_t l;
 
-        if (!uid || !userlist)
-                return NULL;
+	if (!uid || !userlist)
+		return NULL;
 
-        for (l = *userlist; l; l = l->next) {
-                userlist_t *u = l->data;
-                const char *tmp;
-                int len;
+	for (l = *userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		const char *tmp;
+		int len;
 
-                if (!xstrcasecmp(u->uid, uid))
-                        return u;
+		if (!xstrcasecmp(u->uid, uid))
+			return u;
 
-                if (u->nickname && !xstrcasecmp(u->nickname, uid))
-                        return u;
-		
-                /* porównujemy resource; if (len > 0) */
+		if (u->nickname && !xstrcasecmp(u->nickname, uid))
+			return u;
 
-                if (!(tmp = xstrchr(uid, '/')))
-                        continue;
+		/* porównujemy resource; if (len > 0) */
 
-                len = (int)(tmp - uid);
-		
-                if (len > 0 && !xstrncasecmp(uid, u->uid, len))
-                        return u;
+		if (!(tmp = xstrchr(uid, '/')) || xstrncmp(uid, "jid:", 4))
+			continue;
 
-        }
+		len = (int)(tmp - uid);
 
-        return NULL;
+		if (len > 0 && !xstrncasecmp(uid, u->uid, len))
+			return u;
+
+	}
+
+	return NULL;
 }
 
 int userlist_set(session_t *session, const char *contacts)
