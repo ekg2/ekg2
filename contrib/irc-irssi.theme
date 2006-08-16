@@ -1,9 +1,9 @@
-/* (C) Copyright 2005-2006 Jakub 'darkjames' Zawadzki <darkjames at darkjames dot ath dot cx> */
-/* 	some formats (C) Michal 'GiM' Spadlinski */
+# (C) Copyright 2005-2006 Jakub 'darkjames' Zawadzki <darkjames at darkjames dot ath dot cx> 
+# 	some formats (C) Michal 'GiM' Spadlinski 
 
 statusbar_timestamp %H:%M:%S
 
-/* IRSSI @ ekg2 */
+# IRSSI @ ekg2 
 
 irc_joined %> %C%2%n %B[%c%3%B]%n has joined %W%4\n
 irc_joined_you %> %C%2%n %B[%c%3%B]%n has joined %W%4\n
@@ -37,7 +37,7 @@ irc_ctcp_reply %> CTCP %W%2%n reply from %W%3%n: %5\n
 irc_ctcp_request %> %G%2%n %n[%g%3%n]%g requested CTCP %G%5%g from %G%4%n: _NIMP_
 irc_ctcp_request_pub %> %G%2%n %n[%g%3%n]%g requested CTCP %G%5%g from %G%4%n: _NIMP_
 
-/* check */
+# check 
 irc_ctcp_action_y_pub %W%e* %2%n %4\n
 irc_ctcp_action_pub %W%e* %2%n %5\n
 irc_ctcp_action_y %W%e* %2%n %4\n
@@ -45,18 +45,18 @@ irc_ctcp_action_y %W%e* %2%n %4\n
 irc_not_f_chan_n %n-%P%3%n:%p%5%n- %6
 irc_not_f_server %g!%3%n %6
 
-/* to co tutaj jest ma byc w oknie aktualnym, nie otwieranie nowego okna !!! */
+# to co tutaj jest ma byc w oknie aktualnym, nie otwieranie nowego okna !!! 
 irc_not_f_some %n-%P%3%n(%p%4%n)- %6
-/* a tutaj odwrotnie */
+# a tutaj odwrotnie 
 irc_ctcp_action %> %W* %2%n %5\n
-/* */ 
+# 
 
 irc_not_sent %n%K[%Rnotice%K(%r%5%K)]%n %6
 irc_not_sent_n %n%K[%Rnotice%K(%r%5%K)]%n %6
 irc_not_sent_chan %n%K[%Rnotice%K(%r%5%K)]%n %6
 irc_not_sent_chanh %n%K[%Rnotice%K(%r%5%K)]%n %6
 
-/* not irssi ones but these are nice; not changed (c GiM) */
+# not irssi ones but these are nice; not changed (c GiM) 
 RPL_MOTDSTART %g,+=%G-----\n
 RPL_MOTD %g|| %n%2\n
 RPL_ENDOFMOTD %g`+=%G-----\n
@@ -69,7 +69,7 @@ RPL_WHOISIDLE %G||%n %|idle     : %3 (signon: %4)\n
 RPL_ENDOFWHOIS %G`+===%g-----\n
 RPL_WHOWASUSER %G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n%G||%n realname : %6\n
 
-/* EKG2 only, not changed (c GiM) */
+# EKG2 only, not changed (c GiM) 
 IRC_RPL_NEWONE %> (%1) 1:%2 2:%3 3:%4 4:%5\n
 IRC_ERR_CANNOTSENDTOCHAN %! %2: %1\n
 IRC_RPL_FIRSTSECOND %> (%1) %2 %3\n
@@ -81,16 +81,16 @@ IRC_ERR_JUSTONE %! (%1) %2\n
 IRC_ERR_NEWONE %! (%1) 1:%2 2:%3 3:%4 4:%5\n
 IRC_PINGPONG %) (%1) ping/pong %c%2%n\n
 
-/* NOT IMPLEMENTED, feel free to send patch */
+# NOT IMPLEMENTED, feel free to send patch 
 irc_msg_sent 11 %P<%n%3/%5%P>%n %6
 irc_msg_sent_chanh 22 %P<%W%{2@%+GCP}X%2%3%P>%n %6
 irc_not_f_chan_nh 99 %B(%W%{2@%+GCP}X%2%3%B)%n %6
 
-/*  NOT USED */
+#  NOT USED 
 # irc_unknown_ctcp %> %Y%2%n sent unknown CTCP %3: (%4)\n
 # irc_msg_f_chan %B<%w%{2@%+gcp}X%2%3/%5%B>%n %6
 # irc_msg_f_chanh %B<%W%{2@%+GCP}X%2%3/%5%B>%n %6
 # irc_not_f_chan %B(%w%{2@%+gcp}X%2%3/%5%B)%n %6
 # irc_not_f_chanh %B(%W%{2@%+GCP}X%2%3/%5%B)%n %6
 
-/* END */ 
+# END
