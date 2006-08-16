@@ -131,7 +131,7 @@ QUERY(rss_message) {
 			target = uid;
 			break;
 	}
-
+	if (mw) window_new(uid, s, 0);
 	print_window(uid, s, 1, "feed_message_header", title, url);
 
 	if (sheaders) {
@@ -283,7 +283,7 @@ static int feed_theme_init() {
 	format_add("feed_subscribe_no",		_("%) Subscribtion not found, cannot unsubscribe"), 1);
 
 	format_add("feed_message_header",	_("%g,+=%G-----%W  %1 %n(ID: %W%2%n)"), 1);
-	format_add("feed_message_body",		_("%g||%n%| %1"), 1);
+	format_add("feed_message_body",		_("%g||%n %|%1"), 1);
 	format_add("feed_message_footer",	_("%g|+=%G----- End of message...%n\n"), 1);
 
 		/* %1 - tag %2 - value */

@@ -561,6 +561,7 @@ COMMAND(nntp_command_raw) {
 
 COMMAND(nntp_command_nextprev) {
 	nntp_private_t *j = feed_private(session);
+	int mode = session_int_get(session, "display_mode");
 
 	if (!j->newsgroup) {
 		wcs_printq("invalid_params", name);
@@ -569,7 +570,11 @@ COMMAND(nntp_command_nextprev) {
 	if (!xstrcmp(name, "next")) 	j->newsgroup->article++;
 	else				j->newsgroup->article--;
 
-	watch_write(j->send_watch, "%s %d\r\n", "BODY", j->newsgroup->article);
+	if (mode == 2)				watch_write(j->send_watch, "HEAD %d\r\n", j->newsgroup->article);
+	else if (mode == 3 || mode == 4)	watch_write(j->send_watch, "ARTICLE %d\r\n", j->newsgroup->article);
+	else if (mode == 0 || mode == -1)	;
+	else					watch_write(j->send_watch, "BODY %d\r\n", j->newsgroup->article);
+
 	return 0;
 }
 

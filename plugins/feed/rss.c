@@ -97,19 +97,6 @@ typedef struct {
 
 list_t feeds;			/* list of feeds, rss_feed_t struct */
 
-/* userlist_find() is wrong for URI's cause userlist_find() strips everything after first '/' and treat that as resource */
-userlist_t *rss_userlist_find(session_t *s, const char *uid) {
-	list_t l;
-	if (!s) return NULL;
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-
-		if (!xstrcmp(u->uid, uid)) 
-			return u;
-	}
-	return NULL;
-}
-
 void rss_string_append(rss_feed_t *f, const char *str) {
 	string_t buf		= f->buf;
 
@@ -498,7 +485,7 @@ void rss_fetch_process(rss_feed_t *f, const char *str) {
 //	XML_SetParamEntityParsing(parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
 	XML_SetUnknownEncodingHandler(parser, (XML_UnknownEncodingHandler) rss_handle_encoding, priv);
 
-	feed_set_descr(rss_userlist_find(session_find(f->session), f->uid), xstrdup("Parsing..."));
+	feed_set_descr(userlist_find(session_find(f->session), f->uid), xstrdup("Parsing..."));
 
 	if (XML_Parse(parser, str, xstrlen(str), 1) == XML_STATUS_OK) {
 		for (node = priv->node; node; node = node->next) {
@@ -537,8 +524,8 @@ void rss_fetch_process(rss_feed_t *f, const char *str) {
 	}
 
 	if (!new_items)
-		feed_set_statusdescr(rss_userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_DND), xstrdup("Done."));
-	else	feed_set_statusdescr(rss_userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_AVAIL), xstrdup("Done."));
+		feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_DND), xstrdup("Done."));
+	else	feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_AVAIL), xstrdup("Done."));
 fail:
 	xmlnode_free(priv->node);
 	XML_ParserFree(parser);
@@ -558,7 +545,7 @@ WATCHER_LINE(rss_fetch_handler) {
 	}
 
 	if (f->headers_done) {
-		feed_set_descr(rss_userlist_find(session_find(f->session), f->uid), xstrdup("Getting data..."));
+		feed_set_descr(userlist_find(session_find(f->session), f->uid), xstrdup("Getting data..."));
 		if (xstrcmp(watch, ""))
 			rss_string_append(f, watch);
 	} else {
@@ -601,7 +588,7 @@ WATCHER(rss_fetch_handler_connect) {
 	}
 	
 	if (f->proto == RSS_PROTO_HTTP) {
-		feed_set_descr(rss_userlist_find(session_find(f->session), f->uid), xstrdup("Requesting..."));
+		feed_set_descr(userlist_find(session_find(f->session), f->uid), xstrdup("Requesting..."));
 		char *request = saprintf(
 			"GET %s HTTP/1.0\r\n"
 			"Host: %s\r\n"
@@ -711,7 +698,7 @@ int rss_url_fetch(rss_feed_t *f, int quiet) {
 			sin.sin_port		= htons(f->port);
 			sin.sin_family		= AF_INET;
 
-			feed_set_statusdescr(rss_userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_AWAY), xstrdup("Connecting..."));
+			feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_AWAY), xstrdup("Connecting..."));
 			f->connecting = 1;
 
 			ret = connect(fd, (struct sockaddr *) &sin, sizeof(sin));
@@ -761,7 +748,7 @@ COMMAND(rss_command_connect) {
 COMMAND(rss_command_subscribe) {
 	userlist_t *u;
 
-	if ((u = rss_userlist_find(session, target))) {
+	if ((u = userlist_find(session, target))) {
 		printq("feed_subcribe_already", target);
 		return -1;
 	}
@@ -772,8 +759,8 @@ COMMAND(rss_command_subscribe) {
 
 COMMAND(rss_command_unsubscribe) {
 	userlist_t *u; 
-	if (!(u = rss_userlist_find(session, target))) {
-		printq("feed_subcribe_no", target);
+	if (!(u = userlist_find(session, target))) {
+		printq("feed_subscribe_no", target);
 		return -1;
 	}
 	userlist_remove(session, u);
