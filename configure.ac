@@ -474,6 +474,9 @@ AC_OUTPUT
 echo
 echo "configured options: "
 
+echo "CFLAGS: $CFLAGS"
+echo "LDFLAGS: $LDFLAGS"
+echo "LIBS: $DLLIB $LIBS"
 echo "PLUGINS: "
 # - UI PLUGINS
 echo -en " - Interface:\t "
@@ -569,6 +572,13 @@ echo ""
 
 #########################
 echo ""
+
+echo -en " - NLS system:\t "
+if test "$USE_NLS" = "yes"; then
+	echo "en pl"
+else 
+	echo "disabled, only en"
+fi
 
 if test "x$have_libgadu" = "xyes"; then
 	echo -en " - GG Tokens:\t saving to file"
