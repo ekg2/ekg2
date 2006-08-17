@@ -51,62 +51,57 @@ char *jabber_attr(char **atts, const char *att)
  * if you're supplying an outrepl, the target charset should be.
  */
 size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
-		   char **outbuf, size_t *outbytesleft,
-		   char **inrepls, const char *outrepl)
+		char **outbuf, size_t *outbytesleft,
+		char **inrepls, const char *outrepl)
 {
-  size_t ret = 0, ret1;
-  char *ib = *inbuf;
-  size_t ibl = *inbytesleft;
-  char *ob = *outbuf;
-  size_t obl = *outbytesleft;
+	size_t ret = 0, ret1;
+	char *ib = *inbuf;
+	size_t ibl = *inbytesleft;
+	char *ob = *outbuf;
+	size_t obl = *outbytesleft;
 
-  for (;;)
-  {
-    ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
-    if (ret1 != (size_t)-1)
-      ret += ret1;
-    if (ibl && obl && errno == EILSEQ)
-    {
-      if (inrepls)
-      {
-	/* Try replacing the input */
-	char **t;
-	for (t = inrepls; *t; t++)
-	{
-	  char *ib1 = *t;
-	  size_t ibl1 = xstrlen (*t);
-	  char *ob1 = ob;
-	  size_t obl1 = obl;
-	  iconv (cd, &ib1, &ibl1, &ob1, &obl1);
-	  if (!ibl1)
-	  {
-	    ++ib, --ibl;
-	    ob = ob1, obl = obl1;
-	    ++ret;
-	    break;
-	  }
+	for (;;) {
+		ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
+		if (ret1 != (size_t)-1)
+			ret += ret1;
+		if (ibl && obl && errno == EILSEQ) {
+			if (inrepls) {
+				/* Try replacing the input */
+				char **t;
+				for (t = inrepls; *t; t++)
+				{
+					char *ib1 = *t;
+					size_t ibl1 = xstrlen (*t);
+					char *ob1 = ob;
+					size_t obl1 = obl;
+					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
+					if (!ibl1) {
+						++ib, --ibl;
+						ob = ob1, obl = obl1;
+						++ret;
+						break;
+					}
+				}
+				if (*t)
+					continue;
+			}
+			if (outrepl) {
+				/* Try replacing the output */
+				int n = xstrlen (outrepl);
+				if (n <= obl)
+				{
+					memcpy (ob, outrepl, n);
+					++ib, --ibl;
+					ob += n, obl -= n;
+					++ret;
+					continue;
+				}
+			}
+		}
+		*inbuf = ib, *inbytesleft = ibl;
+		*outbuf = ob, *outbytesleft = obl;
+		return ret;
 	}
-	if (*t)
-	  continue;
-      }
-      if (outrepl)
-      {
-	/* Try replacing the output */
-	int n = xstrlen (outrepl);
-	if (n <= obl)
-	{
-	  memcpy (ob, outrepl, n);
-	  ++ib, --ibl;
-	  ob += n, obl -= n;
-	  ++ret;
-	  continue;
-	}
-      }
-    }
-    *inbuf = ib, *inbytesleft = ibl;
-    *outbuf = ob, *outbytesleft = obl;
-    return ret;
-  }
 }
 
 /*
@@ -116,44 +111,42 @@ size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
 
 char *mutt_convert_string (char *ps, const char *from, const char *to)
 {
-  iconv_t cd;
-  char *repls[] = { "\357\277\275", "?", 0 };
-  char *s = ps;
+	iconv_t cd;
+	char *repls[] = { "\357\277\275", "?", 0 };
+	char *s = ps;
 
-  if (!s || !*s)
-    return 0;
+	if (!s || !*s)
+		return NULL;
 
-  if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1)
-  {
-    int len;
-    char *ib;
-    char *buf, *ob;
-    size_t ibl, obl;
-    char **inrepls = 0;
-    char *outrepl = 0;
+	if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1) {
+		int len;
+		char *ib;
+		char *buf, *ob;
+		size_t ibl, obl;
+		char **inrepls = 0;
+		char *outrepl = 0;
 
-    if ( !xstrcasecmp(to, "utf-8") )
-      outrepl = "\357\277\275";
-    else if ( !xstrcasecmp(from, "utf-8"))
-      inrepls = repls;
-    else
-      outrepl = "?";
-      
-    len = xstrlen (s);
-    ib = s, ibl = len + 1;
-    obl = 16 * ibl;
-    ob = buf = xmalloc (obl + 1);
-    
-    mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
-    iconv_close (cd);
+		if ( !xstrcasecmp(to, "utf-8") )
+			outrepl = "\357\277\275";
+		else if ( !xstrcasecmp(from, "utf-8"))
+			inrepls = repls;
+		else
+			outrepl = "?";
 
-    *ob = '\0';
+		len = xstrlen (s);
+		ib = s, ibl = len + 1;
+		obl = 16 * ibl;
+		ob = buf = xmalloc (obl + 1);
 
-    buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
-    return buf;
-  }
-  else
-    return 0;
+		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
+		iconv_close (cd);
+
+		*ob = '\0';
+
+		buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
+		return buf;
+	}
+	return NULL;
 }
 
 /* End of code taken from mutt. */
@@ -221,12 +214,17 @@ char *jabber_unescape(const char *text)
 
 /* tlen_encode() & tlen_decode() ripped from libtlen. XXX, try to rewrite some code */
 
-/* tlen_encode() - Koduje tekst przy pomocy urlencode */
+/* tlen_encode() - Koduje tekst przy pomocy urlencode + rekoduje charset na iso-8859-2 */
 char *tlen_encode(const char *what) {
-	const unsigned char *s = what;
+	const unsigned char *s;
 	unsigned char *ptr, *str;
+	char *text = NULL;
 
 	if (!what) return NULL;
+
+	if (xstrcmp(config_console_charset, "ISO-8859-2"))
+		s = text = mutt_convert_string((char *) what, config_console_charset, "ISO-8859-2");
+	else	s = what;
 
 	str = ptr = (unsigned char *) xcalloc(3 * xstrlen(s) + 1, 1);
 	while (*s) {
@@ -241,12 +239,15 @@ char *tlen_encode(const char *what) {
 			*ptr++ = *s;
 		s++;
 	}
+	xfree(text);
 	return str;
 }
 
-/* tlen_decode() - Dekoduje tekst przy pomocy urldecode */
+/* tlen_decode() - Dekoduje tekst przy pomocy urldecode + rekoduje charset na aktualny.. */
 char *tlen_decode(const char *what) {
 	unsigned char *dest, *data, *retval;
+	char *text;
+
 	if (!what) return NULL;
 	dest = data = retval = xstrdup(what);
 	while (*data) {
@@ -263,7 +264,11 @@ char *tlen_decode(const char *what) {
 		data++;
 	}
 	*dest = '\0';
-	return retval;
+	if (!xstrcmp(config_console_charset, "ISO-8859-2")) return retval;
+
+	text = mutt_convert_string((char *) retval, "ISO-8859-2", config_console_charset);
+	xfree(retval);
+	return text;
 }
 
 /*
