@@ -858,7 +858,7 @@ int ignored_remove(session_t *session, const char *uid)
 	query_emit(NULL, TEXT("protocol-ignore"), &tmps, &tmp, &level, &tmp2);
 	xfree(tmps);
 	xfree(tmp);
-	
+
 	if ((level & IGNORE_STATUS || level & IGNORE_STATUS_DESCR)) {
 		query_emit(NULL, TEXT("protocol-unignore"), &u, &session);
 	}

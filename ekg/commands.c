@@ -1396,10 +1396,10 @@ COMMAND(cmd_ignore)
 		level = ignored_check(session, uid);
 		
 		if (!ignored_remove(session, uid)) {
-			printq("ignored_deleted", format_user(session, uid));
+			printq("ignored_deleted", format_user(session, params[0]));
 			config_changed = 1;
 		} else {
-			printq("error_not_ignored", format_user(session, uid));
+			printq("error_not_ignored", format_user(session, params[0]));
 			return -1;
 		}
 	
