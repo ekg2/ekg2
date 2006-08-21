@@ -6,7 +6,7 @@ AC_DEFUN([AC_CHECK_NCURSES],
 	AC_SUBST(NCURSES_LIBS)
 	AC_SUBST(NCURSES_CPPFLAGS)
 
-	AC_ARG_WITH(ncurses, [[  --with-ncurses[=dir]  Compile with ncurses/locate base dir]], [
+	AC_ARG_WITH(ncurses, 		AC_HELP_STRING([--with-ncurses[=dir]],	[Compile with ncurses/locate base dir]), [
 		if test "x$withval" = "xno"; then
 			without_ncurses=yes
 		elif test "x$withval" != "xyes"; then

@@ -3,8 +3,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
   AC_SUBST([LIBGADU_LIBS])
   AC_SUBST([LIBGADU_CPPFLAGS])
 
-  AC_ARG_WITH([libgadu],
-    AC_HELP_STRING([--with-libgadu], [use libgadu]),
+  AC_ARG_WITH([libgadu],		AC_HELP_STRING([--with-libgadu],	[use libgadu]),
       if test "x$withval" = "xno" ; then
         without_libgadu=yes
       elif test "x$withval" != "xyes" ; then

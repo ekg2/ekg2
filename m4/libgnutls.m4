@@ -13,8 +13,7 @@ AC_DEFUN([AM_PATH_LIBGNUTLS],
 [dnl
 dnl Get the cflags and libraries from the libgnutls-config script
 dnl
-AC_ARG_WITH(libgnutls-prefix,
-          [  --with-libgnutls-prefix=PFX   Prefix where libgnutls is installed (optional)],
+	AC_ARG_WITH(libgnutls-prefix, 	AC_HELP_STRING([--with-libgnutls-prefix=[dir]],	[Prefix where libgnutls is installed (optional)]),
           libgnutls_config_prefix="$withval", libgnutls_config_prefix="")
 
   if test x$libgnutls_config_prefix != x ; then

@@ -23,8 +23,7 @@ AC_DEFUN([AC_CHECK_SQLITE], [
   SQLITE_LIBS=""
   SQLITE_CFLAGS=""
 
-  AC_ARG_WITH(sqlite,
-      AC_HELP_STRING( [--with-sqlite[=dir]] , [Compile with libsqlite at given dir] ),
+  AC_ARG_WITH(sqlite,		AC_HELP_STRING([--with-sqlite[=dir]],	[Compile with libsqlite at given dir]),
       [ ac_sqlite="$withval" 
         if test "x$withval" != "xno" -a test "x$withval" != "xyes"; then
             ac_sqlite="yes"
@@ -32,13 +31,9 @@ AC_DEFUN([AC_CHECK_SQLITE], [
             ac_sqlite_libdir="$withval"/lib
         fi ],
       [ ac_sqlite="auto" ] )
-  AC_ARG_WITH(sqlite-incdir,
-      AC_HELP_STRING( [--with-sqlite-incdir],
-                      [Specifies where the SQLite include files are.] ),
+  AC_ARG_WITH(sqlite-incdir,	AC_HELP_STRING([--with-sqlite-incdir],	[Specifies where the SQLite include files are.]),
       [  ac_sqlite_incdir="$withval" ] )
-  AC_ARG_WITH(sqlite-libdir,
-      AC_HELP_STRING( [--with-sqlite-libdir],
-                      [Specifies where the SQLite libraries are.] ),
+  AC_ARG_WITH(sqlite-libdir,	AC_HELP_STRING([--with-sqlite-libdir],	[Specifies where the SQLite libraries are.]),
       [  ac_sqlite_libdir="$withval" ] )
 
   # Try to automagically find SQLite, either with pkg-config, or without.

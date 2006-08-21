@@ -23,8 +23,7 @@ AC_DEFUN([AC_CHECK_SQLITE3], [
   SQLITE_LIBS=""
   SQLITE_CFLAGS=""
 
-  AC_ARG_WITH(sqlite3,
-      AC_HELP_STRING( [--with-sqlite3[=dir]] , [Compile with libsqlite3 at given dir] ),
+  AC_ARG_WITH(sqlite3,		AC_HELP_STRING([--with-sqlite3[=dir]],	[Compile with libsqlite3 at given dir]),
       [ ac_sqlite3="$withval" 
         if test "x$withval" != "xno" -a "x$withval" != "xyes"; then
             ac_sqlite3="yes"
@@ -32,13 +31,9 @@ AC_DEFUN([AC_CHECK_SQLITE3], [
             ac_sqlite3_libdir="$withval"/lib
         fi ],
       [ ac_sqlite3="auto" ] )
-  AC_ARG_WITH(sqlite3-incdir,
-      AC_HELP_STRING( [--with-sqlite3-incdir],
-                      [Specifies where the SQLite3 include files are.] ),
+  AC_ARG_WITH(sqlite3-incdir,	AC_HELP_STRING([--with-sqlite3-incdir],	[Specifies where the SQLite3 include files are.]),
       [  ac_sqlite3_incdir="$withval" ] )
-  AC_ARG_WITH(sqlite3-libdir,
-      AC_HELP_STRING( [--with-sqlite3-libdir],
-                      [Specifies where the SQLite3 libraries are.] ),
+  AC_ARG_WITH(sqlite3-libdir,	AC_HELP_STRING([--with-sqlite3-libdir],	[Specifies where the SQLite3 libraries are.]),
       [  ac_sqlite3_libdir="$withval" ] )
 
   # Try to automagically find SQLite, either with pkg-config, or without.

@@ -1,6 +1,6 @@
 # Oron Peled (Sun Jun 30 2002)
 # Taken from libglade.m4
-# moidified by Piotr Kupisiewicz 
+# modified by Piotr Kupisiewicz 
 
 # a macro to get the libs/cflags for libxosd
 
@@ -11,9 +11,7 @@ AC_DEFUN([AM_CHECK_LIBXOSD],
 [dnl
 dnl Get the cflags and libraries from the xosd-config script
 dnl
-AC_ARG_WITH(xosd-config,
-AC_HELP_STRING([--with-xosd-config=LIBXOSD_CONFIG],[Location of xosd-config]),
-LIBXOSD_CONFIG="$withval")
+AC_ARG_WITH(xosd-config,		AC_HELP_STRING([--with-xosd-config=LIBXOSD_CONFIG],	[Location of xosd-config]),	LIBXOSD_CONFIG="$withval")
 
 AC_PATH_PROG(LIBXOSD_CONFIG, xosd-config, no)
 AC_MSG_CHECKING(for libxosd)

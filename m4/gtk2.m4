@@ -9,8 +9,7 @@ AC_DEFUN([AC_CHECK_GTK2],
 [dnl 
 dnl Get the cflags and libraries from pkg-config
 dnl
-AC_ARG_ENABLE(gtktest, [  --without-gtk       do not try to compile and run a test GTK+ program],
-		    , enable_gtktest=yes)
+AC_ARG_ENABLE(gtktest,,,enable_gtktest=yes)
 
   pkg_config_args=gtk+-2.0
   for module in . $4

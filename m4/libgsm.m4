@@ -5,7 +5,7 @@ AC_DEFUN([AC_CHECK_LIBGSM],
 	AC_SUBST(LIBGSM_LIBS)
 	AC_SUBST(LIBGSM_CFLAGS)
 
-	AC_ARG_WITH(libgsm, [[  --with-libgsm[=dir]   Compile with libgsm/locate base dir]], [
+	AC_ARG_WITH(libgsm, 		AC_HELP_STRING([--with-libgsm[=dir]],	[Compile with libgsm/locate base dir]), [
 		if test "x$withval" = "xno"; then
 			without_libgsm=yes
 		elif test "x$withval" != "xyes"; then

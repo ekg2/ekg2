@@ -5,8 +5,7 @@ AC_DEFUN([AC_CHECK_READLINE],[
   AC_SUBST(READLINE_LIBS)
   AC_SUBST(READLINE_CFLAGS)
 
-  AC_ARG_WITH(readline,
-    [[  --with-readline[=dir]   Compile with readline/locate base dir]],
+  AC_ARG_WITH(readline,		AC_HELP_STRING([--with-readline[=dir]],	[Compile with readline/locate base dir]),
     if test "x$withval" = "xno" ; then
       without_readline=yes
     elif test "x$withval" != "xyes" ; then

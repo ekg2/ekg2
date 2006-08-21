@@ -5,7 +5,7 @@ AC_DEFUN([AC_CHECK_EXPAT],
 	AC_SUBST(EXPAT_LIBS)
 	AC_SUBST(EXPAT_CPPFLAGS)
 
-	AC_ARG_WITH(expat, [[  --with-expat[=dir]    Compile with expat/locate base dir]], [
+	AC_ARG_WITH(expat, 		AC_HELP_STRING([--with-expat[=dir]],	[Compile with expat/locate base dir]), [
 		if test "x$withval" = "xno"; then
 			without_expat=yes
 		elif test "x$withval" != "xyes"; then
