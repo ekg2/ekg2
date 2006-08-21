@@ -186,7 +186,7 @@ int logs_window_check(logs_log_t *ll, time_t t)
 		char *tmp = l->path;
 
 		l->path = logs_prepare_path(s, config_logs_path, ll->uid, t);
-		debug("[logs] logs_window_check chan = %d oldpath = %s newpath = %s\n", chan, tmp, l->path);
+		debug("[logs] logs_window_check chan = %d oldpath = %s newpath = %s\n", chan, __(tmp), __(l->path));
 #if 0 /* TODO: nie moze byc - bo mogl logformat sie zmienic... */
 		if (chan != 3 && !xstrcmp(tmp, l->path))  /* jesli sciezka sie nie zmienila to nie otwieraj na nowo pliku */
 			chan = -chan; 
@@ -242,7 +242,7 @@ logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid) {
 	logs_log_t *ll;
 	int created = 0;
 		
-	debug("[logs] log_new uid = %s session %s", uid, session);
+	debug("[logs] log_new uid = %s session %s", __(uid), __(session));
 	ll = l ? l : logs_log_find(session, uid, 0);
 	debug(" logs_log_t %x\n", ll);
 
@@ -407,7 +407,7 @@ log_away_t *logs_away_create(char *session)
 	if (logs_away_find(session))
 		return NULL;
 
-	debug("[logs] turning awaylog on for session %s\n", session);
+	debug("[logs] turning awaylog on for session %s\n", __(session));
 
 	la = xmalloc(sizeof(log_away_t));
 	la->sname = xstrdup(session);
@@ -442,7 +442,7 @@ QUERY(logs_sestatus_handler)
 	char *session = *(va_arg(ap, char **));
 	char *status  = *(va_arg(ap, char **));
 
-	debug("[LOGS_SESTATUS HANDLER %s %s\n", session, status);
+	debug("[LOGS_SESTATUS HANDLER %s %s\n", __(session), __(status));
 
 	if (!config_away_log)
 		return 0;
@@ -455,7 +455,7 @@ QUERY(logs_sestatus_handler)
 		logs_away_create(session);
 	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
 		if (logs_away_display(logs_away_find(session), 0, 1)) { /* strange */
-			debug("[LOGS_SESTATUS] strange no away turned on for this sesssion = %s\n", session);
+			debug("[LOGS_SESTATUS] strange no away turned on for this sesssion = %s\n", __(session));
 			return 0; 
 		}
 	}
@@ -484,7 +484,7 @@ int logs_print_window(session_t *s, const char *target, const CHAR_T *line, time
 		return -1;
 	}
 /* search for window */
-	debug("logs_print_window() sesja: 0x%x target: %s ", s, target);
+	debug("logs_print_window() sesja: 0x%x target: %s ", s, __(target));
 	w = window_find_s(s, target);
 	debug("w: 0x%x\n", w);
 
@@ -528,7 +528,7 @@ int logs_buffer_raw_display(const char *file, int items) {
 	profile = (xstrcmp(target, "_default_")) 	? xstrndup(profile, sesja-profile-1) : NULL;
 	sesja	= (xstrcmp(target, "_null_"))		? xstrndup(sesja, target-sesja-1) : NULL;
 	target	= xstrdup(target);
-	debug("[logs_buffer_raw_display()] profile: %s sesja: %s target: %s\n", profile, sesja, target);
+	debug("[logs_buffer_raw_display()] profile: %s sesja: %s target: %s\n", __(profile), __(sesja), __(target));
 
 	for (l = buffers; l; l = l->next) {
 		struct buffer *b = l->data;
@@ -575,12 +575,12 @@ QUERY(logs_handler_newwin) {
 		char *path;
 		
 		path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0 /* time(NULL) */ ); 
-		debug("logs_handler_newwin() loading buffer from: %s\n", path);
+		debug("logs_handler_newwin() loading buffer from: %s\n", __(path));
 
 		f = logs_open_file(path, LOG_FORMAT_RAW);
 
 		if (!f) {
-			debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, path);
+			debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(path));
 			xfree(path);
 			return 0;
 		}
@@ -595,7 +595,7 @@ QUERY(logs_handler_newwin) {
 
 /*	XXX, unlink file instead of truncating? 
 		if (unlink(path+'.raw') == -1)
-			debug("[LOGS:%d] Cannot unlink file: %s (%d %s)\n", __LINE__, path, errno, strerror(errno));
+			debug("[LOGS:%d] Cannot unlink file: %s (%d %s)\n", __LINE__, __(path), errno, strerror(errno));
 */		
 
 		logs_buffer_raw_display(path, config_logs_remind_number);
@@ -703,7 +703,7 @@ static int logs_plugin_destroy()
 
 			if (f) {
 				fprintf(f, "%i " CHARF "\n", (unsigned int) b->ts, b->line);
-			} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, b->target);
+			} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(b->target));
 
 			xfree(b->line);
 			xfree(oldtarget);
@@ -806,12 +806,12 @@ FILE* logs_open_file(char *path, int ff)
 #endif
 	if (ff != LOG_FORMAT_IRSSI && ff != LOG_FORMAT_SIMPLE && ff != LOG_FORMAT_XML && ff != LOG_FORMAT_RAW) {
 		if (ff == LOG_FORMAT_NONE)
-			debug("[logs] opening log file %s with ff == LOG_FORMAT_NONE CANCELLED\n", path, ff);
-		else	debug("[logs] opening log file %s with ff == %d CANCELED\n", path, ff);
+			debug("[logs] opening log file %s with ff == LOG_FORMAT_NONE CANCELLED\n", __(path), ff);
+		else	debug("[logs] opening log file %s with ff == %d CANCELED\n", __(path), ff);
 		return NULL;
 	}
 
-        debug("[logs] opening log file %s ff:%d\n", path, ff);
+        debug("[logs] opening log file %s ff:%d\n", __(path), ff);
 
 	if (!path) {
 		errno = EACCES; /* = 0 ? */
@@ -949,7 +949,7 @@ QUERY(logs_handler)
 	}
 
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
-		debug("[LOGS:%d] logs_handler Cannot open/create file: %s\n", __LINE__, lw->path);
+		debug("[LOGS:%d] logs_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
 		return 0;
 	}
 	
@@ -1001,7 +1001,7 @@ QUERY(logs_status_handler)
 	}
 
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
-		debug("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, lw->path);
+		debug("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
 		return 0;
 	}
 
@@ -1018,7 +1018,7 @@ QUERY(logs_status_handler)
 		char *_what = NULL;
 		char *_ip = saprintf("~%s@%s:%d", "notirc", inet_ntoa((struct in_addr) {ip}), port);
 
-		_what = saprintf("%s (%s)", descr, status);
+		_what = saprintf("%s (%s)", __(descr), __(status));
 		
 		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS, _ip);
 		
@@ -1050,7 +1050,7 @@ QUERY(logs_handler_irc)
 		if (private) {
 			logs_away_append(logs_away_find(session), NULL, channame, text);
 		} else {
-			char *tmp = saprintf("irc:%s", uid); /* czemu uid nie ma irc: ? */
+			char *tmp = saprintf("irc:%s", __(uid)); /* czemu uid nie ma irc: ? */
 			logs_away_append(logs_away_find(session), channame, tmp, text);
 			xfree(tmp);
 		}
@@ -1062,7 +1062,7 @@ QUERY(logs_handler_irc)
 	}
 
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) { 
-		debug("[LOGS:%d] logs_handler_irc Cannot open/create file: %s\n", __LINE__, lw->path);
+		debug("[LOGS:%d] logs_handler_irc Cannot open/create file: %s\n", __LINE__, __(lw->path));
 		return 0;
 	}
 
@@ -1153,7 +1153,7 @@ QUERY(logs_handler_raw) {
 	if (!w || !line || w->id == 0) return 0;	/* don't log debug window */
 	
 		/* line->str + line->attr == ascii str with formats */
-	debug("logs_handler_raw() ID: %d str: %s\n", w->id, line->str);
+	debug("logs_handler_raw() ID: %d str: %s\n", w->id, __(line->str));
 	path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0);
 	str  = logs_fstring_to_string(line->str, line->attr);
 
@@ -1342,20 +1342,20 @@ void logs_irssi(FILE *file, const char *session, const char *uid, const char *te
 
 	switch (type) {
 		case LOG_IRSSI_STATUS: /* status message (other than @1) */
-			text = saprintf("reports status: %s [%s] /* {status} */", text, ip);
+			text = saprintf("reports status: %s [%s] /* {status} */", __(text), __(ip));
 		case LOG_IRSSI_ACTION:	/* irc ACTION messages */
-			fprintf(file, "%s * %s %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : uid, text);
+			fprintf(file, "%s * %s %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
 			if (type == LOG_IRSSI_STATUS) xfree((char *) text);
 			break;
 		case LOG_IRSSI_INFO: /* other messages like session started, session closed and so on */
-			fprintf(file, "%s\n", text);
+			fprintf(file, "%s\n", __(text));
 			break;
 		case LOG_IRSSI_EVENT: /* text - join, part, quit, ... */
 			fprintf(file, "%s -!- %s [%s] has %s #%s\n", 
-				prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : uid, ip, text, session);
+				prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(ip), __(text), __(session));
 			break;
 		case LOG_IRSSI_MESSAGE:	/* just normal message */
-			fprintf(file, "%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : uid, text);
+			fprintf(file, "%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
 			break;
 		default: /* everythink else */
 			debug("[LOGS_IRSSI] UTYPE = %d\n", type);
