@@ -1,4 +1,4 @@
-SUBDIRS = $(CONTRIB_DIR)
+SUBDIRS = $(CONTRIB_SUBDIRS)
 DIST_SUBDIRS = python perl 
 EXTRA_DIST = irc-irssi.theme blue_sea_dragon.theme
 

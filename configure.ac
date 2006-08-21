@@ -35,7 +35,7 @@ ALL_LINGUAS="pl"
 dnl little or big endian ? 
 AC_C_BIGENDIAN
 
-AC_SUBST(CONTRIB_DIR)
+AC_SUBST(CONTRIB_SUBDIRS)
 AC_SUBST(COMPAT)
 AC_SUBST(DLLIB)
 AC_SUBST(PLUGINS)
@@ -366,7 +366,7 @@ if test "x$with_perl" != "xno"; then
 	if test "x$have_perl" = "xyes"; then
 		AC_CONFIG_FILES([plugins/perl/Makefile])
 		AC_CONFIG_FILES([contrib/perl/Makefile])
-		CONTRIB_DIR="$CONTRIB_DIR perl"
+		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS perl"
 		PLUGINS="$PLUGINS perl"
 	fi
 fi
@@ -381,7 +381,7 @@ if test "x$with_python" != "xno"; then
 	if test "x$have_python" = "xyes"; then
 		AC_CONFIG_FILES([plugins/python/Makefile])
 		AC_CONFIG_FILES([contrib/python/Makefile])
-		CONTRIB_DIR="$CONTRIB_DIR python"
+		CONTRIB_SUBDIRS="$CONTRIB_DIRS python"
 		PLUGINS="$PLUGINS python"
 	fi
 fi
