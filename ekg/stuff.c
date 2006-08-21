@@ -2269,7 +2269,7 @@ const char *ekg_status_label(const char *status, const char *descr, const char *
 {
 	static char buf[100];
 
-	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", status, (descr) ? "_descr" : "");
+	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", __(status), (descr) ? "_descr" : "");
 
 	return buf;
 }
