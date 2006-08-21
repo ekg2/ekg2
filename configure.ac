@@ -15,14 +15,9 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_C_CONST
 
-dnl sprawdzic czy sa dobre usuniete flagi jak cos to dodac/ zmienic/ usunac/ etc.. /me nie wie.
-
 AC_LIBTOOL_DLOPEN
-dnl AC_LIBLTDL_CONVENIENCE
-dnl AC_SUBST(LIBLTDL)
-dnl AC_SUBST(LTDLINCL)
-
 AC_DISABLE_STATIC
+
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
@@ -90,13 +85,12 @@ fi
 
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
-dnl to chyba tak ma byc.
+
 AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 #include <sys/param.h>
 #include <sys/user.h>
 ])
 
-dnl AC_CONFIG_SUBDIRS([libltdl])
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in])
@@ -105,6 +99,8 @@ PLUGINS="logs mail rc sms pcm irc"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
+
+dnl ##############################################################################################################################
 
 mouse_lib="xterm only"
 AC_ARG_WITH(gpm-mouse,		AC_HELP_STRING([--without-gpm-mouse],		[Compile without gpm mouse support (Linux only)]))
@@ -125,9 +121,8 @@ esac
 
 AC_ARG_WITH(default-theme,	AC_HELP_STRING([--with-default-theme=theme],	[Use default theme]))
 
-if test "x$with_default_theme" != "xno"; then
+if test "x$with_default_theme" != "x"; then
 	AC_DEFINE_UNQUOTED(DEFAULT_THEME, "$with_default_theme", [define your default theme])
-
 fi
 
 AC_ARG_WITH(theme,		AC_HELP_STRING([--without-theme],		[Don't compile default theme]))
@@ -136,25 +131,6 @@ if test "x$with_theme" = "xno"; then
 	AC_DEFINE(NO_DEFAULT_THEME, 1, [define if you don't want default theme])
 	AC_MSG_WARN([You don't build default theme!! remember about ekg2 -t or see --with-theme option in ./configure])
 fi
-
-AC_ARG_WITH(ioctld,		AC_HELP_STRING([--without-ioctld],		[Disable ioctld plugin]))
-
-if test "x$with_ioctld" != "xno"; then
-        AC_CHECK_HEADERS(linux/kd.h,
-	[
-		have_ioctld_includes=yes
-	], [
-	        AC_CHECK_HEADERS(sys/kbio.h,
-	        [
-		        have_ioctld_includes=yes
-		])
-	])
-        if test "x$have_ioctld_includes" = "xyes"; then
-		AC_CONFIG_FILES([plugins/ioctld/Makefile])
-		PLUGINS="$PLUGINS ioctld"
-	fi
-fi
-
 dnl
 dnl  Resolver libgadu oparty na pthread
 dnl
@@ -258,6 +234,57 @@ if test "x$with_libjpeg" != "xno"; then
         ])
 fi
 
+AC_ARG_WITH(libgnutls,		AC_HELP_STRING([--without-libgnutls],		[Compile without libgnutls support (TLS in jabber)]))
+
+if test "x$with_libgnutls" != "xno"; then
+	AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
+***
+*** libgnutls was not found. You may want to get it from
+*** ftp://ftp.gnutls.org/pub/gnutls/
+	]]))
+fi
+
+AC_ARG_WITH(zlib,		AC_HELP_STRING([--without-zlib],		[Compile without zlib support (in logs plugin)]))
+
+if test "x$with_zlib" != "xno"; then
+	AC_CHECK_LIB(z, gzopen, [
+		AC_CHECK_HEADERS(zlib.h, [
+			AC_DEFINE(HAVE_ZLIB, 1, [define if you want compressed logs])
+			AC_SUBST(ZLIB_LIBS)
+			ZLIB_LIBS="-lz"
+			have_zlib=yes
+		])
+	])
+fi
+
+AC_ARG_ENABLE([unicode],	AC_HELP_STRING([--enable-unicode],		[Enable unicode (EXPERIMENTAL)]),
+    [
+        if test "x$enable_unicode" = "xyes"; then
+            AC_DEFINE([USE_UNICODE], 1, [Use unicode (wide character strings)])
+        fi
+    ]
+)
+
+dnl #######################################################################################################################
+
+AC_ARG_WITH(ioctld,		AC_HELP_STRING([--without-ioctld],		[Compile without ioctld (ioctld plugin)]))
+
+if test "x$with_ioctld" != "xno"; then
+        AC_CHECK_HEADERS(linux/kd.h,
+	[
+		have_ioctld_includes=yes
+	], [
+	        AC_CHECK_HEADERS(sys/kbio.h,
+	        [
+		        have_ioctld_includes=yes
+		])
+	])
+        if test "x$have_ioctld_includes" = "xyes"; then
+		AC_CONFIG_FILES([plugins/ioctld/Makefile])
+		PLUGINS="$PLUGINS ioctld"
+	fi
+fi
+
 AC_ARG_WITH(libgadu,		AC_HELP_STRING([--without-libgadu],		[Compile without libgadu (GG plugin)]))
 
 if test "x$with_libgadu" != "xno"; then
@@ -290,14 +317,6 @@ if test "x$with_expat" != "xno"; then
 		PLUGINS="$PLUGINS jabber"
 	fi
 fi
-
-AC_ARG_ENABLE([unicode],	AC_HELP_STRING([--enable-unicode],		[Enable unicode (EXPERIMENTAL)]),
-    [
-        if test "x$enable_unicode" = "xyes"; then
-            AC_DEFINE([USE_UNICODE], 1, [Use unicode (wide character strings)])
-        fi
-    ]
-)
 
 AC_ARG_WITH(ncurses,		AC_HELP_STRING([--without-ncurses],		[Compile without ncurses support (ncurses plugin)]))
 
@@ -402,29 +421,6 @@ fi
 if test "x$have_sqlite" = "xyes" || test "x$have_sqlite3" = "xyes" ; then
 	AC_CONFIG_FILES([plugins/logsqlite/Makefile])
 	PLUGINS="$PLUGINS logsqlite"
-fi
-
-AC_ARG_WITH(libgnutls,		AC_HELP_STRING([--without-libgnutls],		[Compile without libgnutls support (TLS in jabber)]))
-
-if test "x$with_libgnutls" != "xno"; then
-	AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
-***
-*** libgnutls was not found. You may want to get it from
-*** ftp://ftp.gnutls.org/pub/gnutls/
-	]]))
-fi
-
-AC_ARG_WITH(zlib,		AC_HELP_STRING([--without-zlib],		[Compile without zlib support (logs plugin)]))
-
-if test "x$with_zlib" != "xno"; then
-	AC_CHECK_LIB(z, gzopen, [
-		AC_CHECK_HEADERS(zlib.h, [
-			AC_DEFINE(HAVE_ZLIB, 1, [define if you want compressed logs])
-			AC_SUBST(ZLIB_LIBS)
-			ZLIB_LIBS="-lz"
-			have_zlib=yes
-		])
-	])
 fi
 
 AC_ARG_WITH(gpg,		AC_HELP_STRING([--without-gpg],			[Compile without gpg support (gpg plugin)]))
