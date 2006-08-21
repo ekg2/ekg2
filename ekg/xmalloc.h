@@ -26,6 +26,8 @@
 #include <stdarg.h>
 #include "char.h"
 
+#define __(x) (x ? x : "(null)")
+
 #ifndef EKG2_WIN32_NOFUNCTION
 
 void ekg_oom_handler();
