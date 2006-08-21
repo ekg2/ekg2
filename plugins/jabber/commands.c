@@ -996,9 +996,9 @@ COMMAND(jabber_command_search) {
 	jabber_private_t *j = session_private_get(session);
 		/* XXX implementation bug ? should server be last variable? */
 	const char *server = params[0] ? params[0] : jabber_default_search_server ? jabber_default_search_server : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ 
-	char **splitted;
+	char **splitted		= NULL;
 
-	if (!(splitted = jabber_params_split(params[1], 0)) && params[1]) {
+	if (array_count(params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -1122,7 +1122,7 @@ COMMAND(jabber_command_register)
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *passwd = session_get(session, "password");
-	char **splitted;
+	char **splitted	= NULL;
 
 	if (!session_connected_get(session) && (!passwd || !xstrcmp(passwd, "foo"))) {
 		session_set(session, "__new_acount", "1");
@@ -1137,7 +1137,7 @@ COMMAND(jabber_command_register)
 	if (!j->send_watch) return -1;
 	j->send_watch->transfer_limit = -1;
 
-	if (!(splitted = jabber_params_split(params[1], 0)) && params[1]) {
+	if (array_count(params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -1271,7 +1271,7 @@ COMMAND(jabber_command_privacy) {
 	if (!params[0]) {
 		watch_write(j->send_watch, 
 			"<iq type=\"get\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"/></iq>", j->id++);
-	} else if (req || params[1]) {	/* (req || params[1]); (target -- params[0]) XXX */
+	} else if (req || (params[0] && params[1])) {	/* (req || params[1]); (target -- params[0]) XXX */
 		char *lname = NULL;	/* list name, if not passed. generate random one. */
 		CHAR_T *ename;
 
@@ -1297,7 +1297,7 @@ COMMAND(jabber_command_privacy) {
 			return -1;
 		}
 		
-		if (params[1]) { /* parsing params[1] made in separate block */
+		if (params[0] && params[1]) { /* parsing params[1] made in separate block */
 			char **p = array_make(params[1], " ", 0, 1, 0);
 			
 			for (i=0; p[i]; i++) { 
@@ -1473,56 +1473,61 @@ COMMAND(jabber_command_control) {
 		else if (!xstrcmp(params[1], "ekg-manage-plugins"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-manage-plugins");
 		else if (!xstrcmp(params[1], "ekg-manage-sessions"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-manage-sesions");
 	}
-	if (!params[1]) {
-		watch_write(j->send_watch, 
-			"<iq type=\"get\" to=\"%s/%s\" id=\"control%d\">"
-			"<query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"http://jabber.org/protocol/commands\"/></iq>",
-			uid, resource, j->id++);
+	switch (array_count(params)) {
+		case 1:
+			watch_write(j->send_watch, 
+					"<iq type=\"get\" to=\"%s/%s\" id=\"control%d\">"
+					"<query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"http://jabber.org/protocol/commands\"/></iq>",
+					uid, resource, j->id++);
+			/* wrapper to jid:transports ? */
+			/*		return command_format_exec(target, session, quiet, "/jid:transports %s http://jabber.org/protocol/commands"); */
+			break;
+		case 2:
+			/* .... */
+			watch_write(j->send_watch,
+					"<iq type=\"set\" to=\"%s/%s\" id=\"control%d\">"
+					"<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\"/></iq>",
+					uid, resource, j->id++, nodename ? nodename : params[1]);
+			break;
+		default: {
+				 char **splitted;
+				 char *fulluid = saprintf("%s/%s", uid, resource); 
+				 char *FORM_TYPE = xstrdup(nodename ? nodename : params[1]), *tmp;
+				 int i;
 
-/* wrapper to jid:transports ? */
-/*		return command_format_exec(target, session, quiet, "/jid:transports %s http://jabber.org/protocol/commands"); */
+				 if ((tmp = xstrchr(FORM_TYPE, '#'))) *tmp = '\0';
 
-	} else if (!params[2]) {
-		/* .... */
-		
-		watch_write(j->send_watch,
-			"<iq type=\"set\" to=\"%s/%s\" id=\"control%d\">"
-			"<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\"/></iq>",
-			uid, resource, j->id++, nodename ? nodename : params[1]);
+				 if (!(splitted = jabber_params_split(params[2], 0))) {
+					 printq("invalid_params", name);
+					 goto cleanup;
+					 return -1;
+				 }
+				 printq("jabber_remotecontrols_executing", session_name(session), fulluid, nodename ? nodename : params[1], params[2]) ;
 
-	} else {
-		char **splitted;
-		char *fulluid = saprintf("%s/%s", uid, resource); 
-		int i;
-		char *FORM_TYPE = xstrdup(nodename ? nodename : params[1]), *tmp;
-		if ((tmp = xstrchr(FORM_TYPE, '#'))) *tmp = '\0';
+				 watch_write(j->send_watch, 
+						 "<iq type=\"set\" to=\"%s\" id=\"control%d\">"
+						 "<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\">"
+						 "<x xmlns=\"jabber:x:data\" type=\"submit\">"
+						 "<field var=\"FORM_TYPE\" type=\"hidden\"><value>%s</value></field>",
+						 fulluid, j->id++, nodename ? nodename : params[1], FORM_TYPE);
 
-		if (!(splitted = jabber_params_split(params[2], 0))) {
-			printq("invalid_params", name);
-			return -1;
+				 for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
+					 CHAR_T *varname = jabber_escape(splitted[i]);
+					 CHAR_T *varval = jabber_escape(splitted[i+1]); /* ? */
+
+					 watch_write(j->send_watch, "<field var=\"" CHARF "\"><value>" CHARF "</value></field>", varname, varval);
+
+					 xfree(varname); xfree(varval);
+				 }
+				 watch_write(j->send_watch, "</x></command></iq>");
+				 array_free(splitted);
+
+cleanup:
+				 xfree(fulluid);
+				 xfree(FORM_TYPE);
 		}
-		printq("jabber_remotecontrols_executing", session_name(session), fulluid, nodename ? nodename : params[1], params[2]) ;
-
-		watch_write(j->send_watch, 
-			"<iq type=\"set\" to=\"%s\" id=\"control%d\">"
-			"<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\">"
-			"<x xmlns=\"jabber:x:data\" type=\"submit\">"
-			"<field var=\"FORM_TYPE\" type=\"hidden\"><value>%s</value></field>",
-			fulluid, j->id++, nodename ? nodename : params[1], FORM_TYPE);
-
-		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
-			CHAR_T *varname = jabber_escape(splitted[i]);
-			CHAR_T *varval = jabber_escape(splitted[i+1]); /* ? */
-
-			watch_write(j->send_watch, "<field var=\"" CHARF "\"><value>" CHARF "</value></field>", varname, varval);
-
-			xfree(varname); xfree(varval);
-		}
-		watch_write(j->send_watch, "</x></command></iq>");
-		array_free(splitted);
-		xfree(fulluid);
-		xfree(FORM_TYPE);
 	}
+
 	xfree(nodename);
 
 	xfree(uid);
@@ -1704,7 +1709,8 @@ back:
 				}
 			}
 		} else {
-			watch_write(j->send_watch, CHARF, params[2]);
+			if (params[0] && params[1] && params[2]) /* XXX check */
+				watch_write(j->send_watch, CHARF, params[2]);
 		}
 		{
 			CHAR_T *beg = namespace;
