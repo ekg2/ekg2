@@ -612,9 +612,10 @@ QUERY(logsqlite_status_handler)
 	return 0;
 }
 
-int logsqlite_theme_init()
-{
+int logsqlite_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	format_add("logsqlite_open_error", "%! Can't open database: %1\n", 1);
+#endif
 	return 0;
 }
 

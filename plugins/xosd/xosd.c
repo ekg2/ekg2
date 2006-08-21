@@ -379,8 +379,8 @@ int xosd_plugin_init(int prio)
 	return 0;
 }
 
-static int xosd_theme_init()
-{
+static int xosd_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	format_add("xosd_new_message_irc", _("new message from %1 at %2"), 1);
 	format_add("xosd_new_message_line_1", _("new message from %1"), 1);
 	format_add("xosd_new_message_line_2_long", "%1...", 1);
@@ -399,7 +399,7 @@ static int xosd_theme_init()
 	format_add("xosd_status_change_no_description", _("[no description]"), 1);
 	format_add("xosd_welcome_message_line_1", _("ekg2 XOnScreenDisplay plugin"), 1);
 	format_add("xosd_welcome_message_line_2", _("Author: Adam 'dredzik' Kuczynski"), 1);
-	
+#endif
 	return 0;
 }
 

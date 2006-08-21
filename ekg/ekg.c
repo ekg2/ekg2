@@ -884,8 +884,10 @@ int main(int argc, char **argv)
         variable_set_default();
 
         mesg_startup = mesg_set(MESG_CHECK);
-
-        theme_init();
+#ifdef DEFAULT_THEME 
+	if (theme_read(DEFAULT_THEME, 1) == -1) 
+#endif
+		theme_init();
 
         window_new(NULL, NULL, -1);                     /* debugowanie */
         window_current = window_new(NULL, NULL, 1);     /* okno stanu */

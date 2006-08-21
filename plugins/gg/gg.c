@@ -1270,8 +1270,8 @@ void gg_changed_proxy(session_t *s, const char *var)
 }
 
 
-static int gg_theme_init()
-{
+static int gg_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	/* pobieranie tokenu */
 	format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
 	format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
@@ -1287,7 +1287,8 @@ static int gg_theme_init()
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	format_add("gg_image_ok_get", _("%> Image saved in %1\n"), 1);
-	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);	
+	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);
+#endif
 	return 0;
 }
 

@@ -952,79 +952,79 @@ static FILE *theme_open(FILE *prevfd, const char *prefix, const char *filename)
  *
  * zwraca 0 je¶li wszystko w porz±dku, -1 w przypadku b³êdu.
  */
-int theme_read(const char *filename, int replace)
-{
-        char *buf;
-        FILE *f = NULL;
+int theme_read(const char *filename, int replace) {
+	char *buf;
+	FILE *f = NULL;
 
-        if (!filename) {
-                filename = prepare_path("default.theme", 0);
-                if (!filename || !(f = fopen(filename, "r")))
-                        return -1;
-        } else {
-                char *fn = xstrdup(filename), *tmp;
+	if (!xstrlen(filename)) {
+		/* XXX, DEFAULT_THEME <-> default.theme ? */
+		filename = prepare_path("default.theme", 0);
+		if (!filename || !(f = fopen(filename, "r")))
+			return -1;
+	} else {
+		char *fn = xstrdup(filename), *tmp;
 
-                if ((tmp = xstrchr(fn, ',')))
-                        *tmp = 0;
+		if ((tmp = xstrchr(fn, ',')))
+			*tmp = 0;
 
-                errno = ENOENT;
-                f = NULL;
+		errno = ENOENT;
+		f = NULL;
 
-                if (!xstrchr(filename, '/')) {
-                        f = theme_open(f, prepare_path("", 0), fn);
-                        f = theme_open(f, prepare_path("themes", 0), fn);
-                        f = theme_open(f, DATADIR "/themes", fn);
-                }
+		if (!xstrchr(filename, '/')) {
+			f = theme_open(f, prepare_path("", 0), fn);
+			f = theme_open(f, prepare_path("themes", 0), fn);
+			f = theme_open(f, DATADIR "/themes", fn);
+		}
 
-                xfree(fn);
+		xfree(fn);
 
-                if (!f)
-                        return -1;
-        }
+		if (!f)
+			return -1;
+	}
 	if (!in_autoexec) {
 		theme_free();
 		theme_init();
 	}
-//      ui_event("theme_init");
+	//      ui_event("theme_init");
 
-        while ((buf = read_file(f))) {
-                char *value, *p;
+	while ((buf = read_file(f))) {
+		char *value, *p;
 
-                if (buf[0] == '#') {
-                        xfree(buf);
-                        continue;
-                }
+		if (buf[0] == '#') {
+			xfree(buf);
+			continue;
+		}
 
-                if (!(value = xstrchr(buf, ' '))) {
-                        xfree(buf);
-                        continue;
-                }
+		if (!(value = xstrchr(buf, ' '))) {
+			xfree(buf);
+			continue;
+		}
 
-                *value++ = 0;
+		*value++ = 0;
 
-                for (p = value; *p; p++) {
-                        if (*p == '\\') {
-                                if (!*(p + 1))
-                                        break;
-                                if (*(p + 1) == 'n')
-                                        *p = '\n';
-                                memmove(p + 1, p + 2, xstrlen(p + 1));
-                        }
-                }
+		for (p = value; *p; p++) {
+			if (*p == '\\') {
+				if (!*(p + 1))
+					break;
+				if (*(p + 1) == 'n')
+					*p = '\n';
+				memmove(p + 1, p + 2, xstrlen(p + 1));
+			}
+		}
 
-                if (buf[0] == '-')
-                        format_remove(buf + 1);
-                else
-                        format_add(buf, value, replace);
+		if (buf[0] == '-')
+			format_remove(buf + 1);
+		else
+			format_add(buf, value, replace);
 
-                xfree(buf);
-        }
+		xfree(buf);
+	}
 
-        fclose(f);
+	fclose(f);
 
-        theme_cache_reset();
+	theme_cache_reset();
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -1074,7 +1074,7 @@ void theme_plugins_init()
 void theme_init()
 {
 	theme_cache_reset();
-
+#ifndef NO_DEFAULT_THEME
 	/* wykorzystywane w innych formatach */
 	format_add("prompt", "%K:%g:%G:%n", 1);
 	format_add("prompt,speech", " ", 1);
@@ -1825,6 +1825,7 @@ void theme_init()
 #endif 
 
 	theme_plugins_init();
+#endif	/* !NO_DEFAULT_THEME */
 }
 
 

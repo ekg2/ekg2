@@ -321,8 +321,8 @@ static COMMAND(command_key)
  * 
  * themes initialization
  */
-static int sim_theme_init()
-{
+static int sim_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	format_add("key_generating", _("%> Please wait, generating keys...\n"), 1);
 	format_add("key_generating_success", _("%> Keys generated and saved\n"), 1);
 	format_add("key_generating_error", _("%! Error while generating keys: %1\n"), 1);
@@ -336,7 +336,7 @@ static int sim_theme_init()
 	format_add("key_send_error", _("%! Error sending public key\n"), 1);
 	format_add("key_list", "%> %r%1%n (%3)\n%) fingerprint: %y%2\n", 1);
 	format_add("key_list_timestamp", "%Y-%m-%d %H:%M", 1);
-
+#endif
 	return 0;
 }
 

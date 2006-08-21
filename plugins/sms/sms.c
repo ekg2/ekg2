@@ -362,11 +362,13 @@ static int sms_plugin_destroy()
 }
 
 static int sms_theme_init() {
+#ifndef NO_DEFAULT_THEME
         format_add("sms_error", _("%! Error sending SMS: %1\n"), 1);
         format_add("sms_unknown", _("%! %1 not a cellphone number\n"), 1);
         format_add("sms_sent", _("%> SMS to %T%1%n sent\n"), 1);
         format_add("sms_failed", _("%! SMS to %T%1%n not sent\n"), 1);
         format_add("sms_away", "<ekg:%1> %2", 1);
+#endif
 	return 0;
 }
 

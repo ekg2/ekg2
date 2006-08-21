@@ -279,6 +279,7 @@ static int feed_plugin_destroy() {
 }
 
 static int feed_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	format_add("feed_subcribe_already",	_("%) You already subscribe this group: %1"), 1);
 	format_add("feed_subscribe_no",		_("%) Subscribtion not found, cannot unsubscribe"), 1);
 
@@ -301,6 +302,7 @@ static int feed_theme_init() {
 	format_add("nntp_message_quote_level2", "%y%1", 1);
 	format_add("nntp_message_quote_level",	"%B%1", 1);	/* upper levels.. */
 	format_add("nntp_message_signature",	"%B%1", 1);
+#endif
 	return 0;
 }
 

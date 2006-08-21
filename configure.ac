@@ -107,8 +107,7 @@ export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
 
 mouse_lib="xterm only"
-AC_ARG_WITH(gpm-mouse,
-        [  --without-gpm-mouse         Compile without gpm mouse support (Linux only)])
+AC_ARG_WITH(gpm-mouse,		AC_HELP_STRING([--without-gpm-mouse],		[Compile without gpm mouse support (Linux only)]))
 
 case $host_os in
 linux*)
@@ -124,8 +123,21 @@ linux*)
     ;;
 esac
 
-AC_ARG_WITH(ioctld,
-  [  --without-ioctld        Disable ioctld plugin])
+AC_ARG_WITH(default-theme,	AC_HELP_STRING([--with-default-theme=theme],	[Use default theme]))
+
+if test "x$with_default_theme" != "xno"; then
+	AC_DEFINE_UNQUOTED(DEFAULT_THEME, "$with_default_theme", [define your default theme])
+
+fi
+
+AC_ARG_WITH(theme,		AC_HELP_STRING([--without-theme],		[Don't compile default theme]))
+
+if test "x$with_theme" = "xno"; then
+	AC_DEFINE(NO_DEFAULT_THEME, 1, [define if you don't want default theme])
+	AC_MSG_WARN([You don't build default theme!! remember about ekg2 -t or see --with-theme option in ./configure])
+fi
+
+AC_ARG_WITH(ioctld,		AC_HELP_STRING([--without-ioctld],		[Disable ioctld plugin]))
 
 if test "x$with_ioctld" != "xno"; then
         AC_CHECK_HEADERS(linux/kd.h,
@@ -147,8 +159,7 @@ dnl
 dnl  Resolver libgadu oparty na pthread
 dnl
 
-AC_ARG_WITH(pthread,
-  [  --without-pthread          Don't use pthread in resolver])
+AC_ARG_WITH(pthread,		AC_HELP_STRING([--without-pthread],		[Don't use pthread in resolver]))
 
 if test "x$with_pthread" != "xno"; then
         ACX_PTHREAD(
@@ -168,8 +179,7 @@ dnl
 dnl aspell dictionary
 dnl
 
-AC_ARG_WITH(aspell,
-  [  --without-aspell          Disable aspell support])
+AC_ARG_WITH(aspell,		AC_HELP_STRING([--without-aspell],		[Disable aspell support]))
 
 if test "x$with_aspell" != "xno"; then
        AC_CHECK_HEADERS(aspell.h,
@@ -199,9 +209,9 @@ dnl  Checking libungif.so & <gif_lib.h> or
 dnl  Checking libgif.so   & <gif_lib.h>
 dnl
 
-AC_ARG_WITH(gif,	[  --without-gif         Compile without GIF token support])
-AC_ARG_WITH(libgif,	[  --without-libgif      Compile without libgif token support])
-AC_ARG_WITH(libungif,	[  --without-libungif    Compile without libungif token support])
+AC_ARG_WITH(gif,		AC_HELP_STRING([--without-gif],			[Compile without GIF token support]))
+AC_ARG_WITH(libgif,		AC_HELP_STRING([--without-libgif],		[Compile without libgif token support]))
+AC_ARG_WITH(libungif,		AC_HELP_STRING([--without-libungif],		[Compile without libungif token support]))
 
 if test "x$with_gif" != "xno"; then
 	if test "x$with_libgif" != "xno"; then
@@ -233,8 +243,7 @@ dnl
 dnl  Checking libjpeg.so i <jpeglib.h>
 dnl
 
-AC_ARG_WITH(libjpeg,
-        [  --without-libjpeg        Compile without JPEG token support])
+AC_ARG_WITH(libjpeg, 		AC_HELP_STRING([--without-libjpeg],		[Compile without JPEG token support]))
 
 if test "x$with_libjpeg" != "xno"; then
         AC_CHECK_LIB(jpeg, jpeg_start_decompress,
@@ -249,8 +258,7 @@ if test "x$with_libjpeg" != "xno"; then
         ])
 fi
 
-AC_ARG_WITH(libgadu,
-        [  --without-libgadu        Compile without libgadu (GG plugin)])
+AC_ARG_WITH(libgadu,		AC_HELP_STRING([--without-libgadu],		[Compile without libgadu (GG plugin)]))
 
 if test "x$with_libgadu" != "xno"; then
 	AC_CHECK_LIBGADU
@@ -261,8 +269,7 @@ if test "x$with_libgadu" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(openssl,
-        [  --without-openssl        Compile without OpenSSL support])
+AC_ARG_WITH(openssl,		AC_HELP_STRING([--without-openssl],		[Compile without OpenSSL support (sim plugin)]))
 
 if test "x$with_openssl" != "xno"; then
 	AC_CHECK_OPENSSL
@@ -273,8 +280,7 @@ if test "x$with_openssl" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(expat,
-        [  --without-expat        Compile without expat (jabber plugin)])
+AC_ARG_WITH(expat,		AC_HELP_STRING([--without-expat],		[Compile without expat (jabber plugin)]))
 
 if test "x$with_expat" != "xno"; then
 	AC_CHECK_EXPAT
@@ -285,8 +291,7 @@ if test "x$with_expat" != "xno"; then
 	fi
 fi
 
-AC_ARG_ENABLE([unicode],
-    AC_HELP_STRING([--enable-unicode], [Enable unicode (EXPERIMENTAL)]),
+AC_ARG_ENABLE([unicode],	AC_HELP_STRING([--enable-unicode],		[Enable unicode (EXPERIMENTAL)]),
     [
         if test "x$enable_unicode" = "xyes"; then
             AC_DEFINE([USE_UNICODE], 1, [Use unicode (wide character strings)])
@@ -294,8 +299,7 @@ AC_ARG_ENABLE([unicode],
     ]
 )
 
-AC_ARG_WITH(ncurses,
-        [  --without-ncurses        Compile without ncurses support (ncurses plugin) - program won't work])
+AC_ARG_WITH(ncurses,		AC_HELP_STRING([--without-ncurses],		[Compile without ncurses support (ncurses plugin)]))
 
 if test "x$with_ncurses" != "xno"; then
 	AC_CHECK_NCURSES
@@ -308,8 +312,7 @@ if test "x$with_ncurses" != "xno"; then
 fi
 
 
-AC_ARG_WITH(gtk,
-	[  --without-gtk        Compile without gtk2 support (gtk plugin)])
+AC_ARG_WITH(gtk,		AC_HELP_STRING([--without-gtk],			[Compile without gtk2 support (gtk plugin)]))
 
 if test "x$with_gtk" != "xno"; then
 	AC_CHECK_GTK2([], [have_gtk="yes"], [have_gtk=x"no"], []) 
@@ -319,8 +322,7 @@ if test "x$with_gtk" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(readline,
-	[  --without-readline  Compile without readline support (readline plugin)])
+AC_ARG_WITH(readline,		AC_HELP_STRING([--without-readline],		[Compile without readline support (readline plugin)]))
 
 if test "x$with_readline" != "no"; then
 	AC_CHECK_READLINE
@@ -331,9 +333,7 @@ if test "x$with_readline" != "no"; then
 	fi
 fi
 
-AC_ARG_WITH(libgsm,
-        [  --without-libgsm        Compile without libgsm support (gsm plugin)])
-
+AC_ARG_WITH(libgsm,		AC_HELP_STRING([--without-libgsm],		[Compile without libgsm support (gsm plugin)]))
 
 if test "x$with_libgsm" != "xno"; then
 	AC_CHECK_LIBGSM
@@ -345,8 +345,7 @@ if test "x$with_libgsm" != "xno"; then
 fi
 
 
-AC_ARG_WITH(libxosd,
-        [  --without-libxosd        Compile without libxosd support (xosd plugin)])
+AC_ARG_WITH(libxosd,		AC_HELP_STRING([--without-libxosd],		[Compile without libxosd support (xosd plugin)]))
 
 if test "x$with_libxosd" != "xno"; then
 	AM_CHECK_LIBXOSD
@@ -357,8 +356,7 @@ if test "x$with_libxosd" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(perl,
-        [  --without-perl        Compile without perl support (perl plugin)])
+AC_ARG_WITH(perl,		AC_HELP_STRING([--without-perl],		[Compile without perl support (perl plugin)]))
 
 if test "x$with_perl" != "xno"; then
 	AM_CHECK_PERL
@@ -372,8 +370,7 @@ if test "x$with_perl" != "xno"; then
 fi
 
 
-AC_ARG_WITH(python,
-        [  --without-python        Compile without python support (python plugin)])
+AC_ARG_WITH(python,		AC_HELP_STRING([--without-python],		[Compile without python support (python plugin)]))
 
 if test "x$with_python" != "xno"; then
 	AM_CHECK_PYTHON
@@ -386,8 +383,7 @@ if test "x$with_python" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(sqlite3,
-        [  --without-sqlite3        Compile without sqlite3 support (sqlite plugin)])
+AC_ARG_WITH(sqlite3,		AC_HELP_STRING([--without-sqlite3],		[Compile without sqlite3 support (sqlite plugin)]))
 
 if test "x$with_sqlite3" != "xno"; then
 	AC_CHECK_SQLITE3
@@ -396,8 +392,7 @@ if test "x$with_sqlite3" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(sqlite,
-        [  --without-sqlite        Compile without sqlite support (sqlite plugin)])
+AC_ARG_WITH(sqlite,		AC_HELP_STRING([--without-sqlite],		[Compile without sqlite support (sqlite plugin)]))
 
 if test "x$have_sqlite3" != "xyes"; then
 	if test "x$with_sqlite" != "xno"; then
@@ -409,8 +404,7 @@ if test "x$have_sqlite" = "xyes" || test "x$have_sqlite3" = "xyes" ; then
 	PLUGINS="$PLUGINS logsqlite"
 fi
 
-AC_ARG_WITH(libgnutls,
-        [  --without-libgnutls        Compile without libgnutls support (TLS in jabber)])
+AC_ARG_WITH(libgnutls,		AC_HELP_STRING([--without-libgnutls],		[Compile without libgnutls support (TLS in jabber)]))
 
 if test "x$with_libgnutls" != "xno"; then
 	AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
@@ -420,8 +414,7 @@ if test "x$with_libgnutls" != "xno"; then
 	]]))
 fi
 
-AC_ARG_WITH(zlib,
-	[  --without-zlib             Compile without zlib support (logs plugin)])
+AC_ARG_WITH(zlib,		AC_HELP_STRING([--without-zlib],		[Compile without zlib support (logs plugin)]))
 
 if test "x$with_zlib" != "xno"; then
 	AC_CHECK_LIB(z, gzopen, [
@@ -434,8 +427,7 @@ if test "x$with_zlib" != "xno"; then
 	])
 fi
 
-AC_ARG_WITH(gpg,
-	[  --without-gpg              Compile without gpg support])
+AC_ARG_WITH(gpg,		AC_HELP_STRING([--without-gpg],			[Compile without gpg support (gpg plugin)]))
 
 if test "x$with_gpg" != "xno"; then
 	AC_CHECK_GPG

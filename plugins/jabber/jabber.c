@@ -1151,8 +1151,8 @@ QUERY(jabber_status_show_handle)
 	return 0;
 }
 
-static int jabber_theme_init()
-{
+static int jabber_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	format_add("jabber_auth_subscribe", _("%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/auth -d %1\" to refuse.%n\n"), 1);
 	format_add("jabber_auth_unsubscribe", _("%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"), 1);
 	format_add("jabber_xmlerror", _("%! (%1) Error parsing XML%n\n"), 1);
@@ -1272,6 +1272,8 @@ static int jabber_theme_init()
 	format_add("jabber_recv_chan", _("%b<%w%2%b>%n %5"), 1);
 	format_add("jabber_recv_chan_n", _("%b<%w%2%b>%n %5"), 1);
 #endif
+
+#endif	/* !NO_DEFAULT_THEME */
         return 0;
 }
 

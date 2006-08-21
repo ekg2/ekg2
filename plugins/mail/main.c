@@ -545,9 +545,11 @@ int mail_plugin_init(int prio)
 }
 
 static int mail_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	format_add("new_mail_one", _("%) You got one email\n"), 1);
 	format_add("new_mail_two_four", _("%) You got %1 new emails\n"), 1);
 	format_add("new_mail_more", _("%) You got %1 new emails\n"), 1);
+#endif
 	return 0;
 }
 

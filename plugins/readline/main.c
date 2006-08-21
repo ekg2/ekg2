@@ -59,6 +59,7 @@ static void sigwinch_handler()
 #endif
 
 static int readline_theme_init() {
+#ifndef NO_DEFAULT_THEME
 	/* prompty dla ui-readline */
 	format_add("readline_prompt", "% ", 1);
 	format_add("readline_prompt_away", "/ ", 1);
@@ -73,6 +74,7 @@ static int readline_theme_init() {
 	format_add("readline_prompt_invisible_win_act", "%1 (act/%2). ", 1);
 	format_add("readline_prompt_query_win_act", "%2:%1 (act/%3)> ", 1);
 	format_add("readline_more", _("-- Press Enter to continue or Ctrl-D to break --"), 1);
+#endif
 	return 0;
 }
 

@@ -2189,7 +2189,7 @@ static int irc_theme_init()
 	/* %1 should be _always_ session name, if it's not so,
 	 * you should report this to me (GiM)
 	 */
-	
+#ifndef NO_DEFAULT_THEME
 	/* %2 - prefix, %3 - nick, %4 - nick+ident+host, %5 - chan, %6 - msg*/
 	format_add("irc_msg_sent",	"%P<%n%3/%5%P>%n %6", 1);
 	format_add("irc_msg_sent_n",	"%P<%n%3%P>%n %6", 1);
@@ -2329,7 +2329,7 @@ static int irc_theme_init()
 	
 	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
 	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
-
+#endif	/* !NO_DEFAULT_THEME */
 	return 0;
 }
 
