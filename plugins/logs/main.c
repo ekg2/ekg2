@@ -712,7 +712,7 @@ static int logs_plugin_destroy()
 			list_remove(&buffers, b, 1);
 		}
 		if (!l) {
-			fclose(f);
+			if (f) fclose(f);
 			xfree(oldtarget);
 		}
 	}
