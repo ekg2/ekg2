@@ -215,10 +215,11 @@ char *jabber_unescape(const char *text)
 /* tlen_encode() & tlen_decode() ripped from libtlen. XXX, try to rewrite some code */
 
 /* tlen_encode() - Koduje tekst przy pomocy urlencode + rekoduje charset na iso-8859-2 */
-char *tlen_encode(const char *what) {
+CHAR_T *tlen_encode(const char *what) {
 	const unsigned char *s;
 	unsigned char *ptr, *str;
 	char *text = NULL;
+	CHAR_T *temp;
 
 	if (!what) return NULL;
 
@@ -240,7 +241,17 @@ char *tlen_encode(const char *what) {
 		s++;
 	}
 	xfree(text);
-	return str;
+	temp = normal_to_wcs(str);
+	free_utf(str);
+	return temp;
+}
+
+CHAR_T *tlen_uencode(const CHAR_T *what) {
+/* XXX, make simillar function to tlen_encode() with widechar */
+	char *temp = wcs_to_normal(what);
+	CHAR_T *enc  = tlen_encode(temp);
+	free_utf(temp);
+	return enc;
 }
 
 /* tlen_decode() - Dekoduje tekst przy pomocy urldecode + rekoduje charset na aktualny.. */
