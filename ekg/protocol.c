@@ -354,7 +354,7 @@ notify_plugins:
 	if (!ignore_status && !ignore_status_descr) {
 		xfree(u->descr);
 		u->descr = xstrdup(descr);
-		u->status_time = time(NULL);
+		u->status_time = when ? when : time(NULL);
 	}
 	
 	query_emit(NULL, TEXT("userlist-changed"), __session, __uid);
