@@ -138,13 +138,20 @@ void ekg2_bless_window(HV *hv, window_t *window)
 //	hv_store(hv, "userlist", 8, ekg2_bless(BLESS_LIST, 1, window->userlist), 0); // obsolete: call userlist()
 
 }
+
+static inline char *inet_ntoa_u(uint32_t ip) {
+	struct in_addr in;
+	in.s_addr = ip;
+	return inet_ntoa(in);
+}
+
 void ekg2_bless_user(HV *hv, userlist_t *user)
 {
 	debug_bless("blessing user %s\n", user->uid);
 	hv_store(hv, "uid", 3, new_pv(user->uid), 0);
 	hv_store(hv, "nickname", 8, new_pv(user->nickname), 0);
 	hv_store(hv, "status", 6, new_pv(user->status), 0);
-	hv_store(hv, "ip", 2, 	  new_pv(inet_ntoa((struct in_addr) {user->ip})), 0);
+	hv_store(hv, "ip", 2, 	  new_pv(inet_ntoa_u(user->ip)), 0);
 }
 
 void ekg2_bless_session(HV *hv, session_t *session)
