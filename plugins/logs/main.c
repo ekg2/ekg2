@@ -100,6 +100,12 @@ typedef enum {
 #define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
 #define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
 
+static inline char *inet_ntoa_u(uint32_t ip) {
+	struct in_addr in;
+	in.s_addr = ip;
+	return inet_ntoa(in);
+}
+
 QUERY(logs_setvar_default)
 {
 	xfree(config_logs_path);
@@ -1016,7 +1022,7 @@ QUERY(logs_status_handler)
 
 	if (lw->logformat == LOG_FORMAT_IRSSI) {
 		char *_what = NULL;
-		char *_ip = saprintf("~%s@%s:%d", "notirc", inet_ntoa((struct in_addr) {ip}), port);
+		char *_ip = saprintf("~%s@%s:%d", "notirc", inet_ntoa_u(ip), port);
 
 		_what = saprintf("%s (%s)", __(descr), __(status));
 		
@@ -1214,7 +1220,7 @@ void logs_simple(FILE *file, const char *session, const char *uid, const char *t
 	fputs(gotten_uid, file);      fputc(',', file);
 	fputs(gotten_nickname, file); fputc(',', file);
 	if (class==6) {
-		fputs(inet_ntoa((struct in_addr){ip}), file);
+		fputs(inet_ntoa_u(ip), file);
 	       	fputc(':', file);
 		fputs(itoa(port), file); 
 	       	fputc(',', file);
