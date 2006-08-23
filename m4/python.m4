@@ -14,7 +14,7 @@ AC_DEFUN([AM_CHECK_PYTHON],
 
 	AC_ARG_WITH(python,		AC_HELP_STRING([--with-python],		[Compile with Python bindings]),
 		if test "x$withval" != "xno" -a "x$withval" != "xyes"; then
-			ith_arg="$withval/include:-L$withval/lib $withval/include/python:-L$withval/lib"
+			with_arg="$withval/include:-L$withval/lib $withval/include/python:-L$withval/lib"
 		fi
 	)
 
