@@ -1624,8 +1624,8 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 
 	jid = jabber_unescape(from);
 
-	if (jabber_private(s)->istlen)	uid = saprintf("tlen:%s", jid);
-	else				uid = saprintf("jid:%s", jid);
+	if (istlen)	uid = saprintf("tlen:%s", jid);
+	else		uid = saprintf("jid:%s", jid);
 
 	xfree(jid);
 
@@ -1749,7 +1749,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 					!xstrcasecmp(jstatus, EKG_STATUS_FREE_FOR_CHAT) || !xstrcasecmp(jstatus, EKG_STATUS_BLOCKED))) {
 			status = jstatus;
 		} else if (istlen && !xstrcmp(jstatus, "available")) {
-			status = EKG_STATUS_AVAIL;
+			status = xstrdup(EKG_STATUS_AVAIL);
 		} else {
 			debug("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
 			xfree(jstatus);
