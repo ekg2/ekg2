@@ -201,7 +201,7 @@ char *va_format_string(const char *format, va_list ap, int isunicode)
         /* liczymy ilo¶æ argumentów */
         for (p = format; *p; p++) {
                 if (*p == '\\' && p[1] == '%') {
-                        p += 2;
+                        p++;
                         continue;
                 }
 

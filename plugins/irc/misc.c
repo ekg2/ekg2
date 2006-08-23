@@ -39,6 +39,9 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
+#define GDEBUG
+#define MARLENE
+
 #include "irc.h"
 #include "misc.h"
 #include "people.h"
@@ -797,10 +800,11 @@ IRC_COMMAND(irc_c_msg)
 		if ((pubtous = xstrcasestr(ctcpstripped, j->nick))) {
 			tous = pubtous[xstrlen(j->nick)];
 			if (!isalnum(tous) && !isalpha_pl(tous))
-			{
-				ekgbeep = EKG_TRY_BEEP;
-				xosd_to_us = 1;
-			} 
+				if (pubtous == ctcpstripped || (!isalnum(*(pubtous-1)) && !isalpha_pl(*(pubtous-1))))
+				{
+					ekgbeep = EKG_TRY_BEEP;
+					xosd_to_us = 1;
+				}
 		}
 		w = window_find_s(s, dest);
 

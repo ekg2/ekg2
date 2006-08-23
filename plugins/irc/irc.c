@@ -521,7 +521,6 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 		watch_free(j->recv_watch);
 		j->recv_watch = NULL;
 	}
-
 	watch_remove(&irc_plugin, j->fd, WATCH_WRITE);
 
 	close(j->fd);
@@ -608,13 +607,16 @@ WATCHER_LINE(irc_handle_resolver)
 WATCHER_LINE(irc_handle_stream)
 {
 	session_t *s = session_find(data);
+	irc_private_t *j = irc_private(s);
 
 	/* ups, we get disconnected */
 	if (type == 1) {
-		if (s) irc_private(s)->recv_watch = NULL;
-		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d\n", session_connected_get(s));
-
-		if (s && session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
+		if (s) j->recv_watch = NULL;
+		/* this will cause  'Removed more than one watch...' */
+		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d %d\n", session_connected_get(s), j->connecting);
+		
+		/* avoid reconnecting when we do /disconnect */
+		if (s && (session_connected_get(s) || j->connecting))
 			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 		xfree(data);
 		return 0;
@@ -1612,6 +1614,7 @@ COMMAND(irc_command_devop)
 	irc_private_t	*j = irc_private(session);
 	int		modes, i;
 	char		**mp, *op, *nicks, *tmp, c, *chan, *p;
+	string_t 	zzz;
 
 	if (!(chan = irc_getchan(session, params, name,
 					&mp, 0, IRC_GC_CHAN))) 
@@ -1623,10 +1626,6 @@ COMMAND(irc_command_devop)
 		return -1;
 	}
 
-	nicks = xstrdup(*mp);
-	debug("niki: %s\n", nicks);
-	p = nicks;
-
 	modes = atoi(j->sopt[_005_MODES]);
 	op = xmalloc((modes+2) * sizeof(char));
 	c=xwcschr(name, 'p')?'o':xwcschr(name, 'h')?'h':'v';
@@ -1634,8 +1633,16 @@ COMMAND(irc_command_devop)
 	for (i=0, tmp=op+1; i<modes; i++, tmp++) *tmp=c;
 	op[0]=*name=='d'?'-':'+';
 
+	zzz = string_init(*mp);
+	for (i=1; mp[i]; i++)
+		string_append_c(zzz, ' '), string_append(zzz, mp[i]);
+	
+	nicks = string_free(zzz, 0);
+	p = nicks;
+
 	i=0;
 	chan+=4;
+
 	tmp = p;
 	while (1)
 	{
