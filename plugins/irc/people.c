@@ -301,6 +301,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 		if (!(p->data)) break;
 		else irc_del_person_channel_int(s, j, (people_t *)p->data, chan);
 
+	tmp = chan->name;	chan->name = NULL;
 	xfree(chan->topic);
 	xfree(chan->topicby);
 	xfree(chan->mode_str);
@@ -310,7 +311,6 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	 * this must be done, before, we'll try to kill_window.... */
 	list_remove(&(j->channels), chan, 1);
 	
-	tmp = saprintf("%s%s", IRC4, name);
 	w = window_find_s(s, tmp);
 	if (w && (session_int_get(s, "close_windows") > 0)) {
 		debug("[irc]_del_channel() window_kill(w, 1); %s\n", w->target);
