@@ -193,7 +193,6 @@ int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	userlist_t *ulist = NULL;
 	people_chan_t *tmp;
 	window_t *w;
-	char *chtmp;
 	if (!(nick && chan))
 		return -1;
 	
@@ -216,9 +215,13 @@ int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	if (!(nick->channels)) {
 	/* delete entry in private->people 
 		debug("-%s lista ludzi, ", nick->nick); */
-		chtmp = nick->nick; nick->nick=NULL;
+					/* mh, zerowanie tego tak raczej niepotrzebne... ale jest */
+		xfree(nick->nick);	nick->nick = NULL;
+		xfree(nick->ident);	nick->ident = NULL;
+		xfree(nick->host);	nick->host = NULL;
+		xfree(nick->realname);	nick->realname = NULL;
+
 		list_remove(&(j->people), nick, 1);
-		xfree(chtmp);
 		
 		list_remove(&(chan->onchan), nick, 0);
 		return 1;
