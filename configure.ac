@@ -93,9 +93,9 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile plugins/icq/Makefile po/Makefile.in])
 AC_CONFIG_FILES([ekg/ekg2-config])
-PLUGINS="logs mail rc sms pcm irc"
+PLUGINS="logs mail rc sms pcm irc icq"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
@@ -112,8 +112,10 @@ linux*)
             [AC_DEFINE(HAVE_LIBGPM, 1,
                        [Define to enable gpm mouse support on Linux])
             mouse_lib="gpm and xterm"
-            LIBGPM_LIBS="-lgpm"],
+            LIBGPM_LIBS="-lgpm"
+	    AC_SUBST(LIBGPM_LIBS)],
             [AC_MSG_WARN([libgpm is missing])
+
         ])
     fi
     ;;
@@ -330,7 +332,6 @@ if test "x$with_ncurses" != "xno"; then
 	fi
 fi
 
-
 AC_ARG_WITH(gtk,		AC_HELP_STRING([--without-gtk],			[Compile without gtk2 support (gtk plugin)]))
 
 if test "x$with_gtk" != "xno"; then
@@ -387,7 +388,6 @@ if test "x$with_perl" != "xno"; then
 		PLUGINS="$PLUGINS perl"
 	fi
 fi
-
 
 AC_ARG_WITH(python,		AC_HELP_STRING([--without-python],		[Compile without python support (python plugin)]))
 
@@ -487,7 +487,7 @@ echo -en " - Interface:\t "
 echo ""
 
 # - PROTOCOL PLUGINS
-echo -en " - Protocols:\t irc "
+echo -en " - Protocols:\t irc icq "
 	if test "x$have_expat" = "xyes"; then
 		echo -n "jabber "
 
