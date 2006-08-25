@@ -34,6 +34,7 @@
 #include <ekg/vars.h>
 #include <ekg/windows.h>
 #include <ekg/userlist.h>
+#include <ekg/xmalloc.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
