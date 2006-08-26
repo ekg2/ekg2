@@ -971,7 +971,7 @@ int main(int argc, char **argv)
 
         /* it has to be done after plugins are loaded, either we wouldn't know if we are
          * supporting some protocol in current build */
-        if (session_read() == -1)
+        if (session_read(NULL) == -1)
                 no_config = 1;
 
         config_postread();

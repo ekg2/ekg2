@@ -129,7 +129,7 @@ session_t *session_add(const char *uid);
 int session_remove(const char *uid);
 #define session_remove_s(a) session_remove(a->uid)
 
-int session_read();
+int session_read(const char *filename);
 int session_write();
 
 void sessions_free();

@@ -471,87 +471,86 @@ int session_int_set(session_t *s, const char *key, int value)
  *
  * czyta informacje o sesjach z pliku.
  */
-int session_read()
-{
+int session_read(const char *filename) {
 	char *line;
 	FILE *f;
 	session_t *s = NULL;
 	list_t l;
 	int ret = 0;
 
-	if (!in_autoexec) {
-		list_t l;
+	if (!filename) {
+		if (!in_autoexec) {
+			list_t l;
 
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
+			for (l = sessions; l; l = l->next) {
+				session_t *s = l->data;
 
-			command_exec(NULL, s, TEXT("disconnect"), 1);
-		}
-		sessions_free();
-		debug("	 flushed sessions\n");
-	}
-
-	for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
-		char *tmp;
-
-		if (!p || p->pclass != PLUGIN_PROTOCOL)
-			continue;
-
-		tmp = saprintf("sessions-" CHARF, p->name);
-
-	        if (!(f = fopen(prepare_path(tmp, 0), "r"))) {
-			debug("Error opening file %s\n", tmp);
-			xfree(tmp);
-			ret = -1;
-			continue;
+				command_exec(NULL, s, TEXT("disconnect"), 1);
+			}
+			sessions_free();
+			debug("	 flushed sessions\n");
 		}
 
-		xfree(tmp);
-
-		while ((line = read_file(f))) {
+		for (l = plugins; l; l = l->next) {
+			plugin_t *p = l->data;
 			char *tmp;
 
-			if (line[0] == '[') {
-				tmp = xstrchr(line, ']');
+			if (!p || p->pclass != PLUGIN_PROTOCOL)
+				continue;
 
-				if (!tmp)
-					goto next;
-
-				*tmp = 0;
-				s = session_add(line + 1);	
-
-				goto next;
-			}
-
-			if ((tmp = xstrchr(line, '='))) {
-				*tmp = 0;
-				tmp++;
-				if (!session_is_var(s, line)) {
-					debug("\tSession variable \"%s\" is not correct\n", line);
-					goto next;
-				}
-				xstrtr(tmp, '\002', '\n');
-				if(*tmp == '\001') { 
-					char *decoded = base64_decode(tmp + 1);
-					session_set(s, line, decoded);
-					xfree(decoded);
-				} else 
-					session_set(s, line, tmp);
-				if (!xstrcmp(line, "default") && atoi(tmp) == 1) {
-					session_current = s;
-					window_current->session = s;
-				}
-				goto next;
-			}
-
-next:
-			xfree(line);
+			tmp = saprintf("sessions-" CHARF, p->name);
+			ret = session_read(prepare_path(tmp, 0));
+			xfree(tmp);
 		}
-
-		fclose(f);
+		return ret;
 	}
 
+	if (!(f = fopen(filename, "r"))) {
+		debug("Error opening file %s\n", filename);
+		return -1;
+	}
+
+	while ((line = read_file(f))) {
+		char *tmp;
+
+		if (line[0] == '[') {
+			tmp = xstrchr(line, ']');
+
+			if (!tmp)
+				goto next;
+
+			*tmp = 0;
+			s = session_add(line + 1);	
+
+			goto next;
+		}
+
+		if ((tmp = xstrchr(line, '='))) {
+			*tmp = 0;
+			tmp++;
+			if (!session_is_var(s, line)) {
+				debug("\tSession variable \"%s\" is not correct\n", line);
+				goto next;
+			}
+			xstrtr(tmp, '\002', '\n');
+			if(*tmp == '\001') { 
+				char *decoded = base64_decode(tmp + 1);
+				session_set(s, line, decoded);
+				xfree(decoded);
+			} else 
+				session_set(s, line, tmp);
+			if (!xstrcmp(line, "default") && atoi(tmp) == 1) {
+				session_current = s;
+				window_current->session = s;
+			}
+			goto next;
+		}
+
+next:
+		xfree(line);
+	}
+
+	fclose(f);
 	return ret;
 }
 

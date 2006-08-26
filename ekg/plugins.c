@@ -242,20 +242,19 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 
 	wcs_printq("plugin_loaded", name);
 
-	if (!in_autoexec)
-		config_changed = 1;
-	{
+	if (!in_autoexec) {
 		char *tmp = saprintf("config-" CHARF, name);
 		char *tmp2= saprintf("sessions-" CHARF, name);
-		int old_autoexec = in_autoexec;
 
 	/* XXX, in_autoexec, hack */
 		in_autoexec = 1;
 		config_read(prepare_path(tmp, 0));
 		session_read(prepare_path(tmp2, 0));
-		in_autoexec = old_autoexec;
+		in_autoexec = 0;
 		xfree(tmp);
 		xfree(tmp2);
+
+		config_changed = 1;
 	}
 	return 0;
 }
