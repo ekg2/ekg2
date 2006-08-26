@@ -31,6 +31,7 @@
 #  include <winbase.h>
 #endif
 
+#include "configfile.h"
 #include "char.h"
 #include "commands.h"
 #include "debug.h"
@@ -243,7 +244,19 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 
 	if (!in_autoexec)
 		config_changed = 1;
+	{
+		char *tmp = saprintf("config-" CHARF, name);
+		char *tmp2= saprintf("sessions-" CHARF, name);
+		int old_autoexec = in_autoexec;
 
+	/* XXX, in_autoexec, hack */
+		in_autoexec = 1;
+		config_read(prepare_path(tmp, 0));
+		session_read(prepare_path(tmp2, 0));
+		in_autoexec = old_autoexec;
+		xfree(tmp);
+		xfree(tmp2);
+	}
 	return 0;
 }
 
