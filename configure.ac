@@ -93,9 +93,9 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile plugins/icq/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in])
 AC_CONFIG_FILES([ekg/ekg2-config])
-PLUGINS="logs mail rc sms pcm irc icq"
+PLUGINS="logs mail rc sms pcm irc"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
@@ -397,7 +397,7 @@ if test "x$with_python" != "xno"; then
 	if test "x$have_python" = "xyes"; then
 		AC_CONFIG_FILES([plugins/python/Makefile])
 		AC_CONFIG_FILES([contrib/python/Makefile])
-		CONTRIB_SUBDIRS="$CONTRIB_DIRS python"
+		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS python"
 		PLUGINS="$PLUGINS python"
 	fi
 fi
@@ -487,7 +487,7 @@ echo -en " - Interface:\t "
 echo ""
 
 # - PROTOCOL PLUGINS
-echo -en " - Protocols:\t irc icq "
+echo -en " - Protocols:\t irc "
 	if test "x$have_expat" = "xyes"; then
 		echo -n "jabber "
 
