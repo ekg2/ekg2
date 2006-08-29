@@ -95,10 +95,12 @@ void ncurses_forward_contacts_line(int arg)
         window_t *w = window_find("__contacts");
         int contacts_count = 0, all = 0, count = 0;
 
+	newconference_t *c;
         if (!w)
                 return;
 
         n = w->private;
+	c = newconference_find(window_current->session, window_current->target);
 
         if (config_contacts_groups) {
                 char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
@@ -151,13 +153,16 @@ void ncurses_forward_contacts_line(int arg)
 				}
                         }
 			
-			if (window_current->userlist) {
+			if ((c && c->participants) || window_current->userlist) {
                                 int j;
 
                                 for (j = 0; j < xstrlen(contacts_order); j += 2) {
                                         list_t li;
 
-                                        for (li = window_current->userlist; li; li = li->next) {
+					if (c && c->participants)	li = c->participants;
+					else				li = window_current->userlist;
+
+                                        for (; li; li = li->next) {
                                                 userlist_t *u = li->data;
                                                 char *short_status;
 
@@ -225,8 +230,10 @@ void ncurses_forward_contacts_line(int arg)
 		}
                 default:
 		{
-			list_t current_list = window_current->userlist;
-
+			list_t current_list;
+			
+			if (c && c->participants) 	current_list = c->participants;
+			else				current_list = window_current->userlist;
 again:
                         if (current_list) {
                                 int j;
@@ -333,7 +340,8 @@ int ncurses_contacts_update(window_t *w)
 	int j, count_all = 0;
 	int all = 0; /* 1 - all, 2 - metacontacts */
 	ncurses_window_t *n;
-	list_t sorted_all = NULL;
+	newconference_t *c	= NULL;
+	list_t sorted_all	= NULL;
 	
 	if (!w) {
 		if (!(w = window_find("__contacts")))
@@ -389,9 +397,10 @@ group_cleanup:
 	if (all == 2) {
 		header = format_find("contacts_metacontacts_header");
 		footer = format_find("contacts_metacontacts_footer");
-	} 
+	}
 
-        if (!session_current->userlist && !window_current->userlist && !all && contacts_group_index == 0) {
+	c = newconference_find(window_current->session, window_current->target);
+        if (!session_current->userlist && !window_current->userlist && (!c || !c->participants) && !all && contacts_group_index == 0) {
                 n->redraw = 1;
                 return 0;
         }
@@ -433,8 +442,8 @@ group_cleanup:
 				list_add_sorted(&sorted_all, u, 0, contacts_compare);
 			}
 		}
-	
-		for (l = window_current->userlist; l; l = l->next) {
+
+		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
 			userlist_t *up = l->data;
 			userlist_t *u;
 
@@ -497,8 +506,8 @@ group_cleanup:
 		char *line;
 		char tmp[100];
 
-		if (!all && window_current->userlist)
-			l = window_current->userlist;
+		if (!all && c && c->participants)		l = c->participants;
+		else if (!all && window_current->userlist)	l = window_current->userlist;
 
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
