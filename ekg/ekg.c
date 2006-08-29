@@ -1172,6 +1172,7 @@ watches_again:
 	msg_queue_free();
 	alias_free();
 	conference_free();
+	newconference_free();
 	metacontact_free();
 	sessions_free();
 	theme_free();
