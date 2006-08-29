@@ -770,7 +770,6 @@ userlist_t *newconference_member_add(newconference_t *conf, const char *uid, con
 int newconference_member_remove(newconference_t *conf, userlist_t *u) {
 	if (!conf || !u) return -1;
 	return userlist_remove_u(&(conf->participants), u);
-
 }
 
 newconference_t *newconference_find(session_t *s, const char *name) {
@@ -805,7 +804,10 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 
 void newconference_destroy(newconference_t *conf, int kill_wnd) {
 	if (!conf) return;
-/* XXX, kill_wnd */
+	if (kill_wnd) {
+		window_t *w = window_find_s(session_find(conf->session), conf->name);
+		if (w) window_kill(w, 0);
+	}
 	xfree(conf->name);
 	xfree(conf->session);
 	userlist_free_u(&conf->participants);
