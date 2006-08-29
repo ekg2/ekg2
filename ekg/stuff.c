@@ -751,13 +751,20 @@ const char *compile_time()
 
 /* NEW CONFERENCE API HERE, WHEN OLD CONFERENCE API BECOME OBSOLETE CHANGE FUNCTION NAME, ETC.... */
 
-	/* search for uid in conference just wrapper */
 userlist_t *newconference_member_find(newconference_t *conf, const char *uid) {
+	list_t l;
+
 	if (!conf || !uid) return NULL;
-	return userlist_find_u(&(conf->participants), uid);
+
+	for (l = conf->participants; l; l = l->next) {
+		userlist_t *u = l->data;
+
+		if (!xstrcasecmp(u->uid, uid))
+			return u;
+	}
+	return NULL;
 }
 
-	/* add uid to conference, first check if user exists. just wrapper too..  */
 userlist_t *newconference_member_add(newconference_t *conf, const char *uid, const char *nick) {
 	userlist_t *u;
 	if (!conf || !uid) return NULL;
@@ -798,7 +805,6 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 	c->session	= xstrdup(s->uid);
 	c->name		= xstrdup(name);
 	
-	newconference_member_add(c, s->uid, "__CONFERENCE"); /* let's add us to the userlist ? */
 	return list_add(&newconferences, c, 0);
 }
 
