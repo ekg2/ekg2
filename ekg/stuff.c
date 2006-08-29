@@ -84,6 +84,7 @@ list_t autofinds = NULL;
 list_t bindings = NULL;
 list_t timers = NULL;
 list_t conferences = NULL;
+list_t newconferences = NULL;
 list_t buffers = NULL;
 list_t searches = NULL;
 
@@ -749,30 +750,40 @@ const char *compile_time()
 }
 
 /* NEW CONFERENCE API HERE, WHEN OLD CONFERENCE API BECOME OBSOLETE CHANGE FUNCTION NAME, ETC.... */
-#if 0
-typedef struct {
-	const char *name;
-	list_t participants;
-	void *private;
-} newconference_t;
 
 	/* search for uid in conference just wrapper */
-userlist_t *newconference_find(newconference_t *conf, const char *uid) {
+userlist_t *newconference_member_find(newconference_t *conf, const char *uid) {
 	if (!conf || !uid) return NULL;
 	return userlist_find_u(&(conf->participants), uid);
 }
 
 	/* add uid to conference, first check if user exists. just wrapper too..  */
-userlist_t *newconference_add(newconference_t *conf, const char *uid, const char *nick) {
+userlist_t *newconference_member_add(newconference_t *conf, const char *uid, const char *nick) {
 	userlist_t *u;
 	if (!conf || !uid) return NULL;
 
-	if (!(u = conference_find(conf, uid)))
+	if (!(u = newconference_member_find(conf, uid)))
 		u = userlist_add_u(&(conf->participants), uid, nick);
 	return u;
 }
+	/* remove userlist_t from conference. wrapper. */
+int newconference_member_remove(newconference_t *conf, userlist_t *u) {
+	if (!conf || !u) return -1;
+	return userlist_remove_u(&(conf->participants), u);
 
-newconference_t *newconference_create(session_t *s, const char *name, int create) {
+}
+
+newconference_t *newconference_find(session_t *s, const char *name) {
+	list_t l;
+	for (l = newconferences; l; l = l->next) {
+		newconference_t *c = l->data;
+
+		if ((!s || !xstrcmp(s->uid, c->session)) && !xstrcmp(name, c->name)) return c;
+	}
+	return NULL;
+}
+
+newconference_t *newconference_create(session_t *s, const char *name, int create_wnd) {
 	newconference_t *c;
 	window_t *w;
 
@@ -780,26 +791,41 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 
 	if ((c = newconference_find(s, name))) return c;
 
-	if (!(w = window_find_s(s, name)) && create) {
-		w = window_new(s, name, 0);
+	if (!(w = window_find_s(s, name)) && create_wnd) {
+		w = window_new(name, s, 0);
 	}
 
-	if (!w) return NULL;
-
-	c	= xmalloc(sizeof(newconference_t));
-	c->name	= xstrdup(name);
-/*	CONNECT w->userlist with c->participants ?*/
+	c		= xmalloc(sizeof(newconference_t));
+	c->session	= xstrdup(s->uid);
+	c->name		= xstrdup(name);
 	
-	newconference_add(c, s->uid, "__CONFERENCE"); /* let's add us to the userlist */
-	return list_add(&newconferences, 0, c);
+	newconference_member_add(c, s->uid, "__CONFERENCE"); /* let's add us to the userlist ? */
+	return list_add(&newconferences, c, 0);
 }
 
-void newconference_destroy(newconference_t *conf, int quiet) {
-
-
+void newconference_destroy(newconference_t *conf, int kill_wnd) {
+	if (!conf) return;
+/* XXX, kill_wnd */
+	xfree(conf->name);
+	xfree(conf->session);
+	userlist_free_u(&conf->participants);
 }
+
+void newconference_free() {
+	list_t l;
+	for (l = newconferences; l; l = l->next) {
+		newconference_t *c = l->data;
+
+		xfree(c->session);
+		xfree(c->name);
+		userlist_free_u(&c->participants);
+	}
+
+	list_destroy(newconferences, 1);
+	newconferences = NULL;
+}
+
 /* OLD CONFERENCE API HERE, REQUEST REWRITING/USING NEW-ONE */
-#endif
 
 /*
  * conference_add()

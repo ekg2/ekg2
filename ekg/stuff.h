@@ -44,6 +44,7 @@
 #include "dynstuff.h"
 #include "plugins.h"
 #include "sessions.h"
+#include "userlist.h"
 
 #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
 
@@ -130,6 +131,13 @@ struct conference {
 	list_t recipients;
 };
 
+typedef struct {
+	char *session;
+	char *name;
+	list_t participants;
+	void *private;
+} newconference_t;
+
 enum buffer_t {
 	BUFFER_DEBUG,	/* na zapisanie n ostatnich linii debug */
 	BUFFER_EXEC,	/* na buforowanie tego, co wypluwa exec */
@@ -157,6 +165,7 @@ extern list_t bindings;
 extern list_t bindings_added;
 extern list_t timers;
 extern list_t conferences;
+extern list_t newconferences;
 extern list_t buffers;
 extern list_t searches;
 
@@ -279,6 +288,16 @@ int conference_set_ignore(const char *name, int flag, int quiet);
 int conference_rename(const char *oldname, const char *newname, int quiet);
 int conference_participant(struct conference *c, const char *uid);
 void conference_free();
+
+/* BEGIN OF newconference API HERE */
+userlist_t *newconference_member_add(newconference_t *conf, const char *uid, const char *nick);
+userlist_t *newconference_member_find(newconference_t *conf, const char *uid);
+int newconference_member_remove(newconference_t *conf, userlist_t *u);
+newconference_t *newconference_create(session_t *s, const char *name, int create_wnd);
+newconference_t *newconference_find(session_t *s, const char *name);
+void newconference_destroy(newconference_t *conf, int kill_wnd);
+void newconference_free();
+/* END of newconference API */
 
 void ekg_connect();
 void ekg_reconnect();
