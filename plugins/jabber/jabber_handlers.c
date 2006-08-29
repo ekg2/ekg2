@@ -1680,18 +1680,22 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 						char *affiliation = jabber_unescape(jabber_attr(child->atts, "affiliation"));	/* ? */
 
 						char *uid; 
-						char *tmp;
 
 						userlist_t *ulist;
 						newconference_t *c;
 
+						uid = saprintf("jid:%s", jid);
+
+						if (!na) 	print_window(mucuid, s, 0, "muc_joined", session_name(s), tmp ? tmp + 1 : NULL, uid+4, mucuid+4, "");
+						else		print_window(mucuid, s, 0, "muc_left", session_name(s), tmp ? tmp + 1 : NULL, uid+4, mucuid+4);
+
 						if (!(c = newconference_find(s, mucuid))) {
 							debug("[jabber,muc] recved muc#user but conference: %s not found ?\n", mucuid);
-							/* XXX */
+							xfree(uid);
+							xfree(jid); xfree(role); xfree(affiliation);
 							break;
 						}
 	
-						uid = saprintf("jid:%s", jid);
 
 						ulist = newconference_member_find(c, uid);
 						if (ulist && na) { 
@@ -1701,10 +1705,11 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 						} else if (!ulist) ulist = newconference_member_add(c, uid, jid);
 
 						if (ulist) {
-							tmp = ulist->status;
+							char *tmp = ulist->status;
 							ulist->status = xstrdup(EKG_STATUS_AVAIL);
 							xfree(tmp);
-
+							
+							mucuser_private_deinit(ulist);
 							mucuser_private_get(ulist)->role	= xstrdup(role);
 							mucuser_private_get(ulist)->aff		= xstrdup(affiliation);
 						}

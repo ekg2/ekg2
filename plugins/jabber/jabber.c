@@ -544,12 +544,15 @@ QUERY(jabber_window_kill)
 {
 	window_t        *w = *va_arg(ap, window_t **);
 	jabber_private_t *j;
+	newconference_t  *c;
 
 	char *status = NULL;
 
-	if (w && w->id && w->target && w->userlist && session_check(w->session, 1, "jid") && 
-			(j = jabber_private(w->session)) && session_connected_get(w->session))
-		watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target+4, "darkjames" /* XXX */, status ? status : "");
+	if (w && w->id && w->target && session_check(w->session, 1, "jid") && (c = newconference_find(w->session, w->target)) &&
+			(j = jabber_private(w->session)) && session_connected_get(w->session)) {
+		watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target+4, c->private, status ? status : "");
+		newconference_destroy(c, 0);
+	}
 
 	return 0;
 }
@@ -1274,6 +1277,10 @@ static int jabber_theme_init() {
 	format_add("jabber_recv_chan", _("%b<%w%2%b>%n %5"), 1);
 	format_add("jabber_recv_chan_n", _("%b<%w%2%b>%n %5"), 1);
 #endif
+
+	format_add("muc_joined", 	"%> %C%2%n %B[%c%3%B]%n has joined %W%4\n", 1);		/* %1 sesja %2 nick %3 - jid %4 - kanal */
+	format_add("muc_left",		"%> %c%2%n [%c%3%n] has left %W%4 %n[%5]\n", 1);	/* %1 sesja %2 nick %3 - jid %4 - kanal %5 - reason */
+
 
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
