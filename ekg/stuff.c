@@ -809,14 +809,16 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 }
 
 void newconference_destroy(newconference_t *conf, int kill_wnd) {
+	window_t *w = NULL; 
 	if (!conf) return;
-	if (kill_wnd) {
-		window_t *w = window_find_s(session_find(conf->session), conf->name);
-		if (w) window_kill(w, 0);
-	}
+	if (kill_wnd) w = window_find_s(session_find(conf->session), conf->name);
+
 	xfree(conf->name);
 	xfree(conf->session);
 	userlist_free_u(&conf->participants);
+	list_remove(&newconferences, conf, 1);
+
+	if (w) window_kill(w, 0);
 }
 
 void newconference_free() {
