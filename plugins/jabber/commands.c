@@ -433,7 +433,7 @@ COMMAND(jabber_command_msg)
 	const char *uid;
 	int payload = 4 + j->istlen;
 
-	window_t *w;
+	newconference_t *c;
 	int ismuc = 0;
 
 	if (!xstrcmp(target, "*")) {
@@ -462,7 +462,7 @@ COMMAND(jabber_command_msg)
 #warning TOPIC NOT SUPPORTED IN UNICODE VERSION.
 #endif
 		msg = tlenjabber_uescape(params[1]); /* bez tematu */
-	if ((w = window_find_s(session, target)) && (w->userlist))
+	if ((c = newconference_find(session, target))) 
 		ismuc = 1;
 
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
@@ -1390,8 +1390,7 @@ COMMAND(jabber_command_privacy) {
 	return 0;
 }
 
-COMMAND(jabber_muc_command_join) 
-{
+COMMAND(jabber_muc_command_join) {
 	PARASC
 	/* params[0] - full channel name, 
 	 * params[1] - nickname || default 
@@ -1402,6 +1401,7 @@ COMMAND(jabber_muc_command_join)
 	 * XXX: history requesting, none history requesting.. etc
 	 */
 	jabber_private_t *j = session_private_get(session);
+	newconference_t *conf;
 	char *tmp;
 	char *username = (params[1]) ? xstrdup(params[1]) : (tmp = xstrchr(session->uid, '@')) ? xstrndup(session->uid+4, tmp-session->uid-4) : NULL;
 	char *password = (params[1] && params[2]) ? saprintf("<password>%s</password>", params[2]) : NULL;
@@ -1415,6 +1415,12 @@ COMMAND(jabber_muc_command_join)
 
 	watch_write(j->send_watch, "<presence to='%s/%s'><x xmlns='http://jabber.org/protocol/muc#user'>%s</x></presence>", 
 			target, username, password ? password : "");
+	{
+		char *uid = saprintf("jid:%s", target);
+		conf = newconference_create(session, uid, 1);
+		conf->private = xstrdup(username);
+		xfree(uid);
+	}
 
 	xfree(username);
 	xfree(password);
@@ -1425,19 +1431,20 @@ COMMAND(jabber_muc_command_part)
 {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
-	window_t *w;
+	newconference_t *c;
 	char *status;
 
-	if (!(w = window_find_s(session, target)) || !(w->userlist)) {
+	if (!(c = newconference_find(session, target))) {
 		printq("generic_error", "Use /jid:part only in valid MUC room/window");
 		return -1;
 	}
 
 	status = params[1] ? saprintf(" <status>%s</status> ", params[1]) : NULL;
 
-	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", target+4, "darkjames", status ? status : "");
+	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", c->name+4, c->private, status ? status : "");
 
 	xfree(status);
+	newconference_destroy(c, 1 /* XXX, dorobic zmienna */);
 	return 0;
 }
 

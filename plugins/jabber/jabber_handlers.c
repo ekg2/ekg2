@@ -1610,6 +1610,29 @@ rc_forbidden:
 	} /* type == get */
 } /* iq */
 
+typedef struct {
+	char *role;		/* role: */
+	char *aff;		/* affiliation: */
+} muc_userlist_t;
+
+muc_userlist_t *mucuser_private_get(userlist_t *u) {
+	muc_userlist_t *p;
+	if (!u) 	return NULL;
+	if (u->priv)	return u->priv;
+
+	p = xmalloc(sizeof(muc_userlist_t));
+	u->priv = p;
+	return p;
+}
+
+void mucuser_private_deinit(userlist_t *u) {
+	muc_userlist_t *p;
+	if (!u || !(p = u->priv)) return;
+
+	xfree(p->role);
+	xfree(p->aff);
+}
+
 void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	jabber_private_t *j = jabber_private(s);
 	const char *from = jabber_attr(n->atts, "from");
@@ -1659,29 +1682,35 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 						char *uid; 
 						char *tmp;
 
-						window_t *w;
 						userlist_t *ulist;
+						newconference_t *c;
+
+						if (!(c = newconference_find(s, mucuid))) {
+							debug("[jabber,muc] recved muc#user but conference: %s not found ?\n", mucuid);
+							/* XXX */
+							break;
+						}
 	
-						if (!(w = window_find_s(s, mucuid))) /* co robimy jak okno == NULL ? */
-							w = window_new(mucuid, s, 0); /* tworzymy ? */
 						uid = saprintf("jid:%s", jid);
 
-						if (!(ulist = userlist_find_u(&(w->userlist), uid)))
-							ulist = userlist_add_u(&(w->userlist), uid, jid);
+						ulist = newconference_member_find(c, uid);
+						if (ulist && na) { 
+							mucuser_private_deinit(ulist); 
+							newconference_member_remove(c, ulist); 
+							ulist = NULL; 
+						} else if (!ulist) ulist = newconference_member_add(c, uid, jid);
 
-						if (ulist && na) {
-							userlist_remove_u(&(w->userlist), ulist);
-							ulist = NULL;
-						}
 						if (ulist) {
 							tmp = ulist->status;
 							ulist->status = xstrdup(EKG_STATUS_AVAIL);
 							xfree(tmp);
+
+							mucuser_private_get(ulist)->role	= xstrdup(role);
+							mucuser_private_get(ulist)->aff		= xstrdup(affiliation);
 						}
 						xfree(uid);
-
+						
 						debug("[MUC, PRESENCE] NEWITEM: %s ROLE:%s AFF:%s\n", jid, role, affiliation);
-
 						xfree(jid); xfree(role); xfree(affiliation);
 					} else {
 						debug("[MUC, PRESENCE] child->name: %s\n", child->name);
