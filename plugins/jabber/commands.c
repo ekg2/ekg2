@@ -998,7 +998,7 @@ COMMAND(jabber_command_search) {
 	const char *server = params[0] ? params[0] : jabber_default_search_server ? jabber_default_search_server : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ 
 	char **splitted		= NULL;
 
-	if (array_count(params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
+	if (array_count((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -1137,7 +1137,7 @@ COMMAND(jabber_command_register)
 	if (!j->send_watch) return -1;
 	j->send_watch->transfer_limit = -1;
 
-	if (array_count(params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
+	if (array_count((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -1473,7 +1473,7 @@ COMMAND(jabber_command_control) {
 		else if (!xstrcmp(params[1], "ekg-manage-plugins"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-manage-plugins");
 		else if (!xstrcmp(params[1], "ekg-manage-sessions"))	nodename = saprintf("http://ekg2.org/jabber/rc#ekg-manage-sesions");
 	}
-	switch (array_count(params)) {
+	switch (array_count((char **) params)) {
 		case 1:
 			watch_write(j->send_watch, 
 					"<iq type=\"get\" to=\"%s/%s\" id=\"control%d\">"

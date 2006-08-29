@@ -577,6 +577,8 @@ int jabber_write_status(session_t *s)
 		return 0;
 
 	status = session_status_get(s);
+	if (!xstrcmp(status, EKG_STATUS_AUTOAWAY)) status = "away";
+
 	if ((descr = tlenjabber_escape(session_descr_get(s)))) {
 		real = saprintf("<status>" CHARF "</status>", descr);
 		xfree(descr);
