@@ -57,6 +57,8 @@
 #  include <gif_lib.h>
 #endif
 
+#include <libgadu.h>
+
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -78,15 +80,12 @@
 #include "pubdir50.h"
 #include "token.h"
 
-COMMAND(gg_command_connect)
-{
+COMMAND(gg_command_connect) {
 	PARUNI
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
-	int ret = 0;
 	
 	if (!xwcscasecmp(name, TEXT("disconnect")) || (!xwcscasecmp(name, TEXT("reconnect")))) {
-
 	        /* if ,,reconnect'' timer exists we should stop doing */
 	        if (timer_remove(&gg_plugin, "reconnect") == 0) {
 			wcs_printq("auto_reconnect_removed", wcs_session_name(session));
@@ -151,8 +150,7 @@ COMMAND(gg_command_connect)
 		if (g->sess) {
 			wcs_printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", 
 					wcs_session_name(session));
-			ret = -1;
-			goto end;
+			return -1;
 		}
 
 		if (local_ip == NULL)
@@ -175,8 +173,7 @@ COMMAND(gg_command_connect)
 
 		if (!uin || !password) {
 			wcs_printq("no_config");
-			ret = -1;
-			goto end;
+			return -1;
 		}
 
 		wcs_printq("connecting", wcs_session_name(session));
@@ -227,22 +224,34 @@ COMMAND(gg_command_connect)
 		if ((tmpi = session_int_get(session, "last_sysmsg")) != -1)
 			p.last_sysmsg = tmpi;
 
-		if (realserver) {
+		while (realserver) {
 			in_addr_t tmp_in;
 			
+#ifdef __GG_LIBGADU_HAVE_OPENSSL
+			if (!xstrcasecmp(realserver, "tls")) {
+				p.tls = 1;
+				break;
+			}
+#endif
+			if (!xstrncasecmp(realserver, "tls:", 4)) {
+#ifdef __GG_LIBGADU_HAVE_OPENSSL
+				p.tls = 1;
+#endif
+				realserver += 4;
+			}
+
 			if ((tmp_in = inet_addr(realserver)) != INADDR_NONE)
 				p.server_addr = inet_addr(realserver);
 			else {
 				wcs_print("inet_addr_failed", wcs_session_name(session));
-				ret = -1;
-				goto end;
+				return -1;
 			}
+			break;
 		}
 
 		if ((port < 1) || (port > 65535)) {
 			wcs_print("port_number_error", wcs_session_name(session));
-			ret = -1;
-			goto end;
+			return -1;
 		}
 		p.server_port = port;
 
@@ -313,8 +322,7 @@ noproxy:
 		}
 	}
 
-end:
-	return ret;
+	return 0;
 }
 
 COMMAND(gg_command_away)
