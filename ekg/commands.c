@@ -3459,6 +3459,21 @@ COMMAND(cmd_conference)
 		else if (params[0])
 			cname = params[0];
 
+		for (l = newconferences; l; l = l->next) {
+			newconference_t *c = l->data;
+/* XXX, 
+ * 	::: konferencje:
+ * 		-- konferencja1/sesja
+ * 			USER1:		[query_emit(NULL/pl, "conference-member-info", &c, &u)] 
+ * 			USER2:		[....]
+ * 			query_emit(NULL/pl, "conference-info", &c); 
+ * 	albo jak /names w ircu, albo jak?
+ * 	XXX
+ */
+			print("conferences_list", c->name, "");
+			count++;
+		}
+
 		for (l = conferences; l; l = l->next) {
 			struct conference *c = l->data;
 			string_t recipients;
