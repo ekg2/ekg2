@@ -1427,15 +1427,14 @@ COMMAND(jabber_muc_command_join) {
 	return 0;
 }
 
-COMMAND(jabber_muc_command_part) 
-{
+COMMAND(jabber_muc_command_part) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
 	char *status;
 
 	if (!(c = newconference_find(session, target))) {
-		printq("generic_error", "Use /jid:part only in valid MUC room/window");
+		printq("generic_error", "/jid:part only valid in MUC");
 		return -1;
 	}
 
@@ -1445,6 +1444,118 @@ COMMAND(jabber_muc_command_part)
 
 	xfree(status);
 	newconference_destroy(c, 1 /* XXX, dorobic zmienna */);
+	return 0;
+}
+
+COMMAND(jabber_muc_command_admin) {
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+	newconference_t *c;
+
+	if (!(c = newconference_find(session, target))) {
+		printq("generic_error", "/jid:admin only valid in MUC");
+		return -1;
+	}
+
+	if (!params[1]) {
+		watch_write(j->send_watch,
+			"<iq id=\"mucadmin%d\" to=\"%s\" type=\"get\">"
+			"<query xmlns=\"http://jabber.org/protocol/muc#owner\"/>"
+			"</iq>", j->id++, c->name+4);
+	} else {
+		char **splitted = NULL;
+		int i;
+		int isinstant = !xstrcmp(params[1], "--instant");
+
+		if (isinstant) {
+			watch_write(j->send_watch,
+				"<iq type=\"set\" to=\"%s\" id=\"mucadmin%d\">"
+				"<query xmlns=\"http://jabber.org/protocol/muc#owner\">"
+				"<x xmlns=\"jabber:x:data\" type=\"submit\"/>"
+				"</query></iq>", c->name+4, j->id++);
+			return 0;
+		}
+
+		if (!(splitted = jabber_params_split(params[1], 0))) {
+			printq("invalid_params", name);
+			return -1;
+		}
+
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
+
+		watch_write(j->send_watch, 
+				"<iq type=\"set\" to=\"%s\" id=\"mucadmin%d\">"
+				"<query xmlns=\"http://jabber.org/protocol/muc#owner\">"
+				"<x xmlns=\"jabber:x:data\" type=\"submit\">"
+/*				"<field var=\"FORM_TYPE\"><value>http://jabber.org/protocol/muc#roomconfig/value></field>" */
+				,c->name+4, j->id++);
+
+		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
+			CHAR_T *name	= jabber_escape(splitted[i]);
+			CHAR_T *value	= jabber_escape(splitted[i+1]);
+
+			watch_write(j->send_watch, "<field var=\"" CHARF "\"><value>" CHARF "</value></field>", name, value);
+
+			xfree(value);	xfree(name);
+		}
+		array_free(splitted);
+		watch_write(j->send_watch, "</x></query></iq>");
+		JABBER_COMMIT_DATA(j->send_watch);
+	}
+	return 0;
+}
+
+COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+	newconference_t *c;
+	
+	if (!(c = newconference_find(session, target))) {
+		printq("generic_error", "/jid:ban && /jin:kick && /jid:unban only valid in MUC");
+		return -1;
+	}
+/* XXX, make check if command = "kick" than check if user is on the muc channel... cause we can make /unban */
+
+	if (!params[1]) {
+		watch_write(j->send_watch, 
+			"<iq id=\"%d\" to=\"%s\" type=\"get\">"
+			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"outcast\"/></query>"
+			"</iq>", j->id++, c->name+4);
+	} else {
+		CHAR_T *reason	= jabber_escape(params[2]);
+		const char *jid	= params[1];
+
+		if (!xstrncmp(jid, "jid:", 4)) jid += 4;
+
+		watch_write(j->send_watch,
+			"<iq id=\"%d\" to=\"%s\" type=\"set\">"
+			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"%s\" jid=\"%s\"><reason>" CHARF "</reason></item></query>"
+			"</iq>", j->id++, c->name+4, 
+				!xwcscmp(name, "ban") ? /* ban */ "outcast" : /* unban+kick */ "none", 
+			jid, reason ? reason : "");
+		xfree(reason);
+	}
+	return 0;
+}
+
+COMMAND(jabber_muc_command_topic) {
+	PARASC
+	jabber_private_t *j = session_private_get(session);
+	newconference_t *c;
+/* XXX da, /topic is possible in normal talk too... current limit only to muc. */
+	if (!(c = newconference_find(session, target))) {
+		printq("generic_error", "/jid:topic only valid in MUC");
+		return -1;
+	}
+	
+	if (!params[1]) {
+		/* XXX, display current topic */
+
+	} else {
+		CHAR_T *subject = jabber_escape(params[1]);
+		watch_write(j->send_watch, "<message to=\"%s\" type=\"groupchat\"><subject>" CHARF "</subject></message>", c->name+4, subject);
+	} 
+
 	return 0;
 }
 
@@ -1788,9 +1899,6 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:msg"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:modify"), "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
 			"-n --nickname -g --group");
-/*	command_add(&jabber_plugin, TEXT("jid:muc"),  */
-	command_add(&jabber_plugin, TEXT("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, TEXT("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:privacy"), "? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, TEXT("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
@@ -1807,6 +1915,15 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, TEXT("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:xa"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:xml"), "!", jabber_command_xml, 	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+/* MUC/ old conferences XXX */
+	command_add(&jabber_plugin, TEXT("jid:admin"), "! ?", jabber_muc_command_admin, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:ban"), "! ? ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:unban"), "! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:kick"), "! ! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, TEXT("jid:topic"), "! ?", jabber_muc_command_topic, JABBER_FLAGS_TARGET, NULL);
+
 
 	command_add(&jabber_plugin, TEXT("tlen:auth"), "!p !uU", 	jabber_command_auth,		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS,
 			"-a --accept -d --deny -r --request -c --cancel");

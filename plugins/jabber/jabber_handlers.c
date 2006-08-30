@@ -1258,6 +1258,38 @@ rc_forbidden:
 					print(iscontrol ? "jabber_remotecontrols_list_end"	: "jabber_transport_list_end", session_name(s), uid);
 				} else	print(iscontrol ? "jabber_remotecontrols_list_nolist" : "jabber_transport_list_nolist", session_name(s), uid);
 				xfree(uid);
+			} else if (!xstrcmp(ns, "http://jabber.org/protocol/muc#owner")) {
+				xmlnode_t *node;
+				int formdone = 0;
+				char *uid = jabber_unescape(from);
+
+				for (node = q->children; node; node = node->next) {
+					if (!xstrcmp(node->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(node->atts, "xmlns"))) {
+						if (!xstrcmp(jabber_attr(node->atts, "type"), "form")) {
+							formdone = 1;
+							jabber_handle_xmldata_form(s, uid, "admin", node->children, NULL);
+							break;
+						} 
+					}
+				}
+//				if (!formdone) ;	// XXX
+				xfree(uid);
+			} else if (!xstrcmp(ns, "http://jabber.org/protocol/muc#admin")) {
+				xmlnode_t *node;
+				int count = 0;
+
+				for (node = q->children; node; node = node->next) {
+					if (!xstrcmp(node->name, "item")) {
+						char *jid		= jabber_attr(node->atts, "jid");
+						char *aff		= jabber_attr(node->atts, "affiliation");
+						xmlnode_t *reason	= xmlnode_find_child(node, "reason");
+						char *rsn		= reason ? jabber_unescape(reason->data) : NULL;
+						
+						print("jabber_muc_banlist", session_name(s), from, jid, rsn ? rsn : "", itoa(++count));
+						xfree(rsn);
+					}
+				}
+
 			} else if (!xstrcmp(ns, "jabber:iq:search")) {
 				xmlnode_t *node;
 				int rescount = 0;
@@ -1665,7 +1697,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	}
 
 	for (q = n->children; q; q = q->next) {
-		char *tmp	= xstrrchr(uid, '/');
+		char *tmp	= xstrchr(uid, '/');
 		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : xstrlen(uid));
 		char *ns	= jabber_attr(q->atts, "xmlns");
 
@@ -1674,35 +1706,43 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 				xmlnode_t *child;
 
 				for (child = q->children; child; child = child->next) {
-					if (!xstrcmp(child->name, "item")) { /* lista userow */
+					if (!xstrcmp(child->name, "status")) {		/* status codes, --- http://www.jabber.org/jeps/jep-0045.html#registrar-statuscodes */
+						char *code = jabber_attr(child->atts, "code");
+						int codenr = code ? atoi(code) : -1;
+
+						switch (codenr) {
+							case 201: print_window(mucuid, s, 0, "jabber_muc_room_created", session_name(s), mucuid);	break;
+							case  -1: debug("[jabber, iq, muc#user] codenr: -1 code: %s\n", code);				break;
+							default : debug("[jabber, iq, muc#user] XXX codenr: %d code: %s\n", codenr, code);
+						}
+					} else if (!xstrcmp(child->name, "item")) { /* lista userow */
 						char *jid	  = jabber_unescape(jabber_attr(child->atts, "jid"));		/* jid */
 						char *role	  = jabber_unescape(jabber_attr(child->atts, "role"));		/* ? */
 						char *affiliation = jabber_unescape(jabber_attr(child->atts, "affiliation"));	/* ? */
 
 						char *uid; 
 
-						userlist_t *ulist;
 						newconference_t *c;
-
-						uid = saprintf("jid:%s", jid);
-
-						if (!na) 	print_window(mucuid, s, 0, "muc_joined", session_name(s), tmp ? tmp + 1 : NULL, uid+4, mucuid+4, "");
-						else		print_window(mucuid, s, 0, "muc_left", session_name(s), tmp ? tmp + 1 : NULL, uid+4, mucuid+4);
+						userlist_t *ulist;
 
 						if (!(c = newconference_find(s, mucuid))) {
 							debug("[jabber,muc] recved muc#user but conference: %s not found ?\n", mucuid);
-							xfree(uid);
 							xfree(jid); xfree(role); xfree(affiliation);
 							break;
 						}
-	
+
+						uid = saprintf("jid:%s", jid);
+						if (na) 	print_window(mucuid, s, 0, "muc_left", session_name(s), tmp ? tmp + 1 : NULL, uid+4, mucuid+4, "");
 
 						ulist = newconference_member_find(c, uid);
 						if (ulist && na) { 
 							mucuser_private_deinit(ulist); 
 							newconference_member_remove(c, ulist); 
 							ulist = NULL; 
-						} else if (!ulist) ulist = newconference_member_add(c, uid, jid);
+						} else if (!ulist) {
+							ulist = newconference_member_add(c, uid, jid);
+							print_window(mucuid, s, 0, "muc_joined", session_name(s), tmp ? tmp + 1 : NULL, uid+4, mucuid+4, "");
+						}
 
 						if (ulist) {
 							char *tmp = ulist->status;

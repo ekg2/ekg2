@@ -1270,6 +1270,9 @@ static int jabber_theme_init() {
 
 	/* %1 - sessionname %2 - mucjid %3 - nickname %4 - text */
 	format_add("jabber_muc", "%B<%G%3%B>%n %4", 1);
+	format_add("jabber_muc_room_created", 
+		_("%> Room %W%2%n created, now to configure it: type %W/admin %g%2%n to get configuration form, or type %W/admin %g%2%n --instant to create instant one"), 1);
+	format_add("jabber_muc_banlist", _("%g|| %n %5 - %W%2%n: ban %c%3%n [%4]"), 1);	/* %1 sesja %2 kanal %3 kto %4 reason %5 numerek */
 #if 0
 	format_add("jabber_send_chan", _("%B<%W%2%B>%n %5"), 1);
 	format_add("jabber_send_chan_n", _("%B<%W%2%B>%n %5"), 1);
@@ -1277,7 +1280,6 @@ static int jabber_theme_init() {
 	format_add("jabber_recv_chan", _("%b<%w%2%b>%n %5"), 1);
 	format_add("jabber_recv_chan_n", _("%b<%w%2%b>%n %5"), 1);
 #endif
-
 	format_add("muc_joined", 	"%> %C%2%n %B[%c%3%B]%n has joined %W%4\n", 1);		/* %1 sesja %2 nick %3 - jid %4 - kanal */
 	format_add("muc_left",		"%> %c%2%n [%c%3%n] has left %W%4 %n[%5]\n", 1);	/* %1 sesja %2 nick %3 - jid %4 - kanal %5 - reason */
 
