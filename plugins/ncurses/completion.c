@@ -164,6 +164,7 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	session_t *s;
 	char *tmp = NULL, *session_name = NULL;
 	int tmp_len = 0;
+	newconference_t *c; 
 
 	if (!session_current)
 		return;
@@ -208,9 +209,12 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	}
 
 	if (!window_current) 
-		goto end;	
+		goto end;
 
-        for (l = window_current->userlist; l; l = l->next) {
+	if ((c = newconference_find(window_current->session, window_current->target)))	l = c->participants;
+	else										l = window_current->userlist;
+
+        for (; l; l = l->next) {
                 userlist_t *u = l->data;
 
                 if (u->uid && !xstrncasecmp(stext, u->uid, len)) {
