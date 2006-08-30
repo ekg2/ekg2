@@ -1249,8 +1249,10 @@ rc_forbidden:
 						char *sdesc = jabber_unescape(jabber_attr(item->atts, "name"));
 						char *snode = jabber_unescape(jabber_attr(item->atts, "node"));
 						
-						if (!iscontrol)	print("jabber_transport_list_item", session_name(s), uid, sjid, sdesc, itoa(i));
-						else		print("jabber_remotecontrols_list_item",  session_name(s), uid, sjid, snode, sdesc, itoa(i));
+						if (!iscontrol)	print(snode ? "jabber_transport_list_item_node" : "jabber_transport_list_item", 
+									session_name(s), uid, sjid, snode, sdesc, itoa(i));
+						else		print("jabber_remotecontrols_list_item", 
+									session_name(s), uid, sjid, snode, sdesc, itoa(i));
 						xfree(sdesc);
 						xfree(sjid);
 						xfree(snode);

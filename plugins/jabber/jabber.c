@@ -1214,7 +1214,8 @@ static int jabber_theme_init() {
 
 	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
 	format_add("jabber_transport_list_begin", _("%g,+=%G----- Avalible agents on: %T%2%n"), 1);
-	format_add("jabber_transport_list_item",  _("%g|| %n %5 - %W%3%n (%4)"), 1);
+	format_add("jabber_transport_list_item",  _("%g|| %n %6 - %W%3%n (%5)"), 1);
+	format_add("jabber_transport_list_item_node",("%g|| %n %6 - %W%3%n node: %g%4%n (%5)"), 1);
 	format_add("jabber_transport_list_end",   _("%g`+=%G----- End of the agents list%n\n"), 1);
 	format_add("jabber_transport_list_nolist", _("%! No agents @ %T%2%n"), 1);
 
