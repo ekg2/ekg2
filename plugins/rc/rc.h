@@ -5,7 +5,7 @@
 
 #include <ekg/dynstuff.h>
 
-list_t rc_inputs;
+extern list_t rc_inputs;
 
 typedef enum {
 	RC_INPUT_PIPE = 1,		/* pipe:/home/user/.ekg/pipe */
