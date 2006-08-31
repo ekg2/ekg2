@@ -61,6 +61,12 @@ static int dd_color(const CHAR_T *name)
 	return (config_display_color);
 }
 
+static int dd_beep(const CHAR_T *name)
+{
+	return (config_beep);
+}
+
+
 /*
  * variable_init()
  *
