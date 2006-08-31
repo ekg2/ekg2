@@ -1,0 +1,7 @@
+display_crap
+	type: bool
+	default value: 1
+	
+	defines if information which weren't connected with interlocutor will be displayed in chat window. 
+	If it's 0, in chat window information only about interlocutor status are displayed.
+

@@ -118,14 +118,6 @@ completion_notify
 	pojawią się na liście ze stanem ,,zajęty''. wszystkie dostępne
 	wartości to: 0, 1, 2, 5, 6.
 
-ctrld_quits
-	typ: bool
-	domyślna wartość: 1
-
-	określa, czy wciśnięcie Ctrl-D w ostatnim okienku, nie będąc
-	w trybie, rozmowy klient na zakończyć działanie. ma znaczenie
-	tylko dla interfejsu readline.
-
 dcc
 	typ: bool
 	domyślna wartość: 0
@@ -208,6 +200,14 @@ display_color_map
 	- podkreślony+pogrubiony,
 	- podkreślony+pochyły,
 	- podkreślony+pochyły+pogrubiony.
+
+display_crap
+	typ: bool
+	domyślna wartość: 1
+	
+	mówi, czy w oknie rozmowy mają być wyświetlane komunikaty niezwiązane
+	z rozmówcą. jeśli jest równe 0, w oknie rozmowy są wyświetlane tylko
+	wiadomości i informacje o zmianie stanu rozmówcy. 
 
 display_notify
 	typ: liczba

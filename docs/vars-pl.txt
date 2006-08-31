@@ -118,14 +118,6 @@ completion_notify
 	pojawi± siê na li¶cie ze stanem ,,zajêty''. wszystkie dostêpne
 	warto¶ci to: 0, 1, 2, 5, 6.
 
-ctrld_quits
-	typ: bool
-	domy¶lna warto¶æ: 1
-
-	okre¶la, czy wci¶niêcie Ctrl-D w ostatnim okienku, nie bêd±c
-	w trybie, rozmowy klient na zakoñczyæ dzia³anie. ma znaczenie
-	tylko dla interfejsu readline.
-
 dcc
 	typ: bool
 	domy¶lna warto¶æ: 0
@@ -208,6 +200,14 @@ display_color_map
 	- podkre¶lony+pogrubiony,
 	- podkre¶lony+pochy³y,
 	- podkre¶lony+pochy³y+pogrubiony.
+
+display_crap
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	mówi, czy w oknie rozmowy maj± byæ wy¶wietlane komunikaty niezwi±zane
+	z rozmówc±. je¶li jest równe 0, w oknie rozmowy s± wy¶wietlane tylko
+	wiadomo¶ci i informacje o zmianie stanu rozmówcy. 
 
 display_notify
 	typ: liczba
