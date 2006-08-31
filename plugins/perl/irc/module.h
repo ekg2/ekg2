@@ -1,6 +1,5 @@
 #include "../common/module.h"
 
-#include "../../irc/misc.h"
 #include "../../irc/irc.h"
 
 // #include <plugins/irc/irc.h>
