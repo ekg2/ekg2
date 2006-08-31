@@ -190,7 +190,6 @@ extern int config_beep;
 extern int config_beep_msg;
 extern int config_beep_chat;
 extern int config_beep_notify;
-extern int config_beep_mail;
 extern int config_completion_notify;
 extern char *config_completion_char;
 extern int config_debug;

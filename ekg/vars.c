@@ -51,11 +51,6 @@ char *console_charset;
  * byæ ró¿na od zera, ale dziêki funkcjom nie trzeba bêdzie mieszaæ w 
  * przysz³o¶ci.
  */
-static int dd_beep(const CHAR_T *name)
-{
-	return (config_beep);
-}
-
 static int dd_sound(const CHAR_T *name)
 {
 	return (config_sound_app != NULL);
@@ -81,7 +76,6 @@ void variable_init()
 	variable_add(NULL, TEXT("beep_msg"), VAR_BOOL, 1, &config_beep_msg, NULL, NULL, dd_beep);
 	variable_add(NULL, TEXT("beep_chat"), VAR_BOOL, 1, &config_beep_chat, NULL, NULL, dd_beep);
 	variable_add(NULL, TEXT("beep_notify"), VAR_BOOL, 1, &config_beep_notify, NULL, NULL, dd_beep);
-	variable_add(NULL, TEXT("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
 		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
 		 * 	encoding... and give some tip how to correct this... it's just temporary
 		 */

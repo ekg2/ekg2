@@ -56,6 +56,7 @@ struct mail_folder {
 	int count;
 	int check;
 };
+int config_beep_mail = 1;
 
 static list_t mail_folders = NULL;
 
@@ -517,6 +518,11 @@ static void changed_check_mail(const CHAR_T *var)
 	timer_remove(&mail_plugin, "mail-check");
 }
 
+static int dd_beep(const CHAR_T *name)
+{
+	return (config_beep);
+}
+
 static int dd_check_mail(const CHAR_T *name)
 {
 	return (config_check_mail);
@@ -537,6 +543,7 @@ int mail_plugin_init(int prio)
 
 	query_connect(&mail_plugin, TEXT("mail-count"), mail_count_query, NULL);
 
+	variable_add(&mail_plugin, TEXT("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
 	variable_add(&mail_plugin, TEXT("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);
 	variable_add(&mail_plugin, TEXT("check_mail_frequency"), VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
 	variable_add(&mail_plugin, TEXT("check_mail_folders"), VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);

@@ -101,7 +101,6 @@ int config_beep = 1;
 int config_beep_msg = 1;
 int config_beep_chat = 1;
 int config_beep_notify = 1;
-int config_beep_mail = 1;
 char *config_console_charset;
 int config_display_blinking = 1;
 int config_display_pl_chars = 1;
