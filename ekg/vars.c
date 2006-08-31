@@ -99,6 +99,7 @@ void variable_init()
 	variable_add(NULL, TEXT("display_notify"), VAR_INT, 1, &config_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "significant"), NULL);
 	variable_add(NULL, TEXT("display_pl_chars"), VAR_BOOL, 1, &config_display_pl_chars, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("display_sent"), VAR_BOOL, 1, &config_display_sent, NULL, NULL, NULL);
+	variable_add(NULL, TEXT("display_unknown"), VAR_BOOL, 1, &config_display_unknown, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("display_welcome"), VAR_BOOL, 1, &config_display_welcome, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("emoticons"), VAR_BOOL, 1, &config_emoticons, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("events_delay"), VAR_INT, 1, &config_events_delay, NULL, NULL, NULL);

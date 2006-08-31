@@ -203,6 +203,7 @@ extern int config_display_day_changed;
 extern int config_display_notify;
 extern int config_display_pl_chars;
 extern int config_display_sent;
+extern int config_display_unknown;
 extern int config_display_welcome;
 extern int config_emoticons;
 extern int config_events_delay;

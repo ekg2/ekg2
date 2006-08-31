@@ -238,10 +238,12 @@ int protocol_status(void *data, va_list ap)
 
 	/* we are checking who user we know */
 	if (!(u = userlist_find(s, uid))) {
-		if (config_auto_user_add) {
-			if (!(u=userlist_add(s, uid, uid)))
-				return 0;
-		} else {
+		if (config_auto_user_add) u = userlist_add(s, uid, uid);
+		if (!u) {
+			if (config_display_unknown) {
+				const char *format = ekg_status_label(status, descr, "status_");
+				print_window(uid, s, 0, format, format_user(s, uid), NULL, session_name(s), descr);
+			}
 			return 0;
 		}
 	}
@@ -323,12 +325,7 @@ int protocol_status(void *data, va_list ap)
 
 	/* poka¿ */
 	if (u->nickname) {
-		char format[100];
-		if (ignore_status_descr) {
-			snprintf(format, sizeof(format), "status_%s%s", status, "");
-		} else {
-			snprintf(format, sizeof(format), "status_%s%s", status, (descr) ? "_descr" : "");
-		}
+		const char *format = ekg_status_label(status, ignore_status_descr ? NULL : descr, "status_");
 		print_window(u->nickname, s, 0, format, format_user(s, uid), (u->first_name) ? u->first_name : u->nickname, session_name(s), descr);
 	}
 
