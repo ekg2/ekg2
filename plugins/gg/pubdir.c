@@ -42,6 +42,7 @@ list_t gg_userlists = NULL;
 int gg_register_done = 0;
 char *gg_register_password = NULL;
 char *gg_register_email = NULL;
+int gg_userlist_put_config;
 
 static WATCHER(gg_handle_register)	/* tymczasowy */
 {
@@ -483,7 +484,6 @@ COMMAND(gg_command_list)
                         printq("userlist_clear_error", strerror(errno));
                         return -1;
                 }
-
 		gg_userlist_put_config = 2;
 		return 0;
 	}
@@ -501,9 +501,7 @@ COMMAND(gg_command_list)
                         return -1;
                 }
 		gg_userlist_put_config = 0;
-
 		xfree(cpcontacts);
-		
 		return 0;
 	}
 	return cmd_list(name, params, session, target, quiet);

@@ -62,7 +62,10 @@ static int gg_theme_init();
 
 PLUGIN_DEFINE(gg, PLUGIN_PROTOCOL, gg_theme_init);
 
-list_t gg_currenlty_checked = NULL;
+list_t gg_currently_checked = NULL;
+char *last_tokenid;
+int gg_config_display_token;
+int gg_config_split_messages;
 
 static int gg_private_init(session_t *s) {
 	gg_private_t *g;

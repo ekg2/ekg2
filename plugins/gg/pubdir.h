@@ -23,14 +23,14 @@
 
 #include <ekg/commands.h>
 
-list_t gg_registers;
-list_t gg_unregisters;
-list_t gg_reminds;
-list_t gg_userlists;
+extern list_t gg_registers;
+extern list_t gg_unregisters;
+extern list_t gg_reminds;
+extern list_t gg_userlists;
 
-int gg_register_done;
-char *gg_register_password;
-char *gg_register_email;
+extern int gg_register_done;
+extern char *gg_register_password;
+extern char *gg_register_email;
 
 COMMAND(gg_command_register);
 COMMAND(gg_command_unregister);

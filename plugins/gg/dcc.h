@@ -6,8 +6,6 @@
 #include <ekg/protocol.h>
 #include <ekg/commands.h>
 
-struct gg_dcc *gg_dcc_socket;
-
 COMMAND(gg_command_dcc);
 
 void gg_changed_dcc(const CHAR_T *var);

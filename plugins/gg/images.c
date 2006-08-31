@@ -45,6 +45,9 @@
 #include "gg.h"
 
 list_t images = NULL;
+int gg_config_image_size;
+int gg_config_get_images;
+char *gg_config_images_dir;
 
 /* 
  * gg_changed_images()

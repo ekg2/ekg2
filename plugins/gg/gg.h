@@ -28,22 +28,22 @@
 
 COMMAND(gg_command_image); /* images.c */
 
-plugin_t gg_plugin;
-int gg_userlist_put_config;
-char *last_tokenid;
+extern plugin_t gg_plugin;
+extern int gg_userlist_put_config;
+extern char *last_tokenid;
 
 /* variables */
-int gg_config_display_token;
-int gg_config_dcc;
-int gg_config_audio;
-char *gg_config_dcc_dir;
-char *gg_config_dcc_ip;
-char *gg_config_dcc_limit;
-int gg_config_dcc_port;
-int gg_config_get_images;
-char *gg_config_images_dir;
-int gg_config_image_size;
-int gg_config_split_messages;
+extern int gg_config_display_token;
+extern int gg_config_audio;
+extern int gg_config_dcc;
+extern char *gg_config_dcc_dir;
+extern char *gg_config_dcc_ip;
+extern char *gg_config_dcc_limit;
+extern int gg_config_dcc_port;
+extern int gg_config_get_images;
+extern char *gg_config_images_dir;
+extern int gg_config_image_size;
+extern int gg_config_split_messages;
 
 typedef enum {
 	GG_QUIET_CHANGE = 0x0001
@@ -68,8 +68,8 @@ typedef struct {
 	session_t *session;
 } gg_currently_checked_t;
 
+extern list_t gg_currently_checked;
 
-list_t gg_currently_checked;
 #endif /* __EKG_GG_GG_H */
 
 /*

@@ -36,6 +36,14 @@ struct gg_dcc *gg_dcc_socket = NULL;
 static int dcc_limit_time = 0;  /* time from the first connection */
 static int dcc_limit_count = 0; /* how many connections from the last time */
 
+/* vars */
+int gg_config_audio;
+int gg_config_dcc;
+int gg_config_dcc_port;
+char *gg_config_dcc_dir;
+char *gg_config_dcc_ip;
+char *gg_config_dcc_limit;
+
 typedef struct {
 	dcc_t *dcc;
 	int len;

@@ -28,7 +28,7 @@ typedef struct {
 	uint32_t crc32;
 } image_t;
 
-list_t images;
+extern list_t images;
 
 #define GG_CRC32_INVISIBLE 99
 
