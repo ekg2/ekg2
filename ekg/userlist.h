@@ -124,7 +124,7 @@ struct ignore_label {
 };
 
 #define	IGNORE_LABELS_MAX 8
-struct ignore_label ignore_labels[IGNORE_LABELS_MAX];
+extern struct ignore_label ignore_labels[IGNORE_LABELS_MAX];
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
@@ -134,7 +134,6 @@ int userlist_write(session_t *session);
 int userlist_write_wap();
 #endif
 void userlist_write_crash();
-int userlist_compare(void *data1, void *data2);
 void userlist_clear_status(session_t *session, const char *uid);
 userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname);
 userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname);
