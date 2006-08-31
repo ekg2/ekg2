@@ -103,14 +103,6 @@ contacts_size
 	
 	określa szerokość okienka z listą kontaktów.
 
-display_crap
-	typ: bool
-	domyślna wartość: 1
-	
-	mówi, czy w oknie rozmowy mają być wyświetlane komunikaty niezwiązane
-	z rozmówcą. jeśli jest równe 0, w oknie rozmowy są wyświetlane tylko
-	wiadomości i informacje o zmianie stanu rozmówcy. 
-
 display_transparent
 	typ: bool
 	domyślna wartość: 1

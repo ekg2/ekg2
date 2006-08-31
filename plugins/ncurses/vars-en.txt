@@ -48,7 +48,7 @@ contacts_groups_all_sessions
 	
 	If turn on - displaying group contacts means taking into consideration all sessions.
 
-conatcts_metacontacts_swallow
+contacts_metacontacts_swallow
 	type: bool
 	default value: 1
 	
@@ -96,13 +96,6 @@ contacts_size
 	default value: 8
 	
 	defines width of contacts list window
-
-display_crap
-	type: bool
-	default value: 1
-	
-	defines if information which weren't connected with interlocutor will be displayed in chat window. 
-	If it's 0, in chat window information only about interlocutor status are displayed.
 
 display_transparent
 	type: bool
