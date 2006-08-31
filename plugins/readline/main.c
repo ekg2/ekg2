@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
 #include <ekg/vars.h>
@@ -80,13 +81,13 @@ static int readline_theme_init() {
 	return 0;
 }
 
-QUERY(readline_ui_window_new) { /* window_add() */
+static QUERY(readline_ui_window_new) { /* window_add() */
 	window_t *w = *(va_arg(ap, window_t **));
 	w->private = xmalloc(sizeof(readline_window_t));
 	return 0;
 }
 
-QUERY(readline_ui_window_kill) { /* window_free */
+static QUERY(readline_ui_window_kill) { /* window_free */
 	window_t *w = *(va_arg(ap, window_t **));
 	readline_window_t *r = w->private;
 	int i;
@@ -100,7 +101,12 @@ QUERY(readline_ui_window_kill) { /* window_free */
 	return 0;
 }
 
-QUERY(readline_ui_window_switch) { /* window_switch */
+static QUERY(readline_ui_window_refresh) {
+
+	return 0;
+}
+
+static QUERY(readline_ui_window_switch) { /* window_switch */
 	window_t *w = *(va_arg(ap, window_t **));
 	window_current = w;
 	w->act = 0;
@@ -114,60 +120,78 @@ QUERY(readline_ui_window_switch) { /* window_switch */
 	return 0;
 }
 
-char *readline_change_string_t_back_to_char(char *str, short *attr) {
-        string_t st = string_init(NULL);
-        int prev = -1, prevbold = 0, prevblink = 0;
-        int i;
+static CHAR_T *readline_change_string_t_back_to_char(const CHAR_T *str, const short *attr) {
+	int i;
+	wcs_string_t asc = wcs_string_init(NULL);
 
-/* ripped from perl plugin */
-/* rewrite */
-        for (i=0; i < strlen(str); i++) {
-                short chattr = attr[i];
-                int bold = 0, blink = 0;
+	for (i = 0; i < xwcslen(str); i++) {
+#define ISBOLD(x)	(x & 64)
+#define ISBLINK(x)	(x & 256) 
+#define ISUNDERLINE(x)	(x & 512)
+#define ISREVERSE(x)	(x & 1024)
+#define FGCOLOR(x)	((!(x & 128)) ? (x & 7) : -1)
+#define BGCOLOR(x)	-1	/* XXX */
 
-                if (chattr & 64)  bold = 1;
-		if (chattr & 256) blink = 1;
+#define prev	attr[i-1]
+#define cur	attr[i] 
 
-/*		if (chattr & 512) underline = 1;
-		if (chattr & 1024) reverse = 1;  */
-		if (!blink && prevblink != blink && prev != -1) {
-			prev = -1;
-			string_append(st, "%n"); /* turn off blinking */
+		int reset = 1;
+
+	/* attr */
+		if (i && !ISBOLD(cur)  && ISBOLD(prev));		/* NOT BOLD */
+		else if (i && !ISBLINK(cur) && ISBLINK(prev));		/* NOT BLINK */
+		else if (i && !ISUNDERLINE(cur) && ISUNDERLINE(prev));	/* NOT UNDERLINE */
+		else if (i && !ISREVERSE(cur) && ISREVERSE(prev));	/* NOT REVERSE */
+		else if (i && FGCOLOR(cur) == -1 && FGCOLOR(prev) != -1);/* NO FGCOLOR */
+		else if (i && BGCOLOR(cur) == -1 && BGCOLOR(prev) != -1);/* NO BGCOLOR */
+		else reset = 0;
+		
+		if (reset) wcs_string_append(asc, TEXT("%n"));
+
+		if (ISBOLD(cur)	&& (!i || reset || ISBOLD(cur) != ISBOLD(prev)) && FGCOLOR(cur) == -1)
+			wcs_string_append(asc, TEXT("%T"));		/* no color + bold. */
+
+		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		wcs_string_append(asc, TEXT("%i"));
+//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	wcs_string_append(asc, TEXT("%"));
+//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		wcs_string_append(asc, TEXT("%"));
+
+		if (BGCOLOR(cur) != -1 && ((!i || reset || BGCOLOR(cur) != BGCOLOR(prev)))) {	/* if there's a background color... add it */
+			wcs_string_append_c(asc, '%');
+			switch (BGCOLOR(cur)) {
+				case (0): wcs_string_append_c(asc, 'l'); break;
+				case (1): wcs_string_append_c(asc, 's'); break;
+				case (2): wcs_string_append_c(asc, 'h'); break;
+				case (3): wcs_string_append_c(asc, 'z'); break;
+				case (4): wcs_string_append_c(asc, 'e'); break;
+				case (5): wcs_string_append_c(asc, 'q'); break;
+				case (6): wcs_string_append_c(asc, 'd'); break;
+				case (7): wcs_string_append_c(asc, 'x'); break;
+			}
 		}
-                if (blink && (prevblink != blink || prev == -1))
-			string_append(st, "%i"); /* turn on blinking */
 
-                if (!(chattr & 128) && (prev != (chattr & 7) || prevbold != bold)) { /* change color/bold */
-			string_append_c(st, '%');
-                        switch (chattr & 7) {
-				case (0): string_append_c(st, (bold) ? 'K' : 'k'); break;
-				case (1): string_append_c(st, (bold) ? 'R' : 'r'); break;
-				case (2): string_append_c(st, (bold) ? 'G' : 'g'); break;
-				case (3): string_append_c(st, (bold) ? 'Y' : 'y'); break;
-				case (4): string_append_c(st, (bold) ? 'B' : 'b'); break;
-				case (5): string_append_c(st, (bold) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
-				case (6): string_append_c(st, (bold) ? 'C' : 'c'); break;
-				case (7): string_append_c(st, (bold) ? 'W' : 'w'); break;
-                        }
-                        prev = (chattr & 7);
-                } else if ((chattr & 128) && (prev != -1 || (!bold && prevbold != bold))) { /* reset all attributes */
-                       	string_append(st, "%n");
-			prev = -1;
-                }
-
-		if (prev == -1 && bold && bold != prevbold) {	/* mh ? */
-			string_append(st, "%T");
+		if (FGCOLOR(cur) != -1 && ((!i || reset || FGCOLOR(cur) != FGCOLOR(prev)) || (i && ISBOLD(prev) != ISBOLD(cur)))) {	/* if there's a foreground color... add it */
+			wcs_string_append_c(asc, '%');
+			switch (FGCOLOR(cur)) {
+				 case (0): wcs_string_append_c(asc, ISBOLD(cur) ? 'K' : 'k'); break;
+				 case (1): wcs_string_append_c(asc, ISBOLD(cur) ? 'R' : 'r'); break;
+				 case (2): wcs_string_append_c(asc, ISBOLD(cur) ? 'G' : 'g'); break;
+				 case (3): wcs_string_append_c(asc, ISBOLD(cur) ? 'Y' : 'y'); break;
+				 case (4): wcs_string_append_c(asc, ISBOLD(cur) ? 'B' : 'b'); break;
+				 case (5): wcs_string_append_c(asc, ISBOLD(cur) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
+				 case (6): wcs_string_append_c(asc, ISBOLD(cur) ? 'C' : 'c'); break;
+				 case (7): wcs_string_append_c(asc, ISBOLD(cur) ? 'W' : 'w'); break;
+			}
 		}
 
-                string_append_c(st, str[i]);
-		prevblink = blink;
-		prevbold  = bold;
-        }
-	string_append(st, "%n");	/* reset at end ? */
-	return string_free(st, 0);
+	/* str */
+		if (str[i] == '%' || str[i] == '\\') wcs_string_append_c(asc, '\\');	/* escape chars.. */
+		wcs_string_append_c(asc, str[i]);			/* append current char */
+	}
+	wcs_string_append(asc, TEXT("%n"));	/* reset */
+	return wcs_string_free(asc, 0);
 }
 
-char *readline_ui_window_print_helper(char *str, short *attr) {
+static char *readline_ui_window_print_helper(char *str, short *attr) {
 	char *ascii = readline_change_string_t_back_to_char(str, attr);
 	char *colorful = format_string(ascii);
 
@@ -175,7 +199,7 @@ char *readline_ui_window_print_helper(char *str, short *attr) {
 	return colorful;
 }
 
-QUERY(readline_ui_window_print) {
+static QUERY(readline_ui_window_print) {
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *l = *(va_arg(ap, fstring_t **));
 	char *str = readline_ui_window_print_helper(l->str, l->attr);
@@ -184,7 +208,8 @@ QUERY(readline_ui_window_print) {
 	xfree(str);
 	return 0;
 }
-QUERY(readline_variable_changed) {
+
+static QUERY(readline_variable_changed) {
 	char *name = *(va_arg(ap, char**));
 	if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
 		list_t l;
@@ -197,7 +222,7 @@ QUERY(readline_variable_changed) {
 	return 0;
 }
 
-QUERY(readline_ui_window_clear) {
+static QUERY(readline_ui_window_clear) {
 	int i;
 	window_t *w = *(va_arg(ap, window_t **));
 	readline_window_t *r = w->private;
@@ -210,24 +235,24 @@ QUERY(readline_ui_window_clear) {
 	return 0;
 }
 
-QUERY(ekg2_readline_loop) {
+static QUERY(ekg2_readline_loop) {
 	while(ui_readline_loop());
 	return -1;
 }
 
-QUERY(readline_ui_is_initialized) {
+static QUERY(readline_ui_is_initialized) {
 	int *tmp = va_arg(ap, int *);
 	*tmp = 1;
 	return 0;
 }
 
-QUERY(readline_beep) { /* ui_readline_beep() */
+static QUERY(readline_beep) { /* ui_readline_beep() */
 	printf("\a");
 	fflush(stdout);
 	return 0;
 }
 
-WATCHER(readline_watch_stdin) {
+static WATCHER(readline_watch_stdin) {
 	return 0;
 }
 	
@@ -237,6 +262,19 @@ int readline_plugin_init(int prio) {
 	list_t l;
 	int is_UI = 0;
 
+/* before loading plugin, do some sanity check */
+#ifdef USE_UNICODE
+	if (!config_use_unicode)
+#else
+	if (config_use_unicode)
+#endif
+	{	debug("plugin readline cannot be loaded because of mishmashed compilation...\n"
+			"	program compilated with: --%s-unicode\n"
+			"	 plugin compilated with: --%s-unicode\n",
+				config_use_unicode ? "enable" : "disable",
+				config_use_unicode ? "disable": "enable");
+		return -1;
+	}
         query_emit(NULL, "ui-is-initialized", &is_UI);
 
         if (is_UI)
@@ -244,15 +282,16 @@ int readline_plugin_init(int prio) {
 
 	plugin_register(&readline_plugin, prio);
 
-	query_connect(&readline_plugin, "ui-beep", readline_beep, NULL);
-	query_connect(&readline_plugin, "ui-is-initialized", readline_ui_is_initialized, NULL);
-	query_connect(&readline_plugin, "ui-window-new", readline_ui_window_new, NULL);
-	query_connect(&readline_plugin, "ui-window-switch", readline_ui_window_switch, NULL);
-	query_connect(&readline_plugin, "ui-window-kill", readline_ui_window_kill, NULL);
-	query_connect(&readline_plugin, "ui-window-print", readline_ui_window_print, NULL);
-	query_connect(&readline_plugin, "ui-window-clear", readline_ui_window_clear, NULL);
-	query_connect(&readline_plugin, "variable-changed", readline_variable_changed, NULL);
-	query_connect(&readline_plugin, "ui-loop", ekg2_readline_loop, NULL);
+	query_connect(&readline_plugin, TEXT("ui-beep"), readline_beep, NULL);
+	query_connect(&readline_plugin, TEXT("ui-is-initialized"), readline_ui_is_initialized, NULL);
+	query_connect(&readline_plugin, TEXT("ui-window-new"), readline_ui_window_new, NULL);
+	query_connect(&readline_plugin, TEXT("ui-window-switch"), readline_ui_window_switch, NULL);
+	query_connect(&readline_plugin, TEXT("ui-window-kill"), readline_ui_window_kill, NULL);
+	query_connect(&readline_plugin, TEXT("ui-window-print"), readline_ui_window_print, NULL);
+	query_connect(&readline_plugin, TEXT("ui-window-refresh"), readline_ui_window_refresh, NULL);
+	query_connect(&readline_plugin, TEXT("ui-window-clear"), readline_ui_window_clear, NULL);
+	query_connect(&readline_plugin, TEXT("variable-changed"), readline_variable_changed, NULL);
+	query_connect(&readline_plugin, TEXT("ui-loop"), ekg2_readline_loop, NULL);
 
 	variable_add(&readline_plugin, TEXT("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
 
@@ -313,7 +352,6 @@ int readline_plugin_init(int prio) {
 
 	return 0;
 }
-
 
 static int readline_plugin_destroy() {
 	plugin_unregister(&readline_plugin);
