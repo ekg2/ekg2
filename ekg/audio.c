@@ -35,6 +35,10 @@
 #include "stuff.h"
 #include "xmalloc.h"
 
+list_t audio_codecs;
+list_t audio_inputs;
+list_t streams;
+
 AUDIO_DEFINE(stream);
 
 /* *.wav I/O stolen from xawtv (recode program) which was stolen from cdda2wav */

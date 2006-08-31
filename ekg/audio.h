@@ -111,10 +111,6 @@ typedef struct {
 	void *private;
 } stream_t;
 
-list_t audio_codecs;
-list_t audio_inputs;
-list_t streams;
-
 int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out);
 
 int audio_register(audio_t *audio);
