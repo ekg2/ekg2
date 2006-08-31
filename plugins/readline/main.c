@@ -23,6 +23,8 @@
 static int readline_theme_init();
 PLUGIN_DEFINE(readline, PLUGIN_UI, readline_theme_init);
 
+int config_ctrld_quits = 1;
+
 /*
  * sigint_handler() //XXX może wywalać 
  *
@@ -251,6 +253,8 @@ int readline_plugin_init(int prio) {
 	query_connect(&readline_plugin, "ui-window-clear", readline_ui_window_clear, NULL);
 	query_connect(&readline_plugin, "variable-changed", readline_variable_changed, NULL);
 	query_connect(&readline_plugin, "ui-loop", ekg2_readline_loop, NULL);
+
+	variable_add(&readline_plugin, TEXT("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
 
 	watch_add(&readline_plugin, 0, WATCH_READ, readline_watch_stdin, NULL);
 

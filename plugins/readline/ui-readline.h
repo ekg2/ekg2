@@ -12,6 +12,8 @@
 #define HAVE_RL_SET_PROMPT
 #define HAVE_RL_FILENAME_COMPLETION_FUNCTION
 
+extern int config_ctrld_quits;
+
 typedef struct {
         char *line[MAX_LINES_PER_SCREEN];
 } readline_window_t;

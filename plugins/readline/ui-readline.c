@@ -774,15 +774,14 @@ int ui_readline_loop()
 	}
 
 	/* je¶li wci¶niêto Ctrl-D, to zamknij okienko */
-	if (!line && list_count(windows) > 1) {
+	if (!line && window_current->id != 1) {
 		window_kill(window_current, 0);
 	}
 
-	if (!line) {
-/*
-		if (config_ctrld_quits)	
-			return;
-		else */ {
+	if (!line && window_current->id == 1) {
+		if (config_ctrld_quits)	{
+			return 0;
+		} else {
 			printf("\n");
 		}
 	}
