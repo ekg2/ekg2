@@ -3,6 +3,5 @@ ctrld_quits
 	domyślna wartość: 1
 
 	określa, czy wciśnięcie Ctrl-D w ostatnim okienku, nie będąc
-	w trybie, rozmowy klient na zakończyć działanie. ma znaczenie
-	tylko dla interfejsu readline.
+	w trybie, rozmowy klient na zakończyć działanie.
 

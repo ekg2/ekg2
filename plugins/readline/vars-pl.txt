@@ -1,8 +1,7 @@
 ctrld_quits
 	typ: bool
-	domyÅ›lna wartoÅ›Ä‡: 1
+	domy¶lna warto¶æ: 1
 
-	okreÅ›la, czy wciÅ›niÄ™cie Ctrl-D w ostatnim okienku, nie bÄ™dÄ…c
-	w trybie, rozmowy klient na zakoÅ„czyÄ‡ dziaÅ‚anie. ma znaczenie
-	tylko dla interfejsu readline.
+	okre¶la, czy wci¶niêcie Ctrl-D w ostatnim okienku, nie bêd±c
+	w trybie, rozmowy klient na zakoñczyæ dzia³anie.
 
