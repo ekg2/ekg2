@@ -326,7 +326,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 }
 
 
-int irc_sync_channel(session_t *s, irc_private_t *j, channel_t *p) 
+static int irc_sync_channel(session_t *s, irc_private_t *j, channel_t *p) 
 {
 	p->syncmode = 2;
 	/* to ma sie rownac ile ma byc roznych syncow narazie tylko WHO
@@ -367,23 +367,12 @@ int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
 	
 
 	tmp=ul->status;
-	switch (i)
-	{
-		case 0:
-			ul->status = xstrdup(EKG_STATUS_AVAIL);
-			break;
-		case 1:
-			ul->status = xstrdup(EKG_STATUS_AWAY);
-			break;
-		case 2:
-			ul->status = xstrdup(EKG_STATUS_XA);
-			break;
-		case 3:
-			ul->status = xstrdup(EKG_STATUS_INVISIBLE);
-			break;
-		default:
-			ul->status = xstrdup(EKG_STATUS_ERROR);
-			break;
+	switch (i) {
+		case 0:	ul->status = xstrdup(EKG_STATUS_AVAIL);		break;
+		case 1:	ul->status = xstrdup(EKG_STATUS_AWAY);		break;
+		case 2:	ul->status = xstrdup(EKG_STATUS_XA);		break;
+		case 3:	ul->status = xstrdup(EKG_STATUS_INVISIBLE);	break;
+		default:ul->status = xstrdup(EKG_STATUS_ERROR);		break;
 	}
 	xfree(tmp);
 	return i;
