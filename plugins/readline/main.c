@@ -312,6 +312,7 @@ int readline_plugin_init(int prio) {
 
 
 static int readline_plugin_destroy() {
+	plugin_unregister(&readline_plugin);
 	return 0;
 
 }
