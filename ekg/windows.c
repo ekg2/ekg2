@@ -576,7 +576,7 @@ COMMAND(cmd_window)
 		window_t *w = xmemdup(window_current, sizeof(window_t));
 		query_emit(NULL, TEXT("ui-window-clear"), &w);
 		xfree(w);
-		goto cleanup;
+		return 0;
 	}
 
 	if (!params[0] || !xwcscasecmp(params[0], TEXT("list"))) {
@@ -595,8 +595,7 @@ COMMAND(cmd_window)
 					wcs_printq("window_list_nothing", wcs_itoa(w->id));
 			}
 		}
-
-		goto cleanup;
+		return 0;
 	}
 
 	if (!xwcscasecmp(params[0], TEXT("active"))) {
@@ -614,8 +613,7 @@ COMMAND(cmd_window)
 
 		if (id)
 			window_switch(id);
-
-		goto cleanup;
+		return 0;
 	}
 
 	if (!xwcscasecmp(params[0], TEXT("new"))) {
@@ -629,12 +627,12 @@ COMMAND(cmd_window)
 		if (!w->floating)
 			window_switch(w->id);
 
-		goto cleanup;
+		return 0;
 	}
 
 	if (wcs_atoi(params[0])) {
 		window_switch(wcs_atoi(params[0]));
-		goto cleanup;
+		return 0;
 	}
 
 	if (!xwcscasecmp(params[0], TEXT("switch"))) {
@@ -642,13 +640,12 @@ COMMAND(cmd_window)
 			wcs_printq("not_enough_params", name);
 		else
 			window_switch(wcs_atoi(params[1]));
-		
-		goto cleanup;
+		return 0;
 	}			
 
 	if (!xwcscasecmp(params[0], TEXT("last"))) {
 		window_switch(window_last_id);
-		goto cleanup;
+		return 0;
 	}
 	
 	if (!xwcscasecmp(params[0], TEXT("kill"))) {
@@ -668,52 +665,51 @@ COMMAND(cmd_window)
 
 			if (!w) {
 				wcs_printq("window_noexist");
-				goto cleanup;
+				return -1;
 			}
 		}
 
 		window_kill(w, 0);
 		window_switch(window_current->id);
-
-		goto cleanup;
+		return 0;
 	}
 
 	if (!xwcscasecmp(params[0], TEXT("next"))) {
 		window_next();
-		goto cleanup;
+		return 0;
 	}
 	
 	if (!xwcscasecmp(params[0], TEXT("prev"))) {
 		window_prev();
-		goto cleanup;
+		return 0;
 	}
 
         if (!xwcscasecmp(params[0], TEXT("move"))) {
 		int source, dest;
 
 		if (!window_current)
-			goto cleanup;
+			return -1;
 
 		if (!params[1]) {
 			wcs_printq("invalid_params", name);
-			goto cleanup;
+			return -1;
 		}
 
 		source = (params[2]) ? wcs_atoi(params[2]) : window_current->id;
 
 		if (!source) {
                         wcs_printq("window_invalid_move", wcs_itoa(source));
-                        goto cleanup;
+			return -1;
 		}
 
 		if (!window_exist(source)) {
 			wcs_printq("window_doesnt_exist", wcs_itoa(source));
-			goto cleanup;
+			return -1;
 		}
 
 		if (source == 1) {
 			wcs_printq("window_cannot_move_status");
-			goto cleanup;
+			return -1;
 		}
 
 		/* source is okey, now we are checking destination window */
@@ -728,12 +724,12 @@ COMMAND(cmd_window)
 
 		if (!dest) {
 			wcs_printq("window_invalid_move", wcs_itoa(dest));
-			goto cleanup;
+			return -1;
 		}
 
                 if (dest == 1) {
                         wcs_printq("window_cannot_move_status");
-                        goto cleanup;
+			return -1;
                 }
 
                 if (!window_exist(dest)) {
@@ -741,23 +737,22 @@ COMMAND(cmd_window)
                 }
 
 		if (dest == source)
-			goto cleanup;
+			return 0;
 
 		window_move(source, dest);
 		window_switch(dest);
-                goto cleanup;
+		return 0;
         }
 
 	
 	if (!xwcscasecmp(params[0], TEXT("refresh"))) {
 		query_emit(NULL, TEXT("ui-window-refresh"));
-		goto cleanup;
+		return 0;
 	}
 
 
 	wcs_printq("invalid_params", name);
 
-cleanup:
 	return 0;
 }
 
