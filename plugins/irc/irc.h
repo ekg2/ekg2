@@ -118,7 +118,6 @@ typedef struct {
 extern plugin_t irc_plugin;
 
 void irc_handle_disconnect(session_t *s, const char *reason, int type);
-COMMAND(irc_command_disconnect);
 
 /* checks if name is in format irc:something
  * checkcon is one of:
@@ -128,16 +127,10 @@ COMMAND(irc_command_disconnect);
  *   IRC_GC_ANY		-  name if it's in proper format [irc:something]
  */
 enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
-char *irc_getchan_int(session_t *s, const char *name, int checkchan);
-char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
-      char ***v, int pr, int checkchan);
 
 #define irc_write(s, args...) watch_write((s && s->priv) ? irc_private(s)->send_watch : NULL, args);
 
-/* misc.c */
-int irc_parse_line(session_t *s, char *buf, int fd);
-char *irc_make_banmask(session_t *session, const char *nick, 
-		const char *ident, const char *hostname);
+int irc_parse_line(session_t *s, char *buf, int fd);	/* misc.c */
 
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
 

@@ -133,8 +133,12 @@
  *                                                                       */
 
 static int irc_theme_init();
-WATCHER_LINE(irc_handle_resolver);
-int irc_really_connect(session_t *session);
+static WATCHER_LINE(irc_handle_resolver);
+static COMMAND(irc_command_disconnect);
+static int irc_really_connect(session_t *session);
+static char *irc_getchan_int(session_t *s, const char *name, int checkchan);
+static char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
+      char ***v, int pr, int checkchan);
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
@@ -147,8 +151,7 @@ PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
  *
  * inialize irc_private_t for a given session.
  */
-static void irc_private_init(session_t *s)
-{
+static void irc_private_init(session_t *s) {
 	irc_private_t	*j;
 
 	if (!session_check(s, 0, IRC3))
@@ -183,8 +186,7 @@ static void irc_private_init(session_t *s)
  *
  * cleanup stuff: free irc_private_t for a given session and some other things
  */
-static void irc_private_destroy(session_t *s)
-{
+static void irc_private_destroy(session_t *s) {
 	irc_private_t	*j = irc_private(s);
 	int		i;
 
@@ -219,13 +221,78 @@ static void irc_private_destroy(session_t *s)
 	session_private_set(s, NULL);
 }
 
+static char *irc_make_banmask(session_t *session, const char *nick, const char *ident, const char *hostname) {
+/* 
+ *        1 (Nick)   - nick!*@*
+ *        2 (User)   - *!*ident@*
+ *        4 (Host)   - *!*@host.*
+ *	  4 (IP)     - *!*@*.168.11.11 - buggy, it bans @*.11 
+ *        8 (Domain) - *!*@*.domain.net
+ *        8 (IP)     - *!*@192.168.11.*
+ */
+	char		*host = xstrdup(hostname);
+	const char	*tmp[4];
+	char		*temp = NULL;
+
+	int		family = 0; 
+	char		ind = '.';
+	int		bantype = session_int_get(session, "ban_type");
+	
+#ifdef HAVE_INET_PTON
+	char		buf[33];
+	
+	if (xstrchr(host, ':')) {
+		/* to protect againt iwil var in ircd.conf (ircd-hybrid)
+		 *  dot_in_ip6_addr = yes;
+		 */ 
+		if (host[xstrlen(host)-1] == '.') 
+			host[xstrlen(host)-1] = 0;
+			
+		if (inet_pton(AF_INET6, host, &buf) > 0) {
+			family = AF_INET6;
+			ind = ':';
+		}
+	}
+	else if (inet_pton(AF_INET, host, &buf) > 0)
+		family = AF_INET;
+#else
+/* TODO */
+	print("generic_error", "It seem you don't have inet_pton() current version of irc_make_banmask won't work without this function. If you want to get work it faster contact with developers ;>");
+#endif
+
+	if (host && !family && (temp=xstrchr(host, ind)))
+		*temp = '\0';
+	if (host && family && (temp=xstrrchr(host, ind)))
+		*temp = '\0';
+
+	if (bantype > 15) bantype = 10;
+
+	memset(tmp, 0, sizeof(tmp));
+#define getit(x) tmp[x]?tmp[x]:"*"
+	if (bantype & 1) tmp[0] = nick;
+	if (bantype & 2 && (ident[0] != '~' || session_int_get(session, "dont_ban_user_on_noident") == 0 )) tmp[1] = ident;
+	if (family) {
+		if (bantype & 8) tmp[2] = host;
+		if (bantype & 4) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
+	} else {
+		if (bantype & 4) tmp[2] = host;
+		if (bantype & 8) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
+	}
+
+
+/*	temp = saprintf("%s!*%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3)); */
+	temp = saprintf("%s!%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3));
+ 	xfree(host);
+	return temp;
+#undef getit
+}
+
 /*
  * irc_session()
  *
  * adding and deleting a session
  */
-QUERY(irc_session)
-{
+static QUERY(irc_session) {
 	char		*session = *(va_arg(ap, char**));
 	session_t	*s = session_find(session);
 
@@ -245,15 +312,12 @@ QUERY(irc_session)
  *
  * what the heck this can be ? ;)
  */
-QUERY(irc_print_version)
-{
+static QUERY(irc_print_version) {
 	print("generic", "IRC plugin by Michal 'GiM' Spadlinski, Jakub 'darkjames' Zawadzki v. "IRCVERSION);
-
 	return 0;
 }
 
-int irc_resolver_sort(void *s1, void *s2)
-{
+static int irc_resolver_sort(void *s1, void *s2) {
 	connector_t *sort1 = s1; /*, *sort2 = s2;*/
 	int prefer_family = AF_INET;
 /*	
@@ -270,8 +334,7 @@ int irc_resolver_sort(void *s1, void *s2)
 	return 0;
 }
 
-int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int dobind) 
-{
+static int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int dobind) {
 #ifdef HAVE_GETADDRINFO
 	struct  addrinfo *ai, *aitmp, hint;
 	void *tm = NULL;
@@ -332,8 +395,7 @@ int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int
  * checks, if uid is proper, and if this is a plugin that
  * should deal with such a uid
  */
-QUERY(irc_validate_uid)
-{
+static QUERY(irc_validate_uid) {
 	char	*uid 	= *(va_arg(ap, char **));
 	int	*valid 	= va_arg(ap, int *);
 
@@ -349,9 +411,9 @@ QUERY(irc_validate_uid)
 }
 
 #ifdef NO_POSIX_SYSTEM
-void irc_changed_resolve_child(session_t *s, const char *var, HANDLE fd) {
+static void irc_changed_resolve_child(session_t *s, const char *var, HANDLE fd) {
 #else
-void irc_changed_resolve_child(session_t *s, const char *var, int fd) {
+static void irc_changed_resolve_child(session_t *s, const char *var, int fd) {
 #endif
 	int isbind	= !xstrcmp((char *) var, "hostname");
 	char *tmp	= xstrdup(session_get(s, var));
@@ -398,7 +460,7 @@ struct win32_tmp {	char session[100];
 			HANDLE fd2; 
 		};
 
-THREAD(irc_changed_resolve_child_win32) {
+static THREAD(irc_changed_resolve_child_win32) {
 	struct win32_tmp *helper = data;
 
 	CloseHandle(helper->fd);
@@ -411,7 +473,7 @@ THREAD(irc_changed_resolve_child_win32) {
 }
 #endif
 
-void irc_changed_resolve(session_t *s, const char *var) {
+static void irc_changed_resolve(session_t *s, const char *var) {
 	irc_private_t	*j = irc_private(s);
 	int		isbind;
 	int		res, fd[2];
@@ -561,8 +623,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 
 }
 
-WATCHER_LINE(irc_handle_resolver)
-{
+static WATCHER_LINE(irc_handle_resolver) {
 	irc_resolver_t *resolv = (irc_resolver_t *) data;
 	session_t *s = session_find(resolv->session);
 	irc_private_t *j;
@@ -604,8 +665,7 @@ WATCHER_LINE(irc_handle_resolver)
 	return 0;
 }
 
-WATCHER_LINE(irc_handle_stream)
-{
+static WATCHER_LINE(irc_handle_stream) {
 	session_t *s = session_find(data);
 	irc_private_t *j = irc_private(s);
 
@@ -637,8 +697,7 @@ WATCHER_LINE(irc_handle_stream)
 	return 0;
 }
 
-WATCHER(irc_handle_connect) /* tymczasowy */
-{
+static WATCHER(irc_handle_connect) { /* tymczasowy */
 	session_t		*s = session_find(data);
 	irc_private_t		*j = irc_private(s);
 	const char		*real = NULL, *localhostname = NULL;
@@ -698,14 +757,13 @@ WATCHER(irc_handle_connect) /* tymczasowy */
 /*                                                                       *
  * ======================================== COMMANDS ------------------- *
  *                                                                       */
-
-void resolver_child_handler(child_t *c, int pid, const char *name, int status, void *priv)
-{
+#if 0
+static void resolver_child_handler(child_t *c, int pid, const char *name, int status, void *priv) {
 	debug("(%s) resolver [%d] exited with %d\n", name, pid, status);
 }
+#endif
 
-int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address)
-{
+static int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address) {
 	struct sockaddr_in  *ipv4;
 	struct sockaddr_in6 *ipv6;
 	int len = 0;
@@ -761,7 +819,7 @@ int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address)
 	return len;
 }
 
-int irc_really_connect(session_t *session) {
+static int irc_really_connect(session_t *session) {
 	irc_private_t		*j = irc_private(session);
 	connector_t		*connco, *connvh = NULL;
 	struct sockaddr		*sinco,  *sinvh  = NULL;
@@ -865,8 +923,7 @@ irc_conn_error:
 
 }
 
-COMMAND(irc_command_connect)
-{
+static COMMAND(irc_command_connect) {
 	irc_private_t		*j = irc_private(session);
 	const char		*newnick;
 
@@ -897,8 +954,7 @@ COMMAND(irc_command_connect)
 	return irc_really_connect(session);
 }
 
-COMMAND(irc_command_disconnect)
-{
+static COMMAND(irc_command_disconnect) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	const char	*reason = params[0]?params[0]:QUITMSG(session);
@@ -920,8 +976,7 @@ COMMAND(irc_command_disconnect)
 	return 0;
 }
 
-COMMAND(irc_command_reconnect)
-{
+static COMMAND(irc_command_reconnect) {
 	PARUNI
 	irc_private_t	*j = irc_private(session);
 
@@ -932,8 +987,7 @@ COMMAND(irc_command_reconnect)
 
 /*****************************************************************************/
 
-COMMAND(irc_command_msg)
-{
+static COMMAND(irc_command_msg) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	people_chan_t	*perchn = NULL;
@@ -1043,8 +1097,7 @@ COMMAND(irc_command_msg)
 	return 0;
 }
 
-COMMAND(irc_command_inline_msg)
-{
+static COMMAND(irc_command_inline_msg) {
 	PARUNI
 	const CHAR_T	*p[2] = { NULL, params[0] };
 	if (!target || !params[0])
@@ -1052,16 +1105,13 @@ COMMAND(irc_command_inline_msg)
 	return irc_command_msg(TEXT("msg"), p, session, target, quiet);
 }
 
-COMMAND(irc_command_quote)
-{
+static COMMAND(irc_command_quote) {
 	PARASC
 	watch_write(irc_private(session)->send_watch, "%s\r\n", params[0]);
 	return 0;
 }
 
-
-COMMAND(irc_command_pipl)
-{
+static COMMAND(irc_command_pipl) {
 	irc_private_t	*j = irc_private(session);
 	list_t		t1, t2;
 	people_t	*per;
@@ -1082,7 +1132,7 @@ COMMAND(irc_command_pipl)
 	return 0;
 }
 
-int irc_access_add(session_t *s, const char *uid, int flagsadd, int flagsdel) {
+static int irc_access_add(session_t *s, const char *uid, int flagsadd, int flagsdel) {
 /* channels */
 /* #define IRC_FLAG_AUTOJOIN   0x *//* auto_join to channel */
 #define IRC_FLAG_ISON	    0x02
@@ -1127,15 +1177,13 @@ int irc_access_add(session_t *s, const char *uid, int flagsadd, int flagsdel) {
 	return 0;
 }
 
-COMMAND(irc_command_add)
-{
+static COMMAND(irc_command_add) {
 	int ret = 0;
 	irc_access_add(session, target, IRC_FLAG_ISON, 0);
 	return ret;
 }
 
-COMMAND(irc_command_away)
-{
+static COMMAND(irc_command_away) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	int 		isaway = 0;
@@ -1174,8 +1222,7 @@ COMMAND(irc_command_away)
 
 /*****************************************************************************/
 
-QUERY(irc_window_kill)
-{
+static QUERY(irc_window_kill) {
 	window_t	*w = *va_arg(ap, window_t **);
 	irc_private_t	*j = NULL; /* I'm not sure but what if w will be null ? */
 	char		*tmp = NULL;
@@ -1193,8 +1240,7 @@ QUERY(irc_window_kill)
 	return 0;
 }
 
-QUERY(irc_topic_header)
-{
+static QUERY(irc_topic_header) {
 	char		**top   = va_arg(ap, char **);
 	char		**setby = va_arg(ap, char **);
 	char		**modes = va_arg(ap, char **);
@@ -1227,7 +1273,7 @@ QUERY(irc_topic_header)
 	return -1;
 }
 
-char *irc_getchan_int(session_t *s, const char *name, int checkchan)
+static char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 {
 	char		*ret, *tmp;
 	irc_private_t	*j = irc_private(s);
@@ -1256,7 +1302,7 @@ char *irc_getchan_int(session_t *s, const char *name, int checkchan)
  *   1 - reverse
  * as side effect it adjust table passed as v argument
  */
-char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
+static char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 		char ***v, int pr, int checkchan)
 {
 	char		*chan;
@@ -1349,8 +1395,7 @@ char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 }
 /*****************************************************************************/
 
-COMMAND(irc_command_names)
-{
+static COMMAND(irc_command_names) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	channel_t       *chan;
@@ -1419,8 +1464,7 @@ COMMAND(irc_command_names)
 	return 0;
 }
 
-COMMAND(irc_command_topic)
-{
+static COMMAND(irc_command_topic) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan, *newtop;
@@ -1445,8 +1489,7 @@ COMMAND(irc_command_topic)
 	return 0;
 }
 
-COMMAND(irc_command_who)
-{
+static COMMAND(irc_command_who) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
@@ -1462,8 +1505,7 @@ COMMAND(irc_command_who)
 	return 0;
 }
 
-COMMAND(irc_command_invite)
-{
+static COMMAND(irc_command_invite) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
@@ -1484,8 +1526,7 @@ COMMAND(irc_command_invite)
 	return 0;
 }
 
-COMMAND(irc_command_kick)
-{
+static COMMAND(irc_command_kick) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
@@ -1506,8 +1547,7 @@ COMMAND(irc_command_kick)
 	return 0;
 }
 
-COMMAND(irc_command_unban)
-{
+static COMMAND(irc_command_unban) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		*channame, **mp;
@@ -1549,8 +1589,7 @@ COMMAND(irc_command_unban)
 
 }
 
-COMMAND(irc_command_alist)
-{
+static COMMAND(irc_command_alist) {
 	PARASC
 /*
  *	if (params[1] == NULL && target) 
@@ -1560,8 +1599,7 @@ COMMAND(irc_command_alist)
 	return 0;
 }
 
-COMMAND(irc_command_ban)
-{
+static COMMAND(irc_command_ban) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		*chan, **mp, *temp = NULL;
@@ -1591,7 +1629,7 @@ COMMAND(irc_command_ban)
 	return 0;
 }
 
-COMMAND(irc_command_kickban) {
+static COMMAND(irc_command_kickban) {
 	PARUNI
 	const CHAR_T	*p[4] = { params[0], params[1], params[2], NULL };
 
@@ -1608,8 +1646,7 @@ COMMAND(irc_command_kickban) {
 }
 
 
-COMMAND(irc_command_devop)
-{
+static COMMAND(irc_command_devop) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	int		modes, i;
@@ -1668,8 +1705,7 @@ COMMAND(irc_command_devop)
 	return 0;
 }
 
-COMMAND(irc_command_ctcp)
-{
+static COMMAND(irc_command_ctcp) {
 	PARASC
 	int		i;
 	char		*who;
@@ -1698,8 +1734,7 @@ COMMAND(irc_command_ctcp)
 	return 0;
 }
 
-COMMAND(irc_command_ping)
-{
+static COMMAND(irc_command_ping) {
 	PARASC
 	char		**mp, *who;
 	struct timeval	tv;
@@ -1716,8 +1751,7 @@ COMMAND(irc_command_ping)
 	return 0;
 }
 
-COMMAND(irc_command_me)
-{
+static COMMAND(irc_command_me) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan, *chantypes = SOP(_005_CHANTYPES), *str, *col;
@@ -1746,8 +1780,7 @@ COMMAND(irc_command_me)
 	return 0;
 }
 
-COMMAND(irc_command_mode)
-{
+static COMMAND(irc_command_mode) {
 	PARASC
 	char	**mp, *chan;
 
@@ -1775,8 +1808,7 @@ COMMAND(irc_command_mode)
 	return 0;
 }
 
-COMMAND(irc_command_umode)
-{
+static COMMAND(irc_command_umode) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 
@@ -1790,8 +1822,7 @@ COMMAND(irc_command_umode)
 	return 0;
 }
 
-COMMAND(irc_command_whois)
-{
+static COMMAND(irc_command_whois) {
 	PARASC
 	char	**mp, *person;
 
@@ -1811,8 +1842,7 @@ COMMAND(irc_command_whois)
 	return 0;
 }
 
-QUERY(irc_status_show_handle)
-{
+static QUERY(irc_status_show_handle) {
 	char		**uid = va_arg(ap, char**);
 	session_t	*s = session_find(*uid);
 	const CHAR_T	*p[1];
@@ -1826,8 +1856,7 @@ QUERY(irc_status_show_handle)
 	return irc_command_whois(TEXT("wii"), p, s, NULL, 0);
 }
 
-COMMAND(irc_command_query)
-{
+static COMMAND(irc_command_query) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	window_t	*w;
@@ -1874,8 +1903,7 @@ COMMAND(irc_command_query)
 	return 0;
 }
 
-COMMAND(irc_command_jopacy)
-{
+static COMMAND(irc_command_jopacy) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *tar = NULL, *pass = NULL, *str, *tmp;
@@ -1912,8 +1940,7 @@ COMMAND(irc_command_jopacy)
 	return 0;
 }
 
-COMMAND(irc_command_nick)
-{
+static COMMAND(irc_command_nick) {
 	PARASC
 	irc_private_t	*j = irc_private(session);
 
@@ -1933,7 +1960,7 @@ COMMAND(irc_command_nick)
 	return 0;
 }
 
-COMMAND(irc_command_test) {
+static COMMAND(irc_command_test) {
 	irc_private_t	*j = irc_private(session);
 	list_t		tlist = j->connlist;
 
@@ -1956,7 +1983,7 @@ COMMAND(irc_command_test) {
 	return 0;
 }
 
-COMMAND(irc_command_genkey) {
+static COMMAND(irc_command_genkey) {
 #ifndef NO_POSIX_SYSTEM
 	PARASC
 	extern int sim_key_generate(const char *uid); /* sim plugin */

@@ -25,7 +25,7 @@
 
 #include "irc.h"
 
-#define IRC_COMMAND(x) int x(session_t *s, irc_private_t *j, int fd, int ecode, char **param)
+#define IRC_COMMAND(x) static int x(session_t *s, irc_private_t *j, int fd, int ecode, char **param)
 typedef int (*Irc_Cmd) 	    (session_t * , irc_private_t * , int   , int      , char **);
 
 #define IRC_LISTBAN		0x001

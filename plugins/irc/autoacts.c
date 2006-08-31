@@ -27,8 +27,7 @@
 
 extern plugin_t irc_plugin; 
 
-QUERY(irc_onkick_handler)
-{
+QUERY(irc_onkick_handler) {
 	char *session	= *va_arg(ap, char **);
 	char *nick	= *va_arg(ap, char **);
 	char *chan	= *va_arg(ap, char **);

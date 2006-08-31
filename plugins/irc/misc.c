@@ -52,8 +52,7 @@ char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "M
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 
-int gatoi(char *buf, int *a)
-{
+static int gatoi(char *buf, int *a) {
         char	*x[1];
         long	t;
 	if(!buf) return (1);
@@ -170,76 +169,7 @@ and the prefix.
 	return 0;
 }
 
-char *irc_make_banmask(session_t *session, const char *nick, const char *ident, const char *hostname) 
-{
-/* 
- *        1 (Nick)   - nick!*@*
- *        2 (User)   - *!*ident@*
- *        4 (Host)   - *!*@host.*
- *	  4 (IP)     - *!*@*.168.11.11 - buggy, it bans @*.11 
- *        8 (Domain) - *!*@*.domain.net
- *        8 (IP)     - *!*@192.168.11.*
- */
-	char		*host = xstrdup(hostname);
-	const char	*tmp[4];
-	char		*temp = NULL;
-
-	int		family = 0; 
-	char		ind = '.';
-	int		bantype = session_int_get(session, "ban_type");
-	
-#ifdef HAVE_INET_PTON
-	char		buf[33];
-	
-	if (xstrchr(host, ':')) {
-		/* to protect againt iwil var in ircd.conf (ircd-hybrid)
-		 *  dot_in_ip6_addr = yes;
-		 */ 
-		if (host[xstrlen(host)-1] == '.') 
-			host[xstrlen(host)-1] = 0;
-			
-		if (inet_pton(AF_INET6, host, &buf) > 0) {
-			family = AF_INET6;
-			ind = ':';
-		}
-	}
-	else if (inet_pton(AF_INET, host, &buf) > 0)
-		family = AF_INET;
-#else
-/* TODO */
-	print("generic_error", "It seem you don't have inet_pton() current version of irc_make_banmask won't work without this function. If you want to get work it faster contact with developers ;>");
-#endif
-
-	if (host && !family && (temp=xstrchr(host, ind)))
-		*temp = '\0';
-	if (host && family && (temp=xstrrchr(host, ind)))
-		*temp = '\0';
-
-	if (bantype > 15) bantype = 10;
-
-	memset(tmp, 0, sizeof(tmp));
-#define getit(x) tmp[x]?tmp[x]:"*"
-	if (bantype & 1) tmp[0] = nick;
-	if (bantype & 2 && (ident[0] != '~' || session_int_get(session, "dont_ban_user_on_noident") == 0 )) tmp[1] = ident;
-	if (family) {
-		if (bantype & 8) tmp[2] = host;
-		if (bantype & 4) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
-	} else {
-		if (bantype & 4) tmp[2] = host;
-		if (bantype & 8) tmp[3] = hostname ? temp?temp+1:NULL : NULL;
-	}
-
-
-/*	temp = saprintf("%s!*%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3)); */
-	temp = saprintf("%s!%s@%s%c%s", getit(0), getit(1), getit(2), ind, getit(3));
-	/* dj: better ban possibilities! */
- 	xfree(host);
-	return temp;
-#undef getit
-}
-
-int irc_parse_identhost(char *identhost, char **ident, char **host) 
-{
+static int irc_parse_identhost(char *identhost, char **ident, char **host)  {
 	char	*tmp;
 
 	xfree(*ident);
