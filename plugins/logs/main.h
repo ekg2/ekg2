@@ -54,23 +54,23 @@ struct {
 	list_t	messages; 	/* lista z log_session_away_t */
 } typedef log_away_t;
 
-char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
-const char *prepare_timestamp_format(const char *format, time_t t);
+static char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
+static const char *prepare_timestamp_format(const char *format, time_t t);
 
-logs_log_t *logs_log_find(const char *session, const char *uid, int create);
-logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid);
+static logs_log_t *logs_log_find(const char *session, const char *uid, int create);
+static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid);
 
-FILE *logs_open_file(char *path, int ff);
-QUERY(logs_handler);
-QUERY(logs_handler_newwin);
-QUERY(logs_status_handler);
-QUERY(logs_handler_irc);
-QUERY(logs_handler_raw);
+static FILE *logs_open_file(char *path, int ff);
+static QUERY(logs_handler);
+static QUERY(logs_handler_newwin);
+static QUERY(logs_status_handler);
+static QUERY(logs_handler_irc);
+static QUERY(logs_handler_raw);
 
-void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status);
-void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class);
-void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip);
-void logs_gaim();
+static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status);
+static void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class);
+static void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip);
+static void logs_gaim();
 
 list_t log_logs = NULL; 
 list_t log_awaylog = NULL;
