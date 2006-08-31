@@ -50,7 +50,7 @@ char *jabber_attr(char **atts, const char *att)
  * If you're supplying inrepls, the source charset should be stateless;
  * if you're supplying an outrepl, the target charset should be.
  */
-size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
+static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
 		char **outbuf, size_t *outbytesleft,
 		char **inrepls, const char *outrepl)
 {
