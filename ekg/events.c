@@ -383,11 +383,11 @@ int events_init()
 	return 0;
 }
 
-TIMER(ekg_day_timer)
-{
+TIMER(ekg_day_timer) {
 	static struct tm *oldtm = NULL;
 	struct tm *tm;
 	time_t now = time(NULL);
+
 	if (type) {
 		xfree(oldtm);
 		return 0;
@@ -396,8 +396,15 @@ TIMER(ekg_day_timer)
 #define dayischanged(x) (oldtm->tm_##x != tm->tm_##x)
 	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)  {
 		if (config_display_day_changed) {
-			print("day_changed", timestamp("%d %b %Y"));
-		} else debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
+			list_t l;
+			for (l = windows; l; l = l->next) {
+				window_t *w = l->data;
+				if (w->id == 0 || w->id == 1000) continue; /* skip __contacts && __debug */
+
+				print_window(window_target(w), w->session, 0, "day_changed", timestamp("%d %b %Y"));
+			}
+		}
+		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
 		query_emit(NULL, TEXT("day-changed"), &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
