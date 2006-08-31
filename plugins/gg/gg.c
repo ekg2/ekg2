@@ -59,6 +59,7 @@
 #include "pubdir50.h"
 
 static int gg_theme_init();
+static void gg_session_handler_msg(session_t *s, struct gg_event *e);
 
 PLUGIN_DEFINE(gg, PLUGIN_PROTOCOL, gg_theme_init);
 
@@ -642,7 +643,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
  *
  * obs³uga przychodz±cych wiadomo¶ci.
  */
-void gg_session_handler_msg(session_t *s, struct gg_event *e) {
+static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	char *__sender, **__rcpts = NULL;
 	char *__text;
 	CHAR_T *ltext;

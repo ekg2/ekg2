@@ -80,7 +80,7 @@
 #include "pubdir50.h"
 #include "token.h"
 
-COMMAND(gg_command_connect) {
+static COMMAND(gg_command_connect) {
 	PARUNI
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
@@ -325,8 +325,7 @@ noproxy:
 	return 0;
 }
 
-COMMAND(gg_command_away)
-{
+static COMMAND(gg_command_away) {
 	PARASC
 	gg_private_t *g = session_private_get(session);
 	CHAR_T *descr;
@@ -511,8 +510,7 @@ COMMAND(gg_command_away)
 	return 0;
 }
 	
-COMMAND(gg_command_msg)
-{
+static COMMAND(gg_command_msg) {
 	PARUNI
 	int count, valid = 0, chat, secure = 0, formatlen = 0;
 	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL;
@@ -851,8 +849,7 @@ COMMAND(gg_command_msg)
 	return 0;
 }
 
-COMMAND(gg_command_inline_msg)
-{
+static COMMAND(gg_command_inline_msg) {
 	PARUNI
 	const CHAR_T *p[2] = { NULL, params[0] };
 
@@ -861,8 +858,7 @@ COMMAND(gg_command_inline_msg)
 	return gg_command_msg(TEXT("chat"), p, session, target, quiet);
 }
 
-COMMAND(gg_command_block)
-{
+static COMMAND(gg_command_block) {
 	PARASC
 	const char *uid;
 
@@ -903,8 +899,7 @@ COMMAND(gg_command_block)
 	return 0;
 }
 
-COMMAND(gg_command_unblock)
-{
+static COMMAND(gg_command_unblock) {
 	PARASC
 	const char *uid;
 
@@ -962,8 +957,7 @@ COMMAND(gg_command_unblock)
  *  - token - pointer to structure token
  */
 
-int token_gif_load (char *fname, struct token_t *token)
-{
+static int token_gif_load (char *fname, struct token_t *token) {
 	char errbuf[512];
 	GifFileType *file;
 #ifdef TOKEN_GIF_PAL
@@ -1032,8 +1026,7 @@ err:
  *
  */
 
-void token_gif_free (struct token_t *token)
-{
+static void token_gif_free (struct token_t *token) {
 	if (token->data)
 		xfree (token->data);
 
@@ -1060,8 +1053,7 @@ void token_gif_free (struct token_t *token)
  *  - backgr_color - number of background colour
  */
 
-char token_gif_get_pixel (struct token_t *token, size_t x, size_t y, unsigned char backgr_color)
-{
+static char token_gif_get_pixel (struct token_t *token, size_t x, size_t y, unsigned char backgr_color) {
 	return (x < 0 || y < 0 || x >= token->sx || y >= token->sy) ? 
 	    backgr_color : token->data[y * token->sx + x];
 }
@@ -1075,8 +1067,7 @@ char token_gif_get_pixel (struct token_t *token, size_t x, size_t y, unsigned ch
  *  - token - pointer to structure, debribing token 
  */
 
-void token_gif_strip (struct token_t *token)
-{
+static void token_gif_strip (struct token_t *token) {
 	unsigned char *new_data;
 	size_t i;
 	size_t x, y;
@@ -1143,8 +1134,7 @@ void token_gif_strip (struct token_t *token)
  *  - buf - buffer to be stripped
  */
 
-char *token_gif_strip_txt (char *buf)
-{
+static char *token_gif_strip_txt (char *buf) {
 	char *new_buf = NULL;
 	size_t start, end, len;
 
@@ -1189,8 +1179,7 @@ char *token_gif_strip_txt (char *buf)
  *  - token - pointer to token structure 
  */
 
-char *token_gif_to_txt (struct token_t *token)
-{
+static char *token_gif_to_txt (struct token_t *token) {
 	char *buf, *bptr;
 	size_t x, y;
 #ifdef TOKEN_GIF_PAL
@@ -1308,8 +1297,7 @@ static int token_check(int nr, int x, int y, const char *ocr, int maxx, int maxy
  *
  * returns text of the token
  */
-char *token_ocr(const char *ocr, int width, int height, int length)
-{
+static char *token_ocr(const char *ocr, int width, int height, int length) {
 	int x, y, count = 0;
 	char *token;
 
@@ -1342,7 +1330,7 @@ struct ekg_jpeg_error_mgr {
 	jmp_buf setjmp_buffer;
 };
 
-void ekg_jpeg_error_exit(j_common_ptr j)
+static void ekg_jpeg_error_exit(j_common_ptr j)
 {
 	struct ekg_jpeg_error_mgr *e = (struct ekg_jpeg_error_mgr *) j->err;
 	/* Return control to the setjmp point */
@@ -1541,8 +1529,7 @@ fail:
 	return -1;		/* watch_remove(&gg_plugin, h->fd, h->check); */
 }
 
-COMMAND(gg_command_token)
-{
+static COMMAND(gg_command_token) {
         struct gg_http *h;
 	watch_t *w;
 
@@ -1557,8 +1544,7 @@ COMMAND(gg_command_token)
         return 0;
 }
 
-COMMAND(gg_command_modify)
-{
+static COMMAND(gg_command_modify) {
 	PARASC
 	userlist_t *u;
 	const char **par;
@@ -1794,8 +1780,7 @@ static TIMER(gg_checked_timer_handler)
 	return -1; /* timer tymczasowy */
 }
 
-COMMAND(gg_command_check_conn)
-{
+static COMMAND(gg_command_check_conn) {
 	struct gg_msg_richtext_format_img {
 		struct gg_msg_richtext rt;
 		struct gg_msg_richtext_format f;

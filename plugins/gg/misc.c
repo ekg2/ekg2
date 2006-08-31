@@ -43,8 +43,7 @@ CHAR_T *gg_cp_to_locale(unsigned char *buf_);
  *
  *  - buf.
  */
-unsigned char *gg_cp_to_iso(unsigned char *buf)
-{
+static unsigned char *gg_cp_to_iso(unsigned char *buf) {
 	unsigned char *tmp = buf;
 	if (!buf)
 		return NULL;
@@ -69,8 +68,7 @@ unsigned char *gg_cp_to_iso(unsigned char *buf)
  *
  *  - buf.
  */
-unsigned char *gg_iso_to_cp(unsigned char *buf)
-{
+static unsigned char *gg_iso_to_cp(unsigned char *buf) {
 	unsigned char *tmp = buf;
 	if (!buf)
 		return NULL;

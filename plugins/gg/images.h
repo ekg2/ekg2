@@ -33,7 +33,6 @@ extern list_t images;
 #define GG_CRC32_INVISIBLE 99
 
 void gg_changed_images(const CHAR_T *var);
-image_t *image_add_queue(char *filename, char *data, uint32_t size, uint32_t crc32);
 void image_remove_queue(image_t *i);
 void image_flush_queue();
 

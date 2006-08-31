@@ -479,8 +479,8 @@ COMMAND(gg_command_dcc)
 	return cmd_dcc(name, params, session, target, quiet);
 #endif
 }
-
-void gg_dcc_close_handler(dcc_t *d)
+/* never used? wtf? */
+static void gg_dcc_close_handler(dcc_t *d)
 {
 	struct gg_dcc *g = dcc_private_get(d);
 
@@ -865,7 +865,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 	return -1;
 }
 
-WATCHER(gg_dcc_handler_open) {	/* wrapper */
+static WATCHER(gg_dcc_handler_open) {	/* wrapper */
 	gg_dcc_handler(type, fd, watch, data);
 	return 0;
 }
