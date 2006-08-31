@@ -61,7 +61,7 @@
 
 #include "jabber.h"
 
-COMMAND(jabber_command_dcc) {
+static COMMAND(jabber_command_dcc) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 
@@ -203,7 +203,7 @@ COMMAND(jabber_command_dcc) {
 #endif
 }
 
-void jabber_command_connect_child(
+static void jabber_command_connect_child(
 	const char *server, 
 #ifdef NO_POSIX_SYSTEM
 	HANDLE fd	/* fd[1] */
@@ -233,7 +233,7 @@ void jabber_command_connect_child(
 #ifdef NO_POSIX_SYSTEM
 struct win32_temp { char server[100]; HANDLE fd; HANDLE fd2; };
 
-int jabber_command_connect_child_win32(void *data) {
+static int jabber_command_connect_child_win32(void *data) {
 	struct win32_temp *helper = data;
 	
 	CloseHandle(helper->fd2);
@@ -244,7 +244,7 @@ int jabber_command_connect_child_win32(void *data) {
 
 #endif
 
-COMMAND(jabber_command_connect)
+static COMMAND(jabber_command_connect)
 {
 	const char *server, *realserver = session_get(session, "server"); 
 	int res, fd[2];
@@ -328,7 +328,7 @@ COMMAND(jabber_command_connect)
 	return 0;
 }
 
-COMMAND(jabber_command_disconnect)
+static COMMAND(jabber_command_disconnect)
 {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
@@ -380,7 +380,7 @@ COMMAND(jabber_command_disconnect)
 	return 0;
 }
 
-COMMAND(jabber_command_reconnect)
+static COMMAND(jabber_command_reconnect)
 {
 	PARUNI
 	jabber_private_t *j = session_private_get(session);
@@ -392,7 +392,7 @@ COMMAND(jabber_command_reconnect)
 	return jabber_command_connect(name, params, session, target, quiet);
 }
 
-const char *jid_target2uid(session_t *s, const char *target, int quiet) {
+static const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 	const char *uid;
 	int istlen = jabber_private(s)->istlen;
 
@@ -413,7 +413,7 @@ const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 	return uid;
 }
 
-const char *jid_wcstarget2uid(session_t *s, const CHAR_T *target, int quiet) {
+static const char *jid_wcstarget2uid(session_t *s, const CHAR_T *target, int quiet) {
 	char *temp = wcs_to_normal(target);
 	const char *uid = jid_target2uid(s, temp, quiet);
 
@@ -422,7 +422,7 @@ const char *jid_wcstarget2uid(session_t *s, const CHAR_T *target, int quiet) {
 	return uid;
 }
 
-COMMAND(jabber_command_msg)
+static COMMAND(jabber_command_msg)
 {
 	PARUNI
 	jabber_private_t *j = session_private_get(session);
@@ -523,7 +523,7 @@ COMMAND(jabber_command_msg)
 	return 0;
 }
 
-COMMAND(jabber_command_inline_msg)
+static COMMAND(jabber_command_inline_msg)
 {
 	PARUNI
 	const CHAR_T *p[2] = { NULL, params[0] };
@@ -532,7 +532,7 @@ COMMAND(jabber_command_inline_msg)
 	return jabber_command_msg(TEXT("chat"), p, session, target, quiet);
 }
 
-COMMAND(jabber_command_xml)
+static COMMAND(jabber_command_xml)
 {
 	PARUNI
 	jabber_private_t *j = session_private_get(session);
@@ -540,7 +540,7 @@ COMMAND(jabber_command_xml)
 	return 0;
 }
 
-COMMAND(jabber_command_away)
+static COMMAND(jabber_command_away)
 {
 	PARASC
 	const char *descr, *format;
@@ -612,7 +612,7 @@ COMMAND(jabber_command_away)
 	return 0;
 }
 
-COMMAND(jabber_command_passwd)
+static COMMAND(jabber_command_passwd)
 {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
@@ -637,7 +637,7 @@ COMMAND(jabber_command_passwd)
 	return 0;
 }
 
-COMMAND(jabber_command_auth) 
+static COMMAND(jabber_command_auth) 
 {
 	PARUNI
 	jabber_private_t *j = session_private_get(session);
@@ -685,7 +685,7 @@ COMMAND(jabber_command_auth)
 	return 0;
 }
 
-COMMAND(jabber_command_modify)
+static COMMAND(jabber_command_modify)
 /* XXX REWRITE IT */
 {
 	PARASC
@@ -807,7 +807,7 @@ COMMAND(jabber_command_modify)
 	return ret;
 }
 
-COMMAND(jabber_command_del)
+static COMMAND(jabber_command_del)
 {
 	const char *uid;
 	if (!(uid = jid_target2uid(session, target, quiet)))
@@ -830,7 +830,7 @@ COMMAND(jabber_command_del)
  * When implementing new command don't use jabber_command_ver as template.
  */
 
-COMMAND(jabber_command_ver)
+static COMMAND(jabber_command_ver)
 {
 	const char *query_res, *uid;
         userlist_t *ut;
@@ -862,7 +862,7 @@ COMMAND(jabber_command_ver)
 	return 0;
 }
 
-COMMAND(jabber_command_userinfo)
+static COMMAND(jabber_command_userinfo)
 {
 	const char *uid;
 
@@ -879,7 +879,7 @@ COMMAND(jabber_command_userinfo)
 	return 0;
 }
 
-COMMAND(jabber_command_change)
+static COMMAND(jabber_command_change)
 {
 	PARUNI
 #define pub_sz 6
@@ -917,7 +917,7 @@ COMMAND(jabber_command_change)
 	return 0;
 }
 
-COMMAND(jabber_command_lastseen)
+static COMMAND(jabber_command_lastseen)
 {
 	const char *uid;
 	if (!(uid = jid_target2uid(session, target, quiet)))
@@ -938,7 +938,7 @@ COMMAND(jabber_command_lastseen)
 	return 0;
 }
 
-char **jabber_params_split(const char *line, int allow_empty)
+static char **jabber_params_split(const char *line, int allow_empty)
 {
 	char **arr, **ret = NULL;
 	int num = 0, i = 0, z = 0;
@@ -991,7 +991,7 @@ char **jabber_params_split(const char *line, int allow_empty)
 	return ret;
 }
 
-COMMAND(jabber_command_search) {
+static COMMAND(jabber_command_search) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 		/* XXX implementation bug ? should server be last variable? */
@@ -1029,7 +1029,7 @@ COMMAND(jabber_command_search) {
 	return -1;
 }
 
-COMMAND(tlen_command_pubdir) {
+static COMMAND(tlen_command_pubdir) {
 	PARASC
 	int issearch = !xwcscmp(name, TEXT("search"));
 
@@ -1116,7 +1116,7 @@ COMMAND(tlen_command_pubdir) {
 }
 
 
-COMMAND(jabber_command_register)
+static COMMAND(jabber_command_register)
 {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
@@ -1166,7 +1166,7 @@ COMMAND(jabber_command_register)
 	return 0;
 }
 
-COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERRED) */
+static COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERRED) */
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	CHAR_T *message = jabber_escape(params[0]);
@@ -1185,7 +1185,7 @@ COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERRED) */
 	return 0;
 }
 
-COMMAND(jabber_command_transpinfo) {
+static COMMAND(jabber_command_transpinfo) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
@@ -1204,7 +1204,7 @@ COMMAND(jabber_command_transpinfo) {
 
 }
 
-COMMAND(jabber_command_transports) {
+static COMMAND(jabber_command_transports) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
@@ -1222,7 +1222,7 @@ COMMAND(jabber_command_transports) {
 	return 0;
 }
 
-COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERRED) */
+static COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERRED) */
 	PARASC
 	jabber_private_t *j = jabber_private(session);
 	const char *server = params[0] ? params[0] : j->server;
@@ -1242,7 +1242,7 @@ COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERRED) */
 	return 0;
 }
 
-COMMAND(jabber_command_privacy) {
+static COMMAND(jabber_command_privacy) {
 	PARASC
 	/* XXX, wstepna implementacja jabber:iq:privacy w/g RFC #3921 */
 
@@ -1390,7 +1390,7 @@ COMMAND(jabber_command_privacy) {
 	return 0;
 }
 
-COMMAND(jabber_muc_command_join) {
+static COMMAND(jabber_muc_command_join) {
 	PARASC
 	/* params[0] - full channel name, 
 	 * params[1] - nickname || default 
@@ -1427,7 +1427,7 @@ COMMAND(jabber_muc_command_join) {
 	return 0;
 }
 
-COMMAND(jabber_muc_command_part) {
+static COMMAND(jabber_muc_command_part) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
@@ -1447,7 +1447,7 @@ COMMAND(jabber_muc_command_part) {
 	return 0;
 }
 
-COMMAND(jabber_muc_command_admin) {
+static COMMAND(jabber_muc_command_admin) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
@@ -1505,7 +1505,7 @@ COMMAND(jabber_muc_command_admin) {
 	return 0;
 }
 
-COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
+static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
@@ -1538,7 +1538,7 @@ COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 	return 0;
 }
 
-COMMAND(jabber_muc_command_topic) {
+static COMMAND(jabber_muc_command_topic) {
 	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
@@ -1559,7 +1559,7 @@ COMMAND(jabber_muc_command_topic) {
 	return 0;
 }
 
-COMMAND(jabber_command_control) {
+static COMMAND(jabber_command_control) {
 	/* w params[0] full uid albo samo resource....						*/
 	/* w params[1] polecenie... jesli nie ma to chcemy dostac liste dostepnych polecen 	*/
 	/* w params[2] polecenia do sparsowania 						*/
@@ -1653,8 +1653,7 @@ cleanup:
 	return 0;
 }
 
-
-COMMAND(jabber_command_private) {
+static COMMAND(jabber_command_private) {
 	PARASC
 	jabber_private_t *j = jabber_private(session);
 	CHAR_T *namespace; 	/* <nazwa> */

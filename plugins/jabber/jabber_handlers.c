@@ -49,6 +49,7 @@
 #ifdef __sun      /* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif
+#include <time.h>
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -64,6 +65,12 @@
 #include "jabber.h"
 
 #define jabberfix(x,a) ((x) ? x : a)
+
+static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
+static void jabber_handle_presence(xmlnode_t *n, session_t *s);
+static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
+static time_t jabber_try_xdelay(const char *stamp);
+
 void jabber_handle(void *data, xmlnode_t *n)
 {
         jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
@@ -88,7 +95,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 	}
 };
 
-void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
+static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 	xmlnode_t *nerr		= xmlnode_find_child(n, "error");
 	xmlnode_t *nbody   	= xmlnode_find_child(n, "body");
 	xmlnode_t *nsubject	= NULL;
@@ -303,7 +310,7 @@ void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 /* idea and some code copyrighted by Marek Marczykowski jid:marmarek@jabberpl.org */
 
 /* handlue <x xmlns=jabber:x:data type=form */
-void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *command, xmlnode_t *form, const char *param) { /* JEP-0004: Data Forms */
+static void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *command, xmlnode_t *form, const char *param) { /* JEP-0004: Data Forms */
 	xmlnode_t *node;
 	int fieldcount = 0;
 /*	const char *FORM_TYPE = NULL; */
@@ -374,7 +381,7 @@ void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *comma
 }
 
 /* handluje <x xmlns=jabber:x:data type=submit */
-int jabber_handle_xmldata_submit(session_t *s, xmlnode_t *form, const char *FORM_TYPE, int alloc, ...) {
+static int jabber_handle_xmldata_submit(session_t *s, xmlnode_t *form, const char *FORM_TYPE, int alloc, ...) {
 	char **atts	= NULL;
 	int valid	= 0;
 	int count	= 0;
@@ -421,7 +428,7 @@ int jabber_handle_xmldata_submit(session_t *s, xmlnode_t *form, const char *FORM
 }
 
 /* handlue <x xmlns=jabber:x:data type=result */
-void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const char *uid) {
+static void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const char *uid) {
 	int print_end = 0;
 	char **labels = NULL;
 	int labels_count = 0;
@@ -472,7 +479,7 @@ void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const char *uid
 	array_free(labels);
 }
 
-void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
+static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	const char *type = jabber_attr(n->atts, "type");
 	const char *id   = jabber_attr(n->atts, "id");
 	const char *from = jabber_attr(n->atts, "from");
@@ -1649,7 +1656,7 @@ typedef struct {
 	char *aff;		/* affiliation: */
 } muc_userlist_t;
 
-muc_userlist_t *mucuser_private_get(userlist_t *u) {
+static inline muc_userlist_t *mucuser_private_get(userlist_t *u) {
 	muc_userlist_t *p;
 	if (!u) 	return NULL;
 	if (u->priv)	return u->priv;
@@ -1659,7 +1666,7 @@ muc_userlist_t *mucuser_private_get(userlist_t *u) {
 	return p;
 }
 
-void mucuser_private_deinit(userlist_t *u) {
+static inline void mucuser_private_deinit(userlist_t *u) {
 	muc_userlist_t *p;
 	if (!u || !(p = u->priv)) return;
 
@@ -1667,7 +1674,7 @@ void mucuser_private_deinit(userlist_t *u) {
 	xfree(p->aff);
 }
 
-void jabber_handle_presence(xmlnode_t *n, session_t *s) {
+static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	jabber_private_t *j = jabber_private(s);
 	const char *from = jabber_attr(n->atts, "from");
 	const char *type = jabber_attr(n->atts, "type");
@@ -1743,7 +1750,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 							ulist = NULL; 
 						} else if (!ulist) {
 							ulist = newconference_member_add(c, nickjid, nickjid + 4);
-							print_window(mucuid, s, 0, "muc_joined", session_name(s), nickjid + 4, jid, mucuid+4, "");
+							print_window(mucuid, s, 0, "muc_joined", session_name(s), nickjid + 4, jid, mucuid+4, "", role, affiliation);
 						}
 
 						if (ulist) {
@@ -1848,7 +1855,7 @@ void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	xfree(uid);
 } /* <presence> */
 
-time_t jabber_try_xdelay(const char *stamp) {
+static time_t jabber_try_xdelay(const char *stamp) {
 	/* try to parse timestamp */
 	if (stamp) {
         	struct tm tm;

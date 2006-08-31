@@ -152,15 +152,11 @@ extern char *jabber_default_search_server;
 void jabber_register_commands(void);
 
 int JABBER_COMMIT_DATA(watch_t *w);
+void jabber_handle(void *data, xmlnode_t *n);
 
 char *jabber_attr(char **atts, const char *att);
 char *jabber_digest(const char *sid, const char *password);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
-
-void jabber_handle(void *data, xmlnode_t *n);
-void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
-void jabber_handle_presence(xmlnode_t *n, session_t *s);
-void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
 
 void jabber_initialize_conversions(char *varname);
 CHAR_T *jabber_escape(const char *text);
@@ -173,10 +169,8 @@ int jabber_write_status(session_t *s);
 
 void jabber_reconnect_handler(int type, void *data);
 WATCHER(jabber_handle_resolver);
-WATCHER(jabber_handle_connect_tls);
 
 int jabber_bookmarks_free(jabber_private_t *j);
-time_t jabber_try_xdelay(const char *stamp);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
 #ifdef HAVE_GNUTLS

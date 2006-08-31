@@ -66,6 +66,7 @@ char *jabber_dcc_ip = NULL;
 char *jabber_default_search_server = NULL;
 
 static int jabber_theme_init();
+static WATCHER(jabber_handle_connect_tls);
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
@@ -484,8 +485,7 @@ int jabber_bookmarks_free(jabber_private_t *j) {
  * obs³uguje dodawanie i usuwanie sesji -- inicjalizuje lub zwalnia
  * strukturê odpowiedzialn± za wnêtrzno¶ci jabberowej sesji.
  */
-QUERY(jabber_session)
-{
+static QUERY(jabber_session) {
         char **session = va_arg(ap, char**);
         session_t *s = session_find(*session);
 
@@ -505,10 +505,8 @@ QUERY(jabber_session)
  *
  * wy¶wietla wersjê pluginu i biblioteki.
  */
-QUERY(jabber_print_version)
-{
+static QUERY(jabber_print_version) {
         print("generic", XML_ExpatVersion());
-
         return 0;
 }
 
@@ -517,8 +515,7 @@ QUERY(jabber_print_version)
  *
  * sprawdza, czy dany uid jest poprawny i czy plugin do obs³uguje.
  */
-QUERY(jabber_validate_uid)
-{
+static QUERY(jabber_validate_uid) {
         char *uid = *(va_arg(ap, char **)), *m;
         int *valid = va_arg(ap, int *);
 
@@ -540,8 +537,7 @@ QUERY(jabber_validate_uid)
         return 0;
 }
 
-QUERY(jabber_window_kill) 
-{
+static QUERY(jabber_window_kill) {
 	window_t        *w = *va_arg(ap, window_t **);
 	jabber_private_t *j;
 	newconference_t  *c;
@@ -716,7 +712,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		xmlnode_handle_start(data, name, atts);
 }
 
-WATCHER(jabber_handle_stream)
+static WATCHER(jabber_handle_stream)
 {
         jabber_handler_data_t *jdh	= (jabber_handler_data_t *) data;
         session_t *s			= (session_t *) jdh->session;
@@ -781,7 +777,7 @@ WATCHER(jabber_handle_stream)
         return 0;
 }
 
-TIMER(jabber_ping_timer_handler) {
+static TIMER(jabber_ping_timer_handler) {
 	session_t *s = session_find((char*) data);
 
 	if (type == 1) {
@@ -804,7 +800,7 @@ TIMER(jabber_ping_timer_handler) {
 	return 0;
 }
 
-WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
+static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 	session_t *s = (session_t *) data;
 	if (type) return 0;
 	debug("Connecting to HUB, currectly not works ;/");
@@ -861,7 +857,7 @@ WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 #endif
 }
 
-WATCHER(jabber_handle_connect) /* tymczasowy */
+static WATCHER(jabber_handle_connect) /* tymczasowy */
 {
 	session_t *s = (session_t *) data;
         jabber_private_t *j = session_private_get(s);
@@ -1043,7 +1039,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 }
 
 #ifdef HAVE_GNUTLS
-WATCHER(jabber_handle_connect_tls) /* tymczasowy */
+static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 {
         session_t *s = (session_t *) data;
         jabber_private_t *j = session_private_get(s);
@@ -1079,7 +1075,7 @@ WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 }
 #endif
 
-QUERY(jabber_protocol_ignore) {
+static QUERY(jabber_protocol_ignore) {
 	char *sesion	= *(va_arg(ap, char **));
 	char *uid 	= *(va_arg(ap, char **));
 /*
@@ -1098,8 +1094,7 @@ QUERY(jabber_protocol_ignore) {
 	return 0;
 }
 
-QUERY(jabber_status_show_handle)
-{
+static QUERY(jabber_status_show_handle) {
         char *uid	= *(va_arg(ap, char**));
         session_t *s	= session_find(uid);
         jabber_private_t *j = session_private_get(s);
@@ -1281,8 +1276,10 @@ static int jabber_theme_init() {
 	format_add("jabber_recv_chan", _("%b<%w%2%b>%n %5"), 1);
 	format_add("jabber_recv_chan_n", _("%b<%w%2%b>%n %5"), 1);
 #endif
-	format_add("muc_joined", 	"%> %C%2%n %B[%c%3%B]%n has joined %W%4\n", 1);		/* %1 sesja %2 nick %3 - jid %4 - kanal */
-	format_add("muc_left",		"%> %c%2%n [%c%3%n] has left %W%4 %n[%5]\n", 1);	/* %1 sesja %2 nick %3 - jid %4 - kanal %5 - reason */
+		/* %1 sesja %2 nick %3 - jid %4 - kanal %6 - role %7 affiliation*/
+	format_add("muc_joined", 	_("%> %C%2%n %B[%c%3%B]%n has joined %W%4%n as a %g%6%n and a %g%7%n"), 1);
+		/* %1 sesja %2 nick %3 - jid %4 - kanal %5 - reason */
+	format_add("muc_left",		_("%> %c%2%n [%c%3%n] has left %W%4 %n[%5]\n"), 1);
 
 
 #endif	/* !NO_DEFAULT_THEME */
