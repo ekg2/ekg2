@@ -93,6 +93,7 @@ void variable_init()
 	variable_add(NULL, TEXT("default_status_window"), VAR_BOOL, 1, &config_default_status_window, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("display_ack"), VAR_INT, 1, &config_display_ack, NULL, variable_map(4, 0, 0, "none", 1, 0, "all", 2, 0, "delivered", 3, 0, "queued"), NULL);
         variable_add(NULL, TEXT("display_blinking"), VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
+	variable_add(NULL, TEXT("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("display_color"), VAR_INT, 1, &config_display_color, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("display_color_map"), VAR_STR, 1, &config_display_color_map, NULL, NULL, dd_color);
 	variable_add(NULL, TEXT("display_day_changed"), VAR_BOOL, 1, &config_display_day_changed, NULL, NULL , NULL);
