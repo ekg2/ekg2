@@ -354,7 +354,7 @@ static void empty_generator(const CHAR_T *text, int len)
 
 }
 
-void dir_generator(const CHAR_T *text, int len)
+static void dir_generator(const CHAR_T *text, int len)
 {
 #ifndef USE_UNICODE
 	struct dirent **namelist = NULL;
@@ -700,7 +700,7 @@ static void sessions_var_generator(const CHAR_T *text, int len)
 	free_utf(stext);
 }
 
-void reason_generator(const CHAR_T *text, int len)
+static void reason_generator(const CHAR_T *text, int len)
 {
 	CHAR_T *descr = session_current ? normal_to_wcs(session_current->descr) : NULL;
 	if (descr && !xwcsncasecmp(text, descr, len)) {

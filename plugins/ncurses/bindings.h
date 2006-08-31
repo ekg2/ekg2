@@ -35,10 +35,11 @@
 #define KEY_CTRL_BACKSPACE 355
 #define KEY_CTRL_TAB 356
 
-struct binding *ncurses_binding_map[KEY_MAX + 1];
-struct binding *ncurses_binding_map_meta[KEY_MAX + 1];
+extern struct binding *ncurses_binding_map[KEY_MAX + 1];
+extern struct binding *ncurses_binding_map_meta[KEY_MAX + 1];
 
-void *ncurses_binding_complete;
+extern void *ncurses_binding_complete;
+extern int bindings_added_max;
 
 void ncurses_binding_init();
 void ncurses_binding_destroy();
@@ -48,7 +49,6 @@ void ncurses_binding_delete(const CHAR_T *key, int quiet);
 int  ncurses_binding_default(void *, va_list);
 void ncurses_binding_set(int quiet, const CHAR_T *key, const CHAR_T *sequence);
 
-int bindings_added_max;
 #endif /* __EKG_NCURSES_BINDINGS_H */
 
 /*

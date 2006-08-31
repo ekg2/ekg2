@@ -40,6 +40,19 @@
 #include "mouse.h"
 
 PLUGIN_DEFINE(ncurses, PLUGIN_UI, NULL);
+/* vars */
+int config_aspell;
+char *config_aspell_lang;
+int config_backlog_size;
+int config_display_transparent;
+int config_enter_scrolls;
+int config_header_size;
+int config_margin_size;
+int config_kill_irc_window = 1;
+int config_statusbar_size;
+
+int ncurses_initialized;
+int ncurses_plugin_destroyed;
 
 static int ncurses_beep(void *data, va_list ap)
 {
@@ -521,7 +534,6 @@ int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, TEXT("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, TEXT("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, TEXT("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const CHAR_T *))ncurses_all_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, TEXT("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, TEXT("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, TEXT("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);

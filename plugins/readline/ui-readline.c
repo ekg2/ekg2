@@ -53,12 +53,18 @@
 #include <ekg/xmalloc.h>
 #include "ui-readline.h"
 
+int ui_screen_height;
+int ui_screen_width;
+int ui_need_refresh;
+
 int in_readline = 0, no_prompt = 0, pager_lines = -1, screen_lines = 24, screen_columns = 80;
 
 /* podstawmy ewentualnie brakuj±ce funkcje i definicje readline */
 
 extern void rl_extend_line_buffer(int len);
 extern char **completion_matches();
+
+void *userlist;
 
 #ifndef HAVE_RL_BIND_KEY_IN_MAP
 int rl_bind_key_in_map(int key, void *function, void *keymap)

@@ -60,9 +60,10 @@
 # define unchar unsigned char
 #endif
 
-WINDOW *ncurses_status = NULL;		/* okno stanu */
-WINDOW *ncurses_header = NULL;		/* okno nag³ówka */
-WINDOW *ncurses_input = NULL;		/* okno wpisywania tekstu */
+WINDOW *ncurses_status	= NULL;		/* okno stanu */
+WINDOW *ncurses_header	= NULL;		/* okno nag³ówka */
+WINDOW *ncurses_input	= NULL;		/* okno wpisywania tekstu */
+WINDOW *ncurses_contacts= NULL;
 
 CHAR_T *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
 int ncurses_history_index = 0;		/* offset w historii */
@@ -76,6 +77,9 @@ int ncurses_lines_start = 0;		/* od której linii wy¶wietlamy? */
 int ncurses_lines_index = 0;		/* w której linii jeste¶my? */
 int ncurses_input_size = 1;		/* rozmiar okna wpisywania tekstu */
 int ncurses_debug = 0;			/* debugowanie */
+
+int ncurses_screen_height;
+int ncurses_screen_width;
 
 static struct termios old_tio;
 

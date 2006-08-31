@@ -1,16 +1,16 @@
 #ifndef __EKG_NCURSES_CONTACTS_H
 #define __EKG_NCURSES_CONTACTS_H
 
-int config_contacts_size;
-int config_contacts;
-int config_contacts_groups_all_sessions;
-char *config_contacts_options;
-char *config_contacts_groups;
-int config_contacts_metacontacts_swallow;
+extern int config_contacts_size;
+extern int config_contacts;
+extern int config_contacts_groups_all_sessions;
+extern char *config_contacts_options;
+extern char *config_contacts_groups;
+extern int config_contacts_metacontacts_swallow;
 
-list_t sorted_all_cache;
-int contacts_index;
-int contacts_group_index;
+extern list_t sorted_all_cache;
+extern int contacts_index;
+extern int contacts_group_index;
 
 #define CONTACTS_MAX_HEADERS 20
 

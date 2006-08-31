@@ -11,14 +11,13 @@
 void ncurses_init();
 void ncurses_deinit();
 
-plugin_t ncurses_plugin;
+extern plugin_t ncurses_plugin;
 
-int ncurses_screen_width;
-int ncurses_screen_height;
-int ncurses_resize_term;
+extern int ncurses_screen_width;
+extern int ncurses_screen_height;
+// int ncurses_resize_term;
 
-int ncurses_initialized;
-int ncurses_plugin_destroyed;
+extern int ncurses_plugin_destroyed;
 
 #define LINE_MAXLEN 1000		/* rozmiar linii */
 
@@ -84,12 +83,10 @@ struct format_data {
 	char *text;			/* tre¶æ */
 };
 
-int ncurses_debug;
-
-WINDOW *ncurses_status;
-WINDOW *ncurses_header;
-WINDOW *ncurses_input;
-WINDOW *ncurses_contacts;
+extern WINDOW *ncurses_status;
+extern WINDOW *ncurses_header;
+extern WINDOW *ncurses_input;
+extern WINDOW *ncurses_contacts;
 
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state);
 
@@ -121,35 +118,34 @@ int ncurses_window_new(window_t *w);
 #define yanked ncurses_yanked
 
 #define HISTORY_MAX 1000
-CHAR_T *ncurses_history[HISTORY_MAX];
-int ncurses_history_index;
-CHAR_T *ncurses_line;
-CHAR_T *ncurses_yanked;
-CHAR_T **ncurses_lines;
-int ncurses_line_start;
-int ncurses_line_index;
-int ncurses_lines_start;
-int ncurses_lines_index;
-int ncurses_input_size;
-int ncurses_debug;
+extern CHAR_T *ncurses_history[HISTORY_MAX];
+extern int ncurses_history_index;
+extern CHAR_T *ncurses_line;
+extern CHAR_T *ncurses_yanked;
+extern CHAR_T **ncurses_lines;
+extern int ncurses_line_start;
+extern int ncurses_line_index;
+extern int ncurses_lines_start;
+extern int ncurses_lines_index;
+extern int ncurses_input_size;
+extern int ncurses_debug;
 
 void header_statusbar_resize();
 #ifdef WITH_ASPELL
 void ncurses_spellcheck_init();
 
-int config_aspell;
-char *config_aspell_lang;
+extern int config_aspell;
+extern char *config_aspell_lang;
 #endif
-
-int config_backlog_size;
 void changed_backlog_size(const CHAR_T *var);
-int config_display_transparent;
-int config_display_crap;
-int config_enter_scrolls;
-int config_header_size;
-int config_margin_size;
-int config_statusbar_size;
-int config_kill_irc_window;
+
+extern int config_backlog_size;
+extern int config_display_transparent;
+extern int config_enter_scrolls;
+extern int config_header_size;
+extern int config_margin_size;
+extern int config_statusbar_size;
+extern int config_kill_irc_window;
 
 WATCHER(ncurses_watch_stdin);
 WATCHER(ncurses_watch_winch);

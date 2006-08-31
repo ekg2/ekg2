@@ -35,9 +35,8 @@ char **my_completion(char *text, int start, int end);
 char *empty_generator(char *text, int state);
 
 /* vars remove some !*/
-int ui_need_refresh; /* DARK */
-int ui_screen_width;
-int ui_screen_height;
-void *userlist;
-int pager_lines, screen_lines, screen_columns;
+extern int ui_need_refresh; /* DARK */
+extern int ui_screen_width;
+extern int ui_screen_height;
+extern int pager_lines, screen_lines, screen_columns;
 
