@@ -1,0 +1,35 @@
+beep_mail
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	czy beepaæ przy nadej¶ciu nowej poczty. wy³±czenie ,,beep'' wy³±cza
+	równie¿ tê opcjê.
+
+check_mail
+	typ: liczba
+	domy¶lna warto¶æ: 0
+
+	okre¶la, czy ekg ma sprawdzaæ, czy nadesz³a nowa poczta i informowaæ
+	o tym na pasku stanu. warto¶æ 1 odpowiada sprawdzaniu skrzynki typu
+	mbox, a warto¶æ 2 skrzynki typu Maildir. dodadanie warto¶ci 4 oznacza,
+	¿e oprócz informowania na pasku stanu, bêdziemy otrzymywaæ krótk±
+	informacjê o nadej¶ciu poczty w aktualnym oknie. wszystkie dostêpne
+	warto¶ci to: 0, 1, 2, 5, 6.
+
+check_mail_frequency
+	typ: liczba
+	domy¶lna warto¶æ: 15
+	
+	okre¶la w sekundach, jak czêsto sprawdzaæ, czy nie ma nowej poczty.
+
+check_mail_folders
+	typ: tekst
+	domy¶lna warto¶æ: brak
+
+	zawiera pliki (mbox) lub katalogi (Maildir) rozdzielone przecinkiem lub
+	spacj±, które ekg ma sprawdzaæ, poza g³ówn± skrzynk± pocztow±. mo¿e to
+	byæ ¶cie¿ka bezwzglêdna lub wzglêdem katalogu domowego.
+	g³ówna w przypadku mbox to ta zapisana w zmiennej systemowej MAIL lub
+	/var/mail/user przy braku tej zmiennej. dla Maildir z kolei, to katalog
+	Maildir w katalogu domowym u¿ytkownika.
+

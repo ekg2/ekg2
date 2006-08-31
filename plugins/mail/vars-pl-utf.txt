@@ -1,0 +1,35 @@
+beep_mail
+	typ: bool
+	domyślna wartość: 1
+
+	czy beepać przy nadejściu nowej poczty. wyłączenie ,,beep'' wyłącza
+	również tę opcję.
+
+check_mail
+	typ: liczba
+	domyślna wartość: 0
+
+	określa, czy ekg ma sprawdzać, czy nadeszła nowa poczta i informować
+	o tym na pasku stanu. wartość 1 odpowiada sprawdzaniu skrzynki typu
+	mbox, a wartość 2 skrzynki typu Maildir. dodadanie wartości 4 oznacza,
+	że oprócz informowania na pasku stanu, będziemy otrzymywać krótką
+	informację o nadejściu poczty w aktualnym oknie. wszystkie dostępne
+	wartości to: 0, 1, 2, 5, 6.
+
+check_mail_frequency
+	typ: liczba
+	domyślna wartość: 15
+	
+	określa w sekundach, jak często sprawdzać, czy nie ma nowej poczty.
+
+check_mail_folders
+	typ: tekst
+	domyślna wartość: brak
+
+	zawiera pliki (mbox) lub katalogi (Maildir) rozdzielone przecinkiem lub
+	spacją, które ekg ma sprawdzać, poza główną skrzynką pocztową. może to
+	być ścieżka bezwzględna lub względem katalogu domowego.
+	główna w przypadku mbox to ta zapisana w zmiennej systemowej MAIL lub
+	/var/mail/user przy braku tej zmiennej. dla Maildir z kolei, to katalog
+	Maildir w katalogu domowym użytkownika.
+
