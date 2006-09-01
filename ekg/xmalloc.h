@@ -27,6 +27,7 @@
 #include "char.h"
 
 #define __(x) (x ? x : "(null)")
+#define __U(x) (x ? x : TEXT("(null)"))
 
 #ifndef EKG2_WIN32_NOFUNCTION
 

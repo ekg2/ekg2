@@ -2693,7 +2693,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 					window_lock_dec(w);
 				else {
 					list_t l;
-					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", __(target), __(last_name));
+					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=" CHARF "]\n", __(target), __U(last_name));
 					/* may be faultly */
 					for (l=windows; l; l = l->next) {
 						window_t *w = l->data;
