@@ -1995,8 +1995,9 @@ static COMMAND(irc_command_genkey) {
 	
 	if (!uid) 
 		return -1;
-	
+
 	if ((plugin_find(TEXT("sim")))) {
+#if 0
 		struct stat st;
 		char *temp1, *temp2;
 		int  ret = 0;
@@ -2015,6 +2016,7 @@ static COMMAND(irc_command_genkey) {
 			ret = sim_key_generate(uid);
 			printq("key_generating_success");
 		}
+#endif
 	}
 	// etc.. 	
 	xfree(uid);
