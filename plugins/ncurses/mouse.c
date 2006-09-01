@@ -43,17 +43,16 @@ int mouse_initialized = 0;
  * 
  * should show mouse pointer 
  */
+static void show_mouse_pointer() {
 #ifdef HAVE_LIBGPM
-void show_mouse_pointer()
-{
-    if (gpm_visiblepointer) {
-        Gpm_Event event;
+	if (gpm_visiblepointer) {
+		Gpm_Event event;
 
-	Gpm_GetSnapshot(&event);
-	Gpm_DrawPointer (event.x, event.y, gpm_consolefd);
-    }
-}
+		Gpm_GetSnapshot(&event);
+		Gpm_DrawPointer (event.x, event.y, gpm_consolefd);
+	}
 #endif
+}
 
 /*
  * ncurses_mouse_timer()
@@ -73,7 +72,7 @@ static TIMER(ncurses_mouse_timer)
  * 
  * handler for move of mouse 
  */
-void ncurses_mouse_move_handler(int x, int y)
+static void ncurses_mouse_move_handler(int x, int y)
 {
 	/* debug("%d %d | %d\n", x, y); */
 
@@ -156,7 +155,7 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
  * 
  * handler for gpm events etc
  */
-WATCHER(ncurses_gpm_watch_handler)
+static WATCHER(ncurses_gpm_watch_handler)
 {
         Gpm_Event event;
 

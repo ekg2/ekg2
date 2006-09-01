@@ -42,7 +42,6 @@ extern void *ncurses_binding_complete;
 extern int bindings_added_max;
 
 void ncurses_binding_init();
-void ncurses_binding_destroy();
 
 void ncurses_binding_add(const CHAR_T *key, const CHAR_T *action, int internal, int quiet);
 void ncurses_binding_delete(const CHAR_T *key, int quiet);

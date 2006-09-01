@@ -814,7 +814,7 @@ void ncurses_clear(window_t *w, int full)
  * uaktualnia zawarto¶æ p³ywaj±cego okna o id == i
  * lub wszystkich okienek, gdy i == 0.
  */
-void window_floating_update(int i)
+static void window_floating_update(int i)
 {
 	list_t l;
 
@@ -897,7 +897,7 @@ void ncurses_refresh()
  *
  *  - commit - czy wy¶wietliæ od razu?
  */
-void update_header(int commit)
+static void update_header(int commit)
 {
 	int y;
 
@@ -935,7 +935,7 @@ void update_header(int commit)
  *
  * zwraca ilo¶æ dopisanych znaków.
  */
-int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, int fgcolor, int bold, int bgcolor, int status)
+static int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, int fgcolor, int bold, int bgcolor, int status)
 {
 	int orig_x = x;
 	int backup_display_color = config_display_color;
@@ -1636,7 +1636,7 @@ void ncurses_input_update()
  *
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char(WINDOW *w, int y, int x, unchar ch)
+static void print_char(WINDOW *w, int y, int x, unchar ch)
 {
 	wattrset(w, A_NORMAL);
 
@@ -1662,7 +1662,7 @@ void print_char(WINDOW *w, int y, int x, unchar ch)
  *
  * wy¶wietla w danym okienku podkreslony znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
+static void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
 {
         wattrset(w, A_UNDERLINE);
 
@@ -1694,9 +1694,9 @@ void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
  * zwraca kod klawisza lub -2, je¶li nale¿y go pomin±æ.
  */
 #if USE_UNICODE
-int ekg_getch(int meta, wint_t *ch)
+static int ekg_getch(int meta, wint_t *ch)
 #else
-int ekg_getch(int meta, int *ch)
+static int ekg_getch(int meta, int *ch)
 #endif
 {
 #if USE_UNICODE

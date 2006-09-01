@@ -25,14 +25,9 @@
 
 void ncurses_enable_mouse();
 void ncurses_disable_mouse();
+void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
 
 // int last_mouse_state;
-
-#ifdef HAVE_LIBGPM
-	void show_mouse_pointer();
-#else
-#	define show_mouse_pointer()
-#endif
 
 #define EKG_BUTTON1_CLICKED	0x0001          
 #define EKG_BUTTON2_CLICKED	0x0007
@@ -44,8 +39,6 @@ void ncurses_disable_mouse();
 #define EKG_UNKNOWN_DOUBLE_CLICKED 0x0005
 #define EKG_SCROLLED_UP		0x0003
 #define EKG_SCROLLED_DOWN	0x0004
-
-void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
 
 extern int mouse_initialized;
 

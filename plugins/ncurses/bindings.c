@@ -697,7 +697,7 @@ static void binding_parse(struct binding *b, const CHAR_T *action)
  *
  * 0/-1.
  */
-int binding_key(struct binding *b, const CHAR_T *key, int add)
+static int binding_key(struct binding *b, const CHAR_T *key, int add)
 {
 	/* debug("Key: %s\n", key); */
 	if (!xwcsncasecmp(key, TEXT("Alt-"), 4)) {
@@ -1095,11 +1095,12 @@ void ncurses_binding_init()
 	ncurses_binding_default(NULL, NULL);
 	ncurses_binding_complete = binding_complete;
 }
-
-void ncurses_binding_destroy()
+#if 0
+static void ncurses_binding_destroy()
 {
 
 }
+#endif
 
 
 /*

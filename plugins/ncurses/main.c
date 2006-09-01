@@ -54,7 +54,7 @@ int config_statusbar_size;
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
-static int ncurses_beep(void *data, va_list ap)
+static QUERY(ncurses_beep)
 {
 	beep();
 	
@@ -72,13 +72,13 @@ static TIMER(ncurses_statusbar_timer)
 	return 0;
 }
 
-static int ncurses_statusbar_query(void *data, va_list ap)
+static QUERY(ncurses_statusbar_query)
 {
 	update_statusbar(1);
 	return 0;
 }
 
-static int ncurses_ui_is_initialized(void *data, va_list ap)
+static QUERY(ncurses_ui_is_initialized)
 {
         int *tmp = va_arg(ap, int *);
 	
@@ -91,7 +91,7 @@ static int ncurses_ui_is_initialized(void *data, va_list ap)
 }
 
 
-static int ncurses_ui_window_switch(void *data, va_list ap)
+static QUERY(ncurses_ui_window_switch)
 {
 	window_t **w = va_arg(ap, window_t **);
 	ncurses_window_t *n = (*w)->private;
@@ -112,7 +112,7 @@ static int ncurses_ui_window_switch(void *data, va_list ap)
 	return 0;
 }
 
-int ncurses_ui_window_print(void *data, va_list ap)
+static QUERY(ncurses_ui_window_print)
 {
 	window_t *w	= *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
@@ -168,7 +168,7 @@ int ncurses_ui_window_print(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_ui_window_new(void *data, va_list ap)
+static QUERY(ncurses_ui_window_new)
 {
 	window_t **w = va_arg(ap, window_t **);
 
@@ -177,7 +177,7 @@ static int ncurses_ui_window_new(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_ui_window_kill(void *data, va_list ap)
+static QUERY(ncurses_ui_window_kill)
 {
 	window_t **w = va_arg(ap, window_t **);
 
@@ -186,14 +186,14 @@ static int ncurses_ui_window_kill(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_ui_window_act_changed(void *data, va_list ap)
+static QUERY(ncurses_ui_window_act_changed)
 {
 	update_statusbar(1);
 
 	return 0;
 }
 
-static int ncurses_ui_window_target_changed(void *data, va_list ap)
+static QUERY(ncurses_ui_window_target_changed)
 {
 	window_t *w = *(va_arg(ap, window_t **));
 	ncurses_window_t *n = w->private;
@@ -210,7 +210,7 @@ static int ncurses_ui_window_target_changed(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_ui_window_refresh(void *data, va_list ap)
+static QUERY(ncurses_ui_window_refresh)
 {
 	ncurses_refresh();
 	ncurses_commit();
@@ -218,7 +218,7 @@ static int ncurses_ui_window_refresh(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_ui_window_clear(void *data, va_list ap)
+static QUERY(ncurses_ui_window_clear)
 {
 	window_t **w = va_arg(ap, window_t **);
 
@@ -228,7 +228,7 @@ static int ncurses_ui_window_clear(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_userlist_changed(void *data, va_list ap)
+static QUERY(ncurses_userlist_changed)
 {
 	char **p1 = va_arg(ap, char**);
 	char **p2 = va_arg(ap, char**);
@@ -260,7 +260,7 @@ static int ncurses_userlist_changed(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_variable_changed(void *data, va_list ap)
+static QUERY(ncurses_variable_changed)
 {
 	char *name = *(va_arg(ap, char**));
 
@@ -295,7 +295,7 @@ static int ncurses_variable_changed(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_conference_renamed(void *data, va_list ap)
+static QUERY(ncurses_conference_renamed)
 {
 	char *oldname = *(va_arg(ap, char**));
 	char *newname = *(va_arg(ap, char**));
@@ -325,7 +325,7 @@ static int ncurses_conference_renamed(void *data, va_list ap)
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,aspell'' lub ,,aspell_lang'' lub ,,aspell_encoding''.
  */
-void ncurses_changed_aspell(const CHAR_T *var)
+static void ncurses_changed_aspell(const CHAR_T *var)
 {
 #ifdef WITH_ASPELL
         /* probujemy zainicjowac jeszcze raz aspell'a */
@@ -334,7 +334,7 @@ void ncurses_changed_aspell(const CHAR_T *var)
 #endif
 }
 
-static int ncurses_postinit(void *data, va_list ap)
+static QUERY(ncurses_postinit)
 {
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
@@ -343,7 +343,7 @@ static int ncurses_postinit(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_binding_set_query(void *data, va_list ap)
+static QUERY(ncurses_binding_set_query)
 {
         CHAR_T *p1 = va_arg(ap, CHAR_T *);
 	CHAR_T *p2 = va_arg(ap, CHAR_T *);
@@ -354,7 +354,7 @@ static int ncurses_binding_set_query(void *data, va_list ap)
 	return 0;
 }
 
-static int ncurses_binding_query(void *data, va_list ap)
+static QUERY(ncurses_binding_query)
 {
 	CHAR_T *p1 = va_arg(ap, CHAR_T *);
 	CHAR_T *p2 = va_arg(ap, CHAR_T *);
@@ -388,7 +388,7 @@ static int ncurses_binding_query(void *data, va_list ap)
 	return 0;
 }
 
-QUERY(ncurses_setvar_default)
+static QUERY(ncurses_setvar_default)
 {
 	config_contacts_size = 9;         /* szeroko¶æ okna kontaktów */
 	config_contacts = 2;              /* czy ma byæ okno kontaktów */
@@ -421,7 +421,7 @@ QUERY(ncurses_setvar_default)
  *
  * called when var display_transparent is changed 
  */
-void ncurses_display_transparent_changed(const CHAR_T *var)
+static void ncurses_display_transparent_changed(const CHAR_T *var)
 {
 	int background;
 
@@ -449,7 +449,7 @@ void ncurses_display_transparent_changed(const CHAR_T *var)
 }
 
 volatile int sigint_count = 0;
-void ncurses_sigint_handler(int s)
+static void ncurses_sigint_handler(int s)
 {
 	if (sigint_count++ > 4) {
 		ekg_exit();
