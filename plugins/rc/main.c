@@ -35,7 +35,7 @@ char *rc_paths = NULL;
  *
  * obs³uga przychodz±cych poleceñ.
  */
-WATCHER_LINE(rc_input_handler_line)
+static WATCHER_LINE(rc_input_handler_line)
 {
 	rc_input_t *r = data;
 
@@ -57,7 +57,7 @@ WATCHER_LINE(rc_input_handler_line)
  *
  * obs³uga przychodz±cych datagramów.
  */
-WATCHER(rc_input_handler_dgram)
+static WATCHER(rc_input_handler_dgram)
 {
 	CHAR_T *tmp;
 	rc_input_t *r = data;
@@ -84,7 +84,7 @@ WATCHER(rc_input_handler_dgram)
  *
  * obs³uga przychodz±cych po³±czeñ.
  */
-WATCHER(rc_input_handler_accept)
+static WATCHER(rc_input_handler_accept)
 {
 	rc_input_t *r = data, *rn;
 	struct sockaddr sa;

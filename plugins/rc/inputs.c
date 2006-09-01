@@ -33,7 +33,7 @@
  *
  * tworzy nowe gniazdo AF_INET.
  */
-int rc_input_new_inet(const char *path, int type)
+static int rc_input_new_inet(const char *path, int type)
 {
 	struct sockaddr_in sin;
 	int port, fd;
