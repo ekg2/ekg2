@@ -149,17 +149,10 @@ char *xstrdup(const char *s)
 	return tmp;
 }
 
-CHAR_T *xwcsdup(const CHAR_T *s) 
-{
-#if USE_UNICODE
-	CHAR_T *tmp;
+CHAR_T *xwcsdup(const CHAR_T *s) {
 	if (!s) return NULL;
-	if (!(tmp = wcsdup(s)))
-		ekg_oom_handler();
-	return tmp;
-#else
-	return xstrdup(s);
-#endif
+
+	return xmemdup((void *) s, (xwcslen(s)+1) * sizeof(CHAR_T));
 }
 
 size_t xstrnlen(const char *s, size_t n) 
@@ -181,8 +174,7 @@ char *xstrndup(const char *s, size_t n)
         return tmp;
 }
 
-CHAR_T *xwcsndup(const CHAR_T *s, size_t n)
-{
+CHAR_T *xwcsndup(const CHAR_T *s, size_t n) {
 #if USE_UNICODE
 	CHAR_T *tmp;
 	if (!s)
