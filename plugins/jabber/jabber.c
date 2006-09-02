@@ -629,6 +629,8 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 #ifdef HAVE_GNUTLS
         if (j->using_ssl && j->ssl_session)
                 gnutls_deinit(j->ssl_session);
+	j->using_ssl	= 0;
+	j->ssl_session	= NULL;
 #endif
 
         userlist_clear_status(s, NULL);
@@ -1045,17 +1047,22 @@ static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
         jabber_private_t *j = session_private_get(s);
 	int ret;
 
-	if (type) {
+	if (type)
 		return 0;
-	}
 
 	ret = gnutls_handshake(j->ssl_session);
 
 	if ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN)) {
+		int newfd = (int) gnutls_transport_get_ptr(j->ssl_session);
+		int direc = gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ;
 
-		watch_add(&jabber_plugin, (int) gnutls_transport_get_ptr(j->ssl_session),
-			gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ,
-			jabber_handle_connect_tls, s);
+		/* don't create/destroy watch if data is the same... */
+		if (newfd == fd && direc == watch) {
+			ekg_yield_cpu();
+			return 0;
+		}
+
+		watch_add(&jabber_plugin, newfd, direc, jabber_handle_connect_tls, s);
 
 		ekg_yield_cpu();
 		return -1;
@@ -1063,6 +1070,7 @@ static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 	} else if (ret < 0) {
 		gnutls_deinit(j->ssl_session);
 		gnutls_certificate_free_credentials(j->xcred);
+		j->using_ssl = 0;	/* XXX, hack, peres has reported that here j->using_ssl can be 1 (how possible?) hack to avoid double free */
 		jabber_handle_disconnect(s, gnutls_strerror(ret), EKG_DISCONNECT_FAILURE);
 		return -1;
 	}
