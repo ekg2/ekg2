@@ -1908,7 +1908,11 @@ COMMAND(cmd_quit)
 
 COMMAND(cmd_version) 
 {
-    	printq("ekg_version", VERSION, compile_time());
+#if USE_UNICODE
+    	printq("ekg_version_unicode", VERSION, compile_time());
+#else
+	printq("ekg_version", VERSION, compile_time());
+#endif
 	query_emit(NULL, TEXT("plugin-print-version"));
 
 	return 0;

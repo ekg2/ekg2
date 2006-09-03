@@ -1119,6 +1119,7 @@ void theme_init()
 	format_add("welcome", _("%> %Tekg2-%1%n (%ge%Gk%gg %Gr%ge%Gl%go%Ga%gd%Ge%gd%n)\n%> Software licensed on GPL v2 terms\n\n"), 1);
 	format_add("welcome,speech", _("welcome in e k g 2."), 1);
 	format_add("ekg_version", _("%) %Tekg2-%1%n (compiled %2)\n"), 1);
+	format_add("ekg_version_unicode", _("%) %Tekg2-%1%n (compiled %2) with unicode support\n"), 1);
 	format_add("secure", _("%Y(encrypted)%n"), 1);
 	format_add("day_changed", _("%) Day changed to: %W%1"), 1);
 
