@@ -233,7 +233,7 @@ command_t *command_find(const CHAR_T *name)
 }
 
 
-COMMAND(cmd_tabclear)
+static COMMAND(cmd_tabclear)
 {
 	PARASC
 	int i;
@@ -382,7 +382,7 @@ cleanup:
 	return result;
 }
 
-COMMAND(cmd_alias)
+static COMMAND(cmd_alias)
 {
 	PARASC
 	CHAR_T *sname;
@@ -492,7 +492,7 @@ COMMAND(cmd_alias)
 	return -1;
 }
 
-COMMAND(cmd_status)
+static COMMAND(cmd_status)
 {
 	PARASC
         struct tm *t;
@@ -527,7 +527,7 @@ COMMAND(cmd_status)
 	return 0;
 }
 
-COMMAND(cmd_del)
+static COMMAND(cmd_del)
 {
 	PARASC
 	userlist_t *u;
@@ -593,7 +593,7 @@ typedef struct {
 	wcs_string_t buf;	/* je¶li buforujemy, to tutaj */
 } cmd_exec_info_t;
 
-WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
+static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 {
 	cmd_exec_info_t *i = data;
 	int quiet = (i) ? i->quiet : 0;
@@ -748,7 +748,7 @@ COMMAND(cmd_exec)
 	return 0;
 }
 
-COMMAND(cmd_eval)
+static COMMAND(cmd_eval)
 {
 	PARUNI
 	int i;
@@ -765,7 +765,7 @@ COMMAND(cmd_eval)
 	return 0;
 }
 
-COMMAND(cmd_for)
+static COMMAND(cmd_for)
 {
 	PARASC
 	char *nname = wcs_to_normal(name);
@@ -1026,7 +1026,7 @@ for_end:
 	return ret;
 }
 
-COMMAND(cmd_help)
+static COMMAND(cmd_help)
 {
 	PARUNI
 	list_t l;
@@ -1285,7 +1285,7 @@ COMMAND(cmd_help)
 	return 0;
 }
 
-COMMAND(cmd_ignore)
+static COMMAND(cmd_ignore)
 {
 	PARASC
 	const char *uid;
@@ -1711,7 +1711,7 @@ list_user:
 	return 0;
 }
 
-COMMAND(cmd_save)
+static COMMAND(cmd_save)
 {
 	PARASC
 	last_save = time(NULL);
@@ -1728,7 +1728,7 @@ COMMAND(cmd_save)
 	return 0;
 }
 
-COMMAND(cmd_set)
+static COMMAND(cmd_set)
 {
 	PARUNI
 	const CHAR_T *arg = NULL, *val = NULL;
@@ -1883,7 +1883,7 @@ COMMAND(cmd_set)
 	return res;
 }
 
-COMMAND(cmd_quit)
+static COMMAND(cmd_quit)
 {
 	PARASC
     	char *reason;
@@ -1906,7 +1906,7 @@ COMMAND(cmd_quit)
 	return 0;
 }
 
-COMMAND(cmd_version) 
+static COMMAND(cmd_version) 
 {
 #if USE_UNICODE
     	printq("ekg_version_unicode", VERSION, compile_time());
@@ -1918,7 +1918,7 @@ COMMAND(cmd_version)
 	return 0;
 }
 
-COMMAND(cmd_test_segv)
+static COMMAND(cmd_test_segv)
 {
 	char *foo = (char*) 0x41414141;
 
@@ -1927,7 +1927,7 @@ COMMAND(cmd_test_segv)
 	return 0;
 }
 
-COMMAND(cmd_test_send)
+static COMMAND(cmd_test_send)
 {
 	PARASC
 	const char *sender, *rcpts[2] = { NULL, NULL };
@@ -1947,28 +1947,28 @@ COMMAND(cmd_test_send)
 	return 0;
 }
 
-COMMAND(cmd_test_addtab)
+static COMMAND(cmd_test_addtab)
 {
 	PARASC
 	tabnick_add(params[0]);
 	return 0;
 }
 
-COMMAND(cmd_test_deltab)
+static COMMAND(cmd_test_deltab)
 {
 	PARASC
 	tabnick_remove(params[0]);
 	return 0;
 }
 
-COMMAND(cmd_test_debug)
+static COMMAND(cmd_test_debug)
 {
 	PARUNI
 	debug(CHARF "\n", params[0]);
 	return 0;
 }
 
-COMMAND(cmd_test_debug_dump)
+static COMMAND(cmd_test_debug_dump)
 {
 	CHAR_T *tmp = wcsprintf(TEXT("Zapisalem debug do pliku debug.%d"), (int) getpid());
 
@@ -1979,7 +1979,7 @@ COMMAND(cmd_test_debug_dump)
 	return 0;
 }
 
-COMMAND(cmd_test_event_test)
+static COMMAND(cmd_test_event_test)
 {
 	PARUNI
 	CHAR_T *tmp = xwcsdup(params[0]);
@@ -1988,7 +1988,7 @@ COMMAND(cmd_test_event_test)
 	return 0;
 }
 
-COMMAND(cmd_debug_watches)
+static COMMAND(cmd_debug_watches)
 {
 	list_t l;
 	char buf[256];
@@ -2023,7 +2023,7 @@ COMMAND(cmd_debug_watches)
 	return 0;
 }
 
-COMMAND(cmd_debug_queries)
+static COMMAND(cmd_debug_queries)
 {
 	list_t l;
 	
@@ -2047,7 +2047,7 @@ COMMAND(cmd_debug_queries)
 	return 0;
 }
 
-COMMAND(cmd_debug_query)
+static COMMAND(cmd_debug_query)
 {
 	PARUNI
 	CHAR_T *p[10];
@@ -2072,7 +2072,7 @@ COMMAND(cmd_debug_query)
  *
  * it now supports linux, solaris, freebsd.
  */
-COMMAND(cmd_test_mem) 
+static COMMAND(cmd_test_mem) 
 {
 #ifndef NO_POSIX_SYSTEM
 	char *temp, *p = NULL;
@@ -2158,7 +2158,7 @@ COMMAND(cmd_test_mem)
 #endif
 }
 
-COMMAND(cmd_test_fds)
+static COMMAND(cmd_test_fds)
 {
 #ifndef NO_POSIX_SYSTEM
 	struct stat st;
@@ -2255,14 +2255,14 @@ COMMAND(cmd_test_fds)
 #endif
 }
 
-COMMAND(cmd_beep)
+static COMMAND(cmd_beep)
 {
 	query_emit(NULL, TEXT("ui-beep"), NULL);
 
 	return 0;
 }
 
-COMMAND(cmd_play)
+static COMMAND(cmd_play)
 {
 	PARASC
 	if (!config_sound_app) {
@@ -2273,7 +2273,7 @@ COMMAND(cmd_play)
 	return play_sound(params[0]);
 }
 
-COMMAND(cmd_say)
+static COMMAND(cmd_say)
 {
 	PARUNI
 	if (!config_speech_app) {
@@ -2289,7 +2289,7 @@ COMMAND(cmd_say)
 	return say_it(params[0]);
 }
 
-COMMAND(cmd_reload)
+static COMMAND(cmd_reload)
 {
 	int res;
 
@@ -2308,7 +2308,7 @@ COMMAND(cmd_reload)
 	return res;
 }
 
-COMMAND(cmd_query)
+static COMMAND(cmd_query)
 {
 	PARASC
 	char **p = xcalloc(3, sizeof(char*));
@@ -2459,7 +2459,7 @@ cleanup:
 	return res;
 }
 
-COMMAND(cmd_echo)
+static COMMAND(cmd_echo)
 {
 	PARUNI
 	wcs_printq("generic", (params && params[0]) ? params[0] : TEXT(""));
@@ -2467,7 +2467,7 @@ COMMAND(cmd_echo)
 	return 0;
 }
 
-COMMAND(cmd_bind)
+static COMMAND(cmd_bind)
 {
 	PARUNI
 	window_lock_dec_n(target); /* this is interactive command */
@@ -2900,7 +2900,7 @@ COMMAND(cmd_alias_exec)
 	return 0;
 }
 
-COMMAND(cmd_at)
+static COMMAND(cmd_at)
 {
 	PARASC
 	list_t l;
@@ -3228,7 +3228,7 @@ COMMAND(cmd_at)
 	return -1;
 }
 
-COMMAND(cmd_timer)
+static COMMAND(cmd_timer)
 {
 	PARASC
 	list_t l;
@@ -3450,7 +3450,7 @@ COMMAND(cmd_timer)
 	return -1;
 }
 
-COMMAND(cmd_conference) 
+static COMMAND(cmd_conference) 
 {
 	PARASC
 	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] == '#') {
@@ -3678,7 +3678,7 @@ COMMAND(cmd_conference)
 	return -1;
 }
 
-COMMAND(cmd_last)
+static COMMAND(cmd_last)
 {
 	PARASC
         list_t l;
@@ -3806,7 +3806,7 @@ COMMAND(cmd_last)
 	return 0;
 }
 
-COMMAND(cmd_queue)
+static COMMAND(cmd_queue)
 {
 	PARASC
 	list_t l;
@@ -3971,7 +3971,7 @@ COMMAND(cmd_dcc)
 	return -1;
 }
 
-COMMAND(cmd_plugin)
+static COMMAND(cmd_plugin)
 {
 	PARUNI
 	int ret;
@@ -4034,7 +4034,7 @@ COMMAND(cmd_plugin)
  * changes reason without changing status
  */
 
-COMMAND(cmd_desc)
+static COMMAND(cmd_desc)
 {
 	PARASC
 	const char *status, *cmd;
