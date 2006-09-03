@@ -567,7 +567,11 @@ int session_write()
 
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
-		char *tmp = saprintf("sessions-" CHARF, p->name);
+		char *tmp;
+
+		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
+		
+		tmp = saprintf("sessions-" CHARF, p->name);
 
                 if (!(f = fopen(prepare_path(tmp, 1), "w"))) {
                         debug("Error opening file %s\n", tmp);
