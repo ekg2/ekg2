@@ -43,6 +43,20 @@ CHAR_T **events_all = NULL;
 
 int config_display_day_changed = 1;
 
+static QUERY(event_protocol_message);
+static QUERY(event_avail);
+static QUERY(event_online);
+static QUERY(event_away);
+static QUERY(event_na);
+static TIMER(ekg_day_timer);
+static QUERY(event_descr);
+
+static void events_add_handler(CHAR_T *name, void *function);
+static event_t *event_find(const CHAR_T *name, const CHAR_T *target);
+static event_t *event_find_id(unsigned int id);
+static int event_remove(unsigned int id, int quiet);
+static int events_list(int id, int quiet);
+
 /* 
  * on function 
  */
@@ -180,7 +194,7 @@ int event_add(const CHAR_T *name, int prio, const CHAR_T *target, const CHAR_T *
  * 
  * 0/-1 
  */
-int event_remove(unsigned int id, int quiet)
+static int event_remove(unsigned int id, int quiet)
 {
         event_t *ev;
 	
@@ -214,7 +228,7 @@ cleanup:
  * 
  * it shows the list of events 
  */
-int events_list(int id, int quiet)
+static int events_list(int id, int quiet)
 {
         list_t l;
 
@@ -290,7 +304,7 @@ event_t *event_find(const CHAR_T *name, const CHAR_T *target)
  * descriptor to event
  *
  */
-event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR_T *target, const CHAR_T *data)
+static event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR_T *target, const CHAR_T *data)
 {
 	list_t l;
 	event_t *ev_max = NULL;
@@ -343,7 +357,7 @@ event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR_T *tar
  * descriptor to event
  *
  */
-event_t *event_find_id(unsigned int id)
+static event_t *event_find_id(unsigned int id)
 {
         list_t l;
 
@@ -359,7 +373,7 @@ event_t *event_find_id(unsigned int id)
         return 0;
 }
 
-void events_add_handler(CHAR_T *name, void *function)
+static void events_add_handler(CHAR_T *name, void *function)
 {
         query_connect(NULL, name, function, NULL);
         wcs_array_add(&events_all, name);
@@ -383,7 +397,7 @@ int events_init()
 	return 0;
 }
 
-TIMER(ekg_day_timer) {
+static TIMER(ekg_day_timer) {
 	static struct tm *oldtm = NULL;
 	struct tm *tm;
 	time_t now = time(NULL);
@@ -420,7 +434,7 @@ TIMER(ekg_day_timer) {
  * 
  * handler for protocol-message 
  */
-QUERY(event_protocol_message)
+static QUERY(event_protocol_message)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
@@ -436,7 +450,7 @@ QUERY(event_protocol_message)
  *
  * handler for changing status on available
  */
-QUERY(event_avail)
+static QUERY(event_avail)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
@@ -450,7 +464,7 @@ QUERY(event_avail)
  *
  * handler for changing status on away
  */
-QUERY(event_away)
+static QUERY(event_away)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
@@ -464,7 +478,7 @@ QUERY(event_away)
  *
  * handler for changing status on NA
  */
-QUERY(event_na)
+static QUERY(event_na)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
@@ -478,7 +492,7 @@ QUERY(event_na)
  *
  * handler for changing status from NA to avail
  */
-QUERY(event_online)
+static QUERY(event_online)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
@@ -492,7 +506,7 @@ QUERY(event_online)
  *
  * handler for changing description
  */
-QUERY(event_descr)
+static QUERY(event_descr)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
@@ -625,7 +639,7 @@ void event_free()
  *
  * returns logical value
  */
-int event_target_check_compare(CHAR_T *buf)
+static int event_target_check_compare(CHAR_T *buf)
 {
 	wcs_string_t s;
 
