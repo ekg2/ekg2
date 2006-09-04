@@ -588,11 +588,13 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 
 int userlist_set(session_t *session, const char *contacts)
 {
-	char **entries = array_make(contacts, "\r\n", 0, 1, 0);
+	char **entries;
 	int i;
 
 	if (!session)
 		return -1;
+
+	entries = array_make(contacts, "\r\n", 0, 1, 0);
 
 	userlist_free(session);
 
