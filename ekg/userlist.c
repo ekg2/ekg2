@@ -715,7 +715,8 @@ char *get_uid(session_t *session, const char *text)
  * 
  * the same as get_uid(), but searches in all sessions
  */
-char *get_uid_all(const char *text)
+#if 0
+static char *get_uid_all(const char *text)
 {
 	list_t l;
 	for (l = sessions; l; l = l->next) {
@@ -736,7 +737,7 @@ char *get_uid_all(const char *text)
 
         return NULL;
 }
-
+#endif
 /* 
  * get_nickname()
  *
@@ -770,8 +771,8 @@ char *get_nickname(session_t *session, const char *text)
  * checks, if given uid/nick is on our contacts list
  * it checks every session
  */
-
-int check_uid_nick(const char *text)
+#if 0
+static int check_uid_nick(const char *text)
 {
         list_t l;
 
@@ -788,6 +789,7 @@ int check_uid_nick(const char *text)
         return 0;
 
 }
+#endif
 
 /*
  * format_user()
@@ -1156,7 +1158,7 @@ char *group_to_string(list_t groups, int meta, int sep)
 	for (l = groups; l; l = l->next) {
 		struct ekg_group *g = l->data;
 
-		if (!meta && !strncmp(g->name, "__", 2)) {
+		if (!meta && !xstrncmp(g->name, "__", 2)) {
 			comma = 0;
 			continue;
 		}
@@ -1177,7 +1179,8 @@ char *group_to_string(list_t groups, int meta, int sep)
  *
  * sprawdza, czy wszystkie uidy s± tego samego protoko³u.
  */
-int same_protocol(char **uids)
+#if 0
+static int same_protocol(char **uids)
 {
 	const char *colon;
 	int len, i;
@@ -1188,12 +1191,12 @@ int same_protocol(char **uids)
 	len = (int) (colon - uids[0]) + 1;
 
 	for (i = 0; uids[i]; i++)
-		if (strncmp(uids[0], uids[i], len))
+		if (xstrncmp(uids[0], uids[i], len))
 			return 0;
 
 	return 1;
 }
-
+#endif
 
 /*
  * Local Variables:
