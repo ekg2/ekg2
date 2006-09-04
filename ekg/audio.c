@@ -151,8 +151,8 @@ COMMAND(cmd_streams) {
 			debug("[AUDIO_INPUT] name: %s\n", a->name);
 
 			for (arr = (char **) a->control_handler(AUDIO_CONTROL_HELP, AUDIO_RDWR, NULL); arr && *arr;) {
-				char *attr = *(arr); arr++;
-				char *val  = *(arr); arr++;
+				char *attr = *(arr++);
+				char *val  = *(arr++);
 				debug("... AUDIO_CONTROL_HELP: %s %s\n", attr, val);
 			}
 		}
@@ -163,8 +163,8 @@ COMMAND(cmd_streams) {
 			debug("[AUDIO_CODEC] name: %s\n", c->name);
 
 			for (arr = (char **) c->control_handler(AUDIO_CONTROL_HELP, AUDIO_RDWR, NULL); arr && *arr;) {
-				char *attr = *(arr); arr++;
-				char *val  = *(arr); arr++;
+				char *attr = *(arr++);
+				char *val  = *(arr++);
 				debug("... AUDIO_CONTROL_HELP: %s %s\n", attr, val);
 			}
 		}

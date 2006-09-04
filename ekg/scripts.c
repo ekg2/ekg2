@@ -769,9 +769,9 @@ TIMER(script_timer_handlers)
 QUERY(script_query_handlers)
 {
 	script_query_t	*temp = data;
-	SCRIPT_HANDLER_HEADER(script_handler_query_t);
 	void 		*args[MAX_ARGS];
 	int		i;
+	SCRIPT_HANDLER_HEADER(script_handler_query_t);
 	
 	for (i=0; i < temp->argc; i++) 
 		args[i] = (void *) va_arg(ap, void *);
