@@ -12,14 +12,22 @@ AC_DEFUN([AM_CHECK_PERL],
 	if test "x$with_perl" != "xno"; then
 		AC_PATH_PROG(PERL, perl)
 		if test "$PERL" != ""; then
-			PERL_LIBS=`perl -MExtUtils::Embed -e ldopts`
 			PERL_CFLAGS=`perl -MExtUtils::Embed -e ccopts`
-			
-			AC_DEFINE(WITH_PERL, 1, [define if You want perl])
-			have_perl=yes
-		fi
-
-		if test "x$have_perl" != "xyes"; then 
+			if test -z "$PERL_CFLAGS"; then
+				AC_MSG_RESULT([perl found, but error while getting CFLAGS])
+			else
+				PERL_LIBS=`perl -MExtUtils::Embed -e ldopts`
+				echo "main(){perl_alloc(); return 0;}" > conftest.c
+				$CC $CFLAGS conftest.c -o conftest $LDFLAGS $PERL_LIBS 2> perl.error.tmp > /dev/null
+				if test ! -s conftest; then
+					AC_MSG_RESULT([perl found, but error linking with perl libraries])
+				else
+					AC_DEFINE(WITH_PERL, 1, [define if You want perl])
+					have_perl=yes
+				fi
+				rm -f perl.error.tmp
+			fi
+		else
 			AC_MSG_RESULT(not found)
 		fi
 	fi
