@@ -635,9 +635,10 @@ const char *session_format(session_t *s)
 		return "";
 
 	uid = s->uid;
-
-//	if (xstrchr(uid, ':'))
-//		uid = xstrchr(uid, ':') + 1;
+/*
+	if (xstrchr(uid, ':'))
+		uid = xstrchr(uid, ':') + 1;
+ */
 
 	if (!s->alias)
 		tmp = format_string(format_find("session_format"), uid, uid);

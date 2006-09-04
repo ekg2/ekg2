@@ -237,7 +237,7 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 	window_t *w;
 	int id = 1, done = 0;
 	list_t l;
-//	userlist_t *u = NULL;
+/*	userlist_t *u = NULL; */
 
 	if (target) {
 		window_t *w = window_find_s(session, target);
@@ -245,7 +245,7 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 		if (w)
 			return w;
 
-//		u = get_uid(target);
+/*		u = get_uid(target); */
 
 		if (!xstrcmp(target, "$"))
 			return window_current;
@@ -332,8 +332,9 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 					print("window_id_query_started", itoa(w->id), who, session_name(session));
 					print_window(target, session, 1, "query_started", who, session_name(session));
 					print_window(target, session, 1, "query_started_window", who);
-//					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
-//						event_check(EVENT_QUERY, get_uin(target), target);
+/*					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS)) 
+						event_check(EVENT_QUERY, get_uin(target), target);
+ */
 					break;
 				}
 			}
@@ -347,8 +348,9 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 					print("window_id_query_started", itoa(w->id), who, session_name(session));
 					print_window(target, session, 1, "query_started", who, session_name(session));
 					print_window(target, session, 1, "query_started_window", who);
-//					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
-//						event_check(EVENT_QUERY, get_uin(target), target);
+/*					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
+						event_check(EVENT_QUERY, get_uin(target), target);
+ */
 				}
 			}
 

@@ -104,10 +104,12 @@ int script_autorun(char *scriptname,
 	int ret = -1;
 
 	if (!scriptname) {
-// TODO: list script from autorun dir.
-// script_autorun_list
-//  %1 - filename
-//  %2 - readlink.
+/*
+ TODO: list script from autorun dir.
+ script_autorun_list
+  %1 - filename
+  %2 - readlink.
+ */
 		return 0;
 	}
 	if (isautorun) {
@@ -232,7 +234,7 @@ char *script_find_path(char *name) {
 				path = saprintf("%s/scripts/%s", DATADIR, nametmp);
 				fajl = fopen(path, "r");
 			}
-// etc..
+/* etc.. */
 			xfree(nametmp);
 			if (!fajl) {
 				xfree(path);
@@ -307,7 +309,7 @@ int script_unload_name(scriptlang_t *s, char *name)
 		return -1;
 	}
 	if (script_unload(scr)) {
-	    // error
+		/* error */
 		return -1;
 	}
 	
@@ -353,7 +355,7 @@ int script_load(scriptlang_t *s, char *tname)
 	
 	if ((path = script_find_path(name))) {
 		if (stat(path, &st) || S_ISDIR(st.st_mode)) {
-			// scripts_loaddir(path) (?)
+			/* scripts_loaddir(path) (?) */
 			xfree(path);
 			xfree(name);
 			print("generic_error", strerror(EISDIR));
@@ -628,7 +630,7 @@ script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int typ
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler)
 {
 	SCRIPT_BIND_HEADER(script_query_t);
-// argc i argv_type uzupelnic... z czego ? xstrcmp() ? 
+/* argc i argv_type uzupelnic... z czego ? xstrcmp() ?  */
 #define CHECK(x) if (!xstrcmp(query_name, x)) 
 #define CHECK_(x) if (!xstrncmp(query_name, x, xstrlen(x)))
 #define NEXT_ARG(y) temp->argv_type[temp->argc] = y; temp->argc++;
@@ -644,21 +646,21 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 					      NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARPP);
 					      NEXT_ARG(SCR_ARG_CHARP);
-//					      NEXT_ARG(SCR_ARG_UNITPP);
+/*					      NEXT_ARG(SCR_ARG_UNITPP); */
 					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
 					      NEXT_ARG(SCR_ARG_INT);	}
 	else CHECK("protocol-message-post")      { NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARPP);
 					      NEXT_ARG(SCR_ARG_CHARP);
-//					      NEXT_ARG(SCR_ARG_UNITPP);
+/*					      NEXT_ARG(SCR_ARG_UNITPP); */
 					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
 					      NEXT_ARG(SCR_ARG_INT);	}
 	else CHECK("protocol-message-received") { NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARP);
 					      NEXT_ARG(SCR_ARG_CHARPP);
 					      NEXT_ARG(SCR_ARG_CHARP);
-//					      NEXT_ARG(SCR_ARG_UNITPP);
+/*					      NEXT_ARG(SCR_ARG_UNITPP); */
 					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
 					      NEXT_ARG(SCR_ARG_INT);	}
 	else CHECK("protocol-message-sent") { NEXT_ARG(SCR_ARG_CHARP);
@@ -709,9 +711,9 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 
 void script_var_changed(const CHAR_T *var) {
 	script_var_t     *temp = script_var_find(var);
-//	if (in_autoexec) ...
+/*	if (in_autoexec) ... */
 	SCRIPT_HANDLER_HEADER(script_handler_var_t);
-//	debug("[script_variable_changed] varname = %s newvalue = %s\n", var, temp->value);
+/*	debug("[script_variable_changed] varname = %s newvalue = %s\n", var, temp->value); */
 	SCRIPT_HANDLER_MULTI_FOOTER(script_handler_var, temp->value);
 	return;
 }

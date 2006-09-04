@@ -1267,7 +1267,7 @@ char *help_path(char *name, CHAR_T *plugin) {
         	tmp = saprintf("%s-%s.txt", base, lang);
 	}
 
-        // Temporary fallback - untill we don't have full en translation
+        /* Temporary fallback - untill we don't have full en translation */
         fp = fopen(tmp, "r");
         if (!fp) {
 		xfree(tmp);
@@ -1990,7 +1990,7 @@ char color_map(unsigned char r, unsigned char g, unsigned char b)
 int isalpha_pl(unsigned char c)
 {
 /*  gg_debug(GG_DEBUG_MISC, "c: %d\n", c); */
-    if(isalpha(c)) // normalne znaki
+    if(isalpha(c)) /* normalne znaki */
         return 1;
     else if(c == 177 || c == 230 || c == 234 || c == 179 || c == 241 || c == 243 || c == 182 || c == 191 || c == 188) /* polskie literki */
         return 1;
@@ -2387,8 +2387,10 @@ uint32_t *ekg_sent_message_format(const CHAR_T *text)
 	int len;
 
 	/* je¶li nie stwierdzono znaków kontrolnych, spadamy */
-//	if (!xstrpbrk(text, "\x02\x03\x12\x14\x1f"))
-//		return NULL;
+/*
+	if (!xstrpbrk(text, "\x02\x03\x12\x14\x1f"))
+		return NULL;
+ */
 
 	/* oblicz d³ugo¶æ tekstu bez znaczków formatuj±cych */
 	for (p = text, len = 0; *p; p++) {
@@ -2498,54 +2500,54 @@ int strcasecmp_pl(const char *cs, const char *ct)
 void pl_to_normal(unsigned char ch)
 {
 	switch(ch) {
-                case 161: // ¡
+                case 161: /* ¡ */
 			ch = 'A';
 			break;
-		case 177: // ±
+		case 177: /* ± */
 			ch = 'a';
 			break;
-                case 198: // Æ
+                case 198: /* Æ */
 			ch = 'C';
 			break;
-		case 230: // æ
+		case 230: /* æ */
 			ch = 'c';
 			break;
-                case 202: // Ê
+                case 202: /* Ê */
 			ch = 'E';
 			break;
-		case 234: // ê
+		case 234: /* ê */
 			ch = 'e';
 			break;
-                case 163: // £
+                case 163: /* £ */
 			ch = 'L';
 			break;
-		case 179: // ³
+		case 179: /* ³ */
 			ch = 'l';
 			break;
-                case 209: // Ñ
+                case 209: /* Ñ */
 			ch = 'N';
 			break;
-		case 241: // ñ
+		case 241: /* ñ */
 			ch = 'n';
 			break;
-                case 211: // Ó
+                case 211: /* Ó */
 			ch = 'O';
 			break;
-		case 243: // ó
+		case 243: /* ó */
 			ch = 'o';
 			break;
-                case 166: // ¦
+                case 166: /* ¦ */
 			ch = 'S';
 			break;
-		case 182: // ¶
+		case 182: /* ¶ */
 			ch = 's';
 			break;
-                case 175: // ¯
-		case 172: // ¬
+                case 175: /* ¯ */
+		case 172: /* ¬ */
 			ch = 'Z';
 			break;
-		case 191: // ¿
-		case 188: // ¼
+		case 191: /* ¿ */
+		case 188: /* ¼ */
 			ch = 'z';
 			break;
 		default:
@@ -2583,25 +2585,25 @@ char *strip_pl_chars(const char *text)
  */
 int tolower_pl(const unsigned char c) {
         switch(c) {
-                case 161: // ¡
+                case 161: /* ¡ */
                         return 177;
-                case 198: // Æ
+                case 198: /* Æ */
                         return 230;
-                case 202: // Ê
+                case 202: /* Ê */
                         return 234;
-                case 163: // £
+                case 163: /* £ */
                         return 179;
-                case 209: // Ñ
+                case 209: /* Ñ */
                         return 241;
-                case 211: // Ó
+                case 211: /* Ó */
                         return 243;
-                case 166: // ¦
+                case 166: /* ¦ */
                         return 182;
-                case 175: // ¯
+                case 175: /* ¯ */
                         return 191;
-                case 172: // ¬
+                case 172: /* ¬ */
                         return 188;
-                default: //reszta
+                default: /* reszta */
                         return tolower(c);
         }
 }

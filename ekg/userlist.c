@@ -804,9 +804,10 @@ const char *format_user(session_t *session, const char *uid)
 {
 	userlist_t *u = userlist_find(session, uid);
 	static char buf[256], *tmp;
-	
-//	if (uid && xstrchr(uid, ':'))
-//		uid = xstrchr(uid, ':') + 1;
+/* 	
+	if (uid && xstrchr(uid, ':'))
+		uid = xstrchr(uid, ':') + 1;
+ */
 
 	if (!u || !u->nickname)
 		tmp = format_string(format_find("unknown_user"), uid, uid);

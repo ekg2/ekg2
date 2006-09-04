@@ -27,7 +27,6 @@
 #include "themes.h"
 #include "sessions.h"
 
-// #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 #define wcs_printq(x...) do { if (!quiet) { wcs_print(x); } } while(0)
 

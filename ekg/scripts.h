@@ -103,8 +103,8 @@ typedef int (script_handler_watch_t)  (script_t *, script_watch_t *, int, int, i
 typedef int (script_free_bind_t)      (script_t *, void *, int, void *, ...);
 
 typedef struct {
-	char  	 *name;     // perl, python, php *g* and so on.
-	char 	 *ext; 	//  .pl,    .py, .php ...
+	char  	 *name;		/* perl, python, php *g* and so on. */
+	char 	 *ext;		/*  .pl,    .py, .php ... */
 	int  	 prio;
 	plugin_t *plugin;
 

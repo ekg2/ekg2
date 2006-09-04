@@ -23,6 +23,7 @@
 #include "ekg2-config.h"
 #include "win32.h"
 
+#include <stdio.h>
 #include <sys/types.h>
 
 #ifndef NO_POSIX_SYSTEM

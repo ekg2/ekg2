@@ -45,7 +45,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/resource.h> // rlimit
+#include <sys/resource.h>	/* rlimit */
 #endif
 
 #ifdef __FreeBSD__
@@ -967,7 +967,7 @@ int main(int argc, char **argv)
         events_init();
         metacontact_init();
 	audio_initialize();
-//	scripts_init();
+/*	scripts_init();		*/
 
         /* it has to be done after plugins are loaded, either we wouldn't know if we are
          * supporting some protocol in current build */
@@ -1054,7 +1054,7 @@ void ekg_exit()
 	/* setting default session */
 	if (config_sessions_save && session_current) {
 		session_int_set(session_current, "default", 1);
-//		config_changed = 1;
+/*		config_changed = 1;	*/
 	}
 
 	xfree(last_search_first_name);

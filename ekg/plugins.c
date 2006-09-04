@@ -612,8 +612,10 @@ int query_emit(plugin_t *plugin, const CHAR_T *name, ...)
 	list_t l;
 
 	if (nested > 32) {
-//		if (nested == 33)
-//			debug("too many nested queries. exiting to avoid deadlock\n");
+/*
+		if (nested == 33)
+			debug("too many nested queries. exiting to avoid deadlock\n");
+ */
 		return -1;
 	}
 

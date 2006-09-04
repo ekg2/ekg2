@@ -458,7 +458,7 @@ WATCHER_LINE(stream_handle_write) {
 	audio_handler_func_t *w = NULL;
 	int len;
 
-//	debug("stream_handle_write() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch);
+/*	debug("stream_handle_write() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch); */
 
 	audio = s->output;
 
@@ -494,7 +494,7 @@ WATCHER(stream_handle) {
 	audio_handler_func_t *w = NULL;
 	int len;
 
-//	debug("stream_handle() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch);
+/*	debug("stream_handle() name: %s type: %d fd: %d wtype: %d\n", s->stream_name, type, fd, watch); */
 
 	audio = s->input;
 	codec = s->codec;
@@ -521,7 +521,7 @@ WATCHER(stream_handle) {
 			} else if (s->codec->way == CODEC_DECODE) {
 				res = codec->c->decode_handler(type, audio->buffer, s->output->buffer, codec->private);
 			}
-//			debug("[AUDIO, CODEC, RECODE]: %d\n", res);
+/*			debug("[AUDIO, CODEC, RECODE]: %d\n", res); */
 			if (res > 0) {
 				memmove(audio->buffer->str, audio->buffer->str + res, audio->buffer->len - res);
 				audio->buffer->len -= res;

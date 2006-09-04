@@ -2178,7 +2178,7 @@ static COMMAND(cmd_test_fds)
 			/* GiM: ten sock_n, bo sockaddr_in6 > sockaddr_in */
 			char sock_n[256], bufek[256];
 			struct sockaddr *sa = (struct sockaddr*)sock_n;
-//			struct sockaddr_un *sun = (struct sockaddr_un*) &sa;
+/*			struct sockaddr_un *sun = (struct sockaddr_un*) &sa;		*/
 			struct sockaddr_in *sin = (struct sockaddr_in*) sa;
 #ifdef HAVE_GETADDRINFO
 			struct sockaddr_in6 *sin6 = (struct sockaddr_in6*) sa;
@@ -2615,7 +2615,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 			}
 		} 
 	}
-//	debug("%x %x\n", last_command, last_command_plugin);
+/*	debug("%x %x\n", last_command, last_command_plugin);	*/
 
 	if ((last_command && abbrs == 1 && !abbrs_plugins) || ( (last_command = last_command_plugin) && abbrs_plugins == 1 && !abbrs)) {
 		session_t *s = session ? session : window_current->session;
