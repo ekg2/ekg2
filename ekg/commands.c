@@ -2087,6 +2087,7 @@ static COMMAND(cmd_test_mem)
 
 	if ( (unmres != -1 && !xstrcmp(sys.sysname, "FreeBSD")) || (file  = fopen(temp,"rb")) ) {
 		xfree(temp);
+		{
 #ifdef __linux__
 			char buf[1024];
 
@@ -2144,6 +2145,7 @@ static COMMAND(cmd_test_mem)
 			xfree(p);
 			return -1;
 #endif
+		}
 		txt = wcsprintf(TEXT("Memory used by ekg2: %d kB"), rozmiar);
 		wcs_printq("generic", txt);
 		xfree(txt);
