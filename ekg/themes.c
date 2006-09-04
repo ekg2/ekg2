@@ -116,7 +116,7 @@ const char *format_find(const char *name)
  *
  * zwraca sekwencjê ansi odpowiadaj±c± danemu kolorkowi z thememów ekg.
  */
-const CHAR_T *format_ansi(char ch)
+static const CHAR_T *format_ansi(char ch)
 {
         if (ch == 'k')
                 return TEXT("\033[2;30m");
@@ -444,7 +444,7 @@ char *va_format_string(const char *format, va_list ap, int isunicode)
         return string_free(buf, 0);
 }
 
-CHAR_T *wcs_va_format_string(const char *data, va_list ap)
+static CHAR_T *wcs_va_format_string(const char *data, va_list ap)
 {
 	CHAR_T *tmp;
 	char *tmp2;
@@ -876,7 +876,7 @@ int format_add(const char *name, const char *value, int replace)
  *
  *  - name.
  */
-int format_remove(const char *name)
+static int format_remove(const char *name)
 {
 	CHAR_T *sname;
         list_t l;
