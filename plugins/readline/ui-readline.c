@@ -536,9 +536,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 {
         int old_end = rl_end, id = w->id;
 	char *old_prompt = NULL, *line_buf = NULL;
-	const char *p, *line = NULL;
-	string_t s = NULL;
-	char *linetmp;
+	const char *line = NULL;
 	char *target = window_target(w);
 
 	if (!xstrcmp(target, "__debug"))
@@ -565,30 +563,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 		line = line_buf = string_free(s, 0);
 	} else
 		line = xline;
-/* awful */
-	linetmp = (char *) line;
-	line = line_buf = saprintf("%s\n", linetmp);
-	xfree(linetmp);
 
-	if (config_speech_app) {
-		int in_esc_code = 0;
-		
-		s = string_init(NULL);
-
-		for (p = line; *p; p++) {
-			if (*p == 27) 
-				in_esc_code = 1;
-
-			/* zak³adamy, ¿e 'm' koñczy eskejpow± sekwencje */
-			if (in_esc_code && *p == 'm') {
-				in_esc_code = 0;
-				continue;
-			}
-			
-			if (!in_esc_code) 
-				string_append_c(s, *p);
-		}
-	}
 	/* je¶li nie piszemy do aktualnego, to zapisz do bufora i wyjd¼ */
         if (id && id != window_current->id) {
                 window_write(id, line);
@@ -666,12 +641,6 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 done:
 	if (line_buf)
 		xfree(line_buf);
-
-	/* say it! ;) */
-	if (config_speech_app) {
-		say_it(s->str);
-		string_free(s, 1);
-	}
 }
 /*
  * current_prompt()
@@ -771,8 +740,7 @@ char *my_readline()
  */
 int ui_readline_loop()
 {
-	char *line;
-	line = my_readline();
+	char *line = my_readline();
 
 	/* je¶li wci¶niêto Ctrl-D i jeste¶my w query, wyjd¼my */
 	if (!line && window_current->target) {
@@ -782,6 +750,7 @@ int ui_readline_loop()
 	/* je¶li wci¶niêto Ctrl-D, to zamknij okienko */
 	if (!line && window_current->id != 1) {
 		window_kill(window_current, 0);
+		return 1;
 	}
 
 	if (!line && window_current->id == 1) {
@@ -790,6 +759,7 @@ int ui_readline_loop()
 		} else {
 			printf("\n");
 		}
+		return 1;
 	}
 
 	if (xstrlen(line) > 0 && line[xstrlen(line) - 1] == '\\') {
@@ -888,7 +858,6 @@ int window_write(int id, const char *line)
 		}
 
 	if (w != window_current) {
-		w->act = 1;
 #ifdef HAVE_RL_SET_PROMPT
 		rl_set_prompt((char *) current_prompt());
 #else
@@ -920,22 +889,25 @@ char *window_activity()
 	string_t s = string_init("");
 	int first = 1;
 	list_t l;
-	char *act = NULL;
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
-		
-		if (w->act) {
-			if (!first)
-				string_append_c(s, ',');
-			string_append(s, itoa(w->id));
-			first = 0;
-		}
+/* we cannot make it colorful with default formats because grey on black doesn't look so good... */
+		if (!w->act || !w->id) 
+			continue;
+
+		if (!first)
+			string_append_c(s, ',');
+		string_append(s, itoa(w->id));
+		first = 0;
 	}
 
-	if (!first)
-		return act = string_free(s, 0);
-	
+	if (!first) {
+		char *tmp = string_free(s, 0);
+		char *act = tmp;
+		return act;
+	}
+	string_free(s, 1);
 	return NULL;
 }
 		

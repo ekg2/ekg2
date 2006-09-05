@@ -188,6 +188,7 @@ static CHAR_T *readline_change_string_t_back_to_char(const CHAR_T *str, const sh
 		wcs_string_append_c(asc, str[i]);			/* append current char */
 	}
 	wcs_string_append(asc, TEXT("%n"));	/* reset */
+	wcs_string_append_c(asc, '\n');		/* new line */
 	return wcs_string_free(asc, 0);
 }
 
