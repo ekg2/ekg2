@@ -641,8 +641,18 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
 	{
 		CHAR_T *tmp2 = normal_to_wcs(tmp);
+		char *format;
+		switch(level) {
+			case 0:				format = "debug";	break;
+			case DEBUG_IO:			format = "iodebug";	break;
+			case DEBUG_IORECV:		format = "iorecvdebug";	break;
+			case DEBUG_FUNCTION:		format = "fdebug";	break;
+			case DEBUG_ERROR:		format = "edebug";	break;
+			default:			format = "debug";	break;
+		}
+
+        	wcs_print_window("__debug", NULL, 0, format, tmp2);
         	buffer_add(BUFFER_DEBUG, NULL, tmp2, DEBUG_MAX_LINES);
-        	wcs_print_window("__debug", NULL, 0, "debug", tmp2);
 		free_utf(tmp2);
 	}
         xfree(tmp);

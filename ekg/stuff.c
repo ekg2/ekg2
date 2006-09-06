@@ -496,7 +496,6 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
 
 	time_t ts = 0;
 
-
 	if (!(sep = xstrchr(str, ' '))) {
 		debug("buffer_add_str() parsing str: %s failed\n", str);
 		return -1;
@@ -1100,7 +1099,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 		if (conference_participant(c, from))
 			matched++;
 
-		debug("// conference_find_by_uids(): from=%s, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, list_count(c->recipients));
+		debug_function("// conference_find_by_uids(): from=%s, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, list_count(c->recipients));
 
 		if (matched == list_count(c->recipients) && matched <= (!xstrcasecmp(from, s->uid) ? count : count + 1)) {
 			string_t new = string_init(NULL);
@@ -1322,7 +1321,7 @@ int mesg_set(int what)
 	struct stat s;
 
 	if (!(tty = ttyname(old_stderr)) || stat(tty, &s)) {
-		debug("mesg_set() error: %s\n", strerror(errno));
+		debug_error("mesg_set() error: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -2110,6 +2109,15 @@ int say_it(const CHAR_T *str)
 #else
 	return -1;
 #endif
+}
+
+void debug_ext(int level, const char *format, ...) {
+	va_list ap;
+	if (!config_debug) return;
+
+	va_start(ap, format);
+	ekg_debug_handler(level, format, ap);
+	va_end(ap);
 }
 
 /*

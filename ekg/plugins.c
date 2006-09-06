@@ -457,7 +457,7 @@ plugin_watches_again:
 		l = l->next;
 
 		if (ekg_watches_removed > 1) {
-			debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
+			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
 			goto plugin_watches_again;
 		}
 		ekg_watches_removed = 0;
@@ -734,7 +734,7 @@ void watch_free(watch_t *w)
 		return;
 
 	if (w->type == WATCH_WRITE && w->buf && !w->handler) { 
-		debug("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
+		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
 		return;
 	}
 
@@ -833,7 +833,7 @@ int watch_handle_write(watch_t *w) {
 
 	if (!w || w->removed == -1) return -1;	/* watch is running in another thread / context */
 	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
-	debug("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
+	debug_io("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
 	if (!len) return -1;
 
 	w->removed = -1;
@@ -848,7 +848,7 @@ int watch_handle_write(watch_t *w) {
 #endif
 	}
 
-	debug(" ... wrote:%d bytes (handler: 0x%x) ", res, handler);
+	debug_io(" ... wrote:%d bytes (handler: 0x%x) ", res, handler);
 
 	if (res == -1 &&
 #ifdef NO_POSIX_SYSTEM
@@ -871,7 +871,7 @@ int watch_handle_write(watch_t *w) {
 		memmove(w->buf->str, w->buf->str + res, len - res);
 		w->buf->len -= res;
 	}
-	debug("left: %d bytes\n", w->buf->len);
+	debug_io("left: %d bytes\n", w->buf->len);
 
 	w->removed = 0;
 	return res;
@@ -892,7 +892,7 @@ int watch_write(watch_t *w, const char *format, ...) {
 	
 	textlen = xstrlen(text); 
 
-	debug("[watch]_send: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
+	debug_io("[watch]_send: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
 	if (!text) return -1;
 		/* we don't really need full length of string... so we check if it's NULL or first letter is NUL. */ 
 	was_empty = (!w->buf->str || !(*w->buf->str));	
