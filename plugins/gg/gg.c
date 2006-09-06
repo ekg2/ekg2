@@ -1254,6 +1254,23 @@ static QUERY(gg_setvar_default) {
 	return 0;
 }
 
+static void libgadu_debug_handler(int level, const char *format, va_list ap) {
+	int newlevel;
+
+	if (!config_debug) return;
+
+	switch (level) {
+		/* stale z libgadu.h */
+/*		case GG_DEBUG_NET: 		 1:	newlevel = 0;	break; */		/* never used ? */
+		case /* GG_DEBUG_TRAFFIC */ 	 2:	newlevel = DEBUG_IO;		break;
+		case /* GG_DEBUG_DUMP */	 4:	newlevel = DEBUG_IO;		break;
+		case /* GG_DEBUG_FUNCTION */	 8:	newlevel = DEBUG_FUNCTION;	break;
+		case /* GG_DEBUG_MISC */	16:	newlevel = DEBUG_GGMISC;	break;
+		default:				newlevel = 0;			break;
+	}
+	ekg_debug_handler(newlevel, format, ap);
+}
+
 int gg_plugin_init(int prio) {
 	/* before loading plugin, do some sanity check */
 #ifdef USE_UNICODE
@@ -1319,9 +1336,8 @@ int gg_plugin_init(int prio) {
 	plugin_var_add(&gg_plugin, "scroll_mode", VAR_STR, "bounce", 0, NULL);
 	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0, NULL);
 
-	gg_debug_handler = ekg_debug_handler;
-	gg_debug_level = 255;
-//	gg_debug_handler = NULL;
+	gg_debug_handler	= libgadu_debug_handler;
+	gg_debug_level		= 255;
 
 	return 0;
 }

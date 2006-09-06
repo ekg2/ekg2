@@ -421,7 +421,7 @@ static COMMAND(gg_command_away) {
 
 	reason_changed = 1;
 	if (!session_descr_get(session))
-			autoscroll = timeout = 0;
+		autoscroll = timeout = 0;
 
 	if (autoscroll || (timeout && xstrlen(params0) > GG_STATUS_DESCR_MAXSIZE)) {
 		const char *mode = session_get(session, "scroll_mode");
