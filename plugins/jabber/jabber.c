@@ -735,7 +735,7 @@ static WATCHER(jabber_handle_stream)
                 return 0;
         }
 
-        debug("[jabber] jabber_handle_stream()\n");
+	debug_function("[jabber] jabber_handle_stream()\n");
 
         if (!(buf = XML_GetBuffer(j->parser, 4096))) {
                 print("generic_error", "XML_GetBuffer failed");
@@ -769,7 +769,7 @@ static WATCHER(jabber_handle_stream)
 
         buf[len] = 0;
 
-	debug("[jabber] recv %s\n", buf);
+	debug_iorecv("[jabber] recv %s\n", buf);
 
         if (!XML_ParseBuffer(j->parser, len, (len == 0))) {
                 print("jabber_xmlerror", session_name(s));
@@ -1334,6 +1334,7 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "auto_bookmark_sync", VAR_BOOL, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "auto_privacylist_sync", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
@@ -1344,6 +1345,7 @@ int jabber_plugin_init(int prio)
 	plugin_var_add(&jabber_plugin, "ping-server", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "port", VAR_INT, "5222", 0, NULL);
         plugin_var_add(&jabber_plugin, "priority", VAR_INT, "5", 0, NULL);
+	plugin_var_add(&jabber_plugin, "privacy_list", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, "5223", 0, NULL);

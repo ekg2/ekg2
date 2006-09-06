@@ -93,7 +93,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 	} else {
 		debug("[jabber] what's that: %s ?\n", n->name);
 	}
-};
+}
 
 static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
 	xmlnode_t *nerr		= xmlnode_find_child(n, "error");
@@ -551,6 +551,8 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			jabber_write_status(s);
 
 			if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, TEXT("/jid:bookmark --get"), 1);
+			if (session_int_get(s, "auto_privacylist_sync") != 0) 
+				command_exec_format(NULL, s, 1, TEXT("/jid:privacy --get %s"), session_get(s, "privacy_list") ? session_get(s, "privacy_list") : "ekg2");
 		} 
 	}
 
