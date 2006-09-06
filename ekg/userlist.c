@@ -710,34 +710,6 @@ char *get_uid(session_t *session, const char *text)
 	return NULL;
 }
 
-/*
- * get_uid_all()
- * 
- * the same as get_uid(), but searches in all sessions
- */
-#if 0
-static char *get_uid_all(const char *text)
-{
-	list_t l;
-	for (l = sessions; l; l = l->next) {
-		session_t *session = l->data;
-	        userlist_t *u;
-
-	        if (text && !xstrcmp(text, "$"))
-	                text = window_current->target;
-	
-	        u = userlist_find(session, text);
-	
-	        if (u && u->uid)
-	                return u->uid;
-	
-	        if (valid_uid(text))
-	                return (char *)text;
-	}
-
-        return NULL;
-}
-#endif
 /* 
  * get_nickname()
  *
@@ -763,33 +735,6 @@ char *get_nickname(session_t *session, const char *text)
 
         return NULL;
 }
-
-
-/* 
- * check_uid_nick()
- *
- * checks, if given uid/nick is on our contacts list
- * it checks every session
- */
-#if 0
-static int check_uid_nick(const char *text)
-{
-        list_t l;
-
-        if (!text)
-                return -1;
-
-        for (l = sessions; l; l = l->next) {
-                session_t *s = l->data;
-
-		if (userlist_find(s, text))
-			return 1;
-        }
-
-        return 0;
-
-}
-#endif
 
 /*
  * format_user()
@@ -1174,30 +1119,6 @@ char *group_to_string(list_t groups, int meta, int sep)
 
 	return string_free(foo, 0);
 }
-
-/*
- * same_protocol()
- *
- * sprawdza, czy wszystkie uidy s± tego samego protoko³u.
- */
-#if 0
-static int same_protocol(char **uids)
-{
-	const char *colon;
-	int len, i;
-
-	if (!uids || !uids[0] || !(colon = xstrchr(uids[0], ':')))
-		return 0;
-
-	len = (int) (colon - uids[0]) + 1;
-
-	for (i = 0; uids[i]; i++)
-		if (xstrncmp(uids[0], uids[i], len))
-			return 0;
-
-	return 1;
-}
-#endif
 
 /*
  * Local Variables:
