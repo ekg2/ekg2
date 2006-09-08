@@ -250,7 +250,7 @@ extern time_t ekg_started;
 extern int quit_message_send;
 extern int batch_mode;
 extern char *batch_line;
-extern struct color_map default_color_map[16+10];
+extern struct color_map color_map_default[16+10];
 
 void windows_save();
 

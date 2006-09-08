@@ -159,8 +159,6 @@ char *last_search_uid = 0;
 
 int reason_changed = 0;
 
-struct color_map default_color_map[16+10];
-
 /* 
  * windows_save()
  *

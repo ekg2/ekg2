@@ -653,9 +653,9 @@ static COMMAND(gg_command_msg) {
 					if (xisdigit(*p))
 						p++;
 
-					rgb[0] = default_color_map[num].r;
-					rgb[1] = default_color_map[num].g;
-					rgb[2] = default_color_map[num].b;
+					rgb[0] = color_map_default[num].r;
+					rgb[1] = color_map_default[num].g;
+					rgb[2] = color_map_default[num].b;
 
 					attr |= GG_FONT_COLOR;
 				} else
