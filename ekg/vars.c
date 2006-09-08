@@ -171,8 +171,6 @@ void variable_set_default()
 	if (!xstrcmp(console_charset, "UTF-8")) {
 		debug("Warning, nl_langinfo(CODESET) reports that you are using utf-8 encoding, but you didn't compile ekg2 with (experimental/untested) --enable-unicode\n");
 		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
-		debug("\tWe haven't got workaround for it right now, sorry (in __debug window or below you'll got info about mishmashed compilation)\n");
-		config_use_unicode = 1;		/* this should not allow loading plugins which must have correct unicode setting */
 	}
 #endif
 	if (console_charset) 
