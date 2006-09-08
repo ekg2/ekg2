@@ -162,7 +162,8 @@ void variable_set_default()
 
 #if USE_UNICODE
 	if (xstrcmp(console_charset, "UTF-8")) {
-		/* XXX, warn here: ekg2 compilated with USE_UNICODE but not in unicode enviroment */
+		debug("Warning, nl_langinfo(CODESET) reports that you are using non utf-8 encoding, but you compiled ekg2 with --enable-unicode\n");
+		debug("\tPlease compile ekg2 without --enable-unicode or change your enviroment setting to use utf-8 encoding (LC_ALL/LC_CTYPE)\n");
 		xfree(console_charset);
 		console_charset	= xstrdup("UTF-8");
 	}
