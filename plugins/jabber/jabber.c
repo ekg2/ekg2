@@ -633,7 +633,6 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 	j->ssl_session	= NULL;
 #endif
 
-        userlist_clear_status(s, NULL);
 	{
 		char *__session = xstrdup(session_uid_get(s));
 		char *__reason = xstrdup(reason);
