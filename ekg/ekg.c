@@ -600,47 +600,44 @@ static WATCHER_LINE(handle_stderr)	/* sta³y */
  */
 void ekg_debug_handler(int level, const char *format, va_list ap)
 {
-        static string_t line = NULL;
-        char *tmp;
-        int is_UI = 0;
+	static string_t line = NULL;
+	char *tmp;
+	CHAR_T *tmp2 = NULL;
+	int is_UI = 0;
 
-        if (!config_debug)
-                return;
+	if (!config_debug)
+		return;
 
-        query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
+	tmp = vsaprintf(format, ap);
 
-        if (!is_UI) {
-                /* printf(format, ap); */ /* uncomment for debuging */
-		vprintf(format, ap);
-                return;
-        }
+	if (line) {
+		string_append(line, tmp);
+		xfree(tmp);
+		tmp = NULL;
 
-        tmp = vsaprintf(format, ap);
+		if (line->str[xstrlen(line->str) - 1] == '\n') {
+			tmp = string_free(line, 0);
+			line = NULL;
+		}
+	} else {
+		if (tmp[xstrlen(tmp) - 1] != '\n') {
+			line = string_init(tmp);
+			xfree(tmp);
+			tmp = NULL;
+		}
+	}
 
-        if (line) {
-                string_append(line, tmp);
-                xfree(tmp);
-                tmp = NULL;
+	if (!tmp)
+		return;
 
-                if (line->str[xstrlen(line->str) - 1] == '\n') {
-                        tmp = string_free(line, 0);
-                        line = NULL;
-                }
-        } else {
-                if (tmp[xstrlen(tmp) - 1] != '\n') {
-                        line = string_init(tmp);
-                        xfree(tmp);
-                        tmp = NULL;
-                }
-        }
+	tmp[xstrlen(tmp) - 1] = 0;
 
-        if (!tmp)
-                return;
+	tmp2 = normal_to_wcs(tmp);
+	buffer_add(BUFFER_DEBUG, NULL, tmp2, DEBUG_MAX_LINES);
 
-        tmp[xstrlen(tmp) - 1] = 0;
+	query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
 
-	{
-		CHAR_T *tmp2 = normal_to_wcs(tmp);
+	if (is_UI) {
 		char *format;
 		switch(level) {
 			case 0:				format = "debug";	break;
@@ -650,12 +647,12 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 			case DEBUG_ERROR:		format = "edebug";	break;
 			default:			format = "debug";	break;
 		}
-
-        	wcs_print_window("__debug", NULL, 0, format, tmp2);
-        	buffer_add(BUFFER_DEBUG, NULL, tmp2, DEBUG_MAX_LINES);
-		free_utf(tmp2);
+		wcs_print_window("__debug", NULL, 0, format, tmp2);
+	} else {
+/*		fprintf(stderr, CHARF "\n", tmp2); */	/* uncomment for debuging */
 	}
-        xfree(tmp);
+	free_utf(tmp2);
+	xfree(tmp);
 }
 
 struct option ekg_options[] = {
@@ -926,6 +923,11 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("readline"), -254, 1);
 #endif
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
+	else for (l = buffers; l; l = l->next) {
+		struct buffer *b = l->data;
+		if (b->type != BUFFER_DEBUG) continue;
+		wcs_print_window("__debug", NULL, 0, "debug", b->line);
+	}
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
