@@ -554,11 +554,10 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 {
 /* 
  * EKG_DISCONNECT_NETWORK @ irc_handle_stream type == 1
- * EKG_DISCONNECT_NETWORK @ irc_handle_stream read  < 1
- * EKG_DISCONNECT_NETWORK @ irc_handle_stream if (type)
- * EKG_DISCONNECT_NETWORK @ irc_c_error(misc.c) when we recv ERROR message.
+ * EKG_DISCONNECT_FAILURE @ irc_handle_connect when we got timeouted or connection refused or other..
+ * EKG_DISCONNECT_FAILURE @ irc_c_error(misc.c) when we recv ERROR message @ connecting
  * EKG_DISCONNECT_FAILURE @ irc_command_connect when smth goes wrong.
- * EKG_DISCONNECT_STOPPED @ irc_command_disconnect when we do /disconnect before connecting.
+ * EKG_DISCONNECT_STOPPED @ irc_command_disconnect when we do /disconnect when we are not connected and we try to connect.
  * EKG_DISCONNECT_USER    @ irc_command_disconnect when we do /disconnect when we are connected.
  */
 	irc_private_t	*j = irc_private(s);
@@ -620,7 +619,6 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 	xfree(__reason);
 	xfree(__session);
-
 }
 
 static WATCHER_LINE(irc_handle_resolver) {

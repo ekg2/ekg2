@@ -268,16 +268,14 @@ IRC_COMMAND(irc_c_error)
 
 #define IOK2(x) param[x]?OMITCOLON(param[x]):""
 
-	if (!xstrcmp("ERROR", irccommands[ecode].comm)) {
+	if (irccommands[ecode].future == 0 && !xstrcmp("ERROR", irccommands[ecode].comm)) {
 		/* here error @ CONNECT 
 		 *   21:03:35 [:_empty_][ERROR][:Trying to reconnect too fast.]
 		 * no I:line's etc.. everything that disconnects fd
 		 */
-		print_window(NULL, s, 0,
-				"IRC_ERR_FIRSTSECOND",
-				session_name(s), irccommands[ecode].comm, IOK2(2));
-		if (j->connecting) ;
-/*			irc_handle_disconnect(s, param[0], EKG_DISCONNECT_NETWORK);  */
+/*		print_window(NULL, s, 0, "IRC_ERR_FIRSTSECOND", session_name(s), irccommands[ecode].comm, IOK2(2)); */
+		if (j->connecting)
+			irc_handle_disconnect(s, IOK2(2), EKG_DISCONNECT_FAILURE); 
 		else    debug("!j->connecting\n");
 		return -1;
 	}

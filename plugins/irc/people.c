@@ -414,6 +414,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 			newul = userlist_add_u(&(w->userlist), t2, new);
 			newul->status = xstrdup(ulist->status);
 			userlist_remove_u(&(w->userlist), ulist);
+			/* XXX dj, userlist_replace() */
 			/* GiM: Yes, I thought about doin' this 'in place'
 			 * but we would have to change position in userlist
 			 * to still keep it sorted, so I've chosen to do this
