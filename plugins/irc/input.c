@@ -36,7 +36,11 @@
 
 #define DEFAULT_COLOR 0
 
-int irc_getircoldcol(char *org)
+/* GiM: I've decided to make one big handler instead of many small ones */
+CTCP_COMMAND(ctcp_main_priv);
+CTCP_COMMAND(ctcp_main_noti);
+
+static int irc_getircoldcol(char *org)
 {
 	char	*p = org;
 	int	ibg, ifg, isfg, isbg, isdel, i, ret;
@@ -142,7 +146,7 @@ coloring_finito:
  */
 
 
-int is_ctcp(char *mesg)
+static int is_ctcp(char *mesg)
 {
 	int i;
 	char *p;

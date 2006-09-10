@@ -81,7 +81,7 @@ people_chan_t *irc_find_person_chan(list_t p, char *channame)
 	return NULL;
 }
 
-people_t *irc_add_person_int(session_t *s, irc_private_t *j,
+static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		char *nick, channel_t *chan)
 {
 	people_t *person, *peronchan;
@@ -187,7 +187,7 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	return 0;	
 }
 
-int irc_del_person_channel_int(session_t *s, irc_private_t *j,
+static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 		people_t *nick, channel_t *chan)
 {
 	userlist_t *ulist = NULL;

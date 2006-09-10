@@ -26,6 +26,7 @@
 #include "autoacts.h"
 
 extern plugin_t irc_plugin; 
+static TIMER(irc_autorejoin_timer);
 
 QUERY(irc_onkick_handler) {
 	char *session	= *va_arg(ap, char **);
@@ -57,7 +58,7 @@ QUERY(irc_onkick_handler) {
 	return 0;
 }
 
-TIMER(irc_autorejoin_timer)
+static TIMER(irc_autorejoin_timer)
 {
 	irc_onkick_handler_t *d = data;
 	if (type == 1) {

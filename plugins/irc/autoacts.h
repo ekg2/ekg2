@@ -33,7 +33,6 @@ typedef struct {
 } irc_onkick_handler_t;
 
 int irc_autorejoin(session_t *s, int when, char *chan);
-TIMER(irc_autorejoin_timer);
 QUERY(irc_onkick_handler);
 
 #endif

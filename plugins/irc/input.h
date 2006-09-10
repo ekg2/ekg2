@@ -25,7 +25,7 @@ char *irc_ircoldcolstr_to_ekgcolstr(session_t *s, char *str, int strip);
 char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s);
 
 
-#define CTCP_COMMAND(x) int x(session_t *s, irc_private_t *j, int number, \
+#define CTCP_COMMAND(x) static int x(session_t *s, irc_private_t *j, int number, \
 		char *ctcp, char *sender, char*idhost, char *targ)
 typedef int (*CTCP_Cmd) (session_t *s, irc_private_t *j, int number,
 		char *ctcp, char *sender, char *idhost, char *targ);
@@ -35,11 +35,6 @@ typedef struct {
 	int handled;
 } ctcp_t;
 
-/* GiM: I've decided to make one big handler instead of many small ones */
-CTCP_COMMAND(ctcp_main_priv);
-CTCP_COMMAND(ctcp_main_noti);
-
-int is_ctcp(char *mesg);
 enum { CTCP_ACTION=1, CTCP_DCC, CTCP_SED, CTCP_FINGER, CTCP_VERSION, CTCP_SOURCE,
 	CTCP_USERINFO, CTCP_CLIENTINFO, CTCP_PING, CTCP_TIME, CTCP_ERRMSG };
 
