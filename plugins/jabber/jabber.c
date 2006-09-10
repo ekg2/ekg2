@@ -642,7 +642,6 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 		xfree(__session);
 		xfree(__reason);
 	}
-
 }
 
 static void jabber_handle_start(void *data, const char *name, const char **atts)
@@ -737,7 +736,7 @@ static WATCHER(jabber_handle_stream)
 	debug_function("[jabber] jabber_handle_stream()\n");
 
         if (!(buf = XML_GetBuffer(j->parser, 4096))) {
-                print("generic_error", "XML_GetBuffer failed");
+		jabber_handle_disconnect(s, "XML_GetBuffer failed", EKG_DISCONNECT_FAILURE);
                 return -1;
         }
 
@@ -752,7 +751,7 @@ static WATCHER(jabber_handle_stream)
 		}
 
                 if (len < 0) {
-                        print("generic_error", gnutls_strerror(len));
+			jabber_handle_disconnect(s, gnutls_strerror(len), EKG_DISCONNECT_FAILURE);
                         return -1;
                 }
         } else
@@ -762,7 +761,7 @@ static WATCHER(jabber_handle_stream)
 #else
                 if ((len = read(fd, buf, 4095)) < 1) {
 #endif
-                        print("generic_error", strerror(errno));
+			jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
                         return -1;
                 }
 
