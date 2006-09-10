@@ -1,7 +1,7 @@
 ctrld_quits
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la, czy wci¶niêcie Ctrl-D w ostatnim okienku, nie bêd±c
 	w trybie, rozmowy klient na zakoñczyæ dzia³anie.
 
