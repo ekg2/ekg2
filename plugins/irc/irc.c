@@ -953,7 +953,6 @@ static COMMAND(irc_command_connect) {
 }
 
 static COMMAND(irc_command_disconnect) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	const char	*reason = params[0]?params[0]:QUITMSG(session);
 	debug("[irc] comm_disconnect() !!!\n");
@@ -975,7 +974,6 @@ static COMMAND(irc_command_disconnect) {
 }
 
 static COMMAND(irc_command_reconnect) {
-	PARUNI
 	irc_private_t	*j = irc_private(session);
 
 	if (j->connecting || session_connected_get(session)) 
@@ -986,7 +984,6 @@ static COMMAND(irc_command_reconnect) {
 /*****************************************************************************/
 
 static COMMAND(irc_command_msg) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	people_chan_t	*perchn = NULL;
 	people_t	*person;
@@ -1096,7 +1093,6 @@ static COMMAND(irc_command_msg) {
 }
 
 static COMMAND(irc_command_inline_msg) {
-	PARUNI
 	const CHAR_T	*p[2] = { NULL, params[0] };
 	if (!target || !params[0])
 		return -1;
@@ -1104,7 +1100,6 @@ static COMMAND(irc_command_inline_msg) {
 }
 
 static COMMAND(irc_command_quote) {
-	PARASC
 	watch_write(irc_private(session)->send_watch, "%s\r\n", params[0]);
 	return 0;
 }
@@ -1182,7 +1177,6 @@ static COMMAND(irc_command_add) {
 }
 
 static COMMAND(irc_command_away) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	int 		isaway = 0;
 
@@ -1327,9 +1321,7 @@ static char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		char *sname = wcs_to_normal(name);
-		char *tmpname2 = saprintf("irc:%s", sname);
-		CHAR_T *tmpname = normal_to_wcs(tmpname2);
+		char *tmpname = saprintf("irc:%s", name);
 
 		if (!xwcscasecmp(tmpname, c->name) && &irc_plugin == c->plugin)
 			while (c->params[parnum])
@@ -1339,9 +1331,7 @@ static char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 				parnum++;
 			}
 		
-		xfree(tmpname2);
-		free_utf(tmpname);
-		free_utf(sname);
+		xfree(tmpname);
 	}
 
 	do {
@@ -1394,7 +1384,6 @@ static char *irc_getchan(session_t *s, const char **params, const CHAR_T *name,
 /*****************************************************************************/
 
 static COMMAND(irc_command_names) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	channel_t       *chan;
 	userlist_t      *ulist;
@@ -1463,7 +1452,6 @@ static COMMAND(irc_command_names) {
 }
 
 static COMMAND(irc_command_topic) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan, *newtop;
 
@@ -1488,7 +1476,6 @@ static COMMAND(irc_command_topic) {
 }
 
 static COMMAND(irc_command_who) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
 
@@ -1504,7 +1491,6 @@ static COMMAND(irc_command_who) {
 }
 
 static COMMAND(irc_command_invite) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
 
@@ -1525,7 +1511,6 @@ static COMMAND(irc_command_invite) {
 }
 
 static COMMAND(irc_command_kick) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan;
 
@@ -1546,7 +1531,6 @@ static COMMAND(irc_command_kick) {
 }
 
 static COMMAND(irc_command_unban) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		*channame, **mp;
 	channel_t	*chan = NULL;
@@ -1588,7 +1572,6 @@ static COMMAND(irc_command_unban) {
 }
 
 static COMMAND(irc_command_alist) {
-	PARASC
 /*
  *	if (params[1] == NULL && target) 
  *		params[1] = target;
@@ -1598,7 +1581,6 @@ static COMMAND(irc_command_alist) {
 }
 
 static COMMAND(irc_command_ban) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		*chan, **mp, *temp = NULL;
 	people_t	*person;
@@ -1628,7 +1610,6 @@ static COMMAND(irc_command_ban) {
 }
 
 static COMMAND(irc_command_kickban) {
-	PARUNI
 	const CHAR_T	*p[4] = { params[0], params[1], params[2], NULL };
 
 	if (!xwcscmp(name, TEXT("kickban")))
@@ -1645,7 +1626,6 @@ static COMMAND(irc_command_kickban) {
 
 
 static COMMAND(irc_command_devop) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	int		modes, i;
 	char		**mp, *op, *nicks, *tmp, c, *chan, *p;
@@ -1663,7 +1643,7 @@ static COMMAND(irc_command_devop) {
 
 	modes = atoi(j->sopt[_005_MODES]);
 	op = xmalloc((modes+2) * sizeof(char));
-	c=xwcschr(name, 'p')?'o':xwcschr(name, 'h')?'h':'v';
+	c=xstrchr(name, 'p')?'o':xstrchr(name, 'h')?'h':'v';
 	/* Yes, I know there is such a function as memset() ;> */
 	for (i=0, tmp=op+1; i<modes; i++, tmp++) *tmp=c;
 	op[0]=*name=='d'?'-':'+';
@@ -1704,7 +1684,6 @@ static COMMAND(irc_command_devop) {
 }
 
 static COMMAND(irc_command_ctcp) {
-	PARASC
 	int		i;
 	char		*who;
 	char		**mp;
@@ -1733,7 +1712,6 @@ static COMMAND(irc_command_ctcp) {
 }
 
 static COMMAND(irc_command_ping) {
-	PARASC
 	char		**mp, *who;
 	struct timeval	tv;
 
@@ -1750,7 +1728,6 @@ static COMMAND(irc_command_ping) {
 }
 
 static COMMAND(irc_command_me) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan, *chantypes = SOP(_005_CHANTYPES), *str, *col;
 	int		mw = session_int_get(session, "make_window"), ischn;
@@ -1779,7 +1756,6 @@ static COMMAND(irc_command_me) {
 }
 
 static COMMAND(irc_command_mode) {
-	PARASC
 	char	**mp, *chan;
 
 	if (!(chan=irc_getchan(session, params, name,
@@ -1807,7 +1783,6 @@ static COMMAND(irc_command_mode) {
 }
 
 static COMMAND(irc_command_umode) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 
 	if (!(*params)) {
@@ -1821,7 +1796,6 @@ static COMMAND(irc_command_umode) {
 }
 
 static COMMAND(irc_command_whois) {
-	PARASC
 	char	**mp, *person;
 
 	if (!(person = irc_getchan(session, params, name,
@@ -1848,14 +1822,13 @@ static QUERY(irc_status_show_handle) {
 	if (!s)
 		return -1;
 
-	p[0] = normal_to_wcs(irc_private(s)->nick); /* UUU */
+	p[0] = irc_private(s)->nick;
 	p[1] = 0;
 
 	return irc_command_whois(TEXT("wii"), p, s, NULL, 0);
 }
 
 static COMMAND(irc_command_query) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	window_t	*w;
 	char		**mp, *tar, **p = xcalloc(3, sizeof(char*)), *tmp;
@@ -1902,7 +1875,6 @@ static COMMAND(irc_command_query) {
 }
 
 static COMMAND(irc_command_jopacy) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *tar = NULL, *pass = NULL, *str, *tmp;
 	channel_t	*chan;
@@ -1939,7 +1911,6 @@ static COMMAND(irc_command_jopacy) {
 }
 
 static COMMAND(irc_command_nick) {
-	PARASC
 	irc_private_t	*j = irc_private(session);
 
 	/* GiM: XXX FIXME TODO think more about j->connecting... */
@@ -1983,7 +1954,6 @@ static COMMAND(irc_command_test) {
 
 static COMMAND(irc_command_genkey) {
 #ifndef NO_POSIX_SYSTEM
-	PARASC
 	extern int sim_key_generate(const char *uid); /* sim plugin */
 	char *uid = NULL;
 
@@ -2035,19 +2005,6 @@ int irc_plugin_init(int prio)
 #ifndef NO_POSIX_SYSTEM
 	struct passwd	*pwd_entry = getpwuid(getuid());
 #endif
-/* before loading plugin, do some sanity check */
-#ifdef USE_UNICODE
-	if (!config_use_unicode)
-#else
-	if (config_use_unicode)
-#endif
-	{	debug("plugin irc cannot be loaded because of mishmashed compilation...\n"
-			"	program compilated with: --%s-unicode\n"
-			"	 plugin compilated with: --%s-unicode\n",
-				config_use_unicode ? "enable" : "disable",
-				config_use_unicode ? "disable": "enable");
-		return -1;
-	}
 
 	plugin_register(&irc_plugin, prio);
 
@@ -2064,10 +2021,6 @@ int irc_plugin_init(int prio)
 #define IRC_FLAGS 		IRC_ONLY | SESSION_MUSTBECONNECTED
 #define IRC_FLAGS_TARGET	IRC_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 	
-#if USE_UNICODE
-# define LNULL NULL
-# define command_add(a, b, par, c, d, e) command_add(a, b, L##par, c, d, e)	
-#endif
 	command_add(&irc_plugin, TEXT("irc:"), "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, TEXT("irc:connect"), NULL,	irc_command_connect, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, TEXT("irc:disconnect"), "r ?",irc_command_disconnect,IRC_ONLY, NULL);

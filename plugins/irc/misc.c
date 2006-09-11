@@ -124,7 +124,7 @@ and the prefix.
 	if (xstrlen(q[1]) > 1) {
 		if(!gatoi(q[1], &ecode)) {
 			/* for scripts */
-			CHAR_T *emitname = wcsprintf(TEXT("irc-protocol-numeric %s"), q[1]);
+			CHAR_T *emitname = saprintf(TEXT("irc-protocol-numeric %s"), q[1]);
 			if (query_emit(NULL, emitname, &s->uid, &(q[2])) == -1) { xfree(emitname); return -1; }
 			xfree(emitname);
 			

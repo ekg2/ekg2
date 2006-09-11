@@ -34,7 +34,6 @@
 
 COMMAND(gg_command_find)
 {
-	PARUNI
 	gg_private_t *g = session_private_get(session);
 	CHAR_T **argv = NULL, *user;
 	char **uargv = NULL;
@@ -42,7 +41,7 @@ COMMAND(gg_command_find)
 	int i, res = 0, all = 0;
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		wcs_printq("not_connected", wcs_session_name(session));
+		wcs_printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -63,7 +62,7 @@ COMMAND(gg_command_find)
 	}
 	
 	if (!params[0]) {
-		if (!(params[0] = xwcsdup(normal_to_wcs(window_current->target)))) {
+		if (!(params[0] = xwcsdup(window_current->target))) {
 			wcs_printq("not_enough_params", name);
 			return -1;
 		}
@@ -73,23 +72,19 @@ COMMAND(gg_command_find)
 	argv = (CHAR_T **) params;
 
 	if (argv[0] && !argv[1] && argv[0][0] == '#') {
-#if USE_UNICODE
-		return command_exec_format(target, session, quiet, TEXT("/conference --find %ls"), argv[0]);
-#else
 		return command_exec_format(target, session, quiet, TEXT("/conference --find %s"), argv[0]);
-#endif
 	}
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH))) {
 		return -1;
 	}
 
-	uargv = xcalloc(wcs_array_count(argv)+1, sizeof(CHAR_T **));
+	uargv = xcalloc(array_count(argv)+1, sizeof(CHAR_T **));
 
 	user = xwcsdup(argv[0]);
 	
 	if (argv[0] && argv[0][0] != '-') {
-		const char *uid = get_uid(session, wcs_to_normal(argv[0])); /* UUU */
+		const char *uid = get_uid(session, argv[0]);
 
 		if (!uid) {
 			printq("user_not_found", user);
@@ -185,18 +180,10 @@ COMMAND(gg_command_find)
 
 		wcs_printq("invalid_params", name);
 		gg_pubdir50_free(req);
-#if USE_UNICODE
-		array_free(uargv);
-#else
 		xfree(uargv);
-#endif
 		return -1;
 	}
-#if USE_UNICODE
-		array_free(uargv);
-#else
 		xfree(uargv);
-#endif
 
 	if (!gg_pubdir50(g->sess, req)) {
 		wcs_printq("search_failed", TEXT("Nie wiem o co chodzi"));
@@ -213,7 +200,6 @@ COMMAND(gg_command_find)
 
 COMMAND(gg_command_change)
 {
-	PARUNI
 	gg_private_t *g = session_private_get(session);
 	int i;
 	gg_pubdir50_t req;
@@ -232,8 +218,8 @@ COMMAND(gg_command_change)
 		return -1;
 
 	if (xwcscmp(params[0], TEXT("-"))) {
-		CHAR_T **argv = wcs_array_make(params[0], TEXT(" \t"), 0, 1, 1);
-		char **uargv = xcalloc(wcs_array_count(argv)+1, sizeof(char *));
+		CHAR_T **argv = array_make(params[0], TEXT(" \t"), 0, 1, 1);
+		char **uargv = xcalloc(array_count(argv)+1, sizeof(char *));
 		
 		for (i = 0; argv[i]; i++) {
 			uargv[i] = gg_locale_to_cp(argv[i]);
@@ -287,16 +273,12 @@ COMMAND(gg_command_change)
 
 			wcs_printq("invalid_params", name);
 			gg_pubdir50_free(req);
-			wcs_array_free(argv);
+			array_free(argv);
 			return -1;
 		}
 
-		wcs_array_free(argv);
-#if USE_UNICODE
-		array_free(uargv);
-#else
+		array_free(argv);
 		xfree(uargv);
-#endif
 	}
 
 	if (!gg_pubdir50(g->sess, req)) {
@@ -348,9 +330,10 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 
 	for (i = 0; i < count; i++) {
 		char   *cpfirstname, *cplastname, *cpnickname, *cpcity;
-		CHAR_T *firstname, *lastname, *nickname, *city, *birthyear, *uin;
+		CHAR_T *firstname, *lastname, *nickname, *city;
+		const char *birthyear;
 
-		const char *__fmnumber	= gg_pubdir50_get(res, i, "fmnumber");
+		const char *uin		= gg_pubdir50_get(res, i, "fmnumber");
 		const char *__firstname = gg_pubdir50_get(res, i, "firstname");
 		const char *__lastname	= gg_pubdir50_get(res, i, "lastname");
 		const char *__nickname	= gg_pubdir50_get(res, i, "nickname");
@@ -362,21 +345,14 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *target = NULL;
 
 		int status;
-#if USE_UNICODE
-/* we don't need to duplicate string if it's unicode ... */
-#define unistrdup(x) (char *) x
-#else
-#define unistrdup(x) xstrdup(x) 
-#endif
 
-		uin 		= (__fmnumber)	? normal_to_wcs(__fmnumber) : NULL;
-		cpfirstname 	= (__firstname) ? unistrdup(__firstname) : NULL;
-		cplastname 	= (__lastname)  ? unistrdup(__lastname) : NULL;
-		cpnickname 	= (__nickname)	? unistrdup(__nickname) : NULL;
-		cpcity 		= (__city)	? unistrdup(__city) : NULL;
+		cpfirstname 	= (__firstname) ? xstrdup(__firstname) : NULL;
+		cplastname 	= (__lastname)  ? xstrdup(__lastname) : NULL;
+		cpnickname 	= (__nickname)	? xstrdup(__nickname) : NULL;
+		cpcity 		= (__city)	? xstrdup(__city) : NULL;
 
 		status 		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
-		birthyear 	= (__birthyear && xstrcmp(__birthyear, "0")) ? normal_to_wcs(__birthyear) : NULL;
+		birthyear 	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
 
 		firstname 	= gg_cp_to_locale(cpfirstname);
 		lastname 	= gg_cp_to_locale(cplastname);
@@ -391,45 +367,36 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			last_search_first_name	= xwcsdup(firstname);
 			last_search_last_name	= xwcsdup(lastname);
 			last_search_nickname	= xwcsdup(nickname);
-			last_search_uid 	= saprintf("gg:" CHARF, uin);
+			last_search_uid 	= saprintf("gg:%s", uin);
 		}
 
-		name = wcsprintf(
-#if USE_UNICODE
-			TEXT("%ls %ls"),
-#else
+		name = saprintf(
 			TEXT("%s %s"),
-#endif
 					firstname ? firstname : TEXT(""), 
 					lastname ? lastname : TEXT(""));
 
 #define __format(x) ((count == 1 && !all) ? "search_results_single" x : "search_results_multi" x)
 		{
-			CHAR_T *fvalue;
+			const char *fvalue;
 			switch (status) {
 				case GG_STATUS_AVAIL:
 				case GG_STATUS_AVAIL_DESCR:
-					fvalue = normal_to_wcs(format_find(__format("_avail")));
+					fvalue = format_find(__format("_avail"));
 					break;
 				case GG_STATUS_BUSY:
 				case GG_STATUS_BUSY_DESCR:
-					fvalue = normal_to_wcs(format_find(__format("_away")));
+					fvalue = format_find(__format("_away"));
 					break;
 				case GG_STATUS_INVISIBLE:
 				case GG_STATUS_INVISIBLE_DESCR:
-					fvalue = normal_to_wcs(format_find(__format("_invisible")));
+					fvalue = format_find(__format("_invisible"));
 					break;
 				default:
-					fvalue = normal_to_wcs(format_find(__format("_notavail")));
+					fvalue = format_find(__format("_notavail"));
 			}
-			active = wcs_format_string(fvalue, (__firstname) ? __firstname : nickname);
-			free_utf(fvalue);
+			active = format_string(fvalue, (__firstname) ? __firstname : nickname);
 		}
-		{
-			char *tmpgender = format_string(format_find(__format("_unknown")), "");
-			gender = normal_to_wcs(tmpgender);
-			free_utf(tmpgender);
-		}
+		gender = format_string(format_find(__format("_unknown")), "");
 
 		for (l = autofinds; l; l = l->next) {
 			char *d = (char *) l->data;
@@ -440,7 +407,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			}
 		}
 		
-		wcs_print_window(target, s, 0, __format(""), 
+		print_window(target, s, 0, __format(""), 
 			uin 		? uin : TEXT("?"), name, 
 			nickname 	? nickname : TEXT(""), 
 			city		? city : TEXT(""), 
@@ -458,9 +425,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		xfree(nickname);
 		xfree(city);
 
-		last_uin = wcs_atoi(uin);
-		free_utf(uin);
-		free_utf(birthyear);
+		last_uin = atoi(uin);
 	}
 
 	/* je¶li mieli¶my ,,/find --all'', szukamy dalej */

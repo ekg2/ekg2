@@ -43,12 +43,7 @@ static WATCHER_LINE(rc_input_handler_line)
 		rc_input_close(r, 0);
 		return 0;
 	}
-	{
-		CHAR_T *tmp = normal_to_wcs(watch);
-			/* XXX, input must be unicode to do it... */
-		command_exec(NULL, NULL, tmp, 0);
-		free_utf(tmp);
-	}
+	command_exec(NULL, NULL, watch, 0);
 	return 0;
 }
 
@@ -59,7 +54,6 @@ static WATCHER_LINE(rc_input_handler_line)
  */
 static WATCHER(rc_input_handler_dgram)
 {
-	CHAR_T *tmp;
 	rc_input_t *r = data;
 	char buf[2048];		/* powinno wystarczyæ dla sieci z MTU 1500 */
 	int len;
@@ -72,10 +66,7 @@ static WATCHER(rc_input_handler_dgram)
 	len = read(fd, buf, sizeof(buf) - 1);
 	buf[len] = 0;
 
-	tmp = normal_to_wcs(buf);
-			/* XXX, input must be unicode to do it... */
-	command_exec(NULL, NULL, tmp, 0);
-	free_utf(tmp);
+	command_exec(NULL, NULL, buf, 0);
 	return 0;
 }
 

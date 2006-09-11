@@ -72,7 +72,6 @@ void gg_changed_images(const CHAR_T *var)
 
 COMMAND(gg_command_image)
 {
-	PARASC
 	gg_private_t *g = session_private_get(session);
 	FILE *f;
 	uint32_t size, crc32;

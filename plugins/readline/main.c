@@ -122,7 +122,7 @@ static QUERY(readline_ui_window_switch) { /* window_switch */
 
 static CHAR_T *readline_change_string_t_back_to_char(const CHAR_T *str, const short *attr) {
 	int i;
-	wcs_string_t asc = wcs_string_init(NULL);
+	string_t asc = string_init(NULL);
 
 	for (i = 0; i < xwcslen(str); i++) {
 #define ISBOLD(x)	(x & 64)
@@ -146,50 +146,50 @@ static CHAR_T *readline_change_string_t_back_to_char(const CHAR_T *str, const sh
 		else if (i && BGCOLOR(cur) == -1 && BGCOLOR(prev) != -1);/* NO BGCOLOR */
 		else reset = 0;
 		
-		if (reset) wcs_string_append(asc, TEXT("%n"));
+		if (reset) string_append(asc, TEXT("%n"));
 
 		if (ISBOLD(cur)	&& (!i || reset || ISBOLD(cur) != ISBOLD(prev)) && FGCOLOR(cur) == -1)
-			wcs_string_append(asc, TEXT("%T"));		/* no color + bold. */
+			string_append(asc, TEXT("%T"));		/* no color + bold. */
 
-		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		wcs_string_append(asc, TEXT("%i"));
-//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	wcs_string_append(asc, TEXT("%"));
-//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		wcs_string_append(asc, TEXT("%"));
+		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, TEXT("%i"));
+//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, TEXT("%"));
+//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, TEXT("%"));
 
 		if (BGCOLOR(cur) != -1 && ((!i || reset || BGCOLOR(cur) != BGCOLOR(prev)))) {	/* if there's a background color... add it */
-			wcs_string_append_c(asc, '%');
+			string_append_c(asc, '%');
 			switch (BGCOLOR(cur)) {
-				case (0): wcs_string_append_c(asc, 'l'); break;
-				case (1): wcs_string_append_c(asc, 's'); break;
-				case (2): wcs_string_append_c(asc, 'h'); break;
-				case (3): wcs_string_append_c(asc, 'z'); break;
-				case (4): wcs_string_append_c(asc, 'e'); break;
-				case (5): wcs_string_append_c(asc, 'q'); break;
-				case (6): wcs_string_append_c(asc, 'd'); break;
-				case (7): wcs_string_append_c(asc, 'x'); break;
+				case (0): string_append_c(asc, 'l'); break;
+				case (1): string_append_c(asc, 's'); break;
+				case (2): string_append_c(asc, 'h'); break;
+				case (3): string_append_c(asc, 'z'); break;
+				case (4): string_append_c(asc, 'e'); break;
+				case (5): string_append_c(asc, 'q'); break;
+				case (6): string_append_c(asc, 'd'); break;
+				case (7): string_append_c(asc, 'x'); break;
 			}
 		}
 
 		if (FGCOLOR(cur) != -1 && ((!i || reset || FGCOLOR(cur) != FGCOLOR(prev)) || (i && ISBOLD(prev) != ISBOLD(cur)))) {	/* if there's a foreground color... add it */
-			wcs_string_append_c(asc, '%');
+			string_append_c(asc, '%');
 			switch (FGCOLOR(cur)) {
-				 case (0): wcs_string_append_c(asc, ISBOLD(cur) ? 'K' : 'k'); break;
-				 case (1): wcs_string_append_c(asc, ISBOLD(cur) ? 'R' : 'r'); break;
-				 case (2): wcs_string_append_c(asc, ISBOLD(cur) ? 'G' : 'g'); break;
-				 case (3): wcs_string_append_c(asc, ISBOLD(cur) ? 'Y' : 'y'); break;
-				 case (4): wcs_string_append_c(asc, ISBOLD(cur) ? 'B' : 'b'); break;
-				 case (5): wcs_string_append_c(asc, ISBOLD(cur) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
-				 case (6): wcs_string_append_c(asc, ISBOLD(cur) ? 'C' : 'c'); break;
-				 case (7): wcs_string_append_c(asc, ISBOLD(cur) ? 'W' : 'w'); break;
+				 case (0): string_append_c(asc, ISBOLD(cur) ? 'K' : 'k'); break;
+				 case (1): string_append_c(asc, ISBOLD(cur) ? 'R' : 'r'); break;
+				 case (2): string_append_c(asc, ISBOLD(cur) ? 'G' : 'g'); break;
+				 case (3): string_append_c(asc, ISBOLD(cur) ? 'Y' : 'y'); break;
+				 case (4): string_append_c(asc, ISBOLD(cur) ? 'B' : 'b'); break;
+				 case (5): string_append_c(asc, ISBOLD(cur) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
+				 case (6): string_append_c(asc, ISBOLD(cur) ? 'C' : 'c'); break;
+				 case (7): string_append_c(asc, ISBOLD(cur) ? 'W' : 'w'); break;
 			}
 		}
 
 	/* str */
-		if (str[i] == '%' || str[i] == '\\') wcs_string_append_c(asc, '\\');	/* escape chars.. */
-		wcs_string_append_c(asc, str[i]);			/* append current char */
+		if (str[i] == '%' || str[i] == '\\') string_append_c(asc, '\\');	/* escape chars.. */
+		string_append_c(asc, str[i]);			/* append current char */
 	}
-	wcs_string_append(asc, TEXT("%n"));	/* reset */
-	wcs_string_append_c(asc, '\n');		/* new line */
-	return wcs_string_free(asc, 0);
+	string_append(asc, TEXT("%n"));	/* reset */
+	string_append_c(asc, '\n');		/* new line */
+	return string_free(asc, 0);
 }
 
 static char *readline_ui_window_print_helper(char *str, short *attr) {
@@ -263,19 +263,6 @@ int readline_plugin_init(int prio) {
 	list_t l;
 	int is_UI = 0;
 
-/* before loading plugin, do some sanity check */
-#ifdef USE_UNICODE
-	if (!config_use_unicode)
-#else
-	if (config_use_unicode)
-#endif
-	{	debug("plugin readline cannot be loaded because of mishmashed compilation...\n"
-			"	program compilated with: --%s-unicode\n"
-			"	 plugin compilated with: --%s-unicode\n",
-				config_use_unicode ? "enable" : "disable",
-				config_use_unicode ? "disable": "enable");
-		return -1;
-	}
         query_emit(NULL, "ui-is-initialized", &is_UI);
 
         if (is_UI)

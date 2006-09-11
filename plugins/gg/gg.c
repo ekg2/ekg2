@@ -164,7 +164,7 @@ static QUERY(gg_userlist_info_handle) {
 			wcs_printq("user_info_version", ver);
 
 		else {
-			CHAR_T *tmp = wcsprintf(TEXT("nieznana (%#.2x)"), v);
+			CHAR_T *tmp = saprintf(TEXT("nieznana (%#.2x)"), v);
 			wcs_printq("user_info_version", tmp);
 			xfree(tmp);
 		}
@@ -379,7 +379,7 @@ static QUERY(gg_remove_notify_handle) {
 static QUERY(gg_print_version) {
 	char **tmp1 = array_make(GG_DEFAULT_CLIENT_VERSION, ", ", 0, 1, 0);
 	char *tmp2 = array_join(tmp1, ".");
-	CHAR_T *tmp3 = wcsprintf(TEXT("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
+	CHAR_T *tmp3 = saprintf(TEXT("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
 
 	wcs_print("generic", tmp3);
 
@@ -480,11 +480,7 @@ static void gg_session_handler_success(session_t *s) {
 	/* pamiêtajmy, ¿eby pingowaæ */
 	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
 	timer_add(&gg_plugin, buf, 180, 1, gg_ping_timer_handler, xstrdup(s->uid));
-#if USE_UNICODE
-	descr = normal_to_wcs(session_descr_get(s));
-#else
 	descr = xstrdup(session_descr_get(s));
-#endif
 	status = session_status_get(s);
 
 	cpdescr = gg_locale_to_cp(descr);
@@ -500,9 +496,6 @@ static void gg_session_handler_success(session_t *s) {
 		gg_change_status(g->sess, _status);
 	}
 	xfree(cpdescr);	
-#if USE_UNICODE
-	xfree(descr);
-#endif
 }
 
 /*
@@ -578,7 +571,7 @@ static void gg_session_handler_disconnect(session_t *s) {
  */
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
 	char *__session	= xstrdup(session_uid_get(s));
-	CHAR_T *__uid	= wcsprintf(TEXT("gg:%d"), uin);
+	CHAR_T *__uid	= saprintf(TEXT("gg:%d"), uin);
 	CHAR_T *__status= xwcsdup(gg_status_to_text(status));
 	char *__descr	= xstrdup(descr);
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
@@ -589,7 +582,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 
 	sdescr = gg_cp_to_locale(__descr);
 
-	if ((u = userlist_find(s, wcs_to_normal(__uid)))) /* UUU */
+	if ((u = userlist_find(s, __uid)))
 		u->protocol = protocol;
 
 	for (i = 0; i < xwcslen(sdescr); i++)
@@ -620,16 +613,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		}
 
 	}
-	{
-		CHAR_T *session	= normal_to_wcs(__session);
-		CHAR_T *host	= normal_to_wcs(__host);
-
-		query_emit(NULL, TEXT("wcs_protocol-status"), &session, &__uid, &__status, &sdescr, &host, &__port, &when, NULL);
-
-		free_utf(session);
-		free_utf(host);
-	}
-	free_utf(sdescr);
+	query_emit(NULL, TEXT("protocol-status"), &__session, &__uid, &__status, &sdescr, &__host, &__port, &when, NULL);
 
 	xfree(__host);
 	xfree(__descr);
@@ -759,11 +743,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 /*		if (!check_inv || xstrcmp(__text, ""))
 			printq("generic", "image in message.\n"); - or something
  */
-		{
-			char *text = wcs_to_normal(ltext);
-			query_emit(NULL, TEXT("protocol-message"), &__session, &__sender, &__rcpts, &text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
-			free_utf(text);
-		}
+		query_emit(NULL, TEXT("protocol-message"), &__session, &__sender, &__rcpts, &ltext, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
 		xfree(__session);
 
 /*		xfree(__seq); */
@@ -773,7 +753,6 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	xfree(__sender);
 	xfree(__format);
 	array_free(__rcpts);
-	free_utf(ltext);
 }
 
 /*
@@ -783,8 +762,8 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
  */
 static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 	char *__session = xstrdup(session_uid_get(s));
-	CHAR_T *__rcpt	= wcsprintf(TEXT("gg:%d"), e->event.ack.recipient);
-	CHAR_T *__seq	= xwcsdup(wcs_itoa(e->event.ack.seq));
+	CHAR_T *__rcpt	= saprintf(TEXT("gg:%d"), e->event.ack.recipient);
+	CHAR_T *__seq	= xwcsdup(itoa(e->event.ack.seq));
 	CHAR_T *__status;
 
 	switch (e->event.ack.status) {
@@ -802,11 +781,7 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 			__status = xwcsdup(EKG_ACK_UNKNOWN);
 			break;
 	}
-	{
-		CHAR_T *session = normal_to_wcs(__session);
-		query_emit(NULL, TEXT("protocol-message-ack"), &session, &__rcpt, &__seq, &__status, NULL);
-		free_utf(session);
-	}
+	query_emit(NULL, TEXT("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status, NULL);
 
 	xfree(__status);
 	xfree(__seq);
@@ -838,7 +813,7 @@ static FILE* image_open_file(const char *path) {
 		dir = xstrndup(path, slash_pos);
 
 		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
-			CHAR_T *bo = wcsprintf(TEXT("nie mozna %s bo %s"), dir, strerror(errno));
+			CHAR_T *bo = saprintf(TEXT("nie mozna %s bo %s"), dir, strerror(errno));
 			wcs_print("generic",bo); // XXX usun±æ !! 
 			xfree(bo);
 			xfree(dir);
@@ -1143,11 +1118,7 @@ static void gg_changed_private(session_t *s, const char *var) {
 		return;
 	}
 
-#if USE_UNICODE
-	descr = normal_to_wcs(session_descr_get(s));
-#else
 	descr = xstrdup(session_descr_get(s));
-#endif
 
 	cpdescr = gg_locale_to_cp(descr);
 
@@ -1160,9 +1131,6 @@ static void gg_changed_private(session_t *s, const char *var) {
 		gg_change_status(g->sess, _status);
 
 	xfree(cpdescr);
-#if USE_UNICODE
-	xfree(descr);
-#endif
 }
 
 /*
@@ -1272,20 +1240,6 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 }
 
 int gg_plugin_init(int prio) {
-	/* before loading plugin, do some sanity check */
-#ifdef USE_UNICODE
-	if (!config_use_unicode)
-#else
-		if (config_use_unicode)
-#endif
-		{	debug("plugin gg cannot be loaded because of mishmashed compilation...\n"
-				"	program compilated with: --%s-unicode\n"
-				"	 plugin compilated with: --%s-unicode\n",
-				config_use_unicode ? "enable" : "disable",
-				config_use_unicode ? "disable": "enable");
-		return -1;
-		}
-
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, NULL);
 

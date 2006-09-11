@@ -91,7 +91,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 		input_size = 5;
 		ncurses_input_update();
 	} else {
-		wcs_string_t s = wcs_string_init(TEXT(""));
+		string_t s = string_init(TEXT(""));
 		CHAR_T *tmp;
 		int i;
 	
@@ -99,15 +99,15 @@ static BINDING_FUNCTION(binding_toggle_input)
 			if (!xwcscmp(lines[i], TEXT("")) && !lines[i + 1])
 				break;
 
-			wcs_string_append(s, lines[i]);
-			wcs_string_append(s, TEXT("\r\n"));
+			string_append(s, lines[i]);
+			string_append(s, TEXT("\r\n"));
 		}
 
-		tmp = wcs_string_free(s, 0);
+		tmp = string_free(s, 0);
 
                 if (history[0] != line)
                         xfree(history[0]);
-                history[0] = wcs_array_join(lines, TEXT("\015"));
+                history[0] = array_join(lines, TEXT("\015"));
                 xfree(history[HISTORY_MAX - 1]);
                 memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 
@@ -136,14 +136,14 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 		int i;
 
 		line_index = xwcslen(lines[lines_index - 1]);
-		xwcscat(lines[lines_index - 1], lines[lines_index]);
+		xstrcat(lines[lines_index - 1], lines[lines_index]);
 		
 		xfree(lines[lines_index]);
 
-		for (i = lines_index; i < wcs_array_count(lines); i++)
+		for (i = lines_index; i < array_count(lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (wcs_array_count(lines) + 1) * sizeof(CHAR_T*));
+		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(CHAR_T*));
 
 		lines_index--;
 		lines_adjust();
@@ -185,17 +185,17 @@ static BINDING_FUNCTION(binding_yank)
 
 static BINDING_FUNCTION(binding_delete_char)
 {
-	if (line_index == xwcslen(line) && lines_index < wcs_array_count(lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
+	if (line_index == xwcslen(line) && lines_index < array_count(lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
 		int i;
 
-		xwcscat(line, lines[lines_index + 1]);
+		xstrcat(line, lines[lines_index + 1]);
 
 		xfree(lines[lines_index + 1]);
 
-		for (i = lines_index + 1; i < wcs_array_count(lines); i++)
+		for (i = lines_index + 1; i < array_count(lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (wcs_array_count(lines) + 1) * sizeof(CHAR_T*));
+		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(CHAR_T*));
 
 		lines_adjust();
 	
@@ -213,13 +213,13 @@ static BINDING_FUNCTION(binding_accept_line)
 	if (lines) {
 		int i;
 
-		lines = xrealloc(lines, (wcs_array_count(lines) + 2) * sizeof(CHAR_T *));
+		lines = xrealloc(lines, (array_count(lines) + 2) * sizeof(CHAR_T *));
 
-		for (i = wcs_array_count(lines); i > lines_index; i--)
+		for (i = array_count(lines); i > lines_index; i--)
 			lines[i + 1] = lines[i];
 
 		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
-		xwcscpy(lines[lines_index + 1], line + line_index);
+		xstrcpy(lines[lines_index + 1], line + line_index);
 		line[line_index] = 0;
 		
 		line_index = 0;
@@ -260,15 +260,15 @@ static BINDING_FUNCTION(binding_line_discard)
 	line[0] = 0;
 	line_adjust();
 
-	if (lines && lines_index < wcs_array_count(lines) - 1) {
+	if (lines && lines_index < array_count(lines) - 1) {
 		int i;
 
 		xfree(lines[lines_index]);
 
-		for (i = lines_index; i < wcs_array_count(lines); i++)
+		for (i = lines_index; i < array_count(lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (wcs_array_count(lines) + 1) * sizeof(CHAR_T*));
+		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(CHAR_T*));
 
 		lines_adjust();
 	}
@@ -313,11 +313,7 @@ static BINDING_FUNCTION(binding_word_rubout)
 	}
 
 	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
-#if USE_UNICODE
-	xwcsncpy(yanked, p, eaten + 1);
-#else
 	strlcpy(yanked, p, eaten + 1);
-#endif
 
 	memmove(p, line + line_index, xwcslen(line) - line_index + 1);
 	line_index -= eaten;
@@ -368,7 +364,7 @@ static BINDING_FUNCTION(binding_forward_char)
 		if (line_index < xwcslen(line))
 			line_index++;
 		else {
-			if (lines_index < wcs_array_count(lines) - 1) {
+			if (lines_index < array_count(lines) - 1) {
 				lines_index++;
 				line_index = 0;
 				line_start = 0;
@@ -400,7 +396,7 @@ static BINDING_FUNCTION(binding_previous_only_history)
                 if (history_index == 0)
                         history[0] = xwcsdup(line);
                 history_index++;
-		if (xwcschr(history[history_index], TEXT('\015'))) {
+		if (xstrchr(history[history_index], TEXT('\015'))) {
 			CHAR_T **tmp;
 			int i;
 			
@@ -409,24 +405,24 @@ static BINDING_FUNCTION(binding_previous_only_history)
                                 ncurses_input_update();
                         }
 
-                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+                        tmp = array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
-			wcs_array_free(lines);
-			lines = xmalloc((wcs_array_count(tmp) + 2) * sizeof(CHAR_T *));
+			array_free(lines);
+			lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
 
-			for (i = 0; i < wcs_array_count(tmp); i++) {
+			for (i = 0; i < array_count(tmp); i++) {
 				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-				xwcscpy(lines[i], tmp[i]);
+				xstrcpy(lines[i], tmp[i]);
 			}
 
-			wcs_array_free(tmp);
+			array_free(tmp);
 			lines_adjust();
 		} else {
 			if (input_size != 1) {
 		                input_size = 1;
 		                ncurses_input_update();
 		        }
-			xwcscpy(line, history[history_index]);
+			xstrcpy(line, history[history_index]);
 	                line_adjust();
 		}
         }
@@ -438,7 +434,7 @@ static BINDING_FUNCTION(binding_next_only_history)
                 if (history_index == 0)
                         history[0] = xwcsdup(line);
                 history_index--;
-                if (xwcschr(history[history_index], TEXT('\015'))) {
+                if (xstrchr(history[history_index], TEXT('\015'))) {
                         CHAR_T **tmp;
                         int i;
 
@@ -447,24 +443,24 @@ static BINDING_FUNCTION(binding_next_only_history)
                                 ncurses_input_update();
 			}
 
-                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+                        tmp = array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
-                        wcs_array_free(lines);
-                        lines = xmalloc((wcs_array_count(tmp) + 2) * sizeof(CHAR_T *));
+                        array_free(lines);
+                        lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
 
-                        for (i = 0; i < wcs_array_count(tmp); i++) {
+                        for (i = 0; i < array_count(tmp); i++) {
                                 lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-                                xwcscpy(lines[i], tmp[i]);
+                                xstrcpy(lines[i], tmp[i]);
                         }
 
-                        wcs_array_free(tmp);
+                        array_free(tmp);
                         lines_adjust();
                 } else {
                         if (input_size != 1) {
                                 input_size = 1;
                                 ncurses_input_update();
                         }
-                        xwcscpy(line, history[history_index]);
+                        xstrcpy(line, history[history_index]);
                         line_adjust();
                 }
         }
@@ -493,10 +489,10 @@ static BINDING_FUNCTION(binding_next_history)
 {
 	if (lines) {
 		if (lines_index - line_start == 4)
-			if (lines_index < wcs_array_count(lines) - 1)
+			if (lines_index < array_count(lines) - 1)
 				lines_start++;
 
-		if (lines_index < wcs_array_count(lines) - 1)
+		if (lines_index < array_count(lines) - 1)
 			lines_index++;
 
 		lines_adjust();
@@ -634,10 +630,10 @@ static void binding_parse(struct binding *b, const CHAR_T *action)
 
 	b->action = xwcsdup(action);
 
-	args = wcs_array_make(action, TEXT(" \t"), 1, 1, 1);
+	args = array_make(action, TEXT(" \t"), 1, 1, 1);
 
 	if (!args[0]) {
-		wcs_array_free(args);
+		array_free(args);
 		return;
 	}
 	
@@ -687,7 +683,7 @@ static void binding_parse(struct binding *b, const CHAR_T *action)
 
 #undef __action
 
-	wcs_array_free(args);
+	array_free(args);
 }
 
 /*
@@ -700,7 +696,7 @@ static void binding_parse(struct binding *b, const CHAR_T *action)
 static int binding_key(struct binding *b, const CHAR_T *key, int add)
 {
 	/* debug("Key: %s\n", key); */
-	if (!xwcsncasecmp(key, TEXT("Alt-"), 4)) {
+	if (!xstrncasecmp(key, TEXT("Alt-"), 4)) {
 		unsigned char ch;
 
 		if (!xwcscasecmp(key + 4, TEXT("Enter"))) {
@@ -724,7 +720,7 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 	
 		ch = xtoupper(key[4]);
 
-		b->key = wcsprintf(TEXT("Alt-%c"), ch);
+		b->key = saprintf(TEXT("Alt-%c"), ch);
 
 		if (add) {
 			ncurses_binding_map_meta[ch] = list_add(&bindings, b, sizeof(struct binding));
@@ -735,7 +731,7 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 		return 0;
 	}
 
-	if (!xwcsncasecmp(key, TEXT("Ctrl-"), 5)) {
+	if (!xstrncasecmp(key, TEXT("Ctrl-"), 5)) {
 		unsigned char ch;
 		
 //		if (xstrlen(key) != 6)
@@ -762,7 +758,7 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 #undef __key
 	
 		ch = xtoupper(key[5]);
-		b->key = wcsprintf(TEXT("Ctrl-%c"), ch);
+		b->key = saprintf(TEXT("Ctrl-%c"), ch);
 
 		if (add) {
                         if (xisalpha(ch))
@@ -774,13 +770,13 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 		return 0;
 	}
 
-	if (xtoupper(key[0]) == 'F' && wcs_atoi(key + 1)) {
-		int f = wcs_atoi(key + 1);
+	if (xtoupper(key[0]) == 'F' && atoi(key + 1)) {
+		int f = atoi(key + 1);
 
 		if (f < 1 || f > 24)
 			return -1;
 
-		b->key = wcsprintf(TEXT("F%d"), f);
+		b->key = saprintf(TEXT("F%d"), f);
 		
 		if (add)
 			ncurses_binding_map[KEY_F(f)] = list_add(&bindings, b, sizeof(struct binding));
@@ -851,12 +847,12 @@ void ncurses_binding_set(int quiet, const CHAR_T *key, const CHAR_T *sequence)
 		printq("bind_press_key");
 		nodelay(input, FALSE);
 		while ((ch = wgetch(input)) != ERR) {
-			wcs_array_add(&chars, xwcsdup(wcs_itoa(ch)));
+			array_add(&chars, xwcsdup(itoa(ch)));
 			nodelay(input, TRUE);
 			count++;
 		}
-		joined = wcs_array_join(chars, TEXT(" "));
-		wcs_array_free(chars);
+		joined = array_join(chars, TEXT(" "));
+		array_free(chars);
 	} else
 		joined = xwcsdup(sequence);
 

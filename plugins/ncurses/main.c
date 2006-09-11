@@ -468,20 +468,6 @@ int ncurses_plugin_init(int prio)
 	list_t l;
 	int is_UI = 0;
 
-/* before loading plugin, do some sanity check */
-#ifdef USE_UNICODE
-	if (!config_use_unicode)
-#else
-	if (config_use_unicode)
-#endif
-	{	debug("plugin ncurses cannot be loaded because of mishmashed compilation...\n"
-			"	program compilated with: --%s-unicode\n"
-			"	 plugin compilated with: --%s-unicode\n",
-				config_use_unicode ? "enable" : "disable",
-				config_use_unicode ? "disable": "enable");
-		return -1;
-	}
-
         query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
 
         if (is_UI) 

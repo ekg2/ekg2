@@ -78,31 +78,21 @@ static void command_generator(const CHAR_T *text, int len)
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 		CHAR_T *without_sess_id = NULL;
-		char *cname = wcs_to_normal(c->name);
 		int plen = 0;
 		if (session && session->uid)
 			plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
-                if (session && !xstrncasecmp(cname, session->uid, plen))
-			without_sess_id = xwcschr(c->name, ':');
+                if (session && !xstrncasecmp(c->name, session->uid, plen))
+			without_sess_id = xstrchr(c->name, ':');
 
-		if (!xwcsncasecmp(text, c->name, len) && !wcs_array_item_contains(completions, c->name, 1))
-			wcs_array_add_check(&completions, 
-#if USE_UNICODE
-					wcsprintf(TEXT("%ls%ls%ls"), slash, dash, c->name),
-#else
-					wcsprintf(TEXT("%s%s%s"), slash, dash, c->name),
-#endif
+		if (!xstrncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
+			array_add_check(&completions, 
+					saprintf(TEXT("%s%s%s"), slash, dash, c->name),
 					1);
-		else if (without_sess_id && !wcs_array_item_contains(completions, without_sess_id + 1, 1) && !xwcsncasecmp(text, without_sess_id + 1, len))
-			wcs_array_add_check(&completions, 
-#if USE_UNICODE
-					wcsprintf(TEXT("%ls%ls%ls"), slash, dash, without_sess_id + 1),
-#else
-					wcsprintf(TEXT("%s%s%s"), slash, dash, without_sess_id + 1),
-#endif
+		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !xstrncasecmp(text, without_sess_id + 1, len))
+			array_add_check(&completions, 
+					saprintf(TEXT("%s%s%s"), slash, dash, without_sess_id + 1),
 					1);
-		free_utf(cname);
 	}
 }
 
@@ -110,15 +100,12 @@ static void events_generator(const CHAR_T *text, int len)
 {
 	int i;
 	for (i = 0; events_all && events_all[i]; i++)
-		if (!xwcsncasecmp(text, events_all[i], len))
-			wcs_array_add_check(&completions, xwcsdup(events_all[i]), 1);
+		if (!xstrncasecmp(text, events_all[i], len))
+			array_add_check(&completions, xwcsdup(events_all[i]), 1);
 }
 
 static void ignorelevels_generator(const CHAR_T *text, int len)
 {
-#if USE_UNICODE
-#warning UNICODE TODO
-#else
 	int i;
 	const char *tmp = NULL;
 	char *pre = NULL;
@@ -138,27 +125,21 @@ static void ignorelevels_generator(const CHAR_T *text, int len)
 	for (i = 0; ignore_labels[i].name; i++)
 		if (!xstrncasecmp(tmp, ignore_labels[i].name, len))
 			array_add_check(&completions, ((tmp == text) ? xstrdup(ignore_labels[i].name) : saprintf("%s%s", pre, ignore_labels[i].name)), 1);
-#endif
 }
 
 static void unknown_uin_generator(const CHAR_T *text, int len)
 {
 	int i;
-	char *stext = wcs_to_normal(text);
 	
 	for (i = 0; i < send_nicks_count; i++) {
-		if (send_nicks[i] && xstrchr(send_nicks[i], ':') && xisdigit(xstrchr(send_nicks[i], ':')[1]) && !xstrncasecmp(stext, send_nicks[i], len)) {
-			CHAR_T *snick = normal_to_wcs(send_nicks[i]);
-			wcs_array_add_check(&completions, xwcsdup(snick), 1);
-			free_utf(snick);
+		if (send_nicks[i] && xstrchr(send_nicks[i], ':') && xisdigit(xstrchr(send_nicks[i], ':')[1]) && !xstrncasecmp(text, send_nicks[i], len)) {
+			array_add_check(&completions, xwcsdup(send_nicks[i]), 1);
 		}
 	}
-	free_utf(stext);
 }
 
 static void known_uin_generator(const CHAR_T *text, int len)
 {
-	char *stext;
 	int done = 0;
 	list_t l;
 	session_t *s;
@@ -169,29 +150,26 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	if (!session_current)
 		return;
 
-	stext = wcs_to_normal(text);
 	s  = session_current;
 
-	tmp = xstrrchr(stext, '/');
+	tmp = xstrrchr(text, '/');
 	if (tmp && tmp + 1) {
 		tmp++;
 		tmp_len = xstrlen(tmp);
-		session_name = xstrndup(stext, xstrlen(stext) - tmp_len - 1);
+		session_name = xstrndup(text, xstrlen(text) - tmp_len - 1);
 		if (session_find(session_name))
 			s = session_find(session_name);
 	}
 
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		if (u->nickname && !xstrncasecmp(stext, u->nickname, len)) {
-			CHAR_T *unickname = normal_to_wcs(u->nickname);
-			wcs_array_add_check(&completions, xwcsdup(unickname), 1);
-			free_utf(unickname);
+		if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
+			array_add_check(&completions, xwcsdup(u->nickname), 1);
 			done = 1;
 		}
 		
 		if (u->nickname && tmp && !xstrncasecmp(tmp, u->nickname, tmp_len)) { 
-                        wcs_array_add_check(&completions, wcsprintf(TEXT("%s/%s"), session_name, u->nickname), 1);
+                        array_add_check(&completions, saprintf(TEXT("%s/%s"), session_name, u->nickname), 1);
                         done = 1;
 		}
 	}
@@ -199,13 +177,11 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 
-		if (!done && !xstrncasecmp(stext, u->uid, len)) {
-			CHAR_T *uuid = normal_to_wcs(u->uid);
-			wcs_array_add_check(&completions, xwcsdup(uuid), 1);
-			free_utf(uuid);
+		if (!done && !xstrncasecmp(text, u->uid, len)) {
+			array_add_check(&completions, xwcsdup(u->uid), 1);
 		}
 		if (!done && tmp && !xstrncasecmp(tmp, u->uid, tmp_len)) 
-                       wcs_array_add_check(&completions, wcsprintf(TEXT("%s/%s"), session_name, u->uid), 1);
+                       array_add_check(&completions, saprintf(TEXT("%s/%s"), session_name, u->uid), 1);
 	}
 
 	if (!window_current) 
@@ -217,28 +193,22 @@ static void known_uin_generator(const CHAR_T *text, int len)
         for (; l; l = l->next) {
                 userlist_t *u = l->data;
 
-                if (u->uid && !xstrncasecmp(stext, u->uid, len)) {
-			CHAR_T *uuid = normal_to_wcs(u->uid);
-                        wcs_array_add_check(&completions, xwcsdup(uuid), 1);
-			free_utf(uuid);
+                if (u->uid && !xstrncasecmp(text, u->uid, len)) {
+                        array_add_check(&completions, xwcsdup(u->uid), 1);
 		}
 
-                if (u->nickname && !xstrncasecmp(stext, u->nickname, len)) {
-			CHAR_T *unickname = normal_to_wcs(u->nickname);
-			wcs_array_add_check(&completions, xwcsdup(unickname), 1);
-			free_utf(unickname);
+                if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
+			array_add_check(&completions, xwcsdup(u->nickname), 1);
 		}
         } 
 
 end:
 	if (session_name)
 		xfree(session_name);
-	free_utf(stext);
 }
 
 static void conference_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
         list_t l;
 
         for (l = conferences; l; l = l->next) {
@@ -247,7 +217,6 @@ static void conference_generator(const CHAR_T *text, int len)
                 if (!xstrncasecmp(text, c->name, len))
                         array_add_check(&completions, xstrdup(c->name), 1);
         }
-#endif
 }
 
 static void plugin_generator(const CHAR_T *text, int len)
@@ -257,12 +226,12 @@ static void plugin_generator(const CHAR_T *text, int len)
         for (l = plugins; l; l = l->next) {
                 plugin_t *p = l->data;
 
-                if (!xwcsncasecmp(text, p->name, len)) {
-                        wcs_array_add_check(&completions, xwcsdup(p->name), 1);
+                if (!xstrncasecmp(text, p->name, len)) {
+                        array_add_check(&completions, xwcsdup(p->name), 1);
 		}
-		if ((text[0] == '+' || text[0] == '-') && !xwcsncasecmp(text + 1, p->name, len - 1)) {
-			CHAR_T *tmp = wcsprintf(TEXT("%c" CHARF), text[0], p->name);
-			wcs_array_add_check(&completions, tmp, 1);
+		if ((text[0] == '+' || text[0] == '-') && !xstrncasecmp(text + 1, p->name, len - 1)) {
+			CHAR_T *tmp = saprintf(TEXT("%c%s"), text[0], p->name);
+			array_add_check(&completions, tmp, 1);
 		}
         }
 }
@@ -277,17 +246,13 @@ static void variable_generator(const CHAR_T *text, int len)
 			continue;
 
 		if (*text == '-') {
-			if (!xwcsncasecmp(text + 1, v->name, len - 1))
-				wcs_array_add_check(&completions, 
-#if USE_UNICODE
-				wcsprintf(TEXT("-%ls"), v->name),
-#else
-				wcsprintf("-%s", v->name),
-#endif
+			if (!xstrncasecmp(text + 1, v->name, len - 1))
+				array_add_check(&completions, 
+				saprintf("-%s", v->name),
 				1);
 		} else {
-			if (!xwcsncasecmp(text, v->name, len)) {
-				wcs_array_add_check(&completions, xwcsdup(v->name), 1);
+			if (!xstrncasecmp(text, v->name, len)) {
+				array_add_check(&completions, xwcsdup(v->name), 1);
 			}
 		}
 	}
@@ -295,7 +260,6 @@ static void variable_generator(const CHAR_T *text, int len)
 
 static void ignored_uin_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
         session_t *s;
 	list_t l;
 
@@ -318,12 +282,10 @@ static void ignored_uin_generator(const CHAR_T *text, int len)
 				array_add_check(&completions, xstrdup(u->nickname), 1);
 		}
 	}
-#endif
 }
 
 static void blocked_uin_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
         session_t *s;
 	list_t l;
 
@@ -346,7 +308,6 @@ static void blocked_uin_generator(const CHAR_T *text, int len)
 				array_add_check(&completions, xstrdup(u->nickname), 1);
 		}
 	}
-#endif
 }
 
 static void empty_generator(const CHAR_T *text, int len)
@@ -356,7 +317,6 @@ static void empty_generator(const CHAR_T *text, int len)
 
 static void dir_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
 	struct dirent **namelist = NULL;
 	char *dname, *tmp;
 	const char *fname;
@@ -439,12 +399,10 @@ static void dir_generator(const CHAR_T *text, int len)
 
 	xfree(dname);
 	xfree(namelist);
-#endif
 }
 
 static void file_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
 	struct dirent **namelist = NULL;
 	CHAR_T *dname;
 	char *tmp;
@@ -540,7 +498,6 @@ again:
 
 	xfree(dname);
 	xfree(namelist);
-#endif
 }
 
 /*
@@ -554,7 +511,6 @@ again:
  */
 static void theme_generator_adding(const CHAR_T *text, int len, const char *dname, int themes_only)
 {
-#ifndef USE_UNICODE
 	struct dirent **namelist = NULL;
 	int count, i;
 
@@ -589,7 +545,6 @@ static void theme_generator_adding(const CHAR_T *text, int len, const char *dnam
 	}
 
 	xfree(namelist);
-#endif
 }
 
 static void theme_generator(const CHAR_T *text, int len)
@@ -604,23 +559,18 @@ static void possibilities_generator(const CHAR_T *text, int len)
 {
 	int i;
 	command_t *c = actual_completed_command;
-	char *stext;
 
 	if (!c)
 		return;
-	stext = wcs_to_normal(text);
 
 	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
-		if (!xstrncmp(stext, c->possibilities[i], len)) {
-			CHAR_T *cpos = normal_to_wcs(c->possibilities[i]);
-			wcs_array_add_check(&completions, xwcsdup(cpos), 1);
-			free_utf(cpos);
+		if (!xstrncmp(text, c->possibilities[i], len)) {
+			array_add_check(&completions, xwcsdup(c->possibilities[i]), 1);
 		}
 }
 
 static void window_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
 	window_t *w;
 	list_t l;
 
@@ -632,12 +582,10 @@ static void window_generator(const CHAR_T *text, int len)
 
 		array_add_check(&completions, xstrdup(w->target), 0);
 	}
-#endif
 }
 
 static void sessions_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
         list_t l;
 
         for (l = sessions; l; l = l->next) {
@@ -654,12 +602,10 @@ static void sessions_generator(const CHAR_T *text, int len)
                                 array_add_check(&completions, xstrdup(v->alias), 1);
                 }
         }
-#endif
 }
 
 static void metacontacts_generator(const CHAR_T *text, int len)
 {
-#ifndef USE_UNICODE
         list_t l;
 
         for (l = metacontacts; l; l = l->next) {
@@ -668,12 +614,10 @@ static void metacontacts_generator(const CHAR_T *text, int len)
 		if (!xstrncasecmp(text, m->name, len)) 
                 	array_add_check(&completions, xstrdup(m->name), 1);
         }
-#endif
 }
 
 static void sessions_var_generator(const CHAR_T *text, int len)
 {
-	char *stext;
         int i;
         plugin_t *p;
 
@@ -683,31 +627,26 @@ static void sessions_var_generator(const CHAR_T *text, int len)
         if (!(p = plugin_find_uid(session_in_line->uid)))
                 return;
 
-	stext = wcs_to_normal(text);
 
 	for (i = 0; p->params[i]; i++) {
-		if(*stext == '-') {
-                        if (!xstrncasecmp(stext + 1, p->params[i]->key, len - 1))
-                                wcs_array_add_check(&completions, wcsprintf(TEXT("-%s"), p->params[i]->key), 1);
+		if(*text == '-') {
+                        if (!xstrncasecmp(text + 1, p->params[i]->key, len - 1))
+                                array_add_check(&completions, saprintf(TEXT("-%s"), p->params[i]->key), 1);
                 } else {
-                        if (!xstrncasecmp(stext, p->params[i]->key, len)) {
-				CHAR_T *pparamskey = normal_to_wcs(p->params[i]->key);
-                                wcs_array_add_check(&completions, xwcsdup(pparamskey), 1);
-				free_utf(pparamskey);
+                        if (!xstrncasecmp(text, p->params[i]->key, len)) {
+                                array_add_check(&completions, xwcsdup(p->params[i]->key), 1);
 			}
                 }
         }
-	free_utf(stext);
 }
 
 static void reason_generator(const CHAR_T *text, int len)
 {
-	CHAR_T *descr = session_current ? normal_to_wcs(session_current->descr) : NULL;
-	if (descr && !xwcsncasecmp(text, descr, len)) {
+	char *descr = session_current ? session_current->descr : NULL;
+	if (descr && !xstrncasecmp(text, descr, len)) {
 		/* not to good solution to avoid descr changing by complete */
-		wcs_array_add_check(&completions, wcsprintf(TEXT("\001%s"), session_current->descr), 1);
+		array_add_check(&completions, saprintf(TEXT("\001%s"), session_current->descr), 1);
 	}
-	free_utf(descr);
 }
 
 
@@ -788,25 +727,25 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		if (cols == 0)
 			cols = 1;
 
-		rows = wcs_array_count(completions) / cols + 1;
+		rows = array_count(completions) / cols + 1;
 
 		tmp = xmalloc((cols * maxlen + 2)*sizeof(CHAR_T));
 
 		for (i = 0; i < rows; i++) {
 			int j;
 
-			xwcscpy(tmp, TEXT(""));
+			xstrcpy(tmp, TEXT(""));
 
 			for (j = 0; j < cols; j++) {
 				int cell = j * rows + i;
 
-				if (cell < wcs_array_count(completions)) {
+				if (cell < array_count(completions)) {
 					int k;
 
-					xwcscat(tmp, completions[cell]);
+					xstrcat(tmp, completions[cell]);
 
 					for (k = 0; k < maxlen - xwcslen(completions[cell]); k++)
-						xwcscat(tmp, TEXT(" "));
+						xstrcat(tmp, TEXT(" "));
 				}
 			}
 
@@ -829,7 +768,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 	/* je¿eli przeskakujemy to trzeba wróciæ z lini± do poprzedniego stanu */
 	if (continue_complete) {
-		xwcscpy(line, last_line_without_complete);
+		xstrcpy(line, last_line_without_complete);
 	}
 
 	/* zerujemy co mamy */
@@ -851,19 +790,19 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		/* "przewijamy" wiêksz± ilo¶æ spacji */
 		for(i++; i < xwcslen(line) && (xisspace(line[i]) || line[i] == ','); i++);
 		i--;
-		wcs_array_add(&words, xwcsdup(start));
+		array_add(&words, xwcsdup(start));
 	}
 
 	/* je¿eli ostatnie znaki to spacja, albo przecinek to trzeba dodaæ jeszcze pusty wyraz do words */
 	if (xwcslen(line) > 1 && (line[xwcslen(line) - 1] == ' ' || line[xwcslen(line) - 1] == ',') && !open_quote)
-		wcs_array_add(&words, xwcsdup(TEXT("")));
+		array_add(&words, xwcsdup(TEXT("")));
 
 /*	 for(i = 0; i < array_count(words); i++)
 		debug("words[i = %d] = \"%s\"\n", i, words[i]);     */
 
 	/* inicjujemy pamiêc dla separators */
 	if (words != NULL)
-		separators = xmalloc(wcs_array_count(words) * sizeof(CHAR_T) + 1);
+		separators = xmalloc(array_count(words) * sizeof(CHAR_T) + 1);
 	else
 		separators = NULL;
 
@@ -924,13 +863,13 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
                 if(i >= *line_index)
                         break;
 	}
-	words_count = wcs_array_count(words);
+	words_count = array_count(words);
 	lenght = xwcslen(line);
 	if (lenght) {
 		/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
 	        if (xisspace(line[lenght - 1]))
         	        word_current++;
-		if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== wcs_array_count(words) -1 )
+		if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== array_count(words) -1 )
 			word++;
 		if (xisspace(line[lenght - 1]))
 			words_count++;
@@ -950,7 +889,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	if (continue_complete && completions) {
 		int cnt = continue_complete_count;
 
-		count = wcs_array_count(completions);
+		count = array_count(completions);
 		line[0] = '\0';
 		if (continue_complete_count >= count - 1)
 			continue_complete_count = 0;
@@ -959,33 +898,29 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		if (!completions[cnt]) /* nigdy nie powinno siê zdarzyæ, ale na wszelki ... */
 			goto cleanup;
 			
-		for(i = 0; i < wcs_array_count(words); i++) {
+		for(i = 0; i < array_count(words); i++) {
 			if(i == word) {
-				if(xwcschr(completions[cnt],  TEXT('\001'))) {
+				if(xstrchr(completions[cnt],  TEXT('\001'))) {
 					if(completions[cnt][0] == '"')
-						xwcsncat(line, completions[cnt] + 2, xwcslen(completions[cnt]) - 2 - 1 );
+						xstrncat(line, completions[cnt] + 2, xwcslen(completions[cnt]) - 2 - 1 );
 					else
-						xwcsncat(line, completions[cnt] + 1, xwcslen(completions[cnt]) - 1);
+						xstrncat(line, completions[cnt] + 1, xwcslen(completions[cnt]) - 1);
 				} else
-			    		xwcscat(line, completions[cnt]);
+			    		xstrcat(line, completions[cnt]);
 				*line_index = xwcslen(line) + 1;
 			} else {
-				if(xwcschr(words[i], TEXT(' '))) {
+				if(xstrchr(words[i], TEXT(' '))) {
 					CHAR_T *tmp = 
-#if USE_UNICODE
-						wcsprintf(TEXT("\"%ls\""), words[i]);
-#else
-						wcsprintf(TEXT("\"%s\""), words[i]);
-#endif
-					xwcscat(line, tmp);
+						saprintf(TEXT("\"%s\""), words[i]);
+					xstrcat(line, tmp);
 					xfree(tmp);
 				} else 
-					xwcscat(line, words[i]);
+					xstrcat(line, words[i]);
 			}
-			if((i == wcs_array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
-				xwcscat(line, TEXT(" "));
+			if((i == array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
+				xstrcat(line, TEXT(" "));
 			else if (line[xwcslen(line) - 1] != ' ') 
-				xwcsncat(line, separators + i, 1);
+				xstrncat(line, separators + i, 1);
 		}
 		/* ustawiamy dane potrzebne do nastêpnego dope³nienia */
 		xfree(last_line);
@@ -993,30 +928,22 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
                 last_pos = *line_index;
 		goto cleanup;
 	}
-	cmd = wcsprintf(TEXT("/%s "), (config_tab_command) ? config_tab_command : "chat");
+	cmd = saprintf(TEXT("/%s "), (config_tab_command) ? config_tab_command : "chat");
 	/* nietypowe dope³nienie nicków przy rozmowach */
-	if (!xwcscmp(line, TEXT("")) || (!xwcsncasecmp(line, cmd, xwcslen(cmd)) && word == 2 && send_nicks_count > 0) || (!xwcscasecmp(line, cmd) && send_nicks_count > 0)) {
+	if (!xwcscmp(line, TEXT("")) || (!xstrncasecmp(line, cmd, xwcslen(cmd)) && word == 2 && send_nicks_count > 0) || (!xwcscasecmp(line, cmd) && send_nicks_count > 0)) {
 		if (send_nicks_index >= send_nicks_count)
 			send_nicks_index = 0;
 
 		if (send_nicks_count) {
 			char *nick = send_nicks[send_nicks_index++];
-#if USE_UNICODE
-			swprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? TEXT("%ls\"%s\" ") : TEXT("%ls%s "), cmd, nick);
-#else
 			snprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
-#endif
 		} else
-#if USE_UNICODE
-			swprintf(line, LINE_MAXLEN, TEXT("%ls"), cmd);
-#else
 			snprintf(line, LINE_MAXLEN, "%s", cmd);
-#endif
 		*line_start = 0;
 		*line_index = xwcslen(line);
 
-                wcs_array_free(completions);
-                wcs_array_free(words);
+                array_free(completions);
+                array_free(words);
 		xfree(start);
 		xfree(separators);
 		xfree(cmd);
@@ -1031,25 +958,25 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	                known_uin_generator(start, xwcslen(start));
 	                if (completions) {
 	                        for (j = 0; completions && completions[j]; j++) {
-	                                wcs_string_t s;
+	                                string_t s;
 	
-	                                if (!xwcschr(completions[j], TEXT('"')) && !xwcschr(completions[j], TEXT('\\')) && !xwcschr(completions[j], TEXT(' '))) {
-						s = wcs_string_init(TEXT(""));
-						wcs_string_append(s, completions[j]);
+	                                if (!xstrchr(completions[j], TEXT('"')) && !xstrchr(completions[j], TEXT('\\')) && !xstrchr(completions[j], TEXT(' '))) {
+						s = string_init(TEXT(""));
+						string_append(s, completions[j]);
 						if (config_completion_char && strlen(config_completion_char))
 							string_append_c(s, *config_completion_char);
 						else
-							wcs_string_append_c(s, TEXT(':'));
+							string_append_c(s, TEXT(':'));
 						xfree(completions[j]);
-						completions[j] = wcs_string_free(s, 0);
+						completions[j] = string_free(s, 0);
 	                                        continue;
 					}
-	                                s = wcs_string_init(TEXT("\""));
-	                                wcs_string_append(s, completions[j]);
-	                                wcs_string_append_c(s, TEXT('\"'));
-					wcs_string_append_c(s, TEXT(':'));
+	                                s = string_init(TEXT("\""));
+	                                string_append(s, completions[j]);
+	                                string_append_c(s, TEXT('\"'));
+					string_append_c(s, TEXT(':'));
 	                                xfree(completions[j]);
-	                                completions[j] = wcs_string_free(s, 0);
+	                                completions[j] = string_free(s, 0);
 	                        }
 	                }
 
@@ -1070,30 +997,27 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		/* first we look for some session complete */
 		if (session_current) {
 			session_t *session = session_current;
-			CHAR_T *suid = normal_to_wcs(session->uid);
 			int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
 			for (l = commands; l; l = l->next) {
 				command_t *c = l->data;
 
-	                        if (xwcsncasecmp(c->name, suid, plen))
+	                        if (xstrncasecmp(c->name, session->uid, plen))
 	                                continue;
 
-                	        if (!xwcsncasecmp(c->name + plen, cmd, len)) {
+                	        if (!xstrncasecmp(c->name + plen, cmd, len)) {
 	                                params = c->params;
 	                                abbrs = 1;
 	                                actual_completed_command = c;
-					free_utf(suid);
 	                                goto exact_match;
 	                        }
 			}
-			free_utf(suid);
 		}
 
         	for (l = commands; l; l = l->next) {
 	                command_t *c = l->data;
 
-	                if (!xwcsncasecmp(c->name, cmd, len)) {
+	                if (!xstrncasecmp(c->name, cmd, len)) {
 	                        params = c->params;
 	                        abbrs = 1;
 	                        actual_completed_command = c;
@@ -1103,7 +1027,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 exact_match: 
 		/* for /set maybe we want to complete the file path */
-		if (!xwcsncmp(cmd, TEXT("set"), xwcslen(TEXT("set"))) && words[1] && words[2] && word_current == 3) {
+		if (!xstrncmp(cmd, TEXT("set"), xwcslen(TEXT("set"))) && words[1] && words[2] && word_current == 3) {
 			variable_t *v;
 
 			if ((v = variable_find(words[1]))) {
@@ -1124,8 +1048,8 @@ exact_match:
 
 		}
 
-		if (word_current > wcs_array_count(params) + 1) 
-			word_current = wcs_array_count(params) + 2;
+		if (word_current > array_count(params) + 1) 
+			word_current = array_count(params) + 2;
 
 		if (params && abbrs == 1 && params[word_current - 2]) {
 			int j;
@@ -1147,19 +1071,19 @@ exact_match:
 	
 		if (completions) {
 			for (j = 0; completions && completions[j]; j++) {
-				wcs_string_t s;
+				string_t s;
 	
-				if (!xwcschr(completions[j], TEXT('"')) && !xwcschr(completions[j], TEXT('\\')) && !xwcschr(completions[j], TEXT(' ')))
+				if (!xstrchr(completions[j], TEXT('"')) && !xstrchr(completions[j], TEXT('\\')) && !xstrchr(completions[j], TEXT(' ')))
 					continue;
-				s = wcs_string_init(TEXT("\""));
-				wcs_string_append(s, completions[j]);				
-				wcs_string_append_c(s, TEXT('\"'));
+				s = string_init(TEXT("\""));
+				string_append(s, completions[j]);				
+				string_append_c(s, TEXT('\"'));
 				xfree(completions[j]);
-				completions[j] = wcs_string_free(s, 0);
+				completions[j] = string_free(s, 0);
 			}
 		}	 
 	}
-	count = wcs_array_count(completions);
+	count = array_count(completions);
 	
 	/* 
 	 * je¶li jest tylko jedna mo¿lwio¶æ na dope³nienie to drukujemy co mamy,
@@ -1168,35 +1092,31 @@ exact_match:
 	 */
 	if (count == 1) {
 		line[0] = '\0';
-		for(i = 0; i < wcs_array_count(words); i++) {
+		for(i = 0; i < array_count(words); i++) {
 			if(i == word) {
-				if (xwcschr(completions[0],  '\001')) {
+				if (xstrchr(completions[0],  '\001')) {
 					if(completions[0][0] == '"')
-						xwcsncat(line, completions[0] + 2, xwcslen(completions[0]) - 2 - 1 );
+						xstrncat(line, completions[0] + 2, xwcslen(completions[0]) - 2 - 1 );
 					else
-						xwcsncat(line, completions[0] + 1, xwcslen(completions[0]) - 1);
+						xstrncat(line, completions[0] + 1, xwcslen(completions[0]) - 1);
 				} else
-			    		xwcscat(line, completions[0]);
+			    		xstrcat(line, completions[0]);
 				*line_index = xwcslen(line) + 1;
 			} else {
-				if (xwcschr(words[i], TEXT(' '))) {
+				if (xstrchr(words[i], TEXT(' '))) {
 					CHAR_T *tmp = 
-#if USE_UNICODE
-						wcsprintf(TEXT("\"%ls\""), words[i]);
-#else
-						wcsprintf(TEXT("\"%s\""), words[i]);
-#endif
-					xwcscat(line, tmp);
+						saprintf(TEXT("\"%s\""), words[i]);
+					xstrcat(line, tmp);
 					xfree(tmp);
 				} else
-					xwcscat(line, words[i]);
+					xstrcat(line, words[i]);
 			}
-			if((i == wcs_array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
-				xwcscat(line, TEXT(" "));
+			if((i == array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
+				xstrcat(line, TEXT(" "));
 			else if (line[xwcslen(line) - 1] != ' ')
-                                xwcsncat(line, separators + i, 1);
+                                xstrncat(line, separators + i, 1);
 		}
-		wcs_array_free(completions);
+		array_free(completions);
 		completions = NULL;
 	}
 
@@ -1229,7 +1149,7 @@ exact_match:
 					quotes = 1;
 					s2++;
 				}
-				tmp = xwcsncasecmp(s1, s2, i);
+				tmp = xstrncasecmp(s1, s2, i);
 				/* debug("xstrncasecmp(\"%s\", \"%s\", %d) = %d\n", s1, s2, i, xstrncasecmp(s1, s2, i)); */
 				if (tmp)
 					break;
@@ -1242,10 +1162,10 @@ exact_match:
 
 		if (xwcslen(line) + common < LINE_MAXLEN) {
 			line[0] = '\0';
-			for(i = 0; i < wcs_array_count(words); i++) {
+			for(i = 0; i < array_count(words); i++) {
 				if (i == word) {
 					if (quotes == 1 && completions[0][0] != '"') 
-						xwcscat(line, TEXT("\""));
+						xstrcat(line, TEXT("\""));
 
 					if (completions[0][0] == '"')
 						common++;
@@ -1253,30 +1173,26 @@ exact_match:
 					if (completions[0][common - 1] == '"')
 						common--;
 
-					xwcsncat(line, completions[0], common);
+					xstrncat(line, completions[0], common);
 					*line_index = xwcslen(line);
 				} else {
-					if (xwcsrchr(words[i], TEXT(' '))) {
+					if (xstrchr(words[i], TEXT(' '))) {
 						CHAR_T *tmp = 
-#if USE_UNICODE
-							wcsprintf(TEXT("\"%ls\""), words[i]);
-#else
-							wcsprintf(TEXT("\"%s\""), words[i]);
-#endif
-						xwcscat(line, tmp);
+							saprintf(TEXT("\"%s\""), words[i]);
+						xstrcat(line, tmp);
 						xfree(tmp);
 					} else
-						xwcscat(line, words[i]);
+						xstrcat(line, words[i]);
 				}
 
 				if(separators[i]) 
-					xwcsncat(line, separators + i, 1);
+					xstrncat(line, separators + i, 1);
 			}
 		}
 	}
 
 cleanup:
-	wcs_array_free(words);
+	array_free(words);
 	xfree(start);
 	xfree(separators);
 	return;
@@ -1284,7 +1200,7 @@ cleanup:
 
 void ncurses_complete_clear()
 {
-	wcs_array_free(completions);
+	array_free(completions);
 	completions = NULL;
         continue_complete = 0;
         continue_complete_count = 0;

@@ -50,7 +50,6 @@ COMMAND(perl_command_list)
 
 COMMAND(perl_command_eval)
 {
-	PARASC
 	char *code = saprintf("use Ekg2; %s", params[0]);
 	
 	eval_pv(code, TRUE);
@@ -61,7 +60,6 @@ COMMAND(perl_command_eval)
 
 COMMAND(perl_command_test)
 {
-	PARASC
 	char *code = saprintf("use Ekg2;\nuse Ekg2::%s Ekg2::debug(\"%s\n\");", params[0], params[1]);
 	
 	eval_pv(code, TRUE);
@@ -72,13 +70,11 @@ COMMAND(perl_command_test)
 
 COMMAND(perl_command_unload)
 {
-	PARASC
 	return script_unload_name(&perl_lang, (char *) params[0]);
 }
 
 COMMAND(perl_command_load)
 {
-	PARASC
 	return script_load(&perl_lang, (char *) params[0]);
 }
 

@@ -112,9 +112,7 @@ fail:
 
 COMMAND(gg_command_register)
 {
-	PARASC
 	struct gg_http *h;
-	CHAR_T *upasswd;
 	char *passwd;
 	watch_t *w;
 
@@ -139,18 +137,15 @@ COMMAND(gg_command_register)
         }
 
 
-	upasswd = xwcsdup(normal_to_wcs(params[1])); /* UUU */
-	passwd = gg_locale_to_cp(upasswd);
+	passwd = gg_locale_to_cp(xstrdup(params[1]));
 	
 	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[2], 1))) {
-		free_utf(passwd);
-		xfree(upasswd);
+		xfree(passwd);
 		printq("register_failed", strerror(errno));
 		return -1;
 	}
 
-	free_utf(passwd);
-	xfree(upasswd);
+	xfree(passwd);
 
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_register, h); 
 	watch_timeout_set(w, h->timeout);
@@ -209,7 +204,6 @@ fail:
 
 COMMAND(gg_command_unregister)
 {
-	PARASC
 	struct gg_http *h;
 	watch_t *w;
 	uin_t uin;
@@ -230,12 +224,7 @@ COMMAND(gg_command_unregister)
 		printq("unregister_bad_uin", params[0]);
 		return -1;
 	}
-#if USE_UNICODE
-#warning gg_command_unregister() not work with unicode version.
-	passwd = normal_to_wcs(params[1]);
-#else
 	passwd = xstrdup(params[1]);
-#endif
 	cppasswd = gg_locale_to_cp(passwd);
 
 	if (!(h = gg_unregister3(uin, cppasswd, last_tokenid, params[2], 1))) {
@@ -244,10 +233,6 @@ COMMAND(gg_command_unregister)
 		return -1;
 	}
 	xfree(cppasswd);
-#if USE_UNICODE
-	xfree(passwd);
-#endif
-
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_unregister, h); 
 	watch_timeout_set(w, h->timeout);
 
@@ -328,7 +313,6 @@ fail:
 
 COMMAND(gg_command_passwd)
 {
-	PARASC
 	gg_private_t *g = session_private_get(session);
 	struct gg_http *h;
 	watch_t *w;
@@ -336,13 +320,8 @@ COMMAND(gg_command_passwd)
 	CHAR_T *newpasswd, *oldpasswd;
 	char *cppasswd, *cpoldpasswd;
 
-#if USE_UNICODE
-	oldpasswd = normal_to_wcs(session_get(session, "password"));
-	newpasswd = normal_to_wcs(params[0]);
-#else
 	oldpasswd = xstrdup(session_get(session, "password"));
 	newpasswd = xstrdup(params[0]);
-#endif
 	cppasswd	= gg_locale_to_cp(newpasswd);
 	cpoldpasswd	= gg_locale_to_cp(oldpasswd);
 
@@ -352,10 +331,6 @@ COMMAND(gg_command_passwd)
 	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? cpoldpasswd : "", cppasswd, "", 1)))
 #endif 
 	{
-#if USE_UNICODE
-		xfree(newpasswd);
-		xfree(oldpasswd);
-#endif
 		xfree(cppasswd);
 		xfree(cpoldpasswd);
 		printq("passwd_failed", strerror(errno));
@@ -368,10 +343,6 @@ COMMAND(gg_command_passwd)
 	watch_timeout_set(w, h->timeout);
 
 	list_add(&g->passwds, h, 0);
-#if USE_UNICODE
-	xfree(newpasswd);
-	xfree(oldpasswd);
-#endif
 
 	/* memleaks ? ... mh, if gg_change_passwd3 fails... we have freeing it.. why here was not? it's ok or not? libgadu/we frees it ?*/
 #if 0
@@ -428,7 +399,6 @@ fail:
 
 COMMAND(gg_command_remind)
 {
-	PARASC
 	gg_private_t *g = session_private_get(session);
 	struct gg_http *h;
 	watch_t *w;
@@ -466,7 +436,6 @@ COMMAND(gg_command_remind)
 
 COMMAND(gg_command_list)
 {
-	PARUNI
 /* moze mi ktos qrwa powiedziec po co bylo to passwd ? tylko byly memleaki i jakies goto.... */
 	gg_private_t *g = session_private_get(session);
 	/* list --get */

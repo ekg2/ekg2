@@ -185,7 +185,6 @@ static int ioctld_send(const char *seq, int act, int quiet)
 
 static COMMAND(command_beeps_spk)
 {
-	PARASC
 	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
@@ -196,7 +195,6 @@ static COMMAND(command_beeps_spk)
 
 static COMMAND(command_blink_leds)
 {
-	PARASC
 	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;

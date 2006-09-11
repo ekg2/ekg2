@@ -121,7 +121,6 @@ static int xosd_show_message(char *line1, char *line2)
 
 static COMMAND(xosd_command_msg) 
 {
-	PARASC
 	xosd_show_message((char *) params[0], NULL);
 	return 0;
 }

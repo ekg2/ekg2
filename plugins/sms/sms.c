@@ -117,7 +117,7 @@ static int sms_send(const char *recipient, const char *message)
 
 	close(fd[1]);
 
-	tmp = wcsprintf(TEXT("%s %s %s"), config_sms_app, recipient, message);
+	tmp = saprintf(TEXT("%s %s %s"), config_sms_app, recipient, message);
 	child_add(&sms_plugin, pid, tmp, sms_child_handler, xstrdup(recipient));
 	xfree(tmp);
 
@@ -228,7 +228,6 @@ static void sms_away_free()
 
 static COMMAND(sms_command_sms)
 {
-	PARASC
         userlist_t *u;
         const char *number = NULL;
 

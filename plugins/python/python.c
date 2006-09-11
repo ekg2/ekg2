@@ -73,7 +73,6 @@ SCRIPT_DEFINE(python, ".py");
 
 COMMAND(python_command_eval)
 {
-	PARASC
 	python_exec(params[0]);
 	return 0;
 }
@@ -87,7 +86,6 @@ COMMAND(python_command_eval)
 
 COMMAND(python_command_run)
 {
-	PARASC
 	python_run(params[0]);
 	return 0;
 }
@@ -101,7 +99,6 @@ COMMAND(python_command_run)
 
 COMMAND(python_command_load)
 {
-	PARASC
 	script_load(&python_lang, (char *) params[0]);
 	return 0;
 }
@@ -115,7 +112,6 @@ COMMAND(python_command_load)
 
 COMMAND(python_command_unload)
 {
-	PARASC
 	script_unload_name(&python_lang, (char *) params[0]);
 	return 0;
 }

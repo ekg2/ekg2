@@ -88,53 +88,13 @@ static unsigned char *gg_iso_to_cp(unsigned char *buf) {
 unsigned char *gg_locale_to_cp(CHAR_T *buf_) {
 	if (!buf_)
 		return NULL;
-#if USE_UNICODE
-	unsigned char *buf = xmalloc((xwcslen(buf_) * sizeof(unsigned char)+1));
-	unsigned char *tmp = buf;
-
-	while (*buf_) {
-		struct table_entry *enc = (struct table_entry *) &(table_cp1250);
-		if (*buf_ >= 0x80) {
-			unsigned char a = '?'; /* jesli nie mozemy przekonwertowac znaczka unicodowego na cp1250 - nie mamy czegos takiego w tablicy to dajemy '?' ? :>*/
-			while (enc->ch) {
-				if (enc->wc == *buf_) {
-					a = enc->ch;
-					break;
-				}
-				enc++;
-			}
-			*buf = a;
-		} else {
-			*buf = *buf_;
-		}
-		buf_++;
-		buf++;
-	}
-	return tmp;
-#else
 	return gg_iso_to_cp(buf_);
-#endif
 }
 
 CHAR_T *gg_cp_to_locale(unsigned char *buf_) {
 	if (!buf_)
 		return NULL;
-#if USE_UNICODE
-	CHAR_T *buf = xmalloc((xstrlen(buf_)+1) * sizeof(CHAR_T));
-	CHAR_T *tmp = buf;
-	unsigned char cur;
-
-	while ((cur = *buf_)) {
-		if (cur >= 0x80 && cur <= 0xFF) {
-			*buf = table_cp1250[cur-0x80].wc;
-		} else *buf = *buf_;
-		buf_++;
-		buf++;
-	}
-	return tmp;
-#else
 	return gg_cp_to_iso(buf_);
-#endif
 }
 
 /*

@@ -163,20 +163,6 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
  * zaalokowany bufor
  */
 
-CHAR_T *jabber_uescape(const CHAR_T *text) {
-	unsigned char *utftext;
-	CHAR_T *res;
-	if (config_use_unicode)
-		return xml_uescape(text);
-	if (!text)
-		return NULL;
-	if ( !(utftext = mutt_convert_string((char *)text, config_console_charset, "utf-8")) )
-		return NULL;
-	res = xml_escape(utftext);
-        xfree(utftext);
-	return res;
-}
-
 CHAR_T *jabber_escape(const char *text)
 {
 	unsigned char *utftext;
@@ -219,7 +205,6 @@ CHAR_T *tlen_encode(const char *what) {
 	const unsigned char *s;
 	unsigned char *ptr, *str;
 	char *text = NULL;
-	CHAR_T *temp;
 
 	if (!what) return NULL;
 
@@ -241,17 +226,7 @@ CHAR_T *tlen_encode(const char *what) {
 		s++;
 	}
 	xfree(text);
-	temp = normal_to_wcs(str);
-	free_utf(str);
-	return temp;
-}
-
-CHAR_T *tlen_uencode(const CHAR_T *what) {
-/* XXX, make simillar function to tlen_encode() with widechar */
-	char *temp = wcs_to_normal(what);
-	CHAR_T *enc  = tlen_encode(temp);
-	free_utf(temp);
-	return enc;
+	return str;
 }
 
 /* tlen_decode() - Dekoduje tekst przy pomocy urldecode + rekoduje charset na aktualny.. */

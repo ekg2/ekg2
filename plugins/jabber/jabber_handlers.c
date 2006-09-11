@@ -190,13 +190,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 						NULL);
 					CHAR_T *__seq	= NULL; /* id ? */
 					/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
-					{
-						CHAR_T *session = normal_to_wcs(__session);
-						CHAR_T *rcpt = normal_to_wcs(__rcpt);
-						query_emit(NULL, TEXT("protocol-message-ack"), &session, &rcpt, &__seq, &__status);
-						free_utf(session);
-						free_utf(rcpt);
-					}
+					query_emit(NULL, TEXT("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status);
 					xfree(__session);
 					xfree(__rcpt);
 					xfree(__status);
@@ -608,7 +602,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 					if (jabber_dcc_ip) {
 						/* basic streamhost, our ip, default port, our jid. check if we enable it. XXX*/
-						streamhost.jid	= saprintf("%s/" CHARF, s->uid+4, j->resource);
+						streamhost.jid	= saprintf("%s/%s", s->uid+4, j->resource);
 						streamhost.ip	= xstrdup(jabber_dcc_ip);
 						streamhost.port	= jabber_dcc_port;
 						list_add(&(b->streamlist), &streamhost, sizeof(struct jabber_streamhost_item));
@@ -895,11 +889,11 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 						session_t *s = l->data;
 						CHAR_T *alias	= jabber_escape(s->alias);
 						CHAR_T *uid	= jabber_escape(s->uid);
-						watch_write(j->send_watch, "<option label=\"" CHARF "\"><value>" CHARF "</value></option>", alias ? alias : uid, uid);
+						watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>", alias ? alias : uid, uid);
 						xfree(alias); xfree(uid);
 					}
 					watch_write(j->send_watch, 
-						"<value>" CHARF "</value></field>"
+						"<value>%s</value></field>"
 						"<field label=\"Window name (leave empty for current)\" type=\"list-single\" var=\"window-name\">", session_cur);
 
 					for (l = windows; l; l = l->next) {
@@ -928,7 +922,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					if (window)	windowid = atoi(window);
 
 					if (is_valid) { 
-						CHAR_T *fullcommand = wcsprintf(TEXT("/%s %s"), command, params ? params : "");
+						CHAR_T *fullcommand = saprintf("/%s %s", command, params ? params : "");
 						window_t  *win;
 						session_t *ses;
 						int ret;
@@ -1639,9 +1633,9 @@ rc_forbidden:
 
 				watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
 						"<query xmlns=\"jabber:iq:version\">"
-						"<name>"CHARF"</name>"
-						"<version>"CHARF "</version>"
-						"<os>"CHARF"</os></query></iq>", 
+						"<name>%s</name>"
+						"<version>%s</version>"
+						"<os>%s</os></query></iq>", 
 						from, id, 
 						escaped_client_name, escaped_client_version, osversion);
 

@@ -221,7 +221,6 @@ void gg_changed_dcc(const CHAR_T *var)
 
 COMMAND(gg_command_dcc)
 {
-	PARASC
 	uin_t uin = atoi(session->uid + 3);
 	gg_private_t *g = session_private_get(session);
 
@@ -299,7 +298,6 @@ COMMAND(gg_command_dcc)
 		struct gg_dcc *gd = NULL;
 		dcc_t *d;
 		userlist_t *u;
-		list_t l;
 
 		if (!params[1]) {
 			printq("not_enough_params", name);
@@ -332,6 +330,7 @@ COMMAND(gg_command_dcc)
 		}
 		
 #if 0
+		list_t l;
 		struct transfer *t, tt;
 		/* sprawdzamy najpierw przychodz±ce po³±czenia */
 		
@@ -473,11 +472,7 @@ COMMAND(gg_command_dcc)
 
 		return 0;
 	}
-#if USE_UNICODE
-	return cmd_dcc(name, params_, session, target, quiet);
-#else
 	return cmd_dcc(name, params, session, target, quiet);
-#endif
 }
 /* never used? wtf? */
 static void gg_dcc_close_handler(dcc_t *d)

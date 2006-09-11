@@ -54,12 +54,6 @@
 #include "contacts.h"
 #include "mouse.h"
 
-#if USE_UNICODE
-# define unchar wchar_t
-#else
-# define unchar unsigned char
-#endif
-
 WINDOW *ncurses_status	= NULL;		/* okno stanu */
 WINDOW *ncurses_header	= NULL;		/* okno nag³ówka */
 WINDOW *ncurses_input	= NULL;		/* okno wpisywania tekstu */
@@ -705,7 +699,7 @@ void ncurses_redraw(window_t *w)
 		}
 		for (x = 0; x < l->prompt_len + l->len; x++) {
 			int attr = A_NORMAL;
-			unchar ch;
+			unsigned char ch;
 			short chattr;
 			if (x < l->prompt_len) {
 				if (!l->prompt_str)
@@ -733,7 +727,6 @@ void ncurses_redraw(window_t *w)
 
 			if ((chattr & 1024))
 				attr |= A_REVERSE;
-#ifndef USE_UNICODE
 			if (ch < 32) {
 				ch += 64;
 				attr |= A_REVERSE;
@@ -743,19 +736,12 @@ void ncurses_redraw(window_t *w)
 				ch = '?';
 				attr |= A_REVERSE;
 			}
-#else
-#warning MH............... ;> UNICODE HACK ?
-#endif
 			wattrset(n->window, attr);
 			if (l->margin_left != -1 && x >= l->margin_left) 
 				x_real = x - l->margin_left + config_margin_size;
 			else 
 				x_real = x;
-#if USE_UNICODE
-			mvwaddnwstr(n->window, top + y, left + x_real + l->ts_len, &ch, 1);
-#else
 			mvwaddch(n->window, top + y, left + x_real + l->ts_len, ch);
-#endif
 		}
 	}
 
@@ -1306,7 +1292,7 @@ void update_statusbar(int commit)
 
 			case 2:
 			{
-				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", wcs_array_count(ncurses_lines), lines_start, lines_index, line_start, line_index);
+				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count(ncurses_lines), lines_start, lines_index, line_start, line_index);
 				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
 				xfree(tmp);
 				break;
@@ -1479,7 +1465,7 @@ void ncurses_init()
 #endif
 
 	ncurses_line = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-	xwcscpy(ncurses_line, TEXT(""));
+	xstrcpy(ncurses_line, TEXT(""));
 
 	ncurses_history[0] = ncurses_line;
 }
@@ -1602,8 +1588,8 @@ void ncurses_input_update()
 			xfree(ncurses_lines[i]);
 		xfree(ncurses_lines);
 		ncurses_lines = NULL;
-		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unchar));
-		xwcscpy(ncurses_line, TEXT(""));
+		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unsigned char));
+		xstrcpy(ncurses_line, TEXT(""));
 
 		ncurses_history[0] = ncurses_line;
 
@@ -1613,9 +1599,9 @@ void ncurses_input_update()
 		lines_index = 0;
 	} else {
 		ncurses_lines = xmalloc(2 * sizeof(CHAR_T*));
-		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(unchar));
+		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(unsigned char));
 		ncurses_lines[1] = NULL;
-		xwcscpy(ncurses_lines[0], ncurses_line);
+		xstrcpy(ncurses_lines[0], ncurses_line);
 		xfree(ncurses_line);
 		ncurses_line = ncurses_lines[0];
 		ncurses_history[0] = NULL;
@@ -1636,7 +1622,7 @@ void ncurses_input_update()
  *
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-static void print_char(WINDOW *w, int y, int x, unchar ch)
+static void print_char(WINDOW *w, int y, int x, unsigned char ch)
 {
 	wattrset(w, A_NORMAL);
 
@@ -1649,11 +1635,7 @@ static void print_char(WINDOW *w, int y, int x, unchar ch)
 		ch = '?';
 		wattrset(w, A_REVERSE);
 	}
-#if USE_UNICODE
-	mvwaddnwstr(w, y, x, &ch, 1);
-#else
 	mvwaddch(w, y, x, ch);
-#endif
 	wattrset(w, A_NORMAL);
 }
 
@@ -1662,7 +1644,7 @@ static void print_char(WINDOW *w, int y, int x, unchar ch)
  *
  * wy¶wietla w danym okienku podkreslony znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  */
-static void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
+static void print_char_underlined(WINDOW *w, int y, int x, unsigned char ch)
 {
         wattrset(w, A_UNDERLINE);
 
@@ -1675,11 +1657,7 @@ static void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
                 ch = '?';
                 wattrset(w, A_REVERSE | A_UNDERLINE);
         }
-#if USE_UNICODE
-	mvwaddnwstr(w, y, x, &ch, 1);
-#else
         mvwaddch(w, y, x, ch);
-#endif
         wattrset(w, A_NORMAL);
 }
 
@@ -1693,18 +1671,9 @@ static void print_char_underlined(WINDOW *w, int y, int x, unchar ch)
  *
  * zwraca kod klawisza lub -2, je¶li nale¿y go pomin±æ.
  */
-#if USE_UNICODE
-static int ekg_getch(int meta, wint_t *ch)
-#else
 static int ekg_getch(int meta, int *ch)
-#endif
 {
-#if USE_UNICODE
-	int retcode;
-	retcode = wget_wch(input, ch);
-#else
 	*ch = wgetch(input);
-#endif
 
 	/* 
 	 * conception is borrowed from Midnight Commander project 
@@ -1795,11 +1764,7 @@ static int ekg_getch(int meta, int *ch)
 #undef DIF_TIME
 	if (query_emit(NULL, TEXT("ui-keypress"), ch, NULL) == -1)  
 		return -2; /* -2 - ignore that key */
-#if USE_UNICODE
-	return retcode;
-#else
 	return *ch;
-#endif
 }
 
 /* XXX: deklaracja ncurses_watch_stdin nie zgadza sie ze
@@ -1895,16 +1860,13 @@ static void spellcheck(CHAR_T *what, char *where)
 /*		debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
 
 		/* sprawdzamy pisownie tego wyrazu */
-		char *sword = wcs_to_normal(word);
-		
-        	if (aspell_speller_check(spell_checker, sword, xwcslen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
+        	if (aspell_speller_check(spell_checker, word, xwcslen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
 			for (j = xwcslen(word) - 1; j >= 0; j--)
 				where[i - j] = ASPELLCHAR;
         	} else { /* jesli wyraz jest napisany poprawnie */
 			for (j = xwcslen(word) - 1; j >= 0; j--)
 				where[i - j] = ' ';
         	}
-		free_utf(sword);
 aspell_loop_end:
 		xfree(word);
 	    }	
@@ -1922,11 +1884,7 @@ WATCHER(ncurses_watch_stdin)
 {
 	struct binding *b = NULL;
 	int tmp;
-#if USE_UNICODE
-	wint_t ch;
-#else
 	int ch;
-#endif
 #ifdef WITH_ASPELL
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
@@ -1940,9 +1898,7 @@ WATCHER(ncurses_watch_stdin)
 	switch ((tmp = ekg_getch(0, &ch))) {
 		case(-1):	/* dziwna kombinacja, która by blokowa³a */
 		case(-2):	/* przeszlo przez query_emit i mamy zignorowac (pytthon, perl) */
-#ifndef USE_UNICODE
 		case(0):	/* Ctrl-Space, g³upie to */
-#endif
 			return 0;
 		case(3):
 		default:
@@ -1954,26 +1910,17 @@ WATCHER(ncurses_watch_stdin)
 		CHAR_T **chars = NULL, *joined;
 		int i = 0, count = 0, success = 0;
 		list_t l;
-#if USE_UNICODE
-		int retcode;
-		wint_t c;
-#else
 		int c;
-#endif
-		wcs_array_add(&chars, xwcsdup(wcs_itoa(ch)));
+		array_add(&chars, xwcsdup(itoa(ch)));
 
         	while (count <= bindings_added_max && 
-#if USE_UNICODE
-				(retcode = wget_wch(input, &c)) != ERR
-#else
 				(c = wgetch(input)) != ERR
-#endif
 				) {
-	                wcs_array_add(&chars, xwcsdup(wcs_itoa(c)));
+	                array_add(&chars, xwcsdup(itoa(c)));
 			count++;
 	        }
 
-		joined = wcs_array_join(chars, TEXT(" "));
+		joined = array_join(chars, TEXT(" "));
 
 		for (l = bindings_added; l; l = l->next) {
 			binding_added_t *d = l->data;
@@ -1994,16 +1941,12 @@ WATCHER(ncurses_watch_stdin)
 		}
 
                 for (i = count; i > 0; i--) {
-#if USE_UNICODE
-			unget_wch(wcs_atoi(chars[i]));
-#else
-                        ungetch(wcs_atoi(chars[i]));
-#endif
+                        ungetch(atoi(chars[i]));
                 }
 
 end:
 		xfree(joined);
-		wcs_array_free(chars);
+		array_free(chars);
 		if (success)
 			goto then;
 	} 
@@ -2033,11 +1976,7 @@ end:
 				else if (tmp == 'M')
 					b = ncurses_binding_map[13];
 				else
-#if USE_UNICODE
-					unget_wch(tmp);
-#else
 					ungetch(tmp);
-#endif
 			}
 		}
 
@@ -2046,11 +1985,7 @@ end:
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-#if USE_UNICODE
-						TEXT("%s%ls"), ((b->action[0] == '/') ? "" : "/"), b->action
-#else
 						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
-#endif
 						);
 			}
 		} else {
@@ -2067,27 +2002,16 @@ end:
 		}
 	} else {
 		if (
-#if USE_UNICODE
-		(tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */) && 
-#endif
 		(b = ncurses_binding_map[ch]) && b->action) {
 			if (b->function)
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-#if USE_UNICODE
-						TEXT("%s%ls"), ((b->action[0] == '/') ? "" : "/"), b->action
-#else
 						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
-#endif
 						);
 			}
 		} else if (
-#if USE_UNICODE
-				ch != KEY_MOUSE &&
-#else
 				ch < 255 && 
-#endif
 				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 				
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, LINE_MAXLEN - line_index - 1);
@@ -2118,7 +2042,7 @@ then:
 		int i;
 		
 		for (i = 0; i < 5; i++) {
-			unchar *p;
+			unsigned char *p;
 			int j;
 
 			if (!ncurses_lines[lines_start + i])

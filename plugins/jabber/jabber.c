@@ -171,7 +171,7 @@ WATCHER(jabber_dcc_handle_recv) {
 						req[4] = 40;	/* length of hash. */
 
 						/* generate SHA1 hash */
-						ouruid = saprintf("%s/" CHARF, s->uid+4, j->resource);
+						ouruid = saprintf("%s/%s", s->uid+4, j->resource);
 						digest = jabber_dcc_digest(p->sid, d->uid+4, ouruid);
 						for (i=0; i < 40; i++) req[5+i] = digest[i];
 						xfree(ouruid);
@@ -316,7 +316,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 					if (!s->connected) continue;
 					if (!(session_check(s, 1, "jid"))) continue;
 
-					fulluid = saprintf("%s/" CHARF, s->uid+4, j->resource);
+					fulluid = saprintf("%s/%s", s->uid+4, j->resource);
 
 					/* XXX, take care about initiator && we		*/
 					/* D->type == DCC_SEND initiator -- we 		*/
@@ -579,7 +579,7 @@ int jabber_write_status(session_t *s)
 	if (!xstrcmp(status, EKG_STATUS_AUTOAWAY)) status = "away";
 
 	if ((descr = tlenjabber_escape(session_descr_get(s)))) {
-		real = saprintf("<status>" CHARF "</status>", descr);
+		real = saprintf("<status>%s</status>", descr);
 		xfree(descr);
 	}
 	if (!j->istlen) priority = saprintf("<priority>%d</priority>", prio); /* priority only in real jabber session */
@@ -666,7 +666,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 			epasswd		= jabber_escape(passwd);
 			watch_write(j->send_watch, 
 				"<iq type=\"set\" to=\"%s\" id=\"register%d\">"
-				"<query xmlns=\"jabber:iq:register\"><username>%s</username><password>" CHARF "</password></query></iq>", 
+				"<query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", 
 				j->server, j->id++, username, epasswd ? epasswd : TEXT("foo"));
 		}
 
@@ -695,10 +695,10 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		}
 
 		authpass = (!j->istlen && session_int_get(s, "plaintext_passwd")) ? 
-			saprintf("<password>" CHARF "</password>", epasswd) :			/* plaintext */
+			saprintf("<password>%s</password>", epasswd) :			/* plaintext */
 			saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd));	/* hash */
 		watch_write(j->send_watch, 
-			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>" CHARF"</resource></query></iq>", 
+			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", 
 			j->server, username, authpass, resource);
                 xfree(username);
 		xfree(authpass);
@@ -1112,7 +1112,7 @@ static QUERY(jabber_status_show_handle) {
         if (!s || !j)
                 return -1;
 
-        fulluid = saprintf("%s/" CHARF, uid, j->resource);
+        fulluid = saprintf("%s/%s", uid, j->resource);
 
         // nasz stan
 	if ((u = userlist_find(s, uid)) && u->nickname)
@@ -1295,20 +1295,6 @@ static int jabber_theme_init() {
 
 int jabber_plugin_init(int prio)
 {
-/* before loading plugin, do some sanity check */
-#ifdef USE_UNICODE
-	if (!config_use_unicode)
-#else
-	if (config_use_unicode)
-#endif
-	{	debug("plugin jabber cannot be loaded because of mishmashed compilation...\n"
-			"	program compilated with: --%s-unicode\n"
-			"	 plugin compilated with: --%s-unicode\n",
-				config_use_unicode ? "enable" : "disable",
-				config_use_unicode ? "disable": "enable");
-		return -1;
-	}
-
         plugin_register(&jabber_plugin, prio);
 
         query_connect(&jabber_plugin, TEXT("protocol-validate-uid"), jabber_validate_uid, NULL);

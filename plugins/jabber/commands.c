@@ -62,7 +62,6 @@
 #include "jabber.h"
 
 static COMMAND(jabber_command_dcc) {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 
 	if (!xstrncasecmp(params[0], "se", 2)) { /* send */
@@ -121,7 +120,7 @@ static COMMAND(jabber_command_dcc) {
 
 			watch_write(j->send_watch, "<iq type=\"set\" id=\"%s\" to=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%s\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
-					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"" CHARF "\">"
+					"<file xmlns=\"http://jabber.org/protocol/si/profile/file-transfer\" size=\"%d\" name=\"%s\">"
 					"<range/></file>"
 					"<feature xmlns=\"http://jabber.org/protocol/feature-neg\"><x xmlns=\"jabber:x:data\" type=\"form\">"
 					"<field type=\"list-single\" var=\"stream-method\">"
@@ -196,11 +195,7 @@ static COMMAND(jabber_command_dcc) {
 	if (!xstrncasecmp(params[0], "vo", 2)) { /* voice */
 		return -1;
 	}
-#if USE_UNICODE
-	return cmd_dcc(name, params_, session, target, quiet);
-#else
 	return cmd_dcc(name, params, session, target, quiet);
-#endif
 }
 
 static void jabber_command_connect_child(
@@ -330,7 +325,6 @@ static COMMAND(jabber_command_connect)
 
 static COMMAND(jabber_command_disconnect)
 {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	char *descr = NULL;
 	int fd = j->fd;
@@ -359,7 +353,7 @@ static COMMAND(jabber_command_disconnect)
 
 	if (descr) {
 		CHAR_T *tmp = jabber_escape(descr);
-		watch_write(j->send_watch, "<presence type=\"unavailable\"><status>" CHARF "</status></presence>", tmp ? tmp : TEXT(""));
+		watch_write(j->send_watch, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp ? tmp : "");
 		xfree(tmp);
 	} else
 		watch_write(j->send_watch, "<presence type=\"unavailable\"/>");
@@ -382,7 +376,6 @@ static COMMAND(jabber_command_disconnect)
 
 static COMMAND(jabber_command_reconnect)
 {
-	PARUNI
 	jabber_private_t *j = session_private_get(session);
 
 	if (j->connecting || session_connected_get(session)) {
@@ -413,18 +406,8 @@ static const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 	return uid;
 }
 
-static const char *jid_wcstarget2uid(session_t *s, const CHAR_T *target, int quiet) {
-	char *temp = wcs_to_normal(target);
-	const char *uid = jid_target2uid(s, temp, quiet);
-
-	if (uid == temp) return uid;				/* UUU */
-	free_utf(temp);
-	return uid;
-}
-
 static COMMAND(jabber_command_msg)
 {
-	PARUNI
 	jabber_private_t *j = session_private_get(session);
 	int chat = !xwcscasecmp(name, TEXT("chat"));
 	int subjectlen = xstrlen(config_subject_prefix);
@@ -444,7 +427,6 @@ static COMMAND(jabber_command_msg)
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
 	/* czy wiadomo¶æ ma mieæ temat? */
-#ifndef USE_UNICODE
 	if (!j->istlen && config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
 		char *subtmp = xstrdup((params[1]+subjectlen)); /* obcinamy prefix tematu */
 		char *tmp;
@@ -458,10 +440,7 @@ static COMMAND(jabber_command_msg)
 		msg = (tmp) ? jabber_escape(tmp+1) : NULL;
 		xfree(subtmp);
 	} else 
-#else
-#warning TOPIC NOT SUPPORTED IN UNICODE VERSION.
-#endif
-		msg = tlenjabber_uescape(params[1]); /* bez tematu */
+		msg = tlenjabber_unescape(params[1]); /* bez tematu */
 	if ((c = newconference_find(session, target))) 
 		ismuc = 1;
 
@@ -480,7 +459,7 @@ static COMMAND(jabber_command_msg)
 		xfree(subject); 
 	}
 	if (msg) {
-		watch_write(j->send_watch, "<body>" CHARF "</body>", msg);
+		watch_write(j->send_watch, "<body>%s</body>", msg);
         	if (config_last & 4) 
         		last_add(1, uid, time(NULL), 0, msg);
 		xfree(msg);
@@ -495,7 +474,7 @@ static COMMAND(jabber_command_msg)
 	JABBER_COMMIT_DATA(j->send_watch);
 
 	if (!quiet && !ismuc) { /* if (1) ? */ 
-		CHAR_T *me 	= xwcsdup( normal_to_wcs(  session_uid_get(session)  ));
+		CHAR_T *me 	= xwcsdup(session_uid_get(session));
 		CHAR_T **rcpts 	= xcalloc(2, sizeof(CHAR_T *));
 		CHAR_T *msg	= xwcsdup(params[1]);
 		time_t sent 	= time(NULL);
@@ -505,17 +484,17 @@ static COMMAND(jabber_command_msg)
 		CHAR_T *seq 	= NULL;
 		int secure	= 0;
 
-		rcpts[0] 	= xwcsdup(normal_to_wcs(uid));
+		rcpts[0] 	= xwcsdup(uid);
 		rcpts[1] 	= NULL;
 
 		if (ismuc)
 			class |= EKG_NO_THEMEBIT;
 		
-		query_emit(NULL, TEXT("wcs_protocol-message"), &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		query_emit(NULL, TEXT("protocol-message"), &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(msg);
 		xfree(me);
-		wcs_array_free(rcpts);
+		array_free(rcpts);
 	}
 
 	session_unidle(session);
@@ -525,7 +504,6 @@ static COMMAND(jabber_command_msg)
 
 static COMMAND(jabber_command_inline_msg)
 {
-	PARUNI
 	const CHAR_T *p[2] = { NULL, params[0] };
 	if (!params[0] || !target)
 		return -1;
@@ -534,15 +512,13 @@ static COMMAND(jabber_command_inline_msg)
 
 static COMMAND(jabber_command_xml)
 {
-	PARUNI
 	jabber_private_t *j = session_private_get(session);
-	watch_write(j->send_watch, CHARF, params[0]);
+	watch_write(j->send_watch, "%s", params[0]);
 	return 0;
 }
 
 static COMMAND(jabber_command_away)
 {
-	PARASC
 	const char *descr, *format;
 	
 	if (params[0]) {
@@ -614,7 +590,6 @@ static COMMAND(jabber_command_away)
 
 static COMMAND(jabber_command_passwd)
 {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	char *username;
 	CHAR_T *passwd;
@@ -639,7 +614,6 @@ static COMMAND(jabber_command_passwd)
 
 static COMMAND(jabber_command_auth) 
 {
-	PARUNI
 	jabber_private_t *j = session_private_get(session);
 	session_t *s = session;
 	const char *action;
@@ -647,7 +621,7 @@ static COMMAND(jabber_command_auth)
 	int payload;
 
 
-	if (!(uid = jid_wcstarget2uid(session, params[1], quiet)))
+	if (!(uid = jid_target2uid(session, params[1], quiet)))
 		return -1;
 	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
 	tabnick_add(uid);
@@ -688,7 +662,6 @@ static COMMAND(jabber_command_auth)
 static COMMAND(jabber_command_modify)
 /* XXX REWRITE IT */
 {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *uid = NULL;
 	CHAR_T *nickname = NULL;
@@ -716,7 +689,7 @@ static COMMAND(jabber_command_modify)
 
 		for (i = 0; argv[i]; i++) {
 
-			if (nmatch_arg(argv[i], 'g', TEXT("group"), 2) && argv[i + 1]) {
+			if (match_arg(argv[i], 'g', TEXT("group"), 2) && argv[i + 1]) {
 				char **tmp = array_make(argv[++i], ",", 0, 1, 1);
 				int x, off;	/* je¶li zaczyna siê od '@', pomijamy pierwszy znak */
 
@@ -754,7 +727,7 @@ static COMMAND(jabber_command_modify)
 				continue;
 			}
 
-			if (nmatch_arg(argv[i], 'n', TEXT("nickname"), 2) && argv[i + 1]) {
+			if (match_arg(argv[i], 'n', TEXT("nickname"), 2) && argv[i + 1]) {
 				xfree(nickname);
 				nickname = jabber_escape(argv[++i]);
 			}
@@ -780,14 +753,14 @@ static COMMAND(jabber_command_modify)
 	watch_write(j->send_watch, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
 
 	/* nickname always should be set */
-	if (nickname)	watch_write(j->send_watch, "<item jid=\"%s\" name=\"" CHARF "\"%s>", uid+4, nickname, (u->groups ? "" : "/"));
+	if (nickname)	watch_write(j->send_watch, "<item jid=\"%s\" name=\"%s\"%s>", uid+4, nickname, (u->groups ? "" : "/"));
 	else		watch_write(j->send_watch, "<item jid=\"%s\"%s>", uid+4, (u->groups ? "" : "/"));
 
 	for (m = u->groups; m ; m = m->next) {
 		struct ekg_group *g = m->data;
 		CHAR_T *gname = jabber_escape(g->name);
 
-		watch_write(j->send_watch, "<group>"CHARF"</group>", gname);
+		watch_write(j->send_watch, "<group>%s</group>", gname);
 		xfree(gname);
 	}
 
@@ -816,7 +789,7 @@ static COMMAND(jabber_command_del)
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
 		watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
-		watch_write(j->send_watch, "<item jid=\"" CHARF "\" subscription=\"remove\"/></query></iq>", xuid);
+		watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/></query></iq>", xuid);
 		xfree(xuid);
 	}
 	print("user_deleted", target, session_name(session));
@@ -854,7 +827,7 @@ static COMMAND(jabber_command_ver)
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
 		CHAR_T *xquery_res = jabber_escape(query_res);
-       		watch_write(j->send_watch, "<iq id='%d' to='" CHARF"/"CHARF "' type='get'><query xmlns='jabber:iq:version'/></iq>", \
+       		watch_write(j->send_watch, "<iq id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
 			     j->id++, xuid, xquery_res);
 		xfree(xuid);
 		xfree(xquery_res);
@@ -872,7 +845,7 @@ static COMMAND(jabber_command_userinfo)
 	{ 
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
-       		watch_write(j->send_watch, "<iq id='%d' to='" CHARF "' type='get'><vCard xmlns='vcard-temp'/></iq>", \
+       		watch_write(j->send_watch, "<iq id='%d' to='%s' type='get'><vCard xmlns='vcard-temp'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
 	}
@@ -881,9 +854,8 @@ static COMMAND(jabber_command_userinfo)
 
 static COMMAND(jabber_command_change)
 {
-	PARUNI
 #define pub_sz 6
-#define strfix(s) (s ? s : TEXT(""))
+#define strfix(s) (s ? s : "")
 	jabber_private_t *j = session_private_get(session);
 	CHAR_T *pub[pub_sz] = { NULL, NULL, NULL, NULL, NULL, NULL };
 	int i;
@@ -905,11 +877,11 @@ static COMMAND(jabber_command_change)
 
 	}
 	for (i=0; i<pub_sz; i++) 
-		pub[i] = jabber_uescape(pub[i]);
+		pub[i] = jabber_escape(pub[i]);
 	watch_write(j->send_watch, "<iq type=\"set\"><vCard xmlns='vcard-temp'>"
-			"<FN>" CHARF "</FN>" "<NICKNAME>" CHARF "</NICKNAME>"
-			"<ADR><LOCALITY>" CHARF "</LOCALITY><COUNTRY>" CHARF "</COUNTRY></ADR>"
-			"<BDAY>" CHARF "</BDAY><DESC>" CHARF "</DESC></vCard></iq>\n", 
+			"<FN>%s</FN>" "<NICKNAME>%s</NICKNAME>"
+			"<ADR><LOCALITY>%s</LOCALITY><COUNTRY>%s</COUNTRY></ADR>"
+			"<BDAY>%s</BDAY><DESC>%s</DESC></vCard></iq>\n", 
 			strfix(pub[0]), strfix(pub[1]), strfix(pub[2]), strfix(pub[5]), strfix(pub[3]), strfix(pub[4]));
 
 	for (i=0; i<pub_sz; i++) 
@@ -931,7 +903,7 @@ static COMMAND(jabber_command_lastseen)
 	{
 		jabber_private_t *j = session_private_get(session);
 		CHAR_T *xuid = jabber_escape(uid+4);
-	       	watch_write(j->send_watch, "<iq id='%d' to='" CHARF "' type='get'><query xmlns='jabber:iq:last'/></iq>", \
+	       	watch_write(j->send_watch, "<iq id='%d' to='%s' type='get'><query xmlns='jabber:iq:last'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
 	}
@@ -992,7 +964,6 @@ static char **jabber_params_split(const char *line, int allow_empty)
 }
 
 static COMMAND(jabber_command_search) {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 		/* XXX implementation bug ? should server be last variable? */
 	const char *server = params[0] ? params[0] : jabber_default_search_server ? jabber_default_search_server : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ 
@@ -1030,7 +1001,6 @@ static COMMAND(jabber_command_search) {
 }
 
 static COMMAND(tlen_command_pubdir) {
-	PARASC
 	int issearch = !xwcscmp(name, TEXT("search"));
 
 	if (!issearch && !xstrcmp(params[0], "show")) 
@@ -1038,7 +1008,7 @@ static COMMAND(tlen_command_pubdir) {
 	if (params[0]) {
 		int res;
 		char **splitted;
-		wcs_string_t str;
+		string_t str;
 		int i;
 
 		if (!(splitted = jabber_params_split(params[0], 1))) {
@@ -1049,8 +1019,8 @@ static COMMAND(tlen_command_pubdir) {
 			/* execute jabber_command_search.. | _register */
 				/* params[0] == "tuba" */
 				/* params[1] == parsed params[0] */
-		if (issearch)	str = wcs_string_init(TEXT("/jid:search tuba "));
-		else		str = wcs_string_init(TEXT("/jid:register tuba "));
+		if (issearch)	str = string_init(TEXT("/jid:search tuba "));
+		else		str = string_init(TEXT("/jid:register tuba "));
 
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
 			char *valname = 0;
@@ -1073,16 +1043,16 @@ static COMMAND(tlen_command_pubdir) {
 			else if (!issearch && !xstrcmp(splitted[i], "birthyear")) valname = "b";
 
 			if (valname) {
-				wcs_string_append(str, TEXT("--"));
-				wcs_string_append(str, valname);
-				wcs_string_append_c(str, ' ');
-				wcs_string_append(str, splitted[i+1]);
+				string_append(str, TEXT("--"));
+				string_append(str, valname);
+				string_append_c(str, ' ');
+				string_append(str, splitted[i+1]);
 			} else debug("option --%s not supported in /tlen:%s! skipping.\n", splitted[i], name);
 		}
 		array_free(splitted);
 
 		res = command_exec(target, session, str->str, quiet);
-		wcs_string_free(str, 1);
+		string_free(str, 1);
 
 		return res;
 	}
@@ -1118,7 +1088,6 @@ static COMMAND(tlen_command_pubdir) {
 
 static COMMAND(jabber_command_register)
 {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *passwd = session_get(session, "password");
@@ -1167,7 +1136,6 @@ static COMMAND(jabber_command_register)
 }
 
 static COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERRED) */
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	CHAR_T *message = jabber_escape(params[0]);
 /* XXX, wysylac id: vacation%d... porobic potwierdzenia ustawiania/ usuwania. oraz jesli nie ma statusu to wyswylic jakies 'no vacation status'... */
@@ -1178,7 +1146,7 @@ static COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERR
 	else	watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"%d\"><query xmlns=\"http://jabber.org/protocol/vacation\">"
 			"<start/><end/>" /* XXX, startdate, enddate */
-			"<message>" CHARF "</message>"
+			"<message>%s</message>"
 			"</query></iq>", 
 			j->id++, message);
 	xfree(message);
@@ -1186,7 +1154,6 @@ static COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERR
 }
 
 static COMMAND(jabber_command_transpinfo) {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *node   = (params[0] && params[1]) ? params[1] : NULL;
@@ -1205,7 +1172,6 @@ static COMMAND(jabber_command_transpinfo) {
 }
 
 static COMMAND(jabber_command_transports) {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *node   = (params[0] && params[1]) ? params[1] : NULL;
@@ -1223,7 +1189,6 @@ static COMMAND(jabber_command_transports) {
 }
 
 static COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERRED) */
-	PARASC
 	jabber_private_t *j = jabber_private(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *items   = (params[0] && params[1]) ? params[1] : NULL;
@@ -1243,7 +1208,6 @@ static COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERR
 }
 
 static COMMAND(jabber_command_privacy) {
-	PARASC
 	/* XXX, wstepna implementacja jabber:iq:privacy w/g RFC #3921 */
 
 	enum {	/* name */			/* allow/block: */
@@ -1335,7 +1299,7 @@ static COMMAND(jabber_command_privacy) {
 
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\">"
-			"<list name=\"" CHARF "\">", j->id++, ename);
+			"<list name=\"%s\">", j->id++, ename);
 
 		for (i=0; i < PRIVACY_LIST_COUNT; i++) {
 			if ( (alist[i] && done != 0x01) || (blist[i] && done != 0x02)) {
@@ -1391,7 +1355,6 @@ static COMMAND(jabber_command_privacy) {
 }
 
 static COMMAND(jabber_muc_command_join) {
-	PARASC
 	/* params[0] - full channel name, 
 	 * params[1] - nickname || default 
 	 * params[2] - password || none
@@ -1428,7 +1391,6 @@ static COMMAND(jabber_muc_command_join) {
 }
 
 static COMMAND(jabber_muc_command_part) {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
 	char *status;
@@ -1448,7 +1410,6 @@ static COMMAND(jabber_muc_command_part) {
 }
 
 static COMMAND(jabber_muc_command_admin) {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
 
@@ -1494,7 +1455,7 @@ static COMMAND(jabber_muc_command_admin) {
 			CHAR_T *name	= jabber_escape(splitted[i]);
 			CHAR_T *value	= jabber_escape(splitted[i+1]);
 
-			watch_write(j->send_watch, "<field var=\"" CHARF "\"><value>" CHARF "</value></field>", name, value);
+			watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", name, value);
 
 			xfree(value);	xfree(name);
 		}
@@ -1506,7 +1467,6 @@ static COMMAND(jabber_muc_command_admin) {
 }
 
 static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
 	
@@ -1529,7 +1489,7 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 
 		watch_write(j->send_watch,
 			"<iq id=\"%d\" to=\"%s\" type=\"set\">"
-			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"%s\" jid=\"%s\"><reason>" CHARF "</reason></item></query>"
+			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"%s\" jid=\"%s\"><reason>%s</reason></item></query>"
 			"</iq>", j->id++, c->name+4, 
 				!xwcscmp(name, "ban") ? /* ban */ "outcast" : /* unban+kick */ "none", 
 			jid, reason ? reason : "");
@@ -1539,7 +1499,6 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 }
 
 static COMMAND(jabber_muc_command_topic) {
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
 /* XXX da, /topic is possible in normal talk too... current limit only to muc. */
@@ -1553,7 +1512,7 @@ static COMMAND(jabber_muc_command_topic) {
 
 	} else {
 		CHAR_T *subject = jabber_escape(params[1]);
-		watch_write(j->send_watch, "<message to=\"%s\" type=\"groupchat\"><subject>" CHARF "</subject></message>", c->name+4, subject);
+		watch_write(j->send_watch, "<message to=\"%s\" type=\"groupchat\"><subject>%s</subject></message>", c->name+4, subject);
 	} 
 
 	return 0;
@@ -1564,7 +1523,6 @@ static COMMAND(jabber_command_control) {
 	/* w params[1] polecenie... jesli nie ma to chcemy dostac liste dostepnych polecen 	*/
 	/* w params[2] polecenia do sparsowania 						*/
 
-	PARASC
 	jabber_private_t *j = session_private_get(session);
 	char *resource, *uid;
 	char *tmp;
@@ -1633,7 +1591,7 @@ static COMMAND(jabber_command_control) {
 					 CHAR_T *varname = jabber_escape(splitted[i]);
 					 CHAR_T *varval = jabber_escape(splitted[i+1]); /* ? */
 
-					 watch_write(j->send_watch, "<field var=\"" CHARF "\"><value>" CHARF "</value></field>", varname, varval);
+					 watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", varname, varval);
 
 					 xfree(varname); xfree(varval);
 				 }
@@ -1654,7 +1612,6 @@ cleanup:
 }
 
 static COMMAND(jabber_command_private) {
-	PARASC
 	jabber_private_t *j = jabber_private(session);
 	CHAR_T *namespace; 	/* <nazwa> */
 
@@ -1671,9 +1628,9 @@ static COMMAND(jabber_command_private) {
 	if (bookmark) {				/* bookmark-only-commands */
 		int bookmark_sync	= 0;			/* 0 - no sync; 1 - sync (item added); 2 - sync (item modified) 3 - sync (item removed)	*/
 	
-		if (nmatch_arg(params[0], 'a', TEXT("add"), 2))		bookmark_sync = 1;	/* add item */
-		if (nmatch_arg(params[0], 'm', TEXT("modify"), 2))	bookmark_sync = 2; 	/* modify item */
-		if (nmatch_arg(params[0], 'r', TEXT("remove"), 2))	bookmark_sync = 3; 	/* remove item */
+		if (match_arg(params[0], 'a', TEXT("add"), 2))		bookmark_sync = 1;	/* add item */
+		if (match_arg(params[0], 'm', TEXT("modify"), 2))	bookmark_sync = 2; 	/* modify item */
+		if (match_arg(params[0], 'r', TEXT("remove"), 2))	bookmark_sync = 3; 	/* remove item */
 
 		if (bookmark_sync) {
 			const CHAR_T *p[2]	= {TEXT("-p"), NULL};	/* --put */
@@ -1736,25 +1693,25 @@ static COMMAND(jabber_command_private) {
 		}
 	}
 
-	if (nmatch_arg(params[0], 'g', TEXT("get"), 2) || nmatch_arg(params[0], 'd', TEXT("display"), 2)) {	/* get/display */
+	if (match_arg(params[0], 'g', TEXT("get"), 2) || match_arg(params[0], 'd', TEXT("display"), 2)) {	/* get/display */
 		watch_write(j->send_watch,
 			"<iq type=\"get\" id=\"%s%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
-			"<" CHARF "/>"
+			"<%s/>"
 			"</query></iq>", 
-			(nmatch_arg(params[0], 'g', TEXT("get"), 2) && (config || bookmark) ) ? "config" : "private", 
+			(match_arg(params[0], 'g', TEXT("get"), 2) && (config || bookmark) ) ? "config" : "private", 
 			j->id++, namespace);
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'p', TEXT("put"), 2)) {							/* put */
+	if (match_arg(params[0], 'p', TEXT("put"), 2)) {							/* put */
 		list_t l;
 
 		if (j->send_watch) j->send_watch->transfer_limit = -1;
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"private%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
-			"<" CHARF ">", j->id++, namespace);
+			"<%s>", j->id++, namespace);
 
 		if (config) {
 			for (l = plugins; l; l = l->next) {
@@ -1766,9 +1723,9 @@ back:
 					variable_t *v = n->data;
 					CHAR_T *vname, *tname;
 					if (v->plugin != p) continue;
-					tname = vname = jabber_uescape(v->name);
+					tname = vname = jabber_escape(v->name);
 
-					if (p && !xwcsncmp(tname, p->name, xwcslen(p->name))) tname += xwcslen(p->name);
+					if (p && !xstrncmp(tname, p->name, xwcslen(p->name))) tname += xwcslen(p->name);
 					if (tname[0] == ':') tname++;
 				
 					switch (v->type) {
@@ -1827,18 +1784,18 @@ back:
 			}
 		} else {
 			if (params[0] && params[1] && params[2]) /* XXX check */
-				watch_write(j->send_watch, CHARF, params[2]);
+				watch_write(j->send_watch, "%s", params[2]);
 		}
 		{
 			CHAR_T *beg = namespace;
-			CHAR_T *end = xwcsstr(namespace, TEXT(" "));
+			CHAR_T *end = xstrstr(namespace, TEXT(" "));
 
 /*			if (end) *end = '\0'; */	/* SEGV? where? why? :( */
 
-			if (end) beg = xwcsndup(namespace, end-namespace);
-			else	 beg = xwcsdup(namespace);
+			if (end) beg = xstrndup(namespace, end-namespace);
+			else	 beg = xstrdup(namespace);
 
-			watch_write(j->send_watch, "</" CHARF "></query></iq>", beg);
+			watch_write(j->send_watch, "</%s></query></iq>", beg);
 
 			xfree(beg);
 		}
@@ -1846,12 +1803,12 @@ back:
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'c', TEXT("clear"), 2)) {						/* clear */
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {						/* clear */
 		if (bookmark) jabber_bookmarks_free(j);			/* let's destroy previously saved bookmarks */
 		watch_write(j->send_watch,
 			"<iq type=\"set\" id=\"private%d\">"
 			"<query xmlns=\"jabber:iq:private\">"
-			"<" CHARF "/></query></iq>", j->id++, namespace);
+			"<%s/></query></iq>", j->id++, namespace);
 		return 0;
 	}
 
@@ -1865,10 +1822,6 @@ void jabber_register_commands()
 #define JABBER_FLAGS        JABBER_ONLY  | SESSION_MUSTBECONNECTED
 #define JABBER_FLAGS_TARGET JABBER_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
-#if USE_UNICODE
-#define LNULL NULL
-#define command_add(x, y, par, a, b, c) command_add(x, y, L##par, a, b, c)
-#endif
 	command_add(&jabber_plugin, TEXT("jid:"), "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:_autoaway"), "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, TEXT("jid:_autoback"), "r", jabber_command_away,	JABBER_ONLY, NULL);

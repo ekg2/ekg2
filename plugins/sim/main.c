@@ -137,7 +137,6 @@ static QUERY(message_decrypt)
  */
 static COMMAND(command_key)
 {
-	PARUNI
 	if (match_arg(params[0], 'g', TEXT("generate"), 2)) {
 		char *tmp, *tmp2;
 		struct stat st;
@@ -178,7 +177,7 @@ static COMMAND(command_key)
 	}
 
 	if (match_arg(params[0], 's', TEXT("send"), 2)) {
-		wcs_string_t s = NULL;
+		string_t s = NULL;
 		char *tmp, buf[128];
 		FILE *f;
 
@@ -199,20 +198,17 @@ static COMMAND(command_key)
 			return -1;
 		}
 
-		s = wcs_string_init(TEXT("/ "));
+		s = string_init(TEXT("/ "));
 
-		while (fgets(buf, sizeof(buf), f)) {
-			CHAR_T *sbuf = normal_to_wcs(buf);
-			wcs_string_append(s, sbuf);
-			free_utf(sbuf);
-		}
+		while (fgets(buf, sizeof(buf), f))
+			string_append(s, buf);
 
 		fclose(f);
 
-		command_exec(wcs_to_normal(params[1]), session, s->str, quiet);
+		command_exec(params[1], session, s->str, quiet);
 
-		printq("key_send_success", format_user(session, get_uid(session, wcs_to_normal(params[1]))));
-		wcs_string_free(s, 1);
+		printq("key_send_success", format_user(session, get_uid(session, params[1])));
+		string_free(s, 1);
 
 		return 0;
 	}
@@ -226,7 +222,7 @@ static COMMAND(command_key)
 			return -1;
 		}
 
-		if (!(uid = get_uid(session_current, wcs_to_normal(params[1])))) {
+		if (!(uid = get_uid(session_current, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
 		}
@@ -267,7 +263,7 @@ static COMMAND(command_key)
 		else if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			x = params[1];
 
-		if (x && !(list_uid = get_uid(session, wcs_to_normal(x)))) {
+		if (x && !(list_uid = get_uid(session, x))) {
 			printq("user_not_found", x);
 			closedir(dir);
 			return -1;

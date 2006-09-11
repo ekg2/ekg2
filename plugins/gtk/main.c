@@ -243,16 +243,16 @@ void destroy(GtkWidget *widget, gpointer data) {
 gint on_enter(GtkWidget *widget, gpointer data) {
 	window_t *oldw	= window_current;
 	session_t *olds	= session_current;
-	CHAR_T *txt;
+	const char *txt;
 
 	if (data) {
 		window_current = data;
 		session_current = window_current->session;
 	}
-	txt = normal_to_wcs(gtk_entry_get_text(GTK_ENTRY(widget)));
+
+	txt = gtk_entry_get_text(GTK_ENTRY(widget));
 	command_exec(window_current->target, session_current, txt, 0);
 	gtk_entry_set_text(GTK_ENTRY(widget), "");
-	free_utf(txt);
 
 	window_current = oldw;
 	session_current = olds;
@@ -511,13 +511,13 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
 }
 
 int gtk_loop() {
-	GdkEvent *ev;
 	ekg_loop();
 
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
 /* 	
+	GdkEvent *ev;
 	while ((ev = gdk_event_get())) {
 		printf("EVENT: %x\n", ev);
 		gtk_main_do_event(ev);
@@ -915,7 +915,7 @@ void ekg_gtk_window_new(window_t *w) {
 	GtkWidget *sw, *view;
 	GtkTextBuffer *buffer = NULL;
 	GtkWidget *edit;
-	GtkWidget *vbox;
+	GtkWidget *vbox = NULL;
 	
 	char *name = window_target(w);
 	gtk_window_t *n;
@@ -1066,18 +1066,11 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, const CHAR_T *str, cons
 		if (istimestamp && (att & 7) == 0) tags[1] = ekg2_tag_bold;
 
 		if (len && ((tags[0] != newtags[0] || tags[1] != newtags[1]))) {
-			char *tmp = wcs_to_normal_n(str+i-len, len);
 			gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 			gtk_text_buffer_insert_with_tags(buffer, &iter, 
-#if USE_UNICODE
-					tmp, -1,
-#else
-					tmp, len,
-//					str+i-len, len, 
-#endif
+					str+i-len, len, 
 					tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
 			len = 0;
-			free_utf(tmp);
 		}
 
 		tags[0] = newtags[0];
@@ -1085,10 +1078,9 @@ void gtk_process_str(window_t *w, GtkTextBuffer *buffer, const CHAR_T *str, cons
 		len++;
 	}
 	if (len) {
-		char *tmp = wcs_to_normal_n(str+xwcslen(str)-len, -1);
+		const char *tmp = str+xwcslen(str)-len;
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 		gtk_text_buffer_insert_with_tags(buffer, &iter, tmp, -1, tags[0] ? tags[0] : tags[1], tags[0] ? tags[1] : NULL, NULL);
-		free_utf(tmp);
 	}
 }
 
@@ -1108,8 +1100,8 @@ QUERY(gtk_ui_window_print) {
 
 	if (config_timestamp && config_timestamp_show && xstrcmp(config_timestamp, "")) {
 		char *tmp = format_string(config_timestamp);
-		CHAR_T *ts  = wcsprintf(TEXT("%s "), timestamp(tmp));
-		fstring_t *t = wcs_fstring_new(ts);
+		CHAR_T *ts  = saprintf(TEXT("%s "), timestamp(tmp));
+		fstring_t *t = fstring_new(ts);
 		gtk_process_str(w, buffer, t->str, t->attr, 1);
 		xfree(tmp);
 		xfree(ts);
@@ -1293,20 +1285,6 @@ int gtk_plugin_init(int prio) {
 	list_t l;
 	int xfd = -1;
         int is_UI = 0;
-
-/* before loading plugin, do some sanity check */
-#ifdef USE_UNICODE
-	if (!config_use_unicode)
-#else
-	if (config_use_unicode)
-#endif
-	{	debug("plugin gtk cannot be loaded because of mishmashed compilation...\n"
-			"	program compilated with: --%s-unicode\n"
-			"	 plugin compilated with: --%s-unicode\n",
-				config_use_unicode ? "enable" : "disable",
-				config_use_unicode ? "disable": "enable");
-		return -1;
-	}
 
         query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
 #ifdef WITH_X_WINDOWS

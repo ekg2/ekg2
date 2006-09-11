@@ -497,7 +497,6 @@ WATCHER(nntp_handle_connect) {
 
 COMMAND(nntp_command_disconnect)
 {
-	PARASC
 	nntp_private_t	*j = feed_private(session);
 
 	if (!j->connecting && !session_connected_get(session)) {

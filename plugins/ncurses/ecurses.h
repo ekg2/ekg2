@@ -5,10 +5,6 @@
 
 #include "ekg2-config.h"
 
-#if USE_UNICODE
-# define _XOPEN_SOURCE_EXTENDED
-# include <ncursesw/ncurses.h>
-#else
 #ifdef HAVE_NCURSES_H
 #  include <ncurses.h>
 # else
@@ -17,7 +13,6 @@
 #  endif
 #endif
 
-#endif
 #endif
 
 /*
