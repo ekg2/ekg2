@@ -138,30 +138,30 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 #ifdef SHARED_LIBS
 #ifndef NO_POSIX_SYSTEM
         if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-                lib = saprintf("%s/" CHARF ".so", env_ekg_plugins_path, name);
+                lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
                 plugin = ekg2_dlopen(lib);
                 if (!plugin) {
                         xfree(lib);
-                        lib = saprintf("%s/" CHARF "/.libs/" CHARF ".so", env_ekg_plugins_path, name, name);
+                        lib = saprintf("%s/%s/.libs/%s.so", env_ekg_plugins_path, name, name);
                         plugin = ekg2_dlopen(lib);
                 }
         }
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("plugins/" CHARF "/.libs/" CHARF ".so", name, name);
+                lib = saprintf("plugins/%s/.libs/%s.so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("../plugins/" CHARF "/.libs/" CHARF ".so", name, name);
+                lib = saprintf("../plugins/%s/.libs/%s.so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 
 	if (!plugin) {
 		xfree(lib);
-		lib = saprintf("%s/" CHARF ".so", PLUGINDIR, name);
+		lib = saprintf("%s/%s.so", PLUGINDIR, name);
 		plugin = ekg2_dlopen(lib);
 	}
 #else	/* NO_POSIX_SYSTEM */
@@ -209,7 +209,7 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 		plugin_preinit(&win32_helper);
 # endif
 /* than if we don't have static plugin... let's try to load it dynamicly */
-		init = saprintf(CHARF "_plugin_init", name);
+		init = saprintf("%s_plugin_init", name);
 
 		if (!(plugin_init = ekg2_dlsym(plugin, init))) {
 			wcs_printq("plugin_incorrect", name);
@@ -243,8 +243,8 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 	wcs_printq("plugin_loaded", name);
 
 	if (!in_autoexec) {
-		char *tmp = saprintf("config-" CHARF, name);
-		char *tmp2= saprintf("sessions-" CHARF, name);
+		char *tmp = saprintf("config-%s", name);
+		char *tmp2= saprintf("sessions-%s", name);
 
 	/* XXX, in_autoexec, hack */
 		in_autoexec = 1;

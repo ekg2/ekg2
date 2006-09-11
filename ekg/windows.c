@@ -573,7 +573,6 @@ char *window_target(window_t *window) {
  */
 COMMAND(cmd_window)
 {
-	PARUNI
 	if (!xwcscmp(name, TEXT("clear")) || (params[0] && !xwcscasecmp(params[0], TEXT("clear")))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
 		query_emit(NULL, TEXT("ui-window-clear"), &w);
@@ -594,7 +593,7 @@ COMMAND(cmd_window)
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
 				} else
-					wcs_printq("window_list_nothing", wcs_itoa(w->id));
+					wcs_printq("window_list_nothing", itoa(w->id));
 			}
 		}
 		return 0;
@@ -619,7 +618,7 @@ COMMAND(cmd_window)
 	}
 
 	if (!xwcscasecmp(params[0], TEXT("new"))) {
-		window_t *w = window_new(wcs_to_normal(params[1]), session, 0); /* UUU */
+		window_t *w = window_new(params[1], session, 0);
 
 		w->session = window_current->session;
 
@@ -632,16 +631,16 @@ COMMAND(cmd_window)
 		return 0;
 	}
 
-	if (wcs_atoi(params[0])) {
-		window_switch(wcs_atoi(params[0]));
+	if (atoi(params[0])) {
+		window_switch(atoi(params[0]));
 		return 0;
 	}
 
 	if (!xwcscasecmp(params[0], TEXT("switch"))) {
-		if (!params[1] || (!wcs_atoi(params[1]) && xwcscmp(params[1], TEXT("0"))))
+		if (!params[1] || (!atoi(params[1]) && xwcscmp(params[1], TEXT("0"))))
 			wcs_printq("not_enough_params", name);
 		else
-			window_switch(wcs_atoi(params[1]));
+			window_switch(atoi(params[1]));
 		return 0;
 	}			
 
@@ -659,7 +658,7 @@ COMMAND(cmd_window)
 			for (w = NULL, l = windows; l; l = l->next) {
 				window_t *ww = l->data;
 
-				if (ww->id == wcs_atoi(params[1])) {
+				if (ww->id == atoi(params[1])) {
 					w = ww;
 					break;
 				}
@@ -697,15 +696,15 @@ COMMAND(cmd_window)
 			return -1;
 		}
 
-		source = (params[2]) ? wcs_atoi(params[2]) : window_current->id;
+		source = (params[2]) ? atoi(params[2]) : window_current->id;
 
 		if (!source) {
-                        wcs_printq("window_invalid_move", wcs_itoa(source));
+                        wcs_printq("window_invalid_move", itoa(source));
 			return -1;
 		}
 
 		if (!window_exist(source)) {
-			wcs_printq("window_doesnt_exist", wcs_itoa(source));
+			wcs_printq("window_doesnt_exist", itoa(source));
 			return -1;
 		}
 
@@ -721,11 +720,11 @@ COMMAND(cmd_window)
 		else if (!xwcscasecmp(params[1], TEXT("right")))
 			dest = source + 1;
 		else
-			dest = wcs_atoi(params[1]);
+			dest = atoi(params[1]);
 
 
 		if (!dest) {
-			wcs_printq("window_invalid_move", wcs_itoa(dest));
+			wcs_printq("window_invalid_move", itoa(dest));
 			return -1;
 		}
 

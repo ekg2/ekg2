@@ -242,7 +242,7 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 	CHAR_T **params = NULL;
 	CHAR_T *array;
 
-	if (!string || !(cmd = xwcschr(string, ' ')))
+	if (!string || !(cmd = xstrchr(string, ' ')))
 		return -1;
 
 	*cmd++ = 0;
@@ -265,7 +265,7 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 
 					if (!xwcscasecmp(c->name, j->name)) {
 						xfree(c->params);
-						c->params = wcs_array_make(TEXT("?"), TEXT(" "), 0, 1, 1);
+						c->params = array_make(TEXT("?"), TEXT(" "), 0, 1, 1);
 						break;
 					}
 				}
@@ -295,7 +295,7 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 	list_add(&(a->commands), cmd, (xwcslen(cmd) + 1) * sizeof(CHAR_T));
 	list_add(&aliases, a, 0);
 
-	array = (params) ? wcs_array_join(params, TEXT(" ")) : xwcsdup(TEXT("?"));
+	array = (params) ? array_join(params, TEXT(" ")) : xwcsdup(TEXT("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
@@ -390,7 +390,7 @@ void binding_list(int quiet, const CHAR_T *name, int all)
 		struct binding *b = l->data;
 
 		if (name) {
-			if (xwcscasestr(b->key, name)) {
+			if (xstrcasestr(b->key, name)) {
 				wcs_printq("bind_seq_list", b->key, b->action);
 				found = 1;
 			}
@@ -405,7 +405,7 @@ void binding_list(int quiet, const CHAR_T *name, int all)
 		for (l = bindings; l; l = l->next) {
 			struct binding *b = l->data;
 
-			if (xwcscasestr(b->action, name))
+			if (xstrcasestr(b->action, name))
 				wcs_printq("bind_seq_list", b->key, b->action);
 		}
 	}
@@ -489,7 +489,6 @@ int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines)
 
 int buffer_add_str(int type, const char *target, const char *str, int max_lines) {
 	struct buffer *b;
-	CHAR_T *line;
 	char *sep;
 
 	time_t ts = 0;
@@ -516,15 +515,11 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
 		}
 	}
 
-	line	= normal_to_wcs(sep+1);
-
 	b	= xmalloc(sizeof(struct buffer));
 	b->ts		= ts;
 	b->type		= type;
 	b->target	= xstrdup(target);
-	b->line		= xwcsdup(line);
-
-	free_utf(line);
+	b->line		= xwcsdup(sep+1);
 
 	return ((list_add(&buffers, b, 0) ? 0 : -1));
 }
@@ -540,7 +535,7 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
  */
 CHAR_T *buffer_flush(int type, const char *target)
 {
-	wcs_string_t str = wcs_string_init(NULL);
+	string_t str = string_init(NULL);
 	list_t l;
 
 	for (l = buffers; l; ) {
@@ -554,17 +549,17 @@ CHAR_T *buffer_flush(int type, const char *target)
 		if (target && b->target && xstrcmp(target, b->target))
 			continue;
 
-		wcs_string_append(str, itoa(b->ts));
-		wcs_string_append_c(str, ' ');
-		wcs_string_append(str, b->line);
-		wcs_string_append_c(str, '\n');
+		string_append(str, itoa(b->ts));
+		string_append_c(str, ' ');
+		string_append(str, b->line);
+		string_append_c(str, '\n');
 
 		xfree(b->line);
 		xfree(b->target);
 		list_remove(&buffers, b, 1);
 	}
 
-	return wcs_string_free(str, 0);
+	return string_free(str, 0);
 }
 
 /*
@@ -1240,7 +1235,7 @@ char *help_path(char *name, CHAR_T *plugin) {
         FILE *fp;
 
         if (plugin) {
-                base = saprintf(DATADIR "/plugins/"CHARF"/%s", plugin, name);
+                base = saprintf(DATADIR "/plugins/%s/%s", plugin, name);
         } else {
                 base = saprintf(DATADIR "/%s", name);
         }
@@ -1414,20 +1409,6 @@ char *strip_spaces(char *line)
 	return buf;
 }
 
-CHAR_T *wcs_strip_spaces(CHAR_T *line)
-{
-	CHAR_T *buf;
-
-	if (!xwcslen(line)) return line;
-
-	for (buf = line; *buf == TEXT(' '); buf++);
-
-	while (line[xwcslen(line) - 1] == TEXT(' '))
-		line[xwcslen(line) - 1] = 0;
-
-	return buf;
-}
-
 /*
  * play_sound()
  *
@@ -1445,7 +1426,7 @@ int play_sound(const char *sound_path)
 		return -1;
 	}
 
-	params[0] = wcsprintf(TEXT("^%s %s"), config_sound_app, sound_path);
+	params[0] = saprintf(TEXT("^%s %s"), config_sound_app, sound_path);
 	params[1] = NULL;
 
 	res = cmd_exec(TEXT("exec"), (const CHAR_T **) params, NULL, NULL, 1);
@@ -1619,18 +1600,6 @@ char *read_file(FILE *f)
 		res[xstrlen(res) - 1] = 0;
 
 	return res;
-}
-
-CHAR_T *wcs_read_file(FILE *f)
-{
-	char *tmp = read_file(f);
-	CHAR_T *t;
-
-	if (!tmp)
-		return NULL;
-	t = normal_to_wcs(tmp);
-	free_utf(tmp);
-	return t;
 }
 
 /*
@@ -2017,18 +1986,7 @@ char *strcasestr(const char *haystack, const char *needle)
 
 CHAR_T *wcscasestr(const CHAR_T *haystack, const CHAR_T *needle)
 {
-#if USE_UNICODE
-	int i, hlen = xwcslen(haystack), nlen = xwcslen(needle);
-
-	for (i = 0; i <= hlen - nlen; i++) {
-		if (!xwcsncasecmp(haystack + i, needle, nlen))
-			return (CHAR_T*) (haystack + i);
-	}
-
-	return NULL;
-#else
 	return strcasestr(haystack, needle);
-#endif
 }
 
 /*
@@ -2052,11 +2010,7 @@ int msg_all(session_t *s, const CHAR_T *function, const CHAR_T *what)
 
 		if (!u || !u->uid)
 			continue;
-#if USE_UNICODE
-		command_exec_format(NULL, s, 0, TEXT("%ls \"%s\" %ls"), function, get_nickname(s, u->uid), what);
-#else
-		command_exec_format(NULL, s, 0, TEXT("%s \"%s\" %s"), function, get_nickname(s, u->uid), what);
-#endif
+		command_exec_format(NULL, s, 0, "%s \"%s\" %s", function, get_nickname(s, u->uid), what);
 	}
 
 	return 0;
@@ -2095,7 +2049,7 @@ int say_it(const CHAR_T *str)
 		xfree(tmp);
 
 		if (f) {
-			fprintf(f, CHARF".", str);
+			fprintf(f, "%s.", str);
 			status = pclose(f);	/* dzieciak czeka na dzieciaka */
 		}
 
@@ -2281,27 +2235,6 @@ char *split_line(char **ptr)
         return res;
 }
 
-CHAR_T *wcs_split_line(CHAR_T **ptr) {
-	CHAR_T *foo, *res;
-
-        if (!ptr || !*ptr || !xwcscmp(*ptr, TEXT("")))
-                return NULL;
-
-        res = *ptr;
-
-        if (!(foo = xwcschr(*ptr, '\n')))
-                *ptr += xwcslen(*ptr);
-        else {
-                *ptr = foo + 1;
-                *foo = 0;
-                if (xwcslen(res) > 1 && res[xwcslen(res) - 1] == TEXT('\r'))
-                        res[xwcslen(res) - 1] = 0;
-        }
-
-        return res;
-
-}
-
 /*
  * ekg_status_label()
  *
@@ -2330,10 +2263,10 @@ char *ekg_draw_descr(const char *status)
 	variable_t *v;	
 
 	if (!xstrcmp(status, EKG_STATUS_NA) || !xstrcmp(status, EKG_STATUS_INVISIBLE)) {
-		xwcscpy(var, TEXT("quit_reason"));
+		xstrcpy(var, TEXT("quit_reason"));
 		xstrcpy(file, "quit.reasons");
 	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
-		xwcscpy(var, TEXT("back_reason"));
+		xstrcpy(var, TEXT("back_reason"));
 		xstrcpy(file, "back.reasons");
 	} else {
 		snprintf(var, sizeof(var), "%s_reason", status);
@@ -2400,7 +2333,7 @@ uint32_t *ekg_sent_message_format(const CHAR_T *text)
 
 	/* oblicz d³ugo¶æ tekstu bez znaczków formatuj±cych */
 	for (p = text, len = 0; *p; p++) {
-		if (!xwcschr(TEXT("\x02\x03\x12\x14\x1f"), *p))
+		if (!xstrchr(TEXT("\x02\x03\x12\x14\x1f"), *p))
 			len++;
 	}
 
@@ -2419,7 +2352,7 @@ uint32_t *ekg_sent_message_format(const CHAR_T *text)
 			p++;
 
 			if (xisdigit(*p)) {
-				int num = wcs_atoi(p);
+				int num = atoi(p);
 				
 				if (num < 0 || num > 15)
 					num = 0;
@@ -2651,16 +2584,6 @@ char *saprintf(const char *format, ...)
         return res;
 }
 
-CHAR_T *wcsprintf(const CHAR_T *format, ...)
-{
-	va_list ap;
-	CHAR_T *res;
-
-	va_start(ap, format);
-	res = vwcssaprintf(format, ap);
-	va_end(ap);
-	return res;
-}
 /*
  * xstrtr()
  *

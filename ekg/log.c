@@ -48,8 +48,8 @@ static CHAR_T *utf_ent[256] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, TEXT("&quot;"), 0, 0, 0, TEXT("&amp;"), TEXT("&apos;"), 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("&lt;"), 0, TEXT("&gt;"), 0,
+	0, 0, "&quot;", 0, 0, 0, "&amp;", "&apos;", 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "&lt;", 0, "&gt;", 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -264,7 +264,7 @@ char *log_escape(const char *str)
  *
  * allocated buffer
  */
-CHAR_T *xml_uescape(const CHAR_T *text)
+CHAR_T *xml_escape(const char *text)
 {
 	const CHAR_T *p;
 	CHAR_T *res, *q;
@@ -284,22 +284,13 @@ CHAR_T *xml_uescape(const CHAR_T *text)
 		if (*p >= sizeof(utf_ent)/sizeof(CHAR_T)) ent = NULL;
 
 		if (ent)
-			xwcscpy(q, ent);
+			xstrcpy(q, ent);
 		else
 			*q = *p;
 
 		q += ent ? xwcslen(ent) : 1;
 	}
 
-	return res;
-}
-
-CHAR_T *xml_escape(const char *text) {
-	CHAR_T *stext = normal_to_wcs(text);
-	CHAR_T *res;
-
-	res = xml_uescape(stext);
-	free_utf(stext);
 	return res;
 }
 

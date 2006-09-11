@@ -62,7 +62,6 @@ static int events_list(int id, int quiet);
  */
 COMMAND(cmd_on)
 {
-	PARUNI
 	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		int prio;
 
@@ -71,7 +70,7 @@ COMMAND(cmd_on)
                         return -1;
                 }
 
-		if (!(prio = wcs_atoi(params[2])) || !wcs_array_contains(events_all, params[1], 0)) {
+		if (!(prio = atoi(params[2])) || !array_contains(events_all, params[1], 0)) {
 			wcs_printq("invalid_params", name);
 			return -1;
 		}
@@ -94,7 +93,7 @@ COMMAND(cmd_on)
 		if (!xwcscmp(params[1], TEXT("*")))
 			par = 0;
 		else {
-			if (!(par = wcs_atoi(params[1]))) {
+			if (!(par = atoi(params[1]))) {
 				wcs_printq("invalid_params", name);			
 				return -1;
 			}
@@ -108,7 +107,7 @@ COMMAND(cmd_on)
 	}
 
 	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
-		events_list((params[0] && params[1] && wcs_atoi(params[1])) ? wcs_atoi(params[1]) : 0, 0);
+		events_list((params[0] && params[1] && atoi(params[1])) ? atoi(params[1]) : 0, 0);
 		return 0;
 	}
 
@@ -205,7 +204,7 @@ static int event_remove(unsigned int id, int quiet)
 	}
 	
 	if (!(ev = event_find_id(id))) {
-		wcs_printq("events_del_noexist", wcs_itoa(id));
+		wcs_printq("events_del_noexist", itoa(id));
 		return -1;
 	}
 	
@@ -215,7 +214,7 @@ static int event_remove(unsigned int id, int quiet)
 	
 	list_remove(&events, ev, 1);
 
-	wcs_printq("events_del", wcs_itoa(id));
+	wcs_printq("events_del", itoa(id));
 
 cleanup:	
         query_emit(NULL, TEXT("event-removed"), itoa(id));
@@ -263,16 +262,16 @@ event_t *event_find(const CHAR_T *name, const CHAR_T *target)
 	int ev_max_prio = 0;
 	CHAR_T **b, **c;
 
-	debug("// event_find (name (" CHARF "), target (" CHARF ")\n", name, target);
-	b = wcs_array_make(target, TEXT("|,;"), 0, 1, 0);
-	c = wcs_array_make(name, TEXT("|,;"), 0, 1, 0);
+	debug("// event_find (name (%s), target (%s)\n", name, target);
+	b = array_make(target, TEXT("|,;"), 0, 1, 0);
+	c = array_make(name, TEXT("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {
 		event_t *ev = l->data;
 		CHAR_T **a, **d;
 		int i, j, k, m;
 
-		a = wcs_array_make(ev->target, TEXT("|,;"), 0, 1, 0);
-		d = wcs_array_make(ev->name, TEXT("|,;"), 0, 1, 0);
+		a = array_make(ev->target, TEXT("|,;"), 0, 1, 0);
+		d = array_make(ev->name, TEXT("|,;"), 0, 1, 0);
 		for (i = 0; a[i]; i++) {
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
@@ -287,12 +286,12 @@ event_t *event_find(const CHAR_T *name, const CHAR_T *target)
 				}
 			}
 		}
-		wcs_array_free(a);
-		wcs_array_free(d);
+		array_free(a);
+		array_free(d);
 	}
 
-	wcs_array_free(b);
-	wcs_array_free(c);
+	array_free(b);
+	array_free(c);
 
 	return (ev_max) ? ev_max : NULL;
 }
@@ -311,21 +310,21 @@ static event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR
 	int ev_max_prio = 0;
 	CHAR_T **b, **c;
 
-	debug("// event_find_all (name (" CHARF "), target (" CHARF ")\n", name, target);
-	b = wcs_array_make(target, TEXT("|,;"), 0, 1, 0);
-	c = wcs_array_make(name, TEXT("|,;"), 0, 1, 0);
+	debug("// event_find_all (name (%s), target (%s)\n", name, target);
+	b = array_make(target, TEXT("|,;"), 0, 1, 0);
+	c = array_make(name, TEXT("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {
 		event_t *ev = l->data;
 		CHAR_T **a, **d;
 		int i, j, k, m;
 
-		a = wcs_array_make(ev->target, TEXT("|,;"), 0, 1, 0);
-		d = wcs_array_make(ev->name, TEXT("|,;"), 0, 1, 0);
+		a = array_make(ev->target, TEXT("|,;"), 0, 1, 0);
+		d = array_make(ev->name, TEXT("|,;"), 0, 1, 0);
 		for (i = 0; a[i]; i++) {
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-						CHAR_T *tmp = wcs_format_string(a[i], uid, target, data);
+						CHAR_T *tmp = format_string(a[i], uid, target, data);
 						if ((xwcscasecmp(d[m], c[k]) && xwcscasecmp(d[m], TEXT("*"))) || 
 								(!event_target_check(tmp) && xwcscasecmp(a[i], TEXT("*")) && 
 								 xwcscasecmp(a[i], b[j]))) {
@@ -340,12 +339,12 @@ static event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR
 				}
 			}
 		}
-		wcs_array_free(a);
-		wcs_array_free(d);
+		array_free(a);
+		array_free(d);
 	}
 
-	wcs_array_free(b);
-	wcs_array_free(c);
+	array_free(b);
+	array_free(c);
 
 	return (ev_max) ? ev_max : NULL;
 }
@@ -376,7 +375,7 @@ static event_t *event_find_id(unsigned int id)
 static void events_add_handler(CHAR_T *name, void *function)
 {
         query_connect(NULL, name, function, NULL);
-        wcs_array_add(&events_all, name);
+        array_add(&events_all, name);
 }
 
 /* 
@@ -588,19 +587,17 @@ int event_check(const char *session, const char *name, const char *uid, const ch
                 *q = 0;
         }
 
-	actions = wcs_array_make(action, TEXT(";"), 0, 0, 1);
+	actions = array_make(action, TEXT(";"), 0, 0, 1);
 
 	for (i = 0; actions && actions[i]; i++) {
-	        char *tmp = format_string(wcs_strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
-		CHAR_T *tmp2 = normal_to_wcs(tmp);
+	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
 
 		debug("// event_check() calling \"%s\"\n", tmp);
-		command_exec(NULL, NULL, tmp2, 0); /* BUG? CHECK: hm, we've got specified session, not current one... target too.. so is it correct ? */
+		command_exec(NULL, NULL, tmp, 0); /* BUG? CHECK: hm, we've got specified session, not current one... target too.. so is it correct ? */
 		xfree(tmp);
-		free_utf(tmp2);
 	}
 
-	wcs_array_free(actions);
+	array_free(actions);
 	xfree(edata);
 
         return 0;
@@ -641,9 +638,9 @@ void event_free()
  */
 static int event_target_check_compare(CHAR_T *buf)
 {
-	wcs_string_t s;
+	string_t s;
 
-	s = wcs_string_init(TEXT(""));
+	s = string_init(TEXT(""));
 
 	while(*buf) {
 		if (*buf == '/') {
@@ -667,11 +664,11 @@ static int event_target_check_compare(CHAR_T *buf)
 				if (!*buf)
 					break;
 
-				return (!xwcscmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
+				return (!xwcscmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 			}
 
 			/* '=' */
-			return (!xwcscasecmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
+			return (!xwcscasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 		}
 
 		if (*buf == '!') {
@@ -691,11 +688,11 @@ static int event_target_check_compare(CHAR_T *buf)
 					if (!*buf)
 						break;
 
-					return (xwcscmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
+					return (xwcscmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 				}
 
 				/* '!=' */
-				return (xwcscasecmp(s->str, buf) && !wcs_string_free(s, 1)) ? 1 : 0;
+				return (xwcscasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 			}
 
 			if (*buf == '+') {
@@ -709,12 +706,12 @@ static int event_target_check_compare(CHAR_T *buf)
 					if (!*buf)
 						break;
 
-					return (!xwcsstr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
+					return (!xstrstr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
 				}
 
 
 				/* '!+' */
-				return (!xwcscasestr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
+				return (!xstrcasestr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
 			}
 
 			continue;
@@ -732,18 +729,18 @@ static int event_target_check_compare(CHAR_T *buf)
 				if (!*buf)
 					break;
 
-				return (xwcsstr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
+				return (xstrstr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
 			}
 
 			/* '+' */
-			return (xwcscasestr(buf, s->str) && !wcs_string_free(s, 1)) ? 1 : 0;
+			return (xstrcasestr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
 		}
 
-		wcs_string_append_c(s, *buf);
+		string_append_c(s, *buf);
 		*buf++;
 	}
 
-	wcs_string_free(s, 1);
+	string_free(s, 1);
 	return 0;
 }
 
@@ -757,7 +754,7 @@ static int event_target_check_compare(CHAR_T *buf)
 
 int event_target_check(CHAR_T *buf)
 {
-	CHAR_T **params = wcs_array_make(buf, TEXT("&|"), 0, 1, 1);
+	CHAR_T **params = array_make(buf, TEXT("&|"), 0, 1, 1);
 	int i = 1;
 	CHAR_T *separators;
 	char last_returned = 0;
@@ -768,7 +765,7 @@ int event_target_check(CHAR_T *buf)
 	if (!params)
 		return -1;
 	
-	separators = xmalloc(wcs_array_count(params) * sizeof(CHAR_T) + 1);
+	separators = xmalloc(array_count(params) * sizeof(CHAR_T) + 1);
 	
 	while (*buf) {
 		if (*buf == '&' || *buf == '|') {
@@ -802,7 +799,7 @@ int event_target_check(CHAR_T *buf)
 #undef s
 
 	xfree(separators);
-	wcs_array_free(params);
+	array_free(params);
 
 	return last_returned;
 }

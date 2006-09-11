@@ -28,17 +28,9 @@
 #include "sessions.h"
 
 #define printq(x...) do { if (!quiet) { print(x); } } while(0)
-#define wcs_printq(x...) do { if (!quiet) { wcs_print(x); } } while(0)
+#define wcs_printq(x...) do { if (!quiet) { print(x); } } while(0)
 
-#if USE_UNICODE
-#define COMMAND(x) int x(const CHAR_T *name, const CHAR_T **params_, session_t *session, const char *target, int quiet)
-#define PARASC 		const char **params = (const char **) wcs_array_to_str((CHAR_T **) params_);
-#define PARUNI		const CHAR_T **params = params_;
-#else
 #define COMMAND(x) int x(const CHAR_T *name, const CHAR_T **params, session_t *session, const char *target, int quiet)
-#define PARASC 
-#define PARUNI
-#endif
 
 /* INFORMATIONAL FLAGS */
 	/* command is binded by alias managment */
@@ -88,6 +80,7 @@ void command_free();
 int command_exec(const char *target, session_t *session, const CHAR_T *line, int quiet);
 int command_exec_format(const char *target, session_t *session, int quiet, const CHAR_T *format, ...);
 
+COMMAND(cmd_add);
 COMMAND(cmd_alias_exec);
 COMMAND(cmd_exec);
 COMMAND(cmd_list);
@@ -115,7 +108,6 @@ int binding_quick_list(int a, int b);
 int binding_toggle_contacts(int a, int b);
 
 int match_arg(const CHAR_T *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
-int nmatch_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
 
 /* wyniki ostatniego szukania */
 extern CHAR_T *last_search_first_name;

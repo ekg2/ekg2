@@ -97,7 +97,6 @@ typedef struct {
 } stream_private_t; 
 
 COMMAND(cmd_streams) {
-	PARUNI
 	const CHAR_T **create = NULL;
 	int display = 0;
 	list_t l;
@@ -110,9 +109,9 @@ COMMAND(cmd_streams) {
 
 /* i think that api if i (we?) write it... will be nice, but code can be obscure... sorry */
 
-	if (match_arg(params[0], 'c', TEXT("create"), 2)) {		/* --create */
+	if (match_arg(params[0], 'c', "create", 2)) {		/* --create */
 		create = &params[1];
-	} else if (match_arg(params[0], 'l', TEXT("list"), 2) || !params[0]) {	/* list if --list. default action is --list (if we don't have params)  */
+	} else if (match_arg(params[0], 'l', "list", 2) || !params[0]) {	/* list if --list. default action is --list (if we don't have params)  */
 		display = 1;
 	} else {							/* default action is --create (if we have params) */
 		create = &params[0];

@@ -62,7 +62,6 @@ list_t formats = NULL;
  */
 const char *format_find(const char *name)
 {
-	CHAR_T *sname;
         const char *tmp;
         int hash;
         list_t l;
@@ -70,8 +69,7 @@ const char *format_find(const char *name)
         if (!name)
                 return "";
 
-	sname = normal_to_wcs(name);
-        hash = ekg_hash(sname);
+        hash = ekg_hash(name);
 
         if (config_speech_app && !xstrchr(name, ',')) {
                 char *name2 = saprintf("%s,speech", name);
@@ -79,7 +77,6 @@ const char *format_find(const char *name)
 
                 if (xstrcmp((tmp = format_find(name2)), "")) {
                         xfree(name2);
-			free_utf(sname);
                         return tmp;
                 }
 
@@ -92,7 +89,6 @@ const char *format_find(const char *name)
 
                 if (xstrcmp((tmp = format_find(name2)), "")) {
                         xfree(name2);
-			free_utf(sname);
                         return tmp;
                 }
 
@@ -102,12 +98,10 @@ const char *format_find(const char *name)
         for (l = formats; l; l = l->next) {
                 struct format *f = l->data;
 
-                if (hash == f->name_hash && !xwcscasecmp(f->name, sname)) {
-			free_utf(sname);
+                if (hash == f->name_hash && !xwcscasecmp(f->name, name)) {
                         return f->value;
 		}
         }
-	free_utf(sname);
         return "";
 }
 
@@ -190,13 +184,12 @@ static const CHAR_T *format_ansi(char ch)
  *  - format - warto¶æ, nie nazwa formatu,
  *  - ap - argumenty.
  */
-char *va_format_string(const char *format, va_list ap, int isunicode)
+char *va_format_string(const char *format, va_list ap)
 {
         static int dont_resolve = 0;
         string_t buf = string_init(NULL);
         const char *p;
 	char *args[9];
-	const CHAR_T *uargs[9];
         int i, argc = 0;
         /* liczymy ilo¶æ argumentów */
         for (p = format; *p; p++) {
@@ -245,16 +238,11 @@ char *va_format_string(const char *format, va_list ap, int isunicode)
                 }
         }
 
-        for (i = 0; i < 9; i++) {
+        for (i = 0; i < 9; i++) 
                 args[i] = NULL;
-		uargs[i] = NULL;
-	}
 
         for (i = 0; i < argc; i++)
-                uargs[i] = va_arg(ap, CHAR_T *);
-	for (i = 0; i < argc; i++)
-		if (isunicode) args[i] = wcs_to_normal(uargs[i]);
-		else args[i] = (char *) uargs[i];
+                args[i] = va_arg(ap, CHAR_T *);
 
         if (!dont_resolve) {
                 dont_resolve = 1;
@@ -338,9 +326,8 @@ char *va_format_string(const char *format, va_list ap, int isunicode)
                         if (*p == '#')
                                 string_append(buf, timestamp(timestamp_cache));
                         else if (config_display_color) {
-				char *tmp = wcs_to_normal(format_ansi(*p));
+				const char *tmp = format_ansi(*p);
                                 string_append(buf, tmp);
-				free_utf(tmp);
                         }
 
                         if (*p == '@') {
@@ -437,22 +424,7 @@ char *va_format_string(const char *format, va_list ap, int isunicode)
         if (!config_display_pl_chars)
                 iso_to_ascii(buf->str);
 
-	if (isunicode)
-		for (i = 0; i < 9; i++)
-			free_utf(args[i]);
-
         return string_free(buf, 0);
-}
-
-static CHAR_T *wcs_va_format_string(const char *data, va_list ap)
-{
-	CHAR_T *tmp;
-	char *tmp2;
-		
-	tmp2 = va_format_string(data, ap, 1);
-	tmp = normal_to_wcs(tmp2);
-	free_utf(tmp2);
-	return tmp;
 }
 
 /*
@@ -464,8 +436,8 @@ static CHAR_T *wcs_va_format_string(const char *data, va_list ap)
  *
  * zwraca zaalokowan± fstring_t.
  */
-fstring_t *wcs_fstring_new(const CHAR_T *str)
-{
+
+fstring_t *fstring_new(const char *str) {
         fstring_t *res = xmalloc(sizeof(fstring_t));
 	CHAR_T *tmpstr;
         short attr = 128;
@@ -517,11 +489,7 @@ fstring_t *wcs_fstring_new(const CHAR_T *str)
                         p=(CHAR_T *)&(str[i]);
                         while (1) {
                                 ism=deli=0;
-#if USE_UNICODE
-				ism = swscanf(p, TEXT("%02d"), &m);
-#else
                                 ism=sscanf(p, "%02d", &m);
-#endif
                                 if (ism) {
                                         p++; deli++; i++;
                                         if(isdigit(*p)) { p++; deli++; i++; }
@@ -613,14 +581,6 @@ wedonthavem:
         return res;
 }
 
-fstring_t *fstring_new(const char *str) {
-	fstring_t *fstr;
-	CHAR_T *tmp = normal_to_wcs(str);
-	fstr = wcs_fstring_new(tmp);
-	free_utf(tmp);
-	return fstr;
-}
-
 /*
  * fstring_free()
  *
@@ -652,25 +612,10 @@ char *format_string(const char *format, ...)
         char *tmp;
 
         va_start(ap, format);
-        tmp = va_format_string(format, ap, 0);
+        tmp = va_format_string(format, ap);
         va_end(ap);
 
         return tmp;
-}
-
-CHAR_T *wcs_format_string(const CHAR_T *format, ...)
-{
-	char *sformat = wcs_to_normal(format);
-	va_list ap;
-	CHAR_T *tmp;
-
-	va_start(ap, format);
-	tmp = wcs_va_format_string(sformat, ap);
-	va_end(ap);
-
-	free_utf(sformat);
-
-	return tmp;
 }
 
 /*
@@ -719,7 +664,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
                 target = "__current";
 
         va_start(ap, theme);
-        tmp = stmp = va_format_string(format_find(theme), ap, 0);
+        tmp = stmp = va_format_string(format_find(theme), ap);
         va_end(ap);
 
         while ((line = split_line(&tmp))) {
@@ -747,68 +692,6 @@ void print_window(const char *target, session_t *session, int separate, const ch
         xfree(newtarget);
 }
 
-void wcs_print_window(const char *target, session_t *session, int separate, const char *theme, ...)
-{
-        CHAR_T *tmp, *stmp, *line, *prompt = NULL;
-	char *newtarget = NULL;
-        va_list ap;
-        if (!window_find_s(session, target)) {
-                const char *res;
-                userlist_t *u;
-
-                if ((res = xstrchr(target, '/'))) {
-                        newtarget = xstrdup(target);
-                        *(xstrchr(newtarget, '/')) = 0;
-                        u = userlist_find(session, target);
-                } else {
-                        u = userlist_find(session, target);
-
-                        if (u && window_find_s(session, u->uid))
-                                newtarget = xstrdup(u->uid);
-                        else if (u && u->nickname)
-                                newtarget = xstrdup(u->nickname);
-                }
-        }
-
-        if (newtarget)
-                target = newtarget;
-
-        if (!target)
-                target = "__current";
-
-        va_start(ap, theme);
-        tmp = stmp = wcs_va_format_string(format_find(theme), ap);
-        va_end(ap);
-
-        while ((line = wcs_split_line(&tmp))) {
-                CHAR_T *p;
-
-                if ((p = xwcsstr(line, TEXT("\033[00m")))) {
-                        xfree(prompt);
-                        if (p != line)
-                                prompt = xwcsmid(line, 0, (int) (p - line) + 5);
-                        else
-                                prompt = NULL;
-                        line = p;
-                }
-
-                if (prompt) {
-                        CHAR_T *tmp = 
-#if USE_UNICODE
-				wcsprintf(TEXT("%ls%ls"), prompt, line);
-#else
-				wcsprintf("%s%s", prompt, line);
-#endif
-                        window_print(target, session, separate, wcs_fstring_new(tmp));
-                        xfree(tmp);
-                } else
-                        window_print(target, session, separate, wcs_fstring_new(line));
-        }
-
-        xfree(prompt);
-        xfree(stmp);
-        xfree(newtarget);
-}
 /*
  * theme_cache_reset()
  *
@@ -835,7 +718,6 @@ void theme_cache_reset()
  */
 int format_add(const char *name, const char *value, int replace)
 {
-	CHAR_T *sname = normal_to_wcs(name);
         struct format *f;
         list_t l;
         int hash;
@@ -847,24 +729,22 @@ int format_add(const char *name, const char *value, int replace)
                 no_prompt_cache = 1;
                 return 0;
         }
-        hash = ekg_hash(sname);
+        hash = ekg_hash(name);
 
         for (l = formats; l; l = l->next) {
 		f = l->data;
-                if (hash == f->name_hash && !xwcscasecmp(sname, f->name)) {
+                if (hash == f->name_hash && !xwcscasecmp(name, f->name)) {
                         if (replace) {
                                 xfree(f->value);
                                 f->value = xstrdup(value);
                         }
-			free_utf(sname);
                         return 0;
                 }
         }
 	f = xmalloc(sizeof(struct format));
-        f->name = xwcsdup(sname);
+        f->name = xwcsdup(name);
         f->name_hash = hash;
         f->value = xstrdup(value);
-	free_utf(sname);
 
         return (list_add(&formats, f, 0) ? 0 : -1);
 }
@@ -878,17 +758,15 @@ int format_add(const char *name, const char *value, int replace)
  */
 static int format_remove(const char *name)
 {
-	CHAR_T *sname;
         list_t l;
 
         if (!name)
                 return -1;
-	sname = normal_to_wcs(name);
 
         for (l = formats; l; l = l->next) {
                 struct format *f = l->data;
 
-                if (!xwcscasecmp(f->name, sname)) {
+                if (!xwcscasecmp(f->name, name)) {
                         xfree(f->value);
                         xfree(f->name);
                         list_remove(&formats, f, 1);
@@ -1125,7 +1003,6 @@ void theme_init()
 	format_add("welcome", _("%> %Tekg2-%1%n (%ge%Gk%gg %Gr%ge%Gl%go%Ga%gd%Ge%gd%n)\n%> Software licensed on GPL v2 terms\n\n"), 1);
 	format_add("welcome,speech", _("welcome in e k g 2."), 1);
 	format_add("ekg_version", _("%) %Tekg2-%1%n (compiled %2)\n"), 1);
-	format_add("ekg_version_unicode", _("%) %Tekg2-%1%n (compiled %2) with unicode support\n"), 1);
 	format_add("secure", _("%Y(encrypted)%n"), 1);
 	format_add("day_changed", _("%) Day changed to: %W%1"), 1);
 

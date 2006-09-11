@@ -45,7 +45,6 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
-#include "char.h"
 
 #include "configfile.h"
 #include "stuff.h"
@@ -71,7 +70,6 @@
 #endif
 
 #define fix(s) ((s) ? (s) : "")
-#define ufix(s) ((s) ? (s) : TEXT(""))
 
 void ekg_oom_handler()
 {
@@ -149,17 +147,10 @@ char *xstrdup(const char *s)
 	return tmp;
 }
 
-CHAR_T *xwcsdup(const CHAR_T *s) {
-	if (!s) return NULL;
-
-	return xmemdup((void *) s, (xwcslen(s)+1) * sizeof(CHAR_T));
-}
-
 size_t xstrnlen(const char *s, size_t n) 
 {
         return strnlen(fix(s), n);
 }
-
 
 char *xstrndup(const char *s, size_t n)
 {
@@ -172,21 +163,6 @@ char *xstrndup(const char *s, size_t n)
 		ekg_oom_handler();
 
         return tmp;
-}
-
-CHAR_T *xwcsndup(const CHAR_T *s, size_t n) {
-#if USE_UNICODE
-	CHAR_T *tmp;
-	if (!s)
-		return NULL;
-	if (!(tmp = xcalloc(n+1, sizeof(CHAR_T))))
-		ekg_oom_handler();
-	xwcsncpy(tmp, s, n);
-	tmp[n] = (wchar_t) 0;
-	return tmp;
-#else
-	return xstrndup(s, n);
-#endif
 }
 
 void *xmemdup(void *ptr, size_t size)
@@ -230,50 +206,9 @@ char *vsaprintf(const char *format, va_list ap)
 	return res;
 }
 
-CHAR_T *vwcssaprintf(const CHAR_T *format, va_list ap) 
-{
-#if USE_UNICODE
-#if defined(va_copy) || defined(__va_copy)
-	va_list aq;
-#endif
-	int size = 512, len = -1;
-	CHAR_T *res = NULL;
-
-	do {
-		res = (CHAR_T *) xrealloc(res, (size+1)*sizeof(CHAR_T));	/* allocate buffer */
-	/* copy va_list, some system need it */
-#if defined(va_copy)
-		va_copy(aq, ap);
-#elif defined(__va_copy)
-		__va_copy(aq, ap);
-#endif
-	/* format string */
-#if defined(va_copy) || defined(__va_copy)
-		len = vswprintf(res, size, format, aq);
-		va_end(aq);
-#else
-		len = vswprintf(res, size, format, ap);
-#endif
-		size += 1024;
-	} while (len == -1 && size < 1666666);		/* if formating fails, try do to it once more time, untill magic length 1'666'666 B */
-	return res;
-#else
-	return vsaprintf(format, ap);
-#endif
-}
-
 char *xstrstr(const char *haystack, const char *needle)
 {
 	return strstr(fix(haystack), fix(needle));		
-}
-
-CHAR_T *xwcsstr(const CHAR_T *haystack, const CHAR_T *needle)
-{
-#if USE_UNICODE
-	return wcsstr(ufix(haystack), ufix(needle));
-#else
-	return xstrstr(haystack, needle);
-#endif
 }
 
 char *xstrcasestr(const char *haystack, const char *needle)
@@ -281,27 +216,9 @@ char *xstrcasestr(const char *haystack, const char *needle)
         return strcasestr(fix(haystack), fix(needle));
 }
 
-CHAR_T *xwcscasestr(const CHAR_T *haystack, const CHAR_T *needle)
-{
-#if USE_UNICODE
-	return wcscasestr(ufix(haystack), ufix(needle));
-#else
-	return xstrcasestr(haystack, needle);
-#endif
-}
-
 int xstrcasecmp(const char *s1, const char *s2) 
 {
 	return strcasecmp(fix(s1), fix(s2));
-}
-
-int xwcscasecmp(const CHAR_T *s1, const CHAR_T *s2) 
-{
-#if USE_UNICODE
-	return wcscasecmp(ufix(s1), ufix(s2));
-#else
-	return xstrcasecmp(s1, s2);
-#endif
 }
 
 char *xstrcat(char *dest, const char *src) 
@@ -309,28 +226,9 @@ char *xstrcat(char *dest, const char *src)
 	return strcat(dest, fix(src));
 }
 
-CHAR_T *xwcscat(CHAR_T *dest, const CHAR_T *src)
-{
-#if USE_UNICODE
-	return wcscat(dest, ufix(src));
-#else
-	return xstrcat(dest, src);
-#endif
-}
-
 char *xstrchr(const char *s, int c) 
 {
 	return strchr(fix(s), c);
-}
-
-CHAR_T *xwcschr(const CHAR_T *s, int c)
-{
-#if USE_UNICODE
-#warning BAD PROTOTYPE.
-	return wcschr(ufix(s), c);
-#else
-	return xstrchr(s, c);
-#endif
 }
 
 int xstrcmp(const char *s1, const char *s2)
@@ -338,14 +236,6 @@ int xstrcmp(const char *s1, const char *s2)
 	return strcmp(fix(s1), fix(s2));
 }
 
-int xwcscmp(const CHAR_T *s1, const CHAR_T *s2) 
-{
-#if USE_UNICODE
-	return wcscmp(ufix(s1), ufix(s2));
-#else
-	return xstrcmp(s1, s2);
-#endif
-}
 
 int xstrcoll(const char *s1, const char *s2)
 {
@@ -355,15 +245,6 @@ int xstrcoll(const char *s1, const char *s2)
 char *xstrcpy(char *dest, const char *src) 
 {
 	return strcpy(dest, fix(src));
-}
-
-CHAR_T *xwcscpy(CHAR_T *dest, const CHAR_T *src)
-{
-#if USE_UNICODE
-	return wcscpy(dest, ufix(src));
-#else
-	return xstrcpy(dest, src);
-#endif
 }
 
 size_t xstrcspn(const char *s, const char *reject)
@@ -381,15 +262,6 @@ size_t xstrlen(const char *s)
 	return strlen(fix(s));
 }
 
-size_t xwcslen(const CHAR_T *s)
-{
-#if USE_UNICODE
-	return wcslen(ufix(s));
-#else
-	return xstrlen(s);
-#endif
-}
-
 int xstrncasecmp_pl(const char *s1, const char *s2, size_t n)
 {
 	return strncasecmp_pl(fix(s1), fix(s2), n);
@@ -400,41 +272,14 @@ char *xstrncat(char *dest, const char *src, size_t n)
 	return strncat(dest, fix(src), n);
 }
 
-CHAR_T *xwcsncat(CHAR_T *dest, const CHAR_T *src, size_t n)
-{
-#if USE_UNICODE
-	return wcsncat(dest, ufix(src), n);
-#else
-	return xstrncat(dest, src, n);
-#endif
-}
-
 int xstrncmp(const char *s1, const char *s2, size_t n)
 {
 	return strncmp(fix(s1), fix(s2), n);
 }
 
-int xwcsncmp(const CHAR_T *s1, const CHAR_T *s2, size_t n)
-{
-#if USE_UNICODE
-	return wcsncmp(ufix(s1), ufix(s2), n);
-#else
-	return xstrncmp(s1, s2, n);
-#endif
-}
-
 char *xstrncpy(char *dest, const char *src, size_t n)
 {
 	return strncpy(dest, fix(src), n);
-}
-
-CHAR_T *xwcsncpy(CHAR_T *dest, const CHAR_T *src, size_t n)
-{
-#if USE_UNICODE
-	return wcsncpy(dest, ufix(src), n);
-#else
-	return xstrncpy(dest, src, n);
-#endif
 }
 
 int xstrncasecmp(const char *s1, const char *s2, size_t n)
@@ -453,15 +298,6 @@ int xstrncasecmp(const char *s1, const char *s2, size_t n)
 #endif
 }
 
-int xwcsncasecmp(const CHAR_T *s1, const CHAR_T *s2, size_t n)
-{
-#if USE_UNICODE
-	return wcsncasecmp(ufix(s1), ufix(s2), n);
-#else
-	return xstrncasecmp(s1, s2, n);
-#endif
-}
-
 char *xstrpbrk(const char *s, const char *accept) 
 {
 	return strpbrk(fix(s), fix(accept));
@@ -471,15 +307,7 @@ char *xstrrchr(const char *s, int c)
 {
 	return strrchr(fix(s), c);
 }
-CHAR_T *xwcsrchr(const CHAR_T *s, int c)
-{
-#if USE_UNICODE
-#warning BAD PROTOTYPE
-	return wcsrchr(s, c);
-#else
-	return xstrrchr(s, c);
-#endif
-}
+
 #if 0
 nic tego nie u¿ywa, a to nie jest zaimplementowane na wszystkich systemach
 i tylko powoduje problemy z kompilacj± [Solaris again]

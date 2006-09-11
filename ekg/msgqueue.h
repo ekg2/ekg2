@@ -38,7 +38,7 @@ typedef struct {
 
 extern list_t msg_queue;
 
-int msg_queue_add(const char *session, const char *rcpts, const CHAR_T *message, const char *seq);
+int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq);
 void msg_queue_remove(msg_queue_t *m);
 int msg_queue_remove_uid(const char *uid);
 int msg_queue_remove_seq(const char *seq);

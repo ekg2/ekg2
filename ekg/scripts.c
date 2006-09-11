@@ -574,13 +574,10 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 		if (in_autoexec) /* i think it is enough, not tested. */
 			variable_set(name, value, 0);
 	} else if (!tmp) {
-		CHAR_T *aname;
 		SCRIPT_BIND_HEADER(script_var_t);
-		aname = normal_to_wcs(name);
 		temp->name  = xstrdup(name);
 		temp->value = xstrdup(value);
-		temp->self = variable_add(NULL, aname, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
-		free_utf(aname);
+		temp->self = variable_add(NULL, name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
 		SCRIPT_BIND_FOOTER(script_vars);
 	} 
 	
@@ -589,11 +586,8 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler) 
 {
-	CHAR_T *acommand;
 	SCRIPT_BIND_HEADER(script_command_t);
-	acommand = normal_to_wcs(command);
-	temp->self = command_add(NULL, acommand, TEXT("?"), script_command_handlers, COMMAND_ISSCRIPT, NULL);
-	free_utf(acommand);
+	temp->self = command_add(NULL, command, TEXT("?"), script_command_handlers, COMMAND_ISSCRIPT, NULL);
 	SCRIPT_BIND_FOOTER(script_commands);
 }
 
@@ -735,7 +729,6 @@ WATCHER(script_handle_watch)
 
 COMMAND(script_command_handlers)
 {
-	PARASC
 	script_command_t *temp = script_command_find(name);
 
 	SCRIPT_HANDLER_HEADER(script_handler_command_t);
@@ -821,7 +814,6 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 
 COMMAND(cmd_script)
 {
-	PARASC
 	scriptlang_t *s = NULL;
 	char 	     *tmp = NULL;
 	char	     *param0 = NULL;

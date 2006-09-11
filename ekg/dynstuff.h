@@ -81,58 +81,34 @@ struct string {
 	int len, size;
 };
 
-struct wcs_string {
-	CHAR_T *str;
-	int len, size;
-};
-
 typedef struct string *string_t;
-typedef struct wcs_string *wcs_string_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
 string_t string_init(const char *str);
-wcs_string_t wcs_string_init(const CHAR_T *value);
 int string_append(string_t s, const char *str);
-int wcs_string_append(wcs_string_t s, const CHAR_T *str);
 int string_append_n(string_t s, const char *str, int count);
-int wcs_string_append_n(wcs_string_t s, const CHAR_T *str, int count);
 int string_append_c(string_t s, char ch);
-int wcs_string_append_c(wcs_string_t s, CHAR_T c);
 int string_append_raw(string_t s, const char *str, int count);
 void string_insert(string_t s, int index, const char *str);
 void string_insert_n(string_t s, int index, const char *str, int count);
 void string_clear(string_t s);
-void wcs_string_clear(wcs_string_t s);
 char *string_free(string_t s, int free_string);
-CHAR_T *wcs_string_free(wcs_string_t s, int free_string);
 
-/* tablice stringów */
-char **wcs_array_to_str(CHAR_T **arr);
-
+/* tablice stringow */
 char **array_make(const char *string, const char *sep, int max, int trim, int quotes);
-CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes);
 char *array_join(char **array, const char *sep);
-CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep);
 
 void array_add(char ***array, char *string);
-void wcs_array_add(CHAR_T ***array, CHAR_T *string);
 void array_add_check(char ***array, char *string, int casesensitive);
-void wcs_array_add_check(CHAR_T ***array, CHAR_T *string, int casesensitive);
 int array_count(char **array);
-int wcs_array_count(CHAR_T **array);
 int array_contains(char **array, const char *string, int casesensitive);
-int wcs_array_contains(CHAR_T **array, const CHAR_T *string, int casesensitive);
 int array_item_contains(char **array, const char *string, int casesensitive);
-int wcs_array_item_contains(CHAR_T **array, const CHAR_T *string, int casesensitive);
 void array_free(char **array);
-void wcs_array_free(CHAR_T **array);
 
 /* rozszerzenia libców */
 
 const char *itoa(long int i);
-const CHAR_T *wcs_itoa(long int i);
-int wcs_atoi(const CHAR_T *nptr);
 
 #endif
 

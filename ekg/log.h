@@ -46,7 +46,6 @@ void last_del(const char *uid);
 int last_count(const char *uid);
 void last_free();
 
-CHAR_T *xml_uescape(const CHAR_T *text);
 CHAR_T *xml_escape(const char *text);
 char *log_escape(const char *str);
 

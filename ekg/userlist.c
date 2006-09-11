@@ -162,12 +162,12 @@ void userlist_add_entry(session_t *session, const char *line)
  */
 CHAR_T *userlist_dump(session_t *session)
 {
-	wcs_string_t s;
+	string_t s;
 	list_t l;
 /*	if (!session->userlist) 
  *		return NULL;	
  */
-	s = wcs_string_init(NULL);
+	s = string_init(NULL);
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		CHAR_T *line;
@@ -178,7 +178,7 @@ CHAR_T *userlist_dump(session_t *session)
 
 		groups = group_to_string(u->groups, 1, 0);
 		
-		line = wcsprintf(TEXT("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
+		line = saprintf(TEXT("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
 			(u->first_name) ? u->first_name : "",
 			(u->last_name) ? u->last_name : "",
 			(u->nickname) ? u->nickname : "",
@@ -188,13 +188,13 @@ CHAR_T *userlist_dump(session_t *session)
 			uid,
 			(u->foreign) ? u->foreign : "");
 		
-		wcs_string_append(s, line);
+		string_append(s, line);
 
 		xfree(line);
 		xfree(groups);
 	}	
 
-	return wcs_string_free(s, 0);
+	return string_free(s, 0);
 }
 
 /*
@@ -269,11 +269,7 @@ int userlist_write(session_t *session)
 		return -2;
 	}
 	fchmod(fileno(f), 0600);
-#if USE_UNICODE
-	fprintf(f, "%ls", contacts);
-#else
 	fputs(contacts, f);
-#endif
 	fclose(f);
 	
 	xfree(contacts);

@@ -111,7 +111,6 @@ const char *session_format(session_t *s);
 
 /* alias or uid - formatted */
 const char *session_name(session_t *s);
-const CHAR_T *wcs_session_name(session_t *s);
 #define session_name_n(a) session_name(session_find(a))
 
 /* alias or uid - not formatted */

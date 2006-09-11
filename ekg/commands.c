@@ -103,8 +103,6 @@
 #include "windows.h"
 #include "xmalloc.h"
 
-#define unpar(x) normal_to_wcs(x)
-
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
@@ -123,21 +121,14 @@ int match_arg(const CHAR_T *arg, char shortopt, const CHAR_T *longopt, int longo
 
 	arg++;
 	if (*arg == '-') {
-		int len = xwcslen(++arg);
+		int len = xstrlen(++arg);
 
 		if (longoptlen > len)
 			len = longoptlen;
 
-		return !xwcsncmp(arg, longopt, len);
+		return !xstrncmp(arg, longopt, len);
 	}
 	return (*arg == shortopt) && (*(arg + 1) == 0);
-}
-
-int nmatch_arg(const char *arg, char shortopt, const CHAR_T *longopt, int longoptlen) {
-	CHAR_T *uarg = normal_to_wcs(arg);
-	int ret = match_arg(uarg, shortopt, longopt, longoptlen);
-	free_utf(uarg);
-	return ret;
 }
 
 /*
@@ -225,7 +216,7 @@ command_t *command_find(const CHAR_T *name)
         for (l = commands; l; l = l->next) {
                 command_t *c = l->data;
 
-                if (!xwcscasecmp(c->name, name)) {
+                if (!xstrcasecmp(c->name, name)) {
                         return c;
 		}
         }
@@ -235,7 +226,6 @@ command_t *command_find(const CHAR_T *name)
 
 static COMMAND(cmd_tabclear)
 {
-	PARASC
 	int i;
 
 	if (!params[0]) {
@@ -243,7 +233,7 @@ static COMMAND(cmd_tabclear)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'o', TEXT("offline"), 2)) {
+	if (match_arg(params[0], 'o', TEXT("offline"), 2)) {
 		for (i = 0; i < send_nicks_count; i++) {
 			userlist_t *u = NULL;
 
@@ -266,7 +256,6 @@ static COMMAND(cmd_tabclear)
 
 COMMAND(cmd_add)
 {
-	PARASC
 	int params_free = 0;	/* zmienili¶my params[] i trzeba zwolniæ */
 	int result = 0;
 	userlist_t *u = NULL;
@@ -286,7 +275,7 @@ COMMAND(cmd_add)
 		params[3] = NULL;
 	}
 
-	if (params[0] && nmatch_arg(params[0], 'f', TEXT("find"), 2)) {
+	if (params[0] && match_arg(params[0], 'f', TEXT("find"), 2)) {
 		int nonick = 0;
 		char *nickname;
 		CHAR_T *tmp;
@@ -296,7 +285,7 @@ COMMAND(cmd_add)
 			return -1;
 		}
 
-		tmp = wcs_strip_spaces(last_search_nickname);
+		tmp = strip_spaces(last_search_nickname);
 
 		if ((nonick = !xwcscmp(tmp, TEXT(""))) && !params[1]) {
 			wcs_printq("search_no_last_nickname");
@@ -313,7 +302,7 @@ COMMAND(cmd_add)
 		params = xmalloc(4 * sizeof(char *));
 		params[0] = last_search_uid;
 		params[1] = nickname;
-		params[2] = saprintf("-f \"" CHARF "\" -l \"" CHARF "\"", 
+		params[2] = saprintf("-f \"%s\" -l \"%s\"", 
 				((last_search_first_name) ? last_search_first_name : TEXT("")), 
 				((last_search_last_name) ? last_search_last_name : TEXT("")));
 /*		params[3] = NULL; */
@@ -384,41 +373,35 @@ cleanup:
 
 static COMMAND(cmd_alias)
 {
-	PARASC
-	CHAR_T *sname;
-	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
-		if (!alias_add((sname = normal_to_wcs(params[1])), quiet, 0)) {
+		if (!alias_add(params[1], quiet, 0)) {
 			config_changed = 1;
-			free_utf(sname);
 			return 0;
 		}
-		free_utf(sname);
 
 		return -1;
 	}
 
-	if (nmatch_arg(params[0], 'A', TEXT("append"), 2)) {
+	if (match_arg(params[0], 'A', TEXT("append"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			wcs_printq("not_enough_params", name);
 			return -1;
 		}
 
-		if (!alias_add((sname = normal_to_wcs(params[1])), quiet, 1)) {
+		if (!alias_add(params[1], quiet, 1)) {
 			config_changed = 1;
-			free_utf(sname);
 			return 0;
 		}
-		free_utf(sname);
 
 		return -1;
 	}
 
-	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int ret;
 
 		if (!params[1]) {
@@ -429,8 +412,7 @@ static COMMAND(cmd_alias)
 		if (!xstrcmp(params[1], "*"))
 			ret = alias_remove(NULL, quiet);
 		else {
-			ret = alias_remove((sname = normal_to_wcs(params[1])), quiet);
-			free_utf(sname);
+			ret = alias_remove(params[1], quiet);
 		}
 
 		if (!ret) {
@@ -441,15 +423,15 @@ static COMMAND(cmd_alias)
 		return -1;
 	}
 	
-	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		list_t l;
 		int count = 0;
-		CHAR_T *aname = NULL;
+		const char *aname = NULL;
 
-		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
-			aname = normal_to_wcs(params[1]);
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
+			aname = params[1];
 		else if (params[0])
-			aname = normal_to_wcs(params[0]);
+			aname = params[0];
 
 		for (l = aliases; l; l = l->next) {
 			struct alias *a = l->data;
@@ -463,7 +445,7 @@ static COMMAND(cmd_alias)
 			tmp = xcalloc(xwcslen(a->name) + 1, sizeof(CHAR_T));
 
 			for (i = 0; i < xwcslen(a->name); i++)
-				xwcscat(tmp, TEXT(" "));
+				xstrcat(tmp, " ");
 
 			for (m = a->commands; m; m = m->next) {
 				wcs_printq((first) ? "aliases_list" : "aliases_list_next", a->name, (CHAR_T *) m->data, tmp);
@@ -482,8 +464,6 @@ static COMMAND(cmd_alias)
 
 			wcs_printq("aliases_list_empty");
 		}
-		free_utf(aname);
-
 		return 0;
 	}
 
@@ -494,7 +474,6 @@ static COMMAND(cmd_alias)
 
 static COMMAND(cmd_status)
 {
-	PARASC
         struct tm *t;
         time_t n;
         int now_days;
@@ -529,7 +508,6 @@ static COMMAND(cmd_status)
 
 static COMMAND(cmd_del)
 {
-	PARASC
 	userlist_t *u;
 	char *tmp;
 	int del_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
@@ -557,7 +535,7 @@ static COMMAND(cmd_del)
 			userlist_remove(session, u);
 		}
 
-		wcs_printq("user_cleared_list", wcs_session_name(session));
+		wcs_printq("user_cleared_list", session_name(session));
 		tabnick_flush();
 		config_changed = 1;
 
@@ -590,7 +568,7 @@ typedef struct {
 	char *target;		/* je¶li wysy³amy wynik, to do kogo? */
 	char *session;		/* jaka sesja? */
 	int quiet;		/* czy mamy byæ cicho? */
-	wcs_string_t buf;	/* je¶li buforujemy, to tutaj */
+	string_t buf;	/* je¶li buforujemy, to tutaj */
 } cmd_exec_info_t;
 
 static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
@@ -603,8 +581,8 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 
 	if (type == 1) {
 		if (i->buf) {
-			command_exec_format(i->target, session_find(i->session), quiet, TEXT("/ " CHARF), i->buf->str);
-			wcs_string_free(i->buf, 1);
+			command_exec_format(i->target, session_find(i->session), quiet, TEXT("/ %s"), i->buf->str);
+			string_free(i->buf, 1);
 		}
 		xfree(i->target);
 		xfree(i->session);
@@ -618,10 +596,8 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 	}
 
 	if (i->buf) {
-		CHAR_T *watch_wcs = normal_to_wcs(watch);
-		wcs_string_append(i->buf, watch_wcs);
-		wcs_string_append(i->buf, TEXT("\r\n"));
-		free_utf(watch_wcs);
+		string_append(i->buf, watch);
+		string_append(i->buf, TEXT("\r\n"));
 	} else {
 		command_exec_format(i->target, session_find(i->session), quiet, TEXT("/ %s"), watch);
 	}
@@ -632,12 +608,11 @@ void cmd_exec_child_handler(child_t *c, int pid, const CHAR_T *name, int status,
 {
 	int quiet = (name && name[0] == '^');
 
-	wcs_printq("process_exit", wcs_itoa(pid), name, wcs_itoa(status));
+	wcs_printq("process_exit", itoa(pid), name, itoa(status));
 }
 
 COMMAND(cmd_exec)
 {
-	PARASC
 	list_t l;
 	int pid;
 
@@ -652,10 +627,10 @@ COMMAND(cmd_exec)
 			int big_match = 0;
 			args = (char **) params;
 
-			if (nmatch_arg(args[0], 'M', TEXT("MSG"), 2) || (buf = nmatch_arg(args[0], 'B', TEXT("BMSG"), 2)))
+			if (match_arg(args[0], 'M', TEXT("MSG"), 2) || (buf = match_arg(args[0], 'B', TEXT("BMSG"), 2)))
 				big_match = add_commandline = 1;
 
-			if (big_match || nmatch_arg(args[0], 'm', TEXT("msg"), 2) || (buf = nmatch_arg(args[0], 'b', TEXT("bmsg"), 2))) {
+			if (big_match || match_arg(args[0], 'm', TEXT("msg"), 2) || (buf = match_arg(args[0], 'b', TEXT("bmsg"), 2))) {
 				const char *uid;
 
 				if (!args[1] || !args[2]) {
@@ -713,7 +688,7 @@ COMMAND(cmd_exec)
 		i->session = xstrdup(session_uid_get(session));
 
 		if (buf)
-			i->buf = wcs_string_init(NULL);
+			i->buf = string_init(NULL);
 
 		w = watch_add_line(NULL, fd[0], WATCH_READ_LINE, cmd_exec_watch_handler, i);
 
@@ -726,17 +701,13 @@ COMMAND(cmd_exec)
 		fcntl(fd[0], F_SETFL, O_NONBLOCK);
 
 		close(fd[1]);
-		{
-			CHAR_T *ucommand = normal_to_wcs(command);
-			child_add(NULL, pid, ucommand, cmd_exec_child_handler, NULL);
-			free_utf(ucommand);
-		}
-			
+		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
+
 	} else {
 		for (l = children; l; l = l->next) {
 			child_t *c = l->data;
 			
-			wcs_printq("process", wcs_itoa(c->pid), ((c->name) ? (c->name) : TEXT("?")));
+			wcs_printq("process", itoa(c->pid), ((c->name) ? (c->name) : TEXT("?")));
 		}
 
 		if (!children) {
@@ -750,38 +721,35 @@ COMMAND(cmd_exec)
 
 static COMMAND(cmd_eval)
 {
-	PARUNI
 	int i;
 	CHAR_T **argv;
 
-	argv = wcs_array_make(params[0], TEXT(" "), 0, 1, 1);
+	argv = array_make(params[0], TEXT(" "), 0, 1, 1);
 	
 	for (i = 0; argv[i]; i++) {
 		command_exec(NULL, session, argv[i], 0);
 	}
 
-	wcs_array_free(argv);
+	array_free(argv);
 
 	return 0;
 }
 
 static COMMAND(cmd_for)
 {
-	PARASC
-	char *nname = wcs_to_normal(name);
-	int for_all = 0, ret = 0;
+	int for_all = 0;
 
 	if (!xstrcmp(params[1], "*")) 
 		for_all = 1; 
 
-	if (nmatch_arg(params[0], 's', TEXT("sessions"), 2)) {
+	if (match_arg(params[0], 's', TEXT("sessions"), 2)) {
 		char *param = (char *) params[2];
 		int next_is_for = 0;
 
 		if (param[0] == '/')
 			param++;
 
-		if (!xstrncasecmp(param, nname, xstrlen(nname)))
+		if (!xstrncasecmp(param, name, xstrlen(name)))
 			next_is_for = 1;
 
 		if (for_all) {
@@ -789,13 +757,11 @@ static COMMAND(cmd_for)
 			
 			if (!sessions) {
 				wcs_printq("session_list_empty");
-				ret = -2;
-				goto for_end;
+				return -2;
 			}
 				
 			for (l = sessions; l; l = l->next) {
 				session_t *s = l->data;
-				CHAR_T *ffor_command;
 				char *for_command;
 				
 				if (!s || !s->uid)
@@ -806,10 +772,8 @@ static COMMAND(cmd_for)
 				else
 					for_command = xstrdup(params[2]);
 
-				ffor_command = normal_to_wcs(for_command);
-				command_exec(NULL, s, ffor_command, 0);
+				command_exec(NULL, s, for_command, 0);
 				xfree(for_command);
-				free_utf(ffor_command);
 			}
 		} else {
 			char **tmp = array_make(params[1], ",", 0, 0, 0);
@@ -822,14 +786,12 @@ static COMMAND(cmd_for)
 			for (i = 0; tmp[i]; i++) {
 				if (!(s[i] = session_find(tmp[i]))) {
 					printq("session_doesnt_exist", tmp[i]);
-					ret = -1;
 					xfree(s);
-					goto for_end;
+					return -1;
 				}
 			}		
 			
 			for (i = 0; tmp[i]; i++) {
-				CHAR_T *ffor_command;
 				char *for_command;
 				
 				if (!s[i] || !s[i]->uid)
@@ -840,33 +802,29 @@ static COMMAND(cmd_for)
 				else
 					for_command = xstrdup(params[2]);
 
-				ffor_command = normal_to_wcs(for_command);
-				command_exec(NULL, s[i], ffor_command, 0);
-				free_utf(ffor_command);
+				command_exec(NULL, s[i], for_command, 0);
 				xfree(for_command);
 			}
 	
 			xfree(s);
 		}
-	} else if (nmatch_arg(params[0], 'u', TEXT("users"), 2)) {
+	} else if (match_arg(params[0], 'u', TEXT("users"), 2)) {
 		char *param = (char *) params[2];
                 int next_is_for = 0;
 
                 if (param[0] == '/')
                         param++;
 
-                if (!xstrncasecmp(param, nname, xstrlen(nname)))
+                if (!xstrncasecmp(param, name, xstrlen(name)))
                         next_is_for = 1;
 				
 		if (!session) {
-			ret = -1;
-			goto for_end;
+			return -1;
 		}
 
 		if (!session->userlist) {
 			wcs_printq("list_empty");
-			ret = -1;
-			goto for_end;
+			return -1;
 		}
 
 		if (for_all) {
@@ -875,7 +833,6 @@ static COMMAND(cmd_for)
 			for (l = session->userlist; l; l = l->next) {
 				userlist_t *u = l->data;
 				char *for_command;
-				CHAR_T *ffor_command;
 
 				if (!u || !u->uid)
 					continue;
@@ -885,9 +842,7 @@ static COMMAND(cmd_for)
 				else
 					for_command = xstrdup(params[2]);
 
-				ffor_command = normal_to_wcs(for_command);
-				command_exec(NULL, session, ffor_command, 0);
-				free_utf(ffor_command);
+				command_exec(NULL, session, for_command, 0);
 				xfree(for_command);
 			}
 				
@@ -902,15 +857,13 @@ static COMMAND(cmd_for)
                         for (i = 0; tmp[i]; i++) {
                                 if (!(u[i] = userlist_find(session, tmp[i]))) {
                                         printq("user_not_found", tmp[i]);
-                                        ret = -1;
                                         xfree(u);
-                                        goto for_end;
+					return -1;
                                 }
                         }
 
                         for (i = 0; tmp[i]; i++) {
                                 char *for_command;
-				CHAR_T *ffor_command;
 
                                 if (!u[i] || !u[i]->uid)
                                         continue;
@@ -920,27 +873,24 @@ static COMMAND(cmd_for)
 				else
 					for_command = xstrdup(params[2]);
 
-				ffor_command = normal_to_wcs(for_command);
-                                command_exec(NULL, session, ffor_command, 0);
-				free_utf(ffor_command);
+                                command_exec(NULL, session, for_command, 0);
                                 xfree(for_command);
                         }
 
                         xfree(u);
                 }
-	} else if (nmatch_arg(params[0], 'w', TEXT("windows"), 2)) {
+	} else if (match_arg(params[0], 'w', TEXT("windows"), 2)) {
                 char *param = (char *) params[2];
                 int next_is_for = 0;
 
                 if (param[0] == '/')
                         param++;
 
-                if (!xstrncasecmp(param, nname, xstrlen(nname)))
+                if (!xstrncasecmp(param, name, xstrlen(name)))
                         next_is_for = 1;
 
                 if (!windows) {
-                        ret = -1;
-                        goto for_end;
+			return -1;
                 }
 
                 if (for_all) {
@@ -948,7 +898,6 @@ static COMMAND(cmd_for)
 
                         for (l = windows; l; l = l->next) {
                         	window_t *w = l->data;
-				CHAR_T *ffor_command;
                                 char *for_command;
 
                                 if (!w || !w->target || !w->session)
@@ -959,10 +908,8 @@ static COMMAND(cmd_for)
                                 else
                                         for_command = xstrdup(params[2]);
 
-				ffor_command = normal_to_wcs(for_command);
-                                command_exec(NULL, session, ffor_command, 0);
+                                command_exec(NULL, session, for_command, 0);
                                 xfree(for_command);
-				free_utf(ffor_command);
 			}
                  } else {
                        	char **tmp = array_make(params[1], ",", 0, 0, 0);
@@ -991,15 +938,13 @@ static COMMAND(cmd_for)
 			
 				if (!found) {
 		                        printq("window_doesnt_exist", tmp[i]);
-		                        ret = -1;	
                                         xfree(w);
-       	                                goto for_end;
+					return -1;
 				}
                         }
 
                         for (i = 0; tmp[i]; i++) {
                                 char *for_command;
-				CHAR_T *ffor_command;
 
                                 if (!w[i] || !w[i]->target || !w[i]->session)
                                         continue;
@@ -1008,9 +953,7 @@ static COMMAND(cmd_for)
                                         for_command = format_string(params[2], get_nickname(w[i]->session, w[i]->target), get_uid(w[i]->session, w[i]->target));
                                 else
                                         for_command = xstrdup(params[2]);
-				ffor_command = normal_to_wcs(for_command);
-                                command_exec(NULL, session, ffor_command, 0);
-				free_utf(ffor_command);
+                                command_exec(NULL, session, for_command, 0);
                                 xfree(for_command);
                         }
 
@@ -1018,17 +961,13 @@ static COMMAND(cmd_for)
                 }
 	} else {
 	        wcs_printq("invalid_params", name);
-	        ret = -1;
+		return -1;
 	}
-	
-for_end:
-	free_utf(nname);
-	return ret;
+	return 0;
 }
 
 static COMMAND(cmd_help)
 {
-	PARUNI
 	list_t l;
 	if (params[0]) {
 		const CHAR_T *p = (params[0][0] == '/' && xwcslen(params[0]) > 1) ? params[0] + 1 : params[0];
@@ -1067,7 +1006,7 @@ static COMMAND(cmd_help)
 				FILE *f; 
 				CHAR_T *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
 				const CHAR_T *seeking_name;
-				wcs_string_t s;
+				string_t s;
 				int found = 0;
 
 				if (c->plugin && c->plugin->name) {
@@ -1080,7 +1019,7 @@ static COMMAND(cmd_help)
                                                 wcs_print("help_command_file_not_found_plugin", c->plugin->name);
 						return -1;
 			                }
-					tmp2 = xwcschr(c->name, ':');
+					tmp2 = xstrchr(c->name, ':');
 					if (!tmp2)
 						seeking_name = c->name;
 					else
@@ -1097,7 +1036,7 @@ static COMMAND(cmd_help)
 
 	                		seeking_name = c->name;
         			}
-			        while ((line = wcs_read_file(f))) {
+			        while ((line = read_file(f))) {
 			                if (!xwcscasecmp(line, seeking_name)) {
 			                        found = 1;
 			                        xfree(line);
@@ -1113,20 +1052,20 @@ static COMMAND(cmd_help)
 			                return -1;
 			        }
 
-			        line = wcs_read_file(f);
+			        line = read_file(f);
 
-			        if ((tmp = xwcsstr(line, TEXT(": "))))
+			        if ((tmp = xstrstr(line, TEXT(": "))))
 			                params_help = xwcsdup(tmp + 2);
 			        else
 			                params_help = xwcsdup(TEXT(""));
 
-				params_help_s = wcs_strip_spaces(params_help);
+				params_help_s = strip_spaces(params_help);
 
 			        xfree(line);
 
-				line = wcs_read_file(f);
+				line = read_file(f);
 
-                                if ((tmp = xwcsstr(line, TEXT(": "))))
+                                if ((tmp = xstrstr(line, TEXT(": "))))
                                         brief = xwcsdup(tmp + 2);
                                 else
                                         brief = xwcsdup(TEXT("?"));
@@ -1135,8 +1074,8 @@ static COMMAND(cmd_help)
 
 				tmp = NULL;
 
-			        if (xwcsstr(brief, TEXT("%")))
-			  		tmp = wcs_format_string(brief);
+			        if (xstrstr(brief, TEXT("%")))
+			  		tmp = format_string(brief);
 
 	                        if (!xwcscmp(brief, TEXT(""))) {
 	                                xfree(brief);
@@ -1152,37 +1091,37 @@ static COMMAND(cmd_help)
 				xfree(params_help);
 				xfree(tmp);
 
-				s = wcs_string_init(NULL);
-			        while ((line = wcs_read_file(f))) {
+				s = string_init(NULL);
+			        while ((line = read_file(f))) {
 			                if (line[0] != TEXT('\t')) {
 			                        xfree(line);
 			                        break;
 			                }
 					
-			                if (!xwcsncmp(line, TEXT("\t- "), 3) && xwcscmp(s->str, TEXT(""))) {
-			                        wcs_print("help_command_body", line);
-			                        wcs_string_clear(s);
+			                if (!xstrncmp(line, TEXT("\t- "), 3) && xwcscmp(s->str, TEXT(""))) {
+			                        print("help_command_body", line);
+			                        string_clear(s);
 			                }
 					
-					if (!xwcsncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
-						wcs_string_append(s, TEXT("\n\r"));
+					if (!xstrncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
+						string_append(s, "\n\r");
 						continue;
 					}
 					
-			                wcs_string_append(s, line + 1);
+			                string_append(s, line + 1);
 
-			                if (line[xwcslen(line) - 1] != TEXT(' '))
-			                        wcs_string_append_c(s, TEXT(' '));
+			                if (line[xwcslen(line) - 1] != ' ')
+			                        string_append_c(s, ' ');
 			                xfree(line);
 			        }
 				
 				if (xwcscmp(s->str, TEXT(""))) {
-					CHAR_T *tmp = wcs_format_string(s->str);
+					CHAR_T *tmp = format_string(s->str);
                                         wcs_printq("help_command_body", tmp);
 					xfree(tmp);
 				}
 				fclose(f);
-			        wcs_string_free(s, 1);
+			        string_free(s, 1);
 				return 0;
 			}
 		}
@@ -1207,7 +1146,7 @@ static COMMAND(cmd_help)
                                 if (!f) {
 					continue;
                                 }
-				tmp2 = xwcschr(c->name, TEXT(':'));
+				tmp2 = xstrchr(c->name, TEXT(':'));
 				if (!tmp2)
 					seeking_name = c->name;
 				else 
@@ -1224,7 +1163,7 @@ static COMMAND(cmd_help)
                                 seeking_name = c->name;
                         }
 
-                        while ((line = wcs_read_file(f))) {
+                        while ((line = read_file(f))) {
                         	if (!xwcscasecmp(line, seeking_name)) {
                                 	found = 1;
                                         xfree(line);
@@ -1239,28 +1178,28 @@ static COMMAND(cmd_help)
 				continue;
                         }
 
-			line = wcs_read_file(f);
+			line = read_file(f);
 		
-			if ((tmp = xwcsstr(line, TEXT(": "))))
+			if ((tmp = xstrstr(line, TEXT(": "))))
                                params_help = xwcsdup(tmp + 2);
                         else
                                params_help = xwcsdup(TEXT(""));
 
-			params_help_s = wcs_strip_spaces(params_help);	
+			params_help_s = strip_spaces(params_help);	
 
                         xfree(line);
 
-                        line = wcs_read_file(f);
+                        line = read_file(f);
 
-                        if ((tmp = xwcsstr(line, TEXT(": "))))
+                        if ((tmp = xstrstr(line, TEXT(": "))))
  	                       brief = xwcsdup(tmp + 2);
                         else
                                brief = xwcsdup(TEXT("?"));
 
                         xfree(line);
 
-			if (xwcsstr(brief, TEXT("%"))) {
-			    	blah = wcs_format_string(brief);
+			if (xstrstr(brief, TEXT("%"))) {
+			    	blah = format_string(brief);
 			}
 
 			if (!xwcscmp(brief, TEXT(""))) {
@@ -1287,7 +1226,6 @@ static COMMAND(cmd_help)
 
 static COMMAND(cmd_ignore)
 {
-	PARASC
 	const char *uid;
 
 	if (*name == 'i' || *name == 'I') {
@@ -1409,7 +1347,6 @@ static COMMAND(cmd_ignore)
 
 COMMAND(cmd_list)
 {
-	PARASC
 	list_t l;
 	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
 	char **argv = NULL, *show_group = NULL;
@@ -1608,37 +1545,37 @@ list_user:
 		argv = array_make(params[j], " \t", 0, 1, 1);
 
 	 	for (i = 0; argv[i]; i++) {
-			if (nmatch_arg(argv[i], 'a', TEXT("active"), 2)) {
+			if (match_arg(argv[i], 'a', TEXT("active"), 2)) {
 				show_all = 0;
 				show_active = 1;
 			}
 				
-			if (nmatch_arg(argv[i], 'i', TEXT("inactive"), 2) || nmatch_arg(argv[i], 'n', TEXT("notavail"), 2)) {
+			if (match_arg(argv[i], 'i', TEXT("inactive"), 2) || match_arg(argv[i], 'n', TEXT("notavail"), 2)) {
 				show_all = 0;
 				show_inactive = 1;
 			}
 			
-			if (nmatch_arg(argv[i], 'A', TEXT("away"), 2)) {
+			if (match_arg(argv[i], 'A', TEXT("away"), 2)) {
 				show_all = 0;
 				show_away = 1;
 			}
 			
-			if (nmatch_arg(argv[i], 'I', TEXT("invisible"), 2)) {
+			if (match_arg(argv[i], 'I', TEXT("invisible"), 2)) {
 				show_all = 0;
 				show_invisible = 1;
 			}
 
-			if (nmatch_arg(argv[i], 'B', TEXT("blocked"), 2)) {
+			if (match_arg(argv[i], 'B', TEXT("blocked"), 2)) {
 				show_all = 0;
 				show_blocked = 1;
 			}
 
-			if (nmatch_arg(argv[i], 'o', TEXT("offline"), 2)) {
+			if (match_arg(argv[i], 'o', TEXT("offline"), 2)) {
 				show_all = 0;
 				show_offline = 1;
 			}
 
-			if (nmatch_arg(argv[i], 'm', TEXT("member"), 2)) {
+			if (match_arg(argv[i], 'm', TEXT("member"), 2)) {
 				if (j && argv[i+1]) {
 					int off = (argv[i+1][0] == '@' && xstrlen(argv[i+1]) > 1) ? 1 : 0;
 
@@ -1653,7 +1590,7 @@ list_user:
 					}
 			}
 
-			if (nmatch_arg(argv[i], 'd', TEXT("description"), 2))
+			if (match_arg(argv[i], 'd', TEXT("description"), 2))
 				show_descr = 1;
 		}
 		array_free(argv);
@@ -1713,7 +1650,6 @@ list_user:
 
 static COMMAND(cmd_save)
 {
-	PARASC
 	last_save = time(NULL);
 	
 	if (!config_write(params[0]) && !session_write() && !metacontact_write() && !script_variables_write() ) {
@@ -1730,7 +1666,6 @@ static COMMAND(cmd_save)
 
 static COMMAND(cmd_set)
 {
-	PARUNI
 	const CHAR_T *arg = NULL, *val = NULL;
 	int unset = 0, show_all = 0, res = 0;
 	CHAR_T *value = NULL;
@@ -1753,11 +1688,11 @@ static COMMAND(cmd_set)
 	}
 
 	if (arg && val) {
-		CHAR_T **tmp = wcs_array_make(val, TEXT(""), 0, 0, 1);
+		CHAR_T **tmp = array_make(val, TEXT(""), 0, 0, 1);
 
 		value = tmp[0];
 		tmp[0] = NULL;
-		wcs_array_free(tmp);
+		array_free(tmp);
 	}
 
 	if ((!arg || !val) && !unset) {
@@ -1780,7 +1715,7 @@ static COMMAND(cmd_set)
 				}
 
 				if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
-					CHAR_T *tmp = (string) ? wcsprintf(TEXT("\"%s\""), string) : TEXT("(none)");
+					CHAR_T *tmp = (string) ? saprintf(TEXT("\"%s\""), string) : TEXT("(none)");
 
 					wcs_printq("variable", v->name, tmp);
 					
@@ -1792,7 +1727,7 @@ static COMMAND(cmd_set)
 					wcs_printq("variable", v->name, (value) ? TEXT("1 (on)") : TEXT("0 (off)"));
 				
 				if ((v->type == VAR_INT || v->type == VAR_MAP) && !v->map)
-					wcs_printq("variable", v->name, wcs_itoa(value));
+					wcs_printq("variable", v->name, itoa(value));
 
 				if (v->type == VAR_INT && v->map) {
 					CHAR_T *tmp = NULL;
@@ -1800,14 +1735,12 @@ static COMMAND(cmd_set)
 
 					for (i = 0; v->map[i].label; i++)
 						if (v->map[i].value == value) {
-							CHAR_T *vmaplabel = normal_to_wcs(v->map[i].label);
-							tmp = wcsprintf(TEXT("%d (%s)"), value, vmaplabel);
-							free_utf(vmaplabel);
+							tmp = saprintf(TEXT("%d (%s)"), value, v->map[i].label);
 							break;
 						}
 
 					if (!tmp)
-						tmp = wcsprintf(TEXT("%d"), value);
+						tmp = saprintf(TEXT("%d"), value);
 
 					wcs_printq("variable", v->name, tmp);
 
@@ -1815,25 +1748,23 @@ static COMMAND(cmd_set)
 				}
 
 				if (v->type == VAR_MAP && v->map) {
-					wcs_string_t s = wcs_string_init(wcs_itoa(value));
+					string_t s = string_init(itoa(value));
 					int i, first = 1;
 
 					for (i = 0; v->map[i].label; i++) {
 						if ((value & v->map[i].value) || (!value && !v->map[i].value)) {
-							CHAR_T *vmaplabel = normal_to_wcs(v->map[i].label);
-							wcs_string_append(s, (first) ? TEXT(" (") : TEXT(","));
+							string_append(s, (first) ? TEXT(" (") : TEXT(","));
 							first = 0;
-							wcs_string_append(s, vmaplabel);
-							free_utf(vmaplabel);
+							string_append(s, v->map[i].label);
 						}
 					}
 
 					if (!first)
-						wcs_string_append_c(s, TEXT(')'));
+						string_append_c(s, TEXT(')'));
 
 					wcs_printq("variable", v->name, s->str);
 
-					wcs_string_free(s, 1);
+					string_free(s, 1);
 				}
 
 				displayed = 1;
@@ -1857,7 +1788,7 @@ static COMMAND(cmd_set)
 			}
 		} 
 
-		switch (variable_set(arg, (unset) ? NULL : wcs_to_normal(value), 0)) {
+		switch (variable_set(arg, (unset) ? NULL : value, 0)) {
 			case 0:
 			{
 				const CHAR_T *my_params[2] = { (!unset) ? params[0] : params[0] + 1, NULL };
@@ -1885,7 +1816,6 @@ static COMMAND(cmd_set)
 
 static COMMAND(cmd_quit)
 {
-	PARASC
     	char *reason;
 	list_t l;
 	
@@ -1908,11 +1838,7 @@ static COMMAND(cmd_quit)
 
 static COMMAND(cmd_version) 
 {
-#if USE_UNICODE
-    	printq("ekg_version_unicode", VERSION, compile_time());
-#else
 	printq("ekg_version", VERSION, compile_time());
-#endif
 	query_emit(NULL, TEXT("plugin-print-version"));
 
 	return 0;
@@ -1929,7 +1855,6 @@ static COMMAND(cmd_test_segv)
 
 static COMMAND(cmd_test_send)
 {
-	PARASC
 	const char *sender, *rcpts[2] = { NULL, NULL };
 
 	if (!params[0] || !params[1] || !window_current || !window_current->session)
@@ -1949,28 +1874,25 @@ static COMMAND(cmd_test_send)
 
 static COMMAND(cmd_test_addtab)
 {
-	PARASC
 	tabnick_add(params[0]);
 	return 0;
 }
 
 static COMMAND(cmd_test_deltab)
 {
-	PARASC
 	tabnick_remove(params[0]);
 	return 0;
 }
 
 static COMMAND(cmd_test_debug)
 {
-	PARUNI
-	debug(CHARF "\n", params[0]);
+	debug("%s\n", params[0]);
 	return 0;
 }
 
 static COMMAND(cmd_test_debug_dump)
 {
-	CHAR_T *tmp = wcsprintf(TEXT("Zapisalem debug do pliku debug.%d"), (int) getpid());
+	CHAR_T *tmp = saprintf(TEXT("Zapisalem debug do pliku debug.%d"), (int) getpid());
 
 	debug_write_crash();
 	wcs_printq("generic", tmp);
@@ -1981,7 +1903,6 @@ static COMMAND(cmd_test_debug_dump)
 
 static COMMAND(cmd_test_event_test)
 {
-	PARUNI
 	CHAR_T *tmp = xwcsdup(params[0]);
 	event_target_check(tmp);
 	xfree(tmp);
@@ -2012,11 +1933,7 @@ static COMMAND(cmd_debug_watches)
 			plugin = w->plugin->name;
 		else
 			plugin = TEXT("-");
-#if USE_UNICODE
-		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8ls  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, 1, w->timeout, w->started, w->removed);
-#else
 		snprintf(buf, sizeof(buf), "%-5d  %-3s  %-8s  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, 1, w->timeout, w->started, w->removed);
-#endif
 		printq("generic", buf);
 	}
 
@@ -2036,11 +1953,7 @@ static COMMAND(cmd_debug_queries)
 		CHAR_T *plugin;
 
 		plugin = (q->plugin) ? q->plugin->name : TEXT("-");
-#if USE_UNICODE
-		snprintf(buf, sizeof(buf), "%-32ls | %-8ls | %d", q->name, plugin, q->count);
-#else
 		snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", q->name, plugin, q->count);
-#endif
 		printq("generic", buf);
 	}
 
@@ -2049,7 +1962,6 @@ static COMMAND(cmd_debug_queries)
 
 static COMMAND(cmd_debug_query)
 {
-	PARUNI
 	CHAR_T *p[10];
 	int i;
 
@@ -2146,7 +2058,7 @@ static COMMAND(cmd_test_mem)
 			return -1;
 #endif
 		}
-		txt = wcsprintf(TEXT("Memory used by ekg2: %d kB"), rozmiar);
+		txt = saprintf(TEXT("Memory used by ekg2: %d kB"), rozmiar);
 		wcs_printq("generic", txt);
 		xfree(txt);
 	} else {
@@ -2266,7 +2178,6 @@ static COMMAND(cmd_beep)
 
 static COMMAND(cmd_play)
 {
-	PARASC
 	if (!config_sound_app) {
 		wcs_printq("not_enough_params", name);
 		return -1;
@@ -2277,7 +2188,6 @@ static COMMAND(cmd_play)
 
 static COMMAND(cmd_say)
 {
-	PARUNI
 	if (!config_speech_app) {
 		wcs_printq("not_enough_params", name);
 		return -1;
@@ -2312,7 +2222,6 @@ static COMMAND(cmd_reload)
 
 static COMMAND(cmd_query)
 {
-	PARASC
 	char **p = xcalloc(3, sizeof(char*));
 	int i, res = 0;
 	metacontact_t *m;
@@ -2463,7 +2372,6 @@ cleanup:
 
 static COMMAND(cmd_echo)
 {
-	PARUNI
 	wcs_printq("generic", (params && params[0]) ? params[0] : TEXT(""));
 
 	return 0;
@@ -2471,7 +2379,6 @@ static COMMAND(cmd_echo)
 
 static COMMAND(cmd_bind)
 {
-	PARUNI
 	window_lock_dec_n(target); /* this is interactive command */
 	query_emit(NULL, TEXT("binding-command"), (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
 
@@ -2519,7 +2426,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 				command_t *c = l->data;
 				int l = xwcslen(c->name);
 
-				if (l < 3 || xwcsncasecmp(xline, c->name, l))
+				if (l < 3 || xstrncasecmp(xline, c->name, l))
 					continue;
 				
 				if (!xline[l] || xisspace(xline[l])) {
@@ -2530,7 +2437,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		}
 
 		if (!correct_command) {
-			command_exec_format(target, session, quiet, TEXT("/ " CHARF), xline);
+			command_exec_format(target, session, quiet, TEXT("/ %s"), xline);
 			return 0;
 		}
 	}
@@ -2562,20 +2469,19 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 			tmp++;
 		p = (*tmp) ? tmp + 1 : tmp;
 		*tmp = 0;
-		p = wcs_strip_spaces(p);
+		p = strip_spaces(p);
 	}
 
 	/* poszukaj najpierw komendy dla danej sesji */
 	if (!session && session_current)
 		session = session_current;
 	if (session && session->uid) {
-		CHAR_T *suid = normal_to_wcs(session->uid);
-		int plen = (int)(xwcschr(suid, ':') - suid) + 1;
+		int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 		
 		for (l = commands; l; l = l->next) {
 			command_t *c = l->data;
 
-			if (xwcsncasecmp(c->name, suid, plen))
+			if (xstrncasecmp(c->name, session->uid, plen))
 				continue;
 		
 			if (!xwcscasecmp(c->name + plen, cmd)) {
@@ -2585,7 +2491,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 				break;
 			}
 
-			if (!xwcsncasecmp(c->name + plen, cmd, xwcslen(cmd))) {
+			if (!xstrncasecmp(c->name + plen, cmd, xwcslen(cmd))) {
 				last_command_plugin = c;
 				abbrs_plugins++;
 			} else {
@@ -2593,7 +2499,6 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 					break;
 			} 
 		}
-		free_utf(suid);
 	}
 	if (!exact) {
 		for (l = commands; l; l = l->next) {
@@ -2608,7 +2513,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 				last_command_plugin = NULL;
 				break;
 			}
-			if (!xwcsncasecmp(c->name, cmd, xwcslen(cmd))) {
+			if (!xstrncasecmp(c->name, cmd, xwcslen(cmd))) {
 				last_command = c;
 		    		abbrs++;
 			} else {
@@ -2629,7 +2534,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		if (exact) 
 			last_alias = (last_command->flags & COMMAND_ISALIAS || last_command->flags & COMMAND_ISSCRIPT) ? 1 : 0;
 		
-		if (!last_alias && (tmp = xwcschr(last_name, ':')))
+		if (!last_alias && (tmp = xstrchr(last_name, ':')))
 			last_name = tmp + 1;
 		
         	/* sprawdzamy czy session istnieje - je¶li nie to nie mamy po co robiæ czego¶ dalej ... */
@@ -2648,7 +2553,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		}
 		if (!res && (last_command->flags & SESSION_MUSTBECONNECTED)) {
 			if (!session_connected_get(s)) {
-				wcs_printq("not_connected", wcs_session_name(s));	
+				wcs_printq("not_connected", session_name(s));	
 				res = -1;
 			}
 		}
@@ -2662,14 +2567,14 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 		}
 
 		if (!res) {
-			CHAR_T **last_params = (last_command->flags & COMMAND_ISALIAS) ? wcs_array_make(TEXT("?"), TEXT(" "), 0, 1, 1) : last_command->params;
-			int parcount = wcs_array_count(last_params);
-			CHAR_T **par = wcs_array_make(p, TEXT(" \t"), parcount, 1, 1);
+			CHAR_T **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make(TEXT("?"), TEXT(" "), 0, 1, 1) : last_command->params;
+			int parcount = array_count(last_params);
+			CHAR_T **par = array_make(p, TEXT(" \t"), parcount, 1, 1);
 			char *ntarget;
 
 			if ((last_command->flags & COMMAND_PARAMASTARGET) && par[0]) {
 /*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]); */
-				ntarget = xstrdup(wcs_to_normal(par[0]));
+				ntarget = xstrdup(par[0]);
 			} else	ntarget = xstrdup(target);
 
 			target = strip_quotes(ntarget);
@@ -2699,7 +2604,7 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 					window_lock_dec(w);
 				else {
 					list_t l;
-					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=" CHARF "]\n", __(target), __U(last_name));
+					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", __(target), __(last_name));
 					/* may be faultly */
 					for (l=windows; l; l = l->next) {
 						window_t *w = l->data;
@@ -2709,8 +2614,8 @@ int command_exec(const char *target, session_t *session, const CHAR_T *xline, in
 				}
 				query_emit(NULL, TEXT("ui-window-refresh"));
 			}
-			if (last_command->flags & COMMAND_ISALIAS) wcs_array_free(last_params);
-			wcs_array_free(par);
+			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
+			array_free(par);
 			xfree(ntarget);
 		}
 		xfree(line_save);
@@ -2738,7 +2643,7 @@ int command_exec_format(const char *target, session_t *session, int quiet, const
 	int res;
 	
 	va_start(ap, format);
-	command = vwcssaprintf(format, ap);
+	command = vsaprintf(format, ap);
 	va_end(ap);
 	
 	if (!command) 
@@ -2800,7 +2705,6 @@ int binding_quick_list(int a, int b)
 
 COMMAND(cmd_alias_exec)
 {	
-	PARUNI
 	list_t l, tmp = NULL, m = NULL;
 	int need_args = 0;
 
@@ -2843,12 +2747,12 @@ COMMAND(cmd_alias_exec)
 	}
 	
 	for (tmp = m; tmp; tmp = tmp->next) {
-		wcs_string_t str;
+		string_t str;
 
 		if (*((CHAR_T *) tmp->data) == '/')
-			str = wcs_string_init(NULL);
+			str = string_init(NULL);
 		else
-			str = wcs_string_init(TEXT("/"));
+			str = string_init(TEXT("/"));
 
 		if (need_args) {
 			CHAR_T *args[9], **arr, *s; 
@@ -2856,17 +2760,17 @@ COMMAND(cmd_alias_exec)
 
 			if (!params[0]) {
 				wcs_printq("aliases_not_enough_params", name);
-				wcs_string_free(str, 1);
+				string_free(str, 1);
 				list_destroy(m, 1);
 				return -1;
 			}
 
-			arr = wcs_array_make(params[0], TEXT("\t "), need_args, 1, 1);
+			arr = array_make(params[0], TEXT("\t "), need_args, 1, 1);
 
-			if (wcs_array_count(arr) < need_args) {
+			if (array_count(arr) < need_args) {
 				wcs_printq("aliases_not_enough_params", name);
-				wcs_string_free(str, 1);
-				wcs_array_free(arr);
+				string_free(str, 1);
+				array_free(arr);
 				list_destroy(m, 1);
 				return -1;
 			}
@@ -2878,23 +2782,23 @@ COMMAND(cmd_alias_exec)
 					args[i] = NULL;
 			}
 
-			s = wcs_format_string((CHAR_T *) tmp->data, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-			wcs_string_append(str, s);
+			s = format_string((CHAR_T *) tmp->data, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+			string_append(str, s);
 			xfree(s);
 
-			wcs_array_free(arr);
+			array_free(arr);
 
 		} else {
-			wcs_string_append(str, tmp->data);
+			string_append(str, tmp->data);
 			
 			if (params[0]) {
-				wcs_string_append(str, TEXT(" "));
-				wcs_string_append(str, params[0]);
+				string_append(str, TEXT(" "));
+				string_append(str, params[0]);
 			}
 		}
 
 		command_exec(target, session, str->str, quiet);
-		wcs_string_free(str, 1);
+		string_free(str, 1);
 	}
 	
 	list_destroy(m, 1);
@@ -2904,10 +2808,9 @@ COMMAND(cmd_alias_exec)
 
 static COMMAND(cmd_at)
 {
-	PARASC
 	list_t l;
 
-	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		const char *p, *a_name = NULL;
 		char *a_command = NULL;
 		time_t period = 0, freq = 0;
@@ -3105,7 +3008,7 @@ static COMMAND(cmd_at)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int del_all = 0;
 		int ret = 1;
 
@@ -3139,11 +3042,11 @@ static COMMAND(cmd_at)
 		return 0;
 	}
 
-	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		const char *a_name = NULL;
 		int count = 0;
 
-		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			a_name = params[1];
 		else if (params[0])
 			a_name = params[0];
@@ -3232,10 +3135,9 @@ static COMMAND(cmd_at)
 
 static COMMAND(cmd_timer)
 {
-	PARASC
 	list_t l;
 
-	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		const char *t_name = NULL, *p;
 		char *t_command = NULL;
 		time_t period = 0;
@@ -3340,7 +3242,7 @@ static COMMAND(cmd_timer)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		int del_all = 0, ret;
 
 		if (!params[1]) {
@@ -3373,11 +3275,11 @@ static COMMAND(cmd_timer)
 		return 0;
 	}
 
-	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
 		const char *t_name = NULL;
 		int count = 0;
 
-		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			t_name = params[1];
 		else if (params[0])
 			t_name = params[0];
@@ -3454,13 +3356,12 @@ static COMMAND(cmd_timer)
 
 static COMMAND(cmd_conference) 
 {
-	PARASC
-	if (!params[0] || nmatch_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] == '#') {
+	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] == '#') {
 		list_t l, r;
 		int count = 0;
 		const char *cname = NULL;
 	
-		if (params[0] && nmatch_arg(params[0], 'l', TEXT("list"), 2))
+		if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
 			cname = params[1];
 		else if (params[0])
 			cname = params[0];
@@ -3524,7 +3425,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'j', TEXT("join"), 2)) {
+	if (match_arg(params[0], 'j', TEXT("join"), 2)) {
 		struct conference *c;
 		const char *uid;
 
@@ -3560,7 +3461,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3578,7 +3479,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3598,7 +3499,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'r', TEXT("rename"), 2)) {
+	if (match_arg(params[0], 'r', TEXT("rename"), 2)) {
 		if (!params[1] || !params[2]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3614,7 +3515,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 	
-	if (nmatch_arg(params[0], 'i', TEXT("ignore"), 2)) {
+	if (match_arg(params[0], 'i', TEXT("ignore"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3630,7 +3531,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'u', TEXT("unignore"), 2)) {
+	if (match_arg(params[0], 'u', TEXT("unignore"), 2)) {
 		if (!params[1]) {
 			wcs_printq("not_enough_params", name);
 			return -1;
@@ -3646,7 +3547,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	if (nmatch_arg(params[0], 'f', TEXT("find"), 2)) {
+	if (match_arg(params[0], 'f', TEXT("find"), 2)) {
 		struct conference *c;
 		list_t l;
 
@@ -3682,7 +3583,6 @@ static COMMAND(cmd_conference)
 
 static COMMAND(cmd_last)
 {
-	PARASC
         list_t l;
 	const char *uid = NULL;
 	int show_sent = 0, last_n = 0, count = 0, i = 0, show_all = 0;
@@ -3691,7 +3591,7 @@ static COMMAND(cmd_last)
 	time_t n;
 	struct tm *now;
 
-	if (nmatch_arg(params[0], 'c', TEXT("clear"), 2)) {
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {
 		if (params[1] && !(uid = get_uid(session, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
@@ -3718,7 +3618,7 @@ static COMMAND(cmd_last)
 	}		
 
 	if (params[0]) {
-		show_sent = nmatch_arg(params[0], 's', TEXT("stime"), 2);
+		show_sent = match_arg(params[0], 's', TEXT("stime"), 2);
 
 		if (!show_sent)
 			nick = params[0];
@@ -3728,15 +3628,15 @@ static COMMAND(cmd_last)
 
 			nick = arr[0];
 			
-			if (nmatch_arg(params[0], 'n', TEXT("number"), 2)) {
+			if (match_arg(params[0], 'n', TEXT("number"), 2)) {
 				last_n = strtol(arr[0], NULL, 0);
 				nick = arr[1];
 				
-				if (arr[1] && (show_sent = nmatch_arg(arr[1], 's', TEXT("stime"), 2)))
+				if (arr[1] && (show_sent = match_arg(arr[1], 's', TEXT("stime"), 2)))
 					nick = arr[2];
 			}
 
-			if (arr[1] && show_sent && nmatch_arg(arr[0], 'n', TEXT("number"), 2)) {
+			if (arr[1] && show_sent && match_arg(arr[0], 'n', TEXT("number"), 2)) {
 				last_n = atoi(arr[1]);
 				nick = arr[2];
 			}
@@ -3810,10 +3710,9 @@ static COMMAND(cmd_last)
 
 static COMMAND(cmd_queue)
 {
-	PARASC
 	list_t l;
 	
-	if (nmatch_arg(params[0], 'c', TEXT("clear"), 2)) {
+	if (match_arg(params[0], 'c', TEXT("clear"), 2)) {
 		if ((params[1] && !msg_queue_count_uid(params[1])) || !msg_queue_count()) {
 			if (params[1])
 				printq("queue_empty_uid", format_user(session, params[1]));
@@ -3863,7 +3762,6 @@ static COMMAND(cmd_queue)
 
 COMMAND(cmd_dcc)
 {
-	PARASC
 	list_t l;
 
 	if (!params[0] || !xstrncasecmp(params[0], "li", 2)) {	/* list */
@@ -3975,7 +3873,6 @@ COMMAND(cmd_dcc)
 
 static COMMAND(cmd_plugin)
 {
-	PARUNI
 	int ret;
 	plugin_t *pl;
 
@@ -3985,7 +3882,7 @@ static COMMAND(cmd_plugin)
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
 
-			wcs_printq("plugin_list", (p && p->name) ? p->name : TEXT("?"), wcs_itoa(p->prio));
+			wcs_printq("plugin_list", (p && p->name) ? p->name : TEXT("?"), itoa(p->prio));
 		}
 
 		return 0;
@@ -4019,7 +3916,7 @@ static COMMAND(cmd_plugin)
 
 	if (params[1] && (pl = plugin_find(params[0]))) {
 		list_remove(&plugins, pl, 0);
-		plugin_register(pl, wcs_atoi(params[1])); 
+		plugin_register(pl, atoi(params[1])); 
 
 		config_changed = 1;
 		wcs_printq("plugin_prio_set", pl->name, params[1]);
@@ -4038,7 +3935,6 @@ static COMMAND(cmd_plugin)
 
 static COMMAND(cmd_desc)
 {
-	PARASC
 	const char *status, *cmd;
 	
 	if (!session)
@@ -4106,7 +4002,7 @@ command_t *command_add(plugin_t *plugin, const CHAR_T *name, CHAR_T *params, com
 	command_t *c = xmalloc(sizeof(command_t));
 
 	c->name = xwcsdup(name);
-	c->params = params ? wcs_array_make(params, TEXT(" "), 0, 1, 1) : NULL;
+	c->params = params ? array_make(params, TEXT(" "), 0, 1, 1) : NULL;
 	c->function = function;
 	c->flags = flags;
 	c->plugin = plugin;
@@ -4129,7 +4025,7 @@ void command_freeone(command_t *c)
 	if (!c)
 		return;
 	xfree(c->name);
-	wcs_array_free(c->params);
+	array_free(c->params);
 	array_free(c->possibilities);
 	list_remove(&commands, c, 1);
 }
@@ -4188,11 +4084,6 @@ int command_remove(plugin_t *plugin, const CHAR_T *name)
  */
 void command_init()
 {
-#if USE_UNICODE
-#define LNULL NULL
-#define command_add(x, y, par, a, b, c) command_add(x, y, L##par, a, b, c)
-#endif
-
 	command_add(NULL, TEXT("add"), "U ? p", cmd_add, 0, "-f --find");
 
 	command_add(NULL, TEXT("alias"), "p ?", cmd_alias, 0,
@@ -4329,7 +4220,7 @@ void command_free()
 		command_t *c = l->data;
 
 		xfree(c->name);
-		wcs_array_free(c->params);
+		array_free(c->params);
 		array_free(c->possibilities);
 	}
 

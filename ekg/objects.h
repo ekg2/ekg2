@@ -57,13 +57,6 @@
 	}
 
 
-#define PROPERTY_CHART_GET(object,property) \
-	\
-	const CHAR_T *object##_##property##_get(object##_t *o) \
-	{ \
-		return (o) ? o->property : NULL; \
-	}
-
 #define PROPERTY_STRING_SET(object,property) \
 	\
 	int object##_##property##_set(object##_t *o, const char *v) \
@@ -76,24 +69,6 @@
 		\
 		return 0; \
 	}
-
-#define PROPERTY_CHART_SET(object,property) \
-	\
-	int object##_##property##_set(object##_t *o, const CHAR_T *v) \
-	{ \
-		if (!o) \
-			return -1; \
-		\
-		xfree(o->property); \
-		o->property = xwcsdup(v); \
-		\
-		return 0; \
-	}
-
-#define PROPERTY_CHART(object,property) \
-	\
-	PROPERTY_CHART_SET(object, property) \
-	PROPERTY_CHART_GET(object, property)
 
 #define PROPERTY_STRING(object,property) \
 \

@@ -205,21 +205,6 @@ static void string_realloc(string_t s, int count)
 	s->str = tmp;
 }
 
-static void wcs_string_realloc(wcs_string_t s, int count)
-{
-	CHAR_T *tmp;
-	
-	if (s->str && (count + 1) <= s->size)
-		return;
-	
-	tmp = xrealloc(s->str, (count + 81)*sizeof(CHAR_T));
-	if (!s->str)
-		*tmp = 0;
-	tmp[count + 80] = 0;
-	s->size = count + 81;
-	s->str = tmp;
-}
-	
 /*
  * string_append_c()
  *
@@ -237,21 +222,6 @@ int string_append_c(string_t s, char c)
 	}
 	
 	string_realloc(s, s->len + 1);
-
-	s->str[s->len + 1] = 0;
-	s->str[s->len++] = c;
-
-	return 0;
-}
-
-int wcs_string_append_c(wcs_string_t s, CHAR_T c)
-{
-	if (!s) {
-		errno = EFAULT;
-		return -1;
-	}
-	
-	wcs_string_realloc(s, s->len + 1);
 
 	s->str[s->len + 1] = 0;
 	s->str[s->len++] = c;
@@ -288,26 +258,6 @@ int string_append_n(string_t s, const char *str, int count)
 	return 0;
 }
 
-int wcs_string_append_n(wcs_string_t s, const CHAR_T *str, int count)
-{
-	if (!s || !str) {
-		errno = EFAULT;
-		return -1;
-	}
-	if (count == -1)
-		count = xwcslen(str);
-
-	wcs_string_realloc(s, s->len + count);
-
-	s->str[s->len + count] = (CHAR_T) 0;
-
-	xwcsncpy(s->str + s->len, str, count);
-
-	s->len += count;
-
-	return 0;
-}
-
 int string_append_raw(string_t s, const char *str, int count) {
 	if (!s || !str) {
 		errno = EFAULT;
@@ -329,11 +279,6 @@ int string_append_raw(string_t s, const char *str, int count) {
 int string_append(string_t s, const char *str)
 {
 	return string_append_n(s, str, -1);
-}
-
-int wcs_string_append(wcs_string_t s, const CHAR_T *str) 
-{
-	return wcs_string_append_n(s, str, -1);
 }
 
 /*
@@ -393,18 +338,6 @@ string_t string_init(const char *value)
 	return tmp;
 }
 
-wcs_string_t wcs_string_init(const CHAR_T *value)
-{
-	wcs_string_t tmp = xmalloc(sizeof(struct wcs_string));
-	if (!value)
-		value = TEXT("");
-
-	tmp->str = xwcsdup(value);
-	tmp->len = xwcslen(value);
-	tmp->size = xwcslen(value) + 1;
-	return tmp;
-}
-
 /*
  * string_clear()
  *
@@ -418,20 +351,6 @@ void string_clear(string_t s)
 		return;
 	if (s->size > 160) {
 		s->str = xrealloc(s->str, 80);
-		s->size = 80;
-	}
-
-	s->str[0] = 0;
-	s->len = 0;
-}
-
-void wcs_string_clear(wcs_string_t s)
-{
-	if (!s)
-		return;
-
-	if (s->size > 160) {
-		s->str = xrealloc(s->str, 80*sizeof(CHAR_T));
 		s->size = 80;
 	}
 
@@ -467,20 +386,6 @@ char *string_free(string_t s, int free_string)
 	return tmp;
 }
 
-CHAR_T *wcs_string_free(wcs_string_t s, int free_string)
-{
-	CHAR_T *tmp = NULL;
-	if (!s) 
-		return NULL;
-	if (free_string)
-		xfree(s->str);
-	else
-		tmp = s->str;
-
-	xfree(s);
-	return tmp;
-}
-
 /*
  * itoa()
  *
@@ -505,29 +410,6 @@ const char *itoa(long int i)
 	snprintf(tmp, 16, "%ld", i);
 
 	return tmp;
-}
-
-const CHAR_T *wcs_itoa(long int i)
-{
-	static CHAR_T bufs[10][16];
-	static int index = 0;
-	CHAR_T *tmp = bufs[index++];
-
-	if (index > 9)
-		index = 0;
-#if USE_UNICODE
-	swprintf(tmp, 16, TEXT("%ld"), i);
-#else
-	snprintf(tmp, 16, "%ld", i);
-#endif
-	return tmp;
-}
-
-int wcs_atoi(const CHAR_T *nptr) {
-	char *tmp = wcs_to_normal(nptr);
-	int at = atoi(tmp);
-	free_utf(tmp);
-	return at;
 }
 
 /*
@@ -643,106 +525,6 @@ failure:
 	return result;
 }
 
-CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes)  /* just hack.. */
-{
-#if USE_UNICODE
-	const CHAR_T *p, *q;
-	CHAR_T **result = NULL;
-	int items = 0, last = 0;
-
-	if (!string || !sep)
-		goto failure;
-
-	for (p = string; ; ) {
-		int len = 0;
-		CHAR_T *token = NULL;
-
-		if (max && items >= max - 1)
-			last = 1;
-		
-		if (trim) {
-			while (*p && xwcschr(sep, *p))
-				p++;
-			if (!*p)
-				break;
-		}
-
-		if (!last && quotes && (*p == '\'' || *p == '\"')) {
-			CHAR_T sep = *p;
-
-			for (q = p + 1, len = 0; *q; q++, len++) {
-				if (*q == '\\') {
-					q++;
-					if (!*q)
-						break;
-				} else if (*q == sep)
-					break;
-			}
-
-                        len++;
-
-			if ((token = xcalloc(len + 1, sizeof(CHAR_T)))) {
-				CHAR_T *r = token;
-			
-				for (q = p + 1; *q; q++, r++) {
-					if (*q == '\\') {
-						q++;
-						
-						if (!*q)
-							break;
-						
-						switch (*q) {
-							case 'n':
-								*r = '\n';
-								break;
-							case 'r':
-								*r = '\r';
-								break;
-							case 't':
-								*r = '\t';
-								break;
-							default:
-								*r = *q;
-						}
-					} else if (*q == sep) {
-						break;
-					} else 
-						*r = *q;
-				}
-				
-				*r = 0;
-			}
-			
-			p = (*q) ? q + 1 : q;
-
-		} else {
-			for (q = p, len = 0; *q && (last || !xwcschr(sep, *q)); q++, len++);
-			token = xcalloc(len + 1, sizeof(CHAR_T));
-			xwcsncpy(token, p, len);
-			token[len] = 0;
-			p = q;
-		}
-		
-		result = xrealloc(result, (items + 2) * sizeof(CHAR_T *));
-		result[items] = token;
-		result[++items] = NULL;
-
-		if (!*p)
-			break;
-
-		p++;
-	}
-
-failure:
-	if (!items)
-		result = xcalloc(1, sizeof(CHAR_T *));
-
-	return result;
-#else
-	return array_make(string, sep, max, trim, quotes);
-#endif
-}
-
 /*
  * array_count()
  *
@@ -763,30 +545,6 @@ int array_count(char **array)
 	return result;
 }
 
-int wcs_array_count(CHAR_T **array)
-{
-	int result = 0;
-
-	if (!array)
-		return 0;
-
-	while (*array) {
-		result++;
-		array++;
-	}
-
-	return result;
-}
-
-char **wcs_array_to_str(CHAR_T **arr)
-{
-	char **tab = xcalloc(wcs_array_count(arr)+1, sizeof(char *));
-	int i;
-	for (i=0; i < wcs_array_count(arr); i++)
-		tab[i] = wcs_to_normal(arr[i]);
-	return tab;
-}
-
 /* 
  * array_add()
  *
@@ -797,15 +555,6 @@ void array_add(char ***array, char *string)
 	int count = array_count(*array);
 
 	*array = xrealloc(*array, (count + 2) * sizeof(char*));
-	(*array)[count + 1] = NULL;
-	(*array)[count] = string;
-}
-
-void wcs_array_add(CHAR_T ***array, CHAR_T *string)
-{
-	int count = wcs_array_count(*array);
-
-	*array = xrealloc(*array, (count + 2) * sizeof(CHAR_T*));
 	(*array)[count + 1] = NULL;
 	(*array)[count] = string;
 }
@@ -824,14 +573,6 @@ void array_add_check(char ***array, char *string, int casesensitive)
 {
 	if (!array_item_contains(*array, string, casesensitive))
 		array_add(array, string);
-	else
-		xfree(string);
-}
-
-void wcs_array_add_check(CHAR_T ***array, CHAR_T *string, int casesensitive)
-{
-	if (!wcs_array_item_contains(*array, string, casesensitive))
-		wcs_array_add(array, string);
 	else
 		xfree(string);
 }
@@ -865,25 +606,6 @@ char *array_join(char **array, const char *sep)
 	return string_free(s, 0);
 }
 
-CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep)
-{
-	wcs_string_t s = wcs_string_init(NULL);
-	int i;
-
-	if (!array)
-		return wcs_string_free(s, 0);
-
-	for (i = 0; array[i]; i++) {
-		if (i)
-			wcs_string_append(s, sep);
-
-		wcs_string_append(s, array[i]);
-	}
-
-	return wcs_string_free(s, 0);
-
-}
-
 /*
  * array_contains()
  *
@@ -912,22 +634,6 @@ int array_contains(char **array, const char *string, int casesensitive)
 	return 0;
 }
 
-int wcs_array_contains(CHAR_T **array, const CHAR_T *string, int casesensitive)
-{
-	int i;
-
-	if (!array || !string)
-		return 0;
-
-	for (i = 0; array[i]; i++) {
-		if (casesensitive && !xwcscmp(array[i], string))
-			return 1;
-		if (!casesensitive && !xwcscasecmp(array[i], string))
-			return 1;
-	}
-
-	return 0;
-}
 /*
  * array_item_contains()
  *
@@ -956,22 +662,6 @@ int array_item_contains(char **array, const char *string, int casesensitive)
         return 0;
 }
 
-int wcs_array_item_contains(CHAR_T **array, const CHAR_T *string, int casesensitive)
-{
-        int i;
-        if (!array || !string)
-                return 0;
-        for (i = 0; array[i]; i++) {
-                if (casesensitive && xwcsstr(array[i], string))
-                        return 1;
-                if (!casesensitive && xwcscasestr(array[i], string))
-                        return 1;
-        }
-
-        return 0;
-}
-
-	
 /*
  * array_free()
  *
@@ -989,20 +679,6 @@ void array_free(char **array)
 
 	xfree(array);
 }
-
-void wcs_array_free(CHAR_T **array)
-{
-	CHAR_T **tmp;
-
-	if (!array)
-		return;
-
-	for (tmp = array; *tmp; tmp++)
-		xfree(*tmp);
-
-	xfree(array);
-}
-
 
 /*
  * Local Variables:

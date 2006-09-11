@@ -409,7 +409,7 @@ watches_once_again:
                                         if (!fstat(w->fd, &st))
                                                 continue;
 
-                                        debug("select(): bad file descriptor: fd=%d, type=%d, plugin="CHARF"\n", w->fd, w->type, (w->plugin) ? w->plugin->name : TEXT("none"));
+                                        debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : TEXT("none"));
 
                                         watch_free(w);
                                 }
@@ -602,7 +602,6 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 {
 	static string_t line = NULL;
 	char *tmp;
-	CHAR_T *tmp2 = NULL;
 	int is_UI = 0;
 
 	if (!config_debug)
@@ -632,8 +631,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
 	tmp[xstrlen(tmp) - 1] = 0;
 
-	tmp2 = normal_to_wcs(tmp);
-	buffer_add(BUFFER_DEBUG, NULL, tmp2, DEBUG_MAX_LINES);
+	buffer_add(BUFFER_DEBUG, NULL, tmp, DEBUG_MAX_LINES);
 
 	query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
 
@@ -647,11 +645,10 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 			case DEBUG_ERROR:		format = "edebug";	break;
 			default:			format = "debug";	break;
 		}
-		wcs_print_window("__debug", NULL, 0, format, tmp2);
+		print_window("__debug", NULL, 0, format, tmp);
 	} else {
-/*		fprintf(stderr, CHARF "\n", tmp2); */	/* uncomment for debuging */
+/*		fprintf(stderr, "%s\n", tmp); */	/* uncomment for debuging */
 	}
-	free_utf(tmp2);
 	xfree(tmp);
 }
 
@@ -903,7 +900,7 @@ int main(int argc, char **argv)
                 config_read(SYSCONFDIR "/ekg2.conf");
 
         if (frontend) {
-                plugin_load(normal_to_wcs(frontend), -254, 1);
+                plugin_load(frontend, -254, 1);
 		config_changed = 1;
 	}
 
@@ -926,7 +923,7 @@ int main(int argc, char **argv)
 	else for (l = buffers; l; l = l->next) {
 		struct buffer *b = l->data;
 		if (b->type != BUFFER_DEBUG) continue;
-		wcs_print_window("__debug", NULL, 0, "debug", b->line);
+		print_window("__debug", NULL, 0, "debug", b->line);
 	}
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {

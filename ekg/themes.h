@@ -35,7 +35,7 @@ struct format {
 };
 
 typedef struct {
-	CHAR_T *str;	/* znaki, ci±g zakoñczony \0 */
+	char *str;	/* znaki, ci±g zakoñczony \0 */
 	short *attr;	/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	int ts;		/* timestamp */
 
@@ -53,19 +53,16 @@ extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo incl
 #endif
 
 #define print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x) 
-#define wcs_print(x...) wcs_print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x)
+#define wcs_print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x)
 #define print_status(x...) print_window("__status", NULL, 0, x)
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
-void wcs_print_window(const char *target, session_t *session, int separate, const char *theme, ...);
 
 int format_add(const char *name, const char *value, int replace);
 const char *format_find(const char *name);
-CHAR_T *wcs_format_find(const char *name);
 char *format_string(const char *format, ...);
-CHAR_T *wcs_format_string(const CHAR_T *format, ...);
 
 void theme_init();
 void theme_plugins_init();
@@ -74,7 +71,6 @@ void theme_cache_reset();
 void theme_free();
 
 fstring_t *fstring_new(const char *str);
-fstring_t *wcs_fstring_new(const CHAR_T *str);
 void fstring_free(fstring_t *str);
 
 #endif

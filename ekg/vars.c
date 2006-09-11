@@ -131,9 +131,6 @@ void variable_init()
 	variable_add(NULL, TEXT("time_deviation"), VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("timestamp"), VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("timestamp_show"), VAR_BOOL, 1, &config_timestamp_show, NULL, NULL, NULL);
-#if USE_UNICODE
-//	variable_add(NULL, TEXT("use_unicode"), VAR_BOOL, 1, &config_use_unicode, NULL, NULL, NULL);
-#endif
 	variable_add(NULL, TEXT("windows_save"), VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
 	variable_add(NULL, TEXT("windows_layout"), VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
 }
@@ -160,15 +157,7 @@ void variable_set_default()
 	console_charset = xstrdup(nl_langinfo(CODESET));
 #endif
 
-#if USE_UNICODE
-	if (xstrcmp(console_charset, "UTF-8")) {
-		debug("Warning, nl_langinfo(CODESET) reports that you are using non utf-8 encoding, but you compiled ekg2 with --enable-unicode\n");
-		debug("\tPlease compile ekg2 without --enable-unicode or change your enviroment setting to use utf-8 encoding (LC_ALL/LC_CTYPE)\n");
-		xfree(console_charset);
-		console_charset	= xstrdup("UTF-8");
-	}
-	config_use_unicode	= 1;
-#else
+#if 0
 	if (!xstrcmp(console_charset, "UTF-8")) {
 		debug("Warning, nl_langinfo(CODESET) reports that you are using utf-8 encoding, but you didn't compile ekg2 with (experimental/untested) --enable-unicode\n");
 		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
@@ -178,6 +167,7 @@ void variable_set_default()
 		config_console_charset = xstrdup(console_charset);
 	else
 		config_console_charset = xstrdup("ISO-8859-2"); /* Default: ISO-8859-2 */
+	config_use_unicode = 0;
 }
 
 /*
@@ -285,11 +275,7 @@ variable_t *variable_add(plugin_t *plugin, const CHAR_T *name, int type, int dis
 		return NULL;
 
 	if (plugin)
-#if USE_UNICODE
-		__name = wcsprintf(TEXT("%ls:%ls"), plugin->name, name);
-#else
-		__name = wcsprintf("%s:%s", plugin->name, name);
-#endif
+		__name = saprintf("%s:%s", plugin->name, name);
 	else
 		__name = xwcsdup(name);
 
@@ -605,7 +591,7 @@ void variable_help(const CHAR_T *name)
 	char *filename;
 	const CHAR_T *seeking_name;
 	char *tmplang;
-	wcs_string_t s;
+	string_t s;
 	int found = 0;
 	variable_t *v = variable_find(name);
 
@@ -628,7 +614,7 @@ void variable_help(const CHAR_T *name)
 
 again:
 	if (v->plugin && v->plugin->name) {
-		char *tmp = saprintf(DATADIR "/plugins/"CHARF"/%s", v->plugin->name, filename);
+		char *tmp = saprintf(DATADIR "/plugins/%s/%s", v->plugin->name, filename);
 		f = fopen(tmp, "r");
 		xfree(tmp);
 
@@ -643,7 +629,7 @@ again:
 			return;
 		}
 
-		seeking_name = xwcschr(name, ':') + 1;
+		seeking_name = xstrchr(name, ':') + 1;
 	} else {
 		char *tmp = saprintf(DATADIR "/%s", filename);
 		f = fopen(tmp, "r");
@@ -665,7 +651,7 @@ again:
 
 	xfree(filename);
 
-	while ((line = wcs_read_file(f))) {
+	while ((line = read_file(f))) {
 		if (!xwcscasecmp(line, seeking_name)) {
 			found = 1;
 			xfree(line);
@@ -681,9 +667,9 @@ again:
 		return;
 	}
 
-	line = wcs_read_file(f);
+	line = read_file(f);
 	
-	if ((tmp = xwcsstr(line, TEXT(": "))))
+	if ((tmp = xstrstr(line, TEXT(": "))))
 		type = xwcsdup(tmp + 2);
 	else
 		type = xwcsdup(TEXT("?"));
@@ -692,8 +678,8 @@ again:
 
 	tmp = NULL;
 	
-	line = wcs_read_file(f);
-	if ((tmp = xwcsstr(line, TEXT(": "))))
+	line = read_file(f);
+	if ((tmp = xstrstr(line, TEXT(": "))))
 		def = xwcsdup(tmp + 2);
 	else
 		def = xwcsdup(TEXT("?"));
@@ -705,28 +691,28 @@ again:
 	xfree(def);
 
 	if (tmp)			/* je¶li nie jest to ukryta zmienna... */
-		xfree(wcs_read_file(f));	/* ... pomijamy liniê */
-	s = wcs_string_init(NULL);
-	while ((line = wcs_read_file(f))) {
+		xfree(read_file(f));	/* ... pomijamy liniê */
+	s = string_init(NULL);
+	while ((line = read_file(f))) {
 		if (line[0] != '\t') {
 			xfree(line);
 			break;
 		}
 
-		if (!xwcsncmp(line, TEXT("\t- "), 3) && xwcscmp(s->str, TEXT(""))) {
+		if (!xstrncmp(line, TEXT("\t- "), 3) && xwcscmp(s->str, TEXT(""))) {
 			wcs_print("help_set_body", s->str);
-			wcs_string_clear(s);
+			string_clear(s);
 		}
 
-                if (!xwcsncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
-	                wcs_string_append(s, TEXT("\n\r"));
+                if (!xstrncmp(line, TEXT("\t"), 1) && xwcslen(line) == 1) {
+	                string_append(s, TEXT("\n\r"));
                         continue;
                 }
 	
-		wcs_string_append(s, line + 1);
+		string_append(s, line + 1);
 
 		if (line[xwcslen(line) - 1] != ' ')
-			wcs_string_append_c(s, ' ');
+			string_append_c(s, ' ');
 
 		xfree(line);
 	}
@@ -734,7 +720,7 @@ again:
 	if (xwcscmp(s->str, TEXT("")))
 		wcs_print("help_set_body", s->str);
 
-	wcs_string_free(s, 1);
+	string_free(s, 1);
 	
 	if (xstrcmp(format_find("help_set_footer"), ""))
 		wcs_print("help_set_footer", name);

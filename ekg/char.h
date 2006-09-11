@@ -27,37 +27,8 @@
 #ifndef EKG2__CHAR_H__
 #define EKG2__CHAR_H__
 
-#include "ekg2-config.h"
-
-#if USE_UNICODE
-#	include <wchar.h>
-#	define TEXT(x)	L##x
-#	define CHAR_T	wchar_t
-#	define CHARF	"%ls"
-#	define free_utf(x) xfree(x)
-#else
-#	define TEXT(x)	x
-#	define CHARF	"%s"
-#	define CHAR_T	char
-#	define free_utf(x) 
-#endif
-
-#ifndef EKG2_WIN32_NOFUNCTION
-char *wcs_to_normal(const CHAR_T *str);
-char *wcs_to_normal_n(const CHAR_T *str, int len);
-
-CHAR_T *normal_to_wcs(const char *str);
-CHAR_T *normal_to_wcs_n(const char *str, int len);
-#endif
-
-struct table_entry {
-	unsigned char 	ch;
-	unsigned short 	wc;
-};
-
-extern struct table_entry table_cp1250[];
-extern struct table_entry table_iso8859_2[];
-
+#define TEXT(x)	x
+#define CHAR_T	char
 
 #endif /* EKG2__CHAR_H__ */
 

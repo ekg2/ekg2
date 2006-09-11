@@ -63,13 +63,10 @@ list_t dccs = NULL;
 void protocol_init()
 {
 	query_connect(NULL, TEXT("protocol-status"), protocol_status, NULL);
-	query_connect(NULL, TEXT("wcs_protocol-status"), protocol_status, (void *) 1);
 	query_connect(NULL, TEXT("protocol-message"), protocol_message, NULL);
-	query_connect(NULL, TEXT("wcs_protocol-message"), protocol_message, (void *) 1);
 	query_connect(NULL, TEXT("protocol-message-ack"), protocol_message_ack, NULL);
 
 	query_connect(NULL, TEXT("protocol-connected"), protocol_connected, NULL);
-	query_connect(NULL, TEXT("wcs_protocol-disconnected"), protocol_disconnected, (void *) 1);
 	query_connect(NULL, TEXT("protocol-disconnected"), protocol_disconnected, NULL);
 }
 
@@ -109,22 +106,6 @@ int protocol_disconnected(void *data, va_list ap)
 	char *reason	= *(va_arg(ap, char **));
 	int type	= *(va_arg(ap, int*));
 
-	if (data == (void *) 1) {
-#if USE_UNICODE
-		int ret;
-		char *__session = wcs_to_normal((CHAR_T *) session);
-		char *__reason	= wcs_to_normal((CHAR_T *) reason);
-
-		ret = query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &type);
-
-		free_utf(__session);
-		free_utf(__reason);
-		return ret;
-#else
-		return query_emit(NULL, TEXT("protocol-disconnected"), &session, &reason, &type);
-#endif
-	}
-	
 	userlist_clear_status(session_find(session), NULL);
 
 	switch (type) {
@@ -186,10 +167,10 @@ int protocol_connected(void *data, va_list ap)
 	if (descr)
 		print("connected_descr", descr, session_name(s));
 	else
-		wcs_print("connected", wcs_session_name(s));
+		wcs_print("connected", session_name(s));
 
 	if (!msg_queue_flush(*session))
-		wcs_print("queue_flush", wcs_session_name(s));
+		wcs_print("queue_flush", session_name(s));
 
 	return 0;
 }
@@ -213,27 +194,7 @@ int protocol_status(void *data, va_list ap)
 	session_t *s;
 	int ignore_level;
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
-	if (data == (void *) 1) {
-#if USE_UNICODE
-		char *ssession	= wcs_to_normal( (CHAR_T *) session);
-		char *suid	= wcs_to_normal( (CHAR_T *) uid);
-		char *sstatus	= wcs_to_normal( (CHAR_T *) status);
-		char *sdescr	= wcs_to_normal( (CHAR_T *) descr);
-		char *shost	= wcs_to_normal( (CHAR_T *) host);
-		int ret;
 
-		ret = query_emit(NULL, TEXT("protocol-status"), &ssession, &suid, &sstatus, &sdescr, &shost, &port, &when);
-
-		free_utf(ssession);
-		free_utf(suid);
-		free_utf(sstatus);
-		free_utf(sdescr);
-		free_utf(shost);
-		return ret;
-#else
-		return query_emit(NULL, TEXT("protocol-status"), __session, __uid, &status, __descr, &host, &port, &when);
-#endif
-	}
 	if (!(s = session_find(session)))
 		return 0;
 
@@ -568,28 +529,6 @@ int protocol_message(void *data, va_list ap)
 	int empty_theme = 0;
 	int our_msg;
 
-	if (data == (void *) 1) {
-#if USE_UNICODE
-		char *ssession	= wcs_to_normal( (CHAR_T *) session);
-		char *suid	= wcs_to_normal( (CHAR_T *) uid);
-		char *stext	= wcs_to_normal( (CHAR_T *) text);
-		char *sseq	= wcs_to_normal( (CHAR_T *) seq);
-		char **srcpts   = wcs_array_to_str( (CHAR_T **) rcpts);
-		int ret;
-
-		ret = query_emit(NULL, TEXT("protocol-message"), &ssession, &suid, &srcpts, &stext, &format, &sent, &class, &sseq, &dobeep, &secure);
-
-		free_utf(ssession);
-		free_utf(suid);
-		free_utf(stext);
-		free_utf(sseq);
-		array_free(srcpts);
-		return ret;
-#else
-		return query_emit(NULL, TEXT("protocol-message"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &dobeep, &secure);
-#endif
-	}
-
 	if (ignored_check(session_class, uid) & IGNORE_MSG)
 		return -1;
 
@@ -689,24 +628,17 @@ int protocol_message(void *data, va_list ap)
  */
 int protocol_message_ack(void *data, va_list ap)
 {
-	CHAR_T *__session	= *(va_arg(ap, CHAR_T **));
-	CHAR_T *__rcpt		= *(va_arg(ap, CHAR_T **));
-	CHAR_T *__seq		= *(va_arg(ap, CHAR_T **));
-	CHAR_T *__status	= *(va_arg(ap, CHAR_T **));
-
-	char *session	= wcs_to_normal(__session);
-	char *rcpt	= wcs_to_normal(__rcpt);
-	char *seq	= wcs_to_normal(__seq);
+	char *session		= *(va_arg(ap, char **));
+	char *rcpt		= *(va_arg(ap, char **));
+	char *seq		= *(va_arg(ap, char **));
+	char *__status		= *(va_arg(ap, char **));
 
 	userlist_t *u = userlist_find(session_find(session), rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
 	int display = 0;
 	CHAR_T format[100];
-#if USE_UNICODE
-	swprintf(format, sizeof(format)/sizeof(CHAR_T), TEXT("ack_%ls"), __status);
-#else
+
 	snprintf(format, sizeof(format), "ack_%s", __status);
-#endif
 
 	msg_queue_remove_seq(seq);
 	
@@ -720,11 +652,7 @@ int protocol_message_ack(void *data, va_list ap)
 		display = 1;
 
 	if (display)
-		print_window(target, session_find(session), 0, wcs_to_normal(format), format_user(session_find(session), rcpt));
-
-	free_utf(session);
-	free_utf(rcpt);
-	free_utf(seq);
+		print_window(target, session_find(session), 0, format, format_user(session_find(session), rcpt));
 
 	return 0;
 }
