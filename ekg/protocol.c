@@ -34,7 +34,6 @@
 
 #include <string.h>
 
-#include "char.h"
 #include "debug.h"
 #include "dynstuff.h"
 #include "xmalloc.h"
@@ -62,12 +61,12 @@ list_t dccs = NULL;
  */
 void protocol_init()
 {
-	query_connect(NULL, TEXT("protocol-status"), protocol_status, NULL);
-	query_connect(NULL, TEXT("protocol-message"), protocol_message, NULL);
-	query_connect(NULL, TEXT("protocol-message-ack"), protocol_message_ack, NULL);
+	query_connect(NULL, ("protocol-status"), protocol_status, NULL);
+	query_connect(NULL, ("protocol-message"), protocol_message, NULL);
+	query_connect(NULL, ("protocol-message-ack"), protocol_message_ack, NULL);
 
-	query_connect(NULL, TEXT("protocol-connected"), protocol_connected, NULL);
-	query_connect(NULL, TEXT("protocol-disconnected"), protocol_disconnected, NULL);
+	query_connect(NULL, ("protocol-connected"), protocol_connected, NULL);
+	query_connect(NULL, ("protocol-disconnected"), protocol_disconnected, NULL);
 }
 
 
@@ -91,7 +90,7 @@ static TIMER(protocol_reconnect_handler)
 
 	debug("reconnecting session %s\n", session);
 
-	command_exec(NULL, s, TEXT("/connect"), 0);
+	command_exec(NULL, s, ("/connect"), 0);
 	return 0;
 }
 
@@ -144,7 +143,7 @@ int protocol_disconnected(void *data, va_list ap)
 			break;
 
 		default:
-			wcs_print("generic_error", TEXT("protocol_disconnect internal error, report to authors"));
+			wcs_print("generic_error", ("protocol_disconnect internal error, report to authors"));
 			break;
 	}
 
@@ -272,7 +271,7 @@ int protocol_status(void *data, va_list ap)
 
 	/* daj znaæ d¼wiêkiem... */
 	if (config_beep && config_beep_notify)
-		query_emit(NULL, TEXT("ui-beep"));
+		query_emit(NULL, ("ui-beep"));
 
 	/* ...i muzyczk± */
 	if (config_sound_notify_file)
@@ -300,7 +299,7 @@ notify_plugins:
 	}
 
 	if (!xstrcasecmp(u->status, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-		query_emit(NULL, TEXT("event_online"), __session, __uid);
+		query_emit(NULL, ("event_online"), __session, __uid);
 
 	if (!ignore_status) {
 		xfree(u->status);
@@ -308,7 +307,7 @@ notify_plugins:
 	}
 
 	if (xstrcasecmp(u->descr, descr) && !ignore_events)
-		query_emit(NULL, TEXT("event_descr"), __session, __uid, __descr);
+		query_emit(NULL, ("event_descr"), __session, __uid, __descr);
 
 	if (!ignore_status && !ignore_status_descr) {
 		xfree(u->descr);
@@ -316,14 +315,14 @@ notify_plugins:
 		u->status_time = when ? when : time(NULL);
 	}
 	
-	query_emit(NULL, TEXT("userlist-changed"), __session, __uid);
+	query_emit(NULL, ("userlist-changed"), __session, __uid);
 
 	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && !ignore_events)
-		query_emit(NULL, TEXT("event_avail"), __session, __uid);
+		query_emit(NULL, ("event_avail"), __session, __uid);
 	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && !ignore_events)
-                query_emit(NULL, TEXT("event_away"), __session, __uid);
+                query_emit(NULL, ("event_away"), __session, __uid);
         if (!xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-                query_emit(NULL, TEXT("event_na"), __session, __uid);
+                query_emit(NULL, ("event_na"), __session, __uid);
 
 	return 0;
 }
@@ -473,7 +472,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (class == EKG_MSGCLASS_CHAT) {
 
 		if (config_beep && config_beep_chat && dobeep)
-			query_emit(NULL, TEXT("ui-beep"));
+			query_emit(NULL, ("ui-beep"));
 	
 		if (config_sound_chat_file && dobeep)
 			play_sound(config_sound_chat_file);
@@ -481,7 +480,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_MESSAGE) {
 
 		if (config_beep && config_beep_msg && dobeep)
-			query_emit(NULL, TEXT("ui-beep"));
+			query_emit(NULL, ("ui-beep"));
 		if (config_sound_msg_file && dobeep)
 			play_sound(config_sound_chat_file);
 
@@ -565,7 +564,7 @@ int protocol_message(void *data, va_list ap)
                 char *___message = xstrdup(text);
                 int ___decrypted = 0;
 
-                query_emit(NULL, TEXT("message-decrypt"), &___session, &___sender, &___message, &___decrypted, NULL);
+                query_emit(NULL, ("message-decrypt"), &___session, &___sender, &___message, &___decrypted, NULL);
 
                 if (___decrypted) {
                         text = ___message;
@@ -578,10 +577,10 @@ int protocol_message(void *data, va_list ap)
                 xfree(___message);
 	}
 
-	if (our_msg)	query_emit(NULL, TEXT("protocol-message-sent"), &session, &(rcpts[0]), &text);
-	else		query_emit(NULL, TEXT("protocol-message-received"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+	if (our_msg)	query_emit(NULL, ("protocol-message-sent"), &session, &(rcpts[0]), &text);
+	else		query_emit(NULL, ("protocol-message-received"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
 
-	query_emit(NULL, TEXT("protocol-message-post"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+	query_emit(NULL, ("protocol-message-post"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
 
 	/* show it ! */
 	if (!(our_msg && !config_display_sent)) {
@@ -615,7 +614,7 @@ int protocol_message(void *data, va_list ap)
 
                         list_add(&autofinds, (void *) uid, xstrlen(uid) + 1);
 
-                        command_exec_format(target, session_class, 0, TEXT("/find %s"), uid);
+                        command_exec_format(target, session_class, 0, ("/find %s"), uid);
                 }
         }
 
@@ -636,7 +635,7 @@ int protocol_message_ack(void *data, va_list ap)
 	userlist_t *u = userlist_find(session_find(session), rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
 	int display = 0;
-	CHAR_T format[100];
+	char format[100];
 
 	snprintf(format, sizeof(format), "ack_%s", __status);
 
@@ -645,10 +644,10 @@ int protocol_message_ack(void *data, va_list ap)
 	if (config_display_ack == 1)
 		display = 1;
 
-	if (!xwcscmp(__status, EKG_ACK_DELIVERED) && config_display_ack == 2)
+	if (!xstrcmp(__status, EKG_ACK_DELIVERED) && config_display_ack == 2)
 		display = 1;
 
-	if (!xwcscmp(__status, EKG_ACK_QUEUED) && config_display_ack == 3)
+	if (!xstrcmp(__status, EKG_ACK_QUEUED) && config_display_ack == 3)
 		display = 1;
 
 	if (display)

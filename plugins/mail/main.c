@@ -148,7 +148,7 @@ static int check_mail_update(const char *s, int more)
 		}
 
 		if (config_beep && config_beep_mail)
-			query_emit(NULL, TEXT("ui-beep"), NULL);
+			query_emit(NULL, ("ui-beep"), NULL);
 
 		play_sound(config_sound_mail_file);
 
@@ -426,7 +426,7 @@ static int check_mail_maildir()
  *
  * wywo³ywane przy zmianie ,,check_mail_folders''.
  */
-static void changed_check_mail_folders(const CHAR_T *var)
+static void changed_check_mail_folders(const char *var)
 {
 	struct mail_folder foo;
 
@@ -492,13 +492,13 @@ static void changed_check_mail_folders(const CHAR_T *var)
  *
  * wywo³ywane przy zmianie zmiennej ,,check_mail''.
  */
-static void changed_check_mail(const CHAR_T *var)
+static void changed_check_mail(const char *var)
 {
 	if (config_check_mail) {
 		list_t l;
 
 		/* konieczne, je¶li by³a zmiana typu skrzynek */
-		changed_check_mail_folders(TEXT("check_mail_folders"));
+		changed_check_mail_folders(("check_mail_folders"));
 
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
@@ -518,12 +518,12 @@ static void changed_check_mail(const CHAR_T *var)
 	timer_remove(&mail_plugin, "mail-check");
 }
 
-static int dd_beep(const CHAR_T *name)
+static int dd_beep(const char *name)
 {
 	return (config_beep);
 }
 
-static int dd_check_mail(const CHAR_T *name)
+static int dd_check_mail(const char *name)
 {
 	return (config_check_mail);
 }
@@ -541,12 +541,12 @@ int mail_plugin_init(int prio)
 {
 	plugin_register(&mail_plugin, prio);
 
-	query_connect(&mail_plugin, TEXT("mail-count"), mail_count_query, NULL);
+	query_connect(&mail_plugin, ("mail-count"), mail_count_query, NULL);
 
-	variable_add(&mail_plugin, TEXT("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
-	variable_add(&mail_plugin, TEXT("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);
-	variable_add(&mail_plugin, TEXT("check_mail_frequency"), VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
-	variable_add(&mail_plugin, TEXT("check_mail_folders"), VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);
+	variable_add(&mail_plugin, ("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
+	variable_add(&mail_plugin, ("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);
+	variable_add(&mail_plugin, ("check_mail_frequency"), VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
+	variable_add(&mail_plugin, ("check_mail_folders"), VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);
 
 	return 0;
 }

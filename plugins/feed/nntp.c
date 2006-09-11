@@ -721,19 +721,19 @@ void nntp_init() {
 
 /*XXX,  :msg -- wysylanie wiadomosc na serwer... BE CAREFULL cause news aren't IM ;) */
 
-	command_add(&feed_plugin, TEXT("nntp:connect"), "?",	nntp_command_connect, RSS_ONLY, NULL);
-	command_add(&feed_plugin, TEXT("nntp:disconnect"), "?", nntp_command_disconnect, RSS_ONLY, NULL);
+	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, RSS_ONLY, NULL);
+	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, RSS_ONLY, NULL);
 
-	command_add(&feed_plugin, TEXT("nntp:subscribe"), "!",	nntp_command_subscribe, RSS_FLAGS_TARGET, NULL); 
-	command_add(&feed_plugin, TEXT("nntp:unsubscibe"), "!", nntp_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
+	command_add(&feed_plugin, ("nntp:subscribe"), "!",	nntp_command_subscribe, RSS_FLAGS_TARGET, NULL); 
+	command_add(&feed_plugin, ("nntp:unsubscibe"), "!", nntp_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
 
-	command_add(&feed_plugin, TEXT("nntp:check"), "u", 	nntp_command_check, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:check"), "u", 	nntp_command_check, RSS_FLAGS, NULL);
 
-	command_add(&feed_plugin, TEXT("nntp:article"), "? ?",	nntp_command_get, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, TEXT("nntp:body"),	"? ?",	nntp_command_get, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, TEXT("nntp:raw"), "?", 	nntp_command_raw, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:article"), "? ?",	nntp_command_get, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:body"),	"? ?",	nntp_command_get, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:raw"), "?", 	nntp_command_raw, RSS_FLAGS, NULL);
 
-	command_add(&feed_plugin, TEXT("nntp:next"), "?", 	nntp_command_nextprev, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, TEXT("nntp:prev"), "?", 	nntp_command_nextprev, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:next"), "?", 	nntp_command_nextprev, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:prev"), "?", 	nntp_command_nextprev, RSS_FLAGS, NULL);
 }
 

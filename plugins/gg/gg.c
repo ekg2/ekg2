@@ -130,41 +130,41 @@ static QUERY(gg_userlist_info_handle) {
 
 	if ((u->protocol & 0x00ffffff)) {
 		int v = u->protocol & 0x00ffffff;
-		const CHAR_T *ver = NULL;
+		const char *ver = NULL;
 
 		if (v < 0x0b)
-			ver = TEXT("<= 4.0.x");
+			ver = ("<= 4.0.x");
 		if (v >= 0x0f && v <= 0x10)
-			ver = TEXT("4.5.x");
+			ver = ("4.5.x");
 		if (v == 0x11)
-			ver = TEXT("4.6.x");
+			ver = ("4.6.x");
 		if (v >= 0x14 && v <= 0x15)
-			ver = TEXT("4.8.x");
+			ver = ("4.8.x");
 		if (v >= 0x16 && v <= 0x17)
-			ver = TEXT("4.9.x");
+			ver = ("4.9.x");
 		if (v >= 0x18 && v <= 0x1b)
-			ver = TEXT("5.0.x");
+			ver = ("5.0.x");
 		if (v >= 0x1c && v <= 0x1e)
-			ver = TEXT("5.7");
+			ver = ("5.7");
 		if (v == 0x20)
-			ver = TEXT("6.0 (build >= 129)");
+			ver = ("6.0 (build >= 129)");
 		if (v == 0x21)
-			ver = TEXT("6.0 (build >= 133)");
+			ver = ("6.0 (build >= 133)");
 		if (v == 0x22)
-			ver = TEXT("6.0 (build >= 140)");
+			ver = ("6.0 (build >= 140)");
 		if (v == 0x24)
-			ver = TEXT("6.1 (build >= 155)");
+			ver = ("6.1 (build >= 155)");
 		if (v == 0x25)
-			ver = TEXT("7.0 (build >= 1)");
+			ver = ("7.0 (build >= 1)");
 		if (v == 0x26)
-			ver = TEXT("7.0 (build >= 20)");
+			ver = ("7.0 (build >= 20)");
 		if (v == 0x27)
-			ver = TEXT("7.0 (build >= 22)");
+			ver = ("7.0 (build >= 22)");
 		if (ver)
 			wcs_printq("user_info_version", ver);
 
 		else {
-			CHAR_T *tmp = saprintf(TEXT("nieznana (%#.2x)"), v);
+			char *tmp = saprintf(("nieznana (%#.2x)"), v);
 			wcs_printq("user_info_version", tmp);
 			xfree(tmp);
 		}
@@ -379,7 +379,7 @@ static QUERY(gg_remove_notify_handle) {
 static QUERY(gg_print_version) {
 	char **tmp1 = array_make(GG_DEFAULT_CLIENT_VERSION, ", ", 0, 1, 0);
 	char *tmp2 = array_join(tmp1, ".");
-	CHAR_T *tmp3 = saprintf(TEXT("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
+	char *tmp3 = saprintf(("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
 
 	wcs_print("generic", tmp3);
 
@@ -449,7 +449,7 @@ static void gg_session_handler_success(session_t *s) {
 	char *__session;
 	char buf[100];
 	int _status;
-	CHAR_T *descr;
+	char *descr;
 	char *cpdescr; 
 
 	if (!g || !g->sess) {
@@ -461,7 +461,7 @@ static void gg_session_handler_success(session_t *s) {
 	session_unidle(s);
 
 	__session = xstrdup(session_uid_get(s));
-	query_emit(NULL, TEXT("protocol-connected"), &__session);
+	query_emit(NULL, ("protocol-connected"), &__session);
 	xfree(__session);
 
 	gg_userlist_send(g->sess, s->userlist);
@@ -534,7 +534,7 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
 		char *__reason = xstrdup(format_find(reason));
 		int __type = EKG_DISCONNECT_FAILURE;
 
-		query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+		query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 
 		xfree(__reason);
 		xfree(__session);
@@ -554,7 +554,7 @@ static void gg_session_handler_disconnect(session_t *s) {
 
 	session_connected_set(s, 0);
 
-	query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+	query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 
 	xfree(__session);
 	xfree(__reason);
@@ -571,21 +571,21 @@ static void gg_session_handler_disconnect(session_t *s) {
  */
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
 	char *__session	= xstrdup(session_uid_get(s));
-	CHAR_T *__uid	= saprintf(TEXT("gg:%d"), uin);
-	CHAR_T *__status= xwcsdup(gg_status_to_text(status));
+	char *__uid	= saprintf(("gg:%d"), uin);
+	char *__status= xstrdup(gg_status_to_text(status));
 	char *__descr	= xstrdup(descr);
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
 	int __port	= port, i, j, dlen, state = 0, m = 0;
 	userlist_t *u;
-	CHAR_T *sdescr;
+	char *sdescr;
 
 	sdescr = gg_cp_to_locale(__descr);
 
 	if ((u = userlist_find(s, __uid)))
 		u->protocol = protocol;
 
-	for (i = 0; i < xwcslen(sdescr); i++)
+	for (i = 0; i < xstrlen(sdescr); i++)
 		if (sdescr[i] == 10 || sdescr[i] == 13)
 			m++;
 	dlen = i;
@@ -613,7 +613,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		}
 
 	}
-	query_emit(NULL, TEXT("protocol-status"), &__session, &__uid, &__status, &sdescr, &__host, &__port, &when, NULL);
+	query_emit(NULL, ("protocol-status"), &__session, &__uid, &__status, &sdescr, &__host, &__port, &when, NULL);
 
 	xfree(__host);
 	xfree(__descr);
@@ -630,7 +630,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	char *__sender, **__rcpts = NULL;
 	char *__text;
-	CHAR_T *ltext;
+	char *ltext;
 	uint32_t *__format = NULL;
 	int image = 0, check_inv = 0;
 	int i;
@@ -650,12 +650,12 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		if (!(u = userlist_find(s, uid)))
 			return;
 
-		query_emit(NULL, TEXT("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
+		query_emit(NULL, ("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
 /*		xfree(__host); */
 
 		if (!__valid) {
 			print_status("dcc_attack", format_user(s, uid));
-			command_exec_format(NULL, s, 0, TEXT("/ignore %s"), uid);
+			command_exec_format(NULL, s, 0, ("/ignore %s"), uid);
 			return;
 		}
 
@@ -743,7 +743,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 /*		if (!check_inv || xstrcmp(__text, ""))
 			printq("generic", "image in message.\n"); - or something
  */
-		query_emit(NULL, TEXT("protocol-message"), &__session, &__sender, &__rcpts, &ltext, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+		query_emit(NULL, ("protocol-message"), &__session, &__sender, &__rcpts, &ltext, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
 		xfree(__session);
 
 /*		xfree(__seq); */
@@ -762,26 +762,26 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
  */
 static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 	char *__session = xstrdup(session_uid_get(s));
-	CHAR_T *__rcpt	= saprintf(TEXT("gg:%d"), e->event.ack.recipient);
-	CHAR_T *__seq	= xwcsdup(itoa(e->event.ack.seq));
-	CHAR_T *__status;
+	char *__rcpt	= saprintf(("gg:%d"), e->event.ack.recipient);
+	char *__seq	= xstrdup(itoa(e->event.ack.seq));
+	char *__status;
 
 	switch (e->event.ack.status) {
 		case GG_ACK_DELIVERED:
-			__status = xwcsdup(EKG_ACK_DELIVERED);
+			__status = xstrdup(EKG_ACK_DELIVERED);
 			break;
 		case GG_ACK_QUEUED:
-			__status = xwcsdup(EKG_ACK_QUEUED);
+			__status = xstrdup(EKG_ACK_QUEUED);
 			break;
 		case GG_ACK_NOT_DELIVERED:
-			__status = xwcsdup(EKG_ACK_DROPPED);
+			__status = xstrdup(EKG_ACK_DROPPED);
 			break;
 		default:
 			debug("[gg] unknown message ack status. consider upgrade\n");
-			__status = xwcsdup(EKG_ACK_UNKNOWN);
+			__status = xstrdup(EKG_ACK_UNKNOWN);
 			break;
 	}
-	query_emit(NULL, TEXT("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status, NULL);
+	query_emit(NULL, ("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status, NULL);
 
 	xfree(__status);
 	xfree(__seq);
@@ -813,7 +813,7 @@ static FILE* image_open_file(const char *path) {
 		dir = xstrndup(path, slash_pos);
 
 		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
-			CHAR_T *bo = saprintf(TEXT("nie mozna %s bo %s"), dir, strerror(errno));
+			char *bo = saprintf(("nie mozna %s bo %s"), dir, strerror(errno));
 			wcs_print("generic",bo); // XXX usun±æ !! 
 			xfree(bo);
 			xfree(dir);
@@ -915,7 +915,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 			wcs_print("userlist_get_ok");
 
 			if (e->event.userlist.reply) {
-				CHAR_T *reply;
+				char *reply;
 				list_t l;
 				gg_private_t *g = session_private_get(s);
 
@@ -974,7 +974,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 			char *__reason = NULL;
 			int __type = EKG_DISCONNECT_FAILURE;
 
-			query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+			query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 
 			xfree(__reason);
 			xfree(__session);
@@ -995,7 +995,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 
 		session_connected_set((session_t*) data, 0);
 
-		query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+		query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
 
 		xfree(__reason);
 		xfree(__session);
@@ -1110,7 +1110,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 static void gg_changed_private(session_t *s, const char *var) {
 	gg_private_t *g = (s) ? session_private_get(s) : NULL;
 	const char *status = session_status_get(s);
-	CHAR_T *descr;
+	char *descr;
 	char *cpdescr;
 	int _status;
 
@@ -1243,32 +1243,32 @@ int gg_plugin_init(int prio) {
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, NULL);
 
-	query_connect(&gg_plugin, TEXT("set-vars-default"), gg_setvar_default, NULL);
-	query_connect(&gg_plugin, TEXT("protocol-validate-uid"), gg_validate_uid, NULL);
-	query_connect(&gg_plugin, TEXT("plugin-print-version"), gg_print_version, NULL);
-	query_connect(&gg_plugin, TEXT("session-added"), gg_session_handle, (void *)1);
-	query_connect(&gg_plugin, TEXT("session-removed"), gg_session_handle, (void *)0);
-	query_connect(&gg_plugin, TEXT("add-notify"), gg_add_notify_handle, NULL);
-	query_connect(&gg_plugin, TEXT("remove-notify"), gg_remove_notify_handle, NULL);
-	query_connect(&gg_plugin, TEXT("status-show"), gg_status_show_handle, NULL);
-	query_connect(&gg_plugin, TEXT("user-offline"), gg_user_offline_handle, NULL);
-	query_connect(&gg_plugin, TEXT("user-online"), gg_user_online_handle, NULL);
-	query_connect(&gg_plugin, TEXT("protocol-unignore"), gg_user_online_handle, (void *)1);
-	query_connect(&gg_plugin, TEXT("userlist-info"), gg_userlist_info_handle, NULL);
+	query_connect(&gg_plugin, ("set-vars-default"), gg_setvar_default, NULL);
+	query_connect(&gg_plugin, ("protocol-validate-uid"), gg_validate_uid, NULL);
+	query_connect(&gg_plugin, ("plugin-print-version"), gg_print_version, NULL);
+	query_connect(&gg_plugin, ("session-added"), gg_session_handle, (void *)1);
+	query_connect(&gg_plugin, ("session-removed"), gg_session_handle, (void *)0);
+	query_connect(&gg_plugin, ("add-notify"), gg_add_notify_handle, NULL);
+	query_connect(&gg_plugin, ("remove-notify"), gg_remove_notify_handle, NULL);
+	query_connect(&gg_plugin, ("status-show"), gg_status_show_handle, NULL);
+	query_connect(&gg_plugin, ("user-offline"), gg_user_offline_handle, NULL);
+	query_connect(&gg_plugin, ("user-online"), gg_user_online_handle, NULL);
+	query_connect(&gg_plugin, ("protocol-unignore"), gg_user_online_handle, (void *)1);
+	query_connect(&gg_plugin, ("userlist-info"), gg_userlist_info_handle, NULL);
 
 	gg_register_commands();
 
-	variable_add(&gg_plugin, TEXT("audio"), VAR_BOOL, 1, &gg_config_audio, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("display_token"), VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("dcc"), VAR_BOOL, 1, &gg_config_dcc, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("dcc_dir"), VAR_STR, 1, &gg_config_dcc_dir, NULL, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("dcc_ip"), VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("dcc_limit"), VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("dcc_port"), VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("get_images"), VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("images_dir"), VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
-	variable_add(&gg_plugin, TEXT("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("audio"), VAR_BOOL, 1, &gg_config_audio, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, ("display_token"), VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("dcc"), VAR_BOOL, 1, &gg_config_dcc, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, ("dcc_dir"), VAR_STR, 1, &gg_config_dcc_dir, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("dcc_ip"), VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, ("dcc_limit"), VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("dcc_port"), VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);
+	variable_add(&gg_plugin, ("get_images"), VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("images_dir"), VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
+	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);

@@ -113,17 +113,17 @@ void config_postread()
 			debug("setted default session to %s\n", s->uid);
 			session_current = s;
 			window_current->session = s;
-			query_emit(NULL, TEXT("session-changed"));
+			query_emit(NULL, ("session-changed"));
 		} else {
 			debug("default session not found\n");
 		}
 	}
-	query_emit(NULL, TEXT("config-postinit"));
+	query_emit(NULL, ("config-postinit"));
 }
 
 int config_read_plugins()
 {
-        CHAR_T*buf, *foo;
+        char*buf, *foo;
 	const char *filename;
 	FILE *f;
         struct stat st;
@@ -135,15 +135,15 @@ int config_read_plugins()
 	check_file();
 
 	while ((buf = read_file(f))) {
-                if (!(foo = xstrchr(buf, TEXT(' ')))) {
+                if (!(foo = xstrchr(buf, (' ')))) {
                         xfree(buf);
                         continue;
                 }
 
                 *foo++ = 0;
 
-		if (!xwcscasecmp(buf, TEXT("plugin"))) {
-                        CHAR_T **p = array_make(foo, TEXT(" \t"), 3, 1, 0);
+		if (!xstrcasecmp(buf, ("plugin"))) {
+                        char **p = array_make(foo, (" \t"), 3, 1, 0);
 
 			if (array_count(p) == 2)
 				plugin_load(p[0], atoi(p[1]), 1);
@@ -168,7 +168,7 @@ int config_read_plugins()
  */
 int config_read(const char *filename)
 {
-	CHAR_T *buf, *foo;
+	char *buf, *foo;
 	FILE *f;
 	list_t l;
 	int i = 0, good_file = 0, first = (filename) ? 0 : 1, ret = 1;
@@ -179,8 +179,8 @@ int config_read(const char *filename)
 		timer_remove_user(-1);
 		event_free();
 		variable_set_default();
-		query_emit(NULL, TEXT("set-vars-default"));
-		query_emit(NULL, TEXT("binding-default"));
+		query_emit(NULL, ("set-vars-default"));
+		query_emit(NULL, ("binding-default"));
 		debug("  flushed previous config\n");
 	} 
 
@@ -205,8 +205,8 @@ int config_read(const char *filename)
 		}
 
 		*foo++ = 0;
-                if (!xwcscasecmp(buf, TEXT("set"))) {
-                        CHAR_T *bar;
+                if (!xstrcasecmp(buf, ("set"))) {
+                        char *bar;
 
                         if (!(bar = xstrchr(foo, ' ')))
                                 ret = variable_set(foo, NULL, 0);
@@ -218,32 +218,32 @@ int config_read(const char *filename)
                         if (ret)
                                 debug("  unknown variable %s\n", foo);
 
-                } else if (!xwcscasecmp(buf, TEXT("plugin"))) {
-                        CHAR_T **p = array_make(foo, TEXT(" \t"), 3, 1, 0);
+                } else if (!xstrcasecmp(buf, ("plugin"))) {
+                        char **p = array_make(foo, (" \t"), 3, 1, 0);
 			if (array_count(p) == 2) 
 				plugin_load(p[0], atoi(p[1]), 1);
 			array_free(p);
-		} else if (!xwcscasecmp(buf, TEXT("bind"))) {
-                        CHAR_T **pms = array_make(foo, TEXT(" \t"), 2, 1, 0);
+		} else if (!xstrcasecmp(buf, ("bind"))) {
+                        char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
                         if (array_count(pms) == 2) {
-                                ret = command_exec_format(NULL, NULL, 1, TEXT("/bind --add %s %s"),  pms[0], pms[1]);
+                                ret = command_exec_format(NULL, NULL, 1, ("/bind --add %s %s"),  pms[0], pms[1]);
                         }
 
                         array_free(pms);
-                } else if (!xwcscasecmp(buf, TEXT("bind-set"))) {
-                        CHAR_T **pms = array_make(foo, TEXT(" \t"), 2, 1, 0);
+                } else if (!xstrcasecmp(buf, ("bind-set"))) {
+                        char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
                         if (array_count(pms) == 2) {
-                                query_emit(NULL, TEXT("binding-set"), pms[0], pms[1], 1);
+                                query_emit(NULL, ("binding-set"), pms[0], pms[1], 1);
                         }
 
                         array_free(pms);
-                } else if (!xwcscasecmp(buf, TEXT("alias"))) {
+                } else if (!xstrcasecmp(buf, ("alias"))) {
 			debug("  alias %s\n", foo);
 			ret = alias_add(foo, 1, 1);
-		} else if (!xwcscasecmp(buf, TEXT("on"))) {
-                        CHAR_T **pms = array_make(foo, TEXT(" \t"), 4, 1, 0);
+		} else if (!xstrcasecmp(buf, ("on"))) {
+                        char **pms = array_make(foo, (" \t"), 4, 1, 0);
 
                         if (array_count(pms) == 4) {
 				debug("  on %s %s %s\n", pms[0], pms[1], pms[2]);
@@ -252,37 +252,37 @@ int config_read(const char *filename)
 
 			array_free(pms);
 
-		} else if (!xwcscasecmp(buf, TEXT("bind"))) {
+		} else if (!xstrcasecmp(buf, ("bind"))) {
 			xfree(buf);
 			continue;
-		} else if (!xwcscasecmp(buf, TEXT("at"))) {
-			CHAR_T **p = array_make(foo, TEXT(" \t"), 2, 1, 0);
+		} else if (!xstrcasecmp(buf, ("at"))) {
+			char **p = array_make(foo, (" \t"), 2, 1, 0);
 
 			if (array_count(p) == 2) {
-				CHAR_T *name = NULL;
+				char *name = NULL;
 
 				debug("  at %s %s\n", p[0], p[1]);
 
-				if (xwcscmp(p[0], TEXT("(null)")))
+				if (xstrcmp(p[0], ("(null)")))
 					name = p[0];
 
-				ret = command_exec_format(NULL, NULL, 1, TEXT("/at -a %s %s"), ((name) ? name : TEXT("")), p[1]);
+				ret = command_exec_format(NULL, NULL, 1, ("/at -a %s %s"), ((name) ? name : ("")), p[1]);
 			}
 
 			array_free(p);
-		} else if (!xwcscasecmp(buf, TEXT("timer"))) {
-			CHAR_T **p = array_make(foo, TEXT(" \t"), 3, 1, 0);
+		} else if (!xstrcasecmp(buf, ("timer"))) {
+			char **p = array_make(foo, (" \t"), 3, 1, 0);
 			char *period_str = NULL;
-			CHAR_T *name = NULL;
+			char *name = NULL;
 			time_t period;
 
 			if (array_count(p) == 3) {
 				debug("  timer %s %s %s\n", p[0], p[1], p[2]);
 
-				if (xwcscmp(p[0], TEXT("(null)")))
+				if (xstrcmp(p[0], ("(null)")))
 					name = p[0];
 
-				if (!xstrncmp(p[1], TEXT("*/"), 2)) {
+				if (!xstrncmp(p[1], ("*/"), 2)) {
 					period = atoi(p[1] + 2);
 					period_str = saprintf("*/%ld", (long) period);
 				} else {
@@ -292,14 +292,14 @@ int config_read(const char *filename)
 		
 				if (period > 0) {
 					ret = command_exec_format(NULL, NULL, 1, 
-						TEXT("/timer --add %s %s %s"), (name) ? name : "", period_str, p[2]);
+						("/timer --add %s %s %s"), (name) ? name : "", period_str, p[2]);
 				}
 
 				xfree(period_str);
 			}
 			array_free(p);
 		} else {
-                        ret = variable_set(buf, (xwcscmp(foo, TEXT(""))) ? foo : NULL, 0);
+                        ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL, 0);
 
                         if (ret)
                                 debug("  unknown variable %s\n", buf);
@@ -407,7 +407,7 @@ static void config_write_main(FILE *f)
 		list_t m;
 
 		for (m = a->commands; m; m = m->next)
-			fprintf(f, "alias %s %s\n", a->name, (CHAR_T *) m->data);
+			fprintf(f, "alias %s %s\n", a->name, (char *) m->data);
 	}
 
         for (l = events; l; l = l->next) {
@@ -552,10 +552,10 @@ int config_write()
  * 
  * 0/-1
  */
-int config_write_partly(const char *filename, CHAR_T **vars)
+int config_write_partly(const char *filename, char **vars)
 {
 	char *newfn;
-	CHAR_T *line;
+	char *line;
 	FILE *fi, *fo;
 	int *wrote, i, first = (filename) ? 0 : 1;
 	list_t l;
@@ -582,7 +582,7 @@ int config_write_partly(const char *filename, CHAR_T **vars)
 	fchmod(fileno(fo), 0600);
 
 	while ((line = read_file(fi))) {
-		CHAR_T *tmp;
+		char *tmp;
 
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
 			goto pass;
@@ -590,24 +590,24 @@ int config_write_partly(const char *filename, CHAR_T **vars)
 		if (!xstrchr(line, ' '))
 			goto pass;
 
-		if (!xstrncasecmp(line, TEXT("alias "), 6))
+		if (!xstrncasecmp(line, ("alias "), 6))
 			goto pass;
 
-		if (!xstrncasecmp(line, TEXT("on "), 3))
+		if (!xstrncasecmp(line, ("on "), 3))
 			goto pass;
 
-		if (!xstrncasecmp(line, TEXT("bind "), 5))
+		if (!xstrncasecmp(line, ("bind "), 5))
 			goto pass;
 
 		tmp = line;
 
-		if (!xstrncasecmp(tmp, TEXT("set "), 4))
+		if (!xstrncasecmp(tmp, ("set "), 4))
 			tmp += 4;
 		
 		for (i = 0; vars[i]; i++) {
-			int len = xwcslen(vars[i]);
+			int len = xstrlen(vars[i]);
 
-			if (xwcslen(tmp) < len + 1)
+			if (xstrlen(tmp) < len + 1)
 				continue;
 
 			if (xstrncasecmp(tmp, vars[i], len) || tmp[len] != ' ')

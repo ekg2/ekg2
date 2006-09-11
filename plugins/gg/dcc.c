@@ -168,9 +168,9 @@ WATCHER_AUDIO(gg_dcc_audio_write) {
  */
 
 /* khem, var jest gg:*.... byl kod ktory nie dzialal... tak?  */
-void gg_changed_dcc(const CHAR_T *var)
+void gg_changed_dcc(const char *var)
 {
-	if (!xwcscmp(var, TEXT("gg:dcc"))) {
+	if (!xstrcmp(var, ("gg:dcc"))) {
 		if (!gg_config_dcc) {
 			gg_dcc_socket_close();
 			gg_dcc_ip = 0;
@@ -181,7 +181,7 @@ void gg_changed_dcc(const CHAR_T *var)
 			if (gg_dcc_socket_open(gg_config_dcc_port) == -1)
 				print("dcc_create_error", strerror(errno));
 		}
-	} else if (!xwcscmp(var, TEXT("gg:dcc_ip"))) {
+	} else if (!xstrcmp(var, ("gg:dcc_ip"))) {
 		if (gg_config_dcc_ip) {
 			if (!xstrcasecmp(gg_config_dcc_ip, "auto")) {
 				gg_dcc_ip = inet_addr("255.255.255.255");
@@ -196,7 +196,7 @@ void gg_changed_dcc(const CHAR_T *var)
 			}
 		} else
 			gg_dcc_ip = 0;
-	} else if (!xwcscmp(var, TEXT("gg:dcc_port"))) {
+	} else if (!xstrcmp(var, ("gg:dcc_port"))) {
 		if (gg_config_dcc && gg_config_dcc_port) {
 			gg_dcc_socket_close();
 			gg_dcc_ip = 0;
@@ -206,7 +206,7 @@ void gg_changed_dcc(const CHAR_T *var)
                                 print("dcc_create_error", strerror(errno));
 	
 		}
-	} else if (!xwcscmp(var, TEXT("gg:audio"))) {
+	} else if (!xstrcmp(var, ("gg:audio"))) {
 		if (gg_config_audio && (!audio_find("oss") || !codec_find("gsm"))) {
 			gg_config_audio = 0;
 			debug("[gg_config_audio] failed to set gg:audio to 1 cause not found oss audio or gsm codec...\n");
@@ -563,7 +563,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
                                 if (dcc_limit_count > c) {
                                         wcs_print("dcc_limit");
                                         gg_config_dcc = 0;
-                                        gg_changed_dcc(TEXT("dcc"));
+                                        gg_changed_dcc(("dcc"));
 
                                         dcc_limit_time = 0;
                                         dcc_limit_count = 0;
@@ -576,7 +576,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 
 			__host = inet_ntoa(*((struct in_addr*) &d->remote_addr));
 			__port = d->remote_port;
-			query_emit(NULL, TEXT("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
+			query_emit(NULL, ("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
 
 			if (__valid)
 				watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);

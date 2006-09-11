@@ -20,7 +20,6 @@
 #ifndef __EKG_VARS_H
 #define __EKG_VARS_H
 
-#include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
 
@@ -41,12 +40,12 @@ typedef struct {
 	int conflicts;		/* warto¶ci, z którymi koliduje */
 } variable_map_t;
 
-typedef void (variable_notify_func_t)(const CHAR_T *);
+typedef void (variable_notify_func_t)(const char *);
 typedef void (variable_check_func_t)(const char *, const char *);
-typedef int (variable_display_func_t)(const CHAR_T *);
+typedef int (variable_display_func_t)(const char *);
 
 typedef struct {
-	CHAR_T *name;		/* nazwa zmiennej */
+	char *name;		/* nazwa zmiennej */
 	plugin_t *plugin;	/* wstyczka obs³uguj±ca zmienn± */
 	int name_hash;		/* hash nazwy zmiennej */
 	int type;		/* rodzaj */
@@ -69,13 +68,13 @@ extern list_t variables;
 
 void variable_init();
 void variable_set_default();
-variable_t *variable_find(const CHAR_T *name);
+variable_t *variable_find(const char *name);
 variable_map_t *variable_map(int count, ...);
 #define variable_hash ekg_hash
 
 variable_t *variable_add(
 	plugin_t *plugin,
-	const CHAR_T *name,
+	const char *name,
 	int type,
 	int display,
 	void *ptr,
@@ -83,10 +82,10 @@ variable_t *variable_add(
 	variable_map_t *map,
 	variable_display_func_t *dyndisplay);
 
-int variable_remove(plugin_t *plugin, const CHAR_T *name);
+int variable_remove(plugin_t *plugin, const char *name);
 
-int variable_set(const CHAR_T *name, const char *value, int allow_foreign);
-void variable_help(const CHAR_T *name);
+int variable_set(const char *name, const char *value, int allow_foreign);
+void variable_help(const char *name);
 void variable_free();
 
 #endif

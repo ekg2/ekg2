@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include <time.h>
 
-#include "char.h"
 #include "dynstuff.h"
 
 struct last {
@@ -46,7 +45,7 @@ void last_del(const char *uid);
 int last_count(const char *uid);
 void last_free();
 
-CHAR_T *xml_escape(const char *text);
+char *xml_escape(const char *text);
 char *log_escape(const char *str);
 
 #endif

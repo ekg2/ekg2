@@ -12,7 +12,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "char.h"
 #include "debug.h"
 #include "dynstuff.h"
 #include "scripts.h"
@@ -41,7 +40,7 @@ list_t	scriptlang;
 
 COMMAND(script_command_handlers);
 TIMER(script_timer_handlers);
-void script_var_changed(const CHAR_T *var);
+void script_var_changed(const char *var);
 QUERY(script_query_handlers);
 WATCHER(script_handle_watch);
 int script_plugin_theme_init( /* plugin_t *p */ );
@@ -465,13 +464,13 @@ int script_variables_write() {
 	return script_variables_free(0);
 }
 
-script_command_t *script_command_find(const CHAR_T *name)
+script_command_t *script_command_find(const char *name)
 {
 	script_command_t *temp;
 	list_t l;
 	for (l = script_commands; l; l = l->next) {
 		temp = l->data;
-		if (!xwcscmp(name, temp->self->name))
+		if (!xstrcmp(name, temp->self->name))
 			return temp;
 	
 	}
@@ -587,7 +586,7 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler) 
 {
 	SCRIPT_BIND_HEADER(script_command_t);
-	temp->self = command_add(NULL, command, TEXT("?"), script_command_handlers, COMMAND_ISSCRIPT, NULL);
+	temp->self = command_add(NULL, command, ("?"), script_command_handlers, COMMAND_ISSCRIPT, NULL);
 	SCRIPT_BIND_FOOTER(script_commands);
 }
 
@@ -703,7 +702,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_na
 
 /*****************************************************************************************************************/
 
-void script_var_changed(const CHAR_T *var) {
+void script_var_changed(const char *var) {
 	script_var_t     *temp = script_var_find(var);
 /*	if (in_autoexec) ... */
 	SCRIPT_HANDLER_HEADER(script_handler_var_t);
@@ -818,7 +817,7 @@ COMMAND(cmd_script)
 	char 	     *tmp = NULL;
 	char	     *param0 = NULL;
 
-	if (xwcscmp(name, TEXT("script"))) { /* script:*    */
+	if (xstrcmp(name, ("script"))) { /* script:*    */
 		tmp = (char *) name; 
 		param0 = (char *) params[0];
 	} else if (params[0]) {        /* script --*  */
@@ -874,13 +873,13 @@ int script_postinit(void *data, va_list ap)
 #endif
 int scripts_init()
 {
-	command_add(NULL, TEXT("script")        , TEXT("p ?"),	cmd_script, 0, "--list --load --unload --varlist --reset"); /* todo  ?!!? */
-	command_add(NULL, TEXT("script:load")   , TEXT("f"),	cmd_script, 0, "");
-	command_add(NULL, TEXT("script:unload") , TEXT("?"),	cmd_script, 0, "");
-	command_add(NULL, TEXT("script:list")   , TEXT("?"),	cmd_script, 0, "");
-	command_add(NULL, TEXT("script:reset")  , TEXT("?"),	cmd_script, 0, "");
-	command_add(NULL, TEXT("script:varlist"), TEXT("?"),	cmd_script, 0, "");
-	command_add(NULL, TEXT("script:autorun"), TEXT("?"),	cmd_script, 0, "");
+	command_add(NULL, ("script")        , ("p ?"),	cmd_script, 0, "--list --load --unload --varlist --reset"); /* todo  ?!!? */
+	command_add(NULL, ("script:load")   , ("f"),	cmd_script, 0, "");
+	command_add(NULL, ("script:unload") , ("?"),	cmd_script, 0, "");
+	command_add(NULL, ("script:list")   , ("?"),	cmd_script, 0, "");
+	command_add(NULL, ("script:reset")  , ("?"),	cmd_script, 0, "");
+	command_add(NULL, ("script:varlist"), ("?"),	cmd_script, 0, "");
+	command_add(NULL, ("script:autorun"), ("?"),	cmd_script, 0, "");
 	script_variables_read();
 #if 0
 	query_connect(NULL, "config-postinit",     script_postinit, NULL);

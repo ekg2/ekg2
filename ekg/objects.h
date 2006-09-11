@@ -20,7 +20,6 @@
 #ifndef __EKG_OBJECTS_H
 #define __EKG_OBJECTS_H
 
-#include "char.h"
 #include "xmalloc.h"
 
 #define PROPERTY_INT_GET(object,property,type) \

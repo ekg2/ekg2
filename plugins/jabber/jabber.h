@@ -5,7 +5,6 @@
 
 #include <ekg2-config.h>
 
-#include <ekg/char.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
@@ -19,7 +18,7 @@
 #endif
 
 #define DEFAULT_CLIENT_NAME "EKG2 -- http://www.ekg2.org"
-#define JABBER_DEFAULT_RESOURCE TEXT("ekg2")
+#define JABBER_DEFAULT_RESOURCE "ekg2"
 
 /* some tlen constants */
 #define TLEN_HUB "idi.tlen.pl"			/* hub 			*/
@@ -130,7 +129,7 @@ typedef struct {
 	char *server;			/* nazwa serwera */
 	int port;			/* numer portu */
 	int connecting;			/* czy siê w³a¶nie ³±czymy? */
-	CHAR_T *resource;		/* resource jakie uzylismy przy laczeniu sie do jabberd */
+	char *resource;		/* resource jakie uzylismy przy laczeniu sie do jabberd */
 
 	list_t bookmarks;		/* for jabber:iq:private <storage xmlns='storage:bookmarks'> */
 
@@ -158,9 +157,9 @@ char *jabber_digest(const char *sid, const char *password);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
 
 void jabber_initialize_conversions(char *varname);
-CHAR_T *jabber_escape(const char *text);
+char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
-CHAR_T *tlen_encode(const char *what);
+char *tlen_encode(const char *what);
 char *tlen_decode(const char *what);
 int jabber_write_status(session_t *s);
 

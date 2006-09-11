@@ -558,7 +558,7 @@ int jabber_write_status(session_t *s)
 	jabber_private_t *j = session_private_get(s);
 	int prio = session_int_get(s, "priority");
 	const char *status;
-	CHAR_T *descr;
+	char *descr;
 	char *real = NULL;
 	char *priority = NULL;
 
@@ -637,7 +637,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 		char *__session = xstrdup(session_uid_get(s));
 		char *__reason = xstrdup(reason);
 		
-		query_emit(NULL, TEXT("protocol-disconnected"), &__session, &__reason, &type, NULL);
+		query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &type, NULL);
 
 		xfree(__session);
 		xfree(__reason);
@@ -652,8 +652,8 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 
         if (!session_connected_get(s) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		const char *passwd	= session_get(s, "password");
-                CHAR_T *resource	= jabber_escape(session_get(s, "resource"));
-		CHAR_T *epasswd		= NULL;
+                char *resource	= jabber_escape(session_get(s, "resource"));
+		char *epasswd		= NULL;
 
                 char *username;
 		char *authpass;
@@ -667,11 +667,11 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 			watch_write(j->send_watch, 
 				"<iq type=\"set\" to=\"%s\" id=\"register%d\">"
 				"<query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", 
-				j->server, j->id++, username, epasswd ? epasswd : TEXT("foo"));
+				j->server, j->id++, username, epasswd ? epasswd : ("foo"));
 		}
 
                 if (!resource)
-                        resource = xwcsdup(JABBER_DEFAULT_RESOURCE);
+                        resource = xstrdup(JABBER_DEFAULT_RESOURCE);
 
 		stream_id = jabber_attr((char **) atts, 
 					j->istlen ? "i" : "id");
@@ -1097,7 +1097,7 @@ static QUERY(jabber_protocol_ignore) {
 		 * 	then send jabber:iq:roster request... with all new & old group...
 		 * 	but it was code copied from modify command handler... so here it is.
 		 */
-	command_exec_format(NULL, s, 0, TEXT("/jid:modify %s -x"), uid);
+	command_exec_format(NULL, s, 0, ("/jid:modify %s -x"), uid);
 	return 0;
 }
 
@@ -1297,19 +1297,19 @@ int jabber_plugin_init(int prio)
 {
         plugin_register(&jabber_plugin, prio);
 
-        query_connect(&jabber_plugin, TEXT("protocol-validate-uid"), jabber_validate_uid, NULL);
-        query_connect(&jabber_plugin, TEXT("plugin-print-version"), jabber_print_version, NULL);
-        query_connect(&jabber_plugin, TEXT("session-added"), jabber_session, (void*) 1);
-        query_connect(&jabber_plugin, TEXT("session-removed"), jabber_session, (void*) 0);
-        query_connect(&jabber_plugin, TEXT("status-show"), jabber_status_show_handle, NULL);
-	query_connect(&jabber_plugin, TEXT("ui-window-kill"), jabber_window_kill, NULL);
-	query_connect(&jabber_plugin, TEXT("protocol-ignore"), jabber_protocol_ignore, NULL);
+        query_connect(&jabber_plugin, ("protocol-validate-uid"), jabber_validate_uid, NULL);
+        query_connect(&jabber_plugin, ("plugin-print-version"), jabber_print_version, NULL);
+        query_connect(&jabber_plugin, ("session-added"), jabber_session, (void*) 1);
+        query_connect(&jabber_plugin, ("session-removed"), jabber_session, (void*) 0);
+        query_connect(&jabber_plugin, ("status-show"), jabber_status_show_handle, NULL);
+	query_connect(&jabber_plugin, ("ui-window-kill"), jabber_window_kill, NULL);
+	query_connect(&jabber_plugin, ("protocol-ignore"), jabber_protocol_ignore, NULL);
 #if WITH_JABBER_DCC
-	query_connect(&jabber_plugin, TEXT("config-postinit"), jabber_dcc_postinit, NULL);
+	query_connect(&jabber_plugin, ("config-postinit"), jabber_dcc_postinit, NULL);
 #endif
 
-	variable_add(&jabber_plugin, TEXT("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
-	variable_add(&jabber_plugin, TEXT("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
 
         jabber_register_commands();
 

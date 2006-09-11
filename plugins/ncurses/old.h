@@ -3,7 +3,6 @@
 
 #include "ecurses.h"
 
-#include <ekg/char.h>
 #include <ekg/plugins.h>
 #include <ekg/themes.h>
 #include <ekg/windows.h>
@@ -28,14 +27,14 @@ void update_statusbar(int commit);
 struct screen_line {
 	int len;		/* d³ugo¶æ linii */
 	
-	CHAR_T *str;		/* tre¶æ */
+	char *str;		/* tre¶æ */
 	short *attr;		/* atrybuty */
 	
-	CHAR_T *prompt_str;	/* tre¶æ promptu */
+	char *prompt_str;	/* tre¶æ promptu */
 	short *prompt_attr;	/* atrybuty promptu */
 	int prompt_len;		/* d³ugo¶æ promptu */
 	
-	CHAR_T *ts;		/* timestamp */
+	char *ts;		/* timestamp */
 	int ts_len;		/* d³ugo¶æ timestampu */
 	short *ts_attr;		/* attributes of the timestamp */
 
@@ -118,11 +117,11 @@ int ncurses_window_new(window_t *w);
 #define yanked ncurses_yanked
 
 #define HISTORY_MAX 1000
-extern CHAR_T *ncurses_history[HISTORY_MAX];
+extern char *ncurses_history[HISTORY_MAX];
 extern int ncurses_history_index;
-extern CHAR_T *ncurses_line;
-extern CHAR_T *ncurses_yanked;
-extern CHAR_T **ncurses_lines;
+extern char *ncurses_line;
+extern char *ncurses_yanked;
+extern char **ncurses_lines;
 extern int ncurses_line_start;
 extern int ncurses_line_index;
 extern int ncurses_lines_start;
@@ -137,7 +136,7 @@ void ncurses_spellcheck_init();
 extern int config_aspell;
 extern char *config_aspell_lang;
 #endif
-void changed_backlog_size(const CHAR_T *var);
+void changed_backlog_size(const char *var);
 
 extern int config_backlog_size;
 extern int config_display_transparent;

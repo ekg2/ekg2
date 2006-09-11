@@ -152,9 +152,9 @@ char *config_profile = NULL;
 int config_reason_limit = 1;
 int config_debug = 1;
 
-CHAR_T *last_search_first_name = NULL;
-CHAR_T *last_search_last_name = NULL;
-CHAR_T *last_search_nickname = NULL;
+char *last_search_first_name = NULL;
+char *last_search_last_name = NULL;
+char *last_search_nickname = NULL;
 char *last_search_uid = 0;
 
 int reason_changed = 0;
@@ -234,13 +234,13 @@ void windows_save()
  *
  * 0/-1
  */
-int alias_add(const CHAR_T *string, int quiet, int append)
+int alias_add(const char *string, int quiet, int append)
 {
-	CHAR_T *cmd;
+	char *cmd;
 	list_t l;
 	struct alias *a;
-	CHAR_T **params = NULL;
-	CHAR_T *array;
+	char **params = NULL;
+	char *array;
 
 	if (!string || !(cmd = xstrchr(string, ' ')))
 		return -1;
@@ -250,22 +250,22 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 	for (l = aliases; l; l = l->next) {
 		struct alias *j = l->data;
 
-		if (!xwcscasecmp(string, j->name)) {
+		if (!xstrcasecmp(string, j->name)) {
 			if (!append) {
 				wcs_printq("aliases_exist", string);
 				return -1;
 			} else {
 				list_t l;
 
-				list_add(&j->commands, cmd, xwcslen(cmd) + 1);
+				list_add(&j->commands, cmd, xstrlen(cmd) + 1);
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
 				for (l = commands; l; l = l->next) {
 					command_t *c = l->data;
 
-					if (!xwcscasecmp(c->name, j->name)) {
+					if (!xstrcasecmp(c->name, j->name)) {
 						xfree(c->params);
-						c->params = array_make(TEXT("?"), TEXT(" "), 0, 1, 1);
+						c->params = array_make(("?"), (" "), 0, 1, 1);
 						break;
 					}
 				}
@@ -279,27 +279,27 @@ int alias_add(const CHAR_T *string, int quiet, int append)
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		CHAR_T *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
+		char *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
 
-		if (!xwcscasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {
+		if (!xstrcasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {
 			wcs_printq("aliases_command", string);
 			return -1;
 		}
 
-		if (!xwcscasecmp(tmp, c->name))
+		if (!xstrcasecmp(tmp, c->name))
 			params = c->params;
 	}
 	a = xmalloc(sizeof(struct alias));
-	a->name = xwcsdup(string);
+	a->name = xstrdup(string);
 	a->commands = NULL;
-	list_add(&(a->commands), cmd, (xwcslen(cmd) + 1) * sizeof(CHAR_T));
+	list_add(&(a->commands), cmd, (xstrlen(cmd) + 1) * sizeof(char));
 	list_add(&aliases, a, 0);
 
-	array = (params) ? array_join(params, TEXT(" ")) : xwcsdup(TEXT("?"));
+	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
-	wcs_printq("aliases_add", a->name, TEXT(""));
+	wcs_printq("aliases_add", a->name, (""));
 
 	return 0;
 }
@@ -314,7 +314,7 @@ int alias_add(const CHAR_T *string, int quiet, int append)
  *
  * 0/-1
  */
-int alias_remove(const CHAR_T *name, int quiet)
+int alias_remove(const char *name, int quiet)
 {
 	list_t l;
 	int removed = 0;
@@ -324,7 +324,7 @@ int alias_remove(const CHAR_T *name, int quiet)
 
 		l = l->next;
 
-		if (!name || !xwcscasecmp(a->name, name)) {
+		if (!name || !xstrcasecmp(a->name, name)) {
 			if (name)
 				wcs_printq("aliases_del", name);
 			command_remove(NULL, a->name);
@@ -378,7 +378,7 @@ void alias_free()
  *
  * wy¶wietla listê przypisanych komend.
  */
-void binding_list(int quiet, const CHAR_T *name, int all) 
+void binding_list(int quiet, const char *name, int all) 
 {
 	list_t l;
 	int found = 0;
@@ -458,7 +458,7 @@ void binding_free()
  *
  * 0/-1
  */
-int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines)
+int buffer_add(int type, const char *target, const char *line, int max_lines)
 {
 	struct buffer *b;
 
@@ -482,7 +482,7 @@ int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines)
 	b->ts	= time(NULL);
 	b->type = type;
 	b->target = xstrdup(target);
-	b->line = xwcsdup(line);
+	b->line = xstrdup(line);
 
 	return ((list_add(&buffers, b, 0) ? 0 : -1));
 }
@@ -519,7 +519,7 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
 	b->ts		= ts;
 	b->type		= type;
 	b->target	= xstrdup(target);
-	b->line		= xwcsdup(sep+1);
+	b->line		= xstrdup(sep+1);
 
 	return ((list_add(&buffers, b, 0) ? 0 : -1));
 }
@@ -533,7 +533,7 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
  *  - type,
  *  - target - dla kogo by³ bufor? NULL, je¶li olewamy.
  */
-CHAR_T *buffer_flush(int type, const char *target)
+char *buffer_flush(int type, const char *target)
 {
 	string_t str = string_init(NULL);
 	list_t l;
@@ -589,9 +589,9 @@ int buffer_count(int type)
  * nale¿y zwolniæ. usuwa go z kolejki. zwraca NULL,
  * gdy kolejka jest pusta.
  */
-CHAR_T *buffer_tail(int type)
+char *buffer_tail(int type)
 {
-	CHAR_T *str = NULL;
+	char *str = NULL;
 	list_t l;
 
 	for (l = buffers; l; l = l->next) {
@@ -674,7 +674,7 @@ void changed_var_default(session_t *s, const char *var)
  *
  * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,mesg''.
  */
-void changed_mesg(const CHAR_T *var)
+void changed_mesg(const char *var)
 {
 	if (config_mesg == MESG_DEFAULT)
 		mesg_set(mesg_startup);
@@ -687,7 +687,7 @@ void changed_mesg(const CHAR_T *var)
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,auto_save''.
  */
-void changed_auto_save(const CHAR_T *var)
+void changed_auto_save(const char *var)
 {
 	/* oszukujemy, ale takie zachowanie wydaje siê byæ
 	 * bardziej ,,naturalne'' */
@@ -699,7 +699,7 @@ void changed_auto_save(const CHAR_T *var)
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,display_blinking''.
  */
-void changed_display_blinking(const CHAR_T *var)
+void changed_display_blinking(const char *var)
 {
 	list_t sl;
 
@@ -719,7 +719,7 @@ void changed_display_blinking(const CHAR_T *var)
  *
  * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,theme''.
  */
-void changed_theme(const CHAR_T *var)
+void changed_theme(const char *var)
 {
 	if (in_autoexec)
 		return;
@@ -731,7 +731,7 @@ void changed_theme(const CHAR_T *var)
 			print("theme_loaded", config_theme);
 		} else {
 			print("error_loading_theme", strerror(errno));
-			variable_set(TEXT("theme"), NULL, 0);
+			variable_set(("theme"), NULL, 0);
 		}
 	}
 }
@@ -852,7 +852,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		return NULL;
 
 	if (nicklist[0] == ',' || nicklist[xstrlen(nicklist) - 1] == ',') {
-		wcs_printq("invalid_params", TEXT("chat"));
+		wcs_printq("invalid_params", ("chat"));
 		return NULL;
 	}
 
@@ -1190,7 +1190,7 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	tmp1 = xstrdup(oldname);
 	tmp2 = xstrdup(newname);
 
-	query_emit(NULL, TEXT("conference-renamed"), &tmp1, &tmp2);
+	query_emit(NULL, ("conference-renamed"), &tmp1, &tmp2);
 
 	xfree(tmp1);
 	xfree(tmp2);
@@ -1227,7 +1227,7 @@ void conference_free()
  * zwraca ¶cie¿kê do pliku z pomoc± we w³a¶ciwym jêzyku lub null je¶li nie ma takiego pliku
  *
  */
-char *help_path(char *name, CHAR_T *plugin) {
+char *help_path(char *name, char *plugin) {
 
         char *tmp;
         char *base;
@@ -1286,7 +1286,7 @@ end:
  *
  *  - name - nazwa.
  */
-int ekg_hash(const CHAR_T *name)
+int ekg_hash(const char *name)
 {
 	int hash = 0;
 
@@ -1418,7 +1418,7 @@ char *strip_spaces(char *line)
  */
 int play_sound(const char *sound_path)
 {
-	CHAR_T *params[2];
+	char *params[2];
 	int res;
 
 	if (!config_sound_app || !sound_path) {
@@ -1426,10 +1426,10 @@ int play_sound(const char *sound_path)
 		return -1;
 	}
 
-	params[0] = saprintf(TEXT("^%s %s"), config_sound_app, sound_path);
+	params[0] = saprintf(("^%s %s"), config_sound_app, sound_path);
 	params[1] = NULL;
 
-	res = cmd_exec(TEXT("exec"), (const CHAR_T **) params, NULL, NULL, 1);
+	res = cmd_exec(("exec"), (const char **) params, NULL, NULL, 1);
 
 	xfree(params[0]);
 
@@ -1449,13 +1449,13 @@ int play_sound(const char *sound_path)
  *
  * 0/-1
  */
-child_t *child_add(plugin_t *plugin, int pid, const CHAR_T *name, child_handler_t handler, void *private)
+child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private)
 {
 	child_t *c = xmalloc(sizeof(child_t));
 
 	c->plugin	= plugin;
 	c->pid		= pid;
-	c->name		= xwcsdup(name);
+	c->name		= xstrdup(name);
 	c->handler	= handler;
 	c->private	= private;
 	
@@ -1468,7 +1468,7 @@ int child_pid_get(child_t *c)
 	return (c) ? c->pid : -1;
 }
 
-const CHAR_T *child_name_get(child_t *c)
+const char *child_name_get(child_t *c)
 {
 	return (c) ? c->name : NULL;
 }
@@ -1764,7 +1764,7 @@ TIMER(timer_handle_command)
 		return 0;
 	}
 	
-	command_exec(NULL, NULL, (CHAR_T *) data, 0);
+	command_exec(NULL, NULL, (char *) data, 0);
 	return 0;
 }
 
@@ -1960,7 +1960,7 @@ char *strcasestr(const char *haystack, const char *needle)
  * msg to all users in session's userlist
  * it uses function to do it
  */
-int msg_all(session_t *s, const CHAR_T *function, const CHAR_T *what)
+int msg_all(session_t *s, const char *function, const char *what)
 {
 	list_t l;
 
@@ -1988,12 +1988,12 @@ int msg_all(session_t *s, const CHAR_T *function, const CHAR_T *what)
  *
  * 0/-1/-2. -2 w przypadku, gdy dodano do bufora.
  */
-int say_it(const CHAR_T *str)
+int say_it(const char *str)
 {
 #ifndef NO_POSIX_SYSTEM
 	pid_t pid;
 
-	if (!config_speech_app || !str || !xwcscmp(str, TEXT("")))
+	if (!config_speech_app || !str || !xstrcmp(str, ("")))
 		return -1;
 
 	if (speech_pid) {
@@ -2224,14 +2224,14 @@ char *ekg_draw_descr(const char *status)
 {
 	const char *value;
 	char file[100];
-	CHAR_T var[100];
+	char var[100];
 	variable_t *v;	
 
 	if (!xstrcmp(status, EKG_STATUS_NA) || !xstrcmp(status, EKG_STATUS_INVISIBLE)) {
-		xstrcpy(var, TEXT("quit_reason"));
+		xstrcpy(var, ("quit_reason"));
 		xstrcpy(file, "quit.reasons");
 	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
-		xstrcpy(var, TEXT("back_reason"));
+		xstrcpy(var, ("back_reason"));
 		xstrcpy(file, "back.reasons");
 	} else {
 		snprintf(var, sizeof(var), "%s_reason", status);
@@ -2283,11 +2283,11 @@ void ekg_update_status(session_t *session)
  * tekstu wycina kolorki i zwraca informacje o formatowaniu tekstu bez
  * kolorków.
  */
-uint32_t *ekg_sent_message_format(const CHAR_T *text)
+uint32_t *ekg_sent_message_format(const char *text)
 {
 	uint32_t *format, attr;
 	char *newtext, *q;
-	const CHAR_T *p, *end;
+	const char *p, *end;
 	int len;
 
 	/* je¶li nie stwierdzono znaków kontrolnych, spadamy */
@@ -2298,17 +2298,17 @@ uint32_t *ekg_sent_message_format(const CHAR_T *text)
 
 	/* oblicz d³ugo¶æ tekstu bez znaczków formatuj±cych */
 	for (p = text, len = 0; *p; p++) {
-		if (!xstrchr(TEXT("\x02\x03\x12\x14\x1f"), *p))
+		if (!xstrchr(("\x02\x03\x12\x14\x1f"), *p))
 			len++;
 	}
 
-	if (len == xwcslen(text))
+	if (len == xstrlen(text))
 		return NULL;
 	
 	newtext = xmalloc(len + 1);
 	format = xmalloc(len * 4);
 
-	end = text + xwcslen(text);
+	end = text + xstrlen(text);
 
 	for (p = text, q = newtext, attr = 0; p < end; ) {
 		int j;

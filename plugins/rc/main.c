@@ -128,7 +128,7 @@ static rc_input_t *rc_input_find(const char *path)
  * zmieniono zmienn± remote_control. dodaj nowe kana³y wej¶ciowe, usuñ te,
  * których ju¿ nie ma.
  */
-static void rc_paths_changed(const CHAR_T *name)
+static void rc_paths_changed(const char *name)
 {
 	char **paths = array_make(rc_paths, ",; ", 0, 1, 1);
 	int (*rc_input_new)(const char *);
@@ -229,7 +229,7 @@ int rc_plugin_init(int prio)
 {
 	plugin_register(&rc_plugin, prio);
 
-	variable_add(&rc_plugin, TEXT("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
+	variable_add(&rc_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
 
 	return 0;
 }

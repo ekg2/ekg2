@@ -22,7 +22,6 @@
 #define __EKG_SESSIONS_H
 
 #include <time.h>
-#include "char.h"
 #include "dynstuff.h"
 
 typedef struct {
@@ -133,7 +132,7 @@ int session_write();
 
 void sessions_free();
 
-void session_help(session_t *s, const CHAR_T *name);
+void session_help(session_t *s, const char *name);
 #endif
 
 #endif /* __EKG_SESSIONS_H */

@@ -215,7 +215,7 @@ void ekg_loop()
                                 continue;
 
                         if (time(NULL) - s->activity > tmp)
-                                command_exec(NULL, s, TEXT("/_autoaway"), 0);
+                                command_exec(NULL, s, ("/_autoaway"), 0);
                 }
 
 		/* sprawd¼ scroll timeouty */
@@ -231,7 +231,7 @@ void ekg_loop()
 				continue;
 
 			if (time(NULL) - s->scroll_last > tmp)
-				command_exec(NULL, s, TEXT("/_autoscroll"), 0);
+				command_exec(NULL, s, ("/_autoscroll"), 0);
 		}
 
                 /* auto save */
@@ -267,7 +267,7 @@ void ekg_loop()
                                                 xfree(buffer_flush(BUFFER_SPEECH, NULL));
 
                                         if (buffer_count(BUFFER_SPEECH) && !WEXITSTATUS(status)) {
-                                                CHAR_T *str = buffer_tail(BUFFER_SPEECH);
+                                                char *str = buffer_tail(BUFFER_SPEECH);
                                                 say_it(str);
                                                 xfree(str);
                                         }
@@ -409,7 +409,7 @@ watches_once_again:
                                         if (!fstat(w->fd, &st))
                                                 continue;
 
-                                        debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : TEXT("none"));
+                                        debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
 
                                         watch_free(w);
                                 }
@@ -458,7 +458,7 @@ watches_again:
                                         if (session_int_get(s, "auto_back") != 2)
                                                 continue;
 
-                                        command_exec(NULL, s, TEXT("/_autoback"), 2);
+                                        command_exec(NULL, s, ("/_autoback"), 2);
                                 }
                         }
                         if (!w->buf) {
@@ -483,14 +483,14 @@ watches_again:
 static void handle_sigusr1()
 {
         debug("sigusr1 received\n");
-        query_emit(NULL, TEXT("sigusr1"));
+        query_emit(NULL, ("sigusr1"));
         signal(SIGUSR1, handle_sigusr1);
 }
 
 static void handle_sigusr2()
 {
         debug("sigusr2 received\n");
-        query_emit(NULL, TEXT("sigusr2"));
+        query_emit(NULL, ("sigusr2"));
         signal(SIGUSR2, handle_sigusr2);
 }
 
@@ -633,7 +633,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
 	buffer_add(BUFFER_DEBUG, NULL, tmp, DEBUG_MAX_LINES);
 
-	query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
+	query_emit(NULL, ("ui-is-initialized"), &is_UI);
 
 	if (is_UI) {
 		char *format;
@@ -738,7 +738,7 @@ int main(int argc, char **argv)
 	{
 #if 0
 		USER_INFO_1 *user = NULL;
-		if (NetUserGetInfo(NULL /* for localhost? */, (LPCWSTR) TEXT("darkjames"), 1, (LPBYTE *) &user) == NERR_Success) {
+		if (NetUserGetInfo(NULL /* for localhost? */, (LPCWSTR) ("darkjames"), 1, (LPBYTE *) &user) == NERR_Success) {
 			debug("%ls\n", user->usri1_home_dir);
 			home_dir = saprintf("%ls", user->usri1_home_dir);
 		}
@@ -913,11 +913,11 @@ int main(int argc, char **argv)
         msg_queue_read();
 
 #ifdef HAVE_NCURSES
-        if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("ncurses"), -254, 1);
+        if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("ncurses"), -254, 1);
 #endif
-	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("gtk"), -254, 1);	/* XXX, HAVE_GTK ? */
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("gtk"), -254, 1);	/* XXX, HAVE_GTK ? */
 #ifdef HAVE_READLINE
-	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(TEXT("readline"), -254, 1);
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
 	else for (l = buffers; l; l = l->next) {
@@ -928,12 +928,12 @@ int main(int argc, char **argv)
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
-                plugin_load(TEXT("jabber"), -254, 1);
+                plugin_load(("jabber"), -254, 1);
 #endif
 #ifdef HAVE_LIBGADU
-                plugin_load(TEXT("gg"), -254, 1);
+                plugin_load(("gg"), -254, 1);
 #endif
-                plugin_load(TEXT("irc"), -254, 1);
+                plugin_load(("irc"), -254, 1);
         }
 	theme_plugins_init();
 
@@ -1011,7 +1011,7 @@ int main(int argc, char **argv)
                 if (!cmd)
                         cmd = s->status;
 
-                command_exec_format(NULL, s, 2, TEXT("/%s %s"), cmd, (new_descr) ? new_descr : "");
+                command_exec_format(NULL, s, 2, ("/%s %s"), cmd, (new_descr) ? new_descr : "");
         }
 
         /* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
@@ -1020,7 +1020,7 @@ int main(int argc, char **argv)
                 session_t *s = l->data;
 
                 if (auto_connect && session_int_get(s, "auto_connect") == 1)
-                        command_exec(NULL, s, TEXT("/connect"), 0);
+                        command_exec(NULL, s, ("/connect"), 0);
         }
 
         if (config_auto_save)
@@ -1032,7 +1032,7 @@ int main(int argc, char **argv)
         reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
-	if (query_emit(NULL, TEXT("ui-loop")) != -1) {
+	if (query_emit(NULL, ("ui-loop")) != -1) {
         	/* krêæ imprezê */
 		while (1) {
 			ekg_loop();

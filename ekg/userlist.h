@@ -35,7 +35,6 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include "char.h"
 #include "dynstuff.h"
 #include "sessions.h"
 #include "plugins.h"
@@ -89,19 +88,6 @@ typedef struct {
 #define EKG_STATUS_UNKNOWN "unknown"
 #define EKG_STATUS_ERROR "error"
 
-/* WCS VERSION */
-#define WCS_EKG_STATUS_NA TEXT("notavail")
-#define WCS_EKG_STATUS_AVAIL TEXT("avail")
-#define WCS_EKG_STATUS_AWAY TEXT("away")
-#define WCS_EKG_STATUS_AUTOAWAY TEXT("autoaway")	/* tylko dla session_status_set() */
-#define WCS_EKG_STATUS_INVISIBLE TEXT("invisible")
-#define WCS_EKG_STATUS_XA TEXT("xa")
-#define WCS_EKG_STATUS_DND TEXT("dnd")
-#define WCS_EKG_STATUS_FREE_FOR_CHAT TEXT("chat")
-#define WCS_EKG_STATUS_BLOCKED TEXT("blocked")
-#define WCS_EKG_STATUS_UNKNOWN TEXT("unknown")
-#define WCS_EKG_STATUS_ERROR TEXT("error")
-
 struct ekg_group {
 	char *name;
 };
@@ -144,7 +130,7 @@ int userlist_replace(session_t *session, userlist_t *u);
 userlist_t *userlist_find(session_t *session, const char *uid);
 userlist_t *userlist_find_u(list_t *userlist, const char *uid);
 #define userlist_find_n(a, b) userlist_find(session_find(a), b)
-CHAR_T *userlist_dump(session_t *session);
+char *userlist_dump(session_t *session);
 void userlist_free(session_t *session);
 void userlist_free_u(list_t *userlist);
 int userlist_set(session_t *session, const char *contacts);

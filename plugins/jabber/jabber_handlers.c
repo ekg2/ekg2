@@ -182,15 +182,15 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 				if (!nbody && isack) {
 					char *__session = xstrdup(session_uid_get(s));
 					char *__rcpt	= xstrdup(uid); /* was uid+4 */
-					CHAR_T *__status  = xwcsdup(
+					char *__status  = xstrdup(
 						(acktype & 1) ? EKG_ACK_DELIVERED : 
 						(acktype & 2) ? EKG_ACK_QUEUED : 
 					/* TODO: wbudowac composing w protocol-message-ack ? */
 /*						(acktype & 4) ? "compose" :  */
 						NULL);
-					CHAR_T *__seq	= NULL; /* id ? */
+					char *__seq	= NULL; /* id ? */
 					/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
-					query_emit(NULL, TEXT("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status);
+					query_emit(NULL, ("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status);
 					xfree(__session);
 					xfree(__rcpt);
 					xfree(__status);
@@ -280,13 +280,13 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 			formatted = format_string(format_find("jabber_muc"), session_name(s), uid2, nick ? nick : uid2+4, text);
 			
 			debug("[MUC,MESSAGE] uid2:%s uuid:%s message:%s\n", uid2, nick, text);
-			query_emit(NULL, TEXT("protocol-message"), &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			query_emit(NULL, ("protocol-message"), &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 			xfree(uid2);
 			xfree(nick);
 			xfree(formatted);
 		} else {
-			query_emit(NULL, TEXT("protocol-message"), &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			query_emit(NULL, ("protocol-message"), &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
 		}
 
 		xfree(me);
@@ -530,7 +530,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			session_unidle(s);
 			{
 				char *__session = xstrdup(session_uid_get(s));
-				query_emit(NULL, TEXT("protocol-connected"), &__session);
+				query_emit(NULL, ("protocol-connected"), &__session);
 				xfree(__session);
 			}
 			if (session_get(s, "__new_acount")) {
@@ -544,9 +544,9 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			watch_write(j->send_watch, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 			jabber_write_status(s);
 
-			if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, TEXT("/jid:bookmark --get"), 1);
+			if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, ("/jid:bookmark --get"), 1);
 			if (session_int_get(s, "auto_privacylist_sync") != 0) 
-				command_exec_format(NULL, s, 1, TEXT("/jid:privacy --get %s"), session_get(s, "privacy_list") ? session_get(s, "privacy_list") : "ekg2");
+				command_exec_format(NULL, s, 1, ("/jid:privacy --get %s"), session_get(s, "privacy_list") ? session_get(s, "privacy_list") : "ekg2");
 		} 
 	}
 
@@ -870,7 +870,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			} else if (!xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-command-execute")) {
 				if (!x) {
 					list_t l;
-					CHAR_T *session_cur = jabber_escape(session_current->uid);
+					char *session_cur = jabber_escape(session_current->uid);
 
 					EXECUTING_HEADER("EXECUTE COMMAND IN EKG2", "Do what you want, but be carefull", "http://ekg2.org/jabber/rc");
 					watch_write(j->send_watch, 
@@ -887,8 +887,8 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	
 					for (l = sessions; l; l = l->next) {
 						session_t *s = l->data;
-						CHAR_T *alias	= jabber_escape(s->alias);
-						CHAR_T *uid	= jabber_escape(s->uid);
+						char *alias	= jabber_escape(s->alias);
+						char *uid	= jabber_escape(s->uid);
 						watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>", alias ? alias : uid, uid);
 						xfree(alias); xfree(uid);
 					}
@@ -922,7 +922,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					if (window)	windowid = atoi(window);
 
 					if (is_valid) { 
-						CHAR_T *fullcommand = saprintf("/%s %s", command, params ? params : "");
+						char *fullcommand = saprintf("/%s %s", command, params ? params : "");
 						window_t  *win;
 						session_t *ses;
 						int ret;
@@ -1554,7 +1554,7 @@ rc_forbidden:
 						}
 
 						if (jdh->roster_retrieved) {
-							command_exec_format(NULL, s, 1, TEXT("/auth --probe %s"), uid);
+							command_exec_format(NULL, s, 1, ("/auth --probe %s"), uid);
 						}
 						xfree(nickname); 
 					}
@@ -1613,9 +1613,9 @@ rc_forbidden:
 				const char *ver_os;
 				const char *tmp;
 
-				CHAR_T *escaped_client_name	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_name")), DEFAULT_CLIENT_NAME) );
-				CHAR_T *escaped_client_version	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_version")), VERSION) );
-				CHAR_T *osversion;
+				char *escaped_client_name	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_name")), DEFAULT_CLIENT_NAME) );
+				char *escaped_client_version	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_version")), VERSION) );
+				char *osversion;
 
 				if (!(ver_os = session_get(s, "ver_os"))) {
 					struct utsname buf;
@@ -1625,7 +1625,7 @@ rc_forbidden:
 						osversion = jabber_escape(osver);
 						xfree(osver);
 					} else {
-						osversion = xwcsdup(TEXT("unknown")); /* uname failed and not ver_os session variable */
+						osversion = xstrdup(("unknown")); /* uname failed and not ver_os session variable */
 					}
 				} else {
 					osversion = jabber_escape(ver_os);	/* ver_os session variable */
@@ -1840,7 +1840,7 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			int port 	= 0;
 
 			if (!when) when = time(NULL);
-			query_emit(NULL, TEXT("protocol-status"), &session, &uid, &status, &descr, &host, &port, &when, NULL);
+			query_emit(NULL, ("protocol-status"), &session, &uid, &status, &descr, &host, &port, &when, NULL);
 			
 			xfree(session);
 /*			xfree(host); */

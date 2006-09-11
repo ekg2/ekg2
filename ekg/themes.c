@@ -98,7 +98,7 @@ const char *format_find(const char *name)
         for (l = formats; l; l = l->next) {
                 struct format *f = l->data;
 
-                if (hash == f->name_hash && !xwcscasecmp(f->name, name)) {
+                if (hash == f->name_hash && !xstrcasecmp(f->name, name)) {
                         return f->value;
 		}
         }
@@ -110,70 +110,70 @@ const char *format_find(const char *name)
  *
  * zwraca sekwencjê ansi odpowiadaj±c± danemu kolorkowi z thememów ekg.
  */
-static const CHAR_T *format_ansi(char ch)
+static const char *format_ansi(char ch)
 {
         if (ch == 'k')
-                return TEXT("\033[2;30m");
+                return ("\033[2;30m");
         if (ch == 'K')
-                return TEXT("\033[1;30m");
+                return ("\033[1;30m");
         if (ch == 'l')
-                return TEXT("\033[40m");
+                return ("\033[40m");
         if (ch == 'r')
-                return TEXT("\033[2;31m");
+                return ("\033[2;31m");
         if (ch == 'R')
-                return TEXT("\033[1;31m");
+                return ("\033[1;31m");
         if (ch == 's')
-                return TEXT("\033[41m");
+                return ("\033[41m");
         if (ch == 'g')
-                return TEXT("\033[2;32m");
+                return ("\033[2;32m");
         if (ch == 'G')
-                return TEXT("\033[1;32m");
+                return ("\033[1;32m");
         if (ch == 'h')
-                return TEXT("\033[42m");
+                return ("\033[42m");
         if (ch == 'y')
-                return TEXT("\033[2;33m");
+                return ("\033[2;33m");
         if (ch == 'Y')
-                return TEXT("\033[1;33m");
+                return ("\033[1;33m");
         if (ch == 'z')
-                return TEXT("\033[43m");
+                return ("\033[43m");
         if (ch == 'b')
-                return TEXT("\033[2;34m");
+                return ("\033[2;34m");
         if (ch == 'B')
-                return TEXT("\033[1;34m");
+                return ("\033[1;34m");
         if (ch == 'e')
-                return TEXT("\033[44m");
+                return ("\033[44m");
         if (ch == 'm' || ch == 'p')
-                return TEXT("\033[2;35m");
+                return ("\033[2;35m");
         if (ch == 'M' || ch == 'P')
-                return TEXT("\033[1;35m");
+                return ("\033[1;35m");
         if (ch == 'q')
-                return TEXT("\033[45m");
+                return ("\033[45m");
         if (ch == 'c')
-                return TEXT("\033[2;36m");
+                return ("\033[2;36m");
         if (ch == 'C')
-                return TEXT("\033[1;36m");
+                return ("\033[1;36m");
         if (ch == 'd')
-                return TEXT("\033[46m");
+                return ("\033[46m");
         if (ch == 'w')
-                return TEXT("\033[2;37m");
+                return ("\033[2;37m");
         if (ch == 'W')
-                return TEXT("\033[1;37m");
+                return ("\033[1;37m");
         if (ch == 'x')
-                return TEXT("\033[47m");
+                return ("\033[47m");
         if (ch == 'n')                  /* clear all attributes */
-                return TEXT("\033[0m");
+                return ("\033[0m");
         if (ch == 'T')                  /* bold */
-                return TEXT("\033[1m");
+                return ("\033[1m");
         if (ch == 'N')                  /* clears all attr exc for bkgd */
-                return TEXT("\033[2m");
+                return ("\033[2m");
         if (ch == 'U')                  /* underline */
-                return TEXT("\033[4m");
+                return ("\033[4m");
         if (ch == 'i')                  /* blink */
-                return TEXT("\033[5m");
+                return ("\033[5m");
         if (ch == 'V')                  /* reverse */
-                return TEXT("\033[7m");
+                return ("\033[7m");
 
-        return TEXT("");
+        return ("");
 }
 
 /*
@@ -242,7 +242,7 @@ char *va_format_string(const char *format, va_list ap)
                 args[i] = NULL;
 
         for (i = 0; i < argc; i++)
-                args[i] = va_arg(ap, CHAR_T *);
+                args[i] = va_arg(ap, char *);
 
         if (!dont_resolve) {
                 dont_resolve = 1;
@@ -439,7 +439,7 @@ char *va_format_string(const char *format, va_list ap)
 
 fstring_t *fstring_new(const char *str) {
         fstring_t *res = xmalloc(sizeof(fstring_t));
-	CHAR_T *tmpstr;
+	char *tmpstr;
         short attr = 128;
         int i, j, len = 0, isbold = 0;
 
@@ -469,7 +469,7 @@ fstring_t *fstring_new(const char *str) {
                 len++;
         }
 
-        tmpstr = xmalloc((len + 1) * sizeof(CHAR_T));
+        tmpstr = xmalloc((len + 1) * sizeof(char));
         res->attr = xmalloc((len + 1) * sizeof(short));
         res->prompt_len = 0;
         res->prompt_empty = 0;
@@ -478,15 +478,15 @@ fstring_t *fstring_new(const char *str) {
                 if (str[i] == 27) {
                         int tmp = 0;
                         int m, ism, once=1, deli;
-                        CHAR_T *p;
+                        char *p;
 
-                        if (str[i + 1] != TEXT('['))
+                        if (str[i + 1] != ('['))
                                 continue;
 
                         i += 2;
 
                         /* obs³uguje tylko "\033[...m", tak ma byæ */
-                        p=(CHAR_T *)&(str[i]);
+                        p=(char *)&(str[i]);
                         while (1) {
                                 ism=deli=0;
                                 ism=sscanf(p, "%02d", &m);
@@ -496,7 +496,7 @@ fstring_t *fstring_new(const char *str) {
                                         if(once && isdigit(*p)) { p++; deli++; i++; }
                                 }
                                 once = 0;
-                                if (*p == TEXT(';') || *p == TEXT('m')) {
+                                if (*p == (';') || *p == ('m')) {
                                         if (!ism)
                                                 goto wedonthavem;
                                         if (m == 0) {
@@ -509,9 +509,9 @@ fstring_t *fstring_new(const char *str) {
                                         }
                                         else if (m == 1) /* bold */
                                         {
-                                                if (*p == TEXT('m') && !isbold)
+                                                if (*p == ('m') && !isbold)
                                                         attr ^= 64;
-                                                if (*p == TEXT(';'))  {
+                                                if (*p == (';'))  {
                                                         attr |= 64;
                                                         isbold = 1;
                                                 }
@@ -537,7 +537,7 @@ wedonthavem:
                                                 attr &= ~(128+8+16+32);
                                                 attr |= (tmp - 40) << 3;
                                         }
-                                        if (*p == TEXT(';')) { i++; p++; }
+                                        if (*p == (';')) { i++; p++; }
                                 }
                                 if (*p == 'm') break;
                                 tmp = 0;
@@ -549,8 +549,8 @@ wedonthavem:
                 if (str[i] == 13)
                         continue;
 
-                if (str[i + 1] && str[i] == TEXT('/') && str[i + 1] == TEXT('|')) {
-                        if ((i != 0 && str[i - 1] != TEXT('/')) || i == 0) {
+                if (str[i + 1] && str[i] == ('/') && str[i + 1] == ('|')) {
+                        if ((i != 0 && str[i - 1] != ('/')) || i == 0) {
                                 res->margin_left = j;
                                 i++;
                                 continue;
@@ -562,7 +562,7 @@ wedonthavem:
                         int k = 0, l = 8 - (j % 8);
 
                         for (k = 0; k < l; j++, k++) {
-                                tmpstr[j] = TEXT(' ');
+                                tmpstr[j] = (' ');
                                 res->attr[j] = attr;
                         }
 
@@ -573,7 +573,7 @@ wedonthavem:
                 res->attr[j] = attr;
                 j++;
         }
-        tmpstr[j] = (CHAR_T) 0;
+        tmpstr[j] = (char) 0;
 
         res->attr[j] = 0;
 	res->str = tmpstr;
@@ -733,7 +733,7 @@ int format_add(const char *name, const char *value, int replace)
 
         for (l = formats; l; l = l->next) {
 		f = l->data;
-                if (hash == f->name_hash && !xwcscasecmp(name, f->name)) {
+                if (hash == f->name_hash && !xstrcasecmp(name, f->name)) {
                         if (replace) {
                                 xfree(f->value);
                                 f->value = xstrdup(value);
@@ -742,7 +742,7 @@ int format_add(const char *name, const char *value, int replace)
                 }
         }
 	f = xmalloc(sizeof(struct format));
-        f->name = xwcsdup(name);
+        f->name = xstrdup(name);
         f->name_hash = hash;
         f->value = xstrdup(value);
 
@@ -766,7 +766,7 @@ static int format_remove(const char *name)
         for (l = formats; l; l = l->next) {
                 struct format *f = l->data;
 
-                if (!xwcscasecmp(f->name, name)) {
+                if (!xstrcasecmp(f->name, name)) {
                         xfree(f->value);
                         xfree(f->name);
                         list_remove(&formats, f, 1);

@@ -97,7 +97,7 @@ typedef struct {
 } stream_private_t; 
 
 COMMAND(cmd_streams) {
-	const CHAR_T **create = NULL;
+	const char **create = NULL;
 	int display = 0;
 	list_t l;
 
@@ -118,7 +118,7 @@ COMMAND(cmd_streams) {
 	}
 
 	if (create) {
-		const CHAR_T *input, *codec, *output;
+		const char *input, *codec, *output;
 
 		if (create[0] && create[1] && create[2]) 	{ input = create[0]; codec = create[1]; output = create[2]; } 
 		else if (create[0] && create[1])		{ input = create[0]; codec = NULL;	output = create[2]; } 

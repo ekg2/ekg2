@@ -218,8 +218,8 @@ int ioctld_plugin_init(int prio)
 	
 	atexit(ioctld_kill);
 
-	command_add(&ioctld_plugin, TEXT("ioctld:beeps_spk"), TEXT("?"), command_beeps_spk, 0, NULL);
-	command_add(&ioctld_plugin, TEXT("ioctld:blink_leds"), TEXT("?"), command_blink_leds, 0, NULL);
+	command_add(&ioctld_plugin, ("ioctld:beeps_spk"), ("?"), command_beeps_spk, 0, NULL);
+	command_add(&ioctld_plugin, ("ioctld:blink_leds"), ("?"), command_blink_leds, 0, NULL);
 	
 	return 0;
 }

@@ -31,10 +31,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#undef TEXT
-#undef EKG2__CHAR_H__
-#include "char.h"
-
 #undef pipe
 typedef unsigned __int64 u_int64_t;
 

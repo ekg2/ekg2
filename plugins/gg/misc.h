@@ -24,10 +24,10 @@
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
 
-const CHAR_T *gg_status_to_text(int status);
+const char *gg_status_to_text(int status);
 int gg_text_to_status(const char *text, const char *descr);
-unsigned char *gg_locale_to_cp(CHAR_T *buf);
-CHAR_T *gg_cp_to_locale(unsigned char *buf);
+unsigned char *gg_locale_to_cp(char *buf);
+char *gg_cp_to_locale(unsigned char *buf);
 char gg_userlist_type(userlist_t *u);
 int gg_blocked_add(session_t *s, const char *uid);
 int gg_blocked_remove(session_t *s, const char *uid);

@@ -21,7 +21,6 @@
 #ifndef __EKG_COMMANDS_H
 #define __EKG_COMMANDS_H
 
-#include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
 #include "themes.h"
@@ -30,7 +29,7 @@
 #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 #define wcs_printq(x...) do { if (!quiet) { print(x); } } while(0)
 
-#define COMMAND(x) int x(const CHAR_T *name, const CHAR_T **params, session_t *session, const char *target, int quiet)
+#define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
 
 /* INFORMATIONAL FLAGS */
 	/* command is binded by alias managment */
@@ -58,11 +57,11 @@ typedef COMMAND(command_func_t);
 
 typedef struct {
 	/* public: */
-	CHAR_T *name;
+	char *name;
 	plugin_t *plugin;
 
 	/* private: */
-	CHAR_T**params;
+	char**params;
 	command_func_t *function;
 	int flags;
 	char **possibilities;
@@ -71,14 +70,14 @@ typedef struct {
 #ifndef EKG2_WIN32_NOFUNCTION
 extern list_t commands;
 
-command_t *command_add(plugin_t *plugin, const CHAR_T *name, CHAR_T *params, command_func_t function, int flags, char *possibilities);
+command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities);
 void command_freeone(command_t *c);
-int command_remove(plugin_t *plugin, const CHAR_T *name);
-command_t *command_find (const CHAR_T *name);
+int command_remove(plugin_t *plugin, const char *name);
+command_t *command_find (const char *name);
 void command_init();
 void command_free();
-int command_exec(const char *target, session_t *session, const CHAR_T *line, int quiet);
-int command_exec_format(const char *target, session_t *session, int quiet, const CHAR_T *format, ...);
+int command_exec(const char *target, session_t *session, const char *line, int quiet);
+int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...);
 
 COMMAND(cmd_add);
 COMMAND(cmd_alias_exec);
@@ -107,12 +106,12 @@ int binding_help(int a, int b);
 int binding_quick_list(int a, int b);
 int binding_toggle_contacts(int a, int b);
 
-int match_arg(const CHAR_T *arg, char shortopt, const CHAR_T *longopt, int longoptlen);
+int match_arg(const char *arg, char shortopt, const char *longopt, int longoptlen);
 
 /* wyniki ostatniego szukania */
-extern CHAR_T *last_search_first_name;
-extern CHAR_T *last_search_last_name;
-extern CHAR_T *last_search_nickname;
+extern char *last_search_first_name;
+extern char *last_search_last_name;
+extern char *last_search_nickname;
 extern char *last_search_uid;
 #endif
 

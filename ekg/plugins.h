@@ -23,7 +23,6 @@
 #include <sys/types.h>
 #include <stdarg.h>
 
-#include "char.h"
 #include "dynstuff.h"
 #include "sessions.h"
 
@@ -58,7 +57,7 @@ typedef struct {
 } plugins_params_t;
 
 typedef struct {
-	CHAR_T *name;
+	char *name;
 	int prio;
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
@@ -69,12 +68,12 @@ typedef struct {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-int plugin_load(const CHAR_T *name, int prio, int quiet);
+int plugin_load(const char *name, int prio, int quiet);
 int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);
 int plugin_theme_reload(plugin_t *);
-plugin_t *plugin_find(const CHAR_T *name);
+plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
 #define plugin_find_s(a) plugin_find_uid(a->uid)
 int have_plugin_of_class(int);
@@ -88,7 +87,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 	static int x##_plugin_destroy(); \
 	\
 	plugin_t x##_plugin = { \
-		TEXT(#x), \
+		#x, \
 		0, \
 		y, \
 		x##_plugin_destroy, \
@@ -100,7 +99,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 	static int x##_plugin_destroy(); \
 	\
 	plugin_t x##_plugin = { \
-		.name = TEXT(#x), \
+		.name = #x, \
 		.pclass = y, \
 		.destroy = x##_plugin_destroy, \
 		.theme_init = z \
@@ -111,7 +110,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 typedef QUERY(query_handler_func_t);
 
 typedef struct {
-	CHAR_T *name;
+	char *name;
 	plugin_t *plugin;
 	void *data;
 	query_handler_func_t *handler;
@@ -120,12 +119,12 @@ typedef struct {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-query_t *query_connect(plugin_t *plugin, const CHAR_T *name, query_handler_func_t *handler, void *data);
-int query_disconnect(plugin_t *, const CHAR_T *);
+query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
+int query_disconnect(plugin_t *, const char *);
 int query_free(query_t *q);
-query_t *query_find(const CHAR_T *name);
+query_t *query_find(const char *name);
 
-int query_emit(plugin_t *, const CHAR_T *, ...);
+int query_emit(plugin_t *, const char *, ...);
 
 #endif
 

@@ -31,7 +31,6 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include <ekg/char.h>
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
@@ -60,7 +59,7 @@ PLUGIN_DEFINE(sms, PLUGIN_GENERIC, sms_theme_init);
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
 
-static void sms_child_handler(child_t *c, int pid, const CHAR_T *name, int status, void *data)
+static void sms_child_handler(child_t *c, int pid, const char *name, int status, void *data)
 {
         char *number = data;
 
@@ -80,7 +79,7 @@ static void sms_child_handler(child_t *c, int pid, const CHAR_T *name, int statu
 static int sms_send(const char *recipient, const char *message)
 {
 	int pid, fd[2] = { 0, 0 };
-	CHAR_T *tmp;
+	char *tmp;
 
 	if (!config_sms_app) {
 		errno = EINVAL;
@@ -117,7 +116,7 @@ static int sms_send(const char *recipient, const char *message)
 
 	close(fd[1]);
 
-	tmp = saprintf(TEXT("%s %s %s"), config_sms_app, recipient, message);
+	tmp = saprintf(("%s %s %s"), config_sms_app, recipient, message);
 	child_add(&sms_plugin, pid, tmp, sms_child_handler, xstrdup(recipient));
 	xfree(tmp);
 
@@ -253,7 +252,7 @@ static COMMAND(sms_command_sms)
         return 0;
 }
 
-static int dd_sms(const CHAR_T *name)
+static int dd_sms(const char *name)
 {
         return (config_sms_app != NULL);
 }
@@ -319,7 +318,7 @@ static QUERY(sms_protocol_message)
         return 0;
 }
 
-static void sms_changed_sms_away(const CHAR_T *name)
+static void sms_changed_sms_away(const char *name)
 {
         static int last = -1;
 
@@ -327,9 +326,9 @@ static void sms_changed_sms_away(const CHAR_T *name)
                 return;
 
         if (config_sms_away)
-                query_connect(&sms_plugin, TEXT("protocol-message"), sms_protocol_message, NULL);
+                query_connect(&sms_plugin, ("protocol-message"), sms_protocol_message, NULL);
         else
-                query_disconnect(&sms_plugin, TEXT("protocol-message"));
+                query_disconnect(&sms_plugin, ("protocol-message"));
 
         last = config_sms_away;
 }
@@ -338,17 +337,17 @@ int sms_plugin_init(int prio)
 {
         plugin_register(&sms_plugin, prio);
 
-        command_add(&sms_plugin, TEXT("sms:sms"), TEXT("u ?"), sms_command_sms, 0, NULL);
+        command_add(&sms_plugin, ("sms:sms"), ("u ?"), sms_command_sms, 0, NULL);
 
-        variable_add(&sms_plugin, TEXT("sms_send_app"), VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
-        variable_add(&sms_plugin, TEXT("sms_away"), VAR_MAP, 1, &config_sms_away, sms_changed_sms_away, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
-        variable_add(&sms_plugin, TEXT("sms_away_limit"), VAR_INT, 1, &config_sms_away_limit, NULL, NULL, dd_sms);
-        variable_add(&sms_plugin, TEXT("sms_max_length"), VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
-        variable_add(&sms_plugin, TEXT("sms_number"), VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
+        variable_add(&sms_plugin, ("sms_send_app"), VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
+        variable_add(&sms_plugin, ("sms_away"), VAR_MAP, 1, &config_sms_away, sms_changed_sms_away, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
+        variable_add(&sms_plugin, ("sms_away_limit"), VAR_INT, 1, &config_sms_away_limit, NULL, NULL, dd_sms);
+        variable_add(&sms_plugin, ("sms_max_length"), VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
+        variable_add(&sms_plugin, ("sms_number"), VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
 
         /* senseless, cause it'd be default value... this variable isn't loaded yet. */
 
-        query_connect(&sms_plugin, TEXT("session-status"), sms_session_status, NULL);
+        query_connect(&sms_plugin, ("session-status"), sms_session_status, NULL);
 
         return 0;
 }

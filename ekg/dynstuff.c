@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "char.h"
 #include "dynstuff.h"
 #include "xmalloc.h"
 

@@ -34,7 +34,6 @@
 
 #include <stdint.h>
 
-#include <ekg/char.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/log.h>
@@ -296,7 +295,7 @@ static FILE *logs_window_close(logs_log_t *l, int close) {
 	return f;
 }
 
-static void logs_changed_maxfd(const CHAR_T *var) {
+static void logs_changed_maxfd(const char *var) {
 	int maxfd = config_logs_max_files;
 	if (in_autoexec) 
 		return;
@@ -304,7 +303,7 @@ static void logs_changed_maxfd(const CHAR_T *var) {
 /* TODO: sprawdzic ile fd aktualnie jest otwartych jak cos to zamykac najstarsze... dodac kiedy otwarlismy plik i zapisalismy ostatnio cos do log_window_t ? */
 }
 
-static void logs_changed_path(const CHAR_T *var) {
+static void logs_changed_path(const char *var) {
 	list_t l;
 	if (in_autoexec || !log_logs) 
 		return;
@@ -324,7 +323,7 @@ static void logs_changed_path(const CHAR_T *var) {
 	}
 }
 
-static void logs_changed_raw(const CHAR_T *var) {
+static void logs_changed_raw(const char *var) {
 	/* if logs:log_raw == 0, clean LOGRAW buffer */
 	if (!config_logs_log_raw) 
 		xfree(buffer_flush(BUFFER_LOGRAW, NULL));	/* i'm lazy */
@@ -413,7 +412,7 @@ static log_away_t *logs_away_create(char *session) {
 	return list_add(&log_awaylog, la, 0);
 }
 
-static void logs_changed_awaylog(const CHAR_T *var) {
+static void logs_changed_awaylog(const char *var) {
 	list_t l;
 	if (in_autoexec)
 		return;
@@ -465,16 +464,16 @@ static QUERY(logs_handler_killwin)  {
 	return 0;
 }
 
-static int logs_print_window(session_t *s, const char *target, const CHAR_T *line, time_t ts) {
+static int logs_print_window(session_t *s, const char *target, const char *line, time_t ts) {
 	static plugin_t *ui_plugin = NULL;
 	window_t *w;
 
-	CHAR_T *fline;
+	char *fline;
 	fstring_t *fstr;
 
 	/* it's enough to look for ui_plugin once */
-	if (!ui_plugin) ui_plugin = plugin_find(TEXT("ncurses"));
-	if (!ui_plugin) ui_plugin = plugin_find(TEXT("gtk"));
+	if (!ui_plugin) ui_plugin = plugin_find(("ncurses"));
+	if (!ui_plugin) ui_plugin = plugin_find(("gtk"));
 	if (!ui_plugin) {
 		debug("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
 		return -1;
@@ -490,7 +489,7 @@ static int logs_print_window(session_t *s, const char *target, const CHAR_T *lin
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */
-	query_emit(ui_plugin, TEXT("ui-window-print"), &w, &fstr);	/* let's rock */
+	query_emit(ui_plugin, ("ui-window-print"), &w, &fstr);	/* let's rock */
 
 	xfree(fline);						/* cleanup */
 
@@ -551,7 +550,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	return item;
 }
 
-static int logs_buffer_raw_add(const char *file, const CHAR_T *str) {
+static int logs_buffer_raw_add(const char *file, const char *str) {
 	/* XXX, get global maxsize variable and if > than current ..... */
 
 	return buffer_add(BUFFER_LOGRAW, file, str, 0);
@@ -604,31 +603,31 @@ int logs_plugin_init(int prio) {
 
 	logs_setvar_default(NULL, NULL);
 
-	query_connect(&logs_plugin, TEXT("set-vars-default"), logs_setvar_default, NULL);
-	query_connect(&logs_plugin, TEXT("protocol-message-post"), logs_handler, NULL);
-	query_connect(&logs_plugin, TEXT("irc-protocol-message"), logs_handler_irc, NULL);
-	query_connect(&logs_plugin, TEXT("ui-window-new"), logs_handler_newwin, NULL);
-	query_connect(&logs_plugin, TEXT("ui-window-print"), logs_handler_raw, NULL);
-	query_connect(&logs_plugin, TEXT("ui-window-kill"),logs_handler_killwin, NULL);
-	query_connect(&logs_plugin, TEXT("protocol-status"), logs_status_handler, NULL);
-	query_connect(&logs_plugin, TEXT("config-postinit"), logs_postinit, NULL);
-	query_connect(&logs_plugin, TEXT("session-status"), logs_sestatus_handler, NULL);
+	query_connect(&logs_plugin, ("set-vars-default"), logs_setvar_default, NULL);
+	query_connect(&logs_plugin, ("protocol-message-post"), logs_handler, NULL);
+	query_connect(&logs_plugin, ("irc-protocol-message"), logs_handler_irc, NULL);
+	query_connect(&logs_plugin, ("ui-window-new"), logs_handler_newwin, NULL);
+	query_connect(&logs_plugin, ("ui-window-print"), logs_handler_raw, NULL);
+	query_connect(&logs_plugin, ("ui-window-kill"),logs_handler_killwin, NULL);
+	query_connect(&logs_plugin, ("protocol-status"), logs_status_handler, NULL);
+	query_connect(&logs_plugin, ("config-postinit"), logs_postinit, NULL);
+	query_connect(&logs_plugin, ("session-status"), logs_sestatus_handler, NULL);
 	/* TODO: moze zmienna sesyjna ? ;> */
-	variable_add(&logs_plugin, TEXT("away_log"), VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
+	variable_add(&logs_plugin, ("away_log"), VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
-	variable_add(&logs_plugin, TEXT("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, &logs_changed_maxfd, NULL, NULL); 
-	variable_add(&logs_plugin, TEXT("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
+	variable_add(&logs_plugin, ("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, &logs_changed_maxfd, NULL, NULL); 
+	variable_add(&logs_plugin, ("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
 			variable_map(3, 
 				LOG_FORMAT_NONE, 0, "none", 
 				LOG_FORMAT_SIMPLE, LOG_FORMAT_XML, "simple", 
 				LOG_FORMAT_XML, LOG_FORMAT_SIMPLE, "xml"), 
 			NULL);
-	variable_add(&logs_plugin, TEXT("log_raw"), VAR_BOOL, 1, &config_logs_log_raw, &logs_changed_raw, NULL, NULL);
-	variable_add(&logs_plugin, TEXT("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
-	variable_add(&logs_plugin, TEXT("log_status"), VAR_BOOL, 1, &config_logs_log_status, &logs_changed_path, NULL, NULL);
-	variable_add(&logs_plugin, TEXT("path"), VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
-	variable_add(&logs_plugin, TEXT("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
-	variable_add(&logs_plugin, TEXT("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("log_raw"), VAR_BOOL, 1, &config_logs_log_raw, &logs_changed_raw, NULL, NULL);
+	variable_add(&logs_plugin, ("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("log_status"), VAR_BOOL, 1, &config_logs_log_status, &logs_changed_path, NULL, NULL);
+	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
 	logs_changed_awaylog(NULL); /* nie robi sie automagicznie to trzeba sila. */
 
@@ -1058,11 +1057,11 @@ static QUERY(logs_handler_irc) {
 	return 0;
 }
 
-static CHAR_T *logs_fstring_to_string(const CHAR_T *str, const short *attr) {
+static char *logs_fstring_to_string(const char *str, const short *attr) {
 	int i;
 	string_t asc = string_init(NULL);
 
-	for (i = 0; i < xwcslen(str); i++) {
+	for (i = 0; i < xstrlen(str); i++) {
 #define ISBOLD(x)	(x & 64)
 #define ISBLINK(x)	(x & 256) 
 #define ISUNDERLINE(x)	(x & 512)
@@ -1084,14 +1083,14 @@ static CHAR_T *logs_fstring_to_string(const CHAR_T *str, const short *attr) {
 		else if (i && BGCOLOR(cur) == -1 && BGCOLOR(prev) != -1);/* NO BGCOLOR */
 		else reset = 0;
 		
-		if (reset) string_append(asc, TEXT("%n"));
+		if (reset) string_append(asc, ("%n"));
 
 		if (ISBOLD(cur)	&& (!i || reset || ISBOLD(cur) != ISBOLD(prev)) && FGCOLOR(cur) == -1)
-			string_append(asc, TEXT("%T"));		/* no color + bold. */
+			string_append(asc, ("%T"));		/* no color + bold. */
 
-		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, TEXT("%i"));
-//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, TEXT("%"));
-//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, TEXT("%"));
+		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, ("%i"));
+//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, ("%"));
+//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, ("%"));
 
 		if (BGCOLOR(cur) != -1 && ((!i || reset || BGCOLOR(cur) != BGCOLOR(prev)))) {	/* if there's a background color... add it */
 			string_append_c(asc, '%');
@@ -1125,7 +1124,7 @@ static CHAR_T *logs_fstring_to_string(const CHAR_T *str, const short *attr) {
 		if (str[i] == '%' || str[i] == '\\') string_append_c(asc, '\\');	/* escape chars.. */
 		string_append_c(asc, str[i]);					/* append current char */
 	}
-	string_append(asc, TEXT("%n"));	/* reset */
+	string_append(asc, ("%n"));	/* reset */
 	return string_free(asc, 0);
 }
 
@@ -1133,7 +1132,7 @@ static QUERY(logs_handler_raw) {
 	window_t *w	= *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
 	char *path;
-	CHAR_T *str;
+	char *str;
 
 	if (!config_logs_log_raw) return 0;
 	if (!w || !line || w->id == 0) return 0;	/* don't log debug window */
@@ -1228,10 +1227,10 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 
 static void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class) {
 	session_t *s;
-	CHAR_T *textcopy;
+	char *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(NULL));
 /*	const char *senttimestamp = prepare_timestamp_format(config_logs_timestamp, sent); */
-	CHAR_T *gotten_uid, *gotten_nickname;
+	char *gotten_uid, *gotten_nickname;
 	const char *tmp;
 
 	if (!file)

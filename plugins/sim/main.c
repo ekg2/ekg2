@@ -137,7 +137,7 @@ static QUERY(message_decrypt)
  */
 static COMMAND(command_key)
 {
-	if (match_arg(params[0], 'g', TEXT("generate"), 2)) {
+	if (match_arg(params[0], 'g', ("generate"), 2)) {
 		char *tmp, *tmp2;
 		struct stat st;
 		const char *uid;
@@ -176,7 +176,7 @@ static COMMAND(command_key)
 		return 0;
 	}
 
-	if (match_arg(params[0], 's', TEXT("send"), 2)) {
+	if (match_arg(params[0], 's', ("send"), 2)) {
 		string_t s = NULL;
 		char *tmp, buf[128];
 		FILE *f;
@@ -198,7 +198,7 @@ static COMMAND(command_key)
 			return -1;
 		}
 
-		s = string_init(TEXT("/ "));
+		s = string_init(("/ "));
 
 		while (fgets(buf, sizeof(buf), f))
 			string_append(s, buf);
@@ -213,7 +213,7 @@ static COMMAND(command_key)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'd', TEXT("delete"), 2)) {
+	if (match_arg(params[0], 'd', ("delete"), 2)) {
 		char *tmp;
 		char *uid;
 
@@ -245,12 +245,12 @@ static COMMAND(command_key)
 		return 0;
 	}
 
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
 		DIR *dir;
 		struct dirent *d;
 		int count = 0;
 		const char *path = prepare_path("keys", 0);
-		const CHAR_T *x = NULL;
+		const char *x = NULL;
 		const char *list_uid = NULL;
 
 		if (!(dir = opendir(path))) {
@@ -260,7 +260,7 @@ static COMMAND(command_key)
 
 		if (params[0] && params[0][0] != '-')
 			x = params[0];
-		else if (params[0] && match_arg(params[0], 'l', TEXT("list"), 2))
+		else if (params[0] && match_arg(params[0], 'l', ("list"), 2))
 			x = params[1];
 
 		if (x && !(list_uid = get_uid(session, x))) {
@@ -345,13 +345,13 @@ int sim_plugin_init(int prio)
 {
 	plugin_register(&sim_plugin, prio);
 
-	query_connect(&sim_plugin, TEXT("message-encrypt"), message_encrypt, NULL);
-	query_connect(&sim_plugin, TEXT("message-decrypt"), message_decrypt, NULL);
+	query_connect(&sim_plugin, ("message-encrypt"), message_encrypt, NULL);
+	query_connect(&sim_plugin, ("message-decrypt"), message_decrypt, NULL);
 
-	command_add(&sim_plugin, TEXT("sim:key"), TEXT("puUC uUC"), command_key, 0,
+	command_add(&sim_plugin, ("sim:key"), ("puUC uUC"), command_key, 0,
 			"-g --generate -s --send -d --delete -l --list");
 
-	variable_add(&sim_plugin, TEXT("encryption"), VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
+	variable_add(&sim_plugin, ("encryption"), VAR_BOOL, 1, &config_encryption, NULL, NULL, NULL);
 
 	sim_key_path = xstrdup(prepare_path("keys/", 0));
 

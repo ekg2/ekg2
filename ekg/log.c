@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <time.h>
 
-#include "char.h"
 #include "dynstuff.h"
 #include "log.h"
 #include "xmalloc.h"
@@ -44,7 +43,7 @@ list_t lasts = NULL;
 int config_last_size = 10;
 int config_last = 0;
 
-static CHAR_T *utf_ent[256] =
+static char *utf_ent[256] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -264,31 +263,31 @@ char *log_escape(const char *str)
  *
  * allocated buffer
  */
-CHAR_T *xml_escape(const char *text)
+char *xml_escape(const char *text)
 {
-	const CHAR_T *p;
-	CHAR_T *res, *q;
+	const char *p;
+	char *res, *q;
 	int len;
 
 	if (!text)
 		return NULL;
 
 	for (p = text, len = 0; *p; p++) {
-		if (*p >= sizeof(utf_ent)/sizeof(CHAR_T)) len += 1;
-		else len += (utf_ent[(int) *p] ? xwcslen(utf_ent[(int) *p]) : 1);
+		if (*p >= sizeof(utf_ent)/sizeof(char)) len += 1;
+		else len += (utf_ent[(int) *p] ? xstrlen(utf_ent[(int) *p]) : 1);
 	}
 
-	res = xmalloc((len + 1)*sizeof(CHAR_T));
+	res = xmalloc((len + 1)*sizeof(char));
 	for (p = text, q = res; *p; p++) {
-		const CHAR_T *ent = utf_ent[(int) *p];
-		if (*p >= sizeof(utf_ent)/sizeof(CHAR_T)) ent = NULL;
+		const char *ent = utf_ent[(int) *p];
+		if (*p >= sizeof(utf_ent)/sizeof(char)) ent = NULL;
 
 		if (ent)
 			xstrcpy(q, ent);
 		else
 			*q = *p;
 
-		q += ent ? xwcslen(ent) : 1;
+		q += ent ? xstrlen(ent) : 1;
 	}
 
 	return res;

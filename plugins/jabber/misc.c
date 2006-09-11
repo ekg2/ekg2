@@ -163,10 +163,10 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
  * zaalokowany bufor
  */
 
-CHAR_T *jabber_escape(const char *text)
+char *jabber_escape(const char *text)
 {
 	unsigned char *utftext;
-	CHAR_T *res;
+	char *res;
 	if (config_use_unicode)
 		return xml_escape(text);
 	if (!text)
@@ -201,7 +201,7 @@ char *jabber_unescape(const char *text)
 /* tlen_encode() & tlen_decode() ripped from libtlen. XXX, try to rewrite some code */
 
 /* tlen_encode() - Koduje tekst przy pomocy urlencode + rekoduje charset na iso-8859-2 */
-CHAR_T *tlen_encode(const char *what) {
+char *tlen_encode(const char *what) {
 	const unsigned char *s;
 	unsigned char *ptr, *str;
 	char *text = NULL;

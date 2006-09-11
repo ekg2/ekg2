@@ -26,7 +26,6 @@
 
 #include <libgadu.h>
 
-#include <ekg/char.h>
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
@@ -34,7 +33,7 @@
 
 #include "gg.h"
 
-CHAR_T *gg_cp_to_locale(unsigned char *buf_);
+char *gg_cp_to_locale(unsigned char *buf_);
 
 /*
  * gg_cp_to_iso()
@@ -85,13 +84,13 @@ static unsigned char *gg_iso_to_cp(unsigned char *buf) {
 	return tmp;
 }
 
-unsigned char *gg_locale_to_cp(CHAR_T *buf_) {
+unsigned char *gg_locale_to_cp(char *buf_) {
 	if (!buf_)
 		return NULL;
 	return gg_iso_to_cp(buf_);
 }
 
-CHAR_T *gg_cp_to_locale(unsigned char *buf_) {
+char *gg_cp_to_locale(unsigned char *buf_) {
 	if (!buf_)
 		return NULL;
 	return gg_cp_to_iso(buf_);
@@ -104,30 +103,30 @@ CHAR_T *gg_cp_to_locale(unsigned char *buf_) {
  *  
  *  - status
  */
-const CHAR_T *gg_status_to_text(int status)
+const char *gg_status_to_text(int status)
 {
 	switch (GG_S(status)) {
 		case GG_STATUS_AVAIL:
 		case GG_STATUS_AVAIL_DESCR:
-			return WCS_EKG_STATUS_AVAIL;
+			return EKG_STATUS_AVAIL;
 
 		case GG_STATUS_NOT_AVAIL:
 		case GG_STATUS_NOT_AVAIL_DESCR:
-			return WCS_EKG_STATUS_NA;
+			return EKG_STATUS_NA;
 
 		case GG_STATUS_BUSY:
 		case GG_STATUS_BUSY_DESCR:
-			return WCS_EKG_STATUS_AWAY;
+			return EKG_STATUS_AWAY;
 				
 		case GG_STATUS_INVISIBLE:
 		case GG_STATUS_INVISIBLE_DESCR:
-			return WCS_EKG_STATUS_INVISIBLE;
+			return EKG_STATUS_INVISIBLE;
 
 		case GG_STATUS_BLOCKED:
-			return WCS_EKG_STATUS_BLOCKED;
+			return EKG_STATUS_BLOCKED;
 	}
 
-	return WCS_EKG_STATUS_UNKNOWN;
+	return EKG_STATUS_UNKNOWN;
 }
 
 /*

@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "char.h"
 #include "dynstuff.h"
 #include "plugins.h"
 #include "sessions.h"
@@ -56,20 +55,20 @@
 
 struct child_s;
 
-typedef void (*child_handler_t)(struct child_s *c, int pid, const CHAR_T *name, int status, void *data);
+typedef void (*child_handler_t)(struct child_s *c, int pid, const char *name, int status, void *data);
 
 typedef struct child_s {
 	int pid;			/* id procesu */
 	plugin_t *plugin;		/* obs³uguj±cy plugin */
-	CHAR_T *name;			/* nazwa, wy¶wietlana przy /exec */
+	char *name;			/* nazwa, wy¶wietlana przy /exec */
 	child_handler_t handler;	/* zak³ad pogrzebowy */
 	void *private;			/* dane procesu */
 } child_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-child_t *child_add(plugin_t *plugin, int pid, const CHAR_T *name, child_handler_t handler, void *private);
+child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private);
 int child_pid_get(child_t *c);
-const CHAR_T *child_name_get(child_t *c);
+const char *child_name_get(child_t *c);
 plugin_t *child_plugin_get(child_t *c);
 void *child_private_get(child_t *c);
 child_handler_t child_handler_get(child_t *c);
@@ -78,28 +77,28 @@ child_handler_t child_handler_get(child_t *c);
 
 #ifndef EKG2_WIN32_NOFUNCTION
 struct alias {
-	CHAR_T *name;		/* nazwa aliasu */
+	char *name;		/* nazwa aliasu */
 	list_t commands;	/* commands->data to (char*) */
 };
 #endif
 
-#define BINDING_FUNCTION(x) void x(const CHAR_T *arg) 
+#define BINDING_FUNCTION(x) void x(const char *arg) 
 
 struct binding {
-	CHAR_T *key;
+	char *key;
 
-	CHAR_T *action;					/* akcja */
+	char *action;					/* akcja */
 	int internal;					/* czy domy¶lna kombinacja? */
-	void (*function)(const CHAR_T *arg);		/* funkcja obs³uguj±ca */
-	CHAR_T *arg;					/* argument funkcji */
+	void (*function)(const char *arg);		/* funkcja obs³uguj±ca */
+	char *arg;					/* argument funkcji */
 
-	CHAR_T *default_action;				/* domy¶lna akcja */
-	void (*default_function)(const CHAR_T *arg);	/* domy¶lna funkcja */
-	CHAR_T *default_arg;				/* domy¶lny argument */
+	char *default_action;				/* domy¶lna akcja */
+	void (*default_function)(const char *arg);	/* domy¶lna funkcja */
+	char *default_arg;				/* domy¶lny argument */
 };
 
 typedef struct {
-        CHAR_T *sequence;
+        char *sequence;
         struct binding *binding;
 } binding_added_t;
 
@@ -149,7 +148,7 @@ struct buffer {
 	int type;
 	time_t ts;
 	char *target;
-	CHAR_T *line;
+	char *line;
 };
 
 struct color_map {
@@ -254,29 +253,29 @@ extern struct color_map color_map_default[16+10];
 
 void windows_save();
 
-int alias_add(const CHAR_T *string, int quiet, int append);
-int alias_remove(const CHAR_T *name, int quiet);
+int alias_add(const char *string, int quiet, int append);
+int alias_remove(const char *name, int quiet);
 void alias_free();
 
 char *base64_encode(const char *buf);
 char *base64_decode(const char *buf);
 
-void binding_list(int quiet, const CHAR_T *name, int all);
+void binding_list(int quiet, const char *name, int all);
 void binding_free();
 
-int buffer_add(int type, const char *target, const CHAR_T *line, int max_lines);
+int buffer_add(int type, const char *target, const char *line, int max_lines);
 int buffer_add_str(int type, const char *target, const char *str, int max_lines);
 int buffer_count(int type);
-CHAR_T *buffer_flush(int type, const char *target);
-CHAR_T *buffer_tail(int type);
+char *buffer_flush(int type, const char *target);
+char *buffer_tail(int type);
 void buffer_free();
 
 void changed_var_default(session_t *s, const char *var);
 
-void changed_auto_save(const CHAR_T *var);
-void changed_display_blinking(const CHAR_T *var);
-void changed_mesg(const CHAR_T *var);
-void changed_theme(const CHAR_T *var);
+void changed_auto_save(const char *var);
+void changed_display_blinking(const char *var);
+void changed_mesg(const char *var);
+void changed_theme(const char *var);
 
 const char *compile_time();
 
@@ -303,9 +302,9 @@ void newconference_free();
 void ekg_connect();
 void ekg_reconnect();
 
-int ekg_hash(const CHAR_T *name);
+int ekg_hash(const char *name);
 
-char *help_path(char *name, CHAR_T *plugin);
+char *help_path(char *name, char *plugin);
 
 int mesg_set(int what);
 void iso_to_ascii(unsigned char *buf);
@@ -338,8 +337,8 @@ char *xstrmid(const char *str, int start, int length);
 void xstrtr(char *text, char from, char to);
 char color_map(unsigned char r, unsigned char g, unsigned char b);
 char *strcasestr(const char *haystack, const char *needle);
-int msg_all(session_t *s, const CHAR_T *function, const CHAR_T *what);
-int say_it(const CHAR_T *str);
+int msg_all(session_t *s, const char *function, const char *what);
+int say_it(const char *str);
 char *split_line(char **ptr);
 
 int isalpha_pl(unsigned char c);
@@ -364,7 +363,7 @@ void ekg_update_status(session_t *session);
 #define ekg_update_status_n(a) ekg_update_status(session_find(a))
 
 char *ekg_draw_descr(const char *status);
-uint32_t *ekg_sent_message_format(const CHAR_T *text);
+uint32_t *ekg_sent_message_format(const char *text);
 
 void ekg_yield_cpu();
 

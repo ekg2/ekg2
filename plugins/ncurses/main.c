@@ -61,7 +61,7 @@ static QUERY(ncurses_beep)
 	return 0;
 }
 
-static int dd_contacts(const CHAR_T *name)
+static int dd_contacts(const char *name)
 {
 	return (config_contacts);
 }
@@ -325,7 +325,7 @@ static QUERY(ncurses_conference_renamed)
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,aspell'' lub ,,aspell_lang'' lub ,,aspell_encoding''.
  */
-static void ncurses_changed_aspell(const CHAR_T *var)
+static void ncurses_changed_aspell(const char *var)
 {
 #ifdef WITH_ASPELL
         /* probujemy zainicjowac jeszcze raz aspell'a */
@@ -345,8 +345,8 @@ static QUERY(ncurses_postinit)
 
 static QUERY(ncurses_binding_set_query)
 {
-        CHAR_T *p1 = va_arg(ap, CHAR_T *);
-	CHAR_T *p2 = va_arg(ap, CHAR_T *);
+        char *p1 = va_arg(ap, char *);
+	char *p2 = va_arg(ap, char *);
         int quiet = va_arg(ap, int);
 
 	ncurses_binding_set(quiet, p1, p2);
@@ -356,27 +356,27 @@ static QUERY(ncurses_binding_set_query)
 
 static QUERY(ncurses_binding_query)
 {
-	CHAR_T *p1 = va_arg(ap, CHAR_T *);
-	CHAR_T *p2 = va_arg(ap, CHAR_T *);
-	CHAR_T *p3 = va_arg(ap, CHAR_T *);
+	char *p1 = va_arg(ap, char *);
+	char *p2 = va_arg(ap, char *);
+	char *p3 = va_arg(ap, char *);
 	int quiet = va_arg(ap, int);
 
-	if (match_arg(p1, 'a', TEXT("add"), 2)) {
+	if (match_arg(p1, 'a', ("add"), 2)) {
 		if (!p2 || !p3)
-			wcs_printq("not_enough_params", TEXT("bind"));
+			wcs_printq("not_enough_params", ("bind"));
 		else
 			ncurses_binding_add(p2, p3, 0, quiet);
-	} else if (match_arg(p1, 'd', TEXT("delete"), 2)) {
+	} else if (match_arg(p1, 'd', ("delete"), 2)) {
 		if (!p2)
-			wcs_printq("not_enough_params", TEXT("bind"));
+			wcs_printq("not_enough_params", ("bind"));
 		else
 			ncurses_binding_delete(p2, quiet);
-	} else if (match_arg(p1, 'L', TEXT("list-default"), 5)) {
+	} else if (match_arg(p1, 'L', ("list-default"), 5)) {
 		binding_list(quiet, p2, 1);
-	} else if (match_arg(p1, 'S', TEXT("set"), 2)) {
+	} else if (match_arg(p1, 'S', ("set"), 2)) {
 		ncurses_binding_set(quiet, p2, NULL);
 	} else {
-		if (match_arg(p1, 'l', TEXT("list"), 2))
+		if (match_arg(p1, 'l', ("list"), 2))
 			binding_list(quiet, p2, 0);
 		else
 			binding_list(quiet, p1, 0);
@@ -421,7 +421,7 @@ static QUERY(ncurses_setvar_default)
  *
  * called when var display_transparent is changed 
  */
-static void ncurses_display_transparent_changed(const CHAR_T *var)
+static void ncurses_display_transparent_changed(const char *var)
 {
 	int background;
 
@@ -444,7 +444,7 @@ static void ncurses_display_transparent_changed(const CHAR_T *var)
         refresh();
         /* it will call what's needed */
 	header_statusbar_resize();
-        changed_backlog_size(TEXT("backlog_size"));
+        changed_backlog_size(("backlog_size"));
 
 }
 
@@ -468,7 +468,7 @@ int ncurses_plugin_init(int prio)
 	list_t l;
 	int is_UI = 0;
 
-        query_emit(NULL, TEXT("ui-is-initialized"), &is_UI);
+        query_emit(NULL, ("ui-is-initialized"), &is_UI);
 
         if (is_UI) 
                 return -1;
@@ -477,55 +477,55 @@ int ncurses_plugin_init(int prio)
 
 	ncurses_setvar_default(NULL, NULL);
 
-	query_connect(&ncurses_plugin, TEXT("set-vars-default"), ncurses_setvar_default, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-beep"), ncurses_beep, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-is-initialized"), ncurses_ui_is_initialized, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-switch"), ncurses_ui_window_switch, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-print"), ncurses_ui_window_print, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-new"), ncurses_ui_window_new, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-kill"), ncurses_ui_window_kill, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-target-changed"), ncurses_ui_window_target_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-act-changed"), ncurses_ui_window_act_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-refresh"), ncurses_ui_window_refresh, NULL);
-	query_connect(&ncurses_plugin, TEXT("ui-window-clear"), ncurses_ui_window_clear, NULL);
-	query_connect(&ncurses_plugin, TEXT("session-added"), ncurses_statusbar_query, NULL);
-	query_connect(&ncurses_plugin, TEXT("session-removed"), ncurses_statusbar_query, NULL);
-	query_connect(&ncurses_plugin, TEXT("session-changed"), ncurses_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("userlist-changed"), ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("userlist-added"), ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("userlist-removed"), ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("userlist-renamed"), ncurses_userlist_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("binding-set"), ncurses_binding_set_query, NULL);
-	query_connect(&ncurses_plugin, TEXT("binding-command"), ncurses_binding_query, NULL);
-	query_connect(&ncurses_plugin, TEXT("binding-default"), ncurses_binding_default, NULL);
-	query_connect(&ncurses_plugin, TEXT("variable-changed"), ncurses_variable_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("conference-renamed"), ncurses_conference_renamed, NULL);
+	query_connect(&ncurses_plugin, ("set-vars-default"), ncurses_setvar_default, NULL);
+	query_connect(&ncurses_plugin, ("ui-beep"), ncurses_beep, NULL);
+	query_connect(&ncurses_plugin, ("ui-is-initialized"), ncurses_ui_is_initialized, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-switch"), ncurses_ui_window_switch, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-print"), ncurses_ui_window_print, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-new"), ncurses_ui_window_new, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-kill"), ncurses_ui_window_kill, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-target-changed"), ncurses_ui_window_target_changed, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-act-changed"), ncurses_ui_window_act_changed, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-refresh"), ncurses_ui_window_refresh, NULL);
+	query_connect(&ncurses_plugin, ("ui-window-clear"), ncurses_ui_window_clear, NULL);
+	query_connect(&ncurses_plugin, ("session-added"), ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, ("session-removed"), ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, ("session-changed"), ncurses_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, ("userlist-changed"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, ("userlist-added"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, ("userlist-removed"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, ("userlist-renamed"), ncurses_userlist_changed, NULL);
+	query_connect(&ncurses_plugin, ("binding-set"), ncurses_binding_set_query, NULL);
+	query_connect(&ncurses_plugin, ("binding-command"), ncurses_binding_query, NULL);
+	query_connect(&ncurses_plugin, ("binding-default"), ncurses_binding_default, NULL);
+	query_connect(&ncurses_plugin, ("variable-changed"), ncurses_variable_changed, NULL);
+	query_connect(&ncurses_plugin, ("conference-renamed"), ncurses_conference_renamed, NULL);
 
-	query_connect(&ncurses_plugin, TEXT("metacontact-added"), ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("metacontact-removed"), ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("metacontact-item-added"), ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("metacontact-item-removed"), ncurses_all_contacts_changed, NULL);
-	query_connect(&ncurses_plugin, TEXT("config-postinit"), ncurses_postinit, NULL);
+	query_connect(&ncurses_plugin, ("metacontact-added"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, ("metacontact-removed"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, ("metacontact-item-added"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, ("metacontact-item-removed"), ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, ("config-postinit"), ncurses_postinit, NULL);
 #ifdef WITH_ASPELL
-	variable_add(&ncurses_plugin, TEXT("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
-        variable_add(&ncurses_plugin, TEXT("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
+	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
+        variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
 #endif
-	variable_add(&ncurses_plugin, TEXT("backlog_size"), VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
+	variable_add(&ncurses_plugin, ("backlog_size"), VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	/* this isn't very nice solution, but other solutions would require _more_
 	 * changes...
 	 */
-	variable_add(&ncurses_plugin, TEXT("contacts"), VAR_INT, 1, &config_contacts, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, TEXT("contacts_groups"), VAR_STR, 1, &config_contacts_groups, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const CHAR_T *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const CHAR_T *))ncurses_all_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, TEXT("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, TEXT("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
-	variable_add(&ncurses_plugin, TEXT("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
-	variable_add(&ncurses_plugin, TEXT("kill_irc_window"),  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
-        variable_add(&ncurses_plugin, TEXT("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
-	variable_add(&ncurses_plugin, TEXT("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
+	variable_add(&ncurses_plugin, ("contacts"), VAR_INT, 1, &config_contacts, (void (*)(const char *))ncurses_contacts_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, ("contacts_groups"), VAR_STR, 1, &config_contacts_groups, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, ("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
+	variable_add(&ncurses_plugin, ("kill_irc_window"),  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
+        variable_add(&ncurses_plugin, ("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
 	
 	have_winch_pipe = 0;
 #ifdef SIGWINCH

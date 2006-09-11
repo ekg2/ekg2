@@ -43,7 +43,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "char.h"
 #include "commands.h"
 #include "dynstuff.h"
 #ifndef HAVE_STRLCAT
@@ -160,7 +159,7 @@ void userlist_add_entry(session_t *session, const char *line)
  *
  * zwraca zaalokowany bufor, który nale¿y zwolniæ.
  */
-CHAR_T *userlist_dump(session_t *session)
+char *userlist_dump(session_t *session)
 {
 	string_t s;
 	list_t l;
@@ -170,7 +169,7 @@ CHAR_T *userlist_dump(session_t *session)
 	s = string_init(NULL);
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		CHAR_T *line;
+		char *line;
 		const char *uid;
 		char *groups;
 
@@ -178,7 +177,7 @@ CHAR_T *userlist_dump(session_t *session)
 
 		groups = group_to_string(u->groups, 1, 0);
 		
-		line = saprintf(TEXT("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
+		line = saprintf(("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
 			(u->first_name) ? u->first_name : "",
 			(u->last_name) ? u->last_name : "",
 			(u->nickname) ? u->nickname : "",
@@ -249,7 +248,7 @@ int userlist_read(session_t *session)
 int userlist_write(session_t *session)
 {
 	const char *filename;
-	CHAR_T *contacts;
+	char *contacts;
 	FILE *f;
 	char *tmp = saprintf("%s-userlist", session->uid); 
 
@@ -644,7 +643,7 @@ int valid_uid(const char *uid)
 	char *tmp;
 	tmp = xstrdup(uid);
 
-	query_emit(NULL, TEXT("protocol-validate-uid"), &tmp, &valid);
+	query_emit(NULL, ("protocol-validate-uid"), &tmp, &valid);
 	xfree(tmp);
 
 	return (valid > 0);
@@ -671,7 +670,7 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid)
 
         tmp = xstrdup(uid);
 
-        query_emit(plugin, TEXT("protocol-validate-uid"), &tmp, &valid);
+        query_emit(plugin, ("protocol-validate-uid"), &tmp, &valid);
         xfree(tmp);
 
         return (valid > 0);
@@ -801,12 +800,12 @@ int ignored_remove(session_t *session, const char *uid)
 
 	tmps	= xstrdup(session->uid);
 	tmp	= xstrdup(u->uid);
-	query_emit(NULL, TEXT("protocol-ignore"), &tmps, &tmp, &level, &tmp2);
+	query_emit(NULL, ("protocol-ignore"), &tmps, &tmp, &level, &tmp2);
 	xfree(tmps);
 	xfree(tmp);
 
 	if ((level & IGNORE_STATUS || level & IGNORE_STATUS_DESCR)) {
-		query_emit(NULL, TEXT("protocol-unignore"), &u, &session);
+		query_emit(NULL, ("protocol-unignore"), &u, &session);
 	}
 
 	return 0;
@@ -848,7 +847,7 @@ int ignored_add(session_t *session, const char *uid, int level)
 
 	tmps	= xstrdup(session->uid);
 	tmp	= xstrdup(u->uid);
-	query_emit(NULL, TEXT("protocol-ignore"), &tmps, &tmp, &oldlevel, &level);
+	query_emit(NULL, ("protocol-ignore"), &tmps, &tmp, &oldlevel, &level);
 	xfree(tmps);
 	xfree(tmp);
 	

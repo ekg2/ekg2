@@ -21,7 +21,6 @@
 #ifndef __EKG_DYNSTUFF_H
 #define __EKG_DYNSTUFF_H
 
-#include "char.h"
 /*
  * typedef list_t
  *

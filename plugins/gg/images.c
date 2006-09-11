@@ -56,7 +56,7 @@ static image_t *image_add_queue(char *filename, char *data, uint32_t size, uint3
  *
  * called when some images_* variables are changed
  */
-void gg_changed_images(const CHAR_T *var)
+void gg_changed_images(const char *var)
 {
 	if (gg_config_image_size > 255) {
 		gg_config_image_size = 255;

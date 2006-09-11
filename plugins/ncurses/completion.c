@@ -30,7 +30,6 @@
 #  include "compat/scandir.h"
 #endif
 
-#include <ekg/char.h>
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -46,38 +45,38 @@
 /* nadpisujemy funkcjê xstrncasecmp() odpowiednikiem z obs³ug± polskich znaków */
 #define xstrncasecmp(x...) xstrncasecmp_pl(x)
 
-static CHAR_T **completions = NULL;	/* lista dope³nieñ */
-static CHAR_T *last_line = NULL;
-static CHAR_T *last_line_without_complete = NULL;
+static char **completions = NULL;	/* lista dope³nieñ */
+static char *last_line = NULL;
+static char *last_line_without_complete = NULL;
 static int last_pos = -1;
 int continue_complete = 0;
 int continue_complete_count = 0;
 command_t *actual_completed_command;
 session_t *session_in_line;
 
-static void command_generator(const CHAR_T *text, int len)
+static void command_generator(const char *text, int len)
 {
-	const CHAR_T *slash = TEXT(""), *dash = TEXT("");
+	const char *slash = (""), *dash = ("");
 	list_t l;
 	session_t *session = session_current;
-	if (*text == TEXT('/')) {
-		slash = TEXT("/");
+	if (*text == ('/')) {
+		slash = ("/");
 		text++;
 		len--;
 	}
 
-	if (*text == TEXT('^')) {
-		dash = TEXT("^");
+	if (*text == ('^')) {
+		dash = ("^");
 		text++;
 		len--;
 	}
 
 	if (window_current->target)
-		slash = TEXT("/");
+		slash = ("/");
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		CHAR_T *without_sess_id = NULL;
+		char *without_sess_id = NULL;
 		int plen = 0;
 		if (session && session->uid)
 			plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
@@ -87,24 +86,24 @@ static void command_generator(const CHAR_T *text, int len)
 
 		if (!xstrncasecmp(text, c->name, len) && !array_item_contains(completions, c->name, 1))
 			array_add_check(&completions, 
-					saprintf(TEXT("%s%s%s"), slash, dash, c->name),
+					saprintf(("%s%s%s"), slash, dash, c->name),
 					1);
 		else if (without_sess_id && !array_item_contains(completions, without_sess_id + 1, 1) && !xstrncasecmp(text, without_sess_id + 1, len))
 			array_add_check(&completions, 
-					saprintf(TEXT("%s%s%s"), slash, dash, without_sess_id + 1),
+					saprintf(("%s%s%s"), slash, dash, without_sess_id + 1),
 					1);
 	}
 }
 
-static void events_generator(const CHAR_T *text, int len)
+static void events_generator(const char *text, int len)
 {
 	int i;
 	for (i = 0; events_all && events_all[i]; i++)
 		if (!xstrncasecmp(text, events_all[i], len))
-			array_add_check(&completions, xwcsdup(events_all[i]), 1);
+			array_add_check(&completions, xstrdup(events_all[i]), 1);
 }
 
-static void ignorelevels_generator(const CHAR_T *text, int len)
+static void ignorelevels_generator(const char *text, int len)
 {
 	int i;
 	const char *tmp = NULL;
@@ -127,18 +126,18 @@ static void ignorelevels_generator(const CHAR_T *text, int len)
 			array_add_check(&completions, ((tmp == text) ? xstrdup(ignore_labels[i].name) : saprintf("%s%s", pre, ignore_labels[i].name)), 1);
 }
 
-static void unknown_uin_generator(const CHAR_T *text, int len)
+static void unknown_uin_generator(const char *text, int len)
 {
 	int i;
 	
 	for (i = 0; i < send_nicks_count; i++) {
 		if (send_nicks[i] && xstrchr(send_nicks[i], ':') && xisdigit(xstrchr(send_nicks[i], ':')[1]) && !xstrncasecmp(text, send_nicks[i], len)) {
-			array_add_check(&completions, xwcsdup(send_nicks[i]), 1);
+			array_add_check(&completions, xstrdup(send_nicks[i]), 1);
 		}
 	}
 }
 
-static void known_uin_generator(const CHAR_T *text, int len)
+static void known_uin_generator(const char *text, int len)
 {
 	int done = 0;
 	list_t l;
@@ -164,12 +163,12 @@ static void known_uin_generator(const CHAR_T *text, int len)
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
-			array_add_check(&completions, xwcsdup(u->nickname), 1);
+			array_add_check(&completions, xstrdup(u->nickname), 1);
 			done = 1;
 		}
 		
 		if (u->nickname && tmp && !xstrncasecmp(tmp, u->nickname, tmp_len)) { 
-                        array_add_check(&completions, saprintf(TEXT("%s/%s"), session_name, u->nickname), 1);
+                        array_add_check(&completions, saprintf(("%s/%s"), session_name, u->nickname), 1);
                         done = 1;
 		}
 	}
@@ -178,10 +177,10 @@ static void known_uin_generator(const CHAR_T *text, int len)
 		userlist_t *u = l->data;
 
 		if (!done && !xstrncasecmp(text, u->uid, len)) {
-			array_add_check(&completions, xwcsdup(u->uid), 1);
+			array_add_check(&completions, xstrdup(u->uid), 1);
 		}
 		if (!done && tmp && !xstrncasecmp(tmp, u->uid, tmp_len)) 
-                       array_add_check(&completions, saprintf(TEXT("%s/%s"), session_name, u->uid), 1);
+                       array_add_check(&completions, saprintf(("%s/%s"), session_name, u->uid), 1);
 	}
 
 	if (!window_current) 
@@ -194,11 +193,11 @@ static void known_uin_generator(const CHAR_T *text, int len)
                 userlist_t *u = l->data;
 
                 if (u->uid && !xstrncasecmp(text, u->uid, len)) {
-                        array_add_check(&completions, xwcsdup(u->uid), 1);
+                        array_add_check(&completions, xstrdup(u->uid), 1);
 		}
 
                 if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
-			array_add_check(&completions, xwcsdup(u->nickname), 1);
+			array_add_check(&completions, xstrdup(u->nickname), 1);
 		}
         } 
 
@@ -207,7 +206,7 @@ end:
 		xfree(session_name);
 }
 
-static void conference_generator(const CHAR_T *text, int len)
+static void conference_generator(const char *text, int len)
 {
         list_t l;
 
@@ -219,7 +218,7 @@ static void conference_generator(const CHAR_T *text, int len)
         }
 }
 
-static void plugin_generator(const CHAR_T *text, int len)
+static void plugin_generator(const char *text, int len)
 {
         list_t l;
 
@@ -227,16 +226,16 @@ static void plugin_generator(const CHAR_T *text, int len)
                 plugin_t *p = l->data;
 
                 if (!xstrncasecmp(text, p->name, len)) {
-                        array_add_check(&completions, xwcsdup(p->name), 1);
+                        array_add_check(&completions, xstrdup(p->name), 1);
 		}
 		if ((text[0] == '+' || text[0] == '-') && !xstrncasecmp(text + 1, p->name, len - 1)) {
-			CHAR_T *tmp = saprintf(TEXT("%c%s"), text[0], p->name);
+			char *tmp = saprintf(("%c%s"), text[0], p->name);
 			array_add_check(&completions, tmp, 1);
 		}
         }
 }
 
-static void variable_generator(const CHAR_T *text, int len)
+static void variable_generator(const char *text, int len)
 {
 	list_t l;
 	for (l = variables; l; l = l->next) {
@@ -252,13 +251,13 @@ static void variable_generator(const CHAR_T *text, int len)
 				1);
 		} else {
 			if (!xstrncasecmp(text, v->name, len)) {
-				array_add_check(&completions, xwcsdup(v->name), 1);
+				array_add_check(&completions, xstrdup(v->name), 1);
 			}
 		}
 	}
 }
 
-static void ignored_uin_generator(const CHAR_T *text, int len)
+static void ignored_uin_generator(const char *text, int len)
 {
         session_t *s;
 	list_t l;
@@ -284,7 +283,7 @@ static void ignored_uin_generator(const CHAR_T *text, int len)
 	}
 }
 
-static void blocked_uin_generator(const CHAR_T *text, int len)
+static void blocked_uin_generator(const char *text, int len)
 {
         session_t *s;
 	list_t l;
@@ -310,12 +309,12 @@ static void blocked_uin_generator(const CHAR_T *text, int len)
 	}
 }
 
-static void empty_generator(const CHAR_T *text, int len)
+static void empty_generator(const char *text, int len)
 {
 
 }
 
-static void dir_generator(const CHAR_T *text, int len)
+static void dir_generator(const char *text, int len)
 {
 	struct dirent **namelist = NULL;
 	char *dname, *tmp;
@@ -401,10 +400,10 @@ static void dir_generator(const CHAR_T *text, int len)
 	xfree(namelist);
 }
 
-static void file_generator(const CHAR_T *text, int len)
+static void file_generator(const char *text, int len)
 {
 	struct dirent **namelist = NULL;
-	CHAR_T *dname;
+	char *dname;
 	char *tmp;
 	const char *fname;
 	int count, i;
@@ -412,7 +411,7 @@ static void file_generator(const CHAR_T *text, int len)
 	/* `dname' zawiera nazwê katalogu z koñcz±cym znakiem `/', albo
 	 * NULL, je¶li w dope³nianym tek¶cie nie ma ¶cie¿ki. */
 
-	dname = xwcsdup(text);
+	dname = xstrdup(text);
 
 	if ((tmp = xstrrchr(dname, '/'))) {
 		tmp++;
@@ -509,7 +508,7 @@ again:
  * themes_only - only the .theme extension
  *
  */
-static void theme_generator_adding(const CHAR_T *text, int len, const char *dname, int themes_only)
+static void theme_generator_adding(const char *text, int len, const char *dname, int themes_only)
 {
 	struct dirent **namelist = NULL;
 	int count, i;
@@ -547,7 +546,7 @@ static void theme_generator_adding(const CHAR_T *text, int len, const char *dnam
 	xfree(namelist);
 }
 
-static void theme_generator(const CHAR_T *text, int len)
+static void theme_generator(const char *text, int len)
 {
 
 	theme_generator_adding(text, len, DATADIR "/themes", 0);
@@ -555,7 +554,7 @@ static void theme_generator(const CHAR_T *text, int len)
 	theme_generator_adding(text, len, prepare_path("themes", 0), 0);
 }
 
-static void possibilities_generator(const CHAR_T *text, int len)
+static void possibilities_generator(const char *text, int len)
 {
 	int i;
 	command_t *c = actual_completed_command;
@@ -565,11 +564,11 @@ static void possibilities_generator(const CHAR_T *text, int len)
 
 	for (i = 0; c && c->possibilities && c->possibilities[i]; i++)
 		if (!xstrncmp(text, c->possibilities[i], len)) {
-			array_add_check(&completions, xwcsdup(c->possibilities[i]), 1);
+			array_add_check(&completions, xstrdup(c->possibilities[i]), 1);
 		}
 }
 
-static void window_generator(const CHAR_T *text, int len)
+static void window_generator(const char *text, int len)
 {
 	window_t *w;
 	list_t l;
@@ -584,7 +583,7 @@ static void window_generator(const CHAR_T *text, int len)
 	}
 }
 
-static void sessions_generator(const CHAR_T *text, int len)
+static void sessions_generator(const char *text, int len)
 {
         list_t l;
 
@@ -604,7 +603,7 @@ static void sessions_generator(const CHAR_T *text, int len)
         }
 }
 
-static void metacontacts_generator(const CHAR_T *text, int len)
+static void metacontacts_generator(const char *text, int len)
 {
         list_t l;
 
@@ -616,7 +615,7 @@ static void metacontacts_generator(const CHAR_T *text, int len)
         }
 }
 
-static void sessions_var_generator(const CHAR_T *text, int len)
+static void sessions_var_generator(const char *text, int len)
 {
         int i;
         plugin_t *p;
@@ -631,28 +630,28 @@ static void sessions_var_generator(const CHAR_T *text, int len)
 	for (i = 0; p->params[i]; i++) {
 		if(*text == '-') {
                         if (!xstrncasecmp(text + 1, p->params[i]->key, len - 1))
-                                array_add_check(&completions, saprintf(TEXT("-%s"), p->params[i]->key), 1);
+                                array_add_check(&completions, saprintf(("-%s"), p->params[i]->key), 1);
                 } else {
                         if (!xstrncasecmp(text, p->params[i]->key, len)) {
-                                array_add_check(&completions, xwcsdup(p->params[i]->key), 1);
+                                array_add_check(&completions, xstrdup(p->params[i]->key), 1);
 			}
                 }
         }
 }
 
-static void reason_generator(const CHAR_T *text, int len)
+static void reason_generator(const char *text, int len)
 {
 	char *descr = session_current ? session_current->descr : NULL;
 	if (descr && !xstrncasecmp(text, descr, len)) {
 		/* not to good solution to avoid descr changing by complete */
-		array_add_check(&completions, saprintf(TEXT("\001%s"), session_current->descr), 1);
+		array_add_check(&completions, saprintf(("\001%s"), session_current->descr), 1);
 	}
 }
 
 
 static struct {
 	char ch;
-	void (*generate)(const CHAR_T *text, int len);
+	void (*generate)(const char *text, int len);
 } generators[] = {
 	{ 'u', known_uin_generator },
 	{ 'C', conference_generator },
@@ -696,10 +695,10 @@ static struct {
  *   podany wyraz ma zostañ "wsadzony", st±d konieczna jest tablica separatorów, tablica wszystkich wyrazów itd ...
  * - przeskakiwanie miêdzy dope³nieniami po drugim TABie
  */
-void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
+void ncurses_complete(int *line_start, int *line_index, char *line)
 {
-	CHAR_T *start, **words, *separators;
-	CHAR_T *cmd;
+	char *start, **words, *separators;
+	char *cmd;
 	int i, count, word, j, words_count, word_current, open_quote, lenght;
 
 	/* 
@@ -707,7 +706,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	 * dzia³a to tylko gdy jeste¶my na koñcu linijki, gdy¿ nie ma sensu robiæ takiego przeskakiwania 
  	 * w ¶rodku linii - wtedy sama lista jest wystarczaj±ca 
  	 */
-	if (xwcscmp(last_line, line) || last_pos != *line_index || *line_index != xwcslen(line)) {
+	if (xstrcmp(last_line, line) || last_pos != *line_index || *line_index != xstrlen(line)) {
 		continue_complete = 0;
 		continue_complete_count = 0;
 	}
@@ -717,11 +716,11 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	 */
 	if (completions && !continue_complete) {
 		int maxlen = 0, cols, rows;
-		CHAR_T *tmp;
+		char *tmp;
 
 		for (i = 0; completions[i]; i++)
-			if (xwcslen(completions[i]) + 2 > maxlen)
-				maxlen = xwcslen(completions[i]) + 2;
+			if (xstrlen(completions[i]) + 2 > maxlen)
+				maxlen = xstrlen(completions[i]) + 2;
 
 		cols = (window_current->width - 6) / maxlen;
 		if (cols == 0)
@@ -729,12 +728,12 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 		rows = array_count(completions) / cols + 1;
 
-		tmp = xmalloc((cols * maxlen + 2)*sizeof(CHAR_T));
+		tmp = xmalloc((cols * maxlen + 2)*sizeof(char));
 
 		for (i = 0; i < rows; i++) {
 			int j;
 
-			xstrcpy(tmp, TEXT(""));
+			xstrcpy(tmp, (""));
 
 			for (j = 0; j < cols; j++) {
 				int cell = j * rows + i;
@@ -744,12 +743,12 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 					xstrcat(tmp, completions[cell]);
 
-					for (k = 0; k < maxlen - xwcslen(completions[cell]); k++)
-						xstrcat(tmp, TEXT(" "));
+					for (k = 0; k < maxlen - xstrlen(completions[cell]); k++)
+						xstrcat(tmp, (" "));
 				}
 			}
 
-			if (xwcscmp(tmp, TEXT(""))) {
+			if (xstrcmp(tmp, (""))) {
 				wcs_print("none", tmp);
 			}
 		}
@@ -757,10 +756,10 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		/* w³±czamy nastêpny etap dope³nienia - przeskakiwanie miêdzy dope³nianymi wyrazami */
 		continue_complete = 1;
 		continue_complete_count = 0;
-		last_line = xwcsdup(line);
+		last_line = xstrdup(line);
 		last_pos = *line_index;
 		xfree(last_line_without_complete);
-		last_line_without_complete = xwcsdup(line);
+		last_line_without_complete = xstrdup(line);
 		xfree(tmp);
 
 		return;
@@ -772,55 +771,55 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	}
 
 	/* zerujemy co mamy */
-	start = xmalloc((xwcslen(line) + 1)*sizeof(CHAR_T));
+	start = xmalloc((xstrlen(line) + 1)*sizeof(char));
 	words = NULL;
 	count = 0;
 
 	/* podziel (uwzglêdniaj±c cudzys³owia)*/
-	for (i = 0, j = 0, open_quote = 0; i < xwcslen(line); i++) {
+	for (i = 0, j = 0, open_quote = 0; i < xstrlen(line); i++) {
 		if(line[i] == '"') {
-			for(j = 0,  i++; i < xwcslen(line) && line[i] != '"'; i++, j++)
+			for(j = 0,  i++; i < xstrlen(line) && line[i] != '"'; i++, j++)
 				start[j] = line[i];
-			if (i == xwcslen(line))
+			if (i == xstrlen(line))
 				open_quote = 1;
 		} else
-			for(j = 0; i < xwcslen(line) && !xisspace(line[i]) && line[i] != ','; j++, i++)
+			for(j = 0; i < xstrlen(line) && !xisspace(line[i]) && line[i] != ','; j++, i++)
 				start[j] = line[i];
 		start[j] = '\0';
 		/* "przewijamy" wiêksz± ilo¶æ spacji */
-		for(i++; i < xwcslen(line) && (xisspace(line[i]) || line[i] == ','); i++);
+		for(i++; i < xstrlen(line) && (xisspace(line[i]) || line[i] == ','); i++);
 		i--;
-		array_add(&words, xwcsdup(start));
+		array_add(&words, xstrdup(start));
 	}
 
 	/* je¿eli ostatnie znaki to spacja, albo przecinek to trzeba dodaæ jeszcze pusty wyraz do words */
-	if (xwcslen(line) > 1 && (line[xwcslen(line) - 1] == ' ' || line[xwcslen(line) - 1] == ',') && !open_quote)
-		array_add(&words, xwcsdup(TEXT("")));
+	if (xstrlen(line) > 1 && (line[xstrlen(line) - 1] == ' ' || line[xstrlen(line) - 1] == ',') && !open_quote)
+		array_add(&words, xstrdup(("")));
 
 /*	 for(i = 0; i < array_count(words); i++)
 		debug("words[i = %d] = \"%s\"\n", i, words[i]);     */
 
 	/* inicjujemy pamiêc dla separators */
 	if (words != NULL)
-		separators = xmalloc(array_count(words) * sizeof(CHAR_T) + 1);
+		separators = xmalloc(array_count(words) * sizeof(char) + 1);
 	else
 		separators = NULL;
 
 	/* sprawd¼, gdzie jeste¶my (uwzgêdniaj±c cudzys³owia) i dodaj separatory*/
-	for (word = 0, i = 0; i < xwcslen(line); i++, word++) {
+	for (word = 0, i = 0; i < xstrlen(line); i++, word++) {
 		if(line[i] == '"')  {
-			for(j = 0, i++; i < xwcslen(line) && line[i] != '"'; j++, i++)
+			for(j = 0, i++; i < xstrlen(line) && line[i] != '"'; j++, i++)
 				start[j] = line[i];
 		} else {
-			for(j = 0; i < xwcslen(line) && !xisspace(line[i]) && line[i] != ','; j++, i++)
+			for(j = 0; i < xstrlen(line) && !xisspace(line[i]) && line[i] != ','; j++, i++)
 				start[j] = line[i];
 		}
 		/* "przewijamy */
-		for(i++; i < xwcslen(line) && (xisspace(line[i]) || line[i] == ','); i++);
+		for(i++; i < xstrlen(line) && (xisspace(line[i]) || line[i] == ','); i++);
 		/* ustawiamy znak koñca */
 		start[j] = '\0';
 		/* je¿eli to koniec linii, to koñczymy t± zabawê */
-		if(i >= xwcslen(line))
+		if(i >= xstrlen(line))
 	    		break;
 		/* obni¿amy licznik o 1, ¿eby wszystko by³o okey, po "przewijaniu" */
 		i--;
@@ -830,17 +829,17 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	}
 
 	/* dodajmy separatory - pewne rzeczy podobne do pêtli powy¿ej */
-	for (i = 0, j = 0; i < xwcslen(line); i++, j++) {
+	for (i = 0, j = 0; i < xstrlen(line); i++, j++) {
 		if(line[i] == '"')  {
-			for(i++; i < xwcslen(line) && line[i] != '"'; i++);
-			if(i < xwcslen(line)) 
+			for(i++; i < xstrlen(line) && line[i] != '"'; i++);
+			if(i < xstrlen(line)) 
 				separators[j] = line[i + 1];
 		} else {
-			for(; i < xwcslen(line) && !xisspace(line[i]) && line[i] != ','; i++);
+			for(; i < xstrlen(line) && !xisspace(line[i]) && line[i] != ','; i++);
 			separators[j] = line[i];
 		}
 
-		for(i++; i < xwcslen(line) && (xisspace(line[i]) || line[i] == ','); i++);
+		for(i++; i < xstrlen(line) && (xisspace(line[i]) || line[i] == ','); i++);
 		i--;
 	}
 
@@ -848,12 +847,12 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		separators[j] = '\0'; // koniec ciagu
 	
 	/* aktualny wyraz bez uwzgledniania przecinkow */
-	for (i = 0, words_count = 0, word_current = 0; i < xwcslen(line); i++, words_count++) {
-		for(; i < xwcslen(line) && !xisspace(line[i]); i++)
+	for (i = 0, words_count = 0, word_current = 0; i < xstrlen(line); i++, words_count++) {
+		for(; i < xstrlen(line) && !xisspace(line[i]); i++)
 			if(line[i] == '"') 
-				for(i++; i < xwcslen(line) && line[i] != '"'; i++);
-		for(i++; i < xwcslen(line) && xisspace(line[i]); i++);
-		if(i >= xwcslen(line)) {
+				for(i++; i < xstrlen(line) && line[i] != '"'; i++);
+		for(i++; i < xstrlen(line) && xisspace(line[i]); i++);
+		if(i >= xstrlen(line)) {
 			word_current = words_count + 1;
 			break;
 		}
@@ -864,7 +863,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
                         break;
 	}
 	words_count = array_count(words);
-	lenght = xwcslen(line);
+	lenght = xstrlen(line);
 	if (lenght) {
 		/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
 	        if (xisspace(line[lenght - 1]))
@@ -900,37 +899,37 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 			
 		for(i = 0; i < array_count(words); i++) {
 			if(i == word) {
-				if(xstrchr(completions[cnt],  TEXT('\001'))) {
+				if(xstrchr(completions[cnt],  ('\001'))) {
 					if(completions[cnt][0] == '"')
-						xstrncat(line, completions[cnt] + 2, xwcslen(completions[cnt]) - 2 - 1 );
+						xstrncat(line, completions[cnt] + 2, xstrlen(completions[cnt]) - 2 - 1 );
 					else
-						xstrncat(line, completions[cnt] + 1, xwcslen(completions[cnt]) - 1);
+						xstrncat(line, completions[cnt] + 1, xstrlen(completions[cnt]) - 1);
 				} else
 			    		xstrcat(line, completions[cnt]);
-				*line_index = xwcslen(line) + 1;
+				*line_index = xstrlen(line) + 1;
 			} else {
-				if(xstrchr(words[i], TEXT(' '))) {
-					CHAR_T *tmp = 
-						saprintf(TEXT("\"%s\""), words[i]);
+				if(xstrchr(words[i], (' '))) {
+					char *tmp = 
+						saprintf(("\"%s\""), words[i]);
 					xstrcat(line, tmp);
 					xfree(tmp);
 				} else 
 					xstrcat(line, words[i]);
 			}
-			if((i == array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
-				xstrcat(line, TEXT(" "));
-			else if (line[xwcslen(line) - 1] != ' ') 
+			if((i == array_count(words) - 1 && line[xstrlen(line) - 1] != ' ' ))
+				xstrcat(line, (" "));
+			else if (line[xstrlen(line) - 1] != ' ') 
 				xstrncat(line, separators + i, 1);
 		}
 		/* ustawiamy dane potrzebne do nastêpnego dope³nienia */
 		xfree(last_line);
-                last_line = xwcsdup(line);
+                last_line = xstrdup(line);
                 last_pos = *line_index;
 		goto cleanup;
 	}
-	cmd = saprintf(TEXT("/%s "), (config_tab_command) ? config_tab_command : "chat");
+	cmd = saprintf(("/%s "), (config_tab_command) ? config_tab_command : "chat");
 	/* nietypowe dope³nienie nicków przy rozmowach */
-	if (!xwcscmp(line, TEXT("")) || (!xstrncasecmp(line, cmd, xwcslen(cmd)) && word == 2 && send_nicks_count > 0) || (!xwcscasecmp(line, cmd) && send_nicks_count > 0)) {
+	if (!xstrcmp(line, ("")) || (!xstrncasecmp(line, cmd, xstrlen(cmd)) && word == 2 && send_nicks_count > 0) || (!xstrcasecmp(line, cmd) && send_nicks_count > 0)) {
 		if (send_nicks_index >= send_nicks_count)
 			send_nicks_index = 0;
 
@@ -940,7 +939,7 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 		} else
 			snprintf(line, LINE_MAXLEN, "%s", cmd);
 		*line_start = 0;
-		*line_index = xwcslen(line);
+		*line_index = xstrlen(line);
 
                 array_free(completions);
                 array_free(words);
@@ -955,26 +954,26 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 	if (word == 0) {
 		/* dj's fixes... */
 		if (start[0] != '/' && window_current && window_current->target) {
-	                known_uin_generator(start, xwcslen(start));
+	                known_uin_generator(start, xstrlen(start));
 	                if (completions) {
 	                        for (j = 0; completions && completions[j]; j++) {
 	                                string_t s;
 	
-	                                if (!xstrchr(completions[j], TEXT('"')) && !xstrchr(completions[j], TEXT('\\')) && !xstrchr(completions[j], TEXT(' '))) {
-						s = string_init(TEXT(""));
+	                                if (!xstrchr(completions[j], ('"')) && !xstrchr(completions[j], ('\\')) && !xstrchr(completions[j], (' '))) {
+						s = string_init((""));
 						string_append(s, completions[j]);
 						if (config_completion_char && strlen(config_completion_char))
 							string_append_c(s, *config_completion_char);
 						else
-							string_append_c(s, TEXT(':'));
+							string_append_c(s, (':'));
 						xfree(completions[j]);
 						completions[j] = string_free(s, 0);
 	                                        continue;
 					}
-	                                s = string_init(TEXT("\""));
+	                                s = string_init(("\""));
 	                                string_append(s, completions[j]);
-	                                string_append_c(s, TEXT('\"'));
-					string_append_c(s, TEXT(':'));
+	                                string_append_c(s, ('\"'));
+					string_append_c(s, (':'));
 	                                xfree(completions[j]);
 	                                completions[j] = string_free(s, 0);
 	                        }
@@ -982,14 +981,14 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 		}
 		if (!completions)
-			command_generator(start, xwcslen(start));
+			command_generator(start, xstrlen(start));
 
 	}
 	else {
-		CHAR_T **params = NULL;
+		char **params = NULL;
 		int abbrs = 0, i;
 		list_t l;
-                CHAR_T *cmd = (line[0] == '/') ? line + 1 : line;
+                char *cmd = (line[0] == '/') ? line + 1 : line;
 		int len;
 
 		for (len = 0; cmd[len] && !xisspace(cmd[len]); len++);
@@ -1027,19 +1026,19 @@ void ncurses_complete(int *line_start, int *line_index, CHAR_T *line)
 
 exact_match: 
 		/* for /set maybe we want to complete the file path */
-		if (!xstrncmp(cmd, TEXT("set"), xwcslen(TEXT("set"))) && words[1] && words[2] && word_current == 3) {
+		if (!xstrncmp(cmd, ("set"), xstrlen(("set"))) && words[1] && words[2] && word_current == 3) {
 			variable_t *v;
 
 			if ((v = variable_find(words[1]))) {
 				switch (v->type) {
 					case VAR_FILE:
-						file_generator(words[word], xwcslen(words[word]));
+						file_generator(words[word], xstrlen(words[word]));
 						break;
 					case VAR_THEME:
-						theme_generator(words[word], xwcslen(words[word]));
+						theme_generator(words[word], xstrlen(words[word]));
 						break;
 					case VAR_DIR:
-						dir_generator(words[word], xwcslen(words[word]));
+						dir_generator(words[word], xstrlen(words[word]));
 						break;
 					default:
 						break;
@@ -1063,7 +1062,7 @@ exact_match:
 					session_in_line = session_current;
 				for (j = 0; params[word_current - 2][j]; j++) {
 					if (generators[i].ch == params[word_current - 2][j]) {
-						generators[i].generate(words[word], xwcslen(words[word]));
+						generators[i].generate(words[word], xstrlen(words[word]));
 					}
 				}
 			}		
@@ -1073,11 +1072,11 @@ exact_match:
 			for (j = 0; completions && completions[j]; j++) {
 				string_t s;
 	
-				if (!xstrchr(completions[j], TEXT('"')) && !xstrchr(completions[j], TEXT('\\')) && !xstrchr(completions[j], TEXT(' ')))
+				if (!xstrchr(completions[j], ('"')) && !xstrchr(completions[j], ('\\')) && !xstrchr(completions[j], (' ')))
 					continue;
-				s = string_init(TEXT("\""));
+				s = string_init(("\""));
 				string_append(s, completions[j]);				
-				string_append_c(s, TEXT('\"'));
+				string_append_c(s, ('\"'));
 				xfree(completions[j]);
 				completions[j] = string_free(s, 0);
 			}
@@ -1096,24 +1095,24 @@ exact_match:
 			if(i == word) {
 				if (xstrchr(completions[0],  '\001')) {
 					if(completions[0][0] == '"')
-						xstrncat(line, completions[0] + 2, xwcslen(completions[0]) - 2 - 1 );
+						xstrncat(line, completions[0] + 2, xstrlen(completions[0]) - 2 - 1 );
 					else
-						xstrncat(line, completions[0] + 1, xwcslen(completions[0]) - 1);
+						xstrncat(line, completions[0] + 1, xstrlen(completions[0]) - 1);
 				} else
 			    		xstrcat(line, completions[0]);
-				*line_index = xwcslen(line) + 1;
+				*line_index = xstrlen(line) + 1;
 			} else {
-				if (xstrchr(words[i], TEXT(' '))) {
-					CHAR_T *tmp = 
-						saprintf(TEXT("\"%s\""), words[i]);
+				if (xstrchr(words[i], (' '))) {
+					char *tmp = 
+						saprintf(("\"%s\""), words[i]);
 					xstrcat(line, tmp);
 					xfree(tmp);
 				} else
 					xstrcat(line, words[i]);
 			}
-			if((i == array_count(words) - 1 && line[xwcslen(line) - 1] != ' ' ))
-				xstrcat(line, TEXT(" "));
-			else if (line[xwcslen(line) - 1] != ' ')
+			if((i == array_count(words) - 1 && line[xstrlen(line) - 1] != ' ' ))
+				xstrcat(line, (" "));
+			else if (line[xstrlen(line) - 1] != ' ')
                                 xstrncat(line, separators + i, 1);
 		}
 		array_free(completions);
@@ -1129,7 +1128,7 @@ exact_match:
 		int common = 0;
 		int tmp = 0;
 		int quotes = 0;
-		CHAR_T *s1  = completions[0];
+		char *s1  = completions[0];
 
                 if (*s1 =='"')
 	                s1++;
@@ -1142,7 +1141,7 @@ exact_match:
 		 */
 		for (i=1, j = 0; ; i++, common++) {
 			for (j=0; j < count; j++) {
-				CHAR_T *s2;
+				char *s2;
 
 				s2 = completions[j];
 				if (*s2 == '"') {
@@ -1160,12 +1159,12 @@ exact_match:
 	
 		/* debug("common :%d\t\n", common); */
 
-		if (xwcslen(line) + common < LINE_MAXLEN) {
+		if (xstrlen(line) + common < LINE_MAXLEN) {
 			line[0] = '\0';
 			for(i = 0; i < array_count(words); i++) {
 				if (i == word) {
 					if (quotes == 1 && completions[0][0] != '"') 
-						xstrcat(line, TEXT("\""));
+						xstrcat(line, ("\""));
 
 					if (completions[0][0] == '"')
 						common++;
@@ -1174,11 +1173,11 @@ exact_match:
 						common--;
 
 					xstrncat(line, completions[0], common);
-					*line_index = xwcslen(line);
+					*line_index = xstrlen(line);
 				} else {
-					if (xstrchr(words[i], TEXT(' '))) {
-						CHAR_T *tmp = 
-							saprintf(TEXT("\"%s\""), words[i]);
+					if (xstrchr(words[i], (' '))) {
+						char *tmp = 
+							saprintf(("\"%s\""), words[i]);
 						xstrcat(line, tmp);
 						xfree(tmp);
 					} else

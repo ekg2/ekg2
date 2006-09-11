@@ -96,11 +96,11 @@ int perl_plugin_init(int prio)
  *	command_add(&perl_plugin, "perl:test",   "!",  perl_command_test,   COMMAND_ENABLEREQPARAMS, NULL);
  *	command_add(&perl_plugin, "perl:run",    "?",  perl_command_run,    0, NULL);
  */
-	command_add(&perl_plugin, TEXT("perl:load"),   TEXT("!"),  perl_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&perl_plugin, TEXT("perl:unload"), TEXT("!"),  perl_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&perl_plugin, TEXT("perl:list"),  NULL,  perl_command_list,   0, NULL);
+	command_add(&perl_plugin, ("perl:load"),   ("!"),  perl_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&perl_plugin, ("perl:unload"), ("!"),  perl_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&perl_plugin, ("perl:list"),  NULL,  perl_command_list,   0, NULL);
 
-	variable_add(&perl_plugin, TEXT("autoload"), VAR_BOOL, 1, &auto_load, NULL, NULL, NULL);
+	variable_add(&perl_plugin, ("autoload"), VAR_BOOL, 1, &auto_load, NULL, NULL, NULL);
 
 	return 0;
 }

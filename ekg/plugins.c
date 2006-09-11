@@ -32,7 +32,6 @@
 #endif
 
 #include "configfile.h"
-#include "char.h"
 #include "commands.h"
 #include "debug.h"
 #include "dynstuff.h"
@@ -116,7 +115,7 @@ void *ekg2_dlsym(void *plugin, char *name) {
  * 
  * 0/-1
  */
-int plugin_load(const CHAR_T *name, int prio, int quiet)
+int plugin_load(const char *name, int prio, int quiet)
 {
 #ifdef SHARED_LIBS
 	char *lib = NULL;
@@ -234,7 +233,7 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 
-		if (!xwcscasecmp(p->name, name)) {
+		if (!xstrcasecmp(p->name, name)) {
 			p->dl = plugin;
 			break;
 		}
@@ -264,14 +263,14 @@ int plugin_load(const CHAR_T *name, int prio, int quiet)
  *
  * odnajduje plugin_t odpowiadaj±ce wtyczce o danej nazwie.
  */
-plugin_t *plugin_find(const CHAR_T *name)
+plugin_t *plugin_find(const char *name)
 {
 	list_t l;
 
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 
-		if (p && !xwcscmp(p->name, name))
+		if (p && !xstrcmp(p->name, name))
 			return p;
 	}
 
@@ -306,7 +305,7 @@ plugin_t *plugin_find_uid(const char *uid)
  */
 int plugin_unload(plugin_t *p)
 {
-	CHAR_T *name; 
+	char *name; 
 
 	if (!p)
 		return -1;
@@ -345,7 +344,7 @@ int plugin_unload(plugin_t *p)
 		}
 	}
 
-	name = xwcsdup(p->name);
+	name = xstrdup(p->name);
 
 	if (p->destroy)
 		p->destroy();
@@ -568,12 +567,12 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
         return 0;
 }
 
-query_t *query_connect(plugin_t *plugin, const CHAR_T *name, query_handler_func_t *handler, void *data)
+query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data)
 {
 	query_t *q = xmalloc(sizeof(query_t));
 
 	q->plugin	= plugin;
-	q->name		= xwcsdup(name);
+	q->name		= xstrdup(name);
 	q->handler	= handler;
 	q->data		= data;
 
@@ -588,7 +587,7 @@ int query_free(query_t *q) {
 	return 0;
 }
 
-int query_disconnect(plugin_t *plugin, const CHAR_T *name)
+int query_disconnect(plugin_t *plugin, const char *name)
 {
 	list_t l;
 
@@ -603,7 +602,7 @@ int query_disconnect(plugin_t *plugin, const CHAR_T *name)
 	return -1;
 }
 
-int query_emit(plugin_t *plugin, const CHAR_T *name, ...)
+int query_emit(plugin_t *plugin, const char *name, ...)
 {
 	static int nested = 0;
 	int result = -2;
@@ -625,7 +624,7 @@ int query_emit(plugin_t *plugin, const CHAR_T *name, ...)
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
 
-		if ((!plugin || (plugin == q->plugin)) && !xwcscmp(q->name, name)) {
+		if ((!plugin || (plugin == q->plugin)) && !xstrcmp(q->name, name)) {
 			int (*handler)(void *data, va_list ap) = q->handler;
 
 			q->count++;
@@ -654,14 +653,14 @@ cleanup:
 	return result;
 }
 
-query_t *query_find(const CHAR_T *name)
+query_t *query_find(const char *name)
 {
         list_t l;
 
         for (l = queries; l; l = l->next) {
                 query_t *q = l->data;
 
-                if (!xwcscasecmp(q->name, name))
+                if (!xstrcasecmp(q->name, name))
                         return q;
         }
 
@@ -743,7 +742,7 @@ void watch_free(watch_t *w)
 	if (w->buf) {
 		int (*handler)(int, int, const char *, void *) = w->handler;
 		string_free(w->buf, 1);
-		/* DO WE WANT TO SEND ALL TEXT IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
+		/* DO WE WANT TO SEND ALL  IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
 		if (handler)
 			handler(1, w->fd, NULL, w->data);
 	} else {

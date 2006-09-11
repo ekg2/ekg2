@@ -29,11 +29,6 @@
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-#define xwcsdup(x) xstrdup(x)
-#define xwcscmp(s1, s2) xstrcmp(s1, s2)
-#define xwcscasecmp(s1, s2) xstrcasecmp(s1, s2)
-#define xwcslen(x) xstrlen(x)
-
 void ekg_oom_handler();
 
 void *xcalloc(size_t nmemb, size_t size);

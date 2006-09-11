@@ -630,11 +630,11 @@ int python_plugin_init(int prio)
 	plugin_register(&python_plugin, prio);
 
 	scriptlang_register(&python_lang, 1);
-	command_add(&python_plugin, TEXT("python:eval"),   TEXT("!"),	python_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&python_plugin, TEXT("python:run"),    TEXT("!"),	python_command_run,    COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&python_plugin, TEXT("python:load"),   TEXT("!"),	python_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&python_plugin, TEXT("python:unload"), TEXT("!"),	python_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&python_plugin, TEXT("python:list"),   NULL,	python_command_list,   0, NULL);
+	command_add(&python_plugin, ("python:eval"),   ("!"),	python_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&python_plugin, ("python:run"),    ("!"),	python_command_run,    COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&python_plugin, ("python:load"),   ("!"),	python_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&python_plugin, ("python:unload"), ("!"),	python_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&python_plugin, ("python:list"),   NULL,	python_command_list,   0, NULL);
 	query_connect(&python_plugin, "plugin-print-version", python_print_version, NULL);
 
 	return 0;

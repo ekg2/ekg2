@@ -24,12 +24,11 @@
 #define _(a) gettext(a)
 #define N_(a) gettext_noop(a)
 
-#include "char.h"
 #include "dynstuff.h"
 #include "sessions.h"
 
 struct format {
-	CHAR_T *name;
+	char *name;
 	int name_hash;
 	char *value;
 };

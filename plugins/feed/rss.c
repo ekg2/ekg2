@@ -821,12 +821,12 @@ void rss_deinit() {
 }
 
 void rss_init() {
-	command_add(&feed_plugin, TEXT("rss:connect"), "?", rss_command_connect, RSS_ONLY, NULL);
-	command_add(&feed_plugin, TEXT("rss:check"), "u", rss_command_check, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, TEXT("rss:get"), "!u", rss_command_get, RSS_FLAGS_TARGET, NULL);
+	command_add(&feed_plugin, ("rss:connect"), "?", rss_command_connect, RSS_ONLY, NULL);
+	command_add(&feed_plugin, ("rss:check"), "u", rss_command_check, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("rss:get"), "!u", rss_command_get, RSS_FLAGS_TARGET, NULL);
 
-	command_add(&feed_plugin, TEXT("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
-	command_add(&feed_plugin, TEXT("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
+	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
+	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
 
 	plugin_var_add(&feed_plugin, "display_server_headers", VAR_STR, 
 	/* display some basic server headers */

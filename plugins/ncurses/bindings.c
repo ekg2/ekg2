@@ -61,15 +61,15 @@ static BINDING_FUNCTION(binding_backward_word)
 
 static BINDING_FUNCTION(binding_forward_word)
 {
-	while (line_index < xwcslen(line) && line[line_index] == ' ')
+	while (line_index < xstrlen(line) && line[line_index] == ' ')
 		line_index++;
-	while (line_index < xwcslen(line) && line[line_index] != ' ')
+	while (line_index < xstrlen(line) && line[line_index] != ' ')
 		line_index++;
 }
 
 static BINDING_FUNCTION(binding_kill_word)
 {
-	CHAR_T *p = line + line_index;
+	char *p = line + line_index;
 	int eaten = 0;
 
 	while (*p && *p == ' ') {
@@ -82,7 +82,7 @@ static BINDING_FUNCTION(binding_kill_word)
 		eaten++;
 	}
 
-	memmove(line + line_index, line + line_index + eaten, xwcslen(line) - line_index - eaten + 1);
+	memmove(line + line_index, line + line_index + eaten, xstrlen(line) - line_index - eaten + 1);
 }
 
 static BINDING_FUNCTION(binding_toggle_input)
@@ -91,23 +91,23 @@ static BINDING_FUNCTION(binding_toggle_input)
 		input_size = 5;
 		ncurses_input_update();
 	} else {
-		string_t s = string_init(TEXT(""));
-		CHAR_T *tmp;
+		string_t s = string_init((""));
+		char *tmp;
 		int i;
 	
 		for (i = 0; lines[i]; i++) {
-			if (!xwcscmp(lines[i], TEXT("")) && !lines[i + 1])
+			if (!xstrcmp(lines[i], ("")) && !lines[i + 1])
 				break;
 
 			string_append(s, lines[i]);
-			string_append(s, TEXT("\r\n"));
+			string_append(s, ("\r\n"));
 		}
 
 		tmp = string_free(s, 0);
 
                 if (history[0] != line)
                         xfree(history[0]);
-                history[0] = array_join(lines, TEXT("\015"));
+                history[0] = array_join(lines, ("\015"));
                 xfree(history[HISTORY_MAX - 1]);
                 memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 
@@ -132,10 +132,10 @@ static BINDING_FUNCTION(binding_cancel_input)
 
 static BINDING_FUNCTION(binding_backward_delete_char)
 {
-	if (lines && line_index == 0 && lines_index > 0 && xwcslen(lines[lines_index]) + xwcslen(lines[lines_index - 1]) < LINE_MAXLEN) {
+	if (lines && line_index == 0 && lines_index > 0 && xstrlen(lines[lines_index]) + xstrlen(lines[lines_index - 1]) < LINE_MAXLEN) {
 		int i;
 
-		line_index = xwcslen(lines[lines_index - 1]);
+		line_index = xstrlen(lines[lines_index - 1]);
 		xstrcat(lines[lines_index - 1], lines[lines_index]);
 		
 		xfree(lines[lines_index]);
@@ -143,7 +143,7 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 		for (i = lines_index; i < array_count(lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(CHAR_T*));
+		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(char*));
 
 		lines_index--;
 		lines_adjust();
@@ -151,7 +151,7 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 		return;
 	}
 
-	if (xwcslen(line) > 0 && line_index > 0) {
+	if (xstrlen(line) > 0 && line_index > 0) {
 		memmove(line + line_index - 1, line + line_index, LINE_MAXLEN - line_index);
 		line[LINE_MAXLEN - 1] = 0;
 		line_index--;
@@ -166,7 +166,7 @@ static BINDING_FUNCTION(window_kill_binding)
                 print("cant_kill_irc_window");
                 return;
         }
-        command_exec(window_current->target, window_current->session, TEXT("/window kill"), 0);
+        command_exec(window_current->target, window_current->session, ("/window kill"), 0);
 }
 
 static BINDING_FUNCTION(binding_kill_line)
@@ -176,16 +176,16 @@ static BINDING_FUNCTION(binding_kill_line)
 
 static BINDING_FUNCTION(binding_yank)
 {
-	if (yanked && xwcslen(yanked) + xwcslen(line) + 1 < LINE_MAXLEN) {
-		memmove(line + line_index + xwcslen(yanked), line + line_index, LINE_MAXLEN - line_index - xwcslen(yanked));
-		memcpy(line + line_index, yanked, xwcslen(yanked));
-		line_index += xwcslen(yanked);
+	if (yanked && xstrlen(yanked) + xstrlen(line) + 1 < LINE_MAXLEN) {
+		memmove(line + line_index + xstrlen(yanked), line + line_index, LINE_MAXLEN - line_index - xstrlen(yanked));
+		memcpy(line + line_index, yanked, xstrlen(yanked));
+		line_index += xstrlen(yanked);
 	}
 }
 
 static BINDING_FUNCTION(binding_delete_char)
 {
-	if (line_index == xwcslen(line) && lines_index < array_count(lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
+	if (line_index == xstrlen(line) && lines_index < array_count(lines) - 1 && xstrlen(line) + xstrlen(lines[lines_index + 1]) < LINE_MAXLEN) {
 		int i;
 
 		xstrcat(line, lines[lines_index + 1]);
@@ -195,14 +195,14 @@ static BINDING_FUNCTION(binding_delete_char)
 		for (i = lines_index + 1; i < array_count(lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(CHAR_T*));
+		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(char*));
 
 		lines_adjust();
 	
 		return;
 	}
 				
-	if (line_index < xwcslen(line)) {
+	if (line_index < xstrlen(line)) {
 		memmove(line + line_index, line + line_index + 1, LINE_MAXLEN - line_index - 1);
 		line[LINE_MAXLEN - 1] = 0;
 	}
@@ -213,12 +213,12 @@ static BINDING_FUNCTION(binding_accept_line)
 	if (lines) {
 		int i;
 
-		lines = xrealloc(lines, (array_count(lines) + 2) * sizeof(CHAR_T *));
+		lines = xrealloc(lines, (array_count(lines) + 2) * sizeof(char *));
 
 		for (i = array_count(lines); i > lines_index; i--)
 			lines[i + 1] = lines[i];
 
-		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
+		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(char));
 		xstrcpy(lines[lines_index + 1], line + line_index);
 		line[line_index] = 0;
 		
@@ -236,10 +236,10 @@ static BINDING_FUNCTION(binding_accept_line)
 	if (ncurses_plugin_destroyed)
 		return;
 
-	if (xwcscmp(line, TEXT(""))) {
+	if (xstrcmp(line, (""))) {
 		if (history[0] != line)
 			xfree(history[0]);
-		history[0] = xwcsdup(line);
+		history[0] = xstrdup(line);
 		xfree(history[HISTORY_MAX - 1]);
 		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 	} else {
@@ -256,7 +256,7 @@ static BINDING_FUNCTION(binding_accept_line)
 static BINDING_FUNCTION(binding_line_discard)
 {
 	xfree(yanked);
-	yanked = xwcsdup(line);
+	yanked = xstrdup(line);
 	line[0] = 0;
 	line_adjust();
 
@@ -268,7 +268,7 @@ static BINDING_FUNCTION(binding_line_discard)
 		for (i = lines_index; i < array_count(lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(CHAR_T*));
+		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(char*));
 
 		lines_adjust();
 	}
@@ -283,7 +283,7 @@ static BINDING_FUNCTION(binding_quoted_insert)
 
 static BINDING_FUNCTION(binding_word_rubout)
 {
-	CHAR_T *p;
+	char *p;
 	int eaten = 0;
 
 	if (!line_index)
@@ -312,10 +312,10 @@ static BINDING_FUNCTION(binding_word_rubout)
 		}
 	}
 
-	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
+	yanked = xcalloc(eaten + 1, sizeof(char));
 	strlcpy(yanked, p, eaten + 1);
 
-	memmove(p, line + line_index, xwcslen(line) - line_index + 1);
+	memmove(p, line + line_index, xstrlen(line) - line_index + 1);
 	line_index -= eaten;
 }
 
@@ -326,7 +326,7 @@ static BINDING_FUNCTION(binding_complete)
 	else {
 		int i, count = 8 - (line_index % 8);
 
-		if (xwcslen(line) + count >= LINE_MAXLEN - 1)
+		if (xstrlen(line) + count >= LINE_MAXLEN - 1)
 			return;
 
 		memmove(line + line_index + count, line + line_index, LINE_MAXLEN - line_index - count);
@@ -361,7 +361,7 @@ static BINDING_FUNCTION(binding_backward_char)
 static BINDING_FUNCTION(binding_forward_char)
 {
 	if (lines) {
-		if (line_index < xwcslen(line))
+		if (line_index < xstrlen(line))
 			line_index++;
 		else {
 			if (lines_index < array_count(lines) - 1) {
@@ -375,7 +375,7 @@ static BINDING_FUNCTION(binding_forward_char)
 		return;
 	}
 
-	if (line_index < xwcslen(line))
+	if (line_index < xstrlen(line))
 		line_index++;
 }
 
@@ -394,10 +394,10 @@ static BINDING_FUNCTION(binding_previous_only_history)
 {
         if (history[history_index + 1]) {
                 if (history_index == 0)
-                        history[0] = xwcsdup(line);
+                        history[0] = xstrdup(line);
                 history_index++;
-		if (xstrchr(history[history_index], TEXT('\015'))) {
-			CHAR_T **tmp;
+		if (xstrchr(history[history_index], ('\015'))) {
+			char **tmp;
 			int i;
 			
                         if (input_size == 1) {
@@ -405,13 +405,13 @@ static BINDING_FUNCTION(binding_previous_only_history)
                                 ncurses_input_update();
                         }
 
-                        tmp = array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+                        tmp = array_make(history[history_index], ("\015"), 0, 0, 0);
 
 			array_free(lines);
-			lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
+			lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
 
 			for (i = 0; i < array_count(tmp); i++) {
-				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+				lines[i] = xmalloc(LINE_MAXLEN * sizeof(char));
 				xstrcpy(lines[i], tmp[i]);
 			}
 
@@ -432,10 +432,10 @@ static BINDING_FUNCTION(binding_next_only_history)
 {
         if (history_index > 0) {
                 if (history_index == 0)
-                        history[0] = xwcsdup(line);
+                        history[0] = xstrdup(line);
                 history_index--;
-                if (xstrchr(history[history_index], TEXT('\015'))) {
-                        CHAR_T **tmp;
+                if (xstrchr(history[history_index], ('\015'))) {
+                        char **tmp;
                         int i;
 
                         if (input_size == 1) {
@@ -443,13 +443,13 @@ static BINDING_FUNCTION(binding_next_only_history)
                                 ncurses_input_update();
 			}
 
-                        tmp = array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+                        tmp = array_make(history[history_index], ("\015"), 0, 0, 0);
 
                         array_free(lines);
-                        lines = xmalloc((array_count(tmp) + 2) * sizeof(CHAR_T *));
+                        lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
 
                         for (i = 0; i < array_count(tmp); i++) {
-                                lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+                                lines[i] = xmalloc(LINE_MAXLEN * sizeof(char));
                                 xstrcpy(lines[i], tmp[i]);
                         }
 
@@ -559,7 +559,7 @@ static BINDING_FUNCTION(binding_ignore_query)
 	if (!window_current->target)
 		return;
 	
-	command_exec_format(window_current->target, window_current->session, 0, TEXT("/ignore %s"), window_current->target);
+	command_exec_format(window_current->target, window_current->session, 0, ("/ignore %s"), window_current->target);
 }
 
 static BINDING_FUNCTION(binding_quick_list_wrapper)
@@ -621,16 +621,16 @@ static BINDING_FUNCTION(binding_cycle_sessions)
  *  - b - wska¼nik wype³nianej skruktury,
  *  - action - akcja,
  */
-static void binding_parse(struct binding *b, const CHAR_T *action)
+static void binding_parse(struct binding *b, const char *action)
 {
-	CHAR_T **args;
+	char **args;
 
 	if (!b || !action)
 		return;
 
-	b->action = xwcsdup(action);
+	b->action = xstrdup(action);
 
-	args = array_make(action, TEXT(" \t"), 1, 1, 1);
+	args = array_make(action, (" \t"), 1, 1, 1);
 
 	if (!args[0]) {
 		array_free(args);
@@ -638,9 +638,9 @@ static void binding_parse(struct binding *b, const CHAR_T *action)
 	}
 	
 #define __action(x,y) \
-	if (!xwcscmp(args[0], TEXT(x))) { \
+	if (!xstrcmp(args[0], (x))) { \
 		b->function = y; \
-		b->arg = xwcsdup(args[1]); \
+		b->arg = xstrdup(args[1]); \
 	} else  
 
 	__action("backward-word", binding_backward_word)
@@ -693,21 +693,21 @@ static void binding_parse(struct binding *b, const CHAR_T *action)
  *
  * 0/-1.
  */
-static int binding_key(struct binding *b, const CHAR_T *key, int add)
+static int binding_key(struct binding *b, const char *key, int add)
 {
 	/* debug("Key: %s\n", key); */
-	if (!xstrncasecmp(key, TEXT("Alt-"), 4)) {
+	if (!xstrncasecmp(key, ("Alt-"), 4)) {
 		unsigned char ch;
 
-		if (!xwcscasecmp(key + 4, TEXT("Enter"))) {
-			b->key = xwcsdup(TEXT("Alt-Enter"));
+		if (!xstrcasecmp(key + 4, ("Enter"))) {
+			b->key = xstrdup(("Alt-Enter"));
 			if (add)
 				ncurses_binding_map_meta[13] = list_add(&bindings, b, sizeof(struct binding));
 			return 0;
 		}
 
-		if (!xwcscasecmp(key + 4, TEXT("Backspace"))) {
-			b->key = xwcsdup(TEXT("Alt-Backspace"));
+		if (!xstrcasecmp(key + 4, ("Backspace"))) {
+			b->key = xstrdup(("Alt-Backspace"));
 			if (add) {
 				ncurses_binding_map_meta[KEY_BACKSPACE] = list_add(&bindings, b, sizeof(struct binding));
 				ncurses_binding_map_meta[127] = ncurses_binding_map_meta[KEY_BACKSPACE];
@@ -715,12 +715,12 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 			return 0;
 		}
 
-		if (xwcslen(key) != 5)
+		if (xstrlen(key) != 5)
 			return -1;
 	
 		ch = xtoupper(key[4]);
 
-		b->key = saprintf(TEXT("Alt-%c"), ch);
+		b->key = saprintf(("Alt-%c"), ch);
 
 		if (add) {
 			ncurses_binding_map_meta[ch] = list_add(&bindings, b, sizeof(struct binding));
@@ -731,14 +731,14 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 		return 0;
 	}
 
-	if (!xstrncasecmp(key, TEXT("Ctrl-"), 5)) {
+	if (!xstrncasecmp(key, ("Ctrl-"), 5)) {
 		unsigned char ch;
 		
 //		if (xstrlen(key) != 6)
 //			return -1;
 #define __key(x, y, z) \
-        if (!xwcscasecmp(key + 5, TEXT(x))) { \
-                b->key = xwcsdup(key); \
+        if (!xstrcasecmp(key + 5, (x))) { \
+                b->key = xstrdup(key); \
                 if (add) { \
                         ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
                         if (z) \
@@ -758,7 +758,7 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 #undef __key
 	
 		ch = xtoupper(key[5]);
-		b->key = saprintf(TEXT("Ctrl-%c"), ch);
+		b->key = saprintf(("Ctrl-%c"), ch);
 
 		if (add) {
                         if (xisalpha(ch))
@@ -776,7 +776,7 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 		if (f < 1 || f > 24)
 			return -1;
 
-		b->key = saprintf(TEXT("F%d"), f);
+		b->key = saprintf(("F%d"), f);
 		
 		if (add)
 			ncurses_binding_map[KEY_F(f)] = list_add(&bindings, b, sizeof(struct binding));
@@ -785,8 +785,8 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
 	}
 
 #define __key(x, y, z) \
-	if (!xwcscasecmp(key, TEXT(x))) { \
-		b->key = xwcsdup(TEXT(x)); \
+	if (!xstrcasecmp(key, (x))) { \
+		b->key = xstrdup((x)); \
 		if (add) { \
 			ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
 			if (z) \
@@ -819,18 +819,18 @@ static int binding_key(struct binding *b, const CHAR_T *key, int add)
  *
  * it sets some sequence to the given key
  */
-void ncurses_binding_set(int quiet, const CHAR_T *key, const CHAR_T *sequence)
+void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 {
 	list_t l;
 	binding_added_t *b;
 	struct binding *binding_orginal = NULL;
-	CHAR_T *joined = NULL;
+	char *joined = NULL;
 	int count = 0;
 
         for (l = bindings; l; l = l->next) {
                 struct binding *d = l->data;
 
-                if (!xwcscasecmp(key, d->key)) {
+                if (!xstrcasecmp(key, d->key)) {
                         binding_orginal = d;
                         break;
                 }
@@ -842,24 +842,24 @@ void ncurses_binding_set(int quiet, const CHAR_T *key, const CHAR_T *sequence)
         }
 
 	if (!sequence) {
-		CHAR_T **chars = NULL;
+		char **chars = NULL;
 		char ch;
 		printq("bind_press_key");
 		nodelay(input, FALSE);
 		while ((ch = wgetch(input)) != ERR) {
-			array_add(&chars, xwcsdup(itoa(ch)));
+			array_add(&chars, xstrdup(itoa(ch)));
 			nodelay(input, TRUE);
 			count++;
 		}
-		joined = array_join(chars, TEXT(" "));
+		joined = array_join(chars, (" "));
 		array_free(chars);
 	} else
-		joined = xwcsdup(sequence);
+		joined = xstrdup(sequence);
 
 	for (l = bindings_added; l; l = l->next) {
 		binding_added_t *d = l->data;
 
-		if (!xwcscasecmp(d->sequence, joined)) {
+		if (!xstrcasecmp(d->sequence, joined)) {
 			d->binding = binding_orginal;
 			xfree(joined);
 			goto end;
@@ -888,7 +888,7 @@ end:
  *  - internal - czy to wewnêtrzna akcja interfejsu?
  *  - quiet - czy byæ cicho i nie wy¶wietlaæ niczego?
  */
-void ncurses_binding_add(const CHAR_T *key, const CHAR_T *action, int internal, int quiet)
+void ncurses_binding_add(const char *key, const char *action, int internal, int quiet)
 {
 	struct binding b, *c = NULL;
 	list_t l;
@@ -903,7 +903,7 @@ void ncurses_binding_add(const CHAR_T *key, const CHAR_T *action, int internal, 
 	for (l = bindings; l; l = l->next) {
 		struct binding *d = l->data;
 
-		if (!xwcscasecmp(key, d->key)) {
+		if (!xstrcasecmp(key, d->key)) {
 			if (d->internal) {
 				c = d;
 				break;
@@ -916,9 +916,9 @@ void ncurses_binding_add(const CHAR_T *key, const CHAR_T *action, int internal, 
 	binding_parse(&b, action);
 
 	if (internal) {
-		b.default_action	= xwcsdup(b.action);
+		b.default_action	= xstrdup(b.action);
 		b.default_function 	= b.function;
-		b.default_arg 		= xwcsdup(b.arg);
+		b.default_arg 		= xstrdup(b.arg);
 	}
 
 	if (binding_key(&b, key, (c) ? 0 : 1)) {
@@ -953,7 +953,7 @@ void ncurses_binding_add(const CHAR_T *key, const CHAR_T *action, int internal, 
  *
  * usuwa akcjê z danego klawisza.
  */
-void ncurses_binding_delete(const CHAR_T *key, int quiet)
+void ncurses_binding_delete(const char *key, int quiet)
 {
 	list_t l;
 
@@ -964,7 +964,7 @@ void ncurses_binding_delete(const CHAR_T *key, int quiet)
 		struct binding *b = l->data;
 		int i;
 
-		if (!b->key || xwcscasecmp(key, b->key))
+		if (!b->key || xstrcasecmp(key, b->key))
 			continue;
 
 		if (b->internal) {
@@ -976,8 +976,8 @@ void ncurses_binding_delete(const CHAR_T *key, int quiet)
 		xfree(b->arg);
 		
 		if (b->default_action) {
-			b->action	= xwcsdup(b->default_action);
-			b->arg		= xwcsdup(b->default_arg);
+			b->action	= xstrdup(b->default_action);
+			b->arg		= xstrdup(b->default_arg);
 			b->function 	= b->default_function;
 			b->internal 	= 1;
 		} else {
@@ -1010,7 +1010,7 @@ void ncurses_binding_delete(const CHAR_T *key, int quiet)
  */
 QUERY(ncurses_binding_default)
 {
-#define ncurses_binding_add(arg0, arg1, args...) ncurses_binding_add(TEXT(arg0), TEXT(arg1), args)
+#define ncurses_binding_add(arg0, arg1, args...) ncurses_binding_add((arg0), (arg1), args)
 
 	ncurses_binding_add("Alt-`", "/window switch 0", 1, 1);
 	ncurses_binding_add("Alt-1", "/window switch 1", 1, 1);

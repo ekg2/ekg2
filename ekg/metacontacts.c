@@ -43,7 +43,7 @@ COMMAND(cmd_metacontact)
 {
         metacontact_t *m;
 
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2)) {
+	if (!params[0] || match_arg(params[0], 'l', ("list"), 2)) {
                 list_t l;
 
                 for (l = metacontacts; l; l = l->next) {
@@ -58,7 +58,7 @@ COMMAND(cmd_metacontact)
                 return 0;
         }
 
-	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (match_arg(params[0], 'a', ("add"), 2)) {
                 if (!params[1])
                         goto invalid_params;
 
@@ -73,13 +73,13 @@ COMMAND(cmd_metacontact)
 	                config_changed = 1;
 	                printq("metacontact_added", params[1]);
 
-	                query_emit(NULL, TEXT("metacontact-added"), &tmp);
+	                query_emit(NULL, ("metacontact-added"), &tmp);
 			xfree(tmp);
 		}
 		return 0;	
 	}
 
-        if (match_arg(params[0], 'd', TEXT("del"), 2)) {
+        if (match_arg(params[0], 'd', ("del"), 2)) {
 		if (!params[1])
 			goto invalid_params;
 
@@ -94,13 +94,13 @@ COMMAND(cmd_metacontact)
 	                config_changed = 1;
 	                printq("metacontact_removed", params[1]);
 			
-	                query_emit(NULL, TEXT("metacontact-removed"), &tmp);
+	                query_emit(NULL, ("metacontact-removed"), &tmp);
 			xfree(tmp);
 		}
                 return 0;
 	}
 
-	if (match_arg(params[0], 'i', TEXT("add-item"), 2)) {
+	if (match_arg(params[0], 'i', ("add-item"), 2)) {
                 if (!params[1] || !params[2] || !params[3] || !params[4])
                         goto invalid_params;
 
@@ -114,7 +114,7 @@ COMMAND(cmd_metacontact)
 
 			printq("metacontact_added_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-	                query_emit(NULL, TEXT("metacontact-item-added"), &tmp1, &tmp2, &tmp3);
+	                query_emit(NULL, ("metacontact-item-added"), &tmp1, &tmp2, &tmp3);
 			xfree(tmp1);
 			xfree(tmp2);
 			xfree(tmp3);
@@ -122,7 +122,7 @@ COMMAND(cmd_metacontact)
 		return 0;
 	}
 
-        if (match_arg(params[0], 'r', TEXT("del-item"), 2)) {
+        if (match_arg(params[0], 'r', ("del-item"), 2)) {
                 if (!params[1] || !params[2] || !params[3])
                         goto invalid_params;
 
@@ -136,7 +136,7 @@ COMMAND(cmd_metacontact)
 
                         printq("metacontact_removed_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-                        query_emit(NULL, TEXT("metacontact-item-removed"), &tmp1, &tmp2, &tmp3);
+                        query_emit(NULL, ("metacontact-item-removed"), &tmp1, &tmp2, &tmp3);
                         xfree(tmp1);
                         xfree(tmp2);
                         xfree(tmp3);
@@ -534,8 +534,8 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
  */
 void metacontact_init()
 {
-        query_connect(NULL, TEXT("session-renamed"), metacontact_session_renamed_handler, NULL);
-	query_connect(NULL, TEXT("userlist-removed"), metacontact_userlist_removed_handler, NULL);
+        query_connect(NULL, ("session-renamed"), metacontact_session_renamed_handler, NULL);
+	query_connect(NULL, ("userlist-removed"), metacontact_userlist_removed_handler, NULL);
 }
 
 /* 

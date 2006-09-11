@@ -35,7 +35,6 @@
 #       include <aspell.h>
 #endif
 
-#include <ekg/char.h>
 #include <ekg/debug.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
@@ -59,12 +58,12 @@ WINDOW *ncurses_header	= NULL;		/* okno nag³ówka */
 WINDOW *ncurses_input	= NULL;		/* okno wpisywania tekstu */
 WINDOW *ncurses_contacts= NULL;
 
-CHAR_T *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
+char *ncurses_history[HISTORY_MAX];	/* zapamiêtane linie */
 int ncurses_history_index = 0;		/* offset w historii */
 
-CHAR_T *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
-CHAR_T *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
-CHAR_T **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
+char *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
+char *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
+char **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
 int ncurses_line_start = 0;		/* od którego znaku wy¶wietlamy? */
 int ncurses_line_index = 0;		/* na którym znaku jest kursor? */
 int ncurses_lines_start = 0;		/* od której linii wy¶wietlamy? */
@@ -300,7 +299,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
 		struct screen_line *l;
-		CHAR_T *str; 
+		char *str; 
 		short *attr;
 		int j, margin_left, wrapping = 0;
 		time_t ts;
@@ -323,7 +322,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			l->str = str;
 			l->attr = attr;
-			l->len = xwcslen(str);
+			l->len = xstrlen(str);
 			l->ts = NULL;
 			l->ts_len = 0;
 			l->ts_attr = NULL;
@@ -352,7 +351,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 					s = fstring_new(buf);
 
 					l->ts = s->str;
-					l->ts_len = xwcslen(l->ts);
+					l->ts_len = xstrlen(l->ts);
 					l->ts_attr = s->attr;
 
 					xfree(s);
@@ -1175,16 +1174,16 @@ void update_statusbar(int commit)
 	__add_format("query", tmp, tmp);
 	xfree(tmp); 
 
-	if ((plug = plugin_find(TEXT("mail")))) {
+	if ((plug = plugin_find(("mail")))) {
 		int mail_count = -1;
-		query_emit(plug, TEXT("mail-count"), &mail_count);
+		query_emit(plug, ("mail-count"), &mail_count);
 		__add_format("mail", (mail_count > 0), itoa(mail_count));
 	}
-	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(TEXT("irc")))) {
+	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(("irc")))) {
 		/* yeah, I know, shitty way */
 		char *t2 = NULL;
 		char *t3 = NULL; 
-		query_emit(plug, TEXT("irc-topic"), &tmp, &t2, &t3);
+		query_emit(plug, ("irc-topic"), &tmp, &t2, &t3);
 		__add_format("irctopic", tmp, tmp);
 		__add_format("irctopicby", t2, t2);
 		__add_format("ircmode", t3, t3);
@@ -1312,8 +1311,8 @@ void update_statusbar(int commit)
 	for (i = 0; i < formats_count; i++)
 		xfree(formats[i].text);
 
-	query_emit(NULL, TEXT("ui-redrawing-header"));
-	query_emit(NULL, TEXT("ui-redrawing-statusbar"));
+	query_emit(NULL, ("ui-redrawing-header"));
+	query_emit(NULL, ("ui-redrawing-statusbar"));
 	
 	if (commit)
 		ncurses_commit();
@@ -1464,8 +1463,8 @@ void ncurses_init()
 		ncurses_spellcheck_init();
 #endif
 
-	ncurses_line = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-	xstrcpy(ncurses_line, TEXT(""));
+	ncurses_line = xmalloc(LINE_MAXLEN * sizeof(char));
+	xstrcpy(ncurses_line, (""));
 
 	ncurses_history[0] = ncurses_line;
 }
@@ -1547,11 +1546,11 @@ void ncurses_line_adjust()
 {
 	int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_len;
 
-	line_index = xwcslen(ncurses_line);
-	if (xwcslen(ncurses_line) < input->_maxx - 9 - prompt_len)
+	line_index = xstrlen(ncurses_line);
+	if (xstrlen(ncurses_line) < input->_maxx - 9 - prompt_len)
 		line_start = 0;
 	else
-		line_start = xwcslen(ncurses_line) - xwcslen(ncurses_line) % (input->_maxx - 9 - prompt_len);
+		line_start = xstrlen(ncurses_line) - xstrlen(ncurses_line) % (input->_maxx - 9 - prompt_len);
 }
 
 /*
@@ -1569,8 +1568,8 @@ void ncurses_lines_adjust()
 
 	ncurses_line = ncurses_lines[lines_index];
 
-	if (line_index > xwcslen(ncurses_line))
-		line_index = xwcslen(ncurses_line);
+	if (line_index > xstrlen(ncurses_line))
+		line_index = xstrlen(ncurses_line);
 }
 
 /*
@@ -1589,7 +1588,7 @@ void ncurses_input_update()
 		xfree(ncurses_lines);
 		ncurses_lines = NULL;
 		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(unsigned char));
-		xstrcpy(ncurses_line, TEXT(""));
+		xstrcpy(ncurses_line, (""));
 
 		ncurses_history[0] = ncurses_line;
 
@@ -1598,7 +1597,7 @@ void ncurses_input_update()
 		lines_start = 0;
 		lines_index = 0;
 	} else {
-		ncurses_lines = xmalloc(2 * sizeof(CHAR_T*));
+		ncurses_lines = xmalloc(2 * sizeof(char*));
 		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(unsigned char));
 		ncurses_lines[1] = NULL;
 		xstrcpy(ncurses_lines[0], ncurses_line);
@@ -1762,7 +1761,7 @@ static int ekg_getch(int meta, int *ch)
 	} 
 #undef GET_TIME
 #undef DIF_TIME
-	if (query_emit(NULL, TEXT("ui-keypress"), ch, NULL) == -1)  
+	if (query_emit(NULL, ("ui-keypress"), ch, NULL) == -1)  
 		return -2; /* -2 - ignore that key */
 	return *ch;
 }
@@ -1793,7 +1792,7 @@ WATCHER(ncurses_watch_winch)
 	keypad(input, TRUE);
 	/* wywo³a wszystko, co potrzebne */
 	header_statusbar_resize();
-	changed_backlog_size(TEXT("backlog_size"));
+	changed_backlog_size(("backlog_size"));
 	return 0;
 }
 
@@ -1803,9 +1802,9 @@ WATCHER(ncurses_watch_winch)
  * it checks if the given word is correct
  */
 #ifdef WITH_ASPELL
-static void spellcheck(CHAR_T *what, char *where)
+static void spellcheck(char *what, char *where)
 {
-        CHAR_T *word;             /* aktualny wyraz */
+        char *word;             /* aktualny wyraz */
         register int i = 0;     /* licznik */
 	register int j = 0;     /* licznik */
 	int size;	/* zmienna tymczasowa */
@@ -1816,8 +1815,8 @@ static void spellcheck(CHAR_T *what, char *where)
 	    
 	for (i = 0; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
 	    if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) { // separator/koniec lini/koniec stringu
-		size = xwcslen(what) + 1;
-        	word = xmalloc(size*sizeof(CHAR_T));
+		size = xstrlen(what) + 1;
+        	word = xmalloc(size*sizeof(char));
 		
 		for (; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
 		    if(isalpha_pl(what[i])) /* szukamy jakiejs pierwszej literki */
@@ -1853,18 +1852,18 @@ static void spellcheck(CHAR_T *what, char *where)
 		    	} else 
 				break;
 		}
-		word[j] = (CHAR_T) 0;
+		word[j] = (char) 0;
 		if (i > 0)
 		    i--;
 
 /*		debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
 
 		/* sprawdzamy pisownie tego wyrazu */
-        	if (aspell_speller_check(spell_checker, word, xwcslen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
-			for (j = xwcslen(word) - 1; j >= 0; j--)
+        	if (aspell_speller_check(spell_checker, word, xstrlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
+			for (j = xstrlen(word) - 1; j >= 0; j--)
 				where[i - j] = ASPELLCHAR;
         	} else { /* jesli wyraz jest napisany poprawnie */
-			for (j = xwcslen(word) - 1; j >= 0; j--)
+			for (j = xstrlen(word) - 1; j >= 0; j--)
 				where[i - j] = ' ';
         	}
 aspell_loop_end:
@@ -1907,31 +1906,31 @@ WATCHER(ncurses_watch_stdin)
 	ekg_stdin_want_more = 1;
 
 	if (bindings_added && ch != KEY_MOUSE) {
-		CHAR_T **chars = NULL, *joined;
+		char **chars = NULL, *joined;
 		int i = 0, count = 0, success = 0;
 		list_t l;
 		int c;
-		array_add(&chars, xwcsdup(itoa(ch)));
+		array_add(&chars, xstrdup(itoa(ch)));
 
         	while (count <= bindings_added_max && 
 				(c = wgetch(input)) != ERR
 				) {
-	                array_add(&chars, xwcsdup(itoa(c)));
+	                array_add(&chars, xstrdup(itoa(c)));
 			count++;
 	        }
 
-		joined = array_join(chars, TEXT(" "));
+		joined = array_join(chars, (" "));
 
 		for (l = bindings_added; l; l = l->next) {
 			binding_added_t *d = l->data;
 
-			if (!xwcscasecmp(d->sequence, joined)) {
+			if (!xstrcasecmp(d->sequence, joined)) {
 				struct binding *b = d->binding;
 
 	                        if (b->function)
 	                                b->function(b->arg);
 	                        else {
-	                                command_exec_format(window_current->target, window_current->session, 0, TEXT("%s%s"), 
+	                                command_exec_format(window_current->target, window_current->session, 0, ("%s%s"), 
 							((b->action[0] == '/') ? "" : "/"), b->action);
 	                        }
 
@@ -1985,7 +1984,7 @@ end:
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
+						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
 						);
 			}
 		} else {
@@ -2007,12 +2006,12 @@ end:
 				b->function(b->arg);
 			else {
 				command_exec_format(window_current->target, window_current->session, 0,
-						TEXT("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
+						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
 						);
 			}
 		} else if (
 				ch < 255 && 
-				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
+				xstrlen(ncurses_line) < LINE_MAXLEN - 1) {
 				
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, LINE_MAXLEN - line_index - 1);
 
@@ -2051,14 +2050,14 @@ then:
 			p = ncurses_lines[lines_start + i];
 #ifdef WITH_ASPELL
 			if (spell_checker) {
-				aspell_line = xmalloc(xwcslen(p));
+				aspell_line = xmalloc(xstrlen(p));
 				if (line_start == 0) 
 					mispelling = 0;
 					    
 				spellcheck(p, aspell_line);
 	                }
 
-			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
+			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
                         {                                 
 			    if (spell_checker && aspell_line[line_start + j] == ASPELLCHAR && p[line_start + j] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 	                            print_char_underlined(input, i, j, p[line_start + j]);
@@ -2069,7 +2068,7 @@ then:
 			if (spell_checker)	
 				xfree(aspell_line);
 #else
-			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
+			for (j = 0; j + line_start < xstrlen(p) && j < input->_maxx + 1; j++)
 				print_char(input, i, j, p[j + line_start]);
 #endif
 		}
@@ -2081,14 +2080,14 @@ then:
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
-			aspell_line = xmalloc(xwcslen(ncurses_line) + 1);
+			aspell_line = xmalloc(xstrlen(ncurses_line) + 1);
 			if (line_start == 0) 
 				mispelling = 0;
 	
 			spellcheck(ncurses_line, aspell_line);
 		}
 
-                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xwcslen(ncurses_line) - line_start; i++)
+                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
                 {
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start +
 i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
@@ -2100,7 +2099,7 @@ i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 		if (spell_checker)
 			xfree(aspell_line);
 #else
- 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xwcslen(ncurses_line) - line_start; i++)
+ 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xstrlen(ncurses_line) - line_start; i++)
 			print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i]);
 #endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
@@ -2108,7 +2107,7 @@ i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
 			mvwaddch(input, 0, ncurses_current->prompt_len, '<');
-		if (xwcslen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
+		if (xstrlen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
 			mvwaddch(input, 0, input->_maxx, '>');
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
@@ -2167,7 +2166,7 @@ void header_statusbar_resize()
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,backlog_size''.
  */
-void changed_backlog_size(const CHAR_T *var)
+void changed_backlog_size(const char *var)
 {
 	list_t l;
 

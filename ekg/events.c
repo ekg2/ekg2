@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "char.h"
 #include "commands.h"
 #include "debug.h"
 #include "events.h"
@@ -39,7 +38,7 @@
 #include "windows.h"
 
 list_t events = NULL;
-CHAR_T **events_all = NULL;
+char **events_all = NULL;
 
 int config_display_day_changed = 1;
 
@@ -51,8 +50,8 @@ static QUERY(event_na);
 static TIMER(ekg_day_timer);
 static QUERY(event_descr);
 
-static void events_add_handler(CHAR_T *name, void *function);
-static event_t *event_find(const CHAR_T *name, const CHAR_T *target);
+static void events_add_handler(char *name, void *function);
+static event_t *event_find(const char *name, const char *target);
 static event_t *event_find_id(unsigned int id);
 static int event_remove(unsigned int id, int quiet);
 static int events_list(int id, int quiet);
@@ -62,7 +61,7 @@ static int events_list(int id, int quiet);
  */
 COMMAND(cmd_on)
 {
-	if (match_arg(params[0], 'a', TEXT("add"), 2)) {
+	if (match_arg(params[0], 'a', ("add"), 2)) {
 		int prio;
 
                 if (!params[1] || !params[2] || !params[3] || !params[4]) {
@@ -82,7 +81,7 @@ COMMAND(cmd_on)
 			return -1;
 	}
 
-	if (match_arg(params[0], 'd', TEXT("del"), 2)) {
+	if (match_arg(params[0], 'd', ("del"), 2)) {
 		int par;
 
 		if (!params[1]) {
@@ -90,7 +89,7 @@ COMMAND(cmd_on)
 			return -1;
 		}
 
-		if (!xwcscmp(params[1], TEXT("*")))
+		if (!xstrcmp(params[1], ("*")))
 			par = 0;
 		else {
 			if (!(par = atoi(params[1]))) {
@@ -106,7 +105,7 @@ COMMAND(cmd_on)
 			return -1;
 	}
 
-	if (!params[0] || match_arg(params[0], 'l', TEXT("list"), 2) || params[0][0] != '-') {
+	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
 		events_list((params[0] && params[1] && atoi(params[1])) ? atoi(params[1]) : 0, 0);
 		return 0;
 	}
@@ -143,10 +142,10 @@ static int event_add_compare(void *data1, void *data2)
  *
  * 0/-1
  */
-int event_add(const CHAR_T *name, int prio, const CHAR_T *target, const CHAR_T *action, int quiet)
+int event_add(const char *name, int prio, const char *target, const char *action, int quiet)
 {
 	event_t *ev;
-	CHAR_T *tmp;
+	char *tmp;
 	int done = 0, id = 1;
 	list_t l;
 
@@ -169,14 +168,14 @@ int event_add(const CHAR_T *name, int prio, const CHAR_T *target, const CHAR_T *
         }
 	ev	= xmalloc(sizeof(event_t));
 	ev->id		= id;
-	ev->name 	= xwcsdup(name);
+	ev->name 	= xstrdup(name);
 	ev->prio 	= prio;
-	ev->target 	= xwcsdup(target);
-	ev->action 	= xwcsdup(action);
+	ev->target 	= xstrdup(target);
+	ev->action 	= xstrdup(action);
 	list_add_sorted(&events, ev, 0, event_add_compare);
 
-	tmp = xwcsdup(name);
-	query_emit(NULL, TEXT("event-added"), &tmp);
+	tmp = xstrdup(name);
+	query_emit(NULL, ("event-added"), &tmp);
 	xfree(tmp);
 
 	wcs_printq("events_add", name);
@@ -217,7 +216,7 @@ static int event_remove(unsigned int id, int quiet)
 	wcs_printq("events_del", itoa(id));
 
 cleanup:	
-        query_emit(NULL, TEXT("event-removed"), itoa(id));
+        query_emit(NULL, ("event-removed"), itoa(id));
 
 	return 0;
 }
@@ -255,28 +254,28 @@ static int events_list(int id, int quiet)
  * to event
  *
  */
-event_t *event_find(const CHAR_T *name, const CHAR_T *target)
+event_t *event_find(const char *name, const char *target)
 {
 	list_t l;
 	event_t *ev_max = NULL;
 	int ev_max_prio = 0;
-	CHAR_T **b, **c;
+	char **b, **c;
 
 	debug("// event_find (name (%s), target (%s)\n", name, target);
-	b = array_make(target, TEXT("|,;"), 0, 1, 0);
-	c = array_make(name, TEXT("|,;"), 0, 1, 0);
+	b = array_make(target, ("|,;"), 0, 1, 0);
+	c = array_make(name, ("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {
 		event_t *ev = l->data;
-		CHAR_T **a, **d;
+		char **a, **d;
 		int i, j, k, m;
 
-		a = array_make(ev->target, TEXT("|,;"), 0, 1, 0);
-		d = array_make(ev->name, TEXT("|,;"), 0, 1, 0);
+		a = array_make(ev->target, ("|,;"), 0, 1, 0);
+		d = array_make(ev->name, ("|,;"), 0, 1, 0);
 		for (i = 0; a[i]; i++) {
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-						if (xwcscasecmp(d[m], c[k]) || xwcscasecmp(a[i], b[j]))
+						if (xstrcasecmp(d[m], c[k]) || xstrcasecmp(a[i], b[j]))
 							continue;
 						else if (ev->prio > ev_max_prio){
 							ev_max = ev;
@@ -303,31 +302,31 @@ event_t *event_find(const CHAR_T *name, const CHAR_T *target)
  * descriptor to event
  *
  */
-static event_t *event_find_all(const CHAR_T *name, const CHAR_T *uid, const CHAR_T *target, const CHAR_T *data)
+static event_t *event_find_all(const char *name, const char *uid, const char *target, const char *data)
 {
 	list_t l;
 	event_t *ev_max = NULL;
 	int ev_max_prio = 0;
-	CHAR_T **b, **c;
+	char **b, **c;
 
 	debug("// event_find_all (name (%s), target (%s)\n", name, target);
-	b = array_make(target, TEXT("|,;"), 0, 1, 0);
-	c = array_make(name, TEXT("|,;"), 0, 1, 0);
+	b = array_make(target, ("|,;"), 0, 1, 0);
+	c = array_make(name, ("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {
 		event_t *ev = l->data;
-		CHAR_T **a, **d;
+		char **a, **d;
 		int i, j, k, m;
 
-		a = array_make(ev->target, TEXT("|,;"), 0, 1, 0);
-		d = array_make(ev->name, TEXT("|,;"), 0, 1, 0);
+		a = array_make(ev->target, ("|,;"), 0, 1, 0);
+		d = array_make(ev->name, ("|,;"), 0, 1, 0);
 		for (i = 0; a[i]; i++) {
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-						CHAR_T *tmp = format_string(a[i], uid, target, data);
-						if ((xwcscasecmp(d[m], c[k]) && xwcscasecmp(d[m], TEXT("*"))) || 
-								(!event_target_check(tmp) && xwcscasecmp(a[i], TEXT("*")) && 
-								 xwcscasecmp(a[i], b[j]))) {
+						char *tmp = format_string(a[i], uid, target, data);
+						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], ("*"))) || 
+								(!event_target_check(tmp) && xstrcasecmp(a[i], ("*")) && 
+								 xstrcasecmp(a[i], b[j]))) {
 							xfree(tmp);
 							continue;
 						} else if (ev->prio > ev_max_prio){
@@ -372,7 +371,7 @@ static event_t *event_find_id(unsigned int id)
         return 0;
 }
 
-static void events_add_handler(CHAR_T *name, void *function)
+static void events_add_handler(char *name, void *function)
 {
         query_connect(NULL, name, function, NULL);
         array_add(&events_all, name);
@@ -387,12 +386,12 @@ int events_init()
 {
 	timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL);
 
-	events_add_handler(TEXT("protocol-message"), event_protocol_message);
-	events_add_handler(TEXT("event_avail"), event_avail);
-	events_add_handler(TEXT("event_away"), event_away);
-	events_add_handler(TEXT("event_na"), event_na);
-	events_add_handler(TEXT("event_online"), event_online);
-	events_add_handler(TEXT("event_descr"), event_descr);
+	events_add_handler(("protocol-message"), event_protocol_message);
+	events_add_handler(("event_avail"), event_avail);
+	events_add_handler(("event_away"), event_away);
+	events_add_handler(("event_na"), event_na);
+	events_add_handler(("event_online"), event_online);
+	events_add_handler(("event_descr"), event_descr);
 	return 0;
 }
 
@@ -418,7 +417,7 @@ static TIMER(ekg_day_timer) {
 			}
 		}
 		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
-		query_emit(NULL, TEXT("day-changed"), &tm, &oldtm);
+		query_emit(NULL, ("day-changed"), &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
 		oldtm = xmalloc(sizeof(struct tm));
@@ -529,7 +528,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 	userlist_t *userlist;
 	event_t *ev;
 	const char *target;
-        CHAR_T *action, **actions;
+        char *action, **actions;
 	char *edata = NULL;
 	int i;
 
@@ -587,7 +586,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
                 *q = 0;
         }
 
-	actions = array_make(action, TEXT(";"), 0, 0, 1);
+	actions = array_make(action, (";"), 0, 0, 1);
 
 	for (i = 0; actions && actions[i]; i++) {
 	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
@@ -636,11 +635,11 @@ void event_free()
  *
  * returns logical value
  */
-static int event_target_check_compare(CHAR_T *buf)
+static int event_target_check_compare(char *buf)
 {
 	string_t s;
 
-	s = string_init(TEXT(""));
+	s = string_init((""));
 
 	while(*buf) {
 		if (*buf == '/') {
@@ -664,11 +663,11 @@ static int event_target_check_compare(CHAR_T *buf)
 				if (!*buf)
 					break;
 
-				return (!xwcscmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+				return (!xstrcmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 			}
 
 			/* '=' */
-			return (!xwcscasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+			return (!xstrcasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 		}
 
 		if (*buf == '!') {
@@ -688,11 +687,11 @@ static int event_target_check_compare(CHAR_T *buf)
 					if (!*buf)
 						break;
 
-					return (xwcscmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+					return (xstrcmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 				}
 
 				/* '!=' */
-				return (xwcscasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
+				return (xstrcasecmp(s->str, buf) && !string_free(s, 1)) ? 1 : 0;
 			}
 
 			if (*buf == '+') {
@@ -752,11 +751,11 @@ static int event_target_check_compare(CHAR_T *buf)
  * returns logical value of given expression
  */
 
-int event_target_check(CHAR_T *buf)
+int event_target_check(char *buf)
 {
-	CHAR_T **params = array_make(buf, TEXT("&|"), 0, 1, 1);
+	char **params = array_make(buf, ("&|"), 0, 1, 1);
 	int i = 1;
-	CHAR_T *separators;
+	char *separators;
 	char last_returned = 0;
 	int first = 1;
 	
@@ -765,7 +764,7 @@ int event_target_check(CHAR_T *buf)
 	if (!params)
 		return -1;
 	
-	separators = xmalloc(array_count(params) * sizeof(CHAR_T) + 1);
+	separators = xmalloc(array_count(params) * sizeof(char) + 1);
 	
 	while (*buf) {
 		if (*buf == '&' || *buf == '|') {

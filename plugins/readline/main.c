@@ -120,11 +120,11 @@ static QUERY(readline_ui_window_switch) { /* window_switch */
 	return 0;
 }
 
-static CHAR_T *readline_change_string_t_back_to_char(const CHAR_T *str, const short *attr) {
+static char *readline_change_string_t_back_to_char(const char *str, const short *attr) {
 	int i;
 	string_t asc = string_init(NULL);
 
-	for (i = 0; i < xwcslen(str); i++) {
+	for (i = 0; i < xstrlen(str); i++) {
 #define ISBOLD(x)	(x & 64)
 #define ISBLINK(x)	(x & 256) 
 #define ISUNDERLINE(x)	(x & 512)
@@ -146,14 +146,14 @@ static CHAR_T *readline_change_string_t_back_to_char(const CHAR_T *str, const sh
 		else if (i && BGCOLOR(cur) == -1 && BGCOLOR(prev) != -1);/* NO BGCOLOR */
 		else reset = 0;
 		
-		if (reset) string_append(asc, TEXT("%n"));
+		if (reset) string_append(asc, ("%n"));
 
 		if (ISBOLD(cur)	&& (!i || reset || ISBOLD(cur) != ISBOLD(prev)) && FGCOLOR(cur) == -1)
-			string_append(asc, TEXT("%T"));		/* no color + bold. */
+			string_append(asc, ("%T"));		/* no color + bold. */
 
-		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, TEXT("%i"));
-//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, TEXT("%"));
-//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, TEXT("%"));
+		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, ("%i"));
+//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, ("%"));
+//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, ("%"));
 
 		if (BGCOLOR(cur) != -1 && ((!i || reset || BGCOLOR(cur) != BGCOLOR(prev)))) {	/* if there's a background color... add it */
 			string_append_c(asc, '%');
@@ -187,7 +187,7 @@ static CHAR_T *readline_change_string_t_back_to_char(const CHAR_T *str, const sh
 		if (str[i] == '%' || str[i] == '\\') string_append_c(asc, '\\');	/* escape chars.. */
 		string_append_c(asc, str[i]);			/* append current char */
 	}
-	string_append(asc, TEXT("%n"));	/* reset */
+	string_append(asc, ("%n"));	/* reset */
 	string_append_c(asc, '\n');		/* new line */
 	return string_free(asc, 0);
 }
@@ -270,18 +270,18 @@ int readline_plugin_init(int prio) {
 
 	plugin_register(&readline_plugin, prio);
 
-	query_connect(&readline_plugin, TEXT("ui-beep"), readline_beep, NULL);
-	query_connect(&readline_plugin, TEXT("ui-is-initialized"), readline_ui_is_initialized, NULL);
-	query_connect(&readline_plugin, TEXT("ui-window-new"), readline_ui_window_new, NULL);
-	query_connect(&readline_plugin, TEXT("ui-window-switch"), readline_ui_window_switch, NULL);
-	query_connect(&readline_plugin, TEXT("ui-window-kill"), readline_ui_window_kill, NULL);
-	query_connect(&readline_plugin, TEXT("ui-window-print"), readline_ui_window_print, NULL);
-	query_connect(&readline_plugin, TEXT("ui-window-refresh"), readline_ui_window_refresh, NULL);
-	query_connect(&readline_plugin, TEXT("ui-window-clear"), readline_ui_window_clear, NULL);
-	query_connect(&readline_plugin, TEXT("variable-changed"), readline_variable_changed, NULL);
-	query_connect(&readline_plugin, TEXT("ui-loop"), ekg2_readline_loop, NULL);
+	query_connect(&readline_plugin, ("ui-beep"), readline_beep, NULL);
+	query_connect(&readline_plugin, ("ui-is-initialized"), readline_ui_is_initialized, NULL);
+	query_connect(&readline_plugin, ("ui-window-new"), readline_ui_window_new, NULL);
+	query_connect(&readline_plugin, ("ui-window-switch"), readline_ui_window_switch, NULL);
+	query_connect(&readline_plugin, ("ui-window-kill"), readline_ui_window_kill, NULL);
+	query_connect(&readline_plugin, ("ui-window-print"), readline_ui_window_print, NULL);
+	query_connect(&readline_plugin, ("ui-window-refresh"), readline_ui_window_refresh, NULL);
+	query_connect(&readline_plugin, ("ui-window-clear"), readline_ui_window_clear, NULL);
+	query_connect(&readline_plugin, ("variable-changed"), readline_variable_changed, NULL);
+	query_connect(&readline_plugin, ("ui-loop"), ekg2_readline_loop, NULL);
 
-	variable_add(&readline_plugin, TEXT("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
+	variable_add(&readline_plugin, ("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
 
 	watch_add(&readline_plugin, 0, WATCH_READ, readline_watch_stdin, NULL);
 

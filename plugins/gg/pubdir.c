@@ -207,7 +207,7 @@ COMMAND(gg_command_unregister)
 	struct gg_http *h;
 	watch_t *w;
 	uin_t uin;
-	CHAR_T *passwd;
+	char *passwd;
 	char *cppasswd;
 
         if (!last_tokenid) {
@@ -317,7 +317,7 @@ COMMAND(gg_command_passwd)
 	struct gg_http *h;
 	watch_t *w;
 
-	CHAR_T *newpasswd, *oldpasswd;
+	char *newpasswd, *oldpasswd;
 	char *cppasswd, *cpoldpasswd;
 
 	oldpasswd = xstrdup(session_get(session, "password"));
@@ -439,7 +439,7 @@ COMMAND(gg_command_list)
 /* moze mi ktos qrwa powiedziec po co bylo to passwd ? tylko byly memleaki i jakies goto.... */
 	gg_private_t *g = session_private_get(session);
 	/* list --get */
-	if (params[0] && match_arg(params[0], 'g', TEXT("get"), 2)) {
+	if (params[0] && match_arg(params[0], 'g', ("get"), 2)) {
                 if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
                         printq("userlist_get_error", strerror(errno));
 			return -1;
@@ -448,7 +448,7 @@ COMMAND(gg_command_list)
 	}
 
 	/* list --clear */
-	if (params[0] && match_arg(params[0], 'c', TEXT("clear"), 2)) {
+	if (params[0] && match_arg(params[0], 'c', ("clear"), 2)) {
                 if (gg_userlist_request(g->sess, GG_USERLIST_PUT, NULL) == -1) {
                         printq("userlist_clear_error", strerror(errno));
                         return -1;
@@ -458,8 +458,8 @@ COMMAND(gg_command_list)
 	}
 	
 	/* list --put */
-	if (params[0] && (match_arg(params[0], 'p', TEXT("put"), 2))) {
-		CHAR_T *contacts = userlist_dump(session);
+	if (params[0] && (match_arg(params[0], 'p', ("put"), 2))) {
+		char *contacts = userlist_dump(session);
 		char *cpcontacts;
 
 		cpcontacts = gg_locale_to_cp(contacts);
