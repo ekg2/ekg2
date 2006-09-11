@@ -2,7 +2,5 @@ EXTRA_DIST = README vars-pl.txt commands-pl.txt events.txt mouse.txt sim.txt the
 
 install-data-am:
 	$(INSTALL) -m 644 vars-pl.txt $(DESTDIR)$(pkgdatadir)
-	$(INSTALL) -m 644 vars-pl-utf.txt $(DESTDIR)$(pkgdatadir)
 	$(INSTALL) -m 644 commands-pl.txt $(DESTDIR)$(pkgdatadir)
-	$(INSTALL) -m 644 commands-pl-utf.txt $(DESTDIR)$(pkgdatadir)
 

@@ -1,4 +1,4 @@
-EXTRA_DIST = vars-pl.txt vars-pl-utf.txt
+EXTRA_DIST = vars-pl.txt 
 
 lib_LTLIBRARIES = mail.la
 mail_la_SOURCES = main.c
