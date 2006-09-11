@@ -38,27 +38,27 @@ static int xosd_theme_init();
 PLUGIN_DEFINE(xosd, PLUGIN_GENERIC, xosd_theme_init);
 
 /* variables from xosd.h */
-char	*xosd_colour;
-char 	*xosd_font;
-char 	*xosd_outline_colour;
-char 	*xosd_shadow_colour;
+static char	*xosd_colour;
+static char 	*xosd_font;
+static char 	*xosd_outline_colour;
+static char 	*xosd_shadow_colour;
 
-int 	xosd_display_filter;
-int 	xosd_display_notify;
-int 	xosd_display_timeout;
-int 	xosd_display_welcome;
-int 	xosd_horizontal_offset;
-int	xosd_horizontal_position;
-int 	xosd_outline_offset;
-int 	xosd_shadow_offset;
-int 	xosd_short_messages;
-int 	xosd_text_limit;
-int 	xosd_vertical_offset;
-int 	xosd_vertical_position;
+static int 	xosd_display_filter;
+static int 	xosd_display_notify;
+static int 	xosd_display_timeout;
+static int 	xosd_display_welcome;
+static int 	xosd_horizontal_offset;
+static int	xosd_horizontal_position;
+static int 	xosd_outline_offset;
+static int 	xosd_shadow_offset;
+static int 	xosd_short_messages;
+static int 	xosd_text_limit;
+static int 	xosd_vertical_offset;
+static int 	xosd_vertical_position;
 
-xosd *osd;
+static xosd *osd;
 
-int xosd_show_message(char *line1, char *line2)
+static int xosd_show_message(char *line1, char *line2)
 {
 	if (xosd_font && xosd_set_font(osd, xosd_font)) {
 		debug("xosd: font error: %s\n", xosd_error);
@@ -119,7 +119,7 @@ int xosd_show_message(char *line1, char *line2)
 	return 0; 
 }
 
-COMMAND(xosd_command_msg) 
+static COMMAND(xosd_command_msg) 
 {
 	PARASC
 	xosd_show_message((char *) params[0], NULL);
@@ -302,7 +302,7 @@ static TIMER(xosd_display_welcome_message) /* temporary timer */
 	return -1;
 }
 
-QUERY(xosd_setvar_default)
+static QUERY(xosd_setvar_default)
 {
 	xfree(xosd_colour);
 	xfree(xosd_font);
