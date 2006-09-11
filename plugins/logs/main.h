@@ -72,17 +72,17 @@ static void logs_xml	(FILE *file, const char *session, const char *uid, const ch
 static void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip);
 static void logs_gaim();
 
-list_t log_logs = NULL; 
-list_t log_awaylog = NULL;
+static list_t log_logs = NULL; 
+static list_t log_awaylog = NULL;
 
-int config_away_log = 0;
-int config_logs_log;
-int config_logs_log_raw;
-int config_logs_log_ignored;
-int config_logs_log_status;
-int config_logs_remind_number = 0;
-int config_logs_max_files = 7;
-char *config_logs_path;
-char *config_logs_timestamp;
+static int config_away_log = 0;
+static int config_logs_log;
+static int config_logs_log_raw;
+static int config_logs_log_ignored;
+static int config_logs_log_status;
+static int config_logs_remind_number = 0;
+static int config_logs_max_files = 7;
+static char *config_logs_path;
+static char *config_logs_timestamp;
 
 #endif

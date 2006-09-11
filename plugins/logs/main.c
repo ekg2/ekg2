@@ -75,7 +75,7 @@ PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
 
-logs_log_t *log_curlog = NULL;
+static logs_log_t *log_curlog = NULL;
 
 	/* log ff types... */
 typedef enum {
