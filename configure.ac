@@ -259,14 +259,6 @@ if test "x$with_zlib" != "xno"; then
 	])
 fi
 
-AC_ARG_ENABLE([unicode],	AC_HELP_STRING([--enable-unicode],		[Enable unicode (EXPERIMENTAL)]),
-    [
-        if test "x$enable_unicode" = "xyes"; then
-            AC_DEFINE([USE_UNICODE], 1, [Use unicode (wide character strings)])
-        fi
-    ]
-)
-
 dnl #######################################################################################################################
 
 AC_ARG_WITH(ioctld,		AC_HELP_STRING([--without-ioctld],		[Compile without ioctld (ioctld plugin)]))
