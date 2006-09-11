@@ -598,7 +598,7 @@ static COMMAND(gg_command_msg) {
               wcs_printq("message_too_long");
 	}
 
-	msg = xwcsmid(params[1], 0, 1989);
+	msg = xstrmid(params[1], 0, 1989);
 	ekg_format = ekg_sent_message_format(msg);
 
 	/* analiz�tekstu zrobimy w osobnym bloku dla porzdku */

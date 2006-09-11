@@ -1856,36 +1856,6 @@ char *xstrmid(const char *str, int start, int length)
 	return res;
 }
 
-CHAR_T *xwcsmid(const CHAR_T *str, int start, int length)
-{
-	CHAR_T *res, *q;
-	const CHAR_T *p;
-
-	if (!str)
-		return xwcsdup(TEXT(""));
-
-	if (start > xwcslen(str))
-		start = xwcslen(str);
-
-	if (length == -1)
-		length = xwcslen(str) - start;
-
-	if (length < 1)
-		return xwcsdup(TEXT(""));
-
-	if (length > xwcslen(str) - start)
-		length = xwcslen(str) - start;
-	
-	res = xmalloc((length + 1)*sizeof(CHAR_T));
-	
-	for (p = str + start, q = res; length; p++, q++, length--)
-		*q = *p;
-
-	*q = 0;
-
-	return res;
-}
-
 struct color_map color_map_default[26] = {
 	{ 'k', 0, 0, 0 },
 	{ 'r', 168, 0, 0, },
@@ -1982,11 +1952,6 @@ char *strcasestr(const char *haystack, const char *needle)
 	}
 
 	return NULL;
-}
-
-CHAR_T *wcscasestr(const CHAR_T *haystack, const CHAR_T *needle)
-{
-	return strcasestr(haystack, needle);
 }
 
 /*
