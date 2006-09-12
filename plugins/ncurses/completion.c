@@ -699,7 +699,8 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 {
 	char *start, **words, *separators;
 	char *cmd;
-	int i, count, word, j, words_count, word_current, open_quote, lenght;
+	int i, count, word, j, words_count, word_current, open_quote;
+	size_t linelen;
 
 	/* 
 	 * sprawdzamy czy mamy kontynuowaæ dope³nianie (przeskakiwaæ miêdzy dope³nianymi wyrazami 
@@ -769,31 +770,32 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	if (continue_complete) {
 		xstrcpy(line, last_line_without_complete);
 	}
+	linelen = xstrlen(line);
 
 	/* zerujemy co mamy */
-	start = xmalloc((xstrlen(line) + 1)*sizeof(char));
+	start = xmalloc((linelen + 1)*sizeof(char));
 	words = NULL;
 	count = 0;
 
 	/* podziel (uwzglêdniaj±c cudzys³owia)*/
-	for (i = 0, j = 0, open_quote = 0; i < xstrlen(line); i++) {
+	for (i = 0, j = 0, open_quote = 0; i < linelen; i++) {
 		if(line[i] == '"') {
-			for(j = 0,  i++; i < xstrlen(line) && line[i] != '"'; i++, j++)
+			for(j = 0,  i++; i < linelen && line[i] != '"'; i++, j++)
 				start[j] = line[i];
-			if (i == xstrlen(line))
+			if (i == linelen)
 				open_quote = 1;
 		} else
-			for(j = 0; i < xstrlen(line) && !xisspace(line[i]) && line[i] != ','; j++, i++)
+			for(j = 0; i < linelen && !xisspace(line[i]) && line[i] != ','; j++, i++)
 				start[j] = line[i];
 		start[j] = '\0';
 		/* "przewijamy" wiêksz± ilo¶æ spacji */
-		for(i++; i < xstrlen(line) && (xisspace(line[i]) || line[i] == ','); i++);
+		for(i++; i < linelen && (xisspace(line[i]) || line[i] == ','); i++);
 		i--;
 		array_add(&words, xstrdup(start));
 	}
 
 	/* je¿eli ostatnie znaki to spacja, albo przecinek to trzeba dodaæ jeszcze pusty wyraz do words */
-	if (xstrlen(line) > 1 && (line[xstrlen(line) - 1] == ' ' || line[xstrlen(line) - 1] == ',') && !open_quote)
+	if (linelen > 1 && (line[linelen - 1] == ' ' || line[linelen - 1] == ',') && !open_quote)
 		array_add(&words, xstrdup(("")));
 
 /*	 for(i = 0; i < array_count(words); i++)
@@ -806,20 +808,20 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		separators = NULL;
 
 	/* sprawd¼, gdzie jeste¶my (uwzgêdniaj±c cudzys³owia) i dodaj separatory*/
-	for (word = 0, i = 0; i < xstrlen(line); i++, word++) {
+	for (word = 0, i = 0; i < linelen; i++, word++) {
 		if(line[i] == '"')  {
-			for(j = 0, i++; i < xstrlen(line) && line[i] != '"'; j++, i++)
+			for(j = 0, i++; i < linelen && line[i] != '"'; j++, i++)
 				start[j] = line[i];
 		} else {
-			for(j = 0; i < xstrlen(line) && !xisspace(line[i]) && line[i] != ','; j++, i++)
+			for(j = 0; i < linelen && !xisspace(line[i]) && line[i] != ','; j++, i++)
 				start[j] = line[i];
 		}
 		/* "przewijamy */
-		for(i++; i < xstrlen(line) && (xisspace(line[i]) || line[i] == ','); i++);
+		for(i++; i < linelen && (xisspace(line[i]) || line[i] == ','); i++);
 		/* ustawiamy znak koñca */
 		start[j] = '\0';
 		/* je¿eli to koniec linii, to koñczymy t± zabawê */
-		if(i >= xstrlen(line))
+		if(i >= linelen)
 	    		break;
 		/* obni¿amy licznik o 1, ¿eby wszystko by³o okey, po "przewijaniu" */
 		i--;
@@ -829,17 +831,17 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	}
 
 	/* dodajmy separatory - pewne rzeczy podobne do pêtli powy¿ej */
-	for (i = 0, j = 0; i < xstrlen(line); i++, j++) {
+	for (i = 0, j = 0; i < linelen; i++, j++) {
 		if(line[i] == '"')  {
-			for(i++; i < xstrlen(line) && line[i] != '"'; i++);
-			if(i < xstrlen(line)) 
+			for(i++; i < linelen && line[i] != '"'; i++);
+			if(i < linelen) 
 				separators[j] = line[i + 1];
 		} else {
-			for(; i < xstrlen(line) && !xisspace(line[i]) && line[i] != ','; i++);
+			for(; i < linelen && !xisspace(line[i]) && line[i] != ','; i++);
 			separators[j] = line[i];
 		}
 
-		for(i++; i < xstrlen(line) && (xisspace(line[i]) || line[i] == ','); i++);
+		for(i++; i < linelen && (xisspace(line[i]) || line[i] == ','); i++);
 		i--;
 	}
 
@@ -847,12 +849,12 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		separators[j] = '\0'; // koniec ciagu
 	
 	/* aktualny wyraz bez uwzgledniania przecinkow */
-	for (i = 0, words_count = 0, word_current = 0; i < xstrlen(line); i++, words_count++) {
-		for(; i < xstrlen(line) && !xisspace(line[i]); i++)
+	for (i = 0, words_count = 0, word_current = 0; i < linelen; i++, words_count++) {
+		for(; i < linelen && !xisspace(line[i]); i++)
 			if(line[i] == '"') 
-				for(i++; i < xstrlen(line) && line[i] != '"'; i++);
-		for(i++; i < xstrlen(line) && xisspace(line[i]); i++);
-		if(i >= xstrlen(line)) {
+				for(i++; i < linelen && line[i] != '"'; i++);
+		for(i++; i < linelen && xisspace(line[i]); i++);
+		if(i >= linelen) {
 			word_current = words_count + 1;
 			break;
 		}
@@ -863,14 +865,13 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
                         break;
 	}
 	words_count = array_count(words);
-	lenght = xstrlen(line);
-	if (lenght) {
+	if (linelen) {
 		/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
-	        if (xisspace(line[lenght - 1]))
+	        if (xisspace(line[linelen - 1]))
         	        word_current++;
-		if ((xisspace(line[lenght - 1]) || line[lenght - 1] == ',') && word + 1== array_count(words) -1 )
+		if ((xisspace(line[linelen - 1]) || line[linelen - 1] == ',') && word + 1== array_count(words) -1 )
 			word++;
-		if (xisspace(line[lenght - 1]))
+		if (xisspace(line[linelen - 1]))
 			words_count++;
 	}
 
@@ -889,7 +890,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		int cnt = continue_complete_count;
 
 		count = array_count(completions);
-		line[0] = '\0';
+		line[0] = '\0';			linelen = 0;
 		if (continue_complete_count >= count - 1)
 			continue_complete_count = 0;
 		else
@@ -906,7 +907,8 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 						xstrncat(line, completions[cnt] + 1, xstrlen(completions[cnt]) - 1);
 				} else
 			    		xstrcat(line, completions[cnt]);
-				*line_index = xstrlen(line) + 1;
+				linelen = xstrlen(line);
+				*line_index = linelen + 1;
 			} else {
 				if(xstrchr(words[i], (' '))) {
 					char *tmp = 
@@ -1026,7 +1028,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
 exact_match: 
 		/* for /set maybe we want to complete the file path */
-		if (!xstrncmp(cmd, ("set"), xstrlen(("set"))) && words[1] && words[2] && word_current == 3) {
+		if (!xstrncmp(cmd, "set", 3) && words[1] && words[2] && word_current == 3) {
 			variable_t *v;
 
 			if ((v = variable_find(words[1]))) {
