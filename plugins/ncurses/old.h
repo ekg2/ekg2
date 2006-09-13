@@ -12,8 +12,6 @@ void ncurses_deinit();
 
 extern plugin_t ncurses_plugin;
 
-extern int ncurses_screen_width;
-extern int ncurses_screen_height;
 // int ncurses_resize_term;
 
 extern int ncurses_plugin_destroyed;

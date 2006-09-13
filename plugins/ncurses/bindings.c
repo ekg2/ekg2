@@ -59,11 +59,11 @@ static BINDING_FUNCTION(binding_backward_word)
 		line_index--;
 }
 
-static BINDING_FUNCTION(binding_forward_word)
-{
-	while (line_index < xwcslen(line) && __S(line, line_index) == ' ')
+static BINDING_FUNCTION(binding_forward_word) {
+	size_t linelen = xwcslen(line);
+	while (line_index < linelen && __S(line, line_index) == ' ')
 		line_index++;
-	while (line_index < xwcslen(line) && __S(line, line_index) != ' ')
+	while (line_index < linelen && __S(line, line_index) != ' ')
 		line_index++;
 }
 
@@ -363,10 +363,10 @@ static BINDING_FUNCTION(binding_backward_char)
 		line_index--;
 }
 
-static BINDING_FUNCTION(binding_forward_char)
-{
+static BINDING_FUNCTION(binding_forward_char) {
+	size_t linelen = xwcslen(line);
 	if (lines) {
-		if (line_index < xwcslen(line))
+		if (line_index < linelen)
 			line_index++;
 		else {
 			if (lines_index < array_count((char **) lines) - 1) {
@@ -380,7 +380,7 @@ static BINDING_FUNCTION(binding_forward_char)
 		return;
 	}
 
-	if (line_index < xwcslen(line))
+	if (line_index < linelen)
 		line_index++;
 }
 

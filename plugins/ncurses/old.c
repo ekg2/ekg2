@@ -53,7 +53,6 @@
 #include "contacts.h"
 #include "mouse.h"
 
-
 WINDOW *ncurses_status	= NULL;		/* okno stanu */
 WINDOW *ncurses_header	= NULL;		/* okno nag³ówka */
 WINDOW *ncurses_input	= NULL;		/* okno wpisywania tekstu */
@@ -72,8 +71,8 @@ int ncurses_lines_index = 0;		/* w której linii jeste¶my? */
 int ncurses_input_size = 1;		/* rozmiar okna wpisywania tekstu */
 int ncurses_debug = 0;			/* debugowanie */
 
-int ncurses_screen_height;
-int ncurses_screen_width;
+static int ncurses_screen_height;
+static int ncurses_screen_width;
 
 static struct termios old_tio;
 
@@ -81,9 +80,8 @@ int winch_pipe[2];
 int have_winch_pipe = 0;
 #ifdef WITH_ASPELL
 #  define ASPELLCHAR 5
-AspellConfig * spell_config;
-AspellSpeller * spell_checker = 0;
-char *aspell_line;
+static AspellSpeller *spell_checker = NULL;
+static AspellConfig  *spell_config  = NULL;
 #endif
 
 /*
@@ -92,37 +90,38 @@ char *aspell_line;
  * it inializes dictionary
  */
 #ifdef WITH_ASPELL
-void ncurses_spellcheck_init(void)
-{
-        AspellCanHaveError * possible_err;
+void ncurses_spellcheck_init(void) {
+        AspellCanHaveError *possible_err;
+
         if (!config_aspell || !config_console_charset || !config_aspell_lang) {
 	/* jesli nie chcemy aspella to wywalamy go z pamieci */
-		delete_aspell_speller(spell_checker);
+		if (spell_checker)	delete_aspell_speller(spell_checker);
+		if (spell_config)	delete_aspell_config(spell_config);
 		spell_checker = NULL;
+		spell_config = NULL;
 		debug("Maybe config_console_charset, aspell_lang or aspell variable is not set?\n");
 		return;
 	}
-	
+
 	wcs_print("aspell_init");
 	
-        if (spell_checker) {
-                delete_aspell_speller(spell_checker);
-                spell_checker = NULL;
-        }
+        if (spell_checker)	{ delete_aspell_speller(spell_checker);	spell_checker = NULL; }
+	if (!spell_config) 	spell_config = new_aspell_config();
+	aspell_config_replace(spell_config, "encoding", config_console_charset);
+	aspell_config_replace(spell_config, "lang", config_aspell_lang);
+	possible_err = new_aspell_speller(spell_config);
+	/* delete_aspell_config(spell_config); ? */
 
-        spell_config = new_aspell_config();
-        aspell_config_replace(spell_config, "encoding", config_console_charset);
-        aspell_config_replace(spell_config, "lang", config_aspell_lang);
-        possible_err = new_aspell_speller(spell_config);
-
-        if (aspell_error_number(possible_err) != 0) {
-	    spell_checker = NULL;
-            debug("Aspell error: %s\n", aspell_error_message(possible_err));
-	    print("aspell_init_error", aspell_error_message(possible_err));
-            config_aspell = 0;
-        } else {
-            spell_checker = to_aspell_speller(possible_err);
-	    wcs_print("aspell_init_success");
+	if (aspell_error_number(possible_err) != 0) {
+		spell_checker = NULL;
+		debug("Aspell error: %s\n", aspell_error_message(possible_err));
+		print("aspell_init_error", aspell_error_message(possible_err));
+		config_aspell = 0;
+		delete_aspell_config(spell_config);
+		spell_config = NULL;
+	} else {
+		spell_checker = to_aspell_speller(possible_err);
+		wcs_print("aspell_init_success");
 	}
 }
 #endif
@@ -133,8 +132,14 @@ void ncurses_spellcheck_init(void)
  * zwraca numer COLOR_PAIR odpowiadaj±cej danej parze atrybutów: kolorze
  * tekstu (plus pogrubienie) i kolorze t³a.
  */
-static int color_pair(int fg, int bold, int bg)
-{
+static int color_pair(int fg, int bold, int bg) {
+	if (!config_display_color) {
+		if (bg != COLOR_BLACK)
+			return A_REVERSE;
+		else
+			return A_NORMAL | ((bold) ? A_BOLD : 0);
+	}
+
 	if (fg >= 8) {
 		bold = 1;
 		fg &= 7;
@@ -146,13 +151,6 @@ static int color_pair(int fg, int bold, int bg)
 		fg = 0;
 	}
 
-	if (!config_display_color) {
-		if (bg != COLOR_BLACK)
-			return A_REVERSE;
-		else
-			return A_NORMAL | ((bold) ? A_BOLD : 0);
-	}
-		
 	return COLOR_PAIR(fg + 8 * bg) | ((bold) ? A_BOLD : 0);
 }
 
@@ -947,20 +945,20 @@ static void update_header(int commit)
  * window_printat()
  *
  * wy¶wietla dany tekst w danym miejscu okna.
- *
- *  - w - okno ncurses, do którego piszemy
+ *	(w == ncurses_header || ncurses_status)
  *  - x, y - wspó³rzêdne, od których zaczynamy
  *  - format - co mamy wy¶wietliæ
  *  - data - dane do podstawienia w formatach
  *  - fgcolor - domy¶lny kolor tekstu
  *  - bold - domy¶lne pogrubienie
  *  - bgcolor - domy¶lny kolor t³a
- *  - status - czy to pasek stanu albo nag³ówek okna?
  *
  * zwraca ilo¶æ dopisanych znaków.
  */
-static int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, int fgcolor, int bold, int bgcolor, int status)
-{
+
+/* 13 wrz 06 	removed status cause it was always 1 (dj)  */
+		
+static int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, int fgcolor, int bold, int bgcolor) {
 	int orig_x = x;
 	int backup_display_color = config_display_color;
 	char *format = (char*) format_;
@@ -974,13 +972,12 @@ static int window_printat(WINDOW *w, int x, int y, const char *format_, void *da
 
 	p = format;
 
-	if (status && config_display_color == 2)
-		config_display_color = 0;
+	if (config_display_color == 2)	config_display_color = 0;
 
 	if (!w)
 		return -1;
 	
-	if (status && x == 0) {
+	if (x == 0) {
 		int i;
 
 		wattrset(w, color_pair(fgcolor, 0, bgcolor));
@@ -1141,7 +1138,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format_, void *da
 					p += len + 1;
 
 					if (matched)
-						x += window_printat(w, x, y, p, data, fgcolor, bold, bgcolor, status);
+						x += window_printat(w, x, y, p, data, fgcolor, bold, bgcolor);
 					goto next;
 				}
 			}
@@ -1298,7 +1295,7 @@ void update_statusbar(int commit)
 			xfree(tmp);
 		}
 
-		window_printat(ncurses_header, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+		window_printat(ncurses_header, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE);
 	}
 
 	for (y = 0; y < config_statusbar_size; y++) {
@@ -1317,13 +1314,13 @@ void update_statusbar(int commit)
 
 		switch (ncurses_debug) {
 			case 0:
-				window_printat(ncurses_status, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				window_printat(ncurses_status, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE);
 				break;
 				
 			case 1:
 			{
 				char *tmp = saprintf(" debug: lines_count=%d start=%d height=%d overflow=%d screen_width=%d", ncurses_current->lines_count, ncurses_current->start, window_current->height, ncurses_current->overflow, ncurses_screen_width);
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
 				xfree(tmp);
 				break;
 			}
@@ -1331,7 +1328,7 @@ void update_statusbar(int commit)
 			case 2:
 			{
 				char *tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count((char **) ncurses_lines), lines_start, lines_index, line_start, line_index);
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
 				xfree(tmp);
 				break;
 			}
@@ -1340,7 +1337,7 @@ void update_statusbar(int commit)
 			{
 				session_t *s = window_current->session;
 				char *tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s session_current->uid=%s", s, (s && s->uid) ? s->uid : "", (s && s->alias) ? s->alias : "", (window_current->target) ? window_current->target : "", (session_current && session_current->uid) ? session_current->uid : "");
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE, 1);
+				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
 				xfree(tmp);
 				break;
 			}
@@ -1420,6 +1417,9 @@ static void sigwinch_handler()
 void ncurses_init()
 {
 	int background = COLOR_BLACK;
+
+	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
+	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
 
 	initscr();
 	cbreak();
@@ -1585,10 +1585,10 @@ void ncurses_line_adjust()
 	int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_len;
 
 	line_index = xwcslen(ncurses_line);
-	if (xwcslen(ncurses_line) < input->_maxx - 9 - prompt_len)
+	if (line_index < input->_maxx - 9 - prompt_len)
 		line_start = 0;
 	else
-		line_start = xwcslen(ncurses_line) - xwcslen(ncurses_line) % (input->_maxx - 9 - prompt_len);
+		line_start = line_index - line_index % (input->_maxx - 9 - prompt_len);
 }
 
 /*
@@ -1596,8 +1596,8 @@ void ncurses_line_adjust()
  *
  * poprawia kursor po przesuwaniu go w pionie.
  */
-void ncurses_lines_adjust()
-{
+void ncurses_lines_adjust() {
+	size_t linelen;
 	if (lines_index < lines_start)
 		lines_start = lines_index;
 
@@ -1606,8 +1606,9 @@ void ncurses_lines_adjust()
 
 	ncurses_line = ncurses_lines[lines_index];
 
-	if (line_index > xwcslen(ncurses_line))
-		line_index = xwcslen(ncurses_line);
+	linelen = xwcslen(ncurses_line);
+	if (line_index > linelen)	
+		line_index = linelen;
 }
 
 /*
@@ -1657,19 +1658,20 @@ void ncurses_input_update()
  * print_char()
  *
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
+ * 	gdy attr A_UNDERLINE wtedy podkreslony
  */
-static void print_char(WINDOW *w, int y, int x, CHAR_T ch)
+static void print_char(WINDOW *w, int y, int x, CHAR_T ch, int attr)
 {
-	wattrset(w, A_NORMAL);
+	wattrset(w, attr);
 
 	if (ch < 32) {
-		wattrset(w, A_REVERSE);
+		wattrset(w, A_REVERSE | attr);
 		ch += 64;
 	}
 
 	if (ch >= 128 && ch < 160) {
 		ch = '?';
-		wattrset(w, A_REVERSE);
+		wattrset(w, A_REVERSE | attr);
 	}
 #if USE_UNICODE
 	if (config_use_unicode)
@@ -1678,33 +1680,6 @@ static void print_char(WINDOW *w, int y, int x, CHAR_T ch)
 #endif
 		mvwaddch(w, y, x, ch);
 	wattrset(w, A_NORMAL);
-}
-
-/*
- * print_char_underlined()
- *
- * wy¶wietla w danym okienku podkreslony znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
- */
-static void print_char_underlined(WINDOW *w, int y, int x, CHAR_T ch)
-{
-        wattrset(w, A_UNDERLINE);
-
-        if (ch < 32) {
-                wattrset(w, A_REVERSE | A_UNDERLINE);
-                ch += 64;
-        }
-
-        if (ch >= 128 && ch < 160) {
-                ch = '?';
-                wattrset(w, A_REVERSE | A_UNDERLINE);
-        }
-#if USE_UNICODE
-	if (config_use_unicode)
-		mvwaddnwstr(w, y, x, &ch, 1);
-	else
-#endif
-	        mvwaddch(w, y, x, ch);
-        wattrset(w, A_NORMAL);
 }
 
 /* 
@@ -1747,17 +1722,10 @@ static int ekg_getch(int meta, unsigned int *ch) {
 			last_btn -= 32;
 
 			switch (last_btn) {
-                                case 0:
-                                        mouse_state = (clicks) ? EKG_BUTTON1_DOUBLE_CLICKED : EKG_BUTTON1_CLICKED;
-                                        break;
-                                case 1:
-                                        mouse_state = (clicks) ? EKG_BUTTON2_DOUBLE_CLICKED : EKG_BUTTON2_CLICKED;
-                                        break;
-                                case 2:
-                                        mouse_state = (clicks) ? EKG_BUTTON3_DOUBLE_CLICKED : EKG_BUTTON3_CLICKED;
-                                        break;
-				default:
-					break;
+                                case 0: mouse_state = (clicks) ? EKG_BUTTON1_DOUBLE_CLICKED : EKG_BUTTON1_CLICKED;	break;
+                                case 1: mouse_state = (clicks) ? EKG_BUTTON2_DOUBLE_CLICKED : EKG_BUTTON2_CLICKED;	break;
+                                case 2: mouse_state = (clicks) ? EKG_BUTTON3_DOUBLE_CLICKED : EKG_BUTTON3_CLICKED;	break;
+				default:										break;
 			}
 
 	 		last_btn = 0;
@@ -1859,12 +1827,11 @@ WATCHER(ncurses_watch_winch)
  */
 #ifdef WITH_ASPELL
 static void spellcheck(CHAR_T *what, char *where) {
-/* XXX, may be faulty in real unicode env */
+/* XXX, may be faulty in unicode */
 
         char *word;             /* aktualny wyraz */
 	register int i = 0;     /* licznik */
 	register int j = 0;     /* licznik */
-	int size;	/* zmienna tymczasowa */
 
 	/* Sprawdzamy czy nie mamy doczynienia z 47 (wtedy nie sprawdzamy reszty ) */
 	if (!what || __S(what, 0) == 47)
@@ -1872,8 +1839,8 @@ static void spellcheck(CHAR_T *what, char *where) {
 	    
 	for (i = 0; __S(what, i) != '\0' && __S(what, i) != '\n' && __S(what, i) != '\r'; i++) {
 		if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) { // separator/koniec lini/koniec stringu
-			size = xwcslen(what) + 1;
-			word = xmalloc(size*sizeof(char));
+			word = xmalloc((xwcslen(what) + 1)*sizeof(char));
+			size_t wordlen;		/* len of word */
 		
 			for (; __S(what, i) != '\0' && __S(what, i) != '\n' && __S(what, i) != '\r'; i++) {
 				if (isalpha_pl(__S(what, i))) /* szukamy jakiejs pierwszej literki */
@@ -1929,13 +1896,14 @@ static void spellcheck(CHAR_T *what, char *where) {
 				i--;
 
 /*			debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
+			wordlen = j;			/* xstrlen(word) */
 
 			/* sprawdzamy pisownie tego wyrazu */
 			if (aspell_speller_check(spell_checker, word, xstrlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
-				for (j = xstrlen(word) - 1; j >= 0; j--)
+				for (j = wordlen - 1; j >= 0; j--)
 					where[i - j] = ASPELLCHAR;
 			} else { /* jesli wyraz jest napisany poprawnie */
-				for (j = xstrlen(word) - 1; j >= 0; j--)
+				for (j = wordlen - 1; j >= 0; j--)
 					where[i - j] = ' ';
 			}
 aspell_loop_end:
@@ -1957,6 +1925,7 @@ WATCHER(ncurses_watch_stdin)
 	unsigned int tmp;
 	unsigned int ch;
 #ifdef WITH_ASPELL
+	char *aspell_line = NULL;
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
 
@@ -2112,7 +2081,7 @@ then:
 		if (line_start < 0)
 			line_start = 0;
 	}
-	
+
 	werase(input);
 	wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 
@@ -2122,70 +2091,67 @@ then:
 		for (i = 0; i < 5; i++) {
 			CHAR_T *p;
 			int j;
+			size_t plen;
 
 			if (!ncurses_lines[lines_start + i])
 				break;
 
 			p = ncurses_lines[lines_start + i];
+			plen = xwcslen(p);
 #ifdef WITH_ASPELL
 			if (spell_checker) {
-				aspell_line = xmalloc(xwcslen(p));
+				aspell_line = xmalloc(plen);
 				if (line_start == 0) 
 					mispelling = 0;
 					    
 				spellcheck(p, aspell_line);
 	                }
-
-			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
-                        {                                 
-			    if (spell_checker && aspell_line[line_start + j] == ASPELLCHAR && p[line_start + j] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-	                            print_char_underlined(input, i, j, __S(p, line_start + j));
-                            else /* jesli jest wszystko okey to wyswietlamy normalny */
-	   			    print_char(input, i, j, __S(p, j + line_start));
+#endif
+			for (j = 0; j + line_start < plen && j < input->_maxx + 1; j++) { 
+#ifdef WITH_ASPELL
+				if (aspell_line && aspell_line[line_start + j] == ASPELLCHAR && __S(p, line_start + j) != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+					print_char(input, i, j, __S(p, line_start + j), A_UNDERLINE);
+				else	/* jesli jest wszystko okey to wyswietlamy normalny */
+#endif					/* lub nie mamy aspella */
+					print_char(input, i, j, __S(p, j + line_start), A_NORMAL);
 			}
-
-			if (spell_checker)	
-				xfree(aspell_line);
-#else
-			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
-				print_char(input, i, j, __S(p, j + line_start));
+#ifdef WITH_ASPELL
+			xfree(aspell_line);
 #endif
 		}
 		wmove(input, lines_index - lines_start, line_index - line_start);
 	} else {
 		int i;
+		/* const */size_t linelen = xwcslen(ncurses_line);
 
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
-			aspell_line = xmalloc(xwcslen(ncurses_line) + 1);
+			aspell_line = xmalloc(linelen + 1);
 			if (line_start == 0) 
 				mispelling = 0;
 	
 			spellcheck(ncurses_line, aspell_line);
 		}
-
-                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xwcslen(ncurses_line) - line_start; i++)
-                {
+#endif
+                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < linelen - line_start; i++) {
+#ifdef WITH_ASPELL
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && __S(ncurses_line, line_start + i) != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-                        	print_char_underlined(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i));
-                        else /* jesli jest wszystko okey to wyswietlamy normalny */
-                                print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i));
+                        	print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i), A_UNDERLINE);
+                        else 	/* jesli jest wszystko okey to wyswietlamy normalny */
+#endif				/* lub gdy nie mamy aspella */
+                                print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i), A_NORMAL);
 		}
-
-		if (spell_checker)
-			xfree(aspell_line);
-#else
- 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xwcslen(ncurses_line) - line_start; i++)
-			print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i));
+#ifdef WITH_ASPELL
+		xfree(aspell_line);
 #endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
 		if (ch == 3) ncurses_commit();
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
 			mvwaddch(input, 0, ncurses_current->prompt_len, '<');
-		if (xwcslen(ncurses_line) - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
+		if (linelen - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
 			mvwaddch(input, 0, input->_maxx, '>');
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);

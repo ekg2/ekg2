@@ -81,13 +81,9 @@ static QUERY(ncurses_statusbar_query)
 static QUERY(ncurses_ui_is_initialized)
 {
         int *tmp = va_arg(ap, int *);
-	
-	if (ncurses_initialized)
-		*tmp = 1;
-	else
-		*tmp = 0;	
 
-	return 0;
+	if ((*tmp = ncurses_initialized))	return -1;
+	else					return 0;
 }
 
 
@@ -546,9 +542,6 @@ int ncurses_plugin_init(int prio)
 	watch_add(&ncurses_plugin, 0, WATCH_READ, ncurses_watch_stdin, NULL);
 	signal(SIGINT, ncurses_sigint_handler);
 	timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL);
-
-	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
-	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
 
 	ncurses_init();
 	

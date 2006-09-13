@@ -351,10 +351,8 @@ int ncurses_contacts_update(window_t *w)
 	newconference_t *c	= NULL;
 	list_t sorted_all	= NULL;
 	
-	if (!w) {
-		if (!(w = window_find("__contacts")))
-			return -1;
-	}
+	if (!w) w = window_find("__contacts");
+	if (!w) return -1;
 
 	n = w->private;
 	
@@ -552,13 +550,12 @@ group_cleanup:
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
 				format = format_find(tmp);
-                                line = format_string(format);
-                                string = fstring_new(line);
-				if (xstrcmp(format, "") && count_all >= contacts_index) 
+				if (xstrcmp(format, "") && count_all >= contacts_index) {
+                                	line = format_string(format);
+                                	string = fstring_new(line);
 					ncurses_backlog_add(w, string);
-				else
-					fstring_free(string);
-                                xfree(line);
+                                	xfree(line);
+				}
 				footer_status = u->status;
 			}
 	
@@ -663,45 +660,37 @@ QUERY(ncurses_contacts_changed)
 					contacts_frame = WF_RIGHT;
 			}
 
-			if (!xstrcasecmp(args[i], "right")) {
+			else if (!xstrcasecmp(args[i], "right")) {
 				contacts_edge = WF_RIGHT;
 				if (contacts_frame)
 					contacts_frame = WF_LEFT;
 			}
 
-			if (!xstrcasecmp(args[i], "top")) {
+			else if (!xstrcasecmp(args[i], "top")) {
 				contacts_edge = WF_TOP;
 				if (contacts_frame)
 					contacts_frame = WF_BOTTOM;
 			}
 
-			if (!xstrcasecmp(args[i], "bottom")) {
+			else if (!xstrcasecmp(args[i], "bottom")) {
 				contacts_edge = WF_BOTTOM;
 				if (contacts_frame)
 					contacts_frame = WF_TOP;
 			}
 
-			if (!xstrcasecmp(args[i], "noframe"))
+			else if (!xstrcasecmp(args[i], "noframe"))
 				contacts_frame = 0;
 
-			if (!xstrcasecmp(args[i], "frame")) {
+			else if (!xstrcasecmp(args[i], "frame")) {
 				switch (contacts_edge) {
-					case WF_TOP:
-						contacts_frame = WF_BOTTOM;
-						break;
-					case WF_BOTTOM:
-						contacts_frame = WF_TOP;
-						break;
-					case WF_LEFT:
-						contacts_frame = WF_RIGHT;
-						break;
-					case WF_RIGHT:
-						contacts_frame = WF_LEFT;
-						break;
+					case WF_TOP:	contacts_frame = WF_BOTTOM;	break;
+					case WF_BOTTOM:	contacts_frame = WF_TOP;	break;
+					case WF_LEFT:	contacts_frame = WF_RIGHT;	break;
+					case WF_RIGHT:	contacts_frame = WF_LEFT;	break;
 				}
 			}
 
-			if (!xstrncasecmp(args[i], "margin=", 7)) {
+			else if (!xstrncasecmp(args[i], "margin=", 7)) {
 				contacts_margin = atoi(args[i] + 7);
 				if (contacts_margin > 10)
 					contacts_margin = 10;
@@ -709,25 +698,19 @@ QUERY(ncurses_contacts_changed)
 					contacts_margin = 0;
 			}
 
-			if (!xstrcasecmp(args[i], "nomargin"))
-				contacts_margin = 0;
+			else if (!xstrcasecmp(args[i], "nomargin"))	contacts_margin = 0;
 
-			if (!xstrcasecmp(args[i], "wrap"))
-				contacts_wrap = 1;
+			else if (!xstrcasecmp(args[i], "wrap"))		contacts_wrap = 1;
 
-			if (!xstrcasecmp(args[i], "nowrap"))
-				contacts_wrap = 0;
+			else if (!xstrcasecmp(args[i], "nowrap"))	contacts_wrap = 0;
 
-			if (!xstrcasecmp(args[i], "descr"))
-				contacts_descr = 1;
+			else if (!xstrcasecmp(args[i], "descr"))	contacts_descr = 1;
 
-                        if (!xstrcasecmp(args[i], "nosort"))
-                                contacts_nosort = 1;
+			else if (!xstrcasecmp(args[i], "nosort"))	contacts_nosort = 1;
 
-			if (!xstrcasecmp(args[i], "nodescr"))
-				contacts_descr = 0;
+			else if (!xstrcasecmp(args[i], "nodescr"))	contacts_descr = 0;
 
-			if (!xstrncasecmp(args[i], "order=", 6))
+			else if (!xstrncasecmp(args[i], "order=", 6))
 				snprintf(contacts_order, sizeof(contacts_order), args[i] + 6);
 		}
 

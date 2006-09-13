@@ -719,9 +719,11 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		int maxlen = 0, cols, rows;
 		char *tmp;
 
-		for (i = 0; completions[i]; i++)
-			if (xstrlen(completions[i]) + 2 > maxlen)
-				maxlen = xstrlen(completions[i]) + 2;
+		for (i = 0; completions[i]; i++) {
+			size_t compllen = xstrlen(completions[i]);
+			if (compllen + 2 > maxlen)
+				maxlen = compllen + 2;
+		}
 
 		cols = (window_current->width - 6) / maxlen;
 		if (cols == 0)
@@ -984,9 +986,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		}
 		if (!completions)
 			command_generator(start, xstrlen(start));
-
-	}
-	else {
+	} else {
 		char **params = NULL;
 		int abbrs = 0, i;
 		list_t l;
