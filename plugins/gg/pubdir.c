@@ -136,7 +136,6 @@ COMMAND(gg_command_register)
                 return -1;
         }
 
-
 	passwd = gg_locale_to_cp(xstrdup(params[1]));
 	
 	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[2], 1))) {
@@ -208,7 +207,6 @@ COMMAND(gg_command_unregister)
 	watch_t *w;
 	uin_t uin;
 	char *passwd;
-	char *cppasswd;
 
         if (!last_tokenid) {
                 wcs_printq("token_missing");
@@ -224,15 +222,14 @@ COMMAND(gg_command_unregister)
 		printq("unregister_bad_uin", params[0]);
 		return -1;
 	}
-	passwd = xstrdup(params[1]);
-	cppasswd = gg_locale_to_cp(passwd);
+	passwd = gg_locale_to_cp(xstrdup(params[1]));
 
-	if (!(h = gg_unregister3(uin, cppasswd, last_tokenid, params[2], 1))) {
+	if (!(h = gg_unregister3(uin, passwd, last_tokenid, params[2], 1))) {
 		printq("unregister_failed", strerror(errno));
 		xfree(passwd);
 		return -1;
 	}
-	xfree(cppasswd);
+	xfree(passwd);
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_unregister, h); 
 	watch_timeout_set(w, h->timeout);
 
@@ -317,22 +314,17 @@ COMMAND(gg_command_passwd)
 	struct gg_http *h;
 	watch_t *w;
 
-	char *newpasswd, *oldpasswd;
-	char *cppasswd, *cpoldpasswd;
-
-	oldpasswd = xstrdup(session_get(session, "password"));
-	newpasswd = xstrdup(params[0]);
-	cppasswd	= gg_locale_to_cp(newpasswd);
-	cpoldpasswd	= gg_locale_to_cp(oldpasswd);
+	char *oldpasswd = gg_locale_to_cp(xstrdup(session_get(session, "password")));
+	char *newpasswd = gg_locale_to_cp(xstrdup(params[0]));
 
 #ifdef HAVE_GG_CHANGE_PASSWD4 /* gg_change_passwd4 since ~ LIBGADU 20030930 */
-	if (!(h = gg_change_passwd4(atoi(session->uid + 3), "email", (cpoldpasswd) ? cpoldpasswd : "", cppasswd, "tokenid", "tokenval", 1)))
+	if (!(h = gg_change_passwd4(atoi(session->uid + 3), "email", (oldpasswd) ? oldpasswd : "", newpasswd, "tokenid", "tokenval", 1)))
 #else 
-	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? cpoldpasswd : "", cppasswd, "", 1)))
+	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? oldpasswd : "", newpasswd, "", 1)))
 #endif 
 	{
-		xfree(cppasswd);
-		xfree(cpoldpasswd);
+		xfree(newpasswd);
+		xfree(oldpasswd);
 		printq("passwd_failed", strerror(errno));
 		return -1;
 	}
@@ -346,8 +338,8 @@ COMMAND(gg_command_passwd)
 
 	/* memleaks ? ... mh, if gg_change_passwd3 fails... we have freeing it.. why here was not? it's ok or not? libgadu/we frees it ?*/
 #if 0
-	xfree(cppasswd);
-	xfree(cpoldpasswd);
+	xfree(newpasswd);
+	xfree(oldpasswd);
 #endif
 
 	return 0;

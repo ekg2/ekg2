@@ -99,19 +99,15 @@ static COMMAND(gg_command_connect) {
 			int __type = EKG_DISCONNECT_USER;
 
 			if (__reason) {
-                		char *tmp = xstrdup(__reason);
-				unsigned char *tmp_ = NULL;		/* znaczki w cp1250 */
+				unsigned char *tmp = NULL;		/* znaczki w cp1250 */
 
-	                        if (!xstrcmp(tmp, ("-"))) {
-        	                        xfree(tmp);
-                	                tmp = NULL;
-                        	} else 
-	                		tmp_ = gg_locale_to_cp(tmp);
+				if (!xstrcmp(__reason, "-")) 	tmp = NULL;
+                        	else 				tmp = gg_locale_to_cp(xstrdup(__reason));
 
           			if (config_keep_reason)
-					session_descr_set(session, tmp);
+					session_descr_set(session, tmp ? __reason : NULL);
 				
-				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp_);
+				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
                 		xfree(tmp);
         		} else
   			        gg_change_status(g->sess, GG_STATUS_NOT_AVAIL);
@@ -803,7 +799,7 @@ static COMMAND(gg_command_msg) {
 		xfree(rcpts);
 	}
 
-	xfree(msg);
+	xfree(cpmsg);
 	xfree(raw_msg);
 	xfree(format);
 	xfree(nick);

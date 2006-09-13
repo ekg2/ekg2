@@ -573,47 +573,43 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 	char *__session	= xstrdup(session_uid_get(s));
 	char *__uid	= saprintf(("gg:%d"), uin);
 	char *__status= xstrdup(gg_status_to_text(status));
-	char *__descr	= xstrdup(descr);
+	char *__descr	= gg_cp_to_locale(xstrdup(descr));
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
 	int __port	= port, i, j, dlen, state = 0, m = 0;
 	userlist_t *u;
-	char *sdescr;
-
-	sdescr = gg_cp_to_locale(__descr);
 
 	if ((u = userlist_find(s, __uid)))
 		u->protocol = protocol;
 
-	for (i = 0; i < xstrlen(sdescr); i++)
-		if (sdescr[i] == 10 || sdescr[i] == 13)
+	for (i = 0; i < xstrlen(__descr); i++)
+		if (__descr[i] == 10 || __descr[i] == 13)
 			m++;
 	dlen = i;
 	/* if it is not set it'll be -1 so, everythings ok */
-	if ( (i = session_int_get(s, "concat_multiline_status")) && m > i)
-	{
+	if ( (i = session_int_get(s, "concat_multiline_status")) && m > i) {
 		for (m = i = j = 0; i < dlen; i++) {
-			if (sdescr[i] != 10 && sdescr[i] != 13) {
-				sdescr[j++] = sdescr[i];
+			if (__descr[i] != 10 && __descr[i] != 13) {
+				__descr[j++] = __descr[i];
 				state = 0;
 			} else {
-				if (!state && sdescr[i] == 10)
-					sdescr[j++] = ' ';
+				if (!state && __descr[i] == 10)
+					__descr[j++] = ' ';
 				else
 					m++;
-				if (sdescr[i] == 10)
+				if (__descr[i] == 10)
 					state++;
 			}
 		}
-		sdescr[j] = '\0';
+		__descr[j] = '\0';
 		if (m > 3) {
 			memmove (__descr+4, __descr, j + 1);
 			/* multiline tag */
-			sdescr[0] = '['; sdescr[1] = 'm'; sdescr[2] = ']'; sdescr[3] = ' ';
+			__descr[0] = '['; __descr[1] = 'm'; __descr[2] = ']'; __descr[3] = ' ';
 		}
 
 	}
-	query_emit(NULL, ("protocol-status"), &__session, &__uid, &__status, &sdescr, &__host, &__port, &when, NULL);
+	query_emit(NULL, ("protocol-status"), &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
 
 	xfree(__host);
 	xfree(__descr);
@@ -630,7 +626,6 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	char *__sender, **__rcpts = NULL;
 	char *__text;
-	char *ltext;
 	uint32_t *__format = NULL;
 	int image = 0, check_inv = 0;
 	int i;
@@ -676,8 +671,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
 
-	__text = xstrdup(e->event.msg.message);
-	ltext = gg_cp_to_locale(__text);
+	__text = gg_cp_to_locale(xstrdup(e->event.msg.message));
 
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
@@ -743,7 +737,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 /*		if (!check_inv || xstrcmp(__text, ""))
 			printq("generic", "image in message.\n"); - or something
  */
-		query_emit(NULL, ("protocol-message"), &__session, &__sender, &__rcpts, &ltext, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+		query_emit(NULL, ("protocol-message"), &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
 		xfree(__session);
 
 /*		xfree(__seq); */
@@ -929,8 +923,9 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 
 					gg_remove_notify_ex(g->sess, str_to_uin(parsed + 1), gg_userlist_type(u));
 				}
-				reply = gg_cp_to_locale(e->event.userlist.reply);
+				reply = gg_cp_to_locale(xstrdup(e->event.userlist.reply));
 				userlist_set(s, reply);
+				xfree(reply);
 				gg_userlist_send(g->sess, s->userlist);
 
 				config_changed = 1;

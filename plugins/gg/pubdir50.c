@@ -180,10 +180,17 @@ COMMAND(gg_command_find)
 
 		wcs_printq("invalid_params", name);
 		gg_pubdir50_free(req);
+
+#if USE_UNICODE
+		if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);
+#endif
 		xfree(uargv);
 		return -1;
 	}
-		xfree(uargv);
+#if USE_UNICODE
+	if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);
+#endif
+	xfree(uargv);
 
 	if (!gg_pubdir50(g->sess, req)) {
 		wcs_printq("search_failed", ("Nie wiem o co chodzi"));
@@ -270,14 +277,32 @@ COMMAND(gg_command_change)
 				gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_SET_MALE);
 				continue;
 			}
-
 			wcs_printq("invalid_params", name);
+#if USE_UNICODE
+			if (config_use_unicode) { 
+				for (i = 0; argv[i]; i++) {
+					if (argv[i] != uargv[i]) 	xfree(uargv[i]);
+					else				xfree(argv[i]);
+				} 
+				xfree(argv);
+			} else
+#endif
+				array_free(argv);
+			xfree(uargv);
+
 			gg_pubdir50_free(req);
-			array_free(argv);
 			return -1;
 		}
-
-		array_free(argv);
+#if USE_UNICODE
+		if (config_use_unicode) {
+			for (i = 0; argv[i]; i++) {
+				if (argv[i] != uargv[i]) 	xfree(uargv[i]);
+				else				xfree(argv[i]);
+			}
+			xfree(argv);
+		} else
+#endif
+			array_free(argv);
 		xfree(uargv);
 	}
 
@@ -329,10 +354,6 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 	}
 
 	for (i = 0; i < count; i++) {
-		char   *cpfirstname, *cplastname, *cpnickname, *cpcity;
-		char *firstname, *lastname, *nickname, *city;
-		const char *birthyear;
-
 		const char *uin		= gg_pubdir50_get(res, i, "fmnumber");
 		const char *__firstname = gg_pubdir50_get(res, i, "firstname");
 		const char *__lastname	= gg_pubdir50_get(res, i, "lastname");
@@ -341,23 +362,15 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
 		const char *__city	= gg_pubdir50_get(res, i, "city");
 
+		char *firstname 	= gg_cp_to_locale(xstrdup(__firstname));
+		char *lastname 		= gg_cp_to_locale(xstrdup(__lastname));
+		char *nickname 		= gg_cp_to_locale(xstrdup(__nickname));
+		char *city		= gg_cp_to_locale(xstrdup(__city));
+		int status 		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
+		const char *birthyear 	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
+
 		char *name, *active, *gender;
 		const char *target = NULL;
-
-		int status;
-
-		cpfirstname 	= (__firstname) ? xstrdup(__firstname) : NULL;
-		cplastname 	= (__lastname)  ? xstrdup(__lastname) : NULL;
-		cpnickname 	= (__nickname)	? xstrdup(__nickname) : NULL;
-		cpcity 		= (__city)	? xstrdup(__city) : NULL;
-
-		status 		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
-		birthyear 	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
-
-		firstname 	= gg_cp_to_locale(cpfirstname);
-		lastname 	= gg_cp_to_locale(cplastname);
-		nickname 	= gg_cp_to_locale(cpnickname);
-		city		= gg_cp_to_locale(cpcity);
 
 		if (count == 1 && !all) {
 			xfree(last_search_first_name);
