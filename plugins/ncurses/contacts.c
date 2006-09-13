@@ -774,7 +774,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 {
         window_t *w = window_find("__contacts");
         ncurses_window_t *n;
-	char *name;
+	CHAR_T *name;
 
 	if (mouse_state == EKG_SCROLLED_UP) {
 		ncurses_backward_contacts_line(5);

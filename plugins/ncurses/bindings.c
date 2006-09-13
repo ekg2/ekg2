@@ -61,28 +61,28 @@ static BINDING_FUNCTION(binding_backward_word)
 
 static BINDING_FUNCTION(binding_forward_word)
 {
-	while (line_index < xstrlen(line) && line[line_index] == ' ')
+	while (line_index < xwcslen(line) && __S(line, line_index) == ' ')
 		line_index++;
-	while (line_index < xstrlen(line) && line[line_index] != ' ')
+	while (line_index < xwcslen(line) && __S(line, line_index) != ' ')
 		line_index++;
 }
 
 static BINDING_FUNCTION(binding_kill_word)
 {
-	char *p = line + line_index;
+	CHAR_T *p = __SPTR(line, line_index);
 	int eaten = 0;
 
 	while (*p && *p == ' ') {
-		p++;
+		__SN(&p, 1);	/* p++ */
 		eaten++;
 	}
 
 	while (*p && *p != ' ') {
-		p++;
+		__SN(&p, 1);	/* p++ */
 		eaten++;
 	}
 
-	memmove(line + line_index, line + line_index + eaten, xstrlen(line) - line_index - eaten + 1);
+	memmove(__SPTR(line, line_index), __SPTR(line, line_index + eaten), xwcslen(line) - line_index - eaten + 1);
 }
 
 static BINDING_FUNCTION(binding_toggle_input)
@@ -96,10 +96,11 @@ static BINDING_FUNCTION(binding_toggle_input)
 		int i;
 	
 		for (i = 0; lines[i]; i++) {
-			if (!xstrcmp(lines[i], ("")) && !lines[i + 1])
+			char *tmp;
+			if (!xwcscmp(lines[i], TEXT("")) && !lines[i + 1])
 				break;
 
-			string_append(s, lines[i]);
+			string_append(s, (tmp = wcs_to_normal(lines[i])));	free_utf(tmp);
 			string_append(s, ("\r\n"));
 		}
 
@@ -107,7 +108,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 
                 if (history[0] != line)
                         xfree(history[0]);
-                history[0] = array_join(lines, ("\015"));
+                history[0] = wcs_array_join(lines, TEXT("\015"));
                 xfree(history[HISTORY_MAX - 1]);
                 memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 
@@ -132,18 +133,18 @@ static BINDING_FUNCTION(binding_cancel_input)
 
 static BINDING_FUNCTION(binding_backward_delete_char)
 {
-	if (lines && line_index == 0 && lines_index > 0 && xstrlen(lines[lines_index]) + xstrlen(lines[lines_index - 1]) < LINE_MAXLEN) {
+	if (lines && line_index == 0 && lines_index > 0 && xwcslen(lines[lines_index]) + xwcslen(lines[lines_index - 1]) < LINE_MAXLEN) {
 		int i;
 
-		line_index = xstrlen(lines[lines_index - 1]);
-		xstrcat(lines[lines_index - 1], lines[lines_index]);
+		line_index = xwcslen(lines[lines_index - 1]);
+		xwcscat(lines[lines_index - 1], lines[lines_index]);
 		
 		xfree(lines[lines_index]);
 
-		for (i = lines_index; i < array_count(lines); i++)
+		for (i = lines_index; i < array_count((char **) lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(char*));
+		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_index--;
 		lines_adjust();
@@ -151,8 +152,8 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 		return;
 	}
 
-	if (xstrlen(line) > 0 && line_index > 0) {
-		memmove(line + line_index - 1, line + line_index, LINE_MAXLEN - line_index);
+	if (xwcslen(line) > 0 && line_index > 0) {
+		memmove(__SPTR(line, line_index - 1), __SPTR(line, line_index), LINE_MAXLEN - line_index);
 		line[LINE_MAXLEN - 1] = 0;
 		line_index--;
 	}
@@ -176,50 +177,51 @@ static BINDING_FUNCTION(binding_kill_line)
 
 static BINDING_FUNCTION(binding_yank)
 {
-	if (yanked && xstrlen(yanked) + xstrlen(line) + 1 < LINE_MAXLEN) {
-		memmove(line + line_index + xstrlen(yanked), line + line_index, LINE_MAXLEN - line_index - xstrlen(yanked));
-		memcpy(line + line_index, yanked, xstrlen(yanked));
-		line_index += xstrlen(yanked);
+	if (yanked && xwcslen(yanked) + xwcslen(line) + 1 < LINE_MAXLEN) {
+		memmove(line + line_index + xwcslen(yanked), line + line_index, LINE_MAXLEN - line_index - xwcslen(yanked));
+		memcpy(line + line_index, yanked, xwcslen(yanked));
+		line_index += xwcslen(yanked);
 	}
 }
 
 static BINDING_FUNCTION(binding_delete_char)
 {
-	if (line_index == xstrlen(line) && lines_index < array_count(lines) - 1 && xstrlen(line) + xstrlen(lines[lines_index + 1]) < LINE_MAXLEN) {
+	if (line_index == xwcslen(line) && lines_index < array_count((char **) lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
 		int i;
 
-		xstrcat(line, lines[lines_index + 1]);
+		xwcscat(line, lines[lines_index + 1]);
 
 		xfree(lines[lines_index + 1]);
 
-		for (i = lines_index + 1; i < array_count(lines); i++)
+		for (i = lines_index + 1; i < array_count((char **) lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(char*));
+		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_adjust();
 	
 		return;
 	}
 				
-	if (line_index < xstrlen(line)) {
-		memmove(line + line_index, line + line_index + 1, LINE_MAXLEN - line_index - 1);
+	if (line_index < xwcslen(line)) {
+		memmove(__SPTR(line, line_index), __SPTR(line, line_index + 1), LINE_MAXLEN - line_index - 1);
 		line[LINE_MAXLEN - 1] = 0;
 	}
 }
 				
 static BINDING_FUNCTION(binding_accept_line)
 {
+	char *txt;
 	if (lines) {
 		int i;
 
-		lines = xrealloc(lines, (array_count(lines) + 2) * sizeof(char *));
+		lines = xrealloc(lines, (array_count((char **) lines) + 2) * sizeof(CHAR_T *));
 
-		for (i = array_count(lines); i > lines_index; i--)
+		for (i = array_count((char **) lines); i > lines_index; i--)
 			lines[i + 1] = lines[i];
 
-		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(char));
-		xstrcpy(lines[lines_index + 1], line + line_index);
+		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
+		xwcscpy(lines[lines_index + 1], line + line_index);
 		line[line_index] = 0;
 		
 		line_index = 0;
@@ -230,16 +232,15 @@ static BINDING_FUNCTION(binding_accept_line)
 	
 		return;
 	}
-
-	command_exec(window_current->target, window_current->session, line, 0);
+	command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);	free_utf(txt);
 
 	if (ncurses_plugin_destroyed)
 		return;
 
-	if (xstrcmp(line, (""))) {
+	if (xwcscmp(line, TEXT(""))) {
 		if (history[0] != line)
 			xfree(history[0]);
-		history[0] = xstrdup(line);
+		history[0] = xwcsdup(line);
 		xfree(history[HISTORY_MAX - 1]);
 		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 	} else {
@@ -256,19 +257,19 @@ static BINDING_FUNCTION(binding_accept_line)
 static BINDING_FUNCTION(binding_line_discard)
 {
 	xfree(yanked);
-	yanked = xstrdup(line);
+	yanked = xwcsdup(line);
 	line[0] = 0;
 	line_adjust();
 
-	if (lines && lines_index < array_count(lines) - 1) {
+	if (lines && lines_index < array_count((char **) lines) - 1) {
 		int i;
 
 		xfree(lines[lines_index]);
 
-		for (i = lines_index; i < array_count(lines); i++)
+		for (i = lines_index; i < array_count((char **) lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count(lines) + 1) * sizeof(char*));
+		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_adjust();
 	}
@@ -283,7 +284,7 @@ static BINDING_FUNCTION(binding_quoted_insert)
 
 static BINDING_FUNCTION(binding_word_rubout)
 {
-	char *p;
+	CHAR_T *p;
 	int eaten = 0;
 
 	if (!line_index)
@@ -291,42 +292,42 @@ static BINDING_FUNCTION(binding_word_rubout)
 	
 	xfree(yanked);
 
-	p = line + line_index;
+	p = __SPTR(line, line_index);
 	
 	if (xisspace(*(p-1))) {
 		while (p > line && xisspace(*(p-1))) {
-			p--;
+			__SN(&p, -1);	/* p-- */
 			eaten++;
 		}
 	} else {
                 while (p > line && !xisalpha(*(p-1)) && !xisspace(*(p-1))) {
-                        p--;
+			__SN(&p, -1);	/* p-- */
                         eaten++;
                 }
         }
 
 	if (p > line) {
 		while (p > line && !xisspace(*(p-1)) && xisalpha(*(p-1))) {
-			p--;
+			__SN(&p, -1);	/* p-- */
 			eaten++;
 		}
 	}
 
-	yanked = xcalloc(eaten + 1, sizeof(char));
-	strlcpy(yanked, p, eaten + 1);
+	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
+	strlcpy(yanked, p, eaten + 1);		/* XXX, only ASCII */
 
-	memmove(p, line + line_index, xstrlen(line) - line_index + 1);
+	memmove(p, __SPTR(line, line_index), xwcslen(line) - line_index + 1);
 	line_index -= eaten;
 }
 
 static BINDING_FUNCTION(binding_complete)
 {
-	if (!lines)
+	if (!lines) {
 		ncurses_complete(&line_start, &line_index, line);
-	else {
+	} else {
 		int i, count = 8 - (line_index % 8);
 
-		if (xstrlen(line) + count >= LINE_MAXLEN - 1)
+		if (xwcslen(line) + count >= LINE_MAXLEN - 1)
 			return;
 
 		memmove(line + line_index + count, line + line_index, LINE_MAXLEN - line_index - count);
@@ -361,10 +362,10 @@ static BINDING_FUNCTION(binding_backward_char)
 static BINDING_FUNCTION(binding_forward_char)
 {
 	if (lines) {
-		if (line_index < xstrlen(line))
+		if (line_index < xwcslen(line))
 			line_index++;
 		else {
-			if (lines_index < array_count(lines) - 1) {
+			if (lines_index < array_count((char **) lines) - 1) {
 				lines_index++;
 				line_index = 0;
 				line_start = 0;
@@ -375,7 +376,7 @@ static BINDING_FUNCTION(binding_forward_char)
 		return;
 	}
 
-	if (line_index < xstrlen(line))
+	if (line_index < xwcslen(line))
 		line_index++;
 }
 
@@ -394,10 +395,10 @@ static BINDING_FUNCTION(binding_previous_only_history)
 {
         if (history[history_index + 1]) {
                 if (history_index == 0)
-                        history[0] = xstrdup(line);
+                        history[0] = xwcsdup(line);
                 history_index++;
-		if (xstrchr(history[history_index], ('\015'))) {
-			char **tmp;
+		if (xwcschr(history[history_index], ('\015'))) {
+			CHAR_T **tmp;
 			int i;
 			
                         if (input_size == 1) {
@@ -405,24 +406,24 @@ static BINDING_FUNCTION(binding_previous_only_history)
                                 ncurses_input_update();
                         }
 
-                        tmp = array_make(history[history_index], ("\015"), 0, 0, 0);
+                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
-			array_free(lines);
-			lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
+			array_free((char **) lines);
+			lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
 
-			for (i = 0; i < array_count(tmp); i++) {
-				lines[i] = xmalloc(LINE_MAXLEN * sizeof(char));
-				xstrcpy(lines[i], tmp[i]);
+			for (i = 0; i < array_count((char **) tmp); i++) {
+				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+				xwcscpy(lines[i], tmp[i]);
 			}
 
-			array_free(tmp);
+			array_free((char **) tmp);
 			lines_adjust();
 		} else {
 			if (input_size != 1) {
 		                input_size = 1;
 		                ncurses_input_update();
 		        }
-			xstrcpy(line, history[history_index]);
+			xwcscpy(line, history[history_index]);
 	                line_adjust();
 		}
         }
@@ -432,10 +433,10 @@ static BINDING_FUNCTION(binding_next_only_history)
 {
         if (history_index > 0) {
                 if (history_index == 0)
-                        history[0] = xstrdup(line);
+                        history[0] = xwcsdup(line);
                 history_index--;
-                if (xstrchr(history[history_index], ('\015'))) {
-                        char **tmp;
+                if (xwcschr(history[history_index], ('\015'))) {
+                        CHAR_T **tmp;
                         int i;
 
                         if (input_size == 1) {
@@ -443,24 +444,24 @@ static BINDING_FUNCTION(binding_next_only_history)
                                 ncurses_input_update();
 			}
 
-                        tmp = array_make(history[history_index], ("\015"), 0, 0, 0);
+                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
-                        array_free(lines);
-                        lines = xmalloc((array_count(tmp) + 2) * sizeof(char *));
+                        array_free((char **) lines);
+                        lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
 
-                        for (i = 0; i < array_count(tmp); i++) {
-                                lines[i] = xmalloc(LINE_MAXLEN * sizeof(char));
-                                xstrcpy(lines[i], tmp[i]);
+                        for (i = 0; i < array_count((char **) tmp); i++) {
+                                lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+                                xwcscpy(lines[i], tmp[i]);
                         }
 
-                        array_free(tmp);
+                        array_free((char **) tmp);
                         lines_adjust();
                 } else {
                         if (input_size != 1) {
                                 input_size = 1;
                                 ncurses_input_update();
                         }
-                        xstrcpy(line, history[history_index]);
+                        xwcscpy(line, history[history_index]);
                         line_adjust();
                 }
         }
@@ -489,10 +490,10 @@ static BINDING_FUNCTION(binding_next_history)
 {
 	if (lines) {
 		if (lines_index - line_start == 4)
-			if (lines_index < array_count(lines) - 1)
+			if (lines_index < array_count((char **) lines) - 1)
 				lines_start++;
 
-		if (lines_index < array_count(lines) - 1)
+		if (lines_index < array_count((char **) lines) - 1)
 			lines_index++;
 
 		lines_adjust();

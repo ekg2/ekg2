@@ -27,10 +27,10 @@ void update_statusbar(int commit);
 struct screen_line {
 	int len;		/* d³ugo¶æ linii */
 	
-	char *str;		/* tre¶æ */
+	CHAR_T *str;		/* tre¶æ */
 	short *attr;		/* atrybuty */
 	
-	char *prompt_str;	/* tre¶æ promptu */
+	CHAR_T *prompt_str;	/* tre¶æ promptu */
 	short *prompt_attr;	/* atrybuty promptu */
 	int prompt_len;		/* d³ugo¶æ promptu */
 	
@@ -50,6 +50,18 @@ enum window_frame_t {
 	WF_ALL = 15
 };
 
+/* aka fstring_t but with CHAR_T */
+typedef struct {
+	CHAR_T *str;
+	short *attr;
+	int ts;
+
+	int prompt_len;	
+	int prompt_empty;
+	int margin_left; 
+	void *private;
+} ncurses_fstring_t;
+
 typedef struct {
 	WINDOW *window;		/* okno okna */
 
@@ -59,7 +71,7 @@ typedef struct {
 	int margin_left, margin_right, margin_top, margin_bottom;
 				/* marginesy */
 
-	fstring_t **backlog;	/* bufor z liniami */
+	ncurses_fstring_t **backlog;	/* bufor z liniami */
 	int backlog_size;	/* rozmiar backloga */
 
 	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
@@ -103,7 +115,7 @@ void ncurses_lines_adjust();
 #define lines_adjust ncurses_lines_adjust
 int ncurses_window_kill(window_t *w);
 int ncurses_window_new(window_t *w);
-	
+
 #define input ncurses_input
 #define header ncurses_header
 #define contacts ncurses_contacts
@@ -115,13 +127,13 @@ int ncurses_window_new(window_t *w);
 #define lines_start ncurses_lines_start
 #define input_size ncurses_input_size
 #define yanked ncurses_yanked
-
+	
 #define HISTORY_MAX 1000
-extern char *ncurses_history[HISTORY_MAX];
+extern CHAR_T *ncurses_history[HISTORY_MAX];
 extern int ncurses_history_index;
-extern char *ncurses_line;
-extern char *ncurses_yanked;
-extern char **ncurses_lines;
+extern CHAR_T *ncurses_line;
+extern CHAR_T *ncurses_yanked;
+extern CHAR_T **ncurses_lines;
 extern int ncurses_line_start;
 extern int ncurses_line_index;
 extern int ncurses_lines_start;

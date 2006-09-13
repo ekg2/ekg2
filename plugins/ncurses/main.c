@@ -130,6 +130,7 @@ static QUERY(ncurses_ui_window_print)
 			return -1;
 		}
 	}
+
 	prev_count = n->lines_count;
 
 	if (n->start == n->lines_count - w->height || (n->start == 0 && n->lines_count <= w->height))
