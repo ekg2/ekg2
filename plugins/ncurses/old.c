@@ -2178,7 +2178,7 @@ then:
 			xfree(aspell_line);
 #else
  		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < xwcslen(ncurses_line) - line_start; i++)
-			print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i);
+			print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i));
 #endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
 		if (ch == 3) ncurses_commit();
