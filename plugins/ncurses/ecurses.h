@@ -69,13 +69,14 @@ inline CHAR_T *xwcschr(const CHAR_T *s, CHAR_T c);
 inline char *wcs_to_normal(const CHAR_T *str);
 inline CHAR_T *normal_to_wcs(const char *str);
 inline CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes);
-inline CHAR_T *wcs_array_join(const CHAR_T **array, const CHAR_T *sep);
+inline CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep);
+inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 
 #else	/* USE_UNICODE */
 #define CHAR_T unsigned char
 #define TEXT(x) x
 #define __S(str, i) str[i]
-#define __SN(str) str++
+#define __SN(str, i) ((*str) += i)
 #define __SPTR(str, i) (&str[i]) 
 #define xwcslen(str) xstrlen(str)
 #define xwcscpy(dst, str) xstrcpy(dst, str)
@@ -87,6 +88,7 @@ inline CHAR_T *wcs_array_join(const CHAR_T **array, const CHAR_T *sep);
 #define wcs_to_normal(x) x
 #define free_utf(x) 
 #define wcs_array_join(arr, sep) array_join((char **) arr, sep)
+#define xwcslcpy(dst, src, size) strlcpy(dst, src, size)
 
 #endif	/* USE_UNICODE */
 

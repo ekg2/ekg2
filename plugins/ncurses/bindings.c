@@ -314,7 +314,7 @@ static BINDING_FUNCTION(binding_word_rubout)
 	}
 
 	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
-	strlcpy(yanked, p, eaten + 1);		/* XXX, only ASCII */
+	xwcslcpy(yanked, p, eaten + 1);
 
 	memmove(p, __SPTR(line, line_index), xwcslen(line) - line_index + 1);
 	line_index -= eaten;
@@ -323,7 +323,11 @@ static BINDING_FUNCTION(binding_word_rubout)
 static BINDING_FUNCTION(binding_complete)
 {
 	if (!lines) {
-		ncurses_complete(&line_start, &line_index, line);
+#if USE_UNICODE
+#warning "XXX ncurses_complete doesn't support unicode yet !!"
+		if (config_use_unicode) return;
+#endif
+		ncurses_complete(&line_start, &line_index, (char *) line);
 	} else {
 		int i, count = 8 - (line_index % 8);
 
