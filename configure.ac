@@ -93,9 +93,9 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/irc/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile po/Makefile.in])
 AC_CONFIG_FILES([ekg/ekg2-config])
-PLUGINS="logs mail rc sms pcm irc"
+PLUGINS="logs mail rc sms pcm irc rot13"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
@@ -527,7 +527,7 @@ echo -en " - Audio:\t pcm "
 echo ""
 
 # - ENCRYPTION PLUGINS
-echo -en " - Encryption:\t "
+echo -en " - Encryption:\t rot13 "
 	if test "x$have_openssl" = "xyes"; then
 		echo -n "sim "
 	fi
