@@ -158,16 +158,23 @@ void variable_set_default()
 #endif
 
 #if 0
-	if (!xstrcmp(console_charset, "UTF-8")) {
-		debug("Warning, nl_langinfo(CODESET) reports that you are using utf-8 encoding, but you didn't compile ekg2 with (experimental/untested) --enable-unicode\n");
-		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
-	}
 #endif
 	if (console_charset) 
 		config_console_charset = xstrdup(console_charset);
 	else
 		config_console_charset = xstrdup("ISO-8859-2"); /* Default: ISO-8859-2 */
+#if USE_UNICODE
+	if (!config_use_unicode && xstrcmp(console_charset, "UTF-8")) {
+		debug("nl_langinfo(CODESET) == %s swapping config_use_unicode to 0\n", console_charset);
+		config_use_unicode = 0;
+	} else	config_use_unicode = 1;
+#else
 	config_use_unicode = 0;
+	if (!xstrcmp(console_charset, "UTF-8")) {
+		debug("Warning, nl_langinfo(CODESET) reports that you are using utf-8 encoding, but you didn't compile ekg2 with (experimental/untested) --enable-unicode\n");
+		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
+	}
+#endif
 }
 
 /*
