@@ -39,6 +39,8 @@
 #include <ekg/dynstuff.h>
 #include <ekg/xmalloc.h>
 
+int sizeofchart;
+
 /* stringo-naprawiacze */
 #define fix(x)	((char *) x ? (char *) x : (char *) "")
 #define ufix(x)	((wchar_t *) x ? (wchar_t *) x : (wchar_t *) L"")
@@ -138,10 +140,19 @@ inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size) {
 
 inline CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep) {
 	if (config_use_unicode) {
-		char **arr = NULL; /* wcs_to_normal(array); */
-		char *sp  = wcs_to_normal(sep);
-		char *tmp = array_join(arr, sp);
-		CHAR_T *ret = normal_to_wcs(tmp);
+		char **arr;
+		char *sp = wcs_to_normal(sep);
+		char *tmp;
+		CHAR_T *ret;
+		int i;
+
+		arr = xmalloc(array_count((char **) array) * sizeof(char *));
+		for (i = 0; array[i]; i++)
+			arr[i] = wcs_to_normal(array[i]);
+		
+		tmp = array_join(arr, sp);
+		ret = normal_to_wcs(tmp);
+		array_free(arr);
 		free_utf(tmp);
 		free_utf(sp);
 		return ret;

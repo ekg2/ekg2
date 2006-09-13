@@ -1636,7 +1636,7 @@ void ncurses_input_update()
 	} else {
 		ncurses_lines = xmalloc(2 * sizeof(CHAR_T *));
 		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
-		ncurses_lines[1] = NULL;
+/*		ncurses_lines[1] = NULL; */
 		xwcscpy(ncurses_lines[0], ncurses_line);
 		xfree(ncurses_line);
 		ncurses_line = ncurses_lines[0];
@@ -2093,12 +2093,8 @@ end:
 #endif
 				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 
-			memmove(__SPTR(ncurses_line, line_index + 1), __SPTR(ncurses_line, line_index), LINE_MAXLEN - line_index - 1);	/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
-#if USE_UNICODE	/* it can be __S() but gcc doesn't like it */
-			*__SPTR(ncurses_line, line_index++) = ch;
-#else
-			((char *) ncurses_line)[line_index++] = ch;
-#endif
+			memmove(__SPTR(ncurses_line, line_index + 1), __SPTR(ncurses_line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - 1);	/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
+			*(__SPTR(ncurses_line, line_index++)) = ch;
 		}
 	}
 then:
@@ -2143,16 +2139,16 @@ then:
 			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
                         {                                 
 			    if (spell_checker && aspell_line[line_start + j] == ASPELLCHAR && p[line_start + j] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-	                            print_char_underlined(input, i, j, p[line_start + j]);
+	                            print_char_underlined(input, i, j, __S(p, line_start + j));
                             else /* jesli jest wszystko okey to wyswietlamy normalny */
-	   			    print_char(input, i, j, p[j + line_start]);
+	   			    print_char(input, i, j, __S(p, j + line_start));
 			}
 
 			if (spell_checker)	
 				xfree(aspell_line);
 #else
 			for (j = 0; j + line_start < xwcslen(p) && j < input->_maxx + 1; j++)
-				print_char(input, i, j, p[j + line_start]);
+				print_char(input, i, j, __S(p, j + line_start));
 #endif
 		}
 		wmove(input, lines_index - lines_start, line_index - line_start);

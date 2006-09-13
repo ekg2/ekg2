@@ -38,6 +38,7 @@
 
 #if USE_UNICODE
 extern int config_use_unicode;	/* not everyone want to include stuff.h */
+extern int sizeofchart;
 
 #define CHAR_T wchar_t 	
 	/* be carefull!   use __S() macro to get true value. */
@@ -74,6 +75,7 @@ inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 
 #else	/* USE_UNICODE */
 #define CHAR_T unsigned char
+#define sizeofchart sizeof(char)
 #define TEXT(x) x
 #define __S(str, i) str[i]
 #define __SN(str, i) ((*str) += i)

@@ -53,9 +53,9 @@ int bindings_added_max = 0;
 
 static BINDING_FUNCTION(binding_backward_word)
 {
-	while (line_index > 0 && line[line_index - 1] == ' ')
+	while (line_index > 0 && __S(line, line_index - 1) == ' ')
 		line_index--;
-	while (line_index > 0 && line[line_index - 1] != ' ')
+	while (line_index > 0 && __S(line, line_index - 1) != ' ')
 		line_index--;
 }
 
@@ -153,8 +153,8 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 	}
 
 	if (xwcslen(line) > 0 && line_index > 0) {
-		memmove(__SPTR(line, line_index - 1), __SPTR(line, line_index), LINE_MAXLEN - line_index);
-		line[LINE_MAXLEN - 1] = 0;
+		memmove(__SPTR(line, line_index - 1), __SPTR(line, line_index), LINE_MAXLEN*sizeofchart - line_index*sizeofchart);
+		*(__SPTR(line, LINE_MAXLEN - 1)) = 0;
 		line_index--;
 	}
 }
@@ -172,13 +172,13 @@ static BINDING_FUNCTION(window_kill_binding)
 
 static BINDING_FUNCTION(binding_kill_line)
 {
-	line[line_index] = 0;
+	*(__SPTR(line, line_index)) = 0;
 }
 
 static BINDING_FUNCTION(binding_yank)
 {
 	if (yanked && xwcslen(yanked) + xwcslen(line) + 1 < LINE_MAXLEN) {
-		memmove(line + line_index + xwcslen(yanked), line + line_index, LINE_MAXLEN - line_index - xwcslen(yanked));
+		memmove(__SPTR(line,  line_index + xwcslen(yanked)), __SPTR(line, line_index), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - sizeofchart*xwcslen(yanked));
 		memcpy(line + line_index, yanked, xwcslen(yanked));
 		line_index += xwcslen(yanked);
 	}
@@ -204,8 +204,8 @@ static BINDING_FUNCTION(binding_delete_char)
 	}
 				
 	if (line_index < xwcslen(line)) {
-		memmove(__SPTR(line, line_index), __SPTR(line, line_index + 1), LINE_MAXLEN - line_index - 1);
-		line[LINE_MAXLEN - 1] = 0;
+		memmove(__SPTR(line, line_index), __SPTR(line, line_index + 1), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - 1);
+		*(__SPTR(line, LINE_MAXLEN - 1)) = 0;
 	}
 }
 				
@@ -221,8 +221,8 @@ static BINDING_FUNCTION(binding_accept_line)
 			lines[i + 1] = lines[i];
 
 		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
-		xwcscpy(lines[lines_index + 1], line + line_index);
-		line[line_index] = 0;
+		xwcscpy(lines[lines_index + 1], __SPTR(line, line_index));
+		*(__SPTR(line, line_index)) = 0;
 		
 		line_index = 0;
 		line_start = 0;
@@ -316,7 +316,7 @@ static BINDING_FUNCTION(binding_word_rubout)
 	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
 	xwcslcpy(yanked, p, eaten + 1);
 
-	memmove(p, __SPTR(line, line_index), xwcslen(line) - line_index + 1);
+	memmove(p, __SPTR(line, line_index), xwcslen(line)*sizeofchart - line_index*sizeofchart + sizeofchart);
 	line_index -= eaten;
 }
 
