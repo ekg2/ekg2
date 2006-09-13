@@ -142,8 +142,6 @@ void ekg_loop()
         int ret, maxfd, pid, status;
 
 	{
-                watch_t *watch_last;
-
                 /* przejrzyj timery u¿ytkownika, ui, skryptów */
                 for (l = timers; l; ) {
                         struct timer *t = l->data;
@@ -420,11 +418,6 @@ watches_once_again:
 
 watches_again:
 		ekg_watches_removed = 0;
-                /* zapamiêtaj ostatni deskryptor */
-                for (watch_last = NULL, l = watches; l; l = l->next) {
-                        if (!l->next)
-                                watch_last = l->data;
-                }
 
                 /* przejrzyj deskryptory */
                 for (l = watches; l; ) {
@@ -438,7 +431,7 @@ watches_again:
                         /* handlery mog± dodawaæ kolejne watche, wiêc je¶li
                          * dotrzemy do ostatniego sprzed wywo³ania pêtli,
                          * koñczymy pracê. */
-                        l = (w != watch_last) ? l->next : NULL;
+                        l = l->next;
 
                         if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
                                 continue;

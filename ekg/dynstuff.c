@@ -90,6 +90,28 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 	return new->data;
 }
 
+void *list_add_beginning(list_t *list, void *data, int alloc_size) {
+
+	list_t new;
+
+	if (!list) {
+		errno = EFAULT;
+		return NULL;
+	}
+
+	new = xmalloc(sizeof(struct list));
+	new->next = *list;
+	*list	  = new;
+
+	if (alloc_size) {	/* xmemdup() ? */
+		new->data = xmalloc(alloc_size);
+		memcpy(new->data, data, alloc_size);
+	} else	new->data = data;
+
+	return new->data;
+
+}
+
 /*
  * list_add()
  *

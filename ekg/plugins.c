@@ -694,7 +694,7 @@ watch_t *watch_new(plugin_t *plugin, int fd, watch_type_t type)
 	
 	w->started = time(NULL);
 
-	list_add(&watches, w, 0);
+	list_add_beginning(&watches, w, 0);
 
 	return w;
 }

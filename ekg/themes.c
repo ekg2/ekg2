@@ -746,7 +746,7 @@ int format_add(const char *name, const char *value, int replace)
         f->name_hash = hash;
         f->value = xstrdup(value);
 
-        return (list_add(&formats, f, 0) ? 0 : -1);
+        return (list_add_beginning(&formats, f, 0) ? 0 : -1);
 }
 
 /*

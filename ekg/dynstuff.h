@@ -52,6 +52,7 @@ typedef struct list *list_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
 void *list_add(list_t *list, void *data, int alloc_size);
+void *list_add_beginning(list_t *list, void *data, int alloc_size);
 void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *));
 int list_remove(list_t *list, void *data, int free_data);
 int list_count(list_t list);
