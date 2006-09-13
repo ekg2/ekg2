@@ -87,6 +87,7 @@ static void ncurses_mouse_move_handler(int x, int y)
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 {
 	list_t l;
+#if 0
 	char *tmp;
 
 	switch (mouse_flag) {
@@ -126,6 +127,7 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 	}
 
 	/* debug("stalo sie: %s x: %d y: %d\n", tmp, x, y); */
+#endif
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 		
