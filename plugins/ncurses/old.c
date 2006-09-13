@@ -1722,10 +1722,7 @@ static int ekg_getch(int meta, unsigned int *ch) {
 	int retcode;
 	if (config_use_unicode) {
 		retcode = wget_wch(input, ch);
-		if (retcode == KEY_CODE_YES);
-		else if (retcode == OK);
-		else if (retcode == ERR) *ch = ERR;
-		/* XXX retcode ! */
+		if (retcode == ERR) *ch = ERR;
 	} else retcode = 
 #endif
 		*ch = wgetch(input);
@@ -1819,6 +1816,9 @@ static int ekg_getch(int meta, unsigned int *ch) {
 #undef DIF_TIME
 	if (query_emit(NULL, ("ui-keypress"), ch, NULL) == -1)  
 		return -2; /* -2 - ignore that key */
+#if USE_UNICODE
+	if (retcode == KEY_CODE_YES) return KEY_CODE_YES;
+#endif
 	return *ch;
 }
 
@@ -2073,7 +2073,11 @@ end:
 		}
 	} else {
 		if (
-		(b = ncurses_binding_map[ch]) && b->action) {
+#if USE_UNICODE
+			( (config_use_unicode && (tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */)) || !config_use_unicode) &&
+#endif
+			(b = ncurses_binding_map[ch]) && b->action) {
+
 			if (b->function)
 				b->function(b->arg);
 			else {
