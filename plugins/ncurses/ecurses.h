@@ -36,9 +36,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#if USE_UNICODE
 extern int config_use_unicode;	/* not everyone want to include stuff.h */
 
-#if USE_UNICODE
 #define CHAR_T wchar_t 	
 	/* be carefull!   use __S() macro to get true value. */
 	/* be carefull111 use __SN() macr^H^H ekhm, function to move to real index */
@@ -58,8 +58,8 @@ static inline CHAR_T *__SN(CHAR_T **str, int offset) { /* #define __SN(str) (CHA
 	if (config_use_unicode) return (CHAR_T *) ((*str) += offset);
 	else 			return (CHAR_T *) ((*((char **) str)) += offset);
 }
+#define free_utf(ptr)  do { if (ptr && config_use_unicode) free(ptr); } while(0)
 
-inline void free_utf(void *ptr);
 inline int xwcslen(CHAR_T *str);
 inline CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src);
 inline CHAR_T *xwcsdup(CHAR_T *str);
