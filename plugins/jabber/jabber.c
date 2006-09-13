@@ -605,14 +605,14 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
         if (!j)
                 return;
 
-        if (j->connecting)
-                watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
-
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;
 		watch_free(j->send_watch);
 		j->send_watch = NULL;
 	}
+
+	if (j->connecting)
+		watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
 
 #ifdef HAVE_GNUTLS
         if (j->using_ssl && j->ssl_session)
