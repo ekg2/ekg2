@@ -1647,20 +1647,28 @@ list_user:
 	return 0;
 }
 
-static COMMAND(cmd_save)
-{
+static COMMAND(cmd_save) {
+	int ret = 0;
 	last_save = time(NULL);
-	
-	if (!config_write(params[0]) && !session_write() && !metacontact_write() && !script_variables_write() ) {
-		wcs_printq("saved");
+
+/* Changes 14 wrze 2006 (dj) */
+/* We try to save everything, but if smth not pass, try others */
+/* makes it executable even if we don't have sessions. */
+
+	if ((session || session_current) && session_write()) ret = -1;
+	if (config_write(params[0]))	ret = -1;
+	if (metacontact_write())	ret = -1;
+	if (script_variables_write())	ret = -1;
+
+	if (!ret) {
+		printq("saved");
 		config_changed = 0;
 		reason_changed = 0;
 	} else {
 		wcs_printq("error_saving");
-		return -1;
 	}
 
-	return 0;
+	return ret;
 }
 
 static COMMAND(cmd_set)
@@ -4107,7 +4115,7 @@ void command_init()
 	  
 	command_add(NULL, ("reload"), NULL, cmd_reload, 0, NULL);
 	  
-	command_add(NULL, ("save"), NULL, cmd_save, SESSION_MUSTHAS, NULL);
+	command_add(NULL, ("save"), NULL, cmd_save, 0, NULL);
 
 	command_add(NULL, ("say"), "!", cmd_say, COMMAND_ENABLEREQPARAMS,
 	  "-c --clear");
