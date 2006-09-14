@@ -75,15 +75,16 @@ void protocol_init()
  *
  * obs³uga timera reconnectu.
  */
-static TIMER(protocol_reconnect_handler)
-{
+static TIMER(protocol_reconnect_handler) {	/* temporary */
 	char *session = (char*) data;
-	session_t *s = session_find(session);
+	session_t *s;
 
 	if (type == 1) {
 		xfree(session);
 		return 0;
 	}
+
+	s = session_find(session);
 
         if (!s || session_connected_get(s) == 1)
                 return -1;
@@ -91,7 +92,7 @@ static TIMER(protocol_reconnect_handler)
 	debug("reconnecting session %s\n", session);
 
 	command_exec(NULL, s, ("/connect"), 0);
-	return 0;
+	return -1;
 }
 
 /*
@@ -105,25 +106,24 @@ int protocol_disconnected(void *data, va_list ap)
 	char *reason	= *(va_arg(ap, char **));
 	int type	= *(va_arg(ap, int*));
 
-	userlist_clear_status(session_find(session), NULL);
+	session_t *s	= session_find(session);
+
+	userlist_clear_status(s, NULL);
 
 	switch (type) {
 		case EKG_DISCONNECT_NETWORK:
 		case EKG_DISCONNECT_FAILURE:
 		{
 			int tmp;
-			session_t *s = session_find(session);
-
-			if (!s)
-				break;
-
-			if ((tmp = session_int_get(s, "auto_reconnect")) && tmp != -1)
-				timer_add(plugin_find_uid(s->uid), "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
 
 			if (type == EKG_DISCONNECT_NETWORK)
 				print("conn_broken", session_name_n(session));
 			else
 				print("conn_failed", reason, session_name_n(session));
+
+			if (s && (tmp = session_int_get(s, "auto_reconnect")) && tmp != -1)
+				timer_add(plugin_find_uid(s->uid), "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
+
 			break;
 		}
 

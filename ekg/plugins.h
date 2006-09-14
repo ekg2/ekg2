@@ -72,7 +72,6 @@ int plugin_load(const char *name, int prio, int quiet);
 int plugin_unload(plugin_t *);
 int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);
-int plugin_theme_reload(plugin_t *);
 plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
 #define plugin_find_s(a) plugin_find_uid(a->uid)

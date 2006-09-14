@@ -949,14 +949,9 @@ int main(int argc, char **argv)
 	config_read(NULL);
 
         /* je¶li ma byæ theme, niech bêdzie theme */
-        if (load_theme)
-                theme_read(load_theme, 1);
-        else {
-		if (config_theme)
-			theme_read(config_theme, 1);
-        }
-
-        theme_cache_reset();
+	if (load_theme)		theme_read(load_theme, 1);
+	else if (config_theme)	theme_read(config_theme, 1);
+	else			theme_cache_reset();		/* XXX, wywalic? */
 
         in_autoexec = 0;
 

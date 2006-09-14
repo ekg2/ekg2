@@ -45,12 +45,17 @@
 # endif
 #endif
 
-char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
-const char *timestamp_cache = NULL;
+static char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
+static const char *timestamp_cache = NULL;
 
-int no_prompt_cache = 0;
+static int no_prompt_cache = 0;
 
-list_t formats = NULL;
+struct format {
+	char *name;
+	int name_hash;
+	char *value;
+};
+static list_t formats = NULL;
 
 /*
  * format_find()
@@ -62,47 +67,47 @@ list_t formats = NULL;
  */
 const char *format_find(const char *name)
 {
-        const char *tmp;
-        int hash;
-        list_t l;
+	const char *tmp;
+	int hash;
+	list_t l;
 
-        if (!name)
-                return "";
+	if (!name)
+		return "";
 
-        hash = ekg_hash(name);
+	if (config_speech_app && !xstrchr(name, ',')) {
+		char *name2 = saprintf("%s,speech", name);
+		const char *tmp;
 
-        if (config_speech_app && !xstrchr(name, ',')) {
-                char *name2 = saprintf("%s,speech", name);
-                const char *tmp;
-
-                if (xstrcmp((tmp = format_find(name2)), "")) {
-                        xfree(name2);
-                        return tmp;
-                }
-
-                xfree(name2);
-        }
-
-        if (config_theme && (tmp = xstrchr(config_theme, ',')) && !xstrchr(name, ',')) {
-                char *name2 = saprintf("%s,%s", name, tmp + 1);
-                const char *tmp;
-
-                if (xstrcmp((tmp = format_find(name2)), "")) {
-                        xfree(name2);
-                        return tmp;
-                }
-
-                xfree(name2);
-        }
-
-        for (l = formats; l; l = l->next) {
-                struct format *f = l->data;
-
-                if (hash == f->name_hash && !xstrcasecmp(f->name, name)) {
-                        return f->value;
+		if (xstrcmp((tmp = format_find(name2)), "")) {
+			xfree(name2);
+			return tmp;
 		}
-        }
-        return "";
+
+		xfree(name2);
+	}
+
+	if (config_theme && (tmp = xstrchr(config_theme, ',')) && !xstrchr(name, ',')) {
+		char *name2 = saprintf("%s,%s", name, tmp + 1);
+		const char *tmp;
+
+		if (xstrcmp((tmp = format_find(name2)), "")) {
+			xfree(name2);
+			return tmp;
+		}
+
+		xfree(name2);
+	}
+
+	hash = ekg_hash(name);
+
+	for (l = formats; l; l = l->next) {
+		struct format *f = l->data;
+
+		if (hash == f->name_hash && !xstrcasecmp(f->name, name)) {
+			return f->value;
+		}
+	}
+	return "";
 }
 
 /*
@@ -110,70 +115,69 @@ const char *format_find(const char *name)
  *
  * zwraca sekwencjê ansi odpowiadaj±c± danemu kolorkowi z thememów ekg.
  */
-static const char *format_ansi(char ch)
-{
-        if (ch == 'k')
-                return ("\033[2;30m");
-        if (ch == 'K')
-                return ("\033[1;30m");
-        if (ch == 'l')
-                return ("\033[40m");
-        if (ch == 'r')
-                return ("\033[2;31m");
-        if (ch == 'R')
-                return ("\033[1;31m");
-        if (ch == 's')
-                return ("\033[41m");
-        if (ch == 'g')
-                return ("\033[2;32m");
-        if (ch == 'G')
-                return ("\033[1;32m");
-        if (ch == 'h')
-                return ("\033[42m");
-        if (ch == 'y')
-                return ("\033[2;33m");
-        if (ch == 'Y')
-                return ("\033[1;33m");
-        if (ch == 'z')
-                return ("\033[43m");
-        if (ch == 'b')
-                return ("\033[2;34m");
-        if (ch == 'B')
-                return ("\033[1;34m");
-        if (ch == 'e')
-                return ("\033[44m");
-        if (ch == 'm' || ch == 'p')
-                return ("\033[2;35m");
-        if (ch == 'M' || ch == 'P')
-                return ("\033[1;35m");
-        if (ch == 'q')
-                return ("\033[45m");
-        if (ch == 'c')
-                return ("\033[2;36m");
-        if (ch == 'C')
-                return ("\033[1;36m");
-        if (ch == 'd')
-                return ("\033[46m");
-        if (ch == 'w')
-                return ("\033[2;37m");
-        if (ch == 'W')
-                return ("\033[1;37m");
-        if (ch == 'x')
-                return ("\033[47m");
-        if (ch == 'n')                  /* clear all attributes */
-                return ("\033[0m");
-        if (ch == 'T')                  /* bold */
-                return ("\033[1m");
-        if (ch == 'N')                  /* clears all attr exc for bkgd */
-                return ("\033[2m");
-        if (ch == 'U')                  /* underline */
-                return ("\033[4m");
-        if (ch == 'i')                  /* blink */
-                return ("\033[5m");
-        if (ch == 'V')                  /* reverse */
-                return ("\033[7m");
+static const char *format_ansi(char ch) {
+	if (ch == 'k')
+		return ("\033[2;30m");
+	if (ch == 'K')
+		return ("\033[1;30m");
+	if (ch == 'l')
+		return ("\033[40m");
+	if (ch == 'r')
+		return ("\033[2;31m");
+	if (ch == 'R')
+		return ("\033[1;31m");
+	if (ch == 's')
+		return ("\033[41m");
+	if (ch == 'g')
+		return ("\033[2;32m");
+	if (ch == 'G')
+		return ("\033[1;32m");
+	if (ch == 'h')
+		return ("\033[42m");
+	if (ch == 'y')
+		return ("\033[2;33m");
+	if (ch == 'Y')
+		return ("\033[1;33m");
+	if (ch == 'z')
+		return ("\033[43m");
+	if (ch == 'b')
+		return ("\033[2;34m");
+	if (ch == 'B')
+		return ("\033[1;34m");
+	if (ch == 'e')
+		return ("\033[44m");
+	if (ch == 'm' || ch == 'p')
+		return ("\033[2;35m");
+	if (ch == 'M' || ch == 'P')
+		return ("\033[1;35m");
+	if (ch == 'q')
+		return ("\033[45m");
+	if (ch == 'c')
+		return ("\033[2;36m");
+	if (ch == 'C')
+		return ("\033[1;36m");
+	if (ch == 'd')
+		return ("\033[46m");
+	if (ch == 'w')
+		return ("\033[2;37m");
+	if (ch == 'W')
+		return ("\033[1;37m");
+	if (ch == 'x')
+		return ("\033[47m");
+	if (ch == 'n')                  /* clear all attributes */
+		return ("\033[0m");
+	if (ch == 'T')                  /* bold */
+		return ("\033[1m");
+	if (ch == 'N')                  /* clears all attr exc for bkgd */
+		return ("\033[2m");
+	if (ch == 'U')                  /* underline */
+		return ("\033[4m");
+	if (ch == 'i')                  /* blink */
+		return ("\033[5m");
+	if (ch == 'V')                  /* reverse */
+		return ("\033[7m");
 
-        return ("");
+	return ("");
 }
 
 /*
@@ -184,242 +188,231 @@ static const char *format_ansi(char ch)
  *  - format - warto¶æ, nie nazwa formatu,
  *  - ap - argumenty.
  */
-char *va_format_string(const char *format, va_list ap)
-{
-        static int dont_resolve = 0;
-        string_t buf = string_init(NULL);
-        const char *p;
+char *va_format_string(const char *format, va_list ap) {
+	string_t buf = string_init(NULL);
+	static int dont_resolve = 0;
+	const char *p;
 	char *args[9];
-        int i, argc = 0;
+	int i, argc = 0;
         /* liczymy ilo¶æ argumentów */
-        for (p = format; *p; p++) {
-                if (*p == '\\' && p[1] == '%') {
-                        p++;
-                        continue;
-                }
+	for (p = format; *p; p++) {
+		if (*p == '\\' && p[1] == '%') {
+			p++;
+			continue;
+		}
 
-                if (*p != '%')
-                        continue;
+		if (*p != '%')
+			continue;
 
-                p++;
+		p++;
 
-                if (!*p)
-                        break;
+		if (!*p)
+			break;
 
-                if (*p == '@') {
-                        p++;
+		if (*p == '@') {
+			p++;
 
-                        if (!*p)
-                                break;
+			if (!*p)
+				break;
 
-                        if ((*p - '0') > argc)
-                                argc = *p - '0';
+			if ((*p - '0') > argc)
+				argc = *p - '0';
 
-                } else if (*p == '(' || *p == '[') {
-                        if (*p == '(') {
-                                while (*p && *p != ')')
-                                        p++;
-                        } else {
-                                while (*p && *p != ']')
-                                        p++;
-                        }
+		} else if (*p == '(' || *p == '[') {
+			if (*p == '(') {
+				while (*p && *p != ')')
+					p++;
+			} else {
+				while (*p && *p != ']')
+					p++;
+			}
 
-                        if (*p)
-                                p++;
+			if (*p)
+				p++;
 
-                        if (!*p)
-                                break;
+			if (!*p)
+				break;
 
-                        if ((*p - '0') > argc)
-                                argc = *p - '0';
-                } else {
-                        if (*p >= '1' && *p <= '9' && (*p - '0') > argc)
-                                argc = *p - '0';
-                }
-        }
+			if ((*p - '0') > argc)
+				argc = *p - '0';
+		} else {
+			if (*p >= '1' && *p <= '9' && (*p - '0') > argc)
+				argc = *p - '0';
+		}
+	}
 
         for (i = 0; i < 9; i++) 
                 args[i] = NULL;
 
-        for (i = 0; i < argc; i++)
-                args[i] = va_arg(ap, char *);
+	for (i = 0; i < argc; i++)
+		args[i] = va_arg(ap, char *);
 
-        if (!dont_resolve) {
-                dont_resolve = 1;
-                if (no_prompt_cache) {
-                        /* zawsze czytaj */
-                        timestamp_cache = format_find("timestamp");
-                        prompt_cache = format_string(format_find("prompt"));
-                        prompt2_cache = format_string(format_find("prompt2"));
-                        error_cache = format_string(format_find("error"));
-                } else {
-                        /* tylko je¶li nie s± keszowanie */
-                        if (!timestamp_cache)
-                                timestamp_cache = format_find("timestamp");
-                        if (!prompt_cache)
-                                prompt_cache = format_string(format_find("prompt"));
-                        if (!prompt2_cache)
-                                prompt2_cache = format_string(format_find("prompt2"));
-                        if (!error_cache)
-                                error_cache = format_string(format_find("error"));
-                }
-                dont_resolve = 0;
-        }
+	if (!dont_resolve) {
+		dont_resolve = 1;
+		if (no_prompt_cache) {
+			/* zawsze czytaj */
+			timestamp_cache	= format_find("timestamp");
+			prompt_cache	= format_string(format_find("prompt"));
+			prompt2_cache	= format_string(format_find("prompt2"));
+			error_cache 	= format_string(format_find("error"));
+		} else {
+			/* tylko je¶li nie s± keszowanie */
+			if (!timestamp_cache)	timestamp_cache = format_find("timestamp");
+			if (!prompt_cache)	prompt_cache	= format_string(format_find("prompt"));
+			if (!prompt2_cache)	prompt2_cache	= format_string(format_find("prompt2"));
+			if (!error_cache)	error_cache	= format_string(format_find("error"));
+		}
+		dont_resolve = 0;
+	}
 
-        p = format;
+	p = format;
 
-        while (*p) {
-                int escaped = 0;
+	while (*p) {
+		if (*p == '\\' && (p[1] == '%' || p[1] == '\\')) {
+			string_append_c(buf, p[1]);
+			p += 2;
+			continue;
+		} else if (*p == '%') {
+			int fill_before = 0;
+			int fill_after	= 0;
+			int fill_soft	= 1;
+			int fill_length = 0;
+			char fill_char	= ' ';
 
-                if (*p == '\\' && (p[1] == '%' || p[1] == '\\')) {
-                        escaped = 1;
-                        p++;
-                }
+			p++;
+			if (!*p)
+				break;
+			if (*p == '{') {		/* how does it works ? i czemu tego nie ma w docs/themes.txt ? */
+				int hm		= 0;
+				char *str;
+				char *cnt;
 
-                if (*p == '%' && !escaped) {
-                        int fill_before, fill_after, fill_soft, fill_length, hm;
-                        char fill_char, *cnt=NULL;
+				p++;
 
-                        p++;
-                        if (!*p)
-                                break;
-                        if (*p == '{')
-                        {
-                                char *str;
-                                p++;
-                                if (*p >= '0' && *p <= '9')
-                                        str = (char *)args[*p - '1'];
-                                else if (*p == '}') {
-                                        p++; p++; continue;
-                                } else {
-                                        p++; continue;
-                                }
-                                p++;
-                                cnt = (char *)p;
-                                hm = 0;
+				if (*p == '}') 				{  p++; p++; continue; }	/* why p++; p++; ? who wrote it? */
+				else if (!(*p >= '0' && *p <= '9'))	{	p++; continue; }	/* not number, skip it */
+				else 					str = args[*p - '1'];		/* if number, get str from args table */
 
-                                while (*cnt && *cnt!='}') { cnt++; hm++; }
-                                hm>>=1; cnt=(char *)(p+hm);
-                                /* debug(">>> [HM:%d]", hm); */
-                                for (; hm>0; hm--) {
-                                        if (*p == *str) break;
-                                        p++; cnt++;
-                                }
-                                /* debug(" [%c%c][%d] [%s] ", *p, *cnt, hm, p); */
-                                if (!hm) { p=*cnt?*(cnt+1)?(cnt+2):(cnt+1):cnt; continue; }
-                                p=(cnt+hm+1);
-                                /* debug(" [%s]\n"); */
-                                *((char *)p)=*cnt;
-                        }
-                        if (*p == '%')
-                                string_append_c(buf, '%');
-                        if (*p == '>')
-                                string_append(buf, prompt_cache);
-                        if (*p == ')')
-                                string_append(buf, prompt2_cache);
-                        if (*p == '!')
-                                string_append(buf, error_cache);
-                        if (*p == '|')
-                                string_append(buf, "\033[00m"); /* g³upie, wiem */
-                        if (*p == ']')
-                                string_append(buf, "\033[000m");        /* jeszcze g³upsze */
-                        if (*p == '#')
-                                string_append(buf, timestamp(timestamp_cache));
-                        else if (config_display_color) {
+				p++;
+				cnt = (char *)p;
+
+				while (*cnt && *cnt!='}') { cnt++; hm++; }
+				hm>>=1; cnt=(char *)(p+hm);
+				/* debug(">>> [HM:%d]", hm); */
+				for (; hm>0; hm--) {
+					if (*p == *str) break;
+					p++; cnt++;
+				}
+				/* debug(" [%c%c][%d] [%s] ", *p, *cnt, hm, p); */
+				if (!hm) { 
+					p = *cnt ? *(cnt+1) ? (cnt+2) : (cnt+1) : cnt;		/* (*p points to \0) ? or p = cnt+2 ? */
+					continue; 
+				}
+				p=(cnt+hm+1);
+				/* debug(" [%s]\n"); */
+				*((char *)p)=*cnt;
+			}
+			if (*p == '%')
+				string_append_c(buf, '%');
+			else if (*p == '>')
+				string_append(buf, prompt_cache);
+			else if (*p == ')')
+				string_append(buf, prompt2_cache);
+			else if (*p == '!')
+				string_append(buf, error_cache);
+			else if (*p == '|')
+				string_append(buf, "\033[00m"); /* g³upie, wiem */
+			else if (*p == ']')
+				string_append(buf, "\033[000m");        /* jeszcze g³upsze */
+			else if (*p == '#')
+				string_append(buf, timestamp(timestamp_cache));
+			else if (config_display_color) {
 				const char *tmp = format_ansi(*p);
-                                string_append(buf, tmp);
-                        }
+				string_append(buf, tmp);
+			} 
 
-                        if (*p == '@') {
-                                char *str = (char*) args[*(p + 1) - '1'];
+			if (*p == '@') {
+				char *str = (char*) args[*(p + 1) - '1'];
 
-                                if (str) {
-                                        char *q = str + xstrlen(str) - 1;
+				if (str) {
+					char *q = str + xstrlen(str) - 1;
 
-                                        while (q >= str && !isalpha_pl_PL(*q))
-                                                q--;
+					while (q >= str && !isalpha_pl_PL(*q))
+						q--;
 
-                                        if (*q == 'a')
-                                                string_append(buf, "a");
-                                        else
-                                                string_append(buf, "y");
-                                }
-                                p += 2;
-                                continue;
-                        }
+					if (*q == 'a')
+						string_append(buf, "a");
+					else
+						string_append(buf, "y");
+				}
+				p += 2;
+				continue;
+			}
 
-                        fill_before = 0;
-                        fill_after = 0;
-                        fill_length = 0;
-                        fill_char = ' ';
-                        fill_soft = 1;
+			if (*p == '[' || *p == '(') {
+				char *q;
 
-                        if (*p == '[' || *p == '(') {
-                                char *q;
+				fill_soft = (*p == '(');
+				p++;
 
-                                fill_soft = (*p == '(');
+				/* fill_char = ' '; */		/* zadeklarowane wczesniej */
 
-                                p++;
-                                fill_char = ' ';
+				if (*p == '.') {
+					fill_char = '0';
+					p++;
+				} else if (*p == ',') {
+					fill_char = '.';
+					p++;
+				} else if (*p == '_') {
+					fill_char = '_';
+					p++;
+				}
 
-                                if (*p == '.') {
-                                        fill_char = '0';
-                                        p++;
-                                } else if (*p == ',') {
-                                        fill_char = '.';
-                                        p++;
-                                } else if (*p == '_') {
-                                        fill_char = '_';
-                                        p++;
-                                }
+				fill_length = strtol(p, &q, 0);
+				p = q;
+				if (fill_length > 0)
+					fill_after = 1;
+				else {
+					fill_length = -fill_length;
+					fill_before = 1;
+				}
+				p++;
+			}
 
-                                fill_length = strtol(p, &q, 0);
-                                p = q;
-                                if (fill_length > 0)
-                                        fill_after = 1;
-                                else {
-                                        fill_length = -fill_length;
-                                        fill_before = 1;
-                                }
-                                p++;
-                        }
+			if (*p >= '1' && *p <= '9') {
+				char *str = (char *) args[*p - '1'];
+				int i, len;
 
-                        if (*p >= '1' && *p <= '9') {
-                                char *str = (char *) args[*p - '1'];
-                                int i, len;
+				if (!str)
+					str = "";
+				len = xstrlen(str);
 
-                                if (!str)
-                                        str = "";
-                                len = xstrlen(str);
+				if (fill_length) {
+					if (len >= fill_length) {
+						if (!fill_soft)
+							len = fill_length;
+						fill_length = 0;
+					} else
+						fill_length -= len;
+				}
 
-                                if (fill_length) {
-                                        if (len >= fill_length) {
-                                                if (!fill_soft)
-                                                        len = fill_length;
-                                                fill_length = 0;
-                                        } else
-                                                fill_length -= len;
-                                }
+				if (fill_before)
+					for (i = 0; i < fill_length; i++)
+						string_append_c(buf, fill_char);
 
-                                if (fill_before)
-                                        for (i = 0; i < fill_length; i++)
-                                                string_append_c(buf, fill_char);
+				string_append_n(buf, str, len);
 
-                                string_append_n(buf, str, len);
-
-                                if (fill_after)
-                                        for (i = 0; i < fill_length; i++)
-                                                string_append_c(buf, fill_char);
-
+				if (fill_after)
+					for (i = 0; i < fill_length; i++)
+						string_append_c(buf, fill_char);
                         }
                 } else
                         string_append_c(buf, *p);
-
                 p++;
         }
 
         if (!dont_resolve && no_prompt_cache)
-                theme_cache_reset();
+		theme_cache_reset();
 
         if (!config_display_pl_chars)
                 iso_to_ascii(buf->str);
@@ -437,6 +430,7 @@ char *va_format_string(const char *format, va_list ap)
  * zwraca zaalokowan± fstring_t.
  */
 
+/* XXX, parsing \033 is wrong, need rewrite (dj) */
 fstring_t *fstring_new(const char *str) {
         fstring_t *res = xmalloc(sizeof(fstring_t));
 	char *tmpstr;
@@ -638,30 +632,30 @@ void print_window(const char *target, session_t *session, int separate, const ch
          * zasobem to wrzucamy tam. je¶li mamy otwarte okno dla zasobu,
          * a przychodzi z innego, otwieramy nowe. */
 
-        if (!window_find_s(session, target)) {
-                const char *res;
-                userlist_t *u;
+	if (!window_find_s(session, target)) {
+		const char *res;
+		userlist_t *u;
 
-                if ((res = xstrchr(target, '/'))) {
-                        newtarget = xstrdup(target);
-                        *(xstrchr(newtarget, '/')) = 0;
-                        u = userlist_find(session, target);
-                        /* XXX cza dorobiæ, szefie */
-                } else {
-                        u = userlist_find(session, target);
+		if ((res = xstrchr(target, '/'))) {
+			newtarget = xstrdup(target);
+			*(xstrchr(newtarget, '/')) = 0;
+			u = userlist_find(session, target);
+			/* XXX cza dorobiæ, szefie */
+		} else {
+			u = userlist_find(session, target);
 
-                        if (u && window_find_s(session, u->uid))
-                                newtarget = xstrdup(u->uid);
-                        else if (u && u->nickname)
-                                newtarget = xstrdup(u->nickname);
-                }
-        }
+			if (u && window_find_s(session, u->uid))
+				newtarget = xstrdup(u->uid);
+			else if (u && u->nickname)
+				newtarget = xstrdup(u->nickname);
+		}
+	}
 
-        if (newtarget)
-                target = newtarget;
+	if (newtarget)
+		target = newtarget;
 
-        if (!target)
-                target = "__current";
+	if (!target)
+		target = "__current";
 
         va_start(ap, theme);
         tmp = stmp = va_format_string(format_find(theme), ap);
@@ -725,11 +719,12 @@ int format_add(const char *name, const char *value, int replace)
         if (!name || !value)
                 return -1;
 
-        if (!xstrcasecmp(name, "no_prompt_cache")) {
+        hash = ekg_hash(name);
+
+        if (hash == 2261954 && !xstrcmp(name, "no_prompt_cache")) { /* XXX, if you change ekg_hash() change this value too */
                 no_prompt_cache = 1;
                 return 0;
         }
-        hash = ekg_hash(name);
 
         for (l = formats; l; l = l->next) {
 		f = l->data;
@@ -759,14 +754,17 @@ int format_add(const char *name, const char *value, int replace)
 static int format_remove(const char *name)
 {
         list_t l;
+	int hash;
 
         if (!name)
                 return -1;
 
+	hash = ekg_hash(name);
+
         for (l = formats; l; l = l->next) {
                 struct format *f = l->data;
 
-                if (!xstrcasecmp(f->name, name)) {
+                if (hash == f->name_hash && !xstrcasecmp(f->name, name)) {
                         xfree(f->value);
                         xfree(f->name);
                         list_remove(&formats, f, 1);
@@ -787,14 +785,11 @@ static int format_remove(const char *name)
  *  - prefix - ¶cie¿ka,
  *  - filename - nazwa pliku.
  */
-static FILE *theme_open(FILE *prevfd, const char *prefix, const char *filename)
+static FILE *theme_open(const char *prefix, const char *filename)
 {
         char buf[PATH_MAX];
         int save_errno;
         FILE *f;
-
-        if (prevfd)
-                return prevfd;
 
         if (prefix)
                 snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
@@ -849,9 +844,9 @@ int theme_read(const char *filename, int replace) {
 		f = NULL;
 
 		if (!xstrchr(filename, '/')) {
-			f = theme_open(f, prepare_path("", 0), fn);
-			f = theme_open(f, prepare_path("themes", 0), fn);
-			f = theme_open(f, DATADIR "/themes", fn);
+			if (!f) f = theme_open(prepare_path("", 0), fn);
+			if (!f) f = theme_open(prepare_path("themes", 0), fn);
+			if (!f) f = theme_open(DATADIR "/themes", fn);
 		}
 
 		xfree(fn);
@@ -866,35 +861,27 @@ int theme_read(const char *filename, int replace) {
 	/*      ui_event("theme_init"); */
 
 	while ((buf = read_file(f))) {
-		char *value, *p;
+		char *value;
 
-		if (buf[0] == '#') {
-			xfree(buf);
-			continue;
-		}
+		if (buf[0] == '-') 			format_remove(buf + 1);
+		else if (buf[0] == '#')			;
+		else if (!(value = xstrchr(buf, ' ')))	;
+		else {
+			char *p;
+			*value++ = 0;
 
-		if (!(value = xstrchr(buf, ' '))) {
-			xfree(buf);
-			continue;
-		}
-
-		*value++ = 0;
-
-		for (p = value; *p; p++) {
-			if (*p == '\\') {
-				if (!*(p + 1))
-					break;
-				if (*(p + 1) == 'n')
-					*p = '\n';
-				memmove(p + 1, p + 2, xstrlen(p + 1));
+			for (p = value; *p; p++) {
+				if (*p == '\\') {
+					if (!*(p + 1))
+						break;
+					if (*(p + 1) == 'n')
+						*p = '\n';
+					memmove(p + 1, p + 2, xstrlen(p + 1));
+				}
 			}
-		}
 
-		if (buf[0] == '-')
-			format_remove(buf + 1);
-		else
 			format_add(buf, value, replace);
-
+		}
 		xfree(buf);
 	}
 
@@ -923,24 +910,21 @@ void theme_free()
 
         list_destroy(formats, 1);
         formats = NULL;
+	no_prompt_cache = 0;
 
         theme_cache_reset();
 }
 
-void theme_plugins_init()
-{
+void theme_plugins_init() {
         list_t l;
-
-        if (!plugins)
-                return;
 
         for (l = plugins; l; l = l->next) {
                 plugin_t *p = l->data;
 
-                if (!p)
+                if (!p || !p->theme_init)
                         continue;
 
-                plugin_theme_reload(p);
+		p->theme_init();
         }
 }
 

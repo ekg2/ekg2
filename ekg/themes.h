@@ -27,12 +27,6 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-struct format {
-	char *name;
-	int name_hash;
-	char *value;
-};
-
 typedef struct {
 	char *str;	/* znaki, ci±g zakoñczony \0 */
 	short *attr;	/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
@@ -44,8 +38,6 @@ typedef struct {
 	int margin_left; 	/* where the margin is set (on what char) */
 	void *private;          /* can be helpfull */
 } fstring_t;
-
-extern list_t formats;
 
 #ifndef __EKG_STUFF_H
 extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo includowac calego stuff.h */

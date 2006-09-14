@@ -494,14 +494,6 @@ plugin_watches_again:
 	return 0;
 }
 
-int plugin_theme_reload(plugin_t *p)
-{
-	if (p->theme_init)
-		p->theme_init();
-
-	return 0;
-}
-
 /* 
  * plugin_var_find()
  *
@@ -946,7 +938,7 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 {
 	int res = -1;
 	watch_t *w;
-
+/* XXX, here can be deadlock feel warned. */
 	while ((w = watch_find(plugin, fd, type))) {
 		watch_free(w);
 		res = 0;
@@ -967,8 +959,6 @@ int have_plugin_of_class(int pclass) {
 PROPERTY_INT(watch, timeout, time_t)
 PROPERTY_DATA(watch)
 PROPERTY_MISC(watch, handler, watch_handler_func_t, NULL)
-
-
 
 /*
  * Local Variables:
