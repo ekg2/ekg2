@@ -256,23 +256,27 @@ int rot13_plugin_init(int prio) {
 }
 
 static int rot13_plugin_destroy() {
-	char *path = saprintf("%s/rot13.keys", prepare_path("keys", 0));
-	FILE *f;
-	if ((f = fopen(path, "w"))) {
-		list_t l;
+	list_t l;
+	char *path 	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
+	FILE *f		= fopen(path, "w");
 
-		for (l = keys; l; l = l->next) {
-			rot13_key_t *k = l->data;
-
-			fprintf(f, "\"%s\" \"%s\" \"%s\" \"%s\"\n",
-					k->target ? k->target : "*",
-					k->session ? k->session : "*", 
-					k->rot ? k->rot : "?",
-					k->drot ? k->drot : "?");
-		}
-		fclose(f);
-	}
 	xfree(path);
+
+	for (l = keys; l; l = l->next) {
+		rot13_key_t *k = l->data;
+
+		if (f) fprintf(f, "\"%s\" \"%s\" \"%s\" \"%s\"\n",
+				k->target ? k->target : "*",
+				k->session ? k->session : "*", 
+				k->rot ? k->rot : "?",
+				k->drot ? k->drot : "?");
+		xfree(k->target);
+		xfree(k->session);
+		xfree(k->rot);
+		xfree(k->drot);
+	}
+	list_destroy(keys, 1);
+	if (f) fclose(f);
 
 	plugin_unregister(&rot13_plugin);
 	return 0;
