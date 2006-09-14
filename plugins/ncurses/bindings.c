@@ -82,7 +82,7 @@ static BINDING_FUNCTION(binding_kill_word)
 		eaten++;
 	}
 
-	memmove(__SPTR(line, line_index), __SPTR(line, line_index + eaten), xwcslen(line) - line_index - eaten + 1);
+	memmove(__SPTR(line, line_index), __SPTR(line, line_index + eaten), sizeofchart*xwcslen(line) - sizeofchart*line_index - sizeofchart*eaten + sizeofchart);
 }
 
 static BINDING_FUNCTION(binding_toggle_input)
@@ -179,7 +179,7 @@ static BINDING_FUNCTION(binding_yank)
 {
 	if (yanked && xwcslen(yanked) + xwcslen(line) + 1 < LINE_MAXLEN) {
 		memmove(__SPTR(line,  line_index + xwcslen(yanked)), __SPTR(line, line_index), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - sizeofchart*xwcslen(yanked));
-		memcpy(line + line_index, yanked, xwcslen(yanked));
+		memcpy(__SPTR(line, line_index), yanked, sizeofchart*xwcslen(yanked));
 		line_index += xwcslen(yanked);
 	}
 }
@@ -204,7 +204,7 @@ static BINDING_FUNCTION(binding_delete_char)
 	}
 				
 	if (line_index < xwcslen(line)) {
-		memmove(__SPTR(line, line_index), __SPTR(line, line_index + 1), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - 1);
+		memmove(__SPTR(line, line_index), __SPTR(line, line_index + 1), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - sizeofchart);
 		__SREP(line, LINE_MAXLEN - 1, 0);	/* line[LINE_MAXLEN - 1] = 0; */
 	}
 }
