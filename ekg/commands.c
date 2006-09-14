@@ -2178,7 +2178,7 @@ static COMMAND(cmd_beep)
 static COMMAND(cmd_play)
 {
 	if (!config_sound_app) {
-		wcs_printq("not_enough_params", name);
+		wcs_printq("var_not_set", name, "sound_app");
 		return -1;
 	}
 
@@ -2188,7 +2188,7 @@ static COMMAND(cmd_play)
 static COMMAND(cmd_say)
 {
 	if (!config_speech_app) {
-		wcs_printq("not_enough_params", name);
+		wcs_printq("var_not_set", name, "speech_app");
 		return -1;
 	}
 
@@ -2245,7 +2245,7 @@ static COMMAND(cmd_query) {
 		par0 = c->name;
 	}
 
-	if (!par0 && (tmp = xstrrchr(params[0], '/'))) {	/* query user in passed session? wow */
+	if (!par0 && (tmp = xstrrchr(params[0], '/'))) {	/* query user in passed session? wow XXX, we need to fix it cause jabber can pass '/' as resource. XXX */
 		char *session_name = xstrndup(params[0], xstrlen(params[0]) - xstrlen(tmp));
 		session_t *sess_tmp;
 
@@ -2320,7 +2320,7 @@ next:
 	window_switch(w->id);	/* switch to that window */
 
 	if (params[1])	/* if we've got message in params[1] send it */
-		command_exec_format(par0 ? par0 : params[0], session, quiet, ("/ %s"), params[1]);
+		command_exec_format(par0, session, quiet, ("/ %s"), params[1]);
 	return 0;
 }
 

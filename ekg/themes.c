@@ -994,6 +994,7 @@ void theme_init()
 	format_add("value_none", _("(none)"), 1);
 	format_add("not_enough_params", _("%! Too few parameters. Try %Thelp %1%n\n"), 1);
 	format_add("invalid_params", _("%! Invalid parameters. Try %Thelp %1%n\n"), 1);
+	format_add("var_not_set", _("%! Required variable %T%2%n by %T%1%n is unset\n"), 1);
 	format_add("invalid_uid", _("%! Invalid user id\n"), 1);
 	format_add("invalid_session", _("%! Invalid session\n"), 1);
 	format_add("invalid_nick", _("%! Invalid username\n"), 1);
