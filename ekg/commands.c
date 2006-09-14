@@ -2219,49 +2219,33 @@ static COMMAND(cmd_reload)
 	return res;
 }
 
-static COMMAND(cmd_query)
-{
-	char **p = xcalloc(3, sizeof(char*));
-	int i, res = 0;
+static COMMAND(cmd_query) {
+	char *par0 = NULL;
 	metacontact_t *m;
+	window_t *w;
 	char *tmp;
 
-	/* skopiuj argumenty dla wywo³ania /chat */
-	for (i = 0; params[i]; i++)
-		p[i] = xstrdup(params[i]);
-
-	p[i] = NULL;
-
-	if (params[0] && (params[0][0] == '@' || xstrchr(params[0], ','))) {
+	if (params[0][0] == '@' || xstrchr(params[0], ',')) {	/* you want to talk with lot people? let's create conference ! */
 		struct conference *c = conference_create(session, params[0]);
 		
-		if (!c) {
-			res = -1;
-			goto cleanup;
-		}
+		if (!c)
+			return -1;
 
-		xfree(p[0]);
-		p[0] = xstrdup(c->name);
-
-		goto query;
+		par0 = c->name;
 	}
 
-	if (params[0] && params[0][0] == '#') {
+	if (!par0 && params[0][0] == '#') {			/* query conference ? ok... */
 		struct conference *c = conference_find(params[0]);
 
 		if (!c) {
 			printq("conferences_noexist", params[0]);
-			res = -1;
-			goto cleanup;
+			return -1;
 		}
-		
-		xfree(p[0]);
-		p[0] = xstrdup(c->name);
 
-		goto query;
+		par0 = c->name;
 	}
 
-	if (params[0] && (tmp = xstrrchr(params[0], '/'))) {
+	if (!par0 && (tmp = xstrrchr(params[0], '/'))) {	/* query user in passed session? wow */
 		char *session_name = xstrndup(params[0], xstrlen(params[0]) - xstrlen(tmp));
 		session_t *sess_tmp;
 
@@ -2275,49 +2259,37 @@ static COMMAND(cmd_query)
 		if (!get_uid(session, ++tmp)) {
 			printq("user_not_found", tmp);
 			xfree(session_name);
-		        res = -1;
-	                goto cleanup;
+			return -1;
 		}
 
 		xfree(session_name);
-                xfree(p[0]);
-		p[0] = xstrdup(tmp);
-		goto query;
+		par0 = tmp;
 	}
 
 next:
-	if (params[0] && (m = metacontact_find(params[0]))) {
+	if (!par0 && (m = metacontact_find(params[0]))) {	/* some metacontact's name ? */
 		metacontact_item_t *i = metacontact_find_prio(m);
 
 		if (!i) {
 			wcs_printq("metacontact_item_list_empty");
-			res = -1;
-			goto cleanup;
+			return -1;
 		}
-
-		xfree(p[0]);
-		p[0] = xstrdup(i->name);
+		
+		par0 = i->name;
 		session = session_find(i->s_uid);
-		goto query;
-	}	
-
-	if (params[0] && !get_uid(session, params[0])) {
-		printq("user_not_found", params[0]);
-		res = -1;
-		goto cleanup;
 	}
 
-query:
-	if (!p[0] && !window_current->target)
-		goto chat;
+	if (!par0) {						/* everything else if it's valid uid/ (nickname if we have user in roster) */
+		char *uid = get_uid(session, params[0]);
 
-	if (p[0]) {
-		window_t *w;
-
-		if ((w = window_find_s(session, p[0]))) {
-			window_switch(w->id);
-			goto chat;
+		if (!uid) {
+			printq("user_not_found", params[0]);
+			return -1;
 		}
+		par0 = (char *) params[0];
+	}
+
+	if (!(w = window_find_s(session, par0))) {			/* if we don't have window, we need to create it, in way specified by config_make_window */
 
 		if (config_make_window == 1) {
 			list_t l;
@@ -2332,41 +2304,24 @@ query:
 				break;
 			}
 
-			if (!w)
-				w = window_new(p[0], session, 0);
-
-			window_switch(w->id);
+			if (w) {	/* zmiennilismy target, okienku, poinformujmy o tym ncurses lub inne ui ! */
+				w->target = xstrdup(par0);
+				query_emit(NULL, ("ui-window-target-changed"), &w);
+			}
 		}
 
-		if (config_make_window == 2) {
-			w = window_new(p[0], session, 0);
-			window_switch(w->id);
-		}
+		if (!w) w = window_new(par0, session, 0);	/* jesli jest config_make_window == 2 lub inne, lub nie mielismy wolnego okienka przy config_make_window == 1, stworzmy je */
 
-		xfree(window_current->target);
-		window_current->target = xstrdup(p[0]);
-		query_emit(NULL, ("ui-window-target-changed"), &window_current);
-
-		if (!quiet) {
-			print_window(p[0], session, 0, "query_started", p[0], session_name(session));
-			print_window(p[0], session, 0, "query_started_window", p[0], session_name(session));
+		if (!quiet) {		/* display some beauty info */
+			print_window(par0, session, 0, "query_started", par0, session_name(session));
+			print_window(par0, session, 0, "query_started_window", par0, session_name(session));
 		}
-	} else {
-		query_emit(NULL, ("ui-window-target-changed"), &window_current);
 	}
+	window_switch(w->id);	/* switch to that window */
 
-chat:
-	if (params[0] && params[1]) {
-		command_exec_format((p[0]) ? p[0] : params[0], session, quiet, ("/ %s"), params[1]);
-	}
-
-cleanup:
-	for (i = 0; p[i]; i++)
-		xfree(p[i]);
-
-	xfree(p);
-
-	return res;
+	if (params[1])	/* if we've got message in params[1] send it */
+		command_exec_format(par0 ? par0 : params[0], session, quiet, ("/ %s"), params[1]);
+	return 0;
 }
 
 static COMMAND(cmd_echo)
@@ -4141,7 +4096,7 @@ void command_init()
 
 	command_add(NULL, ("plugin"), "P ?", cmd_plugin, 0, NULL);
 
-	command_add(NULL, ("query"), "uUCms ?", cmd_query, SESSION_MUSTHAS,
+	command_add(NULL, ("query"), "!uUCms ?", cmd_query, SESSION_MUSTHAS | COMMAND_ENABLEREQPARAMS,
 	  "-c --clear");
 
 	command_add(NULL, ("queue"), "puUC uUC", cmd_queue, 0, 
