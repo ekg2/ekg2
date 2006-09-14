@@ -117,9 +117,9 @@ int protocol_disconnected(void *data, va_list ap)
 			int tmp;
 
 			if (type == EKG_DISCONNECT_NETWORK)
-				print("conn_broken", session_name_n(session));
+				print("conn_broken", session_name(s));
 			else
-				print("conn_failed", reason, session_name_n(session));
+				print("conn_failed", reason, session_name(s));
 
 			if (s && (tmp = session_int_get(s, "auto_reconnect")) && tmp != -1)
 				timer_add(plugin_find_uid(s->uid), "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
@@ -129,21 +129,21 @@ int protocol_disconnected(void *data, va_list ap)
 
 		case EKG_DISCONNECT_USER:
 			if (reason)
-				print("disconnected_descr", reason, session_name_n(session));
+				print("disconnected_descr", reason, session_name(s));
 			else
-				print("disconnected", session_name_n(session));
+				print("disconnected", session_name(s));
 			break;
 
 		case EKG_DISCONNECT_FORCED:
-			print("conn_disconnected", session_name_n(session));
+			print("conn_disconnected", session_name(s));
 			break;
 			
 		case EKG_DISCONNECT_STOPPED:
-			print("conn_stopped", session_name_n(session));
+			print("conn_stopped", session_name(s));
 			break;
 
 		default:
-			wcs_print("generic_error", ("protocol_disconnect internal error, report to authors"));
+			print("generic_error", "protocol_disconnect internal error, report to authors");
 			break;
 	}
 

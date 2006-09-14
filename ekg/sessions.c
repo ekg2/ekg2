@@ -689,10 +689,10 @@ int session_check(session_t *s, int need_private, const char *protocol)
 const char *session_name(session_t *s)
 {
 	static char buf[150];
-	char *tmp = format_string(format_find("session_name"), (s->alias) ? s->alias : s->uid);
+	char *tmp = format_string(format_find("session_name"), s ? (s->alias) ? s->alias : s->uid : "?");
 
 	strlcpy(buf, tmp, sizeof(buf));
-	
+
 	xfree(tmp);
 	return buf;
 }
