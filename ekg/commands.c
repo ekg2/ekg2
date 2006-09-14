@@ -2298,7 +2298,6 @@ next:
 	}
 
 	if (!(w = window_find_s(session, par0))) {			/* if we don't have window, we need to create it, in way specified by config_make_window */
-
 		if (config_make_window == 1) {
 			list_t l;
 
@@ -2316,9 +2315,14 @@ next:
 				w->target = xstrdup(par0);
 				query_emit(NULL, ("ui-window-target-changed"), &w);
 			}
+		} else if (config_make_window == 0 && window_current /* && window_current->id >1 && !window_current->floating */) {
+			w = window_current;
+			xfree(w->target);	w->target = xstrdup(par0);		/* change target */
+			w->session = session;						/* change session */
+			query_emit(NULL, ("ui-window-target-changed"), &w);		/* notify ui-plugin */
 		}
 
-		if (!w) w = window_new(par0, session, 0);	/* jesli jest config_make_window == 2 lub inne, lub nie mielismy wolnego okienka przy config_make_window == 1, stworzmy je */
+		if (!w) w = window_new(par0, session, 0);	/* jesli jest config_make_window => 2 lub nie mielismy wolnego okienka przy config_make_window == 1, stworzmy je */
 
 		if (!quiet) {		/* display some beauty info */
 			print_window(par0, session, 0, "query_started", par0, session_name(session));
