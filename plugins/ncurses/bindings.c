@@ -154,7 +154,7 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 
 	if (xwcslen(line) > 0 && line_index > 0) {
 		memmove(__SPTR(line, line_index - 1), __SPTR(line, line_index), LINE_MAXLEN*sizeofchart - line_index*sizeofchart);
-		*(__SPTR(line, LINE_MAXLEN - 1)) = 0;
+		__SREP(line, LINE_MAXLEN - 1, 0);		/* line[LINE_MAXLEN - 1] = 0; */
 		line_index--;
 	}
 }
@@ -172,7 +172,7 @@ static BINDING_FUNCTION(window_kill_binding)
 
 static BINDING_FUNCTION(binding_kill_line)
 {
-	*(__SPTR(line, line_index)) = 0;
+	__SREP(line, line_index, 0);			/* line[line_index] = 0; */
 }
 
 static BINDING_FUNCTION(binding_yank)
@@ -205,7 +205,7 @@ static BINDING_FUNCTION(binding_delete_char)
 				
 	if (line_index < xwcslen(line)) {
 		memmove(__SPTR(line, line_index), __SPTR(line, line_index + 1), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - 1);
-		*(__SPTR(line, LINE_MAXLEN - 1)) = 0;
+		__SREP(line, LINE_MAXLEN - 1, 0);	/* line[LINE_MAXLEN - 1] = 0; */
 	}
 }
 				
@@ -222,7 +222,7 @@ static BINDING_FUNCTION(binding_accept_line)
 
 		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
 		xwcscpy(lines[lines_index + 1], __SPTR(line, line_index));
-		*(__SPTR(line, line_index)) = 0;
+		__SREP(line, line_index, 0);		/* line[line_index] = 0; */
 		
 		line_index = 0;
 		line_start = 0;
@@ -250,7 +250,7 @@ static BINDING_FUNCTION(binding_accept_line)
 
 	history[0] = line;
 	history_index = 0;
-	line[0] = 0;
+	__SREP(line, 0, 0);	/* line[0] = 0; */
 	line_adjust();
 }
 
@@ -258,7 +258,7 @@ static BINDING_FUNCTION(binding_line_discard)
 {
 	xfree(yanked);
 	yanked = xwcsdup(line);
-	line[0] = 0;
+	__SREP(line, 0, 0);	/* line[0] = 0; */
 	line_adjust();
 
 	if (lines && lines_index < array_count((char **) lines) - 1) {
@@ -294,20 +294,20 @@ static BINDING_FUNCTION(binding_word_rubout)
 
 	p = __SPTR(line, line_index);
 	
-	if (xisspace(*(p-1))) {
-		while (p > line && xisspace(*(p-1))) {
+	if (__S(p, -1)) {
+		while (p > line && xisspace(__S(p, -1))) {
 			__SN(&p, -1);	/* p-- */
 			eaten++;
 		}
 	} else {
-                while (p > line && !xisalpha(*(p-1)) && !xisspace(*(p-1))) {
+                while (p > line && !xisalpha(__S(p, -1)) && !xisspace(__S(p, -1))) {
 			__SN(&p, -1);	/* p-- */
                         eaten++;
                 }
         }
 
 	if (p > line) {
-		while (p > line && !xisspace(*(p-1)) && xisalpha(*(p-1))) {
+		while (p > line && !xisspace(__S(p, -1)) && xisalpha(__S(p, -1))) {
 			__SN(&p, -1);	/* p-- */
 			eaten++;
 		}
@@ -334,10 +334,10 @@ static BINDING_FUNCTION(binding_complete)
 		if (xwcslen(line) + count >= LINE_MAXLEN - 1)
 			return;
 
-		memmove(line + line_index + count, line + line_index, LINE_MAXLEN - line_index - count);
+		memmove(__SPTR(line, line_index + count), __SPTR(line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - sizeofchart*count);
 
 		for (i = line_index; i < line_index + count; i++)
-			line[i] = ' ';
+			__SREP(line, i, ' ');	/* line[i] = ' '; */
 
 		line_index += count;
 	}

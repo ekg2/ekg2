@@ -53,8 +53,8 @@
 #include "contacts.h"
 #include "mouse.h"
 
-WINDOW *ncurses_status	= NULL;		/* okno stanu */
-WINDOW *ncurses_header	= NULL;		/* okno nag³ówka */
+static WINDOW *ncurses_status	= NULL;		/* okno stanu */
+static WINDOW *ncurses_header	= NULL;		/* okno nag³ówka */
 WINDOW *ncurses_input	= NULL;		/* okno wpisywania tekstu */
 WINDOW *ncurses_contacts= NULL;
 
@@ -1827,8 +1827,6 @@ WATCHER(ncurses_watch_winch)
  */
 #ifdef WITH_ASPELL
 static void spellcheck(CHAR_T *what, char *where) {
-/* XXX, may be faulty in unicode */
-
         char *word;             /* aktualny wyraz */
 	register int i = 0;     /* licznik */
 	register int j = 0;     /* licznik */
@@ -1838,7 +1836,7 @@ static void spellcheck(CHAR_T *what, char *where) {
 		return;       /* konczymy funkcje */
 	    
 	for (i = 0; __S(what, i) != '\0' && __S(what, i) != '\n' && __S(what, i) != '\r'; i++) {
-		if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != '\0' ) { // separator/koniec lini/koniec stringu
+		if ((!isalpha_pl(__S(what, i)) || i == 0 ) && __S(what, i+1) != '\0' ) { // separator/koniec lini/koniec stringu
 			word = xmalloc((xwcslen(what) + 1)*sizeof(char));
 			size_t wordlen;		/* len of word */
 		
@@ -1878,7 +1876,7 @@ static void spellcheck(CHAR_T *what, char *where) {
 					__S(what, i + 4) && __S(what, i + 4) == '/' && 
 					__S(what, i + 5) && __S(what, i + 5) == '/') {
 
-				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
+				for(; __S(what, i) != ' ' && __S(what, i) != '\n' && __S(what, i) != '\r' && __S(what, i) != '\0'; i++);
 				i--;
 				goto aspell_loop_end;
 			}
@@ -2062,8 +2060,10 @@ end:
 #endif
 				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 
-			memmove(__SPTR(ncurses_line, line_index + 1), __SPTR(ncurses_line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - 1);	/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
-			*(__SPTR(ncurses_line, line_index++)) = ch;
+					/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
+			memmove(__SPTR(ncurses_line, line_index + 1), __SPTR(ncurses_line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - sizeofchart);
+					/* put in ncurses_line[lindex_index] current char */
+			__SREP(ncurses_line, line_index++, ch);		/* ncurses_line[line_index++] = ch */
 		}
 	}
 then:

@@ -44,6 +44,7 @@ extern int sizeofchart;
 	/* be carefull!   use __S() macro to get true value. */
 	/* be carefull111 use __SN() macr^H^H ekhm, function to move to real index */
 	/* 		  use __SPTR() function to get ptr to real index */
+	/*		  use __SREP() function to replace real char with anotherone */
 #define CHAR CHAR_T 	/* silent warnings */
 
 #define TEXT(x) (config_use_unicode ? (CHAR_T *) L##x : (CHAR_T *) x)
@@ -53,6 +54,11 @@ extern int sizeofchart;
 static inline CHAR_T *__SPTR(CHAR_T *str, int offset) { /* #define __SPTR(str, i) (CHAR_T *) (config_use_unicode ? &((wchar_t *) str[i]) : &((unsigned char *) str)[i]) */
 	if (config_use_unicode) return (CHAR_T *) (str + offset);
 	else 			return (CHAR_T *) (((char *) str) + offset);
+}
+
+static inline void __SREP(CHAR_T *str, int offset, CHAR_T newchar) {
+	if (config_use_unicode) (*__SPTR(str, offset)) = newchar;
+	else			(* ((char *) __SPTR(str, offset))) = newchar;
 }
 
 static inline CHAR_T *__SN(CHAR_T **str, int offset) { /* #define __SN(str) (CHAR_T) (config_use_unicode ? ((wchar_t *) str)++ : ((unsigned char *) str)++) */
@@ -80,6 +86,7 @@ inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 #define __S(str, i) str[i]
 #define __SN(str, i) ((*str) += i)
 #define __SPTR(str, i) (&str[i]) 
+#define __SREP(str, i, newchar) str[i] = newchar
 #define xwcslen(str) xstrlen(str)
 #define xwcscpy(dst, str) xstrcpy(dst, str)
 #define xwcsdup(str) xstrdup(str)

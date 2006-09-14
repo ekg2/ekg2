@@ -92,10 +92,8 @@ struct format_data {
 	char *text;			/* tre¶æ */
 };
 
-extern WINDOW *ncurses_status;
-extern WINDOW *ncurses_header;
-extern WINDOW *ncurses_input;
 extern WINDOW *ncurses_contacts;
+extern WINDOW *ncurses_input;
 
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state);
 
