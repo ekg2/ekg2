@@ -2311,9 +2311,10 @@ next:
 				break;
 			}
 
-			if (w) {	/* zmiennilismy target, okienku, poinformujmy o tym ncurses lub inne ui ! */
-				w->target = xstrdup(par0);
-				query_emit(NULL, ("ui-window-target-changed"), &w);
+			if (w) {
+				w->target = xstrdup(par0);				/* new target */
+				w->session = session;					/* change session */
+				query_emit(NULL, ("ui-window-target-changed"), &w);	/* notify ui-plugin */
 			}
 		} else if (config_make_window == 0 && window_current /* && window_current->id >1 && !window_current->floating */) {
 			w = window_current;
@@ -2329,7 +2330,7 @@ next:
 			print_window(par0, session, 0, "query_started_window", par0, session_name(session));
 		}
 	}
-	window_switch(w->id);	/* switch to that window */
+	if (w != window_current) window_switch(w->id);	/* switch to that window */
 
 	if (params[1])	/* if we've got message in params[1] send it */
 		command_exec_format(par0, session, quiet, ("/ %s"), params[1]);
