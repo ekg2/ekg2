@@ -439,7 +439,7 @@ static COMMAND(jabber_command_msg)
 		msg = (tmp) ? jabber_escape(tmp+1) : NULL;
 		xfree(subtmp);
 	} else 
-		msg = tlenjabber_unescape(params[1]); /* bez tematu */
+		msg = tlenjabber_escape(params[1]); /* bez tematu */
 	if ((c = newconference_find(session, target))) 
 		ismuc = 1;
 
