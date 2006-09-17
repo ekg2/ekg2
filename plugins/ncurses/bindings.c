@@ -324,10 +324,45 @@ static BINDING_FUNCTION(binding_complete)
 {
 	if (!lines) {
 #if USE_UNICODE
-#warning "XXX ncurses_complete doesn't support unicode yet !!"
-		if (config_use_unicode) return;
+		if (config_use_unicode) {
+		/* PLEASE REPORT ALL BUGS CONNECTED WITH THIS CODE TO <darkjames@darkjames.ath.cx> THX. */
+			char *nline = xmalloc((LINE_MAXLEN+1) /* * MB_CUR_MAX */);
+			size_t len, i, cnt;
+			int lns_start, lns_index; 
+
+			if ((wcstombs(nline, (wchar_t *) line, LINE_MAXLEN) == -1)) {
+				debug("[%s:%d] wcstombs() failed.\n");
+				xfree(nline);
+				return;
+			}
+			ncurses_complete(&line_start, &line_index, nline);
+
+		/* here we need to update line_start && line_index cause of unicode chars.. */
+			len = xstrlen(nline);		i = 0;		cnt = 0;
+			lns_start = 0; lns_index = 0;
+
+			debug("line_start: %d line_index: %d len: %d\n", line_start, line_index, len);
+			while (1) {
+				int tmp = mblen(&nline[i], len-i);
+				debug("[%d] cur: %d nextlen: %d\n", cnt, i, tmp);
+				if (!lns_start && line_start == i) { lns_start = 1; line_start = cnt; }
+				if (!lns_index && line_index == i) { lns_index = 1; line_index = cnt; } 
+				cnt++;
+				i += tmp;
+				if (lns_start && lns_index) break;
+				if (tmp <= 0) break;
+			}
+			debug("lns_start: %d lns_index: %d (%d,%d)\n", lns_start, lns_index, line_start, line_index);
+
+			if (!lns_start) line_start = 0;
+			if (!lns_index) line_index = 0;
+
+			if ((mbstowcs(line, nline, LINE_MAXLEN) == -1)) /* if it's failed the result will be unpredictable \o/ */
+				debug("[%s:%d] mbstowcs() failed.\n");
+			xfree(nline);
+		} else 
 #endif
-		ncurses_complete(&line_start, &line_index, (char *) line);
+			ncurses_complete(&line_start, &line_index, (char *) line);
 	} else {
 		int i, count = 8 - (line_index % 8);
 
