@@ -718,6 +718,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 	if (completions && !continue_complete) {
 		int maxlen = 0, cols, rows;
 		char *tmp;
+		int complcount = array_count(completions);
 
 		for (i = 0; completions[i]; i++) {
 			size_t compllen = xstrlen(completions[i]);
@@ -729,31 +730,28 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		if (cols == 0)
 			cols = 1;
 
-		rows = array_count(completions) / cols + 1;
+		rows = complcount / cols + 1;
 
 		tmp = xmalloc((cols * maxlen + 2)*sizeof(char));
 
 		for (i = 0; i < rows; i++) {
 			int j;
 
-			xstrcpy(tmp, (""));
-
+			tmp[0] = 0;
 			for (j = 0; j < cols; j++) {
 				int cell = j * rows + i;
 
-				if (cell < array_count(completions)) {
+				if (cell < complcount) {
 					int k;
 
 					xstrcat(tmp, completions[cell]);
 
-					for (k = 0; k < maxlen - xstrlen(completions[cell]); k++)
+					for (k = xstrlen(completions[cell]); k < maxlen; k++)
 						xstrcat(tmp, (" "));
 				}
 			}
-
-			if (xstrcmp(tmp, (""))) {
+			if (tmp[0])
 				wcs_print("none", tmp);
-			}
 		}
 		
 		/* w³±czamy nastêpny etap dope³nienia - przeskakiwanie miêdzy dope³nianymi wyrazami */
@@ -871,10 +869,12 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
 	        if (xisspace(line[linelen - 1]))
         	        word_current++;
-		if ((xisspace(line[linelen - 1]) || line[linelen - 1] == ',') && word + 1== array_count(words) -1 )
+		if ((xisspace(line[linelen - 1]) || line[linelen - 1] == ',') && word + 1 == words_count -1 )
 			word++;
+/*			unused?
 		if (xisspace(line[linelen - 1]))
 			words_count++;
+*/
 	}
 
 /*
@@ -900,7 +900,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		if (!completions[cnt]) /* nigdy nie powinno siê zdarzyæ, ale na wszelki ... */
 			goto cleanup;
 			
-		for(i = 0; i < array_count(words); i++) {
+		for(i = 0; i < words_count; i++) {
 			if(i == word) {
 				if(xstrchr(completions[cnt],  ('\001'))) {
 					if(completions[cnt][0] == '"')
@@ -920,7 +920,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 				} else 
 					xstrcat(line, words[i]);
 			}
-			if((i == array_count(words) - 1 && line[xstrlen(line) - 1] != ' ' ))
+			if((i == words_count - 1 && line[xstrlen(line) - 1] != ' ' ))
 				xstrcat(line, (" "));
 			else if (line[xstrlen(line) - 1] != ' ') 
 				xstrncat(line, separators + i, 1);
@@ -960,7 +960,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		if (start[0] != '/' && window_current && window_current->target) {
 	                known_uin_generator(start, xstrlen(start));
 	                if (completions) {
-	                        for (j = 0; completions && completions[j]; j++) {
+	                        for (j = 0; completions[j]; j++) {
 	                                string_t s;
 	
 	                                if (!xstrchr(completions[j], ('"')) && !xstrchr(completions[j], ('\\')) && !xstrchr(completions[j], (' '))) {
@@ -988,7 +988,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			command_generator(start, xstrlen(start));
 	} else {
 		char **params = NULL;
-		int abbrs = 0, i;
+		int i;
 		list_t l;
                 char *cmd = (line[0] == '/') ? line + 1 : line;
 		int len;
@@ -1008,7 +1008,6 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
                 	        if (!xstrncasecmp(c->name + plen, cmd, len)) {
 	                                params = c->params;
-	                                abbrs = 1;
 	                                actual_completed_command = c;
 	                                goto exact_match;
 	                        }
@@ -1020,9 +1019,8 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
 	                if (!xstrncasecmp(c->name, cmd, len)) {
 	                        params = c->params;
-	                        abbrs = 1;
 	                        actual_completed_command = c;
-	                        goto exact_match; 
+				break;
         	        }
         	}
 
@@ -1052,7 +1050,7 @@ exact_match:
 		if (word_current > array_count(params) + 1) 
 			word_current = array_count(params) + 2;
 
-		if (params && abbrs == 1 && params[word_current - 2]) {
+		if (params && params[word_current - 2]) {
 			int j;
 
 			for (i = 0; generators[i].ch; i++) {
@@ -1071,7 +1069,7 @@ exact_match:
 		}
 	
 		if (completions) {
-			for (j = 0; completions && completions[j]; j++) {
+			for (j = 0; completions[j]; j++) {
 				string_t s;
 	
 				if (!xstrchr(completions[j], ('"')) && !xstrchr(completions[j], ('\\')) && !xstrchr(completions[j], (' ')))
@@ -1093,7 +1091,7 @@ exact_match:
 	 */
 	if (count == 1) {
 		line[0] = '\0';
-		for(i = 0; i < array_count(words); i++) {
+		for(i = 0; i < words_count; i++) {
 			if(i == word) {
 				if (xstrchr(completions[0],  '\001')) {
 					if(completions[0][0] == '"')
@@ -1112,14 +1110,14 @@ exact_match:
 				} else
 					xstrcat(line, words[i]);
 			}
-			if((i == array_count(words) - 1 && line[xstrlen(line) - 1] != ' ' ))
+			if((i == words_count - 1 && line[xstrlen(line) - 1] != ' ' ))
 				xstrcat(line, (" "));
 			else if (line[xstrlen(line) - 1] != ' ')
                                 xstrncat(line, separators + i, 1);
 		}
 		array_free(completions);
 		completions = NULL;
-	}
+	} else 
 
 	/*
 	 * gdy jest wiêcej mo¿liwo¶ci to robimy podobnie jak wy¿ej tyle, ¿e czasem
@@ -1132,8 +1130,10 @@ exact_match:
 		int quotes = 0;
 		char *s1  = completions[0];
 
-                if (*s1 =='"')
+                if (*s1 =='"') {
 	                s1++;
+			quotes = 1;
+		}
 
 	    	/* for(i = 0; completions[i]; i++)
                 	debug("completions[i] = %s\n", completions[i]); */
@@ -1141,11 +1141,10 @@ exact_match:
 		 * mo¿e nie za ³adne programowanie, ale skuteczne i w sumie jedyne w 100% spe³niaj±ce	
 	 	 * wymagania dope³niania (uwzglêdnianie cudzyws³owiów itp...)
 		 */
-		for (i=1, j = 0; ; i++, common++) {
-			for (j=0; j < count; j++) {
-				char *s2;
+		for (i=1; ; i++, common++) {
+			for (j=1; j < count; j++) {
+				char *s2 = completions[j];
 
-				s2 = completions[j];
 				if (*s2 == '"') {
 					quotes = 1;
 					s2++;
@@ -1163,7 +1162,7 @@ exact_match:
 
 		if (xstrlen(line) + common < LINE_MAXLEN) {
 			line[0] = '\0';
-			for(i = 0; i < array_count(words); i++) {
+			for(i = 0; i < words_count; i++) {
 				if (i == word) {
 					if (quotes == 1 && completions[0][0] != '"') 
 						xstrcat(line, ("\""));
