@@ -986,9 +986,11 @@ static COMMAND(jabber_command_search) {
 		} 
 
 		for (; (splitted[i] && splitted[i+1]); i+=2) {
+			char *value = jabber_escape(splitted[i+1]);
 			if (use_x_data)
-				watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", splitted[i], splitted[i+1]);
-			else	watch_write(j->send_watch, "<%s>%s</%s>", splitted[i], splitted[i+1], splitted[i]);
+				watch_write(j->send_watch, "<field var=\"%s\"><value>%s</value></field>", splitted[i], value);
+			else	watch_write(j->send_watch, "<%s>%s</%s>", splitted[i], value, splitted[i]);
+			xfree(value);
 		}
 
 		if (use_x_data) watch_write(j->send_watch, "</x>");
