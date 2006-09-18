@@ -743,6 +743,8 @@ static char *logs_prepare_path(session_t *session, const char *logs_path, const 
 						goto attach; /* avoid code duplication */
 				case 'U':	uidtmp = xstrdup(get_nickname(session, uid));
 attach:
+						if (!uidtmp) uidtmp = xstrdup(uid);
+
 						if (xstrchr(uidtmp, '/'))
 							*(xstrchr(uidtmp, '/')) = 0; // strip resource
 						string_append_n(buf, uidtmp ? uidtmp : uid, -1);
