@@ -1342,8 +1342,10 @@ int mesg_set(int what)
  *
  *  - c.
  */
-void iso_to_ascii(unsigned char *buf)
-{
+void iso_to_ascii(unsigned char *buf) {
+#if USE_UNICODE
+	if (config_use_unicode) return;
+#endif
 	if (!buf)
 		return;
 
