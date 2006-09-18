@@ -958,18 +958,17 @@ static void update_header(int commit)
 
 /* 13 wrz 06 	removed status cause it was always 1 (dj)  */
 		
-static int window_printat(WINDOW *w, int x, int y, const char *format_, struct format_data *data, int fgcolor, int bold, int bgcolor) {
+static int window_printat(WINDOW *w, int x, int y, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
 	int orig_x = x;
 	int backup_display_color = config_display_color;
-	char *format = (char*) format_;
-	const char *p;
+	char *ftext = NULL;		/* tekst do zwolnienia jesli !config_display_pl_chars */
+	const char *p;			/* parsowanie format lub ftext jesli !config_display_pl_chars */
 
 	if (!config_display_pl_chars) {
-		format = xstrdup(format);
-		iso_to_ascii(format);
-	}
-
-	p = format;
+		ftext = xstrdup(format);
+		iso_to_ascii(ftext);
+		p = ftext;
+	} else	p = format;
 
 	if (config_display_color == 2)	config_display_color = 0;
 
@@ -1138,11 +1137,10 @@ static int window_printat(WINDOW *w, int x, int y, const char *format_, struct f
 
 					if (matched)
 						x += window_printat(w, x, y, p, data, fgcolor, bold, bgcolor);
-					goto next;
+					break; /* goto next; */
 				}
 			}
-
-			goto next;
+			/* goto next; */
 		}
 
 next:
@@ -1161,9 +1159,7 @@ next:
 
 	config_display_color = backup_display_color;
 
-	if (!config_display_pl_chars)
-		xfree(format);
-	
+	if (ftext) xfree(ftext);
 	return x - orig_x;
 }
 
