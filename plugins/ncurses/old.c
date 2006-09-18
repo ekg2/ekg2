@@ -1230,25 +1230,22 @@ void update_statusbar(int commit)
 
 	{
 		string_t s = string_init("");
-		int first = 1, act = 0;
+		int act = 0;
 		list_t l;
 
 		for (l = windows; l; l = l->next) {
+			char tmp[26];
 			window_t *w = l->data;
-			char *tmp;
 
 			if (!w->act || !w->id) 
 				continue;
 
-			if (!first)
+			if (act)
 				string_append_c(s, ',');
-		
-			tmp = saprintf("statusbar_act%s", (w->act == 1) ? "" :  "_important");
+			sprintf(&tmp[0], "statusbar_act%s", (w->act == 1) ? "" :  "_important");
 			string_append(s, format_find(tmp));
 			string_append(s, itoa(w->id));
-			first = 0;
 			act = 1;
-			xfree(tmp);
 		}
 		
 		__add_format("activity", (act), s->str);
