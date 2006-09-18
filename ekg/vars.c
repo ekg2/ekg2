@@ -117,6 +117,7 @@ void variable_init()
 	variable_add(NULL, ("save_quit"), VAR_INT, 1, &config_save_quit, NULL, NULL, NULL);
 	variable_add(NULL, ("session_default"), VAR_STR, 1, &config_session_default, NULL, NULL, NULL);
 	variable_add(NULL, ("sessions_save"), VAR_BOOL, 1, &config_sessions_save, NULL, NULL, NULL);
+	variable_add(NULL, ("slash_messages"), VAR_BOOL, 1, &config_slash_messages, NULL, NULL, NULL);
 	variable_add(NULL, ("sort_windows"), VAR_BOOL, 1, &config_sort_windows, NULL, NULL, NULL);
 	variable_add(NULL, ("sound_msg_file"), VAR_FILE, 1, &config_sound_msg_file, NULL, NULL, dd_sound);
 	variable_add(NULL, ("sound_chat_file"), VAR_FILE, 1, &config_sound_chat_file, NULL, NULL, dd_sound);
@@ -149,6 +150,8 @@ void variable_set_default()
 	xfree(config_console_charset);
 
 	xfree(console_charset);
+
+	config_slash_messages = 1;
 
 	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
 	config_display_color_map = xstrdup("nTgGbBrR");

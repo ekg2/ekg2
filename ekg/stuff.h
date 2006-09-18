@@ -212,6 +212,7 @@ extern int config_last_size;
 extern int config_make_window;
 extern int config_mesg;
 extern int config_query_commands;
+extern int config_slash_messages;
 extern char *config_quit_reason;
 extern int config_reason_limit;
 extern int config_save_password;

@@ -2403,11 +2403,19 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}		
 		}
 
-		if (!correct_command) {
-			command_exec_format(target, session, quiet, ("/ %s"), xline);
-			return 0;
-		}
+		if (!correct_command)
+			return command_exec_format(target, session, quiet, ("/ %s"), xline);
 	}
+	if (target && *xline == '/' && config_slash_messages && xstrlen(xline) >= 2) {
+	/* send message if we have two '/' in 1 word for instance /bin/sh /dev/hda1 other... */
+		/* code stolen from ekg1, idea stolen from irssi. */
+		char *p = strchr(xline + 1, '/');
+		char *s = strchr(xline + 1, ' ');
+
+		if (p && (!s || p < s)) 
+			return command_exec_format(target, session, quiet, ("/ %s"), xline);
+	}
+
 	
 	send_nicks_index = 0;
 	line = line_save = xstrdup(xline);

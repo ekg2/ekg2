@@ -126,6 +126,7 @@ char *config_quit_reason = NULL;
 char *config_away_reason = NULL;
 char *config_back_reason = NULL;
 int config_query_commands = 0;
+int config_slash_messages = 0;
 int quit_message_send = 0;
 int batch_mode = 0;
 char *batch_line = NULL;
