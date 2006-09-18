@@ -958,12 +958,11 @@ static void update_header(int commit)
 
 /* 13 wrz 06 	removed status cause it was always 1 (dj)  */
 		
-static int window_printat(WINDOW *w, int x, int y, const char *format_, void *data_, int fgcolor, int bold, int bgcolor) {
+static int window_printat(WINDOW *w, int x, int y, const char *format_, struct format_data *data, int fgcolor, int bold, int bgcolor) {
 	int orig_x = x;
 	int backup_display_color = config_display_color;
 	char *format = (char*) format_;
 	const char *p;
-	struct format_data *data = data_;
 
 	if (!config_display_pl_chars) {
 		format = xstrdup(format);
@@ -1048,7 +1047,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format_, void *da
 		if (!*p)
 			break;
 
-		for (i = 0; data && data[i].name; i++) {
+		for (i = 0; /* data && */ data[i].name; i++) {
 			int len;
 
 			if (!data[i].text)
@@ -1126,7 +1125,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format_, void *da
 				p++;
 			}
 
-			for (i = 0; data && data[i].name; i++) {
+			for (i = 0; /* data && */ data[i].name; i++) {
 				int len, matched = ((data[i].text) ? 1 : 0);
 
 				if (neg)
@@ -1193,39 +1192,39 @@ void update_statusbar(int commit)
 
 	memset(&formats, 0, sizeof(formats));
 
-#define __add_format(x, y, z) \
+#define __add_format(x, z) \
 	{ \
 		formats[formats_count].name = x; \
-		formats[formats_count].text = (y) ? xstrdup(z) : NULL; \
+		formats[formats_count].text = z; \
 		formats_count++; \
-/* jak robimy memset(&formats, 0, sizeof(formats)); to po co to ? */\
 	} 
 
-	__add_format("time", 1, timestamp(format_find("statusbar_timestamp")));
+#define __add_format_dup(x, y, z) __add_format(x, y ? xstrdup(z) : NULL)
 
-	__add_format("window", window_current->id, itoa(window_current->id));
-	__add_format("session", (sess), (sess->alias) ? sess->alias : sess->uid);
-	__add_format("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
+
+	__add_format_dup("time", 1, timestamp(format_find("statusbar_timestamp")));
+
+	__add_format_dup("window", window_current->id, itoa(window_current->id));
+	__add_format_dup("session", (sess), (sess->alias) ? sess->alias : sess->uid);
+	__add_format_dup("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
+
 	tmp = (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : xstrdup(window_current->target);
-	__add_format("query", tmp, tmp);
-	xfree(tmp); 
+	__add_format("query", tmp);
 
 	if ((plug = plugin_find(("mail")))) {
 		int mail_count = -1;
 		query_emit(plug, ("mail-count"), &mail_count);
-		__add_format("mail", (mail_count > 0), itoa(mail_count));
+		__add_format_dup("mail", (mail_count > 0), itoa(mail_count));
 	}
 	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(("irc")))) {
 		/* yeah, I know, shitty way */
 		char *t2 = NULL;
 		char *t3 = NULL; 
 		query_emit(plug, ("irc-topic"), &tmp, &t2, &t3);
-		__add_format("irctopic", tmp, tmp);
-		__add_format("irctopicby", t2, t2);
-		__add_format("ircmode", t3, t3);
-		xfree(tmp);
-		xfree(t2);
-		xfree(t3);
+		__add_format("irctopic", tmp);
+		__add_format("irctopicby", t2);
+		__add_format("ircmode", t3);
+		tmp = NULL;
 	}
 
 	{
@@ -1247,35 +1246,38 @@ void update_statusbar(int commit)
 			string_append(s, itoa(w->id));
 			act = 1;
 		}
-		
-		__add_format("activity", (act), s->str);
-
-		string_free(s, 1);
+		if (act) {
+			__add_format("activity", string_free(s, 0));
+		} else {
+			__add_format("activity", NULL);
+			string_free(s, 1);
+		}
 	}
 
-	__add_format("debug", (!window_current->id), "");
-	__add_format("away", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AWAY)), "");
-	__add_format("avail", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
-        __add_format("dnd", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_DND)), "");
-        __add_format("chat", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_FREE_FOR_CHAT)), "");
-        __add_format("xa", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_XA)), "");
-	__add_format("invisible", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
-	__add_format("notavail", (!sess || !sess->connected || !xstrcasecmp(sess->status, EKG_STATUS_NA)), "");
-	__add_format("more", (window_current->more), "");
+	__add_format_dup("debug", (!window_current->id), "");
+	__add_format_dup("away", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AWAY)), "");
+	__add_format_dup("avail", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
+	__add_format_dup("dnd", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_DND)), "");
+	__add_format_dup("chat", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_FREE_FOR_CHAT)), "");
+	__add_format_dup("xa", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_XA)), "");
+	__add_format_dup("invisible", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format_dup("notavail", (!sess || !sess->connected || !xstrcasecmp(sess->status, EKG_STATUS_NA)), "");
+	__add_format_dup("more", (window_current->more), "");
 
-	__add_format("query_descr", (q && q->descr), q->descr);
-	__add_format("query_away", (q && !xstrcasecmp(q->status, EKG_STATUS_AWAY)), "");
-	__add_format("query_avail", (q && !xstrcasecmp(q->status, EKG_STATUS_AVAIL)), "");
-	__add_format("query_invisible", (q && !xstrcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
-	__add_format("query_notavail", (q && !xstrcasecmp(q->status, EKG_STATUS_NA)), "");
-	__add_format("query_dnd", (q && !xstrcasecmp(q->status, EKG_STATUS_DND)), "");
-	__add_format("query_chat", (q && !xstrcasecmp(q->status, EKG_STATUS_FREE_FOR_CHAT)), "");
-	__add_format("query_xa", (q && !xstrcasecmp(q->status, EKG_STATUS_XA)), "");
-	__add_format("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
+	__add_format_dup("query_descr", (q && q->descr), q->descr);
+	__add_format_dup("query_away", (q && !xstrcasecmp(q->status, EKG_STATUS_AWAY)), "");
+	__add_format_dup("query_avail", (q && !xstrcasecmp(q->status, EKG_STATUS_AVAIL)), "");
+	__add_format_dup("query_invisible", (q && !xstrcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format_dup("query_notavail", (q && !xstrcasecmp(q->status, EKG_STATUS_NA)), "");
+	__add_format_dup("query_dnd", (q && !xstrcasecmp(q->status, EKG_STATUS_DND)), "");
+	__add_format_dup("query_chat", (q && !xstrcasecmp(q->status, EKG_STATUS_FREE_FOR_CHAT)), "");
+	__add_format_dup("query_xa", (q && !xstrcasecmp(q->status, EKG_STATUS_XA)), "");
+	__add_format_dup("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
 
-	__add_format("url", 1, "http://www.ekg2.org/");
-	__add_format("version", 1, VERSION);
+	__add_format_dup("url", 1, "http://www.ekg2.org/");
+	__add_format_dup("version", 1, VERSION);
 
+#undef __add_format_dup
 #undef __add_format
 
 	for (y = 0; y < config_header_size; y++) {
