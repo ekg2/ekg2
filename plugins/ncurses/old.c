@@ -1346,10 +1346,10 @@ void update_statusbar(int commit)
 
 	for (i = 0; i < formats_count; i++)
 		xfree(formats[i].text);
-
+#if 0	/* never used queries, in ekg1 it was used by python, coz python can brush in ncurses interface... in ekg2 it's useless. */
 	query_emit(NULL, ("ui-redrawing-header"));
 	query_emit(NULL, ("ui-redrawing-statusbar"));
-	
+#endif	
 	if (commit)
 		ncurses_commit();
 }
