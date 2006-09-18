@@ -643,23 +643,23 @@ static int event_target_check_compare(char *buf)
 
 	while(*buf) {
 		if (*buf == '/') {
-			*buf++;
+			buf++;
 			if (!*buf)
 				break;
-			*buf++;
+			buf++;
 			if (!*buf)
 				break;
 			continue;
 		}
 
 		if (*buf == '=') {
-			*buf++;
+			buf++;
 
 			if (!*buf)
 				break;
 
 			if (*buf == '=') /* '==' */ {
-				*buf++;
+				buf++;
 				if (!*buf)
 					break;
 
@@ -671,19 +671,19 @@ static int event_target_check_compare(char *buf)
 		}
 
 		if (*buf == '!') {
-			*buf++;
+			buf++;
 
 			if (!*buf)
 				break;
 
 			if (*buf == '=') {
-				*buf++;
+				buf++;
 
 				if (!*buf)
 					break;
 
 				if (*buf == '=') { /* '!==' */
-					*buf++;
+					buf++;
 					if (!*buf)
 						break;
 
@@ -695,19 +695,18 @@ static int event_target_check_compare(char *buf)
 			}
 
 			if (*buf == '+') {
-				*buf++;
+				buf++;
 
 				if (!*buf)
 					break;
 
 				if (*buf == '+') { /* '!++' */
-					*buf++;
+					buf++;
 					if (!*buf)
 						break;
 
 					return (!xstrstr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
 				}
-
 
 				/* '!+' */
 				return (!xstrcasestr(buf, s->str) && !string_free(s, 1)) ? 1 : 0;
@@ -717,13 +716,13 @@ static int event_target_check_compare(char *buf)
 		}
 
 		if (*buf == '+') {
-			*buf++;
+			buf++;
 
 			if (!*buf)
 				break;
 
 			if (*buf == '+') { /* '++' */
-				*buf++;
+				buf++;
 
 				if (!*buf)
 					break;
@@ -736,7 +735,7 @@ static int event_target_check_compare(char *buf)
 		}
 
 		string_append_c(s, *buf);
-		*buf++;
+		buf++;
 	}
 
 	string_free(s, 1);
@@ -771,7 +770,7 @@ int event_target_check(char *buf)
 			s = *buf;
 			i++;	
 		}
-		*buf++;
+		buf++;
 	}
 	for (i = 0; params[i]; i++) {
 		int returned_now;

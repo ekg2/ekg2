@@ -2476,7 +2476,7 @@ char *strip_pl_chars(const char *text)
 	if (!text)
 		return NULL;
 
-	for (; *p; *p++) {
+	for (; *p; p++) {
 		if(isalpha_pl(*p))
 			pl_to_normal(*p);
 	}
