@@ -322,6 +322,15 @@ save_quit
 	zapisywana, je¿eli 1 to pojawia siê pytanie, je¿eli 2 to konfiguracja
 	zapisana jest bez pytania 
 
+slash_messages
+	typ: bool
+	domy¶lna warto¶æ: 1
+
+	okre¶la, czy wiadomo¶ci zaczynaj±ce siê od ,,/'' maj± byæ traktowane 
+	w pewnych warunkach jak wiadomo¶ci. wy³±czenie tej opcji sprawia, ¿e 
+	wszystko, co zostanie wpisane w oknie rozmowy a zaczyna siê od ,,/'' 
+	zostanie potraktowane jak komenda.
+
 sessions_save
         typ: bool
         domy¶lna warto¶æ: 0
