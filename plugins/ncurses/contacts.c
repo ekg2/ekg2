@@ -76,7 +76,7 @@ int config_contacts_metacontacts_swallow;
 typedef struct {
 	char *line;
 	const char *name;
-        const char *status;
+	const char *status;
 	const char *descr;
 } contact_t;
 
@@ -84,13 +84,13 @@ void ncurses_backward_contacts_line(int arg)
 {
 	window_t *w = window_find("__contacts");
 
-        if (!w)
-        	return;
+	if (!w)
+		return;
 
 	contacts_index -= arg;
 
-        if (contacts_index < 0)
-                contacts_index = 0;
+	if (contacts_index < 0)
+		contacts_index = 0;
 
 	ncurses_contacts_update(NULL);
 	ncurses_redraw(w);
@@ -99,202 +99,204 @@ void ncurses_backward_contacts_line(int arg)
 
 void ncurses_forward_contacts_line(int arg)
 {
-        ncurses_window_t *n;
-        window_t *w = window_find("__contacts");
-        int contacts_count = 0, all = 0, count = 0;
+	ncurses_window_t *n;
+	window_t *w = window_find("__contacts");
+	int contacts_count = 0, all = 0, count = 0;
+	size_t corderlen;
 
 	newconference_t *c;
-        if (!w)
-                return;
+	if (!w)
+		return;
 
-        n = w->private;
+	n = w->private;
 	c = newconference_find(window_current->session, window_current->target);
 
-        if (config_contacts_groups) {
-                char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
-                count = array_count(groups);
-                array_free(groups);
-        }
+	if (config_contacts_groups) {
+		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
+		count = array_count(groups);
+		array_free(groups);
+	}
 
-        if (contacts_group_index > count + 1)
-                all = 2;
-        else if (contacts_group_index > count)
-                all = 1;
+	if (contacts_group_index > count + 1)
+		all = 2;
+	else if (contacts_group_index > count)
+		all = 1;
 
-        switch (all) {
-                case 1:
-                {
-                        list_t l;
-                        for (l = sessions; sessions && l; l = l->next) {
-                                session_t *s = l->data;
-				int j;
+	corderlen = xstrlen(contacts_order);
 
-                                if (!s || !s->userlist)
-                                        continue;
-				
-				for (j = 0; j < xstrlen(contacts_order); j += 2) {
-					list_t li;
+	switch (all) {
+		case 1:
+			{
+				list_t l;
+				for (l = sessions; l; l = l->next) {
+					session_t *s = l->data;
+					int j;
 
-					for (li = s->userlist; li; li = li->next) {
-		                        	userlist_t *u = li->data;
-                        			char *short_status;
+					if (!s || !s->userlist)
+						continue;
 
-			                        if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
-			                                continue;
+					for (j = 0; j < corderlen; /* xstrlen(contacts_order); */ j += 2) {
+						list_t li;
 
-			                        if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
-			                                continue;
+						for (li = s->userlist; li; li = li->next) {
+							userlist_t *u = li->data;
+							char *short_status;
 
-			                        short_status = xstrndup(u->status, 2);
+							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+								continue;
 
-			                        if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-			                                xfree(short_status);
-			                                continue;
-			                        }
-				
-                                		contacts_count++;
-						xfree(short_status);
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
+								continue;
+
+							short_status = xstrndup(u->status, 2);
+
+							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
+								xfree(short_status);
+								continue;
+							}
+
+							contacts_count++;
+							xfree(short_status);
+						}
+
+						if (contacts_nosort)
+							break;
+					}
+				}
+
+				if ((c && c->participants) || window_current->userlist) {
+					int j;
+
+					for (j = 0; j < corderlen; /* xstrlen(contacts_order); */ j += 2) {
+						list_t li;
+
+						if (c && c->participants)	li = c->participants;
+						else				li = window_current->userlist;
+
+						for (; li; li = li->next) {
+							userlist_t *u = li->data;
+							char *short_status;
+
+							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+								continue;
+
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
+								continue;
+
+							short_status = xstrndup(u->status, 2);
+
+							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
+								xfree(short_status);
+								continue;
+							}
+
+							contacts_count++;
+							xfree(short_status);
+						}
+
+						if (contacts_nosort)
+							break;
 					}
 
-                                        if (contacts_nosort)
-                                                break;
 				}
-                        }
-			
-			if ((c && c->participants) || window_current->userlist) {
-                                int j;
-
-                                for (j = 0; j < xstrlen(contacts_order); j += 2) {
-                                        list_t li;
-
-					if (c && c->participants)	li = c->participants;
-					else				li = window_current->userlist;
-
-                                        for (; li; li = li->next) {
-                                                userlist_t *u = li->data;
-                                                char *short_status;
-
-                                                if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
-                                                        continue;
-
-                                                if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
-                                                        continue;
-
-                                                short_status = xstrndup(u->status, 2);
-
-                                                if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-                                                        xfree(short_status);
-                                                        continue;
-                                                }
-
-                                                contacts_count++;
-                                                xfree(short_status);
-                                        }
-
-                                        if (contacts_nosort)
-                                                break;
-                                }
-
+				break;
 			}
-                        break;
-                }
-                case 2:
-		{
-                        if (metacontacts) {
-                                int j;
+		case 2:
+			{
+				if (metacontacts) {
+					int j;
 
-                                for (j = 0; j < xstrlen(contacts_order); j += 2) {
-                                        list_t li;
+					for (j = 0; j < corderlen; /* xstrlen(contacts_order); */ j += 2) {
+						list_t li;
 
-                                        for (li = metacontacts; li; li = li->next) {
-		                                metacontact_t *m = li->data;
-                		                metacontact_item_t *i = metacontact_find_prio(m);
-                                		userlist_t *u = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
-                                                char *short_status;
+						for (li = metacontacts; li; li = li->next) {
+							metacontact_t *m = li->data;
+							metacontact_item_t *i = metacontact_find_prio(m);
+							userlist_t *u = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
+							char *short_status;
 
-                                                if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
-                                                        continue;
+							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+								continue;
 
-                                                if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
-                                                        continue;
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
+								continue;
 
-                                                short_status = xstrndup(u->status, 2);
+							short_status = xstrndup(u->status, 2);
 
-                                                if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-                                                        xfree(short_status);
-                                                        continue;
-                                                }
+							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
+								xfree(short_status);
+								continue;
+							}
 
-                                                contacts_count++;
-                                                xfree(short_status);
-                                        }
+							contacts_count++;
+							xfree(short_status);
+						}
 
-                                        if (contacts_nosort)
-                                                break;
-                                }
+						if (contacts_nosort)
+							break;
+					}
 
-                        }
-                        break;
-		}
-                default:
-		{
-			list_t current_list;
-			
-			if (c && c->participants) 	current_list = c->participants;
-			else				current_list = window_current->userlist;
+				}
+				break;
+			}
+		default:
+			{
+				list_t current_list;
+
+				if (c && c->participants) 	current_list = c->participants;
+				else				current_list = window_current->userlist;
 again:
-                        if (current_list) {
-                                int j;
+				if (current_list) {
+					int j;
 
-                                for (j = 0; j < xstrlen(contacts_order); j += 2) {
-                                        list_t li;
+					for (j = 0; j < corderlen; /* xstrlen(contacts_order); */ j += 2) {
+						list_t li;
 
-                                        for (li = current_list; li; li = li->next) {
-                                                userlist_t *u = li->data;
-                                                char *short_status;
+						for (li = current_list; li; li = li->next) {
+							userlist_t *u = li->data;
+							char *short_status;
 
-                                                if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
-                                                        continue;
+							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+								continue;
 
-                                                if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
-                                                        continue;
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
+								continue;
 
-                                                short_status = xstrndup(u->status, 2);
+							short_status = xstrndup(u->status, 2);
 
-                                                if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-                                                        xfree(short_status);
-                                                        continue;
-                                                }
+							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
+								xfree(short_status);
+								continue;
+							}
 
-                                                contacts_count++;
-                                                xfree(short_status);
-                                        }
+							contacts_count++;
+							xfree(short_status);
+						}
 
-					if (contacts_nosort)
-						break;
-                                }
+						if (contacts_nosort)
+							break;
+					}
 
-                        }
-			if (current_list != session_current->userlist) {
-				current_list = session_current->userlist;
-				goto again;
+				}
+				if (current_list != session_current->userlist) {
+					current_list = session_current->userlist;
+					goto again;
+				}
+				break;
 			}
-                        break;
-		}
-        }
+	}
 
 	contacts_index += arg;
 
-        if (contacts_index  > contacts_count - w->height + n->overflow + CONTACTS_MAX_HEADERS)
-                contacts_index = contacts_count - window_current->height + n->overflow + CONTACTS_MAX_HEADERS;
-        if (contacts_index < 0)
-                contacts_index = 0;
+	if (contacts_index  > contacts_count - w->height + n->overflow + CONTACTS_MAX_HEADERS)
+		contacts_index = contacts_count - window_current->height + n->overflow + CONTACTS_MAX_HEADERS;
+	if (contacts_index < 0)
+		contacts_index = 0;
 
-        ncurses_contacts_update(NULL);
+	ncurses_contacts_update(NULL);
 	ncurses_redraw(w);
 	ncurses_commit();
 }
-
 
 void ncurses_backward_contacts_page(int arg)
 {
@@ -323,10 +325,10 @@ void ncurses_forward_contacts_page(int arg)
  */
 static int contacts_compare(void *data1, void *data2)
 {
-        userlist_t *a = data1, *b = data2;
+	userlist_t *a = data1, *b = data2;
 
-        if (!a || !a->nickname || !b || !b->nickname)
-                return 0;
+	if (!a || !a->nickname || !b || !b->nickname)
+		return 0;
 
 	return xstrcasecmp(a->nickname, b->nickname);
 }
@@ -358,17 +360,17 @@ int ncurses_contacts_update(window_t *w)
 	
 	ncurses_clear(w, 1);
 
-        if (!session_current)
+	if (!session_current)
 		return -1;
 
 	if (config_contacts_groups) {
 		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
 		int count = array_count(groups);
 
-                if (contacts_group_index > count + 2) {
-                        contacts_group_index = 0;
-                        all = 0;
-                }
+		if (contacts_group_index > count + 2) {
+			contacts_group_index = 0;
+			all = 0;
+		}
 
 		if (contacts_group_index > count + 1) {
 			all = (metacontacts) ? 2 : 0;
@@ -381,7 +383,7 @@ int ncurses_contacts_update(window_t *w)
 		}
 
 		if (contacts_group_index > 0) {
-                        all = config_contacts_groups_all_sessions ? 1 : 0;
+			all = config_contacts_groups_all_sessions ? 1 : 0;
 			group = groups[contacts_group_index - 1];
 			if (*group == '@')
 				group++;
@@ -406,16 +408,16 @@ group_cleanup:
 	}
 
 	c = newconference_find(window_current->session, window_current->target);
-        if (!session_current->userlist && !window_current->userlist && (!c || !c->participants) && !all && contacts_group_index == 0) {
-                n->redraw = 1;
-                return 0;
-        }
+	if (!session_current->userlist && !window_current->userlist && (!c || !c->participants) && !all && contacts_group_index == 0) {
+		n->redraw = 1;
+		return 0;
+	}
 
 	if (!header || !footer) {
 		header = format_find("contacts_header");
 		footer = format_find("contacts_footer");
 	}
-	
+
 	if (xstrcmp(header, "")) {
 		char *tmp = format_string(header, group);
 		ncurses_backlog_add(w, fstring_new(tmp));
@@ -468,36 +470,36 @@ group_cleanup:
 	if ((all == 1 && !sorted_all_cache) || all == 2) {
 		list_t l;
 
- 		for (l = metacontacts; l; l = l->next) {
-                                metacontact_t *m = l->data;
-                                metacontact_item_t *i = metacontact_find_prio(m);
-                                userlist_t *uu, *up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
-				userlist_t *u;
-				list_t ml, sl;
+		for (l = metacontacts; l; l = l->next) {
+			metacontact_t *m = l->data;
+			metacontact_item_t *i = metacontact_find_prio(m);
+			userlist_t *uu, *up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
+			userlist_t *u;
+			list_t ml, sl;
 
-				if (!m || !i || !up)
-					continue;
-				u = xmalloc(sizeof(userlist_t));
-				u->status = up->status;
-				u->descr = up->descr;
-				u->nickname = m->name;
-				u->private = (void *) 2;
-				u->blink = up->blink;
+			if (!m || !i || !up)
+				continue;
+			u = xmalloc(sizeof(userlist_t));
+			u->status = up->status;
+			u->descr = up->descr;
+			u->nickname = m->name;
+			u->private = (void *) 2;
+			u->blink = up->blink;
 
-				list_add_sorted(&sorted_all, u, 0, contacts_compare);
+			list_add_sorted(&sorted_all, u, 0, contacts_compare);
 
-				/* Remove contacts contained in this metacontact. */
-				if ( config_contacts_metacontacts_swallow )
-					for (ml = m->metacontact_items; ml; ml = ml->next) {
-						i = ml->data;
-						up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
-						if (up)
+			/* Remove contacts contained in this metacontact. */
+			if ( config_contacts_metacontacts_swallow )
+				for (ml = m->metacontact_items; ml; ml = ml->next) {
+					i = ml->data;
+					up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
+					if (up)
 						for ( sl = sorted_all ; sl ; sl = sl->next ) {
 							uu = sl->data;
 							if ( uu->uid && !xstrcmp(uu->uid, up->uid) )
-							list_remove(&sorted_all, uu, 1);
+								list_remove(&sorted_all, uu, 1);
 						}
-					}
+				}
 		}
 	} 
 
@@ -522,7 +524,7 @@ group_cleanup:
 
 			if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2) 
 				continue;
-			
+
 			if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 				continue;
 
@@ -534,65 +536,65 @@ group_cleanup:
 			}
 
 			xfree(short_status);
-	
+
 			if (count_all < contacts_index) {
 				count_all++;
 				continue;
 			}
-	
+
 			if (group && (!u->private || 2!=(int)u->private)) {
 				userlist_t *tmp = userlist_find(u->private ? u->private : session_current, u->uid);
 				if ((group[0]=='!' && ekg_group_member(tmp, group+1)) ||
 						(group[0]!='!' && !ekg_group_member(tmp, group)))
 					continue;
 			}
-			
+
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
 				format = format_find(tmp);
 				if (xstrcmp(format, "") && count_all >= contacts_index) {
-                                	line = format_string(format);
-                                	string = fstring_new(line);
+					line = format_string(format);
+					string = fstring_new(line);
 					ncurses_backlog_add(w, string);
-                                	xfree(line);
+					xfree(line);
 				}
 				footer_status = u->status;
 			}
-	
+
 			if (u->descr && contacts_descr)
 				snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", u->status);
 			else if (u->descr && !contacts_descr)
 				snprintf(tmp, sizeof(tmp), "contacts_%s_descr", u->status);
 			else
 				snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
-			
+
 			if (u->blink)
 				xstrcat(tmp, "_blink");
-	
-	                line = format_string(format_find(tmp), u->nickname, u->descr);
+
+			line = format_string(format_find(tmp), u->nickname, u->descr);
 			string = fstring_new(line);
 			if (u->private && (int) u->private == 2)
 				string->private = (void *) saprintf("%s", u->nickname);
 			else 
 				string->private = (void *) saprintf("%s/%s", (u->private) ? ((session_t *) u->private)->uid : session_current->uid, u->nickname);
-	                ncurses_backlog_add(w, string);
-	                xfree(line);
-	
+			ncurses_backlog_add(w, string);
+			xfree(line);
+
 			count++;
 		}
 
 		if (count) {
 			const char *format;
-			
+
 			snprintf(tmp, sizeof(tmp), "contacts_%s_footer", footer_status);
 			format = format_find(tmp);
-		
+
 			if (xstrcmp(format, "")) {
-                                line = format_string(format);
-                                string = fstring_new(line);
+				line = format_string(format);
+				string = fstring_new(line);
 				ncurses_backlog_add(w, string);
-                                xfree(line);
-                        }
+				xfree(line);
+			}
 		}
 
 		if (contacts_nosort) {
@@ -635,12 +637,12 @@ QUERY(ncurses_contacts_changed)
 	if (config_contacts_size < 0) 
 		config_contacts_size = 0;
 
-        if (config_contacts_size == 0)
-                config_contacts = 0;
+	if (config_contacts_size == 0)
+		config_contacts = 0;
 
 	if (config_contacts_size > 1000)
 		config_contacts_size = 1000;
-	
+
 	contacts_margin = 1;
 	contacts_edge = WF_RIGHT;
 	contacts_frame = WF_LEFT;
@@ -726,9 +728,9 @@ QUERY(ncurses_contacts_changed)
 
 	if (config_contacts && !w)
 		window_new("__contacts", NULL, 1000);
-	
+
 	ncurses_contacts_update(NULL);
-        ncurses_resize();
+	ncurses_resize();
 	ncurses_commit();
 	return 0;
 }
@@ -755,8 +757,8 @@ QUERY(ncurses_all_contacts_changed)
  */
 void ncurses_contacts_mouse_handler(int x, int y, int mouse_state) 
 {
-        window_t *w = window_find("__contacts");
-        ncurses_window_t *n;
+	window_t *w = window_find("__contacts");
+	ncurses_window_t *n;
 	CHAR_T *name;
 
 	if (mouse_state == EKG_SCROLLED_UP) {
@@ -818,8 +820,6 @@ void ncurses_contacts_new(window_t *w)
 	w->nowrap = !contacts_wrap;
 	n->start = 0;
 }
-
-
 
 /*
  * Local Variables:
