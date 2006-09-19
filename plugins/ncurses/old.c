@@ -1066,11 +1066,11 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 				while (*text) {
 					if (*text != '%') {
 						waddch(w, (unsigned char) *text);
-						*text++;	
+						text++;	
 						x++;
 						continue;
 					}
-					*text++;
+					text++;
 					
 					if (!*text)	
 						break;
@@ -1099,7 +1099,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 		                                        break;
                 		        }
 					
-					*text++;
+					text++;
 		                        wattrset(w, color_pair(fgcolor, bold, bgcolor));
 				}
 
