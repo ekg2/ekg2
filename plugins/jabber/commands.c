@@ -658,36 +658,37 @@ static COMMAND(jabber_command_auth)
 	return 0;
 }
 
-static COMMAND(jabber_command_modify)
-/* XXX REWRITE IT */
-{
+static COMMAND(jabber_command_modify) {
 	jabber_private_t *j = session_private_get(session);
 	const char *uid = NULL;
 	char *nickname = NULL;
-	int ret = 0;
 	userlist_t *u;
 	list_t m;
 	
-	int addcomm = !xstrcasecmp(name, ("add"));
+	int addcom = !xstrcmp(name, ("add"));
 
-	if (!(u = userlist_find(session, target))) {
-		if (!addcomm) {
-			printq("user_not_found", target);
-			return -1;
-		} else {
-			/* khm ? a nie powinnismy userlist_add() ? */
-			u = xmalloc(sizeof(userlist_t));
-		}
-	} else if (addcomm) {
+	u = userlist_find(session, target);
+
+	if (u && addcom) {	/* don't allow to add user again */
 		printq("user_exists_other", params[0], format_user(session, u->uid), session_name(session));
 		return -1;
 	}
+
+	if (!u && !addcom) {
+		printq("user_not_found", target);
+		return -1;
+	}
+
+	if (!(uid = jid_target2uid(session, target, quiet)))
+		return -1;
+
+	if (!u)	u = xmalloc(sizeof(userlist_t));		/* alloc temporary memory for /jid:add */
+
 	if (params[1]) {
 		char **argv = array_make(params[1], " \t", 0, 1, 1);
 		int i;
 
 		for (i = 0; argv[i]; i++) {
-
 			if (match_arg(argv[i], 'g', ("group"), 2) && argv[i + 1]) {
 				char **tmp = array_make(argv[++i], ",", 0, 1, 1);
 				int x, off;	/* je¶li zaczyna siê od '@', pomijamy pierwszy znak */
@@ -700,7 +701,7 @@ static COMMAND(jabber_command_modify)
 							if (ekg_group_member(u, tmp[x] + 1 + off)) {
 								ekg_group_remove(u, tmp[x] + 1 + off);
 							} else {
-								printq("group_member_not_yet", format_user(session, u->uid), tmp[x] + 1);
+								printq("group_member_not_yet", format_user(session, uid), tmp[x] + 1);
 							}
 							break;
 						case '+':
@@ -709,7 +710,7 @@ static COMMAND(jabber_command_modify)
 							if (!ekg_group_member(u, tmp[x] + 1 + off)) {
 								ekg_group_add(u, tmp[x] + 1 + off);
 							} else {
-								printq("group_member_already", format_user(session, u->uid), tmp[x] + 1);
+								printq("group_member_already", format_user(session, uid), tmp[x] + 1);
 							}
 							break;
 						default:
@@ -718,11 +719,21 @@ static COMMAND(jabber_command_modify)
 							if (!ekg_group_member(u, tmp[x] + off)) {
 								ekg_group_add(u, tmp[x] + off);
 							} else {
-								printq("group_member_already", format_user(session, u->uid), tmp[x]);
+								printq("group_member_already", format_user(session, uid), tmp[x]);
 							}
 					}
 
 				array_free(tmp);
+				continue;
+			}
+		/* emulate gg:modify behavior */
+			if (match_arg(argv[i], 'o', ("online"), 2)) {	/* only jabber:iq:privacy */
+				command_exec_format(target, session, 0, ("/jid:privacy --set %s +pin"), uid);
+				continue;
+			}
+			
+			if (match_arg(argv[i], 'O', ("offline"), 2)) {	/* only jabber:iq:privacy */
+				command_exec_format(target, session, 0, ("/jid:privacy --set %s -pin"), uid);
 				continue;
 			}
 
@@ -731,32 +742,18 @@ static COMMAND(jabber_command_modify)
 				nickname = jabber_escape(argv[++i]);
 				continue;
 			}
-		/* emulate gg:modify behavior */
-			if (!addcomm && match_arg(argv[i], 'o', ("online"), 2)) {	/* only jabber:iq:privacy */
-				command_exec_format(target, session, 0, ("/jid:privacy --set %s +pin"), u->uid);
-				continue;
-			}
-			
-			if (!addcomm && match_arg(argv[i], 'O', ("offline"), 2)) {	/* only jabber:iq:privacy */
-				command_exec_format(target, session, 0, ("/jid:privacy --set %s -pin"), u->uid);
+	
+			if (argv[i][0] != '-') {	/* if param doesn't looks like command treat as a nickname */
+				xfree(nickname);
+				nickname = jabber_escape(argv[i]);
 				continue;
 			}
 		}
 		array_free(argv);
 	} 
-	
-	if (addcomm) {
-		if (!nickname && params[1])
-			nickname = jabber_escape(params[1]);
-	} 
-/* TODO: co robimy z nickname jesli jest jid:modify ? Pobieramy z userlisty jaka mamy akutualnie nazwe ? */
-#if 0
-	else if (!nickname && target) /* jesli jest modify i hmm. nie mamy nickname czyli params[1] to zamieniamy na target ? czyli zamieniamy na to samo co mielismy ? */
-			nickname = jabber_escape(target);
-#endif
 
-	if (!(uid = jid_target2uid(session, target, quiet))) 
-		return -1;
+	if (addcom && !nickname && params[1]) 	nickname = jabber_escape(params[1]);		/* ? */
+	if (!addcom && !nickname)		nickname = jabber_escape(u->nickname);		/* get current nickname */
 
 	if (j->send_watch) j->send_watch->transfer_limit = -1;	/* let's send this in one/two packets not in 7 or more. */
 
@@ -781,13 +778,11 @@ static COMMAND(jabber_command_modify)
 	JABBER_COMMIT_DATA(j->send_watch); 
 
 	xfree(nickname);
-	
-	if (addcomm) {
+	if (addcom) {
 		xfree(u);
 		return command_exec_format(target, session, 0, ("/auth --request %s"), uid);
 	}
-	
-	return ret;
+	return 0;
 }
 
 static COMMAND(jabber_command_del)
