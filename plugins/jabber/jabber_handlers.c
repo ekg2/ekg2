@@ -549,8 +549,8 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				const char *list = session_get(s, "privacy_list");
 
 				if (!list) list = "ekg2";
-				command_exec_format(NULL, s, 1, ("/jid:privacy --get %s"), 		list);
-				command_exec_format(NULL, s, 1, ("/jid:privacy --session %s"), 	list); 
+				command_exec_format(NULL, s, 1, ("/jid:privacy --get %s"), 	list);	/* synchronize list */
+				command_exec_format(NULL, s, 1, ("/jid:privacy --session %s"), 	list); 	/* set as active */
 			}
 		} 
 	}

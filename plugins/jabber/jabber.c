@@ -1209,6 +1209,8 @@ static int jabber_theme_init() {
 	/* %1 - session_name, %2 - server/ uid */
 	format_add("jabber_privacy_list_begin",   _("%g,+=%G----- Privacy list on %T%2%n"), 1);
 	format_add("jabber_privacy_list_item",	  _("%g|| %n %3 - %W%4%n"), 1);					/* %3 - lp %4 - itemname */
+	format_add("jabber_privacy_list_item_def",_("%g|| %g Default:%n %W%4%n"), 1);
+	format_add("jabber_privacy_list_item_act",_("%g|| %r  Active:%n %W%4%n"), 1); 
 	format_add("jabber_privacy_list_end",	  _("%g`+=%G----- End of the privacy list%n"), 1);
 	format_add("jabber_privacy_list_noitem",  _("%! No privacy list in %T%2%n"), 1);
 
