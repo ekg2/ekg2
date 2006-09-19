@@ -71,17 +71,6 @@ char *config_contacts_options;
 char *config_contacts_groups;
 int config_contacts_metacontacts_swallow;
 
-/*
- * we need this structure because we have to add it to the list 
- * maybe stupid way, but at the moment i couldn't find better (del)
- */
-typedef struct {
-	char *line;
-	const char *name;
-	const char *status;
-	const char *descr;
-} contact_t;
-
 void ncurses_backward_contacts_line(int arg)
 {
 	window_t *w = window_find("__contacts");
@@ -97,6 +86,19 @@ void ncurses_backward_contacts_line(int arg)
 	ncurses_contacts_update(w);
 	ncurses_redraw(w);
 	ncurses_commit();
+}
+
+/* 
+ * funkcja zwraca pierwsze literki status avail -> av away -> aw itd... 
+ * funkcja nie sprawdza czy status jest NULL, ani czy strlen(status) > 2 
+ */
+static inline char *get_short_status(char *status) {
+	static char buf[3];
+
+	buf[0] = status[0];
+	buf[1] = status[1];
+	buf[2] = 0; 		/* ? */
+	return &buf[0];
 }
 
 void ncurses_forward_contacts_line(int arg)
@@ -138,7 +140,6 @@ void ncurses_forward_contacts_line(int arg)
 
 						for (li = s->userlist; li; li = li->next) {
 							userlist_t *u = li->data;
-							char *short_status;
 
 							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
@@ -146,15 +147,10 @@ void ncurses_forward_contacts_line(int arg)
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
-							short_status = xstrndup(u->status, 2);
-
-							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-								xfree(short_status);
+							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
 								continue;
-							}
 
 							contacts_count++;
-							xfree(short_status);
 						}
 
 						if (contacts_nosort)
@@ -173,7 +169,6 @@ void ncurses_forward_contacts_line(int arg)
 
 						for (; li; li = li->next) {
 							userlist_t *u = li->data;
-							char *short_status;
 
 							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
@@ -181,15 +176,10 @@ void ncurses_forward_contacts_line(int arg)
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
-							short_status = xstrndup(u->status, 2);
-
-							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-								xfree(short_status);
+							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
 								continue;
-							}
 
 							contacts_count++;
-							xfree(short_status);
 						}
 
 						if (contacts_nosort)
@@ -211,7 +201,6 @@ void ncurses_forward_contacts_line(int arg)
 							metacontact_t *m = li->data;
 							metacontact_item_t *i = metacontact_find_prio(m);
 							userlist_t *u = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
-							char *short_status;
 
 							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
@@ -219,15 +208,10 @@ void ncurses_forward_contacts_line(int arg)
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
-							short_status = xstrndup(u->status, 2);
-
-							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-								xfree(short_status);
+							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
 								continue;
-							}
 
 							contacts_count++;
-							xfree(short_status);
 						}
 
 						if (contacts_nosort)
@@ -252,7 +236,6 @@ again:
 
 						for (li = current_list; li; li = li->next) {
 							userlist_t *u = li->data;
-							char *short_status;
 
 							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
@@ -260,15 +243,10 @@ again:
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
-							short_status = xstrndup(u->status, 2);
-
-							if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-								xfree(short_status);
+							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
 								continue;
-							}
 
 							contacts_count++;
-							xfree(short_status);
 						}
 
 						if (contacts_nosort)
@@ -530,7 +508,6 @@ group_cleanup:
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
 			const char *format;
-			char *short_status;
 
 			if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2) 
 				continue;
@@ -538,14 +515,8 @@ group_cleanup:
 			if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 				continue;
 
-			short_status = xstrndup(u->status, 2);
-
-			if (contacts_nosort && !xstrstr(contacts_order, short_status)) {
-				xfree(short_status);
+			if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
 				continue;
-			}
-
-			xfree(short_status);
 
 			if (count_all < contacts_index) {
 				count_all++;
