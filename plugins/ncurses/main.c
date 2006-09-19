@@ -250,9 +250,10 @@ static QUERY(ncurses_userlist_changed)
 	list_destroy(sorted_all_cache, 1);
 	sorted_all_cache = NULL;
 
-	ncurses_contacts_update(NULL);
-	if ((w = window_find("__contacts")))
+	if ((w = window_find("__contacts"))) {
+		ncurses_contacts_update(w);
 		ncurses_redraw(w);
+	}
 	ncurses_commit();
 	return 0;
 }
@@ -472,7 +473,6 @@ int ncurses_plugin_init(int prio)
 #if USE_UNICODE
 	if (config_use_unicode)		sizeofchart = sizeof(wchar_t);
 	else				sizeofchart = sizeof(char);
-
 #endif
 	plugin_register(&ncurses_plugin, prio);
 

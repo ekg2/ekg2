@@ -92,7 +92,7 @@ void ncurses_backward_contacts_line(int arg)
 	if (contacts_index < 0)
 		contacts_index = 0;
 
-	ncurses_contacts_update(NULL);
+	ncurses_contacts_update(w);
 	ncurses_redraw(w);
 	ncurses_commit();
 }
@@ -293,7 +293,7 @@ again:
 	if (contacts_index < 0)
 		contacts_index = 0;
 
-	ncurses_contacts_update(NULL);
+	ncurses_contacts_update(w);
 	ncurses_redraw(w);
 	ncurses_commit();
 }
@@ -517,6 +517,8 @@ group_cleanup:
 		if (!all && c && c->participants)		l = c->participants;
 		else if (!all && window_current->userlist)	l = window_current->userlist;
 
+		if (!l) break;
+
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
 			const char *format;
@@ -721,15 +723,17 @@ QUERY(ncurses_contacts_changed)
 
 		array_free(args);
 	}
+	/* XXX destroy window only if (!config_contacts) ? XXX */
 	if ((w = window_find("__contacts"))) {
 		window_kill(w, 1);
 		w = NULL;
 	}
 
-	if (config_contacts && !w)
-		window_new("__contacts", NULL, 1000);
+	if (config_contacts /* && !w */) {
+		w = window_new("__contacts", NULL, 1000);
+		ncurses_contacts_update(w);
+	}
 
-	ncurses_contacts_update(NULL);
 	ncurses_resize();
 	ncurses_commit();
 	return 0;
