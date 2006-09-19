@@ -55,9 +55,11 @@ static int contacts_edge = WF_RIGHT;
 static int contacts_frame = WF_LEFT;
 static int contacts_descr = 0;
 static int contacts_wrap = 0;
-#define CONTACTS_ORDER_DEFAULT "chopvoluavawxadninnoerr"
+#define CONTACTS_ORDER_DEFAULT "chopvoluavawxadninnoerr"		/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
+#define CONTACTS_ORDER_DEFAULT_LEN 23					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
 static char contacts_order[100] = CONTACTS_ORDER_DEFAULT;
 static int contacts_nosort = 0;
+static size_t corderlen	= CONTACTS_ORDER_DEFAULT_LEN;			/* it must be always equal xstrlen(contacts_order) XXX please note if you add somewhere code which modify contacts_order */
 
 list_t sorted_all_cache = NULL;
 
@@ -102,8 +104,6 @@ void ncurses_forward_contacts_line(int arg)
 	ncurses_window_t *n;
 	window_t *w = window_find("__contacts");
 	int contacts_count = 0, all = 0, count = 0;
-	size_t corderlen;
-
 	newconference_t *c;
 	if (!w)
 		return;
@@ -121,8 +121,6 @@ void ncurses_forward_contacts_line(int arg)
 		all = 2;
 	else if (contacts_group_index > count)
 		all = 1;
-
-	corderlen = xstrlen(contacts_order);
 
 	switch (all) {
 		case 1:
@@ -506,7 +504,7 @@ group_cleanup:
 	if (sorted_all_cache && all != 2) 	
 		sorted_all = sorted_all_cache;
 
-	for (j = 0; j < xstrlen(contacts_order); j += 2) {
+	for (j = 0; j < corderlen; /* xstrlen(contacts_order); */ j += 2) {
 		int count = 0;
 		list_t l = (!all) ? session_current->userlist : sorted_all;
 		const char *footer_status = NULL;
@@ -648,7 +646,7 @@ QUERY(ncurses_contacts_changed)
 	contacts_margin = 1;
 	contacts_edge = WF_RIGHT;
 	contacts_frame = WF_LEFT;
-	xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);
+	xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);	corderlen = CONTACTS_ORDER_DEFAULT_LEN;	/* xstrlen(CONTACTS_ORDER_DEFAULT) eq CONTACTS_ORDER_DEFAULT_LEN */
 	contacts_wrap = 0;
 	contacts_descr = 0;
 	contacts_nosort = 0;
@@ -714,8 +712,10 @@ QUERY(ncurses_contacts_changed)
 
 			else if (!xstrcasecmp(args[i], "nodescr"))	contacts_descr = 0;
 
-			else if (!xstrncasecmp(args[i], "order=", 6))
-				snprintf(contacts_order, sizeof(contacts_order), args[i] + 6);
+			else if (!xstrncasecmp(args[i], "order=", 6)) {
+				snprintf(contacts_order, sizeof(contacts_order), args[i] + 6);	/* snprintf returns count of char... can we count on it? */
+				corderlen = xstrlen(contacts_order);
+			}
 		}
 
 		if (contacts_margin < 0)
