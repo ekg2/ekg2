@@ -964,6 +964,9 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 	char *ftext = NULL;		/* tekst do zwolnienia jesli !config_display_pl_chars */
 	const char *p;			/* parsowanie format lub ftext jesli !config_display_pl_chars */
 
+	if (!w)
+		return -1;
+	
 	if (!config_display_pl_chars) {
 		ftext = xstrdup(format);
 		iso_to_ascii(ftext);
@@ -972,9 +975,6 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 
 	if (config_display_color == 2)	config_display_color = 0;
 
-	if (!w)
-		return -1;
-	
 	if (x == 0) {
 		int i;
 
