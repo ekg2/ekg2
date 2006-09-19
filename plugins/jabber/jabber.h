@@ -116,6 +116,21 @@ typedef struct {
 	} private;
 } jabber_dcc_t; 
 
+	/* name				bit			allow/block:	*/
+#define PRIVACY_LIST_MESSAGE		1		/* 	incoming messages */
+#define PRIVACY_LIST_IQ			2		/*      incoming iq packets */
+#define PRIVACY_LIST_PRESENCE_IN	4		/*      incoming presence packets */
+#define PRIVACY_LIST_PRESENCE_OUT	8		/*      outgoint presence packets */
+#define PRIVACY_LIST_ALL		(PRIVACY_LIST_MESSAGE | PRIVACY_LIST_IQ | PRIVACY_LIST_PRESENCE_IN | PRIVACY_LIST_PRESENCE_OUT)
+
+typedef struct {
+	char *type;						/* jid/group/subscription/ */
+	char *value;						/* jid:.../@group/subscription ---- value */
+	int allow;						/* 1 - allow 0 - deny */
+	int items;						/* lista bitmaski j/w */
+	unsigned int order;					/* order */
+} jabber_iq_privacy_t;
+
 typedef struct {
 	int fd;				/* deskryptor po³±czenia */
 	int istlen;			/* czy to tlen? */
@@ -131,6 +146,7 @@ typedef struct {
 	int connecting;			/* czy siê w³a¶nie ³±czymy? */
 	char *resource;		/* resource jakie uzylismy przy laczeniu sie do jabberd */
 
+	list_t privacy;			/* for jabber:iq:privacy */
 	list_t bookmarks;		/* for jabber:iq:private <storage xmlns='storage:bookmarks'> */
 
 	watch_t *send_watch;
@@ -166,6 +182,8 @@ int jabber_write_status(session_t *s);
 void jabber_reconnect_handler(int type, void *data);
 WATCHER(jabber_handle_resolver);
 
+int jabber_privacy_add_compare(void *data1, void *data2);
+int jabber_privacy_free(jabber_private_t *j);
 int jabber_bookmarks_free(jabber_private_t *j);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);

@@ -545,8 +545,13 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			jabber_write_status(s);
 
 			if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, ("/jid:bookmark --get"), 1);
-			if (session_int_get(s, "auto_privacylist_sync") != 0) 
-				command_exec_format(NULL, s, 1, ("/jid:privacy --get %s"), session_get(s, "privacy_list") ? session_get(s, "privacy_list") : "ekg2");
+			if (session_int_get(s, "auto_privacylist_sync") != 0) {
+				const char *list = session_get(s, "privacy_list");
+
+				if (!list) list = "ekg2";
+				command_exec_format(NULL, s, 1, ("/jid:privacy --get %s"), 		list);
+				command_exec_format(NULL, s, 1, ("/jid:privacy --session %s"), 	list); 
+			}
 		} 
 	}
 
@@ -1016,24 +1021,47 @@ rc_forbidden:
 			} else 
 #endif
 			if (!xstrcmp(ns, "jabber:iq:privacy")) { /* RFC 3921 (10th: privacy) */
+				xmlnode_t *active 	= xmlnode_find_child(q, "active");
+				xmlnode_t *def		= xmlnode_find_child(q, "default");
+				char *activename   	= active ? jabber_attr(active->atts, "name") : NULL;
+				char *defaultname 	= def ? jabber_attr(def->atts, "name") : NULL;
+
 				xmlnode_t *node;
 				int i = 0;
 
 				for (node = q->children; node; node = node->next) {
 					if (!xstrcmp(node->name, "list")) {
 						if (node->children) {	/* Display all details */
+							list_t *lista = NULL;
 							xmlnode_t *temp;
 							i = -1;
+
+							if (session_int_get(s, "auto_privacylist_sync") != 0) {
+								const char *list = session_get(s, "privacy_list");
+								if (!list) list = "ekg2";
+
+								if (!xstrcmp(list, jabber_attr(node->atts, "name"))) {
+									jabber_privacy_free(j);
+									lista = &(j->privacy);
+								}
+							}
+
 							print("jabber_privacy_item_header", session_name(s), j->server, jabber_attr(node->atts, "name"));
 
 							for (temp=node->children; temp; temp = temp->next) {	
 								if (!xstrcmp(temp->name, "item")) {
 									/* (we should sort it by order! XXX) (server send like it was set) */
 									/* a lot TODO */
+									xmlnode_t *iq		= xmlnode_find_child(temp, "iq");
+									xmlnode_t *message	= xmlnode_find_child(temp, "message");
+									xmlnode_t *presencein	= xmlnode_find_child(temp, "presence-in");
+									xmlnode_t *presenceout	= xmlnode_find_child(temp, "presence-out");
+
 									char *value = jabber_attr(temp->atts, "value");
 									char *type  = jabber_attr(temp->atts, "type");
 									char *action = jabber_attr(temp->atts, "action");
 									char *jid, *formated;
+									char *formatedx;
 
 									if (!xstrcmp(type, "jid")) 		jid = saprintf("jid:%s", value);
 									else if (!xstrcmp(type, "group")) 	jid = saprintf("@%s", value);
@@ -1042,14 +1070,37 @@ rc_forbidden:
 									formated = format_string(
 										format_find(!xstrcmp(action,"allow") ? "jabber_privacy_item_allow" : "jabber_privacy_item_deny"), jid);
 
+									formatedx = format_string(
+										format_find(!xstrcmp(action,"allow") ? "jabber_privacy_item_allow" : "jabber_privacy_item_deny"), "*");
+
+									xfree(formatedx);
+									formatedx = xstrdup("x");
+
+									if (lista) {
+										jabber_iq_privacy_t *item = xmalloc(sizeof(jabber_iq_privacy_t));
+
+										item->type  = xstrdup(type);
+										item->value = xstrdup(value);
+										item->allow = !xstrcmp(action,"allow");
+
+										if (iq)		item->items |= PRIVACY_LIST_IQ;
+										if (message)	item->items |= PRIVACY_LIST_MESSAGE;
+										if (presencein)	item->items |= PRIVACY_LIST_PRESENCE_IN;
+										if (presenceout)item->items |= PRIVACY_LIST_PRESENCE_OUT;
+										item->order = atoi(jabber_attr(temp->atts, "order"));
+
+										list_add_sorted(lista, item, 0, jabber_privacy_add_compare);
+									}
+
 									print("jabber_privacy_item", session_name(s), j->server, 
 										jabber_attr(temp->atts, "order"), formated, 
-										xmlnode_find_child(temp, "message")		? "X" : " ",
-										xmlnode_find_child(temp, "presence-in")		? "X" : " ", 
-										xmlnode_find_child(temp, "presence-out")	? "X" : " ", 
-										xmlnode_find_child(temp, "iq") 			? "X" : " ");
+										message		? formatedx : " ",
+										presencein	? formatedx : " ", 
+										presenceout	? formatedx : " ", 
+										iq		? formatedx : " ");
 
 									xfree(formated);
+									xfree(formatedx);
 									xfree(jid);
 								}
 							}
@@ -1060,11 +1111,15 @@ rc_forbidden:
 								xfree(allowed); xfree(denied);
 							}
 						} else { 		/* Display only name */
+							int dn = 0;
 							/* rekurencja, ask for this item (?) */
 							if (!i) print("jabber_privacy_list_begin", session_name(s), j->server);
 							if (i != -1) i++;
-
-							print("jabber_privacy_list_item", session_name(s), j->server, itoa(i), jabber_attr(node->atts, "name")); 
+							if (active && !xstrcmp(jabber_attr(node->atts, "name"), activename)) {
+								print("jabber_privacy_list_item_act", session_name(s), j->server, itoa(i), activename); dn++; }
+							if (def && !xstrcmp(jabber_attr(node->atts, "name"), defaultname)) {
+								print("jabber_privacy_list_item_def", session_name(s), j->server, itoa(i), defaultname); dn++; }
+							if (!dn) print("jabber_privacy_list_item", session_name(s), j->server, itoa(i), jabber_attr(node->atts, "name")); 
 						}
 					}
 				}

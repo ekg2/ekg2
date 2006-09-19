@@ -729,6 +729,17 @@ static COMMAND(jabber_command_modify)
 			if (match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1]) {
 				xfree(nickname);
 				nickname = jabber_escape(argv[++i]);
+				continue;
+			}
+		/* emulate gg:modify behavior */
+			if (!addcomm && match_arg(argv[i], 'o', ("online"), 2)) {	/* only jabber:iq:privacy */
+				command_exec_format(target, session, 0, ("/jid:privacy --set %s +pin"), u->uid);
+				continue;
+			}
+			
+			if (!addcomm && match_arg(argv[i], 'O', ("offline"), 2)) {	/* only jabber:iq:privacy */
+				command_exec_format(target, session, 0, ("/jid:privacy --set %s -pin"), u->uid);
+				continue;
 			}
 		}
 		array_free(argv);
@@ -1208,152 +1219,409 @@ static COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERR
 	return 0;
 }
 
-static COMMAND(jabber_command_privacy) {
-	/* XXX, wstepna implementacja jabber:iq:privacy w/g RFC #3921 */
+int jabber_privacy_add_compare(void *data1, void *data2) {
+	jabber_iq_privacy_t *a = data1;
+	jabber_iq_privacy_t *b = data2;
 
-	enum {	/* name */			/* allow/block: */
-		PRIVACY_LIST_MESSAGE = 0,	/* 	incoming messages */
-		PRIVACY_LIST_IQ,		/* 	incoming iq packets */
-		PRIVACY_LIST_PRESENCE_IN,	/*	incoming presence packets */
-		PRIVACY_LIST_PRESENCE_OUT, 	/*	outgoint presence packets */
-		PRIVACY_LIST_ALL,		/*	everythink ;) */
-		PRIVACY_LIST_COUNT,		/* nothink ;) */
-		/* Usage: 
-		 *    -*  		 : set order to 1, enable blist[PRIVACY_LIST_ALL] 
-		 *    +* 		 : set order to 0, enable alist[PRIVACY_LIST_ALL]
-		 *    -* +pin +pout +msg : set order to 1, enable alist[PRIVACY_LIST_PRESENCE_IN, PRIVACY_LIST_PRESENCE_OUT, PRIVACY_LIST_MESSAGE] && blist[PRIVACY_LIST_ALL] 
-		 *    -pout -pin	 : (order doesn't matter) enable blist[PRIVACY_LIST_PRESENCE_IN, PRIVACY_LIST_PRESENCE_OUT]
-		 */
-	};
+	return (a->order - b->order);
+}
+
+static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921) by my watch */
+/* NEED SOME more IDEAs... */
 	jabber_private_t *j = jabber_private(session);
+	int needsync = 0;
 
-	char req = 0;
-#if 0 /* some idea, senseless ? */
-	if (!xstrcmp(name, "ignore")) req = '-'
-	if (!xstrcmp(name, "unignore")) req = '+'
-#endif
+	if (!params[0] || !xstrcmp(params[0], "--lists")) {	
+		/* Usage:	--lists			-- request for lists */
 
-	if (!params[0]) {
-		watch_write(j->send_watch, 
-			"<iq type=\"get\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"/></iq>", j->id++);
-	} else if (req || (params[0] && params[1])) {	/* (req || params[1]); (target -- params[0]) XXX */
-		char *lname = NULL;	/* list name, if not passed. generate random one. */
-		char *ename;
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"/></iq>", j->id++);
+		return 0;
+	}
+
+	if (!xstrcmp(params[0], "--session") || !xstrcmp(params[0], "--default")) {	
+		/* Usage:	--session <list>	-- set session's list */
+		/* Usage:	--default <list>	-- set default list */
+
+		char *val = jabber_escape(params[1]);
+		int unset = !xstrcmp(params[1], "-");
+		char *tag = !xstrcmp(params[0], "--session") ? "active" : "default";
+		if (!val) {
+			/* XXX, display current default/session list? */
+			printq("invalid_params", name);
+			return -1;
+		}
+		if (unset)	watch_write(j->send_watch, "<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"><%s/></query></iq>", j->id++, tag);
+		else		watch_write(j->send_watch, "<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"><%s name=\"%s\"/></query></iq>", j->id++, tag, val);
+		xfree(val);
+		return 0;
+	}
+
+	if (!xstrcmp(params[0], "--get")) {		/* display list */
+		/* Usage:	--get [list] 		-- display list */
+
+		char *val = jabber_escape(params[1] ? params[1] : session_get(session, "privacy_list"));
+
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"><list name=\"%s\"/></query></iq>", j->id++, val ? val : "ekg2");
+		xfree(val);
+		return 0;
+	}
+
+	if (!xstrcmp(params[0], "--modify")) {		/* modify list's entry */
+		printq("generic_error", "not impl, sorry");
+		return -1;
+		needsync = 1;
+	}
+
+	if (!xstrcmp(params[0], "--delete")) {		/* delete list's entry */
+		printq("generic_error", "not impl, sorry");
+		return -1;
+		needsync = 1;
+	}
+
+	if (!xstrcmp(params[0], "--set")) {
+		/* Usage: 	--set [list] jid:/@grupa/typ
+		 *    --order xyz	: only with new lists... if you want to modify, please use --modify 
+		 *    -*  		: set order to 1, enable blist[PRIVACY_LIST_ALL] 
+		 *    +* 		: set order to 0, enable alist[PRIVACY_LIST_ALL]
+		 *    -* +pin +pout +msg: set order to 1, enable alist[PRIVACY_LIST_PRESENCE_IN, PRIVACY_LIST_PRESENCE_OUT, PRIVACY_LIST_MESSAGE] && blist[PRIVACY_LIST_ALL] 
+		 *    -pout -pin	: (order doesn't matter) enable blist[PRIVACY_LIST_PRESENCE_IN, PRIVACY_LIST_PRESENCE_OUT]
+		 */
 
 		const char *type;		/* <item type */
 		const char *value;		/* <item value */
 
-		int alist[PRIVACY_LIST_COUNT] = {0, 0, 0, 0, 0, };	/* allowed list */
-		int blist[PRIVACY_LIST_COUNT] = {0, 0, 0, 0, 0, };	/* blocked list */
-		int order = 0;		/* 0 - wpierw 'deny' 1 - wpierw 'allow' */
-		int done  = 0;		/* 0x01 - done 'allow' 0x02 - done 'deny' */
-
-		int i;
-		
-		if (!xstrncmp(params[0], "jid:", 4))
-			{ type = "jid"; value = params[0]+4; }
-		else if (!xstrcmp(params[0], "none") || !xstrcmp(params[0], "both") || !xstrcmp(params[0], "from") || !xstrcmp(params[0], "to"))
-			{ type = "subscription"; value = params[0]; }
-		else if (params[0][0] == '@') 
-			{ type = "group"; value = params[0]+1; }
-		else {
-			/* XXX */
+		if (!params[1]) {
 			wcs_printq("invalid_params", name);
 			return -1;
 		}
-		
-		if (params[0] && params[1]) { /* parsing params[1] made in separate block */
-			char **p = array_make(params[1], " ", 0, 1, 0);
-			
-			for (i=0; p[i]; i++) { 
-				int preq = req;
-				int flag = -1;		/* PRIVACY_LIST_MESSAGE...PRIVACY_LIST_ALL */
-				char *cur = p[i];	/* current */
 
-				if (cur[0] == '-')	{ preq = '-'; cur++; }
-				else if (cur[0] == '+')	{ preq = '+'; cur++; }
+		if (!xstrncmp(params[1], "jid:", 4))	{ type = "jid";		value = params[1]+4; }
+		else if (params[1][0] == '@')		{ type = "group";	value = params[1]+1; }
+		else if (!xstrcmp(params[1], "none") || !xstrcmp(params[1], "both") || !xstrcmp(params[1], "from") || !xstrcmp(params[1], "to"))
+							{ type = "subscription"; value = params[1]; }
+		else {
+			wcs_printq("invalid_params", name);
+			return -1;
+		}
+
+		if (session_int_get(session, "auto_privacylist_sync") == 0) {
+			wcs_printq("generic_error", "If you really want to use jabber:iq:privacy list, you need to set session variable auto_privacylist_sync to 1 and reconnect.");
+			return -1;
+		}
+#if 0
+		/* order swaper */
+		if (allowlist && denylist && (denylist->items & PRIVACY_LIST_ALL) && allowlist->order > denylist->order) {
+			/* swap order if -* is passed (firstlist should be allowlist) */
+			int tmp		= denylist->order;
+			denylist->order		= allowlist->order;
+			allowlist->order	= tmp;
+		}
+#endif
+		if (params[2]) { /* parsing params[2] */
+			char **p = array_make(params[2], " ", 0, 1, 0);
+			jabber_iq_privacy_t *allowlist= NULL;
+			jabber_iq_privacy_t *denylist = NULL;
+			unsigned int order = 0;
+			int opass = 0;
+			int i;
+			list_t l;
+
+			for (l = j->privacy; l; l = l->next) {
+				jabber_iq_privacy_t *p = l->data;
+
+				if (!xstrcmp(p->value, value) && !xstrcmp(p->type, type)) {
+					if (p->allow)	allowlist	= p;
+					else		denylist	= p;
+				}
+			}
+
+			for (i=0; p[i]; i++) { 
+				int flag = -1;		/* bitmask PRIVACY_LIST_MESSAGE...PRIVACY_LIST_ALL */
+				char *cur = p[i];	/* current */
+				jabber_iq_privacy_t *lista = NULL;
+				jabber_iq_privacy_t *lista2= NULL;
+
+				if (!xstrcmp(p[i], "--order") && p[i + 1]) {
+					order = atoi(p[++i]);
+					opass = 1;
+					continue;
+				}
+
+				if (cur[0] == '-')	{
+					if (!denylist) denylist = xmalloc(sizeof(jabber_iq_privacy_t));
+					lista = denylist; cur++; 
+					lista2= allowlist;
+				}
+				else if (cur[0] == '+')	{
+					if (!allowlist) allowlist = xmalloc(sizeof(jabber_iq_privacy_t));
+					lista = allowlist; cur++; 
+					lista2 = denylist;
+				}
 				
 				if 	(!xstrcmp(cur, "iq"))	flag = PRIVACY_LIST_IQ;
 				else if (!xstrcmp(cur, "msg")) 	flag = PRIVACY_LIST_MESSAGE;
 				else if (!xstrcmp(cur, "pin"))	flag = PRIVACY_LIST_PRESENCE_IN;
-				else if (!xstrcmp(cur, "pout"))	flag = PRIVACY_LIST_PRESENCE_OUT;
-				else if (!xstrcmp(cur, "*"))	flag = PRIVACY_LIST_ALL;
+  				else if (!xstrcmp(cur, "pout"))	flag = PRIVACY_LIST_PRESENCE_OUT;
+  				else if (!xstrcmp(cur, "*"))	flag = PRIVACY_LIST_ALL;
+  
+ 				if (flag == -1 || !lista) {
+ 					debug("[JABBER, PRIVACY] INVALID PARAM @ p[%d] = %s... [%d, 0x%x] \n", i, cur, flag, lista);
+  					wcs_printq("invalid_params", name);
+ 					if (allowlist && !allowlist->value)	xfree(allowlist);
+ 					if (denylist && !denylist->value)	xfree(denylist);
+  					array_free(p);
+  					return -1;
+  				}
+  
+ 				lista->items |= flag;
+  
+				if (flag != PRIVACY_LIST_ALL && lista2 && (lista2->items & flag))	lista2->items		&= ~flag;	/* uncheck it on 2nd list */
+  			}
+  			array_free(p);
+  
+				/* jesli nie podano order, to bierzemy ostatnia wartosc */
+ 			if (!opass && !order && ( (denylist && !denylist->value) || (allowlist && !allowlist->value) )) for (l = j->privacy; l; l = l->next) {
+ 				jabber_iq_privacy_t *p = l->data;
+  
+ 				if (!l->next) order = p->order+1;
+ 			}
+ 				/* podano order, musimy przesunac wszystkie elementy ktora maja ten order o 1 lub 2 (jesli jest tez denylist) w przod) */
+ 			else if (opass && order) for (l = j->privacy; l; l = l->next) {
+ 				jabber_iq_privacy_t *p = l->data;
+ 				int nextorder = (allowlist && denylist && !allowlist->value && !denylist->value);
+ 
+ 				if (p == allowlist || p == denylist) continue;
+ 
+ 				if (p->order == order || p->order == order+nextorder) {
+ 					jabber_iq_privacy_t *m = l->data;
+ 					list_t j = l;
+ 
+ 					if (p->order == order+nextorder) nextorder--;
+ 
+ 					do {
+ 						m = j->data;
+ 						m->order += (1 + nextorder);
+ 						j = j->next;
+ 					} while (j && ((jabber_iq_privacy_t *) j->data)->order <= m->order);
+ 					break;
+ 				}
+ 			}
+				/* jesli jest -* to wtedy allowlista powinna byc przed denylista */
+			if (denylist && !denylist->value && denylist->items & PRIVACY_LIST_ALL && allowlist && !allowlist->value)	denylist->order = 1;
+				/* w przeciwnym wypadku najpierw deynlista */
+			else if (denylist && allowlist && !denylist->value && !allowlist->value)					allowlist->order = 1;
+ 
+ 			if (allowlist && !allowlist->value) {
+ 				allowlist->value = xstrdup(value);
+ 				allowlist->type	 = xstrdup(type);
+ 				allowlist->allow = 1;
+ 				allowlist->order += order;
+ 				list_add_sorted(&j->privacy, allowlist, 0, jabber_privacy_add_compare);
+ 			} 
+  
+ 			if (denylist && !denylist->value) {
+ 				denylist->value = xstrdup(value);
+ 				denylist->type	= xstrdup(type);
+ /*				denylist->allow = 0; */
+ 				denylist->order += order;
+ 				list_add_sorted(&j->privacy, denylist, 0, jabber_privacy_add_compare);
+ 			} 
+ 		}
+ 		needsync = 1;
+ 	}
+	if (!xstrcmp(params[0], "--unset")) {
+		/* usage: 	--unset [lista] Unset / remove list */
 
-				if (flag == -1 || !preq) {
-					debug("[JABBER, PRIVACY] INVALID PARAM @ p[%d] = %s... [%d, %d, %d] \n", i, cur, flag, preq, req);
-					wcs_printq("invalid_params", name);
-					array_free(p);
-					return -1;
-				}
+		char *val = jabber_escape(!needsync && params[1] ? params[1] : session_get(session, "privacy_list"));
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"><list name=\"%s\"/></query></iq>", j->id++, val ? val : "ekg2");
+		xfree(val);
+		return 0;
+	}
+ 
+ 	if ((needsync || !xstrcmp(params[0], "--sync")) && j->privacy) {
+ 		/* Usage:	--sync			-- sync default list [internal use] */
 
-				if (preq == '-') { blist[flag] = 1; alist[flag] = 0; }
-				if (preq == '+') { alist[flag] = 1; blist[flag] = 0; }
+ 		static unsigned int last_order;
+ 		char *val = jabber_escape(!needsync && params[1] ? params[1] : session_get(session, "privacy_list"));
+ 		list_t l;
+ 
+ 		last_order = 0;
 
-				if (flag == PRIVACY_LIST_ALL) order = (preq == '-');
+		if (j->send_watch)	j->send_watch->transfer_limit = -1;
+ 
+ 		watch_write(j->send_watch, "<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"><list name=\"%s\">", j->id++, val ? val : "ekg2");
+ 
+ 		for (l = j->privacy; l; l = l->next) {
+ 			jabber_iq_privacy_t *p = l->data;
+ 			char *eval;
+ 
+ 			if (!p->items) continue;			/* XXX, remove? */
+ 			eval = jabber_escape(p->value);
+ 		/* XXX XXX */
+ 			if (last_order == p->order) p->order++;
+ 			last_order = p->order;
+ 
+ 			watch_write(j->send_watch, "<item type=\"%s\" value=\"%s\" action=\"%s\" order=\"%d\">", 
+ 				p->type,												/* type (jid/group/subscription)*/
+ 				eval, 													/* value */
+ 				p->allow ? "allow" : "deny",										/* action */
+ 				p->order);												/* order */
+ 
+ 			if (p->items & PRIVACY_LIST_MESSAGE)		watch_write(j->send_watch, "<message/>");
+ 			if (p->items & PRIVACY_LIST_IQ)			watch_write(j->send_watch, "<iq/>");
+ 			if (p->items & PRIVACY_LIST_PRESENCE_IN)	watch_write(j->send_watch, "<presence-in/>");
+ 			if (p->items & PRIVACY_LIST_PRESENCE_OUT)	watch_write(j->send_watch, "<presence-out/>");
+ 
+ 			watch_write(j->send_watch, "</item>");
+  		}
+  		watch_write(j->send_watch, "</list></query></iq>");
+ 		xfree(val);
+
+		JABBER_COMMIT_DATA(j->send_watch);
+
+ 		return 0;
+ 	}
+
+	if (params[0] && params[0][0] != '-') /* jesli nie opcja, to pewnie jest to lista, wyswietlamy liste */
+		return command_exec_format(target, session, 0, "/jid:privacy --get %s", params[0]);
+
+ 	wcs_print("invalid_params", name);
+ 	return 1;
+}
+ 
+#if 0
+static const char *jabber_ignore_format(int level) {
+ 	static char buf[100];
+ 
+ 	buf[0] = 0;
+ 
+ 	if (level == PRIVACY_LIST_ALL) return "*";
+ 	
+ 	if (level & PRIVACY_LIST_MESSAGE)	xstrcat(buf, "msg,");
+ 	if (level & PRIVACY_LIST_IQ)		xstrcat(buf, "iq,");
+ 	if (level & PRIVACY_LIST_PRESENCE_IN)	xstrcat(buf, "notify,");
+ 	if (level & PRIVACY_LIST_PRESENCE_OUT)	xstrcat(buf, "notifyout,");
+ 
+ 	if (!buf[0]) return buf;
+ 
+ 	buf[xstrlen(buf)-1] = 0;
+ 
+ 	return buf;
+}
+
+static COMMAND(jabber_command_ignore) {	/* emulates ekg2's /ignore with jabber_command_privacy() */
+ 	jabber_private_t *j = jabber_private(session);
+ 	const char *uid;
+ 
+ 	if (*name == 'i' || *name == 'I') {
+ 		int flags, modified = 0;
+ 
+ 		if (!params[0]) {
+ 			list_t l;
+ 			int i = 0;
+ 
+ 			for (l = session->userlist; l; l = l->next) {
+ 				userlist_t *u = l->data;
+ 				int level;
+ 
+ 				if (!(level = ignored_check(session, u->uid))) continue;
+ 				printq("ignored_list", format_user(session, u->uid), ignore_format(level));
+ 				i++;
+ 			}
+ 			for (l = j->privacy; l; l = l->next) {
+ 				jabber_iq_privacy_t *p = l->data;
+ 
+ 				if (!p->items) continue;
+ 				if (!xstrcmp(p->type, "uid")) printq("ignored_list", format_user(session, p->value), jabber_ignore_format(p->items));
+ 				i++;
+ 			}
+ 
+ 			if (!i)
+ 				wcs_printq("ignored_list_empty");
+ 
+ 			return 0;
+ 		}
+ 		if (params[0][0] == '#') {
+ 			return command_exec_format(NULL, NULL, quiet, ("/conference --ignore %s"), params[0]);
+ 		}
+	/* XXX, use privacy list here */
+		if ((flags = ignored_check(session, get_uid(session, params[0]))))
+			modified = 1;
+
+		if (params[1]) {
+			int __flags = ignore_flags(params[1]);
+
+			if (!__flags) {
+				wcs_printq("invalid_params", name);
+				return -1;
 			}
-			array_free(p);
-		}
 
-		lname = saprintf("__ekg2_%s__%s", type, value);	/* nicely generated name */
-		ename = jabber_escape(lname);
-		xfree(lname);
+			flags |= __flags;
+		} else
+			flags = IGNORE_ALL;
 
-		watch_write(j->send_watch, 
-			"<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\">"
-			"<list name=\"%s\">", j->id++, ename);
-
-		for (i=0; i < PRIVACY_LIST_COUNT; i++) {
-			if ( (alist[i] && done != 0x01) || (blist[i] && done != 0x02)) {
-				int *clist = (alist[i]) ? (int *) &alist : (int *) &blist;
-
-				watch_write(j->send_watch,
-					"<item type=\"%s\" value=\"%s\" action=\"%s\" order=\"%d\">%s%s%s%s</item>", type, value,
-
-					alist[i] ? "allow" : "deny", ((alist[i] && order) || (blist[i] && !order)) ? 0 : 1, 
-					clist[PRIVACY_LIST_MESSAGE]	? "<message/>"	: "",
-					clist[PRIVACY_LIST_IQ]		? "<iq/>"	: "",
-					clist[PRIVACY_LIST_PRESENCE_IN] ? "<presence-in/>" : "",
-					clist[PRIVACY_LIST_PRESENCE_OUT]? "<presence-out/>" : "");
-
-				if (done) break;
-				if (alist[i]) done = 0x01;
-				if (blist[i]) done = 0x02;
-			}
-		}
-		watch_write(j->send_watch, "</list></query></iq>");
-	} else {
-		const char *type, *value;
-		char *lname;
-		char *ename = NULL;
-
-		if (!xstrncmp(params[0], "jid:", 4))
-			{ type = "jid"; value = params[0]+4; }
-		else if (!xstrcmp(params[0], "none") || !xstrcmp(params[0], "both") || !xstrcmp(params[0], "from") || !xstrcmp(params[0], "to"))
-			{ type = "subscription"; value = params[0]; }
-		else if (params[0][0] == '@') 
-			{ type = "group"; value = params[0]+1; }
-		else if (!xstrncmp(params[0], "__ekg2_", 7))
-			{ type = NULL; value = NULL; ename = jabber_escape(params[0]); } 
-		else {
-			/* XXX */
-			wcs_printq("invalid_params", name);
+		if (!(uid = get_uid(session, params[0]))) {
+			printq("user_not_found", params[0]);
 			return -1;
 		}
 
-		if (type && value) {
-			lname = saprintf("__ekg2_%s__%s", type, value);	/* nicely generated name */
-			ename = jabber_escape(lname);
-			xfree(lname);
-		}
+		if (modified)
+			ignored_remove(session, uid);
 
-		watch_write(j->send_watch, 
-			"<iq type=\"get\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\">"
-			"<list name=\"%s\"/>"
-			"</query></iq>", j->id++, ename);
-		xfree(ename);
-	}
-	return 0;
+		if (!ignored_add(session, uid, flags)) {
+			if (modified)
+				printq("ignored_modified", format_user(session, uid));
+			else
+				printq("ignored_added", format_user(session, uid));
+			config_changed = 1;
+		}
+	/* XXX, end */
+  	} else {
+ 		int unignore_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
+ 		int retcode = 0;
+ 
+ 		if (!params[0]) {
+ 			wcs_printq("not_enough_params", name);
+  			return -1;
+  		}
+ 		if (params[0][0] == '#') {
+ 			return command_exec_format(NULL, NULL, quiet, ("/conference --unignore %s"), params[0]);
+ 		}
+ 
+ 		if (unignore_all) {
+ 			list_t l;
+			int x = 0;
+/* 			int x = command_exec_format(NULL, session, 1, ("/jid:privacy --unset")) == 0 ? 1 : 0; */	/* bad idea? */	/* --delete * -*  ??!! XXX */ 
+ 
+ 			for (l = session->userlist; l; ) {
+ 				userlist_t *u = l->data;
+ 				l = l->next;
+ 
+ 				if (!ignored_remove(session, u->uid)) 	x = 1;
+ 			}
+  
+ 			if (x) {
+ 				wcs_printq("ignored_deleted_all");
+ 				config_changed = 1;
+ 			} else {
+ 				wcs_printq("ignored_list_empty");
+				return -1;
+ 			}
+ 			
+ 			return 0;
+ 		} else if (!(uid = get_uid(session, params[0]))) {
+ 			printq("user_not_found", params[0]);
+ 			return -1;
+  		}
+ 		retcode = command_exec_format(NULL, session, 1, ("/jid:privacy --delete %s"), params[0]) == 0 ? 1 : 0;
+ 		retcode |= !ignored_remove(session, uid);
+  
+ 		if (retcode) 	{ printq("ignored_deleted", format_user(session, params[0]));	config_changed = 1;	}
+ 		else		{ printq("error_not_ignored", format_user(session, params[0]));	return -1; 		}
+  	}
+  	return 0;
 }
+#endif
 
 static COMMAND(jabber_muc_command_join) {
 	/* params[0] - full channel name, 
@@ -1847,13 +2115,14 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:disconnect"), "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+//	command_add(&jabber_plugin, ("jid:ignore"), "uUC I", jabber_command_ignore,	JABBER_ONLY, "status descr notify msg dcc events *");
 	command_add(&jabber_plugin, ("jid:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:ffc"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:msg"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:modify"), "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, ("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&jabber_plugin, ("jid:privacy"), "? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, ("jid:privacy"), "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
 			"-c --clear -d --display -p --put");
 	command_add(&jabber_plugin, ("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
@@ -1861,6 +2130,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:stats"), "? ?", jabber_command_stats, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:transpinfo"), "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
+//	command_add(&jabber_plugin, ("jid:unignore"), "i ?", jabber_command_ignore, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:vacation"), "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	command_add(&jabber_plugin, ("jid:userinfo"), "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);

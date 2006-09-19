@@ -116,6 +116,7 @@ static void jabber_private_destroy(session_t *s)
         if (j->parser)
                 XML_ParserFree(j->parser);
 	jabber_bookmarks_free(j);
+	jabber_privacy_free(j);
 
         xfree(j);
 
@@ -455,6 +456,27 @@ dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const
 	return NULL;
 }
 #endif
+
+/* destroy all previously saved jabber:iq:privacy list... we DON'T DELETE LIST on jabberd server... only list saved @ j->privacy */
+
+int jabber_privacy_free(jabber_private_t *j) {
+	list_t l;
+	if (!j || !j->privacy) return -1;
+
+	for (l = j->privacy; l; l = l->next) {
+		jabber_iq_privacy_t *pr = l->data;
+		if (!pr) continue;
+
+		xfree(pr->type);
+		xfree(pr->value);
+
+		xfree(pr);
+		l->data = NULL;
+	}
+	list_destroy(j->privacy, 0);
+	j->privacy = NULL;
+	return 0;
+}
 
 /* destory all previously saved bookmarks... we DON'T DELETE LIST on jabberd server... only list saved @ j->bookamarks */
 int jabber_bookmarks_free(jabber_private_t *j) {
