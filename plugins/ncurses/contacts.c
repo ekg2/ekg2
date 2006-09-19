@@ -350,6 +350,13 @@ int ncurses_contacts_update(window_t *w)
 	ncurses_window_t *n;
 	newconference_t *c	= NULL;
 	list_t sorted_all	= NULL;
+	int (*comp)(void *, void *) = NULL;		/* coz userlist's list are sorted we don't need to sort it again... 
+								unfortunetly if we create list from serveral userlists (for instance: session && window)
+								we must resort... --- in ekg2 we do 
+									list_add_sorted(...., NULL) on session userlist &&
+									list_add_sorted(...., contacts_compare) on window userlist
+							*/
+
 	
 	if (!w) w = window_find("__contacts");
 	if (!w) return -1;
@@ -445,9 +452,10 @@ group_cleanup:
 				u->status = up->status;
 				u->private = (void *) s;
 				u->blink = up->blink;
-				list_add_sorted(&sorted_all, u, 0, contacts_compare);
+				list_add_sorted(&sorted_all, u, 0, NULL);
 			}
 		}
+		if (sorted_all) comp = contacts_compare;	/* if we add smth on list turn on sorting.... */
 
 		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
 			userlist_t *up = l->data;
@@ -462,8 +470,10 @@ group_cleanup:
 			u->status = up->status;
 			u->private = (void *) w->session;
 			u->blink = up->blink;
-			list_add_sorted(&sorted_all, u, 0, contacts_compare);
-		}	
+			list_add_sorted(&sorted_all, u, 0, comp /* contacts_compare : NULL */);
+		}
+
+		if (sorted_all) comp = contacts_compare;	/* like above */
 	}
 	if ((all == 1 && !sorted_all_cache) || all == 2) {
 		list_t l;
@@ -484,7 +494,7 @@ group_cleanup:
 			u->private = (void *) 2;
 			u->blink = up->blink;
 
-			list_add_sorted(&sorted_all, u, 0, contacts_compare);
+			list_add_sorted(&sorted_all, u, 0, comp /* contacts_compare ; NULL */);
 
 			/* Remove contacts contained in this metacontact. */
 			if ( config_contacts_metacontacts_swallow )
