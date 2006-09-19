@@ -105,7 +105,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 
 	char *juid 	= jabber_unescape(from); /* was tmp */
 	char *uid;
-	time_t sent = 0;
+	time_t bsent = 0;
 	string_t body;
 	int new_line = 0;	/* if there was headlines do we need to display seperator between them and body? */
 	
@@ -215,15 +215,15 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 					new_line = 1;
 				}
 /* jabber:x:oob */	} else if (!xstrncmp(ns, "jabber:x:delay", 14)) {
-				sent = jabber_try_xdelay(jabber_attr(xitem->atts, "stamp"));
+				bsent = jabber_try_xdelay(jabber_attr(xitem->atts, "stamp"));
 #if 0		/* XXX, fjuczer? */
 				if (nazwa_zmiennej_do_formatowania_czasu) {
 					/* some people don't have time in formats... and if we really do like in emails (first headlines than body) so display it too.. */
-					stuct tm *tm = localtime(&sent);
+					stuct tm *tm = localtime(&bsent);
 					char buf[100];
 					string_append(body, "Sent: ");
 					if (!strftime(buf, sizeof(buf), nazwa_zmiennej_do_formatowania_czasu, tm) 
-						string_append(body, itoa(sent);	/* if too long display seconds since the Epoch */
+						string_append(body, itoa(bsent);	/* if too long display seconds since the Epoch */
 					else	string_append(body, buf);	/* otherwise display formatted time */
 					new_line = 1;
 				}
@@ -248,7 +248,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 			else debug("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
 		} else debug("[JABBER, MESSAGE]: <%s\n", xitem->name);
 	}
-	if (new_line) string_append(body, "\n\n"); 	/* let's seperate headlines from message */
+	if (new_line) string_append(body, "\n"); 	/* let's seperate headlines from message */
 	if (nbody)    string_append(body, nbody->data);	/* here message */
 
 	if (nbody || nsubject) {
@@ -260,7 +260,8 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 		int secure	= 0;
 		char **rcpts 	= NULL;
 		char *seq 	= NULL;
-		uint32_t *format = NULL;
+		uint32_t *format= NULL;
+		time_t sent	= bsent;
 
 		char *text = tlenjabber_unescape(body->str);
 
@@ -268,16 +269,20 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 
 		debug("[jabber,message] type = %s\n", type);
 		if (!xstrcmp(type, "groupchat")) {
-			char *tuid = xstrrchr(uid, '/');
-			char *uid2 = (tuid) ? xstrndup(uid, tuid-uid) : xstrdup(uid);
-			char *nick = (tuid) ? xstrdup(tuid+1) : NULL;
+			char *tuid = xstrrchr(uid, '/');				/* temporary */
+			char *uid2 = (tuid) ? xstrndup(uid, tuid-uid) : xstrdup(uid);		/* muc room */
+			char *nick = (tuid) ? xstrdup(tuid+1) : NULL;				/* nickname */
+			newconference_t *c = newconference_find(s, uid2);
+			int isour = (c && !xstrcmp(c->private, nick)) ? 1 : 0;			/* is our message? */
 			char *formatted;
-			/* w muc po resource jest nickname (?) always? */
+
+		/* jesli (bsent != 0) wtedy mamy do czynienia z backlogiem */
 
 			class	|= EKG_NO_THEMEBIT;
 			ekgbeep	= EKG_NO_BEEP;
 
-			formatted = format_string(format_find("jabber_muc"), session_name(s), uid2, nick ? nick : uid2+4, text);
+			formatted = format_string(format_find(isour ? "jabber_muc_send" : "jabber_muc_recv"),
+				session_name(s), uid2, nick ? nick : uid2+4, text, "");
 			
 			debug("[MUC,MESSAGE] uid2:%s uuid:%s message:%s\n", uid2, nick, text);
 			query_emit(NULL, ("protocol-message"), &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);

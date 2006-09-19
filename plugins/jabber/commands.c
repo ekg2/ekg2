@@ -1897,7 +1897,7 @@ static COMMAND(jabber_command_private) {
 	if (bookmark) {				/* bookmark-only-commands */
 		int bookmark_sync	= 0;			/* 0 - no sync; 1 - sync (item added); 2 - sync (item modified) 3 - sync (item removed)	*/
 	
-		if (match_arg(params[0], 'a', ("add"), 2))		bookmark_sync = 1;	/* add item */
+		if (match_arg(params[0], 'a', ("add"), 2))	bookmark_sync = 1;	/* add item */
 		if (match_arg(params[0], 'm', ("modify"), 2))	bookmark_sync = 2; 	/* modify item */
 		if (match_arg(params[0], 'r', ("remove"), 2))	bookmark_sync = 3; 	/* remove item */
 

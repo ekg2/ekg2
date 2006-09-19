@@ -1295,8 +1295,10 @@ static int jabber_theme_init() {
 	/* %1 - session %2 - message %3 - start %4 - end */
 	format_add("jabber_vacation", _("%> You'd set up your vacation status: %g%2%n (since: %3 expires@%4)"), 1);
 
-	/* %1 - sessionname %2 - mucjid %3 - nickname %4 - text */
-	format_add("jabber_muc", "%B<%G%3%B>%n %4", 1);
+	/* %1 - sessionname %2 - mucjid %3 - nickname %4 - text %5 - atr */
+	format_add("jabber_muc_recv", 	"%B<%w%X%5%3%B>%n %4", 1);
+	format_add("jabber_muc_send",	"%B<%n%X%5%W%3%B>%n %4", 1);
+
 	format_add("jabber_muc_room_created", 
 		_("%> Room %W%2%n created, now to configure it: type %W/admin %g%2%n to get configuration form, or type %W/admin %g%2%n --instant to create instant one"), 1);
 	format_add("jabber_muc_banlist", _("%g|| %n %5 - %W%2%n: ban %c%3%n [%4]"), 1);	/* %1 sesja %2 kanal %3 kto %4 reason %5 numerek */
