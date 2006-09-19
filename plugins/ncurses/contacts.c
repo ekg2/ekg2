@@ -141,7 +141,7 @@ void ncurses_forward_contacts_line(int arg)
 						for (li = s->userlist; li; li = li->next) {
 							userlist_t *u = li->data;
 
-							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
@@ -170,7 +170,7 @@ void ncurses_forward_contacts_line(int arg)
 						for (; li; li = li->next) {
 							userlist_t *u = li->data;
 
-							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
@@ -202,7 +202,7 @@ void ncurses_forward_contacts_line(int arg)
 							metacontact_item_t *i = metacontact_find_prio(m);
 							userlist_t *u = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
 
-							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
@@ -237,7 +237,7 @@ again:
 						for (li = current_list; li; li = li->next) {
 							userlist_t *u = li->data;
 
-							if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
 							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
@@ -509,7 +509,7 @@ group_cleanup:
 			userlist_t *u = l->data;
 			const char *format;
 
-			if (!u || !u->status || !u->nickname || !u->status || xstrlen(u->status) < 2) 
+			if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2) 
 				continue;
 
 			if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
