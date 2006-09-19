@@ -1172,12 +1172,11 @@ next:
  */
 void update_statusbar(int commit)
 {
-	userlist_t *q = userlist_find(window_current->session, window_current->target);
 	struct format_data formats[32];	/* if someone add his own format increment it. */
 	int formats_count = 0, i = 0, y;
-	plugin_t *plug;
 	session_t *sess = window_current->session;
-	userlist_t *u;
+	userlist_t *q = userlist_find(sess, window_current->target);
+	plugin_t *plug;
 	char *tmp;
 
 	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
@@ -1204,7 +1203,7 @@ void update_statusbar(int commit)
 	__add_format_dup("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format_dup("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
 
-	tmp = (sess && (u = userlist_find(sess, window_current->target))) ? saprintf("%s/%s", u->nickname, u->uid) : xstrdup(window_current->target);
+	tmp = (sess && q) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->target);
 	__add_format("query", tmp);
 
 	if ((plug = plugin_find(("mail")))) {
