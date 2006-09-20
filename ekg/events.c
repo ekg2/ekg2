@@ -302,14 +302,14 @@ event_t *event_find(const char *name, const char *target)
  * descriptor to event
  *
  */
-static event_t *event_find_all(const char *name, const char *uid, const char *target, const char *data)
+static event_t *event_find_all(const char *name, const char *session, const char *uid, const char *target, const char *data)
 {
 	list_t l;
 	event_t *ev_max = NULL;
 	int ev_max_prio = 0;
 	char **b, **c;
 
-	debug("// event_find_all (name (%s), target (%s)\n", name, target);
+	debug("// event_find_all (session %s) (name (%s), target (%s)\n", session, name, target);
 	b = array_make(target, ("|,;"), 0, 1, 0);
 	c = array_make(name, ("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {
@@ -323,7 +323,7 @@ static event_t *event_find_all(const char *name, const char *uid, const char *ta
 			for (j = 0; b[j]; j++) {
 				for (k = 0; c[k]; k++) {
 					for (m = 0; d[m]; m++) {
-						char *tmp = format_string(a[i], uid, target, data);
+						char *tmp = format_string(a[i], uid, target, data, session);
 						if ((xstrcasecmp(d[m], c[k]) && xstrcasecmp(d[m], ("*"))) || 
 								(!event_target_check(tmp) && xstrcasecmp(a[i], ("*")) && 
 								 xstrcasecmp(a[i], b[j]))) {
@@ -545,7 +545,7 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 	userlist = userlist_find(__session, uid);
 	target = (userlist && userlist->nickname) ? userlist->nickname : uid;
 
-	if (!(ev = event_find_all(name, uid, target, data)))
+	if (!(ev = event_find_all(name, session, uid, target, data)))
 		return -1;
 
 	action = ev->action;
