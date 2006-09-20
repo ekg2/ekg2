@@ -523,13 +523,15 @@ static COMMAND(cmd_del)
 		list_t l;
 		for (l = session->userlist; l; ) {
 			userlist_t *u = l->data;
+			char *p0;
 			char *tmp;
 	
 			l = l->next;
-
+			p0 = xstrdup(u->nickname);
 			tmp = xstrdup(u->uid);
-			query_emit(NULL, ("userlist-removed"), &tmp);
+			query_emit(NULL, ("userlist-removed"), &p0, &tmp);
 			xfree(tmp);
+			xfree(p0);
 
 			userlist_remove(session, u);
 		}
