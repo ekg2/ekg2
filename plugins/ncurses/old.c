@@ -1906,168 +1906,23 @@ aspell_loop_end:
 #endif
 
 extern volatile int sigint_count;
-/*
- * ncurses_watch_stdin()
- *
- * g³ówna pêtla interfejsu.
+
+/* to jest tak, ncurses_redraw_input() jest wywolywany po kazdym nacisnieciu klawisza (gdy ch != 0)
+   oraz przez ncurses_ui_window_switch() handler `window-switch`
+   window_switch() moze byc rowniez wywolany jako binding po nacisnieciu klawisza (command_exec() lub ^n ^p lub inne)
+   wtedy ncurses_redraw_input() bylby wywolywany dwa razy przez window_switch() oraz po nacisnieciu klawisza)
  */
-WATCHER(ncurses_watch_stdin)
-{
-	struct binding *b = NULL;
-	unsigned int tmp;
-	unsigned int ch;
+static int ncurses_redraw_input_already_exec = 0;
+
+/* 
+ * wyswietla ponownie linie wprowadzenia tekstu		(prompt + aktualnie wpisany tekst) 
+ * 	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
+ */
+void ncurses_redraw_input(unsigned int ch) {
 #ifdef WITH_ASPELL
 	char *aspell_line = NULL;
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
-
-	/* GiM: I'm not sure if this should be like that
-	 * deletek you should take a look at this.
-	 */
-	if (type)
-		return 0;
-
-	switch ((tmp = ekg_getch(0, &ch))) {
-		case(-1):	/* dziwna kombinacja, która by blokowa³a */
-		case(-2):	/* przeszlo przez query_emit i mamy zignorowac (pytthon, perl) */
-		case(0):	/* Ctrl-Space, g³upie to */
-			return 0;
-		case(3):
-		default:
-			if (ch != 3) sigint_count = 0;
-	}
-	ekg_stdin_want_more = 1;
-
-	if (bindings_added && ch != KEY_MOUSE) {
-		char **chars = NULL, *joined;
-		int i = 0, count = 0, success = 0;
-		list_t l;
-		int c;
-		array_add(&chars, xstrdup(itoa(ch)));
-
-        	while (count <= bindings_added_max && 
-				(c = wgetch(input)) != ERR
-				) {
-	                array_add(&chars, xstrdup(itoa(c)));
-			count++;
-	        }
-
-		joined = array_join(chars, (" "));
-
-		for (l = bindings_added; l; l = l->next) {
-			binding_added_t *d = l->data;
-
-			if (!xstrcasecmp(d->sequence, joined)) {
-				struct binding *b = d->binding;
-
-	                        if (b->function)
-	                                b->function(b->arg);
-	                        else {
-	                                command_exec_format(window_current->target, window_current->session, 0, ("%s%s"), 
-							((b->action[0] == '/') ? "" : "/"), b->action);
-	                        }
-
-				success = 1;
-				goto end;
-			}
-		}
-
-                for (i = count; i > 0; i--) {
-                        ungetch(atoi(chars[i]));
-                }
-
-end:
-		xfree(joined);
-		array_free(chars);
-		if (success)
-			goto then;
-	} 
-
-	if (ch == 27) {
-		if ((ekg_getch(27, &ch)) == -2)
-			return 0;
-
-                b = ncurses_binding_map_meta[ch];
-		
-		if (ch == 27)
-			b = ncurses_binding_map[27];
-
-		/* je¶li dostali¶my \033O to albo mamy Alt-O, albo
-		 * pokaleczone klawisze funkcyjne (\033OP do \033OS).
-		 * ogólnie rzecz bior±c, nieciekawa sytuacja ;) */
-
-		if (ch == 'O') {
-			unsigned int tmp;
-			if ((ekg_getch(ch, &tmp)) > -1) {
-				if (tmp >= 'P' && tmp <= 'S')
-					b = ncurses_binding_map[KEY_F(tmp - 'P' + 1)];
-				else if (tmp == 'H')
-					b = ncurses_binding_map[KEY_HOME];
-				else if (tmp == 'F')
-					b = ncurses_binding_map[KEY_END];
-				else if (tmp == 'M')
-					b = ncurses_binding_map[13];
-				else
-					ungetch(tmp);
-			}
-		}
-
-		if (b && b->action) {
-			if (b->function)
-				b->function(b->arg);
-			else {
-				command_exec_format(window_current->target, window_current->session, 0,
-						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
-						);
-			}
-		} else {
-			/* obs³uga Ctrl-F1 - Ctrl-F12 na FreeBSD */
-			if (ch == '[') {
-				ch = wgetch(input);
-
-				if (ch == '4' && wgetch(input) == '~' && ncurses_binding_map[KEY_END])
-					ncurses_binding_map[KEY_END]->function(NULL);
-
-				if (ch >= 107 && ch <= 118)
-					window_switch(ch - 106);
-			}
-		}
-	} else {
-		if (
-#if USE_UNICODE
-			( (config_use_unicode && (tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */)) || !config_use_unicode) &&
-#endif
-			(b = ncurses_binding_map[ch]) && b->action) {
-
-			if (b->function)
-				b->function(b->arg);
-			else {
-				command_exec_format(window_current->target, window_current->session, 0,
-						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
-						);
-			}
-		} else if (
-#if USE_UNICODE
-				((config_use_unicode && ch != KEY_MOUSE) || (!config_use_unicode && ch < 255)) &&
-#else
-				ch < 255 && 
-#endif
-				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
-
-					/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
-			memmove(__SPTR(ncurses_line, line_index + 1), __SPTR(ncurses_line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - sizeofchart);
-					/* put in ncurses_line[lindex_index] current char */
-			__SREP(ncurses_line, line_index++, ch);		/* ncurses_line[line_index++] = ch */
-		}
-	}
-then:
-	if (ncurses_plugin_destroyed)
-		return 0; /* -1 */
-
-	/* je¶li siê co¶ zmieni³o, wygeneruj dope³nienia na nowo */
-	if (!b || (b && b->function != ncurses_binding_complete))
-		ncurses_complete_clear();
-
 	if (line_index - line_start > input->_maxx - 9 - ncurses_current->prompt_len)
 		line_start += input->_maxx - 19 - ncurses_current->prompt_len;
 	if (line_index - line_start < 10) {
@@ -2075,6 +1930,7 @@ then:
 		if (line_start < 0)
 			line_start = 0;
 	}
+	ncurses_redraw_input_already_exec = 1;
 
 	werase(input);
 	wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
@@ -2129,11 +1985,11 @@ then:
 			spellcheck(ncurses_line, aspell_line);
 		}
 #endif
-                for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < linelen - line_start; i++) {
+		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < linelen - line_start; i++) {
 #ifdef WITH_ASPELL
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && __S(ncurses_line, line_start + i) != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
                         	print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i), A_UNDERLINE);
-                        else 	/* jesli jest wszystko okey to wyswietlamy normalny */
+			else 	/* jesli jest wszystko okey to wyswietlamy normalny */
 #endif				/* lub gdy nie mamy aspella */
                                 print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i), A_NORMAL);
 		}
@@ -2150,7 +2006,171 @@ then:
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
 	}
-	return 0;
+}
+
+/*
+ * ncurses_watch_stdin()
+ *
+ * g³ówna pêtla interfejsu.
+ */
+WATCHER(ncurses_watch_stdin)
+{
+	struct binding *b = NULL;
+	unsigned int tmp;
+	unsigned int ch;
+
+	/* GiM: I'm not sure if this should be like that
+	 * deletek you should take a look at this.
+	 */
+	ncurses_redraw_input_already_exec = 0;
+	if (type)
+		return 0;
+
+	switch ((tmp = ekg_getch(0, &ch))) {
+		case(-1):	/* dziwna kombinacja, która by blokowa³a */
+		case(-2):	/* przeszlo przez query_emit i mamy zignorowac (pytthon, perl) */
+		case(0):	/* Ctrl-Space, g³upie to */
+			return 0;
+		case(3):
+		default:
+			if (ch != 3) sigint_count = 0;
+	}
+
+	if (bindings_added && ch != KEY_MOUSE) {
+		char **chars = NULL, *joined;
+		int i = 0, count = 0, success = 0;
+		list_t l;
+		int c;
+		array_add(&chars, xstrdup(itoa(ch)));
+
+        	while (count <= bindings_added_max && 
+				(c = wgetch(input)) != ERR
+				) {
+	                array_add(&chars, xstrdup(itoa(c)));
+			count++;
+	        }
+
+		joined = array_join(chars, (" "));
+
+		for (l = bindings_added; l; l = l->next) {
+			binding_added_t *d = l->data;
+
+			if (!xstrcasecmp(d->sequence, joined)) {
+				struct binding *b = d->binding;
+
+	                        if (b->function)
+	                                b->function(b->arg);
+	                        else {
+	                                command_exec_format(window_current->target, window_current->session, 0, ("%s%s"), 
+							((b->action[0] == '/') ? "" : "/"), b->action);
+	                        }
+
+				success = 1;
+				goto end;
+			}
+		}
+
+                for (i = count; i > 0; i--) {
+                        ungetch(atoi(chars[i]));
+                }
+
+end:
+		xfree(joined);
+		array_free(chars);
+		if (success)
+			goto then;
+	} 
+
+	if (ch == 27) {
+		if ((ekg_getch(27, &ch)) == -2)
+			goto loop;
+
+                b = ncurses_binding_map_meta[ch];
+		
+		if (ch == 27)
+			b = ncurses_binding_map[27];
+
+		/* je¶li dostali¶my \033O to albo mamy Alt-O, albo
+		 * pokaleczone klawisze funkcyjne (\033OP do \033OS).
+		 * ogólnie rzecz bior±c, nieciekawa sytuacja ;) */
+
+		if (ch == 'O') {
+			unsigned int tmp;
+			if ((ekg_getch(ch, &tmp)) > -1) {
+				if (tmp >= 'P' && tmp <= 'S')
+					b = ncurses_binding_map[KEY_F(tmp - 'P' + 1)];
+				else if (tmp == 'H')
+					b = ncurses_binding_map[KEY_HOME];
+				else if (tmp == 'F')
+					b = ncurses_binding_map[KEY_END];
+				else if (tmp == 'M')
+					b = ncurses_binding_map[13];
+				else
+					ungetch(tmp);
+			}
+		}
+		if (b && b->action) {
+			if (b->function)
+				b->function(b->arg);
+			else {
+				command_exec_format(window_current->target, window_current->session, 0,
+						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
+						);
+			}
+		} else {
+			/* obs³uga Ctrl-F1 - Ctrl-F12 na FreeBSD */
+			if (ch == '[') {
+				ch = wgetch(input);
+
+				if (ch == '4' && wgetch(input) == '~' && ncurses_binding_map[KEY_END])
+					ncurses_binding_map[KEY_END]->function(NULL);
+
+				if (ch >= 107 && ch <= 118)
+					window_switch(ch - 106);
+			}
+		}
+	} else {
+		if (
+#if USE_UNICODE
+			( (config_use_unicode && (tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */)) || !config_use_unicode) &&
+#endif
+			(b = ncurses_binding_map[ch]) && b->action) {
+
+			if (b->function)
+				b->function(b->arg);
+			else {
+				command_exec_format(window_current->target, window_current->session, 0,
+						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
+						);
+			}
+		} else if (
+#if USE_UNICODE
+				((config_use_unicode && ch != KEY_MOUSE) || (!config_use_unicode && ch < 255)) &&
+#else
+				ch < 255 && 
+#endif
+				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
+
+					/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
+			memmove(__SPTR(ncurses_line, line_index + 1), __SPTR(ncurses_line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - sizeofchart);
+					/* put in ncurses_line[lindex_index] current char */
+			__SREP(ncurses_line, line_index++, ch);		/* ncurses_line[line_index++] = ch */
+		}
+	}
+then:
+	if (ncurses_plugin_destroyed)
+		return 0;
+
+	/* je¶li siê co¶ zmieni³o, wygeneruj dope³nienia na nowo */
+	if (!b || (b && b->function != ncurses_binding_complete))
+		ncurses_complete_clear();
+	
+	if (!ncurses_redraw_input_already_exec) 
+		ncurses_redraw_input(ch);
+loop:
+	while ((ncurses_watch_stdin(type, fd, watch, NULL)) == 1) ;		/* execute handler untill all data from fd 0 will be readed */
+
+	return 1;
 }
 
 /*

@@ -102,7 +102,7 @@ static QUERY(ncurses_ui_window_switch)
 	touchwin(n->window);
 
 	update_statusbar(0);
-
+	ncurses_redraw_input(0);	/* redraw prompt... */
 	ncurses_commit();
 
 	return 0;

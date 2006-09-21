@@ -101,6 +101,7 @@ void ncurses_resize();
 int ncurses_backlog_add(window_t *w, fstring_t *str);
 int ncurses_backlog_split(window_t *w, int full, int removed);
 void ncurses_redraw(window_t *w);
+void ncurses_redraw_input(unsigned int ch);
 void ncurses_clear(window_t *w, int full);
 void ncurses_refresh();
 void ncurses_commit();
