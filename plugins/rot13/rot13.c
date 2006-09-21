@@ -37,21 +37,27 @@ static void do_foo(char *p, int rot, int deltarot) {	/* some code/idea gathered 
 	while (*p) {
 		int i;
 
-		if (tolower(*p) < 'a' || tolower(*p) > 'z') goto end;
+		if (!(tolower(*p) < 'a' || tolower(*p) > 'z')) {
+			for (i = 0; i < rot; i++) {
+				if (*p == 'z') 		*p = 'a';
+				else if (*p == 'Z') 	*p = 'A';
+				else 			(*p)++;
 
-		for (i = 0; i < rot; i++) {
-			if (*p == 'z') 		*p = 'a';
-			else if (*p == 'Z') 	*p = 'A';
-			else 			(*p)++;
+			}
+			for (i = 0; i > rot; i--) {
+				if (*p == 'a')		*p = 'z';
+				else if (*p == 'A')	*p = 'Z';
+				else			(*p)--;
+			}
 		}
-end:
+
 		rot += deltarot;
 		rot %= 26;
 		p++;
 	}
 }
 
-static rot13_key_t *rot13_find_key(char *session, char *target) {
+static rot13_key_t *rot13_find_key(char *session, char *target, int *reverted) {
 	list_t l;
 	for (l = keys; l; l = l->next) {
 		rot13_key_t *k = l->data;
@@ -60,6 +66,11 @@ static rot13_key_t *rot13_find_key(char *session, char *target) {
 
 		if ((!k->session || !xstrcmp(session, k->session)) && (!k->target || !xstrcmp(target, k->target))) 
 			return k;
+
+		if ((!k->session || !xstrcmp(session, k->target)) && (!k->target || !xstrcmp(target, k->session))) {
+			*reverted = 1;
+			return k;
+		}
 
 	/* XXX, resource strip, only jabber if no resource passed */
 		if (!((tmp = xstrchr(target, '/')) || xstrncmp(target, "jid:", 4) || xstrchr(k->target, '/'))) continue;
@@ -96,18 +107,20 @@ static QUERY(message_parse) {
 	char *recipient = *(va_arg(ap, char **));
 	char *message	= *(va_arg(ap, char **));
 	int *encrypted = va_arg(ap, int *);
+	int rev = 0;
 	rot13_key_t *key;
 
 	if (!config_encryption)					return 0;
 	if (!session || !recipient || !message || !encrypted)	return 0;
 	if (*encrypted)						return 0;
+	debug("message_parse() s: %s rec: %s\n", session, recipient);
 
-	if (!(key = rot13_find_key(session, recipient)))	return 0;
+	if (!(key = rot13_find_key(session, recipient, &rev)))	return 0;
 	
-	if (data) 	do_foo(message, key->rot ? atoi(key->rot) : config_default_rot, key->drot ? atoi(key->drot) : config_default_drot);
+	if (!rev) 	do_foo(message, key->rot ? atoi(key->rot) : config_default_rot, key->drot ? atoi(key->drot) : config_default_drot);
 	else		do_foo(message, key->rot ? -atoi(key->rot): config_default_rot, key->drot ? -atoi(key->drot): config_default_drot);
 
-	*encrypted = 1;
+	*encrypted = 1; 
 	return 0;
 }
 
@@ -243,8 +256,8 @@ int rot13_plugin_init(int prio) {
 	rot13_setvar_default(NULL, NULL);
 
 	query_connect(&rot13_plugin, ("set-vars-default"), rot13_setvar_default, NULL);
-	query_connect(&rot13_plugin, "message-encrypt", message_parse, (void *) 0);
-	query_connect(&rot13_plugin, "message-decrypt", message_parse, (void *) 1);
+	query_connect(&rot13_plugin, "message-encrypt", message_parse, (void *) 1);
+	query_connect(&rot13_plugin, "message-decrypt", message_parse, (void *) 0);
 
 	command_add(&rot13_plugin, "rot13", "! ? ?", command_rot, 0, NULL);
 	command_add(&rot13_plugin, "rot:key", ("puUC uUC"), command_key, 0, "-a --add -m --modify -d --delete -l --list");
