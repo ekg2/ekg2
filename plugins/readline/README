@@ -4,13 +4,4 @@ jeszcze nie jest portniête i nie wiem, czy bêdzie.
 
 o5-1o-2oo5 costam dziala (dj)
 
-porting status
- -> completion: buggy. (~ 30 %)
-	-> completion: added support for commands in current_session. (?) :>
-	-> completion: +session generator.
-/* maybe let's port ncurses/completion.c to readline ? it'd be faster.. */
- -> ui: 
-   -> WRONG PROMPT ?
-   -> and a lot of other bugs..
-away.
-
+22-o9-2oo6 zostalo completion do dokonczenia.
