@@ -558,7 +558,7 @@ int protocol_message(void *data, va_list ap)
 	our_msg = (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT);
 
 	/* there is no need to decode our messages */
-	if (!our_msg) {
+	if (!our_msg && !empty_theme) {	/* empty_theme + decrpyt? i don't think so... */
                 char *___session = xstrdup(session);
                 char *___sender = xstrdup(uid);
                 char *___message = xstrdup(text);

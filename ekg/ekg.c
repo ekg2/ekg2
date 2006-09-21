@@ -115,7 +115,6 @@
 
 char *config_dir;
 int mesg_startup;
-int ekg_stdin_want_more;
 int ekg_watches_removed;
 static pid_t ekg_pid = 0;
 static char argv0[PATH_MAX];
@@ -384,17 +383,17 @@ void ekg_loop()
 			}
 		}
 #endif
-watches_once_again:
-		ekg_watches_removed = 0;
                 /* je¶li wyst±pi³ b³±d, daj znaæ */
-                if (ret == -1) {
+		if (ret == -1) {
                         /* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
                          * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
                          * usuñmy z listy. */
-                        if (errno == EBADF) {
-                                for (l = watches; l; ) {
-                                        watch_t *w = l->data;
-                                        struct stat st;
+			if (errno == EBADF) {
+watches_once_again:
+				ekg_watches_removed = 0;
+				for (l = watches; l; ) {
+					watch_t *w = l->data;
+					struct stat st;
 
 					if (ekg_watches_removed > 1) {
 						debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
@@ -402,73 +401,65 @@ watches_once_again:
 					}
 					ekg_watches_removed = 0;
 
-                                        l = l->next;
+					l = l->next;
 
-                                        if (!fstat(w->fd, &st))
-                                                continue;
+					if (!fstat(w->fd, &st))
+						continue;
 
-                                        debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
-
-                                        watch_free(w);
-                                }
-                        } else if (errno != EINTR)
-                                debug("select() failed: %s\n", strerror(errno));
-                        return;
-                }
+					debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
+					watch_free(w);
+				}
+			} else if (errno != EINTR)
+				debug("select() failed: %s\n", strerror(errno));
+			return;
+		}
 
 watches_again:
 		ekg_watches_removed = 0;
 
                 /* przejrzyj deskryptory */
-                for (l = watches; l; ) {
-                        watch_t *w = l->data;
+		for (l = watches; l; ) {
+			watch_t *w = l->data;
 
 			if (ekg_watches_removed > 1) {
 				debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
 				goto watches_again;
 			}
 			ekg_watches_removed = 0;
-                        /* handlery mog± dodawaæ kolejne watche, wiêc je¶li
-                         * dotrzemy do ostatniego sprzed wywo³ania pêtli,
-                         * koñczymy pracê. */
-                        l = l->next;
 
-                        if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
-                                continue;
+			l = l->next;
 
-                        if (w->fd == 0) {
+			if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
+				continue;
+
+			if (w->fd == 0) {
 				list_t session_list;
-                                for (
-						session_list = sessions;
-						session_list;
-						session_list = session_list->next)
+				for (
+					session_list = sessions;
+					session_list;
+					session_list = session_list->next) 
 				{
-                                        session_t *s = session_list->data;
+					session_t *s = session_list->data;
 
-                                        if (!s->connected || !s->autoaway)
-                                                continue;
+					if (!s->connected || !s->autoaway)
+						continue;
 
-                                        if (session_int_get(s, "auto_back") != 2)
-                                                continue;
+					if (session_int_get(s, "auto_back") != 2)
+						continue;
 
-                                        command_exec(NULL, s, ("/_autoback"), 2);
-                                }
-                        }
-                        if (!w->buf) {
-                                ekg_stdin_want_more = 0;
-
-                                if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
-                                    ((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
-                                        watch_handle(w);
-
-                                if (ekg_stdin_want_more && w->fd == 0)
-                                        goto watches_again;
-                        } else {
-                                if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
+					command_exec(NULL, s, ("/_autoback"), 2);
+				}
+			}
+			if (!w->buf) {
+				if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
+						((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
+					watch_handle(w);
+			} else {
+				if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
 				else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
 			}
-                }
-        }
+		}
+	}
 
         return;
 }
