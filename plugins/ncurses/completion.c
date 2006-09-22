@@ -124,6 +124,7 @@ static void ignorelevels_generator(const char *text, int len)
 	for (i = 0; ignore_labels[i].name; i++)
 		if (!xstrncasecmp(tmp, ignore_labels[i].name, len))
 			array_add_check(&completions, ((tmp == text) ? xstrdup(ignore_labels[i].name) : saprintf("%s%s", pre, ignore_labels[i].name)), 1);
+	xfree(pre);
 }
 
 static void unknown_uin_generator(const char *text, int len)
