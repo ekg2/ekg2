@@ -241,30 +241,51 @@ GENERATOR(conference) {
 }
 
 GENERATOR(known_uin) {
-#warning "GENERATOR: known uin NOT COPIED"
-	static list_t l;
+	static list_t el;
 	static int len;
+	static session_t *s;
+
+	if (!session_current) return NULL;
+
 
 	if (!state) {
-		l = userlist;
+		char *tmp;
+
 		len = xstrlen(text);
+		s = session_current;
+
+		if ((tmp == xstrrchr(text, '/')) && tmp+1) {
+			/* XXX, find session */
+
+		}
+
+		el = s->userlist;
 	}
 
-	while (l) {
-		userlist_t *u = l->data;
+/* XXX, search window_current->userlist && conference */
 
-		l = l->next;
-#if 0 /* dark */
-		if (u && !xstrncasecmp(text, u->display, len))
-			return ((xstrchr(u->display, ' ')) ? saprintf("\"%s\"", u->display) : xstrdup(u->display));
-#endif
+	while (el) {
+		userlist_t *u = el->data;
+
+		el = el->next;
+
+		if (!xstrncasecmp(text, u->nickname, len))
+			return (session_current != s) ?
+				saprintf("%s/%s", s->uid, u->nickname) : 
+				xstrdup(u->nickname);
+
+
+		if (!xstrncasecmp(text, u->uid, len))
+			return (session_current != s) ?
+				saprintf("%s/%s", s->uid, u->uid) : 
+				xstrdup(u->uid);
+
 	}
 
 	return NULL;
 }
 
 GENERATOR(unknown_uin) {
-#warning "GENERATOR: unknown uin NOT COPIED"
 	static int index = 0, len;
 
 	if (!state) {
@@ -272,10 +293,11 @@ GENERATOR(unknown_uin) {
 		len = xstrlen(text);
 	}
 
-	while (index < send_nicks_count)
-		if (xisdigit(send_nicks[index++][0]))
-			if (!xstrncasecmp(text, send_nicks[index - 1], len))
-				return xstrdup(send_nicks[index - 1]);
+	while (index < send_nicks_count) {
+		if (send_nicks[index] && xstrchr(send_nicks[index], ':') && xisdigit(xstrchr(send_nicks[index], ':')[1]) && !xstrncasecmp(text, send_nicks[index], len))
+			return xstrdup(send_nicks[index++]);
+		index++;
+	}
 
 	return NULL;
 }
