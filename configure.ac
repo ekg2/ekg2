@@ -350,6 +350,17 @@ if test "x$with_readline" != "no"; then
 	if test "x$have_readline" = "xyes"; then
 		AC_CONFIG_FILES([plugins/readline/Makefile])
 		PLUGINS="$PLUGINS readline"
+dnl backup CFLAGS && LDFLAGS
+		ac_save_CFLAGS="$CFLAGS"
+		ac_save_LDFLAGS="$LDFLAGS"
+dnl new CFLAGS && LDFLAGS
+		CFLAGS="$CFLAGS $READLINE_INCLUDES"
+	        LDFLAGS="$READLINE_LIBS $LDFLAGS"
+dnl check funcs
+		AC_CHECK_FUNCS([rl_set_prompt rl_filename_completion_function rl_get_screen_size rl_set_key rl_bind_key_in_map])
+dnl restore CFLAGS && LDFLAGS
+		CFLAGS="$ac_save_CFLAGS"
+		LDFLAGS="$ac_save_LDFLAGS"
 	fi
 fi
 

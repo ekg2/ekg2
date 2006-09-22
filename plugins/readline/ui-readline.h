@@ -5,13 +5,6 @@
 #define readline_current ((readline_window_t *) window_current->private)
 #define readline_window(w) ((readline_window_t *) w->private)
 
-/* todo: ./configure should do it */
-#define HAVE_RL_BIND_KEY_IN_MAP
-#define HAVE_RL_GET_SCREEN_SIZE
-#define HAVE_RL_SET_KEY
-#define HAVE_RL_SET_PROMPT
-#define HAVE_RL_FILENAME_COMPLETION_FUNCTION
-
 extern int config_ctrld_quits;
 
 typedef struct {

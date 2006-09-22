@@ -90,7 +90,37 @@ GENERATOR(sessions_var) {
 }
 
 GENERATOR(ignorelevels) {
-#warning "GENERATOR: ignorelevels TODO"
+	static int len;
+	static int index;
+
+	if (!state) {
+		len = xstrlen(text);
+		index = 0;
+	}
+
+#if 0
+	const char *tmp = NULL;
+	char *pre = NULL;
+
+	if ((tmp = xstrrchr(text, '|')) || (tmp = xstrrchr(text, ','))) {
+		char *foo;
+
+		pre = xstrdup(text);
+		foo = xstrrchr(pre, *tmp);
+		*(foo + 1) = 0;
+
+		len -= tmp - text + 1;
+		tmp = tmp + 1;
+	} else
+		tmp = text;
+#endif
+
+	while (ignore_labels[i].name) {
+		if (!xstrncasecmp(tmp, ignore_labels[i].name, len))
+			return (tmp == text) ?	xstrdup(ignore_labels[i].name) : 
+						saprintf("%s%s", pre, ignore_labels[i].name);	
+	}
+
 	return NULL;
 }
 
