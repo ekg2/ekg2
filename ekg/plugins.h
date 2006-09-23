@@ -176,7 +176,6 @@ typedef void *watch_handler_func_t;
 
 int watch_timeout_set(watch_t *w, time_t timeout);
 time_t watch_timeout_get(watch_t *w);
-time_t watch_started_get(watch_t *w);
 
 watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data);
 #define watch_add_line(p, fd, type, handler, data) watch_add(p, fd, type, (watcher_handler_func_t *) (handler), data)
