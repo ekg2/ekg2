@@ -1466,31 +1466,6 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 	return c;
 }
 
-int child_pid_get(child_t *c)
-{
-	return (c) ? c->pid : -1;
-}
-
-const char *child_name_get(child_t *c)
-{
-	return (c) ? c->name : NULL;
-}
-
-void *child_private_get(child_t *c)
-{
-	return (c) ? c->private : NULL;
-}
-
-plugin_t *child_plugin_get(child_t *c)
-{
-	return (c) ? c->plugin : NULL;
-}
-
-child_handler_t child_handler_get(child_t *c)
-{
-	return (c) ? c->handler : NULL;
-}
-
 /*
  * prepare_path()
  *
