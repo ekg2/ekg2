@@ -100,31 +100,6 @@ PROPERTY_STRING_GET(object, property)
 	PROPERTY_PRIVATE_SET(object)
 
 
-#define PROPERTY_DATA_GET(object) \
-	\
-	void *object##_data_get(object##_t *o) \
-	{ \
-		return (o) ? o->data : NULL; \
-	}
-
-#define PROPERTY_DATA_SET(object) \
-	\
-	int object##_data_set(object##_t *o, void *d) \
-	{ \
-		if (!o) \
-			return -1; \
-		\
-		o->data = d; \
-		\
-		return 0; \
-	}
-
-#define PROPERTY_DATA(object) \
-	\
-	PROPERTY_DATA_GET(object) \
-	PROPERTY_DATA_SET(object)
-
-
 #define PROPERTY_MISC_GET(object,property,type,null) \
 	\
 	type object##_##property##_get(object##_t *o) \
