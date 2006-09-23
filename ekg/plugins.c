@@ -99,7 +99,7 @@ void *ekg2_dlopen(char *name) {
 }
 
 /* it only support posix dlsym() but maybe in future... */
-void *ekg2_dlsym(void *plugin, char *name) {
+static void *ekg2_dlsym(void *plugin, char *name) {
 #ifndef NO_POSIX_SYSTEM
 	return dlsym(plugin, name);
 #else
@@ -645,6 +645,7 @@ cleanup:
 	return result;
 }
 
+#if 0
 query_t *query_find(const char *name)
 {
         list_t l;
@@ -658,38 +659,8 @@ query_t *query_find(const char *name)
 
         return 0;
 }
+#endif
 
-/*
- * watch_new()
- *
- * tworzy nowy obiekt typu watch_t i zwraca do niego wska¼nik.
- *
- *  - plugin - obs³uguj±cy plugin
- *  - fd - obserwowany deskryptor
- *  - type - rodzaj obserwacji watch_type_t
- */
-watch_t *watch_new(plugin_t *plugin, int fd, watch_type_t type)
-{
-	watch_t *w = xmalloc(sizeof(watch_t));
-
-	w->plugin = plugin;
-	w->fd = fd;
-	w->type = type;
-
-	if (w->type == WATCH_READ_LINE) {
-		w->type = WATCH_READ;
-		w->buf = string_init(NULL);
-	} else if (w->type == WATCH_WRITE_LINE) {
-		w->type = WATCH_WRITE;
-		w->buf = string_init(NULL);
-	}
-	
-	w->started = time(NULL);
-
-	list_add_beginning(&watches, w, 0);
-
-	return w;
-}
 
 /*
  * watch_find()
@@ -924,13 +895,37 @@ void watch_handle(watch_t *w)
 	w->removed = 0;
 }
 
-watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data)
-{
-	watch_t *w = watch_new(plugin, fd, type);
+/*
+ * watch_add()
+ *
+ * tworzy nowy obiekt typu watch_t i zwraca do niego wska¼nik.
+ *
+ *  - plugin - obs³uguj±cy plugin
+ *  - fd - obserwowany deskryptor
+ *  - type - rodzaj obserwacji watch_type_t
+ *  - handler - handler
+ *  - data - data przekazywana do handlera
+ */
+watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data) {
+	watch_t *w	= xmalloc(sizeof(watch_t));
+	w->plugin	= plugin;
+	w->fd		= fd;
+	w->type		= type;
 
-	watch_handler_set(w, handler);
-	watch_data_set(w, data);
+	if (w->type == WATCH_READ_LINE) {
+		w->type = WATCH_READ;
+		w->buf = string_init(NULL);
+	} else if (w->type == WATCH_WRITE_LINE) {
+		w->type = WATCH_WRITE;
+		w->buf = string_init(NULL);
+	}
 	
+	w->started = time(NULL);
+	w->handler = handler;
+	w->data    = data;
+
+	list_add_beginning(&watches, w, 0);
+
 	return w;
 }
 
@@ -957,8 +952,6 @@ int have_plugin_of_class(int pclass) {
 }
 
 PROPERTY_INT(watch, timeout, time_t)
-PROPERTY_DATA(watch)
-PROPERTY_MISC(watch, handler, watch_handler_func_t, NULL)
 
 /*
  * Local Variables:

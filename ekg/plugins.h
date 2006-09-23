@@ -121,7 +121,7 @@ typedef struct {
 query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
 int query_disconnect(plugin_t *, const char *);
 int query_free(query_t *q);
-query_t *query_find(const char *name);
+/* query_t *query_find(const char *name); */
 
 int query_emit(plugin_t *, const char *, ...);
 
@@ -169,18 +169,13 @@ int watch_write(watch_t *w, const char *format, ...) __attribute__ ((format (pri
 int watch_write(watch_t *w, const char *format, ...);
 #endif
 
-watch_t *watch_new(plugin_t *plugin, int fd, watch_type_t type);
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type);
 void watch_free(watch_t *w);
 
 typedef void *watch_handler_func_t;
 
-int watch_data_set(watch_t *w, void *priv);
-void *watch_data_get(watch_t *w);
 int watch_timeout_set(watch_t *w, time_t timeout);
 time_t watch_timeout_get(watch_t *w);
-int watch_handler_set(watch_t *w, watch_handler_func_t h);
-watch_handler_func_t watch_handler_get(watch_t *w);
 time_t watch_started_get(watch_t *w);
 
 watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data);
