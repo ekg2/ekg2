@@ -64,13 +64,6 @@ enum msgclass_t {
 #ifndef EKG2_WIN32_NOFUNCTION
 void protocol_init();
 
-int protocol_connected(void *data, va_list ap);
-int protocol_failed(void *data, va_list ap);
-int protocol_disconnected(void *data, va_list ap);
-int protocol_status(void *data, va_list ap);
-int protocol_message(void *data, va_list ap);
-int protocol_message_ack(void *data, va_list ap);
-
 char *message_print(const char *session, const char *sender, const char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure);
 #endif
 

@@ -53,6 +53,12 @@
 static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
 list_t dccs = NULL;
 
+static QUERY(protocol_disconnected);
+static QUERY(protocol_connected);
+static QUERY(protocol_message_ack);
+static QUERY(protocol_status);
+static QUERY(protocol_message);
+
 /*
  * protocol_init()
  *
@@ -100,7 +106,7 @@ static TIMER(protocol_reconnect_handler) {	/* temporary */
  *
  * obs³uga zerwanego po³±czenia.
  */
-int protocol_disconnected(void *data, va_list ap)
+static QUERY(protocol_disconnected)
 {
 	char *session	= *(va_arg(ap, char **));
 	char *reason	= *(va_arg(ap, char **));
@@ -155,7 +161,7 @@ int protocol_disconnected(void *data, va_list ap)
  *
  * obs³uga udanego po³±czenia.
  */
-int protocol_connected(void *data, va_list ap)
+static QUERY(protocol_connected)
 {
 	char **session = va_arg(ap, char**);
 	session_t *s = session_find(*session);
@@ -179,7 +185,7 @@ int protocol_connected(void *data, va_list ap)
  *
  * obs³uga zapytania "protocol-status" wysy³anego przez pluginy protoko³ów.
  */
-int protocol_status(void *data, va_list ap)
+static QUERY(protocol_status)
 {
 	char **__session	= va_arg(ap, char**), *session = *__session;
 	char **__uid		= va_arg(ap, char**), *uid = *__uid;
@@ -509,7 +515,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 /*
  * protocol_message()
  */
-int protocol_message(void *data, va_list ap)
+static QUERY(protocol_message)
 {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
@@ -625,7 +631,7 @@ int protocol_message(void *data, va_list ap)
 /*
  * protocol_message_ack()
  */
-int protocol_message_ack(void *data, va_list ap)
+static QUERY(protocol_message_ack)
 {
 	char *session		= *(va_arg(ap, char **));
 	char *rcpt		= *(va_arg(ap, char **));
