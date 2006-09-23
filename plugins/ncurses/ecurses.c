@@ -146,7 +146,7 @@ inline CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep) {
 		CHAR_T *ret;
 		int i;
 
-		arr = xmalloc(array_count((char **) array) * sizeof(char *));
+		arr = xmalloc( (array_count((char **) array)+1) * sizeof(char *));
 		for (i = 0; array[i]; i++)
 			arr[i] = wcs_to_normal(array[i]);
 		
