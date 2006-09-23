@@ -2341,7 +2341,7 @@ next:
 
 static COMMAND(cmd_echo)
 {
-	wcs_printq("generic", (params && params[0]) ? params[0] : (""));
+	wcs_printq("generic", params[0] ? params[0] : "");
 
 	return 0;
 }
@@ -2349,7 +2349,7 @@ static COMMAND(cmd_echo)
 static COMMAND(cmd_bind)
 {
 	window_lock_dec_n(target); /* this is interactive command */
-	query_emit(NULL, ("binding-command"), (params) ? params[0] : NULL, (params && params[0]) ? params[1] : NULL, (params && params[1]) ? params[2] : NULL, quiet);
+	query_emit(NULL, ("binding-command"), params[0], (params[0]) ? params[1] : NULL, (params[0] && params[1]) ? params[2] : NULL, quiet);
 
 	return 0;
 }
