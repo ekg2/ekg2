@@ -1050,8 +1050,6 @@ void ncurses_binding_delete(const char *key, int quiet)
  */
 QUERY(ncurses_binding_default)
 {
-#define ncurses_binding_add(arg0, arg1, args...) ncurses_binding_add((arg0), (arg1), args)
-
 	ncurses_binding_add("Alt-`", "/window switch 0", 1, 1);
 	ncurses_binding_add("Alt-1", "/window switch 1", 1, 1);
 	ncurses_binding_add("Alt-2", "/window switch 2", 1, 1);
@@ -1119,7 +1117,6 @@ QUERY(ncurses_binding_default)
 	ncurses_binding_add("F11", "ui-ncurses-debug-toggle", 1, 1);
 	/* ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1); 
 	ncurses_binding_add("Ctrl-Up", "backward-contacts-page", 1, 1); */
-#undef ncurses_binding_add
 	return 0;
 }
 
