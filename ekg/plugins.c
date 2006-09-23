@@ -86,7 +86,7 @@ int ekg2_dlclose(void *plugin) {
 }
 
 /* it only support posix dlopen() but maybe in future... */
-void *ekg2_dlopen(char *name) {
+static void *ekg2_dlopen(char *name) {
 	void *tmp = NULL;
 #ifdef NO_POSIX_SYSTEM
 	tmp = LoadLibraryA(name);
@@ -841,7 +841,7 @@ int watch_handle_write(watch_t *w) {
 
 int watch_write(watch_t *w, const char *format, ...) {
 	char		*text;
-	int		was_empty = 0;
+	int		was_empty;
 	int		textlen;
 	va_list		ap;
 
@@ -856,8 +856,8 @@ int watch_write(watch_t *w, const char *format, ...) {
 
 	debug_io("[watch]_send: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
 	if (!text) return -1;
-		/* we don't really need full length of string... so we check if it's NULL or first letter is NUL. */ 
-	was_empty = (!w->buf->str || !(*w->buf->str));	
+
+	was_empty = !w->buf->len;
 	string_append_n(w->buf, text, textlen);
 
 	xfree(text);
@@ -951,7 +951,7 @@ int have_plugin_of_class(int pclass) {
 	return 0;
 }
 
-PROPERTY_INT(watch, timeout, time_t)
+PROPERTY_INT_SET(watch, timeout, time_t)
 
 /*
  * Local Variables:
