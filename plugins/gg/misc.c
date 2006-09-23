@@ -52,6 +52,8 @@ static unsigned char *gg_cp_to_iso(unsigned char *buf) {
 		if (*buf == 156) *buf = '¶';
 		if (*buf == 143) *buf = '¬';
 		if (*buf == 159) *buf = '¼';
+		if (*buf > 0x79 && *buf < 0xA0)	/* control-codes in iso-8859-2 */
+			*buf = '?';
 
 		buf++;
 	}
@@ -77,6 +79,7 @@ static unsigned char *gg_iso_to_cp(unsigned char *buf) {
 		if (*buf == (unsigned char)'¶') *buf = 'œ';
 		if (*buf == (unsigned char)'¬') *buf = '';
 		if (*buf == (unsigned char)'¼') *buf = 'Ÿ';
+
 		buf++;
 	}
 	return tmp;
