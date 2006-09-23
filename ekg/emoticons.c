@@ -27,12 +27,15 @@
 #include <stdio.h>
 
 #include "dynstuff.h"
-#include "emoticons.h"
 #include "stuff.h"
 #include "xmalloc.h"
 
-list_t emoticons = NULL;
+typedef struct {
+        char *name;
+        char *value;
+} emoticon_t;
 
+list_t emoticons = NULL;
 int config_emoticons = 1;
 
 /*
@@ -45,7 +48,7 @@ int config_emoticons = 1;
  *
  * 0/-1
  */
-int emoticon_add(const char *name, const char *value)
+static int emoticon_add(const char *name, const char *value)
 {
 	emoticon_t *e;
 	list_t l;
@@ -77,7 +80,7 @@ int emoticon_add(const char *name, const char *value)
  *
  * 0/-1
  */
-int emoticon_remove(const char *name)
+static int emoticon_remove(const char *name)
 {
 	list_t l;
 

@@ -24,21 +24,9 @@
 #ifndef __EKG_EMOTICONS_H
 #define __EKG_EMOTICONS_H
 
-#include "dynstuff.h"
-
-typedef struct {
-        char *name;
-        char *value;
-} emoticon_t;
-
-extern list_t emoticons;
-
 int emoticon_read();
 char *emoticon_expand(const char *s);
 void emoticon_free();
-
-int emoticon_add(const char *name, const char *value);
-int emoticon_remove(const char *name);
 
 #endif /* __EKG_EMOTICONS_H */
 
