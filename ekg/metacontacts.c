@@ -36,6 +36,10 @@
 
 list_t metacontacts = NULL;
 
+static int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet);
+static int metacontact_remove_item(metacontact_t *m, const char *session, const char *name, int quiet);
+static int metacontact_remove(const char *name);
+
 /* 
  * metacontact function support
  */
@@ -59,8 +63,10 @@ COMMAND(cmd_metacontact)
         }
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
-                if (!params[1])
-                        goto invalid_params;
+                if (!params[1]) {
+			printq("invalid_params", name);
+			return -1;
+		}
 
 		if (metacontact_find(params[1])) {
                         printq("metacontact_exists", params[1]);
@@ -80,8 +86,10 @@ COMMAND(cmd_metacontact)
 	}
 
         if (match_arg(params[0], 'd', ("del"), 2)) {
-		if (!params[1])
-			goto invalid_params;
+		if (!params[1]) {
+			printq("invalid_params", name);
+			return -1;
+		}
 
                 if (!metacontact_find(params[1])) {
                         printq("metacontact_doesnt_exist", params[1]);
@@ -101,8 +109,10 @@ COMMAND(cmd_metacontact)
 	}
 
 	if (match_arg(params[0], 'i', ("add-item"), 2)) {
-                if (!params[1] || !params[2] || !params[3] || !params[4])
-                        goto invalid_params;
+                if (!params[1] || !params[2] || !params[3] || !params[4]) {
+			printq("invalid_params", name);
+			return -1;
+		}
 
                 if (!(m = metacontact_find(params[1]))) {
                         printq("metacontact_doesnt_exist", params[1]);
@@ -123,8 +133,10 @@ COMMAND(cmd_metacontact)
 	}
 
         if (match_arg(params[0], 'r', ("del-item"), 2)) {
-                if (!params[1] || !params[2] || !params[3])
-                        goto invalid_params;
+                if (!params[1] || !params[2] || !params[3]) {
+			printq("invalid_params", name);
+			return -1;
+		}
 
                 if (!(m = metacontact_find(params[1]))) {
                         printq("metacontact_doesnt_exist", params[1]);
@@ -177,12 +189,12 @@ COMMAND(cmd_metacontact)
 
 	if (params[0] && !params[1]) {
 	        printq("metacontact_doesnt_exist", params[0]);
-                return 0;
+                return -1;
 	}
-invalid_params:
+
 	printq("invalid_params", name);
 
-	return 0;
+	return -1;
 }
 
 /* 
@@ -263,7 +275,7 @@ static int metacontact_add_item_compare(void *data1, void *data2)
  * it looks for metacontact item 
  * returns pointer to this item
  */
-metacontact_item_t *metacontact_find_item(metacontact_t *m, const char *name, const char *uid)
+static metacontact_item_t *metacontact_find_item(metacontact_t *m, const char *name, const char *uid)
 {
         list_t l;
 
@@ -291,7 +303,7 @@ metacontact_item_t *metacontact_find_item(metacontact_t *m, const char *name, co
  * prio - prio
  * quiet - be quiet ? 
  */
-int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet)
+static int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet)
 {
 	metacontact_item_t *i;
 	session_t *s;
@@ -330,7 +342,7 @@ int metacontact_add_item(metacontact_t *m, const char *session, const char *name
  * it removes item from a list
  * returns 1 if success, if errors found 0 is returned
  */
-int metacontact_remove_item(metacontact_t *m, const char *session, const char *name, int quiet)
+static int metacontact_remove_item(metacontact_t *m, const char *session, const char *name, int quiet)
 {
 	metacontact_item_t *i;
 	session_t *s;
@@ -364,7 +376,7 @@ int metacontact_remove_item(metacontact_t *m, const char *session, const char *n
  * it removes metacontact from a list 
  * returns 0 if errors, 1 if successed 
  */
-int metacontact_remove(const char *name)
+static int metacontact_remove(const char *name)
 {
 	metacontact_t *m = metacontact_find(name);
 	list_t l;
@@ -391,7 +403,7 @@ int metacontact_remove(const char *name)
  * when session alias is changed it had to be resorted in metacontact items 
  * list
  */
-int metacontact_session_renamed_handler(void *data, va_list ap)
+static int metacontact_session_renamed_handler(void *data, va_list ap)
 {
 	char **tmp = va_arg(ap, char**);
 	session_t *s = session_find(*tmp);
@@ -441,7 +453,7 @@ int metacontact_session_renamed_handler(void *data, va_list ap)
  * when some user from userlist is removed we have to remove it
  * also from metacontact
  */
-int metacontact_userlist_removed_handler(void *data, va_list ap)
+static int metacontact_userlist_removed_handler(void *data, va_list ap)
 {
         char **name = va_arg(ap, char**);
         list_t l;

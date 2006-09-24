@@ -37,9 +37,6 @@ extern list_t metacontacts;
 
 metacontact_t *metacontact_add(const char *name);
 metacontact_t *metacontact_find(const char *name);
-int metacontact_remove(const char *name);
-int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet);
-int metacontact_remove_item(metacontact_t *m, const char *session, const char *name, int quiet);
 metacontact_item_t *metacontact_find_prio(metacontact_t *m);
 
 void metacontact_init();
