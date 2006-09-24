@@ -331,7 +331,10 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		CHAR_T *str; 
 		short *attr;
 		int j, margin_left, wrapping = 0;
-		time_t ts;
+
+		time_t ts;			/* current ts */
+		time_t lastts = 0; 		/* last cached ts */
+		char lasttsbuf[100];		/* last cached strftime() result */
 
 		str = __SPTR(n->backlog[i]->str, n->backlog[i]->prompt_len);
 		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
@@ -367,16 +370,24 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			}
 
 			if (!w->floating && config_timestamp && config_timestamp_show) {
-				struct tm *tm = localtime(&ts);
-				char buf[100], *tmp = NULL, *format;
 				fstring_t *s = NULL;
+				if (ts && lastts == ts) {	/* use cached value */
+					s = fstring_new(lasttsbuf);
 
-				if (xstrcmp(config_timestamp, "")) {
+					l->ts = s->str;
+					l->ts_len = xstrlen(l->ts);
+					l->ts_attr = s->attr;
+
+					xfree(s);
+				} else if (xstrcmp(config_timestamp, "")) {
+					struct tm *tm = localtime(&ts);
+					char *tmp = NULL, *format;
+
 					tmp = format_string(config_timestamp);
 					format = saprintf("%s ", tmp);
-        	                        strftime(buf, sizeof(buf)-1, format, tm);
-					
-					s = fstring_new(buf);
+					strftime(lasttsbuf, sizeof(lasttsbuf)-1, format, tm);
+
+					s = fstring_new(lasttsbuf);
 
 					l->ts = s->str;
 					l->ts_len = xstrlen(l->ts);
@@ -385,6 +396,8 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 					xfree(s);
 					xfree(tmp);
 					xfree(format);
+
+					lastts = ts;
 				}
 			}
 
