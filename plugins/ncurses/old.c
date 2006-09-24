@@ -1834,7 +1834,6 @@ WATCHER(ncurses_watch_winch)
  */
 #ifdef WITH_ASPELL
 static void spellcheck(CHAR_T *what, char *where) {
-        char *word;             /* aktualny wyraz */
 	register int i = 0;     /* licznik */
 	register int j = 0;     /* licznik */
 
@@ -1844,8 +1843,8 @@ static void spellcheck(CHAR_T *what, char *where) {
 	    
 	for (i = 0; __S(what, i) != '\0' && __S(what, i) != '\n' && __S(what, i) != '\r'; i++) {
 		if ((!isalpha_pl(__S(what, i)) || i == 0 ) && __S(what, i+1) != '\0' ) { // separator/koniec lini/koniec stringu
-			word = xmalloc((xwcslen(what) + 1)*sizeof(char));
-			size_t wordlen;		/* len of word */
+			char *word;             /* aktualny wyraz */
+			size_t wordlen;		/* dlugosc aktualnego wyrazu */
 		
 			for (; __S(what, i) != '\0' && __S(what, i) != '\n' && __S(what, i) != '\r'; i++) {
 				if (isalpha_pl(__S(what, i))) /* szukamy jakiejs pierwszej literki */
@@ -1855,11 +1854,7 @@ static void spellcheck(CHAR_T *what, char *where) {
 			/* trochê poprawiona wydajno¶æ */
 			if (__S(what, i) == '\0' || __S(what, i) == '\n' || __S(what, i) == '\r') {
 				i--;
-				goto aspell_loop_end; /* 
-						       * nie powinno siê u¿ywaæ goto, aczkolwiek s± du¿o szybsze
-						       * ni¿ instrukcje warunkowe i w tym przypadku nie psuj± bardzo
-						       * czytelno¶ci kodu
-						       */
+				continue;
 				/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */ 
 			} else if (
 							    __S(what, i) == 'h' && 
@@ -1872,8 +1867,7 @@ static void spellcheck(CHAR_T *what, char *where) {
 
 				for(; __S(what, i) != ' ' && __S(what, i) != '\n' && __S(what, i) != '\r' && __S(what, i) != '\0'; i++);
 				i--;
-				goto aspell_loop_end;
-
+				continue;
 				/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */ 
 			} else if (
 							    __S(what, i) == 'f' && 
@@ -1885,10 +1879,12 @@ static void spellcheck(CHAR_T *what, char *where) {
 
 				for(; __S(what, i) != ' ' && __S(what, i) != '\n' && __S(what, i) != '\r' && __S(what, i) != '\0'; i++);
 				i--;
-				goto aspell_loop_end;
+				continue;
 			}
+/* XXX in unicode/unicode it's wrong... */
+			word = xmalloc((xwcslen(what) + 1)*sizeof(char));
 
-			/* wrzucamy aktualny wyraz do zmiennej word */		    
+			/* wrzucamy aktualny wyraz do zmiennej word */
 			for (j = 0; __S(what, i) != '\n' && __S(what, i) != '\0' && isalpha_pl(__S(what, i)); i++) {
 				if (isalpha_pl(__S(what, i))) {
 					word[j]= __S(what, i);
@@ -1896,12 +1892,13 @@ static void spellcheck(CHAR_T *what, char *where) {
 				} else 
 					break;
 			}
-			word[j] = (char) 0;
+/*			word[j] = (char) 0; */	/* xmalloc() zero memory */
+			wordlen = j;		/* xstrlen(word) */
+
 			if (i > 0)
 				i--;
 
 /*			debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
-			wordlen = j;			/* xstrlen(word) */
 
 			/* sprawdzamy pisownie tego wyrazu */
 			if (aspell_speller_check(spell_checker, word, xstrlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
@@ -1911,9 +1908,8 @@ static void spellcheck(CHAR_T *what, char *where) {
 				for (j = wordlen - 1; j >= 0; j--)
 					where[i - j] = ' ';
 			}
-aspell_loop_end:
 			xfree(word);
-		}	
+		}
 	}
 }
 #endif
