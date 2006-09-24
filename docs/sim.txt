@@ -21,7 +21,7 @@ Zostanie on zapisany na dysku. Je¶li chcemy szyfrowaæ wiadomo¶ci wysy³ane
 do znajomych, musimy umie¶ciæ ich klucze publiczne w ~/.gg/keys. Je¶li
 chcemy, ¿eby wiadomo¶ci wysy³ane do nas by³y szyfrowane, musimy wys³aæ
 naszym rozmówcom nasz klucz publiczny, u¿ywaj±c polecenia ,,key -s''.
-NIE NALE¯Y NIKOMU WYSY£AÆ NIKOMU KLUCZA PRYWATNEGO Z PLIKU PRIVATE.PEM.
+NIE NALE¯Y NIKOMU WYSY£AÆ KLUCZA PRYWATNEGO Z PLIKU PRIVATE.PEM.
 
 By w³±czyæ szyfrowanie, nale¿y ju¿ tylko wpisaæ:
 
