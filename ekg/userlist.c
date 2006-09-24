@@ -60,8 +60,6 @@
 #include "xmalloc.h"
 #include "log.h"
 
-#include "objects.h"
-
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX
 #endif
