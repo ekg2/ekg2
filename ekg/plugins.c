@@ -756,19 +756,20 @@ void watch_handle_line(watch_t *w)
 		string_append_c(w->buf, '\n');
 
 	while ((tmp = xstrchr(w->buf->str, '\n'))) {
-		int index = tmp - w->buf->str;
-		char *line = xstrmid(w->buf->str, 0, index);
+		size_t strlen = tmp - w->buf->str;		/* get len of str from begining to \n char */
+		char *line = xstrndup(w->buf->str, strlen);	/* strndup() str with len == strlen */
 		string_t new;
-			
-		if (xstrlen(line) > 1 && line[xstrlen(line) - 1] == '\r')
-			line[xstrlen(line) - 1] = 0;
+
+		/* we strndup() str with len == strlen, so we don't need to call xstrlen() */
+		if (strlen > 1 && line[strlen - 1] == '\r')
+			line[strlen - 1] = 0;
 
 		if ((res = handler(0, w->fd, line, w->data)) == -1) {
 			xfree(line);
 			break;
 		}
-
-		new = string_init(w->buf->str + index + 1);
+	/* maybe simple memmove() insteasd of string_free() + string_init() ? */
+		new = string_init(w->buf->str + strlen + 1);
 		string_free(w->buf, 1);
 		w->buf = new;
 		xfree(line);
