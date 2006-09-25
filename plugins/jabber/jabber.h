@@ -13,9 +13,7 @@
  #include <expat.h>
 #endif
 
-#ifdef HAVE_GNUTLS
-# include <gnutls/gnutls.h>
-#endif
+#include "jabber-ssl.h"
 
 #define DEFAULT_CLIENT_NAME "EKG2 -- http://www.ekg2.org"
 #define JABBER_DEFAULT_RESOURCE "ekg2"
@@ -134,10 +132,13 @@ typedef struct {
 typedef struct {
 	int fd;				/* deskryptor po³±czenia */
 	int istlen;			/* czy to tlen? */
-#ifdef HAVE_GNUTLS
-	gnutls_session ssl_session;	/* sesja ssla */
-	gnutls_certificate_credentials xcred;
+
+#ifdef JABBER_HAVE_SSL
 	char using_ssl;			/* czy polaczono uzywajac ssl */
+	SSL_SESSION ssl_session;	/* sesja ssla */
+#ifdef JABBER_HAVE_GNUTLS
+	gnutls_certificate_credentials xcred;
+#endif
 #endif
 	int id;				/* id zapytañ */
 	XML_Parser parser;		/* instancja parsera expata */
@@ -187,7 +188,7 @@ int jabber_privacy_free(jabber_private_t *j);
 int jabber_bookmarks_free(jabber_private_t *j);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
-#ifdef HAVE_GNUTLS
+#ifdef JABBER_HAVE_SSL
  WATCHER_LINE(jabber_handle_write);
 #endif
 

@@ -15,6 +15,7 @@
 #include <ekg/log.h>
 
 #include "jabber.h"
+#include "jabber-ssl.h"
 
 int JABBER_COMMIT_DATA(watch_t *w) {
 	if (w) { 
@@ -263,7 +264,7 @@ char *tlen_decode(const char *what) {
  * obs³uga mo¿liwo¶ci zapisu do socketa. wypluwa z bufora ile siê da
  * i je¶li co¶ jeszcze zostanie, ponawia próbê.
  */
-#ifdef HAVE_GNUTLS
+#ifdef JABBER_HAVE_SSL
 WATCHER_LINE(jabber_handle_write) /* tylko dla ssla. dla zwyklych polaczen jest watch_handle_write() */
 {
 	jabber_private_t *j = data;
@@ -274,17 +275,24 @@ WATCHER_LINE(jabber_handle_write) /* tylko dla ssla. dla zwyklych polaczen jest 
 		j->send_watch = NULL;
 		return 0;
 	}
+	res = SSL_SEND(j->ssl_session, watch);
 
-	res = gnutls_record_send(j->ssl_session, watch, xstrlen(watch));	
+#ifdef JABBER_HAVE_OPENSSL		/* OpenSSL */
+	if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
+	else if (res < 0) 
+		res = SSL_get_error(j->ssl_session, res);
+/* XXX, When an SSL_write() operation has to be repeated because of SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated with the same arguments. */
+#endif
 
-	if ((res == GNUTLS_E_INTERRUPTED) || (res == GNUTLS_E_AGAIN)) {
+	if (SSL_E_AGAIN(res)) {
 		ekg_yield_cpu();
 		return 0;
 	}
 
 	if (res < 0) {
-		print("generic_error", gnutls_strerror(res));
+		print("generic_error", SSL_ERROR(res));
 	}
+
 	return res;
 }
 #endif
