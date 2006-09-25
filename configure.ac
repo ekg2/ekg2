@@ -237,7 +237,6 @@ if test "x$with_libjpeg" != "xno"; then
 fi
 
 AC_ARG_WITH(libgnutls,		AC_HELP_STRING([--without-libgnutls],		[Compile without libgnutls support (TLS in jabber)]))
-
 if test "x$with_libgnutls" != "xno"; then
 	AM_PATH_LIBGNUTLS( 1.0.0,,AC_MSG_WARN([[
 ***
@@ -315,6 +314,23 @@ if test "x$with_expat" != "xno"; then
 	AC_CHECK_EXPAT
 
 	if test "x$have_expat" = "xyes"; then
+		AC_SUBST(JABBER_SSL_LIBS)
+		AC_SUBST(JABBER_SSL_CPPFLAGS)
+
+		if test "x$have_gnutls" = "xyes" -a "x$with_libgnutls" != "xno"; then
+			jabber_have_gnutls=yes;
+			JABBER_SSL_LIBS=$LIBGNUTLS_LIBS
+			JABBER_SSL_CPPFLAGS=$LIBGNUTLS_CFLAGS
+
+			AC_DEFINE([JABBER_HAVE_GNUTLS], 1, [define if you want use gnutls for ssl connections])
+		else
+			if test "x$have_openssl" = "xyes"; then
+				jabber_have_openssl=yes;
+				JABBER_SSL_LIBS=$OPENSSL_LIBS
+				JABBER_SSL_CPPFLAGS=$OPENSSL_INCLUDES
+				AC_DEFINE([JABBER_HAVE_OPENSSL], 1, [define if you want use openssl for ssl connections])
+			fi
+		fi
 		AC_CONFIG_FILES([plugins/jabber/Makefile])
 		PLUGINS="$PLUGINS jabber"
 	fi
@@ -502,8 +518,12 @@ echo -en " - Protocols:\t irc "
 	if test "x$have_expat" = "xyes"; then
 		echo -n "jabber "
 
-		if test "x$have_gnutls" = "xyes"; then
+		if test "x$jabber_have_gnutls" = "xyes"; then
 			echo -n "(with ssl support in -lgnutls) "
+		fi
+
+		if test "x$jabber_have_openssl" = "xyes"; then
+			echo -n "(with ssl support in -lssl) "
 		fi
 	fi
 
