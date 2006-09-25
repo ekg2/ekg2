@@ -52,7 +52,7 @@ static unsigned char *gg_cp_to_iso(unsigned char *buf) {
 		if (*buf == 156) *buf = '¶';
 		if (*buf == 143) *buf = '¬';
 		if (*buf == 159) *buf = '¼';
-		if (*buf > 0x79 && *buf < 0xA0)	/* control-codes in iso-8859-2 */
+		if (*buf > 0x7F && *buf < 0xA0)	/* control-codes in iso-8859-2 */
 			*buf = '?';
 
 		buf++;
