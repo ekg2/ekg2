@@ -52,7 +52,8 @@ typedef struct {
 				 * invisible, dnd, xa itp. */
 	char *descr;		/* opis/powód stanu */
 	char *authtype;		/* to/from/both itp */	
-	char *resource;         /* jabberowy resource */
+	char *resource;		/* for leafnode, always NULL */
+	list_t resources;	/* jabberowe resources */
 
 	uint32_t ip;		/* adres ip */
 	uint16_t port;		/* port */
@@ -87,6 +88,13 @@ typedef struct {
 #define EKG_STATUS_BLOCKED "blocked"
 #define EKG_STATUS_UNKNOWN "unknown"
 #define EKG_STATUS_ERROR "error"
+
+typedef struct {
+	char *name;		/* name of resource */
+	char *status;		/* status, like u->status */
+	char *descr;		/* descr, like u->dsecr */
+	int prio;		/* prio of resource */
+} ekg_resource_t;
 
 struct ekg_group {
 	char *name;
@@ -134,6 +142,12 @@ char *userlist_dump(session_t *session);
 void userlist_free(session_t *session);
 void userlist_free_u(list_t *userlist);
 int userlist_set(session_t *session, const char *contacts);
+
+/* u->resource */
+ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio);
+ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name);
+void userlist_resource_remove(userlist_t *u, ekg_resource_t *r);
+void userlist_resource_free(userlist_t *u);
 
 int ignored_add(session_t *session, const char *uid, int level);
 int ignored_remove(session_t *session, const char *uid);

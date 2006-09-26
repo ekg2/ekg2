@@ -1376,6 +1376,8 @@ void theme_init()
 	format_add("user_info_blocked_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
 	format_add("user_info_unknown", _("%Munknown%n"), 1);
 
+	format_add("resource_info_status", _("%K| %nResource: %W%1%n Status: %T%2 Prio: %g%3%n"), 1);
+
 	/* grupy */
 	format_add("group_members", _("%> %|Group %T%1%n: %2\n"), 1);
 	format_add("group_member_already", _("%! %1 already in group %T%2%n\n"), 1);

@@ -1365,6 +1365,7 @@ COMMAND(cmd_list)
 		char *status, *last_status;
 		const char *group = params0;
 		userlist_t *u;
+		list_t res;
 		int invert = 0;
 		
 		/* list !@grupa */
@@ -1493,6 +1494,16 @@ list_user:
 
 		if (u->authtype)
 			printq("user_info_auth_type", u->authtype);
+		for (res = u->resources; res; res = res->next) {
+			ekg_resource_t *r = res->data;
+			char *resstatus; 
+
+			resstatus = format_string(format_find(ekg_status_label(r->status, r->descr, /* resource_info? senseless */ "user_info_")), 
+					/* here r->name ? */
+					(u->first_name) ? u->first_name : u->nickname, r->descr);
+			printq("resource_info_status", r->name, resstatus, itoa(r->prio));
+			xfree(resstatus);
+		}
 
 		if (ekg_group_member(u, "__blocked"))
 			printq("user_info_block", ((u->first_name) ? u->first_name : u->nickname));

@@ -60,6 +60,7 @@
 
 #include "jabber.h"
 
+#if 0
 static COMMAND(jabber_command_dcc) {
 	jabber_private_t *j = session_private_get(session);
 
@@ -196,6 +197,7 @@ static COMMAND(jabber_command_dcc) {
 	}
 	return cmd_dcc(name, params, session, target, quiet);
 }
+#endif
 
 static void jabber_command_connect_child(
 	const char *server, 
@@ -810,8 +812,10 @@ static COMMAND(jabber_command_del)
 
 static COMMAND(jabber_command_ver)
 {
-	const char *query_res, *uid;
+	const char *uid;
         userlist_t *ut;
+	list_t l;
+
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
 
@@ -824,14 +828,17 @@ static COMMAND(jabber_command_ver)
 		return -1;
 	}
 
-	if (!(query_res = ut->resource)) {
+	if (!ut->resources) {
 		print("jabber_unknown_resource", session_name(session), target);
 		return -1;
 	}
-	{
+
+	for (l = ut->resources; l; l = l->next) {	/* send query to each resource */
 		jabber_private_t *j = session_private_get(session);
+		ekg_resource_t *r = l->data;
+
+		char *xquery_res = jabber_escape(r->name);
 		char *xuid = jabber_escape(uid+4);
-		char *xquery_res = jabber_escape(query_res);
        		watch_write(j->send_watch, "<iq id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
 			     j->id++, xuid, xquery_res);
 		xfree(xuid);

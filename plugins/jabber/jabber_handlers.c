@@ -1846,6 +1846,7 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			jstatus = jabber_unescape(nshow->data);
 			if (!xstrcmp(jstatus, "na") || na) {
 				status = xstrdup(EKG_STATUS_NA);
+				na = 1;
 			}
 		} else {
 			if (na)
@@ -1867,19 +1868,6 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			descr = jabber_unescape(nstatus->data);
 		}
 
-		if ((tmp2 = xstrchr(uid, '/'))) {
-			char *tmp = xstrndup(uid, tmp2-uid);
-			userlist_t *ut;
-#if 0
-			if (!xstrcmp(tmp, s->uid)) print("jabber_resource_another", session_name(s), tmp, tmp2+1, itoa(prio), status ? status : jstatus, descr); /* makes it more colorful ? */
-#endif
-			if ((ut = userlist_find(s, tmp))) {
-				char *tmp = ut->resource;
-				ut->resource = xstrdup(tmp2+1);
-				xfree(tmp);
-			}
-			xfree(tmp);
-		}
 		if (status) {
 			xfree(jstatus);
 		} else if (jstatus && (!xstrcasecmp(jstatus, EKG_STATUS_AWAY)		|| !xstrcasecmp(jstatus, EKG_STATUS_INVISIBLE)	||
@@ -1893,7 +1881,27 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			xfree(jstatus);
 			status = xstrdup(EKG_STATUS_AVAIL);
 		}
-		
+
+		if ((tmp2 = xstrchr(uid, '/'))) {
+			userlist_t *ut;
+	
+			if ((ut = userlist_find(s, uid))) {
+				ekg_resource_t *r;
+				char *tmp;
+
+				if ((r = userlist_resource_find(ut, tmp2+1))) {
+					if (na) {				/* if resource went offline remove... */
+						userlist_resource_remove(ut, r);
+						r = NULL;
+					}
+				} else r = userlist_resource_add(ut, tmp2+1, prio);
+
+				if (r && r->prio != prio) {
+					/* XXX, here resort, stupido */
+					r->prio = prio;
+				}
+			}
+		}
 		{
 			char *session 	= xstrdup(session_uid_get(s));
 			char *host 	= NULL;

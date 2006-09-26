@@ -194,9 +194,13 @@ static QUERY(protocol_status)
 	char *host		= *(va_arg(ap, char**));
 	int port		= *(va_arg(ap, int*));
 	time_t when		= *(va_arg(ap, time_t*));
-
+	ekg_resource_t *r	= NULL;
 	userlist_t *u;
 	session_t *s;
+
+	char *st;			/* status	u->status || r->status */
+	char *de;			/* descr 	u->descr  || r->descr  */
+
 	int ignore_level;
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
 
@@ -221,6 +225,21 @@ static QUERY(protocol_status)
 	ignore_events = ignore_level & IGNORE_EVENTS;
 	ignore_notify = ignore_level & IGNORE_NOTIFY;
 
+	/* znajdz resource... */
+	if (u->resources) {
+		char *res = xstrchr(uid, '/');	/* resource ? */
+		if (res) r = userlist_resource_find(u, res+1); 
+	}
+
+	/* status && descr ? */
+	if (r) {		/* resource status && descr */
+		st = r->status;
+		de = r->descr;
+	} else {		/* global status && descr */
+		st = u->status;
+		de = u->descr;
+	}
+
 	/* zapisz adres IP i port */
 	u->ip = (host) ? inet_addr(host) : 0;
 	u->port = port;
@@ -230,19 +249,12 @@ static QUERY(protocol_status)
 	if (port)
 		u->last_port = port;
 
-	/* je¶li te same stany... */
-	if (!xstrcasecmp(status, u->status)) {
-		/* ...i nie ma opisu, ignoruj */
-		if (!descr && !u->descr)
-			return 0;
-	
-		/* ...i te same opisy, ignoruj */
-		if (descr && u->descr && !xstrcmp(descr, u->descr))
-			return 0;
-	}
+	/* je¶li te same stany...  i te same opisy (lub brak opisu), ignoruj */
+	if (!xstrcasecmp(status, st) && !xstrcmp(descr, de)) 
+		return 0;
 
 	/* je¶li kto¶ nam znika, zapamiêtajmy kiedy go widziano */
-	if (xstrcasecmp(u->status, EKG_STATUS_NA) && !xstrcasecmp(status, EKG_STATUS_NA))
+	if (!u->resources && xstrcasecmp(u->status, EKG_STATUS_NA) && !xstrcasecmp(status, EKG_STATUS_NA))
 		u->last_seen = when ? when : time(NULL);
 
 	/* XXX dodaæ events_delay */
@@ -257,13 +269,13 @@ static QUERY(protocol_status)
 
 
 	/* je¶li ma³o wa¿na zmiana stanu... */
-	if ((session_int_get(s, "display_notify") == 2 || (session_int_get(s, "display_notify") == -1 && config_display_notify == 2)) && xstrcasecmp(u->status, EKG_STATUS_NA)) {
+	if ((session_int_get(s, "display_notify") == 2 || (session_int_get(s, "display_notify") == -1 && config_display_notify == 2)) && xstrcasecmp(st, EKG_STATUS_NA)) {
 		/* je¶li na zajêty, ignorujemy */
-		if (!xstrcasecmp(status, EKG_STATUS_AWAY))
+		if (!xstrcasecmp(st, EKG_STATUS_AWAY))
 			goto notify_plugins;
 
 		/* je¶li na dostêpny, ignorujemy */
-		if (!xstrcasecmp(status, EKG_STATUS_AVAIL))
+		if (!xstrcasecmp(st, EKG_STATUS_AVAIL))
 			goto notify_plugins;
 	}
 
@@ -272,7 +284,7 @@ static QUERY(protocol_status)
 		goto notify_plugins;
 
 	/* nie zmieni³ siê status, zmieni³ siê opis */
-	if (ignore_status_descr && !xstrcmp(status, u->status) && xstrcmp(descr, u->descr))
+	if (ignore_status_descr && !xstrcmp(status, st) && xstrcmp(descr, de))
 		goto notify_plugins;
 
 	/* daj znaæ d¼wiêkiem... */
@@ -297,28 +309,50 @@ static QUERY(protocol_status)
 	}
 
 notify_plugins:
-	if (xstrcasecmp(u->status, EKG_STATUS_NA)) {
+	if (xstrcasecmp(st, EKG_STATUS_NA)) {
 	        xfree(u->last_status);
-	        u->last_status = xstrdup(u->status);
+	        u->last_status = xstrdup(st);
 	        xfree(u->last_descr);
-	        u->last_descr = xstrdup(u->descr);
+	        u->last_descr = xstrdup(de);
 	}
 
-	if (!xstrcasecmp(u->status, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
+	if (!xstrcasecmp(st, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
 		query_emit(NULL, ("event_online"), __session, __uid);
 
 	if (!ignore_status) {
-		xfree(u->status);
-		u->status = xstrdup(status);
+		if (r) {
+			xfree(r->status);
+			r->status = xstrdup(status);
+		}
+
+		if (u->resources) { 		/* get higest prio status */
+			xfree(u->status);
+			u->status = xstrdup( ((ekg_resource_t *) (u->resources->data))->status);
+		} else {
+			xfree(u->status);
+			u->status = xstrdup(status);
+		}
 	}
 
-	if (xstrcasecmp(u->descr, descr) && !ignore_events)
+	if (xstrcasecmp(de, descr) && !ignore_events)
 		query_emit(NULL, ("event_descr"), __session, __uid, __descr);
 
 	if (!ignore_status && !ignore_status_descr) {
-		xfree(u->descr);
-		u->descr = xstrdup(descr);
-		u->status_time = when ? when : time(NULL);
+		if (r) {
+			xfree(r->descr);
+			r->descr = xstrdup(descr);
+		}
+
+		if (u->resources) { 	/* get highest prio descr */
+			xfree(u->descr);
+			u->descr = xstrdup( ((ekg_resource_t *) (u->resources->data))->descr);
+		} else {
+			xfree(u->descr);
+			u->descr = xstrdup(descr);
+		}
+
+		if (!u->resource || u->resources->data == r) 
+			u->status_time = when ? when : time(NULL);
 	}
 	
 	query_emit(NULL, ("userlist-changed"), __session, __uid);
