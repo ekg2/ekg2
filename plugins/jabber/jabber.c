@@ -793,7 +793,7 @@ static WATCHER(jabber_handle_stream)
 #else
                 if ((len = read(fd, buf, 4095)) < 1) {
 #endif
-			if (len == -1 && errno == EINPROGRESS) return 0;
+			if (len == -1 && (errno == EINPROGRESS || errno == EAGAIN)) return 0;
 			jabber_handle_disconnect(s, len == -1 ? strerror(errno) : "got disconnected", len == -1 ? EKG_DISCONNECT_FAILURE : EKG_DISCONNECT_NETWORK);
                         return -1;
                 }
