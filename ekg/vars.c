@@ -160,8 +160,6 @@ void variable_set_default()
 	console_charset = xstrdup(nl_langinfo(CODESET));
 #endif
 
-#if 0
-#endif
 	if (console_charset) 
 		config_console_charset = xstrdup(console_charset);
 	else
