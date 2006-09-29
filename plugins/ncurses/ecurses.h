@@ -37,6 +37,7 @@
  */
 
 #if USE_UNICODE
+#include <errno.h>
 extern int config_use_unicode;	/* not everyone want to include stuff.h */
 extern int sizeofchart;
 

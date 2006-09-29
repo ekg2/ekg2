@@ -1400,14 +1400,18 @@ char *strip_quotes(char *line)
  *
  * pozbywa siê spacji na pocz±tku i koñcu ³añcucha.
  */
-char *strip_spaces(char *line)
-{
+char *strip_spaces(char *line) {
+	size_t linelen;
 	char *buf;
+
+	if (!(linelen = xstrlen(line))) return line;
 	
 	for (buf = line; xisspace(*buf); buf++);
 
-	while (xisspace(line[xstrlen(line) - 1]))
-		line[xstrlen(line) - 1] = 0;
+	while (linelen > 0 && xisspace(line[linelen - 1])) {
+		line[linelen - 1] = 0;
+		linelen--;
+	}
 	
 	return buf;
 }
@@ -2379,84 +2383,45 @@ int strcasecmp_pl(const char *cs, const char *ct)
 }
 
 
-void pl_to_normal(unsigned char ch)
+unsigned char pl_to_normal(unsigned char ch)
 {
 	switch(ch) {
                 case 161: /* ¡ */
-			ch = 'A';
-			break;
+			return 'A';
 		case 177: /* ± */
-			ch = 'a';
-			break;
+			return 'a';
                 case 198: /* Æ */
-			ch = 'C';
-			break;
+			return 'C';
 		case 230: /* æ */
-			ch = 'c';
-			break;
+			return 'c';
                 case 202: /* Ê */
-			ch = 'E';
-			break;
+			return 'E';
 		case 234: /* ê */
-			ch = 'e';
-			break;
+			return 'e';
                 case 163: /* £ */
-			ch = 'L';
-			break;
+			return 'L';
 		case 179: /* ³ */
-			ch = 'l';
-			break;
+			return 'l';
                 case 209: /* Ñ */
-			ch = 'N';
-			break;
+			return 'N';
 		case 241: /* ñ */
-			ch = 'n';
-			break;
+			return 'n';
                 case 211: /* Ó */
-			ch = 'O';
-			break;
+			return 'O';
 		case 243: /* ó */
-			ch = 'o';
-			break;
+			return 'o';
                 case 166: /* ¦ */
-			ch = 'S';
-			break;
+			return 'S';
 		case 182: /* ¶ */
-			ch = 's';
-			break;
+			return 's';
                 case 175: /* ¯ */
 		case 172: /* ¬ */
-			ch = 'Z';
-			break;
+			return 'Z';
 		case 191: /* ¿ */
 		case 188: /* ¼ */
-			ch = 'z';
-			break;
-		default:
-			break;
+			return 'z';
 	}
-}
-
-/*
- * strip_pl_chars()
- *
- * changes pl chars to normal chars 
- * should be freed by free()
- */
-char *strip_pl_chars(const char *text)
-{
-	char *ret = xstrdup(text);
-	char *p = ret;
-
-	if (!text)
-		return NULL;
-
-	for (; *p; p++) {
-		if(isalpha_pl(*p))
-			pl_to_normal(*p);
-	}
-
-	return ret;
+	return ch;
 }
 
 /*

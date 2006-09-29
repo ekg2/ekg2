@@ -242,34 +242,48 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(ncurses_fstring_t *));
 #if USE_UNICODE
 	if (config_use_unicode) {
-	/* str */
-		char *tmp = str->str;
-		CHAR_T *ble	= normal_to_wcs(tmp);		/* jesli to padnie to klops */
-	/* attr */
 		int rlen = xstrlen(str->str);
+		wchar_t *temp = xmalloc((rlen+1) * sizeof(CHAR_T));		/* new str->str */
+
 		int cur = 0;
 		int i = 0;
-	/* dopasuj atrybuty do literek */
-		while (cur < rlen) {
-			int len = mblen(&(str->str[cur]), rlen-cur);
+
+		mbtowc(NULL, NULL, 0);	/* reset */
+
+		while (cur <= rlen) {
+			wchar_t znak;
+			int inv = 0;
+			int len	= mbtowc(&znak, &(str->str[cur]), rlen-cur);
 
 			if (len == -1) {
-				debug("[%s:%d] mblen() failed ?!\n", __FILE__, __LINE__);
-				i = 0;
-				break;
+/*				debug("[%s:%d] mbtowc() failed ?! (%d, %s) (%d)\n", __FILE__, __LINE__, errno, strerror(errno), i); */
+
+/*				znak		= '?'; */
+				znak		= pl_to_normal((unsigned char) str->str[cur]);		/* assume iso-8859-2 ?*/
+				inv 		= 1;
 			}
-/*			if (len > 1) debug("mblen(): %d\n", len); */
-			str->attr[i] = str->attr[cur];
-			i++;	cur += len;
+			
+			temp[i]		= znak;
+			str->attr[i]	= str->attr[cur]; 
+
+			if (inv) str->attr[i] |= 1024;	/* A_REVERSE ? */
+
+			cur += ((!inv) ? len : 1);
+			i++;
+
+			if (!len)	/* NUL */
+				break;
 		}
-	/* fstring */
-		n->backlog[0] = (ncurses_fstring_t *) str;
-		n->backlog[0]->str	= ble;
-		if (i) str->attr = xrealloc(str->attr, (i+1) * sizeof(short));		/* resize */
-		free_utf(tmp);
-	} else 
+
+	/* resize str->attr && str->str to match newlen */
+		xfree(str->str); 
+
+		str->str  = xrealloc(temp, (i+1) * sizeof(CHAR_T));		/* i ? */
+		str->attr = xrealloc(str->attr, (i+1) * sizeof(short));		/* i ? */
+
+	}
 #endif
-		n->backlog[0] = (ncurses_fstring_t *) str;
+	n->backlog[0] = (ncurses_fstring_t *) str;
 
 	n->backlog_size++;
 
