@@ -258,8 +258,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 			if (len == -1) {
 /*				debug("[%s:%d] mbtowc() failed ?! (%d, %s) (%d)\n", __FILE__, __LINE__, errno, strerror(errno), i); */
 
-/*				znak		= '?'; */
-				znak		= pl_to_normal((unsigned char) str->str[cur]);		/* assume iso-8859-2 ?*/
+				znak		= '?'; 
 				inv 		= 1;
 			}
 			
