@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -18,6 +19,7 @@
 #include <ekg/debug.h>
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
+#include <ekg/stuff.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 
@@ -328,7 +330,7 @@ void rss_handle_end(void *data, const char *name) {
 void rss_handle_cdata(void *data, const char *text, int len) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
-	int oldlen, i, display = 0;
+	int oldlen, i;
 
 	if (!j || !text) {
 		debug("[rss] xmlnode_handle_cdata() invalid parameters\n");
@@ -340,57 +342,60 @@ void rss_handle_cdata(void *data, const char *text, int len) {
 	oldlen		= xstrlen(n->data);
 	n->data		= xrealloc(n->data, oldlen + len + 1);
 
-	for (i = 0; i < len; i++) {
-		if (j->no_unicode && text[i] < 0) {
-			unsigned char x = -text[i];
-			char ch = '?';
-		/* iwil code */
-			if (x == 0x3e)		ch = text[i+1];
-			else if (x == 0x3d)	ch = text[i+1]+0x40;
-			else			debug("UNKN: %x %c\n", x, text[i+1]);
-			i++;
+	for (i = 0; i < len;) {
+		unsigned int znak = (unsigned char) text[i];
 
-			n->data[oldlen++] = ch;
-			continue;
-		} else if (text[i] < 0) {
-			unsigned int x = 0;
+		if (znak > 0x7F && j->no_unicode) {
+			int ucount = 0;
+			unsigned char znaczek = 0;
 
-			unsigned char y = -text[i];
+			/* mapowanie takie samo jak iso-8859-1 <==> utf-8 */
+			/* stolen from linux/drivers/char/vt.c do_con_write() */
 
-			if (y == 0x3b)		x = (0x01 << 8);
-						x |= -text[i+1]-60;
-			debug("%x %x\n", y, x);
-			i++;
+			if ((znak & 0xe0) == 0xc0) 	{ ucount = 1; znaczek = (znak & 0x1f); }
+			else if ((znak & 0xf0) == 0xe0) { ucount = 2; znaczek = (znak & 0x0f); }
+			else if ((znak & 0xf8) == 0xf0) { ucount = 3; znaczek = (znak & 0x07); }
+			else if ((znak & 0xfc) == 0x78) { ucount = 4; znaczek = (znak & 0x03); }
+			else if ((znak & 0xfe) == 0xfc) { ucount = 5; znaczek = (znak & 0x01); }	/* shouldn't happen in utf-8 */
+			i++;		/* next */
 
-			n->data[oldlen++] = '?';
+			if (i+ucount > len || ucount == 5 || !ucount) {
+				debug("invalid utf-8 char\n");	/* shouldn't happen */
+				n->data[oldlen++] = '?';
+				i += ucount;
+				continue;
+			}
+
+			while (ucount && ((text[i] & 0xc0) == 0x80)) {
+				ucount--;
+				znaczek = (znaczek << 6) | (((unsigned char) text[i]) & 0x3f);
+				i++;
+			}
+
+			n->data[oldlen++] = znaczek;
 			continue;
 		}
-		n->data[oldlen++] = text[i];
+		n->data[oldlen++] = znak;
+		i++;
 	}
+/* XXX, recode to console_charset !! */
 	n->data[oldlen++] = 0;
-	if (display) debug("UNI: %s\n", n->data);
 }
 
 int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
 	rss_fetch_process_t      *j = data;
+	int i;
 
 	debug("rss_handle_encoding() %s\n", name);
-	if (!xstrcmp(name, "iso-8859-2")) {
-		int i;
-		for(i=0; i<256; i++) {
-			if (xisdigit(i) || isalpha_pl(i) || isprint(i))	info->map[i] = i;
-			else if (iscntrl(i)) 				info->map[i] = i;
-			else {
-				debug("rss_handle_encoding NOT_HANDLED: %d %c\n", i, i);
-				info->map[i] = -1;
-			}
-		}
-		info->convert	= NULL;
-		info->data	= NULL;
-		info->release	= NULL;
-		j->no_unicode	= xstrdup(name); 
-		return 1;
-	}
+
+	for(i=0; i<256; i++)
+		info->map[i] = i;
+
+	info->convert	= NULL;
+	info->data	= NULL;
+	info->release	= NULL;
+	j->no_unicode	= xstrdup(name); 
+	return 1;
 	return 0;
 }
 void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
@@ -689,6 +694,7 @@ int rss_url_fetch(rss_feed_t *f, int quiet) {
 		if (f->ip) {
 			struct sockaddr_in sin;
 			int ret;
+			int one = 1;
 
 			debug("rss_url_fetch %s using previously cached IP address: %s\n", f->host, f->ip);
 
@@ -700,6 +706,8 @@ int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 			feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_AWAY), xstrdup("Connecting..."));
 			f->connecting = 1;
+
+			ioctl(fd, FIONBIO, &one);
 
 			ret = connect(fd, (struct sockaddr *) &sin, sizeof(sin));
 

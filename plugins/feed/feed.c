@@ -5,6 +5,7 @@
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/sessions.h>
+#include <ekg/stuff.h>
 #include <ekg/vars.h>
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
@@ -302,6 +303,9 @@ static int feed_theme_init() {
 	format_add("nntp_message_quote_level2", "%y%1", 1);
 	format_add("nntp_message_quote_level",	"%B%1", 1);	/* upper levels.. */
 	format_add("nntp_message_signature",	"%B%1", 1);
+
+	format_add("nntp_posting_failed",	_("(%1) Posting to group: %2 failed: %3 (post saved in: %4)"), 1);
+	format_add("nntp_posting",		_("(%1) Posting to group: %2 Subject: %3...."), 1);
 #endif
 	return 0;
 }

@@ -34,6 +34,7 @@
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/vars.h>
+#include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
@@ -173,28 +174,29 @@ typedef struct {
 
 void nntp_children_died(struct child_s *c, int pid, const char *name, int status, void *data) {
 	nntp_children_t *d = data;
-	FILE *f;
 	session_t *s = session_find(d->session);
+	nntp_private_t *j;
 	struct stat st;
+	FILE *f;
 
-	if (!s) {
-		print("none", "session not found?!");
+	if (!s || !s->priv) {
+		print("nntp_posting_failed", session_name(s), d->newsgroup, "session not found", d->filename);
 		goto fail;
 	}
 
 	if ((stat(d->filename, &st) != 0)) {
-		print("none", "fstat failed with errno: %d");
+		print("nntp_posting_failed", session_name(s), d->newsgroup, "fstat() failed", d->filename);
 		goto fail;
 	}
 
 	if (st.st_ctime <= d->last_mtime) {
-		print("none", "NNTP, mtime not changed... Post saved in:");
+		print("nntp_posting_failed", session_name(s), d->newsgroup, "mtime not changed", d->filename);
 		goto fail;
 	}
-	
-	print("none", "posting article to");
 
-	nntp_private_t *j 	= feed_private(s);	
+	print("nntp_posting", session_name(s), d->newsgroup, d->subject);
+
+	j = feed_private(s);
 
 fail:
 	xfree(d->session);
