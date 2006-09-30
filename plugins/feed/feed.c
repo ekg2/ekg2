@@ -281,8 +281,8 @@ static int feed_plugin_destroy() {
 
 static int feed_theme_init() {
 #ifndef NO_DEFAULT_THEME
-	format_add("feed_subcribe_already",	_("%) You already subscribe this group: %1"), 1);
-	format_add("feed_subscribe_no",		_("%) Subscribtion not found, cannot unsubscribe"), 1);
+	format_add("feed_subcribe_already",	_("%) You already subscribe to this group: %1"), 1);
+	format_add("feed_subscribe_no",		_("%) Subscription not found, cannot unsubscribe"), 1);
 
 	format_add("feed_message_header",	_("%g,+=%G-----%W  %1 %n(ID: %W%2%n)"), 1);
 	format_add("feed_message_body",		_("%g||%n %|%1"), 1);
