@@ -97,9 +97,9 @@ typedef struct {
 	char *file;	/* protos: 	j/w RSS_PROTO_FILE 						file		*/
 } rss_feed_t;
 
-list_t feeds;			/* list of feeds, rss_feed_t struct */
+static list_t feeds;			/* list of feeds, rss_feed_t struct */
 
-void rss_string_append(rss_feed_t *f, const char *str) {
+static void rss_string_append(rss_feed_t *f, const char *str) {
 	string_t buf		= f->buf;
 
 	if (!buf) buf = f->buf = 	string_init(str);
@@ -107,7 +107,7 @@ void rss_string_append(rss_feed_t *f, const char *str) {
 	string_append_c(buf, '\n');
 }
 
-rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *title, const char *descr) {
+static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *title, const char *descr) {
 	session_t *s	= session_find(c->session);
 
 	int hash_url	= url	? ekg_hash(url)   : 0;
@@ -146,7 +146,7 @@ rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *title, 
 	return item;
 }
 
-rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const char *title, const char *descr, const char *lang) {
+static rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const char *title, const char *descr, const char *lang) {
 	session_t *s	= session_find(f->session);
 
 	int hash_url	= url	? ekg_hash(url)   : 0;
@@ -189,7 +189,7 @@ rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const char *titl
 	return channel;
 }
 
-rss_feed_t *rss_feed_find(session_t *s, const char *url) {
+static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
 	list_t newsgroups = feeds;
 	list_t l;
 	rss_feed_t *feed;
@@ -270,12 +270,12 @@ typedef struct {
 	char *no_unicode;
 } rss_fetch_process_t;
 
-void rss_fetch_error(rss_feed_t *f, const char *str) {
+static void rss_fetch_error(rss_feed_t *f, const char *str) {
 	debug("rss_fetch_error() %s\n", str);
 	feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_ERROR), xstrdup(str));
 }
 /* ripped from jabber plugin */
-void rss_handle_start(void *data, const char *name, const char **atts) {
+static void rss_handle_start(void *data, const char *name, const char **atts) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n, *newnode;
 	int arrcount;
@@ -315,7 +315,7 @@ void rss_handle_start(void *data, const char *name, const char **atts) {
 	j->node = newnode;
 }
 
-void rss_handle_end(void *data, const char *name) {
+static void rss_handle_end(void *data, const char *name) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
 
@@ -328,7 +328,7 @@ void rss_handle_end(void *data, const char *name) {
 	if (n->parent) j->node = n->parent;
 }
 
-void rss_handle_cdata(void *data, const char *text, int len) {
+static void rss_handle_cdata(void *data, const char *text, int len) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
 	int oldlen, i;
@@ -383,7 +383,7 @@ void rss_handle_cdata(void *data, const char *text, int len) {
 	n->data[oldlen++] = 0;
 }
 
-int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
+static int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
 	rss_fetch_process_t      *j = data;
 	int i;
 
@@ -399,11 +399,11 @@ int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
 	return 1;
 	return 0;
 }
-void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
+static void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
 	debug("rss_parsexml_atom() sorry, atom not implemented\n");
 }
 
-void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
+static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 	debug("rss_parsexml_rss (channels oldcount: %d)\n", list_count(f->rss_channels));
 
 	for (; node; node = node->next) {
@@ -476,7 +476,7 @@ static void xmlnode_free(xmlnode_t *n) {
 	xfree(n);
 }
 
-void rss_fetch_process(rss_feed_t *f, const char *str) {
+static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	int new_items = 0;
 	list_t l;
 
@@ -539,7 +539,7 @@ fail:
 	return;
 }
 
-WATCHER_LINE(rss_fetch_handler) {
+static WATCHER_LINE(rss_fetch_handler) {
 	rss_feed_t      *f = data;
 
 	if (type) {
@@ -571,7 +571,7 @@ WATCHER_LINE(rss_fetch_handler) {
 }
 
 /* handluje polaczenie, wysyla to co ma wyslac, dodaje łocza do odczytu */
-WATCHER(rss_fetch_handler_connect) {
+static WATCHER(rss_fetch_handler_connect) {
 	int		res = 0; 
 	socklen_t	res_size = sizeof(res);
 	rss_feed_t	*f = data;
@@ -615,7 +615,7 @@ WATCHER(rss_fetch_handler_connect) {
 	return -1;
 }
 
-int rss_url_fetch(rss_feed_t *f, int quiet) {
+static int rss_url_fetch(rss_feed_t *f, int quiet) {
 	int fd = -1;
 
 	debug("rss_url_fetch() f: 0x%x\n", f);
@@ -723,7 +723,7 @@ int rss_url_fetch(rss_feed_t *f, int quiet) {
 }
 
 
-COMMAND(rss_command_check) {
+static COMMAND(rss_command_check) {
 	list_t l;
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
@@ -738,11 +738,11 @@ COMMAND(rss_command_check) {
 	return 0;
 }
 
-COMMAND(rss_command_get) {
+static COMMAND(rss_command_get) {
 	return rss_url_fetch(rss_feed_find(session, target+4), quiet);
 }
 
-COMMAND(rss_command_connect) {
+static COMMAND(rss_command_connect) {
 	if (session_connected_get(session)) {
 		printq("already_connected", session_name(session));
 		return -1;
@@ -755,7 +755,7 @@ COMMAND(rss_command_connect) {
 	return 0;
 }
 
-COMMAND(rss_command_subscribe) {
+static COMMAND(rss_command_subscribe) {
 	userlist_t *u;
 
 	if ((u = userlist_find(session, target))) {
@@ -767,7 +767,7 @@ COMMAND(rss_command_subscribe) {
 	return 0;
 }
 
-COMMAND(rss_command_unsubscribe) {
+static COMMAND(rss_command_unsubscribe) {
 	userlist_t *u; 
 	if (!(u = userlist_find(session, target))) {
 		printq("feed_subscribe_no", target);

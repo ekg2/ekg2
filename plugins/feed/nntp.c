@@ -82,7 +82,7 @@ typedef struct {
 	watch_t *send_watch;
 } nntp_private_t;
 
-nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid, char *msgid) {
+static nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid, char *msgid) {
 	nntp_article_t *article;
 	list_t l;
 
@@ -105,7 +105,7 @@ nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid, char *
 	return article;
 }
 
-nntp_newsgroup_t *nntp_newsgroup_find(session_t *s, const char *name) {
+static nntp_newsgroup_t *nntp_newsgroup_find(session_t *s, const char *name) {
 	nntp_private_t *j = feed_private(s);
 	list_t l;
 	nntp_newsgroup_t *newsgroup;
@@ -127,7 +127,7 @@ nntp_newsgroup_t *nntp_newsgroup_find(session_t *s, const char *name) {
 	return newsgroup;
 }
 
-void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
+static void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 	nntp_private_t *j = feed_private(s);
 
 	if (!j)
@@ -172,7 +172,7 @@ typedef struct {
 	time_t last_mtime;
 } nntp_children_t;
 
-void nntp_children_died(struct child_s *c, int pid, const char *name, int status, void *data) {
+static void nntp_children_died(struct child_s *c, int pid, const char *name, int status, void *data) {
 	nntp_children_t *d = data;
 	session_t *s = session_find(d->session);
 	nntp_private_t *j;
@@ -206,7 +206,7 @@ fail:
 	xfree(d);
 }
 
-#define NNTP_HANDLER(x) int x(session_t *s, int code, char *str, void *data) 
+#define NNTP_HANDLER(x) static int x(session_t *s, int code, char *str, void *data) 
 typedef int (*nntp_handler) (session_t *, int, char *, void *);
 
 
@@ -216,6 +216,17 @@ NNTP_HANDLER(nntp_help_process) {			/* 100 */
 //	format_add("nntp_command_help_header",	_("%g,+=%G----- %2 %n(%T%1%n)"), 1);
 //	format_add("nntp_command_help_item",	_("%g|| %W%1: %n%2"), 1);
 //	format_add("nntp_command_help_footer",	_("%g`+=%G----- End of 100%n\n"), 1);
+	return 0;
+}
+
+static char hextochar(char t) {
+	if (t >= '0' && t <= '9')
+		return t - '0';
+	else if (t >= 'A' && t <= 'F')
+		return 10+(t - 'A');
+	else if (t >= 'a' && t <= 'f') 
+		return 10+(t - 'a');
+	debug("hextochar() invalid char: %d\n", t);
 	return 0;
 }
 
@@ -260,6 +271,55 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 	if (article_body)
 		string_append_n(art->body, str, xstrlen(str)-1);	/* don't add ending \n */
 
+
+	if (article_body && article_headers) do {
+		enum {
+			ENCODING_UNKNOWN = 0,
+			ENCODING_BASE64,
+			ENCODING_QUOTEDPRINTABLE,
+			ENCODING_8BIT,
+		} cte = ENCODING_UNKNOWN;
+
+		char *encoding;
+		char *tmp; 
+
+		char *text;
+		int i = 0;
+
+		/* Content-Transfer-Encoding */
+		if ((tmp = xstrstr(art->header->str, "Content-Transfer-Encoding: "))) { /* base64 || quoted-printable || 8bit || .... */
+			char *value = xstrchr(tmp, ' ')+1;
+
+			if (!xstrncmp(value, "8bit", 4)) 		cte = ENCODING_8BIT;
+			if (!xstrncmp(value, "base64", 6))		cte = ENCODING_BASE64;
+			if (!xstrncmp(value, "quoted-printable", 16))	cte = ENCODING_QUOTEDPRINTABLE;
+		}
+		debug("encoding type: %d\n", cte);
+/* XXX, console_charset + iconv... */
+		if (cte == ENCODING_UNKNOWN);
+
+		text = string_free(art->body, 0);
+
+		art->body = string_init(NULL);
+
+		while (text[i]) {
+			switch (cte) {
+				case ENCODING_QUOTEDPRINTABLE:
+					if (text[i] == '=' && text[i+1] && text[i+2]) {
+						string_append_c(art->body, hextochar(text[i+1]) * 16 | hextochar(text[i+2]));
+						i += 2;
+					} else	string_append_c(art->body, text[i]);
+					break;
+				case ENCODING_8BIT:
+				default:
+					string_append_c(art->body, text[i]);
+			}
+			i++;
+		}
+		xfree(text);
+	} while(0);
+
+	
 	{
 		char *uid	= j->newsgroup		? j->newsgroup->uid 	: NULL;
 		char *sheaders	= NULL;
@@ -399,7 +459,7 @@ nntp_handler_t nntp_handlers[] = {
 	{-1, NULL, 			0, NULL},
 }; 
 
-void nntp_string_append(session_t *s, const char *str) {
+static void nntp_string_append(session_t *s, const char *str) {
 	nntp_private_t *j       = feed_private(s);
 	string_t buf            = j->buf;
 
@@ -407,7 +467,7 @@ void nntp_string_append(session_t *s, const char *str) {
 	string_append_c(buf, '\n');
 }
 
-nntp_handler_t *nntp_handler_find(int code) {
+static nntp_handler_t *nntp_handler_find(int code) {
 	int i;
 	for (i = 0; nntp_handlers[i].num != -1; i++) {
 		if (nntp_handlers[i].num == code) return &(nntp_handlers[i]);
@@ -415,7 +475,7 @@ nntp_handler_t *nntp_handler_find(int code) {
 	return NULL;
 }
 
-WATCHER_LINE(nntp_handle_stream) {
+static WATCHER_LINE(nntp_handle_stream) {
 	session_t *s = session_find(data);
 	nntp_private_t *j = feed_private(s);
 
@@ -471,7 +531,7 @@ WATCHER_LINE(nntp_handle_stream) {
 	return 0;
 }
 
-WATCHER(nntp_handle_connect) {
+static WATCHER(nntp_handle_connect) {
 	session_t *s = session_find(data);
 	nntp_private_t *j = feed_private(s);
 	int res = 0, res_size = sizeof(res);
@@ -497,7 +557,7 @@ WATCHER(nntp_handle_connect) {
 	return -1;
 }
 
-COMMAND(nntp_command_disconnect)
+static COMMAND(nntp_command_disconnect)
 {
 	nntp_private_t	*j = feed_private(session);
 
@@ -517,7 +577,7 @@ COMMAND(nntp_command_disconnect)
 	return 0;
 }
 
-COMMAND(nntp_command_connect) {
+static COMMAND(nntp_command_connect) {
 	nntp_private_t *j = feed_private(session);
 	struct sockaddr_in sin;
 	/* just proof of concpect... no checking for errors... no resolving etc... it's boring */
@@ -554,13 +614,13 @@ COMMAND(nntp_command_connect) {
 	return 0;
 }
 
-COMMAND(nntp_command_raw) {
+static COMMAND(nntp_command_raw) {
 	nntp_private_t *j = feed_private(session);
 	watch_write(j->send_watch, "%s\r\n", params[0]);
 	return 0;
 }
 
-COMMAND(nntp_command_nextprev) {
+static COMMAND(nntp_command_nextprev) {
 	nntp_private_t *j = feed_private(session);
 	int mode = session_int_get(session, "display_mode");
 
@@ -579,7 +639,7 @@ COMMAND(nntp_command_nextprev) {
 	return 0;
 }
 
-COMMAND(nntp_command_get) {
+static COMMAND(nntp_command_get) {
 	nntp_private_t *j = feed_private(session);
 	const char *comm = "ARTICLE";
 	const char *group = NULL, *article = NULL;
@@ -602,7 +662,7 @@ COMMAND(nntp_command_get) {
 		return -1;
 	}
 
-	if (!xstrncmp(group, "nntp:", 5)) group = target+5;	/* skip nntp: if exists */
+	if (!xstrncmp(group, "nntp:", 5)) group = group+5;	/* skip nntp: if exists */
 
 	if (!j->newsgroup || xstrcmp(j->newsgroup->name, group)) {
 /* zmienic grupe na target jesli != aktualnej .. */
@@ -622,7 +682,7 @@ COMMAND(nntp_command_get) {
 	return 0;
 }
 
-COMMAND(nntp_command_check) {
+static COMMAND(nntp_command_check) {
 	extern void ekg_loop();
 
 	nntp_private_t *j = feed_private(session);
@@ -682,7 +742,7 @@ COMMAND(nntp_command_check) {
 	return 0;
 }
 
-COMMAND(nntp_command_subscribe) {
+static COMMAND(nntp_command_subscribe) {
 	userlist_t *u;
 
 	if ((u = userlist_find(session, target))) {
@@ -694,7 +754,7 @@ COMMAND(nntp_command_subscribe) {
 	return 0;
 }
 
-COMMAND(nntp_command_unsubscribe) {
+static COMMAND(nntp_command_unsubscribe) {
 	userlist_t *u; 
 	if (!(u = userlist_find(session, target))) {
 		printq("feed_subscribe_no", target);
@@ -709,7 +769,6 @@ void *nntp_protocol_init() {
 	p->buf			= string_init(NULL);
 	return p;
 }
-
 
 void nntp_protocol_deinit(void *priv) {
 

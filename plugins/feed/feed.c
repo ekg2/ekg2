@@ -15,7 +15,7 @@
 static int feed_theme_init();
 PLUGIN_DEFINE(feed, PLUGIN_PROTOCOL, feed_theme_init);
 
-QUERY(feed_validate_uid)
+static QUERY(feed_validate_uid)
 {
         char *uid = *(va_arg(ap, char **));
         int *valid = va_arg(ap, int *);
@@ -36,7 +36,7 @@ QUERY(feed_validate_uid)
         return 0;
 }
 
-QUERY(feed_session) {
+static QUERY(feed_session) {
 	char *session = *(va_arg(ap, char**));
 	session_t *s = session_find(session);
 
@@ -85,7 +85,7 @@ QUERY(feed_session) {
 	 * 	0x8 - display all headers / sheaders
 	 */
 
-QUERY(rss_message) {
+static QUERY(rss_message) {
 	char *session	= *(va_arg(ap, char **));
 	char *uid	= *(va_arg(ap, char **));
 	char *sheaders	= *(va_arg(ap, char **));
@@ -163,7 +163,10 @@ QUERY(rss_message) {
 			char *formatka;
 
 			if ((value = xstrchr(tmp, ' '))) *value = 0;
-			if (dheaders && !xstrstr(dheaders, tmp)) continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
+			if (dheaders && !xstrstr(dheaders, tmp)) {
+/*				debug("DHEADER: %s=%s\n", tmp, value+1); */
+				continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
+			}
 
 			formatka = saprintf("feed_message_header_%s", tmp);
 			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
