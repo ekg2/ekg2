@@ -156,7 +156,8 @@ static QUERY(rss_message) {
 		if (headers || body) print_window(uid, s, 1, "feed_message_body", "");	/* rozdziel */
 	}
 	if (headers) {
-		char *str = xstrdup(headers);
+		char *str, *org;
+		str = org = xstrdup(headers);
 		char *formated = NULL;
 		while ((tmp = split_line(&str))) {
 			char *value = NULL;
@@ -177,11 +178,13 @@ static QUERY(rss_message) {
 			xfree(formatka);
 		}
 		if (body) print_window(uid, s, 1, "feed_message_body", "");	/* rozdziel */
+		xfree(org);
 	}
 	if (body) {
 		if (session_check(s, 0, "nntp")) {
 			int article_signature	= 0;
-			char *str		= xstrdup(body);
+			char *str, *org;
+			str = org = xstrdup(body);
 
 			while ((tmp = split_line(&str))) {
 				char *formated = NULL;
@@ -211,6 +214,7 @@ static QUERY(rss_message) {
 				print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
 				xfree(formated);
 			}
+			xfree(org);
 		} else {
 			print_window(uid, s, 1, "feed_message_body", body);
 		}

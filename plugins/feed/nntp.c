@@ -272,6 +272,71 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		string_append_n(art->body, str, xstrlen(str)-1);	/* don't add ending \n */
 
 
+	if (article_headers) {
+		/* reencode headers */
+		char *text, *org;
+		char *tmp;
+		text = org = string_free(art->header, 0);
+		
+		art->header = string_init(NULL);
+
+		while ((tmp = split_line(&text))) {
+			char *value;
+			char *charque, *encque, *endque;
+			int i = 0;
+
+			if ((value = xstrstr(tmp, ": "))) {
+				*value = '\0';
+				value += 2;
+			} else {
+				string_append(art->header, tmp);
+				string_append_c(art->header, '\n');
+				continue;
+			}
+
+			string_append(art->header, tmp);
+			string_append(art->header, ": ");
+
+			while (value[i]) {
+				if 	(!xstrncmp(&value[i], "=?", 2) &&			/* begins with =? */
+					(charque = xstrchr(&value[i+2], '?')) && 		/* charset end with '?' */
+					(encque = xstrchr(charque+1, '?')) && 			/* encoding end with '?' */
+					(endque = xstrstr(encque+1, "?="))) {			/* end */
+					
+					debug("RFC1522: encoding: %c\n", *(encque-1));
+
+					i = (encque - value)+1;
+					while (&value[i] != endque) {
+						switch (*(encque-1)) {
+	/* XXX before adding text to buffer do iconv() */
+							case 'Q': 
+								if (value[i] == '=' && value[i+1] && value[i+2]) {
+									string_append_c(art->header, hextochar(value[i+1]) * 16 | hextochar(value[i+2]));
+									i += 2;
+								} else	string_append_c(art->header, value[i]);
+								break;
+							case 'B': 
+								*(endque) = 0;
+								string_append(art->header, base64_decode(&value[i]));
+								i = (endque - value)-1;
+								break;
+							default:
+								string_append_c(art->header, value[i]);
+						}
+						i++;
+					}
+					i += 2;
+				}
+				string_append_c(art->header, value[i]);
+				i++;
+			}
+
+			string_append_c(art->header, '\n');
+		}
+		
+		xfree(org);
+	}
+
 	if (article_body && article_headers) do {
 		enum {
 			ENCODING_UNKNOWN = 0,
