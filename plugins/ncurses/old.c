@@ -2187,7 +2187,7 @@ then:
 	if (!b || (b && b->function != ncurses_binding_complete))
 		ncurses_complete_clear();
 	
-	if (!ncurses_redraw_input_already_exec) 
+	if (!ncurses_redraw_input_already_exec || (b && b->function == ncurses_binding_accept_line)) 
 		ncurses_redraw_input(ch);
 loop:
 	while ((ncurses_watch_stdin(type, fd, watch, NULL)) == 1) ;		/* execute handler untill all data from fd 0 will be readed */

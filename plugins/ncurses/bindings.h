@@ -38,6 +38,7 @@ extern struct binding *ncurses_binding_map[KEY_MAX + 1];
 extern struct binding *ncurses_binding_map_meta[KEY_MAX + 1];
 
 extern void *ncurses_binding_complete;
+extern void *ncurses_binding_accept_line;
 extern int bindings_added_max;
 
 void ncurses_binding_init();

@@ -45,6 +45,7 @@ struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
 
 void *ncurses_binding_complete = NULL;
+void *ncurses_binding_accept_line = NULL;
 
 int bindings_added_max = 0;
 
@@ -1126,7 +1127,8 @@ void ncurses_binding_init()
 	memset(ncurses_binding_map_meta, 0, sizeof(ncurses_binding_map_meta));
 
 	ncurses_binding_default(NULL, NULL);
-	ncurses_binding_complete = binding_complete;
+	ncurses_binding_complete	= binding_complete;
+	ncurses_binding_accept_line	= binding_accept_line;
 }
 #if 0
 static void ncurses_binding_destroy()
