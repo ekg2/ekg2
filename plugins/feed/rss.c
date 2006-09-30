@@ -272,6 +272,7 @@ typedef struct {
 
 void rss_fetch_error(rss_feed_t *f, const char *str) {
 	debug("rss_fetch_error() %s\n", str);
+	feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_ERROR), xstrdup(str));
 }
 /* ripped from jabber plugin */
 void rss_handle_start(void *data, const char *name, const char **atts) {
@@ -502,8 +503,9 @@ void rss_fetch_process(rss_feed_t *f, const char *str) {
 			}
 		}
 	} else {
-		debug("Error: %s\n", XML_ErrorString(XML_GetErrorCode(parser)));
-		rss_fetch_error(f, "XML_Parse XML_STATUS_ERROR!!!");
+		char *tmp = saprintf("XML_Parse: %s", XML_ErrorString(XML_GetErrorCode(parser)));
+		rss_fetch_error(f, tmp);
+		xfree(tmp);
 		goto fail;
 			//		for (node = priv->node; node; node = node->parent); /* going up on error */
 	}
