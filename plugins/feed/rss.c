@@ -681,8 +681,7 @@ static WATCHER(rss_url_fetch_resolver) {
 
 		buf[len] = 0;
 
-		rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_AWAY),
-			saprintf("Resolved to: %s (read: %d bytes)", buf, len));
+		rss_set_descr(b->uid, saprintf("Resolved to: %s (read: %d bytes)", buf, len));
 
 		f->ip = xstrdup(buf);
 		rss_url_fetch(f, 0);
@@ -782,7 +781,7 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 			sin.sin_port		= htons(f->port);
 			sin.sin_family		= AF_INET;
 
-			rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_AWAY), saprintf("Connecting to: %s (%s)", f->host, f->ip));
+			rss_set_descr(f->uid, saprintf("Connecting to: %s (%s)", f->host, f->ip));
 			f->connecting = 1;
 
 			ioctl(fd, FIONBIO, &one);
@@ -816,6 +815,8 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 				b->session 	= xstrdup(f->session);
 				b->uid		= saprintf("rss:%s", f->url);
+
+				rss_set_descr(f->uid, xstrdup("Resolving..."));
 	
 				w = watch_add(&feed_plugin, fd[0], WATCH_READ, rss_url_fetch_resolver, b);
 				watch_timeout_set(w, 10);	/* 10 sec resolver timeout */

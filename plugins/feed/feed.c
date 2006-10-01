@@ -230,6 +230,7 @@ void feed_set_status(userlist_t *u, char *status) {
 	char *tmp;
 	if (!u || !status) return;
 
+/*	if (xstrcmp(u->status, status)) print("feed_status", u->uid, status, u->descr); */
 	tmp 		= u->status;
 	u->status	= status;
 	xfree(tmp);
@@ -239,6 +240,7 @@ void feed_set_descr(userlist_t *u, char *descr) {
 	char *tmp;
 	if (!u || !descr) return;
 
+/*	if (xstrcmp(u->descr, descr)) print("feed_status", u->uid, u->status, descr); */
 	tmp 		= u->descr;
 	u->descr	= descr;
 	xfree(tmp);
@@ -288,6 +290,8 @@ static int feed_plugin_destroy() {
 
 static int feed_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	format_add("feed_status",		_("%> Newstatus: %1 (%2) %3"), 1);	/* XXX */
+
 	format_add("feed_subcribe_already",	_("%) You already subscribe to this group: %1"), 1);
 	format_add("feed_subscribe_no",		_("%) Subscription not found, cannot unsubscribe"), 1);
 

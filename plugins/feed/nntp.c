@@ -1,5 +1,5 @@
 /*
- *  (C) Copyright 2006 Jakub Zawadzki <darkjames@darkjames.ath.cxl>
+ *  (C) Copyright 2006 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -270,7 +270,6 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 
 	if (article_body)
 		string_append_n(art->body, str, xstrlen(str)-1);	/* don't add ending \n */
-
 
 	if (article_headers) {
 		/* reencode headers */
