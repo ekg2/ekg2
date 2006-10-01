@@ -12,6 +12,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include <netdb.h>
+
 #include <string.h>
 
 #include <ekg/dynstuff.h>
@@ -80,6 +82,7 @@ typedef struct {
 	char *url;		/* url */
 	char *uid;		/* rss:url */
 
+	int resolving;		/* we wait for resolver ? */
 	int connecting;		/* we wait for connect() ? */
 	int getting;		/* we wait for read()	 ? */
 
@@ -105,6 +108,37 @@ static void rss_string_append(rss_feed_t *f, const char *str) {
 	if (!buf) buf = f->buf = 	string_init(str);
 	else				string_append(buf, str);
 	string_append_c(buf, '\n');
+}
+
+static void rss_set_statusdescr(const char *uid, char *status, char *descr) {
+	list_t l;
+	for (l = sessions; l; l = l->next) {
+		session_t *s = l->data;
+
+		if (!xstrncmp(s->uid, "rss:", 4))
+			feed_set_statusdescr(userlist_find(s, uid), status, descr);
+	}
+}
+
+static void rss_set_status(const char *uid, char *status) {
+	list_t l;
+
+	for (l = sessions; l; l = l->next) {
+		session_t *s = l->data;
+
+		if (!xstrncmp(s->uid, "rss:", 4))
+			feed_set_status(userlist_find(s, uid), status);
+	}
+}
+
+static void rss_set_descr(const char *uid, char *descr) {
+	list_t l;
+	for (l = sessions; l; l = l->next) {
+		session_t *s = l->data;
+
+		if (!xstrncmp(s->uid, "rss:", 4)) 
+			feed_set_descr(userlist_find(s, uid), descr);
+	}
 }
 
 static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *title, const char *descr) {
@@ -272,7 +306,7 @@ typedef struct {
 
 static void rss_fetch_error(rss_feed_t *f, const char *str) {
 	debug("rss_fetch_error() %s\n", str);
-	feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_ERROR), xstrdup(str));
+	rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_ERROR), xstrdup(str));
 }
 /* ripped from jabber plugin */
 static void rss_handle_start(void *data, const char *name, const char **atts) {
@@ -491,7 +525,7 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 //	XML_SetParamEntityParsing(parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
 	XML_SetUnknownEncodingHandler(parser, (XML_UnknownEncodingHandler) rss_handle_encoding, priv);
 
-	feed_set_descr(userlist_find(session_find(f->session), f->uid), xstrdup("Parsing..."));
+	rss_set_descr(f->uid, xstrdup("Parsing..."));
 
 	if (XML_Parse(parser, str, xstrlen(str), 1) == XML_STATUS_OK) {
 		for (node = priv->node; node; node = node->next) {
@@ -531,8 +565,8 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	}
 
 	if (!new_items)
-		feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_DND), xstrdup("Done."));
-	else	feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_AVAIL), xstrdup("Done."));
+		rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_DND), xstrdup("Done, no new messages"));
+	else	rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_AVAIL), saprintf("Done, %d new messages", new_items));
 fail:
 	xmlnode_free(priv->node);
 	XML_ParserFree(parser);
@@ -545,14 +579,14 @@ static WATCHER_LINE(rss_fetch_handler) {
 	if (type) {
 		if (f->buf) 
 			rss_fetch_process(f, f->buf->str);
-		else	rss_fetch_error(f, "Null f->buf");
+		else	rss_fetch_error(f, "[INTERNAL ERROR] Null f->buf");
 		f->getting = 0;
 		f->headers_done = 0;
 		return 0;
 	}
 
 	if (f->headers_done) {
-		feed_set_descr(userlist_find(session_find(f->session), f->uid), xstrdup("Getting data..."));
+		rss_set_descr(f->uid, xstrdup("Getting data..."));
 		if (xstrcmp(watch, ""))
 			rss_string_append(f, watch);
 	} else {
@@ -595,7 +629,7 @@ static WATCHER(rss_fetch_handler_connect) {
 	}
 	
 	if (f->proto == RSS_PROTO_HTTP) {
-		feed_set_descr(userlist_find(session_find(f->session), f->uid), xstrdup("Requesting..."));
+		rss_set_descr(f->uid, xstrdup("Requesting..."));
 		char *request = saprintf(
 			"GET %s HTTP/1.0\r\n"
 			"Host: %s\r\n"
@@ -615,12 +649,56 @@ static WATCHER(rss_fetch_handler_connect) {
 	return -1;
 }
 
+typedef struct {
+	char *session;
+	char *uid;
+} rss_resolver_t;
+
+static int rss_url_fetch(rss_feed_t *f, int quiet);
+
+static WATCHER(rss_url_fetch_resolver) {
+	rss_resolver_t *b = data;
+	rss_feed_t *f;
+	char buf[25];	/* v4 */
+	int len;
+
+	debug("rss_url_fetch_resolver() fd: %d type: %d\n", fd, type);
+
+	f = rss_feed_find(session_find(b->session), b->uid+4);
+
+	if (type) {
+		f->resolving = 0;
+		if (type == 2) 
+			rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver tiemout..."));
+
+		xfree(b->session);
+		xfree(b->uid);
+		xfree(b);
+		return 0;
+	}
+
+	if ((len = read(fd, &buf[0], sizeof(buf)-1)) > 0) {
+
+		buf[len] = 0;
+
+		rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_AWAY),
+			saprintf("Resolved to: %s (read: %d bytes)", buf, len));
+
+		f->ip = xstrdup(buf);
+		rss_url_fetch(f, 0);
+	} else {
+		rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), 
+			saprintf("Resolver ERROR read: %d bytes (%s)", len, len == -1 ? strerror(errno) : ""));
+	}
+	return -1;
+}
+
 static int rss_url_fetch(rss_feed_t *f, int quiet) {
 	int fd = -1;
 
 	debug("rss_url_fetch() f: 0x%x\n", f);
 
-	if (f->connecting) {
+	if (f->connecting || f->resolving) {
 		printq("rss_during_connect", session_name(session_find(f->session)), f->url);
 		return -1;
 	}
@@ -686,11 +764,9 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 		if (f->port <= 0 || f->port >= 65535) return -1;
 		
-		if (!f->ip) {
-			/* some static IPs */
-			if (!xstrcmp(f->host, "rss.7thguard.net"))	f->ip = xstrdup("83.145.128.5");
-			if (!xstrcmp(f->host, "jogger.pl"))		f->ip = xstrdup("212.14.32.26");
-			if (!xstrcmp(f->host, "www.evhead.com"))	f->ip = xstrdup("207.7.108.85");
+		if (!f->ip) {	/* if we don't have ip, maybe it's v4 address? */
+			if (inet_addr(f->host) != INADDR_NONE)
+				f->ip = xstrdup(f->host);
 		}
 
 		if (f->ip) {
@@ -706,7 +782,7 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 			sin.sin_port		= htons(f->port);
 			sin.sin_family		= AF_INET;
 
-			feed_set_statusdescr(userlist_find(session_find(f->session), f->uid), xstrdup(EKG_STATUS_AWAY), xstrdup("Connecting..."));
+			rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_AWAY), saprintf("Connecting to: %s (%s)", f->host, f->ip));
 			f->connecting = 1;
 
 			ioctl(fd, FIONBIO, &one);
@@ -715,7 +791,49 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 			watch_add(&feed_plugin, fd, WATCH_WRITE, rss_fetch_handler_connect, f);
 		} else {
-			/* XXX, resolver */
+			int fd[2];
+			int res;
+
+			if (pipe(fd) == -1) {
+				rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver error @ pipe() %s\n", strerror(errno)));
+				return -1;
+			}
+
+			f->resolving = 1;
+			if ((res = fork()) == -1) {
+				rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver error @ fork() %s\n", strerror(errno)));
+				close(fd[0]);
+				close(fd[1]);
+				f->resolving = 0;
+				return -1;
+			}
+			
+			if (res) {
+				rss_resolver_t *b = xmalloc(sizeof(rss_resolver_t));
+				watch_t *w; 
+
+				close(fd[1]);
+
+				b->session 	= xstrdup(f->session);
+				b->uid		= saprintf("rss:%s", f->url);
+	
+				w = watch_add(&feed_plugin, fd[0], WATCH_READ, rss_url_fetch_resolver, b);
+				watch_timeout_set(w, 10);	/* 10 sec resolver timeout */
+			} else {
+				struct hostent *he;
+				close(fd[0]);
+				if ((he = gethostbyname(f->host))) {
+					struct in_addr a;
+					char *ip;
+
+					memcpy(&a, he->h_addr, sizeof(a));
+					ip = inet_ntoa(a);
+
+					write(fd[1], ip, xstrlen(ip));
+				}
+				sleep(2);
+				exit(0);
+			}
 		}
 		return fd;
 	}
