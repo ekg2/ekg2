@@ -2,16 +2,16 @@
  *  (C) Copyright 2006 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License Version
- *  2.1 as published by the Free Software Foundation.
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ *  GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this program; if not, write to the Free Software
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
@@ -300,14 +300,16 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 				if 	(!xstrncmp(&value[i], "=?", 2) &&			/* begins with =? */
 					(charque = xstrchr(&value[i+2], '?')) && 		/* charset end with '?' */
 					(encque = xstrchr(charque+1, '?')) && 			/* encoding end with '?' */
-					(endque = xstrstr(encque+1, "?="))) {			/* end */
+					(endque = xstrstr(encque+1, "?=")) && 			/* end */
+					((*(encque-1) == 'Q' || *(encque-1) == 'B'))		/* valid encodings are: 'B' -- base64 && 'Q' -- quoted-printable */
+					) {
 					
 					debug("RFC1522: encoding: %c\n", *(encque-1));
 
 					i = (encque - value)+1;
 					while (&value[i] != endque) {
-						switch (*(encque-1)) {
 	/* XXX before adding text to buffer do iconv() */
+						switch (*(encque-1)) {
 							case 'Q': 
 								if (value[i] == '=' && value[i+1] && value[i+2]) {
 									string_append_c(art->header, hextochar(value[i+1]) * 16 | hextochar(value[i+2]));
@@ -319,8 +321,6 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 								string_append(art->header, base64_decode(&value[i]));
 								i = (endque - value)-1;
 								break;
-							default:
-								string_append_c(art->header, value[i]);
 						}
 						i++;
 					}
