@@ -1800,7 +1800,7 @@ static COMMAND(cmd_set)
 		theme_cache_reset();
 
 		if (!unset && !xstrcasecmp(value, ("t"))) {
-			if (v->type == VAR_BOOL) {
+			if (v && v->type == VAR_BOOL) {
 				int t_value = *(int*)(v->ptr);
 			
 				xfree(value);
