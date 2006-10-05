@@ -467,6 +467,7 @@ void userlist_resource_free(userlist_t *u) {
 		xfree(r->descr);
 	}
 	list_destroy(u->resources, 1);
+	u->resources = NULL;
 }
 
 /*
