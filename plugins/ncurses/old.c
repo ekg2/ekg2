@@ -2038,7 +2038,7 @@ void ncurses_redraw_input(unsigned int ch) {
 WATCHER(ncurses_watch_stdin)
 {
 	struct binding *b = NULL;
-	unsigned int tmp;
+	int tmp;
 	unsigned int ch;
 
 	/* GiM: I'm not sure if this should be like that
@@ -2104,9 +2104,9 @@ end:
 	} 
 
 	if (ch == 27) {
-		if ((ekg_getch(27, &ch)) == -2)
+		if ((ekg_getch(27, &ch)) < 0)
 			goto loop;
-
+/* XXX HERE we rather should check if ch is not larger than tabsize... */
                 b = ncurses_binding_map_meta[ch];
 		
 		if (ch == 27)
