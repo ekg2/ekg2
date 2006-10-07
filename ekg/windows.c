@@ -371,11 +371,13 @@ crap:
 		return;
  
 	if (w != window_current && !w->floating) {
+		int oldact = w->act;
 		if (separate)
 			w->act = 2;
 		else if (w->act != 2)
 			w->act = 1;
-		query_emit(NULL, ("ui-window-act-changed"));
+		if (oldact != w->act)
+			query_emit(NULL, ("ui-window-act-changed"));
 	}
 
 	if (!line->ts)
