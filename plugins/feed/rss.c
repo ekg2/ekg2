@@ -685,6 +685,9 @@ static WATCHER(rss_url_fetch_resolver) {
 
 	if (type) {
 		f->resolving = 0;
+		if (f->ip)
+			rss_url_fetch(f, 0);
+
 		if (type == 2) 
 			rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver tiemout..."));
 
@@ -701,7 +704,6 @@ static WATCHER(rss_url_fetch_resolver) {
 		rss_set_descr(b->uid, saprintf("Resolved to: %s (read: %d bytes)", buf, len));
 
 		f->ip = xstrdup(buf);
-		rss_url_fetch(f, 0);
 	} else {
 		rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), 
 			saprintf("Resolver ERROR read: %d bytes (%s)", len, len == -1 ? strerror(errno) : ""));

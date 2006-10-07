@@ -141,7 +141,8 @@ static void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 		watch_free(j->send_watch);
 		j->send_watch = NULL;
 	}
-
+	if (j->newsgroup)
+		j->newsgroup->state = NNTP_IDLE;
 	j->newsgroup = NULL;
 
 	j->last_code	= -1;
