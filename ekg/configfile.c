@@ -88,8 +88,10 @@ void config_postread()
 		                char *session_name = xstrndup(targets[i], xstrlen(targets[i]) - xstrlen(tmp));
 				session_t *s;
 
-		                if (!(s = session_find(session_name)))
+		                if (!(s = session_find(session_name))) {
+					xfree(session_name);
 					continue;
+				}
 
 		                tmp++;
 				strip_spaces(tmp);
