@@ -78,7 +78,7 @@ static QUERY(feed_session) {
 					j->private = nntp_protocol_init();
 		s->priv			= j;
 		userlist_read(s);
-	} else if (s->priv) {
+	} else if (!data && s->priv) {
 		feed_private_t *j 	= s->priv;
 		userlist_write(s);
 		s->priv			= NULL;
@@ -191,7 +191,8 @@ static QUERY(rss_message) {
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
 			print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
-
+			
+			xfree(formated);
 			xfree(formatka);
 		}
 		if (body) print_window(uid, s, 1, "feed_message_body", "");	/* rozdziel */

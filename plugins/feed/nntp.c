@@ -548,6 +548,7 @@ static WATCHER_LINE(nntp_handle_stream) {
 
 	if (type == 1) {
 		nntp_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_NETWORK);
+		xfree(data);
 		return 0;
 	}
 
