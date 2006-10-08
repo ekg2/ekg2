@@ -788,6 +788,7 @@ static COMMAND(cmd_for)
 				if (!(s[i] = session_find(tmp[i]))) {
 					printq("session_doesnt_exist", tmp[i]);
 					xfree(s);
+					array_free(tmp);
 					return -1;
 				}
 			}		
@@ -806,7 +807,7 @@ static COMMAND(cmd_for)
 				command_exec(NULL, s[i], for_command, 0);
 				xfree(for_command);
 			}
-	
+			array_free(tmp);
 			xfree(s);
 		}
 	} else if (match_arg(params[0], 'u', ("users"), 2)) {
@@ -858,6 +859,7 @@ static COMMAND(cmd_for)
                         for (i = 0; tmp[i]; i++) {
                                 if (!(u[i] = userlist_find(session, tmp[i]))) {
                                         printq("user_not_found", tmp[i]);
+					array_free(tmp);
                                         xfree(u);
 					return -1;
                                 }
@@ -877,7 +879,7 @@ static COMMAND(cmd_for)
                                 command_exec(NULL, session, for_command, 0);
                                 xfree(for_command);
                         }
-
+			array_free(tmp);
                         xfree(u);
                 }
 	} else if (match_arg(params[0], 'w', ("windows"), 2)) {
@@ -939,6 +941,7 @@ static COMMAND(cmd_for)
 			
 				if (!found) {
 		                        printq("window_doesnt_exist", tmp[i]);
+					array_free(tmp);
                                         xfree(w);
 					return -1;
 				}
@@ -957,7 +960,7 @@ static COMMAND(cmd_for)
                                 command_exec(NULL, session, for_command, 0);
                                 xfree(for_command);
                         }
-
+			array_free(tmp);
                         xfree(w);
                 }
 	} else {
