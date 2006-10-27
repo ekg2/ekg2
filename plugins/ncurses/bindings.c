@@ -295,7 +295,7 @@ static BINDING_FUNCTION(binding_word_rubout)
 
 	p = __SPTR(line, line_index);
 	
-	if (__S(p, -1)) {
+	if (xisspace(__S(p, -1))) {
 		while (p > line && xisspace(__S(p, -1))) {
 			__SN(&p, -1);	/* p-- */
 			eaten++;
