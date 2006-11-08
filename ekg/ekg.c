@@ -598,7 +598,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 		xfree(tmp);
 		tmp = NULL;
 
-		if (line->str[xstrlen(line->str) - 1] == '\n') {
+		if (line->str[line->len - 1] == '\n') {
 			tmp = string_free(line, 0);
 			line = NULL;
 		}
