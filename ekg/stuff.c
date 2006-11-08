@@ -2048,10 +2048,13 @@ static char base64_charset[] =
  *
  * zaalokowany bufor.
  */
-char *base64_encode(const char *buf)
+char *base64_encode(const char *buf, size_t len)
 {
 	char *out, *res;
-	int i = 0, j = 0, k = 0, len = xstrlen(buf);
+	int i = 0, j = 0, k = 0;
+
+	if (!buf) return NULL;
+/*	if (!len) return NULL; */
 	
 	res = out = xmalloc((len / 3 + 1) * 4 + 2);
 
@@ -2107,13 +2110,14 @@ char *base64_decode(const char *buf)
 	char *res, *save, *foo, val;
 	const char *end;
 	int index = 0;
+	size_t buflen;
 
-	if (!buf)
+	if (!buf || !(buflen = xstrlen(buf)))
 		return NULL;
 
-	save = res = xcalloc(1, (xstrlen(buf) / 4 + 1) * 3 + 2);
+	save = res = xcalloc(1, (buflen / 4 + 1) * 3 + 2);
 
-	end = buf + xstrlen(buf) - 1;
+	end = buf + buflen - 1;
 
 	while (*buf && buf < end) {
 		if (*buf == '\r' || *buf == '\n') {

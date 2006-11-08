@@ -247,7 +247,7 @@ int session_status_set(session_t *s, const char *status)
 int session_password_set(session_t *s, const char *password)
 {
 	xfree(s->password);
-	s->password = (password) ? base64_encode(password) : NULL;
+	s->password = (password) ? base64_encode(password, xstrlen(password)) : NULL;
 	return 0;
 }
 

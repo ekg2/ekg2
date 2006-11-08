@@ -252,7 +252,7 @@ int alias_add(const char *string, int quiet, int append);
 int alias_remove(const char *name, int quiet);
 void alias_free();
 
-char *base64_encode(const char *buf);
+char *base64_encode(const char *buf, size_t len);
 char *base64_decode(const char *buf);
 
 void binding_list(int quiet, const char *name, int all);
