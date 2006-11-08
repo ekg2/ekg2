@@ -134,7 +134,7 @@ typedef struct {
 	int istlen;			/* czy to tlen? */
 
 #ifdef JABBER_HAVE_SSL
-	char using_ssl;			/* czy polaczono uzywajac ssl */
+	char using_ssl;			/* czy polaczono uzywajac ssl */	/* 1 - tak, uzywamy SSL, 2 - tak, uzywamy TLS */
 	SSL_SESSION ssl_session;	/* sesja ssla */
 #ifdef JABBER_HAVE_GNUTLS
 	gnutls_certificate_credentials xcred;
@@ -144,7 +144,7 @@ typedef struct {
 	XML_Parser parser;		/* instancja parsera expata */
 	char *server;			/* nazwa serwera */
 	int port;			/* numer portu */
-	int connecting;			/* czy siê w³a¶nie ³±czymy? */
+	int connecting;			/* czy siê w³a¶nie ³±czymy? */		/* 1 - normalne laczenie, 2 - laczenie po SASLu */
 	char *resource;		/* resource jakie uzylismy przy laczeniu sie do jabberd */
 
 	list_t privacy;			/* for jabber:iq:privacy */
@@ -165,15 +165,17 @@ extern plugin_t jabber_plugin;
 extern char *jabber_default_search_server;
 
 void jabber_register_commands(void);
+XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);
 
 int JABBER_COMMIT_DATA(watch_t *w);
 void jabber_handle(void *data, xmlnode_t *n);
 
-char *jabber_attr(char **atts, const char *att);
+/* digest.c hashowanie.. */
 char *jabber_digest(const char *sid, const char *password);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
+char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm);
 
-void jabber_initialize_conversions(char *varname);
+char *jabber_attr(char **atts, const char *att);
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
 char *tlen_encode(const char *what);

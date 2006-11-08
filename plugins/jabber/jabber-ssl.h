@@ -34,7 +34,8 @@
 # define SSL_RECV(session, buf, size)	gnutls_record_recv(session, buf, size)
 
 #else				/* HAVE_OPENSSL */
-#include <openssl/ssl.h>
+# include <openssl/ssl.h>
+# include <openssl/err.h>
 
 extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 
@@ -45,7 +46,7 @@ extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 # define SSL_DEINIT(session)		SSL_free(session)
 # define SSL_GLOBAL_INIT()		SSL_library_init(); jabberSslCtx = SSL_CTX_new(SSLv23_client_method())
 # define SSL_GLOBAL_DEINIT()		SSL_CTX_free(jabberSslCtx)
-# define SSL_ERROR(retcode)		NULL		/* retcode need be value from SSL_get_error(session, res) */
+# define SSL_ERROR(retcode)		ERR_error_string(retcode, NULL)		/* retcode need be value from SSL_get_error(session, res) */
 # define SSL_E_AGAIN(ret)		((ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE))
 
 # define SSL_SEND(session, str)		SSL_write(session, str, xstrlen(str))

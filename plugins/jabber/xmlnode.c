@@ -36,7 +36,7 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
 	int i;
 
 	if (!s || !(j = session_private_get(s)) || !name) {
-		debug("[jabber] xmlnode_handle_end() invalid parameters\n");
+		debug_error("[jabber] xmlnode_handle_end() invalid parameters\n");
 		return;
 	}
 
@@ -79,11 +79,9 @@ void xmlnode_handle_end(void *data, const char *name)
 	jabber_private_t *j;
 
 	if (!s || !(j = session_private_get(s)) || !name) {
-		debug("[jabber] xmlnode_handle_end() invalid parameters\n");
+		debug_error("[jabber] xmlnode_handle_end() invalid parameters\n");
 		return;
 	}
-
-//	debug("[jabber] xmlnode_handle_end(\"%s\")\n", name);
 
 	if (!(n = j->node)) {
 		debug("[jabber] end tag within <stream>, ignoring\n");
@@ -91,17 +89,13 @@ void xmlnode_handle_end(void *data, const char *name)
 	}
 
 	if (!n->parent) {
-//		debug("[jabber] finished parsing <%s></%s>\n", name, name);
 		jabber_handle(data, n);
 		xmlnode_free(n);
 		j->node = NULL;
 		return;
 	} else {
-//		debug("[jabber] finished parsing <%s></%s>, going up\n", name, name);
 		j->node = n->parent;
 	}
-
-//	debug("[jabber] current node is now <%s>\n", j->node->name);
 }
 
 void xmlnode_handle_cdata(void *data, const char *text, int len)
@@ -113,14 +107,12 @@ void xmlnode_handle_cdata(void *data, const char *text, int len)
 	int oldlen;
 
 	if (!s || !(j = session_private_get(s)) || !text) {
-		debug("[jabber] xmlnode_handle_cdata() invalid parameters\n");
+		debug_error("[jabber] xmlnode_handle_cdata() invalid parameters\n");
 		return;
 	}
 
-	if (!(n = j->node)) {
-		debug("[jabber] cdata within <stream>, ignoring\n");
+	if (!(n = j->node))
 		return;
-	}
 
 	oldlen = xstrlen(n->data);
 	n->data = xrealloc(n->data, oldlen + len + 1);

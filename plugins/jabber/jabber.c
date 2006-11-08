@@ -71,7 +71,7 @@ char *jabber_dcc_ip = NULL;
 char *jabber_default_search_server = NULL;
 
 static int jabber_theme_init();
-static WATCHER(jabber_handle_connect_tls);
+static WATCHER(jabber_handle_connect_ssl);
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
@@ -160,8 +160,8 @@ WATCHER(jabber_dcc_handle_recv) {
 				if (len == 0) { close(fd); return -1; }
 				buf[len] = 0;
 
-				if (buf[0] != 5) { debug("SOCKS5: protocol mishmash\n"); return -1; }
-				if (buf[1] != 0) { debug("SOCKS5: reply error: %x\n", buf[1]); return -1; }
+				if (buf[0] != 5) { debug_error("SOCKS5: protocol mishmash\n"); return -1; }
+				if (buf[1] != 0) { debug_error("SOCKS5: reply error: %x\n", buf[1]); return -1; }
 
 				switch (b->step) {
 					case (SOCKS5_CONNECT): {
@@ -200,7 +200,7 @@ WATCHER(jabber_dcc_handle_recv) {
 						return 0;
 					}
 				default:
-					debug("SOCKS5: UNKNOWN STATE: %x\n", b->step);
+					debug_error("SOCKS5: UNKNOWN STATE: %x\n", b->step);
 					close(fd);
 					return -1;
 				}
@@ -227,7 +227,7 @@ WATCHER(jabber_dcc_handle_recv) {
 			break;
 		}
 		default:
-			debug("jabber_dcc_handle_recv() UNIMPLEMENTED PROTOTYPE: %x\n", p->protocol);
+			debug_error("jabber_dcc_handle_recv() UNIMPLEMENTED PROTOTYPE: %x\n", p->protocol);
 	}
 	return 0;
 }
@@ -245,7 +245,7 @@ WATCHER(jabber_dcc_handle_send) {  /* XXX, try merge with jabber_dcc_handle_recv
 	}
 
 	if (!d->active) return 0; /* we must wait untill stream will be accepted... BLAH! awful */
-	debug("jabber_dcc_handle_send() ready: %d type: %d fd: %d filename: %s --- data = 0x%x\n", d->active, type, fd, d->filename, data);
+	debug_error("jabber_dcc_handle_send() ready: %d type: %d fd: %d filename: %s --- data = 0x%x\n", d->active, type, fd, d->filename, data);
 
 
 	flen = sizeof(buf);
@@ -260,10 +260,10 @@ WATCHER(jabber_dcc_handle_send) {  /* XXX, try merge with jabber_dcc_handle_recv
 
 	len = write(fd, (char *) &buf, flen);
 
-	debug("jabber_dcc_handle_send() write(): %d offset: %d ", len, d->offset);
+	debug_error("jabber_dcc_handle_send() write(): %d offset: %d ", len, d->offset);
 
 	d->offset += len;
-	debug("rest: %d\n", d->size-d->offset);
+	debug_function("rest: %d\n", d->size-d->offset);
 
 	if (d->offset /* == */ >= d->size) {
 		close(fd);
@@ -285,9 +285,9 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 
 	if (len < 1) return -1;
 	buf[len] = 0;
-	debug("jabber_dcc_handle_accepted() read: %d bytes data: %s\n", len, buf);
+	debug_function("jabber_dcc_handle_accepted() read: %d bytes data: %s\n", len, buf);
 
-	if (buf[0] != 0x05) { debug("SOCKS5: protocol mishmash\n"); return -1; }
+	if (buf[0] != 0x05) { debug_error("SOCKS5: protocol mishmash\n"); return -1; }
 
 	if (buf[1] == 0x02 /* SOCKS5 AUTH */) {
 		char req[2];
@@ -329,7 +329,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 					/*            DCC_GET  initiator -- D->uid+4	*/
 					this_sha1 = jabber_dcc_digest(p->sid, fulluid, D->uid+4);
 
-					debug("[JABBER_DCC_ACCEPTED] SHA1: %s THIS: %s (session: %s)\n", sha1, this_sha1, fulluid);
+					debug_function("[JABBER_DCC_ACCEPTED] SHA1: %s THIS: %s (session: %s)\n", sha1, this_sha1, fulluid);
 					if (!xstrcmp(sha1, this_sha1)) {
 						d = D;
 						break;
@@ -340,7 +340,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 		}
 
 		if (!d) {
-			debug("[JABBER_DCC_ACCEPTED] SHA1 HASH NOT FOUND: %s\n", sha1);
+			debug_error("[JABBER_DCC_ACCEPTED] SHA1 HASH NOT FOUND: %s\n", sha1);
 			/* XXX */
 			return -1;
 		}
@@ -374,11 +374,11 @@ WATCHER(jabber_dcc_handle_accept) {
 	}
 
 	if ((newfd = accept(fd, (struct sockaddr *) &sin, &sin_len)) == -1) {
-		debug("jabber_dcc_handle_accept() accept() FAILED (%s)\n", strerror(errno));
+		debug_error("jabber_dcc_handle_accept() accept() FAILED (%s)\n", strerror(errno));
 		return -1;
 	}
 
-	debug("jabber_dcc_handle_accept() accept() fd: %d\n", newfd);
+	debug_function("jabber_dcc_handle_accept() accept() fd: %d\n", newfd);
 	watch_add(&jabber_plugin, newfd, WATCH_READ, jabber_dcc_handle_accepted, NULL);
 	return 0;
 }
@@ -389,7 +389,7 @@ int jabber_dcc_init(int port) {
 	int fd;
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		debug("jabber_dcc_init() socket() FAILED (%s)\n", strerror(errno));
+		debug_error("jabber_dcc_init() socket() FAILED (%s)\n", strerror(errno));
 		return -1;
 	}
 
@@ -398,17 +398,21 @@ int jabber_dcc_init(int port) {
 	sin.sin_port = htons(port);
 
 	while (bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in))) {
-		debug("jabber_dcc_init() bind() port: %d FAILED (%s)\n", port, strerror(errno));
+		debug_error("jabber_dcc_init() bind() port: %d FAILED (%s)\n", port, strerror(errno));
 		port++;
-		if (port > 65535) return -1;
+		if (port > 65535) {
+			close(fd);
+			return -1;
+		}
 
 		sin.sin_port = htons(port);
 	}
 	if (listen(fd, 10)) {
-		debug("jabber_dcc_init() listen() FAILED (%s)\n", strerror(errno));
+		debug_error("jabber_dcc_init() listen() FAILED (%s)\n", strerror(errno));
+		close(fd);
 		return -1;
 	}
-	debug("jabber_dcc_init() SUCCESSED fd:%d port:%d\n", fd, port);
+	debug_function("jabber_dcc_init() SUCCESSED fd:%d port:%d\n", fd, port);
 
 	watch_add(&jabber_plugin, fd, WATCH_READ, jabber_dcc_handle_accept, NULL);
 
@@ -446,18 +450,18 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const char *sid) {
 #define DCC_RULE(x) (!xstrncmp(x->uid, "jid:", 4) && !xstrcmp(x->uid+4, uin))
 	list_t l;
-	if (!id && !sid) { debug("jabber_dcc_find() neither id nor sid passed.. Returning NULL\n"); return NULL; }
+	if (!id && !sid) { debug_error("jabber_dcc_find() neither id nor sid passed.. Returning NULL\n"); return NULL; }
 
 	for (l = dccs; l; l = l->next) {
 		dcc_t *d = l->data;
 		jabber_dcc_t *p = d->priv;
 
 		if (DCC_RULE(d) && (!sid || !xstrcmp(p->sid, sid)) && (!id || !xstrcmp(p->req, id))) {
-			debug("jabber_dcc_find() %s sid: %s id: %s founded: 0x%x\n", uin, sid, id, d);
+			debug_function("jabber_dcc_find() %s sid: %s id: %s founded: 0x%x\n", uin, sid, id, d);
 			return d;
 		}
 	}
-	debug("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", uin, sid);
+	debug_error("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", uin, sid);
 	return NULL;
 }
 #endif
@@ -632,6 +636,9 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
         if (!j)
                 return;
 
+        session_connected_set(s, 0);
+        j->connecting = 0;
+
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;
 		watch_free(j->send_watch);
@@ -640,15 +647,12 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 
 	if (j->connecting)
 		watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
+	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
+
 #ifdef JABBER_HAVE_SSL
         if (j->using_ssl && j->ssl_session)
 		SSL_BYE(j->ssl_session);
 #endif
-        session_connected_set(s, 0);
-        j->connecting = 0;
-        if (j->parser)
-                XML_ParserFree(j->parser);
-        j->parser = NULL;
         close(j->fd);
         j->fd = -1;
 
@@ -658,6 +662,11 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 	j->using_ssl	= 0;
 	j->ssl_session	= NULL;
 #endif
+
+        if (j->parser)
+                XML_ParserFree(j->parser);
+        j->parser = NULL;
+	session_set(s, "__sasl_excepted", NULL);
 
 	{
 		char *__session = xstrdup(session_uid_get(s));
@@ -678,7 +687,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 
         if (!session_connected_get(s) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		const char *passwd	= session_get(s, "password");
-                char *resource	= jabber_escape(session_get(s, "resource"));
+		char *resource		= jabber_escape(session_get(s, "resource"));
 		char *epasswd		= NULL;
 
                 char *username;
@@ -688,7 +697,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		else 		username = xstrdup(s->uid + 5);
 		*(xstrchr(username, '@')) = 0;
 	
-		if (session_get(s, "__new_acount")) {
+		if (!j->istlen && session_get(s, "__new_acount")) {
 			epasswd		= jabber_escape(passwd);
 			watch_write(j->send_watch, 
 				"<iq type=\"set\" to=\"%s\" id=\"register%d\">"
@@ -699,8 +708,13 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
                 if (!resource)
                         resource = xstrdup(JABBER_DEFAULT_RESOURCE);
 
-		stream_id = jabber_attr((char **) atts, 
-					j->istlen ? "i" : "id");
+		xfree(j->resource);
+		j->resource = resource;
+
+		if (!j->istlen && session_int_get(s, "use_sasl") == 1) {
+			xfree(username);	/* waste */
+			return;
+		}
 
 		/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
 		if (j->istlen) {
@@ -715,26 +729,26 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 			magic1 &= 0x7fffffff;
 			magic2 &= 0x7fffffff;
 
-			passwd = saprintf("%08x%08x", magic1, magic2);
+			epasswd = passwd = saprintf("%08x%08x", magic1, magic2);
 		} else if (session_int_get(s, "plaintext_passwd") && !epasswd) {
 			epasswd = jabber_escape(passwd);
 		}
 
+		stream_id = jabber_attr((char **) atts, 
+					j->istlen ? "i" : "id");
+
 		authpass = (!j->istlen && session_int_get(s, "plaintext_passwd")) ? 
 			saprintf("<password>%s</password>", epasswd) :			/* plaintext */
 			saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd));	/* hash */
+
 		watch_write(j->send_watch, 
 			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", 
 			j->server, username, authpass, resource);
                 xfree(username);
 		xfree(authpass);
 
-		if (j->istlen) xfree((char *) passwd);
 		xfree(epasswd);
-
-		xfree(j->resource);
-		j->resource = resource;
-        } else
+	} else
 		xmlnode_handle_start(data, name, atts);
 }
 
@@ -743,6 +757,7 @@ static WATCHER(jabber_handle_stream)
         jabber_handler_data_t *jdh	= (jabber_handler_data_t *) data;
         session_t *s			= (session_t *) jdh->session;
         jabber_private_t *j		= session_private_get(s);
+	XML_Parser parser;				/* j->parser */
         char *buf;
         int len;
 
@@ -760,8 +775,9 @@ static WATCHER(jabber_handle_stream)
         }
 
 	debug_function("[jabber] jabber_handle_stream()\n");
+	parser = j->parser;
 
-        if (!(buf = XML_GetBuffer(j->parser, 4096))) {
+        if (!(buf = XML_GetBuffer(parser, 4096))) {
 		jabber_handle_disconnect(s, "XML_GetBuffer failed", EKG_DISCONNECT_FAILURE);
                 return -1;
         }
@@ -800,12 +816,16 @@ static WATCHER(jabber_handle_stream)
 
         buf[len] = 0;
 
-	debug_iorecv("[jabber] recv %s\n", buf);
+	debug_iorecv("[jabber] (%db) recv: %s\n", len, buf);
 
-        if (!XML_ParseBuffer(j->parser, len, (len == 0))) {
+        if (!XML_ParseBuffer(parser, len, (len == 0))) {
                 print("jabber_xmlerror", session_name(s));
+		debug_error("jabber_xmlerror: %s\n", XML_ErrorString(XML_GetErrorCode(parser)));
+
+		if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
                 return -1;
         }
+	if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
 
         return 0;
 }
@@ -836,7 +856,7 @@ static TIMER(jabber_ping_timer_handler) {
 static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 	session_t *s = (session_t *) data;
 	if (type) return 0;
-	debug("Connecting to HUB, currectly not works ;/");
+	debug_error("Connecting to HUB, currectly not works ;/");
 	jabber_handle_disconnect(s, "Unimplemented do: /eval \"/session server s1.tlen.pl\" \"/session port 443\" \"/connect\" sorry.", EKG_DISCONNECT_FAILURE);
 	return -1;
 
@@ -879,15 +899,28 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 			*header = '\0';
 			body += 4;
 			if (xstrstr(buf, " 200 ")) {
-				debug("[TLEN, HUB]: %s\n", body);
+				debug_function("[TLEN, HUB]: %s\n", body);
 				return -1;
 			}
-		} else debug("[TLEN, HUB]: FAILED\n");
+		} else debug_error("[TLEN, HUB]: FAILED\n");
 
 		if (len == 0)	return -1;
 		else		return 0;
 	} else return -1;
 #endif
+}
+
+XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
+/*	debug_function("jabber_parser_recreate() 0x%x 0x%x\n", parser, data); */
+
+	if (!parser) 	parser = XML_ParserCreate("UTF-8");	/*   new parser */
+	else		XML_ParserReset(parser, "UTF-8");	/* reset parser */
+
+	XML_SetUserData(parser, (void*) data);
+	XML_SetElementHandler(parser, (XML_StartElementHandler) jabber_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
+	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
+
+	return parser;
 }
 
 static WATCHER(jabber_handle_connect) /* tymczasowy */
@@ -899,7 +932,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
         int res = 0, res_size = sizeof(res);
 	char *tname;
 
-        debug("[jabber] jabber_handle_connect()\n");
+        debug_function("[jabber] jabber_handle_connect()\n");
 
         if (type) {
                 return 0;
@@ -922,17 +955,14 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 #endif
 	if (!(j->istlen))
 		watch_write(j->send_watch, 
-			"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\">", 
+			"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">", 
 			j->server);
 	else {
 		watch_write(j->send_watch, "<s v=\'2\'>");
 	}
 
         j->id = 1;
-        j->parser = XML_ParserCreate("UTF-8");
-        XML_SetUserData(j->parser, (void*) jdh);
-        XML_SetElementHandler(j->parser, (XML_StartElementHandler) jabber_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
-        XML_SetCharacterDataHandler(j->parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
+	j->parser = jabber_parser_recreate(NULL, jdh);
 
 	if (j->istlen || (session_int_get(s, "ping-server") != 0)) {
 		tname = saprintf("ping-%s", s->uid+4);
@@ -967,7 +997,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
                 return 0;
 	}
 
-        debug("[jabber] jabber_handle_resolver()\n", type);
+        debug_function("[jabber] jabber_handle_resolver()\n", type);
 #ifdef NO_POSIX_SYSTEM
 	int ret = ReadFile(fd, &a, sizeof(a), &res, NULL);
 #else
@@ -975,9 +1005,9 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 #endif
 	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
                 if (res == -1)
-                        debug("[jabber] unable to read data from resolver: %s\n", strerror(errno));
+                        debug_error("[jabber] unable to read data from resolver: %s\n", strerror(errno));
                 else
-                        debug("[jabber] read %d bytes from resolver. not good\n", res);
+                        debug_error("[jabber] read %d bytes from resolver. not good\n", res);
                 close(fd);
                 print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
                 /* no point in reconnecting by jabber_handle_disconnect() */
@@ -985,7 +1015,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
                 return -1;
         }
 
-        debug("[jabber] resolved to %s\n", inet_ntoa(a));
+        debug_function("[jabber] resolved to %s\n", inet_ntoa(a));
 #ifdef NO_POSIX_SYSTEM
 	CloseHandle((HANDLE) fd);
 #else
@@ -993,17 +1023,17 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 #endif
 
         if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-                debug("[jabber] socket() failed: %s\n", strerror(errno));
+                debug_error("[jabber] socket() failed: %s\n", strerror(errno));
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
                 return -1;
         }
 
-        debug("[jabber] socket() = %d\n", fd);
+        debug_function("[jabber] socket() = %d\n", fd);
 
         j->fd = fd;
 
         if (ioctl(fd, FIONBIO, &one) == -1) {
-                debug("[jabber] ioctl() failed: %s\n", strerror(errno));
+                debug_error("[jabber] ioctl() failed: %s\n", strerror(errno));
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
                 return -1;
         }
@@ -1025,7 +1055,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 
 	sin.sin_port = htons(j->port);
 
-        debug("[jabber] connecting to %s:%d\n", inet_ntoa(sin.sin_addr), j->port);
+        debug_function("[jabber] connecting to %s:%d\n", inet_ntoa(sin.sin_addr), j->port);
 
         res = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
@@ -1036,7 +1066,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 		errno != EINPROGRESS
 #endif
 		) {
-                debug("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
+                debug_error("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
                 return -1;
         }
@@ -1047,14 +1077,14 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 #ifdef JABBER_HAVE_OPENSSL
 		if (!(j->ssl_session = SSL_new(jabberSslCtx))) {
 			print("conn_failed_tls");
-			jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_FAILURE);
+			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
 			return -1;
 		}
 		if (SSL_set_fd(j->ssl_session, fd) == 0) {
 			print("conn_failed_tls");
 			SSL_free(j->ssl_session);
 			j->ssl_session = NULL;
-			jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_FAILURE);
+			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
 			return -1;
 		}
 #endif
@@ -1080,7 +1110,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
                 gnutls_transport_set_push_function(j->ssl_session, (gnutls_push_func)write);
 		SSL_SET_FD(j->ssl_session, j->fd);
 #endif
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_tls, s);
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_ssl, s);
 		return -1;
         } // use_ssl
 #endif
@@ -1090,7 +1120,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 }
 
 #ifdef JABBER_HAVE_SSL
-static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
+static WATCHER(jabber_handle_connect_ssl) /* tymczasowy */
 {
         session_t *s = (session_t *) data;
         jabber_private_t *j = session_private_get(s);
@@ -1101,51 +1131,44 @@ static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 
 	ret = SSL_HELLO(j->ssl_session);
 #ifdef JABBER_HAVE_OPENSSL
-	debug("SSL_connect() returns: %d\n", ret);
-
 	if (ret == -1) {
 		ret = SSL_get_error(j->ssl_session, ret);
+#else
+	{
+#endif
+		if (SSL_E_AGAIN(ret)) {
+			int newfd, direc;
+#ifdef JABBER_HAVE_OPENSSL
+			direc = (ret != SSL_ERROR_WANT_READ) ? WATCH_WRITE : WATCH_READ;
+			newfd = fd;
+#else
+			direc = gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ;
+			newfd = (int) gnutls_transport_get_ptr(j->ssl_session);
+#endif
 
-		if (ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE) {
-			int direc = (ret != SSL_ERROR_WANT_READ) ? WATCH_WRITE : WATCH_READ;
-
-			if (direc == watch) {
+			/* don't create && destroy watch if data is the same... */
+			if (newfd == fd && direc == watch) {
+				ekg_yield_cpu();
 				return 0;
 			}
 
-			watch_add(&jabber_plugin, fd, direc, jabber_handle_connect_tls, s);
+			watch_add(&jabber_plugin, fd, direc, jabber_handle_connect_ssl, s);
+			ekg_yield_cpu();
 			return -1;
 		} else {
-			jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_FAILURE);
-		}
-	}
-
-#endif
-
 #ifdef JABBER_HAVE_GNUTLS
-	if ((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN)) {
-		int newfd = (int) gnutls_transport_get_ptr(j->ssl_session);
-		int direc = gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ;
+			if (ret >= 0) goto gnutls_ok;	/* gnutls was ok */
 
-		/* don't create/destroy watch if data is the same... */
-		if (newfd == fd && direc == watch) {
-			ekg_yield_cpu();
-			return 0;
-		}
-
-		watch_add(&jabber_plugin, newfd, direc, jabber_handle_connect_tls, s);
-
-		ekg_yield_cpu();
-		return -1;
-
-	} else if (ret < 0) {
-		SSL_DEINIT(j->ssl_session);
-		gnutls_certificate_free_credentials(j->xcred);
-		j->using_ssl = 0;	/* XXX, hack, peres has reported that here j->using_ssl can be 1 (how possible?) hack to avoid double free */
-		jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-		return -1;
-	}
+			SSL_DEINIT(j->ssl_session);
+			gnutls_certificate_free_credentials(j->xcred);
+			j->using_ssl = 0;	/* XXX, hack, peres has reported that here j->using_ssl can be 1 (how possible?) hack to avoid double free */
 #endif
+			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
+			return -1;
+
+		}
+	}
+gnutls_ok:
 	// handshake successful
 	j->using_ssl = 1;
 
@@ -1241,8 +1264,7 @@ static int jabber_theme_init() {
 	format_add("jabber_auth_cancel", _("%> (%2) Authorisation for %T%1%n revoked.\n"), 1);
 	format_add("jabber_auth_denied", _("%> (%2) Authorisation for %T%1%n denied.\n"), 1);
 	format_add("jabber_auth_probe", _("%> (%2) Sent presence probe to %T%1%n.\n"), 1);
-	format_add("jabber_generic_conn_failed", _("%! (%1) Error connecting to Jabber server%n\n"), 1);
-	format_add("jabber_resource_another", _("%> (%1) Another resource: %2/%3 (%4) is %5: %6"), 1); /* %1 session, %2: jid:cos %3: resource %4 priority %5 statustype %6 descr */
+
 	format_add("jabber_msg_failed", _("%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"),1);
 	format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
 	format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
@@ -1410,8 +1432,10 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, "5223", 0, NULL);
-        plugin_var_add(&jabber_plugin, "show_typing_notify", VAR_INT, "1", 0, NULL);
-        plugin_var_add(&jabber_plugin, "use_ssl", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&jabber_plugin, "show_typing_notify", VAR_BOOL, "1", 0, NULL);
+	plugin_var_add(&jabber_plugin, "use_sasl", VAR_BOOL, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "use_tls", VAR_BOOL, "0", 0, NULL);
+        plugin_var_add(&jabber_plugin, "use_ssl", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0, NULL);

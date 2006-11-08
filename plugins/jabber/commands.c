@@ -328,7 +328,6 @@ static COMMAND(jabber_command_disconnect)
 {
 	jabber_private_t *j = session_private_get(session);
 	char *descr = NULL;
-	int fd = j->fd;
 
 	/* jesli istnieje timer reconnecta, to znaczy, ze przerywamy laczenie */
 	if (timer_remove(&jabber_plugin, "reconnect") == 0) {
@@ -352,25 +351,23 @@ static COMMAND(jabber_command_disconnect)
 
 /* w libtlenie jest <show>unavailable</show> + eskejpiete tlen_encode() */
 
-	if (descr) {
-		char *tmp = jabber_escape(descr);
-		watch_write(j->send_watch, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp ? tmp : "");
-		xfree(tmp);
-	} else
-		watch_write(j->send_watch, "<presence type=\"unavailable\"/>");
+	if (session->connected) {
+		if (descr) {
+			char *tmp = jabber_escape(descr);
+			watch_write(j->send_watch, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp ? tmp : "");
+			xfree(tmp);
+		} else
+			watch_write(j->send_watch, "<presence type=\"unavailable\"/>");
+	}
 
 	if (!j->istlen) watch_write(j->send_watch, "</stream:stream>");
 	else		watch_write(j->send_watch, "</s>");
-
-	if (j->connecting) 
-		j->connecting = 0;
 
 	userlist_free(session);
 	if (j->connecting)
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_STOPPED);
 	else
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_USER);
-	watch_remove(&jabber_plugin, fd, WATCH_READ);
 	xfree(descr);
 	return 0;
 }
