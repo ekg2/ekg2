@@ -430,113 +430,121 @@ char *va_format_string(const char *format, va_list ap) {
  * zwraca zaalokowan± fstring_t.
  */
 
-/* XXX, parsing \033 is wrong, need rewrite (dj) */
 fstring_t *fstring_new(const char *str) {
-        fstring_t *res = xmalloc(sizeof(fstring_t));
+#define NPAR 16 		/* ECMA-48 CSI have got max 16 params (NPAR) defined in <linux/console_struct.h> */
+        fstring_t *res;
 	char *tmpstr;
         short attr = 128;
         int i, j, len = 0, isbold = 0;
 
+	for (i = 0; str[i]; i++) {
+		if (str[i] == 27) {
+			int parcount = 0;
+			if (str[i + 1] != '[')
+				continue;
+			i += 2;		/* skip begining */
+			while ((str[i] == ';' && parcount++ < NPAR-1) || (str[i] >= '0' && str[i] <= '9'))	/* find max NPAR-1 seq */
+				i++;
+			if (str[i] == 'm') i++;		/* skip 'm' */
+			i--;
+
+			continue;
+		}
+
+		if (str[i] == 9) {
+			len += (8 - (len % 8));
+			continue;
+		}
+
+
+		if (str[i] == 13)
+			continue;
+
+		len++;
+	}
+
+	res			= xmalloc(sizeof(fstring_t));
+	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
+        res->attr		= xmalloc((len + 1) * sizeof(short));
+
         res->margin_left = -1;
-
-        for (i = 0; str[i]; i++) {
-                if (str[i] == 27) {
-                        if (str[i + 1] != '[')
-                                continue;
-
-                        while (str[i] && !isalpha_pl_PL(str[i]))
-                                i++;
-
-                        i--;
-
-                        continue;
-                }
-
-                if (str[i] == 9) {
-                        len += (8 - (len % 8));
-                        continue;
-                }
-
-                if (str[i] == 13)
-                        continue;
-
-                len++;
-        }
-
-        tmpstr = xmalloc((len + 1) * sizeof(char));
-        res->attr = xmalloc((len + 1) * sizeof(short));
+/*
         res->prompt_len = 0;
         res->prompt_empty = 0;
+ */
 
         for (i = 0, j = 0; str[i]; i++) {
-                if (str[i] == 27) {
-                        int tmp = 0;
-                        int m, ism, once=1, deli;
-                        char *p;
+                if (str[i] == 27) {		/* ESC- */
+			unsigned short par[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
+			unsigned short parlen[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
+
+			int npar	= 0; 
 
                         if (str[i + 1] != ('['))
                                 continue;
-
                         i += 2;
 
-                        /* obs³uguje tylko "\033[...m", tak ma byæ */
-                        p=(char *)&(str[i]);
-                        while (1) {
-                                ism=deli=0;
-                                ism=sscanf(p, "%02d", &m);
-                                if (ism) {
-                                        p++; deli++; i++;
-                                        if(isdigit(*p)) { p++; deli++; i++; }
-                                        if(once && isdigit(*p)) { p++; deli++; i++; }
-                                }
-                                once = 0;
-                                if (*p == (';') || *p == ('m')) {
-                                        if (!ism)
-                                                goto wedonthavem;
-                                        if (m == 0) {
-                                                attr = 128;
-                                                isbold = 0;
-                                                if (deli >= 2)
-                                                        res->prompt_len = j;
-                                                if (i>3 && deli == 3)
-                                                        res->prompt_empty = 1;
-                                        }
-                                        else if (m == 1) /* bold */
-                                        {
-                                                if (*p == ('m') && !isbold)
-                                                        attr ^= 64;
-                                                if (*p == (';'))  {
-                                                        attr |= 64;
-                                                        isbold = 1;
-                                                }
-                                        }
-                                        else if (m == 2) {
-                                                attr &= (56);
-                                                isbold = 0;
-                                        } else if (m == 4) /* underline */
-                                                attr ^= 512;
-                                        else if (m == 5) /* blink */
-                                                attr ^= 256;
-                                        else if (m == 7) /* reverse */
-                                                attr ^= 1024;
-                                        else if (m>=30)
-                                                tmp = m;
-wedonthavem:
-                                        if (tmp >= 30 && tmp <= 37) {
-                                                attr &= ~(128+1+2+4);
-                                                attr |= (tmp - 30);
-                                        }
+			/* parse ECMA-48 CSI here & build data */
+			while (1) {	/* idea based from kernel sources */
+				char c = str[i++];
 
-                                        if (tmp >= 40 && tmp <= 47) {
-                                                attr &= ~(128+8+16+32);
-                                                attr |= (tmp - 40) << 3;
-                                        }
-                                        if (*p == (';')) { i++; p++; }
-                                }
-                                if (*p == 'm') break;
-                                tmp = 0;
-                        }
+				if (c == ';' && npar < NPAR -1) {	/* next param */
+					npar++;
+					continue;
+				} else if (c >= '0' && c <= '9') {	/* code */
+					par[npar] *= 10;			/* multiply current */
+					par[npar] += c - '0';		/* add current */
+					parlen[npar]++;			/* some old code must know sequence length... stupid */
+					continue;
+				} else {				/* params done */
+					break;
+				}
+			}
+			i--;
 
+			if (str[i] == 'm') {	/* parse sequence to internal attr we only parse seq like \033[...m */
+				int k;
+				for (k=0; k <= npar; k++) {
+					unsigned short cur = par[k];
+					switch (cur) {
+						case 0:				/* RESET */
+							attr = 128;
+							isbold = 0;
+							if (parlen[k] >= 2)
+								res->prompt_len = j;
+
+							if (parlen[k] == 3)
+								res->prompt_empty = 1;
+							break;
+						case 1: 			/* BOLD */
+							if (i == npar && !isbold)		/* if (*p == ('m') && !isbold) */
+								attr ^= 64;
+							else {					/* if (*p == (';')) */
+								attr |= 64;
+								isbold = 1;
+							}
+							break;
+						case 2:
+							attr &= (56);
+							isbold = 0;
+							break;
+						case 4:	attr ^= 512;	break;	/* UNDERLINE */
+						case 5: attr ^= 256;	break;	/* BLINK */
+						case 7: attr ^= 1024;	break;	/* REVERSE */
+					}
+
+					if (cur >= 30 && cur <= 37) {
+						attr &= ~(128+1+2+4);
+						attr |= (cur - 30);
+					}
+
+					if (cur >= 40 && cur <= 47) {
+						attr &= ~(128+8+16+32);
+						attr |= (cur - 48) << 3;
+					}
+				}
+			}
+//			else debug("Invalid/unsupported by ekg2 ECMA-48 CSI seq? (npar: %d)\n", npar);	/* sequence not ended with m */
                         continue;
                 }
 
@@ -567,10 +575,18 @@ wedonthavem:
                 res->attr[j] = attr;
                 j++;
         }
-        tmpstr[j] = (char) 0;
+/* XXX, if len < j, we are in trouble... */
 
+#if 0	/* testing pursuit only */
+	FILE *f = fopen("/home/darkjames/test.data", "a");
+	fprintf(f, "%.3d %.3d\t%s\n", len, j, len == j ? "MATCH" : len < j ? "LESS" : "MORE");
+	fclose(f);
+#endif
+
+/* 
+        tmpstr[j] = (char) 0;
         res->attr[j] = 0;
-	res->str = tmpstr;
+ */
 
         return res;
 }
