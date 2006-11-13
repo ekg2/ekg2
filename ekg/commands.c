@@ -107,6 +107,7 @@ int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
 
 list_t commands = NULL;
+list_t *commands_lock = NULL;
 
 /*
  * match_arg()
@@ -3999,6 +4000,17 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 	c->plugin = plugin;
 	c->possibilities = possibilities ? array_make(possibilities, " ", 0, 1, 1) : NULL;
 
+	if (commands_lock) {				/* if we lock commands */
+		if (*commands_lock == commands) {	/* if lock_command points to commands */
+			/* then we need to find place where to add it.. */
+			for (; *commands_lock && (command_add_compare((*commands_lock)->data, c) == 1); commands_lock = &((*commands_lock)->next));
+			if (*commands_lock) 
+				commands_lock = &((*commands_lock)->next);	/* if it wasn't last item, move to next */
+
+		} else		commands_lock = &((*commands_lock)->next);	/* otherwise if we have list... move to next */
+		list_add_beginning(commands_lock, c, 0);	/* add to commands */
+		return c;
+	}
 	return list_add_sorted(&commands, c, 0, command_add_compare);
 }
 
@@ -4075,6 +4087,40 @@ int command_remove(plugin_t *plugin, const char *name)
  */
 void command_init()
 {
+	commands_lock = &commands;
+
+	command_add(NULL, ("!"), "?", cmd_exec, 0, NULL);
+
+	command_add(NULL, ("?"), "c vS", cmd_help, 0, NULL);
+
+	command_add(NULL, ("_addtab"), "!", cmd_test_addtab, COMMAND_ENABLEREQPARAMS, NULL);
+
+	command_add(NULL, ("_debug"), "!", cmd_test_debug, COMMAND_ENABLEREQPARAMS, NULL);
+ 
+	command_add(NULL, ("_debug_dump"), NULL, cmd_test_debug_dump, 0, NULL);
+
+	command_add(NULL, ("_deltab"), "!", cmd_test_deltab, COMMAND_ENABLEREQPARAMS, NULL);
+
+	command_add(NULL, ("_desc"), "r", cmd_desc, 0, NULL);
+
+	command_add(NULL, ("_event_test"), "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
+
+	command_add(NULL, ("_fds"), NULL, cmd_test_fds, 0, NULL);
+
+	command_add(NULL, ("_mem"), NULL, cmd_test_mem, 0, NULL);
+
+	command_add(NULL, ("_msg"), "uUC ?", cmd_test_send, 0, NULL);
+
+	command_add(NULL, ("_queries"), NULL, cmd_debug_queries, 0, NULL);
+
+	command_add(NULL, ("_query"), "? ? ? ? ? ? ? ? ? ?", cmd_debug_query, 0,NULL); 
+
+	command_add(NULL, ("_segv"), NULL, cmd_test_segv, 0, NULL);
+
+	command_add(NULL, ("_streams"), "p ? ? ? ?", cmd_streams, 0, "-c --create -l --list");
+
+	command_add(NULL, ("_watches"), NULL, cmd_debug_watches, 0,NULL);
+
 	command_add(NULL, ("add"), "U ? p", cmd_add, 0, "-f --find");
 
 	command_add(NULL, ("alias"), "p ?", cmd_alias, 0,
@@ -4100,31 +4146,27 @@ void command_init()
 	
 	command_add(NULL, ("echo"), "?", cmd_echo, 0, NULL);
 	  
+	command_add(NULL, ("eval"), "!", cmd_eval, COMMAND_ENABLEREQPARAMS, NULL);
+
 	command_add(NULL, ("exec"), "p UuC ?", cmd_exec, 0,
 	  "-m --msg -b --bmsg");
-	
-	command_add(NULL, ("eval"), "!", cmd_eval, COMMAND_ENABLEREQPARAMS, NULL);
  
 	command_add(NULL, ("for"), "!p !? !c", cmd_for, COMMAND_ENABLEREQPARAMS,
           "-s --sessions -u --users -w --windows");
  
-	command_add(NULL, ("!"), "?", cmd_exec, 0, NULL);
-
 	command_add(NULL, ("help"), "c vS", cmd_help, 0, NULL);
 	  
-	command_add(NULL, ("?"), "c vS", cmd_help, 0, NULL);
-	 
 	command_add(NULL, ("ignore"), "uUC I", cmd_ignore, 0,
 	  "status descr notify msg dcc events *");
 	  
 	command_add(NULL, ("last"), "CpuU CuU", cmd_last, SESSION_MUSTHAS,
 	  "-c --clear -s --stime -n --number");
 
-        command_add(NULL, ("metacontact"), "mp m s uU ?", cmd_metacontact, 0,
-          "-a --add -d --del -i --add-item -r --del-item -l --list");
-
 	command_add(NULL, ("list"), "CpuUsm", cmd_list, SESSION_MUSTHAS,
 	  "-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online");
+
+        command_add(NULL, ("metacontact"), "mp m s uU ?", cmd_metacontact, 0,
+          "-a --add -d --del -i --add-item -r --del-item -l --list");
 	  
 	command_add(NULL, ("on"), "p e ? UuC c", cmd_on, SESSION_MUSTHAS,
 	  "-a --add -d --del -l --list" );
@@ -4139,7 +4181,6 @@ void command_init()
 	command_add(NULL, ("queue"), "puUC uUC", cmd_queue, 0, 
 	  "-c --clear");
 
- 
 	command_add(NULL, ("quit"), "r", cmd_quit, 0, NULL);
 	  
 	command_add(NULL, ("reload"), NULL, cmd_reload, 0, NULL);
@@ -4169,33 +4210,7 @@ void command_init()
 	command_add(NULL, ("window"), "p ? p", cmd_window, 0,
 	  "active clear kill last list move new next prev switch refresh left right");
 
-	command_add(NULL, ("_watches"), NULL, cmd_debug_watches, 0,NULL);
- 
-	command_add(NULL, ("_queries"), NULL, cmd_debug_queries, 0, NULL);
-
-	command_add(NULL, ("_query"), "? ? ? ? ? ? ? ? ? ?", cmd_debug_query, 0,NULL); 
-
-	command_add(NULL, ("_addtab"), "!", cmd_test_addtab, COMMAND_ENABLEREQPARAMS, NULL);
- 
-	command_add(NULL, ("_deltab"), "!", cmd_test_deltab, COMMAND_ENABLEREQPARAMS, NULL);
-
-	command_add(NULL, ("_fds"), NULL, cmd_test_fds, 0, NULL);
-
-	command_add(NULL, ("_streams"), "p ? ? ? ?", cmd_streams, 0, "-c --create -l --list");
-
-	command_add(NULL, ("_mem"), NULL, cmd_test_mem, 0, NULL);
-
-	command_add(NULL, ("_msg"), "uUC ?", cmd_test_send, 0, NULL);
-
-	command_add(NULL, ("_segv"), NULL, cmd_test_segv, 0, NULL);
- 
-	command_add(NULL, ("_debug"), "!", cmd_test_debug, COMMAND_ENABLEREQPARAMS, NULL);
- 
-	command_add(NULL, ("_debug_dump"), NULL, cmd_test_debug_dump, 0, NULL);
- 
-	command_add(NULL, ("_event_test"), "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
-
-	command_add(NULL, ("_desc"), "r", cmd_desc, 0, NULL);
+	commands_lock = NULL;
 }
 
 /*
