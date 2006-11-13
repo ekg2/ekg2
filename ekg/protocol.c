@@ -702,8 +702,6 @@ dcc_t *dcc_add(const char *uid, dcc_type_t type, void *priv)
 	int id = 1, id_ok = 0;
 	list_t l;
 
-	memset(d, 0, sizeof(dcc_t));
-
 	d->uid = xstrdup(uid);
 	d->type = type;
 	d->priv = priv;
