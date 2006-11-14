@@ -30,7 +30,7 @@
 # define SSL_ERROR(retcode)		gnutls_strerror(retcode)
 # define SSL_E_AGAIN(ret)		((ret == GNUTLS_E_INTERRUPTED) || (ret == GNUTLS_E_AGAIN))
 
-# define SSL_SEND(session, str)		gnutls_record_send(session, str, xstrlen(str))
+# define SSL_SEND(session, str, len)	gnutls_record_send(session, str, len)
 # define SSL_RECV(session, buf, size)	gnutls_record_recv(session, buf, size)
 
 #else				/* HAVE_OPENSSL */
@@ -49,7 +49,7 @@ extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 # define SSL_ERROR(retcode)		ERR_error_string(retcode, NULL)		/* retcode need be value from SSL_get_error(session, res) */
 # define SSL_E_AGAIN(ret)		((ret == SSL_ERROR_WANT_READ || ret == SSL_ERROR_WANT_WRITE))
 
-# define SSL_SEND(session, str)		SSL_write(session, str, xstrlen(str))
+# define SSL_SEND(session, str, len)	SSL_write(session, str, len)
 # define SSL_RECV(session, buf, size)	SSL_read(session, buf, size)
 
 #endif				/* ... */

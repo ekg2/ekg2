@@ -147,7 +147,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 {
 #define CHECK_CONNECT(connecting_, connected_, func) \
 	if (j->connecting != connecting_ || s->connected != connected_) {\
-		debug_error("[jabber] %s:%d ASSERT_CONNECT j->connecting: %d (shouldbe: %d) s->connected: %d (shouldbe: %d)\n", j->connecting, connecting_, s->connected, connected_);\
+		debug_error("[jabber] %s:%d ASSERT_CONNECT j->connecting: %d (shouldbe: %d) s->connected: %d (shouldbe: %d)\n", __FILE__, __LINE__, j->connecting, connecting_, s->connected, connected_);\
 		func;\
 	}
 #if STRICT_XMLNS
@@ -209,8 +209,58 @@ void jabber_handle(void *data, xmlnode_t *n)
 				CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-bind", continue)
 				
 				use_fjuczers |= 2;
+			} else if (!xstrcmp(n->name, "compression")) {
+				const char *tmp		= session_get(s, "use_compression");
+				const char *method_comp = NULL;
+				char *tmp2;
+
+				xmlnode_t *method;
+
+				if (!tmp) continue;
+				CHECK_CONNECT(1, 0, continue)
+				CHECK_XMLNS(n, "http://jabber.org/features/compress", continue)
+
+				j->using_compress = JABBER_COMPRESSION_NONE;
+
+				for (method = n->children; method; method = method->next) {
+					if (!xstrcmp(method->name, "method")) {
+						if (!xstrcmp(method->data, "zlib")) {
+#ifdef HAVE_ZLIB
+							if ((tmp2 = xstrstr(tmp, "zlib")) && ((tmp2 < method_comp) || (!method_comp)) && 
+								(tmp2[4] == ',' || tmp2[4] == '\0')) {
+									method_comp = tmp2;			 /* found more preferable method */
+									j->using_compress = JABBER_COMPRESSION_ZLIB;
+							}
+#else
+							debug_error("[jabber] compression... NO ZLIB support\n");
+#endif
+						} else if (!xstrcmp(method->data, "lzw")) {
+							if ((tmp2 = xstrstr(tmp, "zlib")) && ((tmp2 < method_comp) || (!method_comp)) &&
+								(tmp2[3] == ',' || tmp2[3] == '\0')) {
+/*									method_comp = tmp2 */			/* nieczynne */
+/*									j->using_compress = JABBER_COMPRESSION_LZW; */
+							}
+							debug_error("[jabber] compression... sorry NO LZW support\n");
+						} else	debug_error("[jabber] compression %s\n", __(method->data));
+
+					} else debug_error("[jabber] stream:features/compression %s\n", __(method->name));
+				}
+				debug_function("[jabber] compression, method: %d\n", j->using_compress);
+
+				if (!j->using_compress) continue;
+
+				if (j->using_compress == JABBER_COMPRESSION_ZLIB)	method_comp = "zlib";
+				else if (j->using_compress == JABBER_COMPRESSION_LZW)	method_comp = "lzw";
+				else {
+					debug_error("[jabber] BLAH [%s:%d] %s; %d\n", __FILE__, __LINE__, method_comp, j->using_compress);
+					continue;
+				}
+
+				watch_write(j->send_watch, 
+					"<compress xmlns=\"http://jabber.org/protocol/compress\"><method>%s</method></compress>", method_comp);
+				return;
 			} else 
-				debug_error("[jabber] stream:features %s\n", n->name);
+				debug_error("[jabber] stream:features %s\n", __(n->name));
 		}
 
 		if (j->send_watch) j->send_watch->transfer_limit = -1;
@@ -292,7 +342,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 			}
 		}
 
-	} else if (!xstrcmp(n->name, "proceed")) {
+	} else if (!xstrcmp(n->name, "proceed")) {	/* TLS HERE */
 		CHECK_CONNECT(1, 0, return)
 
 		if (!xstrcmp(jabber_attr(n->atts, "xmlns"), "urn:ietf:params:xml:ns:xmpp-tls")) {
@@ -347,6 +397,17 @@ void jabber_handle(void *data, xmlnode_t *n)
 #endif
 		} else	debug_error("[jabber] proceed what's that xmlns: %s ?\n", jabber_attr(n->atts, "xmlns"));
 
+	} else if (!xstrcmp(n->name, "compressed")) {	/* COMPRESSION HERE */
+		CHECK_CONNECT(1, 0, return)
+		CHECK_XMLNS(n, "http://jabber.org/protocol/compress", return)
+
+	/* REINITIALIZE STREAM WITH COMPRESSION TURNED ON */
+		j->parser = jabber_parser_recreate(NULL, XML_GetUserData(j->parser));
+		j->send_watch->handler	= jabber_handle_write;
+		watch_write(j->send_watch,
+				"<stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">",
+				j->server);
+	
 	} else if (!xstrcmp(n->name, "success")) {
 		CHECK_CONNECT(2, 0, return)
 		CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
@@ -429,7 +490,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 			session_set(s, "__sasl_excepted", NULL);
 		} else {
 			char *username = xstrndup(s->uid+4, xstrchr(s->uid+4, '@')-s->uid-4);
-			char *password = session_get(s, "password");
+			const char *password = session_get(s, "password");
 
 			string_t str = string_init(NULL);	/* text to encode && sent */
 			char *encoded;				/* BASE64 response text */

@@ -79,6 +79,12 @@ enum jabber_dcc_protocol_type_t {
 	JABBER_DCC_PROTOCOL_WEBDAV,		/* http://www.jabber.org/jeps/jep-0129.html */ /* DON'T IMPLEMENT IT UNTILL IT WILL BE STARNDARD DRAFT */
 };
 
+enum jabber_compression_method {
+	JABBER_COMPRESSION_NONE = 0,
+	JABBER_COMPRESSION_ZLIB,
+	JABBER_COMPRESSION_LZW,
+};
+
 enum jabber_socks5_step_t {
 	SOCKS5_UNKNOWN = 0,
 	SOCKS5_CONNECT, 
@@ -133,6 +139,7 @@ typedef struct {
 	int fd;				/* deskryptor po³±czenia */
 	int istlen;			/* czy to tlen? */
 
+	enum jabber_compression_method using_compress;				/* czy kompresujemy polaczenie */
 #ifdef JABBER_HAVE_SSL
 	char using_ssl;			/* czy polaczono uzywajac ssl */	/* 1 - tak, uzywamy SSL, 2 - tak, uzywamy TLS */
 	SSL_SESSION ssl_session;	/* sesja ssla */

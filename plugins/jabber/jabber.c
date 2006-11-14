@@ -649,6 +649,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 		watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
 
+	j->using_compress = JABBER_COMPRESSION_NONE;
 #ifdef JABBER_HAVE_SSL
         if (j->using_ssl && j->ssl_session)
 		SSL_BYE(j->ssl_session);
@@ -947,6 +948,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 	jdh->session = s;
 /*	jdh->roster_retrieved = 0; */
 	watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_stream, jdh);
+	j->using_compress = JABBER_COMPRESSION_NONE;
 
 #ifdef JABBER_HAVE_SSL
 	j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, j->using_ssl ? jabber_handle_write : NULL, j);
@@ -1433,9 +1435,10 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, "5223", 0, NULL);
         plugin_var_add(&jabber_plugin, "show_typing_notify", VAR_BOOL, "1", 0, NULL);
+	plugin_var_add(&jabber_plugin, "use_compression", VAR_STR, 0, 0, NULL);		/* for instance: zlib,lzw */
 	plugin_var_add(&jabber_plugin, "use_sasl", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "use_tls", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "use_ssl", VAR_BOOL, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "use_tls", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0, NULL);

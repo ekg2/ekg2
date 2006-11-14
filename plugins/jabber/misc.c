@@ -7,6 +7,10 @@
 
 #include "ekg2-config.h"
 
+#ifdef HAVE_ZLIB
+# include "zlib.h"
+#endif
+
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/themes.h>
@@ -264,38 +268,97 @@ char *tlen_decode(const char *what) {
  * obs³uga mo¿liwo¶ci zapisu do socketa. wypluwa z bufora ile siê da
  * i je¶li co¶ jeszcze zostanie, ponawia próbê.
  */
-#ifdef JABBER_HAVE_SSL
-WATCHER_LINE(jabber_handle_write) /* tylko dla ssla. dla zwyklych polaczen jest watch_handle_write() */
+WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/SSL. dla zwyklych polaczen jest watch_handle_write() */
 {
 	jabber_private_t *j = data;
-	int res;
+	char *compressed = NULL;
+	int res = 0;
+	size_t len;
 
 	if (type) {
 		/* XXX, do we need to make jabber_handle_disconnect() or smth simillar? */
 		j->send_watch = NULL;
 		return 0;
 	}
-	res = SSL_SEND(j->ssl_session, watch);
-
-#ifdef JABBER_HAVE_OPENSSL		/* OpenSSL */
-	if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
-	else if (res < 0) 
-		res = SSL_get_error(j->ssl_session, res);
-/* XXX, When an SSL_write() operation has to be repeated because of SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated with the same arguments. */
+	
+	if (
+#ifdef JABBER_HAVE_SSL
+	!j->using_ssl && 
 #endif
-
-	if (SSL_E_AGAIN(res)) {
-		ekg_yield_cpu();
+	!j->using_compress) {
+		/* XXX ? */
+		debug_error("[jabber] jabber_handle_write() nor j->using_ssl nor j->using_compression.... wtf?!\n");
 		return 0;
 	}
 
-	if (res < 0) {
-		print("generic_error", SSL_ERROR(res));
+	len = xstrlen(watch);
+
+	switch (j->using_compress) {
+		case JABBER_COMPRESSION_NONE:
+			break;
+
+		case JABBER_COMPRESSION_ZLIB:
+#ifdef HAVE_ZLIB
+			{
+				size_t destlen = len * 1.01 + 12;
+				compressed = xmalloc(destlen);
+				if (compress(compressed, &destlen, watch, len) != Z_OK) {
+					xfree(compressed);
+					compressed = NULL;
+					debug_error("jabber_handle_write() zlib compress() != Z_OK\n");
+					res = -1;
+					/* XXX powinnismy serwer poinformowac o tym? */
+					return 0;	/* no idea, sorry */
+				} else {
+					debug_function("jabber_handle_write() compress ok, retlen: %d orglen: %d\n", destlen, len);
+					res = len;
+					len = destlen;
+				}
+			}
+#else
+				debug("[jabber] jabber_handle_write() compression zlib, but no zlib support.. you're joking, right?\n");
+#endif
+			break;
+
+		case JABBER_COMPRESSION_LZW:	/* XXX */
+#warning "LZW SUPPORT !!!"
+		default:
+			debug_error("[jabber] jabber_handle_write() unknown compression: %d\n", j->using_compress);
 	}
+
+	if (compressed) watch = (const char *) compressed;
+
+#ifdef JABBER_HAVE_SSL
+	if (j->using_ssl) {
+		res = SSL_SEND(j->ssl_session, watch, len);
+
+#ifdef JABBER_HAVE_OPENSSL		/* OpenSSL */
+		if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
+		else if (res < 0) 
+			res = SSL_get_error(j->ssl_session, res);
+		/* XXX, When an SSL_write() operation has to be repeated because of SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated with the same arguments. */
+#endif
+
+		if (SSL_E_AGAIN(res)) {
+			ekg_yield_cpu();
+			return 0;
+		}
+
+		if (res < 0) {
+			print("generic_error", SSL_ERROR(res));
+		}
+
+		xfree(compressed);
+		return res;
+	}
+#endif
+
+/* here we call write() */
+	write(fd, watch, len);
+	xfree(compressed);
 
 	return res;
 }
-#endif
 
 /*
  * Local Variables:
