@@ -81,6 +81,9 @@ enum jabber_dcc_protocol_type_t {
 
 enum jabber_compression_method {
 	JABBER_COMPRESSION_NONE = 0,
+	JABBER_COMPRESSION_ZLIB_INIT,
+	JABBER_COMPRESSION_LZW_INIT,
+	
 	JABBER_COMPRESSION_ZLIB,
 	JABBER_COMPRESSION_LZW,
 };

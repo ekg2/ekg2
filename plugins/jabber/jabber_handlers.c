@@ -229,7 +229,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 							if ((tmp2 = xstrstr(tmp, "zlib")) && ((tmp2 < method_comp) || (!method_comp)) && 
 								(tmp2[4] == ',' || tmp2[4] == '\0')) {
 									method_comp = tmp2;			 /* found more preferable method */
-									j->using_compress = JABBER_COMPRESSION_ZLIB;
+									j->using_compress = JABBER_COMPRESSION_ZLIB_INIT;
 							}
 #else
 							debug_error("[jabber] compression... NO ZLIB support\n");
@@ -238,7 +238,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 							if ((tmp2 = xstrstr(tmp, "zlib")) && ((tmp2 < method_comp) || (!method_comp)) &&
 								(tmp2[3] == ',' || tmp2[3] == '\0')) {
 /*									method_comp = tmp2 */			/* nieczynne */
-/*									j->using_compress = JABBER_COMPRESSION_LZW; */
+/*									j->using_compress = JABBER_COMPRESSION_LZW_INIT; */
 							}
 							debug_error("[jabber] compression... sorry NO LZW support\n");
 						} else	debug_error("[jabber] compression %s\n", __(method->data));
@@ -249,8 +249,8 @@ void jabber_handle(void *data, xmlnode_t *n)
 
 				if (!j->using_compress) continue;
 
-				if (j->using_compress == JABBER_COMPRESSION_ZLIB)	method_comp = "zlib";
-				else if (j->using_compress == JABBER_COMPRESSION_LZW)	method_comp = "lzw";
+				if (j->using_compress == JABBER_COMPRESSION_ZLIB_INIT)		method_comp = "zlib";
+				else if (j->using_compress == JABBER_COMPRESSION_LZW_INIT)	method_comp = "lzw";
 				else {
 					debug_error("[jabber] BLAH [%s:%d] %s; %d\n", __FILE__, __LINE__, method_comp, j->using_compress);
 					continue;
@@ -402,8 +402,25 @@ void jabber_handle(void *data, xmlnode_t *n)
 		CHECK_XMLNS(n, "http://jabber.org/protocol/compress", return)
 
 	/* REINITIALIZE STREAM WITH COMPRESSION TURNED ON */
+		
+		switch (j->using_compress) {
+			case JABBER_COMPRESSION_NONE: 		break;
+			case JABBER_COMPRESSION_ZLIB_INIT: 	j->using_compress = JABBER_COMPRESSION_ZLIB;	break;
+			case JABBER_COMPRESSION_LZW_INIT:	j->using_compress = JABBER_COMPRESSION_LZW;	break;
+
+			default:
+				debug_error("[jabber] invalid j->use_compression (%d) state..\n", j->using_compress);
+				j->using_compress = JABBER_COMPRESSION_NONE;
+		}
+		
+		if (j->using_compress == JABBER_COMPRESSION_NONE) {
+			debug_error("[jabber] j->using_compress == JABBER_COMPRESSION_NONE but, compressed stanza?\n");
+			return;
+		}
+
 		j->parser = jabber_parser_recreate(NULL, XML_GetUserData(j->parser));
 		j->send_watch->handler	= jabber_handle_write;
+
 		watch_write(j->send_watch,
 				"<stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">",
 				j->server);

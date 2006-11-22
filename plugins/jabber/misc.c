@@ -295,6 +295,8 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 
 	switch (j->using_compress) {
 		case JABBER_COMPRESSION_NONE:
+		case JABBER_COMPRESSION_LZW_INIT:
+		case JABBER_COMPRESSION_ZLIB_INIT:
 			break;
 
 		case JABBER_COMPRESSION_ZLIB:
@@ -316,7 +318,7 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 				}
 			}
 #else
-				debug("[jabber] jabber_handle_write() compression zlib, but no zlib support.. you're joking, right?\n");
+				debug_error("[jabber] jabber_handle_write() compression zlib, but no zlib support.. you're joking, right?\n");
 #endif
 			break;
 

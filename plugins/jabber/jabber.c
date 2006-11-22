@@ -47,6 +47,10 @@
 #include <sys/filio.h>
 #endif
 
+#ifdef HAVE_ZLIB
+# include "zlib.h"
+#endif
+
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/protocol.h>
@@ -759,8 +763,10 @@ static WATCHER(jabber_handle_stream)
         session_t *s			= (session_t *) jdh->session;
         jabber_private_t *j		= session_private_get(s);
 	XML_Parser parser;				/* j->parser */
+	char *uncompressed	= NULL;
         char *buf;
         int len;
+	int rlen;
 
         s->activity = time(NULL);
 
@@ -816,19 +822,81 @@ static WATCHER(jabber_handle_stream)
                 }
 
         buf[len] = 0;
+	rlen = len;
 
-	debug_iorecv("[jabber] (%db) recv: %s\n", len, buf);
+	switch (j->using_compress) {
+		case JABBER_COMPRESSION_ZLIB:
+#ifdef HAVE_ZLIB
+			{
+#define ZLIB_BUF_SIZE 1024
+				z_stream zlib_stream;
+				int err;
+				size_t size = ZLIB_BUF_SIZE+1;
+				rlen = 0;
+				
+				zlib_stream.zalloc 	= Z_NULL;
+				zlib_stream.zfree	= Z_NULL;
+				zlib_stream.opaque	= Z_NULL;
 
-        if (!XML_ParseBuffer(parser, len, (len == 0))) {
-                print("jabber_xmlerror", session_name(s));
+				if ((err = inflateInit(&zlib_stream)) != Z_OK) {
+					debug_error("[jabber] jabber_handle_stream() inflateInit() %d != Z_OK\n", err);
+					break;
+				}
+
+				zlib_stream.next_in	= buf;
+				zlib_stream.avail_in	= len;
+
+				do {
+					uncompressed = xrealloc(uncompressed, size);
+					zlib_stream.next_out = uncompressed + rlen;
+					zlib_stream.avail_out= ZLIB_BUF_SIZE;
+
+					err = inflate(&zlib_stream, Z_SYNC_FLUSH);
+					if (err != Z_OK && err != Z_STREAM_END) {
+						debug_error("[jabber] jabber_handle_stream() inflate() %d != Z_OK && %d != Z_STREAM_END\n", err, err);
+						break;
+					}
+
+					rlen += (ZLIB_BUF_SIZE - zlib_stream.avail_out);
+					size += (ZLIB_BUF_SIZE - zlib_stream.avail_out);
+				} while (err == Z_OK && zlib_stream.avail_out == 0);
+
+				inflateEnd(&zlib_stream);
+			}
+#else
+			debug_error("[jabber] jabber_handle_stream() compression zlib, but no zlib support.. you're joking, right?\n");
+#endif
+			break;
+
+		case JABBER_COMPRESSION_LZW:
+			debug_error("[jabber] jabber_handle_stream() j->using_compress XXX implement LZW!\n");
+			break;
+
+		case JABBER_COMPRESSION_NONE:
+		case JABBER_COMPRESSION_LZW_INIT:
+		case JABBER_COMPRESSION_ZLIB_INIT:
+			break;
+
+		default:
+			debug_error("[jabber] jabber_handle_stream() j->using_compress wtf? unknown! %d\n", j->using_compress);
+	}
+
+	debug_iorecv("[jabber] (%db/%db) recv: %s\n", rlen, len, uncompressed ? uncompressed : buf);
+
+	if (!XML_ParseBuffer(parser, rlen, (rlen == 0))) 
+//	if (!XML_Parse(parser, uncompressed ? uncompressed : buf, rlen, (rlen == 0))) 
+	{
+		print("jabber_xmlerror", session_name(s));
 		debug_error("jabber_xmlerror: %s\n", XML_ErrorString(XML_GetErrorCode(parser)));
 
 		if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
-                return -1;
-        }
+		xfree(uncompressed);
+		return -1;
+	}
 	if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
+	xfree(uncompressed);
 
-        return 0;
+	return 0;
 }
 
 static TIMER(jabber_ping_timer_handler) {
