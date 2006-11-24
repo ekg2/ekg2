@@ -181,6 +181,53 @@ void jabber_handle(void *data, xmlnode_t *n)
 		int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
 		xmlnode_t *mech_node = NULL;
 
+		if (session_int_get(s, "display_server_features") == 1) {
+			xmlnode_t *ch;
+
+			print("xmpp_feature_header", session_name(s), j->server, "");
+
+			for (ch = n->children; ch; ch = ch->next) {
+				xmlnode_t *another;
+#define show_feature(excepted, n, what) \
+	if (!xstrcmp(excepted, n->name)) { print("xmpp_feature", session_name(s), j->server, excepted, jabber_attr(n->atts, "xmlns"), what);
+
+#define show_subfeature(excepted, name, n, what) \
+	if (!xstrcmp(excepted, n->data)) print("xmpp_feature_sub", session_name(s), j->server, name, excepted, what)
+
+				show_feature("starttls", ch, "/session use_tls") continue; }
+				show_feature("mechanisms", ch, "/session use_sasl")
+					for (another = ch->children; another; another = another->next) {
+						if (!xstrcmp(another->name, "mechanism")) {
+							if (0); 
+							else show_subfeature("DIGEST-MD5", "SASL", another, "Default");
+							else show_subfeature("PLAIN", "SASL", another, "/sesion plaintext_passwd");
+							else print("xmpp_feature_sub_unknown", session_name(s), j->server, "SASL", __(another->data), "");
+						}
+					} continue; 
+				}
+#if 0
+				show_feature("compression", ch, "/session use_compression method1,method2,method3")
+					for (another = ch->children; another; another = another->next) {
+						if (!xstrcmp(another->name, "method")) {
+							if (0); 
+							else show_subfeature("zlib", "COMPRESSION", another, "/session use_compression zlib");
+							else show_subfeature("lzw", "COMPRESSION", another, "/session use_compression lzw");
+							else print("xmpp_feature_sub_unknown", session_name(s), j->server, "COMPRESSION" __(another->data), "");
+						}
+					} continue;
+				}
+#endif
+				show_feature("session", ch, "Manage session") continue; }
+				show_feature("bind", ch, "Bind resource") continue; }
+				show_feature("register", ch, "Register account using /register") continue; }
+
+				print("xmpp_feature_unknown", session_name(s), j->server, ch->name, jabber_attr(n->atts, "xmlns"));
+#undef show_feature
+#undef show_subfeature
+			}
+			print("xmpp_feature_footer", session_name(s), j->server);
+		}
+
 		for (n = n->children; n; n = n->next) {
 			if (!xstrcmp(n->name, "starttls")) {
 #ifdef JABBER_HAVE_SSL
@@ -196,7 +243,6 @@ void jabber_handle(void *data, xmlnode_t *n)
 #endif
 			} else if (!xstrcmp(n->name, "mechanisms") && !mech_node) {		/* faster than xmlnode_find_child */
 				CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", continue)
-
 				mech_node = n->children;
 			} else if (!xstrcmp(n->name, "session")) {
 				CHECK_CONNECT(2, 0, continue)
@@ -259,8 +305,9 @@ void jabber_handle(void *data, xmlnode_t *n)
 				watch_write(j->send_watch, 
 					"<compress xmlns=\"http://jabber.org/protocol/compress\"><method>%s</method></compress>", method_comp);
 				return;
-			} else 
+			} else {
 				debug_error("[jabber] stream:features %s\n", __(n->name));
+			}
 		}
 
 		if (j->send_watch) j->send_watch->transfer_limit = -1;

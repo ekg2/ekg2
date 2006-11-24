@@ -1456,6 +1456,12 @@ static int jabber_theme_init() {
 		/* %1 sesja %2 nick %3 - jid %4 - kanal %5 - reason */
 	format_add("muc_left",		_("%> %c%2%n [%c%3%n] has left %W%4 %n[%5]\n"), 1);
 
+			/* %1 - sesja, %2 - serwer, %3 - nazwa, %4 - XMLNS, %5 - z czym sie je */
+	format_add("xmpp_feature_header", _("%g,+=%G----- XMPP features %n(%T%2%n%3%n)"), 1);	/* %3 - todo */
+	format_add("xmpp_feature",	  _("%g|| %n %W%2%n can: %5 [%G%3%g,%4%n]"), 1);
+	format_add("xmpp_feature_sub",	  _("%g|| %n     %W%3%n: %5 [%G%4%n]"), 1);
+	format_add("xmpp_feature_unknown",_("%g|| %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]"), 1);
+	format_add("xmpp_feature_footer", _("%g`+=%G----- %n Turn it off using: /session display_server_features 0\n"), 1);
 
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
@@ -1492,6 +1498,7 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "display_server_features", VAR_INT, "1", 0, NULL);
         plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
         plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);
