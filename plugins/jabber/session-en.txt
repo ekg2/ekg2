@@ -62,6 +62,15 @@ display_notify
 	Setting ,,contacts'' variable to 2 takes precendence (status changes
 	are hidden). 
 
+display_server_features
+	type: integer
+	default value: 1
+	
+	Set when server's features should be shown:
+	0 - never
+	1 - only when first connected
+	2 - always
+
 log_formats
 	type: string
 	default value: xml,simple

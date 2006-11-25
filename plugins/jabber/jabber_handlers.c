@@ -72,7 +72,7 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s);
 static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
 static time_t jabber_try_xdelay(const char *stamp);
 static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh);
-
+int jabber_display_server_features = 1;
 
 #ifdef JABBER_HAVE_SSL
 static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
@@ -181,7 +181,10 @@ void jabber_handle(void *data, xmlnode_t *n)
 		int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
 		xmlnode_t *mech_node = NULL;
 
-		if (session_int_get(s, "display_server_features") == 1) {
+		if ((session_int_get(s, "display_server_features") == 1 && jabber_display_server_features == 1) || session_int_get(s, "display_server_features") == 2) {
+			if (session_int_get(s, "display_server_features") == 1)
+				jabber_display_server_features = 0;
+
 			xmlnode_t *ch;
 
 			print("xmpp_feature_header", session_name(s), j->server, "");

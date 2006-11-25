@@ -58,6 +58,15 @@ display_notify
 	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2
 	ukrywa zmiany stanu.
 
+display_server_features
+	typ: liczba
+	domy¿lna warto¿¿: 1
+	
+	Okre¿la kiedy powinny zosta¿ pokazane obs¿ugiwane przez serwer ficzery:
+	0 - nigdy
+	1 - tylko przy pierwszym po¿¿czeniu
+	2 - zawsze
+
 log_formats
 	typ: tekst
 	domy¶lna warto¶æ: xml,simple
