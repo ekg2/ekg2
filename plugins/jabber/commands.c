@@ -2148,22 +2148,22 @@ void jabber_register_commands()
 
 	commands_lock = &commands;
 
-	command_add(&jabber_plugin, ("tlen:"), "?",			jabber_command_inline_msg, 	JABBER_ONLY, NULL);
-//	command_add(&jabber_plugin, ("tlen:_autoaway"), "r", 		jabber_command_away,		JABBER_ONLY, NULL);
-//	command_add(&jabber_plugin, ("tlen:_autoback"), "r", 		jabber_command_away,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("tlen:"), "?",		jabber_command_inline_msg, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("tlen:_autoaway"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("tlen:_autoback"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:auth"), "!p !uU", 	jabber_command_auth,		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS,
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, ("tlen:away"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:back"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:change"), "?",		tlen_command_pubdir, 		JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, ("tlen:change"), "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("tlen:connect"), "r ?",	jabber_command_connect,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:disconnect"), "r ?",	jabber_command_disconnect,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:dnd"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:ffc"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:msg"), "!uU !",		jabber_command_msg, 		JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, ("tlen:msg"), "!uU !",	jabber_command_msg, 		JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("tlen:reconnect"), NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:search"), "?",		tlen_command_pubdir, 		JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, ("tlen:search"), "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
 
 	commands_lock = NULL;
 };
