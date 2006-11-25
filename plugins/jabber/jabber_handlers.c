@@ -404,14 +404,14 @@ void jabber_handle(void *data, xmlnode_t *n)
 #ifdef JABBER_HAVE_OPENSSL
 			if (!(j->ssl_session = SSL_new(jabberSslCtx))) {
 				print("conn_failed_tls");
-				j->parser = NULL; jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
+				j->parser = NULL; jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_FAILURE);
 				return;
 			}
 			if (SSL_set_fd(j->ssl_session, j->fd) == 0) {
 				print("conn_failed_tls");
 				SSL_free(j->ssl_session);
 				j->ssl_session = NULL;
-				j->parser = NULL; jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
+				j->parser = NULL; jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_FAILURE);
 				return;
 			}
 #else
