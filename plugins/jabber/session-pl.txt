@@ -64,7 +64,7 @@ display_server_features
 	
 	Okre¿la kiedy powinny zosta¿ pokazane obs¿ugiwane przez serwer ficzery:
 	0 - nigdy
-	1 - tylko przy pierwszym po¿¿czeniu
+	1 - tylko przy pierwszym po³±czeniu
 	2 - zawsze
 
 log_formats
