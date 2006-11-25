@@ -422,6 +422,7 @@ static QUERY(ncurses_setvar_default)
 static void ncurses_display_transparent_changed(const char *var)
 {
 	int background;
+	if (in_autoexec) return;	/* stuff already inited @ ncurses_init() */
 
         if (config_display_transparent) {
                 background = COLOR_DEFAULT;
@@ -442,8 +443,8 @@ static void ncurses_display_transparent_changed(const char *var)
         refresh();
         /* it will call what's needed */
 	header_statusbar_resize();
-        changed_backlog_size(("backlog_size"));
 
+	changed_backlog_size("backlog_size");
 }
 
 volatile int sigint_count = 0;

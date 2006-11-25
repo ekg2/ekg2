@@ -1436,7 +1436,7 @@ static void sigwinch_handler()
  */
 void ncurses_init()
 {
-	int background = COLOR_BLACK;
+	int background;
 
 	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
 	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
@@ -1449,6 +1449,9 @@ void ncurses_init()
 	if (config_display_transparent) {
 		background = COLOR_DEFAULT;
 		use_default_colors();
+	} else {
+		background = COLOR_BLACK;
+		assume_default_colors(COLOR_WHITE, COLOR_BLACK);
 	}
 
 	ncurses_screen_width = stdscr->_maxx + 1;
@@ -2202,6 +2205,7 @@ loop:
  */
 void header_statusbar_resize()
 {
+/*	if (in_autoexec) return; */
 	if (!ncurses_status)
 		return;
 	
