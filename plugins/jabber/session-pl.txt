@@ -60,9 +60,9 @@ display_notify
 
 display_server_features
 	typ: liczba
-	domy¿lna warto¿¿: 1
+	domy¶lna warto¿¿: 1
 	
-	Okre¿la kiedy powinny zosta¿ pokazane obs¿ugiwane przez serwer ficzery:
+	Okre¶la kiedy powinny zostaæ pokazane obs³ugiwane przez serwer ficzery:
 	0 - nigdy
 	1 - tylko przy pierwszym po³±czeniu
 	2 - zawsze
