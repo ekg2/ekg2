@@ -873,13 +873,6 @@ int script_postinit(void *data, va_list ap)
 #endif
 int scripts_init()
 {
-	command_add(NULL, ("script")        , ("p ?"),	cmd_script, 0, "--list --load --unload --varlist --reset"); /* todo  ?!!? */
-	command_add(NULL, ("script:load")   , ("f"),	cmd_script, 0, "");
-	command_add(NULL, ("script:unload") , ("?"),	cmd_script, 0, "");
-	command_add(NULL, ("script:list")   , ("?"),	cmd_script, 0, "");
-	command_add(NULL, ("script:reset")  , ("?"),	cmd_script, 0, "");
-	command_add(NULL, ("script:varlist"), ("?"),	cmd_script, 0, "");
-	command_add(NULL, ("script:autorun"), ("?"),	cmd_script, 0, "");
 	script_variables_read();
 #if 0
 	query_connect(NULL, "config-postinit",     script_postinit, NULL);

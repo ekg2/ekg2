@@ -4003,10 +4003,7 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 	if (commands_lock) {				/* if we lock commands */
 		if (*commands_lock == commands) {	/* if lock_command points to commands */
 			/* then we need to find place where to add it.. */
-			for (; *commands_lock && (command_add_compare((*commands_lock)->data, c) == 1); commands_lock = &((*commands_lock)->next));
-			if (*commands_lock) 
-				commands_lock = &((*commands_lock)->next);	/* if it wasn't last item, move to next */
-
+			for (; *commands_lock && (command_add_compare((*commands_lock)->data, c) < 0); commands_lock = &((*commands_lock)->next));
 		} else		commands_lock = &((*commands_lock)->next);	/* otherwise if we have list... move to next */
 		list_add_beginning(commands_lock, c, 0);	/* add to commands */
 		return c;
@@ -4087,7 +4084,7 @@ int command_remove(plugin_t *plugin, const char *name)
  */
 void command_init()
 {
-	commands_lock = &commands;
+	commands_lock = &commands;	/* keep it sorted, or die */
 
 	command_add(NULL, ("!"), "?", cmd_exec, 0, NULL);
 
@@ -4189,7 +4186,22 @@ void command_init()
 
 	command_add(NULL, ("say"), "!", cmd_say, COMMAND_ENABLEREQPARAMS,
 	  "-c --clear");
+
+	command_add(NULL, ("script")        , ("p ?"),	cmd_script, 0, 
+	  "--list --load --unload --varlist --reset"); /* todo  ?!!? */
+
+	command_add(NULL, ("script:autorun"), ("?"),	cmd_script, 0, "");
 	  
+	command_add(NULL, ("script:list")   , ("?"),	cmd_script, 0, "");
+
+	command_add(NULL, ("script:load")   , ("f"),	cmd_script, 0, "");
+
+	command_add(NULL, ("script:reset")  , ("?"),	cmd_script, 0, "");
+
+	command_add(NULL, ("script:unload") , ("?"),	cmd_script, 0, "");
+
+	command_add(NULL, ("script:varlist"), ("?"),	cmd_script, 0, "");
+
         command_add(NULL, ("session"), "psS psS sS ?", session_command, 0,
           "-a --add -d --del -l --list -g --get -s --set -w --sw");
 
