@@ -299,36 +299,32 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 			xfree((char*)(v->ptr));
 		} else 
 			*(char**)(ptr) = (char*)(v->ptr);
-	
-		xfree(v->name);
-		v->name = xstrdup(__name);
-		v->name_hash = hash;
-		v->type = type;
-		v->plugin = plugin;
-		v->display = display;
-		v->map = map;
-		v->notify = notify;
-		v->dyndisplay = dyndisplay;
-		v->ptr = ptr;
-		
-		xfree(__name);		
-		return 0;
-	}
-	v = xmalloc(sizeof(variable_t));
-	v->name = xstrdup(__name);
-	v->name_hash = variable_hash(__name);
-	v->type = type;
-	v->display = display;
-	v->ptr = ptr;
-	v->notify = notify;
-	v->map = map;
-	v->dyndisplay = dyndisplay;
-	v->plugin = plugin;
 
-	xfree(__name);
+		xfree(v->name);
+		v->name		= __name;
+		v->name_hash	= hash;
+		v->type		= type;
+		v->plugin	= plugin;
+		v->display	= display;
+		v->map		= map;
+		v->notify	= notify;
+		v->dyndisplay	= dyndisplay;
+		v->ptr		= ptr;
+
+		return v;
+	}
+	v 	= xmalloc(sizeof(variable_t));
+	v->name		= __name;
+	v->name_hash 	= hash;
+	v->type 	= type;
+	v->display 	= display;
+	v->ptr 		= ptr;
+	v->notify 	= notify;
+	v->map 		= map;
+	v->dyndisplay 	= dyndisplay;
+	v->plugin 	= plugin;
 
 	return list_add_sorted(&variables, v, 0, variable_add_compare);
-
 }
 
 /*
