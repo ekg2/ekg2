@@ -540,7 +540,7 @@ fstring_t *fstring_new(const char *str) {
 
 					if (cur >= 40 && cur <= 47) {
 						attr &= ~(128+8+16+32);
-						attr |= (cur - 48) << 3;
+						attr |= (cur - 40) << 3;
 					}
 				}
 			}
