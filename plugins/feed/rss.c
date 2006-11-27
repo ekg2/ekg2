@@ -325,23 +325,14 @@ typedef struct {
 	char *no_unicode;
 } rss_fetch_process_t;
 
-
-
-
-static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
-		char **outbuf, size_t *outbytesleft,
-		char **inrepls, const char *outrepl)
+char *mutt_iconv (iconv_t cd, 
+			char *ib, size_t ibl,
+			char *ob, size_t obl,
+			char **inrepls, const char *outrepl)
 {
-	size_t ret = 0, ret1;
-	char *ib = *inbuf;
-	size_t ibl = *inbytesleft;
-	char *ob = *outbuf;
-	size_t obl = *outbytesleft;
-
-	for (;;) {
-		ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
-		if (ret1 != (size_t)-1)
-			ret += ret1;
+	do {
+		errno = 0;
+		iconv (cd, &ib, &ibl, &ob, &obl);
 		if (ibl && obl && errno == EILSEQ) {
 			if (inrepls) {
 				/* Try replacing the input */
@@ -349,14 +340,14 @@ static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
 				for (t = inrepls; *t; t++)
 				{
 					char *ib1 = *t;
-					size_t ibl1 = xstrlen (*t);
 					char *ob1 = ob;
+					size_t ibl1 = xstrlen (*t);
 					size_t obl1 = obl;
+
 					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
 					if (!ibl1) {
 						++ib, --ibl;
 						ob = ob1, obl = obl1;
-						++ret;
 						break;
 					}
 				}
@@ -371,67 +362,53 @@ static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
 					memcpy (ob, outrepl, n);
 					++ib, --ibl;
 					ob += n, obl -= n;
-					++ret;
 					continue;
 				}
 			}
 		}
-		*inbuf = ib, *inbytesleft = ibl;
-		*outbuf = ob, *outbytesleft = obl;
-		return ret;
-	}
+		return ob;
+	} while(1);
 }
-
-/*
- * Convert a string
- * Used in rfc2047.c and rfc2231.c
- */
-
-char *mutt_convert_string (char *ps, const char *from, const char *to)
-{
-	iconv_t cd;
-	char *repls[] = { "\357\277\275", "?", 0 };
-	char *s = ps;
-
-	if (!s || !*s)
-		return NULL;
-
-	if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1) {
-		int len;
-		char *ib;
-		char *buf, *ob;
-		size_t ibl, obl;
-		char **inrepls = 0;
-		char *outrepl = 0;
-
-		if ( !xstrcasecmp(from, "utf-8"))
-			inrepls = repls;
-		else
-			outrepl = "?";
-
-		len = xstrlen (s);
-		ib = s, ibl = len + 1;
-		obl = 16 * ibl;
-		ob = buf = xmalloc (obl + 1);
-
-		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
-		iconv_close (cd);
-
-		*ob = '\0';
-
-		buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
-		return buf;
-	}
-	return NULL;
-}
-
 
 static char *rss_iconv(const char *str, const char *enconding) {
+	char *repls[] = { "\357\277\275", "?", 0 };
+
+	char **inrepls = NULL;
+	char *outrepl = NULL;
+
+	size_t inplen = xstrlen(str);
+	size_t outlen = (inplen+1) * 16; 
+
+	char *buf, *ob;
+	char *niah;
+	iconv_t cd;
+
 	if (!enconding) enconding = "UTF-8";
 
-	debug("[rss] rss_iconv() from: %s to: %s\n", __(enconding), __(config_console_charset));
+	if (!config_console_charset)
+		return NULL;
 
-	return mutt_convert_string(str, enconding, config_console_charset);
+	if (!inplen)
+		return NULL;
+
+	if ((cd = iconv_open(config_console_charset, enconding)) == (iconv_t)-1) 
+		return NULL;
+
+	if (!xstrcasecmp(config_console_charset, "UTF-8"))	outrepl = "\357\277\275";
+	else if (!xstrcasecmp(enconding, "UTF-8"))		inrepls = repls;
+	else							outrepl = "?";
+
+	buf = xmalloc(outlen);
+
+	niah = xstrdup(str);
+
+	ob = mutt_iconv(cd, str /* input */, inplen+1 /* input len */, buf /* output buffer */, outlen /* output len */, inrepls, outrepl);
+	iconv_close (cd);
+
+	xfree(niah);
+
+	*ob = '\0';
+	return xrealloc((void*)buf, ob-buf);
 }
 
 static void rss_fetch_error(rss_feed_t *f, const char *str) {
@@ -498,6 +475,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 	xmlnode_t *n;
 	char *recode;
 	int i;
+	int rlen;
 
 	if (!j || !text) {
 		debug("[rss] xmlnode_handle_cdata() invalid parameters\n");
@@ -505,6 +483,9 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 	}
 
 	if (!(n = j->node)) return;
+
+	recode	= xmalloc(len+1);
+	rlen	= 0;
 
 	for (i = 0; i < len;) {
 		unsigned int znak = (unsigned char) text[i];
@@ -525,7 +506,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 
 			if (i+ucount > len || ucount == 5 || !ucount) {
 				debug("invalid utf-8 char\n");	/* shouldn't happen */
-				string_append_c(n->data, '?');
+				recode[rlen++] = '?';
 				i += ucount;
 				continue;
 			}
@@ -535,17 +516,15 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 				znaczek = (znaczek << 6) | (((unsigned char) text[i]) & 0x3f);
 				i++;
 			}
-
-			string_append_c(n->data, znaczek);
+			recode[rlen++] = znaczek;
 			continue;
 		}
-		string_append_c(n->data, znak);
+		recode[rlen++] = znak;
 		i++;
 	}
-	recode = string_free(n->data, 0);
 	recode = rss_iconv(recode, j->no_unicode);
 
-	n->data = string_init(recode);
+	string_append(n->data, recode);
 
 	xfree(recode);
 }
