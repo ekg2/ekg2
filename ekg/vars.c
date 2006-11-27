@@ -41,6 +41,7 @@
 #include "xmalloc.h"
 #include "plugins.h"
 
+static list_t *variables_lock = NULL;
 list_t variables = NULL;
 char *console_charset;
 
@@ -75,28 +76,30 @@ static int dd_beep(const char *name)
  */
 void variable_init()
 {
+	variables_lock = &variables; /* keep it sorted */
+
 	variable_add(NULL, ("auto_save"), VAR_INT, 1, &config_auto_save, changed_auto_save, NULL, NULL);
-	variable_add(NULL, ("away_reason"), VAR_STR, 1, &config_away_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("auto_user_add"), VAR_BOOL, 1, &config_auto_user_add, NULL, NULL, NULL);
+	variable_add(NULL, ("away_reason"), VAR_STR, 1, &config_away_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("back_reason"), VAR_STR, 1, &config_back_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("beep"), VAR_BOOL, 1, &config_beep, NULL, NULL, NULL);
-	variable_add(NULL, ("beep_msg"), VAR_BOOL, 1, &config_beep_msg, NULL, NULL, dd_beep);
 	variable_add(NULL, ("beep_chat"), VAR_BOOL, 1, &config_beep_chat, NULL, NULL, dd_beep);
+	variable_add(NULL, ("beep_msg"), VAR_BOOL, 1, &config_beep_msg, NULL, NULL, dd_beep);
 	variable_add(NULL, ("beep_notify"), VAR_BOOL, 1, &config_beep_notify, NULL, NULL, dd_beep);
+	variable_add(NULL, ("completion_char"), VAR_STR, 1, &config_completion_char, NULL, NULL, NULL);
+	variable_add(NULL, ("completion_notify"), VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
 		 * 	encoding... and give some tip how to correct this... it's just temporary
 		 */
 	variable_add(NULL, ("console_charset"), VAR_STR, 1, &config_console_charset, NULL, NULL, NULL); 
-	variable_add(NULL, ("completion_char"), VAR_STR, 1, &config_completion_char, NULL, NULL, NULL);
-	variable_add(NULL, ("completion_notify"), VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 	variable_add(NULL, ("debug"), VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
 /*	variable_add(NULL, ("default_protocol"), VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL); */
 	variable_add(NULL, ("default_status_window"), VAR_BOOL, 1, &config_default_status_window, NULL, NULL, NULL);
 	variable_add(NULL, ("display_ack"), VAR_INT, 1, &config_display_ack, NULL, variable_map(4, 0, 0, "none", 1, 0, "all", 2, 0, "delivered", 3, 0, "queued"), NULL);
         variable_add(NULL, ("display_blinking"), VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
-	variable_add(NULL, ("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(NULL, ("display_color"), VAR_INT, 1, &config_display_color, NULL, NULL, NULL);
 	variable_add(NULL, ("display_color_map"), VAR_STR, 1, &config_display_color_map, NULL, NULL, dd_color);
+	variable_add(NULL, ("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(NULL, ("display_day_changed"), VAR_BOOL, 1, &config_display_day_changed, NULL, NULL , NULL);
 	variable_add(NULL, ("display_notify"), VAR_INT, 1, &config_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "significant"), NULL);
 	variable_add(NULL, ("display_pl_chars"), VAR_BOOL, 1, &config_display_pl_chars, NULL, NULL, NULL);
@@ -110,30 +113,32 @@ void variable_init()
 	variable_add(NULL, ("last_size"), VAR_INT, 1, &config_last_size, NULL, NULL, NULL);
 	variable_add(NULL, ("make_window"), VAR_INT, 1, &config_make_window, changed_display_blinking, variable_map(3, 0, 0, "none", 1, 2, "usefree", 2, 1, "always"), NULL);
 	variable_add(NULL, ("mesg"), VAR_INT, 1, &config_mesg, changed_mesg, variable_map(3, 0, 0, "no", 1, 2, "yes", 2, 1, "default"), NULL);
-	variable_add(NULL, ("reason_limit"), VAR_BOOL, 1, &config_reason_limit, NULL, NULL, NULL);
-	variable_add(NULL, ("quit_reason"), VAR_STR, 1, &config_quit_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("query_commands"), VAR_BOOL, 1, &config_query_commands, NULL, NULL, NULL);
+	variable_add(NULL, ("quit_reason"), VAR_STR, 1, &config_quit_reason, NULL, NULL, NULL);
+	variable_add(NULL, ("reason_limit"), VAR_BOOL, 1, &config_reason_limit, NULL, NULL, NULL);
 	variable_add(NULL, ("save_password"), VAR_BOOL, 1, &config_save_password, NULL, NULL, NULL);
 	variable_add(NULL, ("save_quit"), VAR_INT, 1, &config_save_quit, NULL, NULL, NULL);
 	variable_add(NULL, ("session_default"), VAR_STR, 1, &config_session_default, NULL, NULL, NULL);
 	variable_add(NULL, ("sessions_save"), VAR_BOOL, 1, &config_sessions_save, NULL, NULL, NULL);
 	variable_add(NULL, ("slash_messages"), VAR_BOOL, 1, &config_slash_messages, NULL, NULL, NULL);
 	variable_add(NULL, ("sort_windows"), VAR_BOOL, 1, &config_sort_windows, NULL, NULL, NULL);
-	variable_add(NULL, ("sound_msg_file"), VAR_FILE, 1, &config_sound_msg_file, NULL, NULL, dd_sound);
-	variable_add(NULL, ("sound_chat_file"), VAR_FILE, 1, &config_sound_chat_file, NULL, NULL, dd_sound);
-	variable_add(NULL, ("sound_sysmsg_file"), VAR_FILE, 1, &config_sound_sysmsg_file, NULL, NULL, dd_sound);
-	variable_add(NULL, ("sound_notify_file"), VAR_FILE, 1, &config_sound_notify_file, NULL, NULL, dd_sound);
-	variable_add(NULL, ("sound_mail_file"), VAR_FILE, 1, &config_sound_mail_file, NULL, NULL, dd_sound);
 	variable_add(NULL, ("sound_app"), VAR_STR, 1, &config_sound_app, NULL, NULL, NULL);
+	variable_add(NULL, ("sound_chat_file"), VAR_FILE, 1, &config_sound_chat_file, NULL, NULL, dd_sound);
+	variable_add(NULL, ("sound_mail_file"), VAR_FILE, 1, &config_sound_mail_file, NULL, NULL, dd_sound);
+	variable_add(NULL, ("sound_msg_file"), VAR_FILE, 1, &config_sound_msg_file, NULL, NULL, dd_sound);
+	variable_add(NULL, ("sound_notify_file"), VAR_FILE, 1, &config_sound_notify_file, NULL, NULL, dd_sound);
+	variable_add(NULL, ("sound_sysmsg_file"), VAR_FILE, 1, &config_sound_sysmsg_file, NULL, NULL, dd_sound);
 	variable_add(NULL, ("speech_app"), VAR_STR, 1, &config_speech_app, NULL, NULL, NULL);
 	variable_add(NULL, ("subject_prefix"), VAR_STR, 1, &config_subject_prefix, NULL, NULL, NULL);
 	variable_add(NULL, ("tab_command"), VAR_STR, 1, &config_tab_command, NULL, NULL, NULL);
 	variable_add(NULL, ("theme"), VAR_THEME, 1, &config_theme, changed_theme, NULL, NULL);
 	variable_add(NULL, ("time_deviation"), VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
-	variable_add(NULL, ("timestamp"), VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);
+	variable_add(NULL, ("timestamp"), VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);	/* ? */
 	variable_add(NULL, ("timestamp_show"), VAR_BOOL, 1, &config_timestamp_show, NULL, NULL, NULL);
-	variable_add(NULL, ("windows_save"), VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
 	variable_add(NULL, ("windows_layout"), VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
+	variable_add(NULL, ("windows_save"), VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
+
+	variables_lock = NULL;
 }
 
 /*
@@ -323,6 +328,15 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	v->map 		= map;
 	v->dyndisplay 	= dyndisplay;
 	v->plugin 	= plugin;
+
+/* like commands_lock in command_add() @ commands.c */
+	if (variables_lock) {
+		if (*variables_lock == variables) {
+			for (; *variables_lock && (variable_add_compare((*variables_lock)->data, v) < 0); variables_lock = &((*variables_lock)->next));
+		} else		variables_lock = &((*variables_lock)->next);
+		list_add_beginning(variables_lock, v, 0);
+		return v;
+	}
 
 	return list_add_sorted(&variables, v, 0, variable_add_compare);
 }
