@@ -812,10 +812,11 @@ static COMMAND(nntp_command_subscribe) {
 	userlist_t *u;
 
 	if ((u = userlist_find(session, target))) {
-		printq("feed_subcribe_already", target);
+		printq("feed_exists_other", target, format_user(session, u->uid), session_name(session));
 		return -1;
 	}
 
+	printq("feed_added", target, session_name(session));
 	userlist_add(session, target, target);
 	return 0;
 }
@@ -823,9 +824,11 @@ static COMMAND(nntp_command_subscribe) {
 static COMMAND(nntp_command_unsubscribe) {
 	userlist_t *u; 
 	if (!(u = userlist_find(session, target))) {
-		printq("feed_subscribe_no", target);
+		printq("feed_not_found", target);
 		return -1;
 	}
+
+	printq("feed_deleted", target, session_name(session));
 	userlist_remove(session, u);
 	return 0;
 }

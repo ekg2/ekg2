@@ -46,6 +46,8 @@
 # include <expat.h>
 #endif
 
+#include <iconv.h>
+
 #define RSS_DEFAULT_TIMEOUT 60
 
 #include "feed.h"
@@ -245,6 +247,8 @@ static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
 	list_t l;
 	rss_feed_t *feed;
 
+	if (!xstrncmp(url, "rss:", 4)) url += 4;
+
 	for (l = newsgroups; l; l = l->next) {
 		feed = l->data;
 
@@ -306,7 +310,7 @@ static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
 
 typedef struct xmlnode_s {
 	char *name;
-	char *data; 
+	string_t data;
 	char **atts;
 
 	struct xmlnode_s *parent;
@@ -320,6 +324,115 @@ typedef struct {
 	xmlnode_t *node;
 	char *no_unicode;
 } rss_fetch_process_t;
+
+
+
+
+static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
+		char **outbuf, size_t *outbytesleft,
+		char **inrepls, const char *outrepl)
+{
+	size_t ret = 0, ret1;
+	char *ib = *inbuf;
+	size_t ibl = *inbytesleft;
+	char *ob = *outbuf;
+	size_t obl = *outbytesleft;
+
+	for (;;) {
+		ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
+		if (ret1 != (size_t)-1)
+			ret += ret1;
+		if (ibl && obl && errno == EILSEQ) {
+			if (inrepls) {
+				/* Try replacing the input */
+				char **t;
+				for (t = inrepls; *t; t++)
+				{
+					char *ib1 = *t;
+					size_t ibl1 = xstrlen (*t);
+					char *ob1 = ob;
+					size_t obl1 = obl;
+					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
+					if (!ibl1) {
+						++ib, --ibl;
+						ob = ob1, obl = obl1;
+						++ret;
+						break;
+					}
+				}
+				if (*t)
+					continue;
+			}
+			if (outrepl) {
+				/* Try replacing the output */
+				int n = xstrlen (outrepl);
+				if (n <= obl)
+				{
+					memcpy (ob, outrepl, n);
+					++ib, --ibl;
+					ob += n, obl -= n;
+					++ret;
+					continue;
+				}
+			}
+		}
+		*inbuf = ib, *inbytesleft = ibl;
+		*outbuf = ob, *outbytesleft = obl;
+		return ret;
+	}
+}
+
+/*
+ * Convert a string
+ * Used in rfc2047.c and rfc2231.c
+ */
+
+char *mutt_convert_string (char *ps, const char *from, const char *to)
+{
+	iconv_t cd;
+	char *repls[] = { "\357\277\275", "?", 0 };
+	char *s = ps;
+
+	if (!s || !*s)
+		return NULL;
+
+	if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1) {
+		int len;
+		char *ib;
+		char *buf, *ob;
+		size_t ibl, obl;
+		char **inrepls = 0;
+		char *outrepl = 0;
+
+		if ( !xstrcasecmp(from, "utf-8"))
+			inrepls = repls;
+		else
+			outrepl = "?";
+
+		len = xstrlen (s);
+		ib = s, ibl = len + 1;
+		obl = 16 * ibl;
+		ob = buf = xmalloc (obl + 1);
+
+		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
+		iconv_close (cd);
+
+		*ob = '\0';
+
+		buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
+		return buf;
+	}
+	return NULL;
+}
+
+
+static char *rss_iconv(const char *str, const char *enconding) {
+	if (!enconding) enconding = "UTF-8";
+
+	debug("[rss] rss_iconv() from: %s to: %s\n", __(enconding), __(config_console_charset));
+
+	return mutt_convert_string(str, enconding, config_console_charset);
+}
 
 static void rss_fetch_error(rss_feed_t *f, const char *str) {
 	debug("rss_fetch_error() %s\n", str);
@@ -339,6 +452,7 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 
 	newnode = xmalloc(sizeof(xmlnode_t));
 	newnode->name = xstrdup(name);
+	newnode->data = string_init(NULL);
 
 	if ((n = j->node)) {
 		newnode->parent = n;
@@ -360,7 +474,7 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
 		for (i = 0; i < arrcount; i++)
-			newnode->atts[i] = xstrdup(atts[i]);
+			newnode->atts[i] = rss_iconv(atts[i], j->no_unicode);
 	} else	newnode->atts = NULL; 
 
 	j->node = newnode;
@@ -382,7 +496,8 @@ static void rss_handle_end(void *data, const char *name) {
 static void rss_handle_cdata(void *data, const char *text, int len) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
-	int oldlen, i;
+	char *recode;
+	int i;
 
 	if (!j || !text) {
 		debug("[rss] xmlnode_handle_cdata() invalid parameters\n");
@@ -390,9 +505,6 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 	}
 
 	if (!(n = j->node)) return;
-
-	oldlen		= xstrlen(n->data);
-	n->data		= xrealloc(n->data, oldlen + len + 1);
 
 	for (i = 0; i < len;) {
 		unsigned int znak = (unsigned char) text[i];
@@ -413,7 +525,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 
 			if (i+ucount > len || ucount == 5 || !ucount) {
 				debug("invalid utf-8 char\n");	/* shouldn't happen */
-				n->data[oldlen++] = '?';
+				string_append_c(n->data, '?');
 				i += ucount;
 				continue;
 			}
@@ -424,14 +536,18 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 				i++;
 			}
 
-			n->data[oldlen++] = znaczek;
+			string_append_c(n->data, znaczek);
 			continue;
 		}
-		n->data[oldlen++] = znak;
+		string_append_c(n->data, znak);
 		i++;
 	}
-/* XXX, recode to console_charset !! */
-	n->data[oldlen++] = 0;
+	recode = string_free(n->data, 0);
+	recode = rss_iconv(recode, j->no_unicode);
+
+	n->data = string_init(recode);
+
+	xfree(recode);
 }
 
 static int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
@@ -448,8 +564,8 @@ static int rss_handle_encoding(void *data, const char *name, XML_Encoding *info)
 	info->release	= NULL;
 	j->no_unicode	= xstrdup(name); 
 	return 1;
-	return 0;
 }
+
 static void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
 	debug("rss_parsexml_atom() sorry, atom not implemented\n");
 }
@@ -468,10 +584,10 @@ static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 			xmlnode_t *subnode;
 
 			for (subnode = node->children; subnode; subnode = subnode->next) {
-				if (!xstrcmp(subnode->name, "title")) 		chantitle 	= subnode->data;
-				else if (!xstrcmp(subnode->name, "link")) 	chanlink	= subnode->data;
-				else if (!xstrcmp(subnode->name, "description"))chandescr	= subnode->data;
-				else if (!xstrcmp(subnode->name, "language"))	chanlang	= subnode->data;
+				if (!xstrcmp(subnode->name, "title")) 		chantitle 	= subnode->data->str;
+				else if (!xstrcmp(subnode->name, "link")) 	chanlink	= subnode->data->str;
+				else if (!xstrcmp(subnode->name, "description"))chandescr	= subnode->data->str;
+				else if (!xstrcmp(subnode->name, "language"))	chanlang	= subnode->data->str;
 				else if (!xstrcmp(subnode->name, "item"))	; /* later */
 				else debug("rss_parsexml_rss RSS->CHANNELS: %s\n", subnode->name);
 			}
@@ -489,13 +605,13 @@ static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 
 					xmlnode_t *items;
 					for (items = subnode->children; items; items = items->next) {
-						if (!xstrcmp(items->name, "title"))		itemtitle = items->data;
-						else if (!xstrcmp(items->name, "description"))	itemdescr = items->data;
-						else if (!xstrcmp(items->name, "link")) 	itemlink  = items->data;
+						if (!xstrcmp(items->name, "title"))		itemtitle = items->data->str;
+						else if (!xstrcmp(items->name, "description"))	itemdescr = items->data->str;
+						else if (!xstrcmp(items->name, "link")) 	itemlink  = items->data->str;
 						else {	/* other, format tag: value\n */
 							string_append(tmp, items->name);
 							string_append(tmp, ": ");
-							string_append(tmp, items->data);
+							string_append(tmp, items->data->str);
 							string_append_c(tmp, '\n');
 						}
 					}
@@ -522,7 +638,7 @@ static void xmlnode_free(xmlnode_t *n) {
 	}
 
 	xfree(n->name);
-	xfree(n->data);
+	string_free(n->data, 1);
 	array_free(n->atts);
 	xfree(n);
 }
@@ -681,7 +797,7 @@ static WATCHER(rss_url_fetch_resolver) {
 
 	debug("rss_url_fetch_resolver() fd: %d type: %d\n", fd, type);
 
-	f = rss_feed_find(session_find(b->session), b->uid+4);
+	f = rss_feed_find(session_find(b->session), b->uid);
 
 	if (type) {
 		f->resolving = 0;
@@ -865,7 +981,7 @@ static COMMAND(rss_command_check) {
 	list_t l;
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		rss_feed_t *f = rss_feed_find(session, u->uid+4);
+		rss_feed_t *f = rss_feed_find(session, u->uid);
 
 		if (params[0] && xstrcmp(u->uid, params[0])) continue;
 
@@ -877,7 +993,7 @@ static COMMAND(rss_command_check) {
 }
 
 static COMMAND(rss_command_get) {
-	return rss_url_fetch(rss_feed_find(session, target+4), quiet);
+	return rss_url_fetch(rss_feed_find(session, target), quiet);
 }
 
 static COMMAND(rss_command_connect) {
@@ -897,10 +1013,11 @@ static COMMAND(rss_command_subscribe) {
 	userlist_t *u;
 
 	if ((u = userlist_find(session, target))) {
-		printq("feed_subcribe_already", target);
+		printq("feed_exists_other", target, format_user(session, u->uid), session_name(session));
 		return -1;
 	}
 
+	printq("feed_added", target, session_name(session));
 	userlist_add(session, target, target);
 	return 0;
 }
@@ -908,9 +1025,11 @@ static COMMAND(rss_command_subscribe) {
 static COMMAND(rss_command_unsubscribe) {
 	userlist_t *u; 
 	if (!(u = userlist_find(session, target))) {
-		printq("feed_subscribe_no", target);
+		printq("feed_not_found", target);
 		return -1;
 	}
+
+	printq("feed_deleted", params[0], session_name(session));
 	userlist_remove(session, u);
 	return 0;
 }

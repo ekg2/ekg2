@@ -310,8 +310,10 @@ static int feed_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("feed_status",		_("%> Newstatus: %1 (%2) %3"), 1);	/* XXX */
 
-	format_add("feed_subcribe_already",	_("%) You already subscribe to this group: %1"), 1);
-	format_add("feed_subscribe_no",		_("%) Subscription not found, cannot unsubscribe"), 1);
+	format_add("feed_added", 		_("%> (%2) Added %T%1%n to subscription\n"), 1);
+	format_add("feed_exists_other", 	_("%! (%3) %T%1%n already subscribed as %2\n"), 1);
+	format_add("feed_not_found",		_("%) Subscription %1 not found, cannot unsubscribe"), 1);
+	format_add("feed_deleted", 		_("%) (%2) Removed from subscription %T%1%n\n"), 1);
 
 	format_add("feed_message_header",	_("%g,+=%G-----%W  %1 %n(ID: %W%2%n)"), 1);
 	format_add("feed_message_body",		_("%g||%n %|%1"), 1);
