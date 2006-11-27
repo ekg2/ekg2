@@ -37,19 +37,16 @@ irc_ctcp_reply %> CTCP %W%2%n reply from %W%3%n: %5\n
 irc_ctcp_request %> %G%2%n %n[%g%3%n]%g requested CTCP %G%5%g from %G%4%n: _NIMP_
 irc_ctcp_request_pub %> %G%2%n %n[%g%3%n]%g requested CTCP %G%5%g from %G%4%n: _NIMP_
 
-# check 
-irc_ctcp_action_y_pub %W%e* %2%n %4\n
-irc_ctcp_action_pub %W%e* %2%n %5\n
-irc_ctcp_action_y %W%e* %2%n %4\n
+irc_ctcp_action_y_pub %W* %2%n %4\n
+irc_ctcp_action_pub %W* %2%n %5\n
+irc_ctcp_action_y %W* %2%n %4\n
+# to ma byc otwierane w nowym okienku...
+irc_ctcp_action %W* %2%n %5\n
 
 irc_not_f_chan_n %n-%P%3%n:%p%5%n- %6
 irc_not_f_server %g!%3%n %6
-
 # to co tutaj jest ma byc w oknie aktualnym, nie otwieranie nowego okna !!! 
 irc_not_f_some %n-%P%3%n(%p%4%n)- %6
-# a tutaj odwrotnie 
-irc_ctcp_action %> %W* %2%n %5\n
-# 
 
 irc_not_sent %n%K[%Rnotice%K(%r%5%K)]%n %6
 irc_not_sent_n %n%K[%Rnotice%K(%r%5%K)]%n %6
