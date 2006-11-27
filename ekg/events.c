@@ -411,9 +411,13 @@ static TIMER(ekg_day_timer) {
 			list_t l;
 			for (l = windows; l; l = l->next) {
 				window_t *w = l->data;
+				int oldact;
+				
 				if (w->id == 0 || w->id == 1000) continue; /* skip __contacts && __debug */
 
+				oldact = w->act;	/* save old act */
 				print_window(window_target(w), w->session, 0, "day_changed", timestamp("%d %b %Y"));
+				w->act = oldact;	/* restore old act */
 			}
 		}
 		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
