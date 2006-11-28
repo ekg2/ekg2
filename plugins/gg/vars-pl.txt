@@ -1,78 +1,79 @@
-// may opis dostï¿½nych zmiennych pluginu gg
+// ma³y opis dostêpnych zmiennych pluginu gg
 // (c) copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 Piotr Kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004-2006 Adam Mikuta <adamm@ekg2.org>
 
 dcc
 	typ: bool
-	domylna wartoï¿½ 0
+	domy¶lna warto¶æ: 0
 	
-	wcza lub wycza bezporednie poczenia miï¿½zy klientami. zmiana
-	tej opcji wymaga ponownego poczenia z serwerem, by przesaï¿½nowy
+	w³±cza lub wy³±cza bezpo¶rednie po³±czenia miêdzy klientami. zmiana
+	tej opcji wymaga ponownego po³±czenia z serwerem, by przes³aæ nowy
 	adres IP lub jego brak.
 
 dcc_ip
 	typ: tekst
-	domylna wartoï¿½ brak
+	domy¶lna warto¶æ: brak
 	
-	okrela adres IP, ktï¿½y jest wysyany serwerowi. jeli przypisze
-	siï¿½tej zmiennej wartoï¿½,,auto'', adres bï¿½zie ustalany 
-	automatycznie. jeli chcemy bezproblemowo czyï¿½siï¿½z klientami
-	z tej samej sieci LAN, dobrze jest podaï¿½adres IP sieci LAN zamiast
-	zewnï¿½rznego.
+	okre¶la adres IP, który jest wysy³any serwerowi. je¶li przypisze
+	siê tej zmiennej warto¶æ ,,auto'', adres bêdzie ustalany 
+	automatycznie. je¶li chcemy bezproblemowo ³±czyæ siê z klientami
+	z tej samej sieci LAN, dobrze jest podaæ adres IP sieci LAN zamiast
+	zewnêtrznego.
 
 dcc_limit
 	typ: tekst
-	domylna wartoï¿½ 30/30
+	domy¶lna warto¶æ: 30/30
 	
-	okrela limit bezporednich poczeï¿½w danym przedziale czasu.
-	liczba przed ukonikiem okrela maksymaln iloï¿½poczeï¿½ a liczba
-	po ukoniku iloï¿½sekund. po przekroczeniu tego progu bezporednie
-	poczenia zostaj wyczone, by zapobiec atakom polegajcym na
-	wyczerpaniu zasobï¿½ klienta. zwykle po ponownym wczeniu
-	bezporednich poczeï¿½naley poczyï¿½siï¿½ponownie z serwerem.
+	okre¶la limit bezpo¶rednich po³±czeñ w danym przedziale czasu.
+	liczba przed uko¶nikiem okre¶la maksymaln± ilo¶æ po³±czeñ, a liczba
+	po uko¶niku ilo¶æ sekund. po przekroczeniu tego progu bezpo¶rednie
+	po³±czenia zostaj± wy³±czone, by zapobiec atakom polegaj±cym na
+	wyczerpaniu zasobów klienta. zwykle po ponownym w³±czeniu
+	bezpo¶rednich po³±czeñ nale¿y po³±czyæ siê ponownie z serwerem.
 
 dcc_port
 	typ: liczba
-	domylna wartoï¿½ 1550
+	domy¶lna warto¶æ: 1550
 	
-	port, na ktï¿½ym ekg bï¿½zie oczekiwaï¿½na poczenia bezporednie.
+	port, na którym ekg bêdzie oczekiwaæ na po³±czenia bezpo¶rednie.
 
 display_token
 	typ: bool
-	domylna wartoï¿½ 1
+	domy¶lna warto¶æ: 1
 	
-	zmienna dostï¿½na tylko gdy w systemie jest biblioteka pozwalajca
-	dekodowaï¿½pliki JPEG. wyczenie jej spowoduje dziaanie ekg tak,
-	jakby biblioteki nie byo, tj. zapisywanie tokenï¿½ do pliku.
+	zmienna dostêpna tylko gdy w systemie jest biblioteka pozwalaj±ca
+	dekodowaæ pliki JPEG. wy³±czenie jej spowoduje dzia³anie ekg tak,
+	jakby biblioteki nie by³o, tj. zapisywanie tokenów do pliku.
 
 get_images
 	typ: bool
-	domylna wartoï¿½ 0
+	domy¶lna warto¶æ: 0
 	
-	przy ustawionej wartoci 1 jeli w wiadomociach bï¿½ siï¿½znajdoway
-	obrazki to bï¿½ one cigane i zapisywane do katalogu okrelonego 
+	przy ustawionej warto¶ci 1 je¶li w wiadomo¶ciach bêd± siê znajdowa³y
+	obrazki to bêd± one ¶ci±gane i zapisywane do katalogu okre¶lonego 
 	przez images_dir
 
 images_dir
 	typ: tekst
-	domylna wartoï¿½ brak
+	domy¶lna warto¶æ: brak
 	
-	zmienna okrela katalog, do ktï¿½ego maj byï¿½zapisywane obrazki 
+	zmienna okre¶la katalog, do którego maj± byæ zapisywane obrazki 
 	przy ustawionej zmiennej get_images
 
 images_size
 	typ: liczba
-	domylna wartoï¿½ 20
+	domy¶lna warto¶æ: 20
 	
-	zmienna okrela gï¿½n granicï¿½wielkoci rozmiaru przyjmowanych obrazkï¿½
+	zmienna okre¶la górn± granicê wielko¶ci rozmiaru przyjmowanych obrazków
 	w kB
 
 split_messages
 	typ: bool
-	domylna wartoï¿½ 0
+	domy¶lna warto¶æ: 0
 	
-	zmienna okrela co robiï¿½gdy wiadomoï¿½przekracza maksymaln dugoï¿½	wiadomoci. jeeli 1 to wiadomoï¿½dzielona jest na czï¿½i, jeli 0
-	to wiadomoï¿½jest wysyana niekompletna
+	zmienna okre¶la co robiæ gdy wiadomo¶æ przekracza maksymaln± d³ugo¶æ
+	wiadomo¶ci. je¿eli 1 to wiadomo¶æ dzielona jest na czê¶ci, je¶li 0
+	to wiadomo¶æ jest wysy³ana niekompletna
 
 $Id$
