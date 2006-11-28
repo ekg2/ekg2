@@ -36,7 +36,6 @@ extern char *last_tokenid;
 extern int gg_config_display_token;
 extern int gg_config_audio;
 extern int gg_config_dcc;
-extern char *gg_config_dcc_dir;
 extern char *gg_config_dcc_ip;
 extern char *gg_config_dcc_limit;
 extern int gg_config_dcc_port;

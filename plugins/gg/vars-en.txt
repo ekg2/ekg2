@@ -20,12 +20,6 @@ dcc_ip
         this variable as ,,auto'', IP then will be set
         automatically. 
 
-dcc_dir
-        type: text
-        default value: none
-	
-        set catalogue, in which files will be saved.
-
 dcc_limit
         type: text
         default value: 30/30

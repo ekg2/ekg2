@@ -1200,7 +1200,6 @@ static int gg_theme_init() {
 }
 
 static QUERY(gg_setvar_default) {
-	xfree(gg_config_dcc_dir);
 	xfree(gg_config_dcc_ip);
 	xfree(gg_config_dcc_limit);
 	xfree(gg_config_images_dir);
@@ -1210,7 +1209,6 @@ static QUERY(gg_setvar_default) {
 	gg_config_images_dir = NULL;
 	gg_config_image_size = 20;
 	gg_config_dcc = 0;
-	gg_config_dcc_dir = NULL;
 	gg_config_dcc_ip = NULL;
 	gg_config_dcc_limit = xstrdup("30/30");
 	gg_config_dcc_port = 1550;
@@ -1256,7 +1254,6 @@ int gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("audio"), VAR_BOOL, 1, &gg_config_audio, gg_changed_dcc, NULL, NULL);
 	variable_add(&gg_plugin, ("display_token"), VAR_BOOL, 1, &gg_config_display_token, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("dcc"), VAR_BOOL, 1, &gg_config_dcc, gg_changed_dcc, NULL, NULL);
-	variable_add(&gg_plugin, ("dcc_dir"), VAR_STR, 1, &gg_config_dcc_dir, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("dcc_ip"), VAR_STR, 1, &gg_config_dcc_ip, gg_changed_dcc, NULL, NULL);
 	variable_add(&gg_plugin, ("dcc_limit"), VAR_STR, 1, &gg_config_dcc_limit, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("dcc_port"), VAR_INT, 1, &gg_config_dcc_port, gg_changed_dcc, NULL, NULL);

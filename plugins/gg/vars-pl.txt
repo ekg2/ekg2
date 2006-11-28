@@ -1,85 +1,78 @@
-// ma³y opis dostêpnych zmiennych pluginu gg
+// may opis dostï¿½nych zmiennych pluginu gg
 // (c) copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 Piotr Kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004-2006 Adam Mikuta <adamm@ekg2.org>
 
 dcc
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domylna wartoï¿½ 0
 	
-	w³±cza lub wy³±cza bezpo¶rednie po³±czenia miêdzy klientami. zmiana
-	tej opcji wymaga ponownego po³±czenia z serwerem, by przes³aæ nowy
+	wcza lub wycza bezporednie poczenia miï¿½zy klientami. zmiana
+	tej opcji wymaga ponownego poczenia z serwerem, by przesaï¿½nowy
 	adres IP lub jego brak.
 
 dcc_ip
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domylna wartoï¿½ brak
 	
-	okre¶la adres IP, który jest wysy³any serwerowi. je¶li przypisze
-	siê tej zmiennej warto¶æ ,,auto'', adres bêdzie ustalany 
-	automatycznie. je¶li chcemy bezproblemowo ³±czyæ siê z klientami
-	z tej samej sieci LAN, dobrze jest podaæ adres IP sieci LAN zamiast
-	zewnêtrznego.
-
-dcc_dir
-	typ: tekst
-	domy¶lna warto¶æ: brak
-	
-	okre¶la katalog, do którego bêd± zapisywane pobierane pliki.
+	okrela adres IP, ktï¿½y jest wysyany serwerowi. jeli przypisze
+	siï¿½tej zmiennej wartoï¿½,,auto'', adres bï¿½zie ustalany 
+	automatycznie. jeli chcemy bezproblemowo czyï¿½siï¿½z klientami
+	z tej samej sieci LAN, dobrze jest podaï¿½adres IP sieci LAN zamiast
+	zewnï¿½rznego.
 
 dcc_limit
 	typ: tekst
-	domy¶lna warto¶æ: 30/30
+	domylna wartoï¿½ 30/30
 	
-	okre¶la limit bezpo¶rednich po³±czeñ w danym przedziale czasu.
-	liczba przed uko¶nikiem okre¶la maksymaln± ilo¶æ po³±czeñ, a liczba
-	po uko¶niku ilo¶æ sekund. po przekroczeniu tego progu bezpo¶rednie
-	po³±czenia zostaj± wy³±czone, by zapobiec atakom polegaj±cym na
-	wyczerpaniu zasobów klienta. zwykle po ponownym w³±czeniu
-	bezpo¶rednich po³±czeñ nale¿y po³±czyæ siê ponownie z serwerem.
+	okrela limit bezporednich poczeï¿½w danym przedziale czasu.
+	liczba przed ukonikiem okrela maksymaln iloï¿½poczeï¿½ a liczba
+	po ukoniku iloï¿½sekund. po przekroczeniu tego progu bezporednie
+	poczenia zostaj wyczone, by zapobiec atakom polegajcym na
+	wyczerpaniu zasobï¿½ klienta. zwykle po ponownym wczeniu
+	bezporednich poczeï¿½naley poczyï¿½siï¿½ponownie z serwerem.
 
 dcc_port
 	typ: liczba
-	domy¶lna warto¶æ: 1550
+	domylna wartoï¿½ 1550
 	
-	port, na którym ekg bêdzie oczekiwaæ na po³±czenia bezpo¶rednie.
+	port, na ktï¿½ym ekg bï¿½zie oczekiwaï¿½na poczenia bezporednie.
 
 display_token
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domylna wartoï¿½ 1
 	
-	zmienna dostêpna tylko gdy w systemie jest biblioteka pozwalaj±ca
-	dekodowaæ pliki JPEG. wy³±czenie jej spowoduje dzia³anie ekg tak,
-	jakby biblioteki nie by³o, tj. zapisywanie tokenów do pliku.
+	zmienna dostï¿½na tylko gdy w systemie jest biblioteka pozwalajca
+	dekodowaï¿½pliki JPEG. wyczenie jej spowoduje dziaanie ekg tak,
+	jakby biblioteki nie byo, tj. zapisywanie tokenï¿½ do pliku.
 
 get_images
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domylna wartoï¿½ 0
 	
-	przy ustawionej warto¶ci 1 je¶li w wiadomo¶ciach bêd± siê znajdowa³y
-	obrazki to bêd± one ¶ci±gane i zapisywane do katalogu okre¶lonego 
+	przy ustawionej wartoci 1 jeli w wiadomociach bï¿½ siï¿½znajdoway
+	obrazki to bï¿½ one cigane i zapisywane do katalogu okrelonego 
 	przez images_dir
 
 images_dir
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domylna wartoï¿½ brak
 	
-	zmienna okre¶la katalog, do którego maj± byæ zapisywane obrazki 
+	zmienna okrela katalog, do ktï¿½ego maj byï¿½zapisywane obrazki 
 	przy ustawionej zmiennej get_images
 
 images_size
 	typ: liczba
-	domy¶lna warto¶æ: 20
+	domylna wartoï¿½ 20
 	
-	zmienna okre¶la górn± granicê wielko¶ci rozmiaru przyjmowanych obrazków
+	zmienna okrela gï¿½n granicï¿½wielkoci rozmiaru przyjmowanych obrazkï¿½
 	w kB
 
 split_messages
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domylna wartoï¿½ 0
 	
-	zmienna okre¶la co robiæ gdy wiadomo¶æ przekracza maksymaln± d³ugo¶æ
-	wiadomo¶ci. je¿eli 1 to wiadomo¶æ dzielona jest na czê¶ci, je¶li 0
-	to wiadomo¶æ jest wysy³ana niekompletna
+	zmienna okrela co robiï¿½gdy wiadomoï¿½przekracza maksymaln dugoï¿½	wiadomoci. jeeli 1 to wiadomoï¿½dzielona jest na czï¿½i, jeli 0
+	to wiadomoï¿½jest wysyana niekompletna
 
 $Id$

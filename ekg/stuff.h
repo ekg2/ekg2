@@ -232,6 +232,7 @@ extern int config_use_unicode; 	/* for instance in jabber plugin if this is on, 
 extern char *config_console_charset;	/* */
 extern char *config_windows_layout;
 extern int config_windows_save;
+extern char *config_dcc_dir;
 
 extern char *home_dir;
 extern char *config_dir;

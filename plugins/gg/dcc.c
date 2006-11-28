@@ -40,7 +40,6 @@ static int dcc_limit_count = 0; /* how many connections from the last time */
 int gg_config_audio;
 int gg_config_dcc;
 int gg_config_dcc_port;
-char *gg_config_dcc_dir;
 char *gg_config_dcc_ip;
 char *gg_config_dcc_limit;
 
@@ -443,8 +442,8 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 
-		if (gg_config_dcc_dir) 
-		    	path = saprintf("%s/%s", gg_config_dcc_dir, dcc_filename_get(d));
+		if (config_dcc_dir) 
+		    	path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
 		else
 		    	path = xstrdup(dcc_filename_get(d));
 		
@@ -703,8 +702,8 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 
 			print("dcc_get_offer", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));
 
-			if (gg_config_dcc_dir)
-				path = saprintf("%s/%s", gg_config_dcc_dir, dcc_filename_get(D));
+			if (config_dcc_dir)
+				path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(D));
 			else
 				path = xstrdup(dcc_filename_get(D));
 

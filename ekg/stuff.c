@@ -102,6 +102,7 @@ int config_beep_msg = 1;
 int config_beep_chat = 1;
 int config_beep_notify = 1;
 char *config_console_charset;
+char *config_dcc_dir;
 int config_display_blinking = 1;
 int config_display_pl_chars = 1;
 int config_events_delay = 3;
