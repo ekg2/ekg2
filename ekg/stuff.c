@@ -637,40 +637,6 @@ void buffer_free()
 	buffers = NULL;
 }
 
-/* 
- * changed_var_default()
- * 
- * function called when session var ,,default''
- * is changed
- */
-void changed_var_default(session_t *s, const char *var)
-{
-	list_t l;
-
-	if (!sessions)
-		return;
-	
-	if (session_int_get(s, var) == 0)
-		return; 
-
-	for (l = sessions; l; l = l->next) {
-		session_t *sp = l->data;
-		session_param_t *sparam;
-
-		if (!session_compare(s, sp))
-			continue;
-
-		sparam = session_var_find(sp, var);
-
-		if (sparam) {
-			xfree(sparam->value);
-			sparam->value = xstrdup("0");
-		} else {
-			debug("Default variable didn't setted for the session: %s - contact with developers\n", session_name(sp));
-		}
-	}
-}
-
 /*
  * changed_mesg()
  *
