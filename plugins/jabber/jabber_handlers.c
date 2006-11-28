@@ -125,9 +125,25 @@ static char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 	}
 	return NULL;	/* never here */
 #else
-#warning "XXX, HERE VERIFY CERT USING GNUTLS"
-	return NULL;
+	static char buf[100];
+	int res;
+	unsigned int ret;
+
+	if ((res = gnutls_certificate_verify_peers2(ssl, &ret)) != 0)
+		return gnutls_strerror(res);
+
+	buf[0] = 0;
+		/* ret is bitmask of gnutls_certificate_status_t */
+	if (ret & GNUTLS_CERT_INVALID) 		xstrcat(buf, "Certificate is invalid:");	/* 23b */
+	if (ret & GNUTLS_CERT_REVOKED) 		xstrcat(buf, " revoked");			/* 08b */
+	if (ret & GNUTLS_CERT_SIGNER_NOT_FOUND)	xstrcat(buf, " signer not found");		/* 17b */
+	if (ret & GNUTLS_CERT_SIGNER_NOT_CA)	xstrcat(buf, " signer not a CA");		/* 16b */
+/*	if (ret & GNUTLS_CERT_INSECURE_ALGORITHM) xstrcat(buf, " INSECURE ALGO?"); */
+
+	return (buf[0]) ? &buf[0] : NULL;
 #endif
+
+/* XXX czy sie dane zgadzaja z j->server */
 }
 
 static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
@@ -182,8 +198,8 @@ static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
 gnutls_ok:
 	
 	if ((certret = jabber_ssl_cert_verify(j->ssl_session))) {
-		debug_error("[jabber] jabber_ssl_cert_verify() %s retcode = %s\n", s->uid, __(certret));
-		print("generic_error", certret);
+		debug_error("[jabber] jabber_ssl_cert_verify() %s retcode = %s\n", s->uid, certret);
+		print("generic2", certret);
 	}
 
 	// handshake successful
