@@ -2143,12 +2143,15 @@ char *split_line(char **ptr)
 
         if (!(foo = xstrchr(*ptr, '\n')))
                 *ptr += xstrlen(*ptr);
-        else {
-                *ptr = foo + 1;
-                *foo = 0;
-                if (xstrlen(res) > 1 && res[xstrlen(res) - 1] == '\r')
-                        res[xstrlen(res) - 1] = 0;
-        }
+	else {
+		size_t reslen;
+		*ptr = foo + 1;
+		*foo = 0;
+
+		reslen = xstrlen(res);
+		if (reslen > 1 && res[reslen - 1] == '\r')
+			res[reslen - 1] = 0;
+	}
 
         return res;
 }
