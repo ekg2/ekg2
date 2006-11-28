@@ -59,8 +59,9 @@
 #include <ekg/log.h>
 
 #include "jabber.h"
+#include "jabber_dcc.h"
 
-#if 0
+#if WITH_JABBER_DCC
 static COMMAND(jabber_command_dcc) {
 	jabber_private_t *j = session_private_get(session);
 
@@ -2110,7 +2111,7 @@ void jabber_register_commands()
 			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, ("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-#if 0
+#if WITH_JABBER_DCC
 	command_add(&jabber_plugin, ("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
 			"send get resume voice close list");
 #endif

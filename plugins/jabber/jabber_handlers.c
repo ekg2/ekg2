@@ -63,6 +63,7 @@
 #include <ekg/log.h>
 
 #include "jabber.h"
+#include "jabber_dcc.h"
 
 #define jabberfix(x,a) ((x) ? x : a)
 #define STRICT_XMLNS 1

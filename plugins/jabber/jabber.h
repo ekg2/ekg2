@@ -26,9 +26,7 @@
 #define tlenjabber_escape(str)	(j->istlen ? tlen_encode(str) : jabber_escape(str))
 #define tlenjabber_unescape(str) (j->istlen ? tlen_decode(str) : jabber_unescape(str))
 
-#define WITH_JABBER_DCC 0
 #define WITH_JABBER_JINGLE 0
-#define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
 
 struct xmlnode_s {
 	char *name;
@@ -72,13 +70,6 @@ typedef struct {
 	} private;
 } jabber_bookmark_t;
 
-enum jabber_dcc_protocol_type_t {
-	JABBER_DCC_PROTOCOL_UNKNOWN	= 0,
-	JABBER_DCC_PROTOCOL_BYTESTREAMS,	/* http://www.jabber.org/jeps/jep-0065.html */
-	JABBER_DCC_PROTOCOL_IBB, 		/* http://www.jabber.org/jeps/jep-0047.html */
-	JABBER_DCC_PROTOCOL_WEBDAV,		/* http://www.jabber.org/jeps/jep-0129.html */ /* DON'T IMPLEMENT IT UNTILL IT WILL BE STARNDARD DRAFT */
-};
-
 enum jabber_compression_method {
 	JABBER_COMPRESSION_NONE = 0,
 	JABBER_COMPRESSION_ZLIB_INIT,
@@ -87,41 +78,6 @@ enum jabber_compression_method {
 	JABBER_COMPRESSION_ZLIB,
 	JABBER_COMPRESSION_LZW,
 };
-
-enum jabber_socks5_step_t {
-	SOCKS5_UNKNOWN = 0,
-	SOCKS5_CONNECT, 
-	SOCKS5_AUTH,
-	SOCKS5_DATA,
-};
-
-/* <JABBER_DCC_PROTOCOL_BYTESTREAMS> */
-struct jabber_streamhost_item {
-	char *jid;
-	char *ip;
-	int port;
-};
-
-typedef struct {
-	int validate;		/* should be: JABBER_DCC_PROTOCOL_BYTESTREAMS */
-	enum jabber_socks5_step_t step;
-
-	struct jabber_streamhost_item *streamhost;
-	list_t streamlist;
-} jabber_dcc_bytestream_t;
-
-/* </JABBER_DCC_PROTOCOL_BYTESTREAMS> */
-
-typedef struct {
-	session_t *session;
-	char *req;
-	char *sid;
-	enum jabber_dcc_protocol_type_t protocol;
-	union { /* private data based on protocol */
-		jabber_dcc_bytestream_t *bytestream;		/* for JABBER_DCC_PROTOCOL_BYTESTREAMS */
-		void *other;			/* XXX */
-	} private;
-} jabber_dcc_t; 
 
 	/* name				bit			allow/block:	*/
 #define PRIVACY_LIST_MESSAGE		1		/* 	incoming messages */
@@ -200,9 +156,7 @@ int jabber_privacy_free(jabber_private_t *j);
 int jabber_bookmarks_free(jabber_private_t *j);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
-#ifdef JABBER_HAVE_SSL
- WATCHER_LINE(jabber_handle_write);
-#endif
+WATCHER_LINE(jabber_handle_write);
 
 void xmlnode_handle_start(void *data, const char *name, const char **atts);
 void xmlnode_handle_end(void *data, const char *name);
