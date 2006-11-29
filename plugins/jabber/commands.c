@@ -132,9 +132,10 @@ static COMMAND(jabber_command_dcc) {
 					int n;
 
 					for (n = 0; n < 4; n++) {
-						char *tmp = saprintf("%x", (word >> (n * 4)) & 0xf);	/* XXX! */
-						string_append(sid, tmp);
-						xfree(tmp);
+						int dgst  = (word >> (n * 4)) & 0xf;	/* from 0..9 -> '0'..'9', 10..15 - 'A'..'F' */
+
+						if (dgst < 10)	string_append_c(sid, dgst + '0');
+						else		string_append_c(sid, dgst - 10 + 'a');
 					}
 				}
 				debug_function("[jabber] jabber_command_dcc() hash generated: %s errors below are ok.\n", sid->str);

@@ -189,7 +189,8 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 	char buf[200];
 	int len;
 
-	if (type) return -1;
+	if (type)
+		return -1;
 	
 	len = read(fd, &buf, sizeof(buf)-1);
 
@@ -283,8 +284,10 @@ WATCHER(jabber_dcc_handle_accept) {
 	struct sockaddr_in sin;
 	int newfd, sin_len = sizeof(sin);
 
-	if (type)
+	if (type) {
+		close(fd);
 		return -1;
+	}
 
 	if ((newfd = accept(fd, (struct sockaddr *) &sin, &sin_len)) == -1) {
 		debug_error("jabber_dcc_handle_accept() accept() FAILED (%s)\n", strerror(errno));

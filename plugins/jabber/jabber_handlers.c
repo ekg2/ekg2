@@ -1105,7 +1105,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 			if (p) {
 				/* XXX, new theme it's for ip:port */
-				print("dcc_error_refused", format_user(session_find(s), p->uid));
+				print("dcc_error_refused", format_user(s, p->uid));
 				dcc_close(p);
 			} else {
 				/* XXX, possible abuse attempt */
@@ -1174,8 +1174,6 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					jabber_dcc_bytestream_t *b;
 					list_t l;
 
-					debug_function("p->protocol: OK\n");
-
 					b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
 					b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
 
@@ -1225,6 +1223,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			jdcc->session	= s;
 			jdcc->req 	= xstrdup(id);
 			jdcc->sid	= jabber_unescape(jabber_attr(q->atts, "id"));
+			jdcc->sfd	= -1;
 
 			D = dcc_add(uid, DCC_GET, NULL);
 			dcc_filename_set(D, filename);
@@ -2039,8 +2038,8 @@ rc_forbidden:
 					struct jabber_streamhost_item *streamhost;
 
 					if (d->type == DCC_SEND) {
-						watch_write(j->send_watch, "<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"406\">Declined</error></iq>", d->uid+4, id);
-						debug_error("BAD!\n");
+						watch_write(j->send_watch, 
+							"<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"406\">Declined</error></iq>", d->uid+4, id);
 						return;
 					}
 
@@ -2048,7 +2047,7 @@ rc_forbidden:
 
 					xfree(p->req);
 					p->req = xstrdup(id);
-
+		/* XXX, set our streamhost && send them too */
 					for (node = q->children; node; node = node->next) {
 						if (!xstrcmp(node->name, "streamhost")) {
 							struct jabber_streamhost_item *newstreamhost = xmalloc(sizeof(struct jabber_streamhost_item));
@@ -2071,6 +2070,7 @@ find_streamhost:
 							break;
 						}
 					}
+
 					if (streamhost) {
 						struct sockaddr_in sin;
 						int fd;
@@ -2105,7 +2105,7 @@ find_streamhost:
 					} else {
 						list_t l;
 
-						debug_error("[jabber] Not found any streamhost with ipv4 address.. sorry, closing connection.");
+						debug_error("[jabber] We cannot connect to any streamhost with ipv4 address.. sorry, closing connection.\n");
 
 						for (l = host_list; l; l = l->next) {
 							struct jabber_streamhost_item *i = l->data;
@@ -2115,8 +2115,16 @@ find_streamhost:
 						}
 						list_destroy(host_list, 1);
 
+						watch_write(j->send_watch, 
+							"<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"404\" type=\"cancel\">"
+							/* Psi: <error code='404'>Could not connect to given hosts</error> */
+								"<item-not-found xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/>"
+							"</error></iq>", d->uid+4, id);
+
+						print("dcc_error_refused", format_user(s, d->uid));
+
+						d->active = 1;		/* hack to avoid sending 403 */
 						dcc_close(d);		/* zamykamy dcc */
-						/* XXX, tutaj powinnismy wyslac cos do tamtego czegos. */
 					}
 				} else if (!xstrcmp(type, "result")) {
 					xmlnode_t *used = xmlnode_find_child(q, "streamhost-used");
