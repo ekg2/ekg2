@@ -105,6 +105,7 @@ static COMMAND(jabber_command_dcc) {
 			char *touid;
 			jabber_dcc_t *p;
 			char *filename;
+			string_t sid = NULL;
 
 	/* XXX, introduce function jabber_get_resource(u, input_uid); */
 			touid = saprintf("%s/%s", u->uid, ((ekg_resource_t *) (u->resources->data))->name);
@@ -116,7 +117,27 @@ static COMMAND(jabber_command_dcc) {
 			d->priv = p = xmalloc(sizeof(jabber_dcc_t));
 			p->session 	= session;
 			p->req		= saprintf("offer%d", dcc_id_get(d));
-			p->sid		= xstrdup(itoa(j->id++));		/* make it more uniq */
+		
+		/* copied from iris/jabber/s5b.cpp (C) 2003 Justin Karneges under LGPL 2.1 */
+			do {
+				/* generate hash like Psi do */
+				int i;
+
+				sid = string_init("s5b_");
+				for (i = 0; i < 4; i++) {
+					int word = rand() & 0xffff;
+					int n;
+
+					for (n = 0; n < 4; n++) {
+						char *tmp = saprintf("%x", (word >> (n * 4)) & 0xf);	/* XXX! */
+						string_append(sid, tmp);
+						xfree(tmp);
+					}
+				}
+				debug_function("[jabber] jabber_command_dcc() hash generated: %s errors below are ok.\n", sid->str);
+			} while (jabber_dcc_find(NULL, NULL, sid->str) && string_free(sid, 1));	/* loop, [if sid exists] + free string if yes */
+
+			p->sid		= string_free(sid, 0);
 			p->sfd		= -1;
 			p->fd		= fd;
 

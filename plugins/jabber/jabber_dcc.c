@@ -360,11 +360,11 @@ dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const
 		jabber_dcc_t *p = d->priv;
 
 		if (DCC_RULE(d) && (!sid || !xstrcmp(p->sid, sid)) && (!id || !xstrcmp(p->req, id))) {
-			debug_function("jabber_dcc_find() %s sid: %s id: %s founded: 0x%x\n", uin, sid, id, d);
+			debug_function("jabber_dcc_find() %s sid: %s id: %s founded: 0x%x\n", __(uin), __(sid), __(id), d);
 			return d;
 		}
 	}
-	debug_error("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", uin, sid);
+	debug_error("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", __(uin), __(sid));
 	return NULL;
 }
 #endif
