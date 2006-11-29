@@ -40,13 +40,6 @@ auto_reconnect
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
 
-default
-	typ: bool
-	domy¶lna warto¶æ: 0
-	
-	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
-	podczas uruchomienia programu)
-
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: -1
@@ -60,7 +53,7 @@ display_notify
 
 display_server_features
 	typ: liczba
-	domy¶lna warto¿¿: 1
+	domy¶lna warto¶æ: 1
 	
 	Okre¶la kiedy powinny zostaæ pokazane obs³ugiwane przez serwer ficzery:
 	0 - nigdy

@@ -40,13 +40,6 @@ auto_reconnect
 	program will try again. If set to 0 there will be no automatical
 	reconnects.
 
-default
-	type: bool
-	default value: 0
-	
-	determines whether session should be default (set as first after
-	program startup)
-
 display_notify
 	type: integer
 	default value: -1
