@@ -1161,6 +1161,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				if (!xstrcmp(stream_method, "http://jabber.org/protocol/bytestreams")) 	p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS; 
 				else debug_error("[JABBER] JEP-0095: ERROR, stream_method XYZ error: %s\n", stream_method);
 				xfree(stream_method);
+
 				if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
 					struct jabber_streamhost_item streamhost;
 					jabber_dcc_bytestream_t *b;
@@ -2019,7 +2020,7 @@ rc_forbidden:
 				char *smode = jabber_attr(q->atts, "mode"); 	/* tcp, udp */
 				dcc_t *d = NULL;
 
-				if (!xstrcmp(type, "set") && (d = jabber_dcc_find(uid, NULL, sid)) && d->type == DCC_GET /* XXX */) {
+				if (!xstrcmp(type, "set") && (d = jabber_dcc_find(uid, NULL, sid))) {
 					/* w sumie jak nie mamy nawet tego dcc.. to mozemy kontynuowac ;) */
 					/* problem w tym czy user chce ten plik.. etc.. */
 					/* i tak to na razie jest jeden wielki hack, trzeba sprawdzac czy to dobry typ dcc. etc, XXX */
@@ -2028,7 +2029,13 @@ rc_forbidden:
 					jabber_dcc_bytestream_t *b = NULL;
 
 					list_t host_list = NULL, l;
-					struct jabber_streamhost_item *streamhost = NULL;
+					struct jabber_streamhost_item *streamhost;
+
+					if (d->type == DCC_SEND) {
+						watch_write(j->send_watch, "<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"406\">Declined</error></iq>", d->uid+4, id);
+						debug_error("BAD!\n");
+						return;
+					}
 
 					p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS;
 
@@ -2045,7 +2052,10 @@ rc_forbidden:
 							list_add(&host_list, newstreamhost, 0);
 						}
 					}
-					for (l = host_list; l; l = l->next) {
+					l = host_list;
+find_streamhost:
+					streamhost = NULL;
+					for (; l; l = l->next) {
 						struct jabber_streamhost_item *item = l->data;
 						struct sockaddr_in sin;
 						/* let's search the list for ipv4 address... for now only this we can handle */
@@ -2058,18 +2068,26 @@ rc_forbidden:
 						struct sockaddr_in sin;
 						int fd;
 						char socks5[4];
+
 						fd = socket(AF_INET, SOCK_STREAM, 0);
 
 						sin.sin_family = AF_INET;
 						sin.sin_port	= htons(streamhost->port);
 						inet_pton(AF_INET, streamhost->ip, &(sin.sin_addr));
 
-						connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
+						if (connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)) == -1) {
+							/* let's try connect once more to another host? */
+							debug_error("[jabber] dcc connecting to: %s failed (%s)\n", streamhost->ip, strerror(errno));
+							goto find_streamhost;
+						}
+						p->sfd = fd;
+
 						watch_add(&jabber_plugin, fd, WATCH_READ, jabber_dcc_handle_recv, d);
 						
 						p->private.bytestream = b = xmalloc(sizeof(jabber_dcc_bytestream_t));
 						b->validate	= JABBER_DCC_PROTOCOL_BYTESTREAMS;
 						b->step		= SOCKS5_CONNECT;
+						b->streamlist	= host_list;
 						b->streamhost	= streamhost;
 
 						socks5[0] = 0x05;	/* socks version 5 */
@@ -2077,7 +2095,22 @@ rc_forbidden:
 						socks5[2] = 0x00;	/* no auth */
 						socks5[3] = 0x02;	/* username */
 						write(fd, (char *) &socks5, sizeof(socks5));
-					} else debug_error("[jabber] Not found any streamhost with ipv4 address.. sorry");
+					} else {
+						list_t l;
+
+						debug_error("[jabber] Not found any streamhost with ipv4 address.. sorry, closing connection.");
+
+						for (l = host_list; l; l = l->next) {
+							struct jabber_streamhost_item *i = l->data;
+
+							xfree(i->jid);
+							xfree(i->ip);
+						}
+						list_destroy(host_list, 1);
+
+						dcc_close(d);		/* zamykamy dcc */
+						/* XXX, tutaj powinnismy wyslac cos do tamtego czegos. */
+					}
 				} else if (!xstrcmp(type, "result")) {
 					xmlnode_t *used = xmlnode_find_child(q, "streamhost-used");
 					jabber_dcc_t *p;

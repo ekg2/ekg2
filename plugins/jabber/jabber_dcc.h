@@ -8,6 +8,8 @@
 
 #if WITH_JABBER_DCC
 
+#include <stdio.h>
+
 #include <ekg/dynstuff.h>
 #include <ekg/protocol.h>
 
@@ -44,7 +46,10 @@ typedef struct {
 
 
 typedef struct {
+	FILE *fd;
+	int sfd;
 	session_t *session;
+
 	char *req;
 	char *sid;
 	enum jabber_dcc_protocol_type_t protocol;

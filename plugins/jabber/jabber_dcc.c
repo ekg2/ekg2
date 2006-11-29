@@ -30,11 +30,13 @@ WATCHER(jabber_dcc_handle_recv) {
 
 /*	debug("jabber_dcc_handle_recv() data = %x type = %d\n", data, type); */
 	if (type) {
-		/* XXX, close DCC */
+		if (d && d->priv) dcc_close(d);
 		return 0;
 	}
 
-	if (!d || !(p = d->priv)) return -1;
+	if (!d || !(p = d->priv))
+		return -1;
+
 	if (!(s = p->session) || !(j = jabber_private(s))) return -1;
 
 	switch (p->protocol) {
@@ -86,7 +88,6 @@ WATCHER(jabber_dcc_handle_recv) {
 							"<query xmlns=\"http://jabber.org/protocol/bytestreams\">"
 							"<streamhost-used jid=\"%s\"/>"
 							"</query></iq>", d->uid+4, p->req, b->streamhost->jid);
-
 						b->step = SOCKS5_DATA;
 						d->active = 1;
 						return 0;
@@ -102,11 +103,7 @@ WATCHER(jabber_dcc_handle_recv) {
 			if (len == 0) { close(fd); return -1; }
 			buf[len] = 0;
 
-			/* XXX, write to file @ d->offset */
-			FILE *f = fopen("temp.dump", d->offset == 0 ? "w" : "a");
-			fseek(f, d->offset, SEEK_SET);
-			fwrite(&buf, len, 1, f);
-			fclose(f);
+			fwrite(&buf, len, 1, p->fd);
 
 			d->offset += len;
 			if (d->offset == d->size) {
@@ -126,31 +123,32 @@ WATCHER(jabber_dcc_handle_recv) {
 
 WATCHER(jabber_dcc_handle_send) {  /* XXX, try merge with jabber_dcc_handle_recv() */
 	dcc_t *d = data;
-
+	jabber_dcc_t *p = d->priv;
+ 
 	char buf[16384];
 	int flen, len;
 
 	if (!d) return -1;
 
 	if (type) {
+		p->sfd = -1;
+		dcc_close(d);
 		return -1;
 	}
 
 	if (!d->active) return 0; /* we must wait untill stream will be accepted... BLAH! awful */
-	debug_error("jabber_dcc_handle_send() ready: %d type: %d fd: %d filename: %s --- data = 0x%x\n", d->active, type, fd, d->filename, data);
+	debug_error("jabber_dcc_handle_send() ready: %d type: %d fd: %d filename: %s --- data = 0x%x\n", d->active, type, fd, d->filename, data); 
 
+	flen = fread(&buf[0], sizeof(buf), 1, p->fd);
+//	flen = 1024;
+	debug_function("jabber_dcc_handle_send() flen: %d\n", flen);
+	len = write(fd, &buf[0], flen);
 
-	flen = sizeof(buf);
-
-	if (d->offset + flen > d->size) flen = d->size - d->offset;
-
-/*
-	FILE *f = fopen(d->filename, "r");
-        fseek(f, d->offset, SEEK_SET); 
-	flen = fread((char *) &buf, 16384, 1, f); 
-*/
-
-	len = write(fd, (char *) &buf, flen);
+	if (len < 1) {
+		debug_error("jabber_dcc_handle_send() len: %d\n", len);
+		close(fd);
+		return -1;
+	}
 
 	debug_error("jabber_dcc_handle_send() write(): %d offset: %d ", len, d->offset);
 
@@ -169,9 +167,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 	char buf[200];
 	int len;
 
-	if (type) {
-		return -1;
-	}
+	if (type) return -1;
 	
 	len = read(fd, &buf, sizeof(buf)-1);
 
@@ -193,47 +189,51 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 		char req[47];
 
 		dcc_t *d = NULL;
+		jabber_dcc_t *p;
 		list_t l;
 		int i;
 
 		for (l=dccs; l; l = l->next) {
-			dcc_t *D = l->data;
+			dcc_t *D	= l->data;
 			jabber_dcc_t *p = D->priv;
+
 			char *this_sha1;
+			list_t k;
 
 			if (xstrncmp(D->uid, "jid:", 4)) continue; /* we skip not jabber dccs */
-			if (p->protocol != JABBER_DCC_PROTOCOL_BYTESTREAMS) continue; /* prottype must be JABBER_DCC_PROTOCOL_BYTESTREAMS */
 
-			{
-				list_t l;
-				for (l = sessions; l; l = l->data) {
-					session_t *s = l->data;
-					jabber_private_t *j = s->priv;
-					char *fulluid;
+			if (!p) 		{ debug_error("[%s:%d] D->priv == NULL ?\n", __FILE__, __LINE__); continue; }			/* we skip invalid dccs */
+			if (p->sfd != -1) 	{ debug_error("[%s:%d] p->sfd  != -1, already associated ?\n", __FILE__, __LINE__); continue; }	/* we skip associated dccs */
+			if (p->protocol != JABBER_DCC_PROTOCOL_BYTESTREAMS) continue; 								/* we skip not BYTESTREAMS dccs */
 
-					if (!s->connected) continue;
-					if (!(session_check(s, 1, "jid"))) continue;
+			for (k = sessions; k; k = k->next) {
+				session_t *s = k->data;
+				jabber_private_t *j = s->priv;
+				char *fulluid;
 
-					fulluid = saprintf("%s/%s", s->uid+4, j->resource);
+				if (!s->connected) continue;
+				if (!(session_check(s, 1, "jid"))) continue;
 
-					/* XXX, take care about initiator && we		*/
-					/* D->type == DCC_SEND initiator -- we 		*/
-					/*            DCC_GET  initiator -- D->uid+4	*/
-					this_sha1 = jabber_dcc_digest(p->sid, fulluid, D->uid+4);
+				fulluid = saprintf("%s/%s", s->uid+4, j->resource);
 
-					debug_function("[JABBER_DCC_ACCEPTED] SHA1: %s THIS: %s (session: %s)\n", sha1, this_sha1, fulluid);
-					if (!xstrcmp(sha1, this_sha1)) {
-						d = D;
-						break;
-					}
-					xfree(fulluid);
+				/* XXX, take care about initiator && we		*/
+				/* D->type == DCC_SEND initiator -- we 		*/
+				/*            DCC_GET  initiator -- D->uid+4	*/
+				this_sha1 = jabber_dcc_digest(p->sid, fulluid, D->uid+4);
+
+				debug_function("[JABBER_DCC_ACCEPTED] SHA1: %s THIS: %s (session: %s)\n", sha1, this_sha1, fulluid);
+				if (!xstrcmp(sha1, this_sha1)) {
+					d = D;
+					p->sfd = fd;	/* associate client FD... */
+					break;
 				}
+				xfree(fulluid);
 			}
 		}
 
 		if (!d) {
 			debug_error("[JABBER_DCC_ACCEPTED] SHA1 HASH NOT FOUND: %s\n", sha1);
-			/* XXX */
+			close(fd);
 			return -1;
 		}
 
@@ -261,9 +261,8 @@ WATCHER(jabber_dcc_handle_accept) {
 	struct sockaddr_in sin;
 	int newfd, sin_len = sizeof(sin);
 
-	if (type) {
+	if (type)
 		return -1;
-	}
 
 	if ((newfd = accept(fd, (struct sockaddr *) &sin, &sin_len)) == -1) {
 		debug_error("jabber_dcc_handle_accept() accept() FAILED (%s)\n", strerror(errno));
@@ -314,6 +313,12 @@ int jabber_dcc_init(int port) {
 
 void jabber_dcc_close_handler(struct dcc_s *d) {
 	jabber_dcc_t *p = d->priv;
+
+	debug_error("jabber_dcc_close_handler() d->priv: 0x%x\n", d->priv);
+
+	if (!p)
+		return;
+
 	if (!d->active && d->type == DCC_GET) {
 		session_t *s = p->session;
 		jabber_private_t *j;
@@ -323,13 +328,26 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 		watch_write(j->send_watch, "<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"403\">Declined</error></iq>", 
 			d->uid+4, p->req);
 	}
+
+	d->priv = NULL;
+
 	if (p) {
+		list_t l;
+
+		if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
+			/* XXX, free protocol-specified data */
+
+		}
+
+		if (p->sfd != -1) close(p->sfd);
+
+		if (p->fd) fclose(p->fd);
 		xfree(p->req);
 		xfree(p->sid);
 		xfree(p);
+	} else {
+		debug_error("[jabber] jabber_dcc_close_handler() d->priv == NULL ?! wtf?\n");
 	}
-	/* XXX, free ALL data */
-	d->priv = NULL;
 }
 
 dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const char *sid) {

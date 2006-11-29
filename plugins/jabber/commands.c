@@ -69,7 +69,7 @@ static COMMAND(jabber_command_dcc) {
 		struct stat st;
 		userlist_t *u;
 		dcc_t *d;
-		int fd;
+		FILE *fd;
 
 		if (!params[1] || !params[2]) {
 			wcs_printq("not_enough_params", name);
@@ -86,7 +86,7 @@ static COMMAND(jabber_command_dcc) {
 			return -1;
 		}
 
-		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
+		if (!xstrcmp(u->status, EKG_STATUS_NA) || !u->resources) {
 			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}
@@ -95,27 +95,30 @@ static COMMAND(jabber_command_dcc) {
 			printq("dcc_open_error", params[2], strerror(EISDIR));
 			return -1;
 		}
-		
-		if ((fd = open(params[2], O_RDONLY)) == -1) {
+
+		if ((fd = fopen(params[2], "r")) == NULL) {
 			printq("dcc_open_error", params[2], strerror(errno));
 			return -1;
 		}
 
-		close(fd);
-
 		{
-			char *filename;
-			char *touid = saprintf("%s/%s", u->uid, u->resource);
+			char *touid;
 			jabber_dcc_t *p;
-			d = dcc_add(touid, DCC_SEND, NULL);
-			dcc_filename_set(d, params[2]);
-			dcc_size_set(d, st.st_size);
+			char *filename;
 
-			p = xmalloc(sizeof(jabber_dcc_t));
-			p->session = session;
-			p->req = saprintf("offer%d", dcc_id_get(d));
-			p->sid = xstrdup(itoa(j->id++));
-			dcc_private_set(d, p);
+	/* XXX, introduce function jabber_get_resource(u, input_uid); */
+			touid = saprintf("%s/%s", u->uid, ((ekg_resource_t *) (u->resources->data))->name);
+
+			d 	= dcc_add(touid, DCC_SEND, NULL);
+			d->filename 	= xstrdup(params[2]);
+			d->size		= st.st_size;
+
+			d->priv = p = xmalloc(sizeof(jabber_dcc_t));
+			p->session 	= session;
+			p->req		= saprintf("offer%d", dcc_id_get(d));
+			p->sid		= xstrdup(itoa(j->id++));		/* make it more uniq */
+			p->sfd		= -1;
+			p->fd		= fd;
 
 			filename = jabber_escape(params[2]); /* mo¿e obetniemy path? */
 
@@ -168,8 +171,15 @@ static COMMAND(jabber_command_dcc) {
 			printq("dcc_not_found", (params[1]) ? params[1] : "");
 			return -1;
 		}
+		
 		if (dcc_active_get(d)) {
 			printq("dcc_receiving_already", dcc_filename_get(d), format_user(session, dcc_uid_get(d)));
+			return -1;
+		}
+
+		if (xstrncmp(d->uid, "jid:", 4)) {
+			debug_error("%s:%d /dcc command, incorrect `%s`!\n", __(d->uid));
+			printq("generic_error", "Use /dcc on correct session, sorry");
 			return -1;
 		}
 
@@ -177,6 +187,35 @@ static COMMAND(jabber_command_dcc) {
 			jabber_dcc_t *p = d->priv;
 			session_t *s = p->session;
 			jabber_private_t *j = jabber_private(s);
+			char *filename;
+
+			if (p->fd) {
+				debug_error("[jabber] p->fd: 0x%x\n", p->fd);
+				printq("generic_error", "Critical dcc error p->fd != NULL");
+				return -1;
+			}
+
+			filename = saprintf("%s/%s", config_dcc_dir ? config_dcc_dir : prepare_path("download", 1), d->filename);
+			debug("[jabber] DCC/GET Downloading file as: %s\n", filename);
+			/* XXX, sanity d->filename */
+		
+		/* jesli to jest rget to plik moze istniec, ok XXX */
+			while ((p->fd = fopen(filename, "r"))) {
+				filename = xrealloc(filename, xstrlen(filename)+3);
+				debug_error("[jabber] DCC/GET FILE ALREADY EXISTS APPENDING '.1': %s\n", filename);
+
+				xstrcat(filename, ".1");
+
+				fclose(p->fd);
+			}
+			
+			if (!(p->fd = fopen(filename, "w"))) {
+				debug_error("[jabber] DCC/GET CANNOT CREATE FILE: %s\n", filename);
+				return -1;
+			}
+			/* fseek() to d->offset XXX */
+
+			printq("dcc_get_getting", format_user(session, dcc_uid_get(d)), filename);
 
 			watch_write(j->send_watch, "<iq type=\"result\" to=\"%s\" id=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\"><feature xmlns=\"http://jabber.org/protocol/feature-neg\">"
@@ -187,7 +226,6 @@ static COMMAND(jabber_command_dcc) {
 		/* TODO */
 		return -1;
 #if 0
-		printq("dcc_get_getting", format_user(session, dcc_uid_get(d)), dcc_filename_get(d));
 		dcc_active_set(d, 1);
 		
 		return 0;
