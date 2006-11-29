@@ -18,6 +18,7 @@ char *jabber_dcc_ip = NULL;
 
 #include <ekg/plugins.h>
 #include <ekg/userlist.h>
+#include <ekg/themes.h>
 #include <ekg/xmalloc.h>
 
 #include "jabber.h"
@@ -107,6 +108,10 @@ WATCHER(jabber_dcc_handle_recv) {
 
 			d->offset += len;
 			if (d->offset == d->size) {
+				/* moze sie zdarzyc ze klient chce nam wyslac wiecej danych niz na poczatku zadeklarowal...
+				 * ale takie psi tego nie umie... my tez nie.
+				 */
+
 				print("dcc_done_get", format_user(p->session, d->uid), d->filename);
 				dcc_close(d);
 				close(fd);
@@ -128,7 +133,10 @@ WATCHER(jabber_dcc_handle_send) {  /* XXX, try merge with jabber_dcc_handle_recv
 	char buf[16384];
 	int flen, len;
 
-	if (!d) return -1;
+	if (!d || !(p = d->priv)) {
+		debug_error("jabber_dcc_handle_send() d == NULL 0x%x || d->priv == NULL 0x%x\n", d, d ? d->priv : NULL);
+		return -1;
+	}
 
 	if (type) {
 		p->sfd = -1;
@@ -136,26 +144,40 @@ WATCHER(jabber_dcc_handle_send) {  /* XXX, try merge with jabber_dcc_handle_recv
 		return -1;
 	}
 
-	if (!d->active) return 0; /* we must wait untill stream will be accepted... BLAH! awful */
-	debug_error("jabber_dcc_handle_send() ready: %d type: %d fd: %d filename: %s --- data = 0x%x\n", d->active, type, fd, d->filename, data); 
+	if (!d->active) {
+		debug_error("jabber_dcc_handle_send() d->active = 0\n");
+		return 0; /* we must wait untill stream will be accepted... BLAH! awful */
+	}
 
-	flen = fread(&buf[0], sizeof(buf), 1, p->fd);
-//	flen = 1024;
-	debug_function("jabber_dcc_handle_send() flen: %d\n", flen);
-	len = write(fd, &buf[0], flen);
+	if (!p->fd) {
+		debug_error("jabber_dcc_handle_send() p->fd == NULL\n");
+		return -1;
+	}
+	
+	if (p->sfd != fd) {
+		debug_error("jabber_dcc_handle_send() p->sfd != fd\n");
+		return -1;
+	}
 
-	if (len < 1) {
+	flen	= sizeof(buf);
+	if (d->offset + flen > d->size)
+		flen = d->size - d->offset;
+
+	flen	= fread(&buf[0], 1, flen, p->fd);
+	len	= write(fd, &buf[0], flen);
+
+	if (len < 1 && len != flen) {
 		debug_error("jabber_dcc_handle_send() len: %d\n", len);
 		close(fd);
 		return -1;
 	}
-
-	debug_error("jabber_dcc_handle_send() write(): %d offset: %d ", len, d->offset);
-
 	d->offset += len;
-	debug_function("rest: %d\n", d->size-d->offset);
+	
+	if (d->offset == d->size) {
+		if (!feof(p->fd)) debug_error("d->offset > d->size... file changes size?\n");
+		print("dcc_done_send", format_user(p->session, d->uid), d->filename);
 
-	if (d->offset /* == */ >= d->size) {
+	/* Zamykamy to polaczenie... i tak takie psi nie przyjmie wiecej danych niz wyslalismy mu ... */
 		close(fd);
 		return -1;
 	}
@@ -251,7 +273,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 	/* LET'S SEND IWIL (OK, AUTH NOT IWIL) PACKET: */
 		write(fd, (char *) &req, sizeof(req));
 
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_dcc_handle_send, d);
+		watch_add(&jabber_plugin, fd, WATCH_NONE, jabber_dcc_handle_send, d);
 		return -1;
 	}
 	return 0;

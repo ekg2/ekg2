@@ -53,6 +53,7 @@
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
+#include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
@@ -1100,7 +1101,13 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 #if WITH_JABBER_DCC
 		else if (!xstrncmp(id, "offer", 5)) {
 			char *uin = jabber_unescape(from);
-			if (dcc_close(jabber_dcc_find(uin, id, NULL))) {
+			dcc_t *p = jabber_dcc_find(uin, id, NULL);
+
+			if (p) {
+				/* XXX, new theme it's for ip:port */
+				print("dcc_error_refused", format_user(session_find(s), p->uid));
+				dcc_close(p);
+			} else {
 				/* XXX, possible abuse attempt */
 			}
 			xfree(uin);
@@ -2119,6 +2126,8 @@ find_streamhost:
 
 					if ((d = jabber_dcc_find(uid, id, NULL))) {
 						char *usedjid = (used) ? jabber_attr(used->atts, "jid") : NULL;
+						watch_t *w;
+
 						p = d->priv;
 						b = p->private.bytestream;
 
@@ -2130,6 +2139,23 @@ find_streamhost:
 						}
 						debug_function("[STREAMHOST-USED] stream: 0x%x\n", b->streamhost);
 						d->active	= 1;
+
+						w = watch_find(&jabber_plugin, p->sfd, WATCH_NONE);
+
+						if (w && /* w->handler == jabber_dcc_handle_send && */ w->data == d)
+							w->type = WATCH_WRITE;
+						else {
+							debug_error("[jabber] %s:%d WATCH BAD DATA/NOT FOUND, 0x%x 0x%x 0x%x\n", __FILE__, __LINE__, w, w ? w->handler : NULL, w ? w->data : NULL);
+							/* XXX, SHOW ERROR ON __STATUS */
+							dcc_close(d);
+							return;
+						}
+
+						{	/* activate stream */
+							char buf[1];
+							buf[0] = '\r';
+							write(p->sfd, &buf[0], 1);
+						}
 					}
 				}
 				debug_function("[FILE - BYTESTREAMS] 0x%x\n", d);

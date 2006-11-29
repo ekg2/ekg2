@@ -102,10 +102,11 @@ static COMMAND(jabber_command_dcc) {
 		}
 
 		{
-			char *touid;
+			string_t sid = NULL;
 			jabber_dcc_t *p;
 			char *filename;
-			string_t sid = NULL;
+			char *pathtmp;
+			char *touid;
 
 	/* XXX, introduce function jabber_get_resource(u, input_uid); */
 			touid = saprintf("%s/%s", u->uid, ((ekg_resource_t *) (u->resources->data))->name);
@@ -113,6 +114,8 @@ static COMMAND(jabber_command_dcc) {
 			d 	= dcc_add(touid, DCC_SEND, NULL);
 			d->filename 	= xstrdup(params[2]);
 			d->size		= st.st_size;
+
+			dcc_close_handler_set(d, jabber_dcc_close_handler);
 
 			d->priv = p = xmalloc(sizeof(jabber_dcc_t));
 			p->session 	= session;
@@ -141,7 +144,11 @@ static COMMAND(jabber_command_dcc) {
 			p->sfd		= -1;
 			p->fd		= fd;
 
-			filename = jabber_escape(params[2]); /* mo¿e obetniemy path? */
+			if ((pathtmp = xstrrchr(params[2], '/'))) 
+				pathtmp++;			/* skip '/' */ 
+			else 	pathtmp = params[2];		/* no '/' ok.  */
+
+			filename = jabber_escape(pathtmp);	/* escape string */
 
 			watch_write(j->send_watch, "<iq type=\"set\" id=\"%s\" to=\"%s\">"
 					"<si xmlns=\"http://jabber.org/protocol/si\" id=\"%s\" profile=\"http://jabber.org/protocol/si/profile/file-transfer\">"
@@ -220,7 +227,7 @@ static COMMAND(jabber_command_dcc) {
 			debug("[jabber] DCC/GET Downloading file as: %s\n", filename);
 			/* XXX, sanity d->filename */
 		
-		/* jesli to jest rget to plik moze istniec, ok XXX */
+		/* XXX, jesli to jest rget to plik moze istniec */
 			while ((p->fd = fopen(filename, "r"))) {
 				filename = xrealloc(filename, xstrlen(filename)+3);
 				debug_error("[jabber] DCC/GET FILE ALREADY EXISTS APPENDING '.1': %s\n", filename);
@@ -231,10 +238,12 @@ static COMMAND(jabber_command_dcc) {
 			}
 			
 			if (!(p->fd = fopen(filename, "w"))) {
-				debug_error("[jabber] DCC/GET CANNOT CREATE FILE: %s\n", filename);
+				int err = errno;
+				debug_error("[jabber] DCC/GET CANNOT CREATE FILE: %s (%s)\n", filename, strerror(err));
+				printq("dcc_get_cant_create", filename, strerror(err));
 				return -1;
 			}
-			/* fseek() to d->offset XXX */
+			/* if resume fseek() to d->offset XXX */
 
 			printq("dcc_get_getting", format_user(session, dcc_uid_get(d)), filename);
 
@@ -244,14 +253,9 @@ static COMMAND(jabber_command_dcc) {
 					"<field var=\"stream-method\"><value>http://jabber.org/protocol/bytestreams</value></field>"
 					"</x></feature></si></iq>", d->uid+4, p->req);
 		}
-		/* TODO */
-		return -1;
-#if 0
-		dcc_active_set(d, 1);
-		
 		return 0;
-#endif
 	}
+
 	if (!xstrncasecmp(params[0], "vo", 2)) { /* voice */
 		return -1;
 	}
