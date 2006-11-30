@@ -1264,6 +1264,41 @@ static COMMAND(jabber_command_transports) {
 	return 0;
 }
 
+static COMMAND(jabber_command_pubsub) {
+	jabber_private_t *j = session->priv;
+	const char *server = (params[0] && params[1]) ? params[1] : j->server;
+	const char *node   = (params[0] && params[1] && params[2]) ? params[2] : NULL;
+
+	printq("generic_error", "STUB FUNCTION");
+
+	if (match_arg(params[0], 'c', "create", 2)) {			/* CREATE NODE */
+
+	} else if (match_arg(params[0], 'C', "configure", 2)) {		/* CONFIGURE NODE */
+
+	} else if (match_arg(params[0], 'd', "delete", 2)) {		/* DELETE NODE */
+
+	} else if (match_arg(params[0], 'm', "manage", 2)) {		/* MANAGE NODE */
+
+	} else if (match_arg(params[0], 'g', "get", 2)) {		/* GET ITEMS @ `node` @ `server` == /transport `server` `node` */
+		/* XXX, we can limit result using max_items */
+		/* XXX, we can get only specified items using <item id= /> */
+
+	} else if (match_arg(params[0], 'l', "list", 2)) {		/* LIST SUBSCRIPTION */
+
+	} else if (match_arg(params[0], 'p', "publish", 2)) {		/* PUBLISH ITEM TO `node` @ `server` */
+
+	} else if (match_arg(params[0], 'r', "remove", 2)) {		/* REMOVE ITEM */
+
+	} else if (match_arg(params[0], 's', "subscribe", 2)) {		/* SUBSCRIBE TO `node` @ `server` */
+
+	} else if (match_arg(params[0], 'S', "status", 2)) {		/* DISPLAY (SUBSCIPTION) | (AFFILITATIONS) STATUS @ `node` @ `server` */
+		
+
+	} else return -1;
+
+	return 0;
+}
+
 static COMMAND(jabber_command_stats) { /* JEP-0039: Statistics Gathering (DEFERRED) */
 	jabber_private_t *j = jabber_private(session);
 	const char *server = params[0] ? params[0] : j->server;
@@ -2196,6 +2231,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:privacy"), "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
 			"-c --clear -d --display -p --put");
+	command_add(&jabber_plugin, ("jid:pubsub"), "? ?", jabber_command_pubsub, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
