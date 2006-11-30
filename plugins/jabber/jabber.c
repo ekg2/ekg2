@@ -683,11 +683,11 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 #else
 	j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
 #endif
-	if (!(j->istlen))
+	if (!(j->istlen)) {
 		watch_write(j->send_watch, 
-			"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">", 
-			j->server);
-	else {
+			"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\"%s>", 
+			j->server, (session_int_get(s, "use_sasl") == 1) ? " version=\"1.0\"" : "");
+	} else {
 		watch_write(j->send_watch, "<s v=\'2\'>");
 	}
 
