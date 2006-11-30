@@ -1123,6 +1123,10 @@ static int jabber_theme_init() {
 	format_add("xmpp_feature_unknown",_("%g|| %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]"), 1);
 	format_add("xmpp_feature_footer", _("%g`+=%G----- %n Turn it off using: /session display_server_features 0\n"), 1);
 
+	format_add("gmail_count", 	  _("%> (%1) You have %T%2%n new thread(s) on your gmail account."), 1);	/* sesja, mail count */
+	format_add("gmail_mail", 	  "%>    %|%T%2%n - %g%3%n\n", 1);						/* sesja, from, topic, [UNUSED messages count in thread (?1)] */
+	format_add("gmail_thread",	  "%>    %|%T%2 [%4]%n - %g%3%n\n", 1);						/* sesja, from, topic, messages count in thread */
+
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
 }
@@ -1158,6 +1162,7 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "display_server_features", VAR_INT, "1", 0, NULL);
         plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
+/*	plugin_var_add(&jabber_plugin, "newmail_exec", VAR_STR, 0, 0, NULL); */
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
         plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "ping-server", VAR_BOOL, "0", 0, NULL);

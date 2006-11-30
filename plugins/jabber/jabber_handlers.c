@@ -69,6 +69,8 @@
 #define jabberfix(x,a) ((x) ? x : a)
 #define STRICT_XMLNS 1
 
+#define GMAIL_MAIL_NOTIFY 0
+
 static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
 static void jabber_handle_presence(xmlnode_t *n, session_t *s);
 static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
@@ -1118,6 +1120,69 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		xfree(reason);
 		return;			/* we don't need to go down */
 	}
+
+/* thx to Michal Gorny for following code. 
+ * handle google mail notify. */
+#if GMAIL_MAIL_NOTIFY
+	if (!xstrcmp(type, "result") && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify"))
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
+
+	if (!xstrcmp(type, "result") && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
+		char *mailcount = jabber_attr(q->atts, "total-matched");
+		xmlnode_t *child;
+
+		print("gmail_count", session_name(s), mailcount);
+
+		for (child = q->children; child; child = child->next) {
+			if (!xstrcmp(child->name, "mail-thread-info")) {
+				xmlnode_t *subchild;
+				string_t from = string_init(NULL);
+
+				char *amessages = jabber_attr(child->atts, "messages");		/* messages count in thread */
+				char *subject = NULL;
+				int firstsender = 1;
+
+				for (subchild = child->children; subchild; subchild = subchild->next) {
+					if (0) {
+					} else if (!xstrcmp(subchild->name, "subject")) {
+						if (xstrcmp(subchild->data, "")) {
+							xfree(subject);
+							subject = jabber_unescape(subchild->data);
+						}
+
+					} else if (!xstrcmp(subchild->name, "senders")) {
+						xmlnode_t *senders;
+
+						for (senders = subchild->children; senders; senders = senders->next) {
+							/* XXX, unescape */
+							char *aname = jabber_attr(senders->atts, "name");
+							char *amail = jabber_attr(senders->atts, "address");
+
+							if (!firstsender)
+								string_append(from, ", ");
+
+							if (aname) {
+								char *tmp = saprintf("%s <%s>", aname, amail);
+								string_append(from, tmp);
+								xfree(tmp);
+							} else {
+								string_append(from, amail);
+							}
+
+							firstsender = 0;
+						}
+					} else debug_error("[jabber] google:mail:notify/mail-thread-info wtf: %s\n", __(subchild->name));
+				}
+
+				print((amessages && atoi(amessages) > 1) ? "gmail_thread" : "gmail_mail", 
+						session_name(s), from->str, jabberfix(subject, "(no subject)"), amessages);
+
+				string_free(from, 1);
+				xfree(subject);
+			} else debug_error("[jabber, iq] google:mail:notify wtf: %s\n", __(child->name));
+		}
+	}
+#endif
 
 	if (!xstrcmp(id, "auth")) {
 		if (!xstrcmp(type, "result")) {
@@ -2576,6 +2641,17 @@ static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh) {
 		command_exec_format(NULL, s, 1, ("/jid:privacy --get %s"), 	list);	/* synchronize list */
 		command_exec_format(NULL, s, 1, ("/jid:privacy --session %s"), 	list); 	/* set as active */
 	}
+#if GMAIL_MAIL_NOTIFY
+	if (!xstrcmp(j->server, "gmail.com")) {
+		watch_write(j->send_watch,
+			"<iq type=\"set\" to=\"%s\" id=\"gmail%d\"><usersetting xmlns=\"google:setting\"><mailnotifications value=\"true\"/></usersetting></iq>",
+			s->uid+4, j->id++);
+
+		watch_write(j->send_watch,
+			"<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>",
+			j->id++);
+	}
+#endif
 	xfree(__session);
 }
 
