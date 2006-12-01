@@ -517,7 +517,7 @@ fstring_t *fstring_new(const char *str) {
 								res->prompt_empty = 1;
 							break;
 						case 1: 			/* BOLD */
-							if (i == npar && !isbold)		/* if (*p == ('m') && !isbold) */
+							if (k == npar && !isbold)		/* if (*p == ('m') && !isbold) */
 								attr ^= 64;
 							else {					/* if (*p == (';')) */
 								attr |= 64;
