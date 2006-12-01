@@ -1072,7 +1072,7 @@ static void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const ch
 }
 
 static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
-	const char *type = jabber_attr(n->atts, "type");
+	const char *atype= jabber_attr(n->atts, "type");
 	const char *id   = jabber_attr(n->atts, "id");
 	const char *from = jabber_attr(n->atts, "from");
 
@@ -1080,12 +1080,26 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	jabber_private_t *j = jabber_private(s);
 	xmlnode_t *q;
 
-	if (!type) {
-		debug_error("[jabber] <iq> without type!\n");
-		return;
+	enum {
+		JABBER_IQ_TYPE_NONE,
+		JABBER_IQ_TYPE_GET,
+		JABBER_IQ_TYPE_SET,
+		JABBER_IQ_TYPE_RESULT,
+		JABBER_IQ_TYPE_ERROR,
+	} type = JABBER_IQ_TYPE_NONE;
+
+	if (0);
+	else if (!xstrcmp(atype, "get"))	type = JABBER_IQ_TYPE_GET;
+	else if (!xstrcmp(atype, "set"))	type = JABBER_IQ_TYPE_SET;
+	else if (!xstrcmp(atype, "result"))	type = JABBER_IQ_TYPE_RESULT;
+	else if (!xstrcmp(atype, "error"))	type = JABBER_IQ_TYPE_ERROR;
+
+	else if (atype)				debug_error("[jabber] <iq> wtf iq type: %s\n", atype);
+	else {					debug_error("[jabber] <iq> without type!\n");
+						return;
 	}
 
-	if (!xstrcmp(type, "error")) {
+	if (type == JABBER_IQ_TYPE_ERROR) {
 		xmlnode_t *e = xmlnode_find_child(n, "error");
 		char *reason = (e) ? jabber_unescape(e->data) : NULL;
 
@@ -1124,10 +1138,10 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 /* thx to Michal Gorny for following code. 
  * handle google mail notify. */
 #if GMAIL_MAIL_NOTIFY
-	if (!xstrcmp(type, "result") && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify"))
+	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify"))
 		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
 
-	if (!xstrcmp(type, "result") && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
+	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
 		char *mailcount = jabber_attr(q->atts, "total-matched");
 		xmlnode_t *child;
 
@@ -1185,7 +1199,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 #endif
 
 	if (!xstrcmp(id, "auth")) {
-		if (!xstrcmp(type, "result")) {
+		if (type == JABBER_IQ_TYPE_RESULT) {
 			jabber_session_connected(s, jdh);
 		} else {	/* Can someone look at that, i don't undestand for what is it here... */
 			s->last_conn = time(NULL);
@@ -1194,7 +1208,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 	}
 
 	if (!xstrncmp(id, "passwd", 6)) {
-		if (!xstrcmp(type, "result")) {
+		if (type == JABBER_IQ_TYPE_RESULT) {
 			char *new_passwd = (char *) session_get(s, "__new_password");
 
 			session_set(s, "password", new_passwd);
@@ -1209,7 +1223,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 /* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
 		xmlnode_t *p;
 
-		if (!xstrcmp(type, "result")) {
+		if (type == JABBER_IQ_TYPE_RESULT) {
 			char *uin = jabber_unescape(from);
 			dcc_t *d;
 
@@ -1271,9 +1285,9 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 				}
 			} else /* XXX */;
-		} 
+		}
 
-		if (!xstrcmp(type, "set") && ((p = xmlnode_find_child(q, "file")))) {  /* JEP-0096: File Transfer */
+		if (type == JABBER_IQ_TYPE_SET && ((p = xmlnode_find_child(q, "file")))) {  /* JEP-0096: File Transfer */
 			dcc_t *D;
 			char *uin = jabber_unescape(from);
 			char *uid;
@@ -1318,7 +1332,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 		char *uid 	= jabber_unescape(from);
 
-		if (!xstrcmp(type, "result") && !xstrcmp(ns, "http://jabber.org/protocol/commands")) {
+		if (type == JABBER_IQ_TYPE_RESULT && !xstrcmp(ns, "http://jabber.org/protocol/commands")) {
 			const char *status	= jabber_attr(q->atts, "status");
 
 			if (!xstrcmp(status, "completed")) { 
@@ -1338,7 +1352,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					}
 				}
 			} else debug_error("[JABBER, UNKNOWN STATUS: %s\n", status);
-		} else if (!xstrcmp(type, "set") && !xstrcmp(ns, "http://jabber.org/protocol/commands") && xstrcmp(jabber_attr(q->atts, "action"), "cancel") /* XXX */) {
+		} else if (type == JABBER_IQ_TYPE_SET && !xstrcmp(ns, "http://jabber.org/protocol/commands") && xstrcmp(jabber_attr(q->atts, "action"), "cancel") /* XXX */) {
 			int not_handled = 0;
 			int not_allowed = 0;
 			int is_valid = 0;
@@ -1614,7 +1628,7 @@ rc_forbidden:
 
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
-	if (!xstrncmp(type, "result", 6) || !xstrncmp(type, "set", 3)) {
+	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_SET) {
 		xmlnode_t *q;
 
 		/* First we check if there is vCard... */
@@ -2318,7 +2332,7 @@ find_streamhost:
 		} /* if query */
 	} /* type == set */
 
-	if (!xstrncmp(type, "get", 3)) {
+	if (type == JABBER_IQ_TYPE_GET) {
 		xmlnode_t *q;
 
 		if ((q = xmlnode_find_child(n, "query"))) {
