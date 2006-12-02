@@ -2105,7 +2105,7 @@ rc_forbidden:
 				char *smode = jabber_attr(q->atts, "mode"); 	/* tcp, udp */
 				dcc_t *d = NULL;
 
-				if (!xstrcmp(type, "set") && (d = jabber_dcc_find(uid, NULL, sid))) {
+				if (type == JABBER_IQ_TYPE_SET && (d = jabber_dcc_find(uid, NULL, sid))) {
 					/* w sumie jak nie mamy nawet tego dcc.. to mozemy kontynuowac ;) */
 					/* problem w tym czy user chce ten plik.. etc.. */
 					/* i tak to na razie jest jeden wielki hack, trzeba sprawdzac czy to dobry typ dcc. etc, XXX */
@@ -2205,7 +2205,7 @@ find_streamhost:
 						d->active = 1;		/* hack to avoid sending 403 */
 						dcc_close(d);		/* zamykamy dcc */
 					}
-				} else if (!xstrcmp(type, "result")) {
+				} else if (type == JABBER_IQ_TYPE_RESULT) {
 					xmlnode_t *used = xmlnode_find_child(q, "streamhost-used");
 					jabber_dcc_t *p;
 					jabber_dcc_bytestream_t *b;
