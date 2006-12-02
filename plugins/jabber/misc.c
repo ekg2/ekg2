@@ -21,6 +21,70 @@
 #include "jabber.h"
 #include "jabber-ssl.h"
 
+
+#ifdef HAVE_ZLIB
+char *jabber_zlib_compress(const char *buf, int *len) {
+	size_t destlen = (*len) * 1.01 + 12;
+	char *compressed = xmalloc(destlen);
+
+	if (compress(compressed, &destlen, buf, *len) != Z_OK) {
+		debug_error("jabber_zlib_compress() zlib compress() != Z_OK\n");
+		xfree(compressed);
+		return NULL;
+	} 
+	debug_function("jabber_handle_write() compress ok, retlen: %d orglen: %d\n", destlen, *len);
+	*len = destlen;
+	
+	return compressed;
+}
+
+char *jabber_zlib_decompress(const char *buf, int *len) {
+#define ZLIB_BUF_SIZE 1024
+	z_stream zlib_stream;
+	int err;
+	size_t size = ZLIB_BUF_SIZE+1;
+	int rlen = 0;
+
+	char *uncompressed = NULL;
+
+	zlib_stream.zalloc 	= Z_NULL;
+	zlib_stream.zfree	= Z_NULL;
+	zlib_stream.opaque	= Z_NULL;
+
+	if ((err = inflateInit(&zlib_stream)) != Z_OK) {
+		debug_error("[jabber] jabber_handle_stream() inflateInit() %d != Z_OK\n", err);
+		return NULL;
+	}
+
+	zlib_stream.next_in	= buf;
+	zlib_stream.avail_in	= *len;
+
+	do {
+		uncompressed = xrealloc(uncompressed, size);
+		zlib_stream.next_out = uncompressed + rlen;
+		zlib_stream.avail_out= ZLIB_BUF_SIZE;
+
+		err = inflate(&zlib_stream, Z_NO_FLUSH);
+		if (err != Z_OK && err != Z_STREAM_END) {
+			debug_error("[jabber] jabber_handle_stream() inflate() %d != Z_OK && %d != Z_STREAM_END %s\n", 
+					err, err, zlib_stream.msg);
+			break;
+		}
+
+		rlen += (ZLIB_BUF_SIZE - zlib_stream.avail_out);
+		size += (ZLIB_BUF_SIZE - zlib_stream.avail_out);
+	} while (err == Z_OK && zlib_stream.avail_out == 0);
+
+	inflateEnd(&zlib_stream);
+
+	uncompressed[rlen] = 0;
+
+	*len = rlen;
+
+	return uncompressed;
+}
+#endif
+
 int JABBER_COMMIT_DATA(watch_t *w) {
 	if (w) { 
 		w->transfer_limit = 0;
@@ -301,24 +365,10 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 
 		case JABBER_COMPRESSION_ZLIB:
 #ifdef HAVE_ZLIB
-			{
-				size_t destlen = len * 1.01 + 12;
-				compressed = xmalloc(destlen);
-				if (compress(compressed, &destlen, watch, len) != Z_OK) {
-					xfree(compressed);
-					compressed = NULL;
-					debug_error("jabber_handle_write() zlib compress() != Z_OK\n");
-					res = -1;
-					/* XXX powinnismy serwer poinformowac o tym? */
-					return 0;	/* no idea, sorry */
-				} else {
-					debug_function("jabber_handle_write() compress ok, retlen: %d orglen: %d\n", destlen, len);
-					res = len;
-					len = destlen;
-				}
-			}
+			res = len;
+			if (!(compressed = jabber_zlib_compress(watch, &len))) return 0;
 #else
-				debug_error("[jabber] jabber_handle_write() compression zlib, but no zlib support.. you're joking, right?\n");
+			debug_error("[jabber] jabber_handle_write() compression zlib, but no zlib support.. you're joking, right?\n");
 #endif
 			break;
 

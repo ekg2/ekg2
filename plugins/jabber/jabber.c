@@ -487,42 +487,7 @@ static WATCHER(jabber_handle_stream)
 	switch (j->using_compress) {
 		case JABBER_COMPRESSION_ZLIB:
 #ifdef HAVE_ZLIB
-			{
-#define ZLIB_BUF_SIZE 1024
-				z_stream zlib_stream;
-				int err;
-				size_t size = ZLIB_BUF_SIZE+1;
-				rlen = 0;
-				
-				zlib_stream.zalloc 	= Z_NULL;
-				zlib_stream.zfree	= Z_NULL;
-				zlib_stream.opaque	= Z_NULL;
-
-				if ((err = inflateInit(&zlib_stream)) != Z_OK) {
-					debug_error("[jabber] jabber_handle_stream() inflateInit() %d != Z_OK\n", err);
-					break;
-				}
-
-				zlib_stream.next_in	= buf;
-				zlib_stream.avail_in	= len;
-
-				do {
-					uncompressed = xrealloc(uncompressed, size);
-					zlib_stream.next_out = uncompressed + rlen;
-					zlib_stream.avail_out= ZLIB_BUF_SIZE;
-
-					err = inflate(&zlib_stream, Z_SYNC_FLUSH);
-					if (err != Z_OK && err != Z_STREAM_END) {
-						debug_error("[jabber] jabber_handle_stream() inflate() %d != Z_OK && %d != Z_STREAM_END\n", err, err);
-						break;
-					}
-
-					rlen += (ZLIB_BUF_SIZE - zlib_stream.avail_out);
-					size += (ZLIB_BUF_SIZE - zlib_stream.avail_out);
-				} while (err == Z_OK && zlib_stream.avail_out == 0);
-
-				inflateEnd(&zlib_stream);
-			}
+			uncompressed = jabber_zlib_decompress(buf, &rlen);
 #else
 			debug_error("[jabber] jabber_handle_stream() compression zlib, but no zlib support.. you're joking, right?\n");
 #endif
@@ -542,6 +507,11 @@ static WATCHER(jabber_handle_stream)
 	}
 
 	debug_iorecv("[jabber] (%db/%db) recv: %s\n", rlen, len, uncompressed ? uncompressed : buf);
+/*
+	if (uncompressed) {
+		memcpy(buf, uncompressed, rlen);
+	}
+ */
 
 	if (!XML_ParseBuffer(parser, rlen, (rlen == 0))) 
 //	if (!XML_Parse(parser, uncompressed ? uncompressed : buf, rlen, (rlen == 0))) 
