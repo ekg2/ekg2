@@ -165,6 +165,11 @@ xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name);
 
 void jabber_handle_disconnect(session_t *s, const char *reason, int type);
 
+#ifdef HAVE_ZLIB
+char *jabber_zlib_decompress(const char *buf, int *len);
+char *jabber_zlib_compress(const char *buf, int *len);
+#endif
+
 #endif /* __EKG_JABBER_JABBER_H */
 
 /*
