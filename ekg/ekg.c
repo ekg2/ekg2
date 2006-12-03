@@ -145,20 +145,18 @@ void ekg_loop()
                 for (l = timers; l; ) {
                         struct timer *t = l->data;
                         struct timeval tv;
-                        struct timezone tz;
 
                         l = l->next;
 
-                        gettimeofday(&tv, &tz);
+                        gettimeofday(&tv, NULL);
 
                         if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
 				int ispersist = t->persist;
 				
                                 if (ispersist) {
                                         struct timeval tv;
-                                        struct timezone tz;
 
-                                        gettimeofday(&tv, &tz);
+                                        gettimeofday(&tv, NULL);
                                         tv.tv_sec += t->period;
                                         memcpy(&t->ends, &tv, sizeof(tv));
                                 }
@@ -301,10 +299,9 @@ void ekg_loop()
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
 			struct timeval tv2;
-			struct timezone tz;
 			int usec = 0;
 
-			gettimeofday(&tv2, &tz);
+			gettimeofday(&tv2, NULL);
 
 			/* zeby uniknac przekrecenia licznika mikrosekund przy
 			 * wiekszych czasach, pomijamy dlugie timery */

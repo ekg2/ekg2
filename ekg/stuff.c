@@ -1623,7 +1623,6 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 {
 	struct timer *t;
 	struct timeval tv;
-	struct timezone tz;
 
 	/* wylosuj now± nazwê, je¶li nie mamy */
 	if (!name) {
@@ -1647,7 +1646,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 		}
 	}
 	t = xmalloc(sizeof(struct timer));
-	gettimeofday(&tv, &tz);
+	gettimeofday(&tv, NULL);
 	tv.tv_sec += period;
 	memcpy(&(t->ends), &tv, sizeof(tv));
 	t->name = xstrdup(name);
