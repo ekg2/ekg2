@@ -69,5 +69,6 @@ WATCHER(jabber_dcc_handle_recv);
 QUERY(jabber_dcc_postinit);
 extern int jabber_dcc_port;
 extern char *jabber_dcc_ip;
+extern int jabber_dcc;
 
 #endif

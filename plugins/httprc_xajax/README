@@ -1,0 +1,52 @@
+This is experimental http remote control plugin
+for modern browser with some basic ajax support
+
+There are some flaws in desing of EKG2 that makes
+makes some thing quite problematic, but I'm not 
+going to hack them around.
+
+
+design note:
+ + I'm using ajax.js from xajax, I've taken it from
+   xajax 0.2.4, it's messy since it was compressed (?)
+ + There is simple query parsing cookie setting
+ + I'm not using http_fstring at all since it'd destroy
+   xhtml dom structure of document.
+   It would have to be rewritten using functions from xajax.js
+ + If there is GET /ekg.css /ekg.js /xajax.js I'm sending back
+   content of a proper file [CONSTANT paths used!]
+ + currently there is one handler for different queries
+   for debugging purposes.
+
+   It saves all changes to buffer assigned to user. and then
+   if ajax request occur [post], data is sent.
+   
+   [In case of window-print it adds line to webpage JS 'gwins' ]
+   [buffer, and JS code to update current window or highlight  ]
+   [active one.                                                ]
+   [In case of window-new specific code is added to add new win]
+   [to JS and to update window list                            ]
+   
+   [In case of all queries some stuff is written to            ]
+   [specially for this purpose created div 'LOG'               ]
+
+ + _debug window is empty by design, since it could do some nasty
+   recurssion [if (w->id != 0) in ui-window-print in xajax_def_action] 
+
+ + gwins internal buffer - you can think of it as a array of structures:
+   struct gwins {
+	   int magic [2-current win, 1-active, 0-normal]
+	   char *windowname
+	   char **lines
+   };
+   so gwins[3][2][5] is simply line number 2 of window, that has id of '3'
+   and gwins[3][1] is the name of that window.
+
+ + window name cannot contain any html tags, since  update_windows_list()
+   in ekg2.js uses aa.innerHTML, to set link name....
+
+ + For debugging purposes COMMENT OUT the line responsible for auto-update
+   "window.setTimeout('eventsinbackground()', 1000);\n"
+   and click the ajax link on generated page, whenever you want...
+
+ -- GiM

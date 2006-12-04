@@ -1,0 +1,16 @@
+19:35:24 CET 2oo6-o4-12
+=======================
+ * some changes before commiting this stuff to cvs
+   [on dj's request]
+ * window kill and window new handling
+
+o1:o7:38 CEST 2oo6-23-o9
+ * nice chaning windows
+
+19:45:22 CEST 2oo6-22-o9
+========================
+After taking code from darkjames:
+ * added xajax javascript engine
+ * added some basic cookie support
+ * connected different queries to default handler
+ * I had to remove timestamp and colours

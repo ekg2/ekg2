@@ -1,0 +1,170 @@
+
+body {
+	background:		#000000;
+	color:			#e8e8e8;
+	color:			#aaaaaa;
+}
+
+a {
+	color:			#a0d0d0;
+}
+
+#left, #right, #input {
+	border:			1px solid #808080;
+}
+
+#left, #right {
+	float:			left;
+	padding:		0.25em;
+}
+
+#left {
+	width:			80%;
+}
+
+#windows_list li {
+	display:		inline;
+	list-style:		none;
+	padding:		0 .5em;
+}
+
+#windows_list li.cur {
+	background:		#808080;
+}
+
+#windows_list li.act {
+	background:		#404040;
+}
+
+#window_content {
+	font-family: "Consolas", "Courier New", monospace;
+	font-size: small;
+	list-style:		none;
+	margin:			0;
+	padding:		0.5em;
+}
+
+#window_content li.info1 {
+	background:		#404040;
+	display: 		block;
+}
+
+#window_content li.info2 {
+	background:		#202020;
+	display: 		block;
+}
+
+/*
+# color 5 rgb:cc/00/cc			x
+# color 7 rgb:aa/aa/aa			grey
+# color 8 rgb:33/33/33			black
+# color 11 rgb:ff/ff/00			yellow
+# color 14 rgb:00/ff/ff
+*/
+
+strong {
+	color:			#ffffff;
+}
+
+strong.blue { 
+	color:			#0000cc;
+} 
+
+strong.black {
+	color:			#000000;
+}
+
+strong.red {
+	color:			#cc0000;
+}
+
+strong.grey {
+	color:			#aaaaaa;
+}
+
+strong.turquoise {
+	color:			#00cccc;
+}
+
+strong.yellow {
+	color:			#cccc00;
+}
+
+strong.green {
+	color:			#00cc00;
+}
+
+span.white {
+	color:			#ffffff;
+}
+
+span.green {
+	color:			#00ff00;
+}
+
+span.red {
+	color:			#ff0000;
+}
+
+span.turquoise {
+	color:			#00ffff;
+}
+
+span.blue {
+	color:			#0000ff;
+}
+
+
+#left #window_content .nick:before {
+	content:		'<';
+}
+
+#left #window_content .nick:after {
+	content:		'>';
+}
+
+#right {
+	margin-left:		1%;
+	width:			17%;
+}
+
+#right dl,#right dd ul,#right dd,#left #windows_list {
+	margin:			0;
+	padding:		0;
+}
+
+#right dt {
+	font-weight:		bold;
+}
+
+#right dd li {
+	list-style:		none;
+	margin-left:		18px;
+}
+
+#right dd li.avail {
+	color:			#e8e800;
+}
+
+#right dd li.xa {
+	color:			#00c000;
+}
+
+#right dd li.notavail {
+	color:			#f06060;
+}
+
+#right dd li.err {
+	color:			#c080c0;
+}
+
+#zwijarka {
+	float:			right;
+}
+
+#input input {
+	width:			99%;
+	margin:			0 0.5%;
+	background:		#000000;
+	color:			#e8e8e8;
+}
