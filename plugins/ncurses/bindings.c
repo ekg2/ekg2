@@ -634,7 +634,7 @@ static BINDING_FUNCTION(binding_next_contacts_group)
 
 static BINDING_FUNCTION(binding_ui_ncurses_debug_toggle)
 {
-	if (ncurses_debug++ > 3)
+	if (++ncurses_debug > 3)
 		ncurses_debug = 0;
 
 	update_statusbar(1);
