@@ -2,9 +2,11 @@
 
 #include <ekg/debug.h>
 
+int jabber_dcc = 0;
 int jabber_dcc_port = 0;
 char *jabber_dcc_ip = NULL;
 
+static int jabber_dcc_fd = -1;
 #if WITH_JABBER_DCC
 
 #include <stdio.h>
@@ -286,6 +288,8 @@ WATCHER(jabber_dcc_handle_accept) {
 
 	if (type) {
 		close(fd);
+		jabber_dcc_fd	= -1;
+		jabber_dcc_port = 0;
 		return -1;
 	}
 
@@ -299,8 +303,8 @@ WATCHER(jabber_dcc_handle_accept) {
 	return 0;
 }
 
-/* zwraca strukture z fd / infem XXX */
-int jabber_dcc_init(int port) {
+/* zwraca watcha */
+static watch_t *jabber_dcc_init(int port) {
 	struct sockaddr_in sin;
 	int fd;
 
@@ -330,10 +334,9 @@ int jabber_dcc_init(int port) {
 	}
 	debug_function("jabber_dcc_init() SUCCESSED fd:%d port:%d\n", fd, port);
 
-	watch_add(&jabber_plugin, fd, WATCH_READ, jabber_dcc_handle_accept, NULL);
-
 	jabber_dcc_port = port;
-	return fd;
+	jabber_dcc_fd	= fd;
+	return watch_add(&jabber_plugin, fd, WATCH_READ, jabber_dcc_handle_accept, NULL);
 }
 
 void jabber_dcc_close_handler(struct dcc_s *d) {
@@ -395,10 +398,21 @@ dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const
 #endif
 
 QUERY(jabber_dcc_postinit) {
+	static watch_t *dcc_watch = NULL;
+
+	debug("jabber_dcc_postinit() dcc: %d fd: %d dcc_watch: 0x%x\n", jabber_dcc, jabber_dcc_fd, dcc_watch);
+
+	if (jabber_dcc_fd == -1) dcc_watch = NULL;
+
+	if (jabber_dcc && !dcc_watch)
 #if WITH_JABBER_DCC
-	jabber_dcc_init(JABBER_DEFAULT_DCC_PORT); /* XXX */
+		dcc_watch = jabber_dcc_init(JABBER_DEFAULT_DCC_PORT); 
+	else if (!jabber_dcc) {
+		watch_free(dcc_watch);
+		dcc_watch = NULL;
+	}
 #else
-	debug_error("[jabber] compilated without WITH_JABBER_DCC=1, disabling JABBER DCC.\n");
+		debug_error("[jabber] compilated without WITH_JABBER_DCC=1, disabling JABBER DCC.\n");
 #endif
 	return 0;
 }

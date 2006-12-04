@@ -1114,6 +1114,7 @@ int jabber_plugin_init(int prio)
 	query_connect(&jabber_plugin, ("protocol-ignore"), jabber_protocol_ignore, NULL);
 	query_connect(&jabber_plugin, ("config-postinit"), jabber_dcc_postinit, NULL);
 
+	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, jabber_dcc_postinit, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
 

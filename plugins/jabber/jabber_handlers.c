@@ -1256,7 +1256,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
 					b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
 
-					if (jabber_dcc_ip) {
+					if (jabber_dcc_ip && jabber_dcc) {
 						/* basic streamhost, our ip, default port, our jid. check if we enable it. XXX*/
 						streamhost.jid	= saprintf("%s/%s", s->uid+4, j->resource);
 						streamhost.ip	= xstrdup(jabber_dcc_ip);
