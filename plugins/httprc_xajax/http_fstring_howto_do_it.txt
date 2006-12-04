@@ -1,0 +1,74 @@
+piszę po polsku bo jestem leń [długie linijki coby zaczaić]
+
+Na razie opiszę jak osiągnąć cel, może komuś sie będzie chciało skodować:
+
+załóżmy, że chcemy przerobić następujący text:
+
+<@GiM> hahahaha hihihi dupa.8
+i chcemy żeby w htmlu wyglądało to jakoś tak
+<span class="purple">&lt;</span><span class="green">@GiM</span> <span class="purple">&gt;</span> hahahaha <strong>hihihi</stong> dupa.8
+
+
+najpierw załóżmy, że funkcję update_window_content podmieniamy na coś takiego:
+function update_window_content(win)
+{
+	var el = xajax.$('window_content');
+	if (el)
+	{
+		el.innerHTML='';
+		for (i=0; i<gwins[win][2].length; i++)
+			if (gwins[win][2][i] != undefined)
+				el.appendChild(gwins[win][2][i]);
+	}
+
+}
+
+oto kod JSowy jaki trzeba nam z poziomu C wygenerować [dla tego przykładu powyżej]:
+[trza jeszcze oprawić ładnie w C]
+
+i = gwins[win][2].length;
+ch = document.createElement('li');
+ch.setAttribute('id', 'lin'+i);       // to całe gwins, żeby mieć 'kolejny' identyfikator...
+// w sumie już na poziomie C wiemy (?) czy ten string pusty je, czy nie
+// więc tego ifa można na poziomie C rozstrzygnąć...
+if (gwins[win][2][i].length > 0)
+{
+	temp = document.createElement('span');
+	temp.setAttribute('class', 'purple');
+	temp.appendChild(document.createTextNode("&lt;"));
+	ch.appendChild(temp);
+
+	temp = document.createElement('span');
+	temp.setAttribute('class', 'green');
+	temp.appendChild(document.createTextNode("@GiM"));
+	ch.appendChild(temp);
+	
+	temp = document.createElement('span');
+	temp.setAttribute('class', 'purple');
+	temp.appendChild(document.createTextNode("&gt;"));
+	ch.appendChild(temp);
+	
+	ch.appendChild(document.createTextNode(" hahahaha ");
+
+	temp = document.createElement('strong');
+	temp.appendChild(document.createTextNode("hihihi"));
+	ch.appendChild(temp);
+	
+	ch.appendChild(document.createTextNode(" dupa.8");
+} else
+	ch.appendChild(document.createTextNode("&nbsp;"));
+
+
+if (i % 2)
+	ch.className="info1";
+else
+	ch.className="info2";
+
+// no i wreszcie:
+gwins[win][2][i] = ch
+
+UWAGA: na stringach które mają trafić do createTextNode trza wcześniej z poziomu C wywołać xml_excape !!! XXX
+
+dj: rozumiesz już, czemu mnie się nie chciało ;>
+to co w htmlu to linijka, to używając metod dom, widzisz ile...
+
