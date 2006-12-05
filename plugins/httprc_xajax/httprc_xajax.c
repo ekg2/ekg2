@@ -492,9 +492,9 @@ WATCHER(http_watch_read) {
 			char *line;
 			char *mime;
 
-			if (!xstrcmp(req, "/xajax.js"))		{ f = fopen("/usr/src/ekg2/plugins/httprc_xajax/xajax_0.2.4.js", "r");	mime = "text/javascript"; }
-			else if (!xstrcmp(req, "/ekg2.js"))		{ f = fopen("/usr/src/ekg2/plugins/httprc_xajax/ekg2.js", "r");	mime = "text/javascript"; }
-			else { f = fopen("/usr/src/ekg2/plugins/httprc_xajax/ekg2.css", "r");	mime = "text/css"; }
+			if (!xstrcmp(req, "/xajax.js"))		{ f = fopen(DATADIR"/plugins/httprc_xajax/xajax_0.2.4.js", "r");	mime = "text/javascript"; }
+			else if (!xstrcmp(req, "/ekg2.js"))	{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.js", "r");		mime = "text/javascript"; }
+			else 					{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.css", "r");		mime = "text/css"; }
 
 			string_append(htheader, "Connection: Keep-Alive\r\n"
 					"Keep-Alive: timeout=5, max=100\r\n"
