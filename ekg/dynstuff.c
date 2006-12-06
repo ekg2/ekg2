@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "dynstuff.h"
@@ -276,6 +277,27 @@ int string_append_n(string_t s, const char *str, int count)
 
 	s->len += count;
 
+	return 0;
+}
+
+int string_append_format(string_t s, const char *format, ...) {
+	va_list ap;
+	char *formatted;
+
+	if (!s || !format) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	va_start(ap, format);
+	formatted = vsaprintf(format, ap);
+	va_end(ap);
+	
+	if (!formatted) 
+		return 0;
+	
+	string_append_n(s, formatted, -1);
+	xfree(formatted);
 	return 0;
 }
 
