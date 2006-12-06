@@ -467,8 +467,17 @@ WATCHER(http_watch_read) {
 	debug ("%d %08x\n", send_cookie_again, client);
 	WATCH_FIND(send_watch, fd);
 
+	if (!send_watch) {
+		debug_error("[%s:%d] NOT SEND_WATCH @ fd: %d!\n", __FILE__, __LINE__, fd);
+		return -1;
+	}
+
+#define httprc_write(watch, args...) 	string_append_format(watch->buf, args)
+#define httprc_write2(watch, str)	string_append_n(watch->buf, str, -1)
+#define httprc_write3(watch, str, len)	string_append_raw(watch->buf, str, len)
+
 #define HTTP_HEADER(ver, scode, eheaders) \
-	watch_write(send_watch,				\
+	httprc_write(send_watch,				\
 		"%s %d %s\r\n"						/* statusline: $PROTOCOL $SCODE $RESPONSE */\
 		"Server: ekg2-CVS-httprc_xajax plugin\r\n"		/* server info */	\
 		"%s\r\n",							/* headers */		\
@@ -483,13 +492,10 @@ WATCHER(http_watch_read) {
 		eheaders ? eheaders : "\r\n"			\
 		);
 
-	send_watch->transfer_limit = -1;	/* lock watch */
-
 	if (method == HTTP_METHOD_GET) {
 		string_t htheader = string_init("");
 		if (!xstrcmp(req, "/ekg2.js") || !xstrcmp(req, "/ekg2.css") || !xstrcmp(req, "/xajax.js")) {
 			FILE *f = NULL;
-			char *line;
 			char *mime;
 
 			if (!xstrcmp(req, "/xajax.js"))		{ f = fopen(DATADIR"/plugins/httprc_xajax/xajax_0.2.4.js", "r");	mime = "text/javascript"; }
@@ -505,13 +511,16 @@ WATCHER(http_watch_read) {
 			string_free(htheader, 1);
 
 			if (f) {
-				while ((line = read_file(f))) {
-					watch_write(send_watch, "%s\n", line);
-					xfree(line);
+				char buf[4096];
+				int len;
+
+				while ((!feof(f))) {
+					len = fread(&buf[0], 1, sizeof(buf), f);
+					httprc_write3(send_watch, buf, len);	
 				}
 				fclose(f);
 			} else {
-				watch_write(send_watch, "FATAL ERROR!\n");
+				debug_error("[%s:%d] File couldn't be open req: %s\n", __FILE__, __LINE__, req);
 			}
 		} else {
 			char *temp;
@@ -539,7 +548,7 @@ WATCHER(http_watch_read) {
 			string_free(htheader, 1);
 
 			/* naglowek HTML */
-			watch_write(send_watch,	
+			httprc_write2(send_watch,	
 					"<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 					"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 					"<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
@@ -590,10 +599,10 @@ WATCHER(http_watch_read) {
 					xfree(temp);
 				}
 			}
-			watch_write(send_watch,	htheader->str);
+			httprc_write(send_watch, "%s", htheader->str);
 			string_free(htheader, 1);
 
-			watch_write(send_watch,	
+			httprc_write(send_watch,	
 					"\t\t</script>"
 					"\t\t<script type=\"text/javascript\" src=\"ekg2.js\"> </script>\n"
 					"\t\t<script type=\"text/javascript\">\n"
@@ -611,30 +620,30 @@ WATCHER(http_watch_read) {
 					"\t\t\t<ul id=\"windows_list\">\n"
 							,config_console_charset);
 
-			watch_write(send_watch, "\t\t\t</ul>\n"
+			httprc_write2(send_watch, "\t\t\t</ul>\n"
 					"\t\t\t<ul id=\"window_content\">\n");
 
-			watch_write(send_watch, 
+			httprc_write2(send_watch, 
 					"\t\t\t</ul>\n"
 					"\t\t</div>\n"
 					"\t\t<div id=\"right\">\n"
 					"\t\t\t<dl>\n");
 			/* USERLISTA */
 			if (session_current) {
-				watch_write(send_watch, "\t\t\t\t<dt>Aktualna sesja: %s</dt>\n",
+				httprc_write(send_watch, "\t\t\t\t<dt>Aktualna sesja: %s</dt>\n",
 						session_current->alias ? session_current->alias : session_current->uid);
 				if (session_current->userlist)
-					watch_write(send_watch,	"\t\t\t\t<dd><ul>\n");
+					httprc_write2(send_watch, "\t\t\t\t<dd><ul>\n");
 				for (l = session_current->userlist; l; l = l->next) {
 					userlist_t *u = l->data;
-					watch_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", u->status, u->nickname ? u->nickname : u->uid);
+					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", u->status, u->nickname ? u->nickname : u->uid);
 				}
 				if (session_current->userlist)
-					watch_write(send_watch,	"\t\t\t\t</ul></dd>\n");
+					httprc_write2(send_watch, "\t\t\t\t</ul></dd>\n");
 			}
 			/* KOMENDY */
-			
-			temp = saprintf("\t\t\t</dl>\n"
+			httprc_write(send_watch, 
+					"\t\t\t</dl>\n"
 					"\t\t</div>\n\n"
 					"\t\t<div id=\"input\">\n"
 					"\t\t\t<form action=\"#\" method=\"post\">\n"
@@ -651,12 +660,10 @@ WATCHER(http_watch_read) {
 					"window.setTimeout('eventsinbackground()', 3000);\n"
 					"</script>\n"
 					"</html>", w->id);
-			watch_write(send_watch, temp);
-			xfree(temp);
 		}
 	} else if (method == HTTP_METHOD_POST && !xstrcmp(req, "/xajax/")) {
 		HTTP_HEADER(ver, 200, "Content-Type: text/html\r\n");
-		watch_write(send_watch, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+		httprc_write(send_watch, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 			"<xjx>%s</xjx>",
 			config_console_charset, client->collected->str);
 		string_free(client->collected, 1);
@@ -666,7 +673,6 @@ WATCHER(http_watch_read) {
 	}
 /* commit data */
 
-	send_watch->transfer_limit = 0;
 	watch_handle_write(send_watch);
 	return -1;
 }
