@@ -101,10 +101,30 @@ alert("Illegal request type: "+xajaxRequestType);return false;break;}
 r=this.getRequestObject();if(!r)return false;r.open(xajaxRequestType==xajaxDefinedGet?"GET":"POST",uri,true);if(xajaxRequestType==xajaxDefinedPost){try{r.setRequestHeader("Method","POST "+uri+" HTTP/1.1");r.setRequestHeader("Content-Type","application/x-www-form-urlencoded");}
 catch(e){alert("Your browser does not appear to  support asynchronous requests using POST.");return false;}
 }
-r.onreadystatechange=function(){if(r.readyState!=4)
-return;if(r.status==200){if(xajaxDebug)xajax.DebugMessage("Received:\n"+r.responseText);if(r.responseXML&&r.responseXML.documentElement)
-xajax.processResponse(r.responseXML);else{var errorString="Error: the XML response that was returned from the server is invalid.";errorString+="\nReceived:\n"+r.responseText;trimmedResponseText=r.responseText.replace(/^\s+/g,"");trimmedResponseText=trimmedResponseText.replace(/\s+$/g,"");if(trimmedResponseText!=r.responseText)
-errorString+="\nYou have whitespace in your response.";alert(errorString);document.body.style.cursor='default';if(xajaxStatusMessages==true)window.status='Invalid XML response error';}
+r.onreadystatechange=function(){
+	if(r.readyState!=4)
+		return;
+	if(r.status==200){
+		if(xajaxDebug)
+			xajax.DebugMessage("Received:\n"+r.responseText);
+		if(r.responseXML&&r.responseXML.documentElement)
+			xajax.processResponse(r.responseXML);
+		else if(r.responseXML) {
+			// probably empty response, do not treat this as an error
+			document.body.style.cursor='default';
+		} else{
+			var errorString="Error: the XML response that was returned from the server is invalid.";
+			errorString+="\nxjx:"+r.responseXML.documentElement+"]\n";
+			errorString+="\nReceived:\n"+r.responseText;
+			trimmedResponseText=r.responseText.replace(/^\s+/g,"");
+			trimmedResponseText=trimmedResponseText.replace(/\s+$/g,"");
+			if(trimmedResponseText!=r.responseText)
+				errorString+="\nYou have whitespace in your response.";
+			alert(errorString);
+			document.body.style.cursor='default';
+			if(xajaxStatusMessages==true)
+				window.status='Invalid XML response error';
+		}
 }
 else{if(xajax.responseErrorsForAlert.containsValue(r.status)){var errorString="Error: the server returned the following HTTP status: "+r.status;errorString+="\nReceived:\n"+r.responseText;alert(errorString);}
 document.body.style.cursor='default';if(xajaxStatusMessages==true)window.status='Invalid XML response error';}

@@ -41,6 +41,8 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
+#include <plugins/ncurses/ecurses.h>
+
 /* string that you're typing in browser's window:
  * e.g: your.server.with.ekg2.com, localhost, 127.0.0.1
  */
@@ -91,6 +93,21 @@ client_t *find_client_by_cookie(list_t clients, char *cookie)
 char *generate_cookie(void)
 {
 	return saprintf("%x%d%d", rand()*rand(), (int)time(NULL), rand());
+}
+
+inline char *wcs_to_normal_http(const CHAR_T *str) {
+	if (!str) return NULL;
+#if USE_UNICODE
+	if (config_use_unicode) {
+		int len		= wcstombs(NULL, (wchar_t *) str,0);
+		char *tmp 	= xmalloc(len+1);
+		int ret;
+
+		ret = wcstombs(tmp, (wchar_t *) str, len);
+		return tmp;
+	} else
+#endif
+		return (char *) str;
 }
 
 QUERY(httprc_xajax_def_action)
@@ -592,11 +609,15 @@ WATCHER(http_watch_read) {
 
 				n = w->private;
 				for (i = n->backlog_size-1; i >= 0; i--) {
-					temp = xml_escape(n->backlog[i]->str);
+					/* really, really stupid... */
+					char *normal = wcs_to_normal_http(n->backlog[i]->str);
+					temp = xml_escape(normal);
 					tempdata = saprintf("gwins[%d][2][%d] = \"%s\";\n", w->id, n->backlog_size-1-i, temp);
 					string_append(htheader, tempdata);
 					xfree(tempdata);
 					xfree(temp);
+					if (normal != n->backlog[i]->str)
+						xfree(normal);
 				}
 			}
 			httprc_write(send_watch, "%s", htheader->str);
