@@ -112,12 +112,6 @@ ssl_port
 	
 	port u¿ywany przy po³±czeniu szyfrowanym.
 
-show_typing_notify
-	typ: bool
-	domy¶lna warto¶æ: 1
-	
-	okre¶la, czy pokazywaæ informacjê, ¿e kto¶ w³a¶nie pisze do nas wiadomo¶æ.
-
 use_ssl
 	typ: bool
 	domy¶lna warto¶æ: 1

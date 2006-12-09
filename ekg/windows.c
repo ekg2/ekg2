@@ -183,8 +183,8 @@ void window_switch(int id)
 		window_current = w;
 
 		w->act = 0;
-		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && u->blink) 
-			u->blink = 0;
+		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) 
+			u->xstate &= ~EKG_XSTATE_BLINK;
 
 		if (!config_make_window && w->id == 1) {
 			list_t l;
@@ -193,7 +193,7 @@ void window_switch(int id)
 			for (l = s->userlist; l; l = l->next) {
                         	userlist_t *u = l->data;
 				if (!window_find_s(s, u->uid))
-		                        u->blink = 0;
+		                        u->xstate &= ~EKG_XSTATE_BLINK;
 			}
                 }
 

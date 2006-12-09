@@ -117,13 +117,6 @@ ssl_port
 	
 	Ciphered connection port.
 
-show_typeing_notify
-	type: bool
-	default value: 1
-	
-	If set to 1 ekg2 will show information that someone is currently typing
-	a message to you.
-
 use_ssl
 	type: bool
 	default value: 1

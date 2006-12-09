@@ -677,7 +677,7 @@ void changed_display_blinking(const char *var)
         	session_t *s = sl->data;
 		for (l = s->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
-			u->blink = 0;			
+			u->xstate &= ~EKG_XSTATE_BLINK;			
 		}
 	}
 }
@@ -2226,7 +2226,7 @@ void ekg_update_status(session_t *session)
                         u->status = xstrdup(EKG_STATUS_NA);
                 else
                         u->status = xstrdup(session->status);
-		u->blink = 0;
+		u->xstate &= ~EKG_XSTATE_BLINK;
         }
 
 }

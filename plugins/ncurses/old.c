@@ -1254,15 +1254,15 @@ void update_statusbar(int commit)
 		list_t l;
 
 		for (l = windows; l; l = l->next) {
-			char tmp[26];
+			char tmp[33];
 			window_t *w = l->data;
 
-			if (!w->act || !w->id) 
+			if (!w->act || !w->id || (w == window_current)) 
 				continue;
 
 			if (act)
 				string_append_c(s, ',');
-			sprintf(&tmp[0], "statusbar_act%s", (w->act == 1) ? "" :  "_important");
+			sprintf(&tmp[0], "statusbar_act%s%s", (w->act & 2 ? "_important" : ""), (w->act & 4 ? "_typing" : ""));
 			string_append(s, format_find(tmp));
 			string_append(s, itoa(w->id));
 			act = 1;
@@ -1295,6 +1295,7 @@ void update_statusbar(int commit)
 	__add_format_dup("query_xa", (q && !xstrcasecmp(q->status, EKG_STATUS_XA)), "");
 	__add_format_dup("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
 
+        __add_format_dup("typing", (q && (q->xstate & EKG_XSTATE_TYPING)), "");
 	__add_format_dup("url", 1, "http://www.ekg2.org/");
 	__add_format_dup("version", 1, VERSION);
 

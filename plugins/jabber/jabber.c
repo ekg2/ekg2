@@ -974,7 +974,6 @@ static int jabber_theme_init() {
 	format_add("jabber_lastseen_idle",      _("%> Jabber ID: %T%1%n\n%> Idle for:  %T%2%n\n"), 1);
 	format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
 	format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
-	format_add("jabber_typing_notify", _("%> %T%1%n is typing to us ...%n\n"), 1);
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
 	format_add("register_change_passwd", _("%> Your password for acount %T%1 is '%T%2%n' change it as fast as you can using command /jid:passwd <newpassword>"), 1);
 
@@ -1143,7 +1142,6 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, "5223", 0, NULL);
-        plugin_var_add(&jabber_plugin, "show_typing_notify", VAR_BOOL, "1", 0, NULL);
 	plugin_var_add(&jabber_plugin, "use_compression", VAR_STR, 0, 0, NULL);		/* for instance: zlib,lzw */
 	plugin_var_add(&jabber_plugin, "use_sasl", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "use_ssl", VAR_BOOL, "0", 0, NULL);

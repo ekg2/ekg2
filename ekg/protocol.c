@@ -58,6 +58,7 @@ static QUERY(protocol_connected);
 static QUERY(protocol_message_ack);
 static QUERY(protocol_status);
 static QUERY(protocol_message);
+static QUERY(protocol_xstate);
 
 /*
  * protocol_init()
@@ -70,6 +71,7 @@ void protocol_init()
 	query_connect(NULL, ("protocol-status"), protocol_status, NULL);
 	query_connect(NULL, ("protocol-message"), protocol_message, NULL);
 	query_connect(NULL, ("protocol-message-ack"), protocol_message_ack, NULL);
+	query_connect(NULL, ("protocol-xstate"), protocol_xstate, NULL);
 
 	query_connect(NULL, ("protocol-connected"), protocol_connected, NULL);
 	query_connect(NULL, ("protocol-disconnected"), protocol_disconnected, NULL);
@@ -574,7 +576,7 @@ static QUERY(protocol_message)
 	/* display blinking */
 	if (config_display_blinking && userlist && class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT && (!rcpts || !rcpts[0])) {
 		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
-			userlist->blink = 1;
+			userlist->xstate |= EKG_XSTATE_BLINK;
 		else if (!config_make_window) {
 			window_t *w;
 
@@ -585,9 +587,9 @@ static QUERY(protocol_message)
 			w = window_find_s(session_class, uid);
 
 			if (!w && window_current->id != 1)
-				userlist->blink = 1; 
+				userlist->xstate |= EKG_XSTATE_BLINK; 
 			if (w && window_current->id != w->id)
-				userlist->blink = 1;
+				userlist->xstate |= EKG_XSTATE_BLINK;
 		}
 	}
 	
@@ -692,6 +694,40 @@ static QUERY(protocol_message_ack)
 
 	if (display)
 		print_window(target, session_find(session), 0, format, format_user(session_find(session), rcpt));
+
+	return 0;
+}
+
+static QUERY(protocol_xstate)
+{
+	/* state contains xstate bits, which should be set, offstate those, which should be cleared */
+	char **__session	= va_arg(ap, char**), *session = *__session;
+	char **__uid		= va_arg(ap, char**), *uid = *__uid;
+	int  state		= *(va_arg(ap, int*));
+	int  offstate		= *(va_arg(ap, int*));
+
+	session_t *s;
+	userlist_t *u;
+	window_t *w;
+
+	if (!(s = session_find(session)))
+		return 0;
+	
+	if ((w = window_find_s(s, uid))) {
+		if (offstate & EKG_XSTATE_TYPING)
+			w->act &= ~4;
+		else if (state & EKG_XSTATE_TYPING)
+			w->act |= 4;
+		query_emit(NULL, "ui-window-act-changed");
+	}
+
+	if ((u = userlist_find(s, uid)) || (config_auto_user_add && (u = userlist_add(s, uid, uid)))) {
+		if (offstate & EKG_XSTATE_TYPING)
+			u->xstate &= ~EKG_XSTATE_TYPING;
+		else if (state & EKG_XSTATE_TYPING)
+			u->xstate |= EKG_XSTATE_TYPING;
+		query_emit(NULL, "userlist-changed", __session, __uid);
+	}
 
 	return 0;
 }

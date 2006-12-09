@@ -66,7 +66,7 @@ typedef struct {
 
 	void *priv;		/* dane pluginu obs³uguj±cego usera */
 	
-	int blink;		/* czy ma byæ zaznaczony jako u¿ytkownik, od którego mamy msg */
+	int xstate;		/* formerly called blink */
 
         uint32_t last_ip;       /* ostatni adres ip */
         uint16_t last_port;     /* ostatni port */
@@ -88,6 +88,9 @@ typedef struct {
 #define EKG_STATUS_BLOCKED "blocked"
 #define EKG_STATUS_UNKNOWN "unknown"
 #define EKG_STATUS_ERROR "error"
+
+#define EKG_XSTATE_BLINK	01
+#define EKG_XSTATE_TYPING	02
 
 typedef struct {
 	char *name;		/* name of resource */

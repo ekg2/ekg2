@@ -69,7 +69,7 @@
 #define jabberfix(x,a) ((x) ? x : a)
 #define STRICT_XMLNS 1
 
-#define GMAIL_MAIL_NOTIFY 0
+#define GMAIL_MAIL_NOTIFY 1
 
 static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
 static void jabber_handle_presence(xmlnode_t *n, session_t *s);
@@ -778,8 +778,6 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 					char *__status  = xstrdup(
 						(acktype & 1) ? EKG_ACK_DELIVERED : 
 						(acktype & 2) ? EKG_ACK_QUEUED : 
-					/* TODO: wbudowac composing w protocol-message-ack ? */
-/*						(acktype & 4) ? "compose" :  */
 						NULL);
 					char *__seq	= NULL; /* id ? */
 					/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
@@ -789,9 +787,18 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 					xfree(__status);
 					/* xfree(__seq); */
 				}
-				if (!nbody && (acktype & 4) && session_int_get(s, "show_typing_notify")) {
-					print("jabber_typing_notify", uid+4);
-				} /* composing */
+				
+				{
+					char *__session = xstrdup(session_uid_get(s));
+					char *__rcpt	= xstrdup(uid);
+					int  state	= (!nbody && (acktype & 4) ? EKG_XSTATE_TYPING : 0);
+					int  stateo	= (!state ? EKG_XSTATE_TYPING : 0);
+
+					query_emit(NULL, "protocol-typing", &__session, &__rcpt, &state, &stateo);
+					
+					xfree(__session);
+					xfree(__rcpt);
+				}
 /* jabber:x:event */	} else if (!xstrncmp(ns, "jabber:x:oob", 12)) {
 				xmlnode_t *xurl;
 				xmlnode_t *xdesc;

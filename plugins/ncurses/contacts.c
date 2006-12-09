@@ -429,7 +429,7 @@ group_cleanup:
 				u->descr = up->descr;
 				u->status = up->status;
 				u->private = (void *) s;
-				u->blink = up->blink;
+				u->xstate = up->xstate;
 				list_add_sorted(&sorted_all, u, 0, NULL);
 			}
 		}
@@ -447,7 +447,7 @@ group_cleanup:
 			u->descr = up->descr;
 			u->status = up->status;
 			u->private = (void *) w->session;
-			u->blink = up->blink;
+			u->xstate = up->xstate;
 			list_add_sorted(&sorted_all, u, 0, comp /* contacts_compare : NULL */);
 		}
 
@@ -470,7 +470,7 @@ group_cleanup:
 			u->descr = up->descr;
 			u->nickname = m->name;
 			u->private = (void *) 2;
-			u->blink = up->blink;
+			u->xstate = up->xstate;
 
 			list_add_sorted(&sorted_all, u, 0, comp /* contacts_compare ; NULL */);
 
@@ -549,8 +549,10 @@ group_cleanup:
 			else
 				snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
 
-			if (u->blink)
+			if (u->xstate & EKG_XSTATE_BLINK)
 				xstrcat(tmp, "_blink");
+			if (u->xstate & EKG_XSTATE_TYPING)
+				xstrcat(tmp, "_typing");
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
 			string = fstring_new(line);
