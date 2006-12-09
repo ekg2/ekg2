@@ -383,6 +383,7 @@ WATCHER(http_watch_read) {
 	char *req = NULL;
 
 	char *line;
+	int clen = 0;
 
 	if (type) {
 		close(fd);
@@ -507,7 +508,7 @@ WATCHER(http_watch_read) {
 			scode == 302 ? "Found" :		\
 			"",					\
 		eheaders ? eheaders : "\r\n"			\
-		);
+		); clen = send_watch->buf ? send_watch->buf->len : 0;
 
 	if (method == HTTP_METHOD_GET) {
 		string_t htheader = string_init("");
@@ -692,7 +693,13 @@ WATCHER(http_watch_read) {
 	} else {
 		HTTP_HEADER(ver, 200, "Content-Type: text/html\r\n");
 	}
+
 /* commit data */
+	if (send_watch->buf) {
+		char *tmp = saprintf("Content-length: %d\r\n", send_watch->buf->len - clen);
+		string_insert(send_watch->buf, clen - 2, tmp);
+		xfree(tmp);
+	}
 
 	watch_handle_write(send_watch);
 	return -1;
