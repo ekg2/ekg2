@@ -1,7 +1,7 @@
 #ifndef __JABBER_DCC_H
 #define __JABBER_DCC_H
 
-#define WITH_JABBER_DCC 0
+#define WITH_JABBER_DCC 1
 #define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
 
 #include <ekg/plugins.h>
@@ -67,6 +67,7 @@ WATCHER(jabber_dcc_handle_recv);
 #endif
 
 QUERY(jabber_dcc_postinit);
+extern int jabber_dcc;
 extern int jabber_dcc_port;
 extern char *jabber_dcc_ip;
 extern int jabber_dcc;
