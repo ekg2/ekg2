@@ -490,6 +490,9 @@ WATCHER(http_watch_read) {
 		return -1;
 	}
 
+	if (send_watch->buf)
+		clen = send_watch->buf->len;
+
 #define httprc_write(watch, args...) 	string_append_format(watch->buf, args)
 #define httprc_write2(watch, str)	string_append_n(watch->buf, str, -1)
 #define httprc_write3(watch, str, len)	string_append_raw(watch->buf, str, len)
@@ -508,7 +511,7 @@ WATCHER(http_watch_read) {
 			scode == 302 ? "Found" :		\
 			"",					\
 		eheaders ? eheaders : "\r\n"			\
-		); clen = send_watch->buf ? send_watch->buf->len : 0;
+		); clen = (send_watch->buf ? send_watch->buf->len : 0) - clen;
 
 	if (method == HTTP_METHOD_GET) {
 		string_t htheader = string_init("");
