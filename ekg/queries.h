@@ -39,7 +39,7 @@ enum queries_id {
 
 	PROTOCOL_CONNECTED, PROTOCOL_DISCONNECTED, PROTOCOL_IGNORE, PROTOCOL_MESSAGE, PROTOCOL_MESSAGE_ACK, PROTOCOL_STATUS, PROTOCOL_VALIDATE_UID, PROTOCOL_XSTATE,
 
-	SESSION_ADDED, SESSION_REMOVED, SESSION_CHANGED, SESSION_RENAMED, SESSION_STATUS,
+	SESSION_ADDED, SESSION_CHANGED, SESSION_REMOVED, SESSION_RENAMED, SESSION_STATUS,
 
 	SET_VARS_DEFAULT,
 	STATUS_SHOW,
@@ -101,7 +101,13 @@ struct query query_list[] = {
 	{ EVENT_AVAIL, "event_avail", {
 		/* XXX */
 		QUERY_ARG_END } },
-	
+
+	{ EVENT_DESCR, "event_descr", {
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_CHARP,		/* descr */
+		QUERY_ARG_END } },
+
 	{ EVENT_ONLINE, "event_online", {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
@@ -110,12 +116,6 @@ struct query query_list[] = {
 	{ EVENT_NA, "event_na", {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
-		QUERY_ARG_END } },
-
-	{ EVENT_DESCR, "event_descr", {
-		QUERY_ARG_CHARP,		/* session uid */
-		QUERY_ARG_CHARP,		/* uid */
-		QUERY_ARG_CHARP,		/* descr */
 		QUERY_ARG_END } },
 
 	{ METACONTACT_ADDED, "metacontact-added", {
