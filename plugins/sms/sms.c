@@ -318,21 +318,6 @@ static QUERY(sms_protocol_message)
         return 0;
 }
 
-static void sms_changed_sms_away(const char *name)
-{
-        static int last = -1;
-
-        if (last != -1 && last == config_sms_away)
-                return;
-
-        if (config_sms_away)
-                query_connect(&sms_plugin, ("protocol-message"), sms_protocol_message, NULL);
-        else
-                query_disconnect(&sms_plugin, ("protocol-message"));
-
-        last = config_sms_away;
-}
-
 int sms_plugin_init(int prio)
 {
         plugin_register(&sms_plugin, prio);
@@ -340,13 +325,12 @@ int sms_plugin_init(int prio)
         command_add(&sms_plugin, ("sms:sms"), ("u ?"), sms_command_sms, 0, NULL);
 
         variable_add(&sms_plugin, ("sms_send_app"), VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
-        variable_add(&sms_plugin, ("sms_away"), VAR_MAP, 1, &config_sms_away, sms_changed_sms_away, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
+        variable_add(&sms_plugin, ("sms_away"), VAR_MAP, 1, &config_sms_away, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
         variable_add(&sms_plugin, ("sms_away_limit"), VAR_INT, 1, &config_sms_away_limit, NULL, NULL, dd_sms);
         variable_add(&sms_plugin, ("sms_max_length"), VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
         variable_add(&sms_plugin, ("sms_number"), VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
 
-        /* senseless, cause it'd be default value... this variable isn't loaded yet. */
-
+	query_connect(&sms_plugin, ("protocol-message"), sms_protocol_message, NULL);
         query_connect(&sms_plugin, ("session-status"), sms_session_status, NULL);
 
         return 0;
