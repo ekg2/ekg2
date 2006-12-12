@@ -25,16 +25,21 @@ enum queries_id {
 	IRC_TOPIC = 0,
 	MAIL_COUNT,
 
+	BINDING_COMMAND, BINDING_DEFAULT, BINDING_SET, 
+	CONFERENCE_RENAMED,
+
 	CONFIG_POSTINIT,
 	DAY_CHANGED,
 
-	METACONTACT_ADDED, METACONTACT_REMOVED,
+	EVENT_AWAY, EVENT_AVAIL, EVENT_DESCR, EVENT_ONLINE, EVENT_NA,
+
+	METACONTACT_ADDED, METACONTACT_ITEM_ADDED, METACONTACT_ITEM_REMOVED, METACONTACT_REMOVED,
 
 	PLUGIN_PRINT_VERSION,
 
 	PROTOCOL_CONNECTED, PROTOCOL_DISCONNECTED, PROTOCOL_IGNORE, PROTOCOL_MESSAGE, PROTOCOL_MESSAGE_ACK, PROTOCOL_STATUS, PROTOCOL_VALIDATE_UID, PROTOCOL_XSTATE,
 
-	SESSION_ADDED, SESSION_REMOVED, SESSION_CHANGED, SESSION_RENAMED,
+	SESSION_ADDED, SESSION_REMOVED, SESSION_CHANGED, SESSION_RENAMED, SESSION_STATUS,
 
 	SET_VARS_DEFAULT,
 	STATUS_SHOW,
@@ -43,7 +48,7 @@ enum queries_id {
 	UI_WINDOW_CLEAR, UI_WINDOW_KILL, UI_WINDOW_NEW, UI_WINDOW_PRINT, UI_WINDOW_REFRESH,
 	UI_WINDOW_SWITCH, UI_WINDOW_TARGET_CHANGED,
 
-	USERLIST_ADDED, USERLIST_CHANGED, USERLIST_REMOVED,
+	USERLIST_ADDED, USERLIST_CHANGED, USERLIST_REMOVED, USERLIST_RENAMED,
 
 	VARIABLE_CHANGED,
 
@@ -66,14 +71,63 @@ struct query query_list[] = {
 		QUERY_ARG_INT,			/* mail count */
 		QUERY_ARG_END } },
 
+	{ BINDING_COMMAND, "binding-command", {
+		/* XXX */
+		QUERY_ARG_END } },
+
+	{ BINDING_DEFAULT, "binding-default", {
+		/* XXX */
+		QUERY_ARG_END } },
+
+	{ BINDING_SET, "binding-set", {
+		/* XXX */
+		QUERY_ARG_END } },
+
+	{ CONFERENCE_RENAMED, "conference-renamed", {
+		/* XXX */
+		QUERY_ARG_END } },
+
 	{ CONFIG_POSTINIT, "config-postinit", {
 		QUERY_ARG_END } },		/* no params */
 
 	{ DAY_CHANGED, "day-changed", {		/* XXX: struct tm *, struct tm * 	*/
 		QUERY_ARG_END } },
 
+	{ EVENT_AWAY, "event_away", {
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_END } },
+
+	{ EVENT_AVAIL, "event_avail", {
+		/* XXX */
+		QUERY_ARG_END } },
+	
+	{ EVENT_ONLINE, "event_online", {
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_END } },
+
+	{ EVENT_NA, "event_na", {
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_END } },
+
+	{ EVENT_DESCR, "event_descr", {
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_CHARP,		/* descr */
+		QUERY_ARG_END } },
+
 	{ METACONTACT_ADDED, "metacontact-added", {
 		QUERY_ARG_CHARP,		/* metacontact name */
+		QUERY_ARG_END } },
+
+	{ METACONTACT_ITEM_ADDED, "metacontact-item-added", {
+		/* XXX */
+		QUERY_ARG_END } },
+	
+	{ METACONTACT_ITEM_REMOVED, "metacontact-item-removed", {
+		/* XXX */
 		QUERY_ARG_END } },
 
 	{ METACONTACT_REMOVED, "metacontact-removed", {
@@ -157,6 +211,10 @@ struct query query_list[] = {
 		QUERY_ARG_CHARP,		/* new session alias */
 		QUERY_ARG_END } },
 
+	{ SESSION_STATUS, "session-status", {
+		/* XXX */
+		QUERY_ARG_END } },
+
 	{ SET_VARS_DEFAULT, "set-vars-default", {
 		QUERY_ARG_END } },		/* no params */
 
@@ -229,6 +287,10 @@ struct query query_list[] = {
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_END } },
 
+	{ USERLIST_RENAMED, "userlist-renamed", {
+		/* XXX */
+		QUERY_ARG_END } },
+
 	{ VARIABLE_CHANGED, "variable-changed", {
 		QUERY_ARG_CHARP,		/* variable */
 		QUERY_ARG_END } },
@@ -236,14 +298,14 @@ struct query query_list[] = {
 
 /* other, not listed above here queries, for example plugin which use internally his own query, 
  * and if devel of that plugin doesn't want share with us info about that plugin..
- * can use query_connect() query_emit() and it will work... however, binding that query from scripts won't work.. untill devel fill query_arg_type...
+ * can use query_connect() query_emit() and it will work... however, binding that query from scripts/events (/on) won't work.. untill devel fill query_arg_type...
  */
 
 static list_t queries_external;
 static int queries_count = QUERY_EXTERNAL;	/* list_count(queries_other)+QUERY_EXTERNAL */
 #else
 
-extern struct query query_list[];	/* for scripts.h */
+extern struct query query_list[];		/* for: events.h scripts.h */
 
 #endif
 
