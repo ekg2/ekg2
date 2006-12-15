@@ -27,6 +27,7 @@
 #define tlenjabber_unescape(str) (j->istlen ? tlen_decode(str) : jabber_unescape(str))
 
 #define WITH_JABBER_JINGLE 0
+#define GMAIL_MAIL_NOTIFY 1
 
 struct xmlnode_s {
 	char *name;
@@ -112,7 +113,10 @@ typedef struct {
 	int port;			/* numer portu */
 	int connecting;			/* czy siê w³a¶nie ³±czymy? */		/* 1 - normalne laczenie, 2 - laczenie po SASLu */
 	char *resource;		/* resource jakie uzylismy przy laczeniu sie do jabberd */
-
+#ifdef GMAIL_MAIL_NOTIFY
+	char *last_gmail_result_time; 	/* last time we've checked mail, this seems not to work correctly ;/ */
+	char *last_gmail_tid;
+#endif
 	list_t privacy;			/* for jabber:iq:privacy */
 	list_t bookmarks;		/* for jabber:iq:private <storage xmlns='storage:bookmarks'> */
 

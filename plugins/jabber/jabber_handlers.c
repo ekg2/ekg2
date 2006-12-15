@@ -69,8 +69,6 @@
 #define jabberfix(x,a) ((x) ? x : a)
 #define STRICT_XMLNS 1
 
-#define GMAIL_MAIL_NOTIFY 1
-
 static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
 static void jabber_handle_presence(xmlnode_t *n, session_t *s);
 static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
@@ -1149,17 +1147,29 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
 	if (type == JABBER_IQ_TYPE_SET && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
 		print("gmail_new_mail", session_name(s));
-		/* maybe we should depend on some session var */
-		//watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
+		watch_write(j->send_watch, "<iq type='result' id='%s'/>", jabber_attr(n->atts, "id"));
+		if (j->last_gmail_result_time && j->last_gmail_tid)
+			watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\" newer-than-time=\"%s\" newer-than-tid=\"%s\" /></iq>", j->id++, j->last_gmail_result_time, j->last_gmail_tid);
+		else
+			watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
 	}
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
 		char *mailcount = jabber_attr(q->atts, "total-matched");
+		int tid_set = 0;
 		xmlnode_t *child;
+		xfree(j->last_gmail_result_time);
+		j->last_gmail_result_time = xstrdup(jabber_attr(q->atts, "result-time"));
 
 		print("gmail_count", session_name(s), mailcount);
 
 		for (child = q->children; child; child = child->next) {
 			if (!xstrcmp(child->name, "mail-thread-info")) {
+				if (!tid_set)
+				{
+					xfree(j->last_gmail_tid);
+					j->last_gmail_tid = xstrdup(jabber_attr(child->atts, "tid"));
+				}
+				tid_set = 1;
 				xmlnode_t *subchild;
 				string_t from = string_init(NULL);
 
