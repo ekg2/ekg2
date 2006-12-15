@@ -372,11 +372,25 @@ IRC_COMMAND(irc_c_error)
 			print_window(dest, s, 0, irccommands[ecode].name, session_name(s), param[3], param[4]);
 			break;
 		case 376:
+			/* zero, identify with nickserv */
+			if (xstrlen(session_get(s, "identify"))) {
+				/* temporary */
+				watch_write(j->send_watch, "PRIVMSG nickserv :IDENTIFY %s\n", session_get(s, "identify"));
+				/* XXX, bedzie:
+				 * 	session_get(s, "identify") 
+				 * 		<nick_ns> <host_ns *weryfikacja zeby nikt nie spoofowac*> "<NICK1 HASLO>" "<NICK2 HASLO>" "[GLOWNE HASLO]"
+				 *
+				 * 	array_make() splitowane po spacjach. " " traktuj jako jeden parametr
+				 * 		p[2...x] jesli ma spacje sprawdz czy nicki do spacji sie zgadzaja... jesli tak uzyj haslo.
+				 * 				jesli nie, uzywaj haslo.
+				 *
+				 * 	i dopiero robmy IDENTIFY jesli dostaniem request od serwisow !!!
+				 */
+			}
+
 			/* first we join */
 			if (xstrlen(session_get(s, "AUTO_JOIN")))
 				watch_write(j->send_watch, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
-			/* G->dj: someday, someday ;-) 
-			 */
 		case 372:
 		case 375:
 			if (session_int_get(s, "SHOW_MOTD") != 0) {

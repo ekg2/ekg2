@@ -2100,7 +2100,7 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
         plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "hostname", VAR_STR, 0, 0, irc_changed_resolve);
-/*	plugin_var_add(&irc_plugin, "lag_test */
+	plugin_var_add(&irc_plugin, "identify", VAR_STR, 0, 0, NULL);
 
 	plugin_var_add(&irc_plugin, "log_formats", VAR_STR, "irssi", 0, NULL);
 
