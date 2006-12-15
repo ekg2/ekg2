@@ -1147,7 +1147,11 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 #if GMAIL_MAIL_NOTIFY
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify"))
 		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
-
+	if (type == JABBER_IQ_TYPE_SET && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
+		print("gmail_new_mail", session_name(s));
+		/* maybe we should depend on some session var */
+		//watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
+	}
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
 		char *mailcount = jabber_attr(q->atts, "total-matched");
 		xmlnode_t *child;

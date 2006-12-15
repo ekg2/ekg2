@@ -1092,6 +1092,7 @@ static int jabber_theme_init() {
 	format_add("xmpp_feature_unknown",_("%g|| %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]"), 1);
 	format_add("xmpp_feature_footer", _("%g`+=%G----- %n Turn it off using: /session display_server_features 0\n"), 1);
 
+	format_add("gmail_new_mail", 	  _("%> (%1) You have new mail on your gmail account."), 1);	/* sesja */
 	format_add("gmail_count", 	  _("%> (%1) You have %T%2%n new thread(s) on your gmail account."), 1);	/* sesja, mail count */
 	format_add("gmail_mail", 	  "%>    %|%T%2%n - %g%3%n\n", 1);						/* sesja, from, topic, [UNUSED messages count in thread (?1)] */
 	format_add("gmail_thread",	  "%>    %|%T%2 [%4]%n - %g%3%n\n", 1);						/* sesja, from, topic, messages count in thread */
