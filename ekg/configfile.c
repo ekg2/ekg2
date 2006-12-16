@@ -50,6 +50,8 @@
 #include "plugins.h"
 #include "windows.h"
 
+#include "queries.h"
+
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX
 #endif
@@ -115,12 +117,12 @@ void config_postread()
 			debug("setted default session to %s\n", s->uid);
 			session_current = s;
 			window_current->session = s;
-			query_emit(NULL, ("session-changed"));
+			query_emit_id(NULL, SESSION_CHANGED);
 		} else {
 			debug("default session not found\n");
 		}
 	}
-	query_emit(NULL, ("config-postinit"));
+	query_emit_id(NULL, CONFIG_POSTINIT);
 }
 
 int config_read_plugins()
@@ -181,8 +183,8 @@ int config_read(const char *filename)
 		timer_remove_user(-1);
 		event_free();
 		variable_set_default();
-		query_emit(NULL, ("set-vars-default"));
-		query_emit(NULL, ("binding-default"));
+		query_emit_id(NULL, SET_VARS_DEFAULT);
+		query_emit_id(NULL, BINDING_DEFAULT);
 		debug("  flushed previous config\n");
 	} 
 
@@ -237,7 +239,7 @@ int config_read(const char *filename)
                         char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
                         if (array_count(pms) == 2) {
-                                query_emit(NULL, ("binding-set"), pms[0], pms[1], 1);
+                                query_emit_id(NULL, BINDING_SET, pms[0], pms[1], 1);
                         }
 
                         array_free(pms);

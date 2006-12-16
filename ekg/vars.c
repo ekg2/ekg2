@@ -41,6 +41,8 @@
 #include "xmalloc.h"
 #include "plugins.h"
 
+#include "queries.h"
+
 static list_t *variables_lock = NULL;
 list_t variables = NULL;
 char *console_charset;
@@ -545,7 +547,7 @@ notify:
 		(v->notify)(v->name);
 
 	tmpname = xstrdup(v->name);
-	query_emit(NULL, ("variable-changed"), &tmpname);
+	query_emit_id(NULL, VARIABLE_CHANGED, &tmpname);
 	xfree(tmpname);
 			
 	return 0;

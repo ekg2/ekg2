@@ -44,6 +44,9 @@
 #include "xmalloc.h"
 
 
+#define __DECLARE_QUERIES_STUFF
+#include "queries.h"
+
 #if !defined(va_copy) && defined(__va_copy)
 #define va_copy(DST,SRC) __va_copy(DST,SRC)
 #endif
@@ -559,48 +562,104 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
         return 0;
 }
 
-query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data)
-{
+void query_external_free() {
+	list_t l;
+
+	for (l = queries_external; l; l = l->next) {
+		struct query *a = l->data;
+
+		xfree(a->name);
+	}
+	list_destroy(queries_external, 1);
+
+	queries_external 	= NULL;
+	queries_count		= QUERY_EXTERNAL;
+}
+
+int query_id(const char *name) {
+	struct query *a = NULL;
+	list_t l;
+	int i;
+
+	for (i=0; i < QUERY_EXTERNAL; i++) {
+		if (!xstrcmp(query_list[i].name, name)) {
+#ifdef DDEBUG
+			debug_error("Use query_connect_id()/query_emit_id() for: %s\n", name);
+#endif
+			return query_list[i].id;
+		}
+	}
+
+	for (l = queries_external; l; l = l->next) {
+		a = l->data;
+
+		if (!xstrcmp(a->name, name))
+			return a->id;
+	}
+	debug_error("query_id() NOT FOUND[%d]: %s\n", queries_count - QUERY_EXTERNAL, __(name));
+
+	a 	= xmalloc(sizeof(struct query));
+	a->id 	= queries_count++;
+	a->name	= xstrdup(name);
+
+	list_add(&queries_external, a, 0);
+
+	return a->id;
+}
+
+const char *query_name(const int id) {
+	list_t l;
+
+	if (id < QUERY_EXTERNAL) 
+		return query_list[id].name;
+
+	for (l = queries_external; l; l = l->next) {
+		struct query* a = l->data;
+
+		if (a->id == id) 
+			return a->name;
+	}
+
+	debug_error("[%s:%d] query_name() REALLY NASTY (%d)\n", __FILE__, __LINE__, id);
+
+	return NULL;
+}
+
+query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
 	query_t *q = xmalloc(sizeof(query_t));
 
+	q->id		= id;
 	q->plugin	= plugin;
-	q->name		= xstrdup(name);
 	q->handler	= handler;
 	q->data		= data;
 
 	return list_add(&queries, q, 0);
 }
 
+query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
+	return query_connect_id(plugin, query_id(name), handler, data);
+}
+
 int query_free(query_t *q) {
 	if (!q) return -1;
 
-	xfree(q->name);
 	list_remove(&queries, q, 1);
 	return 0;
 }
 
 int query_disconnect(plugin_t *plugin, const char *name)
 {
-	list_t l;
-
-	for (l = queries; l; l = l->next) {
-		query_t *q = l->data;
-
-		if (q->plugin == plugin && q->name == name) {
-			return query_free(q);
-		}
-	}
-
+	debug_error("[%s:%d] query_disconnect() THIS FUNCTION IS OBSOLETE, USE query_free() INSTEAD..\n");
 	return -1;
 }
 
-int query_emit(plugin_t *plugin, const char *name, ...)
-{
+static int query_emit_common(query_t *q, va_list ap) {
 	static int nested = 0;
-	int result = -2;
-	va_list ap;
+	int (*handler)(void *data, va_list ap) = q->handler;
+	int result;
 	va_list ap_plugin;
-	list_t l;
+
+	nested++;
 
 	if (nested > 32) {
 /*
@@ -610,57 +669,63 @@ int query_emit(plugin_t *plugin, const char *name, ...)
 		return -1;
 	}
 
-	nested++;
+	q->count++;
+
+	/*
+	 * pc and amd64: va_arg remove var from va_list when you use va_arg, 
+	 * so we must keep orig va_list for next plugins
+	 */
+	va_copy(ap_plugin, ap);
+	result = handler(q->data, ap_plugin);
+	va_end(ap_plugin);
+
+	nested--;
+
+	return result != -1 ? 0 : -1;
+}
+
+int query_emit_id(plugin_t *plugin, const int id, ...) {
+	int result = -2;
+	va_list ap;
+	list_t l;
+
+	va_start(ap, id);
+	for (l = queries; l; l = l->next) {
+		query_t *q = l->data;
+
+		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
+			result = query_emit_common(q, ap);
+
+			if (result == -1) break;
+		}
+	}
+	va_end(ap);
+
+	return result;
+}
+
+int query_emit(plugin_t *plugin, const char *name, ...) {
+	int result = -2;
+	va_list ap;
+	list_t l;
+	int id;
+
+	id = query_id(name);
 
 	va_start(ap, name);
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
 
-		if ((!plugin || (plugin == q->plugin)) && !xstrcmp(q->name, name)) {
-			int (*handler)(void *data, va_list ap) = q->handler;
+		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
+			result = query_emit_common(q, ap);
 
-			q->count++;
-
-			result = 0;
-			/*
-			 * pc and amd64: va_arg remove var from va_list when you use va_arg, 
-			 * so we must keep orig va_list for next plugins
-			 */
-			va_copy(ap_plugin, ap);
-
-			if (handler(q->data, ap_plugin) == -1) {
-				result = -1;
-				goto cleanup;
-			}
-
-			va_end(ap_plugin);
+			if (result == -1) break;
 		}
 	}
-
-cleanup:
 	va_end(ap);
-
-	nested--;
 
 	return result;
 }
-
-#if 0
-query_t *query_find(const char *name)
-{
-        list_t l;
-
-        for (l = queries; l; l = l->next) {
-                query_t *q = l->data;
-
-                if (!xstrcasecmp(q->name, name))
-                        return q;
-        }
-
-        return 0;
-}
-#endif
-
 
 /*
  * watch_find()

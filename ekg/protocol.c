@@ -50,6 +50,8 @@
 #include "stuff.h"
 #include "themes.h"
 
+#include "queries.h"
+
 static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
 list_t dccs = NULL;
 
@@ -68,13 +70,13 @@ static QUERY(protocol_xstate);
  */
 void protocol_init()
 {
-	query_connect(NULL, ("protocol-status"), protocol_status, NULL);
-	query_connect(NULL, ("protocol-message"), protocol_message, NULL);
-	query_connect(NULL, ("protocol-message-ack"), protocol_message_ack, NULL);
-	query_connect(NULL, ("protocol-xstate"), protocol_xstate, NULL);
+	query_connect_id(NULL, PROTOCOL_STATUS, protocol_status, NULL);
+	query_connect_id(NULL, PROTOCOL_MESSAGE, protocol_message, NULL);
+	query_connect_id(NULL, PROTOCOL_MESSAGE_ACK, protocol_message_ack, NULL);
+	query_connect_id(NULL, PROTOCOL_XSTATE, protocol_xstate, NULL);
 
-	query_connect(NULL, ("protocol-connected"), protocol_connected, NULL);
-	query_connect(NULL, ("protocol-disconnected"), protocol_disconnected, NULL);
+	query_connect_id(NULL, PROTOCOL_CONNECTED, protocol_connected, NULL);
+	query_connect_id(NULL, PROTOCOL_DISCONNECTED, protocol_disconnected, NULL);
 }
 
 
@@ -291,7 +293,7 @@ static QUERY(protocol_status)
 
 	/* daj znaæ d¼wiêkiem... */
 	if (config_beep && config_beep_notify)
-		query_emit(NULL, ("ui-beep"));
+		query_emit_id(NULL, UI_BEEP);
 
 	/* ...i muzyczk± */
 	if (config_sound_notify_file)
@@ -319,7 +321,7 @@ notify_plugins:
 	}
 
 	if (!xstrcasecmp(st, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-		query_emit(NULL, ("event_online"), __session, __uid);
+		query_emit_id(NULL, EVENT_ONLINE, __session, __uid);
 
 	if (!ignore_status) {
 		if (r) {
@@ -337,7 +339,7 @@ notify_plugins:
 	}
 
 	if (xstrcasecmp(de, descr) && !ignore_events)
-		query_emit(NULL, ("event_descr"), __session, __uid, __descr);
+		query_emit_id(NULL, EVENT_DESCR, __session, __uid, __descr);
 
 	if (!ignore_status && !ignore_status_descr) {
 		if (r) {
@@ -357,14 +359,14 @@ notify_plugins:
 			u->status_time = when ? when : time(NULL);
 	}
 	
-	query_emit(NULL, ("userlist-changed"), __session, __uid);
+	query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
 
 	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && !ignore_events)
-		query_emit(NULL, ("event_avail"), __session, __uid);
+		query_emit_id(NULL, EVENT_AVAIL, __session, __uid);
 	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && !ignore_events)
-                query_emit(NULL, ("event_away"), __session, __uid);
+                query_emit_id(NULL, EVENT_AWAY, __session, __uid);
         if (!xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-                query_emit(NULL, ("event_na"), __session, __uid);
+                query_emit_id(NULL, EVENT_NA, __session, __uid);
 
 	return 0;
 }
@@ -514,7 +516,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (class == EKG_MSGCLASS_CHAT) {
 
 		if (config_beep && config_beep_chat && dobeep)
-			query_emit(NULL, ("ui-beep"));
+			query_emit_id(NULL, UI_BEEP);
 	
 		if (config_sound_chat_file && dobeep)
 			play_sound(config_sound_chat_file);
@@ -522,7 +524,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_MESSAGE) {
 
 		if (config_beep && config_beep_msg && dobeep)
-			query_emit(NULL, ("ui-beep"));
+			query_emit_id(NULL, UI_BEEP);
 		if (config_sound_msg_file && dobeep)
 			play_sound(config_sound_chat_file);
 
@@ -606,7 +608,7 @@ static QUERY(protocol_message)
                 char *___message = xstrdup(text);
                 int ___decrypted = 0;
 
-                query_emit(NULL, ("message-decrypt"), &___session, &___sender, &___message, &___decrypted, NULL);
+                query_emit_id(NULL, MESSAGE_DECRYPT, &___session, &___sender, &___message, &___decrypted, NULL);
 
                 if (___decrypted) {
                         text = ___message;
@@ -619,10 +621,10 @@ static QUERY(protocol_message)
                 xfree(___message);
 	}
 
-	if (our_msg)	query_emit(NULL, ("protocol-message-sent"), &session, &(rcpts[0]), &text);
-	else		query_emit(NULL, ("protocol-message-received"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+	if (our_msg)	query_emit_id(NULL, PROTOCOL_MESSAGE_SENT, &session, &(rcpts[0]), &text);
+	else		query_emit_id(NULL, PROTOCOL_MESSAGE_RECEIVED, &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
 
-	query_emit(NULL, ("protocol-message-post"), &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
+	query_emit_id(NULL, PROTOCOL_MESSAGE_POST, &session, &uid, &rcpts, &text, &format, &sent, &class, &seq, &secure);
 
 	/* show it ! */
 	if (!(our_msg && !config_display_sent)) {
@@ -718,7 +720,7 @@ static QUERY(protocol_xstate)
 			w->act &= ~4;
 		else if (state & EKG_XSTATE_TYPING)
 			w->act |= 4;
-		query_emit(NULL, "ui-window-act-changed");
+		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
 	}
 
 	if ((u = userlist_find(s, uid)) || (config_auto_user_add && (u = userlist_add(s, uid, uid)))) {
@@ -726,7 +728,7 @@ static QUERY(protocol_xstate)
 			u->xstate &= ~EKG_XSTATE_TYPING;
 		else if (state & EKG_XSTATE_TYPING)
 			u->xstate |= EKG_XSTATE_TYPING;
-		query_emit(NULL, "userlist-changed", __session, __uid);
+		query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
 	}
 
 	return 0;

@@ -41,6 +41,8 @@
 #  include "compat/strlcpy.h"
 #endif
 
+#include "queries.h"
+
 list_t sessions = NULL;
 session_t *session_current = NULL;
 
@@ -150,7 +152,7 @@ session_t *session_add(const char *uid)
 	session_var_default(s);
 
 	tmp = xstrdup(uid);
-	query_emit(NULL, ("session-added"), &tmp);
+	query_emit_id(NULL, SESSION_ADDED, &tmp);
 	xfree(tmp);
 
 	return s;
@@ -192,8 +194,8 @@ int session_remove(const char *uid)
 		command_exec_format(NULL, s, 1, ("/disconnect %s"), s->uid);
 	}
 	tmp = xstrdup(uid);
-        query_emit(NULL, ("session-changed"));
-	query_emit(NULL, ("session-removed"), &tmp);
+        query_emit_id(NULL, SESSION_CHANGED);
+	query_emit_id(NULL, SESSION_REMOVED, &tmp);
 	xfree(tmp);
 
         for (l = s->params; l; l = l->next) {
@@ -226,7 +228,7 @@ int session_status_set(session_t *s, const char *status)
 	__session = xstrdup(s->uid);
 	__status = xstrdup(status);
 
-	query_emit(NULL, ("session-status"), &__session, &__status);
+	query_emit_id(NULL, SESSION_STATUS, &__session, &__status);
 
 	xfree(s->status);
 
@@ -415,7 +417,7 @@ int session_set(session_t *s, const char *key, const char *value)
 		char *tmp = xstrdup(value);
 		ret = session_alias_set(s, value);
 
-		query_emit(NULL, ("session-renamed"), &tmp);
+		query_emit_id(NULL, SESSION_RENAMED, &tmp);
 		xfree(tmp);
 
 		goto notify;
@@ -838,7 +840,7 @@ COMMAND(session_command)
 		window_current->session = s;
 		session_current = s;
 
-		query_emit(NULL, ("session-changed"));
+		query_emit_id(NULL, SESSION_CHANGED);
 
 		return 0;
 	}

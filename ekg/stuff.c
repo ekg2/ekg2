@@ -70,6 +70,8 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+#include "queries.h"
+
 #ifndef PATH_MAX
 # ifdef MAX_PATH
 #  define PATH_MAX MAX_PATH
@@ -1158,7 +1160,7 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	tmp1 = xstrdup(oldname);
 	tmp2 = xstrdup(newname);
 
-	query_emit(NULL, ("conference-renamed"), &tmp1, &tmp2);
+	query_emit_id(NULL, CONFERENCE_RENAMED, &tmp1, &tmp2);
 
 	xfree(tmp1);
 	xfree(tmp2);

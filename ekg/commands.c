@@ -102,6 +102,8 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+#include "queries.h"
+
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
@@ -351,8 +353,8 @@ COMMAND(cmd_add)
 	if (u || userlist_add(session_current, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
-		query_emit(NULL, ("userlist-added"), &uid, &params[1], &quiet);
-                query_emit(NULL, ("add-notify"), &session_current->uid, &uid);
+		query_emit_id(NULL, USERLIST_ADDED, &uid, &params[1], &quiet);
+                query_emit_id(NULL, ADD_NOTIFY, &session_current->uid, &uid);
                 xfree(uid);
 
 		printq("user_added", params[1], session_name(session_current));
@@ -484,12 +486,12 @@ static COMMAND(cmd_status)
         wcs_printq("show_status_header");
 
 	if (!params[0] && session)
-		query_emit(plugin_find_uid(session->uid), ("status-show"), &session->uid);
+		query_emit_id(plugin_find_uid(session->uid), STATUS_SHOW, &session->uid);
 	else if (!(s = session_find(params[0]))) {
 		printq("invalid_uid", params[0]);
 		return -1;
 	} else
-		query_emit(plugin_find_uid(s->uid), ("status-show"), &s->uid);
+		query_emit_id(plugin_find_uid(s->uid), STATUS_SHOW, &s->uid);
 
         n = time(NULL);
         t = localtime(&n);
@@ -530,7 +532,7 @@ static COMMAND(cmd_del)
 			l = l->next;
 			p0 = xstrdup(u->nickname);
 			tmp = xstrdup(u->uid);
-			query_emit(NULL, ("userlist-removed"), &p0, &tmp);
+			query_emit_id(NULL, USERLIST_REMOVED, &p0, &tmp);
 			xfree(tmp);
 			xfree(p0);
 
@@ -550,8 +552,8 @@ static COMMAND(cmd_del)
 	}
 
 	tmp = xstrdup(u->uid);
-	query_emit(NULL, ("userlist-removed"), &params[0], &tmp);
-	query_emit(NULL, ("remove-notify"), &session->uid, &tmp);
+	query_emit_id(NULL, USERLIST_REMOVED, &params[0], &tmp);
+	query_emit_id(NULL, REMOVE_NOTIFY, &session->uid, &tmp);
 
         printq("user_deleted", params[0], session_name(session));
 	xfree(tmp);
@@ -1514,7 +1516,7 @@ list_user:
 		if (ekg_group_member(u, "__offline"))
 			printq("user_info_offline", ((u->first_name) ? u->first_name : u->nickname));
 
-		query_emit(NULL, ("userlist-info"), &u, &quiet);
+		query_emit_id(NULL, USERLIST_INFO, &u, &quiet);
 
 		if (u->ip) {
 			char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port));
@@ -1844,7 +1846,7 @@ static COMMAND(cmd_quit)
 	list_t l;
 	
 	reason = xstrdup(params[0]);
-	query_emit(NULL, ("quitting"), &reason);
+	query_emit_id(NULL, QUITTING, &reason);
 	xfree(reason);
 
 	for (l = sessions; l; l = l->next) {
@@ -1863,7 +1865,7 @@ static COMMAND(cmd_quit)
 static COMMAND(cmd_version) 
 {
 	printq("ekg_version", VERSION, compile_time());
-	query_emit(NULL, ("plugin-print-version"));
+	query_emit_id(NULL, PLUGIN_PRINT_VERSION);
 
 	return 0;
 }
@@ -1977,7 +1979,7 @@ static COMMAND(cmd_debug_queries)
 		char *plugin;
 
 		plugin = (q->plugin) ? q->plugin->name : ("-");
-		snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", q->name, plugin, q->count);
+		snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", __(query_name(q->id)), plugin, q->count);
 		printq("generic", buf);
 	}
 
@@ -2195,7 +2197,7 @@ static COMMAND(cmd_test_fds)
 
 static COMMAND(cmd_beep)
 {
-	query_emit(NULL, ("ui-beep"), NULL);
+	query_emit_id(NULL, UI_BEEP, NULL);
 
 	return 0;
 }
@@ -2331,13 +2333,13 @@ next:
 			if (w) {
 				w->target = xstrdup(par0);				/* new target */
 				w->session = session;					/* change session */
-				query_emit(NULL, ("ui-window-target-changed"), &w);	/* notify ui-plugin */
+				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* notify ui-plugin */
 			}
 		} else if (config_make_window == 0 && window_current /* && window_current->id >1 && !window_current->floating */) {
 			w = window_current;
 			xfree(w->target);	w->target = xstrdup(par0);		/* change target */
 			w->session = session;						/* change session */
-			query_emit(NULL, ("ui-window-target-changed"), &w);		/* notify ui-plugin */
+			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);		/* notify ui-plugin */
 		}
 
 		if (!w) w = window_new(par0, session, 0);	/* jesli jest config_make_window => 2 lub nie mielismy wolnego okienka przy config_make_window == 1, stworzmy je */
@@ -2364,7 +2366,7 @@ static COMMAND(cmd_echo)
 static COMMAND(cmd_bind)
 {
 	window_lock_dec_n(target); /* this is interactive command */
-	query_emit(NULL, ("binding-command"), params[0], (params[0]) ? params[1] : NULL, (params[0] && params[1]) ? params[2] : NULL, quiet);
+	query_emit_id(NULL, BINDING_COMMAND, params[0], (params[0]) ? params[1] : NULL, (params[0] && params[1]) ? params[2] : NULL, quiet);
 
 	return 0;
 }
@@ -2604,7 +2606,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 						w->lock = 0;
 					}
 				}
-				query_emit(NULL, ("ui-window-refresh"));
+				query_emit_id(NULL, UI_WINDOW_REFRESH);
 			}
 			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
 			array_free(par);

@@ -105,6 +105,8 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+#include "queries.h"
+
 #ifndef PATH_MAX
 # ifdef MAX_PATH
 #  define PATH_MAX MAX_PATH
@@ -464,14 +466,14 @@ watches_again:
 static void handle_sigusr1()
 {
         debug("sigusr1 received\n");
-        query_emit(NULL, ("sigusr1"));
+        query_emit_id(NULL, EKG_SIGUSR1);
         signal(SIGUSR1, handle_sigusr1);
 }
 
 static void handle_sigusr2()
 {
         debug("sigusr2 received\n");
-        query_emit(NULL, ("sigusr2"));
+        query_emit_id(NULL, EKG_SIGUSR2);
         signal(SIGUSR2, handle_sigusr2);
 }
 
@@ -614,7 +616,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
 	buffer_add(BUFFER_DEBUG, NULL, tmp, DEBUG_MAX_LINES);
 
-	query_emit(NULL, ("ui-is-initialized"), &is_UI);
+	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
 	if (is_UI) {
 		char *format;
@@ -1023,7 +1025,7 @@ int main(int argc, char **argv)
         reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
-	if (query_emit(NULL, ("ui-loop")) != -1) {
+	if (query_emit_id(NULL, UI_LOOP) != -1) {
         	/* krêæ imprezê */
 		while (1) {
 			ekg_loop();
@@ -1203,6 +1205,7 @@ watches_again:
 
 		query_free(q);
 	}
+	query_external_free();
 
 	xfree(home_dir);
 

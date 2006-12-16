@@ -37,6 +37,9 @@
 #include "stuff.h"
 #include "xmalloc.h"
 
+#include "queries.h"
+
+
 list_t windows = NULL;			/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
 int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
@@ -197,7 +200,7 @@ void window_switch(int id)
 			}
                 }
 
-		query_emit(NULL, ("ui-window-switch"), &w);	/* XXX */
+		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
 		if (!w->id)
 			w->session = session_current;
@@ -288,7 +291,7 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 
 	list_add_sorted(&windows, w, 0, window_new_compare);
 
-	query_emit(NULL, ("ui-window-new"), &w);	/* XXX */
+	query_emit_id(NULL, UI_WINDOW_NEW, &w);	/* XXX */
 
 	return w;
 }
@@ -328,7 +331,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 				if (separate && !w->target && w->id > 1) {
 					xfree(w->target);
 					w->target = xstrdup(target);
-					query_emit(NULL, ("ui-window-target-changed"), &w);	/* XXX */
+					query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
 					print("window_id_query_started", itoa(w->id), who, session_name(session));
 					print_window(target, session, 1, "query_started", who, session_name(session));
 					print_window(target, session, 1, "query_started_window", who);
@@ -377,12 +380,12 @@ crap:
 		else if (w->act != 2)
 			w->act = 1;
 		if (oldact != w->act)
-			query_emit(NULL, ("ui-window-act-changed"));
+			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
 	}
 
 	if (!line->ts)
 		line->ts = time(NULL);
-	query_emit(NULL, ("ui-window-print"), &w, &line);	/* XXX */
+	query_emit_id(NULL, UI_WINDOW_PRINT, &w, &line);	/* XXX */
 }
 
 /*
@@ -473,7 +476,7 @@ void window_kill(window_t *w, int quiet)
 		userlist_free_u(&(window_current->userlist));
 
 		tmp = xmemdup(w, sizeof(window_t));
-		query_emit(NULL, ("ui-window-target-changed"), &tmp);
+		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &tmp);
 		xfree(tmp);
 
 		return;
@@ -506,7 +509,7 @@ void window_kill(window_t *w, int quiet)
 
 cleanup:
 	tmp = xmemdup(w, sizeof(window_t));
-	query_emit(NULL, ("ui-window-kill"), &tmp);
+	query_emit_id(NULL, UI_WINDOW_KILL, &tmp);
 	xfree(tmp);
 
 	xfree(w->target);
@@ -577,7 +580,7 @@ COMMAND(cmd_window)
 {
 	if (!xstrcmp(name, ("clear")) || (params[0] && !xstrcasecmp(params[0], ("clear")))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
-		query_emit(NULL, ("ui-window-clear"), &w);
+		query_emit_id(NULL, UI_WINDOW_CLEAR, &w);
 		xfree(w);
 		return 0;
 	}
@@ -749,7 +752,7 @@ COMMAND(cmd_window)
 
 	
 	if (!xstrcasecmp(params[0], ("refresh"))) {
-		query_emit(NULL, ("ui-window-refresh"));
+		query_emit_id(NULL, UI_WINDOW_REFRESH);
 		return 0;
 	}
 
@@ -776,7 +779,7 @@ int window_session_cycle(window_t *w)
 			w->session = (session_t*) l->next->data;
 			if (w == window_current)
 				session_current = window_current->session;
-        		query_emit(NULL, ("session-changed"));
+        		query_emit_id(NULL, SESSION_CHANGED);
 			return 0;
 		} else
 			break;
@@ -786,7 +789,7 @@ int window_session_cycle(window_t *w)
         if (w == window_current)
                  session_current = window_current->session;
 
-        query_emit(NULL, ("session-changed"));
+        query_emit_id(NULL, SESSION_CHANGED);
 
 	return 0;
 }

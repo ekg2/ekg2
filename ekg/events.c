@@ -37,6 +37,8 @@
 #include "themes.h"
 #include "windows.h"
 
+#include "queries.h"
+
 list_t events = NULL;
 char **events_all = NULL;
 
@@ -175,7 +177,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	list_add_sorted(&events, ev, 0, event_add_compare);
 
 	tmp = xstrdup(name);
-	query_emit(NULL, ("event-added"), &tmp);
+	query_emit_id(NULL, EVENT_ADDED, &tmp);
 	xfree(tmp);
 
 	wcs_printq("events_add", name);
@@ -216,7 +218,7 @@ static int event_remove(unsigned int id, int quiet)
 	wcs_printq("events_del", itoa(id));
 
 cleanup:	
-        query_emit(NULL, ("event-removed"), itoa(id));
+/*        query_emit_id(NULL, EVENT_REMOVED, itoa(id)); */	/* XXX, incorrect. */
 
 	return 0;
 }
@@ -421,7 +423,7 @@ static TIMER(ekg_day_timer) {
 			}
 		}
 		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
-		query_emit(NULL, ("day-changed"), &tm, &oldtm);
+		query_emit_id(NULL, DAY_CHANGED, &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
 		oldtm = xmalloc(sizeof(struct tm));

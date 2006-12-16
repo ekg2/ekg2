@@ -109,7 +109,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 typedef QUERY(query_handler_func_t);
 
 typedef struct {
-	char *name;
+	int id;
 	plugin_t *plugin;
 	void *data;
 	query_handler_func_t *handler;
@@ -119,11 +119,15 @@ typedef struct {
 #ifndef EKG2_WIN32_NOFUNCTION
 
 query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
-int query_disconnect(plugin_t *, const char *);
+query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
 int query_free(query_t *q);
-/* query_t *query_find(const char *name); */
+void query_external_free();
 
+int query_emit_id(plugin_t *, const int, ...);
 int query_emit(plugin_t *, const char *, ...);
+
+const char *query_name(const int id);
+int query_id(const char *name);
 
 #endif
 
