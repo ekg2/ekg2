@@ -38,6 +38,8 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #include "feed.h"
 
 typedef enum {
@@ -157,7 +159,7 @@ static void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 		char *__session = xstrdup(session_uid_get(s));
 		char *__reason = xstrdup(reason);
 
-		query_emit(NULL, "protocol-disconnected", &__session, &__reason, &type, NULL);
+		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &type, NULL);
 
 		xfree(__session);
 		xfree(__reason);
@@ -393,7 +395,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		char *artid	= (char *) itoa(art->artid);
 		int modify	= 0;						/* XXX */
 
-		query_emit(NULL, "rss-message", &(s->uid), &uid, &sheaders, &headers, &artid, &(art->msgid), &body, &(art->new), &modify);
+		query_emit_id(NULL, RSS_MESSAGE, &(s->uid), &uid, &sheaders, &headers, &artid, &(art->msgid), &body, &(art->new), &modify);
 	}
 
 	if (j->newsgroup) {
@@ -616,7 +618,7 @@ static WATCHER(nntp_handle_connect) {
 
 	j->connecting = 0;
 	session_connected_set(s, 1);
-	query_emit(NULL, "protocol-connected", &data);
+	query_emit_id(NULL, PROTOCOL_CONNECTED, &data);
 
 	watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, nntp_handle_stream, xstrdup(data));
 	j->send_watch = watch_add_line(&feed_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);

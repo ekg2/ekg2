@@ -51,6 +51,8 @@ const char *_DATADIR = DATADIR;
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -278,7 +280,7 @@ gint on_list_select(GtkTreeView *treeview, GtkTreePath *path, GtkTreeViewColumn 
 //		window_session_cycle(window_current);
 		window_current->session = s;
 		session_current = s;
-		query_emit(NULL, ("session-changed"));
+		query_emit_id(NULL, SESSION_CHANGED);
 	} else print("session_cannot_change");
 	return TRUE;
 }
@@ -436,7 +438,7 @@ gint gtk_key_press (GtkWidget *widget, GdkEventKey *event, void *data) {
  * 	L-ALT	8	MOD1_MASK
  * 	R-ALT 128	MOD2_MASK
  */
-		if (query_emit(NULL, ("ui-keypress"), &(event->keyval), NULL) == -1)
+		if (query_emit_id(NULL, UI_KEYPRESS, &(event->keyval), NULL) == -1)
 			return TRUE; /* ignore this key */
 
 		if (event->keyval == GDK_Tab) {
@@ -1285,7 +1287,7 @@ int gtk_plugin_init(int prio) {
 	int xfd = -1;
         int is_UI = 0;
 
-        query_emit(NULL, ("ui-is-initialized"), &is_UI);
+        query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 #ifdef WITH_X_WINDOWS
 	if (!getenv("DISPLAY")) {
 /* po czyms takim for sure bedzie initowane ncurses... no ale moze to jest wlasciwe zachowanie? jatam nie wiem.
@@ -1312,27 +1314,27 @@ int gtk_plugin_init(int prio) {
 
 	plugin_register(&gtk_plugin, prio);
 /* glowne eventy ui */
-	query_connect(&gtk_plugin, ("ui-beep"), gtk_ui_beep, NULL);
-	query_connect(&gtk_plugin, ("ui-window-clear"), gtk_ui_window_clear, NULL);
-	query_connect(&gtk_plugin, ("ui-window-kill"), gtk_ui_window_kill, NULL);
-	query_connect(&gtk_plugin, ("ui-window-new"), gtk_ui_window_new, NULL);
-	query_connect(&gtk_plugin, ("ui-window-print"), gtk_ui_window_print, NULL);
-	query_connect(&gtk_plugin, ("ui-window-switch"), gtk_ui_window_switch, NULL);
-	query_connect(&gtk_plugin, ("ui-window-act-changed"), gtk_ui_window_act_changed, NULL);
+	query_connect_id(&gtk_plugin, UI_BEEP,			gtk_ui_beep, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_CLEAR,		gtk_ui_window_clear, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_KILL,		gtk_ui_window_kill, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_NEW,		gtk_ui_window_new, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_PRINT,		gtk_ui_window_print, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_SWITCH,		gtk_ui_window_switch, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_ACT_CHANGED,	gtk_ui_window_act_changed, NULL);
 /* userlist */
-	query_connect(&gtk_plugin, ("userlist-changed"), gtk_userlist_changed, NULL);
-	query_connect(&gtk_plugin, ("userlist-added"), gtk_userlist_changed, NULL);
-	query_connect(&gtk_plugin, ("userlist-removed"), gtk_userlist_changed, NULL);
-	query_connect(&gtk_plugin, ("userlist-renamed"), gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, USERLIST_CHANGED,	gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, USERLIST_ADDED,	gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, USERLIST_REMOVED,	gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, USERLIST_RENAMED,	gtk_userlist_changed, NULL);
 /* sesja */
-	query_connect(&gtk_plugin, ("session-added"), gtk_statusbar_query, NULL);
-	query_connect(&gtk_plugin, ("session-removed"), gtk_statusbar_query, NULL);
-	query_connect(&gtk_plugin, ("session-changed"), gtk_contacts_changed, NULL);
+	query_connect_id(&gtk_plugin, SESSION_ADDED,	gtk_statusbar_query, NULL);
+	query_connect_id(&gtk_plugin, SESSION_REMOVED,	gtk_statusbar_query, NULL);
+	query_connect_id(&gtk_plugin, SESSION_CHANGED,	gtk_contacts_changed, NULL);
 /* ui-loop */
-	query_connect(&gtk_plugin, ("ui-loop"), ekg2_gtk_loop, NULL);
+	query_connect_id(&gtk_plugin, UI_LOOP,		ekg2_gtk_loop, NULL);
 /* inne */
-	query_connect(&gtk_plugin, ("ui-is-initialized"), gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
-	query_connect(&gtk_plugin, ("plugin-print-version"), gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
+	query_connect_id(&gtk_plugin, UI_IS_INITIALIZED,	gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
+	query_connect_id(&gtk_plugin, PLUGIN_PRINT_VERSION,	gtk_print_version, NULL);  /* aby sie po /version wyswietlalo */
 
 /* wszystkie inne x 2 */
 	gtk_misc_handlers_init(); 
@@ -1360,6 +1362,8 @@ int gtk_plugin_init(int prio) {
 
 static int gtk_plugin_destroy() {
 	plugin_unregister(&gtk_plugin);
+
+	xfree(iconfile);
 	return 0;
 }
 

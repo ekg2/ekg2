@@ -48,6 +48,8 @@
 #include <ekg/xmalloc.h>
 #include <ekg/vars.h>
 
+#include <ekg/queries.h>
+
 struct mail_folder {
 	int fhash;
 	char *fname;
@@ -148,7 +150,7 @@ static int check_mail_update(const char *s, int more)
 		}
 
 		if (config_beep && config_beep_mail)
-			query_emit(NULL, ("ui-beep"), NULL);
+			query_emit_id(NULL, UI_BEEP, NULL);
 
 		play_sound(config_sound_mail_file);
 
@@ -541,7 +543,7 @@ int mail_plugin_init(int prio)
 {
 	plugin_register(&mail_plugin, prio);
 
-	query_connect(&mail_plugin, ("mail-count"), mail_count_query, NULL);
+	query_connect_id(&mail_plugin, MAIL_COUNT, mail_count_query, NULL);
 
 	variable_add(&mail_plugin, ("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
 	variable_add(&mail_plugin, ("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);

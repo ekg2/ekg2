@@ -20,6 +20,8 @@
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 
+#include <ekg/queries.h>
+
 #include "simlite.h"
 
 static int config_encryption = 0;
@@ -345,8 +347,8 @@ int sim_plugin_init(int prio)
 {
 	plugin_register(&sim_plugin, prio);
 
-	query_connect(&sim_plugin, ("message-encrypt"), message_encrypt, NULL);
-	query_connect(&sim_plugin, ("message-decrypt"), message_decrypt, NULL);
+	query_connect_id(&sim_plugin, MESSAGE_ENCRYPT, message_encrypt, NULL);
+	query_connect_id(&sim_plugin, MESSAGE_DECRYPT, message_decrypt, NULL);
 
 	command_add(&sim_plugin, ("sim:key"), ("puUC uUC"), command_key, 0,
 			"-g --generate -s --send -d --delete -l --list");

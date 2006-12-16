@@ -47,6 +47,9 @@
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
 
+#include <ekg/queries.h>
+
+
 #include "old.h"
 #include "completion.h"
 #include "bindings.h"
@@ -1234,14 +1237,14 @@ void update_statusbar(int commit)
 
 	if ((plug = plugin_find(("mail")))) {
 		int mail_count = -1;
-		query_emit(plug, ("mail-count"), &mail_count);
+		query_emit_id(plug, MAIL_COUNT, &mail_count);
 		__add_format_dup("mail", (mail_count > 0), itoa(mail_count));
 	}
 	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(("irc")))) {
 		/* yeah, I know, shitty way */
 		char *t2 = NULL;
 		char *t3 = NULL; 
-		query_emit(plug, ("irc-topic"), &tmp, &t2, &t3);
+		query_emit_id(plug, IRC_TOPIC, &tmp, &t2, &t3);
 		__add_format("irctopic", tmp);
 		__add_format("irctopicby", t2);
 		__add_format("ircmode", t3);
@@ -1800,7 +1803,7 @@ static int ekg_getch(int meta, unsigned int *ch) {
 	} 
 #undef GET_TIME
 #undef DIF_TIME
-	if (query_emit(NULL, ("ui-keypress"), ch, NULL) == -1)  
+	if (query_emit_id(NULL, UI_KEYPRESS, ch) == -1)  
 		return -2; /* -2 - ignore that key */
 #if USE_UNICODE
 	if (retcode == KEY_CODE_YES) return KEY_CODE_YES;

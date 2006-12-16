@@ -49,6 +49,8 @@
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
 
+#include <ekg/queries.h>
+
 /**
  * python_plugin
  *
@@ -235,7 +237,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
                                 break;
                         }
                         default:
-                               debug("[NIMP] %s %d %d\n",scr_que->self->name, i, scr_que->argv_type[i]);
+                               debug("[NIMP] %s %d %d\n", __(query_name(scr_que->self->id)), i, scr_que->argv_type[i]);
                 }
                 if (!w) {
                         Py_INCREF(Py_None);
@@ -635,7 +637,7 @@ int python_plugin_init(int prio)
 	command_add(&python_plugin, ("python:load"),   ("!"),	python_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:unload"), ("!"),	python_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:list"),   NULL,	python_command_list,   0, NULL);
-	query_connect(&python_plugin, "plugin-print-version", python_print_version, NULL);
+	query_connect_id(&python_plugin, PLUGIN_PRINT_VERSION, python_print_version, NULL);
 
 	return 0;
 }

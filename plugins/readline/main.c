@@ -18,6 +18,8 @@
 #include <ekg/themes.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #include <readline.h>
 #include "ui-readline.h"
 
@@ -263,23 +265,23 @@ int readline_plugin_init(int prio) {
 	list_t l;
 	int is_UI = 0;
 
-        query_emit(NULL, "ui-is-initialized", &is_UI);
+        query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
         if (is_UI)
                 return -1;
 
 	plugin_register(&readline_plugin, prio);
 
-	query_connect(&readline_plugin, ("ui-beep"), readline_beep, NULL);
-	query_connect(&readline_plugin, ("ui-is-initialized"), readline_ui_is_initialized, NULL);
-	query_connect(&readline_plugin, ("ui-window-new"), readline_ui_window_new, NULL);
-	query_connect(&readline_plugin, ("ui-window-switch"), readline_ui_window_switch, NULL);
-	query_connect(&readline_plugin, ("ui-window-kill"), readline_ui_window_kill, NULL);
-	query_connect(&readline_plugin, ("ui-window-print"), readline_ui_window_print, NULL);
-	query_connect(&readline_plugin, ("ui-window-refresh"), readline_ui_window_refresh, NULL);
-	query_connect(&readline_plugin, ("ui-window-clear"), readline_ui_window_clear, NULL);
-	query_connect(&readline_plugin, ("variable-changed"), readline_variable_changed, NULL);
-	query_connect(&readline_plugin, ("ui-loop"), ekg2_readline_loop, NULL);
+	query_connect_id(&readline_plugin, UI_BEEP, readline_beep, NULL);
+	query_connect_id(&readline_plugin, UI_IS_INITIALIZED, readline_ui_is_initialized, NULL);
+	query_connect_id(&readline_plugin, UI_WINDOW_NEW, readline_ui_window_new, NULL);
+	query_connect_id(&readline_plugin, UI_WINDOW_SWITCH, readline_ui_window_switch, NULL);
+	query_connect_id(&readline_plugin, UI_WINDOW_KILL, readline_ui_window_kill, NULL);
+	query_connect_id(&readline_plugin, UI_WINDOW_PRINT, readline_ui_window_print, NULL);
+	query_connect_id(&readline_plugin, UI_WINDOW_REFRESH, readline_ui_window_refresh, NULL);
+	query_connect_id(&readline_plugin, UI_WINDOW_CLEAR, readline_ui_window_clear, NULL);
+	query_connect_id(&readline_plugin, VARIABLE_CHANGED, readline_variable_changed, NULL);
+	query_connect_id(&readline_plugin, UI_LOOP, ekg2_readline_loop, NULL);
 
 	variable_add(&readline_plugin, ("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
 

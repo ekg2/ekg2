@@ -11,6 +11,8 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 typedef struct {
 	char *session;
 	char *target;
@@ -255,9 +257,9 @@ int rot13_plugin_init(int prio) {
 
 	rot13_setvar_default(NULL, NULL);
 
-	query_connect(&rot13_plugin, ("set-vars-default"), rot13_setvar_default, NULL);
-	query_connect(&rot13_plugin, "message-encrypt", message_parse, (void *) 1);
-	query_connect(&rot13_plugin, "message-decrypt", message_parse, (void *) 0);
+	query_connect_id(&rot13_plugin, SET_VARS_DEFAULT, rot13_setvar_default, NULL);
+	query_connect_id(&rot13_plugin, MESSAGE_ENCRYPT, message_parse, (void *) 1);
+	query_connect_id(&rot13_plugin, MESSAGE_DECRYPT, message_parse, (void *) 0);
 
 	command_add(&rot13_plugin, "rot13", "! ? ?", command_rot, 0, NULL);
 	command_add(&rot13_plugin, "rot:key", ("puUC uUC"), command_key, 0, "-a --add -m --modify -d --delete -l --list");

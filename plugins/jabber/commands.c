@@ -58,6 +58,8 @@
 #include <ekg/vars.h>
 #include <ekg/log.h>
 
+#include <ekg/queries.h>
+
 #include "jabber.h"
 #include "jabber_dcc.h"
 
@@ -553,7 +555,7 @@ static COMMAND(jabber_command_msg)
 		if (ismuc)
 			class |= EKG_NO_THEMEBIT;
 		
-		query_emit(NULL, ("protocol-message"), &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(msg);
 		xfree(me);

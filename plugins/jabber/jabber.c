@@ -62,6 +62,8 @@
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
 
+#include <ekg/queries.h>
+
 #include "jabber.h"
 #include "jabber-ssl.h"
 #include "jabber_dcc.h"
@@ -337,7 +339,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 		char *__session = xstrdup(session_uid_get(s));
 		char *__reason = xstrdup(reason);
 		
-		query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &type, NULL);
+		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &type, NULL);
 
 		xfree(__session);
 		xfree(__reason);
@@ -1105,14 +1107,14 @@ int jabber_plugin_init(int prio)
 {
         plugin_register(&jabber_plugin, prio);
 
-        query_connect(&jabber_plugin, ("protocol-validate-uid"), jabber_validate_uid, NULL);
-        query_connect(&jabber_plugin, ("plugin-print-version"), jabber_print_version, NULL);
-        query_connect(&jabber_plugin, ("session-added"), jabber_session, (void*) 1);
-        query_connect(&jabber_plugin, ("session-removed"), jabber_session, (void*) 0);
-        query_connect(&jabber_plugin, ("status-show"), jabber_status_show_handle, NULL);
-	query_connect(&jabber_plugin, ("ui-window-kill"), jabber_window_kill, NULL);
-	query_connect(&jabber_plugin, ("protocol-ignore"), jabber_protocol_ignore, NULL);
-	query_connect(&jabber_plugin, ("config-postinit"), jabber_dcc_postinit, NULL);
+	query_connect_id(&jabber_plugin, PROTOCOL_VALIDATE_UID,	jabber_validate_uid, NULL);
+	query_connect_id(&jabber_plugin, PLUGIN_PRINT_VERSION,	jabber_print_version, NULL);
+	query_connect_id(&jabber_plugin, SESSION_ADDED,		jabber_session, (void*) 1);
+	query_connect_id(&jabber_plugin, SESSION_REMOVED,	jabber_session, (void*) 0);
+	query_connect_id(&jabber_plugin, STATUS_SHOW,		jabber_status_show_handle, NULL);
+	query_connect_id(&jabber_plugin, UI_WINDOW_KILL,	jabber_window_kill, NULL);
+	query_connect_id(&jabber_plugin, PROTOCOL_IGNORE,	jabber_protocol_ignore, NULL);
+	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_dcc_postinit, NULL);
 
 	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, jabber_dcc_postinit, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);

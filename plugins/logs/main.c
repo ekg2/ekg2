@@ -47,6 +47,8 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #include <sys/stat.h>
 #ifndef NO_POSIX_SYSTEM
 #include <sys/mman.h>
@@ -489,7 +491,7 @@ static int logs_print_window(session_t *s, const char *target, const char *line,
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */
-	query_emit(ui_plugin, ("ui-window-print"), &w, &fstr);	/* let's rock */
+	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);	/* let's rock */
 
 	xfree(fline);						/* cleanup */
 
@@ -603,15 +605,16 @@ int logs_plugin_init(int prio) {
 
 	logs_setvar_default(NULL, NULL);
 
-	query_connect(&logs_plugin, ("set-vars-default"), logs_setvar_default, NULL);
-	query_connect(&logs_plugin, ("protocol-message-post"), logs_handler, NULL);
-	query_connect(&logs_plugin, ("irc-protocol-message"), logs_handler_irc, NULL);
-	query_connect(&logs_plugin, ("ui-window-new"), logs_handler_newwin, NULL);
-	query_connect(&logs_plugin, ("ui-window-print"), logs_handler_raw, NULL);
-	query_connect(&logs_plugin, ("ui-window-kill"),logs_handler_killwin, NULL);
-	query_connect(&logs_plugin, ("protocol-status"), logs_status_handler, NULL);
-	query_connect(&logs_plugin, ("config-postinit"), logs_postinit, NULL);
-	query_connect(&logs_plugin, ("session-status"), logs_sestatus_handler, NULL);
+	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
+	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);
+	query_connect_id(&logs_plugin, IRC_PROTOCOL_MESSAGE, logs_handler_irc, NULL);
+	query_connect_id(&logs_plugin, UI_WINDOW_NEW,	logs_handler_newwin, NULL);
+	query_connect_id(&logs_plugin, UI_WINDOW_PRINT,	logs_handler_raw, NULL);
+	query_connect_id(&logs_plugin, UI_WINDOW_KILL,	logs_handler_killwin, NULL);
+	query_connect_id(&logs_plugin, PROTOCOL_STATUS, logs_status_handler, NULL);
+	query_connect_id(&logs_plugin, CONFIG_POSTINIT, logs_postinit, NULL);
+	query_connect_id(&logs_plugin, SESSION_STATUS,	logs_sestatus_handler, NULL);
+
 	/* TODO: moze zmienna sesyjna ? ;> */
 	variable_add(&logs_plugin, ("away_log"), VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */

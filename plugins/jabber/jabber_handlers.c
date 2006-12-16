@@ -63,6 +63,8 @@
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
 
+#include <ekg/queries.h>
+
 #include "jabber.h"
 #include "jabber_dcc.h"
 
@@ -779,7 +781,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 						NULL);
 					char *__seq	= NULL; /* id ? */
 					/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
-					query_emit(NULL, ("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status);
+					query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status);
 					xfree(__session);
 					xfree(__rcpt);
 					xfree(__status);
@@ -792,7 +794,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 					int  state	= (!nbody && (acktype & 4) ? EKG_XSTATE_TYPING : 0);
 					int  stateo	= (!state ? EKG_XSTATE_TYPING : 0);
 
-					query_emit(NULL, "protocol-typing", &__session, &__rcpt, &state, &stateo);
+					query_emit_id(NULL, PROTOCOL_XSTATE, &__session, &__rcpt, &state, &stateo);
 					
 					xfree(__session);
 					xfree(__rcpt);
@@ -883,13 +885,13 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 				session_name(s), uid2, nick ? nick : uid2+4, text, "");
 			
 			debug("[MUC,MESSAGE] uid2:%s uuid:%s message:%s\n", uid2, nick, text);
-			query_emit(NULL, ("protocol-message"), &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 			xfree(uid2);
 			xfree(nick);
 			xfree(formatted);
 		} else {
-			query_emit(NULL, ("protocol-message"), &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
 		}
 
 		xfree(me);
@@ -2635,7 +2637,7 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			int port 	= 0;
 
 			if (!when) when = time(NULL);
-			query_emit(NULL, ("protocol-status"), &session, &uid, &status, &descr, &host, &port, &when, NULL);
+			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &host, &port, &when, NULL);
 			
 			xfree(session);
 /*			xfree(host); */
@@ -2655,7 +2657,7 @@ static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh) {
 	j->connecting = 0;
 	s->last_conn = time(NULL);
 
-	query_emit(NULL, ("protocol-connected"), &__session);
+	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
 
 	if (session_get(s, "__new_acount")) {
 		print("register", __session);

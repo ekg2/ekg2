@@ -42,6 +42,8 @@
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #ifdef HAVE_EXPAT_H
 # include <expat.h>
 #endif
@@ -669,7 +671,7 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 //			if (channel->new)	item->new = 0;
 			if (item->new)		new_items++;
 
-			query_emit(NULL, "rss-message", 
+			query_emit_id(NULL, RSS_MESSAGE, 
 				&(f->session), &(f->uid), &proto_headers, &headers, &(item->title), 
 				&(item->url),  &(item->descr), &(item->new), &modify);
 		}
@@ -982,7 +984,7 @@ static COMMAND(rss_command_connect) {
 	}
 
 	session_connected_set(session, 1);
-	query_emit(NULL, "protocol-connected", &session->uid);
+	query_emit_id(NULL, PROTOCOL_CONNECTED, &session->uid);
 	xfree(session->status);	session->status = xstrdup(EKG_STATUS_AVAIL);
 
 	return 0;

@@ -27,6 +27,8 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #include "feed.h"
 
 static int feed_theme_init();
@@ -272,11 +274,11 @@ void feed_set_statusdescr(userlist_t *u, char *status, char *descr) {
 int feed_plugin_init(int prio) {
 	plugin_register(&feed_plugin, prio);
 			/* common */
-	query_connect(&feed_plugin, "session-added", feed_session, (void*) 1);
-	query_connect(&feed_plugin, "session-removed", feed_session, (void*) 0);
-        query_connect(&feed_plugin, "protocol-validate-uid", feed_validate_uid, NULL);
+	query_connect_id(&feed_plugin, SESSION_ADDED, feed_session, (void*) 1);
+	query_connect_id(&feed_plugin, SESSION_REMOVED, feed_session, (void*) 0);
+	query_connect_id(&feed_plugin, PROTOCOL_VALIDATE_UID, feed_validate_uid, NULL);
 			/* common - rss, nntp */
-	query_connect(&feed_plugin, "rss-message", rss_message, NULL);
+	query_connect_id(&feed_plugin, RSS_MESSAGE, rss_message, NULL);
 			/* common - vars */
 	plugin_var_add(&feed_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&feed_plugin, "alias", VAR_STR, NULL, 0, NULL);
