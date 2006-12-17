@@ -71,6 +71,8 @@ typedef struct {
 typedef struct {
 	char *cookie;
 	int collector_active;
+	int fd, httpver;
+	int waiting;
 	string_t collected;
 } client_t;
 
@@ -241,6 +243,38 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 	return string_free(asc, 0);
 }
 
+#define httprc_write(watch, args...) 	string_append_format(watch->buf, args)
+#define httprc_write2(watch, str)	string_append_n(watch->buf, str, -1)
+#define httprc_write3(watch, str, len)	string_append_raw(watch->buf, str, len)
+
+#define HTTP_HEADER(ver, scode, eheaders) \
+	httprc_write(send_watch,				\
+		"%s %d %s\r\n"						/* statusline: $PROTOCOL $SCODE $RESPONSE */\
+		"Server: ekg2-CVS-httprc_xajax plugin\r\n"		/* server info */	\
+		"%s\r\n",							/* headers */		\
+		ver == 0 ? "HTTP/1.0" : ver == 1 ? "HTTP/1.1" : "",	/* PROTOCOL */		\
+		scode, 							/* Status code */	\
+			/* some typical responses */		\
+			scode == 100 ? "Continue" :		\
+			scode == 101 ? "Switching Protocols" :	\
+			scode == 200 ? "OK" :			\
+			scode == 302 ? "Found" :		\
+			"",					\
+		eheaders ? eheaders : "\r\n"			\
+		); clen = (send_watch->buf ? send_watch->buf->len : 0) - clen;
+
+
+#define WATCH_FIND(w, fd) \
+	w = watch_find(&httprc_xajax_plugin, fd, WATCH_WRITE);\
+	if (!w) w = watch_add_line(&httprc_xajax_plugin, fd, WATCH_WRITE_LINE, http_watch_send, NULL); \
+
+WATCHER_LINE(http_watch_send)  {
+	if (type) return 0;
+	/* XXX, sprawdzic czy user chce gzipa. jesli tak wysylamy gzipniete. */
+	/* XXX, sprawdzic czy user leci po https */
+	/* XXX, sprawdzic, czy user leci w kulki! */
+	return write(fd, watch, xstrlen(watch));
+}
 
 QUERY(httprc_xajax_def_action)
 {
@@ -284,7 +318,6 @@ QUERY(httprc_xajax_def_action)
 							w->id);
 					xfree(fstringed);
 				}
-				FILE *fp=fopen("dupa", "a"); fprintf(fp, "%s:%s\n", p->cookie, line->str); fflush(fp); fclose(fp);
 				/* it'd be easier if we'd got iface for creating xml files... */
 
 				string_append(p->collected, "<cmd n=\"ap\" t=\"LOG\" p=\"innerHTML\"><![CDATA[");
@@ -297,6 +330,7 @@ QUERY(httprc_xajax_def_action)
 				string_append(p->collected, "]]></cmd>");
 				string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
 				string_append(p->collected, tmp);
+				string_append(p->collected, "eventsinbackground();\n");
 				string_append(p->collected, "]]></cmd>");
 			} else {
 				nobr = 1;
@@ -318,6 +352,7 @@ QUERY(httprc_xajax_def_action)
 				string_append(p->collected, tmp);
 				/* add call to update_windows_list [in ekg.js] */
 				string_append(p->collected, "update_windows_list();\n");
+				string_append(p->collected, "eventsinbackground();\n");
 				string_append(p->collected, "]]></cmd>");
 
 
@@ -330,6 +365,10 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, w->target?w->target:"empty_target");
 			string_append(p->collected, " = sess:");
 			string_append(p->collected, w->session?(w->session->uid?w->session->uid:"empty_sessionuid"):"empty_session");
+			string_append(p->collected, "]]></cmd>");
+
+			string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
+			string_append(p->collected, "eventsinbackground();\n");
 			string_append(p->collected, "]]></cmd>");
 		} else if (!xstrcmp((char *)data, "ui-window-kill")) {
 			if (!gw) {
@@ -360,6 +399,9 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, w->session?(w->session->uid?w->session->uid:"empty_sessionuid"):"empty_session");
 			string_append(p->collected, "]]></cmd>");
 
+			string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
+			string_append(p->collected, "eventsinbackground();\n");
+			string_append(p->collected, "]]></cmd>");
 		} else if (!xstrcmp((char *)data, "variable-changed")) {
 			if (!gname) {
 				name = *(va_arg(ap, char**));
@@ -370,10 +412,18 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, " = ");
 			string_append(p->collected, name);
 			string_append(p->collected, "]]></cmd>");
+
+			string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
+			string_append(p->collected, "eventsinbackground();\n");
+			string_append(p->collected, "]]></cmd>");
 		} else {
 			debug("oth: %08X\n", data);
 			string_append(p->collected, "<cmd n=\"ap\" t=\"LOG\" p=\"innerHTML\"><![CDATA[");
 			string_append(p->collected, (char *)data);
+			string_append(p->collected, "]]></cmd>");
+
+			string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
+			string_append(p->collected, "eventsinbackground();\n");
 			string_append(p->collected, "]]></cmd>");
 		}
 		if (!nobr)
@@ -381,6 +431,34 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, "<cmd n=\"ce\" t=\"LOG\" p=\"l");
 			string_append(p->collected, itoa(xxxid++));
 			string_append(p->collected, "\"><![CDATA[br]]></cmd>");
+		}
+		if (xstrlen(p->collected->str))
+		{
+			watch_t *send_watch = NULL;
+			int clen;
+
+			WATCH_FIND(send_watch, p->fd);
+
+			/* VERY VERY BAAAAD */
+			if (!send_watch) {
+				debug_error("[%s:%d] NOT SEND_WATCH @ fd: %d!\n", __FILE__, __LINE__, p->fd);
+				return -1;
+			}
+			if (send_watch->buf)
+				clen = send_watch->buf->len;
+			p->waiting = 0;
+			HTTP_HEADER(p->httpver, 200, "Content-Type: text/html\r\n");
+			httprc_write(send_watch, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+				"<xjx>%s</xjx>",
+				config_console_charset, p->collected->str);
+			string_free(p->collected, 1);
+			p->collected = string_init("");
+			if (send_watch->buf) {
+				char *tmp = saprintf("Content-length: %d\r\n", send_watch->buf->len - clen);
+				string_insert(send_watch->buf, clen - 2, tmp);
+				xfree(tmp);
+			}
+			watch_handle_write(send_watch);
 		}
 	}
 	xfree(tmp);
@@ -403,18 +481,6 @@ const char *http_timestamp(time_t t) {
 	return buf[i++];
 }
 
-#define WATCH_FIND(w, fd) \
-	w = watch_find(&httprc_xajax_plugin, fd, WATCH_WRITE);\
-	if (!w) w = watch_add_line(&httprc_xajax_plugin, fd, WATCH_WRITE_LINE, http_watch_send, NULL); \
-
-
-WATCHER_LINE(http_watch_send)  {
-	if (type) return 0;
-	/* XXX, sprawdzic czy user chce gzipa. jesli tak wysylamy gzipniete. */
-	/* XXX, sprawdzic czy user leci po https */
-	/* XXX, sprawdzic, czy user leci w kulki! */
-	return write(fd, watch, xstrlen(watch));
-}
 
 typedef enum {
 	HTTP_METHOD_UNKNOWN = -1,
@@ -443,6 +509,7 @@ WATCHER(http_watch_read) {
 	int clen = 0;
 
 	if (type) {
+		debug(">>>>>>>>>>>>>>>>>>\n closing http fd\n");
 		close(fd);
 		return 0;
 	}
@@ -527,6 +594,7 @@ WATCHER(http_watch_read) {
 			client->collector_active = 1;
 			client->collected = string_init("");
 			client->cookie = generate_cookie();
+			client->httpver = ver;
 			list_add(&clients, client, 0);
 			debug("Adding client %s!\n", client->cookie);
 		}
@@ -549,26 +617,6 @@ WATCHER(http_watch_read) {
 
 	if (send_watch->buf)
 		clen = send_watch->buf->len;
-
-#define httprc_write(watch, args...) 	string_append_format(watch->buf, args)
-#define httprc_write2(watch, str)	string_append_n(watch->buf, str, -1)
-#define httprc_write3(watch, str, len)	string_append_raw(watch->buf, str, len)
-
-#define HTTP_HEADER(ver, scode, eheaders) \
-	httprc_write(send_watch,				\
-		"%s %d %s\r\n"						/* statusline: $PROTOCOL $SCODE $RESPONSE */\
-		"Server: ekg2-CVS-httprc_xajax plugin\r\n"		/* server info */	\
-		"%s\r\n",							/* headers */		\
-		ver == 0 ? "HTTP/1.0" : ver == 1 ? "HTTP/1.1" : "",	/* PROTOCOL */		\
-		scode, 							/* Status code */	\
-			/* some typical responses */		\
-			scode == 100 ? "Continue" :		\
-			scode == 101 ? "Switching Protocols" :	\
-			scode == 200 ? "OK" :			\
-			scode == 302 ? "Found" :		\
-			"",					\
-		eheaders ? eheaders : "\r\n"			\
-		); clen = (send_watch->buf ? send_watch->buf->len : 0) - clen;
 
 	if (method == HTTP_METHOD_GET) {
 		string_t htheader = string_init("");
@@ -700,7 +748,6 @@ WATCHER(http_watch_read) {
 					"\t\talert('Error: the xajax Javascript file could not be included.');\n\t}\n}, 6000);\n"
 					"function eventsinbackground() {\n"
 					"\txajax_events();"
-					"\twindow.setTimeout('eventsinbackground()', 3000);\n"
 					"}\n"
 					"\t\t</script>\n"
 					"\t</head>\n"
@@ -751,18 +798,26 @@ WATCHER(http_watch_read) {
 					"update_window_content(%d);\n"
 					"document.onload=update_windows_list();\n"
 					"document.onload=update_window_content(%d);\n"
-					"window.setTimeout('eventsinbackground()', 3000);\n"
+					"document.onload=eventsinbackground();\n"
 					"</script>\n"
 					"</html>", w->id, w->id);
 		}
 	} else if (method == HTTP_METHOD_POST && !xstrcmp(req, "/xajax/")) {
-		HTTP_HEADER(ver, 200, "Content-Type: text/html\r\n");
-		httprc_write(send_watch, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
-			"<xjx>%s</xjx>",
-			config_console_charset, client->collected->str);
-//		FILE *fp=fopen("dupa", "a"); fprintf(fp, "sending data:%s\n", client->collected->str); fflush(fp); fclose(fp);
-		string_free(client->collected, 1);
-		client->collected = string_init("");
+		//if (xstrlen(client->collected->str))
+		//{
+			/*
+			HTTP_HEADER(ver, 200, "Content-Type: text/html\r\n");
+			httprc_write(send_watch, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+				"<xjx>%s</xjx>",
+				config_console_charset, client->collected->str);
+			string_free(client->collected, 1);
+			client->collected = string_init("");
+			*/
+			client->fd = fd;
+			client->waiting = 1;
+			debug_error("turning on waiting: on fd: %d by cookie: %s\n", fd, client->cookie);
+		//}
+		return 0;
 	} else {
 		HTTP_HEADER(ver, 200, "Content-Type: text/html\r\n");
 	}
@@ -775,7 +830,7 @@ WATCHER(http_watch_read) {
 	}
 
 	watch_handle_write(send_watch);
-	return -1;
+	return 0;
 }
 
 WATCHER(http_watch_accept) {
@@ -792,7 +847,7 @@ WATCHER(http_watch_accept) {
 		debug("[httprc-xajax] accept() failed: %s\n", strerror(errno));
 		return -1;
 	}
-	debug("[httprc-xajax] accept() succ\n");
+	debug("[httprc-xajax] accept() succ: %d\n",cfd);
 	watch_add_line(&httprc_xajax_plugin, cfd, WATCH_READ, http_watch_read, NULL);
 	return 0;
 }
@@ -806,6 +861,12 @@ int httprc_xajax_plugin_init(int prio) {
 	sin.sin_port = htons(atoi(HTTPRCXAJAX_DEFPORT));
 	sin.sin_addr.s_addr = INADDR_ANY;
 
+	if (!config_console_charset || (xstrcmp(config_console_charset, "ISO-8859-2") && xstrcmp(config_console_charset, "UTF-8")))
+	{
+		debug("This plugin is under development and requires console_charset to be set to one of the following:\n");
+		debug("ISO-8859-2, UTF-8. Use /set console_charset to change current value: %s\n", config_console_charset);
+		return -1;
+	}
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		debug("[httprc-xajax] socket() failed: %s\n", strerror(errno));
 		return -1;
