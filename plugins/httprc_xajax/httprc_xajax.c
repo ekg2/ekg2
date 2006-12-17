@@ -521,7 +521,13 @@ WATCHER(http_watch_read) {
 		return 0;
 	}
 
-	len = read(fd, &rbuf[0], sizeof(rbuf)-1);
+	if ((len = read(fd, &rbuf[0], sizeof(rbuf)-1)) < 1) {
+		if (len == -1) {
+			if (errno == EAGAIN || errno == EINTR) return 0;
+			debug_error("HTTPRC: read() errno = %d %s\n", errno, strerror(errno));
+		}
+		return -1;
+	}
 	rbuf[len] = 0;
 
 	buf = &rbuf[0];
