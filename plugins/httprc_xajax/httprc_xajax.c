@@ -233,9 +233,9 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 		lastbeg = i;
 		last = attr[i];
 	}
-	if (!wcslen(str))
+	if (!len)
 	{
-		ADDJSf("%s.appendChild(document.createTextNode('\u00a0'));\n", parent);
+		ADDJSf("%s.appendChild(document.createTextNode('\\u00a0'));\n", parent);
 	}
 
 	return string_free(asc, 0);
@@ -631,7 +631,7 @@ WATCHER(http_watch_read) {
 					"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 					"<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 					"\t<head>\n"
-					"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"	/* GiM, XXX config_console_charset ? */
+					"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\" />\n"
 					"\t\t<title>EKG2 :: Remote Control</title>\n"
 					"\t\t<link rel=\"stylesheet\" href=\"ekg2.css\" type=\"text/css\" />\n"
 					"\t\t<script type=\"text/javascript\">\n"
@@ -647,7 +647,7 @@ WATCHER(http_watch_read) {
 					""
 					"</script>\n"
 					"\t\t<script type=\"text/javascript\" src=\"xajax.js\"> </script>\n"
-					"\t\t<script type=\"text/javascript\">\n", config_console_charset);
+					"\t\t<script type=\"text/javascript\">\n", config_console_charset, config_console_charset);
 
 			
 			htheader = string_init("gwins = new Array();\n");
