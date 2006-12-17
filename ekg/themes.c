@@ -1733,7 +1733,7 @@ void theme_init()
 	format_add("plugin_already_loaded", _("%! Plugin %T%1%n already loaded%n.\n"), 1);
 	format_add("plugin_doesnt_exist", _("%! Plugin %T%1%n can not be found%n\n"), 1);
 	format_add("plugin_incorrect", _("%! Plugin %T%1%n is not correct EKG2 plugin%n\n"), 1);
-	format_add("plugin_not_initialized", _("%! Plugin %T%1%n not initialized correctly%n\n"), 1);
+	format_add("plugin_not_initialized", _("%! Plugin %T%1%n not initialized correctly, check debug window%n\n"), 1);
 	format_add("plugin_unload_ui", _("%! Plugin %T%1%n is an UI plugin and can't be unloaded%n\n"), 1);
 	format_add("plugin_loaded", _("%> Plugin %T%1%n loaded%n\n"), 1);
 	format_add("plugin_unloaded", _("%> Plugin %T%1%n unloaded%n\n"), 1);
