@@ -432,7 +432,7 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, itoa(xxxid++));
 			string_append(p->collected, "\"><![CDATA[br]]></cmd>");
 		}
-		if (xstrlen(p->collected->str))
+		if (p->fd != -1 && p->collected->len)
 		{
 			watch_t *send_watch = NULL;
 			int clen;
@@ -509,6 +509,13 @@ WATCHER(http_watch_read) {
 	int clen = 0;
 
 	if (type) {
+		list_t l;
+		for (l = clients; l; l = l->next) {
+			client_t *c = l->data;
+
+			if (c->fd == fd) c->fd = -1;
+		}
+
 		debug(">>>>>>>>>>>>>>>>>>\n closing http fd\n");
 		close(fd);
 		return 0;
@@ -595,6 +602,7 @@ WATCHER(http_watch_read) {
 			client->collected = string_init("");
 			client->cookie = generate_cookie();
 			client->httpver = ver;
+			client->fd	= fd;		/* XXX -1 ? */
 			list_add(&clients, client, 0);
 			debug("Adding client %s!\n", client->cookie);
 		}
