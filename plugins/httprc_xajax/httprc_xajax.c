@@ -432,7 +432,7 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, itoa(xxxid++));
 			string_append(p->collected, "\"><![CDATA[br]]></cmd>");
 		}
-		if (p->fd != -1 && p->collected->len)
+		if (p->fd != -1 && p->collected->len && p->waiting)
 		{
 			watch_t *send_watch = NULL;
 			int clen;
