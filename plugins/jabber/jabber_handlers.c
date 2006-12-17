@@ -815,6 +815,18 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 		xfree(uid);
 		return;
 	} /* <error> */
+
+	if (j->istlen) {	/* disable typing notify, tlen protocol doesn't send info about it (?) XXX */
+		char *session 	= xstrdup(session_uid_get(s));
+		char *rcpt	= xstrdup(uid);
+		int state 	= 0;
+		int stateo 	= EKG_XSTATE_TYPING;
+
+		query_emit_id(NULL, PROTOCOL_XSTATE, &session, &rcpt, &state, &stateo);
+
+		xfree(session);
+		xfree(rcpt);
+	}
 	
 	body = string_init("");
 
