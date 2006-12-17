@@ -2038,6 +2038,7 @@ void ncurses_redraw_input(unsigned int ch) {
  */
 WATCHER(ncurses_watch_stdin)
 {
+	static int lock = 0;
 	struct binding *b = NULL;
 	int tmp;
 	unsigned int ch;
@@ -2191,7 +2192,11 @@ then:
 	if (!ncurses_redraw_input_already_exec || (b && b->function == ncurses_binding_accept_line)) 
 		ncurses_redraw_input(ch);
 loop:
-	while ((ncurses_watch_stdin(type, fd, watch, NULL)) == 1) ;		/* execute handler untill all data from fd 0 will be readed */
+	if (!lock) {
+		lock = 1;
+		while ((ncurses_watch_stdin(type, fd, watch, NULL)) == 1) ;		/* execute handler untill all data from fd 0 will be readed */
+		lock = 0;
+	}
 
 	return 1;
 }
