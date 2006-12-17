@@ -167,6 +167,7 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 #define FORE 		(att & FSTR_FOREMASK)
 #define BACK 		((att & FSTR_BACKMASK)>>3)
 #define ADDJS(x) 	string_append(asc, x)
+#define ADDJSf(x...) 	string_append_format(asc, x)
 
 	lastbeg = 0;
 	last = attr[0];
@@ -198,11 +199,7 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 			normal = str+lastbeg;
 		if (ISONLYNORMAL)
 		{
-			ADDJS(parent);
-			ADDJS(".appendChild(document.createTextNode('");
-			tmp = escape_single_quote(normal, inuni);
-			ADDJS(normal);
-			ADDJS("'));\n");
+			ADDJSf("%s.appendChild(document.createTextNode('%s'));\n",parent,(tmp = escape_single_quote(normal,inuni)));
 		} else {
 			if (ISBOLD || ISUNDERLINE || ISBLINK)
 				ADDJS("em = document.createElement('em'); em.setAttribute('class', '");
@@ -215,23 +212,14 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 			ADDJS("sp = document.createElement('span');");
 			
 			if (!ISNORMAL)
-			{
-				tmp = saprintf("sp.setAttribute('class', '%s');", colortbl[FORE]);
-				ADDJS(tmp);
-				xfree(tmp);
-			}
-			ADDJS("sp.appendChild(document.createTextNode('");
-			tmp = escape_single_quote(normal, inuni);
-			ADDJS(normal);
-			xfree(tmp);
-			ADDJS("'));");
+				ADDJSf("sp.setAttribute('class', '%s');", colortbl[FORE]);
+			ADDJSf("sp.appendChild(document.createTextNode('%s'));\n",(tmp = escape_single_quote(normal,inuni)));
 			if (ISBOLD)
 			{
 				ADDJS("em.appendChild(sp);");
-				tmp = saprintf("%s.appendChild(em);", parent);
+				ADDJSf("%s.appendChild(em);", parent);
 			} else 
-				tmp = saprintf("%s.appendChild(sp);", parent);
-			ADDJS(tmp);
+				ADDJSf("%s.appendChild(sp);", parent);
 		}
 		if (normal != str+lastbeg)
 			xfree(normal);
@@ -247,8 +235,7 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 	}
 	if (!wcslen(str))
 	{
-		tmp = saprintf("%s.appendChild(document.createTextNode('\u00a0'));\n", parent);
-		ADDJS(tmp);
+		ADDJSf("%s.appendChild(document.createTextNode('\u00a0'));\n", parent);
 	}
 
 	return string_free(asc, 0);
