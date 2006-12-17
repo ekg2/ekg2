@@ -133,6 +133,7 @@ typedef struct {
 
 extern plugin_t jabber_plugin;
 extern char *jabber_default_search_server;
+extern int config_jabber_beep_mail;
 
 void jabber_register_commands(void);
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);

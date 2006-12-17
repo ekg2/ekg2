@@ -78,6 +78,7 @@ static time_t jabber_try_xdelay(const char *stamp);
 static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh);
 int jabber_display_server_features = 1;
 
+static void newmail_common(session_t *s); 
 #ifdef JABBER_HAVE_SSL
 
 static char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
@@ -223,6 +224,92 @@ gnutls_ok:
 	return -1;
 }
 #endif
+
+static void tlen_handle(xmlnode_t *n, session_t *s) {
+	if (!xstrcmp(n->name, "m")) {
+		char *type = jabber_attr(n->atts, "tp");
+		char *from = jabber_attr(n->atts, "f");
+		char *typeadd = jabber_attr(n->atts, "type");
+
+		char *uid = saprintf("tlen:%s", from);
+
+		if (!type || !from || (typeadd && !xstrcmp(typeadd, "error"))) {
+			debug_error("tlen_handle() %d %s/%s/%s", __LINE__, type, from, typeadd);
+
+		} else if (!xstrcmp(type, "t") || !xstrcmp(type, "u")) {
+			/* typing notification */
+			char *session	= xstrdup(session_uid_get(s));
+			int stateo	= !xstrcmp(type, "u") ? EKG_XSTATE_TYPING : 0;
+			int state	= stateo ? EKG_XSTATE_TYPING : 0;
+			
+			query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid, &state, &stateo);
+			
+			xfree(session);
+
+		} else if (!xstrcmp(type, "a")) {	/* funny thing called alert */
+			print_window(uid, s, 0, "tlen_alert", session_name(s), format_user(s, uid));
+
+			if (config_sound_notify_file)
+				play_sound(config_sound_notify_file);
+			else if (config_beep && config_beep_notify)
+				query_emit_id(NULL, UI_BEEP, NULL);
+		}
+		
+		xfree(uid);
+	} else if (!xstrcmp(n->name, "n")) {	/* new mail */
+		char *from = tlen_decode(jabber_attr(n->atts, "f"));
+		char *subj = tlen_decode(jabber_attr(n->atts, "s"));
+		
+		print("tlen_mail", session_name(s), from, subj);
+		newmail_common(s);
+		
+		xfree(from);
+		xfree(subj);
+
+	} else if (!xstrcmp(n->name, "w")) {	/* web message */
+		char *from = jabber_attr(n->atts, "f");
+		char *mail = jabber_attr(n->atts, "e");
+		char *content = n->data;
+		string_t body = string_init("");
+		
+		char *me	= xstrdup(session_uid_get(s));
+		char *uid	= xstrdup("webmsg.tlen.pl");
+		int class 	= EKG_MSGCLASS_MESSAGE;
+		int ekgbeep 	= EKG_TRY_BEEP;
+		int secure	= 0;
+		char **rcpts 	= NULL;
+		char *seq 	= NULL;
+		uint32_t *format= NULL;
+		time_t sent	= time(NULL);
+		char *text;
+		
+		if (from || mail) {
+			string_append(body, "From:");
+			if (from) {
+				string_append(body, " ");
+				string_append(body, from);
+			}
+			if (mail) {
+				string_append(body, " <");
+				string_append(body, mail);
+				string_append(body, ">");
+			}
+			string_append(body, "\n");
+		}
+
+		if (body->len) string_append(body, "\n");
+
+		string_append(body, content);
+		text = tlen_decode(body->str);
+		string_free(body, 1);
+		
+		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		
+		xfree(me);
+		xfree(uid);
+		xfree(text);
+	} else debug_error("[tlen] what's that: %s ?\n", n->name);
+}
 
 void jabber_handle(void *data, xmlnode_t *n)
 {
@@ -683,9 +770,9 @@ void jabber_handle(void *data, xmlnode_t *n)
 			xfree(cnonce);
 		}
 		array_free(arr);
-	} else {
-		debug_error("[jabber] what's that: %s ?\n", n->name);
-	}
+	} else if (j->istlen) {
+		tlen_handle(n, s);
+	} else	debug_error("[jabber] what's that: %s ?\n", n->name);
 }
 
 static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
@@ -728,7 +815,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 		xfree(uid);
 		return;
 	} /* <error> */
-
+	
 	body = string_init("");
 
 	for (xitem = n->children; xitem; xitem = xitem->next) {
@@ -1218,6 +1305,8 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				xfree(subject);
 			} else debug_error("[jabber, iq] google:mail:notify wtf: %s\n", __(child->name));
 		}
+		if (mailcount && atoi(mailcount)) /* we don't want to beep or send events if no new mail is available */
+			newmail_common(s);
 	}
 #endif
 
@@ -2690,6 +2779,15 @@ static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh) {
 	}
 #endif
 	xfree(__session);
+}
+
+static void newmail_common(session_t *s) { /* maybe inline? */
+	if (config_sound_mail_file) 
+		play_sound(config_sound_mail_file);
+	else if (config_jabber_beep_mail)
+		query_emit_id(NULL, UI_BEEP, NULL);
+	/* XXX, we NEED to connect to MAIL_COUNT && display info about mail like mail plugin do. */
+	/* XXX, emit events */
 }
 
 static time_t jabber_try_xdelay(const char *stamp) {

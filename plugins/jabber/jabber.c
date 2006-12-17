@@ -73,6 +73,7 @@ SSL_CTX *jabberSslCtx;
 #endif
 
 char *jabber_default_search_server = NULL;
+int config_jabber_beep_mail = 0;
 
 static int jabber_theme_init();
 static WATCHER(jabber_handle_connect_ssl);
@@ -1098,6 +1099,8 @@ static int jabber_theme_init() {
 	format_add("gmail_count", 	  _("%> (%1) You have %T%2%n new thread(s) on your gmail account."), 1);	/* sesja, mail count */
 	format_add("gmail_mail", 	  "%>    %|%T%2%n - %g%3%n\n", 1);						/* sesja, from, topic, [UNUSED messages count in thread (?1)] */
 	format_add("gmail_thread",	  "%>    %|%T%2 [%4]%n - %g%3%n\n", 1);						/* sesja, from, topic, messages count in thread */
+	format_add("tlen_mail",		_("%> (%1) New mail from %T%2%n, with subject: %G%3%n"), 1); 			/* sesja, from, topic */
+	format_add("tlen_alert", 	_("%> (%1) %T%2%n sent us an alert ...%n"), 1); 				/* sesja, from */
 
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
@@ -1116,6 +1119,8 @@ int jabber_plugin_init(int prio)
 	query_connect_id(&jabber_plugin, PROTOCOL_IGNORE,	jabber_protocol_ignore, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_dcc_postinit, NULL);
 
+/* XXX, set-vars-default */
+	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, jabber_dcc_postinit, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
@@ -1135,7 +1140,6 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "display_server_features", VAR_INT, "1", 0, NULL);
         plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
-/*	plugin_var_add(&jabber_plugin, "newmail_exec", VAR_STR, 0, 0, NULL); */
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
         plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "ping-server", VAR_BOOL, "0", 0, NULL);

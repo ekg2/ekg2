@@ -2186,6 +2186,18 @@ back:
 	return -1;
 }
 
+COMMAND(tlen_command_alert)
+{
+	jabber_private_t *j = jabber_private(session);
+	const char *uid;
+
+	if (!(uid = jid_target2uid(session, target, quiet)))
+		return -1;
+
+	watch_write(j->send_watch, "<m to='%s' tp='a'/>", uid+5);	/* sound alert */
+	return 0;
+}
+
 void jabber_register_commands()
 {
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
@@ -2254,6 +2266,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("tlen:"), "?",		jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:_autoaway"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:_autoback"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("tlen:alert"), "!u",	tlen_command_alert,		JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("tlen:auth"), "!p !uU", 	jabber_command_auth,		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS,
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, ("tlen:away"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
