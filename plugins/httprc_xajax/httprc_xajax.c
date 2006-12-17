@@ -639,12 +639,12 @@ WATCHER(http_watch_read) {
 			string_free(htheader, 1);
 
 			/* naglowek HTML */
-			httprc_write2(send_watch,	
+			httprc_write(send_watch,
 					"<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 					"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 					"<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 					"\t<head>\n"
-					"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+					"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"	/* GiM, XXX config_console_charset ? */
 					"\t\t<title>EKG2 :: Remote Control</title>\n"
 					"\t\t<link rel=\"stylesheet\" href=\"ekg2.css\" type=\"text/css\" />\n"
 					"\t\t<script type=\"text/javascript\">\n"
@@ -660,7 +660,7 @@ WATCHER(http_watch_read) {
 					""
 					"</script>\n"
 					"\t\t<script type=\"text/javascript\" src=\"xajax.js\"> </script>\n"
-					"\t\t<script type=\"text/javascript\">\n");
+					"\t\t<script type=\"text/javascript\">\n", config_console_charset);
 
 			
 			htheader = string_init("gwins = new Array();\n");
@@ -672,13 +672,12 @@ WATCHER(http_watch_read) {
 				window_t *w = l->data;
 				char *tempdata;
 				if (w == window_current)
-					tempdata = saprintf("gwins[%d] = new Array(2, \"%s\", new Array());\n ", w->id, window_target(w));
+					string_append_format(htheader, "gwins[%d] = new Array(2, \"%s\", new Array());\n ", w->id, window_target(w));
 				else if (w->act)
-					tempdata = saprintf("gwins[%d] = new Array(1, \"%s\", new Array());\n ", w->id, window_target(w));
+					string_append_format(htheader, "gwins[%d] = new Array(1, \"%s\", new Array());\n ", w->id, window_target(w));
 				else
-					tempdata = saprintf("gwins[%d] = new Array(0, \"%s\", new Array());\n ", w->id, window_target(w));
-				string_append(htheader, tempdata);
-				xfree(tempdata);
+					string_append_format(htheader, "gwins[%d] = new Array(0, \"%s\", new Array());\n ", w->id, window_target(w));
+
 				/* we don't want debug window... */
 				if (w->id == 0)
 					continue;
@@ -702,7 +701,7 @@ WATCHER(http_watch_read) {
 				}
 				xfree(temp);
 			}
-			httprc_write(send_watch, "%s", htheader->str);
+			httprc_write2(send_watch, htheader->str);
 			string_free(htheader, 1);
 
 			httprc_write(send_watch,	
@@ -720,8 +719,7 @@ WATCHER(http_watch_read) {
 					"\t</head>\n"
 					"\t<body>\n"
 					"\t\t<div id=\"left\">\n"
-					"\t\t\t<ul id=\"windows_list\">\n"
-							,config_console_charset);
+					"\t\t\t<ul id=\"windows_list\">\n");
 
 			httprc_write2(send_watch, "\t\t\t</ul>\n"
 					"\t\t\t<ul id=\"window_content\">\n");
