@@ -434,7 +434,7 @@ fstring_t *fstring_new(const char *str) {
 #define NPAR 16 		/* ECMA-48 CSI have got max 16 params (NPAR) defined in <linux/console_struct.h> */
         fstring_t *res;
 	char *tmpstr;
-        short attr = 128;
+        short attr = FSTR_NORMAL;
         int i, j, len = 0, isbold = 0;
 
 	for (i = 0; str[i]; i++) {
@@ -508,7 +508,7 @@ fstring_t *fstring_new(const char *str) {
 					unsigned short cur = par[k];
 					switch (cur) {
 						case 0:				/* RESET */
-							attr = 128;
+							attr = FSTR_NORMAL;
 							isbold = 0;
 							if (parlen[k] >= 2)
 								res->prompt_len = j;
@@ -518,28 +518,28 @@ fstring_t *fstring_new(const char *str) {
 							break;
 						case 1: 			/* BOLD */
 							if (k == npar && !isbold)		/* if (*p == ('m') && !isbold) */
-								attr ^= 64;
+								attr ^= FSTR_BOLD;
 							else {					/* if (*p == (';')) */
-								attr |= 64;
+								attr |= FSTR_BOLD;
 								isbold = 1;
 							}
 							break;
 						case 2:
-							attr &= (56);
+							attr &= (FSTR_BACKMASK);
 							isbold = 0;
 							break;
-						case 4:	attr ^= 512;	break;	/* UNDERLINE */
-						case 5: attr ^= 256;	break;	/* BLINK */
-						case 7: attr ^= 1024;	break;	/* REVERSE */
+						case 4:	attr ^= FSTR_UNDERLINE;	break;	/* UNDERLINE */
+						case 5: attr ^= FSTR_BLINK;	break;	/* BLINK */
+						case 7: attr ^= FSTR_REVERSE;	break;	/* REVERSE */
 					}
 
 					if (cur >= 30 && cur <= 37) {
-						attr &= ~(128+1+2+4);
+						attr &= ~(FSTR_NORMAL+FSTR_FOREMASK);
 						attr |= (cur - 30);
 					}
 
 					if (cur >= 40 && cur <= 47) {
-						attr &= ~(128+8+16+32);
+						attr &= ~(FSTR_NORMAL+FSTR_BACKMASK);
 						attr |= (cur - 40) << 3;
 					}
 				}

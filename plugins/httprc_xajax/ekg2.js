@@ -88,20 +88,7 @@ function window_content_add_line(win)
 {
 	var el = xajax.$('window_content');
 	if (el)
-	{
-		ch = document.createElement('li');
-		ch.setAttribute('id', 'lin'+i);
-		i=gwins[win][2].length-1;
-		if (gwins[win][2][i].length > 0)
-			ch.innerHTML=gwins[win][2][i];
-		else
-			ch.innerHTML="&nbsp;";
-		if (i % 2)
-			ch.className="info1";
-		else
-			ch.className="info2";
-		el.appendChild(ch);
-	}
+		el.appendChild(gwins[win][2][gwins[win][2].length-1]);
 }
 
 function update_window_content(win)
@@ -113,19 +100,7 @@ function update_window_content(win)
 		for (i=0; i<gwins[win][2].length; i++)
 		{
 			if (gwins[win][2][i] != undefined)
-			{
-				ch = document.createElement('li');
-				ch.setAttribute('id', 'lin'+i);
-				if (gwins[win][2][i].length > 0)
-					ch.innerHTML=gwins[win][2][i];
-				else
-					ch.innerHTML="&nbsp;";
-				if (i % 2)
-					ch.className="info1";
-				else
-					ch.className="info2";
-				el.appendChild(ch);
-			}
+				el.appendChild(gwins[win][2][i]);
 		}
 	}
 

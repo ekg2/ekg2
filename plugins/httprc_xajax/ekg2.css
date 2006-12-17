@@ -62,56 +62,34 @@ a {
 # color 14 rgb:00/ff/ff
 */
 
-strong {
-	color:			#ffffff;
+em { font-style:normal; }
+em.bold { font-weight: bold; }
+em.underline { text-decoration:underline; }
+em.blink { border: 1px solid white; }
+	
+span.grey {
+	color:			#aaa;
 }
-
-strong.blue { 
-	color:			#0000cc;
-} 
-
-strong.black {
-	color:			#000000;
-}
-
-strong.red {
-	color:			#cc0000;
-}
-
-strong.grey {
-	color:			#aaaaaa;
-}
-
-strong.turquoise {
-	color:			#00cccc;
-}
-
-strong.yellow {
-	color:			#cccc00;
-}
-
-strong.green {
-	color:			#00cc00;
-}
-
-span.white {
-	color:			#ffffff;
-}
-
-span.green {
-	color:			#00ff00;
-}
-
 span.red {
-	color:			#ff0000;
+	color:			#c00;
 }
-
+span.green {
+	color:			#0c0;
+}
+span.yellow {
+	color:			#cc0;
+}
+span.blue { 
+	color:			#008;
+} 
+span.purple {
+	color: 			#c0c;
+}
 span.turquoise {
-	color:			#00ffff;
+	color:			#0ff;
 }
-
-span.blue {
-	color:			#0000ff;
+span.white {
+	color:			#fff;
 }
 
 

@@ -49,6 +49,7 @@
 #define LOCALHOST "localhost"
 #define HTTPRCXAJAX_DEFPORT "8080"
 
+/* PLUGIN_LOG NOT PLUGIN_UI, since it depends on ncurses !!! */
 PLUGIN_DEFINE(httprc_xajax, PLUGIN_UI, NULL);
 
 typedef struct {
@@ -110,6 +111,150 @@ inline char *wcs_to_normal_http(const CHAR_T *str) {
 		return (char *) str;
 }
 
+char *escape_single_quote(char *p, int inuni)
+{
+	string_t s = string_init(NULL);
+	int l=xstrlen(p), r;
+#if USE_UNICODE
+	if (inuni)
+	{
+		mbtowc(NULL, NULL, 0);	/* reset */
+		while (l>0)
+		{
+			if ((r = mbtowc(NULL, p, l)) == -1)
+				string_append_c(s, '?'), r=1;
+			else if (r == 1)
+			{
+				if (*p == '\'')
+					string_append(s, "\\'");
+				else
+					string_append_c(s, *p);
+			} else
+				string_append_n(s, p, r);
+			l -= r;
+			p += r;
+		}
+	} else
+#endif
+	{
+		while (l>0)
+		{
+			if (*p == '\'')
+				string_append(s, "\\'");
+			else
+				string_append_c(s, *p);
+			l --;
+			p ++;
+		}
+	}
+	return string_free(s, 0);
+}
+
+char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
+{
+	string_t asc = string_init(NULL);
+	int i, last, lastbeg, tempchar, len, att;
+	char *normal;
+	char *tmp;
+	char *colortbl[10] = { "grey", "red", "green", "yellow", "blue", "purple", "turquoise", "white" };
+
+#define ISBOLD		(att & FSTR_BOLD)
+#define ISBLINK		(att & FSTR_BLINK) 
+#define ISUNDERLINE	(att & FSTR_UNDERLINE)
+#define ISREVERSE	(att & FSTR_REVERSE)
+#define ISNORMAL	(att & FSTR_NORMAL)
+#define ISONLYNORMAL	((att & FSTR_NORMAL) && !(att & (FSTR_BOLD|FSTR_BLINK|FSTR_REVERSE|FSTR_UNDERLINE)))
+#define FORE 		(att & FSTR_FOREMASK)
+#define BACK 		((att & FSTR_BACKMASK)>>3)
+#define ADDJS(x) 	string_append(asc, x)
+
+	lastbeg = 0;
+	last = attr[0];
+	/* I do not create nested tags like:
+	 * <strong><span>...</span>  ... <span> ... </span> </strong>
+	 * since this would be quite senseless
+	 */
+	len = strlen(str);
+#if USE_UNICODE
+	if (config_use_unicode && inuni)
+		len = wcslen(str);
+#endif
+	for (i = 1; i <= len; i++)
+	{
+		if (attr[i] == last)
+			continue;
+	
+		if (inuni) {
+			tempchar = __S(str, i);
+			__SREP(str, i, 0);
+		} else {
+			tempchar = str[i];
+			str[i] = 0;
+		}
+		att = attr[lastbeg];
+		if (inuni)
+			normal = wcs_to_normal_http(__SPTR(str, lastbeg));
+		else
+			normal = str+lastbeg;
+		if (ISONLYNORMAL)
+		{
+			ADDJS(parent);
+			ADDJS(".appendChild(document.createTextNode('");
+			tmp = escape_single_quote(normal, inuni);
+			ADDJS(normal);
+			ADDJS("'));\n");
+		} else {
+			if (ISBOLD || ISUNDERLINE || ISBLINK)
+				ADDJS("em = document.createElement('em'); em.setAttribute('class', '");
+			/* DO NOT REMOVE THOSE SPACES AT THE END!!! */
+			if (ISBOLD) 		ADDJS("bold ");
+			if (ISUNDERLINE) 	ADDJS("underline ");
+			if (ISBLINK) 		ADDJS("blink ");
+			if (ISBOLD || ISUNDERLINE || ISBLINK)
+				ADDJS("');");
+			ADDJS("sp = document.createElement('span');");
+			
+			if (!ISNORMAL)
+			{
+				tmp = saprintf("sp.setAttribute('class', '%s');", colortbl[FORE]);
+				ADDJS(tmp);
+				xfree(tmp);
+			}
+			ADDJS("sp.appendChild(document.createTextNode('");
+			tmp = escape_single_quote(normal, inuni);
+			ADDJS(normal);
+			xfree(tmp);
+			ADDJS("'));");
+			if (ISBOLD)
+			{
+				ADDJS("em.appendChild(sp);");
+				tmp = saprintf("%s.appendChild(em);", parent);
+			} else 
+				tmp = saprintf("%s.appendChild(sp);", parent);
+			ADDJS(tmp);
+		}
+		if (normal != str+lastbeg)
+			xfree(normal);
+		xfree(tmp);
+
+		ADDJS("\n");
+		if (inuni)
+			__SREP(str, i, tempchar);
+		else
+			str[i]=tempchar;
+		lastbeg = i;
+		last = attr[i];
+	}
+	if (!wcslen(str))
+	{
+		tmp = saprintf("%s.appendChild(document.createTextNode('\u00a0'));\n", parent);
+		ADDJS(tmp);
+	}
+
+	return string_free(asc, 0);
+}
+
+
 QUERY(httprc_xajax_def_action)
 {
 	list_t a;
@@ -134,20 +279,29 @@ QUERY(httprc_xajax_def_action)
 			if (w->id != 0)
 			{
 				if (!gline) {
-					char *xmled;
+					char *fstringed;
+					ncurses_window_t *n = w->private;
 					line = *(va_arg(ap, fstring_t **));
 					gline=1;
-					xmled = xml_escape(line->str);
-					tmp = saprintf("gwins[%d][2][gwins[%d][2].length]=\"%s\";\n"
+					fstringed = http_fstring(w->id, "ch", line->str, line->attr, 0);
+					tmp = saprintf("glst=gwins[%d][2].length;\n"
+							"ch = document.createElement('li');\n"
+							"ch.setAttribute('id', 'lin'+glst);\n"
+							"%s\n"
+							"ch.className='info'+(glst%2);\n"
+							"gwins[%d][2][glst]=ch;\n"
 							"if (current_window != %d) { xajax.$('wi'+%d).className='act'; }\n"
 							"else { window_content_add_line(%d); }\n",
-							w->id, w->id, xmled,
+							w->id, fstringed, w->id,
 							w->id, w->id,
 							w->id);
-					xfree(xmled);
+					xfree(fstringed);
 				}
+				FILE *fp=fopen("dupa", "a"); fprintf(fp, "%s:%s\n", p->cookie, line->str); fflush(fp); fclose(fp);
 				/* it'd be easier if we'd got iface for creating xml files... */
+
 				string_append(p->collected, "<cmd n=\"ap\" t=\"LOG\" p=\"innerHTML\"><![CDATA[");
+				string_append(p->collected, itoa(nobr));
 				string_append(p->collected, (char *)data);
 				string_append(p->collected, " = ");
 				string_append(p->collected, itoa(w->id));
@@ -260,90 +414,6 @@ const char *http_timestamp(time_t t) {
 	if (!strftime(buf[i], sizeof(buf[0]), format, tm) && xstrlen(format)>0)
 		xstrcpy(buf[i], "TOOLONG");
 	return buf[i++];
-}
-
-char *http_fstring(const char *str, const short *attr) {
-	string_t asc = string_init(NULL);
-	int i;
-	int otag = 0;	/* 1 - SPAN 2 - STRONG */
-
-	for (i = 0; i < strlen(str); i++) {
-#define ISBOLD(x)	(x & 64)
-#define ISBLINK(x)	(x & 256) 
-#define ISUNDERLINE(x)	(x & 512)
-#define ISREVERSE(x)	(x & 1024)
-#define FGCOLOR(x)	((!(x & 128)) ? (x & 7) : -1)
-#define BGCOLOR(x)	-1	/* XXX */
-
-#define prev	attr[i-1]
-#define cur	attr[i] 
-
-	/* attr */
-		if (i && !ISBOLD(cur) && ISBOLD(prev))				{ string_append(asc, "</strong>");	otag = 0; }	/* NOT BOLD */
-		else if (i && FGCOLOR(cur) == -1 && FGCOLOR(prev) != -1)	{ string_append(asc, "</span>");	otag = 0; } 	/* NO FGCOLOR */
-
-		else if (i && !ISBLINK(cur) && ISBLINK(prev));		/* NOT BLINK */
-		else if (i && !ISUNDERLINE(cur) && ISUNDERLINE(prev));	/* NOT UNDERLINE */
-		else if (i && !ISREVERSE(cur) && ISREVERSE(prev));	/* NOT REVERSE */
-		else if (i && BGCOLOR(cur) == -1 && BGCOLOR(prev) != -1);/* NO BGCOLOR */
-		
-		if (ISBOLD(cur)	&& (!i || ISBOLD(cur) != ISBOLD(prev)) && FGCOLOR(cur) == -1) {
-			if (otag == 2) string_append(asc, "</strong>");
-			if (otag == 1) string_append(asc, "</span>");
-
-			string_append(asc, "<strong>");		/* bold+nocolor */
-			otag = 2;
-		}
-
-		if (ISBLINK(cur)	&& (!i || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, "%i");
-//		if (ISUNDERLINE(cur)	&& (!i || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, "%");
-//		if (ISREVERSE(cur)	&& (!i || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, "%");
-
-		if (BGCOLOR(cur) != -1 && ((!i || BGCOLOR(cur) != BGCOLOR(prev)))) {	/* if there's a background color... add it */
-			string_append_c(asc, '%');
-			switch (BGCOLOR(cur)) {
-				case (0): string_append_c(asc, 'l'); break;
-				case (1): string_append_c(asc, 's'); break;
-				case (2): string_append_c(asc, 'h'); break;
-				case (3): string_append_c(asc, 'z'); break;
-				case (4): string_append_c(asc, 'e'); break;
-				case (5): string_append_c(asc, 'q'); break;
-				case (6): string_append_c(asc, 'd'); break;
-				case (7): string_append_c(asc, 'x'); break;
-			}
-		}
-
-		if (FGCOLOR(cur) != -1 && ((!i || FGCOLOR(cur) != FGCOLOR(prev)) || (i && ISBOLD(prev) != ISBOLD(cur)))) {	/* if there's a foreground color... add it */
-			char *color = NULL;;
-
-			if (otag == 2) string_append(asc, "</strong>");
-			if (otag == 1) string_append(asc, "</span>");
-
-			switch (FGCOLOR(cur)) {
-				 case (0): color = "grey";	break;
-				 case (1): color = "red";	break;
-				 case (2): color = "green";	break;
-				 case (3): color = "yellow";	break;
-				 case (4): color = "blue";	break;
-				 case (5): color = "purple";	break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
-				 case (6): color = "turquoise";	break;
-				 case (7): color = "white"; 	break;
-			}
-
-			if (ISBOLD(cur)) { string_append(asc, "<strong class=\"");	otag = 2; } 
-			else		 { string_append(asc, "<span class=\"");	otag = 1; }
-
-			string_append(asc, color);
-			string_append(asc, "\">");
-
-		}
-	/* XXX, escape, xml_escape() */
-		string_append_c(asc, str[i]);			/* append current char */
-	}
-	if (otag == 2) string_append(asc, "</strong>");
-	if (otag == 1) string_append(asc, "</span>");
-
-	return string_free(asc, 0);
 }
 
 #define WATCH_FIND(w, fd) \
@@ -545,7 +615,7 @@ WATCHER(http_watch_read) {
 			}
 		} else {
 			char *temp;
-			int i;
+			int i, j;
 			list_t l;
 
 			window_t *w = window_current; 
@@ -574,6 +644,7 @@ WATCHER(http_watch_read) {
 					"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 					"<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 					"\t<head>\n"
+					"\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 					"\t\t<title>EKG2 :: Remote Control</title>\n"
 					"\t\t<link rel=\"stylesheet\" href=\"ekg2.css\" type=\"text/css\" />\n"
 					"\t\t<script type=\"text/javascript\">\n"
@@ -591,6 +662,7 @@ WATCHER(http_watch_read) {
 					"\t\t<script type=\"text/javascript\" src=\"xajax.js\"> </script>\n"
 					"\t\t<script type=\"text/javascript\">\n");
 
+			
 			htheader = string_init("gwins = new Array();\n");
 			string_append (htheader, "current_window = ");
 			string_append (htheader, itoa(window_current->id));
@@ -612,17 +684,23 @@ WATCHER(http_watch_read) {
 					continue;
 
 				n = w->private;
-				for (i = n->backlog_size-1; i >= 0; i--) {
+				string_append(htheader, "i=0;\n");
+				temp = saprintf("gwins[%d][2][i++] = ch;\n", w->id);
+				for (j=0, i = n->backlog_size-1; i >= 0; i--) {
 					/* really, really stupid... */
-					char *normal = wcs_to_normal_http(n->backlog[i]->str);
-					temp = xml_escape(normal);
-					tempdata = saprintf("gwins[%d][2][%d] = \"%s\";\n", w->id, n->backlog_size-1-i, temp);
+					string_append(htheader, "ch = document.createElement('li');\n"
+							"ch.setAttribute('id', 'lin'+i);\n");
+					tempdata = http_fstring(w->id, "ch", n->backlog[i]->str, n->backlog[i]->attr, 1);
 					string_append(htheader, tempdata);
+					if (j^=1)
+						string_append(htheader, "ch.className='info1';");
+					else
+						string_append(htheader, "ch.className='info2';");
+					/* add object to gwins table */
+					string_append(htheader, temp);
 					xfree(tempdata);
-					xfree(temp);
-					if (normal != n->backlog[i]->str)
-						xfree(normal);
 				}
+				xfree(temp);
 			}
 			httprc_write(send_watch, "%s", htheader->str);
 			string_free(htheader, 1);
@@ -678,19 +756,26 @@ WATCHER(http_watch_read) {
 					"\t\t</div>\n"
 					"\t\t<div id=\"LOG\">\n"
 					"\t\t</div>\n"
+					"\t\t<div id=\"LOG2\" style=\"background-color:#666;\">\n"
+					"\t\t</div>\n"
+					"\t\t<div id=\"LOG3\" style=\"background-color:#444;\">\n"
+					"\t\t</div>\n"
 					"\t</body>\n"
 					"\t<script>\n"
+					"update_windows_list();\n"
+					"update_window_content(%d);\n"
 					"document.onload=update_windows_list();\n"
 					"document.onload=update_window_content(%d);\n"
 					"window.setTimeout('eventsinbackground()', 3000);\n"
 					"</script>\n"
-					"</html>", w->id);
+					"</html>", w->id, w->id);
 		}
 	} else if (method == HTTP_METHOD_POST && !xstrcmp(req, "/xajax/")) {
 		HTTP_HEADER(ver, 200, "Content-Type: text/html\r\n");
 		httprc_write(send_watch, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 			"<xjx>%s</xjx>",
 			config_console_charset, client->collected->str);
+//		FILE *fp=fopen("dupa", "a"); fprintf(fp, "sending data:%s\n", client->collected->str); fflush(fp); fclose(fp);
 		string_free(client->collected, 1);
 		client->collected = string_init("");
 	} else {

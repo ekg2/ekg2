@@ -72,3 +72,8 @@ UWAGA: na stringach które mają trafić do createTextNode trza wcześniej z poz
 dj: rozumiesz już, czemu mnie się nie chciało ;>
 to co w htmlu to linijka, to używając metod dom, widzisz ile...
 
+pi razy drzwi zrobiłem...
+zdałoby się jeszcze wypróbować, czy zamiast przesyłania całego kodu jsowego
+nie lepiej by było posyłać xajaxowe instrukcje postaci:
+<cmd n="cóś" ... >
+ale na razie mi się nie chce :P

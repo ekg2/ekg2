@@ -72,6 +72,20 @@ void fstring_free(fstring_t *str);
  */
 #define isalpha_pl_PL(x) ((x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z') || x == '±' || x == 'æ' || x == 'ê' || x == '³' || x == 'ñ' || x == 'ó' || x == '¶' || x == '¿' || x == '¼' || x == '¡' || x == 'Æ' || x == 'Ê' || x == '£' || x == 'Ñ' || x == 'Ó' || x == '¦' || x == '¯' || x == '¬')
 
+#define FSTR_FOREA 		1
+#define FSTR_FOREB 		2
+#define FSTR_FOREC 		4
+#define FSTR_FOREMASK 		(FSTR_FOREA|FSTR_FOREB|FSTR_FOREC)
+#define FSTR_BACKA 		8
+#define FSTR_BACKB 		16
+#define FSTR_BACKC 		32
+#define FSTR_BACKMASK 		(FSTR_BACKA|FSTR_BACKB|FSTR_BACKC)
+#define FSTR_BOLD 		64
+#define FSTR_NORMAL 		128
+#define FSTR_BLINK 		256
+#define FSTR_UNDERLINE 		512
+#define FSTR_REVERSE 		1024
+
 #endif /* __EKG_THEMES_H */
 
 /*

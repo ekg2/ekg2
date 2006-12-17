@@ -6,14 +6,23 @@ text=text.replace(/&/g,"&amp;")
 text=text.replace(/</g,"&lt;")
 text=text.replace(/>/g,"&gt;")
 debugTag=this.debugWindow.document.getElementById('debugTag');debugTag.innerHTML=('<b>'+(new Date()).toString()+'</b>: '+text+'<hr/>')+debugTag.innerHTML;}catch(e){alert("Xajax Debug:\n "+text);}
-};this.workId='xajaxWork'+new Date().getTime();this.depth=0;this.responseErrorsForAlert=["400","401","402","403","404","500","501","502","503"];this.getRequestObject=function(){if(xajaxDebug)this.DebugMessage("Initializing Request Object..");var req=null;if(typeof XMLHttpRequest!="undefined")
-req=new XMLHttpRequest();if(!req&&typeof ActiveXObject!="undefined"){try{req=new ActiveXObject("Msxml2.XMLHTTP");}
-catch(e){try{req=new ActiveXObject("Microsoft.XMLHTTP");}
-catch(e2){try{req=new ActiveXObject("Msxml2.XMLHTTP.4.0");}
-catch(e3){req=null;}
-}
-}
-}
+};this.workId='xajaxWork'+new Date().getTime();this.depth=0;this.responseErrorsForAlert=["400","401","402","403","404","500","501","502","503"];this.getRequestObject=function(){if(xajaxDebug)this.DebugMessage("Initializing Request Object..");var req=null;
+	if(typeof XMLHttpRequest!="undefined")
+		req=new XMLHttpRequest();
+	if(!req&&typeof ActiveXObject!="undefined"){
+		try{
+			req=new ActiveXObject("Msxml2.XMLHTTP");
+		} catch(e){
+			try{
+				req=new ActiveXObject("Microsoft.XMLHTTP");
+			} catch(e2){
+				try{
+					req=new ActiveXObject("Msxml2.XMLHTTP.4.0");}
+				catch(e3){req=null;}
+			}
+		}
+	}
+	req.overrideMimeType('text/xml');
 if(!req&&window.createRequest)
 req=window.createRequest();if(!req)this.DebugMessage("Request Object Instantiation failed.");return req;}
 this.$=function(sId){if(!sId){return null;}
@@ -107,14 +116,14 @@ r.onreadystatechange=function(){
 	if(r.status==200){
 		if(xajaxDebug)
 			xajax.DebugMessage("Received:\n"+r.responseText);
-		if(r.responseXML&&r.responseXML.documentElement)
+		if(r.responseXML&&r.responseXML.documentElement) {
 			xajax.processResponse(r.responseXML);
-		else if(r.responseXML) {
+		} else if(r.responseXML) {
 			// probably empty response, do not treat this as an error
 			document.body.style.cursor='default';
 		} else{
 			var errorString="Error: the XML response that was returned from the server is invalid.";
-			errorString+="\nxjx:"+r.responseXML.documentElement+"]\n";
+			//errorString+="\nxjx:"+r.responseXML.documentElement+"]\n";
 			errorString+="\nReceived:\n"+r.responseText;
 			trimmedResponseText=r.responseText.replace(/^\s+/g,"");
 			trimmedResponseText=trimmedResponseText.replace(/\s+$/g,"");
@@ -138,38 +147,67 @@ elementObject=this.$(element);if(elementObject){var oldData;eval("oldData=this.$
 return true;}
 return false;}
 this.viewSource=function(){return "<html>"+document.getElementsByTagName("HTML")[0].innerHTML+"</html>";}
-this.processResponse=function(xml){clearTimeout(loadingTimeout);this.doneLoadingFunction();if(xajaxStatusMessages==true)window.status='Processing...';var tmpXajax=null;xml=xml.documentElement;if(xml==null)
-return;var skipCommands=0;for(var i=0;i<xml.childNodes.length;i++){if(skipCommands > 0){skipCommands--;continue;}
-if(xml.childNodes[i].nodeName=="cmd"){var cmd;var id;var property;var data;var search;var type;var before;var objElement=null;for(var j=0;j<xml.childNodes[i].attributes.length;j++){if(xml.childNodes[i].attributes[j].name=="n"){cmd=xml.childNodes[i].attributes[j].value;}
-else if(xml.childNodes[i].attributes[j].name=="t"){id=xml.childNodes[i].attributes[j].value;}
-else if(xml.childNodes[i].attributes[j].name=="p"){property=xml.childNodes[i].attributes[j].value;}
-else if(xml.childNodes[i].attributes[j].name=="c"){type=xml.childNodes[i].attributes[j].value;}
-}
-if(xml.childNodes[i].childNodes.length > 1&&xml.childNodes[i].firstChild.nodeName=="#cdata-section"){data="";for(var j=0;j<xml.childNodes[i].childNodes.length;j++){data+=xml.childNodes[i].childNodes[j].data;}
-}
-else if(xml.childNodes[i].firstChild&&xml.childNodes[i].firstChild.nodeName=='xjxobj'){data=this._nodeToObject(xml.childNodes[i].firstChild);objElement="XJX_SKIP";}
-else if(xml.childNodes[i].childNodes.length > 1){for(var j=0;j<xml.childNodes[i].childNodes.length;j++){if(xml.childNodes[i].childNodes[j].childNodes.length > 1&&xml.childNodes[i].childNodes[j].firstChild.nodeName=="#cdata-section"){var internalData="";for(var k=0;k<xml.childNodes[i].childNodes[j].childNodes.length;k++){internalData+=xml.childNodes[i].childNodes[j].childNodes[k].nodeValue;}
-}else{var internalData=xml.childNodes[i].childNodes[j].firstChild.nodeValue;}
-if(xml.childNodes[i].childNodes[j].nodeName=="s"){search=internalData;}
-if(xml.childNodes[i].childNodes[j].nodeName=="r"){data=internalData;}
-}
-}
-else if(xml.childNodes[i].firstChild)
-data=xml.childNodes[i].firstChild.nodeValue;else
-data="";if(objElement!="XJX_SKIP")objElement=this.$(id);var cmdFullname;try{if(cmd=="cc"){cmdFullname="addConfirmCommands";var confirmResult=confirm(data);if(!confirmResult){skipCommands=id;}
-}
-if(cmd=="al"){cmdFullname="addAlert";alert(data);}
-else if(cmd=="js"){cmdFullname="addScript/addRedirect";eval(data);}
-else if(cmd=="jc"){cmdFullname="addScriptCall";var scr=id+'(';if(data[0]!=null){scr+='data[0]';for(var l=1;l<data.length;l++){scr+=',data['+l+']';}
-}
-scr+=');';eval(scr);}
-else if(cmd=="in"){cmdFullname="addIncludeScript";this.include(data);}
-else if(cmd=="as"){cmdFullname="addAssign/addClear";if(this.willChange(id,property,data)){eval("objElement."+property+"=data;");}
-}
-else if(cmd=="ap"){cmdFullname="addAppend";eval("objElement."+property+"+=data;");}
-else if(cmd=="pp"){cmdFullname="addPrepend";eval("objElement."+property+"=data+objElement."+property);}
-else if(cmd=="rp"){cmdFullname="addReplace";this.replace(id,property,search,data)
-}
+this.processResponse=function(xml){
+	clearTimeout(loadingTimeout);
+	this.doneLoadingFunction();
+	if(xajaxStatusMessages==true)
+		window.status='Processing...';
+	var tmpXajax=null;
+	xml=xml.documentElement;
+	if(xml==null)
+		return;
+	var skipCommands=0;
+	var cmdline="";
+	var i;
+	for(i=0;i<xml.childNodes.length;i++) {
+		if(skipCommands > 0){skipCommands--;continue;}
+		if(xml.childNodes[i].nodeName=="cmd"){
+			var cmd;var id;var property;var data;var search;var type;var before;var objElement=null;
+			for(var j=0;j<xml.childNodes[i].attributes.length;j++){
+				if(xml.childNodes[i].attributes[j].name=="n"){cmd=xml.childNodes[i].attributes[j].value;}
+				else if(xml.childNodes[i].attributes[j].name=="t"){id=xml.childNodes[i].attributes[j].value;}
+				else if(xml.childNodes[i].attributes[j].name=="p"){property=xml.childNodes[i].attributes[j].value;}
+				else if(xml.childNodes[i].attributes[j].name=="c"){type=xml.childNodes[i].attributes[j].value;}
+			}
+			if(xml.childNodes[i].childNodes.length > 1&&xml.childNodes[i].firstChild.nodeName=="#cdata-section"){
+				data="";
+				for(var j=0;j<xml.childNodes[i].childNodes.length;j++){data+=xml.childNodes[i].childNodes[j].data;}
+			}
+			else if(xml.childNodes[i].firstChild&&xml.childNodes[i].firstChild.nodeName=='xjxobj'){
+				data=this._nodeToObject(xml.childNodes[i].firstChild);objElement="XJX_SKIP";
+			} else if(xml.childNodes[i].childNodes.length > 1){
+				for(var j=0;j<xml.childNodes[i].childNodes.length;j++){
+					if(xml.childNodes[i].childNodes[j].childNodes.length > 1&&xml.childNodes[i].childNodes[j].firstChild.nodeName=="#cdata-section"){
+						var internalData="";
+						for(var k=0;k<xml.childNodes[i].childNodes[j].childNodes.length;k++){
+							internalData+=xml.childNodes[i].childNodes[j].childNodes[k].nodeValue;}
+					}else{var internalData=xml.childNodes[i].childNodes[j].firstChild.nodeValue;}
+					if(xml.childNodes[i].childNodes[j].nodeName=="s"){search=internalData;}
+					if(xml.childNodes[i].childNodes[j].nodeName=="r"){data=internalData;}
+				}
+			}
+			else if(xml.childNodes[i].firstChild)
+				data=xml.childNodes[i].firstChild.nodeValue;
+			else
+				data="";if(objElement!="XJX_SKIP")objElement=this.$(id);
+			var cmdFullname;
+			try{
+				if(cmd=="cc"){cmdFullname="addConfirmCommands";var confirmResult=confirm(data);if(!confirmResult){skipCommands=id;}}
+				if(cmd=="al"){cmdFullname="addAlert";alert(data);}
+				else if(cmd=="js"){cmdFullname="addScript/addRedirect"; eval(data);}
+				else if(cmd=="jc"){cmdFullname="addScriptCall";var scr=id+'(';
+					if(data[0]!=null){scr+='data[0]';
+						for(var l=1;l<data.length;l++){scr+=',data['+l+']';}
+					}
+					scr+=');';eval(scr);
+				}
+				else if(cmd=="in"){cmdFullname="addIncludeScript";this.include(data);}
+				else if(cmd=="as"){cmdFullname="addAssign/addClear";
+					if(this.willChange(id,property,data)){eval("objElement."+property+"=data;");}
+				}
+				else if(cmd=="ap"){cmdFullname="addAppend";eval("objElement."+property+"+=data;");}
+				else if(cmd=="pp"){cmdFullname="addPrepend";eval("objElement."+property+"=data+objElement."+property);}
+				else if(cmd=="rp"){cmdFullname="addReplace";this.replace(id,property,search,data);}
 else if(cmd=="rm"){cmdFullname="addRemove";this.remove(id);}
 else if(cmd=="ce"){cmdFullname="addCreate";this.create(id,data,property);}
 else if(cmd=="ie"){cmdFullname="addInsert";this.insert(id,data,property);}
@@ -181,11 +219,13 @@ else if(cmd=="ev"){cmdFullname="addEvent";property=this.addOnPrefix(property);ev
 else if(cmd=="ah"){cmdFullname="addHandler";this.addHandler(id,property,data);}
 else if(cmd=="rh"){cmdFullname="addRemoveHandler";this.removeHandler(id,property,data);}
 }
-catch(e){if(xajaxDebug)
-alert("While trying to '"+cmdFullname+"' (command number "+i+"), the following error occured:\n"
-+e.name+": "+e.message+"\n"
-+(id&&!objElement?"Object with id='"+id+"' wasn't found.\n":""));}
-delete objElement;delete cmd;delete cmdFullname;delete id;delete property;delete search;delete data;delete type;delete before;delete internalData;delete j;delete k;}
+catch(e){
+	if(xajaxDebug)
+		alert("While trying to '"+cmdFullname+"' (command number "+i+"), the following error occured:\n"
+				+e.name+": "+e.message+"\n"+(id&&!objElement?"Object with id='"+id+"' wasn't found.\n":""));
+}
+delete objElement;delete cmd;delete cmdFullname;delete id;delete property;delete search;delete data;delete type;delete before;delete internalData;delete j;delete k;
+}
 }
 delete xml;delete i;document.body.style.cursor='default';if(xajaxStatusMessages==true)window.status='Done';}
 }
