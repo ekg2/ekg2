@@ -131,7 +131,6 @@ static QUERY(gpg_message_encrypt) {
 	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
 
 	const char *key  = NULL;
-	const char *pass = NULL;
 
 	char *gpg_data	= *message;
 
@@ -219,7 +218,7 @@ static QUERY(gpg_message_decrypt) {
 
 		p = getenv("GPG_AGENT_INFO");
 		if (!(p && xstrchr(p, ':')))
-			gpgme_set_passphrase_cb(ctx, gpg_passphrase_cb, 0);
+			gpgme_set_passphrase_cb(ctx, gpg_passphrase_cb, (void *) pass);
 
 		err = gpgme_data_new_from_mem(&in, gpg_data, xstrlen(gpg_data), 0);
 		if (!err) {
@@ -298,7 +297,7 @@ static QUERY(gpg_sign) {
 		gpgme_signers_clear(ctx);
 		gpgme_signers_add(ctx, gpg_key);
 		gpgme_key_release(gpg_key);
-		err = gpgme_data_new_from_mem(&in, gpg_data, xstrlen(gpg_data), pass);
+		err = gpgme_data_new_from_mem(&in, gpg_data, xstrlen(gpg_data), 0);
 		if (!err) {
 			err = gpgme_data_new(&out);
 			if (!err) {
