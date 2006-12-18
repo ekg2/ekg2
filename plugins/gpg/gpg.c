@@ -20,6 +20,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2-config.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -33,12 +35,15 @@
 
 #include <gpgme.h>
 
-PLUGIN_DEFINE(gpg, PLUGIN_CRYPT, NULL);
+static int gpg_theme_init();
+PLUGIN_DEFINE(gpg, PLUGIN_CRYPT, gpg_theme_init);
 
 typedef struct {
 	char *uid;
 	char *keyid;
+	char *status;
 	char *password;
+	int keysetup;
 } egpg_key_t;
 
 static list_t gpg_keydb;
@@ -51,6 +56,7 @@ static egpg_key_t *gpg_keydb_add(const char *uid, const char *keyid, const char 
 	a->uid		= xstrdup(uid);
 	a->keyid 	= xstrdup(keyid);
 /*	a->password	= NULL; */
+/*	a->keysetup	= 0; */
 	
 	list_add(&gpg_keydb, a, 0);
 
@@ -293,36 +299,42 @@ static QUERY(gpg_verify) {
 					gpgme_verify_result_t vr = gpgme_op_verify_result(ctx);
 
 					if (vr && vr->signatures) {
-						char *r = vr->signatures->fpr;
+						char *fpr	= vr->signatures->fpr;
+						char *keyid	= NULL;
 						egpg_key_t *k;
 
 						/* FINGERPRINT -> KEY_ID */
-						if (!gpgme_get_key(ctx, r, &key, 0) && key) {
-							r = key->subkeys->keyid;
+						if (!gpgme_get_key(ctx, fpr, &key, 0) && key) {
+							keyid = key->subkeys->keyid;
 							gpgme_key_release(key);
 						}
 
 						xfree(*keydata);
-						*keydata = xstrdup(r);
-
-						/* XXX, think about it */
-						if (!vr->signatures->summary && !vr->signatures->status) /* summary = 0, status = 0 -> signature valid */
-							*error	= saprintf("Signature ok");
-
-						if (vr->signatures->summary & GPGME_SIGSUM_RED)
-							*error	= saprintf("Bad signature from <%s/%s>", uid, "");
-#if 0
-						/* HERE:
-						 * 	add to our db.
-						 * 		jid <==> key + small amount of info...
-						 */
+						*keydata = xstrdup(keyid);
 
 						if ((k = gpg_keydb_find_uid(uid))) {
+							xfree(k->status);
+							if (xstrcmp(k->keyid, keyid)) {
+								if (k->keysetup)
+									k->status = xstrdup("Warning: The KeyId doesn't match the key you set up");
+								else {
+									xfree(k->keyid);
+									k->keyid  = xstrdup(keyid);
+									k->status = NULL;
+								}
+							} else		k->status = NULL;
+						} else k = gpg_keydb_add(uid, keyid, fpr);
 
-						} else k = gpg_keydb_add(uid, *keydata, vr->signatures->fpr);
+						if (!vr->signatures->summary && !vr->signatures->status) /* summary = 0, status = 0 -> signature valid */
+							*error	= xstrdup("Signature ok");
+						else if (vr->signatures->summary & GPGME_SIGSUM_RED)
+							*error	= xstrdup("Signature bad");
+						else if (vr->signatures->summary & GPGME_SIGSUM_GREEN)
+							*error	= xstrdup("Signature ok");
+						else	*error	= xstrdup("Signature ?!?!");
 
-						k->status = *error;
-#endif
+						if (!k->status) k->status = xstrdup(*error);
+
 					} else {
 						xfree(*keydata);
 						*keydata = NULL;
@@ -358,7 +370,7 @@ static QUERY(gpg_user_keyinfo) {
 	if (xstrncmp(u->uid, "jid:", 4)) return 0; /* only jabber for now... */
 
 	if ((k = gpg_keydb_find_uid(u->uid))) {
-		printq("generic", k->keyid);
+		printq("user_info_gpg_key", k->keyid, k->status);
 	}
 
 	return 0;
@@ -400,6 +412,14 @@ int gpg_plugin_init(int prio) {
 						"-----END PGP SIGNATURE-----\n");
 
 	query_connect_id(&gpg_plugin, USERLIST_INFO,		gpg_user_keyinfo, NULL);
+
+	return 0;
+}
+
+static int gpg_theme_init() {
+#ifndef NO_DEFAULT_THEME
+	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2) %n"), 1);	/* keyid, status */
+#endif
 	return 0;
 }
 
