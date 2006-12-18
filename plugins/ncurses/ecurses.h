@@ -88,17 +88,17 @@ inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 #define __SN(str, i) ((*str) += i)
 #define __SPTR(str, i) (&str[i]) 
 #define __SREP(str, i, newchar) str[i] = newchar
-#define xwcslen(str) xstrlen(str)
-#define xwcscpy(dst, str) xstrcpy(dst, str)
-#define xwcsdup(str) xstrdup(str)
-#define xwcscat(dst, src) xstrcat(dst, src)
-#define xwcscmp(s1, s2)	xstrcmp(s1, s2)
-#define xwcschr(s, c) xstrchr(s, c)
-#define wcs_array_make(str, sep, max, trim, quotes) (CHAR_T **) array_make(str, sep, max, trim, quotes)
-#define wcs_to_normal(x) x
+#define xwcslen(str) xstrlen((char *) str)
+#define xwcscpy(dst, str) xstrcpy((char *) dst, (char *) str)
+#define xwcsdup(str) (CHAR_T *) xstrdup((char *) str)
+#define xwcscat(dst, src) xstrcat((char *) dst, (char *) src)
+#define xwcscmp(s1, s2)	xstrcmp((char *) s1, s2)
+#define xwcschr(s, c) xstrchr((char *) s, c)
+#define wcs_array_make(str, sep, max, trim, quotes) (CHAR_T **) array_make((char *) str, sep, max, trim, quotes)
+#define wcs_to_normal(x) (char *) x
 #define free_utf(x) 
-#define wcs_array_join(arr, sep) array_join((char **) arr, sep)
-#define xwcslcpy(dst, src, size) strlcpy(dst, src, size)
+#define wcs_array_join(arr, sep) (CHAR_T *) array_join((char **) arr, sep)
+#define xwcslcpy(dst, src, size) strlcpy((char *) dst, (char *) src, size)
 
 #endif	/* USE_UNICODE */
 
