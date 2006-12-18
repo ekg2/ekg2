@@ -75,6 +75,7 @@ SSL_CTX *jabberSslCtx;
 char *jabber_default_search_server = NULL;
 int config_jabber_beep_mail = 0;
 
+static int session_postinit;
 static int jabber_theme_init();
 static WATCHER(jabber_handle_connect_ssl);
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
@@ -259,6 +260,7 @@ int jabber_write_status(session_t *s)
 	char *descr;
 	char *real = NULL;
 	char *priority = NULL;
+	char *x_signed = NULL;
 
 #if WITH_JABBER_JINGLE
 /* This is only to enable 'call' button in GTalk .... */
@@ -280,19 +282,38 @@ int jabber_write_status(session_t *s)
 		real = saprintf("<status>%s</status>", descr);
 		xfree(descr);
 	}
-	if (!j->istlen) priority = saprintf("<priority>%d</priority>", prio); /* priority only in real jabber session */
 
+	if (!j->istlen) {
+		priority = saprintf("<priority>%d</priority>", prio); /* priority only in real jabber session */
+
+		if (session_int_get(s, "__gpg_enabled") == 1) {
+			char *signpresence;
+			
+			signpresence = xstrdup(session_descr_get(s));	/* XXX, data in unicode required (?) */
+			if (!signpresence) 
+				signpresence = xstrdup("");
+
+			signpresence = jabber_openpgp(s, NULL, JABBER_OPENGPG_SIGN, signpresence, NULL, NULL);
+			if (signpresence) {
+				x_signed = saprintf("<x xmlns=\"jabber:x:signed\">%s</x>", signpresence);
+				xfree(signpresence);
+			}
+		}
+	}
+#define P(x) (x ? x : "")
 	if (!j->istlen && !xstrcmp(status, EKG_STATUS_AVAIL))
-		watch_write(j->send_watch, "<presence>%s%s%s</presence>", real ? real : "", priority ? priority : "", JINGLE_CAPS);
+		watch_write(j->send_watch, "<presence>%s%s%s%s</presence>", P(real), P(priority), P(x_signed), JINGLE_CAPS);
 	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))
-		watch_write(j->send_watch, "<presence type=\"invisible\">%s%s</presence>", real ? real : "", priority ? priority : "");
+		watch_write(j->send_watch, "<presence type=\"invisible\">%s%s</presence>", P(real), P(priority));
 	else {
 		if (j->istlen && !xstrcmp(status, EKG_STATUS_AVAIL)) status = "available";
-		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s</presence>", status, real ? real : "", priority ? priority : "", JINGLE_CAPS);
+		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s%s</presence>", status, P(real), P(priority), P(x_signed), JINGLE_CAPS);
 	}
+#undef P
 
 	xfree(priority);
 	xfree(real);
+	xfree(x_signed);
 	return 0;
 }
 
@@ -934,6 +955,9 @@ static QUERY(jabber_status_show_handle) {
 #else
 	print("show_status_server", j->server, itoa(j->port));
 #endif
+
+	if (session_int_get(s, "__gpg_enabled") == 1)
+		print("jabber_gpg_sok", session_name(s), session_get(s, "gpg_key"));
 			
         if (j->connecting)
                 print("show_status_connecting");
@@ -1102,13 +1126,74 @@ static int jabber_theme_init() {
 	format_add("tlen_mail",		_("%> (%1) New mail from %T%2%n, with subject: %G%3%n"), 1); 			/* sesja, from, topic */
 	format_add("tlen_alert", 	_("%> (%1) %T%2%n sent us an alert ...%n"), 1); 				/* sesja, from */
 
+	format_add("jabber_gpg_plugin",	_("%> (%1) To use OpenGPG support in jabber, first load gpg plugin!"), 1);	/* sesja */
+	format_add("jabber_gpg_config",	_("%> (%1) First set gpg_key and gpg_password before turning on gpg_active!"), 1); /* sesja */
+	format_add("jabber_gpg_ok",	_("%) (%1) GPG support: %gENABLED%n using key: %W%2%n"), 1);			/* sesja, klucz */
+	format_add("jabber_gpg_sok",	_("%) GPG key: %W%2%n"), 1);							/* sesja, klucz for /status */
+	format_add("jabber_gpg_fail", 	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\n"	/* sesja, klucz, error */
+					"OpenGPG support for this session disabled."), 1);
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
+}
+
+void jabber_gpg_changed(session_t *s, const char *name) {
+	plugin_t *gpg_plug;
+	const char *key;
+	const char *passhrase;
+
+	char *error;
+	char *msg;
+
+	if (!session_postinit) return;
+
+/* SLOWDOWN! */
+	session_int_set(s, "__gpg_enabled", 0);
+	if (session_int_get(s, "gpg_active") != 1) return;
+
+	if (!(key = session_get(s, "gpg_key")) || !(passhrase = session_get(s, "gpg_password"))) {
+		print("jabber_gpg_config", session_name(s));
+		return;
+	}
+
+	if (!(gpg_plug = plugin_find("gpg"))) {
+		print("jabber_gpg_plugin", session_name(s));
+		return;		/* don't remove prev set password... */
+	}
+
+	msg = xstrdup("test");
+	msg = jabber_openpgp(s, NULL, JABBER_OPENGPG_SIGN, msg, NULL, &error);
+
+	if (error) {
+		session_set(s, "gpg_active", "0");
+		session_set(s, "gpg_password", NULL);
+		print("jabber_gpg_fail", session_name(s), key, error); 
+		xfree(error);
+	} else	{
+		session_int_set(s, "__gpg_enabled", 1);
+		print("jabber_gpg_ok", session_name(s), key);
+	}
+	xfree(msg);
+}
+
+static QUERY(jabber_pgp_postinit) {
+	list_t l;
+
+	session_postinit = 1;
+
+	for (l = sessions; l; l = l->next) {
+		session_t *s = l->data;
+
+		if (!xstrncmp(s->uid, "jid:", 4)) 
+			jabber_gpg_changed(s, NULL);
+	}
+	return 0;
 }
 
 int jabber_plugin_init(int prio)
 {
         plugin_register(&jabber_plugin, prio);
+
+	session_postinit = 0;
 
 	query_connect_id(&jabber_plugin, PROTOCOL_VALIDATE_UID,	jabber_validate_uid, NULL);
 	query_connect_id(&jabber_plugin, PLUGIN_PRINT_VERSION,	jabber_print_version, NULL);
@@ -1118,6 +1203,7 @@ int jabber_plugin_init(int prio)
 	query_connect_id(&jabber_plugin, UI_WINDOW_KILL,	jabber_window_kill, NULL);
 	query_connect_id(&jabber_plugin, PROTOCOL_IGNORE,	jabber_protocol_ignore, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_dcc_postinit, NULL);
+	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_pgp_postinit, NULL);
 
 /* XXX, set-vars-default */
 	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
@@ -1139,6 +1225,9 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "display_server_features", VAR_INT, "1", 0, NULL);
+	plugin_var_add(&jabber_plugin, "gpg_active", VAR_BOOL, "0", 0, jabber_gpg_changed);
+	plugin_var_add(&jabber_plugin, "gpg_key", VAR_STR, NULL, 0, jabber_gpg_changed);
+	plugin_var_add(&jabber_plugin, "gpg_password", VAR_STR, NULL, 1, jabber_gpg_changed);
         plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
         plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
         plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);

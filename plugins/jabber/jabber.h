@@ -43,6 +43,13 @@ struct xmlnode_s {
 
 typedef struct xmlnode_s xmlnode_t;
 
+enum jabber_opengpg_type_t {
+	JABBER_OPENGPG_ENCRYPT = 0,
+	JABBER_OPENGPG_DECRYPT,
+	JABBER_OPENGPG_SIGN,
+	JABBER_OPENGPG_VERIFY
+};
+
 enum jabber_bookmark_type_t {			/* see JEP-0048 for details */
 	JABBER_BOOKMARK_UNKNOWN = 0,
 	JABBER_BOOKMARK_URL,
@@ -170,6 +177,7 @@ xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name);
 
 void jabber_handle_disconnect(session_t *s, const char *reason, int type);
 
+char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_t way, char *message, char *key, char **error);
 #ifdef HAVE_ZLIB
 char *jabber_zlib_decompress(const char *buf, int *len);
 char *jabber_zlib_compress(const char *buf, int *len);

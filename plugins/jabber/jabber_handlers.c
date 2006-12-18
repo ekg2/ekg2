@@ -2658,7 +2658,15 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 				}
 				ismuc = 1;
 			} else if (!xstrcmp(ns, "jabber:x:signed")) {	/* JEP-0027 */
-				debug("[JABBER] XXX, SIGNED PRESENCE? uid: %s data: %s\n", mucuid, q->data);
+				char *x_signed	= xstrdup(q->data);
+				char *x_status	= NULL;
+				char *x_key;
+
+				x_key = jabber_openpgp(s, mucuid, JABBER_OPENGPG_VERIFY, "" /* STATUS opisowy */, x_signed, &x_status);
+				/* @ x_key KEY, x_status STATUS of verification */
+				debug("jabber_openpgp() %s %s\n", __(x_key), __(x_status));
+				xfree(x_key);
+				xfree(x_status);
 			} else if (!xstrncmp(ns, "jabber:x:delay", 14)) {
 				when = jabber_try_xdelay(jabber_attr(q->atts, "stamp"));
 			} else debug("[JABBER, PRESENCE]: <x xmlns=%s\n", ns);

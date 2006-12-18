@@ -18,9 +18,86 @@
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
 
+#include <ekg/queries.h>
+
 #include "jabber.h"
 #include "jabber-ssl.h"
 
+/* XXX, It's the same function from mcjabber, but uses one buffor. */
+char *jabber_gpg_strip_header_footer(char *data) {
+	char *p, *q;
+
+	if (!data)
+		return NULL;
+
+	if (!(p = xstrstr(data, "\n\n")))
+		return data;
+
+	p += 2;
+
+	for (q = p ; *q; q++);
+	for (q--; q > p && (*q != '\n' || *(q+1) != '-'); q--) ;
+
+	if (q <= p) {
+		debug_error("jabber_gpg_strip_header_footer() assert. shouldn't happen, happen!\n");
+		return NULL;
+	}
+	xstrncpy(data, p, q-p);
+	data[q-p] = 0;
+	return data;
+}
+
+char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_t way, char *message, char *key, char **error) {
+	char *err = NULL;
+	int ret = -2;
+
+	if (!message)	return NULL;
+	if (!s) 	return NULL;
+
+	switch (way) {
+		case JABBER_OPENGPG_ENCRYPT:
+			ret = query_emit_id(NULL, GPG_MESSAGE_ENCRYPT, &s->uid, &fromto, &message, &err); 	break;
+		case JABBER_OPENGPG_DECRYPT:
+			ret = query_emit_id(NULL, GPG_MESSAGE_DECRYPT, /* &s->uid, */ &fromto, &message, &err);	break; 
+		case JABBER_OPENGPG_SIGN:	/* K */
+			ret = query_emit_id(NULL, GPG_SIGN, &s->uid, &message, &err);			break;
+		case JABBER_OPENGPG_VERIFY:	/* K */
+			ret = query_emit_id(NULL, GPG_VERIFY, &fromto, &message, &key, &err); 		break;	/* @ KEY retval key-id */
+	}
+
+	if (ret == -2)
+		err = xstrdup("Load GPG plugin you moron.");
+
+/* if way == JABBER_OPENGPG_VERIFY than message is never NULL */
+
+	if (!message && !err)
+		err = xstrdup("Bad password?");
+
+	if (way == JABBER_OPENGPG_VERIFY && !key && !err)
+		err = xstrdup("wtf?");
+
+	if (err) 
+		debug_error("jabber_openpgp(): %s\n", err);
+
+	if (error) 
+		*error = err;
+	else
+		xfree(err);
+
+	if (err && way == JABBER_OPENGPG_VERIFY) {
+		xfree(key);
+		return NULL;
+	} else if (err) {
+		xfree(message);
+		return NULL;
+	}
+
+	if (way == JABBER_OPENGPG_SIGN || way == JABBER_OPENGPG_ENCRYPT) {
+		message = jabber_gpg_strip_header_footer(message);
+	}
+
+	return way != JABBER_OPENGPG_VERIFY ? message : key;
+}
 
 #ifdef HAVE_ZLIB
 char *jabber_zlib_compress(const char *buf, int *len) {
