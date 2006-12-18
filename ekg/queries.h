@@ -52,6 +52,8 @@ enum queries_id {
 	UI_WINDOW_CLEAR, UI_WINDOW_KILL, UI_WINDOW_NEW, UI_WINDOW_PRINT, UI_WINDOW_REFRESH,
 	UI_WINDOW_SWITCH, UI_WINDOW_TARGET_CHANGED,
 
+	GPG_MESSAGE_ENCRYPT, GPG_MESSAGE_DECRYPT, GPG_SIGN, GPG_VERIFY,
+
 	QUERY_EXTERNAL,
 };
 
@@ -366,6 +368,19 @@ const struct query query_list[] = {
 
 	{ UI_WINDOW_TARGET_CHANGED , "ui-window-target-changed", {
 		QUERY_ARG_WINDOW,		/* window */
+		QUERY_ARG_END } },
+
+/* GPG: PARAMS XXX */
+	{ GPG_MESSAGE_ENCRYPT, "gpg-message-encrypt", {
+		QUERY_ARG_END } },
+
+	{ GPG_MESSAGE_DECRYPT, "gpg-message-decrypt", {
+		QUERY_ARG_END } },
+
+	{ GPG_SIGN, "gpg-sign", {
+		QUERY_ARG_END } },
+
+	{ GPG_VERIFY, "gpg-verify", {
 		QUERY_ARG_END } },
 };
 
