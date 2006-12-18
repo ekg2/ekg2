@@ -95,17 +95,18 @@ static const char *gpg_find_keyid(const char *uid, const char **password, char *
 	const char *key	= NULL;
 	session_t *s;
 
-	*password = NULL;
+	if (password) *password = NULL;
 
 	if ((s = session_find(uid))) {				/* if we have that session */
 		key = session_get(s, "gpg_key");			/* get value from session */
-		*password = session_get(s, "gpg_password");		/* get password from session too */
+									/* get password from session too */
+		if (password) *password = session_get(s, "gpg_password");	
 	}
 	if (!key) {				/* if we still have no key... than try our keydatabase */
 		egpg_key_t *k = gpg_keydb_find_uid(uid);
 		if (k) {
 			key = k->uid;
-			*password = k->password;
+			if (password) *password = k->password;
 		}
 	}
 	if (!key) key = uid;					/* otherwise use uid */
@@ -136,21 +137,14 @@ static QUERY(gpg_message_encrypt) {
 
 	*error = NULL;
 
-	if (!(key = gpg_find_keyid(uid, &pass, error))) 
+	if (!(key = gpg_find_keyid(uid, NULL, error))) 
 		return 1;
-
-	if (!pass) {
-		*error = saprintf("GPG: NO PASSPHRASE FOR KEY: %s SET PASSWORD AND TRY AGAIN (/sesion -s gpg_password \"[PASSWORD]\")\n", key);
-		/* XXX, here if we don't have password. Allow user to type it. XXX */
-		return 1;
-	}
 
 	*error = NULL;
 
 	do {
 		gpgme_ctx_t ctx;
 		gpgme_data_t in, out;
-		size_t nread;
 		gpgme_key_t gpg_key;
 		gpgme_error_t err;
 
@@ -169,6 +163,7 @@ static QUERY(gpg_message_encrypt) {
 				if (!err) {
 					err = gpgme_op_encrypt(ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
 					if (!err) {
+						size_t nread;
 						char *encrypted_data = gpgme_data_release_and_get_mem(out, &nread);
 						xfree(*message);
 						*message = xstrndup(encrypted_data, nread);
@@ -198,8 +193,19 @@ static QUERY(gpg_message_decrypt) {
 	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
 
 	char *gpg_data	= saprintf(data, *message);
+	const char *key  = NULL;
+	const char *pass = NULL;
 
 	*error = NULL;
+
+	if (!(key = gpg_find_keyid(uid, &pass, error))) 
+		return 1;
+
+	if (!pass) {
+		*error = saprintf("GPG: NO PASSPHRASE FOR KEY: %s SET PASSWORD AND TRY AGAIN (/sesion -s gpg_password \"[PASSWORD]\")\n", key);
+		/* XXX, here if we don't have password. Allow user to type it. XXX */
+		return 1;
+	}
 
 	do {
 		gpgme_ctx_t ctx;
@@ -292,7 +298,7 @@ static QUERY(gpg_sign) {
 		gpgme_signers_clear(ctx);
 		gpgme_signers_add(ctx, gpg_key);
 		gpgme_key_release(gpg_key);
-		err = gpgme_data_new_from_mem(&in, gpg_data, xstrlen(gpg_data), 0);
+		err = gpgme_data_new_from_mem(&in, gpg_data, xstrlen(gpg_data), pass);
 		if (!err) {
 			err = gpgme_data_new(&out);
 			if (!err) {
