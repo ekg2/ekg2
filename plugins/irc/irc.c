@@ -1644,7 +1644,8 @@ static COMMAND(irc_command_devop) {
 
 	modes = atoi(j->sopt[_005_MODES]);
 	op = xmalloc((modes+2) * sizeof(char));
-	c=xstrchr(name, 'p')?'o':xstrchr(name, 'h')?'h':'v';
+		/* H alfop */	/* o P */	/* voice */
+	c=xstrchr(name, 'h')?'h':xstrchr(name, 'p')?'o':'v';
 	/* Yes, I know there is such a function as memset() ;> */
 	for (i=0, tmp=op+1; i<modes; i++, tmp++) *tmp=c;
 	op[0]=*name=='d'?'-':'+';
