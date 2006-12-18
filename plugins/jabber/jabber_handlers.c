@@ -835,9 +835,20 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 			const char *ns = jabber_attr(xitem->atts, "xmlns");
 			
 			if (!xstrcmp(ns, "jabber:x:encrypted")) {	/* JEP-0027 */
-				/* XXX, encrypted message. It's only limited to OpenPGP */
-				string_append(body, "Encrypted message:");
-				string_append(body, "\tXXX, Sorry, decrypting message not works now :(\n");
+				char *x_encrypted = xstrdup(xitem->data);
+				char *error = NULL;
+
+				if ((x_encrypted = jabber_openpgp(s, uid, JABBER_OPENGPG_DECRYPT, x_encrypted, NULL, &error))) {
+					string_append(body, "Encrypted message: ");
+					string_append(body,  x_encrypted);
+					xfree(x_encrypted);
+				} else {
+					string_append(body, "Encrypted message but error: ");
+					string_append(body, error);
+				}
+				string_append_c(body, '\n');
+				xfree(error);
+
 				new_line = 1;
 			} else if (!xstrncmp(ns, "jabber:x:event", 14)) {
 				int acktype = 0; /* bitmask: 2 - queued ; 1 - delivered */

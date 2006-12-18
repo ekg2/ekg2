@@ -524,7 +524,22 @@ static COMMAND(jabber_command_msg)
 		xfree(subject); 
 	}
 	if (msg) {
-		watch_write(j->send_watch, "<body>%s</body>", msg);
+		int enc_ok = 0;
+		if (session_int_get(session, "__gpg_enabled") == 1) {
+			char *e_msg = xstrdup(msg);
+
+			if ((e_msg = jabber_openpgp(session, uid, JABBER_OPENGPG_ENCRYPT, e_msg, NULL, NULL))) {
+				watch_write(j->send_watch, 
+					"<x xmlns=\"jabber:x:encrypted\">%s</x>"
+					"<body>This message was encrypted by ekg2! (EKG2 BABY) Sorry if you can decode it ;)</body>", e_msg);
+				enc_ok = 1;
+				debug_error("... %s\n", e_msg);
+				xfree(e_msg);
+			}
+		} 
+		if (!enc_ok) 
+			watch_write(j->send_watch, "<body>%s</body>", msg);
+
         	if (config_last & 4) 
         		last_add(1, uid, time(NULL), 0, msg);
 		xfree(msg);
