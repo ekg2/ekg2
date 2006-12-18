@@ -124,14 +124,69 @@ static const char *gpg_find_keyid(const char *uid, const char **password, char *
 
 #define GPGME_GENERROR(x) saprintf(x": %s", gpgme_strerror(err));
 
-
 static QUERY(gpg_message_encrypt) {
 	char *uid	= *(va_arg(ap, char **));		/* uid */
-	char **error 	= va_arg(ap, char **);
+	char **message	= va_arg(ap, char **);			/* message to encrypt */
+	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
 
-	return -2;
+	const char *key  = NULL;
+	const char *pass = NULL;
+
+	char *gpg_data	= *message;
 
 	*error = NULL;
+
+	if (!(key = gpg_find_keyid(uid, &pass, error))) 
+		return 1;
+
+	if (!pass) {
+		*error = saprintf("GPG: NO PASSPHRASE FOR KEY: %s SET PASSWORD AND TRY AGAIN (/sesion -s gpg_password \"[PASSWORD]\")\n", key);
+		/* XXX, here if we don't have password. Allow user to type it. XXX */
+		return 1;
+	}
+
+	*error = NULL;
+
+	do {
+		gpgme_ctx_t ctx;
+		gpgme_data_t in, out;
+		size_t nread;
+		gpgme_key_t gpg_key;
+		gpgme_error_t err;
+
+		if ((err = gpgme_new(&ctx))) { *error = GPGME_GENERROR("GPGME error"); break; }
+
+		gpgme_set_protocol(ctx, GPGME_PROTOCOL_OpenPGP);
+		gpgme_set_textmode(ctx, 0);
+		gpgme_set_armor(ctx, 1);
+
+		err = gpgme_get_key(ctx, key, &gpg_key, 0);
+		if (!err && gpg_key) {
+			gpgme_key_t keys[] = { gpg_key, 0 };
+			err = gpgme_data_new_from_mem(&in, gpg_data, xstrlen(gpg_data), 0);
+			if (!err) {
+				err = gpgme_data_new(&out);
+				if (!err) {
+					err = gpgme_op_encrypt(ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
+					if (!err) {
+						char *encrypted_data = gpgme_data_release_and_get_mem(out, &nread);
+						xfree(*message);
+						*message = xstrndup(encrypted_data, nread);
+						xfree(encrypted_data);
+					} else
+						gpgme_data_release(out);
+				}
+				gpgme_data_release(in);
+			}
+			gpgme_key_release(gpg_key);
+		} else {
+			*error = saprintf("GPGME encryption error: key not found");
+		}
+		if (!*error && err /* && err != GPG_ERR_CANCELED */)
+			*error = GPGME_GENERROR("GPGME encryption error");
+
+		gpgme_release(ctx);
+	} while(0);
 
 	if (*error) return 1;
 	return 0;
