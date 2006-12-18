@@ -2673,7 +2673,9 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 				char *x_status	= NULL;
 				char *x_key;
 
-				x_key = jabber_openpgp(s, mucuid, JABBER_OPENGPG_VERIFY, "" /* STATUS opisowy */, x_signed, &x_status);
+				xmlnode_t *nstatus = xmlnode_find_child(n, "status");
+
+				x_key = jabber_openpgp(s, mucuid, JABBER_OPENGPG_VERIFY, nstatus ? nstatus->data ? nstatus->data : "" : "", x_signed, &x_status);
 				/* @ x_key KEY, x_status STATUS of verification */
 				debug("jabber_openpgp() %s %s\n", __(x_key), __(x_status));
 				xfree(x_key);

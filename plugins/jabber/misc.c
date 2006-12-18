@@ -40,6 +40,7 @@ static char *jabber_gpg_strip_header_footer(char *data) {
 
 	if (q <= p) {
 		debug_error("jabber_gpg_strip_header_footer() assert. shouldn't happen, happen!\n");
+		xfree(data);
 		return NULL;
 	}
 	xstrncpy(data, p, q-p);
@@ -50,6 +51,7 @@ static char *jabber_gpg_strip_header_footer(char *data) {
 char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_t way, char *message, char *key, char **error) {
 	char *err = NULL;
 	int ret = -2;
+	char *oldkey = key;
 
 	if (!message)	return NULL;
 	if (!s) 	return NULL;
@@ -85,8 +87,10 @@ char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_
 		xfree(err);
 
 	if (err && way == JABBER_OPENGPG_VERIFY) {
-		xfree(key);
-		return NULL;
+		if (oldkey == key) {
+			xfree(key);
+			return NULL;
+		}
 	} else if (err) {
 		xfree(message);
 		return NULL;
