@@ -469,8 +469,11 @@ static char *gpg_key_status(egpg_key_t *k) {
 	if (k->keysetup == 1 && k->keynotok == 0)
 		xstrcat(&buf[0], " [ENCRYPTED]");
 
-	if (k->keysetup == 0) 
+	if (k->keysetup == 1 && k->keynotok != 0)
 		xstrcat(&buf[0], " [NOTENCRYPTED]");
+
+	if (k->keysetup == 0) 
+		xstrcat(&buf[0], " [NOTENCRYPTED, NOTTRUSTED]");
 
 	if (k->keysetup == 0 && k->keynotok == 0)
 		xstrcat(&buf[0], " [If you trust that key use /gpg:key -s]");
