@@ -484,6 +484,8 @@ static COMMAND(jabber_command_msg)
 	newconference_t *c;
 	int ismuc = 0;
 
+	int secure = 0;
+
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
 			printq("list_empty");
@@ -524,7 +526,6 @@ static COMMAND(jabber_command_msg)
 		xfree(subject); 
 	}
 	if (msg) {
-		int enc_ok = 0;
 		if (session_int_get(session, "__gpg_enabled") == 1) {
 			char *e_msg = xstrdup(msg);
 
@@ -532,11 +533,11 @@ static COMMAND(jabber_command_msg)
 				watch_write(j->send_watch, 
 					"<x xmlns=\"jabber:x:encrypted\">%s</x>"
 					"<body>This message was encrypted by ekg2! (EKG2 BABY) Sorry if you cannot decode it ;)</body>", e_msg);
-				enc_ok = 1;
+				secure = 1;
 				xfree(e_msg);
 			}
 		} 
-		if (!enc_ok) 
+		if (!secure) 
 			watch_write(j->send_watch, "<body>%s</body>", msg);
 
         	if (config_last & 4) 
@@ -561,7 +562,6 @@ static COMMAND(jabber_command_msg)
 		int ekgbeep 	= EKG_NO_BEEP;
 		char *format 	= NULL;
 		char *seq 	= NULL;
-		int secure	= 0;
 
 		rcpts[0] 	= xstrdup(uid);
 		rcpts[1] 	= NULL;

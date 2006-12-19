@@ -782,6 +782,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 	xmlnode_t *xitem;
 	
 	const char *from = jabber_attr(n->atts, "from");
+	char *x_encrypted = NULL;
 
 	char *juid 	= jabber_unescape(from); /* was tmp */
 	char *uid;
@@ -835,21 +836,17 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 			const char *ns = jabber_attr(xitem->atts, "xmlns");
 			
 			if (!xstrcmp(ns, "jabber:x:encrypted")) {	/* JEP-0027 */
-				char *x_encrypted = xstrdup(xitem->data);
+				x_encrypted = xstrdup(xitem->data);
 				char *error = NULL;
 
-				if ((x_encrypted = jabber_openpgp(s, uid, JABBER_OPENGPG_DECRYPT, x_encrypted, NULL, &error))) {
-					string_append(body, "Encrypted message: ");
-					string_append(body,  x_encrypted);
-					xfree(x_encrypted);
-				} else {
+				if (!(x_encrypted = jabber_openpgp(s, uid, JABBER_OPENGPG_DECRYPT, x_encrypted, NULL, &error))) {
 					string_append(body, "Encrypted message but error: ");
 					string_append(body, error);
+					string_append_c(body, '\n');
+					new_line = 1;
 				}
-				string_append_c(body, '\n');
 				xfree(error);
 
-				new_line = 1;
 			} else if (!xstrncmp(ns, "jabber:x:event", 14)) {
 				int acktype = 0; /* bitmask: 2 - queued ; 1 - delivered */
 				int isack;
@@ -959,7 +956,11 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 		} else debug_error("[JABBER, MESSAGE]: <%s\n", xitem->name);
 	}
 	if (new_line) string_append(body, "\n"); 	/* let's seperate headlines from message */
-	if (nbody)    string_append(body, nbody->data);	/* here message */
+
+	if (x_encrypted) 
+		string_append(body, x_encrypted);	/* encrypted message */
+	else if (nbody)
+		string_append(body, nbody->data);	/* unecrpyted message */
 
 	if (nbody || nsubject) {
 		const char *type = jabber_attr(n->atts, "type");
@@ -967,7 +968,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 		char *me	= xstrdup(session_uid_get(s));
 		int class 	= EKG_MSGCLASS_CHAT;
 		int ekgbeep 	= EKG_TRY_BEEP;
-		int secure	= 0;
+		int secure	= (x_encrypted != NULL);
 		char **rcpts 	= NULL;
 		char *seq 	= NULL;
 		uint32_t *format= NULL;
@@ -1012,6 +1013,8 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 		xfree(format);
 */
 	}
+	xfree(x_encrypted);
+
 	string_free(body, 1);
 	xfree(uid);
 } /* */
