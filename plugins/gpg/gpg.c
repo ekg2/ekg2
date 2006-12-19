@@ -23,7 +23,12 @@
 #include "ekg2-config.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <errno.h>
 
 #include <ekg/commands.h>
 #include <ekg/debug.h>
@@ -32,6 +37,8 @@
 #include <ekg/queries.h>
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
+
+#include <ekg/stuff.h>
 
 #include <gpgme.h>
 
@@ -42,7 +49,6 @@ PLUGIN_DEFINE(gpg, PLUGIN_CRYPT, gpg_theme_init);
 typedef struct {
 	char *uid;
 	char *keyid;
-	char *status;
 	char *password;
 	int keysetup;		/*  0 - autoadded; 
 				    1 - added by user; 
@@ -599,6 +605,11 @@ static int gpg_theme_init() {
 int gpg_plugin_init(int prio) {
 	gpgme_error_t err;
 
+	if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
+		debug_error("Creating of directory keys failed, gpg plugin needs it!\n");	/* it's not 100% true.. but... */
+		return -1;
+	}
+
 	if (!gpgme_check_version(MIN_GPGME_VERSION)) {
 		debug_error("GPGME initialization error: Bad library version");
 		return -1;
@@ -607,6 +618,27 @@ int gpg_plugin_init(int prio) {
 	if ((err = gpgme_engine_check_version(GPGME_PROTOCOL_OpenPGP))) {
 		debug_error("GPGME initialization error: %s", gpgme_strerror(err));
 		return -1;
+	}
+
+	{
+		FILE *f;
+		const char *dbfile = prepare_path("keys/gpgkeydb.txt", 1);
+		if ((f = fopen(dbfile, "r"))) {
+			char *line;
+			while ((line = read_file(f))) {
+				char **p = array_make(line, "\t", 3, 0, 0);
+				
+				if (p && p[0] && p[1] && p[2]) {
+					egpg_key_t *k = gpg_keydb_add(p[0], p[1], NULL);
+
+					k->keysetup = atoi(p[2]);
+				} else debug_error("[GPG] INVALID LINE: %s\n", line);
+
+				array_free(p);
+				xfree(line);
+			}
+			fclose(f);
+		} else debug_error("[GPG] Opening of %s failed: %d %s.\n", dbfile, errno, strerror(errno));
 	}
 
 #if 0
@@ -638,7 +670,36 @@ int gpg_plugin_init(int prio) {
 }
 
 static int gpg_plugin_destroy() {
+	FILE *f = NULL;
+	
+	list_t l;
+
+	if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
+		debug_error("[GPG] Creating of directory keys failed: %d %s. gpg db failed to save\n", errno, strerror(errno));
+	} else {
+		const char *dbfile = prepare_path("keys/gpgkeydb.txt", 1);
+
+		if (!(f = fopen(dbfile, "w")))
+			debug_error("[GPG] Opening of %s failed: %d %s. gpg db failed to save\n", dbfile, errno, strerror(errno));
+	}
+
+/* save our db to file, and cleanup memory... */
+	for (l = gpg_keydb; l; l = l->next) {
+		egpg_key_t *k = l->data;
+
+		if (f) fprintf(f, "%s\t%s\t%d\n", k->uid, k->keyid, k->keysetup);
+
+		xfree(k->uid);
+		xfree(k->keyid);
+		xfree(k->password);	/* WE DON'T SAVE PASSWORD ? XXX */
+	}
+	list_destroy(gpg_keydb, 1);
+	gpg_keydb = NULL;
+
+	if (f) fclose(f);
+
 	plugin_unregister(&gpg_plugin);
+	
 	return 0;
 }
 
