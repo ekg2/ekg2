@@ -445,6 +445,19 @@ static QUERY(gpg_verify) {
 	return 0;
 }
 
+static char *gpg_key_status(egpg_key_t *k) {
+	if (!k) return NULL;	/* X */
+
+	if (k->keynotok == -1)		return "Warning: Signature unknown status";
+	if (k->keynotok == 0)		return "Signature ok";
+	if (k->keynotok == 1)		return "Signature bad";
+	if (k->keynotok == 2) {
+		if (k->keysetup == 2) 	return "Warning: The KeyId doesn't match the key you set up. But encryption forced";
+		if (k->keysetup == 1) 	return "Warning: The KeyId doesn't match the key you set up.";
+	}
+	return NULL;
+}
+
 static QUERY(gpg_user_keyinfo) {
 /* HERE, we display info about gpg support for user 'u' 
  * 	query emited by /list 
@@ -460,16 +473,7 @@ static QUERY(gpg_user_keyinfo) {
 	if (xstrncmp(u->uid, "jid:", 4)) return 0; /* only jabber for now... */
 
 	if ((k = gpg_keydb_find_uid(u->uid))) {
-		char *status;
-
-		if (k->keynotok == -1)		status = "Warning: Signature unknown status";
-		if (k->keynotok == 0)		status = "Signature ok";
-		if (k->keynotok == 1)		status = "Signature bad";
-		if (k->keynotok == 2) {
-			if (k->keysetup == 2) 	status = "Warning: The KeyId doesn't match the key you set up. But encryption forced";
-			if (k->keysetup == 1) 	status = "Warning: The KeyId doesn't match the key you set up.";
-		}
-		printq("user_info_gpg_key", k->keyid, status);
+		printq("user_info_gpg_key", k->keyid, gpg_key_status(k));
 	}
 
 	return 0;
@@ -483,17 +487,17 @@ static COMMAND(gpg_command_key) {
 		for (l = gpg_keydb; l; l = l->next) {
 			egpg_key_t *k = l->data;
 
-			printq("generic", k->uid);
+			printq("gpg_keys_list", k->uid, k->keyid, gpg_key_status(k));
 		}
 
 		return 0;
 	}
-
+#if 0
 	if ((params[0] && !params[1]) || match_arg(params[0], 'i', "infokey", 2)) {		/* DISPLAY KEY INFO */
 		
 		return 0;
 	}
-
+#endif
 	if ((fkey = match_arg(params[0], 'f', "forcekey", 2)) || match_arg(params[0], 's', "setkey", 2)) {
 		egpg_key_t *k;
 		if (!params[1] || !params[2]) {
@@ -503,7 +507,7 @@ static COMMAND(gpg_command_key) {
 
 		if ((k = gpg_keydb_find_uid(params[1]))) {	/* szukaj klucza */
 			if (xstrcmp(k->keyid, params[2])) {		/* jesli mamy usera w bazie i klucze mishmashuja */
-				if (k->keysetup != 0) {			/* jesli klucz nie byl ustawiony przez nas */
+				if (k->keysetup == 0) {			/* jesli klucz byl ustawiony przez nas */
 					printq(fkey ? "gpg_key_set_okfbutmish" : "gpg_key_set_okbutmish", k->uid, params[2]);
 					k->keynotok = 2;		/* key mishmash */
 				} else	{
@@ -568,6 +572,8 @@ static int gpg_theme_init() {
 	format_add("gpg_key_set_okfbutmish",	_("%! Keys mishmash. Encryption forced."), 1);
 	format_add("gpg_key_set_okbutunk",	_("%! We didn't verify this key, if you're sure it's ok force key (gpg:key --forcekey) however it's NOT RECOMENDED.. or wait until we verify key"), 1);
 	format_add("gpg_key_set_okfbutunk",	_("%! We didn't verify this key, You've forced encryption. NOT RECOMENDED."), 1);
+
+	format_add("gpg_keys_list",		"%> %W%1%n/%W%2%n %3", 1);		/* uid, keyid, key status */
 
 	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
 #endif
