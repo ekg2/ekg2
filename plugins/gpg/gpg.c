@@ -504,20 +504,30 @@ static COMMAND(gpg_command_key) {
 		if ((k = gpg_keydb_find_uid(params[1]))) {	/* szukaj klucza */
 			if (xstrcmp(k->keyid, params[2])) {		/* jesli mamy usera w bazie i klucze mishmashuja */
 				if (k->keysetup != 0) {			/* jesli klucz nie byl ustawiony przez nas */
-					if (fkey)
-						printq("generic_error", "Keys mishmash, setting key forced, encryption will work");
-					else	printq("generic_error", "Keys mishmash, encryption of messages won't work until you forced this key, or user will change his keyid");
+					printq(fkey ? "gpg_key_set_okfbutmish" : "gpg_key_set_okbutmish", k->uid, params[2]);
 					k->keynotok = 2;		/* key mishmash */
-				} else	k->keynotok = -1;		/* jesli my go ustalilismy... to `nadal (?)` nie wiemy jaki jest stan tego klucza... */
+				} else	{
+					printq(fkey ? "gpg_key_set_okfbutunk" : "gpg_key_set_okbutunk", k->uid, params[2]);
+					k->keynotok = -1;		/* jesli my go ustalilismy... to `nadal (?)` nie wiemy jaki jest stan tego klucza... */
+				}
 
 			/* replace keyid */
 				xfree(k->keyid);
 				k->keyid = xstrdup(params[2]);
 			} else {
-				if (k->keynotok == 0) printq("generic", "keys ok");
-				if (k->keynotok == 1) printq("generic_error", "key ver failed last time");
-				if (k->keynotok ==-1) printq("generic_error", "unknown status of key");
-				if (k->keynotok ==-2) printq("generic_error", "keys mishmash");
+				if (k->keysetup == 2)  /* forced */
+					printq(
+						k->keynotok == 0 ? "gpg_key_set_okf" :
+						k->keynotok == 1 ? "gpg_key_set_okfbutver" :
+						k->keynotok == 2 ? "gpg_key_set_okfbutmish":
+								   "gpg_key_set_okfbutunk",
+							k->uid, k->keyid);
+				else	printq(
+						k->keynotok == 0 ? "gpg_key_set_ok" :
+						k->keynotok == 1 ? "gpg_key_set_okbutver" :
+						k->keynotok == 2 ? "gpg_key_set_okbutmish":
+								   "gpg_key_set_okbutunk",
+							k->uid, k->keyid);
 			}
 		} else {
 			k = gpg_keydb_add(params[1], params[2], NULL);
@@ -549,6 +559,15 @@ static int gpg_theme_init() {
 					"%) Encryption will be disabled until you force key (gpg:key --forcekey) NOT RECOMENDED or we verify key (signed presence is enough)"), 1);
 	format_add("gpg_key_set_newf",	_("%) You've forced setting new key for uid: %W%1%n keyid: %W%2%n\n"
 					"%! Forcing key is not good idea... Please rather use /gpg:key --setkey coz key will be verified before encryption..."), 1);
+
+	format_add("gpg_key_set_ok",		_("%> Keys you've set up for uid: %W%1%n match with our internal DB. Happy encrypted talk. F**k echelon"), 1);
+	format_add("gpg_key_set_okf",		_("%> Keys you've set up for uid: %W%1%n match with our internal DB. Happy encrypted talk. F**k echelon (Forcing key is not nessesary here!)"), 1);
+	format_add("gpg_key_set_okbutver",	_("%! Keys matched, but lasttime we fail to verify key. Encryption won't work until forced."), 1);
+	format_add("gpg_key_set_okfbutver",	_("%! Keys matched, but lasttime we fail to verify key. Encryption forced."), 1);
+	format_add("gpg_key_set_okbutmish",	_("%! Keys mishmash. Encryption won't work until forced or user change his keyid."), 1);
+	format_add("gpg_key_set_okfbutmish",	_("%! Keys mishmash. Encryption forced."), 1);
+	format_add("gpg_key_set_okbutunk",	_("%! We didn't verify this key, if you're sure it's ok force key (gpg:key --forcekey) however it's NOT RECOMENDED.. or wait until we verify key"), 1);
+	format_add("gpg_key_set_okfbutunk",	_("%! We didn't verify this key, You've forced encryption. NOT RECOMENDED."), 1);
 
 	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
 #endif
