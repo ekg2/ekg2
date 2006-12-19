@@ -156,7 +156,6 @@ static QUERY(gpg_message_encrypt) {
 	}
 
 	if (key->keynotok) {
-		debug_error("gpg_message_encrypt() keynotok == %d keysetup: %d\n", key->keynotok, key->keysetup);
 		if (key->keysetup != 2) {
 			if (key->keynotok == -1)*error = xstrdup("Message not encrypted cause key verification status unknown");
 			if (key->keynotok == 1) *error = xstrdup("Message not encrypted cause key failed verification");
@@ -164,10 +163,11 @@ static QUERY(gpg_message_encrypt) {
 			return 1;
 		}
 		/* key forced */
+		debug_error("gpg_message_encrypt() USER FORCE KEY!!!!\n");
 	}
 
 	if (key->keysetup == 0 && 1 /* XXX, zmienna */) {
-		*error = xstrdup("Message not encrypted, key is ok, but it was set up automagicly... you must turn on global encryption with /set gpg:smth 1 (XXX) or use /gpg:key --setkey");
+		*error = xstrdup("Message not encrypted, key is ok, but it was set up automagicly... you must [turn on global encryption with /set gpg:smth 1 (XXX) or] use /gpg:key --setkey");
 		return 1;
 	}
 
@@ -573,6 +573,17 @@ static COMMAND(gpg_command_key) {
 			printq("not_enough_params", name);
 			return -1;
 		}
+
+		if (!(k = gpg_keydb_find_uid(params[1]))) { 
+			printq("gpg_key_not_found", params[1]);
+			return -1;
+		}
+
+		k->keysetup = 0;
+		k->keynotok = -1;
+
+		printq("gpg_key_unset", params[1]);
+
 		return 0;
 	}
 	
@@ -582,6 +593,9 @@ static COMMAND(gpg_command_key) {
 
 static int gpg_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	format_add("gpg_key_unset",	_("%) GPGKEY for uid: %W%1%n UNSET!"), 1);
+	format_add("gpg_key_not_found", _("%> GPGKEY for uid: %W%1%n NOT FOUND!"), 1);
+
 	format_add("gpg_key_set_new",	_("%) You've set up new key for uid: %W%1%n keyid: %W%2%n\n"
 					"%) Encryption will be disabled until you force key (gpg:key --forcekey) NOT RECOMENDED or we verify key (signed presence is enough)"), 1);
 	format_add("gpg_key_set_newf",	_("%) You've forced setting new key for uid: %W%1%n keyid: %W%2%n\n"
