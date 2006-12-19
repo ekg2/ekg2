@@ -214,7 +214,6 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 		char req[47];
 
 		dcc_t *d = NULL;
-		jabber_dcc_t *p;
 		list_t l;
 		int i;
 
@@ -310,7 +309,7 @@ static watch_t *jabber_dcc_init(int port) {
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		debug_error("jabber_dcc_init() socket() FAILED (%s)\n", strerror(errno));
-		return -1;
+		return NULL;
 	}
 
 	sin.sin_family = AF_INET;
@@ -322,7 +321,7 @@ static watch_t *jabber_dcc_init(int port) {
 		port++;
 		if (port > 65535) {
 			close(fd);
-			return -1;
+			return NULL;
 		}
 
 		sin.sin_port = htons(port);
@@ -330,7 +329,7 @@ static watch_t *jabber_dcc_init(int port) {
 	if (listen(fd, 10)) {
 		debug_error("jabber_dcc_init() listen() FAILED (%s)\n", strerror(errno));
 		close(fd);
-		return -1;
+		return NULL;
 	}
 	debug_function("jabber_dcc_init() SUCCESSED fd:%d port:%d\n", fd, port);
 
@@ -414,6 +413,10 @@ QUERY(jabber_dcc_postinit) {
 #else
 		debug_error("[jabber] compilated without WITH_JABBER_DCC=1, disabling JABBER DCC.\n");
 #endif
+	if (!dcc_watch) {
+		jabber_dcc = 0;
+		jabber_dcc_fd = -1;
+	}
 	return 0;
 }
 
