@@ -450,15 +450,15 @@ if test "x$have_sqlite" = "xyes" || test "x$have_sqlite3" = "xyes" ; then
 	PLUGINS="$PLUGINS logsqlite"
 fi
 
-AC_ARG_WITH(gpg,		AC_HELP_STRING([--without-gpg],			[Compile without gpg support (gpg plugin)]))
+# AC_ARG_WITH(gpg,		AC_HELP_STRING([--without-gpg],			[Compile without gpg support (gpg plugin)]))
 
-if test "x$with_gpg" != "xno"; then
-	AM_PATH_GPGME(1.0.0, [
-		have_gpg="yes"
-		AC_CONFIG_FILES([plugins/gpg/Makefile])
-		PLUGINS="$PLUGINS gpg"
-	])
-fi
+# if test "x$with_gpg" != "xno"; then
+#	AM_PATH_GPGME(1.0.0, [
+#		have_gpg="yes"
+#		AC_CONFIG_FILES([plugins/gpg/Makefile])
+#		PLUGINS="$PLUGINS gpg"
+#	])
+# fi
 
 PLUGINS_LIBS=""
 
