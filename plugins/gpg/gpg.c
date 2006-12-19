@@ -503,16 +503,16 @@ static COMMAND(gpg_command_key) {
 
 		if ((k = gpg_keydb_find_uid(params[1]))) {	/* szukaj klucza */
 			if (xstrcmp(k->keyid, params[2])) {		/* jesli mamy usera w bazie i klucze mishmashuja */
-				if (k->keysetup == 0) {
+				if (k->keysetup != 0) {			/* jesli klucz nie byl ustawiony przez nas */
 					if (fkey)
 						printq("generic_error", "Keys mishmash, setting key forced, encryption will work");
 					else	printq("generic_error", "Keys mishmash, encryption of messages won't work until you forced this key, or user will change his keyid");
-				}
+					k->keynotok = 2;		/* key mishmash */
+				} else	k->keynotok = -1;		/* jesli my go ustalilismy... to `nadal (?)` nie wiemy jaki jest stan tego klucza... */
 
-			/* replace keys */
+			/* replace keyid */
 				xfree(k->keyid);
 				k->keyid = xstrdup(params[2]);
-				k->keynotok = 2;
 			} else {
 				if (k->keynotok == 0) printq("generic", "keys ok");
 				if (k->keynotok == 1) printq("generic_error", "key ver failed last time");
@@ -521,8 +521,7 @@ static COMMAND(gpg_command_key) {
 			}
 		} else {
 			k = gpg_keydb_add(params[1], params[2], NULL);
-			printq("generic_error", "unknown status of key");
-			/* XXX, new key in db, user didn't sent us signed presence... until forced encryption won't work */
+			printq(fkey ? "gpg_key_set_newf" : "gpg_key_set_new", params[1], params[2]);
 		}
 
 		if (fkey)
@@ -537,10 +536,23 @@ static COMMAND(gpg_command_key) {
 			printq("not_enough_params", name);
 			return -1;
 		}
+		return 0;
 	}
 	
 	printq("invalid_params", name);
 	return -1;
+}
+
+static int gpg_theme_init() {
+#ifndef NO_DEFAULT_THEME
+	format_add("gpg_key_set_new",	_("%) You've set up new key for uid: %W%1%n keyid: %W%2%n\n"
+					"%) Encryption will be disabled until you force key (gpg:key --forcekey) NOT RECOMENDED or we verify key (signed presence is enough)"), 1);
+	format_add("gpg_key_set_newf",	_("%) You've forced setting new key for uid: %W%1%n keyid: %W%2%n\n"
+					"%! Forcing key is not good idea... Please rather use /gpg:key --setkey coz key will be verified before encryption..."), 1);
+
+	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
+#endif
+	return 0;
 }
 
 #define MIN_GPGME_VERSION "1.0.0"
@@ -583,13 +595,6 @@ int gpg_plugin_init(int prio) {
 
 	query_connect_id(&gpg_plugin, USERLIST_INFO,		gpg_user_keyinfo, NULL);
 
-	return 0;
-}
-
-static int gpg_theme_init() {
-#ifndef NO_DEFAULT_THEME
-	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
-#endif
 	return 0;
 }
 
