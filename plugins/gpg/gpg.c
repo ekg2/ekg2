@@ -446,16 +446,30 @@ static QUERY(gpg_verify) {
 }
 
 static char *gpg_key_status(egpg_key_t *k) {
+	static char buf[123];
+
 	if (!k) return NULL;	/* X */
 
-	if (k->keynotok == -1)		return "Warning: Signature unknown status";
-	if (k->keynotok == 0)		return "Signature ok";
-	if (k->keynotok == 1)		return "Signature bad";
-	if (k->keynotok == 2) {
-		if (k->keysetup == 2) 	return "Warning: The KeyId doesn't match the key you set up. But encryption forced";
-		if (k->keysetup == 1) 	return "Warning: The KeyId doesn't match the key you set up.";
-	}
-	return NULL;
+	buf[0] = 0;
+
+	if (k->keynotok == -1)		xstrcat(&buf[0], "Warning: Signature unknown status");
+	if (k->keynotok == 0)		xstrcat(&buf[0], "Signature ok");
+	if (k->keynotok == 1)		xstrcat(&buf[0], "Warning: Signature bad.");
+	if (k->keynotok == 2)		xstrcat(&buf[0], "Warning: The KeyId doesn't match the key you set up.");
+
+	if (k->keysetup == 2)
+		xstrcat(&buf[0], " [ENCRPYTION FORCED]");
+
+	if (k->keysetup == 1 && k->keynotok == 0)
+		xstrcat(&buf[0], " [ENCRYPTED]");
+
+	if (k->keysetup == 0) 
+		xstrcat(&buf[0], " [NOTENCRYPTED]");
+
+	if (k->keysetup == 0 && k->keynotok == 0)
+		xstrcat(&buf[0], " [If you trust that key use /gpg:key -s]");
+
+	return &buf[0];
 }
 
 static QUERY(gpg_user_keyinfo) {
@@ -519,7 +533,7 @@ static COMMAND(gpg_command_key) {
 				xfree(k->keyid);
 				k->keyid = xstrdup(params[2]);
 			} else {
-				if (k->keysetup == 2)  /* forced */
+				if (fkey)  /* forced */
 					printq(
 						k->keynotok == 0 ? "gpg_key_set_okf" :
 						k->keynotok == 1 ? "gpg_key_set_okfbutver" :
