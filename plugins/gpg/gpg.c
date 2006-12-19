@@ -530,12 +530,14 @@ static COMMAND(gpg_command_key) {
 
 		if ((k = gpg_keydb_find_uid(params[1]))) {	/* szukaj klucza */
 			if (xstrcmp(k->keyid, params[2])) {		/* jesli mamy usera w bazie i klucze mishmashuja */
-				if (k->keysetup == 0) {			/* jesli klucz byl ustawiony przez nas */
+/* XXX, keep user valid key? and check here if match? XXX */
+
+				if (k->keynotok != 2 && k->keynotok != -1) {			/* XXX ? keynotok != 0 */
 					printq(fkey ? "gpg_key_set_okfbutmish" : "gpg_key_set_okbutmish", k->uid, params[2]);
-					k->keynotok = 2;		/* key mishmash */
-				} else	{
+					k->keynotok = 2;
+				} else {
 					printq(fkey ? "gpg_key_set_okfbutunk" : "gpg_key_set_okbutunk", k->uid, params[2]);
-					k->keynotok = -1;		/* jesli my go ustalilismy... to `nadal (?)` nie wiemy jaki jest stan tego klucza... */
+					k->keynotok = -1;					/* unknown status of key */
 				}
 
 			/* replace keyid */
@@ -569,6 +571,7 @@ static COMMAND(gpg_command_key) {
 	}
 
 	if (match_arg(params[0], 'd', "delkey", 2)) {
+		egpg_key_t *k;
 		if (!params[1]) {
 			printq("not_enough_params", name);
 			return -1;
