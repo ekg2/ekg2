@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
-
 #include <ekg/sessions.h>
 #include <ekg/queries.h>
 #include <ekg/userlist.h>
@@ -38,12 +38,21 @@
 static int gpg_theme_init();
 PLUGIN_DEFINE(gpg, PLUGIN_CRYPT, gpg_theme_init);
 
+/* XXX, enums */
 typedef struct {
 	char *uid;
 	char *keyid;
 	char *status;
 	char *password;
-	int keysetup;
+	int keysetup;		/*  0 - autoadded; 
+				    1 - added by user; 
+				    2 - forced by user 
+				*/
+	int keynotok;		/* -1 - keystatus unknown. 
+				    0 - key ok;	
+				    1 - key ver failed; 
+				    2 - key mishmashed 
+				 */
 } egpg_key_t;
 
 static list_t gpg_keydb;
@@ -55,8 +64,7 @@ static egpg_key_t *gpg_keydb_add(const char *uid, const char *keyid, const char 
 
 	a->uid		= xstrdup(uid);
 	a->keyid 	= xstrdup(keyid);
-/*	a->password	= NULL; */
-/*	a->keysetup	= 0; */
+	a->keynotok	= -1;
 	
 	list_add(&gpg_keydb, a, 0);
 
@@ -130,16 +138,32 @@ static QUERY(gpg_message_encrypt) {
 	char **message	= va_arg(ap, char **);			/* message to encrypt */
 	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
 
-	const char *key  = NULL;
-
 	char *gpg_data	= *message;
 
+	egpg_key_t *key = gpg_keydb_find_uid(uid);
+
 	*error = NULL;
 
-	if (!(key = gpg_find_keyid(uid, NULL, error))) 
+	if (!(key = gpg_keydb_find_uid(uid))) {
+		*error = saprintf("GPG KEY FOR USER: %s NOT FOUND. TRY /gpg:key --setkey\n", uid);
 		return 1;
+	}
 
-	*error = NULL;
+	if (key->keynotok) {
+		debug_error("gpg_message_encrypt() keynotok == %d keysetup: %d\n", key->keynotok, key->keysetup);
+		if (key->keysetup != 2) {
+			if (key->keynotok == -1)*error = xstrdup("Message not encrypted cause key verification status unknown");
+			if (key->keynotok == 1) *error = xstrdup("Message not encrypted cause key failed verification");
+			if (key->keynotok == 2) *error = xstrdup("Message not encrypted cause key mishmash, if you really want encrypt messages use: /gpg:key --forcekey");
+			return 1;
+		}
+		/* key forced */
+	}
+
+	if (key->keysetup == 0 && 1 /* XXX, zmienna */) {
+		*error = xstrdup("Message not encrypted, key is ok, but it was set up automagicly... you must turn on global encryption with /set gpg:smth 1 (XXX) or use /gpg:key --setkey");
+		return 1;
+	}
 
 	do {
 		gpgme_ctx_t ctx;
@@ -153,7 +177,7 @@ static QUERY(gpg_message_encrypt) {
 		gpgme_set_textmode(ctx, 0);
 		gpgme_set_armor(ctx, 1);
 
-		err = gpgme_get_key(ctx, key, &gpg_key, 0);
+		err = gpgme_get_key(ctx, key->keyid, &gpg_key, 0);
 		if (!err && gpg_key) {
 			gpgme_key_t keys[] = { gpg_key, 0 };
 			err = gpgme_data_new_from_mem(&in, gpg_data, xstrlen(gpg_data), 0);
@@ -341,7 +365,6 @@ static QUERY(gpg_verify) {
 	do {
 		gpgme_ctx_t ctx;
 		gpgme_error_t err;
-		gpgme_key_t key;
 
 		gpgme_data_t data_sign, data_text;
 
@@ -361,40 +384,47 @@ static QUERY(gpg_verify) {
 					if (vr && vr->signatures) {
 						char *fpr	= vr->signatures->fpr;
 						char *keyid	= NULL;
+						int keynotok	= -1;
+						gpgme_key_t key;
 						egpg_key_t *k;
 
 						/* FINGERPRINT -> KEY_ID */
 						if (!gpgme_get_key(ctx, fpr, &key, 0) && key) {
-							keyid = key->subkeys->keyid;
+							keyid = xstrdup(key->subkeys->keyid);
 							gpgme_key_release(key);
 						}
 
-						xfree(*keydata);
-						*keydata = xstrdup(keyid);
+						if (!vr->signatures->summary && !vr->signatures->status) { /* summary = 0, status = 0 -> signature valid */
+							*error	= xstrdup("Signature ok");
+							keynotok = 0;				/* ok */
+						} else if (vr->signatures->summary & GPGME_SIGSUM_RED) {
+							*error	= xstrdup("Signature bad");
+							keynotok = 1;				/* bad */
+						} else if (vr->signatures->summary & GPGME_SIGSUM_GREEN) {
+							*error	= xstrdup("Signature ok");
+							keynotok = 0;				/* ok */
+						} else	{ 
+							*error	= xstrdup("Signature ?!?!");
+							keynotok = -1;				/* bad, unknown */
+						}
 
 						if ((k = gpg_keydb_find_uid(uid))) {
-							xfree(k->status);
 							if (xstrcmp(k->keyid, keyid)) {
-								if (k->keysetup)
-									k->status = xstrdup("Warning: The KeyId doesn't match the key you set up");
-								else {
+								if (k->keysetup == 0) {		/* if we don't setup our key... than replace it. */
 									xfree(k->keyid);
 									k->keyid  = xstrdup(keyid);
-									k->status = NULL;
-								}
-							} else		k->status = NULL;
-						} else k = gpg_keydb_add(uid, keyid, fpr);
+								} else	debug_error("[gpg] uid: %s is really using key: %s in our db: %s\n", uid, keyid, k->keyid);
+								if (k->keysetup)	k->keynotok = 2;			/* key mishmash (if we set it up manually. */
+								else			k->keynotok = keynotok;
+							} else	
+								k->keynotok = keynotok;
+						} else {
+							k = gpg_keydb_add(uid, keyid, fpr);
+							k->keynotok	= keynotok;
+						}
 
-						if (!vr->signatures->summary && !vr->signatures->status) /* summary = 0, status = 0 -> signature valid */
-							*error	= xstrdup("Signature ok");
-						else if (vr->signatures->summary & GPGME_SIGSUM_RED)
-							*error	= xstrdup("Signature bad");
-						else if (vr->signatures->summary & GPGME_SIGSUM_GREEN)
-							*error	= xstrdup("Signature ok");
-						else	*error	= xstrdup("Signature ?!?!");
-
-						if (!k->status) k->status = xstrdup(*error);
-
+						xfree(*keydata);
+						*keydata = keyid;
 					} else {
 						xfree(*keydata);
 						*keydata = NULL;
@@ -430,10 +460,87 @@ static QUERY(gpg_user_keyinfo) {
 	if (xstrncmp(u->uid, "jid:", 4)) return 0; /* only jabber for now... */
 
 	if ((k = gpg_keydb_find_uid(u->uid))) {
-		printq("user_info_gpg_key", k->keyid, k->status);
+		char *status;
+
+		if (k->keynotok == -1)		status = "Warning: Signature unknown status";
+		if (k->keynotok == 0)		status = "Signature ok";
+		if (k->keynotok == 1)		status = "Signature bad";
+		if (k->keynotok == 2) {
+			if (k->keysetup == 2) 	status = "Warning: The KeyId doesn't match the key you set up. But encryption forced";
+			if (k->keysetup == 1) 	status = "Warning: The KeyId doesn't match the key you set up.";
+		}
+		printq("user_info_gpg_key", k->keyid, status);
 	}
 
 	return 0;
+}
+
+static COMMAND(gpg_command_key) {
+	int fkey = 0;
+
+	if ((!params[0]) || match_arg(params[0], 'l', "listkeys", 2)) {		/* DISPLAY SUMMARY OF ALL KEYS */
+		list_t l;
+		for (l = gpg_keydb; l; l = l->next) {
+			egpg_key_t *k = l->data;
+
+			printq("generic", k->uid);
+		}
+
+		return 0;
+	}
+
+	if ((params[0] && !params[1]) || match_arg(params[0], 'i', "infokey", 2)) {		/* DISPLAY KEY INFO */
+		
+		return 0;
+	}
+
+	if ((fkey = match_arg(params[0], 'f', "forcekey", 2)) || match_arg(params[0], 's', "setkey", 2)) {
+		egpg_key_t *k;
+		if (!params[1] || !params[2]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if ((k = gpg_keydb_find_uid(params[1]))) {	/* szukaj klucza */
+			if (xstrcmp(k->keyid, params[2])) {		/* jesli mamy usera w bazie i klucze mishmashuja */
+				if (k->keysetup == 0) {
+					if (fkey)
+						printq("generic_error", "Keys mishmash, setting key forced, encryption will work");
+					else	printq("generic_error", "Keys mishmash, encryption of messages won't work until you forced this key, or user will change his keyid");
+				}
+
+			/* replace keys */
+				xfree(k->keyid);
+				k->keyid = xstrdup(params[2]);
+				k->keynotok = 2;
+			} else {
+				if (k->keynotok == 0) printq("generic", "keys ok");
+				if (k->keynotok == 1) printq("generic_error", "key ver failed last time");
+				if (k->keynotok ==-1) printq("generic_error", "unknown status of key");
+				if (k->keynotok ==-2) printq("generic_error", "keys mishmash");
+			}
+		} else {
+			k = gpg_keydb_add(params[1], params[2], NULL);
+			printq("generic_error", "unknown status of key");
+			/* XXX, new key in db, user didn't sent us signed presence... until forced encryption won't work */
+		}
+
+		if (fkey)
+			k->keysetup = 2;	/* forced */
+		else	k->keysetup = 1;	/* normal */
+
+		return 0;
+	}
+
+	if (match_arg(params[0], 'd', "delkey", 2)) {
+		if (!params[1]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+	}
+	
+	printq("invalid_params", name);
+	return -1;
 }
 
 #define MIN_GPGME_VERSION "1.0.0"
@@ -459,6 +566,9 @@ int gpg_plugin_init(int prio) {
 
 	plugin_register(&gpg_plugin, prio);
 
+	command_add(&gpg_plugin, "gpg:key", "p u ?", gpg_command_key, 0, 
+		"-d --delkey -f --forcekey -i --infokey -l --listkeys -s --setkey");
+
 	query_connect_id(&gpg_plugin, GPG_MESSAGE_ENCRYPT, 	gpg_message_encrypt, NULL);
 	query_connect_id(&gpg_plugin, GPG_MESSAGE_DECRYPT, 	gpg_message_decrypt, 
 						"-----BEGIN PGP MESSAGE-----\n\n"
@@ -478,7 +588,7 @@ int gpg_plugin_init(int prio) {
 
 static int gpg_theme_init() {
 #ifndef NO_DEFAULT_THEME
-	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2) %n"), 1);	/* keyid, status */
+	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
 #endif
 	return 0;
 }
