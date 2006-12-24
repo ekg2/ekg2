@@ -1,0 +1,30 @@
+auto_connect
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	Okre¶la, czy sesja bêdzie ³±czona automagicznie przy starcie programu.
+
+max_filesize
+	typ: liczba
+	domy¶lna warto¶æ: 16384
+	
+	Plik wiêksze ni¿ warto¶æ tej zmiennej, bêd± ignorowane przez wtyczkê.
+
+send_cmd
+	typ: tekst
+	domy¶lna warto¶æ: (brak)
+	
+	Polecenie u¿ywane do wysy³ania wiadomo¶ci przy u¿yciu wtyczki.
+	Uruchomione bêdzie z dwoma argumentami - UID-em (bez xmsg:) oraz
+	¶cie¿k± do pliku z wiadomo¶ci±. Proszê zwróciæ uwagê, ¿e xmsg
+	nie sprawdza kodu zakoñczenia aplikacji/skryptu, tak wiêc wszelakie
+	b³êdy zwracane byæ winny poprzez u¿ycie katalogu wiadomo¶ci
+	przychodz±cych.
+	
+rescan_timer
+	typ: liczba
+	domy¶lna warto¶æ: 0 or 300
+	
+	Interwa³ ponownego wczytywania katalogu wiadomo¶ci przychodz±cych.
+	Zmienna ta nie powinna byæ u¿ywana w ¶rodowiskach, wspieraj±cych
+	inotify, tak wiêc domy¶lnie ma tam warto¶æ 0.

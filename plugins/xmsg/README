@@ -1,0 +1,120 @@
+xmsg for ekg2
+(C) 2006 Michał Górny
+===========================================================
+
+Some time ago I was looking for some easy way to send messages to my ekg2 from
+external scripts. I haven't found any useful methods to do this. Maybe I could
+use rc plugin some way, but it'd be pain-in-the-ass, I think. So I decided to
+create small plugin for doing this.
+
+I thought about several ways of delivering messages to the plugin, but finally
+decided to use filesystem for this. xmsg watches directory specified by user,
+fetches any file created there and shows it to user as a message.
+
+All of this is done by use of xmsg: sessions. To start watching some directory,
+at first You should create session, with path to that directory as UID. Then
+connect fresh-made session and watch the magic.
+
+When session is connected, xmsg parses all files currently existing in given
+directory. If possible, then it uses inotify to immediately fetch newly-created
+files. Even if inotify is not available (kernel <= 2.6.13, for example), it can
+watch the directory by use of timers.
+
+Variables:
+	auto_connect
+		If set to 1, then ekg2 will automagically connect the session
+		on startup. Defaults to 1.
+	max_filesize
+		The size in bytes, above which files won't be read. Please bear
+		in mind, that xmsg mmaps whole file, so this shouldn't be set
+		above desired max memory consumption, and above max message
+		size. Default to 16 kiB.
+	rescan_timer
+		Interval of rescanning given directory. No need for this when
+		using inotify. Defaults to 0, if inotify is available, or 300.
+	send_cmd
+		See SENDING MESSAGES below.
+
+Some remarks:
+* session UIDs should be in form 'xmsg:/some/path', without trailing slash
+  (but existence of that slash shouldn't also make any problems),
+* xmsg does watch only given directory, it DOES NOT watch its' subdirectories,
+* the sender of xmsg messages is 'xmsg:filename', but the filename is cut
+  before first colon (that's feature, not bug), so I recommend to use filenames
+  like: 'somesource:XXXXXX' (mktemp-like syntax),
+* logs plugin currently has problems with slashes in UIDs, so xmsg messages
+  won't be logged,
+* all fetched files are immediately removed (but only if read successfully),
+* message files shouldn't be created directly in watched directory; although
+  inotify waits until file is closed, the plugin can't fully determine if
+  someone isn't still writing to it — so it's better to create it somewhere else
+  first, then only move to watched directory.
+
+EXAMPLE OF USE
+
+/usr/local/bin/smbxmsg:
+	#!/bin/bash
+	[ -z "$1" ] && exit 1
+	[ -z "$2" ] && exit 1
+	[ ! -f "$2" ] && exit 2
+	[ "`stat -c %U "$2"`" != "smbguest" ] && exit 3
+	
+	N=`mktemp -u /some/path/smbmsg-$1:XXXXXX`
+	
+	chown myuser:mygroup "$2"
+	mv "$2" "$N"
+
+/etc/samba/smb.conf:
+	[...]
+  	guest account = smbguest
+	message command = sudo /usr/local/bin/smbxmsg "%f" %s
+	[...]
+
+/etc/sudoers:
+	smbguest ALL=(ALL)      NOPASSWD: /usr/local/bin/smbxmsg
+
+Then all winpopup messages should be delivered directly to ekg2. Although
+smbxmsg takes root privs, it makes sure that owner of given file is smbguest.
+
+SENDING MESSAGES
+
+Starting from 1.9 cvs revision, xmsg is now able to send messages. Message
+sending is done by using external handler command, given in send_cmd variable.
+When user sends message to xmsg-UID, xmsg saves the whole message in temporary
+file, then executes that command with two arguments — UID (without xmsg:)
+and path to that file. xmsg DOES NOT unlink message's temporary file after
+handler closes, so handler should do it itself.
+
+EXAMPLE HANDLER
+
+/home/myuser/bin/xmsghandler:
+	#!/usr/bin/perl
+	
+	use File::Temp qw/tempfile/;
+	
+	sub reply
+	{
+	($fh, $fn) = tempfile("/tmp/$ARGV[0]:XXXXXX");
+		print $fh shift;
+		close $fh;
+		`mv "$fn" "/some/path/"`
+	}
+	
+	exit 1 if (! ($ARGV[0] && $ARGV[1]));
+	exit 2 if (! -f $ARGV[1]);
+	
+	if ($ARGV[0] =~ /^smbmsg-(.*)/) {
+		`cat "$ARGV[1]" | smbclient -M "$1"`;
+		reply('WinPopup request failed - probably peer is not connected')
+			if ($?);
+	} else {
+		reply('Unknown rcpt - message lost');
+	}
+	
+	unlink $ARGV[1];
+	exit 0;
+
+This handler is designed to send winpopup messages with UIDs compatible with
+previous example.
+
+(That's all, folks)

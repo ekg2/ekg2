@@ -1,0 +1,28 @@
+auto_connect
+	type: bool
+	default value: 1
+	
+	If set to true, this session will be connected automagically
+	on program startup.
+
+max_filesize
+	type: integer
+	default value: 16384
+	
+	Files larger than value of this variable won't be read by xmsg plugin.
+
+send_cmd
+	type: string
+	default value: (none)
+	
+	Command used to send messages to xmsg plugin; it'll be launched with
+	two args - an UID (without xmsg:) and path to file with message inside.
+	Note that xmsg doesn't check return value from this handler app/script,
+	so errors should be returned by use of session's incoming message dir.
+	
+rescan_timer
+	type: integer
+	default value: 0 or 300
+	
+	Interval of rescanning incoming message directory. It shouldn't be used
+	(and thus is set to 0 by default) in inotify environments.

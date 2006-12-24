@@ -93,9 +93,9 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile po/Makefile.in])
 AC_CONFIG_FILES([ekg/ekg2-config])
-PLUGINS="logs mail rc sms pcm irc rot13 httprc_xajax"
+PLUGINS="logs mail rc sms pcm irc rot13 httprc_xajax xmsg"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
@@ -255,6 +255,14 @@ if test "x$with_zlib" != "xno"; then
 			ZLIB_LIBS="-lz"
 			have_zlib=yes
 		])
+	])
+fi
+
+AC_ARG_WITH(inotify,		AC_HELP_STRING([--without-inotify],		[Compile without inotify support (in xmsg plugin)]))
+
+if test "x$with_inotify" != "xno"; then
+	AC_CHECK_HEADERS(sys/inotify.h, [
+		AC_DEFINE(HAVE_INOTIFY, 1, [define if you want inotify support])
 	])
 fi
 
@@ -520,7 +528,7 @@ echo ""
 # - PROTOCOL PLUGINS
 echo -en " - Protocols:\t irc "
 	if test "x$have_expat" = "xyes"; then
-		echo -n "jabber "
+		echo -n "jabber xmsg "
 
 		if test "x$jabber_have_gnutls" = "xyes"; then
 			echo -n "(with ssl support in -lgnutls) "
