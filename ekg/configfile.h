@@ -31,7 +31,7 @@ int config_read(const char *filename);
 int config_read_plugins();
 int config_read_later(const char *filename);
 int config_write();
-int config_write_partly(const char *filename, char **vars);
+int config_write_partly(const char *filename, const char **vars);
 void config_write_crash();
 void debug_write_crash();
 

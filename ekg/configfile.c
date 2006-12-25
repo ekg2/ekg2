@@ -556,7 +556,7 @@ int config_write()
  * 
  * 0/-1
  */
-int config_write_partly(const char *filename, char **vars)
+int config_write_partly(const char *filename, const char **vars)
 {
 	char *newfn;
 	char *line;
@@ -581,7 +581,7 @@ int config_write_partly(const char *filename, char **vars)
 		return -1;
 	}
 	
-	wrote = xcalloc(array_count(vars) + 1, sizeof(int));
+	wrote = xcalloc(array_count((char **) vars) + 1, sizeof(int));
 	
 	fchmod(fileno(fo), 0600);
 
