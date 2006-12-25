@@ -1047,17 +1047,10 @@ void ekg_exit()
 {
 	extern int ekg2_dlclose(void *plugin);
 
-	char **vars = NULL;
 	list_t l;
 	int i;
 
 	msg_queue_write();
-
-	/* setting default session */
-	if (config_sessions_save && session_current) {
-		session_int_set(session_current, "default", 1);
-/*		config_changed = 1;	*/
-	}
 
 	xfree(last_search_first_name);
 	xfree(last_search_last_name);
@@ -1066,13 +1059,18 @@ void ekg_exit()
 
 	windows_save();
 
+	/* setting windows layout */
 	if (config_windows_save) {
-		array_add(&vars, xstrdup("windows_layout"));
+		const char *vars[] = { "windows_layout", NULL };
+		config_write_partly(NULL, vars);
 	}
 
-	if (vars) {
+	/* setting default session */
+	if (config_sessions_save && session_current) {
+		const char *vars[] = { "session_default", NULL };
+		xfree(config_session_default); config_session_default = xstrdup(session_current->uid);
+
 		config_write_partly(NULL, vars);
-		array_free(vars);
 	}
 
 	for (i = 0; i < SEND_NICKS_MAX; i++) {
