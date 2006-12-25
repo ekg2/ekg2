@@ -380,7 +380,8 @@ notify_plugins:
  */
 char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure)
 {
-	char *class_str, timestamp[100], *t = NULL, *text = xstrdup(__text), *emotted = NULL;
+	char *class_str, timestamp[100], *text = xstrdup(__text), *emotted = NULL;
+	char *securestr = NULL;
 	const char *target = sender, *user;
         time_t now;
 	session_t *s = session_find(session);
@@ -464,6 +465,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	        struct tm *tm_now, *tm_msg;
 
 		now = time(NULL);
+	/* localtime() uses one static buffor. it cannot work good. XXX 24 XII 2006 */
 		tm_now = localtime(&now);
 		tm_msg = localtime(&sent);
 
@@ -531,10 +533,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
 			play_sound(config_sound_sysmsg_file);
 	
-        if (config_last & 3 && xstrcasecmp(class_str, "sent")) 
+        if (config_last & 3 && xstrcmp(class_str, "sent")) 
 	        last_add(0, sender, now, sent, text);
 	
-	user = xstrcasecmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
+	user = xstrcmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
 
 	if (config_emoticons && text)
 		emotted = emoticon_expand(text);
@@ -542,10 +544,21 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (empty_theme)
 		class_str = "empty";
 
-	print_window(target, s, (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), class_str, user, timestamp, (emotted) ? emotted : text, (!xstrcasecmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), (!xstrcasecmp(class_str, "sent")) ? s->uid : get_uid(s, sender), (secure) ? format_string(format_find("secure")) : "");
+	if (secure) 
+		securestr = format_string(format_find("secure"));
+
+	print_window(target, s, 
+		(class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), 
+		class_str, 
+		user, 
+		timestamp, 
+		(emotted) ? emotted : text, 
+		(!xstrcmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), 
+		(!xstrcmp(class_str, "sent")) ? s->uid : get_uid(s, sender), 
+		(secure) ? securestr : "");
 
 	xfree(text);
-	xfree(t);
+	xfree(securestr);
 	xfree(emotted);
 	return xstrdup(target);
 }
@@ -656,7 +669,7 @@ static QUERY(protocol_message)
                                 list_remove(&autofinds, autofinds->data, 1);
                         }
 
-                        list_add(&autofinds, (void *) uid, xstrlen(uid) + 1);
+                        list_add(&autofinds, (void *) xstrdup(uid), 0);
 
                         command_exec_format(target, session_class, 0, ("/find %s"), uid);
                 }
