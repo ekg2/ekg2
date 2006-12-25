@@ -121,7 +121,7 @@ void variable_init()
 	variable_add(NULL, ("reason_limit"), VAR_BOOL, 1, &config_reason_limit, NULL, NULL, NULL);
 	variable_add(NULL, ("save_password"), VAR_BOOL, 1, &config_save_password, NULL, NULL, NULL);
 	variable_add(NULL, ("save_quit"), VAR_INT, 1, &config_save_quit, NULL, NULL, NULL);
-	variable_add(NULL, ("session_default"), VAR_STR, 1, &config_session_default, NULL, NULL, NULL);
+	variable_add(NULL, ("session_default"), VAR_STR, 2, &config_session_default, NULL, NULL, NULL);
 	variable_add(NULL, ("sessions_save"), VAR_BOOL, 1, &config_sessions_save, NULL, NULL, NULL);
 	variable_add(NULL, ("slash_messages"), VAR_BOOL, 1, &config_slash_messages, NULL, NULL, NULL);
 	variable_add(NULL, ("sort_windows"), VAR_BOOL, 1, &config_sort_windows, NULL, NULL, NULL);
