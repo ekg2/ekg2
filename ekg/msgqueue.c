@@ -379,9 +379,7 @@ int msg_queue_read()
 				string_append(msg, "\r\n");
 		}
 
-		m.message = msg->str;
-
-		string_free(msg, 0);
+		m.message = string_free(msg, 0);
 
 		list_add(&msg_queue, &m, sizeof(m));
 
