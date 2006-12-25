@@ -1674,6 +1674,14 @@ static COMMAND(cmd_save) {
 /* We try to save everything, but if smth not pass, try others */
 /* makes it executable even if we don't have sessions. */
 
+	/* set windows layout */
+	windows_save();
+
+	/* set default session */
+	if (config_sessions_save && session_current) {
+		xfree(config_session_default); config_session_default = xstrdup(session_current->uid);
+	}
+
 	if ((session || session_current) && session_write()) ret = -1;
 	if (config_write(params[0]))	ret = -1;
 	if (metacontact_write())	ret = -1;
@@ -1715,6 +1723,9 @@ static COMMAND(cmd_set)
 
 	if (arg && val) {
 		char **tmp = array_make(val, (""), 0, 0, 1);
+
+	/* TUTAJ MEMLEAK, nie mozemy robic tmp[0] = NULL na tablicy, poniewaz w tablicy ostatni element jest NULL... czyli by to oznaczalo
+	 * 	ze tablica sie konczy od razu. FIX IT. 24 XII 2006 (dj XXX) */
 
 		value = tmp[0];
 		tmp[0] = NULL;
@@ -1893,7 +1904,7 @@ static COMMAND(cmd_test_send)
 		sender = window_current->session->uid;
 	}
 
-	message_print((session) ? session->uid : NULL, sender, (rcpts[0]) ? rcpts : NULL, params[1], NULL, time(NULL), EKG_MSGCLASS_CHAT, "1234", EKG_TRY_BEEP, 0);
+	xfree(message_print((session) ? session->uid : NULL, sender, (rcpts[0]) ? rcpts : NULL, params[1], NULL, time(NULL), EKG_MSGCLASS_CHAT, "1234", EKG_TRY_BEEP, 0));
 
 	return 0;
 }
@@ -2410,7 +2421,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (config_query_commands) {
 			for (l = commands; l; l = l->next) {
 				command_t *c = l->data;
-				int l = xstrlen(c->name);
+				size_t l = xstrlen(c->name);
 
 				if (l < 3 || xstrncasecmp(xline, c->name, l))
 					continue;
@@ -2669,7 +2680,7 @@ int binding_quick_list(int a, int b)
 		session_t *s = sl->data;
 		for (l = s->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
-			const char *format = NULL;
+			const char *format;
 			char *tmp;
 
 			if (!u->nickname)
@@ -2677,7 +2688,7 @@ int binding_quick_list(int a, int b)
 		
 			format = format_find(ekg_status_label(u->status, NULL, "quick_list_"));
 
-			if (!format)
+			if (!xstrcmp(format, ""))	/* format_find returns "" if not found! */
 				continue;
 
 			if (!(tmp = format_string(format, u->nickname)))
@@ -2689,7 +2700,7 @@ int binding_quick_list(int a, int b)
 		}
 	}
 
-	if (xstrlen(list->str) > 0)
+	if (list->len > 0)
 		print("quick_list", list->str);
 
 	string_free(list, 1);
@@ -3448,7 +3459,7 @@ static COMMAND(cmd_conference)
 			return -1;
 		}
 
-		list_add(&c->recipients, (void*) uid, xstrlen(uid) + 1);
+		list_add(&c->recipients, (void*) xstrdup(uid), 0);
 
 		printq("conferences_joined", format_user(session, uid), params[1]);
 
