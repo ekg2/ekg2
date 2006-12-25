@@ -720,7 +720,7 @@ static COMMAND(gg_command_msg) {
 	        u = userlist_find(session, uid);
 
 		if (config_last & 4) 
-			last_add(1, uid, time(NULL), 0, msg);
+			last_add(1, uid, time(NULL), 0, raw_msg);
 
 		if (!chat || count == 1) {
 			char *__msg = xstrdup(cpmsg);
