@@ -16,4 +16,5 @@ rc		wojtekka	zdalne sterowanie ekg		-
 readline	*		interfejs tekstowy		readline
 sim		*		szyfrowanie wiadomo¶ci		openssl
 sms		wojtekka	wysy³anie smsów i takie tam	/usr/bin/sms
+xmsg 		peres 		komunikacja via FS 		[inotify]
 xosd		dredzik		xosd ;]				xosd
