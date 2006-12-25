@@ -1529,26 +1529,34 @@ char *random_line(const char *path)
 char *read_file(FILE *f)
 {
 	char buf[1024], *res = NULL;
+	size_t reslen = 0;
+
 	if (!f)
 		return NULL;
 
 	while (fgets(buf, sizeof(buf), f)) {
 		int first = (res) ? 0 : 1;
-		size_t new_size = ((res) ? xstrlen(res) : 0) + xstrlen(buf) + 1;
+		size_t new_size = reslen + xstrlen(buf) + 1;
 
 		res = xrealloc(res, new_size);
 		if (first)
 			*res = 0;
-		xstrcpy(res + xstrlen(res), buf);
+		xstrcpy(res + reslen, buf);
 
+		reslen = xstrlen(res);	/* XXX new_size - 1 here? */
 		if (xstrchr(buf, '\n'))
 			break;
 	}
 
-	if (res && xstrlen(res) > 0 && res[xstrlen(res) - 1] == '\n')
-		res[xstrlen(res) - 1] = 0;
-	if (res && xstrlen(res) > 0 && res[xstrlen(res) - 1] == '\r')
-		res[xstrlen(res) - 1] = 0;
+	if (reslen > 0 && res[reslen - 1] == '\n') {
+		res[reslen - 1] = 0;
+		reslen--;
+	}
+
+	if (reslen > 0 && res[reslen - 1] == '\r') {
+		res[reslen - 1] = 0;
+/*		reslen--;	*/
+	}
 
 	return res;
 }
