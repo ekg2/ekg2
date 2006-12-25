@@ -138,7 +138,14 @@ const struct query query_list[] = {
 		QUERY_ARG_END } },
 	
 	{ PROTOCOL_MESSAGE_POST, "protocol-message-post", {
-		/* XXX */
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_CHARPP,		/* rcpts */
+		QUERY_ARG_UINT,	/* uint32_t */	/* format */
+		QUERY_ARG_UINT, /* time_t */	/* sent */
+		QUERY_ARG_INT,			/* class */
+		QUERY_ARG_CHARP,		/* seq */
+		QUERY_ARG_INT,			/* secure */
 		QUERY_ARG_END } }, 
 
 	{ EVENT_AWAY, "event_away", {
@@ -226,7 +233,7 @@ const struct query query_list[] = {
 
 	{ QUITTING, "quitting", {
 		/* XXX, emited, but never used */
-		QUERY_ARG_CHARP,	/* reason */
+		QUERY_ARG_CHARP,		/* reason */
 		QUERY_ARG_END } },
 
 	{ IRC_TOPIC, "irc-topic", {
@@ -236,14 +243,20 @@ const struct query query_list[] = {
 		QUERY_ARG_END } },
 
 	{ IRC_PROTOCOL_MESSAGE, "irc-protocol-message", {
-		/* XXX */
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_CHARP,		/* text */
+		QUERY_ARG_INT,			/* isour */
+		QUERY_ARG_INT,			/* foryou */
+		QUERY_ARG_INT,			/* private */
+		QUERY_ARG_CHARP,		/* channame */
 		QUERY_ARG_END } },
 
 	{ IRC_KICK, "irc-kick", {
-		QUERY_ARG_CHARP,	/* session uid */
-		QUERY_ARG_CHARP,	/* nick */
-		QUERY_ARG_CHARP,	/* channel */
-		QUERY_ARG_CHARP,	/* kickedby */
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* nick */
+		QUERY_ARG_CHARP,		/* channel */
+		QUERY_ARG_CHARP,		/* kickedby */
 		QUERY_ARG_END } },
 
 	{ RSS_MESSAGE, "rss-message", {
@@ -333,7 +346,7 @@ const struct query query_list[] = {
 		QUERY_ARG_END } }, 
 
 	{ UI_KEYPRESS, "ui-keypress", {
-		QUERY_ARG_UINT,	 		/* key */
+		QUERY_ARG_INT,	 /* XXX uint? *//* key */
 		QUERY_ARG_END } },
 
 	{ UI_LOOP, "ui-loop", {
