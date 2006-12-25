@@ -34,8 +34,11 @@
 /* some additional defines */
 #define XMSG_UID_DIROFFSET 5
 #define XMSG_MAXFS_DEF "16384"
+#define XMSG_MAXFC_DEF "25"
+#define XMSG_MAXFC_TIMER "3"
 /* if we have inotify, we don't need that timer */
 #ifdef HAVE_INOTIFY
+#define XMSG_MAXFC_INOTIFY 25
 #define XMSG_TIMER_DEF "0"
 #else
 #define XMSG_TIMER_DEF "300"
@@ -51,6 +54,9 @@
 /* global vars */
 static int in_fd = 0;
 static struct inotify_event *ev = NULL;
+#ifdef HAVE_INOTIFY
+static int config_maxinotifycount = XMSG_MAXFC_INOTIFY;
+#endif
 
 /* function declarations */
 #ifdef HAVE_INOTIFY
@@ -64,6 +70,7 @@ static COMMAND(xmsg_disconnect);
 static COMMAND(xmsg_reconnect);
 static inline int xmsg_add_watch(session_t *s, const char *f);
 static void xmsg_timer_change(session_t *s, const char *varname);
+static void xmsg_unlink_dotfiles(session_t *s, const char *varname);
 static COMMAND(xmsg_inline_msg);
 static COMMAND(xmsg_msg);
 static int xmsg_theme_init(void);
@@ -76,11 +83,11 @@ PLUGIN_DEFINE(xmsg, PLUGIN_PROTOCOL, xmsg_theme_init);
 /* the code */
 
 #ifdef HAVE_INOTIFY
-/* watch inotify fd and parse incoming events */
 static WATCHER(xmsg_handle_data)
 {
 #define __FUNC__ "xmsg_handle_data"
 	int n;
+	int c = 0;
 	struct inotify_event *evp;
 
 	if (type)
@@ -103,36 +110,55 @@ static WATCHER(xmsg_handle_data)
 		for (sp = sessions; sp; sp = sp->next) {
 			s = sp->data;
 
-			if (s && (s->priv == (void*) evp->wd))
+			if (s && (s->priv == (void*) evp->wd) && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
 				break;
 		}
 		
 		xdebug("n = %d, wd = %d, str = %s", n, evp->wd, evp->name);
 			
 		if ((evp->mask & IN_IGNORED) || !s || !session_connected_get(s))
-			return 0;
+			continue;
 		else if (evp->mask & IN_UNMOUNT)
 			xmsg_disconnect(NULL, NULL, s, NULL, -1);
-		else if (evp->mask & IN_Q_OVERFLOW)
-			xmsg_iterate_dir(0, (void*) s);
+		else if (!(evp->mask & IN_Q_OVERFLOW) && (c != -1) && (!xmsg_handle_file(s, evp->name))) 
+			c++;
+		
+		if ((evp->mask & IN_Q_OVERFLOW) || ((config_maxinotifycount > 0) && c >= config_maxinotifycount)) {
+			for (sp = sessions; sp; sp = sp->next) {
+				s = sp->data;
 
-		xmsg_handle_file(s, evp->name);
+				if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5)) {
+					const int i = session_int_get(s, "oneshot_resume_timer");
+					/* to gain timer name different from that used with normal timers,
+					 * we leave ':' in the beginning of UID */
+					if (!timer_remove(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET-1))
+						xdebug("old oneshot resume timer removed");
+					if ((i > 0) && timer_add(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET-1, i, 0, xmsg_iterate_dir, s))
+						xdebug("oneshot resume timer added");
+					c = -1;
+				}
+			}
+		}
 	}
+	if (c >= 0)
+		xdebug("processed %d files", c);
+	else
+		xdebug("reached max_inotifycount");
 
 	return 0;
 #undef __FUNC__
 }
 #endif /*HAVE_INOTIFY*/
 
-/* iterate over all files existing in directory,
- * used on startup and queue overflow,
- * syntax changed to match TIMER(...) */
 static TIMER(xmsg_iterate_dir)
 {
 #define __FUNC__ "xmsg_iterate_dir"
-	const char *dir = session_uid_get((session_t*) data)+XMSG_UID_DIROFFSET;
+#define s (session_t*) data
+	const char *dir = session_uid_get(s)+XMSG_UID_DIROFFSET;
 	DIR *d = opendir(dir);
 	struct dirent *de;
+	int n = 0;
+	const int maxn = session_int_get(s, "max_oneshot_files");
 
 	if (type)
 		return -1;
@@ -143,24 +169,41 @@ static TIMER(xmsg_iterate_dir)
 	}
 	
 	while ((de = readdir(d))) {
-		if (!xstrcmp(de->d_name, ".") || !xstrcmp(de->d_name, ".."))
-			continue;
-		xmsg_handle_file((session_t*) data, de->d_name);
+		if (!xmsg_handle_file(s, de->d_name))
+			n++;
+		
+		if ((maxn > 0) && n >= maxn) {
+			const int i = session_int_get(s, "oneshot_resume_timer");
+			/* to gain timer name different from that used with normal timers,
+			 * we leave ':' in the beginning of UID */
+			if ((i > 0) && timer_add(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET-1, i, 0, xmsg_iterate_dir, s))
+				xdebug("oneshot resume timer added");
+			break;
+		}
 	}
 	closedir(d);
+	xdebug("processed %d files", n);
 
 	return 0;
+#undef s
 #undef __FUNC__
 }
 
-/* try to submit, then unlink, incoming file */
 static int xmsg_handle_file(session_t *s, const char *fn)
 {
 #define __FUNC__ "xmsg_handle_file"
 	const char *dir = session_uid_get(s)+XMSG_UID_DIROFFSET;
+	const int nounlink = !session_int_get(s, "unlink_sent");
+	const int utb = session_int_get(s, "unlink_toobig");
+	const int maxfs = session_int_get(s, "max_filesize");
+
 	char *msg;
-	char *f = xmalloc(xstrlen(dir) + xstrlen(fn) + 2);
-	int fd, fs, maxfs;
+	char *f;
+	int fd, fs;
+	
+	if (*fn == '.') /* we're skipping ALL dotfiles */
+		return -1;
+	f = xmalloc(xstrlen(dir) + xstrlen(fn) + 2);
 #undef XERRADD
 #define XERRADD xfree(f);
 	strcpy(f, dir);
@@ -170,20 +213,47 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	xdebug("s = %s, d = %s, fn = %s, f = %s", session_uid_get(s), dir, fn, f);
 	
 	{
-		struct stat st;
-
+		struct stat st, std;
+		char *dotf = NULL;
+		int r;
+		
+		if (nounlink || !utb) {
+			dotf = xmalloc(xstrlen(f) + 2);
+#undef XERRADD
+#define XERRADD xfree(f); xfree(dotf);
+			strcpy(dotf, dir);
+			strcat(dotf, "/.");
+			strcat(dotf, fn);
+			
+			r = !(stat(dotf, &std) || S_ISDIR(std.st_mode));
+		} else
+			r = 0;
+		
 		if (stat(f, &st) || !S_ISREG(st.st_mode)) {
-			xfree(f);
-			return 0;
+			if (r) /* clean up stale dotfile */
+				unlink(dotf);
+			XERRADD
+			return -1;
+		} else if (r) {
+			XERRADD
+			return -1;
+		} else if (nounlink || (!utb && maxfs && (st.st_size > maxfs))) {
+			if (!(maxfs && (st.st_size > maxfs) && utb))
+				close(open(dotf, O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600));
 		}
+		
 		fs = st.st_size;
+		xfree(dotf);
+#undef XERRADD
+#define XERRADD xfree(f);
 	}
 	
-	maxfs = session_int_get(s, "max_filesize");
-	if (maxfs && fs > maxfs) {
-		print("xmsg_toobig", fn, session_name(s));
+	if (maxfs && (fs > maxfs)) {
+		print((utb ? "xmsg_toobigrm" : "xmsg_toobig"), fn, session_name(s));
+		if (utb)
+			unlink(f);
 		XERRADD
-		return 0; /* we don't want to unlink such files */
+		return -1; /* we don't want to unlink such files */
 	} else if (fs == 0)
 		xdebug("empty file found, not submitting");
 	else {
@@ -195,7 +265,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		
 		if ((msg = mmap(NULL, fs, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
 			xerrn("mmap failed");
-
+		
 		{
 			char *session	= xstrdup(session_uid_get(s));
 			char *uid	= xmalloc(strlen(fn) + 6);
@@ -223,7 +293,8 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		close(fd);
 	}
 	
-	unlink(f);
+	if (!nounlink)
+		unlink(f);
 	xfree(f);
 #undef XERRADD
 #define XERRADD
@@ -232,7 +303,6 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 #undef __FUNC__
 }
 
-/* check if or session id starts with xmsg: */
 static QUERY(xmsg_validate_uid)
 {
 #define __FUNC__ "xmsg_validate_uid"
@@ -248,7 +318,6 @@ static QUERY(xmsg_validate_uid)
 #undef __FUNC__
 }
 
-/* add inotify watch (used within connect) */
 static inline int xmsg_add_watch(session_t *s, const char *f)
 {
 #define __FUNC__ "xmsg_add_watch"
@@ -273,7 +342,6 @@ static inline int xmsg_add_watch(session_t *s, const char *f)
 #undef __FUNC__
 }
 
-/* connect = add inotify watch */
 static COMMAND(xmsg_connect)
 {
 #define __FUNC__ "xmsg_connect"
@@ -303,8 +371,7 @@ static COMMAND(xmsg_connect)
 #undef __FUNC__
 }
 
-/* disconnect = remove inotify watch
- * we return 0 even if rmwatch fails, because xmsg_handle_data checks
+/* we return 0 even if rmwatch fails, because xmsg_handle_data checks
  * if our session is still connected, so it'll ignore unneeded events */
 static COMMAND(xmsg_disconnect)
 {
@@ -315,6 +382,8 @@ static COMMAND(xmsg_disconnect)
 	}
 	
 	xmsg_timer_change(session, NULL);
+	if (!timer_remove(&xmsg_plugin, session_uid_get(session)+XMSG_UID_DIROFFSET-1))
+		xdebug("old oneshot resume timer removed");
 	session_connected_set(session, 0);
 	{
 		char *sess = xstrdup(session_uid_get(session));
@@ -338,7 +407,6 @@ static COMMAND(xmsg_disconnect)
 #undef __FUNC__
 }
 
-/* funny thing called reconnect */
 static COMMAND(xmsg_reconnect)
 {
 #define __FUNC__ "xmsg_reconnect"
@@ -350,7 +418,6 @@ static COMMAND(xmsg_reconnect)
 #undef __FUNC__
 }
 
-/* update our timer */
 static void xmsg_timer_change(session_t *s, const char *varname)
 {
 #define __FUNC__ "xmsg_timer_change"
@@ -369,7 +436,53 @@ static void xmsg_timer_change(session_t *s, const char *varname)
 #undef __FUNC__
 }
 
-/* handle inline messages */
+/* kind = 0 for sent, 1 for toobig */
+static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
+{
+#define __FUNC__ "xmsg_unlink_dotfiles"
+	if (session_int_get(s, varname)) {
+		const int kind = !xstrcasecmp(varname, "unlink_sent");
+		const int maxfs = session_int_get(s, "max_filesize");
+		const char *dir = session_uid_get(s)+XMSG_UID_DIROFFSET;
+		DIR *d = opendir(dir);
+		struct dirent *de;
+		struct stat st, std;
+		char *df, *dfd, *dp, *dpd;
+
+		if (!d) {
+			xdebug("unable to open specified directory");
+			return;
+		}
+		
+		df = xmalloc(xstrlen(dir) + NAME_MAX + 2);
+		dfd = xmalloc(xstrlen(dir) + NAME_MAX + 3);
+		xstrcpy(df, dir);
+		dp = df + xstrlen(df);
+		*(dp++) = '/';
+		xstrcpy(dfd, df);
+		dpd = dfd + xstrlen(dfd);
+		*(dpd++) = '.';
+		
+		while ((de = readdir(d))) {
+			if (de->d_name[0] == '.')
+				continue;
+			strcpy(dp, de->d_name);
+			strcpy(dpd, de->d_name);
+			if (!stat(df, &st) && !stat(dfd, &std)
+					&& ((!maxfs || (st.st_size < maxfs)) == kind)) {
+				xdebug("removing %s", de->d_name);
+				unlink(df);
+				unlink(dfd);
+			}
+		}
+
+		closedir(d);
+		xfree(df);
+		xfree(dfd);
+	}
+#undef __FUNC__
+}
+
 static COMMAND(xmsg_inline_msg)
 {
 #define __FUNC__ "xmsg_inline_msg"
@@ -381,7 +494,6 @@ static COMMAND(xmsg_inline_msg)
 #undef __FUNC__
 }
 
-/* main send message handler */
 static COMMAND(xmsg_msg)
 {
 #define __FUNC__ "xmsg_msg"
@@ -459,7 +571,6 @@ static COMMAND(xmsg_msg)
 #undef __FUNC__
 }
 
-/* init our lovely formats */
 static int xmsg_theme_init(void)
 {
 #define __FUNC__ "xmsg_theme_init"
@@ -467,13 +578,13 @@ static int xmsg_theme_init(void)
 	format_add("xmsg_addwatch_failed", _("Unable to add inotify watch (wrong path?)"), 1);
 	format_add("xmsg_nosendcmd", _("%> (%1) You need to set %csend_cmd%n to be able to send msgs"), 1);
 	format_add("xmsg_toobig", _("%> (%2) File %T%1%n is larger than %cmax_filesize%n, skipping"), 1);
+	format_add("xmsg_toobigrm", _("%> (%2) File %T%1%n was larger than %cmax_filesize%n, removed"), 1);
 	format_add("xmsg_umount", _("volume containing watched directory was unmounted"), 1);
 #endif
 	return 0;
 #undef __FUNC__
 }
 
-/* init plugin and inotify */
 int xmsg_plugin_init(int prio)
 {
 #define __FUNC__ "xmsg_plugin_init"
@@ -489,9 +600,14 @@ int xmsg_plugin_init(int prio)
 	query_connect_id(&xmsg_plugin, PROTOCOL_VALIDATE_UID, xmsg_validate_uid, NULL);
 
 	plugin_var_add(&xmsg_plugin, "auto_connect", VAR_BOOL, "1", 0, NULL);
+	plugin_var_add(&xmsg_plugin, "log_formats", VAR_STR, "simple", 0, NULL);
 	plugin_var_add(&xmsg_plugin, "max_filesize", VAR_INT, XMSG_MAXFS_DEF, 0, NULL);
+	plugin_var_add(&xmsg_plugin, "max_oneshot_files", VAR_INT, XMSG_MAXFC_DEF, 0, NULL);
+	plugin_var_add(&xmsg_plugin, "oneshot_resume_timer", VAR_INT, XMSG_MAXFC_TIMER, 0, NULL);
 	plugin_var_add(&xmsg_plugin, "send_cmd", VAR_STR, NULL, 0, NULL);
 	plugin_var_add(&xmsg_plugin, "rescan_timer", VAR_INT, XMSG_TIMER_DEF, 0, xmsg_timer_change);
+	plugin_var_add(&xmsg_plugin, "unlink_sent", VAR_BOOL, "1", 0, xmsg_unlink_dotfiles);
+	plugin_var_add(&xmsg_plugin, "unlink_toobig", VAR_BOOL, "0", 0, xmsg_unlink_dotfiles);
 
 #define XMSG_CMDFLAGS SESSION_MUSTBELONG
 #define XMSG_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET|SESSION_MUSTBECONNECTED
@@ -505,6 +621,7 @@ int xmsg_plugin_init(int prio)
 #undef XMSG_CMDFLAGS
 
 #ifdef HAVE_INOTIFY
+	variable_add(&xmsg_plugin, "max_inotifycount", VAR_INT, 1, &config_maxinotifycount, NULL, NULL, NULL);
 	watch_add(&xmsg_plugin, in_fd, WATCH_READ, xmsg_handle_data, NULL);
 #endif /*HAVE_INOTIFY*/
 	
@@ -512,7 +629,6 @@ int xmsg_plugin_init(int prio)
 #undef __FUNC__
 }
 
-/* cleanup */ 
 static int xmsg_plugin_destroy(void)
 {
 #define __FUNC__ "xmsg_plugin_destroy"

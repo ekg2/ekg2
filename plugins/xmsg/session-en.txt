@@ -11,6 +11,30 @@ max_filesize
 	
 	Files larger than value of this variable won't be read by xmsg plugin.
 
+max_oneshot_files
+	type: integer
+	default value: 25
+
+	Max count of files that'll be processed during one function call.
+	If function reaches that count, it'll break off the loop, and set resume
+	timer (see: oneshot_resume_timer). Value of 0 means no limit.
+
+oneshot_resume_timer
+	type: integer
+	default vlaue: 3
+
+	Delay (in seconds), after which the process, stopped by reaching
+	max_oneshot_files, will be resumed. If set to 0, no autoresume'll
+	be done (the process'll be resumed on next function call, for example
+	on next /connect).
+
+rescan_timer
+	type: integer
+	default value: 0 or 300
+	
+	Interval of rescanning incoming message directory. It shouldn't be used
+	(and thus is set to 0 by default) in inotify environments.
+
 send_cmd
 	type: string
 	default value: (none)
@@ -19,10 +43,18 @@ send_cmd
 	two args - an UID (without xmsg:) and path to file with message inside.
 	Note that xmsg doesn't check return value from this handler app/script,
 	so errors should be returned by use of session's incoming message dir.
-	
-rescan_timer
-	type: integer
-	default value: 0 or 300
-	
-	Interval of rescanning incoming message directory. It shouldn't be used
-	(and thus is set to 0 by default) in inotify environments.
+
+unlink_sent
+	type: bool
+	default value: 1
+
+	If set to true, incoming message files will be removed after reading.
+	Otherwise, xmsg will create dotfiles to mark them.
+
+unlink_toobig
+	type: bool
+	default value: 0
+
+	If set to true, files larger than max_filesize will be deleted,
+	otherwise they'll be ignored (and dotfiles for them will be created).
+

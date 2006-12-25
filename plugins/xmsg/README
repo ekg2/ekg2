@@ -2,6 +2,8 @@ xmsg for ekg2
 (C) 2006 Michał Górny
 ===========================================================
 
+[ README isn't updated frequently, so may contain inactual information. ]
+
 Some time ago I was looking for some easy way to send messages to my ekg2 from
 external scripts. I haven't found any useful methods to do this. Maybe I could
 use rc plugin some way, but it'd be pain-in-the-ass, I think. So I decided to
@@ -20,20 +22,7 @@ directory. If possible, then it uses inotify to immediately fetch newly-created
 files. Even if inotify is not available (kernel <= 2.6.13, for example), it can
 watch the directory by use of timers.
 
-Variables:
-	auto_connect
-		If set to 1, then ekg2 will automagically connect the session
-		on startup. Defaults to 1.
-	max_filesize
-		The size in bytes, above which files won't be read. Please bear
-		in mind, that xmsg mmaps whole file, so this shouldn't be set
-		above desired max memory consumption, and above max message
-		size. Default to 16 kiB.
-	rescan_timer
-		Interval of rescanning given directory. No need for this when
-		using inotify. Defaults to 0, if inotify is available, or 300.
-	send_cmd
-		See SENDING MESSAGES below.
+For description of variables see session-*.txt and variable-*.txt.
 
 Some remarks:
 * session UIDs should be in form 'xmsg:/some/path', without trailing slash
@@ -45,6 +34,7 @@ Some remarks:
 * logs plugin currently has problems with slashes in UIDs, so xmsg messages
   won't be logged,
 * all fetched files are immediately removed (but only if read successfully),
+  if running in unlink mode; in nounlink mode they're marked with dotfiles,
 * message files shouldn't be created directly in watched directory; although
   inotify waits until file is closed, the plugin can't fully determine if
   someone isn't still writing to it — so it's better to create it somewhere else
