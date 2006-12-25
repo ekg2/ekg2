@@ -1298,7 +1298,7 @@ static char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 static char *irc_getchan(session_t *s, const char **params, const char *name,
 		char ***v, int pr, int checkchan)
 {
-	char		*chan;
+	char		*chan, *tmpname;
 	const char	*tf, *ts, *tp; /* first, second */
 	int		i = 0, parnum = 0, argnum = 0, hasq = 0;
 	list_t		l;
@@ -1320,20 +1320,22 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 		pr = !!!pr;
 	}
 
+	tmpname = saprintf("irc:%s", name);
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
-		char *tmpname = saprintf("irc:%s", name);
 
-		if (!xstrcasecmp(tmpname, c->name) && &irc_plugin == c->plugin)
+		if (&irc_plugin == c->plugin && !xstrcasecmp(tmpname, c->name))
+		{
 			while (c->params[parnum])
 			{
-				if (!xstrcmp(c->params[parnum], ("?")))
+				if (!hasq && !xstrcmp(c->params[parnum], ("?")))
 					hasq = 1;
 				parnum++;
 			}
-		
-		xfree(tmpname);
+			break;
+		}
 	}
+	xfree(tmpname);
 
 	do {
 		if (params)
