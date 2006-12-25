@@ -202,10 +202,6 @@ static COMMAND(gg_command_connect) {
                 if (session_int_get(session, "private"))
                         _status |= GG_STATUS_FRIENDS_MASK;
 
-		p.status = _status;
-		p.status_descr = (char*) session_descr_get(session);
-		p.async = 1;
-
 		if ((tmpi = session_int_get(session, "protocol")) != -1)
 			p.protocol_version = tmpi;
 
@@ -299,10 +295,16 @@ noproxy:
 
 			xfree(fwd);
 		}
+		
+		/* moved this further, because of gg_locale_to_cp() allocation */
+		p.status = _status;
+		p.status_descr = gg_locale_to_cp(xstrdup(session_descr_get(session)));
+		p.async = 1;
 
 		g->sess = gg_login(&p);
+		xfree(p.status_descr);
 
-		if (!g->sess)	
+		if (!g->sess)
 			wcs_printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
 		else {
 			watch_t *w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, gg_session_handler, session);
