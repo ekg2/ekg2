@@ -470,7 +470,7 @@ static void gg_session_handler_success(session_t *s) {
 	session_unidle(s);
 
 	__session = xstrdup(session_uid_get(s));
-	query_emit(NULL, ("protocol-connected"), &__session);
+	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
 	xfree(__session);
 
 	gg_userlist_send(g->sess, s->userlist);
@@ -543,7 +543,7 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
 		char *__reason = xstrdup(format_find(reason));
 		int __type = EKG_DISCONNECT_FAILURE;
 
-		query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
 
 		xfree(__reason);
 		xfree(__session);
@@ -563,7 +563,7 @@ static void gg_session_handler_disconnect(session_t *s) {
 
 	session_connected_set(s, 0);
 
-	query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+	query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
 
 	xfree(__session);
 	xfree(__reason);
@@ -618,7 +618,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		}
 
 	}
-	query_emit(NULL, ("protocol-status"), &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
+	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
 
 	xfree(__host);
 	xfree(__descr);
@@ -746,7 +746,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 /*		if (!check_inv || xstrcmp(__text, ""))
 			printq("generic", "image in message.\n"); - or something
  */
-		query_emit(NULL, ("protocol-message"), &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
+		query_emit_id(NULL, PROTOCOL_MESSAGE, &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
 		xfree(__session);
 
 /*		xfree(__seq); */
@@ -784,7 +784,7 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 			__status = xstrdup(EKG_ACK_UNKNOWN);
 			break;
 	}
-	query_emit(NULL, ("protocol-message-ack"), &__session, &__rcpt, &__seq, &__status, NULL);
+	query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status, NULL);
 
 	xfree(__status);
 	xfree(__seq);
@@ -978,7 +978,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 			char *__reason = NULL;
 			int __type = EKG_DISCONNECT_FAILURE;
 
-			query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+			query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
 
 			xfree(__reason);
 			xfree(__session);
@@ -999,7 +999,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 
 		session_connected_set((session_t*) data, 0);
 
-		query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
 
 		xfree(__reason);
 		xfree(__session);
