@@ -236,6 +236,14 @@ static QUERY(jabber_validate_uid) {
         return 0;
 }
 
+static QUERY(jabber_protocols) {
+	char ***arr = va_arg(ap, char ***);
+
+	array_add(arr, "tlen:");
+	array_add(arr, "jid:");
+	return 0;
+}
+
 static QUERY(jabber_window_kill) {
 	window_t        *w = *va_arg(ap, window_t **);
 	jabber_private_t *j;
@@ -1197,6 +1205,7 @@ int jabber_plugin_init(int prio)
 
 	query_connect_id(&jabber_plugin, PROTOCOL_VALIDATE_UID,	jabber_validate_uid, NULL);
 	query_connect_id(&jabber_plugin, PLUGIN_PRINT_VERSION,	jabber_print_version, NULL);
+	query_connect_id(&jabber_plugin, GET_PLUGIN_PROTOCOLS,	jabber_protocols, NULL);
 	query_connect_id(&jabber_plugin, SESSION_ADDED,		jabber_session, (void*) 1);
 	query_connect_id(&jabber_plugin, SESSION_REMOVED,	jabber_session, (void*) 0);
 	query_connect_id(&jabber_plugin, STATUS_SHOW,		jabber_status_show_handle, NULL);
