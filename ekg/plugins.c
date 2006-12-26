@@ -96,6 +96,8 @@ static void *ekg2_dlopen(char *name) {
 #else
 	tmp = dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
 #endif
+	if(!tmp) debug_error("[plugin] could not be loaded: %s %s\n", name, dlerror());
+	else debug_function("[plugin] loaded: %s\n", name);
 /*	if (!tmp && !in_autoexec) debug("[plugin] Error loading plugin %s: %s\n", name, dlerror()); */
 /*	return lt_dlopen(lib); */
 	return tmp;
@@ -625,7 +627,7 @@ const char *query_name(const int id) {
 	return NULL;
 }
 
-query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
+static query_t *query_connect_common(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
 	query_t *q = xmalloc(sizeof(query_t));
 
 	q->id		= id;
@@ -636,8 +638,24 @@ query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *
 	return list_add(&queries, q, 0);
 }
 
+#define ID_AND_QUERY_EXTERNAL	\
+	"Here, we have two possibilites.\n"	\
+		"\t1/ You are lazy moron, who doesn't rebuilt core but use plugin with this enum...\n"	\
+		"\t2/ You are ekg2 hacker who use query_id(\"your_own_query_name\") to get new query id and use this id with "	\
+			"query_connect_id()... but unfortunetly it won't work cause of 1st possibility, sorry.\n"
+
+
+query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
+	if (id >= QUERY_EXTERNAL) {
+		debug_error("%s", ID_AND_QUERY_EXTERNAL);
+		return NULL;
+	}
+
+	return query_connect_common(plugin, id, handler, data);
+}
+
 query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
-	return query_connect_id(plugin, query_id(name), handler, data);
+	return query_connect_common(plugin, query_id(name), handler, data);
 }
 
 int query_free(query_t *q) {
@@ -689,6 +707,11 @@ int query_emit_id(plugin_t *plugin, const int id, ...) {
 	va_list ap;
 	list_t l;
 
+	if (id >= QUERY_EXTERNAL) {
+		debug_error("%s", ID_AND_QUERY_EXTERNAL);
+		return -2;
+	}
+		
 	va_start(ap, id);
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
