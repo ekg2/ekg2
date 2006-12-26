@@ -411,6 +411,13 @@ static QUERY(irc_validate_uid) {
 	return 0;
 }
 
+static QUERY(irc_protocols) {
+	char ***arr	= va_arg(ap, char ***);
+
+	array_add(arr, "irc:");
+	return 0;
+}
+
 #ifdef NO_POSIX_SYSTEM
 static void irc_changed_resolve_child(session_t *s, const char *var, HANDLE fd) {
 #else
@@ -2013,6 +2020,7 @@ int irc_plugin_init(int prio)
 	plugin_register(&irc_plugin, prio);
 
 	query_connect_id(&irc_plugin, PROTOCOL_VALIDATE_UID,	irc_validate_uid, NULL);
+	query_connect_id(&irc_plugin, GET_PLUGIN_PROTOCOLS,	irc_protocols, NULL);
 	query_connect_id(&irc_plugin, PLUGIN_PRINT_VERSION,	irc_print_version, NULL);
 	query_connect_id(&irc_plugin, UI_WINDOW_KILL,		irc_window_kill, NULL);
 	query_connect_id(&irc_plugin, SESSION_ADDED,		irc_session, (void*) 1);
