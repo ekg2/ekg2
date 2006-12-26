@@ -51,6 +51,8 @@
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
 
+#include <ekg/queries.h>
+
 #include "dcc.h"
 #include "gg.h"
 #include "misc.h"
@@ -412,6 +414,13 @@ static QUERY(gg_validate_uid) {
 		(*valid)++;
 		return -1;
 	}
+	return 0;
+}
+
+static QUERY(gg_protocols) {
+	char ***arr	= va_arg(ap, char ***);
+
+	array_add(arr, "gg:");
 	return 0;
 }
 
@@ -1236,18 +1245,19 @@ int gg_plugin_init(int prio) {
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, NULL);
 
-	query_connect(&gg_plugin, ("set-vars-default"), gg_setvar_default, NULL);
-	query_connect(&gg_plugin, ("protocol-validate-uid"), gg_validate_uid, NULL);
-	query_connect(&gg_plugin, ("plugin-print-version"), gg_print_version, NULL);
-	query_connect(&gg_plugin, ("session-added"), gg_session_handle, (void *)1);
-	query_connect(&gg_plugin, ("session-removed"), gg_session_handle, (void *)0);
-	query_connect(&gg_plugin, ("add-notify"), gg_add_notify_handle, NULL);
-	query_connect(&gg_plugin, ("remove-notify"), gg_remove_notify_handle, NULL);
-	query_connect(&gg_plugin, ("status-show"), gg_status_show_handle, NULL);
+	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
+	query_connect_id(&gg_plugin, PROTOCOL_VALIDATE_UID, gg_validate_uid, NULL);
+	query_connect_id(&gg_plugin, GET_PLUGIN_PROTOCOLS, gg_protocols, NULL);
+	query_connect_id(&gg_plugin, PLUGIN_PRINT_VERSION, gg_print_version, NULL);
+	query_connect_id(&gg_plugin, SESSION_ADDED, gg_session_handle, (void *)1);
+	query_connect_id(&gg_plugin, SESSION_REMOVED, gg_session_handle, (void *)0);
+	query_connect_id(&gg_plugin, ADD_NOTIFY, gg_add_notify_handle, NULL);
+	query_connect_id(&gg_plugin, REMOVE_NOTIFY, gg_remove_notify_handle, NULL);
+	query_connect_id(&gg_plugin, STATUS_SHOW, gg_status_show_handle, NULL);
 	query_connect(&gg_plugin, ("user-offline"), gg_user_offline_handle, NULL);
 	query_connect(&gg_plugin, ("user-online"), gg_user_online_handle, NULL);
-	query_connect(&gg_plugin, ("protocol-unignore"), gg_user_online_handle, (void *)1);
-	query_connect(&gg_plugin, ("userlist-info"), gg_userlist_info_handle, NULL);
+	query_connect_id(&gg_plugin, PROTOCOL_UNIGNORE, gg_user_online_handle, (void *)1);
+	query_connect_id(&gg_plugin, USERLIST_INFO, gg_userlist_info_handle, NULL);
 
 	gg_register_commands();
 
