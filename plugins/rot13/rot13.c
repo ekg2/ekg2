@@ -126,22 +126,22 @@ static QUERY(message_parse) {
 	return 0;
 }
 
-static rot13_key_t *rot13_key_parse(const char *target, const char *sesja, const char *offset, const char *offset2) {
+static rot13_key_t *rot13_key_parse(char *target, char *sesja, char *offset, char *offset2) {
 	rot13_key_t *k = xmalloc(sizeof(rot13_key_t));
 
-	if (!xstrcmp(target, "$")) 		k->target = xstrdup(get_uid(window_current->session, window_current->target));
-	else if (!xstrcmp(target, "*")) 	k->target = NULL;
-	else					k->target = xstrdup(target);
+	if (!xstrcmp(target, "$")) {		k->target = xstrdup(get_uid(window_current->session, window_current->target));	xfree(target); }
+	else if (!xstrcmp(target, "*")) {	k->target = NULL;								xfree(target); }
+	else					k->target = target;
 
-	if (!xstrcmp(sesja, "$"))		k->session = session_current ? xstrdup(session_current->uid) : NULL /* "*" */;
-	else if (!xstrcmp(sesja, "*"))		k->session = NULL;
-	else					k->session = xstrdup(sesja);
+	if (!xstrcmp(sesja, "$")) {		k->session = session_current ? xstrdup(session_current->uid) : NULL /* "*" */;	xfree(sesja); }
+	else if (!xstrcmp(sesja, "*")) {	k->session = NULL;								xfree(sesja); }
+	else					k->session = sesja;
 
-	if (!offset || !xstrncmp(offset, "def", 3))	k->rot = xstrdup("?");
-	else						k->rot = xstrdup(offset);
+	if (!offset || !xstrncmp(offset, "def", 3)) {	k->rot = xstrdup("?");							xfree(offset); }
+	else						k->rot = offset;
 
-	if (!offset2 || !xstrncmp(offset2, "def", 3))	k->drot	= xstrdup("?");
-	else						k->drot	= xstrdup(offset2);
+	if (!offset2 || !xstrncmp(offset2, "def", 3)) {	k->drot	= xstrdup("?");							xfree(offset2); }
+	else						k->drot	= offset2;
 
 	return k;
 }
@@ -182,7 +182,10 @@ static COMMAND(command_key) {
 			else if (!sesja)	sesja  = arr[i];
 			else if (!offset)	offset = arr[i];
 			else if (!offset2)	offset2= arr[i];
-			else			debug("command_key() Nextarg? for what? %s\n", arr[i]);
+			else {
+				debug("command_key() Nextarg? for what? %s\n", arr[i]);
+				xfree(arr[i]);
+			}
 		}
 
 		if (!target) {
@@ -193,7 +196,7 @@ static COMMAND(command_key) {
 
 		list_add_sorted(&keys, rot13_key_parse(target, sesja, offset, offset2), 0, rot13_key_compare);
 
-		array_free(arr);
+		xfree(arr);
 		return 0;
 	}
 
