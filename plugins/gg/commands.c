@@ -64,6 +64,8 @@
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
 
+#include <ekg/queries.h>
+
 #ifdef HAVE_JPEGLIB_H
 #  include <jpeglib.h>
 #endif
@@ -119,7 +121,7 @@ static COMMAND(gg_command_connect) {
 			g->sess = NULL;
 			session_connected_set(session, 0);
 
-			query_emit(NULL, ("protocol-disconnected"), &__session, &__reason, &__type, NULL);
+			query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
 
 			xfree(__session);
 			xfree(__reason);
@@ -730,7 +732,7 @@ static COMMAND(gg_command_msg) {
 
 			secure = 0;
 			
-			query_emit(NULL, ("message-encrypt"), &sid, &uid_tmp, &__msg, &secure);
+			query_emit_id(NULL, MESSAGE_ENCRYPT, &sid, &uid_tmp, &__msg, &secure);
 
 			xfree(sid);
 			xfree(uid_tmp);
@@ -794,7 +796,7 @@ static COMMAND(gg_command_msg) {
 		rcpts[0] = xstrdup(nick);
 		rcpts[1] = NULL;
 
-		query_emit(NULL, ("protocol-message"), &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
+		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
 
 		xfree(me);
 		xfree(rcpts[0]);
@@ -1560,7 +1562,7 @@ static COMMAND(gg_command_modify) {
 			tmp1 = xstrdup(u->nickname);
 			tmp2 = xstrdup(argv[++i]);
 
-			query_emit(NULL, ("userlist-renamed"), &tmp1, &tmp2);
+			query_emit_id(NULL, USERLIST_RENAMED, &tmp1, &tmp2);
 			xfree(tmp1);
 				
 			xfree(u->nickname);
@@ -1661,14 +1663,14 @@ static COMMAND(gg_command_modify) {
 
 			tmp1 = xstrdup(u->uid);
 			tmp2 = xstrdup(argv[i + 1]);
-			query_emit(NULL, ("userlist-removed"), &tmp1, &tmp2, &q);
+			query_emit_id(NULL, USERLIST_REMOVED, &tmp1, &tmp2, &q);
 			xfree(tmp1);
 			xfree(tmp2);
 
 			userlist_clear_status(session, u->uid);
 
 			tmp1 = xstrdup(argv[++i]);
-			query_emit(NULL, ("userlist-added"), &tmp1, &tmp1, &q);
+			query_emit_id(NULL, USERLIST_ADDED, &tmp1, &tmp1, &q);
 
 			xfree(u->uid);
 			u->uid = tmp1;
