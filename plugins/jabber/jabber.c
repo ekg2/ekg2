@@ -123,6 +123,8 @@ static void jabber_private_destroy(session_t *s)
 
         xfree(j->server);
 	xfree(j->resource);
+	xfree(j->last_gmail_result_time);
+	xfree(j->last_gmail_tid);
 
         if (j->parser)
                 XML_ParserFree(j->parser);
