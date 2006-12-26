@@ -1429,13 +1429,14 @@ static COMMAND(irc_command_names) {
 		mode[0] = (*sort_modes)?(*sort_modes):160; /* ivil hack*/
 		for (l = chan->window->userlist; l; l = l->next)
 		{
+			char *tmp;
 			ulist = (userlist_t *)l->data;
 			if (!ulist || xstrcmp(ulist->status, sort_status[lvl]) )
 				continue;
 			++lvl_total[lvl];
 
 			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = '\0';
-			string_append(buf, format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad));
+			string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad))); xfree(tmp);
 			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = 160;
 			++count;
 		}
