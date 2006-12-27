@@ -139,6 +139,7 @@ typedef struct {
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
 
 extern plugin_t jabber_plugin;
+extern char *jabber_default_pubsub_server;
 extern char *jabber_default_search_server;
 extern int config_jabber_beep_mail;
 

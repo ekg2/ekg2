@@ -73,6 +73,7 @@ SSL_CTX *jabberSslCtx;
 #endif
 
 char *jabber_default_search_server = NULL;
+char *jabber_default_pubsub_server = NULL;
 int config_jabber_beep_mail = 0;
 
 static int session_postinit;
@@ -1220,6 +1221,7 @@ int jabber_plugin_init(int prio)
 	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, jabber_dcc_postinit, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("default_pubusb_server"), VAR_STR, 1, &jabber_default_pubsub_server, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
 
         jabber_register_commands();

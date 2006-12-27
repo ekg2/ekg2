@@ -1282,17 +1282,67 @@ static COMMAND(jabber_command_transports) {
 
 static COMMAND(jabber_command_pubsub) {
 	jabber_private_t *j = session->priv;
-	const char *server = (params[0] && params[1]) ? params[1] : j->server;
-	const char *node   = (params[0] && params[1] && params[2]) ? params[2] : NULL;
-
-	printq("generic_error", "STUB FUNCTION");
+/* XXX, server mniej znaczacy niz node. */
+	const char *server = (params[0] && params[1]) ? params[1] : jabber_default_pubsub_server ? jabber_default_pubsub_server : j->server;
+	const char *node   = (params[0] && params[1] && params[2]) ? params[2] : NULL;		/* XXX, escape */
 
 	if (match_arg(params[0], 'c', "create", 2)) {			/* CREATE NODE */
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
 
-	} else if (match_arg(params[0], 'C', "configure", 2)) {		/* CONFIGURE NODE */
+		watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"pusubcreatenode%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">", server, j->id++);
+		if (!node) 
+			watch_write(j->send_watch, "<create/><configure/>");
+		else	watch_write(j->send_watch, "<create node=\"%s\"/><configure/>", node);
 
+		watch_write(j->send_watch, "</pubsub></iq>");
+
+		JABBER_COMMIT_DATA(j->send_watch);
+		return 0;
+	} else if (match_arg(params[0], 'C', "configure", 2)) {		/* CONFIGURE NODE (if node) || GET DEFAULT CONFIGURATION (if !node) */
+/* XXX, about !node from XEP
+ *
+ * 	If the request did not specify a node, the service SHOULD return a <bad-request/> error. 
+ * 	It is possible that by not including a NodeID, the requesting entity is asking to configure the root node; however, 
+ * 	if the requesting entity is not a service-level admin, it makes sense to return <bad-request/> instead of <forbidden/>.
+ *
+ * 	We assume that if user didn't pass node, that we'll show default configuration...
+ */
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
+
+		watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"pubsubconfigure%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub#owner\">", server, j->id++);
+
+		if (!node)
+			watch_write(j->send_watch, "<default/>");
+		else	watch_write(j->send_watch, "<configure node=\"%s\"/>", node);
+
+		watch_write(j->send_watch, "</pubsub></iq>");
+
+		JABBER_COMMIT_DATA(j->send_watch);
+		return 0;
 	} else if (match_arg(params[0], 'd', "delete", 2)) {		/* DELETE NODE */
+		if (!node) {
+			printq("not_enough_params", name);
+			return -1;
+		}
 
+		watch_write(j->send_watch, 
+				"<iq type=\"set\" to=\"%s\" id=\"pubsubdelete%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub#owner\">"
+					"<delete node=\"%s\"/>"
+				"</pubsub></iq>",
+				server, j->id++, node);
+		return 0;
+	} else if (match_arg(params[0], 'P', "purge", 2)) {		/* PURGE NODE */
+		if (!node) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		watch_write(j->send_watch,
+				"<iq type=\"set\" to=\"%s\" id=\"pubsubdelete%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub#owner\">"
+					"<purge node=\"%s\"/>"
+				"</pubsub></iq>",
+				server, j->id++, node);
+		return 0;
 	} else if (match_arg(params[0], 'm', "manage", 2)) {		/* MANAGE NODE */
 
 	} else if (match_arg(params[0], 'g', "get", 2)) {		/* GET ITEMS @ `node` @ `server` == /transport `server` `node` */
@@ -1311,6 +1361,8 @@ static COMMAND(jabber_command_pubsub) {
 		
 
 	} else return -1;
+
+	printq("generic_error", "STUB FUNCTION");
 
 	return 0;
 }
@@ -2259,7 +2311,8 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:privacy"), "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
 			"-c --clear -d --display -p --put");
-	command_add(&jabber_plugin, ("jid:pubsub"), "? ?", jabber_command_pubsub, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, ("jid:pubsub"), "p ? ?", jabber_command_pubsub, JABBER_FLAGS, 
+			"-c --create -C --configure -d --delete -P --purge -m --manage -g --get -l --list -p --publish -r --remove -s --subscribe -S --status");
 	command_add(&jabber_plugin, ("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
