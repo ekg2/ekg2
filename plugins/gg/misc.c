@@ -33,6 +33,25 @@
 
 #include "gg.h"
 
+/* 80..9F = ?; here is A0..BF, C0..FF is the same */
+static const unsigned char iso_to_cp_table[] = {
+	0xa0, 0xa5, 0xa2, 0xa3, 0xa4, 0xbc, 0x8c, 0xa7,
+	0xa8, 0x8a, 0xaa, 0x8d, 0x8f, 0xad, 0x8e, 0xaf,
+	0xb0, 0xb9, 0xb2, 0xb3, 0xb4, 0xbe, 0x9c, 0xa1,
+	0xb8, 0x9a, 0xba, 0x9d, 0x9f, 0xbd, 0x9e, 0xbf,
+};
+
+static const unsigned char cp_to_iso_table[] = {
+	 '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',
+	 '?',  '?', 0xa9,  '?', 0xa6, 0xab, 0xae, 0xac,
+	 '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',
+	 '?',  '?', 0xb9,  '?', 0xb6, 0xbb, 0xbe, 0xbc,
+	0xa0, 0xb7, 0xa2, 0xa3, 0xa4, 0xa1,  '?', 0xa7,
+	0xa8,  '?', 0xaa,  '?',  '?', 0xad,  '?', 0xaf,
+	0xb0,  '?', 0xb2, 0xb3, 0xb4,  '?',  '?',  '?',
+	0xb8, 0xb1, 0xba,  '?', 0xa5, 0xbd, 0xb5, 0xbf,
+};
+
 /*
  * gg_cp_to_iso()
  *
@@ -42,18 +61,13 @@
  */
 static unsigned char *gg_cp_to_iso(unsigned char *buf) {
 	unsigned char *tmp = buf;
+
 	if (!buf)
 		return NULL;
 
 	while (*buf) {
-		if (*buf == (unsigned char)'¥') *buf = '¡';
-		if (*buf == (unsigned char)'¹') *buf = '±';
-		if (*buf == 140) *buf = '¦';
-		if (*buf == 156) *buf = '¶';
-		if (*buf == 143) *buf = '¬';
-		if (*buf == 159) *buf = '¼';
-		if (*buf > 0x7F && *buf < 0xA0)	/* control-codes in iso-8859-2 */
-			*buf = '?';
+		if (*buf >= 0x80 && *buf < 0xC0)
+			*buf = cp_to_iso_table[*buf - 0x80];
 
 		buf++;
 	}
@@ -73,12 +87,10 @@ static unsigned char *gg_iso_to_cp(unsigned char *buf) {
 		return NULL;
 
 	while (*buf) {
-		if (*buf == (unsigned char)'¡') *buf = '¥';
-		if (*buf == (unsigned char)'±') *buf = '¹';
-		if (*buf == (unsigned char)'¦') *buf = 'Œ';
-		if (*buf == (unsigned char)'¶') *buf = 'œ';
-		if (*buf == (unsigned char)'¬') *buf = '';
-		if (*buf == (unsigned char)'¼') *buf = 'Ÿ';
+		if (*buf >= 0x80 && *buf < 0xA0)
+			*buf = '?';
+		else if (*buf >= 0xA0 && *buf < 0xC0)
+			*buf = iso_to_cp_table[*buf - 0xA0];
 
 		buf++;
 	}
