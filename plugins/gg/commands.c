@@ -718,6 +718,11 @@ static COMMAND(gg_command_msg) {
 			printq("user_not_found", *p);
 			continue;
 		}
+
+		if (xstrncasecmp(uid, "gg:", 3)) {
+			printq("invalid_session");
+			continue;
+		}
 		
 	        u = userlist_find(session, uid);
 
