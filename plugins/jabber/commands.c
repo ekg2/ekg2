@@ -1285,8 +1285,8 @@ typedef enum {
 
 	PUBSUB_GEO,		/* XXX XEP-0080: User Geolocation 4.1 */
 	PUBSUB_MOOD,		/* XXX XEP-0107: User Mood 2.2 */
-	PUBSBUB_ACTIVITY,	/* XXX XEP-0108: User Activity 2.2 */
-	PUBSUB_USERTUNE,	/* XXX XEP-0118: User Tune */			/* NOW PLAYING! YEAH! D-BUS!!! :-) */
+	PUBSUB_ACTIVITY,	/* XEP-0108: User Activity 2.2 */
+	PUBSUB_USERTUNE,	/* XEP-0118: User Tune */			/* NOW PLAYING! YEAH! D-BUS!!! :-) */
 	PUBSUB_NICKNAME,	/* XXX XEP-0172: User Nickname 4.5 */
 	PUBSUB_CHATTING,	/* XXX XEP-0194: User Chatting */
 	PUBSUB_BROWSING,	/* XXX XEP-0195: User Browsing */
@@ -1295,19 +1295,75 @@ typedef enum {
 } pubsub_type_t;
 
 /* XXX, QUERY() */
-static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char *node, const char *itemid, ...) {
+static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char *nodeid, const char *itemid, ...) {
+	jabber_private_t *j;
+	va_list ap;
+
+	char *node;
 	char *item;
-	if (!s) return NULL;
+	if (!s || !(j = s->priv)) return NULL;
+
+	if (!node) {			/* if !node */
+		switch (type) {			/* assume it's PEP, and use defaults */
+			case PUBSUB_ACTIVITY:	node = xstrdup("http://jabber.org/protocol/activity");	break;
+			case PUBSUB_USERTUNE:	node = xstrdup("http://jabber.org/protocol/tune");	break;
+			/* ... */
+
+			default:	/* we MUST have node */
+				debug_error("jabber_pubsub_publish() Unknown node... type: %d\n", type);
+				return NULL;
+		}
+	} else node = jabber_escape(nodeid);
 
 	item = xstrdup(itemid);
 	if (!item) item = saprintf("%s_%x%d%d", node, rand()*rand(), (int)time(NULL), rand());	/* some pseudo random itemid */
 
-#if 0
-		watch_write(j->send_watch,
-			"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
-				"<publish node=\"%s\"><item id=\"%s\">%s</item></publish></pubsub></iq>",
-			server, j->id++, node, itemid, (tmp = jabber_escape(p[0]))); xfree(tmp);
+	if (j->send_watch) j->send_watch->transfer_limit = -1;
 
+	watch_write(j->send_watch,
+		"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
+		"<publish node=\"%s\"><item id=\"%s\">", "pubsub.jabber.autocom.pl", j->id++, node, item);
+
+	switch (type) {
+		char *p[10];		/* different params */
+		char *tmp;		/* for jabber_escape() */
+
+		case PUBSUB_ACTIVITY:	/* XEP-0108: User Activity */
+			p[0] = va_arg(ap, char *);	/* [REQ] general category (doing_chores, drinking, eating, exercising, grooming, ....) */
+			p[1] = va_arg(ap, char *);	/* [OPT] specific category (...) */
+			p[2] = va_arg(ap, char *);	/* [OPT] text */
+			
+			watch_write(j->send_watch, "<activity xmlns=\"http://jabber.org/protocol/activity\">");	/* activity header */
+
+			if (p[1]) {
+				watch_write(j->send_watch, "<%s><%s/></%s>", p[0], p[1], p[0]);						/* general + specific */
+			} else	watch_write(j->send_watch, "<%s/>", p[0]);								/* only general */
+			if (p[2]) watch_write(j->send_watch, "<text>%s</text>", (tmp = jabber_escape(p[2]))); 	xfree(tmp);		/* text */
+			watch_write(j->send_watch, "</activity>");						/* activity footer */
+
+			break;
+
+		case PUBSUB_USERTUNE:	/* XEP-0118: User Tune */
+			p[0] = va_arg(ap, char *);	/* artist */
+			p[1] = va_arg(ap, char *);	/* title */
+			p[2] = va_arg(ap, char *);	/* source */
+			p[3] = va_arg(ap, char *);	/* track */
+			p[4] = va_arg(ap, char *);	/* length */
+
+			watch_write(j->send_watch, "<tune xmlns=\"http://jabber.org/protocol/tune\">");		/* tune header */
+			if (p[0]) watch_write(j->send_watch, "<artist>%s</artist>", (tmp = jabber_escape(p[0])));	xfree(tmp);	/* artist */
+			if (p[1]) watch_write(j->send_watch, "<title>%s</title>", (tmp = jabber_escape(p[1])));		xfree(tmp);	/* title */
+			if (p[2]) watch_write(j->send_watch, "<source>%s</source>", (tmp = jabber_escape(p[2])));	xfree(tmp);	/* source */
+			if (p[3]) watch_write(j->send_watch, "<track>%s</track>", p[3]);						/* track # or URI */
+			if (p[4]) watch_write(j->send_watch, "<length>%s</length>", p[4]);						/* len [seconds] */
+			watch_write(j->send_watch, "</tune>");							/* tune footer */
+
+			break;
+	}
+
+	watch_write(j->send_watch, "</item></publish></pubsub></iq>");
+
+	JABBER_COMMIT_DATA(j->send_watch);
 #if 0
 		char *title = NULL;
 /* @ p[0]	if http://www.w3.org/2005/Atom ...
@@ -1329,7 +1385,7 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 		JABBER_COMMIT_DATA(j->send_watch);
 #endif 
 
-#endif
+	xfree(node);
 	return item;
 }
 
