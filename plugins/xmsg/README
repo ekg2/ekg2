@@ -27,6 +27,10 @@ For description of variables see session-*.txt and variable-*.txt.
 Some remarks:
 * session UIDs should be in form 'xmsg:/some/path', without trailing slash
   (but existence of that slash shouldn't also make any problems),
+* you can use # instead of / in session UID, this should fix problems with logs
+  plugin or userlist saving,
+* if you want to watch directory with # somewhere in path, you MUST give
+  absolute path, starting with / — else above conversion will be done,
 * xmsg does watch only given directory, it DOES NOT watch its' subdirectories,
 * the sender of xmsg messages is 'xmsg:filename', but the filename is cut
   before first colon (that's feature, not bug), so I recommend to use filenames
@@ -65,6 +69,8 @@ EXAMPLE OF USE
 
 Then all winpopup messages should be delivered directly to ekg2. Although
 smbxmsg takes root privs, it makes sure that owner of given file is smbguest.
+
+You can find more examples in the contrib/xmsg-extras/ subdirectory in ekg2 directory.
 
 SENDING MESSAGES
 
