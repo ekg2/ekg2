@@ -1,0 +1,53 @@
+XMSG handler.d package
+(C) 2006 Michał Górny <peres@peres.int.pl>
+------------------------
+
+This package contains handler.d-based XMSG send_cmd script and some example
+handler.d scripts for it. To use it, put it in some directory, adjust paths in
+it (xmsg incoming message directory path has been moved to SimpleXMSG.pm) and
+set it as xmsg-session's send_cmd.
+
+What exactly does xmsghandler.pl do? The first, it checks if given ARGV
+arguments are right (both are not null and given file exists), then it tries to
+handle incoming message with all handler.d scripts. If all of them fail, it also
+sends failure message to user.
+
+What is that XMSG? That's simple external message delivery system for IM's,
+independent of any servers, with simplest queuing ever. Currently only IM
+supporting it is EKG2 (<http://www.ekg2.org/>, only fresh CVS versions). See
+README within plugins/xmsg/ in its' CVS for more information.
+
+What's rules of creating handler.d scripts?
+1) Main handler invokes all scripts with same arguments it is invoked with,
+   i.e. first one contains UID, and the second one path to file, containing
+   message;
+2) Every script MUST determine if it can handle that kind of message (and it
+   SHOULD do it depending on UID),
+3) If script can handle message, it SHOULD do it and then MUST return value of
+   0 (even if further processing fails),
+4) If script can't handle that kind of message, it MUST return value other than
+   0,
+5) Handlers are invoked until one of them returns positive response (i.e. 0),
+6) If none of the handlers return positive response, main handler script replies
+   to the sender with failure message,
+7) If handler can't handle message, it MUST NOT unlink the file given on second
+   arg. If it can, it also SHOULD NOT do this — main handler unlinks that file
+   itself,
+8) The scripts SHOULD NOT write to STDOUT/STDERR [user won't see this (-;], all
+   messages to user MUST be sent using xmsg incoming messages directory,
+9) If handler is written in Perl, it MAY use SimpleXMSG.pm module, providing
+   easy-to-use reply subroutine, which as only argument takes message text.
+   CAUTION: reply uses directly $ARGV[0], so it's incompatible with non-handler
+   scripts. You need to explicitly define, what symbol do you need (qw/reply/),
+   and don't forget about adding directory with this module to search path.
+
+With package, there is smbxmsghandler.pl example included, which does convert
+XMSG messages with uids xmsg:smbmsg-XXX (where XXX stands for computer name) to
+WinPopup messages (and sends them). For another example, you can download
+xmsgrss package, where handler.d interface is used for easy manipulation
+of database.
+
+Hope that's all I wanted to write. I'm very sorry, if you can't understand
+anything of it. I'm a programmer, not docwriter (and mi primary language is
+Polish). I can only wish you good luck.
+

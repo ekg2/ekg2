@@ -1,0 +1,43 @@
+XMSG-RSS
+(C) 2006 Michał Górny <peres@peres.int.pl>
+------------------------
+
+XMSG-RSS is XMSG-plugin-based RSS headline reader. It does consist of two parts.
+The first one, xmsgrss.pl, is main script, which reads feeds database, refreshes
+all feeds, then sends new messages through XMSG and rewrites db. The second one
+is xmsghandler.d script, which allows user to easily update database from their
+XMSG-capable IM.
+
+The feature list is not long now. XMSG-RSS saves in its database last-headline
+ID to not send the same headlines two times. But if some way headline order
+changes or our 'last headline' disappears, XMSG-RSS will resend all headlines.
+
+We also keep Last-Modified header in db, if available. Then we resend it as
+If-Modified-Since, so that we won't download unmodified feeds again and again.
+
+XMSG-RSS uses also Syslog, to which it is writing information about processed
+feeds, in the form 'name: action taken'.
+
+How to use it? First, you'll need some XMSG-capable IM, that is EKG2
+(<http://www.ekg2.org>, xmsg is available only in fresh CVS versions). Then you
+should read XMSG plugin README, and prepare yourself XMSG environment.
+
+Then, you should put xmsgrss.pl and db.example in some directory, and rename the
+second one to something less-exampling. XMSG incoming message directory should
+be also adjusted inside SimpleXMSG.pm ($msgdir variable). To run feedupdate, you
+must call xmsgrss.pl with path to database file. You may put this into cron.d,
+so your feeds will be refreshed automagically.
+
+You can edit the database with any text editor, its' file format is very simple.
+One record is one line, if line begins with #, it's a comment. Field seperator
+is ##, in the beginning of database, xmsg writes field use as a comment. You
+shouldn't put your own comments, because xmsg will remove them in next run (-;.
+
+You can also use XMSG-handler based interface. To get started, you should get
+yourself xmsghandler.d package, and read its' README. Then you can put or
+symlink xmsgrssxhandler.pl into your xmsghandler.d directory, and adjust paths
+inside. Don't forget to set xmsg-session's send_cmd. Then just write 'help'
+(without quotes) to xmsg:rss UID.
+
+That's all for now. I'm very sorry if that README is too difficult to understand
+for you, but I'm a programmer, not helpwriter. I can only wish you good luck.
