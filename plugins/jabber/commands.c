@@ -1280,6 +1280,59 @@ static COMMAND(jabber_command_transports) {
 	return 0;
 }
 
+typedef enum {
+	PUBSUB_GENERIC = 0,	/* XXX generic one */
+
+	PUBSUB_GEO,		/* XXX XEP-0080: User Geolocation 4.1 */
+	PUBSUB_MOOD,		/* XXX XEP-0107: User Mood 2.2 */
+	PUBSBUB_ACTIVITY,	/* XXX XEP-0108: User Activity 2.2 */
+	PUBSUB_USERTUNE,	/* XXX XEP-0118: User Tune */			/* NOW PLAYING! YEAH! D-BUS!!! :-) */
+	PUBSUB_NICKNAME,	/* XXX XEP-0172: User Nickname 4.5 */
+	PUBSUB_CHATTING,	/* XXX XEP-0194: User Chatting */
+	PUBSUB_BROWSING,	/* XXX XEP-0195: User Browsing */
+	PUBSUB_GAMING,		/* XXX XEP-0196: User Gaming */
+	PUBSUB_VIEWING,		/* XXX XEP-0197: User Viewing */
+} pubsub_type_t;
+
+/* XXX, QUERY() */
+static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char *node, const char *itemid, ...) {
+	char *item;
+	if (!s) return NULL;
+
+	item = xstrdup(itemid);
+	if (!item) item = saprintf("%s_%x%d%d", node, rand()*rand(), (int)time(NULL), rand());	/* some pseudo random itemid */
+
+#if 0
+		watch_write(j->send_watch,
+			"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
+				"<publish node=\"%s\"><item id=\"%s\">%s</item></publish></pubsub></iq>",
+			server, j->id++, node, itemid, (tmp = jabber_escape(p[0]))); xfree(tmp);
+
+#if 0
+		char *title = NULL;
+/* @ p[0]	if http://www.w3.org/2005/Atom ...
+ * 	--itemid %s
+ * 	--title %s
+ * 	--summary %s
+ * 	...
+ * 	...
+ */
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
+
+		watch_write(j->send_watch, 
+			"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
+			"<publish node=\"%s\">"
+				"<item id=\"%s\"><entry xmlns=\"http://www.w3.org/2005/Atom\">", server, j->id++, node, itemid);
+
+		if (title) { watch_write(j->send_watch, "<title>%s</title>", (tmp = jabber_escape(title))); xfree(title); }
+		/* XXX ... */
+		JABBER_COMMIT_DATA(j->send_watch);
+#endif 
+
+#endif
+	return item;
+}
+
 static COMMAND(jabber_command_pubsub) {
 	jabber_private_t *j = session->priv;
 
@@ -1365,45 +1418,16 @@ static COMMAND(jabber_command_pubsub) {
 	} else if (match_arg(params[0], 'l', "list", 2)) {		/* LIST SUBSCRIPTION */
 
 	} else if (match_arg(params[0], 'p', "publish", 2)) {		/* PUBLISH ITEM TO `node` @ `server` */
-		char *itemid = NULL;
-		char *tmp;
+		char *itemid;
 
 		if (!node || !p[0]) {
 			printq("not_enough_params", name);
 			return -1;
 		}
-
-		if (!itemid) itemid = saprintf("%s_%x%d%d", node, rand()*rand(), (int)time(NULL), rand());	/* some pseudo random itemid */
-	
-		watch_write(j->send_watch,
-			"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
-				"<publish node=\"%s\"><item id=\"%s\">%s</item></publish></pubsub></iq>",
-			server, j->id++, node, itemid, (tmp = jabber_escape(p[0]))); xfree(tmp);
-
-#if 0
-		char *title = NULL;
-/* @ p[0]	if http://www.w3.org/2005/Atom ...
- * 	--itemid %s
- * 	--title %s
- * 	--summary %s
- * 	...
- * 	...
- */
-		if (j->send_watch) j->send_watch->transfer_limit = -1;
-
-		watch_write(j->send_watch, 
-			"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
-			"<publish node=\"%s\">"
-				"<item id=\"%s\"><entry xmlns=\"http://www.w3.org/2005/Atom\">", server, j->id++, node, itemid);
-
-		if (title) { watch_write(j->send_watch, "<title>%s</title>", (tmp = jabber_escape(title))); xfree(title); }
-		/* XXX ... */
-		JABBER_COMMIT_DATA(j->send_watch);
-#endif 
+		itemid = jabber_pubsub_publish(session, PUBSUB_GENERIC, node, NULL /* generate own itemid */, p[0]);
 
 		xfree(itemid);
 		return 0;
-
 	} else if (match_arg(params[0], 'r', "remove", 2)) {		/* REMOVE ITEM */
 
 	} else if (match_arg(params[0], 's', "subscribe", 2)) {		/* SUBSCRIBE TO `node` @ `server` */
