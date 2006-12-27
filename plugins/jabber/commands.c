@@ -1282,9 +1282,22 @@ static COMMAND(jabber_command_transports) {
 
 static COMMAND(jabber_command_pubsub) {
 	jabber_private_t *j = session->priv;
-/* XXX, server mniej znaczacy niz node. */
-	const char *server = (params[0] && params[1]) ? params[1] : jabber_default_pubsub_server ? jabber_default_pubsub_server : j->server;
-	const char *node   = (params[0] && params[1] && params[2]) ? params[2] : NULL;		/* XXX, escape */
+
+	const char *server;
+	const char *node;
+	const char **p = &params[1];
+
+	if (p[0] && p[1]) {
+		server	= p[0];
+		node	= p[1];
+		p	= &p[2];
+	} else {
+		server	= jabber_default_pubsub_server ? jabber_default_pubsub_server : j->server;
+		node	= p[0];
+		p	= &p[1];
+	}
+
+/* XXX, escape node */
 
 	if (match_arg(params[0], 'c', "create", 2)) {			/* CREATE NODE */
 		if (j->send_watch) j->send_watch->transfer_limit = -1;
@@ -1352,6 +1365,44 @@ static COMMAND(jabber_command_pubsub) {
 	} else if (match_arg(params[0], 'l', "list", 2)) {		/* LIST SUBSCRIPTION */
 
 	} else if (match_arg(params[0], 'p', "publish", 2)) {		/* PUBLISH ITEM TO `node` @ `server` */
+		char *itemid = NULL;
+		char *tmp;
+
+		if (!node || !p[0]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!itemid) itemid = saprintf("%s_%x%d%d", node, rand()*rand(), (int)time(NULL), rand());	/* some pseudo random itemid */
+	
+		watch_write(j->send_watch,
+			"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
+				"<publish node=\"%s\"><item id=\"%s\">%s</item></publish></pubsub></iq>",
+			server, j->id++, node, itemid, (tmp = jabber_escape(p[0]))); xfree(tmp);
+
+#if 0
+		char *title = NULL;
+/* @ p[0]	if http://www.w3.org/2005/Atom ...
+ * 	--itemid %s
+ * 	--title %s
+ * 	--summary %s
+ * 	...
+ * 	...
+ */
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
+
+		watch_write(j->send_watch, 
+			"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
+			"<publish node=\"%s\">"
+				"<item id=\"%s\"><entry xmlns=\"http://www.w3.org/2005/Atom\">", server, j->id++, node, itemid);
+
+		if (title) { watch_write(j->send_watch, "<title>%s</title>", (tmp = jabber_escape(title))); xfree(title); }
+		/* XXX ... */
+		JABBER_COMMIT_DATA(j->send_watch);
+#endif 
+
+		xfree(itemid);
+		return 0;
 
 	} else if (match_arg(params[0], 'r', "remove", 2)) {		/* REMOVE ITEM */
 
@@ -2311,7 +2362,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:privacy"), "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
 			"-c --clear -d --display -p --put");
-	command_add(&jabber_plugin, ("jid:pubsub"), "p ? ?", jabber_command_pubsub, JABBER_FLAGS, 
+	command_add(&jabber_plugin, ("jid:pubsub"), "!p ? ? ?", jabber_command_pubsub, JABBER_FLAGS, 
 			"-c --create -C --configure -d --delete -P --purge -m --manage -g --get -l --list -p --publish -r --remove -s --subscribe -S --status");
 	command_add(&jabber_plugin, ("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
