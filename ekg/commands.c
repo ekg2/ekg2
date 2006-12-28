@@ -1724,11 +1724,7 @@ static COMMAND(cmd_set)
 	if (arg && val) {
 		char **tmp = array_make(val, (""), 0, 0, 1);
 
-	/* TUTAJ MEMLEAK, nie mozemy robic tmp[0] = NULL na tablicy, poniewaz w tablicy ostatni element jest NULL... czyli by to oznaczalo
-	 * 	ze tablica sie konczy od razu. FIX IT. 24 XII 2006 (dj XXX) */
-
-		value = tmp[0];
-		tmp[0] = NULL;
+		value = xstrdup(tmp[0]);
 		array_free(tmp);
 	}
 
