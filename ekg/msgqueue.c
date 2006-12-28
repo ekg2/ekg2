@@ -338,6 +338,7 @@ int msg_queue_read()
 			fclose(f);
 			continue;
 		}
+		xfree(buf);
 
 		if (!(m.session = read_file(f))) {
 			fclose(f);
