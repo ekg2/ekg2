@@ -1183,6 +1183,7 @@ void jabber_gpg_changed(session_t *s, const char *name) {
 		session_int_set(s, "__gpg_enabled", 1);
 		print("jabber_gpg_ok", session_name(s), key);
 	}
+	jabber_write_status(s);
 	xfree(msg);
 }
 
