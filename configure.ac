@@ -526,9 +526,9 @@ echo -en " - Interface:\t "
 echo ""
 
 # - PROTOCOL PLUGINS
-echo -en " - Protocols:\t irc "
+echo -en " - Protocols:\t irc xmsg "
 	if test "x$have_expat" = "xyes"; then
-		echo -n "jabber xmsg "
+		echo -n "jabber "
 
 		if test "x$jabber_have_gnutls" = "xyes"; then
 			echo -n "(with ssl support in -lgnutls) "
