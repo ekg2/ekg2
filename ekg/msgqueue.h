@@ -43,7 +43,6 @@ int msg_queue_count_session(const char *uid);
 int msg_queue_remove_uid(const char *uid);
 int msg_queue_remove_seq(const char *seq);
 int msg_queue_flush(const char *session);
-int msg_queue_count();
 int msg_queue_read();
 int msg_queue_write();
 

@@ -217,16 +217,6 @@ int msg_queue_flush(const char *session)
 }
 
 /*
- * msg_queue_count()
- *
- * zwraca liczbê wiadomo¶ci w kolejce.
- */
-int msg_queue_count()
-{
-	return list_count(msg_queue);
-}
-
-/*
  * msg_queue_count_session()
  *
  * zwraca liczbê wiadomo¶ci w kolejce dla danej sesji.

@@ -3715,7 +3715,7 @@ static COMMAND(cmd_queue)
 	int isempty = 1;
 	
 	if (match_arg(params[0], 'c', ("clear"), 2)) {
-		if (!msg_queue_count()) {
+		if (!msg_queue) {
 			wcs_printq("queue_empty");
 			return 0;
 		}
