@@ -176,7 +176,7 @@ void msg_queue_free()
 int msg_queue_flush(const char *session)
 {
 	list_t l;
-	int nothing = 1;
+	int sent = 0;
 
 	if (!msg_queue)
 		return -2;
@@ -210,10 +210,10 @@ int msg_queue_flush(const char *session)
 
 		msg_queue_remove(m);
 
-		nothing = 0;
+		sent = 1;
 	}
 
-	return (nothing) ? -1 : 0;
+	return (sent) ? 0 : -1;
 }
 
 /*
