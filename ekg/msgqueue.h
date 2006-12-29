@@ -38,13 +38,12 @@ typedef struct {
 extern list_t msg_queue;
 
 int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq);
-void msg_queue_remove(msg_queue_t *m);
+void msg_queue_free();
+int msg_queue_count_session(const char *uid);
 int msg_queue_remove_uid(const char *uid);
 int msg_queue_remove_seq(const char *seq);
-void msg_queue_free();
 int msg_queue_flush(const char *session);
 int msg_queue_count();
-int msg_queue_count_uid(const char *uid);
 int msg_queue_read();
 int msg_queue_write();
 

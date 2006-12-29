@@ -3712,20 +3712,18 @@ static COMMAND(cmd_last)
 static COMMAND(cmd_queue)
 {
 	list_t l;
+	int isempty = 1;
 	
 	if (match_arg(params[0], 'c', ("clear"), 2)) {
-		if ((params[1] && !msg_queue_count_uid(params[1])) || !msg_queue_count()) {
-			if (params[1])
-				printq("queue_empty_uid", format_user(session, params[1]));
-			else
-				wcs_printq("queue_empty");
-
+		if (!msg_queue_count()) {
+			wcs_printq("queue_empty");
 			return 0;
 		}
 
 		if (params[1]) {
-			msg_queue_remove_uid(params[1]);
-			printq("queue_clear_uid", format_user(session, params[1]));
+			if (!msg_queue_remove_uid(params[1]))	/* msg_queue_remove_uid() returns 0 on success */
+				printq("queue_clear_uid", format_user(session, params[1]));
+			else	printq("queue_empty_uid", format_user(session, params[1]));	/* queue for user empty */
 		} else {
 			msg_queue_free();
 			wcs_printq("queue_clear");
@@ -3733,15 +3731,6 @@ static COMMAND(cmd_queue)
 
 		return 0;
 	}		
-
-	if ((params[0] && !msg_queue_count_uid(params[0])) || !msg_queue_count()) {
-		if (params[0])
-			printq("queue_empty_uid", format_user(session, params[0]));
-		else
-			wcs_printq("queue_empty");
-
-		return 0;
-	}
 
         for (l = msg_queue; l; l = l->next) {
                 msg_queue_t *m = l->data;
@@ -3755,7 +3744,15 @@ static COMMAND(cmd_queue)
 				xstrcpy(buf, "TOOLONG");
 
 			printq("queue_list_message", buf, m->rcpts, m->message);
+			isempty = 0;
 		}
+	}
+
+	if (isempty) {
+		if (params[0])
+			printq("queue_empty_uid", format_user(session, params[0]));
+		else
+			printq("queue_empty");
 	}
 
 	return 0;

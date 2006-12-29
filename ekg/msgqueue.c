@@ -74,7 +74,7 @@ int msg_queue_add(const char *session, const char *rcpts, const char *message, c
  *
  * 0 je¶li usuniêto, -1 je¶li nie ma takiej wiadomo¶ci.
  */
-void msg_queue_remove(msg_queue_t *m)
+static void msg_queue_remove(msg_queue_t *m)
 {
 	xfree(m->session);
 	xfree(m->rcpts);
@@ -227,13 +227,13 @@ int msg_queue_count()
 }
 
 /*
- * msg_queue_count_uid()
+ * msg_queue_count_session()
  *
- * zwraca liczbê wiadomo¶ci w kolejce dla danego u¿ytkownika.
+ * zwraca liczbê wiadomo¶ci w kolejce dla danej sesji.
  *
  * - uin.
  */
-int msg_queue_count_uid(const char *uid)
+int msg_queue_count_session(const char *uid)
 {
 	list_t l;
 	int count = 0;
@@ -241,7 +241,7 @@ int msg_queue_count_uid(const char *uid)
 	for (l = msg_queue; l; l = l->next) {
 		msg_queue_t *m = l->data;
 
-		if (!xstrcasecmp(m->rcpts, uid))
+		if (!xstrcasecmp(m->session, uid))
 			count++;
 	}
 
