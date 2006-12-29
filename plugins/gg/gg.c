@@ -264,7 +264,7 @@ static QUERY(gg_status_show_handle) {
 
 		if (s->last_conn)
 			print("show_status_disconnected_since", buf);
-		if ((mqc = msg_queue_count()))
+		if ((mqc = msg_queue_count_session(s->uid)))
 			print("show_status_msg_queue", itoa(mqc));
 		return 0;
 	}
