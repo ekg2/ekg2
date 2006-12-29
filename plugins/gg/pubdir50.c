@@ -71,8 +71,6 @@ COMMAND(gg_command_find)
 		return -1;
 	}
 
-	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
-
 	if (target[0] != '-' || !params[0]) {		/* if window_current->target is even --blah use it. it's quite stupid hovewer. */
 		const char *uid = get_uid(session, target);
 
@@ -90,18 +88,15 @@ COMMAND(gg_command_find)
 
 		if (!params[0]) goto no_argv;
 
-		for (i = 1; argv[i]; i++)
-			uargv[i] = gg_locale_to_cp(argv[i]);
-
-		i = 1;
-	} else {
-		for (i = 0; argv[i]; i++)
-			uargv[i] = gg_locale_to_cp(argv[i]);
-		
-		i = 0;
+		argv = &argv[1];	/* skip this param, and go to nextone */
 	}
+	
+	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
 
-	for (; argv[i]; i++) {
+	for (i = 0; argv[i]; i++)
+		uargv[i] = gg_locale_to_cp(argv[i]);
+
+	for (i = 0; argv[i]; i++) {
 		char *arg = argv[i];
 				
 		if (match_arg(arg, 'f', ("first"), 2) && argv[i + 1]) {
@@ -170,17 +165,17 @@ COMMAND(gg_command_find)
 		gg_pubdir50_free(req);
 
 #if USE_UNICODE
-		if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);
+		if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);	/* wrong? */
 #endif
 		xfree(uargv);
 		return -1;
 	}
 #if USE_UNICODE
-	if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);
+	if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);		/* wrongx2? */
 #endif
-no_argv:
 	xfree(uargv);
 
+no_argv:
 	if (!gg_pubdir50(g->sess, req)) {
 		wcs_printq("search_failed", ("Nie wiem o co chodzi"));
 		res = -1;
