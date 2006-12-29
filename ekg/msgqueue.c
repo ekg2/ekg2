@@ -187,9 +187,11 @@ int msg_queue_flush(const char *session)
 		m->mark = 1;
 	}
 
-	for (l = msg_queue; l; l = l->next) {
+	for (l = msg_queue; l;) {
 		msg_queue_t *m = l->data;
 		session_t *s;
+
+		l = l->next;
 
 		/* czy wiadomo¶æ dodano w trakcie opró¿niania kolejki? */
 		if (!m->mark)
