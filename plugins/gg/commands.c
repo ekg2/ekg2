@@ -1829,8 +1829,8 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:unregister"), "! ! !", gg_command_unregister, COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:passwd"), "! ?", gg_command_passwd, 		GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:userlist"), "p ?", gg_command_list, 		GG_ONLY, "-c --clear -g --get -p --put");
-	command_add(&gg_plugin, ("gg:find"), "puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC", 
-							gg_command_find, 	GG_ONLY, 
+	command_add(&gg_plugin, ("gg:find"), "!puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC", 
+							gg_command_find, 	GG_FLAGS_TARGET, 
 			"-u --uin -f --first -l --last -n --nick -c --city -b --born -a --active -F --female -M --male -s --start -A --all -S --stop");
 	command_add(&gg_plugin, ("gg:change"), "p", gg_command_change, 		GG_ONLY, 
 			"-f --first -l --last -n --nick -b --born -c --city -N --familyname -C --familycity -F --female -M --male");

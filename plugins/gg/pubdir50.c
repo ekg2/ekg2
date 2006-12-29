@@ -35,7 +35,7 @@
 COMMAND(gg_command_find)
 {
 	gg_private_t *g = session_private_get(session);
-	char **argv = NULL, *user;
+	char **argv = NULL;
 	char **uargv = NULL;
 	gg_pubdir50_t req;
 	int i, res = 0, all = 0;
@@ -61,18 +61,10 @@ COMMAND(gg_command_find)
 		return 0;
 	}
 	
-	if (!params[0]) {
-		if (!(params[0] = xstrdup(window_current->target))) {
-			wcs_printq("not_enough_params", name);
-			return -1;
-		}
-		params[1] = NULL;
-	}
-
 	argv = (char **) params;
 
-	if (argv[0] && !argv[1] && argv[0][0] == '#') {
-		return command_exec_format(target, session, quiet, ("/conference --find %s"), argv[0]);
+	if (target[0] == '#' && (!argv[0] || !argv[1])) {
+		return command_exec_format(target, session, quiet, ("/conference --find %s"), target);
 	}
 
 	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH))) {
@@ -81,24 +73,22 @@ COMMAND(gg_command_find)
 
 	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
 
-	user = xstrdup(argv[0]);
-	
-	if (argv[0] && argv[0][0] != '-') {
-		const char *uid = get_uid(session, argv[0]);
+	if (target[0] != '-' || !params[0]) {		/* if window_current->target is even --blah use it. it's quite stupid hovewer. */
+		const char *uid = get_uid(session, target);
 
 		if (!uid) {
-			printq("user_not_found", user);
-			xfree(user);
+			printq("user_not_found", target);
 			return -1;
 		}
 
 		if (xstrncasecmp(uid, "gg:", 3)) {
 			wcs_printq("generic_error", ("Tylko GG"));
-			xfree(user);
 			return -1;
 		}
 
 		gg_pubdir50_add(req, GG_PUBDIR50_UIN, uid + 3);
+
+		if (!params[0]) goto no_argv;
 
 		for (i = 1; argv[i]; i++)
 			uargv[i] = gg_locale_to_cp(argv[i]);
@@ -110,8 +100,6 @@ COMMAND(gg_command_find)
 		
 		i = 0;
 	}
-
-	xfree(user);
 
 	for (; argv[i]; i++) {
 		char *arg = argv[i];
@@ -190,6 +178,7 @@ COMMAND(gg_command_find)
 #if USE_UNICODE
 	if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);
 #endif
+no_argv:
 	xfree(uargv);
 
 	if (!gg_pubdir50(g->sess, req)) {
