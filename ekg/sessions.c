@@ -863,24 +863,26 @@ COMMAND(session_command)
 		 
 		if (params[2] && session_is_var(s, params[2])) {
 			plugin_t *p = plugin_find_uid(s->uid);
-                        plugins_params_t *pa;
+			plugins_params_t *pa;
+			char *tmp = NULL;
 
                         if ((pa = plugin_var_find(p, params[2]))) {
          	        	var = session_get_n(s->uid, params[2]);
 
                  		if (pa->secret)
-                         		printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? format_string(format_find("value_none")) : "(...)");
+                         		printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? (tmp = format_string(format_find("value_none"))) : "(...)");
                                 else
-                                        printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? format_string(format_find("value_none")) : var);
-				
+                                        printq("session_variable", session_name(s), params[2], (pa->type == VAR_STR && !var) ? (tmp = format_string(format_find("value_none"))) : var);
+				xfree(tmp);	
                         	return 0;
 			}
 
 			var = session_get_n(s->uid, params[2]);
                         if (!xstrcasecmp(params[2], "password"))
-                		printq("session_variable", session_name(session), params[2], (var) ? "(...)" : format_string(format_find("value_none")));
+                		printq("session_variable", session_name(session), params[2], (var) ? "(...)" : (tmp = format_string(format_find("value_none"))));
                         else
-                                printq("session_variable", session_name(session), params[2], (var) ? var : format_string(format_find("value_none")));
+                                printq("session_variable", session_name(session), params[2], (var) ? var : (tmp = format_string(format_find("value_none"))));
+			xfree(tmp);
                         return 0;
 		}
 		
