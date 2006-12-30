@@ -466,6 +466,15 @@ plugin_watches_again:
 		}
 		ekg_watches_removed = 0;
 
+/* XXX here, to segvuje jesli na przyklad mamy dzialajacego watcha w tle.. a handler watcha zrobi cos ze trzeba watcha usunac (watch dzialajacy wiec w->remove = 1) 
+ * 	a potem usunac caly plugin... watch_free() dla w->remove = 1 zadziala. a potem wraca do handlera watcha... gdzie radosnie mamy sigsegv. 
+ * 	infrastuktura ekg2 ssie. w takim glibie mamy refcount dla takich rzeczy... tutaj jakies znaczniki w->removed, brak pomyslu jak zrobic zeby to dzialalo
+ * 	na razie tylko komunikat. 
+ *
+ * 	testowac na pluginie rc. 
+ *	polaczyc sie z ekg2 zrobic: /plugin -rc
+ *	i wesolo debugowac....
+ */
 		if (w->plugin == p)
 			watch_free(w);
 	}
