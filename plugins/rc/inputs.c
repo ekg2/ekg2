@@ -17,9 +17,6 @@
 #include <string.h>
 
 #include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 
 #ifndef HAVE_STRLCPY
@@ -54,7 +51,7 @@ static int rc_input_new_inet(const char *path, int type)
 	sin.sin_addr.s_addr = addr;
 
 	if ((fd = socket(AF_INET, type, 0)) == -1) {
-		debug("[rc] socket() failed: %s\n", strerror(errno));
+		debug_error("[rc] socket() failed: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -63,17 +60,19 @@ static int rc_input_new_inet(const char *path, int type)
 		int one = 1;
 
 		if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) == -1)
-			debug("[rc] setsockopt(SO_REUSEADDR) failed: %s\n", strerror(errno));
+			debug_error("[rc] setsockopt(SO_REUSEADDR) failed: %s\n", strerror(errno));
 	}
 #endif
 	
 	if (bind(fd, (struct sockaddr*) &sin, sizeof(sin))) {
-		debug("[rc] bind() failed: %s\n", strerror(errno));
+		debug_error("[rc] bind() failed: %s\n", strerror(errno));
+		close(fd);
 		return -1;
 	}
 
 	if (type == SOCK_STREAM && listen(fd, 10)) {
-		debug("[rc] listen() failed: %s\n", strerror(errno));
+		debug_error("[rc] listen() failed: %s\n", strerror(errno));
+		close(fd);
 		return -1;
 	}
 
@@ -102,17 +101,17 @@ int rc_input_new_pipe(const char *path)
 	int fd;
 
 	if (!stat(path, &st) && !S_ISFIFO(st.st_mode)) {
-		debug("[rc] file exists, but isn't a pipe\n");
+		debug_error("[rc] file exists, but isn't a pipe\n");
 		return -1;
 	}
 
 	if (mkfifo(path, 0600) == -1 && errno != EEXIST) {
-		debug("[rc] mkfifo() failed: %s\n", strerror(errno));
+		debug_error("[rc] mkfifo() failed: %s\n", strerror(errno));
 		return -1;
 	}
 
 	if ((fd = open(path, O_RDWR | O_NONBLOCK)) == -1) {
-		debug("[rc] open() failed: %s\n", strerror(errno));
+		debug_error("[rc] open() failed: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -143,11 +142,13 @@ int rc_input_new_unix(const char *path)
 	
 	if (bind(fd, (struct sockaddr*) &beeth, sizeof(beeth))) {
 		debug("[rc] bind() failed: %s\n", strerror(errno));
+		close(fd);
 		return -1;
 	}
 
 	if (listen(fd, 10)) {
 		debug("[rc] listen() failed: %s\n", strerror(errno));
+		close(fd);
 		return -1;
 	}
 
@@ -156,34 +157,6 @@ int rc_input_new_unix(const char *path)
 	return -1;
 #endif
 }
-
-/*
- * rc_input_close()
- *
- * zamyka kana³ wej¶ciowy.
- */
-void rc_input_close(rc_input_t *r, int onlyclosefd)
-{
-	if (!r)
-		return;
-
-	if (onlyclosefd) {
-		close(r->fd);
-		r->fd = -1;
-		return;
-	}
-
-	debug("[rc] closing %s\n", r->path);
-
-	if (r->type == RC_INPUT_PIPE)
-		unlink(r->path);
-
-	xfree(r->path);
-	if (r->fd != -1) close(r->fd);
-
-	list_remove(&rc_inputs, r, 1);
-}
-
 
 /*
  * Local Variables:
