@@ -1,0 +1,9 @@
+max_inotifycount
+	type: integer
+	default value: 25
+
+	Max number of inotify events that will be processed on one loop
+	execution. After reaching that count, next events (awaiting in the
+	queue) will be silently ignored and resume timer will be created (see:
+	session variable oneshot_resume_timer).
+

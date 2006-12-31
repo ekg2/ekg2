@@ -1,0 +1,9 @@
+max_inotifycount
+	typ: liczba
+	domy¶lna warto¶æ: 25
+
+	Maksymalna ilo¶æ powiadomieñ inotify, jakie mog± byæ obs³u¿one podczas
+	jednego wywo³ania pêtli. Po przekroczeniu tej ilo¶ci, pozosta³e
+	powiadomienia (w serii) s± ignorowane, a tak¿e tworzony jest timer
+	wznawiaj±cy skanowanie (patrz: zmienna sesyjna oneshot_resume_timer).
+
