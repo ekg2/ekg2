@@ -1358,10 +1358,27 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "pubsub"))) {
 		const char *xmlns = jabber_attr(q->atts, "xmlns");
-
+/* XXX, we really need make functions for iq's. */
 		if (!xstrcmp(xmlns, "http://jabber.org/protocol/pubsub#event")) {
-			debug_error("[XXX %s:%d] http://jabber.org/protocol/pubsub#event\n", __FILE__, __LINE__);
+			xmlnode_t *p;
 
+			for (p = q->children; p; p = p->next) {
+				if (!xstrcmp(p->name, "items")) {
+					const char *nodename = jabber_attr(p->atts, "node");
+					xmlnode_t *node;
+
+					debug_error("XXX %s\n", __(nodename));
+
+					for (node = p->children; node; node = node->next) {
+						if (!xstrcmp(node->name, "item")) {
+							const char *itemid = jabber_attr(node->atts, "id");
+							debug_error("XXX XXX %s\n", __(itemid));
+
+/* XXX HERE, node->children... is entry. */
+						} else debug_error("[%s:%d] wtf? %s\n", __FILE__, __LINE__, __(node->name));
+					} 
+				} else debug_error("[%s:%d] wtf? %s\n", __FILE__, __LINE__, __(p->name));
+			}
 		} else debug_error("[JABBER] RESULT/PUBSUB wtf XMLNS: %s\n", __(xmlns));
 	}
 
