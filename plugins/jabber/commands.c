@@ -1281,21 +1281,21 @@ static COMMAND(jabber_command_transports) {
 }
 
 typedef enum {
-	PUBSUB_GENERIC = 0,	/* XXX generic one */
+	PUBSUB_GENERIC = 0,	/* generic one */
 
-	PUBSUB_GEO,		/* XXX XEP-0080: User Geolocation 4.1 */
-	PUBSUB_MOOD,		/* XXX XEP-0107: User Mood 2.2 */
+	PUBSUB_GEO,		/* XEP-0080: User Geolocation 4.1 */
+	PUBSUB_MOOD,		/* XEP-0107: User Mood 2.2 */
 	PUBSUB_ACTIVITY,	/* XEP-0108: User Activity 2.2 */
 	PUBSUB_USERTUNE,	/* XEP-0118: User Tune */			/* NOW PLAYING! YEAH! D-BUS!!! :-) */
-	PUBSUB_NICKNAME,	/* XXX XEP-0172: User Nickname 4.5 */
-	PUBSUB_CHATTING,	/* XXX XEP-0194: User Chatting */
-	PUBSUB_BROWSING,	/* XXX XEP-0195: User Browsing */
-	PUBSUB_GAMING,		/* XXX XEP-0196: User Gaming */
-	PUBSUB_VIEWING,		/* XXX XEP-0197: User Viewing */
+	PUBSUB_NICKNAME,	/* XEP-0172: User Nickname 4.5 */
+	PUBSUB_CHATTING,	/* XEP-0194: User Chatting */
+	PUBSUB_BROWSING,	/* XEP-0195: User Browsing */
+	PUBSUB_GAMING,		/* XEP-0196: User Gaming */
+	PUBSUB_VIEWING,		/* XEP-0197: User Viewing */
 } pubsub_type_t;
 
 /* XXX, QUERY() */
-static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char *nodeid, const char *itemid, ...) {
+static char *jabber_pubsub_publish(session_t *s, const char *server, pubsub_type_t type, const char *nodeid, const char *itemid, ...) {
 	jabber_private_t *j;
 	va_list ap;
 
@@ -1305,9 +1305,15 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 
 	if (!nodeid) {			/* if !nodeid */
 		switch (type) {			/* assume it's PEP, and use defaults */
+			case PUBSUB_GEO:	node = xstrdup("http://jabber.org/protocol/geoloc");	break; /* ? */
+			case PUBSUB_MOOD:	node = xstrdup("http://jabber.org/protocol/mood");	break; /* ? */
 			case PUBSUB_ACTIVITY:	node = xstrdup("http://jabber.org/protocol/activity");	break;
 			case PUBSUB_USERTUNE:	node = xstrdup("http://jabber.org/protocol/tune");	break;
-			/* ... */
+			case PUBSUB_NICKNAME:	node = xstrdup("http://jabber.org/protocol/nick");	break;
+			case PUBSUB_CHATTING:	node = xstrdup("http://jabber.org/protocol/chatting");	break;
+			case PUBSUB_BROWSING:	node = xstrdup("http://jabber.org/protocol/browsing");	break;
+			case PUBSUB_GAMING:	node = xstrdup("http://jabber.org/protocol/gaming");	break; /* ? */
+			case PUBSUB_VIEWING:	node = xstrdup("http://jabber.org/protocol/viewing");	break; /* ? */
 
 			default:	/* we MUST have node */
 				debug_error("jabber_pubsub_publish() Unknown node... type: %d\n", type);
@@ -1325,7 +1331,7 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 
 	watch_write(j->send_watch,
 		"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
-		"<publish node=\"%s\"><item id=\"%s\">", "pubsub.jabber.autocom.pl", j->id++, node, item);
+		"<publish node=\"%s\"><item id=\"%s\">", server, j->id++, node, item);
 
 	switch (type) {
 		char *p[10];		/* different params */
@@ -1335,7 +1341,24 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 			p[0] = va_arg(ap, char *);
 
 			watch_write(j->send_watch, p[0]);
+			break;
 
+		case PUBSUB_GEO:	/* XEP-0080: User Geolocation */
+			/* XXX a lot */
+			break;
+
+			watch_write(j->send_watch, "<geoloc xmlns=\"http://jabber.org/protocol/geoloc\"");
+			watch_write(j->send_watch, "</geoloc>");
+			break;
+
+		case PUBSUB_MOOD:	/* XEP-0107: User Mood */
+			p[0] = va_arg(ap, char *);	/* mood */
+			p[1] = va_arg(ap, char *);	/* text */
+
+			watch_write(j->send_watch, "<mood xmlns=\"http://jabber.org/protocol/mood\">");		/* header */
+			watch_write(j->send_watch, "<%s/>", p[0]);								/* mood value */
+			if (p[1]) { watch_write(j->send_watch, "<text>%s</text>", (tmp = jabber_escape(p[1])));	xfree(tmp); }	/* text */
+			watch_write(j->send_watch, "</mood>");							/* footer */
 			break;
 
 		case PUBSUB_ACTIVITY:	/* XEP-0108: User Activity */
@@ -1350,7 +1373,25 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 			} else	watch_write(j->send_watch, "<%s/>", p[0]);								/* only general */
 			if (p[2]) { watch_write(j->send_watch, "<text>%s</text>", (tmp = jabber_escape(p[2]))); 	xfree(tmp); }	/* text */
 			watch_write(j->send_watch, "</activity>");						/* activity footer */
+			break;
 
+		case PUBSUB_NICKNAME:	/* XEP-0172: User Nickname */
+			p[0] = va_arg(ap, char *);	/* nickname */
+
+			watch_write(j->send_watch, "<nick xmlns=\"http://jabber.org/protocol/nick\">%s</nick>", 
+				(tmp = jabber_escape(p[0])));	xfree(tmp);								/* nickname */
+			break;
+
+		case PUBSUB_CHATTING:	/* XEP-0194: User Chatting */
+			p[0] = va_arg(ap, char *);	/* [REQ] uri */
+			p[1] = va_arg(ap, char *);	/* [OPT] name */
+			p[2] = va_arg(ap, char *);	/* [OPT] topic */
+
+			watch_write(j->send_watch, "<room xmlns=\"http://jabber.org/protocol/chatting\">");	/* header */
+			watch_write(j->send_watch, "<uri>%s</uri>", p[0]);								/* uri */
+			if (p[1]) watch_write(j->send_watch, "<name>%s</name>", p[1]);							/* name */
+			if (p[2]) { watch_write(j->send_watch, "<topic>%s</topic>", (tmp = jabber_escape(p[2])));	xfree(tmp); }	/* topic */
+			watch_write(j->send_watch, "</room>");							/* footer */
 			break;
 
 		case PUBSUB_USERTUNE:	/* XEP-0118: User Tune */
@@ -1367,8 +1408,37 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 			if (p[3]) watch_write(j->send_watch, "<track>%s</track>", p[3]);						/* track # or URI */
 			if (p[4]) watch_write(j->send_watch, "<length>%s</length>", p[4]);						/* len [seconds] */
 			watch_write(j->send_watch, "</tune>");							/* tune footer */
-
 			break;
+
+		case PUBSUB_BROWSING:	/* XEP-0195: User Browsing */
+			p[0] = va_arg(ap, char *);	/* [REQ] uri */
+			p[1] = va_arg(ap, char *);	/* [OPT] title */
+			p[2] = va_arg(ap, char *);	/* [OPT] description */
+			p[3] = va_arg(ap, char *);	/* [OPT] keywords */
+
+			watch_write(j->send_watch, "<page xmlns='http://jabber.org/protocol/browsing'>");	/* header */
+			watch_write(j->send_watch, "<uri>%s</uri>", p[0]);									/* uri */
+			if (p[1]) { watch_write(j->send_watch, "<title>%s</title>", (tmp = jabber_escape(p[1])));		xfree(tmp); }	/* title */
+			if (p[2]) { watch_write(j->send_watch, "<description>%s</description>", (tmp = jabber_escape(p[2])));	xfree(tmp); }   /* descr */
+			if (p[3]) { watch_write(j->send_watch, "<keywords>%s</keywords>", (tmp = jabber_escape(p[3])));		xfree(tmp); }   /* keywords */
+			watch_write(j->send_watch, "</page>");							/* footer */
+			break;
+
+		case PUBSUB_GAMING:
+			p[0] = va_arg(ap, char *);	/* [REQ] name */
+		/* XXX */
+
+			watch_write(j->send_watch, "<game xmlns=\"http://jabber.org/protocol/gaming\">");	/* header */
+			watch_write(j->send_watch, (tmp = jabber_escape(p[0]))); xfree(tmp);				/* game name */
+//			if (p[1]) watch_write(j->send_watch, 
+			watch_write(j->send_watch, "</game>");							/* footer */
+			break;
+
+		case PUBSUB_VIEWING:	/* XEP-0197: User Viewing */
+			break;
+		/* XXX, not implemented cause of bug in XEP
+		 */
+			p[0] = va_arg(ap, char *);	/* program name */
 	}
 
 	va_end(ap);
@@ -1504,8 +1574,8 @@ static COMMAND(jabber_command_pubsub) {
 			printq("not_enough_params", name);
 			return -1;
 		}
-		itemid = jabber_pubsub_publish(session, PUBSUB_USERTUNE, NULL, "current", "Artist", "Title", NULL, "666", "123456");
-//		itemid = jabber_pubsub_publish(session, PUBSUB_GENERIC, node, NULL /* generate own itemid */, p[0]);
+//		itemid = jabber_pubsub_publish(session, server, PUBSUB_USERTUNE, node, "current", "Artist", "Title", NULL, "666", "123456");
+		itemid = jabber_pubsub_publish(session, server, PUBSUB_GENERIC, node, NULL /* generate own itemid */, p[0]);
 
 		xfree(itemid);
 		return 0;

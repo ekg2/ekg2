@@ -1362,7 +1362,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		if (!xstrcmp(xmlns, "http://jabber.org/protocol/pubsub#event")) {
 			debug_error("[XXX %s:%d] http://jabber.org/protocol/pubsub#event\n", __FILE__, __LINE__);
 
-		} else debug_error("[JABBER] RESULT/PUBSUB wtf XMLNS: %s\n", xmlns);
+		} else debug_error("[JABBER] RESULT/PUBSUB wtf XMLNS: %s\n", __(xmlns));
 	}
 
 #if WITH_JABBER_DCC
