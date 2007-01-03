@@ -1356,6 +1356,15 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 		session_set(s, "__new_password", NULL);
 	}
 
+	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "pubsub"))) {
+		const char *xmlns = jabber_attr(q->atts, "xmlns");
+
+		if (!xstrcmp(xmlns, "http://jabber.org/protocol/pubsub#event")) {
+			debug_error("[XXX %s:%d] http://jabber.org/protocol/pubsub#event\n", __FILE__, __LINE__);
+
+		} else debug_error("[JABBER] RESULT/PUBSUB wtf XMLNS: %s\n", xmlns);
+	}
+
 #if WITH_JABBER_DCC
 	if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
 /* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/

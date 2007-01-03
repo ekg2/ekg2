@@ -1303,7 +1303,7 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 	char *item;
 	if (!s || !(j = s->priv)) return NULL;
 
-	if (!node) {			/* if !node */
+	if (!nodeid) {			/* if !nodeid */
 		switch (type) {			/* assume it's PEP, and use defaults */
 			case PUBSUB_ACTIVITY:	node = xstrdup("http://jabber.org/protocol/activity");	break;
 			case PUBSUB_USERTUNE:	node = xstrdup("http://jabber.org/protocol/tune");	break;
@@ -1315,10 +1315,13 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 		}
 	} else node = jabber_escape(nodeid);
 
-	item = xstrdup(itemid);
-	if (!item) item = saprintf("%s_%x%d%d", node, rand()*rand(), (int)time(NULL), rand());	/* some pseudo random itemid */
+	if (!itemid) 
+		item = saprintf("%s_%x%d%d", node, rand()*rand(), (int)time(NULL), rand());	/* some pseudo random itemid */
+	else	item = jabber_escape(itemid);	
 
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
+	
+	va_start(ap, itemid);
 
 	watch_write(j->send_watch,
 		"<iq type=\"set\" to=\"%s\" id=\"pubsubpublish%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
@@ -1327,6 +1330,13 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 	switch (type) {
 		char *p[10];		/* different params */
 		char *tmp;		/* for jabber_escape() */
+
+		case PUBSUB_GENERIC:
+			p[0] = va_arg(ap, char *);
+
+			watch_write(j->send_watch, p[0]);
+
+			break;
 
 		case PUBSUB_ACTIVITY:	/* XEP-0108: User Activity */
 			p[0] = va_arg(ap, char *);	/* [REQ] general category (doing_chores, drinking, eating, exercising, grooming, ....) */
@@ -1338,7 +1348,7 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 			if (p[1]) {
 				watch_write(j->send_watch, "<%s><%s/></%s>", p[0], p[1], p[0]);						/* general + specific */
 			} else	watch_write(j->send_watch, "<%s/>", p[0]);								/* only general */
-			if (p[2]) watch_write(j->send_watch, "<text>%s</text>", (tmp = jabber_escape(p[2]))); 	xfree(tmp);		/* text */
+			if (p[2]) { watch_write(j->send_watch, "<text>%s</text>", (tmp = jabber_escape(p[2]))); 	xfree(tmp); }	/* text */
 			watch_write(j->send_watch, "</activity>");						/* activity footer */
 
 			break;
@@ -1351,15 +1361,17 @@ static char *jabber_pubsub_publish(session_t *s, pubsub_type_t type, const char 
 			p[4] = va_arg(ap, char *);	/* length */
 
 			watch_write(j->send_watch, "<tune xmlns=\"http://jabber.org/protocol/tune\">");		/* tune header */
-			if (p[0]) watch_write(j->send_watch, "<artist>%s</artist>", (tmp = jabber_escape(p[0])));	xfree(tmp);	/* artist */
-			if (p[1]) watch_write(j->send_watch, "<title>%s</title>", (tmp = jabber_escape(p[1])));		xfree(tmp);	/* title */
-			if (p[2]) watch_write(j->send_watch, "<source>%s</source>", (tmp = jabber_escape(p[2])));	xfree(tmp);	/* source */
+			if (p[0]) { watch_write(j->send_watch, "<artist>%s</artist>", (tmp = jabber_escape(p[0])));	xfree(tmp); }	/* artist */
+			if (p[1]) { watch_write(j->send_watch, "<title>%s</title>", (tmp = jabber_escape(p[1])));	xfree(tmp); }	/* title */
+			if (p[2]) { watch_write(j->send_watch, "<source>%s</source>", (tmp = jabber_escape(p[2])));	xfree(tmp); }	/* source */
 			if (p[3]) watch_write(j->send_watch, "<track>%s</track>", p[3]);						/* track # or URI */
 			if (p[4]) watch_write(j->send_watch, "<length>%s</length>", p[4]);						/* len [seconds] */
 			watch_write(j->send_watch, "</tune>");							/* tune footer */
 
 			break;
 	}
+
+	va_end(ap);
 
 	watch_write(j->send_watch, "</item></publish></pubsub></iq>");
 
@@ -1467,10 +1479,22 @@ static COMMAND(jabber_command_pubsub) {
 		return 0;
 	} else if (match_arg(params[0], 'm', "manage", 2)) {		/* MANAGE NODE */
 
-	} else if (match_arg(params[0], 'g', "get", 2)) {		/* GET ITEMS @ `node` @ `server` == /transport `server` `node` */
+	} else if (match_arg(params[0], 'g', "get", 2)) {		/* LIST NODES @ `server` || GET ITEMS @ `node` @ `server` */
+		if (!node) {			/* if !node list nodes @ server */
+			watch_write(j->send_watch, 
+				"<iq type=\"get\" to=\"%s\" id=\"pubsublist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>",
+				server, j->id++);
+			return 0;
+		}
+
 		/* XXX, we can limit result using max_items */
 		/* XXX, we can get only specified items using <item id= /> */
 
+		watch_write(j->send_watch,
+				"<iq type=\"get\" to=\"%s\" id=\"pubsubitems%d\"><pubsub xmlns=\"http://jabber.org/protocol/pubsub\">"
+						"<items node=\"%s\"/>"
+				"</pubsub></iq>", server, j->id++, node);
+		return 0;
 	} else if (match_arg(params[0], 'l', "list", 2)) {		/* LIST SUBSCRIPTION */
 
 	} else if (match_arg(params[0], 'p', "publish", 2)) {		/* PUBLISH ITEM TO `node` @ `server` */
@@ -1480,7 +1504,8 @@ static COMMAND(jabber_command_pubsub) {
 			printq("not_enough_params", name);
 			return -1;
 		}
-		itemid = jabber_pubsub_publish(session, PUBSUB_GENERIC, node, NULL /* generate own itemid */, p[0]);
+		itemid = jabber_pubsub_publish(session, PUBSUB_USERTUNE, NULL, "current", "Artist", "Title", NULL, "666", "123456");
+//		itemid = jabber_pubsub_publish(session, PUBSUB_GENERIC, node, NULL /* generate own itemid */, p[0]);
 
 		xfree(itemid);
 		return 0;
@@ -1491,7 +1516,10 @@ static COMMAND(jabber_command_pubsub) {
 	} else if (match_arg(params[0], 'S', "status", 2)) {		/* DISPLAY (SUBSCIPTION) | (AFFILITATIONS) STATUS @ `node` @ `server` */
 		
 
-	} else return -1;
+	} else {
+		printq("invalid_params", name);
+		return -1;
+	}
 
 	printq("generic_error", "STUB FUNCTION");
 
