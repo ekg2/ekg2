@@ -1166,55 +1166,95 @@ static COMMAND(irc_command_pipl) {
 	return 0;
 }
 
-static int irc_access_add(session_t *s, const char *uid, int flagsadd, int flagsdel) {
-/* channels */
-/* #define IRC_FLAG_AUTOJOIN   0x *//* auto_join to channel */
-#define IRC_FLAG_ISON	    0x02
+static COMMAND(irc_command_alist) {
+	irc_private_t	*j = irc_private(session);
+	int isshow = 0;
 
-/* friends */
-#define IRC_FLAG_AUTOOP     0x04 /* auto op user */
-#define IRC_FLAG_AUTOHALFOP 0x08 /* auto halfop user */
-#define IRC_FLAG_AUTOVOICE  0x10 /* auto voice user */
-/* foos */
-#define IRC_FLAG_IGNORE     0x01
-#define IRC_FLAG_AUTOKICK   0x20
-#define IRC_FLAG_AUTOBAN    0x40
+	format_add("irc_friendlist_known", "a-> %2!%3@%4", 1);	/* %2 is nickname, not uid ! */
 
-#define IRC_FLAG_AUTOSHIT   (IRC_FLAG_AUTOKICK | IRC_FLAG_AUTOBAN)
+#if 0
+	for (l = j->people; l; l = l->next) {
+		people_t	*per = l->data;
 
-/* TODO: zrobic tablice 4 elementowa: 
- *        (czy dot. kanal/user) bitmaska nazwa_grupy czy_wyswietlac_na_userliscie
- * TODO: __$nazwa_grupy__$opcj_nazwa_kanalu
- */
+		printq("irc_friendlist_known", session_name(session), per->nick+4, per->ident, per->host);
+	}
+#endif
 
-#define CHECK(maska, grupa) \
-	if (flagsdel == -1 || flagsdel & maska)\
-		ekg_group_remove(u, grupa);    \
-	if (flagsadd == -1 || flagsadd & maska)   \
-		ekg_group_add(u, grupa);
-	
-	userlist_t *u = userlist_find(s, uid);
+	if (!params[0] || match_arg(params[0], 'l', "list", 2) || (isshow = match_arg(params[0], 's', "show", 2))) {	/* list, list, show */
+		list_t l;
 
-	if (!u)
-		u = userlist_add(s, uid, NULL);
-	
-/*	CHECK(IRC_FLAG_AUTOJOIN, "__autojoin"); */
+		for (l = session->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+			/* u->resources; */
+		}
 
-	CHECK(IRC_FLAG_AUTOOP, "__autoop");
-	CHECK(IRC_FLAG_AUTOHALFOP, "__autohalfop");
-	CHECK(IRC_FLAG_AUTOVOICE, "__autovoice");
+		return 0;
+	}
 
-	CHECK(IRC_FLAG_IGNORE, "__ignored");
-	CHECK(IRC_FLAG_AUTOKICK, "__autokick");
-	CHECK(IRC_FLAG_AUTOBAN, "__autoban");
-#undef CHECK
-	return 0;
+	if (match_arg(params[0], 'a', "add", 2)) {
+	/* params[1] - nick!ident@hostname or nickname (in form irc:nick) 
+	 * params[2] - options + channels like: +ison +autoop:#linux,#linux.pl +autounban:* +autovoice:* 
+	 * ZZZ params[2] - channels: #chan1,#chan2 or '*' 
+	 * ZZZ params[3] - options.
+	 */
+
+/* /irc:access -a irc:nickname #chan1,#chan2 +autoop +autounban +revenge +ison */
+
+		char *mask = NULL;
+
+		if (!params[1] || !params[2]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		debug_error("[irc] (/irc:access --add) STUB. p[1]: %s p[2]: %s\n", params[1], params[2]);
+
+		if (!xstrncmp(params[1], "irc:", 4)) {	/* nickname */
+			list_t l;
+			for (l = j->people; l; l = l->next) {
+				people_t *per = l->data;
+
+				if (!xstrcmp(per->nick+4, params[1]+4)) {
+					/* XXX, here generate mask */
+					mask = saprintf("%s!%s@%s", per->nick+4, per->ident, per->host);
+					break;
+				}
+			}
+			
+			if (!mask) {
+				printq("user_not_found", params[1]);
+				return -1;
+			}
+		} else {
+			/* XXX verify if mask in params[1] is ok */
+			mask = xstrdup(params[1]);
+		}
+
+		debug_error("[irc] (/irc:access --add) mask: %s\n", mask);
+		
+		{
+			char *tmp = saprintf("irc:%s:otherdata", mask);
+			userlist_add(session, tmp, mask);
+			xfree(tmp);
+		}
+		xfree(mask);
+
+		return 0;
+	}
+
+	if (match_arg(params[0], 'd', "delete", 2)) {
+		printq("generic_error", "stub function");
+		return -1;
+	}
+
+	printq("invalid_params", name);
+	return -1;
 }
 
 static COMMAND(irc_command_add) {
-	int ret = 0;
-	irc_access_add(session, target, IRC_FLAG_ISON, 0);
-	return ret;
+	printq("generic_error", "/irc:add do nothing. if you want friendlists use /irc:access");
+/* XXX, wrapper do /irc:access --add $UID +ison ? */
+	return -1;
 }
 
 static COMMAND(irc_command_away) {
@@ -1613,15 +1653,6 @@ static COMMAND(irc_command_unban) {
 	xfree(channame);
 	return 0;
 
-}
-
-static COMMAND(irc_command_alist) {
-/*
- *	if (params[1] == NULL && target) 
- *		params[1] = target;
- */
-	debug("[irc_alist] ALIST: %s (%s, %s)\n", target, params[0], params[1]);
-	return 0;
 }
 
 static COMMAND(irc_command_ban) {
@@ -2073,7 +2104,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:_autoback"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_conntest"), "?",	irc_command_test, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, ("irc:_genkeys"),  "?",  irc_command_genkey, 0, NULL);
-	command_add(&irc_plugin, ("irc:access"), "p ?",	irc_command_alist, 0, "-a --add -d --delete -s --show -l --list");
+	command_add(&irc_plugin, ("irc:access"), "p ? ?",	irc_command_alist, 0, "-a --add -d --delete -s --show -l --list");
 	command_add(&irc_plugin, ("irc:add"), NULL,	irc_command_add, 	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
 	command_add(&irc_plugin, ("irc:away"), "?",	irc_command_away,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:back"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
