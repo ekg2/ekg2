@@ -14,7 +14,7 @@ max_filesize
 max_oneshot_files
 	type: integer
 	default value: 25
-
+	
 	Max count of files that'll be processed during one function call.
 	If function reaches that count, it'll break off the loop, and set resume
 	timer (see: oneshot_resume_timer). Value of 0 means no limit.
@@ -22,7 +22,7 @@ max_oneshot_files
 oneshot_resume_timer
 	type: integer
 	default vlaue: 3
-
+	
 	Delay (in seconds), after which the process, stopped by reaching
 	max_oneshot_files, will be resumed. If set to 0, no autoresume'll
 	be done (the process'll be resumed on next function call, for example
@@ -47,14 +47,14 @@ send_cmd
 unlink_sent
 	type: bool
 	default value: 1
-
+	
 	If set to true, incoming message files will be removed after reading.
 	Otherwise, xmsg will create dotfiles to mark them.
 
 unlink_toobig
 	type: bool
 	default value: 0
-
+	
 	If set to true, files larger than max_filesize will be deleted,
 	otherwise they'll be ignored (and dotfiles for them will be created).
 

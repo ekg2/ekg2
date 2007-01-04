@@ -14,7 +14,7 @@ max_filesize
 max_oneshot_files
 	typ: liczba
 	domy¶lna warto¶æ: 25
-
+	
 	Maksymalna liczba plików, jakie przetworzone zostaj± podczas jednego
 	wywo³ania funkcji skanuj±cej. Po przekroczeniu tej liczby, funkcja jest
 	wstrzymywana i tworzony jest timer ponawiaj±cy, patrz:
@@ -23,7 +23,7 @@ max_oneshot_files
 oneshot_resume_timer
 	typ: liczba
 	domy¶lna warto¶æ: 3
-
+	
 	Okre¶la czas (w sekundach), po jakim operacja wstrzymana po
 	przekroczeniu max_oneshot_files, zostaje wznowiona (a¿ do ponownego
 	przetworzenia okre¶lonej liczby plików). Je¶li zmienna ta bêdzie mia³a
@@ -52,7 +52,7 @@ send_cmd
 unlink_sent
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	Okre¶la, czy pliki wiadomo¶ci przychodz±cych powinny byæ usuwane
 	po odczytaniu. W przeciwnym razie, dla plików tych tworzone bêd± tzw.
 	dotfiles (ukryte pliki, informuj±ce xmsg, ¿e wiadomo¶æ ju¿ zosta³a
