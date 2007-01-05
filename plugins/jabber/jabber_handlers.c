@@ -2746,7 +2746,7 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		} 
 		if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
 			xfree(descr);
-			descr = jabber_unescape(nstatus->data);
+			descr = tlenjabber_unescape(nstatus->data);
 		}
 
 		if (status) {
