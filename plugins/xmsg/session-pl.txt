@@ -20,6 +20,16 @@ max_oneshot_files
 	wstrzymywana i tworzony jest timer ponawiaj±cy, patrz:
 	oneshot_resume_timer. Warto¶æ zerowa oznacza brak ograniczenia.
 
+name_separator
+	typ: tekst
+	domy¶lna warto¶æ: .
+	
+	Separator oddzielaj±cy zasadnicz± czê¶æ nazwy (u¿ywan± w UID-ach)
+	od sufiksu. Nazwa pliku bêdzie ³amana na ostatnim wyst±pieniu tego
+	znaku. Warto¶æ nieustalona wy³±cza dzielenie. W przypadku podania
+	wiêkszej liczby znaków, brany bêdzie pod uwagê tylko pierwszy (mo¿e to
+	ulec zmianie w najbli¿szym czasie).
+
 oneshot_resume_timer
 	typ: liczba
 	domy¶lna warto¶æ: 3

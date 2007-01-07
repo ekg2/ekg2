@@ -33,8 +33,8 @@ Some remarks:
   absolute path, starting with / — else above conversion will be done,
 * xmsg does watch only given directory, it DOES NOT watch its' subdirectories,
 * the sender of xmsg messages is 'xmsg:filename', but the filename is cut
-  before first colon (that's feature, not bug), so I recommend to use filenames
-  like: 'somesource:XXXXXX' (mktemp-like syntax),
+  on last occurrence of name_separator, so I recommend to use filenames
+  like: 'somesource.XXXXXX' (mktemp-like syntax, for default namesep),
 * logs plugin currently has problems with slashes in UIDs, so xmsg messages
   won't be logged,
 * all fetched files are immediately removed (but only if read successfully),
@@ -53,7 +53,7 @@ EXAMPLE OF USE
 	[ ! -f "$2" ] && exit 2
 	[ "`stat -c %U "$2"`" != "smbguest" ] && exit 3
 	
-	N=`mktemp -u /some/path/smbmsg-$1:XXXXXX`
+	N=`mktemp -u /some/path/smbmsg-$1.XXXXXX`
 	
 	chown myuser:mygroup "$2"
 	mv "$2" "$N"
@@ -70,7 +70,8 @@ EXAMPLE OF USE
 Then all winpopup messages should be delivered directly to ekg2. Although
 smbxmsg takes root privs, it makes sure that owner of given file is smbguest.
 
-You can find more examples in the contrib/xmsg-extras/ subdirectory in ekg2 directory.
+You can find more examples in the contrib/xmsg-extras/ subdirectory of ekg2
+sources directory.
 
 SENDING MESSAGES
 
@@ -90,7 +91,7 @@ EXAMPLE HANDLER
 	
 	sub reply
 	{
-	($fh, $fn) = tempfile("/tmp/$ARGV[0]:XXXXXX");
+	($fh, $fn) = tempfile("/tmp/$ARGV[0].XXXXXX");
 		print $fh shift;
 		close $fh;
 		`mv "$fn" "/some/path/"`

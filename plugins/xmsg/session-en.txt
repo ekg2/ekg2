@@ -19,6 +19,15 @@ max_oneshot_files
 	If function reaches that count, it'll break off the loop, and set resume
 	timer (see: oneshot_resume_timer). Value of 0 means no limit.
 
+name_separator
+	type: string
+	default value: .
+	
+	Separator dividing filename into main part (used in UID-s) and suffix.
+	Filename will be divided on last occurrence of this character. If null,
+	dividing will be disabled. If more than one char, the first one will be
+	used (subject to change in near time).
+
 oneshot_resume_timer
 	type: integer
 	default vlaue: 3

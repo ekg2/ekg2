@@ -29,13 +29,20 @@
 #include <termios.h>
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
+
+#ifndef IN_ONLYDIR
+/* direct from sys/inotify.h */
+#define IN_ONLYDIR       0x01000000
+#endif
 #endif /*HAVE_INOTIFY*/
 
 /* some additional defines */
 #define XMSG_UID_DIROFFSET 5
+#define XMSG_NAMESEP_DEF "."
 #define XMSG_MAXFS_DEF "16384"
 #define XMSG_MAXFC_DEF "25"
 #define XMSG_MAXFC_TIMER "3"
+
 /* if we have inotify, we don't need that timer */
 #ifdef HAVE_INOTIFY
 #define XMSG_MAXFC_INOTIFY 25
@@ -221,6 +228,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	const int nounlink = !session_int_get(s, "unlink_sent");
 	const int utb = session_int_get(s, "unlink_toobig");
 	const int maxfs = session_int_get(s, "max_filesize");
+	const char *namesep = session_get(s, "name_separator");
 
 	char *msg;
 	char *f;
@@ -306,7 +314,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 
 			xstrcpy(uid, "xmsg:");
 			xstrcat(uid, fn);
-			if ((p = xstrchr(uid+XMSG_UID_DIROFFSET, ':')))
+			if (namesep && (p = xstrrchr(uid+XMSG_UID_DIROFFSET, *namesep)))
 				*p = '\0';
 
 			query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid, &rcpts, &msg, &format, &sent, &class, &seq, &dobeep, &secure);
@@ -483,7 +491,6 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		struct stat st, std;
 		char *df, *dfd, *dp, *dpd;
 		
-		xfree(dir);
 		if (!d) {
 			xdebug("unable to open specified directory");
 			return;
@@ -492,6 +499,7 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		df = xmalloc(xstrlen(dir) + NAME_MAX + 2);
 		dfd = xmalloc(xstrlen(dir) + NAME_MAX + 3);
 		xstrcpy(df, dir);
+		xfree(dir);
 		dp = df + xstrlen(df);
 		*(dp++) = '/';
 		xstrcpy(dfd, df);
@@ -638,6 +646,7 @@ int xmsg_plugin_init(int prio)
 	plugin_var_add(&xmsg_plugin, "log_formats", VAR_STR, "simple", 0, NULL);
 	plugin_var_add(&xmsg_plugin, "max_filesize", VAR_INT, XMSG_MAXFS_DEF, 0, NULL);
 	plugin_var_add(&xmsg_plugin, "max_oneshot_files", VAR_INT, XMSG_MAXFC_DEF, 0, NULL);
+	plugin_var_add(&xmsg_plugin, "name_separator", VAR_STR, XMSG_NAMESEP_DEF, 0, NULL);
 	plugin_var_add(&xmsg_plugin, "oneshot_resume_timer", VAR_INT, XMSG_MAXFC_TIMER, 0, NULL);
 	plugin_var_add(&xmsg_plugin, "send_cmd", VAR_STR, NULL, 0, NULL);
 	plugin_var_add(&xmsg_plugin, "rescan_timer", VAR_INT, XMSG_TIMER_DEF, 0, xmsg_timer_change);
