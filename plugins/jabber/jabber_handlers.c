@@ -1277,6 +1277,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 		print("gmail_count", session_name(s), mailcount);
 
+/* http://code.google.com/apis/talk/jep_extensions/gmail.html */
 		for (child = q->children; child; child = child->next) {
 			if (!xstrcmp(child->name, "mail-thread-info")) {
 				if (!tid_set)
@@ -1321,6 +1322,10 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 							firstsender = 0;
 						}
+					} else if (!xstrcmp(subchild->name, "labels")) {	/* <labels>        | 
+								A tag that contains a pipe ('|') delimited list of labels applied to this thread. */
+					} else if (!xstrcmp(subchild->name, "snippet")) {	/* <snippet>       | 
+								A snippet from the body of the email. This must be HTML-encoded. */
 					} else debug_error("[jabber] google:mail:notify/mail-thread-info wtf: %s\n", __(subchild->name));
 				}
 
