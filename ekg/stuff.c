@@ -2332,6 +2332,8 @@ uint32_t *ekg_sent_message_format(const char *text)
 	return format;
 }
 
+
+static int tolower_pl(const unsigned char c);
 /*
  * strncasecmp_pl()
  *
@@ -2365,55 +2367,13 @@ int strcasecmp_pl(const char *cs, const char *ct)
         return __res;
 }
 
-
-unsigned char pl_to_normal(unsigned char ch)
-{
-	switch(ch) {
-                case 161: /* ¡ */
-			return 'A';
-		case 177: /* ± */
-			return 'a';
-                case 198: /* Æ */
-			return 'C';
-		case 230: /* æ */
-			return 'c';
-                case 202: /* Ê */
-			return 'E';
-		case 234: /* ê */
-			return 'e';
-                case 163: /* £ */
-			return 'L';
-		case 179: /* ³ */
-			return 'l';
-                case 209: /* Ñ */
-			return 'N';
-		case 241: /* ñ */
-			return 'n';
-                case 211: /* Ó */
-			return 'O';
-		case 243: /* ó */
-			return 'o';
-                case 166: /* ¦ */
-			return 'S';
-		case 182: /* ¶ */
-			return 's';
-                case 175: /* ¯ */
-		case 172: /* ¬ */
-			return 'Z';
-		case 191: /* ¿ */
-		case 188: /* ¼ */
-			return 'z';
-	}
-	return ch;
-}
-
 /*
  * tolower_pl()
  *
  * zamienia podany znak na ma³y je¶li to mo¿liwe
  * obs³uguje polskie znaki
  */
-int tolower_pl(const unsigned char c) {
+static int tolower_pl(const unsigned char c) {
         switch(c) {
                 case 161: /* ¡ */
                         return 177;
@@ -2436,25 +2396,6 @@ int tolower_pl(const unsigned char c) {
                 default: /* reszta */
                         return tolower(c);
         }
-}
-
-
-/*
- * str_tolower()
- *
- * zamienia wszystkie znaki ci±gu na ma³e
- * zwraca ci±g po zmianach (wraz z zaalokowan± pamiêci±)
- */
-char *str_tolower(const char *text) {
-        int i;
-        char *tmp;
-
-        tmp = xmalloc(xstrlen(text) + 1);
-
-        for(i=0; i < xstrlen(text); i++)
-                tmp[i] = tolower_pl(text[i]);
-        tmp[i] = '\0';
-        return tmp;
 }
 
 /*

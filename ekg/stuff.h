@@ -304,11 +304,8 @@ int mesg_set(int what);
 void iso_to_ascii(unsigned char *buf);
 char *strip_quotes(char *line);
 char *strip_spaces(char *line);
-char *str_tolower(const char *text);
-int tolower_pl(const unsigned char c);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
 int strcasecmp_pl(const char *cs, const char *ct);
-unsigned char pl_to_normal(unsigned char ch);
 
 
 #ifdef __GNUC__
