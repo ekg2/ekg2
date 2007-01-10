@@ -1135,11 +1135,10 @@ list_t group_init(const char *names)
 	for (i = 0; groups[i]; i++) {
 		struct ekg_group *g = xmalloc(sizeof(struct ekg_group));
 
-		g->name = xstrdup(groups[i]);
+		g->name = groups[i];
 		list_add_sorted(&l, g, 0, group_compare);
 	}
-	
-	array_free(groups);
+	xfree(groups);
 	
 	return l;
 }
