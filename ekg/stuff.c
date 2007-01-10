@@ -1350,18 +1350,20 @@ void iso_to_ascii(unsigned char *buf) {
  * strips quotes from the begging and the end of 
  * given string
  */
-char *strip_quotes(char *line)
-{
-        char *buf;
-	if (!line)
-		return NULL;
+char *strip_quotes(char *line) {
+	size_t linelen;
+	char *buf;
 
-        for (buf = line; *buf == '\"'; buf++);
+	if (!(linelen = xstrlen(line))) return line;
 
-        while (line[xstrlen(line) - 1] == '\"')
-                line[xstrlen(line) - 1] = 0;
+	for (buf = line; *buf == '\"'; buf++);
 
-        return buf;
+	while (linelen > 0 && line[linelen - 1] == '\"') {
+		line[linelen - 1] = 0;
+		linelen--;
+	}
+
+	return buf;
 }
 
 /*
