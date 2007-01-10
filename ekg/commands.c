@@ -2813,7 +2813,7 @@ static COMMAND(cmd_at)
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *p, *a_name = NULL;
-		char *a_command = NULL;
+		char *a_command;
 		time_t period = 0, freq = 0;
 		struct timer *t;
 
@@ -2979,20 +2979,9 @@ static COMMAND(cmd_at)
 		else
 			a_command = array_join((char **) params + 2, " ");
 
-		if (a_command) {
-			char *tmp = a_command;
-
-			a_command = strip_spaces(a_command);
-			
-			if (!xstrcmp(a_command, "")) {
-				wcs_printq("not_enough_params", name);
-				xfree(tmp);
-				return -1;
-			}
-
-			a_command = tmp;
-		} else {
+		if (!xstrcmp(strip_spaces(a_command), "")) {
 			wcs_printq("not_enough_params", name);
+			xfree(a_command);
 			return -1;
 		}
 
@@ -3140,7 +3129,7 @@ static COMMAND(cmd_timer)
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *t_name = NULL, *p;
-		char *t_command = NULL;
+		char *t_command;
 		time_t period = 0;
 		struct timer *t;
 		int persistent = 0;
@@ -3216,20 +3205,9 @@ static COMMAND(cmd_timer)
 				break;
 		}
 
-		if (t_command) {
-			char *tmp = t_command;
-
-			t_command = strip_spaces(t_command);
-
-			if (!xstrcmp(t_command, "")) {
-				wcs_printq("not_enough_params", name);
-				xfree(tmp);
-				return -1;
-			}
-
-			t_command = tmp;
-		} else {
+		if (!xstrcmp(strip_spaces(t_command), "")) {
 			wcs_printq("not_enough_params", name);
+			xfree(t_command);
 			return -1;
 		}
 
