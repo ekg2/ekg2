@@ -233,10 +233,6 @@ int userlist_read(session_t *session)
                 return -1;
                         
         while ((buf = read_file(f))) {
-                userlist_t u;
-
-                memset(&u, 0, sizeof(u));
-                        
                 if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/')) {
                         xfree(buf);
                         continue;
