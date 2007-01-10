@@ -462,16 +462,17 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	 * obecn±, ¿eby wybraæ odpowiedni format timestampu. */
 	{
 		char tmp[100], *timestamp_type;
-	        struct tm *tm_now, *tm_msg;
+	        struct tm *tm_msg;
+		int tm_now_day;			/* it's localtime(&now)->tm_yday */
 
 		now = time(NULL);
-	/* localtime() uses one static buffor. it cannot work good. XXX 24 XII 2006 */
-		tm_now = localtime(&now);
+
+		tm_now_day = localtime(&now)->tm_yday;
 		tm_msg = localtime(&sent);
 
 		if (sent - config_time_deviation <= now && now <= sent + config_time_deviation)
 			timestamp_type = "timestamp_now";
-		else if (tm_now->tm_yday == tm_msg->tm_yday)
+		else if (tm_now_day == tm_msg->tm_yday)
 			timestamp_type = "timestamp_today";
 		else	timestamp_type = "timestamp";
 
