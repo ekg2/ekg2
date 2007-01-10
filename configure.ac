@@ -632,6 +632,22 @@ fi
 echo -en " - Charset:\t "
 	if test "x$enable_unicode" = "xyes"; then
 	        echo "unicode/ascii (EXPERIMENTAL)"
+		echo "******************************************************************************************************"
+		echo "IF YOU ARE USING GCC 4.x AND YOU USE --enable-unicode JUST FOR FUN, BUT YOU ARE USING ASCII TERMINAL.."
+		echo "THAN GCC HAPILLY MISSCOMPILE NCURSES MODULE, AND IT'LL LOOP UNENDING. "
+		echo "IF YOU MUST HAVE DUAL ASCII/UNICODE MODE, THAN RECOMPILE WITH OLDER GCC (gcc 3.4 is good)"
+		echo "IF YOU MUST USE GCC 4.x THAN TURN OFF OPTIMALIZATION (-O1 IS GOOD)"
+		echo "OR COMPILE WITHOUT STRING-ALIASING (-fno-strict-aliasing in CFLAGS)"
+		echo "IT'S KNOWN BUG, DON'T REPORT IT. FEEL FREE TO SEND PATCH"
+		echo "IT'LL BE EVENTAULLY FIXED. SOMEDAY."
+		echo "******************************************************************************************************"
+		echo "ANOTHER INFO, WE DON'T MAINTAINE UNICODE DOCUMENTATION PLEASE DO IT BY HAND."
+		echo "GO TO $PREFIX/share/ekg2/ AND IN THAT DIR AND ALL plugins/* SUBDIRS "
+		echo "IF YOU ARE USING POLISH DOCs DO: iconv -f iso-8859-2 -t utf-8 commands-pl.txt > commands-pl-utf.txt"
+		echo "IF YOU ARE USING ENGLISH DOCs DO: iconv -f iso-8859-1 -t utf-8 commands.txt > commands-utf.txt"
+		echo "THE SAME WITH sessions.txt AND vars.txt AND OTHER STUFF."
+		echo "******************************************************************************************************"
+		echo "AND ENJOY USING EKG2-UNICODE"
 	else
 	        echo "ascii"
 	fi
