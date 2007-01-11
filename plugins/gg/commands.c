@@ -929,9 +929,6 @@ static COMMAND(gg_command_unblock) {
 static int token_gif_load (char *fname, struct token_t *token) {
 	char errbuf[512];
 	GifFileType *file;
-#ifdef TOKEN_GIF_PAL
-	ColorMapObject *pal;
-#endif
 	int fd;
 	fd = open(fname, O_RDONLY);
 	if (fd == -1) {
@@ -954,20 +951,6 @@ static int token_gif_load (char *fname, struct token_t *token) {
 		snprintf (errbuf, sizeof(errbuf), "ImageCount = %d", file->ImageCount);
 		goto err3;
 	}
-#ifdef TOKEN_GIF_PAL
-	token->pal = NULL;
-	token->pal_sz = 0;
-	pal = file->SavedImages[0].ImageDesc.ColorMap;
-	if (!pal)
-		pal = file->SColorMap;
-
-	if (pal) {
-		token->pal_sz = pal->ColorCount;
-		token->pal = (unsigned char *) xmalloc(token->pal_sz * 3);
-		memcpy (token->pal, pal->Colors, pal->ColorCount);
-	}
-#endif
-
 	token->sx = file->SavedImages[0].ImageDesc.Width;
 	token->sy = file->SavedImages[0].ImageDesc.Height;
 	token->data = (unsigned char *) xmalloc(token->sx * token->sy);
@@ -996,19 +979,8 @@ err:
  */
 
 static void token_gif_free (struct token_t *token) {
-	if (token->data)
-		xfree (token->data);
-
-#ifdef TOKEN_GIF_PAL
-	if (token->pal)
-		xfree (token->pal);
-#endif
-
+	xfree (token->data);
 	token->data = NULL;
-
-#ifdef TOKEN_GIF_PAL
-	token->pal = NULL;
-#endif
 }
 
 /*
@@ -1151,54 +1123,12 @@ static char *token_gif_strip_txt (char *buf) {
 static char *token_gif_to_txt (struct token_t *token) {
 	char *buf, *bptr;
 	size_t x, y;
-#ifdef TOKEN_GIF_PAL
-	size_t i;
-	unsigned char min_rgb[3] = {255, 255, 255};
-	unsigned char max_rgb[3] = {0, 0, 0};
-	unsigned char delta_rgb[3] = {255, 255, 255};
-#endif
 	static const char chars[] = " !@#$&*:;-=+?";
 	char mappings[256];
 	int cur_char = 0;	/* Kolejny znaczek z chars[]. */
 
 	memset (mappings, 0, sizeof(mappings));
 	buf = bptr = (char *) xmalloc(token->sx * (token->sy + 1));
-
-#ifdef TOKEN_GIF_PAL
-	for (i = 0; i < token->sx * token->sy; i++) {
-		unsigned char ofs = token->data[i];
-		unsigned char *pent;
-		size_t pent_i;
-
-		if (ofs >= token->pal_sz)
-			continue;
-
-		pent = token->pal + ofs * 3;
-		for (pent_i = 0; pent_i < 3; pent_i++) {
-			if (pent[pent_i] < min_rgb[pent_i])
-				min_rgb[pent_i] = pent[pent_i];
-
-			if (pent[pent_i] > max_rgb[pent_i])
-				max_rgb[pent_i] = pent[pent_i];
-		}
-	}
-
-	for (i = 0; i < 3; i++)
-		delta_rgb[i] = max_rgb[i] - min_rgb[i];
-
-	for (i = 0; i < ((token->pal_sz < 256) ? token->pal_sz : 256); i++) {
-		char rgb[3];
-		size_t ri;
-
-		for (ri = 0; ri < 3; ri++)
-			rgb[ri] = ((int) token->pal[i * 3 + ri] - min_rgb[ri]) 
-			    * 255 / delta_rgb[ri];
-
-		intens[i] = (33 * rgb[0] + 
-		    59 * rgb[1] + 
-		    11 * rgb[2]) >= 50 ? 0 : 1;
-	}
-#endif
 
 	for (x = 0; x < token->sx; x++) {
 		for (y = 0; y < token->sy; y++) {

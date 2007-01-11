@@ -235,18 +235,8 @@ const char token_id[][15] = {
 
 #ifdef GIF_OCR
 
-/* Wy³±czone, bo teraz nie u¿ywamy palety, ale je¶li kto¶ wymy¶li lepszy 
- * algorytm wy¶wietlania obrazka (ten jest beznadziejnie prosty) to mo¿e 
- * siê przydaæ. */
-
-#undef TOKEN_GIF_PAL	
-
 struct token_t {
 	size_t sx, sy;
-#ifdef TOKEN_GIF_PAL
-	size_t pal_sz;
-	unsigned char *pal;
-#endif
 	unsigned char *data;
 };
 #endif
