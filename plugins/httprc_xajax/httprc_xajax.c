@@ -78,18 +78,14 @@ typedef struct {
 
 list_t clients = NULL;
 
-client_t *find_client_by_cookie(list_t clients, char *cookie)
-{
-	client_t *p;
-	list_t a;
-	for (a=clients; a; a=a->next)
-	{
-		p = (client_t *)a->data;
+client_t *find_client_by_cookie(list_t clients, char *cookie) {
+	list_t l;
+	for (l=clients; l; l=l->next) {
+		client_t *p = l->data;
 		if (!xstrcmp(p->cookie, cookie))
-			break;
+			return p;
 	}
-	if (a)
-		return p;
+
 	return NULL;
 }
 
