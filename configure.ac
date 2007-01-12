@@ -93,8 +93,10 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile plugins/Makefile contrib/Makefile docs/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile po/Makefile.in])
-AC_CONFIG_FILES([ekg/ekg2-config])
+AC_CONFIG_FILES([Makefile ekg/Makefile ekg/ekg2-config compat/Makefile contrib/Makefile docs/Makefile po/Makefile.in])
+AC_CONFIG_FILES([contrib/Makefile contrib/python/Makefile contrib/perl/Makefile])
+AC_CONFIG_FILES([plugins/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile])
+
 PLUGINS="logs mail rc sms pcm irc rot13 httprc_xajax xmsg"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
@@ -289,7 +291,6 @@ if test "x$with_ioctld" != "xno"; then
 		])
 	])
         if test "x$have_ioctld_includes" = "xyes"; then
-		AC_CONFIG_FILES([plugins/ioctld/Makefile])
 		PLUGINS="$PLUGINS ioctld"
 	fi
 fi
@@ -300,7 +301,6 @@ if test "x$with_libgadu" != "xno"; then
 	AC_CHECK_LIBGADU
 	
 	if test "x$have_libgadu" = "xyes"; then
-		AC_CONFIG_FILES([plugins/gg/Makefile])
 		PLUGINS="$PLUGINS gg"
 	fi
 fi
@@ -311,7 +311,6 @@ if test "x$with_openssl" != "xno"; then
 	AC_CHECK_OPENSSL
 
 	if test "x$have_openssl" = "xyes"; then
-		AC_CONFIG_FILES([plugins/sim/Makefile])
 		PLUGINS="$PLUGINS sim"
 	fi
 fi
@@ -339,7 +338,6 @@ if test "x$with_expat" != "xno"; then
 				AC_DEFINE([JABBER_HAVE_OPENSSL], 1, [define if you want use openssl for ssl connections])
 			fi
 		fi
-		AC_CONFIG_FILES([plugins/jabber/Makefile])
 		PLUGINS="$PLUGINS jabber"
 	fi
 fi
@@ -350,7 +348,6 @@ if test "x$with_ncurses" != "xno"; then
 	AC_CHECK_NCURSES
 
 	if test "x$have_ncurses" = "xyes"; then
-		AC_CONFIG_FILES([plugins/ncurses/Makefile])
 		PLUGINS="$PLUGINS ncurses"
 		AC_CHECK_HEADERS(curses.h ncurses.h ncurses/ncurses.h)
 	fi
@@ -361,7 +358,6 @@ AC_ARG_WITH(gtk,		AC_HELP_STRING([--without-gtk],			[Compile without gtk2 suppor
 if test "x$with_gtk" != "xno"; then
 	AC_CHECK_GTK2([], [have_gtk="yes"], [have_gtk=x"no"], []) 
 	if test "x$have_gtk" = "xyes"; then
-		AC_CONFIG_FILES([plugins/gtk/Makefile])
 		PLUGINS="$PLUGINS gtk"
 	fi
 fi
@@ -372,7 +368,6 @@ if test "x$with_readline" != "no"; then
 	AC_CHECK_READLINE
 
 	if test "x$have_readline" = "xyes"; then
-		AC_CONFIG_FILES([plugins/readline/Makefile])
 		PLUGINS="$PLUGINS readline"
 dnl backup CFLAGS && LDFLAGS
 		ac_save_CFLAGS="$CFLAGS"
@@ -394,7 +389,6 @@ if test "x$with_libgsm" != "xno"; then
 	AC_CHECK_LIBGSM
 
 	if test "x$have_libgsm" = "xyes"; then
-		AC_CONFIG_FILES([plugins/gsm/Makefile])
 		PLUGINS="$PLUGINS gsm"
 	fi
 fi
@@ -406,7 +400,6 @@ if test "x$with_libxosd" != "xno"; then
 	AM_CHECK_LIBXOSD
 
 	if test "x$have_libxosd" = "xyes"; then
-		AC_CONFIG_FILES([plugins/xosd/Makefile])
 		PLUGINS="$PLUGINS xosd"
 	fi
 fi
@@ -417,8 +410,6 @@ if test "x$with_perl" != "xno"; then
 	AM_CHECK_PERL
 
 	if test "x$have_perl" = "xyes"; then
-		AC_CONFIG_FILES([plugins/perl/Makefile])
-		AC_CONFIG_FILES([contrib/perl/Makefile])
 		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS perl"
 		PLUGINS="$PLUGINS perl"
 	fi
@@ -430,8 +421,6 @@ if test "x$with_python" != "xno"; then
 	AM_CHECK_PYTHON
 
 	if test "x$have_python" = "xyes"; then
-		AC_CONFIG_FILES([plugins/python/Makefile])
-		AC_CONFIG_FILES([contrib/python/Makefile])
 		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS python"
 		PLUGINS="$PLUGINS python"
 	fi
@@ -454,7 +443,6 @@ if test "x$have_sqlite3" != "xyes"; then
 	fi	
 fi	
 if test "x$have_sqlite" = "xyes" || test "x$have_sqlite3" = "xyes" ; then
-	AC_CONFIG_FILES([plugins/logsqlite/Makefile])
 	PLUGINS="$PLUGINS logsqlite"
 fi
 
@@ -463,7 +451,6 @@ AC_ARG_WITH(gpg,		AC_HELP_STRING([--without-gpg],			[Compile without gpg support
 if test "x$with_gpg" != "xno"; then
 	AM_PATH_GPGME(1.0.0, [
 		have_gpg="yes"
-		AC_CONFIG_FILES([plugins/gpg/Makefile])
 		PLUGINS="$PLUGINS gpg"
 	])
 fi
