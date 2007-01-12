@@ -926,23 +926,7 @@ static COMMAND(cmd_for)
 
                         /* first we are checking all of the parametrs */
                         for (i = 0; tmp[i]; i++) {
-				list_t l;
-				int found = 0;
-
-				for (l = windows; l; l = l->next) {
-					window_t *wp = l->data;
-
-					if (!wp)
-						continue;
-					
-					if (atoi(tmp[i]) == wp->id) {
-						found = 1;
-						w[i] = wp;
-						break;
-					}
-				}
-			
-				if (!found) {
+				if (!(w[i] = window_exist(atoi(tmp[i])))) {
 		                        printq("window_doesnt_exist", tmp[i]);
 					array_free(tmp);
                                         xfree(w);
