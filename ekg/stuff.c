@@ -826,8 +826,6 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		return NULL;
 	}
 
-	memset(&c, 0, sizeof(c));
-
 	nicks = array_make(nicklist, " ,", 0, 1, 0);
 
 	/* grupy zamieniamy na niki */
@@ -890,6 +888,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		}
 	}
 
+	memset(&c, 0, sizeof(c));
 
 	for (p = nicks, i = 0; *p; p++) {
 		char *uid;
@@ -900,7 +899,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		uid = get_uid(session, *p);
 
 		if (uid)
-			list_add(&(c.recipients), uid, xstrlen(uid) +1);
+			list_add(&(c.recipients), xstrdup(uid), 0);
 		i++;
 	}
 
@@ -909,6 +908,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	if (i != count) {
 		printq("conferences_not_added", name);
+		list_destroy(c.recipients, 1);
 		return NULL;
 	}
 
