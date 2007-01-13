@@ -674,12 +674,6 @@ int query_free(query_t *q) {
 	return 0;
 }
 
-int query_disconnect(plugin_t *plugin, const char *name)
-{
-	debug_error("[%s:%d] query_disconnect() THIS FUNCTION IS OBSOLETE, USE query_free() INSTEAD..\n");
-	return -1;
-}
-
 static int query_emit_common(query_t *q, va_list ap) {
 	static int nested = 0;
 	int (*handler)(void *data, va_list ap) = q->handler;
