@@ -970,20 +970,6 @@ err:
 }
 
 /*
- * token_gif_free()
- *
- * Frees structures occupies by token (not token_t)
- * 
- *  - token - pointer to structure with data to be freed
- *
- */
-
-static void token_gif_free (struct token_t *token) {
-	xfree (token->data);
-	token->data = NULL;
-}
-
-/*
  * token_gif_get_pixel()
  *
  * Gets pixel from given position. If the position is out of range it returns
@@ -1312,9 +1298,8 @@ static WATCHER(gg_handle_token)
 		print("gg_token_start");
 		print("gg_token_body", buf);
 		print("gg_token_end");
-		xfree (buf);
-		token_gif_free (&token);
-
+		xfree(buf);
+		xfree(token.data);
 		goto fail;
 	}
 #endif
