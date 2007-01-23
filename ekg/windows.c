@@ -185,7 +185,7 @@ void window_switch(int id)
 	
 		window_current = w;
 
-		w->act = 0;
+		w->act &= 4;
 		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) 
 			u->xstate &= ~EKG_XSTATE_BLINK;
 
@@ -376,9 +376,9 @@ crap:
 	if (w != window_current && !w->floating) {
 		int oldact = w->act;
 		if (separate)
-			w->act = 2;
+			w->act = 2 | (w->act & 4);
 		else if (w->act != 2)
-			w->act = 1;
+			w->act = 1 | (w->act & 4);
 		if (oldact != w->act)
 			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
 	}
