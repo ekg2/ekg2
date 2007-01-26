@@ -1134,6 +1134,9 @@ list_t group_init(const char *names)
 		g->name = groups[i];
 		list_add_sorted(&l, g, 0, group_compare);
 	}
+	/* NOTE: we don't call here array_free() cause we use items of this
+	 * 	array @ initing groups. We don't use strdup()
+	 */
 	xfree(groups);
 	
 	return l;
