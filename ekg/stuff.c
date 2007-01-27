@@ -2147,7 +2147,7 @@ char *split_line(char **ptr)
 {
         char *foo, *res;
 
-        if (!ptr || !(*ptr))
+        if (!ptr || !*ptr || !xstrcmp(*ptr, ""))
                 return NULL;
 
         res = *ptr;
