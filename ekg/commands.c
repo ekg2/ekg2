@@ -914,7 +914,7 @@ static COMMAND(cmd_for)
                                 else
                                         for_command = xstrdup(params[2]);
 
-                                command_exec(NULL, session, for_command, 0);
+                                command_exec(NULL, w->session, for_command, 0);
                                 xfree(for_command);
 			}
                  } else {
@@ -944,7 +944,7 @@ static COMMAND(cmd_for)
                                         for_command = format_string(params[2], get_nickname(w[i]->session, w[i]->target), get_uid(w[i]->session, w[i]->target));
                                 else
                                         for_command = xstrdup(params[2]);
-                                command_exec(NULL, session, for_command, 0);
+                                command_exec(NULL, w[i]->session, for_command, 0);
                                 xfree(for_command);
                         }
 			array_free(tmp);
