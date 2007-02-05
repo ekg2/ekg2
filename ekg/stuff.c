@@ -1211,16 +1211,17 @@ char *help_path(char *name, char *plugin) {
         }
 
 	do {
-		/* I don't know why we are checking for $LANGUAGE here,
-		 * I don't even see this variable in locale manpage,
-		 * so I added fallback to $LC_ALL or $LANG for normal environments */
+		/* if we don't get lang from $LANGUAGE (man 3 gettext) */
 		if ((tmp = getenv("LANGUAGE"))) break;
+		/* fallback on locale enviroments.. (man 5 locale) */
 		if ((tmp = getenv("LC_ALL"))) break;
 		if ((tmp = getenv("LANG"))) break;
+		/* eventually fallback, fallback on en language */
 		tmp = "en";
 	} while (0);
 	lang = xstrndup(tmp, 2);
 	
+/* XXX, rewrite */
 	if (config_use_unicode) {
 	        tmp = saprintf("%s-%s-utf.txt", base, lang);
 		if (!(fp = fopen(tmp, "r"))) {
