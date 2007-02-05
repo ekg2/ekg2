@@ -1210,12 +1210,17 @@ char *help_path(char *name, char *plugin) {
                 base = saprintf(DATADIR "/%s", name);
         }
 
-        tmp = getenv("LANGUAGE");
-        if (!tmp) {
-                lang = xstrdup("en");
-        } else {
-                lang = xstrdup(tmp);
-        }
+	do {
+		/* I don't know why we are checking for $LANGUAGE here,
+		 * I don't even see this variable in locale manpage,
+		 * so I added fallback to $LC_ALL or $LANG for normal environments */
+		if ((tmp = getenv("LANGUAGE"))) break;
+		if ((tmp = getenv("LC_ALL"))) break;
+		if ((tmp = getenv("LANG"))) break;
+		tmp = "en";
+	} while (0);
+	lang = xstrndup(tmp, 2);
+	
 	if (config_use_unicode) {
 	        tmp = saprintf("%s-%s-utf.txt", base, lang);
 		if (!(fp = fopen(tmp, "r"))) {
@@ -2434,6 +2439,8 @@ void xstrtr(char *text, char from, char to)
 		if (*text == from)
 			*text = to;
 }
+
+
 
 /*
  * ekg_yield_cpu()
