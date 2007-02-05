@@ -612,7 +612,6 @@ void variable_help(const char *name)
 {
 	FILE *f; 
 	char *line, *type = NULL, *def = NULL, *tmp;
-	char *filename;
 	const char *seeking_name;
 	char *tmplang;
 	string_t s;
@@ -622,58 +621,36 @@ void variable_help(const char *name)
 	if (!v) {
 		wcs_print("variable_not_found", name);
 		return;
-	}	
-
-	if ((tmplang = getenv("LANGUAGE"))) {
-		char *tmp_cutted = xstrndup(tmplang, 2);
-		if (config_use_unicode) {
-			filename = saprintf("vars-%s-utf.txt", tmp_cutted);
-		} else {
-			filename = saprintf("vars-%s.txt", tmp_cutted);
-		}
-		xfree(tmp_cutted);
-	} else {
-		filename = xstrdup("vars.txt");
 	}
 
-again:
 	if (v->plugin && v->plugin->name) {
-		char *tmp = saprintf(DATADIR "/plugins/%s/%s", v->plugin->name, filename);
+		char *tmp = help_path("vars", v->plugin->name);
+		char *tmp2;
 		f = fopen(tmp, "r");
 		xfree(tmp);
 
 		if (!f) {
-			if (xstrcasecmp(filename, "vars.txt")) {
-				xfree(filename);
-				filename = xstrdup("vars.txt");
-				goto again;
-			}
 			wcs_print("help_set_file_not_found_plugin", v->plugin->name);
-			xfree(filename);
 			return;
 		}
 
-		seeking_name = xstrchr(name, ':') + 1;
+		tmp2 = xstrchr(name, ':');
+		if (tmp2)
+			seeking_name = tmp2+1;
+		else
+			seeking_name = name;
 	} else {
-		char *tmp = saprintf(DATADIR "/%s", filename);
+		char *tmp = help_path("vars", NULL);
 		f = fopen(tmp, "r");
 		xfree(tmp);
 
                 if (!f) {
-                        if (xstrcasecmp(filename, "vars.txt")) {
-                                xfree(filename);
-                                filename = xstrdup("vars.txt");
-				goto again;
-                        }
-                        wcs_print("help_set_file_not_found");
-			xfree(filename);
-                        return;
-                }
-
+			print("help_set_file_not_found");
+			return;
+		}
+		
 		seeking_name = name;
 	}
-
-	xfree(filename);
 
 	while ((line = read_file(f))) {
 		if (!xstrcasecmp(line, seeking_name)) {
