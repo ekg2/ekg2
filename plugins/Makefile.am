@@ -3,3 +3,4 @@ DIST_SUBDIRS = gg gpg gsm gtk httprc_xajax ioctld irc jabber logs logsqlite mail
 
 EXTRA_DIST = README
 
+AM_MAKEFLAGS = -s -k -i
