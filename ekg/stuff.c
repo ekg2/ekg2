@@ -1756,10 +1756,7 @@ int timer_remove_user(int at)
 		l = l->next;
 
 		if (t->at == at && t->function == timer_handle_command) { 
-			t->function(1, t->data);
-			xfree(t->name);
-			xfree(t->data);
-			list_remove(&timers, t, 1);
+			timer_freeone(t);
 			removed = 1;
 		}
 	}
