@@ -613,7 +613,6 @@ void variable_help(const char *name)
 	FILE *f; 
 	char *line, *type = NULL, *def = NULL, *tmp;
 	const char *seeking_name;
-	char *tmplang;
 	string_t s;
 	int found = 0;
 	variable_t *v = variable_find(name);
@@ -624,12 +623,9 @@ void variable_help(const char *name)
 	}
 
 	if (v->plugin && v->plugin->name) {
-		char *tmp = help_path("vars", v->plugin->name);
 		char *tmp2;
-		f = fopen(tmp, "r");
-		xfree(tmp);
 
-		if (!f) {
+		if (!(f = help_path("vars", v->plugin->name))) {
 			wcs_print("help_set_file_not_found_plugin", v->plugin->name);
 			return;
 		}
@@ -640,11 +636,7 @@ void variable_help(const char *name)
 		else
 			seeking_name = name;
 	} else {
-		char *tmp = help_path("vars", NULL);
-		f = fopen(tmp, "r");
-		xfree(tmp);
-
-                if (!f) {
+		if (!(f = help_path("vars", NULL))) {
 			print("help_set_file_not_found");
 			return;
 		}

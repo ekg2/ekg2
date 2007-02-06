@@ -1103,7 +1103,6 @@ void session_help(session_t *s, const char *name)
 	FILE *f;
 	char *line, *type = NULL, *def = NULL, *tmp;
 	char *plugin_name;
-	char *tmppath;
 
 	string_t str;
 	int found = 0;
@@ -1118,11 +1117,8 @@ void session_help(session_t *s, const char *name)
 	}
 
 	plugin_name = plugin_find_uid(s->uid)->name;
-	tmppath = help_path("session", plugin_name);
-	f = fopen(tmppath, "r");
-	xfree(tmppath);
 
-	if (!f) {
+	if (!(f = help_path("session", plugin_name))) {
 		wcs_print("help_session_file_not_found", plugin_name);
 		return;
 	}

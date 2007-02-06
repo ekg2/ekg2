@@ -1194,21 +1194,17 @@ void conference_free()
 /*
  * help_path()
  *
- * zwraca ¶cie¿kê do pliku z pomoc± we w³a¶ciwym jêzyku lub null je¶li nie ma takiego pliku
+ * zwraca plik z pomoc± we w³a¶ciwym jêzyku lub null je¶li nie ma takiego pliku
  *
  */
-char *help_path(char *name, char *plugin) {
-
+FILE *help_path(char *name, char *plugin) {
+	char lang[3];
         char *tmp;
-        char *base;
-        char *lang;
         FILE *fp;
 
-        if (plugin) {
-                base = saprintf(DATADIR "/plugins/%s/%s", plugin, name);
-        } else {
-                base = saprintf(DATADIR "/%s", name);
-        }
+	char *base = plugin ? 
+		saprintf(DATADIR "/plugins/%s/%s", plugin, name) :
+		saprintf(DATADIR "/%s", name);
 
 	do {
 		/* if we don't get lang from $LANGUAGE (man 3 gettext) */
@@ -1219,38 +1215,46 @@ char *help_path(char *name, char *plugin) {
 		/* eventually fallback, fallback on en language */
 		tmp = "en";
 	} while (0);
-	lang = xstrndup(tmp, 2);
+
+	xstrncpy(&lang[0], tmp, 2);
+	lang[2] = 0;
 	
-/* XXX, rewrite */
+help_again:
 	if (config_use_unicode) {
 	        tmp = saprintf("%s-%s-utf.txt", base, lang);
-		if (!(fp = fopen(tmp, "r"))) {
+
+		if ((fp = fopen(tmp, "r"))) {
+			xfree(base);
 			xfree(tmp);
-			tmp = saprintf("%s-%s.txt", base, lang);
-		} else { 
-			fclose(fp);
-			goto end;
+			return fp;
 		}
+		xfree(tmp);
+		tmp = saprintf("%s-%s.txt", base, lang);
 	} else {
         	tmp = saprintf("%s-%s.txt", base, lang);
 	}
 
-        /* Temporary fallback - untill we don't have full en translation */
-        fp = fopen(tmp, "r");
-        if (!fp) {
+	if ((fp = fopen(tmp, "r"))) {
+		xfree(base);
 		xfree(tmp);
-		if (config_use_unicode) {
-                	tmp = saprintf("%s-pl-utf.txt", base);
-		} else {
-                	tmp = saprintf("%s-pl.txt", base);
-		}
-        } else {
-                fclose(fp);
-        }
-end:
+		return fp;
+	}
+
+        /* Temporary fallback - untill we don't have full en translation */
+	xfree(tmp);
+	if (xstrcasecmp(lang, "pl")) {
+		lang[0] = 'p';
+		lang[1] = 'l';
+		goto help_again;
+	}
+
+	/* last chance, just base without lang. */
+	tmp = saprintf("%s.txt", base);
+	fp = fopen(tmp, "r");
+
+	xfree(tmp);
         xfree(base);
-        xfree(lang);
-        return tmp;
+        return fp;
 }
 
 

@@ -1001,12 +1001,9 @@ static COMMAND(cmd_help)
 				int found = 0;
 
 				if (c->plugin && c->plugin->name) {
-                                        char *tmp = help_path("commands", c->plugin->name);
 					char *tmp2;
-					f = fopen(tmp, "r");
-				        xfree(tmp);
 
-			                if (!f) {
+                                        if (!(f = help_path("commands", c->plugin->name))) {
                                                 wcs_print("help_command_file_not_found_plugin", c->plugin->name);
 						return -1;
 			                }
@@ -1016,11 +1013,7 @@ static COMMAND(cmd_help)
 					else
 				                seeking_name = tmp2 + 1;
 			        } else {
-					char *tmp = help_path("commands", NULL);
-					f = fopen(tmp, "r");
-					xfree(tmp);
-
-			                if (!f) {
+					if (!(f = help_path("commands", NULL))) {
 		                	        wcs_print("help_command_file_not_found");
 						return -1;
 			                }
@@ -1129,27 +1122,17 @@ static COMMAND(cmd_help)
                         int found = 0;
 
 		        if (c->plugin && c->plugin->name) {
-	                        char *tmp = help_path("commands", c->plugin->name);
 				char *tmp2;
-                                f = fopen(tmp, "r");
-                                xfree(tmp);
 
-                                if (!f) {
-					continue;
-                                }
+	                        if (!(f = help_path("commands", c->plugin->name))) continue;
+
 				tmp2 = xstrchr(c->name, (':'));
 				if (!tmp2)
 					seeking_name = c->name;
 				else 
 	                                seeking_name = tmp2 + 1;
                         } else {
-                                char *tmp = help_path("commands", NULL);
-                                f = fopen(tmp, "r");
-				xfree(tmp);
-
-				if (!f) {
-					continue;
-                                }
+                                if (!(f = help_path("commands", NULL))) continue;
 
                                 seeking_name = c->name;
                         }
