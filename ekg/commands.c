@@ -2337,10 +2337,41 @@ static COMMAND(cmd_echo)
 	return 0;
 }
 
-static COMMAND(cmd_bind)
-{
-	window_lock_dec_n(target); /* this is interactive command */
-	query_emit_id(NULL, BINDING_COMMAND, params[0], (params[0]) ? params[1] : NULL, (params[0] && params[1]) ? params[2] : NULL, quiet);
+static COMMAND(cmd_bind) {
+	if (match_arg(params[0], 'a', ("add"), 2)) {
+		if (!params[1] || !params[2]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+		query_emit_id(NULL, BINDING_COMMAND, (int) 1, params[1], params[2], quiet);
+/*		ncurses_binding_add(p2, p3, 0, quiet); */
+		return 0;
+	}
+	if (match_arg(params[0], 'd', ("delete"), 2)) {
+		if (!params[1]) {
+			printq("not_enough_params", ("bind"));
+			return -1;
+		}
+
+		query_emit_id(NULL, BINDING_COMMAND, (int) 0, params[1], NULL, quiet);
+/*		ncurses_binding_delete(p2, quiet); */
+		return 0;
+	} 
+	if (match_arg(params[0], 'L', ("list-default"), 5)) {
+		binding_list(quiet, params[1], 1);
+		return 0;
+	} 
+	if (match_arg(params[0], 'S', ("set"), 2)) {
+		window_lock_dec_n(target); /* this is interactive command */
+
+		query_emit_id(NULL, BINDING_SET, params[1], NULL, quiet);
+		return 0;
+	}
+	if (match_arg(params[0], 'l', ("list"), 2)) {
+		binding_list(quiet, params[1], 0);
+		return 0;
+	}
+	binding_list(quiet, params[0], 0);
 
 	return 0;
 }

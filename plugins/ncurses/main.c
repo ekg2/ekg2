@@ -354,33 +354,15 @@ static QUERY(ncurses_binding_set_query)
 	return 0;
 }
 
-static QUERY(ncurses_binding_query)
+static QUERY(ncurses_binding_adddelete_query)
 {
-	char *p1 = va_arg(ap, char *);
+	int add = va_arg(ap, int);
 	char *p2 = va_arg(ap, char *);
 	char *p3 = va_arg(ap, char *);
 	int quiet = va_arg(ap, int);
 
-	if (match_arg(p1, 'a', ("add"), 2)) {
-		if (!p2 || !p3)
-			wcs_printq("not_enough_params", ("bind"));
-		else
-			ncurses_binding_add(p2, p3, 0, quiet);
-	} else if (match_arg(p1, 'd', ("delete"), 2)) {
-		if (!p2)
-			wcs_printq("not_enough_params", ("bind"));
-		else
-			ncurses_binding_delete(p2, quiet);
-	} else if (match_arg(p1, 'L', ("list-default"), 5)) {
-		binding_list(quiet, p2, 1);
-	} else if (match_arg(p1, 'S', ("set"), 2)) {
-		ncurses_binding_set(quiet, p2, NULL);
-	} else {
-		if (match_arg(p1, 'l', ("list"), 2))
-			binding_list(quiet, p2, 0);
-		else
-			binding_list(quiet, p1, 0);
-	}
+	if (add)	ncurses_binding_add(p2, p3, 0, quiet);
+	else		ncurses_binding_delete(p2, quiet);
 
 	ncurses_contacts_update(NULL);
 	update_statusbar(1);
@@ -500,7 +482,7 @@ int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_userlist_changed, NULL);
 	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_userlist_changed, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
-	query_connect_id(&ncurses_plugin, BINDING_COMMAND, ncurses_binding_query, NULL);
+	query_connect_id(&ncurses_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
 	query_connect_id(&ncurses_plugin, VARIABLE_CHANGED, ncurses_variable_changed, NULL);
 	query_connect_id(&ncurses_plugin, CONFERENCE_RENAMED, ncurses_conference_renamed, NULL);
