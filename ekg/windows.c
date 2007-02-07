@@ -39,10 +39,10 @@
 
 #include "queries.h"
 
+static int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 
 list_t windows = NULL;			/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
-int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 window_t *window_current = NULL;	/* zawsze na co¶ musi wskazywaæ! */
 
 window_t *window_find_ptr(window_t *w) {
