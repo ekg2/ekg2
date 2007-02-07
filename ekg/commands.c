@@ -2568,7 +2568,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 				window_lock_inc(w);
 				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
-				if ((w == window_find(target)))
+				if (window_find_ptr(w) || (w == window_find(target)))
 					window_lock_dec(w);
 				else {
 					list_t l;
