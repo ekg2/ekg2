@@ -56,6 +56,7 @@ extern list_t sessions;
 extern session_t *session_current;
 
 session_t *session_find(const char *uid);
+session_t *session_find_ptr(session_t *s);
 session_param_t *session_var_find(session_t *s, const char *key);
 
 int session_var_default(session_t *s);

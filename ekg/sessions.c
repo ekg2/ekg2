@@ -46,6 +46,16 @@
 list_t sessions = NULL;
 session_t *session_current = NULL;
 
+session_t *session_find_ptr(session_t *s) {
+	list_t l;
+	for (l = sessions; l; l = l->next) {
+		if (l->data == s)
+			return s;
+
+	}
+	return NULL;
+}
+
 /*
  * session_find()
  *

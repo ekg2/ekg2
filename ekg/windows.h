@@ -60,6 +60,7 @@ extern window_t *window_current;
 
 window_t *window_find(const char *target);
 window_t *window_find_s(session_t *session, const char *target);
+window_t *window_find_ptr(window_t *w);
 window_t *window_new(const char *target, session_t *session, int new_id);
 void window_kill(window_t *w, int quiet);
 void window_switch(int id);

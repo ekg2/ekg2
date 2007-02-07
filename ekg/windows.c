@@ -45,6 +45,15 @@ int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
 int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 window_t *window_current = NULL;	/* zawsze na co¶ musi wskazywaæ! */
 
+window_t *window_find_ptr(window_t *w) {
+	list_t l;
+	for (l = windows; l; l = l->next) {
+		if (w == l->data)
+			return w;
+	}
+	return NULL;
+}
+
 /*
  * window_find()
  *
