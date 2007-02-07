@@ -1143,7 +1143,6 @@ static QUERY(logs_handler_raw) {
 	if (!w || !line || w->id == 0) return 0;	/* don't log debug window */
 
 	/* line->str + line->attr == ascii str with formats */
-	debug("logs_handler_raw() ID: %d str: %s\n", w->id, __(line->str));
 	path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0);
 	str  = logs_fstring_to_string(line->str, line->attr);
 
