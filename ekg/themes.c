@@ -1599,7 +1599,7 @@ void theme_init()
 	format_add("bind_seq_list", "%> %1: %T%2%n\n", 1);
 	format_add("bind_seq_exist", _("%! Sequence %T%1%n is already bound\n"), 1);
 	format_add("bind_seq_list_empty", _("%! No bound actions\n"), 1);
-	format_add("bind_doesnt_exist", _("%! Can't open file %T%1%n\n"), 1);
+	format_add("bind_doesnt_exist", _("%! Can't find sequence %T%1%n\n"), 1);
 	format_add("bind_press_key", _("%! Press key(s) which should be bound\n"), 1);
 	format_add("bind_added", _("%> Binding added\n"), 1);
 
