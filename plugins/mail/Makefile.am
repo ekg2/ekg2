@@ -6,3 +6,7 @@ mail_la_LDFLAGS = -module -avoid-version
 
 libdir = $(plugindir)
 
+install-data-am:
+	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/mail/
+	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/mail/
+

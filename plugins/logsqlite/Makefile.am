@@ -10,4 +10,4 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/
-	$(INSTALL) -m 644 vars-pl.txt commands-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/
+	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/

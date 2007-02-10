@@ -13,5 +13,5 @@ INCLUDES = -DIOCTLD_PATH=\"$(libexecdir)/ioctld\"
 
 install-data-am:
 	mkdir -p  $(DESTDIR)$(pkgdatadir)/plugins/ioctld/
-	$(INSTALL) -m 644 commands-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/ioctld/commands-pl.txt
+	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/ioctld/
 

@@ -10,5 +10,5 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/sim/
-	$(INSTALL) -m 644 commands-pl.txt vars-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/sim/
+	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/sim/
 

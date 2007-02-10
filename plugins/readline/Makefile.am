@@ -12,5 +12,5 @@ INCLUDES = -DDATADIR=\"$(datadir)/ekg\"
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/readline/
-	$(INSTALL) -m 644 vars-pl.txt $(DESTDIR)$(pkgdatadir)/plugins/readline/
+	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/readline/
 

@@ -11,5 +11,5 @@ libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/gg/
-	$(INSTALL) -m 644 vars-pl.txt vars-en.txt commands-pl.txt commands-en.txt session-pl.txt session-en.txt $(DESTDIR)$(pkgdatadir)/plugins/gg/
+	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/gg/
 
