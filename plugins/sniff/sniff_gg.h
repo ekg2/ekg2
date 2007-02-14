@@ -23,3 +23,25 @@ typedef struct {
 	char msg_data[];
 } gg_send_msg;
 
+#define GG_WELCOME 0x0001
+typedef struct {
+	uint32_t key;
+} gg_welcome;
+
+#define GG_SEND_MSG_ACK 0x0005
+typedef struct {
+	uint32_t status;
+	uint32_t recipient;
+	uint32_t seq;
+} gg_send_msg_ack;
+
+#define GG_PING 0x0008
+#define GG_PONG 0x0007
+
+#define GG_STATUS 0x0002
+typedef struct {
+	uint32_t uin;			/* numerek */
+	uint32_t status;		/* nowy stan */
+} gg_status;
+
+#define GG_NEW_STATUS 0x0002

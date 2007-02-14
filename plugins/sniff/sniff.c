@@ -110,7 +110,7 @@ static QUERY(sniff_validate_uid) {
 }
 
 static char *tcp_print_flags(u_char tcpflag) {
-	static char buf[255];
+	static char buf[60];
 
 	buf[0] = 0;
 	if (tcpflag & TH_FIN) xstrcat(buf, "FIN+");
@@ -180,6 +180,14 @@ static int sniff_gg_send_msg(session_t *s, const sniff_data_t *hdr, const gg_sen
 	return 0;
 }
 
+static int sniff_gg_send_msg_ack(session_t *s, const sniff_data_t *hdr, const gg_send_msg_ack *pkt_ack, int len) {
+	CHECK_LEN(sizeof(gg_send_msg_ack))	len -= sizeof(gg_send_msg_ack);
+	
+	debug_function("sniff_gg_send_msg_ack() uid:%d %d %d\n", pkt_ack->recipient, pkt_ack->status, pkt_ack->seq);
+
+	return 0;
+}
+
 /* return 0 on success */
 int sniff_gg(session_t *s, const sniff_data_t *hdr, const gg_header *pkt, int len) {
 	CHECK_LEN(sizeof(gg_header)) 	len -= sizeof(gg_header);
@@ -187,18 +195,32 @@ int sniff_gg(session_t *s, const sniff_data_t *hdr, const gg_header *pkt, int le
 	CHECK_LEN(pkt->len)
 
 	debug_function("sniff_gg() rcv pkt type: %d len: %d next: %d\n", pkt->type, pkt->len, !(pkt->len == len));
+	if (!(pkt->len == len)) 
+		debug_error("sniff_gg() XXX NEXT PACKET?!\n");
 
 /* XXX, check direction!!!!!111 */
 	switch (pkt->type) {
+#if 0
+		case GG_WELCOME:
+			return sniff_gg_welcome(s, hdr, (gg_welcome *) pkt->data, pkt->len);	/* OUTGOING */
+#endif
 		case GG_RECV_MSG:
-			return sniff_gg_recv_msg(s, hdr, (gg_recv_msg *) pkt->data, len);	/* INCOMING */
+			return sniff_gg_recv_msg(s, hdr, (gg_recv_msg *) pkt->data, pkt->len);	/* INCOMING */
 		case GG_SEND_MSG:
-			return sniff_gg_send_msg(s, hdr, (gg_send_msg *) pkt->data, len);	/* OUTGOING */
+			return sniff_gg_send_msg(s, hdr, (gg_send_msg *) pkt->data, pkt->len);	/* OUTGOING */
+		case GG_SEND_MSG_ACK:
+			return sniff_gg_send_msg_ack(s, hdr, (gg_send_msg_ack *) pkt->data, pkt->len);	/* INCOMING */
+		case GG_PING:
+			debug_function("sniff_gg() rcv GG_PING ip: %s\n", inet_ntoa(hdr->srcip));	/* OUTGOING */
+			return 0;
+		case GG_PONG:
+			debug_function("sniff_gg() rcv GG_PONG ip: %s\n", inet_ntoa(hdr->dstip));	/* INCOMING */
+			return 0;
+
 		default:
 			debug_error("sniff_gg() UNHANDLED pkt type: %x\n", pkt->type);
 /*			print_payload(gg_hdr->pakiet, gg_hdr->len); */
 	}
-
 
 	return 0;
 }
@@ -283,8 +305,7 @@ static WATCHER(sniff_pcap_read) {
 }
 
 static COMMAND(sniff_command_connect) {
-#define DEFAULT_FILTER "tcp and net 217.17.41.88/29 or net 217.17.45.128/27 and tcp"
-
+#define DEFAULT_FILTER "tcp and net 217.17.41.80/28 or net 217.17.45.128/27 and tcp"
 	struct bpf_program fp;
 	char errbuf[PCAP_ERRBUF_SIZE] = { 0 };
 	pcap_t *dev;
@@ -322,7 +343,9 @@ static COMMAND(sniff_command_connect) {
 		pcap_close(dev);
 		return -1;
 	}
-
+/*
+	pcap_freecode(&fp);
+ */
 	session->priv = dev;
 
 	watch_add(&sniff_plugin, pcap_fileno(dev), WATCH_READ, sniff_pcap_read, session);
@@ -340,6 +363,9 @@ static COMMAND(sniff_command_disconnect) {
 		return -1;
 	}
 
+	session->connected = 0;
+	/* XXX, notify */
+
 	if (!GET_DEV(session)) {
 		debug_error("sniff_command_disconnect() not dev?!\n");
 		return -1;
@@ -355,14 +381,20 @@ static QUERY(sniff_status_show) {
 	return 0;
 }
 
+static QUERY(sniff_print_version) {
+	print("generic", pcap_lib_version());
+	return 0;
+}
+
 int sniff_plugin_init(int prio) {
 	plugin_register(&sniff_plugin, prio);
 
 	query_connect_id(&sniff_plugin, PROTOCOL_VALIDATE_UID,	sniff_validate_uid, NULL);
 	query_connect_id(&sniff_plugin, STATUS_SHOW, 		sniff_status_show, NULL);
+	query_connect_id(&sniff_plugin, PLUGIN_PRINT_VERSION,	sniff_print_version, NULL);
 
         command_add(&sniff_plugin, "sniff:connect", NULL, sniff_command_connect,    SESSION_MUSTBELONG, NULL);
-	command_add(&sniff_plugin, "irc:disconnect", NULL,sniff_command_disconnect, SESSION_MUSTBELONG, NULL);
+	command_add(&sniff_plugin, "sniff:disconnect", NULL,sniff_command_disconnect, SESSION_MUSTBELONG, NULL);
 
 	plugin_var_add(&sniff_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&sniff_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
