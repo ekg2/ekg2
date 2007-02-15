@@ -57,7 +57,7 @@ static inline unsigned int gg_login_hash(const unsigned char *password, unsigned
 
 /* I have no idea, how to crack/optimize this algo. Maybe someone? */
 	for (; *password; password++) {
-		x = (x/* & 0xffffff00 */) | digit[*password]; /* LE, po co & ? */
+		x = (x/* & 0xffffff00 */) | digit[*password]; /* LE x86 32b, po co & ? */
 		y ^= x;
 		y += x;
 		x <<= 8;

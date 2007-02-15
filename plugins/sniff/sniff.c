@@ -85,14 +85,46 @@ static char *build_windowip_name(struct in_addr ip) {
 	return buf;
 }
 
-static connection_t *build_header(connection_t *d, const struct iphdr *ip, const struct tcphdr *tcp) {
+/* XXX, make it only session-visible */
+static list_t tcp_connections;
+
+/* XXX, sniff_tcp_close_connection(connection_t *) */
+
+static connection_t *sniff_tcp_find_connection(const struct iphdr *ip, const struct tcphdr *tcp) {
+#if 0
+	connection_t *d;
+	list_t l;
+
+	for (l = tcp_connections; l; l = l->next) {
+		connection_t *c = l->data;
+
+		if (	c->srcip.s_addr == ip->ip_src.s_addr && c->srcport == ntohs(tcp->th_sport) &&
+			c->dstip.s_addr == ip->ip_dst.s_addr && c->dstport == ntohs(tcp->th_dport)) 
+				return c;
+
+		if (	c->srcip.s_addr == ip->ip_dst.s_addr && c->srcport == ntohs(tcp->th_dport) &&
+			c->dstip.s_addr == ip->ip_src.s_addr && c->dstport == ntohs(tcp->th_sport))
+				return c;
+	}
+
+	d	= xmalloc(sizeof(connection_t));
+
 	d->srcip	= ip->ip_src;
 	d->srcport	= ntohs(tcp->th_sport);
 	
 	d->dstip	= ip->ip_dst;
 	d->dstport	= ntohs(tcp->th_dport);
 
-	return d;
+	list_add(&tcp_connections, d, 0);
+#endif
+	static connection_t d;
+	
+	d.srcip		= ip->ip_src;
+	d.srcport	= ntohs(tcp->th_sport);
+
+	d.dstip		= ip->ip_dst;
+	d.dstport	= ntohs(tcp->th_dport);
+	return &d;
 }
 
 /* stolen from libgadu+gg plugin */
@@ -430,7 +462,7 @@ static const struct {
 	{ GG_LIST_EMPTY,"GG_LIST_EMPTY",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
 	{ GG_STATUS60,	"GG_STATUS60",	SNIFF_INCOMING, (void *) sniff_gg_status60, 0},
 	{ GG_NEED_EMAIL,"GG_NEED_EMAIL",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
-	{ GG_LOGIN60,	"GG_LOGIN60",	SNIFF_OUTGOING, (void *) sniff_gg_login60, 0},	/* XXX */
+	{ GG_LOGIN60,	"GG_LOGIN60",	SNIFF_OUTGOING, (void *) sniff_gg_login60, 0},
 	{ -1,		NULL,		-1,		(void *) NULL, 0},
 };
 
@@ -438,6 +470,7 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 	int i;
 	int handled = 0;
 	pkt_way_t way = SNIFF_OUTGOING;
+	int ret = 0;
 
 	CHECK_LEN(sizeof(gg_header)) 	len -= sizeof(gg_header);
 	CHECK_LEN(pkt->len)
@@ -463,10 +496,10 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 
 	if (len > pkt->len) {
 		debug_error("sniff_gg() next packet?\n");
-		sniff_gg(s, hdr, (gg_header *) (pkt->data + pkt->len), len - pkt->len); 
+		ret = sniff_gg(s, hdr, (gg_header *) (pkt->data + pkt->len), len - pkt->len);
+		if (ret < 0) ret = 0;
 	}
-	/* XXX, return len */
-	return 0;
+	return (sizeof(gg_header) + pkt->len) + ret;
 }
 
 #undef CHECK_LEN
@@ -475,7 +508,7 @@ void sniff_loop(void *data, const struct pcap_pkthdr *header, const u_char *pack
 	const struct iphdr *ip;
 	const struct tcphdr *tcp;
 
-	connection_t hdr;
+	connection_t *hdr;
 	const char *payload;
 	
 	int size_ip;
@@ -513,15 +546,15 @@ void sniff_loop(void *data, const struct pcap_pkthdr *header, const u_char *pack
 	
 	payload = (u_char *) (packet + SIZE_ETHERNET + size_ip + size_tcp);
 
-	build_header(&hdr, ip, tcp);
+	hdr = sniff_tcp_find_connection(ip, tcp);
 
 	debug_function("sniff_loop() %15s:%5d <==> ", 
-			inet_ntoa(hdr.srcip), 		/* src ip */
-			hdr.srcport);			/* src port */
+			inet_ntoa(hdr->srcip), 		/* src ip */
+			hdr->srcport);			/* src port */
 
 	debug_function("%15s:%5d %s (SEQ: %lx ACK: %lx len: %d)\n", 
-			inet_ntoa(hdr.dstip), 		/* dest ip */
-			hdr.dstport, 			/* dest port */
+			inet_ntoa(hdr->dstip), 		/* dest ip */
+			hdr->dstport, 			/* dest port */
 			tcp_print_flags(tcp->th_flags), /* tcp flags */
 			htonl(tcp->th_seq), 		/* seq */
 			htonl(tcp->th_ack), 		/* ack */
@@ -530,7 +563,7 @@ void sniff_loop(void *data, const struct pcap_pkthdr *header, const u_char *pack
 /* XXX check tcp flags */
 	if (!size_payload) return;
 /* XXX what proto ? check based on ip + port? */
-	sniff_gg((session_t *) data, &hdr, (gg_header *) payload, size_payload);
+	sniff_gg((session_t *) data, hdr, (gg_header *) payload, size_payload);
 #undef CHECK_LEN
 }
 
@@ -627,6 +660,25 @@ static COMMAND(sniff_command_disconnect) {
 	return 0;
 }
 
+static COMMAND(sniff_command_connections) {
+	list_t l;
+
+	for (l = tcp_connections; l; l = l->next) {
+		connection_t *c = l->data;
+		char src_ip[INET_ADDRSTRLEN];
+		char dst_ip[INET_ADDRSTRLEN];
+
+		print_window("__status", session, 0,
+			"sniff_tcp_connection", 
+				inet_ntop(AF_INET, &c->srcip, src_ip, sizeof(src_ip)),
+				itoa(c->srcport),
+				inet_ntop(AF_INET, &c->dstip, dst_ip, sizeof(dst_ip)),
+				itoa(c->dstport));
+	}
+	return 0;
+}
+
+
 static QUERY(sniff_validate_uid) {
 	char    *uid    = *(va_arg(ap, char **));
 	int     *valid  = va_arg(ap, int *);
@@ -670,6 +722,7 @@ static QUERY(sniff_status_show) {
 	debug("pcap_stats() recv: %d drop: %d ifdrop: %d\n", stats.ps_recv, stats.ps_drop, stats.ps_ifdrop);
 	print("sniff_pkt_rcv",	session_name(s), itoa(stats.ps_recv));
 	print("sniff_pkt_drop",	session_name(s), itoa(stats.ps_drop));
+	print("sniff_conn_db",	session_name(s), itoa(list_count(tcp_connections)));
 
 	return 0;
 }
@@ -687,6 +740,9 @@ static int sniff_theme_init() {
 	format_add("sniff_pkt_rcv", _("%) %2 packets captured"), 1);
 	format_add("sniff_pkt_drop",_("%) %2 packets dropped"), 1);
 
+	format_add("sniff_conn_db", 		_("%) %2 connections founded"), 1);
+	format_add("sniff_tcp_connection",	"TCP %1:%2 <==> %3:%4", 1);
+
 	return 0;
 }
 
@@ -697,7 +753,8 @@ int sniff_plugin_init(int prio) {
 	query_connect_id(&sniff_plugin, STATUS_SHOW, 		sniff_status_show, NULL);
 	query_connect_id(&sniff_plugin, PLUGIN_PRINT_VERSION,	sniff_print_version, NULL);
 
-        command_add(&sniff_plugin, "sniff:connect", NULL, sniff_command_connect,    SESSION_MUSTBELONG, NULL);
+	command_add(&sniff_plugin, "sniff:connect", NULL, sniff_command_connect,    SESSION_MUSTBELONG, NULL);
+	command_add(&sniff_plugin, "sniff:connections", NULL, sniff_command_connections, SESSION_MUSTBELONG | SESSION_MUSTBECONNECTED, NULL);
 	command_add(&sniff_plugin, "sniff:disconnect", NULL,sniff_command_disconnect, SESSION_MUSTBELONG, NULL);
 
 	plugin_var_add(&sniff_plugin, "alias", VAR_STR, 0, 0, NULL);
