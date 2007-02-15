@@ -370,8 +370,6 @@ static QUERY(ncurses_binding_adddelete_query)
 	return 0;
 }
 
-#define NCURSES_LASTLOG_CASE_SENSITIVE 0
-
 static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, const char *substr) {
 	int items = 0;
 	ncurses_window_t *n = w->private;
@@ -382,9 +380,9 @@ static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, 
 	for (i = n->backlog_size-1; i >= 0; i--) {
 		int found = 0;
 
-		if (NCURSES_LASTLOG_CASE_SENSITIVE) 
-			found = !!xstrcasestr(n->backlog[i]->str, substr);
-		else	found = !!xstrstr(n->backlog[i]->str, substr);
+		if (config_lastlog_case) 
+			found = !!xstrstr(n->backlog[i]->str, substr);
+		else	found = !!xstrcasestr(n->backlog[i]->str, substr);
 		
 		if (found) {
 			fstring_t *dup;
