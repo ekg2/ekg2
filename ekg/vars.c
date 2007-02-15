@@ -114,6 +114,7 @@ void variable_init()
 	variable_add(NULL, ("keep_reason"), VAR_INT, 1, &config_keep_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("last"), VAR_MAP, 1, &config_last, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "separate", 4, 0, "sent"), NULL);
 	variable_add(NULL, ("last_size"), VAR_INT, 1, &config_last_size, NULL, NULL, NULL);
+	variable_add(NULL, ("lastlog_matchcase"), VAR_BOOL, 1, &config_lastlog_case, NULL, NULL, NULL);
 	variable_add(NULL, ("make_window"), VAR_INT, 1, &config_make_window, changed_display_blinking, variable_map(3, 0, 0, "none", 1, 2, "usefree", 2, 1, "always"), NULL);
 	variable_add(NULL, ("mesg"), VAR_INT, 1, &config_mesg, changed_mesg, variable_map(3, 0, 0, "no", 1, 2, "yes", 2, 1, "default"), NULL);
 	variable_add(NULL, ("query_commands"), VAR_BOOL, 1, &config_query_commands, NULL, NULL, NULL);
