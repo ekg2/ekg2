@@ -2278,6 +2278,58 @@ void changed_backlog_size(const char *var)
 	}
 }
 
+static int ncurses_lastlog_update(window_t *w) {
+	ncurses_window_t *n;
+
+	if (!w) w = window_find("__lastlog");
+	if (!w) return -1;
+
+	n = w->private;
+
+	n->redraw = 1;
+	
+	return 0;
+}
+
+static void ncurses_lastlog_new(window_t *w) {
+#define lastlog_edge		WF_BOTTOM
+#define lastlog_margin		1
+#define config_lastlog_size	10
+#define lastlog_frame		WF_TOP
+#define lastlog_wrap		0
+
+	ncurses_window_t *n = w->private;
+	int size = config_lastlog_size + lastlog_margin + ((lastlog_frame) ? 1 : 0);
+
+	switch (lastlog_edge) {
+		case WF_LEFT:
+			w->width = size;
+			n->margin_right = lastlog_margin;
+			break;
+		case WF_RIGHT:
+			w->width = size;
+			n->margin_left = lastlog_margin;
+			break;
+		case WF_TOP:
+			w->height = size;
+			n->margin_bottom = lastlog_margin;
+			break;
+		case WF_BOTTOM:
+			w->height = size;
+			n->margin_top = lastlog_margin;
+			break;
+	}
+	w->frames = lastlog_frame;
+	n->handle_redraw = ncurses_lastlog_update;
+/*
+	n->handle_mouse = ncurses_lastlog_mouse_handler;
+ */
+	n->start = 0;
+	w->edge = lastlog_edge;
+	w->nowrap = !lastlog_wrap;
+	w->floating = 1;
+}
+
 /*
  * ncurses_window_new()
  *
@@ -2294,6 +2346,9 @@ int ncurses_window_new(window_t *w)
 
 	if (!xstrcmp(w->target, "__contacts"))
 		ncurses_contacts_new(w);
+
+	if (!xstrcmp(w->target, "__lastlog")) 
+		ncurses_lastlog_new(w);
 
 	if (w->target) {
 		const char *f = format_find("ncurses_prompt_query");

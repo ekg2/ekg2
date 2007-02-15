@@ -370,6 +370,76 @@ static QUERY(ncurses_binding_adddelete_query)
 	return 0;
 }
 
+#define NCURSES_LASTLOG_CASE_SENSITIVE 0
+
+static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, const char *substr) {
+	int items = 0;
+	ncurses_window_t *n = w->private;
+	int i;
+
+	if (w->floating) return 0;	/* XXX */
+
+	for (i = n->backlog_size-1; i >= 0; i--) {
+		int found = 0;
+
+		if (NCURSES_LASTLOG_CASE_SENSITIVE) 
+			found = !!xstrcasestr(n->backlog[i]->str, substr);
+		else	found = !!xstrstr(n->backlog[i]->str, substr);
+		
+		if (found) {
+			fstring_t *dup;
+			size_t len;
+#if USE_UNICODE
+			#warning "ncurses_ui_window_lastlog_find() won't work with USE_UNICODE sorry. no time for it. feel free"
+			continue;
+#endif
+
+			dup = xmalloc(sizeof(fstring_t));
+
+			len = xstrlen(n->backlog[i]->str);
+
+			dup->str		= xmemdup(n->backlog[i]->str, sizeof(char)*(len+1));
+			dup->attr		= xmemdup(n->backlog[i]->attr, sizeof(short)*(len+1));
+			dup->ts			= n->backlog[i]->ts;
+			dup->prompt_len		= n->backlog[i]->prompt_len;
+			dup->prompt_empty	= n->backlog[i]->prompt_empty;
+			dup->margin_left	= n->backlog[i]->margin_left;
+		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
+/*			dup->private		= (void *) w;	 */
+
+			ncurses_backlog_add(lastlog, dup);
+			items++;
+		}
+	}
+
+	return items;
+}
+
+static QUERY(ncurses_ui_window_lastlog) {
+	window_t *lastlog_w;
+
+	window_t *w 	= *(va_arg(ap, window_t **));
+	char *str	= *(va_arg(ap, char **));
+
+	list_t l;
+	int retval = 0;
+
+	if (!str) 
+		return 0;
+
+	if ((lastlog_w = window_find("__lastlog"))) 
+		ncurses_clear(lastlog_w, 1);
+	else	lastlog_w = window_new("__lastlog", NULL, 1001);
+	
+	if (w)
+		return ncurses_ui_window_lastlog_find(lastlog_w, w, str);
+
+	for (l = windows; l; l = l->next) 
+		retval += ncurses_ui_window_lastlog_find(lastlog_w, (window_t *) l->data, str);
+
+	return retval;
+}
+
 static QUERY(ncurses_setvar_default)
 {
 	config_contacts_size = 9;         /* szeroko¶æ okna kontaktów */
@@ -474,6 +544,7 @@ int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, UI_WINDOW_ACT_CHANGED, ncurses_ui_window_act_changed, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
+	query_connect_id(&ncurses_plugin, UI_WINDOW_LASTLOG, ncurses_ui_window_lastlog, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);
