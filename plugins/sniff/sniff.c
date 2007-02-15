@@ -64,6 +64,13 @@ typedef struct {
 	uint16_t dstport;
 } connection_t;
 
+static char *build_hex(uint32_t hex) {
+	static char buf[20];
+
+	sprintf(buf, "0x%x", hex);
+	return buf;
+}
+
 static char *build_gg_uid(uint32_t sender) {
 	static char buf[80];
 
@@ -268,15 +275,12 @@ SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
 }
 
 SNIFF_HANDLER(sniff_gg_welcome, gg_welcome) {
-	char *key_hex;
 	CHECK_LEN(sizeof(gg_welcome))		len -= sizeof(gg_welcome);
 
-	key_hex = saprintf("0x%x\n", pkt->key);
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
 			"sniff_gg_welcome",
 
-			key_hex);
-	xfree(key_hex);
+			build_hex(pkt->key));
 	return 0;
 }
 
@@ -389,6 +393,18 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 	return 0;
 }
 
+SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
+	CHECK_LEN(sizeof(gg_login60))	len -= sizeof(gg_login60);
+
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login60",
+
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->hash));
+
+	return -5;
+}
+
 typedef enum {
 	SNIFF_OUTGOING = 0,
 	SNIFF_INCOMING
@@ -414,36 +430,43 @@ static const struct {
 	{ GG_LIST_EMPTY,"GG_LIST_EMPTY",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
 	{ GG_STATUS60,	"GG_STATUS60",	SNIFF_INCOMING, (void *) sniff_gg_status60, 0},
 	{ GG_NEED_EMAIL,"GG_NEED_EMAIL",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
+	{ GG_LOGIN60,	"GG_LOGIN60",	SNIFF_OUTGOING, (void *) sniff_gg_login60, 0},	/* XXX */
 	{ -1,		NULL,		-1,		(void *) NULL, 0},
 };
 
-/* return 0 on success */
 SNIFF_HANDLER(sniff_gg, gg_header) {
 	int i;
+	int handled = 0;
 	pkt_way_t way = SNIFF_OUTGOING;
 
 	CHECK_LEN(sizeof(gg_header)) 	len -= sizeof(gg_header);
-	/* XXX, tcp fragmentation!!!!!!1111 */
 	CHECK_LEN(pkt->len)
 
 	/* XXX, check direction!!!!!111, in better way: */
 	if (!xstrncmp(inet_ntoa(hdr->srcip), "217.17.", 7))
 		way = SNIFF_INCOMING;
 
-	if (!(pkt->len == len)) 
-		debug_error("sniff_gg() XXX NEXT PACKET?!\n");
-
+	/* XXX, jesli mamy podejrzenia ze to nie jest pakiet gg, to wtedy powinnismy zwrocic -2 i pozwolic zeby inni za nas to przetworzyli */
 	for (i=0; sniff_gg_callbacks[i].name; i++) {
 		if (sniff_gg_callbacks[i].type == pkt->type && sniff_gg_callbacks[i].way == way) {
 			debug("sniff_gg() %s [%d,%d,%db] %s\n", sniff_gg_callbacks[i].name, pkt->type, way, pkt->len, inet_ntoa(way ? hdr->dstip : hdr->srcip));
 			if (sniff_gg_callbacks[i].handler) 
-				return sniff_gg_callbacks[i].handler(s, hdr, pkt->data, pkt->len);
-			return 0;
+				sniff_gg_callbacks[i].handler(s, hdr, pkt->data, pkt->len);
+
+			handled = 1;
 		}
 	}
-	debug_error("sniff_gg() UNHANDLED pkt type: %x way: %d len: %db\n", pkt->type, way, pkt->len);
-/*	print_payload(gg_hdr->pakiet, gg_hdr->len); */
-	return -2;
+	if (!handled) {
+		debug_error("sniff_gg() UNHANDLED pkt type: %x way: %d len: %db\n", pkt->type, way, pkt->len);
+	/*	print_payload(gg_hdr->pakiet, gg_hdr->len); */
+	}
+
+	if (len > pkt->len) {
+		debug_error("sniff_gg() next packet?\n");
+		sniff_gg(s, hdr, (gg_header *) (pkt->data + pkt->len), len - pkt->len); 
+	}
+	/* XXX, return len */
+	return 0;
 }
 
 #undef CHECK_LEN
@@ -511,6 +534,13 @@ void sniff_loop(void *data, const struct pcap_pkthdr *header, const u_char *pack
 #undef CHECK_LEN
 }
 
+/* XXX, some notes about tcp fragment*
+ * 		@ sniff_loop() we'll do: sniff_find_tcp_connection(connection_t *hdr);
+ * 		it'll find (or create) struct with inited string_t buf...
+ * 		than we append to that string_t recv data from packet, and than pass this to sniff_gg() [or anyother sniff handler]
+ * 		than in sniff_loop() we'll remove already data.. [of length len, len returned from sniff_gg()]
+ */
+
 static WATCHER(sniff_pcap_read) {
 	if (type) {
 		return 0;
@@ -520,7 +550,6 @@ static WATCHER(sniff_pcap_read) {
 		debug_error("sniff_pcap_read() no session!\n");
 		return -1;
 	}
-
 	pcap_dispatch(GET_DEV(data), 1, sniff_loop, data);
 	return 0;
 }
@@ -652,7 +681,8 @@ static QUERY(sniff_print_version) {
 
 static int sniff_theme_init() {
 /* sniff gg */
-	format_add("sniff_gg_welcome",	_("%> [GG_WELCOME] SEED: %1"), 1);
+	format_add("sniff_gg_welcome",	_("%) [GG_WELCOME] SEED: %1"), 1);
+	format_add("sniff_gg_login60",	_("%) [GG_LOGIN60] UIN: %1 HASH: %2"), 1);
 /* stats */
 	format_add("sniff_pkt_rcv", _("%) %2 packets captured"), 1);
 	format_add("sniff_pkt_drop",_("%) %2 packets dropped"), 1);

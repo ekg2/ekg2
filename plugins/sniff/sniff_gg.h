@@ -101,3 +101,19 @@ typedef struct {
 
 #define GG_NEED_EMAIL 0x0014
 
+#define GG_LOGIN60 0x0015
+
+typedef struct {
+	uint32_t uin;			/* mój numerek */
+	uint32_t hash;			/* hash hasła */
+	uint32_t status;		/* status na dzień dobry */
+	uint32_t version;		/* moja wersja klienta */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t local_ip;		/* mój adres ip */
+	uint16_t local_port;		/* port, na którym słucham */
+	uint32_t external_ip;		/* zewnętrzny adres ip */
+	uint16_t external_port;		/* zewnętrzny port */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno2;			/* 0xbe */
+} GG_PACKED gg_login60;
+
