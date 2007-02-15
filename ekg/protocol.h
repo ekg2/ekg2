@@ -41,7 +41,7 @@
 
 #define EKG_ACK_DELIVERED	"delivered"	/* wiadomo¶æ dostarczono */
 #define EKG_ACK_QUEUED		"queued"	/* wiadomo¶æ zakolejkowano */
-#define EKG_ACK_DROPPED		"dropped"	/* wiadomo¶æ odrzucono */
+#define EKG_ACK_DROPPED		"filtered"	/* wiadomo¶æ odrzucono */
 #define EKG_ACK_UNKNOWN 	"unknown"	/* nie wiadomo, co siê z ni± sta³o */
 
 #define EKG_DISCONNECT_USER 0		/* u¿ytkownik wpisa³ /disconnect */
