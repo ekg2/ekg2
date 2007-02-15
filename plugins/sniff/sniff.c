@@ -214,10 +214,36 @@ SNIFF_HANDLER(sniff_gg_send_msg, gg_send_msg) {
 }
 
 SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
+#define GG_ACK_BLOCKED 0x0001
+#define GG_ACK_DELIVERED 0x0002
+#define GG_ACK_QUEUED 0x0003
+#define GG_ACK_MBOXFULL 0x0004
+#define GG_ACK_NOT_DELIVERED 0x0006
+	const char *format;
+
 	CHECK_LEN(sizeof(gg_send_msg_ack))	len -= sizeof(gg_send_msg_ack);
 	
-	debug("sniff_gg_send_msg_ack() uid:%d %d %d\n", pkt->recipient, pkt->status, pkt->seq);
+	debug_function("sniff_gg_send_msg_ack() uid:%d %d %d\n", pkt->recipient, pkt->status, pkt->seq);
 
+	switch (pkt->status) {
+		/* XXX, implement GG_ACK_BLOCKED, GG_ACK_MBOXFULL */
+		case GG_ACK_DELIVERED:
+			format = "ack_delivered";
+			break;
+		case GG_ACK_QUEUED:
+			format = "ack_queued";
+			break;
+		case GG_ACK_NOT_DELIVERED:
+			format = "ack_filtered";
+			break;
+		default:
+			format = "ack_unknown";
+			debug("[sniff,gg] unknown message ack status. consider upgrade\n");
+			break;
+	}
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			format, 
+			format_user(s, build_gg_uid(pkt->recipient)));	/* XXX */
 	return 0;
 }
 
