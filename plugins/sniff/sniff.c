@@ -250,19 +250,18 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 	if (!xstrncmp(inet_ntoa(hdr->srcip), "217.17.", 7))
 		way = SNIFF_INCOMING;
 
-	debug_function("sniff_gg() rcv pkt type: %d len: %d next: %d way: %d\n", pkt->type, pkt->len, !(pkt->len == len), way);
 	if (!(pkt->len == len)) 
 		debug_error("sniff_gg() XXX NEXT PACKET?!\n");
 
 	for (i=0; sniff_gg_callbacks[i].name; i++) {
 		if (sniff_gg_callbacks[i].type == pkt->type && sniff_gg_callbacks[i].way == way) {
-			debug("sniff_gg() %s [%d,%d] %s\n", sniff_gg_callbacks[i].name, pkt->type, way, inet_ntoa(way ? hdr->dstip : hdr->srcip));
+			debug("sniff_gg() %s [%d,%d,%db] %s\n", sniff_gg_callbacks[i].name, pkt->type, way, pkt->len, inet_ntoa(way ? hdr->dstip : hdr->srcip));
 			if (sniff_gg_callbacks[i].handler) 
 				return sniff_gg_callbacks[i].handler(s, hdr, pkt->data, pkt->len);
 			return 0;
 		}
 	}
-	debug_error("sniff_gg() UNHANDLED pkt type: %x way: %d\n", pkt->type, way);
+	debug_error("sniff_gg() UNHANDLED pkt type: %x way: %d len: %db\n", pkt->type, way, pkt->len);
 /*	print_payload(gg_hdr->pakiet, gg_hdr->len); */
 	return -2;
 }
