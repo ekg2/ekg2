@@ -18,6 +18,7 @@
 #include <ekg/userlist.h>
 
 #include <ekg/commands.h>
+#include <ekg/stuff.h>
 #include <ekg/themes.h>
 
 #include <ekg/queries.h>
@@ -26,7 +27,8 @@
 #include "sniff_ip.h"
 #include "sniff_gg.h"
 
-PLUGIN_DEFINE(sniff, PLUGIN_PROTOCOL, NULL);
+static int sniff_theme_init();
+PLUGIN_DEFINE(sniff, PLUGIN_PROTOCOL, sniff_theme_init);
 
 #define DEVICE "eth0"
 #define SNAPLEN 2000
@@ -40,7 +42,7 @@ typedef struct {
 
 	struct in_addr dstip;
 	uint16_t dstport;
-} sniff_data_t;
+} connection_t;
 
 static char *build_gg_uid(uint32_t sender) {
 	static char buf[80];
@@ -56,7 +58,7 @@ static char *build_windowip_name(struct in_addr ip) {
 	return buf;
 }
 
-static sniff_data_t *build_header(sniff_data_t *d, const struct iphdr *ip, const struct tcphdr *tcp) {
+static connection_t *build_header(connection_t *d, const struct iphdr *ip, const struct tcphdr *tcp) {
 	d->srcip	= ip->ip_src;
 	d->srcport	= ntohs(tcp->th_sport);
 	
@@ -66,7 +68,50 @@ static sniff_data_t *build_header(sniff_data_t *d, const struct iphdr *ip, const
 	return d;
 }
 
-/* stolen from gg plugin */
+/* stolen from libgadu+gg plugin */
+static const char *gg_status_to_text(int status, int *descr) {
+#define GG_STATUS_NOT_AVAIL 0x0001		/* niedostępny */
+#define GG_STATUS_NOT_AVAIL_DESCR 0x0015	/* niedostępny z opisem (4.8) */
+#define GG_STATUS_AVAIL 0x0002			/* dostępny */
+#define GG_STATUS_AVAIL_DESCR 0x0004		/* dostępny z opisem (4.9) */
+#define GG_STATUS_BUSY 0x0003			/* zajęty */
+#define GG_STATUS_BUSY_DESCR 0x0005		/* zajęty z opisem (4.8) */
+#define GG_STATUS_INVISIBLE 0x0014		/* niewidoczny (4.6) */
+#define GG_STATUS_INVISIBLE_DESCR 0x0016	/* niewidoczny z opisem (4.9) */
+#define GG_STATUS_BLOCKED 0x0006		/* zablokowany */
+
+#define GG_STATUS_FRIENDS_MASK 0x8000		/* tylko dla znajomych (4.6) */
+	if (status & GG_STATUS_FRIENDS_MASK) status -= GG_STATUS_FRIENDS_MASK;
+
+	*descr = 0;
+	switch (status) {
+		case GG_STATUS_AVAIL_DESCR:
+			*descr = 1;
+		case GG_STATUS_AVAIL:
+			return EKG_STATUS_AVAIL;
+
+		case GG_STATUS_NOT_AVAIL_DESCR:
+			*descr = 1;
+		case GG_STATUS_NOT_AVAIL:
+			return EKG_STATUS_NA;
+
+		case GG_STATUS_BUSY_DESCR:
+			*descr = 1;
+		case GG_STATUS_BUSY:
+			return EKG_STATUS_AWAY;
+				
+		case GG_STATUS_INVISIBLE_DESCR:
+			*descr = 1;
+		case GG_STATUS_INVISIBLE:
+			return EKG_STATUS_INVISIBLE;
+
+		case GG_STATUS_BLOCKED:
+			return EKG_STATUS_BLOCKED;
+	}
+
+	return EKG_STATUS_ERROR;
+}
+
 static const unsigned char cp_to_iso_table[] = {
 	 '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',
 	 '?',  '?', 0xa9,  '?', 0xa6, 0xab, 0xae, 0xac,
@@ -93,23 +138,6 @@ static unsigned char *gg_cp_to_iso(unsigned char *buf) {
 	return tmp;
 }
 
-/*  ****************************************************** */
-
-static QUERY(sniff_validate_uid) {
-	char    *uid    = *(va_arg(ap, char **));
-	int     *valid  = va_arg(ap, int *);
-
-	if (!uid)
-		return 0;
-
-	if (!xstrncasecmp(uid, "sniff", 5) && uid[5]) {
-		(*valid)++;
-		return -1;
-	}
-
-	return 0;
-}
-
 static char *tcp_print_flags(u_char tcpflag) {
 	static char buf[60];
 
@@ -128,8 +156,10 @@ static char *tcp_print_flags(u_char tcpflag) {
 	return buf;
 }
 
-#define SNIFF_HANDLER(x, type) static int x(session_t *s, const sniff_data_t *hdr, const type *pkt, int len)
-typedef int (*sniff_handler_t)(session_t *, const sniff_data_t *, const unsigned char *, int);
+/*  ****************************************************** */
+
+#define SNIFF_HANDLER(x, type) static int x(session_t *s, const connection_t *hdr, const type *pkt, int len)
+typedef int (*sniff_handler_t)(session_t *, const connection_t *, const unsigned char *, int);
 
 #define CHECK_LEN(x) \
 	if (len < x) {\
@@ -192,24 +222,90 @@ SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
 }
 
 SNIFF_HANDLER(sniff_gg_welcome, gg_welcome) {
+	char *key_hex;
 	CHECK_LEN(sizeof(gg_welcome))		len -= sizeof(gg_welcome);
 
-	debug("sniff_gg_welcome() ip: %s seed: %d\n", inet_ntoa(hdr->dstip), pkt->key);
+	key_hex = saprintf("0x%x\n", pkt->key);
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_welcome",
+
+			key_hex);
+	xfree(key_hex);
 	return 0;
 }
 
 SNIFF_HANDLER(sniff_gg_status, gg_status) {
+	const char *status;
+	char *descr;
+	int has_descr;
+
 	CHECK_LEN(sizeof(gg_status))		len -= sizeof(gg_status);
 
-	debug("sniff_gg_status()\n");
-	return -5;
+/* XXX, update w->userlist->{user}->status/descr if have */
+	status	= gg_status_to_text(pkt->status, &has_descr);
+	descr	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+
+	if (!has_descr && len > 0)
+		debug_error("sniff_gg_status() !has_descr but len > 0?!\n");
+
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
+		ekg_status_label(status, descr, "status_"), /* formatka */
+
+		format_user(s, build_gg_uid(pkt->uin)),		/* od */
+		NULL, 						/* nickname, realname */
+		session_name(s), 				/* XXX! do */
+		descr);						/* status */
+
+	xfree(descr);
+
+	return 0;
 }
 
 SNIFF_HANDLER(sniff_gg_new_status, gg_new_status) {
 	CHECK_LEN(sizeof(gg_new_status))	len -= sizeof(gg_new_status);
 
-	debug("sniff_gg_new_status()\n");
+/* XXX, update s->status/descr */
+	debug_error("sniff_gg_new_status() XXX\n");
 	return -5;
+}
+
+SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
+	uint32_t uin;
+	const char *status;
+	char *descr;
+
+	int has_time = 0;
+	int has_descr = 0;
+
+	CHECK_LEN(sizeof(gg_status60))		len -= sizeof(gg_status60);
+#if 0
+	if (len > 4 && pkt->status_data[len - 5] == 0) {
+		has_time = 1;
+		len -= 5;
+	}
+#endif
+	uin	= pkt->uin & 0x00ffffff;
+
+	status	= gg_status_to_text(pkt->status, &has_descr);
+	descr 	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+
+/* XXX, update w->userlist */
+	if (!has_descr && len > 0)
+		debug_error("sniff_gg_status60() !has_descr but len > 0?!\n");
+
+	if (has_time)
+		debug_error("sniff_gg_status60() HAS_TIME?!\n");
+
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
+			ekg_status_label(status, descr, "status_"), /* formatka */
+
+			format_user(s, build_gg_uid(uin)), 		/* od */
+			NULL, 						/* nickname, realname */
+			session_name(s), 				/* XXX! do */
+			descr);						/* status */
+
+	xfree(descr);
+	return 0;
 }
 
 typedef enum {
@@ -232,8 +328,11 @@ static const struct {
 	{ GG_SEND_MSG_ACK,"GG_MSG_ACK",	SNIFF_INCOMING, (void *) sniff_gg_send_msg_ack, 0}, 
 	{ GG_STATUS, 	"GG_STATUS",	SNIFF_INCOMING, (void *) sniff_gg_status, 0},
 	{ GG_NEW_STATUS,"GG_NEW_STATUS",SNIFF_OUTGOING, (void *) sniff_gg_new_status, 0},
-	{ GG_PING,	"GG_PING",	SNIFF_OUTGOING,	(void *) NULL, 1},
-	{ GG_PONG,	"GG_PONG",	SNIFF_INCOMING, (void *) NULL, 1},
+	{ GG_PING,	"GG_PING",	SNIFF_OUTGOING,	(void *) NULL, 0},
+	{ GG_PONG,	"GG_PONG",	SNIFF_INCOMING, (void *) NULL, 0},
+	{ GG_LIST_EMPTY,"GG_LIST_EMPTY",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
+	{ GG_STATUS60,	"GG_STATUS60",	SNIFF_INCOMING, (void *) sniff_gg_status60, 0},
+	{ GG_NEED_EMAIL,"GG_NEED_EMAIL",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
 	{ -1,		NULL,		-1,		(void *) NULL, 0},
 };
 
@@ -272,7 +371,7 @@ void sniff_loop(void *data, const struct pcap_pkthdr *header, const u_char *pack
 	const struct iphdr *ip;
 	const struct tcphdr *tcp;
 
-	sniff_data_t hdr;
+	connection_t hdr;
 	const char *payload;
 	
 	int size_ip;
@@ -418,6 +517,23 @@ static COMMAND(sniff_command_disconnect) {
 	return 0;
 }
 
+
+static QUERY(sniff_validate_uid) {
+	char    *uid    = *(va_arg(ap, char **));
+	int     *valid  = va_arg(ap, int *);
+
+	if (!uid)
+		return 0;
+
+	if (!xstrncasecmp(uid, "sniff", 5) && uid[5]) {
+		(*valid)++;
+		return -1;
+	}
+
+	return 0;
+}
+
+
 static QUERY(sniff_status_show) {
 	char		*uid = *(va_arg(ap, char **));
 	session_t	*s = session_find(uid);
@@ -434,6 +550,9 @@ static QUERY(sniff_status_show) {
 		return -1;
 	}
 
+/* Device: DEVICE (PROMISC?) */
+
+/* some stats */
 	memset(&stats, 0, sizeof(struct pcap_stat));
 	if (pcap_stats(GET_DEV(s), &stats) == -1) {
 		debug_error("sniff_status_show() pcap_stats() failed\n");
@@ -441,12 +560,24 @@ static QUERY(sniff_status_show) {
 	}
 
 	debug("pcap_stats() recv: %d drop: %d ifdrop: %d\n", stats.ps_recv, stats.ps_drop, stats.ps_ifdrop);
+	print("sniff_pkt_rcv",	session_name(s), itoa(stats.ps_recv));
+	print("sniff_pkt_drop",	session_name(s), itoa(stats.ps_drop));
 
 	return 0;
 }
 
 static QUERY(sniff_print_version) {
 	print("generic", pcap_lib_version());
+	return 0;
+}
+
+static int sniff_theme_init() {
+/* sniff gg */
+	format_add("sniff_gg_welcome",	_("%> [GG_WELCOME] SEED: %1"), 1);
+/* stats */
+	format_add("sniff_pkt_rcv", _("%) %2 packets captured"), 1);
+	format_add("sniff_pkt_drop",_("%) %2 packets dropped"), 1);
+
 	return 0;
 }
 
