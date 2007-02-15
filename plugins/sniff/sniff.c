@@ -1,7 +1,8 @@
 #include "ekg2-config.h"
 
 #include <stdio.h>
-#include <signal.h>
+#include <string.h>
+
 #include <pcap.h>
 
 #include <sys/types.h>
@@ -127,21 +128,23 @@ static char *tcp_print_flags(u_char tcpflag) {
 	return buf;
 }
 
+#define SNIFF_HANDLER(x, type) static int x(session_t *s, const sniff_data_t *hdr, const type *pkt, int len)
+typedef int (*sniff_handler_t)(session_t *, const sniff_data_t *, const unsigned char *, int);
+
 #define CHECK_LEN(x) \
 	if (len < x) {\
 		debug_error("%s()  * READ less than: %d (len: %d) (%s)\n", __FUNCTION__, x, len, #x);\
 		return -1;\
 	}
 
-
-static int sniff_gg_recv_msg(session_t *s, const sniff_data_t *hdr, const gg_recv_msg *pkt_msg, int len) {
+SNIFF_HANDLER(sniff_gg_recv_msg, gg_recv_msg) {
 	const char *sender;
 	char *msg;
 
 	CHECK_LEN(sizeof(gg_recv_msg))	len -= sizeof(gg_recv_msg);
 
-	sender = build_gg_uid(pkt_msg->sender);
-	msg = gg_cp_to_iso(xstrndup(pkt_msg->msg_data, len));
+	sender = build_gg_uid(pkt->sender);
+	msg = gg_cp_to_iso(xstrndup(pkt->msg_data, len));
 
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
 		"message", 			/* formatka */
@@ -157,14 +160,14 @@ static int sniff_gg_recv_msg(session_t *s, const sniff_data_t *hdr, const gg_rec
 	return 0;
 }
 
-static int sniff_gg_send_msg(session_t *s, const sniff_data_t *hdr, const gg_send_msg *pkt_msg, int len) {
+SNIFF_HANDLER(sniff_gg_send_msg, gg_send_msg) {
 	const char *sender;
 	char *msg;
 
 	CHECK_LEN(sizeof(gg_send_msg))  len -= sizeof(gg_send_msg);
 
-	sender = build_gg_uid(pkt_msg->recipient);
-	msg = gg_cp_to_iso(xstrndup(pkt_msg->msg_data, len));
+	sender = build_gg_uid(pkt->recipient);
+	msg = gg_cp_to_iso(xstrndup(pkt->msg_data, len));
 
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
 			"sent",                      /* formatka */
@@ -180,49 +183,88 @@ static int sniff_gg_send_msg(session_t *s, const sniff_data_t *hdr, const gg_sen
 	return 0;
 }
 
-static int sniff_gg_send_msg_ack(session_t *s, const sniff_data_t *hdr, const gg_send_msg_ack *pkt_ack, int len) {
+SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
 	CHECK_LEN(sizeof(gg_send_msg_ack))	len -= sizeof(gg_send_msg_ack);
 	
-	debug_function("sniff_gg_send_msg_ack() uid:%d %d %d\n", pkt_ack->recipient, pkt_ack->status, pkt_ack->seq);
+	debug("sniff_gg_send_msg_ack() uid:%d %d %d\n", pkt->recipient, pkt->status, pkt->seq);
 
 	return 0;
 }
 
+SNIFF_HANDLER(sniff_gg_welcome, gg_welcome) {
+	CHECK_LEN(sizeof(gg_welcome))		len -= sizeof(gg_welcome);
+
+	debug("sniff_gg_welcome() ip: %s seed: %d\n", inet_ntoa(hdr->dstip), pkt->key);
+	return 0;
+}
+
+SNIFF_HANDLER(sniff_gg_status, gg_status) {
+	CHECK_LEN(sizeof(gg_status))		len -= sizeof(gg_status);
+
+	debug("sniff_gg_status()\n");
+	return -5;
+}
+
+SNIFF_HANDLER(sniff_gg_new_status, gg_new_status) {
+	CHECK_LEN(sizeof(gg_new_status))	len -= sizeof(gg_new_status);
+
+	debug("sniff_gg_new_status()\n");
+	return -5;
+}
+
+typedef enum {
+	SNIFF_OUTGOING = 0,
+	SNIFF_INCOMING
+} pkt_way_t;
+
+static const struct {
+	uint32_t 	type;
+	char 		*name;
+	pkt_way_t 	way;
+	sniff_handler_t handler;
+	int 		just_print;
+
+} sniff_gg_callbacks[] = {
+	{ GG_WELCOME,	"GG_WELCOME",	SNIFF_INCOMING, (void *) sniff_gg_welcome, 0},
+	{ GG_LOGIN_OK,	"GG_LOGIN_OK",	SNIFF_INCOMING, (void *) NULL, 1}, 
+	{ GG_SEND_MSG,	"GG_SEND_MSG",	SNIFF_OUTGOING, (void *) sniff_gg_send_msg, 0},
+	{ GG_RECV_MSG,	"GG_RECV_MSG",	SNIFF_INCOMING, (void *) sniff_gg_recv_msg, 0},
+	{ GG_SEND_MSG_ACK,"GG_MSG_ACK",	SNIFF_INCOMING, (void *) sniff_gg_send_msg_ack, 0}, 
+	{ GG_STATUS, 	"GG_STATUS",	SNIFF_INCOMING, (void *) sniff_gg_status, 0},
+	{ GG_NEW_STATUS,"GG_NEW_STATUS",SNIFF_OUTGOING, (void *) sniff_gg_new_status, 0},
+	{ GG_PING,	"GG_PING",	SNIFF_OUTGOING,	(void *) NULL, 1},
+	{ GG_PONG,	"GG_PONG",	SNIFF_INCOMING, (void *) NULL, 1},
+	{ -1,		NULL,		-1,		(void *) NULL, 0},
+};
+
 /* return 0 on success */
-int sniff_gg(session_t *s, const sniff_data_t *hdr, const gg_header *pkt, int len) {
+SNIFF_HANDLER(sniff_gg, gg_header) {
+	int i;
+	pkt_way_t way = SNIFF_OUTGOING;
+
 	CHECK_LEN(sizeof(gg_header)) 	len -= sizeof(gg_header);
-/* XXX, tcp fragmentation!!!!!!1111 */
+	/* XXX, tcp fragmentation!!!!!!1111 */
 	CHECK_LEN(pkt->len)
 
-	debug_function("sniff_gg() rcv pkt type: %d len: %d next: %d\n", pkt->type, pkt->len, !(pkt->len == len));
+	/* XXX, check direction!!!!!111, in better way: */
+	if (!xstrncmp(inet_ntoa(hdr->srcip), "217.17.", 7))
+		way = SNIFF_INCOMING;
+
+	debug_function("sniff_gg() rcv pkt type: %d len: %d next: %d way: %d\n", pkt->type, pkt->len, !(pkt->len == len), way);
 	if (!(pkt->len == len)) 
 		debug_error("sniff_gg() XXX NEXT PACKET?!\n");
 
-/* XXX, check direction!!!!!111 */
-	switch (pkt->type) {
-#if 0
-		case GG_WELCOME:
-			return sniff_gg_welcome(s, hdr, (gg_welcome *) pkt->data, pkt->len);	/* OUTGOING */
-#endif
-		case GG_RECV_MSG:
-			return sniff_gg_recv_msg(s, hdr, (gg_recv_msg *) pkt->data, pkt->len);	/* INCOMING */
-		case GG_SEND_MSG:
-			return sniff_gg_send_msg(s, hdr, (gg_send_msg *) pkt->data, pkt->len);	/* OUTGOING */
-		case GG_SEND_MSG_ACK:
-			return sniff_gg_send_msg_ack(s, hdr, (gg_send_msg_ack *) pkt->data, pkt->len);	/* INCOMING */
-		case GG_PING:
-			debug_function("sniff_gg() rcv GG_PING ip: %s\n", inet_ntoa(hdr->srcip));	/* OUTGOING */
+	for (i=0; sniff_gg_callbacks[i].name; i++) {
+		if (sniff_gg_callbacks[i].type == pkt->type && sniff_gg_callbacks[i].way == way) {
+			debug("sniff_gg() %s [%d,%d] %s\n", sniff_gg_callbacks[i].name, pkt->type, way, inet_ntoa(way ? hdr->dstip : hdr->srcip));
+			if (sniff_gg_callbacks[i].handler) 
+				return sniff_gg_callbacks[i].handler(s, hdr, pkt->data, pkt->len);
 			return 0;
-		case GG_PONG:
-			debug_function("sniff_gg() rcv GG_PONG ip: %s\n", inet_ntoa(hdr->dstip));	/* INCOMING */
-			return 0;
-
-		default:
-			debug_error("sniff_gg() UNHANDLED pkt type: %x\n", pkt->type);
-/*			print_payload(gg_hdr->pakiet, gg_hdr->len); */
+		}
 	}
-
-	return 0;
+	debug_error("sniff_gg() UNHANDLED pkt type: %x way: %d\n", pkt->type, way);
+/*	print_payload(gg_hdr->pakiet, gg_hdr->len); */
+	return -2;
 }
 
 #undef CHECK_LEN
@@ -378,6 +420,29 @@ static COMMAND(sniff_command_disconnect) {
 }
 
 static QUERY(sniff_status_show) {
+	char		*uid = *(va_arg(ap, char **));
+	session_t	*s = session_find(uid);
+	struct pcap_stat stats;
+
+	if (!s)
+		return -1;
+
+	if (!s->connected)
+		return 0;
+
+	if (!s->priv) {
+		debug_error("sniff_status_show() s->priv NULL\n");
+		return -1;
+	}
+
+	memset(&stats, 0, sizeof(struct pcap_stat));
+	if (pcap_stats(GET_DEV(s), &stats) == -1) {
+		debug_error("sniff_status_show() pcap_stats() failed\n");
+		return -1;
+	}
+
+	debug("pcap_stats() recv: %d drop: %d ifdrop: %d\n", stats.ps_recv, stats.ps_drop, stats.ps_ifdrop);
+
 	return 0;
 }
 

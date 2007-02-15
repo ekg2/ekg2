@@ -45,3 +45,10 @@ typedef struct {
 } gg_status;
 
 #define GG_NEW_STATUS 0x0002
+typedef struct {
+	uint32_t status;			/* na jaki zmienić? */
+} gg_new_status;
+
+#define GG_LOGIN_OK 0x0003
+
+#define GG_LIST_EMPTY 0x0012
