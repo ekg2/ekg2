@@ -662,6 +662,22 @@ COMMAND(cmd_window)
 		window_switch(window_last_id);
 		return 0;
 	}
+
+	if (!xstrcmp(params[0], "lastlog")) {
+		/* XXX, 
+		 * params[1] 	-> window #, session/window window
+		 * params[1,2]	-> string 
+		 */
+
+		window_t *w = NULL;
+		const char *str = params[1];
+		int ret;
+
+		if (!(ret = query_emit_id(NULL, UI_WINDOW_LASTLOG, &w, &str))) return 0;
+
+/*		debug("window() UI_WINDOW_LASTLOG wnd: 0x%x str: %s ret: %d\n", w, str, ret); */
+		return ret;
+	}
 	
 	if (!xstrcasecmp(params[0], ("kill"))) {
 		window_t *w = window_current;

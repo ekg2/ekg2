@@ -55,6 +55,7 @@ enum queries_id {
 	GPG_MESSAGE_ENCRYPT, GPG_MESSAGE_DECRYPT, GPG_SIGN, GPG_VERIFY,
 	GET_PLUGIN_PROTOCOLS,
 
+	UI_WINDOW_LASTLOG,
 	QUERY_EXTERNAL,
 };
 
@@ -399,6 +400,9 @@ const struct query query_list[] = {
 
 	{ GET_PLUGIN_PROTOCOLS, "get-plugin-protocols", {
 		QUERY_ARG_CHARPP,		/* array with protos */
+		QUERY_ARG_END } },
+
+	{ UI_WINDOW_LASTLOG, "ui-window-lastlog", { /* XXX */
 		QUERY_ARG_END } },
 };
 
