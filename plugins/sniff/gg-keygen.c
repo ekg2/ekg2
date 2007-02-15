@@ -121,7 +121,7 @@ static inline void incr() {
 	for (i = pass_pos; i >= 0; i--) {
 		if (pass[i] < DIGIT_SIZE) {
 #if ULTRA_VERBOSE
-			/* jesli ktos lubi kropki, lepiej jest nie lubiec. */
+			/* jesli ktos bardzo lubi kropki, lepiej jest nie lubiec. */
 			if (i == 0) {
 				putchar('.');
 				fflush(stdout);
