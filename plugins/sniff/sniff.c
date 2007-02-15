@@ -241,7 +241,7 @@ SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
 			debug("[sniff,gg] unknown message ack status. consider upgrade\n");
 			break;
 	}
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
 			format, 
 			format_user(s, build_gg_uid(pkt->recipient)));	/* XXX */
 	return 0;
@@ -272,7 +272,7 @@ SNIFF_HANDLER(sniff_gg_status, gg_status) {
 	descr	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
 
 	if (!has_descr && len > 0)
-		debug_error("sniff_gg_status() !has_descr but len > 0?!\n");
+		debug_error("sniff_gg_status() !has_descr but len > 0?! (%d)\n", len);
 
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
 		ekg_status_label(status, descr, "status_"), /* formatka */
@@ -288,10 +288,43 @@ SNIFF_HANDLER(sniff_gg_status, gg_status) {
 }
 
 SNIFF_HANDLER(sniff_gg_new_status, gg_new_status) {
+	const char *status;
+	char *descr;
+	int has_descr;
+
 	CHECK_LEN(sizeof(gg_new_status))	len -= sizeof(gg_new_status);
 
 /* XXX, update s->status/descr */
-	debug_error("sniff_gg_new_status() XXX\n");
+	status	= gg_status_to_text(pkt->status, &has_descr);
+
+	if (!xstrcmp(status, EKG_STATUS_AVAIL)) 		status = "back";
+	else if (!xstrcmp(status, EKG_STATUS_AWAY))		status = "away";
+	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	status = "invsible";
+	else {
+/* XXX, rozlaczony */
+		debug_error("sniff_gg_new_status() bad status: %s\n", status);
+		return -5;
+	}
+
+	descr	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+
+	if (!has_descr && len > 0)
+		debug_error("sniff_gg_new_status() !has_descr but len > 0?! (%d)\n", len);
+/* XXX tajm */
+
+/* XXX, session_name(s) is wrong here. */
+	if (descr) {
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+				ekg_status_label(status, descr, NULL), /* formatka */
+
+				descr, "", session_name(s));
+	} else 
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+				ekg_status_label(status, descr, NULL), /* formatka */
+
+				session_name(s));
+
+
 	return -5;
 }
 
@@ -304,6 +337,8 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 	int has_descr = 0;
 
 	CHECK_LEN(sizeof(gg_status60))		len -= sizeof(gg_status60);
+
+/* XXX, tajm */
 #if 0
 	if (len > 4 && pkt->status_data[len - 5] == 0) {
 		has_time = 1;

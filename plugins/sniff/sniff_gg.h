@@ -50,6 +50,7 @@ typedef struct {
 #define GG_NEW_STATUS 0x0002
 typedef struct {
 	uint32_t status;			/* na jaki zmienić? */
+	char status_data[];
 } GG_PACKED gg_new_status;
 
 #define GG_LOGIN_OK 0x0003
