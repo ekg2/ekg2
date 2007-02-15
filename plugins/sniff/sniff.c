@@ -1,3 +1,23 @@
+/*
+ *  (C) Copyright 2007 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+/* some functions are copied from ekg2's gg plugin/other ekg2's plugins/libgadu 
+ * 	there're copyrighted under GPL-2 */
+
 #include "ekg2-config.h"
 
 #include <stdio.h>
@@ -578,7 +598,6 @@ static COMMAND(sniff_command_disconnect) {
 	return 0;
 }
 
-
 static QUERY(sniff_validate_uid) {
 	char    *uid    = *(va_arg(ap, char **));
 	int     *valid  = va_arg(ap, int *);
@@ -593,7 +612,6 @@ static QUERY(sniff_validate_uid) {
 
 	return 0;
 }
-
 
 static QUERY(sniff_status_show) {
 	char		*uid = *(va_arg(ap, char **));
@@ -674,3 +692,4 @@ static int sniff_plugin_destroy() {
 
 	return 0;
 }
+
