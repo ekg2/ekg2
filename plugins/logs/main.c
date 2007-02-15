@@ -466,9 +466,8 @@ static QUERY(logs_handler_killwin)  {
 	return 0;
 }
 
-static int logs_print_window(session_t *s, const char *target, const char *line, time_t ts) {
+static int logs_print_window(session_t *s, window_t *w, const char *line, time_t ts) {
 	static plugin_t *ui_plugin = NULL;
-	window_t *w;
 
 	char *fline;
 	fstring_t *fstr;
@@ -480,11 +479,6 @@ static int logs_print_window(session_t *s, const char *target, const char *line,
 		debug("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
 		return -1;
 	}
-	/* search for window */
-	debug("logs_print_window() sesja: 0x%x target: %s ", s, __(target));
-	w = window_find_s(s, target);
-	debug("w: 0x%x\n", w);
-
 	if (!w) w = window_current;
 
 	fline = format_string(line);			/* format string */
@@ -508,6 +502,9 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	int i;
 	int ret;
 
+	session_t *s;
+	window_t *w;
+
 	if (!file) return -1;
 	if (!items) return 0;
 
@@ -527,13 +524,19 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	target	= xstrdup(target);
 	debug("[logs_buffer_raw_display()] profile: %s sesja: %s target: %s\n", __(profile), __(sesja), __(target));
 
+	/* search for session+window */
+	s = session_find(sesja);
+	w = window_find_s(s, target);
+
+	debug("[logs_buffer_raw_display()] s:0x%x; w:0x%x;\n", s, w);
+
 	for (l = buffers; l; l = l->next) {
 		struct buffer *b = l->data;
 		if (b->type != BUFFER_LOGRAW) continue;
 		if (!xstrcmp(b->target, file)) {
 			/* we asume that (b->ts < (b->next)->ts, it's quite correct unless other plugin do this trick... */
 			if (items == -1) { 
-				logs_print_window(session_find(sesja), target, b->line, b->ts);
+				logs_print_window(s, w, b->line, b->ts);
 			} else {
 				bs		= (struct buffer **) xrealloc(bs, (item+2) * sizeof(struct buffer *));
 				bs[item + 1]	= NULL;
@@ -543,7 +546,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 		}
 	}
 	if (bs) for (i = item < items ? 0 : item-items; i < item; i++) 
-		logs_print_window(session_find(sesja), target, bs[i]->line, bs[i]->ts);
+		logs_print_window(s, w, bs[i]->line, bs[i]->ts);
 	xfree(bs);
 
 	xfree(profile);
