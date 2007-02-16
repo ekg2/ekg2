@@ -2385,6 +2385,8 @@ int ncurses_lastlog_update(window_t *w) {
 			retval += ncurses_ui_window_lastlog(w, (window_t *) l->data);
 		}
 	}
+	ncurses_backlog_add(w, fstring_new(""));
+	ncurses_backlog_add(w, fstring_new(""));
 
 /* fix n->start */
 	n->start = old_start;
