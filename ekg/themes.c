@@ -1637,8 +1637,8 @@ void theme_init()
 	format_add("last_end", _("%) Lastlog end\n"), 1);
 
 	/* lastlog */
-	format_add("lastlog_title", 	_("%) %gLastlog from window: %W%T%1%n"), 1);
-	format_add("lastlog_title_cur", _("%) %gLastlog from window: %W%T%1 (*)%n"), 1);
+	format_add("lastlog_title", 	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
+	format_add("lastlog_title_cur", _("%) %gLastlog [%B%2%n%g] from window: %W%T%1 (*)%n"), 1);
 
 	/* away log */
 	format_add("away_log_begin", _("%) Logged messages for session %1:\n"), 1);
