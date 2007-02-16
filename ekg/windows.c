@@ -703,7 +703,7 @@ COMMAND(cmd_window)
 			lastlog_current		= lastlog;
 		}
 		/* this query now, is stupid. change it for smth better. */
-		if (!(ret = query_emit_id(NULL, UI_WINDOW_LASTLOG, &w, &str))) return 0;
+		if (!(ret = query_emit_id(NULL, UI_WINDOW_UPDATE_LASTLOG))) return 0;
 
 /*		debug("window() UI_WINDOW_LASTLOG wnd: 0x%x str: %s ret: %d\n", w, str, ret); */
 		return ret;
