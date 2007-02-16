@@ -694,6 +694,8 @@ COMMAND(cmd_window)
 			for (i = 0; arr[i]; i++) {
 				if (match_arg(arr[i], 'r', "regex", 2)) 
 					isregex = 1;
+				else if (match_arg(arr[i], 'R', "extended-regex", 2))
+					isregex = 2;
 				else if (match_arg(arr[i], 's', "substring", 2))
 					isregex = 0;
 
@@ -740,10 +742,9 @@ COMMAND(cmd_window)
 #ifdef HAVE_REGEX_H
 			int rs, flags = REG_NOSUB;
 			char errbuf[512];
-/*
-			if (!(config_regex_flags & 1))
+
+			if (isregex == 2)
 				flags |= REG_EXTENDED;
-*/
 
 /* XXX, when config_lastlog_case is toggled.. we need to recompile regex's */
 			if (!lastlog->casense || (lastlog->casense == -1 && !config_lastlog_case))
