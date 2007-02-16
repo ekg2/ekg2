@@ -60,7 +60,7 @@ contacts_options
 	default value: none
 	
 	options of contacts list separate by coma or space. Default settings is : 
-	,,right, margin=1, nowrap, nodescr, order=chavawxadninnoerr''
+	,,right, margin=1, nowrap, nodescr, order=chavawxadninnoer''
 	
 	possible status:
 	
@@ -78,7 +78,7 @@ contacts_options
 	
 	no - not available
 	
-	err - illegal contac
+	er - illegal contac
 	
 	it possible to skipp some of status -- they will be not displayed on contacts list.
 	
