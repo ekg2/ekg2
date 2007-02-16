@@ -669,7 +669,7 @@ COMMAND(cmd_window)
 		 * params[1,2]	-> string 
 		 */
 
-		window_t *w = NULL;
+		window_t *w = window_current;
 		const char *str = params[1];
 		int ret;
 
