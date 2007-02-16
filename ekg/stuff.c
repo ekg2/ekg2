@@ -88,7 +88,6 @@ list_t timers = NULL;
 list_t conferences = NULL;
 list_t newconferences = NULL;
 list_t buffers = NULL;
-list_t searches = NULL;
 
 list_t bindings_added;
 int old_stderr;

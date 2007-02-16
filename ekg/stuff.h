@@ -161,7 +161,6 @@ extern list_t timers;
 extern list_t conferences;
 extern list_t newconferences;
 extern list_t buffers;
-extern list_t searches;
 
 extern time_t last_save;
 extern char *config_profile;
