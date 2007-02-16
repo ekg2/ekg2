@@ -29,6 +29,17 @@
 #include "themes.h"
 
 typedef struct {
+	void *w;		/* window, if NULL it means current */
+	int casense;		/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
+	int lock;		/* if 0, don't update */
+	int isregexp;		/* 1 - in target regexp */
+#ifdef HAVE_REGEX_H
+	regex_t reg;		/* regexp compilated expression */
+#endif
+	char *expression;	/* expression */
+} window_lastlog_t;
+
+typedef struct {
 	int id;			/* numer okna */
 	char *target;		/* nick query albo inna nazwa albo NULL */
 	session_t *session;	/* której sesji dotyczy okno */
@@ -50,6 +61,7 @@ typedef struct {
 
 	list_t userlist;	/* sometimes window may require separate userlist */
 
+	window_lastlog_t *lastlog;	/* prywatne informacje lastloga */
 	void *private;		/* prywatne informacje ui */
 } window_t;
 
@@ -57,6 +69,7 @@ typedef struct {
 
 extern list_t windows;
 extern window_t *window_current;
+extern window_lastlog_t *lastlog_current;
 
 window_t *window_find(const char *target);
 window_t *window_find_s(session_t *session, const char *target);

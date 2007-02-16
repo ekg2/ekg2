@@ -205,6 +205,7 @@ extern int config_keep_reason;
 extern int config_last;
 extern int config_last_size;
 extern int config_lastlog_case;
+extern int config_lastlog_display_all;
 extern int config_make_window;
 extern int config_mesg;
 extern int config_query_commands;

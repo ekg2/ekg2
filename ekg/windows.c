@@ -45,6 +45,8 @@ list_t windows = NULL;			/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
 window_t *window_current = NULL;	/* zawsze na co¶ musi wskazywaæ! */
 
+window_lastlog_t *lastlog_current = NULL;
+
 window_t *window_find_ptr(window_t *w) {
 	list_t l;
 	for (l = windows; l; l = l->next) {
@@ -664,12 +666,14 @@ COMMAND(cmd_window)
 	}
 
 	if (!xstrcmp(params[0], "lastlog")) {
+		window_lastlog_t *lastlog;
+
 		/* XXX, 
 		 * params[1] 	-> window #, session/window window
 		 * params[1,2]	-> string 
 		 */
 
-		window_t *w = window_current;
+		window_t *w = NULL;
 		const char *str = params[1];
 		int ret;
 
@@ -678,6 +682,27 @@ COMMAND(cmd_window)
 			return -1;
 		}
 
+		if (!w) {
+			static window_lastlog_t lastlog_current_static;
+
+			lastlog = &lastlog_current_static;
+			if (lastlog_current) {
+#ifdef HAVE_REGEX_H
+				if (lastlog->isregexp)
+					regfree(&lastlog->reg);
+#endif
+				xfree(lastlog->expression);
+			}
+
+			lastlog->w 		= NULL;
+			lastlog->casense 	= -1;
+			lastlog->lock		= 0;
+			lastlog->isregexp	= 0;
+			lastlog->expression	= xstrdup(str);
+
+			lastlog_current		= lastlog;
+		}
+		/* this query now, is stupid. change it for smth better. */
 		if (!(ret = query_emit_id(NULL, UI_WINDOW_LASTLOG, &w, &str))) return 0;
 
 /*		debug("window() UI_WINDOW_LASTLOG wnd: 0x%x str: %s ret: %d\n", w, str, ret); */
