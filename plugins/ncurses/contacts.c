@@ -55,8 +55,8 @@ static int contacts_edge = WF_RIGHT;
 static int contacts_frame = WF_LEFT;
 static int contacts_descr = 0;
 static int contacts_wrap = 0;
-#define CONTACTS_ORDER_DEFAULT "chopvoluavawxadninnoerr"		/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
-#define CONTACTS_ORDER_DEFAULT_LEN 23					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
+#define CONTACTS_ORDER_DEFAULT "chavawxadninnoer"			/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
+#define CONTACTS_ORDER_DEFAULT_LEN 16					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
 static char contacts_order[100] = CONTACTS_ORDER_DEFAULT;
 static int contacts_nosort = 0;
 static size_t corderlen	= CONTACTS_ORDER_DEFAULT_LEN;			/* it must be always equal xstrlen(contacts_order) XXX please note if you add somewhere code which modify contacts_order */
