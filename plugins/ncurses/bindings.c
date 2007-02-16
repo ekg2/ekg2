@@ -579,6 +579,8 @@ static BINDING_FUNCTION(binding_forward_lastlog_page) {
 	if (!w || !(n = w->private)) 
 		return;
 	
+	n->start += w->height / 2;
+
 	if (n->start > n->lines_count - w->height + n->overflow)
 		n->start = n->lines_count - w->height + n->overflow;
 

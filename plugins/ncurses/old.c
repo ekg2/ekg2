@@ -2353,25 +2353,47 @@ int ncurses_lastlog_update(window_t *w) {
 	list_t l;
 	int retval = 0;
 
+	int old_start;
+
+	char *tmp;
+
 	if (config_lastlog_lock) return 0;
 
 	if (!w) w = window_find("__lastlog");
 	if (!w) return -1;
 
+	n = w->private;
+	old_start = n->start;
+
 	ncurses_clear(w, 1);
 
-	/* first lookat current window.. */
+/* first lookat current window.. */
+		tmp = format_string(format_find("lastlog_title_cur"), window_target(window_current));
+		ncurses_backlog_add(w, fstring_new(tmp));
+		xfree(tmp);
 	retval += ncurses_ui_window_lastlog(w, window_current);
 
 	if (config_lastlog_display_all) {
-		/* other windows? */
+/* other windows? */
 		for (l = windows; l; l = l->next) {
 			if (l->data == window_current) continue;
+			if (l->data == w) continue; /* ;p */
+
+				tmp = format_string(format_find("lastlog_title"), window_target((window_t *) l->data));
+				ncurses_backlog_add(w, fstring_new(tmp));
+				xfree(tmp);
 			retval += ncurses_ui_window_lastlog(w, (window_t *) l->data);
 		}
 	}
 
-	n = w->private;
+/* fix n->start */
+	n->start = old_start;
+	if (n->start > n->lines_count - w->height + n->overflow)
+		n->start = n->lines_count - w->height + n->overflow;
+	
+	if (n->start < 0)
+		n->start = 0;
+
 	n->redraw = 1;
 	return retval;
 }

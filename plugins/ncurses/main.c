@@ -390,17 +390,11 @@ static QUERY(ncurses_lastlog_changed) {
 }
 
 static QUERY(ncurses_ui_window_lastlog) {
-	window_t *w 	= *(va_arg(ap, window_t **));
-	char *str	= *(va_arg(ap, char **));
-
 	window_t *lastlog_w;
 	ncurses_window_t *n;
 
 	int lock_old = config_lastlog_lock;
 	int retval;
-
-	if (!str)
-		return -1;
 
 	if (!(lastlog_w = window_find("__lastlog")))
 		lastlog_w = window_new("__lastlog", NULL, 1001);
@@ -414,7 +408,9 @@ static QUERY(ncurses_ui_window_lastlog) {
 
 	config_lastlog_lock = 0;
 	retval = n->handle_redraw(lastlog_w);
+	n->start = n->lines_count - lastlog_w->height + n->overflow;
 	config_lastlog_lock = lock_old;
+	ncurses_redraw(lastlog_w);
 	return retval;
 }
 
@@ -525,7 +521,7 @@ int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, UI_WINDOW_ACT_CHANGED, ncurses_ui_window_act_changed, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
-	query_connect_id(&ncurses_plugin, UI_WINDOW_LASTLOG, ncurses_ui_window_lastlog, NULL);
+	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);
