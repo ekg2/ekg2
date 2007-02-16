@@ -644,8 +644,6 @@ void ncurses_redraw(window_t *w)
 {
 	int x, y, left, top, height, width;
 	ncurses_window_t *n = w->private;
-	const char *vertical_line_char = format_find("contacts_vertical_line_char");
-	const char *horizontal_line_char = format_find("contacts_horizontal_line_char");
 	
 	if (!n)
 		return;
@@ -672,6 +670,9 @@ void ncurses_redraw(window_t *w)
 	wattrset(n->window, color_pair(COLOR_BLUE, 0, COLOR_BLACK));
 
 	if (w->floating) {
+		const char *vertical_line_char	= format_find("contacts_vertical_line_char");
+		const char *horizontal_line_char= format_find("contacts_horizontal_line_char");
+
 		if ((w->frames & WF_LEFT)) {
 			left++;
 
@@ -1337,7 +1338,7 @@ void update_statusbar(int commit)
 		}
 
 		switch (ncurses_debug) {
-			char *tmp = NULL;
+			char *tmp;
 			case 0:
 				window_printat(ncurses_status, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE);
 				break;
@@ -2301,6 +2302,7 @@ static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, 
 	for (i = n->backlog_size-1; i >= 0; i--) {
 		int found = 0;
 
+/* XXX allow regexp's as well. */
 		if (config_lastlog_case) 
 			found = !!xstrstr(n->backlog[i]->str, substr);
 		else	found = !!xstrcasestr(n->backlog[i]->str, substr);
@@ -2341,7 +2343,6 @@ int ncurses_lastlog_update(window_t *w) {
 	if (!w) w = window_find("__lastlog");
 	if (!w) return -1;
 
-/* if lastlog_lock return 1; */
 	ncurses_clear(w, 1);
 
 	n = w->private;

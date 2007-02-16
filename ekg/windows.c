@@ -673,6 +673,11 @@ COMMAND(cmd_window)
 		const char *str = params[1];
 		int ret;
 
+		if (!str) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
 		if (!(ret = query_emit_id(NULL, UI_WINDOW_LASTLOG, &w, &str))) return 0;
 
 /*		debug("window() UI_WINDOW_LASTLOG wnd: 0x%x str: %s ret: %d\n", w, str, ret); */
