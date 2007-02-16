@@ -154,6 +154,7 @@ char *config_windows_layout = NULL;
 char *config_profile = NULL;
 int config_reason_limit = 1;
 int config_debug = 1;
+int config_lastlog_noitems = 0;
 int config_lastlog_case = 0;
 int config_lastlog_display_all = 0;
 
