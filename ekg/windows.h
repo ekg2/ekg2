@@ -28,6 +28,11 @@
 #include "sessions.h"
 #include "themes.h"
 
+#ifdef HAVE_REGEX_H
+#include <sys/types.h>
+#include <regex.h>
+#endif
+
 typedef struct {
 	void *w;		/* window, if NULL it means current */
 	int casense;		/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
