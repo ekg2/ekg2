@@ -390,16 +390,16 @@ static QUERY(ncurses_lastlog_changed) {
 }
 
 static QUERY(ncurses_ui_window_lastlog) {
-	window_t *lastlog_w;
+	window_t *w;
 	ncurses_window_t *n;
 
 	int lock_old = config_lastlog_lock;
 	int retval;
 
-	if (!(lastlog_w = window_find("__lastlog")))
-		lastlog_w = window_new("__lastlog", NULL, 1001);
+	if (!(w = window_find("__lastlog")))
+		w = window_new("__lastlog", NULL, 1001);
 
-	n = lastlog_w->private;
+	n = w->private;
 
 	if (!n || !n->handle_redraw) {
 		debug_error("ncurses_ui_window_lastlog() BAD __lastlog wnd?\n");
@@ -407,10 +407,20 @@ static QUERY(ncurses_ui_window_lastlog) {
 	}
 
 	config_lastlog_lock = 0;
-	retval = n->handle_redraw(lastlog_w);
-	n->start = n->lines_count - lastlog_w->height + n->overflow;
+	if (!(retval = n->handle_redraw(w))) {
+		/* if no items, destroy.. */
+		window_kill(w, 1);
+		config_lastlog_lock = lock_old;
+/* XXX bugnotes, when killing visible w->floating window we should do: implement in window_kill() */
+		ncurses_resize();
+		ncurses_commit();
+		return 0;
+	}
+
+	n->start = n->lines_count - w->height + n->overflow;
+	config_lastlog_lock = 1;
+	ncurses_redraw(w);
 	config_lastlog_lock = lock_old;
-	ncurses_redraw(lastlog_w);
 	return retval;
 }
 

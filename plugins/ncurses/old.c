@@ -2282,7 +2282,7 @@ void changed_backlog_size(const char *var)
 	}
 }
 
-static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
+static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w, const char *header) {
 	window_lastlog_t *lastlog;
 	window_t *ww;
 	ncurses_window_t *n;
@@ -2291,25 +2291,43 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 
 	int items = 0;
 	int i;
-	
-	lastlog = w->lastlog;				/* get private lastlog */
-	if (!lastlog && (w == window_current || config_lastlog_display_all == 2))	/* if not found, but it's current window, or lastlog_display_all eq 2 */
-		lastlog = lastlog_current;			/* get global-current-window-lastlog */
+
+/* XXX, cleanup */
+	if (!w) {
+		w 	= window_current;
+		lastlog = lastlog_current;
+		if (!lastlog)
+			lastlog = w->lastlog;
+		else if (w->lastlog)
+			ncurses_ui_window_lastlog(lastlog_w, window_current, header);
+	} else {
+		lastlog = w->lastlog;								/* get private lastlog */
+		if (!lastlog && (w == window_current || config_lastlog_display_all == 2)) 	/* if not found, but it's current window, or 
+												lastlog_display_all eq 2 */
+			lastlog = lastlog_current;							/* get global-current-window-lastlog */
+	}
 
 	if (!lastlog) 
 		return 0;
 
-	ww = lastlog->w ? lastlog->w : window_current;
-	n = w->private;
+	ww = lastlog->w ? lastlog->w : w;
+	n = ww->private;
 
 	if (!n)
 		return 0;
+
+	{	/* add header */
+		char *tmp = format_string(header, window_target(ww));
+		ncurses_backlog_add(lastlog_w, fstring_new(tmp));
+		xfree(tmp);
+	}
+
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
 	for (i = n->backlog_size-1; i >= 0; i--) {
 		int found = 0;
 
-		if (lastlog->isregexp) {		/* regexp */
+		if (lastlog->isregex) {		/* regexp */
 #ifdef HAVE_REGEX_H
 			int rs;
 			if (!(rs = regexec(&(lastlog->reg), n->backlog[i]->str, 0, NULL, 0))) 
@@ -2367,8 +2385,6 @@ int ncurses_lastlog_update(window_t *w) {
 
 	int old_start;
 
-	char *tmp;
-
 	if (config_lastlog_lock) return 0;
 
 	if (!w) w = window_find("__lastlog");
@@ -2380,23 +2396,18 @@ int ncurses_lastlog_update(window_t *w) {
 	ncurses_clear(w, 1);
 
 /* 1st, lookat current window.. */
-		tmp = format_string(format_find("lastlog_title_cur"), window_target(window_current));
-		ncurses_backlog_add(w, fstring_new(tmp));
-		xfree(tmp);
-	retval += ncurses_ui_window_lastlog(w, window_current);
+	retval += ncurses_ui_window_lastlog(w, NULL, format_find("lastlog_title_cur"));
 
 /* 2nd, display lastlog from floating windows? (XXX) */
 
 	if (config_lastlog_display_all) {
 /* 3rd, other windows? */
 		for (l = windows; l; l = l->next) {
+			if (!l->data) continue;
 			if (l->data == window_current) continue;
 			if (l->data == w) continue; /* ;p */
 
-				tmp = format_string(format_find("lastlog_title"), window_target((window_t *) l->data));
-				ncurses_backlog_add(w, fstring_new(tmp));
-				xfree(tmp);
-			retval += ncurses_ui_window_lastlog(w, (window_t *) l->data);
+			retval += ncurses_ui_window_lastlog(w, (window_t *) l->data, format_find("lastlog_title"));
 		}
 	}
 	ncurses_backlog_add(w, fstring_new(""));
