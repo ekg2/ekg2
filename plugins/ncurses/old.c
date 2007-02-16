@@ -2282,42 +2282,48 @@ void changed_backlog_size(const char *var)
 	}
 }
 
-static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w, const char *header) {
-	window_lastlog_t *lastlog;
-	window_t *ww;
+static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
+	const char *header;
+
 	ncurses_window_t *n;
+	window_lastlog_t *lastlog;
 
 	int local_config_lastlog_case;
 
 	int items = 0;
 	int i;
 
-/* XXX, cleanup */
-	if (!w) {
-		w 	= window_current;
-		lastlog = lastlog_current;
-		if (!lastlog)
-			lastlog = w->lastlog;
-		else if (w->lastlog)
-			ncurses_ui_window_lastlog(lastlog_w, window_current, header);
+	static int lock = 0;
+
+	if (lock) {
+		lastlog = w->lastlog;
+		w	= lastlog->w;
+
 	} else {
-		lastlog = w->lastlog;								/* get private lastlog */
-		if (!lastlog && (w == window_current || config_lastlog_display_all == 2)) 	/* if not found, but it's current window, or 
-												lastlog_display_all eq 2 */
-			lastlog = lastlog_current;							/* get global-current-window-lastlog */
+		lastlog = NULL;
+
+		if (w == window_current || config_lastlog_display_all == 2)
+			lastlog = lastlog_current;
+
+		if (w->lastlog) {
+			lock = 1;
+			items += ncurses_ui_window_lastlog(lastlog_w, w);
+			lock = 0;
+		} 
 	}
 
 	if (!lastlog) 
-		return 0;
+		return items;
 
-	ww = lastlog->w ? lastlog->w : w;
-	n = ww->private;
+	if (lastlog == lastlog_current)	header = format_find("lastlog_title_cur");
+	else				header = format_find("lastlog_title");
 
-	if (!n)
-		return 0;
+
+	if (!w || !(n = w->private))
+		return items;
 
 	{	/* add header */
-		char *tmp = format_string(header, window_target(ww));
+		char *tmp = format_string(header, window_target(w), lastlog->expression);
 		ncurses_backlog_add(lastlog_w, fstring_new(tmp));
 		xfree(tmp);
 	}
@@ -2395,25 +2401,27 @@ int ncurses_lastlog_update(window_t *w) {
 
 	ncurses_clear(w, 1);
 
+/* XXX, it's bad orded now, need fix */
+
 /* 1st, lookat current window.. */
-	retval += ncurses_ui_window_lastlog(w, NULL, format_find("lastlog_title_cur"));
+	retval += ncurses_ui_window_lastlog(w, window_current);
 
 /* 2nd, display lastlog from floating windows? (XXX) */
 
 	if (config_lastlog_display_all) {
 /* 3rd, other windows? */
 		for (l = windows; l; l = l->next) {
-			if (!l->data) continue;
-			if (l->data == window_current) continue;
-			if (l->data == w) continue; /* ;p */
+			window_t *ww = l->data;
+			if (ww == window_current) continue;
+			if (ww == w) continue; /* ;p */
 
-			retval += ncurses_ui_window_lastlog(w, (window_t *) l->data, format_find("lastlog_title"));
+			retval += ncurses_ui_window_lastlog(w, ww);
 		}
 	}
 	ncurses_backlog_add(w, fstring_new(""));
 	ncurses_backlog_add(w, fstring_new(""));
 
-/* fix n->start */
+/* XXX fix n->start */
 	n->start = old_start;
 	if (n->start > n->lines_count - w->height + n->overflow)
 		n->start = n->lines_count - w->height + n->overflow;
