@@ -2278,23 +2278,81 @@ void changed_backlog_size(const char *var)
 	}
 }
 
-static int ncurses_lastlog_update(window_t *w) {
+static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, const char *substr) {
+	int items = 0;
+	int i;
 	ncurses_window_t *n;
+	
+	if (!w) {
+		list_t l;
+		int retval = 0;
+
+		for (l = windows; l; l = l->next) {
+			if (!l->data) continue;
+			retval += ncurses_ui_window_lastlog_find(lastlog, (window_t *) l->data, substr);
+		}
+
+		return retval;
+	}
+	
+	if (w->floating) return 0;	/* XXX */
+
+	n = w->private;
+	for (i = n->backlog_size-1; i >= 0; i--) {
+		int found = 0;
+
+		if (config_lastlog_case) 
+			found = !!xstrstr(n->backlog[i]->str, substr);
+		else	found = !!xstrcasestr(n->backlog[i]->str, substr);
+		
+		if (found) {
+			fstring_t *dup;
+			size_t len;
+#if USE_UNICODE
+			#warning "ncurses_ui_window_lastlog_find() won't work with USE_UNICODE sorry. no time for it. feel free"
+			continue;
+#endif
+
+			dup = xmalloc(sizeof(fstring_t));
+
+			len = xstrlen(n->backlog[i]->str);
+
+			dup->str		= xmemdup(n->backlog[i]->str, sizeof(char)*(len+1));
+			dup->attr		= xmemdup(n->backlog[i]->attr, sizeof(short)*(len+1));
+			dup->ts			= n->backlog[i]->ts;
+			dup->prompt_len		= n->backlog[i]->prompt_len;
+			dup->prompt_empty	= n->backlog[i]->prompt_empty;
+			dup->margin_left	= n->backlog[i]->margin_left;
+		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
+/*			dup->private		= (void *) w;	 */
+
+			ncurses_backlog_add(lastlog, dup);
+			items++;
+		}
+	}
+
+	return items;
+}
+
+int ncurses_lastlog_update(window_t *w) {
+	ncurses_window_t *n;
+	if (config_lastlog_lock) return 0;
 
 	if (!w) w = window_find("__lastlog");
 	if (!w) return -1;
 
-	n = w->private;
+/* if lastlog_lock return 1; */
+	ncurses_clear(w, 1);
 
+	n = w->private;
 	n->redraw = 1;
-	
-	return 0;
+
+	return ncurses_ui_window_lastlog_find(w, n->prompt_len ? window_current : NULL, n->prompt);
 }
 
-static void ncurses_lastlog_new(window_t *w) {
+void ncurses_lastlog_new(window_t *w) {
 #define lastlog_edge		WF_BOTTOM
 #define lastlog_margin		1
-#define config_lastlog_size	10
 #define lastlog_frame		WF_TOP
 #define lastlog_wrap		0
 
@@ -2344,13 +2402,13 @@ int ncurses_window_new(window_t *w)
 
 	w->private = n = xmalloc(sizeof(ncurses_window_t));
 
-	if (!xstrcmp(w->target, "__contacts"))
+	if (!xstrcmp(w->target, "__contacts")) {
 		ncurses_contacts_new(w);
 
-	if (!xstrcmp(w->target, "__lastlog")) 
+	} else if (!xstrcmp(w->target, "__lastlog")) {
 		ncurses_lastlog_new(w);
 
-	if (w->target) {
+	} else if (w->target) {
 		const char *f = format_find("ncurses_prompt_query");
 
 		n->prompt = format_string(f, w->target);

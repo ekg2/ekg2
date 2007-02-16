@@ -155,6 +155,11 @@ extern int config_margin_size;
 extern int config_statusbar_size;
 extern int config_kill_irc_window;
 
+int ncurses_lastlog_update(window_t *w);
+void ncurses_lastlog_new(window_t *w);
+extern int config_lastlog_size;
+extern int config_lastlog_lock;
+
 WATCHER(ncurses_watch_stdin);
 WATCHER(ncurses_watch_winch);
 int ncurses_command_window(void *data, va_list ap);

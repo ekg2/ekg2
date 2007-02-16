@@ -52,6 +52,8 @@ int config_header_size;
 int config_margin_size;
 int config_kill_irc_window = 1;
 int config_statusbar_size;
+int config_lastlog_size;
+int config_lastlog_lock;
 
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
@@ -370,71 +372,52 @@ static QUERY(ncurses_binding_adddelete_query)
 	return 0;
 }
 
-static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, const char *substr) {
-	int items = 0;
-	ncurses_window_t *n = w->private;
-	int i;
+static QUERY(ncurses_lastlog_changed) {
+	window_t *w;
 
-	if (w->floating) return 0;	/* XXX */
+	if (config_lastlog_size < 0) 
+		config_lastlog_size = 0;
 
-	for (i = n->backlog_size-1; i >= 0; i--) {
-		int found = 0;
+	if (!(w = window_find("__lastlog")))
+		return 0;
 
-		if (config_lastlog_case) 
-			found = !!xstrstr(n->backlog[i]->str, substr);
-		else	found = !!xstrcasestr(n->backlog[i]->str, substr);
-		
-		if (found) {
-			fstring_t *dup;
-			size_t len;
-#if USE_UNICODE
-			#warning "ncurses_ui_window_lastlog_find() won't work with USE_UNICODE sorry. no time for it. feel free"
-			continue;
-#endif
+	ncurses_lastlog_new(w);
+	ncurses_lastlog_update(w);
 
-			dup = xmalloc(sizeof(fstring_t));
-
-			len = xstrlen(n->backlog[i]->str);
-
-			dup->str		= xmemdup(n->backlog[i]->str, sizeof(char)*(len+1));
-			dup->attr		= xmemdup(n->backlog[i]->attr, sizeof(short)*(len+1));
-			dup->ts			= n->backlog[i]->ts;
-			dup->prompt_len		= n->backlog[i]->prompt_len;
-			dup->prompt_empty	= n->backlog[i]->prompt_empty;
-			dup->margin_left	= n->backlog[i]->margin_left;
-		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
-/*			dup->private		= (void *) w;	 */
-
-			ncurses_backlog_add(lastlog, dup);
-			items++;
-		}
-	}
-
-	return items;
+	ncurses_resize();
+	ncurses_commit();
+	return 0;
 }
 
 static QUERY(ncurses_ui_window_lastlog) {
-	window_t *lastlog_w;
-
 	window_t *w 	= *(va_arg(ap, window_t **));
 	char *str	= *(va_arg(ap, char **));
 
-	list_t l;
-	int retval = 0;
+	window_t *lastlog_w;
+	ncurses_window_t *n;
 
-	if (!str) 
-		return 0;
+	int lock_old = config_lastlog_lock;
+	int retval;
 
-	if ((lastlog_w = window_find("__lastlog"))) 
-		ncurses_clear(lastlog_w, 1);
-	else	lastlog_w = window_new("__lastlog", NULL, 1001);
-	
-	if (w)
-		return ncurses_ui_window_lastlog_find(lastlog_w, w, str);
+	if (!str)
+		return -1;
 
-	for (l = windows; l; l = l->next) 
-		retval += ncurses_ui_window_lastlog_find(lastlog_w, (window_t *) l->data, str);
+	if (!(lastlog_w = window_find("__lastlog")))
+		lastlog_w = window_new("__lastlog", NULL, 1001);
 
+	n = lastlog_w->private;
+
+	if (!n || !n->handle_redraw) {
+		debug_error("ncurses_ui_window_lastlog() BAD __lastlog wnd?\n");
+		return -1;
+	}
+
+	xfree(n->prompt);	n->prompt 	= xstrdup(str);
+				n->prompt_len	= !!w;
+
+	config_lastlog_lock = 0;
+	retval = n->handle_redraw(lastlog_w);
+	config_lastlog_lock = lock_old;
 	return retval;
 }
 
@@ -442,6 +425,9 @@ static QUERY(ncurses_setvar_default)
 {
 	config_contacts_size = 9;         /* szeroko¶æ okna kontaktów */
 	config_contacts = 2;              /* czy ma byæ okno kontaktów */
+
+	config_lastlog_size = 10;         /* szerokosc/dlugosc okna kontaktow */
+	config_lastlog_lock = 1;          /* czy blokujemy lastloga.. zeby nam nie zmienialo sie w czasie zmiany okna, *wolne* */
 
 	xfree(config_contacts_options);
 	xfree(config_contacts_groups);
@@ -575,6 +561,8 @@ int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, ("lastlog_lock"), VAR_BOOL, 1, &config_lastlog_lock, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, ("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
