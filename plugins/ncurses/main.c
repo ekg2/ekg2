@@ -412,9 +412,6 @@ static QUERY(ncurses_ui_window_lastlog) {
 		return -1;
 	}
 
-	xfree(n->prompt);	n->prompt 	= xstrdup(str);
-				n->prompt_len	= !!w;
-
 	config_lastlog_lock = 0;
 	retval = n->handle_redraw(lastlog_w);
 	config_lastlog_lock = lock_old;

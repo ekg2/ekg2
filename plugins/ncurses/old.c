@@ -2279,33 +2279,45 @@ void changed_backlog_size(const char *var)
 	}
 }
 
-static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, const char *substr) {
+static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
+	window_lastlog_t *lastlog;
+	window_t *ww;
+	ncurses_window_t *n;
+
+	int local_config_lastlog_case;
+
 	int items = 0;
 	int i;
-	ncurses_window_t *n;
 	
-	if (!w) {
-		list_t l;
-		int retval = 0;
+	lastlog = w->lastlog;				/* get private lastlog */
+	if (!lastlog && (w == window_current || config_lastlog_display_all == 2))	/* if not found, but it's current window, or lastlog_display_all eq 2 */
+		lastlog = lastlog_current;			/* get global-current-window-lastlog */
 
-		for (l = windows; l; l = l->next) {
-			if (!l->data) continue;
-			retval += ncurses_ui_window_lastlog_find(lastlog, (window_t *) l->data, substr);
-		}
+	if (!lastlog) 
+		return -1;
 
-		return retval;
-	}
-	
-	if (w->floating) return 0;	/* XXX */
-
+	ww = lastlog->w ? lastlog->w : window_current;
 	n = w->private;
+
+	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
+
 	for (i = n->backlog_size-1; i >= 0; i--) {
 		int found = 0;
 
-/* XXX allow regexp's as well. */
-		if (config_lastlog_case) 
-			found = !!xstrstr(n->backlog[i]->str, substr);
-		else	found = !!xstrcasestr(n->backlog[i]->str, substr);
+		if (lastlog->isregexp) {		/* regexp */
+#ifdef HAVE_REGEX_H
+			int rs;
+			if (!(rs = regexec(&(lastlog->reg), n->backlog[i]->str, 0, NULL, 0))) 
+				found = 1;
+			else if (rs != REG_NOMATCH) {
+				/* blad wyrazenia? */
+			}
+#endif
+		} else {				/* substring */
+			if (local_config_lastlog_case) 
+				found = !!xstrstr(n->backlog[i]->str, lastlog->expression);
+			else	found = !!xstrcasestr(n->backlog[i]->str, lastlog->expression);
+		}
 		
 		if (found) {
 			fstring_t *dup;
@@ -2328,7 +2340,7 @@ static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, 
 		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
 /*			dup->private		= (void *) w;	 */
 
-			ncurses_backlog_add(lastlog, dup);
+			ncurses_backlog_add(lastlog_w, dup);
 			items++;
 		}
 	}
@@ -2338,6 +2350,9 @@ static int ncurses_ui_window_lastlog_find(window_t *lastlog, const window_t *w, 
 
 int ncurses_lastlog_update(window_t *w) {
 	ncurses_window_t *n;
+	list_t l;
+	int retval = 0;
+
 	if (config_lastlog_lock) return 0;
 
 	if (!w) w = window_find("__lastlog");
@@ -2345,10 +2360,20 @@ int ncurses_lastlog_update(window_t *w) {
 
 	ncurses_clear(w, 1);
 
+	/* first lookat current window.. */
+	retval += ncurses_ui_window_lastlog(w, window_current);
+
+	if (config_lastlog_display_all) {
+		/* other windows? */
+		for (l = windows; l; l = l->next) {
+			if (l->data == window_current) continue;
+			retval += ncurses_ui_window_lastlog(w, (window_t *) l->data);
+		}
+	}
+
 	n = w->private;
 	n->redraw = 1;
-
-	return ncurses_ui_window_lastlog_find(w, n->prompt_len ? window_current : NULL, n->prompt);
+	return retval;
 }
 
 void ncurses_lastlog_new(window_t *w) {
