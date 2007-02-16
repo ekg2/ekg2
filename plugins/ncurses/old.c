@@ -34,6 +34,10 @@
 #ifdef WITH_ASPELL
 #       include <aspell.h>
 #endif
+#ifdef HAVE_REGEX_H
+#	include <sys/types.h>
+#	include <regex.h>
+#endif
 
 #include <ekg/debug.h>
 #include <ekg/windows.h>
@@ -48,7 +52,6 @@
 #include <ekg/vars.h>
 
 #include <ekg/queries.h>
-
 
 #include "old.h"
 #include "completion.h"
@@ -2312,7 +2315,14 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 			if (!(rs = regexec(&(lastlog->reg), n->backlog[i]->str, 0, NULL, 0))) 
 				found = 1;
 			else if (rs != REG_NOMATCH) {
+				char errbuf[512];
 				/* blad wyrazenia? */
+        		        regerror(rs, &(lastlog->reg), errbuf, sizeof(errbuf));	/* NUL-char-ok */
+		                print("regex_error", errbuf);
+
+				/* XXX mh, dodac to do backloga? */
+				/* XXX, przerwac wykonywanie? */
+				break;
 			}
 #endif
 		} else {				/* substring */
@@ -2369,14 +2379,16 @@ int ncurses_lastlog_update(window_t *w) {
 
 	ncurses_clear(w, 1);
 
-/* first lookat current window.. */
+/* 1st, lookat current window.. */
 		tmp = format_string(format_find("lastlog_title_cur"), window_target(window_current));
 		ncurses_backlog_add(w, fstring_new(tmp));
 		xfree(tmp);
 	retval += ncurses_ui_window_lastlog(w, window_current);
 
+/* 2nd, display lastlog from floating windows? (XXX) */
+
 	if (config_lastlog_display_all) {
-/* other windows? */
+/* 3rd, other windows? */
 		for (l = windows; l; l = l->next) {
 			if (l->data == window_current) continue;
 			if (l->data == w) continue; /* ;p */
