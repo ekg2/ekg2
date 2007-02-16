@@ -572,6 +572,37 @@ static BINDING_FUNCTION(binding_forward_page)
 	ncurses_commit();
 }
 
+static BINDING_FUNCTION(binding_forward_lastlog_page) {
+	window_t *w = window_find("__lastlog");
+	ncurses_window_t *n;
+
+	if (!w || !(n = w->private)) 
+		return;
+	
+	if (n->start > n->lines_count - w->height + n->overflow)
+		n->start = n->lines_count - w->height + n->overflow;
+
+	if (n->start < 0)
+		n->start = 0;
+
+	ncurses_redraw(w);
+	ncurses_commit();
+}
+
+static BINDING_FUNCTION(binding_backward_lastlog_page) {
+	window_t *w = window_find("__lastlog");
+	ncurses_window_t *n;
+
+	if (!w || !(n = w->private))
+		return;
+	
+	n->start -= w->height / 2;
+	if (n->start < 0)
+		n->start = 0;
+
+	ncurses_redraw(w);
+	ncurses_commit();
+}
 
 
 static BINDING_FUNCTION(binding_backward_contacts_line)
@@ -719,6 +750,8 @@ static void binding_parse(struct binding *b, const char *action)
 	__action("backward-contacts-page", binding_backward_contacts_page)
 	__action("forward-contacts-line", binding_forward_contacts_line)
 	__action("backward-contacts-line", binding_backward_contacts_line)
+	__action("forward-lastlog-page", binding_forward_lastlog_page)
+	__action("backward-lastlog-page", binding_backward_lastlog_page)
 	; /* no/unknown action */
 
 
