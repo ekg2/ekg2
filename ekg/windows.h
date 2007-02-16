@@ -37,7 +37,7 @@ typedef struct {
 	void *w;		/* window, if NULL it means current */
 	int casense;		/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
 	int lock;		/* if 0, don't update */
-	int isregexp;		/* 1 - in target regexp */
+	int isregex;		/* 1 - in target regexp */
 #ifdef HAVE_REGEX_H
 	regex_t reg;		/* regexp compilated expression */
 #endif

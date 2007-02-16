@@ -28,6 +28,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef HAVE_REGEX_H
+#	include <regex.h>
+#endif
+
 #include "commands.h"
 #include "dynstuff.h"
 #include "windows.h"
@@ -666,47 +670,109 @@ COMMAND(cmd_window)
 	}
 
 	if (!xstrcmp(params[0], "lastlog")) {
+		static window_lastlog_t lastlog_current_static;
+
 		window_lastlog_t *lastlog;
 
-		/* XXX, 
-		 * params[1] 	-> window #, session/window window
-		 * params[1,2]	-> string 
-		 */
-
+		const char *str;
 		window_t *w = NULL;
-		const char *str = params[1];
-		int ret;
 
-		if (!str) {
+		int iscase	= -1;	/* default-default variable */
+		int isregex	= 0;	/* constant, make variable? */
+		int islock	= 0;	/* constant, make variable? */
+
+		if (!params[1]) {
 			printq("not_enough_params", name);
 			return -1;
 		}
 
-		if (!w) {
-			static window_lastlog_t lastlog_current_static;
+		if (params[2]) {
+			char **arr = array_make(params[1], " ", 0, 1, 1);
+			int i;
 
-			lastlog = &lastlog_current_static;
-			if (lastlog_current) {
-#ifdef HAVE_REGEX_H
-				if (lastlog->isregexp)
-					regfree(&lastlog->reg);
-#endif
-				xfree(lastlog->expression);
+	/* parse configuration */
+			for (i = 0; arr[i]; i++) {
+				if (match_arg(arr[i], 'r', "regex", 2)) 
+					isregex = 1;
+				else if (match_arg(arr[i], 's', "substring", 2))
+					isregex = 0;
+
+				else if (match_arg(arr[i], 'C', "CaseSensitive", 2))
+					iscase = 1;
+				else if (match_arg(arr[i], 'c', "caseinsensitive", 2))
+					iscase = 0;
+
+				else if (match_arg(arr[i], 'w', "window", 2) && arr[i+1]) {
+					w = window_exist(atoi(arr[++i]));
+					
+					if (!w) {
+						printq("window_doesnt_exist", arr[i]);
+						array_free(arr);
+						return -1;
+					}
+				} else {
+					printq("invalid_params", name);
+					array_free(arr);
+					return -1;
+				}
 			}
+			array_free(arr);
+			str = params[2];
 
-			lastlog->w 		= NULL;
-			lastlog->casense 	= -1;
-			lastlog->lock		= 0;
-			lastlog->isregexp	= 0;
-			lastlog->expression	= xstrdup(str);
+		} else	str = params[1];
 
-			lastlog_current		= lastlog;
+		lastlog = w ? window_current->lastlog : &lastlog_current_static;
+
+		if (!lastlog) 
+			lastlog = xmalloc(sizeof(window_lastlog_t));
+
+		if (w || lastlog_current) {
+#ifdef HAVE_REGEX_H
+			if (lastlog->isregex)
+				regfree(&lastlog->reg);
+			xfree(lastlog->expression);
+#endif
+
 		}
-		/* this query now, is stupid. change it for smth better. */
-		if (!(ret = query_emit_id(NULL, UI_WINDOW_UPDATE_LASTLOG))) return 0;
 
-/*		debug("window() UI_WINDOW_LASTLOG wnd: 0x%x str: %s ret: %d\n", w, str, ret); */
-		return ret;
+/* compile regexp if needed */
+		if (isregex) {
+#ifdef HAVE_REGEX_H
+			int rs, flags = REG_NOSUB;
+			char errbuf[512];
+/*
+			if (!(config_regex_flags & 1))
+				flags |= REG_EXTENDED;
+*/
+
+/* XXX, when config_lastlog_case is toggled.. we need to recompile regex's */
+			if (!lastlog->casense || (lastlog->casense == -1 && !config_lastlog_case))
+				flags |= REG_ICASE;
+
+			if ((rs = regcomp(&lastlog->reg, str, flags))) {
+				regerror(rs, &lastlog->reg, errbuf, sizeof(errbuf));
+				printq("regex_error", errbuf);
+				/* XXX, it was copied from ekg1, although i don't see much sense to free if regcomp() failed.. */
+				regfree(&(lastlog->reg));
+				return -1;
+			}
+#else
+			printq("generic_error", "you don't have regex.h !!!!!!!!!!!!!!!!!!!11111");
+/*			isrgex = 0; */
+			return -1;
+#endif
+		}
+
+		lastlog->w 		= w;
+		lastlog->casense 	= iscase;
+		lastlog->lock		= islock;
+		lastlog->isregex	= isregex;
+		lastlog->expression	= xstrdup(str);
+
+		if (w)  window_current->lastlog	= lastlog;
+		else	lastlog_current		= lastlog;
+			
+		return query_emit_id(NULL, UI_WINDOW_UPDATE_LASTLOG);
 	}
 	
 	if (!xstrcasecmp(params[0], ("kill"))) {
