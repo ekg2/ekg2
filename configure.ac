@@ -86,6 +86,10 @@ fi
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
+dnl regex.h do regexpowania ;-)
+dnl XXX, sprawdzic czy nie musimy sprawdzac funkcji
+AC_CHECK_HEADERS(regex.h)
+
 AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 #include <sys/param.h>
 #include <sys/user.h>
