@@ -2294,11 +2294,13 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		lastlog = lastlog_current;			/* get global-current-window-lastlog */
 
 	if (!lastlog) 
-		return -1;
+		return 0;
 
 	ww = lastlog->w ? lastlog->w : window_current;
 	n = w->private;
 
+	if (!n)
+		return 0;
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
 	for (i = n->backlog_size-1; i >= 0; i--) {
