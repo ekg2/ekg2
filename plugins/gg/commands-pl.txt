@@ -203,10 +203,8 @@ msg
 	,,%T*%n'', to wiadomo¶æ bêdzie wys³ana do wszystkich aktualnych rozmówców.
 
 passwd
-	parametry:  <has³o>
+	parametry:  <has³o> <token>
 	krotki opis: zmienia has³o u¿ytkownika
-	
-	Zmiana has³a nie wymaga ju¿ ustawienia zmiennej %Temail%n.
 
 reconnect
 	parametry: 

@@ -186,10 +186,8 @@ msg
 	short description: send message
 
 passwd
-	parameters:  <password>
+	parameters:  <password> <token>
 	short description: change user password
-	
-	Changing password don't need %Temail%n variable any more.
 
 reconnect
 	parameters: 
