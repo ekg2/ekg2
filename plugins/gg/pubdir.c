@@ -449,7 +449,7 @@ COMMAND(gg_command_remind)
 		return -1;
 	}
 
-	token_eval = (params[0]) ? params[1] : params[0];
+	token_eval = (params[0] && params[1]) ? params[1] : params[0];
 
 	if (!token_eval) {
 		printq("not_enough_params", name);
