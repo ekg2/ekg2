@@ -140,6 +140,8 @@ COMMAND(gg_command_register)
 		return -1;
 	}
 
+	xfree(last_tokenid);	last_tokenid = NULL;
+
 	xfree(passwd);
 
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_register, h); 
@@ -225,6 +227,9 @@ COMMAND(gg_command_unregister)
 		xfree(passwd);
 		return -1;
 	}
+
+	xfree(last_tokenid);	last_tokenid = NULL;
+
 	xfree(passwd);
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_unregister, h); 
 	watch_timeout_set(w, h->timeout);
@@ -316,17 +321,16 @@ COMMAND(gg_command_passwd)
 #ifdef HAVE_GG_CHANGE_PASSWD4 /* gg_change_passwd4 since ~ LIBGADU 20030930 */
 	const char *config_email = session_get(session, "email");
 
+	if (!config_email) {
+		printq("var_not_set", name, "/session email");
+		return -1;
+	}
 	if (!last_tokenid) {
 		printq("gg_token_missing");
 		return -1;
 	}
 	if (!params[1]) {
 		printq("not_enough_params", name);
-		return -1;
-	}
-
-	if (!config_email) {
-		printq("var_not_set", name, "/session email");
 		return -1;
 	}
 
@@ -340,6 +344,8 @@ COMMAND(gg_command_passwd)
 		printq("passwd_failed", strerror(errno));
 		return -1;
 	}
+
+	xfree(last_tokenid);	last_tokenid = NULL;
 
 	session_set(session, "new_password", params[0]);
 
@@ -407,8 +413,16 @@ COMMAND(gg_command_remind)
 	struct gg_http *h;
 	watch_t *w;
 	uin_t uin = 0;
+#ifdef HAVE_GG_REMIND_PASSWD3
+	const char *config_email;
+	const char *token_eval;
+#endif
 
+#ifdef HAVE_GG_REMIND_PASSWD3
+	if (params[0] && params[1])
+#else
 	if (params[0])
+#endif
 		uin = atoi(params[0]);
 	else {
 		if (!uin && (!session || !g || xstrncasecmp(session_uid_get(session), "gg:", 3))) {
@@ -424,11 +438,35 @@ COMMAND(gg_command_remind)
 		wcs_printq("invalid_uid");
 		return -1;
 	}
-	
-	if (!(h = gg_remind_passwd(uin, 1))) {
+#ifdef HAVE_GG_REMIND_PASSWD3 /* since LIBGADU ~20050217 */
+	if (!(config_email = session_get(session, "email"))) {
+		printq("var_not_set", name, "/session email");
+		return -1;
+	}
+
+	if (!last_tokenid) {
+		printq("gg_token_missing");
+		return -1;
+	}
+
+	token_eval = (params[0]) ? params[1] : params[0];
+
+	if (!token_eval) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+
+	if (!(h = gg_remind_passwd3(uin, config_email, last_tokenid, token_eval, 1)))
+#else
+	if (!(h = gg_remind_passwd(uin, 1))) 
+#endif
+	{
 		printq("remind_failed", strerror(errno));
 		return -1;
 	}
+#ifdef HAVE_GG_REMIND_PASSWD3
+	xfree(last_tokenid);	last_tokenid = NULL;
+#endif
 
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_remind, h); 
 	watch_timeout_set(w, h->timeout);
