@@ -1738,7 +1738,7 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:block"), "uUC ?", gg_command_block, 0, NULL);
 	command_add(&gg_plugin, ("gg:unblock"), "!b ?", gg_command_unblock, 	COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:modify"), "!Uu ?", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&gg_plugin, ("gg:remind"), "?", gg_command_remind, 0, NULL);
+	command_add(&gg_plugin, ("gg:remind"), "? ?", gg_command_remind, 0, NULL);
 	command_add(&gg_plugin, ("gg:register"), "? ? ?", gg_command_register, 0, NULL);
         command_add(&gg_plugin, ("gg:token"), NULL, gg_command_token, 0, NULL);
 	command_add(&gg_plugin, ("gg:unregister"), "! ! !", gg_command_unregister, COMMAND_ENABLEREQPARAMS, NULL);
