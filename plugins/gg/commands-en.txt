@@ -200,7 +200,7 @@ register
 	Before registration use command 'token'.
 
 remind
-	parameters:  [uin]
+	parameters:  [uin] <token>
 	short description: send password on email
 
 token

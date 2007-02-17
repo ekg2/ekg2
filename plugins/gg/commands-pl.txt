@@ -217,7 +217,7 @@ register
 	Przed rejestracj± nale¿y pobraæ token komend± token.
 
 remind
-	parametry:  [numer]
+	parametry:  [numer] <token>
 	krotki opis: wysy³a has³o na skrzynkê pocztow±
 
 token
