@@ -1281,6 +1281,7 @@ int gg_plugin_init(int prio) {
 	plugin_var_add(&gg_plugin, "concat_multiline_status", VAR_INT, "3", 0, NULL);
 	plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "-1", 0, NULL);
+	plugin_var_add(&gg_plugin, "email", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
 	plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1, NULL);

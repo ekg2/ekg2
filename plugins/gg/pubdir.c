@@ -318,7 +318,23 @@ COMMAND(gg_command_passwd)
 	char *newpasswd = gg_locale_to_cp(xstrdup(params[0]));
 
 #ifdef HAVE_GG_CHANGE_PASSWD4 /* gg_change_passwd4 since ~ LIBGADU 20030930 */
-	if (!(h = gg_change_passwd4(atoi(session->uid + 3), "email", (oldpasswd) ? oldpasswd : "", newpasswd, "tokenid", "tokenval", 1)))
+	const char *config_email = session_get(session, "email");
+
+	if (!last_tokenid) {
+		printq("gg_token_missing");
+		return -1;
+	}
+	if (!params[1]) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+
+	if (!config_email) {
+		printq("var_not_set", name, "/session email");
+		return -1;
+	}
+
+	if (!(h = gg_change_passwd4(atoi(session->uid + 3), config_email, (oldpasswd) ? oldpasswd : "", newpasswd, last_tokenid, params[1], 1)))
 #else 
 	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? oldpasswd : "", newpasswd, "", 1)))
 #endif 
