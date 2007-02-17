@@ -95,12 +95,8 @@ static WATCHER(gg_handle_register)	/* tymczasowy */
 	tmp = saprintf("gg:%d", p->uin);
 	s = session_add(tmp);
 	xfree(tmp);
-	session_set(s, "password", gg_register_password);
-	xfree(gg_register_password);
-	gg_register_password = NULL;
-//	session_set(s, "email", gg_register_email);
-	xfree(gg_register_email);
-	gg_register_email = NULL;
+	session_set(s, "password", gg_register_password);	xfree(gg_register_password);	gg_register_password = NULL;
+	session_set(s, "email", gg_register_email);		xfree(gg_register_email);	gg_register_email = NULL;
 
 	window_session_set(window_current, s);
 
