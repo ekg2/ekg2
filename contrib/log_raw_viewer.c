@@ -88,7 +88,7 @@ int main() {
 
 	char *rbuf = buf;
 
-	while ((len = read(0, rbuf, sizeof(buf)-1)) > 0) {
+	while ((len = read(0, buf, sizeof(buf)-1)) > 0) {
 		if (eaten) {
 			printf("%s", format_ansi(buf[0]));
 			rbuf++;
@@ -110,6 +110,7 @@ int main() {
 
 		buf[len] = 0;
 		printf("%s", format_line(rbuf));
+		rbuf = buf;
 	}
 	printf("\n");
 
