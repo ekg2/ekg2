@@ -30,6 +30,7 @@
 #include <ekg/stuff.h>
 #include <ekg/metacontacts.h>
 #include <ekg/xmalloc.h>
+#include <ekg/debug.h>
 
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"

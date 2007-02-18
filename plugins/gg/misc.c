@@ -30,6 +30,7 @@
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
+#include <ekg/debug.h>
 
 #include "gg.h"
 
