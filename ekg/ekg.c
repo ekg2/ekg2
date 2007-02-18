@@ -135,8 +135,8 @@ int no_mouse = 0;
  * g³ówna pêtla ekg. obs³uguje przegl±danie deskryptorów, timery i wszystko,
  * co ma siê dziaæ w tle.
  */
-void ekg_loop()
-{
+void ekg_loop() {
+	struct timeval tv;
         struct timeval stv;
         list_t l, m;
         fd_set rd, wd;
@@ -146,8 +146,6 @@ void ekg_loop()
                 /* przejrzyj timery u¿ytkownika, ui, skryptów */
                 for (l = timers; l; ) {
                         struct timer *t = l->data;
-                        struct timeval tv;
-
                         l = l->next;
 
                         gettimeofday(&tv, NULL);
@@ -156,8 +154,6 @@ void ekg_loop()
 				int ispersist = t->persist;
 				
                                 if (ispersist) {
-                                        struct timeval tv;
-
                                         gettimeofday(&tv, NULL);
                                         tv.tv_sec += t->period;
                                         memcpy(&t->ends, &tv, sizeof(tv));
@@ -300,18 +296,17 @@ void ekg_loop()
 		stv.tv_usec = 0;
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
-			struct timeval tv2;
 			int usec = 0;
 
-			gettimeofday(&tv2, NULL);
+			gettimeofday(&tv, NULL);
 
 			/* zeby uniknac przekrecenia licznika mikrosekund przy
 			 * wiekszych czasach, pomijamy dlugie timery */
-			if (t->ends.tv_sec - tv2.tv_sec > 1)
+			if (t->ends.tv_sec - tv.tv_sec > 1)
 				continue;
 
 			/* zobacz, ile zostalo do wywolania timera */
-			usec = (t->ends.tv_sec - tv2.tv_sec) * 1000000 + (t->ends.tv_usec - tv2.tv_usec);
+			usec = (t->ends.tv_sec - tv.tv_sec) * 1000000 + (t->ends.tv_usec - tv.tv_usec);
 
 			/* jesli wiecej niz sekunda, to nie ma znacznia */
 			if (usec >= 1000000)
