@@ -135,6 +135,12 @@ int no_mouse = 0;
  * g³ówna pêtla ekg. obs³uguje przegl±danie deskryptorów, timery i wszystko,
  * co ma siê dziaæ w tle.
  */
+
+#define OPTIMIZE_EKG_LOOP 0	/* define to 1, if you want to call gettimeofday() only once... disable also time(NULL) calls
+				 *	it's quite ok, although we're less accurate. But feel free to change it to 1.
+				 *	It'll be someday default value in ekg2-cvs too.. but not now.
+				 */
+
 void ekg_loop() {
 	struct timeval tv;
         struct timeval stv;
@@ -142,19 +148,27 @@ void ekg_loop() {
         fd_set rd, wd;
         int ret, maxfd, pid, status;
 
+#if OPTIMIZE_EKG_LOOP
+	gettimeofday(&tv, NULL);
+#define time(x) tv.tv_sec
+#endif
+
 	{
                 /* przejrzyj timery u¿ytkownika, ui, skryptów */
                 for (l = timers; l; ) {
                         struct timer *t = l->data;
                         l = l->next;
-
+#if !OPTIMIZE_EKG_LOOP
                         gettimeofday(&tv, NULL);
+#endif
 
                         if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
 				int ispersist = t->persist;
 				
                                 if (ispersist) {
+#if !OPTIMIZE_EKG_LOOP
                                         gettimeofday(&tv, NULL);
+#endif
                                         tv.tv_sec += t->period;
                                         memcpy(&t->ends, &tv, sizeof(tv));
                                 }
@@ -297,8 +311,9 @@ void ekg_loop() {
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
 			int usec = 0;
-
+#if !OPTIMIZE_EKG_LOOP
 			gettimeofday(&tv, NULL);
+#endif
 
 			/* zeby uniknac przekrecenia licznika mikrosekund przy
 			 * wiekszych czasach, pomijamy dlugie timery */
@@ -325,7 +340,9 @@ void ekg_loop() {
 			stv.tv_sec = 0;
 		if (stv.tv_usec < 0)
 			stv.tv_usec = 1;
-
+#if OPTIMIZE_EKG_LOOP
+#undef time
+#endif
                 /* sprawd¼, co siê dzieje */
 /* XXX, on win32 we must do select() on only SOCKETS.
  *    , on files we must do "WaitForSingleObjectEx() 
