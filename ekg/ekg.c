@@ -137,7 +137,7 @@ int no_mouse = 0;
  */
 void ekg_loop()
 {
-        struct timeval tv;
+        struct timeval stv;
         list_t l, m;
         fd_set rd, wd;
         int ret, maxfd, pid, status;
@@ -296,8 +296,8 @@ void ekg_loop()
 			}
                 }
 
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+		stv.tv_sec = 1;
+		stv.tv_usec = 0;
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
 			struct timeval tv2;
@@ -318,18 +318,18 @@ void ekg_loop()
 				continue;
 			
 			/* jesli mniej niz aktualny timeout, zmniejsz */
-			if (tv.tv_sec * 1000000 + tv.tv_usec > usec) {
-				tv.tv_sec = 0;
-				tv.tv_usec = usec;
+			if (stv.tv_sec * 1000000 + stv.tv_usec > usec) {
+				stv.tv_sec = 0;
+				stv.tv_usec = usec;
 			}
 		}
 	
                 /* na wszelki wypadek sprawd¼ warto¶ci */
 
-		if (tv.tv_sec != 1) 
-			tv.tv_sec = 0;
-		if (tv.tv_usec < 0)
-			tv.tv_usec = 1;
+		if (stv.tv_sec != 1) 
+			stv.tv_sec = 0;
+		if (stv.tv_usec < 0)
+			stv.tv_usec = 1;
 
                 /* sprawd¼, co siê dzieje */
 /* XXX, on win32 we must do select() on only SOCKETS.
@@ -340,10 +340,10 @@ void ekg_loop()
 #ifdef NO_POSIX_SYSTEM
 		ret = 0;
 		if (watches) {
-			struct timeval tv = { 0, 0 };
+			struct timeval stv = { 0, 0 };
 			WSASetLastError(0);
 #endif
-                	ret = select(maxfd + 1, &rd, &wd, NULL, &tv);
+                	ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
 #ifdef NO_POSIX_SYSTEM
 			if (ret != 0) printf("select() ret = %d WSAErr: %d.\n", ret, WSAGetLastError());
 		}
@@ -378,7 +378,7 @@ void ekg_loop()
 			}
 			if (!ret) {
 /*				debug("Waiting max... %d\n", tv.tv_sec * 1000 + (tv.tv_usec / 1000)); */
-				MsgWaitForMultipleObjects(0, &wat, FALSE, tv.tv_sec * 1000 + (tv.tv_usec / 1000), QS_ALLEVENTS);
+				MsgWaitForMultipleObjects(0, &wat, FALSE, stv.tv_sec * 1000 + (stv.tv_usec / 1000), QS_ALLEVENTS);
 			}
 		}
 #endif
