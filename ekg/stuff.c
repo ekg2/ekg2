@@ -1528,18 +1528,20 @@ char *read_file(FILE *f)
 		return NULL;
 
 	while (fgets(buf, sizeof(buf), f)) {
-		int first = (res) ? 0 : 1;
-		size_t new_size = reslen + xstrlen(buf) + 1;
+		size_t new_size = reslen + xstrlen(buf);
 
-		res = xrealloc(res, new_size);
-		if (first)
-			*res = 0;
+		res = xrealloc(res, new_size+1);
 		xstrcpy(res + reslen, buf);
 
-		reslen = xstrlen(res);	/* XXX new_size - 1 here? */
+		reslen = new_size;
 		if (xstrchr(buf, '\n'))
 			break;
 	}
+
+/*
+	if (!reslen && res)
+		res[0] = '\0';
+*/
 
 	if (reslen > 0 && res[reslen - 1] == '\n') {
 		res[reslen - 1] = 0;
