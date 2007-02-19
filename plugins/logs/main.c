@@ -77,6 +77,7 @@ PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 #endif
 
 static list_t buffer_lograw;
+static list_t buffer_lograw_tail;	/* last item of buffer_lograw */
 
 static logs_log_t *log_curlog = NULL;
 
@@ -329,8 +330,10 @@ static void logs_changed_path(const char *var) {
 
 static void logs_changed_raw(const char *var) {
 	/* if logs:log_raw == 0, clean LOGRAW buffer */
-	if (!config_logs_log_raw) 
+	if (!config_logs_log_raw) {
 		xfree(buffer_flush(&buffer_lograw, NULL));	/* i'm lazy */
+		buffer_lograw_tail = NULL;
+	}
 }
 
 static QUERY(logs_postinit) {
@@ -558,12 +561,23 @@ static int logs_buffer_raw_display(const char *file, int items) {
 
 static int logs_buffer_raw_add(const char *file, const char *str) {
 	/* XXX, get global maxsize variable and if > than current ..... */
-
-	return buffer_add(&buffer_lograw, file, str, 0);
+	if (buffer_add(buffer_lograw_tail ? &buffer_lograw_tail : &buffer_lograw, file, str, 0) == 0) {
+		if (!buffer_lograw_tail)
+			buffer_lograw_tail = buffer_lograw;
+		else	buffer_lograw_tail = buffer_lograw_tail->next;
+		return 0;
+	}
+	return -1;
 }
 
 static int logs_buffer_raw_add_line(const char *file, const char *line) {
-	return buffer_add_str(&buffer_lograw, file, line, 0);
+	if (buffer_add_str(buffer_lograw_tail ? &buffer_lograw_tail : &buffer_lograw, file, line, 0) == 0) {
+		if (!buffer_lograw_tail)
+			buffer_lograw_tail = buffer_lograw;
+		else	buffer_lograw_tail = buffer_lograw_tail->next;
+		return 0;
+	}
+	return -1;
 }
 
 static QUERY(logs_handler_newwin) {
@@ -606,7 +620,8 @@ static QUERY(logs_handler_newwin) {
 
 int logs_plugin_init(int prio) {
 	plugin_register(&logs_plugin, prio);
-
+	
+	buffer_lograw_tail = NULL;
 	logs_setvar_default(NULL, NULL);
 
 	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
@@ -716,7 +731,7 @@ static int logs_plugin_destroy() {
 	}
 	debug_error("[logs] 0x%x\n", buffer_lograw);
 	/* just in case */
-	buffer_free(&buffer_lograw);
+	buffer_free(&buffer_lograw);	buffer_lograw_tail = NULL;
 
 	plugin_unregister(&logs_plugin);
 	return 0;
