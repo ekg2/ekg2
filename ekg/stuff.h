@@ -301,7 +301,7 @@ char *strip_quotes(char *line);
 char *strip_spaces(char *line);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
 int strcasecmp_pl(const char *cs, const char *ct);
-
+int mkdir_recursive(const char *pathname, int isdir);
 
 #ifdef __GNUC__
 char *saprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));

@@ -1424,6 +1424,48 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 	return c;
 }
 
+int mkdir_recursive(const char *pathname, int isdir) {
+	char fullname[PATH_MAX+1];
+	int i = 0;
+
+	if (!pathname) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	do {
+		struct stat st;
+		fullname[i] = pathname[i];
+
+		if (pathname[i] == '/' || (isdir && pathname[i] == '\0')) {	/* if it's / or it's last char.. */
+			if (!isdir && !xstrchr(&pathname[i], '/')) 			/* if it's not dir (e.g filename) we don't want to create the dir.. */
+				return 0;
+
+			fullname[i+1] = '\0';
+
+			if (stat(fullname, &st) == 0) {	/* if smth exists with such filename */
+				if (!S_ISDIR(st.st_mode)) {	/* and it's not dir, abort. */
+					errno = ENOTDIR;
+					return -1;
+				}
+			} else {			/* if not, try mkdir() and if fail exit. */
+				if
+#ifndef NO_POSIX_SYSTEM
+				(mkdir(fullname, 0700) == -1)
+#else
+				(mkdir(fullname) == -1)
+#endif
+				   	return -1;
+			}
+		}
+		if (i == PATH_MAX) {
+			errno = ENAMETOOLONG;
+			return -1;
+		}
+	} while (pathname[i++]);	/* while not NUL */
+	return 0;
+}
+
 /*
  * prepare_path()
  *

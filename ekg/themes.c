@@ -1764,6 +1764,8 @@ void theme_init()
 	format_add("script_varlist", _("%> %1 = %2 (%3)\n"), 1);
 	format_add("script_varlist_empty", _("%! No script vars!\n"), 1);
 
+	format_add("directory_cant_create", 	_("%! Can't create directory: %1 (%2)"), 1);
+
 #ifdef WITH_ASPELL
 	/* aspell */
 	format_add("aspell_init", "%> Czekaj, inicjujê modu³ sprawdzania pisowni...\n", 1);
