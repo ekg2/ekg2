@@ -132,15 +132,7 @@ typedef struct {
 	void *private;
 } newconference_t;
 
-enum buffer_t {
-	BUFFER_DEBUG,	/* na zapisanie n ostatnich linii debug */
-	BUFFER_EXEC,	/* na buforowanie tego, co wypluwa exec */
-	BUFFER_SPEECH,	/* na wymawiany tekst */
-	BUFFER_LOGRAW, 	/* plugins/logs uses it */
-};
-
 struct buffer {
-	int type;
 	time_t ts;
 	char *target;
 	char *line;
@@ -160,7 +152,9 @@ extern list_t bindings_added;
 extern list_t timers;
 extern list_t conferences;
 extern list_t newconferences;
-extern list_t buffers;
+
+extern list_t buffer_debug;
+extern list_t buffer_speech;
 
 extern time_t last_save;
 extern char *config_profile;
@@ -261,12 +255,11 @@ char *base64_decode(const char *buf);
 void binding_list(int quiet, const char *name, int all);
 void binding_free();
 
-int buffer_add(int type, const char *target, const char *line, int max_lines);
-int buffer_add_str(int type, const char *target, const char *str, int max_lines);
-int buffer_count(int type);
-char *buffer_flush(int type, const char *target);
-char *buffer_tail(int type);
-void buffer_free();
+int buffer_add(list_t *type, const char *target, const char *line, int max_lines);
+int buffer_add_str(list_t *type, const char *target, const char *str, int max_lines);
+char *buffer_flush(list_t *type, const char *target);
+char *buffer_tail(list_t *type);
+void buffer_free(list_t *type);
 
 void changed_auto_save(const char *var);
 void changed_display_blinking(const char *var);

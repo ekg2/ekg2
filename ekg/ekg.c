@@ -271,10 +271,10 @@ void ekg_loop() {
                                         speech_pid = 0;
 
                                         if (!config_speech_app)
-                                                xfree(buffer_flush(BUFFER_SPEECH, NULL));
+                                                xfree(buffer_flush(&buffer_speech, NULL));
 
-                                        if (buffer_count(BUFFER_SPEECH) && !WEXITSTATUS(status)) {
-                                                char *str = buffer_tail(BUFFER_SPEECH);
+                                        if (buffer_speech && !WEXITSTATUS(status)) {
+                                                char *str = buffer_tail(&buffer_speech);
                                                 say_it(str);
                                                 xfree(str);
                                         }
@@ -626,7 +626,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
 	tmp[xstrlen(tmp) - 1] = 0;
 
-	buffer_add(BUFFER_DEBUG, NULL, tmp, DEBUG_MAX_LINES);
+	buffer_add(&buffer_debug, NULL, tmp, DEBUG_MAX_LINES);
 
 	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
@@ -930,9 +930,8 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
-	else for (l = buffers; l; l = l->next) {
+	else for (l = buffer_debug; l; l = l->next) {
 		struct buffer *b = l->data;
-		if (b->type != BUFFER_DEBUG) continue;
 		print_window("__debug", NULL, 0, "debug", b->line);
 	}
 
@@ -1195,7 +1194,8 @@ watches_again:
 	timer_free();
 	binding_free();
 	last_free();
-	buffer_free();
+
+	buffer_free(&buffer_debug);	buffer_free(&buffer_speech);
 	event_free();
 
 	for (l = windows; l; l = l->next) {

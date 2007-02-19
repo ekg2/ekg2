@@ -748,11 +748,10 @@ void debug_write_crash()
 
 	chmod(name, 0400);
 	
-	for (l = buffers; l; l = l->next) {
+	for (l = buffer_debug; l; l = l->next) {
 		struct buffer *b = l->data;
 
-		if (b->type == BUFFER_DEBUG)
-			fprintf(f, "%s\n", b->line);
+		fprintf(f, "%s\n", b->line);
 	}
 	
 	fclose(f);

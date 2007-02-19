@@ -2194,7 +2194,7 @@ static COMMAND(cmd_say)
 	}
 
 	if (match_arg(params[0], 'c', ("clear"), 2)) {
-		xfree(buffer_flush(BUFFER_SPEECH, NULL));
+		xfree(buffer_flush(&buffer_speech, NULL));
 		return 0;
 	}
 

@@ -87,7 +87,9 @@ list_t bindings = NULL;
 list_t timers = NULL;
 list_t conferences = NULL;
 list_t newconferences = NULL;
-list_t buffers = NULL;
+
+list_t buffer_debug;
+list_t buffer_speech;
 
 list_t bindings_added;
 int old_stderr;
@@ -464,36 +466,33 @@ void binding_free()
  *
  * 0/-1
  */
-int buffer_add(int type, const char *target, const char *line, int max_lines)
+int buffer_add(list_t *type, const char *target, const char *line, int max_lines)
 {
 	struct buffer *b;
 
 	if (max_lines) {
-		list_t l = buffers;
-		int bcount = buffer_count(type);
+		list_t l = *type;
+		int bcount = list_count(*type);
 		
 		while (bcount >= max_lines && l) {
 			b = l->data;
 			l = l->next;
 
-			if (b->type != type) continue;
-
 			xfree(b->line);
 			xfree(b->target);
-			list_remove(&buffers, b, 1);
+			list_remove(type, b, 1);
 			bcount--;
 		}
 	}
 	b = xmalloc(sizeof(struct buffer));
 	b->ts	= time(NULL);
-	b->type = type;
 	b->target = xstrdup(target);
 	b->line = xstrdup(line);
 
-	return ((list_add(&buffers, b, 0) ? 0 : -1));
+	return ((list_add(type, b, 0) ? 0 : -1));
 }
 
-int buffer_add_str(int type, const char *target, const char *str, int max_lines) {
+int buffer_add_str(list_t *type, const char *target, const char *str, int max_lines) {
 	struct buffer *b;
 	char *sep;
 
@@ -506,28 +505,26 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
 	ts = atoi(str);
 
 	if (max_lines) {
-		list_t l = buffers;
-		int bcount = buffer_count(type);
+		list_t l = *type;
+		int bcount = list_count(*type);
 		
 		while (bcount >= max_lines && l) {
 			b = l->data;
 			l = l->next;
-			if (b->type != type) continue;
 
 			xfree(b->line);
 			xfree(b->target);
-			list_remove(&buffers, b, 1);
+			list_remove(type, b, 1);
 			bcount--;
 		}
 	}
 
 	b	= xmalloc(sizeof(struct buffer));
 	b->ts		= ts;
-	b->type		= type;
 	b->target	= xstrdup(target);
 	b->line		= xstrdup(sep+1);
 
-	return ((list_add(&buffers, b, 0) ? 0 : -1));
+	return ((list_add(type, b, 0) ? 0 : -1));
 }
 
 /* 
@@ -539,18 +536,15 @@ int buffer_add_str(int type, const char *target, const char *str, int max_lines)
  *  - type,
  *  - target - dla kogo by³ bufor? NULL, je¶li olewamy.
  */
-char *buffer_flush(int type, const char *target)
+char *buffer_flush(list_t *type, const char *target)
 {
 	string_t str = string_init(NULL);
 	list_t l;
 
-	for (l = buffers; l; ) {
+	for (l = *type; l; ) {
 		struct buffer *b = l->data;
 
 		l = l->next;
-
-		if (type != b->type)
-			continue;
 
 		if (target && b->target && xstrcmp(target, b->target))
 			continue;
@@ -562,30 +556,10 @@ char *buffer_flush(int type, const char *target)
 
 		xfree(b->line);
 		xfree(b->target);
-		list_remove(&buffers, b, 1);
+		list_remove(type, b, 1);
 	}
 
 	return string_free(str, 0);
-}
-
-/*
- * buffer_count()
- *
- * zwraca liczbê linii w buforze danego typu.
- */
-int buffer_count(int type)
-{
-	list_t l;
-	int count = 0;
-
-	for (l = buffers; l; l = l->next) {
-		struct buffer *b = l->data;
-
-		if (b->type == type)
-			count++;
-	}	
-
-	return count;
 }
 
 /*
@@ -595,22 +569,19 @@ int buffer_count(int type)
  * nale¿y zwolniæ. usuwa go z kolejki. zwraca NULL,
  * gdy kolejka jest pusta.
  */
-char *buffer_tail(int type)
+char *buffer_tail(list_t *type)
 {
 	char *str = NULL;
 	list_t l;
 
-	for (l = buffers; l; l = l->next) {
+	for (l = *type; l; l = l->next) {
 		struct buffer *b = l->data;
 
-		if (type != b->type)
-			continue;
-		
 		str = b->line;
 		b->line = NULL;
 
 		xfree(b->target);
-		list_remove(&buffers, b, 1);
+		list_remove(type, b, 1);
 
 		break;
 	}
@@ -623,22 +594,22 @@ char *buffer_tail(int type)
  * 
  * zwalnia pamiêæ po buforach.
  */
-void buffer_free()
+void buffer_free(list_t *type)
 {
 	list_t l;
 
-	if (!buffers)
+	if (!(*type))
 		return;
 
-	for (l = buffers; l; l = l->next) {
+	for (l = *type; l; l = l->next) {
 		struct buffer *b = l->data;
 
 		xfree(b->line);
 		xfree(b->target);
 	}
 
-	list_destroy(buffers, 1);
-	buffers = NULL;
+	list_destroy(*type, 1);
+	*type = NULL;
 }
 
 /*
@@ -1966,7 +1937,7 @@ int say_it(const char *str)
 		return -1;
 
 	if (speech_pid) {
-		buffer_add(BUFFER_SPEECH, NULL, str, 50);
+		buffer_add(&buffer_speech, NULL, str, 50);
 		return -2;
 	}
 
