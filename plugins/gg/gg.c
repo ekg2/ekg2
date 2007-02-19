@@ -905,10 +905,9 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 				}
 
 				xfree(image_file);
+
+				break;
 			}
-		default:
-			debug("// gg_session_handler_image() - This function is not supported yet\n");
-			break;
 	}
 }
 
@@ -1092,10 +1091,8 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 			break;
 		case GG_EVENT_IMAGE_REQUEST:
 		case GG_EVENT_IMAGE_REPLY:
-			{
-				gg_session_handler_image(data, e);
-				break;
-			}
+			gg_session_handler_image(data, e);
+			break;
 
 		default:
 			debug("[gg] unhandled event 0x%.4x, consider upgrade\n", e->type);
