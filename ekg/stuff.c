@@ -1437,6 +1437,11 @@ int mkdir_recursive(const char *pathname, int isdir) {
 		struct stat st;
 		fullname[i] = pathname[i];
 
+		if (i == PATH_MAX) {
+			errno = ENAMETOOLONG;
+			return -1;
+		}
+
 		if (pathname[i] == '/' || (isdir && pathname[i] == '\0')) {	/* if it's / or it's last char.. */
 			if (!isdir && !xstrchr(&pathname[i], '/')) 			/* if it's not dir (e.g filename) we don't want to create the dir.. */
 				return 0;
@@ -1457,10 +1462,6 @@ int mkdir_recursive(const char *pathname, int isdir) {
 #endif
 				   	return -1;
 			}
-		}
-		if (i == PATH_MAX) {
-			errno = ENAMETOOLONG;
-			return -1;
 		}
 	} while (pathname[i++]);	/* while not NUL */
 	return 0;
