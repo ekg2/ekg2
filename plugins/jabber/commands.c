@@ -209,7 +209,7 @@ static COMMAND(jabber_command_dcc) {
 		}
 
 		if (xstrncmp(d->uid, "jid:", 4)) {
-			debug_error("%s:%d /dcc command, incorrect `%s`!\n", __(d->uid));
+			debug_error("%s:%d /dcc command, incorrect `%s`!\n", __FILE__, __LINE__, __(d->uid));
 			printq("generic_error", "Use /dcc on correct session, sorry");
 			return -1;
 		}
