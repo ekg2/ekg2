@@ -870,9 +870,10 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 					break;
 				}
 
-				for (l = images; l; l = l->next) {
+				for (l = images; l;) {
 					image_t *i = l->data;
 
+					l = l->next;
 					if (e->event.image_request.crc32 == i->crc32 && 
 							e->event.image_request.size == i->size) {
 						gg_image_reply(g->sess, e->event.image_request.sender, i->filename, i->data, i->size);

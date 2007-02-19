@@ -76,7 +76,8 @@ COMMAND(gg_command_image)
 	FILE *f;
 	uint32_t size, crc32;
 	int i;
-	char *filename, *data, *uid;
+	const char *filename	= params[1];
+	char *data, *uid;
 
         struct gg_msg_richtext_format_img {
                 struct gg_msg_richtext rt;
@@ -88,8 +89,8 @@ COMMAND(gg_command_image)
 		printq("user_not_found", params[0]);
 		return -1;
 	}
-	if (!(f = fopen(params[1], "r"))) {
-		printq("file_doesnt_exist", params[1]);
+	if (!(f = fopen(filename, "r"))) {
+		printq("file_doesnt_exist", filename);
 		return -1;
 	}
 	
@@ -98,13 +99,13 @@ COMMAND(gg_command_image)
 	fseek(f, 0, SEEK_END);
 	size = ftell(f);
 	fseek(f, 0, SEEK_SET);
-	filename = xstrdup(params[1]);
 
 	data = xmalloc(size);
 
 	for (i = 0; !feof(f); i++) {
 		data[i] = fgetc(f);
 	}
+	fclose(f);
 
 	crc32 = gg_crc32(0, data, size);
 	
@@ -120,13 +121,10 @@ COMMAND(gg_command_image)
 
         if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
 		wcs_printq("gg_image_error_send");
-		/* fclose(f)  ? */
-		xfree(filename);
                 return -1;
         }
 		
 	wcs_printq("gg_image_ok_send");
-	xfree(filename);
 
 	return 0;
 }
