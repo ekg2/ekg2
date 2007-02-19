@@ -834,7 +834,7 @@ static FILE* logs_open_file(char *path, int ff) {
 	}
 	xstrncpy(fullname, path, PATH_MAX);
 
-	if (mkdir_recursive(path, 0) && errno != EEXIST) {
+	if (mkdir_recursive(path, 0)) {
 		print("directory_cant_create", path, strerror(errno));
 		return NULL;
 	}
