@@ -442,6 +442,12 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 
+		if (xstrncmp(d->uid, "gg:", 3)) {
+			debug_error("%s:%d /dcc command, incorrect `%s`!\n", __FILE__, __LINE__, __(d->uid));
+			printq("generic_error", "Use /dcc on correct session, sorry");
+			return -1;
+		}
+
 		if (config_dcc_dir) 
 		    	path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
 		else
