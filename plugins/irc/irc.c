@@ -1270,10 +1270,10 @@ static COMMAND(irc_command_away) {
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
 		isaway = 1;
-	} else if (!xstrcasecmp(name, ("_autoaway"))) {
+	} else if (!xstrcmp(name, ("_autoaway"))) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		isaway = 1;
-	} else if (!xstrcasecmp(name, ("_autoback"))) {
+	} else if (!xstrcmp(name, ("_autoback"))) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 		session_unidle(session);
 	} else {
@@ -1404,7 +1404,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		if (&irc_plugin == c->plugin && !xstrcasecmp(tmpname, c->name))
+		if (&irc_plugin == c->plugin && !xstrcmp(tmpname, c->name))
 		{
 			while (c->params[parnum])
 			{
