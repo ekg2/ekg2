@@ -645,13 +645,15 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 
 	gg_private_t *g = session_private_get(s);
 
-	if (gg_config_dcc && (e->event.msg.msgclass & GG_CLASS_CTCP)) {
+	if (e->event.msg.msgclass & GG_CLASS_CTCP) {
 		struct gg_dcc *d;
 		char *__host = NULL;
 		char uid[16];
 		int __port = -1, __valid = 1;
 		userlist_t *u;
 		watch_t *w;
+
+		if (!gg_config_dcc) return;
 
 		snprintf(uid, sizeof(uid), "gg:%d", e->event.msg.sender);
 
@@ -674,12 +676,8 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 
 		w = watch_add(&gg_plugin, d->fd, d->check, gg_dcc_handler, d);
 		watch_timeout_set(w, d->timeout);
-
 		return;
 	}
-
-	if (e->event.msg.msgclass & GG_CLASS_CTCP)
-		return;
 
 	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
@@ -697,20 +695,34 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 			gg_debug(GG_DEBUG_DUMP, " %.2x", (unsigned char) p[ii]);
 		gg_debug(GG_DEBUG_DUMP, "\n");
 
+/* XXX, check it. especially this 'pos' */
 		for (i = 0; i < e->event.msg.formats_length; ) {
 			int j, pos = p[i] + p[i + 1] * 256;
 			uint32_t val = 0;
 
 			if ((p[i + 2] & GG_FONT_IMAGE))	{
+				struct gg_msg_richtext_image *img = (void *) &p[i+3];
+					
+				/* XXX, needed? */
+				if (i+3 + sizeof(struct gg_msg_richtext_image) > e->event.msg.formats_length) {
+					debug_error("gg_session_handler_msg() wtf?\n");
+					break;
+				}
+
+				debug_function("gg_session_handler_msg() inline image: sender=%d, size=%d, crc32=0x%.8x\n", 
+					e->event.msg.sender, 
+					img->size, 
+					img->crc32);
+
 				image=1;
 
-				if (((struct gg_msg_richtext_image*)&p[i+3])->crc32 == GG_CRC32_INVISIBLE)
+				if (img->crc32 == GG_CRC32_INVISIBLE)
 					check_inv = 1;
 
-				if (gg_config_get_images){
-					gg_image_request(g->sess, e->event.msg.sender, ((struct gg_msg_richtext_image*)&p[i+3])->size, ((struct gg_msg_richtext_image*)&p[i+3])->crc32);
-				}
-				i+=10;
+				if (gg_config_get_images)
+					gg_image_request(g->sess, e->event.msg.sender, img->size, img->crc32);
+
+				i+=sizeof(struct gg_msg_richtext_image);
 
 			} else {
 				if ((p[i + 2] & GG_FONT_BOLD))
@@ -797,42 +809,6 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 }
 
 /*
- * image_open_file()
- *
- * create and open file 
- * for image
- */
-
-static FILE* image_open_file(const char *path) {
-	struct stat statbuf;
-	char *dir, *slash;
-	int slash_pos = 0;
-
-        debug("[gg] opening image file\n");
-
-	while (1) {
-		if (!(slash = xstrchr(path + slash_pos, '/'))) {
-			// nie ma juz slashy - zostala tylko nazwa pliku
-			break;		// konczymy petle
-		};
-
-		slash_pos = slash - path + 1;
-		dir = xstrndup(path, slash_pos);
-
-		if (stat(dir, &statbuf) != 0 && mkdir(dir, 0700) == -1) {
-			char *bo = saprintf(("nie mozna %s bo %s"), dir, strerror(errno));
-			wcs_print("generic",bo); // XXX usun±æ !! 
-			xfree(bo);
-			xfree(dir);
-			return NULL;
-		}
-		xfree(dir);
-	} // while mkdir..
-
-	return fopen(path, "w");
-};
-
-/*
  * gg_session_handler_image()
  *
  * support image request or reply
@@ -885,24 +861,49 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 			}
 		case GG_EVENT_IMAGE_REPLY:
 			{
-				char *image_file = NULL;
+				const char *image_basedir;
+				char *image_file;
 				FILE *fp;
+				int i;
+			
+		/* 0th, get basedir */
+				image_basedir = gg_config_images_dir ? 
+					gg_config_images_dir : 			/* dir specified by config */
+					prepare_path("images", 1);		/* (ekg_config)/images */
 
-				// TODO: file name format should be defined by user
-				image_file = saprintf("%s/%s_%s_%s", gg_config_images_dir, itoa(e->event.image_reply.sender), itoa(e->event.image_reply.crc32), e->event.image_reply.filename);
+		/* 1st, create directory, XXX here. do smth like mkdir_force() which create all nessesary subdirs.. */
+				if (mkdir(image_basedir, 0700) && errno != EEXIST) {
+					print("gg_image_cant_open_file", image_basedir, strerror(errno));
+					return;
+				}
+
+/* XXX, recode from cp1250 to locales [e->event.image_reply.filename] */
+/* XXX, sanity path */
+				image_file = saprintf("%s/gg_%d_%.4x_%s", 
+					image_basedir, 
+					e->event.image_reply.sender, 
+					e->event.image_reply.crc32, 
+					e->event.image_reply.filename);
+
 				debug("image from %d called %s\n", e->event.image_reply.sender, image_file);
 
-				if ((fp = image_open_file(image_file)) == NULL) {
-					print("gg_image_cant_open_file", image_file);
-				} else {
-					int i;
-
-					for (i = 0; i<e->event.image_reply.size; i++) {
-						fputc(e->event.image_reply.image[i],fp);
-					}
-					fclose(fp);
-					print("gg_image_ok_get", image_file);
+				if (!(fp = fopen(image_file, "w"))) {
+					print("gg_image_cant_open_file", image_file, strerror(errno));
+					xfree(image_file);
+					return;
 				}
+
+				for (i = 0; i<e->event.image_reply.size; i++) {
+					fputc(e->event.image_reply.image[i],fp);
+				}
+				fclose(fp);
+
+				{
+					char *uid = saprintf("gg:%d", e->event.image_reply.sender);
+					print_window(uid, s, 0, "gg_image_ok_get", image_file, uid, e->event.image_reply.filename);
+					xfree(uid);
+				}
+
 				xfree(image_file);
 			}
 		default:
@@ -1204,10 +1205,10 @@ static int gg_theme_init() {
 	format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
 	format_add("gg_user_is_connected", _("%> (%1) User %T%2%n is connected\n"), 1);
 	format_add("gg_user_is_not_connected", _("%> (%1) User %T%2%n is not connected\n"), 1);
-	format_add("gg_image_cant_open_file", _("%! Can't open file for image %1\n"), 1);
+	format_add("gg_image_cant_open_file", _("%! Can't open file for image %1 (%2)\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
-	format_add("gg_image_ok_get", _("%> Image saved in %1\n"), 1);
+	format_add("gg_image_ok_get", _("%> Image <%3> saved in %1\n"), 1);	/* %1 - path, %2 - uid, %3 - name of picture */
 	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);
 #endif
 	return 0;
