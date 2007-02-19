@@ -257,7 +257,6 @@ void binding_free();
 
 int buffer_add(list_t *type, const char *target, const char *line, int max_lines);
 int buffer_add_str(list_t *type, const char *target, const char *str, int max_lines);
-char *buffer_flush(list_t *type, const char *target);
 char *buffer_tail(list_t *type);
 void buffer_free(list_t *type);
 

@@ -527,41 +527,6 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 	return ((list_add(type, b, 0) ? 0 : -1));
 }
 
-/* 
- * buffer_flush()
- *
- * zwraca zaalokowany ³ancuch zawieraj±cy wszystkie linie
- * z bufora danego typu.
- *
- *  - type,
- *  - target - dla kogo by³ bufor? NULL, je¶li olewamy.
- */
-char *buffer_flush(list_t *type, const char *target)
-{
-	string_t str = string_init(NULL);
-	list_t l;
-
-	for (l = *type; l; ) {
-		struct buffer *b = l->data;
-
-		l = l->next;
-
-		if (target && b->target && xstrcmp(target, b->target))
-			continue;
-
-		string_append(str, itoa(b->ts));
-		string_append_c(str, ' ');
-		string_append(str, b->line);
-		string_append_c(str, '\n');
-
-		xfree(b->line);
-		xfree(b->target);
-		list_remove(type, b, 1);
-	}
-
-	return string_free(str, 0);
-}
-
 /*
  * buffer_tail()
  *

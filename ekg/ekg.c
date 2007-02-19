@@ -271,7 +271,7 @@ void ekg_loop() {
                                         speech_pid = 0;
 
                                         if (!config_speech_app)
-                                                xfree(buffer_flush(&buffer_speech, NULL));
+                                                buffer_free(&buffer_speech);
 
                                         if (buffer_speech && !WEXITSTATUS(status)) {
                                                 char *str = buffer_tail(&buffer_speech);
