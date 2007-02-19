@@ -155,13 +155,17 @@ static QUERY(gg_userlist_info_handle) {
 		if (v == 0x22)
 			ver = ("6.0 (build >= 140)");
 		if (v == 0x24)
-			ver = ("6.1 (build >= 155)");
+			ver = ("6.1 (build >= 155) || 7.6 (build >= 1359)");
 		if (v == 0x25)
 			ver = ("7.0 (build >= 1)");
 		if (v == 0x26)
 			ver = ("7.0 (build >= 20)");
 		if (v == 0x27)
 			ver = ("7.0 (build >= 22)");
+		if (v == 0x28)
+			ver = ("7.5.0 (build >= 2201)");
+		if (v == 0x29)
+			ver = ("7.6 (build >= 1688)");
 		if (ver)
 			wcs_printq("user_info_version", ver);
 
