@@ -816,7 +816,6 @@ attach:
 static FILE* logs_open_file(char *path, int ff) {
 	char fullname[PATH_MAX+1];
 	int len;
-	int slash_pos = 0;
 #ifdef HAVE_ZLIB
 	int zlibmode = 0;
 #endif
@@ -834,36 +833,14 @@ static FILE* logs_open_file(char *path, int ff) {
 		return NULL;
 	}
 	xstrncpy(fullname, path, PATH_MAX);
+
+	if (mkdir_recursive(path, 0) && errno != EEXIST) {
+		print("directory_cant_create", path, strerror(errno));
+		return NULL;
+	}
+
 	len = xstrlen(path);
-	while (1) {
-		struct stat statbuf;
-		char *slash, *dir;
-
-		if (!(slash = xstrchr(path + slash_pos, '/'))) {
-			// nie ma juz slashy - zostala tylko nazwa pliku
-			break; // konczymy petle
-		};
-
-		slash_pos = slash - path + 1;
-		dir = xstrndup(path, slash_pos);
-
-		if (stat(dir, &statbuf) != 0 && 
-#ifndef NO_POSIX_SYSTEM
-				mkdir(dir, 0700) == -1
-#else
-				mkdir(dir) == -1
-#endif
-		   ) {
-
-			char *bo = saprintf("[logs_mkdir]: nie mo¿na %s bo %s", dir, strerror(errno));
-			print("generic_error",bo); // XXX usun±æ !! 
-			xfree(bo);
-			xfree(dir);
-			return NULL;
-		}
-		xfree(dir);
-	} // while 1
-
+	
 	if (len+5 < PATH_MAX) {
 		if (ff == LOG_FORMAT_IRSSI)		xstrcat(fullname, ".log");
 		else if (ff == LOG_FORMAT_SIMPLE)	xstrcat(fullname, ".txt");

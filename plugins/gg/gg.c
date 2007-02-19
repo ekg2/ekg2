@@ -871,8 +871,8 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 					gg_config_images_dir : 			/* dir specified by config */
 					prepare_path("images", 1);		/* (ekg_config)/images */
 
-		/* 1st, create directory, XXX here. do smth like mkdir_force() which create all nessesary subdirs.. */
-				if (mkdir(image_basedir, 0700) && errno != EEXIST) {
+		/* 1st, create directories.. */
+				if (mkdir_recursive(image_basedir, 1)) {
 					print("gg_image_cant_open_file", image_basedir, strerror(errno));
 					return;
 				}
