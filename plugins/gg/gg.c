@@ -1285,6 +1285,7 @@ int gg_plugin_init(int prio) {
 	plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
 	plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1, NULL);
+	plugin_var_add(&gg_plugin, "protocol", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0, NULL);
 	plugin_var_add(&gg_plugin, "proxy", VAR_STR, 0, 0, gg_changed_proxy);
 	plugin_var_add(&gg_plugin, "proxy_forwarding", VAR_STR, 0, 0, NULL);
