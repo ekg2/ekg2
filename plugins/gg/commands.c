@@ -86,7 +86,7 @@ static COMMAND(gg_command_connect) {
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
 	
-	if (!xstrcasecmp(name, ("disconnect")) || (!xstrcasecmp(name, ("reconnect")))) {
+	if (!xstrcmp(name, ("disconnect")) || (!xstrcmp(name, ("reconnect")))) {
 	        /* if ,,reconnect'' timer exists we should stop doing */
 	        if (timer_remove(&gg_plugin, "reconnect") == 0) {
 			wcs_printq("auto_reconnect_removed", session_name(session));
@@ -128,7 +128,7 @@ static COMMAND(gg_command_connect) {
 		}
 	}
 
-	if (!xstrcasecmp(name, ("connect")) || !xstrcasecmp(name, ("reconnect"))) {
+	if (!xstrcmp(name, ("connect")) || !xstrcmp(name, ("reconnect"))) {
 		struct gg_login_params p;
 		const char *tmp, *local_ip = session_get(session, "local_ip");
 		int tmpi;
@@ -329,7 +329,7 @@ static COMMAND(gg_command_away) {
 	if (xstrlen(params0))
 		session->scroll_pos = 0;
 
-	if (!xstrcasecmp(name, ("_autoscroll"))) {
+	if (!xstrcmp(name, ("_autoscroll"))) {
 		autoscroll = 1;
 		status = session_status_get(session);
 		if (!xstrcasecmp(status, EKG_STATUS_AWAY) ||
@@ -354,22 +354,22 @@ static COMMAND(gg_command_away) {
 				xfree(params0);
 				return -1;
 		}
-	} else if (!xstrcasecmp(name, ("away"))) {
+	} else if (!xstrcmp(name, ("away"))) {
 		session_status_set(session, EKG_STATUS_AWAY);
 		df = "away"; f = "away"; fd = "away_descr";
 		session_unidle(session);
-	} else if (!xstrcasecmp(name, ("_autoaway"))) {
+	} else if (!xstrcmp(name, ("_autoaway"))) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		df = "away"; f = "auto_away"; fd = "auto_away_descr";
-	} else if (!xstrcasecmp(name, ("back"))) {
+	} else if (!xstrcmp(name, ("back"))) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 		df = "back"; f = "back"; fd = "back_descr";
 		session_unidle(session);
-	} else if (!xstrcasecmp(name, ("_autoback"))) {
+	} else if (!xstrcmp(name, ("_autoback"))) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 		df = "back"; f = "auto_back"; fd = "auto_back_descr";
 		session_unidle(session);
-	} else if (!xstrcasecmp(name, ("invisible"))) {
+	} else if (!xstrcmp(name, ("invisible"))) {
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		df = "quit"; f = "invisible"; fd = "invisible_descr";
 		session_unidle(session);
@@ -503,7 +503,7 @@ static COMMAND(gg_command_msg) {
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
 
-	chat = (xstrcasecmp(name, ("msg")));
+	chat = (xstrcmp(name, ("msg")));
 
 	session_unidle(session);
 
@@ -1616,7 +1616,7 @@ static COMMAND(gg_command_modify) {
 		return -1;
 	}
 
-	if (xstrcasecmp(name, ("add"))) {
+	if (xstrcmp(name, ("add"))) {
 		switch (modified) {
 			case 0:
 				wcs_printq("not_enough_params", name);
@@ -1726,7 +1726,6 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:msg"), "!uUC !", gg_command_msg, 		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
 	command_add(&gg_plugin, ("gg:chat"), "!uUC !", gg_command_msg, 		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
 	command_add(&gg_plugin, ("gg:"), "?", gg_command_inline_msg, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:_descr"), "r", gg_command_away, 		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:away"), "r", gg_command_away, 		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:_autoaway"), "?", gg_command_away, 		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:back"), "r", gg_command_away, 		GG_ONLY, NULL);
