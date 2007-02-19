@@ -331,7 +331,7 @@ static void logs_changed_path(const char *var) {
 static void logs_changed_raw(const char *var) {
 	/* if logs:log_raw == 0, clean LOGRAW buffer */
 	if (!config_logs_log_raw) {
-		xfree(buffer_flush(&buffer_lograw, NULL));	/* i'm lazy */
+		buffer_free(&buffer_lograw);
 		buffer_lograw_tail = NULL;
 	}
 }
