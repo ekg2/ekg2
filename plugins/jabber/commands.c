@@ -474,7 +474,7 @@ static const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 static COMMAND(jabber_command_msg)
 {
 	jabber_private_t *j = session_private_get(session);
-	int chat = !xstrcasecmp(name, ("chat"));
+	int chat = !xstrcmp(name, ("chat"));
 	int subjectlen = xstrlen(config_subject_prefix);
 	char *msg;
 	char *subject = NULL;
