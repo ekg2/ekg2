@@ -76,6 +76,8 @@ PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
 
+static list_t buffer_lograw;
+
 static logs_log_t *log_curlog = NULL;
 
 	/* log ff types... */
@@ -328,7 +330,7 @@ static void logs_changed_path(const char *var) {
 static void logs_changed_raw(const char *var) {
 	/* if logs:log_raw == 0, clean LOGRAW buffer */
 	if (!config_logs_log_raw) 
-		xfree(buffer_flush(BUFFER_LOGRAW, NULL));	/* i'm lazy */
+		xfree(buffer_flush(&buffer_lograw, NULL));	/* i'm lazy */
 }
 
 static QUERY(logs_postinit) {
@@ -530,9 +532,8 @@ static int logs_buffer_raw_display(const char *file, int items) {
 
 	debug("[logs_buffer_raw_display()] s:0x%x; w:0x%x;\n", s, w);
 
-	for (l = buffers; l; l = l->next) {
+	for (l = buffer_lograw; l; l = l->next) {
 		struct buffer *b = l->data;
-		if (b->type != BUFFER_LOGRAW) continue;
 		if (!xstrcmp(b->target, file)) {
 			/* we asume that (b->ts < (b->next)->ts, it's quite correct unless other plugin do this trick... */
 			if (items == -1) { 
@@ -558,11 +559,11 @@ static int logs_buffer_raw_display(const char *file, int items) {
 static int logs_buffer_raw_add(const char *file, const char *str) {
 	/* XXX, get global maxsize variable and if > than current ..... */
 
-	return buffer_add(BUFFER_LOGRAW, file, str, 0);
+	return buffer_add(&buffer_lograw, file, str, 0);
 }
 
 static int logs_buffer_raw_add_line(const char *file, const char *line) {
-	return buffer_add_str(BUFFER_LOGRAW, file, line, 0);
+	return buffer_add_str(&buffer_lograw, file, line, 0);
 }
 
 static QUERY(logs_handler_newwin) {
@@ -680,7 +681,7 @@ static int logs_plugin_destroy() {
 		logs_away_display(a, 1, 1);
 	}
 
-	if (config_logs_log_raw) for (l = buffers; l;) {
+	if (config_logs_log_raw) for (l = buffer_lograw; l;) {
 		struct buffer *b = l->data;
 
 		static FILE *f = NULL;
@@ -692,28 +693,30 @@ static int logs_plugin_destroy() {
 		 */
 		l = l->next;
 
-		if (b->type == BUFFER_LOGRAW) {
-			if (f && !xstrcmp(b->target, oldtarget)); 		/* if file is already opened and current target match old one, use it */
-			else {
-				if (f) fclose(f);				/* close file */
-				f = logs_open_file(b->target, LOG_FORMAT_RAW);	/* otherwise try to open new file/reopen */
-			}
-
-			if (f) {
-				fprintf(f, "%i %s\n", (unsigned int) b->ts, b->line);
-			} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(b->target));
-
-			xfree(b->line);
-			xfree(oldtarget);
-			oldtarget = b->target;
-
-			list_remove(&buffers, b, 1);
+		if (f && !xstrcmp(b->target, oldtarget)); 		/* if file is already opened and current target match old one, use it */
+		else {
+			if (f) fclose(f);				/* close file */
+			f = logs_open_file(b->target, LOG_FORMAT_RAW);	/* otherwise try to open new file/reopen */
 		}
+
+		if (f) {
+			fprintf(f, "%i %s\n", (unsigned int) b->ts, b->line);
+		} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(b->target));
+
+		xfree(b->line);
+		xfree(oldtarget);
+		oldtarget = b->target;
+
+		list_remove(&buffer_lograw, b, 1);
+
 		if (!l) {
 			if (f) fclose(f);
 			xfree(oldtarget);
 		}
 	}
+	debug_error("[logs] 0x%x\n", buffer_lograw);
+	/* just in case */
+	buffer_free(&buffer_lograw);
 
 	plugin_unregister(&logs_plugin);
 	return 0;
