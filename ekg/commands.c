@@ -2376,6 +2376,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	char *p = NULL;
 	char *line_save = NULL, *line = NULL;
 	char *cmd = NULL, *tmp;
+	size_t cmdlen;
 
 	command_t *last_command = NULL;
 	command_t *last_command_plugin = NULL; /* niepotrzebne, ale ktos to napisal tak ze moze kiedys mialobyc potrzebne.. wiec zostaje. */
@@ -2452,6 +2453,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		*tmp = 0;
 		p = strip_spaces(p);
 	}
+	cmdlen = xstrlen(cmd);
 
 	/* poszukaj najpierw komendy dla danej sesji */
 	if (!session && session_current)
@@ -2472,7 +2474,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				break;
 			}
 
-			if (!xstrncasecmp(c->name + plen, cmd, xstrlen(cmd))) {
+			if (!xstrncasecmp(c->name + plen, cmd, cmdlen)) {
 				last_command_plugin = c;
 				abbrs_plugins++;
 			} else {
@@ -2494,7 +2496,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				last_command_plugin = NULL;
 				break;
 			}
-			if (!xstrncasecmp(c->name, cmd, xstrlen(cmd))) {
+			if (!xstrncasecmp(c->name, cmd, cmdlen)) {
 				last_command = c;
 		    		abbrs++;
 			} else {
@@ -2607,9 +2609,9 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		return res;
 	}
 
-	if (xstrcmp(cmd, (""))) {
+	if (cmdlen) {	/* if not empty command typed: ("") and we didn't found handler for it... [was: xstrcmp(cmd, "")] */
 		quiet = quiet & 2;
-		wcs_printq("unknown_command", cmd);
+		printq("unknown_command", cmd);	/* display warning, if !(quiet & 2) */
 	}
 
 	xfree(line_save);
