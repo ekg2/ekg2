@@ -109,7 +109,7 @@ static int emoticon_remove(const char *name)
 int emoticon_read()
 {
 	const char *filename;
-	char *buf, **emot;
+	char *buf;
 	FILE *f;
 
 	if (!(filename = prepare_path("emoticons", 0)))
@@ -118,12 +118,11 @@ int emoticon_read()
 	if (!(f = fopen(filename, "r")))
 		return -1;
 
-	while ((buf = read_file(f))) {
+	while ((buf = read_file(f, 0))) {
+		char **emot;
 	
-		if (buf[0] == '#') {
-			xfree(buf);
+		if (buf[0] == '#')
 			continue;
-		}
 
 		emot = array_make(buf, "\t", 2, 1, 1);
 	
@@ -131,7 +130,6 @@ int emoticon_read()
 			emoticon_add(emot[0], emot[1]);
 
 		array_free(emot);
-		xfree(buf);
 	}
 	
 	fclose(f);

@@ -232,15 +232,11 @@ int userlist_read(session_t *session)
         if (!(f = fopen(filename, "r")))
                 return -1;
                         
-        while ((buf = read_file(f))) {
-                if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/')) {
-                        xfree(buf);
+        while ((buf = read_file(f, 0))) {
+                if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/'))
                         continue;
-                }
                 
-                userlist_add_entry(session,buf);
-        
-                xfree(buf);
+                userlist_add_entry(session, buf);
         }
 
         fclose(f);

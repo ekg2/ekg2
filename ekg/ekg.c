@@ -1198,6 +1198,8 @@ watches_again:
 	buffer_free(&buffer_debug);	buffer_free(&buffer_speech);
 	event_free();
 
+	xfree(read_file(NULL, -1));	/* free internal read_file() buffer */
+
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 

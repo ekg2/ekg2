@@ -1489,22 +1489,18 @@ char *random_line(const char *path)
 	if ((f = fopen(path, "r")) == NULL)
 		return NULL;
 	
-	while ((line = read_file(f))) {
-		xfree(line);
+	while ((line = read_file(f, 0)))
 		max++;
-	}
-
-	rewind(f);
 
 	if (max) {
+		rewind(f);
 		item = rand() / (RAND_MAX / max + 1);
 
-		while ((line = read_file(f))) {
+		while ((line = read_file(f, (tmp == item)))) {	/* read_file(f, 0) + xstrdup() if needed? */
 			if (tmp == item) {
 				fclose(f);
 				return line;
 			}
-			xfree(line);
 			tmp++;
 		}
 	}
@@ -1518,11 +1514,27 @@ char *random_line(const char *path)
  *
  * czyta i zwraca linijkê tekstu z pliku, alokuj±c przy tym odpowiedni buforek.
  * usuwa znaki koñca linii.
+ *
+ * !!! gdy read_file(f, 0) nie nalezy robic xfree() po przetworzeniu wyniku.. !!!
+ * !!! jesli wywolujesz kilka razy read_file() i potrzebujesz znac wczesniejsze wyniku !!!
+ * !!! uzywaj read_file(f, 1) i potem _zawsze_ zwalniaj wynik, chyba ze chcesz zeby !!!
+ * !!! twoj kod memleakowal !!!
  */
-char *read_file(FILE *f)
-{
-	char buf[1024], *res = NULL;
+char *read_file(FILE *f, int alloc) {
+	static char buf[1024];
+	static char *reres = NULL;
+
+	char *res = NULL;
+
 	size_t reslen = 0;
+
+	int isnewline = 0;
+
+	if (alloc == -1) {
+		res = reres;
+		reres = NULL;
+		return res;
+	}
 
 	if (!f)
 		return NULL;
@@ -1530,18 +1542,22 @@ char *read_file(FILE *f)
 	while (fgets(buf, sizeof(buf), f)) {
 		size_t new_size = reslen + xstrlen(buf);
 
-		res = xrealloc(res, new_size+1);
+		if (xstrchr(buf, '\n')) {
+			isnewline = 1;
+			if (!reslen) {
+				res = buf;
+				reslen = new_size;
+				break;
+			}
+		}
+
+		res = reres = xrealloc(reres, new_size+1);
 		xstrcpy(res + reslen, buf);
 
 		reslen = new_size;
-		if (xstrchr(buf, '\n'))
+		if (isnewline)
 			break;
 	}
-
-/*
-	if (!reslen && res)
-		res[0] = '\0';
-*/
 
 	if (reslen > 0 && res[reslen - 1] == '\n') {
 		res[reslen - 1] = 0;
@@ -1553,7 +1569,7 @@ char *read_file(FILE *f)
 /*		reslen--;	*/
 	}
 
-	return res;
+	return (alloc) ? xstrdup(res) : res;
 }
 
 /*

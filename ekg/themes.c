@@ -877,7 +877,7 @@ int theme_read(const char *filename, int replace) {
 	}
 	/*      ui_event("theme_init"); */
 
-	while ((buf = read_file(f))) {
+	while ((buf = read_file(f, 0))) {
 		char *value;
 
 		if (buf[0] == '-') 			format_remove(buf + 1);
@@ -899,7 +899,6 @@ int theme_read(const char *filename, int replace) {
 
 			format_add(buf, value, replace);
 		}
-		xfree(buf);
 	}
 
 	fclose(f);

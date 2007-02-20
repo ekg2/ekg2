@@ -312,7 +312,7 @@ int play_sound(const char *sound_path);
 
 const char *prepare_path(const char *filename, int do_mkdir);
 char *random_line(const char *path);
-char *read_file(FILE *f);
+char *read_file(FILE *f, int alloc);
 
 const char *timestamp(const char *format);
 void unidle();

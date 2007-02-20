@@ -650,14 +650,11 @@ void variable_help(const char *name)
 		seeking_name = name;
 	}
 
-	while ((line = read_file(f))) {
+	while ((line = read_file(f, 0))) {
 		if (!xstrcasecmp(line, seeking_name)) {
 			found = 1;
-			xfree(line);
 			break;
 		}
-
-		xfree(line);
 	}
 
 	if (!found) {
@@ -666,37 +663,30 @@ void variable_help(const char *name)
 		return;
 	}
 
-	line = read_file(f);
+	line = read_file(f, 0);
 	
 	if ((tmp = xstrstr(line, (": "))))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup(("?"));
 	
-	xfree(line);
-
-	tmp = NULL;
-	
-	line = read_file(f);
+	line = read_file(f, 0);
 	if ((tmp = xstrstr(line, (": "))))
 		def = xstrdup(tmp + 2);
 	else
 		def = xstrdup(("?"));
-	xfree(line);
 
 	wcs_print("help_set_header", name, type, def);
 
 	xfree(type);
 	xfree(def);
 
-	if (tmp)			/* je¶li nie jest to ukryta zmienna... */
-		xfree(read_file(f));	/* ... pomijamy liniê */
+	if (tmp)		/* je¶li nie jest to ukryta zmienna... */
+		read_file(f, 0);	/* ... pomijamy liniê */
 	s = string_init(NULL);
-	while ((line = read_file(f))) {
-		if (line[0] != '\t') {
-			xfree(line);
+	while ((line = read_file(f, 0))) {
+		if (line[0] != '\t')
 			break;
-		}
 
 		if (!xstrncmp(line, ("\t- "), 3) && xstrcmp(s->str, (""))) {
 			wcs_print("help_set_body", s->str);
@@ -712,8 +702,6 @@ void variable_help(const char *name)
 
 		if (line[xstrlen(line) - 1] != ' ')
 			string_append_c(s, ' ');
-
-		xfree(line);
 	}
 
 	if (xstrcmp(s->str, ("")))

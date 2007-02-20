@@ -616,7 +616,7 @@ int metacontact_read()
         if (!(f = fopen(prepare_path("metacontacts", 0), "r")))
                 return -1;
 
-        while ((line = read_file(f))) {
+        while ((line = read_file(f, 0))) {
                 char *tmp;
 		char **array = NULL;
 
@@ -624,12 +624,12 @@ int metacontact_read()
                         tmp = xstrchr(line, ']');
 
                         if (!tmp)
-                                goto next;
+                                continue;
 
                         *tmp = 0;
                         m = metacontact_add(line + 1);
 
-                        goto next;
+			continue;
                 } 
 
 		array = array_make(line, " ", 3, 1, 1);
@@ -638,11 +638,10 @@ int metacontact_read()
 			debug("		metacontact_read: wrong number of forms\n");
 			goto next;
 		}
-			
+
 		metacontact_add_item(m, array[0], array[1], atoi(array[2]), 1);
 next:
 		array_free(array);
-                xfree(line);
         }
 
         fclose(f);

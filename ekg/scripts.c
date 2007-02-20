@@ -424,10 +424,8 @@ int script_variables_read() {
 		return -1;
 	}
 	
-        while ((line = read_file(f))) {
+        while ((line = read_file(f, 0)))
 		script_var_add(NULL, NULL, line, NULL, NULL);
-                xfree(line);
-        }
 
         fclose(f);
 	return 0;

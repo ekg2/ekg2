@@ -323,27 +323,25 @@ int msg_queue_read()
 
 		memset(&m, 0, sizeof(m));
 
-		buf = read_file(f);
+		buf = read_file(f, 0);
 
 		if (!buf || xstrcmp(buf, "v1")) {
-			xfree(buf);
 			fclose(f);
 			continue;
 		}
-		xfree(buf);
 
-		if (!(m.session = read_file(f))) {
+		if (!(m.session = read_file(f, 1))) {
 			fclose(f);
 			continue;
 		}
 	
-		if (!(m.rcpts = read_file(f))) {
+		if (!(m.rcpts = read_file(f, 1))) {
 			xfree(m.session);
 			fclose(f);
 			continue;
 		}
 
-		if (!(buf = read_file(f))) {
+		if (!(buf = read_file(f, 0))) {
 			xfree(m.session);
 			xfree(m.rcpts);
 			fclose(f);
@@ -351,9 +349,8 @@ int msg_queue_read()
 		}
 
 		m.time = atoi(buf);
-		xfree(buf);
 
-		if (!(m.seq = read_file(f))) {
+		if (!(m.seq = read_file(f, 1))) {
 			xfree(m.session);
 			xfree(m.rcpts);
 			fclose(f);
@@ -362,12 +359,11 @@ int msg_queue_read()
 		
 		msg = string_init(NULL);
 
-		buf = read_file(f);
+		buf = read_file(f, 0);
 
 		while (buf) {
 			string_append(msg, buf);
-			xfree(buf);
-			buf = read_file(f);
+			buf = read_file(f, 0);
 			if (buf)
 				string_append(msg, "\r\n");
 		}

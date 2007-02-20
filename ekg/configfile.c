@@ -138,11 +138,9 @@ int config_read_plugins()
 	
 	check_file();
 
-	while ((buf = read_file(f))) {
-                if (!(foo = xstrchr(buf, (' ')))) {
-                        xfree(buf);
+	while ((buf = read_file(f, 0))) {
+                if (!(foo = xstrchr(buf, (' '))))
                         continue;
-                }
 
                 *foo++ = 0;
 
@@ -154,7 +152,6 @@ int config_read_plugins()
 
 			array_free(p);
                 }
-		xfree(buf);
 	}
 	fclose(f);
 
@@ -194,19 +191,15 @@ int config_read(const char *filename)
 
         check_file();
 
-	while ((buf = read_file(f))) {
+	while ((buf = read_file(f, 0))) {
 		ret = 0;
 		i++;
 
-		if (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/')) {
-			xfree(buf);
+		if (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/'))
 			continue;
-		}
 
-		if (!(foo = xstrchr(buf, ' '))) {
-			xfree(buf);
+		if (!(foo = xstrchr(buf, ' ')))
 			continue;
-		}
 
 		*foo++ = 0;
                 if (!xstrcasecmp(buf, ("set"))) {
@@ -257,7 +250,6 @@ int config_read(const char *filename)
 			array_free(pms);
 
 		} else if (!xstrcasecmp(buf, ("bind"))) {
-			xfree(buf);
 			continue;
 		} else if (!xstrcasecmp(buf, ("at"))) {
 			char **p = array_make(foo, (" \t"), 2, 1, 0);
@@ -313,12 +305,8 @@ int config_read(const char *filename)
 		if (!ret)
 			good_file = 1;
 
-		if (!good_file && i > 100) {
-			xfree(buf);
+		if (!good_file && i > 100)
 			break;
-		}
-
-		xfree(buf);
 	}
 	
 	fclose(f);
@@ -585,7 +573,7 @@ int config_write_partly(const char *filename, const char **vars)
 	
 	fchmod(fileno(fo), 0600);
 
-	while ((line = read_file(fi))) {
+	while ((line = read_file(fi, 0))) {
 		char *tmp;
 
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
@@ -621,18 +609,13 @@ int config_write_partly(const char *filename, const char **vars)
 
 			wrote[i] = 1;
 			
-			xfree(line);
 			line = NULL;
-			
 			break;
 		}
 
-		if (!line)
-			continue;
-
 pass:
-		fprintf(fo, "%s\n", line);
-		xfree(line);
+		if (line)
+			fprintf(fo, "%s\n", line);
 	}
 
 	for (i = 0; vars[i]; i++) {
