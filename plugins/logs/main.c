@@ -599,11 +599,10 @@ static QUERY(logs_handler_newwin) {
 			xfree(path);
 			return 0;
 		}
+
 		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
-		while ((line = read_file(f))) {
+		while ((line = read_file(f, 0)))
 			logs_buffer_raw_add_line(path, line);
-			xfree(line);
-		}
 
 		ftruncate(fileno(f), 0);	/* works? */
 		fclose(f);

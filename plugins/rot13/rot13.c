@@ -224,7 +224,7 @@ static QUERY(rot13_setvar_default) {
 	
 	if ((f = fopen(path, "r"))) {
 		char *tmp;
-		while ((tmp = read_file(f))) {
+		while ((tmp = read_file(f, 0))) {
 			char **arr = array_make(tmp, " ", 0, 1, 1);
 			
 			if (arr[0] && arr[1] && arr[2] && arr[3] && !arr[4]) {
@@ -235,7 +235,6 @@ static QUERY(rot13_setvar_default) {
 				debug("rot13_setvar_default() failed to parse line: %s\n", tmp);
 				array_free(arr);
 			}
-			xfree(tmp);
 		}
 		fclose(f);
 	} else debug("rot13_setvar_default() failed to open: %s errno: %d\n", path, errno);

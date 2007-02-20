@@ -229,7 +229,7 @@ static int check_mail_mbox()
 	}
 
 	if (!pid) {	/* born to be wild */
-		char *s = NULL, *line = NULL;
+		char *s = NULL, *line;
 		int f_new = 0, new = 0, in_header = 0, i = 0;
 		FILE *f;
 		struct stat st;
@@ -247,9 +247,7 @@ static int check_mail_mbox()
 			if (stat(m->fname, &st) || !(f = fopen(m->fname, "r")))
 				continue;
 
-			while ((line = read_file(f))) {
-				char *line_save = line;
-
+			while ((line = read_file(f, 0))) {
 				if (!strncmp(line, "From ", 5)) {
 					in_header = 1;
 					f_new++;
@@ -258,12 +256,10 @@ static int check_mail_mbox()
 				if (in_header && (!strncmp(line, "Status: RO", 10) || !strncmp(line, "Status: O", 9))) 
 					f_new--;	
 
-				strip_spaces(line);
+				line = strip_spaces(line);
 
 				if (xstrlen(line) == 0)
 					in_header = 0;
-
-				xfree(line_save);
 			}
 
 			fclose(f);

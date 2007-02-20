@@ -645,7 +645,7 @@ int gpg_plugin_init(int prio) {
 		const char *dbfile = prepare_path("keys/gpgkeydb.txt", 1);
 		if ((f = fopen(dbfile, "r"))) {
 			char *line;
-			while ((line = read_file(f))) {
+			while ((line = read_file(f, 0))) {
 				char **p = array_make(line, "\t", 3, 0, 0);
 				
 				if (p && p[0] && p[1] && p[2]) {
@@ -655,7 +655,6 @@ int gpg_plugin_init(int prio) {
 				} else debug_error("[GPG] INVALID LINE: %s\n", line);
 
 				array_free(p);
-				xfree(line);
 			}
 			fclose(f);
 		} else debug_error("[GPG] Opening of %s failed: %d %s.\n", dbfile, errno, strerror(errno));
