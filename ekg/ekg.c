@@ -144,7 +144,7 @@ int no_mouse = 0;
 void ekg_loop() {
 	struct timeval tv;
         struct timeval stv;
-        list_t l, m;
+        list_t l;
         fd_set rd, wd;
         int ret, maxfd, pid, status;
 
@@ -259,10 +259,10 @@ void ekg_loop() {
                 while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
                         debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
 
-                        for (l = children; l; l = m) {
+                        for (l = children; l;) {
                                 child_t *c = l->data;
 
-                                m = l->next;
+                                l = l->next;
 
                                 if (pid != c->pid)
                                         continue;
@@ -1100,6 +1100,7 @@ void ekg_exit()
 #endif
 		xfree(c->name);
 	}
+	list_destroy(children, 1);	children = NULL;
 
 watches_again:
 	ekg_watches_removed = 0;
@@ -1128,8 +1129,7 @@ watches_again:
 
 		if (p->dl) ekg2_dlclose(p->dl);
 	}
-
-	list_destroy(watches, 0);
+	list_destroy(watches, 0);	/* watches = NULL; */
 
 	if (config_changed && !config_speech_app && config_save_quit == 1) {
 		char line[80];
