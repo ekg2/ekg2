@@ -63,7 +63,7 @@ typedef struct {
 	uint16_t dstport;
 } connection_t;
 
-static char *build_code(const char *code) {
+static char *build_code(const unsigned char *code) {
 	static char buf[100];
 
 	sprintf(buf, "%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x", 
@@ -271,6 +271,11 @@ typedef int (*sniff_handler_t)(session_t *, const connection_t *, const unsigned
 		debug_error("%s()  * READ less than: %d (len: %d) (%s)\n", __FUNCTION__, x, len, #x);\
 		return -1;\
 	}
+
+SNIFF_HANDLER(sniff_print_payload, unsigned) {
+	tcp_print_payload((u_char *) pkt, len);
+	return 0;
+}
 
 SNIFF_HANDLER(sniff_gg_recv_msg, gg_recv_msg) {
 	const char *sender;
@@ -625,36 +630,78 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 typedef struct {
 	uint32_t uid;
 	unsigned char code1[8];
-	uint32_t dunno1;
-} gg_dcc_reject_in;
+	uint32_t dunno1;		/* known values: 0x02 -> rejected, 0x06 -> invalid version (6.x) */
+} GG_PACKED gg_dcc_reject;
 
-SNIFF_HANDLER(sniff_gg_dcc_reject_in, gg_dcc_reject_in) {
-	if (len != sizeof(gg_dcc_reject_in)) {
+SNIFF_HANDLER(sniff_gg_dcc_reject_in, gg_dcc_reject) {
+	if (len != sizeof(gg_dcc_reject)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
 
-	debug("sniff_gg_dcc_reject_in() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
+	debug_error("XXX sniff_gg_dcc_reject_in() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
 
 	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
 	return 0;
 }
 
-typedef struct {
-	uint32_t uid;
-	unsigned char code1[8];
-	uint32_t dunno1;
-} gg_dcc_reject_out;
-
-SNIFF_HANDLER(sniff_gg_dcc_reject_out, gg_dcc_reject_out) {
-	if (len != sizeof(gg_dcc_reject_out)) {
+SNIFF_HANDLER(sniff_gg_dcc_reject_out, gg_dcc_reject) {
+	if (len != sizeof(gg_dcc_reject)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
 
-	debug("sniff_gg_dcc_reject_out() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
+	debug_error("XXX sniff_gg_dcc_reject_out() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
 
 	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
+	return 0;
+}
+
+#define GG_DCC_1XXX 0x21
+
+typedef struct {
+	uint32_t uin;
+	unsigned char code1[8];
+	uint32_t emp1;
+	uint32_t emp2;
+} GG_PACKED gg_dcc_1xx;
+
+SNIFF_HANDLER(sniff_gg_dcc1xx, gg_dcc_1xx) {
+
+
+	return 0;
+}
+
+#define GG_DCC_2XXX 0x1f
+#define GG_DCC_3XXX 0x24
+
+
+#define GG_DCC_4XXX 0x25
+typedef struct {
+	unsigned char code1[8];
+} GG_PACKED gg_dcc_4xx_in;
+
+SNIFF_HANDLER(sniff_gg_dcc_4xx_in, gg_dcc_4xx_in) {
+	if (len != sizeof(gg_dcc_4xx_in)) {
+		tcp_print_payload((u_char *) pkt, len);
+		return -1;
+	}
+	debug_error("XXX sniff_gg_dcc_4xx_in() code: %s\n", build_code(pkt->code1));
+	return 0;
+}
+
+typedef struct {
+	unsigned char code1[8];
+	uint32_t uin1;
+	uint32_t uin2;
+} GG_PACKED gg_dcc_4xx_out;
+
+SNIFF_HANDLER(sniff_gg_dcc_4xx_out, gg_dcc_4xx_out) {
+	if (len != sizeof(gg_dcc_4xx_out)) {
+		tcp_print_payload((u_char *) pkt, len);
+		return -1;
+	}
+	debug_error("XXX sniff_gg_dcc_4xx_out() uin1: %d uin2: %d code: %s\n", pkt->uin1, pkt->uin2, build_code(pkt->code1));
 	return 0;
 }
 
@@ -698,6 +745,17 @@ static const struct {
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_OUTGOING, (void *) sniff_gg_dcc_new_request_id_out, 0},
 	{ GG_DCC_REJECT_XXX,	"GG_DCC_REJECT ?",	SNIFF_INCOMING, (void *) sniff_gg_dcc_reject_in, 0},
 	{ GG_DCC_REJECT_XXX,	"GG_DCC_REJECT ?",	SNIFF_OUTGOING, (void *) sniff_gg_dcc_reject_out, 0},
+/* unknown, 0x21 */
+	{ GG_DCC_1XXX,		"GG_DCC_1XXX",		SNIFF_INCOMING, (void *) sniff_print_payload, 0}, 
+	{ GG_DCC_1XXX,		"GG_DCC_1XXX",		SNIFF_OUTGOING, (void *) sniff_print_payload, 0}, 
+/* unknown, 0x1f */
+	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_INCOMING, (void *) sniff_print_payload, 0},
+	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_OUTGOING, (void *) sniff_print_payload, 0},
+/* unknown, 0x24 */
+	{ GG_DCC_3XXX,		"GG_DCC_3XXX",		SNIFF_OUTGOING, (void *) sniff_print_payload, 0},
+/* unknown, 0x25 */
+	{ GG_DCC_4XXX,		"GG_DCC_4XXX",		SNIFF_INCOMING, (void *) sniff_gg_dcc_4xx_in, 0},
+	{ GG_DCC_4XXX,		"GG_DCC_4XXX",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_4xx_out, 0},
 
 	{ -1,		NULL,		-1,		(void *) NULL, 0},
 };
