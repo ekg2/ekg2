@@ -525,6 +525,97 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 	return -5;
 }
 
+/* nie w libgadu */
+#define CHECK_PRINT(is, shouldbe) if (is != shouldbe) \
+		debug_error("%s() values not match: %s [%x != %x]\n", __FUNCTION__, #is, is, shouldbe)
+	
+#define GG_DCC_NEW_REQUEST_ID 0x23
+typedef struct {
+	uint32_t type;		/* 04 00 00 00 */
+} GG_PACKED gg_dcc_new_request_id_out;
+
+SNIFF_HANDLER(sniff_gg_dcc_new_request_id_out, gg_dcc_new_request_id_out) {
+	if (len != sizeof(gg_dcc_new_request_id_out)) {
+		tcp_print_payload((u_char *) pkt, len);
+		return -1;
+	}
+
+	CHECK_PRINT(pkt->type, htonl(0x04000000));
+	return 0;
+}
+
+typedef struct {
+	uint32_t type;
+	unsigned char code1[8];
+} GG_PACKED gg_dcc_new_request_id_in;
+
+SNIFF_HANDLER(sniff_gg_dcc_new_request_id_in, gg_dcc_new_request_id_in) {
+	if (len != sizeof(gg_dcc_new_request_id_in)) {
+		tcp_print_payload((u_char *) pkt, len);
+		return -1;
+	}
+
+	CHECK_PRINT(pkt->type, htonl(0x04000000));
+	debug("sniff_gg_dcc_new_request_id_in() code: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+			pkt->code1[0], pkt->code1[1], pkt->code1[2], pkt->code1[3],
+			pkt->code1[4], pkt->code1[5], pkt->code1[6], pkt->code1[7]);
+
+	return 0;
+}
+
+#define GG_DCC_NEW 0x20
+typedef struct {
+	unsigned char code1[8];
+	uint32_t uin1;		/* LE, from */
+	uint32_t uin2;		/* LE, to */
+	uint32_t dunno1;	/* 04 00 00 00 */
+	unsigned char filename[226];
+	uint16_t emp1;		/* 00 00 */
+	uint16_t dunno2;	/* 10 00 */
+	uint16_t emp2;		/* 00 00 */
+	uint32_t dunno3;	/* unknown */
+	uint32_t emp3;		/* 00 00 00 00 */
+	uint32_t dunno4;	/* b4 e5 32 00 */
+	uint32_t dunno5;	/* 8e d0 4c 00 */
+	uint32_t dunno6;	/* 10 00 00 00 */
+	uint16_t dunno7;	/* unknown */
+	uint8_t dunno8;		/* unknown */
+	uint32_t size;		/* rozmiar, LE */
+	uint32_t emp4;		/* 00 00 00 00 */
+	unsigned char hash[20];	/* hash w sha1 */
+} GG_PACKED gg_dcc_new;
+
+SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
+	char *fname;
+	CHECK_LEN(sizeof(gg_dcc_new));	len -= sizeof(gg_dcc_new);
+	
+/* print known data: */
+	fname = xstrndup(pkt->filename, 226);
+	debug("sniff_gg_dcc_new() code: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x uin1: %d uin2: %d fname: %s [%db]\n", 
+		pkt->code1[0], pkt->code1[1], pkt->code1[2], pkt->code1[3],
+		pkt->code1[4], pkt->code1[5], pkt->code1[6], pkt->code1[7],
+		pkt->uin1, pkt->uin2, fname, pkt->size);
+	xfree(fname);
+
+/* CHECK unknown vals.. */
+	/* these are known as 0 */
+	CHECK_PRINT(pkt->emp1, 0);
+	CHECK_PRINT(pkt->emp2, 0);
+	CHECK_PRINT(pkt->emp3, 0);
+	CHECK_PRINT(pkt->emp4, 0);
+
+	CHECK_PRINT(pkt->dunno1, htonl(0x04000000));
+	CHECK_PRINT(pkt->dunno2, htons(0x1000));
+	CHECK_PRINT(pkt->dunno3, !pkt->dunno3);
+	CHECK_PRINT(pkt->dunno4, htonl(0xb4e53200));
+	CHECK_PRINT(pkt->dunno5, htonl(0x8ed04c00));
+	CHECK_PRINT(pkt->dunno6, htonl(0x10000000));
+	CHECK_PRINT(pkt->dunno7, !pkt->dunno7);
+	CHECK_PRINT(pkt->dunno8, !pkt->dunno8);
+	return 0;
+}
+#undef CHECK_PRINT
+
 typedef enum {
 	SNIFF_OUTGOING = 0,
 	SNIFF_INCOMING
@@ -555,6 +646,12 @@ static const struct {
 	{ GG_ADD_NOTIFY,	"GG_ADD_NOTIFY",	SNIFF_OUTGOING, (void *) sniff_gg_add_notify, 0},
 	{ GG_REMOVE_NOTIFY,	"GG_REMOVE_NOTIFY", 	SNIFF_OUTGOING, (void *) sniff_gg_del_notify, 0},
 	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_notify_reply60, 0}, 
+
+/* pakiety nie w libgadu: */
+	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc_new, 0}, 
+	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
+	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_INCOMING, (void *) sniff_gg_dcc_new_request_id_in, 0},
+	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_OUTGOING, (void *) sniff_gg_dcc_new_request_id_out, 0},
 
 	{ -1,		NULL,		-1,		(void *) NULL, 0},
 };
