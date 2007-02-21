@@ -73,6 +73,16 @@ static char *build_code(const unsigned char *code) {
 	return buf;
 }
 
+static char *build_sha1(const unsigned char *digest) {
+	static char result[40];
+	int i;
+
+	for (i = 0; i < 20; i++)
+		sprintf(result + (i * 2), "%.2x", digest[i]);
+
+	return &result[0];
+}
+
 static char *build_hex(uint32_t hex) {
 	static char buf[20];
 
@@ -743,6 +753,12 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
 	debug("sniff_gg_login70() ip: %d:%d\n", pkt->local_ip, pkt->local_port);
 
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login70",
+
+			build_gg_uid(pkt->uin),
+			build_sha1(pkt->hash));
+
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, 
 			ekg_status_label(status, descr, "status_"), /* formatka */
 
@@ -1098,6 +1114,7 @@ static int sniff_theme_init() {
 /* sniff gg */
 	format_add("sniff_gg_welcome",	_("%) [GG_WELCOME] SEED: %1"), 1);
 	format_add("sniff_gg_login60",	_("%) [GG_LOGIN60] UIN: %1 HASH: %2"), 1);
+	format_add("sniff_gg_login70",	_("%) [GG_LOGIN70] UIN: %1 HASH: %2"), 1);
 	format_add("sniff_gg_addnotify",_("%) [GG_ADD_NOTIFY] UIN: %1 DATA: %2"), 1);
 	format_add("sniff_gg_delnotify",_("%) [GG_REMOVE_NOTIFY] UIN: %1 DATA: %2"), 1);
 /* stats */
