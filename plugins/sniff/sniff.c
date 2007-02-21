@@ -196,6 +196,43 @@ static unsigned char *gg_cp_to_iso(unsigned char *buf) {
 	return tmp;
 }
 
+static void tcp_print_payload(u_char *payload, size_t len) {
+	#define MAX_BYTES_PER_LINE 16
+        int offset = 0;
+
+	while (1) {
+		int display_len;
+		int i;
+
+		if (len <= 0) 
+			break;
+		
+		if (len > MAX_BYTES_PER_LINE)
+			display_len = MAX_BYTES_PER_LINE;
+		else	display_len = len;
+	
+	/* offset */
+        	debug_iorecv("\t0x%.4x  ", offset);
+	/* hexdump */
+		for(i = 0; i < MAX_BYTES_PER_LINE; i++) {
+			if (i < display_len)
+				debug_iorecv("%.2x ", payload[i]);
+			else	debug_iorecv("   ");
+		}
+	/* seperate */
+		debug_iorecv("   ");
+
+	/* asciidump if printable, else '.' */
+		for(i = 0; i < display_len; i++)
+			debug_iorecv("%c", isprint(payload[i]) ? payload[i] : '.');
+		debug_iorecv("\n");
+
+		payload	+= display_len;
+		offset	+= display_len;
+		len 	-= display_len;
+	}
+}
+
 static char *tcp_print_flags(u_char tcpflag) {
 	static char buf[60];
 
@@ -547,7 +584,7 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 	}
 	if (!handled) {
 		debug_error("sniff_gg() UNHANDLED pkt type: %x way: %d len: %db\n", pkt->type, way, pkt->len);
-	/*	print_payload(gg_hdr->pakiet, gg_hdr->len); */
+		tcp_print_payload((u_char *) pkt->data, pkt->len);
 	}
 
 	if (len > pkt->len) {
