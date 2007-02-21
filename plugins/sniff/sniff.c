@@ -50,7 +50,6 @@
 static int sniff_theme_init();
 PLUGIN_DEFINE(sniff, PLUGIN_PROTOCOL, sniff_theme_init);
 
-#define DEVICE "eth0"
 #define SNAPLEN 2000
 #define PROMISC 0
 
@@ -355,10 +354,10 @@ SNIFF_HANDLER(sniff_gg_new_status, gg_new_status) {
 
 	if (!xstrcmp(status, EKG_STATUS_AVAIL)) 		status = "back";
 	else if (!xstrcmp(status, EKG_STATUS_AWAY))		status = "away";
-	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	status = "invsible";
+	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	status = "invisible";
 	else {
 /* XXX, rozlaczony */
-		debug_error("sniff_gg_new_status() bad status: %s\n", status);
+		debug_error("sniff_gg_new_status() XXX bad status: %s\n", status);
 		return -5;
 	}
 
@@ -426,14 +425,66 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 }
 
 SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
+	const char *status;
+	char *descr;
+	int has_descr = 0;
+	int has_time = 0;
+
 	CHECK_LEN(sizeof(gg_login60))	len -= sizeof(gg_login60);
+
+	status = gg_status_to_text(pkt->status, &has_descr);
+	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+
+	if (!has_descr && len > 0) 
+		debug_error("sniff_gg_login60() !has_descr but len > 0?!\n");
+
+	if (has_time)
+		debug_error("sniff_gg_login60() HAS_TIME?!\n");
 
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
 			"sniff_gg_login60",
 
 			build_gg_uid(pkt->uin),
 			build_hex(pkt->hash));
+	
 
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
+			ekg_status_label(status, descr, "status_"), /* formatka */
+
+			format_user(s, build_gg_uid(pkt->uin)),		/* od */
+			NULL, 						/* nickname, realname */
+			session_name(s), 				/* XXX! do */
+			descr);						/* status */
+	
+	xfree(descr);
+	return 0;
+}
+
+SNIFF_HANDLER(sniff_gg_add_notify, gg_add_remove) {
+	CHECK_LEN(sizeof(gg_add_remove));	len -= sizeof(gg_add_remove);
+
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_addnotify",
+
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->dunno1));
+	return 0;
+}
+
+SNIFF_HANDLER(sniff_gg_del_notify, gg_add_remove) {
+	CHECK_LEN(sizeof(gg_add_remove));	len -= sizeof(gg_add_remove);
+
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_delnotify",
+
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->dunno1));
+	return 0;
+}
+
+SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
+	CHECK_LEN(sizeof(gg_notify_reply60));	len -= sizeof(gg_notify_reply60);
+	debug_error("sniff_notify_reply60() XXX\n");
 	return -5;
 }
 
@@ -463,6 +514,11 @@ static const struct {
 	{ GG_STATUS60,	"GG_STATUS60",	SNIFF_INCOMING, (void *) sniff_gg_status60, 0},
 	{ GG_NEED_EMAIL,"GG_NEED_EMAIL",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
 	{ GG_LOGIN60,	"GG_LOGIN60",	SNIFF_OUTGOING, (void *) sniff_gg_login60, 0},
+
+	{ GG_ADD_NOTIFY,	"GG_ADD_NOTIFY",	SNIFF_OUTGOING, (void *) sniff_gg_add_notify, 0},
+	{ GG_REMOVE_NOTIFY,	"GG_REMOVE_NOTIFY", 	SNIFF_OUTGOING, (void *) sniff_gg_del_notify, 0},
+	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_notify_reply60, 0}, 
+
 	{ -1,		NULL,		-1,		(void *) NULL, 0},
 };
 
@@ -593,6 +649,8 @@ static COMMAND(sniff_command_connect) {
 	char errbuf[PCAP_ERRBUF_SIZE] = { 0 };
 	pcap_t *dev;
 	const char *filter;
+	char *device;
+	char *tmp;
 
 	if (!(filter = session_get(session, "filter")))
 		filter = DEFAULT_FILTER;
@@ -602,18 +660,27 @@ static COMMAND(sniff_command_connect) {
 		return -1;
 	}
 
-	dev = pcap_open_live(DEVICE, SNAPLEN, PROMISC, 1000, errbuf);
+	if ((tmp = xstrchr(session->uid+6, ':')))
+		device = xstrndup(session->uid+6, tmp-(session->uid+6));
+	else	device = xstrdup(session->uid+6);
+
+	dev = pcap_open_live(device, SNAPLEN, PROMISC, 1000, errbuf);
 
 	if (!dev) {
-		debug_error("Couldn't open dev: %s\n", DEVICE);
+		debug_error("Couldn't open dev: %s (%s)\n", device, errbuf);
+		printq("conn_failed", errbuf, session_name(session));
+		xfree(device);
 		return -1;
 	}
 
 	if (pcap_setnonblock(dev, 1, errbuf) == -1) {
-		debug_error("Could not set device \"%s\" to non-blocking: %s\n", DEVICE, errbuf);
+		debug_error("Could not set device \"%s\" to non-blocking: %s\n", device, errbuf);
 		pcap_close(dev);
+		xfree(device);
 		return -1;
 	}
+
+	xfree(device);
 
 	if (pcap_compile(dev, &fp, (char *) filter, 0, 0 /*net*/) == -1) {
 		debug_error("Couldn't parse filter %s: %s\n", filter, pcap_geterr(dev));
@@ -686,7 +753,7 @@ static QUERY(sniff_validate_uid) {
 	if (!uid)
 		return 0;
 
-	if (!xstrncasecmp(uid, "sniff", 5) && uid[5]) {
+	if (!xstrncasecmp(uid, "sniff:", 6) && uid[6]) {
 		(*valid)++;
 		return -1;
 	}
@@ -736,6 +803,8 @@ static int sniff_theme_init() {
 /* sniff gg */
 	format_add("sniff_gg_welcome",	_("%) [GG_WELCOME] SEED: %1"), 1);
 	format_add("sniff_gg_login60",	_("%) [GG_LOGIN60] UIN: %1 HASH: %2"), 1);
+	format_add("sniff_gg_addnotify",_("%) [GG_ADD_NOTIFY] UIN: %1 DATA: %2"), 1);
+	format_add("sniff_gg_delnotify",_("%) [GG_REMOVE_NOTIFY] UIN: %1 DATA: %2"), 1);
 /* stats */
 	format_add("sniff_pkt_rcv", _("%) %2 packets captured"), 1);
 	format_add("sniff_pkt_drop",_("%) %2 packets dropped"), 1);

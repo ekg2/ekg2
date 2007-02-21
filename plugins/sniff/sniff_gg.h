@@ -115,5 +115,25 @@ typedef struct {
 	uint16_t external_port;		/* zewnętrzny port */
 	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
 	uint8_t dunno2;			/* 0xbe */
+	char status_data[];
 } GG_PACKED gg_login60;
+
+#define GG_ADD_NOTIFY 0x000d
+#define GG_REMOVE_NOTIFY 0x000e
+
+typedef struct {
+	uint32_t uin;			/* numerek */
+	uint8_t dunno1;			/* bitmapa */
+} GG_PACKED gg_add_remove;
+
+#define GG_NOTIFY_REPLY60 0x0011
+typedef struct {
+	uint32_t uin;			/* numerek plus flagi w MSB */
+	uint8_t status;			/* status danej osoby */
+	uint32_t remote_ip;		/* adres ip delikwenta */
+	uint16_t remote_port;		/* port, na którym słucha klient */
+	uint8_t version;		/* wersja klienta */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno1;			/* 0x00 */
+} GG_PACKED gg_notify_reply60;
 
