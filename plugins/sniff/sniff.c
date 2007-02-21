@@ -63,6 +63,16 @@ typedef struct {
 	uint16_t dstport;
 } connection_t;
 
+static char *build_code(const char *code) {
+	static char buf[100];
+
+	sprintf(buf, "%.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x", 
+		code[0], code[1], code[2], code[3],
+		code[4], code[5], code[6], code[7]);
+
+	return buf;
+}
+
 static char *build_hex(uint32_t hex) {
 	static char buf[20];
 
@@ -556,9 +566,7 @@ SNIFF_HANDLER(sniff_gg_dcc_new_request_id_in, gg_dcc_new_request_id_in) {
 	}
 
 	CHECK_PRINT(pkt->type, htonl(0x04000000));
-	debug("sniff_gg_dcc_new_request_id_in() code: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
-			pkt->code1[0], pkt->code1[1], pkt->code1[2], pkt->code1[3],
-			pkt->code1[4], pkt->code1[5], pkt->code1[6], pkt->code1[7]);
+	debug("sniff_gg_dcc_new_request_id_in() code: %s\n", build_code(pkt->code1));
 
 	return 0;
 }
@@ -591,10 +599,8 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 	
 /* print known data: */
 	fname = xstrndup(pkt->filename, 226);
-	debug("sniff_gg_dcc_new() code: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x uin1: %d uin2: %d fname: %s [%db]\n", 
-		pkt->code1[0], pkt->code1[1], pkt->code1[2], pkt->code1[3],
-		pkt->code1[4], pkt->code1[5], pkt->code1[6], pkt->code1[7],
-		pkt->uin1, pkt->uin2, fname, pkt->size);
+	debug("sniff_gg_dcc_new() code: %s uin1: %d uin2: %d fname: %s [%db]\n", 
+		build_code(pkt->code1), pkt->uin1, pkt->uin2, fname, pkt->size);
 	xfree(fname);
 
 /* CHECK unknown vals.. */
@@ -614,6 +620,44 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 	CHECK_PRINT(pkt->dunno8, !pkt->dunno8);
 	return 0;
 }
+
+#define GG_DCC_REJECT_XXX 0x22
+typedef struct {
+	uint32_t uid;
+	unsigned char code1[8];
+	uint32_t dunno1;
+} gg_dcc_reject_in;
+
+SNIFF_HANDLER(sniff_gg_dcc_reject_in, gg_dcc_reject_in) {
+	if (len != sizeof(gg_dcc_reject_in)) {
+		tcp_print_payload((u_char *) pkt, len);
+		return -1;
+	}
+
+	debug("sniff_gg_dcc_reject_in() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
+
+	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
+	return 0;
+}
+
+typedef struct {
+	uint32_t uid;
+	unsigned char code1[8];
+	uint32_t dunno1;
+} gg_dcc_reject_out;
+
+SNIFF_HANDLER(sniff_gg_dcc_reject_out, gg_dcc_reject_out) {
+	if (len != sizeof(gg_dcc_reject_out)) {
+		tcp_print_payload((u_char *) pkt, len);
+		return -1;
+	}
+
+	debug("sniff_gg_dcc_reject_out() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
+
+	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
+	return 0;
+}
+
 #undef CHECK_PRINT
 
 typedef enum {
@@ -652,6 +696,8 @@ static const struct {
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_INCOMING, (void *) sniff_gg_dcc_new_request_id_in, 0},
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_OUTGOING, (void *) sniff_gg_dcc_new_request_id_out, 0},
+	{ GG_DCC_REJECT_XXX,	"GG_DCC_REJECT ?",	SNIFF_INCOMING, (void *) sniff_gg_dcc_reject_in, 0},
+	{ GG_DCC_REJECT_XXX,	"GG_DCC_REJECT ?",	SNIFF_OUTGOING, (void *) sniff_gg_dcc_reject_out, 0},
 
 	{ -1,		NULL,		-1,		(void *) NULL, 0},
 };
