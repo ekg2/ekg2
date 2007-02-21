@@ -500,7 +500,7 @@ SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
 			build_hex(pkt->hash));
 	
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, 
 			ekg_status_label(status, descr, "status_"), /* formatka */
 
 			format_user(s, build_gg_uid(pkt->uin)),		/* od */
@@ -541,8 +541,11 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 }
 
 /* nie w libgadu */
-#define CHECK_PRINT(is, shouldbe) if (is != shouldbe) \
-		debug_error("%s() values not match: %s [%x != %x]\n", __FUNCTION__, #is, is, shouldbe)
+#define CHECK_PRINT(is, shouldbe) if (is != shouldbe) {\
+		if (sizeof(is) == 2)		debug_error("%s() values not match: %s [%.4x != %.4x]\n", __FUNCTION__, #is, is, shouldbe); \
+		else if (sizeof(is) == 4)	debug_error("%s() values not match: %s [%.8x != %.8x]\n", __FUNCTION__, #is, is, shouldbe); \
+		else 				debug_error("%s() values not match: %s [%x != %x]\n", __FUNCTION__, #is, is, shouldbe);\
+	}
 	
 #define GG_DCC_NEW_REQUEST_ID 0x23
 typedef struct {
@@ -630,7 +633,8 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 typedef struct {
 	uint32_t uid;
 	unsigned char code1[8];
-	uint32_t dunno1;		/* known values: 0x02 -> rejected, 0x06 -> invalid version (6.x) */
+	uint32_t dunno1;		/* known values: 0x02 -> rejected, 0x06 -> invalid version (6.x) 
+							 0x01 -> niemozliwe teraz? [jak ktos przesyla inny plik do Ciebie?] */
 } GG_PACKED gg_dcc_reject;
 
 SNIFF_HANDLER(sniff_gg_dcc_reject_in, gg_dcc_reject) {
@@ -705,6 +709,57 @@ SNIFF_HANDLER(sniff_gg_dcc_4xx_out, gg_dcc_4xx_out) {
 	return 0;
 }
 
+#define GG_LOGIN70 0x19
+typedef struct {
+	uint32_t uin;			/* mój numerek [gg_login60] */
+	uint8_t dunno0;			/* 02 */
+	unsigned char hash[20];		/* sha1 chyba, 99% ?? */
+
+	unsigned char unknown[44];	/* ??? */
+	uint32_t status;		/* status na dzień dobry [gg_login60] */
+	uint32_t version;		/* moja wersja klienta [gg_login60] */
+	uint8_t dunno1;			/* 0x00 [gg_login60] */
+
+	uint32_t local_ip;		/* mój adres ip [gg_login60] */
+	uint16_t local_port;		/* port, na którym słucham [gg_login60] */
+
+	uint32_t external_ip;		/* XXX */
+	uint16_t external_port;		/* XXX */
+
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB [gg_login60] */
+	uint8_t dunno2;			/* 0xbe [gg_login60] */
+	char status_data[];
+} GG_PACKED gg_login70;
+
+SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
+	const char *status;
+	char *descr;
+	int has_time = 0;	/* XXX */
+	int has_descr = 0;
+
+	CHECK_LEN(sizeof(gg_login70));	len -= sizeof(gg_login70);
+
+	status = gg_status_to_text(pkt->status, &has_descr);
+	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+	debug("sniff_gg_login70() ip: %d:%d\n", pkt->local_ip, pkt->local_port);
+
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, 
+			ekg_status_label(status, descr, "status_"), /* formatka */
+
+			format_user(s, build_gg_uid(pkt->uin)),		/* od */
+			NULL, 						/* nickname, realname */
+			session_name(s), 				/* XXX! do */
+			descr);						/* status */
+	xfree(descr);
+	
+	CHECK_PRINT(pkt->dunno0, 0x02);
+	CHECK_PRINT(pkt->dunno1, 0x00);
+	CHECK_PRINT(pkt->dunno2, 0xbe);
+
+	tcp_print_payload((u_char *) pkt->unknown, sizeof(pkt->unknown));
+	return 0;
+}
+
 #undef CHECK_PRINT
 
 typedef enum {
@@ -739,6 +794,8 @@ static const struct {
 	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_notify_reply60, 0}, 
 
 /* pakiety nie w libgadu: */
+	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
+
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_INCOMING, (void *) sniff_gg_dcc_new_request_id_in, 0},
