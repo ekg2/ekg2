@@ -367,16 +367,18 @@ void string_insert(string_t s, int index, const char *str)
  *
  * zwraca zaalokowan± strukturê `string'.
  */
-string_t string_init(const char *value)
-{
+string_t string_init(const char *value) {
 	string_t tmp = xmalloc(sizeof(struct string));
+	size_t valuelen;
 
 	if (!value)
 		value = "";
 
+	valuelen = xstrlen(value);
+
 	tmp->str = xstrdup(value);
-	tmp->len = xstrlen(value);
-	tmp->size = xstrlen(value) + 1;
+	tmp->len = valuelen;
+	tmp->size = valuelen + 1;
 
 	return tmp;
 }
