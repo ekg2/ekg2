@@ -478,8 +478,8 @@ if test "x$with_logsoracle" == "xyes"; then
 		else
 			AC_SUBST(LOGS_ORACLE_LIBS)
 			AC_SUBST(LOGS_ORACLE_CFLAGS)
-			LOGSORACLE_LIBS="-L${ORACLE_HOME}/lib"		
-			LOGSORACLE_CFLAGS="-I${ORACLE_HOME}/rdbms/public"
+			LOGS_ORACLE_LIBS="-L${ORACLE_HOME}/lib"		
+			LOGS_ORACLE_CFLAGS="-I${ORACLE_HOME}/rdbms/public"
 
 			AC_CHECK_LIB(clntsh, sqlcxt,[have_clntsh=yes],[have_clntsh=no])
 
