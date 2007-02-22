@@ -1,0 +1,132 @@
+Copyright (c) 2006 Szymon Bilinski <simon(at)babel(dot)pl>
+
+             logsoracle plugin for EKG2
+
+1. Licence
+
+Unless stated otherwise this program is distributed under General Public Licence v2 
+as published by Free Software Foundation. Check attached 'COPYING' file for details.
+
+Oracle trademark and the OCI library are a property of Oracle Corporation.
+Read their licence for more information about the rules of using the library.
+
+Oracle code should not be distributed with this program in any way. 
+
+
+2. Aim
+
+logsoracle is an EKG2 plugin (www.ekg2.org) for logging incoming messages
+and/or status changes into an Oracle database.
+
+3. Instalation
+
+   3.1 Download and install Oracle
+
+   For home use or a small company you can download Oracle XE (Express Edition). It has
+   some limitations (maximum 4GB of stored data, maximum 1 processor in use at a time).
+   Check oracle.com for more details and the licence.
+
+   Installation procedure is also available on the web. If you encounter any problems
+   check the official Oracle database manual.
+
+
+   For Debian GNU/Linux you can do the following (this text was written on 26/07/2006)
+
+   Edit /etc/apt/sources.list. Add this line:
+    deb http://oss.oracle.com/debian/ unstable main non-free
+   Run commands:
+    apt-get update
+    apt-get oracle-xe-universal	   # Universal means Universal set of languages
+   Provide a 'system' password.
+   Decide if you want oracle-xe to be run at system startup. At any time you can launch
+   it by running '/etc/init.d/oracle-xe restart' from the command line as root.
+   If you're using KDE or GNOME you can now check for a 'Oracle Database 10g Express Edition'
+   menu inside KDE/GNOME Menu. 
+
+   Login into Oracle using either SQLPLUS (command line) or a cool web interface (default
+   address is http://127.0.0.1:8080/apex). SQLPLUS requires some enviroment variables to
+   be set (read below)
+   
+   Type SYSTEM as username. Use password given earlier.
+   
+   Create a new schema for EKG (Check Oracle SQL Reference in case of using sqlplus).
+
+
+   3.2 Initial configuration
+   
+   At this point you should have an operational database and an empty user schema created.
+
+   Make sure ALL required enviroment variables are set each time you launch EKG2 or try to
+   connect to the database using sqlplus. It might be a good idea to put something like:
+    source /usr/lib/oracle/xe/app/oracle/product/10.2.0/server/bin/oracle_env.sh
+   into your $HOME/.bashrc
+
+   Don't forget to change the version number ;)
+
+   Now we have to create required database objects. Connect to the database using your new
+   schema name and password. It will look something like:
+   bash$ sqlplus
+    <enter username>
+    <enter password>
+   SQL> start <path_to_ekg2_sources>/plugins/logsoracle/logsoracle.sql
+
+   The last line will run a script which creates all database objects for this plugin 
+   (tables,sequences,indexes..).
+
+   
+   3.3 Building EKG2
+
+   I assume you already have untarred ekg2 source package into ekg2/ dir.
+
+   Make sure you have logsoracle sources in ekg2/plugins/logsoracle/
+
+   You need to modify ekg2/configure.ac a bit.
+   Check ekg2/plugins/logsoracle/configure.ac.with_oracle for a complete file. If you don't
+   want to loose any changes made since the release of this file, then creating a patch is
+   a good idea (check diff and patch manpages).
+
+   Check if you have pthreads library installed.
+
+   Go to ekg2/
+
+   If you have built ekg2 before then run ./autoclean.sh
+   
+   ./autogen.sh
+   ./configure --with-logsoracle
+   make
+   su -c 'make install'
+
+
+4. Usage
+
+   Run ekg2 :)
+
+   Load plugin:
+    plugin +logsoracle
+   Configure database connection:
+    set logsoracle:db_login <your_schema_name>
+    set logsoracle:db_password <your_database_password>
+    set logsoracle:auto_connect 1
+   Save new configuration:
+    save
+   
+   Estabilish a connection:
+    logsoracle:connect
+
+   You can check plugin status by typing:
+    logsoracle:status
+
+   To browse the archive execute SELECT queries on messages, recipients and status_changes
+   tables.
+   
+   You can also use a predefined view which joins messages with recipients:
+    SELECT * FROM archive_msg;
+    
+   If something goes wrong check Google, Oracle docs and the debug window. 
+   
+5. Some useful links
+
+http://www.ekg2.org
+http://www.oracle.com
+
+EOF

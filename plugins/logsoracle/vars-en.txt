@@ -1,0 +1,51 @@
+// logsoracle plugin - variables
+// (c) copyright 2006 Szymon Biliñski <ecimon@babel.pl>
+
+auto_connect:
+	type: bool
+	default value: false
+	
+	autoconnect with the database at startup
+
+db_login
+	type: text
+	default value: none
+	
+	database login (schema name). 
+	it's generally a good idea to create a new schema for
+	EKG2 purposes (don't forget to create all required database
+	objects - see logsoracle.sql file for more details)
+
+db_password
+	type: text
+	default value: none.
+	
+	database password associated with schema specified by
+	'db_login' variable
+
+log_messages
+	type: bool
+	default value: true
+	
+	if this is set to true then all passing messages (both sent and
+	recieved) will be logged into the database. it's rather smart 
+	to keep this on ;)
+
+log_status
+	type: bool
+	default value: true
+	
+	if true then all status changes (both your's and people from 
+	the roster) will be logged into the database.
+	this might generate a lot of data/queries if you have many 
+	contacts or connect/disconnect very often. in that case try
+	disabling this feature or create a database trigger which
+	will filter out unnecessary status changes before new inserts.  
+
+logging_active
+	type: bool
+	default value: true
+	
+	if for some reason you want to disable logging for a while and
+	keep the plugin loaded in memory then set this to false.
+

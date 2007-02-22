@@ -1,0 +1,50 @@
+// logsoracle plugin - zmienne
+// (c) copyright 2006 Szymon Biliñski <ecimon@babel.pl>
+
+auto_connect
+	typ: bool
+	domy¶lna warto¶æ: brak
+	
+	autopo³±czenie z baz± danych przy starcie EKG
+
+db_login
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	login do bazy danych (nazwa schemy). 
+	dobrym pomys³em jest stworzenie odrêbnej schemy dla celów EKG2
+	(pamiêtaj o utworzeniu wszystkich potrzebnych obiektów w bazie - 
+	wiêcej info w pliku logsoracle.sql)
+
+db_password
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	has³o zwi±zane z zmienn± 'db_login'
+
+log_messages
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	je¿eli ustawione na true, to wszystkie wiadomo¶ci (wychodz±ce i
+	przychodz±ce) bêd± logowane do bazy. zwykle lepiej mieæ w³±czone ;)
+
+log_status
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	je¿eli ustawione na 1 to wszystkie zmiany statusów bêd± logowane do
+	bazy danych.
+	je¿eli masz zapisanych du¿o kontaktów lub czêsto ³±czysz siê/roz³±czasz
+	z serwerem, to funkcja ta mo¿e generowaæ du¿o danych/zapytañ
+	do bazy. w takim wypadku mo¿esz j± albo wy³±czyæ albo stworzyæ triggera
+	w bazie, który odfiltruje niepotrzebne/nieaktualne rekordy przed
+	ka¿dym insertem.
+
+logging_active
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	je¿eli z jakiego¶ powodu chcesz wy³±czyæ logowanie, ale zatrzymaæ plugin
+	w pamiêci to ustaw to na 0.
+

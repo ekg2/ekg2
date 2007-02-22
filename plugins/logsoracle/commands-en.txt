@@ -1,0 +1,33 @@
+// descripton for logsoracle-plugin proceedings
+// (c) copyright 2006 Szymon Biliñski <ecimon@babel.pl>
+
+connect
+	parameters: 
+	short description: connect to oracle database
+	
+	in order to log anything you need to estabilish a connection first.
+	this requieres ekg variables 'logsoracle:db_login' and
+	'logsoracle:db_password' to be set.
+	if something goes wrong during connection check if:
+	- you have oracle installed ;)
+	- required enviroment variables are set ($ORACLE_HOME and friends)
+	  a script which does the work for you should come with the database.
+	- an instance of the database is running and you can connect to it
+	  from the command line using sqlplus.
+	- you have properly set logsoracle:db_login and logsoracle:db_password
+        variables (type 'set' to see all vars.)
+	- check if all permissions are ok
+
+disconnect
+	parameters:
+	short description: close an open oracle connection
+
+	see also 'connect' command
+
+status
+	parameters:
+	short description: print various information about plugin
+	
+	this command is for informational purposes only. you should get
+	some basic info about plugin work in your status window.
+

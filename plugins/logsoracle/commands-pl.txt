@@ -1,0 +1,33 @@
+// descripton for logsoracle-plugin proceedings
+// (c) copyright 2006 Szymon Biliñski <ecimon@babel.pl>
+
+connect
+	parametry: 
+	krotki opis: polacz z baza danych Oracla 
+	
+	¿eby cokolwiek zalogowaæ trzeba mieæ najpierw po³±czenie z baz±.
+	wymaga to ustawienia zmiennych 'logsoracle:db_login' i
+	'logsoracle:db_password' i wykonanie polecenia logsoracle:connect.
+	je¿eli co¶ pójdzie nie tak sprawd¼ czy
+	- masz zainstalowanego oracla ;)
+	- zmienne ¶rodowiskowe s± poprawnie ustawione ($ORACLE_HOME i spó³ka)
+	  skrypt który to robi powinien byæ za³±czony do pakietu z baz±.
+	- dzia³a instancja bazy danych i mo¿esz siê z ni± po³±czyæ (i zalogowaæ!) 
+	  z linii poleceñ przy pomocy sqlplus'a.
+	- logsoracle:db_login i logsoracle:db_password s± ustawione poprawnie.
+	  (wpisz 'set' ¿eby zobaczyæ wszystkie zmienne.)
+	- sprawd¼ czy wszystkie uprawnienia s± ok.
+
+disconnect
+	parametry:
+	krotki opis: zamknij otwarte po³±czenie z Oraclem
+	
+	patrz te¿ polecenie 'connect' 
+
+status
+	parametry:
+	krotki opis: wypisz ró¿ne informacje na temat pracy pluginu
+	
+	polecenie to ma charakter wy³±cznie informacyjny. po jego wykonaniu
+	w oknie statusowym powinny pojawiæ siê podstawowe charakterystyki pluginu.
+
