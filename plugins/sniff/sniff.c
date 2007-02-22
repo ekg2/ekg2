@@ -266,7 +266,8 @@ static char *tcp_print_flags(u_char tcpflag) {
 	if (tcpflag & TH_ECE) xstrcat(buf, "ECE+");
 	if (tcpflag & TH_CWR) xstrcat(buf, "CWR+");
 
-	buf[xstrlen(buf)-1] = 0;
+	if (buf[0])
+		buf[xstrlen(buf)-1] = 0;
 	
 	return buf;
 }
@@ -705,9 +706,9 @@ SNIFF_HANDLER(sniff_gg_dcc1xx_out, gg_dcc_1xx) {
 #define GG_DCC_2XXX 0x1f
 typedef struct {
 	uint32_t uin;			/* uin */
-	uint32_t dunno1;		/* XXX */
+	uint32_t dunno1;		/* XXX */		/* 000003e8 -> transfer wstrzymano? */
 	unsigned char code1[8];		/* kod */
-	unsigned char ipport[15+1+5];	/* ip <SPACE> port */	/* XXX, what about NUL char? */
+	unsigned char ipport[15+1+5];	/* ip <SPACE> port */	/* XXX, what about NUL char? */	/* XXX, not always (ip+port) */
 	unsigned char unk[43];		/* large amount of unknown data */
 } GG_PACKED gg_dcc_2xx;
 
@@ -734,7 +735,7 @@ SNIFF_HANDLER(sniff_gg_dcc_2xx_out, gg_dcc_2xx) {
 	}
 
 	ipport = xstrndup(pkt->ipport, 21);
-	debug_error("XXX sniff_gg_dcc_2xx_in() uin: %d ip: %s code: %s\n", pkt->uin, ipport, build_code(pkt->code1));
+	debug_error("XXX sniff_gg_dcc_2xx_out() uin: %d ip: %s code: %s\n", pkt->uin, ipport, build_code(pkt->code1));
 	xfree(ipport);
 	tcp_print_payload((u_char *) pkt->unk, sizeof(pkt->unk));
 	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
@@ -744,7 +745,9 @@ SNIFF_HANDLER(sniff_gg_dcc_2xx_out, gg_dcc_2xx) {
 #define GG_DCC_3XXX 0x24
 typedef struct {
 	unsigned char code1[8];	/* code 1 */
-	unsigned char unk[12];	/* unknown data */
+	uint32_t dunno1;	/* 04 00 00 00 */
+	uint32_t dunno2;
+	uint32_t dunno3;
 } GG_PACKED gg_dcc_3xx;
 
 SNIFF_HANDLER(sniff_gg_dcc_3xx_out, gg_dcc_3xx) {
@@ -754,7 +757,9 @@ SNIFF_HANDLER(sniff_gg_dcc_3xx_out, gg_dcc_3xx) {
 	}
 
 	debug_error("XXX sniff_gg_dcc_3xx_out() code1: %s\n", build_code(pkt->code1));
-	tcp_print_payload((u_char *) pkt->unk, sizeof(pkt->unk));
+	CHECK_PRINT(pkt->dunno1, htonl(0x04000000));
+	CHECK_PRINT(pkt->dunno2, !pkt->dunno2);
+	CHECK_PRINT(pkt->dunno3, !pkt->dunno3);
 	return 0;
 }
 
