@@ -1015,6 +1015,10 @@ static COMMAND(rss_command_unsubscribe) {
 	return 0;
 }
 
+void rss_protocol_deinit(void *priv) {
+	return;
+}
+
 void *rss_protocol_init() {
 	return NULL;
 }
