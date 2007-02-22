@@ -99,7 +99,7 @@ AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile ekg/ekg2-config compat/Makefile docs/Makefile po/Makefile.in])
 AC_CONFIG_FILES([contrib/Makefile contrib/python/Makefile contrib/perl/Makefile])
-AC_CONFIG_FILES([plugins/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile])
+AC_CONFIG_FILES([plugins/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile])
 
 PLUGINS="logs mail rc sms pcm irc rot13 httprc_xajax xmsg"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
@@ -474,9 +474,9 @@ if test "x$with_logsoracle" == "xyes"; then
 	dnl $have_pthread is defined by 'resolver libgadu'
 	if test "x$have_pthread" == "xyes"; then
 		if test -z "$ORACLE_HOME"; then
-			AC_MSG_WARN([logsoracle plugin requires enviroment variable $ORACLE_HOME to be set (incomplete oracle installation?)]);
+			AC_MSG_WARN([logsoracle plugin requires enviroment variable ORACLE_HOME to be set (incomplete oracle installation?)]);
 		else
-			AC_SUBST(LOGS_ORCACLE_LIBS)
+			AC_SUBST(LOGS_ORACLE_LIBS)
 			AC_SUBST(LOGS_ORACLE_CFLAGS)
 			LOGSORACLE_LIBS="-L${ORACLE_HOME}/lib"		
 			LOGSORACLE_CFLAGS="-I${ORACLE_HOME}/rdbms/public"
