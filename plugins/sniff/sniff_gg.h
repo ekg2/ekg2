@@ -137,3 +137,13 @@ typedef struct {
 	uint8_t dunno1;			/* 0x00 */
 } GG_PACKED gg_notify_reply60;
 
+#define GG_NOTIFY_FIRST 0x000f
+#define GG_NOTIFY_LAST 0x0010
+
+#define GG_NOTIFY 0x0010
+	
+struct gg_notify {
+	uint32_t uin;				/* numerek danej osoby */
+	uint8_t dunno1;				/* rodzaj wpisu w liście */
+} GG_PACKED;
+

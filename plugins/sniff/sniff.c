@@ -721,7 +721,8 @@ SNIFF_HANDLER(sniff_gg_dcc_2xx_in, gg_dcc_2xx) {
 	ipport = xstrndup(pkt->ipport, 21);
 	debug_error("XXX sniff_gg_dcc_2xx_in() uin: %d ip: %s code: %s\n", pkt->uin, ipport, build_code(pkt->code1));
 	xfree(ipport);
-	tcp_print_payload(pkt->unk, sizeof(pkt->unk));
+	tcp_print_payload((u_char *) pkt->unk, sizeof(pkt->unk));
+	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
 	return 0;
 }
 
@@ -735,11 +736,27 @@ SNIFF_HANDLER(sniff_gg_dcc_2xx_out, gg_dcc_2xx) {
 	ipport = xstrndup(pkt->ipport, 21);
 	debug_error("XXX sniff_gg_dcc_2xx_in() uin: %d ip: %s code: %s\n", pkt->uin, ipport, build_code(pkt->code1));
 	xfree(ipport);
-	tcp_print_payload(pkt->unk, sizeof(pkt->unk));
+	tcp_print_payload((u_char *) pkt->unk, sizeof(pkt->unk));
+	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
 	return 0;
 }
 
 #define GG_DCC_3XXX 0x24
+typedef struct {
+	unsigned char code1[8];	/* code 1 */
+	unsigned char unk[12];	/* unknown data */
+} GG_PACKED gg_dcc_3xx;
+
+SNIFF_HANDLER(sniff_gg_dcc_3xx_out, gg_dcc_3xx) {
+	if (len != sizeof(gg_dcc_3xx)) {
+		tcp_print_payload((u_char *) pkt, len);
+		return -1;
+	}
+
+	debug_error("XXX sniff_gg_dcc_3xx_out() code1: %s\n", build_code(pkt->code1));
+	tcp_print_payload((u_char *) pkt->unk, sizeof(pkt->unk));
+	return 0;
+}
 
 #define GG_DCC_4XXX 0x25
 typedef struct {
@@ -878,7 +895,7 @@ static const struct {
 	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_INCOMING, (void *) sniff_gg_dcc_2xx_in, 0},
 	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_2xx_out, 0},
 /* unknown, 0x24 */
-	{ GG_DCC_3XXX,		"GG_DCC_3XXX",		SNIFF_OUTGOING, (void *) sniff_print_payload, 0},
+	{ GG_DCC_3XXX,		"GG_DCC_3XXX",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_3xx_out, 0},
 /* unknown, 0x25 */
 	{ GG_DCC_4XXX,		"GG_DCC_4XXX",		SNIFF_INCOMING, (void *) sniff_gg_dcc_4xx_in, 0},
 	{ GG_DCC_4XXX,		"GG_DCC_4XXX",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_4xx_out, 0},
