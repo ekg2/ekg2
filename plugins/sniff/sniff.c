@@ -547,6 +547,7 @@ SNIFF_HANDLER(sniff_gg_del_notify, gg_add_remove) {
 
 SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 	CHECK_LEN(sizeof(gg_notify_reply60));	len -= sizeof(gg_notify_reply60);
+
 	debug_error("sniff_notify_reply60() XXX\n");
 	return -5;
 }
@@ -600,7 +601,11 @@ typedef struct {
 	uint16_t emp1;		/* 00 00 */
 	uint16_t dunno2;	/* 10 00 */
 	uint16_t emp2;		/* 00 00 */
-	uint32_t dunno3;	/* unknown */
+
+	uint16_t dunno31;
+	uint8_t	 dunno32;
+	uint8_t  dunno33;	/* 02 */
+
 	uint32_t emp3;		/* 00 00 00 00 */
 	uint32_t dunno4;	/* b4 e5 32 00 */
 	uint32_t dunno5;	/* 8e d0 4c 00 */
@@ -616,6 +621,9 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 	char *fname;
 	CHECK_LEN(sizeof(gg_dcc_new));	len -= sizeof(gg_dcc_new);
 	
+	if (len != 0)
+		debug_error("sniff_gg_dcc_new() extra data?\n");
+
 /* print known data: */
 	fname = xstrndup(pkt->filename, 226);
 	debug("sniff_gg_dcc_new() code: %s uin1: %d uin2: %d fname: %s [%db]\n", 
@@ -631,7 +639,11 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 
 	CHECK_PRINT(pkt->dunno1, htonl(0x04000000));
 	CHECK_PRINT(pkt->dunno2, htons(0x1000));
-	CHECK_PRINT(pkt->dunno3, !pkt->dunno3);
+
+	CHECK_PRINT(pkt->dunno31, !pkt->dunno31);
+	CHECK_PRINT(pkt->dunno32, !pkt->dunno32);
+	CHECK_PRINT(pkt->dunno33, 0x02);
+
 	CHECK_PRINT(pkt->dunno4, htonl(0xb4e53200));
 	CHECK_PRINT(pkt->dunno5, htonl(0x8ed04c00));
 	CHECK_PRINT(pkt->dunno6, htonl(0x10000000));
@@ -796,9 +808,8 @@ SNIFF_HANDLER(sniff_gg_dcc_4xx_out, gg_dcc_4xx_out) {
 typedef struct {
 	uint32_t uin;			/* mój numerek [gg_login60] */
 	uint8_t dunno0;			/* 02 */
-	unsigned char hash[20];		/* sha1 chyba, 99% ?? */
-
-	unsigned char unknown[44];	/* ??? */
+	unsigned char hash[20];		/* sha1 [haslo i seed] */
+	unsigned char unknown[44];	/* ??? 00 */
 	uint32_t status;		/* status na dzień dobry [gg_login60] */
 	uint32_t version;		/* moja wersja klienta [gg_login60] */
 	uint8_t dunno1;			/* 0x00 [gg_login60] */
@@ -819,6 +830,8 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	char *descr;
 	int has_time = 0;	/* XXX */
 	int has_descr = 0;
+	int print_payload = 0;
+	int i; 
 
 	CHECK_LEN(sizeof(gg_login70));	len -= sizeof(gg_login70);
 
@@ -845,7 +858,14 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	CHECK_PRINT(pkt->dunno1, 0x00);
 	CHECK_PRINT(pkt->dunno2, 0xbe);
 
-	tcp_print_payload((u_char *) pkt->unknown, sizeof(pkt->unknown));
+	for (i = 0; i < sizeof(pkt->unknown); i++)
+		if (pkt->unknown[i] != 0) {
+			print_payload = 1;
+			break;
+		}
+
+	if (print_payload)
+		tcp_print_payload((u_char *) pkt->unknown, sizeof(pkt->unknown));
 	return 0;
 }
 
@@ -1189,7 +1209,7 @@ static int sniff_theme_init() {
 /* sniff gg */
 	format_add("sniff_gg_welcome",	_("%) [GG_WELCOME] SEED: %1"), 1);
 	format_add("sniff_gg_login60",	_("%) [GG_LOGIN60] UIN: %1 HASH: %2"), 1);
-	format_add("sniff_gg_login70",	_("%) [GG_LOGIN70] UIN: %1 HASH: %2"), 1);
+	format_add("sniff_gg_login70",	_("%) [GG_LOGIN70] UIN: %1 SHA1: %2"), 1);
 	format_add("sniff_gg_addnotify",_("%) [GG_ADD_NOTIFY] UIN: %1 DATA: %2"), 1);
 	format_add("sniff_gg_delnotify",_("%) [GG_REMOVE_NOTIFY] UIN: %1 DATA: %2"), 1);
 /* stats */
