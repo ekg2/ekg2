@@ -354,11 +354,8 @@ COMMAND(gg_command_passwd)
 
 	list_add(&g->passwds, h, 0);
 
-	/* memleaks ? ... mh, if gg_change_passwd3 fails... we have freeing it.. why here was not? it's ok or not? libgadu/we frees it ?*/
-#if 0
 	xfree(newpasswd);
 	xfree(oldpasswd);
-#endif
 
 	return 0;
 }
