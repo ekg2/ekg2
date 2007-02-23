@@ -43,6 +43,7 @@
 
 #include <ekg/queries.h>
 #include <ekg/xmalloc.h>
+#include <ekg/protocol.h>
 
 #include "sniff_ip.h"
 #include "sniff_gg.h"
@@ -147,7 +148,7 @@ static connection_t *sniff_tcp_find_connection(const struct iphdr *ip, const str
 }
 
 /* stolen from libgadu+gg plugin */
-static const char *gg_status_to_text(int status, int *descr) {
+static const char *gg_status_to_text(uint32_t status, int *descr) {
 #define GG_STATUS_NOT_AVAIL 0x0001		/* niedostępny */
 #define GG_STATUS_NOT_AVAIL_DESCR 0x0015	/* niedostępny z opisem (4.8) */
 #define GG_STATUS_AVAIL 0x0002			/* dostępny */
@@ -186,6 +187,7 @@ static const char *gg_status_to_text(int status, int *descr) {
 		case GG_STATUS_BLOCKED:
 			return EKG_STATUS_BLOCKED;
 	}
+	debug_error("gg_status_to_text() last chance: %x\n", status);
 
 	return EKG_STATUS_ERROR;
 }
@@ -273,6 +275,57 @@ static char *tcp_print_flags(u_char tcpflag) {
 }
 
 /*  ****************************************************** */
+static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32_t recpt, enum msgclass_t type, const char *msg) {
+	const char *sender = build_gg_uid(recpt);
+
+	print_window(build_windowip_name(type == EKG_MSGCLASS_CHAT ? hdr->dstip : hdr->srcip) /* ip and/or gg# */, s, 1, 
+		type == EKG_MSGCLASS_CHAT ? "message" : "sent", 	/* formatka */
+
+		format_user(s, sender),			/* do kogo */
+		"timestamp", 				/* XXX timestamp */
+		msg,					/* wiadomosc */
+		get_nickname(s, sender),		/* jego nickname */
+		sender,					/* jego uid */
+		"");					/* secure */
+}
+
+static void sniff_gg_print_status(session_t *s, const connection_t *hdr, uint32_t uin, const char *status, const char *descr) {
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
+		ekg_status_label(status, descr, "status_"), /* formatka */
+
+		format_user(s, build_gg_uid(uin)),		/* od */
+		NULL, 						/* nickname, realname */
+		session_name(s), 				/* XXX! do */
+		descr);						/* status */
+}
+
+static void sniff_gg_print_new_status(session_t *s, const connection_t *hdr, uint32_t uin, const char *status, const char *descr) {
+	const char *whom;
+
+	if (!xstrcmp(status, EKG_STATUS_AVAIL)) 		status = "back";
+	else if (!xstrcmp(status, EKG_STATUS_AWAY))		status = "away";
+	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	status = "invisible";
+	else {
+/* XXX, rozlaczony */
+		debug_error("sniff_gg_print_new_status() XXX bad status: %s\n", status);
+		return;
+	}
+
+	whom = uin ? format_user(s, build_gg_uid(uin)) : session_name(s);	/* session_name() bad */
+
+	if (descr) {
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+				ekg_status_label(status, descr, NULL), /* formatka */
+
+				descr, "", whom);
+	} else 
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+				ekg_status_label(status, descr, NULL), /* formatka */
+
+				whom);
+}
+
+/*  ****************************************************** */
 
 #define SNIFF_HANDLER(x, type) static int x(session_t *s, const connection_t *hdr, const type *pkt, int len)
 typedef int (*sniff_handler_t)(session_t *, const connection_t *, const unsigned char *, int);
@@ -289,46 +342,21 @@ SNIFF_HANDLER(sniff_print_payload, unsigned) {
 }
 
 SNIFF_HANDLER(sniff_gg_recv_msg, gg_recv_msg) {
-	const char *sender;
 	char *msg;
 
 	CHECK_LEN(sizeof(gg_recv_msg))	len -= sizeof(gg_recv_msg);
-
-	sender = build_gg_uid(pkt->sender);
 	msg = gg_cp_to_iso(xstrndup(pkt->msg_data, len));
-
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
-		"message", 			/* formatka */
-
-		format_user(s, sender),			/* sender */
-		"timestamp", 				/* timestamp */
-		msg,					/* wiadomosc */
-		get_nickname(s, sender),		/* jego nickname */
-		sender,					/* jego uid */
-		"");					/* secure */
+		sniff_gg_print_message(s, hdr, pkt->sender, EKG_MSGCLASS_CHAT, msg);
 	xfree(msg);
-
 	return 0;
 }
 
 SNIFF_HANDLER(sniff_gg_send_msg, gg_send_msg) {
-	const char *sender;
 	char *msg;
 
 	CHECK_LEN(sizeof(gg_send_msg))  len -= sizeof(gg_send_msg);
-
-	sender = build_gg_uid(pkt->recipient);
 	msg = gg_cp_to_iso(xstrndup(pkt->msg_data, len));
-
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-			"sent",                      /* formatka */
-
-			format_user(s, sender),                 /* sender */
-			"timestamp",                            /* timestamp */
-			msg,                                    /* wiadomosc */
-			get_nickname(s, sender),                /* jego nickname */
-			sender,                                 /* jego uid */
-			"");                                    /* secure */
+		sniff_gg_print_message(s, hdr, pkt->recipient, EKG_MSGCLASS_SENT_CHAT, msg);
 	xfree(msg);
 
 	return 0;
@@ -348,20 +376,14 @@ SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
 
 	switch (pkt->status) {
 		/* XXX, implement GG_ACK_BLOCKED, GG_ACK_MBOXFULL */
-		case GG_ACK_DELIVERED:
-			format = "ack_delivered";
-			break;
-		case GG_ACK_QUEUED:
-			format = "ack_queued";
-			break;
-		case GG_ACK_NOT_DELIVERED:
-			format = "ack_filtered";
-			break;
-		default:
-			format = "ack_unknown";
-			debug("[sniff,gg] unknown message ack status. consider upgrade\n");
-			break;
+		case GG_ACK_DELIVERED:		format = "ack_delivered";	break;
+		case GG_ACK_QUEUED:		format = "ack_queued";		break;
+		case GG_ACK_NOT_DELIVERED:	format = "ack_filtered";	break;
+		default:			format = "ack_unknown";
+						debug("[sniff,gg] unknown message ack status. consider upgrade\n");
+						break;
 	}
+
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
 			format, 
 			format_user(s, build_gg_uid(pkt->recipient)));	/* XXX */
@@ -385,21 +407,9 @@ SNIFF_HANDLER(sniff_gg_status, gg_status) {
 
 	CHECK_LEN(sizeof(gg_status))		len -= sizeof(gg_status);
 
-/* XXX, update w->userlist->{user}->status/descr if have */
 	status	= gg_status_to_text(pkt->status, &has_descr);
 	descr	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
-
-	if (!has_descr && len > 0)
-		debug_error("sniff_gg_status() !has_descr but len > 0?! (%d)\n", len);
-
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
-		ekg_status_label(status, descr, "status_"), /* formatka */
-
-		format_user(s, build_gg_uid(pkt->uin)),		/* od */
-		NULL, 						/* nickname, realname */
-		session_name(s), 				/* XXX! do */
-		descr);						/* status */
-
+	sniff_gg_print_status(s, hdr, pkt->uin, status, descr);
 	xfree(descr);
 
 	return 0;
@@ -409,41 +419,16 @@ SNIFF_HANDLER(sniff_gg_new_status, gg_new_status) {
 	const char *status;
 	char *descr;
 	int has_descr;
+	int has_time = 0;
 
 	CHECK_LEN(sizeof(gg_new_status))	len -= sizeof(gg_new_status);
 
-/* XXX, update s->status/descr */
 	status	= gg_status_to_text(pkt->status, &has_descr);
-
-	if (!xstrcmp(status, EKG_STATUS_AVAIL)) 		status = "back";
-	else if (!xstrcmp(status, EKG_STATUS_AWAY))		status = "away";
-	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	status = "invisible";
-	else {
-/* XXX, rozlaczony */
-		debug_error("sniff_gg_new_status() XXX bad status: %s\n", status);
-		return -5;
-	}
-
 	descr	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+	sniff_gg_print_new_status(s, hdr, 0, status, descr);
+	xfree(descr);
 
-	if (!has_descr && len > 0)
-		debug_error("sniff_gg_new_status() !has_descr but len > 0?! (%d)\n", len);
-/* XXX tajm */
-
-/* XXX, session_name(s) is wrong here. */
-	if (descr) {
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-				ekg_status_label(status, descr, NULL), /* formatka */
-
-				descr, "", session_name(s));
-	} else 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-				ekg_status_label(status, descr, NULL), /* formatka */
-
-				session_name(s));
-
-
-	return -5;
+	return 0;
 }
 
 SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
@@ -451,39 +436,18 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 	const char *status;
 	char *descr;
 
-	int has_time = 0;
 	int has_descr = 0;
+	int has_time = 0;
 
 	CHECK_LEN(sizeof(gg_status60))		len -= sizeof(gg_status60);
 
-/* XXX, tajm */
-#if 0
-	if (len > 4 && pkt->status_data[len - 5] == 0) {
-		has_time = 1;
-		len -= 5;
-	}
-#endif
 	uin	= pkt->uin & 0x00ffffff;
 
 	status	= gg_status_to_text(pkt->status, &has_descr);
 	descr 	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
-
-/* XXX, update w->userlist */
-	if (!has_descr && len > 0)
-		debug_error("sniff_gg_status60() !has_descr but len > 0?!\n");
-
-	if (has_time)
-		debug_error("sniff_gg_status60() HAS_TIME?!\n");
-
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
-			ekg_status_label(status, descr, "status_"), /* formatka */
-
-			format_user(s, build_gg_uid(uin)), 		/* od */
-			NULL, 						/* nickname, realname */
-			session_name(s), 				/* XXX! do */
-			descr);						/* status */
-
+	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
+
 	return 0;
 }
 
@@ -495,30 +459,15 @@ SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
 
 	CHECK_LEN(sizeof(gg_login60))	len -= sizeof(gg_login60);
 
-	status = gg_status_to_text(pkt->status, &has_descr);
-	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
-
-	if (!has_descr && len > 0) 
-		debug_error("sniff_gg_login60() !has_descr but len > 0?!\n");
-
-	if (has_time)
-		debug_error("sniff_gg_login60() HAS_TIME?!\n");
-
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
 			"sniff_gg_login60",
 
 			build_gg_uid(pkt->uin),
 			build_hex(pkt->hash));
 	
-
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, 
-			ekg_status_label(status, descr, "status_"), /* formatka */
-
-			format_user(s, build_gg_uid(pkt->uin)),		/* od */
-			NULL, 						/* nickname, realname */
-			session_name(s), 				/* XXX! do */
-			descr);						/* status */
-	
+	status = gg_status_to_text(pkt->status, &has_descr);
+	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+	sniff_gg_print_new_status(s, hdr, pkt->uin, status, descr);
 	xfree(descr);
 	return 0;
 }
@@ -835,25 +784,19 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 
 	CHECK_LEN(sizeof(gg_login70));	len -= sizeof(gg_login70);
 
-	status = gg_status_to_text(pkt->status, &has_descr);
-	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
-	debug_error("sniff_gg_login70() XXX ip %d:%d\n", pkt->external_ip, pkt->external_port);
-
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
 			"sniff_gg_login70",
 
 			build_gg_uid(pkt->uin),
 			build_sha1(pkt->hash));
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, 
-			ekg_status_label(status, descr, "status_"), /* formatka */
-
-			format_user(s, build_gg_uid(pkt->uin)),		/* od */
-			NULL, 						/* nickname, realname */
-			session_name(s), 				/* XXX! do */
-			descr);						/* status */
+	status = gg_status_to_text(pkt->status, &has_descr);
+	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+	sniff_gg_print_new_status(s, hdr, pkt->uin, status, descr);
 	xfree(descr);
 	
+	debug_error("sniff_gg_login70() XXX ip %d:%d\n", pkt->external_ip, pkt->external_port);
+
 	CHECK_PRINT(pkt->dunno0, 0x02);
 	CHECK_PRINT(pkt->dunno1, 0x00);
 	CHECK_PRINT(pkt->dunno2, 0xbe);
