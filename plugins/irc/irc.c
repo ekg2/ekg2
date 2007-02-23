@@ -141,6 +141,8 @@ static char *irc_getchan_int(session_t *s, const char *name, int checkchan);
 static char *irc_getchan(session_t *s, const char **params, const char *name,
       char ***v, int pr, int checkchan);
 
+static char *irc_config_default_access_groups;
+
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
@@ -315,6 +317,12 @@ static QUERY(irc_session) {
  */
 static QUERY(irc_print_version) {
 	print("generic", "IRC plugin by Michal 'GiM' Spadlinski, Jakub 'darkjames' Zawadzki v. "IRCVERSION);
+	return 0;
+}
+
+static QUERY(irc_setvar_default) {
+	xfree(irc_config_default_access_groups);
+	irc_config_default_access_groups = xstrdup("__ison");
 	return 0;
 }
 
@@ -1257,7 +1265,7 @@ static COMMAND(irc_command_alist) {
 					else printq("irc_access_invalid_flag", value);
 				}
 				array_free(arr);
-			}
+			} else u->groups = group_init(irc_config_default_access_groups);
 			xfree(tmp);
 		}
 
@@ -2132,6 +2140,7 @@ int irc_plugin_init(int prio)
 	query_connect_id(&irc_plugin, IRC_TOPIC,		irc_topic_header, (void*) 0);
 	query_connect_id(&irc_plugin, STATUS_SHOW,		irc_status_show_handle, NULL);
 	query_connect_id(&irc_plugin, IRC_KICK,			irc_onkick_handler, 0);
+	query_connect_id(&irc_plugin, SET_VARS_DEFAULT, 	irc_setvar_default, NULL);
 
 #define IRC_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS 		IRC_ONLY | SESSION_MUSTBECONNECTED
@@ -2263,6 +2272,10 @@ int irc_plugin_init(int prio)
 	plugin_var_add(&irc_plugin, "VERSION_NAME", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_NO", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&irc_plugin, "VERSION_SYS", VAR_STR, 0, 0, NULL);
+
+	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
+
+	irc_setvar_default(NULL, NULL);
 
 /* irc_session by queries do it. */
 	return 0;
