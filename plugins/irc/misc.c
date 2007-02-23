@@ -54,6 +54,84 @@ char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "M
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 
+/* cos co blabla, zwraca liczbe pochlonietych znakow przez '*' XXX */
+static int do_sample_wildcard_match(const char *str, const char *matchstr, const char stopon) {
+	int i;
+
+	for (i = 0; (str[i] && str[i] != stopon); i++) {
+		if (!matchstr[i]) {
+			debug_error("XXX do_sample_wildcard_match() retval: %d\n", i);
+			return i;
+		}
+	}
+	debug_error("XXX do_sample_wildcard_match() retval: %d\n", i);
+
+	return i;
+}
+
+static int irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flags) {
+	list_t l;
+
+	if (!s || !chan || !p)
+		return -1;
+
+#define dchar(x) debug("%c", x);
+
+	for (l = s->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		int i, j;
+
+		if (!p->ident || !p->host) continue;
+
+		if (xstrncmp(u->uid, "irc:", 4)) continue;	/* skip irc: */
+/* parse nick! */		
+		for (i = 4, j = 0; (u->uid[i] != '\0' && u->uid[i] != '!'); i++, j++) {
+			dchar(u->uid[i]);
+
+			if (u->uid[i] != p->ident[j]) {
+				if (u->uid[i] == '*') i += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], '!');
+				else if (u->uid[i] == '?') continue;
+				else goto next;
+			}
+		} if (!u->uid[i]) goto next;
+		dchar('!');
+		i++;
+
+/* parse ident@ */
+		for (j = 4 /* skip irc: */; (u->uid[i] != '\0' && u->uid[i] != '@'); i++, j++) {
+			dchar(u->uid[i]);
+
+			if (u->uid[i] != p->nick[j]) {
+				if (u->uid[i] == '*') i += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], '@');
+				else if (u->uid[i] == '?') continue;
+				else goto next;
+			}
+		} if (!u->uid[i]) goto next;
+		dchar('@');
+		i++;
+
+/* parse host: */
+		for (j = 0; (u->uid[i] != '\0' && u->uid[i] != ':'); i++, j++) {
+			dchar(u->uid[i]);
+
+			if (u->uid[i] != p->host[j]) {
+				if (u->uid[i] == '*') i += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], ':');
+				else if (u->uid[i] == '?') continue;
+				else goto next;
+			}
+		} if (!u->uid[i]) goto next;
+		dchar('\n');
+
+		debug_error("irc_access_parse() %s!%s@%s MATCH with %s\n", p->ident, p->nick+4, p->host, u->uid+4);
+		continue;
+
+next:
+		dchar('\n');
+		debug_error("irc_access_parse() %s!%s@%s NOT MATCH with %s\n", p->ident, p->nick+4, p->host, u->uid+4);
+	}
+}
+
+
 static int gatoi(char *buf, int *a) {
         char	*x[1];
         long	t;
@@ -838,8 +916,6 @@ IRC_COMMAND(irc_c_join)
 	channel_t	*ischan;
 	window_t	*newwin;
 	people_t	*person;
-	//int  __class = EKG_MSGCLASS_CHAT;
-	//time_t __sent = time(NULL);
 	int		me = 0;
 	char		*ignore_nick;
 
@@ -860,6 +936,7 @@ IRC_COMMAND(irc_c_join)
 		if (person && tmp && !(person->ident) && !(person->host))
 			irc_parse_identhost(tmp+1, &(person->ident), &(person->host));
 
+/*		if (irc_access_parse(s, irc_find_channel(j->channels, OMITCOLON(param[2])), person, 0)); */
 	}
 
 	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);

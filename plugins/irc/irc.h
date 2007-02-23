@@ -89,12 +89,6 @@ typedef struct {
 	channel_t *chanp;
 } people_chan_t;
 
-typedef struct {
-	char *mask;
-	int frmask;
-/*      char frmask[100]; */
-} access_t;
-
 /* structure needed by resolver */
 typedef struct {
 	session_t *session;

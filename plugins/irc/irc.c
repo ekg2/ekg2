@@ -1170,13 +1170,11 @@ static COMMAND(irc_command_alist) {
 	irc_private_t	*j = irc_private(session);
 	int isshow = 0;
 
-	format_add("irc_friendlist_known", "a-> %2!%3@%4", 1);	/* %2 is nickname, not uid ! */
-
 #if 0
 	for (l = j->people; l; l = l->next) {
 		people_t	*per = l->data;
 
-		printq("irc_friendlist_known", session_name(session), per->nick+4, per->ident, per->host);
+		printq("irc_access_known", session_name(session), per->nick+4, per->ident, per->host);
 	}
 #endif
 
@@ -1201,13 +1199,15 @@ static COMMAND(irc_command_alist) {
 /* /irc:access -a irc:nickname #chan1,#chan2 +autoop +autounban +revenge +ison */
 
 		char *mask = NULL;
+		const char *channel;
+		char *groupstr;
 
-		if (!params[1] || !params[2]) {
+		userlist_t *u;
+
+		if (!params[1] || !(channel = params[2])) {
 			printq("not_enough_params", name);
 			return -1;
 		}
-
-		debug_error("[irc] (/irc:access --add) STUB. p[1]: %s p[2]: %s\n", params[1], params[2]);
 
 		if (!xstrncmp(params[1], "irc:", 4)) {	/* nickname */
 			list_t l;
@@ -1230,19 +1230,58 @@ static COMMAND(irc_command_alist) {
 			mask = xstrdup(params[1]);
 		}
 
-		debug_error("[irc] (/irc:access --add) mask: %s\n", mask);
-		
+
+
 		{
-			char *tmp = saprintf("irc:%s:otherdata", mask);
-			userlist_add(session, tmp, mask);
+			char *tmp = saprintf("irc:%s:%s", mask, channel);
+			u = userlist_add(session, tmp, params[1]);
+			if (params[3]) {
+				char **arr = array_make(params[3], " ", 0, 1, 1);
+				int i;
+
+				for (i=0; arr[i]; i++) {
+					const char *value = arr[i];
+
+					if (arr[i][0] == '+')
+						value++;
+
+					if (!xstrcmp(value, "autoop")) 		ekg_group_add(u, "__autoop");		/* +o */
+					else if (!xstrcmp(value, "autovoice"))	ekg_group_add(u, "__autovoice");	/* +v */
+					else if (!xstrcmp(value, "autounban"))	ekg_group_add(u, "__autounban");	/* -b */
+
+					else if (!xstrcmp(value, "autoban"))	ekg_group_add(u, "__autoban");		/* +b */
+					else if (!xstrcmp(value, "autodevop"))	ekg_group_add(u, "__autodevop");	/* -o, -h, -v */
+					else if (!xstrcmp(value, "revenge"))	ekg_group_add(u, "__revenge");		/* + */
+
+					else if (!xstrcmp(value, "ison"))	ekg_group_add(u, "__ison");		/* + */
+					else printq("irc_access_invalid_flag", value);
+				}
+				array_free(arr);
+			}
 			xfree(tmp);
 		}
-		xfree(mask);
 
+		groupstr = group_to_string(u->groups, 1, 1);
+		printq("irc_access_added", session_name(session), "0" /* XXX # */, mask, channel, groupstr);
+		xfree(groupstr);
+
+		xfree(mask);
+	
+		/* XXX sync if wanted */
 		return 0;
 	}
 
 	if (match_arg(params[0], 'd', "delete", 2)) {
+		printq("generic_error", "stub function use /del");
+		return -1;
+	}
+
+	if (match_arg(params[0], 'e', "edit", 2)) {
+		printq("generic_error", "stub function");
+		return -1;
+	}
+
+	if (match_arg(params[0], 'S', "sync", 2)) {
 		printq("generic_error", "stub function");
 		return -1;
 	}
@@ -2104,7 +2143,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:_autoback"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_conntest"), "?",	irc_command_test, 	IRC_ONLY, NULL);
 	command_add(&irc_plugin, ("irc:_genkeys"),  "?",  irc_command_genkey, 0, NULL);
-	command_add(&irc_plugin, ("irc:access"), "p ? ?",	irc_command_alist, 0, "-a --add -d --delete -s --show -l --list");
+	command_add(&irc_plugin, ("irc:access"), "p uUw ? ?",	irc_command_alist, 0, "-a --add -d --delete -e --edit -s --show -l --list -S --sync");
 	command_add(&irc_plugin, ("irc:add"), NULL,	irc_command_add, 	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
 	command_add(&irc_plugin, ("irc:away"), "?",	irc_command_away,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:back"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
@@ -2159,8 +2198,6 @@ int irc_plugin_init(int prio)
 	/* lower case: names of variables that reffer to client itself */
 	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
 	plugin_var_add(&irc_plugin, "alias", VAR_STR, 0, 0, NULL);
-/*	plugin_var_add(&irc_plugin, "alist", VAR_STR, 0, 0, irc_load_alist); */
-	plugin_var_add(&irc_plugin, "alist", VAR_STR, 0, 0, NULL);
 
 	plugin_var_add(&irc_plugin, "auto_away", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
@@ -2390,6 +2427,11 @@ static int irc_theme_init()
 	
 	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
 	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
+
+	format_add("irc_access_added",	_("%> (%1) %3 [#%2] was added to accesslist chan: %4 (flags: %5)"), 1);
+	format_add("irc_access_known", "a-> %2!%3@%4", 1);	/* %2 is nickname, not uid ! */
+
+
 #endif	/* !NO_DEFAULT_THEME */
 	return 0;
 }
