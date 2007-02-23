@@ -402,9 +402,27 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 	char *t1, *t2 = saprintf("%s%s", IRC4, new);
 
 	if (!(per = irc_find_person(j->people, old))) {
+		debug_error("irc_nick_change() person not found?\n");
 		xfree(t2);
 		return 0;
 	}
+
+	for (l=s->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		list_t m;
+
+		for (m = u->resources; m; m = m->next) {
+			ekg_resource_t *r = m->data;
+
+			if (r->private != per) continue;
+
+			xfree(r->name);
+			r->name = xstrdup(t2);
+			/* XXX, here. readd to list, coz it'll be bad sorted. :( */
+			break;
+		}
+	}
+
 	debug("[irc] nick_change():\n");
 	for (i=per->channels; i; i=i->next)
 	{
@@ -421,6 +439,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 			 * this way */
 		}
 	}
+
 	t1 = per->nick;
 	per->nick = t2;
 	xfree(t1);
