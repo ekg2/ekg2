@@ -1230,6 +1230,7 @@ int jabber_plugin_init(int prio)
         plugin_var_add(&jabber_plugin, "alias", VAR_STR, 0, 0, NULL);
 		/* '666' enabled for everyone (DON'T TRY IT!); '0' - disabled; '1' - enabled for the same id (allow from diffrent resources); '2' - enabled for allow_remote_control_jids (XXX) */
 	plugin_var_add(&jabber_plugin, "allow_remote_control", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "allow_autoresponder", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "auto_bookmark_sync", VAR_BOOL, "0", 0, NULL);

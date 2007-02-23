@@ -1276,6 +1276,7 @@ int gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "allow_autoresponder", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0, NULL);	
 	plugin_var_add(&gg_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
