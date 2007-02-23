@@ -711,9 +711,10 @@ IRC_COMMAND(irc_c_list)
 					osoba->ident= xstrdup(IOK(4));
 					xfree(osoba->realname);
 					osoba->realname = xstrdup(realname);
+
+					if (chan && chan->syncmode)
+						irc_access_parse(s, chan, osoba, 0);
 				}
-				if (chan && chan->syncmode)
-					irc_access_parse(s, chan, osoba, 0);
 				break;
 			/*
 			case (IRC_LISTCHA):
