@@ -95,8 +95,9 @@ typedef struct {
 typedef struct {
 	char *name;		/* name of resource */
 	char *status;		/* status, like u->status */
-	char *descr;		/* descr, like u->dsecr */
+	char *descr;		/* descr, like u->descr */
 	int prio;		/* prio of resource */
+	void *private;		/* priv, like u->private */
 } ekg_resource_t;
 
 struct ekg_group {
