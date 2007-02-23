@@ -1,0 +1,33 @@
+question
+	typ: tekst
+	domy¶lna warto¶æ: (brak)
+	
+	Pytanie, wysy³ane do nieznanych u¿ytkowników, w przypadku otrzymania
+	od nich wiadomo¶ci. Je¶li nieustawione, autoresponder bêdzie wy³±czony.
+
+answer
+	typ: tekst
+	domy¶lna warto¶æ: (brak)
+	
+	Poprawna odpowied¼ na twoje pytanie - tzn. je¶li u¿ytkownik wy¶le
+	wiadomo¶æ o identycznej tre¶ci, jego dalsze wiadomo¶ci bêd± ju¿
+	dostarczane u¿ytkownikowi. Je¶li nieustalone, autoreponder bêdzie
+	oczekiwa³ od u¿ytkownika dok³adnego przepisania pytania.
+
+greeting
+	typ: tekst
+	domy¶lna warto¶æ: (brak)
+	
+	Tekst wysy³any u¿ytkownikowi w momencie otrzymania od niego poprawnej
+	odpowiedzi.
+
+match_mode
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	Okre¶la sposób porównywania wiadomo¶ci z odpowiedzi± na pytanie.
+	Dopuszczalne warto¶ci:
+		0 - odpowied¼ musi byæ identyczna
+		1 - odpowied¼ musi zawieraæ siê w wiadomo¶ci
+		2 - odpowied¼ jest wyra¿eniem regularnym (POSIX)
+
