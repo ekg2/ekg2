@@ -273,7 +273,7 @@ static void tlen_handle(xmlnode_t *n, session_t *s) {
 		string_t body = string_init("");
 		
 		char *me	= xstrdup(session_uid_get(s));
-		char *uid	= xstrdup("webmsg.tlen.pl");
+		char *uid	= xstrdup("ludzie.tlen.pl");
 		int class 	= EKG_MSGCLASS_MESSAGE;
 		int ekgbeep 	= EKG_TRY_BEEP;
 		int secure	= 0;
