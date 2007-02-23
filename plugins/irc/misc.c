@@ -89,7 +89,7 @@ static int irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flag
 			dchar(u->uid[i]);
 
 			if (u->uid[i] != p->ident[j]) {
-				if (u->uid[i] == '*') i += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], '!');
+				if (u->uid[i] == '*') j += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], '!');
 				else if (u->uid[i] == '?') continue;
 				else goto next;
 			}
@@ -102,7 +102,7 @@ static int irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flag
 			dchar(u->uid[i]);
 
 			if (u->uid[i] != p->nick[j]) {
-				if (u->uid[i] == '*') i += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], '@');
+				if (u->uid[i] == '*') j += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], '@');
 				else if (u->uid[i] == '?') continue;
 				else goto next;
 			}
@@ -115,19 +115,57 @@ static int irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flag
 			dchar(u->uid[i]);
 
 			if (u->uid[i] != p->host[j]) {
-				if (u->uid[i] == '*') i += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], ':');
+				if (u->uid[i] == '*') j += do_sample_wildcard_match(&u->uid[i+1], &p->ident[j], ':');
 				else if (u->uid[i] == '?') continue;
 				else goto next;
 			}
 		} if (!u->uid[i]) goto next;
 		dchar('\n');
+		i++;
 
 		debug_error("irc_access_parse() %s!%s@%s MATCH with %s\n", p->ident, p->nick+4, p->host, u->uid+4);
+
+/* let's rock with channels */
+		{
+			char **arr = array_make(&u->uid[i], ",", 0, 1, 0);
+
+			int ismatch = 0;
+
+
+			for (i=0; arr[i]; i++) {
+				int k;
+				debug_error("CHAN%d: %s: ", i, arr[i]);
+
+				for (j = 0, k = 4 /* skip irc: */; arr[i][j]; j++, k++) {
+					if (arr[i][j] != chan->name[k]) {
+						if (arr[i][j] == '*') k += do_sample_wildcard_match(&arr[i][j], &chan->name[k], '\0');
+						else if (arr[i][j] == '?') continue;
+						else goto next2;
+					}
+				}
+				if (chan->name[k] != '\0') 
+					goto next2;
+
+				ismatch = 1;
+				debug_error("MATCH\n");
+				break;
+next2:
+				debug_error("NOT MATCH\n");
+				continue;
+					
+			}
+			array_free(arr);
+
+			if (!ismatch) continue;
+		}
+	
+		debug_error("USER: 0x%x PERMISION GRANTED ON CHAN: 0x%x\n", u, chan);
 		continue;
 
 next:
 		dchar('\n');
 		debug_error("irc_access_parse() %s!%s@%s NOT MATCH with %s\n", p->ident, p->nick+4, p->host, u->uid+4);
+		continue;
 	}
 }
 
