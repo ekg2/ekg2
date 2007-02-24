@@ -30,7 +30,7 @@ name_separator
 
 oneshot_resume_timer
 	type: integer
-	default vlaue: 3
+	default value: 3
 	
 	Delay (in seconds), after which the process, stopped by reaching
 	max_oneshot_files, will be resumed. If set to 0, no autoresume'll
