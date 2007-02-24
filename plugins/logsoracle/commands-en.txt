@@ -21,7 +21,7 @@ connect
 disconnect
 	parameters:
 	short description: close an open oracle connection
-
+	
 	see also 'connect' command
 
 status

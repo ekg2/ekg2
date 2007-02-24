@@ -8,7 +8,7 @@ question
 answer
 	type: string
 	default value: (none)
-
+	
 	Correct answer for your question - i.e. if user does reply with exact
 	string, his further messages will be delivered to user. If null, then
 	autoresponder will expect user to rewrite the 'question' string.
@@ -16,14 +16,14 @@ answer
 greeting
 	type: string
 	default value: (none)
-
+	
 	If set, that message will be sent to user, when he sends correct
 	answer.
 
 match_mode
 	type: integer
 	default value: 1
-
+	
 	Defines match mode for comparing specified answer with incoming
 	messages. Possible values:
 		0 - exact match
