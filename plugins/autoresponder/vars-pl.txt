@@ -24,7 +24,7 @@ greeting
 match_mode
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	Okre¶la sposób porównywania wiadomo¶ci z odpowiedzi± na pytanie.
 	Dopuszczalne warto¶ci:
 		0 - odpowied¼ musi byæ identyczna
