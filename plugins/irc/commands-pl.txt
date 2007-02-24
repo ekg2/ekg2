@@ -19,7 +19,7 @@ connect
 	krotki opis: pod³±cza sesjê do sieci IRC
 	
 	Nale¿y wcze¶niej ustawiæ zmienn± sesyjn± server 
-	[/session irc:nazwa_sesji server irc_servewr_name]
+	[/session irc:nazwa_sesji server irc_serwer_name]
 	oraz zmienn± nickname.
 
 disconnect
