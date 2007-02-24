@@ -43,24 +43,17 @@ ban_type
 	typ: liczba
 	domy¶lna warto¶æ: 10
 	
-	Typy banów: (irssi-like) tylko ze zamiast tekstu mamy numerki.
+	Typy banów: (irssi-like) tylko ze zamiast tekstu mamy numerki:
+	- 1 (Nick)   - nick!*@*
+	- 2 (User)   - *!*user@*
+	- 4 (Host)   - *!*@host.* (to jest troche inne niz w irssi jak chcesz irssi-like to ustaw 12)
+	- 8 (Domain) - *!*@*.domain.net
+	- 8 (IP)     - *!*@192.168.11.*
 	
-	 1 (Nick)   - nick!*@*
-	 
-	 2 (User)   - *!*user@*
-	 
-	 4 (Host)   - *!*@host.* (to jest troche inne niz w irssi
-	jak chcesz irssi-like to ustaw 12)
-	 
-	 8 (Domain) - *!*@*.domain.net
-	 
-	 8 (IP)     - *!*@192.168.11.*
-	 
 	i po dodaniu mamy np:
 	
-	 3 (Nick|User)   - nick!user@*
-	 
-	10 (User|Domain) - *!*user@*.domain.net
+	-  3 (Nick|User)   - nick!user@*
+	- 10 (User|Domain) - *!*user@*.domain.net
 	
 	Zmienna uzywana przy /ban oraz /kickban
 	Wiecej /help ban (@irssi)
@@ -78,13 +71,6 @@ dcc_port
 	domy¶lna warto¶æ: 0
 	
 	póki co jeszcze nie u¿ywane...
-
-default
-	typ: bool
-	domy¶lna warto¶æ: false
-	
-	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
-	podczas uruchomienia programu)
 
 display_notify
 	typ: liczba
