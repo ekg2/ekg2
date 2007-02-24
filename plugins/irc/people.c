@@ -407,8 +407,8 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		return 0;
 	}
 
-	for (l=s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (i=s->userlist; i; i = i->next) {
+		userlist_t *u = i->data;
 		list_t m;
 
 		for (m = u->resources; m; m = m->next) {
