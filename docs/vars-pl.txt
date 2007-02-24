@@ -2,14 +2,6 @@
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 //		      2004 adam mikuta <adammikuta@poczta.onet.pl>
 
-audio_device
-	typ: tekst
-	domy¶lna warto¶æ: /dev/dsp
-
-	urz±dzenie d¼wiêkowe, którego nale¿y u¿ywaæ przy rozmowach g³osowych.
-	je¶li poprzedzi siê je minusem ,,-'', sygna³ z wej¶cia urz±dzenia nie
-	bêdzie wysy³any podczas rozmowy g³osowej.
-
 auto_save
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -83,42 +75,13 @@ completion_notify
 	pojawi± siê na li¶cie ze stanem ,,zajêty''. wszystkie dostêpne
 	warto¶ci to: 0, 1, 2, 5, 6.
 
-dcc
-	typ: bool
-	domy¶lna warto¶æ: 0
-
-	w³±cza lub wy³±cza bezpo¶rednie po³±czenia miêdzy klientami. zmiana
-	tej opcji wymaga ponownego po³±czenia z serwerem, by przes³aæ nowy
-	adres IP lub jego brak.
-
-dcc_ip
-	typ: tekst
-	domy¶lna warto¶æ: brak
-
-	okre¶la adres IP, który jest wysy³any serwerowi. je¶li przypisze
-	siê tej zmiennej warto¶æ ,,auto'', adres bêdzie ustalany 
-	automatycznie. je¶li chcemy bezproblemowo ³±czyæ siê z klientami
-	z tej samej sieci LAN, dobrze jest podaæ adres IP sieci LAN zamiast
-	zewnêtrznego.
-
 dcc_dir
 	typ: tekst
 	domy¶lna warto¶æ: brak
 
 	okre¶la katalog, do którego bêd± zapisywane pobierane pliki.
 
-dcc_limit
-	typ: tekst
-	domy¶lna warto¶æ: 30/30
-
-	okre¶la limit bezpo¶rednich po³±czeñ w danym przedziale czasu.
-	liczba przed uko¶nikiem okre¶la maksymaln± ilo¶æ po³±czeñ, a liczba
-	po uko¶niku ilo¶æ sekund. po przekroczeniu tego progu bezpo¶rednie
-	po³±czenia zostaj± wy³±czone, by zapobiec atakom polegaj±cym na
-	wyczerpaniu zasobów klienta. zwykle po ponownym w³±czeniu
-	bezpo¶rednich po³±czeñ nale¿y po³±czyæ siê ponownie z serwerem.
-
-default_status_window 
+default_status_window
 	typ: bool
 	domy¶lna warto¶æ: 0
 
@@ -233,7 +196,7 @@ keep_reason
 	i ,,disconnect'' bez podanego powodu przejm± aktualny opis. zostanie
 	on wraz ze stanem zapisany bez wyra¼nego wydawania komendy zapisu 
 	konfiguracji. warto¶æ 2 powoduje zapisywanie opisu bez stanu.
-	
+
 last
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -244,7 +207,7 @@ last
 	wiadomo¶ci od ka¿dego usera. dostêpna jest jeszcze logiczna
 	warto¶æ 4, która pozwala logowaæ wiadomo¶ci wys³ane. dostêpne s±
 	w takim razie warto¶ci 0, 1, 2, 5 i 6.
-	
+
 last_size
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -281,20 +244,6 @@ quit_reason
 	domy¶lna warto¶æ: brak
 
 	domy¶lny opis stanu niedostêpnego, ustawiany przy wychodzeniu.
-
-random_reason
-	typ: liczba
-	domy¶lna warto¶æ: 0
-
-	okre¶la czy przy zmianie stanu i po³±czeniu ma byæ losowany opis (z 
-	~/.gg/quit.reasons dla komend ,,quit'', ,,disconnect'', ,,invisible'', 
-	~/.gg/away.reasons dla ,,away'' i ~/.gg/back.reasons dla ,,back'').
-	dla 0 nie jest losowany, dla 1 losowany jest opis dotycz±cy stanu
-	zajêty, dla 2 niedostêpny, dla 4 dostêpny, dla 8 niewidoczny.
-	warto¶ci te mo¿na ze sob± dodawaæ, np. 11 bêdzie dotyczyæ stanów
-	niedostêpny, zajêty oraz niewidoczny. je¿eli z jakich¶ przyczyn
-	nie powiedzie siê odczyt, opis bêdzie pobierany ze zmiennych
-	,,away_reason'' lub ,,quit_reason'', o ile nie s± puste.
 
 reason_limit
 	typ: bool
@@ -335,7 +284,7 @@ sessions_save
         typ: bool
         domy¶lna warto¶æ: 0
 
-        okre¶la, czy aktualna sesja ma byæ ustawiona jako domy¶lna - przy 
+	okre¶la, czy aktualna sesja ma byæ ustawiona jako domy¶lna - przy 
 	nastêpnym uruchomieniu bêdzie ona ustawiona jako aktywna. przy 
 	wychodzeniu z programu pojawi siê monit o zapisanie zmian.
 
@@ -394,7 +343,7 @@ speech_app
 	aplikacja u¿ywana do odczytywania tekstów wy¶wietlanych na ekranie.
 	jej ustawienie powoduje równie¿ zmianê motywu na taki, który jest
 	³atwiejszy do wymówienia.
-	
+
 tab_command
 	typ: tekst
 	domy¶lna warto¶æ: "chat"
@@ -441,11 +390,6 @@ windows_save
 	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
 	uruchomieniu programu. przy wychodzeniu z programu pojawi siê 
 	monit o zapisanie zmian.
-
-last_sysmsg
-	typ: liczba, zmienna wewnêtrzna, ukryta
-
-	okre¶la numer ostatniej wiadomo¶ci systemowej.
 
 windows_layout
 	typ: tekst, zmienna wewnêtrzna, ukryta
