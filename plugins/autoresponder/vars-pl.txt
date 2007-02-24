@@ -27,7 +27,10 @@ match_mode
 	
 	Okre¶la sposób porównywania wiadomo¶ci z odpowiedzi± na pytanie.
 	Dopuszczalne warto¶ci:
+	
 		0 - odpowied¼ musi byæ identyczna
+	
 		1 - odpowied¼ musi zawieraæ siê w wiadomo¶ci
+	
 		2 - odpowied¼ jest wyra¿eniem regularnym (POSIX)
 
