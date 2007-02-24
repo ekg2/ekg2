@@ -551,6 +551,50 @@ static void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
 	debug("rss_parsexml_atom() sorry, atom not implemented\n");
 }
 
+static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
+	rss_channel_t *chan;
+
+	debug("rss_parsexml_rdf (channels oldcount: %d)\n", list_count(f->rss_channels));
+	debug_error("XXX http://web.resource.org/rss/1.0/");
+
+	chan = rss_channel_find(f, /* chanlink, chantitle, chandescr, chanlang */ "", "", "", "");
+
+	for (; node; node = node->next) {
+		if (!xstrcmp(node->name, "channel")) {
+			/* DUZE XXX */
+
+
+		} else if (!xstrcmp(node->name, "item")) {
+			const char *itemtitle   = NULL;
+			const char *itemdescr   = NULL;
+			const char *itemlink    = NULL;
+
+			xmlnode_t *subnode;
+			rss_item_t *item;
+			string_t    tmp		= string_init(NULL);
+
+			for (subnode = node->children; subnode; subnode = subnode->next) {
+				if (!xstrcmp(subnode->name, "title"))		itemtitle	= subnode->data->str;
+				else if (!xstrcmp(subnode->name, "link"))	itemlink	= subnode->data->str;
+				else if (!xstrcmp(subnode->name, "description"))itemdescr	= subnode->data->str;
+				else {  /* other, format tag: value\n */
+/*					debug("rss_parsexml_rdf RDF->ITEMS: %s\n", subnode->name); */
+					string_append(tmp, subnode->name);
+					string_append(tmp, ": ");
+					string_append(tmp, subnode->data->str);
+					string_append_c(tmp, '\n');
+				}
+			}
+			item = rss_item_find(chan, itemlink, itemtitle, itemdescr);
+
+			string_free(item->other_tags, 1);
+			item->other_tags = tmp;
+
+
+		} else debug("rss_parsexml_rdf RSS: %s\n", node->name);
+	}
+}
+
 static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 	debug("rss_parsexml_rss (channels oldcount: %d)\n", list_count(f->rss_channels));
 
@@ -645,6 +689,7 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 		for (node = priv->node; node; node = node->next) {
 			if (!xstrcmp(node->name, "rss")) rss_parsexml_rss(f, node->children);
 			else if (!xstrcmp(node->name, "feed")) rss_parsexml_atom(f, node->children); /* xmlns */
+			else if (!xstrcmp(node->name, "rdf:RDF")) rss_parsexml_rdf(f, node->children);
 			else {
 				debug("UNKNOWN node->name: %s\n", node->name);
 				goto fail;

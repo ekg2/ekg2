@@ -184,7 +184,7 @@ static QUERY(rss_message) {
 
 			if ((value = xstrchr(tmp, ' '))) *value = 0;
 			if (dheaders && !xstrstr(dheaders, tmp)) {
-/*				debug("DHEADER: %s=%s\n", tmp, value+1); */
+/*				debug("DHEADER: %s=%s\n", tmp, value+1);  */
 				continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
 			}
 
@@ -287,7 +287,7 @@ int feed_plugin_init(int prio) {
 	plugin_var_add(&feed_plugin, "display_mode", VAR_INT, "3", 0, NULL);	
 	plugin_var_add(&feed_plugin, "display_headers", VAR_STR, 
 		/* RSS: */ 
-			"pubDate: author: " 
+			"pubDate: author: dc:creator: dc:date:" 
 		/* NNTP: */ 
 			"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
 		0, NULL);
@@ -322,9 +322,13 @@ static int feed_theme_init() {
 	format_add("feed_message_footer",	_("%g|+=%G----- End of message...%n\n"), 1);
 
 		/* %1 - tag %2 - value */
+/* rss: */
 	format_add("feed_message_header_generic",	_("%r %1 %W%2"), 1);
 	format_add("feed_message_header_pubDate:",	_("%r Napisano: %W%2"), 1);
 	format_add("feed_message_header_author:",	_("%r Autor: %W%2"), 1);
+/* rdf: */
+	format_add("feed_message_header_dc:date:",	_("%r Napisano: %W%2"), 1);
+	format_add("feed_message_header_dc:creator:",	_("%r Autor: %W%2"), 1);
 
 	format_add("feed_server_header_generic",	_("%m %1 %W%2"), 1);
 
