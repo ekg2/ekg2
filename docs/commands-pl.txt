@@ -5,33 +5,27 @@
 !
 	parametry:  [opcje] <polecenie>
 	krotki opis: synonim dla %Texec%n
-	
-	
+
 ?
 	parametry:  [polecenie] [zmienna]
 	krotki opis: synonim dla %Thelp%n
-	
-	
+
 _addtab
 	parametry: 
 	krotki opis: dodaje do listy dope³niania TABem
-	
-	
+
 _debug
 	parametry:  <tekst>
 	krotki opis: wy¶wietla podany tekst w oknie debug
-	
-	
+
 _debug_dump
 	parametry: 
 	krotki opis: zrzuca debug do pliku
-	
-	
+
 _deltab
 	parametry: 
 	krotki opis: usuwa z listy dope³niania TABem
-	
-	
+
 _desc
 	parametry: [-/opis]
 	krotki opis: zmienia opis nie zmieniaj±c stanu
@@ -39,38 +33,31 @@ _desc
 _event_test
 	parametry: 
 	krotki opis: iha
-	
-	
+
 _fds
 	parametry: 
 	krotki opis: wy¶wietla otwarte pliki
-	
-	
+
 _msg
 	parametry: 
 	krotki opis: udaje, ¿e wysy³a wiadomo¶æ
-	
-	
+
 _queries
 	parametry: 
 	krotki opis: wy¶wietla listê zapytañ
-	
-	
+
 _query
 	parametry:  <zapytanie> [parametry...]
 	krotki opis: generuje zapytanie
-	
-	
+
 _segv
 	parametry: 
 	krotki opis: wywo³uje naruszenie segmentacji pamiêci
-	
-	
+
 _watches
 	parametry: 
 	krotki opis: wy¶wietla listê przegl±danych deskryptorów
-	
-	
+
 add
 	parametry:  [numer] [alias] [opcje]
 	krotki opis: dodaje u¿ytkownika do listy kontaktów
@@ -148,14 +135,15 @@ bind
 	quoted-insert, word-rubout, backward-char, forward-char, previous-history, 
 	next-history, complete, quick-list, toggle-contacts, next-contacts-group, 
 	ignore-query, forward-contacts-page, backward-contacts-page, forward-contacts-line, 
-	backward-contacts-line, previous-only-history, next-only-history.
+	backward-contacts-line, previous-only-history, next-only-history,
+	backward-lastlog-page, forward-lastlog-page.
 	
 	Ka¿da inna akcja bêdzie traktowana jako komenda do wykonania.
 
 clear
 	parametry: 
 	krotki opis: czy¶ci ekran
-	
+
 conference
 	parametry:  [opcje]
 	krotki opis: zarz±dzanie konferencjami
@@ -204,15 +192,11 @@ dcc
 del
 	parametry:  <numer/alias>|*
 	krotki opis: usuwa u¿ytkownika z listy kontaktów
-	
+
 echo
 	parametry:  [tekst]
 	krotki opis: wy¶wietla podany tekst
-	
-ehe
-	parametry:  ehe
-	krotki opis: 
-	
+
 eval
 	parametry:  <polecenie(a)>
 	krotki opis: wykonuje podane polecenia
@@ -394,8 +378,8 @@ on
 	za³o¿eniem, np. ,,%T!+%n''. Mo¿na u¿ywaæ \%1 zamiast nazwy nadawcy oraz \%2 
 	zamiast ewentualnych parametrów. Gdy potrzeba u¿yæ spacji w za³o¿eniu nale¿y 
 	ca³e za³o¿enie uj±æ w cudzys³ów. 
-
-		
+	
+	
 	W za³o¿eniach mo¿na u¿ywaæ:
 	
 	  \%1  - jako uid sprawcy
