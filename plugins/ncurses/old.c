@@ -2112,11 +2112,13 @@ end:
 	if (ch == 27) {
 		if ((ekg_getch(27, &ch)) < 0)
 			goto loop;
-/* XXX HERE we rather should check if ch is not larger than tabsize... */
-                b = ncurses_binding_map_meta[ch];
 		
 		if (ch == 27)
 			b = ncurses_binding_map[27];
+		else if (ch > KEY_MAX) {
+			debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
+			goto then;
+		} else	b = ncurses_binding_map_meta[ch];
 
 		/* je¶li dostali¶my \033O to albo mamy Alt-O, albo
 		 * pokaleczone klawisze funkcyjne (\033OP do \033OS).
@@ -2158,6 +2160,16 @@ end:
 			}
 		}
 	} else {
+		if (
+#if USE_UNICODE
+			!config_use_unicode && 
+#endif
+			ch > KEY_MAX) {
+			
+			debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
+			goto then;
+		}
+
 		if (
 #if USE_UNICODE
 			( (config_use_unicode && (tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */)) || !config_use_unicode) &&
