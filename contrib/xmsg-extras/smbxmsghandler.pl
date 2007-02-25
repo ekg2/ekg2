@@ -1,9 +1,9 @@
 #!/usr/bin/perl
-#
-# smbxmsghandler.pl
-# (C) 2006 Michał Górny <peres@peres.int.pl>
 
-use lib "/home/peres/perl/xmsghandler/";
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::RealBin";
 use SimpleXMSG qw/replyxmsg/;
 
 if ($ARGV[0] =~ /^smbmsg-(.*)/) {

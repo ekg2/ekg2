@@ -1,10 +1,9 @@
 #!/usr/bin/perl
-#
-# xmsghandler.pl
-# (C) 2006 Michał Górny <peres@peres.int.pl>
 
+use strict;
+use warnings;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::RealBin";
 use SimpleXMSG qw/replyxmsg/;
 
 my $handlerddir = '~/xmsghandler.d';

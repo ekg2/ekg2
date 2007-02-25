@@ -1,12 +1,11 @@
 #!/usr/bin/perl
-#
-# xmsgrssxhandler.pl
-# (C) 2006 Michał Górny <peres@peres.int.pl>
-#
 # to be called from xmsghandler.pl
 # symlink into handlers.d/
 
-use lib "/home/peres/perl/xmsghandler/";
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::RealBin";
 use SimpleXMSG qw/replyxmsg/;
 use File::Temp qw/tempfile/;
 
@@ -18,26 +17,17 @@ our $helpmsg =
 	"\tlist\t\tlist feeds in db\n" .
 	"\tadd %n %u\tadd new feed to db, %n = name, %u = url\n" .
 	"\trm [%n]\t\tremove feed, [%n] = name, if writing to xmsg:rss-feedname, MUST be NULL";
-our $dbfile = '/home/peres/perl/xmsgrss/db';
-our $xmsgrss = '~/perl/xmsgrss/xmsgrss.pl';
-our $msgdir = '/var/xmsg';
-
-sub replyxmsg
-{
-	($fh, $fn) = tempfile("/tmp/$ARGV[0]:XXXXXX");
-	print $fh shift;
-	close $fh;
-	`mv "$fn" "$msgdir"`;
-}
+our $dbfile = "$FindBin::RealBin/db";
+our $xmsgrss = "$FindBin::RealBin/xmsgrss.pl";
+our $f;
 
 sub DoRemove
 {
 	my $what = shift;
 	
 	eval {
-		my $out;
-		my $found = 0;
-		my $confirmed = 0;
+		my ($out, $line, @arr);
+		my ($found, $confirmed) = (0, 0);
 
 		open($f, "+<$dbfile") or die('unable to open database');
 		while (<$f>) {
@@ -89,7 +79,8 @@ my $cmd;
 
 if ($ARGV[0] =~ /^rss-(.*)$/) {
 	{
-		local ($/, $f);
+		local $/;
+
 		open($f, "<$ARGV[1]");
 		$cmd = <$f>;
 		close($f);
@@ -113,7 +104,7 @@ if ($ARGV[0] =~ /^rss-(.*)$/) {
 	
 	chomp $cmd;
 	if ($cmd eq 'list') {
-		my ($outmsg, $f);
+		my ($outmsg, @arr);
 		
 		eval {
 			open($f, "<$dbfile") or die;
@@ -136,8 +127,6 @@ if ($ARGV[0] =~ /^rss-(.*)$/) {
 		replyxmsg('Unable to open database') if ($@);
 	} elsif ($cmd =~ /^add[[:space:]]+(.*?)[[:space:]]+(https?:\/\/.*)$/) {
 		eval {
-			my $f;
-
 			open($f, ">>$dbfile") or die('unable to open database');
 			print($f "$1##$2##0####\n") or die('db write error');
 			close($f);
@@ -154,7 +143,7 @@ if ($ARGV[0] =~ /^rss-(.*)$/) {
 	} elsif ($cmd =~ /^rm[[:space:]]+(.*)$/) {
 		DoRemove($1);
 	} elsif ($cmd eq 'refresh') {
-		`$xmsgrss $dbfile`;
+		`$xmsgrss`;
 		if ($?>>8) {
 			replyxmsg('Execution failed: ' . ($?>>8));
 		} else {
