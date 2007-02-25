@@ -27,8 +27,8 @@ name_separator
 	Separator oddzielaj±cy zasadnicz± czê¶æ nazwy (u¿ywan± w UID-ach)
 	od sufiksu. Nazwa pliku bêdzie ³amana na ostatnim wyst±pieniu tego
 	znaku. Warto¶æ nieustalona wy³±cza dzielenie. W przypadku podania
-	wiêkszej liczby znaków, brany bêdzie pod uwagê tylko pierwszy (mo¿e to
-	ulec zmianie w najbli¿szym czasie).
+	wiêkszej liczby znaków, brany bêdzie pod uwagê ten, wystêpuj±cy
+	najbli¿ej koñca nazwy pliku.
 
 oneshot_resume_timer
 	typ: liczba

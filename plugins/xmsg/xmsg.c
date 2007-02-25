@@ -54,8 +54,8 @@
 /* debugs */
 #define xerr(txt, ...) do { debug_error("[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__); XERRADD return -1; } while (0)
 #define xerrn(txt, ...) do { debug_error("[xmsg] " __FUNC__ ": " txt ": %s\n", ##__VA_ARGS__, strerror(errno)); XERRADD return -1; } while (0)
-#define xdebug(txt, ...) do { debug("[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__); } while (0)
-#define xdebug2(lvl, txt, ...) do { debug_ext(lvl, "[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__); } while (0)
+#define xdebug(txt, ...) debug("[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__)
+#define xdebug2(lvl, txt, ...) debug_ext(lvl, "[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__)
 #define XERRADD
 
 /* global vars */
@@ -222,7 +222,7 @@ static TIMER(xmsg_iterate_dir)
 static int xmsg_handle_file(session_t *s, const char *fn)
 {
 #define __FUNC__ "xmsg_handle_file"
-	char *dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
+	char *dir;
 #undef XERRADD
 #define XERRADD xfree(dir);
 	const int nounlink = !session_int_get(s, "unlink_sent");
@@ -233,9 +233,11 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	char *msg;
 	char *f;
 	int fd, fs;
+	time_t ft;
 	
 	if (*fn == '.') /* we're skipping ALL dotfiles */
 		return -1;
+	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
 	f = xmalloc(xstrlen(dir) + xstrlen(fn) + 2);
 #undef XERRADD
 #define XERRADD xfree(f); xfree(dir);
@@ -276,6 +278,10 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		}
 		
 		fs = st.st_size;
+		/* mtime > ctime > atime > time(NULL) */
+#define X(x,y) (x ? x : y)
+		ft = X(st.st_mtime, X(st.st_ctime, X(st.st_atime, time(NULL))));
+#undef X
 		xfree(dotf);
 #undef XERRADD
 #define XERRADD xfree(f);
@@ -305,17 +311,25 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 			char *uid	= xmalloc(strlen(fn) + 6);
 			char **rcpts    = NULL;
 			uint32_t *format= NULL;
-			time_t sent	= time(NULL);
+			time_t sent	= ft;
 			int class	= EKG_MSGCLASS_CHAT;
 			char *seq	= NULL;
 			int dobeep	= EKG_TRY_BEEP;
 			int secure	= 0;
-			char *p;
 
 			xstrcpy(uid, "xmsg:");
 			xstrcat(uid, fn);
-			if (namesep && (p = xstrrchr(uid+XMSG_UID_DIROFFSET, *namesep)))
-				*p = '\0';
+			if (namesep) {
+				char *p, *q = NULL;
+
+				for (p = namesep; *p; p++) {
+					char *r = xstrrchr(uid+XMSG_UID_DIROFFSET, *p);
+					if (r > q)
+						q = r;
+				}
+				if (q)
+					*q = '\0';
+			}
 
 			query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid, &rcpts, &msg, &format, &sent, &class, &seq, &dobeep, &secure);
 

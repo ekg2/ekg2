@@ -25,8 +25,8 @@ name_separator
 	
 	Separator dividing filename into main part (used in UID-s) and suffix.
 	Filename will be divided on last occurrence of this character. If null,
-	dividing will be disabled. If more than one char, the first one will be
-	used (subject to change in near time).
+	dividing will be disabled. If more than one char, the one closer to
+	the end of filename will be used.
 
 oneshot_resume_timer
 	type: integer
