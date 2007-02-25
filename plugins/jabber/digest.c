@@ -39,12 +39,12 @@ typedef struct {
     uint32_t state[5];
     uint32_t count[2];
     unsigned char buffer[64];
-} SHA1_CTX, MD5_CTX;
+} EKG2_SHA1_CTX, EKG2_MD5_CTX;
 
-static void Init(SHA1_CTX* context, int usesha);
+static void Init(EKG2_SHA1_CTX* context, int usesha);
 static void Transform(uint32_t state[5], unsigned char buffer[64], int usesha);
-static void Update(SHA1_CTX* context, unsigned char* data, unsigned int len, int usesha);
-static void Final(unsigned char digest[20], SHA1_CTX* context, int usesha);
+static void Update(EKG2_SHA1_CTX* context, unsigned char* data, unsigned int len, int usesha);
+static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha);
 
 #define SHA1Init(ctx)			Init(ctx, 1)
 #define SHA1Transform(state, buffer)	Transform(state, buffer, 1)
@@ -236,7 +236,7 @@ static unsigned char workspace[64];
 
 /* SHA1Init - Initialize new context */
 
-static void Init(SHA1_CTX* context, int usesha)
+static void Init(EKG2_SHA1_CTX* context, int usesha)
 {
     /* SHA1 initialization constants */
     context->state[0] = 0x67452301;
@@ -249,7 +249,7 @@ static void Init(SHA1_CTX* context, int usesha)
 
 /* Run your data through this. */
 
-static void Update(SHA1_CTX* context, unsigned char* data, unsigned int len, int usesha)
+static void Update(EKG2_SHA1_CTX* context, unsigned char* data, unsigned int len, int usesha)
 {
 unsigned int i, j;
 
@@ -290,7 +290,7 @@ static void Encode (unsigned char *output, uint32_t *input, unsigned int len, in
 
 /* Add padding and return the message digest. */
 
-static void Final(unsigned char digest[20], SHA1_CTX* context, int usesha)
+static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 {
     unsigned char finalcount[8];
     uint32_t i;
@@ -350,7 +350,7 @@ static char *base16_encode(const unsigned char *data) {
 }
 
 char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm) {
-	MD5_CTX ctx;
+	EKG2_MD5_CTX ctx;
 	unsigned char digest[20];
 
 	char *convnode, *convpasswd;	/* sid && password encoded in UTF-8 */
@@ -413,7 +413,7 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 
 /* XXX, make smth more universal? jabber_digest(int count, ...) */
 char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
-	SHA1_CTX ctx;
+	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
 	int i;
@@ -438,7 +438,7 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
  * zwraca skrót has³a dla jabber:iq:auth.
  */
 char *jabber_digest(const char *sid, const char *password) {
-	SHA1_CTX ctx;
+	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
 	char *tmp;
