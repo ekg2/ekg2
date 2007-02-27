@@ -35,10 +35,16 @@
 #ifdef __sun /* Solaris */
 #  include <sys/kbd.h>
 #  include <sys/kbio.h>
-#endif 
+#endif
 #ifdef __linux__
-#  include <linux/cdrom.h>		  
-#  include <linux/kd.h>			 
+#if 0
+/* This should fix compilation with newer kernel headers. I don't know why this
+ * file was included here, so I'm not sure I don't break something
+ * Maybe it was needed with older kernels? Anyone has got an idea?
+ * As we still use -k in make, disabling it. If it fails, let me know. [peres] */
+#  include <linux/cdrom.h>
+#endif
+#  include <linux/kd.h>
 #endif
 
 #include <fcntl.h>
