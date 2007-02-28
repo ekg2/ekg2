@@ -221,6 +221,8 @@ int session_remove(const char *uid)
 	xfree(s->status);
 	xfree(s->descr);
 	xfree(s->password);
+	xfree(s->laststatus);
+	xfree(s->lastdescr);
 
 	list_remove(&sessions, s, 1);
 	return 0;
@@ -230,7 +232,8 @@ PROPERTY_STRING_GET(session, status)
 
 int session_status_set(session_t *s, const char *status)
 {
-	char *__session, *__status;	
+	char *__session, *__status;
+	int is_xa;
 
 	if (!s)
 		return -1;
@@ -240,15 +243,44 @@ int session_status_set(session_t *s, const char *status)
 
 	query_emit_id(NULL, SESSION_STATUS, &__session, &__status);
 
-	xfree(s->status);
+	if ((is_xa = !xstrcmp(__status, EKG_STATUS_AUTOXA)) || !xstrcmp(__status, EKG_STATUS_AUTOAWAY)) {
+		char *tmp = xstrdup(session_get(s, (is_xa ? "auto_xa_descr" : "auto_away_descr")));
+		if (xstrchr(tmp, '%')) {
+			char *tmpx = (s->autoaway ? s->lastdescr : s->descr);
+			char *tmp_ = saprintf(tmp, (tmpx ? tmpx : ""));
+			xfree(tmp);
+			tmp = tmp_;
+		}
+		if (!s->autoaway) { /* don't overwrite laststatus, if already on aa */
+			s->laststatus = s->status;
+			s->status = NULL;
+			s->lastdescr = xstrdup(s->descr);
+		}
 
-	if (!xstrcmp(__status, EKG_STATUS_AUTOAWAY)) {
+		if (tmp) {
+			xfree(s->descr);
+			s->descr = tmp;
+		}
 		xfree(__status);
-		__status = xstrdup(EKG_STATUS_AWAY);
+		__status = xstrdup((is_xa ? EKG_STATUS_XA : EKG_STATUS_AWAY));
 		s->autoaway = 1;
-	} else 
+	} else if (s->autoaway) {
+		if (!xstrcmp(__status, EKG_STATUS_AUTOBACK)) {
+			xfree(__status);
+			__status = s->laststatus;
+			s->laststatus = NULL;
+		} else {
+			xfree(s->laststatus);
+			s->laststatus = NULL;
+		}
+		
+		xfree(s->descr);
+		s->descr = s->lastdescr;
+		s->lastdescr = NULL;
 		s->autoaway = 0;
+	}
 	
+	xfree(s->status);
 	s->status = __status;
 
 	xfree(__session);
@@ -276,7 +308,24 @@ const char *session_password_get(session_t *s)
 }
 
 
-PROPERTY_STRING(session, descr)
+PROPERTY_STRING_GET(session, descr)
+
+int session_descr_set(session_t *s, const char *descr)
+{
+	if (!s)
+		return -1;
+	
+	if (s->autoaway) {
+		xfree(s->lastdescr);
+		s->lastdescr = xstrdup(descr);
+	} else {
+		xfree(s->descr);
+		s->descr = xstrdup(descr);
+	}
+	
+	return 0;
+}
+
 PROPERTY_STRING(session, alias)
 PROPERTY_PRIVATE(session)
 PROPERTY_INT_GET(session, connected, int)
@@ -599,11 +648,12 @@ int session_write()
 			if (s->alias)
 				fprintf(f, "alias=%s\n", s->alias);
 			if (s->status && config_keep_reason != 2)
-				fprintf(f, "status=%s\n", s->status);
+				fprintf(f, "status=%s\n", (s->autoaway ? s->laststatus : s->status));
 			if (s->descr && config_keep_reason) {
-				xstrtr(s->descr, '\n', '\002');
-				fprintf(f, "descr=%s\n", s->descr);
-				xstrtr(s->descr, '\002', '\n');
+				char *myvar = (s->autoaway ? s->lastdescr : s->descr);
+				xstrtr(myvar, '\n', '\002');
+				fprintf(f, "descr=%s\n", myvar);
+				xstrtr(myvar, '\002', '\n');
 			}
         	        if (s->password && config_save_password)
 	                        fprintf(f, "password=\001%s\n", s->password);
@@ -772,9 +822,9 @@ COMMAND(session_command)
 			if (s->alias)
 				debug("alias=%s\n", s->alias);
 			if (s->status)
-				debug("status=%s\n", s->status);
+				debug("status=%s\n", (s->autoaway ? s->laststatus : s->status));
 			if (s->descr)
-				debug("descr=%s\n", s->descr);
+				debug("descr=%s\n", (s->autoaway ? s->lastdescr : s->descr));
                 
 			for (lp = s->params; lp; lp = lp->next) {
 		                session_param_t *v = lp->data;
@@ -1073,6 +1123,8 @@ void sessions_free()
 	        xfree(s->status);
         	xfree(s->descr);
 	        xfree(s->password);
+		xfree(s->laststatus);
+		xfree(s->lastdescr);
 		userlist_free(s);
         }
 

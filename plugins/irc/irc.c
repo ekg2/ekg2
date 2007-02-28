@@ -1321,7 +1321,7 @@ static COMMAND(irc_command_away) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
 		isaway = 1;
 	} else if (!xstrcmp(name, ("_autoback"))) {
-		session_status_set(session, EKG_STATUS_AVAIL);
+		session_status_set(session, EKG_STATUS_AUTOBACK);
 		session_unidle(session);
 	} else {
 		printq("generic_error", "Ale o so chozi?");

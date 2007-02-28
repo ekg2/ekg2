@@ -48,6 +48,10 @@ typedef struct {
 	int scroll_op;
 	time_t last_conn;               /* kiedy siê po³±czyli¶my */
 	list_t params;
+	
+	/* new auto-away */
+	char *laststatus;
+	char *lastdescr;
 } session_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION

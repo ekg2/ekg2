@@ -215,14 +215,24 @@ void ekg_loop() {
                         session_t *s = l->data;
                         int tmp;
 
-                        if (!s->connected || xstrcmp(s->status, EKG_STATUS_AVAIL))
+                        if (!s->connected || (xstrcmp(s->status, EKG_STATUS_AVAIL) && xstrcmp(s->status, EKG_STATUS_FREE_FOR_CHAT) && xstrcmp(s->status, EKG_STATUS_AWAY)))
                                 continue;
 
-                        if ((tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
-                                continue;
+			do {
+				if (!xstrcmp(s->status, EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
+        	                        break;
 
-                        if (time(NULL) - s->activity > tmp)
-                                command_exec(NULL, s, ("/_autoaway"), 0);
+                	        if (time(NULL) - s->activity > tmp)
+                        	        command_exec(NULL, s, ("/_autoaway"), 0);
+			} while (0);
+
+			do {
+	                        if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
+        	                        break;
+
+                	        if (time(NULL) - s->activity > tmp)
+                        	        command_exec(NULL, s, ("/_autoxa"), 0);
+			} while (0);
                 }
 
 		/* sprawd¼ scroll timeouty */

@@ -1582,6 +1582,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 					char *descr = jabber_escape(s->descr);
 					/* XXX, w/g http://jabber.org/protocol/rc#set-status nie mamy 'avail' tylko 'online' */
 
+					/* XXX, should this be even used? Not making any modifications for new autoaway */
 					if (!xstrcmp(status, EKG_STATUS_AUTOAWAY))	status = (s->autoaway ? "away" : "online");
 					else if (!xstrcmp(status, EKG_STATUS_AVAIL))	status = "online";
 

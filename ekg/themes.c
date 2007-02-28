@@ -1039,8 +1039,10 @@ void theme_init()
 
 	format_add("auto_away", _("%> (%1) Auto %Gaway%n\n"), 1);
 	format_add("auto_away_descr", _("%> (%3) Auto %Gaway%n: %T%1%n%2%n\n"), 1);
-	format_add("auto_back", _("%> (%1) Auto back - %Yavailable%n\n"), 1);
-	format_add("auto_back_descr", _("%> (%3) Auto back - %Yavailable%n: %T%1%n%2%n\n"), 1);
+	format_add("auto_xa", _("%> (%1) Auto %gextended away%n\n"), 1);
+	format_add("auto_xa_descr", _("%> (%3) Auto %gextended away%n: %T%1%n%2%n\n"), 1);
+	format_add("auto_back", _("%> (%1) Auto back%n\n"), 1);
+	format_add("auto_back_descr", _("%> (%3) Auto back: %T%1%n%2%n\n"), 1);
 
 	/* pomoc */
 	format_add("help", "%> %T%1%n %2 - %3\n", 1);

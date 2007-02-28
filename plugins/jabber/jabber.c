@@ -1232,12 +1232,15 @@ int jabber_plugin_init(int prio)
 	plugin_var_add(&jabber_plugin, "allow_remote_control", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "allow_autoresponder", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "auto_away_descr", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "auto_bookmark_sync", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "auto_privacylist_sync", VAR_BOOL, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0, NULL);
         plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
+        plugin_var_add(&jabber_plugin, "auto_xa", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&jabber_plugin, "auto_xa_descr", VAR_STR, 0, 0, NULL);
         plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
 	plugin_var_add(&jabber_plugin, "display_server_features", VAR_INT, "1", 0, NULL);
 	plugin_var_add(&jabber_plugin, "gpg_active", VAR_BOOL, "0", 0, jabber_gpg_changed);

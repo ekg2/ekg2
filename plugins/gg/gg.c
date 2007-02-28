@@ -1278,6 +1278,7 @@ int gg_plugin_init(int prio) {
 	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "allow_autoresponder", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_away_descr", VAR_STR, 0, 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0, NULL);	
 	plugin_var_add(&gg_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
 	plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0, NULL);

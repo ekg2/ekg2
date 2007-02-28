@@ -3898,13 +3898,12 @@ static COMMAND(cmd_desc)
 	if (!session)
 		return -1;
 	
+	session_unidle(session);
 	status = session_status_get(session);
-
+	
 	if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
 		cmd = "back";
 	} else if (!xstrcmp(status, EKG_STATUS_AWAY)) {
-		cmd = "away";
-	} else if (!xstrcmp(status, EKG_STATUS_AUTOAWAY)) {
 		cmd = "away";
 	} else if (!xstrcmp(status, EKG_STATUS_INVISIBLE)) {
 		cmd = "invisible";

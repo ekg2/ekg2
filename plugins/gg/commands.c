@@ -366,7 +366,7 @@ static COMMAND(gg_command_away) {
 		df = "back"; f = "back"; fd = "back_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("_autoback"))) {
-		session_status_set(session, EKG_STATUS_AVAIL);
+		session_status_set(session, EKG_STATUS_AUTOBACK);
 		df = "back"; f = "auto_back"; fd = "auto_back_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("invisible"))) {

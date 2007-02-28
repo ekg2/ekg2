@@ -606,7 +606,7 @@ static COMMAND(jabber_command_away)
 	} 
 	if (!xstrcmp(name, ("_autoback"))) {
 		format = "auto_back";
-		session_status_set(session, EKG_STATUS_AVAIL);
+		session_status_set(session, EKG_STATUS_AUTOBACK);
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("back"))) {
 		format = "back";
@@ -615,6 +615,9 @@ static COMMAND(jabber_command_away)
 	} else if (!xstrcmp(name, ("_autoaway"))) {
 		format = "auto_away";
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
+	} else if (!xstrcmp(name, ("_autoxa"))) {
+		format = "auto_xa";
+		session_status_set(session, EKG_STATUS_AUTOXA);
 	} else if (!xstrcmp(name, ("away"))) {
 		format = "away"; 
 		session_status_set(session, EKG_STATUS_AWAY);
@@ -2502,6 +2505,7 @@ void jabber_register_commands()
 
 	command_add(&jabber_plugin, ("jid:"), "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:_autoaway"), "r", jabber_command_away,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("jid:_autoxa"), "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:_autoback"), "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:add"), "!U ?", jabber_command_modify, 	JABBER_FLAGS_TARGET, NULL); 
 	command_add(&jabber_plugin, ("jid:admin"), "! ?", jabber_muc_command_admin, JABBER_FLAGS_TARGET, NULL);
@@ -2561,6 +2565,7 @@ void jabber_register_commands()
 
 	command_add(&jabber_plugin, ("tlen:"), "?",		jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:_autoaway"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("tlen:_autoxa"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:_autoback"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:alert"), "!u",	tlen_command_alert,		JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("tlen:auth"), "!p !uU", 	jabber_command_auth,		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS,

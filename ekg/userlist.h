@@ -80,7 +80,6 @@ typedef struct {
 #define EKG_STATUS_NA "notavail"
 #define EKG_STATUS_AVAIL "avail"
 #define EKG_STATUS_AWAY "away"
-#define EKG_STATUS_AUTOAWAY "autoaway"	/* tylko dla session_status_set() */
 #define EKG_STATUS_INVISIBLE "invisible"
 #define EKG_STATUS_XA "xa"
 #define EKG_STATUS_DND "dnd"
@@ -88,6 +87,10 @@ typedef struct {
 #define EKG_STATUS_BLOCKED "blocked"
 #define EKG_STATUS_UNKNOWN "unknown"
 #define EKG_STATUS_ERROR "error"
+/* only for session_status_set() */
+#define EKG_STATUS_AUTOAWAY "autoaway"
+#define EKG_STATUS_AUTOXA "autoxa"
+#define EKG_STATUS_AUTOBACK "autoback"
 
 #define EKG_XSTATE_BLINK	01
 #define EKG_XSTATE_TYPING	02
