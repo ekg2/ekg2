@@ -49,7 +49,7 @@ int gg_config_image_size;
 int gg_config_get_images;
 char *gg_config_images_dir;
 
-static image_t *image_add_queue(char *filename, char *data, uint32_t size, uint32_t crc32);
+static image_t *image_add_queue(const char *filename, char *data, uint32_t size, uint32_t crc32);
 
 /* 
  * gg_changed_images()
@@ -134,7 +134,7 @@ COMMAND(gg_command_image)
  * 
  * data should be given as already allocated pointer 
  */
-static image_t *image_add_queue(char *filename, char *data, uint32_t size, uint32_t crc32)
+static image_t *image_add_queue(const char *filename, char *data, uint32_t size, uint32_t crc32)
 {
 	image_t *i = xmalloc(sizeof(image_t));
 
