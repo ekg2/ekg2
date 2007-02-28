@@ -1,42 +1,12 @@
 // Little hint of session variables for gg plugin.
 // (c) copyright      2005 sebastian szary <greyer@ekg2.org>
 
-auto_away
-	type: integer
-	default value: 600
-	
-	Idle time in seconds after which status will be set 'away'.
-	If 0, auto_away will be disabled.
-
-auto_back
-	type: integer
-	default value: 0
-	
-	Variable determines that status will be change to 'available', if current
-	away status was set automatically.
-	If 1, status is changed whenever user send any message.
-	If 2, status is changed after keypressed.
-
-auto_connect
-	type: bool
-	default value: 0
-	
-	Variable determines session should be connected after program startup.
-
 auto_find
 	type: bool
 	default value: 0
 	
 	Variable determines if people we haven't got on userlist, but send us 
 	a message, should be checked in users catalog.
-
-auto_reconnect
-	type: integer
-	default value: 10
-	
-	Variable determines, that how long program need to wait to reconnect, 
-	after disconnect or invalid connection.
-	If 0, program won't try.
 
 concat_multiline_status
 	type: integer

@@ -2,43 +2,6 @@
 // (c) 2004-2005 Michal 'GiM' Spadlinski
 //		Jakub 'darkjames' Zawadzki
 
-alias
-	typ: tekst
-	domy¶lna warto¶æ: brak
-	
-	krótka nazwa sesji
-
-auto_away
-	typ: liczba
-	domy¶lna warto¶æ: 0
-	
-	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
-	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
-	nie bêdzie automatycznej zmiany.
-
-auto_back
-	typ: liczba
-	domy¶lna warto¶æ: 0
-	
-	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
-	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
-	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
-	jakiejkolwiek wiadomo¶ci. je¶li równa 2, przy wci¶niêciu klawisza.
-
-auto_connect
-	typ: bool
-	domy¶lna warto¶æ: 0
-	
-	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
-	programu
-
-auto_reconnect
-	typ: liczba
-	domy¶lna warto¶æ: 0
-	
-	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
-	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
-
 ban_type
 	typ: liczba
 	domy¶lna warto¶æ: 10

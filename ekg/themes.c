@@ -1063,7 +1063,7 @@ void theme_init()
 	format_add("help_session_body", "%> %|%1\n", 1);
 	format_add("help_session_file_not_found", _("%! Can't find variables descriptions for %T%1%n plugin (incomplete installation)\n"), 1);
 	format_add("help_session_var_not_found", _("%! Cant find description of %T%1%n variable\n"), 1);
-	format_add("help_session_header", _("%> %T%1%n (%2, default value: %3)\n%>\n"), 1);
+	format_add("help_session_header", _("%> %1->%T%2%n (%3, default value: %4)\n%>\n"), 1);
 	format_add("help_session_footer", "", 1);
 
 	/* ignore, unignore, block, unblock */

@@ -1108,6 +1108,7 @@ void session_help(session_t *s, const char *name)
 
 	string_t str;
 	int found = 0;
+	int sessfilnf = 0;
 
 	if (!s)
 		return;
@@ -1120,21 +1121,47 @@ void session_help(session_t *s, const char *name)
 
 	plugin_name = plugin_find_uid(s->uid)->name;
 
-	if (!(f = help_path("session", plugin_name))) {
-		wcs_print("help_session_file_not_found", plugin_name);
-		return;
-	}
-
-	while ((line = read_file(f, 0))) {
-		if (!xstrcasecmp(line, name)) {
-			found = 1;
+	do {
+		/* first try to find the variable in plugins' session file */
+		if (!(f = help_path("session", plugin_name))) {
+			sessfilnf = 1;
 			break;
 		}
-	}
+
+		while ((line = read_file(f, 0))) {
+			if (!xstrcasecmp(line, name)) {
+				found = 1;
+				break;
+			}
+		}
+	} while(0);
 
 	if (!found) {
-		fclose(f);
-		wcs_print("help_session_var_not_found", name);
+		do {
+			/* then look for them inside global session file */
+			if (!sessfilnf)
+				fclose(f);
+			
+			if (!(f = help_path("session", NULL)))
+				break;
+			
+			while ((line = read_file(f, 0))) {
+				if (!xstrcasecmp(line, name)) {
+					found = 1;
+					break;
+				}
+			}
+		} while (0);
+	}
+
+
+	if (!found) {
+		if (f)
+			fclose(f);
+		if (sessfilnf)
+			print("help_session_file_not_found", plugin_name);
+		else
+			print("help_session_var_not_found", name);
 		return;
 	}
 

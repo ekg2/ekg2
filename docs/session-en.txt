@@ -1,0 +1,44 @@
+alias
+	type: string
+	default value: none
+	
+	short session name
+
+allow_autoresponder
+	type: bool
+	default value: 0
+	
+	Whether autoresponder should handle incoming messages in this session.
+	Works only when 'autoresponder' plugin is loaded.
+
+auto_away
+	type: integer
+	default value: 600
+	
+	Idle time in seconds after which status will be set 'away'.
+	If 0, auto_away will be disabled.
+
+auto_back
+	type: integer
+	default value: 0
+	
+	Variable determines that status will be change to 'available', if current
+	away status was set automatically.
+	If 1, status is changed whenever user send any message.
+	If 2, status is changed after keypressed.
+
+auto_connect
+	type: bool
+	default value: 0
+	
+	Variable determines session should be connected after program startup.
+
+auto_reconnect
+	type: integer
+	default value: 10
+	
+	Variable determines, that how long program need to wait to reconnect, 
+	after disconnect or invalid connection.
+	If 0, program won't try.
+
+

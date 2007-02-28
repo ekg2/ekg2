@@ -3,43 +3,6 @@
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
 
-alias
-	type: string
-	default value: none
-	
-	short session name
-
-auto_away
-	type: integer
-	default value: 600
-	
-	idle time in seconds after which status will be set to away. If set to 0,
-	auto-away will be disabled.
-
-auto_back
-	type: integer
-	default value: 0
-	
-	variable, which determines whether status should be automatically
-	changed to ,,available'' if current ,,away'' status was set
-	automatically.  If it's set to 1, status will be changed after sending
-	any message. If it's set to 2, it'll be changed after any keypress.
-
-auto_connect
-	type: bool
-	default value: 0
-	
-	variable, which determines whether given session should be connected
-	after program startup
-
-auto_reconnect
-	type: integer
-	default value: 10
-	
-	after unsuccesful connection, determines number of seconds after which
-	program will try again. If set to 0 there will be no automatical
-	reconnects.
-
 display_notify
 	type: integer
 	default value: -1
