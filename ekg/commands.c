@@ -104,6 +104,10 @@
 
 #include "queries.h"
 
+#ifndef HAVE_SOCKLEN_T
+typedef int socklen_t;
+#endif
+
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;

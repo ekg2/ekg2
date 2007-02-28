@@ -95,6 +95,10 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 #include <sys/user.h>
 ])
 
+AC_CHECK_TYPE(socklen_t,[AC_DEFINE(HAVE_SOCKLEN_T, 1, [define if you've got socklen_t])],,[
+#include <sys/socket.h>
+])
+
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile ekg/ekg2-config compat/Makefile docs/Makefile po/Makefile.in])
