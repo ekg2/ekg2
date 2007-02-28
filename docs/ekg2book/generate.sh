@@ -45,6 +45,10 @@ do
       then
          $GENPROG -s $i/session-pl.txt >> $OUTPUT
       fi
+      if [ -f ../session-pl.txt ]
+      then
+         $GENPROG -s ../session-pl.txt >> $OUTPUT
+      fi
 
       cat "design/plugin_footer.xml" >> $OUTPUT
    fi
