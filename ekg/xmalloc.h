@@ -27,6 +27,17 @@
 
 #define __(x) (x ? x : "(null)")
 
+/* stolen from: http://sourcefrog.net/weblog/software/languages/C/unused.html */
+#ifdef UNUSED
+#elif defined(__GNUC__)
+#	define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+#	define UNUSED(x) /*@unused@*/ x
+#else
+#	define UNUSED(x) x
+#endif
+/* /stolen */
+
 #ifndef EKG2_WIN32_NOFUNCTION
 
 void ekg_oom_handler();

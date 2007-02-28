@@ -442,7 +442,7 @@ static QUERY(event_protocol_message)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
-        /*char **rcpts	= *(*/va_arg(ap, char***)/*)*/;
+        char **UNUSED(rcpts)	= *(va_arg(ap, char***));
         char *text	= *(va_arg(ap, char**));
 
 	event_check(session, "protocol-message", uid, text);
