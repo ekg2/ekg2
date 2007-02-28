@@ -80,6 +80,7 @@ static int emoticon_add(const char *name, const char *value)
  *
  * 0/-1
  */
+#if 0 /* never used, never exported, uncomment when needed */
 static int emoticon_remove(const char *name)
 {
 	list_t l;
@@ -97,6 +98,7 @@ static int emoticon_remove(const char *name)
 	
 	return -1;
 }
+#endif
 
 /*
  * emoticon_read()

@@ -50,7 +50,7 @@ typedef WATCHER_AUDIO(audio_handler_func_t);
 	extern WATCHER_AUDIO(x##_audio_write);	\
 	audio_t x##_audio = { \
 		.name = #x, \
-		.control_handler= x##_audio_control, \
+		.control_handler= (void*) x##_audio_control, \
 		.read_handler	= x##_audio_read, \
 		.write_handler  = x##_audio_write, \
 	}
@@ -61,7 +61,7 @@ typedef WATCHER_AUDIO(audio_handler_func_t);
 	extern CODEC_RECODE(x##_codec_decode);	\
 	codec_t x##_codec = { \
 		.name = #x, \
-		.control_handler= x##_codec_control,	\
+		.control_handler= (void*) x##_codec_control,	\
 		.code_handler	= x##_codec_code,	\
 		.decode_handler = x##_codec_decode,	\
 	}

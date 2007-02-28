@@ -34,7 +34,7 @@ struct last {
 	char *uid;		/* od kogo, lub do kogo przy wysy³anych */
 	time_t time;		/* czas */
 	time_t sent_time;	/* czas wys³ania wiadomo¶ci przychodz±cej */
-	unsigned char *message;	/* wiadomo¶æ */
+	char *message;		/* wiadomo¶æ */
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION

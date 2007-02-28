@@ -446,7 +446,7 @@ AUDIO_CONTROL(stream_audio_control) {
 			"-stream:file", 		"*",		/* bidirectional, file, everythink can be passed as param */
 			"-stream:format", 		"raw pcm wave",	/* bidirectional, format, possible vars: 'raw' 'pcm' 'wave' */
 			NULL, };
-		return arr;
+		return (audio_io_t*) arr;
 	}
 	return aio;
 }
@@ -596,10 +596,14 @@ audio_io_t *stream_as_audio(stream_t *s) {
 }
 
 int audio_initialize() {
+#if 0
 	audio_t *inp, *out;
 	codec_t *co;
+#endif
 	audio_register(&stream_audio);
 
+	/* As all of them evaluate to false, commenting them to remove warnings */
+#if 0
 	if (0 && (inp = audio_find("stream") && (out = audio_find("stream"))))
 		stream_create("Now playing: /dev/urandom",
 				__AINIT(inp, AUDIO_READ, "file", "/dev/urandom"),	/* reading from /dev/urandom */
@@ -625,6 +629,7 @@ int audio_initialize() {
 				__AINIT(inp, AUDIO_READ, "file", "plik.raw", "format", "raw"),
 				__CINIT(co,  "ifreq", "8000", "ofreq", "44100", "sample", "16", "channels", "1"),
 				__AINIT(out, AUDIO_WRITE, "file", "recoded.wav", "format", "wave"));
+#endif
 	return 0;
 #undef __AINIT
 #undef __CINIT
