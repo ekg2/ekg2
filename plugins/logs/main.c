@@ -456,7 +456,7 @@ static QUERY(logs_sestatus_handler) {
 
 	if (!xstrcmp(status, EKG_STATUS_AWAY) || !xstrcmp(status, EKG_STATUS_AUTOAWAY)) {
 		logs_away_create(session);
-	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
+	} else if (!xstrcmp(status, EKG_STATUS_AVAIL) || !xstrcmp(status, EKG_STATUS_AUTOBACK)) {
 		if (logs_away_display(logs_away_find(session), 0, 1)) { /* strange */
 			debug("[LOGS_SESTATUS] strange no away turned on for this sesssion = %s\n", __(session));
 			return 0; 
