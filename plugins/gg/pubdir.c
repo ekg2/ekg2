@@ -315,8 +315,7 @@ COMMAND(gg_command_passwd)
 	struct gg_http *h;
 	watch_t *w;
 
-	char *oldpasswd = gg_locale_to_cp(xstrdup(session_get(session, "password")));
-	char *newpasswd = gg_locale_to_cp(xstrdup(params[0]));
+	char *oldpasswd, *newpasswd;
 
 #ifdef HAVE_GG_CHANGE_PASSWD4 /* gg_change_passwd4 since ~ LIBGADU 20030930 */
 	const char *config_email = session_get(session, "email");
@@ -333,7 +332,10 @@ COMMAND(gg_command_passwd)
 		printq("not_enough_params", name);
 		return -1;
 	}
-
+#endif
+	oldpasswd = gg_locale_to_cp(xstrdup(session_get(session, "password")));
+	newpasswd = gg_locale_to_cp(xstrdup(params[0]));
+#ifdef HAVE_GG_CHANGE_PASSWD4 
 	if (!(h = gg_change_passwd4(atoi(session->uid + 3), config_email, (oldpasswd) ? oldpasswd : "", newpasswd, last_tokenid, params[1], 1)))
 #else 
 	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? oldpasswd : "", newpasswd, "", 1)))
