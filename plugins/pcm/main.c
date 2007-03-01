@@ -179,7 +179,7 @@ CODEC_CONTROL(pcm_codec_control) {
 			"<pcm:obps",		"8 16",
 			"<pcm:ochannels",	"1 2",
 			NULL, };
-		return arr;
+		return (void*) arr;
 	} 
 	return aco;
 }

@@ -228,7 +228,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	const int nounlink = !session_int_get(s, "unlink_sent");
 	const int utb = session_int_get(s, "unlink_toobig");
 	const int maxfs = session_int_get(s, "max_filesize");
-	const char *namesep = session_get(s, "name_separator");
+	char *namesep = (char*) session_get(s, "name_separator");
 
 	char *msg;
 	char *f;

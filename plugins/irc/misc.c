@@ -198,6 +198,8 @@ next3:
 		continue;
 	}
 #undef dchar
+
+	return 0;
 }
 
 

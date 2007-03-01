@@ -149,7 +149,7 @@ static COMMAND(jabber_command_dcc) {
 
 			if ((pathtmp = xstrrchr(params[2], '/'))) 
 				pathtmp++;			/* skip '/' */ 
-			else 	pathtmp = params[2];		/* no '/' ok.  */
+			else 	pathtmp = (char*) params[2];		/* no '/' ok.  */
 
 			filename = jabber_escape(pathtmp);	/* escape string */
 

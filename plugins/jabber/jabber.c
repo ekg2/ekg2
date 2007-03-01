@@ -386,7 +386,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
         session_t *s = jdh->session;
 
         if (!session_connected_get(s) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
-		const char *passwd	= session_get(s, "password");
+		char *passwd		= (char*) session_get(s, "password");
 		char *resource		= jabber_escape(session_get(s, "resource"));
 		char *epasswd		= NULL;
 
@@ -663,7 +663,8 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
         jabber_private_t *j = session_private_get(s);
        	jabber_handler_data_t *jdh;
 
-        int res = 0, res_size = sizeof(res);
+        int res = 0;
+	socklen_t res_size = sizeof(res);
 	char *tname;
 
         debug_function("[jabber] jabber_handle_connect()\n");
@@ -1220,7 +1221,7 @@ int jabber_plugin_init(int prio)
 
 /* XXX, set-vars-default */
 	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
-	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, jabber_dcc_postinit, NULL, NULL);
+	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_pubsub_server"), VAR_STR, 1, &jabber_default_pubsub_server, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
