@@ -43,11 +43,8 @@ do
       fi
       if [ -f $i/session-en.txt ]
       then
-         $GENPROG -s $i/session-en.txt >> $OUTPUT
-      fi
-      if [ -f ../session-en.txt ]
-      then
          $GENPROG -s ../session-en.txt >> $OUTPUT
+         $GENPROG -s $i/session-en.txt >> $OUTPUT
       fi
 
       cat "design/plugin_footer.xml" >> $OUTPUT
