@@ -3,6 +3,25 @@
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
 
+auto_auth
+	type: integer
+	default value: 0
+	
+	Whether ekg2 should handle authorization request automagically.
+	Variable bitmapped (i.e. you should sum up following values):
+	
+		1 - accept subscribe requests
+	
+		2 - accept unsubscribe requests
+	
+		4 - deny subscribe requests
+	
+		8 - deny unsubscribe requests
+	
+		5 - ignore subscribe requests
+	
+		10 - ignore unsubscribe requests
+
 display_notify
 	type: integer
 	default value: -1

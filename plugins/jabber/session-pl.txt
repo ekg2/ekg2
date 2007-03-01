@@ -3,6 +3,25 @@
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
 
+auto_auth
+	typ: liczba
+	domy¶lna warto¶æ: 0
+	
+	Okre¶la, czy ekg2 ma automagicznie odpowiadaæ na pro¶by o autoryzacjê.
+	Zmienna ta stanowi bitmapê (sumê nastêpuj±cych warto¶ci):
+	
+		1 - odpowiada twierdz±co na ¿±dania autoryzacji
+	
+		2 - odpowiada twierdz±co na ¿±dania cofniêcia autoryzacji
+	
+		4 - odpowiada przecz±co na ¿±dania autoryzacji
+	
+		8 - odpowiada przecz±co na ¿±dania cofniêcia autoryzacji
+	
+		5 - (1+4) ignoruje ¿±dania autoryzacji
+	
+		10 - (8+2) ignoruje ¿±dania cofniêcia autoryzacji
+
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: -1

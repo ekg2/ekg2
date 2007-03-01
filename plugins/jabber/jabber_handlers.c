@@ -1687,7 +1687,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 				} else {
 					not_handled = 1;
 				}
-			} else if (!xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-manage-sesions")) {
+			} else if (!xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-manage-sessions")) {
 				if (!x) {
 					EXECUTING_HEADER("Manage ekg2 sessions", "Do what you want :)", "http://ekg2.org/jabber/rc");
 					EXECUTING_FOOTER();
@@ -2627,13 +2627,35 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	xfree(jid);
 
 	if (from && !xstrcmp(type, "subscribe")) {
-		print("jabber_auth_subscribe", uid, session_name(s));
+		int auto_auth = session_int_get(s, "auto_auth");
+
+		if (auto_auth == -1)
+			auto_auth = 0;
+		if ((auto_auth & 1)) {
+			if (!(auto_auth & 4)) /* auto-accept */
+				command_exec_format(NULL, s, 2, "/auth --accept %s", uid);
+			/* else ignore */
+		} else if ((auto_auth & 4)) /* auto-deny */
+			command_exec_format(NULL, s, 2, "/auth --deny %s", uid);
+		else /* ask */
+			print("jabber_auth_subscribe", uid, session_name(s));
 		xfree(uid);
 		return;
 	}
 
 	if (from && !xstrcmp(type, "unsubscribe")) {
-		print("jabber_auth_unsubscribe", uid, session_name(s));
+		int auto_auth = session_int_get(s, "auto_auth");
+
+		if (auto_auth == -1)
+			auto_auth = 0;
+		if ((auto_auth & 2)) {
+			if (!(auto_auth & 8)) /* auto-accept */
+				command_exec_format(NULL, s, 2, "/auth --deny %s", uid);
+			/* else ignore */
+		} else if (!(auto_auth & 8)) /* auto-deny, czyli robienie na opak? */
+			command_exec_format(NULL, s, 2, "/auth --accept %s", uid);
+		else /* ask */
+			print("jabber_auth_unsubscribe", uid, session_name(s));
 		xfree(uid);
 		return;
 	}
