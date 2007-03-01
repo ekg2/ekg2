@@ -2652,7 +2652,7 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			if (!(auto_auth & 8)) /* auto-accept */
 				command_exec_format(NULL, s, 2, "/auth --deny %s", uid);
 			/* else ignore */
-		} else if (!(auto_auth & 8)) /* auto-deny, czyli robienie na opak? */
+		} else if ((auto_auth & 8)) /* auto-deny, czyli robienie na opak? */
 			command_exec_format(NULL, s, 2, "/auth --accept %s", uid);
 		else /* ask */
 			print("jabber_auth_unsubscribe", uid, session_name(s));
