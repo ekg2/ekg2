@@ -104,10 +104,9 @@ void variable_init()
 	variable_add(NULL, ("display_color_map"), VAR_STR, 1, &config_display_color_map, NULL, NULL, dd_color);
 	variable_add(NULL, ("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
 	variable_add(NULL, ("display_day_changed"), VAR_BOOL, 1, &config_display_day_changed, NULL, NULL , NULL);
-	variable_add(NULL, ("display_notify"), VAR_INT, 1, &config_display_notify, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "significant"), NULL);
+	variable_add(NULL, ("display_notify"), VAR_MAP, 1, &config_display_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "significant", 4, 0, "unknown_too"), NULL);
 	variable_add(NULL, ("display_pl_chars"), VAR_BOOL, 1, &config_display_pl_chars, NULL, NULL, NULL);
 	variable_add(NULL, ("display_sent"), VAR_BOOL, 1, &config_display_sent, NULL, NULL, NULL);
-	variable_add(NULL, ("display_unknown"), VAR_BOOL, 1, &config_display_unknown, NULL, NULL, NULL);
 	variable_add(NULL, ("display_welcome"), VAR_BOOL, 1, &config_display_welcome, NULL, NULL, NULL);
 	variable_add(NULL, ("emoticons"), VAR_BOOL, 1, &config_emoticons, NULL, NULL, NULL);
 	variable_add(NULL, ("events_delay"), VAR_INT, 1, &config_events_delay, NULL, NULL, NULL);

@@ -207,15 +207,17 @@ static QUERY(protocol_status)
 
 	int ignore_level;
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
+	int sess_notify;
 
 	if (!(s = session_find(session)))
 		return 0;
-
+	
+	sess_notify = session_int_get(s, "display_notify");
 	/* we are checking who user we know */
 	if (!(u = userlist_find(s, uid))) {
 		if (config_auto_user_add) u = userlist_add(s, uid, uid);
 		if (!u) {
-			if (config_display_unknown) {
+			if ((sess_notify == -1 ? config_display_notify : sess_notify) & 4) {
 				const char *format = ekg_status_label(status, descr, "status_");
 				print_window(uid, s, 0, format, format_user(s, uid), NULL, session_name(s), descr);
 			}
@@ -273,7 +275,7 @@ static QUERY(protocol_status)
 
 
 	/* je¶li ma³o wa¿na zmiana stanu... */
-	if ((session_int_get(s, "display_notify") == 2 || (session_int_get(s, "display_notify") == -1 && config_display_notify == 2)) && xstrcasecmp(st, EKG_STATUS_NA)) {
+	if ((sess_notify == -1 ? config_display_notify : sess_notify) & 2) {
 		/* je¶li na zajêty, ignorujemy */
 		if (!xstrcasecmp(st, EKG_STATUS_AWAY))
 			goto notify_plugins;
@@ -300,11 +302,8 @@ static QUERY(protocol_status)
 		play_sound(config_sound_notify_file);
 
         /* wy¶wietlaæ na ekranie? */
-        if (!session_int_get(s, "display_notify")) 
+	if (!((sess_notify == -1 ? config_display_notify : sess_notify) & 3))
                 goto notify_plugins;
-
-	if (!config_display_notify && session_int_get(s, "display_notify") == -1)
-		goto notify_plugins;
 
 	/* poka¿ */
 	if (u->nickname) {
