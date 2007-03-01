@@ -20,6 +20,48 @@ auto_away
 	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
 	nie bêdzie automatycznej zmiany.
 
+auto_away_descr
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	Opis ustawiany przy przej¶ciu w auto-away. Je¶li nieustawione, zmiana
+	opisu nie nast±pi. Dozwolone s± nastêpuj±ce sekwencje specjalne:
+	
+		%?	wypisz nastêpne znaki, je¶li opis jest ustawiony
+	
+		%!	wypisz nastêpne znaki, je¶li opis nie jest ustawiony
+	
+		%/	zawsze wypisz nastêpne znaki (wy³±cza powy¿sze)
+	
+		%$	wypisz aktualny opis
+	
+		%%	wypisz '%'
+
+auto_xa
+	typ: liczba
+	domy¶lna warto¶æ: 0
+	
+	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
+	zmieniony na ,,bardzo zajêty''. podaje siê w sekundach. je¶li
+	równa 0, nie bêdzie automatycznej zmiany.
+
+auto_xa_descr
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	Opis ustawiany przy przej¶ciu w auto-xa. Je¶li nieustawione, zmiana
+	opisu nie nast±pi. Dozwolone s± nastêpuj±ce sekwencje specjalne:
+	
+		%?	wypisz nastêpne znaki, je¶li opis jest ustawiony
+	
+		%!	wypisz nastêpne znaki, je¶li opis nie jest ustawiony
+	
+		%/	zawsze wypisz nastêpne znaki (wy³±cza powy¿sze)
+	
+		%$	wypisz aktualny opis
+	
+		%%	wypisz '%'
+
 auto_back
 	typ: liczba
 	domy¶lna warto¶æ: 0

@@ -97,22 +97,26 @@ static COMMAND(gg_command_connect) {
 			wcs_printq("not_connected", session_name(session));
 		} else {
 			char *__session = xstrdup(session->uid);
-			char *__reason = xstrdup(params[0]);
+			const char *__reason = params[0];
+			char *myreason;
+			unsigned char *tmp;
 			int __type = EKG_DISCONNECT_USER;
 
+			session_unidle(session);
 			if (__reason) {
-				unsigned char *tmp = NULL;		/* znaczki w cp1250 */
-
-				if (!xstrcmp(__reason, "-")) 	tmp = NULL;
-                        	else 				tmp = gg_locale_to_cp(xstrdup(__reason));
-
-          			if (config_keep_reason)
-					session_descr_set(session, tmp ? __reason : NULL);
-				
+				if (!xstrcmp(__reason, "-")) 	myreason = NULL;
+                        	else 				myreason = xstrdup(__reason);
+				tmp = gg_locale_to_cp(xstrdup(myreason));
+				session_descr_set(session, tmp ? myreason : NULL);
+        		} else {
+				myreason = xstrdup(session_descr_get(session));
+				tmp = gg_locale_to_cp(xstrdup(myreason));
+			}
+			if (tmp)
 				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
-                		xfree(tmp);
-        		} else
-  			        gg_change_status(g->sess, GG_STATUS_NOT_AVAIL);
+			else
+				gg_change_status(g->sess, GG_STATUS_NOT_AVAIL);
+			xfree(tmp);
 
 			watch_remove(&gg_plugin, g->sess->fd, g->sess->check);
 			
@@ -121,10 +125,10 @@ static COMMAND(gg_command_connect) {
 			g->sess = NULL;
 			session_connected_set(session, 0);
 
-			query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
+			query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &myreason, &__type, NULL);
 
+			xfree(myreason);
 			xfree(__session);
-			xfree(__reason);
 		}
 	}
 

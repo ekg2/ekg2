@@ -15,8 +15,49 @@ auto_away
 	type: integer
 	default value: 600
 	
-	Idle time in seconds after which status will be set 'away'.
+	Idle time in seconds, after which status will be set to 'away'.
 	If 0, auto_away will be disabled.
+
+auto_away_descr
+	type: string
+	default value: none
+	
+	Description to be set while entering auto-away. If null, the current
+	description will be kept. Can contain following escape sequences:
+	
+		%?	output following chars only if description is set
+	
+		%!	output following chars only if description is not set
+	
+		%/	output following chars always (disable above)
+	
+		%$	output current description here
+	
+		%%	output '%'
+
+auto_xa
+	type: integer
+	default value: 0
+	
+	Idle time in seconds, after which status will be set to 'xa'.
+	If 0, auto_xa will be disabled.
+
+auto_xa_descr
+	type: string
+	default value: none
+	
+	Description to be set while entering auto-xa. If null, the current
+	description will be kept. Can contain following escape sequences:
+	
+		%?	output following chars only if description is set
+	
+		%!	output following chars only if description is not set
+	
+		%/	output following chars always (disable above)
+	
+		%$	output current description here
+	
+		%%	output '%'
 
 auto_back
 	type: integer

@@ -249,19 +249,8 @@ int session_status_set(session_t *s, const char *status)
 
 /* if it's autoaway or autoxa */
 	if ((is_xa = !xstrcmp(status, EKG_STATUS_AUTOXA)) || !xstrcmp(status, EKG_STATUS_AUTOAWAY)) {
-		const char *tmp = session_get(s, (is_xa ? "auto_xa_descr" : "auto_away_descr"));
+		char *tmp = (char*) session_get(s, (is_xa ? "auto_xa_descr" : "auto_away_descr"));
 
-/* XXX, jak koniecznie chcemy zeby dalo sie appendowac opis do wczesniejszego
- * 	to tak, zamiast saprintf() zdecydowanie format_string() i parametr %1, ktory
- * 	da sie duzo, duzo latwiej sprawdzic czy ten string jest poprawny.
- *
- * 	Next, dodajemy sprawdzanie do ustawiania w/w zmiennych.. czy jesli juz korzystamy z '%' w nich
- * 	to czy to jest %1 jesli inne.. to od razu eskejpujemy '%' na "%%" zeby ten kod kurwa nam nie segvnal
- *
- * 	a jesli nawet nie bedziemy sprawdzac, to zawsze mozemy zrobic:
- * 		format_string(str, ten_string, "%2", "%3", "%4", ..., "%9")
- * 	przy saprintf() to nie jest takie proste.
- */
 	/* save current status/ descr && turn autoaway on */
 		if (!s->autoaway) { /* don't overwrite laststatus, if already on aa */
 			xfree(s->laststatus); xfree(s->lastdescr);	/* just in case */
@@ -276,7 +265,59 @@ int session_status_set(session_t *s, const char *status)
 	/* new descr */
 		if (tmp) {
 			xfree(s->descr);
-			s->descr = xstrdup(tmp);
+
+			if (xstrchr(tmp, '%')) { /* the New&Better-AutoAway-Markup^TM */
+				const char *current_descr = (s->autoaway ? s->lastdescr : s->descr);
+				char *c, *xbuf, *xc;
+				int xm = 0;
+
+				/* following thing is used to count how large buffer do we need
+				 * yep, I know that we can waste some space
+				 * yep, I know that this would also count %%$, but I don't think we need to care that much
+				 * if user does want to use shitty strings, it's his problem */
+				for (c = tmp; (c = xstrstr(c, "%$")); c++, xm++);
+				xbuf = xmalloc(xstrlen(tmp) + (xm * xstrlen(current_descr)) + 1);
+				xc = xbuf;
+				xm = 1; /* previously xm was used as %$ counter, now it says if we should copy or skip */
+
+				for (c = tmp; *c; c++) {
+					if (*c == '%') {
+						switch (*(++c)) {
+							case '?': /* write if descr is set */
+								xm = (int) (current_descr);
+								break;
+							case '!': /* write if descr isn't set */
+								xm = !(current_descr);
+								break;
+							case '/': /* always write */
+								xm = 1;
+								break;
+							/* do we need to employ some never-write (i.e. comments)? */
+							case '$': /* insert current descr */
+								if (current_descr) {
+		/* Here I use memcpy(), 'cause I already need to get strlen(), and the function itself puts final \0 */
+									const int xl = xstrlen(current_descr);
+									memcpy(xc, current_descr, xl);
+									xc += xl;
+								}
+								break;
+							default: /* other chars, i.e. someone's forgotten to escape % */
+								if (xm)
+									*(xc++) = '%';
+							case '%': /* above, or escaped % */
+								if (*c == '\0') /* oops, escaped NULL? ( ; */
+									c--; /* else for loop won't break */
+								else if (xm)
+									*(xc++) = *c;
+						}
+					} else if (xm) /* normal char */
+						*(xc++) = *c;
+				}
+
+				*xc = '\0'; /* make sure we end with \0 */
+				s->descr = xrealloc(xbuf, strlen(xbuf)+1); /* free unused bytes */
+			} else /* no markup, just copy */
+				s->descr = xstrdup(tmp);
 		}
 		return 0;
 	}

@@ -407,18 +407,21 @@ static COMMAND(jabber_command_disconnect)
 		return -1;
 	}
 
+	session_unidle(session);
 	/* je¶li jest /reconnect, nie mieszamy z opisami */
-	if (xstrcmp(name, ("reconnect"))) {
-		if (params[0])
-			descr = xstrdup(params[0]);
+	if (xstrcmp(name, ("reconnect")) && params[0]) {
+		if (!xstrcmp(params[0], "-"))
+			descr = NULL;
 		else
-			descr = ekg_draw_descr("quit");
+			descr = params[0];
+		session_descr_set(session, descr);
 	} else
-		descr = xstrdup(session_descr_get(session));
+		descr = session_descr_get(session);
 
 /* w libtlenie jest <show>unavailable</show> + eskejpiete tlen_encode() */
 
 	if (session->connected) {
+		/* XXX: draw_descr removed here, need someone smart to think about that */
 		if (descr) {
 			char *tmp = jabber_escape(descr);
 			watch_write(j->send_watch, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp ? tmp : "");
@@ -435,7 +438,6 @@ static COMMAND(jabber_command_disconnect)
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_STOPPED);
 	else
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_USER);
-	xfree(descr);
 	return 0;
 }
 
