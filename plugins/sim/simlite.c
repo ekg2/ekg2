@@ -196,7 +196,8 @@ char *sim_key_fingerprint(const char *uid)
 	unsigned char md_value[EVP_MAX_MD_SIZE], *buf, *newbuf;
 	char *result = NULL;
 	EVP_MD_CTX ctx;
-	int md_len, size, i;
+	unsigned int md_len;
+	int size, i;
 
 	if (!key) {
 		debug("out (%s)\n", uid);
@@ -358,8 +359,8 @@ char *sim_message_encrypt(const unsigned char *message, const char *uid)
 	BIO_push(cbio, bbio);
 
 	BIO_write(cbio, &head, sizeof(head));
-	BIO_write(cbio, message, xstrlen(message));
-	BIO_flush(cbio);
+	BIO_write(cbio, message, xstrlen((char*) message));
+	{	int UNUSED(ret) = BIO_flush(cbio);	}
 
 	/* zachowaj wynik */
 	res_len = BIO_get_mem_data(mbio, (unsigned char*) &tmp);
@@ -410,7 +411,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 
 	/* je¶li wiadomo¶æ jest krótsza ni¿ najkrótsza zaszyfrowana,
 	 * nie ma sensu siê bawiæ w próby odszyfrowania. */
-	if (xstrlen(message) < 192) {
+	if (xstrlen((char*) message) < 192) {
 		sim_errno = SIM_ERROR_INVALID;
 		goto cleanup;
 	}
@@ -425,8 +426,8 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	bbio = BIO_new(BIO_f_base64());
 	BIO_set_flags(bbio, BIO_FLAGS_BASE64_NO_NL);
 	BIO_push(bbio, mbio);
-	BIO_write(mbio, message, xstrlen(message));
-	BIO_flush(mbio);
+	BIO_write(mbio, message, xstrlen((char*) message));
+	{	int UNUSED(ret) = BIO_flush(mbio);	}
 
 	if (BIO_read(bbio, bf_key_rsa, sizeof(bf_key_rsa)) < sizeof(bf_key_rsa)) {
 		sim_errno = SIM_ERROR_INVALID;
@@ -467,7 +468,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	BIO_push(cbio, mbio);
 
 	BIO_write(cbio, buf, len);
-	BIO_flush(cbio);
+	{	int UNUSED(ret) = BIO_flush(cbio);	}
 
 	free(buf);
 	buf = NULL;
@@ -512,7 +513,7 @@ cleanup:
 		RSA_free(private);
 	if (buf)
 		free(buf);
-	return res;
+	return (char*) res;
 }
 
 /*

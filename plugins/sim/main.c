@@ -31,13 +31,12 @@ PLUGIN_DEFINE(sim, PLUGIN_CRYPT, sim_theme_init);
 
 static QUERY(message_encrypt)
 {
-	char **session, **recipient, **message, *result;
-	int *encrypted;
+	char **session = va_arg(ap, char**);
+	char **recipient = va_arg(ap, char**);
+	char **message = va_arg(ap, char**);
+	int *encrypted = va_arg(ap, int*);
 
-	session = va_arg(ap, char**);
-	recipient = va_arg(ap, char**);
-	message = va_arg(ap, char**);
-	encrypted = va_arg(ap, int*);
+	char *result;
 
 	if (!session || !message || !encrypted)
 		return 0;
@@ -54,7 +53,7 @@ static QUERY(message_encrypt)
 		return 0;
 	}
 
-	result = sim_message_encrypt(*message, *recipient);
+	result = sim_message_encrypt((unsigned char*) *message, *recipient);
 
 	if (!result) {
 		debug("[sim] encryption failed: %s\n", sim_strerror(sim_errno));
@@ -75,13 +74,12 @@ static QUERY(message_encrypt)
 
 static QUERY(message_decrypt)
 {
-	char **session, **sender, **message, *result;
-	int *decrypted;
-
-	session = va_arg(ap, char**);
-	sender = va_arg(ap, char**);
-	message = va_arg(ap, char**);
-	decrypted = va_arg(ap, int*);
+	char **session = va_arg(ap, char**);
+	char **sender = va_arg(ap, char**);
+	char **message = va_arg(ap, char**);
+	int *decrypted = va_arg(ap, int*);
+	
+	char *result;
 
 	if (!session || !message || !decrypted)
 		return 0;
@@ -118,7 +116,7 @@ static QUERY(message_decrypt)
 		return 1;
 	}
 
-	result = sim_message_decrypt(*message, *session);
+	result = sim_message_decrypt((unsigned char*) *message, *session);
 
 	if (!result) {
 		debug("[sim] decryption failed: %s\n", sim_strerror(sim_errno));
