@@ -232,59 +232,81 @@ PROPERTY_STRING_GET(session, status)
 
 int session_status_set(session_t *s, const char *status)
 {
-	char *__session, *__status;
 	int is_xa;
 
 	if (!s)
 		return -1;
 
-	__session = xstrdup(s->uid);
-	__status = xstrdup(status);
+	{
+		char *__session = xstrdup(s->uid);
+		char *__status = xstrdup(status);
 
-	query_emit_id(NULL, SESSION_STATUS, &__session, &__status);
+		query_emit_id(NULL, SESSION_STATUS, &__session, &__status);
 
-	if ((is_xa = !xstrcmp(__status, EKG_STATUS_AUTOXA)) || !xstrcmp(__status, EKG_STATUS_AUTOAWAY)) {
-		char *tmp = xstrdup(session_get(s, (is_xa ? "auto_xa_descr" : "auto_away_descr")));
-		if (xstrchr(tmp, '%')) {
-			char *tmpx = (s->autoaway ? s->lastdescr : s->descr);
-			char *tmp_ = saprintf(tmp, (tmpx ? tmpx : ""));
-			xfree(tmp);
-			tmp = tmp_;
-		}
+		xfree(__session);
+		xfree(__status);
+	}
+
+/* if it's autoaway or autoxa */
+	if ((is_xa = !xstrcmp(status, EKG_STATUS_AUTOXA)) || !xstrcmp(status, EKG_STATUS_AUTOAWAY)) {
+		const char *tmp = session_get(s, (is_xa ? "auto_xa_descr" : "auto_away_descr"));
+
+/* XXX, jak koniecznie chcemy zeby dalo sie appendowac opis do wczesniejszego
+ * 	to tak, zamiast saprintf() zdecydowanie format_string() i parametr %1, ktory
+ * 	da sie duzo, duzo latwiej sprawdzic czy ten string jest poprawny.
+ *
+ * 	Next, dodajemy sprawdzanie do ustawiania w/w zmiennych.. czy jesli juz korzystamy z '%' w nich
+ * 	to czy to jest %1 jesli inne.. to od razu eskejpujemy '%' na "%%" zeby ten kod kurwa nam nie segvnal
+ *
+ * 	a jesli nawet nie bedziemy sprawdzac, to zawsze mozemy zrobic:
+ * 		format_string(str, ten_string, "%2", "%3", "%4", ..., "%9")
+ * 	przy saprintf() to nie jest takie proste.
+ */
+	/* save current status/ descr && turn autoaway on */
 		if (!s->autoaway) { /* don't overwrite laststatus, if already on aa */
-			s->laststatus = s->status;
-			s->status = NULL;
-			s->lastdescr = xstrdup(s->descr);
+			xfree(s->laststatus); xfree(s->lastdescr);	/* just in case */
+			s->laststatus	= s->status;		s->status = NULL;
+			s->lastdescr	= xstrdup(s->descr);
+			s->autoaway = 1;
 		}
+	/* new status */
+		xfree(s->status);
+		s->status = xstrdup(is_xa ? EKG_STATUS_XA : EKG_STATUS_AWAY);
 
+	/* new descr */
 		if (tmp) {
 			xfree(s->descr);
-			s->descr = tmp;
+			s->descr = xstrdup(tmp);
 		}
-		xfree(__status);
-		__status = xstrdup((is_xa ? EKG_STATUS_XA : EKG_STATUS_AWAY));
-		s->autoaway = 1;
-	} else if (s->autoaway) {
-		if (!xstrcmp(__status, EKG_STATUS_AUTOBACK)) {
-			xfree(__status);
-			__status = s->laststatus;
-			s->laststatus = NULL;
-		} else {
-			xfree(s->laststatus);
-			s->laststatus = NULL;
-		}
-		
-		xfree(s->descr);
-		s->descr = s->lastdescr;
-		s->lastdescr = NULL;
-		s->autoaway = 0;
+		return 0;
 	}
-	
+
+/* if it's autoback */
+	if (!xstrcmp(status, EKG_STATUS_AUTOBACK)) {
+	/* set status */
+		xfree(s->status);
+		s->status	= s->laststatus ? s->laststatus : xstrdup(EKG_STATUS_AVAIL);
+	/* set descr */
+		if (s->lastdescr) {
+			xfree(s->descr);
+			s->descr = s->lastdescr;
+		}
+
+		s->laststatus	= NULL;
+		s->lastdescr	= NULL;
+		s->autoaway	= 0;
+		return 0;
+	}
+
 	xfree(s->status);
-	s->status = __status;
+	s->status = xstrdup(status);
 
-	xfree(__session);
-
+/* if it wasn't neither _autoback nor _autoaway|_autoxa, it should be one of valid status types... */
+	if (s->autoaway) {	/* if we're @ away, set previous, set lastdescr status & free data */
+		xfree(s->laststatus);	s->laststatus = NULL;
+		xfree(s->descr);	s->descr	= s->lastdescr;	s->lastdescr = NULL;
+		s->autoaway	= 0;
+	}
 	return 0;
 }
 
@@ -299,7 +321,10 @@ int session_password_set(session_t *s, const char *password)
 const char *session_password_get(session_t *s)
 {
         static char buf[100];
-	char *tmp = (s->password && xstrlen(s->password))?base64_decode(s->password):xstrdup("");
+	char *tmp = base64_decode(s->password);
+
+	if (!tmp)
+		return "";
 	
 	strlcpy(buf, tmp, sizeof(buf));
 	xfree(tmp);
