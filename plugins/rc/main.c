@@ -78,7 +78,7 @@ static WATCHER(rc_input_handler_dgram) {
 static WATCHER(rc_input_handler_accept) {
 	rc_input_t *r = data, *rn;
 	struct sockaddr sa;
-	int salen = sizeof(sa), cfd;
+	socklen_t salen = sizeof(sa), cfd;
 
 	if (type == 1) {
 		rc_input_close(r);
@@ -227,7 +227,7 @@ static void rc_paths_changed(const char *name)
 
 		if (!strncmp(paths[i], "pipe:", 5)) {
 			rc_input_new = rc_input_new_pipe;
-			rc_input_handler = rc_input_handler_line;
+			rc_input_handler = (watcher_handler_func_t*) rc_input_handler_line;
 			path = paths[i] + 5;
 			type = RC_INPUT_PIPE;
 		}

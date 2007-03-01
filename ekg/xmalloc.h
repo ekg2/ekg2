@@ -38,6 +38,10 @@
 #endif
 /* /stolen */
 
+#ifndef HAVE_SOCKLEN_T
+typedef unsigned int socklen_t;
+#endif
+
 #ifndef EKG2_WIN32_NOFUNCTION
 
 void ekg_oom_handler();
