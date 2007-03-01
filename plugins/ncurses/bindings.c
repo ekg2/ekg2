@@ -676,12 +676,9 @@ static BINDING_FUNCTION(binding_ui_ncurses_debug_toggle)
 
 static BINDING_FUNCTION(binding_cycle_sessions)
 {
-	if (window_current->id == 0 || !window_current->target)
-		window_session_cycle(window_current);
-	else {
-		print("session_cannot_change");
-		return;
-	}
+	if (window_current->id != 0 && window_current->target)
+		command_exec(NULL, NULL, "/window switch 1", 2);
+	window_session_cycle(window_current);
 	
 	ncurses_contacts_update(NULL);
 	update_statusbar(1);

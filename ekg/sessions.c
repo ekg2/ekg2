@@ -950,10 +950,10 @@ COMMAND(session_command)
 			printq("session_doesnt_exist", params[1]);
 			return -1;
 		}
-		if (window_current->target && window_current->id != 0) {
-			printq("sesssion_cannot_change");
-			return -1;			
-		}
+		if (window_current->session == s)
+			return 0; /* we don't need to switch to the same session */
+		if (window_current->target && (window_current->id != 0))
+			command_exec(NULL, NULL, "/window switch 1", 2);
 
 		window_current->session = s;
 		session_current = s;
