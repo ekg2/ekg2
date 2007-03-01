@@ -54,11 +54,13 @@
 #define EKG_TRY_BEEP 1
 
 enum msgclass_t {
+	/* recv */
 	EKG_MSGCLASS_MESSAGE = 0,	/* pojedyncza wiadomo¶æ */
 	EKG_MSGCLASS_CHAT,		/* wiadomo¶æ w ramach rozmowy */
-	EKG_MSGCLASS_SENT,		/* wiadomo¶æ, któr± sami wysy³amy */
+	EKG_MSGCLASS_SYSTEM,		/* wiadomo¶æ systemowa */
+	/* sent */
+	EKG_MSGCLASS_SENT = 32,		/* wiadomo¶æ, któr± sami wysy³amy */
 	EKG_MSGCLASS_SENT_CHAT,		/* wiadomo¶c, któr± sam wysylamy w ramach rozmowy */
-	EKG_MSGCLASS_SYSTEM		/* wiadomo¶æ systemowa */
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION

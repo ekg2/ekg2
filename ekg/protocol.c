@@ -395,6 +395,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 
 	switch (class) {
 		case EKG_MSGCLASS_SENT:
+		case EKG_MSGCLASS_SENT_CHAT:
 			class_str = "sent";
 			target = (rcpts) ? rcpts[0] : NULL;
 			break;
@@ -405,10 +406,6 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			class_str = "system";
 			target = "__status";
 			break;
-		case EKG_MSGCLASS_SENT_CHAT:
-			class_str = "sent";
-                        target = (rcpts) ? rcpts[0] : NULL;
-        	        break;
 		default:
 			class_str = "message";
 	}
@@ -529,7 +526,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		if (config_beep && config_beep_msg && dobeep)
 			query_emit_id(NULL, UI_BEEP);
 		if (config_sound_msg_file && dobeep)
-			play_sound(config_sound_chat_file);
+			play_sound(config_sound_msg_file);
 
 	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
 			play_sound(config_sound_sysmsg_file);
@@ -549,7 +546,8 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		securestr = format_string(format_find("secure"));
 
 	print_window(target, s, 
-		(class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT), 
+		(class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT
+			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))),
 		class_str, 
 		user, 
 		timestamp, 
@@ -590,7 +588,7 @@ static QUERY(protocol_message)
 		return -1;
 
 	/* display blinking */
-	if (config_display_blinking && userlist && class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT && (!rcpts || !rcpts[0])) {
+	if (config_display_blinking && userlist && (class < EKG_MSGCLASS_SENT) && (!rcpts || !rcpts[0])) {
 		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
 			userlist->xstate |= EKG_XSTATE_BLINK;
 		else if (!config_make_window) {
@@ -613,7 +611,7 @@ static QUERY(protocol_message)
 		class &= ~EKG_NO_THEMEBIT;
 		empty_theme = 1;
 	}
-	our_msg = (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT);
+	our_msg = (class >= EKG_MSGCLASS_SENT);
 
 	/* there is no need to decode our messages */
 	if (!our_msg && !empty_theme) {	/* empty_theme + decrpyt? i don't think so... */

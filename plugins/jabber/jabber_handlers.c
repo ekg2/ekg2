@@ -966,7 +966,7 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 		const char *type = jabber_attr(n->atts, "type");
 
 		char *me	= xstrdup(session_uid_get(s));
-		int class 	= EKG_MSGCLASS_CHAT;
+		int class 	= (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
 		int ekgbeep 	= EKG_TRY_BEEP;
 		int secure	= (x_encrypted != NULL);
 		char **rcpts 	= NULL;

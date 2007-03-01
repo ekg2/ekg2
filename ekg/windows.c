@@ -204,7 +204,7 @@ void window_switch(int id)
 		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) 
 			u->xstate &= ~EKG_XSTATE_BLINK;
 
-		if (!config_make_window && w->id == 1) {
+		if (!(config_make_window & 3) && w->id == 1) {
 			list_t l;
 	                session_t *s = session_current;
 
@@ -332,7 +332,7 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 	else 
 		who = target;
 
-	switch (config_make_window) {
+	switch (config_make_window & 3) {
 		case 1:
 			if ((w = window_find_s(session, target)))
 				goto crap;

@@ -61,7 +61,7 @@ static QUERY(autoresponder_message)
 			? config_autoresponder_answer : config_autoresponder_question);
 	int matchoccured;
 	
-	if ((class == EKG_MSGCLASS_SENT) || (class == EKG_MSGCLASS_SENT_CHAT) /* at first, skip our messages */
+	if ((class >= EKG_MSGCLASS_SENT) /* at first, skip our messages */
 			|| !config_autoresponder_question || !(*config_autoresponder_question) /* are we configured? */
 			|| !(s = session_find(session)) || !(session_int_get(s, "allow_autoresponder") == 1) /* check, if session allows autoreponding */
 			|| (userlist_find(s, uid)) /* check if it aren't currently on our roster */

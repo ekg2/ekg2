@@ -929,7 +929,7 @@ static QUERY(logs_handler) {
 		return 0;
 
 	class &= ~EKG_NO_THEMEBIT;
-	ruid = (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) ? rcpts[0] : uid;
+	ruid = (class >= EKG_MSGCLASS_SENT) ? rcpts[0] : uid;
 
 	lw = logs_log_find(session, ruid, 1)->lw;
 

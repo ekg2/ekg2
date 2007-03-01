@@ -221,7 +221,8 @@ make_window
 	okre¶la czy bêd± tworzone nowe okienka dla nowych rozmów. dla 1 bêdzie
 	wykorzystane pierwsze wolne okno (na którym z nikim jeszcze siê nie
 	rozmawia), lub tworzone nowe w przypadku braku wolnych. dla 2
-	bezwarunkowo utworzone zostanie nowe okno.
+	bezwarunkowo utworzone zostanie nowe okno. je¶li do warto¶ci zostanie
+	dodane 4, okienka nie bêd± tworzone dla pojedynczych wiadomo¶ci.
 
 mesg
 	typ: liczba
