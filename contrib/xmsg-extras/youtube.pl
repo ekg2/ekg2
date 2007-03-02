@@ -20,6 +20,7 @@ my $player = 'mplayer -vo dxr3 -ao alsa -fs -framedrop';
 my $preplayer = 'mpc pause; sleep 2';
 my $postplayer = 'sleep 2; mpc play';
 my $autoplay = 1;
+my $len;
 
 {
 	my ($f);
@@ -34,7 +35,18 @@ LWP::Simple::get($path) =~ /<title>YouTube - (.*?)<\/title>.*player2.swf\?(video
 
 my ($title, $id) = ($1, $2);
 
-replyxmsg("Download of '$title' ( http://youtube.com/get_video.php?$id ) started.");
+{
+	my @res = LWP::Simple::head("http://youtube.com/get_video.php?$id");
+
+	$len = ($res[1] / 1024) if (@res > 1);
+	if ($len > 1024) {
+		$len = sprintf("%.2f MiB", $len / 1024);
+	} else {
+		$len = sprintf("%.2f KiB", $len);
+	}
+}
+
+replyxmsg("Download of '$title'" . ($len ? " [$len] " : "") . "( http://youtube.com/get_video.php?$id ) started.");
 
 mkdir($dldir) if (! -d $dldir);
 
