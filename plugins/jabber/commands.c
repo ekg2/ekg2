@@ -409,17 +409,18 @@ static COMMAND(jabber_command_disconnect)
 
 	session_unidle(session);
 	/* je¶li jest /reconnect, nie mieszamy z opisami */
-	if (xstrcmp(name, ("reconnect")) && (params[0] || !config_keep_reason)) {
+	if (xstrcmp(name, ("reconnect"))) {
 		if (params[0]) {
-			/* XXX: draw_descr removed here, need someone smart to think about that */
 			if (!xstrcmp(params[0], "-"))
 				descr = NULL;
 			else
-				descr = params[0];
-		}
+				descr = xstrdup(params[0]);
+		} else if (config_keep_reason && !(descr = ekg_draw_descr("quit")))
+			descr = xstrdup(session_descr_get(session));
+		
 		session_descr_set(session, descr);
 	} else
-		descr = session_descr_get(session);
+		descr = xstrdup(session_descr_get(session));
 
 /* w libtlenie jest <show>unavailable</show> + eskejpiete tlen_encode() */
 
@@ -440,6 +441,8 @@ static COMMAND(jabber_command_disconnect)
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_STOPPED);
 	else
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_USER);
+
+	xfree(descr);
 	return 0;
 }
 
@@ -647,13 +650,11 @@ static COMMAND(jabber_command_away)
 	if (!params[0]) {
                 char *tmp;
 
-                if ((tmp = ekg_draw_descr(format))) {
-                        session_status_set(session, tmp);
-                        xfree(tmp);
-                }
-
                 if (!config_keep_reason) {
                         session_descr_set(session, NULL);
+                } else if ((tmp = ekg_draw_descr(format))) {
+                        session_descr_set(session, tmp);
+                        xfree(tmp);
                 }
 	}
 

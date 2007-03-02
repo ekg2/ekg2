@@ -403,15 +403,12 @@ static COMMAND(gg_command_away) {
 	} else {
 		char *tmp;
 
-		if ((tmp = ekg_draw_descr(df))) {
-			session_status_set(session, tmp);
-			xfree(tmp);
-		}
-
 		if (!config_keep_reason) {
 			session_descr_set(session, NULL);
+		} else if ((tmp = ekg_draw_descr(df))) {
+			session_descr_set(session, tmp);
+			xfree(tmp);
 		}
-
 	}
 
 	reason_changed = 1;
