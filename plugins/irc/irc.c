@@ -1360,6 +1360,26 @@ static QUERY(irc_window_kill) {
 	return 0;
 }
 
+/** 
+ * irc_topic_header() 
+ *
+ * handler for IRC_TOPIC query requests
+ *
+ * @param charargp1 <b>(top)</b> - place to put:<br>
+ * 	-> <i>topic of current irc channel</i> (if current window is valid irc channel)<br>
+ * 	-> <i>ident\@host of current irc user</i> (if current window is known user)
+ * @param charargp2 <b>(setby)</b> - place to put:<br>
+ * 	-> <i>topic owner of current irc channel</i><br>
+ * 	-> <i>realname of current irc user</i>
+ * @param charargp3 <b>(modes)</b> - place to put:<br>
+ * 	<i>modes of current irc channel</i> or <i>undefined if not channel</i>
+ *
+ * @return 	 1 if it's known irc channel.<br>
+ * 		 2 if it's known irc user.<br>
+ * 		 0 if neither known user, nor channel.<br>
+ *		-3 if it's not valid irc window, or session is not connected
+ */
+
 static QUERY(irc_topic_header) {
 	char		**top   = va_arg(ap, char **);
 	char		**setby = va_arg(ap, char **);
@@ -1390,7 +1410,7 @@ static QUERY(irc_topic_header) {
 			return 2;
 		} else return 0;
 	}
-	return -1;
+	return -3;
 }
 
 static char *irc_getchan_int(session_t *s, const char *name, int checkchan)
