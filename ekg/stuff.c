@@ -84,11 +84,14 @@ list_t children = NULL;
 list_t aliases = NULL;
 list_t autofinds = NULL;
 list_t bindings = NULL;
+/** list_t with <b>all</b> ekg2 timers */
 list_t timers = NULL;
 list_t conferences = NULL;
 list_t newconferences = NULL;
 
+/** debug list_t buffer */
 list_t buffer_debug;
+/** speech list_t buffer */
 list_t buffer_speech;
 
 list_t bindings_added;
@@ -1301,7 +1304,7 @@ void iso_to_ascii(unsigned char *buf) {
  * given string
  *
  * @param line - given string ;-)
- * @sa strip_spaces - for striping spaces function
+ * @sa strip_spaces - for spaces striping function
  *
  * @return buffer without quotes. Note, if you pass here smth which was strdup'ed() malloc'ed() or whatever. 
  * 		You <b>must</b> @a xfree() buffor passed, not result of this function.
