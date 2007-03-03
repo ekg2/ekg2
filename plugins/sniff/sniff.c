@@ -305,8 +305,8 @@ static void sniff_gg_print_new_status(session_t *s, const connection_t *hdr, uin
 	if (!xstrcmp(status, EKG_STATUS_AVAIL)) 		status = "back";
 	else if (!xstrcmp(status, EKG_STATUS_AWAY))		status = "away";
 	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	status = "invisible";
+	else if (!xstrcmp(status, EKG_STATUS_NA))		status = "disconnected";
 	else {
-/* XXX, rozlaczony */
 		debug_error("sniff_gg_print_new_status() XXX bad status: %s\n", status);
 		return;
 	}
@@ -314,14 +314,19 @@ static void sniff_gg_print_new_status(session_t *s, const connection_t *hdr, uin
 	whom = uin ? format_user(s, build_gg_uid(uin)) : session_name(s);	/* session_name() bad */
 
 	if (descr) {
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		if (!xstrcmp(status, "disconnected")) {
+			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
 				ekg_status_label(status, descr, NULL), /* formatka */
+				descr, whom);
 
+		} else {
+			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+				ekg_status_label(status, descr, NULL), /* formatka */
 				descr, "", whom);
+		}
 	} else 
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
 				ekg_status_label(status, descr, NULL), /* formatka */
-
 				whom);
 }
 
@@ -639,7 +644,7 @@ typedef struct {
 	uint32_t uin;			/* uin */
 	unsigned char code1[8];		/* kod polaczenia */
 	uint32_t seek;			/* od ktorego miejsca chcemy/mamy wysylac. */
-	uint32_t emp2;
+	uint32_t empty;
 } GG_PACKED gg_dcc_1xx;
 
 SNIFF_HANDLER(sniff_gg_dcc1xx_in, gg_dcc_1xx) {
@@ -649,7 +654,7 @@ SNIFF_HANDLER(sniff_gg_dcc1xx_in, gg_dcc_1xx) {
 	}
 	debug_error("XXX sniff_gg_dcc1xx_in() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
 
-	CHECK_PRINT(pkt->emp2, 0);
+	CHECK_PRINT(pkt->empty, 0);
 	return 0;
 }
 
@@ -660,7 +665,7 @@ SNIFF_HANDLER(sniff_gg_dcc1xx_out, gg_dcc_1xx) {
 	}
 	debug_error("XXX sniff_gg_dcc1xx_out() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
 
-	CHECK_PRINT(pkt->emp2, 0);
+	CHECK_PRINT(pkt->empty, 0);
 	return 0;
 }
 
@@ -758,7 +763,7 @@ typedef struct {
 	uint32_t uin;			/* mój numerek [gg_login60] */
 	uint8_t dunno0;			/* 02 */
 	unsigned char hash[20];		/* sha1 [haslo i seed] */
-	unsigned char unknown[44];	/* ??? 00 */
+	unsigned char unknown[44];	/* ??? duzo 00 ??? */
 	uint32_t status;		/* status na dzień dobry [gg_login60] */
 	uint32_t version;		/* moja wersja klienta [gg_login60] */
 	uint8_t dunno1;			/* 0x00 [gg_login60] */
