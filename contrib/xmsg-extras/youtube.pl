@@ -24,7 +24,8 @@ my $convertera = 'ffmpeg -i';
 my $converterb = '';
 my $converterc = '-sameq -vcodec mpeg2video -acodec copy';
 my $converterext = 'mpg';
-my $len;
+my $avgkibps = 28;
+my ($len, $avgtime);
 
 {
 	my ($f);
@@ -42,15 +43,23 @@ my ($title, $id) = ($1, $2);
 {
 	my @res = LWP::Simple::head("http://youtube.com/get_video.php?$id");
 
-	$len = ($res[1] / 1024) if (@res > 1);
-	if ($len > 1024) {
-		$len = sprintf("%.2f MiB", $len / 1024);
-	} else {
-		$len = sprintf("%.2f KiB", $len);
+	if (@res > 1) {
+		$len = ($res[1] / 1024);
+		$avgtime = ($len / $avgkibps);
+		if ($len > 1024) {
+			$len = sprintf("%.2f MiB", $len / 1024);
+		} else {
+			$len = sprintf("%.2f KiB", $len);
+		}
+		if ($avgtime > 60) {
+			$avgtime = sprintf("%d:%02d min", ($avgtime / 60), ($avgtime % 60));
+		} else {
+			$avgtime .= " s";
+		}
 	}
 }
 
-replyxmsg("Download of '$title'" . ($len ? " [$len] " : "") . "( http://youtube.com/get_video.php?$id ) started.");
+replyxmsg("Download of '$title'" . ($len ? " [$len] (~$avgtime) " : "") . "( http://youtube.com/get_video.php?$id ) started.");
 
 mkdir($dldir) if (! -d $dldir);
 
