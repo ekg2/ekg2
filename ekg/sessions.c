@@ -49,12 +49,12 @@ session_t *session_current = NULL;
 /**
  * session_find_ptr()
  *
- * it's search over session list and checks if param @a s is in that list.
+ * it's search over sessions list and checks if param @a s is in that list.
  * it's useful for all watch handler, and if programmer was too lazy to destroy watches assosiated with that
  * session (in private watch data struct) before it gone.
  *
  * @note It's possible to find another session with the same address as old one.. it's rather not possible.. however.
- *	It's better if watch use @a session_find() function.. Yeah, i know it's slower.
+ *	It's better if you use @a session_find() function.. Yeah, i know it's slower.
  *
  * @param s - session to look for.
  *
@@ -71,11 +71,18 @@ session_t *session_find_ptr(session_t *s) {
 	return NULL;
 }
 
-/*
+/**
  * session_find()
  *
- * szuka podanej sesji.
+ * It's search over sessions list and checks if we have session with uid @a uid
+ *
+ * @param uid - uid of session you look for
+ * @sa session_find_ptr() - If you are looking for smth faster ;) but less reliable.
+ *
+ * @return It returns pointer to session_t struct of found session, or NULL
+ *
  */
+
 session_t *session_find(const char *uid)
 {
 	list_t l;
@@ -93,14 +100,19 @@ session_t *session_find(const char *uid)
 	return NULL;
 }
 
-/*
+/**
  * session_compare()
  *
  * funkcja pomocna przy list_add_sorted().
  *
- *  - data1, data2 - dwa wpisy userlisty do porównania.
+ * @note To raczej powinna byc wewnetrzna funkcja w session.c ale nie wiedziec czemu kilka pluginow z tego korzysta...
+ * 	W koncu nie mozemy miec dwoch sesji o takich samych uidach... ? to chyba wystarczy porownac adresy?
+ * 
+ * @param data1 - pierwsza sesja do porownania
+ * @param data2 - druga sesja do porownania
+ * @sa list_add_sorted
  *
- * zwraca wynik xstrcasecmp() na nazwach sesji.
+ * @return zwraca wynik xstrcasecmp() na nazwach sesji.
  */
 int session_compare(void *data1, void *data2)
 {
@@ -112,12 +124,15 @@ int session_compare(void *data1, void *data2)
 	return xstrcasecmp(a->uid, b->uid);
 }
 
-/*
+/**
  * session_var_default()
  *
- * sets the default values 
- * 
- * s - session in which we are setting
+ * sets the default values of session params
+ *
+ * @param s - session in which we are setting
+ * @sa plugin_var_add
+ *
+ * @return -1 if smth went wrong... 0 on success.
  */
 int session_var_default(session_t *s)
 {
