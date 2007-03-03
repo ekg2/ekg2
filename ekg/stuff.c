@@ -167,10 +167,12 @@ char *last_search_uid = 0;
 
 int reason_changed = 0;
 
-/* 
+/**
  * windows_save()
  *
- * saves windows to the variable 
+ * saves current open windows to the variable @a config_windows_layout if @a config_windows_save is on
+ * @sa config_windows_layout
+ * @sa config_windows_save
  */
 void windows_save()
 {
@@ -1292,11 +1294,17 @@ void iso_to_ascii(unsigned char *buf) {
 	}
 }
 
-/*
+/**
  * strip_quotes()
  *
  * strips quotes from the begging and the end of 
  * given string
+ *
+ * @param line - given string ;-)
+ * @sa strip_spaces - for striping spaces function
+ *
+ * @return buffer without quotes. Note, if you pass here smth which was strdup'ed() malloc'ed() or whatever. 
+ * 		You <b>must</b> @a xfree() buffor passed, not result of this function.
  */
 char *strip_quotes(char *line) {
 	size_t linelen;
@@ -2443,7 +2451,7 @@ void xstrtr(char *text, char from, char to)
 
 
 
-/*
+/**
  * ekg_yield_cpu()
  *
  * releases cpu
