@@ -20,6 +20,10 @@ my $player = 'mplayer -vo dxr3 -ao alsa -fs -framedrop';
 my $preplayer = 'mpc pause; sleep 2';
 my $postplayer = 'sleep 2; mpc play';
 my $autoplay = 1;
+my $convertera = 'ffmpeg -i';
+my $converterb = '';
+my $converterc = '-sameq -vcodec mpeg2video -acodec copy';
+my $converterext = 'mpg';
 my $len;
 
 {
@@ -50,22 +54,42 @@ replyxmsg("Download of '$title'" . ($len ? " [$len] " : "") . "( http://youtube
 
 mkdir($dldir) if (! -d $dldir);
 
-`wget $wgetopts -O "$dldir/$title.flv" "http://youtube.com/get_video.php?$id"`;
+my $fn = $title;
+($fn =~ s/\//_/g);
+
+if (!$convertera || ! -f "$dldir/$fn.$converterext") {
+	`wget $wgetopts -O "$dldir/$fn.flv" "http://youtube.com/get_video.php?$id"`;
+
+	if ($convertera) {
+		replyxmsg('Starting video converter...');
+		`$convertera "$dldir/$fn.flv" $converterb "$dldir/$fn.$converterext" $converterc`;
+		if (($?>>8) == 0) {
+			unlink("$dldir/$fn.flv");
+			$fn .= ".$converterext";
+		} else {
+			replyxmsg('Converter somewhat failed.');
+			$fn .= '.flv';
+		}
+	} else {
+		$fn .= '.flv';
+	}
+} else {
+	$fn .= ".$converterext";
+}
 
 if (($?>>8) == 0) {
 	if ($autoplay) {
-		replyxmsg('Download finished.');
 		`$preplayer`;
 		replyxmsg("Starting playback of '$title'...");
-		`$player "$dldir/$title.flv" &> /dev/null`;
+		`$player "$dldir/$fn" &> /dev/null`;
 		if (($?>>8) == 0) {
 			replyxmsg('Playback finished.');
 		} else {
-			replyxmsg("Playback somewhat failed. Please try by hand:\n\t$player \"$dldir/$title.flv\"");
+			replyxmsg("Playback somewhat failed. Please try by hand:\n\t$player \"$dldir/$fn\"");
 		}
 		`$postplayer`;
 	} else {
-		replyxmsg("Download of '$title' finished. To see it:\n\t$player \"$dldir/$title.flv\"");
+		replyxmsg("Download of '$title' finished. To see it:\n\t$player \"$dldir/$fn\"");
 	}
 } else {
 	replyxmsg("Download of '$title' somewhat failed.");
