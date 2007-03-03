@@ -46,6 +46,21 @@
 list_t sessions = NULL;
 session_t *session_current = NULL;
 
+/**
+ * session_find_ptr()
+ *
+ * it's search over session list and checks if param @a s is in that list.
+ * it's useful for all watch handler, and if programmer was too lazy to destroy watches assosiated with that
+ * session (in private watch data struct) before it gone.
+ *
+ * @note It's possible to find another session with the same address as old one.. it's rather not possible.. however.
+ *	It's better if watch use @a session_find() function.. Yeah, i know it's slower.
+ *
+ * @param s - session to look for.
+ *
+ * @return It returns @a s if session was found, otherwise NULL.
+ */
+
 session_t *session_find_ptr(session_t *s) {
 	list_t l;
 	for (l = sessions; l; l = l->next) {
