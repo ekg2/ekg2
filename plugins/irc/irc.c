@@ -1342,10 +1342,23 @@ static COMMAND(irc_command_away) {
 
 /*****************************************************************************/
 
+/**
+ * irc_window_kill()
+ *
+ * handler for UI_WINDOW_KILL query requests
+ * It checks if window which will be destroyed is valid irc channel window, and we
+ * are on it now. if yes (and of course if we are connected) it send PART message to irc
+ * server, with reason got using @a PARTMSG macro
+ *
+ * @param windowargp <b>w</b> - window which will be destroyed 
+ *
+ * @return 0
+ */
+
 static QUERY(irc_window_kill) {
 	window_t	*w = *va_arg(ap, window_t **);
-	irc_private_t	*j = NULL; /* I'm not sure but what if w will be null ? */
-	char		*tmp = NULL;
+	irc_private_t	*j;
+	char		*tmp;
 
 	if (w && w->id && w->target && session_check(w->session, 1, IRC3) &&
 			(j = irc_private(w->session)) &&
@@ -1376,7 +1389,7 @@ static QUERY(irc_window_kill) {
  *
  * @return 	 1 if it's known irc channel.<br>
  * 		 2 if it's known irc user.<br>
- * 		 0 if neither known user, nor channel.<br>
+ * 		 0 if it's neither known user, nor channel.<br>
  *		-3 if it's not valid irc window, or session is not connected
  */
 
