@@ -5,6 +5,13 @@ auto_connect
 	If set to true, this session will be connected automagically
 	on program startup.
 
+dotfile_suffix
+	type: string
+	default value: none
+	
+	Suffix added to dotfiles on message retrieval. It allows you to use one
+	than one client on the same incoming message directory.
+
 max_filesize
 	type: integer
 	default value: 16384

@@ -228,6 +228,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	const int nounlink = !session_int_get(s, "unlink_sent");
 	const int utb = session_int_get(s, "unlink_toobig");
 	const int maxfs = session_int_get(s, "max_filesize");
+	const char *dfsuffix = session_get(s, "dotfile_suffix");
 	char *namesep = (char*) session_get(s, "name_separator");
 
 	char *msg;
@@ -241,9 +242,9 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	f = xmalloc(xstrlen(dir) + xstrlen(fn) + 2);
 #undef XERRADD
 #define XERRADD xfree(f); xfree(dir);
-	strcpy(f, dir);
-	strcat(f, "/"); /* double trailing slash shouldn't make any problems */
-	strcat(f, fn);
+	xstrcpy(f, dir);
+	xstrcat(f, "/"); /* double trailing slash shouldn't make any problems */
+	xstrcat(f, fn);
 	
 	xdebug("s = %s, d = %s, fn = %s, f = %s", session_uid_get(s), dir, fn, f);
 	
@@ -253,12 +254,13 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		int r;
 		
 		if (nounlink || !utb) {
-			dotf = xmalloc(xstrlen(f) + 2);
+			dotf = xmalloc(xstrlen(f) + 2 + xstrlen(dfsuffix));
 #undef XERRADD
 #define XERRADD xfree(f); xfree(dotf); xfree(dir);
-			strcpy(dotf, dir);
-			strcat(dotf, "/.");
-			strcat(dotf, fn);
+			xstrcpy(dotf, dir);
+			xstrcat(dotf, "/.");
+			xstrcat(dotf, fn);
+			xstrcat(dotf, dfsuffix);
 			
 			r = !(stat(dotf, &std) || S_ISDIR(std.st_mode));
 		} else
@@ -499,6 +501,7 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 	if (session_int_get(s, varname)) {
 		const int kind = !xstrcasecmp(varname, "unlink_sent");
 		const int maxfs = session_int_get(s, "max_filesize");
+		const char *dfsuffix = session_get(s, "dotfile_suffix");
 		char *dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
 		DIR *d = opendir(dir);
 		struct dirent *de;
@@ -511,7 +514,7 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		}
 		
 		df = xmalloc(xstrlen(dir) + NAME_MAX + 2);
-		dfd = xmalloc(xstrlen(dir) + NAME_MAX + 3);
+		dfd = xmalloc(xstrlen(dir) + NAME_MAX + 3 + xstrlen(dfsuffix));
 		xstrcpy(df, dir);
 		xfree(dir);
 		dp = df + xstrlen(df);
@@ -523,8 +526,9 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		while ((de = readdir(d))) {
 			if (de->d_name[0] == '.')
 				continue;
-			strcpy(dp, de->d_name);
-			strcpy(dpd, de->d_name);
+			xstrcpy(dp, de->d_name);
+			xstrcpy(dpd, de->d_name);
+			xstrcat(dpd, dfsuffix);
 			if (!stat(df, &st) && !stat(dfd, &std)
 					&& ((!maxfs || (st.st_size < maxfs)) == kind)) {
 				xdebug("removing %s", de->d_name);
@@ -657,6 +661,7 @@ int xmsg_plugin_init(int prio)
 	query_connect_id(&xmsg_plugin, PROTOCOL_VALIDATE_UID, xmsg_validate_uid, NULL);
 
 	plugin_var_add(&xmsg_plugin, "auto_connect", VAR_BOOL, "1", 0, NULL);
+	plugin_var_add(&xmsg_plugin, "dotfile_suffix", VAR_STR, "", 0, NULL);
 	plugin_var_add(&xmsg_plugin, "log_formats", VAR_STR, "simple", 0, NULL);
 	plugin_var_add(&xmsg_plugin, "max_filesize", VAR_INT, XMSG_MAXFS_DEF, 0, NULL);
 	plugin_var_add(&xmsg_plugin, "max_oneshot_files", VAR_INT, XMSG_MAXFC_DEF, 0, NULL);
