@@ -464,7 +464,7 @@ void userlist_free_u (list_t *userlist)
  * @param name - name of resource
  * @param prio - prio of resource
  *
- * @return It returns inited resource_t pointer of given data, or NULL if @a u was NULL
+ * @return It returns inited ekg_resource_t pointer of given data, or NULL if @a u was NULL
  */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio) {
 	ekg_resource_t *r;

@@ -124,8 +124,9 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
 /**
  * list_add()
  *
- * It's just wrapper to list_add_sorted() without sorting<br>
- * Item will be added at end of list - as <b>last</b> item 
+ * Add item @a data to @a list without sorting<br>
+ * Item will be added at end of list - as <b>last</b> item<br>
+ * Wrapper to: <code>list_add_sorted(list, data, alloc_size, NULL)</code>
  *
  * @sa list_remove
  * @sa list_add_beginning - If you can have items of list in reverse sequence [third_added_item, second_added_item, first_added_item] and not sorted
@@ -312,6 +313,26 @@ int string_append_n(string_t s, const char *str, int count)
 	return 0;
 }
 
+/**
+ * string_append_format()
+ *
+ * Append to string_t @a s, formatted output of @a format + params
+ * equivalent to:<br>
+ * 	<code>
+ * 		char *tmp = saprintf(format, ...);<br>
+ * 		string_append(s, tmp);<br>
+ * 		xfree(tmp);<br>
+ * 	</code>
+ *
+ * @note For more details about string formating functions read man 3 vsnprintf
+ *
+ * @sa string_append
+ * @sa saprintf
+ *
+ * @return 	 0 on success<br>
+ * 		-1 and errno set to EFAULT if input params were wrong (s == NULL || format == NULL)
+ */
+
 int string_append_format(string_t s, const char *format, ...) {
 	va_list ap;
 	char *formatted;
@@ -333,6 +354,15 @@ int string_append_format(string_t s, const char *format, ...) {
 	return 0;
 }
 
+/**
+ * string_append_raw()
+ *
+ * Append to string_t @a s, @a count bytes from memory pointed by @a str<br>
+ * 
+ * @sa string_append_n() - If you want to append NUL terminated (C-like) String
+ * @todo XXX Protect from negative count (and less than -1) ?
+ */
+
 int string_append_raw(string_t s, const char *str, int count) {
 	if (!s || !str) {
 		errno = EFAULT;
@@ -350,6 +380,13 @@ int string_append_raw(string_t s, const char *str, int count) {
 
 	return 0;
 }
+
+/**
+ * string_append()
+ *
+ * Append to string_t @a s, NUL terminated string pointed by str<br>
+ * Wrapper to:<code>string_append_n(s, str, -1)</code>
+ */
 
 int string_append(string_t s, const char *str)
 {
@@ -415,13 +452,16 @@ string_t string_init(const char *value) {
 	return tmp;
 }
 
-/*
+/**
  * string_clear()
  *
- * czy¶ci zawarto¶æ struktury `string'.
+ * Clear s->str (s->str[0] == '\\0')<br>
+ * If memory allocated by string_t @a s was larger than 160, than decrease to 80
  *
- *  - s - ci±g znaków.
+ *  @param s - string_t
+ *  @sa string_free
  */
+
 void string_clear(string_t s)
 {
 	if (!s)

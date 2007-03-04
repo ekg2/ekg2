@@ -83,16 +83,13 @@
 list_t children = NULL;
 list_t aliases = NULL;
 list_t autofinds = NULL;
-list_t bindings = NULL;
-/** list_t with <b>all</b> ekg2 timers */
+list_t bindings = NULL;		/**< list_t struct timer <b>all</b> ekg2 timers */
 list_t timers = NULL;
 list_t conferences = NULL;
 list_t newconferences = NULL;
 
-/** debug list_t buffer */
-list_t buffer_debug;
-/** speech list_t buffer */
-list_t buffer_speech;
+list_t buffer_debug;		/**< debug list_t struct buffer */
+list_t buffer_speech;		/**< speech list_t struct buffer */
 
 list_t bindings_added;
 int old_stderr;

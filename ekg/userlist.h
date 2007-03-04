@@ -55,7 +55,7 @@ typedef struct {
 	char *first_name;	/**< first name */
 	char *last_name;	/**< surname */
 	char *mobile;		/**< mobile phone number */
-	list_t groups;		/**< list_t with group_t<br>
+	list_t groups;		/**< list_t with ekg_group<br>
 				 * 	Groups to which this user belongs like: work, friends, family..<br>
 				 *	It's also used internally by ekg2, for example when user is ignore he has group with name: __ignore */
 	
@@ -63,7 +63,7 @@ typedef struct {
 	char *descr;		/**< description of status. */
 	char *authtype;		/**< authtype: to/from/both [only used by jabber] */	
 	char *resource;		/**< For leafnode and compatilibity with python, always NULL [Will be removed!] */
-	list_t resources;	/**< list_t with resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
+	list_t resources;	/**< list_t with ekg_resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
 
 	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)]<br>
 				 *	It's used mainly for DCC communications. */
@@ -120,8 +120,8 @@ typedef struct {
 	void *private;		/**< priv, like u->private 	[private data info/struct]	*/
 } ekg_resource_t;
 
-/***
- * ekg_group is used to manage userlist_t groups.
+/**
+ * struct ekg_group is used to manage userlist_t groups.
  */
 
 struct ekg_group {
