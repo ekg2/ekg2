@@ -22,7 +22,6 @@ AC_DEFUN([AM_CHECK_PERL],
 				if test ! -s conftest; then
 					AC_MSG_RESULT([perl found, but error linking with perl libraries])
 				else
-					AC_DEFINE(WITH_PERL, 1, [define if You want perl])
 					have_perl=yes
 				fi
 				rm -f perl.error.tmp
