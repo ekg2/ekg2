@@ -114,6 +114,7 @@ session_t *session_find(const char *uid)
  *
  * @return zwraca wynik xstrcasecmp() na nazwach sesji.
  */
+
 int session_compare(void *data1, void *data2)
 {
 	session_t *a = data1, *b = data2;
@@ -134,6 +135,7 @@ int session_compare(void *data1, void *data2)
  *
  * @return -1 if smth went wrong... 0 on success.
  */
+
 int session_var_default(session_t *s)
 {
 	plugin_t *p;
@@ -198,12 +200,32 @@ session_t *session_add(const char *uid)
 	return s;
 }
 
-/*
+/**
  * session_remove()
  *
- * usuwa sesjê.
+ * Remove session with uid passed in @a uid<br>
+ * This function free session params variable and internal<br>
+ * session data like alias, current status, descr, password..<br>
+ * If sesssion is connected, /disconnect command will be executed with session uid as param<br>
+ * It'll do window->session swapping if needed... and changing current session also.
+ * 
+ * @bug Possible implementation/idea bug in window_session_cycle() I really don't know if we should change session on this windows...
+ * 	Maybe swaping is ok... but we really need think about protocol.. Now If we change session from jabber to gg one this window
+ * 	won't be very useful..
  *
- * 0/-1
+ * @note If plugin allocated memory for session example in s->private you should
+ * 	connect to SESSION_REMOVED query event, and free alloced memory
+ * 	(remember about checking if this is your session) also session watches/timers
+ * 	won't be automagicly removed (please note: ekg2 don't have <i>session</i> watches/timers, 
+ * 	we have <i>plugin</i> watches/timers...) We don't want segv on watch/
+ * 	timer handler when it want access to memory which was freed, do we? So please be aware of it.
+ * 	[Hint, you can use session_find_ptr() session_find() functions to check in watch/timer handler if it wasn't removed
+ *
+ * @param uid - uid of session to remove
+ *
+ * @return 	 0 if session was found, and removed.<br>
+ * 		-1 if session wasn't founded.
+ *
  */
 int session_remove(const char *uid)
 {
@@ -388,11 +410,35 @@ int session_password_set(session_t *s, const char *password)
 	return 0;
 }
 
-/* static buffer is a better idea - i think (del) */
+/** 
+ * session_password_get()
+ *
+ * It's decrypt ,,encrypted''(and return) using base64 from session struct (s->password) is @a s was passed, otherwise
+ * it cleanup decrypted password from internal buffer.
+ *
+ * @note static buffer is a better idea - i think (del)
+ * @sa base64_decode() - function to decode base64 strings.
+ * @sa session_get() - session_get() can be used to get password also... but it's just a wrapper with several xstrcmp() to this function
+ * 		so it's slower. Instead of using session_get(session, "password") it's better If you use: session_password_get(session) 
+ *
+ * @param s - session of which we want get password from or NULL if we want to erase internal buf with password
+ *
+ * @return 	,,decrypted'' password if succeed<br>
+ * 		otherwise ""<br>
+ * 		or even NULL if @a s was NULL
+ */
+
 const char *session_password_get(session_t *s)
 {
         static char buf[100];
-	char *tmp = base64_decode(s->password);
+	char *tmp;
+
+	if (!s) {
+		memset(buf, 0, sizeof(buf));
+		return NULL;
+	}
+	
+	tmp = base64_decode(s->password);
 
 	if (!tmp)
 		return "";
