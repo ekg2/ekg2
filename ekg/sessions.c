@@ -206,7 +206,7 @@ session_t *session_add(const char *uid)
  * Remove session with uid passed in @a uid<br>
  * This function free session params variable and internal<br>
  * session data like alias, current status, descr, password..<br>
- * If sesssion is connected, /disconnect command will be executed with session uid as param<br>
+ * If sesssion is connected, /disconnect command will be executed with session uid as reason<br>
  * It'll do window->session swapping if needed... and changing current session also.
  * 
  * @bug Possible implementation/idea bug in window_session_cycle() I really don't know if we should change session on this windows...
@@ -218,8 +218,8 @@ session_t *session_add(const char *uid)
  * 	(remember about checking if this is your session) also session watches/timers
  * 	won't be automagicly removed (please note: ekg2 don't have <i>session</i> watches/timers, 
  * 	we have <i>plugin</i> watches/timers...) We don't want segv on watch/
- * 	timer handler when it want access to memory which was freed, do we? So please be aware of it.
- * 	[Hint, you can use session_find_ptr() session_find() functions to check in watch/timer handler if it wasn't removed
+ * 	timer handler when it want access to memory which was freed, do we? So please be aware of it.<br>
+ * 	[Hint, you can use session_find_ptr() session_find() functions to check in watch/timer handler if it wasn't removed]
  *
  * @param uid - uid of session to remove
  *
@@ -227,6 +227,7 @@ session_t *session_add(const char *uid)
  * 		-1 if session wasn't founded.
  *
  */
+
 int session_remove(const char *uid)
 {
 	session_t *s;
