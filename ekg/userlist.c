@@ -77,24 +77,41 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 	{ 0, NULL }
 };
 
-/*
+/**
  * userlist_compare()
  *
- * funkcja pomocna przy list_add_sorted().
+ * wewnetrzna funkcja pomocna przy list_add_sorted().
  *
- *  - data1, data2 - dwa wpisy userlisty do porównania.
+ * @param data1 - pierwszy wpis userlisty do porównania.
+ * @param data2 - drugi wpis userlisty do porówniania.
+ * @sa list_add_sorted
  *
- * zwraca wynik xstrcasecmp() na nazwach userów.
+ * @return zwraca wynik xstrcasecmp() na nazwach userów.
  */
 static int userlist_compare(void *data1, void *data2)
 {
 	userlist_t *a = data1, *b = data2;
 	
 	if (!a || !a->nickname || !b || !b->nickname)
-		return 1;
+		return 0;
 
 	return xstrcasecmp(a->nickname, b->nickname);
 }
+
+/**
+ * userlist_resource_compare()
+ *
+ * internal function used to sort resources by prio and by name
+ * used by list_add_sorted() 
+ *
+ * @param data1 - first resource_t to compare.
+ * @param data2 - second resource_t to compare.
+ * @sa userlist_resource_add
+ * @sa list_add_sorted
+ *
+ * @return It returns result of prio subtraction if prio is diffrent.
+ * 	Otherwise result of xstrcasecmp() by resources name
+ */
 
 static int userlist_resource_compare(void *data1, void *data2)
 {
@@ -215,7 +232,6 @@ char *userlist_dump(session_t *session)
  * @param session
  * @return 0 on success, -1 file not found
  */
-
 int userlist_read(session_t *session)
 {
         const char *filename;
@@ -299,7 +315,6 @@ int userlist_write(session_t *session)
  * @bug It was copied from ekg1 and it doesn't match ekg2 abi.
  * 	It's bad so i comment it out... Reimplement it or delete
  */
-
 void userlist_write_crash() {
 /*
 	list_t l;
@@ -344,12 +359,12 @@ void userlist_write_crash() {
 /**
  * userlist_clear_status()
  *
- * If @a uin == NULL then it clears all users <i>avail info</i> in the @a session userlist
+ * If @a uin == NULL then it clears all users <i>presence informations</i> in the @a session userlist
  * otherwise it clears only specified user
  * It's useful if user goes notavail, or we goes disconnected..<br>
  * However if that happen you shouldn't use this function but emit query <i>PROTOCOL_STATUS</i> or <i>PROTOCOL_DISCONNECTED</i>
  *
- * @note By <i>avail info</i> I mean:<br>
+ * @note By <i>presence informations</i> I mean:<br>
  * 	-> status 	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
  * 	-> descr 	- user's description, it'll be: NULL<br>
  * 	-> ip		- user's ip, il'll be: 0.0.0.0<br>
@@ -437,6 +452,20 @@ void userlist_free_u (list_t *userlist)
         *userlist = NULL;
 }
 
+/**
+ * userlist_resource_add()
+ *
+ * It adds <b>new</b> user resource to resources list, with given data.
+ *
+ * @note It <b>doesn't</b> check if prio already exists.. So you must remember about
+ * 	calling userlist_resource_find() if you don't want two (or more) same resources...
+ *
+ * @param u - user
+ * @param name - name of resource
+ * @param prio - prio of resource
+ *
+ * @return It returns inited resource_t pointer of given data, or NULL if @a u was NULL
+ */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio) {
 	ekg_resource_t *r;
 
@@ -451,6 +480,16 @@ ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio)
 	return r;
 }
 
+/**
+ * userlist_resource_find()
+ *
+ * It search for given resource @a name in user resource list @a u
+ *
+ * @param u - user
+ * @param name - name of resource
+ *
+ * @return It returns resource with given name if founded, otherwise NULL
+ */
 ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
 	list_t l;
 	if (!u) return NULL;
@@ -464,6 +503,15 @@ ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
 	return NULL;
 }
 
+/**
+ * userlist_resource_remove()
+ *
+ * Remove given resource @a r from user resource list @a u<br>
+ * Free allocated memory.
+ *
+ * @param u - user
+ * @param r - resource
+ */
 void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
 	if (!u || !r) return;
 	
@@ -474,6 +522,15 @@ void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
 	list_remove(&(u->resources), r, 1);
 }
 
+/**
+ * userlist_resource_free()
+ *
+ * Remove all user @a u resources.<br>
+ * Free allocated memory.
+ *
+ * @param u - user
+ * @sa userlist_resource_remove - to remove given resource
+ */
 void userlist_resource_free(userlist_t *u) {
 	list_t l;
 	if (!u) return;
