@@ -2043,7 +2043,7 @@ static COMMAND(cmd_test_mem)
 			return -1;
 #endif
 		}
-		txt = saprintf(("Memory used by ekg2: %d kB"), rozmiar);
+		txt = saprintf(("Memory used by ekg2: %d KiB"), rozmiar);
 		wcs_printq("generic", txt);
 		xfree(txt);
 	} else {
