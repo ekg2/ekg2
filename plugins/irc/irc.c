@@ -408,15 +408,15 @@ static int irc_resolver2(session_t *session, char ***arr, char *hostname, int po
  * irc_validate_uid()
  *
  * handler for <i>PROTOCOL_VALIDATE_UID</i><br>
- * checks, if @a uid is proper for irc plugin.
+ * checks, if @a uid is <i>proper for irc plugin</i>.
  *
- * @note Valid irc plugin means if @a uid starts with "irc:" and uid len > 4
+ * @note <i>Proper for irc plugin</i> means if @a uid starts with "irc:" and uid len > 4
  *
  * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
  * @param ap 2nd param: <i>(int *) </i><b>valid</b> - place to put 1 if uid is valid for irc plugin.
  * @param data NULL
  *
- * @return 	-1 if it's valid uid for irc plugin
+ * @return 	-1 if it's valid uid for irc plugin<br>
  * 		 0 if not
  */
 
@@ -434,6 +434,20 @@ static QUERY(irc_validate_uid) {
 
 	return 0;
 }
+
+/**
+ * irc_protocols()
+ *
+ * handler for <i>GET_PLUGIN_PROTOCOLS</i><br>
+ * It just add "irc:" to @a arr
+ *
+ * @note I know it's nowhere used. It'll be used by d-bus plugin.
+ *
+ * @param ap 1st param: <i>(char **) </i><b>arr</b> - array with available protocols
+ * @param data NULL
+ *
+ * @return 0
+ */
 
 static QUERY(irc_protocols) {
 	char ***arr	= va_arg(ap, char ***);
