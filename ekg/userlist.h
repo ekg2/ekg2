@@ -40,41 +40,50 @@
 #include "plugins.h"
 #include "windows.h"
 
+/** 
+ * userlist_t is used to manage all info about user.<br>
+ * It's used not only to manage contacts in roster, but also to manage people in chat or conference
+ *
+ * @todo It's too heavy, we really <b>need</b> to move some plugin specified data [like mobile, protocol, authtype] to private. sizeof(userlist_t)==96
+ * @todo Remove u->resource, it's used only by python plugin by now...
+ * @bug There are two private fields [u->private and u->priv] one need to be removed.
+ */
+
 typedef struct {
-	char *uid;		/* protokó³:identyfikator */
-	char *nickname;		/* pseudonim */
-	char *first_name;	/* imiê */
-	char *last_name;	/* nazwisko */
-	char *mobile;		/* komórka */
-	list_t groups;		/* grupy, do których nale¿y */
+	char *uid;		/**< uin in form protocol:id */
+	char *nickname;		/**< nickname */
+	char *first_name;	/**< first name */
+	char *last_name;	/**< surname */
+	char *mobile;		/**< mobile phone number */
+	list_t groups;		/**< list_t with group_t Groups to which this user belongs like: work, friends, family.. 
+				 *	It's also used internally by ekg2, for example by ignore g->name: __ignore */
 	
-	char *status;		/* aktualny stan: notavail, avail, away,
-				 * invisible, dnd, xa itp. */
-	char *descr;		/* opis/powód stanu */
-	char *authtype;		/* to/from/both itp */	
-	char *resource;		/* for leafnode, always NULL */
-	list_t resources;	/* jabberowe resources */
+	char *status;		/**< current status like: notavail, avail, away, invisible, dnd, xa, etc */
+	char *descr;		/**< description of status. */
+	char *authtype;		/**< authtype: to/from/both [only used by jabber] */	
+	char *resource;		/**< For leafnode, always NULL [Will be removed!] */
+	list_t resources;	/**< list_t with resource_t Jabber resources, also irc friendlist use it. */
 
-	uint32_t ip;		/* adres ip */
-	uint16_t port;		/* port */
+	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)] It's used mainly for DCC communications. */
+	uint16_t port;		/**< port of user. Used mainly for DCC communications. */
 
-	time_t last_seen;	/* je¶li niedostêpny/ukryty to od kiedy */
+	time_t last_seen;	/**< Last time when user was available [when u->status was different that notavail] */
 	
-	int protocol;		/* wersja protoko³u */
+	int protocol;		/**< Protocol version [only used by gg plugin] */
 
-	char *foreign;		/* dla kompatybilno¶ci */
+	char *foreign;		/**< For compatilibity with ekg1 userlist. */
 
-	void *priv;		/* dane pluginu obs³uguj±cego usera */
+	void *priv;		/**< Plugin data which handle this userlist_t */
 	
 	int xstate;		/* formerly called blink */
 
-        uint32_t last_ip;       /* ostatni adres ip */
-        uint16_t last_port;     /* ostatni port */
+        uint32_t last_ip;       /**< Lastseen ipv4 address */
+        uint16_t last_port;     /**< Lastseen port */
 
-	char *last_status;	/* ostatni stan */
-	char *last_descr;	/* ostatni opis */
-	time_t status_time;	/* kiedy w³±czyli¶my aktualny status */
-	void *private;          /* sometimes can be helpfull */
+	char *last_status;	/**< Lastseen status */
+	char *last_descr;	/**< Lastseen description */
+	time_t status_time;	/**< From when we have this status, description */
+	void *private;          /**< sometimes can be helpfull */
 } userlist_t;
 
 #define EKG_STATUS_NA "notavail"
@@ -95,16 +104,25 @@ typedef struct {
 #define EKG_XSTATE_BLINK	01
 #define EKG_XSTATE_TYPING	02
 
+/** 
+ * ekg_resource_t is used to manage userlist_t resources.<br>
+ * For example jabber resources, or irc friendlist
+ */
+
 typedef struct {
-	char *name;		/* name of resource */
-	char *status;		/* status, like u->status */
-	char *descr;		/* descr, like u->descr */
-	int prio;		/* prio of resource */
-	void *private;		/* priv, like u->private */
+	char *name;		/**< name of resource */
+	char *status;		/**< status, like u->status 	[status of resource]		*/
+	char *descr;		/**< descr, like u->descr	[description of resource]	*/
+	int prio;		/**< prio of resource 		[priority of this resource] 	*/
+	void *private;		/**< priv, like u->private 	[private data info/struct]	*/
 } ekg_resource_t;
 
+/***
+ * ekg_group is used to manage userlist_t groups.
+ */
+
 struct ekg_group {
-	char *name;
+	char *name;		/**< name of group */
 };
 
 enum ignore_t {
