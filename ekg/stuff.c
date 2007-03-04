@@ -174,6 +174,7 @@ int reason_changed = 0;
  * @sa config_windows_layout
  * @sa config_windows_save
  */
+
 void windows_save()
 {
 	list_t l;
@@ -1297,15 +1298,17 @@ void iso_to_ascii(unsigned char *buf) {
 /**
  * strip_quotes()
  *
- * strips quotes from the begging and the end of 
- * given string
+ * strips quotes from the begining and the end of string @a line
  *
  * @param line - given string ;-)
  * @sa strip_spaces - for spaces striping function
  *
- * @return buffer without quotes. Note, if you pass here smth which was strdup'ed() malloc'ed() or whatever. 
- * 		You <b>must</b> @a xfree() buffor passed, not result of this function.
+ * @note If you pass here smth which was strdup'ed() malloc'ed() or smth which was allocated.<br>
+ * 		You <b>must</b> xfree() string passed, not result of this function.
+ *
+ * @return buffer without quotes.
  */
+
 char *strip_quotes(char *line) {
 	size_t linelen;
 	char *buf;
@@ -1322,11 +1325,20 @@ char *strip_quotes(char *line) {
 	return buf;
 }
 
-/*
+/**
  * strip_spaces()
  *
- * pozbywa siê spacji na pocz±tku i koñcu ³añcucha.
+ * strips spaces from the begining and the end of string @a line
+ *
+ * @param line - given string
+ * @sa strip_quotes - for quotes striping function
+ *
+ * @note If you pass here smth which was strdup'ed() malloc'ed() or smth which was allocated.<br>
+ * 		You <b>must</b> xfree() string passed, not result of this function.
+ *
+ * @return buffer without spaces.
  */
+
 char *strip_spaces(char *line) {
 	size_t linelen;
 	char *buf;
@@ -2449,14 +2461,13 @@ void xstrtr(char *text, char from, char to)
 			*text = to;
 }
 
-
-
 /**
  * ekg_yield_cpu()
  *
  * releases cpu
  * meant to be called while busy-looping
  */
+
 void inline ekg_yield_cpu()
 {
 #ifdef _POSIX_PRIORITY_SCHEDULING
