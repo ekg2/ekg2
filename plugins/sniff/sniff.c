@@ -826,7 +826,7 @@ typedef enum {
 
 static const struct {
 	uint32_t 	type;
-	char 		*name;
+	char 		*sname;
 	pkt_way_t 	way;
 	sniff_handler_t handler;
 	int 		just_print;
@@ -890,9 +890,9 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 		way = SNIFF_INCOMING;
 
 	/* XXX, jesli mamy podejrzenia ze to nie jest pakiet gg, to wtedy powinnismy zwrocic -2 i pozwolic zeby inni za nas to przetworzyli */
-	for (i=0; sniff_gg_callbacks[i].name; i++) {
+	for (i=0; sniff_gg_callbacks[i].sname; i++) {
 		if (sniff_gg_callbacks[i].type == pkt->type && sniff_gg_callbacks[i].way == way) {
-			debug("sniff_gg() %s [%d,%d,%db] %s\n", sniff_gg_callbacks[i].name, pkt->type, way, pkt->len, inet_ntoa(way ? hdr->dstip : hdr->srcip));
+			debug("sniff_gg() %s [%d,%d,%db] %s\n", sniff_gg_callbacks[i].sname, pkt->type, way, pkt->len, inet_ntoa(way ? hdr->dstip : hdr->srcip));
 			if (sniff_gg_callbacks[i].handler) 
 				sniff_gg_callbacks[i].handler(s, hdr, pkt->data, pkt->len);
 
