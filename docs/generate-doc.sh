@@ -6,7 +6,18 @@
 #
 #
 
+# XXX, nie dziala. dlatego jest PREDERFINED ze skopiowanymi deklaracjami z odpowiednich .h 
+#	w sumie niby ok, ale musimy pilnowac deklaracji... BTW. nie wiem w sumie czy jest jakis
+#	duzy sens aby deklrarowac kazda funkcje... @param quiet - czy byc cicho...
+#	Troche wiecej sensu jest przy deklarowaniu juz jakie mozliwe parametry sa w name...
 #	"EXPAND_AS_DEFINED= QUERY COMMAND WATCHER \n" \
+
+# XXX, DOT. generowanie grafiki. callgraphow, itd, fajne. tylkoze zasobozerne.. raz dziennie moze mozna
+#	to zrobic, ale nie ciagle.
+#	"HAVE_DOT=YES\n" \
+#	"INCLUDE_GRAPH=NO\n" \
+#	"INCLUDED_BY_GRAPH=NO\n" \
+#	\
 
 rm -rf ./doxygen
 
