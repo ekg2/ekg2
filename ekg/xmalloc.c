@@ -105,6 +105,24 @@ void *xcalloc(size_t nmemb, size_t size)
 	return tmp;
 }
 
+/** 
+ * xmalloc() 
+ *
+ * Wrapper to malloc()+memset()<br>
+ * It allocate memory for @a size bytes, clears it [set it with \\0], and returns pointer to allocated memory.
+ * If malloc() fails with NULL, ekg_oom_handler() kills program.
+ *
+ * @bug Possible bug: Some libc may return NULL if size is 0, from man malloc:<br>
+ * 	<i>If @a size is 0 (...) a <b>null pointer</b> (...) shall be returned.</i><br>
+ * 	XXX, check it in configure.ac if malloc() returns NULL on 0 size, and check here if size is 0.
+ *
+ * @sa xfree
+ *
+ * @param size - the same as in malloc()
+ *
+ * @return pointer to allocated memory 
+ */
+
 void *xmalloc(size_t size)
 {
 	void *tmp = malloc(size);
