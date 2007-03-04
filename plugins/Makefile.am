@@ -3,4 +3,3 @@ DIST_SUBDIRS = autoresponder gg gpg gsm gtk httprc_xajax ioctld irc jabber logs 
 
 EXTRA_DIST = README
 
-AM_MAKEFLAGS = -s -k -i
