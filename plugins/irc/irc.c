@@ -310,11 +310,17 @@ static QUERY(irc_session) {
 	return 0;
 }
 
-/*
+/**
  * irc_print_version()
  *
- * what the heck this can be ? ;)
+ * handler for <i>PLUGIN_PRINT_VERSION</i> query requests<br>
+ * print info about this plugin [Copyright note+version]
+ *
+ * @note what the heck this can be ? ;) (c GiM)
+ *
+ * @return 0
  */
+
 static QUERY(irc_print_version) {
 	print("generic", "IRC plugin by Michal 'GiM' Spadlinski, Jakub 'darkjames' Zawadzki v. "IRCVERSION);
 	return 0;
@@ -398,12 +404,20 @@ static int irc_resolver2(session_t *session, char ***arr, char *hostname, int po
 	return 0;
 }
 
-/*
+/**
  * irc_validate_uid()
  *
- * checks, if uid is proper, and if this is a plugin that
- * should deal with such a uid
+ * handler for <i>PROTOCOL_VALIDATE_UID</i><br>
+ * checks, if @a uid is proper for irc plugin (If it's start with irc: and len >4)
+ *
+ * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
+ * @param ap 2nd param: <i>(int *) </i><b>valid</b> - place to put 1 if uid is valid for irc plugin.
+ * @param data NULL
+ *
+ * @return 	-1 if it's valid uid for irc plugin [irc:]<br>
+ * 		 0 if not
  */
+
 static QUERY(irc_validate_uid) {
 	char	*uid 	= *(va_arg(ap, char **));
 	int	*valid 	= va_arg(ap, int *);
@@ -411,7 +425,7 @@ static QUERY(irc_validate_uid) {
 	if (!uid)
 		return 0;
 
-	if (!xstrncasecmp(uid, IRC4, 4) && xstrlen(uid)>4) {
+	if (!xstrncasecmp(uid, IRC4, 4) && uid[4]) {
 		(*valid)++;
 		return -1; /* if it's correct uid for irc we don't need to send to others... */
 	}
@@ -1345,12 +1359,13 @@ static COMMAND(irc_command_away) {
 /**
  * irc_window_kill()
  *
- * handler for UI_WINDOW_KILL query requests
+ * handler for <i>UI_WINDOW_KILL</i> query requests
  * It checks if window which will be destroyed is valid irc channel window, and we
  * are on it now. if yes (and of course if we are connected) it send PART message to irc
  * server, with reason got using @a PARTMSG macro
  *
- * @param windowargp <b>w</b> - window which will be destroyed 
+ * @param ap 1st param: <i>(window_t *) </i><b>w</b> - window which will be destroyed 
+ * @param data NULL
  *
  * @return 0
  */
@@ -1376,16 +1391,16 @@ static QUERY(irc_window_kill) {
 /** 
  * irc_topic_header() 
  *
- * handler for IRC_TOPIC query requests
- *
- * @param charargp1 <b>(top)</b> - place to put:<br>
+ * handler for <i>IRC_TOPIC</i> query requests
+ * @param ap 1st param: <i>(char *) </i><b>top</b> - place to put:<br>
  * 	-> <i>topic of current irc channel</i> (if current window is valid irc channel)<br>
  * 	-> <i>ident\@host of current irc user</i> (if current window is known user)
- * @param charargp2 <b>(setby)</b> - place to put:<br>
+ * @param ap 2nd param: <i>(char *) </i><b>setby</b> - place to put:<br>
  * 	-> <i>topic owner of current irc channel</i><br>
  * 	-> <i>realname of current irc user</i>
- * @param charargp3 <b>(modes)</b> - place to put:<br>
+ * @param ap 3rd param: <i>(char *) </i><b>modes</b> - place to put:<br>
  * 	<i>modes of current irc channel</i> or <i>undefined if not channel</i>
+ * @param data 0 
  *
  * @return 	 1 if it's known irc channel.<br>
  * 		 2 if it's known irc user.<br>
