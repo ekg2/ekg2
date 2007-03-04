@@ -55,17 +55,20 @@ typedef struct {
 	char *first_name;	/**< first name */
 	char *last_name;	/**< surname */
 	char *mobile;		/**< mobile phone number */
-	list_t groups;		/**< list_t with group_t Groups to which this user belongs like: work, friends, family.. 
-				 *	It's also used internally by ekg2, for example by ignore g->name: __ignore */
+	list_t groups;		/**< list_t with group_t<br>
+				 * 	Groups to which this user belongs like: work, friends, family..<br>
+				 *	It's also used internally by ekg2, for example when user is ignore he has group with name: __ignore */
 	
 	char *status;		/**< current status like: notavail, avail, away, invisible, dnd, xa, etc */
 	char *descr;		/**< description of status. */
 	char *authtype;		/**< authtype: to/from/both [only used by jabber] */	
-	char *resource;		/**< For leafnode, always NULL [Will be removed!] */
-	list_t resources;	/**< list_t with resource_t Jabber resources, also irc friendlist use it. */
+	char *resource;		/**< For leafnode and compatilibity with python, always NULL [Will be removed!] */
+	list_t resources;	/**< list_t with resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
 
-	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)] It's used mainly for DCC communications. */
-	uint16_t port;		/**< port of user. Used mainly for DCC communications. */
+	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)]<br>
+				 *	It's used mainly for DCC communications. */
+	uint16_t port;		/**< port of user<br> 
+				 *	It's used mainly for DCC communications. */
 
 	time_t last_seen;	/**< Last time when user was available [when u->status was different that notavail] */
 	
