@@ -407,7 +407,8 @@ static COMMAND(jabber_command_disconnect)
 		return -1;
 	}
 
-	session_unidle(session);
+	if (session->autoaway)
+		session_status_set(session, EKG_STATUS_AUTOBACK);
 	/* je¶li jest /reconnect, nie mieszamy z opisami */
 	if (xstrcmp(name, ("reconnect"))) {
 		if (params[0]) {

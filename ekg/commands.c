@@ -1808,7 +1808,10 @@ static COMMAND(cmd_quit)
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 		
-		command_exec_format(NULL, s, 3, ("/disconnect \"%s\""), (params[0]) ? params[0] : (s->descr) ? s->descr : "");
+		if (params[0])
+			command_exec_format(NULL, s, 3, ("/disconnect \"%s\""), params[0]);
+		else
+			command_exec(NULL, s, "/disconnect", 3);
 	}
 
 	/* nie wychodzimy tutaj, ¿eby command_exec() mia³o szansê zwolniæ

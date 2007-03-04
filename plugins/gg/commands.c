@@ -102,7 +102,8 @@ static COMMAND(gg_command_connect) {
 			unsigned char *tmp;
 			int __type = EKG_DISCONNECT_USER;
 
-			session_unidle(session);
+			if (session->autoaway)
+				session_status_set(session, EKG_STATUS_AUTOBACK);
 			if (__reason) {
 				if (!xstrcmp(__reason, "-")) 	myreason = NULL;
                         	else 				myreason = xstrdup(__reason);
