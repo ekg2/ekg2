@@ -224,11 +224,20 @@ void window_switch(int id)
 	}
 }
 
-/*
- * window_new_compare()  // funkcja wewnêtrzna
+/**
+ * window_new_compare()
  *
- * do sortowania okienek.
+ * internal function to sort windows by id
+ * used by list_add_sorted()
+ *
+ * @param data1 - first window_t to compare
+ * @param data2 - second window_t to compare
+ *
+ * @sa list_add_sorted() 
+ *
+ * @return It returns result of window id subtractions.
  */
+
 static int window_new_compare(void *data1, void *data2)
 {
 	window_t *a = data1, *b = data2;
@@ -532,11 +541,19 @@ cleanup:
 	list_remove(&windows, w, 1);
 }
 
-/* 
+/**
  * window_exist()
  *
- * check if window exist 
+ * check if window with @a id exist 
+ *
+ * @param id - id of window.
+ * @sa window_find()	- If you want to search for window target, instead of window id.
+ * @sa window_find_s()	- If you want to search for window session && target, instead of window id.
+ * @sa window_find_ptr()- if you want to search for window pointer, instead of window id.
+ *
+ * @return window_t *, with id specified by @a id, or NULL if such window doesn't exists.
  */
+
 window_t *window_exist(int id)
 {
 	list_t l;
@@ -551,12 +568,16 @@ window_t *window_exist(int id)
 	return NULL;
 }
 
-/*
+/**
  * window_move()
  * 
- * swap windows 
+ * swap windows (swap windows @a id -> change sequence of them in UI)
+ *
+ * @param first		- 1st window id.
+ * @param second 	- 2nd window id.
+ *
  */
-void window_move(int first, int second)
+static void window_move(int first, int second)
 {
 	window_t *w1, *w2;
 
@@ -569,8 +590,8 @@ void window_move(int first, int second)
         list_remove(&windows, w2, 0);
 	w2->id = first;
 
-	list_add_sorted(&windows, w1, sizeof(window_t), window_new_compare);
-        list_add_sorted(&windows, w2, sizeof(window_t), window_new_compare);
+	list_add_sorted(&windows, w1, 0, window_new_compare);
+	list_add_sorted(&windows, w2, 0, window_new_compare);
 }
 
 /*

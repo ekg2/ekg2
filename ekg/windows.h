@@ -83,7 +83,6 @@ window_t *window_new(const char *target, session_t *session, int new_id);
 void window_kill(window_t *w, int quiet);
 void window_switch(int id);
 window_t *window_exist(int id);
-void window_move(int first, int second);
 void window_print(const char *target, session_t *session, int separate, fstring_t *line);
 char *window_target(window_t *window);
 
