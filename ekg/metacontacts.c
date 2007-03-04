@@ -518,22 +518,16 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
 			continue;
 		}
 
-		if (xstrcasecmp(last->status, EKG_STATUS_NA) && xstrcasecmp(u->status, EKG_STATUS_NA) && ret->prio < i->prio) {
-			ret = i;
-			last = u;
-			continue;
-		}
+		{
+			/* hardly simplified that, XXX could you check it? */
+			const int last_na = (!xstrcmp(last->status, EKG_STATUS_NA) || !xstrcmp(last->status, EKG_STATUS_ERROR) || !xstrcmp(last->status, EKG_STATUS_BLOCKED) || !xstrcmp(last->status, EKG_STATUS_UNKNOWN));
+			const int u_na = (!xstrcmp(u->status, EKG_STATUS_NA) || !xstrcmp(u->status, EKG_STATUS_ERROR) || !xstrcmp(u->status, EKG_STATUS_BLOCKED) || !xstrcmp(u->status, EKG_STATUS_UNKNOWN));
 
-		if (!xstrcasecmp(last->status, EKG_STATUS_NA) && xstrcasecmp(u->status, EKG_STATUS_NA)) {
-			ret = i;
-			last = u;
-			continue;
-		}
-		
-		if (!xstrcasecmp(last->status, EKG_STATUS_NA) && !xstrcasecmp(u->status, EKG_STATUS_NA) && ret->prio < i->prio) {
-			ret = i;
-			last = u;
-			continue;
+			if (((last_na == u_na) && ret->prio < i->prio) || (last_na && !u_na)) {
+				ret = i;
+				last = u;
+				continue;
+			}
 		}
         }
 
