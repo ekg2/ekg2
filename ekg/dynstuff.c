@@ -91,6 +91,14 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 	return new->data;
 }
 
+/**
+ * list_add_beginning()
+ * 
+ *
+ * @sa list_add
+ * @sa list_remove
+ */
+
 void *list_add_beginning(list_t *list, void *data, int alloc_size) {
 
 	list_t new;
@@ -113,25 +121,36 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
 
 }
 
-/*
+/**
  * list_add()
  *
- * wrapper do list_add_sorted(), który zachowuje poprzedni± sk³adniê.
+ * It's just wrapper to list_add_sorted() without sorting<br>
+ * Item will be added at end of list - as <b>last</b> item 
+ *
+ * @sa list_remove
+ * @sa list_add_beginning - If you can have items of list in reverse sequence [third_added_item, second_added_item, first_added_item] and not sorted
  */
+
 void *list_add(list_t *list, void *data, int alloc_size)
 {
 	return list_add_sorted(list, data, alloc_size, NULL);
 }
 
-/*
+/**
  * list_remove()
  *
- * usuwa z listy wpis z podanym elementem.
+ * Remove item @a data from list_t pointed by @a list
  *
- *  - list - wska¼nik do listy,
- *  - data - element,
- *  - free_data - zwolniæ pamiêæ po elemencie.
+ * @param list - pointer to list_t
+ * @param data - data to remove from @a list
+ * @param free_data - if set and item was found it'll call xfree() on it.
+ * @sa list_destroy - to remove whole list
+ *
+ * @return 	 0 if item was founded, and was removed from list_t pointed by @a list<br>
+ * 		-1 and errno set to EFAULT, if @a list was NULL<br>
+ * 		-1 and errno set to ENOENT, if item was not found
  */
+
 int list_remove(list_t *list, void *data, int free_data)
 {
 	list_t tmp, last = NULL;
@@ -161,13 +180,14 @@ int list_remove(list_t *list, void *data, int free_data)
 	return 0;
 }
 
-/*
+/**
  * list_count()
  *
- * zwraca ilo¶æ elementów w danej li¶cie.
+ * @param list - list_t
  *
- *  - list - lista.
+ * @return items count on list_t @a list.
  */
+
 int list_count(list_t list)
 {
 	int count = 0;
@@ -178,14 +198,26 @@ int list_count(list_t list)
 	return count;
 }
 
-/*
+/**
  * list_destroy()
  *
- * niszczy wszystkie elementy listy.
+ * Destroy all items from list_t @a list
  *
- *  - list - lista,
- *  - free_data - czy zwalniaæ bufor danych?
+ * @note It doesn't take pointer to list_t, and it don't cleanup memory with \\0, so after list_destroy() you must remember that
+ * 	@a list is <b>unaccessible</b>. So if you have list as global variable, or if you keep pointer to it in some struct.. you must NULL pointer.
+ * 	so always do: <br>
+ * 	<code>
+ * 		list_destroy(my_list, free_data);
+ * 		my_list = NULL;
+ * 	</code>
+ *
+ * @param list - list_t
+ * @param free_data - if set we will call xfree() on each item data
+ * @sa list_remove - to remove specified item.
+ *
+ * @return 0
  */
+
 int list_destroy(list_t list, int free_data)
 {
 	list_t tmp;
