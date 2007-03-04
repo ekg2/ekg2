@@ -50,7 +50,7 @@ session_t *session_current = NULL;
  * session_find_ptr()
  *
  * it's search over sessions list and checks if param @a s is in that list.
- * it's useful for all watch handler, and if programmer was too lazy to destroy watches assosiated with that
+ * it's useful for all watch handler, and if programmer was too lazy to destroy watches associated with that
  * session (in private watch data struct) before it gone.
  *
  * @note It's possible to find another session with the same address as old one.. it's rather not possible.. however.
@@ -225,7 +225,6 @@ session_t *session_add(const char *uid)
  *
  * @return 	 0 if session was found, and removed.<br>
  * 		-1 if session wasn't founded.
- *
  */
 
 int session_remove(const char *uid)

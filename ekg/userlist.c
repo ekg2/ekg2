@@ -66,8 +66,6 @@
 #  define PATH_MAX _POSIX_PATH_MAX
 #endif
 
-list_t userlist = NULL;
-
 struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 	{ IGNORE_STATUS, "status" },
 	{ IGNORE_STATUS_DESCR, "descr" },
@@ -217,6 +215,7 @@ char *userlist_dump(session_t *session)
  * @param session
  * @return 0 on success, -1 file not found
  */
+
 int userlist_read(session_t *session)
 {
         const char *filename;
@@ -245,11 +244,18 @@ int userlist_read(session_t *session)
         return 0;
 } 
 
-/*
+/**
  * userlist_write()
  *
- * zapisuje listê kontaktów w pliku ~/.ekg/gg:NUMER-userlist
+ * It writes @a session userlist to file: <i>session->uid</i>-userlist in ekg2 config directory
+ *
+ * @param session
+ *
+ * @return 	 0 on succees<br>
+ * 		-1 if smth went wrong<br>
+ * 		-2 if we fail to create/open userlist file in rw mode
  */
+
 int userlist_write(session_t *session)
 {
 	const char *filename;
@@ -267,6 +273,8 @@ int userlist_write(session_t *session)
 		xfree(tmp);
 		return -1;
 	}
+
+	xfree(tmp);
 	
 	if (!(f = fopen(filename, "w"))) {
 		xfree(contacts);
@@ -277,19 +285,23 @@ int userlist_write(session_t *session)
 	fclose(f);
 	
 	xfree(contacts);
-	xfree(tmp);
 
 	return 0;
 }
 
-/*
+/**
  * userlist_write_crash()
  *
  * zapisuje listê kontaktów w sytuacji kryzysowej jak najmniejszym
  * nak³adem pamiêci i pracy.
+ *
+ * @sa userlist_write
+ * @bug It was copied from ekg1 and it doesn't match ekg2 abi.
+ * 	It's bad so i comment it out... Reimplement it or delete
  */
-void userlist_write_crash()
-{
+
+void userlist_write_crash() {
+/*
 	list_t l;
 	char name[32];
 	FILE *f;
@@ -326,16 +338,28 @@ void userlist_write_crash()
 	}	
 
 	fclose(f);
+ */
 }
 
-/*
+/**
  * userlist_clear_status()
  *
- * czy¶ci stan u¿ytkowników na li¶cie. je¶li uin != 0 to
- * to czy¶ci danego u¿ytkownika.
+ * If @a uin == NULL then it clears all users <i>avail info</i> in the @a session userlist
+ * otherwise it clears only specified user
+ * It's useful if user goes notavail, or we goes disconnected..<br>
+ * However if that happen you shouldn't use this function but emit query <i>PROTOCOL_STATUS</i> or <i>PROTOCOL_DISCONNECTED</i>
  *
- *  - uin.
+ * @note By <i>avail info</i> I mean:<br>
+ * 	-> status 	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
+ * 	-> descr 	- user's description, it'll be: NULL<br>
+ * 	-> ip		- user's ip, il'll be: 0.0.0.0<br>
+ * 	-> port		- user's port, it'll be: 0<br>
+ * 	-> resources	- user's resource, list will be destroyed.
+ *
+ * @param session
+ * @param uid
  */
+
 void userlist_clear_status(session_t *session, const char *uid)
 {
         list_t l;
