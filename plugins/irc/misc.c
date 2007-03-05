@@ -58,46 +58,53 @@ char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "M
 static int do_sample_wildcard_match(const char *str, const char *matchstr, const char stopon) {
 	int i;
 
-	return xstrlen(matchstr);
+	for (i = 0; (str[i] && str[i] != stopon); i++);
+		
+	if (i == 0) 
+		return xstrlen(matchstr);
 
-	for (i = 0; (str[i] && str[i] != stopon); i++) {
-	}
-	debug_error("XXX do_sample_wildcard_match() retval: %d\n", i);
-
-	return i;
+	debug_error("\nXXX do_sample_wildcard_match() XXX\n");
+	return 0;
 }
 
-static int irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flags) {
+static void irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flags) {
 	list_t l;
 
 	if (!s || !chan || !p)
-		return -1;
+		return;
 
 #define dchar(x) debug("%c", x);
 
 	for (l = s->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		ekg_resource_t *r;
+		ekg_resource_t *r = NULL;
 		list_t m;
 
 		int i, j;
 
 		if (!p->ident || !p->host) continue;
 
+		if (xstrncmp(u->uid, "irc:", 4)) continue;	/* check for irc: */
+
 		for (m = u->resources; m; m = m->next) {
 			r = m->data;
 
 			if (r->private == p) {
-				string_t s = string_init(r->descr); xfree(r->descr);
+				char *tmp = &(u->uid[4]);
 				
-				string_append_c(s, ',');
-				string_append(s, chan->name+4);
-				r->descr = string_free(s, 0);
-				goto next3;
+				/* fast forward move.. */
+				if (!(tmp = xstrchr(tmp, '!')) || !(tmp = xstrchr(tmp, '@')) || !(tmp = xstrchr(tmp, ':'))) {
+					debug_error("%s:%d INTERNAL ERROR\n", __FILE__, __LINE__);
+					goto next3;
+				}
+				tmp++;
+				i = (tmp - u->uid);
+				debug("irc, checkchan: %s\n", tmp);
+				goto skip_identhost_check;
+				break;	/* never here */
 			}
 		}
-
-		if (xstrncmp(u->uid, "irc:", 4)) continue;	/* skip irc: */
+		r = NULL;
 /* parse nick! */		
 		for (i = 4, j = 0; (u->uid[i] != '\0' && u->uid[i] != '!'); i++, j++) {
 			dchar(u->uid[i]);
@@ -139,6 +146,7 @@ static int irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flag
 
 		debug_error("irc_access_parse() %s!%s@%s MATCH with %s\n", p->ident, p->nick+4, p->host, u->uid+4);
 
+skip_identhost_check:
 /* let's rock with channels */
 		{
 			char **arr = array_make(&u->uid[i], ",", 0, 1, 0);
@@ -152,7 +160,7 @@ static int irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flag
 
 				for (j = 0, k = 4 /* skip irc: */; arr[i][j]; j++, k++) {
 					if (arr[i][j] != chan->name[k]) {
-						if (arr[i][j] == '*') k += do_sample_wildcard_match(&arr[i][j], &chan->name[k], '\0');
+						if (arr[i][j] == '*') k += do_sample_wildcard_match(&arr[i][j+1], &chan->name[k], '\0');
 						else if (arr[i][j] == '?') continue;
 						else goto next2;
 					}
@@ -172,22 +180,30 @@ next2:
 
 			if (!ismatch) continue;
 		}
+		if (!r) {
+			r = userlist_resource_add(u, p->nick, 0);
 
-		r = userlist_resource_add(u, p->nick, 0);
+			r->status	= xstrdup(EKG_STATUS_AVAIL);
+			r->descr	= xstrdup(chan->name+4);
+			r->private	= p;
 
-		r->status	= xstrdup(EKG_STATUS_AVAIL);
-		r->descr	= xstrdup(chan->name+4);
-		r->private	= p;
+			if (xstrcmp(u->status, EKG_STATUS_AVAIL)) {
+				xfree(u->status);
+				xfree(u->descr);
+				u->status 	= xstrdup(EKG_STATUS_AVAIL);
+				u->descr	= xstrdup("description... ?");
+				query_emit_id(NULL, USERLIST_CHANGED, &s, &(u->uid));
+			}
+		} else {
+			string_t str = string_init(r->descr);
 
-		/* tutaj ladnie by wygladalo jakbysmy wywolali protocol-status.. ale jednak to jest b. kiepski pomysl */
-		if (xstrcmp(u->status, EKG_STATUS_AVAIL)) {
-			xfree(u->status);
-			xfree(u->descr);
-			u->status 	= xstrdup(EKG_STATUS_AVAIL);
-			u->descr	= xstrdup("description... ?");
-			query_emit_id(NULL, USERLIST_CHANGED, &s, &(u->uid));
+			string_append_c(str, ',');
+			string_append(str, chan->name+4);
+
+			xfree(r->descr); r->descr = string_free(str, 0);
 		}
 
+		/* tutaj ladnie by wygladalo jakbysmy wywolali protocol-status.. ale jednak to jest b. kiepski pomysl */
 		debug_error("USER: 0x%x PERMISION GRANTED ON CHAN: 0x%x\n", u, chan);
 		continue;
 
@@ -1011,7 +1027,7 @@ IRC_COMMAND(irc_c_join)
 		if (person && tmp && !(person->ident) && !(person->host))
 			irc_parse_identhost(tmp+1, &(person->ident), &(person->host));
 
-		if (irc_access_parse(s, irc_find_channel(j->channels, OMITCOLON(param[2])), person, 0));
+		irc_access_parse(s, irc_find_channel(j->channels, OMITCOLON(param[2])), person, 0);
 	}
 
 	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
