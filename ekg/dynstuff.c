@@ -95,8 +95,8 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
  * list_add_beginning()
  * 
  *
- * @sa list_add
- * @sa list_remove
+ * @sa list_add()
+ * @sa list_remove()
  */
 
 void *list_add_beginning(list_t *list, void *data, int alloc_size) {
@@ -128,8 +128,8 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
  * Item will be added at end of list - as <b>last</b> item<br>
  * Wrapper to: <code>list_add_sorted(list, data, alloc_size, NULL)</code>
  *
- * @sa list_remove
- * @sa list_add_beginning - If you can have items of list in reverse sequence [third_added_item, second_added_item, first_added_item] and not sorted
+ * @sa list_remove()
+ * @sa list_add_beginning() - If you can have items of list in reverse sequence [third_added_item, second_added_item, first_added_item] and not sorted
  */
 
 void *list_add(list_t *list, void *data, int alloc_size)
@@ -145,7 +145,7 @@ void *list_add(list_t *list, void *data, int alloc_size)
  * @param list - pointer to list_t
  * @param data - data to remove from @a list
  * @param free_data - if set and item was found it'll call xfree() on it.
- * @sa list_destroy - to remove whole list
+ * @sa list_destroy() - to remove whole list
  *
  * @return 	 0 if item was founded, and was removed from list_t pointed by @a list<br>
  * 		-1 and errno set to EFAULT, if @a list was NULL<br>
@@ -214,7 +214,7 @@ int list_count(list_t list)
  *
  * @param list - list_t
  * @param free_data - if set we will call xfree() on each item data
- * @sa list_remove - to remove specified item.
+ * @sa list_remove() - to remove specified item.
  *
  * @return 0
  */
@@ -260,15 +260,18 @@ static void string_realloc(string_t s, int count)
 	s->str = tmp;
 }
 
-/*
+/**
  * string_append_c()
  *
- * dodaje do danego ci±gu jeden znak, alokuj±c przy tym odpowiedni± ilo¶æ
- * pamiêci.
+ * Append to string_t @a s char @a c.
  *
- *  - s - ci±g znaków.
- *  - c - znaczek do dopisania.
+ * @param s - string_t
+ * @param c - char to append
+ *
+ * @return	 0 on success<br>
+ *		-1 and errno set to EFAULT if input params were wrong (s == NULL || format == NULL)
  */
+
 int string_append_c(string_t s, char c)
 {
 	if (!s) {
@@ -316,8 +319,8 @@ int string_append_n(string_t s, const char *str, int count)
 /**
  * string_append_format()
  *
- * Append to string_t @a s, formatted output of @a format + params
- * equivalent to:<br>
+ * Append to string_t @a s, formatted output of @a format + params<br>
+ * Equivalent to:<br>
  * 	<code>
  * 		char *tmp = saprintf(format, ...);<br>
  * 		string_append(s, tmp);<br>
@@ -326,8 +329,8 @@ int string_append_n(string_t s, const char *str, int count)
  *
  * @note For more details about string formating functions read man 3 vsnprintf
  *
- * @sa string_append
- * @sa saprintf
+ * @sa string_append()	- If you want/can use non-formating function..
+ * @sa saprintf()	- If you want to format output but to normal char *, not to string_t
  *
  * @return 	 0 on success<br>
  * 		-1 and errno set to EFAULT if input params were wrong (s == NULL || format == NULL)
@@ -427,14 +430,15 @@ void string_insert(string_t s, int index, const char *str)
 	string_insert_n(s, index, str, -1);
 }
 
-/*
+/**
  * string_init()
  *
- * inicjuje strukturê string. alokuje pamiêæ i przypisuje pierwsz± warto¶æ.
+ * init string_t struct, allocating memory for string passed by @a value, and setting internal string_t data.
  *
- *  - value - je¶li NULL, ci±g jest pusty, inaczej kopiuje tam.
+ *  @param value - if NULL char buffer will be inited with "", otherwise with given @a value.
+ *  @sa string_free() - to free memory used by string_t
  *
- * zwraca zaalokowan± strukturê `string'.
+ *  @return pointer to allocated string_t struct.
  */
 string_t string_init(const char *value) {
 	string_t tmp = xmalloc(sizeof(struct string));
@@ -459,7 +463,7 @@ string_t string_init(const char *value) {
  * If memory allocated by string_t @a s was larger than 160, than decrease to 80
  *
  *  @param s - string_t
- *  @sa string_free
+ *  @sa string_free() - To free memory allocated by string_t
  */
 
 void string_clear(string_t s)
@@ -475,17 +479,19 @@ void string_clear(string_t s)
 	s->len = 0;
 }
 
-/*
+/**
  * string_free()
  *
- * zwalnia pamiêæ po strukturze string i mo¿e te¿ zwolniæ pamiêæ po samym
- * ci±gu znaków.
+ * Cleanup memory after string_t @a s, and eventually (if @a free_string set) cleanup memory after char buffer.
  *
- *  - s - struktura, któr± wycinamy,
- *  - free_string - zwolniæ pamiêæ po ci±gu znaków?
+ * @param s		- string_t which we want to free.
+ * @param free_string	- do we want to free memory after char buffer?
+ * @sa string_clear()	- if you just want to clear saved char buffer, and you don't want to free internal string_t struct.
  *
- * je¶li free_string=0 zwraca wska¼nik do ci±gu, inaczej NULL.
+ * @return 	if @a free_string != 0 always NULL<br>
+ * 		else returns saved char buffer, which need be free()'d after use by xfree()
  */
+
 char *string_free(string_t s, int free_string)
 {
 	char *tmp = NULL;
