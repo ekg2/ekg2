@@ -357,7 +357,6 @@ if test "x$with_ncurses" != "xno"; then
 
 	if test "x$have_ncurses" = "xyes"; then
 		PLUGINS="$PLUGINS ncurses"
-		AC_CHECK_HEADERS(curses.h ncurses.h ncurses/ncurses.h)
 	fi
 fi
 
