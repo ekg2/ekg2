@@ -19,6 +19,8 @@
 #	"INCLUDED_BY_GRAPH=NO\n" \
 #	\
 
+#	"WARN_IF_UNDOCUMENTED=YES\n" \
+
 rm -rf ./doxygen
 
 echo -ne \
@@ -37,6 +39,8 @@ echo -ne \
 		"\"WATCHER_LINE(x)=int x(int type, int fd, const char *watch, void *data)\"" \
 		"\"BINDING_FUNCTION(x)=void x(const char *arg)\"" \
 		"\"TIMER(x)=int x(int type, void *data)\"" \
+		"\"SNIFF_HANDLER(x, type)=static int x(session_t *s, const connection_t *hdr, const type *pkt, int len)\"" \
+		"\"GG_PACKED=\""	\
 		"\n"\
 	\
 	"INPUT=../\n" \
