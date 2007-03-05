@@ -23,15 +23,22 @@ AC_DEFUN([AC_CHECK_NCURSES],
 		NLIBRARY=""
 		have_ncurses_h=""
 		opt=ncurses.h
-		AC_CHECK_HEADERS([ncurses.h],
-		[
-			have_ncurses_h="yes"
-		], [
-			AC_CHECK_HEADERS([ncurses/ncurses.h],
+		if test "x$enable_unicode" != "xyes"; then
+			AC_CHECK_HEADERS([ncurses.h],
+			[
+				have_ncurses_h="yes"
+			], [
+				AC_CHECK_HEADERS([ncurses/ncurses.h],
+				[
+					have_ncurses_h="yes"
+				])
+			])
+		else
+			AC_CHECK_HEADERS([ncursesw/ncurses.h],
 			[
 				have_ncurses_h="yes"
 			])
-		])
+		fi
 		if test "x$have_ncurses_h" = "xyes"; then
 			if test "x$enable_unicode" != "xyes"; then
 				NLIBRARY="ncurses"
