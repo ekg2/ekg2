@@ -51,6 +51,23 @@ window_t *window_current = NULL;	/* zawsze na co¶ musi wskazywaæ! */
 
 window_lastlog_t *lastlog_current = NULL;
 
+/**
+ * window_find_ptr()
+ *
+ * it's search over window list and checks if param @a w is still on that list.
+ *
+ * @note It's possible to find another window with the same address as old one.. it's rather not possible.. however,
+ *	It's better if you use other functions...
+ *
+ * @sa window_find()	- If you want to search for window target, instead of window ptr.
+ * @sa window_find_s()	- If you want to search for window session && target, instead of window ptr.
+ * @sa window_exist	- If you want to search for window id, instead of window ptr.
+ *
+ * @param w - window to look for.
+ *
+ * @return It returns @a w if window was found, otherwise NULL.
+ */
+
 window_t *window_find_ptr(window_t *w) {
 	list_t l;
 	for (l = windows; l; l = l->next) {
@@ -547,9 +564,9 @@ cleanup:
  * check if window with @a id exist 
  *
  * @param id - id of window.
- * @sa window_find()	- If you want to search for window target, instead of window id.
- * @sa window_find_s()	- If you want to search for window session && target, instead of window id.
- * @sa window_find_ptr()- if you want to search for window pointer, instead of window id.
+ * @sa window_find()		- If you want to search for window target, instead of window id.
+ * @sa window_find_s()		- If you want to search for window session && target, instead of window id.
+ * @sa window_find_ptr()	- if you want to search for window pointer, instead of window id.
  *
  * @return window_t *, with id specified by @a id, or NULL if such window doesn't exists.
  */
@@ -577,6 +594,7 @@ window_t *window_exist(int id)
  * @param second 	- 2nd window id.
  *
  */
+
 static void window_move(int first, int second)
 {
 	window_t *w1, *w2;

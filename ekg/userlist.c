@@ -104,12 +104,12 @@ static int userlist_compare(void *data1, void *data2)
  * internal function used to sort resources by prio and by name
  * used by list_add_sorted() 
  *
- * @param data1 - first resource_t to compare.
- * @param data2 - second resource_t to compare.
+ * @param data1 - first ekg_resource_t to compare.
+ * @param data2 - second ekg_resource_t to compare.
  * @sa userlist_resource_add
  * @sa list_add_sorted
  *
- * @return It returns result of prio subtraction if prio is diffrent.
+ * @return It returns result of prio subtraction if resource prio is diffrent.
  * 	Otherwise result of xstrcasecmp() by resources name
  */
 

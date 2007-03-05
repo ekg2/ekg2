@@ -95,6 +95,13 @@ void ekg_oom_handler()
 	exit(1);
 }
 
+/**
+ * xcalloc()
+ *
+ * @bug same as in xmalloc()
+ *
+ */
+
 void *xcalloc(size_t nmemb, size_t size)
 {
 	void *tmp = calloc(nmemb, size);
@@ -108,15 +115,16 @@ void *xcalloc(size_t nmemb, size_t size)
 /** 
  * xmalloc() 
  *
- * Wrapper to malloc()+memset()<br>
- * It allocate memory for @a size bytes, clears it [set it with \\0], and returns pointer to allocated memory.
- * If malloc() fails with NULL, ekg_oom_handler() kills program.
+ * Allocate memory for @a size bytes, clears it [set it with \\0], and returns pointer to allocated memory.
+ * If malloc() fails with NULL, ekg_oom_handler() kills program.<br>
+ * Wrapper to <code>malloc()+memset()</code><br>
  *
  * @bug Possible bug: Some libc may return NULL if size is 0, from man malloc:<br>
  * 	<i>If @a size is 0 (...) a <b>null pointer</b> (...) shall be returned.</i><br>
  * 	XXX, check it in configure.ac if malloc() returns NULL on 0 size, and check here if size is 0.
  *
- * @sa xfree
+ * @sa xcalloc()
+ * @sa xfree()
  *
  * @param size - the same as in malloc()
  *
@@ -136,11 +144,28 @@ void *xmalloc(size_t size)
 	return tmp;
 }
 
+/** 
+ * xfree()
+ *
+ * Free memory pointed by @a ptr
+ * if @a ptr == NULL do nothing.<br>
+ * Equivalent to: <code>if (ptr) free(ptr);</code>
+ *
+ * @sa xrealloc() - If you want change size of allocated memory.
+ */
+
 void xfree(void *ptr)
 {
 	if (ptr)
 		free(ptr);
 }
+
+/**
+ * xrealloc()
+ *
+ * @bug same as in xmalloc()
+ *
+ */
 
 void *xrealloc(void *ptr, size_t size)
 {
