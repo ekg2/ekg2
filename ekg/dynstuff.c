@@ -93,7 +93,9 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 
 /**
  * list_add_beginning()
- * 
+ *
+ * Add item @a data to the begining of the @a list<br>
+ * (Once again), item will be added at begining of the list - as <b>first</b> item<br>
  *
  * @sa list_add()
  * @sa list_remove()
@@ -130,6 +132,7 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
  *
  * @sa list_remove()
  * @sa list_add_beginning() - If you can have items of list in reverse sequence [third_added_item, second_added_item, first_added_item] and not sorted
+ * @sa list_add_sorted()
  */
 
 void *list_add(list_t *list, void *data, int alloc_size)
@@ -287,15 +290,23 @@ int string_append_c(string_t s, char c)
 	return 0;
 }
 
-/*
+/**
  * string_append_n()
  *
- * dodaje tekst do bufora alokuj±c odpowiedni± ilo¶æ pamiêci.
+ * Append to string_t @a s, first @a count chars, from @a str<br>
  *
- *  - s - ci±g znaków,
- *  - str - tekst do dopisania,
- *  - count - ile znaków tego tekstu dopisaæ? (-1 znaczy, ¿e ca³y).
+ * @param s     - string_t
+ * @param str   - buffer to append.
+ * @param count - how many chars copy copy from @a str, or -1 to copy whole.
+ *
+ * @todo 	We append here NUL terminated string, so maybe let's <b>always</b> do <code>count = xstrnlen(str, count);</code>?<br>
+ * 		Because now programmer can pass negative value, and it'll possible do SIGSEGV<br>
+ * 		Also we can allocate less memory for string, when for example str[count-3] was NUL char.<br>
+ *
+ * @return	 0 on success<br>
+ *		-1 and errno set to EFAULT if input params were wrong (s == NULL || str == NULL)
  */
+
 int string_append_n(string_t s, const char *str, int count)
 {
 	if (!s || !str) {
@@ -389,6 +400,8 @@ int string_append_raw(string_t s, const char *str, int count) {
  *
  * Append to string_t @a s, NUL terminated string pointed by str<br>
  * Wrapper to:<code>string_append_n(s, str, -1)</code>
+ *
+ * @sa string_append_n()
  */
 
 int string_append(string_t s, const char *str)
@@ -424,6 +437,19 @@ void string_insert_n(string_t s, int index, const char *str, int count)
 
 	s->len += count;
 }
+
+/**
+ * string_insert()
+ *
+ * Insert given text (@a str) to given string_t (@a s) at given pos (@a index)<br>
+ * Wrapper to: <code>string_insert_t(s, index, str, -1)</code>
+ *
+ * @param s     - string_t
+ * @param index - pos
+ * @param str   - text 
+ *
+ * @sa string_insert_n()
+ */
 
 void string_insert(string_t s, int index, const char *str)
 {
