@@ -849,7 +849,7 @@ static const struct {
 	{ GG_ADD_NOTIFY,	"GG_ADD_NOTIFY",	SNIFF_OUTGOING, (void *) sniff_gg_add_notify, 0},
 	{ GG_REMOVE_NOTIFY,	"GG_REMOVE_NOTIFY", 	SNIFF_OUTGOING, (void *) sniff_gg_del_notify, 0},
 	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_notify_reply60, 0}, 
-	
+	{ GG_NOTIFY_FIRST,	"GG_NOTIFY_FIRST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 	{ GG_NOTIFY_LAST,	"GG_NOTIFY_LAST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 
 /* pakiety nie w libgadu: */
