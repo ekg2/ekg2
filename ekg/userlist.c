@@ -563,6 +563,11 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
 	if (!session)
 		return NULL;
 
+	if (valid_plugin_uid(session->plugin, uid) != 1) {
+		debug_error("userlist_add() wrong uid: %s for session: %s [plugin: 0x%x]\n", uid, session->uid, session->plugin);
+		return NULL;
+	}
+
 	return userlist_add_u(&(session->userlist), uid, nickname);
 }
 
