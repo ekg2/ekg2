@@ -162,7 +162,6 @@ session_t *session_add(const char *uid) {
 		window_current->session = s;
 	}
 
-
 	/* session_var_default() */
 	if (pl->params) {
 		int count, i;
@@ -175,7 +174,7 @@ session_t *session_add(const char *uid) {
 		for (i=0; i <= count; i++) {
 			const char *key   = pl->params[i].key;
 			const char *value = pl->params[i].value;
-/*			debug("session_add() Setting default var %s at %s\n",  key, value); */
+/*			debug("session_add() Setting default var %s at %s\n", key, value); */
 
 			/* emulate session_set() */
 			if (!xstrcmp(key, "uid"));
@@ -198,7 +197,7 @@ session_t *session_add(const char *uid) {
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 
-/* this was unacceptable. So we do now this trick:
+/* previous version was unacceptable. So we do now this trick:
  * 	userlist (if plugin has one) have been already read by SESSION_ADDED emit. so now, 
  * 	we check throught get_uid() if this plugin can handle it.. [userlist must be read, if we have nosession window 
  * 	with w->target: "Aga". it's not uid. it's nickname.. so we must search for it in userlist.
@@ -253,7 +252,7 @@ int session_remove(const char *uid)
 
 	count = list_count(sessions);
 
-	for (l = windows; windows && l; l = l->next) {
+	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 
 		if (w && w->session == s) {
@@ -264,9 +263,9 @@ int session_remove(const char *uid)
 		} 
 	}
 	
-	if (s->connected) {
+	if (s->connected)
 		command_exec_format(NULL, s, 1, ("/disconnect %s"), s->uid);
-	}
+
 	tmp = xstrdup(uid);
         query_emit_id(NULL, SESSION_CHANGED);
 	query_emit_id(NULL, SESSION_REMOVED, &tmp);
@@ -711,7 +710,7 @@ int session_read(const char *filename) {
 			for (l = sessions; l; l = l->next) {
 				session_t *s = l->data;
 
-				command_exec(NULL, s, ("disconnect"), 1);
+				command_exec(NULL, s, ("/disconnect"), 1);
 			}
 			sessions_free();
 			debug("	 flushed sessions\n");
@@ -1290,15 +1289,18 @@ COMMAND(session_command)
  *
  * zwalnia wszystkie dostêpne sesje
  */
-void sessions_free()
-{
-        list_t l;
+void sessions_free() {
+	list_t old_sessions;
+	list_t l;
 
         if (!sessions)
                 return;
 
-        for (l = sessions; l; l = l->next) {
-                session_t *s = l->data;
+/* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...
+ * This bug was really time-wasting ;(
+ */
+        for (old_sessions = sessions; sessions; sessions = sessions->next) {
+                session_t *s = sessions->data;
 		list_t lp;
 
 		if (!s)
@@ -1340,7 +1342,7 @@ void sessions_free()
 		w->session = NULL;
 	}
 
-        list_destroy(sessions, 1);
+        list_destroy(old_sessions, 1);
         sessions = NULL;
 	session_current = NULL;
 	window_current->session = NULL;
