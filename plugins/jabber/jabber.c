@@ -1283,9 +1283,6 @@ static int jabber_plugin_destroy()
 #ifdef JABBER_HAVE_SSL
 	SSL_GLOBAL_DEINIT();
 #endif
-
-        for (l = sessions; l; l = l->next)
-                jabber_private_destroy((session_t*) l->data);
         plugin_unregister(&jabber_plugin);
 
         return 0;
