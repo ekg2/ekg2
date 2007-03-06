@@ -1291,6 +1291,11 @@ void sessions_free()
 		if (!s)
 			continue;
 
+		query_emit_id(s->plugin, SESSION_REMOVED, &(s->uid));	/* it notify only that plugin here, to free internal data. 
+									 * ui-plugin already removed.. other plugins @ quit.
+									 * shouldn't be aware about it. too...
+									 * XXX, think about it?
+									 */
 		/* free _global_ variables */
 		array_free_count(s->values, s->global_vars_count);
 

@@ -1137,7 +1137,7 @@ watches_again:
 
 		p->destroy();
 
-		if (p->dl) ekg2_dlclose(p->dl);
+//		if (p->dl) ekg2_dlclose(p->dl);
 	}
 	list_destroy(watches, 0);	/* watches = NULL; */
 
@@ -1179,6 +1179,14 @@ watches_again:
 			printf(_("Error while saving.\n"));
 	}
 
+/* XXX, think about sequence of unloading. */
+
+	msg_queue_free();
+	conference_free();
+	newconference_free();
+	metacontact_free();
+	sessions_free();
+
 	for (l = plugins; l; ) {
 		plugin_t *p = l->data;
 
@@ -1186,15 +1194,10 @@ watches_again:
 
 		p->destroy();
 
-		if (p->dl) ekg2_dlclose(p->dl);
+//		if (p->dl) ekg2_dlclose(p->dl);
 	}
 
-	msg_queue_free();
 	alias_free();
-	conference_free();
-	newconference_free();
-	metacontact_free();
-	sessions_free();
 	theme_free();
 	variable_free();
 	script_variables_free(1);

@@ -400,11 +400,6 @@ int plugin_register(plugin_t *p, int prio)
  */
 int plugin_unregister(plugin_t *p)
 {
-	list_t l;
-
-	if (!p)
-		return -1;
-
 	/* XXX eXtreme HACK warning
 	 * (mp) na razie jest tak.  docelowo: wyladowywac pluginy tylko z
 	 * glownego programu (queriesami?)
@@ -416,33 +411,13 @@ int plugin_unregister(plugin_t *p)
 	 * ekg2 do SEGV. For example below is comment for rc plugin and watches...
 	 */
 
-	for (l = queries; l; ) {
-		query_t *q = l->data;
+	list_t l;
 
-		l = l->next;
+	if (!p)
+		return -1;
 
-		if (q->plugin == p)
-			query_free(q);
-	}
+/* XXX think about sequence of unloading....: currently: watches, timers, sessions, queries, variables, commands */
 
-
-	for (l = variables; l; ) {
-		variable_t *v = l->data;
-
-		l = l->next;
-
-		if (v && v->plugin == p) 
-			variable_remove(v->plugin, v->name);
-	}
-
-	for (l = commands; l; ) {
-		command_t *c = l->data;
-
-		l = l->next;
-
-		if (c->plugin == p)
-			command_freeone(c);
-	}
 plugin_watches_again:
 	ekg_watches_removed = 0;
 	for (l = watches; l; ) {
@@ -475,10 +450,9 @@ plugin_watches_again:
 		l = l->next;
 
 		if (t->plugin == p) {
-			list_remove(&timers, t, 0);
 			xfree(t->name);
 			xfree(t->data);
-			xfree(t);
+			list_remove(&timers, t, 1);
 		}
 	}
 
@@ -489,6 +463,34 @@ plugin_watches_again:
 
 		if (s->plugin == p)
 			session_remove(s->uid);
+	}
+
+	for (l = queries; l; ) {
+		query_t *q = l->data;
+
+		l = l->next;
+
+		if (q->plugin == p)
+			query_free(q);
+	}
+
+
+	for (l = variables; l; ) {
+		variable_t *v = l->data;
+
+		l = l->next;
+
+		if (v && v->plugin == p) 
+			variable_remove(v->plugin, v->name);
+	}
+
+	for (l = commands; l; ) {
+		command_t *c = l->data;
+
+		l = l->next;
+
+		if (c->plugin == p)
+			command_freeone(c);
 	}
 
 	list_remove(&plugins, p, 0);
