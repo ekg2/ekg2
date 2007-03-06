@@ -2351,13 +2351,7 @@ int irc_plugin_init(int prio)
 	return 0;
 }
 
-static int irc_plugin_destroy() 
-{
-	list_t  l;
-
-	for (l = sessions; l; l = l->next)
-		irc_private_destroy((session_t*) l->data);
-
+static int irc_plugin_destroy() {
 	plugin_unregister(&irc_plugin);
 
 	return 0;
