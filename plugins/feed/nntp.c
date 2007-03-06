@@ -817,10 +817,14 @@ static COMMAND(nntp_command_subscribe) {
 		printq("feed_exists_other", target, format_user(session, u->uid), session_name(session));
 		return -1;
 	}
+	
+	/* userlist_add() fails only when invalid uid was passed */
+	if (target[0] == 'r' /* rss: */ || !(userlist_add(session, target, target))) {
+		printq("invalid_session");
+		return -1;
+	}
 
 	printq("feed_added", target, session_name(session));
-	userlist_add(session, target, target);
-	return 0;
 }
 
 static COMMAND(nntp_command_unsubscribe) {

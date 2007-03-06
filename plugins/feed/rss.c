@@ -1043,8 +1043,12 @@ static COMMAND(rss_command_subscribe) {
 		return -1;
 	}
 
+	/* userlist_add() fails only when invalid uid was passed */
+	if (target[0] == 'n' /* nttp: */ || !(userlist_add(session, target, target))) {
+		printq("invalid_session");
+		return -1;
+	} 
 	printq("feed_added", target, session_name(session));
-	userlist_add(session, target, target);
 	return 0;
 }
 
