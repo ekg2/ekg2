@@ -307,7 +307,7 @@ QUERY(httprc_xajax_def_action)
 							"%s\n"
 							"ch.className='info'+(glst%2);\n"
 							"gwins[%d][2][glst]=ch;\n"
-							"if (current_window != %d) { xajax.$('wi'+%d).className='act'; }\n"
+							"if (current_window != %d) { xajax.$\('wi'+%d).className='act'; }\n"
 							"else { window_content_add_line(%d); }\n",
 							w->id, fstringed, w->id,
 							w->id, w->id,
@@ -895,13 +895,10 @@ int httprc_xajax_plugin_init(int prio) {
 		return -1;
 	}
 
-	watch_add(&httprc_xajax_plugin, fd, WATCH_READ, http_watch_accept, NULL);
-
-/*	variable_add(&rc_plugin, TEXT("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL); */
-
 	plugin_register(&httprc_xajax_plugin, prio);
 
-	plugin_var_add(&httprc_xajax_plugin, "port", VAR_INT, HTTPRCXAJAX_DEFPORT, 0, NULL);
+/*	variable_add(&rc_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL); */
+	watch_add(&httprc_xajax_plugin, fd, WATCH_READ, http_watch_accept, NULL);
 
 //	query_connect(&httprc_xajax_plugin, ("set-vars-default"), httprc_xajax_def_action, NULL);
 //	query_connect(&httprc_xajax_plugin, ("ui-beep"), httprc_xajax_def_action, NULL);
