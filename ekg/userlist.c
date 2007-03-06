@@ -858,8 +858,7 @@ char *get_uid_any(session_t *session, const char *text) {
  * @note It also work with userlist_find() and if @a text is nickname of smb in session userlist.. 
  * 	 Than it return uid of this user. 
  *	 So you shouldn't call userlist_find() with get_uid() as param, cause it's senseless
- *	 userlist_find() only don't check for "$" target.. So you must do it by hand..
- *	 But otherwise it's the same. <br>
+ *	 userlist_find() don't check for "$" target, so you must do it by hand. Rest is the same.
  *	 If there are such user:
  *	 <code>userlist_find(s, get_uid(s, target))</code> return the same as <code>userlist_find(s, target)</code><br>
  *	 If not, even <code>userlist_find(s, get_uid(s, get_uid(s, get_uid(s, target))))</code> won't help 
