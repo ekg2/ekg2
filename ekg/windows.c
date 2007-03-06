@@ -133,10 +133,10 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 			if (session != s && session)
 				continue;
 
-			/* XXX, get_uid() execute userlist_find() also, fix it. */
-			if (!(u = userlist_find(s, get_uid(s, target))))
+		/* get_uid() was bad here. Because if even it's uid of user but we don't have it in userlist it'll do nothing. */
+			if (!(u = userlist_find(s, target))) 
 				continue;
-			
+
 		/* skip __debug && __status */
 			for (m = l; m; m = m->next) {
 				window_t *w = m->data;
