@@ -646,6 +646,22 @@ static int xmsg_theme_init(void)
 #undef __FUNC__
 }
 
+static plugins_params_t xmsg_plugin_vars[] = {
+	PLUGIN_VAR_ADD("auto_connect",		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("dotfile_suffix",	0, VAR_STR, "", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
+	PLUGIN_VAR_ADD("max_filesize", 		0, VAR_INT, XMSG_MAXFS_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("max_oneshot_files",	0, VAR_INT, XMSG_MAXFC_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("name_separator", 	0, VAR_STR, XMSG_NAMESEP_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("oneshot_resume_timer",	0, VAR_INT, XMSG_MAXFC_TIMER, 0, NULL),
+	PLUGIN_VAR_ADD("send_cmd", 		0, VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("rescan_timer",		0, VAR_INT, XMSG_TIMER_DEF, 0, xmsg_timer_change),
+	PLUGIN_VAR_ADD("unlink_sent",		0, VAR_BOOL, "1", 0, xmsg_unlink_dotfiles),
+	PLUGIN_VAR_ADD("unlink_toobig",		0, VAR_BOOL, "0", 0, xmsg_unlink_dotfiles),
+
+	PLUGIN_VAR_END()
+};
+
 int xmsg_plugin_init(int prio)
 {
 #define __FUNC__ "xmsg_plugin_init"
@@ -656,21 +672,10 @@ int xmsg_plugin_init(int prio)
 	
 	xdebug("inotify fd = %d", in_fd);
 	
+	xmsg_plugin.params = xmsg_plugin_vars;
 	plugin_register(&xmsg_plugin, prio);
 
 	query_connect_id(&xmsg_plugin, PROTOCOL_VALIDATE_UID, xmsg_validate_uid, NULL);
-
-	plugin_var_add(&xmsg_plugin, "auto_connect", VAR_BOOL, "1", 0, NULL);
-	plugin_var_add(&xmsg_plugin, "dotfile_suffix", VAR_STR, "", 0, NULL);
-	plugin_var_add(&xmsg_plugin, "log_formats", VAR_STR, "simple", 0, NULL);
-	plugin_var_add(&xmsg_plugin, "max_filesize", VAR_INT, XMSG_MAXFS_DEF, 0, NULL);
-	plugin_var_add(&xmsg_plugin, "max_oneshot_files", VAR_INT, XMSG_MAXFC_DEF, 0, NULL);
-	plugin_var_add(&xmsg_plugin, "name_separator", VAR_STR, XMSG_NAMESEP_DEF, 0, NULL);
-	plugin_var_add(&xmsg_plugin, "oneshot_resume_timer", VAR_INT, XMSG_MAXFC_TIMER, 0, NULL);
-	plugin_var_add(&xmsg_plugin, "send_cmd", VAR_STR, NULL, 0, NULL);
-	plugin_var_add(&xmsg_plugin, "rescan_timer", VAR_INT, XMSG_TIMER_DEF, 0, xmsg_timer_change);
-	plugin_var_add(&xmsg_plugin, "unlink_sent", VAR_BOOL, "1", 0, xmsg_unlink_dotfiles);
-	plugin_var_add(&xmsg_plugin, "unlink_toobig", VAR_BOOL, "0", 0, xmsg_unlink_dotfiles);
 
 #define XMSG_CMDFLAGS SESSION_MUSTBELONG
 #define XMSG_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET|SESSION_MUSTBECONNECTED
