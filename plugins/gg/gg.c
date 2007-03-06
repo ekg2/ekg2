@@ -1213,6 +1213,7 @@ static int gg_theme_init() {
 
 static QUERY(gg_setvar_default) {
 	xfree(gg_config_dcc_ip);
+	xfree(gg_config_images_dir);
 	xfree(gg_config_dcc_limit);
 	xfree(gg_config_images_dir);
 
