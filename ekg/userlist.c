@@ -771,6 +771,26 @@ int valid_nick(const char *nick)
 
 	return 1;
 }
+
+/*
+ * valid_uid()
+ *
+ * sprawdza, czy uid jest obs³ugiwany przez jaki¶ plugin i czy jest
+ * poprawny.
+ *
+ * zwraca 1 je¶li nick jest w porz±dku, w przeciwnym razie 0.
+ */
+int valid_uid(const char *uid) {
+	int valid = 0;
+	char *tmp;
+	tmp = xstrdup(uid);
+
+	query_emit_id(NULL, PROTOCOL_VALIDATE_UID, &tmp, &valid);
+	xfree(tmp);
+
+	return (valid > 0);
+}
+
 /*
  * valid_plugin_uid()
  *
@@ -817,6 +837,9 @@ char *get_uid(session_t *session, const char *text)
 	if (text && !xstrcmp(text, "$"))
 		text = window_current->target;
 
+	if (!session)
+		return valid_uid(text) ? (char *) text : NULL;
+
 	u = userlist_find(session, text);
 
 	/* XXX, pro. we should not allow add to userlist bad uid, and remove checking it here */
@@ -843,6 +866,9 @@ char *get_uid(session_t *session, const char *text)
 char *get_nickname(session_t *session, const char *text)
 {
         userlist_t *u;
+
+	if (!session)
+		return valid_uid(text) ? (char *) text : NULL;
 
         u = userlist_find(session, text);
 
