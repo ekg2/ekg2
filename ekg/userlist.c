@@ -60,6 +60,7 @@
 #include "xmalloc.h"
 #include "log.h"
 
+#include "debug.h"
 #include "queries.h"
 
 #ifndef PATH_MAX
