@@ -36,7 +36,7 @@ my ($len, $avgtime);
 	close($f);
 }
 
-LWP::Simple::get($path) =~ /<title>YouTube - (.*?)<\/title>.*player2.swf\?(video_id=[0-9a-z]+.+?)\"/is or replyxmsg("Can't find download URL!"), exit(0);
+LWP::Simple::get($path) =~ /<title>YouTube - (.*?)<\/title>.*player2.swf\?(video_id=[0-9a-z_]+.+?)\"/is or replyxmsg("Can't find download URL!"), exit(0);
 
 my ($title, $id) = ($1, $2);
 
