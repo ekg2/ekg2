@@ -863,10 +863,6 @@ char *get_uid(session_t *session, const char *text)
 
 	u = userlist_find(session, text);
 
-	/* XXX, pro. we should not allow add to userlist bad uid, and remove checking it here */
-	if (u && valid_plugin_uid(session->plugin, u->uid) != 1)
-		u = NULL;
-	
 	if (u && u->uid)
 		return u->uid;
 
@@ -892,10 +888,6 @@ char *get_nickname(session_t *session, const char *text)
 		return valid_uid(text) ? (char *) text : NULL;
 
         u = userlist_find(session, text);
-
-	/* XXX, pro. we should not allow add to userlist bad uid, and remove checking it here */
-	if (u && valid_plugin_uid(session->plugin, u->uid) != 1)
-		u = NULL;
 
         if (u && u->nickname)
                 return u->nickname;
