@@ -279,6 +279,9 @@ int session_remove(const char *uid)
 	xfree(s->laststatus);
 	xfree(s->lastdescr);
 
+	/* free memory like sessions_free() do */
+	userlist_free(s);
+
 	list_remove(&sessions, s, 1);
 	return 0;
 }
