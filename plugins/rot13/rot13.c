@@ -129,7 +129,9 @@ static QUERY(message_parse) {
 static rot13_key_t *rot13_key_parse(char *target, char *sesja, char *offset, char *offset2) {
 	rot13_key_t *k = xmalloc(sizeof(rot13_key_t));
 
-	if (!xstrcmp(target, "$")) {		k->target = xstrdup(get_uid(window_current->session, window_current->target));	xfree(target); }
+	if (!xstrcmp(target, "$")) {		k->target = xstrdup(get_uid(window_current->session, window_current->target));	
+						if (!k->target) k->target = xstrdup(window_current->target);
+						xfree(target); }
 	else if (!xstrcmp(target, "*")) {	k->target = NULL;								xfree(target); }
 	else					k->target = target;
 
