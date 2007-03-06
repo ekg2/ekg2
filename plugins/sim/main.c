@@ -189,6 +189,11 @@ static COMMAND(command_key)
 		if (!session) 
 			return -1;
 
+		if (valid_plugin_uid(session->plugin, params[1]) != 1) {
+			printq("invalid_session");
+			return -1;
+		}
+
 		tmp = saprintf("%s/%s.pem", prepare_path("keys", 0), session_uid_get(session));
 		f = fopen(tmp, "r");
 		xfree(tmp);
