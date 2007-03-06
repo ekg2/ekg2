@@ -279,9 +279,14 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 }
 
 static void logs_window_new(window_t *w) {
+	const char *uid;
 	if (!w->target || !w->session || w->id == 1000)
 		return;
-	logs_log_new(NULL, session_uid_get(w->session), get_uid(w->session, w->target));
+
+	uid = get_uid(w->session, w->target);
+	if (!uid) uid = w->target;
+
+	logs_log_new(NULL, session_uid_get(w->session), uid);
 }
 
 static FILE *logs_window_close(logs_log_t *l, int close) {
