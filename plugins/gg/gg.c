@@ -73,17 +73,15 @@ int gg_config_split_messages;
 static int gg_private_init(session_t *s) {
 	gg_private_t *g;
 
-	if (!s)
-		return -1;
-
-	if (xstrncasecmp(session_uid_get(s), "gg:", 3))
+	if (!s || s->priv || s->plugin != &gg_plugin)
 		return -1;
 
 	g = xmalloc(sizeof(gg_private_t));
 
 	userlist_free(s);
 	userlist_read(s);
-	session_private_set(s, g);
+
+	s->priv = g;
 
 	return 0;
 }
@@ -92,13 +90,7 @@ static int gg_private_destroy(session_t *s) {
 	gg_private_t *g;
 	list_t l;
 
-	if (!s)
-		return -1;
-
-	if (xstrncasecmp(session_uid_get(s), "gg:", 3))
-		return -1;
-
-	if (!(g = session_private_get(s)))
+	if (!s || !(g = s->priv) || s->plugin != &gg_plugin)
 		return -1;
 
 	if (g->sess)
@@ -109,7 +101,7 @@ static int gg_private_destroy(session_t *s) {
 
 	xfree(g);
 
-	session_private_set(s, NULL);
+	s->priv = NULL;
 
 	return 0;
 }
@@ -117,10 +109,8 @@ static int gg_private_destroy(session_t *s) {
 static QUERY(gg_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
-	if (!u)
-		return 0;
 
-	if (valid_plugin_uid(&gg_plugin, u->uid) != 1) 
+	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1) 
 		return 0;
 
 	if (u->port == 2)
