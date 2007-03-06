@@ -142,11 +142,22 @@ void userlist_add_entry(session_t *session, const char *line)
 		return;
 	}
 	
+	if (atoi(entry[6])) {	/* XXX it's hack for gg, FIX IT. */
+		char *tmp = entry[6];
+		entry[6] = saprintf("gg:%s", entry[6]);
+		xfree(tmp);
+	} 
+
+	if (valid_plugin_uid(session->plugin, entry[6]) != 1) {
+		debug_error("userlist_add_entry() wrong uid: %s for session: %s [plugin: 0x%x]\n", entry[6], session->uid, session->plugin);
+		array_free(entry);
+		return;
+	}
+
 	u = xmalloc(sizeof(userlist_t));
-	if (atoi(entry[6])) 
-		u->uid = saprintf("gg:%s", entry[6]);
-	else
-		u->uid = xstrdup(entry[6]);
+
+	u->status = xstrdup(EKG_STATUS_NA);
+	u->uid = entry[6];	entry[6] = NULL;
 
 	for (i = 0; i < 6; i++) {
 		if (!xstrcmp(entry[i], "(null)") || !xstrcmp(entry[i], "")) {
@@ -155,28 +166,20 @@ void userlist_add_entry(session_t *session, const char *line)
 		}
 	}
 			
-	u->first_name = xstrdup(entry[0]);
-	u->last_name = xstrdup(entry[1]);
+	u->first_name 	= entry[0];	entry[0] = NULL;
+	u->last_name	= entry[1];	entry[1] = NULL;
+	u->mobile	= entry[4];	entry[4] = NULL;
+	u->groups	= group_init(entry[5]);
 
-	if (entry[3] && !valid_nick(entry[3]))
-		u->nickname = saprintf("_%s", entry[3]);
-	else
-		u->nickname = xstrdup(entry[3]);
+	u->nickname	= !valid_nick(entry[3]) ? 
+		saprintf("_%s", entry[3]) :
+		xstrdup(entry[3]);
 
-	u->mobile = xstrdup(entry[4]);
-	u->groups = group_init(entry[5]);
-	u->status = xstrdup(EKG_STATUS_NA);
+	u->foreign	= entry[7] ? 
+		saprintf(";%s", entry[7]) :
+		NULL;
 	
-	if (entry[7])
-		u->foreign = saprintf(";%s", entry[7]);
-	else
-		u->foreign = xstrdup("");
-
-	for (i = 0; i < count; i++)
-		xfree(entry[i]);
-
-	xfree(entry);
-
+	array_free_count(entry, count);
 	list_add_sorted(&(session->userlist), u, 0, userlist_compare);
 }
 
