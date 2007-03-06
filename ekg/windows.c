@@ -78,62 +78,71 @@ window_t *window_find_ptr(window_t *w) {
 }
 
 /*
- * window_find()
+ * window_find_sa()
  *
- * it seeks for an window with given target
+ * it seeks for an window with given target and session
  * returns structure describing it
+ *
  */
-window_t *window_find(const char *target)
-{
-	int current = ((target) ? !xstrcasecmp(target, "__current") : 0);
-	int debug = ((target) ? !xstrcasecmp(target, "__debug") : 0);
-	int status = ((target) ? !xstrcasecmp(target, "__status") : 0);
-	userlist_t *u = NULL;
+window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session) {
+	int status = 0;
+	userlist_t *u;
 	list_t l, m;
 
-	if (!target || current) {
+	if (!target || !xstrcasecmp(target, "__current")) {
 		if (window_current->id)
 			return window_current;
 		else
 			status = 1;
 	}
 
-	for (l = windows; l; l = l->next) {
+	for (l = windows; l;) {
 		window_t *w = l->data;
 
-		if (!w->id && debug)
+		if (!w->id && !xstrcasecmp(target, "__debug"))
 			return w;
 
-		if (w->id == 1 && status)
+		if (w->id == 1 && (status || !xstrcasecmp(target, "__status")))
 			return w;
 
 		if (w->id > 1)
 			break;
+
+		l = l->next;
 	}
 
 /* skip __debug && __status */
 	for (m = l; m; m = m->next) {
 		window_t *w = m->data;
 
-		if (!xstrcasecmp(target, w->target))
+		/* if targets match, and (sessions match or [no session was specified, and it doesn't matter to which session window belongs to]) */
+		if (!xstrcasecmp(target, w->target) && ((session == w->session) || (!session && !session_null_means_no_session)))
 			return w;
 	}
+
+	/* if we don't want session window, code below is useless */
+	if (!session && session_null_means_no_session)
+		return NULL;
 
 	if (xstrncmp(target, "__", 2)) {
 		list_t sl;
 		for (sl = sessions; sl; sl = sl->next) {
 			session_t *s = sl->data;
-			list_t new_l;
 
-				/* XXX, get_uid() execute userlist_find() also, fix it. */
+		/* if sessions mishmash, and it wasn't NULL session, skip this session */
+			if (session != s && session)
+				continue;
+
+			/* XXX, get_uid() execute userlist_find() also, fix it. */
 			if (!(u = userlist_find(s, get_uid(s, target))))
 				continue;
 			
 		/* skip __debug && __status */
-			for (new_l = l; new_l; new_l = new_l->next) {
-				window_t *w = new_l->data;
+			for (m = l; m; m = m->next) {
+				window_t *w = m->data;
 
-				if (w->target) {
+				/* if there's target, and sessions match [no session specified, or sessions equal, check if entry (from userlist) match */
+				if ((!session || session == w->session) && w->target) {
 					if (u->nickname && !xstrcasecmp(u->nickname, w->target))
 						return w;
 
@@ -147,65 +156,13 @@ window_t *window_find(const char *target)
 }
 
 /*
- * window_find_s()
+ * window_find()
  *
- * it seeks for an window with given target and session
+ * it seeks for an window with given target
  * returns structure describing it
  */
-window_t *window_find_s(session_t *session, const char *target)
-{
-	int current = ((target) ? !xstrcasecmp(target, "__current") : 0);
-	int debug = ((target) ? !xstrcasecmp(target, "__debug") : 0);
-	int status = ((target) ? !xstrcasecmp(target, "__status") : 0);
-	userlist_t *u = NULL;
-	list_t l;
-
-	if (!target || current) {
-		if (window_current->id)
-			return window_current;
-		else
-			status = 1;
-	}
-
-	if (session && target) {
-			/* XXX, bad session, get_uid() */
-		u = userlist_find(session, get_uid(session, target));
-	} else {
-		if (target && strncmp(target, "__", 2)) {
-			list_t sl;
-			for (sl = sessions; sl; sl = sl->next) {
-				session_t *s = sl->data;
-				u = userlist_find(s, get_uid(s, target));
-				break;
-			}
-		}
-	}
-
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
-		if (!w->id && debug)
-			return w;
-
-		if (w->id == 1 && status)
-			return w;
-
-		if (w->target && target && !session_compare(w->session, session)) {
-			if (!xstrcasecmp(target, w->target)) {
-				return w;
-			}
-
-			if (u && u->nickname && !xstrcasecmp(u->nickname, w->target)) {
-				return w;
-}
-
-			if (u && !xstrcasecmp(u->uid, w->target)) {
-				return w;
-			}
-		}
-	}
-
-	return NULL;
+window_t *window_find(const char *target) {
+	return window_find_sa(NULL, target, 0);
 }
 
 /*
@@ -309,6 +266,7 @@ window_t *window_new(const char *target, session_t *session, int new_id)
 /*		u = get_uid(target); */
 
 		if (!xstrcmp(target, "$"))
+			/* XXX, what about sessions, check if match? */
 			return window_current;
 	}
 

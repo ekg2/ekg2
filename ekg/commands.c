@@ -2283,7 +2283,7 @@ next:
 		par0 = (char *) params[0];
 	}
 
-	if (!(w = window_find_s(session, par0))) {			/* if we don't have window, we need to create it, in way specified by config_make_window */
+	if (!(w = window_find_s(session, par0))) {		/* if we don't have window, we need to create it, in way specified by config_make_window */
 		if (config_make_window & 1) {
 			list_t l;
 
@@ -2597,11 +2597,11 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res) {
-				window_t *w = window_find(target);
+				window_t *w = window_find_sa(s, target, 0);
 
 				window_lock_inc(w);
 				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
-				if (window_find_ptr(w) || (w == window_find(target)))
+				if (window_find_ptr(w) || (w == window_find_sa(s, target, 0)))
 					window_lock_dec(w);
 				else {
 					list_t l;

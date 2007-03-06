@@ -77,7 +77,9 @@ extern window_t *window_current;
 extern window_lastlog_t *lastlog_current;
 
 window_t *window_find(const char *target);
-window_t *window_find_s(session_t *session, const char *target);
+window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session);
+
+#define window_find_s(s, target) window_find_sa(s, target, 1) 	/* XXX, need checking */
 window_t *window_find_ptr(window_t *w);
 window_t *window_new(const char *target, session_t *session, int new_id);
 void window_kill(window_t *w, int quiet);
@@ -87,19 +89,12 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 char *window_target(window_t *window);
 
 int window_session_cycle(window_t *w);
-#define window_session_cycle_n(a) window_session_cycle(window_find(a))
-#define window_session_cycle_id(a) window_session_cycle_id(window_find_id(a))
 int window_session_set(window_t *w, session_t *s);
-#define window_session_set_n(a,b) window_session_set(window_find(a),b)
-#define window_session_set_id(a,b) window_session_set(window_find_id(a),b)
 session_t *window_session_get(window_t *w);
-#define window_session_get_n(a) window_session_get(window_find(a))
-#define window_session_get_id(a) window_session_get(window_find_id(a))
 
 int window_lock_set(window_t *w, int lock);
 int window_lock_get(window_t *w);
 int window_lock_inc(window_t *w);
-#define window_lock_inc_n(a) window_lock_inc(window_find(a))
 int window_lock_dec(window_t *w);
 #define window_lock_dec_n(a) window_lock_dec(window_find(a))
 #endif
