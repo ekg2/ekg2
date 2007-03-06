@@ -2246,14 +2246,8 @@ static COMMAND(cmd_query) {
 
 		tmp++;
 	
-	/* check if plugin can handle it */
-		if (valid_plugin_uid(session->plugin, tmp) != 1) {
-			printq("invalid_session");
-			return -1;
-		}
-		
 		if (!get_uid(session, tmp)) {
-			printq("user_not_found", tmp);
+			printq("invalid_session");
 			return -1;
 		}
 
