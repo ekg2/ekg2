@@ -284,7 +284,7 @@ static void logs_window_new(window_t *w) {
 		return;
 
 	uid = get_uid(w->session, w->target);
-	if (!uid) uid = w->target;
+	if (!uid && w->session) uid = get_uid(NULL, w->target);
 
 	logs_log_new(NULL, session_uid_get(w->session), uid);
 }
