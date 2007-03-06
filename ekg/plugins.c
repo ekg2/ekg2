@@ -293,7 +293,7 @@ plugin_t *plugin_find_uid(const char *uid)
 
         for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
-                if (p && p->name && valid_plugin_uid(p, uid))
+                if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
                 	return p;
         }
 
