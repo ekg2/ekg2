@@ -60,6 +60,7 @@ PLUGIN_DEFINE(polchat, PLUGIN_PROTOCOL, NULL);
 
 #define POLCHAT_DEFAULT_HOST "polczat.pl"
 #define POLCHAT_DEFAULT_PORT 14003
+#define POLCHAT_DEFAULT_PORT_STR "14003"
 
 /* HELPERS */
 static inline char *dword_str(int dword) {	/* 4 bajty BE */
@@ -851,7 +852,18 @@ static COMMAND(polchat_command_inline_msg) {
 	return polchat_command_msg(("msg"), p, session, target, quiet);
 }
 
+static plugins_params_t polchat_plugin_vars[] = {
+	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL), 
+	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "irssi", 0, NULL),
+	PLUGIN_VAR_ADD("nickname", 		0, VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, POLCHAT_DEFAULT_PORT_STR, 0, NULL),
+	PLUGIN_VAR_ADD("server", 		SESSION_VAR_SERVER, VAR_STR, POLCHAT_DEFAULT_HOST, 0, NULL),
+	PLUGIN_VAR_END()
+};
+
 int polchat_plugin_init(int prio) {
+	polchat_plugin.params = polchat_plugin_vars;
 	plugin_register(&polchat_plugin, prio);
 	query_connect(&polchat_plugin, "protocol-validate-uid", polchat_validate_uid, NULL);
 	query_connect(&polchat_plugin, "session-added",		polchat_session, (void*) 1);
@@ -872,12 +884,6 @@ int polchat_plugin_init(int prio) {
 	command_add(&polchat_plugin, "polchat:connect", NULL,   polchat_command_connect,    POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:disconnect", "r ?",polchat_command_disconnect,POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:reconnect", "r ?", polchat_command_reconnect, POLCHAT_ONLY, NULL);
-
-	plugin_var_add(&polchat_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&polchat_plugin, "nickname", VAR_STR, NULL, 0, NULL);
-	plugin_var_add(&polchat_plugin, "log_formats", VAR_STR, "irssi", 0, NULL);
-	plugin_var_add(&polchat_plugin, "server", VAR_STR, POLCHAT_DEFAULT_HOST, 0, NULL);
-	plugin_var_add(&polchat_plugin, "port", VAR_INT, itoa(POLCHAT_DEFAULT_PORT), 0, NULL);
 
 	return 0;
 }
