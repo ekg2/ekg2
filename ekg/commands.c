@@ -2545,7 +2545,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 		}
 		if (!res && (last_command->flags & SESSION_MUSTBELONG)) {
-			/* ok, it works but i still thinks that valid_plugin_uid sucks (too slow) */
+			/* if in future of ekg2, there'll be need of this, please feel free to change thoese if's.
+			 * it's correct.. but for now, i don't see much sense of doing it cause. we don't have 
+			 * two plugins which handle for example irc: or gg:
+			 * if we'll have/ or maybe you have then write to use.
+			 * thx.
+			 */
+/*			if (valid_plugin_uid(last_command->plugin, session_uid_get(s)) != 1) */
+
 			if (last_command->plugin != s->plugin) {
 				wcs_printq("invalid_session");
 				res = -1;
