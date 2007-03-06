@@ -1170,7 +1170,17 @@ static int sniff_theme_init() {
 	return 0;
 }
 
+static plugins_params_t sniff_plugin_vars[] = {
+
+	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("filter", 		0, VAR_STR, 0, 0, NULL),
+
+	PLUGIN_VAR_END()
+};
+
 int sniff_plugin_init(int prio) {
+	sniff_plugin.params = sniff_plugin_vars;
 	plugin_register(&sniff_plugin, prio);
 
 	query_connect_id(&sniff_plugin, PROTOCOL_VALIDATE_UID,	sniff_validate_uid, NULL);
@@ -1180,10 +1190,6 @@ int sniff_plugin_init(int prio) {
 	command_add(&sniff_plugin, "sniff:connect", NULL, sniff_command_connect,    SESSION_MUSTBELONG, NULL);
 	command_add(&sniff_plugin, "sniff:connections", NULL, sniff_command_connections, SESSION_MUSTBELONG | SESSION_MUSTBECONNECTED, NULL);
 	command_add(&sniff_plugin, "sniff:disconnect", NULL,sniff_command_disconnect, SESSION_MUSTBELONG, NULL);
-
-	plugin_var_add(&sniff_plugin, "alias", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&sniff_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&sniff_plugin, "filter", VAR_STR, 0, 0, NULL);
 
 	return 0;
 }
