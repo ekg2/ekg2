@@ -280,13 +280,14 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 
 static void logs_window_new(window_t *w) {
 	const char *uid;
+
 	if (!w->target || !w->session || w->id == 1000)
 		return;
 
-	uid = get_uid(w->session, w->target);
-	if (!uid && w->session) uid = get_uid(NULL, w->target);
+	uid = get_uid_any(w->session, w->target);
 
-	logs_log_new(NULL, session_uid_get(w->session), uid);
+/* XXX, do we really want/need to create log struct with invalid uid? XXX */
+	logs_log_new(NULL, session_uid_get(w->session), uid ? uid : w->target);
 }
 
 static FILE *logs_window_close(logs_log_t *l, int close) {
