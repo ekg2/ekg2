@@ -38,14 +38,6 @@ CODE:
 ###########  EKG2::Session ##################################################################
 MODULE = Ekg2::Session	PACKAGE = Ekg2::Session  PREFIX = session_
 
-void session_params(Ekg2::Session session)
-PREINIT:
-        list_t l;
-PPCODE:
-        for (l = session->params; l; l = l->next) {
-                XPUSHs(sv_2mortal(bless_session_param( (session_param_t *) l->data)));
-        }
-
 Ekg2::Userlist session_userlist(Ekg2::Session session)
 CODE:
         RETVAL = (session->userlist);
