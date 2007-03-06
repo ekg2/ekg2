@@ -179,6 +179,7 @@ static COMMAND(command_key)
 	if (match_arg(params[0], 's', ("send"), 2)) {
 		string_t s = NULL;
 		char *tmp, buf[128];
+		const char *uid;
 		FILE *f;
 
 		if (!params[1]) {
@@ -189,7 +190,7 @@ static COMMAND(command_key)
 		if (!session) 
 			return -1;
 
-		if (valid_plugin_uid(session->plugin, params[1]) != 1) {
+		if (!(uid = get_uid(session, params[1]))) {
 			printq("invalid_session");
 			return -1;
 		}
@@ -212,7 +213,7 @@ static COMMAND(command_key)
 
 		command_exec(params[1], session, s->str, quiet);
 
-		printq("key_send_success", format_user(session, get_uid(session, params[1])));
+		printq("key_send_success", format_user(session, uid));
 		string_free(s, 1);
 
 		return 0;
