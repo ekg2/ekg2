@@ -2426,14 +2426,22 @@ back:
 			}
 			for (l = sessions; l; l = l->next) {
 				session_t *s = l->data;
-				list_t n;
+				plugin_t *pl = s->plugin;
+				int i;
+
+				if (!pl) {
+					printq("generic_error", "Internal fatal error, plugin somewhere disappear. Report this bug");
+					continue;
+				}
+
 				watch_write(j->send_watch, "<session xmlns=\"ekg2:session\" uid=\"%s\" password=\"%s\">", s->uid, s->password);
 
-				for (n = session->params; n; n = n->next) {
-					session_param_t *v = n->data;
-					if (v->value)	watch_write(j->send_watch, "<%s>%s</%s>", v->key, v->value, v->key);
-					else		watch_write(j->send_watch, "<%s/>", v->key);
+				/* XXX, escape? */
+				for (i = 0; (pl->params[i].key /* && p->params[i].id != -1 */); i++) {
+					if (s->values[i])	watch_write(j->send_watch, "<%s>%s</%s>", pl->params[i].key, s->values[i], pl->params[i].key);
+					else			watch_write(j->send_watch, "<%s/>", pl->params[i].key);
 				}
+
 				watch_write(j->send_watch, "</session>");
 			}
 		} else if (bookmark) {	/* synchronize with j->bookmarks using JEP-0048 */

@@ -1202,8 +1202,51 @@ static QUERY(jabber_pgp_postinit) {
 	return 0;
 }
 
-int jabber_plugin_init(int prio)
-{
+static plugins_params_t jabber_plugin_vars[] = {
+	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
+	/* '666' enabled for everyone (DON'T TRY IT!); '0' - disabled; '1' - enabled for the same id (allow from diffrent resources); '2' - enabled for allow_remote_control_jids (XXX) */
+	PLUGIN_VAR_ADD("allow_remote_control",	0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("allow_autoresponder",	SESSION_VAR_ALLOW_AUTORESPONDER, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_auth",		0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away", 		SESSION_VAR_AUTO_AWAY, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away_descr",	SESSION_VAR_AUTO_AWAY_DESCR, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_back", 		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_bookmark_sync", 	0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_privacylist_sync", 0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_find", 		SESSION_VAR_AUTO_FIND, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_reconnect", 	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa", 		SESSION_VAR_AUTO_XA, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa_descr", 	SESSION_VAR_AUTO_XA_DESCR, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("display_notify", 	SESSION_VAR_DISPLAY_NOTIFY, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("display_server_features", 0, VAR_INT, "1", 0, NULL),
+	PLUGIN_VAR_ADD("gpg_active", 		0, VAR_BOOL, "0", 0, jabber_gpg_changed),
+	PLUGIN_VAR_ADD("gpg_key", 		0, VAR_STR, NULL, 0, jabber_gpg_changed),
+	PLUGIN_VAR_ADD("gpg_password", 		0, VAR_STR, NULL, 1, jabber_gpg_changed),
+	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "xml,simple", 0, NULL),
+	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
+	PLUGIN_VAR_ADD("plaintext_passwd", 	0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("ping-server", 		0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, "5222", 0, NULL),
+	PLUGIN_VAR_ADD("priority", 		0, VAR_INT, "5", 0, NULL),
+	PLUGIN_VAR_ADD("privacy_list", 		0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("resource", 		0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("server", 		SESSION_VAR_SERVER, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("ssl_port", 		0, VAR_INT, "5223", 0, NULL),
+	PLUGIN_VAR_ADD("use_compression", 	0, VAR_STR, 0, 0, NULL),		/* for instance: zlib,lzw */
+	PLUGIN_VAR_ADD("use_sasl", 		0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("use_ssl", 		0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("use_tls", 		0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("ver_client_name", 	0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("ver_client_version", 	0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("ver_os", 		0, VAR_STR, 0, 0, NULL),
+
+	PLUGIN_VAR_END()
+};
+
+int jabber_plugin_init(int prio) {
+	jabber_plugin.params = jabber_plugin_vars;
+
         plugin_register(&jabber_plugin, prio);
 
 	session_postinit = 0;
@@ -1227,45 +1270,6 @@ int jabber_plugin_init(int prio)
 	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
 
         jabber_register_commands();
-
-        plugin_var_add(&jabber_plugin, "alias", VAR_STR, 0, 0, NULL);
-		/* '666' enabled for everyone (DON'T TRY IT!); '0' - disabled; '1' - enabled for the same id (allow from diffrent resources); '2' - enabled for allow_remote_control_jids (XXX) */
-	plugin_var_add(&jabber_plugin, "allow_remote_control", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "allow_autoresponder", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "auto_auth", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "auto_away", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "auto_away_descr", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&jabber_plugin, "auto_back", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "auto_bookmark_sync", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "auto_privacylist_sync", VAR_BOOL, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "auto_connect", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "auto_find", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "auto_xa", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "auto_xa_descr", VAR_STR, 0, 0, NULL);
-        plugin_var_add(&jabber_plugin, "display_notify", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "display_server_features", VAR_INT, "1", 0, NULL);
-	plugin_var_add(&jabber_plugin, "gpg_active", VAR_BOOL, "0", 0, jabber_gpg_changed);
-	plugin_var_add(&jabber_plugin, "gpg_key", VAR_STR, NULL, 0, jabber_gpg_changed);
-	plugin_var_add(&jabber_plugin, "gpg_password", VAR_STR, NULL, 1, jabber_gpg_changed);
-        plugin_var_add(&jabber_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
-        plugin_var_add(&jabber_plugin, "password", VAR_STR, "foo", 1, NULL);
-        plugin_var_add(&jabber_plugin, "plaintext_passwd", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "ping-server", VAR_BOOL, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "port", VAR_INT, "5222", 0, NULL);
-        plugin_var_add(&jabber_plugin, "priority", VAR_INT, "5", 0, NULL);
-	plugin_var_add(&jabber_plugin, "privacy_list", VAR_STR, 0, 0, NULL);
-        plugin_var_add(&jabber_plugin, "resource", VAR_STR, 0, 0, NULL);
-        plugin_var_add(&jabber_plugin, "server", VAR_STR, 0, 0, NULL);
-        plugin_var_add(&jabber_plugin, "ssl_port", VAR_INT, "5223", 0, NULL);
-	plugin_var_add(&jabber_plugin, "use_compression", VAR_STR, 0, 0, NULL);		/* for instance: zlib,lzw */
-	plugin_var_add(&jabber_plugin, "use_sasl", VAR_BOOL, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "use_ssl", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&jabber_plugin, "use_tls", VAR_BOOL, "0", 0, NULL);
-        plugin_var_add(&jabber_plugin, "ver_client_name", VAR_STR, 0, 0, NULL);
-        plugin_var_add(&jabber_plugin, "ver_client_version", VAR_STR, 0, 0, NULL);
-        plugin_var_add(&jabber_plugin, "ver_os", VAR_STR, 0, 0, NULL);
-
 #ifdef JABBER_HAVE_SSL
 	SSL_GLOBAL_INIT();
 #endif
