@@ -193,6 +193,7 @@ int valid_nick(const char *nick);
 int valid_plugin_uid(plugin_t *plugin, const char *uid);
 const char *format_user(session_t *session, const char *uid);
 char *get_uid(session_t *session, const char *text);
+char *get_uid_any(session_t *session, const char *text);
 char *get_nickname(session_t *session, const char *text);
 
 #endif

@@ -821,6 +821,22 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid)
 }
 
 /*
+ * get_uid_any()
+ *
+ * robi to co stare get_uid()
+ * backward compatilibity
+ */
+
+char *get_uid_any(session_t *session, const char *text) {
+	char *uid = get_uid(session, text);
+
+	if (!session) 
+		return uid;
+
+	return uid ? uid : valid_uid(text) ? (char *) text : NULL;
+}
+
+/*
  * get_uid()
  *
  * je¶li podany tekst jest uid (ale nie jednocze¶nie nazw± u¿ytkownika),
