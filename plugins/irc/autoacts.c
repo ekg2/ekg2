@@ -76,14 +76,14 @@ static TIMER(irc_autorejoin_timer)
 
 int irc_autorejoin(session_t *s, int when, char *chan)
 {
-	irc_private_t *j = irc_private(s);
+	irc_private_t *j;
 	list_t l;
 	string_t st;
 	window_t *w;
 	char *chanprefix;
 	int rejoin;
 
-	if (!session_check(s, 1, IRC3))
+	if (!s || !(j = s->priv) || (s->plugin != &irc_plugin))
     		return -1;
 
 	chanprefix = SOP(_005_CHANTYPES);

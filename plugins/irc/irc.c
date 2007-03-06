@@ -157,10 +157,7 @@ PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 static void irc_private_init(session_t *s) {
 	irc_private_t	*j;
 
-	if (!session_check(s, 0, IRC3))
-		return;
-
-	if (irc_private(s))
+	if (!s || s->priv || (s->plugin != &irc_plugin))
 		return;
 
 	userlist_free(s);
@@ -190,12 +187,12 @@ static void irc_private_init(session_t *s) {
  * cleanup stuff: free irc_private_t for a given session and some other things
  */
 static void irc_private_destroy(session_t *s) {
-	irc_private_t	*j = irc_private(s);
+	irc_private_t	*j;
 	int		i;
 
 	list_t 		tmplist;
 
-	if (!session_check(s, 1, IRC3))
+	if (!s || !(j = s->priv) || (s->plugin != &irc_plugin))
 		return;
 
 	userlist_write(s);
@@ -1391,7 +1388,7 @@ static QUERY(irc_window_kill) {
 	irc_private_t	*j;
 	char		*tmp;
 
-	if (w && w->id && w->target && session_check(w->session, 1, IRC3) &&
+	if (w && w->id && w->target && w->session && w->session->plugin == &irc_plugin &&
 			(j = irc_private(w->session)) &&
 			(tmp = SOP(_005_CHANTYPES)) &&
 			xstrchr(tmp, (w->target)[4]) &&
@@ -1437,7 +1434,7 @@ static QUERY(irc_topic_header) {
 	char		*tmp	= NULL;
 
 	*top = *setby = *modes = NULL;
-	if ( targ && session_check(window_current->session, 1, IRC3) && session_connected_get(window_current->session) )
+	if (targ && window_current->session && window_current->session->plugin == &irc_plugin && session_connected_get(window_current->session) )
 	{ 
 		/* channel */
 		if ((tmp = SOP(_005_CHANTYPES)) && 
