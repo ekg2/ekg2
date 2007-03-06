@@ -2195,7 +2195,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_back",		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_find",		SESSION_VAR_AUTO_FIND, VAR_BOOL, "0", 0, NULL),		/* it's really auto_whois */
-	PLUGIN_VAR_ADD("auto_reconnect",	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "0", 10, NULL), 
+	PLUGIN_VAR_ADD("auto_reconnect",	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "10", 0, NULL), 
 	PLUGIN_VAR_ADD("auto_channel_sync",	0, VAR_BOOL, "1", 0, NULL),				/* like channel_sync in irssi; better DO NOT turn it off! */
 	PLUGIN_VAR_ADD("auto_lusers_sync", 	0, VAR_BOOL, "0", 0, NULL),				/* sync lusers, stupid ;(,  G->dj: well why ? */
 	PLUGIN_VAR_ADD("ban_type", 		0, VAR_INT, "10", 0, NULL),
