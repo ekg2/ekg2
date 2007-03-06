@@ -1124,13 +1124,6 @@ void rss_init() {
 
 	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
 	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
-
-	plugin_var_add(&feed_plugin, "display_server_headers", VAR_STR, 
-	/* display some basic server headers */
-		"HTTP/1.1 "	/* rcode? */
-		"Server: "
-		"Date: ",
-		0, NULL);
 }
 #endif
 

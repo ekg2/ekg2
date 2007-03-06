@@ -271,7 +271,43 @@ void feed_set_statusdescr(userlist_t *u, char *status, char *descr) {
 	feed_set_descr(u, descr);
 }
 
+static plugins_params_t feed_plugin_vars[] = {
+#warning "Sort it"
+/* common vars. */
+	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("alias",			SESSION_VAR_ALIAS, VAR_STR, NULL, 0, NULL),
+	/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
+	PLUGIN_VAR_ADD("display_mode",		0, VAR_INT, "3", 0, NULL),	
+
+	PLUGIN_VAR_ADD("display_headers",	0, VAR_STR, 
+			/* RSS: */ 
+				"pubDate: author: dc:creator: dc:date:" 
+			/* NNTP: */ 
+				"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
+			0, NULL),
+
+	/* 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
+	PLUGIN_VAR_ADD("make_window", 		0, VAR_INT, "2", 0, NULL),
+/* rss vars. */
+#ifdef HAVE_EXPAT
+	PLUGIN_VAR_ADD("display_server_headers", 0, VAR_STR, 
+	/* display some basic server headers */
+		"HTTP/1.1 "	/* rcode? */
+		"Server: "
+		"Date: ",
+		0, NULL),
+#endif
+/* nntp vars. */
+	PLUGIN_VAR_ADD("username",		0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
+	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, "119", 0, NULL),
+	PLUGIN_VAR_ADD("server", 		SESSION_VAR_SERVER, VAR_STR, 0, 0, NULL),
+
+	PLUGIN_VAR_END()
+};
+
 int feed_plugin_init(int prio) {
+	feed_plugin.params = feed_plugin_vars;
 	plugin_register(&feed_plugin, prio);
 			/* common */
 	query_connect_id(&feed_plugin, SESSION_ADDED, feed_session, (void*) 1);
@@ -279,20 +315,7 @@ int feed_plugin_init(int prio) {
 	query_connect_id(&feed_plugin, PROTOCOL_VALIDATE_UID, feed_validate_uid, NULL);
 			/* common - rss, nntp */
 	query_connect_id(&feed_plugin, RSS_MESSAGE, rss_message, NULL);
-			/* common - vars */
-	plugin_var_add(&feed_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&feed_plugin, "alias", VAR_STR, NULL, 0, NULL);
 
-			/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
-	plugin_var_add(&feed_plugin, "display_mode", VAR_INT, "3", 0, NULL);	
-	plugin_var_add(&feed_plugin, "display_headers", VAR_STR, 
-		/* RSS: */ 
-			"pubDate: author: dc:creator: dc:date:" 
-		/* NNTP: */ 
-			"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
-		0, NULL);
-			/* 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
-	plugin_var_add(&feed_plugin, "make_window", VAR_INT, "2", 0, NULL);
 #ifdef HAVE_EXPAT
 	rss_init();	/* rss */
 #endif

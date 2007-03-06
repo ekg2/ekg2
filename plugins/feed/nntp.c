@@ -846,13 +846,7 @@ void nntp_protocol_deinit(void *priv) {
 }
 
 void nntp_init() {
-	plugin_var_add(&feed_plugin, "username", VAR_STR, 0, 0, NULL);
-        plugin_var_add(&feed_plugin, "password", VAR_STR, "foo", 1, NULL);
-	plugin_var_add(&feed_plugin, "server", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&feed_plugin, "port", VAR_INT, "119", 0, NULL);
-
 /*XXX,  :msg -- wysylanie wiadomosc na serwer... BE CAREFULL cause news aren't IM ;) */
-
 	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, RSS_ONLY, NULL);
 
