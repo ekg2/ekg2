@@ -154,15 +154,14 @@ session_t *session_add(const char *uid) {
 	
 	list_add_sorted(&sessions, s, 0, session_compare);
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
-		if (!w->session && !w->floating)	/* remove this? if user want to change session he should press ctrl+x in that window ? */
-			w->session = s;
-	}
-
+/* XXX, i still don't understand why session_current isn't macro to window_current->session... */
 	if (!session_current)
 		session_current = s;
+
+	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
+		window_current->session = s;
+	}
+
 
 	/* session_var_default() */
 	if (pl->params) {
@@ -195,6 +194,20 @@ session_t *session_add(const char *uid) {
 	tmp = xstrdup(uid);
 	query_emit_id(NULL, SESSION_ADDED, &tmp);
 	xfree(tmp);
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+
+/* this was unacceptable. So we do now this trick:
+ * 	userlist (if plugin has one) have been already read by SESSION_ADDED emit. so now, 
+ * 	we check throught get_uid() if this plugin can handle it.. [userlist must be read, if we have nosession window 
+ * 	with w->target: "Aga". it's not uid. it's nickname.. so we must search for it in userlist.
+ *	it's better idea than what was.. however it's slow and I still want to do it other way.
+ */
+		if (!w->session && !w->floating && get_uid(s, w->target))
+			w->session = s;
+			/* XXX, notify ui-plugin */
+	}
 
 	return s;
 }
