@@ -777,14 +777,19 @@ int valid_nick(const char *nick)
 	return 1;
 }
 
-/*
+/**
  * valid_uid()
  *
- * sprawdza, czy uid jest obs³ugiwany przez jaki¶ plugin i czy jest
- * poprawny.
+ * Check if @a uid can be handled by any plugin
  *
- * zwraca 1 je¶li nick jest w porz±dku, w przeciwnym razie 0.
+ * @param uid	- uid to check for
+ *
+ * @sa valid_plugin_uid()	- You can specify plugin
+ *
+ * @return	1 - if uid can be handled by ekg2<br>
+ * 		0 - if not
  */
+
 int valid_uid(const char *uid) {
 	int valid = 0;
 	char *tmp;
@@ -796,18 +801,22 @@ int valid_uid(const char *uid) {
 	return (valid > 0);
 }
 
-/*
+/**
  * valid_plugin_uid()
  *
- * sprawdza, czy uid jest obs³ugiwany przez podany plugin i czy jest
- * poprawny.
+ * Check if @a uid can be handled by given @a plugin
+ * 
+ * @param plugin 	- plugin to check for
+ * @param uid		- uid to check for
  *
- * zwraca 1 je¶li nick jest w porz±dku, w przeciwnym razie 0.
- * natoamiast zwraca -1 gdy pogadany plugin jest pusty 
+ * @sa valid_uid()	- if we want to know if this @a uid can be handled by ekg2 [when it doesn't matter which plugin]
+ *
+ * @return 	 1 - if @a uid can be handled by @a plugin<br>
+ * 		 0 - if not<br>
+ *		-1 - if @a plugin == NULL
  */
 
-int valid_plugin_uid(plugin_t *plugin, const char *uid)
-{
+int valid_plugin_uid(plugin_t *plugin, const char *uid) {
         int valid = 0;
         char *tmp;
 
