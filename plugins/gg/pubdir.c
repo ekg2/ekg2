@@ -37,7 +37,6 @@
 list_t gg_reminds = NULL;
 list_t gg_registers = NULL;
 list_t gg_unregisters = NULL;
-list_t gg_userlists = NULL;
 
 int gg_register_done = 0;
 char *gg_register_password = NULL;

@@ -1338,13 +1338,6 @@ static int gg_plugin_destroy() {
 		gg_pubdir_free(h);
 	}
 
-	for (l = gg_userlists; l; l = l->next) {
-		struct gg_http *h = l->data;
-
-		watch_remove(&gg_plugin, h->fd, h->check);
-		gg_pubdir_free(h);
-	}
-
 	xfree(gg_register_password);
 	gg_register_password = NULL;
 	xfree(gg_register_email);

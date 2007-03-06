@@ -26,7 +26,6 @@
 extern list_t gg_registers;
 extern list_t gg_unregisters;
 extern list_t gg_reminds;
-extern list_t gg_userlists;
 
 extern int gg_register_done;
 extern char *gg_register_password;
