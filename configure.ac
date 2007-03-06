@@ -675,7 +675,7 @@ fi
 
 echo -en " - Charset:\t "
 	if test "x$enable_unicode" = "xyes"; then
-	        echo "unicode/ascii (EXPERIMENTAL)"
+	        echo "unicode/utf8 (EXPERIMENTAL)"
 		echo "*****************************************************************************************************"
 		echo "WARNING: USING THE RESULTING EKG2 BINARY IN A NON-UTF-8 (ASCII or LATIN) TERMINAL IS CURRENTLY"
 		echo "NOT SUPPORTED WHEN BUILT WITH GCC 4.x OR LATER."
@@ -692,7 +692,7 @@ echo -en " - Charset:\t "
 		echo "******************************************************************************************************"
 		echo "AND ENJOY USING EKG2-UNICODE"
 	else
-	        echo "ascii"
+	        echo "ansi"
 	fi
 
 echo -en " - Plugins:\t "
