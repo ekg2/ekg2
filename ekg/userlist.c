@@ -767,28 +767,6 @@ int valid_nick(const char *nick)
 
 	return 1;
 }
-
-/*
- * valid_uid()
- *
- * sprawdza, czy uid jest obs³ugiwany przez jaki¶ plugin i czy jest
- * poprawny.
- *
- * zwraca 1 je¶li nick jest w porz±dku, w przeciwnym razie 0.
- */
-int valid_uid(const char *uid)
-{
-	int valid = 0;
-	char *tmp;
-	tmp = xstrdup(uid);
-
-	query_emit_id(NULL, PROTOCOL_VALIDATE_UID, &tmp, &valid);
-	xfree(tmp);
-
-	return (valid > 0);
-}
-
-
 /*
  * valid_plugin_uid()
  *
@@ -804,8 +782,10 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid)
         int valid = 0;
         char *tmp;
 
-	if (!plugin)
+	if (!plugin) {
+		debug_error("valid_plugin_uid() no plugin passed. In current api, it means than something really bad happen.\n");
 		return -1;
+	}
 
         tmp = xstrdup(uid);
 
@@ -831,14 +811,18 @@ char *get_uid(session_t *session, const char *text)
 	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
-		return window_current->target;
-	
+		text = window_current->target;
+
 	u = userlist_find(session, text);
 
+	/* XXX, pro. we should not allow add to userlist bad uid, and remove checking it here */
+	if (u && valid_plugin_uid(session->plugin, u->uid) != 1)
+		u = NULL;
+	
 	if (u && u->uid)
 		return u->uid;
 
-	if (valid_uid(text))
+	if (valid_plugin_uid(session->plugin, text) == 1)
 		return (char *)text;
 
 	return NULL;
@@ -858,13 +842,17 @@ char *get_nickname(session_t *session, const char *text)
 
         u = userlist_find(session, text);
 
+	/* XXX, pro. we should not allow add to userlist bad uid, and remove checking it here */
+	if (u && valid_plugin_uid(session->plugin, u->uid) != 1)
+		u = NULL;
+
         if (u && u->nickname)
                 return u->nickname;
 
 	if (u && u->uid)
 		return u->uid;
 
-	if (valid_uid(text))
+	if (valid_plugin_uid(session->plugin, text) == 1)
 	        return (char *)text;
 
         return NULL;

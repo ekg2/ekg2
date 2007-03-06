@@ -102,6 +102,7 @@ window_t *window_find(const char *target)
 		list_t sl;
 		for (sl = sessions; sl; sl = sl->next) {
 			session_t *s = sl->data;
+					/* XXX, get_uid() */
 			u = userlist_find(s, get_uid(s, target));
 		}
 	}
@@ -152,6 +153,7 @@ window_t *window_find_s(session_t *session, const char *target)
 	}
 
 	if (session && target) {
+			/* XXX, bad session, get_uid() */
 		u = userlist_find(session, get_uid(session, target));
 	} else {
 		if (target && strncmp(target, "__", 2)) {

@@ -551,6 +551,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		user, 
 		timestamp, 
 		(emotted) ? emotted : text, 
+					/* XXX, get_uid() get_nickname() */
 		(!xstrcmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), 
 		(!xstrcmp(class_str, "sent")) ? s->uid : get_uid(s, sender), 
 		(secure) ? securestr : "");

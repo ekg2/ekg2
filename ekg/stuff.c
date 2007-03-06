@@ -836,7 +836,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 		if (!xstrcmp(*p, ""))
 		        continue;
-
+			/* XXX, check if bad uid */
 		uid = get_uid(session, *p);
 
 		if (uid)
@@ -1961,6 +1961,8 @@ int msg_all(session_t *s, const char *function, const char *what)
 
 		if (!u || !u->uid)
 			continue;
+		/* XXX, when adding to userlist if we check if uid is good, this code will be ok. */
+
 		command_exec_format(NULL, s, 0, "%s \"%s\" %s", function, get_nickname(s, u->uid), what);
 	}
 

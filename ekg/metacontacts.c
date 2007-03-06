@@ -319,7 +319,7 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 		printq("session_doesnt_exist", session);
 		return 0;
 	}
-
+		/* XXX, bad session */
         if (!(uid = get_uid(s, name))) {
 		printq("user_not_found", name);
                 debug("! metacontact_add_item: UID is not on our contact lists: %s\n", name);

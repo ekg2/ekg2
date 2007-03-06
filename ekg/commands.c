@@ -910,7 +910,7 @@ static COMMAND(cmd_for)
                                 if (!w || !w->target || !w->session)
                                         continue;
 
-                                if (!next_is_for)
+                                if (!next_is_for)		/* XXX, get_uid(), get_nickname() */
                                         for_command = format_string(params[2], get_nickname(w->session, w->target), get_uid(w->session, w->target));
                                 else
                                         for_command = xstrdup(params[2]);
@@ -941,7 +941,7 @@ static COMMAND(cmd_for)
                                 if (!w[i] || !w[i]->target || !w[i]->session)
                                         continue;
 
-                                if (!next_is_for)
+                                if (!next_is_for)		/* XXX, get_uid(), get_nickname() */
                                         for_command = format_string(params[2], get_nickname(w[i]->session, w[i]->target), get_uid(w[i]->session, w[i]->target));
                                 else
                                         for_command = xstrdup(params[2]);
@@ -1213,7 +1213,12 @@ static COMMAND(cmd_ignore)
 			return command_exec_format(NULL, NULL, quiet, ("/conference --ignore %s"), params[0]);
 		}
 
-                if ((flags = ignored_check(session, get_uid(session, params[0]))))
+		if (!(uid = get_uid(session, params[0]))) {
+			printq("user_not_found", params[0]);
+			return -1;
+		}
+
+                if ((flags = ignored_check(session, uid)))
                         modified = 1;
 
 		if (params[1]) {
@@ -1227,11 +1232,6 @@ static COMMAND(cmd_ignore)
                         flags |= __flags;
 		} else
 			flags = IGNORE_ALL;
-
-		if (!(uid = get_uid(session, params[0]))) {
-			printq("user_not_found", params[0]);
-			return -1;
-		}
 
 		if (modified)
 			ignored_remove(session, uid);
@@ -2239,17 +2239,24 @@ static COMMAND(cmd_query) {
 		if (!(sess_tmp = session_find(session_name))) {
 			xfree(session_name);
 			goto next;
-		} 
+		}
+		xfree(session_name);
 
 		session = sess_tmp;
+
+		tmp++;
+	
+	/* check if plugin can handle it */
+		if (valid_plugin_uid(session->plugin, tmp) != 1) {
+			printq("invalid_session");
+			return -1;
+		}
 		
-		if (!get_uid(session, ++tmp)) {
+		if (!get_uid(session, tmp)) {
 			printq("user_not_found", tmp);
-			xfree(session_name);
 			return -1;
 		}
 
-		xfree(session_name);
 		par0 = tmp;
 	}
 
@@ -3564,6 +3571,7 @@ static COMMAND(cmd_last)
 	struct tm *now;
 
 	if (match_arg(params[0], 'c', ("clear"), 2)) {
+				/* XXX, get_uid() */
 		if (params[1] && !(uid = get_uid(session, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
@@ -3617,7 +3625,7 @@ static COMMAND(cmd_last)
 	}
 
 	show_all = (nick && !xstrcasecmp(nick, "*")) ? 1 : 0;
-
+			/* XXX, get_uid() */
 	if (!show_all && nick && !(uid = get_uid(session, nick))) {
 		printq("user_not_found", nick);
 		array_free(arr);
@@ -3806,7 +3814,7 @@ COMMAND(cmd_dcc)
 			wcs_printq("not_enough_params", name);
 			return -1;
 		}
-
+			/* XXX, get_uid() */
 		uid = get_uid(session, params[1]);		
 
 		for (l = dccs; l; l = l->next) {
