@@ -106,6 +106,7 @@ int array_count(char **array);
 int array_contains(char **array, const char *string, int casesensitive);
 int array_item_contains(char **array, const char *string, int casesensitive);
 void array_free(char **array);
+void array_free_count(char **array, int count);
 
 /* rozszerzenia libców */
 

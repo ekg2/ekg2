@@ -829,6 +829,18 @@ void array_free(char **array)
 	xfree(array);
 }
 
+void array_free_count(char **array, int count) {
+	char **tmp;
+
+	if (!array)
+		return;
+
+	for (tmp = array; count; tmp++, count--)
+		xfree(*tmp);
+
+	xfree(array);
+}
+
 /*
  * Local Variables:
  * mode: c

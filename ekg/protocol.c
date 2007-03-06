@@ -132,7 +132,7 @@ static QUERY(protocol_disconnected)
 				print("conn_failed", reason, session_name(s));
 
 			if (s && (tmp = session_int_get(s, "auto_reconnect")) && tmp != -1)
-				timer_add(plugin_find_uid(s->uid), "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
+				timer_add(s->plugin, "reconnect", tmp, 0, protocol_reconnect_handler, xstrdup(session));
 
 			break;
 		}

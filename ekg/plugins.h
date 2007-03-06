@@ -48,8 +48,33 @@ typedef int (*plugin_destroy_func_t)(void);
 typedef int (*plugin_theme_init_func_t)(void);
 typedef void (plugin_notify_func_t)(session_t *, const char *);
 
+#define PLUGIN_VAR_ADD(name, id, type, value, secret, notify) 	{ name, id, value, secret, type, notify }
+#define PLUGIN_VAR_ADD_ID(id, type, value, secret, notify)	{ NULL, id, value, secret, type, notify }
+#define PLUGIN_VAR_ADD_NAME(name, type, value, secret, notify)	{ name,  0, value, secret, type, notify }
+#define PLUGIN_VAR_END()					{ NULL, -1, NULL, 0, -1, NULL } 
+
+typedef enum {
+	SESSION_VAR_START = 0,
+	SESSION_VAR_ALIAS,
+	SESSION_VAR_ALLOW_AUTORESPONDER,
+	SESSION_VAR_AUTO_AWAY,
+	SESSION_VAR_AUTO_AWAY_DESCR,
+	SESSION_VAR_AUTO_BACK,
+	SESSION_VAR_AUTO_CONNECT,
+	SESSION_VAR_AUTO_FIND,
+	SESSION_VAR_AUTO_RECONNECT,
+	SESSION_VAR_CONNECT_TIMEOUT,
+	SESSION_VAR_DCC_PORT,
+	SESSION_VAR_DISPLAY_NOTIFY,
+	SESSION_VAR_LOG_FORMATS,
+	SESSION_VAR_PASSWORD,
+	SESSION_VAR_PORT,
+	SESSION_VAR_SERVER,
+} plugin_param_id_t;
+
 typedef struct {
         char *key;                      /* name */
+	int id;				/* see @ plugin_param_id_t */
         char *value;                    /* value */
         int secret;                     /* should it be hidden ? */
 	int type;			/* type */
@@ -62,7 +87,7 @@ typedef struct {
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
 	/* lt_dlhandle */ void *dl;
-	plugins_params_t **params;
+	plugins_params_t *params;
 	plugin_theme_init_func_t theme_init;
 } plugin_t;
 
@@ -74,10 +99,9 @@ int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);
 plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
-#define plugin_find_s(a) plugin_find_uid(a->uid)
 int have_plugin_of_class(int);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
-plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
+int plugin_var_find_id(plugin_t *pl, const char *name);
 
 #endif
 

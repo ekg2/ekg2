@@ -315,27 +315,7 @@ int plugin_unload(plugin_t *p)
 	if (!p)
 		return -1;
 
-	/* XXX eXtreme HACK warning
-	 * (mp) na razie jest tak.  docelowo: wyladowywac pluginy tylko z
-	 * glownego programu (queriesami?)
-	 * to cos segfaultowalo (wczesniej czy pozniej), jesli bylo wywolane z
-	 * ncurses.  niestety, problem pozostaje dla innych pluginow i takiego
-	 * np. rc. sie zrobi nast razem */
-	if (p->pclass == PLUGIN_PROTOCOL) {
-		list_t l;
-
-		for (l = sessions; l; ) {
-			session_t *s = l->data;
-
-			l = l->next;
-		
-			if (!s || !s->uid)
-				continue;
-
-			if (plugin_find_uid(s->uid) == p)
-				session_remove(s->uid);
-		}		
-	} else if (p->pclass == PLUGIN_UI) {
+	if (p->pclass == PLUGIN_UI) {
 		list_t l;
 		int unloadable = 0;
 		for (l=plugins; l; l = l->next) {
@@ -354,16 +334,16 @@ int plugin_unload(plugin_t *p)
 	if (p->destroy)
 		p->destroy();
 
-	if (p->dl) {
+	if (p->dl)
 		ekg2_dlclose(p->dl);
-	}
 
 	wcs_print("plugin_unloaded", name);
+
+	xfree(name);
 
         if (!in_autoexec)
                 config_changed = 1;
 
-	xfree(name);
 	return 0;
 }
 
@@ -420,11 +400,21 @@ int plugin_register(plugin_t *p, int prio)
  */
 int plugin_unregister(plugin_t *p)
 {
-	plugins_params_t **par;
 	list_t l;
 
 	if (!p)
 		return -1;
+
+	/* XXX eXtreme HACK warning
+	 * (mp) na razie jest tak.  docelowo: wyladowywac pluginy tylko z
+	 * glownego programu (queriesami?)
+	 * to cos segfaultowalo (wczesniej czy pozniej), jesli bylo wywolane z
+	 * ncurses.  niestety, problem pozostaje dla innych pluginow i takiego
+	 * np. rc. sie zrobi nast razem */
+
+	/* j/w If any plugin has backtrace here, and we try to remove it from memory.
+	 * ekg2 do SEGV. For example below is comment for rc plugin and watches...
+	 */
 
 	for (l = queries; l; ) {
 		query_t *q = l->data;
@@ -492,15 +482,13 @@ plugin_watches_again:
 		}
 	}
 
-	if ((par = p->params)) {
-		while (*par) {
-			xfree((*par)->key);
-			xfree((*par)->value);
-			xfree((*par));
-			par++;
-		}
-		xfree(p->params);
-		p->params = NULL;
+	for (l = sessions; l; ) {
+		session_t *s = l->data;
+
+		l = l->next;
+
+		if (s->plugin == p)
+			session_remove(s->uid);
 	}
 
 	list_remove(&plugins, p, 0);
@@ -509,69 +497,27 @@ plugin_watches_again:
 }
 
 /* 
- * plugin_var_find()
+ * plugin_var_find_id()
  *
  * it looks for given var in given plugin
  *
- * returns pointer to this var or NULL if not found or error
+ * returns sequence number+1 of variable if found, else 0
  */
-plugins_params_t *plugin_var_find(plugin_t *pl, const char *name)
-{
+
+int plugin_var_find_id(plugin_t *pl, const char *name) {
 	int i;
-	
-	if (!pl)
-		return NULL;
 
-	if (!pl->params)
-		return NULL;
+	if (!pl || !pl->params)
+		return 0;
 
-	for (i = 0; pl->params[i]; i++) {
-		if (!xstrcasecmp(pl->params[i]->key, name))
-			return pl->params[i];
+	for (i = 0; (pl->params[i].key /* && pl->params[i].id != -1 */); i++) {
+		if (!xstrcasecmp(pl->params[i].key, name))
+			return i+1;
 	}
-
-	return NULL;
+	return 0;
 }
 
-/*
- * plugin_var_add()
- *
- * adds given var to the given plugin
- *
- * name - name
- * type - VAR_INT | VAR_STR
- * value - default_value
- * secret - hide when showing?
- */
-int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify)
-{
-	plugins_params_t *p;
-	int i, count;
-
-        p = xmalloc(sizeof(plugins_params_t));
-        p->key = xstrdup(name);
-	p->type = type;
-	p->value = xstrdup(value);
-	p->secret = secret;
-        p->notify = notify;
-
-	if (!pl->params) {
-                pl->params = xmalloc(sizeof(plugins_params_t *) * 2);
-                pl->params[0] = p;
-                pl->params[1] = NULL;
-                return 0;
-        }
-
-        for (i = 0, count = 0; pl->params[i]; i++)
-                count++;
-
-        pl->params = xrealloc(pl->params, (count + 2) * sizeof(plugins_params_t *));
-
-        pl->params[count] = p;
-        pl->params[count + 1] = NULL;
-
-        return 0;
-}
+int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
 void query_external_free() {
 	list_t l;

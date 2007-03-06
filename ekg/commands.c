@@ -322,7 +322,7 @@ COMMAND(cmd_add)
 		goto cleanup;
 	}
 
-	if (plug != plugin_find_uid(session_current->uid)) {
+	if (plug != session_current->plugin) {
 		wcs_printq("invalid_uid");
 		result = -1;
 		goto cleanup;
@@ -485,13 +485,14 @@ static COMMAND(cmd_status)
 
         wcs_printq("show_status_header");
 
-	if (!params[0] && session)
-		query_emit_id(plugin_find_uid(session->uid), STATUS_SHOW, &session->uid);
-	else if (!(s = session_find(params[0]))) {
+	s = params[0] ? session_find(params[0]) : session;
+
+	if (params[0] && !s) {
 		printq("invalid_uid", params[0]);
 		return -1;
-	} else
-		query_emit_id(plugin_find_uid(s->uid), STATUS_SHOW, &s->uid);
+	}
+
+	query_emit_id(s->plugin, STATUS_SHOW, &s->uid);
 
         n = time(NULL);
         t = localtime(&n);
@@ -2545,7 +2546,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 		if (!res && (last_command->flags & SESSION_MUSTBELONG)) {
 			/* ok, it works but i still thinks that valid_plugin_uid sucks (too slow) */
-			if (valid_plugin_uid(last_command->plugin, session_uid_get(s)) != 1) {
+			if (last_command->plugin != s->plugin) {
 				wcs_printq("invalid_session");
 				res = -1;
 /*				debug("[command_exec] res = -1; SESSION_MUSTBELONG\n"); */

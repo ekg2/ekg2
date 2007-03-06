@@ -1183,7 +1183,6 @@ watches_again:
 		plugin_t *p = l->data;
 
 		l = l->next;
-		/* if (plugin_find_uid(s->uid) == p) session_remove(s->uid);	XXX, plugin_unload() */
 
 		p->destroy();
 

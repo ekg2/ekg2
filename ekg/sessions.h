@@ -31,6 +31,7 @@ typedef struct {
 
 typedef struct {
 	/* public: */
+	void *plugin;
 	char *uid;			/* id u¿ytkownika */
 	char *alias;			/* alias sesji */
 	void *priv;			/* dla plugina obs³uguj±cego sesjê */
@@ -47,7 +48,10 @@ typedef struct {
 	int scroll_pos;
 	int scroll_op;
 	time_t last_conn;               /* kiedy siê po³±czyli¶my */
-	list_t params;
+
+	int global_vars_count;
+	char **values;
+	list_t local_vars;
 	
 	/* new auto-away */
 	char *laststatus;
@@ -63,74 +67,51 @@ session_t *session_find(const char *uid);
 session_t *session_find_ptr(session_t *s);
 session_param_t *session_var_find(session_t *s, const char *key);
 
-int session_var_default(session_t *s);
-#define session_var_default_n(a) session_var_default(session_find(a))
-
 int session_is_var(session_t *s, const char *key);
 
 const char *session_uid_get(session_t *s);
-#define session_uid_get_n(a) session_uid_get(session_find(a))
 
 const char *session_alias_get(session_t *s);
-#define session_alias_get_n(a) session_alias_get(session_find(a))
 int session_alias_set(session_t *s, const char *alias);
-#define session_alias_set_n(a,b) session_alias_set(session_find(a),b)
 
 const char *session_status_get(session_t *s);
 #define session_status_get_n(a) session_status_get(session_find(a))
 int session_status_set(session_t *s, const char *status);
-#define session_status_set_n(a,b) session_status_set(session_find(a),b)
 
 const char *session_descr_get(session_t *s);
-#define session_descr_get_n(a) session_descr_get(session_find(a))
 int session_descr_set(session_t *s, const char *descr);
-#define session_descr_set_n(a,b) session_descr_set(session_find(a),b)
 
 const char *session_password_get(session_t *s);
-#define session_password_get_n(a) session_descr_get(session_find(a))
 int session_password_set(session_t *s, const char *password);
-#define session_password_set_n(a,b) session_descr_set(session_find(a),b)
 
 void *session_private_get(session_t *s);
-#define session_private_get_n(a) session_private_get(session_find(a))
 int session_private_set(session_t *s, void *priv);
-#define session_private_set_n(a,b) session_private_set(session_find(a),b)
 
 int session_connected_get(session_t *s);
-#define session_connected_get_n(a) session_connected_get(session_find(a))
 int session_connected_set(session_t *s, int connected);
-#define session_connected_set_n(a,b) session_connected_set(session_find(a),b)
 
 const char *session_get(session_t *s, const char *key);
-#define session_get_n(a,b) session_get(session_find(a),b)
 int session_int_get(session_t *s, const char *key);
-#define session_int_get_n(a,b) session_int_get(session_find(a),b)
 int session_set(session_t *s, const char *key, const char *value);
-#define session_set_n(a,b,c) session_set(session_find(a),b,c)
 int session_int_set(session_t *s, const char *key, int value);
-#define session_int_set_n(a,b,c) session_int_set(session_find(a),b,c)
 
 const char *session_format(session_t *s);
 #define session_format_n(a) session_format(session_find(a))
 
 /* alias or uid - formatted */
 const char *session_name(session_t *s);
-#define session_name_n(a) session_name(session_find(a))
 
 /* alias or uid - not formatted */
 #define session_alias_uid(a) (a->alias) ? a->alias : a->uid
 #define session_alias_uid_n(a) session_alias_uid(session_find(a))
 
 int session_check(session_t *s, int need_private, const char *protocol);
-#define session_check_n(a,b,c) session_check(session_find(a),b,c)
 
 int session_unidle(session_t *s);
-#define session_unidle_n(a) session_unidle(session_find(a))
 
 int session_compare(void *data1, void *data2);
 session_t *session_add(const char *uid);
 int session_remove(const char *uid);
-#define session_remove_s(a) session_remove(a->uid)
 
 int session_read(const char *filename);
 int session_write();
