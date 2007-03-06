@@ -2187,11 +2187,86 @@ static COMMAND(irc_command_genkey) {
 
 #define params(x) x
 
+static plugins_params_t irc_plugin_vars[] = {
+	/* lower case: names of variables that reffer to client itself */
+	PLUGIN_VAR_ADD("alt_nick", 		0, VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("alias",			SESSION_VAR_ALIAS, VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("auto_away",		SESSION_VAR_AUTO_AWAY, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_back",		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect",		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_find",		SESSION_VAR_AUTO_FIND, VAR_BOOL, "0", 0, NULL),		/* it's really auto_whois */
+	PLUGIN_VAR_ADD("auto_reconnect",	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "0", 10, NULL), 
+	PLUGIN_VAR_ADD("auto_channel_sync",	0, VAR_BOOL, "1", 0, NULL),				/* like channel_sync in irssi; better DO NOT turn it off! */
+	PLUGIN_VAR_ADD("auto_lusers_sync", 	0, VAR_BOOL, "0", 0, NULL),				/* sync lusers, stupid ;(,  G->dj: well why ? */
+	PLUGIN_VAR_ADD("ban_type", 		0, VAR_INT, "10", 0, NULL),
+	PLUGIN_VAR_ADD("connect_timeout",	SESSION_VAR_CONNECT_TIMEOUT, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("close_windows", 	0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("dcc_port",		SESSION_VAR_DCC_PORT, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("display_notify", 	SESSION_VAR_DISPLAY_NOTIFY, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("hostname",		0, VAR_STR, 0, 0, irc_changed_resolve),
+	PLUGIN_VAR_ADD("identify",		0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("log_formats",		SESSION_VAR_LOG_FORMATS, VAR_STR, "irssi", 0, NULL),
+	PLUGIN_VAR_ADD("make_window",		0, VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("prefer_family", 	0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("nickname",		0, VAR_STR, NULL, 0, NULL), 				/* value will be inited @ irc_plugin_init() [pwd_entry->pw_name] */
+	PLUGIN_VAR_ADD("password",		SESSION_VAR_PASSWORD, VAR_STR, 0, 1, NULL),
+	PLUGIN_VAR_ADD("port",			SESSION_VAR_PORT, VAR_INT, "6667", 0, NULL),
+	PLUGIN_VAR_ADD("realname",		0, VAR_STR, NULL, 0, NULL),				/* value will be inited @ irc_plugin_init() [pwd_entry->pw_gecos] */
+	PLUGIN_VAR_ADD("server",		SESSION_VAR_SERVER, VAR_STR, 0, 0, irc_changed_resolve),
+
+	/* upper case: names of variables, that reffer to protocol stuff */
+	PLUGIN_VAR_ADD("AUTO_JOIN",			0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("AUTO_JOIN_CHANS_ON_INVITE", 	0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("DEFAULT_COLOR", 		0, VAR_INT, "0", 0, NULL),			/* TODO :> */
+	PLUGIN_VAR_ADD("DISPLAY_PONG", 			0, VAR_BOOL, "1", 0, NULL),			/* GiM, do we really want/need '1' here as default? */
+	PLUGIN_VAR_ADD("DISPLAY_AWAY_NOTIFICATION", 	0, VAR_INT, "1", 0, NULL),
+	PLUGIN_VAR_ADD("DISPLAY_IN_CURRENT", 		0, VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("DISPLAY_NICKCHANGE", 		0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("DISPLAY_QUIT", 			0, VAR_INT, "0", 0, NULL),
+	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
+	PLUGIN_VAR_ADD("KICK_MSG", 			0, VAR_STR, DEFKICKMSG, 0, NULL),
+	PLUGIN_VAR_ADD("PART_MSG", 			0, VAR_STR, DEFPARTMSG, 0, NULL),
+	PLUGIN_VAR_ADD("QUIT_MSG", 			0, VAR_STR, DEFQUITMSG, 0, NULL),
+	PLUGIN_VAR_ADD("REJOIN", 			0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("REJOIN_TIME", 			0, VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("SHOW_NICKMODE_EMPTY", 		0, VAR_INT, "1", 0, NULL),
+	PLUGIN_VAR_ADD("SHOW_MOTD", 			0, VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("STRIPMIRCCOL", 			0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("VERSION_NAME", 			0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("VERSION_NO", 			0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("VERSION_SYS", 			0, VAR_STR, 0, 0, NULL),
+
+	PLUGIN_VAR_END()
+};
+
 int irc_plugin_init(int prio)
 {
 #ifndef NO_POSIX_SYSTEM
 	struct passwd	*pwd_entry = getpwuid(getuid());
+
+/* yeah, i know it's static. */
+	static char pwd_name[2000] 	= { '\0'};
+	static char pwd_realname[2000]	= { '\0'};
+
+	if (pwd_entry) {
+		xstrncpy(pwd_name, pwd_entry->pw_name, sizeof(pwd_name));
+		xstrncpy(pwd_realname, pwd_entry->pw_gecos, sizeof(pwd_realname));
+
+		pwd_name[sizeof(pwd_name)-1] = '\0';
+		pwd_realname[sizeof(pwd_realname)-1] = '\0';
+		/* XXX, we need to free buffer allocated by getpwuid()? */
+	}
+
+#else
+	const char *pwd_name = NULL;
+	const char *pwd_realname = NULL;
 #endif
+
+/* magic stuff */
+	irc_plugin_vars[19].value = pwd_name;
+	irc_plugin_vars[22].value = pwd_realname;
+
+	irc_plugin.params = irc_plugin_vars;
 
 	plugin_register(&irc_plugin, prio);
 
@@ -2267,75 +2342,6 @@ int irc_plugin_init(int prio)
 	command:add(&irc_plugin, ("irc:list"), .....)			V q list 
 */
 	commands_lock = NULL;
-
-	/* lower case: names of variables that reffer to client itself */
-	plugin_var_add(&irc_plugin, "alt_nick", VAR_STR, NULL, 0, NULL);
-	plugin_var_add(&irc_plugin, "alias", VAR_STR, 0, 0, NULL);
-
-	plugin_var_add(&irc_plugin, "auto_away", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "auto_back", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
-	/* it's really auto_whois */
-	plugin_var_add(&irc_plugin, "auto_find", VAR_BOOL, "0", 0, NULL); 
-	plugin_var_add(&irc_plugin, "auto_reconnect", VAR_INT, "0", 0, NULL); 
-	/* like channel_sync in irssi; better DO NOT turn it off! */
-	plugin_var_add(&irc_plugin, "auto_channel_sync", VAR_BOOL, "1", 0, NULL);
-	/* sync lusers, stupid ;(,  G->dj: well why ? */
-	plugin_var_add(&irc_plugin, "auto_lusers_sync", VAR_BOOL, "0", 0, NULL);
-        plugin_var_add(&irc_plugin, "auto_reconnect", VAR_INT, "-1", 0, NULL);
-	plugin_var_add(&irc_plugin, "ban_type", VAR_INT, "10", 0, NULL);
-	plugin_var_add(&irc_plugin, "connect_timeout", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "close_windows", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "dcc_port", VAR_INT, "0", 0, NULL);
-        plugin_var_add(&irc_plugin, "display_notify", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "hostname", VAR_STR, 0, 0, irc_changed_resolve);
-	plugin_var_add(&irc_plugin, "identify", VAR_STR, 0, 0, NULL);
-
-	plugin_var_add(&irc_plugin, "log_formats", VAR_STR, "irssi", 0, NULL);
-
-	plugin_var_add(&irc_plugin, "make_window", VAR_INT, "2", 0, NULL);
-	plugin_var_add(&irc_plugin, "prefer_family", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "nickname", VAR_STR, 
-#ifdef NO_POSIX_SYSTEM
-		NULL,
-#else
-		pwd_entry ? pwd_entry->pw_name : NULL, 
-#endif
-		0, NULL);
-	plugin_var_add(&irc_plugin, "password", VAR_STR, 0, 1, NULL);
-	plugin_var_add(&irc_plugin, "port", VAR_INT, "6667", 0, NULL);
-	plugin_var_add(&irc_plugin, "realname", VAR_STR, 
-#ifdef NO_POSIX_SYSTEM
-		NULL,
-#else
-		pwd_entry ? pwd_entry->pw_gecos : NULL, 
-#endif
-		0, NULL);
-	plugin_var_add(&irc_plugin, "server", VAR_STR, 0, 0, irc_changed_resolve);
-
-	/* upper case: names of variables, that reffer to protocol stuff */
-	plugin_var_add(&irc_plugin, "AUTO_JOIN", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&irc_plugin, "AUTO_JOIN_CHANS_ON_INVITE", VAR_BOOL, "0", 0, NULL);
-	/* TODO ;> */
-	plugin_var_add(&irc_plugin, "DEFAULT_COLOR", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_PONG", VAR_BOOL, "1", 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_AWAY_NOTIFICATION", VAR_INT, "1", 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_IN_CURRENT", VAR_INT, "2", 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_NICKCHANGE", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "DISPLAY_QUIT", VAR_INT, "0", 0, NULL);
-	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
-	plugin_var_add(&irc_plugin, "KICK_MSG", VAR_STR, DEFKICKMSG, 0, NULL);
-	plugin_var_add(&irc_plugin, "PART_MSG", VAR_STR, DEFPARTMSG, 0, NULL);
-	plugin_var_add(&irc_plugin, "QUIT_MSG", VAR_STR, DEFQUITMSG, 0, NULL);
-	plugin_var_add(&irc_plugin, "REJOIN", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "REJOIN_TIME", VAR_INT, "2", 0, NULL);
-	
-	plugin_var_add(&irc_plugin, "SHOW_NICKMODE_EMPTY", VAR_INT, "1", 0, NULL);
-	plugin_var_add(&irc_plugin, "SHOW_MOTD", VAR_BOOL, "1", 0, NULL);
-	plugin_var_add(&irc_plugin, "STRIPMIRCCOL", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&irc_plugin, "VERSION_NAME", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&irc_plugin, "VERSION_NO", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&irc_plugin, "VERSION_SYS", VAR_STR, 0, 0, NULL);
 
 	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
 
