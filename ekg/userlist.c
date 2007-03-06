@@ -825,11 +825,17 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid)
 
 }
 
-/*
+/**
  * get_uid_any()
  *
- * robi to co stare get_uid()
- * backward compatilibity
+ * Return and checks if uid passed @a text is proper for at least one session, or it's nickname of smb on @a session userlist
+ *
+ * @param session 	- session to search for item on userlist
+ * @param text		- uid to check for, if '$' then check current window.
+ *
+ * @sa get_uid()	- to search only specified session.
+ *
+ * @return If we found proper uid for @a text, than return it. Otherwise NULL
  */
 
 char *get_uid_any(session_t *session, const char *text) {
@@ -838,19 +844,38 @@ char *get_uid_any(session_t *session, const char *text) {
 	if (!session) 
 		return uid;
 
+	if (!uid && !xstrcmp(text, "$"))
+		text = window_current->target;
+
 	return uid ? uid : valid_uid(text) ? (char *) text : NULL;
 }
 
-/*
+/**
  * get_uid()
  *
- * je¶li podany tekst jest uid (ale nie jednocze¶nie nazw± u¿ytkownika),
- * zwraca jego warto¶æ. je¶li jest nazw± u¿ytkownika w naszej li¶cie kontaktów,
- * zwraca jego uid. je¶li tekstem jestem znak ,,$'', zwraca uid aktualnego
- * rozmówcy. inaczej zwraca NULL.
+ * Return and checks if uid passed @a text is proper for @a session or it's nickname of smb on @a session userlist.
  *
- *  - text.
+ * @note It also work with userlist_find() and if @a text is nickname of smb in session userlist.. 
+ * 	 Than it return uid of this user. 
+ *	 So you shouldn't call userlist_find() with get_uid() as param, cause it's senseless
+ *	 userlist_find() only don't check for "$" target.. So you must do it by hand..
+ *	 But otherwise it's the same. <br>
+ *	 If there are such user:
+ *	 <code>userlist_find(s, get_uid(s, target))</code> return the same as <code>userlist_find(s, target)</code><br>
+ *	 If not, even <code>userlist_find(s, get_uid(s, get_uid(s, get_uid(s, target))))</code> won't help 
+ *
+ * @param session - session to check for, if NULL check all sessions (it doesn't look at userlists, in this mode)
+ * @param text - uid to check for, if '$' than check current window.
+ *
+ * @sa userlist_find()
+ * @sa get_nickname() 	- to look for nickname..
+ * @sa get_uid_any()	- to do all session searching+specified session userlist search..
+ * 				This function does only all session searching if @a session is NULL... and than
+ * 				it doesn't look at userlist. Do you feel difference?
+ *
+ * @return If we found proper uid for @a text, than return it. Otherwise NULL
  */
+
 char *get_uid(session_t *session, const char *text)
 {
 	userlist_t *u;
