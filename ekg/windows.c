@@ -116,7 +116,7 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 		window_t *w = m->data;
 
 		/* if targets match, and (sessions match or [no session was specified, and it doesn't matter to which session window belongs to]) */
-		if (!xstrcasecmp(target, w->target) && ((session == w->session) || (!session && !session_null_means_no_session)))
+		if (((session == w->session) || (!session && !session_null_means_no_session)) && !xstrcasecmp(target, w->target))
 			return w;
 	}
 
