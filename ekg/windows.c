@@ -89,22 +89,13 @@ window_t *window_find(const char *target)
 	int debug = ((target) ? !xstrcasecmp(target, "__debug") : 0);
 	int status = ((target) ? !xstrcasecmp(target, "__status") : 0);
 	userlist_t *u = NULL;
-	list_t l;
+	list_t l, m;
 
 	if (!target || current) {
 		if (window_current->id)
 			return window_current;
 		else
 			status = 1;
-	}
-
-	if (xstrncmp(target, "__", 2)) {
-		list_t sl;
-		for (sl = sessions; sl; sl = sl->next) {
-			session_t *s = sl->data;
-					/* XXX, get_uid() */
-			u = userlist_find(s, get_uid(s, target));
-		}
 	}
 
 	for (l = windows; l; l = l->next) {
@@ -116,18 +107,42 @@ window_t *window_find(const char *target)
 		if (w->id == 1 && status)
 			return w;
 
-		if (w->target && target) {
-			if (!xstrcasecmp(target, w->target))
-				return w;
-
-			if (u && u->nickname && !xstrcasecmp(u->nickname, w->target))
-				return w;
-
-			if (u && !xstrcasecmp(u->uid, w->target))
-				return w;
-		}
+		if (w->id > 1)
+			break;
 	}
 
+/* skip __debug && __status */
+	for (m = l; m; m = m->next) {
+		window_t *w = m->data;
+
+		if (!xstrcasecmp(target, w->target))
+			return w;
+	}
+
+	if (xstrncmp(target, "__", 2)) {
+		list_t sl;
+		for (sl = sessions; sl; sl = sl->next) {
+			session_t *s = sl->data;
+			list_t new_l;
+
+				/* XXX, get_uid() execute userlist_find() also, fix it. */
+			if (!(u = userlist_find(s, get_uid(s, target))))
+				continue;
+			
+		/* skip __debug && __status */
+			for (new_l = l; new_l; new_l = new_l->next) {
+				window_t *w = new_l->data;
+
+				if (w->target) {
+					if (u->nickname && !xstrcasecmp(u->nickname, w->target))
+						return w;
+
+					if (!xstrcasecmp(u->uid, w->target))
+						return w;
+				}
+			}
+		}
+	}
 	return NULL;
 }
 
