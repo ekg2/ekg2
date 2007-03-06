@@ -1276,10 +1276,7 @@ int jabber_plugin_init(int prio) {
         return 0;
 }
 
-static int jabber_plugin_destroy()
-{
-        list_t l;
-
+static int jabber_plugin_destroy() {
 #ifdef JABBER_HAVE_SSL
 	SSL_GLOBAL_DEINIT();
 #endif
