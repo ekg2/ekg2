@@ -1244,7 +1244,37 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 	ekg_debug_handler(newlevel, format, ap);
 }
 
+static plugins_params_t gg_plugin_vars[] = {
+	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL), 
+	PLUGIN_VAR_ADD("allow_autoresponder", 	SESSION_VAR_ALLOW_AUTORESPONDER, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away", 		SESSION_VAR_AUTO_AWAY, VAR_INT, "600", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away_descr", 	SESSION_VAR_AUTO_AWAY_DESCR, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_back", 		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),	
+	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_find", 		SESSION_VAR_AUTO_FIND, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_reconnect", 	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "10", 0, NULL),
+	PLUGIN_VAR_ADD("concat_multiline_status", 0, VAR_INT, "3", 0, NULL),
+	PLUGIN_VAR_ADD("connection_save", 	0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("display_notify", 	SESSION_VAR_DISPLAY_NOTIFY, VAR_INT, "-1", 0, NULL),
+	PLUGIN_VAR_ADD("email", 		0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("local_ip", 		0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "xml,simple", 0, NULL),
+	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
+	PLUGIN_VAR_ADD("protocol", 		0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, "8074", 0, NULL),
+	PLUGIN_VAR_ADD("proxy", 		0, VAR_STR, NULL, 0, gg_changed_proxy),
+	PLUGIN_VAR_ADD("proxy_forwarding", 	0, VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("private", 		0, VAR_BOOL, "0", 0, gg_changed_private),
+	PLUGIN_VAR_ADD("scroll_long_desc", 	0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("scroll_mode", 		0, VAR_STR, "bounce", 0, NULL),
+	PLUGIN_VAR_ADD("server", 		SESSION_VAR_SERVER, VAR_STR, NULL, 0, NULL),
+
+	PLUGIN_VAR_END()
+};
+
 int gg_plugin_init(int prio) {
+	gg_plugin.params = gg_plugin_vars;
+
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, NULL);
 
@@ -1274,30 +1304,6 @@ int gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("images_dir"), VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
-
-	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&gg_plugin, "allow_autoresponder", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);
-	plugin_var_add(&gg_plugin, "auto_away_descr", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0, NULL);	
-	plugin_var_add(&gg_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "10", 0, NULL);
-	plugin_var_add(&gg_plugin, "concat_multiline_status", VAR_INT, "3", 0, NULL);
-	plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "-1", 0, NULL);
-	plugin_var_add(&gg_plugin, "email", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
-	plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1, NULL);
-	plugin_var_add(&gg_plugin, "protocol", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0, NULL);
-	plugin_var_add(&gg_plugin, "proxy", VAR_STR, 0, 0, gg_changed_proxy);
-	plugin_var_add(&gg_plugin, "proxy_forwarding", VAR_STR, 0, 0, NULL);
-	plugin_var_add(&gg_plugin, "private", VAR_BOOL, "0", 0, gg_changed_private);
-	plugin_var_add(&gg_plugin, "scroll_long_desc", VAR_INT, "0", 0, NULL);
-	plugin_var_add(&gg_plugin, "scroll_mode", VAR_STR, "bounce", 0, NULL);
-	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0, NULL);
 
 	gg_debug_handler	= libgadu_debug_handler;
 	gg_debug_level		= 255;
