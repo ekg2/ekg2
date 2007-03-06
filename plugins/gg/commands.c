@@ -1555,7 +1555,7 @@ static COMMAND(gg_command_modify) {
 			char *tmp1, *tmp2;
 			int q = 1;
 
-			if (!valid_uid(argv[i + 1])) {
+			if (!valid_plugin_uid(&gg_plugin, argv[i + 1])) {
 				wcs_printq("invalid_uid");
 				array_free(argv);
 				return -1;
