@@ -574,7 +574,7 @@ static BINDING_FUNCTION(binding_forward_page)
 }
 
 static BINDING_FUNCTION(binding_forward_lastlog_page) {
-	window_t *w = window_find("__lastlog");
+	window_t *w = window_find_sa(NULL, "__lastlog", 1);
 	ncurses_window_t *n;
 
 	if (!w || !(n = w->private)) 
@@ -593,7 +593,7 @@ static BINDING_FUNCTION(binding_forward_lastlog_page) {
 }
 
 static BINDING_FUNCTION(binding_backward_lastlog_page) {
-	window_t *w = window_find("__lastlog");
+	window_t *w = window_find_sa(NULL, "__lastlog", 1);
 	ncurses_window_t *n;
 
 	if (!w || !(n = w->private))

@@ -254,7 +254,7 @@ static QUERY(ncurses_userlist_changed)
 	list_destroy(sorted_all_cache, 1);
 	sorted_all_cache = NULL;
 
-	if ((w = window_find("__contacts"))) {
+	if ((w = window_find_sa(NULL, "__contacts", 1))) {
 		ncurses_contacts_update(w);
 		ncurses_redraw(w);
 	}
@@ -378,7 +378,7 @@ static QUERY(ncurses_lastlog_changed) {
 	if (config_lastlog_size < 0) 
 		config_lastlog_size = 0;
 
-	if (!(w = window_find("__lastlog")))
+	if (!(w = window_find_sa(NULL, "__lastlog", 1)))
 		return 0;
 
 	ncurses_lastlog_new(w);
@@ -396,7 +396,7 @@ static QUERY(ncurses_ui_window_lastlog) {
 	int lock_old = config_lastlog_lock;
 	int retval;
 
-	if (!(w = window_find("__lastlog")))
+	if (!(w = window_find_sa(NULL, "__lastlog", 1)))
 		w = window_new("__lastlog", NULL, 1001);
 
 	n = w->private;

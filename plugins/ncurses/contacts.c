@@ -73,7 +73,7 @@ int config_contacts_metacontacts_swallow;
 
 void ncurses_backward_contacts_line(int arg)
 {
-	window_t *w = window_find("__contacts");
+	window_t *w = window_find_sa(NULL, "__contacts", 1);
 
 	if (!w)
 		return;
@@ -104,7 +104,7 @@ static inline char *get_short_status(char *status) {
 void ncurses_forward_contacts_line(int arg)
 {
 	ncurses_window_t *n;
-	window_t *w = window_find("__contacts");
+	window_t *w = window_find_sa(NULL, "__contacts", 1);
 	int contacts_count = 0, all = 0, count = 0;
 	newconference_t *c;
 	if (!w)
@@ -276,7 +276,7 @@ again:
 
 void ncurses_backward_contacts_page(int arg)
 {
-        window_t *w = window_find("__contacts");
+        window_t *w = window_find_sa(NULL, "__contacts", 1);
 
         if (!w)
                 return;
@@ -286,7 +286,7 @@ void ncurses_backward_contacts_page(int arg)
 
 void ncurses_forward_contacts_page(int arg)
 {
-        window_t *w = window_find("__contacts");
+        window_t *w = window_find_sa(NULL, "__contacts", 1);
 
         if (!w)
                 return;
@@ -336,7 +336,7 @@ int ncurses_contacts_update(window_t *w)
 							*/
 
 	
-	if (!w) w = window_find("__contacts");
+	if (!w) w = window_find_sa(NULL, "__contacts", 1);
 	if (!w) return -1;
 
 	n = w->private;
@@ -707,7 +707,7 @@ QUERY(ncurses_contacts_changed)
 		array_free(args);
 	}
 	/* XXX destroy window only if (!config_contacts) ? XXX */
-	if ((w = window_find("__contacts"))) {
+	if ((w = window_find_sa(NULL, "__contacts", 1))) {
 		window_kill(w, 1);
 		w = NULL;
 	}
@@ -744,7 +744,7 @@ QUERY(ncurses_all_contacts_changed)
  */
 void ncurses_contacts_mouse_handler(int x, int y, int mouse_state) 
 {
-	window_t *w = window_find("__contacts");
+	window_t *w = window_find_sa(NULL, "__contacts", 1);
 	ncurses_window_t *n;
 	CHAR_T *name;
 
