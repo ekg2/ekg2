@@ -624,8 +624,10 @@ static void sessions_var_generator(const char *text, int len)
         if (!session_in_line)
                 return;
 
-        if (!(p = plugin_find_uid(session_in_line->uid)))
-                return;
+	if (!(p = session_in_line->plugin)) {
+		debug_error("[%s:%d] Plugin disappear [s: %s]\n", __FILE__, __LINE__, __(session_in_line->uid));
+		return;
+	}
 
 	if (!p->params)
 		return;
