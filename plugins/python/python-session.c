@@ -108,16 +108,10 @@ void ekg_session_dealloc(ekg_sessionObj * o)
 
 int ekg_session_len(ekg_sessionObj * self)
 {
-	int cnt = 0;
 	session_t * s;
 	s = session_find(self->name);
-	if (s->params) {
-		list_t l;
-		for (l = s->params; l; l = l->next) {
-			cnt++;
-		}
-	}
-	return cnt;
+	/* XXX, leafnode what about _local_ ones? */
+	return s ? s->global_vars_count : 0;
 }
 
 /**
