@@ -462,18 +462,14 @@ static const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 	const char *uid;
 	int istlen = jabber_private(s)->istlen;
 
-/* CHECK: po co my wlasciwcie robimy to get_uid ? */
-/* a) jak target jest '$' to zwraca aktualne okienko... 	(niepotrzebne raczej, CHECK)
-   b) szuka targeta na userliscie 				(w sumie to trzeba jeszcze)
-   c) robi to co my nizej tylko dla kazdego plugina 		(niepotrzebne)
- */
-#if 1
 	if (!(uid = get_uid(s, target))) 
 		uid = target;
-#endif
-/* CHECK: i think we can omit it */
+
+/* XXX, get_uid() checks if this plugin is ok to handle it. so we have here tlen: or jid: but, we must check
+ * 		if this uid match istlen.. However doesn't matter which protocol is, function should work...
+ */
 	if (((!istlen && xstrncasecmp(uid, "jid:", 4)) || (istlen && xstrncasecmp(uid, "tlen:", 5)))) {
-		wcs_printq("invalid_session");
+		printq("invalid_session");
 		return NULL;
 	}
 	return uid;
