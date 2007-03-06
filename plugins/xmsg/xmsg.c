@@ -568,10 +568,6 @@ static COMMAND(xmsg_msg)
 	
 	if (!(uid = get_uid(session, target)))
 		uid = (char*) target;
-	if (xstrncasecmp(uid, "xmsg:", 5)) {
-		printq("invalid_session");
-		return -1;
-	}
 
 	if (!msgcmd || *msgcmd == '\0') {
 		printq("xmsg_nosendcmd", session_name(session));
