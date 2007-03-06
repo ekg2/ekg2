@@ -720,11 +720,6 @@ static COMMAND(gg_command_msg) {
 			printq("user_not_found", *p);
 			continue;
 		}
-
-		if (xstrncasecmp(uid, "gg:", 3)) {
-			printq("invalid_session");
-			continue;
-		}
 		
 	        u = userlist_find(session, uid);
 
@@ -763,9 +758,6 @@ static COMMAND(gg_command_msg) {
 			const char *uid;
 			
 			if (!(uid = get_uid(session, *p)))
-				continue;
-
-			if (xstrncmp(uid, "gg:", 3))
 				continue;
 			
 			uins[realcount++] = atoi(uid + 3);
@@ -1555,8 +1547,8 @@ static COMMAND(gg_command_modify) {
 			char *tmp1, *tmp2;
 			int q = 1;
 
-			if (!valid_plugin_uid(&gg_plugin, argv[i + 1])) {
-				wcs_printq("invalid_uid");
+			if (!valid_plugin_uid(&gg_plugin, argv[i + 1] != 1)) {
+				printq("invalid_uid");
 				array_free(argv);
 				return -1;
 			}
