@@ -1349,9 +1349,6 @@ static int gg_plugin_destroy() {
 	xfree(gg_register_email);
 	gg_register_email = NULL;
 
-	for (l = sessions; l; l = l->next)
-		gg_private_destroy((session_t*) l->data);
-
 	image_flush_queue();
 
 	plugin_unregister(&gg_plugin);
