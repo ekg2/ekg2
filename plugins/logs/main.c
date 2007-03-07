@@ -437,7 +437,7 @@ static void logs_changed_awaylog(const char *var) {
 	if (config_away_log) {
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
-			if (!xstrcmp(s->status, EKG_STATUS_AWAY) || !xstrcmp(s->status, EKG_STATUS_AUTOAWAY))
+			if (s->status == EKG_STATUS_AWAY)
 				logs_away_create(s->uid);
 		}
 	} else {
@@ -450,10 +450,10 @@ static void logs_changed_awaylog(const char *var) {
 }
 
 static QUERY(logs_sestatus_handler) {
-	char *session = *(va_arg(ap, char **));
-	char *status  = *(va_arg(ap, char **));
+	char *session	= *(va_arg(ap, char **));
+	int status	= *(va_arg(ap, int *));
 
-	debug("[LOGS_SESTATUS HANDLER %s %s\n", __(session), __(status));
+	debug("[LOGS_SESTATUS HANDLER %s %s\n", __(session), __(ekg_status_string(status, 0)));
 
 	if (!config_away_log)
 		return 0;
@@ -462,11 +462,11 @@ static QUERY(logs_sestatus_handler) {
 		return 0;
 /* session_int_get(session_find(session), "awaylog")) ? */
 
-	if (!xstrcmp(status, EKG_STATUS_AWAY) || !xstrcmp(status, EKG_STATUS_AUTOAWAY)) {
+	if ((status == EKG_STATUS_AWAY) || (status == EKG_STATUS_AUTOAWAY)) {
 		logs_away_create(session);
-	} else if (!xstrcmp(status, EKG_STATUS_AVAIL) || !xstrcmp(status, EKG_STATUS_AUTOBACK)) {
+	} else if ((status == EKG_STATUS_AVAIL) || (status == EKG_STATUS_AUTOBACK)) {
 		if (logs_away_display(logs_away_find(session), 0, 1)) { /* strange */
-			debug("[LOGS_SESTATUS] strange no away turned on for this sesssion = %s\n", __(session));
+			debug("[LOGS_SESTATUS] strange no away turned on for this session = %s\n", __(session));
 			return 0; 
 		}
 	}
@@ -971,7 +971,7 @@ static QUERY(logs_handler) {
 static QUERY(logs_status_handler) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-	char *status	= *(va_arg(ap, char**));
+	int status	= *(va_arg(ap, int*));
 	char *descr	= *(va_arg(ap, char**));
 
 	session_t *s; // session pointer
@@ -1014,7 +1014,7 @@ static QUERY(logs_status_handler) {
 		char *_what = NULL;
 		char *_ip = saprintf("~%s@%s:%d", "notirc", inet_ntoa_u(ip), port);
 
-		_what = saprintf("%s (%s)", __(descr), __(status));
+		_what = saprintf("%s (%s)", __(descr), __(ekg_status_string(status, 0)));
 
 		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS, _ip);
 
@@ -1022,7 +1022,7 @@ static QUERY(logs_status_handler) {
 		xfree(_ip);
 
 	} else if (lw->logformat == LOG_FORMAT_SIMPLE) {
-		logs_simple(lw->file, session, uid, descr, time(NULL), 6, ip, port, status);
+		logs_simple(lw->file, session, uid, descr, time(NULL), 6, ip, port, ekg_status_string(status, 0));
 	} else if (lw->logformat == LOG_FORMAT_XML) {
 		/*		logs_xml(lw->file, session, uid, descr, time(NULL), 6, ip, port, status); */
 	}

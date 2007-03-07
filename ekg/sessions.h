@@ -38,7 +38,7 @@ typedef struct {
 	list_t userlist;		/* userlista */
 
 	/* private: */
-	char *status;			/* stan sesji */
+	int status;			/* stan sesji */
 	char *descr;			/* opis stanu sesji */
 	char *password;
 	int connected;			/* czy sesja jest po³±czona? */
@@ -54,7 +54,7 @@ typedef struct {
 	list_t local_vars;
 	
 	/* new auto-away */
-	char *laststatus;
+	int laststatus;
 	char *lastdescr;
 } session_t;
 
@@ -74,9 +74,9 @@ const char *session_uid_get(session_t *s);
 const char *session_alias_get(session_t *s);
 int session_alias_set(session_t *s, const char *alias);
 
-const char *session_status_get(session_t *s);
+int session_status_get(session_t *s);
 #define session_status_get_n(a) session_status_get(session_find(a))
-int session_status_set(session_t *s, const char *status);
+int session_status_set(session_t *s, const int status);
 
 const char *session_descr_get(session_t *s);
 int session_descr_set(session_t *s, const char *descr);

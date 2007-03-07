@@ -246,7 +246,7 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 
-		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
+		if (u->status == EKG_STATUS_NA) {
 			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}
@@ -318,7 +318,7 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 
-		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
+		if (u->status == EKG_STATUS_NA) {
 			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}

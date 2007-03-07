@@ -448,7 +448,7 @@ static TIMER(gg_ping_timer_handler) {
  */
 static void gg_session_handler_success(session_t *s) {
 	gg_private_t *g = session_private_get(s);
-	const char *status;
+	int status;
 	char *__session;
 	char buf[100];
 	int _status;
@@ -575,7 +575,7 @@ static void gg_session_handler_disconnect(session_t *s) {
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
 	char *__session	= xstrdup(session_uid_get(s));
 	char *__uid	= saprintf(("gg:%d"), uin);
-	char *__status= xstrdup(gg_status_to_text(status));
+	int __status	= gg_status_to_text(status);
 	char *__descr	= gg_cp_to_locale(xstrdup(descr));
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
@@ -616,7 +616,6 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 
 	xfree(__host);
 	xfree(__descr);
-	xfree(__status);
 	xfree(__uid);
 	xfree(__session);
 }
@@ -1106,7 +1105,7 @@ WATCHER(gg_session_handler)		/* tymczasowe */
 
 static void gg_changed_private(session_t *s, const char *var) {
 	gg_private_t *g = (s) ? session_private_get(s) : NULL;
-	const char *status = session_status_get(s);
+	const int status = session_status_get(s);
 	char *descr;
 	char *cpdescr;
 	int _status;

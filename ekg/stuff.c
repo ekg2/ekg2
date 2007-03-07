@@ -2200,11 +2200,12 @@ char *split_line(char **ptr)
  *
  * tworzy etykietê formatki opisuj±cej stan.
  */
-const char *ekg_status_label(const char *status, const char *descr, const char *prefix)
+const char *ekg_status_label(const int status, const char *descr, const char *prefix)
 {
-	static char buf[100];
-
-	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", __(status), (descr) ? "_descr" : "");
+	static char buf[100]; /* maybe dynamic buffer would be better? */
+	const char *status_string = ekg_status_string(status, 0);
+	
+	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", status_string, (descr) ? "_descr" : "");
 
 	return buf;
 }
@@ -2215,22 +2216,23 @@ const char *ekg_status_label(const char *status, const char *descr, const char *
  * losuje opis dla danego stanu lub pobiera ze zmiennej, lub cokolwiek
  * innego.
  */
-char *ekg_draw_descr(const char *status)
+char *ekg_draw_descr(const int status)
 {
 	const char *value;
 	char file[100];
 	char var[100];
 	variable_t *v;	
 
-	if (!xstrcmp(status, EKG_STATUS_NA) || !xstrcmp(status, EKG_STATUS_INVISIBLE)) {
+	if (status <= EKG_STATUS_NA) {
 		xstrcpy(var, ("quit_reason"));
 		xstrcpy(file, "quit.reasons");
-	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
+	} else if (status == EKG_STATUS_AVAIL) {
 		xstrcpy(var, ("back_reason"));
 		xstrcpy(file, "back.reasons");
 	} else {
-		snprintf(var, sizeof(var), "%s_reason", status);
-		snprintf(file, sizeof(file), "%s.reasons", status);
+		/* Wouldn't it be better to use command-names? */
+		snprintf(var, sizeof(var), "%s_reason", ekg_status_string(status, 0));
+		snprintf(file, sizeof(file), "%s.reasons", ekg_status_string(status, 0));
 	}
 
 	if (!(v = variable_find(var)) || v->type != VAR_STR)
@@ -2261,14 +2263,70 @@ void ekg_update_status(session_t *session)
                 xfree(u->descr);
                 u->descr = xstrdup(session->descr);
 
-                xfree(u->status);
                 if (!session_connected_get(session))
-                        u->status = xstrdup(EKG_STATUS_NA);
+                        u->status = EKG_STATUS_NA;
                 else
-                        u->status = xstrdup(session->status);
+                        u->status = session->status;
 		u->xstate &= ~EKG_XSTATE_BLINK;
         }
 
+}
+
+/*
+ * ekg_status_string()
+ *
+ * converts enum status to string
+ */
+
+const char *ekg_status_string(const int status, const int cmd)
+{
+	const char *status_string;
+#define ENUM_TO_S(x, y) case EKG_STATUS_##x: status_string = y; break;
+#define ENUM_TO_S_ONLY(x, y) ENUM_TO_S(x, (cmd ? "back" : y))
+
+	switch (status) {
+		ENUM_TO_S(ERROR, "error")
+		ENUM_TO_S(BLOCKED, "blocked")
+		ENUM_TO_S(UNKNOWN, "unknown")
+		ENUM_TO_S(NA, "notavail")
+		ENUM_TO_S(INVISIBLE, "invisible")
+		ENUM_TO_S(DND, "dnd")
+		ENUM_TO_S(XA, "xa")
+		ENUM_TO_S(AWAY, "away")
+		ENUM_TO_S(FFC, (cmd ? "ffc" : "chat"))
+		default:
+			status_string = (cmd ? "back" : "avail"); /* XXX if possible, use UNKNOWN here */
+	}
+
+#undef ENUM_TO_S_ONLY
+#undef ENUM_TO_S
+	return status_string;
+}
+
+/*
+ * ekg_status_int()
+ *
+ * converts string to enum status
+ */
+
+int ekg_status_int(const char *text)
+{
+#define STR_TO_E(y, x) if (!xstrcasecmp(x, text)) return EKG_STATUS_##y;
+	STR_TO_E(ERROR, "error")
+	else STR_TO_E(BLOCKED, "blocked")
+	else STR_TO_E(NA, "notavail")
+	else STR_TO_E(INVISIBLE, "invisible")
+	else STR_TO_E(DND, "dnd")
+	else STR_TO_E(XA, "xa")
+	else STR_TO_E(AWAY, "away")
+	else STR_TO_E(FFC, "ffc")
+	else STR_TO_E(FFC, "chat")
+	else STR_TO_E(AVAIL, "avail")
+	else STR_TO_E(AVAIL, "available")		/* tlen */
+	else STR_TO_E(AVAIL, "back")
+	else STR_TO_E(AVAIL, "online")			/* jabber */
+	else return EKG_STATUS_UNKNOWN;
+#undef STR_TO_E
 }
 
 /*

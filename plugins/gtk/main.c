@@ -995,7 +995,7 @@ void gtk_contacts_add(session_t *s, userlist_t *u, GtkTreeIter *iter)
  *      jesli user  to user_avail, user_invisible, etc... 
  *      bo teraz w sumie to nie wiadomo co do czego jest.. ;p 
  */
-	char *status_filename = saprintf("%s/plugins/gtk/%s.png", _DATADIR, (u) ? u->status : s->status);
+	char *status_filename = saprintf("%s/plugins/gtk/%s.png", _DATADIR, ekg_status_string((u ? u->status : s->status), 0));
 
 	if (!s && !u) {
 		xfree(status_filename);

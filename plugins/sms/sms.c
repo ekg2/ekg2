@@ -266,9 +266,9 @@ static int dd_sms(const char *name)
 static QUERY(sms_session_status)
 {
         {	char **UNUSED(session)	= va_arg(ap, char**);	}
-        char *status	= *(va_arg(ap, char**));
+        int status	= *(va_arg(ap, int*));
 
-        if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
+        if ((status <= EKG_STATUS_NA) || (status >= EKG_STATUS_AVAIL))
                 sms_away_free();
 
         return 0;
@@ -285,12 +285,12 @@ static QUERY(sms_protocol_message)
         char *uid	= *(va_arg(ap, char**));
         {	char ***UNUSED(rcpts)	= va_arg(ap, char***);	}
         char *text	= *(va_arg(ap, char**));
-        const char *status = session_status_get_n(session);
+        const int status = session_status_get_n(session);
 
         if (!status || !config_sms_away || !config_sms_app || !config_sms_number)
                 return 0;
 
-        if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
+	if ((status <= EKG_STATUS_NA) || (status >= EKG_STATUS_AVAIL))
                 return 0;
 
         sms_away_add(uid);

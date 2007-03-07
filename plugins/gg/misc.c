@@ -196,11 +196,11 @@ char *gg_cp_to_locale(unsigned char *buf) {
 /*
  * gg_status_to_text()
  *
- * zamienia stan GG na opis.
+ * zamienia stan GG na enum ekg2 (dawniej: tekst, stad nazwa).
  *  
  *  - status
  */
-const char *gg_status_to_text(int status)
+int gg_status_to_text(int status)
 {
 	switch (GG_S(status)) {
 		case GG_STATUS_AVAIL:
@@ -229,27 +229,20 @@ const char *gg_status_to_text(int status)
 /*
  * gg_text_to_status()
  *
- * zamienia stan tekstowy ekg na stan liczbowy ekg.
+ * zamienia stan enumowy (dawniej: tekstowy, stad nazwa) ekg2 na stan liczbowy ekg.
  *
- *  - text
+ *  - status
  *  - descr
  */
-int gg_text_to_status(const char *text, const char *descr)
+int gg_text_to_status(const int status, const char *descr)
 {
-	if (!xstrcasecmp(text, EKG_STATUS_NA))
-		return (descr) ? GG_STATUS_NOT_AVAIL_DESCR : GG_STATUS_NOT_AVAIL;
-
-	if (!xstrcasecmp(text, EKG_STATUS_AVAIL))
-		return (descr) ? GG_STATUS_AVAIL_DESCR : GG_STATUS_AVAIL;
-
-	if (!xstrcasecmp(text, EKG_STATUS_AWAY) || !xstrcasecmp(text, EKG_STATUS_DND) || !xstrcasecmp(text, EKG_STATUS_XA))
-		return (descr) ? GG_STATUS_BUSY_DESCR : GG_STATUS_BUSY;
-
-	if (!xstrcasecmp(text, EKG_STATUS_INVISIBLE))
-		return (descr) ? GG_STATUS_INVISIBLE_DESCR : GG_STATUS_INVISIBLE;
-
-	if (!xstrcasecmp(text, EKG_STATUS_BLOCKED))
-		return GG_STATUS_BLOCKED;
+#define GG_TTS(x, y) if (status == EKG_STATUS_##x) return (descr ? GG_STATUS_##y##_DESCR : GG_STATUS_##y);
+	GG_TTS(NA, NOT_AVAIL)
+	GG_TTS(AVAIL, AVAIL)
+	GG_TTS(AWAY, BUSY) /* I think we don't need to care about Jabber aways */
+	GG_TTS(INVISIBLE, INVISIBLE)
+#undef GG_TTS
+	if (status == EKG_STATUS_BLOCKED) return GG_STATUS_BLOCKED;
 
 	return GG_STATUS_NOT_AVAIL;
 }

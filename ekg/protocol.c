@@ -246,7 +246,7 @@ static QUERY(protocol_status)
 {
 	char **__session	= va_arg(ap, char**), *session = *__session;
 	char **__uid		= va_arg(ap, char**), *uid = *__uid;
-	char *status		= *(va_arg(ap, char**));
+	int status		= *(va_arg(ap, int*));
 	char **__descr		= va_arg(ap, char**), *descr = *__descr;
 	char *host		= *(va_arg(ap, char**));
 	int port		= *(va_arg(ap, int*));
@@ -255,13 +255,14 @@ static QUERY(protocol_status)
 	userlist_t *u;
 	session_t *s;
 
-	char *st;			/* status	u->status || r->status */
+	int st;				/* status	u->status || r->status */
 	char *de;			/* descr 	u->descr  || r->descr  */
 
 	int ignore_level;
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
 	int sess_notify;
 
+	debug("protocol-status: %d\n", status);
 	if (!(s = session_find(session)))
 		return 0;
 	
@@ -309,32 +310,33 @@ static QUERY(protocol_status)
 		u->last_port = port;
 
 	/* je¶li te same stany...  i te same opisy (lub brak opisu), ignoruj */
-	if (!xstrcasecmp(status, st) && !xstrcmp(descr, de)) 
+	if ((status == st) && !xstrcmp(descr, de)) 
 		return 0;
 
 	/* je¶li kto¶ nam znika, zapamiêtajmy kiedy go widziano */
-	if (!u->resources && xstrcasecmp(u->status, EKG_STATUS_NA) && !xstrcasecmp(status, EKG_STATUS_NA))
+	if (!u->resources && (u->status > EKG_STATUS_NA) && (status <= EKG_STATUS_NA))
 		u->last_seen = when ? when : time(NULL);
 
 	/* XXX dodaæ events_delay */
 	
 	/* je¶li dostêpny lub zajêty, dopisz to taba. je¶li niedostêpny, usuñ */
-	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && config_completion_notify && u->nickname)
+	if ((status >= EKG_STATUS_AVAIL) && config_completion_notify && u->nickname)
 		tabnick_add(u->nickname);
-	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && (config_completion_notify & 4) && u->nickname)
+	if ((status > EKG_STATUS_NA) && (status < EKG_STATUS_AVAIL) /* == aways */ && (config_completion_notify & 4) && u->nickname)
 		tabnick_add(u->nickname);
-	if (!xstrcasecmp(status, EKG_STATUS_NA) && (config_completion_notify & 2) && u->nickname)
+	if ((status < EKG_STATUS_NA) && (config_completion_notify & 2) && u->nickname)
 		tabnick_remove(u->nickname);
 
 
-	/* je¶li ma³o wa¿na zmiana stanu... */
+	/* je¶li ma³o wa¿na zmiana stanu...
+	 * XXX someone can tell me what this should do, 'cos I can't understand the way it's written? */
 	if ((sess_notify == -1 ? config_display_notify : sess_notify) & 2) {
 		/* je¶li na zajêty, ignorujemy */
-		if (!xstrcasecmp(st, EKG_STATUS_AWAY))
+		if (st == EKG_STATUS_AWAY)
 			goto notify_plugins;
 
 		/* je¶li na dostêpny, ignorujemy */
-		if (!xstrcasecmp(st, EKG_STATUS_AVAIL))
+		if (st == EKG_STATUS_AVAIL)
 			goto notify_plugins;
 	}
 
@@ -343,7 +345,7 @@ static QUERY(protocol_status)
 		goto notify_plugins;
 
 	/* nie zmieni³ siê status, zmieni³ siê opis */
-	if (ignore_status_descr && !xstrcmp(status, st) && xstrcmp(descr, de))
+	if (ignore_status_descr && (status == st) && xstrcmp(descr, de))
 		goto notify_plugins;
 
 	/* daj znaæ d¼wiêkiem... */
@@ -365,28 +367,24 @@ static QUERY(protocol_status)
 	}
 
 notify_plugins:
-	if (xstrcasecmp(st, EKG_STATUS_NA)) {
-	        xfree(u->last_status);
-	        u->last_status = xstrdup(st);
+	if (st > EKG_STATUS_NA) {
+	        u->last_status = st;
 	        xfree(u->last_descr);
 	        u->last_descr = xstrdup(de);
 	}
 
-	if (!xstrcasecmp(st, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
+	if ((st <= EKG_STATUS_NA) && (status > EKG_STATUS_NA) && !ignore_events)
 		query_emit_id(NULL, EVENT_ONLINE, __session, __uid);
 
 	if (!ignore_status) {
 		if (r) {
-			xfree(r->status);
-			r->status = xstrdup(status);
+			r->status = status;
 		}
 
 		if (u->resources) { 		/* get higest prio status */
-			xfree(u->status);
-			u->status = xstrdup( ((ekg_resource_t *) (u->resources->data))->status);
+			u->status = ((ekg_resource_t *) (u->resources->data))->status;
 		} else {
-			xfree(u->status);
-			u->status = xstrdup(status);
+			u->status = status;
 		}
 	}
 
@@ -413,12 +411,18 @@ notify_plugins:
 	
 	query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
 
-	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && !ignore_events)
-		query_emit_id(NULL, EVENT_AVAIL, __session, __uid);
-	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && !ignore_events)
-                query_emit_id(NULL, EVENT_AWAY, __session, __uid);
-        if (!xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-                query_emit_id(NULL, EVENT_NA, __session, __uid);
+	/* Currently it behaves like event means grouped statuses,
+	 * i.e. EVENT_AVAIL is for avail&ffc
+	 * 	EVENT_AWAY for away&xa&dnd
+	 * 	... */
+	if (!ignore_events) {
+		if (status >= EKG_STATUS_AVAIL)
+			query_emit_id(NULL, EVENT_AVAIL, __session, __uid);
+		else if (status > EKG_STATUS_NA)
+			query_emit_id(NULL, EVENT_AWAY, __session, __uid);
+		else if (status <= EKG_STATUS_NA)
+			query_emit_id(NULL, EVENT_NA, __session, __uid);
+	}
 
 	return 0;
 }

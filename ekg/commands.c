@@ -242,7 +242,9 @@ static COMMAND(cmd_tabclear)
 			if (send_nicks[i])
 				u = userlist_find(session, send_nicks[i]);
 
-			if (!u || xstrcasecmp(u->status, EKG_STATUS_NA))
+			/* I think we should also remove errors and likes here
+			 * if I'm wrong, change the > to == */
+			if (!u || (u->status > EKG_STATUS_NA))
 				continue;
 
 			tabnick_remove(send_nicks[i]);
@@ -1442,7 +1444,7 @@ list_user:
 			printq("user_info_name", u->last_name, "");
 
 		printq("user_info_status", status);
-                if (u->status_time && xstrcasecmp(u->status, EKG_STATUS_NA)) {
+                if (u->status_time && (u->status <= EKG_STATUS_NA)) {
 		        struct tm *status_time;
 			char buf[100];		
 
@@ -1494,7 +1496,7 @@ list_user:
 			printq("user_info_groups", groups);
 			xfree(groups);
 		}
-		if (!xstrcasecmp(u->status, EKG_STATUS_NA) || !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE) || !xstrcasecmp(u->status, EKG_STATUS_ERROR)) {
+		if (u->status <= EKG_STATUS_NA) {
 			char buf[100];
 			struct tm *last_seen_time;
 			
@@ -1583,24 +1585,15 @@ list_user:
 		tmp = ekg_status_label(u->status, u->descr, "list_");
 
 		show = show_all;
-
-		if (show_away && !xstrcasecmp(u->status, EKG_STATUS_AWAY))
-			show = 1;
-
-		if (show_active && !xstrcasecmp(u->status, EKG_STATUS_AVAIL))
-			show = 1;
-
-		if (show_inactive && !xstrcasecmp(u->status, EKG_STATUS_NA))
-			show = 1;
-
-		if (show_invisible && !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE))
-			show = 1;
-
-		if (show_blocked && !xstrcasecmp(u->status, EKG_STATUS_BLOCKED))
-			show = 1;
-		
-		/* nie chcialo mi sie zmiennej robic */
-		if (!xstrcasecmp(u->status, EKG_STATUS_ERROR))
+#define SHOW_IF_S(x,y) if (show_##x && (u->status == EKG_STATUS_##y)) show = 1;
+		SHOW_IF_S(away, AWAY)
+		SHOW_IF_S(active, AVAIL)
+		SHOW_IF_S(inactive, NA)
+		SHOW_IF_S(invisible, INVISIBLE)
+		SHOW_IF_S(blocked, BLOCKED)
+#undef SHOW_IF_S		
+		/* XXX nie chcialo mi sie zmiennej robic */
+		if (u->status == EKG_STATUS_ERROR)
 			show = 1;
 
 		if (show_descr && !u->descr)
@@ -3915,31 +3908,14 @@ static COMMAND(cmd_plugin)
 
 static COMMAND(cmd_desc)
 {
-	const char *status, *cmd;
+	const char *cmd;
 	
 	if (!session)
 		return -1;
 	
 	session_unidle(session);
-	status = session_status_get(session);
-	
-	if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
-		cmd = "back";
-	} else if (!xstrcmp(status, EKG_STATUS_AWAY)) {
-		cmd = "away";
-	} else if (!xstrcmp(status, EKG_STATUS_INVISIBLE)) {
-		cmd = "invisible";
-	} else if (!xstrcmp(status, EKG_STATUS_XA)) {
-		cmd = "xa";
-	} else if (!xstrcmp(status, EKG_STATUS_DND)) {
-		cmd = "dnd";
-	} else if (!xstrcmp(status, EKG_STATUS_FREE_FOR_CHAT)) {
-		cmd = "ffc";
-	} else {
-		/* invalid self status? */
-		return -2;
-	};
-	
+	cmd = ekg_status_string(session_status_get(session), 1);
+
 	return command_exec_format(NULL, session, 0, ("/%s %s"), cmd, (params[0] ? params[0] : ""));
 }
 

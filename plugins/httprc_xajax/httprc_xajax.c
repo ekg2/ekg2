@@ -781,7 +781,7 @@ WATCHER(http_watch_read) {
 					httprc_write2(send_watch, "\t\t\t\t<dd><ul>\n");
 				for (l = session_current->userlist; l; l = l->next) {
 					userlist_t *u = l->data;
-					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", u->status, u->nickname ? u->nickname : u->uid);
+					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", ekg_status_string(u->status, 0), u->nickname ? u->nickname : u->uid);
 				}
 				if (session_current->userlist)
 					httprc_write2(send_watch, "\t\t\t\t</ul></dd>\n");

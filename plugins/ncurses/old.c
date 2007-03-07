@@ -1283,23 +1283,28 @@ void update_statusbar(int commit)
 	}
 
 	__add_format_dup("debug", (!window_current->id), "");
-	__add_format_dup("away", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AWAY)), "");
-	__add_format_dup("avail", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
-	__add_format_dup("dnd", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_DND)), "");
-	__add_format_dup("chat", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_FREE_FOR_CHAT)), "");
-	__add_format_dup("xa", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_XA)), "");
-	__add_format_dup("invisible", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
-	__add_format_dup("notavail", (!sess || !sess->connected || !xstrcasecmp(sess->status, EKG_STATUS_NA)), "");
+#define __add_format_dup_st(x, y) __add_format_dup(x, (sess && sess->connected && (sess->status == y)), "");
+	__add_format_dup_st("away", EKG_STATUS_AWAY);
+	__add_format_dup_st("avail", EKG_STATUS_AVAIL);
+	__add_format_dup_st("dnd", EKG_STATUS_DND);
+	__add_format_dup_st("chat", EKG_STATUS_FFC);
+	__add_format_dup_st("xa", EKG_STATUS_XA);
+	__add_format_dup_st("invisible", EKG_STATUS_INVISIBLE);
+#undef __add_format_dup_st
+	__add_format_dup("notavail", (!sess || !sess->connected || (sess->status == EKG_STATUS_NA)), "");
 	__add_format_dup("more", (window_current->more), "");
 
 	__add_format_dup("query_descr", (q && q->descr), q->descr);
-	__add_format_dup("query_away", (q && !xstrcasecmp(q->status, EKG_STATUS_AWAY)), "");
-	__add_format_dup("query_avail", (q && !xstrcasecmp(q->status, EKG_STATUS_AVAIL)), "");
-	__add_format_dup("query_invisible", (q && !xstrcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
-	__add_format_dup("query_notavail", (q && !xstrcasecmp(q->status, EKG_STATUS_NA)), "");
-	__add_format_dup("query_dnd", (q && !xstrcasecmp(q->status, EKG_STATUS_DND)), "");
-	__add_format_dup("query_chat", (q && !xstrcasecmp(q->status, EKG_STATUS_FREE_FOR_CHAT)), "");
-	__add_format_dup("query_xa", (q && !xstrcasecmp(q->status, EKG_STATUS_XA)), "");
+#define __add_format_dup_st(x, y) __add_format_dup("query_" x, (q && (q->status == y)), "");
+	__add_format_dup_st("away", EKG_STATUS_AWAY);
+	__add_format_dup_st("avail", EKG_STATUS_AVAIL);
+	__add_format_dup_st("invisible", EKG_STATUS_INVISIBLE);
+	__add_format_dup_st("notavail", EKG_STATUS_NA);
+	__add_format_dup_st("dnd", EKG_STATUS_DND);
+	__add_format_dup_st("chat", EKG_STATUS_FFC);
+	__add_format_dup_st("xa", EKG_STATUS_XA);
+	/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
+#undef __add_format_dup_st
 	__add_format_dup("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
 
         __add_format_dup("typing", (q && (q->xstate & EKG_XSTATE_TYPING)), "");

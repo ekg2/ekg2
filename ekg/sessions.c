@@ -149,7 +149,7 @@ session_t *session_add(const char *uid) {
 	
 	s = xmalloc(sizeof(session_t));
 	s->uid 		= xstrdup(uid);
-	s->status 	= xstrdup(EKG_STATUS_NA);
+	s->status 	= EKG_STATUS_NA;
 	s->plugin 	= pl;
 	
 	list_add_sorted(&sessions, s, 0, session_compare);
@@ -180,7 +180,7 @@ session_t *session_add(const char *uid) {
 			if (!xstrcmp(key, "uid"));
 			else if (!xstrcmp(key, "alias"))	session_alias_set(s, value);
 			else if (!xstrcmp(key, "descr"))	session_descr_set(s, value);
-			else if (!xstrcmp(key, "status"))	session_status_set(s, value);
+			else if (!xstrcmp(key, "status"))	session_status_set(s, ekg_status_int(value));
 			else if (!xstrcmp(key, "password"))	session_password_set(s, value);
 			else 					s->values[i] = xstrdup(value);
 
@@ -285,10 +285,8 @@ int session_remove(const char *uid)
 
 	xfree(s->alias);
 	xfree(s->uid);
-	xfree(s->status);
 	xfree(s->descr);
 	xfree(s->password);
-	xfree(s->laststatus);
 	xfree(s->lastdescr);
 
 	/* free memory like sessions_free() do */
@@ -298,9 +296,9 @@ int session_remove(const char *uid)
 	return 0;
 }
 
-PROPERTY_STRING_GET(session, status)
+PROPERTY_INT_GET(session, status, int)
 
-int session_status_set(session_t *s, const char *status)
+int session_status_set(session_t *s, const int status)
 {
 	int is_xa;
 
@@ -309,28 +307,26 @@ int session_status_set(session_t *s, const char *status)
 
 	{
 		char *__session = xstrdup(s->uid);
-		char *__status = xstrdup(status);
+		int __status = status;
 
 		query_emit_id(NULL, SESSION_STATUS, &__session, &__status);
 
 		xfree(__session);
-		xfree(__status);
 	}
 
 /* if it's autoaway or autoxa */
-	if ((is_xa = !xstrcmp(status, EKG_STATUS_AUTOXA)) || !xstrcmp(status, EKG_STATUS_AUTOAWAY)) {
+	if ((is_xa = (status == EKG_STATUS_AUTOXA)) || (status == EKG_STATUS_AUTOAWAY)) {
 		char *tmp = (char*) session_get(s, (is_xa ? "auto_xa_descr" : "auto_away_descr"));
 
 	/* save current status/ descr && turn autoaway on */
 		if (!s->autoaway) { /* don't overwrite laststatus, if already on aa */
-			xfree(s->laststatus); xfree(s->lastdescr);	/* just in case */
-			s->laststatus	= s->status;		s->status = NULL;
+			xfree(s->lastdescr);		/* just in case */
+			s->laststatus	= s->status;
 			s->lastdescr	= xstrdup(s->descr);
 			s->autoaway = 1;
 		}
 	/* new status */
-		xfree(s->status);
-		s->status = xstrdup(is_xa ? EKG_STATUS_XA : EKG_STATUS_AWAY);
+		s->status = (is_xa ? EKG_STATUS_XA : EKG_STATUS_AWAY);
 
 	/* new descr */
 		if (tmp) {
@@ -393,28 +389,26 @@ int session_status_set(session_t *s, const char *status)
 	}
 
 /* if it's autoback */
-	if (!xstrcmp(status, EKG_STATUS_AUTOBACK)) {
+	if (status == EKG_STATUS_AUTOBACK) {
 	/* set status */
-		xfree(s->status);
-		s->status	= s->laststatus ? s->laststatus : xstrdup(EKG_STATUS_AVAIL);
+		s->status	= s->laststatus ? s->laststatus : EKG_STATUS_AVAIL;
 	/* set descr */
 		if (s->lastdescr) {
 			xfree(s->descr);
 			s->descr = s->lastdescr;
 		}
 
-		s->laststatus	= NULL;
+		s->laststatus	= 0;
 		s->lastdescr	= NULL;
 		s->autoaway	= 0;
 		return 0;
 	}
 
-	xfree(s->status);
-	s->status = xstrdup(status);
+	s->status = status;
 
 /* if it wasn't neither _autoback nor _autoaway|_autoxa, it should be one of valid status types... */
 	if (s->autoaway) {	/* if we're @ away, set previous, set lastdescr status & free data */
-		xfree(s->laststatus);	s->laststatus = NULL;
+		s->laststatus	= 0;	/* EKG_STATUS_NULL */
 		xfree(s->descr);	s->descr	= s->lastdescr;	s->lastdescr = NULL;
 		s->autoaway	= 0;
 	}
@@ -547,7 +541,7 @@ const char *session_get(session_t *s, const char *key) {
 		return session_descr_get(s);
 
 	if (!xstrcasecmp(key, "status"))
-		return session_status_get(s);
+		return ekg_status_string(session_status_get(s), 0);
 	
 	if (!xstrcasecmp(key, "password"))
                 return session_password_get(s);
@@ -646,7 +640,7 @@ int session_set(session_t *s, const char *key, const char *value) {
 	}
 
 	if (!xstrcasecmp(key, "status")) {
-		ret = session_status_set(s, value);
+		ret = session_status_set(s, ekg_status_int(value));
 		goto notify;
 	}
 
@@ -811,7 +805,7 @@ int session_write()
 			if (s->alias)
 				fprintf(f, "alias=%s\n", s->alias);
 			if (s->status && config_keep_reason != 2)
-				fprintf(f, "status=%s\n", (s->autoaway ? s->laststatus : s->status));
+				fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->laststatus : s->status, 0));
 			if (s->descr && config_keep_reason) {
 				char *myvar = (s->autoaway ? s->lastdescr : s->descr);
 				xstrtr(myvar, '\n', '\002');
@@ -955,12 +949,10 @@ COMMAND(session_command)
 
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
-			const char *status, *descr;
+			const char *descr = (s->connected) ? s->descr : NULL;
+			const int status = (!s->connected) ? EKG_STATUS_NA : s->status;
 			char *tmp;
-
-			status = (!s->connected) ? EKG_STATUS_NA : s->status;
-			descr = (s->connected) ? s->descr : NULL;
-
+												/* wtf?  vvvvvv */
 			tmp = format_string(format_find(ekg_status_label(status, descr, "user_info_")), "foobar", descr);
 
 			if (!s->alias)
@@ -1104,7 +1096,7 @@ COMMAND(session_command)
 		if (!xstrcasecmp(key, "uid")) 		var = session_uid_get(s);
 		else if (!xstrcasecmp(key, "alias"))    var = session_alias_get(s);                                               
 		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);                                                
-		else if (!xstrcasecmp(key, "status"))	var = session_status_get(s);                                               
+		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 0);                                               
 		else if (!xstrcasecmp(key, "password")) { var = session_password_get(s); secret = 1; }
 		else if ((paid = plugin_var_find_id(s->plugin, key))) {
 			plugins_params_t *pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
@@ -1207,7 +1199,7 @@ COMMAND(session_command)
 	}
 
 	if ((s = session_find(params[0]))) {
-		const char *status;
+		int status;
 		char *tmp;
 		int i;
 		plugin_t *p = s->plugin;
@@ -1325,10 +1317,8 @@ void sessions_free() {
 
 	        xfree(s->alias);
 	        xfree(s->uid);
-	        xfree(s->status);
         	xfree(s->descr);
 	        xfree(s->password);
-		xfree(s->laststatus);
 		xfree(s->lastdescr);
 		userlist_free(s);
         }

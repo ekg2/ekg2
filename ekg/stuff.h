@@ -342,11 +342,13 @@ int timer_remove_user();
 TIMER(timer_handle_command);
 void timer_free();
 
-const char *ekg_status_label(const char *status, const char *descr, const char *prefix);
+const char *ekg_status_label(const int status, const char *descr, const char *prefix);
 void ekg_update_status(session_t *session);
 #define ekg_update_status_n(a) ekg_update_status(session_find(a))
+const char *ekg_status_string(const int status, const int cmd);
+int ekg_status_int(const char *text);
 
-char *ekg_draw_descr(const char *status);
+char *ekg_draw_descr(const int status);
 uint32_t *ekg_sent_message_format(const char *text);
 
 void ekg_yield_cpu();

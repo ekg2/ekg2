@@ -183,14 +183,13 @@ next2:
 		if (!r) {
 			r = userlist_resource_add(u, p->nick, 0);
 			
-			xfree(r->status); r->status	= xstrdup(EKG_STATUS_AVAIL);
+			r->status	= EKG_STATUS_AVAIL;
 			r->descr	= xstrdup(chan->name+4);
 			r->private	= p;
 
-			if (xstrcmp(u->status, EKG_STATUS_AVAIL)) {
-				xfree(u->status);
+			if (u->status != EKG_STATUS_AVAIL) {
 				xfree(u->descr);
-				u->status 	= xstrdup(EKG_STATUS_AVAIL);
+				u->status 	= EKG_STATUS_AVAIL;
 				u->descr	= xstrdup("description... ?");
 				query_emit_id(NULL, USERLIST_CHANGED, &s, &(u->uid));
 			}
@@ -214,8 +213,6 @@ next3:
 		continue;
 	}
 #undef dchar
-
-	return 0;
 }
 
 

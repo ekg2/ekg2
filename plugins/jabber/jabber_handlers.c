@@ -860,13 +860,13 @@ static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *
 				/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
 				if (nbody && isack) {
 					char *id = jabber_attr(n->atts, "id");
-					const char *our_status = session_status_get(s);
+					const int our_status = session_status_get(s);
 
 					if (j->send_watch) j->send_watch->transfer_limit = -1;
 
 					watch_write(j->send_watch, "<message to=\"%s\"><x xmlns=\"jabber:x:event\">", from);
 
-					if (!xstrcmp(our_status, EKG_STATUS_INVISIBLE)) {
+					if (our_status == EKG_STATUS_INVISIBLE) {
 						watch_write(j->send_watch, "<offline/>");
 					} else {
 						if (acktype & 1)
@@ -1462,7 +1462,9 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			char *uid;
 			char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
 			char *size 	= jabber_attr(p->atts, "size");
-			xmlnode_t *range;
+#if 0
+			xmlnode_t *range; /* unused? */
+#endif
 			jabber_dcc_t *jdcc;
 
 			uid = saprintf("jid:%s", uin);
@@ -1578,17 +1580,17 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 			if (!xstrcmp(node, "http://jabber.org/protocol/rc#set-status")) {
 				if (!x) {
-					char *status = s->status;
+					int status_n = s->status;
+					const char *status;
 					char *descr = jabber_escape(s->descr);
 					/* XXX, w/g http://jabber.org/protocol/rc#set-status nie mamy 'avail' tylko 'online' */
 
-					/* XXX, should this be even used? Not making any modifications for new autoaway */
-					if (!xstrcmp(status, EKG_STATUS_AUTOAWAY))	status = (s->autoaway ? "away" : "online");
-					else if (!xstrcmp(status, EKG_STATUS_AVAIL))	status = "online";
+					if (status_n == EKG_STATUS_AVAIL)	status = "online";
+					else status = ekg_status_string(status_n, 0);
 
 					EXECUTING_HEADER("Set Status", "Choose the status and status message", "http://jabber.org/protocol/rc");
 					watch_write(j->send_watch, "<field var=\"status\" label=\"Status\" type=\"list-single\"><required/>");
-						EXECUTING_SUBOPTION_STR("Chat", EKG_STATUS_FREE_FOR_CHAT);
+						EXECUTING_SUBOPTION_STR("Chat", EKG_STATUS_FFC);
 						EXECUTING_SUBOPTION_STR("Online", "online");			/* EKG_STATUS_AVAIL */
 						EXECUTING_SUBOPTION_STR("Away", EKG_STATUS_AWAY);
 						EXECUTING_SUBOPTION_STR("Extended Away", EKG_STATUS_XA);
@@ -1611,9 +1613,9 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 							&descr, "status-priority", &prio, NULL);
 					if (is_valid) {
 						if (prio) priority = atoi(prio);
-						if (!xstrcmp(status, "online")) { xfree(status); status = xstrdup(EKG_STATUS_AVAIL); } 
+						/* 'online' is handled in core */
 
-						if (status)	session_status_set(s, status);
+						if (status)	session_status_set(s, ekg_status_int(status));
 						if (descr)	session_descr_set(s, descr);
 						session_int_set(s, "priority", priority);
 						print("jabber_remotecontrols_commited_status", session_name(s), uid, status, descr, itoa(priority));
@@ -2272,7 +2274,9 @@ rc_forbidden:
 			} else if (!xstrcmp(ns, "http://jabber.org/protocol/bytestreams")) { /* JEP-0065: SOCKS5 Bytestreams */
 				char *uid = jabber_unescape(from);		/* jid */
 				char *sid = jabber_attr(q->atts, "sid");	/* session id */
+#if 0 /* unused */
 				char *smode = jabber_attr(q->atts, "mode"); 	/* tcp, udp */
+#endif
 				dcc_t *d = NULL;
 
 				if (type == JABBER_IQ_TYPE_SET && (d = jabber_dcc_find(uid, NULL, sid))) {
@@ -2709,9 +2713,10 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 						}
 
 						if (ulist) {
-							char *tmp = ulist->status;
-							ulist->status = xstrdup(EKG_STATUS_AVAIL);
-							xfree(tmp);
+#if 0
+							int tmp = ulist->status; /* yyy? XXX dj, can you see it? */
+#endif
+							ulist->status = EKG_STATUS_AVAIL;
 							
 							mucuser_private_deinit(ulist);
 							mucuser_private_get(ulist)->role	= xstrdup(role);
@@ -2745,7 +2750,8 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	}
 	if (!ismuc && (!type || ( na || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
 		xmlnode_t *nshow, *nstatus, *nerr, *temp;
-		char *status = NULL, *descr = NULL;
+		char *descr = NULL;
+		int status = 0;
 		char *jstatus = NULL;
 		char *tmp2;
 
@@ -2754,13 +2760,13 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
 			jstatus = jabber_unescape(nshow->data);
 			if (!xstrcmp(jstatus, "na") || na) {
-				status = xstrdup(EKG_STATUS_NA);
+				status = EKG_STATUS_NA;
 				na = 1;
 			}
 		} else {
 			if (na)
-				status = xstrdup(EKG_STATUS_NA);
-			else	status = xstrdup(EKG_STATUS_AVAIL);
+				status = EKG_STATUS_NA;
+			else	status = EKG_STATUS_AVAIL;
 		}
 
 		if ((nerr = xmlnode_find_child(n, "error"))) { /* bledny */
@@ -2769,27 +2775,16 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			descr = saprintf("(%s) %s", ecode, etext);
 			xfree(etext);
 
-			xfree(status);
-			status = xstrdup(EKG_STATUS_ERROR);
+			status = EKG_STATUS_ERROR;
 		} 
 		if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
 			xfree(descr);
 			descr = tlenjabber_unescape(nstatus->data);
 		}
 
-		if (status) {
-			xfree(jstatus);
-		} else if (jstatus && (!xstrcasecmp(jstatus, EKG_STATUS_AWAY)		|| !xstrcasecmp(jstatus, EKG_STATUS_INVISIBLE)	||
-					!xstrcasecmp(jstatus, EKG_STATUS_XA)		|| !xstrcasecmp(jstatus, EKG_STATUS_DND) 	|| 
-					!xstrcasecmp(jstatus, EKG_STATUS_FREE_FOR_CHAT) || !xstrcasecmp(jstatus, EKG_STATUS_BLOCKED))) {
-			status = jstatus;
-		} else if (istlen && !xstrcmp(jstatus, "available")) {
-			status = xstrdup(EKG_STATUS_AVAIL);
-		} else {
+		if (!status && (!jstatus || ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN)))
 			debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
-			xfree(jstatus);
-			status = xstrdup(EKG_STATUS_AVAIL);
-		}
+		xfree(jstatus);
 
 		if ((tmp2 = xstrchr(uid, '/'))) {
 			userlist_t *ut;
@@ -2821,7 +2816,6 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			xfree(session);
 /*			xfree(host); */
 		}
-		xfree(status);
 		xfree(descr);
 	}
 	xfree(uid);

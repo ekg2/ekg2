@@ -175,7 +175,7 @@ static COMMAND(gg_command_connect) {
 
 		memset(&p, 0, sizeof(p));
 
-		if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
+		if ((session_status_get(session) == EKG_STATUS_NA))
 			session_status_set(session, EKG_STATUS_AVAIL);
 		
 		/* dcc */
@@ -325,8 +325,9 @@ noproxy:
 static COMMAND(gg_command_away) {
 	gg_private_t *g = session_private_get(session);
 	char *descr;
-	char *cpdescr, *f = NULL, *fd = NULL, *df = NULL, *params0 = xstrdup(params[0]);
-	const char *status;
+	char *cpdescr, *f = NULL, *fd = NULL, *params0 = xstrdup(params[0]);
+	int df = 0; /* do we really need this? */
+	int status;
 	int timeout = session_int_get(session, "scroll_long_desc");
 	int autoscroll = 0;
 	int _status;
@@ -337,12 +338,11 @@ static COMMAND(gg_command_away) {
 	if (!xstrcmp(name, ("_autoscroll"))) {
 		autoscroll = 1;
 		status = session_status_get(session);
-		if (!xstrcasecmp(status, EKG_STATUS_AWAY) ||
-						!xstrcasecmp(status, EKG_STATUS_AUTOAWAY)) {
+		if ((status == EKG_STATUS_AWAY)	/*|| (status == EKG_STATUS_AUTOAWAY) */) {
 				fd = "away_descr";
-		} else if (!xstrcasecmp(status, EKG_STATUS_AVAIL)) {
+		} else if (status == EKG_STATUS_AVAIL) {
 				fd = "back_descr";
-		} else if (!xstrcasecmp(status, EKG_STATUS_INVISIBLE)) {
+		} else if (status == EKG_STATUS_INVISIBLE) {
 				fd = "invisible_descr";
 		}
 		xfree(params0);
@@ -361,22 +361,22 @@ static COMMAND(gg_command_away) {
 		}
 	} else if (!xstrcmp(name, ("away"))) {
 		session_status_set(session, EKG_STATUS_AWAY);
-		df = "away"; f = "away"; fd = "away_descr";
+		df = EKG_STATUS_AWAY; f = "away"; fd = "away_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("_autoaway"))) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
-		df = "away"; f = "auto_away"; fd = "auto_away_descr";
+		df = EKG_STATUS_AWAY; f = "auto_away"; fd = "auto_away_descr";
 	} else if (!xstrcmp(name, ("back"))) {
 		session_status_set(session, EKG_STATUS_AVAIL);
-		df = "back"; f = "back"; fd = "back_descr";
+		df = EKG_STATUS_AVAIL; f = "back"; fd = "back_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("_autoback"))) {
 		session_status_set(session, EKG_STATUS_AUTOBACK);
-		df = "back"; f = "auto_back"; fd = "auto_back_descr";
+		df = EKG_STATUS_AVAIL; f = "auto_back"; fd = "auto_back_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("invisible"))) {
 		session_status_set(session, EKG_STATUS_INVISIBLE);
-		df = "quit"; f = "invisible"; fd = "invisible_descr";
+		df = EKG_STATUS_NA; f = "invisible"; fd = "invisible_descr";
 		session_unidle(session);
 	} else {
 		xfree(params0);

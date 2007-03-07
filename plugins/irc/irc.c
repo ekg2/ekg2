@@ -949,7 +949,7 @@ static int irc_really_connect(session_t *session) {
 		return -1;
 
 	}
-	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
+	if (session_status_get(session) == EKG_STATUS_NA)
 		session_status_set(session, EKG_STATUS_AVAIL);
 
 	w = watch_add(&irc_plugin, fd, WATCH_WRITE, irc_handle_connect, xstrdup(session->uid) );
@@ -1355,7 +1355,7 @@ static COMMAND(irc_command_away) {
 		return -1;
 	}
 	if (isaway) {
-		const char *status = session_status_get(session);
+		const char *status = ekg_status_string(session_status_get(session), 0);
 		const char *descr  = session_descr_get(session);
 		if (descr)
 			watch_write(j->send_watch, "AWAY :%s\r\n", descr);
@@ -1580,7 +1580,7 @@ static COMMAND(irc_command_names) {
 	userlist_t      *ulist;
         list_t          l;
 	string_t	buf;
-	const char      *sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, NULL};
+	int		sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, 0};
 	int             lvl_total[5]    = {0, 0, 0, 0, 0};
 	int             lvl, count = 0;
 	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')')+1;
@@ -1612,7 +1612,7 @@ static COMMAND(irc_command_names) {
 		{
 			char *tmp;
 			ulist = (userlist_t *)l->data;
-			if (!ulist || xstrcmp(ulist->status, sort_status[lvl]) )
+			if (!ulist || (ulist->status != sort_status[lvl]))
 				continue;
 			++lvl_total[lvl];
 

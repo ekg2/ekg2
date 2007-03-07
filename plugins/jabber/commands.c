@@ -88,7 +88,7 @@ static COMMAND(jabber_command_dcc) {
 			return -1;
 		}
 
-		if (!xstrcmp(u->status, EKG_STATUS_NA) || !u->resources) {
+		if ((u->status <= EKG_STATUS_NA) || !u->resources) {
 			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}
@@ -386,7 +386,7 @@ static COMMAND(jabber_command_connect)
 
 	printq("connecting", session_name(session));
 
-	if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
+	if (session_status_get(session) == EKG_STATUS_NA)
 		session_status_set(session, EKG_STATUS_AVAIL);
 	return 0;
 }
@@ -416,7 +416,7 @@ static COMMAND(jabber_command_disconnect)
 				descr = NULL;
 			else
 				descr = xstrdup(params[0]);
-		} else if (config_keep_reason && !(descr = ekg_draw_descr("quit")))
+		} else if (config_keep_reason && !(descr = ekg_draw_descr(EKG_STATUS_NA)))
 			descr = xstrdup(session_descr_get(session));
 		
 		session_descr_set(session, descr);
@@ -632,7 +632,7 @@ static COMMAND(jabber_command_away)
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("ffc"))) {
 	        format = "ffc";
-	        session_status_set(session, EKG_STATUS_FREE_FOR_CHAT);
+	        session_status_set(session, EKG_STATUS_FFC);
                 session_unidle(session);
         } else if (!xstrcmp(name, ("xa"))) {
 		format = "xa";
@@ -649,7 +649,7 @@ static COMMAND(jabber_command_away)
 
                 if (!config_keep_reason) {
                         session_descr_set(session, NULL);
-                } else if ((tmp = ekg_draw_descr(format))) {
+                } else if ((tmp = ekg_draw_descr(session_status_get(session)))) {
                         session_descr_set(session, tmp);
                         xfree(tmp);
                 }
@@ -906,7 +906,7 @@ static COMMAND(jabber_command_ver)
 		print("user_not_found", session_name(session));
 		return -1;
 	}
-	if (xstrcasecmp(ut->status, EKG_STATUS_NA) == 0) {
+	if (ut->status <= EKG_STATUS_NA) {
 		print("jabber_status_notavail", session_name(session), ut->uid);
 		return -1;
 	}

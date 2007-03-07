@@ -256,7 +256,7 @@ int jabber_write_status(session_t *s)
 {
 	jabber_private_t *j = session_private_get(s);
 	int prio = session_int_get(s, "priority");
-	const char *status;
+	int status;
 	char *descr;
 	char *real = NULL;
 	char *priority = NULL;
@@ -276,7 +276,7 @@ int jabber_write_status(session_t *s)
 		return 0;
 
 	status = session_status_get(s);
-	if (!xstrcmp(status, EKG_STATUS_AUTOAWAY)) status = "away";
+	/*if (!xstrcmp(status, EKG_STATUS_AUTOAWAY)) status = "away"; (that shouldn't take place...)*/
 
 	if ((descr = tlenjabber_escape(session_descr_get(s)))) {
 		real = saprintf("<status>%s</status>", descr);
@@ -301,13 +301,16 @@ int jabber_write_status(session_t *s)
 		}
 	}
 #define P(x) (x ? x : "")
-	if (!j->istlen && !xstrcmp(status, EKG_STATUS_AVAIL))
+	if (!j->istlen && (status == EKG_STATUS_AVAIL))
 		watch_write(j->send_watch, "<presence>%s%s%s%s</presence>", P(real), P(priority), P(x_signed), JINGLE_CAPS);
-	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))
+	else if (status == EKG_STATUS_INVISIBLE)
 		watch_write(j->send_watch, "<presence type=\"invisible\">%s%s</presence>", P(real), P(priority));
 	else {
-		if (j->istlen && !xstrcmp(status, EKG_STATUS_AVAIL)) status = "available";
-		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s%s</presence>", status, P(real), P(priority), P(x_signed), JINGLE_CAPS);
+		const char *status_s;
+
+		if (j->istlen && (status == EKG_STATUS_AVAIL)) status_s = "available";
+		else status_s = ekg_status_string(status, 0);
+		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s%s</presence>", status_s, P(real), P(priority), P(x_signed), JINGLE_CAPS);
 	}
 #undef P
 

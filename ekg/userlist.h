@@ -59,7 +59,7 @@ typedef struct {
 				 * 	Groups to which this user belongs like: work, friends, family..<br>
 				 *	It's also used internally by ekg2, for example when user is ignore he has group with name: __ignore */
 	
-	char *status;		/**< current status like: notavail, avail, away, invisible, dnd, xa, etc */
+	int status;		/**< current status */
 	char *descr;		/**< description of status. */
 	char *authtype;		/**< authtype: to/from/both [only used by jabber] */	
 	char *resource;		/**< For leafnode and compatilibity with python, always NULL [Will be removed!] */
@@ -83,29 +83,40 @@ typedef struct {
         uint32_t last_ip;       /**< Lastseen ipv4 address */
         uint16_t last_port;     /**< Lastseen port */
 
-	char *last_status;	/**< Lastseen status */
+	int last_status;	/**< Lastseen status */
 	char *last_descr;	/**< Lastseen description */
 	time_t status_time;	/**< From when we have this status, description */
 	void *private;          /**< sometimes can be helpfull */
 } userlist_t;
 
-#define EKG_STATUS_NA "notavail"
-#define EKG_STATUS_AVAIL "avail"
-#define EKG_STATUS_AWAY "away"
-#define EKG_STATUS_INVISIBLE "invisible"
-#define EKG_STATUS_XA "xa"
-#define EKG_STATUS_DND "dnd"
-#define EKG_STATUS_FREE_FOR_CHAT "chat"
-#define EKG_STATUS_BLOCKED "blocked"
-#define EKG_STATUS_UNKNOWN "unknown"
-#define EKG_STATUS_ERROR "error"
-/* only for session_status_set() */
-#define EKG_STATUS_AUTOAWAY "autoaway"
-#define EKG_STATUS_AUTOXA "autoxa"
-#define EKG_STATUS_AUTOBACK "autoback"
-
 #define EKG_XSTATE_BLINK	01
 #define EKG_XSTATE_TYPING	02
+
+/**
+ * status_t - user's current status, as prioritized enum
+ */
+
+enum status_t {
+	EKG_STATUS_NULL		= 0x00, /* special value */
+	/* These statuses should be considered as no-delivery */
+	EKG_STATUS_ERROR,		/* used in Jabber */
+	EKG_STATUS_BLOCKED,		/* used in GG */
+	/* These statuses should be considered as 'not sure' */
+	EKG_STATUS_UNKNOWN	= 0x10,	/* will be used in Jabber */
+	EKG_STATUS_NA,			/* universal */
+	/* These should be considered as 'probably available' */
+	EKG_STATUS_INVISIBLE,		/* will be used in GG; hard to prioritize... */
+	EKG_STATUS_DND		= 0x20,	/* Jabber */
+	EKG_STATUS_XA,			/* Jabber */
+	EKG_STATUS_AWAY,		/* universal */
+	/* These should be considered as 'sure available' */
+	EKG_STATUS_AVAIL	= 0x40,	/* universal */
+	EKG_STATUS_FFC,			/* Jabber; FREE_FOR_CHAT was too long */
+	/* These are special statusem for auto-away magic */
+	EKG_STATUS_AUTOAWAY	= 0x80,	/* putting in auto-away */
+	EKG_STATUS_AUTOXA,		/* putting in auto-xa */
+	EKG_STATUS_AUTOBACK		/* returning to previous status */
+};
 
 /** 
  * ekg_resource_t is used to manage userlist_t resources.<br>
@@ -114,7 +125,7 @@ typedef struct {
 
 typedef struct {
 	char *name;		/**< name of resource */
-	char *status;		/**< status, like u->status 	[status of resource]		*/
+	int status;		/**< status, like u->status 	[status of resource]		*/
 	char *descr;		/**< descr, like u->descr	[description of resource]	*/
 	int prio;		/**< prio of resource 		[priority of this resource] 	*/
 	void *private;		/**< priv, like u->private 	[private data info/struct]	*/

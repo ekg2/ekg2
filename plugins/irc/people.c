@@ -358,7 +358,6 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
 {
 	int  i, len;
-	char *tmp;
 	len = xstrlen(modes);
 
 	/* GiM: this could be done much easier on intel ;/ */
@@ -366,15 +365,13 @@ int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
 		if (mode & (1<<(len-1-i))) break;
 	
 
-	tmp=ul->status;
 	switch (i) {
-		case 0:	ul->status = xstrdup(EKG_STATUS_AVAIL);		break;
-		case 1:	ul->status = xstrdup(EKG_STATUS_AWAY);		break;
-		case 2:	ul->status = xstrdup(EKG_STATUS_XA);		break;
-		case 3:	ul->status = xstrdup(EKG_STATUS_INVISIBLE);	break;
-		default:ul->status = xstrdup(EKG_STATUS_ERROR);		break;
+		case 0:	ul->status = EKG_STATUS_AVAIL;		break;
+		case 1:	ul->status = EKG_STATUS_AWAY;		break;
+		case 2:	ul->status = EKG_STATUS_XA;		break;
+		case 3:	ul->status = EKG_STATUS_INVISIBLE;	break;
+		default:ul->status = EKG_STATUS_ERROR;		break;
 	}
-	xfree(tmp);
 	return i;
 }
 
@@ -430,7 +427,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		w = window_find_s(s, pch->chanp->name);
 		if (w && (ulist = userlist_find_u(&(w->userlist), old))) {
 			newul = userlist_add_u(&(w->userlist), t2, new);
-			newul->status = xstrdup(ulist->status);
+			newul->status = ulist->status;
 			userlist_remove_u(&(w->userlist), ulist);
 			/* XXX dj, userlist_replace() */
 			/* GiM: Yes, I thought about doin' this 'in place'

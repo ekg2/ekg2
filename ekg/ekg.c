@@ -215,11 +215,11 @@ void ekg_loop() {
                         session_t *s = l->data;
                         int tmp;
 
-                        if (!s->connected || (xstrcmp(s->status, EKG_STATUS_AVAIL) && xstrcmp(s->status, EKG_STATUS_FREE_FOR_CHAT) && xstrcmp(s->status, EKG_STATUS_AWAY)))
+                        if (!s->connected || (s->status < EKG_STATUS_AWAY))
                                 continue;
 
 			do {
-				if (!xstrcmp(s->status, EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
+				if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
         	                        break;
 
                 	        if (time(NULL) - s->activity > tmp)
@@ -707,8 +707,8 @@ struct option ekg_options[] = {
 
 int main(int argc, char **argv)
 {
-        int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0;
-        char *tmp = NULL, *new_status = NULL, *new_descr = NULL;
+        int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0;
+        char *tmp = NULL, *new_descr = NULL;
         char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
         struct passwd *pw;
 #ifndef NO_POSIX_SYSTEM
@@ -822,7 +822,7 @@ int main(int argc, char **argv)
                                 if (!optarg && argv[optind] && argv[optind][0] != '-')
                                         optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_FREE_FOR_CHAT;
+                                new_status = EKG_STATUS_FFC;
                                 xfree(new_descr);
                                 new_descr = xstrdup(optarg);
                                 break;
@@ -1019,11 +1019,7 @@ int main(int argc, char **argv)
                 if (new_descr)
                         session_descr_set(s, new_descr);
 
-                if (!xstrcmp(s->status, EKG_STATUS_AVAIL) || !xstrcmp(s->status, EKG_STATUS_NA))
-                        cmd = "back";
-
-                if (!cmd)
-                        cmd = s->status;
+		cmd = ekg_status_string(s->status, 1);
 
                 command_exec_format(NULL, s, 2, ("/%s %s"), cmd, (new_descr) ? new_descr : "");
         }
