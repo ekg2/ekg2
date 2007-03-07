@@ -77,13 +77,24 @@ window_t *window_find_ptr(window_t *w) {
 	return NULL;
 }
 
-/*
+/**
  * window_find_sa()
  *
- * it seeks for an window with given target and session
- * returns structure describing it
+ * Search for an window with given @a target and @a session<br>
  *
+ * @param session				- window session to search [See also @@ @a session_null_means_no_session]
+ * @param target				- window target to search
+ * @param session_null_means_no_session		- if you know that this window must belong to given session [NULL, or whatever] so this should be 1.
+ * 						  else NULL @@ @a session will mean that you don't know which session should it be. And it'll search/check
+ * 						  <b>all</b> sessions
+ *
+ * @sa window_find_ptr()        - If you want to search for given window ptr.
+ * @sa window_find_s()          - macro to <code>window_find_sa(session, target, 1)</code>
+ * @sa window_find()            - wrapper to <code>window_find_sa(NULL, target, 0)</code>
+ *
+ * @return pointer to window_t struct if window was founded, else NULL
  */
+
 window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session) {
 	int status = 0;
 	userlist_t *u;
@@ -155,12 +166,22 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 	return NULL;
 }
 
-/*
+/**
  * window_find()
  *
- * it seeks for an window with given target
- * returns structure describing it
+ * Seeks for an window with given @a target<br>
+ * Wrapper to: <code>window_find_sa(NULL, target, 0);</code>
+ *
+ * @note It's really slow, and you should avoid using it. You'll never know if you found good window... so use window_find_s()
+ *
+ * @param target - window target
+ *
+ * @sa window_find_s()		- If you know session.
+ *
+ * @return pointer to window_t struct if window was founded, else NULL
+ *
  */
+
 window_t *window_find(const char *target) {
 	return window_find_sa(NULL, target, 0);
 }
