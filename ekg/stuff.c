@@ -2294,7 +2294,7 @@ const char *ekg_status_string(const int status, const int cmd)
 		ENUM_TO_S(FFC, (cmd ? "ffc" : "chat"))
 		default:
 			debug_error("ekg_status_string(): Got unexpected status: 0x%02x\n", status);
-			return EKG_STATUS_UNKNOWN;
+			return "unknown";
 	}
 #undef ENUM_TO_S
 }
