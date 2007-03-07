@@ -1713,7 +1713,7 @@ void gg_register_commands()
 #define GG_FLAGS       GG_ONLY | SESSION_MUSTBECONNECTED
 #define GG_FLAGS_TARGET GG_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
-	command_add(&gg_plugin, ("gg:add"), "U ? p", gg_command_modify, 0, "-f --find");
+	command_add(&gg_plugin, ("gg:add"), "!U ? p", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, "-f --find");
 	command_add(&gg_plugin, ("gg:connect"), "r ?", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:disconnect"), "r ?", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:reconnect"), NULL, gg_command_connect, 	GG_ONLY, NULL);
