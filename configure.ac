@@ -415,7 +415,7 @@ fi
 AC_ARG_WITH(perl,		AC_HELP_STRING([--without-perl],		[Compile without perl support (perl plugin)]))
 
 if test "x$with_perl" != "xno"; then
-	AM_CHECK_PERL
+dnl	AM_CHECK_PERL
 
 	if test "x$have_perl" = "xyes"; then
 		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS perl"
@@ -426,7 +426,7 @@ fi
 AC_ARG_WITH(python,		AC_HELP_STRING([--without-python],		[Compile without python support (python plugin)]))
 
 if test "x$with_python" != "xno"; then
-	AM_CHECK_PYTHON
+dnl	AM_CHECK_PYTHON
 
 	if test "x$have_python" = "xyes"; then
 		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS python"
@@ -673,9 +673,9 @@ if test "x$have_ncurses" = "xyes"; then
 	echo -e " - Mouse support:in $mouse_lib"
 fi
 
-echo -en " - Charset:\t "
+echo -en " - Charset support:\t "
 	if test "x$enable_unicode" = "xyes"; then
-	        echo "unicode/utf8 (EXPERIMENTAL)"
+	        echo "utf-8 & iso-8859-2 (EXPERIMENTAL)"
 		echo "*****************************************************************************************************"
 		echo "WARNING: USING THE RESULTING EKG2 BINARY IN A NON-UTF-8 (ASCII or LATIN) TERMINAL IS CURRENTLY"
 		echo "NOT SUPPORTED WHEN BUILT WITH GCC 4.x OR LATER."
@@ -692,7 +692,7 @@ echo -en " - Charset:\t "
 		echo "******************************************************************************************************"
 		echo "AND ENJOY USING EKG2-UNICODE"
 	else
-	        echo "ansi"
+	        echo "iso-8859-2"
 	fi
 
 echo -en " - Plugins:\t "
