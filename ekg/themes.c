@@ -1180,6 +1180,14 @@ void theme_init()
 	format_add("contacts_blocking_header", "", 1);
 	format_add("contacts_blocking", " %m%1%n", 1);
 	format_add("contacts_blocking_footer", "", 1);
+	format_add("contacts_unknown_header", "", 1);
+	format_add("contacts_unknown", " %M%1%n", 1);
+	format_add("contacts_unknown_descr", "%Ki%M%1%n", 1);
+	format_add("contacts_unknown_descr_full", "%Ki%M%1%n %2", 1);
+	format_add("contacts_unknown_blink", " %M%i%1%n", 1);
+	format_add("contacts_unknown_descr_blink", "%K%ii%M%i%1%n", 1);
+	format_add("contacts_unknown_descr_full_blink", "%K%ii%M%i%1%n %2", 1);
+	format_add("contacts_unknown_footer", "", 1);
 	format_add("contacts_footer", "", 1);
 	format_add("contacts_footer_group", "", 1);
 	format_add("contacts_metacontacts_footer", "", 1);
@@ -1236,7 +1244,8 @@ void theme_init()
 	format_add("contacts_invisible_descr_typing", "%W*%c%1%n", 1);
 	format_add("contacts_invisible_descr_full_typing", "%W*%c%1%n %2", 1);
 	format_add("contacts_unknown_typing", "%W*%M%1%n", 1);
-	format_add("contacts_unknown_blink_typing", "%W%i*%M%i%1%n", 1);
+	format_add("contacts_unknown_descr_typing", "%W*%M%1%n", 1);
+	format_add("contacts_unknown_descr_full_typing", "%W*%M%1%n %2", 1);
 
 	/* we are saying goodbye and we are saving configuration */
 	format_add("quit", _("%> Bye\n"), 1);

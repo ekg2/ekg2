@@ -2280,10 +2280,7 @@ void ekg_update_status(session_t *session)
 
 const char *ekg_status_string(const int status, const int cmd)
 {
-	const char *status_string;
-#define ENUM_TO_S(x, y) case EKG_STATUS_##x: status_string = y; break;
-#define ENUM_TO_S_ONLY(x, y) ENUM_TO_S(x, (cmd ? "back" : y))
-
+#define ENUM_TO_S(x, y) case EKG_STATUS_##x: return y;
 	switch (status) {
 		ENUM_TO_S(ERROR, "error")
 		ENUM_TO_S(BLOCKED, "blocked")
@@ -2293,14 +2290,13 @@ const char *ekg_status_string(const int status, const int cmd)
 		ENUM_TO_S(DND, "dnd")
 		ENUM_TO_S(XA, "xa")
 		ENUM_TO_S(AWAY, "away")
+		ENUM_TO_S(AVAIL, (cmd ? "back" : "avail")
 		ENUM_TO_S(FFC, (cmd ? "ffc" : "chat"))
 		default:
-			status_string = (cmd ? "back" : "avail"); /* XXX if possible, use UNKNOWN here */
+			debug_error("ekg_status_string(): Got unexpected status: 0x%02x\n", status);
+			return EKG_STATUS_UNKNOWN;
 	}
-
-#undef ENUM_TO_S_ONLY
 #undef ENUM_TO_S
-	return status_string;
 }
 
 /*
@@ -2314,6 +2310,7 @@ int ekg_status_int(const char *text)
 #define STR_TO_E(y, x) if (!xstrcasecmp(x, text)) return EKG_STATUS_##y;
 	STR_TO_E(ERROR, "error")
 	else STR_TO_E(BLOCKED, "blocked")
+	else STR_TO_E(UNKNOWN, "unknown")
 	else STR_TO_E(NA, "notavail")
 	else STR_TO_E(INVISIBLE, "invisible")
 	else STR_TO_E(DND, "dnd")
@@ -2325,7 +2322,10 @@ int ekg_status_int(const char *text)
 	else STR_TO_E(AVAIL, "available")		/* tlen */
 	else STR_TO_E(AVAIL, "back")
 	else STR_TO_E(AVAIL, "online")			/* jabber */
-	else return EKG_STATUS_UNKNOWN;
+	else {
+		debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
+		return EKG_STATUS_UNKNOWN;
+	}
 #undef STR_TO_E
 }
 
