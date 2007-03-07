@@ -359,14 +359,14 @@ COMMAND(cmd_add) {
 		u->nickname = xstrdup(params[1]);
 	}
 
-	if (u || userlist_add(session_current, params[0], params[1])) {
+	if (u || userlist_add(session, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
 		query_emit_id(NULL, USERLIST_ADDED, &uid, &params[1], &quiet);
-                query_emit_id(NULL, ADD_NOTIFY, &session_current->uid, &uid);
+                query_emit_id(NULL, ADD_NOTIFY, &session->uid, &uid);
                 xfree(uid);
 
-		printq("user_added", params[1], session_name(session_current));
+		printq("user_added", params[1], session_name(session));
 
 		tabnick_remove(params[0]);
 		config_changed = 1;
