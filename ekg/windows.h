@@ -95,7 +95,6 @@ session_t *window_session_get(window_t *w);
 int window_lock_get(window_t *w);
 int window_lock_inc(window_t *w);
 int window_lock_dec(window_t *w);
-#define window_lock_dec_n(a) window_lock_dec(window_find(a))
 #endif
 
 COMMAND(cmd_window);

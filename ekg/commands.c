@@ -1966,14 +1966,18 @@ static COMMAND(cmd_debug_query)
 	return 0;
 }
 
-/* 
- * on Solaris files under /proc filesystem are in 
- * binary format, so this is not portable...
+/**
+ * cmd_test_mem()
  *
- * it now supports linux, solaris, freebsd.
+ * Check and printq() how much memory ekg2 use.<br>
+ *
+ * @note OS currently supported: Linux, Solaris, FreeBSD. If your OS isn't supported please give us info.
+ * @bug Need cleanup/rewritting
+ *
+ * @return Memory used by ekg2
  */
-static COMMAND(cmd_test_mem) 
-{
+
+static COMMAND(cmd_test_mem) {
 #ifndef NO_POSIX_SYSTEM
 	char *temp, *p = NULL;
 	char *txt;
@@ -2157,10 +2161,20 @@ static COMMAND(cmd_test_fds)
 #endif
 }
 
-static COMMAND(cmd_beep)
-{
-	query_emit_id(NULL, UI_BEEP, NULL);
+/**
+ * cmd_beep()
+ *
+ * Beep by emiting <i>UI_BEEP</i> event
+ *
+ * @note UI-PLUGINS should connect to this event, and when they succesfully beep, returns -1.
+ * 	 Cause we may have more than 1 UI-PLUGIN, and I really don't like idea, when after /beep 
+ * 	 I hear 2 or more beeps.
+ *
+ * @return 0
+ */
 
+static COMMAND(cmd_beep) {
+	query_emit_id(NULL, UI_BEEP, NULL);
 	return 0;
 }
 
@@ -2319,10 +2333,16 @@ next:
 	return 0;
 }
 
-static COMMAND(cmd_echo)
-{
-	wcs_printq("generic", params[0] ? params[0] : "");
+/**
+ * cmd_echo()
+ *
+ * printq() params[0] if not NULL, or just ""
+ *
+ * @return 0
+ */
 
+static COMMAND(cmd_echo) {
+	printq("generic", params[0] ? params[0] : "");
 	return 0;
 }
 
@@ -2351,7 +2371,7 @@ static COMMAND(cmd_bind) {
 		return 0;
 	} 
 	if (match_arg(params[0], 'S', ("set"), 2)) {
-		window_lock_dec_n(target); /* this is interactive command */
+		window_lock_dec(window_find_s(session, target)); /* this is interactive command. XXX, what about window_current? */
 
 		query_emit_id(NULL, BINDING_SET, params[1], NULL, quiet);
 		return 0;
