@@ -968,16 +968,6 @@ session_t *window_session_get(window_t *w)
 	return (w) ? w->session : NULL;
 }
 
-int window_lock_set(window_t *w, int lock)
-{
-	if (!w)
-		return -1;
-
-	w->lock = lock;
-
-	return 0;
-}
-
 int window_lock_inc(window_t *w)
 {
 	if (!w)
