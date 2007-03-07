@@ -114,11 +114,35 @@ static TIMER(protocol_reconnect_handler) {	/* temporary */
 	return -1;
 }
 
-/*
- * protocol_disconnect()
+/**
+ * protocol_disconnected()
  *
- * obs³uga zerwanego po³±czenia.
+ * Handler for <i>PROTOCOL_DISCONNECTED</i><br>
+ * When session notify core about disconnection we do here:<br>
+ * 	- clear <b>all</b> user status, presence, resources details. @sa userlist_clear_status()<br>
+ * 	- check if disconnect @a type was either <i>EKG_DISCONNECT_NETWORK:</i> or <i>EKG_DISCONNECT_FAILURE:</i> and
+ * 		if yes, create reconnect timer (if user set auto_reconnect variable)<br>
+ * 	- display notify through UI-plugin
+ *
+ * @note About diffrent types [@a type] of disconnections:<br>
+ * 		- <i>EKG_DISCONNECT_USER</i> - when user do /disconnect in @a reason we should have param of /disconnect command, without reconnection<br>
+ * 		- <i>EKG_DISCONNECT_NETWORK</i>					<br>
+ *		- <i>EKG_DISCONNECT_FORCED</i>					<br>
+ *		- <i>EKG_DISCONNECT_FAILURE</i>					<br>
+ *		- <i>EKG_DISCONNECT_STOPPED</i> - when user do /disconnect during connection, without reason, without reconnection<br>
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - session uid which goes disconnect
+ * @param ap 2nd param: <i>(char *) </i><b>reason</b>  - reason why session goes disconnect.. It's reason specifed by user if EKG_DISCONNECT_USER, else 
+ * 								string with error description like from: strerror().. [if EKG_DISCONNECT_FAILURE]
+ * @param ap 3rd param: <i>(int) </i><b>type</b> - type of disconnection one of: 
+ * 					[EKG_DISCONNECT_USER, EKG_DISCONNECT_NETWORK, EKG_DISCONNECT_FORCED, EKG_DISCONNECT_FAILURE, EKG_DISCONNECT_STOPPED]
+ *
+ * @param data NULL
+ *
+ * @return 0
+ *
  */
+
 static QUERY(protocol_disconnected)
 {
 	char *session	= *(va_arg(ap, char **));
