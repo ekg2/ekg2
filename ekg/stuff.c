@@ -2290,7 +2290,7 @@ const char *ekg_status_string(const int status, const int cmd)
 		ENUM_TO_S(DND, "dnd")
 		ENUM_TO_S(XA, "xa")
 		ENUM_TO_S(AWAY, "away")
-		ENUM_TO_S(AVAIL, (cmd ? "back" : "avail")
+		ENUM_TO_S(AVAIL, (cmd ? "back" : "avail"))
 		ENUM_TO_S(FFC, (cmd ? "ffc" : "chat"))
 		default:
 			debug_error("ekg_status_string(): Got unexpected status: 0x%02x\n", status);
