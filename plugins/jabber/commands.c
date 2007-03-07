@@ -141,7 +141,7 @@ static COMMAND(jabber_command_dcc) {
 					}
 				}
 				debug_function("[jabber] jabber_command_dcc() hash generated: %s errors below are ok.\n", sid->str);
-			} while (jabber_dcc_find(NULL, NULL, sid->str) && string_free(sid, 1));	/* loop, [if sid exists] + free string if yes */
+			} while (jabber_dcc_find(NULL, NULL, sid->str) && !string_free(sid, 1));	/* loop, [if sid exists] + free string if yes */
 
 			p->sid		= string_free(sid, 0);
 			p->sfd		= -1;
