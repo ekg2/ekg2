@@ -90,23 +90,15 @@ PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
  *
  * inicjuje jabber_private_t danej sesji.
  */
-static void jabber_private_init(session_t *s)
-{
-        const char *uid = session_uid_get(s);
-        jabber_private_t *j = s->priv;
+static void jabber_private_init(session_t *s) {
+        jabber_private_t *j;
 
-	if ((xstrncasecmp(uid, "tlen:", 5) && xstrncasecmp(uid, "jid:", 4)) || j)
+	if (!s || s->priv || s->plugin != &jabber_plugin)
 		return;
 
-        if (session_private_get(s))
-                return;
-
-        j = xmalloc(sizeof(jabber_private_t));
+        s->priv = j = xmalloc(sizeof(jabber_private_t));
         j->fd = -1;
-
-	j->istlen = !xstrncasecmp(uid, "tlen:", 5);
-
-        session_private_set(s, j);
+	j->istlen = !xstrncasecmp(s->uid, "tlen:", 5);
 }
 
 /*
@@ -114,13 +106,11 @@ static void jabber_private_init(session_t *s)
  *
  * zwalnia jabber_private_t danej sesji.
  */
-static void jabber_private_destroy(session_t *s)
-{
-        jabber_private_t *j = session_private_get(s);
-        const char *uid = session_uid_get(s);
+static void jabber_private_destroy(session_t *s) {
+        jabber_private_t *j;
 
-	if ((xstrncasecmp(uid, "tlen:", 5) && xstrncasecmp(uid, "jid:", 4)) || !j)
-                return;
+	if (!s || !(j = s->priv) || s->plugin != &jabber_plugin)
+		return;
 
         xfree(j->server);
 	xfree(j->resource);
@@ -133,8 +123,7 @@ static void jabber_private_destroy(session_t *s)
 	jabber_privacy_free(j);
 
         xfree(j);
-
-        session_private_set(s, NULL);
+	s->priv = NULL;
 }
 
 /* destroy all previously saved jabber:iq:privacy list... we DON'T DELETE LIST on jabberd server... only list saved @ j->privacy */
