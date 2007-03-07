@@ -1497,8 +1497,19 @@ const char *prepare_path(const char *filename, int do_mkdir)
 	return path;
 }
 
-char *random_line(const char *path)
-{
+/**
+ * random_line()
+ *
+ * Open file specified by @a path and select by random one line from file specified by @a path
+ *
+ * @param	path - path to file.
+ *
+ * @return 	NULL - if file was not found or file has no line inside. <br>
+ * 		else random line founded at file,
+ *
+ */
+
+static char *random_line(const char *path) {
 	int max = 0, item, tmp = 0;
 	char *line;
 	FILE *f;
@@ -1516,7 +1527,7 @@ char *random_line(const char *path)
 		rewind(f);
 		item = rand() / (RAND_MAX / max + 1);
 
-		while ((line = read_file(f, (tmp == item)))) {	/* read_file(f, 0) + xstrdup() if needed? */
+		while ((line = read_file(f, (tmp == item)))) {	/* read_file(f, 0)  if needed? */
 			if (tmp == item) {
 				fclose(f);
 				return line;
