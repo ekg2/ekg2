@@ -89,12 +89,19 @@ void protocol_init() {
 }
 
 
-/*
+/**
  * protocol_reconnect_handler()
  *
- * obs³uga timera reconnectu.
+ * Handler of reconnect timer created by protocol_disconnected()<br>
+ *
+ * @param type - 	0 - If timer should do his job<br>
+ * 			1 - If timer'll be destroy, and handler should free his data
+ * @param data - session uid to reconnect
+ *
+ * @return -1 [TEMPORARY TIMER]
  */
-static TIMER(protocol_reconnect_handler) {	/* temporary */
+
+static TIMER(protocol_reconnect_handler) {
 	char *session = (char*) data;
 	session_t *s;
 
@@ -124,12 +131,14 @@ static TIMER(protocol_reconnect_handler) {	/* temporary */
  * 		if yes, create reconnect timer (if user set auto_reconnect variable)<br>
  * 	- display notify through UI-plugin
  *
- * @note About diffrent types [@a type] of disconnections:<br>
+ * @note About different types [@a type] of disconnections:<br>
  * 		- <i>EKG_DISCONNECT_USER</i> - when user do /disconnect in @a reason we should have param of /disconnect command, without reconnection<br>
  * 		- <i>EKG_DISCONNECT_NETWORK</i>					<br>
  *		- <i>EKG_DISCONNECT_FORCED</i>					<br>
  *		- <i>EKG_DISCONNECT_FAILURE</i>					<br>
  *		- <i>EKG_DISCONNECT_STOPPED</i> - when user do /disconnect during connection, without reason, without reconnection<br>
+ *
+ * @todo Before creating reconnect timer, check if another one with the same name exists.
  *
  * @param ap 1st param: <i>(char *) </i><b>session</b> - session uid which goes disconnect
  * @param ap 2nd param: <i>(char *) </i><b>reason</b>  - reason why session goes disconnect.. It's reason specifed by user if EKG_DISCONNECT_USER, else 
@@ -193,13 +202,22 @@ static QUERY(protocol_disconnected)
 	return 0;
 }
 
-/*
- * protocol_connect()
+/**
+ * protocol_connected()
  *
- * obs³uga udanego po³±czenia.
+ * Handler for <i>PROTOCOL_CONNECTED</i><br>
+ * When session notify core about connection we do here:<br>
+ * 	- If we have ourselves on the userlist. It update status and description<br>
+ * 	- Display notify through UI-plugin<br>
+ * 	- If we have messages in session queue, than send it and display info.
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - session uid which goes connected.
+ * @param data NULL
+ *
+ * @return 0
  */
-static QUERY(protocol_connected)
-{
+
+static QUERY(protocol_connected) {
 	char **session = va_arg(ap, char**);
 	session_t *s = session_find(*session);
 	const char *descr = session_descr_get(s);
