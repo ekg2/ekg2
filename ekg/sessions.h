@@ -76,7 +76,7 @@ int session_alias_set(session_t *s, const char *alias);
 
 int session_status_get(session_t *s);
 #define session_status_get_n(a) session_status_get(session_find(a))
-int session_status_set(session_t *s, const int status);
+int session_status_set(session_t *s, int status);
 
 const char *session_descr_get(session_t *s);
 int session_descr_set(session_t *s, const char *descr);

@@ -298,12 +298,14 @@ int session_remove(const char *uid)
 
 PROPERTY_INT_GET(session, status, int)
 
-int session_status_set(session_t *s, const int status)
+int session_status_set(session_t *s, int status)
 {
 	int is_xa;
 
 	if (!s)
 		return -1;
+	if (status == EKG_STATUS_UNKNOWN) /* we shouldn't set our status to unknown ( ; */
+		status = EKG_STATUS_AVAIL;
 
 	{
 		char *__session = xstrdup(s->uid);
