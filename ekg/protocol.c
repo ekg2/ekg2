@@ -62,14 +62,23 @@ static QUERY(protocol_status);
 static QUERY(protocol_message);
 static QUERY(protocol_xstate);
 
-/*
+/**
  * protocol_init()
  *
- * rejestruje wszystkie zapytania zwi±zane z protoko³em, które bêd±
- * wysy³ane przez pluginy.
+ * Init communication between core and PROTOCOL plugins<br>
+ * <br>
+ * Here, we register <b>main</b> <i>communication channels</i> like:<br>
+ * 	- status changes: 			<i>PROTOCOL_STATUS</i><br>
+ * 	- message I/O:				<i>PROTOCOL_MESSAGE</i><br>
+ * 	- acknowledge of messages: 		<i>PROTOCOL_MESSAGE_ACK</i><br>
+ * 	- misc user events like typing notifies:<i>PROTOCOL_XSTATE</i><br>
+ * 	- session connection/disconnection: 	<i>PROTOCOL_CONNECTED</i> and <i>PROTOCOL_DISCONNECTED</i>
+ *
+ * @sa query_connect()	- Function to add listener on specified events.
+ * @sa query_emit()	- Function to emit specified events.
  */
-void protocol_init()
-{
+
+void protocol_init() {
 	query_connect_id(NULL, PROTOCOL_STATUS, protocol_status, NULL);
 	query_connect_id(NULL, PROTOCOL_MESSAGE, protocol_message, NULL);
 	query_connect_id(NULL, PROTOCOL_MESSAGE_ACK, protocol_message_ack, NULL);
