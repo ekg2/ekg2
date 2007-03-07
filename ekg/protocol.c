@@ -132,11 +132,13 @@ static TIMER(protocol_reconnect_handler) {
  * 	- display notify through UI-plugin
  *
  * @note About different types [@a type] of disconnections:<br>
- * 		- <i>EKG_DISCONNECT_USER</i> - when user do /disconnect in @a reason we should have param of /disconnect command, without reconnection<br>
- * 		- <i>EKG_DISCONNECT_NETWORK</i>					<br>
- *		- <i>EKG_DISCONNECT_FORCED</i>					<br>
- *		- <i>EKG_DISCONNECT_FAILURE</i>					<br>
- *		- <i>EKG_DISCONNECT_STOPPED</i> - when user do /disconnect during connection, without reason, without reconnection<br>
+ * 		- <i>EKG_DISCONNECT_USER</i> 	- when user do /disconnect [<b>with reason</b>, in @a reason we should have param of /disconnect command][<b>without reconnection</b>]<br>
+ * 		- <i>EKG_DISCONNECT_NETWORK</i>	- when smth is wrong with network... (read: when recv() fail, or send() or SSL wrappers for rcving/sending data fail with -1 and with bad errno)
+ * 							[<b>without reason</b>][<b>without reconnection</b>]<br>
+ *		- <i>EKG_DISCONNECT_FORCED</i>	- when server force us to disconnection. [<b>without reason</b>][<b>without reconnection</b>]<br>
+ *		- <i>EKG_DISCONNECT_FAILURE</i> - when we fail to connect to server (read: when we fail connect session, after /connect) 
+ *						[<b>with reason</b> describiny why we fail (strerror() is good here)][<b>with reconnection</b>]<br>
+ *		- <i>EKG_DISCONNECT_STOPPED</i> - when user do /disconnect during connection [<b>without reason</b>] [<b>without reconnection</b>]<br>
  *
  * @todo Before creating reconnect timer, check if another one with the same name exists.
  *
@@ -734,7 +736,7 @@ static QUERY(protocol_message)
  *
  * Handler for <i>PROTOCOL_MESSAGE_ACK</i>
  * When session notify core about receiving acknowledge of message we do here:<br>
- * 	- Remove message with given sequence id (@a seq) from msgqueue<br>
+ * 	- Remove message with given sequence id (@a seq) from msgqueue @sa msg_queue_remove_seq()<br>
  * 	- If @a config_display_ack variable was set to 1, or @a config_display_ack value match
  * 	  	type of @a __status. Than display notify through UI-plugin
  *
@@ -756,13 +758,10 @@ static QUERY(protocol_message)
  *
  * @param data NULL
  *
- * @sa msg_queue_remove_seq() 
- *
  * @return 0
  */
 
-static QUERY(protocol_message_ack)
-{
+static QUERY(protocol_message_ack) {
 	char *session		= *(va_arg(ap, char **));
 	char *rcpt		= *(va_arg(ap, char **));
 	char *seq		= *(va_arg(ap, char **));
