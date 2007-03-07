@@ -729,9 +729,38 @@ static QUERY(protocol_message)
 	return 0;
 }
 
-/*
+/**
  * protocol_message_ack()
+ *
+ * Handler for <i>PROTOCOL_MESSAGE_ACK</i>
+ * When session notify core about receiving acknowledge of message we do here:<br>
+ * 	- Remove message with given sequence id (@a seq) from msgqueue<br>
+ * 	- If @a config_display_ack variable was set to 1, or @a config_display_ack value match
+ * 	  	type of @a __status. Than display notify through UI-plugin
+ *
+ * @note	About different types of confirmations (@a __status):<br>
+ * 			- <i>EKG_ACK_DELIVERED</i> 	- when message was delivered to user<br>
+ * 			- <i>EKG_ACK_QUEUED</i>		- when user is unavailable and server confirm accepting message to later delivery<br>
+ * 			- <i>EKG_ACK_DROPPED</i>	- when user or server don't want our message [we don't know why] and message was dropped<br>
+ * 			- <i>EKG_ACK_UNKNOWN</i>	- when it's not clear what happene to that message<br>
+ *
+ * @todo 	Should we remove msg from msgqueue only when sequenceid and session and rcpt matches?
+ * 		I think it's buggy cause user at jabber can send us acknowledge of message
+ * 		which we never send, but if seq match with other message, which wasn't send (because session was for example disconnected)
+ * 		we remove that messageid, and than we'll never send it, and we'll never know that we don't send it.
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b>  - session which send this notify
+ * @param ap 2nd param: <i>(char *) </i><b>rcpt</b>     - user uid who confirm receiving messages
+ * @param ap 3rd param: <i>(char *) </i><b>seq</b>	- sequence id of message
+ * @param ap 4th param: <i>(char *) </i><b>__status</b> - type of confirmation one of: [EKG_ACK_DELIVERED, EKG_ACK_QUEUED, EKG_ACK_DROPPED, EKG_ACK_UNKNOWN]
+ *
+ * @param data NULL
+ *
+ * @sa msg_queue_remove_seq() 
+ *
+ * @return 0
  */
+
 static QUERY(protocol_message_ack)
 {
 	char *session		= *(va_arg(ap, char **));
@@ -739,8 +768,10 @@ static QUERY(protocol_message_ack)
 	char *seq		= *(va_arg(ap, char **));
 	char *__status		= *(va_arg(ap, char **));
 
-	userlist_t *u = userlist_find(session_find(session), rcpt);
+	session_t *s	= session_find(session);
+	userlist_t *u	= userlist_find(s, rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
+
 	int display = 0;
 	char format[100];
 
@@ -751,14 +782,14 @@ static QUERY(protocol_message_ack)
 	if (config_display_ack == 1)
 		display = 1;
 
-	if (!xstrcmp(__status, EKG_ACK_DELIVERED) && config_display_ack == 2)
+	if (config_display_ack == 2 && !xstrcmp(__status, EKG_ACK_DELIVERED))
 		display = 1;
 
-	if (!xstrcmp(__status, EKG_ACK_QUEUED) && config_display_ack == 3)
+	if (config_display_ack == 3 && !xstrcmp(__status, EKG_ACK_QUEUED))
 		display = 1;
 
 	if (display)
-		print_window(target, session_find(session), 0, format, format_user(session_find(session), rcpt));
+		print_window(target, s, 0, format, format_user(s, rcpt));
 
 	return 0;
 }
