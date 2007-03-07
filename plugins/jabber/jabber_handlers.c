@@ -2782,7 +2782,9 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 			descr = tlenjabber_unescape(nstatus->data);
 		}
 
-		if (!status && (!jstatus || ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN)))
+		if (!jstatus)
+			jstatus = xstrdup("unknown");
+		if (!status && ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN))
 			debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
 		xfree(jstatus);
 
