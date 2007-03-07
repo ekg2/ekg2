@@ -617,6 +617,9 @@ void event_free()
 {
 	list_t l;
 
+	xfree(events_all);
+	events_all = NULL;
+
 	if (!events)
 		return;
 
@@ -629,9 +632,6 @@ void event_free()
 	}
 	list_destroy(events, 1);
 	events = NULL;
-
-	xfree(events_all);
-	events_all = NULL;
 }
 
 /*
