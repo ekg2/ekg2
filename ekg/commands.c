@@ -1970,6 +1970,7 @@ static COMMAND(cmd_debug_query)
  * cmd_test_mem()
  *
  * Check and printq() how much memory ekg2 use.<br>
+ * Handler for: <i>/_mem</i> command
  *
  * @note OS currently supported: Linux, Solaris, FreeBSD. If your OS isn't supported please give us info.
  * @bug Need cleanup/rewritting
@@ -2336,7 +2337,8 @@ next:
 /**
  * cmd_echo()
  *
- * printq() params[0] if not NULL, or just ""
+ * printq() params[0] if not NULL, or just ""<br>
+ * Handler for: <i>/echo</i> command
  *
  * @return 0
  */
@@ -2653,8 +2655,27 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	return -1;
 }
 
-int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...)
-{
+/**
+ * command_exec_format()
+ *
+ * Format string in @a format and execute formated command
+ * Equivalent to:<br>
+ * 	<code>
+ * 		char *tmp = saprintf(format, ...);<br>
+ * 		command_exec(target, session, tmp, quiet);<br>
+ * 		xfree(tmp);<br>
+ * 	</code>
+ *
+ * @note For more details about string formating functions read man 3 vsnprintf
+ *
+ * @sa command_exec()	- If you want/can use non-formating function.. Watch for swaped params! (@a quiet with @a format)
+ *
+ * @return 	 0 - If @a format was NULL<br>
+ *		-1 - If command was not found	[It's result of command_exec()]<br>
+ *		else it returns result of command handler.
+ */
+
+int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...) {
 	char *command;
 	va_list ap;
 	int res;
@@ -3864,18 +3885,31 @@ COMMAND(cmd_dcc)
 	return -1;
 }
 
-static COMMAND(cmd_plugin)
-{
+/**
+ * cmd_plugin()
+ *
+ * Manage plugins in ekg2 load/unload/list/change plugin prios<br>
+ * Handler for: <i>/plugin</i> command
+ *
+ * @todo see XXX's
+ *
+ */
+
+static COMMAND(cmd_plugin) {
 	int ret;
 	plugin_t *pl;
 
 	if (!params[0]) {
 		list_t l;
-		
+
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
 
-			wcs_printq("plugin_list", (p && p->name) ? p->name : ("?"), itoa(p->prio));
+			printq("plugin_list", p->name ? p->name : ("?"), itoa(p->prio));
+		}
+
+		if (!plugins) {
+			/* XXX, display info: no plugins. */
 		}
 
 		return 0;
@@ -3891,52 +3925,68 @@ static COMMAND(cmd_plugin)
 
                         list_remove(&plugins, p, 0);
                         plugin_register(p, -254);
+			/* big XXX here, we don't resort queries already added by this plugin */
                 }
 
 		config_changed = 1;
-                wcs_printq("plugin_default");
+		printq("plugin_default");
         }
 
 	if (params[0][0] == '+') {
-		ret = plugin_load(params[0] + 1, -254, 0);
-		if (!ret) /* if plugin cannot be founded || loaded don't reload theme. */
-			changed_theme(NULL); 
-		return ret;
+		if ((ret = plugin_load(params[0] + 1, -254, 0))) {
+			/* if plugin cannot be founded || loaded don't reload theme. */
+			return ret;
+		}
+
+		changed_theme(NULL); 
+		return 0;
 	}
 
-	if (params[0][0] == '-')
-		return plugin_unload(plugin_find(params[0] + 1));
+	if (params[0][0] == '-') {
+		pl = plugin_find(params[0] + 1);
+
+		if (!pl) {
+			/* XXX, display info */
+			return -1;
+		}
+		return plugin_unload(pl);
+	}
 
 	if (params[1] && (pl = plugin_find(params[0]))) {
 		list_remove(&plugins, pl, 0);
 		plugin_register(pl, atoi(params[1])); 
+		/* big XXX here, we don't resort queries already added by this plugin */
 
 		config_changed = 1;
-		wcs_printq("plugin_prio_set", pl->name, params[1]);
+		printq("plugin_prio_set", pl->name, params[1]);
 
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
 
-/*
- * changes reason without changing status
+/**
+ * cmd_desc()
+ *
+ * Changes reason without changing status<br>
+ * Handler for: <i>/_desc</i> command
+ *
+ * @todo Think about it. think, think, think. Maybe let's use queries for it?
+ *
+ * @todo Check if session_unidle() is needed.
+ *
  */
 
-static COMMAND(cmd_desc)
-{
+static COMMAND(cmd_desc) {
 	const char *cmd;
 	
-	if (!session)
-		return -1;
-	
 	session_unidle(session);
-	cmd = ekg_status_string(session_status_get(session), 1);
+	cmd = ekg_status_string(session->status, 1);
 
-	return command_exec_format(NULL, session, 0, ("/%s %s"), cmd, (params[0] ? params[0] : ""));
+	return command_exec_format(NULL, session, quiet, ("/%s %s"), cmd, (params[0] ? params[0] : ""));
 }
 
 /*
@@ -3958,22 +4008,38 @@ static int command_add_compare(void *data1, void *data2)
 	return xstrcasecmp((char *) a->name, (char *) b->name);
 }
 
-/*
+/**
  * command_add()
  *
- * dodaje komendê. 
+ * Add command, and make it know for ekg2.
  *
- *  - plugin - plugin obs³uguj±cy komendê,
- *  - name - nazwa komendy,
- *  - params - definicja parametrów (szczegó³y poni¿ej),
- *  - function - funkcja obs³uguj±ca komendê,
- *  - flags - bitmask. look @ commands.h
- *  - possibilities - mo¿liwo¶ci tj ewentualne parametry - przy dope³nianiu przydatne 
+ * @note About params XXX
  *
- * 0 je¶li siê nie uda³o, w przeciwnym razie adres do strukturki.
+ * @note @a flag param, there're two types of it.
+ * 		Informational like:
+ * 			- <i>COMMAND_ISALIAS</i> - When it's alias command.<br>
+ * 			- <i>COMMAND_ISSCRIPT</i> - When it's script command.<br>
+ * 		and <br>
+ * 		Conditionals, checked at executing command @@ command_exec() like: [XXX, dorobic]
+ * 			- <i>COMMAND_ENABLEREQPARAMS</i> - 	<br>
+ * 			- <i>COMMAND_PARAMASTARGET</i>		<br>
+ * 			- <i>SESSION_MUSTBECONNECTED</i> - 	<br>
+ * 			- <i>SESSION_MUSTBELONG</i>		<br>
+ * 			- <i>SESSION_MUSTHAS</i>		<br>
+ * 			- <i>SESSION_MUSTHASPRIVATE</i> 	<br>
+ *
+ * @param plugin 	- plugin which handle this command
+ * @param name		- name of command
+ * @param params	- space seperated paramlist (read note for more details!)
+ * @param function	- function handler
+ * @param flags		- bitmask from commands.h (read note for more details!)
+ * @param possibilities	- eventually space separated list of possible params.. completion useful
+ *
+ * @return Pointer to added command_t *. It shouldn't return NULL
+ *
  */
-command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities)
-{
+
+command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities) {
 	command_t *c = xmalloc(sizeof(command_t));
 
 	c->name = xstrdup(name);
@@ -4081,7 +4147,7 @@ void command_init()
 
 	command_add(NULL, ("_deltab"), "!", cmd_test_deltab, COMMAND_ENABLEREQPARAMS, NULL);
 
-	command_add(NULL, ("_desc"), "r", cmd_desc, 0, NULL);
+	command_add(NULL, ("_desc"), "r", cmd_desc, SESSION_MUSTHAS, NULL);
 
 	command_add(NULL, ("_event_test"), "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
 
