@@ -256,74 +256,81 @@ static COMMAND(cmd_tabclear)
 	return -1;
 }
 
-COMMAND(cmd_add)
-{
+/* XXX, rewritten, need checking */
+COMMAND(cmd_add) {
 	int params_free = 0;	/* zmienili¶my params[] i trzeba zwolniæ */
 	int result = 0;
 	userlist_t *u = NULL;
-	plugin_t *plug = NULL;
 	
-	if (!session_current) {
+	/* XXX, just in case? */
+	if (!target)
+		target = window_current->target;
+
+	/* XXX, check this damn session_current. */
+	if (!session)
+		session = session_current;
+
+	if (!session)
 		return -1;
-	}
 	
-	if (params[0] && !params[1] && params[0][0] != '-' && window_current->target) {
-		const char *name = params[0], *s1 = params[1], *s2 = params[2];
+	/* If we didn't have params[1] and we params[0] isn't option (for example not --find) and we have target 
+	 * 	get uid from current window, get nickname from params[0]
+	 *
+	 * 	Code for getting more options from params[1] && params[2] were senseless, cause we have !params[1] ;(
+	 */
+	if (params[0][0] != '-' && !params[1] && target) {
+		const char *name = params[0];
+
 		params_free = 1;
-		params = xmalloc(4 * sizeof(char *));
-		params[0] = window_current->target;
+		params = xmalloc(3 * sizeof(char *));
+		params[0] = target;
 		params[1] = name;
-		params[2] = (s1) ? saprintf("%s %s", s1, ((s2) ? s2 : "")) : NULL;
-		params[3] = NULL;
+/* 		params[2] = NULL */
 	}
 
-	if (params[0] && match_arg(params[0], 'f', ("find"), 2)) {
-		int nonick = 0;
-		char *nickname;
-		char *tmp;
+	/* if we have passed -f [lastfound] then get uid, nickname and other stuff from searches... */
+	/* if params[1] passed than it should be used as nickname */
 
-		if (!last_search_uid || !last_search_nickname) {
-			wcs_printq("search_no_last");
+	/* XXX, we need to make it session-visible only.. or at least protocol-visible only.
+	 * 	cause we maybe implement it in jabber */
+	if (match_arg(params[0], 'f', ("find"), 2)) {
+		const char *nickname;
+
+		if (!last_search_uid || (!last_search_nickname && !params[1])) {
+			printq("search_no_last");
 			return -1;
 		}
 
-		tmp = strip_spaces(last_search_nickname);
+		nickname = last_search_nickname ? strip_spaces(last_search_nickname) : params[1];
 
-		if ((nonick = !xstrcmp(tmp, (""))) && !params[1]) {
-			wcs_printq("search_no_last_nickname");
+		if (nickname && nickname[0] == '\0') 
+			nickname = params[1];
+
+		if (!nickname) {
+			printq("search_no_last_nickname");
 			return -1;
 		}
-
-		if (nonick || params[1])
-			nickname = (char *) params[1];
-		else
-			nickname = tmp;
 
 		params_free = 1;
 
 		params = xmalloc(4 * sizeof(char *));
 		params[0] = last_search_uid;
 		params[1] = nickname;
+		/* construct params[2] -f FIRST_NAME -l LAST_NAME */
 		params[2] = saprintf("-f \"%s\" -l \"%s\"", 
 				((last_search_first_name) ? last_search_first_name : ("")), 
 				((last_search_last_name) ? last_search_last_name : ("")));
 /*		params[3] = NULL; */
 	}
 
-	if (!params[0] || !params[1]) {
-		wcs_printq("not_enough_params", name);
-		result = -1;
-		goto cleanup;
-	}
-
-	if (!(plug=plugin_find_uid(params[0]))) {
+	if (!valid_plugin_uid(session->plugin, params[0])) {
 		wcs_printq("invalid_uid");
 		result = -1;
 		goto cleanup;
 	}
 
-	if (plug != session_current->plugin) {
-		wcs_printq("invalid_uid");
+	if (!params[1]) {
+		printq("not_enough_params", name);
 		result = -1;
 		goto cleanup;
 	}
@@ -334,11 +341,13 @@ COMMAND(cmd_add)
 		goto cleanup;
 	}
 
-	if (((u = userlist_find(session_current, params[0])) && u->nickname) || ((u = userlist_find(session_current, params[1])) && u->nickname)) {
+	/* XXX, parse params[2] */
+
+	if (((u = userlist_find(session, params[0])) && u->nickname) || ((u = userlist_find(session, params[1])) && u->nickname)) {
 		if (!xstrcasecmp(params[1], u->nickname) && !xstrcasecmp(params[0], u->uid))
-			printq("user_exists", params[1], session_name(session_current));
+			printq("user_exists", params[1], session_name(session));
 		else
-			printq("user_exists_other", params[1], format_user(session_current, u->uid), session_name(session_current));
+			printq("user_exists_other", params[1], format_user(session, u->uid), session_name(session));
 
 		result = -1;
 		goto cleanup;
@@ -4096,7 +4105,7 @@ void command_init()
 
 	command_add(NULL, ("_watches"), NULL, cmd_debug_watches, 0,NULL);
 
-	command_add(NULL, ("add"), "U ? p", cmd_add, 0, "-f --find");
+	command_add(NULL, ("add"), "!U ? p", cmd_add, COMMAND_ENABLEREQPARAMS, "-f --find");
 
 	command_add(NULL, ("alias"), "p ?", cmd_alias, 0,
 	 "-a --add -A --append -d --del -l --list");
