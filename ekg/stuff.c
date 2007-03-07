@@ -1409,6 +1409,20 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 	return c;
 }
 
+/**
+ * mkdir_recursive()
+ *
+ * Create directory @a pathname and all needed parent directories.<br>
+ *
+ * @todo Maybe at begining of function let's check with stat() if that dir/file already exists?
+ *
+ * @param pathname	- path to directory or file (see @a isdir comment)
+ * @param isdir		- if @a isdir is set, than we should also create dir specified by full @a pathname path,
+ * 			  else we shouldn't do it, because it's filename and we want to create directory only to last '/' char
+ *
+ * @return Like mkdir() do we return -1 on fail with errno set.
+ */
+
 int mkdir_recursive(const char *pathname, int isdir) {
 	char fullname[PATH_MAX+1];
 	int i = 0;
@@ -1504,9 +1518,10 @@ const char *prepare_path(const char *filename, int do_mkdir)
  *
  * @param	path - path to file.
  *
+ * @sa read_file() - if you want read next line from file.
+ *
  * @return 	NULL - if file was not found or file has no line inside. <br>
  * 		else random line founded at file,
- *
  */
 
 static char *random_line(const char *path) {
@@ -1527,7 +1542,7 @@ static char *random_line(const char *path) {
 		rewind(f);
 		item = rand() / (RAND_MAX / max + 1);
 
-		while ((line = read_file(f, (tmp == item)))) {	/* read_file(f, 0)  if needed? */
+		while ((line = read_file(f, (tmp == item)))) {	/* read_file(f, 0) or read_file(f, 1) if this is that line */
 			if (tmp == item) {
 				fclose(f);
 				return line;
@@ -1540,17 +1555,23 @@ static char *random_line(const char *path) {
 	return NULL;
 }
 
-/*
+/**
  * read_file()
  *
- * czyta i zwraca linijkê tekstu z pliku, alokuj±c przy tym odpowiedni buforek.
- * usuwa znaki koñca linii.
+ * Read next line from file @a f, if needed alloc memory for it.<br>
+ * Remove \\r and \\n chars from end of line if needed.
  *
- * !!! gdy read_file(f, 0) nie nalezy robic xfree() po przetworzeniu wyniku.. !!!
- * !!! jesli wywolujesz kilka razy read_file() i potrzebujesz znac wczesniejsze wyniku !!!
- * !!! uzywaj read_file(f, 1) i potem _zawsze_ zwalniaj wynik, chyba ze chcesz zeby !!!
- * !!! twoj kod memleakowal !!!
+ * @param f 	- opened FILE *
+ * @param alloc 
+ * 		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
+ * 			which you <b>MUST NOT</b> xfree()<br>
+ * 		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
+ * 		- If -1 than it return <i>internal</i> pointer which were used by xrealloc() and it <b>MUST BE</b> xfree()
+ * 			cause we set it to NULL afterwards.
+ *
+ * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
  */
+
 char *read_file(FILE *f, int alloc) {
 	static char buf[1024];
 	static char *reres = NULL;
@@ -1635,13 +1656,16 @@ void unidle()
 	time(&last_action);
 }
 
-/*
+/**
  * on_off()
  *
- * zwraca 1 je¶li tekst znaczy w³±czyæ, 0 je¶li wy³±czyæ, -1 je¶li co innego.
+ * @todo	It's only used in vars.c by variable_set() move it?
  *
- *  - value.
+ * @return 	 1 - If @a value is one of: <i>on</i>, <i>true</i>, <i>yes</i>, <i>tak</i>, <i>1</i> 	[case-insensitive]<br>
+ * 		 0 - If @a value is one of: <i>off</i>, <i>false</i>, <i>no</i>, <i>nie</i>, <i>0</i>	[case-insensitive]<br>
+ *		else -1
  */
+
 int on_off(const char *value)
 {
 	if (!value)
