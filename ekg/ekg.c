@@ -1036,15 +1036,16 @@ int main(int argc, char **argv)
         if (config_auto_save)
                 last_save = time(NULL);
 
-        if (no_config)
+	if (no_config) {
 #ifdef HAVE_LIBGADU
 		if (plugin_find("gg"))
-			wcs_print("no_config");
+			print("no_config");
 		else
-			wcs_print("no_config_gg_not_loaded");
+			print("no_config_gg_not_loaded");
 #else
-                wcs_print("no_config_no_libgadu");
+		print("no_config_no_libgadu");
 #endif
+	}
 
         reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
