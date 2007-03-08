@@ -996,11 +996,6 @@ int window_lock_dec(window_t *w)
 	return 0;
 }
 
-int window_lock_get(window_t *w)
-{
-	return (w) ? w->lock : 0;
-}
-
 /*
  * Local Variables:
  * mode: c
