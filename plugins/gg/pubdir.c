@@ -295,11 +295,10 @@ fail:
 				continue;
 
 			if (p && p->success) {
-				char *new_passwd = (char *) session_get(s, "new_password");
+				const char *new_passwd = session_get(s, "__new_password");
 				session_set(s, "password", new_passwd);
-				xfree(new_passwd);
 			}
-			session_set(s, "new_password", NULL);
+			session_set(s, "__new_password", NULL);
 
 			list_remove(&g->passwds, h, 0);
 			gg_free_pubdir(h);
@@ -348,7 +347,7 @@ COMMAND(gg_command_passwd)
 
 	xfree(last_tokenid);	last_tokenid = NULL;
 
-	session_set(session, "new_password", params[0]);
+	session_set(session, "__new_password", params[0]);
 
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_passwd, h); 
 	watch_timeout_set(w, h->timeout);
