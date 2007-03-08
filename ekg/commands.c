@@ -1825,16 +1825,35 @@ static COMMAND(cmd_quit)
 	return 0;
 }
 
-static COMMAND(cmd_version) 
-{
+/**
+ * cmd_version()
+ *
+ * printq() ekg2 VERSION + compile_time() and emit <i>PLUGIN_PRINT_VERSION</i><br>
+ * Handler for: <i>/version</i> command.
+ *
+ * @return 0
+ */
+
+static COMMAND(cmd_version) {
 	printq("ekg_version", VERSION, compile_time());
 	query_emit_id(NULL, PLUGIN_PRINT_VERSION);
 
 	return 0;
 }
 
-static COMMAND(cmd_test_segv)
-{
+/**
+ * cmd_test_segv()
+ *
+ * It try do Segmentation fault [By writting one byte to @@ 0x41414141]<br>
+ * Sad command :(<br>
+ * Handler for: <i>/_segv</i> command.
+ *
+ * @sa handle_sigsegv()	- ekg2's handler for SIGSEGV signal
+ *
+ * @return Shouldn't return, SIGSEGV should be raised before. If SIGSEGV not raised return 0
+ */
+
+static COMMAND(cmd_test_segv) {
 	char *foo = (char*) 0x41414141;
 
 	*foo = 0x41;
@@ -3972,13 +3991,14 @@ static COMMAND(cmd_plugin) {
 /**
  * cmd_desc()
  *
- * Changes reason without changing status<br>
+ * Changes description (@a params[0]) without changing status<br>
  * Handler for: <i>/_desc</i> command
  *
  * @todo Think about it. think, think, think. Maybe let's use queries for it?
  *
  * @todo Check if session_unidle() is needed.
  *
+ * @param params [0] New description, if NULL than "" will be used.
  */
 
 static COMMAND(cmd_desc) {
@@ -4012,7 +4032,7 @@ static int command_add_compare(void *data1, void *data2)
 /**
  * command_add()
  *
- * Add command, and make it know for ekg2.
+ * Add command, and make it known for ekg2.
  *
  * @note About params XXX
  *
@@ -4275,14 +4295,19 @@ void command_init()
 	commands_lock = NULL;
 }
 
-/*
+/**
  * command_free()
  *
- * usuwa listê komend z pamiêci.
+ * Free <b>all</b> commands
+ *
+ * @sa command_freeone() - To free one command.
  */
-void command_free()
-{
+
+void command_free() {
 	list_t l;
+
+	if (!commands)
+		return;
 
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
