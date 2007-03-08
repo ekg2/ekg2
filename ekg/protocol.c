@@ -142,6 +142,9 @@ static TIMER(protocol_reconnect_handler) {
  *
  * @todo Before creating reconnect timer, check if another one with the same name exists.
  *
+ * @bug		Implementation bug, BIG BUG, we should create reconnect-name_of_session, cause plugins sometimes want to remove 'reconnect' timer, but we cannot check
+ * 		session, so we can remove wrong one.
+ *
  * @param ap 1st param: <i>(char *) </i><b>session</b> - session uid which goes disconnect
  * @param ap 2nd param: <i>(char *) </i><b>reason</b>  - reason why session goes disconnect.. It's reason specifed by user if EKG_DISCONNECT_USER, else 
  * 								string with error description like from: strerror().. [if EKG_DISCONNECT_FAILURE]
