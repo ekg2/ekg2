@@ -263,7 +263,7 @@ int alias_add(const char *string, int quiet, int append)
 
 		if (!xstrcasecmp(string, j->name)) {
 			if (!append) {
-				wcs_printq("aliases_exist", string);
+				printq("aliases_exist", string);
 				return -1;
 			} else {
 				list_t l;
@@ -281,7 +281,7 @@ int alias_add(const char *string, int quiet, int append)
 					}
 				}
 			
-				wcs_printq("aliases_append", string);
+				printq("aliases_append", string);
 
 				return 0;
 			}
@@ -293,7 +293,7 @@ int alias_add(const char *string, int quiet, int append)
 		char *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
 
 		if (!xstrcasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {
-			wcs_printq("aliases_command", string);
+			printq("aliases_command", string);
 			return -1;
 		}
 
@@ -310,7 +310,7 @@ int alias_add(const char *string, int quiet, int append)
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
-	wcs_printq("aliases_add", a->name, (""));
+	printq("aliases_add", a->name, (""));
 
 	return 0;
 }
@@ -337,7 +337,7 @@ int alias_remove(const char *name, int quiet)
 
 		if (!name || !xstrcasecmp(a->name, name)) {
 			if (name)
-				wcs_printq("aliases_del", name);
+				printq("aliases_del", name);
 			command_remove(NULL, a->name);
 			xfree(a->name);
 			list_destroy(a->commands, 1);
@@ -348,15 +348,15 @@ int alias_remove(const char *name, int quiet)
 
 	if (!removed) {
 		if (name)
-			wcs_printq("aliases_noexist", name);
+			printq("aliases_noexist", name);
 		else
-			wcs_printq("aliases_list_empty");
+			printq("aliases_list_empty");
 
 		return -1;
 	}
 
 	if (removed && !name)
-		wcs_printq("aliases_del_all");
+		printq("aliases_del_all");
 
 	return 0;
 }
@@ -395,21 +395,21 @@ void binding_list(int quiet, const char *name, int all)
 	int found = 0;
 
 	if (!bindings)
-		wcs_printq("bind_seq_list_empty");
+		printq("bind_seq_list_empty");
 
 	for (l = bindings; l; l = l->next) {
 		struct binding *b = l->data;
 
 		if (name) {
 			if (xstrcasestr(b->key, name)) {
-				wcs_printq("bind_seq_list", b->key, b->action);
+				printq("bind_seq_list", b->key, b->action);
 				found = 1;
 			}
 			continue;
 		}
 
 		if (!b->internal || (all && b->internal)) 
-			wcs_printq("bind_seq_list", b->key, b->action);
+			printq("bind_seq_list", b->key, b->action);
 	}
 
 	if (name && !found) {
@@ -417,7 +417,7 @@ void binding_list(int quiet, const char *name, int all)
 			struct binding *b = l->data;
 
 			if (xstrcasestr(b->action, name))
-				wcs_printq("bind_seq_list", b->key, b->action);
+				printq("bind_seq_list", b->key, b->action);
 		}
 	}
 }
@@ -763,7 +763,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		return NULL;
 
 	if (nicklist[0] == ',' || nicklist[xstrlen(nicklist) - 1] == ',') {
-		wcs_printq("invalid_params", ("chat"));
+		printq("invalid_params", ("chat"));
 		return NULL;
 	}
 
@@ -897,13 +897,13 @@ int conference_remove(const char *name, int quiet)
 		if (name)
 			printq("conferences_noexist", name);
 		else
-			wcs_printq("conferences_list_empty");
+			printq("conferences_list_empty");
 		
 		return -1;
 	}
 
 	if (removed && !name)
-		wcs_printq("conferences_del_all");
+		printq("conferences_del_all");
 
 	return 0;
 }

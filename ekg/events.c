@@ -67,12 +67,12 @@ COMMAND(cmd_on)
 		int prio;
 
                 if (!params[1] || !params[2] || !params[3] || !params[4]) {
-                        wcs_printq("not_enough_params", name);
+                        printq("not_enough_params", name);
                         return -1;
                 }
 
 		if (!(prio = atoi(params[2])) || !array_contains(events_all, params[1], 0)) {
-			wcs_printq("invalid_params", name);
+			printq("invalid_params", name);
 			return -1;
 		}
 		
@@ -87,7 +87,7 @@ COMMAND(cmd_on)
 		int par;
 
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -95,7 +95,7 @@ COMMAND(cmd_on)
 			par = 0;
 		else {
 			if (!(par = atoi(params[1]))) {
-				wcs_printq("invalid_params", name);			
+				printq("invalid_params", name);			
 				return -1;
 			}
 		}
@@ -112,7 +112,7 @@ COMMAND(cmd_on)
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
@@ -152,7 +152,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	list_t l;
 
 	if (event_find(name, target)) {
-		wcs_printq("events_exist", name, target);
+		printq("events_exist", name, target);
 		return -1;
 	}
 	
@@ -180,7 +180,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	query_emit_id(NULL, EVENT_ADDED, &tmp);
 	xfree(tmp);
 
-	wcs_printq("events_add", name);
+	printq("events_add", name);
 
 	return 0;
 }
@@ -200,12 +200,12 @@ static int event_remove(unsigned int id, int quiet)
 	
 	if (id == 0) {
 		event_free();
-		wcs_printq("events_del_all");
+		printq("events_del_all");
 		goto cleanup;
 	}
 	
 	if (!(ev = event_find_id(id))) {
-		wcs_printq("events_del_noexist", itoa(id));
+		printq("events_del_noexist", itoa(id));
 		return -1;
 	}
 	
@@ -215,7 +215,7 @@ static int event_remove(unsigned int id, int quiet)
 	
 	list_remove(&events, ev, 1);
 
-	wcs_printq("events_del", itoa(id));
+	printq("events_del", itoa(id));
 
 cleanup:	
 /*        query_emit_id(NULL, EVENT_REMOVED, itoa(id)); */	/* XXX, incorrect. */
@@ -233,11 +233,11 @@ static int events_list(int id, int quiet)
         list_t l;
 
 	if (!events) {
-        	wcs_printq("events_list_empty");
+        	printq("events_list_empty");
 		return 0;
 	}
 
-	wcs_printq("events_list_header");
+	printq("events_list_header");
 
 	for (l = events; l; l = l->next) {
 	        event_t *ev = l->data;

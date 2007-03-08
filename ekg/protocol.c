@@ -229,10 +229,10 @@ static QUERY(protocol_connected) {
 	if (descr)
 		print("connected_descr", descr, session_name(s));
 	else
-		wcs_print("connected", session_name(s));
+		print("connected", session_name(s));
 
 	if (!msg_queue_flush(*session))
-		wcs_print("queue_flush", session_name(s));
+		print("queue_flush", session_name(s));
 
 	return 0;
 }

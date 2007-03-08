@@ -205,7 +205,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		char *preinit = saprintf("win32_plugin_init");
 		if (!(plugin_preinit = ekg2_dlsym(plugin, preinit))) {
 			debug("NO_POSIX_SYSTEM, PLUGIN:%s NOT COMPILATED WITH EKG2_WIN32_SHARED_LIB?!\n", name);
-			wcs_printq("plugin_incorrect", name);
+			printq("plugin_incorrect", name);
 			xfree(preinit);
 			return -1;
 		}
@@ -216,7 +216,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		init = saprintf("%s_plugin_init", name);
 
 		if (!(plugin_init = ekg2_dlsym(plugin, init))) {
-			wcs_printq("plugin_incorrect", name);
+			printq("plugin_incorrect", name);
 			ekg2_dlclose(plugin);
 			xfree(init);
 			return -1;
@@ -230,7 +230,7 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 
 	if (plugin_init(prio) == -1) {
-		wcs_printq("plugin_not_initialized", name);
+		printq("plugin_not_initialized", name);
 		ekg2_dlclose(plugin);
 		return -1;
 	}
@@ -244,7 +244,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		}
 	}
 
-	wcs_printq("plugin_loaded", name);
+	printq("plugin_loaded", name);
 
 	if (!in_autoexec) {
 		char *tmp = saprintf("config-%s", name);
@@ -337,7 +337,7 @@ int plugin_unload(plugin_t *p)
 	if (p->dl)
 		ekg2_dlclose(p->dl);
 
-	wcs_print("plugin_unloaded", name);
+	print("plugin_unloaded", name);
 
 	xfree(name);
 

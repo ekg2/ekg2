@@ -520,7 +520,7 @@ void window_kill(window_t *w, int quiet)
 	}
 	
 	if (id == 1) {
-		wcs_printq("window_kill_status");
+		printq("window_kill_status");
 		return;
 	}
 
@@ -648,7 +648,7 @@ COMMAND(cmd_window)
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
 				} else
-					wcs_printq("window_list_nothing", itoa(w->id));
+					printq("window_list_nothing", itoa(w->id));
 			}
 		}
 		return 0;
@@ -693,7 +693,7 @@ COMMAND(cmd_window)
 
 	if (!xstrcasecmp(params[0], ("switch"))) {
 		if (!params[1] || (!atoi(params[1]) && xstrcmp(params[1], ("0"))))
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 		else
 			window_switch(atoi(params[1]));
 		return 0;
@@ -827,7 +827,7 @@ COMMAND(cmd_window)
 			}
 
 			if (!w) {
-				wcs_printq("window_noexist");
+				printq("window_noexist");
 				return -1;
 			}
 		}
@@ -854,24 +854,24 @@ COMMAND(cmd_window)
 			return -1;
 
 		if (!params[1]) {
-			wcs_printq("invalid_params", name);
+			printq("invalid_params", name);
 			return -1;
 		}
 
 		source = (params[2]) ? atoi(params[2]) : window_current->id;
 
 		if (!source) {
-                        wcs_printq("window_invalid_move", itoa(source));
+                        printq("window_invalid_move", itoa(source));
 			return -1;
 		}
 
 		if (!window_exist(source)) {
-			wcs_printq("window_doesnt_exist", itoa(source));
+			printq("window_doesnt_exist", itoa(source));
 			return -1;
 		}
 
 		if (source == 1) {
-			wcs_printq("window_cannot_move_status");
+			printq("window_cannot_move_status");
 			return -1;
 		}
 
@@ -886,12 +886,12 @@ COMMAND(cmd_window)
 
 
 		if (!dest) {
-			wcs_printq("window_invalid_move", itoa(dest));
+			printq("window_invalid_move", itoa(dest));
 			return -1;
 		}
 
                 if (dest == 1) {
-                        wcs_printq("window_cannot_move_status");
+                        printq("window_cannot_move_status");
 			return -1;
                 }
 
@@ -914,7 +914,7 @@ COMMAND(cmd_window)
 	}
 
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return 0;
 }

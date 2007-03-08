@@ -966,7 +966,7 @@ COMMAND(session_command)
 		}
 
 		if (!sessions)
-			wcs_printq("session_list_empty");
+			printq("session_list_empty");
 
 		return 0;
 	}
@@ -1126,7 +1126,7 @@ COMMAND(session_command)
 	if (match_arg(params[0], 's', ("set"), 2)) {
 		
 		if (!params[1]) {
-			wcs_printq("invalid_params", name);
+			printq("invalid_params", name);
 			return -1;
 		}	
 		
@@ -1168,7 +1168,7 @@ COMMAND(session_command)
 				return -1;
 			}
 			
-    		    	wcs_printq("invalid_params", name);
+    		    	printq("invalid_params", name);
 			return -1;
 		}
 		
@@ -1196,7 +1196,7 @@ COMMAND(session_command)
 			return 0;
 		}
 		
-		wcs_printq("invalid_params", name);
+		printq("invalid_params", name);
 		return -1;
 	}
 
@@ -1274,7 +1274,7 @@ COMMAND(session_command)
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 	
 	return -1;
 }
@@ -1364,7 +1364,7 @@ void session_help(session_t *s, const char *name)
 
 	if (!session_is_var(s, name)) {
 		/* XXX, check using session_localvar_find() if this is _local_ variable */ 
-		wcs_print("session_variable_doesnt_exist", session_name(s), name);
+		print("session_variable_doesnt_exist", session_name(s), name);
 		return;
 	}
 
@@ -1427,7 +1427,7 @@ void session_help(session_t *s, const char *name)
 	else
 		def = xstrdup(("?"));
 
-	wcs_print("help_session_header", session_name(s), name, type, def);
+	print("help_session_header", session_name(s), name, type, def);
 
 	xfree(type);
 	xfree(def);
@@ -1441,7 +1441,7 @@ void session_help(session_t *s, const char *name)
 			break;
 
 		if (!xstrncmp(line, ("\t- "), 3) && xstrcmp(str->str, (""))) {
-			wcs_print("help_session_body", str->str);
+			print("help_session_body", str->str);
 			string_clear(str);
 		}
 
@@ -1457,12 +1457,12 @@ void session_help(session_t *s, const char *name)
 	}
 
 	if (xstrcmp(str->str, ("")))
-		wcs_print("help_session_body", str->str);
+		print("help_session_body", str->str);
 
 	string_free(str, 1);
 
 	if (xstrcmp(format_find("help_session_footer"), ""))
-		wcs_print("help_session_footer", name);
+		print("help_session_footer", name);
 
 	fclose(f);
 }

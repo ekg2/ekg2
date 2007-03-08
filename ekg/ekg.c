@@ -259,9 +259,9 @@ void ekg_loop() {
                         if (!config_write(NULL) && !session_write()) {
                                 config_changed = 0;
                                 reason_changed = 0;
-                                wcs_print("autosaved");
+                                print("autosaved");
                         } else
-                                wcs_print("error_saving");
+                                print("error_saving");
                 }
 
                 /* przegl±danie zdech³ych dzieciaków */

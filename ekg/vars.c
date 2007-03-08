@@ -623,7 +623,7 @@ void variable_help(const char *name)
 	variable_t *v = variable_find(name);
 
 	if (!v) {
-		wcs_print("variable_not_found", name);
+		print("variable_not_found", name);
 		return;
 	}
 
@@ -631,7 +631,7 @@ void variable_help(const char *name)
 		char *tmp2;
 
 		if (!(f = help_path("vars", v->plugin->name))) {
-			wcs_print("help_set_file_not_found_plugin", v->plugin->name);
+			print("help_set_file_not_found_plugin", v->plugin->name);
 			return;
 		}
 
@@ -658,7 +658,7 @@ void variable_help(const char *name)
 
 	if (!found) {
 		fclose(f);
-		wcs_print("help_set_var_not_found", name);
+		print("help_set_var_not_found", name);
 		return;
 	}
 
@@ -675,7 +675,7 @@ void variable_help(const char *name)
 	else
 		def = xstrdup(("?"));
 
-	wcs_print("help_set_header", name, type, def);
+	print("help_set_header", name, type, def);
 
 	xfree(type);
 	xfree(def);
@@ -688,7 +688,7 @@ void variable_help(const char *name)
 			break;
 
 		if (!xstrncmp(line, ("\t- "), 3) && xstrcmp(s->str, (""))) {
-			wcs_print("help_set_body", s->str);
+			print("help_set_body", s->str);
 			string_clear(s);
 		}
 
@@ -704,12 +704,12 @@ void variable_help(const char *name)
 	}
 
 	if (xstrcmp(s->str, ("")))
-		wcs_print("help_set_body", s->str);
+		print("help_set_body", s->str);
 
 	string_free(s, 1);
 	
 	if (xstrcmp(format_find("help_set_footer"), ""))
-		wcs_print("help_set_footer", name);
+		print("help_set_footer", name);
 
 	fclose(f);
 }

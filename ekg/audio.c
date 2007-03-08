@@ -79,14 +79,14 @@ COMMAND(cmd_streams) {
 		if (create[0] && create[1] && create[2]) 	{ input = create[0]; codec = create[1]; output = create[2]; } 
 		else if (create[0] && create[1])		{ input = create[0]; codec = NULL;	output = create[2]; } 
 		else {
-			wcs_printq("invali_params", name);
+			printq("invali_params", name);
 			return -1; 
 		}
 		/* XXX here, we ought to build arrays with INPUT name && paramas CODEC name && params OUTPUT name && params */
 	} else if (!params[0]) {	/* no params, display list */
 		display = 1;
 	} else {
-		wcs_printq("invalid_params", name);
+		printq("invalid_params", name);
 		return -1;
 	}
 
