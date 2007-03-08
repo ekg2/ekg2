@@ -106,19 +106,34 @@ static int gg_private_destroy(session_t *s) {
 	return 0;
 }
 
+/**
+ * gg_userlist_info_handle()
+ *
+ * Handler for: <i>USERLIST_INFO</i><br>
+ * (Emited by: <i>/list</i> command, when we want know more about given user)<br>
+ * Display all gg-protocol-only-data like: possible client version [read: which version of protocol he use], if he has voip, etc..
+ *
+ * @param ap 1st param: <i>(userlist_t *) </i><b>u</b>	- item.
+ * @param ap 2nd param: <i>(int) </i><b>quiet</b>	- If quiet for printq()
+ * @param data NULL
+ *
+ * @return 	1 - If no @a u passed, or it's invalid for gg plugin<br>
+ * 		else printq() info and return 0
+ */
+
 static QUERY(gg_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
 
 	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1) 
-		return 0;
+		return 1;
 
 	if (u->port == 2)
-		wcs_printq("user_info_not_in_contacts");
+		printq("user_info_not_in_contacts");
 	if (u->port == 1)
-		wcs_printq("user_info_firewalled");
+		printq("user_info_firewalled");
 	if ((u->protocol & GG_HAS_AUDIO_MASK))
-		wcs_printq("user_info_voip");
+		printq("user_info_voip");
 
 	if ((u->protocol & 0x00ffffff)) {
 		int v = u->protocol & 0x00ffffff;
@@ -157,11 +172,11 @@ static QUERY(gg_userlist_info_handle) {
 		if (v == 0x29)
 			ver = ("7.6 (build >= 1688)");
 		if (ver)
-			wcs_printq("user_info_version", ver);
+			printq("user_info_version", ver);
 
 		else {
 			char *tmp = saprintf(("nieznana (%#.2x)"), v);
-			wcs_printq("user_info_version", tmp);
+			printq("user_info_version", tmp);
 			xfree(tmp);
 		}
 	}
@@ -412,7 +427,7 @@ static QUERY(gg_remove_notify_handle) {
  * Handler for: <i>PLUGIN_PRINT_VERSION</i>
  * print info about libgadu version.
  *
- * @todo	To many string parsing functions :/ and think about "generic" format... maybe let's create new format?
+ * @todo	Too many string parsing functions :/ and think about "generic" format... maybe let's create new format?
  *
  * @return 0
  */
@@ -422,7 +437,7 @@ static QUERY(gg_print_version) {
 	char *tmp2 = array_join(tmp1, ".");
 	char *tmp3 = saprintf(("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
 
-	wcs_print("generic", tmp3);
+	print("generic", tmp3);
 
 	xfree(tmp3);
 	xfree(tmp2);
@@ -439,6 +454,7 @@ static QUERY(gg_print_version) {
  *
  * @note <i>Proper for irc plugin</i> means if @a uid starts with "gg:" and uid len > 3
  * @todo Blah, irc does xstrncasecmp() here it's only xstrncmp() let's decide... GG: and gg: is proper, or only gg:
+ * @todo Maybe let's check if after gg: we have max 32b number.. because libgadu and gg protocol only support 32bit uids... ;)
  *
  * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
  * @param ap 2nd param: <i>(int) </i><b>valid</b> - place to put 1 if uid is valid for gg plugin.
@@ -980,7 +996,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 	switch (e->event.userlist.type) {
 		case GG_USERLIST_GET_REPLY:
-			wcs_print("userlist_get_ok");
+			print("userlist_get_ok");
 
 			if (e->event.userlist.reply) {
 				char *reply;
@@ -1007,10 +1023,10 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 			break;
 		case GG_USERLIST_PUT_REPLY:
 			switch (gg_userlist_put_config) {
-				case 0:	wcs_print("userlist_put_ok");		break;
-				case 1:	wcs_print("userlist_config_put_ok");	break;
-				case 2:	wcs_print("userlist_clear_ok");		break;
-				case 3:	wcs_print("userlist_config_clear_ok");	break;
+				case 0:	print("userlist_put_ok");		break;
+				case 1:	print("userlist_config_put_ok");	break;
+				case 2:	print("userlist_clear_ok");		break;
+				case 3:	print("userlist_config_clear_ok");	break;
 			}
 			break;
 	}
