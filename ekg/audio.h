@@ -79,6 +79,7 @@ typedef struct {
 typedef struct {
 	audio_t *a;
 	int fd;
+	unsigned int outb;		/* how many bytes go through handler */
 	string_t buffer;
 	void *private;
 } audio_io_t;

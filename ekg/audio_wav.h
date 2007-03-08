@@ -44,3 +44,39 @@ typedef struct WAVEHDR {
 #define le32_to_cpu(x) (x)
 #define le16_to_cpu(x) (x)
 
+static void *audio_wav_set_header(const char *freq, const char *sample, const char *channels) {
+	WAVEHDR *fileheader;
+	int rate, nchannels, nBitsPerSample;
+
+	if (!freq || !sample || !channels) 
+		return NULL;
+
+	rate		= atoi(freq);
+	nchannels	= atoi(channels);
+	nBitsPerSample	= atoi(sample);
+
+	fileheader = xmalloc(sizeof(WAVEHDR));
+
+	/* stolen from xawtv && cdda2wav */
+	unsigned long nBlockAlign = nchannels * ((nBitsPerSample + 7) / 8);
+	unsigned long nAvgBytesPerSec = nBlockAlign * rate;
+	unsigned long temp = /* data length */ 0 + sizeof(WAVEHDR) - sizeof(CHUNKHDR);
+
+	fileheader->chkRiff.ckid    = cpu_to_le32(FOURCC_RIFF);
+	fileheader->fccWave         = cpu_to_le32(FOURCC_WAVE);
+	fileheader->chkFmt.ckid     = cpu_to_le32(FOURCC_FMT);
+	fileheader->chkFmt.dwSize   = cpu_to_le32(16);
+	fileheader->wFormatTag      = cpu_to_le16(WAVE_FORMAT_PCM);
+	fileheader->nChannels       = cpu_to_le16(nchannels);
+	fileheader->nSamplesPerSec  = cpu_to_le32(rate);
+	fileheader->nAvgBytesPerSec = cpu_to_le32(nAvgBytesPerSec);
+	fileheader->nBlockAlign     = cpu_to_le16(nBlockAlign);
+	fileheader->wBitsPerSample  = cpu_to_le16(nBitsPerSample);
+	fileheader->chkData.ckid    = cpu_to_le32(FOURCC_DATA);
+	fileheader->chkRiff.dwSize  = cpu_to_le32(temp);
+	fileheader->chkData.dwSize  = cpu_to_le32(0 /* data length */);
+
+	return fileheader;
+
+}
+

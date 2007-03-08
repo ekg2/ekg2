@@ -46,16 +46,13 @@ AUDIO_DEFINE(stream);
 /*********************************************************************************/
 
 typedef struct {
+	audio_io_t *parent;
 	char *file;
 	char *format;
 	WAVEHDR *wave;
-	int size;
 } stream_private_t; 
 
 COMMAND(cmd_streams) {
-	const char **create = NULL;
-	int display = 0;
-	list_t l;
 
 /* /_stream --create "INPUT inputparams"    "CODEC codecparams"			"OUTPUT outputparams" */
 
@@ -65,36 +62,24 @@ COMMAND(cmd_streams) {
 
 /* i think that api if i (we?) write it... will be nice, but code can be obscure... sorry */
 
-	if (match_arg(params[0], 'c', "create", 2)) {		/* --create */
-		create = &params[1];
-	} else if (match_arg(params[0], 'l', "list", 2) || !params[0]) {	/* list if --list. default action is --list (if we don't have params)  */
-		display = 1;
-	} else {							/* default action is --create (if we have params) */
-		create = &params[0];
-	}
+	if (!params[0] || match_arg(params[0], 'l', "list", 2) || !params[0]) {	/* list if --list. default action is --list (if we don't have params)  */
+		list_t l;
 
-	if (create) {
-		const char *input, *codec, *output;
-
-		if (create[0] && create[1] && create[2]) 	{ input = create[0]; codec = create[1]; output = create[2]; } 
-		else if (create[0] && create[1])		{ input = create[0]; codec = NULL;	output = create[2]; } 
-		else {
-			printq("invali_params", name);
-			return -1; 
-		}
-		/* XXX here, we ought to build arrays with INPUT name && paramas CODEC name && params OUTPUT name && params */
-	} else if (!params[0]) {	/* no params, display list */
-		display = 1;
-	} else {
-		printq("invalid_params", name);
-		return -1;
-	}
-
-	if (display) { 
-		/* XXX, display nice info to __status/__current window */
-		/* XXX, add more debug info */
+		/* XXX, add more debug info, get info using  */
 		for (l = streams; l; l = l->next) {
 			stream_t *s = l->data;
+
+			/* co->c->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, co, "freq", &freq, "sample", &sample, "channels", &channels, NULL); */
+			
+			printq("stream_info", s->stream_name);
+			if (s->input) {
+				printq("stream_info_in", s->input->a->name, itoa(s->input->fd), itoa(s->input->buffer->len), itoa(s->input->outb));
+			}
+
+			if (s->output) {
+				printq("stream_info_out",s->output->a->name, itoa(s->output->fd), itoa(s->output->buffer->len), itoa(s->input->outb));
+			}
+
 			debug("[STREAM] name: %s IN: 0x%x CODEC: 0x%x OUT: 0x%x\n", s->stream_name, s->input, s->codec, s->output);
 			if (s->input)	debug("	 IN, AUDIO: %s fd: %d bufferlen: %d\n", s->input->a->name, s->input->fd, s->input->buffer->len);
 			if (s->output)	debug("	OUT, AUDIO: %s fd: %d bufferlen: %d\n", s->output->a->name, s->output->fd, s->output->buffer->len);
@@ -103,6 +88,9 @@ COMMAND(cmd_streams) {
 		for (l = audio_inputs; l; l = l->next) {
 			audio_t *a = l->data;
 			char **arr;
+
+			printq("audio_device", a->name);
+
 			debug("[AUDIO_INPUT] name: %s\n", a->name);
 
 			for (arr = (char **) a->control_handler(AUDIO_CONTROL_HELP, AUDIO_RDWR, NULL); arr && *arr;) {
@@ -115,6 +103,8 @@ COMMAND(cmd_streams) {
 		for (l = audio_codecs; l; l = l->next) {
 			codec_t *c = l->data;
 			char **arr;
+
+			printq("audio_codec", c->name);
 			debug("[AUDIO_CODEC] name: %s\n", c->name);
 
 			for (arr = (char **) c->control_handler(AUDIO_CONTROL_HELP, AUDIO_RDWR, NULL); arr && *arr;) {
@@ -123,8 +113,72 @@ COMMAND(cmd_streams) {
 				debug("... AUDIO_CONTROL_HELP: %s %s\n", attr, val);
 			}
 		}
-	} 
-	return 0;
+		return 0;
+	}
+
+	if (match_arg(params[0], 'c', "create", 2)) {		/* --create */
+		const char **p = &params[1];
+
+		const char *input;
+		const char *codec;
+		const char *output;
+		const char *name = NULL;
+
+#if 0
+		if (match_arg(p[0], 'n', "name", 2) && p[1]) {		/* --name */
+			name = p[1];
+			p = &p[2];
+		}
+#endif
+
+		if (!p[0] || !p[1]) {
+			printq("not_enough_params", name);
+			return -1; 
+		}
+
+		input = p[1];				/* input */
+		codec = p[2] ? p[2] : NULL;		/* codec if we have 3 params.. otherwise NULL */
+		output = !p[2] ? p[1] : p[2];		/* output */
+
+		{
+			audio_t *input_s;
+			codec_t *codec_s;
+			audio_t *output_s;
+
+			char **input_array = array_make(input, " ", 0, 1, 1);
+			char **codec_array = codec ? array_make(codec, " ", 0, 1, 1) : NULL;
+			char **output_array = array_make(output, " ", 0, 1, 1);
+			
+			input_s = audio_find(input_array[0]);
+			codec_s = codec ? codec_find(codec_array[0]) : NULL;
+			output_s = audio_find(output_array[0]);
+
+			if (!input_s)
+				printq("audio_not_found", input_array[0]);
+			else if (!codec_s && codec)
+				printq("codec_not_found", codec_array[0]);
+			else if (!output_s)
+				printq("audio_not_found", output_array[0]);
+			else {
+				/* XXX inicjuj */
+
+			}
+
+			array_free(input_array);
+			array_free(codec_array);
+			array_free(output_array);
+		}
+
+		return 0;
+	}
+
+	if (match_arg(params[0], 'C', "close", 2)) {		/* --close */
+		return -1;
+	}
+
+	printq("invalid_params", name);
+	
+	return -1;
 }
 
 codec_t *codec_find(const char *name) {
@@ -203,12 +257,12 @@ WATCHER_AUDIO(stream_audio_write) {
 
 	if (type == 1) {
 		if (priv->wave) {
-			unsigned long temp = priv->size + sizeof(WAVEHDR) - sizeof(CHUNKHDR);
+			unsigned long temp = priv->parent->outb + sizeof(WAVEHDR) - sizeof(CHUNKHDR);
 			priv->wave->chkRiff.dwSize = cpu_to_le32(temp);
-			priv->wave->chkData.dwSize = cpu_to_le32(priv->size);
+			priv->wave->chkData.dwSize = cpu_to_le32(priv->parent->outb);
 
 			if ((lseek(fd, 0, SEEK_SET) != (off_t) -1) && ((write(fd, priv->wave, sizeof(WAVEHDR)) == sizeof(WAVEHDR)))) {
-				debug("[stream_audio_write] type == 1. UPDATING WAVEHDR succ. size: %d\n", priv->size);
+				debug("[stream_audio_write] type == 1. UPDATING WAVEHDR succ. size: %d\n", priv->parent->outb);
 			} else	debug("[stream_audio_write] type == 1. UPDATING WAVEHDR fail\n");
 		}
 		close(fd);	/* mh? */
@@ -247,10 +301,11 @@ AUDIO_CONTROL(stream_audio_control) {
 			out->a->control_handler(AUDIO_CONTROL_SET, !way, out, directory, "stream", NULL);
 
 		if (!xstrcmp(priv->format, "wave")) {
-			WAVEHDR *fileheader	= xmalloc(sizeof(WAVEHDR));
 
 			if (way == AUDIO_READ) {
-				if ((read(aio->fd, fileheader, sizeof(fileheader)) != sizeof(fileheader))) {
+				WAVEHDR *fileheader	= xmalloc(sizeof(WAVEHDR));
+
+				if ((read(aio->fd, fileheader, sizeof(WAVEHDR)) == sizeof(WAVEHDR))) {
 #define __SET(args...) 	  (co) ? co->c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, args) : \
 				out->a->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, args)
 					int freq	= le32_to_cpu(fileheader->nSamplesPerSec);
@@ -272,56 +327,38 @@ AUDIO_CONTROL(stream_audio_control) {
 					xfree(priv->format);
 					priv->format = xstrdup("raw");
 				}
+
+				priv->wave = fileheader;
 			} else if (way == AUDIO_WRITE) {
+				WAVEHDR *fileheader;
 				char *freq = NULL, *sample = NULL, *channels = NULL;
 
 				if (co) co->c->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, co, "freq", &freq, "sample", &sample, "channels", &channels, NULL);
 				else	out->a->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, out, "freq", &freq, "sample", &sample, "channels", &channels, NULL);
 				debug("[stream_audio_control] WAVE: AUDIO_CONTROL_SET freq: %s sample: %s channels: %s\n", freq, sample, channels);
 
-				if (freq && sample && channels) {
-					int rate		= atoi(freq);
-					int nchannels		= atoi(channels);
-					int nBitsPerSample	= atoi(sample);
+				if (!(fileheader = audio_wav_set_header(freq, sample, channels)))
+					return NULL;
 
-					/* stolen from xawtv && cdda2wav */
-					unsigned long nBlockAlign = nchannels * ((nBitsPerSample + 7) / 8);
-					unsigned long nAvgBytesPerSec = nBlockAlign * rate;
-					unsigned long temp = /* data length */ 0 + sizeof(WAVEHDR) - sizeof(CHUNKHDR);
-
-					fileheader->chkRiff.ckid    = cpu_to_le32(FOURCC_RIFF);
-					fileheader->fccWave         = cpu_to_le32(FOURCC_WAVE);
-					fileheader->chkFmt.ckid     = cpu_to_le32(FOURCC_FMT);
-					fileheader->chkFmt.dwSize   = cpu_to_le32(16);
-					fileheader->wFormatTag      = cpu_to_le16(WAVE_FORMAT_PCM);
-					fileheader->nChannels       = cpu_to_le16(nchannels);
-					fileheader->nSamplesPerSec  = cpu_to_le32(rate);
-					fileheader->nAvgBytesPerSec = cpu_to_le32(nAvgBytesPerSec);
-					fileheader->nBlockAlign     = cpu_to_le16(nBlockAlign);
-					fileheader->wBitsPerSample  = cpu_to_le16(nBitsPerSample);
-					fileheader->chkData.ckid    = cpu_to_le32(FOURCC_DATA);
-					fileheader->chkRiff.dwSize  = cpu_to_le32(temp);
-					fileheader->chkData.dwSize  = cpu_to_le32(0 /* data length */);
-
+				lseek(aio->fd, 0, SEEK_SET);
+				if ((write(aio->fd, fileheader, sizeof(WAVEHDR)) == sizeof(WAVEHDR))) {
+					debug("[stream_audio_control] WAVE: SUCC write WAVE HEADER\n");
+					xfree(priv->format);
+					priv->format = xstrdup("pcm");
+				} else {
+					debug("[stream_audio_control] WAVE: writting WAVE HEADER failed... mhh... FALLBACK on raw format\n");
 					lseek(aio->fd, 0, SEEK_SET);
-					if ((write(aio->fd, fileheader, sizeof(WAVEHDR)) == sizeof(WAVEHDR))) {
-						debug("[stream_audio_control] WAVE: SUCC write WAVE HEADER\n");
-						xfree(priv->format);
-						priv->format = xstrdup("pcm");
-					} else {
-						debug("[stream_audio_control] WAVE: writting WAVE HEADER failed... mhh... FALLBACK on raw format\n");
-						lseek(aio->fd, 0, SEEK_SET);
-						xfree(fileheader);
-						fileheader = NULL;
+					xfree(fileheader);
+					fileheader = NULL;
 
-						xfree(priv->format);
-						priv->format = xstrdup("raw");
-					}
+					xfree(priv->format);
+					priv->format = xstrdup("raw");
+				}
 
-				} else	succ = NULL;
 				xfree(freq); xfree(sample); xfree(channels);
+
+				priv->wave = fileheader;
 			}
-			priv->wave = fileheader;
 		}
 		return succ;
 	} else if ((type == AUDIO_CONTROL_SET && !aio) || (type == AUDIO_CONTROL_GET && aio)) {
@@ -387,6 +424,8 @@ AUDIO_CONTROL(stream_audio_control) {
 		aio->fd		= fd;
 		aio->private	= priv;
 
+		priv->parent	= aio;
+
 	} else if (type == AUDIO_CONTROL_DEINIT && aio) {
 		if (aio->private) {
 			stream_private_t *priv = aio->private;
@@ -438,7 +477,12 @@ WATCHER_LINE(stream_handle_write) {
 		audio->fd = fd		= -1;
 		audio->buffer		= string_init(NULL);
 	}
-	if (len == -1) return 0;
+	if (!type) {
+		if (len == -1 && (errno == EAGAIN || errno == EINTR)) 
+			return 0;
+		if (len > 0) 
+			audio->outb += len;
+	}
 	return len;
 }
 
@@ -466,6 +510,7 @@ WATCHER(stream_handle) {
 
 	if (len > 0 && s->output) {	/* if watch write do nothing */
 		if (!codec) {
+			s->input->outb += len;
 			/* we just copy data from input->buf */
 			string_append_raw(s->output->buffer, audio->buffer->str, audio->buffer->len);
 			string_clear(s->input->buffer);
@@ -480,6 +525,7 @@ WATCHER(stream_handle) {
 			if (res > 0) {
 				memmove(audio->buffer->str, audio->buffer->str + res, audio->buffer->len - res);
 				audio->buffer->len -= res;
+				s->input->outb += res;
 			}
 		}
 		/* if this is read handler, and we don't have watch handler for writing stream->out->fd == -1 then we don't need to wait for WATCH_WRITE and we here do it */
@@ -491,6 +537,7 @@ WATCHER(stream_handle) {
 			if (res > 0) {
 				memmove(s->output->buffer->str, s->output->buffer->str + res, s->output->buffer->len - res);
 				s->output->buffer->len -= res;
+				s->output->outb += res;
 			}
 			debug(" ... left:%d bytes\n", s->output->buffer->len);
 		}
@@ -548,47 +595,23 @@ fail:
 
 audio_io_t *stream_as_audio(stream_t *s) {
 	return NULL;
-
 }
 
 int audio_initialize() {
-#if 0
-	audio_t *inp, *out;
-	codec_t *co;
-#endif
 	audio_register(&stream_audio);
 
-	/* As all of them evaluate to false, commenting them to remove warnings */
-#if 0
-	if (0 && (inp = audio_find("stream") && (out = audio_find("stream"))))
-		stream_create("Now playing: /dev/urandom",
-				__AINIT(inp, AUDIO_READ, "file", "/dev/urandom"),	/* reading from /dev/urandom */
-				NULL, 							/* no codec */
-				__AINIT(out, AUDIO_WRITE, "file", "/dev/dsp")		/* writing to /dev/dsp */);
-	if (0 && (inp = audio_find("oss")) && (out = audio_find("stream")))
-		stream_create("Now recording: /dev/dsp",
-				__AINIT(inp, AUDIO_READ, "freq", "8000", "sample", "16", "channels", "1"),
-				NULL,
-				__AINIT(out, AUDIO_WRITE, "file", "plik.raw", "format", "raw"));
-	if (0 &&  (out = audio_find("oss")) && (inp = audio_find("stream"))) 
-		stream_create("Now playing to: /dev/dsp",
-				__AINIT(inp, AUDIO_READ, "file", "plik.raw"),
-				NULL,
-				__AINIT(out, AUDIO_WRITE, "freq", "8000", "sample", "16", "channels", "1"));
-	if (0 && (out = audio_find("stream")) && (inp = audio_find("oss"))) 
-		stream_create("Now recoring /dev/dsp to WAVE file.",
-				__AINIT(inp, AUDIO_READ, "freq", "44100", "sample", "16", "channels", "2"),
-				NULL,
-				__AINIT(out, AUDIO_WRITE, "file", "plik.wav", "format", "wave"));
-	if (0 && (out = audio_find("stream")) && (inp = audio_find("stream")) && (co = codec_find("pcm"))) 
-		stream_create("Now let's recode some pcm data...",
-				__AINIT(inp, AUDIO_READ, "file", "plik.raw", "format", "raw"),
-				__CINIT(co,  "ifreq", "8000", "ofreq", "44100", "sample", "16", "channels", "1"),
-				__AINIT(out, AUDIO_WRITE, "file", "recoded.wav", "format", "wave"));
-#endif
+	/* move it to formats.c */
+	format_add("audio_device", 	_("%> Audio device: %1"), 1);
+	format_add("audio_codec",	_("%> Audio codec: %1"), 1);
+
+	format_add("audio_not_found",	_("%! Audio not found: %1"), 1);
+	format_add("codec_not_found",	_("%! Codec not found: %1"), 1);
+
+	format_add("stream_info",	_("%> Stream name: %1"), 1);
+	format_add("stream_info_in",	_("%>  [IN] %[10]1 fd: %2 [Buffer: %3 bytes, out: %4 bytes]"), 1);	/* %1: device name, %2 fd, %3 size of buffer, %4 out bytes */
+	format_add("stream_info_out",	_("%> [OUT] %[10]1 fd: %2 [Buffer: %3 bytes, out: %4 bytes]"), 1);	/* %1: device name, %2 fd, %3 size of buffer, %4 out bytes */
+
 	return 0;
-#undef __AINIT
-#undef __CINIT
 }
 
 /*
