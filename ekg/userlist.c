@@ -194,9 +194,7 @@ char *userlist_dump(session_t *session)
 {
 	string_t s;
 	list_t l;
-/*	if (!session->userlist) 
- *		return NULL;	
- */
+
 	s = string_init(NULL);
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
@@ -533,7 +531,7 @@ void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
  */
 void userlist_resource_free(userlist_t *u) {
 	list_t l;
-	if (!u) return;
+	if (!u || !(u->resources)) return;
 
 	for (l = u->resources; l; l = l->next) {
 		ekg_resource_t *r = l->data;
@@ -630,12 +628,15 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
         xfree(u->foreign);
         xfree(u->last_descr);
 
-        for (l = u->groups; l; l = l->next) {
-                struct ekg_group *g = l->data;
+	if (u->groups) {
+		for (l = u->groups; l; l = l->next) {
+			struct ekg_group *g = l->data;
 
-                xfree(g->name);
-        }
-        list_destroy(u->groups, 1);
+			xfree(g->name);
+		}
+		list_destroy(u->groups, 1);
+	}
+
 	userlist_resource_free(u);
 
         list_remove(userlist, u, 1);

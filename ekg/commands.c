@@ -736,16 +736,27 @@ COMMAND(cmd_exec)
 	return 0;
 }
 
-static COMMAND(cmd_eval)
-{
+/**
+ * cmd_eval()
+ *
+ * Execute space seperated commands from @a params[0]<br>
+ * If you want add params to command use " " sample: /eval "first_commamnd --first_param --second_param" second_command third_command
+ *
+ * Handler for: <i>/eval</i> command.
+ *
+ * @param params [0] - commands to execute
+ *
+ * @return 0
+ */
+
+static COMMAND(cmd_eval) {
 	int i;
 	char **argv;
 
 	argv = array_make(params[0], (" "), 0, 1, 1);
 	
-	for (i = 0; argv[i]; i++) {
+	for (i = 0; argv[i]; i++)
 		command_exec(NULL, session, argv[i], 0);
-	}
 
 	array_free(argv);
 
