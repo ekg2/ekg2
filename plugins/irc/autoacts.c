@@ -33,21 +33,22 @@ static TIMER(irc_autorejoin_timer);
  *
  * Handler for: <i>IRC_KICK</i><br>
  *
- * Here we check if we were kicked (by checking @a nick) and if yes, than if we want to rejoin on kick (REJOIN && REJOIN_TIME)<br>
- * Than after time specified by REJOIN_TIME we try to rejoin
+ * Here we check if we were kicked (by checking @a nick) and if yes, than if we want to rejoin on kick (<i>REJOIN</i> && <i>REJOIN_TIME</i>)<br>
+ * Than after time specified by <i>REJOIN_TIME</i> we try to rejoin
  *
  * @sa irc_autorejoin()		- for rejoin function
  * @sa irc_autorejoin_timer()	- for rejoin timer.
  *
  * @todo	We don't check if @a nick and @a chan is full uid.. It's I think correct.. However can be faulty.
  *
- * @param	ap 1st param: <i>(char *) </i><b>session</b> 	- session uid
- * 		ap 2nd param: <i>(char *) </i><b>nick</b>	- full uid of kicked person (irc:nickname)
- * 		ap 3rd param: <i>(char *) </i><b>chan</b>	- full uid of channel where kick event happen.
- * 		ap 4th param: <i>(char *) </i><b>kickedby</b>	- full uid who kicked.
+ * @param ap 1st param: <i>(char *) </i><b>session</b> 	- session uid
+ * 	  ap 2nd param: <i>(char *) </i><b>nick</b>	- full uid of kicked person (irc:nickname)
+ * 	  ap 3rd param: <i>(char *) </i><b>chan</b>	- full uid of channel where kick event happen.
+ * 	  ap 4th param: <i>(char *) </i><b>kickedby</b>	- full uid who kicked.
+ * @param data NULL
  *
- * @return 	1 - If no session, no irc session, or no private struct.
- * 		2 - If we are not interested in autorejoining	[either smb else was kicked (not us) or REJOIN was not set]
+ * @return 	1 - If no session, no irc session, or no private struct.<br>
+ * 		2 - If we are not interested in autorejoining	[either smb else was kicked (not us) or <i>REJOIN</i> was not set]<br>
  * 		3 - If we'll try to autorejoin
  */
 
@@ -97,8 +98,22 @@ QUERY(irc_onkick_handler) {
 	return 2;
 }
 
-static TIMER(irc_autorejoin_timer)
-{
+/**
+ * irc_autorejoin_timer()
+ *
+ * Timer handler for auto-rejoining<br>
+ * Added by irc_autorejoin()
+ * It just execute irc_autorejoin() with params...
+ *
+ * @todo Remove some struct info from irc_onkick_handler_t? Here we use only channelname and session..
+ * @todo Check session with session_find_ptr() ?
+ *
+ * @param data - irc_onkick_handler_t * struct with data inited by irc_autorejoin()
+ *
+ * @return -1 [TEMPORARY HANDLER]
+ */
+
+static TIMER(irc_autorejoin_timer) {
 	irc_onkick_handler_t *d = data;
 	if (type == 1) {
 		xfree(d->nick);
@@ -108,9 +123,9 @@ static TIMER(irc_autorejoin_timer)
 		return 0;
 	}
 
-	debug("wykonujê timer %d %s\n", type, (d->chan)+4);
+	debug("irc_autorejoin_timer() rejoining to: %s\n", (d->chan)+4);
 	irc_autorejoin(d->s, IRC_REJOIN_KICK, (d->chan)+4);
-	return -1; /* timer tymczasowy */
+	return -1;
 }
 
 int irc_autorejoin(session_t *s, int when, char *chan)
