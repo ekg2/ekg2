@@ -90,7 +90,6 @@ char *window_target(window_t *window);
 
 int window_session_cycle(window_t *w);
 int window_session_set(window_t *w, session_t *s);
-session_t *window_session_get(window_t *w);
 
 int window_lock_inc(window_t *w);
 int window_lock_dec(window_t *w);
