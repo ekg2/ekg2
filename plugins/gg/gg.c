@@ -186,10 +186,11 @@ static QUERY(gg_session_handle) {
 static QUERY(gg_user_offline_handle) {
 	userlist_t *u	= *(va_arg(ap, userlist_t **));
 	session_t *s	= *(va_arg(ap, session_t **));
-	gg_private_t *g = session_private_get(s);
+	gg_private_t *g;
 	int uin;
 
-	if (!session_check(s, 1, "gg")) return 1;
+	if (!s || !(g = s->priv) || s->plugin != &gg_plugin)
+		return 1;
 	uin = atoi(u->uid + 3);
 
 	gg_remove_notify_ex(g->sess, uin, gg_userlist_type(u));
@@ -203,11 +204,12 @@ static QUERY(gg_user_offline_handle) {
 static QUERY(gg_user_online_handle) {
 	userlist_t *u	= *(va_arg(ap, userlist_t **));
 	session_t *s	= *(va_arg(ap, session_t **));
-	gg_private_t *g = session_private_get(s);
+	gg_private_t *g;
 	int quiet = (int) data;
 	int uin;
 
-	if (!session_check(s, 1, "gg")) return 1;
+	if (!s || !(g = s->priv) || s->plugin != &gg_plugin)
+		return 1;
 	uin = atoi(u->uid + 3);
 
 	gg_remove_notify_ex(g->sess, uin, gg_userlist_type(u));
@@ -321,49 +323,86 @@ uin_t str_to_uin(const char *text) {
 	return (uin_t) num;
 }
 
-/* 
- * trzeba dodaæ numer u¿ytkownika do listy osób, o których
- * zmianach statusów chcemy byæ informowani 
+/**
+ * gg_add_notify_handle()
+ *
+ * Handler for: <i>ADD_NOTIFY</i><br>
+ * (Emited by: <i>/add</i> command, when you successfully add smb to the userlist)<br>
+ * Notify gg server about it.
+ *
+ * @todo	We ignore gg_add_notify_ex() result
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session_uid</b> 	- session uid
+ * @param ap 2nd param: <i>(char *) </i><b>uid</b>		- user uid
+ * @param data NULL
+ *
+ * @return 	1 - If smth is wrong, @a session_uid or @a uid isn't valid gg number, or session is without private struct.<br>
+ * 		else 0
+ *
  */
+
 static QUERY(gg_add_notify_handle) {
-	char **session_uid = va_arg(ap, char**);
-	char **uid = va_arg(ap, char**);
-	session_t *s = session_find(*session_uid);
+	char *session_uid 	= *(va_arg(ap, char **));
+	char *uid		= *(va_arg(ap, char **));
+
+	session_t *s = session_find(session_uid);
 	gg_private_t *g;
 
+/* Check session */
 	if (!s) {
 		debug("Function gg_add_notify_handle() called with NULL data\n");
 		return 1;
 	}
 
-	if (!session_check(s, 0, "gg"))		return 1;	/* not gg session. */
-	if (!(g = session_private_get(s)))
+	if (!(g = s->priv) || s->plugin != &gg_plugin)
 		return 1;
 
-	gg_add_notify_ex(g->sess, str_to_uin(xstrchr(*uid, ':') + 1), gg_userlist_type(userlist_find(s, s->uid))); 
+/* Check uid */
+	if (valid_plugin_uid(&gg_plugin, uid) != 1)
+		return 1;
+
+	gg_add_notify_ex(g->sess, str_to_uin(uid+3), gg_userlist_type(userlist_find(s, s->uid))); 
 	return 0;
 }
 
-/*
- * trzeba usun±æ numer u¿ytkownika z listy osób, o których
- * zmianach statusów chcemy byæ informowani
+/**
+ * gg_remove_notify_handle()
+ *
+ * Handler for: <i>REMOVE_NOTIFY</i><br>
+ * (Emited by: <i>/del</i> command, when we sucessfully remove smb from userlist.<br>
+ * Notify gg server about it.
+ *
+ * @todo	We ignore gg_remove_notify() result
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session_uid</b>	- session uid
+ * @param ap 2nd param: <i>(char *) </i><b>uid</b>		- user uid
+ * @param data NULL
+ *
+ * @return	1 - If smth is wrong, @a session_uid or @a uid isn't valid gg number, or session is without private struct.<br>
+ * 		else 0
  */
-static QUERY(gg_remove_notify_handle) {
-	char **session_uid = va_arg(ap, char**);
-	session_t *s = session_find(*session_uid);
-	char *uid = *(va_arg(ap, char**));
-	gg_private_t *g;
-	char *tmp;
 
+static QUERY(gg_remove_notify_handle) {
+	char *session_uid 	= *(va_arg(ap, char **));
+	char *uid 		= *(va_arg(ap, char **));
+
+	session_t *s = session_find(session_uid);
+	gg_private_t *g;
+
+/* Check session */
 	if (!s) {
 		debug("Function gg_remove_notify_handle() called with NULL data\n");
 		return 1;
 	}
-	if (!session_check(s, 1, "gg"))		return 1;
-	if (!(g = session_private_get(s)))	return 1;
-	if (!(tmp = xstrchr(uid, ':')))		return 1;
 
-	gg_remove_notify(g->sess, str_to_uin(tmp+1));
+	if (!(g = s->priv) || s->plugin != &gg_plugin)
+		return 1;
+
+/* Check uid */
+	if (valid_plugin_uid(&gg_plugin, uid) != 1)
+		return 1;
+
+	gg_remove_notify(g->sess, str_to_uin(uid+3));
 	return 0;
 }
 
