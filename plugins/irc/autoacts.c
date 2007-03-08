@@ -123,13 +123,29 @@ static TIMER(irc_autorejoin_timer) {
 		return 0;
 	}
 
-	debug("irc_autorejoin_timer() rejoining to: %s\n", (d->chan)+4);
+	debug("irc_autorejoin_timer() rejoining to: %s\n", d->chan);
 	irc_autorejoin(d->s, IRC_REJOIN_KICK, (d->chan)+4);
 	return -1;
 }
 
-int irc_autorejoin(session_t *s, int when, char *chan)
-{
+/**
+ * irc_autorejoin()
+ *
+ * Try to rejoin.
+ *
+ * @todo We double check "REJOIN" if IRC_REJOIN_KICK
+ *
+ * @param s	- session
+ * @param when	- type of rejoining:<br>
+ * 			- <i>IRC_REJOIN_CONNECT</i> 	When we want to rejoin to all channels we had opened for example after <i>/reconnect</i>
+ * 			- <i>IRC_REJOIN_KICK</i>	When we want to rejoin to given channel (@a chan)
+ * @param chan	- if @a when == IRC_REJOIN_KICK than it specify to which channel we want to rejoin after kick.
+ *
+ * @return 	 0 - if we send JOIN commands to ircd...<br>
+ * 		-1 - If smth went wrong.
+ */
+
+int irc_autorejoin(session_t *s, int when, char *chan) {
 	irc_private_t *j;
 	list_t l;
 	string_t st;
@@ -137,26 +153,29 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 	char *chanprefix;
 	int rejoin;
 
+#if 1	/* there's no need of doing it, already checked by irc_onkick_handler() or if it goes through irc_c_init() it's even better. */
 	if (!s || !(j = s->priv) || (s->plugin != &irc_plugin))
     		return -1;
-
+#endif
 	chanprefix = SOP(_005_CHANTYPES);
 	rejoin = session_int_get(s, "REJOIN");
 
 	if (!(rejoin&(1<<(when))))
-		return 0;
+		return -1;
 
-	switch (when)
-	{
+	switch (when) {
 		case IRC_REJOIN_CONNECT:
 			st = string_init(NULL);
 			for (l = windows; l; l = l->next) {
 				w = l->data;
-				if (!(w->target))
+
+				if (!w->target || w->session != s)			/* check if sessions match and has w->target */
 					continue;
-				if (session_compare(w->session, s)) 
+
+				if (valid_plugin_uid(s->plugin, w->target) != 1)	/* check if window is correct for irc: */
 					continue;
-				if (!xstrchr(chanprefix, (w->target)[4]))
+				
+				if (!xstrchr(chanprefix, (w->target)[4]))		/* check if this is channel.. */
 					continue;
 
 				if (st->len)
@@ -172,9 +191,11 @@ int irc_autorejoin(session_t *s, int when, char *chan)
 				watch_write(j->send_watch, "JOIN %s\r\n", st->str);
 			string_free(st, 1);
 			break;
+
 		case IRC_REJOIN_KICK:
 			watch_write(j->send_watch, "JOIN %s\r\n", chan);
 			break;
+
 		default:
 			return -1;
 	}
