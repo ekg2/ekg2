@@ -238,8 +238,20 @@ COMMAND(gg_command_unregister)
 	return 0;
 }
 
-static WATCHER(gg_handle_passwd)	/* tymczasowy */
-{
+/**
+ * gg_handle_passwd()
+ *
+ * Watch used to change password<br>
+ * We send asynchrous request for change password @@ gg_command_passwd() If it success, than this watch is created.<br>
+ * Here we wait for server reply, and if it success we set new password in session variable.<br>
+ *
+ * @todo Need rewriting, it's buggy. We don't free memory @ type == 1, when watch wasn't executed...
+ * 		We always create watch @@ not GG_STATE_DONE, even if there's no need, and maybe more. XXX
+ *
+ * @return -1 [TEMPORARY WATCH]
+ */
+
+static WATCHER(gg_handle_passwd) {
 	struct gg_http *h = data;
 	struct gg_pubdir *p = NULL;
 	list_t l;
@@ -264,7 +276,9 @@ static WATCHER(gg_handle_passwd)	/* tymczasowy */
 	}
 
 	if (h->state != GG_STATE_DONE) {
-		watch_t *w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_passwd, h);
+		watch_t *w;
+
+		w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_passwd, h);
 		watch_timeout_set(w, h->timeout);
 		
 		return -1;
@@ -280,12 +294,12 @@ static WATCHER(gg_handle_passwd)	/* tymczasowy */
 fail:
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
-		gg_private_t *g = session_private_get(s);
+		gg_private_t *g;
 		list_t m;
 
-		if (xstrncasecmp(s->uid, "gg:", 3))
+		if (!s || !(g = s->priv) || s->plugin != &gg_plugin)
 			continue;
-		
+
 		for (m = g->passwds; m; ) {
 			struct gg_http *sh = m->data;
 
