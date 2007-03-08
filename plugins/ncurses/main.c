@@ -162,7 +162,7 @@ static QUERY(ncurses_ui_window_print)
 
 	if (!w->floating) {
 		ncurses_redraw(w);
-		if (!window_lock_get(w)) // && w == window_current) it should be tested
+		if (w->lock == 0) // && w == window_current) it should be tested
 			ncurses_commit();
 	}
 	
