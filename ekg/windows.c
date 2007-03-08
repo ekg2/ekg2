@@ -608,10 +608,18 @@ static void window_move(int first, int second)
 	list_add_sorted(&windows, w2, 0, window_new_compare);
 }
 
-/*
+/**
  * window_target()
  *
- * return window target
+ * @param window - window
+ * @todo Make it const?
+ *
+ * @return 	Never NULL pointer [to don't care about it] look below for more details:
+ * 		- __current	if @a window is NULL<br>
+ * 		- __status	if @a window->id == 1<br>
+ * 		- __debug	if @a window->id == 0<br>
+ * 		- else if @a window->target is not NULL return it<br>
+ * 		- else return ""
  */
 
 char *window_target(window_t *window) {
