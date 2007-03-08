@@ -112,22 +112,22 @@ COMMAND(gg_command_register)
 	watch_t *w;
 
 	if (gg_register_done) {
-		wcs_printq("registered_today");
+		printq("registered_today");
 		return -1;
 	}
 	
 	if (!params[0] || !params[1] || !params[2]) {
-		wcs_printq("not_enough_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 	
 	if (gg_registers) {
-		wcs_printq("register_pending");
+		printq("register_pending");
 		return -1;
 	}
 
         if (!last_tokenid) {
-	        wcs_printq("gg_token_missing");
+	        printq("gg_token_missing");
                 return -1;
         }
 
@@ -206,7 +206,7 @@ COMMAND(gg_command_unregister)
 	char *passwd;
 
         if (!last_tokenid) {
-                wcs_printq("token_missing");
+                printq("token_missing");
                 return -1;
         }
 
@@ -321,8 +321,21 @@ fail:
 	return -1;
 }
 
-COMMAND(gg_command_passwd)
-{
+/**
+ * gg_command_passwd()
+ *
+ * It's used to change password on gg server.<br>
+ * Handler for: <i>/gg:passwd</i> command.
+ *
+ * @param params [0] - New password
+ * @param params [1] - Text from token [only needed when HAVE_GG_CHANGE_PASSWD4 is defined]
+ *
+ * @todo Add support for really old libgadu functions? like: gg_change_passwd2() ?
+ *
+ * @return 0 on sucess, else -1
+ */
+
+COMMAND(gg_command_passwd) {
 	gg_private_t *g = session_private_get(session);
 	struct gg_http *h;
 	watch_t *w;
@@ -359,7 +372,9 @@ COMMAND(gg_command_passwd)
 		return -1;
 	}
 
+#ifdef HAVE_GG_CHANGE_PASSWD4
 	xfree(last_tokenid);	last_tokenid = NULL;
+#endif
 
 	session_set(session, "__new_password", params[0]);
 
@@ -438,7 +453,7 @@ COMMAND(gg_command_remind)
 	else {
 		if (!uin && (!session || !g || xstrncasecmp(session_uid_get(session), "gg:", 3))) {
 			if (!params[0])
-				wcs_printq("invalid_session");
+				printq("invalid_session");
 			return -1;
 		}
 
@@ -446,7 +461,7 @@ COMMAND(gg_command_remind)
 	}
 
 	if (!uin) {
-		wcs_printq("invalid_uid");
+		printq("invalid_uid");
 		return -1;
 	}
 #ifdef HAVE_GG_REMIND_PASSWD3 /* since LIBGADU ~20050217 */
