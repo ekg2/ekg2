@@ -253,7 +253,7 @@ static COMMAND(cmd_tabclear)
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
@@ -325,20 +325,21 @@ COMMAND(cmd_add) {
 /*		params[3] = NULL; */
 	}
 
-	if (!valid_plugin_uid(session->plugin, params[0])) {
-		wcs_printq("invalid_uid");
-		result = -1;
-		goto cleanup;
-	}
-
 	if (!params[1]) {
 		printq("not_enough_params", name);
 		result = -1;
 		goto cleanup;
 	}
 
+
+	if (!valid_plugin_uid(session->plugin, params[0])) {
+		printq("invalid_uid");
+		result = -1;
+		goto cleanup;
+	}
+
 	if (!valid_nick(params[1])) {
-		wcs_printq("invalid_nick");
+		printq("invalid_nick");
 		result = -1;
 		goto cleanup;
 	}
@@ -388,7 +389,7 @@ static COMMAND(cmd_alias)
 {
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -402,7 +403,7 @@ static COMMAND(cmd_alias)
 
 	if (match_arg(params[0], 'A', ("append"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -418,7 +419,7 @@ static COMMAND(cmd_alias)
 		int ret;
 
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -461,7 +462,7 @@ static COMMAND(cmd_alias)
 				xstrcat(tmp, " ");
 
 			for (m = a->commands; m; m = m->next) {
-				wcs_printq((first) ? "aliases_list" : "aliases_list_next", a->name, (char *) m->data, tmp);
+				printq((first) ? "aliases_list" : "aliases_list_next", a->name, (char *) m->data, tmp);
 				first = 0;
 				count++;
 			}
@@ -471,16 +472,16 @@ static COMMAND(cmd_alias)
 
 		if (!count) {
 			if (aname) {
-				wcs_printq("aliases_noexist", aname);
+				printq("aliases_noexist", aname);
 				return -1;
 			}
 
-			wcs_printq("aliases_list_empty");
+			printq("aliases_list_empty");
 		}
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
@@ -494,7 +495,7 @@ static COMMAND(cmd_status)
 	const char *format;
 	session_t *s = NULL;
 
-        wcs_printq("show_status_header");
+        printq("show_status_header");
 
 	s = params[0] ? session_find(params[0]) : session;
 
@@ -515,7 +516,7 @@ static COMMAND(cmd_status)
 		xstrcpy(buf1, "TOOLONG");
 
         printq("show_status_ekg_started_since", buf1);
-        wcs_printq("show_status_footer");
+        printq("show_status_footer");
 
 	return 0;
 }
@@ -530,7 +531,7 @@ static COMMAND(cmd_del)
 		return -1;
 	
 	if (!params[0]) {
-		wcs_printq("not_enough_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -551,7 +552,7 @@ static COMMAND(cmd_del)
 			userlist_remove(session, u);
 		}
 
-		wcs_printq("user_cleared_list", session_name(session));
+		printq("user_cleared_list", session_name(session));
 		tabnick_flush();
 		config_changed = 1;
 
@@ -624,7 +625,7 @@ void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, v
 {
 	int quiet = (name && name[0] == '^');
 
-	wcs_printq("process_exit", itoa(pid), name, itoa(status));
+	printq("process_exit", itoa(pid), name, itoa(status));
 }
 
 COMMAND(cmd_exec)
@@ -650,7 +651,7 @@ COMMAND(cmd_exec)
 				const char *uid;
 
 				if (!args[1] || !args[2]) {
-					wcs_printq("not_enough_params", name);
+					printq("not_enough_params", name);
 					return -1;
 				}
 
@@ -662,7 +663,7 @@ COMMAND(cmd_exec)
 				target = uid;
 				command = args[2];
 			} else {
-				wcs_printq("invalid_params", name);
+				printq("invalid_params", name);
 				return -1;
 			}
 		} 
@@ -723,11 +724,11 @@ COMMAND(cmd_exec)
 		for (l = children; l; l = l->next) {
 			child_t *c = l->data;
 			
-			wcs_printq("process", itoa(c->pid), ((c->name) ? (c->name) : ("?")));
+			printq("process", itoa(c->pid), ((c->name) ? (c->name) : ("?")));
 		}
 
 		if (!children) {
-			wcs_printq("no_processes");
+			printq("no_processes");
 			return -1;
 		}
 	}
@@ -772,7 +773,7 @@ static COMMAND(cmd_for)
 			list_t l;
 			
 			if (!sessions) {
-				wcs_printq("session_list_empty");
+				printq("session_list_empty");
 				return -2;
 			}
 				
@@ -840,7 +841,7 @@ static COMMAND(cmd_for)
 		}
 
 		if (!session->userlist) {
-			wcs_printq("list_empty");
+			printq("list_empty");
 			return -1;
 		}
 
@@ -963,7 +964,7 @@ static COMMAND(cmd_for)
                         xfree(w);
                 }
 	} else {
-	        wcs_printq("invalid_params", name);
+	        printq("invalid_params", name);
 		return -1;
 	}
 	return 0;
@@ -1016,7 +1017,7 @@ static COMMAND(cmd_help)
 					char *tmp2;
 
                                         if (!(f = help_path("commands", c->plugin->name))) {
-                                                wcs_print("help_command_file_not_found_plugin", c->plugin->name);
+                                                print("help_command_file_not_found_plugin", c->plugin->name);
 						return -1;
 			                }
 					tmp2 = xstrchr(c->name, ':');
@@ -1026,7 +1027,7 @@ static COMMAND(cmd_help)
 				                seeking_name = tmp2 + 1;
 			        } else {
 					if (!(f = help_path("commands", NULL))) {
-		                	        wcs_print("help_command_file_not_found");
+		                	        print("help_command_file_not_found");
 						return -1;
 			                }
 
@@ -1041,7 +1042,7 @@ static COMMAND(cmd_help)
 
 			        if (!found) {
 			                fclose(f);
-			                wcs_print("help_command_not_found", c->name);
+			                print("help_command_not_found", c->name);
 			                return -1;
 			        }
 
@@ -1072,9 +1073,9 @@ static COMMAND(cmd_help)
 	                        }
 
 	                        if (xstrcmp(params_help_s, ("")))
-        	                        wcs_printq("help", (c->name) ? (c->name) : (""), params_help_s, tmp ? tmp : brief, "");
+        	                        printq("help", (c->name) ? (c->name) : (""), params_help_s, tmp ? tmp : brief, "");
 	                        else
-	                                wcs_printq("help_no_params", (c->name) ? (c->name) : (""), tmp ? tmp : brief, (""));
+	                                printq("help_no_params", (c->name) ? (c->name) : (""), tmp ? tmp : brief, (""));
 
 				xfree(brief);
 				xfree(params_help);
@@ -1103,7 +1104,7 @@ static COMMAND(cmd_help)
 				
 				if (xstrcmp(s->str, (""))) {
 					char *tmp = format_string(s->str);
-                                        wcs_printq("help_command_body", tmp);
+                                        printq("help_command_body", tmp);
 					xfree(tmp);
 				}
 				fclose(f);
@@ -1176,9 +1177,9 @@ static COMMAND(cmd_help)
 			}
 
 			if (xstrcmp(params_help_s, ("")))
-				wcs_printq("help", c->name ? (c->name) : (""), params_help_s, blah ? blah : brief, (""));
+				printq("help", c->name ? (c->name) : (""), params_help_s, blah ? blah : brief, (""));
 			else
-				wcs_printq("help_no_params", (c->name) ? (c->name) : (""), blah ? blah : brief, (""));
+				printq("help_no_params", (c->name) ? (c->name) : (""), blah ? blah : brief, (""));
 			xfree(blah);
 			xfree(brief);
 			xfree(params_help);
@@ -1187,8 +1188,8 @@ static COMMAND(cmd_help)
 		}
 	}
 
-	wcs_printq("help_footer");
-	wcs_printq("help_quick");
+	printq("help_footer");
+	printq("help_quick");
 	return 0;
 }
 
@@ -1215,7 +1216,7 @@ static COMMAND(cmd_ignore)
 			}
 
 			if (!i)
-				wcs_printq("ignored_list_empty");
+				printq("ignored_list_empty");
 
 			return 0;
 		}
@@ -1236,7 +1237,7 @@ static COMMAND(cmd_ignore)
 			int __flags = ignore_flags(params[1]);
 
 			if (!__flags) {
-				wcs_printq("invalid_params", name);
+				printq("invalid_params", name);
 				return -1;
 			}
 
@@ -1260,7 +1261,7 @@ static COMMAND(cmd_ignore)
 		int level;
 
 		if (!params[0]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -1289,10 +1290,10 @@ static COMMAND(cmd_ignore)
 			}
 
 			if (x) {
-				wcs_printq("ignored_deleted_all");
+				printq("ignored_deleted_all");
 				config_changed = 1;
 			} else {
-				wcs_printq("ignored_list_empty");
+				printq("ignored_list_empty");
 				return -1;
 			}
 			
@@ -1401,7 +1402,7 @@ next:
 	                i = metacontact_find_prio(m);
 
 	                if (!i) {
-	                        wcs_printq("metacontact_item_list_empty");
+	                        printq("metacontact_item_list_empty");
 				xfree(tparams0);
 				return -1;
 	               	} 
@@ -1506,7 +1507,7 @@ list_user:
 					xstrcpy(buf, "TOOLONG");
 				printq("user_info_last_seen", buf);
 			} else
-				wcs_printq("user_info_never_seen");
+				printq("user_info_never_seen");
 		}
 			
 		printq("user_info_footer", u->nickname, u->uid);
@@ -1612,7 +1613,7 @@ list_user:
 	}
 
 	if (!count && !(show_descr || show_group) && show_all)
-		wcs_printq("list_empty");
+		printq("list_empty");
 	xfree(show_group);
 	xfree(tparams0);
 	return 0;
@@ -1644,7 +1645,7 @@ static COMMAND(cmd_save) {
 		config_changed = 0;
 		reason_changed = 0;
 	} else {
-		wcs_printq("error_saving");
+		printq("error_saving");
 	}
 
 	return ret;
@@ -1694,7 +1695,7 @@ static COMMAND(cmd_set)
 					continue;
 
 				if (!v->display) {
-					wcs_printq("variable", v->name, ("(...)"));
+					printq("variable", v->name, ("(...)"));
 					displayed = 1;
 					continue;
 				}
@@ -1702,17 +1703,17 @@ static COMMAND(cmd_set)
 				if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
 					char *tmp = (string) ? saprintf(("\"%s\""), string) : ("(none)");
 
-					wcs_printq("variable", v->name, tmp);
+					printq("variable", v->name, tmp);
 					
 					if (string)
 						xfree(tmp);
 				}
 
 				if (v->type == VAR_BOOL)
-					wcs_printq("variable", v->name, (value) ? ("1 (on)") : ("0 (off)"));
+					printq("variable", v->name, (value) ? ("1 (on)") : ("0 (off)"));
 				
 				if ((v->type == VAR_INT || v->type == VAR_MAP) && !v->map)
-					wcs_printq("variable", v->name, itoa(value));
+					printq("variable", v->name, itoa(value));
 
 				if (v->type == VAR_INT && v->map) {
 					char *tmp = NULL;
@@ -1727,7 +1728,7 @@ static COMMAND(cmd_set)
 					if (!tmp)
 						tmp = saprintf(("%d"), value);
 
-					wcs_printq("variable", v->name, tmp);
+					printq("variable", v->name, tmp);
 
 					xfree(tmp);
 				}
@@ -1747,7 +1748,7 @@ static COMMAND(cmd_set)
 					if (!first)
 						string_append_c(s, (')'));
 
-					wcs_printq("variable", v->name, s->str);
+					printq("variable", v->name, s->str);
 
 					string_free(s, 1);
 				}
@@ -1883,7 +1884,7 @@ static COMMAND(cmd_test_debug_dump)
 	char *tmp = saprintf(("Zapisalem debug do pliku debug.%d"), (int) getpid());
 
 	debug_write_crash();
-	wcs_printq("generic", tmp);
+	printq("generic", tmp);
 	xfree(tmp);
 
 	return 0;
@@ -1902,7 +1903,7 @@ static COMMAND(cmd_debug_watches)
 	list_t l;
 	char buf[256];
 	
-	wcs_printq("generic_bold", ("fd     wa   plugin  pers tout  started     rm"));
+	printq("generic_bold", ("fd     wa   plugin  pers tout  started     rm"));
 	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
@@ -1932,8 +1933,8 @@ static COMMAND(cmd_debug_queries)
 {
 	list_t l;
 	
-	wcs_printq("generic", ("name                             | plugin   | count"));
-	wcs_printq("generic", ("---------------------------------|----------|------"));
+	printq("generic", ("name                             | plugin   | count"));
+	printq("generic", ("---------------------------------|----------|------"));
 	
 	for (l = queries; l; l = l->next) {
 		query_t *q = l->data;
@@ -2000,14 +2001,14 @@ static COMMAND(cmd_test_mem) {
 			fclose(file);
 			if (rd == 0)
 			{
-				wcs_printq("generic_error", ("Internal error, GiM's fault"));
+				printq("generic_error", ("Internal error, GiM's fault"));
 				return -1;
 			} 
 			p = xstrstr(buf, "VmSize");
 			if (p) {
 				sscanf(p, "VmSize:     %d kB", &rozmiar);
 			} else {
-				wcs_printq("generic_error", ("VmSize line not found!"));
+				printq("generic_error", ("VmSize line not found!"));
 				return -1;
 			}
 #elif __sun
@@ -2027,12 +2028,12 @@ static COMMAND(cmd_test_mem) {
 			static kvm_t      *kd;
 
 			if (!(kd = kvm_openfiles(NULL /* "/dev/null" */, "/dev/null", NULL, /* O_RDONLY */0, errbuf))) {
-				wcs_printq("generic_error", ("Internal error! (kvm_openfiles)"));
+				printq("generic_error", ("Internal error! (kvm_openfiles)"));
 				return -1;
 			}
 			kp = kvm_getprocs(kd, KERN_PROC_PID, getpid(), &nentries);
     			if (!kp || nentries != 1) {
-				wcs_printq("generic_error", ("Internal error! (kvm_getprocs)"));
+				printq("generic_error", ("Internal error! (kvm_getprocs)"));
             			return -1; 
     			}
 #ifdef HAVE_STRUCT_KINFO_PROC_KI_SIZE
@@ -2052,10 +2053,10 @@ static COMMAND(cmd_test_mem) {
 #endif
 		}
 		txt = saprintf(("Memory used by ekg2: %d KiB"), rozmiar);
-		wcs_printq("generic", txt);
+		printq("generic", txt);
 		xfree(txt);
 	} else {
-		wcs_printq("generic_error", ("/proc not mounted, no permissions, or no proc filesystem support"));
+		printq("generic_error", ("/proc not mounted, no permissions, or no proc filesystem support"));
 		xfree(temp);
 		return -1;
 	}
@@ -2182,7 +2183,7 @@ static COMMAND(cmd_beep) {
 static COMMAND(cmd_play)
 {
 	if (!config_sound_app) {
-		wcs_printq("var_not_set", name, "sound_app");
+		printq("var_not_set", name, "sound_app");
 		return -1;
 	}
 
@@ -2192,7 +2193,7 @@ static COMMAND(cmd_play)
 static COMMAND(cmd_say)
 {
 	if (!config_speech_app) {
-		wcs_printq("var_not_set", name, "speech_app");
+		printq("var_not_set", name, "speech_app");
 		return -1;
 	}
 
@@ -2217,7 +2218,7 @@ static COMMAND(cmd_reload)
 	if ((res = session_read(NULL))) printq("error_reading_config", strerror(errno));
 	if (res == -1) return -1;
 
-	wcs_printq("config_read_success");
+	printq("config_read_success");
 	config_changed = 0;
 
 	return res;
@@ -2276,7 +2277,7 @@ next:
 		metacontact_item_t *i = metacontact_find_prio(m);
 
 		if (!i) {
-			wcs_printq("metacontact_item_list_empty");
+			printq("metacontact_item_list_empty");
 			return -1;
 		}
 		
@@ -2558,14 +2559,14 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 		if (!res && last_command->flags & SESSION_MUSTHASPRIVATE) {
 			if (!s || !(s->priv)) {
-				wcs_printq("invalid_session");
+				printq("invalid_session");
 				res = -1;
 /*				debug("[command_exec] res = -1; SESSION_MUSTHASPRIVATE"); */
 			}
 		}
 		if (!res && (last_command->flags & SESSION_MUSTBECONNECTED)) {
 			if (!session_connected_get(s)) {
-				wcs_printq("not_connected", session_name(s));	
+				printq("not_connected", session_name(s));	
 				res = -1;
 			}
 		}
@@ -2579,7 +2580,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 /*			if (valid_plugin_uid(last_command->plugin, session_uid_get(s)) != 1) */
 
 			if (last_command->plugin != s->plugin) {
-				wcs_printq("invalid_session");
+				printq("invalid_session");
 				res = -1;
 /*				debug("[command_exec] res = -1; SESSION_MUSTBELONG\n"); */
 			}
@@ -2607,7 +2608,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 						if (i == 0 && (last_command->flags & COMMAND_PARAMASTARGET) && target) /* if params[0] already in target */
 							continue;	/* skip it */
 						debug("[command_exec,%s] res = -1; req params[%d] = NIL\n", last_name, i);
-						wcs_printq("not_enough_params", last_name);
+						printq("not_enough_params", last_name);
 						res = -1;
 						break;
 					} else if (p[0] != '!') break;
@@ -2694,7 +2695,7 @@ int command_exec_format(const char *target, session_t *session, int quiet, const
 
 int binding_help(int a, int b)  
 {
-	wcs_print("help_quick");  
+	print("help_quick");  
 
 	return 0;  
 }
@@ -2797,7 +2798,7 @@ COMMAND(cmd_alias_exec)
 			int i;
 
 			if (!params[0]) {
-				wcs_printq("aliases_not_enough_params", name);
+				printq("aliases_not_enough_params", name);
 				string_free(str, 1);
 				list_destroy(m, 1);
 				return -1;
@@ -2806,7 +2807,7 @@ COMMAND(cmd_alias_exec)
 			arr = array_make(params[0], ("\t "), need_args, 1, 1);
 
 			if (array_count(arr) < need_args) {
-				wcs_printq("aliases_not_enough_params", name);
+				printq("aliases_not_enough_params", name);
 				string_free(str, 1);
 				array_free(arr);
 				list_destroy(m, 1);
@@ -2855,7 +2856,7 @@ static COMMAND(cmd_at)
 		struct timer *t;
 
 		if (!params[1] || !params[2]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -2863,7 +2864,7 @@ static COMMAND(cmd_at)
 			a_name = params[1];
 
 			if (!xstrcmp(a_name, "(null)")) {
-				wcs_printq("invalid_params", name);
+				printq("invalid_params", name);
 				return -1;
 			}
 
@@ -2951,7 +2952,7 @@ static COMMAND(cmd_at)
 
 			/* nie ma b³êdów ? */
 			if (wrong || lt->tm_hour > 23 || lt->tm_min > 59 || lt->tm_sec > 59 || lt->tm_mday > 31 || !lt->tm_mday || lt->tm_mon > 11) {
-				wcs_printq("invalid_params", name);
+				printq("invalid_params", name);
 				xfree(foo);
 				return -1;
 			}
@@ -2963,7 +2964,7 @@ static COMMAND(cmd_at)
 					if (xisdigit(*freq_str))
 						_period = atoi(freq_str);
 					else {
-						wcs_printq("invalid_params", name);
+						printq("invalid_params", name);
 						xfree(foo);
 						return -1;
 					}
@@ -2984,7 +2985,7 @@ static COMMAND(cmd_at)
 							case 's':
 								break;
 							default:
-								wcs_printq("invalid_params", name);
+								printq("invalid_params", name);
 								xfree(foo);
 								return -1;
 						}
@@ -3005,7 +3006,7 @@ static COMMAND(cmd_at)
 					while (period <= 0)
 						period += freq;
 				} else {
-					wcs_printq("at_back_to_past");
+					printq("at_back_to_past");
 					return -1;
 				}
 			}
@@ -3017,7 +3018,7 @@ static COMMAND(cmd_at)
 			a_command = array_join((char **) params + 2, " ");
 
 		if (!xstrcmp(strip_spaces(a_command), "")) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			xfree(a_command);
 			return -1;
 		}
@@ -3040,7 +3041,7 @@ static COMMAND(cmd_at)
 		int ret = 1;
 
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3052,14 +3053,14 @@ static COMMAND(cmd_at)
 		
 		if (!ret) {
 			if (del_all)
-				wcs_printq("at_deleted_all");
+				printq("at_deleted_all");
 			else
 				printq("at_deleted", params[1]);
 			
 			config_changed = 1;
 		} else {
 			if (del_all)
-				wcs_printq("at_empty");
+				printq("at_empty");
 			else {
 				printq("at_noexist", params[1]);
 				return -1;
@@ -3149,13 +3150,13 @@ static COMMAND(cmd_at)
 				printq("at_noexist", a_name);
 				return -1;
 			} else
-				wcs_printq("at_empty");
+				printq("at_empty");
 		}
 
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
@@ -3172,7 +3173,7 @@ static COMMAND(cmd_timer)
 		int persistent = 0;
 
 		if (!params[1] || !params[2]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3180,7 +3181,7 @@ static COMMAND(cmd_timer)
 			t_name = params[1];
 
 			if (!xstrcmp(t_name, "(null)")) {
-				wcs_printq("invalid_params", name);
+				printq("invalid_params", name);
 				return -1;
 			}
 
@@ -3209,7 +3210,7 @@ static COMMAND(cmd_timer)
 			if (xisdigit(*p))
 				_period = atoi(p);
 			else {
-				wcs_printq("invalid_params", name);
+				printq("invalid_params", name);
 				xfree(t_command);
 				return -1;
 			}
@@ -3230,7 +3231,7 @@ static COMMAND(cmd_timer)
 					case 's':
 						break;
 					default:
-						wcs_printq("invalid_params", name);
+						printq("invalid_params", name);
 						xfree(t_command);
 						return -1;
 				}
@@ -3243,7 +3244,7 @@ static COMMAND(cmd_timer)
 		}
 
 		if (!xstrcmp(strip_spaces(t_command), "")) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			xfree(t_command);
 			return -1;
 		}
@@ -3262,7 +3263,7 @@ static COMMAND(cmd_timer)
 		int del_all = 0, ret;
 
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3359,13 +3360,13 @@ static COMMAND(cmd_timer)
 				printq("timer_noexist", t_name);
 				return -1;
 			} else
-				wcs_printq("timer_empty");
+				printq("timer_empty");
 		}
 
 		return 0;
 	}	
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
@@ -3435,7 +3436,7 @@ static COMMAND(cmd_conference)
 				printq("conferences_noexist", params[0]);
 				return -1;
 			} else
-				wcs_printq("conferences_list_empty");
+				printq("conferences_list_empty");
 		}
 
 		return 0;
@@ -3446,7 +3447,7 @@ static COMMAND(cmd_conference)
 		const char *uid;
 
 		if (!params[1] || !params[2]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3479,13 +3480,13 @@ static COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[2]) {
 			if (params[1][0] != '#') {
-				wcs_printq("conferences_name_error");
+				printq("conferences_name_error");
 				return -1;
 			} else
 				conference_add(session, params[1], params[2], quiet);
@@ -3497,7 +3498,7 @@ static COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'd', ("del"), 2)) {
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -3505,7 +3506,7 @@ static COMMAND(cmd_conference)
 			conference_remove(NULL, quiet);
 		else {
 			if (params[1][0] != '#') {
-				wcs_printq("conferences_name_error");
+				printq("conferences_name_error");
 				return -1;
 			}
 
@@ -3517,12 +3518,12 @@ static COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'r', ("rename"), 2)) {
 		if (!params[1] || !params[2]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#' || params[2][0] != '#') {
-			wcs_printq("conferences_name_error");
+			printq("conferences_name_error");
 			return -1;
 		}
 
@@ -3533,12 +3534,12 @@ static COMMAND(cmd_conference)
 	
 	if (match_arg(params[0], 'i', ("ignore"), 2)) {
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#') {
-			wcs_printq("conferences_name_error");
+			printq("conferences_name_error");
 			return -1;
 		}
 
@@ -3549,12 +3550,12 @@ static COMMAND(cmd_conference)
 
 	if (match_arg(params[0], 'u', ("unignore"), 2)) {
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#') {
-			wcs_printq("conferences_name_error");
+			printq("conferences_name_error");
 			return -1;
 		}
 
@@ -3568,12 +3569,12 @@ static COMMAND(cmd_conference)
 		list_t l;
 
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
 		if (params[1][0] != '#') {
-			wcs_printq("conferences_name_error");
+			printq("conferences_name_error");
 			return -1;
 		}
 
@@ -3592,7 +3593,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
@@ -3618,7 +3619,7 @@ static COMMAND(cmd_last)
 			if (uid)
 				printq("last_list_empty_nick", format_user(session, uid));
 			else
-				wcs_printq("last_list_empty");
+				printq("last_list_empty");
 
 			return -1;
 		}
@@ -3628,7 +3629,7 @@ static COMMAND(cmd_last)
 			printq("last_clear_uin", format_user(session, uid));
 		} else {
 			last_free();
-			wcs_printq("last_clear");
+			printq("last_clear");
 		}
 
 		return 0;
@@ -3677,7 +3678,7 @@ static COMMAND(cmd_last)
 			return -1;
 		}
 
-		wcs_printq("last_list_empty");
+		printq("last_list_empty");
 		return 0;
 	}
 
@@ -3720,7 +3721,7 @@ static COMMAND(cmd_last)
 		}
         }
 
-        wcs_printq("last_end");
+        printq("last_end");
 
 	return 0;
 }
@@ -3732,7 +3733,7 @@ static COMMAND(cmd_queue)
 	
 	if (match_arg(params[0], 'c', ("clear"), 2)) {
 		if (!msg_queue) {
-			wcs_printq("queue_empty");
+			printq("queue_empty");
 			return 0;
 		}
 
@@ -3742,7 +3743,7 @@ static COMMAND(cmd_queue)
 			else	printq("queue_empty_uid", format_user(session, params[1]));	/* queue for user empty */
 		} else {
 			msg_queue_free();
-			wcs_printq("queue_clear");
+			printq("queue_clear");
 		}
 
 		return 0;
@@ -3790,7 +3791,7 @@ COMMAND(cmd_dcc)
 			empty = 0;
 			
 			if (!passed++)
-				wcs_printq("dcc_show_pending_header");
+				printq("dcc_show_pending_header");
 
 			switch (d->type) {
 				case DCC_SEND:
@@ -3818,7 +3819,7 @@ COMMAND(cmd_dcc)
 			empty = 0;
 
 			if (!passed++)
-				wcs_printq("dcc_show_active_header");
+				printq("dcc_show_active_header");
 
 			switch (d->type) {
 				case DCC_SEND:
@@ -3838,7 +3839,7 @@ COMMAND(cmd_dcc)
 		}
 
 		if (empty)
-			wcs_printq("dcc_show_empty");
+			printq("dcc_show_empty");
 		
 		return 0;
 	}
@@ -3848,7 +3849,7 @@ COMMAND(cmd_dcc)
 		const char *uid;
 
 		if (!params[1]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 			/* XXX, get_uid() */
@@ -3880,7 +3881,7 @@ COMMAND(cmd_dcc)
 		return 0;
 	}
 
-	wcs_printq("invalid_params", name);
+	printq("invalid_params", name);
 
 	return -1;
 }
