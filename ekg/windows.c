@@ -157,6 +157,11 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 					if (u->nickname && !xstrcasecmp(u->nickname, w->target))
 						return w;
 
+					/* XXX, userlist_find() search only for u->nickname or u->uid.. so code below is useless? we can always return w; ?
+					 * 	However userlist_find() also strip resources if preset.. here we don't have it. 
+					 * 	maybe it's better, maybe not. Must think about it.
+					 * 	For now leave this code.
+					 */
 					if (!xstrcasecmp(u->uid, w->target))
 						return w;
 				}
