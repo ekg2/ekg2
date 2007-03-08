@@ -58,11 +58,21 @@ int config_lastlog_lock;
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
-static QUERY(ncurses_beep)
-{
+/**
+ * ncurses_beep()
+ *
+ * Handler for: <i>UI_BEEP</i><br>
+ * do curses beep()
+ *
+ * @todo Check result of beep()
+ * @todo What about curses flash() ? :>
+ *
+ * @return -1 [We don't want to hear other beeps]
+ */
+
+static QUERY(ncurses_beep) {
 	beep();
-	
-	return 0;
+	return -1;
 }
 
 static int dd_contacts(const char *name)
@@ -82,8 +92,22 @@ static QUERY(ncurses_statusbar_query)
 	return 0;
 }
 
-static QUERY(ncurses_ui_is_initialized)
-{
+/**
+ * ncurses_ui_is_initialized()
+ *
+ * Handler for: <i>UI_IS_INITIALIZED</i><br>
+ * Set @a tmp to ncurses_initialized [0/1]<br>
+ *
+ * @note <i>UI_IS_INITIALIZED</i> is used to check if we can display debug info by emiting <i>UI_PRINT_WINDOW</i> or not.
+ * 		It also used by other UI-PLUGINS to check if another UI-plugin is in use. [Becasuse we have only one private struct in window_t]
+ *
+ * @param ap 1st param: <i>(int) </i><b>tmp</b> - place to put ncurses_initialized variable.
+ * @param data NULL
+ *
+ * @return -1 If ncurses is initialized, else 0
+ */
+
+static QUERY(ncurses_ui_is_initialized) {
         int *tmp = va_arg(ap, int *);
 
 	if ((*tmp = ncurses_initialized))	return -1;
