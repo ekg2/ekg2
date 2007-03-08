@@ -406,11 +406,17 @@ static QUERY(gg_remove_notify_handle) {
 	return 0;
 }
 
-/*
+/**
  * gg_print_version()
  *
- * wy¶wietla wersjê pluginu i biblioteki.
+ * Handler for: <i>PLUGIN_PRINT_VERSION</i>
+ * print info about libgadu version.
+ *
+ * @todo	To many string parsing functions :/ and think about "generic" format... maybe let's create new format?
+ *
+ * @return 0
  */
+
 static QUERY(gg_print_version) {
 	char **tmp1 = array_make(GG_DEFAULT_CLIENT_VERSION, ", ", 0, 1, 0);
 	char *tmp2 = array_join(tmp1, ".");
@@ -425,11 +431,23 @@ static QUERY(gg_print_version) {
 	return 0;
 }
 
-/*
+/**
  * gg_validate_uid()
  *
- * sprawdza, czy dany uid jest poprawny i czy plugin do obs³uguje.
+ * handler for <i>PROTOCOL_VALIDATE_UID</i><br>
+ * checks, if @a uid is <i>proper for gg plugin</i>.
+ *
+ * @note <i>Proper for irc plugin</i> means if @a uid starts with "gg:" and uid len > 3
+ * @todo Blah, irc does xstrncasecmp() here it's only xstrncmp() let's decide... GG: and gg: is proper, or only gg:
+ *
+ * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
+ * @param ap 2nd param: <i>(int) </i><b>valid</b> - place to put 1 if uid is valid for gg plugin.
+ * @param data NULL
+ *
+ * @return 	-1 if it's valid uid for gg plugin<br>
+ * 		 0 if not
  */
+
 static QUERY(gg_validate_uid) {
 	char *uid	= *(va_arg(ap, char **));
 	int *valid	= va_arg(ap, int *);
@@ -437,9 +455,9 @@ static QUERY(gg_validate_uid) {
 	if (!uid)
 		return 0;
 
-	if (!xstrncmp(uid, "gg:", 3) && xstrlen(uid)>3) {
-		/* sprawdzmy, czy w uidzie wystepuja tylko cyferki... */
+	if (!xstrncmp(uid, "gg:", 3) && uid[3]) {
 		uid+=3;
+		/* now let's check if after gg: we have only digits */
 		for (; *uid; uid++)
 			if (!isdigit(*uid))
 				return 0;
@@ -449,6 +467,20 @@ static QUERY(gg_validate_uid) {
 	}
 	return 0;
 }
+
+/**
+ * gg_protocols()
+ *
+ * handler for <i>GET_PLUGIN_PROTOCOLS</i><br>
+ * It just add "gg:" to @a arr
+ *
+ * @note I know it's nowhere used. It'll be used by d-bus plugin.
+ *
+ * @param ap 1st param: <i>(char **) </i><b>arr</b> - array with available protocols
+ * @param data NULL
+ *
+ * @return 0
+ */
 
 static QUERY(gg_protocols) {
 	char ***arr	= va_arg(ap, char ***);
