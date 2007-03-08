@@ -3745,10 +3745,19 @@ static COMMAND(cmd_last)
 	return 0;
 }
 
-static COMMAND(cmd_queue)
-{
+/**
+ * cmd_queue()
+ *
+ * Manage ekg2 message queue list.<br>
+ * Handler for: <i>/queue</i> command.
+ *
+ * @return 0
+ */
+
+static COMMAND(cmd_queue) {
 	list_t l;
 	int isempty = 1;
+	const char *queue_list_timestamp_f;	/* cached result of format_find("queue_list_timestamp") */
 	
 	if (match_arg(params[0], 'c', ("clear"), 2)) {
 		if (!msg_queue) {
@@ -3766,18 +3775,21 @@ static COMMAND(cmd_queue)
 		}
 
 		return 0;
-	}		
+	}
+
+	queue_list_timestamp_f = format_find("queue_list_timestamp");
 
         for (l = msg_queue; l; l = l->next) {
                 msg_queue_t *m = l->data;
 		struct tm *tm;
-		char buf[100];
+		char buf[100] = { '\0' };	/* we need to init it to '\0' cause queue_list_timestamp_f can be empty. and if buf was not NUL terminated string, than printq() can do SIGSEGV */
 
 		if (!params[0] || !xstrcasecmp(m->rcpts, params[0])) {
 			tm = localtime(&m->time);
-			if (!strftime(buf, sizeof(buf), format_find("queue_list_timestamp"), tm)
-					&& xstrlen(format_find("queue_list_timestamp"))>0)
-				xstrcpy(buf, "TOOLONG");
+
+			/* [if queue_list_timestamp_f != "", (format_find() returns "" if format not found]] && if strftime() fails */
+			if (queue_list_timestamp_f[0] && !strftime(buf, sizeof(buf), queue_list_timestamp_f, tm))
+				xstrcpy(buf, "TOOLONG");	/* use 'TOOLONG' */
 
 			printq("queue_list_message", buf, m->rcpts, m->message);
 			isempty = 0;
@@ -4300,7 +4312,8 @@ void command_init()
  *
  * Free <b>all</b> commands
  *
- * @sa command_freeone() - To free one command.
+ * @sa command_freeone() 	- To free one command [with know pointer to it]
+ * @sa command_remove()		- To free command [with known plugin and name]
  */
 
 void command_free() {
