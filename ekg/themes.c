@@ -421,14 +421,17 @@ char *va_format_string(const char *format, va_list ap) {
         return string_free(buf, 0);
 }
 
-/*
+/**
  * fstring_new()
  *
- * zamienia sformatowany ci±g znaków ansi na Nowy-i-Lepszy(tm).
+ * Change formatted ansi string (@a str) to Nowy-i-Lepszy (tm) [New-and-Better].
  *
- *  - str - ci±g znaków,
+ * @param str - string
  *
- * zwraca zaalokowan± fstring_t.
+ * @sa format_string() 	- Function to format strings.
+ * @sa fstring_free()	- Function to free fstring_t.
+ *
+ * @return Allocated fstring_t.
  */
 
 fstring_t *fstring_new(const char *str) {
@@ -456,7 +459,6 @@ fstring_t *fstring_new(const char *str) {
 			len += (8 - (len % 8));
 			continue;
 		}
-
 
 		if (str[i] == 13)
 			continue;
@@ -552,8 +554,8 @@ fstring_t *fstring_new(const char *str) {
                 if (str[i] == 13)
                         continue;
 
-                if (str[i + 1] && str[i] == ('/') && str[i + 1] == ('|')) {
-                        if ((i != 0 && str[i - 1] != ('/')) || i == 0) {
+                if (str[i] == ('/') && str[i + 1] == ('|')) {
+                        if (i == 0 || str[i - 1] != ('/')) {
                                 res->margin_left = j;
                                 i++;
                                 continue;
@@ -576,14 +578,6 @@ fstring_t *fstring_new(const char *str) {
                 res->attr[j] = attr;
                 j++;
         }
-/* XXX, if len < j, we are in trouble... */
-
-#if 0	/* testing pursuit only */
-	FILE *f = fopen("/home/darkjames/test.data", "a");
-	fprintf(f, "%.3d %.3d\t%s\n", len, j, len == j ? "MATCH" : len < j ? "LESS" : "MORE");
-	fclose(f);
-#endif
-
 /* 
         tmpstr[j] = (char) 0;
         res->attr[j] = 0;
@@ -592,12 +586,14 @@ fstring_t *fstring_new(const char *str) {
         return res;
 }
 
-/*
+/**
  * fstring_free()
  *
- * zwalnia pamiêæ zajmowan± przez fstring_t
+ * Free memory allocated by @a str
  *
- *  - str - do usuniêcia.
+ * @todo XXX Think about freeing str->private
+ *
+ * @param str - fstring_t * to free.
  */
 void fstring_free(fstring_t *str)
 {
