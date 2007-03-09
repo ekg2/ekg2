@@ -181,6 +181,16 @@ COMMAND(cmd_streams) {
 	return -1;
 }
 
+/**
+ * codec_find()
+ *
+ * Find codec_t by @a name
+ *
+ * @param name - name of codec_t
+ *
+ * @return if @a name founded, return struct describing it, else NULL
+ */
+
 codec_t *codec_find(const char *name) {
 	list_t l;
 	if (!name) 
@@ -194,6 +204,25 @@ codec_t *codec_find(const char *name) {
 	return NULL;
 }
 
+/**
+ * codec_register()
+ *
+ * Register new codec_t (@a codec)
+ *
+ * @note	This should be done @@ *_plugin_init() and just before
+ * 		plugin_register() If codec_register() fails (return not 0)
+ * 		than you <b>should NOT</b> call plugin_register() only display some info...
+ * 		and return -1
+ *
+ * @param codec - codec_t to register
+ *
+ * @sa codec_unregister() - to unregister codec_t
+ *
+ * @return 	-1 if invalid params (@a codec NULL)<br>
+ * 		-2 if codec with such name already exists<br>
+ * 		 0 on success
+ */
+
 int codec_register(codec_t *codec) {
 	if (!codec)			return -1;
 	if (codec_find(codec->name))	return -2;
@@ -201,15 +230,41 @@ int codec_register(codec_t *codec) {
 	return 0;
 }
 
-void codec_unregister(codec_t *codec)
-{
+/**
+ * audio_unregister()
+ *
+ * Unregister codec_t
+ *
+ * @note 	This should be done @@ *_plugin_destroy() just before
+ * 		plugin_unregister()
+ *
+ * @param codec - codec_t to unregister
+ */
 
+void codec_unregister(codec_t *codec) {
+	if (!codec) return;
+
+	/* XXX here, we should search for <b>all</b> streams using this codec, and unload them */
+
+	list_remove(&audio_codecs, codec, 0);
 }
+
+/**
+ * audio_find()
+ *
+ * Find audio_t by @a name
+ *
+ * @param name - name of audio_t
+ *
+ * @return if @a name founded, return struct describing it. else NULL
+ */
 
 audio_t *audio_find(const char *name) {
 	list_t l;
+
 	if (!name) 
 		return NULL;
+
 	for (l = audio_inputs; l; l = l->next) {
 		audio_t *a = l->data;
 		if (!xstrcmp(a->name, name)) 
@@ -219,6 +274,25 @@ audio_t *audio_find(const char *name) {
 	return NULL;
 }
 
+/**
+ * audio_register()
+ *
+ * Register new audio I/O (@a audio)
+ *
+ * @note 	This should be done @@ *_plugin_init() and just before 
+ * 		plugin_register() If audio_register() fails (return not 0)
+ * 		than you <b>should NOT</b> call plugin_register() only display some info...
+ * 		and return -1
+ *
+ * @param audio - audio_t to register
+ *
+ * @sa audio_unregister() - to unregister audio_t
+ *
+ * @return 	-1 if invalid params (@a audio NULL)<br>
+ * 		-2 if audio with such name already exists<br>
+ * 		 0 on success
+ */
+
 int audio_register(audio_t *audio) {
 	if (!audio)			return -1;
 	if (audio_find(audio->name))	return -2;
@@ -227,8 +301,23 @@ int audio_register(audio_t *audio) {
 	return 0;
 }
 
-void audio_unregister(audio_t *audio) {
+/**
+ * audio_unregister()
+ *
+ * Unregister audio_t
+ *
+ * @note 	This should be done @@ *_plugin_destroy() just before
+ * 		plugin_unregister()
+ *
+ * @param audio - audio_t to unregister
+ */
 
+void audio_unregister(audio_t *audio) {
+	if (!audio) return;
+
+	/* XXX here, we should search for <b>all</b> streams using this audio, and unload them */
+	
+	list_remove(&audio_inputs, audio, 0);
 }
 		/* READING / WRITING FROM FILEs */
 WATCHER_AUDIO(stream_audio_read) {
@@ -565,6 +654,21 @@ WATCHER(stream_handle) {
 	return len;
 }
 
+/**
+ * stream_create()
+ *
+ * Function to create streams /input fd/ --> [codec function] --> /output fd or function/
+ *
+ * @note	@a in->fd must != -1, @a out->fd can be -1
+ *
+ * @todo 	Implement errors. make param , char **error<br>
+ * 			Pass it to AUDIO_CONTROL_INIT and if smth fail, there should be allocated description of error.
+ *
+ * @todo	Implement stream_close()
+ *
+ * @return	1 on sucess [created stream_t] or 0 if fail.
+ */
+
 int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out) {
 	stream_t *s;
 
@@ -601,11 +705,40 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 	return 1;
 fail:
 	/* deinit */
-	if (in)		{ in->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_READ, in);		close(in->fd);	xfree(in); }
-	if (co)		{ co->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, co); 	;		xfree(co); }
-	if (out)	{ out->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_WRITE, out);	close(out->fd);	xfree(out); }
+	if (in)		{ in->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_READ, in);		if (in->fd != -1) close(in->fd);	xfree(in); }
+	if (co)		{ co->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, co); 	;					xfree(co); }
+	if (out)	{ out->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_WRITE, out);	if (out->fd != -1) close(out->fd);	xfree(out); }
 	return 0;
 }
+
+/**
+ * stream_as_audio()
+ *
+ * @todo	Ever not begin.
+ *
+ * @note	This is not implemented, that was only idea howto do multiple encoding/decoding for example we want to decode MPEG 1 Layer 3 stream
+ * 		and reencode it to OGG
+ * 		so we could do:<br>
+ *		<code>
+		stream_create("Reencoding from MPEG to OGG",<br>
+				__AINIT_F("stream", AUDIO_READ, "file", "plik.mp3", "format", "mp3"),		READING FROM FILE: plik.mp3 WITH FORMAT mp3<br>
+				__CINIT_F("lame", ....),							INIT LAME CODEC<br>
+				__AINI(stream_as_audio(								INIT ANOTHER STREAM, HERE WE HAVE DATA IN PCM FORMAT<br>
+					stream_create("Reencoding from MPEG to OGG (part II)",<br>
+						NULL,								WE PASS AS INPUT HERE NULL.<br>
+						__CINIT_F("ogg", .....),					INIT OGG CODEC<br>
+						__AINIT_F("stream", AUDIO_WRITE, "file", "plik.ogg", "format", "ogg")	WRITE OGG FILE TO DISK<br>
+						))<br>
+					)<br>
+				);<br>
+		</code>
+ *		But it was only idea... and i had/have no time for it. For now... So if you really want this feature. implement it ;)
+ *
+ *
+ * @param s - stream_t to convert.
+ *
+ * @return audio_io_t struct.	[NULL for now]
+ */
 
 audio_io_t *stream_as_audio(stream_t *s) {
 	return NULL;
@@ -630,6 +763,7 @@ int audio_initialize() {
 
 int audio_deinitialize() {
 	/* trzeba dorobic */
+	audio_unregister(&stream_audio);
 
 }
 
