@@ -164,15 +164,17 @@ session_t *session_add(const char *uid) {
 	
 	list_add_sorted(&sessions, s, 0, session_compare);
 
-	/* XXX, i still don't understand why session_current isn't macro to window_current->session... */
-	if (!session_current)
-		session_current = s;
-
 	/* XXX, wywalic sprawdzanie czy juz jest sesja? w koncu jak dodajemy sesje.. to moze chcemy sie od razu na nia przelaczyc? */
 	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
 		window_current->session = s;
+		session_current = s;
 		/* XXX, notify ui */
 	}
+
+
+	/* XXX, i still don't understand why session_current isn't macro to window_current->session... */
+	if (!session_current)
+		session_current = s;
 
 	/* session_var_default() */
 	if (pl->params) {

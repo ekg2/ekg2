@@ -964,18 +964,6 @@ int window_session_cycle(window_t *w)
 	return 0;
 }
 
-int window_session_set(window_t *w, session_t *s)
-{
-	if (!w)
-		return -1;
-
-	w->session = s;
-	if (window_current == w)
-		session_current = s;
-
-	return 0;
-}
-
 int window_lock_inc(window_t *w)
 {
 	if (!w)

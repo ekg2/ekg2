@@ -89,7 +89,6 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 char *window_target(window_t *window);
 
 int window_session_cycle(window_t *w);
-int window_session_set(window_t *w, session_t *s);
 
 int window_lock_inc(window_t *w);
 int window_lock_dec(window_t *w);
