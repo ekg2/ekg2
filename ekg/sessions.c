@@ -152,9 +152,7 @@ session_t *session_add(const char *uid) {
 	if (!uid)
 		return NULL;
 
-	pl = plugin_find_uid(uid);
-
-	if (!pl) {
+	if (!(pl = plugin_find_uid(uid))) {		/* search for plugin */
 		debug_error("session_add() Invalid UID: %s\n", uid);
 		return NULL;
 	}
@@ -180,23 +178,25 @@ session_t *session_add(const char *uid) {
 	if (pl->params) {
 		int count, i;
 
-		for (count=0; (pl->params[count].key /* && p->params[count].id != -1 */); count++);
+		for (count=0; (pl->params[count].key /* && p->params[count].id != -1 */); count++);	/* count how many _global_ params should have this sessioni */
+		s->values 		= (char **) xcalloc(count+1, sizeof(char *));			/* alloc memory for it */
+		s->global_vars_count 	= count;							/* save it for future, little helper... */
 
-		s->values 		= (char **) xcalloc(count+1, sizeof(char *));
-		s->global_vars_count 	= count;
-
+		/* set variables */
 		for (i=0; i <= count; i++) {
 			const char *key   = pl->params[i].key;
+			const int keyid	  = pl->params[i].id;
 			const char *value = pl->params[i].value;
-/*			debug("session_add() Setting default var %s at %s\n", key, value); */
+/*			debug("session_add() Setting default var %s [%d] at %s\n", key, keyid, value); */
 
 			/* emulate session_set() */
-			if (!xstrcmp(key, "uid"));
-			else if (!xstrcmp(key, "alias"))	session_alias_set(s, value);
-			else if (!xstrcmp(key, "descr"))	session_descr_set(s, value);
-			else if (!xstrcmp(key, "status"))	session_status_set(s, ekg_status_int(value));
-			else if (!xstrcmp(key, "password"))	session_password_set(s, value);
-			else 					s->values[i] = xstrdup(value);
+		/* I don't think we want to set in vars default of these, but if you really want to. */
+			if (keyid == SESSION_VAR_ALIAS)		session_alias_set(s, value);			/* set default alias  */
+			else if (keyid == SESSION_VAR_DESCR)	session_descr_set(s, value);			/* set default descr  */
+			else if (keyid == SESSION_VAR_STATUS)	session_status_set(s, ekg_status_int(value));	/* set default status */
+			else if (keyid == SESSION_VAR_PASSWORD)	session_password_set(s, value);			/* set default password */
+
+			else 					s->values[i] = xstrdup(value);			/* other variable */
 
 			/* notify plugin, like session_set() do */
 			if (pl->params[i].notify) 
