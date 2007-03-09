@@ -1201,6 +1201,7 @@ watches_again:
 //		if (p->dl) ekg2_dlclose(p->dl);
 	}
 
+	audio_deinitialize();
 	alias_free();
 	theme_free();
 	variable_free();

@@ -123,6 +123,7 @@ codec_t *codec_find(const char *name);
 void codec_unregister(codec_t *codec);
 
 int audio_initialize();
+int audio_deinitialize();
 
 
 #endif /* __EKG_AUDIO_H */

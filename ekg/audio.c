@@ -628,6 +628,11 @@ int audio_initialize() {
 	return 0;
 }
 
+int audio_deinitialize() {
+	/* trzeba dorobic */
+
+}
+
 /*
  * Local Variables:
  * mode: c
