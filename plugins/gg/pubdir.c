@@ -97,8 +97,6 @@ static WATCHER(gg_handle_register)	/* tymczasowy */
 	session_set(s, "password", gg_register_password);	xfree(gg_register_password);	gg_register_password = NULL;
 	session_set(s, "email", gg_register_email);		xfree(gg_register_email);	gg_register_email = NULL;
 
-	window_session_set(window_current, s);
-
 fail:
 	list_remove(&gg_registers, h, 0);
 	gg_free_pubdir(h);
