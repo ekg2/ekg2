@@ -1033,9 +1033,6 @@ COMMAND(session_command)
 			return -1;
 		}
 
-		if (!window_current->session)
-			window_session_set(window_current, s);
-		
 		config_changed = 1;
 		
 		printq("session_added", s->uid);
