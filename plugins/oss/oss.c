@@ -8,6 +8,7 @@
 
 #include <ekg/audio.h>
 #include <ekg/debug.h>
+#include <ekg/commands.h>
 #include <ekg/plugins.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
@@ -125,7 +126,7 @@ int oss_device_free(oss_device_t *dev, int way) {
 		string_free(dev->buf, 1);
 		close(dev->fd);
 		xfree(dev->path);
-		xfree(dev);
+		list_remove(&oss_devices, dev, 1);
 
 		return 0;
 	}
@@ -278,9 +279,74 @@ AUDIO_CONTROL(oss_audio_control) {
 	return aio;
 }
 
-QUERY(oss_setvar_default) {
+static QUERY(oss_setvar_default) {
 	xfree(config_audio_device);
 	config_audio_device = xstrdup("/dev/dsp");
+	return 0;
+}
+
+static COMMAND(oss_cmd_record) {
+	const char *device 	= config_audio_device;
+	const char *freq	= "";
+	const char *sample 	= "";
+	const char *channels 	= "";
+	const char *filename	= "";
+
+	char **array;
+	int i;
+
+	if (!params[0] || match_arg(params[0], 'l', "list", 2)) {
+		/* XXX, list */
+
+		return 0;
+	}
+	/* else here, create new. */
+
+	array = array_make(params[0], " ", 0, 1, 1);
+
+	for (i=0; array[i]; i++) {
+		if (match_arg(array[i], 'f', "filename", 2) && array[i+1]) {
+			filename = array[++i];
+			continue;
+		}
+		if (match_arg(array[i], 'd', "device", 2) && array[i+1]) {
+			device = array[++i];
+			continue;
+		}
+		if (match_arg(array[i], 'F', "frequency", 2) && array[i+1]) {
+			freq = array[++i];
+			continue;
+		}
+		if (match_arg(array[i], 's', "sample", 2) && array[i+1]) {
+			sample = array[++i];
+			continue;
+		}
+
+		/* if it's last option and it's not command -> filename */
+		if (array[i][0] != '-' && !array[i+1]) {
+			filename = array[i];
+			continue;
+		}
+
+		printq("invalid_params", name);
+		array_free(array);
+		return -1;
+	}
+
+	if (!filename) {
+		printq("not_enough_params", name);	/* XXX, need better */
+		array_free(array);
+		return -1;
+	}
+
+	stream_create("Recording created by /oss:record",
+			__AINIT((&oss_audio), AUDIO_READ, "freq", freq, "sample", sample, "channels", channels),
+			NULL,
+			__AINIT_F("stream", AUDIO_WRITE, "file", filename, "format", "guess"));
+	/* XXX, check for errors */
+
+	array_free(array);
+
 	return 0;
 }
 
@@ -291,6 +357,9 @@ int oss_plugin_init(int prio) {
 
 	variable_add(&oss_plugin, ("audio_device"), VAR_STR, 1, &config_audio_device, NULL, NULL, NULL);
 	query_connect(&oss_plugin, "set-vars-default", oss_setvar_default, NULL);
+
+	command_add(&oss_plugin, "oss:record", "p", oss_cmd_record, 0, 
+			"-d --device -f --filename -F --frequency -s --sample -l --list");	/* XXX here, more like: --freq --channels --sample */
 
 	return 0;
 }
