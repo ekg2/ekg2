@@ -191,42 +191,75 @@ static QUERY(jabber_session) {
         return 0;
 }
 
-/*
+/**
  * jabber_print_version()
  *
- * wy¶wietla wersjê pluginu i biblioteki.
+ * handler for: <i>PLUGIN_PRINT_VERSION</i><br>
+ * Print expat version
+ *
+ * @return 0
  */
+
 static QUERY(jabber_print_version) {
         print("generic", XML_ExpatVersion());
         return 0;
 }
 
-/*
+/**
  * jabber_validate_uid()
  *
- * sprawdza, czy dany uid jest poprawny i czy plugin do obs³uguje.
+ * handler for: <i>PROTOCOL_VALIDATE_UID</i>
+ * checks, if @a uid is <i>proper for jabber plugin</i>.
+ *
+ * @note <i>Proper for jabber plugin</i> means either:
+ * 	- If @a uid starts with jid: have got '@' (but jid:@ is wrong) and after '@' there is at least one char	[<b>xmpp protocol</b>]<br>
+ * 	- If @a uid starts with tlen: (and len > 5)								[<b>tlen protocol</b>]
+ *
+ * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
+ * @param ap 2nd param: <i>(int) </i><b>valid</b> - place to put 1 if uid is valid for jabber plugin.
+ * @param data NULL
+ *
+ * @return 	-1 if it's valid uid for jabber plugin<br>
+ * 		 0 if not
  */
-static QUERY(jabber_validate_uid) {
-        char *uid = *(va_arg(ap, char **)), *m;
-        int *valid = va_arg(ap, int *);
 
-        if (!uid)
-                return 0;
+static QUERY(jabber_validate_uid) {
+	char *uid = *(va_arg(ap, char **));
+	int *valid = va_arg(ap, int *);
+	const char *m;
+
+	if (!uid)
+		return 0;
 
 	/* minimum: jid:a@b */
-        if (!xstrncasecmp(uid, "jid:", 4) && (m=xstrchr(uid, '@')) &&
-			((uid+4)<m) && xstrlen(m+1)) {
-                (*valid)++;
-		return -1;
-	}
-
-	if (!xstrncasecmp(uid, "tlen:", 5)) {
+	if (!xstrncasecmp(uid, "jid:", 4) && (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0') {
 		(*valid)++;
 		return -1;
 	}
 
-        return 0;
+	if (!xstrncasecmp(uid, "tlen:", 5) && uid[5] != '\0') {
+		(*valid)++;
+		return -1;
+	}
+
+	return 0;
 }
+
+/**
+ * jabber_protocols()
+ *
+ * Handler for: <i>GET_PLUGIN_PROTOCOLS</i><br>
+ * It just add "tlen:" and "jid:" to @a arr
+ *
+ * @note I know it's nowhere used. It'll be used by d-bus plugin.
+ *
+ * @todo Instead of "jid:" add "xmpp:" ?
+ *
+ * @param ap 1st param: <i>(char **) </i><b>arr</b> - array with available protocols
+ * @param data NULL
+ *
+ * @return 0
+ */
 
 static QUERY(jabber_protocols) {
 	char ***arr = va_arg(ap, char ***);
@@ -564,7 +597,7 @@ static TIMER(jabber_ping_timer_handler) {
 		return 0;
 	}
 
-	if (!s || !session_connected_get(s)) {
+	if (!s || !s->priv || !s->connected) {
 		return -1;
 	}
 
