@@ -125,16 +125,28 @@ int session_compare(void *data1, void *data2)
 	return xstrcasecmp(a->uid, b->uid);
 }
 
-/*
+/**
  * session_add()
  *
- * dodaje do listy sesji.
+ * Add session with @a uid to session list.<br>
+ * Check by plugin_find_uid() if any plugin can handle this type of session if not return NULL<br>
+ * Allocate memory for variables, switch windows.. etc, etc..<br>
+ * Emit global <i>SESSION_ADDED</i> plugin which handle this session can alloc memory for his private data<br>
+ *
+ * @todo See XXX's
+ *
+ * @param uid - full uid of new session
+ *
+ * @sa session_remove() - To remove session
+ *
+ * @return 	NULL if none plugin can handle this session uid<br>
+ * 		allocated session_t struct.
  */
+
 session_t *session_add(const char *uid) {
 	plugin_t *pl;
 
 	session_t *s;
-	char *tmp;
 	list_t l;
 
 	if (!uid)
@@ -154,12 +166,14 @@ session_t *session_add(const char *uid) {
 	
 	list_add_sorted(&sessions, s, 0, session_compare);
 
-/* XXX, i still don't understand why session_current isn't macro to window_current->session... */
+	/* XXX, i still don't understand why session_current isn't macro to window_current->session... */
 	if (!session_current)
 		session_current = s;
 
+	/* XXX, wywalic sprawdzanie czy juz jest sesja? w koncu jak dodajemy sesje.. to moze chcemy sie od razu na nia przelaczyc? */
 	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
 		window_current->session = s;
+		/* XXX, notify ui */
 	}
 
 	/* session_var_default() */
@@ -190,9 +204,7 @@ session_t *session_add(const char *uid) {
 		}
 	}
 
-	tmp = xstrdup(uid);
-	query_emit_id(NULL, SESSION_ADDED, &tmp);
-	xfree(tmp);
+	query_emit_id(NULL, SESSION_ADDED, &(s->uid));		/* It's read-only query, XXX */
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
@@ -203,9 +215,10 @@ session_t *session_add(const char *uid) {
  * 	with w->target: "Aga". it's not uid. it's nickname.. so we must search for it in userlist.
  *	it's better idea than what was.. however it's slow and I still want to do it other way.
  */
-		if (!w->session && !w->floating && get_uid(s, w->target))
+		if (!w->session && !w->floating && get_uid(s, w->target)) {
 			w->session = s;
 			/* XXX, notify ui-plugin */
+		}
 	}
 
 	return s;
@@ -224,8 +237,8 @@ session_t *session_add(const char *uid) {
  * 	Maybe swaping is ok... but we really need think about protocol.. Now If we change session from jabber to gg one this window
  * 	won't be very useful..
  *
- * @note If plugin allocated memory for session example in s->private you should
- * 	connect to SESSION_REMOVED query event, and free alloced memory
+ * @note If plugin allocated memory for session example in s->priv you should
+ * 	connect to <i>SESSION_REMOVED</i> query event, and free alloced memory
  * 	(remember about checking if this is your session) also session watches/timers
  * 	won't be automagicly removed (please note: ekg2 don't have <i>session</i> watches/timers, 
  * 	we have <i>plugin</i> watches/timers...) We don't want segv on watch/
@@ -951,8 +964,9 @@ COMMAND(session_command)
 
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
+
 			const char *descr = (s->connected) ? s->descr : NULL;
-			const int status = (!s->connected) ? EKG_STATUS_NA : s->status;
+			const int status = (s->connected) ? s->status : EKG_STATUS_NA;
 			char *tmp;
 												/* wtf?  vvvvvv */
 			tmp = format_string(format_find(ekg_status_label(status, descr, "user_info_")), "foobar", descr);
@@ -1440,12 +1454,12 @@ void session_help(session_t *s, const char *name)
 		if (line[0] != '\t')
 			break;
 
-		if (!xstrncmp(line, ("\t- "), 3) && xstrcmp(str->str, (""))) {
+		if (!xstrncmp(line, ("\t- "), 3) && str->len != 0) {
 			print("help_session_body", str->str);
 			string_clear(str);
 		}
 
-		if (!xstrncmp(line, ("\t"), 1) && xstrlen(line) == 1) {
+		if (line[0] == '\t' && line[1] == '\0') {	/* if it's \t\0, than add new line */
 			string_append(str, ("\n\r"));
 			continue;
 		}
@@ -1456,8 +1470,8 @@ void session_help(session_t *s, const char *name)
 			string_append_c(str, ' ');
 	}
 
-	if (xstrcmp(str->str, ("")))
-		print("help_session_body", str->str);
+	if (str->len != 0)	/* if we have smth in str */
+		print("help_session_body", str->str);		/* display it */
 
 	string_free(str, 1);
 
