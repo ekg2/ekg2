@@ -663,8 +663,9 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 
 	if (is_UI)
 		print_window("__debug", NULL, 0, theme_format, tmp);
+/*
 	else
-/*		fprintf(stderr, "%s\n", tmp); */	/* uncomment for debuging */
+		fprintf(stderr, "%s\n", tmp); */	/* uncomment for debuging */
 
 	xfree(tmp);
 }
