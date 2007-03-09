@@ -103,7 +103,8 @@ plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
 int have_plugin_of_class(int);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
-int plugin_var_find_id(plugin_t *pl, const char *name);
+int plugin_var_find(plugin_t *pl, const char *name);
+int plugin_var_find_id(plugin_t *pl, int id);
 
 #endif
 

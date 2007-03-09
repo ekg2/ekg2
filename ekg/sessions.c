@@ -549,7 +549,7 @@ const char *session_get(session_t *s, const char *key) {
                 return session_password_get(s);
 
 /* _global_ session variables */
-	if ((paid = plugin_var_find_id(s->plugin, key))) {
+	if ((paid = plugin_var_find(s->plugin, key))) {
 /*		debug("session_get() CHECK [%s, %d] value: %s\n", PLUGIN_VAR_FIND_BYID(s->plugin, paid)->key, paid-1, s->values[paid-1]); */
 		return s->values[paid-1];
 	}
@@ -602,7 +602,7 @@ int session_is_var(session_t *s, const char *key)
                 return 1;
 
 /* so maybe _global_ session variable? */
-	return (plugin_var_find_id(s->plugin, key) != 0);
+	return (plugin_var_find(s->plugin, key) != 0);
 }
 
 /*
@@ -620,7 +620,7 @@ int session_set(session_t *s, const char *key, const char *value) {
 	if (!s)
 		return -1;
 
-	paid = plugin_var_find_id(s->plugin, key);
+	paid = plugin_var_find(s->plugin, key);
 	pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
 
 	if (!xstrcasecmp(key, "uid"))
@@ -1100,7 +1100,7 @@ COMMAND(session_command)
 		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);                                                
 		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 0);                                               
 		else if (!xstrcasecmp(key, "password")) { var = session_password_get(s); secret = 1; }
-		else if ((paid = plugin_var_find_id(s->plugin, key))) {
+		else if ((paid = plugin_var_find(s->plugin, key))) {
 			plugins_params_t *pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
 
 			var = s->values[paid-1];
