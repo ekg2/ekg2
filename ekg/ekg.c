@@ -598,44 +598,55 @@ static WATCHER_LINE(handle_stderr)	/* sta³y */
 	return 0;
 }
 
-/*
+/**
  * ekg_debug_handler()
  *
- * obs³uguje informacje debugowania libgadu i klienta.
+ * debug message [if config_debug set] coming direct from libgadu (by libgadu_debug_handler())
+ * or by debug() or by debug_ext()<br>
+ * XXX, doc more. But function now is ok.
+ * 
+ * @sa debug_ext()
+ *
+ * @bug It can happen than internal string_t @a line will be not freed.
+ *
+ * @param level 
+ * @param format
+ * @param ap
+ *
  */
-void ekg_debug_handler(int level, const char *format, va_list ap)
-{
+
+void ekg_debug_handler(int level, const char *format, va_list ap) {
 	static string_t line = NULL;
 	char *tmp;
+
 	int is_UI = 0;
 	char *theme_format;
 
 	if (!config_debug)
 		return;
 
-	tmp = vsaprintf(format, ap);
+	if (!(tmp = vsaprintf(format, ap)))
+		return;
 
 	if (line) {
 		string_append(line, tmp);
 		xfree(tmp);
-		tmp = NULL;
 
-		if (line->str[line->len - 1] == '\n') {
-			tmp = string_free(line, 0);
-			line = NULL;
-		}
+		if (line->len == 0 || line->str[line->len - 1] != '\n')
+			return;
+
+		line->str[line->len - 1] = '\0';	/* remove '\n' */
+		tmp = string_free(line, 0);
+		line = NULL;
 	} else {
-		if (tmp[xstrlen(tmp) - 1] != '\n') {
+		const size_t tmplen = xstrlen(tmp);
+		if (tmplen == 0 || tmp[tmplen - 1] != '\n') {
 			line = string_init(tmp);
 			xfree(tmp);
-			tmp = NULL;
+			return;
 		}
+		tmp[tmplen - 1] = 0;			/* remove '\n' */
 	}
-
-	if (!tmp)
-		return;
-
-	tmp[xstrlen(tmp) - 1] = 0;
 
 	switch(level) {
 		case 0:				theme_format = "debug";		break;
