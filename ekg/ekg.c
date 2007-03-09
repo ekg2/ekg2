@@ -608,6 +608,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 	static string_t line = NULL;
 	char *tmp;
 	int is_UI = 0;
+	char *theme_format;
 
 	if (!config_debug)
 		return;
@@ -636,24 +637,24 @@ void ekg_debug_handler(int level, const char *format, va_list ap)
 
 	tmp[xstrlen(tmp) - 1] = 0;
 
-	buffer_add(&buffer_debug, NULL, tmp, DEBUG_MAX_LINES);
+	switch(level) {
+		case 0:				theme_format = "debug";		break;
+		case DEBUG_IO:			theme_format = "iodebug";	break;
+		case DEBUG_IORECV:		theme_format = "iorecvdebug";	break;
+		case DEBUG_FUNCTION:		theme_format = "fdebug";	break;
+		case DEBUG_ERROR:		theme_format = "edebug";	break;
+		default:			theme_format = "debug";		break;
+	}
+
+	buffer_add(&buffer_debug, theme_format, tmp, DEBUG_MAX_LINES);
 
 	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
-	if (is_UI) {
-		char *format;
-		switch(level) {
-			case 0:				format = "debug";	break;
-			case DEBUG_IO:			format = "iodebug";	break;
-			case DEBUG_IORECV:		format = "iorecvdebug";	break;
-			case DEBUG_FUNCTION:		format = "fdebug";	break;
-			case DEBUG_ERROR:		format = "edebug";	break;
-			default:			format = "debug";	break;
-		}
-		print_window("__debug", NULL, 0, format, tmp);
-	} else {
+	if (is_UI)
+		print_window("__debug", NULL, 0, theme_format, tmp);
+	else
 /*		fprintf(stderr, "%s\n", tmp); */	/* uncomment for debuging */
-	}
+
 	xfree(tmp);
 }
 
@@ -942,7 +943,7 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
 	else for (l = buffer_debug; l; l = l->next) {
 		struct buffer *b = l->data;
-		print_window("__debug", NULL, 0, "debug", b->line);
+		print_window("__debug", NULL, 0, b->target, b->line);
 	}
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
