@@ -55,23 +55,25 @@ typedef void (plugin_notify_func_t)(session_t *, const char *);
 
 typedef enum {
 	SESSION_VAR_START = 0,
-	SESSION_VAR_ALIAS,
-	SESSION_VAR_ALLOW_AUTORESPONDER,
-	SESSION_VAR_AUTO_AWAY,
-	SESSION_VAR_AUTO_AWAY_DESCR,
-	SESSION_VAR_AUTO_BACK,
-	SESSION_VAR_AUTO_CONNECT,
-	SESSION_VAR_AUTO_FIND,
-	SESSION_VAR_AUTO_RECONNECT,
-	SESSION_VAR_AUTO_XA,
-	SESSION_VAR_AUTO_XA_DESCR,
-	SESSION_VAR_CONNECT_TIMEOUT,
-	SESSION_VAR_DCC_PORT,
-	SESSION_VAR_DISPLAY_NOTIFY,
-	SESSION_VAR_LOG_FORMATS,
-	SESSION_VAR_PASSWORD,
-	SESSION_VAR_PORT,
-	SESSION_VAR_SERVER,
+	SESSION_VAR_ALIAS,			/* alias */
+	SESSION_VAR_ALLOW_AUTORESPONDER,	/* allow_autoresponder */
+	SESSION_VAR_AUTO_AWAY,			/* auto_away */
+	SESSION_VAR_AUTO_AWAY_DESCR,		/* auto_away_descr */
+	SESSION_VAR_AUTO_BACK,			/* auto_back */
+	SESSION_VAR_AUTO_CONNECT,		/* auto_connect */
+	SESSION_VAR_AUTO_FIND,			/* auto_find */
+	SESSION_VAR_AUTO_RECONNECT,		/* auto_reconnect */
+	SESSION_VAR_AUTO_XA,			/* auto_xa */
+	SESSION_VAR_AUTO_XA_DESCR,		/* auto_xa_descr */
+	SESSION_VAR_CONNECT_TIMEOUT,		/* connect_timeout */
+	SESSION_VAR_DCC_PORT,			/* XXX */
+	SESSION_VAR_DESCR,			/* descr */
+	SESSION_VAR_DISPLAY_NOTIFY,		/* display_notify */
+	SESSION_VAR_LOG_FORMATS,		/* log_formats */
+	SESSION_VAR_PASSWORD,			/* password */
+	SESSION_VAR_PORT,			/* port */
+	SESSION_VAR_SERVER,			/* server */
+	SESSION_VAR_STATUS,			/* status */
 } plugin_param_id_t;
 
 typedef struct {
