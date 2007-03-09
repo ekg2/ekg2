@@ -395,6 +395,20 @@ AUDIO_CONTROL(stream_audio_control) {
 
 		if (!format)				format = "raw";
 
+		if (!xstrcmp(format, "guess")) {
+			const char *fileext = xstrrchr(file, '.');
+			format = "raw";
+
+			if (fileext) {
+				fileext++;
+				if (!xstrcasecmp(fileext, "wav"))
+					format = "wave";
+
+				if (!xstrcasecmp(fileext, "ogg"))
+					format = "ogg";
+			}
+		}
+
 		if (xstrcmp(format, "raw") && xstrcmp(format, "pcm") && xstrcmp(format, "wave")) { 
 			debug("[stream_audio_control] WRONG FORMAT: %s\n", format);
 			return NULL;
@@ -437,9 +451,9 @@ AUDIO_CONTROL(stream_audio_control) {
 		aio = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		static char *arr[] = { 
-			"-stream",			"", 		/* bidirectional, no required params */
-			"-stream:file", 		"*",		/* bidirectional, file, everythink can be passed as param */
-			"-stream:format", 		"raw pcm wave",	/* bidirectional, format, possible vars: 'raw' 'pcm' 'wave' */
+			"-stream",			"", 			/* bidirectional, no required params */
+			"-stream:file", 		"*",			/* bidirectional, file, everythink can be passed as param */
+			"-stream:format", 		"guess raw pcm wave",	/* bidirectional, format, possible vars: 'guess' 'raw' 'pcm' 'wave' */
 			NULL, };
 		return (audio_io_t*) arr;
 	}
