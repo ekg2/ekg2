@@ -165,7 +165,7 @@ int list_remove(list_t *list, void *data, int free_data)
 	}
 
 	tmp = *list;
-	if (tmp->data == data) {
+	if (tmp && tmp->data == data) {
 		*list = tmp->next;
 	} else {
 		for (; tmp && tmp->data != data; tmp = tmp->next)
