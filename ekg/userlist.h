@@ -103,10 +103,10 @@ enum status_t {
 	EKG_STATUS_BLOCKED,		/* used in GG */
 	/* These statuses should be considered as 'not sure' */
 	EKG_STATUS_UNKNOWN	= 0x10,	/* will be used in Jabber */
-	EKG_STATUS_NA,			/* universal */
+	EKG_STATUS_NA		= 0x20,	/* universal */
 	/* These should be considered as 'probably available' */
 	EKG_STATUS_INVISIBLE,		/* will be used in GG; hard to prioritize... */
-	EKG_STATUS_DND		= 0x20,	/* Jabber */
+	EKG_STATUS_DND,			/* Jabber */
 	EKG_STATUS_XA,			/* Jabber */
 	EKG_STATUS_AWAY,		/* universal */
 	/* These should be considered as 'sure available' */
@@ -180,15 +180,15 @@ struct ekg_group {
 };
 
 enum ignore_t {
-	IGNORE_STATUS = 1,
-	IGNORE_STATUS_DESCR = 2,
-	IGNORE_MSG = 4,
-	IGNORE_DCC = 8,
-	IGNORE_EVENTS = 16,
-	IGNORE_NOTIFY = 32,
-	IGNORE_XOSD = 64,
+	IGNORE_STATUS		= 0x01,
+	IGNORE_STATUS_DESCR	= 0x02,
+	IGNORE_MSG		= 0x04,
+	IGNORE_DCC		= 0x08,
+	IGNORE_EVENTS		= 0x10,
+	IGNORE_NOTIFY		= 0x20,
+	IGNORE_XOSD		= 0x40,
 	
-	IGNORE_ALL = 255
+	IGNORE_ALL		= 0xFF
 };
 
 struct ignore_label {
