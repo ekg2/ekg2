@@ -317,6 +317,10 @@ static COMMAND(oss_cmd_record) {
 			freq = array[++i];
 			continue;
 		}
+		if (match_arg(array[i], 'c', "channels", 2) && array[i+1]) {
+			channels = array[++i];
+			continue;
+		}
 		if (match_arg(array[i], 's', "sample", 2) && array[i+1]) {
 			sample = array[++i];
 			continue;
@@ -359,7 +363,7 @@ int oss_plugin_init(int prio) {
 	query_connect(&oss_plugin, "set-vars-default", oss_setvar_default, NULL);
 
 	command_add(&oss_plugin, "oss:record", "p", oss_cmd_record, 0, 
-			"-d --device -f --filename -F --frequency -s --sample -l --list");	/* XXX here, more like: --freq --channels --sample */
+			"-c --chanels -d --device -f --filename -F --frequency -s --sample -l --list");
 
 	return 0;
 }
