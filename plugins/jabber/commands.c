@@ -2494,15 +2494,30 @@ back:
 	return -1;
 }
 
-COMMAND(tlen_command_alert)
-{
+/**
+ * tlen_command_alert()
+ *
+ * XXX, info<br>
+ * <b>ONLY TLEN PROTOCOL</b>
+ *
+ * @param params [0] - uid/nickname/$ of target [ONLY tlen: uid]
+ *
+ * @return	-1 if wrong uid<br>
+ * 		 0 on success<br>
+ */
+
+static COMMAND(tlen_command_alert) {
 	jabber_private_t *j = jabber_private(session);
 	const char *uid;
-
-	if (!(uid = jid_target2uid(session, target, quiet)))
+	
+	/* get uid of target and check if it's starts with 't' [tlen:, ONLY TLEN PROTOCOL] */
+	if (!(uid = get_uid(session, target)) || tolower(uid[0]) != 't') {
+		printq("invalid_session");
 		return -1;
+	}
 
 	watch_write(j->send_watch, "<m to='%s' tp='a'/>", uid+5);	/* sound alert */
+	/* XXX, printq() jakies ze wyslano */
 	return 0;
 }
 
