@@ -265,71 +265,92 @@ static int window_new_compare(void *data1, void *data2)
 	return a->id - b->id;
 }
 
-/*
+/**
  * window_new()
  *
- * tworzy nowe okno o podanej nazwie i id.
+ * Create new window_t, with given @a new_id (if @a new_id != 0)
  *
- *  - target - nazwa okienka
- *  - session - do jakiej sesji ma nale¿eæ
- *  - new_id - je¶li ró¿ne od zera, okno przyjmie taki numer
+ * @note 	If target == "$" than it return current window. [POSSIBLE BUG]
+ * 		If window with such target [it can also be u->uid/u->nickname combination] exists.
+ * 		than it'll return it.
+ * 
+ * @note 	You shouldn't pass @a new_id here. Because it can broke UI stuff. don't ask. it's wrong. Just don't use it.
+ * 		It'll be possible removed... Really eventually you can talk with devs, and ask for id from class: 1000 to 1999
  *
- * zwraca strukturê opisuj±c± nowe okno.
+ * @param target 	- name of window
+ * @param session 	- session of this window
+ * @param new_id	- if different than 0, than window will take this id.
+ *
+ * @return window_t struct
  */
-window_t *window_new(const char *target, session_t *session, int new_id)
-{
+
+window_t *window_new(const char *target, session_t *session, int new_id) {
 	window_t *w;
-	int id = 1, done = 0;
-	list_t l;
-/*	userlist_t *u = NULL; */
 
 	if (target) {
-		window_t *w = window_find_s(session, target);
+		window_t *w;
+		
+		/* XXX, we don't check new_id here. stupido */
+		if (!xstrcmp(target, "$")) {
+			/* XXX, what about sessions, check if match? */
+			return window_current;
+		}
+		
+		w = window_find_s(session, target);
 
 		if (w)
 			return w;
 
-/*		u = get_uid(target); */
-
-		if (!xstrcmp(target, "$"))
-			/* XXX, what about sessions, check if match? */
-			return window_current;
 	}
 
-	while (!done) {
-		done = 1;
+	/* if no new_id given, than let's search for window id.. */
+	if (new_id == 0) {
+		list_t l	= windows;	/* set to the beginning of the window list */
+		int id		= 2;		/* [XXX] set to first valid id? */
+		
+		/* XXX, after it, we exactly know where to put new window to list, without list_add_sorted() we can do list_add_beggining() 
+		 * but it'll ugly code. So not doing it :) */
 
-		for (l = windows; l; l = l->next) {
+		/* we can do this stuff. because windows are sorted by id */
+		while (l) {
 			window_t *w = l->data;
 
-			if (w->id == id) {
-				done = 0;
-				id++;
-				break;
+			l = l->next;				/* goto next window */
+
+			if (w->id < 2)				/* [RESERVED CLASS: 0-1] 	0 for __debug, 1 for __status */
+				continue;
+
+			if (w->id >= 1000-1 && w->id < 2000) {	/* [REVERVED CLASS: 1000-1999] 	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
+				id = 2000;
+				continue;
 			}
+
+			/* if current window is larger than current id... than we found good id! */
+			if (w->id > id)
+				break;
+
+			id = w->id+1;		/* current window+1 */
 		}
+
+		new_id = id;
 	}
 
-	if (new_id != 0)
-		id = new_id;
-
-	/* okno z debug'iem */
-	if (id == -1)
-		id = 0;
-	
+	/* debug window */
+	if (new_id == -1)
+		new_id = 0;
 
 	w = xmalloc(sizeof(window_t));
 
-	w->id = id;
+	w->id = new_id;
 
 	/* domy¶lne rozmiary zostan± dostosowane przez ui */
-	w->top = 0;
-	w->left = 0;
+/*	w->top = 0;
+	w->left = 0; */			/* xmalloc memset() to 0 memory */
 	w->width = 1;
 	w->height = 1;
 	w->target = xstrdup(target);
 	w->session = session;
-	w->userlist = NULL;
+/*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
 	list_add_sorted(&windows, w, 0, window_new_compare);
 
