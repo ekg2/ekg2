@@ -97,7 +97,7 @@ int ekg2_dlclose(void *plugin) {
 #ifndef NO_POSIX_SYSTEM
 	return dlclose(plugin);
 #else
-	return (FreeLibrary(plugin) != 0);	/* FreeLibrary() return 0 on fail. */
+	return (FreeLibrary(plugin) == 0);	/* FreeLibrary() return 0 on fail. */
 #endif
 }
 
@@ -1067,17 +1067,26 @@ int watch_write(watch_t *w, const char *format, ...) {
 	return 0;
 }
 
-/*
+/**
  * watch_handle()
  *
- * obs³uga deskryptorów typu WATCH_READ i WATCH_WRITE. je¶li wyst±pi na
- * nich jakakolwiek aktywno¶æ, wywo³ujemy dan± funkcjê. je¶li nie jest
- * to sta³e przegl±danie, usuwamy.
+ * Handler for watches with type: <i>WATCH_READ</i> or <i>WATCH_WRITE</i><br>
+ * Mark watch with w->removed = -1, to indicate that watch is in use. And it shouldn't be
+ * executed again. [If watch can or even must be executed twice from ekg_loop() than you must
+ * change w->removed by yourself.]<br>
+ * 
+ * If handler of watch return -1 or watch was removed inside function [by watch_remove() or watch_free()]. Than it'll be removed.<br>
+ * ELSE Update w->started field to current time.
+ *
+ * @param w	- watch_t to handler
+ *
+ * @todo We only check for w->removed == -1, maybe instead change it to: w->removed != 0
  */
-void watch_handle(watch_t *w)
-{
+
+void watch_handle(watch_t *w) {
 	int (*handler)(int, int, int, void *);
 	int res;
+
 	if (!w || w->removed == -1)	/* watch is running in another thread / context */
 		return;
 
@@ -1090,23 +1099,26 @@ void watch_handle(watch_t *w)
 		w->removed = 0;
 		watch_free(w);
 		return;
-	} else {
-		w->started = time(NULL);
 	}
+
+	w->started = time(NULL);
 	w->removed = 0;
 }
 
-/*
+/**
  * watch_add()
  *
- * tworzy nowy obiekt typu watch_t i zwraca do niego wska¼nik.
+ * Create new watch_t and add it on the beginning of watches list.
  *
- *  - plugin - obs³uguj±cy plugin
- *  - fd - obserwowany deskryptor
- *  - type - rodzaj obserwacji watch_type_t
- *  - handler - handler
- *  - data - data przekazywana do handlera
+ * @param plugin 	- plugin
+ * @param fd		- fd to watch data for.
+ * @param type		- type of watch.
+ * @param handler	- handler of watch.
+ * @param data		- data which be passed to handler.
+ *
+ * @return Created watch_t. if @a type is either WATCH_READ_LINE or WATCH_WRITE_LINE than also allocate memory for buffer
  */
+
 watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data) {
 	watch_t *w	= xmalloc(sizeof(watch_t));
 	w->plugin	= plugin;
