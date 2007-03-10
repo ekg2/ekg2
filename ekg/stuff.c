@@ -1656,22 +1656,28 @@ char *read_file(FILE *f, int alloc) {
 	return (alloc) ? xstrdup(res) : res;
 }
 
-/*
+/**
  * timestamp()
  *
- * zwraca statyczny buforek z ³adnie sformatowanym czasem.
+ * It returns <b>static</b> buffer with formated current time.
  *
- *  - format.
+ * @param format - format to pass to strftime() [man 3 strftime]
+ *
+ * @return 	if format is NULL or format == '\0' than it return ""
+ *  		else it returns strftime()'d value. or TOOLONG if @a buf (sizeof(buf) == 100) was too small..
  */
-const char *timestamp(const char *format)
-{
+
+const char *timestamp(const char *format) {
 	static char buf[100];
 	time_t t;
 	struct tm *tm;
 
+	if (!format || format[0] == '\0')
+		return "";
+
 	time(&t);
 	tm = localtime(&t);
-	if (!strftime(buf, sizeof(buf), format, tm) && xstrlen(format)>0)
+	if (!strftime(buf, sizeof(buf), format, tm))
 		xstrcpy(buf, "TOOLONG");
 
 	return buf;
