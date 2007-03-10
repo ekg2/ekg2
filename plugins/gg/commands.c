@@ -823,6 +823,24 @@ static COMMAND(gg_command_inline_msg) {
 	return gg_command_msg(("chat"), p, session, target, quiet);
 }
 
+/**
+ * gg_command_block()
+ *
+ * Block @a uid or printq() list of blocked uids.<br>
+ * Handler for: <i>/gg:block</i> command
+ *
+ * @todo	Think about config_changed ... maybe let's create userlist_changed for this or smth?
+ *
+ * @param params [0] (<b>uid</b>) - uid to block, or NULL if you want to display list of blocked uids.
+ *
+ * @sa gg_blocked_add()		- for block function.
+ * @sa gg_command_unblock()	- for unblock command
+ *
+ * @return	 0 - if @a uid == NULL, or @a uid was successfully blocked.<br>
+ * 		-1 - if @a uid was neither valid gg uid, nor user nickname<br>
+ * 		-2 - if @a uid is already blocked.
+ */
+
 static COMMAND(gg_command_block) {
 	const char *uid;
 
@@ -842,7 +860,7 @@ static COMMAND(gg_command_block) {
 		}
 
 		if (!i) 
-			wcs_printq("blocked_list_empty");
+			printq("blocked_list_empty");
 
 		return 0;
 	}
@@ -851,17 +869,34 @@ static COMMAND(gg_command_block) {
 		printq("user_not_found", params[0]);
 		return -1;
 	}
-		
-	if (gg_blocked_add(session, uid) != -1) {
-		printq("blocked_added", format_user(session, uid));
-		config_changed = 1;
-	} else {
+
+	if (gg_blocked_add(session, uid) == -1) {
 		printq("blocked_exist", format_user(session, uid));
-		return -1;
+		return -2;
 	}
+
+	printq("blocked_added", format_user(session, uid));
+	config_changed = 1;
 
 	return 0;
 }
+
+/**
+ * gg_command_unblock()
+ *
+ * Unblock @a uid. Or everybody if @a uid '*'<br>
+ * Handler for: <i>/gg:unlock</i> command.
+ *
+ * @todo	Think about config_changed ... maybe let's create userlist_changed for this or smth?
+ *
+ * @param params [0] (<b>uid</b>) - @a uid to unblock, or '*' to unblock everyone.
+ *
+ * @sa gg_blocked_remove()	- for unblock function.
+ * @sa gg_command_block()	- for block command
+ *
+ * @return 	 0 - if somebody was unblocked.<br>
+ * 		-1 - if smth went wrong.
+ */
 
 static COMMAND(gg_command_unblock) {
 	const char *uid;
@@ -879,14 +914,13 @@ static COMMAND(gg_command_unblock) {
 				x = 1;
 		}
 
-		if (x) {
-			wcs_printq("blocked_deleted_all");
-			config_changed = 1;
-		} else {
-			wcs_printq("blocked_list_empty");
+		if (!x) {
+			printq("blocked_list_empty");
 			return -1;
 		}
 
+		printq("blocked_deleted_all");
+		config_changed = 1;
 		return 0;
 	}
 
@@ -894,14 +928,14 @@ static COMMAND(gg_command_unblock) {
 		printq("user_not_found", params[0]);
 		return -1;
 	}
-		
-	if (gg_blocked_remove(session, uid) != -1) {
-		printq("blocked_deleted", format_user(session, uid));
-		config_changed = 1;
-	} else {
+
+	if (gg_blocked_remove(session, uid) == -1) {
 		printq("error_not_blocked", format_user(session, uid));
 		return -1;
 	}
+		
+	printq("blocked_deleted", format_user(session, uid));
+	config_changed = 1;
 
 	return 0;
 }
@@ -1728,12 +1762,12 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:check_conn"), "!uUC", gg_command_check_conn,	GG_FLAGS_TARGET, NULL);
 	command_add(&gg_plugin, ("gg:invisible"), "r", gg_command_away, 		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:image"), "!u !f", gg_command_image, 		COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&gg_plugin, ("gg:block"), "uUC ?", gg_command_block, 0, NULL);
-	command_add(&gg_plugin, ("gg:unblock"), "!b ?", gg_command_unblock, 	COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, ("gg:block"), "uUC", gg_command_block, 		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:unblock"), "!b", gg_command_unblock, 	GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:modify"), "!Uu ?", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:remind"), "? ?", gg_command_remind, 0, NULL);
 	command_add(&gg_plugin, ("gg:register"), "? ? ?", gg_command_register, 0, NULL);
-        command_add(&gg_plugin, ("gg:token"), NULL, gg_command_token, 0, NULL);
+	command_add(&gg_plugin, ("gg:token"), NULL, gg_command_token, 0, NULL);
 	command_add(&gg_plugin, ("gg:unregister"), "! ! !", gg_command_unregister, COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:passwd"), "! ?", gg_command_passwd, 		GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:userlist"), "p ?", gg_command_list, 		GG_ONLY, "-c --clear -g --get -p --put");
