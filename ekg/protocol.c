@@ -112,7 +112,7 @@ static TIMER(protocol_reconnect_handler) {
 
 	s = session_find(session);
 
-        if (!s || session_connected_get(s) == 1)
+        if (!s || s->connected == 1)
                 return -1;
 
 	debug("reconnecting session %s\n", session);

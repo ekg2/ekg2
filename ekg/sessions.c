@@ -1078,7 +1078,7 @@ COMMAND(session_command)
 		return 0;
 	}
 
-	if (match_arg(params[0], 'g', ("get"), 2)) {
+	if (match_arg(params[0], 'g', ("get"), 2)) {	/* /session --get [session uid] <variable name> */
 		const char *key;	/* variable name */
 		const char *var;	/* variable value */
 		int secret	= 0;	/* if variable should be hidden, for example passwords */
@@ -1088,14 +1088,14 @@ COMMAND(session_command)
 		char *tmp = NULL;
 
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
 		if ((s = session_find(params[1]))) {
 			key = params[2];
 		} else {
-			if (!(s = window_current->session)) {
+			if (!(s = session)) {
 				printq("invalid_session");
 				return -1;
 			}
@@ -1103,7 +1103,7 @@ COMMAND(session_command)
 		}
 
 		if (!key) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 

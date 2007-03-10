@@ -294,7 +294,7 @@ int msg_queue_write()
  *
  * @todo	code which handle errors is awful and it need rewriting.
  *
- * @return	-1 if fail to open msgqueue directory
+ * @return	-1 if fail to open msgqueue directory<br>
  * 		 0 on success.
  */
 
