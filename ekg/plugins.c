@@ -88,29 +88,73 @@ int ekg2_dlclose(void *plugin) {
 /*	return lt_dlclose(plugin); */
 }
 
-/* it only support posix dlopen() but maybe in future... */
+/**
+ * ekg2_dlopen()
+ *
+ * Load dynamic library file from @a name<br>
+ * Support POSIX dlopen() and LoadLibraryA() [WINDOWS]
+ *
+ * @todo For support of more dynamic interfaces see sources of lt_dlopen() [libltdl]
+ *
+ * @todo Think more about flags for dlopen() [was: RTLD_LAZY | RTLD_GLOBAL]
+ *
+ * @param name - Full path of library to load.
+ *
+ * @return Pointer to the loaded library, or NULL if fail.
+ */
+
 static void *ekg2_dlopen(char *name) {
-	void *tmp = NULL;
 #ifdef NO_POSIX_SYSTEM
-	tmp = LoadLibraryA(name);
+	void *tmp = LoadLibraryA(name);
 #else
-	tmp = dlopen(name, RTLD_GLOBAL | RTLD_LAZY);
+	/* RTLD_LAZY is bad flag, because code can SEGV on executing undefined symbols...
+	 * 	it's better to fail earlier than later with SIGSEGV
+	 *
+	 * RTLD_GLOBAL is bad flag also, because we have no need to export symbols to another plugns
+	 *	we should do it by queries... Yeah, I know it was used for example in perl && irc plugin.
+	 *	But we cannot do it. Because if we load irc before sim plugin. Than we'll have unresolved symbols
+	 *	even if we load sim plugin later.
+	 */
+	void *tmp = dlopen(name, RTLD_NOW);
 #endif
-	if(!tmp) debug_error("[plugin] could not be loaded: %s %s\n", name, dlerror());
-	else debug_function("[plugin] loaded: %s\n", name);
-/*	if (!tmp && !in_autoexec) debug("[plugin] Error loading plugin %s: %s\n", name, dlerror()); */
-/*	return lt_dlopen(lib); */
+	if (!tmp) {
+		debug_error("[plugin] could not be loaded: %s %s\n", name, dlerror());
+	} else {
+		debug_function("[plugin] loaded: %s\n", name);
+	}
 	return tmp;
 }
 
-/* it only support posix dlsym() but maybe in future... */
+/**
+ * ekg2_dlsym()
+ *
+ * Get symbol with @a name from loaded dynamic library.<br>
+ * Support POSIX dlsym() and GetProcAddress() [WINDOWS]
+ *
+ * @todo For support of more dynamic interfaces see lt_dlsym() [libltdl]
+ *
+ * @param plugin 	- Pointer to the loaded library.
+ * @param name		- Name of symbol to lookup.
+ *
+ * @return Address of symbol or NULL if error occur.
+ */
+
 static void *ekg2_dlsym(void *plugin, char *name) {
 #ifndef NO_POSIX_SYSTEM
-	return dlsym(plugin, name);
+	void *tmp = dlsym(plugin, name);
+	const char *error = dlerror();
+
+	/* Be POSIX like, if dlerror() returns smth, even if dlsym() successful return pointer. Then report error.
+	 * man 3 dlsym */
+	if (error) {
+		debug_error("[plugin] plugin: %x symbol: %s error: %s\n", plugin, name, error);
+		return NULL;
+	}
+
+	return tmp;
 #else
 	return GetProcAddress(plugin, name);
 #endif
-/*	return lt_dlsym( (lt_dlhandle) plugin, init); */
 }
 
 /*
@@ -263,11 +307,16 @@ int plugin_load(const char *name, int prio, int quiet)
 	return 0;
 }
 
-/*
+/**
  * plugin_find()
  *
- * odnajduje plugin_t odpowiadaj±ce wtyczce o danej nazwie.
+ * Find plugin by name
+ *
+ * @param name - name of plugin_t
+ *
+ * @return plugin_t with given name, or NULL if not found.
  */
+
 plugin_t *plugin_find(const char *name)
 {
 	list_t l;
@@ -282,17 +331,24 @@ plugin_t *plugin_find(const char *name)
 	return NULL;
 }
 
-/*
- * plugin_find()
+/**
+ * plugin_find_uid()
  *
- * odnajduje plugin_t odpowiadaj±cy podanemu uid'owie.
+ * Find <i>PLUGIN_PROTOCOL</i> plugin which can handle @a uid
+ * 
+ * @todo used only by session_add() in session.c move it there?
+ *
+ * @sa valid_plugin_uid() - For function to check if given plugin can handle given uid
+ *
+ * @return If such plugin was founded return it, or NULL if not found.
  */
-plugin_t *plugin_find_uid(const char *uid)
-{
+
+plugin_t *plugin_find_uid(const char *uid) {
         list_t l;
 
         for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
+
                 if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
                 	return p;
         }
@@ -347,8 +403,21 @@ int plugin_unload(plugin_t *p)
 	return 0;
 }
 
-static int plugin_register_compare(void *data1, void *data2)
-{
+/**
+ * plugin_register_compare()
+ *
+ * internal function used to sort plugins by prio
+ * used by list_add_sorted() 
+ *
+ * @param data1 - First plugin_t to compare
+ * @param data2 - Second plugin_t to compare
+ *
+ * @sa plugin_register()
+ *
+ * @return Result of prio subtraction
+ */
+
+static int plugin_register_compare(void *data1, void *data2) {
         plugin_t *a = data1, *b = data2;
 
         return b->prio - a->prio;
@@ -543,10 +612,15 @@ plugin_watches_again:
 	return 0;
 }
 
-/* 
+/**
  * plugin_var_find()
  *
- * it looks for given var in given plugin
+ * it looks for given variable name in given plugin
+ *
+ * @param	pl - plugin
+ * @param	name - variable name
+ *
+ * @sa	plugin_var_find_id() - To search for variable id
  *
  * returns sequence number+1 of variable if found, else 0
  */
@@ -563,6 +637,19 @@ int plugin_var_find(plugin_t *pl, const char *name) {
 	}
 	return 0;
 }
+
+/**
+ * plugin_var_find_id()
+ *
+ * It looks for given variable idin given plugin
+ *
+ * @param	pl - plugin
+ * @param	id - variable id	(plugin_param_id_t)
+ *
+ * @sa	plugin_var_find() - To search for variable name
+ *
+ * return Sequence number+1 of variable if found, else 0
+ */
 
 int plugin_var_find_id(plugin_t *pl, int id) {
 	int i;
@@ -1040,7 +1127,18 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 	return res;
 }
 
-int have_plugin_of_class(int pclass) {
+/**
+ * have_plugin_of_class()
+ *
+ * Check if we have loaded plugin from @a pclass
+ *
+ * @param pclass 
+ *
+ * @return	1 - If such plugin was founded<br>
+ * 		else 0
+ */
+
+int have_plugin_of_class(plugin_class_t pclass) {
 	list_t l;
 	for(l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
