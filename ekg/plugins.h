@@ -156,7 +156,6 @@ int query_emit_id(plugin_t *, const int, ...);
 int query_emit(plugin_t *, const char *, ...);
 
 const char *query_name(const int id);
-int query_id(const char *name);
 
 #endif
 

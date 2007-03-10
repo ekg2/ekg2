@@ -89,7 +89,6 @@ int ekg2_dlinit() {
  * @param plugin - Handler to loaded library.
  *
  * @return 	0 on success, else fail.
- *
  */
 
 /* it only support posix dlclose() but maybe in future... */
@@ -158,7 +157,7 @@ static void *ekg2_dlsym(void *plugin, char *name) {
 	const char *error;
 
 	dlerror();			/* Clear any existing error */
-	tmp = dlsym(plugin, name);	/* Loop for symbol */
+	tmp = dlsym(plugin, name);	/* Look for symbol */
 
 	/* Be POSIX like, if dlerror() returns smth, even if dlsym() successful return pointer. Then report error.
 	 * man 3 dlsym */
@@ -682,8 +681,20 @@ int plugin_var_find_id(plugin_t *pl, int id) {
 
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
+/**
+ * query_external_free()
+ *
+ * Free memory allocated by query_id() for not-known-in-core-query-names
+ *
+ * @todo 	We don't destroy here queries which uses these ids >= QUERY_EXTERNAL.<br>
+ * 		It's quite correct in current api. But if you change it, you must clean after yourself.
+ */
+
 void query_external_free() {
 	list_t l;
+
+	if (!queries_external)
+		return;
 
 	for (l = queries_external; l; l = l->next) {
 		struct query *a = l->data;
@@ -696,7 +707,20 @@ void query_external_free() {
 	queries_count		= QUERY_EXTERNAL;
 }
 
-int query_id(const char *name) {
+/**
+ * query_id()
+ *
+ * Get unique query id, for passed name
+ *
+ * @param name
+ *
+ * @return 
+ * 	- If it's query known for core than return id of it.<br>
+ * 	- If it's ,,seen'' by query_id() from previous call, than return assigned id also [from @a queries_external list_t]<br>
+ * 	- else it allocate struct query in @a queries_external, and return next available id.
+ */
+
+static int query_id(const char *name) {
 	struct query *a = NULL;
 	list_t l;
 	int i;
@@ -726,6 +750,17 @@ int query_id(const char *name) {
 
 	return a->id;
 }
+
+/**
+ * query_name()
+ *
+ * Get name of query, by passed id
+ *
+ * @return 
+ * 	- If id is known for core (@a id < QUERY_EXTERNAL) than return it's name<br>
+ * 	- If it was ,,seen'' by query_id() than return name registered.<br>
+ * 	- else return NULL, and display info that smth really nasty happen.
+ */
 
 const char *query_name(const int id) {
 	list_t l;
