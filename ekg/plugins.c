@@ -78,14 +78,27 @@ int ekg2_dlinit() {
 /*	return lt_dlinit() */
 }
 
+/**
+ * ekg2_dlclose()
+ *
+ * Close handler to dynamic loaded library.<br>
+ * Support POSIX dlclose() and FreeLibrary() [WINDOWS]
+ *
+ * @todo For support of more dynamic interfaces see sources of lt_dlclose() [libltdl]
+ *
+ * @param plugin - Handler to loaded library.
+ *
+ * @return 	0 on success, else fail.
+ *
+ */
+
 /* it only support posix dlclose() but maybe in future... */
 int ekg2_dlclose(void *plugin) {
 #ifndef NO_POSIX_SYSTEM
 	return dlclose(plugin);
 #else
-	return FreeLibrary(plugin);
+	return (FreeLibrary(plugin) != 0);	/* FreeLibrary() return 0 on fail. */
 #endif
-/*	return lt_dlclose(plugin); */
 }
 
 /**
@@ -141,12 +154,15 @@ static void *ekg2_dlopen(char *name) {
 
 static void *ekg2_dlsym(void *plugin, char *name) {
 #ifndef NO_POSIX_SYSTEM
-	void *tmp = dlsym(plugin, name);
-	const char *error = dlerror();
+	void *tmp;
+	const char *error;
+
+	dlerror();			/* Clear any existing error */
+	tmp = dlsym(plugin, name);	/* Loop for symbol */
 
 	/* Be POSIX like, if dlerror() returns smth, even if dlsym() successful return pointer. Then report error.
 	 * man 3 dlsym */
-	if (error) {
+	if ((error = dlerror())) {
 		debug_error("[plugin] plugin: %x symbol: %s error: %s\n", plugin, name, error);
 		return NULL;
 	}
