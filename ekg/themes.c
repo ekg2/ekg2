@@ -699,94 +699,108 @@ void print_window(const char *target, session_t *session, int separate, const ch
         xfree(newtarget);
 }
 
-/*
+/**
  * theme_cache_reset()
  *
- * usuwa cache'owane prompty. przydaje siê przy zmianie theme'u.
+ * Remove cached: @a prompt_cache, @a prompt2_cache, @a error_cache and @a timestamp_cache<br>
+ * These values are used by va_format_string() to don't call format_find() on:<br>
+ * 	["prompt" "%>", "prompt2" "%)", "errror" "%!", "timestamp" "%#"]
+ *
  */
-void theme_cache_reset()
-{
-        xfree(prompt_cache);
-        xfree(prompt2_cache);
-        xfree(error_cache);
 
-        prompt_cache = prompt2_cache = error_cache = NULL;
-        timestamp_cache = NULL;
+void theme_cache_reset() {
+	xfree(prompt_cache);
+	xfree(prompt2_cache);
+	xfree(error_cache);
+
+	prompt_cache = prompt2_cache = error_cache = NULL;
+	timestamp_cache = NULL;
 }
 
-/*
+/**
  * format_add()
  *
- * dodaje dan± formatkê do listy.
+ * Add format with @a name and @a value. <br>
+ * If @a replace set to 1, than if format with the same name exists. than format value will be replaced.
  *
- *  - name - nazwa,
- *  - value - warto¶æ,
- *  - replace - je¶li znajdzie, to zostawia (=0) lub zamienia (=1).
+ * @todo What about creating global variable: formats_unique_here.. and if set to 1, don't search if this format already exists? It should speedup theme_init() a little.
+ *
+ * @param name	- name of format
+ * @param value - value of format
+ * @param replace - if this format exists and is set to 1 than format value will be replaced with new one. else do nothing.
  */
-int format_add(const char *name, const char *value, int replace)
-{
-        struct format *f;
-        list_t l;
-        int hash;
 
-        if (!name || !value)
-                return -1;
-
-        hash = ekg_hash(name);
-
-        if (hash == no_promp_cache_hash && !xstrcmp(name, "no_prompt_cache")) { /* XXX, if you change ekg_hash() change this value too */
-                no_prompt_cache = 1;
-                return 0;
-        }
-
-        for (l = formats; l; l = l->next) {
-		f = l->data;
-                if (hash == f->name_hash && !xstrcasecmp(name, f->name)) {
-                        if (replace) {
-                                xfree(f->value);
-                                f->value = xstrdup(value);
-                        }
-                        return 0;
-                }
-        }
-	f = xmalloc(sizeof(struct format));
-        f->name = xstrdup(name);
-        f->name_hash = hash;
-        f->value = xstrdup(value);
-
-        return (list_add_beginning(&formats, f, 0) ? 0 : -1);
-}
-
-/*
- * format_remove()
- *
- * usuwa formatkê o danej nazwie.
- *
- *  - name.
- */
-static int format_remove(const char *name)
-{
-        list_t l;
+void format_add(const char *name, const char *value, int replace) {
+	struct format *f;
+	list_t l;
 	int hash;
 
-        if (!name)
-                return -1;
+	if (!name || !value)
+		return;
 
 	hash = ekg_hash(name);
 
-        for (l = formats; l; l = l->next) {
-                struct format *f = l->data;
+	if (hash == no_promp_cache_hash && !xstrcmp(name, "no_prompt_cache")) {
+		no_prompt_cache = 1;
+		return;
+	}
 
-                if (hash == f->name_hash && !xstrcasecmp(f->name, name)) {
-                        xfree(f->value);
-                        xfree(f->name);
-                        list_remove(&formats, f, 1);
+	for (l = formats; l; l = l->next) {
+		struct format *f = l->data;
 
-                        return 0;
-                }
-        }
+		if (hash == f->name_hash && !xstrcmp(name, f->name)) {
+			if (replace) {
+				xfree(f->value);
+				f->value = xstrdup(value);
+			}
+			return;
+		}
+	}
 
-        return -1;
+	f = xmalloc(sizeof(struct format));
+	f->name		= xstrdup(name);
+	f->name_hash	= hash;
+	f->value	= xstrdup(value);
+
+	list_add_beginning(&formats, f, 0);
+	return;
+}
+
+/**
+ * format_remove()
+ *
+ * Remove format with given name.
+ *
+ * @todo We can speedup it a little, by passing to list_remove() ptr to previous item.. senseless?
+ *
+ * @param name
+ *
+ * @return	 0 if format was founded and removed from list<br>
+ * 		-1 else
+ */
+
+static int format_remove(const char *name) {
+	list_t l;
+	int hash;
+
+	if (!name)
+		return -1;
+
+	hash = ekg_hash(name);
+
+	for (l = formats; l; l = l->next) {
+		struct format *f = l->data;
+
+		if (hash == f->name_hash && !xstrcmp(f->name, name)) {
+			xfree(f->value);
+			xfree(f->name);
+			list_remove(&formats, f, 1);
+
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
 /*

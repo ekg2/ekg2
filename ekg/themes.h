@@ -51,7 +51,7 @@ extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo incl
 
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
 
-int format_add(const char *name, const char *value, int replace);
+void format_add(const char *name, const char *value, int replace);
 const char *format_find(const char *name);
 char *format_string(const char *format, ...);
 
