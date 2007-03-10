@@ -111,7 +111,7 @@ static int gg_private_destroy(session_t *s) {
  *
  * Handler for: <i>USERLIST_INFO</i><br>
  * (Emited by: <i>/list</i> command, when we want know more about given user)<br>
- * Display all gg-protocol-only-data like: possible client version [read: which version of protocol he use], if he has voip, etc..
+ * printq() all gg-protocol-only-data like: possible client version [read: which version of protocol he use], if he has voip, etc..
  *
  * @param ap 1st param: <i>(userlist_t *) </i><b>u</b>	- item.
  * @param ap 2nd param: <i>(int) </i><b>quiet</b>	- If quiet for printq()
@@ -171,10 +171,10 @@ static QUERY(gg_userlist_info_handle) {
 			ver = ("7.5.0 (build >= 2201)");
 		if (v == 0x29)
 			ver = ("7.6 (build >= 1688)");
-		if (ver)
-			printq("user_info_version", ver);
 
-		else {
+		if (ver) {
+			printq("user_info_version", ver);
+		} else {
 			char *tmp = saprintf(("nieznana (%#.2x)"), v);
 			printq("user_info_version", tmp);
 			xfree(tmp);
@@ -452,7 +452,7 @@ static QUERY(gg_print_version) {
  * handler for <i>PROTOCOL_VALIDATE_UID</i><br>
  * checks, if @a uid is <i>proper for gg plugin</i>.
  *
- * @note <i>Proper for irc plugin</i> means if @a uid starts with "gg:" and uid len > 3
+ * @note <i>Proper for gg plugin</i> means if @a uid starts with "gg:" and uid len > 3
  * @todo Blah, irc does xstrncasecmp() here it's only xstrncmp() let's decide... GG: and gg: is proper, or only gg:
  * @todo Maybe let's check if after gg: we have max 32b number.. because libgadu and gg protocol only support 32bit uids... ;)
  *
@@ -1244,11 +1244,16 @@ static void gg_changed_private(session_t *s, const char *var) {
 	xfree(cpdescr);
 }
 
-/*
+/**
  * changed_proxy()
  *
- * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,gg:proxy''.
+ * Handler execute when session variable: "proxy" change
+ *
+ * @bug BIG XXX, Mistake at art, it should use global config variable, not session ones, because it's used to inform libgadu about proxy servers.<br>
+ * 	And libgadu has got this variables global, not session private. Maybe we somehow can update these variables before gg_login() by callng gg_changed_proxy() 
+ * 	but now it's BAD, BAD, BAD.
  */
+
 static void gg_changed_proxy(session_t *s, const char *var) {
 	char **auth, **userpass = NULL, **hostport = NULL;
 	const char *gg_config_proxy;
@@ -1331,6 +1336,16 @@ static QUERY(gg_setvar_default) {
 	gg_config_dcc_port = 1550;
 	return 0;
 }
+
+/**
+ * libgadu_debug_handler()
+ *
+ * Handler for libgadu: gg_debug_handler<br>
+ * It's communcation channel between libgadu debug messages, and ekg2.<br>
+ * Here we translate libgadu levels to ekg2 one, and than pass it to ekg_debug_handler()
+ *
+ * @param level - libgadu debug level
+ */
 
 static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 	int newlevel;
