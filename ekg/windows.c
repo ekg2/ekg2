@@ -277,6 +277,8 @@ static int window_new_compare(void *data1, void *data2)
  * @note 	You shouldn't pass @a new_id here. Because it can broke UI stuff. don't ask. it's wrong. Just don't use it.
  * 		It'll be possible removed... Really eventually you can talk with devs, and ask for id from class: 1000 to 1999
  *
+ * @todo	See XXX's
+ *
  * @param target 	- name of window
  * @param session 	- session of this window
  * @param new_id	- if different than 0, than window will take this id.
@@ -300,8 +302,10 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 
 		if (w)
 			return w;
-
 	}
+	/* XXX, check new_id ? */
+/*	if (new_id != 0 && (w = window_exist(new_id)) 
+		return w; */
 
 	/* if no new_id given, than let's search for window id.. */
 	if (new_id == 0) {
@@ -315,19 +319,19 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 		while (l) {
 			window_t *w = l->data;
 
-			l = l->next;				/* goto next window */
+			l = l->next;		/* goto next window */
 
-			if (w->id < 2)				/* [RESERVED CLASS: 0-1] 	0 for __debug, 1 for __status */
+			if (w->id < 2)					/* [RESERVED CLASS: 0-1] 	0 for __debug, 1 for __status */
 				continue;
-
-			if (w->id >= 1000-1 && w->id < 2000) {	/* [REVERVED CLASS: 1000-1999] 	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
-				id = 2000;
-				continue;
-			}
 
 			/* if current window is larger than current id... than we found good id! */
 			if (w->id > id)
 				break;
+
+			if (w->id >= 1000-1 && w->id < 2000 /* -1 */) {	/* [REVERVED CLASS: 1000-1999] 	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
+				id = 2000;
+				continue;
+			}
 
 			id = w->id+1;		/* current window+1 */
 		}
@@ -586,6 +590,7 @@ cleanup:
  * check if window with @a id exist 
  *
  * @param id - id of window.
+ *
  * @sa window_find()		- If you want to search for window target, instead of window id.
  * @sa window_find_s()		- If you want to search for window session && target, instead of window id.
  * @sa window_find_ptr()	- if you want to search for window pointer, instead of window id.
@@ -593,8 +598,7 @@ cleanup:
  * @return window_t *, with id specified by @a id, or NULL if such window doesn't exists.
  */
 
-window_t *window_exist(int id)
-{
+window_t *window_exist(int id) {
 	list_t l;
 
         for (l = windows; l; l = l->next) {
@@ -614,11 +618,9 @@ window_t *window_exist(int id)
  *
  * @param first		- 1st window id.
  * @param second 	- 2nd window id.
- *
  */
 
-static void window_move(int first, int second)
-{
+static void window_move(int first, int second) {
 	window_t *w1, *w2;
 
 	if (!(w1 = window_exist(first)) || !(w2 = window_exist(second)))
