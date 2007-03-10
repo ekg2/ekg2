@@ -167,7 +167,7 @@ char *last_search_uid = 0;
 
 int reason_changed = 0;
 
-/**
+/*
  * windows_save()
  *
  * saves current open windows to the variable @a config_windows_layout if @a config_windows_save is on
@@ -175,8 +175,7 @@ int reason_changed = 0;
  * @sa config_windows_save
  */
 
-void windows_save()
-{
+void windows_save() {
 	list_t l;
 
 	if (config_windows_save) {
@@ -361,13 +360,14 @@ int alias_remove(const char *name, int quiet)
 	return 0;
 }
 
-/*
+/**
  * alias_free()
  *
- * zwalnia pamiêæ zajêt± przez aliasy.
+ * Free memory allocated by aliases
+ *
  */
-void alias_free()
-{
+
+void alias_free() {
 	list_t l;
 
 	if (!aliases)
@@ -379,7 +379,6 @@ void alias_free()
 		xfree(a->name);
 		list_destroy(a->commands, 1);
 	}
-
 	list_destroy(aliases, 1);
 	aliases = NULL;
 }
@@ -431,47 +430,48 @@ void binding_free()
 {
 	list_t l;
 
-	if (!bindings)
-		return;
+	if (bindings) {
+		for (l = bindings; l; l = l->next) {
+			struct binding *b = l->data;
 
-	for (l = bindings; l; l = l->next) {
-		struct binding *b = l->data;
-
-		xfree(b->key);
-		xfree(b->action);
-		xfree(b->arg);
-		xfree(b->default_action);
-		xfree(b->default_arg);
+			xfree(b->key);
+			xfree(b->action);
+			xfree(b->arg);
+			xfree(b->default_action);
+			xfree(b->default_arg);
+		}
+		list_destroy(bindings, 1);
+		bindings = NULL;
 	}
+	if (bindings_added) {
+		for (l = bindings_added; l; l = l->next) {
+			binding_added_t *b = l->data;
 
-	list_destroy(bindings, 1);
-	bindings = NULL;
-
-        for (l = bindings_added; l; l = l->next) {
-                binding_added_t *b = l->data;
-
-                xfree(b->sequence);
-        }
-
-	list_destroy(bindings_added, 1);
-	bindings_added = NULL;
+			xfree(b->sequence);
+		}
+		list_destroy(bindings_added, 1);
+		bindings_added = NULL;
+	}
 }
 
-/*
+/**
  * buffer_add()
  *
- * dodaje linijkê do danego typu bufora. je¶li max_lines > 0
- * to pilnuje, aby w buforze by³o maksymalnie tyle linii.
+ * Add new line to given buffer_t, if max_lines > 0 than it maintain list that we can have max: @a max_lines items on it.
  *
- *  - type,
- *  - line,
- *  - max_lines.
+ * @param type 		- pointer to buffer list_t 
+ * @param target	- name of target.. or just name of smth we want to keep in b->target
+ * @param line		- line which we want to save.
+ * @param max_lines	- max number of items in buffer
  *
- * 0/-1
+ * @return 	0 - when line was successfully added to buffer, else -1	(when @a type was NULL)
  */
-int buffer_add(list_t *type, const char *target, const char *line, int max_lines)
-{
+
+int buffer_add(list_t *type, const char *target, const char *line, int max_lines) {
 	struct buffer *b;
+
+	if (!type)
+		return -1;
 
 	if (max_lines) {
 		list_t l = *type;
@@ -492,17 +492,35 @@ int buffer_add(list_t *type, const char *target, const char *line, int max_lines
 	b->target = xstrdup(target);
 	b->line = xstrdup(line);
 
-	return ((list_add(type, b, 0) ? 0 : -1));
+	list_add(type, b, 0);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
+	return 0;			/* so always return success here */
 }
+
+/**
+ * buffer_add_str()
+ *
+ * Add new line to given buffer_t, if max_lines > 0 than it maintain list that we can have max: @a max_lines items on it.
+ *
+ * @param type		- pointer to buffer list_t
+ * @param target	- name of target, or just name of smth we want to keep in b->target
+ * @param str		- string in format: [time_when_it_happen proper line... blah, blah] <i>time_when_it_happen</i> should be in digits.
+ * @param max_lines	- max number of items in buffer
+ *
+ * @todo Think about parsing @a line.. now it's xstrchr(str, ' ') and than atoi() 
+ *
+ * @return	0 - when line was successfully added to buffer, else -1 (when @a type was NULL, or @a line was in wrong format)
+ */
 
 int buffer_add_str(list_t *type, const char *target, const char *str, int max_lines) {
 	struct buffer *b;
 	char *sep;
-
 	time_t ts = 0;
 
+	if (!type)
+		return -1;
+
 	if (!(sep = xstrchr(str, ' '))) {
-		debug("buffer_add_str() parsing str: %s failed\n", str);
+		debug_error("buffer_add_str() parsing str: %s failed\n", str);
 		return -1;
 	}
 	ts = atoi(str);
@@ -527,7 +545,8 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 	b->target	= xstrdup(target);
 	b->line		= xstrdup(sep+1);
 
-	return ((list_add(type, b, 0) ? 0 : -1));
+	list_add(type, b, 0);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
+	return 0;			/* so always return success here */
 }
 
 /*
