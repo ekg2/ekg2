@@ -163,7 +163,7 @@ oss_device_t *oss_device_new(const char *path, int way, int freq, int sample, in
 		/* to mamy problem.... */
 		dev->bufsize = 4096;
 	}
-	dev->bufsize = 3200;
+//	dev->bufsize = 3200;
 
 	list_add(&oss_devices, dev, 0);
 	return dev;
@@ -370,5 +370,7 @@ int oss_plugin_init(int prio) {
 
 static int oss_plugin_destroy() {
 	audio_unregister(&oss_audio);
+
+	plugin_unregister(&oss_plugin);
 	return 0;
 }
