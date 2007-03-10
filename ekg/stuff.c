@@ -549,43 +549,47 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 	return 0;			/* so always return success here */
 }
 
-/*
+/**
  * buffer_tail()
  *
- * zwraca najstarszy element buforowej kolejki, który
- * nale¿y zwolniæ. usuwa go z kolejki. zwraca NULL,
- * gdy kolejka jest pusta.
+ * Return oldest b->line, free b->target and remove whole buffer_t from list
+ * 
+ * @param type	- pointer to buffer list_t 
+ *
+ * @return First b->line on the list, or NULL, if no items on list.
  */
-char *buffer_tail(list_t *type)
-{
-	char *str = NULL;
-	list_t l;
 
-	for (l = *type; l; l = l->next) {
-		struct buffer *b = l->data;
+char *buffer_tail(list_t *type) {
+	struct buffer *b;
+	char *str;
 
-		str = b->line;
-		b->line = NULL;
+	if (!type || !(*type))
+		return NULL;
 
-		xfree(b->target);
-		list_remove(type, b, 1);
+	b = (*type)->data;
 
-		break;
-	}
+	str = b->line;			/* save b->line */
 
-	return str;
+	xfree(b->target);		/* free b->target */
+	list_remove(type, b, 1);	/* remove struct */
+
+	return str;			/* return saved b->line */
 }
 
-/*
+/**
  * buffer_free()
+ *
+ * Free memory after given buffer.<br>
+ * After it set *type to NULL
+ *
+ * @param type - pointer to list_t
  * 
- * zwalnia pamiêæ po buforach.
  */
-void buffer_free(list_t *type)
-{
+
+void buffer_free(list_t *type) {
 	list_t l;
 
-	if (!(*type))
+	if (!type || !(*type))
 		return;
 
 	for (l = *type; l; l = l->next) {
@@ -666,8 +670,17 @@ void changed_theme(const char *var)
 	}
 }
 
-const char *compile_time()
-{
+/**
+ * compile_time()
+ *
+ * Return compilation date, and time..<br>
+ * Used by <i>/version command</i> and <i>ekg2 --version</i>
+ *
+ * @return 	__DATE__" "__TIME__<br> 
+ * 		For example: <b>"Jun 21 1987" " " "22:06:47"</b>
+ */
+
+const char *compile_time() {
 	return __DATE__ " " __TIME__;
 }
 
