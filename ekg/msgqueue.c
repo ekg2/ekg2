@@ -284,15 +284,21 @@ int msg_queue_write()
 	return 0;
 }
 
-/*
+/**
  * msg_queue_read()
  *
- * wczytuje kolejkê niewys³anych wiadomo¶ci z dysku.
+ * Read msgqueue of not sended messages.<br>
+ * msgqueue is subdir ("queue") in ekg2 config directory.
  *
- * 0/-1
+ * @todo	return count of readed messages?
+ *
+ * @todo	code which handle errors is awful and it need rewriting.
+ *
+ * @return	-1 if fail to open msgqueue directory
+ * 		 0 on success.
  */
-int msg_queue_read()
-{
+
+int msg_queue_read() {
 	const char *path;
 	struct dirent *d;
 	DIR *dir;
@@ -327,17 +333,20 @@ int msg_queue_read()
 
 		if (!buf || xstrcmp(buf, "v1")) {
 			fclose(f);
+			xfree(fn);
 			continue;
 		}
 
 		if (!(m.session = read_file(f, 1))) {
 			fclose(f);
+			xfree(fn);
 			continue;
 		}
 	
 		if (!(m.rcpts = read_file(f, 1))) {
 			xfree(m.session);
 			fclose(f);
+			xfree(fn);
 			continue;
 		}
 
@@ -345,6 +354,7 @@ int msg_queue_read()
 			xfree(m.session);
 			xfree(m.rcpts);
 			fclose(f);
+			xfree(fn);
 			continue;
 		}
 
@@ -354,6 +364,7 @@ int msg_queue_read()
 			xfree(m.session);
 			xfree(m.rcpts);
 			fclose(f);
+			xfree(fn);
 			continue;
 		}
 		
