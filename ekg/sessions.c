@@ -410,8 +410,10 @@ int session_status_set(session_t *s, int status)
 	/* set status */
 		s->status	= s->laststatus ? s->laststatus : EKG_STATUS_AVAIL;
 	/* set descr */
-		xfree(s->descr);
-		s->descr = s->lastdescr;
+		if (s->autoaway || s->lastdescr) {
+			xfree(s->descr);
+			s->descr = s->lastdescr;
+		}
 
 		s->laststatus	= 0;
 		s->lastdescr	= NULL;
