@@ -333,8 +333,16 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 
 /* EKG2 STUFF */
 
-extern char *mutt_convert_string (char *ps, const char *from, const char *to);	/* jabber/misc.c */
-extern char *config_console_charset;						/* ekg/stuff.h */
+extern char *mutt_convert_string (const char *ps, const char *from, const char *to);	/* jabber/misc.c */
+extern char *config_console_charset;							/* ekg/stuff.h */
+
+/**
+ * base16_encode()
+ *
+ * Return base16 hash of @a data
+ *
+ * @return <b>static</b> with 32 digit BASE16 HASH + NUL char.
+ */
 
 static char *base16_encode(const unsigned char *data) {
 	static char result[33];
@@ -344,10 +352,20 @@ static char *base16_encode(const unsigned char *data) {
 
 	for (i = 0; i < 16; i++)
 		snprintf(&result[i * 2], 3, "%02hhx", data[i]);
-	result[32] = 0;
 
-	return &result[0];
+	result[32] = 0;
+	return result;
 }
+
+/**
+ * jabber_challange_digest()
+ *
+ * Return base16 encoded hash for SASL MD5 CHALLANGE
+ *
+ * @todo MD5Update() on NULL params will fail. XXX, no idea what to do.
+ *
+ * @return <b>static</b> buffer with 32 digit BASE16 HASH + NUL char
+ */
 
 char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm) {
 	EKG2_MD5_CTX ctx;
@@ -358,10 +376,10 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	char *kd;
 
 /* ZERO STEP -> recode */
-	if (!(convnode = mutt_convert_string((char *) sid, config_console_charset, "utf-8")))
+	if (!(convnode = mutt_convert_string(sid, config_console_charset, "utf-8")))
 		convnode = xstrdup(sid);
 
-	if (!(convpasswd = mutt_convert_string((char *) password, config_console_charset, "utf-8")))
+	if (!(convpasswd = mutt_convert_string(password, config_console_charset, "utf-8")))
 		convpasswd = xstrdup(password);
 
 /* FIRST STEP */
@@ -411,14 +429,28 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	return base16_encode(digest);
 }
 
-/* XXX, make smth more universal? jabber_digest(int count, ...) */
+/** [XXX] SOME TIME AGO, I had idea to connect jabber_dcc_digest() and jabber_digest()
+ * 	with one function, and use va_list for it... i don't know.
+ */
+
+/**
+ * jabber_dcc_digest()
+ *
+ * Return SHA1 hash for SOCKS5 Bytestreams connections [DCC]<br>
+ * Make SHA1Update()'s on (@a uid, @a initiator and @a target)
+ *
+ * @todo SHA1Update() on NULL params will fail. XXX, no idea what to do.
+ *
+ * @todo We don't reencode params here to utf-8.
+ *
+ * @return <b>static</b> buffer, with 40 digit SHA1 hash + NUL char
+ */
+
 char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
 	int i;
-
-	debug("jabber_dcc_digest() 1:%s 2:%s 3:%s\n", sid, initiator, target);
 
 	SHA1Init(&ctx);
 	SHA1Update(&ctx, sid, xstrlen(sid));
@@ -432,11 +464,17 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
 	return result;
 }
 
-/*
+/**
  * jabber_digest()
  *
- * zwraca skrót has³a dla jabber:iq:auth.
+ * Return SHA1 hash for jabber:iq:auth<br>
+ * Make SHA1Update()'s on recoded to utf-8 (@a sid and @a password)
+ *
+ * @todo SHA1Update() on NULL params will fail. XXX, no idea what to do.
+ *
+ * @return <b>static</b> buffer, with 40 digit SHA1 hash + NUL char
  */
+
 char *jabber_digest(const char *sid, const char *password) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
@@ -446,11 +484,11 @@ char *jabber_digest(const char *sid, const char *password) {
 
 	SHA1Init(&ctx);
 
-	tmp = mutt_convert_string((char *) sid, config_console_charset, "utf-8");
+	tmp = mutt_convert_string(sid, config_console_charset, "utf-8");
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
-	tmp = mutt_convert_string((char *) password, config_console_charset, "utf-8");
+	tmp = mutt_convert_string(password, config_console_charset, "utf-8");
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 

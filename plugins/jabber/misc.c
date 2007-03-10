@@ -259,7 +259,7 @@ static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
  * Used in rfc2047.c and rfc2231.c
  */
 
-char *mutt_convert_string (char *ps, const char *from, const char *to)
+char *mutt_convert_string (const char *ps, const char *from, const char *to)
 {
 	iconv_t cd;
 	char *repls[] = { "\357\277\275", "?", 0 };
@@ -302,55 +302,80 @@ char *mutt_convert_string (char *ps, const char *from, const char *to)
 /* End of code taken from mutt. */
 
 
-/*
+/**
  * jabber_escape()
+ * 
+ * Convert charset from config_console_charset to "utf-8"<br>
+ * Escape xml chars using xml_escape()
  *
- * zamienia tekst w iso-8859-2 na tekst w utf-8 z eskejpniêtymi znakami,
- * które bêd± przeszkadza³y XML-owi: ' " & < >.
+ * @note If config_use_unicode is set, this function return only xml_escape(@a text)
  *
- *  - text
+ * @param text - text to reencode+escape
  *
- * zaalokowany bufor
+ * @sa jabber_unescape() - For function reconverting charset back to config_console_charset
+ *
+ * @return Dynamic allocated string, which should be xfree()'d
  */
 
-char *jabber_escape(const char *text)
-{
+char *jabber_escape(const char *text) {
 	unsigned char *utftext;
 	char *res;
-	if (config_use_unicode)
-		return xml_escape(text);
+
 	if (!text)
 		return NULL;
-	if ( !(utftext = mutt_convert_string((char *)text, config_console_charset, "utf-8")) )
+
+	if (config_use_unicode)
+		return xml_escape(text);
+
+	if (!(utftext = mutt_convert_string(text, config_console_charset, "utf-8")))
 		return NULL;
+
 	res = xml_escape(utftext);
         xfree(utftext);
 	return res;
 }
 
-/*
+/**
  * jabber_unescape()
  *
- * zamienia tekst w utf-8 na iso-8859-2. xmlowe znaczki s± ju¿ zamieniane
- * przez expat, wiêc nimi siê nie zajmujemy.
+ * Convert charset from "utf-8" to config_console_charset.<br>
+ * xml escaped chars are already changed by expat. so we don't care about them.
  *
- *  - text
+ * @note If config_use_unicode is set, this function only xstrdup(@a text) 
  *
- * zaalokowany bufor
+ * @param text - text to reencode.
+ *
+ * @sa jabber_escape() - for function escaping xml chars + reencoding string to utf-8
+ *
+ * @return Dynamic allocated string, which should be xfree()'d
  */
-char *jabber_unescape(const char *text)
-{
+
+char *jabber_unescape(const char *text) {
 	if (!text)
 		return NULL;
 	if (config_use_unicode)
 		return xstrdup(text);
 
-	return mutt_convert_string((char *)text, "utf-8", config_console_charset);
+	return mutt_convert_string(text, "utf-8", config_console_charset);
 }
 
-/* tlen_encode() & tlen_decode() ripped from libtlen. XXX, try to rewrite some code */
+/**
+ * tlen_encode()
+ *
+ * Convert charset from config_console_charset to ISO-8859-2<br>
+ * ,,encode'' string with urlencode
+ *
+ * @note It was ripped from libtlen. (c) Libtlen developers see: http://libtlen.sourceforge.net/
+ *
+ * @todo Try to rewrite.
+ *
+ * @param what - string to encode.
+ *
+ * @sa tlen_decode() - for urldecode.
+ *
+ * @return Dynamic allocated string, which should be xfree()'d
+ */
 
-/* tlen_encode() - Koduje tekst przy pomocy urlencode + rekoduje charset na iso-8859-2 */
 char *tlen_encode(const char *what) {
 	const unsigned char *s;
 	unsigned char *ptr, *str;
@@ -358,8 +383,8 @@ char *tlen_encode(const char *what) {
 
 	if (!what) return NULL;
 
-	if (xstrcmp(config_console_charset, "ISO-8859-2"))
-		s = text = mutt_convert_string((char *) what, config_console_charset, "ISO-8859-2");
+	if (xstrcasecmp(config_console_charset, "ISO-8859-2"))
+		s = text = mutt_convert_string(what, config_console_charset, "ISO-8859-2");
 	else	s = what;
 
 	str = ptr = (unsigned char *) xcalloc(3 * xstrlen(s) + 1, 1);
@@ -379,7 +404,22 @@ char *tlen_encode(const char *what) {
 	return str;
 }
 
-/* tlen_decode() - Dekoduje tekst przy pomocy urldecode + rekoduje charset na aktualny.. */
+/**
+ * tlen_decode()
+ *
+ * Decode string ,,encoded'' with urldecode [in ISO-8859-2] and convert charset to config_console_charset<br>
+ *
+ * @note It was ripped from libtlen. (c) Libtlen developers see: http://libtlen.sourceforge.net/
+ *
+ * @todo Try to rewrite
+ *
+ * @param what - string to decode.
+ *
+ * @sa tlen_encode() - for urlencode.
+ *
+ * @return Dynamic allocated string, which should be xfree()'d
+ */
+
 char *tlen_decode(const char *what) {
 	unsigned char *dest, *data, *retval;
 	char *text;
@@ -389,20 +429,21 @@ char *tlen_decode(const char *what) {
 	while (*data) {
 		if (*data == '+')
 			*dest++ = ' ';
-		else if ((*data == '%') && isxdigit((int)data[1]) && isxdigit((int)data[2])) {
-			int     code;
+		else if ((*data == '%') && xisxdigit(data[1]) && xisxdigit(data[2])) {
+			int code;
+
 			sscanf(data + 1, "%2x", &code);
 			if (code != '\r')
-				*dest++ = (unsigned char)code;
+				*dest++ = (unsigned char) code;
 			data += 2;
 		} else
 			*dest++ = *data;
 		data++;
 	}
 	*dest = '\0';
-	if (!xstrcmp(config_console_charset, "ISO-8859-2")) return retval;
+	if (!xstrcasecmp(config_console_charset, "ISO-8859-2")) return retval;
 
-	text = mutt_convert_string((char *) retval, "ISO-8859-2", config_console_charset);
+	text = mutt_convert_string(retval, "ISO-8859-2", config_console_charset);
 	xfree(retval);
 	return text;
 }

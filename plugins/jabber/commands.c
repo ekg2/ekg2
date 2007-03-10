@@ -2500,7 +2500,7 @@ back:
  * XXX, info<br>
  * <b>ONLY TLEN PROTOCOL</b>
  *
- * @param params [0] - uid/nickname/$ of target [ONLY tlen: uid]
+ * @param params [0] - uid/nickname/$ of target [<b>ONLY</b> "tlen:" uids]
  *
  * @return	-1 if wrong uid<br>
  * 		 0 on success<br>
