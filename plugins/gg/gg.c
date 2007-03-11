@@ -540,6 +540,7 @@ static TIMER(gg_inv_check_handler)
 	userlist_t *u;
 	
 	if (type == 1) {
+		xfree(c->uid);
 		xfree(data);
 		return -1;
 	}
