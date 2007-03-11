@@ -494,7 +494,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	}
 	if (!w) w = window_current;
 
-	fline = format_string(line);			/* format string */
+	fline = va_format_string(line);			/* format string */
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */
