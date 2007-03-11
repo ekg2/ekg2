@@ -193,8 +193,12 @@ char *va_format_string(const char *format, va_list ap) {
 	string_t buf = string_init(NULL);
 	static int dont_resolve = 0;
 	const char *p;
-	char *args[9];
+	char *args[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	int i, argc = 0;
+
+	if (!ap) 
+		goto skip_param_count;
+
         /* liczymy ilo¶æ argumentów */
 	for (p = format; *p; p++) {
 		if (*p == '\\' && p[1] == '%') {
@@ -242,12 +246,10 @@ char *va_format_string(const char *format, va_list ap) {
 		}
 	}
 
-        for (i = 0; i < 9; i++) 
-                args[i] = NULL;
-
 	for (i = 0; i < argc; i++)
 		args[i] = va_arg(ap, char *);
 
+skip_param_count:
 	if (!dont_resolve) {
 		dont_resolve = 1;
 		if (no_prompt_cache) {
