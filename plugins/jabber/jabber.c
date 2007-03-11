@@ -1213,6 +1213,16 @@ void jabber_gpg_changed(session_t *s, const char *name) {
 	xfree(msg);
 }
 
+/**
+ * jabber_pgp_postinit()
+ *
+ * Handler for: <i>CONFIG_POSTINIT</i><br>
+ * Executed after ekg2 read sessions configuration.<br>
+ * Here we try to init gpg for <b>all</b> jabber sessions by calling jabber_gpg_changed()<br>
+ *
+ * @return 0
+ */
+
 static QUERY(jabber_pgp_postinit) {
 	list_t l;
 
@@ -1221,7 +1231,8 @@ static QUERY(jabber_pgp_postinit) {
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 
-		if (!xstrncmp(s->uid, "jid:", 4)) 
+		/* check if it's jabber_plugin session, and if it's starts with 'j' or 'J' [DON'T DO IT ON TLEN SESSIONS] */
+		if (s && s->plugin == &jabber_plugin && tolower(s->uid[0]) == 'j')
 			jabber_gpg_changed(s, NULL);
 	}
 	return 0;
@@ -1269,6 +1280,20 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
+/**
+ * jabber_plugin_init()
+ *
+ * Register jabber plugin, assign plugin params [jabber_plugin_vars], connect to most important events<br>
+ * register global jabber variables, register commands with call to jabber_register_commands()<br>
+ * And call SSL_GLOBAL_INIT() if jabber is built with ssl support<br>
+ *
+ * @todo We should set default global jabber variables with set-vars-default
+ *
+ * @sa jabber_plugin_destroy()
+ *
+ * @return 0 [successfully loaded plugin]
+ */
+
 int jabber_plugin_init(int prio) {
 	jabber_plugin.params = jabber_plugin_vars;
 
@@ -1287,7 +1312,6 @@ int jabber_plugin_init(int prio) {
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_dcc_postinit, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_pgp_postinit, NULL);
 
-/* XXX, set-vars-default */
 	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
@@ -1300,6 +1324,17 @@ int jabber_plugin_init(int prio) {
 #endif
         return 0;
 }
+
+/**
+ * jabber_plugin_destroy()
+ *
+ * Call SSL_GLOBAL_DEINIT() if jabber is built with ssl support<br>
+ * and unregister jabber plugin.
+ *
+ * @sa jabber_plugin_init()
+ *
+ * @return 0 [successfully unloaded plugin]
+ */
 
 static int jabber_plugin_destroy() {
 #ifdef JABBER_HAVE_SSL
