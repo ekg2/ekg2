@@ -148,7 +148,7 @@ static connection_t *sniff_tcp_find_connection(const struct iphdr *ip, const str
 }
 
 /* stolen from libgadu+gg plugin */
-static const char *gg_status_to_text(uint32_t status, int *descr) {
+static int gg_status_to_text(uint32_t status, int *descr) {
 #define GG_STATUS_NOT_AVAIL 0x0001		/* niedostępny */
 #define GG_STATUS_NOT_AVAIL_DESCR 0x0015	/* niedostępny z opisem (4.8) */
 #define GG_STATUS_AVAIL 0x0002			/* dostępny */
@@ -289,7 +289,7 @@ static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32
 		"");					/* secure */
 }
 
-static void sniff_gg_print_status(session_t *s, const connection_t *hdr, uint32_t uin, const char *status, const char *descr) {
+static void sniff_gg_print_status(session_t *s, const connection_t *hdr, uint32_t uin, int status, const char *descr) {
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
 		ekg_status_label(status, descr, "status_"), /* formatka */
 
@@ -299,34 +299,44 @@ static void sniff_gg_print_status(session_t *s, const connection_t *hdr, uint32_
 		descr);						/* status */
 }
 
-static void sniff_gg_print_new_status(session_t *s, const connection_t *hdr, uint32_t uin, const char *status, const char *descr) {
+static void sniff_gg_print_new_status(session_t *s, const connection_t *hdr, uint32_t uin, int status, const char *descr) {
+	const char *fname = NULL;
 	const char *whom;
 
-	if (!xstrcmp(status, EKG_STATUS_AVAIL)) 		status = "back";
-	else if (!xstrcmp(status, EKG_STATUS_AWAY))		status = "away";
-	else if (!xstrcmp(status, EKG_STATUS_INVISIBLE))	status = "invisible";
-	else if (!xstrcmp(status, EKG_STATUS_NA))		status = "disconnected";
-	else {
-		debug_error("sniff_gg_print_new_status() XXX bad status: %s\n", status);
+	if (descr) {
+		if (status == EKG_STATUS_AVAIL)			fname = "back_descr";
+		if (status == EKG_STATUS_AWAY)			fname = "away_descr";
+		if (status == EKG_STATUS_INVISIBLE)		fname = "invisible_descr";
+		if (status == EKG_STATUS_NA)			fname = "disconnected_descr";
+	} else {
+		if (status == EKG_STATUS_AVAIL)			fname = "back";
+		if (status == EKG_STATUS_AWAY)			fname = "away";
+		if (status == EKG_STATUS_INVISIBLE)		fname = "invisible";
+		if (status == EKG_STATUS_NA)			fname = "disconnected";
+
+	}
+
+	if (!fname) {
+		debug_error("sniff_gg_print_new_status() XXX bad status: 0x%x\n", status);
 		return;
 	}
 
 	whom = uin ? format_user(s, build_gg_uid(uin)) : session_name(s);	/* session_name() bad */
 
 	if (descr) {
-		if (!xstrcmp(status, "disconnected")) {
+		if (status == EKG_STATUS_NA) {
 			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-				ekg_status_label(status, descr, NULL), /* formatka */
+				fname, 					/* formatka */
 				descr, whom);
 
 		} else {
 			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-				ekg_status_label(status, descr, NULL), /* formatka */
+				fname,					/* formatka */
 				descr, "", whom);
 		}
 	} else 
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-				ekg_status_label(status, descr, NULL), /* formatka */
+				fname,					 /* formatka */
 				whom);
 }
 
@@ -406,7 +416,7 @@ SNIFF_HANDLER(sniff_gg_welcome, gg_welcome) {
 }
 
 SNIFF_HANDLER(sniff_gg_status, gg_status) {
-	const char *status;
+	int status;
 	char *descr;
 	int has_descr;
 
@@ -421,7 +431,7 @@ SNIFF_HANDLER(sniff_gg_status, gg_status) {
 }
 
 SNIFF_HANDLER(sniff_gg_new_status, gg_new_status) {
-	const char *status;
+	int status;
 	char *descr;
 	int has_descr;
 	int has_time = 0;
@@ -438,7 +448,7 @@ SNIFF_HANDLER(sniff_gg_new_status, gg_new_status) {
 
 SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 	uint32_t uin;
-	const char *status;
+	int status;
 	char *descr;
 
 	int has_descr = 0;
@@ -457,7 +467,7 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 }
 
 SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
-	const char *status;
+	int status;
 	char *descr;
 	int has_descr = 0;
 	int has_time = 0;
@@ -780,7 +790,7 @@ typedef struct {
 } GG_PACKED gg_login70;
 
 SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
-	const char *status;
+	int status;
 	char *descr;
 	int has_time = 0;	/* XXX */
 	int has_descr = 0;
@@ -1054,7 +1064,7 @@ static COMMAND(sniff_command_connect) {
 
 	watch_add(&sniff_plugin, pcap_fileno(dev), WATCH_READ, sniff_pcap_read, session);
 
-	xfree(session->status); session->status = xstrdup(EKG_STATUS_AVAIL);
+	session->status = EKG_STATUS_AVAIL;
 	session->connected = 1;
 	session->last_conn = time(NULL);
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &(session->uid));
