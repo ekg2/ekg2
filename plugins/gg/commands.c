@@ -204,6 +204,7 @@ static COMMAND(gg_command_connect) {
 		p.uin = uin;
 		p.password = (char*) password;
 		p.image_size = gg_config_image_size;
+/*		p.use_sha1 = 2; */
 
                 _status = GG_S(_status);
                 if (session_int_get(session, "private"))
@@ -314,7 +315,7 @@ noproxy:
 		if (!g->sess)
 			wcs_printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
 		else {
-			watch_t *w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, gg_session_handler, session);
+			watch_t *w = watch_add_session(session, g->sess->fd, g->sess->check, gg_session_handler);
 			watch_timeout_set(w, g->sess->timeout);
 		}
 	}

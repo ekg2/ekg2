@@ -57,7 +57,7 @@ typedef struct {
 
 void gg_register_commands();
 
-WATCHER(gg_session_handler);
+WATCHER_SESSION(gg_session_handler);
 
 typedef struct {
 	char *uid;

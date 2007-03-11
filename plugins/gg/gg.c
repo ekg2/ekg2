@@ -1110,8 +1110,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
  *
  * obs³uga zdarzeñ przy po³±czeniu gg.
  */
-WATCHER(gg_session_handler) {		/* tymczasowe */
-	session_t *s = (session_t *) data;
+WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 	gg_private_t *g;
 
 	struct gg_event *e;
@@ -1123,7 +1122,7 @@ WATCHER(gg_session_handler) {		/* tymczasowe */
 	}
 
 	if (!s || !(g = s->priv) || !g->sess) {
-		debug("[gg] gg_session_handler() called with NULL gg_session\n");
+		debug_error("gg_session_handler() called with NULL gg_session\n");
 		return -1;
 	}
 
@@ -1257,7 +1256,7 @@ WATCHER(gg_session_handler) {		/* tymczasowe */
 			gg_event_free(e);
 			return 0;
 		} 
-		w = watch_add(&gg_plugin, g->sess->fd, g->sess->check, gg_session_handler, s);
+		w = watch_add_session(s, g->sess->fd, g->sess->check, gg_session_handler);
 		watch_timeout_set(w, g->sess->timeout);
 	}
 	gg_event_free(e);
