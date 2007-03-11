@@ -39,8 +39,14 @@ echo -ne \
 		"\"WATCHER_LINE(x)=int x(int type, int fd, const char *watch, void *data)\"" \
 		"\"BINDING_FUNCTION(x)=void x(const char *arg)\"" \
 		"\"TIMER(x)=int x(int type, void *data)\"" \
+		\
 		"\"SNIFF_HANDLER(x, type)=static int x(session_t *s, const connection_t *hdr, const type *pkt, int len)\"" \
 		"\"GG_PACKED=\""	\
+		\
+		"\"JABBER_HAVE_SSL=1\"" 	\
+		"\"STRICT_XMLNS=0\""		\
+		"\"WITH_JABBER_DCC=1\""		\
+		"\"GMAIL_MAIL_NOTIFY=1\""	\
 		"\n"\
 	\
 	"INPUT=../\n" \
