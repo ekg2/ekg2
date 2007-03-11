@@ -233,6 +233,7 @@ session_t *session_add(const char *uid) {
  * This function free session params variable and internal<br>
  * session data like alias, current status, descr, password..<br>
  * If sesssion is connected, /disconnect command will be executed with session uid as reason<br>
+ * Also it remove watches connected with this session (if watch->is_session && watch->data == s)br>
  * It'll do window->session swapping if needed... and changing current session also.
  * 
  * @bug Possible implementation/idea bug in window_session_cycle() I really don't know if we should change session on this windows...
@@ -241,11 +242,12 @@ session_t *session_add(const char *uid) {
  *
  * @note If plugin allocated memory for session example in s->priv you should
  * 	connect to <i>SESSION_REMOVED</i> query event, and free alloced memory
- * 	(remember about checking if this is your session) also session watches/timers
- * 	won't be automagicly removed (please note: ekg2 don't have <i>session</i> watches/timers, 
- * 	we have <i>plugin</i> watches/timers...) We don't want segv on watch/
- * 	timer handler when it want access to memory which was freed, do we? So please be aware of it.<br>
- * 	[Hint, you can use session_find_ptr() session_find() functions to check in watch/timer handler if it wasn't removed]
+ * 	(remember about checking if this is your session) also timers
+ * 	won't be automagicly removed (please note: ekg2 don't have <i>session</i> timers, 
+ * 	we have <i>plugin</i> timers...) We don't want segv on timer handler when it want access to memory which was freed, do we? So please be aware of it.<br>
+ * 	[Hint, you can use session_find_ptr() session_find() functions to check in timer handler if it wasn't removed]
+ *
+ * @note Current ekg2 API have got session watches. Use watch_add_session()
  *
  * @param uid - uid of session to remove
  *
@@ -280,6 +282,23 @@ int session_remove(const char *uid)
 	
 	if (s->connected)
 		command_exec_format(NULL, s, 1, ("/disconnect %s"), s->uid);
+
+	/* remove sessio watches */
+session_watches_again:
+	ekg_watches_removed = 0;
+	for (l = watches; l;) {
+		watch_t *w = l->data;
+
+		l = l->next;
+
+		if (ekg_watches_removed > 1) {
+			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
+			goto session_watches_again;
+		}
+		ekg_watches_removed = 0;
+		if (w->is_session && w->data == s)
+			watch_free(w);
+	}
 
 	tmp = xstrdup(uid);
         query_emit_id(NULL, SESSION_CHANGED);
@@ -1337,6 +1356,24 @@ void sessions_free() {
 		xfree(s->lastdescr);
 		userlist_free(s);
         }
+
+	/* remove _ALL_ session watches */
+sessions_watches_again:
+	ekg_watches_removed = 0;
+	for (l = watches; l;) {
+		watch_t *w = l->data;
+
+		l = l->next;
+
+		if (ekg_watches_removed > 1) {
+			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
+			goto sessions_watches_again;
+		}
+		ekg_watches_removed = 0;
+
+		if (w->is_session)
+			watch_free(w);
+	}
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;

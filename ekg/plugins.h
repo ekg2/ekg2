@@ -169,8 +169,12 @@ typedef enum {
 
 #define WATCHER(x) int x(int type, int fd, watch_type_t watch, void *data)
 #define WATCHER_LINE(x) int x(int type, int fd, const char *watch, void *data)
+#define WATCHER_SESSION(x) int x(int type, int fd, watch_type_t watch, session_t *s)
+#define WATCHER_SESSION_LINE(x) int x(int type, int fd, const char *watch, session_t *s)
+
 typedef WATCHER(watcher_handler_func_t);
-typedef WATCHER(watcher_handler_line_func_t);
+/* typedef WATCHER_LINE(watcher_handler_line_func_t); */
+typedef WATCHER_SESSION(watcher_session_handler_func_t);
 
 typedef struct {
 	int fd;			/* obserwowany deskryptor */
@@ -191,6 +195,7 @@ typedef struct {
 					or it will be 
 					executed in next ekg_loop() loop.
 				*/
+	int is_session;		/* if set, this watch belongs to session specified in data */
 } watch_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
@@ -210,6 +215,9 @@ int watch_timeout_set(watch_t *w, time_t timeout);
 
 watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data);
 #define watch_add_line(p, fd, type, handler, data) watch_add(p, fd, type, (watcher_handler_func_t *) (handler), data)
+watch_t *watch_add_session(session_t *session, int fd, watch_type_t type, watcher_session_handler_func_t *handler);
+#define watch_add_session_line(s, fd, type, handler) watch_add_session(s, fd, type, (watcher_session_handler_func_t *) (handler))
+
 int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
 void watch_handle(watch_t *w);

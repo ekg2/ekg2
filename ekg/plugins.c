@@ -1177,6 +1177,32 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	return w;
 }
 
+/**
+ * watch_add_session()
+ *
+ * Create new session watch_t and add it on the beginning of watches list.
+ *
+ * @param session	- session
+ * @param fd		- fd to watch data for
+ * @param type		- type of watch.
+ * @param handler	- handler of watch.
+ *
+ * @return 	If @a session is NULL, or @a session->plugin is NULL, it return NULL.<br>
+ * 		else created watch_t
+ */
+
+watch_t *watch_add_session(session_t *session, int fd, watch_type_t type, watcher_session_handler_func_t *handler) {
+	watch_t *w;
+	if (!session || !session->plugin) {
+		debug_error("watch_add_session() s: 0x%x s->plugin: 0x%x\n", session, session ? session->plugin : NULL);
+		return NULL;
+	}
+	w = watch_add(session->plugin, fd, type, handler, session);
+
+	w->is_session = 1;
+	return w;
+}
+
 int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 {
 	int res = -1;
