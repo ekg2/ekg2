@@ -1322,6 +1322,24 @@ void sessions_free() {
         if (!sessions)
                 return;
 
+	/* remove _ALL_ session watches */
+sessions_watches_again:
+	ekg_watches_removed = 0;
+	for (l = watches; l;) {
+		watch_t *w = l->data;
+
+		l = l->next;
+
+		if (ekg_watches_removed > 1) {
+			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
+			goto sessions_watches_again;
+		}
+		ekg_watches_removed = 0;
+
+		if (w->is_session)
+			watch_free(w);
+	}
+
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...
  * This bug was really time-wasting ;(
  */
@@ -1356,24 +1374,6 @@ void sessions_free() {
 		xfree(s->lastdescr);
 		userlist_free(s);
         }
-
-	/* remove _ALL_ session watches */
-sessions_watches_again:
-	ekg_watches_removed = 0;
-	for (l = watches; l;) {
-		watch_t *w = l->data;
-
-		l = l->next;
-
-		if (ekg_watches_removed > 1) {
-			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
-			goto sessions_watches_again;
-		}
-		ekg_watches_removed = 0;
-
-		if (w->is_session)
-			watch_free(w);
-	}
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
