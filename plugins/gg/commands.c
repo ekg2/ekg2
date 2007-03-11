@@ -1748,7 +1748,7 @@ static COMMAND(gg_command_check_conn) {
 	c_timer->uid = xstrdup(u->uid); /* if user gets deleted, we won't get undef value */
 	c_timer->session = session;
 
-        c.uid = u->uid;
+        c.uid = c_timer->uid;
         c.session = session;
 
 	list_add(&gg_currently_checked, &c, sizeof(c));
