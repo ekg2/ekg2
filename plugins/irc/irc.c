@@ -631,7 +631,6 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	j->fd = -1;
 	irc_free_people(s, j);
 
-	debug ("%d [%d:%d:%d,%d]\n", type, EKG_DISCONNECT_FAILURE, EKG_DISCONNECT_STOPPED, EKG_DISCONNECT_NETWORK, EKG_DISCONNECT_USER);
 	switch (type) {
 		case EKG_DISCONNECT_FAILURE:
 			break;
@@ -706,28 +705,25 @@ static WATCHER_LINE(irc_handle_resolver) {
 	return 0;
 }
 
-static WATCHER_LINE(irc_handle_stream) {
-	session_t *s = session_find(data);
-	irc_private_t *j = irc_private(s);
+static WATCHER_SESSION_LINE(irc_handle_stream) {
+	irc_private_t *j = NULL;
+
+	if (!s || !(j = s->priv)) {
+		debug_error("irc_handle_stream() s: 0x%x j: 0x%x\n", s, j);
+		return -1;
+	}
 
 	/* ups, we get disconnected */
 	if (type == 1) {
-		if (s) j->recv_watch = NULL;
+		j->recv_watch = NULL;
 		/* this will cause  'Removed more than one watch...' */
-		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d %d\n", session_connected_get(s), j->connecting);
+		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d %d\n", s->connected, j->connecting);
 		
 		/* avoid reconnecting when we do /disconnect */
-		if (s && (session_connected_get(s) || j->connecting))
+		if (s->connected || j->connecting)
 			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
-		xfree(data);
 		return 0;
 	}
-
-	if (!s) { 
-		debug("The worst happen you've deleted Our Session (%s) ;(\n", data); 
-		return -1; /* watch_remove(&irc_plugin, fd, WATCH_READ); * /plugin -irc makes it but when we delete only that specific session ? irc:test * */ 
-	}
-
 
 	/* this shouldn't be like that, it would be better to change
 	 * query_connect, so the handler should get char not
@@ -738,9 +734,8 @@ static WATCHER_LINE(irc_handle_stream) {
 	return 0;
 }
 
-static WATCHER(irc_handle_connect) { /* tymczasowy */
-	session_t		*s = session_find(data);
-	irc_private_t		*j = irc_private(s);
+static WATCHER_SESSION(irc_handle_connect) { /* tymczasowy */
+	irc_private_t		*j = NULL;
 	const char		*real = NULL, *localhostname = NULL;
 	char			*pass = NULL;
 	int			res = 0; 
@@ -748,13 +743,12 @@ static WATCHER(irc_handle_connect) { /* tymczasowy */
 
 	if (type == 1) {
 		debug ("[irc] handle_connect(): type %d\n", type);
-		xfree(data);
 		return 0;
 	}
 
-	if (!s) { 
-		debug("[irc] handle_connect(): session %s deleted. :(\n", data);  
-		return -1; /* watch_remove(&irc_plugin, fd, WATCH_WRITE); */
+	if (!s || !(j = s->priv)) { 
+		debug_error("irc_handle_connect() s: 0x%x j: 0x%x\n", s, j);
+		return -1;
 	}
 
 	debug ("[irc] handle_connect()\n");
@@ -777,7 +771,7 @@ static WATCHER(irc_handle_connect) { /* tymczasowy */
 	timer_remove(&irc_plugin, "reconnect");
 	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
-	j->recv_watch = watch_add_line(&irc_plugin, fd, WATCH_READ_LINE, irc_handle_stream, xstrdup((char *) data));
+	j->recv_watch = watch_add_session_line(s, fd, WATCH_READ_LINE, irc_handle_stream);
 	j->send_watch = watch_add_line(&irc_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
 
 	real = session_get(s, "realname");
@@ -952,7 +946,7 @@ static int irc_really_connect(session_t *session) {
 	if (session_status_get(session) == EKG_STATUS_NA)
 		session_status_set(session, EKG_STATUS_AVAIL);
 
-	w = watch_add(&irc_plugin, fd, WATCH_WRITE, irc_handle_connect, xstrdup(session->uid) );
+	w = watch_add_session(session, fd, WATCH_WRITE, irc_handle_connect);
 	if ((timeout = session_int_get(session, "connect_timeout") > 0)) 
 		watch_timeout_set(w, timeout);
 	
