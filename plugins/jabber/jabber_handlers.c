@@ -81,8 +81,23 @@ int jabber_display_server_features = 1;
 static void newmail_common(session_t *s); 
 #ifdef JABBER_HAVE_SSL
 
-static char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
-#ifdef JABBER_HAVE_OPENSSL
+/**
+ * jabber_ssl_cert_verify()
+ *
+ * Initial version of routine to test if certificate used by SSL_SESSION is 100% correct.
+ * If not, return error why isn't ok.
+ *
+ * @todo 	It's testing function, so it don't catch all not 100% valid certificates.
+ * 		If you can and you know smth/ a lot about either OpenSSL or GnuTLS. Could you look at it?
+ *
+ * @param ssl - SSL_SESSION
+ *
+ * @return 	NULL if certificate is correct.<br>
+ * 		else NUL terminated string with error description.
+ */
+
+static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
+#ifdef JABBER_HAVE_OPENSSL		/* OpenSSL */
 	X509 *peer_cert = SSL_get_peer_certificate(ssl);
 	long ret;
 
@@ -125,10 +140,10 @@ static char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 		case X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:		return _("Subject Key Identifier serial number doesn't match the Authority's");
 		case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:			return _("Key Usage doesn't include certificate signing");
 		default:	debug_error("[jabber] SSL_get_verify_result() unknown retcode: %d\n", ret);
-				return "Unknown/Generic SSL_get_verify_result() result";
+				return _("Unknown/Generic SSL_get_verify_result() result");
 	}
 	return NULL;	/* never here */
-#else
+#else				/* GnuTLS */
 	static char buf[100];
 	int res;
 	unsigned int ret;
@@ -144,7 +159,7 @@ static char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 	if (ret & GNUTLS_CERT_SIGNER_NOT_CA)	xstrcat(buf, " signer not a CA");		/* 16b */
 /*	if (ret & GNUTLS_CERT_INSECURE_ALGORITHM) xstrcat(buf, " INSECURE ALGO?"); */
 
-	return (buf[0]) ? &buf[0] : NULL;
+	return (buf[0]) ? buf : NULL;
 #endif
 
 /* XXX czy sie dane zgadzaja z j->server */
@@ -156,7 +171,7 @@ static WATCHER(jabber_handle_connect_tls) /* tymczasowy */
         jabber_private_t *j = session_private_get(s);
 
 	int ret;
-	char *certret;
+	const char *certret;
 
 	if (type)
 		return 0;
