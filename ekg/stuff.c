@@ -364,7 +364,6 @@ int alias_remove(const char *name, int quiet)
  * alias_free()
  *
  * Free memory allocated by aliases
- *
  */
 
 void alias_free() {
@@ -421,13 +420,13 @@ void binding_list(int quiet, const char *name, int all)
 	}
 }
 
-/*
+/**
  * binding_free()
  *
- * zwalnia pamiêæ po li¶cie przypisanych klawiszy.
+ * Free memory allocated for key bindings.
  */
-void binding_free() 
-{
+
+void binding_free() {
 	list_t l;
 
 	if (bindings) {
@@ -443,6 +442,7 @@ void binding_free()
 		list_destroy(bindings, 1);
 		bindings = NULL;
 	}
+
 	if (bindings_added) {
 		for (l = bindings_added; l; l = l->next) {
 			binding_added_t *b = l->data;
@@ -1111,7 +1111,6 @@ int conference_set_ignore(const char *name, int flag, int quiet)
 int conference_rename(const char *oldname, const char *newname, int quiet)
 {
 	struct conference *c;
-	char *tmp1, *tmp2;
 	
 	if (conference_find(newname)) {
 		printq("conferences_exist", newname);
@@ -1123,31 +1122,25 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 		return -1;
 	}
 
-	xfree(c->name);
-	c->name = xstrdup(newname);
+	xfree(c->name);		c->name = xstrdup(newname);
+
 	tabnick_remove(oldname);
 	tabnick_add(newname);
 	
 	printq("conferences_rename", oldname, newname);
 
-	tmp1 = xstrdup(oldname);
-	tmp2 = xstrdup(newname);
+	query_emit_id(NULL, CONFERENCE_RENAMED, &oldname, &newname);	/* XXX READ-ONLY QUERY */
 
-	query_emit_id(NULL, CONFERENCE_RENAMED, &tmp1, &tmp2);
-
-	xfree(tmp1);
-	xfree(tmp2);
-	
 	return 0;
 }
 
-/*
+/**
  * conference_free()
  *
- * zwalnia pamiêæ zajêt± przez konferencje.
+ * Free memory allocated by conferences.
  */
-void conference_free()
-{
+
+void conference_free() {
 	list_t l;
 
 	if (!conferences)
@@ -1663,8 +1656,8 @@ char *read_file(FILE *f, int alloc) {
  *
  * @param format - format to pass to strftime() [man 3 strftime]
  *
- * @return 	if format is NULL or format == '\0' than it return ""
- *  		else it returns strftime()'d value. or TOOLONG if @a buf (sizeof(buf) == 100) was too small..
+ * @return 	if format is NULL or format == '\\0' than it return ""<br>
+ *  		else it returns strftime()'d value, or "TOOLONG" if @a buf (sizeof(@a buf) == 100) was too small..
  */
 
 const char *timestamp(const char *format) {
@@ -1856,14 +1849,17 @@ int timer_remove_user(int at)
 	return ((removed) ? 0 : -1);
 }
 
-/*
+/**
  * timer_free()
  *
- * zwalnia pamiêæ po timerach.
+ * Free memory after ekg2 timers.
  */
-void timer_free()
-{
+
+void timer_free() {
 	list_t l;
+
+	if (!timers)
+		return;
 
 	for (l = timers; l; l = l->next) {
 		struct timer *t = l->data;
