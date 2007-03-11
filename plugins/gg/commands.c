@@ -1664,11 +1664,9 @@ static COMMAND(gg_command_modify) {
 	return res;
 }
 
-/* dj, nie rozumiem */
-
 static TIMER(gg_checked_timer_handler)
 {
-        gg_currently_checked_t *c = (gg_currently_checked_t *) data;
+	const gg_currently_checked_t *c = (gg_currently_checked_t *) data;
 	list_t l;
 
 	if (type == 1) {
@@ -1680,7 +1678,27 @@ static TIMER(gg_checked_timer_handler)
 		gg_currently_checked_t *c2 = l->data;
 
 		if (!session_compare(c2->session, c->session) && !xstrcmp(c2->uid, c->uid)) {
-			print("gg_user_is_not_connected", session_name(c->session), format_user(c->session, c->uid));
+			userlist_t *u = userlist_find(c->session, c->uid);
+			if (u) {
+				if (u->status == EKG_STATUS_INVISIBLE) {
+					char *session	= xstrdup(session_uid_get(c->session));
+					char *uid	= xstrdup(c->uid);
+					int status	= EKG_STATUS_NA;
+					char *descr	= xstrdup(u->descr);
+					char *host	= NULL;
+					int port	= 0;
+					time_t when	= time(NULL);
+					
+					query_emit(NULL, ("protocol-status"), &session, &uid, &status, &descr, &host, &port, &when, NULL);
+					
+					xfree(session);
+					xfree(uid);
+					xfree(descr);
+				}
+			} else
+				print("gg_user_is_not_connected", session_name(c->session), format_user(c->session, c->uid));
+			xfree(c2->uid);
+			list_remove(&gg_currently_checked, c2, 1);
 			return -1; 
 		}
 	}
@@ -1727,7 +1745,7 @@ static COMMAND(gg_command_check_conn) {
 	}
 
         c_timer = xmalloc(sizeof(gg_currently_checked_t));
-	c_timer->uid = u->uid;
+	c_timer->uid = xstrdup(u->uid); /* if user gets deleted, we won't get undef value */
 	c_timer->session = session;
 
         c.uid = u->uid;

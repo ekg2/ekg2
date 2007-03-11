@@ -60,7 +60,7 @@ void gg_register_commands();
 WATCHER(gg_session_handler);
 
 typedef struct {
-	const char *uid;
+	char *uid;
 	session_t *session;
 } gg_currently_checked_t;
 

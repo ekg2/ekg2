@@ -528,6 +528,29 @@ static TIMER(gg_ping_timer_handler) {
 	return 0;
 }
 
+/* 
+ * gg_inv_check_handler()
+ *
+ * checks if user marked as invisible, is still connected
+ */
+
+static TIMER(gg_inv_check_handler)
+{
+	const gg_currently_checked_t *c = (gg_currently_checked_t *) data;
+	userlist_t *u;
+	
+	if (type == 1) {
+		xfree(data);
+		return -1;
+	}
+	
+	if ((u = userlist_find(c->session, c->uid)) && (u->status == EKG_STATUS_INVISIBLE)) {
+		command_exec_format(c->uid, c->session, 1, ("/gg:check_conn"));
+	}
+	
+	return -1;
+}
+
 /*
  * gg_session_handler_success()
  *
@@ -932,7 +955,35 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 						l = l->next;
 
 						if (!session_compare(c->session, s) && !xstrcmp(c->uid, tmp)) {
-							print("gg_user_is_connected", session_name(s), format_user(s, tmp));
+							userlist_t *u = userlist_find(s, tmp);
+							if (u) {
+								const int interval = session_int_get(s, "invisible_check_interval");
+								gg_currently_checked_t *c_timer;
+								
+								if (interval > 0) {
+									c_timer = xmalloc(sizeof(gg_currently_checked_t));
+									c_timer->uid = xstrdup(tmp);
+									c_timer->session = s;
+									timer_add(&gg_plugin, NULL, interval, 0, gg_inv_check_handler, c_timer);
+								}
+								if (u->status == EKG_STATUS_NA) {
+									char *session	= xstrdup(session_uid_get(s));
+									char *uid	= xstrdup(tmp);
+									int status	= EKG_STATUS_INVISIBLE;
+									char *descr	= xstrdup(u->descr);
+									char *host	= NULL;
+									int port	= 0;
+									time_t when	= time(NULL);
+									
+									query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &host, &port, &when, NULL);
+									
+									xfree(session);
+									xfree(uid);
+									xfree(descr);
+								}
+							} else
+								print("gg_user_is_connected", session_name(s), format_user(s, tmp));
+							xfree(c->uid);
 							list_remove(&gg_currently_checked, c, 1);
 							break;
 						}
@@ -1377,6 +1428,7 @@ static plugins_params_t gg_plugin_vars[] = {
 	PLUGIN_VAR_ADD("connection_save", 	0, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("display_notify", 	SESSION_VAR_DISPLAY_NOTIFY, VAR_INT, "-1", 0, NULL),
 	PLUGIN_VAR_ADD("email", 		0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("invisible_check_interval", 0, VAR_INT, 0, 0, NULL),
 	PLUGIN_VAR_ADD("local_ip", 		0, VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "xml,simple", 0, NULL),
 	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
