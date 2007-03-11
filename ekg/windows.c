@@ -376,13 +376,6 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 {
 	window_t *w;
 	list_t l;
-	const char *who;
-	userlist_t *uid = userlist_find(session, target);
-
-	if (uid)
-		who = uid->nickname;
-	else 
-		who = target;
 
 	switch (config_make_window & 3) {
 		case 1:
@@ -396,6 +389,11 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 				window_t *w = l->data;
 
 				if (separate && !w->target && w->id > 1) {
+					const char *who = get_nickname(session, target);
+
+					if (!who)
+						who = target;
+
 					xfree(w->target);
 					w->target = xstrdup(target);
 					query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
@@ -414,6 +412,11 @@ void window_print(const char *target, session_t *session, int separate, fstring_
 				if (!separate)
 					w = window_find("__status");
 				else {
+					const char *who = get_nickname(session, target);
+
+					if (!who)
+						who = target;
+
 					w = window_new(target, session, 0);
 					print("window_id_query_started", itoa(w->id), who, session_name(session));
 					print_window(target, session, 1, "query_started", who, session_name(session));
