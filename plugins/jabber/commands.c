@@ -580,7 +580,8 @@ static COMMAND(jabber_command_msg)
 		array_free(rcpts);
 	}
 
-	session_unidle(session);
+	if (!quiet)
+		session_unidle(session);
 
 	return 0;
 }

@@ -1125,7 +1125,8 @@ static COMMAND(irc_command_msg) {
 	xfree(uid_full);
 	xfree(tmpbuf);
 
-	session_unidle(session);
+	if (!quiet)
+		session_unidle(session);
 	return 0;
 }
 

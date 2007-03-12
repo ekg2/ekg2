@@ -508,7 +508,8 @@ static COMMAND(gg_command_msg) {
 
 	chat = (xstrcmp(name, ("msg")));
 
-	session_unidle(session);
+	if (!quiet)
+		session_unidle(session);
 
         if (!xstrcmp(params[0], ("*"))) {
 		if (msg_all(session, name, params[1]) == -1)
