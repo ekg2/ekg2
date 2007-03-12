@@ -1197,7 +1197,7 @@ watch_t *watch_add_session(session_t *session, int fd, watch_type_t type, watche
 		debug_error("watch_add_session() s: 0x%x s->plugin: 0x%x\n", session, session ? session->plugin : NULL);
 		return NULL;
 	}
-	w = watch_add(session->plugin, fd, type, handler, session);
+	w = watch_add(session->plugin, fd, type, (watcher_handler_func_t *) handler, session);
 
 	w->is_session = 1;
 	return w;
