@@ -661,8 +661,8 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 
 	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
-	if (is_UI)
-		print_window("__debug", NULL, 0, theme_format, tmp);
+	if (is_UI && window_debug)
+		print_window_w(window_debug, 0, theme_format, tmp);
 /*
 	else
 		fprintf(stderr, "%s\n", tmp); */	/* uncomment for debuging */
@@ -956,7 +956,7 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
 	else for (l = buffer_debug; l; l = l->next) {
 		struct buffer *b = l->data;
-		print_window("__debug", NULL, 0, b->target, b->line);
+		print_window_w(window_debug, 0, b->target, b->line);
 	}
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
