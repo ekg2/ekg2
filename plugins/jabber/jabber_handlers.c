@@ -1374,7 +1374,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			wcs_print("passwd");
 		} 
 		session_set(s, "__new_password", NULL);
-		return 0;
+		return;
 	}
 
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "pubsub"))) {
@@ -2501,8 +2501,17 @@ find_streamhost:
 						/* czemu sluzy dodanie usera z nickname uid jesli nie ma nickname ? */
 						u = userlist_add(s, uid, nickname ? nickname : uid); 
 
-						if (jabber_attr(item->atts, "subscription"))
+						if (jabber_attr(item->atts, "subscription")) {
 							u->authtype = xstrdup(jabber_attr(item->atts, "subscription"));
+							/* XXX: enum this? */
+							if (xstrcasecmp(u->authtype, "to") && xstrcasecmp(u->authtype, "both")) {
+								if (u->status == EKG_STATUS_NA)
+									u->status = EKG_STATUS_UNKNOWN;
+							} else {
+								if (u->status == EKG_STATUS_UNKNOWN)
+									u->status = EKG_STATUS_NA;
+							}
+						}
 						
 						for (; group ; group = group->next ) {
 							char *gname = jabber_unescape(group->data);
@@ -2803,6 +2812,12 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 		if (!status && ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN))
 			debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
 		xfree(jstatus);
+		{
+			userlist_t *u = userlist_find(s, uid);
+			
+			if ((status == EKG_STATUS_NA) && (!u || (xstrcasecmp(u->authtype, "to") && xstrcasecmp(u->authtype, "both"))))
+				status = EKG_STATUS_UNKNOWN;
+		}
 
 		if ((tmp2 = xstrchr(uid, '/'))) {
 			userlist_t *ut;
