@@ -720,7 +720,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	/* first of all, let's check if config_display_crap is unset and target is current window */
 	if (!config_display_crap) {	/* it was with && (config_make_window & 3) */
 		if (!target || !xstrcmp(target, "__current"))
-			w = window_find("__status");
+			w = window_status;
 	}
 
 	while (w == NULL) {
@@ -746,7 +746,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 		/* 2) if message is not important (not @a seperate) or we don't want create new windows at all [config_make_window & 3 == 0] than get __status window  */
 		if (!separate || (config_make_window & 3) == 0) {
-			w = window_find("__status");
+			w = window_status;
 			xfree(newtarget);
 			break;
 		}
@@ -822,7 +822,7 @@ void print_window_w(window_t *w, int separate, const char *theme, ...) {
         va_list ap;
 
 	if (!w)
-		w = window_find("__status");		/* XXX, __current? */
+		w = window_status;		/* XXX, __current? */
 
 	va_start(ap, theme);
 	print_window_c(w, separate, theme, ap);

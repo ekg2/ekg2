@@ -99,18 +99,13 @@ window_t *window_find_ptr(window_t *w) {
  */
 
 window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session) {
-	int status = 0;
 	userlist_t *u;
 	list_t l;
 
-	if (!target || !xstrcasecmp(target, "__current")) {
-		if (window_current->id)
-			return window_current;
-		else
-			status = 1;
-	}
+	if (!target || !xstrcasecmp(target, "__current"))
+		return window_current->id ? window_current : window_status;
 
-	if ((status || !xstrcasecmp(target, "__status")))
+	if ((!xstrcasecmp(target, "__status")))
 		return window_status;
 
 	if (!xstrcasecmp(target, "__debug"))
