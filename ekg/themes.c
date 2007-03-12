@@ -697,6 +697,14 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
  *
  * Print given text in given window [@a target+ @a session]
  *
+ * @todo 	We have no policy for displaying messages by e.g. jabber resources.<br>
+ * 		For now we do:<br>
+ * 			- If @a target has '/' inside. We put there NUL char.<br>
+ * 			- After it we search for window with stripped '/'<br>
+ * 			- If founded, than done.<br>
+ * 		If not, we look for user in userlist.. And if not found, than we'll create new window with stripped '/'
+ * 		
+ *
  * @param target	- target to look for.
  * @param session	- session to look for.
  * @param separate	- if essence of text if important...
@@ -726,7 +734,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		if (xstrchr(target, '/')) {
 			newtarget = xstrdup(target);
 			*(xstrchr(newtarget, '/')) = '\0';
-			w = window_find_s(session, target);		/* and search for windows with stripped '/' */
+			w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
 		} else {
 			w = window_find_s(session, target);
 		}
@@ -751,7 +759,8 @@ void print_window(const char *target, session_t *session, int separate, const ch
 			target = u->nickname;			/* use nickname instead of target */
 		else if (u && u->uid)
 			target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
-		else	target = newtarget;			/* XXX here, use target with stripped '/' */
+		else if (newtarget)
+			target = newtarget;			/* XXX here, use target with stripped '/' */
 
 		/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
 		if ((config_make_window & 3) == 1) {
