@@ -926,8 +926,9 @@ int main(int argc, char **argv)
 #endif
 		theme_init();
 
-        window_new(NULL, NULL, -1);                     /* debugowanie */
-        window_current = window_new(NULL, NULL, 1);     /* okno stanu */
+	window_debug	= window_new(NULL, NULL, -1);                   /* debugowanie */
+	window_status	= window_new(NULL, NULL, 1);     		/* okno stanu */
+	window_current	= window_status;
 
         if (!no_global_config)
                 config_read(SYSCONFDIR "/ekg2.conf");
@@ -1237,7 +1238,7 @@ watches_again:
 
 		xfree(w->target);
 	}
-	list_destroy(windows, 1);
+	list_destroy(windows, 1);	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
 	for (l = queries; l; ) {	/* free other queries... connected by protocol_init() for example */
 		query_t *q = l->data;

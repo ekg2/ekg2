@@ -73,7 +73,10 @@ typedef struct {
 #ifndef EKG2_WIN32_NOFUNCTION
 
 extern list_t windows;
+extern window_t *window_debug;
+extern window_t *window_status;
 extern window_t *window_current;
+
 extern window_lastlog_t *lastlog_current;
 
 window_t *window_find(const char *target);
@@ -82,7 +85,7 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 #define window_find_s(s, target) window_find_sa(s, target, 1) 	/* XXX, need checking */
 window_t *window_find_ptr(window_t *w);
 window_t *window_new(const char *target, session_t *session, int new_id);
-void window_kill(window_t *w, int quiet);
+void window_kill(window_t *w);
 void window_switch(int id);
 window_t *window_exist(int id);
 void window_print(window_t *w, fstring_t *line);

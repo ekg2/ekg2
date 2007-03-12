@@ -47,7 +47,10 @@ static int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 
 list_t windows = NULL;			/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
-window_t *window_current = NULL;	/* zawsze na co¶ musi wskazywaæ! */
+
+window_t *window_current = NULL;	/* okno aktualne, zawsze na co¶ musi wskazywaæ! */
+window_t *window_status  = NULL;	/* okno statusowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
+window_t *window_debug   = NULL;	/* okno debugowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
 
 window_lastlog_t *lastlog_current = NULL;
 
@@ -110,13 +113,17 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 	for (l = windows; l;) {
 		window_t *w = l->data;
 
+		if (w->id > 1)
+			break;
+
 		if (!w->id && !xstrcasecmp(target, "__debug"))
 			return w;
 
 		if (w->id == 1 && (status || !xstrcasecmp(target, "__status")))
 			return w;
 
-		if (w->id > 1)
+		/* if it's __status window, but have w->target, then let next loop check that target. */
+		if (w->id == 1 && w->target)
 			break;
 
 		l = l->next;
@@ -422,6 +429,8 @@ void window_next()
  *
  * przechodzi do poprzedniego okna.
  */
+
+/* XXX, need check */
 void window_prev()
 {
 	window_t *prev = NULL;
@@ -451,47 +460,54 @@ void window_prev()
 	window_switch(prev->id);
 }
 
-/*
+/**
  * window_kill()
  *
- * usuwa podane okno.
+ * Remove given window.<br>
+ * If it's __status window, and w->target than display nice message about closing talk, else display message about no possibility to close status window<br>
  *
- *  - w - struktura opisuj±ca okno
- *  - quiet - czy ma byæ po cichu?
+ * @note 	You cannot remove here __status and __debug windows.<br>
+ * 		You must do it by hand like in ekg_exit() but if you want do it.<br>
+ * 		Set @a window_debug and window_status for proper values.<br>
+ * 		ekg2 core need them.
+ *
+ * @bug		Possible bug with sort_windows. Can anyone who wrote it look at it?
+ *
+ * @param w - given window.
  */
-void window_kill(window_t *w, int quiet)
-{
-	int id = w->id;
-	window_t *tmp;
 
-	if (quiet) 
-		goto cleanup;
+void window_kill(window_t *w) {
+	int id;
+
+	if (!w)
+		return;
+	
+	id = w->id;
 
 	if (id == 1 && w->target) {
-		printq("query_finished", window_current->target, session_name(window_current->session));
+		print("query_finished", w->target, session_name(w->session));
 		xfree(window_current->target);
-		window_current->target = NULL;
-		userlist_free_u(&(window_current->userlist));
+		w->target	= NULL;
+/*		w->session	= NULL; */
+		userlist_free_u(&(w->userlist));	/* wtf? */
 
-		tmp = xmemdup(w, sizeof(window_t));
-		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &tmp);
-		xfree(tmp);
-
-		return;
-	}
-	
-	if (id == 1) {
-		printq("window_kill_status");
+		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 		return;
 	}
 
-	if (id == 0)
+	if (w == window_status) {
+		print("window_kill_status");
+		return;
+	}
+
+	if (w == window_debug)
 		return;
 	
-	if (w == window_current)
+	if (w == window_current)	/* if it's current window. goto previous one. */
 		window_prev();
 
-	if (config_sort_windows) {
+	/* if config_sort_windows set, and it was not floating window... than resort stuff. */
+	if (config_sort_windows && !w->floating) {
 		list_t l;
 
 		for (l = windows; l; l = l->next) {
@@ -499,16 +515,13 @@ void window_kill(window_t *w, int quiet)
 
 			if (w->floating)
 				continue;
-
+			/* XXX, i'm leaving it. however if we set sort_windows for example when we have: windows: 1, 3, 5, 7 and we will remove 3.. We'll still have: 1, 4, 6 not: 1, 2, 3 bug? */
 			if (w->id > 1 && w->id > id)
 				w->id--;
 		}
 	}
 
-cleanup:
-	tmp = xmemdup(w, sizeof(window_t));
-	query_emit_id(NULL, UI_WINDOW_KILL, &tmp);
-	xfree(tmp);
+	query_emit_id(NULL, UI_WINDOW_KILL, &w);
 
 	xfree(w->target);
 	userlist_free_u(&(w->userlist));
@@ -799,7 +812,7 @@ COMMAND(cmd_window)
 			}
 		}
 
-		window_kill(w, 0);
+		window_kill(w);
 		window_switch(window_current->id);
 		return 0;
 	}

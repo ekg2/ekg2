@@ -753,7 +753,7 @@ void newconference_destroy(newconference_t *conf, int kill_wnd) {
 	userlist_free_u(&conf->participants);
 	list_remove(&newconferences, conf, 1);
 
-	if (w) window_kill(w, 0);
+	window_kill(w);
 }
 
 void newconference_free() {
