@@ -355,7 +355,7 @@ int ui_readline_loop()
 
 	/* je¶li wci¶niêto Ctrl-D, to zamknij okienko */
 	if (!line && window_current->id != 1) {
-		window_kill(window_current, 0);
+		window_kill(window_current);
 		return 1;
 	}
 
