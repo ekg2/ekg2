@@ -39,10 +39,6 @@ typedef struct {
 	void *private;          /* can be helpfull */
 } fstring_t;
 
-#ifndef __EKG_STUFF_H
-extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo includowac calego stuff.h */
-#endif
-
 #define print(x...)		print_window_w(NULL, 0, x) 
 #define wcs_print(x...) 	print_window_w(NULL, 0, x)
 #define print_status(x...) 	print_window_w(window_status, 0, x)
