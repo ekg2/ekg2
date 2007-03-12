@@ -101,7 +101,7 @@ window_t *window_find_ptr(window_t *w) {
 window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session) {
 	int status = 0;
 	userlist_t *u;
-	list_t l, m;
+	list_t l;
 
 	if (!target || !xstrcasecmp(target, "__current")) {
 		if (window_current->id)
@@ -110,31 +110,17 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 			status = 1;
 	}
 
-	for (l = windows; l;) {
+	if ((status || !xstrcasecmp(target, "__status")))
+		return window_status;
+
+	if (!xstrcasecmp(target, "__debug"))
+		return window_debug;
+
+	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 
-		if (w->id > 1)
-			break;
-
-		if (!w->id && !xstrcasecmp(target, "__debug"))
-			return w;
-
-		if (w->id == 1 && (status || !xstrcasecmp(target, "__status")))
-			return w;
-
-		/* if it's __status window, but have w->target, then let next loop check that target. */
-		if (w->id == 1 && w->target)
-			break;
-
-		l = l->next;
-	}
-
-/* skip __debug && __status */
-	for (m = l; m; m = m->next) {
-		window_t *w = m->data;
-
 		/* if targets match, and (sessions match or [no session was specified, and it doesn't matter to which session window belongs to]) */
-		if (((session == w->session) || (!session && !session_null_means_no_session)) && !xstrcasecmp(target, w->target))
+		if (w->target && ((session == w->session) || (!session && !session_null_means_no_session)) && !xstrcasecmp(target, w->target))
 			return w;
 	}
 
@@ -155,9 +141,8 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 			if (!(u = userlist_find(s, target))) 
 				continue;
 
-		/* skip __debug && __status */
-			for (m = l; m; m = m->next) {
-				window_t *w = m->data;
+			for (l = windows; l; l = l->next) {
+				window_t *w = l->data;
 
 				/* if there's target, and sessions match [no session specified, or sessions equal, check if entry (from userlist) match */
 				if ((!session || session == w->session) && w->target) {
@@ -419,7 +404,7 @@ void window_next()
 	}
 
 	if (!next)
-		next = window_find("__status");
+		next = window_status;
 
 	window_switch(next->id);
 }
