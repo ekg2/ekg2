@@ -630,18 +630,81 @@ char *format_string(const char *format, ...)
         return tmp;
 }
 
-/*
+/**
+ * print_window_c()
+ *
+ * Mind abbreviation ;) print_window_c() -> print_window_common()<br>
+ * Common stuff for: print_window() and print_window_w()<br>
+ * Change w->act if needed, format theme, make fstring() and send everything to window_print()
+ *
+ * @note 	We only check if @a w == NULL, if you send here wrong window_t ptr, everything can happen. don't do it.
+ * 		Yeah, we can do here window_find_ptr() but it'll slow down code a lot.
+ */
+
+static void print_window_c(window_t *w, int separate, const char *theme, va_list ap) {
+        char *stmp;
+
+	/* w here shouldn't here be NULL. In case. */
+	if (!w) {
+		/* debug_fatal("print_window_common() w == NULL, theme: %s ap: 0x%x\n", w, theme, ap); */
+		return;
+	}
+
+	/* Change w->act */
+	if (w != window_current && !w->floating) {
+		int oldact = w->act;
+		if (separate)
+			w->act = 2 | (w->act & 4);
+		else if (w->act != 2)
+			w->act = 1 | (w->act & 4);
+
+		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
+			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+	}
+
+	stmp = va_format_string(format_find(theme), ap);
+	{
+		char *prompt = NULL;
+		char *line;
+
+		char *tmp = stmp;
+		while ((line = split_line(&tmp))) {
+			char *p;
+
+			if ((p = xstrstr(line, "\033[00m"))) {
+				xfree(prompt);
+				if (p != line)
+					prompt = xstrndup(line, (int) (p - line) + 5);
+				else
+					prompt = NULL;
+				line = p;
+			}
+
+			if (prompt) {
+				char *tmp = saprintf("%s%s", prompt, line);
+				window_print(w, fstring_new(tmp));
+				xfree(tmp);
+			} else
+				window_print(w, fstring_new(line));
+		}
+		xfree(prompt);
+	}
+	xfree(stmp);
+}
+
+/**
  * print_window()
  *
- * wy¶wietla tekst w podanym oknie.
+ * Print given text in given window [@a target+ @a session]
  *
- *  - target - nazwa okna
- *  - session - sesja, w której wy¶wietlamy
- *  - separate - czy niezbêdne jest otwieranie nowego okna?
- *  - theme, ... - tre¶æ.
+ * @param target	- target to look for.
+ * @param session	- session to look for.
+ * @param separate	- if essence of text if important...
+ * @param theme		- Name of format to format_string() with @a ... Text will be be built.
+ * @param ...
  */
+
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...) {
-        char *stmp;
         va_list ap;
 
 	window_t *w = NULL;
@@ -727,125 +790,34 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		break;
 	}
 
-
-	/* w here shouldn't here be NULL. In case. */
-	if (!w) {
-		debug_error("print_window() (w == NULL!) session: 0x%x target: %s\n", session, __(target));
-		return;
-	}
-
-	/* Change w->act */
-	if (w != window_current && !w->floating) {
-		int oldact = w->act;
-		if (separate)
-			w->act = 2 | (w->act & 4);
-		else if (w->act != 2)
-			w->act = 1 | (w->act & 4);
-
-		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED if really w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
-	}
-
 	va_start(ap, theme);
-	stmp = va_format_string(format_find(theme), ap);
+	print_window_c(w, separate, theme, ap);
 	va_end(ap);
-
-	{
-		char *prompt = NULL;
-		char *line;
-
-		char *tmp = stmp;
-		while ((line = split_line(&tmp))) {
-			char *p;
-
-			if ((p = xstrstr(line, "\033[00m"))) {
-				xfree(prompt);
-				if (p != line)
-					prompt = xstrndup(line, (int) (p - line) + 5);
-				else
-					prompt = NULL;
-				line = p;
-			}
-
-			if (prompt) {
-				char *tmp = saprintf("%s%s", prompt, line);
-				window_print(w, fstring_new(tmp));
-				xfree(tmp);
-			} else
-				window_print(w, fstring_new(line));
-		}
-		xfree(prompt);
-	}
-	xfree(stmp);
 }
 
 /**
  * print_window_w()
  *
  * Like print_window() but it takes window_t struct instead of target+session.
- * 
- * @todo Try merge some code with print_window()? Maybe let's create print_window_common()?
  *
+ * @note 	The same in print_window_c() we don't check if @a w is valid window ptr.
+ * 		Just be carefull. If you are not sure call:<br>
+ * 		<code>print_window_c(window_find_ptr(w), separate, theme, ...)</code>
+ * 		And eventually it will be displayed in __status window instead of good one.. But ekg2 won't crash.
+ * 
  * @param w - window to display, if NULL __status window will be used.
  *
  */
 
 void print_window_w(window_t *w, int separate, const char *theme, ...) {
         va_list ap;
-        char *stmp;
 
 	if (!w)
 		w = window_find("__status");		/* XXX, __current? */
 
-	/* w here shouldn't here be NULL. In case. */
-	if (!w) {
-		debug_error("print_window_w() (w == NULL!)\n");
-		return;
-	}
-
-	/* Change w->act */
-	if (w != window_current && !w->floating) {
-		int oldact = w->act;
-		if (separate)
-			w->act = 2 | (w->act & 4);
-		else if (w->act != 2)
-			w->act = 1 | (w->act & 4);
-
-		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED if really w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
-	}
-
 	va_start(ap, theme);
-	stmp = va_format_string(format_find(theme), ap);
+	print_window_c(w, separate, theme, ap);
 	va_end(ap);
-
-	{
-		char *prompt = NULL;
-		char *line;
-
-		char *tmp = stmp;
-		while ((line = split_line(&tmp))) {
-			char *p;
-
-			if ((p = xstrstr(line, "\033[00m"))) {
-				xfree(prompt);
-				if (p != line)
-					prompt = xstrndup(line, (int) (p - line) + 5);
-				else
-					prompt = NULL;
-				line = p;
-			}
-
-			if (prompt) {
-				char *tmp = saprintf("%s%s", prompt, line);
-				window_print(w, fstring_new(tmp));
-				xfree(tmp);
-			} else
-				window_print(w, fstring_new(line));
-		}
-		xfree(prompt);
-	}
-	xfree(stmp);
 }
 
 
