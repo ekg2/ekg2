@@ -681,6 +681,8 @@ int session_set(session_t *s, const char *key, const char *value) {
 	}
 
 	if (!xstrcasecmp(key, "password")) {
+		if (s->connected && !session_get(s, "__new_password"))
+			print("session_password_changed", session_name(s));
                 ret = session_password_set(s, value);
 		goto notify;
 	}

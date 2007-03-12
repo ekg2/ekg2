@@ -1813,6 +1813,7 @@ void theme_init()
 	format_add("session_format", "%T%1%n", 1);
 	format_add("session_format_alias", "%T%1%n/%2", 1);
 	format_add("session_cannot_change", _("%! Can't change session in query window%n\n"), 1);
+	format_add("session_password_changed", _("%> %|(%1) Looks like you're changing password in connected session. This does only set password on the client-side. If you want you change your account password, please use dedicated function (e.g. /passwd)."), 1);
 
 	format_add("metacontact_list", "%> %T%1%n", 1);
 	format_add("metacontact_list_empty", "%! Metacontact list is empty\n", 1);
