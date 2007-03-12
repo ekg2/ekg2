@@ -646,63 +646,49 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 	window_t *w = NULL;
 
-#if 0 		/* XXX, glupie, ale dorobic. */
-        /* je¶li podamy nazwê z zasobem
-         * i nie ma otwartego okna, a jest otwarte dla nazwy bez
-         * zasobem to wrzucamy tam. je¶li mamy otwarte okno dla zasobu,
-         * a przychodzi z innego, otwieramy nowe. */
-
-	if (!window_find_s(session, target)) {
-		const char *res;
-		userlist_t *u;
-
-		if ((res = xstrchr(target, '/'))) {
-			newtarget = xstrdup(target);
-			*(xstrchr(newtarget, '/')) = 0;
-			u = userlist_find(session, target);
-			/* XXX cza dorobiæ, szefie */
-		} else {
-			u = userlist_find(session, target);
-
-			if (u && window_find_s(session, u->uid))
-				newtarget = xstrdup(u->uid);
-			else if (u && u->nickname)
-				newtarget = xstrdup(u->nickname);
-		}
-	}
-
-#endif
-
 	/* first of all, let's check if config_display_crap is unset and target is current window */
 	if (!config_display_crap) {	/* it was with && (config_make_window & 3) */
-		if (!target || !xstrcmp(target, "__current")) {
-			/* XXX, here because __current window->target can be good for target. XXX */
-			/* if window_current->id == 0, it doesn't matter because __current for debug means __status.. */
-			/* but when window_current->id > 0 we NEED to check if w->target is either nickname for @a target, or uid. and if yes than it's good window! */
-
+		if (!target || !xstrcmp(target, "__current"))
 			w = window_find("__status");
-		}
 	}
 
 	while (w == NULL) {
+		char *newtarget = NULL;
+
 		userlist_t *u;
 
 		/* 1) let's check if we have such window as target... */
-		if ((w = window_find_s(session, target)))
+
+		/* if it's has '/' in target, so strip it [XXX] */
+		if (xstrchr(target, '/')) {
+			newtarget = xstrdup(target);
+			*(xstrchr(newtarget, '/')) = '\0';
+			w = window_find_s(session, target);		/* and search for windows with stripped '/' */
+		} else {
+			w = window_find_s(session, target);
+		}
+
+		if (w) {
+			xfree(newtarget);
 			break;
+		}
 
 		/* 2) if message is not important (not @a seperate) or we don't want create new windows at all [config_make_window & 3 == 0] than get __status window  */
 		if (!separate || (config_make_window & 3) == 0) {
 			w = window_find("__status");
+			xfree(newtarget);
 			break;
 		}
 
 		/* if we have no window, let's find for it in userlist */
 		u = userlist_find(session, target);
 
-		/* XXX if found, and we have nickname, so great! let's use nickname instead of uid */
+		/* if found, and we have nickname, than great! */
 		if (u && u->nickname)
-			target = u->nickname;
+			target = u->nickname;			/* use nickname instead of target */
+		else if (u && u->uid)
+			target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
+		else	target = newtarget;			/* XXX here, use target with stripped '/' */
 
 		/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
 		if ((config_make_window & 3) == 1) {
@@ -737,6 +723,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		print_window(target, session, 1, "query_started", target, session_name(session));
 		print_window(target, session, 1, "query_started_window", target);
 
+		xfree(newtarget);
 		break;
 	}
 
@@ -789,8 +776,78 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		}
 		xfree(prompt);
 	}
-        xfree(stmp);
+	xfree(stmp);
 }
+
+/**
+ * print_window_w()
+ *
+ * Like print_window() but it takes window_t struct instead of target+session.
+ * 
+ * @todo Try merge some code with print_window()? Maybe let's create print_window_common()?
+ *
+ * @param w - window to display, if NULL __status window will be used.
+ *
+ */
+
+void print_window_w(window_t *w, int separate, const char *theme, ...) {
+        va_list ap;
+        char *stmp;
+
+	if (!w)
+		w = window_find("__status");		/* XXX, __current? */
+
+	/* w here shouldn't here be NULL. In case. */
+	if (!w) {
+		debug_error("print_window_w() (w == NULL!)\n");
+		return;
+	}
+
+	/* Change w->act */
+	if (w != window_current && !w->floating) {
+		int oldact = w->act;
+		if (separate)
+			w->act = 2 | (w->act & 4);
+		else if (w->act != 2)
+			w->act = 1 | (w->act & 4);
+
+		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED if really w->act changed */
+			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+	}
+
+	va_start(ap, theme);
+	stmp = va_format_string(format_find(theme), ap);
+	va_end(ap);
+
+	{
+		char *prompt = NULL;
+		char *line;
+
+		char *tmp = stmp;
+		while ((line = split_line(&tmp))) {
+			char *p;
+
+			if ((p = xstrstr(line, "\033[00m"))) {
+				xfree(prompt);
+				if (p != line)
+					prompt = xstrndup(line, (int) (p - line) + 5);
+				else
+					prompt = NULL;
+				line = p;
+			}
+
+			if (prompt) {
+				char *tmp = saprintf("%s%s", prompt, line);
+				window_print(w, fstring_new(tmp));
+				xfree(tmp);
+			} else
+				window_print(w, fstring_new(line));
+		}
+		xfree(prompt);
+	}
+	xfree(stmp);
+}
+
 
 /**
  * theme_cache_reset()
