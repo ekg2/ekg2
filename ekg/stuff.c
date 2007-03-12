@@ -506,8 +506,6 @@ int buffer_add(list_t *type, const char *target, const char *line, int max_lines
  * @param str		- string in format: [time_when_it_happen proper line... blah, blah] <i>time_when_it_happen</i> should be in digits.
  * @param max_lines	- max number of items in buffer
  *
- * @todo Think about parsing @a line.. now it's xstrchr(str, ' ') and than atoi() 
- *
  * @return	0 - when line was successfully added to buffer, else -1 (when @a type was NULL, or @a line was in wrong format)
  */
 
@@ -516,14 +514,19 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 	char *sep;
 	time_t ts = 0;
 
-	if (!type)
+	if (!type || !str)
 		return -1;
 
-	if (!(sep = xstrchr(str, ' '))) {
+	for (sep = str; xisdigit(*sep); sep++) {	
+		/* XXX check if there's no time_t overflow? */
+		ts *= 10;
+		ts += (*sep - '0');
+	}
+
+	if (sep == str || *sep != ' ') {
 		debug_error("buffer_add_str() parsing str: %s failed\n", str);
 		return -1;
 	}
-	ts = atoi(str);
 
 	if (max_lines) {
 		list_t l = *type;
