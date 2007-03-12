@@ -494,12 +494,12 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 		debug("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
 		return -1;
 	}
-	if (!w) w = window_current;
 
 	fline = va_format_string(line, NULL);		/* format string */
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */
+
 	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);	/* let's rock */
 
 	xfree(fline);						/* cleanup */
@@ -542,7 +542,13 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	s = session_find(sesja);
 	w = window_find_s(s, target);
 
+
 	debug("[logs_buffer_raw_display()] s:0x%x; w:0x%x;\n", s, w);
+
+	if (!w)
+		w = window_current;
+
+	if (w) w->lock++;
 
 	for (l = buffer_lograw; l; l = l->next) {
 		struct buffer *b = l->data;
@@ -560,6 +566,12 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	}
 	if (bs) for (i = item < items ? 0 : item-items; i < item; i++) 
 		logs_print_window(s, w, bs[i]->line, bs[i]->ts);
+
+	if (w) {
+		w->lock--;
+		query_emit_id(NULL, UI_WINDOW_REFRESH);
+	}
+
 	xfree(bs);
 
 	xfree(profile);
