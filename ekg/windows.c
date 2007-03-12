@@ -376,8 +376,10 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
  */
 
 void window_print(window_t *w, fstring_t *line) {
-	if (!w || !line) 
+	if (!w || !line) {
+		fstring_free(line);
 		return;
+	}
 
 	if (!line->ts)
 		line->ts = time(NULL);
