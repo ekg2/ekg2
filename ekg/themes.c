@@ -37,6 +37,7 @@
 #include "windows.h"
 #include "userlist.h"
 
+#include "debug.h"
 #include "queries.h"
 
 #ifndef PATH_MAX
@@ -640,7 +641,7 @@ char *format_string(const char *format, ...)
  *  - theme, ... - tre¶æ.
  */
 void print_window(const char *target, session_t *session, int separate, const char *theme, ...) {
-        char *tmp, *stmp, *line, *newtarget = NULL;
+        char *stmp;
         va_list ap;
 
 	window_t *w = NULL;
@@ -670,9 +671,6 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		}
 	}
 
-	if (newtarget)
-		target = newtarget;
-
 #endif
 
 	/* first of all, let's check if config_display_crap is unset and target is current window */
@@ -687,7 +685,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	}
 
 	while (w == NULL) {
-		const char *who;
+		userlist_t *u;
 
 		/* 1) let's check if we have such window as target... */
 		if ((w = window_find_s(session, target)))
@@ -698,6 +696,13 @@ void print_window(const char *target, session_t *session, int separate, const ch
 			w = window_find("__status");
 			break;
 		}
+
+		/* if we have no window, let's find for it in userlist */
+		u = userlist_find(session, target);
+
+		/* XXX if found, and we have nickname, so great! let's use nickname instead of uid */
+		if (u && u->nickname)
+			target = u->nickname;
 
 		/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
 		if ((config_make_window & 3) == 1) {
@@ -727,14 +732,10 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 		/* [FOR 3) and 4)] If we create window or we change target. notify user */
 
-		/* XXX, think about it x1  */
-		if (!(who = get_nickname(session, target)))
-			who = target;
-
-		/* XXX, think about it x2 */
-		print("window_id_query_started", itoa(w->id), who, session_name(session));
-		print_window(target, session, 1, "query_started", who, session_name(session));
-		print_window(target, session, 1, "query_started_window", who);
+		/* XXX, think about it x1 */
+		print("window_id_query_started", itoa(w->id), target, session_name(session));
+		print_window(target, session, 1, "query_started", target, session_name(session));
+		print_window(target, session, 1, "query_started_window", target);
 
 		break;
 	}
@@ -743,12 +744,9 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	/* w here shouldn't here be NULL. In case. */
 	if (!w) {
 		debug_error("print_window() (w == NULL!) session: 0x%x target: %s\n", session, __(target));
-		xfree(newtarget);
 		return;
 	}
-        xfree(newtarget);
 
-	
 	/* Change w->act */
 	if (w != window_current && !w->floating) {
 		int oldact = w->act;
@@ -761,12 +759,15 @@ void print_window(const char *target, session_t *session, int separate, const ch
 			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
 	}
 
-        va_start(ap, theme);
-        tmp = stmp = va_format_string(format_find(theme), ap);
-        va_end(ap);
+	va_start(ap, theme);
+	stmp = va_format_string(format_find(theme), ap);
+	va_end(ap);
 
 	{
 		char *prompt = NULL;
+		char *line;
+
+		char *tmp = stmp;
 		while ((line = split_line(&tmp))) {
 			char *p;
 
@@ -787,7 +788,6 @@ void print_window(const char *target, session_t *session, int separate, const ch
 				window_print(w, fstring_new(line));
 		}
 		xfree(prompt);
-
 	}
         xfree(stmp);
 }
