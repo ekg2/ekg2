@@ -86,6 +86,7 @@ void window_kill(window_t *w, int quiet);
 void window_switch(int id);
 window_t *window_exist(int id);
 void window_print(window_t *w, fstring_t *line);
+void print_window_w(window_t *w, int separate, const char *theme, ...);	/* themes.c */
 char *window_target(window_t *window);
 
 int window_session_cycle(window_t *w);
