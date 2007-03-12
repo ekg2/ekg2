@@ -1374,6 +1374,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 			wcs_print("passwd");
 		} 
 		session_set(s, "__new_password", NULL);
+		return 0;
 	}
 
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "pubsub"))) {
