@@ -411,14 +411,16 @@ static TIMER(ekg_day_timer) {
 	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)  {
 		if (config_display_day_changed) {
 			list_t l;
+			const char *ts = timestamp("%d %b %Y");
+
 			for (l = windows; l; l = l->next) {
 				window_t *w = l->data;
 				int oldact;
 				
-				if (w->id == 0 || w->id == 1000) continue; /* skip __contacts && __debug */
+				if (!w || w->id == 0 || w->floating) continue; /* skip __contacts && floating windows. */
 
 				oldact = w->act;	/* save old act */
-				print_window(window_target(w), w->session, 0, "day_changed", timestamp("%d %b %Y"));
+				print_window_w(w, 0, "day_changed", ts);
 				w->act = oldact;	/* restore old act */
 			}
 		}
