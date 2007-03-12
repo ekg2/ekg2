@@ -363,95 +363,21 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 	return w;
 }
 
-/*
+/**
  * window_print()
  *
- * wy¶wietla w podanym okienku, co trzeba.
- * 
- *  - target - cel wy¶wietlanego tekstu.
- *  - separate - czy jest na tyle wa¿ne, ¿eby otwieraæ nowe okno?
- *  - line - sformatowana linia.
+ * Print fstring_t @a line to window
+ *
+ * @todo If UI_WINDOW_PRINT is not handled by ui-plugin, we should free @a line, or we'll have memleaks.
+ *
+ * @param w - window
+ * @param line - line
+ *
  */
-void window_print(const char *target, session_t *session, int separate, fstring_t *line)
-{
-	window_t *w;
-	list_t l;
 
-	switch (config_make_window & 3) {
-		case 1:
-			if ((w = window_find_s(session, target)))
-				goto crap;
-
-			if (!separate)
-				w = window_find("__status");
-
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-
-				if (separate && !w->target && w->id > 1) {
-					const char *who = get_nickname(session, target);
-
-					if (!who)
-						who = target;
-
-					xfree(w->target);
-					w->target = xstrdup(target);
-					query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
-					print("window_id_query_started", itoa(w->id), who, session_name(session));
-					print_window(target, session, 1, "query_started", who, session_name(session));
-					print_window(target, session, 1, "query_started_window", who);
-/*					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS)) 
-						event_check(EVENT_QUERY, get_uin(target), target);
- */
-					break;
-				}
-			}
-
-		case 2:
-			if (!(w = window_find_s(session, target))) {
-				if (!separate)
-					w = window_find("__status");
-				else {
-					const char *who = get_nickname(session, target);
-
-					if (!who)
-						who = target;
-
-					w = window_new(target, session, 0);
-					print("window_id_query_started", itoa(w->id), who, session_name(session));
-					print_window(target, session, 1, "query_started", who, session_name(session));
-					print_window(target, session, 1, "query_started_window", who);
-/*					if (!(ignored_check(get_uid(target)) & IGNORE_EVENTS))
-						event_check(EVENT_QUERY, get_uin(target), target);
- */
-				}
-			}
-
-crap:
-			if (!config_display_crap && target && !xstrcmp(target, "__current"))
-				w = window_find("__status");
-			
-			break;
-			
-		default:
-			/* je¶li nie ma okna, rzuæ do statusowego. */
-			if (!(w = window_find_s(session, target)))
-				w = window_find("__status");
-	}
-
-	/* albo zaczynamy, albo koñczymy i nie ma okienka ¿adnego */
-	if (!w) 
+void window_print(window_t *w, fstring_t *line) {
+	if (!w || !line) 
 		return;
- 
-	if (w != window_current && !w->floating) {
-		int oldact = w->act;
-		if (separate)
-			w->act = 2 | (w->act & 4);
-		else if (w->act != 2)
-			w->act = 1 | (w->act & 4);
-		if (oldact != w->act)
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
-	}
 
 	if (!line->ts)
 		line->ts = time(NULL);
