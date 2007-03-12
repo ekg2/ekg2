@@ -712,7 +712,7 @@ QUERY(ncurses_contacts_changed)
 	}
 	/* XXX destroy window only if (!config_contacts) ? XXX */
 	if ((w = window_find_sa(NULL, "__contacts", 1))) {
-		window_kill(w, 1);
+		window_kill(w);
 		w = NULL;
 	}
 

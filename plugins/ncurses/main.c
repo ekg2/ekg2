@@ -433,7 +433,7 @@ static QUERY(ncurses_ui_window_lastlog) {
 	config_lastlog_lock = 0;
 	if (!(retval = n->handle_redraw(w)) && !config_lastlog_noitems) {	/* if we don't want __backlog wnd when no items founded.. */
 		/* destroy __backlog */
-		window_kill(w, 1);
+		window_kill(w);
 		config_lastlog_lock = lock_old;
 /* XXX bugnotes, when killing visible w->floating window we should do: implement in window_kill() */
 		ncurses_resize();
