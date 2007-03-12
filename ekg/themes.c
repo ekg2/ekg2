@@ -812,17 +812,20 @@ void print_window(const char *target, session_t *session, int separate, const ch
  * @note 	The same in print_window_c() we don't check if @a w is valid window ptr.
  * 		Just be carefull. If you are not sure call:<br>
  * 		<code>print_window_c(window_find_ptr(w), separate, theme, ...)</code>
- * 		And eventually it will be displayed in __status window instead of good one.. But ekg2 won't crash.
+ * 		And eventually it will be displayed in (__status / or __current) window instead of good one.. But ekg2 won't crash.
  * 
- * @param w - window to display, if NULL __status window will be used.
- *
+ * 		@param	w - window to display,<br>
+ * 			if NULL than __status or __current will be used. it depends on: config_default_status_window and config_display_crap variables.
  */
 
 void print_window_w(window_t *w, int separate, const char *theme, ...) {
         va_list ap;
 
-	if (!w)
-		w = window_status;		/* XXX, __current? */
+	if (!w) {	/* if no window passed, then get window based of */
+		if (config_default_status_window || !config_display_crap)
+			w = window_status;
+		else	w = ((window_current != window_debug) ? window_current : window_status);	/* don't print in __debug window, print in __status one */
+	}
 
 	va_start(ap, theme);
 	print_window_c(w, separate, theme, ap);

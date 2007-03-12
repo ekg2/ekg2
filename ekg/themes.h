@@ -43,9 +43,9 @@ typedef struct {
 extern int config_default_status_window;	/* deklaracja zeby nie trzeba bylo includowac calego stuff.h */
 #endif
 
-#define print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x) 
-#define wcs_print(x...) print_window( (config_default_status_window) ? "__status" : "__current", NULL, 0, x)
-#define print_status(x...) print_window_w(window_status, 0, x)
+#define print(x...)		print_window_w(NULL, 0, x) 
+#define wcs_print(x...) 	print_window_w(NULL, 0, x)
+#define print_status(x...) 	print_window_w(window_status, 0, x)
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
