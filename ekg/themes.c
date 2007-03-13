@@ -79,27 +79,23 @@ const char *format_find(const char *name)
 		return "";
 
 	if (config_speech_app && !xstrchr(name, ',')) {
-		char *name2 = saprintf("%s,speech", name);
-		const char *tmp;
-
-		if (xstrcmp((tmp = format_find(name2)), "")) {
-			xfree(name2);
-			return tmp;
-		}
+		char *name2 	= saprintf("%s,speech", name);
+		const char *tmp = format_find(name2);
 
 		xfree(name2);
+
+		if (tmp[0] != '\0')
+			return tmp;
 	}
 
 	if (config_theme && (tmp = xstrchr(config_theme, ',')) && !xstrchr(name, ',')) {
-		char *name2 = saprintf("%s,%s", name, tmp + 1);
-		const char *tmp;
-
-		if (xstrcmp((tmp = format_find(name2)), "")) {
-			xfree(name2);
-			return tmp;
-		}
+		char *name2	= saprintf("%s,%s", name, tmp + 1);
+		const char *tmp = format_find(name2);
 
 		xfree(name2);
+
+		if (tmp[0] != '\0')
+			return tmp;
 	}
 
 	hash = ekg_hash(name);
@@ -107,9 +103,8 @@ const char *format_find(const char *name)
 	for (l = formats; l; l = l->next) {
 		struct format *f = l->data;
 
-		if (hash == f->name_hash && !xstrcasecmp(f->name, name)) {
+		if (hash == f->name_hash && !xstrcmp(f->name, name))
 			return f->value;
-		}
 	}
 	return "";
 }
