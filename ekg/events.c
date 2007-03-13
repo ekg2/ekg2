@@ -411,7 +411,7 @@ static TIMER(ekg_day_timer) {
 	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)  {
 		if (config_display_day_changed) {
 			list_t l;
-			const char *ts = timestamp("%d %b %Y");
+			char *ts = xstrdup(timestamp("%d %b %Y"));
 
 			for (l = windows; l; l = l->next) {
 				window_t *w = l->data;
@@ -420,9 +420,14 @@ static TIMER(ekg_day_timer) {
 				if (!w || w->id == 0 || w->floating) continue; /* skip __contacts && floating windows. */
 
 				oldact = w->act;	/* save old act */
+				w->lock++;		/* lock window */
 				print_window_w(w, 0, "day_changed", ts);
+				w->lock--;		/* unlock window */
 				w->act = oldact;	/* restore old act */
 			}
+			xfree(ts);
+
+			query_emit_id(NULL, UI_WINDOW_REFRESH);
 		}
 		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
 		query_emit_id(NULL, DAY_CHANGED, &tm, &oldtm);
