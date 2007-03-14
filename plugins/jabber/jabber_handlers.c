@@ -71,9 +71,12 @@
 #define jabberfix(x,a) ((x) ? x : a)
 #define STRICT_XMLNS 1
 
-static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
-static void jabber_handle_presence(xmlnode_t *n, session_t *s);
-static void jabber_handle_iq(xmlnode_t *n, session_t *s);
+#define JABBER_HANDLER(x) static void x(session_t *s, xmlnode_t *n)
+
+JABBER_HANDLER(jabber_handle_message);
+JABBER_HANDLER(jabber_handle_iq);
+JABBER_HANDLER(jabber_handle_presence);
+
 static time_t jabber_try_xdelay(const char *stamp);
 static void jabber_session_connected(session_t *s);
 int jabber_display_server_features = 1;
@@ -241,7 +244,7 @@ gnutls_ok:
 }
 #endif
 
-static void tlen_handle(xmlnode_t *n, session_t *s) {
+JABBER_HANDLER(tlen_handle) {
 	if (!xstrcmp(n->name, "m")) {
 		char *type = jabber_attr(n->atts, "tp");
 		char *from = jabber_attr(n->atts, "f");
@@ -325,6 +328,7 @@ static void tlen_handle(xmlnode_t *n, session_t *s) {
 		xfree(uid);
 		xfree(text);
 	} else debug_error("[tlen] what's that: %s ?\n", n->name);
+
 }
 
 void jabber_handle(void *data, xmlnode_t *n)
@@ -346,7 +350,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 	session_t *s = (session_t *) data;
         jabber_private_t *j;
 
-        if (!s || !(j = jabber_private(s)) || !n) {
+        if (!s || !(j = s->priv) || !n) {
                 debug_error("[jabber] jabber_handle() invalid parameters\n");
                 return;
         }
@@ -354,11 +358,11 @@ void jabber_handle(void *data, xmlnode_t *n)
         debug_function("[jabber] jabber_handle() <%s>\n", n->name);
 
         if (!xstrcmp(n->name, "message")) {
-		jabber_handle_message(n, s, j);
+		jabber_handle_message(s, n);
 	} else if (!xstrcmp(n->name, "iq")) {
-		jabber_handle_iq(n, s);
+		jabber_handle_iq(s, n);
 	} else if (!xstrcmp(n->name, "presence")) {
-		jabber_handle_presence(n, s);
+		jabber_handle_presence(s, n);
 	} else if (!xstrcmp(n->name, "stream:features")) {
 		int use_sasl = j->connecting == 1 && (session_int_get(s, "use_sasl") == 1);
 		int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
@@ -786,11 +790,13 @@ void jabber_handle(void *data, xmlnode_t *n)
 		}
 		array_free(arr);
 	} else if (j->istlen) {
-		tlen_handle(n, s);
+		tlen_handle(s, n);
 	} else	debug_error("[jabber] what's that: %s ?\n", n->name);
 }
 
-static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j) {
+JABBER_HANDLER(jabber_handle_message) {
+	jabber_private_t *j = s->priv;
+
 	xmlnode_t *nerr		= xmlnode_find_child(n, "error");
 	xmlnode_t *nbody   	= xmlnode_find_child(n, "body");
 	xmlnode_t *nsubject	= NULL;
@@ -1206,12 +1212,13 @@ static void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const ch
 	array_free(labels);
 }
 
-static void jabber_handle_iq(xmlnode_t *n, session_t *s) {
+JABBER_HANDLER(jabber_handle_iq) {
+	jabber_private_t *j = s->priv;
+
 	const char *atype= jabber_attr(n->atts, "type");
 	const char *id   = jabber_attr(n->atts, "id");
 	const char *from = jabber_attr(n->atts, "from");
 
-	jabber_private_t *j = jabber_private(s);
 	xmlnode_t *q;
 
 	enum {
@@ -2636,8 +2643,9 @@ static inline void mucuser_private_deinit(userlist_t *u) {
 	xfree(p->aff);
 }
 
-static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
-	jabber_private_t *j = jabber_private(s);
+JABBER_HANDLER(jabber_handle_presence) {
+	jabber_private_t *j = s->priv;
+
 	const char *from = jabber_attr(n->atts, "from");
 	const char *type = jabber_attr(n->atts, "type");
 	char *jid, *uid;
