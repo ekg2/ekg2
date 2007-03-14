@@ -401,6 +401,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
                 XML_ParserFree(j->parser);
         j->parser = NULL;
 	session_set(s, "__sasl_excepted", NULL);
+	session_int_set(s, "__roster_retrieved", 0);
 
 	{
 		char *__session = xstrdup(session_uid_get(s));
@@ -415,9 +416,8 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 
 static void jabber_handle_start(void *data, const char *name, const char **atts)
 {
-        jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
-        jabber_private_t *j = session_private_get(jdh->session);
-        session_t *s = jdh->session;
+	session_t *s = (session_t *) data;
+        jabber_private_t *j = session_private_get(s);
 
         if (!session_connected_get(s) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		char *passwd		= (char*) session_get(s, "password");
@@ -486,10 +486,7 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		xmlnode_handle_start(data, name, atts);
 }
 
-static WATCHER(jabber_handle_stream)
-{
-        jabber_handler_data_t *jdh	= (jabber_handler_data_t *) data;
-        session_t *s			= (session_t *) jdh->session;
+static WATCHER_SESSION(jabber_handle_stream) {
         jabber_private_t *j		= session_private_get(s);
 	XML_Parser parser;				/* j->parser */
 	char *uncompressed	= NULL;
@@ -506,7 +503,6 @@ static WATCHER(jabber_handle_stream)
 		if (s && session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
 			jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 
-		xfree(data);
                 return 0;
         }
 
@@ -695,7 +691,6 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 {
 	session_t *s = (session_t *) data;
         jabber_private_t *j = session_private_get(s);
-       	jabber_handler_data_t *jdh;
 
         int res = 0;
 	socklen_t res_size = sizeof(res);
@@ -712,10 +707,9 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
                 return -1;
         }
 
-	jdh = xmalloc(sizeof(jabber_handler_data_t));
-	jdh->session = s;
-/*	jdh->roster_retrieved = 0; */
-	watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_stream, jdh);
+	session_int_set(s, "__roster_retrieved", 0);
+
+	watch_add_session(s, fd, WATCH_READ, jabber_handle_stream);
 	j->using_compress = JABBER_COMPRESSION_NONE;
 
 #ifdef JABBER_HAVE_SSL
@@ -732,7 +726,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 	}
 
         j->id = 1;
-	j->parser = jabber_parser_recreate(NULL, jdh);
+	j->parser = jabber_parser_recreate(NULL, s);
 
 	if (j->istlen || (session_int_get(s, "ping-server") != 0)) {
 		tname = saprintf("ping-%s", s->uid+4);

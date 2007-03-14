@@ -73,9 +73,9 @@
 
 static void jabber_handle_message(xmlnode_t *n, session_t *s, jabber_private_t *j);
 static void jabber_handle_presence(xmlnode_t *n, session_t *s);
-static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh);
+static void jabber_handle_iq(xmlnode_t *n, session_t *s);
 static time_t jabber_try_xdelay(const char *stamp);
-static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh);
+static void jabber_session_connected(session_t *s);
 int jabber_display_server_features = 1;
 
 static void newmail_common(session_t *s); 
@@ -343,8 +343,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 #else
 #define CHECK_XMLNS(n, xmlns, func)
 #endif
-        jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
-        session_t *s = jdh->session;
+	session_t *s = (session_t *) data;
         jabber_private_t *j;
 
         if (!s || !(j = jabber_private(s)) || !n) {
@@ -357,7 +356,7 @@ void jabber_handle(void *data, xmlnode_t *n)
         if (!xstrcmp(n->name, "message")) {
 		jabber_handle_message(n, s, j);
 	} else if (!xstrcmp(n->name, "iq")) {
-		jabber_handle_iq(n, jdh);
+		jabber_handle_iq(n, s);
 	} else if (!xstrcmp(n->name, "presence")) {
 		jabber_handle_presence(n, s);
 	} else if (!xstrcmp(n->name, "stream:features")) {
@@ -510,7 +509,7 @@ void jabber_handle(void *data, xmlnode_t *n)
 				j->id++);
 
 		if (j->connecting == 2 && !(use_fjuczers & 2))	/* STRANGE, BUT MAYBE POSSIBLE? */
-			jabber_session_connected(s, jdh);
+			jabber_session_connected(s);
 
 		JABBER_COMMIT_DATA(j->send_watch);	
 
@@ -1207,12 +1206,11 @@ static void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const ch
 	array_free(labels);
 }
 
-static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
+static void jabber_handle_iq(xmlnode_t *n, session_t *s) {
 	const char *atype= jabber_attr(n->atts, "type");
 	const char *id   = jabber_attr(n->atts, "id");
 	const char *from = jabber_attr(n->atts, "from");
 
-	session_t *s = jdh->session;
 	jabber_private_t *j = jabber_private(s);
 	xmlnode_t *q;
 
@@ -1359,7 +1357,7 @@ static void jabber_handle_iq(xmlnode_t *n, jabber_handler_data_t *jdh) {
 
 	if (!xstrcmp(id, "auth")) {
 		if (type == JABBER_IQ_TYPE_RESULT) {
-			jabber_session_connected(s, jdh);
+			jabber_session_connected(s);
 		} else {	/* Can someone look at that, i don't undestand for what is it here... */
 			s->last_conn = time(NULL);
 			j->connecting = 0;
@@ -2491,7 +2489,8 @@ find_streamhost:
 					w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
 					mamy ju¿ w liscie, to przyszla do nas zmiana rostera; usunmy wiec najpierw, a potem
 					sprawdzmy, czy warto dodawac :) */
-					if (jdh->roster_retrieved && (u = userlist_find(s, uid)) )
+
+					if ((session_int_get(s, "__roster_retrieved") == 1) && (u = userlist_find(s, uid)))
 						userlist_remove(s, u);
 
 					if (!xstrncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
@@ -2520,14 +2519,14 @@ find_streamhost:
 							xfree(gname);
 						}
 
-						if (jdh->roster_retrieved) {
+						if ((session_int_get(s, "__roster_retrieved") == 1)) {
 							command_exec_format(NULL, s, 1, ("/auth --probe %s"), uid);
 						}
 						xfree(nickname); 
 					}
 					xfree(uid);
 				}; /* for */
-				jdh->roster_retrieved = 1;
+				session_int_set(s, "__roster_retrieved", 1);
 			} /* jabber:iq:roster */
 		} /* if query */
 	} /* type == set */
@@ -2855,7 +2854,7 @@ static void jabber_handle_presence(xmlnode_t *n, session_t *s) {
 	xfree(uid);
 } /* <presence> */
 
-static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh) {
+static void jabber_session_connected(session_t *s) {
 	jabber_private_t *j = jabber_private(s);
 	char *__session = xstrdup(session_uid_get(s));
 
@@ -2872,7 +2871,8 @@ static void jabber_session_connected(session_t *s, jabber_handler_data_t *jdh) {
 		session_set(s, "__new_acount", NULL);
 	}
 
-	jdh->roster_retrieved = 0;
+	session_int_set(s, "__roster_retrieved", 0);
+
 	userlist_free(s);
 	watch_write(j->send_watch, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 	jabber_write_status(s);

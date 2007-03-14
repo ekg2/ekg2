@@ -28,8 +28,7 @@ static void xmlnode_free(xmlnode_t *n)
 
 void xmlnode_handle_start(void *data, const char *name, const char **atts)
 {
-	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
-	session_t *s = jdh->session;
+	session_t *s = (session_t *) data;
 	xmlnode_t *n, *newnode;
 	jabber_private_t *j;
 	int arrcount;
@@ -73,8 +72,7 @@ void xmlnode_handle_start(void *data, const char *name, const char **atts)
  
 void xmlnode_handle_end(void *data, const char *name)
 {
-	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
-	session_t *s = jdh->session;
+	session_t *s = (session_t *) data;
 	xmlnode_t *n;
 	jabber_private_t *j;
 
@@ -100,8 +98,7 @@ void xmlnode_handle_end(void *data, const char *name)
 
 void xmlnode_handle_cdata(void *data, const char *text, int len)
 {
-	jabber_handler_data_t *jdh = (jabber_handler_data_t*) data;
-	session_t *s = jdh->session;
+	session_t *s = (session_t *) data;
 	jabber_private_t *j;
 	xmlnode_t *n;
 	int oldlen;
