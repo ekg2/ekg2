@@ -86,44 +86,74 @@ PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 #endif
 
 /*
- * jabber_private_destroy()
+ * jabber_session_init()
  *
- * inicjuje jabber_private_t danej sesji.
+ * Handler for: <i>SESSION_ADDED</i><br>
+ * Init private session struct jabber_private_t if @a session is jabber one.
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - uid of session
+ * @param data NULL
+ *
+ * @return	0 if @a session is jabber one, and we init memory<br>
+ * 		1 if we don't found such session, or it wasn't jabber session <b>[most probable]</b>, or we already init memory.
  */
-static void jabber_private_init(session_t *s) {
-        jabber_private_t *j;
 
-	if (!s || s->priv || s->plugin != &jabber_plugin)
-		return;
+static QUERY(jabber_session_init) {
+	char *session = *(va_arg(ap, char**));
 
-        s->priv = j = xmalloc(sizeof(jabber_private_t));
-        j->fd = -1;
+	session_t *s = session_find(session);
+	jabber_private_t *j;
+
+	if (!s || s->plugin != &jabber_plugin || s->priv)
+		return 1;
+
+	j = xmalloc(sizeof(jabber_private_t));
+	j->fd = -1;
 	j->istlen = !xstrncasecmp(s->uid, "tlen:", 5);
+
+	s->priv = j;
+
+	return 0;
 }
 
-/*
- * jabber_private_destroy()
+
+/**
+ * jabber_session_deinit()
  *
- * zwalnia jabber_private_t danej sesji.
+ * Handler for: <i>SESSION_REMOVED</i><br>
+ * Free memory allocated by jabber_private_t if @a session is jabber one.
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - uid of session
+ * @param data NULL
+ *
+ * @return 	0 if @a session is jabber one, and memory allocated where xfree()'d.<br>
+ * 		1 if not such session, or it wasn't jabber session <b>[most probable]</b>, or we already free memory.
  */
-static void jabber_private_destroy(session_t *s) {
-        jabber_private_t *j;
 
-	if (!s || !(j = s->priv) || s->plugin != &jabber_plugin)
-		return;
+static QUERY(jabber_session_deinit) {
+	char *session = *(va_arg(ap, char**));
 
-        xfree(j->server);
+	session_t *s = session_find(session);
+	jabber_private_t *j;
+
+	if (!s || s->plugin != &jabber_plugin || !(j = s->priv))
+		return 1;
+
+	s->priv = NULL;
+
+	xfree(j->server);
 	xfree(j->resource);
 	xfree(j->last_gmail_result_time);
 	xfree(j->last_gmail_tid);
 
-        if (j->parser)
-                XML_ParserFree(j->parser);
+	if (j->parser)
+		XML_ParserFree(j->parser);
 	jabber_bookmarks_free(j);
 	jabber_privacy_free(j);
 
-        xfree(j);
-	s->priv = NULL;
+	xfree(j);
+
+	return 0;
 }
 
 /* destroy all previously saved jabber:iq:privacy list... we DON'T DELETE LIST on jabberd server... only list saved @ j->privacy */
@@ -168,27 +198,6 @@ int jabber_bookmarks_free(jabber_private_t *j) {
 	list_destroy(j->bookmarks, 0); 
 	j->bookmarks = NULL;
 	return 0;
-}
-
-/*
- * jabber_session()
- *
- * obs³uguje dodawanie i usuwanie sesji -- inicjalizuje lub zwalnia
- * strukturê odpowiedzialn± za wnêtrzno¶ci jabberowej sesji.
- */
-static QUERY(jabber_session) {
-        char **session = va_arg(ap, char**);
-        session_t *s = session_find(*session);
-
-        if (!s)
-                return -1;
-
-        if (data)
-                jabber_private_init(s);
-        else
-                jabber_private_destroy(s);
-
-        return 0;
 }
 
 /**
@@ -1304,8 +1313,8 @@ int jabber_plugin_init(int prio) {
 	query_connect_id(&jabber_plugin, PROTOCOL_VALIDATE_UID,	jabber_validate_uid, NULL);
 	query_connect_id(&jabber_plugin, PLUGIN_PRINT_VERSION,	jabber_print_version, NULL);
 	query_connect_id(&jabber_plugin, GET_PLUGIN_PROTOCOLS,	jabber_protocols, NULL);
-	query_connect_id(&jabber_plugin, SESSION_ADDED,		jabber_session, (void*) 1);
-	query_connect_id(&jabber_plugin, SESSION_REMOVED,	jabber_session, (void*) 0);
+	query_connect_id(&jabber_plugin, SESSION_ADDED,		jabber_session_init, NULL);
+	query_connect_id(&jabber_plugin, SESSION_REMOVED,	jabber_session_deinit, NULL);
 	query_connect_id(&jabber_plugin, STATUS_SHOW,		jabber_status_show_handle, NULL);
 	query_connect_id(&jabber_plugin, UI_WINDOW_KILL,	jabber_window_kill, NULL);
 	query_connect_id(&jabber_plugin, PROTOCOL_IGNORE,	jabber_protocol_ignore, NULL);
