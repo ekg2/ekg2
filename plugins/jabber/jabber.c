@@ -85,7 +85,7 @@ PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
 
-/*
+/**
  * jabber_session_init()
  *
  * Handler for: <i>SESSION_ADDED</i><br>
@@ -109,7 +109,7 @@ static QUERY(jabber_session_init) {
 
 	j = xmalloc(sizeof(jabber_private_t));
 	j->fd = -1;
-	j->istlen = !xstrncasecmp(s->uid, "tlen:", 5);
+	j->istlen = (tolower(s->uid[0]) == 't');	/* mark if this is tlen protocol */
 
 	s->priv = j;
 
