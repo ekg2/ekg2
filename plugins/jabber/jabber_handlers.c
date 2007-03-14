@@ -87,6 +87,9 @@ static void newmail_common(session_t *s);
  * Initial version of routine to test if certificate used by SSL_SESSION is 100% correct.
  * If not, return error why isn't ok.
  *
+ * @note	Code to handle SSL_get_verify_result() result copied from qssl.cpp<br>
+ * 		qssl.cpp - Qt OpenSSL plugin Copyright (C) 2001, 2002  Justin Karneges under LGPL 2.1
+ *
  * @todo 	It's testing function, so it don't catch all not 100% valid certificates.
  * 		If you can and you know smth/ a lot about either OpenSSL or GnuTLS. Could you look at it?
  *
@@ -104,9 +107,7 @@ static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 	if (!peer_cert) return _("No peer certificate");
 
 	switch ((ret = SSL_get_verify_result(ssl))) {
-		/* 
-		 * copied from qssl.cpp - Qt OpenSSL plugin Copyright (C) 2001, 2002  Justin Karneges under LGPL 2.1 
-		 */
+		/* copied from qssl.cpp - Qt OpenSSL plugin Copyright (C) 2001, 2002  Justin Karneges under LGPL 2.1 */
 		case X509_V_OK: 					return NULL;
 		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: 		return _("Unable to get issuer certificate");
 		case X509_V_ERR_UNABLE_TO_GET_CRL:			return _("Unable to get certificate CRL");
@@ -151,7 +152,7 @@ static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 	if ((res = gnutls_certificate_verify_peers2(ssl, &ret)) != 0)
 		return gnutls_strerror(res);
 
-	buf[0] = 0;
+	buf[0] = '\0';
 		/* ret is bitmask of gnutls_certificate_status_t */
 	if (ret & GNUTLS_CERT_INVALID) 		xstrcat(buf, "Certificate is invalid:");	/* 23b */
 	if (ret & GNUTLS_CERT_REVOKED) 		xstrcat(buf, " revoked");			/* 08b */
@@ -159,7 +160,7 @@ static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 	if (ret & GNUTLS_CERT_SIGNER_NOT_CA)	xstrcat(buf, " signer not a CA");		/* 16b */
 /*	if (ret & GNUTLS_CERT_INSECURE_ALGORITHM) xstrcat(buf, " INSECURE ALGO?"); */
 
-	return (buf[0]) ? buf : NULL;
+	return (buf[0] != '\0') ? buf : NULL;
 #endif
 
 /* XXX czy sie dane zgadzaja z j->server */

@@ -208,7 +208,7 @@ static QUERY(jabber_print_version) {
 /**
  * jabber_validate_uid()
  *
- * handler for: <i>PROTOCOL_VALIDATE_UID</i>
+ * handler for: <i>PROTOCOL_VALIDATE_UID</i><br>
  * checks, if @a uid is <i>proper for jabber plugin</i>.
  *
  * @note <i>Proper for jabber plugin</i> means either:
