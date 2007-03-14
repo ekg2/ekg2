@@ -33,6 +33,9 @@
 # define SSL_SEND(session, str, len)	gnutls_record_send(session, str, len)
 # define SSL_RECV(session, buf, size)	gnutls_record_recv(session, buf, size)
 
+# define SSL_GET_FD(session, fd)		(int) gnutls_transport_get_ptr(session)
+# define SSL_WRITE_DIRECTION(session, ret)	gnutls_record_get_direction(session)
+
 #else				/* HAVE_OPENSSL */
 # include <openssl/ssl.h>
 # include <openssl/err.h>
@@ -51,6 +54,9 @@ extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 
 # define SSL_SEND(session, str, len)	SSL_write(session, str, len)
 # define SSL_RECV(session, buf, size)	SSL_read(session, buf, size)
+
+# define SSL_GET_FD(session, fd)		fd
+# define SSL_WRITE_DIRECTION(session, ret)	(ret != SSL_ERROR_WANT_READ)
 
 #endif				/* ... */
 

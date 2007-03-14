@@ -78,7 +78,7 @@ int config_jabber_beep_mail = 0;
 
 static int session_postinit;
 static int jabber_theme_init();
-static WATCHER(jabber_handle_connect_ssl);
+static WATCHER_SESSION(jabber_handle_connect_ssl);
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
@@ -874,7 +874,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
                 gnutls_transport_set_push_function(j->ssl_session, (gnutls_push_func)write);
 		SSL_SET_FD(j->ssl_session, j->fd);
 #endif
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_ssl, s);
+		watch_add_session(s, fd, WATCH_WRITE, jabber_handle_connect_ssl);
 		return -1;
         } // use_ssl
 #endif
@@ -884,14 +884,28 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 }
 
 #ifdef JABBER_HAVE_SSL
-static WATCHER(jabber_handle_connect_ssl) /* tymczasowy */
+
+/*
+ * jabber_handle_connect_ssl()
+ *
+ * Try to connect to jabberd server by SSL<br>
+ * Session watch.<br>
+ *
+ * @todo XXX This watch should be used to connect to TLS servers as well.
+ * @bug	 It's ugly written, and possible buggy.
+ *
+ */
+
+static WATCHER_SESSION(jabber_handle_connect_ssl) /* tymczasowy */
 {
-        session_t *s = (session_t *) data;
-        jabber_private_t *j = session_private_get(s);
+        jabber_private_t *j;
 	int ret;
 
 	if (type)
 		return 0;
+
+	if (!s || !(j = s->priv))
+		return -1;
 
 	ret = SSL_HELLO(j->ssl_session);
 #ifdef JABBER_HAVE_OPENSSL
@@ -901,14 +915,8 @@ static WATCHER(jabber_handle_connect_ssl) /* tymczasowy */
 	{
 #endif
 		if (SSL_E_AGAIN(ret)) {
-			int newfd, direc;
-#ifdef JABBER_HAVE_OPENSSL
-			direc = (ret != SSL_ERROR_WANT_READ) ? WATCH_WRITE : WATCH_READ;
-			newfd = fd;
-#else
-			direc = gnutls_record_get_direction(j->ssl_session) ? WATCH_WRITE : WATCH_READ;
-			newfd = (int) gnutls_transport_get_ptr(j->ssl_session);
-#endif
+			int direc = SSL_WRITE_DIRECTION(j->ssl_session, ret) ? WATCH_WRITE : WATCH_READ;
+			int newfd = SSL_GET_FD(j->ssl_session, fd);
 
 			/* don't create && destroy watch if data is the same... */
 			if (newfd == fd && direc == watch) {
@@ -916,7 +924,7 @@ static WATCHER(jabber_handle_connect_ssl) /* tymczasowy */
 				return 0;
 			}
 
-			watch_add(&jabber_plugin, fd, direc, jabber_handle_connect_ssl, s);
+			watch_add_session(s, fd, direc, jabber_handle_connect_ssl);
 			ekg_yield_cpu();
 			return -1;
 		} else {
