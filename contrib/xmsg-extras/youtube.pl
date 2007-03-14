@@ -54,7 +54,7 @@ my ($title, $id) = ($1, $2);
 		if ($avgtime > 60) {
 			$avgtime = sprintf("%d:%02d min", ($avgtime / 60), ($avgtime % 60));
 		} else {
-			$avgtime .= " s";
+			$avgtime = sprintf("%d s", $avgtime);
 		}
 	}
 }
