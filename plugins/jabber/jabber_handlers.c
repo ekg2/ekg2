@@ -244,91 +244,150 @@ gnutls_ok:
 }
 #endif
 
-JABBER_HANDLER(tlen_handle) {
-	if (!xstrcmp(n->name, "m")) {
-		char *type = jabber_attr(n->atts, "tp");
-		char *from = jabber_attr(n->atts, "f");
-		char *typeadd = jabber_attr(n->atts, "type");
+/*
+ * tlen_handle_notification()
+ *
+ *
+ */
 
+JABBER_HANDLER(tlen_handle_notification) {	/* n->name: "m" TLEN only: typing, nottyping, and alert notifications */
+	char *type = jabber_attr(n->atts, "tp");
+	char *from = jabber_attr(n->atts, "f");
+	char *typeadd = jabber_attr(n->atts, "type");
+
+
+	if (!type || !from || (typeadd && !xstrcmp(typeadd, "error"))) {
+		debug_error("tlen_handle() %d %s/%s/%s", __LINE__, type, from, typeadd);
+		return;
+	}
+
+	if (!xstrcmp(type, "t") || !xstrcmp(type, "u")) {
 		char *uid = saprintf("tlen:%s", from);
 
-		if (!type || !from || (typeadd && !xstrcmp(typeadd, "error"))) {
-			debug_error("tlen_handle() %d %s/%s/%s", __LINE__, type, from, typeadd);
+		/* typing notification */
+		char *session	= xstrdup(session_uid_get(s));
+		int stateo	= !xstrcmp(type, "u") ? EKG_XSTATE_TYPING : 0;
+		int state	= stateo ? EKG_XSTATE_TYPING : 0;
 
-		} else if (!xstrcmp(type, "t") || !xstrcmp(type, "u")) {
-			/* typing notification */
-			char *session	= xstrdup(session_uid_get(s));
-			int stateo	= !xstrcmp(type, "u") ? EKG_XSTATE_TYPING : 0;
-			int state	= stateo ? EKG_XSTATE_TYPING : 0;
-			
-			query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid, &state, &stateo);
-			
-			xfree(session);
+		query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid, &state, &stateo);
 
-		} else if (!xstrcmp(type, "a")) {	/* funny thing called alert */
-			print_window(uid, s, 0, "tlen_alert", session_name(s), format_user(s, uid));
-
-			if (config_sound_notify_file)
-				play_sound(config_sound_notify_file);
-			else if (config_beep && config_beep_notify)
-				query_emit_id(NULL, UI_BEEP, NULL);
-		}
-		
+		xfree(session);
 		xfree(uid);
-	} else if (!xstrcmp(n->name, "n")) {	/* new mail */
-		char *from = tlen_decode(jabber_attr(n->atts, "f"));
-		char *subj = tlen_decode(jabber_attr(n->atts, "s"));
-		
-		print("tlen_mail", session_name(s), from, subj);
-		newmail_common(s);
-		
-		xfree(from);
-		xfree(subj);
+		return;
+	}
 
-	} else if (!xstrcmp(n->name, "w")) {	/* web message */
-		char *from = jabber_attr(n->atts, "f");
-		char *mail = jabber_attr(n->atts, "e");
-		char *content = n->data;
-		string_t body = string_init("");
-		
+	if (!xstrcmp(type, "a")) {	/* funny thing called alert */
+		char *uid = saprintf("tlen:%s", from);
+		print_window(uid, s, 0, "tlen_alert", session_name(s), format_user(s, uid));
+
+		if (config_sound_notify_file)
+			play_sound(config_sound_notify_file);
+		else if (config_beep && config_beep_notify)
+			query_emit_id(NULL, UI_BEEP, NULL);
+		xfree(uid);
+		return;
+	}
+
+}
+
+/*
+ * tlen_handle_newmail()
+ *
+ */
+
+JABBER_HANDLER(tlen_handle_newmail) {
+	char *from = tlen_decode(jabber_attr(n->atts, "f"));
+	char *subj = tlen_decode(jabber_attr(n->atts, "s"));
+
+	print("tlen_mail", session_name(s), from, subj);
+	newmail_common(s);
+
+	xfree(from);
+	xfree(subj);
+}
+
+/*
+ * tlen_handle_webmessage()
+ * 
+ *
+ */
+
+JABBER_HANDLER(tlen_handle_webmessage) {
+	char *from = jabber_attr(n->atts, "f");
+	char *mail = jabber_attr(n->atts, "e");
+	char *content = n->data;
+	string_t body = string_init("");
+
+	char *text;
+
+	if (from || mail) {
+		string_append(body, "From:");
+		if (from) {
+			string_append_c(body, ' ');
+			string_append(body, from);
+		}
+		if (mail) {
+			string_append(body, " <");
+			string_append(body, mail);
+			string_append_c(body, '>');
+		}
+		string_append_c(body, '\n');
+	}
+
+	if (body->len) string_append_c(body, '\n');
+
+	string_append(body, content);
+	text = tlen_decode(body->str);
+	string_free(body, 1);
+
+	{
 		char *me	= xstrdup(session_uid_get(s));
 		char *uid	= xstrdup("ludzie.tlen.pl");
-		int class 	= EKG_MSGCLASS_MESSAGE;
-		int ekgbeep 	= EKG_TRY_BEEP;
-		int secure	= 0;
 		char **rcpts 	= NULL;
-		char *seq 	= NULL;
 		uint32_t *format= NULL;
 		time_t sent	= time(NULL);
-		char *text;
-		
-		if (from || mail) {
-			string_append(body, "From:");
-			if (from) {
-				string_append(body, " ");
-				string_append(body, from);
-			}
-			if (mail) {
-				string_append(body, " <");
-				string_append(body, mail);
-				string_append(body, ">");
-			}
-			string_append(body, "\n");
-		}
+		int class 	= EKG_MSGCLASS_MESSAGE;
+		char *seq 	= NULL;
+		int ekgbeep 	= EKG_TRY_BEEP;
+		int secure	= 0;
 
-		if (body->len) string_append(body, "\n");
-
-		string_append(body, content);
-		text = tlen_decode(body->str);
-		string_free(body, 1);
-		
 		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
-		
+
 		xfree(me);
 		xfree(uid);
-		xfree(text);
-	} else debug_error("[tlen] what's that: %s ?\n", n->name);
+	}
 
+	xfree(text);
+}
+
+/**
+ * tlen_handle()
+ *
+ * Handle misc tlen-only things...<br>
+ * Executed by jabber_handle() when unknown n->name found, and it's tlen session.<br>
+ * It handle: 
+ * 	- "m" using tlen_handle_notification()		[user-notifications like: typing, stop typing, and soundalers]
+ * 	- "n" using tlen_handle_newmail()		[when server inform us about new mail]
+ * 	- "w" using tlen_handle_webmessage()		[when we receive webmessage]
+ * 	- else print error in __debug window.
+ *
+ * @todo Move this and stuff to jabber_tlen_handlers.c
+ */
+
+JABBER_HANDLER(tlen_handle) {
+	if (!xstrcmp(n->name, "m")) {		/* user-notifications */
+		tlen_handle_notification(s, n);	return;
+	}
+
+	if (!xstrcmp(n->name, "n")) {		/* newmail */
+		tlen_handle_newmail(s, n);	return;
+	}
+
+	if (!xstrcmp(n->name, "w")) {		/* web messages */
+		tlen_handle_webmessage(s, n);	return;
+	}
+
+	debug_error("tlen_handle() what's that: %s ?\n", n->name);
 }
 
 void jabber_handle(void *data, xmlnode_t *n)
