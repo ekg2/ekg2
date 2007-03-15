@@ -69,7 +69,6 @@
 #include "jabber_dcc.h"
 
 #define jabberfix(x,a) ((x) ? x : a)
-#define STRICT_XMLNS 1
 
 #define JABBER_HANDLER(x) 		static void x(session_t *s, xmlnode_t *n)
 #define JABBER_HANDLER_IQ(x) 		static void x(session_t *s, xmlnode_t *n, jabber_iq_type_t iqtype, const char *from, const char *id)
@@ -82,7 +81,6 @@ JABBER_HANDLER(jabber_handle_presence);
 
 static time_t jabber_try_xdelay(const char *stamp);
 static void jabber_session_connected(session_t *s);
-int jabber_display_server_features = 1;
 
 static void newmail_common(session_t *s); 
 
@@ -232,6 +230,289 @@ JABBER_HANDLER(tlen_handle) {
 	debug_error("tlen_handle() what's that: %s ?\n", n->name);
 }
 
+#define CHECK_CONNECT(connecting_, connected_, func) if (j->connecting != connecting_ || s->connected != connected_) { \
+			debug_error("[jabber] %s:%d ASSERT_CONNECT j->connecting: %d (shouldbe: %d) s->connected: %d (shouldbe: %d)\n", \
+				__FILE__, __LINE__, j->connecting, connecting_, s->connected, connected_);	func; }
+
+#define CHECK_XMLNS(n, xmlns, func) if (xstrcmp(jabber_attr(n->atts, "xmlns"), xmlns)) { \
+			debug_error("[jabber] %s:%d ASSERT_XMLNS BAD XMLNS, IS: %s SHOULDBE: %s\n", __FILE__, __LINE__, jabber_attr(n->atts, "xmlns"), xmlns);	func; }
+
+JABBER_HANDLER(jabber_handle_stream_features) {
+	jabber_private_t *j = s->priv;
+
+	int use_sasl = j->connecting == 1 && (session_int_get(s, "use_sasl") == 1);
+	int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
+	xmlnode_t *mech_node = NULL;
+
+	for (n = n->children; n; n = n->next) {
+		if (!xstrcmp(n->name, "starttls")) {
+#ifdef JABBER_HAVE_SSL
+			CHECK_CONNECT(1, 0, continue)
+			CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-tls", continue)
+
+			if (!j->using_ssl && session_int_get(s, "use_tls") == 1 && session_int_get(s, "use_ssl") == 0) {
+				debug_function("[jabber] stream:features && TLS! let's rock.\n");
+
+				watch_write(j->send_watch, "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
+				return;
+			}
+#endif
+		} else if (!xstrcmp(n->name, "mechanisms") && !mech_node) {		/* faster than xmlnode_find_child */
+			CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", continue)
+			mech_node = n->children;
+		} else if (!xstrcmp(n->name, "session")) {
+			CHECK_CONNECT(2, 0, continue)
+			CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-session", continue)
+
+			use_fjuczers |= 1;
+
+		} else if (!xstrcmp(n->name, "bind")) {
+			CHECK_CONNECT(2, 0, continue)
+			CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-bind", continue)
+
+			use_fjuczers |= 2;
+		} else if (!xstrcmp(n->name, "compression")) {
+			const char *tmp		= session_get(s, "use_compression");
+			const char *method_comp = NULL;
+			char *tmp2;
+
+			xmlnode_t *method;
+
+			if (!tmp) continue;
+			CHECK_CONNECT(1, 0, continue)
+			CHECK_XMLNS(n, "http://jabber.org/features/compress", continue)
+
+			j->using_compress = JABBER_COMPRESSION_NONE;
+
+			for (method = n->children; method; method = method->next) {
+				if (!xstrcmp(method->name, "method")) {
+					if (!xstrcmp(method->data, "zlib")) {
+#ifdef HAVE_ZLIB
+						if ((tmp2 = xstrstr(tmp, "zlib")) && ((tmp2 < method_comp) || (!method_comp)) && 
+								(tmp2[4] == ',' || tmp2[4] == '\0')) {
+							method_comp = tmp2;	 /* found more preferable method */
+							j->using_compress = JABBER_COMPRESSION_ZLIB_INIT;
+						}
+#else
+						debug_error("[jabber] compression... NO ZLIB support\n");
+#endif
+					} else if (!xstrcmp(method->data, "lzw")) {
+						if ((tmp2 = xstrstr(tmp, "zlib")) && ((tmp2 < method_comp) || (!method_comp)) &&
+								(tmp2[3] == ',' || tmp2[3] == '\0')) {
+							/* method_comp = tmp2 */			/* nieczynne */
+							/* j->using_compress = JABBER_COMPRESSION_LZW_INIT; */
+						}
+						debug_error("[jabber] compression... sorry NO LZW support\n");
+					} else	debug_error("[jabber] compression %s\n", __(method->data));
+
+				} else debug_error("[jabber] stream:features/compression %s\n", __(method->name));
+			}
+			debug_function("[jabber] compression, method: %d\n", j->using_compress);
+
+			if (!j->using_compress) continue;
+
+			if (j->using_compress == JABBER_COMPRESSION_ZLIB_INIT)		method_comp = "zlib";
+			else if (j->using_compress == JABBER_COMPRESSION_LZW_INIT)	method_comp = "lzw";
+			else {
+				debug_error("[jabber] BLAH [%s:%d] %s; %d\n", __FILE__, __LINE__, method_comp, j->using_compress);
+				continue;
+			}
+
+			watch_write(j->send_watch, 
+					"<compress xmlns=\"http://jabber.org/protocol/compress\"><method>%s</method></compress>", method_comp);
+			return;
+		} else {
+			debug_error("[jabber] stream:features %s\n", __(n->name));
+		}
+	}
+
+	if (j->send_watch) j->send_watch->transfer_limit = -1;
+
+	if (use_fjuczers & 2)	/* bind */
+		watch_write(j->send_watch, 
+				"<iq type=\"set\" id=\"bind%d\"><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"><resource>%s</resource></bind></iq>", 
+				j->id++, j->resource);
+
+	if (use_fjuczers & 1)	/* session */
+		watch_write(j->send_watch, 
+				"<iq type=\"set\" id=\"auth\"><session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/></iq>",
+				j->id++);
+
+	if (j->connecting == 2 && !(use_fjuczers & 2))	/* STRANGE, BUT MAYBE POSSIBLE? */
+		jabber_session_connected(s);
+
+	JABBER_COMMIT_DATA(j->send_watch);	
+
+	if (use_sasl && mech_node) {
+		enum {
+			JABBER_SASL_AUTH_UNKNOWN,			/* UNKNOWN */
+			JABBER_SASL_AUTH_PLAIN,				/* PLAIN */
+			JABBER_SASL_AUTH_DIGEST_MD5,			/* DIGEST-MD5 */
+		} auth_type = JABBER_SASL_AUTH_UNKNOWN;
+
+		for (; mech_node; mech_node = mech_node->next) {
+			if (!xstrcmp(mech_node->name, "mechanism")) {
+
+				if (!xstrcmp(mech_node->data, "DIGEST-MD5"))	auth_type = JABBER_SASL_AUTH_DIGEST_MD5;
+				else if (!xstrcmp(mech_node->data, "PLAIN")) {
+					if ((session_int_get(s, "plaintext_passwd"))) {
+						auth_type = JABBER_SASL_AUTH_PLAIN;
+						break;	/* jesli plaintext jest prefered wychodzimy */
+					}
+					/* ustaw tylko wtedy gdy nie ma ustawionego, wolimy MD5 */
+					if (auth_type == JABBER_SASL_AUTH_UNKNOWN) auth_type = JABBER_SASL_AUTH_PLAIN;
+
+				} else debug_error("[jabber] SASL, unk mechanism: %s\n", __(mech_node->data));
+			} else debug_error("[jabber] SASL mechanisms: %s\n", mech_node->name);
+		}
+
+		if (auth_type != JABBER_SASL_AUTH_UNKNOWN) 
+			j->connecting = 2;
+
+		switch (auth_type) {
+			string_t str;
+			char *encoded;
+
+			case JABBER_SASL_AUTH_DIGEST_MD5:
+				debug_function("[jabber] SASL chosen: JABBER_SASL_AUTH_DIGEST_MD5\n");
+				watch_write(j->send_watch, 
+					"<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"DIGEST-MD5\"/>");
+			break;
+			case JABBER_SASL_AUTH_PLAIN:
+				debug_function("[jabber] SASL chosen: JABBER_SASL_AUTH_PLAIN\n");
+				str = string_init(NULL);
+
+				string_append_raw(str, "\0", 1);
+				string_append_n(str, s->uid+4, xstrchr(s->uid+4, '@')-s->uid-4);
+				string_append_raw(str, "\0", 1);
+				string_append(str, session_get(s, "password"));
+
+				encoded = base64_encode(str->str, str->len);
+
+				watch_write(j->send_watch,
+					"<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"PLAIN\">%s</auth>", encoded);
+
+				xfree(encoded);
+				string_free(str, 1);
+			break;
+			default:
+				debug_error("[jabber] SASL auth_type: UNKNOWN!!!, disconnecting from host.\n");
+				j->parser = NULL; jabber_handle_disconnect(s, 
+						"We tried to auth using SASL but none of method supported by server we know. "
+						"Check __debug window and supported SASL server auth methods and sent them to ekg2 devs. "
+						"Temporary you can turn off SASL auth using /session use_sasl 0", EKG_DISCONNECT_FAILURE);
+			break;
+		}
+	}
+}
+
+JABBER_HANDLER(jabber_handle_challenge) {
+	jabber_private_t *j =  s->priv;
+
+	char *data;
+	char **arr;
+	int i;
+
+	char *realm	= NULL;
+	char *rspauth	= NULL;
+	char *nonce	= NULL;
+
+	CHECK_CONNECT(2, 0, return)
+	CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
+
+	if (!n->data) {
+		debug_error("[jabber] challenge, no data.. (XXX?) disconnecting from host.\n");
+		return;
+	}
+
+	/* decode && parse challenge data */
+	data = base64_decode(n->data);
+	debug_error("[jabber] PARSING challange (%s): \n", data);
+	arr = array_make(data, "=,", 0, 1, 1);	/* maybe we need to change/create another one parser... i'm not sure. please notify me, 
+						   I'm lazy, sorry */
+	/* for chrome.pl and jabber.autocom.pl it works */
+	xfree(data);
+
+	/* check parsed data... */
+	i = 0;
+	while (arr[i]) {
+		debug_error("[%d] %s: %s\n", i / 2, arr[i], __(arr[i+1]));
+		if (!arr[i+1]) {
+			debug_error("Parsing var<=>value failed, NULL....\n");
+			array_free(arr);
+			j->parser = NULL; 
+			jabber_handle_disconnect(s, "IE, Current SASL support for ekg2 cannot handle with this data, sorry.", EKG_DISCONNECT_FAILURE);
+			return;
+		}
+
+		if (!xstrcmp(arr[i], "realm"))		realm	= arr[i+1];
+		if (!xstrcmp(arr[i], "rspauth"))	rspauth	= arr[i+1];
+		if (!xstrcmp(arr[i], "nonce"))		nonce	= arr[i+1];
+
+		i++;
+		if (arr[i]) i++;
+	}
+
+	if (rspauth) {
+		const char *tmp = session_get(s, "__sasl_excepted");
+
+		if (!xstrcmp(tmp, rspauth)) {
+			debug_function("[jabber] KEYS MATCHED, THX FOR USING SASL SUPPORT IN EKG2.\n");
+			watch_write(j->send_watch, "<response xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"/>");
+		} else {
+			debug_error("[jabber] RSPAUTH BUT KEYS DON'T MATCH!!! IS: %s EXCEPT: %s, DISCONNECTING\n", __(rspauth), __(tmp));
+			j->parser = NULL; jabber_handle_disconnect(s, "IE, SASL RSPAUTH DOESN'T MATCH!!", EKG_DISCONNECT_FAILURE);
+		}
+		session_set(s, "__sasl_excepted", NULL);
+	} else {
+		char *username = xstrndup(s->uid+4, xstrchr(s->uid+4, '@')-s->uid-4);
+		const char *password = session_get(s, "password");
+
+		string_t str = string_init(NULL);	/* text to encode && sent */
+		char *encoded;				/* BASE64 response text */
+
+		char tmp_cnonce[32];
+		char *cnonce;
+
+		char *xmpp_temp;
+		char *auth_resp;
+
+		if (!realm) realm = j->server;
+
+		for (i=0; i < sizeof(tmp_cnonce); i++) tmp_cnonce[i] = (char) (256.0*rand()/(RAND_MAX+1.0));	/* generate random number using high-order bytes man 3 rand() */
+
+		cnonce = base64_encode(tmp_cnonce, sizeof(tmp_cnonce));
+
+		xmpp_temp	= saprintf(":xmpp/%s", realm);
+		auth_resp	= jabber_challange_digest(username, password, nonce, cnonce, xmpp_temp, realm);
+		session_set(s, "__sasl_excepted", auth_resp);
+		xfree(xmpp_temp);
+
+		xmpp_temp	= saprintf("AUTHENTICATE:xmpp/%s", realm);
+		auth_resp	= jabber_challange_digest(username, password, nonce, cnonce, xmpp_temp, realm);
+		xfree(xmpp_temp);
+
+		string_append(str, "username=\"");	string_append(str, username);	string_append_c(str, '\"');
+		string_append(str, ",realm=\"");	string_append(str, realm);	string_append_c(str, '\"');
+		string_append(str, ",nonce=\"");	string_append(str, nonce);	string_append_c(str, '\"');
+		string_append(str, ",cnonce=\"");	string_append(str, cnonce);	string_append_c(str, '\"');
+		string_append(str, ",nc=00000001");
+		string_append(str, ",digest-uri=\"xmpp/"); string_append(str, realm);	string_append_c(str, '\"');
+		string_append(str, ",qop=auth");
+		string_append(str, ",response=");	string_append(str, auth_resp);
+		string_append(str, ",charset=utf-8");
+
+		encoded = base64_encode(str->str, str->len);
+		watch_write(j->send_watch, "<response xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">%s</response>", encoded);
+		xfree(encoded);
+
+		string_free(str, 1);
+		xfree(username);
+		xfree(cnonce);
+	}
+	array_free(arr);
+}
+
 /**
  * jabber_handle()
  *
@@ -266,6 +547,46 @@ void jabber_handle(void *data, xmlnode_t *n) {
 
 	if (!xstrcmp(n->name, "presence")) {
 		jabber_handle_presence(s, n);
+		return;
+	}
+
+	if (!xstrcmp(n->name, "stream:features")) {
+		jabber_handle_stream_features(s, n);
+		return;
+	}
+
+	if (!xstrcmp(n->name, "challenge")) {
+		jabber_handle_challenge(s, n);
+		return;
+	}
+
+	if (!xstrcmp(n->name, "success")) {
+		CHECK_CONNECT(2, 0, return)
+		CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
+
+		j->parser = jabber_parser_recreate(NULL, XML_GetUserData(j->parser));	/* here could be passed j->parser to jabber_parser_recreate() but unfortunetly expat makes SIGSEGV */
+		watch_write(j->send_watch, 
+				"<stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">", 
+				j->server);
+		return;
+	} 
+
+	if (!xstrcmp(n->name, "failure")) {
+		char *reason;
+
+		CHECK_CONNECT(2, 0, return)
+		CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
+
+		reason = n->children ? n->children->name : NULL;
+		debug_function("[jabber] failure n->child: 0x%x n->child->name: %s\n", n->children, __(reason));
+
+/* XXX here, think about nice reasons */
+		if (!reason)						reason = "(SASL) GENERIC FAILURE";
+		else if (!xstrcmp(reason, "temporary-auth-failure"))	reason = "(SASL) TEMPORARY AUTH FAILURE";
+		else debug_error("[jabber] UNKNOWN reason: %s\n", reason);
+
+		j->parser = NULL; jabber_handle_disconnect(s, reason, EKG_DISCONNECT_FAILURE);
+		
 		return;
 	}
 
