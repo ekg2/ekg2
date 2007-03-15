@@ -1,12 +1,9 @@
 #ifndef __JABBER_DCC_H
 #define __JABBER_DCC_H
 
-#define WITH_JABBER_DCC 1
 #define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
 
 #include <ekg/plugins.h>
-
-#if WITH_JABBER_DCC
 
 #include <stdio.h>
 
@@ -64,7 +61,6 @@ dcc_t *jabber_dcc_find(const char *uin, const char *id, const char *sid);
 void jabber_dcc_close_handler(struct dcc_s *d);
 
 WATCHER(jabber_dcc_handle_recv);
-#endif
 
 QUERY(jabber_dcc_postinit);
 extern int jabber_dcc;

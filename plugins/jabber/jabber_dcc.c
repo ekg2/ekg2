@@ -7,7 +7,6 @@ int jabber_dcc_port = 0;
 char *jabber_dcc_ip = NULL;
 
 static int jabber_dcc_fd = -1;
-#if WITH_JABBER_DCC
 
 #include <stdio.h>
 #include <string.h>
@@ -394,7 +393,6 @@ dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const
 	debug_error("jabber_dcc_find() %s %s not founded. Possible abuse attempt?!\n", __(uin), __(sid));
 	return NULL;
 }
-#endif
 
 QUERY(jabber_dcc_postinit) {
 	static watch_t *dcc_watch = NULL;
@@ -404,15 +402,11 @@ QUERY(jabber_dcc_postinit) {
 	if (jabber_dcc_fd == -1) dcc_watch = NULL;
 
 	if (jabber_dcc && !dcc_watch)
-#if WITH_JABBER_DCC
 		dcc_watch = jabber_dcc_init(JABBER_DEFAULT_DCC_PORT); 
 	else if (!jabber_dcc) {
 		watch_free(dcc_watch);
 		dcc_watch = NULL;
 	}
-#else
-		debug_error("[jabber] compilated without WITH_JABBER_DCC=1, disabling JABBER DCC.\n");
-#endif
 	if (!dcc_watch) {
 		jabber_dcc = 0;
 		jabber_dcc_fd = -1;

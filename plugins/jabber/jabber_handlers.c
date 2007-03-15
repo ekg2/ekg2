@@ -769,11 +769,9 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco_info) {
 	watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">"
 			"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
 			"<feature var=\"http://jabber.org/protocol/commands\"/>"
-#if WITH_JABBER_DCC
 			"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
 			"<feature var=\"http://jabber.org/protocol/si\"/>"
 			"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
-#endif
 			"</query></iq>", from, id);
 
 
@@ -1645,7 +1643,6 @@ JABBER_HANDLER(jabber_handle_iq) {
 		} else if (!xstrncmp(id, "search", 6)) {
 			debug_error("[JABBER] search failed: %s\n", reason);
 		}
-#if WITH_JABBER_DCC
 		else if (!xstrncmp(id, "offer", 5)) {
 			char *uin = jabber_unescape(from);
 			dcc_t *p = jabber_dcc_find(uin, id, NULL);
@@ -1659,7 +1656,6 @@ JABBER_HANDLER(jabber_handle_iq) {
 			}
 			xfree(uin);
 		}
-#endif
 		else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", reason);
 
 		xfree(reason);
@@ -1710,10 +1706,8 @@ JABBER_HANDLER(jabber_handle_iq) {
 		jabber_handle_result_pubsub(s, q, from, id);
 	}
 
-#if WITH_JABBER_DCC
 	if ((q = xmlnode_find_child(n, "si"))) /* JEP-0095: Stream Initiation */
 		jabber_handle_si(s, q, type, from, id);
-#endif	/* FILETRANSFER */
 
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
@@ -1870,12 +1864,11 @@ JABBER_HANDLER(jabber_handle_iq) {
 				xfree(from_str);
 				return;
 			}
-#if WITH_JABBER_DCC
 
 			if (!xstrcmp(ns, "http://jabber.org/protocol/bytestreams")) { /* JEP-0065: SOCKS5 Bytestreams */
 				jabber_handle_bytestreams(s, q, type, from, id);	return;
 			}
-#endif
+
 			if (!xstrncmp(ns, "jabber:iq:version", 17)) {
 				jabber_handle_iq_result_version(s, q, from, id); 	return;
 			}

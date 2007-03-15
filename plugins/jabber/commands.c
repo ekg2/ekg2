@@ -63,7 +63,6 @@
 #include "jabber.h"
 #include "jabber_dcc.h"
 
-#if WITH_JABBER_DCC
 static COMMAND(jabber_command_dcc) {
 	jabber_private_t *j = session_private_get(session);
 
@@ -264,7 +263,6 @@ static COMMAND(jabber_command_dcc) {
 	}
 	return cmd_dcc(name, params, session, target, quiet);
 }
-#endif
 
 static void jabber_command_connect_child(
 	const char *server, 
@@ -2549,10 +2547,8 @@ void jabber_register_commands()
 			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, ("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-#if WITH_JABBER_DCC
 	command_add(&jabber_plugin, ("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
 			"send get resume voice close list");
-#endif
 	command_add(&jabber_plugin, ("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:disconnect"), "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
