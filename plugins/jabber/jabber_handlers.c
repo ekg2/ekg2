@@ -72,6 +72,7 @@
 #define STRICT_XMLNS 1
 
 #define JABBER_HANDLER(x) static void x(session_t *s, xmlnode_t *n)
+#define JABBER_HANDLER_GET_REPLY(x) static void x(session_t *s, jabber_private_t *j, xmlnode_t *n, const char *from, const char *id)
 
 JABBER_HANDLER(jabber_handle_message);
 JABBER_HANDLER(jabber_handle_iq);
@@ -691,6 +692,116 @@ static void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const ch
 	if (print_end) print("jabber_form_end", session_name(s), uid, "");
 	array_free(labels);
 }
+
+/**
+ * jabber_handle_iq_get_disco()
+ *
+ * Handler for IQ GET QUERY xmlns="http://jabber.org/protocol/disco#items"<br>
+ * Send some info about what ekg2 can do/know with given node [node= in n->atts]<br>
+ * XXX info about it in XEP/RFC
+ *
+ * @todo 	We send here only info about node: http://jabber.org/protocol/commands
+ * 		Be more XEP/RFC compilant... return error if node not known, return smth
+ * 		what we can do at all. etc. etc.
+ */
+
+JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco) {
+	if (!xstrcmp(jabber_attr(n->atts, "node"), "http://jabber.org/protocol/commands")) {	/* jesli node commandowe */
+		/* XXX, check if $uid can do it */
+		watch_write(j->send_watch, 
+				"<iq to=\"%s\" type=\"result\" id=\"%s\">"
+				"<query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"http://jabber.org/protocol/commands\">"
+				"<item jid=\"%s/%s\" name=\"Set Status\" node=\"http://jabber.org/protocol/rc#set-status\"/>"
+				"<item jid=\"%s/%s\" name=\"Forward Messages\" node=\"http://jabber.org/protocol/rc#forward\"/>"
+				"<item jid=\"%s/%s\" name=\"Set Options\" node=\"http://jabber.org/protocol/rc#set-options\"/>"
+				"<item jid=\"%s/%s\" name=\"Set ALL ekg2 Options\" node=\"http://ekg2.org/jabber/rc#ekg-set-all-options\"/>"
+				"<item jid=\"%s/%s\" name=\"Manage ekg2 plugins\" node=\"http://ekg2.org/jabber/rc#ekg-manage-plugins\"/>"
+				"<item jid=\"%s/%s\" name=\"Manage ekg2 plugins\" node=\"http://ekg2.org/jabber/rc#ekg-manage-sessions\"/>"
+				"<item jid=\"%s/%s\" name=\"Execute ANY command in ekg2\" node=\"http://ekg2.org/jabber/rc#ekg-command-execute\"/>"
+				"</query></iq>", from, id, 
+				s->uid+4, j->resource, s->uid+4, j->resource, 
+				s->uid+4, j->resource, s->uid+4, j->resource,
+				s->uid+4, j->resource, s->uid+4, j->resource,
+				s->uid+4, j->resource);
+		return;
+	}
+	/* XXX, tutaj jakies ogolne informacje co umie ekg2 */
+}
+
+/**
+ * jabber_handle_iq_get_disco_info()
+ *
+ * Handler for IQ GET QUERY xmlns="http://jabber.org/protocol/disco#info"<br>
+ * XXX
+ *
+ */
+
+JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco_info) {
+	watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">"
+			"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
+			"<feature var=\"http://jabber.org/protocol/commands\"/>"
+#if WITH_JABBER_DCC
+			"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
+			"<feature var=\"http://jabber.org/protocol/si\"/>"
+			"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
+#endif
+			"</query></iq>", from, id);
+
+
+}
+
+/**
+ * jabber_handle_iq_get_last()
+ *
+ * Handler for IQ GET QUERY xmlns="jabber:iq:last"<br>
+ * Send reply about our last activity.<br>
+ * XXX info about it from XEP/RFC
+ *
+ * @bug	We change s->activity each time when we rcv data, it's buggy. It always return 0s
+ */
+
+JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_last) {
+	watch_write(j->send_watch, 
+			"<iq to=\"%s\" type=\"result\" id=\"%s\">"
+			"<query xmlns=\"jabber:iq:last\" seconds=\"%d\">"
+			"</query></iq>", from, id, (time(NULL)-s->activity));
+}
+
+JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_version) {
+	const char *ver_os;
+	const char *tmp;
+
+	char *escaped_client_name	= jabber_escape(jabberfix((tmp = session_get(s, "ver_client_name")), DEFAULT_CLIENT_NAME));
+	char *escaped_client_version	= jabber_escape(jabberfix((tmp = session_get(s, "ver_client_version")), VERSION));
+	char *osversion;
+
+	if (!(ver_os = session_get(s, "ver_os"))) {
+		struct utsname buf;
+
+		if (uname(&buf) != -1) {
+			char *osver = saprintf("%s %s %s", buf.sysname, buf.release, buf.machine);
+			osversion = jabber_escape(osver);
+			xfree(osver);
+		} else {
+			osversion = xstrdup(("unknown")); /* uname failed and not ver_os session variable */
+		}
+	} else {
+		osversion = jabber_escape(ver_os);	/* ver_os session variable */
+	}
+
+	watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
+			"<query xmlns=\"jabber:iq:version\">"
+			"<name>%s</name>"
+			"<version>%s</version>"
+			"<os>%s</os></query></iq>", 
+			from, id, 
+			escaped_client_name, escaped_client_version, osversion);
+
+	xfree(escaped_client_name);
+	xfree(escaped_client_version);
+	xfree(osversion);
+}
+
 
 JABBER_HANDLER(jabber_handle_iq) {
 	jabber_private_t *j = s->priv;
@@ -2025,77 +2136,21 @@ find_streamhost:
 			const char *ns = jabber_attr(q->atts, "xmlns");
 
 			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#items")) {
-				if (!xstrcmp(jabber_attr(q->atts, "node"), "http://jabber.org/protocol/commands")) {
-					/* XXX, check if $uid can do it */
-					watch_write(j->send_watch, 
-						"<iq to=\"%s\" type=\"result\" id=\"%s\">"
-						"<query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"http://jabber.org/protocol/commands\">"
-						"<item jid=\"%s/%s\" name=\"Set Status\" node=\"http://jabber.org/protocol/rc#set-status\"/>"
-						"<item jid=\"%s/%s\" name=\"Forward Messages\" node=\"http://jabber.org/protocol/rc#forward\"/>"
-						"<item jid=\"%s/%s\" name=\"Set Options\" node=\"http://jabber.org/protocol/rc#set-options\"/>"
-						"<item jid=\"%s/%s\" name=\"Set ALL ekg2 Options\" node=\"http://ekg2.org/jabber/rc#ekg-set-all-options\"/>"
-						"<item jid=\"%s/%s\" name=\"Manage ekg2 plugins\" node=\"http://ekg2.org/jabber/rc#ekg-manage-plugins\"/>"
-						"<item jid=\"%s/%s\" name=\"Manage ekg2 plugins\" node=\"http://ekg2.org/jabber/rc#ekg-manage-sessions\"/>"
-						"<item jid=\"%s/%s\" name=\"Execute ANY command in ekg2\" node=\"http://ekg2.org/jabber/rc#ekg-command-execute\"/>"
-						"</query></iq>", from, id, 
-						s->uid+4, j->resource, s->uid+4, j->resource, 
-						s->uid+4, j->resource, s->uid+4, j->resource,
-						s->uid+4, j->resource, s->uid+4, j->resource,
-						s->uid+4, j->resource);
-				}
+				jabber_handle_iq_get_disco(s, j, q, from, id);	return;
 			}
-			else if (!xstrcmp(ns, "jabber:iq:last")) {
-				/* XXX, buggy cause i think we don't want to do s->activity = time(NULL) in stream handler... just only when we type command or smth? */
-				watch_write(j->send_watch, 
-					"<iq to=\"%s\" type=\"result\" id=\"%s\">"
-					"<query xmlns=\"jabber:iq:last\" seconds=\"%d\">"
-					"</query></iq>", from, id, (time(NULL)-s->activity));
 
-			} else if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
-				watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">"
-					"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
-					"<feature var=\"http://jabber.org/protocol/commands\"/>"
-#if WITH_JABBER_DCC
-					"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
-					"<feature var=\"http://jabber.org/protocol/si\"/>"
-					"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
-#endif
-					"</query></iq>", from, id);
+			if (!xstrcmp(ns, "jabber:iq:last")) {
+				jabber_handle_iq_get_last(s, j, q, from, id);	return;
+			}
+			
+			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
+				jabber_handle_iq_get_disco_info(s, j, q, from, id); return;
+			}
 
-			} else if (!xstrncmp(ns, "jabber:iq:version", 17) && id && from) {
-				const char *ver_os;
-				const char *tmp;
+			if (!xstrcmp(ns, "jabber:iq:version") && id && from) {
+				jabber_handle_iq_get_version(s, j, q, from, id); return;
+			}
 
-				char *escaped_client_name	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_name")), DEFAULT_CLIENT_NAME) );
-				char *escaped_client_version	= jabber_escape( jabberfix((tmp = session_get(s, "ver_client_version")), VERSION) );
-				char *osversion;
-
-				if (!(ver_os = session_get(s, "ver_os"))) {
-					struct utsname buf;
-
-					if (uname(&buf) != -1) {
-						char *osver = saprintf("%s %s %s", buf.sysname, buf.release, buf.machine);
-						osversion = jabber_escape(osver);
-						xfree(osver);
-					} else {
-						osversion = xstrdup(("unknown")); /* uname failed and not ver_os session variable */
-					}
-				} else {
-					osversion = jabber_escape(ver_os);	/* ver_os session variable */
-				}
-
-				watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">" 
-						"<query xmlns=\"jabber:iq:version\">"
-						"<name>%s</name>"
-						"<version>%s</version>"
-						"<os>%s</os></query></iq>", 
-						from, id, 
-						escaped_client_name, escaped_client_version, osversion);
-
-				xfree(escaped_client_name);
-				xfree(escaped_client_version);
-				xfree(osversion);
-			} /* jabber:iq:version */
 		} /* if query */
 	} /* type == get */
 } /* iq */
