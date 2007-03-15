@@ -1258,11 +1258,12 @@ static int jabber_theme_init() {
 	format_add("muc_left",		_("%> %c%2%n [%c%3%n] has left %W%4 %n[%5]\n"), 1);
 
 			/* %1 - sesja, %2 - serwer, %3 - nazwa, %4 - XMLNS, %5 - z czym sie je */
-	format_add("xmpp_feature_header", _("%g,+=%G----- XMPP features %n(%T%2%n%3%n)"), 1);	/* %3 - todo */
-	format_add("xmpp_feature",	  _("%g|| %n %W%2%n can: %5 [%G%3%g,%4%n]"), 1);
-	format_add("xmpp_feature_sub",	  _("%g|| %n     %W%3%n: %5 [%G%4%n]"), 1);
-	format_add("xmpp_feature_unknown",_("%g|| %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]"), 1);
-	format_add("xmpp_feature_footer", _("%g`+=%G----- %n Turn it off using: /session display_server_features 0\n"), 1);
+	format_add("xmpp_feature_header", 	_("%g,+=%G----- XMPP features %n(%T%2%n%3%n)"), 1);	/* %3 - todo */
+	format_add("xmpp_feature",	  	_("%g|| %n %W%2%n can: %5 [%G%3%g,%4%n]"), 1);
+	format_add("xmpp_feature_sub",	  	_("%g|| %n     %W%3%n: %5 [%G%4%n]"), 1);
+	format_add("xmpp_feature_sub_unknown",	_("%g|| %n     %W%3%n: Unknown, report to devs [%G%4%n]"), 1);
+	format_add("xmpp_feature_unknown",	_("%g|| %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]"), 1);
+	format_add("xmpp_feature_footer", 	_("%g`+=%G----- %n Turn it off using: /session display_server_features 0\n"), 1);
 
 	format_add("gmail_new_mail", 	  _("%> (%1) Content of your mailbox have changed or new mail arrived."), 1);	/* sesja */
 	format_add("gmail_count", 	  _("%> (%1) You have %T%2%n new thread(s) on your gmail account."), 1);	/* sesja, mail count */
