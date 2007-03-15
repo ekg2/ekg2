@@ -560,6 +560,24 @@ void jabber_handle(void *data, xmlnode_t *n) {
 		return;
 	}
 
+	if (!xstrcmp(n->name, "proceed")) {
+		CHECK_CONNECT(1, 0, return)
+
+		if (!xstrcmp(jabber_attr(n->atts, "xmlns"), "urn:ietf:params:xml:ns:xmpp-tls")) {
+#ifdef JABBER_HAVE_SSL
+			debug_function("[jabber] proceed urn:ietf:params:xml:ns:xmpp-tls TLS let's rock\n");
+
+			/* XXX HERE WE SHOULD DISABLE RECV_WATCH && (SEND WATCH TOO?) */
+			// j->send_watch->type = WATCH_NONE;
+
+			jabber_handle_connect_ssl(-1, j->fd, WATCH_NONE, s);
+#else
+			debug_error("[jabber] proceed + urn:ietf:params:xml:ns:xmpp-tls but jabber compilated without ssl support?\n");
+#endif
+		} else	debug_error("[jabber] proceed what's that xmlns: %s ?\n", jabber_attr(n->atts, "xmlns"));
+		return;
+	}
+
 	if (!xstrcmp(n->name, "success")) {
 		CHECK_CONNECT(2, 0, return)
 		CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)

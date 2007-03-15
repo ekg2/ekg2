@@ -872,6 +872,7 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 		return -1;
 
 	if (type == -1) {
+		/* XXX here. old tls code do: j->parser = NULL. check if needed */
 #ifdef JABBER_HAVE_GNUTLS
 		/* Allow connections to servers that have OpenPGP keys as well. */
 		const int cert_type_priority[3] = {GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0};
@@ -945,10 +946,26 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 	}
 
 handshake_ok:
-	// handshake successful
-	j->using_ssl = 1;
+	/* if we already got send_watch, then it's TLS connection HACK XXX */
+	if (j->send_watch) {
+		j->using_ssl = 2;
+	/* XXX, recv watch */
+	/* send watch. */
+		j->send_watch->type	= WATCH_WRITE;
+		j->send_watch->handler	= jabber_handle_write;
+	/* reset parser */
+		j->parser = jabber_parser_recreate(NULL, XML_GetUserData(j->parser));
 
-	watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
+	/* reinitialize stream */
+		watch_write(j->send_watch, 
+				"<stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">", 
+				j->server);
+	} else {
+		// handshake successful
+		j->using_ssl = 1;
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
+	}
+
 	return -1;
 }
 #endif
