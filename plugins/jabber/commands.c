@@ -2545,12 +2545,12 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:config"), "!p", jabber_command_private,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
 			"-c --clear -d --display -g --get -p --put");
-	command_add(&jabber_plugin, ("jid:connect"), "r ?", jabber_command_connect, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("jid:connect"), NULL, jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&jabber_plugin, ("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
 			"send get resume voice close list");
 	command_add(&jabber_plugin, ("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:disconnect"), "r ?", jabber_command_disconnect, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("jid:disconnect"), "r", jabber_command_disconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 //	command_add(&jabber_plugin, ("jid:ignore"), "uUC I", jabber_command_ignore,	JABBER_ONLY, "status descr notify msg dcc events *");
 	command_add(&jabber_plugin, ("jid:ffc"), "r", jabber_command_away, 	JABBER_ONLY, NULL);

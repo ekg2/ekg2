@@ -2295,7 +2295,7 @@ int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:dehalfop"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:deop"), "uUw uU uU uU uU uU uU ?",	irc_command_devop, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:devoice"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
-	command_add(&irc_plugin, ("irc:disconnect"), "r ?",irc_command_disconnect,IRC_ONLY, NULL);
+	command_add(&irc_plugin, ("irc:disconnect"), "r",irc_command_disconnect,IRC_ONLY, NULL);
 	command_add(&irc_plugin, ("irc:find"), "uU",	irc_command_whois, 	IRC_FLAGS, NULL); /* for auto_find */
 	command_add(&irc_plugin, ("irc:halfop"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:invite"), "uUw uUw",irc_command_invite, 	IRC_FLAGS, NULL);
