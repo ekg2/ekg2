@@ -853,6 +853,75 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 
 #ifdef JABBER_HAVE_SSL
 
+static char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
+#ifdef JABBER_HAVE_OPENSSL
+	X509 *peer_cert = SSL_get_peer_certificate(ssl);
+	long ret;
+
+	if (!peer_cert) return _("No peer certificate");
+
+	switch ((ret = SSL_get_verify_result(ssl))) {
+		/* 
+		 * copied from qssl.cpp - Qt OpenSSL plugin Copyright (C) 2001, 2002  Justin Karneges under LGPL 2.1 
+		 */
+		case X509_V_OK: 					return NULL;
+		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: 		return _("Unable to get issuer certificate");
+		case X509_V_ERR_UNABLE_TO_GET_CRL:			return _("Unable to get certificate CRL");
+		case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:	return _("Unable to decrypt certificate's signature");
+		case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:	return _("Unable to decrypt CRL's signature");
+		case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:	return _("Unable to decode issuer public key");
+		case X509_V_ERR_CERT_SIGNATURE_FAILURE:			return _("Invalid certificate signature");
+		case X509_V_ERR_CRL_SIGNATURE_FAILURE:			return _("Invalid CRL signature");
+		case X509_V_ERR_CERT_NOT_YET_VALID:			return _("Certificate not yet valid");
+		case X509_V_ERR_CERT_HAS_EXPIRED:			return _("Certificate has expired");
+		case X509_V_ERR_CRL_NOT_YET_VALID:			return _("CRL not yet valid");
+		case X509_V_ERR_CRL_HAS_EXPIRED:			return _("CRL has expired");
+		case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:		return _("Invalid time in certifiate's notBefore field");
+		case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:		return _("Invalid time in certificate's notAfter field");
+		case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:		return _("Invalid time in CRL's lastUpdate field");
+		case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:		return _("Invalid time in CRL's nextUpdate field");
+		case X509_V_ERR_OUT_OF_MEM:				return _("Out of memory while checking the certificate chain");
+		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:		return _("Certificate is self-signed but isn't found in the list of trusted certificates");
+		case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:		return _("Certificate chain ends in a self-signed cert that isn't found in the list of trusted certificates");
+		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:	return _("Unable to get issuer certificate locally");
+		case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:	return _("Certificate chain contains only one certificate and it's not self-signed");
+		case X509_V_ERR_CERT_CHAIN_TOO_LONG:			return _("Certificate chain too long");
+		case X509_V_ERR_CERT_REVOKED:				return _("Certificate is revoked");
+		case X509_V_ERR_INVALID_CA:				return _("Invalid CA certificate");
+		case X509_V_ERR_PATH_LENGTH_EXCEEDED:			return _("Maximum certificate chain length exceeded");
+		case X509_V_ERR_INVALID_PURPOSE:			return _("Invalid certificate purpose");
+		case X509_V_ERR_CERT_UNTRUSTED:				return _("Certificate not trusted for the required purpose");
+		case X509_V_ERR_CERT_REJECTED:				return _("Root CA is marked to reject the specified purpose");
+		case X509_V_ERR_SUBJECT_ISSUER_MISMATCH:		return _("Subject issuer mismatch");
+		case X509_V_ERR_AKID_SKID_MISMATCH:			return _("Subject Key Identifier doesn't match the Authority Key Identifier");
+		case X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:		return _("Subject Key Identifier serial number doesn't match the Authority's");
+		case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:			return _("Key Usage doesn't include certificate signing");
+		default:	debug_error("[jabber] SSL_get_verify_result() unknown retcode: %d\n", ret);
+				return "Unknown/Generic SSL_get_verify_result() result";
+	}
+	return NULL;	/* never here */
+#else
+	static char buf[100];
+	int res;
+	unsigned int ret;
+
+	if ((res = gnutls_certificate_verify_peers2(ssl, &ret)) != 0)
+		return gnutls_strerror(res);
+
+	buf[0] = 0;
+		/* ret is bitmask of gnutls_certificate_status_t */
+	if (ret & GNUTLS_CERT_INVALID) 		xstrcat(buf, "Certificate is invalid:");	/* 23b */
+	if (ret & GNUTLS_CERT_REVOKED) 		xstrcat(buf, " revoked");			/* 08b */
+	if (ret & GNUTLS_CERT_SIGNER_NOT_FOUND)	xstrcat(buf, " signer not found");		/* 17b */
+	if (ret & GNUTLS_CERT_SIGNER_NOT_CA)	xstrcat(buf, " signer not a CA");		/* 16b */
+/*	if (ret & GNUTLS_CERT_INSECURE_ALGORITHM) xstrcat(buf, " INSECURE ALGO?"); */
+
+	return (buf[0]) ? &buf[0] : NULL;
+#endif
+
+/* XXX czy sie dane zgadzaja z j->server */
+}
+
 /*
  * jabber_handle_connect_ssl()
  *
@@ -867,6 +936,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 WATCHER_SESSION(jabber_handle_connect_ssl) {
         jabber_private_t *j;
 	int ret;
+	const char *certret;
 
 	if (!s || !(j = s->priv))
 		return -1;
@@ -946,6 +1016,12 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 	}
 
 handshake_ok:
+
+	if ((certret = jabber_ssl_cert_verify(j->ssl_session))) {
+		debug_error("[jabber] jabber_ssl_cert_verify() %s retcode = %s\n", s->uid, certret);
+		print("generic2", certret);
+	}
+
 	/* if we already got send_watch, then it's TLS connection HACK XXX */
 	if (j->send_watch) {
 		j->using_ssl = 2;
