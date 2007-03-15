@@ -889,15 +889,13 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
  * jabber_handle_connect_ssl()
  *
  * Try to connect to jabberd server by SSL<br>
- * Session watch.<br>
+ * TEMPORARY, Session watch.<br>
  *
- * @todo XXX This watch should be used to connect to TLS servers as well.
- * @bug	 It's ugly written, and possible buggy.
+ * @todo Some xxx's to fix.
  *
  */
 
-static WATCHER_SESSION(jabber_handle_connect_ssl) /* tymczasowy */
-{
+static WATCHER_SESSION(jabber_handle_connect_ssl) {
         jabber_private_t *j;
 	int ret;
 
@@ -909,38 +907,40 @@ static WATCHER_SESSION(jabber_handle_connect_ssl) /* tymczasowy */
 
 	ret = SSL_HELLO(j->ssl_session);
 #ifdef JABBER_HAVE_OPENSSL
-	if (ret == -1) {
-		ret = SSL_get_error(j->ssl_session, ret);
-#else
-	{
+	if (ret != -1)
+		goto handshake_ok;			/* ssl was ok */
+
+	ret = SSL_get_error(j->ssl_session, ret);
 #endif
-		if (SSL_E_AGAIN(ret)) {
-			int direc = SSL_WRITE_DIRECTION(j->ssl_session, ret) ? WATCH_WRITE : WATCH_READ;
-			int newfd = SSL_GET_FD(j->ssl_session, fd);
 
-			/* don't create && destroy watch if data is the same... */
-			if (newfd == fd && direc == watch) {
-				ekg_yield_cpu();
-				return 0;
-			}
+	if (SSL_E_AGAIN(ret)) {
+		int direc = SSL_WRITE_DIRECTION(j->ssl_session, ret) ? WATCH_WRITE : WATCH_READ;
+		int newfd = SSL_GET_FD(j->ssl_session, fd);
 
-			watch_add_session(s, fd, direc, jabber_handle_connect_ssl);
+		/* don't create && destroy watch if data is the same... */
+		if (newfd == fd && direc == watch) {
 			ekg_yield_cpu();
-			return -1;
-		} else {
-#ifdef JABBER_HAVE_GNUTLS
-			if (ret >= 0) goto gnutls_ok;	/* gnutls was ok */
-
-			SSL_DEINIT(j->ssl_session);
-			gnutls_certificate_free_credentials(j->xcred);
-			j->using_ssl = 0;	/* XXX, hack, peres has reported that here j->using_ssl can be 1 (how possible?) hack to avoid double free */
-#endif
-			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-			return -1;
-
+			return 0;
 		}
+
+		watch_add_session(s, fd, direc, jabber_handle_connect_ssl);
+		ekg_yield_cpu();
+		return -1;
+	} else {
+#ifdef JABBER_HAVE_GNUTLS
+		if (ret >= 0) goto handshake_ok;	/* gnutls was ok */
+
+/* XXX, move it to jabber_handle_disconnect() */
+		SSL_DEINIT(j->ssl_session);
+		gnutls_certificate_free_credentials(j->xcred);
+		j->using_ssl = 0;	/* XXX, hack, peres has reported that here j->using_ssl can be 1 (how possible?) hack to avoid double free */
+#endif
+		jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
+		return -1;
+
 	}
-gnutls_ok:
+
+handshake_ok:
 	// handshake successful
 	j->using_ssl = 1;
 
