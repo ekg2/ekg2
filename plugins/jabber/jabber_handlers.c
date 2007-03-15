@@ -242,7 +242,53 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 
 	int use_sasl = j->connecting == 1 && (session_int_get(s, "use_sasl") == 1);
 	int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
+
+	int display_fjuczers = session_int_get(s, "display_server_features");
+
 	xmlnode_t *mech_node = NULL;
+
+	if (display_fjuczers < 0)
+		display_fjuczers = 0;
+
+	if (display_fjuczers == 1 && session_int_get(s, "__features_displayed") == 1)
+		display_fjuczers = 0;
+
+
+	if (display_fjuczers) {
+		xmlnode_t *ch;
+
+		print("xmpp_feature_header", session_name(s), j->server, "");
+
+		for (ch = n->children; ch; ch = ch->next) {
+			xmlnode_t *another;
+				if (!xstrcmp(ch->name, "starttls")) {
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_tls"); 
+					continue;
+				}
+
+				if (!xstrcmp(ch->name, "mechanisms")) {
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_sasl");
+					for (another = ch->children; another; another = another->next) {	
+						if (!xstrcmp(another->name, "mechanism")) {
+							if (!xstrcmp(another->data, "DIGEST-MD5"))
+								print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "Default");
+							else if (!xstrcmp(another->data, "PLAIN"))
+								print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "/sesion plaintext_passwd");
+							else	print("xmpp_feature_sub_unknown", session_name(s), j->server, "SASL", __(another->data), "");
+						}
+					}
+				}
+				if (!xstrcmp(ch->name, "session"))
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Manage session");
+				else if (!xstrcmp(ch->name, "bind"))
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Bind resource");
+				else if (!xstrcmp(ch->name, "register"))
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Reigster account using /register");
+				else	print("xmpp_feature_unknown", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"));
+
+		}
+		print("xmpp_feature_footer", session_name(s), j->server);
+	}
 
 	for (n = n->children; n; n = n->next) {
 		if (!xstrcmp(n->name, "starttls")) {
@@ -338,8 +384,13 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				"<iq type=\"set\" id=\"auth\"><session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/></iq>",
 				j->id++);
 
-	if (j->connecting == 2 && !(use_fjuczers & 2))	/* STRANGE, BUT MAYBE POSSIBLE? */
+	if (j->connecting == 2 && !(use_fjuczers & 2)) {	/* STRANGE, BUT MAYBE POSSIBLE? */
 		jabber_session_connected(s);
+	}
+	
+	/* i think it's done here.. */
+	if (j->connecting == 2 && display_fjuczers)
+		session_int_set(s, "__features_displayed", 1);
 
 	JABBER_COMMIT_DATA(j->send_watch);	
 
