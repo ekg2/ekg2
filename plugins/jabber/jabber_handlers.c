@@ -71,9 +71,10 @@
 #define jabberfix(x,a) ((x) ? x : a)
 #define STRICT_XMLNS 1
 
-#define JABBER_HANDLER(x) static void x(session_t *s, xmlnode_t *n)
-#define JABBER_HANDLER_GET_REPLY(x) static void x(session_t *s, jabber_private_t *j, xmlnode_t *n, const char *from, const char *id)
-#define JABBER_HANDLER_RESULT(x) static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)
+#define JABBER_HANDLER(x) 		static void x(session_t *s, xmlnode_t *n)
+#define JABBER_HANDLER_IQ(x) 		static void x(session_t *s, xmlnode_t *n, jabber_iq_type_t iqtype, const char *from, const char *id)
+#define JABBER_HANDLER_GET_REPLY(x) 	static void x(session_t *s, jabber_private_t *j, xmlnode_t *n, const char *from, const char *id)
+#define JABBER_HANDLER_RESULT(x) 	static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)
 
 JABBER_HANDLER(jabber_handle_message);
 JABBER_HANDLER(jabber_handle_iq);
@@ -962,6 +963,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_version) {
 	xfree(from_str);
 }
 
+/* XXX, check if this is really result. */
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 	jabber_private_t *j = s->priv;
 
@@ -1177,6 +1179,196 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 	}
 }
 
+JABBER_HANDLER_RESULT(jabber_handle_gmail_result_mailbox) {
+	jabber_private_t *j = s->priv;
+
+	char *mailcount = jabber_attr(n->atts, "total-matched");
+	int tid_set = 0;
+	xmlnode_t *child;
+	xfree(j->last_gmail_result_time);
+	j->last_gmail_result_time = xstrdup(jabber_attr(n->atts, "result-time"));
+
+	print("gmail_count", session_name(s), mailcount);
+
+	/* http://code.google.com/apis/talk/jep_extensions/gmail.html */
+	for (child = n->children; child; child = child->next) {
+		if (!xstrcmp(child->name, "mail-thread-info")) {
+			if (!tid_set)
+			{
+				xfree(j->last_gmail_tid);
+				j->last_gmail_tid = xstrdup(jabber_attr(child->atts, "tid"));
+			}
+			tid_set = 1;
+			xmlnode_t *subchild;
+			string_t from = string_init(NULL);
+
+			char *amessages = jabber_attr(child->atts, "messages");		/* messages count in thread */
+			char *subject = NULL;
+			int firstsender = 1;
+
+			for (subchild = child->children; subchild; subchild = subchild->next) {
+				if (0) {
+				} else if (!xstrcmp(subchild->name, "subject")) {
+					if (xstrcmp(subchild->data, "")) {
+						xfree(subject);
+						subject = jabber_unescape(subchild->data);
+					}
+
+				} else if (!xstrcmp(subchild->name, "senders")) {
+					xmlnode_t *senders;
+
+					for (senders = subchild->children; senders; senders = senders->next) {
+						/* XXX, unescape */
+						char *aname = jabber_attr(senders->atts, "name");
+						char *amail = jabber_attr(senders->atts, "address");
+
+						if (!firstsender)
+							string_append(from, ", ");
+
+						if (aname) {
+							char *tmp = saprintf("%s <%s>", aname, amail);
+							string_append(from, tmp);
+							xfree(tmp);
+						} else {
+							string_append(from, amail);
+						}
+
+						firstsender = 0;
+					}
+				} else if (!xstrcmp(subchild->name, "labels")) {	/* <labels>        | 
+											   A tag that contains a pipe ('|') delimited list of labels applied to this thread. */
+				} else if (!xstrcmp(subchild->name, "snippet")) {	/* <snippet>       | 
+											   A snippet from the body of the email. This must be HTML-encoded. */
+				} else debug_error("[jabber] google:mail:notify/mail-thread-info wtf: %s\n", __(subchild->name));
+			}
+
+			print((amessages && atoi(amessages) > 1) ? "gmail_thread" : "gmail_mail", 
+					session_name(s), from->str, jabberfix(subject, "(no subject)"), amessages);
+
+			string_free(from, 1);
+			xfree(subject);
+		} else debug_error("[jabber, iq] google:mail:notify wtf: %s\n", __(child->name));
+	}
+	if (mailcount && atoi(mailcount)) /* we don't want to beep or send events if no new mail is available */
+		newmail_common(s);
+}
+
+typedef enum {
+	JABBER_IQ_TYPE_NONE,
+	JABBER_IQ_TYPE_GET,
+	JABBER_IQ_TYPE_SET,
+	JABBER_IQ_TYPE_RESULT,
+	JABBER_IQ_TYPE_ERROR,
+} jabber_iq_type_t;
+
+JABBER_HANDLER_IQ(jabber_handle_si) {
+/* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
+	jabber_private_t *j = s->priv;
+	xmlnode_t *p;
+
+	if (iqtype == JABBER_IQ_TYPE_RESULT) {
+		char *uin = jabber_unescape(from);
+		dcc_t *d;
+
+		if ((d = jabber_dcc_find(uin, id, NULL))) {
+			xmlnode_t *node;
+			jabber_dcc_t *p = d->priv;
+			char *stream_method = NULL;
+
+			for (node = n->children; node; node = node->next) {
+				if (!xstrcmp(node->name, "feature") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "http://jabber.org/protocol/feature-neg")) {
+					xmlnode_t *subnode;
+					for (subnode = node->children; subnode; subnode = subnode->next) {
+						if (!xstrcmp(subnode->name, "x") && !xstrcmp(jabber_attr(subnode->atts, "xmlns"), "jabber:x:data") && 
+								!xstrcmp(jabber_attr(subnode->atts, "type"), "submit")) {
+							/* var stream-method == http://jabber.org/protocol/bytestreams */
+							jabber_handle_xmldata_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);
+						}
+					}
+				}
+			}
+			if (!xstrcmp(stream_method, "http://jabber.org/protocol/bytestreams")) 	p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS; 
+			else debug_error("[JABBER] JEP-0095: ERROR, stream_method XYZ error: %s\n", stream_method);
+			xfree(stream_method);
+
+			if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
+				struct jabber_streamhost_item streamhost;
+				jabber_dcc_bytestream_t *b;
+				list_t l;
+
+				b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
+				b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
+
+				if (jabber_dcc_ip && jabber_dcc) {
+					/* basic streamhost, our ip, default port, our jid. check if we enable it. XXX*/
+					streamhost.jid	= saprintf("%s/%s", s->uid+4, j->resource);
+					streamhost.ip	= xstrdup(jabber_dcc_ip);
+					streamhost.port	= jabber_dcc_port;
+					list_add(&(b->streamlist), &streamhost, sizeof(struct jabber_streamhost_item));
+				}
+
+/* 	... other, proxy, etc, etc..
+				streamhost.ip = ....
+				streamhost.port = ....
+				list_add(...);
+ */
+
+				xfree(p->req);
+				p->req = xstrdup(itoa(j->id++));
+
+				watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"%s\">"
+						"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">", 
+						d->uid+4, p->req, p->sid);
+
+				for (l = b->streamlist; l; l = l->next) {
+					struct jabber_streamhost_item *item = l->data;
+					watch_write(j->send_watch, "<streamhost port=\"%d\" host=\"%s\" jid=\"%s\"/>", item->port, item->ip, item->jid);
+				}
+				watch_write(j->send_watch, "<fast xmlns=\"http://affinix.com/jabber/stream\"/></query></iq>");
+
+			}
+		} else /* XXX */;
+	}
+
+	if (iqtype == JABBER_IQ_TYPE_SET && ((p = xmlnode_find_child(n, "file")))) {  /* JEP-0096: File Transfer */
+		dcc_t *D;
+		char *uin = jabber_unescape(from);
+		char *uid;
+		char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
+		char *size 	= jabber_attr(p->atts, "size");
+#if 0
+		xmlnode_t *range; /* unused? */
+#endif
+		jabber_dcc_t *jdcc;
+
+		uid = saprintf("jid:%s", uin);
+
+		jdcc = xmalloc(sizeof(jabber_dcc_t));
+		jdcc->session	= s;
+		jdcc->req 	= xstrdup(id);
+		jdcc->sid	= jabber_unescape(jabber_attr(n->atts, "id"));
+		jdcc->sfd	= -1;
+
+		D = dcc_add(uid, DCC_GET, NULL);
+		dcc_filename_set(D, filename);
+		dcc_size_set(D, atoi(size));
+		dcc_private_set(D, jdcc);
+		dcc_close_handler_set(D, jabber_dcc_close_handler);
+/* XXX, result
+		if ((range = xmlnode_find_child(p, "range"))) {
+			char *off = jabber_attr(range->atts, "offset");
+			char *len = jabber_attr(range->atts, "length");
+			if (off) dcc_offset_set(D, atoi(off));
+			if (len) dcc_size_set(D, atoi(len));
+		}
+*/
+		print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
+
+		xfree(uin);
+		xfree(uid);
+		xfree(filename);
+	}
+}
 
 JABBER_HANDLER(jabber_handle_iq) {
 	jabber_private_t *j = s->priv;
@@ -1187,13 +1379,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 
 	xmlnode_t *q;
 
-	enum {
-		JABBER_IQ_TYPE_NONE,
-		JABBER_IQ_TYPE_GET,
-		JABBER_IQ_TYPE_SET,
-		JABBER_IQ_TYPE_RESULT,
-		JABBER_IQ_TYPE_ERROR,
-	} type = JABBER_IQ_TYPE_NONE;
+	jabber_iq_type_t type = JABBER_IQ_TYPE_NONE;
 
 	if (0);
 	else if (!xstrcmp(atype, "get"))	type = JABBER_IQ_TYPE_GET;
@@ -1256,75 +1442,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 			watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
 	}
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
-		char *mailcount = jabber_attr(q->atts, "total-matched");
-		int tid_set = 0;
-		xmlnode_t *child;
-		xfree(j->last_gmail_result_time);
-		j->last_gmail_result_time = xstrdup(jabber_attr(q->atts, "result-time"));
-
-		print("gmail_count", session_name(s), mailcount);
-
-/* http://code.google.com/apis/talk/jep_extensions/gmail.html */
-		for (child = q->children; child; child = child->next) {
-			if (!xstrcmp(child->name, "mail-thread-info")) {
-				if (!tid_set)
-				{
-					xfree(j->last_gmail_tid);
-					j->last_gmail_tid = xstrdup(jabber_attr(child->atts, "tid"));
-				}
-				tid_set = 1;
-				xmlnode_t *subchild;
-				string_t from = string_init(NULL);
-
-				char *amessages = jabber_attr(child->atts, "messages");		/* messages count in thread */
-				char *subject = NULL;
-				int firstsender = 1;
-
-				for (subchild = child->children; subchild; subchild = subchild->next) {
-					if (0) {
-					} else if (!xstrcmp(subchild->name, "subject")) {
-						if (xstrcmp(subchild->data, "")) {
-							xfree(subject);
-							subject = jabber_unescape(subchild->data);
-						}
-
-					} else if (!xstrcmp(subchild->name, "senders")) {
-						xmlnode_t *senders;
-
-						for (senders = subchild->children; senders; senders = senders->next) {
-							/* XXX, unescape */
-							char *aname = jabber_attr(senders->atts, "name");
-							char *amail = jabber_attr(senders->atts, "address");
-
-							if (!firstsender)
-								string_append(from, ", ");
-
-							if (aname) {
-								char *tmp = saprintf("%s <%s>", aname, amail);
-								string_append(from, tmp);
-								xfree(tmp);
-							} else {
-								string_append(from, amail);
-							}
-
-							firstsender = 0;
-						}
-					} else if (!xstrcmp(subchild->name, "labels")) {	/* <labels>        | 
-								A tag that contains a pipe ('|') delimited list of labels applied to this thread. */
-					} else if (!xstrcmp(subchild->name, "snippet")) {	/* <snippet>       | 
-								A snippet from the body of the email. This must be HTML-encoded. */
-					} else debug_error("[jabber] google:mail:notify/mail-thread-info wtf: %s\n", __(subchild->name));
-				}
-
-				print((amessages && atoi(amessages) > 1) ? "gmail_thread" : "gmail_mail", 
-						session_name(s), from->str, jabberfix(subject, "(no subject)"), amessages);
-
-				string_free(from, 1);
-				xfree(subject);
-			} else debug_error("[jabber, iq] google:mail:notify wtf: %s\n", __(child->name));
-		}
-		if (mailcount && atoi(mailcount)) /* we don't want to beep or send events if no new mail is available */
-			newmail_common(s);
+		jabber_handle_gmail_result_mailbox(s, q, from, id);
 	}
 #endif
 
@@ -1376,113 +1494,8 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 
 #if WITH_JABBER_DCC
-	if ((q = xmlnode_find_child(n, "si"))) { /* JEP-0095: Stream Initiation */
-/* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
-		xmlnode_t *p;
-
-		if (type == JABBER_IQ_TYPE_RESULT) {
-			char *uin = jabber_unescape(from);
-			dcc_t *d;
-
-			if ((d = jabber_dcc_find(uin, id, NULL))) {
-				xmlnode_t *node;
-				jabber_dcc_t *p = d->priv;
-				char *stream_method = NULL;
-
-				for (node = q->children; node; node = node->next) {
-					if (!xstrcmp(node->name, "feature") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "http://jabber.org/protocol/feature-neg")) {
-						xmlnode_t *subnode;
-						for (subnode = node->children; subnode; subnode = subnode->next) {
-							if (!xstrcmp(subnode->name, "x") && !xstrcmp(jabber_attr(subnode->atts, "xmlns"), "jabber:x:data") && 
-								!xstrcmp(jabber_attr(subnode->atts, "type"), "submit")) {
-									/* var stream-method == http://jabber.org/protocol/bytestreams */
-								jabber_handle_xmldata_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);
-							}
-						}
-					}
-				}
-				if (!xstrcmp(stream_method, "http://jabber.org/protocol/bytestreams")) 	p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS; 
-				else debug_error("[JABBER] JEP-0095: ERROR, stream_method XYZ error: %s\n", stream_method);
-				xfree(stream_method);
-
-				if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
-					struct jabber_streamhost_item streamhost;
-					jabber_dcc_bytestream_t *b;
-					list_t l;
-
-					b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
-					b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
-
-					if (jabber_dcc_ip && jabber_dcc) {
-						/* basic streamhost, our ip, default port, our jid. check if we enable it. XXX*/
-						streamhost.jid	= saprintf("%s/%s", s->uid+4, j->resource);
-						streamhost.ip	= xstrdup(jabber_dcc_ip);
-						streamhost.port	= jabber_dcc_port;
-						list_add(&(b->streamlist), &streamhost, sizeof(struct jabber_streamhost_item));
-					}
-
-/* 		... other, proxy, etc, etc..
-					streamhost.ip = ....
-					streamhost.port = ....
-					list_add(...);
- */
-
-					xfree(p->req);
-					p->req = xstrdup(itoa(j->id++));
-
-					watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"%s\">"
-						"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">", 
-						d->uid+4, p->req, p->sid);
-
-					for (l = b->streamlist; l; l = l->next) {
-						struct jabber_streamhost_item *item = l->data;
-						watch_write(j->send_watch, "<streamhost port=\"%d\" host=\"%s\" jid=\"%s\"/>", item->port, item->ip, item->jid);
-					}
-					watch_write(j->send_watch, "<fast xmlns=\"http://affinix.com/jabber/stream\"/></query></iq>");
-
-				}
-			} else /* XXX */;
-		}
-
-		if (type == JABBER_IQ_TYPE_SET && ((p = xmlnode_find_child(q, "file")))) {  /* JEP-0096: File Transfer */
-			dcc_t *D;
-			char *uin = jabber_unescape(from);
-			char *uid;
-			char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
-			char *size 	= jabber_attr(p->atts, "size");
-#if 0
-			xmlnode_t *range; /* unused? */
-#endif
-			jabber_dcc_t *jdcc;
-
-			uid = saprintf("jid:%s", uin);
-
-			jdcc = xmalloc(sizeof(jabber_dcc_t));
-			jdcc->session	= s;
-			jdcc->req 	= xstrdup(id);
-			jdcc->sid	= jabber_unescape(jabber_attr(q->atts, "id"));
-			jdcc->sfd	= -1;
-
-			D = dcc_add(uid, DCC_GET, NULL);
-			dcc_filename_set(D, filename);
-			dcc_size_set(D, atoi(size));
-			dcc_private_set(D, jdcc);
-			dcc_close_handler_set(D, jabber_dcc_close_handler);
-/* XXX, result
-			if ((range = xmlnode_find_child(p, "range"))) {
-				char *off = jabber_attr(range->atts, "offset");
-				char *len = jabber_attr(range->atts, "length");
-				if (off) dcc_offset_set(D, atoi(off));
-				if (len) dcc_size_set(D, atoi(len));
-			}
-*/
-			print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
-
-			xfree(uin);
-			xfree(uid);
-			xfree(filename);
-		}
-	}
+	if ((q = xmlnode_find_child(n, "si"))) /* JEP-0095: Stream Initiation */
+		jabber_handle_si(s, q, type, from, id);
 #endif	/* FILETRANSFER */
 
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
