@@ -18,11 +18,16 @@
 #ifdef JABBER_HAVE_GNUTLS		/* HAVE_GNUTLS */
 # include <gnutls/gnutls.h>
 
+
 # define SSL_SESSION		gnutls_session
+
+static int SSL_SET_FD(SSL_SESSION session, int fd) {
+	gnutls_transport_set_ptr(session, (gnutls_transport_ptr)(fd));
+	return 1;	/* always success */
+}
 
 # define SSL_INIT(session)		gnutls_init((&session), GNUTLS_CLIENT)
 # define SSL_DEINIT(session)		gnutls_deinit(session)
-# define SSL_SET_FD(session, fd)	gnutls_transport_set_ptr(session, (gnutls_transport_ptr)(fd));
 # define SSL_HELLO(session)		gnutls_handshake(session)
 # define SSL_BYE(session)		gnutls_bye(session, GNUTLS_SHUT_RDWR)
 # define SSL_GLOBAL_INIT()		gnutls_global_init()
@@ -44,6 +49,8 @@ extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 
 # define SSL_SESSION		SSL *
 
+# define SSL_INIT(session)		!(session = SSL_new(jabberSslCtx))
+
 # define SSL_HELLO(session)		SSL_connect(session)
 # define SSL_BYE(session) 		SSL_shutdown(session)
 # define SSL_DEINIT(session)		SSL_free(session)
@@ -55,6 +62,7 @@ extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 # define SSL_SEND(session, str, len)	SSL_write(session, str, len)
 # define SSL_RECV(session, buf, size)	SSL_read(session, buf, size)
 
+# define SSL_SET_FD(session, fd)	SSL_set_fd(session, fd)
 # define SSL_GET_FD(session, fd)		fd
 # define SSL_WRITE_DIRECTION(session, ret)	(ret != SSL_ERROR_WANT_READ)
 

@@ -78,7 +78,7 @@ int config_jabber_beep_mail = 0;
 
 static int session_postinit;
 static int jabber_theme_init();
-static WATCHER_SESSION(jabber_handle_connect_ssl);
+WATCHER_SESSION(jabber_handle_connect_ssl);
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
@@ -111,6 +111,13 @@ static QUERY(jabber_session_init) {
 	j->fd = -1;
 	j->istlen = (tolower(s->uid[0]) == 't');	/* mark if this is tlen protocol */
 
+
+#ifdef JABBER_HAVE_GNUTLS
+	gnutls_certificate_allocate_credentials(&(j->xcred));
+	/* XXX - ~/.ekg/certs/server.pem */
+	gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
+#endif
+
 	s->priv = j;
 
 	return 0;
@@ -140,6 +147,9 @@ static QUERY(jabber_session_deinit) {
 		return 1;
 
 	s->priv = NULL;
+#ifdef JABBER_HAVE_GNUTLS
+	gnutls_certificate_free_credentials(j->xcred);
+#endif
 
 	xfree(j->server);
 	xfree(j->resource);
@@ -747,11 +757,6 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 	struct sockaddr_in sin;
 	const int port = session_int_get(s, "port");
 #ifdef JABBER_HAVE_SSL
-#ifdef JABBER_HAVE_GNUTLS
-	/* Allow connections to servers that have OpenPGP keys as well. */
-	const int cert_type_priority[3] = {GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0};
-	const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
-#endif
 	int ssl_port = session_int_get(s, "ssl_port");
 	int use_ssl = session_int_get(s, "use_ssl");
 #endif
@@ -837,44 +842,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 
 #ifdef JABBER_HAVE_SSL
         if (use_ssl) {
-		int ret = 0;
-#ifdef JABBER_HAVE_OPENSSL
-		if (!(j->ssl_session = SSL_new(jabberSslCtx))) {
-			print("conn_failed_tls");
-			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-			return -1;
-		}
-		if (SSL_set_fd(j->ssl_session, fd) == 0) {
-			print("conn_failed_tls");
-			SSL_free(j->ssl_session);
-			j->ssl_session = NULL;
-			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-			return -1;
-		}
-#endif
-
-#ifdef JABBER_HAVE_GNUTLS
-                gnutls_certificate_allocate_credentials(&(j->xcred));
-                /* XXX - ~/.ekg/certs/server.pem */
-                gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
-
-		if ((ret = SSL_INIT(j->ssl_session))) {
-			print("conn_failed_tls");
-			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-			return -1;
-		}
-
-		gnutls_set_default_priority(j->ssl_session);
-                gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
-                gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
-                gnutls_compression_set_priority(j->ssl_session, comp_type_priority);
-
-                /* we use read/write instead of recv/send */
-                gnutls_transport_set_pull_function(j->ssl_session, (gnutls_pull_func)read);
-                gnutls_transport_set_push_function(j->ssl_session, (gnutls_push_func)write);
-		SSL_SET_FD(j->ssl_session, j->fd);
-#endif
-		watch_add_session(s, fd, WATCH_WRITE, jabber_handle_connect_ssl);
+		jabber_handle_connect_ssl(-1, fd, 0, s);
 		return -1;
         } // use_ssl
 #endif
@@ -888,22 +856,59 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 /*
  * jabber_handle_connect_ssl()
  *
- * Try to connect to jabberd server by SSL<br>
+ * Asynchronic connection to jabberd server by SSL or TLS [XXX].
  * TEMPORARY, Session watch.<br>
+ * If @a type is -1 than it try to create ssl structs.
  *
  * @todo Some xxx's to fix.
  *
  */
 
-static WATCHER_SESSION(jabber_handle_connect_ssl) {
+WATCHER_SESSION(jabber_handle_connect_ssl) {
         jabber_private_t *j;
 	int ret;
 
-	if (type)
-		return 0;
-
 	if (!s || !(j = s->priv))
 		return -1;
+
+	if (type == -1) {
+#ifdef JABBER_HAVE_GNUTLS
+		/* Allow connections to servers that have OpenPGP keys as well. */
+		const int cert_type_priority[3] = {GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0};
+		const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
+#endif
+
+		if ((ret = SSL_INIT(j->ssl_session))) {
+			/* XXX, OpenSSL error value XXX */
+			print("conn_failed_tls");
+			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
+			return -1;
+		}
+
+#ifdef JABBER_HAVE_GNUTLS
+		gnutls_set_default_priority(j->ssl_session);
+		gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
+		gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
+		gnutls_compression_set_priority(j->ssl_session, comp_type_priority);
+
+		/* we use read/write instead of recv/send */
+		gnutls_transport_set_pull_function(j->ssl_session, (gnutls_pull_func)read);
+		gnutls_transport_set_push_function(j->ssl_session, (gnutls_push_func)write);
+#endif
+		if (SSL_SET_FD(j->ssl_session, fd) == 0) {	/* gnutls never fail */
+			print("conn_failed_tls");
+			SSL_DEINIT(j->ssl_session);
+			j->ssl_session = NULL;
+			jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
+			return -1;
+		}
+
+		watch_add_session(s, fd, WATCH_WRITE, jabber_handle_connect_ssl);
+		/* XXX, continue type = 0; and let's rock */
+	}
+
+	if (type)
+		return 0;
 
 	ret = SSL_HELLO(j->ssl_session);
 #ifdef JABBER_HAVE_OPENSSL
@@ -932,7 +937,6 @@ static WATCHER_SESSION(jabber_handle_connect_ssl) {
 
 /* XXX, move it to jabber_handle_disconnect() */
 		SSL_DEINIT(j->ssl_session);
-		gnutls_certificate_free_credentials(j->xcred);
 		j->using_ssl = 0;	/* XXX, hack, peres has reported that here j->using_ssl can be 1 (how possible?) hack to avoid double free */
 #endif
 		jabber_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
