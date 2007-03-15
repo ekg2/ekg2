@@ -43,6 +43,10 @@ echo -ne \
 		"\"SNIFF_HANDLER(x, type)=static int x(session_t *s, const connection_t *hdr, const type *pkt, int len)\"" \
 		"\"GG_PACKED=\""	\
 		\
+		"\"JABBER_HANDLER(x)=static void x(session_t *s, xmlnode_t *n)\"" \
+		"\"JABBER_HANDLER_GET_REPLY(x)=static void x(session_t *s, jabber_private_t *j, xmlnode_t *n, const char *from, const char *id)\"" \
+		"\"JABBER_HANDLER_IQ(x)=static void x(session_t *s, xmlnode_t *n, jabber_iq_type_t iqtype, const char *from, const char *id)\"" \
+		"\"JABBER_HANDLER_RESULT(x)=static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)\""	\
 		"\"JABBER_HAVE_SSL=1\"" 	\
 		"\"STRICT_XMLNS=0\""		\
 		"\"WITH_JABBER_DCC=1\""		\
