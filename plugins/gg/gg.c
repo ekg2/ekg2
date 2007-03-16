@@ -510,14 +510,12 @@ static QUERY(gg_protocols) {
  *
  * pinguje serwer co jaki¶ czas, je¶li jest nadal po³±czony.
  */
-static TIMER(gg_ping_timer_handler) {
-	session_t *s = session_find((char*) data);
+static TIMER_SESSION(gg_ping_timer_handler) {
 	gg_private_t *g;
 
-	if (type == 1) {
-		xfree(data);
+	if (type == 1)
 		return 0;
-	}
+
 	if (!s || !session_connected_get(s)) {
 		return -1;
 	}
@@ -593,7 +591,7 @@ static void gg_session_handler_success(session_t *s) {
 	/* XXX, check if that timer already exists !!! */
 	/* pamiêtajmy, ¿eby pingowaæ */
 	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
-	timer_add(&gg_plugin, buf, 180, 1, gg_ping_timer_handler, xstrdup(s->uid));
+	timer_add_session(s, buf, 180, 1, gg_ping_timer_handler);
 	descr = xstrdup(session_descr_get(s));
 	status = session_status_get(s);
 
