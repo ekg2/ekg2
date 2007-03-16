@@ -167,7 +167,6 @@ int jabber_bookmarks_free(jabber_private_t *j);
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
 WATCHER_LINE(jabber_handle_write);
 
-void xmlnode_handle_start(void *data, const char *name, const char **atts);
 void xmlnode_handle_end(void *data, const char *name);
 void xmlnode_handle_cdata(void *data, const char *text, int len);
 

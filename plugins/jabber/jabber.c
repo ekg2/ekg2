@@ -424,12 +424,21 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
 	}
 }
 
-static void jabber_handle_start(void *data, const char *name, const char **atts)
-{
+static void xmlnode_handle_start(void *data, const char *name, const char **atts) {
 	session_t *s = (session_t *) data;
-        jabber_private_t *j = session_private_get(s);
+	jabber_private_t *j;
 
-        if (!session_connected_get(s) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
+	if (!s || !(j = s->priv) || !name) {
+		debug_error("[jabber] xmlnode_handle_start() invalid parameters\n");
+		return;
+	}
+
+	/* XXX, czy tego nie mozna parsowac tak jak wszystko inne w jabber_handle() ? 
+	 * 	A tutaj tylko tworzyc drzewo xmlowe? 
+	 * 	XXX, rtfm expat
+	 */
+
+        if (!(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		char *passwd		= (char*) session_get(s, "password");
 		char *resource		= jabber_escape(session_get(s, "resource"));
 		char *epasswd		= NULL;
@@ -492,8 +501,41 @@ static void jabber_handle_start(void *data, const char *name, const char **atts)
 		xfree(authpass);
 
 		xfree(epasswd);
-	} else
-		xmlnode_handle_start(data, name, atts);
+	} else {
+		xmlnode_t *n, *newnode;
+		int arrcount;
+		int i;
+
+		newnode = xmalloc(sizeof(xmlnode_t));
+		newnode->name = xstrdup(name);
+
+		if ((n = j->node)) {
+			newnode->parent = n;
+
+			if (!n->children) 
+				n->children = newnode;
+			else {
+				xmlnode_t *m = n->children;
+
+				while (m->next)
+					m = m->next;
+
+				m->next = newnode;
+			}
+		}
+		arrcount = array_count((char **) atts);
+
+/*		newnode->atts = NULL; */
+
+		if (arrcount > 0) {		/* we don't need to allocate table if arrcount = 0 */
+			newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
+			for (i = 0; i < arrcount; i++)
+				newnode->atts[i] = xstrdup(atts[i]);
+/*			newnode->atts[i] = NULL; */
+		}
+
+		j->node = newnode;
+	}
 }
 
 static WATCHER_SESSION(jabber_handle_stream) {
@@ -691,7 +733,7 @@ XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
 	else		XML_ParserReset(parser, "UTF-8");	/* reset parser */
 
 	XML_SetUserData(parser, (void*) data);
-	XML_SetElementHandler(parser, (XML_StartElementHandler) jabber_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
+	XML_SetElementHandler(parser, (XML_StartElementHandler) xmlnode_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
 	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
 
 	return parser;
