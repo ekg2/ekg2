@@ -299,7 +299,23 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 							else	print("xmpp_feature_sub_unknown", session_name(s), j->server, "SASL", __(another->data), "");
 						}
 					}
+					continue;
 				}
+#if 0
+				if (!xstrcmp(ch->name, "compression")) {
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_compression method1,method2,..");
+					for (another = ch->children; another; another = another->next) {
+						if (!xstrcmp(another->name, "method")) {
+							if (!xstrcmp(another->data, "zlib"))
+								print("xmpp_feature_sub", session_name(s), j->server, "COMPRESSION", another->data, "/session use_compression zlib");
+							else if (!xstrcmp(another->data, "lzw"))
+								print("xmpp_feature_sub", session_name(s), j->server, "COMPRESSION", another->data, "/session use_compression lzw");
+							else	print("xmpp_feature_sub_unknown", session_name(s), j->server, "COMPRESSION", __(another->data), "");
+						}
+					}
+					continue;
+				}
+#endif
 				if (!xstrcmp(ch->name, "session"))
 					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Manage session");
 				else if (!xstrcmp(ch->name, "bind"))
@@ -481,6 +497,37 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 	}
 }
 
+JABBER_HANDLER(jabber_handle_compressed) {
+	jabber_private_t *j = s->priv;
+
+	CHECK_CONNECT(1, 0, return)
+	CHECK_XMLNS(n, "http://jabber.org/protocol/compress", return)
+
+	/* REINITIALIZE STREAM WITH COMPRESSION TURNED ON */
+
+	switch (j->using_compress) {
+		case JABBER_COMPRESSION_NONE: 		break;
+		case JABBER_COMPRESSION_ZLIB_INIT: 	j->using_compress = JABBER_COMPRESSION_ZLIB;	break;
+		case JABBER_COMPRESSION_LZW_INIT:	j->using_compress = JABBER_COMPRESSION_LZW;	break;
+
+		default:
+							debug_error("[jabber] invalid j->use_compression (%d) state..\n", j->using_compress);
+							j->using_compress = JABBER_COMPRESSION_NONE;
+	}
+
+	if (j->using_compress == JABBER_COMPRESSION_NONE) {
+		debug_error("[jabber] j->using_compress == JABBER_COMPRESSION_NONE but, compressed stanza?\n");
+		return;
+	}
+
+	j->parser = jabber_parser_recreate(NULL, XML_GetUserData(j->parser));
+	j->send_watch->handler	= jabber_handle_write;
+
+	watch_write(j->send_watch,
+			"<stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">",
+			j->server);
+}
+
 JABBER_HANDLER(jabber_handle_challenge) {
 	jabber_private_t *j =  s->priv;
 
@@ -632,6 +679,11 @@ void jabber_handle(void *data, xmlnode_t *n) {
 
 	if (!xstrcmp(n->name, "challenge")) {
 		jabber_handle_challenge(s, n);
+		return;
+	}
+
+	if (!xstrcmp(n->name, "compressed")) {	/* COMPRESSION HERE */
+		jabber_handle_compressed(s, n);
 		return;
 	}
 
