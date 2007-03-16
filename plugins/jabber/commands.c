@@ -307,7 +307,10 @@ static int jabber_command_connect_child_win32(void *data) {
 
 static COMMAND(jabber_command_connect)
 {
-	const char *server, *realserver = session_get(session, "server"); 
+	const char *realserver	= session_get(session, "server"); 
+	const char *resource	= session_get(session, "resource");
+	const char *server;
+
 	int res, fd[2];
 	jabber_private_t *j = session_private_get(session);
 	
@@ -379,6 +382,12 @@ static COMMAND(jabber_command_connect)
 		exit(0);
 #endif
 	}
+
+	if (!resource)
+		resource = JABBER_DEFAULT_RESOURCE;
+
+	xfree(j->resource);
+	j->resource = xstrdup(resource);
 
 	j->connecting = 1;
 
