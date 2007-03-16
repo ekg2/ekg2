@@ -117,18 +117,6 @@ void xmlnode_handle_cdata(void *data, const char *text, int len)
 	n->data[oldlen + len] = 0;
 }
 
-xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name)
-{
-	if (!n || !n->children)
-		return NULL;
-
-	for (n = n->children; n; n = n->next)
-		if (!xstrcmp(n->name, name))
-			return n;
-
-	return NULL;
-}
-
 /*
  * Local Variables:
  * mode: c

@@ -84,6 +84,28 @@ static void jabber_session_connected(session_t *s);
 
 static void newmail_common(session_t *s); 
 
+/**
+ * xmlnode_find_child()
+ *
+ * Find child of @a node, with @a name
+ *
+ * @param n - node
+ * @param name - name
+ *
+ * @return Pointer to node if such child was found, else NULL
+ */
+
+static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
+	if (!n || !n->children)
+		return NULL;
+
+	for (n = n->children; n; n = n->next)
+		if (!xstrcmp(n->name, name))
+			return n;
+	return NULL;
+}
+
+
 /*
  * tlen_handle_notification()
  *

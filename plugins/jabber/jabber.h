@@ -170,7 +170,6 @@ WATCHER_LINE(jabber_handle_write);
 void xmlnode_handle_start(void *data, const char *name, const char **atts);
 void xmlnode_handle_end(void *data, const char *name);
 void xmlnode_handle_cdata(void *data, const char *text, int len);
-xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name);
 
 void jabber_handle_disconnect(session_t *s, const char *reason, int type);
 
