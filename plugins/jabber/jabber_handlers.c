@@ -1306,8 +1306,6 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_disco_info) {
  * Handler for IQ GET QUERY xmlns="jabber:iq:last"<br>
  * Send reply about our last activity.<br>
  * XXX info about it from XEP/RFC
- *
- * @bug	We change s->activity each time when we rcv data, it's buggy. It always return 0s
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_last) {
