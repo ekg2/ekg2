@@ -1173,15 +1173,16 @@ static QUERY(jabber_status_show_handle) {
         	time_t n = time(NULL);
         	struct tm *t = localtime(&n);
 		int now_days = t->tm_yday;
-		char buf[100];
+
+		char buf[100] = { '\0' };
 		const char *format;
 
 		t = localtime(&s->last_conn);
 		format = format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event");
-		if (!strftime(buf, sizeof(buf), format, t) && xstrlen(format)>0)
+		if (format[0] && !strftime(buf, sizeof(buf), format, t))
 			xstrcpy(buf, "TOOLONG");
 
-		print( (s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
+		print((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
 	}
 	return 0;
 }
