@@ -563,7 +563,6 @@ static COMMAND(jabber_command_msg)
 				xfree(msg);
 			msg = tmp;
 		}
-		msg = tlenjabber_escape(msg); /* escape after sending HTML */
 
 		if (session_int_get(session, "__gpg_enabled") == 1) {
 			char *e_msg = xstrdup(msg);
