@@ -546,7 +546,7 @@ static COMMAND(jabber_command_msg)
 			char *htmlmsg, *tmp;
 			
 			if (!config_use_unicode) { /* it is important to have utf8 here */
-				if (!(msg = mutt_convert_string(text, config_console_charset, "utf-8")))
+				if (!(msg = mutt_convert_string(msg, config_console_charset, "utf-8")))
 					break;
 			}
 			if ((htmlmsg = utfstrchr(msg, 18))) { /* ^R */
