@@ -438,14 +438,14 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 	 * 	XXX, rtfm expat
 	 */
 
-        if (!(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
+        if (/* !j->node && */ !(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		char *passwd		= (char*) session_get(s, "password");
-		char *resource		= jabber_escape(session_get(s, "resource"));
 		char *epasswd		= NULL;
 
-                char *username;
+		char *username, *resource;
 		char *authpass;
 		char *stream_id;
+
 		if (!j->istlen) username = xstrdup(s->uid + 4);
 		else 		username = xstrdup(s->uid + 5);
 		*(xstrchr(username, '@')) = 0;
@@ -458,16 +458,12 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 				j->server, j->id++, username, epasswd ? epasswd : ("foo"));
 		}
 
-                if (!resource)
-                        resource = xstrdup(JABBER_DEFAULT_RESOURCE);
-
-		xfree(j->resource);
-		j->resource = resource;
-
 		if (!j->istlen && session_int_get(s, "use_sasl") == 1) {
 			xfree(username);	/* waste */
 			return;
 		}
+
+		resource = jabber_escape(j->resource);
 
 		/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
 		if (j->istlen) {
@@ -501,6 +497,7 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 		xfree(authpass);
 
 		xfree(epasswd);
+		xfree(resource);
 	} else {
 		xmlnode_t *n, *newnode;
 		int arrcount;
