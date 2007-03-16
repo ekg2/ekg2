@@ -515,10 +515,10 @@ static COMMAND(jabber_command_msg)
 
 		subject = jabber_escape(subtmp);
 		/* body of wiadomo¶æ to wszystko po koñcu pierwszej linijki */
-		msg = (tmp) ? jabber_escape(tmp+1) : NULL;
+		msg = (tmp) ? (tmp+1) : NULL;
 		xfree(subtmp);
 	} else 
-		msg = tlenjabber_escape(params[1]); /* bez tematu */
+		msg = params[1]; /* bez tematu */
 	if ((c = newconference_find(session, target))) 
 		ismuc = 1;
 
@@ -537,6 +537,20 @@ static COMMAND(jabber_command_msg)
 		xfree(subject); 
 	}
 	if (msg) {
+		{ /* Very, very simple XEP-0071 support */
+			char *htmlmsg = utfstrchr(msg, 18); /* ^R */
+			if (htmlmsg) { /* XXX: Maybe we should ignore ^R when using GPG? */
+				*(htmlmsg++) = 0;
+				/* I don't think anyone would blame us for sending <html/> before <body/>
+				 * TODO: some syntax checking? */
+				watch_write(j->send_watch,
+						"<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
+						"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
+						"%s</body></html>", htmlmsg);
+			}
+		}
+		msg = tlenjabber_escape(msg); /* escape after sending HTML */
+
 		if (session_int_get(session, "__gpg_enabled") == 1) {
 			char *e_msg = xstrdup(msg);
 
