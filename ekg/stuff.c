@@ -1770,6 +1770,19 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	return t;
 }
 
+struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, void *)) {
+	struct timer *t;
+
+	if (!session || !session->plugin) {
+		debug_error("timer_add_session() s: 0x%x s->plugin: 0x%x\n", session, session ? session->plugin : NULL);
+		return NULL;
+	}
+
+	t = timer_add(session->plugin, name, period, persist, function, session);
+	t->is_session = 1;
+	return t;
+}
+
 int timer_freeone(struct timer *t) 
 {
 	if (!t) 

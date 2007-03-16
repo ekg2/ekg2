@@ -242,12 +242,12 @@ session_t *session_add(const char *uid) {
  *
  * @note If plugin allocated memory for session example in s->priv you should
  * 	connect to <i>SESSION_REMOVED</i> query event, and free alloced memory
- * 	(remember about checking if this is your session) also timers
- * 	won't be automagicly removed (please note: ekg2 don't have <i>session</i> timers, 
- * 	we have <i>plugin</i> timers...) We don't want segv on timer handler when it want access to memory which was freed, do we? So please be aware of it.<br>
- * 	[Hint, you can use session_find_ptr() session_find() functions to check in timer handler if it wasn't removed]
+ * 	(remember about checking if this is your session) timers and watches
+ * 	will be automagicly removed.
  *
  * @note Current ekg2 API have got session watches. Use watch_add_session()
+ *
+ * @note Current ekg2 API have got timer watches. Use timer_add_session()
  *
  * @param uid - uid of session to remove
  *
@@ -298,6 +298,15 @@ session_watches_again:
 		ekg_watches_removed = 0;
 		if (w->is_session && w->data == s)
 			watch_free(w);
+	}
+
+	for (l = timers; l;) {
+		struct timer *t = l->data;
+
+		l = l->next;
+
+		if (t->is_session && t->data == s)
+			timer_freeone(t);
 	}
 
 	tmp = xstrdup(uid);
@@ -1340,6 +1349,15 @@ sessions_watches_again:
 
 		if (w->is_session)
 			watch_free(w);
+	}
+
+	for (l = timers; l;) {
+		struct timer *t = l->data;
+
+		l = l->next;
+
+		if (t->is_session)
+			timer_freeone(t);
 	}
 
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...
