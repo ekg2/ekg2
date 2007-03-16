@@ -2622,7 +2622,8 @@ static void jabber_session_connected(session_t *s) {
 		command_exec_format(NULL, s, 1, ("/jid:privacy --session %s"), 	list); 	/* set as active */
 	}
 #if GMAIL_MAIL_NOTIFY
-	if (!xstrcmp(j->server, "gmail.com")) {
+	/* talk.google.com should work also for Google Apps for your domain */
+	if (!xstrcmp(session_get(s, "server"), "talk.google.com")) {
 		watch_write(j->send_watch,
 			"<iq type=\"set\" to=\"%s\" id=\"gmail%d\"><usersetting xmlns=\"google:setting\"><mailnotifications value=\"true\"/></usersetting></iq>",
 			s->uid+4, j->id++);
