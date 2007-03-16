@@ -851,7 +851,6 @@ static const struct {
 	{ GG_NEW_STATUS,"GG_NEW_STATUS",SNIFF_OUTGOING, (void *) sniff_gg_new_status, 0},
 	{ GG_PING,	"GG_PING",	SNIFF_OUTGOING,	(void *) NULL, 0},
 	{ GG_PONG,	"GG_PONG",	SNIFF_INCOMING, (void *) NULL, 0},
-	{ GG_LIST_EMPTY,"GG_LIST_EMPTY",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
 	{ GG_STATUS60,	"GG_STATUS60",	SNIFF_INCOMING, (void *) sniff_gg_status60, 0},
 	{ GG_NEED_EMAIL,"GG_NEED_EMAIL",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
 	{ GG_LOGIN60,	"GG_LOGIN60",	SNIFF_OUTGOING, (void *) sniff_gg_login60, 0},
@@ -859,6 +858,8 @@ static const struct {
 	{ GG_ADD_NOTIFY,	"GG_ADD_NOTIFY",	SNIFF_OUTGOING, (void *) sniff_gg_add_notify, 0},
 	{ GG_REMOVE_NOTIFY,	"GG_REMOVE_NOTIFY", 	SNIFF_OUTGOING, (void *) sniff_gg_del_notify, 0},
 	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_notify_reply60, 0}, 
+
+	{ GG_LIST_EMPTY,	"GG_LIST_EMPTY",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 	{ GG_NOTIFY_FIRST,	"GG_NOTIFY_FIRST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 	{ GG_NOTIFY_LAST,	"GG_NOTIFY_LAST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 
@@ -923,7 +924,7 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 }
 
 #undef CHECK_LEN
-void sniff_loop(void *data, const struct pcap_pkthdr *header, const u_char *packet) {
+void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
 	const struct ethhdr *ethernet;
 	const struct iphdr *ip;
 	const struct tcphdr *tcp;
@@ -994,16 +995,15 @@ void sniff_loop(void *data, const struct pcap_pkthdr *header, const u_char *pack
  * 		than in sniff_loop() we'll remove already data.. [of length len, len returned from sniff_gg()]
  */
 
-static WATCHER(sniff_pcap_read) {
-	if (type) {
+static WATCHER_SESSION(sniff_pcap_read) {
+	if (type)
 		return 0;
-	}
 
-	if (!data) {
+	if (!s) {
 		debug_error("sniff_pcap_read() no session!\n");
 		return -1;
 	}
-	pcap_dispatch(GET_DEV(data), 1, sniff_loop, data);
+	pcap_dispatch(GET_DEV(s), 1, sniff_loop, (void *) s);
 	return 0;
 }
 
@@ -1062,7 +1062,7 @@ static COMMAND(sniff_command_connect) {
  */
 	session->priv = dev;
 
-	watch_add(&sniff_plugin, pcap_fileno(dev), WATCH_READ, sniff_pcap_read, session);
+	watch_add_session(session, pcap_fileno(dev), WATCH_READ, sniff_pcap_read);
 
 	session->status = EKG_STATUS_AVAIL;
 	session->connected = 1;
