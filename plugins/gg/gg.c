@@ -70,7 +70,24 @@ char *last_tokenid;
 int gg_config_display_token;
 int gg_config_split_messages;
 
-static int gg_private_init(session_t *s) {
+/**
+ * gg_session_init()
+ *
+ * Handler for: <i>SESSION_ADDED</i><br>
+ * Init private session struct gg_private_t if @a session is gg one.<br>
+ * Read saved userlist by userlist_read()
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - uid of session
+ * @param data NULL
+ *
+ * @return	0 if @a session is gg one, and we init memory<br>
+ * 		1 if we don't found such session, or it wasn't gg session <b>[most probable]</b>, or we already init memory.
+ */
+
+static QUERY(gg_session_init) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
 	gg_private_t *g;
 
 	if (!s || s->priv || s->plugin != &gg_plugin)
@@ -78,7 +95,6 @@ static int gg_private_init(session_t *s) {
 
 	g = xmalloc(sizeof(gg_private_t));
 
-	userlist_free(s);
 	userlist_read(s);
 
 	s->priv = g;
@@ -86,7 +102,25 @@ static int gg_private_init(session_t *s) {
 	return 0;
 }
 
-static int gg_private_destroy(session_t *s) {
+/**
+ * gg_session_deinit()
+ *
+ * Handler for: <i>SESSION_REMOVED</i><br>
+ * Free memory allocated by gg_private_t if @a session is gg one.
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - uid of session
+ * @param data NULL
+ *
+ * @todo Check if we really free all memory allocated by session.
+ *
+ * @return 	0 if @a session is gg one, and memory allocated where xfree()'d.<br>
+ * 		1 if not such session, or it wasn't gg session <b>[most probable]</b>, or we already free memory.
+ */
+
+static QUERY(gg_session_deinit) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
 	gg_private_t *g;
 	list_t l;
 
@@ -98,6 +132,8 @@ static int gg_private_destroy(session_t *s) {
 
 	for (l = g->searches; l; l = l->next)
 		gg_pubdir50_free((gg_pubdir50_t) l->data);
+
+	list_destroy(g->searches, 0);
 
 	xfree(g);
 
@@ -180,21 +216,6 @@ static QUERY(gg_userlist_info_handle) {
 			xfree(tmp);
 		}
 	}
-	return 0;
-}
-
-static QUERY(gg_session_handle) {
-	char **uid = va_arg(ap, char**);
-	session_t *s = session_find(*uid);
-
-	if (!s)
-		return 0;
-
-	if (data)
-		gg_private_init(s);
-	else
-		gg_private_destroy(s);
-
 	return 0;
 }
 
@@ -1452,8 +1473,8 @@ int gg_plugin_init(int prio) {
 	query_connect_id(&gg_plugin, PROTOCOL_VALIDATE_UID, gg_validate_uid, NULL);
 	query_connect_id(&gg_plugin, GET_PLUGIN_PROTOCOLS, gg_protocols, NULL);
 	query_connect_id(&gg_plugin, PLUGIN_PRINT_VERSION, gg_print_version, NULL);
-	query_connect_id(&gg_plugin, SESSION_ADDED, gg_session_handle, (void *)1);
-	query_connect_id(&gg_plugin, SESSION_REMOVED, gg_session_handle, (void *)0);
+	query_connect_id(&gg_plugin, SESSION_ADDED, gg_session_init, NULL);
+	query_connect_id(&gg_plugin, SESSION_REMOVED, gg_session_deinit, NULL);
 	query_connect_id(&gg_plugin, ADD_NOTIFY, gg_add_notify_handle, NULL);
 	query_connect_id(&gg_plugin, REMOVE_NOTIFY, gg_remove_notify_handle, NULL);
 	query_connect_id(&gg_plugin, STATUS_SHOW, gg_status_show_handle, NULL);
