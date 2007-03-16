@@ -1770,7 +1770,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	return t;
 }
 
-struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, void *)) {
+struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, session_t *)) {
 	struct timer *t;
 
 	if (!session || !session->plugin) {
@@ -1778,7 +1778,7 @@ struct timer *timer_add_session(session_t *session, const char *name, time_t per
 		return NULL;
 	}
 
-	t = timer_add(session->plugin, name, period, persist, function, session);
+	t = timer_add(session->plugin, name, period, persist, (void *) function, session);
 	t->is_session = 1;
 	return t;
 }

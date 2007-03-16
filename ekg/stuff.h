@@ -337,7 +337,7 @@ int isalpha_pl(unsigned char c);
 #define xtoupper(c) toupper((int) (unsigned char) c)
 
 struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persistent, int (*function)(int, void *), void *data);
-struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, void *));
+struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, session_t *));
 int timer_freeone(struct timer *t);
 int timer_remove(plugin_t *plugin, const char *name);
 int timer_remove_user();
