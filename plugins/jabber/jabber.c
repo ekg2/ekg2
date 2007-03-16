@@ -536,20 +536,26 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 }
 
 static WATCHER_SESSION(jabber_handle_stream) {
-        jabber_private_t *j		= session_private_get(s);
+#define BUFFER_LEN 4096
+	jabber_private_t *j;
+
 	XML_Parser parser;				/* j->parser */
 	char *uncompressed	= NULL;
         char *buf;
         int len;
 	int rlen;
 
-        s->activity = time(NULL);
+	/* session dissapear, shouldn't happen */
+	if (!s || !(j = s->priv))
+		return -1;
 
-        /* ojej, roz³±czy³o nas */
+/*	s->activity = time(NULL); */
+
+	/* we got disconnected? */
         if (type == 1) {
                 debug("[jabber] jabber_handle_stream() type == 1, exitting\n");
 
-		if (s && session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
+		if (session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
 			jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 
                 return 0;
@@ -558,14 +564,14 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	debug_function("[jabber] jabber_handle_stream()\n");
 	parser = j->parser;
 
-        if (!(buf = XML_GetBuffer(parser, 4096))) {
+	if (!(buf = XML_GetBuffer(parser, BUFFER_LEN))) {
 		jabber_handle_disconnect(s, "XML_GetBuffer failed", EKG_DISCONNECT_FAILURE);
                 return -1;
         }
 #ifdef JABBER_HAVE_SSL
         if (j->using_ssl && j->ssl_session) {
 
-		len = SSL_RECV(j->ssl_session, buf, 4095);
+		len = SSL_RECV(j->ssl_session, buf, BUFFER_LEN-1);
 #ifdef JABBER_HAVE_OPENSSL
 		if ((len == 0 && SSL_get_error(j->ssl_session, len) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
 		else if (len < 0) 
@@ -586,9 +592,9 @@ static WATCHER_SESSION(jabber_handle_stream) {
         } else
 #endif
 #ifdef NO_POSIX_SYSTEM
-                if ((len = recv(fd, buf, 4095, 0)) < 1) {
+                if ((len = recv(fd, buf, BUFFER_LEN-1, 0)) < 1) {
 #else
-                if ((len = read(fd, buf, 4095)) < 1) {
+                if ((len = read(fd, buf, BUFFER_LEN-1)) < 1) {
 #endif
 			if (len == -1 && (errno == EINPROGRESS || errno == EAGAIN)) return 0;
 			jabber_handle_disconnect(s, len == -1 ? strerror(errno) : "got disconnected", len == -1 ? EKG_DISCONNECT_FAILURE : EKG_DISCONNECT_NETWORK);
