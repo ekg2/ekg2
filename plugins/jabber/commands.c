@@ -536,10 +536,20 @@ static COMMAND(jabber_command_msg)
 		watch_write(j->send_watch, "<subject>%s</subject>", subject); 
 		xfree(subject); 
 	}
-	if (msg) {
-		{ /* Very, very simple XEP-0071 support */
-			char *htmlmsg = utfstrchr(msg, 18); /* ^R */
-			if (htmlmsg) { /* XXX: Maybe we should ignore ^R when using GPG? */
+	do {
+		if (!msg)
+			break;
+
+		if (j->istlen)
+			msg = tlen_encode(msg);
+		else { /* Very, very simple XEP-0071 support + 'modified' jabber_encode() */
+			char *htmlmsg, *tmp;
+			
+			if (!config_use_unicode) { /* it is important to have utf8 here */
+				if (!(msg = mutt_convert_string(text, config_console_charset, "utf-8")))
+					break;
+			}
+			if ((htmlmsg = utfstrchr(msg, 18))) { /* ^R */
 				*(htmlmsg++) = 0;
 				/* I don't think anyone would blame us for sending <html/> before <body/>
 				 * TODO: some syntax checking? */
@@ -548,6 +558,10 @@ static COMMAND(jabber_command_msg)
 						"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
 						"%s</body></html>", htmlmsg);
 			}
+			tmp = xml_escape(msg);
+			if (!config_use_unicode)
+				xfree(msg);
+			msg = tmp;
 		}
 		msg = tlenjabber_escape(msg); /* escape after sending HTML */
 
@@ -568,7 +582,8 @@ static COMMAND(jabber_command_msg)
         	if (config_last & 4) 
         		last_add(1, uid, time(NULL), 0, msg);
 		xfree(msg);
-	}
+	} while(0);
+
 	if (!j->istlen) 
 		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
 			( config_display_ack == 1 || config_display_ack == 2 ? "<delivered/>" : ""),
