@@ -396,11 +396,13 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
 
-	if (use_fjuczers & 2)	/* bind */
+	if (use_fjuczers & 2) {	/* bind */
+		char *resource = jabber_escape(j->resource);
 		watch_write(j->send_watch, 
 				"<iq type=\"set\" id=\"bind%d\"><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"><resource>%s</resource></bind></iq>", 
-				j->id++, j->resource);
-
+				j->id++, resource);
+		xfree(resource);
+	}
 	if (use_fjuczers & 1)	/* session */
 		watch_write(j->send_watch, 
 				"<iq type=\"set\" id=\"auth\"><session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/></iq>",
