@@ -649,13 +649,9 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	return 0;
 }
 
-static TIMER(jabber_ping_timer_handler) {
-	session_t *s = session_find((char*) data);
-
-	if (type == 1) {
-		xfree(data);
+static TIMER_SESSION(jabber_ping_timer_handler) {
+	if (type == 1)
 		return 0;
-	}
 
 	if (!s || !s->priv || !s->connected) {
 		return -1;
@@ -785,7 +781,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 
 	if (j->istlen || (session_int_get(s, "ping-server") != 0)) {
 		tname = saprintf("ping-%s", s->uid+4);
-		timer_add(&jabber_plugin, tname, j->istlen ? 60 : 180, 1, jabber_ping_timer_handler, xstrdup(s->uid));
+		timer_add_session(s, tname, j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
 		/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
 		xfree(tname);
 	}
