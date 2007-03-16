@@ -1047,8 +1047,9 @@ static void jabber_handle_xmldata_form(session_t *s, const char *uid, const char
 
 			print("jabber_form_item", session_name(s), uid, label, var, def_option, 
 				isreq == -1 ? "X" : isreq == 1 ? "V" : " ");
-			if (sub) {
-				int len = xstrlen(sub->str);
+
+			if (sub && sub->len > 1) {
+				int len = sub->len;
 				if (sub->str[len-1] == '\t' && sub->str[len-2] == '\n') sub->str[len-2] = 0;
 				print("jabber_form_item_sub", session_name(s), uid, sub->str);
 				string_free(sub, 1);
@@ -2501,7 +2502,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 	for (q = n->children; q; q = q->next) {
 		char *tmp	= xstrchr(uid, '/');
-		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : xstrlen(uid));
+		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : -1);
 		char *ns	= jabber_attr(q->atts, "xmlns");
 
 		if (!xstrcmp(q->name, "x")) {
