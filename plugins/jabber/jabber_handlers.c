@@ -639,13 +639,17 @@ JABBER_HANDLER(jabber_handle_challenge) {
  * jabber_handle()
  *
  * It handle:
- * 	- "message" using jabber_handle_message()
- * 	- "iq" using jabber_handle_iq()
- *	- "presence" using jabber_handle_presence()
+ * 	- <i>message</i> using jabber_handle_message()
+ * 	- <i>iq</i> using jabber_handle_iq()
+ *	- <i>presence</i> using jabber_handle_presence()
+ *	- <i>stream:features</i> using jabber_handle_stream_features()
+ *	- <i>challenge</i> using jabber_handle_challenge()
+ *	- <i>compressed</i> using jabber_handle_compressed()
+ *	- <i>proceed</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-tls</i> using jabber_handle_connect_ssl()
+ *	- <i>success</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-sasl</i>
+ *	- <i>failure</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-sasl</i>
  *	- else if tlen protocol than forward to tlen_handle()
  *	- else print error in __debug window.
- *
- * @bug It was too big when i added this SASL stuff. removing SASL stuff for while.
  */
 
 void jabber_handle(void *data, xmlnode_t *n) {

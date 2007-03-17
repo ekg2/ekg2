@@ -455,6 +455,8 @@ char *tlen_decode(const char *what) {
  *
  * @note It can only find simple ASCII characters. If you need to find some multibyte char, please use wcs* instead.
  *
+ * @bug  When @a s is invalid utf-8 sequence, anything can happen.
+ *
  * @param s - string to search, as an utf-8 encoded char*
  * @param c - ASCII character to find
  *
