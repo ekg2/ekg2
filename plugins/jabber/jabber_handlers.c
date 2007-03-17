@@ -111,14 +111,20 @@ static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
  * Send jabber:iq:auth with <i><digest>DIGEST</digest></i> or <i><password>PLAINTEXT_PASSWORD</password></i><br>
  * It support both tlen auth, and jabber NON-SASL Authentication [XEP-0078]<br>
  *
- * @note 	Tlen Authentication was stolen from libtlen calc_passcode() with magic stuff (C) libtlen's developer and Piotr Paw³ow<br>
- * 		see: http://libtlen.sourceforge.net/
+ * @note	<b>XEP-0078:</b> Non-SASL Authentication: http://www.xmpp.org/extensions/xep-0078.html
  *
  * @todo	It's not really XEP-0078 cause ekg2 don't support it. But it this done that way.. I don't know any server with XEP-0078 functonality..<br>
  * 		I still rcv 'service-unavailable' or 'bad-request' ;(<br>
- * 		But it <b>MUST</b> be implemented for <i>/session dont_use_sasl 1</i>
- * 		So it's just jabber:iq:auth for dont_use_sasl 2 for now.
- * 		
+ * 		But it <b>MUST</b> be implemented for <i>/session dont_use_sasl 1</i><br>
+ * 		So it's just <i>jabber:iq:auth</i> for <i>dont_use_sasl</i> 2.
+ *
+ * @note 	Tlen Authentication was stolen from libtlen calc_passcode() with magic stuff (C) libtlen's developer and Piotr Paw³ow<br>
+ * 		see: http://libtlen.sourceforge.net/
+ *
+ * @param	s 		- session to authenticate <b>CANNOT BE NULL</b>
+ * @param	username	- username
+ * @param	passwd		- password to hash or to escape
+ * @param	stream_id	- id of stream.
  */
 
 void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id) {
