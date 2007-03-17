@@ -340,6 +340,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, session_t *));
 int timer_freeone(struct timer *t);
 int timer_remove(plugin_t *plugin, const char *name);
+int timer_remove_session(session_t *session, const char *name);
 int timer_remove_user();
 TIMER(timer_handle_command);
 void timer_free();

@@ -1823,6 +1823,29 @@ int timer_remove(plugin_t *plugin, const char *name)
 	return ((removed) ? 0 : -1);
 }
 
+int timer_remove_session(session_t *session, const char *name)
+{
+	list_t l;
+	plugin_t *p;
+	int removed = 0;
+
+	if (!session || (!(p = session->plugin)))
+		return -1;
+
+	for (l = timers; l; ) {
+		struct timer *t = l->data;
+
+		l = l->next;
+
+		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
+			timer_freeone(t);
+			removed++;
+		}
+	}
+
+	return ((removed) ? 0 : -1);
+}
+
 /*
  * timer_handle_command()
  *
