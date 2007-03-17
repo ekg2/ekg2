@@ -382,6 +382,7 @@ plugin_t *plugin_find_uid(const char *uid) {
 int plugin_unload(plugin_t *p)
 {
 	char *name; 
+	list_t l;
 
 	if (!p)
 		return -1;
@@ -399,6 +400,15 @@ int plugin_unload(plugin_t *p)
 			return -1;
 		}
 	}
+
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+		if (w && w->plugin == p && (w->removed == 1 || w->removed == -1)) {
+			print("generic_error", "XXX cannot remove this plugin when there some watches active");
+			return -1;
+		}
+	}
+	/* XXX, to samo dla timerow */
 
 	name = xstrdup(p->name);
 
@@ -547,29 +557,10 @@ int plugin_unregister(plugin_t *p)
 
 /* XXX think about sequence of unloading....: currently: watches, timers, sessions, queries, variables, commands */
 
-plugin_watches_again:
-	ekg_watches_removed = 0;
-	for (l = watches; l; ) {
+	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
-		l = l->next;
-
-		if (ekg_watches_removed > 1) {
-			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
-			goto plugin_watches_again;
-		}
-		ekg_watches_removed = 0;
-
-/* XXX here, to segvuje jesli na przyklad mamy dzialajacego watcha w tle.. a handler watcha zrobi cos ze trzeba watcha usunac (watch dzialajacy wiec w->remove = 1) 
- * 	a potem usunac caly plugin... watch_free() dla w->remove = 1 zadziala. a potem wraca do handlera watcha... gdzie radosnie mamy sigsegv. 
- * 	infrastuktura ekg2 ssie. w takim glibie mamy refcount dla takich rzeczy... tutaj jakies znaczniki w->removed, brak pomyslu jak zrobic zeby to dzialalo
- * 	na razie tylko komunikat. 
- *
- * 	testowac na pluginie rc. 
- *	polaczyc sie z ekg2 zrobic: /plugin -rc
- *	i wesolo debugowac....
- */
-		if (w->plugin == p)
+		if (w && w->plugin == p)
 			watch_free(w);
 	}
 
@@ -908,7 +899,7 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-		if (w->plugin == plugin && w->fd == fd && w->type == type && !(w->removed > 0))
+		if (w && w->plugin == plugin && w->fd == fd && w->type == type && !(w->removed > 0))
 			return w;
 	}
 
@@ -920,23 +911,25 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
  *
  * zwalnia pamiêæ po obiekcie watch_t.
  */
-void watch_free(watch_t *w)
-{
+void watch_free(watch_t *w) {
 	if (!w)
 		return;
-	if (w->removed == -1) { /* watch is running.. we cannot remove it */
+
+	if (w->removed == 2)
+		return;
+
+	if (w->removed == -1 || w->removed == 1) { /* watch is running.. we cannot remove it */
 		w->removed = 1;
 		return;
-	} else if (w->removed == 2) /* watch is already removed, from other thread? */
-		return;
+	}
 
 	if (w->type == WATCH_WRITE && w->buf && !w->handler) { 
 		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
 		return;
 	}
 
-	w->removed = 2;
-		
+	w->removed = 2;	/* to avoid situation: when handler of watch, execute watch_free() on this watch... stupid */
+
 	if (w->buf) {
 		int (*handler)(int, int, const char *, void *) = w->handler;
 		string_free(w->buf, 1);
@@ -948,7 +941,7 @@ void watch_free(watch_t *w)
 		if (handler)
 			handler(1, w->fd, w->type, w->data);
 	}
-	list_remove(&watches, w, 1);
+	list_remove_safe(&watches, w, 1);
 	ekg_watches_removed++;
 	debug("watch_free() REMOVED WATCH, watches removed this loop: %d oldwatch: 0x%x\n", ekg_watches_removed, w);
 }

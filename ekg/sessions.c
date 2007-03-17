@@ -284,19 +284,10 @@ int session_remove(const char *uid)
 		command_exec_format(NULL, s, 1, ("/disconnect %s"), s->uid);
 
 	/* remove sessio watches */
-session_watches_again:
-	ekg_watches_removed = 0;
-	for (l = watches; l;) {
+	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
-		l = l->next;
-
-		if (ekg_watches_removed > 1) {
-			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
-			goto session_watches_again;
-		}
-		ekg_watches_removed = 0;
-		if (w->is_session && w->data == s)
+		if (w && w->is_session && w->data == s)
 			watch_free(w);
 	}
 
@@ -1334,20 +1325,10 @@ void sessions_free() {
                 return;
 
 	/* remove _ALL_ session watches */
-sessions_watches_again:
-	ekg_watches_removed = 0;
-	for (l = watches; l;) {
+	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
-		l = l->next;
-
-		if (ekg_watches_removed > 1) {
-			debug_error("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
-			goto sessions_watches_again;
-		}
-		ekg_watches_removed = 0;
-
-		if (w->is_session)
+		if (w && w->is_session)
 			watch_free(w);
 	}
 

@@ -1940,6 +1940,8 @@ static COMMAND(cmd_debug_watches)
 		char wa[4];
 		char *plugin;
 
+		if (!w) continue;
+
 		xstrcpy(wa, "");
 
 		if ((w->type & WATCH_READ))

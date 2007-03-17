@@ -185,25 +185,27 @@ int list_remove_safe(list_t *list, void *data, int free_data) {
 
 void list_cleanup(list_t *list) {
 	list_t tmp;
+	list_t last = NULL;
 
 	if (!list)
 		return;
 
-	/* 1) Remove NULL data items from beginning of list while we have element on list, and data == NULL */
-	while ((tmp = *list) && tmp->data == NULL) {
-		*list = tmp->next;	/* repoint list to next item */
-		xfree(tmp);		/* free current item struct */
-	}
-
-	/* 2) Remove all other NULL data items */
 	for (tmp = *list; tmp;) {
-
 		if (tmp->data == NULL) {
-			list_t last = tmp;
-			tmp = tmp->next;
+			list_t cur = tmp;
 
-			xfree(last);
-		} else	tmp = tmp->next;
+			tmp = tmp->next;		/* move to next item */
+
+			if (!last)
+				*list = tmp;		/* repoint list to next item */	
+			else
+				last->next = tmp;	/* repoint last->next to next item */
+
+			xfree(cur);			/* free current item struct */
+		} else {
+			last = tmp;
+			tmp = tmp->next;
+		}
 	}
 }
 

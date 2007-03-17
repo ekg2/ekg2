@@ -179,12 +179,14 @@ void ekg_loop() {
                 }
 
                 /* sprawd¼ timeouty ró¿nych deskryptorów, oraz przy okazji w->removed jesli rowne 1, to timer powinien zostac usuniety. */
-                for (l = watches; l; ) {
+                for (l = watches; l; l = l->next) {
                         watch_t *w = l->data;
 
-                        l = l->next;
+			if (!w)
+				continue;
 
 			if (w->removed == 1) {
+				w->removed = 0;
 				watch_free(w);
 				continue;
 			}
@@ -306,6 +308,9 @@ void ekg_loop() {
                 for (maxfd = 0, l = watches; l; l = l->next) {
                         watch_t *w = l->data;
 
+			if (!w)
+				continue;
+
                         if (w->fd > maxfd)
                                 maxfd = w->fd;
                         if ((w->type & WATCH_READ))
@@ -410,21 +415,11 @@ void ekg_loop() {
                          * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
                          * usuñmy z listy. */
 			if (errno == EBADF) {
-watches_once_again:
-				ekg_watches_removed = 0;
-				for (l = watches; l; ) {
+				for (l = watches; l; l = l->next) {
 					watch_t *w = l->data;
 					struct stat st;
 
-					if (ekg_watches_removed > 1) {
-						debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
-						goto watches_once_again;
-					}
-					ekg_watches_removed = 0;
-
-					l = l->next;
-
-					if (!fstat(w->fd, &st))
+					if (!w || !fstat(w->fd, &st))
 						continue;
 
 					debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
@@ -435,20 +430,9 @@ watches_once_again:
 			return;
 		}
 
-watches_again:
-		ekg_watches_removed = 0;
-
                 /* przejrzyj deskryptory */
-		for (l = watches; l; ) {
+		for (l = watches; l; l = l->next) {
 			watch_t *w = l->data;
-
-			if (ekg_watches_removed > 1) {
-				debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
-				goto watches_again;
-			}
-			ekg_watches_removed = 0;
-
-			l = l->next;
 
 			if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
 				continue;
@@ -479,6 +463,12 @@ watches_again:
 				if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
 				else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
 			}
+		}
+
+		if (ekg_watches_removed > 0) {
+			debug("ekg_loop() Removed %d watches this loop, let's cleanup calling: list_cleanup() ...\n", ekg_watches_removed);
+			list_cleanup(&watches);
+			ekg_watches_removed = 0;
 		}
 	}
 
@@ -1129,17 +1119,8 @@ void ekg_exit()
 	}
 	list_destroy(children, 1);	children = NULL;
 
-watches_again:
-	ekg_watches_removed = 0;
-	for (l = watches; l; ) {
+	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-
-		if (ekg_watches_removed > 1) {
-			debug("[EKG_INTERNAL_ERROR] %s:%d Removed more than one watch...\n", __FILE__, __LINE__);
-			goto watches_again;
-		}
-		ekg_watches_removed = 0;
-		l = l->next;
 
 		watch_free(w);
 	}
@@ -1156,7 +1137,7 @@ watches_again:
 
 //		if (p->dl) ekg2_dlclose(p->dl);
 	}
-	list_destroy(watches, 0);	/* watches = NULL; */
+	list_destroy(watches, 0);	 watches = NULL;
 
 	if (config_changed && !config_speech_app && config_save_quit == 1) {
 		char line[80];
