@@ -128,7 +128,7 @@ static watch_t *rc_watch_find(int fd) {
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
-		if (w->plugin == &rc_plugin && w->fd == fd)
+		if (w && w->plugin == &rc_plugin && w->fd == fd)
 			return w;
 	}
 
