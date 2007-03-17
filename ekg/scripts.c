@@ -535,7 +535,7 @@ int script_timer_unbind(script_timer_t *temp, int remove)
 	if (temp->removed) return -1;
 	temp->removed = 1;
 	if (remove) 
-		timer_freeone(temp->self);
+		timer_free(temp->self);
 	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
 	return list_remove(&script_timers, temp, 0 /* 0 is ok */);
 }
@@ -748,7 +748,7 @@ TIMER(script_timer_handlers)
 	debug("::: -> %s %d\n", temp->private, type);
 	SCRIPT_HANDLER_FOOTER(script_handler_timer, type) {
 		if (!type) {
-			return -1; /* timer_freeone(temp->self); */
+			return -1; /* timer_free(temp->self); */
 		}
 	}
 	if (type)

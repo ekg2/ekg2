@@ -1783,8 +1783,7 @@ struct timer *timer_add_session(session_t *session, const char *name, time_t per
 	return t;
 }
 
-int timer_freeone(struct timer *t) 
-{
+int timer_free(struct timer *t) {
 	if (!t) 
 		return -1;
 
@@ -1815,7 +1814,7 @@ int timer_remove(plugin_t *plugin, const char *name)
 		l = l->next;
 
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
-			timer_freeone(t);
+			timer_free(t);
 			removed++;
 		}
 	}
@@ -1838,7 +1837,7 @@ int timer_remove_session(session_t *session, const char *name)
 		l = l->next;
 
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
-			timer_freeone(t);
+			timer_free(t);
 			removed++;
 		}
 	}
@@ -1880,35 +1879,12 @@ int timer_remove_user(int at)
 		l = l->next;
 
 		if (t->at == at && t->function == timer_handle_command) { 
-			timer_freeone(t);
+			timer_free(t);
 			removed = 1;
 		}
 	}
 
 	return ((removed) ? 0 : -1);
-}
-
-/**
- * timer_free()
- *
- * Free memory after ekg2 timers.
- */
-
-void timer_free() {
-	list_t l;
-
-	if (!timers)
-		return;
-
-	for (l = timers; l; l = l->next) {
-		struct timer *t = l->data;
-		
-		xfree(t->name);
-		xfree(t->data);
-	}
-
-	list_destroy(timers, 1);
-	timers = NULL;
 }
 
 /* 

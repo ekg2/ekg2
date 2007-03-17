@@ -306,7 +306,7 @@ session_watches_again:
 		l = l->next;
 
 		if (t->is_session && t->data == s)
-			timer_freeone(t);
+			timer_free(t);
 	}
 
 	tmp = xstrdup(uid);
@@ -1357,7 +1357,7 @@ sessions_watches_again:
 		l = l->next;
 
 		if (t->is_session)
-			timer_freeone(t);
+			timer_free(t);
 	}
 
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...

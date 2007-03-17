@@ -174,7 +174,7 @@ void ekg_loop() {
                                 }
 
 				if ((t->function(0, t->data) == -1) || !ispersist)
-					timer_freeone(t);
+					timer_free(t);
                         }
                 }
 
@@ -1221,7 +1221,15 @@ watches_again:
 	script_variables_free(1);
 	emoticon_free();
 	command_free();
-	timer_free();
+
+	for (l = timers; l;) {
+		struct timer *t = l->data;
+		
+		l = l->next;
+
+		timer_free(t);
+	}
+
 	binding_free();
 	last_free();
 
