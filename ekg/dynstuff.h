@@ -57,6 +57,9 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 int list_remove(list_t *list, void *data, int free_data);
 int list_count(list_t list);
 int list_destroy(list_t list, int free_data);
+
+void list_cleanup(list_t *list);
+int list_remove_safe(list_t *list, void *data, int free_data);
 #endif
 
 /*

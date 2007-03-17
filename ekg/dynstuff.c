@@ -141,6 +141,73 @@ void *list_add(list_t *list, void *data, int alloc_size)
 }
 
 /**
+ * list_remove_safe()
+ *
+ * Remove item @a data from list_t pointed by @a list.<br>
+ * <b>Don't</b> free whole list_t item struct. only set item_list_t->data to NULL<br>
+ *
+ * @note XXX, add note here why we should do it.
+ *
+ * @param list - pointer to list_t
+ * @param data - data to remove from @a list
+ * @param free_data -if set and item was found it'll call xfree() on it.
+ *
+ * @sa list_cleanup() - to remove NULL items from list.
+ */
+
+int list_remove_safe(list_t *list, void *data, int free_data) {
+	list_t tmp;
+
+	if (!list) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	for (tmp = *list; tmp; tmp = tmp->next) {
+		if (tmp->data == data) {
+			if (free_data)
+				xfree(tmp->data);
+			tmp->data = NULL;
+			return 0;
+		}
+	}
+
+	errno = ENOENT;
+	return -1;
+}
+
+/**
+ * list_cleanup()
+ *
+ * Remove from list_t all items with l->data set to NULL.<br>
+ * Use with list_remove_safe() after list is not in use.
+ */
+
+void list_cleanup(list_t *list) {
+	list_t tmp;
+
+	if (!list)
+		return;
+
+	/* 1) Remove NULL data items from beginning of list while we have element on list, and data == NULL */
+	while ((tmp = *list) && tmp->data == NULL) {
+		*list = tmp->next;	/* repoint list to next item */
+		xfree(tmp);		/* free current item struct */
+	}
+
+	/* 2) Remove all other NULL data items */
+	for (tmp = *list; tmp;) {
+
+		if (tmp->data == NULL) {
+			list_t last = tmp;
+			tmp = tmp->next;
+
+			xfree(last);
+		} else	tmp = tmp->next;
+	}
+}
+
+/**
  * list_remove()
  *
  * Remove item @a data from list_t pointed by @a list
