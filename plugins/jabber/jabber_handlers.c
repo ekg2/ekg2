@@ -708,6 +708,7 @@ JABBER_HANDLER(jabber_handle_challenge) {
  * 	- <i>iq</i> using jabber_handle_iq()
  *	- <i>presence</i> using jabber_handle_presence()
  *	- <i>stream:features</i> using jabber_handle_stream_features()
+ *	- <i>stream:error</i>
  *	- <i>challenge</i> using jabber_handle_challenge()
  *	- <i>compressed</i> using jabber_handle_compressed()
  *	- <i>proceed</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-tls</i> using jabber_handle_connect_ssl()
@@ -715,6 +716,8 @@ JABBER_HANDLER(jabber_handle_challenge) {
  *	- <i>failure</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-sasl</i>
  *	- else if tlen protocol than forward to tlen_handle()
  *	- else print error in __debug window.
+ *
+ * @todo See XXX's
  */
 
 void jabber_handle(void *data, xmlnode_t *n) {
@@ -801,6 +804,18 @@ void jabber_handle(void *data, xmlnode_t *n) {
 
 		j->parser = NULL; jabber_handle_disconnect(s, reason, EKG_DISCONNECT_FAILURE);
 		
+		return;
+	}
+
+	if (!xstrcmp(n->name, "stream:error")) {	/* BIG XXX, EKG_DISCONNECT_FAILURE bad here */
+		xmlnode_t *text = xmlnode_find_child(n, "text");
+		char *text2 = NULL;
+
+		if (text && text->data)
+			text2 = jabber_unescape(text->data);
+
+		j->parser = NULL; jabber_handle_disconnect(s, text2 ? text2 : n->children ? n->children->name : "stream:error XXX", EKG_DISCONNECT_FAILURE);
+
 		return;
 	}
 
