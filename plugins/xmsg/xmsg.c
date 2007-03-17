@@ -155,10 +155,8 @@ static WATCHER(xmsg_handle_data)
 
 				if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5)) {
 					const int i = session_int_get(s, "oneshot_resume_timer");
-#if 0
 					if (!timer_remove_session(s, "o"))
 						xdebug("old oneshot resume timer removed");
-#endif
 					if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
 						xdebug("oneshot resume timer added");
 					c = -1;
@@ -440,10 +438,8 @@ static COMMAND(xmsg_disconnect)
 	}
 	
 	xmsg_timer_change(session, NULL);
-#if 0
 	if (!timer_remove_session(session, "o"))
 		xdebug("old oneshot resume timer removed");
-#endif
 	session_status_set(session, EKG_STATUS_NA);
 	session_connected_set(session, 0);
 	{
@@ -487,10 +483,8 @@ static void xmsg_timer_change(session_t *s, const char *varname)
 	
 	xdebug("n = %d", n);
 	if (!varname || session_connected_get(s)) {
-#if 0
 		if (!timer_remove_session(s, "w"))
 			xdebug("old timer removed");
-#endif
 		if (n > 0) {
 			if (timer_add_session(s, "w", n, 1, xmsg_iterate_dir))
 				xdebug("new timer added");
