@@ -149,6 +149,7 @@ void jabber_handle(void *data, xmlnode_t *n);
 char *jabber_digest(const char *sid, const char *password);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
 char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm);
+void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id);
 
 char *mutt_convert_string(const char *ps, const char *from, const char *to); /* ouch */
 char *jabber_attr(char **atts, const char *att);

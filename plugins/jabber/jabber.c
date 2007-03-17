@@ -439,23 +439,22 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 	 */
 
         if (/* !j->node && */ !(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
-		char *passwd		= (char*) session_get(s, "password");
-		char *epasswd		= NULL;
+		const char *passwd	= session_get(s, "password");
 
-		char *username, *resource;
-		char *authpass;
-		char *stream_id;
+		char *username;
 
 		if (!j->istlen) username = xstrdup(s->uid + 4);
 		else 		username = xstrdup(s->uid + 5);
 		*(xstrchr(username, '@')) = 0;
 	
 		if (!j->istlen && session_get(s, "__new_acount")) {
-			epasswd		= jabber_escape(passwd);
+			char *epasswd	= jabber_escape(passwd);
 			watch_write(j->send_watch, 
 				"<iq type=\"set\" to=\"%s\" id=\"register%d\">"
 				"<query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>", 
 				j->server, j->id++, username, epasswd ? epasswd : ("foo"));
+
+			xfree(epasswd);
 		}
 
 		if (!j->istlen && session_int_get(s, "dont_use_sasl") != 2) {
@@ -470,41 +469,8 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 		}
 		/* here forced old jabber only, no XMPP 1.0, NON-SASL AUTH */
 
-		resource = jabber_escape(j->resource);
+		jabber_iq_auth_send(s, username, passwd, jabber_attr((char **) atts, j->istlen ? "i" : "id"));
 
-		/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
-		if (j->istlen) {
-			int     magic1 = 0x50305735, magic2 = 0x12345671, sum = 7;
-			char    z;
-			while ((z = *passwd++) != 0) {
-				if (z == ' ' || z == '\t') continue;
-				magic1 ^= (((magic1 & 0x3f) + sum) * z) + (magic1 << 8);
-				magic2 += (magic2 << 8) ^ magic1;
-				sum += z;
-			}
-			magic1 &= 0x7fffffff;
-			magic2 &= 0x7fffffff;
-
-			epasswd = passwd = saprintf("%08x%08x", magic1, magic2);
-		} else if (session_int_get(s, "plaintext_passwd") && !epasswd) {
-			epasswd = jabber_escape(passwd);
-		}
-
-		stream_id = jabber_attr((char **) atts, 
-					j->istlen ? "i" : "id");
-
-		authpass = (!j->istlen && session_int_get(s, "plaintext_passwd")) ? 
-			saprintf("<password>%s</password>", epasswd) :			/* plaintext */
-			saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd));	/* hash */
-
-		watch_write(j->send_watch, 
-			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", 
-			j->server, username, authpass, resource);
-                xfree(username);
-		xfree(authpass);
-
-		xfree(epasswd);
-		xfree(resource);
 	} else {
 		xmlnode_t *n, *newnode;
 		int arrcount;

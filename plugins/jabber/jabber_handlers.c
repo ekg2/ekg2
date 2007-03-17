@@ -105,6 +105,64 @@ static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
 	return NULL;
 }
 
+/**
+ * jabber_iq_auth_send()
+ *
+ * Send jabber:iq:auth with <i><digest>DIGEST</digest></i> or <i><password>PLAINTEXT_PASSWORD</password></i><br>
+ * It support both tlen auth, and jabber NON-SASL Authentication [XEP-0078]<br>
+ *
+ * @note 	Tlen Authentication was stolen from libtlen calc_passcode() with magic stuff (C) libtlen's developer and Piotr Paw³ow<br>
+ * 		see: http://libtlen.sourceforge.net/
+ *
+ * @todo	It's not really XEP-0078 cause ekg2 don't support it. But it this done that way.. I don't know any server with XEP-0078 functonality..<br>
+ * 		I still rcv 'service-unavailable' or 'bad-request' ;(<br>
+ * 		But it <b>MUST</b> be implemented for <i>/session dont_use_sasl 1</i>
+ * 		So it's just jabber:iq:auth for dont_use_sasl 2 for now.
+ * 		
+ */
+
+void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id) {
+	jabber_private_t *j = s->priv;
+
+	const char *passwd2 = NULL;			/* if set than jabber_digest() should be done on it. else plaintext_passwd 
+							   Variable to keep password from @a password, or generated hash of password with magic constant [tlen] */
+
+	char *resource = jabber_escape(j->resource);	/* escaped resource name */
+	char *epasswd = NULL;				/* temporary password [escaped, or hash], if needed for xfree() */
+	char *authpass;					/* <digest>digest</digest> or <password>plaintext_password</password> */
+
+	/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
+	if (j->istlen) {
+		int     magic1 = 0x50305735, magic2 = 0x12345671, sum = 7;
+		char    z;
+		while ((z = *passwd++) != 0) {
+			if (z == ' ' || z == '\t') continue;
+			magic1 ^= (((magic1 & 0x3f) + sum) * z) + (magic1 << 8);
+			magic2 += (magic2 << 8) ^ magic1;
+			sum += z;
+		}
+		magic1 &= 0x7fffffff;
+		magic2 &= 0x7fffffff;
+
+		passwd2 = epasswd = saprintf("%08x%08x", magic1, magic2);
+	} else if (session_int_get(s, "plaintext_passwd")) {
+		epasswd = jabber_escape(passwd);
+	} else 	passwd2 = passwd;
+
+
+	authpass = (passwd2) ?
+		saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd2)) :	/* hash */
+		saprintf("<password>%s</password>", epasswd);				/* plaintext */
+		
+	watch_write(j->send_watch, 
+			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", 
+			j->server, username, authpass, resource);
+	xfree(authpass);
+
+	xfree(epasswd);
+	xfree(resource);
+}
+
 
 /*
  * tlen_handle_notification()
