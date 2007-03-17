@@ -44,6 +44,10 @@
 #include <netdb.h>
 #endif
 
+#ifdef HAVE_EXPAT_H /* expat is used for XEP-0071 syntax checking */
+#  include <expat.h>
+#endif
+
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -551,12 +555,35 @@ static COMMAND(jabber_command_msg)
 			}
 			if ((htmlmsg = utfstrchr(msg, 18))) { /* ^R */
 				*(htmlmsg++) = 0;
-				/* I don't think anyone would blame us for sending <html/> before <body/>
-				 * TODO: some syntax checking? */
-				watch_write(j->send_watch,
-						"<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
-						"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
-						"%s</body></html>", htmlmsg);
+				if (*htmlmsg != 18) { /* syntax checking */
+					XML_Parser p = XML_ParserCreate("utf-8");
+					/* expat syntax-checking needs the code to be embedded in some parent element
+					 * so we create the whole block here, instead of giving %s to watch_write() */
+					char *fullmsg = saprintf("<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
+							"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
+							"%s</body></html>", htmlmsg);
+					
+					if (!XML_Parse(p, fullmsg, xstrlen(fullmsg), 1)) {
+						enum XML_Error errc = XML_GetErrorCode(p);
+						const char *errs;
+
+						if (errc && (errs = XML_ErrorString(errc))) {
+							print("jabber_msg_xmlsyntaxerr", errs);
+							XML_ParserFree(p);
+							xfree(fullmsg);
+							return -1;
+						}
+						/* we never should get here */
+					}
+					XML_ParserFree(p);
+					watch_write(j->send_watch, "%s", fullmsg); /* to avoid problems with %-formats */
+					xfree(fullmsg);
+				} else {
+					htmlmsg++;
+					watch_write(j->send_watch, "<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
+							"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
+							"%s</body></html>", htmlmsg);
+				}
 			}
 			tmp = xml_escape(msg);
 			if (!config_use_unicode)

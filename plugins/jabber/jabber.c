@@ -1336,6 +1336,10 @@ static int jabber_theme_init() {
 	format_add("jabber_gpg_sok",	_("%) GPG key: %W%2%n"), 1);							/* sesja, klucz for /status */
 	format_add("jabber_gpg_fail", 	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\n"	/* sesja, klucz, error */
 					"OpenGPG support for this session disabled."), 1);
+
+	/* simple XEP-0071 - XML parsing error */
+	format_add("jabber_msg_xmlsyntaxerr",	_("%! Expat syntax-checking failed on your message: %T%1%n. Please correct your code or use double ^R to disable syntax-checking."), 1);
+
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
 }
