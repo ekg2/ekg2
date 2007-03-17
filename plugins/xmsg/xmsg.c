@@ -70,7 +70,7 @@ static char *xmsg_dirfix(const char *path);
 #ifdef HAVE_INOTIFY
 static WATCHER(xmsg_handle_data);
 #endif /*HAVE_INOTIFY*/
-static TIMER(xmsg_iterate_dir);
+static TIMER_SESSION(xmsg_iterate_dir);
 static int xmsg_handle_file(session_t *s, const char *fn);
 static QUERY(xmsg_validate_uid);
 static COMMAND(xmsg_connect);
@@ -157,9 +157,11 @@ static WATCHER(xmsg_handle_data)
 					const int i = session_int_get(s, "oneshot_resume_timer");
 					/* to gain timer name different from that used with normal timers,
 					 * we leave ':' in the beginning of UID */
-					if (!timer_remove(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET-1))
+#if 0
+					if (!timer_remove_session(s, "o"))
 						xdebug("old oneshot resume timer removed");
-					if ((i > 0) && timer_add(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET-1, i, 0, xmsg_iterate_dir, s))
+#endif
+					if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
 						xdebug("oneshot resume timer added");
 					c = -1;
 				}
@@ -176,10 +178,9 @@ static WATCHER(xmsg_handle_data)
 }
 #endif /*HAVE_INOTIFY*/
 
-static TIMER(xmsg_iterate_dir)
+static TIMER_SESSION(xmsg_iterate_dir)
 {
 #define __FUNC__ "xmsg_iterate_dir"
-#define s (session_t*) data
 	char *dir;
 	DIR *d;
 	struct dirent *de;
@@ -188,6 +189,8 @@ static TIMER(xmsg_iterate_dir)
 
 	if (type)
 		return -1;
+	if (!s || !session_connected_get(s))
+		return 0;
 	
 	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
 	d = opendir(dir);
@@ -206,7 +209,7 @@ static TIMER(xmsg_iterate_dir)
 			const int i = session_int_get(s, "oneshot_resume_timer");
 			/* to gain timer name different from that used with normal timers,
 			 * we leave ':' in the beginning of UID */
-			if ((i > 0) && timer_add(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET-1, i, 0, xmsg_iterate_dir, s))
+			if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
 				xdebug("oneshot resume timer added");
 			break;
 		}
@@ -439,8 +442,10 @@ static COMMAND(xmsg_disconnect)
 	}
 	
 	xmsg_timer_change(session, NULL);
-	if (!timer_remove(&xmsg_plugin, session_uid_get(session)+XMSG_UID_DIROFFSET-1))
+#if 0
+	if (!timer_remove_session(session, "o"))
 		xdebug("old oneshot resume timer removed");
+#endif
 	session_status_set(session, EKG_STATUS_NA);
 	session_connected_set(session, 0);
 	{
@@ -484,10 +489,12 @@ static void xmsg_timer_change(session_t *s, const char *varname)
 	
 	xdebug("n = %d", n);
 	if (!varname || session_connected_get(s)) {
-		if (!timer_remove(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET))
+#if 0
+		if (!timer_remove_session(s, "w"))
 			xdebug("old timer removed");
+#endif
 		if (n > 0) {
-			if (timer_add(&xmsg_plugin, session_uid_get(s)+XMSG_UID_DIROFFSET, n, 1, xmsg_iterate_dir, s))
+			if (timer_add_session(s, "w", n, 1, xmsg_iterate_dir))
 				xdebug("new timer added");
 		}
 	}
