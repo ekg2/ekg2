@@ -396,7 +396,7 @@ static COMMAND(jabber_command_connect)
 	j->connecting = 1;
 
 	printq("connecting", session_name(session));
-
+	printq("jabber_sasl_note", session_name(session), session->uid);
 	if (session_status_get(session) == EKG_STATUS_NA)
 		session_status_set(session, EKG_STATUS_AVAIL);
 	return 0;

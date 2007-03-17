@@ -262,7 +262,7 @@ JABBER_HANDLER(tlen_handle) {
 JABBER_HANDLER(jabber_handle_stream_features) {
 	jabber_private_t *j = s->priv;
 
-	int use_sasl = j->connecting == 1 && (session_int_get(s, "use_sasl") == 1);
+	int use_sasl = j->connecting == 1 && (session_int_get(s, "dont_use_sasl") != 2);
 	int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
 
 	int display_fjuczers = session_int_get(s, "display_server_features");
@@ -289,7 +289,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				}
 
 				if (!xstrcmp(ch->name, "mechanisms")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_sasl");
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session dont_use_sasl");
 					for (another = ch->children; another; another = another->next) {	
 						if (!xstrcmp(another->name, "mechanism")) {
 							if (!xstrcmp(another->data, "DIGEST-MD5"))
@@ -491,7 +491,8 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				j->parser = NULL; jabber_handle_disconnect(s, 
 						"We tried to auth using SASL but none of method supported by server we know. "
 						"Check __debug window and supported SASL server auth methods and sent them to ekg2 devs. "
-						"Temporary you can turn off SASL auth using /session use_sasl 0", EKG_DISCONNECT_FAILURE);
+						"Temporary you can turn off SASL auth using by setting dont_use_sasl to 1 or 2. "
+						"/session dont_use_sasl 2", EKG_DISCONNECT_FAILURE);
 			break;
 		}
 	}
