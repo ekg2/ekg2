@@ -155,8 +155,6 @@ static WATCHER(xmsg_handle_data)
 
 				if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5)) {
 					const int i = session_int_get(s, "oneshot_resume_timer");
-					/* to gain timer name different from that used with normal timers,
-					 * we leave ':' in the beginning of UID */
 #if 0
 					if (!timer_remove_session(s, "o"))
 						xdebug("old oneshot resume timer removed");
@@ -185,12 +183,14 @@ static TIMER_SESSION(xmsg_iterate_dir)
 	DIR *d;
 	struct dirent *de;
 	int n = 0;
+	const int timerinterval = session_int_get(s, "rescan_timer");
 	const int maxn = session_int_get(s, "max_oneshot_files");
 
-	if (type)
+	/* delete the timer if it's disabled (using session variable) or session was disconnected
+	 * warn: we're doing this really bad way; if user disabled main dirscan timer, we'll also
+	 * disable working oneshot thing; use with care */
+	if (type || !s || (timerinterval <= 0) || !session_connected_get(s))
 		return -1;
-	if (!s || !session_connected_get(s))
-		return 0;
 	
 	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
 	d = opendir(dir);
@@ -207,8 +207,6 @@ static TIMER_SESSION(xmsg_iterate_dir)
 		
 		if ((maxn > 0) && n >= maxn) {
 			const int i = session_int_get(s, "oneshot_resume_timer");
-			/* to gain timer name different from that used with normal timers,
-			 * we leave ':' in the beginning of UID */
 			if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
 				xdebug("oneshot resume timer added");
 			break;
