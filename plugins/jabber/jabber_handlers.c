@@ -815,7 +815,7 @@ void jabber_handle(void *data, xmlnode_t *n) {
 			text2 = jabber_unescape(text->data);
 
 		j->parser = NULL; jabber_handle_disconnect(s, text2 ? text2 : n->children ? n->children->name : "stream:error XXX", EKG_DISCONNECT_FAILURE);
-
+		xfree(text2);
 		return;
 	}
 
