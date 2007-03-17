@@ -470,7 +470,7 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 		/* here forced old jabber only, no XMPP 1.0, NON-SASL AUTH */
 
 		jabber_iq_auth_send(s, username, passwd, jabber_attr((char **) atts, j->istlen ? "i" : "id"));
-
+		xfree(username);
 	} else {
 		xmlnode_t *n, *newnode;
 		int arrcount;
