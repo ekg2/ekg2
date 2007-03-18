@@ -547,7 +547,7 @@ int plugin_unregister(plugin_t *p)
 	 * np. rc. sie zrobi nast razem */
 
 	/* j/w If any plugin has backtrace here, and we try to remove it from memory.
-	 * ekg2 do SEGV. For example below is comment for rc plugin and watches...
+	 * ekg2 do SEGV.
 	 */
 
 	list_t l;
@@ -569,11 +569,8 @@ int plugin_unregister(plugin_t *p)
 
 		l = l->next;
 
-		if (t->plugin == p) {
-			xfree(t->name);
-			xfree(t->data);
-			list_remove(&timers, t, 1);
-		}
+		if (t->plugin == p)
+			timer_free(t);
 	}
 
 	for (l = sessions; l; ) {
