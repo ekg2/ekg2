@@ -181,11 +181,11 @@ session_t *session_add(const char *uid) {
 		int count, i;
 
 		for (count=0; (pl->params[count].key /* && p->params[count].id != -1 */); count++);	/* count how many _global_ params should have this sessioni */
-		s->values 		= (char **) xcalloc(count+1, sizeof(char *));			/* alloc memory for it */
+		s->values 		= (char **) xcalloc(count+1, sizeof(char *));			/* alloc memory for it, +1 just in case. */
 		s->global_vars_count 	= count;							/* save it for future, little helper... */
 
 		/* set variables */
-		for (i=0; i <= count; i++) {
+		for (i=0; i < count; i++) {
 			const char *key   = pl->params[i].key;
 			const int keyid	  = pl->params[i].id;
 			const char *value = pl->params[i].value;
