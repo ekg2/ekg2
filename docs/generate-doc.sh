@@ -37,8 +37,11 @@ echo -ne \
 		"\"QUERY(x)=int x(void *data, va_list ap)\"" \
 		"\"WATCHER(x)=int x(int type, int fd, watch_type_t watch, void *data)\"" \
 		"\"WATCHER_LINE(x)=int x(int type, int fd, const char *watch, void *data)\"" \
+		"\"WATCHER_SESSION(x)=int x(int type, int fd, watch_type_t watch, session_t *s)\"" \
+		"\"WATCHER_SESSION_LINE(x)=int x(int type, int fd, const char *watch, session_t *s)\"" \
 		"\"BINDING_FUNCTION(x)=void x(const char *arg)\"" \
 		"\"TIMER(x)=int x(int type, void *data)\"" \
+		"\"TIMER_SESSION(x)=int x(int type, session_t *s)\"" \
 		\
 		"\"SNIFF_HANDLER(x, type)=static int x(session_t *s, const connection_t *hdr, const type *pkt, int len)\"" \
 		"\"GG_PACKED=\""	\
