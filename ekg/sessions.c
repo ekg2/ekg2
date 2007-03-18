@@ -1021,7 +1021,7 @@ COMMAND(session_command)
 			if (s->alias)
 				debug("alias=%s\n", s->alias);
 			if (s->status)
-				debug("status=%s\n", (s->autoaway ? s->laststatus : s->status));
+				debug("status=%s\n", ekg_status_string(s->autoaway ? s->laststatus : s->status, 0));
 			if (s->descr)
 				debug("descr=%s\n", (s->autoaway ? s->lastdescr : s->descr));
 
