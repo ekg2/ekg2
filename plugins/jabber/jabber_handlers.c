@@ -115,8 +115,8 @@ static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
  *
  * @todo	It's not really XEP-0078 cause ekg2 don't support it. But it this done that way.. I don't know any server with XEP-0078 functonality..<br>
  * 		I still rcv 'service-unavailable' or 'bad-request' ;(<br>
- * 		But it <b>MUST</b> be implemented for <i>/session dont_use_sasl 1</i><br>
- * 		So it's just <i>jabber:iq:auth</i> for <i>dont_use_sasl</i> 2.
+ * 		But it <b>MUST</b> be implemented for <i>/session disable_sasl 1</i><br>
+ * 		So it's just <i>jabber:iq:auth</i> for <i>disable_sasl</i> 2.
  *
  * @note 	Tlen Authentication was stolen from libtlen calc_passcode() with magic stuff (C) libtlen's developer and Piotr Paw³ow<br>
  * 		see: http://libtlen.sourceforge.net/
@@ -326,7 +326,7 @@ JABBER_HANDLER(tlen_handle) {
 JABBER_HANDLER(jabber_handle_stream_features) {
 	jabber_private_t *j = s->priv;
 
-	int use_sasl = j->connecting == 1 && (session_int_get(s, "dont_use_sasl") != 2);
+	int use_sasl = j->connecting == 1 && (session_int_get(s, "disable_sasl") != 2);
 	int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
 
 	int display_fjuczers = session_int_get(s, "display_server_features");
@@ -353,7 +353,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				}
 
 				if (!xstrcmp(ch->name, "mechanisms")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session dont_use_sasl");
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session disable_sasl");
 					for (another = ch->children; another; another = another->next) {	
 						if (!xstrcmp(another->name, "mechanism")) {
 							if (!xstrcmp(another->data, "DIGEST-MD5"))
@@ -555,8 +555,8 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				j->parser = NULL; jabber_handle_disconnect(s, 
 						"We tried to auth using SASL but none of method supported by server we know. "
 						"Check __debug window and supported SASL server auth methods and sent them to ekg2 devs. "
-						"Temporary you can turn off SASL auth using by setting dont_use_sasl to 1 or 2. "
-						"/session dont_use_sasl 2", EKG_DISCONNECT_FAILURE);
+						"Temporary you can turn off SASL auth using by setting disable_sasl to 1 or 2. "
+						"/session disable_sasl 2", EKG_DISCONNECT_FAILURE);
 			break;
 		}
 	}

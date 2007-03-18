@@ -457,8 +457,8 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 			xfree(epasswd);
 		}
 
-		if (!j->istlen && session_int_get(s, "dont_use_sasl") != 2) {
-			if (session_int_get(s, "dont_use_sasl") == 1)
+		if (!j->istlen && session_int_get(s, "disable_sasl") != 2) {
+			if (session_int_get(s, "disable_sasl") == 1)
 				watch_write(j->send_watch,	/* let's rock with XEP-0078: Non-SASL Authentication */
 					"<iq type=\"get\" id=\"auth1\">"
 					"<query xmlns=\"jabber:iq:auth\"/>"
@@ -744,7 +744,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 	if (!(j->istlen)) {
 		watch_write(j->send_watch, 
 			"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\"%s>", 
-			j->server, (session_int_get(s, "dont_use_sasl") != 2) ? " version=\"1.0\"" : "");
+			j->server, (session_int_get(s, "disable_sasl") != 2) ? " version=\"1.0\"" : "");
 	} else {
 		watch_write(j->send_watch, "<s v=\'2\'>");
 	}
@@ -1311,7 +1311,7 @@ static int jabber_theme_init() {
 					"OpenGPG support for this session disabled."), 1);
 
 	format_add("jabber_sasl_note",	_("%) (%1) %RIMPORTANT NOTE %|%pWe start using XMPP SASL AUTH by default in ekg2, so if you cannot connect to your favourite jabber server "\
-						"please send us debug info and try to set session dont_use_sasl variable to 2 [session -s %2 dont_use_sasl 2] [hth]"), 1);
+						"please send us debug info and try to set session disable_sasl variable to 2 [session -s %2 disable_sasl 2] [hth]"), 1);
 
 	/* simple XEP-0071 - XML parsing error */
 	format_add("jabber_msg_xmlsyntaxerr",	_("%! Expat syntax-checking failed on your message: %T%1%n. Please correct your code or use double ^R to disable syntax-checking."), 1);
@@ -1403,7 +1403,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_xa_descr", 	SESSION_VAR_AUTO_XA_DESCR, VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("display_notify", 	SESSION_VAR_DISPLAY_NOTIFY, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("display_server_features", 0, VAR_INT, "1", 0, NULL),
-	PLUGIN_VAR_ADD("dont_use_sasl",		0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("disable_sasl",		0, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("gpg_active", 		0, VAR_BOOL, "0", 0, jabber_gpg_changed),
 	PLUGIN_VAR_ADD("gpg_key", 		0, VAR_STR, NULL, 0, jabber_gpg_changed),
 	PLUGIN_VAR_ADD("gpg_password", 		0, VAR_STR, NULL, 1, jabber_gpg_changed),
