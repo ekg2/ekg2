@@ -34,6 +34,10 @@
 #include "oralog.h"
 #include "commands.h"
 
+#ifndef TEXT(x)
+#define TEXT(x) x
+#endif
+
 /* If not provided then these values will be put into the db */
 #define EMPTY_STATUS		""
 #define EMPTY_DESCR		""
@@ -167,7 +171,7 @@ QUERY(logsoracle_handler_postinit)
 QUERY(logsoracle_handler_sestatus)
 {
 	char *session_uid = *(va_arg(ap, char **));	/* eg. jid:romeo@verona.net */
-	char *status	  = *(va_arg(ap, char **));	/* eg. (away|back|...) */
+	int status	  = *(va_arg(ap, int *));	/* eg. (away|back|...) */
 
 	session_t *session = (session_t *)session_find(session_uid);
 	
@@ -187,10 +191,10 @@ QUERY(logsoracle_handler_sestatus)
 	}	
 	
 	/*	
-	debug("[logsoracle] session status (session %s :: status %s :: descr '%s')\n", session_uid, status, session->descr);
+	debug("[logsoracle] session status (session %s :: status %s :: descr '%s')\n", session_uid, ekg_status_string(status, 0), session->descr);
 	*/
     
-        if(!oralog_db_new_status(session_uid, session_uid, (status) ? status : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
+        if(!oralog_db_new_status(session_uid, session_uid, (status) ? ekg_status_string(status, 0) : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
 		logsoracle_stat_inc_status();
 
     
@@ -206,10 +210,10 @@ QUERY(logsoracle_handler_prstatus)
 {
         char *session_uid  = *(va_arg(ap, char**));	/* eg. jid:romeo@verona.net */
 	char *uid          = *(va_arg(ap, char**));	/* eg. jid:julia@verona.net */
-	char *status       = *(va_arg(ap, char**));	/* eg. "away" */
+	int status_n       = *(va_arg(ap, int*));	/* eg. "away" (as enum) */
 	char *descr        = *(va_arg(ap, char**));	/* eg. "i'm not here" */
-			
-	int  status_alloc = 0;
+	char *status       = 0;				/* status as string; written into db */
+	
 	int  descr_alloc  = 0;
 
         if(!logsoracle_config.log_status)
@@ -226,9 +230,10 @@ QUERY(logsoracle_handler_prstatus)
 		return 0;
 	}	
 	
-	if(status == NULL) {
+	if(status_n) {
+		status = xstrdup(ekg_status_string(status, 0));
+	} else {
 		status = xstrdup(EMPTY_STATUS);
-		status_alloc = 1;
 	}
 		
 	if(descr == NULL) {
@@ -243,9 +248,7 @@ QUERY(logsoracle_handler_prstatus)
 		logsoracle_stat_inc_status();
 	  
     
-	if(status_alloc) {
-		xfree(status);
-	}	
+	xfree(status);
 
 	if(descr_alloc) {
 		xfree(descr);
