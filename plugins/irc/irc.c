@@ -149,55 +149,71 @@ PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
 
-/*
- * irc_private_init()
+/**
+ * irc_session_init()
  *
- * inialize irc_private_t for a given session.
+ * Handler for: <i>SESSION_ADDED</i><br>
+ * Init private session struct irc_private_t if @a session is irc one.<br>
+ * Read saved userlist with userlist_read()
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - uid of session
+ * @param data NULL
+ *
+ * @return	0 if @a session is irc one, and we init memory<br>
+ * 		1 if we don't found such session, or it wasn't irc session <b>[most probable]</b>, or we already init memory.
  */
-static void irc_private_init(session_t *s) {
-	irc_private_t	*j;
+
+static QUERY(irc_session_init) {
+	char *session = *(va_arg(ap, char**));
+
+	session_t *s = session_find(session);
+	irc_private_t *j;
 
 	if (!s || s->priv || (s->plugin != &irc_plugin))
-		return;
+		return 1;
 
-	userlist_free(s);
 	userlist_read(s);
 
 	j = xmalloc(sizeof(irc_private_t));
 	j->fd = -1;
 
-	/* G->dj: I've told you why this is here, not on every system NULL is 0x00000000
-	 * that's why I'm just commentig this out not removing...
-	j->nick = NULL;
-	j->host_ident = NULL;
-	j->obuf = NULL;
-	j->people = NULL;
-	j->channels = NULL;
-	for (i = 0; i<SERVOPTS; i++) 
-		j->sopt[i] = NULL;
-	*/
-	session_connected_set(s, 0);
-
-	session_private_set(s, j);
+	s->priv = j;
+	return 0;
 }
 
-/*
- * irc_private_destroy()
+/**
+ * irc_session_deinit()
  *
- * cleanup stuff: free irc_private_t for a given session and some other things
+ * Handler for: <i>SESSION_REMOVED</i><br>
+ * Free memory allocated by irc_private_t if @a session is irc one.<br>
+ * Save userlist with userlist_write()
+ *
+ * @param ap 1st param: <i>(char *) </i><b>session</b> - uid of session
+ * @param data NULL
+ *
+ * @todo Check if userlist_write() here is good.
+ * @todo 
+ *
+ * @return 	0 if @a session is irc one, and memory allocated where xfree()'d.<br>
+ * 		1 if not such session, or it wasn't irc session <b>[most probable]</b>, or we already free memory.
  */
-static void irc_private_destroy(session_t *s) {
-	irc_private_t	*j;
-	int		i;
+
+static QUERY(irc_session_deinit) {
+	char *session = *(va_arg(ap, char**));
+	int i;
+
+	session_t *s = session_find(session);
+	irc_private_t *j;
 
 	list_t 		tmplist;
 
 	if (!s || !(j = s->priv) || (s->plugin != &irc_plugin))
-		return;
+		return 1;
 
 	userlist_write(s);
 
-	/*irc_free_people(s, j); wtf? */
+	s->priv = NULL;
+
 	xfree(j->host_ident);
 	xfree(j->nick);
 
@@ -212,13 +228,15 @@ static void irc_private_destroy(session_t *s) {
 		xfree( ((connector_t *)tmplist->data)->hostname);
 	}
 	list_destroy(j->connlist, 1);
+	/* XXX, hilights list_t */
 
 	irc_free_people(s, j);
 
-        for (i = 0; i<SERVOPTS; i++)
-                xfree(j->sopt[i]);
+	for (i = 0; i<SERVOPTS; i++) 
+		xfree(j->sopt[i]);
+
 	xfree(j);
-	session_private_set(s, NULL);
+	return 0;
 }
 
 static char *irc_make_banmask(session_t *session, const char *nick, const char *ident, const char *hostname) {
@@ -285,26 +303,6 @@ static char *irc_make_banmask(session_t *session, const char *nick, const char *
  	xfree(host);
 	return temp;
 #undef getit
-}
-
-/*
- * irc_session()
- *
- * adding and deleting a session
- */
-static QUERY(irc_session) {
-	char		*session = *(va_arg(ap, char**));
-	session_t	*s = session_find(session);
-
-	if (!s)
-		return 0;
-
-	if (data)
-		irc_private_init(s);
-	else
-		irc_private_destroy(s);
-
-	return 0;
 }
 
 /**
@@ -2266,8 +2264,8 @@ int irc_plugin_init(int prio)
 	query_connect_id(&irc_plugin, GET_PLUGIN_PROTOCOLS,	irc_protocols, NULL);
 	query_connect_id(&irc_plugin, PLUGIN_PRINT_VERSION,	irc_print_version, NULL);
 	query_connect_id(&irc_plugin, UI_WINDOW_KILL,		irc_window_kill, NULL);
-	query_connect_id(&irc_plugin, SESSION_ADDED,		irc_session, (void*) 1);
-	query_connect_id(&irc_plugin, SESSION_REMOVED,		irc_session, (void*) 0);
+	query_connect_id(&irc_plugin, SESSION_ADDED,		irc_session_init, NULL);
+	query_connect_id(&irc_plugin, SESSION_REMOVED,		irc_session_deinit, NULL);
 	query_connect_id(&irc_plugin, IRC_TOPIC,		irc_topic_header, (void*) 0);
 	query_connect_id(&irc_plugin, STATUS_SHOW,		irc_status_show_handle, NULL);
 	query_connect_id(&irc_plugin, IRC_KICK,			irc_onkick_handler, 0);
