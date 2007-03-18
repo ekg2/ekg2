@@ -365,37 +365,33 @@ const char *gg_http_error_string(int h)
 	}
 }
 
-/*
+/**
  * gg_userlist_send()
  *
- * wysy³a do serwera listê u¿ytkowników.
+ * Send to server our user list.
+ *
+ * @param s - gg_session <b>[it's not session_t *]</b>
+ * @param userlist - user list.
+ *
+ * @todo XXX, think about args here, maybe let's pass only session_t ?
+ *
+ * @return result of gg_notify_ex()
  */
-int gg_userlist_send(struct gg_session *s, list_t userlist)
-{
-	int i, res, count = 0;
-	uin_t *uins;
-	char *types;
+
+int gg_userlist_send(struct gg_session *s, list_t userlist) {
+	int i, res;
+
+	int count = list_count(userlist);
 	list_t l;
 
-	for (l = userlist; l; l = l->next) {
+	uin_t *uins	= xmalloc(count * sizeof(uin_t));
+	char *types	= xmalloc(count * sizeof(char));
+
+	for (l = userlist, i = 0; l; l = l->next, i++) {
 		userlist_t *u = l->data;
-
-		if (!xstrncasecmp(u->uid, "gg:", 3))
-			count++;
-	}
-
-	uins = xmalloc(count * sizeof(uin_t));
-	types = xmalloc(count * sizeof(char));
-
-	for (i = 0, l = userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-
-		if (xstrncasecmp(u->uid, "gg:", 3))
-			continue;
 
 		uins[i] = atoi(u->uid + 3);
 		types[i] = gg_userlist_type(u);
-		i++;
 	}
 
 	res = gg_notify_ex(s, uins, types, count);
