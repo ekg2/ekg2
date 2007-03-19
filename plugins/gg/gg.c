@@ -1394,7 +1394,6 @@ static QUERY(gg_setvar_default) {
 	xfree(gg_config_dcc_ip);
 	xfree(gg_config_images_dir);
 	xfree(gg_config_dcc_limit);
-	xfree(gg_config_images_dir);
 
 	gg_config_display_token = 1;
 	gg_config_get_images = 0;
