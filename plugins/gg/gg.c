@@ -91,7 +91,7 @@ static QUERY(gg_session_init) {
 	gg_private_t *g;
 
 	if (!s || s->priv || s->plugin != &gg_plugin)
-		return -1;
+		return 1;
 
 	g = xmalloc(sizeof(gg_private_t));
 
@@ -125,7 +125,7 @@ static QUERY(gg_session_deinit) {
 	list_t l;
 
 	if (!s || !(g = s->priv) || s->plugin != &gg_plugin)
-		return -1;
+		return 1;
 
 	if (g->sess)
 		gg_free_session(g->sess);
