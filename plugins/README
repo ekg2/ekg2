@@ -1,5 +1,6 @@
 plugin		autor		przeznaczenie			zale¿no¶ci
 -----------------------------------------------------------------------------
+autoreponder	peres		prosty autoresponder		-
 gg		wojtekka	obs³uga protoko³u Gadu-Gadu	libgadu
 gsm		wojtekka	kodek GSM do rozmów g³osowych 	libgsm
 ioctld		drg		obs³uga diod klawiatury		-
