@@ -577,7 +577,8 @@ static TIMER(gg_inv_check_handler)
  * obs³uga udanego po³±czenia z serwerem.
  */
 static void gg_session_handler_success(session_t *s) {
-	gg_private_t *g = session_private_get(s);
+	gg_private_t *g = s->priv;
+
 	int status;
 	char *__session;
 	char buf[100];
@@ -609,10 +610,11 @@ static void gg_session_handler_success(session_t *s) {
 		session_set(s, "server", inet_ntoa(addr));
 		session_int_set(s, "port", g->sess->port);
 	}
-	/* XXX, check if that timer already exists !!! */
 	/* pamiêtajmy, ¿eby pingowaæ */
 	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
-	timer_add_session(s, buf, 180, 1, gg_ping_timer_handler);
+	if (timer_find_session(s, buf) == NULL)
+		timer_add_session(s, buf, 180, 1, gg_ping_timer_handler);
+
 	descr = xstrdup(session_descr_get(s));
 	status = session_status_get(s);
 
@@ -637,8 +639,9 @@ static void gg_session_handler_success(session_t *s) {
  * obs³uga nieudanego po³±czenia.
  */
 static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
+	gg_private_t *g = s->priv;
+
 	const char *reason;
-	gg_private_t *g = session_private_get(s);
 
 	switch (e->event.failure) {
 		case GG_FAILURE_CONNECTING:	reason = "conn_failed_connecting";	break;
@@ -680,14 +683,15 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
  * obs³uga roz³±czenia z powodu pod³±czenia drugiej sesji.
  */
 static void gg_session_handler_disconnect(session_t *s) {
-	gg_private_t *g = session_private_get(s);
-	char *__session	= xstrdup(session_uid_get(s));
+	gg_private_t *g = s->priv;
+
+	char *__session	= xstrdup(s->uid);
 	char *__reason	= NULL;
 	int __type	= EKG_DISCONNECT_FORCED;
 
 	session_connected_set(s, 0);
 
-	query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
+	query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type);
 
 	xfree(__session);
 	xfree(__reason);
@@ -756,13 +760,13 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
  * obs³uga przychodz±cych wiadomo¶ci.
  */
 static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
+	gg_private_t *g = s->priv;
+
 	char *__sender, **__rcpts = NULL;
 	char *__text;
 	uint32_t *__format = NULL;
 	int image = 0, check_inv = 0;
 	int i;
-
-	gg_private_t *g = session_private_get(s);
 
 	if (e->event.msg.msgclass & GG_CLASS_CTCP) {
 		struct gg_dcc *d;
@@ -956,7 +960,7 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
  * we don't use support images
  */
 static void gg_session_handler_image(session_t *s, struct gg_event *e) {
-	gg_private_t *g = session_private_get(s);
+	gg_private_t *g = s->priv;
 
 	switch (e->type) {
 		case GG_EVENT_IMAGE_REQUEST:
