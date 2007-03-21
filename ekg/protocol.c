@@ -161,7 +161,7 @@ static QUERY(protocol_disconnected)
 
 	userlist_clear_status(s, NULL);
 
-	if (s) {
+	if (s && s->connected) {
 		s->last_conn = time(NULL);
 		s->connected = 0;
 		/* notify ui */
