@@ -513,7 +513,7 @@ static COMMAND(cmd_status)
         t = localtime(&n);
         now_days = t->tm_yday;
 
-	{	/* when we connected [s->connected != 0] to server or when we lost last connection [s->connected == 0] [time from s->last_conn] */
+	if (s->last_conn) { /* when we connected [s->connected != 0] to server or when we lost last connection [s->connected == 0] [time from s->last_conn] */
 		char buf[100] = { '\0' };
 		const char *format;
 
