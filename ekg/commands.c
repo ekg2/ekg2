@@ -505,7 +505,7 @@ static COMMAND(cmd_status) {
 	}
 
 	if (config_profile)
-		print("show_status_profile", config_profile);
+		printq("show_status_profile", config_profile);
 
 	n = time(NULL);
 	t = localtime(&n);
@@ -523,7 +523,7 @@ static COMMAND(cmd_status) {
 			if (format[0] && !strftime(buf, sizeof(buf), format, t))
 				xstrcpy(buf, "TOOLONG");
 
-			print((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
+			printq((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
 		}
 	}
 

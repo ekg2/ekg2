@@ -1469,7 +1469,7 @@ void theme_init()
 	format_add("disconnected_descr", _("%> (%2) Disconnected: %T%1%n\n"), 1);
 	format_add("already_connected", _("%! (%1) Already connected. Use %Treconnect%n to reconnect%n\n"), 1);
 	format_add("during_connect", _("%! (%1) Connecting in progress. Use %Tdisconnect%n to abort%n\n"), 1);
-	format_add("conn_broken", _("%! (%1) Connection broken%n\n"), 1);
+	format_add("conn_broken", _("%! (%1) Connection broken: %2%n\n"), 1);
 	format_add("conn_disconnected", _("%! (%1) Server disconnected%n\n"), 1);
 	format_add("not_connected", _("%! (%1) Not connected.%n\n"), 1);
 	format_add("not_connected_msg_queued", _("%! (%1) Not connected. Message will be delivered when connected.%n\n"), 1);

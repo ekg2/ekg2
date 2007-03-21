@@ -128,7 +128,7 @@ static TIMER_SESSION(protocol_reconnect_handler) {
  * @note About different types [@a type] of disconnections:<br>
  * 		- <i>EKG_DISCONNECT_USER</i> 	- when user do /disconnect [<b>with reason</b>, in @a reason we should have param of /disconnect command][<b>without reconnection</b>]<br>
  * 		- <i>EKG_DISCONNECT_NETWORK</i>	- when smth is wrong with network... (read: when recv() fail, or send() or SSL wrappers for rcving/sending data fail with -1 and with bad errno)
- * 							[<b>without reason</b>][<b>without reconnection</b>]<br>
+ *						[<b>with reason</b> describiny why we fail (strerror() is good here)][<b>with reconnection</b>]<br>
  *		- <i>EKG_DISCONNECT_FORCED</i>	- when server force us to disconnection. [<b>without reason</b>][<b>without reconnection</b>]<br>
  *		- <i>EKG_DISCONNECT_FAILURE</i> - when we fail to connect to server (read: when we fail connect session, after /connect) 
  *						[<b>with reason</b> describiny why we fail (strerror() is good here)][<b>with reconnection</b>]<br>
@@ -174,7 +174,7 @@ static QUERY(protocol_disconnected)
 			int tmp;
 
 			if (type == EKG_DISCONNECT_NETWORK)
-				print("conn_broken", session_name(s));
+				print("conn_broken", session_name(s), reason);
 			else
 				print("conn_failed", reason, session_name(s));
 
