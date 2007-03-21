@@ -158,7 +158,7 @@ static QUERY(protocol_disconnected) {
 	if (s && s->connected) {
 		s->last_conn = time(NULL);
 		s->connected = 0;
-		/* notify ui */
+		/* XXX notify ui */
 	}
 
 	switch (type) {
@@ -241,8 +241,20 @@ static QUERY(protocol_connected) {
 
 	if (s) {
 		s->last_conn = time(NULL);
+		/* XXX, below. this !s->activity is bad here.
+		 * 	'coz user can do /connect by request.
+		 *	and a lot of stuff is wrong.
+		 *	My mistake that I bugreport bug to peres.
+		 *	Mistake, mistake, huge mistake.
+		 *
+		 *	I don't really know how deal with s->activity...
+		 */
+		if (!s->activity) {
+			s->activity  = s->last_conn;	/* session_unidle() */
+		}
 		s->connected = 1;
 		timer_remove_session(s, "reconnect");
+		/* XXX notify ui */
 	}
 
 	return 0;
