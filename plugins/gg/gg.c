@@ -575,8 +575,6 @@ static void gg_session_handler_success(session_t *s) {
 		return;
 	}
 
-	session_unidle(s);
-
 	__session = xstrdup(session_uid_get(s));
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
 	xfree(__session);

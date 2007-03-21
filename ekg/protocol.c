@@ -183,6 +183,11 @@ static QUERY(protocol_disconnected) {
 				print("disconnected_descr", reason, session_name(s));
 			else
 				print("disconnected", session_name(s));
+			/* We don't use session_unidle(), because:
+			 * 1) we don't want to print 'Auto back: ...' - that'd be stupid
+			 * 2) we don't want to risk if some _autoback could make magic at this state of connection */
+			if (s && s->autoaway)
+				session_status_set(s, EKG_STATUS_AUTOBACK);
 			break;
 
 		case EKG_DISCONNECT_FORCED:

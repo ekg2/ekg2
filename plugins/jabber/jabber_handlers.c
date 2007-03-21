@@ -2753,7 +2753,6 @@ static void jabber_session_connected(session_t *s) {
 	jabber_private_t *j = jabber_private(s);
 	char *__session = xstrdup(session_uid_get(s));
 
-	session_unidle(s);
 	j->connecting = 0;
 
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
