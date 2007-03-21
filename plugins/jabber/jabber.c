@@ -527,9 +527,6 @@ static WATCHER_SESSION(jabber_handle_stream) {
         if (type == 1) {
                 debug("[jabber] jabber_handle_stream() type == 1, exitting\n");
 
-		if (session_connected_get(s))  /* hack to avoid reconnecting when we do /disconnect */
-			jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
-
                 return 0;
         }
 
@@ -537,8 +534,8 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	parser = j->parser;
 
 	if (!(buf = XML_GetBuffer(parser, BUFFER_LEN))) {
-		jabber_handle_disconnect(s, "XML_GetBuffer failed", EKG_DISCONNECT_FAILURE);
-                return -1;
+		jabber_handle_disconnect(s, "XML_GetBuffer failed", EKG_DISCONNECT_NETWORK);
+		return -1;
         }
 #ifdef JABBER_HAVE_SSL
         if (j->using_ssl && j->ssl_session) {
@@ -558,8 +555,8 @@ static WATCHER_SESSION(jabber_handle_stream) {
 		}
 
                 if (len < 0) {
-			jabber_handle_disconnect(s, SSL_ERROR(len), EKG_DISCONNECT_FAILURE);
-                        return -1;
+			jabber_handle_disconnect(s, SSL_ERROR(len), EKG_DISCONNECT_NETWORK);
+			return -1;
                 }
         } else
 #endif
@@ -569,8 +566,8 @@ static WATCHER_SESSION(jabber_handle_stream) {
                 if ((len = read(fd, buf, BUFFER_LEN-1)) < 1) {
 #endif
 			if (len == -1 && (errno == EINPROGRESS || errno == EAGAIN)) return 0;
-			jabber_handle_disconnect(s, len == -1 ? strerror(errno) : "got disconnected", len == -1 ? EKG_DISCONNECT_FAILURE : EKG_DISCONNECT_NETWORK);
-                        return -1;
+			jabber_handle_disconnect(s, len == -1 ? strerror(errno) : "got disconnected", EKG_DISCONNECT_NETWORK);
+			return -1;
                 }
 
         buf[len] = 0;
@@ -608,8 +605,9 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	if (!XML_ParseBuffer(parser, rlen, (rlen == 0))) 
 //	if (!XML_Parse(parser, uncompressed ? uncompressed : buf, rlen, (rlen == 0))) 
 	{
-		print("jabber_xmlerror", session_name(s));
-		debug_error("jabber_xmlerror: %s\n", XML_ErrorString(XML_GetErrorCode(parser)));
+		char *tmp = format_string(format_find("jabber_xmlerror_disconnect"), XML_ErrorString(XML_GetErrorCode(parser)));
+		jabber_handle_disconnect(s, tmp, EKG_DISCONNECT_NETWORK);
+		xfree(tmp);
 
 		if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
 		xfree(uncompressed);
@@ -717,7 +715,6 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 
         int res = 0;
 	socklen_t res_size = sizeof(res);
-	char *tname;
 
         debug_function("[jabber] jabber_handle_connect()\n");
 
@@ -752,9 +749,12 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 	j->parser = jabber_parser_recreate(NULL, s);
 
 	if (j->istlen || (session_int_get(s, "ping-server") != 0)) {
-		tname = saprintf("ping-%s", s->uid+4);
-		timer_add_session(s, tname, j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
-		/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
+		char *tname = saprintf("ping-%s", s->uid+4);
+
+		if (timer_find_session(s, tname) == NULL) {
+			/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
+			timer_add_session(s, tname, j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
+		}
 		xfree(tname);
 	}
 
@@ -1159,7 +1159,7 @@ static int jabber_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("jabber_auth_subscribe", _("%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/auth -d %1\" to refuse.%n\n"), 1);
 	format_add("jabber_auth_unsubscribe", _("%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"), 1);
-	format_add("jabber_xmlerror", _("%! (%1) Error parsing XML%n\n"), 1);
+	format_add("jabber_xmlerror_disconnect", _("Error parsing XML: %R%1%n"), 1);
 	format_add("jabber_auth_request", _("%> (%2) Sent authorisation request to %T%1%n.\n"), 1);
 	format_add("jabber_auth_accept", _("%> (%2) Authorised %T%1%n.\n"), 1);
 	format_add("jabber_auth_unsubscribed", _("%> (%2) Asked %T%1%n to remove authorisation.\n"), 1);
