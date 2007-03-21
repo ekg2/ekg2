@@ -757,13 +757,10 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 	j->parser = jabber_parser_recreate(NULL, s);
 
 	if (j->istlen || (session_int_get(s, "ping-server") != 0)) {
-		char *tname = saprintf("ping-%s", s->uid+4);
-
-		if (timer_find_session(s, tname) == NULL) {
+		if (timer_find_session(s, "ping") == NULL) {
 			/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
-			timer_add_session(s, tname, j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
+			timer_add_session(s, "ping", j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
 		}
-		xfree(tname);
 	}
 
 	return -1;
