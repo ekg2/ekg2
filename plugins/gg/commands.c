@@ -88,7 +88,7 @@ static COMMAND(gg_command_connect) {
 	
 	if (!xstrcmp(name, ("disconnect")) || (!xstrcmp(name, ("reconnect")))) {
 	        /* if ,,reconnect'' timer exists we should stop doing */
-	        if (timer_remove(&gg_plugin, "reconnect") == 0) {
+	        if (timer_remove_session(session, "reconnect") == 0) {
 			wcs_printq("auto_reconnect_removed", session_name(session));
 	                return 0;
 		}
