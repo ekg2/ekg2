@@ -359,8 +359,6 @@ IRC_COMMAND(irc_c_init)
 		case 1:
 			temp = j->conntmplist->data;
 			query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
-			session_connected_set(s, 1);
-			s->last_conn = time(NULL);
 			session_unidle(s);
 			t = xstrchr(param[3], '!');
 			xfree(j->host_ident);
