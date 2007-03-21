@@ -381,7 +381,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 
 	/* it's basic code.. I think is shouldn't fail. Hopefully we are single-threaded.. */
 	if (lock) {
-		debug("jabber_handle_disconnect() locked!");
+		debug("jabber_handle_disconnect() locked!\n");
 		return;
 	} lock = 1;
 
