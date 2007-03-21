@@ -410,7 +410,6 @@ static COMMAND(xmsg_connect)
 		return -1;
 	}
 	
-	session_connected_set(session, 1);
 	session_status_set(session, EKG_STATUS_AVAIL);
 	{
 		char *sess = xstrdup(session_uid_get(session));
@@ -441,7 +440,6 @@ static COMMAND(xmsg_disconnect)
 	if (!timer_remove_session(session, "o"))
 		xdebug("old oneshot resume timer removed");
 	session_status_set(session, EKG_STATUS_NA);
-	session_connected_set(session, 0);
 	{
 		char *sess = xstrdup(session_uid_get(session));
 		char *reason = (quiet == -1 ? xstrdup(format_find("xmsg_umount")) : NULL);
