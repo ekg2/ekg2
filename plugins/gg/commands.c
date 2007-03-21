@@ -124,7 +124,6 @@ static COMMAND(gg_command_connect) {
 			gg_logoff(g->sess);
 			gg_free_session(g->sess);
 			g->sess = NULL;
-			session_connected_set(session, 0);
 
 			query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &myreason, &__type, NULL);
 

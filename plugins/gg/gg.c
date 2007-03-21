@@ -575,7 +575,6 @@ static void gg_session_handler_success(session_t *s) {
 		return;
 	}
 
-	session_connected_set(s, 1);
 	session_unidle(s);
 
 	__session = xstrdup(session_uid_get(s));
@@ -583,8 +582,6 @@ static void gg_session_handler_success(session_t *s) {
 	xfree(__session);
 
 	gg_userlist_send(g->sess, s->userlist);
-
-	s->last_conn = time(NULL);
 
 	/* zapiszmy adres serwera */
 	if (session_int_get(s, "connection_save") == 1) {
@@ -671,8 +668,6 @@ static void gg_session_handler_disconnect(session_t *s) {
 	char *__session	= xstrdup(s->uid);
 	char *__reason	= NULL;
 	int __type	= EKG_DISCONNECT_FORCED;
-
-	session_connected_set(s, 0);
 
 	query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type);
 
@@ -1156,8 +1151,6 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 		char *__session = xstrdup(s->uid);
 		char *__reason = NULL;
 		int __type = EKG_DISCONNECT_NETWORK;
-
-		session_connected_set(s, 0);
 
 		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type);
 
