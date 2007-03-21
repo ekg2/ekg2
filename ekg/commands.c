@@ -486,16 +486,16 @@ static COMMAND(cmd_alias)
 	return -1;
 }
 
-static COMMAND(cmd_status)
-{
-        struct tm *t;
-        time_t n;
-        int now_days;
-	char buf1[100];
+static COMMAND(cmd_status) {
+	struct tm *t;
+	time_t n;
+	int now_days;
+
+	char buf1[100] = { '\0' };
 	const char *format;
 	session_t *s = NULL;
 
-        printq("show_status_header");
+	printq("show_status_header");
 
 	s = params[0] ? session_find(params[0]) : session;
 
@@ -507,31 +507,33 @@ static COMMAND(cmd_status)
 	if (config_profile)
 		print("show_status_profile", config_profile);
 
-	query_emit_id(s->plugin, STATUS_SHOW, &s->uid);
+	n = time(NULL);
+	t = localtime(&n);
+	now_days = t->tm_yday;
 
-        n = time(NULL);
-        t = localtime(&n);
-        now_days = t->tm_yday;
+	if (s) {
+		query_emit_id(s->plugin, STATUS_SHOW, &s->uid);
 
-	if (s->last_conn) { /* when we connected [s->connected != 0] to server or when we lost last connection [s->connected == 0] [time from s->last_conn] */
-		char buf[100] = { '\0' };
-		const char *format;
+		/* when we connected [s->connected != 0] to server or when we lost last connection [s->connected == 0] [time from s->last_conn] */
+		if (s->last_conn) { 
+			char buf[100] = { '\0' };
 
-		t = localtime(&s->last_conn);
-		format = format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event");
-		if (format[0] && !strftime(buf, sizeof(buf), format, t))
-			xstrcpy(buf, "TOOLONG");
+			t = localtime(&s->last_conn);
+			format = format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event");
+			if (format[0] && !strftime(buf, sizeof(buf), format, t))
+				xstrcpy(buf, "TOOLONG");
 
-		print((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
+			print((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
+		}
 	}
 
-        t = localtime(&ekg_started);
+	t = localtime(&ekg_started);
 	format = format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started");
-        if (!strftime(buf1, sizeof(buf1), format, t) && xstrlen(format)>0)
+	if (format[0] && !strftime(buf1, sizeof(buf1), format, t))
 		xstrcpy(buf1, "TOOLONG");
 
-        printq("show_status_ekg_started_since", buf1);
-        printq("show_status_footer");
+	printq("show_status_ekg_started_since", buf1);
+	printq("show_status_footer");
 
 	return 0;
 }
