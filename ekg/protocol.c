@@ -120,6 +120,7 @@ static TIMER_SESSION(protocol_reconnect_handler) {
  * Handler for <i>PROTOCOL_DISCONNECTED</i><br>
  * When session notify core about disconnection we do here:<br>
  * 	- clear <b>all</b> user status, presence, resources details. @sa userlist_clear_status()<br>
+ * 	- update s->last_conn state, and set s->connected to 0<br>
  * 	- check if disconnect @a type was either <i>EKG_DISCONNECT_NETWORK:</i> or <i>EKG_DISCONNECT_FAILURE:</i> and
  * 		if yes, create reconnect timer (if user set auto_reconnect variable)<br>
  * 	- display notify through UI-plugin
@@ -159,6 +160,12 @@ static QUERY(protocol_disconnected)
 	session_t *s	= session_find(session);
 
 	userlist_clear_status(s, NULL);
+
+	if (s) {
+		s->last_conn = time(NULL);
+		s->connected = 0;
+		/* notify ui */
+	}
 
 	switch (type) {
 		case EKG_DISCONNECT_NETWORK:
@@ -207,7 +214,9 @@ static QUERY(protocol_disconnected)
  * When session notify core about connection we do here:<br>
  * 	- If we have ourselves on the userlist. It update status and description<br>
  * 	- Display notify through UI-plugin<br>
- * 	- If we have messages in session queue, than send it and display info.
+ * 	- If we have messages in session queue, than send it and display info.<br>
+ * 	- Update last_conn state and set connected state to 1.<br>
+ * 	- Remove "reconnect" timer.
  *
  * @param ap 1st param: <i>(char *) </i><b>session</b> - session uid which goes connected.
  * @param data NULL
@@ -216,8 +225,9 @@ static QUERY(protocol_disconnected)
  */
 
 static QUERY(protocol_connected) {
-	char **session = va_arg(ap, char**);
-	session_t *s = session_find(*session);
+	char *session = *(va_arg(ap, char**));
+
+	session_t *s = session_find(session);
 	const char *descr = session_descr_get(s);
 	
         ekg_update_status(s);
@@ -227,8 +237,14 @@ static QUERY(protocol_connected) {
 	else
 		print("connected", session_name(s));
 
-	if (!msg_queue_flush(*session))
+	if (!msg_queue_flush(session))
 		print("queue_flush", session_name(s));
+
+	if (s) {
+		s->last_conn = time(NULL);
+		s->connected = 1;
+		timer_remove_session(s, "reconnect");
+	}
 
 	return 0;
 }
