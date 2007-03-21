@@ -504,11 +504,26 @@ static COMMAND(cmd_status)
 		return -1;
 	}
 
+	if (config_profile)
+		print("show_status_profile", config_profile);
+
 	query_emit_id(s->plugin, STATUS_SHOW, &s->uid);
 
         n = time(NULL);
         t = localtime(&n);
         now_days = t->tm_yday;
+
+	{	/* when we connected [s->connected != 0] to server or when we lost last connection [s->connected == 0] [time from s->last_conn] */
+		char buf[100] = { '\0' };
+		const char *format;
+
+		t = localtime(&s->last_conn);
+		format = format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event");
+		if (format[0] && !strftime(buf, sizeof(buf), format, t))
+			xstrcpy(buf, "TOOLONG");
+
+		print((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
+	}
 
         t = localtime(&ekg_started);
 	format = format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started");
