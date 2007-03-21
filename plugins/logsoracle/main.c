@@ -194,7 +194,7 @@ QUERY(logsoracle_handler_sestatus)
 	debug("[logsoracle] session status (session %s :: status %s :: descr '%s')\n", session_uid, ekg_status_string(status, 0), session->descr);
 	*/
     
-        if(!oralog_db_new_status(session_uid, session_uid, (status) ? ekg_status_string(status, 0) : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
+        if(!oralog_db_new_status(session_uid, session_uid, (status) ? ekg_status_string(status, 2) : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
 		logsoracle_stat_inc_status();
 
     

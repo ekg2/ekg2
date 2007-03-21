@@ -453,7 +453,7 @@ static QUERY(logs_sestatus_handler) {
 	char *session	= *(va_arg(ap, char **));
 	int status	= *(va_arg(ap, int *));
 
-	debug("[LOGS_SESTATUS HANDLER %s %s\n", __(session), __(ekg_status_string(status, 0)));
+	debug("[LOGS_SESTATUS HANDLER %s %s\n", __(session), __(ekg_status_string(status, 2)));
 
 	if (!config_away_log)
 		return 0;
