@@ -261,10 +261,8 @@ static QUERY(gg_status_show_handle) {
 	session_t *s = session_find(*uid);
 	userlist_t *u;
 	struct in_addr i;
-	struct tm *t;
-	time_t n;
-	int mqc, now_days;
-	char *tmp, *priv, *r1, *r2, buf[100];
+	int mqc;
+	char *tmp, *priv, *r1, *r2;
 	gg_private_t *g;
 
 	if (!s) {
@@ -274,28 +272,16 @@ static QUERY(gg_status_show_handle) {
 	if (!(g = session_private_get(s)))
 		return -1;
 
-	if (config_profile)
-		print("show_status_profile", config_profile);
-
 	if ((u = userlist_find(s, s->uid)) && u->nickname)
 		print("show_status_uid_nick", s->uid, u->nickname);
 	else
 		print("show_status_uid", s->uid);
-
-	n = time(NULL);
-	t = localtime(&n);
-	now_days = t->tm_yday;
-
-	t = localtime(&s->last_conn);
-	strftime(buf, sizeof(buf), format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event"), t);
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
 		char *tmp = format_string(format_find("show_status_notavail"), "");
 		print("show_status_status_simple", tmp);
 		xfree(tmp);
 
-		if (s->last_conn)
-			print("show_status_disconnected_since", buf);
 		if ((mqc = msg_queue_count_session(s->uid)))
 			print("show_status_msg_queue", itoa(mqc));
 		return 0;
@@ -323,7 +309,6 @@ static QUERY(gg_status_show_handle) {
 	else
 #endif
 		print("show_status_server", inet_ntoa(i), itoa(g->sess->port));
-	print("show_status_connected_since", buf);
 
 	xfree(tmp);
 	xfree(priv);
