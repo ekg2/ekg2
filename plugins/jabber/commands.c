@@ -408,7 +408,7 @@ static COMMAND(jabber_command_disconnect)
 	char *descr = NULL;
 
 	/* jesli istnieje timer reconnecta, to znaczy, ze przerywamy laczenie */
-	if (timer_remove(&jabber_plugin, "reconnect") == 0) {
+	if (timer_remove_session(session, "reconnect") == 0) {
 		printq("auto_reconnect_removed", session_name(session));
 		return 0;
 	}
