@@ -1822,6 +1822,22 @@ int timer_remove(plugin_t *plugin, const char *name)
 	return ((removed) ? 0 : -1);
 }
 
+struct timer *timer_find_session(session_t *session, const char *name) {
+	list_t l;
+
+	if (!session)
+		return NULL;
+	
+	for (l = timers; l; l = l->next) {
+		struct timer *t = l->data;
+
+		if (t->is_session && t->data == session && !xstrcmp(name, t->name))
+			return t;
+	}
+
+	return NULL;
+}
+
 int timer_remove_session(session_t *session, const char *name)
 {
 	list_t l;

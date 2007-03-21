@@ -171,7 +171,7 @@ static QUERY(protocol_disconnected)
 			else
 				print("conn_failed", reason, session_name(s));
 
-			if (s && (tmp = session_int_get(s, "auto_reconnect")) && tmp != -1)
+			if (s && (tmp = session_int_get(s, "auto_reconnect")) && tmp != -1 && timer_find_session(s, "reconnect") == NULL)
 				timer_add_session(s, "reconnect", tmp, 0, protocol_reconnect_handler);
 
 			break;
