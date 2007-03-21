@@ -1,0 +1,67 @@
+1. I weren't sure which plugin_class to associate, so I've chosen PLUGIN_GENERIC...
+
+my initial idea of available interfaces:
+[JAVA-like NAMES!]
+
+the following interface proposed by Marcin Krzyzanowski in
+http://svn.hakore.com/ofi/ofi/README.OFI
+
+org.freedesktop.im
+ m getProtocols()
+   RETURNS:
+     supported protocols lis as strings in format 'protocolname:' e.g.:
+     DBUS_TYPE_STRING:'irc:'
+     DBUS_TYPE_STRING:'gg:'
+     DBUS_TYPE_STRING:'tlen:'
+     DBUS_TYPE_STRING:'jid:' [not xmpp:]
+
+ m getPresence(contactUri)
+   not yet available
+ m openChat(contactUri)
+   not yet available
+
+the following additional interfaces will be implemented:
+org.freedesktop.im.ekg2.
+ m getProtcols
+   not yet available
+ m getSessions()
+   RETURNS:
+     following fours, sequentialy:
+     (DBUS_TYPE_STRING:uid, DBUS_TYPE_BOOL:connected, DBUS_TYPE_STRING:status, DBUS_TYPE_STRING:description), [...]
+ m getPlugins
+ + .session
+   ...
+ + .ui
+   m getWindows()
+   s switchWindow(window_id)
+   s killWindow(window_id)
+   ...
+ [[ is protocol interface needed at all if we have session? ]]
+ + .protocol
+   + .protocol.irc
+     ...
+   + .protocol.gg
+     ...
+   + .protocol.jabber
+     ...
+   + .protocol.polchat
+     ...
+ + .session
+     m set_status(sessionName, ofiPresence, description)
+     ...
+ + .crypto
+   + .crypto.rot13 :D
+     ...
+   + .crytpo.gpg
+     ...
+   + .crypto.sim
+     ...
+ + .logging
+   ...
+ 
+having something like org.ekg2.client.ui.windows.[window_id] 
+[or org.ekg2.client.session.[session_id]
+would require to add_match/remove_match every window kill, window new
+[or session create, session destroy]
+
+this would be quite 'objective' approach, but seems quite senseless imho
