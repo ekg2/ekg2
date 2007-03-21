@@ -200,12 +200,12 @@ static QUERY(irc_session_init) {
 
 static QUERY(irc_session_deinit) {
 	char *session = *(va_arg(ap, char**));
-	int i;
 
 	session_t *s = session_find(session);
 	irc_private_t *j;
 
 	list_t 		tmplist;
+	int i;
 
 	if (!s || !(j = s->priv) || (s->plugin != &irc_plugin))
 		return 1;
@@ -640,7 +640,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 			 */
 			j->autoreconnecting = 0;
 			/* if ,,reconnect'' timer exists we should stop doing */
-			if (timer_remove(&irc_plugin, "reconnect") == 0)
+			if (timer_remove_session(s, "reconnect") == 0)
 				print("auto_reconnect_removed", session_name(s)); 
 			break;
 			/*
@@ -766,7 +766,7 @@ static WATCHER_SESSION(irc_handle_connect) { /* tymczasowy */
 		return -1; /* ? */
 	}
 
-	timer_remove(&irc_plugin, "reconnect");
+	timer_remove_session(s, "reconnect");
 	DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
 	j->recv_watch = watch_add_session_line(s, fd, WATCH_READ_LINE, irc_handle_stream);
