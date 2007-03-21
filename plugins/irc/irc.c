@@ -610,7 +610,6 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 		return;
 	}
 
-	session_connected_set(s, 0);
 	j->connecting = 0;
 
 	// !!! 
