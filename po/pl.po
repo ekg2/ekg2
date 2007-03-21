@@ -412,12 +412,11 @@ msgid ""
 msgstr "%) %T%1%n jest aliasem i nie posiada opisu\n"
 
 #: ekg/themes.c:1207
-#, fuzzy
 msgid ""
 "%> %1->%T%2%n (%3, default value: %4)\n"
 "%>\n"
 msgstr ""
-"%> %T%1%n (%2, domy¶lna warto¶æ: %3)\n"
+"%> %1->%T%2%n (%3, domy¶lna warto¶æ: %4)\n"
 "%>\n"
 
 #: ekg/themes.c:1211
