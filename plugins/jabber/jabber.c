@@ -379,7 +379,6 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type)
         if (!j)
                 return;
 
-        session_connected_set(s, 0);
         j->connecting = 0;
 
 	if (j->send_watch) {
