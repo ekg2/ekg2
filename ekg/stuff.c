@@ -2376,11 +2376,17 @@ void ekg_update_status(session_t *session)
  * ekg_status_string()
  *
  * converts enum status to string
+ * cmd = 0 for normal labels, 1 for command names, 2 for labels+special (esp. for debug, use wisely)
  */
 
 const char *ekg_status_string(const int status, const int cmd)
 {
+	/* If we've got status (x), return with corresponding string (y)
+	 * If we use different statuses for cmd values, use (cmd == 1 ? blah : blah) syntax for y */
 #define ENUM_TO_S(x, y) case EKG_STATUS_##x: return y;
+	/* If we've got special status (x), and we want to give corresponding string (e.g. for debug)
+	 * then we return with it, else we continue (i.e. get to default, report bug on debug and return 'unknown' */
+#define ENUM_TO_S_SPEC(x, y) case EKG_STATUS_##x: if (cmd == 2) return y;
 	switch (status) {
 		ENUM_TO_S(ERROR, "error")
 		ENUM_TO_S(BLOCKED, "blocked")
@@ -2390,12 +2396,16 @@ const char *ekg_status_string(const int status, const int cmd)
 		ENUM_TO_S(DND, "dnd")
 		ENUM_TO_S(XA, "xa")
 		ENUM_TO_S(AWAY, "away")
-		ENUM_TO_S(AVAIL, (cmd ? "back" : "avail"))
-		ENUM_TO_S(FFC, (cmd ? "ffc" : "chat"))
+		ENUM_TO_S(AVAIL, (cmd == 1 ? "back" : "avail"))
+		ENUM_TO_S(FFC, (cmd == 1 ? "ffc" : "chat"))
+		ENUM_TO_S_SPEC(AUTOAWAY, "autoaway")
+		ENUM_TO_S_SPEC(AUTOXA, "autoxa")
+		ENUM_TO_S_SPEC(AUTOBACK, "autoback")
 		default:
 			debug_error("ekg_status_string(): Got unexpected status: 0x%02x\n", status);
-			return "unknown";
+			return (cmd == 1 ? "back" : "unknown");
 	}
+#undef ENUM_TO_S_SPEC
 #undef ENUM_TO_S
 }
 

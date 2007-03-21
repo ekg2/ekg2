@@ -577,7 +577,7 @@ const char *session_get(session_t *s, const char *key) {
 		return session_descr_get(s);
 
 	if (!xstrcasecmp(key, "status"))
-		return ekg_status_string(session_status_get(s), 0);
+		return ekg_status_string(session_status_get(s), 2);
 	
 	if (!xstrcasecmp(key, "password"))
                 return session_password_get(s);
@@ -1130,9 +1130,9 @@ COMMAND(session_command)
 
 		/* emulate session_get() */
 		if (!xstrcasecmp(key, "uid")) 		var = session_uid_get(s);
-		else if (!xstrcasecmp(key, "alias"))    var = session_alias_get(s);                                               
-		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);                                                
-		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 0);                                               
+		else if (!xstrcasecmp(key, "alias"))    var = session_alias_get(s);
+		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);
+		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 2);
 		else if (!xstrcasecmp(key, "password")) { var = session_password_get(s); secret = 1; }
 		else if ((paid = plugin_var_find(s->plugin, key))) {
 			plugins_params_t *pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
