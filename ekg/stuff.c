@@ -2417,21 +2417,25 @@ const char *ekg_status_string(const int status, const int cmd)
 
 int ekg_status_int(const char *text)
 {
-#define STR_TO_E(y, x) if (!xstrcasecmp(x, text)) return EKG_STATUS_##y;
+	/* This macro does compare given string (text) with string corresponding to status
+	 * (string as x, status as y). We use reverse/strange order of args to make the syntax
+	 * same as in ekg_status_string() macros. 'else' keyword is already contained within macro.*/
+#define STR_TO_E(y, x) else if (!xstrcasecmp(x, text)) return EKG_STATUS_##y;
+	if (0); /* make 'else' happy */
 	STR_TO_E(ERROR, "error")
-	else STR_TO_E(BLOCKED, "blocked")
-	else STR_TO_E(UNKNOWN, "unknown")
-	else STR_TO_E(NA, "notavail")
-	else STR_TO_E(INVISIBLE, "invisible")
-	else STR_TO_E(DND, "dnd")
-	else STR_TO_E(XA, "xa")
-	else STR_TO_E(AWAY, "away")
-	else STR_TO_E(FFC, "ffc")
-	else STR_TO_E(FFC, "chat")
-	else STR_TO_E(AVAIL, "avail")
-	else STR_TO_E(AVAIL, "available")		/* tlen */
-	else STR_TO_E(AVAIL, "back")
-	else STR_TO_E(AVAIL, "online")			/* jabber */
+	STR_TO_E(BLOCKED, "blocked")
+	STR_TO_E(UNKNOWN, "unknown")
+	STR_TO_E(NA, "notavail")
+	STR_TO_E(INVISIBLE, "invisible")
+	STR_TO_E(DND, "dnd")
+	STR_TO_E(XA, "xa")
+	STR_TO_E(AWAY, "away")
+	STR_TO_E(FFC, "ffc")
+	STR_TO_E(FFC, "chat")
+	STR_TO_E(AVAIL, "avail")
+	STR_TO_E(AVAIL, "available")		/* tlen */
+	STR_TO_E(AVAIL, "back")
+	STR_TO_E(AVAIL, "online")			/* jabber */
 	else {
 		debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
 		return EKG_STATUS_UNKNOWN;
