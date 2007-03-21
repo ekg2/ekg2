@@ -566,7 +566,6 @@ static void gg_session_handler_success(session_t *s) {
 
 	int status;
 	char *__session;
-	char buf[100];
 	int _status;
 	char *descr;
 	char *cpdescr; 
@@ -596,9 +595,8 @@ static void gg_session_handler_success(session_t *s) {
 		session_int_set(s, "port", g->sess->port);
 	}
 	/* pamiêtajmy, ¿eby pingowaæ */
-	snprintf(buf, sizeof(buf), "ping-%s", s->uid + 3);
-	if (timer_find_session(s, buf) == NULL)
-		timer_add_session(s, buf, 180, 1, gg_ping_timer_handler);
+	if (timer_find_session(s, "ping") == NULL)
+		timer_add_session(s, "ping", 180, 1, gg_ping_timer_handler);
 
 	descr = xstrdup(session_descr_get(s));
 	status = session_status_get(s);
