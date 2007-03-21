@@ -1065,8 +1065,6 @@ static COMMAND(sniff_command_connect) {
 	watch_add_session(session, pcap_fileno(dev), WATCH_READ, sniff_pcap_read);
 
 	session->status = EKG_STATUS_AVAIL;
-	session->connected = 1;
-	session->last_conn = time(NULL);
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &(session->uid));
 	return 0;
 }
