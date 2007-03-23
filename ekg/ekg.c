@@ -121,8 +121,6 @@ int ekg_watches_removed;
 static pid_t ekg_pid = 0;
 static char argv0[PATH_MAX];
 
-time_t last_action = 0;
-
 pid_t speech_pid = 0;
 
 static int stderr_backup = -1;
@@ -969,7 +967,7 @@ int main(int argc, char **argv)
 
         in_autoexec = 0;
 
-        time(&last_action);
+	/* XXX, unidle() was here */
 
         /* wypada³oby obserwowaæ stderr */
         if (!batch_mode) {

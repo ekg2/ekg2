@@ -237,7 +237,6 @@ extern char *config_dir;
 extern char *console_charset;
 extern int in_autoexec;
 extern int ekg_watches_removed;
-extern time_t last_action;
 extern time_t ekg_started;
 
 extern int quit_message_send;
