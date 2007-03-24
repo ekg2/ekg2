@@ -40,7 +40,7 @@
 #define EKG_NO_THEMEBIT	256
 
 enum msgack_t {
-	EKG_ACK_DELIVERED,		/* message delivered successfully */
+	EKG_ACK_DELIVERED = 0,		/* message delivered successfully */
 	EKG_ACK_QUEUED,			/* message queued for delivery */
 	EKG_ACK_DROPPED,		/* message rejected 'permamently' */
 	EKG_ACK_TEMPFAIL,		/* temporary delivery failure */
@@ -49,11 +49,13 @@ enum msgack_t {
 	EKG_ACK_MAX			/* we don't want to read after array */
 };
 
-#define EKG_DISCONNECT_USER 0		/* u¿ytkownik wpisa³ /disconnect */
-#define EKG_DISCONNECT_NETWORK 1	/* problemy z sieci± */
-#define EKG_DISCONNECT_FORCED 2		/* serwer kaza³ siê roz³±czyæ */
-#define EKG_DISCONNECT_FAILURE 3	/* b³±d ³±czenia siê z serwerem */
-#define EKG_DISCONNECT_STOPPED 4	/* u¿ytkownik przerwa³ ³±czenie */
+enum disconnect_t {
+	EKG_DISCONNECT_USER = 0,	/* user-engaged disconnect */
+	EKG_DISCONNECT_NETWORK,		/* network problems */
+	EKG_DISCONNECT_FORCED,		/* server forced to disconnect */
+	EKG_DISCONNECT_FAILURE,		/* connecting failed */
+	EKG_DISCONNECT_STOPPED		/* connecting canceled */
+};
 
 #define EKG_NO_BEEP 0
 #define EKG_TRY_BEEP 1
