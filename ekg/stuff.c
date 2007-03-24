@@ -159,6 +159,7 @@ int config_debug = 1;
 int config_lastlog_noitems = 0;
 int config_lastlog_case = 0;
 int config_lastlog_display_all = 0;
+int config_version = 0;
 
 char *last_search_first_name = NULL;
 char *last_search_last_name = NULL;

@@ -52,6 +52,9 @@
 
 #include "queries.h"
 
+/* function inside legacyconfig.c */
+void config_upgrade();
+
 #ifndef PATH_MAX
 #  define PATH_MAX _POSIX_PATH_MAX
 #endif
@@ -122,6 +125,7 @@ void config_postread()
 			debug("default session not found\n");
 		}
 	}
+	config_upgrade();
 	query_emit_id(NULL, CONFIG_POSTINIT);
 }
 

@@ -90,6 +90,8 @@ void variable_init()
 	variable_add(NULL, ("beep_notify"), VAR_BOOL, 1, &config_beep_notify, NULL, NULL, dd_beep);
 	variable_add(NULL, ("completion_char"), VAR_STR, 1, &config_completion_char, NULL, NULL, NULL);
 	variable_add(NULL, ("completion_notify"), VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
+		/* It's very, very special variable; shouldn't be used by user */
+	variable_add(NULL, ("config_version"), VAR_INT, 0, &config_version, NULL, NULL, NULL);
 		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
 		 * 	encoding... and give some tip how to correct this... it's just temporary
 		 */
