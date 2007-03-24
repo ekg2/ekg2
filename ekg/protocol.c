@@ -188,6 +188,7 @@ static QUERY(protocol_disconnected) {
 			 * 2) we don't want to risk if some _autoback could make magic at this state of connection */
 			if (s && s->autoaway)
 				session_status_set(s, EKG_STATUS_AUTOBACK);
+			s->activity = 0; /* mark we'd like PROTOCOL_CONNECTED to set activity */
 			break;
 
 		case EKG_DISCONNECT_FORCED:
@@ -241,17 +242,8 @@ static QUERY(protocol_connected) {
 
 	if (s) {
 		s->last_conn = time(NULL);
-		/* XXX, below. this !s->activity is bad here.
-		 * 	'coz user can do /connect by request.
-		 *	and a lot of stuff is wrong.
-		 *	My mistake that I bugreport bug to peres.
-		 *	Mistake, mistake, huge mistake.
-		 *
-		 *	I don't really know how deal with s->activity...
-		 */
-		if (!s->activity) {
-			s->activity  = s->last_conn;	/* session_unidle() */
-		}
+		if (!s->activity) /* someone asks us to set activity */
+			s->activity  = s->last_conn;
 		s->connected = 1;
 		timer_remove_session(s, "reconnect");
 		/* XXX notify ui */
