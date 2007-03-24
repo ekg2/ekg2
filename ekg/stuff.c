@@ -2372,6 +2372,46 @@ void ekg_update_status(session_t *session)
 
 }
 
+/* status string tables */
+
+const char *ekg_statuses[] = {
+/* 0x00 */	0, "error", "blocked", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x10 */	"unknown", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x20 */	"notavail", "invisible", "dnd", "xa", "away", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x30 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x40 */	"avail", "chat", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x50 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x60 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x70 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x80 */	"autoaway", "autoxa", "autoback", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x90 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0xA0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0xB0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0xC0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0xD0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0xE0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0xF0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	};
+
+const char *ekg_status_commands[] = {
+/* 0x00 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x10 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x20 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x30 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x40 */	"back", "ffc", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x50 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x60 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x70 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	};
+
+const char *ekg_status_specials[] = {
+		"available" /* tlen */, "online" /* jabber */, NULL
+	};
+
+const int ekg_status_specials_i[] = {
+		EKG_STATUS_AVAIL, EKG_STATUS_AVAIL
+	};
+
 /*
  * ekg_status_string()
  *
@@ -2381,32 +2421,23 @@ void ekg_update_status(session_t *session)
 
 const char *ekg_status_string(const int status, const int cmd)
 {
-	/* If we've got status (x), return with corresponding string (y)
-	 * If we use different statuses for cmd values, use (cmd == 1 ? blah : blah) syntax for y */
-#define ENUM_TO_S(x, y) case EKG_STATUS_##x: return y;
-	/* If we've got special status (x), and we want to give corresponding string (e.g. for debug)
-	 * then we return with it, else we continue (i.e. get to default, report bug on debug and return 'unknown' */
-#define ENUM_TO_S_SPEC(x, y) case EKG_STATUS_##x: if (cmd == 2) return y;
-	switch (status) {
-		ENUM_TO_S(ERROR, "error")
-		ENUM_TO_S(BLOCKED, "blocked")
-		ENUM_TO_S(UNKNOWN, "unknown")
-		ENUM_TO_S(NA, "notavail")
-		ENUM_TO_S(INVISIBLE, "invisible")
-		ENUM_TO_S(DND, "dnd")
-		ENUM_TO_S(XA, "xa")
-		ENUM_TO_S(AWAY, "away")
-		ENUM_TO_S(AVAIL, (cmd == 1 ? "back" : "avail"))
-		ENUM_TO_S(FFC, (cmd == 1 ? "ffc" : "chat"))
-		ENUM_TO_S_SPEC(AUTOAWAY, "autoaway")
-		ENUM_TO_S_SPEC(AUTOXA, "autoxa")
-		ENUM_TO_S_SPEC(AUTOBACK, "autoback")
-		default:
-			debug_error("ekg_status_string(): Got unexpected status: 0x%02x\n", status);
-			return (cmd == 1 ? "back" : "unknown");
+	const char *r = NULL;
+
+	if ((status > 0) && (status < (cmd == 2 ? 0x100 : 0x80))) {
+		if (cmd == 1)
+			r = ekg_status_commands[status]; /* if command differs from status */
+		if (!r)
+			r = ekg_statuses[status]; /* else fetch status */
 	}
-#undef ENUM_TO_S_SPEC
-#undef ENUM_TO_S
+
+	if (!r) {
+		/* we only allow 00..7F, or 00..FF with cmd==2
+		 * else we return either UNKNOWN or AVAIL if cmd==1 */
+		debug_error("ekg_status_string(): called with unexpected status: 0x%02x\n", status);
+		return (cmd == 1 ? ekg_status_commands[EKG_STATUS_AVAIL] : ekg_statuses[EKG_STATUS_UNKNOWN]);
+	}
+	
+	return r;
 }
 
 /*
@@ -2417,30 +2448,28 @@ const char *ekg_status_string(const int status, const int cmd)
 
 int ekg_status_int(const char *text)
 {
-	/* This macro does compare given string (text) with string corresponding to status
-	 * (string as x, status as y). We use reverse/strange order of args to make the syntax
-	 * same as in ekg_status_string() macros. 'else' keyword is already contained within macro.*/
-#define STR_TO_E(y, x) else if (!xstrcasecmp(x, text)) return EKG_STATUS_##y;
-	if (0); /* make 'else' happy */
-	STR_TO_E(ERROR, "error")
-	STR_TO_E(BLOCKED, "blocked")
-	STR_TO_E(UNKNOWN, "unknown")
-	STR_TO_E(NA, "notavail")
-	STR_TO_E(INVISIBLE, "invisible")
-	STR_TO_E(DND, "dnd")
-	STR_TO_E(XA, "xa")
-	STR_TO_E(AWAY, "away")
-	STR_TO_E(FFC, "ffc")
-	STR_TO_E(FFC, "chat")
-	STR_TO_E(AVAIL, "avail")
-	STR_TO_E(AVAIL, "available")		/* tlen */
-	STR_TO_E(AVAIL, "back")
-	STR_TO_E(AVAIL, "online")			/* jabber */
-	else {
-		debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
-		return EKG_STATUS_UNKNOWN;
+	const char **p;
+	int i;
+	const int *j;
+
+	/* At first, check statuses */
+	for (p = &ekg_statuses[0], i = 0; i < 0x80; p++, i++) {
+		if (!xstrcasecmp(text, *p))
+			return i;
 	}
-#undef STR_TO_E
+	/* then check commands */
+	for (p = &ekg_status_commands[0], i = 0; i < 0x80; p++, i++) {
+		if (!xstrcasecmp(text, *p))
+			return i;
+	}
+	/* and specials */
+	for (p = &ekg_status_specials[0], j = &ekg_status_specials_i[0]; *p; p++, j++) {
+		if (!xstrcasecmp(text, *p))
+			return *j;
+	}
+
+	debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
+	return EKG_STATUS_UNKNOWN;
 }
 
 /*

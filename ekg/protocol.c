@@ -277,7 +277,6 @@ static QUERY(protocol_status)
         int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
 	int sess_notify;
 
-	debug("protocol-status: %d\n", status);
 	if (!(s = session_find(session)))
 		return 0;
 	
