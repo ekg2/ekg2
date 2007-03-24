@@ -1,1 +1,19 @@
-Not ready
+
+EKG2 does use autotools package for building. If you are checkouting source code
+directly from CVS, you probably need to call:
+	$ ./autogen.sh [configure options]
+before doing the real build, or:
+	$ NOCONFIGURE=1 ./autogen.sh
+if you don't want autogen to call configure after creating it.
+
+If you are using some snapshots, this was probably done for you, and you'll only
+need to call:
+	$ ./configure [configure options]
+	$ make
+	# make install
+
+To see all available options for configure (or first autogen.sh syntax), please
+use '--help'. If compilation fails on one of the plugins, you can append '-k'
+flag to make, so it'll ignore the failures (but please report the problem to
+the authors).
+
