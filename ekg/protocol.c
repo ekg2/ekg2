@@ -762,16 +762,16 @@ static QUERY(protocol_message)
  * protocol_message_ack()
  *
  * Handler for <i>PROTOCOL_MESSAGE_ACK</i>
- * When session notify core about receiving acknowledge of message we do here:<br>
+ * When session notifies core about receiving acknowledgement for our message, we:<br>
  * 	- Remove message with given sequence id (@a seq) from msgqueue @sa msg_queue_remove_seq()<br>
- * 	- If @a config_display_ack variable was set to 1, or @a config_display_ack value match
- * 	  	type of @a __status. Than display notify through UI-plugin
+ * 	- If corresponding @a config_display_ack variable bit is set, then display notification through UI-plugin
  *
  * @note	About different types of confirmations (@a __status):<br>
- * 			- <i>EKG_ACK_DELIVERED</i> 	- when message was delivered to user<br>
- * 			- <i>EKG_ACK_QUEUED</i>		- when user is unavailable and server confirm accepting message to later delivery<br>
- * 			- <i>EKG_ACK_DROPPED</i>	- when user or server don't want our message [we don't know why] and message was dropped<br>
- * 			- <i>EKG_ACK_UNKNOWN</i>	- when it's not clear what happene to that message<br>
+ * 			- <i>EKG_ACK_DELIVERED</i> 	- when message was successfully delivered to user<br>
+ * 			- <i>EKG_ACK_QUEUED</i>		- when user is somewhat unavailable and server confirmed to accept the message for later delivery<br>
+ * 			- <i>EKG_ACK_DROPPED</i>	- when user or server rejected to deliver our message (forbidden content?) and it was dropped; further retries will probably fail, if second side doesn't perform some kind of action (e.g. add us to roster in GG)<br>
+ * 			- <i>EKG_ACK_TEMPFAIL</i>	- when server failed temporarily to deliver our message, but encourages us to try again later (e.g. message queue full)<br>
+ * 			- <i>EKG_ACK_UNKNOWN</i>	- when it's not clear what happened with our message<br>
  *
  * @todo 	Should we remove msg from msgqueue only when sequenceid and session and rcpt matches?
  * 		I think it's buggy cause user at jabber can send us acknowledge of message
@@ -781,7 +781,7 @@ static QUERY(protocol_message)
  * @param ap 1st param: <i>(char *) </i><b>session</b>  - session which send this notify
  * @param ap 2nd param: <i>(char *) </i><b>rcpt</b>     - user uid who confirm receiving messages
  * @param ap 3rd param: <i>(char *) </i><b>seq</b>	- sequence id of message
- * @param ap 4th param: <i>(char *) </i><b>__status</b> - type of confirmation one of: [EKG_ACK_DELIVERED, EKG_ACK_QUEUED, EKG_ACK_DROPPED, EKG_ACK_UNKNOWN]
+ * @param ap 4th param: <i>int </i><b>__status</b> - type of confirmation; one of: [EKG_ACK_DELIVERED, EKG_ACK_QUEUED, EKG_ACK_DROPPED, EKG_ACK_TEMPFAIL, EKG_ACK_UNKNOWN]
  *
  * @param data NULL
  *
@@ -789,33 +789,21 @@ static QUERY(protocol_message)
  */
 
 static QUERY(protocol_message_ack) {
+	const char *ackformats[] = {"ack_delivered", "ack_queued", "ack_filtered", "ack_tempfail", "ack_unknown"};
+
 	char *session		= *(va_arg(ap, char **));
 	char *rcpt		= *(va_arg(ap, char **));
 	char *seq		= *(va_arg(ap, char **));
-	char *__status		= *(va_arg(ap, char **));
+	int __status		= *(va_arg(ap, int *));
 
 	session_t *s	= session_find(session);
 	userlist_t *u	= userlist_find(s, rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
 
-	int display = 0;
-	char format[100];
-
-	snprintf(format, sizeof(format), "ack_%s", __status);
-
 	msg_queue_remove_seq(seq);
 	
-	if (config_display_ack == 1)
-		display = 1;
-
-	if (config_display_ack == 2 && !xstrcmp(__status, EKG_ACK_DELIVERED))
-		display = 1;
-
-	if (config_display_ack == 3 && !xstrcmp(__status, EKG_ACK_QUEUED))
-		display = 1;
-
-	if (display)
-		print_window(target, s, 0, format, format_user(s, rcpt));
+	if ((__status >= 0) && (__status < EKG_ACK_MAX) && (config_display_ack & (1 << __status)))
+		print_window(target, s, 0, ackformats[__status], format_user(s, rcpt));
 
 	return 0;
 }

@@ -117,7 +117,7 @@ char *config_sound_mail_file = NULL;
 char *config_sound_app = NULL;
 int config_use_unicode;
 int config_changed = 0;
-int config_display_ack = 3;
+int config_display_ack = 12;
 int config_completion_notify = 1;
 char *config_completion_char = NULL;
 time_t ekg_started = 0;

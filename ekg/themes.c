@@ -1429,7 +1429,8 @@ void theme_init()
 	format_add("ack_queued", _("%> Message to %1 will be delivered later\n"), 1);
 	format_add("ack_delivered", _("%> Message to %1 delivered\n"), 1);
 	format_add("ack_unknown", _("%> Not clear what happened to message to %1\n"), 1);
-	format_add("ack_filtered", _("%! %|Message to %1 probably was not delivered. The person is unavailable, but server claims message is delivered. Message could been filtered out (e.g. because of web address in it)\n"), 1);
+	format_add("ack_tempfail", _("%! %|Message to %1 encountered temporary delivery failure (e.g. message queue full). Please try again later.\n"), 1);
+	format_add("ack_filtered", _("%! %|Message to %1 encountered permament delivery failure (e.g. forbidden content). Before retrying, try to fix the problem yourself (e.g. ask second side to add us to userlist).\n"), 1);
 	format_add("message_too_long", _("%! Message was too long and got shortened\n"), 1);
 
 	/* people are changing their statuses */

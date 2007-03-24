@@ -936,16 +936,14 @@ JABBER_HANDLER(jabber_handle_message) {
 				if (!nbody && isack) {
 					char *__session = xstrdup(session_uid_get(s));
 					char *__rcpt	= xstrdup(uid); /* was uid+4 */
-					char *__status  = xstrdup(
-						(acktype & 1) ? EKG_ACK_DELIVERED : 
-						(acktype & 2) ? EKG_ACK_QUEUED : 
-						NULL);
+					int __status  = ((acktype & 1) ? EKG_ACK_DELIVERED : 
+							(acktype & 2) ? EKG_ACK_QUEUED : 
+							EKG_ACK_UNKNOWN);
 					char *__seq	= NULL; /* id ? */
 					/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
 					query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status);
 					xfree(__session);
 					xfree(__rcpt);
-					xfree(__status);
 					/* xfree(__seq); */
 				}
 				

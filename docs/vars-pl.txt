@@ -91,12 +91,20 @@ default_status_window
 
 display_ack
 	typ: liczba
-	domy¶lna warto¶æ: 3
+	domy¶lna warto¶æ: 12
 	
-	okre¶la, czy i które powiadomienia o wys³aniu wiadomo¶ci maj±
-	byæ wy¶wietlane. 0 - ¿adne, 1 - wszystkie, 2 - tylko kiedy wiadomo¶æ
-	dotar³a do adresata, 3 - tylko kiedy adresat jest niedostêpny i
-	wiadomo¶æ zosta³a zachowania na serwerze.
+	okre¶la, czy i które powiadomienia o (nie)dostarczeniu wiadomo¶ci
+	maj± byæ wy¶wietlane. stanowi sumê warto¶ci:
+	
+		1 - wiadomo¶æ dotar³a do adresata
+	
+		2 - wiadomo¶æ zosta³a umieszczona w kolejce dorêczania
+	
+		4 - wiadomo¶æ zosta³a odrzucona przez serwer/adresata
+	
+		8 - wiadomo¶æ tymczasowo nie mo¿e byæ przyjêta
+	
+		16 - wynik dorêczania nieznany
 
 display_blinking
         typ: bool

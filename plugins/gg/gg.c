@@ -878,15 +878,13 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
  *
  * Support for messages acknowledgement.<br>
  * Handler for libgadu: <i>GG_EVENT_ACK</i> events
- * 
- * @todo Support for `newer` e->event.ack.status like: <i>GG_ACK_BLOCKED</i> and <i>GG_ACK_MBOXFULL</i>
  */
 
 static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 	char *__session = xstrdup(s->uid);
 	char *__rcpt	= saprintf("gg:%d", e->event.ack.recipient);
 	char *__seq	= xstrdup(itoa(e->event.ack.seq));
-	char *__status;
+	int __status;
 
 /* ifndef + defines for old libgadu */
 #ifndef GG_ACK_BLOCKED
@@ -899,30 +897,27 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 
 	switch (e->event.ack.status) {
 		case GG_ACK_DELIVERED:		/* from libgadu.h 1.1 (15-Oct-01) */
-			__status = xstrdup(EKG_ACK_DELIVERED);
+			__status = EKG_ACK_DELIVERED;
 			break;
 		case GG_ACK_QUEUED:		/* from libgadu.h 1.1 (15-Oct-01) */
-			__status = xstrdup(EKG_ACK_QUEUED);
+			__status = EKG_ACK_QUEUED;
 			break;
 		case GG_ACK_NOT_DELIVERED:	/* from libgadu.h 1.50 (21-Dec-01) */
-			__status = xstrdup(EKG_ACK_DROPPED);
+			__status = EKG_ACK_DROPPED;
 			break;
 		case GG_ACK_BLOCKED:		/* from libgadu.h 1.175 (21-Dec-04) */
-			debug("gg_session_handler_ack() XXX, GG_ACK_BLOCKED\n");
-			__status = xstrdup(EKG_ACK_UNKNOWN);
+			__status = EKG_ACK_DROPPED;
 			break;
 		case GG_ACK_MBOXFULL:		/* from libgadu.h 1.175 (21-Dec-04) */
-			debug("gg_session_handler_ack() XXX, GG_ACK_MBOXFULL\n");
-			__status = xstrdup(EKG_ACK_UNKNOWN);
+			__status = EKG_ACK_TEMPFAIL;
 			break;
 		default:			/* unknown neither for ekg2 nor libgadu */
 			debug_error("gg_session_handler_ack() unknown message ack status. consider upgrade [0x%x]\n", e->event.ack.status);
-			__status = xstrdup(EKG_ACK_UNKNOWN);
+			__status = EKG_ACK_UNKNOWN;
 			break;
 	}
 	query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status);
 
-	xfree(__status);
 	xfree(__seq);
 	xfree(__rcpt);
 	xfree(__session);

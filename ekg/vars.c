@@ -100,7 +100,7 @@ void variable_init()
 	variable_add(NULL, ("debug"), VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
 /*	variable_add(NULL, ("default_protocol"), VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL); */
 	variable_add(NULL, ("default_status_window"), VAR_BOOL, 1, &config_default_status_window, NULL, NULL, NULL);
-	variable_add(NULL, ("display_ack"), VAR_INT, 1, &config_display_ack, NULL, variable_map(4, 0, 0, "none", 1, 0, "all", 2, 0, "delivered", 3, 0, "queued"), NULL);
+	variable_add(NULL, ("display_ack"), VAR_MAP, 1, &config_display_ack, NULL, variable_map(6, 0, 0, "none", 1, 0, "delivered", 2, 0, "queued", 4, 0, "dropped", 8, 0, "tempfail", 16, 0, "unknown"), NULL);
         variable_add(NULL, ("display_blinking"), VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
 	variable_add(NULL, ("display_color"), VAR_INT, 1, &config_display_color, NULL, NULL, NULL);
 	variable_add(NULL, ("display_color_map"), VAR_STR, 1, &config_display_color_map, NULL, NULL, dd_color);

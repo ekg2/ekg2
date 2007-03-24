@@ -39,10 +39,15 @@
 
 #define EKG_NO_THEMEBIT	256
 
-#define EKG_ACK_DELIVERED	"delivered"	/* wiadomo¶æ dostarczono */
-#define EKG_ACK_QUEUED		"queued"	/* wiadomo¶æ zakolejkowano */
-#define EKG_ACK_DROPPED		"filtered"	/* wiadomo¶æ odrzucono */
-#define EKG_ACK_UNKNOWN 	"unknown"	/* nie wiadomo, co siê z ni± sta³o */
+enum msgack_t {
+	EKG_ACK_DELIVERED,		/* message delivered successfully */
+	EKG_ACK_QUEUED,			/* message queued for delivery */
+	EKG_ACK_DROPPED,		/* message rejected 'permamently' */
+	EKG_ACK_TEMPFAIL,		/* temporary delivery failure */
+	EKG_ACK_UNKNOWN,		/* delivery status unknown */
+	
+	EKG_ACK_MAX			/* we don't want to read after array */
+};
 
 #define EKG_DISCONNECT_USER 0		/* u¿ytkownik wpisa³ /disconnect */
 #define EKG_DISCONNECT_NETWORK 1	/* problemy z sieci± */

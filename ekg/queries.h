@@ -292,7 +292,7 @@ const struct query query_list[] = {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_CHARP,		/* seq */
-		QUERY_ARG_CHARP,		/* status */
+		QUERY_ARG_INT,			/* status */
 		QUERY_ARG_END } },
 
 	{ PROTOCOL_STATUS, "protocol-status", {
