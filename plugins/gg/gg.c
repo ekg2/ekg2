@@ -637,8 +637,23 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
 	if (session_int_get(s, "connection_save") == 1) {
 		session_set(s, "server", NULL);
 		session_int_set(s, "port", GG_DEFAULT_PORT);
-	}
+	} else
+	{		/* If we have some servers in 'server' variable and we're unable to connect to the first one,
+			 * then we should move it to the end and set the second one as default,
+			 * maybe that's kinda dirty way, but IMO most flexible [mg] */
+		const char *oldserver = session_get(s, "server");
+		const char *comma;
 
+		if ((comma = xstrchr(oldserver, ','))) {
+			char *newserver = xmalloc(xstrlen(oldserver)+1);
+
+			xstrcpy(newserver, comma+1);
+			xstrcat(newserver, ",");
+			xstrncat(newserver, oldserver, comma-oldserver);
+
+			session_set(s, "server", newserver);
+		}
+	}
 
 	gg_free_session(g->sess);
 	g->sess = NULL;

@@ -231,11 +231,22 @@ static COMMAND(gg_command_connect) {
 				realserver += 4;
 			}
 
-			if ((tmp_in = inet_addr(realserver)) != INADDR_NONE)
-				p.server_addr = inet_addr(realserver);
-			else {
-				wcs_print("inet_addr_failed", session_name(session));
-				return -1;
+			{
+				char *myserver, *comma;
+
+				if ((comma = xstrchr(realserver, ',')))
+					myserver = xstrndup(realserver, comma-realserver);
+				else /* IMO duplicating the string will be more readable then using (myserver ? myserver : realserver */
+					myserver = xstrdup(realserver);
+
+				if ((tmp_in = inet_addr(myserver)) != INADDR_NONE)
+					p.server_addr = inet_addr(myserver);
+				else {
+					wcs_print("inet_addr_failed", session_name(session));
+					xfree(myserver);
+					return -1;
+				}
+				xfree(myserver);
 			}
 			break;
 		}
