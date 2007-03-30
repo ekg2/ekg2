@@ -31,7 +31,7 @@
 #include <sys/ioctl.h>
 
 #ifndef IN_ONLYDIR
-/* direct from sys/inotify.h */
+/* stolen from sys/inotify.h */
 #define IN_ONLYDIR       0x01000000
 #endif
 #endif /*HAVE_INOTIFY*/
@@ -95,7 +95,7 @@ static char *xmsg_dirfix(const char *path)
 #define __FUNC__ "xmsg_dirfix"
 	char *tmp = xstrdup(path), *p;
 	
-	/* if paths starts with slash, we leave it as is,
+	/* if path starts with slash, we leave it as is,
 	 * otherwise we convert # to / */
 	if (*tmp != '/') {
 		for (p = xstrchr(tmp, '#'); p; p = xstrchr(p+1, '#'))
@@ -477,7 +477,6 @@ static void xmsg_timer_change(session_t *s, const char *varname)
 {
 #define __FUNC__ "xmsg_timer_change"
 	int n = (varname ? session_int_get(s, varname) : 0);
-	/* we simplify the whole process by using our UID as timer name */
 	
 	xdebug("n = %d", n);
 	if (!varname || session_connected_get(s)) {

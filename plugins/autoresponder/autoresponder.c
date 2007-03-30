@@ -64,8 +64,8 @@ static QUERY(autoresponder_message)
 	if ((class >= EKG_MSGCLASS_SENT) /* at first, skip our messages */
 			|| !config_autoresponder_question || !(*config_autoresponder_question) /* are we configured? */
 			|| !(s = session_find(session)) || !(session_int_get(s, "allow_autoresponder") == 1) /* check, if session allows autoreponding */
-			|| (userlist_find(s, uid)) /* check if it aren't currently on our roster */
-			|| (window_find_s(s, uid)) /* or maybe opened query? */
+			|| (userlist_find(s, uid)) /* check if it isn't currently on our roster */
+			|| (window_find_s(s, uid)) /* or maybe we've already opened query? */
 			|| (list_find_str(autoresponder_allowed_uids, uid))) /* search the allowed uids list */
 		return 0;
 	
