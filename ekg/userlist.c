@@ -956,7 +956,7 @@ const char *format_user(session_t *session, const char *uid)
 	if (!u || !u->nickname)
 		tmp = format_string(format_find("unknown_user"), uid, uid);
 	else
-		tmp = format_string(format_find("known_user"), u->nickname, u->uid);
+		tmp = format_string(format_find("known_user"), u->nickname, uid);
 	
 	strlcpy(buf, tmp, sizeof(buf));
 	
