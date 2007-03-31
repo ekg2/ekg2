@@ -2445,14 +2445,17 @@ JABBER_HANDLER(jabber_handle_iq) {
 						/* nic nie robimy, bo juz usuniete */
 					} else {
 						char *nickname 	= jabber_unescape(jabber_attr(item->atts, "name"));
+						const char *authval;
 						xmlnode_t *group = xmlnode_find_child(item,"group");
 						/* czemu sluzy dodanie usera z nickname uid jesli nie ma nickname ? */
 						u = userlist_add(s, uid, nickname ? nickname : uid); 
 
-						if (jabber_attr(item->atts, "subscription")) {
-							u->authtype = xstrdup(jabber_attr(item->atts, "subscription"));
-							/* XXX: enum this? */
-							if (xstrcasecmp(u->authtype, "to") && xstrcasecmp(u->authtype, "both")) {
+						if ((authval = jabber_attr(item->atts, "subscription"))) {
+							jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+
+								/* case dependent? */
+							for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
+							if (!(up->authtype & EKG_JABBER_AUTH_TO)) {
 								if (u->status == EKG_STATUS_NA)
 									u->status = EKG_STATUS_UNKNOWN;
 							} else {
@@ -2505,27 +2508,13 @@ JABBER_HANDLER(jabber_handle_iq) {
 	} /* type == get */
 } /* iq */
 
-typedef struct {
-	char *role;		/* role: */
-	char *aff;		/* affiliation: */
-} muc_userlist_t;
-
-static inline muc_userlist_t *mucuser_private_get(userlist_t *u) {
-	muc_userlist_t *p;
-	if (!u) 	return NULL;
-	if (u->priv)	return u->priv;
-
-	p = xmalloc(sizeof(muc_userlist_t));
-	u->priv = p;
-	return p;
-}
-
 static inline void mucuser_private_deinit(userlist_t *u) {
-	muc_userlist_t *p;
-	if (!u || !(p = u->priv)) return;
+	jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
-	xfree(p->role);
-	xfree(p->aff);
+	if (up) {
+		xfree(up->role);
+		xfree(up->aff);
+	}
 }
 
 JABBER_HANDLER(jabber_handle_presence) {
@@ -2631,14 +2620,15 @@ JABBER_HANDLER(jabber_handle_presence) {
 						}
 
 						if (ulist) {
+							jabber_userlist_private_t *up = jabber_userlist_priv_get(ulist);
 #if 0
 							int tmp = ulist->status; /* yyy? XXX dj, can you see it? */
 #endif
 							ulist->status = EKG_STATUS_AVAIL;
 							
 							mucuser_private_deinit(ulist);
-							mucuser_private_get(ulist)->role	= xstrdup(role);
-							mucuser_private_get(ulist)->aff		= xstrdup(affiliation);
+							up->role	= xstrdup(role);
+							up->aff		= xstrdup(affiliation);
 						}
 						debug("[MUC, PRESENCE] NEWITEM: %s (%s) ROLE:%s AFF:%s\n", nickjid, __(jid), role, affiliation);
 						xfree(nickjid);
@@ -2707,8 +2697,9 @@ JABBER_HANDLER(jabber_handle_presence) {
 		xfree(jstatus);
 		{
 			userlist_t *u = userlist_find(s, uid);
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 			
-			if ((status == EKG_STATUS_NA) && (!u || (xstrcasecmp(u->authtype, "to") && xstrcasecmp(u->authtype, "both"))))
+			if ((status == EKG_STATUS_NA) && (!up || !(up->authtype & EKG_JABBER_AUTH_TO)))
 				status = EKG_STATUS_UNKNOWN;
 		}
 

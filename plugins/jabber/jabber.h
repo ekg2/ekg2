@@ -8,6 +8,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
+#include <ekg/userlist.h>
 
 #ifdef HAVE_EXPAT_H
  #include <expat.h>
@@ -132,12 +133,29 @@ typedef struct {
 	xmlnode_t *node;		/* aktualna ga³±¼ xmla */
 } jabber_private_t;
 
+typedef struct {
+	userlist_private_cleanup_func_t *cleanup_func;
+	int authtype;
+
+	/* from muc_userlist_t */
+	char *role;		/* role: */
+	char *aff;		/* affiliation: */
+} jabber_userlist_private_t;
+
+enum jabber_auth_t {
+	EKG_JABBER_AUTH_NONE	= 0,
+	EKG_JABBER_AUTH_FROM	= 1,
+	EKG_JABBER_AUTH_TO	= 2,
+	EKG_JABBER_AUTH_BOTH	= 3
+};
+
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
 
 extern plugin_t jabber_plugin;
 extern char *jabber_default_pubsub_server;
 extern char *jabber_default_search_server;
 extern int config_jabber_beep_mail;
+extern char *jabber_authtypes[];
 
 void jabber_register_commands(void);
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);
@@ -180,6 +198,9 @@ char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_
 char *jabber_zlib_decompress(const char *buf, int *len);
 char *jabber_zlib_compress(const char *buf, int *len);
 #endif
+
+jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u);
+CLEANUP(jabber_userlist_priv_free);
 
 #endif /* __EKG_JABBER_JABBER_H */
 

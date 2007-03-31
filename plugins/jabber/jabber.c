@@ -75,6 +75,7 @@ SSL_CTX *jabberSslCtx;
 char *jabber_default_search_server = NULL;
 char *jabber_default_pubsub_server = NULL;
 int config_jabber_beep_mail = 0;
+char *jabber_authtypes[] = { "none", "from", "to", "both" };
 
 static int session_postinit;
 static int jabber_theme_init();
@@ -1146,6 +1147,9 @@ static QUERY(jabber_status_show_handle) {
 
 static int jabber_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	/* USERLIST_INFO */
+	format_add("user_info_auth_type", _("%K| %nSubscription type: %T%1%n\n"), 1);
+
 	format_add("jabber_auth_subscribe", _("%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/auth -d %1\" to refuse.%n\n"), 1);
 	format_add("jabber_auth_unsubscribe", _("%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"), 1);
 	format_add("jabber_xmlerror_disconnect", _("Error parsing XML: %R%1%n"), 1);
@@ -1370,6 +1374,19 @@ static QUERY(jabber_pgp_postinit) {
 	return 0;
 }
 
+static QUERY(jabber_userlist_info) {
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int quiet	= *va_arg(ap, int *);
+	const jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+
+	if (!u || valid_plugin_uid(&jabber_plugin, u->uid) != 1) 
+		return 1;
+
+	printq("user_info_auth_type", jabber_authtypes[up->authtype == (up->authtype & EKG_JABBER_AUTH_BOTH) ? up->authtype : EKG_JABBER_AUTH_NONE]);
+
+	return 0;
+}
+
 static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
 	/* '666' enabled for everyone (DON'T TRY IT!); '0' - disabled; '1' - enabled for the same id (allow from diffrent resources); '2' - enabled for allow_remote_control_jids (XXX) */
@@ -1443,6 +1460,7 @@ int jabber_plugin_init(int prio) {
 	query_connect_id(&jabber_plugin, PROTOCOL_IGNORE,	jabber_protocol_ignore, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_dcc_postinit, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_pgp_postinit, NULL);
+	query_connect_id(&jabber_plugin, USERLIST_INFO,		jabber_userlist_info, NULL);
 
 	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);

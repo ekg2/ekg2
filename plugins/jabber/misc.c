@@ -23,6 +23,31 @@
 #include "jabber.h"
 #include "jabber-ssl.h"
 
+/* if needed, init private data, then return it */
+jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
+	if (!u)
+		return NULL;
+
+	{
+		jabber_userlist_private_t *j = u->priv;
+
+		if (!j) {
+			j = xmalloc(sizeof(jabber_userlist_private_t));
+			j->cleanup_func = &jabber_userlist_priv_free;
+			u->priv = j;
+		}
+
+		return j;
+	}
+}
+
+/* free private data */
+CLEANUP(jabber_userlist_priv_free) {
+	if (!u)
+		return;
+	xfree(u->priv);
+}
+
 /* XXX, It's the same function from mcjabber, but uses one buffor. */
 static char *jabber_gpg_strip_header_footer(char *data) {
 	char *p, *q;
