@@ -1488,8 +1488,6 @@ list_user:
 		if (u->last_status)
 			printq("user_info_last_status", last_status);
 
-		if (u->authtype)
-			printq("user_info_auth_type", u->authtype);
 		for (res = u->resources; res; res = res->next) {
 			ekg_resource_t *r = res->data;
 			char *resstatus; 

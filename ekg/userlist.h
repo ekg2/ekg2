@@ -61,7 +61,6 @@ typedef struct {
 	
 	int status;		/**< current status */
 	char *descr;		/**< description of status. */
-	char *authtype;		/**< authtype: to/from/both [only used by jabber] */	
 	char *resource;		/**< For leafnode and compatilibity with python, always NULL [Will be removed!] */
 	list_t resources;	/**< list_t with ekg_resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
 
@@ -91,6 +90,10 @@ typedef struct {
 
 #define EKG_XSTATE_BLINK	01
 #define EKG_XSTATE_TYPING	02
+
+#define CLEANUP(x) void x(userlist_t* u)
+typedef CLEANUP(userlist_private_cleanup_func_t);
+
 
 /**
  * status_t - user's current status, as prioritized enum

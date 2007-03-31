@@ -428,13 +428,17 @@ void userlist_free_u (list_t *userlist)
                 userlist_t *u = l->data;
                 list_t lp;
 
+		if (u->priv) {
+			/* u->priv's first field MUST be cleanup function */
+			userlist_private_cleanup_func_t **func = (userlist_private_cleanup_func_t**) u->priv;
+			(*func)(u);
+		}
                 xfree(u->first_name);
                 xfree(u->last_name);
                 xfree(u->nickname);
                 xfree(u->uid);
                 xfree(u->mobile);
                 xfree(u->descr);
-                xfree(u->authtype);
                 xfree(u->foreign);
                 xfree(u->last_descr);
 
@@ -583,7 +587,6 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
         u->last_name = NULL;
         u->mobile = NULL;
         u->descr = NULL;
-        u->authtype = NULL;
         u->foreign = NULL;
         u->last_status = NULL;
         u->last_descr = NULL;
@@ -618,13 +621,17 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
         if (!u)
                 return -1;
 
+	if (u->priv) {
+		/* u->priv's first field MUST be cleanup function */
+		userlist_private_cleanup_func_t **func = (userlist_private_cleanup_func_t**) u->priv;
+		(*func)(u);
+	}
         xfree(u->first_name);
         xfree(u->last_name);
         xfree(u->nickname);
         xfree(u->uid);
         xfree(u->mobile);
         xfree(u->descr);
-        xfree(u->authtype);
         xfree(u->foreign);
         xfree(u->last_descr);
 

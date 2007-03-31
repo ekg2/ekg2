@@ -1570,7 +1570,6 @@ void theme_init()
 	format_add("user_info_status", _("%K| %nStatus: %T%1%n\n"), 1);
 	format_add("user_info_status_time_format", "%Y-%m-%d %H:%M", 1);
 	format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
-	format_add("user_info_auth_type", _("%K| %nSubscription type: %T%1%n\n"), 1);
 	format_add("user_info_block", _("%K| %nBlocked\n"), 1);
 	format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
 	format_add("user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
