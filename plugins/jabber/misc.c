@@ -43,8 +43,15 @@ jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
 
 /* free private data */
 CLEANUP(jabber_userlist_priv_free) {
-	if (!u)
+	if (!u || !u->priv)
 		return;
+
+	{
+		jabber_userlist_private_t *j = u->priv;
+
+		xfree(j->role);
+		xfree(j->aff);
+	}
 	xfree(u->priv);
 }
 
