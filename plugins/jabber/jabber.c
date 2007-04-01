@@ -1377,7 +1377,7 @@ static QUERY(jabber_pgp_postinit) {
 static QUERY(jabber_userlist_info) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
-	const jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+	const jabber_userlist_private_t *up = jabber_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
 
 	if (!u || valid_plugin_uid(&jabber_plugin, u->uid) != 1) 
 		return 1;

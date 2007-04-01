@@ -23,36 +23,29 @@
 #include "jabber.h"
 #include "jabber-ssl.h"
 
-/* if needed, init private data, then return it */
-jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
-	if (!u)
+PRIVHANDLER(jabber_userlist_priv_handler) {
+	if (!u || (!u->priv && function != EKG_USERLIST_PRIVHANDLER_ALLOC))
 		return NULL;
 
 	{
 		jabber_userlist_private_t *j = u->priv;
 
-		if (!j) {
-			j = xmalloc(sizeof(jabber_userlist_private_t));
-			j->cleanup_func = &jabber_userlist_priv_free;
-			u->priv = j;
+		switch (function) {
+			case EKG_USERLIST_PRIVHANDLER_FREE:
+				xfree(j->role);
+				xfree(j->aff);
+				xfree(u->priv);
+				break;
+			case EKG_USERLIST_PRIVHANDLER_ALLOC:
+				if (!j) {
+					j = xmalloc(sizeof(jabber_userlist_private_t));
+					j->handler_func = &jabber_userlist_priv_handler;
+					u->priv = j;
+				}
+				return j;
 		}
-
-		return j;
 	}
-}
-
-/* free private data */
-CLEANUP(jabber_userlist_priv_free) {
-	if (!u || !u->priv)
-		return;
-
-	{
-		jabber_userlist_private_t *j = u->priv;
-
-		xfree(j->role);
-		xfree(j->aff);
-	}
-	xfree(u->priv);
+	return NULL;
 }
 
 /* XXX, It's the same function from mcjabber, but uses one buffor. */

@@ -1492,7 +1492,7 @@ static COMMAND(gg_command_modify) {
 		printq("user_not_found", par[0]);
 		return -1;
 	}
-	up = gg_userlist_priv_get(u);
+	up = gg_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
 
 	if (par[1])
 		argv = array_make(par[1], " \t", 0, 1, 1);

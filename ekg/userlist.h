@@ -66,7 +66,7 @@ typedef struct {
 	uint16_t port;		/**< port of user<br> 
 				 *	It's used mainly for DCC communications. */
 
-	time_t last_seen;	/**< Last time when user was available [when u->status was different that notavail] */
+	time_t last_seen;	/**< Last time when user was available [when u->status was > notavail] */
 	
 	int protocol;		/**< Protocol version [only used by gg plugin] */
 
@@ -91,9 +91,25 @@ enum xstate_t {
 	EKG_XSTATE_TYPING	= 2
 };
 
-#define CLEANUP(x) void x(userlist_t* u)
-typedef CLEANUP(userlist_private_cleanup_func_t);
+/**
+ * PRIVHANDLER(x) - special handler function for dealing with userlist_t.priv
+ */
+#define PRIVHANDLER(x) void *x(userlist_t* u, int function, void *data)
+typedef PRIVHANDLER(userlist_privhandler_func_t);
 
+/**
+ * userlist_privhandler_funcn_t - here we declare possible options for 'function' arg in PRIVHANDLERs
+ */
+enum userlist_privhandler_funcn_t {
+	EKG_USERLIST_PRIVHANDLER_FREE		= 0,	/**< Free private data (called when freeing userlist_t) */
+	EKG_USERLIST_PRIVHANDLER_READING,		/**< Called when reading userlist file, data is char* with data */
+	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, returns char* to allocated data */
+	EKG_USERLIST_PRIVHANDLER_ALLOC,			/**< If userlist_t.priv == NULL, alloc and initialize priv struct,
+							 *	returns void* to priv */
+
+	EKG_USERLIST_PRIVHANDLER_GET_BYNAME	= 0x80,	/**< Get private 'variable' by name, data is char* with 'variable' name
+							 *	returns char* to variable contents (not duplicated) */
+};
 
 /**
  * status_t - user's current status, as prioritized enum

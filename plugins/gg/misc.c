@@ -34,39 +34,32 @@
 
 #include "gg.h"
 
-/* if needed, init private data, then return it */
-gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u) {
-	if (!u)
+PRIVHANDLER(gg_userlist_priv_handler) {
+	if (!u || (!u->priv && function != EKG_USERLIST_PRIVHANDLER_ALLOC))
 		return NULL;
 
 	{
 		gg_userlist_private_t *p = u->priv;
-
-		if (!p) {
-			p = xmalloc(sizeof(gg_userlist_private_t));
-			p->cleanup_func = &gg_userlist_priv_free;
-			u->priv = p;
-		}
-
-		return p;
-	}
-}
-
-/* free private data */
-CLEANUP(gg_userlist_priv_free) {
-	if (!u || !u->priv)
-		return;
-
-	{
-		gg_userlist_private_t *p = u->priv;
 		
-		xfree(p->first_name);
-		xfree(p->last_name);
+		switch (function) {
+			case EKG_USERLIST_PRIVHANDLER_FREE:
+				xfree(p->first_name);
+				xfree(p->last_name);
 #if 0
-		xfree(p->mobile);
+				xfree(p->mobile);
 #endif
+				xfree(u->priv);
+				break;
+			case EKG_USERLIST_PRIVHANDLER_ALLOC:
+				if (!p) {
+					p = xmalloc(sizeof(gg_userlist_private_t));
+					p->handler_func = &gg_userlist_priv_handler;
+					u->priv = p;
+				}
+				return p;
+		}
 	}
-	xfree(u->priv);
+	return NULL;
 }
 
 

@@ -435,9 +435,9 @@ void userlist_free_u (list_t *userlist)
                 list_t lp;
 
 		if (u->priv) {
-			/* u->priv's first field MUST be cleanup function */
-			userlist_private_cleanup_func_t **func = (userlist_private_cleanup_func_t**) u->priv;
-			(*func)(u);
+			/* u->priv's first field MUST be PRIVHANDLER(x) function */
+			userlist_privhandler_func_t **func = (userlist_privhandler_func_t**) u->priv;
+			(*func)(u, EKG_USERLIST_PRIVHANDLER_FREE, NULL);
 		}
                 xfree(u->nickname);
                 xfree(u->uid);
@@ -624,9 +624,9 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
                 return -1;
 
 	if (u->priv) {
-		/* u->priv's first field MUST be cleanup function */
-		userlist_private_cleanup_func_t **func = (userlist_private_cleanup_func_t**) u->priv;
-		(*func)(u);
+		/* u->priv's first field MUST be PRIVHANDLER(x) function */
+		userlist_privhandler_func_t **func = (userlist_privhandler_func_t**) u->priv;
+		(*func)(u, EKG_USERLIST_PRIVHANDLER_FREE, NULL);
 	}
         xfree(u->nickname);
         xfree(u->uid);

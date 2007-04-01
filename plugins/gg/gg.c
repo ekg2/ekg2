@@ -164,7 +164,7 @@ static QUERY(gg_userlist_info_handle) {
 
 	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1) 
 		return 1;
-	up = gg_userlist_priv_get(u);
+	up = gg_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
 
 	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && up->last_name && xstrcmp(up->last_name, ""))
 		printq("user_info_name", up->first_name, up->last_name);
