@@ -1509,8 +1509,6 @@ list_user:
 			xfree(last_ip_str);
 		}
 
-		if (u->mobile && xstrcmp(u->mobile, ""))
-			printq("user_info_mobile", u->mobile);
 		if (u->groups) {
 			char *groups = group_to_string(u->groups, 0, 1);
 			printq("user_info_groups", groups);

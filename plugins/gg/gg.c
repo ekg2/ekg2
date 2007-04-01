@@ -172,6 +172,9 @@ static QUERY(gg_userlist_info_handle) {
 	if ((!up->first_name || !xstrcmp(up->first_name, "")) && up->last_name && xstrcmp(up->last_name, ""))
 		printq("user_info_name", up->last_name, "");
 
+	if (up->mobile && xstrcmp(up->mobile, ""))
+		printq("user_info_mobile", up->mobile);
+
 	if (u->port == 2)
 		printq("user_info_not_in_contacts");
 	if (u->port == 1)
@@ -542,9 +545,7 @@ static QUERY(gg_userlist_priv_handler) {
 			case EKG_USERLIST_PRIVHANDLER_FREE:
 				xfree(p->first_name);
 				xfree(p->last_name);
-#if 0
 				xfree(p->mobile);
-#endif
 				xfree(u->priv);
 				u->priv = NULL;
 				break;
@@ -563,7 +564,7 @@ static QUERY(gg_userlist_priv_handler) {
 
 				p->first_name 	= entry[0];	entry[0] = NULL;
 				p->last_name	= entry[1];	entry[1] = NULL;
-				u->mobile	= entry[4];	entry[4] = NULL; /* it'll be moved to private */
+				p->mobile	= entry[4];	entry[4] = NULL; /* it'll be moved to private */
 				break;
 			}
 			case EKG_USERLIST_PRIVHANDLER_WRITING:
@@ -578,15 +579,23 @@ static QUERY(gg_userlist_priv_handler) {
 					xfree(entry[1]);
 					entry[1] = xstrdup(p->last_name);
 				}
-				if (u->mobile) { /* see above */
+				if (p->mobile) { /* see above */
 					xfree(entry[4]);
-					entry[4] = xstrdup(u->mobile);
+					entry[4] = xstrdup(p->mobile);
 				}
 				break;
 			}
+			case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
+			{
+				char *name	= *va_arg(ap, char **);
+				char **r	= *va_arg(ap, char ***);
+
+				if (!xstrcmp(name, "mobile"))
+					*r = p->mobile;
+			}
 		}
 	}
-	return 0;
+	return 1;
 }
 
 /*

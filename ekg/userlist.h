@@ -52,7 +52,6 @@
 typedef struct {
 	char *uid;		/**< uin in form protocol:id */
 	char *nickname;		/**< nickname */
-	char *mobile;		/**< mobile phone number */
 	list_t groups;		/**< list_t with ekg_group<br>
 				 * 	Groups to which this user belongs like: work, friends, family..<br>
 				 *	It's also used internally by ekg2, for example when user is ignore he has group with name: __ignore */
@@ -107,7 +106,7 @@ enum userlist_privhandler_funcn_t {
 	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, arg is char*** with data array */
 
 	EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
-							 *	and char** for value ptr (not duplicated) */
+							 *	and char*** for value ptr (not duplicated) */
 };
 
 /**

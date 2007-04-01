@@ -437,7 +437,6 @@ void userlist_free_u (list_t *userlist)
 		}
                 xfree(u->nickname);
                 xfree(u->uid);
-                xfree(u->mobile);
                 xfree(u->descr);
                 xfree(u->foreign);
                 xfree(u->last_descr);
@@ -583,7 +582,6 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
         u->nickname = xstrdup(nickname);
         u->status = EKG_STATUS_NA;
 #if 0 /* if 0 != NULL */
-        u->mobile = NULL;
         u->descr = NULL;
         u->foreign = NULL;
         u->last_status = NULL;
@@ -626,7 +624,6 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
 	}
         xfree(u->nickname);
         xfree(u->uid);
-        xfree(u->mobile);
         xfree(u->descr);
         xfree(u->foreign);
         xfree(u->last_descr);

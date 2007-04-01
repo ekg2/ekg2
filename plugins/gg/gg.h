@@ -75,10 +75,7 @@ extern list_t gg_currently_checked;
 typedef struct {
 	char *first_name;	/**< first name */
 	char *last_name;	/**< surname */
-#if 0
 	char *mobile;		/**< mobile phone number */
-#endif
-
 } gg_userlist_private_t;
 
 /* misc.c */

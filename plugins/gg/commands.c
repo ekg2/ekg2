@@ -1543,9 +1543,12 @@ static COMMAND(gg_command_modify) {
 		}
 		
 		if ((match_arg(argv[i], 'p', ("phone"), 2) || match_arg(argv[i], 'm', ("mobile"), 2)) && argv[i + 1]) {
-			xfree(u->mobile);
-			u->mobile = xstrdup(argv[++i]);
-			modified = 1;
+			if (up) {
+				xfree(up->mobile);
+				up->mobile = xstrdup(argv[++i]);
+				modified = 1;
+			} else
+				i++;
 			continue;
 		}
 		
