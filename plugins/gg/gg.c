@@ -606,6 +606,7 @@ static QUERY(gg_userlist_priv_handler) {
 					*r = inet_ntoa(*((struct in_addr*) &p->ip));
 				if (!xstrcmp(name, "port"))
 					*r = itoa(p->port);
+				break;
 			}
 			case EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT:
 			{
@@ -614,6 +615,7 @@ static QUERY(gg_userlist_priv_handler) {
 
 				*ip	= inet_ntoa(*((struct in_addr*) &p->ip));
 				*port	= itoa(p->port);
+				break;
 			}
 		}
 	}
