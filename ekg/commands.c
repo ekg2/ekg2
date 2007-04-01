@@ -1437,7 +1437,7 @@ next:
 		
 			u = userlist_find_n(i->s_uid, i->name);
 
-	                status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
+	                status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), u->nickname, u->descr);
 
 	                printq("metacontact_info_header", params0);
 			printq("metacontact_info_status", status);
@@ -1456,21 +1456,14 @@ next:
 
 list_user:
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), 
-				(u->first_name) ? u->first_name : u->nickname, u->descr);
+				u->nickname, u->descr);
 
                 last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), 
-				(u->first_name) ? u->first_name : u->nickname, u->last_descr);
+				u->nickname, u->last_descr);
 
 		printq("user_info_header", u->nickname, u->uid);
 		if (u->nickname && xstrcmp(u->nickname, u->nickname)) 
 			printq("user_info_nickname", u->nickname);
-
-		if (u->first_name && xstrcmp(u->first_name, "") && u->last_name && u->last_name && xstrcmp(u->last_name, ""))
-			printq("user_info_name", u->first_name, u->last_name);
-		if (u->first_name && xstrcmp(u->first_name, "") && (!u->last_name || !xstrcmp(u->last_name, "")))
-			printq("user_info_name", u->first_name, "");
-		if ((!u->first_name || !xstrcmp(u->first_name, "")) && u->last_name && xstrcmp(u->last_name, ""))
-			printq("user_info_name", u->last_name, "");
 
 		printq("user_info_status", status);
                 if (u->status_time && (u->status <= EKG_STATUS_NA)) {
@@ -1494,15 +1487,15 @@ list_user:
 
 			resstatus = format_string(format_find(ekg_status_label(r->status, r->descr, /* resource_info? senseless */ "user_info_")), 
 					/* here r->name ? */
-					(u->first_name) ? u->first_name : u->nickname, r->descr);
+					 u->nickname, r->descr);
 			printq("resource_info_status", r->name, resstatus, itoa(r->prio));
 			xfree(resstatus);
 		}
 
 		if (ekg_group_member(u, "__blocked"))
-			printq("user_info_block", ((u->first_name) ? u->first_name : u->nickname));
+			printq("user_info_block", u->nickname);
 		if (ekg_group_member(u, "__offline"))
-			printq("user_info_offline", ((u->first_name) ? u->first_name : u->nickname));
+			printq("user_info_offline", u->nickname);
 
 		query_emit_id(NULL, USERLIST_INFO, &u, &quiet);
 
@@ -1633,7 +1626,7 @@ list_user:
 			show = 1;
 
 		if (show) {
-			printq(tmp, format_user(session, u->uid), (u->first_name) ? u->first_name : u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
+			printq(tmp, format_user(session, u->uid), u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
 			count++;
 		}
 	}

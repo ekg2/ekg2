@@ -45,14 +45,13 @@
  * It's used not only to manage contacts in roster, but also to manage people in chat or conference
  *
  * @todo It's too heavy, we really <b>need</b> to move some plugin specified data [like mobile, protocol, authtype] to private. sizeof(userlist_t)==96
+ * @todo Move 'mobile' to gg_private_userlist_t, and make this work with 'sms' plugin somehow
  * @bug There are two private fields [u->private and u->priv] one need to be removed.
  */
 
 typedef struct {
 	char *uid;		/**< uin in form protocol:id */
 	char *nickname;		/**< nickname */
-	char *first_name;	/**< first name */
-	char *last_name;	/**< surname */
 	char *mobile;		/**< mobile phone number */
 	list_t groups;		/**< list_t with ekg_group<br>
 				 * 	Groups to which this user belongs like: work, friends, family..<br>

@@ -59,6 +59,12 @@ CLEANUP(gg_userlist_priv_free) {
 
 	{
 		gg_userlist_private_t *p = u->priv;
+		
+		xfree(p->first_name);
+		xfree(p->last_name);
+#if 0
+		xfree(p->mobile);
+#endif
 	}
 	xfree(u->priv);
 }

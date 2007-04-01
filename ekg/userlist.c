@@ -166,8 +166,10 @@ void userlist_add_entry(session_t *session, const char *line)
 		}
 	}
 			
+#if 0 /*XXX*/
 	u->first_name 	= entry[0];	entry[0] = NULL;
 	u->last_name	= entry[1];	entry[1] = NULL;
+#endif
 	u->mobile	= entry[4];	entry[4] = NULL;
 	u->groups	= group_init(entry[5]);
 
@@ -207,8 +209,12 @@ char *userlist_dump(session_t *session)
 		groups = group_to_string(u->groups, 1, 0);
 		
 		line = saprintf(("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
+#if 0 /*XXX*/
 			(u->first_name) ? u->first_name : "",
 			(u->last_name) ? u->last_name : "",
+#else
+			"", "",
+#endif
 			(u->nickname) ? u->nickname : "",
 			(u->nickname) ? u->nickname : "",
 			(u->mobile) ? u->mobile : "",
@@ -433,8 +439,6 @@ void userlist_free_u (list_t *userlist)
 			userlist_private_cleanup_func_t **func = (userlist_private_cleanup_func_t**) u->priv;
 			(*func)(u);
 		}
-                xfree(u->first_name);
-                xfree(u->last_name);
                 xfree(u->nickname);
                 xfree(u->uid);
                 xfree(u->mobile);
@@ -583,8 +587,6 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
         u->nickname = xstrdup(nickname);
         u->status = EKG_STATUS_NA;
 #if 0 /* if 0 != NULL */
-        u->first_name = NULL;
-        u->last_name = NULL;
         u->mobile = NULL;
         u->descr = NULL;
         u->foreign = NULL;
@@ -626,8 +628,6 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
 		userlist_private_cleanup_func_t **func = (userlist_private_cleanup_func_t**) u->priv;
 		(*func)(u);
 	}
-        xfree(u->first_name);
-        xfree(u->last_name);
         xfree(u->nickname);
         xfree(u->uid);
         xfree(u->mobile);

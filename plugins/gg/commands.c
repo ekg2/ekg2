@@ -1470,6 +1470,7 @@ static COMMAND(gg_command_token) {
 
 static COMMAND(gg_command_modify) {
 	userlist_t *u;
+	gg_userlist_private_t *up;
 	const char **par;
 	char **argv = NULL;
 	int i, res = 0, modified = 0;
@@ -1491,6 +1492,7 @@ static COMMAND(gg_command_modify) {
 		printq("user_not_found", par[0]);
 		return -1;
 	}
+	up = gg_userlist_priv_get(u);
 
 	if (par[1])
 		argv = array_make(par[1], " \t", 0, 1, 1);
@@ -1498,15 +1500,15 @@ static COMMAND(gg_command_modify) {
 	for (i = 0; argv && argv[i]; i++) {
 		
 		if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
-			xfree(u->first_name);
-			u->first_name = xstrdup(argv[++i]);
+			xfree(up->first_name);
+			up->first_name = xstrdup(argv[++i]);
 			modified = 1;
 			continue;
 		}
 		
 		if (match_arg(argv[i], 'l', ("last"), 2) && argv[i + 1]) {
-			xfree(u->last_name);
-			u->last_name = xstrdup(argv[++i]);
+			xfree(up->last_name);
+			up->last_name = xstrdup(argv[++i]);
 			modified = 1;
 			continue;
 		}

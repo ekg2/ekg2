@@ -67,8 +67,19 @@ typedef struct {
 
 extern list_t gg_currently_checked;
 
+/**
+ * gg_userlist_private_t
+ *
+ * Here we keep all userlist things, which are private to GG protocol, and because of this were removed from core userlist_t.
+ */
 typedef struct {
 	userlist_private_cleanup_func_t	*cleanup_func;
+
+	char *first_name;	/**< first name */
+	char *last_name;	/**< surname */
+#if 0
+	char *mobile;		/**< mobile phone number */
+#endif
 
 } gg_userlist_private_t;
 

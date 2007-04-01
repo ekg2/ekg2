@@ -160,9 +160,18 @@ static QUERY(gg_session_deinit) {
 static QUERY(gg_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
+	gg_userlist_private_t *up;
 
 	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1) 
 		return 1;
+	up = gg_userlist_priv_get(u);
+
+	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && up->last_name && xstrcmp(up->last_name, ""))
+		printq("user_info_name", up->first_name, up->last_name);
+	if (up->first_name && xstrcmp(up->first_name, "") && (!up->last_name || !xstrcmp(up->last_name, "")))
+		printq("user_info_name", up->first_name, "");
+	if ((!up->first_name || !xstrcmp(up->first_name, "")) && up->last_name && xstrcmp(up->last_name, ""))
+		printq("user_info_name", up->last_name, "");
 
 	if (u->port == 2)
 		printq("user_info_not_in_contacts");
@@ -1358,6 +1367,7 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 
 static int gg_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
 	/* pobieranie tokenu */
 	format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
 	format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
