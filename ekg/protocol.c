@@ -419,7 +419,7 @@ notify_plugins:
 			u->descr = xstrdup(descr);
 		}
 
-		if (!u->resource || u->resources->data == r) 
+		if (!u->resources || u->resources->data == r) 
 			u->status_time = when ? when : time(NULL);
 	}
 	

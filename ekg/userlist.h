@@ -45,7 +45,6 @@
  * It's used not only to manage contacts in roster, but also to manage people in chat or conference
  *
  * @todo It's too heavy, we really <b>need</b> to move some plugin specified data [like mobile, protocol, authtype] to private. sizeof(userlist_t)==96
- * @todo Remove u->resource, it's used only by python plugin by now...
  * @bug There are two private fields [u->private and u->priv] one need to be removed.
  */
 
@@ -61,7 +60,6 @@ typedef struct {
 	
 	int status;		/**< current status */
 	char *descr;		/**< description of status. */
-	char *resource;		/**< For leafnode and compatilibity with python, always NULL [Will be removed!] */
 	list_t resources;	/**< list_t with ekg_resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
 
 	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)]<br>
@@ -75,9 +73,10 @@ typedef struct {
 
 	char *foreign;		/**< For compatilibity with ekg1 userlist. */
 
-	void *priv;		/**< Plugin data which handle this userlist_t */
+	void *priv;		/**< Private data for protocol plugin, must be pointer to struct with CLEANUP(x) function
+				 *	as _first_ field. Should be allocated on use, else NULL. */
 	
-	int xstate;		/* formerly called blink */
+	int xstate;		/**< Extended userlist element state, for example blinking or typing notify */
 
         uint32_t last_ip;       /**< Lastseen ipv4 address */
         uint16_t last_port;     /**< Lastseen port */
@@ -85,7 +84,7 @@ typedef struct {
 	int last_status;	/**< Lastseen status */
 	char *last_descr;	/**< Lastseen description */
 	time_t status_time;	/**< From when we have this status, description */
-	void *private;          /**< sometimes can be helpfull */
+	void *private;          /**< Alternate private data, used by ncurses plugin */
 } userlist_t;
 
 #define EKG_XSTATE_BLINK	01
