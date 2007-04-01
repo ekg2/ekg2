@@ -1583,52 +1583,55 @@ list_user:
 		array_free(argv);
 	}
 
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		int show;
+	{
+			/* ip/port currently can be fetched for GG only,
+			 * so this should remove unneeded slowdown for other sessions */
+		const int is_ipport_capable = !xstrncmp(session->uid, "gg:", 3);
 
-		if (!u->nickname)
-			continue;
+		for (l = session->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+			int show;
 
-		tmp = ekg_status_label(u->status, u->descr, "list_");
+			if (!u->nickname)
+				continue;
 
-		show = show_all;
-#define SHOW_IF_S(x,y) if (show_##x && (u->status == EKG_STATUS_##y)) show = 1;
-		SHOW_IF_S(away, AWAY)
-		SHOW_IF_S(active, AVAIL)
-		SHOW_IF_S(inactive, NA)
-		SHOW_IF_S(invisible, INVISIBLE)
-		SHOW_IF_S(blocked, BLOCKED)
-#undef SHOW_IF_S		
-		/* XXX nie chcialo mi sie zmiennej robic */
-		if (u->status == EKG_STATUS_ERROR)
-			show = 1;
+			tmp = ekg_status_label(u->status, u->descr, "list_");
 
-		if (show_descr && !u->descr)
-			show = 0;
+			show = show_all;
+	#define SHOW_IF_S(x,y) if (show_##x && (u->status == EKG_STATUS_##y)) show = 1;
+			SHOW_IF_S(away, AWAY)
+			SHOW_IF_S(active, AVAIL)
+			SHOW_IF_S(inactive, NA)
+			SHOW_IF_S(invisible, INVISIBLE)
+			SHOW_IF_S(blocked, BLOCKED)
+	#undef SHOW_IF_S		
+			/* XXX nie chcialo mi sie zmiennej robic */
+			if (u->status == EKG_STATUS_ERROR)
+				show = 1;
 
-		if (show_group && !ekg_group_member(u, show_group))
-			show = 0;
+			if (show_descr && !u->descr)
+				show = 0;
 
-		if (show_offline && ekg_group_member(u, "__offline"))
-			show = 1;
+			if (show_group && !ekg_group_member(u, show_group))
+				show = 0;
 
-		if (show) {
-			char *ip		= NULL;
-			char *port		= NULL;
-			{
-				int func		= EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
-				const char *ipvar	= "ip";
-				const char *portvar	= "port";
-				char **__ip		= &ip;
-				char **__port		= &port;
-				
-				query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &ipvar, &__ip);
-				query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &portvar, &__port);
+			if (show_offline && ekg_group_member(u, "__offline"))
+				show = 1;
+
+			if (show) {
+				const char *ip		= NULL;
+				const char *port	= NULL;
+				if (is_ipport_capable) {
+					int func		= EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT;
+					const char **__ip	= &ip;
+					const char **__port	= &port;
+					
+					query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &__ip, &__port);
+				}
+
+				printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
+				count++;
 			}
-
-			printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
-			count++;
 		}
 	}
 

@@ -95,6 +95,10 @@ enum userlist_privhandler_func_t {
 
 	EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
 							 *	and char*** for value ptr (not duplicated) */
+	EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT,		/**< Get user's IP&port, created to be used within /list (fetching
+							 *	two variables by name would be kinda slow).
+							 *	args should be one char*** for IP,
+							 *	and the second one for port */
 };
 
 /**

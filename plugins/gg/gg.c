@@ -597,8 +597,8 @@ static QUERY(gg_userlist_priv_handler) {
 			}
 			case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
 			{
-				char *name	= *va_arg(ap, char **);
-				char **r	= *va_arg(ap, char ***);
+				const char *name	= *va_arg(ap, const char **);
+				const char **r		= *va_arg(ap, const char ***);
 
 				if (!xstrcmp(name, "mobile"))
 					*r = p->mobile;
@@ -606,6 +606,14 @@ static QUERY(gg_userlist_priv_handler) {
 					*r = inet_ntoa(*((struct in_addr*) &p->ip));
 				if (!xstrcmp(name, "port"))
 					*r = itoa(p->port);
+			}
+			case EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT:
+			{
+				const char **ip		= *va_arg(ap, const char ***);
+				const char **port	= *va_arg(ap, const char ***);
+
+				*ip	= inet_ntoa(*((struct in_addr*) &p->ip));
+				*port	= itoa(p->port);
 			}
 		}
 	}
