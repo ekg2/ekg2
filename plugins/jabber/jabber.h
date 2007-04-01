@@ -134,7 +134,6 @@ typedef struct {
 } jabber_private_t;
 
 typedef struct {
-	userlist_privhandler_func_t *handler_func;
 	int authtype;
 
 	/* from muc_userlist_t */
@@ -199,7 +198,7 @@ char *jabber_zlib_decompress(const char *buf, int *len);
 char *jabber_zlib_compress(const char *buf, int *len);
 #endif
 
-PRIVHANDLER(jabber_userlist_priv_handler);
+jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u);
 
 #endif /* __EKG_JABBER_JABBER_H */
 

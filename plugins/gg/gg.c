@@ -162,9 +162,8 @@ static QUERY(gg_userlist_info_handle) {
 	int quiet	= *va_arg(ap, int *);
 	gg_userlist_private_t *up;
 
-	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1) 
+	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1 || !(up = gg_userlist_priv_get(u)))
 		return 1;
-	up = gg_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
 
 	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && up->last_name && xstrcmp(up->last_name, ""))
 		printq("user_info_name", up->first_name, up->last_name);
@@ -517,6 +516,42 @@ static QUERY(gg_protocols) {
 	char ***arr	= va_arg(ap, char ***);
 
 	array_add(arr, "gg:");
+	return 0;
+}
+
+static QUERY(gg_userlist_priv_handler) {
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int function	= *va_arg(ap, int *);
+
+	if (!u || (!u->priv && function != EKG_USERLIST_PRIVHANDLER_ALLOC) || (valid_plugin_uid(&gg_plugin, u->uid) != 1))
+		return 1;
+
+	{
+		gg_userlist_private_t *p = u->priv;
+		
+		switch (function) {
+			case EKG_USERLIST_PRIVHANDLER_FREE:
+				xfree(p->first_name);
+				xfree(p->last_name);
+#if 0
+				xfree(p->mobile);
+#endif
+				xfree(u->priv);
+				u->priv = NULL;
+				break;
+			case EKG_USERLIST_PRIVHANDLER_ALLOC:
+			{
+				void **r = va_arg(ap, void **);
+
+				if (!p) {
+					p = xmalloc(sizeof(gg_userlist_private_t));
+					u->priv = p;
+				}
+				*r = p;
+				break;
+			}
+		}
+	}
 	return 0;
 }
 
@@ -1479,6 +1514,7 @@ int gg_plugin_init(int prio) {
 	query_connect(&gg_plugin, ("user-online"), gg_user_online_handle, NULL);
 	query_connect_id(&gg_plugin, PROTOCOL_UNIGNORE, gg_user_online_handle, (void *)1);
 	query_connect_id(&gg_plugin, USERLIST_INFO, gg_userlist_info_handle, NULL);
+	query_connect_id(&gg_plugin, USERLIST_PRIVHANDLE, gg_userlist_priv_handler, NULL);
 
 	gg_register_commands();
 

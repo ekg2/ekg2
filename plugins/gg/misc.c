@@ -32,36 +32,18 @@
 #include <ekg/xmalloc.h>
 #include <ekg/debug.h>
 
+#include <ekg/queries.h>
+
 #include "gg.h"
 
-PRIVHANDLER(gg_userlist_priv_handler) {
-	if (!u || (!u->priv && function != EKG_USERLIST_PRIVHANDLER_ALLOC))
-		return NULL;
+gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u) {
+	int func			= EKG_USERLIST_PRIVHANDLER_ALLOC;
+	gg_userlist_private_t *up	= NULL;
 
-	{
-		gg_userlist_private_t *p = u->priv;
-		
-		switch (function) {
-			case EKG_USERLIST_PRIVHANDLER_FREE:
-				xfree(p->first_name);
-				xfree(p->last_name);
-#if 0
-				xfree(p->mobile);
-#endif
-				xfree(u->priv);
-				break;
-			case EKG_USERLIST_PRIVHANDLER_ALLOC:
-				if (!p) {
-					p = xmalloc(sizeof(gg_userlist_private_t));
-					p->handler_func = &gg_userlist_priv_handler;
-					u->priv = p;
-				}
-				return p;
-		}
-	}
-	return NULL;
+	query_emit_id(&gg_plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
+
+	return up;
 }
-
 
 /* 80..9F = ?; here is A0..BF, C0..FF is the same */
 static const unsigned char iso_to_cp_table[] = {

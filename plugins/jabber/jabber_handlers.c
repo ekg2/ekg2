@@ -2451,11 +2451,13 @@ JABBER_HANDLER(jabber_handle_iq) {
 						u = userlist_add(s, uid, nickname ? nickname : uid); 
 
 						if ((authval = jabber_attr(item->atts, "subscription"))) {
-							jabber_userlist_private_t *up = jabber_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
+							jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
 								/* case dependent? */
-							for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
-							if (!(up->authtype & EKG_JABBER_AUTH_TO)) {
+							if (up)
+								for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
+
+							if (!up || !(up->authtype & EKG_JABBER_AUTH_TO)) {
 								if (u->status == EKG_STATUS_NA)
 									u->status = EKG_STATUS_UNKNOWN;
 							} else {
@@ -2509,7 +2511,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 } /* iq */
 
 static inline void mucuser_private_deinit(userlist_t *u) {
-	jabber_userlist_private_t *up = jabber_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
+	jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
 	if (up) {
 		xfree(up->role);
@@ -2620,12 +2622,14 @@ JABBER_HANDLER(jabber_handle_presence) {
 						}
 
 						if (ulist) {
-							jabber_userlist_private_t *up = jabber_userlist_priv_handler(ulist, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
+							jabber_userlist_private_t *up = jabber_userlist_priv_get(ulist);
 							ulist->status = EKG_STATUS_AVAIL;
 							
 							mucuser_private_deinit(ulist);
-							up->role	= xstrdup(role);
-							up->aff		= xstrdup(affiliation);
+							if (up) {
+								up->role	= xstrdup(role);
+								up->aff		= xstrdup(affiliation);
+							}
 						}
 						debug("[MUC, PRESENCE] NEWITEM: %s (%s) ROLE:%s AFF:%s\n", nickjid, __(jid), role, affiliation);
 						xfree(nickjid);
@@ -2694,7 +2698,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 		xfree(jstatus);
 		{
 			userlist_t *u = userlist_find(s, uid);
-			jabber_userlist_private_t *up = jabber_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 			
 			if ((status == EKG_STATUS_NA) && (!up || !(up->authtype & EKG_JABBER_AUTH_TO)))
 				status = EKG_STATUS_UNKNOWN;

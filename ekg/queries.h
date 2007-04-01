@@ -13,6 +13,7 @@ enum query_arg_type {
 
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
 	QUERY_ARG_FSTRING, 	/* fstring_t	*/
+	QUERY_ARG_USERLIST,	/* userlist_t	*/
 };
 
 struct query {
@@ -33,6 +34,7 @@ enum queries_id {
 	PROTOCOL_MESSAGE_SENT, PROTOCOL_MESSAGE_RECEIVED, PROTOCOL_MESSAGE_POST,		/* proto-message-events */
 	EVENT_AWAY, EVENT_AVAIL, EVENT_DESCR, EVENT_ONLINE, EVENT_NA,				/* status-events */
 	USERLIST_ADDED, USERLIST_CHANGED, USERLIST_REMOVED, USERLIST_RENAMED, USERLIST_INFO,	/* userlist */
+	USERLIST_PRIVHANDLE,
 	SESSION_ADDED, SESSION_CHANGED, SESSION_REMOVED, SESSION_RENAMED, SESSION_STATUS,	/* session */
 	EKG_SIGUSR1, EKG_SIGUSR2,								/* signals */
 	CONFIG_POSTINIT, QUITTING,								/* ekg-events */
@@ -203,6 +205,12 @@ const struct query query_list[] = {
 
 	{ USERLIST_INFO, "userlist-info", {
 		/* XXX */
+		QUERY_ARG_END } },
+
+	{ USERLIST_PRIVHANDLE, "userlist-privhandle", {
+		QUERY_ARG_USERLIST,		/* userlist_t */
+		QUERY_ARG_INT,			/* function */
+		/* optional things? */
 		QUERY_ARG_END } },
 
 	{ SESSION_ADDED, "session-added", {

@@ -72,8 +72,7 @@ typedef struct {
 
 	char *foreign;		/**< For compatilibity with ekg1 userlist. */
 
-	void *priv;		/**< Private data for protocol plugin, must be pointer to struct with CLEANUP(x) function
-				 *	as _first_ field. Should be allocated on use, else NULL. */
+	void *priv;		/**< Private data for protocol plugin. */
 	
 	int xstate;		/**< Extended userlist element state, for example blinking or typing notify */
 
@@ -92,23 +91,17 @@ enum xstate_t {
 };
 
 /**
- * PRIVHANDLER(x) - special handler function for dealing with userlist_t.priv
- */
-#define PRIVHANDLER(x) void *x(userlist_t* u, int function, void *data)
-typedef PRIVHANDLER(userlist_privhandler_func_t);
-
-/**
- * userlist_privhandler_funcn_t - here we declare possible options for 'function' arg in PRIVHANDLERs
+ * userlist_privhandler_funcn_t - here we declare possible options for 'function' arg in USERLIST_PRIVHANDLE
  */
 enum userlist_privhandler_funcn_t {
 	EKG_USERLIST_PRIVHANDLER_FREE		= 0,	/**< Free private data (called when freeing userlist_t) */
-	EKG_USERLIST_PRIVHANDLER_READING,		/**< Called when reading userlist file, data is char* with data */
-	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, returns char* to allocated data */
+	EKG_USERLIST_PRIVHANDLER_READING,		/**< Called when reading userlist file, arg is char** with data */
+	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, arg is char** for data ptr */
 	EKG_USERLIST_PRIVHANDLER_ALLOC,			/**< If userlist_t.priv == NULL, alloc and initialize priv struct,
-							 *	returns void* to priv */
+							 *	arg is void** for ptr */
 
-	EKG_USERLIST_PRIVHANDLER_GET_BYNAME	= 0x80,	/**< Get private 'variable' by name, data is char* with 'variable' name
-							 *	returns char* to variable contents (not duplicated) */
+	EKG_USERLIST_PRIVHANDLER_GET_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
+							 *	and char** for value ptr (not duplicated) */
 };
 
 /**

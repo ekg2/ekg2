@@ -1492,7 +1492,7 @@ static COMMAND(gg_command_modify) {
 		printq("user_not_found", par[0]);
 		return -1;
 	}
-	up = gg_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
+	up = gg_userlist_priv_get(u);
 
 	if (par[1])
 		argv = array_make(par[1], " \t", 0, 1, 1);
@@ -1500,16 +1500,22 @@ static COMMAND(gg_command_modify) {
 	for (i = 0; argv && argv[i]; i++) {
 		
 		if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
-			xfree(up->first_name);
-			up->first_name = xstrdup(argv[++i]);
-			modified = 1;
+			if (up) {
+				xfree(up->first_name);
+				up->first_name = xstrdup(argv[++i]);
+				modified = 1;
+			} else /* skip arg */
+				i++;
 			continue;
 		}
 		
 		if (match_arg(argv[i], 'l', ("last"), 2) && argv[i + 1]) {
-			xfree(up->last_name);
-			up->last_name = xstrdup(argv[++i]);
-			modified = 1;
+			if (up) {
+				xfree(up->last_name);
+				up->last_name = xstrdup(argv[++i]);
+				modified = 1;
+			} else /* skip arg */
+				i++;
 			continue;
 		}
 		

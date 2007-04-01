@@ -1377,15 +1377,50 @@ static QUERY(jabber_pgp_postinit) {
 static QUERY(jabber_userlist_info) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
-	const jabber_userlist_private_t *up = jabber_userlist_priv_handler(u, EKG_USERLIST_PRIVHANDLER_ALLOC, NULL);
+	jabber_userlist_private_t *up;
 
-	if (!u || valid_plugin_uid(&jabber_plugin, u->uid) != 1) 
+	if (!u || valid_plugin_uid(&jabber_plugin, u->uid) != 1 || !(up = jabber_userlist_priv_get(u))) 
 		return 1;
 
 	printq("user_info_auth_type", jabber_authtypes[up->authtype == (up->authtype & EKG_JABBER_AUTH_BOTH) ? up->authtype : EKG_JABBER_AUTH_NONE]);
 
 	return 0;
 }
+
+static QUERY(jabber_userlist_priv_handler) {
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int function	= *va_arg(ap, int *);
+
+	if (!u || (!u->priv && function != EKG_USERLIST_PRIVHANDLER_ALLOC) || (valid_plugin_uid(&jabber_plugin, u->uid) != 1))
+		return 1;
+
+	{
+		jabber_userlist_private_t *j = u->priv;
+
+		switch (function) {
+			case EKG_USERLIST_PRIVHANDLER_FREE:
+				xfree(j->role);
+				xfree(j->aff);
+				xfree(u->priv);
+				u->priv = NULL;
+				break;
+			case EKG_USERLIST_PRIVHANDLER_ALLOC:
+			{
+				void **r = va_arg(ap, void **);
+
+				if (!j) {
+					j = xmalloc(sizeof(jabber_userlist_private_t));
+					u->priv = j;
+				}
+				*r = j;
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
 
 static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
@@ -1461,6 +1496,7 @@ int jabber_plugin_init(int prio) {
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_dcc_postinit, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_pgp_postinit, NULL);
 	query_connect_id(&jabber_plugin, USERLIST_INFO,		jabber_userlist_info, NULL);
+	query_connect_id(&jabber_plugin, USERLIST_PRIVHANDLE,	jabber_userlist_priv_handler, NULL);
 
 	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);

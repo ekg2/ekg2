@@ -23,31 +23,15 @@
 #include "jabber.h"
 #include "jabber-ssl.h"
 
-PRIVHANDLER(jabber_userlist_priv_handler) {
-	if (!u || (!u->priv && function != EKG_USERLIST_PRIVHANDLER_ALLOC))
-		return NULL;
+jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
+	int func			= EKG_USERLIST_PRIVHANDLER_ALLOC;
+	jabber_userlist_private_t *up	= NULL;
 
-	{
-		jabber_userlist_private_t *j = u->priv;
+	query_emit_id(&jabber_plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
 
-		switch (function) {
-			case EKG_USERLIST_PRIVHANDLER_FREE:
-				xfree(j->role);
-				xfree(j->aff);
-				xfree(u->priv);
-				break;
-			case EKG_USERLIST_PRIVHANDLER_ALLOC:
-				if (!j) {
-					j = xmalloc(sizeof(jabber_userlist_private_t));
-					j->handler_func = &jabber_userlist_priv_handler;
-					u->priv = j;
-				}
-				return j;
-		}
-	}
-	return NULL;
+	return up;
 }
-
+	
 /* XXX, It's the same function from mcjabber, but uses one buffor. */
 static char *jabber_gpg_strip_header_footer(char *data) {
 	char *p, *q;

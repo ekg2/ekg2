@@ -73,8 +73,6 @@ extern list_t gg_currently_checked;
  * Here we keep all userlist things, which are private to GG protocol, and because of this were removed from core userlist_t.
  */
 typedef struct {
-	userlist_privhandler_func_t	*handler_func;
-
 	char *first_name;	/**< first name */
 	char *last_name;	/**< surname */
 #if 0
@@ -84,7 +82,7 @@ typedef struct {
 } gg_userlist_private_t;
 
 /* misc.c */
-PRIVHANDLER(gg_userlist_priv_handler);
+gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u);
 
 #endif /* __EKG_GG_GG_H */
 
