@@ -25,6 +25,7 @@
 #include <libgadu.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
+#include <ekg/userlist.h>
 
 COMMAND(gg_command_image); /* images.c */
 
@@ -65,6 +66,15 @@ typedef struct {
 } gg_currently_checked_t;
 
 extern list_t gg_currently_checked;
+
+typedef struct {
+	userlist_private_cleanup_func_t	*cleanup_func;
+
+} gg_userlist_private_t;
+
+/* misc.c */
+gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u);
+CLEANUP(gg_userlist_priv_free);
 
 #endif /* __EKG_GG_GG_H */
 

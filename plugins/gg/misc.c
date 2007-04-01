@@ -34,6 +34,36 @@
 
 #include "gg.h"
 
+/* if needed, init private data, then return it */
+gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u) {
+	if (!u)
+		return NULL;
+
+	{
+		gg_userlist_private_t *p = u->priv;
+
+		if (!p) {
+			p = xmalloc(sizeof(gg_userlist_private_t));
+			p->cleanup_func = &gg_userlist_priv_free;
+			u->priv = p;
+		}
+
+		return p;
+	}
+}
+
+/* free private data */
+CLEANUP(gg_userlist_priv_free) {
+	if (!u || !u->priv)
+		return;
+
+	{
+		gg_userlist_private_t *p = u->priv;
+	}
+	xfree(u->priv);
+}
+
+
 /* 80..9F = ?; here is A0..BF, C0..FF is the same */
 static const unsigned char iso_to_cp_table[] = {
 	0xa0, 0xa5, 0xa2, 0xa3, 0xa4, 0xbc, 0x8c, 0xa7,
