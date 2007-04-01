@@ -179,11 +179,11 @@ static QUERY(gg_userlist_info_handle) {
 		printq("user_info_not_in_contacts");
 	if (u->port == 1)
 		printq("user_info_firewalled");
-	if ((u->protocol & GG_HAS_AUDIO_MASK))
+	if ((up->protocol & GG_HAS_AUDIO_MASK))
 		printq("user_info_voip");
 
-	if ((u->protocol & 0x00ffffff)) {
-		int v = u->protocol & 0x00ffffff;
+	if ((up->protocol & 0x00ffffff)) {
+		int v = up->protocol & 0x00ffffff;
 		const char *ver = NULL;
 
 		if (v < 0x0b)
@@ -792,10 +792,14 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
 	int __port	= port, i, j, dlen, state = 0, m = 0;
-	userlist_t *u;
 
-	if ((u = userlist_find(s, __uid)))
-		u->protocol = protocol;
+	{
+		userlist_t *u;
+		gg_userlist_private_t *up;
+
+		if ((u = userlist_find(s, __uid)) && (up = gg_userlist_priv_get(u)))
+			up->protocol = protocol;
+	}
 
 	for (i = 0; i < xstrlen(__descr); i++)
 		if (__descr[i] == 10 || __descr[i] == 13)

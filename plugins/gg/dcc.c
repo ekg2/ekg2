@@ -297,6 +297,7 @@ COMMAND(gg_command_dcc)
 		struct gg_dcc *gd = NULL;
 		dcc_t *d;
 		userlist_t *u;
+		gg_userlist_private_t *up;
 
 		if (!params[1]) {
 			printq("not_enough_params", name);
@@ -312,6 +313,7 @@ COMMAND(gg_command_dcc)
 			printq("user_not_found", params[1]);
 			return -1;
 		}
+		up = gg_userlist_priv_get(u);
 
 		if (!session_connected_get(session)) {
 			wcs_printq("not_connected");
@@ -389,7 +391,7 @@ COMMAND(gg_command_dcc)
 				__AINIT_F("oss", AUDIO_READ, "freq", "8000", "sample", "16", "channels", "1"),
 				__CINIT_F("gsm", "with-ms", "1"),
 				__AINIT_F("gg_dcc", AUDIO_WRITE, "dccuid", u->uid, 
-					"len", (u->protocol >= 0x1b) ? itoa(GG_DCC_VOICE_FRAME_LENGTH_505) : itoa(GG_DCC_VOICE_FRAME_LENGTH), 
+					"len", (up && up->protocol >= 0x1b) ? itoa(GG_DCC_VOICE_FRAME_LENGTH_505) : itoa(GG_DCC_VOICE_FRAME_LENGTH), 
 					"dccid", itoa(d->id) /*, "fd", itoa(audiofds[1]) */ ));
 		stream_create("Gygy audio INPUT",
 				__AINIT_F("gg_dcc", AUDIO_READ, "dccid", itoa(d->id), "uid", u->uid, "fd", itoa(audiofds[0])), 

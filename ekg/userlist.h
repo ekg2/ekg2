@@ -67,8 +67,6 @@ typedef struct {
 
 	time_t last_seen;	/**< Last time when user was available [when u->status was > notavail] */
 	
-	int protocol;		/**< Protocol version [only used by gg plugin] */
-
 	char *foreign;		/**< For compatilibity with ekg1 userlist. */
 
 	void *priv;		/**< Private data for protocol plugin. */
@@ -90,11 +88,11 @@ enum xstate_t {
 };
 
 /**
- * userlist_privhandler_funcn_t - here we declare possible options for 'function' arg in USERLIST_PRIVHANDLE
+ * userlist_privhandler_func_t - here we declare possible options for 'function' arg in USERLIST_PRIVHANDLE
  *
  * All of them, excluding EKG_USERLIST_PRIVHANDLER_FREE, should alloc&init priv if needed
  */
-enum userlist_privhandler_funcn_t {
+enum userlist_privhandler_func_t {
 	EKG_USERLIST_PRIVHANDLER_FREE		= 0,	/**< Free private data (called when freeing userlist_t) */
 	EKG_USERLIST_PRIVHANDLER_GET,			/**< Return private data ptr, arg is void** for ptr */
 	EKG_USERLIST_PRIVHANDLER_READING,		/**< Called when reading userlist file,<br>

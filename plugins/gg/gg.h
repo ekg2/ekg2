@@ -76,6 +76,8 @@ typedef struct {
 	char *first_name;	/**< first name */
 	char *last_name;	/**< surname */
 	char *mobile;		/**< mobile phone number */
+
+	int protocol;		/**< Protocol version */
 } gg_userlist_private_t;
 
 /* misc.c */
