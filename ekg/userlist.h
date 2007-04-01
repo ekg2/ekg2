@@ -86,8 +86,10 @@ typedef struct {
 	void *private;          /**< Alternate private data, used by ncurses plugin */
 } userlist_t;
 
-#define EKG_XSTATE_BLINK	01
-#define EKG_XSTATE_TYPING	02
+enum xstate_t {
+	EKG_XSTATE_BLINK	= 1,
+	EKG_XSTATE_TYPING	= 2
+};
 
 #define CLEANUP(x) void x(userlist_t* u)
 typedef CLEANUP(userlist_private_cleanup_func_t);
