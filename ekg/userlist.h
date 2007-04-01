@@ -98,8 +98,13 @@ enum xstate_t {
 enum userlist_privhandler_funcn_t {
 	EKG_USERLIST_PRIVHANDLER_FREE		= 0,	/**< Free private data (called when freeing userlist_t) */
 	EKG_USERLIST_PRIVHANDLER_GET,			/**< Return private data ptr, arg is void** for ptr */
-	EKG_USERLIST_PRIVHANDLER_READING,		/**< Called when reading userlist file, arg is char** with data */
-	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, arg is char** for data ptr */
+	EKG_USERLIST_PRIVHANDLER_READING,		/**< Called when reading userlist file,<br>
+							 *	1st arg is char*** with data array,<br>
+							 *	2nd arg is int* with array element count
+							 *		you can assume it's always at least 7<br>
+							 *	Please bear in mind that this query is called
+							 *		at the very beginning of userlist_add_entry() */
+	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, arg is char*** with data array */
 
 	EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
 							 *	and char** for value ptr (not duplicated) */

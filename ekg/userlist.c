@@ -141,23 +141,25 @@ void userlist_add_entry(session_t *session, const char *line)
 		array_free(entry);
 		return;
 	}
-	
-	if (atoi(entry[6])) {	/* XXX it's hack for gg, FIX IT. */
-		char *tmp = entry[6];
-		entry[6] = saprintf("gg:%s", entry[6]);
-		xfree(tmp);
-	} 
 
-	if (valid_plugin_uid(session->plugin, entry[6]) != 1) {
-		debug_error("userlist_add_entry() wrong uid: %s for session: %s [plugin: 0x%x]\n", entry[6], session->uid, session->plugin);
-		array_free(entry);
+	u = xmalloc(sizeof(userlist_t)); /* we'd need this here */
+	u->uid = entry[6];	entry[6] = NULL;
+
+	{
+		int function = EKG_USERLIST_PRIVHANDLER_READING;
+
+		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry, &count);
+	}
+
+	if (valid_plugin_uid(session->plugin, u->uid) != 1) {
+		debug_error("userlist_add_entry() wrong uid: %s for session: %s [plugin: 0x%x]\n", u->uid, session->uid, session->plugin);
+		array_free_count(entry, count);
+		xfree(u->uid);
+		xfree(u);
 		return;
 	}
 
-	u = xmalloc(sizeof(userlist_t));
-
 	u->status = EKG_STATUS_NA;
-	u->uid = entry[6];	entry[6] = NULL;
 
 	for (i = 0; i < 6; i++) {
 		if (!xstrcmp(entry[i], "(null)") || !xstrcmp(entry[i], "")) {
@@ -166,11 +168,6 @@ void userlist_add_entry(session_t *session, const char *line)
 		}
 	}
 			
-#if 0 /*XXX*/
-	u->first_name 	= entry[0];	entry[0] = NULL;
-	u->last_name	= entry[1];	entry[1] = NULL;
-#endif
-	u->mobile	= entry[4];	entry[4] = NULL;
 	u->groups	= group_init(entry[5]);
 
 	u->nickname	= !valid_nick(entry[3]) ? 
@@ -201,31 +198,30 @@ char *userlist_dump(session_t *session)
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		char *line;
-		const char *uid;
-		char *groups;
+#define mydup(x) xstrdup(x ? x : "")
+		char **entry = NULL;
+		array_add(&entry, xstrdup(""));				/* first name [gg] */
+		array_add(&entry, xstrdup(""));				/* last name [gg] */
+		array_add(&entry, mydup(u->nickname));			/* display? backwards compatibility? */
+		array_add(&entry, mydup(u->nickname));			/* nickname */
+		array_add(&entry, xstrdup(""));				/* mobile [gg] */
+		array_add(&entry, group_to_string(u->groups, 1, 0));	/* groups (alloced itself) */
+		array_add(&entry, mydup(u->uid));			/* uid */
+		array_add(&entry, mydup(u->foreign));			/* backwards compatibility */
+#undef mydup
+		{
+			int function = EKG_USERLIST_PRIVHANDLER_WRITING;
 
-		uid = (!strncmp(u->uid, "gg:", 3)) ? u->uid + 3 : u->uid;
+			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry);
+		}
 
-		groups = group_to_string(u->groups, 1, 0);
-		
-		line = saprintf(("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
-#if 0 /*XXX*/
-			(u->first_name) ? u->first_name : "",
-			(u->last_name) ? u->last_name : "",
-#else
-			"", "",
-#endif
-			(u->nickname) ? u->nickname : "",
-			(u->nickname) ? u->nickname : "",
-			(u->mobile) ? u->mobile : "",
-			groups,
-			uid,
-			(u->foreign) ? u->foreign : "");
+		line = array_join(entry, ";");
 		
 		string_append(s, line);
+		string_append(s, "\n");
 
 		xfree(line);
-		xfree(groups);
+		array_free(entry);
 	}	
 
 	return string_free(s, 0);

@@ -523,7 +523,8 @@ static QUERY(gg_userlist_priv_handler) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int function	= *va_arg(ap, int *);
 
-	if (!u || (valid_plugin_uid(&gg_plugin, u->uid) != 1))
+	if (!u || ((valid_plugin_uid(&gg_plugin, u->uid) != 1)
+			&& !(function == EKG_USERLIST_PRIVHANDLER_READING && atoi(u->uid))))
 		return 1;
 
 	{
@@ -550,6 +551,39 @@ static QUERY(gg_userlist_priv_handler) {
 			case EKG_USERLIST_PRIVHANDLER_GET:
 				*va_arg(ap, void **) = p;
 				break;
+			case EKG_USERLIST_PRIVHANDLER_READING:
+			{
+				char **entry	= *va_arg(ap, char ***);
+
+				if (atoi(u->uid)) {	/* hack for GG */
+					char *tmp = u->uid;
+					u->uid = saprintf("gg:%s", tmp);
+					xfree(tmp);
+				} 
+
+				p->first_name 	= entry[0];	entry[0] = NULL;
+				p->last_name	= entry[1];	entry[1] = NULL;
+				u->mobile	= entry[4];	entry[4] = NULL; /* it'll be moved to private */
+				break;
+			}
+			case EKG_USERLIST_PRIVHANDLER_WRITING:
+			{
+				char **entry	= *va_arg(ap, char ***);
+
+				if (p->first_name) {
+					xfree(entry[0]);
+					entry[0] = xstrdup(p->first_name);
+				}
+				if (p->last_name) {
+					xfree(entry[1]);
+					entry[1] = xstrdup(p->last_name);
+				}
+				if (u->mobile) { /* see above */
+					xfree(entry[4]);
+					entry[4] = xstrdup(u->mobile);
+				}
+				break;
+			}
 		}
 	}
 	return 0;
