@@ -67,9 +67,9 @@ static QUERY(logs_status_handler);
 static QUERY(logs_handler_irc);
 static QUERY(logs_handler_raw);
 
-static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status);
+static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, const char *status);
 static void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class);
-static void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip);
+static void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type);
 #if 0 /* never started? */
 static void logs_gaim();
 #endif

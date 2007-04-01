@@ -391,8 +391,6 @@ void userlist_clear_status(session_t *session, const char *uid)
 
 		if (!uid || !xstrcasecmp(uid, u->uid)) {
 			u->status = EKG_STATUS_NA;
-			memset(&u->ip, 0, sizeof(struct in_addr));
-			u->port = 0;
 			xfree(u->descr);
 			u->descr = NULL;
 

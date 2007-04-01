@@ -44,8 +44,6 @@
  * userlist_t is used to manage all info about user.<br>
  * It's used not only to manage contacts in roster, but also to manage people in chat or conference
  *
- * @todo It's too heavy, we really <b>need</b> to move some plugin specified data [like mobile, protocol, authtype] to private. sizeof(userlist_t)==96
- * @todo Move 'mobile' to gg_private_userlist_t, and make this work with 'sms' plugin somehow
  * @bug There are two private fields [u->private and u->priv] one need to be removed.
  */
 
@@ -60,11 +58,6 @@ typedef struct {
 	char *descr;		/**< description of status. */
 	list_t resources;	/**< list_t with ekg_resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
 
-	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)]<br>
-				 *	It's used mainly for DCC communications. */
-	uint16_t port;		/**< port of user<br> 
-				 *	It's used mainly for DCC communications. */
-
 	time_t last_seen;	/**< Last time when user was available [when u->status was > notavail] */
 	
 	char *foreign;		/**< For compatilibity with ekg1 userlist. */
@@ -72,9 +65,6 @@ typedef struct {
 	void *priv;		/**< Private data for protocol plugin. */
 	
 	int xstate;		/**< Extended userlist element state, for example blinking or typing notify */
-
-        uint32_t last_ip;       /**< Lastseen ipv4 address */
-        uint16_t last_port;     /**< Lastseen port */
 
 	int last_status;	/**< Lastseen status */
 	char *last_descr;	/**< Lastseen description */

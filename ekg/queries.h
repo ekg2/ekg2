@@ -308,8 +308,6 @@ const struct query query_list[] = {
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_INT,			/* status */
 		QUERY_ARG_CHARP,		/* descr */
-		QUERY_ARG_CHARP,		/* host */
-		QUERY_ARG_INT,			/* port */
 		QUERY_ARG_UINT, /* time_t */	/* when */
 		QUERY_ARG_END } }, 
 

@@ -1499,16 +1499,6 @@ list_user:
 
 		query_emit_id(NULL, USERLIST_INFO, &u, &quiet);
 
-		if (u->ip) {
-			char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port));
-			printq("user_info_ip", ip_str);
-			xfree(ip_str);
-		} else if (u->last_ip) {
-			char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
-                        printq("user_info_last_ip", last_ip_str);
-			xfree(last_ip_str);
-		}
-
 		if (u->groups) {
 			char *groups = group_to_string(u->groups, 0, 1);
 			printq("user_info_groups", groups);
@@ -1624,7 +1614,20 @@ list_user:
 			show = 1;
 
 		if (show) {
-			printq(tmp, format_user(session, u->uid), u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
+			char *ip		= NULL;
+			char *port		= NULL;
+			{
+				int func		= EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
+				const char *ipvar	= "ip";
+				const char *portvar	= "port";
+				char **__ip		= &ip;
+				char **__port		= &port;
+				
+				query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &ipvar, &__ip);
+				query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &portvar, &__port);
+			}
+
+			printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
 			count++;
 		}
 	}

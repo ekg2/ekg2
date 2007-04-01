@@ -175,9 +175,19 @@ static QUERY(gg_userlist_info_handle) {
 	if (up->mobile && xstrcmp(up->mobile, ""))
 		printq("user_info_mobile", up->mobile);
 
-	if (u->port == 2)
+	if (up->ip) {
+		char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->ip)), itoa(up->port));
+		printq("user_info_ip", ip_str);
+		xfree(ip_str);
+	} else if (up->last_ip) {
+		char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->last_ip)), itoa(up->last_port));
+		printq("user_info_last_ip", last_ip_str);
+		xfree(last_ip_str);
+	}
+
+	if (up->port == 2)
 		printq("user_info_not_in_contacts");
-	if (u->port == 1)
+	if (up->port == 1)
 		printq("user_info_firewalled");
 	if ((up->protocol & GG_HAS_AUDIO_MASK))
 		printq("user_info_voip");
@@ -592,6 +602,10 @@ static QUERY(gg_userlist_priv_handler) {
 
 				if (!xstrcmp(name, "mobile"))
 					*r = p->mobile;
+				if (!xstrcmp(name, "ip"))
+					*r = inet_ntoa(*((struct in_addr*) &p->ip));
+				if (!xstrcmp(name, "port"))
+					*r = itoa(p->port);
 			}
 		}
 	}
@@ -789,16 +803,22 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 	char *__uid	= saprintf(("gg:%d"), uin);
 	int __status	= gg_status_to_text(status);
 	char *__descr	= gg_cp_to_locale(xstrdup(descr));
-	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
-	int __port	= port, i, j, dlen, state = 0, m = 0;
+	int i, j, dlen, state = 0, m = 0;
 
 	{
 		userlist_t *u;
 		gg_userlist_private_t *up;
 
-		if ((u = userlist_find(s, __uid)) && (up = gg_userlist_priv_get(u)))
+		if ((u = userlist_find(s, __uid)) && (up = gg_userlist_priv_get(u))) {
 			up->protocol = protocol;
+			/* zapisz adres IP i port */
+			up->ip = ip;
+			up->port = port;
+
+			up->last_ip = ip;
+			up->last_port = port;
+		}
 	}
 
 	for (i = 0; i < xstrlen(__descr); i++)
@@ -828,9 +848,8 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		}
 
 	}
-	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &__host, &__port, &when, NULL);
+	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &when, NULL);
 
-	xfree(__host);
 	xfree(__descr);
 	xfree(__uid);
 	xfree(__session);
@@ -856,13 +875,14 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		char uid[16];
 		int __port = -1, __valid = 1;
 		userlist_t *u;
+		gg_userlist_private_t *up;
 		watch_t *w;
 
 		if (!gg_config_dcc) return;
 
 		snprintf(uid, sizeof(uid), "gg:%d", e->event.msg.sender);
 
-		if (!(u = userlist_find(s, uid)))
+		if (!(u = userlist_find(s, uid)) || !(up = gg_userlist_priv_get(u)))
 			return;
 
 		query_emit(NULL, ("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
@@ -874,7 +894,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 			return;
 		}
 
-		if (!(d = gg_dcc_get_file(u->ip, u->port, atoi(session_uid_get(s) + 3), e->event.msg.sender))) {
+		if (!(d = gg_dcc_get_file(up->ip, up->port, atoi(session_uid_get(s) + 3), e->event.msg.sender))) {
 			print_status("dcc_error", strerror(errno));
 			return;
 		}

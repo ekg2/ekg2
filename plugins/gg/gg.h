@@ -78,6 +78,13 @@ typedef struct {
 	char *mobile;		/**< mobile phone number */
 
 	int protocol;		/**< Protocol version */
+
+	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)]<br>
+				 *	It's used mainly for DCC communications. */
+	uint16_t port;		/**< port of user<br> 
+				 *	It's used mainly for DCC communications. */
+        uint32_t last_ip;       /**< Lastseen ipv4 address */
+        uint16_t last_port;     /**< Lastseen port */
 } gg_userlist_private_t;
 
 /* misc.c */

@@ -1305,7 +1305,9 @@ void update_statusbar(int commit)
 	__add_format_dup_st("xa", EKG_STATUS_XA);
 	/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
 #undef __add_format_dup_st
+#if 0
 	__add_format_dup("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
+#endif
 
         __add_format_dup("typing", (q && (q->xstate & EKG_XSTATE_TYPING)), "");
 	__add_format_dup("url", 1, "http://www.ekg2.org/");

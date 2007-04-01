@@ -263,8 +263,6 @@ static QUERY(protocol_status)
 	char **__uid		= va_arg(ap, char**), *uid = *__uid;
 	int status		= *(va_arg(ap, int*));
 	char **__descr		= va_arg(ap, char**), *descr = *__descr;
-	char *host		= *(va_arg(ap, char**));
-	int port		= *(va_arg(ap, int*));
 	time_t when		= *(va_arg(ap, time_t*));
 	ekg_resource_t *r	= NULL;
 	userlist_t *u;
@@ -313,15 +311,6 @@ static QUERY(protocol_status)
 		st = u->status;
 		de = u->descr;
 	}
-
-	/* zapisz adres IP i port */
-	u->ip = (host) ? inet_addr(host) : 0;
-	u->port = port;
-
-	if (host)
-		u->last_ip = inet_addr(host);
-	if (port)
-		u->last_port = port;
 
 	/* je¶li te same stany...  i te same opisy (lub brak opisu), ignoruj */
 	if ((status == st) && !xstrcmp(descr, de)) 
