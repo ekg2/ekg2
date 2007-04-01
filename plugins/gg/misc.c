@@ -37,7 +37,7 @@
 #include "gg.h"
 
 gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u) {
-	int func			= EKG_USERLIST_PRIVHANDLER_ALLOC;
+	int func			= EKG_USERLIST_PRIVHANDLER_GET;
 	gg_userlist_private_t *up	= NULL;
 
 	query_emit_id(&gg_plugin, USERLIST_PRIVHANDLE, &u, &func, &up);

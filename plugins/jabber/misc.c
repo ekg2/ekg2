@@ -24,7 +24,7 @@
 #include "jabber-ssl.h"
 
 jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
-	int func			= EKG_USERLIST_PRIVHANDLER_ALLOC;
+	int func			= EKG_USERLIST_PRIVHANDLER_GET;
 	jabber_userlist_private_t *up	= NULL;
 
 	query_emit_id(&jabber_plugin, USERLIST_PRIVHANDLE, &u, &func, &up);

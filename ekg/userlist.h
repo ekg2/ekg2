@@ -92,15 +92,16 @@ enum xstate_t {
 
 /**
  * userlist_privhandler_funcn_t - here we declare possible options for 'function' arg in USERLIST_PRIVHANDLE
+ *
+ * All of them, excluding EKG_USERLIST_PRIVHANDLER_FREE, should alloc&init priv if needed
  */
 enum userlist_privhandler_funcn_t {
 	EKG_USERLIST_PRIVHANDLER_FREE		= 0,	/**< Free private data (called when freeing userlist_t) */
+	EKG_USERLIST_PRIVHANDLER_GET,			/**< Return private data ptr, arg is void** for ptr */
 	EKG_USERLIST_PRIVHANDLER_READING,		/**< Called when reading userlist file, arg is char** with data */
 	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, arg is char** for data ptr */
-	EKG_USERLIST_PRIVHANDLER_ALLOC,			/**< If userlist_t.priv == NULL, alloc and initialize priv struct,
-							 *	arg is void** for ptr */
 
-	EKG_USERLIST_PRIVHANDLER_GET_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
+	EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
 							 *	and char** for value ptr (not duplicated) */
 };
 

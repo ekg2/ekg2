@@ -523,11 +523,19 @@ static QUERY(gg_userlist_priv_handler) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int function	= *va_arg(ap, int *);
 
-	if (!u || (!u->priv && function != EKG_USERLIST_PRIVHANDLER_ALLOC) || (valid_plugin_uid(&gg_plugin, u->uid) != 1))
+	if (!u || (valid_plugin_uid(&gg_plugin, u->uid) != 1))
 		return 1;
 
 	{
 		gg_userlist_private_t *p = u->priv;
+
+		if (!u->priv) {
+			if (function == EKG_USERLIST_PRIVHANDLER_FREE)
+				return 0;
+
+			p = xmalloc(sizeof(gg_userlist_private_t));
+			u->priv = p;
+		}
 		
 		switch (function) {
 			case EKG_USERLIST_PRIVHANDLER_FREE:
@@ -539,17 +547,9 @@ static QUERY(gg_userlist_priv_handler) {
 				xfree(u->priv);
 				u->priv = NULL;
 				break;
-			case EKG_USERLIST_PRIVHANDLER_ALLOC:
-			{
-				void **r = va_arg(ap, void **);
-
-				if (!p) {
-					p = xmalloc(sizeof(gg_userlist_private_t));
-					u->priv = p;
-				}
-				*r = p;
+			case EKG_USERLIST_PRIVHANDLER_GET:
+				*va_arg(ap, void **) = p;
 				break;
-			}
 		}
 	}
 	return 0;
