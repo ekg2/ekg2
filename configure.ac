@@ -103,7 +103,7 @@ AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile ekg/ekg2-config compat/Makefile docs/Makefile po/Makefile.in])
 AC_CONFIG_FILES([contrib/Makefile contrib/python/Makefile contrib/perl/Makefile])
-AC_CONFIG_FILES([plugins/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile plugins/autoresponder/Makefile])
+AC_CONFIG_FILES([plugins/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile plugins/autoresponder/Makefile plugins/feed/Makefile])
 
 PLUGINS="logs mail rc sms pcm irc rot13 httprc_xajax xmsg autoresponder"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
@@ -323,7 +323,7 @@ if test "x$with_openssl" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(expat,		AC_HELP_STRING([--without-expat],		[Compile without expat (jabber plugin)]))
+AC_ARG_WITH(expat,		AC_HELP_STRING([--without-expat],		[Compile without expat (jabber&feed plugins)]))
 
 if test "x$with_expat" != "xno"; then
 	AC_CHECK_EXPAT
@@ -346,7 +346,7 @@ if test "x$with_expat" != "xno"; then
 				AC_DEFINE([JABBER_HAVE_OPENSSL], 1, [define if you want use openssl for ssl connections])
 			fi
 		fi
-		PLUGINS="$PLUGINS jabber"
+		PLUGINS="$PLUGINS jabber feed"
 	fi
 fi
 
@@ -568,7 +568,7 @@ echo ""
 # - PROTOCOL PLUGINS
 echo -en " - Protocols:\t irc xmsg "
 	if test "x$have_expat" = "xyes"; then
-		echo -n "jabber "
+		echo -n "feed jabber "
 
 		if test "x$jabber_have_gnutls" = "xyes"; then
 			echo -n "(with ssl support in -lgnutls) "
@@ -675,7 +675,7 @@ fi
 
 echo -en " - Charset support:\t "
 	if test "x$enable_unicode" = "xyes"; then
-	        echo "utf-8 & iso-8859-2 (EXPERIMENTAL)"
+	        echo "utf-8&ansi (EXPERIMENTAL)"
 		echo "*****************************************************************************************************"
 		echo "WARNING: USING THE RESULTING EKG2 BINARY IN A NON-UTF-8 (ASCII or LATIN) TERMINAL IS CURRENTLY"
 		echo "NOT SUPPORTED WHEN BUILT WITH GCC 4.x OR LATER."
