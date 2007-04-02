@@ -285,7 +285,7 @@ static WATCHER(polchat_handle_resolver) {
 	return 0;
 }
 
-static char *polchat_mode_to_ekg_mode(unsigned short status) {
+static int polchat_mode_to_ekg_mode(unsigned short status) {
 	if (status & 0x0002) return EKG_STATUS_AVAIL;	/* OP */
 	if (status & 0x0001) return EKG_STATUS_AWAY;	/* moderator ? */
 	return EKG_STATUS_XA;				/* normal */
@@ -499,9 +499,7 @@ static void processpkt(session_t *s, unsigned short nheaders, unsigned short nst
 
 					u = userlist_add(s, uid, strings[0]);
 					
-					tmp = u->status;
-					u->status = xstrdup(polchat_mode_to_ekg_mode(headers[1]));
-					xfree(tmp);
+					u->status = polchat_mode_to_ekg_mode(headers[1]);
 
 					xfree(uid);
 
@@ -569,9 +567,7 @@ static void processpkt(session_t *s, unsigned short nheaders, unsigned short nst
 			case HEADER0_WELCOMEMSG:
 				if (nheaders == 1 && nstrings == 1) {
 			/* new-status */
-					char *tmp = s->status;
-					s->status = xstrdup(EKG_STATUS_AVAIL);
-					xfree(tmp);
+					s->status = EKG_STATUS_AVAIL;
 			/* connected */
 					j->connecting = 0;
 					s->connected = 1;
