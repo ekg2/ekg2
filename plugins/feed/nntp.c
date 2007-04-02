@@ -150,7 +150,6 @@ static void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 	j->last_code	= -1;
 	j->authed	= 0;
 
-	session_connected_set(s, 0);
 	j->connecting = 0;
 	close(j->fd);
 	j->fd = -1;
@@ -600,7 +599,8 @@ static WATCHER_LINE(nntp_handle_stream) {
 static WATCHER(nntp_handle_connect) {
 	session_t *s = session_find(data);
 	nntp_private_t *j = feed_private(s);
-	int res = 0, res_size = sizeof(res);
+	int res = 0;
+	socklen_t res_size = sizeof(res);
 
 	debug("nntp_handle_connect() type: %d\n", type);
 
@@ -615,7 +615,6 @@ static WATCHER(nntp_handle_connect) {
 	}
 
 	j->connecting = 0;
-	session_connected_set(s, 1);
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &data);
 
 	watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, nntp_handle_stream, xstrdup(data));

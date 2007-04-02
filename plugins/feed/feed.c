@@ -62,12 +62,8 @@ static QUERY(feed_session) {
         if (!s)
                 return -1;
 
-	if (
-		(xstrncasecmp(session, "nntp:", 5) 
-#ifdef HAVE_EXPAT
-		&& xstrncasecmp(session, "rss:", 4))
-#endif
-	   )
+	if (s->plugin != &feed_plugin)
+
 		return 0;
 
 	if (data && !s->priv) {
