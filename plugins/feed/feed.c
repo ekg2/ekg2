@@ -246,14 +246,11 @@ static QUERY(rss_message) {
 	return 0;
 }
 
-void feed_set_status(userlist_t *u, char *status) {
-	char *tmp;
+void feed_set_status(userlist_t *u, int status) {
 	if (!u || !status) return;
 
 /*	if (xstrcmp(u->status, status)) print("feed_status", u->uid, status, u->descr); */
-	tmp 		= u->status;
 	u->status	= status;
-	xfree(tmp);
 }
 
 void feed_set_descr(userlist_t *u, char *descr) {
@@ -266,7 +263,7 @@ void feed_set_descr(userlist_t *u, char *descr) {
 	xfree(tmp);
 }
 
-void feed_set_statusdescr(userlist_t *u, char *status, char *descr) {
+void feed_set_statusdescr(userlist_t *u, int status, char *descr) {
 	feed_set_status(u, status);
 	feed_set_descr(u, descr);
 }

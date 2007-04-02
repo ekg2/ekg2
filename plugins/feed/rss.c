@@ -131,7 +131,7 @@ static void rss_string_append(rss_feed_t *f, const char *str) {
 	string_append_c(buf, '\n');
 }
 
-static void rss_set_statusdescr(const char *uid, char *status, char *descr) {
+static void rss_set_statusdescr(const char *uid, int status, char *descr) {
 	list_t l;
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
@@ -141,7 +141,7 @@ static void rss_set_statusdescr(const char *uid, char *status, char *descr) {
 	}
 }
 
-static void rss_set_status(const char *uid, char *status) {
+static void rss_set_status(const char *uid, int status) {
 	list_t l;
 
 	for (l = sessions; l; l = l->next) {
@@ -415,7 +415,7 @@ static char *rss_iconv(const char *str, const char *enconding) {
 
 static void rss_fetch_error(rss_feed_t *f, const char *str) {
 	debug("rss_fetch_error() %s\n", str);
-	rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_ERROR), xstrdup(str));
+	rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, xstrdup(str));
 }
 /* ripped from jabber plugin */
 static void rss_handle_start(void *data, const char *name, const char **atts) {
@@ -724,8 +724,8 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	}
 
 	if (!new_items)
-		rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_DND), xstrdup("Done, no new messages"));
-	else	rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_AVAIL), saprintf("Done, %d new messages", new_items));
+		rss_set_statusdescr(f->uid, EKG_STATUS_DND, xstrdup("Done, no new messages"));
+	else	rss_set_statusdescr(f->uid, EKG_STATUS_AVAIL, saprintf("Done, %d new messages", new_items));
 fail:
 	xmlnode_free(priv->node);
 	XML_ParserFree(parser);
@@ -831,7 +831,7 @@ static WATCHER(rss_url_fetch_resolver) {
 			rss_url_fetch(f, 0);
 
 		if (type == 2) 
-			rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver tiemout..."));
+			rss_set_statusdescr(b->uid, EKG_STATUS_ERROR, saprintf("Resolver tiemout..."));
 
 		xfree(b->session);
 		xfree(b->uid);
@@ -847,7 +847,7 @@ static WATCHER(rss_url_fetch_resolver) {
 
 		f->ip = xstrdup(buf);
 	} else {
-		rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), 
+		rss_set_statusdescr(b->uid, EKG_STATUS_ERROR, 
 			saprintf("Resolver ERROR read: %d bytes (%s)", len, len == -1 ? strerror(errno) : ""));
 	}
 	return -1;
@@ -955,13 +955,13 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 			int res;
 
 			if (pipe(fd) == -1) {
-				rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver error @ pipe() %s\n", strerror(errno)));
+				rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, saprintf("Resolver error @ pipe() %s\n", strerror(errno)));
 				return -1;
 			}
 
 			f->resolving = 1;
 			if ((res = fork()) == -1) {
-				rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver error @ fork() %s\n", strerror(errno)));
+				rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, saprintf("Resolver error @ fork() %s\n", strerror(errno)));
 				close(fd[0]);
 				close(fd[1]);
 				f->resolving = 0;
@@ -1030,7 +1030,7 @@ static COMMAND(rss_command_connect) {
 
 	session_connected_set(session, 1);
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &session->uid);
-	xfree(session->status);	session->status = xstrdup(EKG_STATUS_AVAIL);
+	session->status = EKG_STATUS_AVAIL;
 
 	return 0;
 }

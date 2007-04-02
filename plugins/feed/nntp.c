@@ -413,10 +413,8 @@ NNTP_HANDLER(nntp_auth_process) {
 	switch(code) {
 		case 200: 
 		case 201: 
-			tmp = s->status;
-			if (code == 200)	s->status = xstrdup(EKG_STATUS_AVAIL);
-			else			s->status = xstrdup(EKG_STATUS_AWAY);
-			xfree(tmp);
+			if (code == 200)	s->status = EKG_STATUS_AVAIL;
+			else			s->status = EKG_STATUS_AWAY;
 
 			tmp = s->descr;
 			s->descr = xstrdup(str);
@@ -458,7 +456,7 @@ NNTP_HANDLER(nntp_group_process) {
 	if (!group->cart) group->cart = group->lart;
 
 	if ((u = userlist_find(s, group->uid))) {
-		if (!xstrcmp(u->status, EKG_STATUS_AWAY)) {
+		if (u->status == EKG_STATUS_AWAY) {
 			feed_set_descr(u, saprintf("First article: %d Last article: %d", group->fart, group->lart));
 		}
 	}
@@ -484,7 +482,7 @@ NNTP_HANDLER(nntp_group_error) {
 
 	if (!j->newsgroup) return -1;
 
-	feed_set_statusdescr(userlist_find(s, j->newsgroup->uid), xstrdup(EKG_STATUS_ERROR), saprintf("Generic error %d: %s", code, str));
+	feed_set_statusdescr(userlist_find(s, j->newsgroup->uid), EKG_STATUS_ERROR, saprintf("Generic error %d: %s", code, str));
 
 	j->newsgroup->state	= NNTP_IDLE;
 	j->newsgroup		= NULL;
@@ -771,17 +769,17 @@ static COMMAND(nntp_command_check) {
 
 		n = nntp_newsgroup_find(session, u->uid+5);
 	
-		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AWAY), xstrdup("Checking..."));
+		feed_set_statusdescr(u, EKG_STATUS_AWAY, xstrdup("Checking..."));
 
 		j->newsgroup	= n;
 		n->state 	= NNTP_CHECKING;
 		watch_write(j->send_watch, "GROUP %s\r\n", n->name);
 
 		while (n->state == NNTP_CHECKING) ekg_loop();
-		if (!xstrcmp(u->status, EKG_STATUS_ERROR)) continue;
+		if (u->status == EKG_STATUS_ERROR) continue;
 
 		if (n->cart == n->lart) {	/* nothing new */
-			feed_set_status(u, xstrdup(EKG_STATUS_DND));
+			feed_set_status(u, EKG_STATUS_DND);
 			continue;
 		}
 
@@ -801,7 +799,7 @@ static COMMAND(nntp_command_check) {
 		}
 		n->state		= NNTP_IDLE;
 		
-		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AVAIL), saprintf("%d new articles", n->lart - n->cart));
+		feed_set_statusdescr(u, EKG_STATUS_AVAIL, saprintf("%d new articles", n->lart - n->cart));
 		j->newsgroup->cart = n->lart;
 
 		if (params[0]) break;
