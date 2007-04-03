@@ -562,7 +562,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	                        c = conference_create(s, tmp->str);
 	
 	                        string_free(tmp, 1);
-	                }
+	                } else if (c->ignore) {
+				xfree(text);
+				return NULL;
+			}
 
 	                if (c) {
 	                        target = c->name;
@@ -702,7 +705,8 @@ static QUERY(protocol_message)
 	if (!(our_msg && !config_display_sent)) {
 		if (empty_theme)
 			class |= EKG_NO_THEMEBIT;
-	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep, secure);
+		if (!(target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep, secure)))
+			return -1;
 	}
 
         /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
