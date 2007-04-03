@@ -134,11 +134,6 @@ int no_mouse = 0;
  * co ma siê dziaæ w tle.
  */
 
-#define OPTIMIZE_EKG_LOOP 0	/* define to 1, if you want to call gettimeofday() only once... disable also time(NULL) calls
-				 *	it's quite ok, although we're less accurate. But feel free to change it to 1.
-				 *	It'll be someday default value in ekg2-cvs too.. but not now.
-				 */
-
 void ekg_loop() {
 	struct timeval tv;
         struct timeval stv;
@@ -146,27 +141,18 @@ void ekg_loop() {
         fd_set rd, wd;
         int ret, maxfd, pid, status;
 
-#if OPTIMIZE_EKG_LOOP
 	gettimeofday(&tv, NULL);
-#define time(x) tv.tv_sec
-#endif
 
 	{
                 /* przejrzyj timery u¿ytkownika, ui, skryptów */
                 for (l = timers; l; ) {
                         struct timer *t = l->data;
                         l = l->next;
-#if !OPTIMIZE_EKG_LOOP
-                        gettimeofday(&tv, NULL);
-#endif
 
                         if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
 				int ispersist = t->persist;
 				
                                 if (ispersist) {
-#if !OPTIMIZE_EKG_LOOP
-                                        gettimeofday(&tv, NULL);
-#endif
                                         tv.tv_sec += t->period;
                                         memcpy(&t->ends, &tv, sizeof(tv));
                                 }
@@ -189,7 +175,7 @@ void ekg_loop() {
 				continue;
 			}
 
-                        if (w->timeout < 1 || (time(NULL) - w->started) < w->timeout)
+                        if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
                                 continue;
 			w->removed = -1;
                         if (w->buf) {
@@ -222,7 +208,7 @@ void ekg_loop() {
 				if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
         	                        break;
 
-                	        if (time(NULL) - s->activity > tmp)
+                	        if (tv.tv_sec - s->activity > tmp)
                         	        command_exec(NULL, s, ("/_autoaway"), 0);
 			} while (0);
 
@@ -230,7 +216,7 @@ void ekg_loop() {
 	                        if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
         	                        break;
 
-                	        if (time(NULL) - s->activity > tmp)
+                	        if (tv.tv_sec - s->activity > tmp)
                         	        command_exec(NULL, s, ("/_autoxa"), 0);
 			} while (0);
                 }
@@ -247,14 +233,14 @@ void ekg_loop() {
 			if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
 				continue;
 
-			if (time(NULL) - s->scroll_last > tmp)
+			if (tv.tv_sec - s->scroll_last > tmp)
 				command_exec(NULL, s, ("/_autoscroll"), 0);
 		}
 
                 /* auto save */
-                if (config_auto_save && config_changed && (time(NULL) - last_save) > config_auto_save) {
-                        debug("autosaving userlist and config after %d seconds\n", time(NULL) - last_save);
-                        last_save = time(NULL);
+                if (config_auto_save && config_changed && (tv.tv_sec - last_save) > config_auto_save) {
+                        debug("autosaving userlist and config after %d seconds\n", tv.tv_sec - last_save);
+                        last_save = tv.tv_sec;
 
                         if (!config_write(NULL) && !session_write()) {
                                 config_changed = 0;
@@ -324,9 +310,6 @@ void ekg_loop() {
 		for (l = timers; l; l = l->next) {
 			struct timer *t = l->data;
 			int usec = 0;
-#if !OPTIMIZE_EKG_LOOP
-			gettimeofday(&tv, NULL);
-#endif
 
 			/* zeby uniknac przekrecenia licznika mikrosekund przy
 			 * wiekszych czasach, pomijamy dlugie timery */
@@ -353,9 +336,6 @@ void ekg_loop() {
 			stv.tv_sec = 0;
 		if (stv.tv_usec < 0)
 			stv.tv_usec = 1;
-#if OPTIMIZE_EKG_LOOP
-#undef time
-#endif
                 /* sprawd¼, co siê dzieje */
 /* XXX, on win32 we must do select() on only SOCKETS.
  *    , on files we must do "WaitForSingleObjectEx() 
