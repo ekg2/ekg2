@@ -43,6 +43,14 @@
 #define XMSG_MAXFC_DEF "25"
 #define XMSG_MAXFC_TIMER "3"
 
+#ifndef NAME_MAX
+#ifdef MAXNAMLEN /* BSD */
+#define NAME_MAX MAXNAMLEN
+#else /* fallback */
+#define NAME_MAX 255
+#endif
+#endif /* NAME_MAX */
+
 /* if we have inotify, we don't need that timer */
 #ifdef HAVE_INOTIFY
 #define XMSG_MAXFC_INOTIFY 25
