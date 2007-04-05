@@ -327,92 +327,6 @@ typedef struct {
 	char *no_unicode;
 } rss_fetch_process_t;
 
-char *mutt_iconv (iconv_t cd, 
-			char *ib, size_t ibl,
-			char *ob, size_t obl,
-			char **inrepls, const char *outrepl)
-{
-	do {
-		errno = 0;
-		iconv (cd, &ib, &ibl, &ob, &obl);
-		if (ibl && obl && errno == EILSEQ) {
-			if (inrepls) {
-				/* Try replacing the input */
-				char **t;
-				for (t = inrepls; *t; t++)
-				{
-					char *ib1 = *t;
-					char *ob1 = ob;
-					size_t ibl1 = xstrlen (*t);
-					size_t obl1 = obl;
-
-					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
-					if (!ibl1) {
-						++ib, --ibl;
-						ob = ob1, obl = obl1;
-						break;
-					}
-				}
-				if (*t)
-					continue;
-			}
-			if (outrepl) {
-				/* Try replacing the output */
-				int n = xstrlen (outrepl);
-				if (n <= obl)
-				{
-					memcpy (ob, outrepl, n);
-					++ib, --ibl;
-					ob += n, obl -= n;
-					continue;
-				}
-			}
-		}
-		return ob;
-	} while(1);
-}
-
-static char *rss_iconv(const char *str, const char *enconding) {
-	char *repls[] = { "\357\277\275", "?", 0 };
-
-	char **inrepls = NULL;
-	char *outrepl = NULL;
-
-	size_t inplen = xstrlen(str);
-	size_t outlen = (inplen+1) * 16; 
-
-	char *buf, *ob;
-	char *niah;
-	iconv_t cd;
-
-	if (!enconding) enconding = "UTF-8";
-
-	if (!config_console_charset)
-		return NULL;
-
-	if (!inplen)
-		return NULL;
-
-	if ((cd = iconv_open(config_console_charset, enconding)) == (iconv_t)-1) 
-		return NULL;
-
-	if (!xstrcasecmp(config_console_charset, "UTF-8"))	outrepl = "\357\277\275";
-	else if (!xstrcasecmp(enconding, "UTF-8"))		inrepls = repls;
-	else							outrepl = "?";
-
-	buf = xmalloc(outlen);
-
-	niah = xstrdup(str);
-
-	ob = mutt_iconv(cd, str /* input */, inplen+1 /* input len */, buf /* output buffer */, outlen /* output len */, inrepls, outrepl);
-	iconv_close (cd);
-
-	xfree(niah);
-
-	*ob = '\0';
-	return xrealloc((void*)buf, ob-buf);
-}
-
 static void rss_fetch_error(rss_feed_t *f, const char *str) {
 	debug("rss_fetch_error() %s\n", str);
 	rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, xstrdup(str));
@@ -453,7 +367,7 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
 		for (i = 0; i < arrcount; i++)
-			newnode->atts[i] = rss_iconv(atts[i], j->no_unicode);
+			newnode->atts[i] = ekg_convert_string(atts[i], j->no_unicode, NULL);
 	} else	newnode->atts = NULL; 
 
 	j->node = newnode;
@@ -524,7 +438,12 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 		recode[rlen++] = znak;
 		i++;
 	}
-	recode = rss_iconv(recode, j->no_unicode);
+	{		/* I think old version leaked, if I were wrong, let mi know */
+		char *tmp = recode;
+
+		recode = ekg_convert_string(recode, j->no_unicode, NULL);
+		xfree(tmp);
+	}
 
 	string_append(n->data, recode);
 

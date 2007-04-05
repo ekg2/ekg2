@@ -168,7 +168,6 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target);
 char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm);
 void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id);
 
-char *mutt_convert_string(const char *ps, const char *from, const char *to); /* ouch */
 char *jabber_attr(char **atts, const char *att);
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);

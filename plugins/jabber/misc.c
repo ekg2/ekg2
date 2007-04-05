@@ -3,7 +3,6 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <iconv.h>
 
 #include "ekg2-config.h"
 
@@ -197,120 +196,6 @@ char *jabber_attr(char **atts, const char *att)
 	return NULL;
 }
 
-/* Following two functions shamelessly ripped from mutt-1.4.2i 
- * (http://www.mutt.org, license: GPL)
- * 
- * Copyright (C) 1999-2000 Thomas Roessler <roessler@guug.de>
- * Modified 2004 by Maciek Pasternacki <maciekp@japhy.fnord.org>
- */
-
-/*
- * Like iconv, but keeps going even when the input is invalid
- * If you're supplying inrepls, the source charset should be stateless;
- * if you're supplying an outrepl, the target charset should be.
- */
-static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
-		char **outbuf, size_t *outbytesleft,
-		char **inrepls, const char *outrepl)
-{
-	size_t ret = 0, ret1;
-	char *ib = *inbuf;
-	size_t ibl = *inbytesleft;
-	char *ob = *outbuf;
-	size_t obl = *outbytesleft;
-
-	for (;;) {
-		ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
-		if (ret1 != (size_t)-1)
-			ret += ret1;
-		if (ibl && obl && errno == EILSEQ) {
-			if (inrepls) {
-				/* Try replacing the input */
-				char **t;
-				for (t = inrepls; *t; t++)
-				{
-					char *ib1 = *t;
-					size_t ibl1 = xstrlen (*t);
-					char *ob1 = ob;
-					size_t obl1 = obl;
-					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
-					if (!ibl1) {
-						++ib, --ibl;
-						ob = ob1, obl = obl1;
-						++ret;
-						break;
-					}
-				}
-				if (*t)
-					continue;
-			}
-			if (outrepl) {
-				/* Try replacing the output */
-				int n = xstrlen (outrepl);
-				if (n <= obl)
-				{
-					memcpy (ob, outrepl, n);
-					++ib, --ibl;
-					ob += n, obl -= n;
-					++ret;
-					continue;
-				}
-			}
-		}
-		*inbuf = ib, *inbytesleft = ibl;
-		*outbuf = ob, *outbytesleft = obl;
-		return ret;
-	}
-}
-
-/*
- * Convert a string
- * Used in rfc2047.c and rfc2231.c
- */
-
-char *mutt_convert_string (const char *ps, const char *from, const char *to)
-{
-	iconv_t cd;
-	char *repls[] = { "\357\277\275", "?", 0 };
-	char *s = ps;
-
-	if (!s || !*s)
-		return NULL;
-
-	if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1) {
-		int len;
-		char *ib;
-		char *buf, *ob;
-		size_t ibl, obl;
-		char **inrepls = 0;
-		char *outrepl = 0;
-
-		if ( !xstrcasecmp(to, "utf-8") )
-			outrepl = "\357\277\275";
-		else if ( !xstrcasecmp(from, "utf-8"))
-			inrepls = repls;
-		else
-			outrepl = "?";
-
-		len = xstrlen (s);
-		ib = s, ibl = len + 1;
-		obl = 16 * ibl;
-		ob = buf = xmalloc (obl + 1);
-
-		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
-		iconv_close (cd);
-
-		*ob = '\0';
-
-		buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
-		return buf;
-	}
-	return NULL;
-}
-
-/* End of code taken from mutt. */
-
-
 /**
  * jabber_escape()
  * 
@@ -336,7 +221,7 @@ char *jabber_escape(const char *text) {
 	if (config_use_unicode)
 		return xml_escape(text);
 
-	if (!(utftext = mutt_convert_string(text, config_console_charset, "utf-8")))
+	if (!(utftext = ekg_convert_string(text, NULL, "utf-8")))
 		return NULL;
 
 	res = xml_escape(utftext);
@@ -365,7 +250,7 @@ char *jabber_unescape(const char *text) {
 	if (config_use_unicode)
 		return xstrdup(text);
 
-	return mutt_convert_string(text, "utf-8", config_console_charset);
+	return ekg_convert_string(text, "utf-8", NULL);
 }
 
 /**
@@ -393,7 +278,7 @@ char *tlen_encode(const char *what) {
 	if (!what) return NULL;
 
 	if (xstrcasecmp(config_console_charset, "ISO-8859-2"))
-		s = text = mutt_convert_string(what, config_console_charset, "ISO-8859-2");
+		s = text = ekg_convert_string(what, NULL, "ISO-8859-2");
 	else	s = what;
 
 	str = ptr = (unsigned char *) xcalloc(3 * xstrlen(s) + 1, 1);
@@ -452,7 +337,7 @@ char *tlen_decode(const char *what) {
 	*dest = '\0';
 	if (!xstrcasecmp(config_console_charset, "ISO-8859-2")) return retval;
 
-	text = mutt_convert_string(retval, "ISO-8859-2", config_console_charset);
+	text = ekg_convert_string(retval, "ISO-8859-2", NULL);
 	xfree(retval);
 	return text;
 }

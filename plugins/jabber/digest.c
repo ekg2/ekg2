@@ -333,7 +333,6 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 
 /* EKG2 STUFF */
 
-extern char *mutt_convert_string (const char *ps, const char *from, const char *to);	/* jabber/misc.c */
 extern char *config_console_charset;							/* ekg/stuff.h */
 
 /**
@@ -376,10 +375,10 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	char *kd;
 
 /* ZERO STEP -> recode */
-	if (!(convnode = mutt_convert_string(sid, config_console_charset, "utf-8")))
+	if (!(convnode = ekg_convert_string(sid, NULL, "utf-8")))
 		convnode = xstrdup(sid);
 
-	if (!(convpasswd = mutt_convert_string(password, config_console_charset, "utf-8")))
+	if (!(convpasswd = ekg_convert_string(password, NULL, "utf-8")))
 		convpasswd = xstrdup(password);
 
 /* FIRST STEP */
@@ -484,11 +483,11 @@ char *jabber_digest(const char *sid, const char *password) {
 
 	SHA1Init(&ctx);
 
-	tmp = mutt_convert_string(sid, config_console_charset, "utf-8");
+	tmp = ekg_convert_string(sid, NULL, "utf-8");
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
-	tmp = mutt_convert_string(password, config_console_charset, "utf-8");
+	tmp = ekg_convert_string(password, NULL, "utf-8");
 	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
