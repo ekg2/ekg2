@@ -3,7 +3,6 @@
 
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
-#include <iconv.h>
 
 #define DBUS_ORG_FREEDESKTOP_IM_INTERFACE "org.freedesktop.im"
 
@@ -22,8 +21,6 @@ struct ekg2_dbus_iface_function {
 	DBusHandleMessageFunction handler;
 };
 typedef struct ekg2_dbus_iface_function ekg2_dbus_iface_function_t;
-
-char *mutt_convert_string (char *ps, const char *from, const char *to);
 
 #define EKG2_DBUS_CALL_HANDLER DBusMessage *reply; \
 		DBusMessageIter args; \

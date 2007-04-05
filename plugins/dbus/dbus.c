@@ -16,7 +16,6 @@
  */
 
 #include <errno.h>
-#include <iconv.h>
 #include <string.h>
 
 #include <ekg/debug.h>
