@@ -1,12 +1,35 @@
 Authors of EKG2:
 
-Wojtek	Kaniewski	<wojtekka[at]irc[dot]pl>
-Piotr	Kupisiewicz	<deletek[at]ekg2[dot]org>
-Maciej	Pietrzak	<mp[at]ekg2[dot]org>
-Tomasz	Torcz		<zdzichu[at]ekg2[dot]org>
-Micha³	Spadliñski	<gim[at]skrzynka[dot]pl>
-Jakub	Zawadzki	<darkjames[at]darkjames[dot]ath[dot]cx>
 Micha³	Górny		<peres[at]peres[dot]int[dot]pl>
+Wojtek	Kaniewski	<wojtekka[at]irc[dot]pl>
+Leszek	Krupiñski
+Adam	Kuczyñski
+Piotr	Kupisiewicz	<deletek[at]ekg2[dot]org>
+Adam	Mikuta
+Maciej	Pietrzak	<mp[at]ekg2[dot]org>
+Micha³	Spadliñski	<gim[at]skrzynka[dot]pl>
+Tomasz	Torcz		<zdzichu[at]ekg2[dot]org>
 
 No questions about this software should ever be sent to the authors.
 The questions should be sent to the mailing list ekg2-users@lists.ziew.org
+
+Special thanks goes to:
+
+Grzegorz Moszumañski 	- webmaster
+Maciej Kupisiewicz	- webmaster
+Marek Marczykowski	- jabber coder.
+Mateusz Samonek		- translator
+
+Instytut Fizyki Do¶wiadczalnej Uniwersytetu Wroc³awskiego
+
+TESTERS/BUG REPORTERS/IDEA GIVERS/and other stuff:
+
+Micha³ Jêczalik Jr
+Kacper Kwapisz
+Sebastan Szary
+Igor Truszkowski
+Kamil Winczek
+
+THX GUYS.
+
+// XXX, keep it synced with authors.php 
