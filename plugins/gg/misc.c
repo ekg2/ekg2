@@ -31,6 +31,7 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 #include <ekg/debug.h>
+#include <ekg/stuff.h>
 
 #include <ekg/queries.h>
 
@@ -165,6 +166,11 @@ unsigned char *gg_locale_to_cp(unsigned char *buf) {
 		return buf;
 	} else
 #endif
+	if (xstrcasecmp(config_console_charset, "ISO-8859-2")) {
+		char *out = ekg_convert_string(buf, NULL, "CP1250");
+		xfree(buf);
+		return out;
+	} else
 		return gg_iso_to_cp(buf);
 }
 
@@ -201,6 +207,11 @@ char *gg_cp_to_locale(unsigned char *buf) {
 		return newbuf;
 	} else
 #endif
+	if (xstrcasecmp(config_console_charset, "ISO-8859-2")) {
+		char *out = ekg_convert_string(buf, "CP1250", NULL);
+		xfree(buf);
+		return out;
+	} else
 		return gg_cp_to_iso(buf);
 }
 
