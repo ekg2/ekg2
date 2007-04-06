@@ -331,6 +331,7 @@ static void rss_fetch_error(rss_feed_t *f, const char *str) {
 	debug("rss_fetch_error() %s\n", str);
 	rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, xstrdup(str));
 }
+
 /* ripped from jabber plugin */
 static void rss_handle_start(void *data, const char *name, const char **atts) {
 	rss_fetch_process_t *j = data;

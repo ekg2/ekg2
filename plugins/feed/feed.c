@@ -63,7 +63,6 @@ static QUERY(feed_session) {
                 return -1;
 
 	if (s->plugin != &feed_plugin)
-
 		return 0;
 
 	if (data && !s->priv) {
@@ -265,10 +264,9 @@ void feed_set_statusdescr(userlist_t *u, int status, char *descr) {
 }
 
 static plugins_params_t feed_plugin_vars[] = {
-#warning "Sort it"
 /* common vars. */
-	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("alias",			SESSION_VAR_ALIAS, VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "1", 0, NULL),
 	/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
 	PLUGIN_VAR_ADD("display_mode",		0, VAR_INT, "3", 0, NULL),	
 
@@ -278,9 +276,6 @@ static plugins_params_t feed_plugin_vars[] = {
 			/* NNTP: */ 
 				"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
 			0, NULL),
-
-	/* 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
-	PLUGIN_VAR_ADD("make_window", 		0, VAR_INT, "2", 0, NULL),
 /* rss vars. */
 #ifdef HAVE_EXPAT
 	PLUGIN_VAR_ADD("display_server_headers", 0, VAR_STR, 
@@ -290,6 +285,8 @@ static plugins_params_t feed_plugin_vars[] = {
 		"Date: ",
 		0, NULL),
 #endif
+	/* [common var again] 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
+	PLUGIN_VAR_ADD("make_window", 		0, VAR_INT, "2", 0, NULL),
 /* nntp vars. */
 	PLUGIN_VAR_ADD("username",		0, VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
