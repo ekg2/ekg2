@@ -763,6 +763,8 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
 			xstrncat(newserver, oldserver, comma-oldserver);
 
 			session_set(s, "server", newserver);
+			
+			xfree(newserver);
 		}
 	}
 
