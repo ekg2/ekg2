@@ -25,23 +25,28 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 2;
+	const int current_config_version = 3;
 
 	if (config_version >= current_config_version)
 		return;
 	else
 		print("config_upgrade_begin");
 	
-	if (config_version == 0) /* jabber SASL behavior change */
-		print("config_upgrade_major", _("We've started using XMPP SASL AUTH by default, so if you're unable to connect to your favorite jabber server, please send us debug info and try to set (within appropriate session):\n\t/session disable_sasl 2"));
-	if (config_version <= 1) { /* display_ack values change */
-		print("config_upgrade_minor", _("Variable display_ack's values have been changed. An update is done to your settings, but please check the new values."));
+	switch (config_version) { /* versions MUST be sorted, break MUST NOT be used */
+		case 0: /* jabber SASL behavior change */
+			print("config_upgrade_major", _("We've started using XMPP SASL AUTH by default, so if you're unable to connect to your favorite jabber server, please send us debug info and try to set (within appropriate session):\n\t/session disable_sasl 2"));
 
-		switch (config_display_ack) {
-			case 1: config_display_ack = 31; break;
-			case 2: config_display_ack = 1; break;
-			case 3: config_display_ack = 2; break;
-		}
+		case 1: /* display_ack values change */
+			print("config_upgrade_minor", _("Variable display_ack's values have been changed. An update is done to your settings, but please check the new values."));
+
+			switch (config_display_ack) {
+				case 1: config_display_ack = 31; break;
+				case 2: config_display_ack = 1; break;
+				case 3: config_display_ack = 2; break;
+			}
+
+		case 2: /* allow_autoresponder session var */
+			print("config_upgrade_minor", _("'allow_autoresponder' session variables have been replaced by 'allowed_sessions' plugin variable. The same way future plugins will be enabled."));
 	}
 
 	config_version = current_config_version;

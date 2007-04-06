@@ -1547,7 +1547,6 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 
 static plugins_params_t gg_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL), 
-	PLUGIN_VAR_ADD("allow_autoresponder", 	SESSION_VAR_ALLOW_AUTORESPONDER, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_away", 		SESSION_VAR_AUTO_AWAY, VAR_INT, "600", 0, NULL),
 	PLUGIN_VAR_ADD("auto_away_descr", 	SESSION_VAR_AUTO_AWAY_DESCR, VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("auto_back", 		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),	

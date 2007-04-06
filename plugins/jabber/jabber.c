@@ -1425,7 +1425,6 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
 	/* '666' enabled for everyone (DON'T TRY IT!); '0' - disabled; '1' - enabled for the same id (allow from diffrent resources); '2' - enabled for allow_remote_control_jids (XXX) */
 	PLUGIN_VAR_ADD("allow_remote_control",	0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("allow_autoresponder",	SESSION_VAR_ALLOW_AUTORESPONDER, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_auth",		0, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_away", 		SESSION_VAR_AUTO_AWAY, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_away_descr",	SESSION_VAR_AUTO_AWAY_DESCR, VAR_STR, 0, 0, NULL),

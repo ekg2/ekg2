@@ -1,9 +1,9 @@
-question
+allowed_sessions
 	typ: tekst
 	domy¶lna warto¶æ: (brak)
 	
-	Pytanie, wysy³ane do nieznanych u¿ytkowników, w przypadku otrzymania
-	od nich wiadomo¶ci. Je¶li nieustawione, autoresponder bêdzie wy³±czony.
+	Oddzielona przecinkami lista sesji, dla których wtyczka autorespondera
+	bêdzie u¿ywana. Mo¿e zawieraæ zarówno UID-y, jak i aliasy.
 
 answer
 	typ: tekst
@@ -33,4 +33,11 @@ match_mode
 		1 - odpowied¼ musi zawieraæ siê w wiadomo¶ci
 	
 		2 - odpowied¼ jest wyra¿eniem regularnym (POSIX)
+
+question
+	typ: tekst
+	domy¶lna warto¶æ: (brak)
+	
+	Pytanie, wysy³ane do nieznanych u¿ytkowników, w przypadku otrzymania
+	od nich wiadomo¶ci. Je¶li nieustawione, autoresponder bêdzie wy³±czony.
 
