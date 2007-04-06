@@ -467,43 +467,14 @@ dnl  'logsoracle' plugin
 dnl
 dnl  Libs required:	pthread, clntsh
 dnl  Other:		$ORACLE_HOME must be set
-dnl
-
+dnl  Default state:	turned off
+dnl	
 AC_ARG_WITH([logsoracle],     [AC_HELP_STRING([--with-logsoracle], [log messages/status changes into an Oracle database @<:@default=no@:>@])],
 	    [with_logsoracle=yes],
 	    [with_logsoracle=no])
 
 if test "x$with_logsoracle" == "xyes"; then
-
-	dnl $have_pthread is defined by 'resolver libgadu'
-	if test "x$have_pthread" == "xyes"; then
-		if test -z "$ORACLE_HOME"; then
-			AC_MSG_WARN([logsoracle plugin requires enviroment variable ORACLE_HOME to be set (incomplete oracle installation?)]);
-		else
-			AC_SUBST(LOGS_ORACLE_LIBS)
-			AC_SUBST(LOGS_ORACLE_CFLAGS)
-			LOGS_ORACLE_LIBS="-L${ORACLE_HOME}/lib"		
-			LOGS_ORACLE_CFLAGS="-I${ORACLE_HOME}/rdbms/public"
-
-			AC_CHECK_LIB(clntsh, sqlcxt,[have_clntsh=yes],[have_clntsh=no])
-
-			if test "x$have_clntsh" == "xyes"; then	
-				AC_CHECK_HEADER(oci.h,[have_oci_h=yes],[have_oci_h=no])
-				if test "x$have_oci_h" != "xyes"; then
-					AC_MSG_WARN([logsoracle plugin : oracle headers not found (oci.h)]);
-				else										    
-					PLUGINS="$PLUGINS logsoracle"
-					AC_MSG_RESULT([logsoracle plugin : added to plugin list ])
-
-					have_logsoracle=yes;
-				fi
-			else
-				AC_MSG_WARN([logsoracle plugin : couldn't find libclntsh]);
-			fi	    
-		fi
-		else
-			AC_MSG_WARN([logsoracle plugin requires pthreads to work])
-	fi
+	AC_CHECK_ORACLE
 else
 	AC_MSG_RESULT([skipping logsoracle plugin])
 fi
