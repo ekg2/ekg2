@@ -114,6 +114,7 @@ void array_free_count(char **array, int count);
 /* rozszerzenia libców */
 
 const char *itoa(long int i);
+const char *cssfind(const char *haystack, const char *needle, const char *sep, int caseinsensitive);
 
 #endif
 

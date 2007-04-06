@@ -910,6 +910,33 @@ void array_free_count(char **array, int count) {
 	xfree(array);
 }
 
+/**
+ * cssfind()
+ *
+ * Short for comma-separated string find, does check whether given string contains given element.
+ * It's works like array_make()+array_contains(), but it's hell simpler and faster.
+ *
+ * @param haystack		- comma-separated string to search.
+ * @param needle		- searched element.
+ * @param sep			- separator.
+ * @param caseinsensitive	- take a wild guess.
+ *
+ * @return Pointer to found element on success, or NULL on failure.
+ */
+const char *cssfind(const char *haystack, const char *needle, const char *sep, int caseinsensitive) {
+	const char *r = (caseinsensitive ? xstrcasestr(haystack, needle) : xstrstr(haystack, needle));
+	const int needlelen = xstrlen(needle);
+	const int seplen = xstrlen(sep);
+		/* yep, this could be simpler and faster, but we're allowing multi-char sep, like array_make() */
+
+	if (!r /* found? */
+			|| ((r != haystack) && (xstrncmp(r-seplen, sep, seplen))) /* first elem or preceded by sep */
+			|| ((xstrncmp(r+needlelen, sep, seplen) && (*(r+needlelen) != '\0')))) /* last elem or followed by sep */
+		return NULL;
+
+	return r;
+}
+
 /*
  * Local Variables:
  * mode: c
