@@ -8,6 +8,8 @@
 #include <sys/un.h>
 #endif
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 
 #include <stdlib.h>
