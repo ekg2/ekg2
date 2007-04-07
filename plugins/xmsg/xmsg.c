@@ -528,6 +528,10 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		while ((de = readdir(d))) {
 			if (de->d_name[0] == '.')
 				continue;
+			if (xstrlen(de->d_name) > NAME_MAX) {
+				xdebug2("Filename longer than NAME_MAX (%s), skipping.", de->d_name);
+				continue;
+			}
 			xstrcpy(dp, de->d_name);
 			xstrcpy(dpd, de->d_name);
 			xstrcat(dpd, dfsuffix);
