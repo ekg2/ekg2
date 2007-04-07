@@ -190,7 +190,6 @@ static TIMER_SESSION(xmsg_iterate_dir)
 	DIR *d;
 	struct dirent *de;
 	int n = 0;
-	const int timerinterval = session_int_get(s, "rescan_timer");
 	const int maxn = session_int_get(s, "max_oneshot_files");
 
 	if (type || !s || !session_connected_get(s))
@@ -529,7 +528,7 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 			if (de->d_name[0] == '.')
 				continue;
 			if (xstrlen(de->d_name) > NAME_MAX) {
-				xdebug2("Filename longer than NAME_MAX (%s), skipping.", de->d_name);
+				xdebug2(DEBUG_ERROR, "Filename longer than NAME_MAX (%s), skipping.", de->d_name);
 				continue;
 			}
 			xstrcpy(dp, de->d_name);
