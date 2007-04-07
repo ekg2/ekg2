@@ -193,10 +193,7 @@ static TIMER_SESSION(xmsg_iterate_dir)
 	const int timerinterval = session_int_get(s, "rescan_timer");
 	const int maxn = session_int_get(s, "max_oneshot_files");
 
-	/* delete the timer if it's disabled (using session variable) or session was disconnected
-	 * warn: we're doing this really bad way; if user disabled main dirscan timer, we'll also
-	 * disable working oneshot thing; use with care */
-	if (type || !s || (timerinterval <= 0) || !session_connected_get(s))
+	if (type || !s || !session_connected_get(s))
 		return -1;
 	
 	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
