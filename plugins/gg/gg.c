@@ -574,7 +574,7 @@ static QUERY(gg_userlist_priv_handler) {
 
 				p->first_name 	= entry[0];	entry[0] = NULL;
 				p->last_name	= entry[1];	entry[1] = NULL;
-				p->mobile	= entry[4];	entry[4] = NULL; /* it'll be moved to private */
+				p->mobile	= entry[4];	entry[4] = NULL;
 				break;
 			}
 			case EKG_USERLIST_PRIVHANDLER_WRITING:
@@ -589,7 +589,7 @@ static QUERY(gg_userlist_priv_handler) {
 					xfree(entry[1]);
 					entry[1] = xstrdup(p->last_name);
 				}
-				if (p->mobile) { /* see above */
+				if (p->mobile) {
 					xfree(entry[4]);
 					entry[4] = xstrdup(p->mobile);
 				}
@@ -602,9 +602,9 @@ static QUERY(gg_userlist_priv_handler) {
 
 				if (!xstrcmp(name, "mobile"))
 					*r = p->mobile;
-				if (!xstrcmp(name, "ip"))
+				else if (!xstrcmp(name, "ip"))
 					*r = inet_ntoa(*((struct in_addr*) &p->ip));
-				if (!xstrcmp(name, "port"))
+				else if (!xstrcmp(name, "port"))
 					*r = itoa(p->port);
 				break;
 			}
@@ -615,6 +615,23 @@ static QUERY(gg_userlist_priv_handler) {
 
 				*ip	= inet_ntoa(*((struct in_addr*) &p->ip));
 				*port	= itoa(p->port);
+				break;
+			}
+			case EKG_USERLIST_PRIVHANDLER_SETVAR_BYNAME:
+			{
+				const char *name	= *va_arg(ap, const char **);
+				const char *val		= *va_arg(ap, const char **);
+
+				if (!xstrcmp(name, "first_name")) {
+					xfree(p->first_name);
+					p->first_name = xstrdup(val);
+				} else if (!xstrcmp(name, "last_name")) {
+					xfree(p->last_name);
+					p->last_name = xstrdup(val);
+				} else if (!xstrcmp(name, "mobile")) {
+					xfree(p->mobile);
+					p->mobile = xstrdup(val);
+				}
 				break;
 			}
 		}

@@ -502,7 +502,6 @@ COMMAND(gg_command_remind)
 
 COMMAND(gg_command_list)
 {
-/* moze mi ktos qrwa powiedziec po co bylo to passwd ? tylko byly memleaki i jakies goto.... */
 	gg_private_t *g = session_private_get(session);
 	/* list --get */
 	if (params[0] && match_arg(params[0], 'g', ("get"), 2)) {
