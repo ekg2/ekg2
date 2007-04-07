@@ -100,7 +100,7 @@ enum userlist_privhandler_func_t {
 							 *	args should be one char*** for IP,
 							 *	and the second one for port */
 
-	EKG_USERLIST_PRIVHANDLER,SETVAR_BYNAME	= 0xC0,	/**< Set private 'variable' by name, args care char** with var name
+	EKG_USERLIST_PRIVHANDLER_SETVAR_BYNAME	= 0xC0,	/**< Set private 'variable' by name, args care char** with var name
 							 *	and char** with value (will be duplicated) */
 };
 
