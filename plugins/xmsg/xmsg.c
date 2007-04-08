@@ -166,8 +166,11 @@ static WATCHER(xmsg_handle_data)
 					const int i = session_int_get(s, "oneshot_resume_timer");
 					if (!timer_remove_session(s, "o"))
 						xdebug("old oneshot resume timer removed");
-					if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
+					if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir)) {
 						xdebug("oneshot resume timer added");
+						session_status_set(s, EKG_STATUS_AWAY);
+					} else
+						session_status_set(s, EKG_STATUS_AVAIL);
 					c = -1;
 				}
 			}
@@ -195,6 +198,7 @@ static TIMER_SESSION(xmsg_iterate_dir)
 	if (type || !s || !session_connected_get(s))
 		return -1;
 	
+	session_status_set(s, EKG_STATUS_AVAIL);
 	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
 	d = opendir(dir);
 	xfree(dir);
@@ -212,6 +216,7 @@ static TIMER_SESSION(xmsg_iterate_dir)
 			const int i = session_int_get(s, "oneshot_resume_timer");
 			if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
 				xdebug("oneshot resume timer added");
+			session_status_set(s, EKG_STATUS_AWAY);
 			break;
 		}
 	}
@@ -220,6 +225,25 @@ static TIMER_SESSION(xmsg_iterate_dir)
 
 	return 0;
 #undef s
+#undef __FUNC__
+}
+
+static QUERY(xmsg_handle_sigusr)
+{
+#define __FUNC__ "xmsg_handle_sigusr"
+	list_t sp;
+	session_t *s;
+
+	for (sp = sessions; sp; sp = sp->next) {
+		s = sp->data;
+
+		if (!timer_remove_session(s, "o"))
+			xdebug("old oneshot resume timer removed");
+		if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
+			xmsg_iterate_dir(0, (void*) s);
+	}
+
+	return 0;
 #undef __FUNC__
 }
 
@@ -583,7 +607,7 @@ static COMMAND(xmsg_msg)
 #undef XERRADD
 #define XERRADD xfree(fn);
 	
-	fd = mkstemp(fn); /* XXX: we are including the correct file, so wtf?! */
+	fd = mkstemp(fn);
 	if (fd == -1)
 		xerrn("Unable to create temp file");
 #undef XERRADD
@@ -677,6 +701,7 @@ int xmsg_plugin_init(int prio)
 	plugin_register(&xmsg_plugin, prio);
 
 	query_connect_id(&xmsg_plugin, PROTOCOL_VALIDATE_UID, xmsg_validate_uid, NULL);
+	query_connect_id(&xmsg_plugin, EKG_SIGUSR1, xmsg_handle_sigusr, NULL);
 
 #define XMSG_CMDFLAGS SESSION_MUSTBELONG
 #define XMSG_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET|SESSION_MUSTBECONNECTED
