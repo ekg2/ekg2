@@ -1053,7 +1053,27 @@ int watch_handle_write(watch_t *w) {
 		watch_free(w);
 #endif
 		return -1;
-	} else if (res == len) {
+	}
+	
+	if (res > len) {
+		/* use debug_fatal() */
+		/* debug_fatal() should do:
+		 *	- print this info to all open windows with RED color
+		 *	- change some variable 'ekg2_need_restart' to 1.
+		 *	- @ ncurses if we have ekg2_need_restart set, and if colors turned on, change from blue to red..
+		 *	- and do other happy stuff.
+		 *
+		 * XXX, implement and use it. It should be used as ASSERT()
+		 */
+		
+		debug_error("watch_write(): handler returned bad value, 0x%x vs 0x%x\n", res, len);
+		res = len;
+	} else if (res < 0) {
+		debug_error("watch_write(): handler returned negative value other than -1.. XXX\n");
+		res = 0;
+	}
+
+	if (res == len) {
 		string_clear(w->buf);
 	} else {
 		memmove(w->buf->str, w->buf->str + res, len - res);
