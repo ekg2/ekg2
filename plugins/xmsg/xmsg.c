@@ -346,6 +346,14 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 			char *seq	= NULL;
 			int dobeep	= EKG_TRY_BEEP;
 			int secure	= 0;
+			char *msgx	= NULL;
+
+			{
+				const char *charset = session_get(s, "charset");
+
+				if (charset)
+					msgx = ekg_convert_string(msg, charset, NULL);
+			}
 
 			xstrcpy(uid, "xmsg:");
 			xstrcat(uid, fn);
@@ -361,8 +369,9 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 					*q = '\0';
 			}
 
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid, &rcpts, &msg, &format, &sent, &class, &seq, &dobeep, &secure);
+			query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid, &rcpts, (msgx ? &msgx : &msg), &format, &sent, &class, &seq, &dobeep, &secure);
 
+			xfree(msgx);
 			xfree(uid);
 			xfree(session);
 		}
@@ -591,9 +600,10 @@ static COMMAND(xmsg_msg)
 	int fd;
 	char *msg = (char*) params[1];
 	char *uid;
-	int fs = xstrlen(msg);
+	int fs;
 	int n;
 	const char *msgcmd = session_get(session, "send_cmd");
+	char *msgx = NULL, *mymsg;
 	
 	if (!(uid = get_uid(session, target)))
 		uid = (char*) target;
@@ -610,14 +620,24 @@ static COMMAND(xmsg_msg)
 	fd = mkstemp(fn);
 	if (fd == -1)
 		xerrn("Unable to create temp file");
+	{
+		const char *charset = session_get(session, "charset");
+
+		if (charset) {
+			msgx = ekg_convert_string(msg, NULL, charset);
+			mymsg = msgx;
+		} else
+			mymsg = msg;
+	}
+	fs = xstrlen(mymsg);
 #undef XERRADD
-#define XERRADD close(fd); unlink(fn); xfree(fn);
+#define XERRADD close(fd); unlink(fn); xfree(fn); xfree(msgx);
 
 	while (fs > 0) {
-		if ((n = write(fd, msg, fs)) == -1)
+		if ((n = write(fd, mymsg, fs)) == -1)
 			xerrn("Unable to write message into temp file");
 		fs -= n;
-		msg += n;
+		mymsg += n;
 	}
 	
 	close(fd);
@@ -673,6 +693,7 @@ static int xmsg_theme_init(void)
 
 static plugins_params_t xmsg_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_connect",		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("charset",		0, VAR_STR, "", 0, NULL),
 	PLUGIN_VAR_ADD("dotfile_suffix",	0, VAR_STR, "", 0, NULL),
 	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
 	PLUGIN_VAR_ADD("max_filesize", 		0, VAR_INT, XMSG_MAXFS_DEF, 0, NULL),
