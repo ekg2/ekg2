@@ -207,7 +207,6 @@ char *userlist_dump(session_t *session)
 		array_add(&entry, xstrdup(""));				/* mobile [gg] */
 		array_add(&entry, group_to_string(u->groups, 1, 0));	/* groups (alloced itself) */
 		array_add(&entry, mydup(u->uid));			/* uid */
-		array_add(&entry, mydup(u->foreign));			/* backwards compatibility */
 #undef mydup
 		{
 			int function = EKG_USERLIST_PRIVHANDLER_WRITING;
@@ -216,8 +215,11 @@ char *userlist_dump(session_t *session)
 		}
 
 		line = array_join(entry, ";");
-		
+
 		string_append(s, line);
+		if (u->foreign)
+			string_append(s, u->foreign);						/* backwards compatibility */
+
 		string_append(s, "\n");
 
 		xfree(line);
