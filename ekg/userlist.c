@@ -194,6 +194,46 @@ char *userlist_dump(session_t *session)
 	string_t s;
 	list_t l;
 
+/* XXX, we currently break compatibility with all gadu-gadu clients like:
+ * 	ekg1, kadu, gnugadu and even with gadu-gadu.exe
+ *	
+ *	And only we write uid in format gg:number, so I think there're two ways:
+ *		- restore compatibility
+ *		- create our own format, because it's ugly.. [for instance: http://lists.ziew.org/mailman/pipermail/ekg2-devel/2007-April/001067.html]
+ *	
+ *	I think we can build it on top of metacontacts... so let's remove metacontacts. Create api for addrbook [in core, not as plugin]
+ *
+ *	And there have info:
+ *
+ * global info:
+ *		name:		realname of contact
+ *		nickname:	nickname
+ *		display:	in what format we want to display it on userlist
+ *
+ * communication uids:
+ *		phone1		(...) ......
+ * 		email1		
+ *		uid1		best_session_to_communicate_with_this_uid1
+ *		uid2		best_session_to_communicate_with_this_uid2
+ *		nextuid		...
+ *
+ *	Yeah, phone1, email1 also as uid. because i think we'll have plugin to support it also.
+ *
+ *	So:
+ *		always save/restore all data [it'll be easy coz of list_t]
+ *		if user want to add new data, first check if any plugin can handle with this data.
+ *		if user type /list display if any plugin can handle this data if yes -> display in GREEN.
+ *			if not -> display in RED.
+ *			If user is available/ unavailable display also status.
+ */
+
+
+/* 
+ *	XXX, in gg plugin, we use userlist_dump() but it's only for ekg2... all other programs will fail to restore contacts written by ekg2.
+ *		This function will be used ONLY to write userlist to file. and it'll be in other format. And it won't return any data. implement proper
+ *		function in gg plugin.
+ */
+
 	s = string_init(NULL);
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
