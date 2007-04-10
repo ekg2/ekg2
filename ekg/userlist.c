@@ -229,7 +229,7 @@ char *userlist_dump(session_t *session)
 
 
 /* 
- *	XXX, in gg plugin, we use userlist_dump() but it's only for ekg2... all other programs will fail to restore contacts written by ekg2.
+ *	XXX, in gg plugin, we use userlist_dump() but it's only for ekg2... all other programs will fail to restore contacts exported to gg server by ekg2.
  *		This function will be used ONLY to write userlist to file. and it'll be in other format. And it won't return any data. implement proper
  *		function in gg plugin.
  */
