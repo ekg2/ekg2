@@ -1499,9 +1499,9 @@ void theme_init()
 
 	/* config_upgrade() */
 	format_add("config_upgrade_begin", _("%) EKG2 upgrade detected. In the meantime, following changes were made:\n"), 1);
-	format_add("config_upgrade_important", "%) %y*%n %1\n", 1);
-	format_add("config_upgrade_major", "%) %Y*%n %1\n", 1);
-	format_add("config_upgrade_minor", "%) %c*%n %1\n", 1);
+	format_add("config_upgrade_important",	"%) %W%2) %y*%n %1\n", 1);
+	format_add("config_upgrade_major",	"%) %W%2) %Y*%n %1\n", 1);
+	format_add("config_upgrade_minor",	"%) %W%2) %c*%n %1\n", 1);
 	format_add("config_upgrade_end", _("%) To make configuration upgrade permament, please save your configuration: %c/save%n\n"), 1);
 
 	/* rejestracja nowego numeru */
