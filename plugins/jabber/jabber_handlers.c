@@ -2729,7 +2729,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 			int port 	= 0;
 
 			if (!when) when = time(NULL);
-			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &host, &port, &when, NULL);
+			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
 			
 			xfree(session);
 /*			xfree(host); */

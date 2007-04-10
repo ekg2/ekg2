@@ -877,7 +877,7 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		}
 
 	}
-	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &when, NULL);
+	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &when);
 
 	xfree(__descr);
 	xfree(__uid);
@@ -1125,7 +1125,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 									int port	= 0;
 									time_t when	= time(NULL);
 									
-									query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &host, &port, &when, NULL);
+									query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
 									
 									xfree(session);
 									xfree(uid);
