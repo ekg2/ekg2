@@ -102,6 +102,7 @@ char *string_free(string_t s, int free_string);
 /* tablice stringow */
 char **array_make(const char *string, const char *sep, int max, int trim, int quotes);
 char *array_join(char **array, const char *sep);
+char *array_join_count(char **array, const char *sep, int count);
 
 void array_add(char ***array, char *string);
 void array_add_check(char ***array, char *string, int casesensitive);

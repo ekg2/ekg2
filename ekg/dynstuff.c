@@ -824,6 +824,24 @@ char *array_join(char **array, const char *sep)
 	return string_free(s, 0);
 }
 
+char *array_join_count(char **array, const char *sep, int count) {
+	string_t s = string_init(NULL);
+
+	if (array) {
+		int i;
+
+		for (i = 0; i < count; i++) {
+			if (array[i])
+				string_append(s, array[i]);
+			
+			if (i != count-1)	
+				string_append(s, sep);
+		}
+	}
+
+	return string_free(s, 0);
+}
+
 /*
  * array_contains()
  *
