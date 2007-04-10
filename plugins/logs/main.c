@@ -647,6 +647,7 @@ int logs_plugin_init(int prio) {
 	query_connect_id(&logs_plugin, PROTOCOL_STATUS, logs_status_handler, NULL);
 	query_connect_id(&logs_plugin, CONFIG_POSTINIT, logs_postinit, NULL);
 	query_connect_id(&logs_plugin, SESSION_STATUS,	logs_sestatus_handler, NULL);
+	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
 
 	/* TODO: moze zmienna sesyjna ? ;> */
 	variable_add(&logs_plugin, ("away_log"), VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
@@ -671,10 +672,11 @@ int logs_plugin_init(int prio) {
 }
 
 static int logs_plugin_destroy() {
-	list_t l = log_logs;
+	list_t old_logs = log_logs;
+	list_t l;
 
-	for (l = log_logs; l; l = l->next) {
-		logs_log_t *ll = l->data;
+	for (; log_logs; log_logs = log_logs->next) {
+		logs_log_t *ll = log_logs->data;
 		FILE *f = NULL;
 		time_t t = time(NULL);
 		int ff = (ll->lw) ? ll->lw->logformat : logs_log_format(session_find(ll->session));
@@ -682,13 +684,13 @@ static int logs_plugin_destroy() {
 		/* TODO: rewrite */
 		if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
 			char *path	= (ll->lw) ? xstrdup(ll->lw->path) : logs_prepare_path(session_find(ll->session), config_logs_path, ll->uid, t);
-			f		= (ll->lw) ? logs_window_close(l->data, 0) : NULL; 
+			f		= (ll->lw) ? logs_window_close(log_logs->data, 0) : NULL; 
 
 			if (!f) 
 				f = logs_open_file(path, ff);
 			xfree(path);
 		} else 
-			logs_window_close(l->data, 1);
+			logs_window_close(log_logs->data, 1);
 
 		if (f) {
 			if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
@@ -702,7 +704,7 @@ static int logs_plugin_destroy() {
 		xfree(ll->session);
 		xfree(ll->uid);
 	}
-	list_destroy(log_logs, 1);
+	list_destroy(old_logs, 1);	log_logs = NULL;
 
 	for (l = log_awaylog; l;) {
 		log_away_t *a = l->data;
@@ -846,6 +848,28 @@ static FILE* logs_open_file(char *path, int ff) {
 		errno = EACCES; /* = 0 ? */
 		return NULL;
 	}
+
+	{	/* check if such file was already open SLOW :( */
+		list_t l;
+
+		for (l=log_logs; l; l = l->next) {
+			logs_log_t *ll = l->data;
+			log_window_t *lw;
+
+			if (!ll || !(lw = ll->lw))
+				continue;
+
+/*			debug_error("here: %x [%s, %s] [%d %d]\n", lw->file, lw->path, path, lw->logformat, ff); */
+
+			if (lw->file && lw->logformat == ff && !xstrcmp(lw->path, path)) {
+				FILE *f = lw->file;
+				lw->file = NULL;	/* simulate fclose() on this */
+				return f;		/* simulate fopen() here */
+			}
+		}
+	}
+
+
 	xstrncpy(fullname, path, PATH_MAX);
 
 	if (mkdir_recursive(path, 0)) {
