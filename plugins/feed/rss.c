@@ -367,8 +367,10 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
-		for (i = 0; i < arrcount; i++)
-			newnode->atts[i] = ekg_convert_string(atts[i], j->no_unicode, NULL);
+		for (i = 0; i < arrcount; i++) {
+			const char *s = ekg_convert_string(atts[i], j->no_unicode, NULL);
+			newnode->atts[i] = (s ? s : xstrdup(atts[i]));
+		}
 	} else	newnode->atts = NULL; 
 
 	j->node = newnode;
@@ -443,7 +445,10 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 		char *tmp = recode;
 
 		recode = ekg_convert_string(recode, j->no_unicode, NULL);
-		xfree(tmp);
+		if (!recode)
+			recode = tmp;
+		else
+			xfree(tmp);
 	}
 
 	string_append(n->data, recode);

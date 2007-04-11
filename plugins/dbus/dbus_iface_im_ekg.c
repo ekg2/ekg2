@@ -30,7 +30,7 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_ekg2_getSessions)
 		EKG2_DBUS_ADD_STRING(&(s->status));
 		/* XXX convert to utf before sending, d-bus sux? XXX */
 		tmp = ekg_convert_string (s->descr, NULL, "utf-8");
-		EKG2_DBUS_ADD_STRING(&tmp);
+		EKG2_DBUS_ADD_STRING(tmp ? &tmp : &(s->descr));
 		xfree(tmp);
 	}
 

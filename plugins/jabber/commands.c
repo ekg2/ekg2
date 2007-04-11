@@ -549,8 +549,9 @@ static COMMAND(jabber_command_msg)
 			char *htmlmsg, *tmp;
 			
 			if (!config_use_unicode) { /* it is important to have utf8 here */
-				if (!(msg = ekg_convert_string(msg, NULL, "utf-8")))
-					break;
+				const char *s = ekg_convert_string(msg, NULL, "UTF-8");
+				if (s)
+					msg = s;
 			}
 			if ((htmlmsg = utfstrchr(msg, 18))) { /* ^R */
 				*(htmlmsg++) = 0;

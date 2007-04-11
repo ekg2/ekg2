@@ -221,10 +221,9 @@ char *jabber_escape(const char *text) {
 	if (config_use_unicode)
 		return xml_escape(text);
 
-	if (!(utftext = ekg_convert_string(text, NULL, "utf-8")))
-		return NULL;
+	utftext = ekg_convert_string(text, NULL, "utf-8");
 
-	res = xml_escape(utftext);
+	res = xml_escape(utftext ? utftext : text);
         xfree(utftext);
 	return res;
 }
@@ -245,12 +244,14 @@ char *jabber_escape(const char *text) {
  */
 
 char *jabber_unescape(const char *text) {
+	const char *s;
 	if (!text)
 		return NULL;
 	if (config_use_unicode)
 		return xstrdup(text);
+	s = ekg_convert_string(text, "utf-8", NULL);
 
-	return ekg_convert_string(text, "utf-8", NULL);
+	return (s ? s : xstrdup(text));
 }
 
 /**
@@ -279,7 +280,8 @@ char *tlen_encode(const char *what) {
 
 	if (xstrcasecmp(config_console_charset, "ISO-8859-2"))
 		s = text = ekg_convert_string(what, NULL, "ISO-8859-2");
-	else	s = what;
+	if (!text)
+		s = what;
 
 	str = ptr = (unsigned char *) xcalloc(3 * xstrlen(s) + 1, 1);
 	while (*s) {
@@ -337,7 +339,8 @@ char *tlen_decode(const char *what) {
 	*dest = '\0';
 	if (!xstrcasecmp(config_console_charset, "ISO-8859-2")) return retval;
 
-	text = ekg_convert_string(retval, "ISO-8859-2", NULL);
+	if (!(text = ekg_convert_string(retval, "ISO-8859-2", NULL)))
+		return retval;
 	xfree(retval);
 	return text;
 }

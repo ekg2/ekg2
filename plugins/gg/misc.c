@@ -168,7 +168,10 @@ unsigned char *gg_locale_to_cp(unsigned char *buf) {
 #endif
 	if (xstrcasecmp(config_console_charset, "ISO-8859-2")) {
 		char *out = ekg_convert_string(buf, NULL, "CP1250");
-		xfree(buf);
+		if (out)
+			xfree(buf);
+		else
+			out = buf;
 		return out;
 	} else
 		return gg_iso_to_cp(buf);
@@ -209,7 +212,10 @@ char *gg_cp_to_locale(unsigned char *buf) {
 #endif
 	if (xstrcasecmp(config_console_charset, "ISO-8859-2")) {
 		char *out = ekg_convert_string(buf, "CP1250", NULL);
-		xfree(buf);
+		if (out)
+			xfree(buf);
+		else
+			out = buf;
 		return out;
 	} else
 		return gg_cp_to_iso(buf);

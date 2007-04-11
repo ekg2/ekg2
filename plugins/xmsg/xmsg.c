@@ -623,11 +623,9 @@ static COMMAND(xmsg_msg)
 	{
 		const char *charset = session_get(session, "charset");
 
-		if (charset) {
+		if (charset)
 			msgx = ekg_convert_string(msg, NULL, charset);
-			mymsg = msgx;
-		} else
-			mymsg = msg;
+		mymsg = (msgx ? msgx : msg);
 	}
 	fs = xstrlen(mymsg);
 #undef XERRADD
