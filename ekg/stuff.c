@@ -118,6 +118,7 @@ char *config_sound_sysmsg_file = NULL;
 char *config_sound_mail_file = NULL;
 char *config_sound_app = NULL;
 int config_use_unicode;
+int config_use_iso;
 int config_changed = 0;
 int config_display_ack = 12;
 int config_completion_notify = 1;

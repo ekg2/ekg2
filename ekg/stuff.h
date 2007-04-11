@@ -227,6 +227,7 @@ extern int config_time_deviation;
 extern char *config_timestamp;
 extern int config_timestamp_show;
 extern int config_use_unicode; 	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
+extern int config_use_iso;  /* this for ncurses */
 extern char *config_console_charset;	/* */
 extern char *config_windows_layout;
 extern int config_windows_save;

@@ -794,6 +794,7 @@ void ncurses_redraw(window_t *w)
 #warning "XXX ?"
 				!config_use_unicode && 
 #endif
+				config_use_iso &&
 				ch > 127 && ch < 160
 			   ) 
 			{
@@ -1454,7 +1455,7 @@ void ncurses_init()
 	cbreak();
 	noecho();
 	nonl();
-#ifdef NCURSES_ULC
+#ifdef HAVE_NCURSES_ULC
 		/* we already escape control chars, so we can do it this way */
 	use_legacy_coding(2);
 #endif
