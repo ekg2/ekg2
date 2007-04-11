@@ -948,8 +948,8 @@ const char *cssfind(const char *haystack, const char *needle, const char *sep, i
 		/* yep, this could be simpler and faster, but we're allowing multi-char sep, like array_make() */
 
 	if (!r /* found? */
-			|| ((r != haystack) && (xstrncmp(r-seplen, sep, seplen))) /* first elem or preceded by sep */
-			|| ((xstrncmp(r+needlelen, sep, seplen) && (*(r+needlelen) != '\0')))) /* last elem or followed by sep */
+			|| (((int) (r-haystack) >= seplen) && (xstrncmp(r-seplen, sep, seplen))) /* first elem or preceded by sep */
+			|| ((*(r+needlelen) != '\0') && (xstrncmp(r+needlelen, sep, seplen)))) /* last elem or followed by sep */
 		return NULL;
 
 	return r;
