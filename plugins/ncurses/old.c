@@ -1454,7 +1454,11 @@ void ncurses_init()
 	cbreak();
 	noecho();
 	nonl();
-	
+#ifdef NCURSES_ULC
+		/* we already escape control chars, so we can do it this way */
+	use_legacy_coding(2);
+#endif
+
 	if (config_display_transparent) {
 		background = COLOR_DEFAULT;
 		use_default_colors();
