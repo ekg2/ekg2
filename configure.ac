@@ -676,4 +676,12 @@ echo -en " - Plugins:\t "
 	fi
  
 echo 
- 
+if test "x$am_cv_func_iconv" != "xyes"; then
+	echo "******************"
+	echo "* BIG FAT WARNING"
+	echo "* EKG2 will be compiled without iconv support. This means most charset"
+	echo "* conversion magic won't work. Jabber would work only on UTF-8 systems, and GG"
+	echo "* only on UTF-8, ISO-8859-2 or CP1250 ones. If you want something more, get"
+	echo "* yourself some iconv. Else, have fun."
+	echo "******************"
+fi
