@@ -1763,8 +1763,7 @@ JABBER_HANDLER_RESULT(jabber_handle_gmail_result_mailbox) {
 					xmlnode_t *senders;
 
 					for (senders = subchild->children; senders; senders = senders->next) {
-						/* XXX, unescape */
-						char *aname = jabber_attr(senders->atts, "name");
+						char *aname = jabber_unescape(jabber_attr(senders->atts, "name"));
 						char *amail = jabber_attr(senders->atts, "address");
 
 						if (!firstsender)
@@ -1779,6 +1778,7 @@ JABBER_HANDLER_RESULT(jabber_handle_gmail_result_mailbox) {
 						}
 
 						firstsender = 0;
+						xfree(aname);
 					}
 				} else if (!xstrcmp(subchild->name, "labels")) {	/* <labels>        | 
 											   A tag that contains a pipe ('|') delimited list of labels applied to this thread. */
