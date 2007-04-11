@@ -50,6 +50,11 @@ AC_DEFUN([AC_CHECK_NCURSES],
 				AC_DEFINE([HAVE_NCURSES], 1, [define if you have ncurses])
 				NCURSES_LIBS="$NCURSES_LIBS -l$NLIBRARY"
 				have_ncurses="yes"
+
+				AC_CHECK_LIB([$NLIBRARY], [use_legacy_coding],
+				[
+					AC_DEFINE([HAVE_NCURSES_ULC], 1, [define if your ncurses has use_legacy_coding()])
+				])
 			])
 		fi
 
