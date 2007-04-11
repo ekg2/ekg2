@@ -2681,6 +2681,7 @@ void inline ekg_yield_cpu()
 #endif
 }
 
+#ifdef HAVE_ICONV
 /* Following two functions shamelessly ripped from mutt-1.4.2i 
  * (http://www.mutt.org, license: GPL)
  * 
@@ -2793,6 +2794,7 @@ inline char *mutt_convert_string (const char *ps, const char *from, const char *
 }
 
 /* End of code taken from mutt. */
+#endif /*HAVE_ICONV*/
 
 /**
  * ekg_convert_string()
@@ -2807,12 +2809,16 @@ inline char *mutt_convert_string (const char *ps, const char *from, const char *
  * 			or when both encodings are equal.
  */
 char *ekg_convert_string (const char *ps, const char *from, const char *to) {
-		/* (from==to==NULL) checking should be caller-side */
+#ifdef HAVE_ICONV
+			/* (from==to==NULL) checking should be caller-side */
 	if (!xstrcasecmp(from, to))
 		return NULL;
 
 	return mutt_convert_string(ps, (from ? from : config_console_charset),
 			(to ? to : config_console_charset));
+#else
+	return NULL;
+#endif /*HAVE_ICONV*/ 
 }
 
 /*
