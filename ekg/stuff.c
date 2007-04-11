@@ -2802,14 +2802,14 @@ inline char *mutt_convert_string (const char *ps, const char *from, const char *
  * @param from		- input encoding (if NULL, console_charset will be assumed).
  * @param to		- output encoding (if NULL, console_charset will be assumed).
  *
- * @return	Pointer to allocated result on success, NULL on failure.
+ * @return	Pointer to allocated result on success, NULL on failure
+ * 			or when both encodings are equal.
  */
 char *ekg_convert_string (const char *ps, const char *from, const char *to) {
-	debug_function("ekg_convert_string[]: from %s to %s, s = %s\n",
-		(from ? from : config_console_charset),
-		(to ? to : config_console_charset),
-		ps);
-	
+		/* (from==to==NULL) checking should be caller-side */
+	if (!xstrcasecmp(from, to))
+		return NULL;
+
 	return mutt_convert_string(ps, (from ? from : config_console_charset),
 			(to ? to : config_console_charset));
 }
