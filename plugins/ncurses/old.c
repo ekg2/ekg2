@@ -1456,8 +1456,12 @@ void ncurses_init()
 	noecho();
 	nonl();
 #ifdef HAVE_NCURSES_ULC
-		/* we already escape control chars, so we can do it this way */
-	use_legacy_coding(2);
+	if (!config_use_iso &&
+#if USE_UNICODE
+			!config_use_unicode
+#endif
+			)
+		use_legacy_coding(2);
 #endif
 
 	if (config_display_transparent) {
