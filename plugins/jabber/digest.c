@@ -35,6 +35,8 @@ A million repetitions of "a"
 #include <stdio.h>
 #include <string.h>
 
+extern void *jconv_out; /* misc.c */
+
 typedef struct {
     uint32_t state[5];
     uint32_t count[2];
@@ -375,10 +377,10 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	char *kd;
 
 /* ZERO STEP -> recode */
-	if (!(convnode = ekg_convert_string(sid, NULL, "utf-8")))
+	if (!(convnode = ekg_convert_string_p(sid, jconv_out)))
 		convnode = xstrdup(sid);
 
-	if (!(convpasswd = ekg_convert_string(password, NULL, "utf-8")))
+	if (!(convpasswd = ekg_convert_string_p(password, jconv_out)))
 		convpasswd = xstrdup(password);
 
 /* FIRST STEP */
@@ -483,11 +485,11 @@ char *jabber_digest(const char *sid, const char *password) {
 
 	SHA1Init(&ctx);
 
-	tmp = ekg_convert_string(sid, NULL, "utf-8");
+	tmp = ekg_convert_string_p(sid, jconv_out);
 	SHA1Update(&ctx, (tmp ? tmp : sid), xstrlen(tmp ? tmp : sid));
 	xfree(tmp);
 
-	tmp = ekg_convert_string(password, NULL, "utf-8");
+	tmp = ekg_convert_string_p(password, jconv_out);
 	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : sid));
 	xfree(tmp);
 

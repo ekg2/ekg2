@@ -67,6 +67,8 @@
 #include "jabber.h"
 #include "jabber_dcc.h"
 
+extern void *jconv_out; /* for msg */
+
 static COMMAND(jabber_command_dcc) {
 	jabber_private_t *j = session_private_get(session);
 
@@ -549,7 +551,7 @@ static COMMAND(jabber_command_msg)
 			char *htmlmsg, *tmp;
 			
 			if (!config_use_unicode) { /* it is important to have utf8 here */
-				const char *s = ekg_convert_string(msg, NULL, "UTF-8");
+				const char *s = ekg_convert_string_p(msg, jconv_out);
 				if (s)
 					msg = s;
 			}
