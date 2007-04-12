@@ -356,7 +356,11 @@ char *ekg_draw_descr(const int status);
 uint32_t *ekg_sent_message_format(const char *text);
 
 void ekg_yield_cpu();
-char *ekg_convert_string (const char *ps, const char *from, const char *to);
+
+void *ekg_convert_string_init(const char *from, const char *to, void **rev);
+void ekg_convert_string_destroy(void *ptr);
+char *ekg_convert_string_p(const char *ps, void *ptr);
+char *ekg_convert_string(const char *ps, const char *from, const char *to);
 
 /* funkcje poza stuff.c */
 void ekg_exit();
