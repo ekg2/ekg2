@@ -37,6 +37,9 @@
 
 #include "gg.h"
 
+void *conv_in	= (void*) -1;
+void *conv_out	= (void*) -1;
+
 gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u) {
 	int func			= EKG_USERLIST_PRIVHANDLER_GET;
 	gg_userlist_private_t *up	= NULL;
@@ -111,8 +114,6 @@ static unsigned char *gg_iso_to_cp(unsigned char *buf) {
 }
 
 #if USE_UNICODE
-extern int config_use_unicode;	/* stuff.h */
-
 static const unsigned short table_cp1250[] = {
 	0x20ac, 0x0000, 0x201a, 0x0000, 0x201e, 0x2026, 0x2020, 0x2021, 
 	0x0000, 0x2030, 0x0160, 0x2039, 0x015a, 0x0164, 0x017d, 0x0179, 
@@ -131,7 +132,6 @@ static const unsigned short table_cp1250[] = {
 	0x0111, 0x0144, 0x0148, 0x00f3, 0x00f4, 0x0151, 0x00f6, 0x00f7, 
 	0x0159, 0x016f, 0x00fa, 0x0171, 0x00fc, 0x00fd, 0x0163, 0x02d9, 
 };
-
 #endif
 
 unsigned char *gg_locale_to_cp(unsigned char *buf) {
@@ -166,8 +166,8 @@ unsigned char *gg_locale_to_cp(unsigned char *buf) {
 		return buf;
 	} else
 #endif
-	if (xstrcasecmp(config_console_charset, "ISO-8859-2")) {
-		char *out = ekg_convert_string(buf, NULL, "CP1250");
+	if (conv_out != (void*) -1) {
+		char *out = ekg_convert_string_p(buf, conv_out);
 		if (out)
 			xfree(buf);
 		else
@@ -210,8 +210,8 @@ char *gg_cp_to_locale(unsigned char *buf) {
 		return newbuf;
 	} else
 #endif
-	if (xstrcasecmp(config_console_charset, "ISO-8859-2")) {
-		char *out = ekg_convert_string(buf, "CP1250", NULL);
+	if (conv_in != (void*) -1) {
+		char *out = ekg_convert_string_p(buf, conv_in);
 		if (out)
 			xfree(buf);
 		else
@@ -427,6 +427,27 @@ int gg_userlist_send(struct gg_session *s, list_t userlist) {
 	xfree(uins);
 	xfree(types);
 	return res;
+}
+
+void gg_convert_string_destroy() {
+	if (conv_in != (void*) -1) {
+		ekg_convert_string_destroy(conv_in);
+		ekg_convert_string_destroy(conv_out);
+	}
+}
+
+QUERY(gg_convert_string_init) {
+	if (conv_in != (void*) -1) /* reinitializing */
+		gg_convert_string_destroy();
+
+	if (
+#if USE_UNICODE
+			config_use_unicode ||
+#endif
+			!xstrcasecmp(config_console_charset, "ISO-8859-2"))
+		conv_in = conv_out = (void*) -1;
+	else
+		conv_in = ekg_convert_string_init("CP1250", NULL, &conv_out);
 }
 
 /*

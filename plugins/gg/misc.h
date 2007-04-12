@@ -33,7 +33,10 @@ int gg_blocked_add(session_t *s, const char *uid);
 int gg_blocked_remove(session_t *s, const char *uid);
 const char *gg_http_error_string(int h);
 int gg_userlist_send(struct gg_session *s, list_t userlist);
-	
+
+void gg_convert_string_destroy();
+QUERY(gg_convert_string_init);
+
 #endif
 
 /*

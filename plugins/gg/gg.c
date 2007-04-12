@@ -1610,6 +1610,7 @@ int gg_plugin_init(int prio) {
 	query_connect_id(&gg_plugin, PROTOCOL_UNIGNORE, gg_user_online_handle, (void *)1);
 	query_connect_id(&gg_plugin, USERLIST_INFO, gg_userlist_info_handle, NULL);
 	query_connect_id(&gg_plugin, USERLIST_PRIVHANDLE, gg_userlist_priv_handler, NULL);
+	query_connect_id(&gg_plugin, CONFIG_POSTINIT, gg_convert_string_init, NULL);
 
 	gg_register_commands();
 
@@ -1662,6 +1663,7 @@ static int gg_plugin_destroy() {
 	gg_register_email = NULL;
 
 	image_flush_queue();
+	gg_convert_string_destroy();
 
 	plugin_unregister(&gg_plugin);
 
