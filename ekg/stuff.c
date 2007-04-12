@@ -89,6 +89,9 @@ list_t bindings = NULL;		/**< list_t struct timer <b>all</b> ekg2 timers */
 list_t timers = NULL;
 list_t conferences = NULL;
 list_t newconferences = NULL;
+#ifdef HAVE_ICONV
+list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
+#endif
 
 list_t buffer_debug;		/**< debug list_t struct buffer */
 list_t buffer_speech;		/**< speech list_t struct buffer */
@@ -2751,18 +2754,18 @@ static inline size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
 /*
  * Convert a string
  * Used in rfc2047.c and rfc2231.c
+ *
+ * Broken for use within EKG2 (passing iconv_t instead of from/to)
  */
 
-inline char *mutt_convert_string (const char *ps, const char *from, const char *to)
+inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
 {
-	iconv_t cd;
 	char *repls[] = { "\357\277\275", "?", 0 };
 	char *s = ps;
 
-	if (!s || !*s)
-		return NULL;
-
-	if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1) {
+		/* we can assume that both from and to aren't NULL in EKG2,
+		 * and cd is NULL in case of error, not -1 */
+	if (cd) {
 		int len;
 		char *ib;
 		char *buf, *ob;
@@ -2770,9 +2773,9 @@ inline char *mutt_convert_string (const char *ps, const char *from, const char *
 		char **inrepls = 0;
 		char *outrepl = 0;
 
-		if ( !xstrcasecmp(to, "utf-8") )
-			outrepl = "\357\277\275";
-		else if ( !xstrcasecmp(from, "utf-8"))
+		if ( is_utf == 2 ) /* to utf */
+			outrepl = repls[0]; /* this would be more evil */
+		else if ( is_utf == 1 ) /* from utf */
 			inrepls = repls;
 		else
 			outrepl = "?";
@@ -2783,7 +2786,6 @@ inline char *mutt_convert_string (const char *ps, const char *from, const char *
 		ob = buf = xmalloc (obl + 1);
 
 		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
-		iconv_close (cd);
 
 		*ob = '\0';
 
@@ -2796,29 +2798,255 @@ inline char *mutt_convert_string (const char *ps, const char *from, const char *
 /* End of code taken from mutt. */
 #endif /*HAVE_ICONV*/
 
+#ifdef HAVE_ICONV
+/**
+ * struct ekg_converter
+ *
+ * Used internally by EKG2, contains information about one initialized character converter.
+ */
+struct ekg_converter {
+	iconv_t		cd;	/**< Magic thing given to iconv, always not NULL (else we won't alloc struct) */
+	iconv_t		rev;	/**< Reverse conversion thing, can be NULL */
+	char		*from;	/**< Input encoding (duped), always not NULL (even on console_charset) */
+	char		*to;	/**< Output encoding (duped), always not NULL (even on console_charset) */
+	int		used;	/**< Use counter - incr on _init(), decr on _destroy(), free if 0 */
+	int		rev_used;	/**< Like above, but for rev; if !rev, value undefined */
+	int		is_utf;	/**< Used internally for mutt_convert_string() */
+};
+#endif
+
+/**
+ * ekg_convert_string_init()
+ *
+ * Initialize string conversion thing for two given charsets.
+ *
+ * @param from		- input encoding (will be duped; if NULL, console_charset will be assumed).
+ * @param to		- output encoding (will be duped; if NULL, console_charset will be assumed).
+ * @param rev		- pointer to assign reverse conversion into; if NULL, no reverse converter will be initialized.
+ * 
+ * @return	Pointer that should be passed to other ekg_convert_string_*(), even if it's NULL.
+ *
+ * @sa ekg_convert_string_destroy()	- deinits charset conversion.
+ * @sa ekg_convert_string_p()		- main charset conversion function.
+ */
+void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
+#ifdef HAVE_ICONV
+	list_t lp;
+
+	if (!from)
+		from	= config_console_charset;
+	if (!to)
+		to	= config_console_charset;
+	if (!xstrcasecmp(from, to)) { /* if they're the same */
+		if (rev)
+			*rev = NULL;
+		return NULL;
+	}
+
+		/* maybe we've already got some converter for this charsets */
+	for (lp = ekg_converters; lp; lp = lp->next) {
+		struct ekg_converter *p = lp->data;
+
+		if (!xstrcasecmp(from, p->from) && !xstrcasecmp(to, p->to)) {
+			p->used++;
+			if (rev) {
+				if (!p->rev) { /* init rev */
+					p->rev = iconv_open(from, to);
+					if (p->rev == (iconv_t)-1) /* we don't want -1 */
+						p->rev = NULL;
+					else
+						p->rev_used = 1;
+				} else
+					p->rev_used++;
+				*rev = p->rev;
+			}
+			return p->cd;
+		} else if (!xstrcasecmp(from, p->to) && !xstrcasecmp(to, p->from)) {
+				/* we've got reverse thing */
+			if (rev) { /* our rev means its forw */
+				p->used++;
+				*rev = p->cd;
+			}
+			if (!p->rev) {
+				p->rev = iconv_open(to, from);
+				if (p->rev == (iconv_t)-1)
+					p->rev = NULL;
+				else
+					p->rev_used = 1;
+			} else
+				p->rev_used++;
+			return p->rev;
+		}
+	}
+
+	{
+		iconv_t cd, rcd = NULL;
+
+		if ((cd = iconv_open(to, from)) == (iconv_t)-1)
+			cd = NULL;
+		if (rev) {
+			if ((rcd = iconv_open(from, to)) == (iconv_t)-1)
+				rcd = NULL;
+			*rev = rcd;
+		}
+			
+		if (cd || rcd) { /* don't init struct if both are NULL */
+			struct ekg_converter *c	= xmalloc(sizeof(struct ekg_converter));
+
+				/* if cd is NULL, we reverse everything */
+			c->cd	= (cd ? cd		: rcd);
+			c->rev	= (cd ? rcd		: cd);
+			c->from	= (cd ? xstrdup(from)	: xstrdup(to));
+			c->to	= (cd ? xstrdup(to)	: xstrdup(from));
+			c->used		= 1;
+			c->rev_used	= (cd && rcd ? 1 : 0);
+				/* for mutt_convert_string() */
+			if (!xstrcasecmp(to, "UTF-8"))
+				c->is_utf = 2;
+			else if (!xstrcasecmp(from, "UTF-8"))
+				c->is_utf = 1;
+			list_add(&ekg_converters, c, 0);
+		}
+
+		return cd;
+	}
+#else
+	return NULL;
+#endif
+}
+
+/**
+ * ekg_convert_string_destroy()
+ *
+ * Frees internal data associated with given pointer, and uninitalizes iconv, if it's not needed anymore.
+ *
+ * @note If 'rev' param was used with ekg_convert_string_init(), this functions must be called two times
+ * 	- with returned value, and with rev-associated one.
+ *
+ * @param ptr		- pointer returned by ekg_convert_string_init().
+ *
+ * @sa ekg_convert_string_init()	- init charset conversion.
+ * @sa ekg_convert_string_p()		- main charset conversion function.
+ */
+
+void ekg_convert_string_destroy(void *ptr) {
+#ifdef HAVE_ICONV
+	list_t lp;
+
+	if (!ptr) /* we can be called with NULL ptr */
+		return;
+
+	for (lp = ekg_converters; lp; lp = lp->next) {
+		struct ekg_converter *c = lp->data;
+
+		if (c->cd == ptr)
+			c->used--;
+		else if (c->rev == ptr) /* ptr won't be NULL here */
+			c->rev_used--;
+		else
+			continue; /* we're gonna break */
+
+		if (c->rev && (c->rev_used == 0)) { /* deinit reverse converter */
+			iconv_close(c->rev);
+			c->rev = NULL;
+		}
+		if (c->used == 0) { /* deinit forward converter, if not needed */
+			iconv_close(c->cd);
+			
+			if (c->rev) { /* if reverse converter is still used, reverse the struct */
+				c->cd	= c->rev;
+				c->rev	= NULL; /* rev_used becomes undef */
+				c->used = c->rev_used;
+				{
+					char *tmp	= c->from;
+					c->from		= c->to;
+					c->to		= tmp;
+				}
+			} else { /* else, free it */
+				xfree(c->from);
+				xfree(c->to);
+				list_remove(&ekg_converters, c, 1);
+			}
+		}
+		
+		break;
+	}
+#endif
+}
+
+/**
+ * ekg_convert_string_p()
+ *
+ * Converts string to specified encoding, using pointer returned by ekg_convert_string_init().
+ * Invalid characters in input will be replaced with question marks.
+ *
+ * @param ps		- string to be converted (won't be freed).
+ * @param ptr		- pointer returned by ekg_convert_string_init().
+ *
+ * @return	Pointer to allocated result or NULL, if some failure has occured or no conversion
+ * 			is needed (i.e. resulting string would be same as input).
+ *
+ * @sa ekg_convert_string_init()	- init charset conversion.
+ * @sa ekg_convert_string_destroy()	- deinits charset conversion.
+ */
+
+char *ekg_convert_string_p(const char *ps, void *ptr) {
+#ifdef HAVE_ICONV
+	list_t lp;
+	int is_utf = 0;
+
+	if (!ps || !*ps || !ptr)
+		return NULL;
+
+		/* XXX, maybe some faster way? any ideas? */
+	for (lp = ekg_converters; lp; lp = lp->next) {
+		const struct ekg_converter *c = lp->data;
+
+		if (c->cd == ptr)
+			is_utf = c->is_utf;
+		else if (c->rev == ptr)
+			is_utf = (c->is_utf == 2 ? 1 : (c->is_utf == 1 ? 2 : 0));
+		else
+			continue;
+
+		break;
+	}
+
+	return mutt_convert_string(ps, ptr, is_utf);
+#else
+	return NULL;
+#endif
+}
+
 /**
  * ekg_convert_string()
  *
  * Converts string to specified encoding, replacing invalid chars with question marks.
  *
- * @param ps		- string to convert (it won't be freed).
+ * @note Deprecated, in favour of ekg_convert_string_p(). Should be used only on single
+ * 	conversions, where charset pair won't be used again.
+ *
+ * @param ps		- string to be converted (it won't be freed).
  * @param from		- input encoding (if NULL, console_charset will be assumed).
  * @param to		- output encoding (if NULL, console_charset will be assumed).
  *
  * @return	Pointer to allocated result on success, NULL on failure
  * 			or when both encodings are equal.
+ *
+ * @sa ekg_convert_string_p()	- more optimized version.
  */
-char *ekg_convert_string (const char *ps, const char *from, const char *to) {
-#ifdef HAVE_ICONV
-			/* (from==to==NULL) checking should be caller-side */
-	if (!xstrcasecmp(from, to))
+char *ekg_convert_string(const char *ps, const char *from, const char *to) {
+	char *r;
+	void *p;
+
+	if (!ps || !*ps) /* don't even init iconv if we've got NULL string */
 		return NULL;
 
-	return mutt_convert_string(ps, (from ? from : config_console_charset),
-			(to ? to : config_console_charset));
-#else
-	return NULL;
-#endif /*HAVE_ICONV*/ 
+	p = ekg_convert_string_init(from, to, NULL);
+	r = ekg_convert_string_p(ps, p);
+	ekg_convert_string_destroy(p);
+
+	return r;
 }
 
 /*
