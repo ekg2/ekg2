@@ -437,8 +437,7 @@ void gg_convert_string_destroy() {
 }
 
 QUERY(gg_convert_string_init) {
-	if (conv_in != (void*) -1) /* reinitializing */
-		gg_convert_string_destroy();
+	gg_convert_string_destroy(); /* reinit? */
 
 	if (
 #if USE_UNICODE
@@ -448,6 +447,8 @@ QUERY(gg_convert_string_init) {
 		conv_in = conv_out = (void*) -1;
 	else
 		conv_in = ekg_convert_string_init("CP1250", NULL, &conv_out);
+
+	return 0;
 }
 
 /*
