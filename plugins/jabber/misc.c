@@ -22,6 +22,11 @@
 #include "jabber.h"
 #include "jabber-ssl.h"
 
+void *jconv_in = (void*) -1;
+void *jconv_out = (void*) -1;
+void *tconv_in = (void*) -1;
+void *tconv_out = (void*) -1;
+
 jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
 	int func			= EKG_USERLIST_PRIVHANDLER_GET;
 	jabber_userlist_private_t *up	= NULL;
@@ -218,11 +223,7 @@ char *jabber_escape(const char *text) {
 	if (!text)
 		return NULL;
 
-	if (config_use_unicode)
-		return xml_escape(text);
-
-	utftext = ekg_convert_string(text, NULL, "utf-8");
-
+	utftext = ekg_convert_string_p(text, jconv_out);
 	res = xml_escape(utftext ? utftext : text);
         xfree(utftext);
 	return res;
@@ -247,9 +248,7 @@ char *jabber_unescape(const char *text) {
 	const char *s;
 	if (!text)
 		return NULL;
-	if (config_use_unicode)
-		return xstrdup(text);
-	s = ekg_convert_string(text, "utf-8", NULL);
+	s = ekg_convert_string_p(text, jconv_in);
 
 	return (s ? s : xstrdup(text));
 }
@@ -278,8 +277,7 @@ char *tlen_encode(const char *what) {
 
 	if (!what) return NULL;
 
-	if (xstrcasecmp(config_console_charset, "ISO-8859-2"))
-		s = text = ekg_convert_string(what, NULL, "ISO-8859-2");
+	s = text = ekg_convert_string_p(what, tconv_out);
 	if (!text)
 		s = what;
 
@@ -337,9 +335,8 @@ char *tlen_decode(const char *what) {
 		data++;
 	}
 	*dest = '\0';
-	if (!xstrcasecmp(config_console_charset, "ISO-8859-2")) return retval;
 
-	if (!(text = ekg_convert_string(retval, "ISO-8859-2", NULL)))
+	if (!(text = ekg_convert_string_p(retval, tconv_in)))
 		return retval;
 	xfree(retval);
 	return text;
@@ -465,6 +462,41 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 	xfree(compressed);
 
 	return res;
+}
+
+/* called within jabber_session_init() */
+void jabber_convert_string_init(int is_tlen) {
+	if (is_tlen && (tconv_in == (void*) -1))
+		tconv_in = ekg_convert_string_init("ISO-8859-2", NULL, &tconv_out);
+	else if (!is_tlen && (jconv_in == (void*) -1))
+		jconv_in = ekg_convert_string_init("UTF-8", NULL, &jconv_out);
+}
+
+void jabber_convert_string_destroy() {
+	if (tconv_in != (void*) -1) {
+		ekg_convert_string_destroy(tconv_in);
+		ekg_convert_string_destroy(tconv_out);
+	}
+	if (jconv_in != (void*) -1) {
+		ekg_convert_string_destroy(jconv_in);
+		ekg_convert_string_destroy(jconv_out);
+	}
+}
+
+/* CONFIG_POSTINIT */
+QUERY(jabber_convert_string_reinit) {
+	jabber_convert_string_destroy();
+
+	if (tconv_in != (void*) -1) {
+		tconv_in = (void*) -1;
+		jabber_convert_string_init(1);
+	}
+	if (jconv_in != (void*) -1) {
+		jconv_in = (void*) -1;
+		jabber_convert_string_init(0);
+	}
+
+	return 0;
 }
 
 /*

@@ -112,6 +112,8 @@ static QUERY(jabber_session_init) {
 	j->fd = -1;
 	j->istlen = (tolower(s->uid[0]) == 't');	/* mark if this is tlen protocol */
 
+	jabber_convert_string_init(j->istlen);
+
 
 #ifdef JABBER_HAVE_GNUTLS
 	gnutls_certificate_allocate_credentials(&(j->xcred));
@@ -1493,6 +1495,7 @@ int jabber_plugin_init(int prio) {
 	query_connect_id(&jabber_plugin, PROTOCOL_IGNORE,	jabber_protocol_ignore, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_dcc_postinit, NULL);
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_pgp_postinit, NULL);
+	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_convert_string_reinit, NULL);
 	query_connect_id(&jabber_plugin, USERLIST_INFO,		jabber_userlist_info, NULL);
 	query_connect_id(&jabber_plugin, USERLIST_PRIVHANDLE,	jabber_userlist_priv_handler, NULL);
 
@@ -1524,6 +1527,7 @@ static int jabber_plugin_destroy() {
 #ifdef JABBER_HAVE_SSL
 	SSL_GLOBAL_DEINIT();
 #endif
+	jabber_convert_string_destroy();
         plugin_unregister(&jabber_plugin);
 
         return 0;

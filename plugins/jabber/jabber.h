@@ -176,6 +176,10 @@ char *tlen_decode(const char *what);
 unsigned char *utfstrchr(unsigned char *s, unsigned char c);
 int jabber_write_status(session_t *s);
 
+void jabber_convert_string_init(int is_tlen);
+void jabber_convert_string_destroy();
+QUERY(jabber_convert_string_reinit);
+
 void jabber_reconnect_handler(int type, void *data);
 WATCHER(jabber_handle_resolver);
 
