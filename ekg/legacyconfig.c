@@ -27,6 +27,11 @@
 void config_upgrade() {
 	const int current_config_version = 3;
 
+	if (xstrcasecmp(console_charset, config_console_charset)) 
+		print("console_charset_bad", console_charset, config_console_charset);
+	else if (config_version == 0)
+		print("console_charset_using", config_console_charset);
+
 	if (config_version >= current_config_version)
 		return;
 	else
