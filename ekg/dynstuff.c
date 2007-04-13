@@ -941,16 +941,13 @@ void array_free_count(char **array, int count) {
  *
  * @return Pointer to found element on success, or NULL on failure.
  */
-const char *cssfind(const char *haystack, const char *needle, const char *sep, int caseinsensitive) {
-	const char *r = (caseinsensitive ? xstrcasestr(haystack, needle) : xstrstr(haystack, needle));
+const char *cssfind(const char *haystack, const char *needle, const char sep, int caseinsensitive) {
+	const char *r = haystack-1;
 	const int needlelen = xstrlen(needle);
-	const int seplen = xstrlen(sep);
-		/* yep, this could be simpler and faster, but we're allowing multi-char sep, like array_make() */
 
-	if (!r /* found? */
-			|| (((int) (r-haystack) >= seplen) && (xstrncmp(r-seplen, sep, seplen))) /* first elem or preceded by sep */
-			|| ((*(r+needlelen) != '\0') && (xstrncmp(r+needlelen, sep, seplen)))) /* last elem or followed by sep */
-		return NULL;
+	while ((r = (caseinsensitive ? xstrcasestr(r+1, needle) : xstrstr(r+1, needle))) &&
+			(((r != haystack) && ((*(r-1) != sep)))
+			|| ((*(r+needlelen) != '\0') && (*(r+needlelen) != sep)))) {};
 
 	return r;
 }
