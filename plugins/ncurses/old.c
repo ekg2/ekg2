@@ -1456,9 +1456,9 @@ void ncurses_init()
 	noecho();
 	nonl();
 #ifdef HAVE_NCURSES_ULC
-	if (!config_use_iso &&
+	if (!config_use_iso
 #if USE_UNICODE
-			!config_use_unicode
+			&& !config_use_unicode
 #endif
 			)
 		use_legacy_coding(2);
