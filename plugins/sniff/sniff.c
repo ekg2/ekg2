@@ -529,8 +529,12 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 	}
 	
 #define GG_DCC_NEW_REQUEST_ID 0x23
+
+#define GG_DCC_REQUEST_VOICE 0x01
+#define GG_DCC_REQUEST_FILE 0x04
+
 typedef struct {
-	uint32_t type;		/* 04 00 00 00 */
+	uint32_t type;
 } GG_PACKED gg_dcc_new_request_id_out;
 
 SNIFF_HANDLER(sniff_gg_dcc_new_request_id_out, gg_dcc_new_request_id_out) {
@@ -539,7 +543,10 @@ SNIFF_HANDLER(sniff_gg_dcc_new_request_id_out, gg_dcc_new_request_id_out) {
 		return -1;
 	}
 
-	CHECK_PRINT(pkt->type, htonl(0x04000000));
+	if (pkt->type != GG_DCC_REQUEST_VOICE && pkt->type != GG_DCC_REQUEST_FILE)
+		debug_error("sniff_gg_dcc_new_request_id_out() type nor VOICE nor FILE -- %.8x\n", pkt->type);
+	else	debug("sniff_gg_dcc_new_request_id_out() %s CONNECTION\n", pkt->type == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
+
 	return 0;
 }
 
@@ -554,7 +561,10 @@ SNIFF_HANDLER(sniff_gg_dcc_new_request_id_in, gg_dcc_new_request_id_in) {
 		return -1;
 	}
 
-	CHECK_PRINT(pkt->type, htonl(0x04000000));
+	if (pkt->type != GG_DCC_REQUEST_VOICE && pkt->type != GG_DCC_REQUEST_FILE)
+		debug_error("sniff_gg_dcc_new_request_id_in() type nor VOICE nor FILE -- %.8x\n", pkt->type);
+	else	debug("sniff_gg_dcc_new_request_id_in() %s CONNECTION\n", pkt->type == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
+
 	debug("sniff_gg_dcc_new_request_id_in() code: %s\n", build_code(pkt->code1));
 
 	return 0;
