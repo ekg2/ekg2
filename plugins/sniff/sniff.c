@@ -768,27 +768,6 @@ SNIFF_HANDLER(sniff_gg_dcc_4xx_out, gg_dcc_4xx_out) {
 	return 0;
 }
 
-#define GG_LOGIN70 0x19
-typedef struct {
-	uint32_t uin;			/* mój numerek [gg_login60] */
-	uint8_t dunno0;			/* 02 */
-	unsigned char hash[20];		/* sha1 [haslo i seed] */
-	unsigned char unknown[44];	/* ??? duzo 00 ??? */
-	uint32_t status;		/* status na dzień dobry [gg_login60] */
-	uint32_t version;		/* moja wersja klienta [gg_login60] */
-	uint8_t dunno1;			/* 0x00 [gg_login60] */
-
-	uint32_t local_ip;		/* mój adres ip [gg_login60] */
-	uint16_t local_port;		/* port, na którym słucham [gg_login60] */
-
-	uint32_t external_ip;		/* XXX */
-	uint16_t external_port;		/* XXX */
-
-	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB [gg_login60] */
-	uint8_t dunno2;			/* 0xbe [gg_login60] */
-	char status_data[];
-} GG_PACKED gg_login70;
-
 SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	int status;
 	char *descr;
@@ -797,13 +776,37 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	int print_payload = 0;
 	int i; 
 
+	int sughash_len;
+
 	CHECK_LEN(sizeof(gg_login70));	len -= sizeof(gg_login70);
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-			"sniff_gg_login70",
+	if (pkt->hash_type == GG_LOGIN_HASH_GG32) {
+		sughash_len = 4;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login70_hash",
+
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->hash_type));
+
+	} else if (pkt->hash_type == GG_LOGIN_HASH_SHA1) {
+		sughash_len = 20;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login70_sha1",
 
 			build_gg_uid(pkt->uin),
 			build_sha1(pkt->hash));
+	} else {
+		sughash_len = 0;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login70_unknown",
+
+			build_gg_uid(pkt->uin), build_hex(pkt->hash_type));
+
+	}
+
 
 	status = gg_status_to_text(pkt->status, &has_descr);
 	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
@@ -812,18 +815,20 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	
 	debug_error("sniff_gg_login70() XXX ip %d:%d\n", pkt->external_ip, pkt->external_port);
 
-	CHECK_PRINT(pkt->dunno0, 0x02);
 	CHECK_PRINT(pkt->dunno1, 0x00);
 	CHECK_PRINT(pkt->dunno2, 0xbe);
 
-	for (i = 0; i < sizeof(pkt->unknown); i++)
-		if (pkt->unknown[i] != 0) {
+	for (i = sughash_len-1; i < sizeof(pkt->hash); i++)
+		if (pkt->hash[i] != 0) {
 			print_payload = 1;
 			break;
 		}
 
-	if (print_payload)
-		tcp_print_payload((u_char *) pkt->unknown, sizeof(pkt->unknown));
+	if (print_payload) {
+		tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
+		print(build_windowip_name(hdr->srcip), s, 1,
+			"generic_error", "gg_login70() print_payload flag set, see debug");
+	}
 	return 0;
 }
 
@@ -862,9 +867,9 @@ static const struct {
 	{ GG_LIST_EMPTY,	"GG_LIST_EMPTY",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 	{ GG_NOTIFY_FIRST,	"GG_NOTIFY_FIRST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 	{ GG_NOTIFY_LAST,	"GG_NOTIFY_LAST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
+	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
 
 /* pakiety nie w libgadu: */
-	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
@@ -1165,7 +1170,11 @@ static int sniff_theme_init() {
 /* sniff gg */
 	format_add("sniff_gg_welcome",	_("%) [GG_WELCOME] SEED: %1"), 1);
 	format_add("sniff_gg_login60",	_("%) [GG_LOGIN60] UIN: %1 HASH: %2"), 1);
-	format_add("sniff_gg_login70",	_("%) [GG_LOGIN70] UIN: %1 SHA1: %2"), 1);
+
+	format_add("sniff_gg_login70_sha1",	_("%) [GG_LOGIN70] UIN: %1 SHA1: %2"), 1);
+	format_add("sniff_gg_login70_hash",	_("%) [GG_LOGIN70] UIN: %1 HASH: %2"), 1);
+	format_add("sniff_gg_login70_unknown",	_("%) [GG_LOGIN70] UIN: %1 TYPE: %2"), 1);
+
 	format_add("sniff_gg_addnotify",_("%) [GG_ADD_NOTIFY] UIN: %1 DATA: %2"), 1);
 	format_add("sniff_gg_delnotify",_("%) [GG_REMOVE_NOTIFY] UIN: %1 DATA: %2"), 1);
 /* stats */

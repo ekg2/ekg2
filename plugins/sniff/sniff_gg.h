@@ -147,3 +147,23 @@ struct gg_notify {
 	uint8_t dunno1;				/* rodzaj wpisu w liście */
 } GG_PACKED;
 
+#define GG_LOGIN70 0x19
+#define GG_LOGIN_HASH_GG32 0x01
+#define GG_LOGIN_HASH_SHA1 0x02
+
+typedef struct {
+	uint32_t uin;			/* mój numerek */
+	uint8_t hash_type;		/* rodzaj hashowania hasła */
+	uint8_t hash[64];		/* hash hasła dopełniony zerami */
+	uint32_t status;		/* status na dzień dobry */
+	uint32_t version;		/* moja wersja klienta */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t local_ip;		/* mój adres ip */
+	uint16_t local_port;		/* port, na którym słucham */
+	uint32_t external_ip;		/* zewnętrzny adres ip (???) */
+	uint16_t external_port;		/* zewnętrzny port (???) */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno2;			/* 0xbe */
+	char status_data[];
+} GG_PACKED gg_login70;
+
