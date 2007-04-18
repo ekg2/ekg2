@@ -773,6 +773,54 @@ SNIFF_HANDLER(sniff_gg_dcc_4xx_out, gg_dcc_4xx_out) {
 	return 0;
 }
 
+#define GG_NOTIFY_REPLY77 0x0018
+typedef struct {
+	uint32_t uin;			/* [gg_notify_reply60] numerek plus flagi w MSB */
+/* 14 bajtow */
+	uint8_t status;			/* [gg_notify_reply60] status danej osoby */
+	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
+	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
+	uint8_t version;		/* [gg_notify_reply60] wersja klienta */
+	uint8_t image_size;		/* [gg_notify_reply60] maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t dunno2;		/* 0x00000000 */
+	uint8_t desc_len;		/* rozmiar opisu */
+	unsigned char desc[];		/* opis */
+} GG_PACKED gg_notify_reply77;
+
+SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
+	uint32_t uin;
+	int has_descr;
+	int status;
+	char *descr;
+
+	CHECK_LEN(sizeof(gg_notify_reply77));	len -= sizeof(gg_notify_reply77);
+	CHECK_LEN(pkt->desc_len); 		len -= pkt->desc_len;
+
+	CHECK_PRINT(pkt->dunno2, 0x00);
+	CHECK_PRINT(pkt->dunno1, 0x00);
+
+	uin = pkt->uin & 0x00ffffff;
+
+	if (!has_descr && pkt->desc_len)
+		debug_error("gg_notify_reply77() pkt->desc_len BUT NOT has_descr?\n");
+	if (has_descr && !pkt->desc_len)
+		debug_error("gg_notify_reply77() has_descr BUT NOT pkt->desc_len?\n");
+
+	status = gg_status_to_text(pkt->status, &has_descr);
+	descr = has_descr ? xstrndup(pkt->desc, pkt->desc_len) : NULL;
+	sniff_gg_print_status(s, hdr, uin, status, descr);
+	xfree(descr);
+
+	debug_error("gg_notify_reply77: ip: %d port: %d ver: %x isize: %d\n", pkt->remote_ip, pkt->remote_port, pkt->version, pkt->image_size);
+
+	if (len > 0) {
+		debug_error("gg_notify_reply77: again? leftlen: %d\n", len);
+		sniff_notify_reply77(s, hdr, ((gg_notify_reply77 *) (pkt->desc + pkt->desc_len)), len);
+	}
+	return 0;
+}
+
 SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	int status;
 	char *descr;
@@ -875,6 +923,7 @@ static const struct {
 	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
 
 /* pakiety nie w libgadu: */
+	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_notify_reply77, 0},
 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
