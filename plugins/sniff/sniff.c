@@ -534,7 +534,7 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 #define GG_DCC_REQUEST_FILE 0x04
 
 typedef struct {
-	uint32_t type;
+	uint32_t type;		/* GG_DCC_REQUEST_VOICE / GG_DCC_REQUEST_FILE */
 } GG_PACKED gg_dcc_new_request_id_out;
 
 SNIFF_HANDLER(sniff_gg_dcc_new_request_id_out, gg_dcc_new_request_id_out) {
@@ -551,7 +551,7 @@ SNIFF_HANDLER(sniff_gg_dcc_new_request_id_out, gg_dcc_new_request_id_out) {
 }
 
 typedef struct {
-	uint32_t type;		/* 04 00 00 00 */
+	uint32_t type;		/* GG_DCC_REQUEST_VOICE / GG_DCC_REQUEST_FILE */
 	unsigned char code1[8];
 } GG_PACKED gg_dcc_new_request_id_in;
 
@@ -575,7 +575,7 @@ typedef struct {
 	unsigned char code1[8];
 	uint32_t uin1;		/* LE, from */
 	uint32_t uin2;		/* LE, to */
-	uint32_t dunno1;	/* 04 00 00 00 */
+	uint32_t dcctype;	/* GG_DCC_REQUEST_AUDIO / GG_DCC_REQUEST_FILE */
 	unsigned char filename[226];
 	uint16_t emp1;		/* 00 00 */
 	uint16_t dunno2;	/* 10 00 */
@@ -604,6 +604,10 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 		debug_error("sniff_gg_dcc_new() extra data?\n");
 
 /* print known data: */
+	if (pkt->dcctype != GG_DCC_REQUEST_VOICE && pkt->dcctype != GG_DCC_REQUEST_FILE)
+		debug_error("sniff_gg_dcc_new() unknown dcc request %x\n", pkt->dcctype);
+	else	debug("sniff_gg_dcc_new() REQUEST FOR: %s CONNECTION\n", pkt->dcctype == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
+
 	fname = xstrndup(pkt->filename, 226);
 	debug("sniff_gg_dcc_new() code: %s uin1: %d uin2: %d fname: %s [%db]\n", 
 		build_code(pkt->code1), pkt->uin1, pkt->uin2, fname, pkt->size);
@@ -616,7 +620,6 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 	CHECK_PRINT(pkt->emp3, 0);
 	CHECK_PRINT(pkt->emp4, 0);
 
-	CHECK_PRINT(pkt->dunno1, htonl(0x04000000));
 	CHECK_PRINT(pkt->dunno2, htons(0x1000));
 
 	CHECK_PRINT(pkt->dunno31, !pkt->dunno31);
