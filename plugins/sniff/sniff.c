@@ -160,7 +160,12 @@ static int gg_status_to_text(uint32_t status, int *descr) {
 #define GG_STATUS_BLOCKED 0x0006		/* zablokowany */
 
 #define GG_STATUS_FRIENDS_MASK 0x8000		/* tylko dla znajomych (4.6) */
+#define GG_STATUS_UNKNOWN_MASK 0x20000		/* (7.7) */
 	if (status & GG_STATUS_FRIENDS_MASK) status -= GG_STATUS_FRIENDS_MASK;
+	if (status & GG_STATUS_UNKNOWN_MASK) {
+		status -= GG_STATUS_UNKNOWN_MASK;
+		debug_error("GG_STATUS_UNKNOWN_MASK!!! set\n");
+	}
 
 	*descr = 0;
 	switch (status) {
