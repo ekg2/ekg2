@@ -829,9 +829,9 @@ typedef struct {
 	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
 	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
 	uint8_t version;		/* [gg_status60] wersja klienta */
-	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t image_size;		/* [gg_status60] maksymalny rozmiar grafiki w KiB */
 	uint8_t dunno1;			/* 0x00 */
-	uint32_t dunno2;
+	uint32_t dunno2;		/* 0x00 */
 	char status_data[];
 } GG_PACKED gg_status77;
 
