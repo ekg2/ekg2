@@ -818,7 +818,7 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	CHECK_PRINT(pkt->dunno1, 0x00);
 	CHECK_PRINT(pkt->dunno2, 0xbe);
 
-	for (i = sughash_len-1; i < sizeof(pkt->hash); i++)
+	for (i = sughash_len; i < sizeof(pkt->hash); i++)
 		if (pkt->hash[i] != 0) {
 			print_payload = 1;
 			break;
@@ -826,7 +826,7 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 
 	if (print_payload) {
 		tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
-		print(build_windowip_name(hdr->srcip), s, 1,
+		print_window(build_windowip_name(hdr->srcip), s, 1,
 			"generic_error", "gg_login70() print_payload flag set, see debug");
 	}
 	return 0;
