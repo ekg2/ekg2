@@ -821,6 +821,43 @@ SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 	return 0;
 }
 
+
+#define GG_STATUS77 0x17
+typedef struct {
+	uint32_t uin;			/* [gg_status60] numerek plus flagi w MSB */
+	uint8_t status;			/* [gg_status60] status danej osoby */
+	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
+	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
+	uint8_t version;		/* [gg_status60] wersja klienta */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t dunno2;
+	char status_data[];
+} GG_PACKED gg_status77;
+
+SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
+	uint32_t uin;
+	int status;
+	int has_descr;
+	char *descr;
+
+	CHECK_LEN(sizeof(gg_status77)); len -= sizeof(gg_status77);
+
+	uin	= pkt->uin & 0x00ffffff;
+
+	CHECK_PRINT(pkt->dunno1, 0x00);
+	CHECK_PRINT(pkt->dunno2, 0x00);
+
+	status	= gg_status_to_text(pkt->status, &has_descr);
+	descr 	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+	sniff_gg_print_status(s, hdr, uin, status, descr);
+	xfree(descr);
+
+	debug_error("sniff_gg_status77: %d %d %x %d\n", pkt->remote_ip, pkt->remote_port, pkt->version, pkt->image_size);
+
+	return 0;
+}
+
 SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	int status;
 	char *descr;
@@ -924,6 +961,7 @@ static const struct {
 
 /* pakiety nie w libgadu: */
 	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_notify_reply77, 0},
+	{ GG_STATUS77,		"GG_STATUS77",		SNIFF_INCOMING, (void *) sniff_gg_status77, 0},
 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
