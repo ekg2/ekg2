@@ -135,6 +135,7 @@ typedef struct {
 	uint8_t version;		/* wersja klienta */
 	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
 	uint8_t dunno1;			/* 0x00 */
+	unsigned char next[];		/* nastepny, lub DLUGOSC_OPISU+OPIS */
 } GG_PACKED gg_notify_reply60;
 
 #define GG_NOTIFY_FIRST 0x000f

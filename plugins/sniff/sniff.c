@@ -514,11 +514,54 @@ SNIFF_HANDLER(sniff_gg_del_notify, gg_add_remove) {
 	return 0;
 }
 
+/* XXX, w libgadu jest chyba mozliwy integer overflow przy parsowaniu tego. */
 SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
+	unsigned char *next;
+
+	uint32_t uin;
+	int desc_len;
+	int has_descr;
+	int status;
+	char *descr;
+
 	CHECK_LEN(sizeof(gg_notify_reply60));	len -= sizeof(gg_notify_reply60);
 
-	debug_error("sniff_notify_reply60() XXX\n");
-	return -5;
+	next = pkt->next;
+
+	uin = pkt->uin & 0x00ffffff;
+
+	status = gg_status_to_text(pkt->status, &has_descr);
+
+	if (has_descr) {
+		CHECK_LEN(1)
+		desc_len = pkt->next[0];
+		len--;	next++;
+
+		if (!desc_len)
+			debug_error("gg_notify_reply60() has_descr BUT NOT desc_len?\n");
+
+		CHECK_LEN(desc_len)
+		len  -= desc_len;
+		next += desc_len;
+	}
+
+	descr = has_descr ? xstrndup(&pkt->next[1], desc_len) : NULL;
+	sniff_gg_print_status(s, hdr, uin, status, descr);
+	xfree(descr);
+
+	debug_error("gg_notify_reply60: ip: %d port: %d ver: %x isize: %d\n", pkt->remote_ip, pkt->remote_port, pkt->version, pkt->image_size);
+
+	if (pkt->uin & 0x40000000)
+		debug_error("gg_notify_reply60: GG_HAS_AUDIO_MASK set\n");
+
+	if (pkt->uin & 0x08000000)
+		debug_error("gg_notify_reply60: GG_ERA_OMNIX_MASK set\n");
+
+	if (len > 0) {
+		debug_error("gg_notify_reply60: again? leftlen: %d\n", len);
+		sniff_notify_reply60(s, hdr, (gg_notify_reply60 *) next, len);
+	}
+	return 0;
 }
 
 /* nie w libgadu */
@@ -608,7 +651,22 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 		debug_error("sniff_gg_dcc_new() unknown dcc request %x\n", pkt->dcctype);
 	else	debug("sniff_gg_dcc_new() REQUEST FOR: %s CONNECTION\n", pkt->dcctype == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
 
-	fname = xstrndup(pkt->filename, 226);
+	if (pkt->dcctype != GG_DCC_REQUEST_FILE) {
+		int print_hash = 0;
+		int i;
+
+		for (i = 0; i < sizeof(pkt->hash); i++)
+			if (pkt->hash[i] != '\0') print_hash = 1;
+
+		if (print_hash) {
+			debug_error("sniff_gg_dcc_new() NOT GG_DCC_REQUEST_FILE, pkt->hash NOT NULL, printing...\n");
+			tcp_print_payload(pkt->hash, sizeof(pkt->hash));
+		}
+	}
+
+	tcp_print_payload(pkt->filename, sizeof(pkt->filename));	/* tutaj smieci */
+
+	fname = xstrndup(pkt->filename, sizeof(pkt->filename));
 	debug("sniff_gg_dcc_new() code: %s uin1: %d uin2: %d fname: %s [%db]\n", 
 		build_code(pkt->code1), pkt->uin1, pkt->uin2, fname, pkt->size);
 	xfree(fname);
@@ -716,6 +774,7 @@ SNIFF_HANDLER(sniff_gg_dcc_2xx_in, gg_dcc_2xx) {
 	ipport = xstrndup(pkt->ipport, 21);
 	debug_error("XXX sniff_gg_dcc_2xx_in() uin: %d ip: %s code: %s\n", pkt->uin, ipport, build_code(pkt->code1));
 	xfree(ipport);
+	tcp_print_payload((u_char *) pkt->ipport, sizeof(pkt->ipport));
 	tcp_print_payload((u_char *) pkt->unk, sizeof(pkt->unk));
 	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
 	return 0;
@@ -731,6 +790,7 @@ SNIFF_HANDLER(sniff_gg_dcc_2xx_out, gg_dcc_2xx) {
 	ipport = xstrndup(pkt->ipport, 21);
 	debug_error("XXX sniff_gg_dcc_2xx_out() uin: %d ip: %s code: %s\n", pkt->uin, ipport, build_code(pkt->code1));
 	xfree(ipport);
+	tcp_print_payload((u_char *) pkt->ipport, sizeof(pkt->ipport));
 	tcp_print_payload((u_char *) pkt->unk, sizeof(pkt->unk));
 	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
 	return 0;
