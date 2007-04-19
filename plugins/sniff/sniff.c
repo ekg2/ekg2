@@ -857,39 +857,55 @@ typedef struct {
 	uint8_t image_size;		/* [gg_notify_reply60] maksymalny rozmiar grafiki w KiB */
 	uint8_t dunno1;			/* 0x00 */
 	uint32_t dunno2;		/* 0x00000000 */
-	uint8_t desc_len;		/* rozmiar opisu */
-	unsigned char desc[];		/* opis */
+	unsigned char next[];		/* nastepny, lub DLUGOSC_OPISU+OPIS */
 } GG_PACKED gg_notify_reply77;
 
 SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
+	unsigned char *next;
+
 	uint32_t uin;
+	int desc_len;
 	int has_descr;
 	int status;
 	char *descr;
 
 	CHECK_LEN(sizeof(gg_notify_reply77));	len -= sizeof(gg_notify_reply77);
-	CHECK_LEN(pkt->desc_len); 		len -= pkt->desc_len;
 
-	CHECK_PRINT(pkt->dunno2, 0x00);
-	CHECK_PRINT(pkt->dunno1, 0x00);
+	next = pkt->next;
 
 	uin = pkt->uin & 0x00ffffff;
 
-	if (!has_descr && pkt->desc_len)
-		debug_error("gg_notify_reply77() pkt->desc_len BUT NOT has_descr?\n");
-	if (has_descr && !pkt->desc_len)
-		debug_error("gg_notify_reply77() has_descr BUT NOT pkt->desc_len?\n");
-
 	status = gg_status_to_text(pkt->status, &has_descr);
-	descr = has_descr ? xstrndup(pkt->desc, pkt->desc_len) : NULL;
+
+	if (has_descr) {
+		CHECK_LEN(1)
+		desc_len = pkt->next[0];
+		len--;	next++;
+
+		if (!desc_len)
+			debug_error("gg_notify_reply77() has_descr BUT NOT desc_len?\n");
+
+		CHECK_LEN(desc_len)
+		len  -= desc_len;
+		next += desc_len;
+	}
+
+	descr = has_descr ? xstrndup(&pkt->next[1], desc_len) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
 	debug_error("gg_notify_reply77: ip: %d port: %d ver: %x isize: %d\n", pkt->remote_ip, pkt->remote_port, pkt->version, pkt->image_size);
 
+#if 0
+	if (pkt->uin & 0x40000000)
+		debug_error("gg_notify_reply60: GG_HAS_AUDIO_MASK set\n");
+
+	if (pkt->uin & 0x08000000)
+		debug_error("gg_notify_reply60: GG_ERA_OMNIX_MASK set\n");
+#endif
 	if (len > 0) {
 		debug_error("gg_notify_reply77: again? leftlen: %d\n", len);
-		sniff_notify_reply77(s, hdr, ((gg_notify_reply77 *) (pkt->desc + pkt->desc_len)), len);
+		sniff_notify_reply77(s, hdr, (gg_notify_reply77 *) next, len);
 	}
 	return 0;
 }
