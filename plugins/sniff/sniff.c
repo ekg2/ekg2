@@ -545,7 +545,7 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 		next += desc_len;
 	}
 
-	descr = has_descr ? xstrndup(&pkt->next[1], desc_len) : NULL;
+	descr = has_descr ? gg_cp_to_iso(xstrndup(&pkt->next[1], desc_len)) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
@@ -857,7 +857,7 @@ typedef struct {
 	uint8_t image_size;		/* [gg_notify_reply60] maksymalny rozmiar grafiki w KiB */
 	uint8_t dunno1;			/* 0x00 */
 	uint32_t dunno2;		/* 0x00000000 */
-	unsigned char next[];		/* nastepny, lub DLUGOSC_OPISU+OPIS */
+	unsigned char next[];		/* [like gg_notify_reply60] nastepny (gg_notify_reply77), lub DLUGOSC_OPISU+OPIS + nastepny (gg_notify_reply77) */
 } GG_PACKED gg_notify_reply77;
 
 SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
@@ -870,6 +870,9 @@ SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 	char *descr;
 
 	CHECK_LEN(sizeof(gg_notify_reply77));	len -= sizeof(gg_notify_reply77);
+
+	CHECK_PRINT(pkt->dunno2, 0x00);
+	CHECK_PRINT(pkt->dunno1, 0x00);
 
 	next = pkt->next;
 
@@ -890,7 +893,7 @@ SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 		next += desc_len;
 	}
 
-	descr = has_descr ? xstrndup(&pkt->next[1], desc_len) : NULL;
+	descr = has_descr ? gg_cp_to_iso(xstrndup(&pkt->next[1], desc_len)) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
