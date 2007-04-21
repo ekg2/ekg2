@@ -16,6 +16,4 @@ ekg2_DEPENDENCIES =
 localedir = $(datadir)/locale
 
 INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
-       -DPLUGINDIR=\"$(plugindir)\"
-DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-
+       -DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\"

@@ -6,7 +6,7 @@ httprc_xajax_la_LDFLAGS = -module -avoid-version
 
 libdir = $(plugindir)
 
-DEFS = -DDATADIR=\"$(pkgdatadir)\" @DEFS@
+INCLUDES = -DDATADIR=\"$(pkgdatadir)\"
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/httprc_xajax/
