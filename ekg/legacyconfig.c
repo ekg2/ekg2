@@ -17,6 +17,7 @@
 
 #include "stuff.h" /* config_version here */
 #include "themes.h" /* print() & _() */
+#include "xmalloc.h" /* x*() */
 
 /**
  * config_upgrade()
