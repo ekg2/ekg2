@@ -524,10 +524,12 @@ COMMAND(gg_command_list)
 	
 	/* list --put */
 	if (params[0] && (match_arg(params[0], 'p', ("put"), 2))) {
-		char *contacts = userlist_dump(session);
+		char *contacts;
 		char *cpcontacts;
 
-		cpcontacts = gg_locale_to_cp(contacts);
+		gg_userlist_put_config = 666; /* special value for userlist_dump magic */
+		contacts	= userlist_dump(session);
+		cpcontacts	= gg_locale_to_cp(contacts);
 
                 if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
                         printq("userlist_put_error", strerror(errno));

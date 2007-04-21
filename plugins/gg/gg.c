@@ -568,7 +568,7 @@ static QUERY(gg_userlist_priv_handler) {
 			{
 				char **entry	= *va_arg(ap, char ***);
 
-				if (atoi(u->uid)) {	/* hack for GG */
+				if (atoi(u->uid)) {	/* backwards compatibility / userlist -g hack for GG */
 					char *tmp = u->uid;
 					u->uid = saprintf("gg:%s", tmp);
 					xfree(tmp);
@@ -594,6 +594,10 @@ static QUERY(gg_userlist_priv_handler) {
 				if (p->mobile) {
 					xfree(entry[4]);
 					entry[4] = xstrdup(p->mobile);
+				}
+				if (gg_userlist_put_config == 666) { /* userlist -p hack */
+					xfree(entry[6]);
+					entry[6] = xstrdup(u->uid+3); /* remove gg: */
 				}
 				break;
 			}

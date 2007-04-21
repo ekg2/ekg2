@@ -194,6 +194,7 @@ char *userlist_dump(session_t *session)
 	string_t s;
 	list_t l;
 
+/* below is out-of-date, compatibility restored */
 /* XXX, we currently break compatibility with all gadu-gadu clients like:
  * 	ekg1, kadu, gnugadu and even with gadu-gadu.exe
  *	
@@ -228,12 +229,6 @@ char *userlist_dump(session_t *session)
  */
 
 
-/* 
- *	XXX, in gg plugin, we use userlist_dump() but it's only for ekg2... all other programs will fail to restore contacts exported to gg server by ekg2.
- *		This function will be used ONLY to write userlist to file. and it'll be in other format. And it won't return any data. implement proper
- *		function in gg plugin.
- */
-
 	s = string_init(NULL);
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
@@ -264,7 +259,7 @@ char *userlist_dump(session_t *session)
 
 		xfree(line);
 		array_free_count(entry, 7);
-	}	
+	}
 
 	return string_free(s, 0);
 }
