@@ -935,7 +935,7 @@ void array_free_count(char **array, int count) {
  * It's works like array_make()+array_contains(), but it's hell simpler and faster.
  *
  * @param haystack		- comma-separated string to search.
- * @param needle		- searched element.
+ * @param needle		- element to search for.
  * @param sep			- separator.
  * @param caseinsensitive	- take a wild guess.
  *
@@ -945,9 +945,18 @@ const char *cssfind(const char *haystack, const char *needle, const char sep, in
 	const char *r = haystack-1;
 	const int needlelen = xstrlen(needle);
 
-	while ((r = (caseinsensitive ? xstrcasestr(r+1, needle) : xstrstr(r+1, needle))) &&
-			(((r != haystack) && ((*(r-1) != sep)))
-			|| ((*(r+needlelen) != '\0') && (*(r+needlelen) != sep)))) {};
+	if (needlelen == 0) { /* workaround for searching '' */
+		char c[3];
+		c[0] = sep;	c[1] = sep;	c[2] = '\0';
+
+		r = xstrstr(haystack, c);
+		if (r) /* return pointer to 'free space' between seps */
+			r++;
+	} else {
+		while ((r = (caseinsensitive ? xstrcasestr(r+1, needle) : xstrstr(r+1, needle))) &&
+				(((r != haystack) && ((*(r-1) != sep)))
+				|| ((*(r+needlelen) != '\0') && (*(r+needlelen) != sep)))) {};
+	}
 
 	return r;
 }
