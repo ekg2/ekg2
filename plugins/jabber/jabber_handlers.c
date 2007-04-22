@@ -2458,10 +2458,10 @@ JABBER_HANDLER(jabber_handle_iq) {
 								for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
 
 							if (!up || !(up->authtype & EKG_JABBER_AUTH_TO)) {
-								if (u->status == EKG_STATUS_NA)
+								if (u && u->status == EKG_STATUS_NA)
 									u->status = EKG_STATUS_UNKNOWN;
 							} else {
-								if (u->status == EKG_STATUS_UNKNOWN)
+								if (u && u->status == EKG_STATUS_UNKNOWN)
 									u->status = EKG_STATUS_NA;
 							}
 						}
