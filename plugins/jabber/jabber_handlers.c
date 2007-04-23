@@ -1409,27 +1409,26 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_last) {
 
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_last) {
 	const char *last = jabber_attr(n->atts, "seconds");
-	int seconds = 0;
 	char buff[21];
-	char *from_str, *lastseen_str;
+	char *from_str;
+	int seconds;
 
 	seconds = atoi(last);
 
 	if ((seconds>=0) && (seconds < 999*24*60*60-1))
 		/* days, hours, minutes, seconds... */
-		snprintf(buff, 21, _("%03dd %02dh %02dm %02ds"),seconds / 86400, \
+		snprintf(buff, sizeof(buff), _("%03dd %02dh %02dm %02ds"),seconds / 86400, \
 				(seconds / 3600) % 24, (seconds / 60) % 60, seconds % 60);
 	else
 		strcpy(buff, _("very long"));
 
 	from_str = (from) ? jabber_unescape(from) : NULL;
-	lastseen_str = xstrdup(buff);
+
 	print(
 		(xstrchr(from_str, '/') ? "jabber_lastseen_idle" :	/* if we have resource than display -> user online+idle		*/
 		xstrchr(from_str, '@') ? "jabber_lastseen_response" :	/* if we have '@' in jid: than display ->  user logged out	*/
 					"jabber_lastseen_uptime"),	/* otherwise we have server -> server up for: 			*/
-			jabberfix(from_str, "unknown"), lastseen_str);
-	xfree(lastseen_str);
+			jabberfix(from_str, "unknown"), buff);
 	xfree(from_str);
 }
 
@@ -2238,11 +2237,14 @@ JABBER_HANDLER(jabber_handle_iq) {
 
 	if (!xstrncmp(id, "passwd", 6)) {
 		if (type == JABBER_IQ_TYPE_RESULT) {
-			char *new_passwd = (char *) session_get(s, "__new_password");
-
-			session_set(s, "password", new_passwd);
-			session_set(s, "__new_password", NULL);
-			wcs_print("passwd");
+			const char *new_passwd = session_get(s, "__new_password");
+			if (new_passwd && (!from || !xstrcmp(from, j->server))) {
+				session_set(s, "password", new_passwd);
+				session_set(s, "__new_password", NULL);
+				print("passwd");
+			} else {
+				print(new_passwd ? "passwd_possible_abuse" : "passwd_abuse", session_name(s), from);
+			}
 		} 
 		session_set(s, "__new_password", NULL);
 		return;
@@ -2693,6 +2695,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 		if (!jstatus)
 			jstatus = xstrdup("unknown");
+
 		if (!status && ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN))
 			debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
 		xfree(jstatus);

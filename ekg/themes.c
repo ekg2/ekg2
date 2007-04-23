@@ -1526,6 +1526,9 @@ void theme_init()
 	format_add("passwd", _("%> Password changed\n"), 1);
 	format_add("passwd_failed", _("%! Error while changing password: %1\n"), 1);
 	format_add("passwd_timeout", _("%! Password changing timed out\n"), 1);
+	format_add("passwd_possible_abuse", "%> (%1) Password reply send by wrong uid: %2, if this is good server uid please report this to developers and manually "
+						"change your session password using /session password", 1);
+	format_add("passwd_abuse", "%! (%1) Somebody want to clear our password (%2)", 1);
 
 	/* changing information in public catalog */
 	format_add("change", _("%> Informations in public directory chenged\n"), 1);
