@@ -514,7 +514,6 @@ SNIFF_HANDLER(sniff_gg_del_notify, gg_add_remove) {
 	return 0;
 }
 
-/* XXX, w libgadu jest chyba mozliwy integer overflow przy parsowaniu tego. */
 SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 	unsigned char *next;
 
@@ -897,7 +896,13 @@ SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	debug_error("gg_notify_reply77: ip: %d port: %d ver: %x isize: %d\n", pkt->remote_ip, pkt->remote_port, pkt->version, pkt->image_size);
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_notify77",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(pkt->version), build_hex(pkt->version),
+		itoa(pkt->image_size));
 
 #if 0
 	if (pkt->uin & 0x40000000)
@@ -956,7 +961,12 @@ SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
 	xfree(descr);
 
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
-		"sniff_gg_status77", inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)), itoa(pkt->remote_port), itoa(pkt->version), build_hex(pkt->version), itoa(pkt->image_size));
+		"sniff_gg_status77",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(pkt->version), build_hex(pkt->version),
+		itoa(pkt->image_size));
 
 	return 0;
 }
@@ -1371,6 +1381,7 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_login70_unknown",	_("%) [GG_LOGIN70] UIN: %1 TYPE: %2"), 1);
 
 	format_add("sniff_gg_status77", _("%) [GG_STATUS77] %gDCC: %W%1:%2%n %gVERSION: %W#%3 (%4)%n %gIMGSIZE: %W%5KiB%n"), 1);
+	format_add("sniff_gg_notify77", _("%) [GG_NOTIFY77] %gDCC: %W%1:%2%n %gVERSION: %W#%3 (%4)%n %gIMGSIZE: %W%5KiB%n"), 1);
 
 	format_add("sniff_gg_addnotify",_("%) [GG_ADD_NOTIFY] UIN: %1 DATA: %2"), 1);
 	format_add("sniff_gg_delnotify",_("%) [GG_REMOVE_NOTIFY] UIN: %1 DATA: %2"), 1);
