@@ -933,19 +933,30 @@ SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
 	int has_descr;
 	char *descr;
 
+	uint32_t dunno2;
+	uint8_t uinflag;
+
 	CHECK_LEN(sizeof(gg_status77)); len -= sizeof(gg_status77);
 
 	uin	= pkt->uin & 0x00ffffff;
 
+	uinflag = pkt->uin >> 24;
+	dunno2	= pkt->dunno2;
+
+	if (dunno2 & GG_STATUS_VOICE_MASK) dunno2 -= GG_STATUS_VOICE_MASK;
+
+	CHECK_PRINT(uinflag, 0x00);
 	CHECK_PRINT(pkt->dunno1, 0x00);
-	CHECK_PRINT(pkt->dunno2, 0x00);
+
+	CHECK_PRINT(dunno2, 0x00);
 
 	status	= gg_status_to_text(pkt->status, &has_descr);
 	descr 	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	debug_error("sniff_gg_status77: %d %d %x %d\n", pkt->remote_ip, pkt->remote_port, pkt->version, pkt->image_size);
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_status77", inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)), itoa(pkt->remote_port), itoa(pkt->version), build_hex(pkt->version), itoa(pkt->image_size));
 
 	return 0;
 }
@@ -1358,6 +1369,8 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_login70_sha1",	_("%) [GG_LOGIN70] UIN: %1 SHA1: %2"), 1);
 	format_add("sniff_gg_login70_hash",	_("%) [GG_LOGIN70] UIN: %1 HASH: %2"), 1);
 	format_add("sniff_gg_login70_unknown",	_("%) [GG_LOGIN70] UIN: %1 TYPE: %2"), 1);
+
+	format_add("sniff_gg_status77", _("%) [GG_STATUS77] %gDCC: %W%1:%2%n %gVERSION: %W#%3 (%4)%n %gIMGSIZE: %W%5KiB%n"), 1);
 
 	format_add("sniff_gg_addnotify",_("%) [GG_ADD_NOTIFY] UIN: %1 DATA: %2"), 1);
 	format_add("sniff_gg_delnotify",_("%) [GG_REMOVE_NOTIFY] UIN: %1 DATA: %2"), 1);
