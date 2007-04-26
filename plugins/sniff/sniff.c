@@ -98,6 +98,18 @@ static char *build_gg_uid(uint32_t sender) {
 	return buf;
 }
 
+static char *inet_ntoa(struct in_addr ip) {
+	static char bufs[10][16];
+	static int index = 0;
+	char *tmp = bufs[index++];
+
+	if (index > 9)
+		index = 0;
+	
+	snprintf(tmp, 16, "%d.%d.%d.%d", (ip.s_addr) & 0xff, (ip.s_addr >> 8) & 0xff, (ip.s_addr >> 16) & 0xff, (ip.s_addr >> 24) & 0xff);
+	return tmp;
+}
+
 static char *build_windowip_name(struct in_addr ip) {
 	static char buf[50];
 
@@ -467,6 +479,14 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 	descr 	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
+
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_status60",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(pkt->version), build_hex(pkt->version),
+		itoa(pkt->image_size));
 
 	return 0;
 }
@@ -1373,18 +1393,20 @@ static QUERY(sniff_print_version) {
 
 static int sniff_theme_init() {
 /* sniff gg */
-	format_add("sniff_gg_welcome",	_("%) [GG_WELCOME] SEED: %1"), 1);
-	format_add("sniff_gg_login60",	_("%) [GG_LOGIN60] UIN: %1 HASH: %2"), 1);
+	format_add("sniff_gg_welcome",	_("%) %b[GG_WELCOME] %gSEED: %W%1"), 1);
+	format_add("sniff_gg_login60",	_("%) %b[GG_LOGIN60] %gUIN: %W%1 %gHASH: %W%2"), 1);
 
-	format_add("sniff_gg_login70_sha1",	_("%) [GG_LOGIN70] UIN: %1 SHA1: %2"), 1);
-	format_add("sniff_gg_login70_hash",	_("%) [GG_LOGIN70] UIN: %1 HASH: %2"), 1);
-	format_add("sniff_gg_login70_unknown",	_("%) [GG_LOGIN70] UIN: %1 TYPE: %2"), 1);
+	format_add("sniff_gg_login70_sha1",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gSHA1: %W%2"), 1);
+	format_add("sniff_gg_login70_hash",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gHASH: %W%2"), 1);
+	format_add("sniff_gg_login70_unknown",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gTYPE: %W%2"), 1);
 
-	format_add("sniff_gg_status77", _("%) [GG_STATUS77] %gDCC: %W%1:%2%n %gVERSION: %W#%3 (%4)%n %gIMGSIZE: %W%5KiB%n"), 1);
-	format_add("sniff_gg_notify77", _("%) [GG_NOTIFY77] %gDCC: %W%1:%2%n %gVERSION: %W#%3 (%4)%n %gIMGSIZE: %W%5KiB%n"), 1);
 
-	format_add("sniff_gg_addnotify",_("%) [GG_ADD_NOTIFY] UIN: %1 DATA: %2"), 1);
-	format_add("sniff_gg_delnotify",_("%) [GG_REMOVE_NOTIFY] UIN: %1 DATA: %2"), 1);
+	format_add("sniff_gg_status60", _("%) %b[GG_STATUS60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_status77", _("%) %b[GG_STATUS77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_notify77", _("%) %b[GG_NOTIFY77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+
+	format_add("sniff_gg_addnotify",_("%) %b[GG_ADD_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
+	format_add("sniff_gg_delnotify",_("%) %b[GG_REMOVE_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
 /* stats */
 	format_add("sniff_pkt_rcv", _("%) %2 packets captured"), 1);
 	format_add("sniff_pkt_drop",_("%) %2 packets dropped"), 1);
