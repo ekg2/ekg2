@@ -9,11 +9,12 @@ MODULE = Ekg2::User	PACKAGE = Ekg2::User  PREFIX = userlist_user_
 
 int userlist_user_set_status(Ekg2::User u, char *status)
 CODE:
-## TODO: sprawdzic czy status jest ok.. i jesli nie jest ok, zwracamy 0.
-	char *tmp = u->status;
-	u->status = xstrdup(status);
-	xfree(tmp);
-	RETVAL = 1;
+	int n = ekg_status_int(status);
+	if (n) {
+		u->status = n;
+		RETVAL = 1;
+	} else
+		RETVAL = 0;
 OUTPUT:
 	RETVAL
 
