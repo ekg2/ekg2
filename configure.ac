@@ -428,7 +428,7 @@ fi
 AC_ARG_WITH(python,		AC_HELP_STRING([--without-python],		[Compile without python support (python plugin)]))
 
 if test "x$with_python" != "xno"; then
-dnl	AM_CHECK_PYTHON
+	AM_CHECK_PYTHON
 
 	if test "x$have_python" = "xyes"; then
 		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS python"
