@@ -42,6 +42,7 @@
 #include <ekg/themes.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
+#include <ekg/queries.h>
 
 #include "python.h"
 #include "python-user.h"
@@ -142,7 +143,7 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                 } else {
                         Py_RETURN_NONE;
                 }
-#if 0 /* XXX use privhandler */
+#if 0 /* using PRIVHANDLER below */
         } else if (!xstrcmp(attr, "first_name")) {
                 if (u->first_name) {
                         return PyString_FromString(u->first_name);
@@ -186,7 +187,7 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                 } else {
                         Py_RETURN_NONE;
                 }
-#if 0
+#if 0 /* using PRIVHANDLER below */
         } else if (!xstrcmp(attr, "ip")) {
                 if (u->ip) {
                         struct sockaddr_in sin;
@@ -216,8 +217,15 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                 } else {
                         Py_RETURN_NONE;
                 }
-        } else {
-                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr);
+        } else { /* XXX, take a look at this */
+		char **val;
+		int f = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
+
+		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &f, &attr, &val);
+		if (val)
+                        return PyString_FromString(*val);
+		else
+	                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr);
         }
 }
 
