@@ -72,5 +72,5 @@ CODE:
 	
 void window_kill(Ekg2::Window wind)
 CODE:
-	window_kill(wind, 0);
+	window_kill(wind);
 
