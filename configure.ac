@@ -417,7 +417,7 @@ fi
 AC_ARG_WITH(perl,		AC_HELP_STRING([--without-perl],		[Compile without perl support (perl plugin)]))
 
 if test "x$with_perl" != "xno"; then
-dnl	AM_CHECK_PERL
+	AM_CHECK_PERL
 
 	if test "x$have_perl" = "xyes"; then
 		CONTRIB_SUBDIRS="$CONTRIB_SUBDIRS perl"
