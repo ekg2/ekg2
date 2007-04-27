@@ -556,17 +556,19 @@ int python_initialize()
 	PyModule_AddIntConstant(ekg, "MSGCLASS_SYSTEM",		EKG_MSGCLASS_SYSTEM);
 
 	// Const - status types
-	PyModule_AddStringConstant(ekg, "STATUS_NA",		EKG_STATUS_NA);
-	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		EKG_STATUS_AVAIL);
-	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		EKG_STATUS_AWAY);
-	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	EKG_STATUS_AUTOAWAY);
-	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	EKG_STATUS_INVISIBLE);
-	PyModule_AddStringConstant(ekg, "STATUS_XA",		EKG_STATUS_XA);
-	PyModule_AddStringConstant(ekg, "STATUS_DND",		EKG_STATUS_DND);
-	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	EKG_STATUS_FREE_FOR_CHAT);
-	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	EKG_STATUS_BLOCKED);
-	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	EKG_STATUS_UNKNOWN);
-	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		EKG_STATUS_ERROR);
+	/* XXX, someone take a look at it? */
+	PyModule_AddStringConstant(ekg, "STATUS_NA",		ekg_status_string(EKG_STATUS_NA, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		ekg_status_string(EKG_STATUS_AVAIL, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		ekg_status_string(EKG_STATUS_AWAY, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	ekg_status_string(EKG_STATUS_AUTOAWAY, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	ekg_status_string(EKG_STATUS_INVISIBLE, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_XA",		ekg_status_string(EKG_STATUS_XA, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_DND",		ekg_status_string(EKG_STATUS_DND, 0));
+		/* XXX, break compatibility and use FFC? */
+	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	ekg_status_string(EKG_STATUS_FFC, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	ekg_status_string(EKG_STATUS_BLOCKED, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	ekg_status_string(EKG_STATUS_UNKNOWN, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		ekg_status_string(EKG_STATUS_ERROR, 0));
 
 	// Const - ignore levels
 	PyModule_AddIntConstant(ekg, "IGNORE_STATUS",		IGNORE_STATUS);

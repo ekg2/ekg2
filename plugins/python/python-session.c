@@ -150,16 +150,13 @@ PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key)
 PyObject *ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value)
 {
 	session_t * s;
-	session_param_t * p;
 	const char *name = PyString_AsString(key);
 	s = session_find(self->name);
 
 	debug("[python] Setting '%s' option to '%s' for session %s\n", name,
 		PyString_AsString(value), self->name);
 
-	p = session_var_find(s, name);
-
-	if (!p) {
+	if (session_is_var(s, name) != 1) {
 		PyErr_SetString(PyExc_LookupError, "unknown variable");
 		return NULL;
     }
@@ -305,21 +302,17 @@ PyObject *ekg_session_status_set(ekg_sessionObj * self, PyObject * pyargs)
         char *status = NULL;
         char *descr = NULL;
         char *command = NULL;
+	char *s;
 
         if (!PyArg_ParseTuple(pyargs, "s|s", &status, &descr))
                 return NULL;
 
-        if (xstrcmp(status, EKG_STATUS_AVAIL) == 0) {
-                command = xstrdup("back");
-        } else if (xstrcmp(status, EKG_STATUS_FREE_FOR_CHAT) == 0) {
-                command = xstrdup("ffc");
-        } else {
-                command = xstrdup(status);
-        }
-        if (descr == NULL) {
+	command = ekg_status_string(ekg_status_int(status), 1);
+        if (descr == NULL)
                 descr = xstrdup("-");
-        }
-        command_exec(NULL, session_find(self->name), saprintf("/%s %s", command, descr), 0);
+
+        command_exec(NULL, session_find(self->name), (s = saprintf("/%s %s", command, descr)), 0);
+	xfree(s); xfree(descr); xfree(status); /* ? */
         Py_RETURN_TRUE;
 }
 
@@ -333,7 +326,7 @@ PyObject *ekg_session_status_set(ekg_sessionObj * self, PyObject * pyargs)
 PyObject *ekg_session_status(ekg_sessionObj * self)
 {
         session_t * s = session_find(self->name);
-        return Py_BuildValue("(ss)", session_status_get(s), session_descr_get(s));
+        return Py_BuildValue("(ss)", ekg_status_string(session_status_get(s), 2), session_descr_get(s));
 }
 
 /*

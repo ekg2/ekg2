@@ -224,7 +224,7 @@ PyObject *ekg_window_kill(ekg_windowObj * self, PyObject *args)
 {
         debug("[python] Killing window '%s'\n", self->w->target);
 
-        window_kill(self->w, 0);
+        window_kill(self->w);
         self->w = NULL;
 
         Py_INCREF(Py_None);
