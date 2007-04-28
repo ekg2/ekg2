@@ -3880,11 +3880,11 @@ COMMAND(cmd_dcc)
 			switch (d->type) {
 				case DCC_SEND:
 					printq("dcc_show_active_send", itoa(d->id), format_user(session, d->uid), d->filename, itoa(d->offset), itoa(d->size), 
-							(d->size) ? itoa(100 * (d->offset / d->size)) : "?");
+							(d->size) ? itoa(d->offset * 100 / d->size) : "?");
 					break;
 				case DCC_GET:
 					printq("dcc_show_active_get", itoa(d->id), format_user(session, d->uid), d->filename, itoa(d->offset), itoa(d->size), 
-							(d->size) ? itoa(100 * (d->offset / d->size)) : "?");
+							(d->size) ? itoa(d->offset * 100 / d->size) : "?");
 					break;
 				case DCC_VOICE:
 					printq("dcc_show_active_voice", itoa(d->id), format_user(session, d->uid));
