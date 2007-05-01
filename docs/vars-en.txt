@@ -18,3 +18,16 @@ exit_exec
 	Command executed on EKG2 exit, just before exit(). It'll replace EKG2
 	in process table, so ekg2 will return its' exit code.
 
+session_locks
+	type: int
+	default value: 1
+	
+	Kind of session-locks used by EKG2 to avoid two copies of it
+	connecting the same session simultaneously. Possible values:
+	
+		0 - session-locks disabled,
+	
+		1 - flock-based locks (default),
+	
+		2 - file existence-based locks (simple).
+

@@ -289,6 +289,19 @@ save_quit
 	zapisywana, je¿eli 1 to pojawia siê pytanie, je¿eli 2 to konfiguracja
 	zapisana jest bez pytania 
 
+session_locks
+	typ: liczba
+	domy¶lna warto¶æ: 1
+	
+	Typ blokad sesji, u¿ywanych przez EKG2 celem unikniêcia jednoczesnego
+	po³±czenia siê dwóch kopii owego do jednej sesji. Mo¿liwe warto¶ci:
+	
+		0 - brak blokad,
+	
+		1 - blokady oparte o flock() (domy¶lne),
+	
+		2 - blokady oparte o istnieniu pliku (uproszczone).
+
 slash_messages
 	typ: bool
 	domy¶lna warto¶æ: 1
