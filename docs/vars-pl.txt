@@ -196,6 +196,15 @@ events_delay
 	pocz±tkowych informacji o stanie osób po po³±czeniu jako zmianê
 	ich stanu.
 
+exit_exec
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	Polecenie, wykonywane przy zamykaniu EKG2, zaraz przed exit().
+	Charakteryzuje siê tym, ¿e ,,zastêpuje'' owe w tablicy procesów,
+	tym samym kod wyj¶cia zwracany przez EKG2 bêdzie wynikiem danego
+	polecenia.
+
 keep_reason
 	typ: liczba
 	domy¶lna warto¶æ: 0

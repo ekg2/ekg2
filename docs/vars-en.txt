@@ -11,4 +11,10 @@ display_crap
 	defines if information which weren't connected with interlocutor will be displayed in chat window. 
 	If it's 0, in chat window information only about interlocutor status are displayed.
 
+exit_exec
+	type: text
+	default value: none
+	
+	Command executed on EKG2 exit, just before exit(). It'll replace EKG2
+	in process table, so ekg2 will return its' exit code.
 

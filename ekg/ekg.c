@@ -1051,6 +1051,7 @@ int main(int argc, char **argv)
  */
 void ekg_exit()
 {
+	char *exit_exec = config_exit_exec;
 	extern int ekg2_dlclose(void *plugin);
 
 	list_t l;
@@ -1154,6 +1155,7 @@ void ekg_exit()
 		if (session_write())
 			printf(_("Error while saving.\n"));
 	}
+	config_exit_exec = NULL; /* avoid freeing it */
 
 /* XXX, think about sequence of unloading. */
 
@@ -1226,6 +1228,17 @@ void ekg_exit()
 	WSACleanup();
 #endif
 	close(stderr_backup);
+
+	if (exit_exec) {
+#ifndef NO_POSIX_SYSTEM
+		execl("/bin/sh", "sh", "-c", exit_exec, NULL);
+#else
+		/* XXX, like in cmd_exec() */
+#endif
+		/* should we return some error code if exec() failed?
+		 * AKA this line shouldn't be ever reached */
+	}
+
         exit(0);
 }
 

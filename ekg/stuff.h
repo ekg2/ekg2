@@ -233,6 +233,7 @@ extern char *config_windows_layout;
 extern int config_windows_save;
 extern char *config_dcc_dir;
 extern int config_version;
+extern char *config_exit_exec;
 
 extern char *home_dir;
 extern char *config_dir;
