@@ -417,7 +417,7 @@ static inline int xmsg_add_watch(session_t *s, const char *f)
 		if (!S_ISDIR(fs.st_mode))
 			xerr("given path is a file, not a directory");
 	} else {
-		if (mkdir(f, 0777))
+		if (mkdir(dir, 0777))
 			xerrn("mkdir failed");
 	}
 
