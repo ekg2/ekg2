@@ -29,33 +29,36 @@ typedef struct {
 	char *value;			/* warto¶æ parametru */
 } session_param_t;
 
+/**
+ * session_t contains all information about session
+ */
 typedef struct {
 	/* public: */
-	void *plugin;
-	char *uid;			/* id u¿ytkownika */
-	char *alias;			/* alias sesji */
-	void *priv;			/* dla plugina obs³uguj±cego sesjê */
-	list_t userlist;		/* userlista */
+	void *plugin;			/**< protocol plugin owing session */
+	char *uid;			/**< user ID */
+	char *alias;			/**< short name */
+	void *priv;			/**< protocol plugin's private data */
+	list_t userlist;		/**< session's userlist */
 
 	/* private: */
-	int status;			/* stan sesji */
-	char *descr;			/* opis stanu sesji */
-	char *password;
-	int connected;			/* czy sesja jest po³±czona? */
-	int activity;			/* kiedy ostatnio co¶ siê dzia³o? */
-	int autoaway;			/* jeste¶my w autoawayu? */
+	int status;			/**< session's user status */
+	char *descr;			/**< session's user description */
+	char *password;			/**< session's account password */
+	int connected;			/**< whether session is connected */
+	int activity;			/**< timestamp of last activity */
+	int autoaway;			/**< whether we're in autoaway */
 	int scroll_last;
 	int scroll_pos;
 	int scroll_op;
-	time_t last_conn;               /* kiedy siê po³±czyli¶my */
+	time_t last_conn;               /**< timestamp of connecting */
 
 	int global_vars_count;
 	char **values;
 	list_t local_vars;
 	
 	/* new auto-away */
-	int laststatus;
-	char *lastdescr;
+	int laststatus;			/**< user's status before going into autoaway */
+	char *lastdescr;		/**< user's description before going into autoaway */
 } session_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
