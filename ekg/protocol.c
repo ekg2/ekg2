@@ -159,6 +159,7 @@ static QUERY(protocol_disconnected) {
 		s->last_conn = time(NULL);
 		s->connected = 0;
 		/* XXX notify ui */
+		command_exec(NULL, s, "/session --unlock", 1);
 	}
 
 	switch (type) {

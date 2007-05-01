@@ -25,6 +25,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "debug.h"
 #include "dynstuff.h"
 #include "sessions.h"
@@ -1232,6 +1238,85 @@ COMMAND(session_command)
 		
 		printq("invalid_params", name);
 		return -1;
+	}
+
+	if (match_arg(params[0], 'L', "lock", 2)) {
+		int fd;
+		const char *path;
+		char *tmp;
+		session_t *s;
+
+		if (params[1]) {
+			if (!(s = session_find(params[1]))) {
+				printq("session_doesnt_exist", params[1]);
+				return -1;
+			}
+		} else
+			s = session;
+		if (!config_session_locks)
+			return 0;
+		if (config_session_locks == 1 && session->lock_fd) {
+			print("session_locked", session_name(session));
+			return -1;
+		}
+
+		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(session), "-lock")), 1);
+		xfree(tmp);
+		fd = open(path,
+				O_CREAT|O_WRONLY
+				| (config_session_locks != 1
+					? O_EXCL		/* if we don't use flock(), we just take care of file's existence */
+					: O_TRUNC
+						| O_NONBLOCK	/* if someone's set up shitpipe for us */
+				), S_IWUSR);
+
+		if (fd == -1) {
+			if (errno == EEXIST) {
+				print("session_locked", session_name(session));
+				return -1;
+			} else if (errno != ENXIO) {
+					/* XXX, be more loud? */
+				debug_error("session_command(), lock's open() failed with errno=%d\n", errno);
+				return 0;
+			}
+		}
+
+		if (config_session_locks == 1) {
+			if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
+				if (errno == EWOULDBLOCK) {
+					print("session_locked", session_name(session));
+					return -1;
+				} else {
+					debug_error("session_command(), lock's flock() failed with errno=%d\n", errno);
+					close(fd); /* if we can't lock, we don't need fd */
+					return 0;
+				}
+			}
+			session->lock_fd = fd;
+		} else
+			close(fd);
+
+		return 0;
+	}
+
+	if (match_arg(params[0], 'u', "unlock", 3)) {
+		int fd;
+		const char *path;
+		char *tmp;
+
+		if (!config_session_locks)
+			return 0;
+
+		if (config_session_locks == 1 && (fd = session->lock_fd)) {
+			flock(fd, LOCK_UN);
+			close(fd);
+			session->lock_fd = 0;
+		}
+
+		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(session), "-lock")), 0);
+		xfree(tmp);
+		unlink(path);
+		return 0;
 	}
 
 	if ((s = session_find(params[0]))) {

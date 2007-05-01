@@ -59,6 +59,8 @@ typedef struct {
 	/* new auto-away */
 	int laststatus;			/**< user's status before going into autoaway */
 	char *lastdescr;		/**< user's description before going into autoaway */
+
+	int lock_fd;			/**< fd used for session locking */
 } session_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
