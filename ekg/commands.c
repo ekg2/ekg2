@@ -598,11 +598,14 @@ static COMMAND(cmd_del)
 	return 0;
 }
 
+/**
+ * cmd_exec_info_t is internal structure, containing information about processes started using /exec.
+ */
 typedef struct {
-	char *target;		/* je¶li wysy³amy wynik, to do kogo? */
-	char *session;		/* jaka sesja? */
-	int quiet;		/* czy mamy byæ cicho? */
-	string_t buf;	/* je¶li buforujemy, to tutaj */
+	char *target;		/**< Target UID, if redirecting output to someone */
+	char *session;		/**< Session UID */
+	int quiet;		/**< Whether to be quiet (i.e. don't print info on exit) */
+	string_t buf;		/**< Buffer */
 } cmd_exec_info_t;
 
 static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
@@ -704,7 +707,10 @@ COMMAND(cmd_exec)
 			exit(1);
 		}
 #else
-/* XXX, fork and execute cmd /C $command */
+/* XXX, fork and execute cmd /C $command
+ * MG: I think using explicitly 'cmd /c' is very bad - in win9x we've got command.com instead;
+ *     but AFAIR $COMSPEC should be always defined; if not, we should even use command.com
+ *     (AFAIK newer versions of windows are backwards compatible with this) */
 		pid = -1;
 #endif
 
