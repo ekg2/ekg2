@@ -442,6 +442,8 @@ static COMMAND(xmsg_connect)
 		printq("already_connected", session_name(session));
 		return -1;
 	}
+	if (command_exec(NULL, session, "/session --lock", 0) == -1)
+		return -1;
 
 	if (xmsg_add_watch(session, session_uid_get(session)+XMSG_UID_DIROFFSET)) {
 		print("conn_failed", format_find("xmsg_addwatch_failed"), session_name(session));

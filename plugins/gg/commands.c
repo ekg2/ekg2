@@ -146,6 +146,8 @@ static COMMAND(gg_command_connect) {
 					session_name(session));
 			return -1;
 		}
+		if (command_exec(NULL, session, "/session --lock", 0) == -1)
+			return -1;
 
 		if (local_ip == NULL)
 			gg_local_ip = htonl(INADDR_ANY);

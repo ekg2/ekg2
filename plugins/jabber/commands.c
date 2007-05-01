@@ -335,6 +335,9 @@ static COMMAND(jabber_command_connect)
 		return -1;
 	}
 
+	if (command_exec(NULL, session, "/session --lock", 0) == -1)
+		return -1;
+
 	debug("session->uid = %s\n", session->uid);
 		/* XXX, nie wymagac od usera podania calego uida w postaci: tlen:ktostam@tlen.pl tylko samo tlen:ktostam? */
 	if (!(server = xstrchr(session->uid, '@'))) {
