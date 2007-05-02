@@ -155,10 +155,12 @@ static QUERY(protocol_disconnected) {
 
 	userlist_clear_status(s, NULL);
 
-	if (s && s->connected) {
-		s->last_conn = time(NULL);
-		s->connected = 0;
-		/* XXX notify ui */
+	if (s) {
+		if (s->connected) {
+			s->last_conn = time(NULL);
+			s->connected = 0;
+			/* XXX notify ui */
+		}
 		command_exec(NULL, s, "/session --unlock", 1);
 	}
 
