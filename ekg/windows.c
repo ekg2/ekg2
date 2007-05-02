@@ -879,34 +879,120 @@ COMMAND(cmd_window)
 	return 0;
 }
 
+int config_window_session_allow = 1;
+
+/**
+ * window_session_cycle()
+ *
+ * Change session of given window to next good one (based on @a config_window_session_allow value) 
+ *
+ * @note	behaviour of window_session_cycle() based on values of config_window_session_allow:
+ * 		 0 - change session only if w->target == NULL
+ * 		 1 - like 0 + if w->target is set than new session must accept that uid	[default && other values]
+ * 		 2 - change to any next session.
+ *
+ * @note	If w->session was changed than UI_WINDOW_TARGET_CHANGED will be emited.
+ * 		If w == window_current than SESSION_CHANGED will be emited also.
+ *
+ * @todo	Gdy config_window_session_allow == 2, to najpierw sprobowac znalezc dobra sesje a potem jesli nie to 
+ * 		nastepna?
+ * 
+ * @todo	Create window_session_set() for some stuff here.
+ *
+ * @param	w - window
+ *
+ * @return	 0 - if session of window was changed
+ * 		-1 - if not
+ */
+
 int window_session_cycle(window_t *w)
 {
 	list_t l;
+	session_t *new_session = NULL;
+	char *uid;
+	char *nickname;
 
-	if (!w || !sessions)
+	if (!w || !sessions || (config_window_session_allow == 0 && w->target))
 		return -1;
 
+	/* find sessions->(...next..)->data == w->session */
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 
-		if (w->session != s)
-			continue;
-
-		if (l->next) {
-			w->session = (session_t*) l->next->data;
-			if (w == window_current)
-				session_current = window_current->session;
-        		query_emit_id(NULL, SESSION_CHANGED);
-			return 0;
-		} else
+		if (w->session == s)
 			break;
 	}
+	l = l->next;
 
-	w->session = (session_t*) sessions->data;	
-        if (w == window_current)
-                 session_current = window_current->session;
+	if (!(uid = get_uid(w->session, w->target)))	/* try to get old uid, because in w->target we can have nickname, and it could be other person */
+		uid = w->target;
 
-        query_emit_id(NULL, SESSION_CHANGED);
+again:
+	if (l) {
+		list_t k;
+
+		for (k = l; k; k = k->next) {
+			session_t *s = k->data;
+
+			if (s == w->session)
+				break;
+
+			if (config_window_session_allow == 2 || !w->target || (config_window_session_allow != 0 && get_uid(s, uid))) {
+				new_session = s;
+				break;
+			}
+		}
+	} 
+		
+	if (!new_session && l != sessions) {
+		l = sessions;
+		goto again;
+	}
+
+	if (!new_session)	/* not found */
+		return -1;
+
+	w->session = new_session;
+
+	if ((nickname = get_nickname(new_session, uid))) {		/* if we've got nickname for old uid, than use it as w->target */
+		char *tmp = w->target;
+		w->target = xstrdup(nickname);
+		xfree(tmp);
+	} else if (w->target != uid) {					/* if not, than change w->target (possibility nickname) with uid value [XXX, untested behavior] */
+		char *tmp = w->target;
+		w->target = xstrdup(uid);
+		xfree(tmp);
+	}
+
+	if (w == window_current) {
+		session_current = new_session;
+        	query_emit_id(NULL, SESSION_CHANGED);
+	}
+	query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+
+	{	/* here sync window_status->session with window_debug->session */
+		if (w == window_status) {
+			if (window_debug->session != new_session) {
+				window_debug->session = new_session;
+				if (window_current == window_debug) {
+					session_current = new_session;
+					query_emit_id(NULL, SESSION_CHANGED);
+				}
+				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_debug);
+			}
+		}
+
+		if (w == window_debug) {
+			if (window_status->session != new_session) {
+				window_status->session = new_session;
+				if (window_current == window_status) {
+					session_current = new_session;
+					query_emit_id(NULL, SESSION_CHANGED);
+				}
+				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_status);
+			}
+		}
+	}
 
 	return 0;
 }
