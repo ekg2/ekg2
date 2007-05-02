@@ -595,10 +595,6 @@ static QUERY(gg_userlist_priv_handler) {
 					xfree(entry[4]);
 					entry[4] = xstrdup(p->mobile);
 				}
-				if (gg_userlist_put_config == 666) { /* userlist -p hack */
-					xfree(entry[6]);
-					entry[6] = xstrdup(u->uid+3); /* remove gg: */
-				}
 				break;
 			}
 			case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
@@ -1248,14 +1244,19 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 
 				config_changed = 1;
 			}
+			session_int_set(s, "__userlist_get_config", -1);
 			break;
+
 		case GG_USERLIST_PUT_REPLY:
-			switch (gg_userlist_put_config) {
+			switch (session_int_get(s, "__userlist_put_config")) {
 				case 0:	print("userlist_put_ok");		break;
 				case 1:	print("userlist_config_put_ok");	break;
 				case 2:	print("userlist_clear_ok");		break;
 				case 3:	print("userlist_config_clear_ok");	break;
+				default:
+					debug_error("gg_session_handler_userlist() occur, but __userlist_put_config: %d\n", session_int_get(s, "__userlist_put_config"));
 			}
+			session_int_set(s, "__userlist_put_config", -1);
 			break;
 	}
 }

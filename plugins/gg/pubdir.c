@@ -41,7 +41,6 @@ list_t gg_unregisters = NULL;
 int gg_register_done = 0;
 char *gg_register_password = NULL;
 char *gg_register_email = NULL;
-int gg_userlist_put_config;
 
 static WATCHER(gg_handle_register)	/* tymczasowy */
 {
@@ -500,25 +499,80 @@ COMMAND(gg_command_remind)
 	return 0;
 }
 
+/*
+ * gg_userlist_dump()
+ *
+ * zapisuje listę kontaktów w postaci tekstowej.
+ *
+ * zwraca zaalokowany bufor, który należy zwolnić.
+ */
+static char *gg_userlist_dump(session_t *session)
+{
+	string_t s;
+	list_t l;
+
+	s = string_init(NULL);
+
+	for (l = session->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		gg_userlist_private_t *p = u->priv;
+		char *groups;
+
+		groups = group_to_string(u->groups, 1, 0);
+		
+		string_append_format(s, 
+			"%s;%s;%s;%s;%s;%s;%s%s\r\n",
+			(p && p->first_name) ? p->first_name : "",
+			(p && p->last_name) ? p->last_name : "",
+			(u->nickname) ? u->nickname : "",
+			(u->nickname) ? u->nickname : "",
+			(p && p->mobile) ? p->mobile : "",
+			groups,
+			u->uid + 3 /* skip gg: */,
+			(u->foreign) ? u->foreign : "");
+
+		xfree(groups);
+	}	
+
+	return string_free(s, 0);
+}
+
 COMMAND(gg_command_list)
 {
 	gg_private_t *g = session_private_get(session);
+
 	/* list --get */
 	if (params[0] && match_arg(params[0], 'g', ("get"), 2)) {
+#if 0
+		if (session_int_get(session, "__userlist_get_config") != -1) {
+			printq("generic_error", "Another import userlist operation in progress... Please wait.");
+			return -1;
+		}
+#endif
+
                 if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
                         printq("userlist_get_error", strerror(errno));
 			return -1;
 	        }
+
+		session_int_set(session, "__userlist_get_config", 0);
 		return 0;
 	}
 
 	/* list --clear */
 	if (params[0] && match_arg(params[0], 'c', ("clear"), 2)) {
+#if 0
+		if (session_int_get(session, "__userlist_put_config") != -1) {
+			printq("generic_error", "Another export/clear userlist operation in progress... Please wait.");
+			return -1;
+		}
+#endif
+
                 if (gg_userlist_request(g->sess, GG_USERLIST_PUT, NULL) == -1) {
                         printq("userlist_clear_error", strerror(errno));
                         return -1;
                 }
-		gg_userlist_put_config = 2;
+		session_int_set(session, "__userlist_put_config", 2);
 		return 0;
 	}
 	
@@ -526,9 +580,13 @@ COMMAND(gg_command_list)
 	if (params[0] && (match_arg(params[0], 'p', ("put"), 2))) {
 		char *contacts;
 		char *cpcontacts;
-
-		gg_userlist_put_config = 666; /* special value for userlist_dump magic */
-		contacts	= userlist_dump(session);
+#if 0
+		if (session_int_get(session, "__userlist_put_config") != -1) {
+			printq("generic_error", "Another export/clear userlist operation in progress... Please wait.");
+			return -1;
+		}
+#endif
+		contacts	= gg_userlist_dump(session);
 		cpcontacts	= gg_locale_to_cp(contacts);
 
                 if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
@@ -536,7 +594,8 @@ COMMAND(gg_command_list)
                         xfree(cpcontacts);
                         return -1;
                 }
-		gg_userlist_put_config = 0;
+
+		session_int_set(session, "__userlist_put_config", 0);
 		xfree(cpcontacts);
 		return 0;
 	}

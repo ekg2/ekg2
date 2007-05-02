@@ -30,7 +30,6 @@
 COMMAND(gg_command_image); /* images.c */
 
 extern plugin_t gg_plugin;
-extern int gg_userlist_put_config;
 extern char *last_tokenid;
 
 /* variables */
