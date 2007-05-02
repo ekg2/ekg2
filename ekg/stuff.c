@@ -2855,6 +2855,9 @@ struct ekg_converter {
 	int		rev_used;	/**< Like above, but for rev; if !rev, value undefined */
 	int		is_utf;	/**< Used internally for mutt_convert_string() */
 };
+
+static iconv_t iconv_same;
+
 #endif
 
 /**
@@ -2881,8 +2884,8 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
 		to	= config_console_charset;
 	if (!xstrcasecmp(from, to)) { /* if they're the same */
 		if (rev)
-			*rev = NULL;
-		return NULL;
+			*rev = &iconv_same;
+		return &iconv_same;
 	}
 
 		/* maybe we've already got some converter for this charsets */
@@ -2978,6 +2981,9 @@ void ekg_convert_string_destroy(void *ptr) {
 	if (!ptr) /* we can be called with NULL ptr */
 		return;
 
+	if (ptr == &iconv_same)
+		return;
+
 	for (lp = ekg_converters; lp; lp = lp->next) {
 		struct ekg_converter *c = lp->data;
 
@@ -3036,6 +3042,9 @@ char *ekg_convert_string_p(const char *ps, void *ptr) {
 #ifdef HAVE_ICONV
 	list_t lp;
 	int is_utf = 0;
+
+	if (ptr == &iconv_same)
+		return xstrdup(ps);
 
 	if (!ps || !*ps || !ptr)
 		return NULL;
