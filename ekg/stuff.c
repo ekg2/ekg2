@@ -61,6 +61,11 @@
 
 #include <iconv.h>
 
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
+
+
 #include "debug.h"
 #include "commands.h"
 #include "dynstuff.h"
@@ -1501,6 +1506,24 @@ int mkdir_recursive(const char *pathname, int isdir) {
 		}
 	} while (pathname[i++]);	/* while not NUL */
 	return 0;
+}
+
+const char *prepare_sapath(const char *filename, ...) {
+	static char path[PATH_MAX];
+	size_t len;
+
+	len = strlcpy(path, config_dir ? config_dir : "", sizeof(path));
+
+	if (filename && *filename && len < sizeof(path)-1) {	/* -1 coz of '/' */
+		va_list ap;
+
+		va_start(ap, filename);
+		path[len++] = '/';
+		vsnprintf(&path[len], sizeof(path)-len, filename, ap);
+		va_end(ap);
+	}
+
+	return path;
 }
 
 /*
