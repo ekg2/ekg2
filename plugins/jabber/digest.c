@@ -476,7 +476,7 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
  * @return <b>static</b> buffer, with 40 digit SHA1 hash + NUL char
  */
 
-char *jabber_digest(const char *sid, const char *password) {
+char *jabber_digest(const char *sid, const char *password, void *charset) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
@@ -485,11 +485,11 @@ char *jabber_digest(const char *sid, const char *password) {
 
 	SHA1Init(&ctx);
 
-	tmp = ekg_convert_string_p(sid, jconv_out);
+	tmp = ekg_convert_string_p(sid, charset);
 	SHA1Update(&ctx, (tmp ? tmp : sid), xstrlen(tmp ? tmp : sid));
 	xfree(tmp);
 
-	tmp = ekg_convert_string_p(password, jconv_out);
+	tmp = ekg_convert_string_p(password, charset);
 	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : sid));
 	xfree(tmp);
 

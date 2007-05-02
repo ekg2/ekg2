@@ -128,12 +128,15 @@ static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
  */
 
 void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id) {
+	extern void *jconv_out; /* misc.c */
+	extern void *tconv_out; /* misc.c */
+
 	jabber_private_t *j = s->priv;
 
 	const char *passwd2 = NULL;			/* if set than jabber_digest() should be done on it. else plaintext_passwd 
 							   Variable to keep password from @a password, or generated hash of password with magic constant [tlen] */
 
-	char *resource = jabber_escape(j->resource);	/* escaped resource name */
+	char *resource = tlenjabber_escape(j->resource);/* escaped resource name */
 	char *epasswd = NULL;				/* temporary password [escaped, or hash], if needed for xfree() */
 	char *authpass;					/* <digest>digest</digest> or <password>plaintext_password</password> */
 
@@ -157,7 +160,7 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 
 
 	authpass = (passwd2) ?
-		saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd2)) :	/* hash */
+		saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd2, j->istlen ? tconv_out : jconv_out)) :	/* hash */
 		saprintf("<password>%s</password>", epasswd);				/* plaintext */
 		
 	watch_write(j->send_watch, 
