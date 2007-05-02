@@ -167,6 +167,7 @@ session_t *session_add(const char *uid) {
 	s->uid 		= xstrdup(uid);
 	s->status 	= EKG_STATUS_NA;
 	s->plugin 	= pl;
+	s->lock_fd	= -1;
 	
 	list_add_sorted(&sessions, s, 0, session_compare);
 
@@ -1251,16 +1252,24 @@ COMMAND(session_command)
 				printq("session_doesnt_exist", params[1]);
 				return -1;
 			}
-		} else
-			s = session;
-		if (!config_session_locks)
-			return 0;
-		if (config_session_locks == 1 && session->lock_fd) {
-			print("session_locked", session_name(session));
+		} else s = session;
+
+		if (!s) {
+			printq("invalid_session");
 			return -1;
 		}
 
-		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(session), "-lock")), 1);
+		if (!config_session_locks) {
+/*			printq("var_not_set", name, "session_locks"); */
+			return 0;
+		}
+
+		if (config_session_locks == 1 && s->lock_fd != -1) {
+			printq("session_locked", session_name(s));
+			return -1;
+		}
+
+		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(s), "-lock")), 1);
 		xfree(tmp);
 		fd = open(path,
 				O_CREAT|O_WRONLY
@@ -1272,7 +1281,7 @@ COMMAND(session_command)
 
 		if (fd == -1) {
 			if (errno == EEXIST) {
-				print("session_locked", session_name(session));
+				printq("session_locked", session_name(s));
 				return -1;
 			} else if (errno != ENXIO) {
 					/* XXX, be more loud? */
@@ -1283,19 +1292,22 @@ COMMAND(session_command)
 
 		if (config_session_locks == 1) {
 			if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
-				if (errno == EWOULDBLOCK) {
-					print("session_locked", session_name(session));
+				int flock_errno = errno;
+
+				close(fd);
+	
+				if (flock_errno == EWOULDBLOCK) {
+					printq("session_locked", session_name(s));
 					return -1;
 				} else {
-					debug_error("session_command(), lock's flock() failed with errno=%d\n", errno);
-					close(fd); /* if we can't lock, we don't need fd */
+					debug_error("session_command(), lock's flock() failed with errno=%d\n", flock_errno);
 					return 0;
 				}
 			}
-			session->lock_fd = fd;
+			s->lock_fd = fd;
 		} else
 			close(fd);
-
+		/* XXX, info about lock */
 		return 0;
 	}
 
@@ -1304,18 +1316,26 @@ COMMAND(session_command)
 		const char *path;
 		char *tmp;
 
-		if (!config_session_locks)
-			return 0;
+		if (!session) {
+			printq("invalid_session");
+			return -1;
+		}
 
-		if (config_session_locks == 1 && (fd = session->lock_fd)) {
+		if (!config_session_locks) {
+/*			printq("var_not_set", name, "session_locks"); */
+			return 0;
+		}
+
+		if (config_session_locks == 1 && ((fd = session->lock_fd) != -1)) {
 			flock(fd, LOCK_UN);
 			close(fd);
-			session->lock_fd = 0;
+			session->lock_fd = -1;
 		}
 
 		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(session), "-lock")), 0);
 		xfree(tmp);
 		unlink(path);
+		/* XXX, info about unlock */
 		return 0;
 	}
 
