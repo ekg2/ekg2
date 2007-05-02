@@ -2449,7 +2449,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 					if (!xstrncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
 						/* nic nie robimy, bo juz usuniete */
 					} else {
-						char *nickname 	= jabber_unescape(jabber_attr(item->atts, "name"));
+						char *nickname 	= tlenjabber_unescape(jabber_attr(item->atts, "name"));
 						const char *authval;
 						xmlnode_t *group = xmlnode_find_child(item,"group");
 						/* czemu sluzy dodanie usera z nickname uid jesli nie ma nickname ? */
@@ -2537,7 +2537,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 	int na = !xstrcmp(type, "unavailable");
 
-	jid = jabber_unescape(from);
+	jid = tlenjabber_unescape(from);
 
 	if (istlen)	uid = saprintf("tlen:%s", jid);
 	else		uid = saprintf("jid:%s", jid);
