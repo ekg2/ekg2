@@ -182,88 +182,6 @@ void userlist_add_entry(session_t *session, const char *line)
 	list_add_sorted(&(session->userlist), u, 0, userlist_compare);
 }
 
-/*
- * userlist_dump()
- *
- * zapisuje listê kontaktów w postaci tekstowej.
- *
- * zwraca zaalokowany bufor, który nale¿y zwolniæ.
- */
-char *userlist_dump(session_t *session)
-{
-	string_t s;
-	list_t l;
-
-/* below is out-of-date, compatibility restored */
-/* XXX, we currently break compatibility with all gadu-gadu clients like:
- * 	ekg1, kadu, gnugadu and even with gadu-gadu.exe
- *	
- *	And only we write uid in format gg:number, so I think there're two ways:
- *		- restore compatibility
- *		- create our own format, because it's ugly.. [for instance: http://lists.ziew.org/mailman/pipermail/ekg2-devel/2007-April/001067.html]
- *	
- *	I think we can build it on top of metacontacts... so let's remove metacontacts. Create api for addrbook [in core, not as plugin]
- *
- *	And there have info:
- *
- * global info:
- *		name:		realname of contact
- *		nickname:	nickname
- *		display:	in what format we want to display it on userlist
- *
- * communication uids:
- *		phone1		(...) ......
- * 		email1		
- *		uid1		best_session_to_communicate_with_this_uid1
- *		uid2		best_session_to_communicate_with_this_uid2
- *		nextuid		...
- *
- *	Yeah, phone1, email1 also as uid. because i think we'll have plugin to support it also.
- *
- *	So:
- *		always save/restore all data [it'll be easy coz of list_t]
- *		if user want to add new data, first check if any plugin can handle with this data.
- *		if user type /list display if any plugin can handle this data if yes -> display in GREEN.
- *			if not -> display in RED.
- *			If user is available/ unavailable display also status.
- */
-
-
-	s = string_init(NULL);
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		char **entry = xcalloc(7, sizeof(char *));
-		char *line;
-
-		entry[0] = NULL;				/* first name [gg] */
-		entry[1] = NULL;				/* last name [gg] */
-		entry[2] = xstrdup(u->nickname);		/* display? backwards compatibility? */
-		entry[3] = xstrdup(u->nickname);		/* nickname */
-		entry[4] = NULL;				/* mobile [gg] */
-		entry[5] = group_to_string(u->groups, 1, 0);	/* groups (alloced itself) */
-		entry[6] = strdup(u->uid);			/* uid */
-
-		{
-			int function = EKG_USERLIST_PRIVHANDLER_WRITING;
-
-			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry);
-		}
-
-		line = array_join_count(entry, ";", 7);
-
-		string_append(s, line);
-		if (u->foreign)
-			string_append(s, u->foreign);						/* backwards compatibility */
-
-		string_append(s, "\n");
-
-		xfree(line);
-		array_free_count(entry, 7);
-	}
-
-	return string_free(s, 0);
-}
-
 /**
  * userlist_read()
  *
@@ -306,6 +224,9 @@ int userlist_read(session_t *session)
  *
  * It writes @a session userlist to file: <i>session->uid</i>-userlist in ekg2 config directory
  *
+ * @todo	Each plugin should've own userlist_write()/ userlist_read()
+ * 		This format is obsolete.
+ *
  * @param session
  *
  * @return 	 0 on succees<br>
@@ -316,17 +237,11 @@ int userlist_read(session_t *session)
 int userlist_write(session_t *session)
 {
 	const char *filename;
-	char *contacts;
 	FILE *f;
 	char *tmp = saprintf("%s-userlist", session->uid); 
+	list_t l;
 
-	if (!(contacts = userlist_dump(session))) {
-		xfree(tmp);
-		return -1;
-	}
-	
 	if (!(filename = prepare_path(tmp, 1))) {
-		xfree(contacts);
 		xfree(tmp);
 		return -1;
 	}
@@ -334,15 +249,41 @@ int userlist_write(session_t *session)
 	xfree(tmp);
 	
 	if (!(f = fopen(filename, "w"))) {
-		xfree(contacts);
 		return -2;
 	}
 	fchmod(fileno(f), 0600);
-	fputs(contacts, f);
-	fclose(f);
-	
-	xfree(contacts);
 
+	/* userlist_dump() */
+	for (l = session->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		char **entry = xcalloc(7, sizeof(char *));
+		char *line;
+
+		entry[0] = NULL;				/* first name [gg] */
+		entry[1] = NULL;				/* last name [gg] */
+		entry[2] = xstrdup(u->nickname);		/* display? backwards compatibility? */
+		entry[3] = xstrdup(u->nickname);		/* nickname */
+		entry[4] = NULL;				/* mobile [gg] */
+		entry[5] = group_to_string(u->groups, 1, 0);	/* groups (alloced itself) */
+		entry[6] = strdup(u->uid);			/* uid */
+
+		{
+			int function = EKG_USERLIST_PRIVHANDLER_WRITING;
+
+			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry);
+		}
+
+		line = array_join_count(entry, ";", 7);
+
+		fprintf(f, "%s%s\n", 
+			line, 					/* look upper */
+			u->foreign ? u->foreign : "");		/* backwards compatibility */
+
+		xfree(line);
+		array_free_count(entry, 7);
+	}
+
+	fclose(f);
 	return 0;
 }
 
