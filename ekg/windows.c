@@ -879,8 +879,6 @@ COMMAND(cmd_window)
 	return 0;
 }
 
-int config_window_session_allow = 1;
-
 /**
  * window_session_cycle()
  *
@@ -909,11 +907,19 @@ int window_session_cycle(window_t *w)
 {
 	list_t l;
 	session_t *new_session = NULL;
+	int once = 0;
 	char *uid;
 	char *nickname;
 
-	if (!w || !sessions || (config_window_session_allow == 0 && w->target))
+	if (!w || !sessions) {
 		return -1;
+	}
+
+	if (config_window_session_allow == 0 && w->target) {
+		print("session_cannot_change");
+		return -1;
+	}
+
 
 	/* find sessions->(...next..)->data == w->session */
 	for (l = sessions; l; l = l->next) {
@@ -937,6 +943,8 @@ again:
 			if (s == w->session)
 				break;
 
+			once = 1;
+
 			if (config_window_session_allow == 2 || !w->target || (config_window_session_allow != 0 && get_uid(s, uid))) {
 				new_session = s;
 				break;
@@ -949,8 +957,12 @@ again:
 		goto again;
 	}
 
-	if (!new_session)	/* not found */
+	if (!new_session) {	/* not found */
+		if (once) {		/* here config_window_session_allow don't allow to change session */
+			print("session_cannot_change");
+		}
 		return -1;
+	}
 
 	w->session = new_session;
 

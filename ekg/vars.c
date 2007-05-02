@@ -147,6 +147,7 @@ void variable_init()
 	variable_add(NULL, ("time_deviation"), VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
 	variable_add(NULL, ("timestamp"), VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);	/* ? */
 	variable_add(NULL, ("timestamp_show"), VAR_BOOL, 1, &config_timestamp_show, NULL, NULL, NULL);
+	variable_add(NULL, ("windows_session_allow"), VAR_INT, 1, &config_window_session_allow, NULL, /* XXX */ NULL, NULL);
 	variable_add(NULL, ("windows_layout"), VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
 	variable_add(NULL, ("windows_save"), VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
 
