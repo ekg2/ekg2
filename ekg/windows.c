@@ -925,10 +925,11 @@ int window_session_cycle(window_t *w)
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 
-		if (w->session == s)
+		if (w->session == s) {
+			l = l->next;
 			break;
+		}
 	}
-	l = l->next;
 
 	if (!(uid = get_uid(w->session, w->target)))	/* try to get old uid, because in w->target we can have nickname, and it could be other person */
 		uid = w->target;
