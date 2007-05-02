@@ -887,6 +887,9 @@ char *get_nickname(session_t *session, const char *text)
 {
         userlist_t *u;
 
+	if (text && !xstrcmp(text, "$"))
+		text = window_current->target;
+
 	if (!session)
 		return valid_uid(text) ? (char *) text : NULL;
 
