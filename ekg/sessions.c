@@ -224,7 +224,7 @@ session_t *session_add(const char *uid) {
  * 	with w->target: "Aga". it's not uid. it's nickname.. so we must search for it in userlist.
  *	it's better idea than what was.. however it's slow and I still want to do it other way.
  */
-		if ((!w->session || !get_uid(w->session, w->target)) && !w->floating && get_uid(s, w->target)) {
+		if (!w->session && !w->floating && get_uid(s, w->target)) {
 			w->session = s;
 			/* XXX, notify ui-plugin */
 		}
