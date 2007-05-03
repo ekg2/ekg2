@@ -584,7 +584,7 @@ char *jabber_thread_gen(jabber_private_t *j, const char *uid) {
 		 * why I haven't used comments?! */
 	for (i = jabber_conversation_find(j, NULL, NULL, NULL, NULL, 0), k = i; n != k; i++) {
 		xfree(thread);
-		thread = saprintf("thr%d", i);
+		thread = saprintf("thr%d-%8x-%8x", i, rand(), time(NULL)); /* that should look gorgeous */
 		n = jabber_conversation_find(j, thread, NULL, uid, NULL, 0);
 		debug("[jabber,thread_gen] i = %d, k = %d, n = %d, t = %s\n", i, n, k, thread);
 	}
