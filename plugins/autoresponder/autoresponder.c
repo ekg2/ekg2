@@ -65,8 +65,8 @@ static QUERY(autoresponder_message)
 	if ((class >= EKG_MSGCLASS_SENT) /* at first, skip our messages */
 			|| !config_autoresponder_question || !(*config_autoresponder_question) /* are we configured? */
 			|| !(s = session_find(session)) /* session really exists? */
-			|| !(cssfind(config_autoresponder_allowed_sessions, session, ",", 0) /* check, if session allows autoresponding */
-				|| cssfind(config_autoresponder_allowed_sessions, session_alias_get(s), ",", 0)) /* and by alias */
+			|| !(cssfind(config_autoresponder_allowed_sessions, session, ',', 0) /* check, if session allows autoresponding */
+				|| cssfind(config_autoresponder_allowed_sessions, session_alias_get(s), ',', 0)) /* and by alias */
 			|| (userlist_find(s, uid)) /* check if it isn't currently on our roster */
 			|| (window_find_s(s, uid)) /* or maybe we've already opened query? */
 			|| (list_find_str(autoresponder_allowed_uids, uid))) /* search the allowed uids list */
@@ -129,7 +129,7 @@ static void autoresponder_varchange(const char *varname)
 	}
 }
 
-int autoresponder_plugin_init(int prio)
+EXPORT int autoresponder_plugin_init(int prio)
 {
 	plugin_register(&autoresponder_plugin, prio);
 	
