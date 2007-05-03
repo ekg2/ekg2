@@ -31,14 +31,14 @@
  */
 
 list_t	scripts;
-list_t	script_timers;
-list_t	script_plugins;
-list_t	script_vars;
-list_t	script_queries;
-list_t	script_commands;
-list_t	script_watches;
 list_t	scriptlang;
 
+static list_t script_timers;
+static list_t script_plugins;
+static list_t script_vars;
+static list_t script_queries;
+static list_t script_commands;
+static list_t script_watches;
 
 static COMMAND(script_command_handlers);
 static TIMER(script_timer_handlers);
