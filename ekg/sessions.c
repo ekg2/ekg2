@@ -766,14 +766,13 @@ int session_read(const char *filename) {
 
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
-			char *tmp;
+			const char *tmp;
 
 			if (!p || p->pclass != PLUGIN_PROTOCOL)
 				continue;
 
-			tmp = saprintf("sessions-%s", p->name);
-			ret = session_read(prepare_path(tmp, 0));
-			xfree(tmp);
+			if ((tmp = prepare_sapath("sessions-%s", p->name)))
+				session_read(tmp);
 		}
 		return ret;
 	}
@@ -830,22 +829,25 @@ int session_write()
 	FILE *f = NULL;
 	int ret = 0;
 
+	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 */
+		return -1;
+
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
-		char *tmp;
+		const char *tmp;
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
-		
-		tmp = saprintf("sessions-%s", p->name);
 
-                if (!(f = fopen(prepare_path(tmp, 1), "w"))) {
+		if (!(tmp = prepare_sapath("sessions-%s", p->name))) {
+			ret = -1;
+			continue;
+		}
+		
+                if (!(f = fopen(tmp, "w"))) {
                         debug("Error opening file %s\n", tmp);
-                        xfree(tmp);
 			ret = -1;
 			continue;
                 }
-
-                xfree(tmp);
 
 		for (ls = sessions; ls; ls = ls->next) {
 			session_t *s = ls->data;
@@ -879,10 +881,8 @@ int session_write()
 			}
 			/* We don't save _local_ variables */
 		}
-
 		fclose(f);
 	}
-
 	return ret;
 }
 
