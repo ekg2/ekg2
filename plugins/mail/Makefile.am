@@ -3,6 +3,7 @@ EXTRA_DIST = vars-pl.txt
 lib_LTLIBRARIES = mail.la
 mail_la_SOURCES = main.c
 mail_la_LDFLAGS = -module -avoid-version
+mail_la_CPPFLAGS = $(C_FVISIBILITY)
 
 libdir = $(plugindir)
 

@@ -535,7 +535,7 @@ static QUERY(mail_count_query)
 	return 0;
 }
 
-int mail_plugin_init(int prio)
+EXPORT int mail_plugin_init(int prio)
 {
 	plugin_register(&mail_plugin, prio);
 
