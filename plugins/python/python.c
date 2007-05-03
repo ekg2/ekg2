@@ -221,16 +221,16 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
         for (i=0; i < scr_que->argc; i++) {
                 PyObject *w = NULL;
                 switch ( scr_que->argv_type[i] ) {
-                        case (SCR_ARG_INT):
+                        case (QUERY_ARG_INT):
                                 w = PyInt_FromLong((long) *(int *) args[i] );
                                 break;
-                        case (SCR_ARG_CHARP): {
+                        case (QUERY_ARG_CHARP): {
                                 char *tmp = *(char **) args[i];
 				if (tmp)
                                         w = PyString_FromString(tmp);
                                 break;
                         }
-                        case (SCR_ARG_CHARPP): {
+                        case (QUERY_ARG_CHARPP): {
                                 char *tmp = array_join((char **) args[i], " ");
                                 w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
                                 xfree(tmp);
@@ -250,17 +250,17 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 		for (i=0; i < scr_que->argc; i++) {
 			PyObject *w = PyTuple_GetItem(__py_r, i);
 			switch (scr_que->argv_type[i]) {
-				case (SCR_ARG_INT):
+				case (QUERY_ARG_INT):
 					if (PyInt_Check(w)) *( (int *) args[i]) = PyInt_AsLong(w);
 					else debug("[recvback,script error] not int ?!\n");
 					break;
-				case (SCR_ARG_CHARP):
+				case (QUERY_ARG_CHARP):
 					if (PyString_Check(w)) {
 						xfree(*(char **) args[i]);
 						*( (char **) args[i]) = xstrdup(PyString_AsString(w));
 					} else debug("[recvback,script error] not string?!\n");
 					break;
-				case (SCR_ARG_CHARPP): /* wazne, zrobic. */
+				case (QUERY_ARG_CHARPP): /* wazne, zrobic. */
 				default:
 					debug("[NIMP, recvback] %d %d -> 0x%x\n", i, scr_que->argv_type[i], w);
 			}
