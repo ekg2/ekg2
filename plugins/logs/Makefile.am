@@ -3,6 +3,7 @@ EXTRA_DIST = vars-pl.txt
 lib_LTLIBRARIES = logs.la
 logs_la_SOURCES = main.c main.h
 logs_la_LDFLAGS = -module -avoid-version
+logs_la_CPPFLAGS = $(C_FVISIBILITY)
 logs_la_LIBADD = $(ZLIB_LIBS)
 
 libdir = $(plugindir)

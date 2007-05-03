@@ -634,7 +634,7 @@ static QUERY(logs_handler_newwin) {
 	return 0;
 }
 
-int logs_plugin_init(int prio) {
+EXPORT int logs_plugin_init(int prio) {
 	plugin_register(&logs_plugin, prio);
 	
 	buffer_lograw_tail = NULL;
