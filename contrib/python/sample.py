@@ -73,8 +73,8 @@ def connect_handler(session):
 	ekg.echo('W tym miejscu jeszcze nie połączony')
     ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
 
-# def keypress(key):
-#    ekg.echo('nacisnales #"+ str(key));
+def keypress(key):
+    ekg.echo('nacisnales #'+ str(key));
     
 
 def disconnect_handler(session):
@@ -93,5 +93,5 @@ ekg.handler_bind('protocol-message-sent', own_message_handler)
 ekg.handler_bind('protocol-status', status_handler)
 ekg.handler_bind('protocol-connected', connect_handler)
 ekg.handler_bind('protocol-disconnected', disconnect_handler)
-ekg.handler_bind('ui-keypress', keypress)
+# ekg.handler_bind('ui-keypress', keypress)
 ekg.variable_add('zmienna_testowa', 'wartość', varchange)
