@@ -1597,7 +1597,7 @@ static plugins_params_t gg_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
-int gg_plugin_init(int prio) {
+int EXPORT gg_plugin_init(int prio) {
 	gg_plugin.params = gg_plugin_vars;
 
 	plugin_register(&gg_plugin, prio);

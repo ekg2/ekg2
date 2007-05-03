@@ -5,7 +5,7 @@ gg_la_SOURCES = commands.c dcc.c gg.c images.c misc.c pubdir.c pubdir50.c \
 	dcc.h gg.h misc.h images.h pubdir50.h pubdir.h token.h
 gg_la_LDFLAGS = -module -avoid-version
 gg_la_LIBADD = $(LIBGADU_LIBS) $(LIBJPEG_LIBS) $(GG_TOKENGIF_LIBS)
-gg_la_CPPFLAGS = $(LIBGADU_CPPFLAGS) 
+gg_la_CPPFLAGS = $(LIBGADU_CPPFLAGS) $(C_FVISIBILITY)
 
 libdir = $(plugindir)
 
