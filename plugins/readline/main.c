@@ -259,7 +259,7 @@ static WATCHER(readline_watch_stdin) {
 	return 0;
 }
 	
-int readline_plugin_init(int prio) {
+EXPORT int readline_plugin_init(int prio) {
 	char c;
 	struct sigaction sa;
 	list_t l;
