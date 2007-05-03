@@ -40,12 +40,12 @@ list_t	script_watches;
 list_t	scriptlang;
 
 
-COMMAND(script_command_handlers);
-TIMER(script_timer_handlers);
-void script_var_changed(const char *var);
-QUERY(script_query_handlers);
-WATCHER(script_handle_watch);
-int script_plugin_theme_init( /* plugin_t *p */ );
+static COMMAND(script_command_handlers);
+static TIMER(script_timer_handlers);
+static void script_var_changed(const char *var);
+static QUERY(script_query_handlers);
+static WATCHER(script_handle_watch);
+static int script_plugin_theme_init( /* plugin_t *p */ );
 
 int scripts_autoload(scriptlang_t *scr);
 char *script_find_path(char *name);
@@ -687,7 +687,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 
 /*****************************************************************************************************************/
 
-void script_var_changed(const char *var) {
+static void script_var_changed(const char *var) {
 	script_var_t     *temp = script_var_find(var);
 /*	if (in_autoexec) ... */
 	SCRIPT_HANDLER_HEADER(script_handler_var_t);
@@ -696,7 +696,7 @@ void script_var_changed(const char *var) {
 	return;
 }
 
-WATCHER(script_handle_watch)
+static WATCHER(script_handle_watch)
 {
 	script_watch_t *temp = data;
 
@@ -711,7 +711,7 @@ WATCHER(script_handle_watch)
 	return 0;
 }
 
-COMMAND(script_command_handlers)
+static COMMAND(script_command_handlers)
 {
 	script_command_t *temp = script_command_find(name);
 
@@ -722,13 +722,13 @@ COMMAND(script_command_handlers)
 	return ret;
 }
 
-int script_plugin_theme_init( /* plugin_t *p */ ) 
+static int script_plugin_theme_init( /* plugin_t *p */ ) 
 {
 /* TODO: it will be slow! foreach scriptplugin call format initializer.  (?) */
 	return 0;
 }
 
-TIMER(script_timer_handlers)
+static TIMER(script_timer_handlers)
 {
 	script_timer_t *temp = data;
 	SCRIPT_HANDLER_HEADER(script_handler_timer_t);
@@ -743,7 +743,7 @@ TIMER(script_timer_handlers)
 	return 0;
 }
 
-QUERY(script_query_handlers)
+static QUERY(script_query_handlers)
 {
 	script_query_t	*temp = data;
 	void 		*args[MAX_ARGS];
