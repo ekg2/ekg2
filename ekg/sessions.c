@@ -1638,7 +1638,12 @@ void session_help(session_t *s, const char *name)
 	fclose(f);
 }
 
-void changed_session_locks(char *varname) {
+/**
+ * changed_session_locks() is called whenever 'session_locks' variable changes it's value.
+ * 
+ * It should cleanup old locks and reinit new, if needed.
+ */
+void changed_session_locks(const char *varname) {
 	list_t l;
 
 #ifdef HAVE_FLOCK
