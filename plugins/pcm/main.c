@@ -260,7 +260,7 @@ CODEC_RECODE(pcm_codec_decode) {
 	return pcm_codec_process(type, CODEC_DECODE, input, output, data);
 }
 
-int pcm_plugin_init(int prio)
+EXPORT int pcm_plugin_init(int prio)
 {
 	plugin_register(&pcm_plugin, prio);
 	codec_register(&pcm_codec);
