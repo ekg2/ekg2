@@ -278,6 +278,8 @@ int script_unload(script_t *scr)
 	void 	     *t;    /* t comes from temporary !from timer ;> */
 	list_t 	      l;
 
+	scr->inited = 0;
+
 #define s(x) ((tmpstruct *) x)
 /* przeszukac liste timerow i komand, jak cos to je wywalic */
 	for (l = script_timers; l;)   { t = l->data; l = l->next; if (!t) continue;
@@ -405,6 +407,7 @@ int script_load(scriptlang_t *s, char *tname)
 		scr->path = xstrdup(path);
 		scr->name = name2;
 		scr->lang = slang;
+		scr->inited = 1;
 		
 		list_add(&scripts, scr, 0); /* BUG: this should be before `script_loaded`...  */
 
@@ -421,7 +424,6 @@ int script_load(scriptlang_t *s, char *tname)
 			xfree(name);
 			script_unload(scr);
 			return -1;
-		
 		}
 		print("script_loaded", scr->name, scr->path, slang->name);
 	}
@@ -744,11 +746,9 @@ static int script_plugin_theme_init( /* plugin_t *p */ )
 	return 0;
 }
 
-static TIMER(script_timer_handlers)
-{
+static TIMER(script_timer_handlers) {
 	script_timer_t *temp = data;
 	SCRIPT_HANDLER_HEADER(script_handler_timer_t);
-	debug("::: -> %s %d\n", temp->private, type);
 	SCRIPT_HANDLER_FOOTER(script_handler_timer, type) {
 		if (!type) {
 			return -1; /* timer_free(temp->self); */

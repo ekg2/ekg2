@@ -27,6 +27,7 @@ typedef struct {
 	char 		*name;
 	char 		*path;
 	void 		*private;
+	int		inited;
 } script_t;
 extern list_t 		scripts;
 
@@ -197,7 +198,12 @@ int script_variables_write();
 /* BINDING && UNBINDING */
 
 #define SCRIPT_BIND_HEADER(x) \
-        x *temp = xmalloc(sizeof(x)); \
+        x *temp; \
+	if (scr && scr->inited != 1) {\
+		debug_error("[script_bind_error] script not inited!\n");	\
+		return NULL;	\
+	}	\
+	temp = xmalloc(sizeof(x)); \
         temp->scr  = scr;\
 	temp->private = handler;
 
