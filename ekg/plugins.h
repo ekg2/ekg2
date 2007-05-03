@@ -26,6 +26,8 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
+#define EXPORT __attribute__ ((visibility("default")))
+
 #ifndef EKG2_WIN32_NOFUNCTION
 extern list_t plugins;
 extern list_t queries;
