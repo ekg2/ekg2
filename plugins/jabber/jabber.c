@@ -627,11 +627,14 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	if (!XML_ParseBuffer(parser, rlen, (rlen == 0))) 
 //	if (!XML_Parse(parser, uncompressed ? uncompressed : buf, rlen, (rlen == 0))) 
 	{
-		char *tmp = format_string(format_find("jabber_xmlerror_disconnect"), XML_ErrorString(XML_GetErrorCode(parser)));
+		char *tmp;
+
+		if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
+
+		tmp = format_string(format_find("jabber_xmlerror_disconnect"), XML_ErrorString(XML_GetErrorCode(parser)));
 		jabber_handle_disconnect(s, tmp, EKG_DISCONNECT_NETWORK);
 		xfree(tmp);
 
-		if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
 		xfree(uncompressed);
 		return -1;
 	}
