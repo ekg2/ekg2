@@ -1917,8 +1917,8 @@ void theme_init()
 	format_add("script_eval_error", _("%! Error running code\n"), 1);
 	format_add("script_list", _("%> %1 (%2, %3)\n"), 1);
 	format_add("script_list_empty", _("%! No scripts loaded\n"), 1);
-	format_add("script_loaded", _("%) Script %1 loaded (%2, %3)\n"), 1);
-	format_add("script_removed", _("%) Script %1 removed\n"), 1);
+	format_add("script_loaded", _("%) Script %W%1%n %g(%2)%n %Gloaded %b(%3)"), 1);
+	format_add("script_removed", _("%) Script %W%1%n %g(%2)%n %Rremoved %b(%3)"), 1);
 	format_add("script_need_name", _("%! No filename given\n"), 1);
 	format_add("script_error", _("%! Error %T%1%n\n"), 1);
 	format_add("script_not_found", _("%! Can't find script %T%1%n\n"), 1);
