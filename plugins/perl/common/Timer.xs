@@ -14,8 +14,12 @@ PPCODE:
 # Ekg2::Timer timer_find(const char *uid)
 
 Ekg2::Timer timer_bind(int freq, char *handler)
+PREINIT:
+	script_timer_t *tmp;
 CODE:
-	RETVAL = (perl_timer_bind(freq, handler)->self);
+	if ((tmp = perl_timer_bind(freq, handler)))
+		RETVAL = tmp->self;
+	else	RETVAL = NULL;
 OUTPUT:
 	RETVAL
 	
