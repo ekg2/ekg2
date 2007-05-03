@@ -256,7 +256,7 @@ static int rot13_theme_init() {
 	return 0;
 }
 
-int rot13_plugin_init(int prio) {
+EXPORT int rot13_plugin_init(int prio) {
 	plugin_register(&rot13_plugin, prio);
 
 	rot13_setvar_default(NULL, NULL);
