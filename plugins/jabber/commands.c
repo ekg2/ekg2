@@ -2611,6 +2611,61 @@ static COMMAND(tlen_command_alert) {
 	return 0;
 }
 
+static COMMAND(jabber_command_reply)
+{
+	jabber_private_t *j	= session_private_get(session);
+	int subjectlen		= xstrlen(config_subject_prefix);
+	int id, ret;
+	char *tmp		= NULL;
+	jabber_conversation_t *thr	= NULL;
+
+		/* XXX: this probably forces #, change that */
+	if (params[0][0] == '#' && (id = atoi(params[0]+1)) > 0) {
+		debug("We have id = %d!\n", id);
+		thr = jabber_conversation_get(j, id);
+	}
+
+	if (!thr) {
+		printq("invalid_params", name);
+		return -1;
+	}
+
+	debug("[jabber]_reply(), thread %d, thread-id = %s, subject = %s, uid = %s...\n", id, thr->thread, thr->subject, thr->uid);
+	
+		/* subject here */
+	if (thr->subject && (!config_subject_prefix || xstrncmp(params[1], config_subject_prefix, subjectlen))) {
+		tmp = saprintf("%s%s%s\n", config_subject_prefix,
+			(xstrncmp(thr->subject, config_subject_reply_prefix, xstrlen(config_subject_reply_prefix))
+			 ? config_subject_reply_prefix : ""), thr->subject);
+	}
+
+	ret = command_exec_format(target, session, 0, "/jid:%smsg %s %s %s%s",
+		(thr->thread ? "t" : ""), thr->uid, (thr->thread ? thr->thread : ""), (tmp ? tmp : ""), params[1]);
+	xfree(tmp);
+	
+	return ret;
+}
+
+static COMMAND(jabber_command_conversations)
+{
+        jabber_private_t *j	= session_private_get(session);
+	int i;
+	jabber_conversation_t *thr;
+	
+	if (!(thr = j->conversations))
+		return 0;
+	
+	print("jabber_conversations_begin", session_name(session));
+	for (i = 1; thr; i++, thr = thr->next) {
+		print("jabber_conversations_item", itoa(i), get_nickname(session, thr->uid),
+				(thr->subject ? thr->subject : format_find("jabber_conversations_nosubject")),
+				(thr->thread ? thr->thread : format_find("jabber_conversations_nothread")));
+	}
+	print("jabber_conversations_end");
+	
+	return 0;
+}
+
 void jabber_register_commands()
 {
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
@@ -2638,6 +2693,7 @@ void jabber_register_commands()
 			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, ("jid:connect"), NULL, jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, ("jid:conversations"), NULL, jabber_command_conversations,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
 			"send get resume voice close list");
 	command_add(&jabber_plugin, ("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
@@ -2661,8 +2717,10 @@ void jabber_register_commands()
 			"-c --create -C --configure -d --delete -P --purge -m --manage -g --get -l --list -p --publish -r --remove -s --subscribe -S --status");
 	command_add(&jabber_plugin, ("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("jid:reply"), "! !", jabber_command_reply, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:stats"), "? ?", jabber_command_stats, JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, ("jid:tmsg"), "!uU ! !", jabber_command_msg, JABBER_FLAGS_TARGET, NULL); /* threaded msg */
 	command_add(&jabber_plugin, ("jid:topic"), "! ?", jabber_muc_command_topic, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:transpinfo"), "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
