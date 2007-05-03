@@ -2672,7 +2672,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 		int prio = (temp = xmlnode_find_child(n, "priority")) ? atoi(temp->data) : 10;
 
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
-			jstatus = jabber_unescape(nshow->data);
+			jstatus = tlenjabber_unescape(nshow->data);
 			if (!xstrcmp(jstatus, "na") || na) {
 				status = EKG_STATUS_NA;
 				na = 1;

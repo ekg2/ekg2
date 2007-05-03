@@ -816,8 +816,7 @@ static COMMAND(jabber_command_modify) {
 	int payload = 4 + j->istlen;
 
 	const char *uid = NULL;
-	char *nick = NULL;
-	char *nickname;
+	char *nickname = NULL;
 	list_t m;
 	
 	userlist_t *u = userlist_find(session, target);
@@ -891,37 +890,25 @@ static COMMAND(jabber_command_modify) {
 				command_exec_format(target, session, 0, ("/jid:privacy --set %s -pin"), uid);
 				continue;
 			}
+						/*    if this is -n smth */
+						/* OR if param doesn't looks like command treat as a nickname */
+			if ((match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1] && i++) || argv[i][0] != '-') {
+				if (userlist_find(session, argv[i])) {
+					printq("user_exists", argv[i], session_name(session));
+					continue;
+				}
 
-			if (match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1]) {
-				xfree(nick);
-				nick = xstrdup(argv[++i]);
-				continue;
-			}
-	
-			if (argv[i][0] != '-') {	/* if param doesn't looks like command treat as a nickname */
-				xfree(nick);
-				nick = xstrdup(argv[i]);
+				xfree(nickname);
+				nickname = tlenjabber_escape(argv[i]);
 				continue;
 			}
 		}
 		array_free(argv);
-	} 
-
-	if (!nick && !addcom)
-		nick = xstrdup(u->nickname);		/* get current nickname */
-
-	if (nick && xstrcmp(nick, u->nickname)) {
-		if (userlist_find(session, nick)) {
-			printq("user_exists", nick, session_name(session));
-
-			if (addcom)
-				xfree(u);
-			return -1;
-		}
 	}
 
-	nickname = tlenjabber_escape(nick);	xfree(nick);
-
+	if (!nickname && !addcom)
+		nickname = tlenjabber_escape(u->nickname);		/* use current nickname */
+	
 	if (j->send_watch) j->send_watch->transfer_limit = -1;	/* let's send this in one/two packets not in 7 or more. */
 
 	watch_write(j->send_watch, "<iq type=\"set\"><query xmlns=\"jabber:iq:roster\">");
