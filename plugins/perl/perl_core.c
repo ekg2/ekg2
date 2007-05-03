@@ -63,6 +63,7 @@ static const char *ekg_core_code =
 #include <ekg/scripts.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
+#include <ekg/queries.h>
 #undef _
 
 #include "perl_ekg.h"
@@ -136,23 +137,23 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 	for (i=0; i < scr_que->argc; i++) {
 		perlarg = NULL;
 		switch ( scr_que->argv_type[i] ) {
-			case (SCR_ARG_INT):   /* int */
+			case (QUERY_ARG_INT):   /* int */
 				perlarg = newSViv( *(int  *) args[i] );
 				break;
-			case (SCR_ARG_CHARP):  /* char * */
+			case (QUERY_ARG_CHARP):  /* char * */
 				perlarg = new_pv(*(char **) args[i]);
 				break;
-			case (SCR_ARG_CHARPP): {/* char ** */
+			case (QUERY_ARG_CHARPP): {/* char ** */
 				char *tmp = array_join((char **) args[i], " ");
 				if (xstrlen(tmp)) 
 					perlarg = new_pv(tmp);
 				xfree(tmp);
 				break;
 				}
-			case (SCR_ARG_WINDOW): /* window_t */
+			case (QUERY_ARG_WINDOW): /* window_t */
 				perlarg = ekg2_bless(BLESS_WINDOW, 0, (*(window_t **) args[i]));
 				break;
-			case (SCR_ARG_FSTRING): /* fstring_t */
+			case (QUERY_ARG_FSTRING): /* fstring_t */
 				perlarg = ekg2_bless(BLESS_FSTRING, 0, (*(fstring_t **) args[i]));
 				break;
 			default:

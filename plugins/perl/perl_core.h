@@ -53,15 +53,15 @@ SV *create_sv_ptr(void *object);
     if (change) {\
         for (i=0; i < scr_que->argc; i++) {\
                 switch ( scr_que->argv_type[i] ) {\
-                        case (SCR_ARG_INT):\
+                        case (QUERY_ARG_INT):\
 				*( (int *) args[i]) = SvIV(SvRV(perlargs[i]));\
 				break;\
 \
-                        case (SCR_ARG_CHARP):\
+                        case (QUERY_ARG_CHARP):\
 /*				xfree(*(char **) args[i]);  */\
 				*( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
 				break;\
-			case (SCR_ARG_CHARPP): /* wazne, zrobic. */\
+			case (QUERY_ARG_CHARPP): /* wazne, zrobic. */\
 				break;\
 \
                 }\
