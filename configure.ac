@@ -83,6 +83,8 @@ if test "x$C_STD" = "xyes"; then
 	CFLAGS="$CFLAGS -std=c99"
 fi
 
+AC_PROG_C_FVISIBILITY
+
 dnl  mkstemp do zapisywania tokenów przy braku libjpeg
 AC_CHECK_FUNCS(mkstemp)
 
@@ -516,6 +518,7 @@ echo
 echo "configured options: "
 
 echo "CFLAGS: $CFLAGS"
+echo "EXTRA CFLAGS FOR PLUGINS: $C_FVISIBILITY"
 echo "LDFLAGS: $LDFLAGS"
 echo "LIBS: $DLLIB $LIBS"
 echo "PLUGINS: "
