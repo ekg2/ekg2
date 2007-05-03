@@ -569,19 +569,16 @@ jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n)
 /**
  * jabber_thread_gen() generates new thread-ID for outgoing messages.
  *
- * @bug		Currently used method does generate TID-s, that are only unique-per-session. Something more random needed?
- *
  * @param	j	- private data of session.
  * @param	uid	- recipient UID.
  *
  * @return	New, session-unique thread-ID.
  */
 char *jabber_thread_gen(jabber_private_t *j, const char *uid) {
-	int i, k, n = 0;
-	char *thread = NULL;
+	int i, k, n	= 0;
+	char *thread	= NULL;
 
-		/* don't ask me now, why it is like that...
-		 * why I haven't used comments?! */
+		/* just trying to find first free one */
 	for (i = jabber_conversation_find(j, NULL, NULL, NULL, NULL, 0), k = i; n != k; i++) {
 		xfree(thread);
 		thread = saprintf("thr%d-%8x-%8x", i, rand(), time(NULL)); /* that should look gorgeous */
