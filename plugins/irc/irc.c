@@ -2228,7 +2228,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
-int irc_plugin_init(int prio)
+EXPORT int irc_plugin_init(int prio)
 {
 #ifndef NO_POSIX_SYSTEM
 	struct passwd	*pwd_entry = getpwuid(getuid());
