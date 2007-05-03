@@ -196,13 +196,9 @@ int userlist_read(session_t *session)
         const char *filename;
         char *buf;
         FILE *f;
-        char *tmp=saprintf("%s-userlist", session->uid);
 
-        if (!(filename = prepare_path(tmp, 0))) {
-                xfree(tmp);
-                return -1;
-        }       
-        xfree(tmp);
+	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
+		return -1;
         
         if (!(f = fopen(filename, "r")))
                 return -1;
@@ -238,15 +234,13 @@ int userlist_write(session_t *session)
 {
 	const char *filename;
 	FILE *f;
-	char *tmp = saprintf("%s-userlist", session->uid); 
 	list_t l;
 
-	if (!(filename = prepare_path(tmp, 1))) {
-		xfree(tmp);
+	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
-	}
 
-	xfree(tmp);
+	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
+		return -1;
 	
 	if (!(f = fopen(filename, "w"))) {
 		return -2;
