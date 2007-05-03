@@ -47,7 +47,7 @@ static list_t *variables_lock = NULL;
 list_t variables = NULL;
 char *console_charset;
 
-void changed_session_locks(char *varname); /* sessions.c */
+void changed_session_locks(const char *varname); /* sessions.c */
 
 /*
  * dd_*()
@@ -150,7 +150,7 @@ void variable_init()
 	variable_add(NULL, ("time_deviation"), VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
 	variable_add(NULL, ("timestamp"), VAR_STR, 1, &config_timestamp, NULL, NULL, NULL);	/* ? */
 	variable_add(NULL, ("timestamp_show"), VAR_BOOL, 1, &config_timestamp_show, NULL, NULL, NULL);
-	variable_add(NULL, ("windows_session_allow"), VAR_INT, 1, &config_window_session_allow, NULL, /* XXX */ NULL, NULL);
+	variable_add(NULL, ("window_session_allow"), VAR_INT, 1, &config_window_session_allow, NULL, variable_map(4, 0, 0, "deny", 1, 6, "uid-capable", 2, 5, "any", 4, 3, "switch-to-status"), NULL);
 	variable_add(NULL, ("windows_layout"), VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
 	variable_add(NULL, ("windows_save"), VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
 

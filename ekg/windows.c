@@ -887,7 +887,8 @@ COMMAND(cmd_window)
  * @note	behaviour of window_session_cycle() based on values of config_window_session_allow:
  * 		 0 - change session only if w->target == NULL
  * 		 1 - like 0 + if w->target is set than new session must accept that uid	[default && other values]
- * 		 2 - change to any next session.
+ * 		 2 - change to any next session
+ * 		 4 - jump to status window before cycling.
  *
  * @note	If w->session was changed than UI_WINDOW_TARGET_CHANGED will be emited.
  * 		If w == window_current than SESSION_CHANGED will be emited also.
@@ -913,6 +914,15 @@ int window_session_cycle(window_t *w)
 
 	if (!w || !sessions) {
 		return -1;
+	}
+
+	if (config_window_session_allow == 4) { /* higher level of magic */
+			/* switch to status window */
+		command_exec(NULL, NULL, "/window switch 1", 1);
+		w			= window_status;
+			/* and change switching order
+			 * we don't need to emit anything, because this function will (should?) change it again */
+		window_status->session	= w->session;
 	}
 
 	if (config_window_session_allow == 0 && w->target) {
