@@ -127,7 +127,11 @@ static void *ekg2_dlopen(char *name) {
 	 *	But we cannot do it. Because if we load irc before sim plugin. Than we'll have unresolved symbols
 	 *	even if we load sim plugin later.
 	 */
-	void *tmp = dlopen(name, RTLD_NOW);
+	/*
+	 * RTLD_GLOBAL is required by perl and python plugins...
+	 * 	need investigation. [XXX]
+	 */
+	void *tmp = dlopen(name, RTLD_NOW | RTLD_GLOBAL);
 #endif
 	if (!tmp) {
 		debug_error("[plugin] could not be loaded: %s %s\n", name, dlerror());
