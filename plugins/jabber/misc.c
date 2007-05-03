@@ -499,6 +499,97 @@ QUERY(jabber_convert_string_reinit) {
 	return 0;
 }
 
+/* conversations */
+
+/**
+ * jabber_conversation_find() searches session's conversation list for matching one.
+ *
+ * @param	j	- private data of session.
+ * @param	uid	- UID of recipient.
+ * @param	subject	- message subject (for non-threaded conversations).
+ * @param	thread	- jabber thread ID, if threaded.
+ * @param	result	- place to write address of jabber_conversation_t or NULL, if not needed.
+ * @param	can_add	- if nonzero, we can create new conversation, if none match.
+ *
+ * @return	Reply-ID of conversation.
+ */
+int jabber_conversation_find(jabber_private_t *j, char *uid, char *subject, char *thread, jabber_conversation_t **result, int can_add) {
+		/* XXX: it's kinda ol' function, need to take a third look at it */
+	jabber_conversation_t *thr, *prev;
+	char *resubject;
+        int i, l;
+	
+	if (!thread && subject && !xstrncmp(subject, config_subject_reply_prefix, (l = xstrlen(config_subject_reply_prefix))))
+		resubject = subject + l;
+	
+		/* XXX: take a closer look at this monster */
+        for (thr = j->conversations, prev = NULL, i = 1;
+                thr && ((thread ? xstrcmp(thr->thread, thread)
+			: (subject ? xstrcmp(thr->subject, subject) && xstrcmp(thr->subject, resubject)
+			&& (xstrncmp(thr->subject, config_subject_reply_prefix, l) || xstrcmp(thr->subject+l, subject)) : thr->subject))
+			|| (uid ? xstrcmp(thr->uid, uid) : 1));
+                prev = thr, thr = thr->next, i++);
+        if (!thr && can_add) {
+                thr = xmalloc(sizeof(jabber_conversation_t));
+                thr->thread = xstrdup(thread);
+		thr->uid = xstrdup(uid);
+		thr->subject = xstrdup(resubject ? resubject : subject); /* XXX, why I haven't added this earlier? */
+                if (prev)
+                        prev->next		= thr;
+                else
+                        j->conversations	= thr;
+        }
+	
+	if (result)
+	        *result = thr;
+        return i;
+}
+
+/**
+ * jabber_conversation_get() is used to get conversation by its Reply-ID.
+ *
+ * @param	j	- private data of session.
+ * @param	n	- Reply-ID.
+ *
+ * @return	Pointer to jabber_conversation_t or NULL, when no conversation found.
+ */
+jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, int n) {
+	jabber_conversation_t *thr;
+	int i;
+	
+	for (thr = j->conversations, i = 1;
+		thr && (i < n);
+		thr = thr->next, i++);
+	
+	return thr;
+}
+
+/**
+ * jabber_thread_gen() generates new thread-ID for outgoing messages.
+ *
+ * @bug		Currently used method does generate TID-s, that are only unique-per-session. Something more random needed?
+ *
+ * @param	j	- private data of session.
+ * @param	uid	- recipient UID.
+ *
+ * @return	New, session-unique thread-ID.
+ */
+char *jabber_thread_gen(jabber_private_t *j, char *uid) {
+	int i, k, n = 0;
+	char *thread = NULL;
+
+		/* don't ask me now, why it is like that...
+		 * why I haven't used comments?! */
+	for (i = jabber_conversation_find(j, NULL, NULL, NULL, NULL, 0), k = i; n != k; i++) {
+		xfree(thread);
+		thread = saprintf("thr%d", i);
+		n = jabber_conversation_find(j, thread, NULL, uid, NULL, 0);
+		debug("[jabber,thread_gen] i = %d, k = %d, n = %d, t = %s\n", i, n, k, thread);
+	}
+	
+	return thread;
+}
+
 /*
  * Local Variables:
  * mode: c

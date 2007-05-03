@@ -104,33 +104,44 @@ typedef struct {
 } jabber_iq_privacy_t;
 
 typedef struct {
-	int fd;				/* deskryptor po³±czenia */
-	int istlen;			/* czy to tlen? */
+	char	*thread;
+	char	*uid;
+	char	*subject;
+	void	*next;
+} jabber_conversation_t;
 
-	enum jabber_compression_method using_compress;				/* czy kompresujemy polaczenie */
+/**
+ * jabber_private_t contains private data of jabber/tlen session.
+ */
+typedef struct {
+	int fd;				/**< connection's fd */
+	int istlen;			/**< whether this is a tlen session */
+
+	enum jabber_compression_method using_compress;	/**< whether we're using compressed connection, and what method */
 #ifdef JABBER_HAVE_SSL
-	char using_ssl;			/* czy polaczono uzywajac ssl */	/* 1 - tak, uzywamy SSL, 2 - tak, uzywamy TLS */
-	SSL_SESSION ssl_session;	/* sesja ssla */
+	char using_ssl;			/**< 1 if we're using SSL, 2 if we're using TLS, else 0 */
+	SSL_SESSION ssl_session;	/**< SSL session */
 #ifdef JABBER_HAVE_GNUTLS
-	gnutls_certificate_credentials xcred;
+	gnutls_certificate_credentials xcred;	/**< gnutls credentials (?) */
 #endif
 #endif
-	int id;				/* id zapytañ */
-	XML_Parser parser;		/* instancja parsera expata */
-	char *server;			/* nazwa serwera */
-	int port;			/* numer portu */
-	int connecting;			/* czy siê w³a¶nie ³±czymy? */		/* 1 - normalne laczenie, 2 - laczenie po SASLu */
-	char *resource;		/* resource jakie uzylismy przy laczeniu sie do jabberd */
+	int id;				/**< queries ID */
+	XML_Parser parser;		/**< expat instance */
+	char *server;			/**< server name */
+	int port;			/**< server's port number */
+	int connecting;			/**< whether we're connecting, 2 if connecting over SASL */
+	char *resource;			/**< resource used when connecting to daemon */
 #ifdef GMAIL_MAIL_NOTIFY
-	char *last_gmail_result_time; 	/* last time we've checked mail, this seems not to work correctly ;/ */
-	char *last_gmail_tid;
+	char *last_gmail_result_time; 	/**< last time we're checking mail (this seems not to work correctly ;/) */
+	char *last_gmail_tid;		/**< lastseen mail thread-id */
 #endif
-	list_t privacy;			/* for jabber:iq:privacy */
-	list_t bookmarks;		/* for jabber:iq:private <storage xmlns='storage:bookmarks'> */
+	list_t privacy;			/**< for jabber:iq:privacy */
+	list_t bookmarks;		/**< for jabber:iq:private <storage xmlns='storage:bookmarks'> */
 
 	watch_t *send_watch;
 
-	xmlnode_t *node;		/* aktualna ga³±¼ xmla */
+	xmlnode_t *node;		/**< current XML branch */
+	jabber_conversation_t *conversations;	/**< known conversations */
 } jabber_private_t;
 
 typedef struct {
@@ -202,6 +213,10 @@ char *jabber_zlib_compress(const char *buf, int *len);
 #endif
 
 jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u);
+
+int jabber_conversation_find(jabber_private_t *j, char *uid, char *subject, char *thread, jabber_conversation_t **result, int can_add);
+jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, int n);
+char *jabber_thread_gen(jabber_private_t *j, char *uid);
 
 #endif /* __EKG_JABBER_JABBER_H */
 
