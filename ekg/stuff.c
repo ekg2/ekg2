@@ -104,6 +104,7 @@ list_t buffer_speech;		/**< speech list_t struct buffer */
 list_t bindings_added;
 int old_stderr;
 char *config_subject_prefix;
+char *config_subject_reply_prefix;
 
 int in_autoexec = 0;
 int config_auto_save = 0;

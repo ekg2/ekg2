@@ -31,3 +31,9 @@ session_locks
 	
 		2 - file existence-based locks (simple).
 
+subject_reply_prefix
+	type: text
+	default value: 'Re: '
+	
+	Prefix used in subjects of message replies.
+

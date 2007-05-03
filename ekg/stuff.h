@@ -221,6 +221,7 @@ extern char *config_sound_notify_file;
 extern char *config_sound_mail_file;
 extern char *config_speech_app;
 extern char *config_subject_prefix;
+extern char *config_subject_reply_prefix;
 extern char *config_tab_command;
 extern char *config_theme;
 extern int config_time_deviation;

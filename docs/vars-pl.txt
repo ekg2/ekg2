@@ -375,6 +375,12 @@ speech_app
 	jej ustawienie powoduje równie¿ zmianê motywu na taki, który jest
 	³atwiejszy do wymówienia.
 
+subject_reply_prefix
+	typ: tekst
+	domy¶lna warto¶æ: "Re: "
+	
+	Prefiks dla tematów odpowiedzi na wiadomo¶ci.
+
 tab_command
 	typ: tekst
 	domy¶lna warto¶æ: "chat"
