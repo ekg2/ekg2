@@ -11,6 +11,7 @@
 #include <ekg/commands.h>
 #include <ekg/plugins.h>
 #include <ekg/vars.h>
+#include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
 char *config_audio_device = NULL;
@@ -354,7 +355,7 @@ static COMMAND(oss_cmd_record) {
 	return 0;
 }
 
-int oss_plugin_init(int prio) {
+EXPORT int oss_plugin_init(int prio) {
 	plugin_register(&oss_plugin, prio);
 	oss_setvar_default(NULL, NULL);
 	audio_register(&oss_audio);
