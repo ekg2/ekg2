@@ -60,7 +60,9 @@ typedef struct {
 	int laststatus;			/**< user's status before going into autoaway */
 	char *lastdescr;		/**< user's description before going into autoaway */
 
+#ifdef HAVE_FLOCK /* XXX: -D for docs? */
 	int lock_fd;			/**< fd used for session locking */
+#endif
 } session_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION

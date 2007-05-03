@@ -167,7 +167,9 @@ session_t *session_add(const char *uid) {
 	s->uid 		= xstrdup(uid);
 	s->status 	= EKG_STATUS_NA;
 	s->plugin 	= pl;
+#ifdef HAVE_FLOCK
 	s->lock_fd	= -1;
+#endif
 	
 	list_add_sorted(&sessions, s, 0, session_compare);
 
@@ -289,11 +291,13 @@ int session_remove(const char *uid)
 	
 	if (s->connected)
 		command_exec_format(NULL, s, 1, ("/disconnect %s"), s->uid);
+#ifdef HAVE_FLOCK
 	if (s->lock_fd != -1) { /* this shouldn't happen */
 		flock(s->lock_fd, LOCK_UN);
 		close(s->lock_fd);
 			/* XXX: unlink then? */
 	}
+#endif
 
 	/* remove session watches */
 	for (l = watches; l; l = l->next) {
@@ -1269,10 +1273,12 @@ COMMAND(session_command)
 			return 0;
 		}
 
+#ifdef HAVE_FLOCK
 		if (config_session_locks == 1 && s->lock_fd != -1) {
 			printq("session_locked", session_name(s));
 			return -1;
 		}
+#endif
 
 		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(s), "-lock")), 1);
 		xfree(tmp);
@@ -1295,6 +1301,7 @@ COMMAND(session_command)
 			}
 		}
 
+#ifdef HAVE_FLOCK
 		if (config_session_locks == 1) {
 			if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
 				int flock_errno = errno;
@@ -1311,13 +1318,16 @@ COMMAND(session_command)
 			}
 			s->lock_fd = fd;
 		} else
+#endif
 			close(fd);
 		/* XXX, info about lock */
 		return 0;
 	}
 
 	if (match_arg(params[0], 'u', "unlock", 3)) {
+#ifdef HAVE_FLOCK
 		int fd;
+#endif
 		const char *path;
 		char *tmp;
 
@@ -1331,11 +1341,13 @@ COMMAND(session_command)
 			return 0;
 		}
 
+#ifdef HAVE_FLOCK
 		if (config_session_locks == 1 && ((fd = session->lock_fd) != -1)) {
 			flock(fd, LOCK_UN);
 			close(fd);
 			session->lock_fd = -1;
 		}
+#endif
 
 		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(session), "-lock")), 0);
 		xfree(tmp);
@@ -1631,6 +1643,7 @@ void session_help(session_t *s, const char *name)
 void changed_session_locks(char *varname) {
 	list_t l;
 
+#ifdef HAVE_FLOCK
 	if (config_session_locks != 1) {
 			/* unlock all files, close fds */
 		for (l = sessions; l; l = l->next) {
@@ -1643,6 +1656,7 @@ void changed_session_locks(char *varname) {
 			}
 		}
 	}
+#endif
 
 	if (!config_session_locks) {
 			/* unlink all lockfiles */
@@ -1661,7 +1675,11 @@ void changed_session_locks(char *varname) {
 		for (l = sessions; l; l = l->next) {
 			session_t *s = l->data;
 
-			if (s->connected && ((config_session_locks != 1) || (s->lock_fd == -1)))
+			if (s->connected
+#ifdef HAVE_FLOCK
+					&& ((config_session_locks != 1) || (s->lock_fd == -1))
+#endif
+					)
 				command_exec(NULL, s, "/session --lock", 1);
 		}
 	}

@@ -72,6 +72,8 @@ AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
 
+AC_CHECK_FUNCS(flock)
+
 dnl locale / encoding... etc
 AM_LANGINFO_CODESET
 
