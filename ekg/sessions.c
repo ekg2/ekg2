@@ -289,8 +289,13 @@ int session_remove(const char *uid)
 	
 	if (s->connected)
 		command_exec_format(NULL, s, 1, ("/disconnect %s"), s->uid);
+	if (s->lock_fd != -1) { /* this shouldn't happen */
+		flock(s->lock_fd, LOCK_UN);
+		close(s->lock_fd);
+			/* XXX: unlink then? */
+	}
 
-	/* remove sessio watches */
+	/* remove session watches */
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
@@ -1621,6 +1626,46 @@ void session_help(session_t *s, const char *name)
 		print("help_session_footer", name);
 
 	fclose(f);
+}
+
+void changed_session_locks(char *varname) {
+	list_t l;
+
+	if (config_session_locks != 1) {
+			/* unlock all files, close fds */
+		for (l = sessions; l; l = l->next) {
+			session_t *s = l->data;
+
+			if (s->lock_fd != -1) {
+				flock(s->lock_fd, LOCK_UN);
+				close(s->lock_fd);
+				s->lock_fd = -1;
+			}
+		}
+	}
+
+	if (!config_session_locks) {
+			/* unlink all lockfiles */
+		for (l = sessions; l; l = l->next) {
+			session_t *s = l->data;
+
+			if (s->connected) { /* don't break locks of other copy of ekg2 */
+				char *tmp;
+				const char *path = prepare_path((tmp = saprintf("%s%s", session_uid_get(s), "-lock")), 0);
+				xfree(tmp);
+				unlink(path);
+			}
+		}
+	} else {
+			/* lock all connected sessions */
+		for (l = sessions; l; l = l->next) {
+			session_t *s = l->data;
+
+			if (s->connected && ((config_session_locks != 1) || (s->lock_fd == -1)))
+				command_exec(NULL, s, "/session --lock", 1);
+		}
+	}
+
 }
 
 /*

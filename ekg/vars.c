@@ -47,6 +47,8 @@ static list_t *variables_lock = NULL;
 list_t variables = NULL;
 char *console_charset;
 
+void changed_session_locks(char *varname); /* sessions.c */
+
 /*
  * dd_*()
  *
@@ -130,7 +132,7 @@ void variable_init()
 	variable_add(NULL, ("save_password"), VAR_BOOL, 1, &config_save_password, NULL, NULL, NULL);
 	variable_add(NULL, ("save_quit"), VAR_INT, 1, &config_save_quit, NULL, NULL, NULL);
 	variable_add(NULL, ("session_default"), VAR_STR, 2, &config_session_default, NULL, NULL, NULL);
-	variable_add(NULL, ("session_locks"), VAR_INT, 1, &config_session_locks, NULL, variable_map(3, 0, 0, "off", 1, 2, "flock", 2, 1, "file"), NULL);
+	variable_add(NULL, ("session_locks"), VAR_INT, 1, &config_session_locks, changed_session_locks, variable_map(3, 0, 0, "off", 1, 2, "flock", 2, 1, "file"), NULL);
 	variable_add(NULL, ("sessions_save"), VAR_BOOL, 1, &config_sessions_save, NULL, NULL, NULL);
 	variable_add(NULL, ("slash_messages"), VAR_BOOL, 1, &config_slash_messages, NULL, NULL, NULL);
 	variable_add(NULL, ("sort_windows"), VAR_BOOL, 1, &config_sort_windows, NULL, NULL, NULL);
