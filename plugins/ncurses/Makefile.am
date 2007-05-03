@@ -5,7 +5,7 @@ ncurses_la_SOURCES = main.c old.c completion.c bindings.c ecurses.c contacts.c m
 	bindings.h completion.h contacts.h ecurses.h old.h mouse.h
 ncurses_la_LDFLAGS = -module -avoid-version
 ncurses_la_LIBADD = $(NCURSES_LIBS) $(ASPELL_LIBS) $(LIBGPM_LIBS)
-ncurses_la_CPPFLAGS = $(NCURSES_CPPFLAGS) 
+ncurses_la_CPPFLAGS = $(C_FVISIBILITY) $(NCURSES_CPPFLAGS) 
 
 libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 

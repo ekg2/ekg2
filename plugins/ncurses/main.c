@@ -527,7 +527,7 @@ static void ncurses_sigint_handler(int s)
 	}
 }
 
-int ncurses_plugin_init(int prio)
+EXPORT int ncurses_plugin_init(int prio)
 {
 	list_t l;
 	int is_UI = 0;
