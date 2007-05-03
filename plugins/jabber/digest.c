@@ -490,7 +490,7 @@ char *jabber_digest(const char *sid, const char *password, void *charset) {
 	xfree(tmp);
 
 	tmp = ekg_convert_string_p(password, charset);
-	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : sid));
+	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : password));
 	xfree(tmp);
 
 	SHA1Final(digest, &ctx);
