@@ -420,13 +420,21 @@ timestamp_show
 	
 	okre¶la czy mamy wy¶wietlaæ timestamp, okre¶lany zmienn± timestamp
 
-windows_save
-	typ: bool
+window_session_allow
+	typ: liczba
 	domy¶lna warto¶æ: 0
 	
-	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
-	uruchomieniu programu. przy wychodzeniu z programu pojawi siê 
-	monit o zapisanie zmian.
+	Okre¶la, w jakich oknach mo¿liwe jest prze³±czanie sesji (C-x):
+	
+		0 - tylko w oknie statusu,
+	
+		1 - okno statusu oraz rozmów, ale w obrêbie sesji, które
+	obs³uguj± UID rozmówcy,
+	
+		2 - okno statusu oraz rozmów,
+	
+		4 - okno statusu oraz rozmów, ale nast±pi prze³±czenie do okna
+	statusu.
 
 windows_layout
 	typ: tekst, zmienna wewnêtrzna, ukryta
@@ -434,6 +442,14 @@ windows_layout
 	zawiera informacje o okienkach. wpis ka¿dego okna jest rozdzielony
 	znakiem ,,|''. je¶li okno nie ma przypisanej rozmowy, wpis jest
 	pusty. je¶li okno nie istnieje, wpis zawiera ,,-''.
+
+windows_save
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
+	uruchomieniu programu. przy wychodzeniu z programu pojawi siê 
+	monit o zapisanie zmian.
 
 
 $Id$

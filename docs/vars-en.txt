@@ -37,3 +37,18 @@ subject_reply_prefix
 	
 	Prefix used in subjects of message replies.
 
+window_session_allow
+	type: text
+	default value: 0
+	
+	When we're allowed to cycle sessions:
+	
+		0 - only in status window,
+	
+		1 - like above + in queries within sessions handling window
+	target,
+	
+		2 - status & query windows,
+	
+		4 - status & query windows, but first change to status window.
+
