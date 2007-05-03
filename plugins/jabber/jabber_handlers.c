@@ -1013,7 +1013,16 @@ JABBER_HANDLER(jabber_handle_message) {
 	const char *type = jabber_attr(n->atts, "type");
 	int class = (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
 	const int nonthreaded = (!nthread || !nthread->data);
+	const int hassubject = (nsubject && nsubject->data);
 
+	if (hassubject) { /* we need to linearize this earlier */
+		char *tmp = nsubject->data;
+
+		if (tmp+xstrlen(tmp) == '\n') /* chomp */
+			*tmp = '\0';
+		while ((tmp = xstrchr(tmp, '\n')))
+			*tmp = ' ';
+	}
 	if ((class == EKG_MSGCLASS_MESSAGE) /* conversations only with messages */
 			&& (!nonthreaded /* either if we've got thread */
 				|| ((nbody || nsubject) && (session_int_get(s, "allow_add_reply_id") > 1))
@@ -1021,7 +1030,7 @@ JABBER_HANDLER(jabber_handle_message) {
 				)) {
 		jabber_conversation_t *thr;
 		int i = jabber_conversation_find(j, uid,
-				(nonthreaded && nsubject && nsubject->data ? nsubject->data : NULL),
+				(nonthreaded && hassubject ? nsubject->data : NULL),
 				(nonthreaded ? NULL : nthread->data),
 				&thr, (session_int_get(s, "allow_add_reply_id") > 0));
 		
@@ -1047,12 +1056,8 @@ JABBER_HANDLER(jabber_handle_message) {
 			thr->subject = xstrdup(nsubject->data); /* we should store newest message subject, not first */
 		}
 	}
-	if (nsubject && nsubject->data) {
-		char *tmp;
-		
+	if (hassubject) {
 		string_append(body, "Subject: ");
-		if ((tmp = xstrchr(nsubject->data, 10))) /* XXX, think about it */
-			*tmp = 0;
 		string_append(body, nsubject->data);
 		if (nthread && nthread->data) {
 			string_append(body, " [");

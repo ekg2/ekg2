@@ -533,7 +533,8 @@ int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *s
                 thr = xmalloc(sizeof(jabber_conversation_t));
                 thr->thread = xstrdup(thread);
 		thr->uid = xstrdup(uid);
-		thr->subject = xstrdup(resubject ? resubject : subject); /* XXX, why I haven't added this earlier? */
+			/* IMPORTANT: thr->subject is maintained by message handler
+			 * Now I know why I haven't added it earlier here */
                 if (prev)
                         prev->next		= thr;
                 else

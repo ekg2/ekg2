@@ -513,24 +513,8 @@ static COMMAND(jabber_command_msg)
 	}
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
-	/* czy wiadomo¶æ ma mieæ temat? */
-	if (!j->istlen && config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
-		char *subtmp = xstrdup((params[1]+subjectlen)); /* obcinamy prefix tematu */
-		char *tmp;
 
-		/* je¶li ma wiêcej linijek, zostawiamu tylko pierwsz± */
-		if ((tmp = xstrchr(subtmp, 10)))
-			*tmp = 0;
-
-		subject = jabber_escape(subtmp);
-		/* body of wiadomo¶æ to wszystko po koñcu pierwszej linijki */
-		msg = (tmp) ? (tmp+1) : NULL;
-		xfree(subtmp);
-	} else 
-		msg = params[1]; /* bez tematu */
-	if ((c = newconference_find(session, target))) 
-		ismuc = 1;
-	
+		/* threaded messages */
 	if (!xstrcasecmp(name, "tmsg")) {
 			/* just make it compatible with /msg */
 		thread = params[1];
@@ -544,6 +528,24 @@ static COMMAND(jabber_command_msg)
 		thread = jabber_unescape(tmp);
 		xfree(tmp);
 	}
+
+		/* message subject, TheNewBetterWay^TM */
+	if (!j->istlen && config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
+		char *last = xstrchr(params[1]+subjectlen, 10);
+
+		if (last) {
+			*last	= 0;
+			subject	= jabber_escape(params[1]+subjectlen);
+			*last	= 10;
+			msg	= last+1;
+		} else {
+			subject	= jabber_escape(params[1]+subjectlen);
+			msg	= NULL;
+		}
+	} else 
+		msg = params[1]; /* bez tematu */
+	if ((c = newconference_find(session, target))) 
+		ismuc = 1;
 
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
 

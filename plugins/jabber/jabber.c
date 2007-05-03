@@ -1443,6 +1443,7 @@ static QUERY(jabber_userlist_priv_handler) {
 
 static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("allow_add_reply_id",	0, VAR_INT, "1", 0, NULL),
 	/* '666' enabled for everyone (DON'T TRY IT!); '0' - disabled; '1' - enabled for the same id (allow from diffrent resources); '2' - enabled for allow_remote_control_jids (XXX) */
 	PLUGIN_VAR_ADD("allow_remote_control",	0, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_auth",		0, VAR_INT, "0", 0, NULL),
@@ -1463,6 +1464,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("gpg_key", 		0, VAR_STR, NULL, 0, jabber_gpg_changed),
 	PLUGIN_VAR_ADD("gpg_password", 		0, VAR_STR, NULL, 1, jabber_gpg_changed),
 	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "xml,simple", 0, NULL),
+	PLUGIN_VAR_ADD("msg_gen_thread",	0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd", 	0, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("ping-server", 		0, VAR_BOOL, "0", 0, NULL),
