@@ -187,9 +187,9 @@ int plugin_load(const char *name, int prio, int quiet)
 	char *init = NULL;
 #endif
 
+	plugin_t *pl;
 	void *plugin = NULL;
 	int (*plugin_init)() = NULL;
-	list_t l;
 
 	if (!name)
 		return -1;
@@ -294,29 +294,26 @@ int plugin_load(const char *name, int prio, int quiet)
 		return -1;
 	}
 
-	for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
-
-		if (!xstrcasecmp(p->name, name)) {
-			p->dl = plugin;
-			break;
-		}
-	}
+	if ((pl = plugin_find(name))) {
+		pl->dl = plugin;
+	} else 
+		debug_error("plugin_load() plugin_find(%s) not found.\n", name);
 
 	printq("plugin_loaded", name);
 
 	if (!in_autoexec) {
-		char *tmp = saprintf("config-%s", name);
-		char *tmp2= saprintf("sessions-%s", name);
+		const char *tmp;
 
-	/* XXX, in_autoexec, hack */
 		in_autoexec = 1;
-		config_read(prepare_path(tmp, 0));
-		session_read(prepare_path(tmp2, 0));
-		in_autoexec = 0;
-		xfree(tmp);
-		xfree(tmp2);
+		if ((tmp = prepare_sapath("config-%s", name)))
+			config_read(tmp);
+		if ((tmp = prepare_sapath("sessions-%s", name)))
+			session_read(tmp);
 
+		if (pl)
+			query_emit_id(pl, CONFIG_POSTINIT);
+
+		in_autoexec = 0;
 		config_changed = 1;
 	}
 	return 0;
