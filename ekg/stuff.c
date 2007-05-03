@@ -1523,8 +1523,10 @@ const char *prepare_sapath(const char *filename, ...) {
 
 	len = strlcpy(path, config_dir ? config_dir : "", sizeof(path));
 
-	if (len + fpassed >= sizeof(path))
+	if (len + fpassed >= sizeof(path)) {
+		debug_error("prepare_sapath() LEVEL0 %d + %d >= %d\n", len, fpassed, sizeof(path));
 		return NULL;
+	}
 
 	if (fpassed) {
 		va_list ap;
@@ -1536,8 +1538,10 @@ const char *prepare_sapath(const char *filename, ...) {
 		len2 = vsnprintf(&path[len], sizeof(path)-len, filename, ap);
 		va_end(ap);
 
-		if (len2 == -1 || (len + len2) >= sizeof(path))     /* (len + len2 == sizeof(path)) ? */
+		if (len2 == -1 || (len + len2) >= sizeof(path)) {	/* (len + len2 == sizeof(path)) ? */
+			debug_error("prepare_sapath() LEVEL1 %d | %d + %d >= %d\n", len2, len, len2, sizeof(path));
 			return NULL;
+		}
 	}
 
 	return path;
