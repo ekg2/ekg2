@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-03 17:19+0200\n"
+"POT-Creation-Date: 2007-05-03 17:37+0200\n"
 "PO-Revision-Date: 2005-01-29 12:32+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polski\n"
@@ -188,11 +188,11 @@ msgid ""
 "enabled."
 msgstr ""
 
-#: ekg/scripts.c:381
+#: ekg/scripts.c:386
 msgid "internal script handling ERROR, script not loaded."
 msgstr ""
 
-#: ekg/scripts.c:384
+#: ekg/scripts.c:389
 #, fuzzy
 msgid "Can't recognize script type"
 msgstr "Nie mo¿na po³±czyæ siê z serwerem"
@@ -2022,42 +2022,57 @@ msgstr "%> Priorytet plugin %T%1%n zosta³ ustawiony na%T%2%n\n"
 msgid "%> Plugins prio setted to default\n"
 msgstr "%> Priorytet pluginu zosta³ ustawiony na domy¶lny\n"
 
+#: ekg/themes.c:1913
+msgid "%> Script %W%1%n successful %G%2%n autorun dir"
+msgstr ""
+
+#: ekg/themes.c:1914
+#, fuzzy
+msgid "%! Script %W%1%n failed %R%2%n autorun dir %r(%3)"
+msgstr "%) Skrypt %W%1%n %g(%2)%n %Gzosta³ za³adowany %b(%3)"
+
+#: ekg/themes.c:1915
+msgid "%! Error adding/removing script %W%1%n from autorundir %r(%3)"
+msgstr ""
+
+#: ekg/themes.c:1916
+msgid "%) Script %W%1%n %g(%2)%n %Gloaded %b(%3)"
+msgstr "%) Skrypt %W%1%n %g(%2)%n %Gzosta³ za³adowany %b(%3)"
+
 #: ekg/themes.c:1917
+msgid "%) Script %W%1%n %g(%2)%n %Rremoved %b(%3)"
+msgstr "%) Skrypt %W%1%n %g(%2)%n %Rzosta³ usuniêty %b(%3)"
+
+#: ekg/themes.c:1918
+msgid "%! No filename given\n"
+msgstr "%! Nie podano nazwy pliku\n"
+
+#: ekg/themes.c:1919
+#, fuzzy
+msgid "%! Can't find script %W%1"
+msgstr "%! Nie znaleziono skryptu %T%1%n\n"
+
+#: ekg/themes.c:1920
+#, fuzzy
+msgid "%! Script have to be in %g%1%n (don't add path)"
+msgstr "%! Skrypt musi siê znajdowaæ w katalogu %T%1%n (nie podawaj ¶cie¿ki)\n"
+
+#: ekg/themes.c:1922
 msgid "%! Error running code\n"
 msgstr "%! B³±d wykonywania kodu\n"
 
-#: ekg/themes.c:1918
+#: ekg/themes.c:1923
 #, fuzzy
 msgid "%> %1 (%2, %3)\n"
 msgstr "%> Temat %2: %3\n"
 
-#: ekg/themes.c:1919
+#: ekg/themes.c:1924
 msgid "%! No scripts loaded\n"
 msgstr "%! Brak za³adowanych skryptów\n"
 
-#: ekg/themes.c:1920
-msgid "%) Script %1 loaded (%2, %3)\n"
-msgstr "%) Skrypt zosta³ za³adowany\n"
-
-#: ekg/themes.c:1921
-msgid "%) Script %1 removed\n"
-msgstr "%) Skrypt zosta³ usuniêty\n"
-
-#: ekg/themes.c:1922
-msgid "%! No filename given\n"
-msgstr "%! Nie podano nazwy pliku\n"
-
-#: ekg/themes.c:1923
+#: ekg/themes.c:1925
 msgid "%! Error %T%1%n\n"
 msgstr "%! B³±d %T%1%n\n"
-
-#: ekg/themes.c:1924
-msgid "%! Can't find script %T%1%n\n"
-msgstr "%! Nie znaleziono skryptu %T%1%n\n"
-
-#: ekg/themes.c:1925
-msgid "%! Script have to be in %T%1%n (don't add path)\n"
-msgstr "%! Skrypt musi siê znajdowaæ w katalogu %T%1%n (nie podawaj ¶cie¿ki)\n"
 
 #: ekg/themes.c:1927
 msgid "%> %1 = %2 (%3)\n"
