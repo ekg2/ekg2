@@ -417,9 +417,9 @@ int script_load(scriptlang_t *s, char *tname)
 		
 		if (ret < 1) {
 			if (ret == -1)
-				print("generic_error", "@script_load error");
+				print("script_incorrect", scr->name, scr->path, slang->name);
 			else if (ret == 0)
-				print("generic_error", "@script_load script has no handler or error in getting handlers.");
+				print("script_incorrect2", scr->name, scr->path, slang->name); /* "script has no handler or error in getting handlers." */
 			xfree(path);
 			xfree(name);
 			script_unload(scr);
