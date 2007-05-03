@@ -347,7 +347,7 @@ static int sim_theme_init() {
  *
  * inicjalizacja pluginu.
  */
-int sim_plugin_init(int prio)
+EXPORT int sim_plugin_init(int prio)
 {
 	plugin_register(&sim_plugin, prio);
 
