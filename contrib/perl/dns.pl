@@ -62,7 +62,7 @@ sub cmd_dns {
 	if (/gg:/) {
 # todo, inaczej
 		my ($ip) = $server->userlist()->find($nicks)->{ip};
-		Ekg2::print(-1, "%> %B$nicks%n: %W$ip");
+		Ekg2::print(1, "%> %B$nicks%n: %W$ip");
 	}
   }
 
@@ -169,7 +169,6 @@ sub host_lookup {
     print($wh $text);
     close($wh);
   };
-
   POSIX::_exit(1);
 }
 
@@ -177,8 +176,8 @@ sub pipe_input {
   my ($type, $rhfd, $watch, $rh) = @_;
   return if ($type);
   my $text = <$rh>;
+
   close($rh);
-#  Ekg2::watch_remove($pipe_tag); # w sumie nie musimy wywalac tego bo watch nie jest staly..
   undef $pipe_tag;
   my ($server);
   
@@ -186,12 +185,12 @@ sub pipe_input {
   if ($server) {
     $server->print('', $text);
   } else {
-    Ekg2::print(-1, $text);
+    Ekg2::print(1, $text);
   }
 
   $lookup_waiting--;
   host_lookup();
-  return -1;
+  return -666;
 }
 
 Ekg2::command_bind_ext('dns', '!u', '', 'cmd_dns');
