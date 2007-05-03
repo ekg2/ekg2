@@ -1337,7 +1337,6 @@ static COMMAND(sniff_command_connections) {
 	return 0;
 }
 
-
 static QUERY(sniff_validate_uid) {
 	char    *uid    = *(va_arg(ap, char **));
 	int     *valid  = va_arg(ap, int *);
@@ -1425,7 +1424,7 @@ static plugins_params_t sniff_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
-int sniff_plugin_init(int prio) {
+EXPORT int sniff_plugin_init(int prio) {
 	sniff_plugin.params = sniff_plugin_vars;
 	plugin_register(&sniff_plugin, prio);
 
