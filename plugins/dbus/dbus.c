@@ -195,7 +195,7 @@ void ekg2_dbus_toggle_watch(DBusWatch *watch, void *data)
 		ekg2_dbus_remove_watch(watch, data);
 }
 
-int dbus_plugin_init(int prio) {
+EXPORT int dbus_plugin_init(int prio) {
 	int ret, i;
 
 	plugin_register(&dbus_plugin, prio);
