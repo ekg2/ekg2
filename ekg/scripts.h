@@ -21,17 +21,6 @@ typedef enum {
 	SCRIPT_PLUGINTYPE, 
 } script_type_t;
 
-typedef enum {
-	SCR_ARG_UNKNOWN,
-/*	SCR_ARG_CHAR, */ /* use SCR_ARG_INT */
-	SCR_ARG_CHARP,
-	SCR_ARG_CHARPP,
-	SCR_ARG_INT,
-	
-	SCR_ARG_WINDOW = 100, 
-	SCR_ARG_FSTRING, 
-} script_arg_type_t;
-
 typedef struct {
 	void 		*lang;
 	char 		*name;
@@ -194,7 +183,7 @@ int script_watch_unbind(script_watch_t *temp, int free);
 
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler);
 script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void *handler);
-script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler);
+script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, void *handler);
 script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *value, void *handler);
 script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, void *handler, void *data);
 script_plugin_t *script_plugin_init(scriptlang_t *s, script_t *scr, char *name, plugin_class_t pclass, void *handler);

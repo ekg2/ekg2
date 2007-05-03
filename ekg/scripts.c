@@ -22,6 +22,8 @@
 #include "stuff.h"	/* timer */
 #include "vars.h"	/* vars */
 
+#include "queries.h"
+
 /* TODO && BUGS 
  * - cleanup.
  * - multiple handler for commands && var_changed. 
@@ -618,83 +620,64 @@ script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int typ
 	SCRIPT_BIND_FOOTER(script_watches);
 }
 
-script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *query_name, void *handler)
+script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, void *handler)
 {
 	SCRIPT_BIND_HEADER(script_query_t);
 /* argc i argv_type uzupelnic... z czego ? xstrcmp() ?  */
-#define CHECK(x) if (!xstrcmp(query_name, x)) 
-#define CHECK_(x) if (!xstrncmp(query_name, x, xstrlen(x)))
+#define CHECK(x) if (!xstrcmp(qname, x)) 
+#define CHECK_(x) if (!xstrncmp(qname, x, xstrlen(x)))
 #define NEXT_ARG(y) temp->argv_type[temp->argc] = y; temp->argc++;
 
 /* PROTOCOL */
-	CHECK("protocol-disconnected")      { NEXT_ARG(SCR_ARG_CHARP);	} /* XXX */
-	else CHECK("protocol-connected")    { NEXT_ARG(SCR_ARG_CHARP);	} /* XXX */
-	else CHECK("protocol-status")       { NEXT_ARG(SCR_ARG_CHARP); 
-					      NEXT_ARG(SCR_ARG_CHARP); 
-					      NEXT_ARG(SCR_ARG_CHARP); 
-					      NEXT_ARG(SCR_ARG_CHARP);	}
-	else CHECK("protocol-message")      { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARPP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-/*					      NEXT_ARG(SCR_ARG_UNITPP); */
-					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
-					      NEXT_ARG(SCR_ARG_INT);	}
-	else CHECK("protocol-message-post")      { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARPP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-/*					      NEXT_ARG(SCR_ARG_UNITPP); */
-					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
-					      NEXT_ARG(SCR_ARG_INT);	}
-	else CHECK("protocol-message-received") { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARPP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-/*					      NEXT_ARG(SCR_ARG_UNITPP); */
-					      NEXT_ARG(SCR_ARG_INT);	/* time_t */
-					      NEXT_ARG(SCR_ARG_INT);	}
-	else CHECK("protocol-message-sent") { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);  }
-	else CHECK("protocol-validate-uid") { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_INT);	} 
-/* USERLIST */
-	else CHECK("userlist-added")	    { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP); 
-					      NEXT_ARG(SCR_ARG_INT);	}
-	else CHECK("userlist-changed")      { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);	}
-	else CHECK("variable-changed")	    { NEXT_ARG(SCR_ARG_CHARP);	}
-/* UI */
-	else CHECK("ui-keypress")	    { NEXT_ARG(SCR_ARG_INT); 	}
-	else CHECK("ui-is-initialized")	    { NEXT_ARG(SCR_ARG_INT); 	}
-	else CHECK("ui-window-new")	    { NEXT_ARG(SCR_ARG_WINDOW); }
-	else CHECK("ui-window-switch")	    { NEXT_ARG(SCR_ARG_WINDOW); }
-	else CHECK("ui-window-print")	    { NEXT_ARG(SCR_ARG_WINDOW); 
-					      NEXT_ARG(SCR_ARG_FSTRING);}
+	CHECK("protocol-disconnected")      { NEXT_ARG(QUERY_ARG_CHARP);	}
+	else CHECK("protocol-status")       { NEXT_ARG(QUERY_ARG_CHARP); 
+					      NEXT_ARG(QUERY_ARG_CHARP); 
+					      NEXT_ARG(QUERY_ARG_CHARP); 		/* XXX, need hacks */
+					      NEXT_ARG(QUERY_ARG_CHARP);	}
+	else CHECK("protocol-message")      { NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARPP);
+					      NEXT_ARG(QUERY_ARG_CHARP);
+/*					      NEXT_ARG(QUERY_ARG_UNITPP); */
+					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
+					      NEXT_ARG(QUERY_ARG_INT);	}
+	else CHECK("protocol-message-post") { NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARPP);
+					      NEXT_ARG(QUERY_ARG_CHARP);
+/*					      NEXT_ARG(QUERY_ARG_UNITPP); */
+					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
+					      NEXT_ARG(QUERY_ARG_INT);	}
+	else CHECK("protocol-message-received") { NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARPP);
+					      NEXT_ARG(QUERY_ARG_CHARP);
+/*					      NEXT_ARG(QUERY_ARG_UNITPP); */
+					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
+					      NEXT_ARG(QUERY_ARG_INT);	}
+	else CHECK("protocol-message-sent") { NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARP);  }
 /* IRC */
-	else CHECK("irc-kick")		    { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);	}
-	else CHECK("irc-protocol-message")  { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_INT);
-					      NEXT_ARG(SCR_ARG_INT);
-					      NEXT_ARG(SCR_ARG_INT);
-					      NEXT_ARG(SCR_ARG_CHARP);  }
-	else CHECK_("irc-protocol-numeric") { NEXT_ARG(SCR_ARG_CHARP);
-					      NEXT_ARG(SCR_ARG_CHARPP);	}
+	else CHECK_("irc-protocol-numeric") { NEXT_ARG(QUERY_ARG_CHARP);
+					      NEXT_ARG(QUERY_ARG_CHARPP);	}
 /* other */
-	else                                {                           }
+	else {
+		int i;
+		for (i = 0; i < QUERY_EXTERNAL; i++) {
+			if (!xstrcmp(qname, (query_name(i)))) {
+				/* XXX */
+				debug_error("XXX %s; %d\n", qname, i);
+				break;
+			}
+		}
+	}
 
 #undef CHECK
 #undef CHECK_
 #undef NEXT_ARG
 
-	temp->self = query_connect(s->plugin, query_name, script_query_handlers, temp);
+	temp->self = query_connect(s->plugin, qname, script_query_handlers, temp);
 	SCRIPT_BIND_FOOTER(script_queries);
 }
 
