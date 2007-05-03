@@ -209,7 +209,7 @@ CODEC_RECODE(gsm_codec_decode) {
 	return gsm_codec_process(type, CODEC_DECODE, input, output, data);
 }
 
-int gsm_plugin_init(int prio)
+EXPORT int gsm_plugin_init(int prio)
 {
 	plugin_register(&gsm_plugin, prio);
 	codec_register(&gsm_codec);
