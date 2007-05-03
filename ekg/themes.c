@@ -1910,19 +1910,19 @@ void theme_init()
 	format_add("plugin_prio_set", _("%> Plugin %T%1%n prio is setted to %T%2%n\n"), 1);
 	format_add("plugin_default", _("%> Plugins prio setted to default\n"), 1);
 
-	format_add("script_autorun_succ", "%> script %1 successful %2 autorun dir \n", 1); /* DARK */
-	format_add("script_autorun_fail", "%! script %1 failed %2 autorun dir (%3)\n", 1); /* DARK */
-	format_add("script_autorun_unkn", "%! Error adding/removing script %1 from autorundir (%2)\n", 1); /* DARK */
+	format_add("script_autorun_succ",	_("%> Script %W%1%n successful %G%2%n autorun dir"), 1);		/* XXX sciezka by sie przydala */
+	format_add("script_autorun_fail", 	_("%! Script %W%1%n failed %R%2%n autorun dir %r(%3)"), 1);
+	format_add("script_autorun_unkn", 	_("%! Error adding/removing script %W%1%n from autorundir %r(%3)"), 1);
+	format_add("script_loaded",		_("%) Script %W%1%n %g(%2)%n %Gloaded %b(%3)"), 1);
+	format_add("script_removed",		_("%) Script %W%1%n %g(%2)%n %Rremoved %b(%3)"), 1);
+	format_add("script_need_name",		_("%! No filename given\n"), 1);
+	format_add("script_not_found",		_("%! Can't find script %W%1"), 1);
+	format_add("script_wrong_location",	_("%! Script have to be in %g%1%n (don't add path)"), 1);
 	format_add("script_autorun_list", "%) Script %1 -> %2\n", 1);
 	format_add("script_eval_error", _("%! Error running code\n"), 1);
 	format_add("script_list", _("%> %1 (%2, %3)\n"), 1);
 	format_add("script_list_empty", _("%! No scripts loaded\n"), 1);
-	format_add("script_loaded", _("%) Script %W%1%n %g(%2)%n %Gloaded %b(%3)"), 1);
-	format_add("script_removed", _("%) Script %W%1%n %g(%2)%n %Rremoved %b(%3)"), 1);
-	format_add("script_need_name", _("%! No filename given\n"), 1);
 	format_add("script_error", _("%! Error %T%1%n\n"), 1);
-	format_add("script_not_found", _("%! Can't find script %T%1%n\n"), 1);
-	format_add("script_wrong_location", _("%! Script have to be in %T%1%n (don't add path)\n"), 1);
 	format_add("script_generic", "%> [script,%2] (%1) %3\n", 1);
 	format_add("script_varlist", _("%> %1 = %2 (%3)\n"), 1);
 	format_add("script_varlist_empty", _("%! No script vars!\n"), 1);

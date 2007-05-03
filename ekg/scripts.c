@@ -103,6 +103,7 @@ int script_autorun(char *scriptname,
  * and it's short, easy to understand etc.. ;>
  */
 	int ret = -1;
+	int old_errno = 0;
 
 	if (!scriptname) {
 /*
@@ -122,6 +123,8 @@ int script_autorun(char *scriptname,
 /* TODO: maybe we should check if (ext) belongs to any scriptlang... ? and in script_find_path() ? 
  * to avoid stupid user mistakes... but i don't think ;>
  */
+
+		errno = 0;
 		if (path) {
 			/* XXX sanity scriptname */
 			const char *autorunpath = prepare_pathf("scripts/autorun/%s%s", scriptname, ext ? ext : "");
@@ -141,6 +144,8 @@ int script_autorun(char *scriptname,
 		if (ret && isautorun == -1)
 			isautorun = 0;
 		else    isautorun = 1;
+
+		old_errno = errno;
 	}
 	if (!isautorun) {
 		const char *path1 = prepare_pathf("scripts/autorun/%s", scriptname);
@@ -160,7 +165,7 @@ int script_autorun(char *scriptname,
 	if (!ret)
 		print("script_autorun_succ", scriptname, (isautorun == 1) ? "added to" : "removed from");
 	else if (isautorun == -1) 
-		print("script_autorun_unkn", scriptname, strerror(errno)); /* i think only when there isn't such a file but i'm not sure */
+		print("script_autorun_unkn", scriptname, "", strerror(errno)); /* i think only when there isn't such a file but i'm not sure */
 	else
 		print("script_autorun_fail", scriptname, (isautorun == 1) ? "to add to" : "to remove from", strerror(errno));
 	return ret;
@@ -294,7 +299,7 @@ int script_unload(script_t *scr)
 	if (slang->script_unload(scr))
 		return -1;
 
-	print("script_removed", scr->name);
+	print("script_removed", scr->name, scr->path, slang->name);
 	
 	xfree(scr->name);
 	xfree(scr->path);
