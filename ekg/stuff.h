@@ -317,7 +317,7 @@ char *saprintf(const char *format, ...);
 int play_sound(const char *sound_path);
 
 const char *prepare_path(const char *filename, int do_mkdir);
-const char *prepare_sapath(const char *filename, ...);
+const char *prepare_pathf(const char *filename, ...);
 char *read_file(FILE *f, int alloc);
 
 const char *timestamp(const char *format);

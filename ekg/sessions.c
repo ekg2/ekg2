@@ -771,7 +771,7 @@ int session_read(const char *filename) {
 			if (!p || p->pclass != PLUGIN_PROTOCOL)
 				continue;
 
-			if ((tmp = prepare_sapath("sessions-%s", p->name)))
+			if ((tmp = prepare_pathf("sessions-%s", p->name)))
 				session_read(tmp);
 		}
 		return ret;
@@ -838,7 +838,7 @@ int session_write()
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
 
-		if (!(tmp = prepare_sapath("sessions-%s", p->name))) {
+		if (!(tmp = prepare_pathf("sessions-%s", p->name))) {
 			ret = -1;
 			continue;
 		}
@@ -1253,7 +1253,6 @@ COMMAND(session_command)
 	if (match_arg(params[0], 'L', "lock", 2)) {
 		int fd;
 		const char *path;
-		char *tmp;
 		session_t *s;
 
 		if (params[1]) {
@@ -1280,15 +1279,16 @@ COMMAND(session_command)
 		}
 #endif
 
-		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(s), "-lock")), 1);
-		xfree(tmp);
-		fd = open(path,
-				O_CREAT|O_WRONLY
-				| (config_session_locks != 1
-					? O_EXCL		/* if we don't use flock(), we just take care of file's existence */
-					: O_TRUNC
-						| O_NONBLOCK	/* if someone's set up shitpipe for us */
-				), S_IWUSR);
+		if ((path = prepare_pathf("%s-lock", session_uid_get(s))))
+			fd = open(path,
+					O_CREAT|O_WRONLY
+					| (config_session_locks != 1
+						? O_EXCL		/* if we don't use flock(), we just take care of file's existence */
+						: O_TRUNC
+							| O_NONBLOCK	/* if someone's set up shitpipe for us */
+					), S_IWUSR);
+		else
+			return 0;
 
 		if (fd == -1) {
 			if (errno == EEXIST) {
@@ -1329,7 +1329,6 @@ COMMAND(session_command)
 		int fd;
 #endif
 		const char *path;
-		char *tmp;
 
 		if (!session) {
 			printq("invalid_session");
@@ -1349,9 +1348,8 @@ COMMAND(session_command)
 		}
 #endif
 
-		path = prepare_path((tmp = saprintf("%s%s", session_uid_get(session), "-lock")), 0);
-		xfree(tmp);
-		unlink(path);
+		if ((path = prepare_pathf("%s-lock", session_uid_get(session))))
+			unlink(path);
 		/* XXX, info about unlock */
 		return 0;
 	}
@@ -1664,10 +1662,9 @@ void changed_session_locks(char *varname) {
 			session_t *s = l->data;
 
 			if (s->connected) { /* don't break locks of other copy of ekg2 */
-				char *tmp;
-				const char *path = prepare_path((tmp = saprintf("%s%s", session_uid_get(s), "-lock")), 0);
-				xfree(tmp);
-				unlink(path);
+				const char *path = prepare_pathf("%s-lock", session_uid_get(s));
+				if (path)
+					unlink(path);
 			}
 		}
 	} else {

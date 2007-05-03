@@ -305,9 +305,9 @@ int plugin_load(const char *name, int prio, int quiet)
 		const char *tmp;
 
 		in_autoexec = 1;
-		if ((tmp = prepare_sapath("config-%s", name)))
+		if ((tmp = prepare_pathf("config-%s", name)))
 			config_read(tmp);
-		if ((tmp = prepare_sapath("sessions-%s", name)))
+		if ((tmp = prepare_pathf("sessions-%s", name)))
 			session_read(tmp);
 
 		if (pl)

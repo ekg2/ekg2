@@ -1510,13 +1510,13 @@ int mkdir_recursive(const char *pathname, int isdir) {
 }
 
 /**
- * prepare_sapath()
+ * prepare_pathf()
  *
  * Return path to configdir/profiledir (~/.ekg2 or ~/.ekg2/$PROFILE) and append @a filename (formated using vsnprintf()) 
  * If length of this string is larger than PATH_MAX (4096 on Linux) than unlike prepare_path() it'll return NULL
  */
 
-const char *prepare_sapath(const char *filename, ...) {
+const char *prepare_pathf(const char *filename, ...) {
 	static char path[PATH_MAX];
 	size_t len;
 	int fpassed = (filename && *filename);
@@ -1524,7 +1524,7 @@ const char *prepare_sapath(const char *filename, ...) {
 	len = strlcpy(path, config_dir ? config_dir : "", sizeof(path));
 
 	if (len + fpassed >= sizeof(path)) {
-		debug_error("prepare_sapath() LEVEL0 %d + %d >= %d\n", len, fpassed, sizeof(path));
+		debug_error("prepare_pathf() LEVEL0 %d + %d >= %d\n", len, fpassed, sizeof(path));
 		return NULL;
 	}
 
@@ -1539,7 +1539,7 @@ const char *prepare_sapath(const char *filename, ...) {
 		va_end(ap);
 
 		if (len2 == -1 || (len + len2) >= sizeof(path)) {	/* (len + len2 == sizeof(path)) ? */
-			debug_error("prepare_sapath() LEVEL1 %d | %d + %d >= %d\n", len2, len, len2, sizeof(path));
+			debug_error("prepare_pathf() LEVEL1 %d | %d + %d >= %d\n", len2, len, len2, sizeof(path));
 			return NULL;
 		}
 	}

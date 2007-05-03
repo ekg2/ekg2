@@ -320,7 +320,7 @@ int config_read(const char *filename)
 			plugin_t *p = l->data;
 			const char *tmp;
 			
-			if ((tmp = prepare_sapath("config-%s", p->name)))
+			if ((tmp = prepare_pathf("config-%s", p->name)))
 				config_read(tmp);
 		}
 	}
@@ -510,7 +510,7 @@ int config_write()
 		const char *tmp;
 		list_t lv;
 
-		if (!(tmp = prepare_sapath("config-%s", p->name)))
+		if (!(tmp = prepare_pathf("config-%s", p->name)))
 			return -1;
 
 		if (!(f = fopen(tmp, "w")))
