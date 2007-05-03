@@ -318,10 +318,10 @@ int config_read(const char *filename)
 	if (first) {
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
-			char *tmp = saprintf("config-%s", p->name);
-	
-			config_read(prepare_path(tmp, 0));
-			xfree(tmp);
+			const char *tmp;
+			
+			if ((tmp = prepare_sapath("config-%s", p->name)))
+				config_read(tmp);
 		}
 	}
 	
@@ -479,14 +479,13 @@ static void config_write_main(FILE *f)
 int config_write()
 {
 	FILE *f;
-	const char *filename;
 	list_t l;
 
-	/* first of all we are saving plugins */
-	if (!(filename = prepare_path("plugins", 1)))
+	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
-	
-	if (!(f = fopen(filename, "w")))
+
+	/* first of all we are saving plugins */
+	if (!(f = fopen(prepare_path("plugins", 0), "w")))
 		return -1;
 	
 	fchmod(fileno(f), 0600);
@@ -496,10 +495,8 @@ int config_write()
 
         /* now we are saving global variables and settings
 	 * timers, bindings etc. */
-        if (!(filename = prepare_path("config", 1)))
-                return -1;
 
-        if (!(f = fopen(filename, "w")))
+        if (!(f = fopen(prepare_path("config", 0), "w")))
                 return -1;
 
         fchmod(fileno(f), 0600);
@@ -509,18 +506,14 @@ int config_write()
 
 	/* now plugins variables */
 	for (l = plugins; l; l = l->next) {
-		list_t lv;
 		plugin_t *p = l->data;
-		char *tmp = saprintf("config-%s", p->name);
+		const char *tmp;
+		list_t lv;
 
-		if (!(filename = prepare_path(tmp, 1))) {
-			xfree(tmp);
+		if (!(tmp = prepare_sapath("config-%s", p->name)))
 			return -1;
-		}
 
-		xfree(tmp);
-
-		if (!(f = fopen(filename, "w")))
+		if (!(f = fopen(tmp, "w")))
 			return -1;
 
 		fchmod(fileno(f), 0600);
@@ -533,9 +526,9 @@ int config_write()
 			}
 		}	
 
-		fclose(f);	
+		fclose(f);
 	}
-	
+
 	return 0;
 }
 
