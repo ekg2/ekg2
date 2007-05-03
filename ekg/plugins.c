@@ -737,6 +737,31 @@ static int query_id(const char *name) {
 }
 
 /**
+ * query_struct()
+ *
+ * Get struct of query, by passed id
+ *
+ */
+
+const struct query *query_struct(const int id) {
+	list_t l;
+
+	if (id < QUERY_EXTERNAL) 
+		return &(query_list[id]);
+
+	for (l = queries_external; l; l = l->next) {
+		struct query* a = l->data;
+
+		if (a->id == id) 
+			return a;
+	}
+
+	debug_error("[%s:%d] query_name() REALLY NASTY (%d)\n", __FILE__, __LINE__, id);
+
+	return NULL;
+}
+
+/**
  * query_name()
  *
  * Get name of query, by passed id
