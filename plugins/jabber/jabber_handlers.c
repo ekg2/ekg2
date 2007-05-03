@@ -1018,10 +1018,13 @@ JABBER_HANDLER(jabber_handle_message) {
 	if (hassubject) { /* we need to linearize this earlier */
 		char *tmp = nsubject->data;
 
-		if (tmp+xstrlen(tmp) == '\n') /* chomp */
-			*tmp = '\0';
-		while ((tmp = xstrchr(tmp, '\n')))
-			*tmp = ' ';
+		while ((tmp = xstrchr(tmp, '\n'))) {
+			if (*(tmp+1) == '\0') {
+				*tmp = '\0';
+				break; /* we really don't need to search again */
+			} else
+				*tmp = ' ';
+		}
 	}
 	if ((class == EKG_MSGCLASS_MESSAGE) /* conversations only with messages */
 			&& (!nonthreaded /* either if we've got thread */
