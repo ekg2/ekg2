@@ -1280,7 +1280,7 @@ WATCHER(ekg2_xorg_watcher) {
 	return 0;
 }
 
-int gtk_plugin_init(int prio) {
+EXPORT int gtk_plugin_init(int prio) {
 	const char *ekg2_another_ui = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
 	const char *ekg2_no_display = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
 	list_t l;
