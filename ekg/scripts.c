@@ -47,8 +47,8 @@ static QUERY(script_query_handlers);
 static WATCHER(script_handle_watch);
 static int script_plugin_theme_init( /* plugin_t *p */ );
 
-int scripts_autoload(scriptlang_t *scr);
-char *script_find_path(char *name);
+static int scripts_autoload(scriptlang_t *scr);
+static char *script_find_path(const char *name);
 /****************************************************************************************************/
 
 scriptlang_t *scriptlang_from_ext(char *name)
@@ -118,17 +118,24 @@ int script_autorun(char *scriptname,
 		char *ext  = NULL;
 		if (!(xrindex(scriptname, '.')))
 			ext = xrindex(path, '.');
+
 /* TODO: maybe we should check if (ext) belongs to any scriptlang... ? and in script_find_path() ? 
  * to avoid stupid user mistakes... but i don't think ;>
  */
 		if (path) {
-			char *autorunpath = saprintf("%s/%s%s", prepare_path("scripts/autorun", 0), scriptname, (ext) ? ext : ""); 
-			debug("[SCRIPT_AUTORUN] makeing symlink from %s to %s ...", path, autorunpath);
+			/* XXX sanity scriptname */
+			const char *autorunpath = prepare_pathf("scripts/autorun/%s%s", scriptname, ext ? ext : "");
+
+			if (autorunpath && mkdir_recursive(autorunpath, 0) == 0) {
+				debug("[SCRIPT_AUTORUN] symlink from %s to %s ... retcode:", path, autorunpath);
 #ifndef NO_POSIX_SYSTEM
-			ret = symlink(path, autorunpath);
+				ret = symlink(path, autorunpath);
 #endif
-			debug("%d\n", ret);
-			xfree(autorunpath);
+				debug("%d\n", ret);
+			}
+
+			if (!autorunpath)
+				errno = ENAMETOOLONG;
 		}
 		xfree(path);
 		if (ret && isautorun == -1)
@@ -136,15 +143,19 @@ int script_autorun(char *scriptname,
 		else    isautorun = 1;
 	}
 	if (!isautorun) {
-		char *path1 = saprintf("%s/%s", prepare_path("scripts/autorun", 0), scriptname);
-		char *path = script_find_path(path1); 
-		if (path && path1) {
-			debug("[SCRIPT_AUTORUN] unlinking %s... ", path);
-			ret = unlink(path);
-			debug("%d\n", ret);
-		} else isautorun = -1;
-		xfree(path);
-		xfree(path1);
+		const char *path1 = prepare_pathf("scripts/autorun/%s", scriptname);
+
+		if (path1) {
+			char *path = script_find_path(path1);
+
+			if (path && path1) {
+				debug("[SCRIPT_AUTORUN] unlinking %s... ", path);
+				ret = unlink(path);
+				debug("%d\n", ret);
+			} else isautorun = -1;
+
+			xfree(path);
+		} else errno = ENAMETOOLONG;
 	}
 	if (!ret)
 		print("script_autorun_succ", scriptname, (isautorun == 1) ? "added to" : "removed from");
@@ -211,7 +222,7 @@ int script_var_list(script_t *scr)
 
 /***********************************************************************************/
 
-char *script_find_path(char *name) {
+static char *script_find_path(const char *name) {
 	FILE 		*fajl;
 	char 		*ext;
 	char 		*nametmp;
@@ -765,7 +776,7 @@ static QUERY(script_query_handlers)
  *  load  scripts from `path`
  */
 
-int scripts_loaddir(scriptlang_t *s, const char *path)
+static int scripts_loaddir(scriptlang_t *s, const char *path)
 {
 	struct dirent *d;
 	struct stat st;
@@ -773,7 +784,7 @@ int scripts_loaddir(scriptlang_t *s, const char *path)
 	scriptlang_t *slang;
 	int i = 0;
 	DIR *dir;
-	
+
 	if (!(dir = opendir(path)))
 		return 0;
 
@@ -843,7 +854,7 @@ COMMAND(cmd_script)
  * load scripts from $DATADIR/scripts/autorun   ($DATADIR   - /usr/share/ekg2 || /usr/local/share/ekg2 || ...) (Turned off ;>)
  */
 
-int scripts_autoload(scriptlang_t *scr)
+static int scripts_autoload(scriptlang_t *scr)
 {
 	int i = 0;
 /*	i += scripts_loaddir(scr, DATADIR"/scripts/autorun"); */       /* I don't think it will be useful */
