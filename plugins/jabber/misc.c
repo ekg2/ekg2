@@ -513,7 +513,7 @@ QUERY(jabber_convert_string_reinit) {
  *
  * @return	Reply-ID of conversation.
  */
-int jabber_conversation_find(jabber_private_t *j, char *uid, char *subject, char *thread, jabber_conversation_t **result, int can_add) {
+int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add) {
 		/* XXX: it's kinda ol' function, need to take a third look at it */
 	jabber_conversation_t *thr, *prev;
 	char *resubject;
@@ -553,7 +553,7 @@ int jabber_conversation_find(jabber_private_t *j, char *uid, char *subject, char
  *
  * @return	Pointer to jabber_conversation_t or NULL, when no conversation found.
  */
-jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, int n) {
+jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n) {
 	jabber_conversation_t *thr;
 	int i;
 	
@@ -574,7 +574,7 @@ jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, int n) {
  *
  * @return	New, session-unique thread-ID.
  */
-char *jabber_thread_gen(jabber_private_t *j, char *uid) {
+char *jabber_thread_gen(jabber_private_t *j, const char *uid) {
 	int i, k, n = 0;
 	char *thread = NULL;
 

@@ -145,6 +145,7 @@ static QUERY(jabber_session_deinit) {
 
 	session_t *s = session_find(session);
 	jabber_private_t *j;
+	jabber_conversation_t *thr, *next;
 
 	if (!s || s->plugin != &jabber_plugin || !(j = s->priv))
 		return 1;
@@ -163,6 +164,16 @@ static QUERY(jabber_session_deinit) {
 		XML_ParserFree(j->parser);
 	jabber_bookmarks_free(j);
 	jabber_privacy_free(j);
+
+		/* conversations */
+	for (thr = j->conversations; thr; thr = next) {
+		next = thr->next; /* we shouldn't rely on freed thr->next */
+
+		xfree(thr->thread);
+		xfree(thr->subject);
+		xfree(thr->uid);
+		xfree(thr);
+	}
 
 	xfree(j);
 
@@ -1306,6 +1317,13 @@ static int jabber_theme_init() {
 
 	/* simple XEP-0071 - XML parsing error */
 	format_add("jabber_msg_xmlsyntaxerr",	_("%! Expat syntax-checking failed on your message: %T%1%n. Please correct your code or use double ^R to disable syntax-checking."), 1);
+
+	/* conversations */
+	format_add("jabber_conversations_begin",	_("%g,+=%G--%n (%1) %GAvailable Reply-IDs:%n"), 1);
+	format_add("jabber_conversations_item",		_("%g|| %n %1 - %W%2%n (%g%3%n [%c%4%n])"), 1);		/* %1 - n, %2 - user, %3 - subject, %4 - thread */
+	format_add("jabber_conversations_end",		_("%g`+=%G-- End of the available Reply-ID list%n"), 1);
+	format_add("jabber_conversations_nothread",	_("non-threaded"), 1);
+	format_add("jabber_conversations_nosubject",	_("[no subject]"), 1);
 
 #endif	/* !NO_DEFAULT_THEME */
         return 0;

@@ -492,18 +492,19 @@ static const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 
 static COMMAND(jabber_command_msg)
 {
-	jabber_private_t *j = session_private_get(session);
-	int chat = !xstrcmp(name, ("chat"));
-	int subjectlen = xstrlen(config_subject_prefix);
+	jabber_private_t *j	= session_private_get(session);
+	int chat		= !xstrcmp(name, ("chat"));
+	int subjectlen		= xstrlen(config_subject_prefix);
 	char *msg;
-	char *subject = NULL;
+	char *subject		= NULL;
+	char *thread		= NULL;
 	const char *uid;
-	int payload = 4 + j->istlen;
+	int payload		= 4 + j->istlen;
 
 	newconference_t *c;
-	int ismuc = 0;
+	int ismuc		= 0;
 
-	int secure = 0;
+	int secure		= 0;
 
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
@@ -529,6 +530,20 @@ static COMMAND(jabber_command_msg)
 		msg = params[1]; /* bez tematu */
 	if ((c = newconference_find(session, target))) 
 		ismuc = 1;
+	
+	if (!xstrcasecmp(name, "tmsg")) {
+			/* just make it compatible with /msg */
+		thread = params[1];
+		params[1] = params[2];
+		params[2] = thread;
+		
+			/* and now we can set real thread */
+		thread = jabber_unescape(params[2]);
+	} else if (!xstrcasecmp(name, "msg") && (session_int_get(session, "msg_gen_thread") > 0)) {
+		char *tmp = jabber_thread_gen(j, uid);
+		thread = jabber_unescape(tmp);
+		xfree(tmp);
+	}
 
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
 
@@ -543,6 +558,10 @@ static COMMAND(jabber_command_msg)
 	if (subject) {
 		watch_write(j->send_watch, "<subject>%s</subject>", subject); 
 		xfree(subject); 
+	}
+	if (thread) {
+		watch_write(j->send_watch, "<thread>%s</thread>", thread);
+		xfree(thread);
 	}
 	do {
 		if (!msg)

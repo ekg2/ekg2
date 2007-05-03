@@ -214,9 +214,9 @@ char *jabber_zlib_compress(const char *buf, int *len);
 
 jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u);
 
-int jabber_conversation_find(jabber_private_t *j, char *uid, char *subject, char *thread, jabber_conversation_t **result, int can_add);
-jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, int n);
-char *jabber_thread_gen(jabber_private_t *j, char *uid);
+int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add);
+jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n);
+char *jabber_thread_gen(jabber_private_t *j, const char *uid);
 
 #endif /* __EKG_JABBER_JABBER_H */
 

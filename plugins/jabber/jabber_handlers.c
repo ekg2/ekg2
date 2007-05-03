@@ -68,6 +68,8 @@
 #include "jabber.h"
 #include "jabber_dcc.h"
 
+WATCHER_SESSION(jabber_handle_connect_ssl); /* jabber.c */
+
 #define jabberfix(x,a) ((x) ? x : a)
 
 #define JABBER_HANDLER(x) 		static void x(session_t *s, xmlnode_t *n)
@@ -836,6 +838,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	xmlnode_t *nerr		= xmlnode_find_child(n, "error");
 	xmlnode_t *nbody   	= xmlnode_find_child(n, "body");
 	xmlnode_t *nsubject	= NULL;
+	xmlnode_t *nthread	= NULL;
 	xmlnode_t *xitem;
 	
 	const char *from = jabber_attr(n->atts, "from");
@@ -993,12 +996,8 @@ JABBER_HANDLER(jabber_handle_message) {
 			} else debug_error("[JABBER, MESSAGE]: <x xmlns=%s\n", ns);
 /* x */		} else if (!xstrcmp(xitem->name, "subject")) {
 			nsubject = xitem;
-			if (nsubject->data) {
-				string_append(body, "Subject: ");
-				string_append(body, nsubject->data);
-				string_append(body, "\n");
-				new_line = 1;
-			}
+		} else if (!xstrcmp(xitem->name, "thread")) {
+			nthread = xitem;
 /* subject */	} else if (!xstrcmp(xitem->name, "body")) {
 		} /* XXX, JEP-0085 here */
 		else if (!xstrcmp(jabber_attr(xitem->atts, "xmlns"), "http://jabber.org/protocol/chatstates")) {
@@ -1010,6 +1009,63 @@ JABBER_HANDLER(jabber_handle_message) {
 			else debug_error("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
 		} else debug_error("[JABBER, MESSAGE]: <%s\n", xitem->name);
 	}
+
+	const char *type = jabber_attr(n->atts, "type");
+	int class = (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
+	const int nonthreaded = (!nthread || !nthread->data);
+
+	if ((class == EKG_MSGCLASS_MESSAGE) /* conversations only with messages */
+			&& (!nonthreaded /* either if we've got thread */
+				|| ((nbody || nsubject) && (session_int_get(s, "allow_add_reply_id") > 1))
+					/* or we're allowing to use conversations for non-threaded messages */
+				)) {
+		jabber_conversation_t *thr;
+		int i = jabber_conversation_find(j, uid,
+				(nonthreaded && nsubject && nsubject->data ? nsubject->data : NULL),
+				(nonthreaded ? NULL : nthread->data),
+				&thr, (session_int_get(s, "allow_add_reply_id") > 0));
+		
+		if (nonthreaded)
+			nthread = xmalloc(sizeof(xmlnode_t)); /* ugly hack, to make non-threaded reply work */
+		
+		if (thr) { /* XXX, do it nicer */
+			xfree(nthread->data);
+			nthread->data = saprintf("#%d", i);
+			debug("[jabber, message] thread: %s -> #%d\n", thr->thread, i);
+		}
+	
+		if (!(nsubject && nsubject->data)) {
+			string_append(body, (thr ? "Reply-ID: " : "Thread: "));
+			string_append(body, nthread->data);
+			string_append(body, "\n");
+			if (nonthreaded)
+				xfree(nthread);
+
+			new_line = 1;
+		} else if (thr) {
+			xfree(thr->subject);
+			thr->subject = xstrdup(nsubject->data); /* we should store newest message subject, not first */
+		}
+	}
+	if (nsubject && nsubject->data) {
+		char *tmp;
+		
+		string_append(body, "Subject: ");
+		if ((tmp = xstrchr(nsubject->data, 10))) /* XXX, think about it */
+			*tmp = 0;
+		string_append(body, nsubject->data);
+		if (nthread && nthread->data) {
+			string_append(body, " [");
+			string_append(body, nthread->data);
+			string_append(body, "]");
+			
+			if (!nthread->name) /* this means we're using above hack */
+				xfree(nthread);
+		}
+		string_append(body, "\n");
+		new_line = 1;
+	}
+
 	if (new_line) string_append(body, "\n"); 	/* let's seperate headlines from message */
 
 	if (x_encrypted) 
@@ -1018,10 +1074,7 @@ JABBER_HANDLER(jabber_handle_message) {
 		string_append(body, nbody->data);	/* unecrpyted message */
 
 	if (nbody || nsubject) {
-		const char *type = jabber_attr(n->atts, "type");
-
 		char *me	= xstrdup(session_uid_get(s));
-		int class 	= (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
 		int ekgbeep 	= EKG_TRY_BEEP;
 		int secure	= (x_encrypted != NULL);
 		char **rcpts 	= NULL;
@@ -2735,14 +2788,11 @@ JABBER_HANDLER(jabber_handle_presence) {
 		}
 		{
 			char *session 	= xstrdup(session_uid_get(s));
-			char *host 	= NULL;
-			int port 	= 0;
 
 			if (!when) when = time(NULL);
 			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
 			
 			xfree(session);
-/*			xfree(host); */
 		}
 		xfree(descr);
 	}
