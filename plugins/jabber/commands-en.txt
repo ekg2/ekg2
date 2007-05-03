@@ -130,6 +130,20 @@ reconnect
 	parameters: 
 	short description: disconnects and connects again
 
+reply
+	parameters: #id ...
+	short description: replies on given conversation
+	
+	Replies with given message to conversation connected with given
+	Reply-ID. Message can contain subject like in msg, but if not
+	specified, old one (prefixed by subject_reply_prefix) will be used.
+
+tmsg
+	parameters: uid/nickname thread-id ...
+	short description: sends message with thread
+	
+	Like msg, but additional, second arg specifies thread-ID to use.
+
 userinfo
 	parameters: 
 	short description: retrieves Jabber Directory info about given jid

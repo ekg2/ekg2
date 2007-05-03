@@ -3,6 +3,18 @@
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
 
+allow_add_reply_id
+	type: integer
+	default value: 1
+	
+	Whether ekg2 should add Reply-IDs for incoming messages:
+	
+		0 - disabled
+	
+		1 - add Reply-IDs for messages with threads
+	
+		2 - add Reply-IDs for any message (excl. chats and likes)
+
 auto_auth
 	type: integer
 	default value: 0
@@ -53,6 +65,13 @@ log_formats
 	Defines file formats to use when logging to file.
 	
 	See also: log_path variable
+
+msg_gen_thread
+	type: bool
+	default value: 0
+	
+	Whether to automagically generate thread-IDs for outgoing messages
+	without given thread.
 
 password
 	type: string

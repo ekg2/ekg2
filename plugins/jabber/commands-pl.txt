@@ -132,6 +132,22 @@ reconnect
 	parametry: 
 	krotki opis: roz³±cza i ³±czy siê ponownie
 
+reply
+	parametry: #reply-id ...
+	krotki opis: odpisuje na w±tek
+	
+	Wysy³a wiadomo¶æ jako kontynuacjê wskazanego przez reply-id w±tku.
+	Mo¿liwe jest podanie tematu jak w msg, w przeciwnym razie temat
+	zostanie utworzone w oparciu o temat w±tku (poprzedzony
+	subject_reply_prefix).
+
+tmsg
+	parametry: uid/nick id-watku ...
+	krotki opis: wysy³a wiadomo¶æ w±tkowan±
+	
+	Dzia³a podobnie jak msg, z tym, ¿e dodatkowy, drugi parametr zawiera
+	identyfikator w±tku dla wiadomo¶ci.
+
 userinfo
 	parametry: 
 	krotki opis: pobiera informacje z katalogu Jabbera o danym jid

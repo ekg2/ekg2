@@ -522,7 +522,7 @@ static COMMAND(jabber_command_msg)
 		params[2] = thread;
 		
 			/* and now we can set real thread */
-		thread = jabber_unescape(params[2]);
+		thread = jabber_escape(params[2]);
 	} else if (!xstrcasecmp(name, "msg") && (session_int_get(session, "msg_gen_thread") > 0)) {
 		char *tmp = jabber_thread_gen(j, uid);
 		thread = jabber_unescape(tmp);
@@ -2621,11 +2621,12 @@ static COMMAND(jabber_command_reply)
 	char *tmp		= NULL;
 	jabber_conversation_t *thr	= NULL;
 
-		/* XXX: this probably forces #, change that */
-	if (params[0][0] == '#' && (id = atoi(params[0]+1)) > 0) {
+	if (((params[0][0] == '#') && (id = atoi(params[0]+1)) > 0) /* #reply-id */
+			|| ((id = atoi(params[0])) > 0)) { /* or without # */
 		debug("We have id = %d!\n", id);
 		thr = jabber_conversation_get(j, id);
 	}
+		/* XXX: some UID/thread/whatever match? */
 
 	if (!thr) {
 		printq("invalid_params", name);
