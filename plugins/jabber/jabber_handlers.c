@@ -2433,10 +2433,14 @@ JABBER_HANDLER(jabber_handle_iq) {
 				xmlnode_t *item = xmlnode_find_child(q, "item");
 
 				for (; item ; item = item->next) {
+					const char *jid = jabber_attr(item->atts, "jid");
 					userlist_t *u;
 					char *uid;
-					if (j->istlen)	uid = saprintf("tlen:%s", jabber_attr(item->atts, "jid"));
-					else 		uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
+
+					if (j->istlen) {
+						if (xstrstr(jid, "@tlen.pl")) 	uid = saprintf("tlen:%s", jid);
+						else				uid = saprintf("tlen:%s@tlen.pl", jid);		/* fast hack */
+					} else  uid = saprintf("jid:%s", jid);
 
 					/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
 					w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
