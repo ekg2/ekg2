@@ -296,7 +296,7 @@ static plugins_params_t feed_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
-int feed_plugin_init(int prio) {
+EXPORT int feed_plugin_init(int prio) {
 	feed_plugin.params = feed_plugin_vars;
 	plugin_register(&feed_plugin, prio);
 			/* common */
