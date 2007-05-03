@@ -514,7 +514,6 @@ QUERY(jabber_convert_string_reinit) {
  * @return	Reply-ID of conversation.
  */
 int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add) {
-		/* XXX: it's kinda ol' function, need to take a third look at it */
 	jabber_conversation_t *thr, *prev;
 	char *resubject;
         int i, l;
@@ -522,17 +521,19 @@ int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *s
 	if (!thread && subject && !xstrncmp(subject, config_subject_reply_prefix, (l = xstrlen(config_subject_reply_prefix))))
 		resubject = subject + l;
 	
-		/* XXX: take a closer look at this monster */
         for (thr = j->conversations, prev = NULL, i = 1;
-                thr && ((thread ? xstrcmp(thr->thread, thread)
-			: (subject ? xstrcmp(thr->subject, subject) && xstrcmp(thr->subject, resubject)
-			&& (xstrncmp(thr->subject, config_subject_reply_prefix, l) || xstrcmp(thr->subject+l, subject)) : thr->subject))
-			|| (uid ? xstrcmp(thr->uid, uid) : 1));
-                prev = thr, thr = thr->next, i++);
-        if (!thr && can_add) {
-                thr = xmalloc(sizeof(jabber_conversation_t));
-                thr->thread = xstrdup(thread);
-		thr->uid = xstrdup(uid);
+                thr && ((thread ? xstrcmp(thr->thread, thread) /* try to match the thread, if avail */
+			: (subject ? xstrcmp(thr->subject, subject) /* else try to match the subject... */
+				&& xstrcmp(thr->subject, resubject) /* ...also with Re: prefix... */
+				&& (xstrncmp(thr->subject, config_subject_reply_prefix, l)
+					|| xstrcmp(thr->subject+l, subject)) /* ...on both sides... */
+				: thr->subject)) || (uid ? xstrcmp(thr->uid, uid) : 1)); /* ...and UID */
+	                prev = thr, thr = thr->next, i++); /* <- that's third param for 'for' */
+
+	if (!thr && can_add) { /* haven't found anything, but can create something */
+                thr		= xmalloc(sizeof(jabber_conversation_t));
+                thr->thread	= xstrdup(thread);
+		thr->uid	= xstrdup(uid);
 			/* IMPORTANT: thr->subject is maintained by message handler
 			 * Now I know why I haven't added it earlier here */
                 if (prev)
