@@ -916,18 +916,21 @@ int window_session_cycle(window_t *w)
 		return -1;
 	}
 
+	/* @ab config_window_session_allow == 4: don't change session when we have open talk in __status window */
+	/* 	XXX, change to __status? */
+	if ((config_window_session_allow == 0 && w->target) || (config_window_session_allow == 4 && window_status->target)) {
+		print("session_cannot_change");
+		return -1;
+	}
+
 	if (config_window_session_allow == 4) { /* higher level of magic */
 			/* switch to status window */
-		command_exec(NULL, NULL, "/window switch 1", 1);
-		w			= window_status;
+		command_exec(NULL, NULL, "/window switch 1", 1);	/* XXX, window_switch(window_status->id); */
+
 			/* and change switching order
 			 * we don't need to emit anything, because this function will (should?) change it again */
 		window_status->session	= w->session;
-	}
-
-	if (config_window_session_allow == 0 && w->target) {
-		print("session_cannot_change");
-		return -1;
+		w			= window_status;
 	}
 
 
