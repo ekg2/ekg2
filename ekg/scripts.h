@@ -7,9 +7,10 @@
 #include "protocol.h"
 #include "stuff.h"
 #include "vars.h"
+#include "queries.h"
 
 #define SCRIPT_HANDLE_UNBIND    -666
-#define MAX_ARGS 15
+#define MAX_ARGS QUERY_ARGS_MAX+1
 
 typedef enum {
 	SCRIPT_UNKNOWNTYPE,

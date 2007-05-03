@@ -666,8 +666,12 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 		int i;
 		for (i = 0; i < QUERY_EXTERNAL; i++) {
 			if (!xstrcmp(qname, (query_name(i)))) {
-				/* XXX */
-				debug_error("XXX %s; %d\n", qname, i);
+				const struct query *q = query_struct(i);
+				int j = 0;
+
+				while (j < QUERY_ARGS_MAX && q->params[j] != QUERY_ARG_END)
+					NEXT_ARG(q->params[j++]);
+
 				break;
 			}
 		}
@@ -744,8 +748,9 @@ QUERY(script_query_handlers)
 	script_query_t	*temp = data;
 	void 		*args[MAX_ARGS];
 	int		i;
+
 	SCRIPT_HANDLER_HEADER(script_handler_query_t);
-	
+
 	for (i=0; i < temp->argc; i++) 
 		args[i] = (void *) va_arg(ap, void *);
 	
