@@ -1,21 +1,23 @@
+# -*- encoding: iso-8859-2 -*-
+
 import ekg
 import time
 
 def status_handler(session, uid, status, desc):
     for sesja in ekg.sessions():
 	if sesja.connected():
-	    ekg.echo("sesja '%s' poÅ‚Ä…czona" % (name,))
+	    ekg.echo("sesja '%s' po³±czona" % (name,))
 	    ekg.echo("status: "+sesja['status'])
 	else:
-	    ekg.echo("sesja '%s' nie jest poÅ‚Ä…czona" % (name,))
-    ekg.echo("DostaÅ‚em status!")
+	    ekg.echo("sesja '%s' nie jest po³±czona" % (name,))
+    ekg.echo("Dosta³em status!")
     ekg.echo("Sesja : "+session)
     ekg.echo("UID   : "+uid)
     ekg.echo("Status: "+status)
     if desc:
 	ekg.echo("Opis  : "+desc)
     sesja = ekg.session_get(session)
-    ekg.echo('Lista userÃ³w sesji: '+", ".join(sesja.users()))
+    ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
     user = sesja.user_get(uid)
     if user.last_status:
 	ekg.echo(str(user.last_status))
@@ -24,19 +26,19 @@ def status_handler(session, uid, status, desc):
 	if user.last_status[1]:
 	    ekg.echo("Ostatni opis  : "+des)
     else:
-	ekg.echo("Nie ma poprzedniego stanu - pewnie dopiero siÄ™ Å‚Ä…czymy...")
+	ekg.echo("Nie ma poprzedniego stanu - pewnie dopiero siê ³±czymy...")
     ekg.echo("IP: "+user.ip)
     ekg.echo("Grupy: "+", ".join(user.groups()))
     if status == ekg.STATUS_AWAY:
 	ekg.echo("Chyba go nie ma...")
     if status == ekg.STATUS_XA:
-	ekg.echo("Chyba bardzo go nie ma, to na grzyb mi taki status?. PoÅ‚ykam. *Å›lurp*")
+	ekg.echo("Chyba bardzo go nie ma, to na grzyb mi taki status?. Po³ykam. *¶lurp*")
 	return 0
     return 1
 
 def message_handler(session, uid, type, text, sent_time, ignore_level):
     ekg.debug("[test script] some debug\n")
-    ekg.echo("DostaÅ‚em wiadomoÅ›Ä‡!")
+    ekg.echo("Dosta³em wiadomo¶æ!")
     ekg.echo("Sesja : "+session)
     ekg.echo("UID   : "+uid)
     if type == ekg.MSGCLASS_MESSAGE:
@@ -53,39 +55,39 @@ def message_handler(session, uid, type, text, sent_time, ignore_level):
 
 def own_message_handler(session, target, text):
     ekg.debug("[test script] some debug\n")
-    ekg.echo("WysyÅ‚am wiadomoÅ›Ä‡!")
+    ekg.echo("Wysy³am wiadomo¶æ!")
     ekg.echo("Sesja : "+session)
     ekg.echo("Target: "+target)
     ekg.echo("TxtLen: "+str(len(text)))
     return 1
 
 def connect_handler(session):
-    ekg.echo("PoÅ‚Ä…czono! Ale super! MoÅ¼na gadaÄ‡!")
+    ekg.echo("Po³±czono! Ale super! Mo¿na gadaæ!")
     ekg.echo("Sesja : "+session)
     if session[:3] == 'irc':
 	struct = time.gmtime()
 	if struct[3] >= 8 and struct[3] < 17:
-	    ekg.echo('Åadnie to tak ircowaÄ‡ w pracy? ;)')
+	    ekg.echo('£adnie to tak ircowaæ w pracy? ;)')
     sesja = ekg.session_get(session)
     if sesja.connected():
-	ekg.echo('PoÅ‚Ä…czony!')
+	ekg.echo('Po³±czony!')
     else:
-	ekg.echo('W tym miejscu jeszcze nie poÅ‚Ä…czony')
-    ekg.echo('Lista userÃ³w sesji: '+", ".join(sesja.users()))
+	ekg.echo('W tym miejscu jeszcze nie po³±czony')
+    ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
 
 def keypress(key):
     ekg.echo('nacisnales #'+ str(key));
     
 
 def disconnect_handler(session):
-    ekg.echo("Åo, sesja %s nam padÅ‚a" % (session,))
-    ekg.echo("WysyÅ‚amy smsa Å¼e nam cuÅ› padÅ‚o...")
+    ekg.echo("£o, sesja %s nam pad³a" % (session,))
+    ekg.echo("Wysy³amy smsa ¿e nam cu¶ pad³o...")
 
 def foo_command(name, args):
-    ekg.echo("WywoÅ‚ane polecenie foo!")
+    ekg.echo("Wywo³ane polecenie foo!")
 
 def varchange(name, newval):
-    ekg.echo("Zmienna %s zmieniÅ‚a wartoÅ›Ä‡ na %s" % (name, newval) )
+    ekg.echo("Zmienna %s zmieni³a warto¶æ na %s" % (name, newval) )
     
 ekg.command_bind('foo', foo_command)
 ekg.handler_bind('protocol-message-received', message_handler)
@@ -93,5 +95,5 @@ ekg.handler_bind('protocol-message-sent', own_message_handler)
 ekg.handler_bind('protocol-status', status_handler)
 ekg.handler_bind('protocol-connected', connect_handler)
 ekg.handler_bind('protocol-disconnected', disconnect_handler)
-# ekg.handler_bind('ui-keypress', keypress)
-ekg.variable_add('zmienna_testowa', 'wartoÅ›Ä‡', varchange)
+ekg.handler_bind('ui-keypress', keypress)
+ekg.variable_add('zmienna_testowa', 'warto¶æ', varchange)
