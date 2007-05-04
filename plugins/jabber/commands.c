@@ -515,7 +515,7 @@ static COMMAND(jabber_command_msg)
 		return -1;
 
 		/* threaded messages */
-	if (!xstrcasecmp(name, "tmsg")) {
+	if (!xstrcmp(name, "tmsg")) {
 			/* just make it compatible with /msg */
 		thread = params[1];
 		params[1] = params[2];
@@ -523,7 +523,7 @@ static COMMAND(jabber_command_msg)
 		
 			/* and now we can set real thread */
 		thread = jabber_escape(params[2]);
-	} else if (!xstrcasecmp(name, "msg") && (session_int_get(session, "msg_gen_thread") > 0))
+	} else if (!xstrcmp(name, "msg") && (session_int_get(session, "msg_gen_thread") > 0))
 		thread = jabber_thread_gen(j, uid); /* we don't return any chars to escape */
 
 		/* message subject, TheNewBetterWay^TM */
