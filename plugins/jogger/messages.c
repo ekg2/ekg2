@@ -103,10 +103,10 @@ QUERY(jogger_msghandler) {
 
 		if (!xstrncmp(msg, jogger_text[0], xstrlen(jogger_text[0])))
 			found = 1; /* own jogger comment */
-		else if (owncf && !xstrncmp(msg, owncf, xstrlen(owncf)))
-			found = 2; /* as above, but with custom text */
 		else if (!xstrncmp(msg, jogger_text[1], xstrlen(jogger_text[1])))
-			found = 3; /* other jogger comment */
+			found = 2; /* other jogger comment */
+		else if (owncf && !xstrncmp(msg, owncf, xstrlen(owncf)))
+			found = 3; /* own jogger comment with custom text */
 		else if (!xstrncmp(msg, jogger_text[12], xstrlen(jogger_text[12])))
 			found = 4; /* new jogger entry */
 		else if (!xstrncmp(msg, jogger_text[2], xstrlen(jogger_text[2]))) {
@@ -137,17 +137,20 @@ QUERY(jogger_msghandler) {
 				return 0;
 
 			const int oq	= (session_int_get(js, "newentry_open_query") || (found < 4));
-			char *suid, *uid, *msg;
+			char *suid, *uid, *lmsg, *url;
 			char **rcpts	= NULL;
 			uint32_t *fmt	= NULL;
 			
 			if (found == 4)
-				msg	= xstrdup(msg+xstrlen(jogger_text[12])+1);
+				lmsg	= xstrdup(msg+xstrlen(jogger_text[12])+1);
 			else {
-					/* XXX: store URL somewhere (nickname?) */
-				if (!(msg = xstrchr(tmp, '\n')) || !(msg = xstrchr(msg+1, '\n')))
+				url	= msg+xstrlen(found == 3 ? owncf : jogger_text[found-1])+1;
+
+				if (!(lmsg = xstrchr(tmp, '\n')) || !(lmsg = xstrchr(lmsg+1, '\n')))
 					return 0;
-				msg	= xstrdup(msg+1);
+
+				lmsg	= xstrdup(lmsg+1);
+				url	= xstrndup(url, tmp-url);
 			}
 
 			if (oq)
@@ -156,11 +159,25 @@ QUERY(jogger_msghandler) {
 				uid	= xstrdup("jogger:");
 			suid		= xstrdup(session_uid_get(js));
 
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcpts, &msg, &fmt, &sent, &class, &seq, &dobeep, &secure);
+			if (found != 4) {
+#if 0 /* next ekg2 bug - infinite loop if nickname contains slash */
+				userlist_t *u = userlist_find(js, uid);
+				
+				if (!u)
+					userlist_add(js, uid, url);
+				else if (xstrcmp(u->nickname, url)) {
+					xfree(u->nickname);
+					u->nickname = url;
+				} else
+#endif
+					xfree(url);
+			}
+
+			query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcpts, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
 
 			xfree(suid);
 			xfree(uid);
-			xfree(msg);
+			xfree(lmsg);
 		} else if (found <= 8) {
 			const char *formats[] = { "jogger_modified", "jogger_noentry", 
 					"jogger_unsubscribed", "jogger_subscribed" };
