@@ -693,11 +693,11 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
  * Print given text in given window [@a target+ @a session]
  *
  * @todo 	We have no policy for displaying messages by e.g. jabber resources.<br>
- * 		For now we do:<br>
+ * 		For now we do: [only jabber]<br>
  * 			- If @a target has '/' inside. We put there NUL char.<br>
  * 			- After it we search for window with stripped '/'<br>
  * 			- If founded, than done.<br>
- * 		If not, we look for user in userlist.. And if not found, than we'll create new window with stripped '/'
+ * 		If not, we look for user in userlist.. And if not found, than we'll create new window with stripped '/' [only jabber]
  * 		
  *
  * @param target	- target to look for.
@@ -719,19 +719,22 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	}
 
 	while (w == NULL) {
+		const char *tmp;
 		char *newtarget = NULL;
 
 		userlist_t *u;
 
-		/* 1) let's check if we have such window as target... */
+	/* 1) let's check if we have such window as target... */
+		if ((w = window_find_s(session, target)))
+			break;
 
-		/* if it's has '/' in target, so strip it [XXX] */
-		if (xstrchr(target, '/')) {
-			newtarget = xstrdup(target);
-			*(xstrchr(newtarget, '/')) = '\0';
+		/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
+		if (!xstrncmp(target, "jid:", 3) && (tmp = xstrchr(target, '/'))) {
+			newtarget = xstrndup(target, tmp - target);
 			w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
-		} else {
-			w = window_find_s(session, target);
+			/* even if w == NULL here, we use newtarget to create window without resource */
+			/* Yeah, we search for target on userlist, but u can be NULL also... */
+			/* XXX, optimize and think about it */
 		}
 
 		if (w) {
@@ -739,7 +742,9 @@ void print_window(const char *target, session_t *session, int separate, const ch
 			break;
 		}
 
-		/* 2) if message is not important (not @a seperate) or we don't want create new windows at all [config_make_window & 3 == 0] than get __status window  */
+	/* 2) if message is not important (not @a seperate) or we don't want create new windows at all [config_make_window & 3 == 0] 
+	 *    than get __status window  */
+
 		if (!separate || (config_make_window & 3) == 0) {
 			w = window_status;
 			xfree(newtarget);
@@ -755,9 +760,10 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		else if (u && u->uid)
 			target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
 		else if (newtarget)
-			target = newtarget;			/* XXX here, use target with stripped '/' */
+			target = newtarget;			/* use target with stripped '/' */
+								/* XXX, window resources */
 
-		/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
+	/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
 		if ((config_make_window & 3) == 1) {
 			list_t l;
 		
@@ -779,7 +785,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 			}
 		}
 
-		/* 4) if not found unused window, or ((config_make_window & 3) == 2) [always] than just create it */
+	/* 4) if not found unused window, or ((config_make_window & 3) == 2) [always] than just create it */
 		if (!w)
 			w = window_new(target, session, 0);
 
@@ -787,8 +793,8 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 		/* XXX, think about it x1 */
 		print("window_id_query_started", itoa(w->id), target, session_name(session));
-		print_window(target, session, 1, "query_started", target, session_name(session));
-		print_window(target, session, 1, "query_started_window", target);
+		print_window_w(w, 1, "query_started", target, session_name(session));
+		print_window_w(w, 1, "query_started_window", target);
 
 		xfree(newtarget);
 		break;
