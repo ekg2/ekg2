@@ -588,13 +588,13 @@ static COMMAND(jabber_command_msg)
 					enum XML_Error errc = XML_GetErrorCode(p);
 					const char *errs;
 
-					if (errc && (errs = XML_ErrorString(errc))) {
+					if (errc && (errs = XML_ErrorString(errc)))
 						print("jabber_msg_xmlsyntaxerr", errs);
-						XML_ParserFree(p);
-						xfree(fullmsg);
-						return -1;
-					}
-					/* we never should get here */
+					else	print("jabber_msg_xmlsyntaxerr", "unknown");
+
+					XML_ParserFree(p);
+					xfree(fullmsg);
+					return -1;			/* XXX, return -1; here is invalid, we already sent data to server */
 				}
 				XML_ParserFree(p);
 				watch_write(j->send_watch, "%s", fullmsg); /* to avoid problems with %-formats */
@@ -622,7 +622,7 @@ static COMMAND(jabber_command_msg)
 			secure = 1;
 			xfree(e_msg);
 		}
-	} 
+	}
 	if (!secure) 
 		watch_write(j->send_watch, "<body>%s</body>", msg);
 
