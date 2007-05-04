@@ -562,77 +562,75 @@ static COMMAND(jabber_command_msg)
 		watch_write(j->send_watch, "<thread>%s</thread>", thread);
 		xfree(thread);
 	}
-	do {
-		if (!msg)
-			break;
 
-		if (j->istlen)
-			msg = tlen_encode(msg);
-		else { /* Very, very simple XEP-0071 support + 'modified' jabber_encode() */
-			char *htmlmsg, *tmp;
-			
-			if (!config_use_unicode) { /* it is important to have utf8 here */
-				const char *s = ekg_convert_string_p(msg, jconv_out);
-				if (s)
-					msg = s;
-			}
-			if ((htmlmsg = utfstrchr(msg, 18))) { /* ^R */
-				*(htmlmsg++) = 0;
-				if (*htmlmsg != 18) { /* syntax checking */
-					XML_Parser p = XML_ParserCreate("utf-8");
-					/* expat syntax-checking needs the code to be embedded in some parent element
-					 * so we create the whole block here, instead of giving %s to watch_write() */
-					char *fullmsg = saprintf("<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
-							"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
-							"%s</body></html>", htmlmsg);
-					
-					if (!XML_Parse(p, fullmsg, xstrlen(fullmsg), 1)) {
-						enum XML_Error errc = XML_GetErrorCode(p);
-						const char *errs;
+	if (!msg) goto nomsg;
 
-						if (errc && (errs = XML_ErrorString(errc))) {
-							print("jabber_msg_xmlsyntaxerr", errs);
-							XML_ParserFree(p);
-							xfree(fullmsg);
-							return -1;
-						}
-						/* we never should get here */
-					}
-					XML_ParserFree(p);
-					watch_write(j->send_watch, "%s", fullmsg); /* to avoid problems with %-formats */
-					xfree(fullmsg);
-				} else {
-					htmlmsg++;
-					watch_write(j->send_watch, "<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
-							"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
-							"%s</body></html>", htmlmsg);
-				}
-			}
-			tmp = xml_escape(msg);
-			if (!config_use_unicode)
-				xfree(msg);
-			msg = tmp;
+	if (!j->istlen) {
+		 /* Very, very simple XEP-0071 support + 'modified' jabber_encode() */
+		char *htmlmsg, *tmp;
+
+		if (!config_use_unicode) { /* it is important to have utf8 here */
+			const char *s = ekg_convert_string_p(msg, jconv_out);
+			if (s)
+				msg = s;
 		}
+		if ((htmlmsg = utfstrchr(msg, 18))) { /* ^R */
+			*(htmlmsg++) = 0;
+			if (*htmlmsg != 18) { /* syntax checking */
+				XML_Parser p = XML_ParserCreate("utf-8");
+				/* expat syntax-checking needs the code to be embedded in some parent element
+				 * so we create the whole block here, instead of giving %s to watch_write() */
+				char *fullmsg = saprintf("<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
+						"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
+						"%s</body></html>", htmlmsg);
 
-		if (session_int_get(session, "__gpg_enabled") == 1) {
-			char *e_msg = xstrdup(msg);
+				if (!XML_Parse(p, fullmsg, xstrlen(fullmsg), 1)) {
+					enum XML_Error errc = XML_GetErrorCode(p);
+					const char *errs;
 
-			if ((e_msg = jabber_openpgp(session, uid, JABBER_OPENGPG_ENCRYPT, e_msg, NULL, NULL))) {
-				watch_write(j->send_watch, 
+					if (errc && (errs = XML_ErrorString(errc))) {
+						print("jabber_msg_xmlsyntaxerr", errs);
+						XML_ParserFree(p);
+						xfree(fullmsg);
+						return -1;
+					}
+					/* we never should get here */
+				}
+				XML_ParserFree(p);
+				watch_write(j->send_watch, "%s", fullmsg); /* to avoid problems with %-formats */
+				xfree(fullmsg);
+			} else {
+				htmlmsg++;
+				watch_write(j->send_watch, "<html xmlns=\"http://jabber.org/protocol/xhtml-im\">"
+						"<body xmlns=\"http://www.w3.org/1999/xhtml\">"
+						"%s</body></html>", htmlmsg);
+			}
+		}
+		tmp = xml_escape(msg);
+		if (!config_use_unicode)
+			xfree(msg);
+		msg = tmp;
+	} else	msg = tlen_encode(msg);
+
+	if (session_int_get(session, "__gpg_enabled") == 1) {
+		char *e_msg = xstrdup(msg);
+
+		if ((e_msg = jabber_openpgp(session, uid, JABBER_OPENGPG_ENCRYPT, e_msg, NULL, NULL))) {
+			watch_write(j->send_watch, 
 					"<x xmlns=\"jabber:x:encrypted\">%s</x>"
 					"<body>This message was encrypted by ekg2! (EKG2 BABY) Sorry if you cannot decode it ;)</body>", e_msg);
-				secure = 1;
-				xfree(e_msg);
-			}
-		} 
-		if (!secure) 
-			watch_write(j->send_watch, "<body>%s</body>", msg);
+			secure = 1;
+			xfree(e_msg);
+		}
+	} 
+	if (!secure) 
+		watch_write(j->send_watch, "<body>%s</body>", msg);
 
-        	if (config_last & 4) 
-        		last_add(1, uid, time(NULL), 0, msg);
-		xfree(msg);
-	} while(0);
+	if (config_last & 4) 
+		last_add(1, uid, time(NULL), 0, msg);
+	xfree(msg);
 
+nomsg:
 	if (!j->istlen) 
 		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
 			( config_display_ack & 1 ? "<delivered/>" : ""),
