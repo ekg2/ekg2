@@ -22,7 +22,8 @@
 
 #include "ekg2-config.h"
 
-#include <ekg/dynstuff.h>
+#include "dynstuff.h"
+#include "sessions.h"
 #include <stdarg.h>
 #include <stdint.h>
 #include <time.h>
