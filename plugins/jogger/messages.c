@@ -47,6 +47,7 @@ const char *utf_jogger_text[] = {
 
 	"Brak uprawnień do śledzenia tego wpisu",		/* [10] */
 	"Wpis nie był śledzony",				/* [11] */
+	/* XXX: entry added */					/* [12] */
 };
 
 char *jogger_text[12];
@@ -88,7 +89,32 @@ QUERY(jogger_msghandler) {
 		return 0;
 
 	if (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_CHAT) { /* incoming */
-			/* (un)subscription acks */
+		const char *owncf = session_get(js, "own_commentformat");
+
+		if (!xstrncmp(*msg, jogger_text[0], xstrlen(jogger_text[0]))) {
+			/* own jogger comment */
+		}
+		if (owncf && !xstrncmp(*msg, owncf, xstrlen(owncf))) {
+			/* own jogger comment (custom ack format) */
+		}
+		if (!xstrncmp(*msg, jogger_text[1], xstrlen(jogger_text[1]))) {
+			/* other jogger comment */
+		}
+		if (!xstrncmp(*msg, jogger_text[2], xstrlen(jogger_text[2]))) {
+			char *tmp;
+
+			/* XXX: [3] */
+			if ((tmp = xstrstr(*msg, jogger_text[4]))) {
+				*(tmp-1) = '\0';
+				print("jogger_noentry", session_name(js), *msg+xstrlen(jogger_text[2])+1);
+				*(tmp-1) = ' ';
+				return -1;
+			}
+		}
+		if (!xstrncmp(*msg, jogger_text[5], xstrlen(jogger_text[5]))) {
+			print("jogger_published", session_name(js), *msg+xstrlen(jogger_text[5])+1);
+			return -1;
+		}
 		if (!xstrncmp(*msg, jogger_text[7], xstrlen(jogger_text[7]))) {
 			char *tmp;
 
@@ -96,13 +122,22 @@ QUERY(jogger_msghandler) {
 				*(tmp-1) = '\0';
 				print("jogger_unsubscribed", session_name(js), *msg+xstrlen(jogger_text[7])+1);
 				*(tmp-1) = ' ';
-				return -1; /* cut off */
-			} else if ((tmp = xstrstr(*msg, jogger_text[9]))) {
+				return -1;
+			}
+			if ((tmp = xstrstr(*msg, jogger_text[9]))) {
 				*(tmp-1) = '\0';
 				print("jogger_subscribed", session_name(js), *msg+xstrlen(jogger_text[7])+1);
 				*(tmp-1) = ' ';
-				return -1; /* cut off */
+				return -1;
 			}
+		}
+		if (!xstrncmp(*msg, jogger_text[10], xstrlen(jogger_text[10]))) {
+			print("jogger_subscription_denied", session_name(js));
+			return -1;
+		}
+		if (!xstrncmp(*msg, jogger_text[11], xstrlen(jogger_text[11]))) {
+			print("jogger_unsubscribed_earlier", session_name(js));
+			return -1;
 		}
 	} else if (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) { /* outgoing */
 	}
