@@ -15,8 +15,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
+#include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
 	/* jogger.c */
@@ -44,5 +47,39 @@ QUERY(jogger_msghandler) {
 		/* 4) ack match */
 
 	return 0;
+}
+
+COMMAND(jogger_msg) {
+	const int is_inline	= (*name == '\0');
+	const char *uid 	= get_uid(session, target);
+	session_t *js		= session_find(session_get(session, "used_session"));
+	const char *juid	= session_get(session, "used_uid");
+	int n;
+
+	if (!uid || !js || !juid) {
+		printq("invalid_session");	/* XXX, unprepared session? */
+		return -1;
+	}
+	uid += 7; /* skip jogger: */
+
+	if (*uid == '\0') { /* redirect message to jogger uid */
+		if (is_inline)
+			return command_exec(juid, js, params[0], 0);
+		else
+			return command_exec_format(NULL, js, 0, "/%s \"%s\" %s", name, juid, params[1]);
+	}
+	if (*uid == '#')
+		uid++;
+
+	if (!(n = atoi(uid))) {
+		printq("invalid_uid");
+		return -1;
+	}
+
+		/* post as comment-reply */
+	if (is_inline)
+		return command_exec_format(juid, js, 0, "#%d %s", n, params[0]);
+	else
+		return command_exec_format(NULL, js, 0, "/%s \"%s\" #%d %s", name, juid, n, params[1]);
 }
 

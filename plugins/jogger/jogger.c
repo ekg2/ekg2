@@ -16,6 +16,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/queries.h>
@@ -30,6 +31,7 @@ static int jogger_plugin_destroy(void);
 
 	/* messages.c */
 QUERY(jogger_msghandler);
+COMMAND(jogger_msg);
 
 	/* we need to be 'protocol' to establish sessions */
 PLUGIN_DEFINE(jogger, PLUGIN_PROTOCOL, jogger_theme_init);
@@ -160,6 +162,11 @@ static void jogger_usedchanged(session_t *s, const char *varname) {
 #endif
 }
 
+	/* we need some dummy commands, e.g. /disconnect */
+static COMMAND(jogger_null) {
+	return 0;
+}
+
 static int jogger_theme_init(void) {
 #ifndef NO_DEFAULT_THEME
 #endif
@@ -181,8 +188,18 @@ int jogger_plugin_init(int prio) {
 	query_connect_id(&jogger_plugin, PROTOCOL_VALIDATE_UID, jogger_validate_uid, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_STATUS, jogger_statuschanged, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_DISCONNECTED, jogger_statuscleanup, NULL);
-
 	query_connect_id(&jogger_plugin, PROTOCOL_MESSAGE, jogger_msghandler, NULL);
+
+#define JOGGER_CMDFLAGS SESSION_MUSTBELONG
+#define JOGGER_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET
+	command_add(&jogger_plugin, "jogger:", "?", jogger_msg, JOGGER_CMDFLAGS, NULL);
+	command_add(&jogger_plugin, "jogger:chat", "!uU !", jogger_msg, JOGGER_CMDFLAGS_TARGET, NULL);
+	command_add(&jogger_plugin, "jogger:connect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
+	command_add(&jogger_plugin, "jogger:disconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
+	command_add(&jogger_plugin, "jogger:msg", "!uU !", jogger_msg, JOGGER_CMDFLAGS_TARGET, NULL);
+	command_add(&jogger_plugin, "jogger:reconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
+#undef JOGGER_CMDFLAGS_TARGET
+#undef JOGGER_CMDFLAGS
 
 	plugin_register(&jogger_plugin, prio);
 
