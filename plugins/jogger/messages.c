@@ -99,6 +99,7 @@ QUERY(jogger_msghandler) {
 
 		const char *owncf = session_get(js, "own_commentformat");
 		int found = 0;
+		char *tmp;
 
 		if (!xstrncmp(msg, jogger_text[0], xstrlen(jogger_text[0])))
 			found = 1; /* own jogger comment */
@@ -108,92 +109,76 @@ QUERY(jogger_msghandler) {
 			found = 3; /* other jogger comment */
 		else if (!xstrncmp(msg, jogger_text[12], xstrlen(jogger_text[12])))
 			found = 4; /* new jogger entry */
-
-		if (!xstrncmp(msg, jogger_text[2], xstrlen(jogger_text[2]))) {
-			char *tmp;
-
-			if ((tmp = xstrstr(msg, jogger_text[3]))) {
-					/* XXX: msg instead? */
-				*(tmp-1) = '\0';
-				print("jogger_modified", session_name(js), msg+xstrlen(jogger_text[2])+1);
-				*(tmp-1) = ' ';
-				return -1;
-			}
-			if ((tmp = xstrstr(msg, jogger_text[4]))) {
-				*(tmp-1) = '\0';
-				print("jogger_noentry", session_name(js), msg+xstrlen(jogger_text[2])+1);
-				*(tmp-1) = ' ';
-				return -1;
-			}
-		}
-		if (!xstrncmp(msg, jogger_text[5], xstrlen(jogger_text[5]))) {
-			print("jogger_published", session_name(js), msg+xstrlen(jogger_text[5])+1);
-			return -1;
-		}
-		if (!xstrncmp(msg, jogger_text[6], xstrlen(jogger_text[6]))) {
-			print("jogger_comment_added", session_name(js), msg+xstrlen(jogger_text[6])+1);
-			return -1;
-		}
-		if (!xstrncmp(msg, jogger_text[7], xstrlen(jogger_text[7]))) {
-			char *tmp;
-
-			if ((tmp = xstrstr(msg, jogger_text[8]))) {
-				*(tmp-1) = '\0';
-				print("jogger_unsubscribed", session_name(js), msg+xstrlen(jogger_text[7])+1);
-				*(tmp-1) = ' ';
-				return -1;
-			}
-			if ((tmp = xstrstr(msg, jogger_text[9]))) {
-				*(tmp-1) = '\0';
-				print("jogger_subscribed", session_name(js), msg+xstrlen(jogger_text[7])+1);
-				*(tmp-1) = ' ';
-				return -1;
-			}
-		}
-		if (!xstrncmp(msg, jogger_text[10], xstrlen(jogger_text[10]))) {
-			print("jogger_subscription_denied", session_name(js));
-			return -1;
-		}
-		if (!xstrncmp(msg, jogger_text[11], xstrlen(jogger_text[11]))) {
-			print("jogger_unsubscribed_earlier", session_name(js));
-			return -1;
-		}
+		else if (!xstrncmp(msg, jogger_text[2], xstrlen(jogger_text[2]))) {
+			if ((tmp = xstrstr(msg, jogger_text[3])))
+				found = 5;
+			else if ((tmp = xstrstr(msg, jogger_text[4])))
+				found = 6;
+		} else if (!xstrncmp(msg, jogger_text[7], xstrlen(jogger_text[7]))) {
+			if ((tmp = xstrstr(msg, jogger_text[8])))
+				found = 7;
+			else if ((tmp = xstrstr(msg, jogger_text[9])))
+				found = 8;
+		} else if (!xstrncmp(msg, jogger_text[5], xstrlen(jogger_text[5])))
+			found = 9;
+		else if (!xstrncmp(msg, jogger_text[6], xstrlen(jogger_text[6])))
+			found = 10;
+		else if (!xstrncmp(msg, jogger_text[10], xstrlen(jogger_text[10])))
+			found = 11;
+		else if (!xstrncmp(msg, jogger_text[11], xstrlen(jogger_text[11])))
+			found = 12;
 
 		if (found == 0)
 			return 0;
-
-		if (found <= 4) { /* we get id here */
+		else if (found <= 4) { /* we get id here */
 			const char *tmp = xstrstr(msg, " (#");
 
-			if (tmp) {
-				const int oq	= (session_int_get(js, "newentry_open_query") || (found < 4));
-				char *suid, *uid, *msg;
-				char **rcpts	= NULL;
-				uint32_t *fmt	= NULL;
-				
-				if (found == 4)
-					msg	= xstrdup(msg+xstrlen(jogger_text[12])+1);
-				else {
-						/* XXX: store URL somewhere (nickname?) */
-					if (!(msg = xstrchr(tmp, '\n')) || !(msg = xstrchr(msg+1, '\n')))
-						return 0;
-					msg	= xstrdup(msg+1);
-				}
+			if (!tmp)
+				return 0;
 
-				if (oq)
-					uid	= saprintf("jogger:%d", atoi(tmp+3));
-				else
-					uid	= xstrdup("jogger:");
-				suid		= xstrdup(session_uid_get(js));
-
-				query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcpts, &msg, &fmt, &sent, &class, &seq, &dobeep, &secure);
-
-				xfree(suid);
-				xfree(uid);
-				xfree(msg);
-				return -1;
+			const int oq	= (session_int_get(js, "newentry_open_query") || (found < 4));
+			char *suid, *uid, *msg;
+			char **rcpts	= NULL;
+			uint32_t *fmt	= NULL;
+			
+			if (found == 4)
+				msg	= xstrdup(msg+xstrlen(jogger_text[12])+1);
+			else {
+					/* XXX: store URL somewhere (nickname?) */
+				if (!(msg = xstrchr(tmp, '\n')) || !(msg = xstrchr(msg+1, '\n')))
+					return 0;
+				msg	= xstrdup(msg+1);
 			}
+
+			if (oq)
+				uid	= saprintf("jogger:%d", atoi(tmp+3));
+			else
+				uid	= xstrdup("jogger:");
+			suid		= xstrdup(session_uid_get(js));
+
+			query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcpts, &msg, &fmt, &sent, &class, &seq, &dobeep, &secure);
+
+			xfree(suid);
+			xfree(uid);
+			xfree(msg);
+		} else if (found <= 8) {
+			const char *formats[] = { "jogger_noentry", "jogger_modified",
+					"jogger_unsubscribed", "jogger_subscribed" };
+
+			*(tmp-1) = '\0';
+			print(formats[found-5], session_name(js),
+					msg+xstrlen(found > 6 ? jogger_text[7] : jogger_text[2])+1);
+			*(tmp-1) = ' ';
+		} else if (found <= 10) {
+			const char *formats[] = { "jogger_published", "jogger_comment_added" };
+
+			print(formats[found-9], session_name(js), msg+xstrlen(jogger_text[found-4])+1);
+		} else if (found <= 12) {
+			const char *formats[] = { "jogger_subscription_denied", "jogger_unsubscribed_earlier" };
+
+			print(formats[found-12], session_name(js));
 		}
+		return -1;
 	} else if (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) { /* outgoing */
 		if (!s || !rcpts || !rcpts[0] || !(js = jogger_session_find_uid(s, rcpts[0])))
 			return 0;
