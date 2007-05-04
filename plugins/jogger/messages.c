@@ -162,7 +162,7 @@ QUERY(jogger_msghandler) {
 			xfree(uid);
 			xfree(msg);
 		} else if (found <= 8) {
-			const char *formats[] = { "jogger_noentry", "jogger_modified",
+			const char *formats[] = { "jogger_modified", "jogger_noentry", 
 					"jogger_unsubscribed", "jogger_subscribed" };
 
 			*(tmp-1) = '\0';
