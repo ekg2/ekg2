@@ -231,7 +231,6 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid);
 #define userlist_find_n(a, b) userlist_find(session_find(a), b)
 void userlist_free(session_t *session);
 void userlist_free_u(list_t *userlist);
-int userlist_set(session_t *session, const char *contacts);
 
 /* u->resource */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio);

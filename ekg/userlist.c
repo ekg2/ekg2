@@ -693,26 +693,6 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 	return NULL;
 }
 
-int userlist_set(session_t *session, const char *contacts)
-{
-	char **entries;
-	int i;
-
-	if (!session)
-		return -1;
-
-	entries = array_make(contacts, "\r\n", 0, 1, 0);
-
-	userlist_free(session);
-
-	for (i = 0; entries[i]; i++)
-		userlist_add_entry(session, entries[i]);
-
-	array_free(entries);
-
-	return 0;
-}
-
 /*
  * valid_nick()
  *
