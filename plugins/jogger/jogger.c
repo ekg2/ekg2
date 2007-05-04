@@ -21,6 +21,7 @@
 #include <ekg/plugins.h>
 #include <ekg/queries.h>
 #include <ekg/sessions.h>
+#include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 #include <ekg/vars.h>
@@ -30,8 +31,11 @@ int jogger_plugin_init(int prio);
 static int jogger_plugin_destroy(void);
 
 	/* messages.c */
+void localize_texts();
+void free_texts();
 QUERY(jogger_msghandler);
 COMMAND(jogger_msg);
+COMMAND(jogger_subscribe);
 
 	/* we need to be 'protocol' to establish sessions */
 PLUGIN_DEFINE(jogger, PLUGIN_PROTOCOL, jogger_theme_init);
@@ -169,11 +173,14 @@ static COMMAND(jogger_null) {
 
 static int jogger_theme_init(void) {
 #ifndef NO_DEFAULT_THEME
+	format_add("jogger_subscribed", _("%> (%1) The thread '%2' has been subscribed."), 1);
+	format_add("jogger_unsubscribed", _("%> (%1) The thread '%2' has been unsubscribed."), 1);
 #endif
 	return 0;
 }
 
 static plugins_params_t jogger_plugin_vars[] = {
+	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
 	PLUGIN_VAR_ADD("own_commentformat",	0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("used_session",		0, VAR_STR, NULL, 0, jogger_usedchanged),
 	PLUGIN_VAR_ADD("used_uid",		0, VAR_STR, NULL, 0, jogger_usedchanged),
@@ -182,7 +189,6 @@ static plugins_params_t jogger_plugin_vars[] = {
 };
 
 int jogger_plugin_init(int prio) {
-		/* XXX: force prio? or only warn? */
 	jogger_plugin.params = jogger_plugin_vars;
 	
 	query_connect_id(&jogger_plugin, PROTOCOL_VALIDATE_UID, jogger_validate_uid, NULL);
@@ -198,16 +204,22 @@ int jogger_plugin_init(int prio) {
 	command_add(&jogger_plugin, "jogger:disconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:msg", "!uU !", jogger_msg, JOGGER_CMDFLAGS_TARGET, NULL);
 	command_add(&jogger_plugin, "jogger:reconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
+	command_add(&jogger_plugin, "jogger:subscribe", "!uU", jogger_subscribe, JOGGER_CMDFLAGS_TARGET, NULL);
+	command_add(&jogger_plugin, "jogger:unsubscribe", "!uU", jogger_subscribe, JOGGER_CMDFLAGS_TARGET, NULL);
 #undef JOGGER_CMDFLAGS_TARGET
 #undef JOGGER_CMDFLAGS
 
-	plugin_register(&jogger_plugin, prio);
+	localize_texts();
+
+	plugin_register(&jogger_plugin, prio*3);
 
 	return 0;
 }
 
 static int jogger_plugin_destroy(void) {
 	plugin_unregister(&jogger_plugin);
+	
+	free_texts();
 
 	return 0;
 }
