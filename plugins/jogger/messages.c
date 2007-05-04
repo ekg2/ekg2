@@ -141,9 +141,10 @@ QUERY(jogger_msghandler) {
 			char **rcpts	= NULL;
 			uint32_t *fmt	= NULL;
 			
-			if (found == 4)
+			if (found == 4) {
 				lmsg	= xstrdup(msg+xstrlen(jogger_text[12])+1);
-			else {
+				url	= xstrndup(lmsg, tmp-msg-xstrlen(jogger_text[12])-1);
+			} else {
 				url	= msg+xstrlen(found == 3 ? owncf : jogger_text[found-1])+1;
 
 				if (!(lmsg = xstrchr(tmp, '\n')) || !(lmsg = xstrchr(lmsg+1, '\n')))
@@ -159,8 +160,7 @@ QUERY(jogger_msghandler) {
 				uid	= xstrdup("jogger:");
 			suid		= xstrdup(session_uid_get(js));
 
-			if (found != 4) {
-#if 0 /* next ekg2 bug - infinite loop if nickname contains slash */
+			{
 				userlist_t *u = userlist_find(js, uid);
 				
 				if (!u)
@@ -169,7 +169,6 @@ QUERY(jogger_msghandler) {
 					xfree(u->nickname);
 					u->nickname = url;
 				} else
-#endif
 					xfree(url);
 			}
 
