@@ -725,8 +725,6 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		userlist_t *u;
 
 	/* 1) let's check if we have such window as target... */
-		if ((w = window_find_s(session, target)))
-			break;
 
 		/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
 		if (!xstrncmp(target, "jid:", 3) && (tmp = xstrchr(target, '/'))) {
@@ -735,7 +733,8 @@ void print_window(const char *target, session_t *session, int separate, const ch
 			/* even if w == NULL here, we use newtarget to create window without resource */
 			/* Yeah, we search for target on userlist, but u can be NULL also... */
 			/* XXX, optimize and think about it */
-		}
+
+		} else	w = window_find_s(session, target);
 
 		if (w) {
 			xfree(newtarget);
@@ -791,7 +790,6 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 		/* [FOR 3) and 4)] If we create window or we change target. notify user */
 
-		/* XXX, think about it x1 */
 		print("window_id_query_started", itoa(w->id), target, session_name(session));
 		print_window_w(w, 1, "query_started", target, session_name(session));
 		print_window_w(w, 1, "query_started_window", target);
