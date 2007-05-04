@@ -322,7 +322,6 @@ const char *prepare_pathf(const char *filename, ...);
 char *read_file(FILE *f, int alloc);
 
 const char *timestamp(const char *format);
-void unidle();
 int on_off(const char *value);
 char *xstrmid(const char *str, int start, int length);
 void xstrtr(char *text, char from, char to);

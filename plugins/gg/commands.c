@@ -824,8 +824,6 @@ static COMMAND(gg_command_msg) {
 
 	array_free(nicks);
 
-	unidle();
-
 	return 0;
 }
 

@@ -1733,16 +1733,6 @@ const char *timestamp(const char *format) {
 	return buf;
 }
 
-/*
- * unidle()
- *
- * uaktualnia licznik czasu ostatniej akcji, ¿eby przypadkiem nie zrobi³o
- * autoawaya, kiedy piszemy.
- */
-
-/* use session_unidle() XXX do kasacji */
-void unidle() { }
-
 /**
  * on_off()
  *
