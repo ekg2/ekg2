@@ -286,7 +286,7 @@ COMMAND(gg_command_dcc)
 			}
 		}
 		
-		d = dcc_add(u->uid, DCC_SEND, gd);
+		d = dcc_add(session, u->uid, DCC_SEND, gd);
 		dcc_filename_set(d, params[2]);
 		dcc_size_set(d, st.st_size);
 		if (gd)
@@ -382,7 +382,7 @@ COMMAND(gg_command_dcc)
 				return -1;
 			}
 		}
-		if (!(d = dcc_add(u->uid, DCC_VOICE, gd))) return -1;
+		if (!(d = dcc_add(session, u->uid, DCC_VOICE, gd))) return -1;
 
 
 		if (gd)
@@ -697,7 +697,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 				char peer[16];
 
 				snprintf(peer, sizeof(peer), "gg:%d", d->peer_uin);
-				D = dcc_add(peer, DCC_GET, d);
+				D = dcc_add(NULL, peer, DCC_GET, d);		/* XXX, fix it. */
 			}
 
 			for (p = d->file_info.filename; *p; p++)

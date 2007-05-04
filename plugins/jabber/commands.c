@@ -118,7 +118,7 @@ static COMMAND(jabber_command_dcc) {
 	/* XXX, introduce function jabber_get_resource(u, input_uid); */
 			touid = saprintf("%s/%s", u->uid, ((ekg_resource_t *) (u->resources->data))->name);
 
-			d 	= dcc_add(touid, DCC_SEND, NULL);
+			d 	= dcc_add(session, touid, DCC_SEND, NULL);
 			d->filename 	= xstrdup(params[2]);
 			d->size		= st.st_size;
 

@@ -2042,7 +2042,7 @@ JABBER_HANDLER_IQ(jabber_handle_si) {
 		jdcc->sid	= jabber_unescape(jabber_attr(n->atts, "id"));
 		jdcc->sfd	= -1;
 
-		D = dcc_add(uid, DCC_GET, NULL);
+		D = dcc_add(s, uid, DCC_GET, NULL);
 		dcc_filename_set(D, filename);
 		dcc_size_set(D, atoi(size));
 		dcc_private_set(D, jdcc);
