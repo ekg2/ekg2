@@ -88,6 +88,7 @@ struct dcc_s;
 typedef void (*dcc_close_handler_t)(struct dcc_s *);
 
 typedef struct dcc_s {
+	session_t *session;		/* ktora sesja? */
 	char *uid;			/* z kim po³±czenie */
 	dcc_type_t type;		/* rodzaj po³±czenia */
 	int id;				/* numer po³±czenia */
@@ -102,7 +103,7 @@ typedef struct dcc_s {
 } dcc_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-dcc_t *dcc_add(const char *uid, dcc_type_t type, void *priv);
+dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv);
 int dcc_close(dcc_t *d);
 
 int dcc_private_set(dcc_t *, void *);

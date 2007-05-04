@@ -829,31 +829,40 @@ static QUERY(protocol_xstate)
 	return 0;
 }
 
-dcc_t *dcc_add(const char *uid, dcc_type_t type, void *priv)
-{
-	dcc_t *d = xmalloc(sizeof(dcc_t));
-	int id = 1, id_ok = 0;
-	list_t l;
+/**
+ * dcc_add()
+ *
+ */
 
-	d->uid = xstrdup(uid);
-	d->type = type;
-	d->priv = priv;
-	d->started = time(NULL);
+dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv) {
+	dcc_t *d;
+	int id = 1, id_ok;
+	list_t l;
 
 	do {
 		id_ok = 1;
 
 		for (l = dccs; l; l = l->next) {
-			dcc_t *D = l->data;
+			dcc_t *d = l->data;
 	
-			if (D->id == id) {
+			if (d->id == id) {
 				id++;
 				id_ok = 0;
 				break;
 			}
 		}
+		if (id < 1) {		/* protect from posibble deadlock */
+			debug_error("dcc_add() too many dcc's id < 1...\n");
+			return NULL;
+		}
 	} while (!id_ok);
 
+	d = xmalloc(sizeof(dcc_t));
+	d->session = session;
+	d->uid = xstrdup(uid);
+	d->type = type;
+	d->priv = priv;
+	d->started = time(NULL);
 	d->id = id;
 
 	list_add(&dccs, d, 0);
