@@ -1238,7 +1238,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 					gg_remove_notify_ex(g->sess, str_to_uin(parsed + 1), gg_userlist_type(u));
 				}
 				reply = gg_cp_to_locale(xstrdup(e->event.userlist.reply));
-				userlist_set(s, reply);
+				gg_userlist_set(s, reply);
 				xfree(reply);
 				gg_userlist_send(g->sess, s->userlist);
 

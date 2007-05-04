@@ -37,6 +37,8 @@ COMMAND(gg_command_passwd);
 COMMAND(gg_command_remind);
 COMMAND(gg_command_list);
 
+int gg_userlist_set(session_t *session, const char *contacts);
+
 #endif
 
 
