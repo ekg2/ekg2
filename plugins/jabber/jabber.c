@@ -462,12 +462,14 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
         if (/* !j->node && */ !(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		const char *passwd	= session_get(s, "password");
 
+		int payload = 4 + j->istlen;
 		char *username;
+		char *tmp;
 
-		if (!j->istlen) username = xstrdup(s->uid + 4);
-		else 		username = xstrdup(s->uid + 5);
-		*(xstrchr(username, '@')) = 0;
-	
+		if ((tmp = xstrchr(s->uid + payload, '@')))
+			username = xstrndup(s->uid + payload, tmp - s->uid - payload);
+		else	username = xstrdup(s->uid + payload);
+
 		if (!j->istlen && session_get(s, "__new_acount")) {
 			char *epasswd	= jabber_escape(passwd);
 			watch_write(j->send_watch, 
