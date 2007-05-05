@@ -31,8 +31,8 @@ int jogger_plugin_init(int prio);
 static int jogger_plugin_destroy(void);
 
 	/* messages.c */
-void localize_texts();
-void free_texts();
+QUERY(jogger_localize_texts);
+void jogger_free_texts(int real_free);
 QUERY(jogger_msghandler);
 COMMAND(jogger_msg);
 COMMAND(jogger_subscribe);
@@ -155,15 +155,14 @@ static void jogger_usedchanged(session_t *s, const char *varname) {
 	if (xstrcmp(tmpb, tmp)) /* replace nickname with UID */
 		session_set(s, "used_uid", tmpb);
 
-		/* update status */
-#if 0 /* XXX: startup problems */
-	{
+	{		/* update status */
 		userlist_t *u	= userlist_find(js, tmpb);
 
-		session_connected_set(s, (u->status > EKG_STATUS_NA));
-		session_status_set(s, u->status);
+		if (session_connected_get(s) != (u && (u->status > EKG_STATUS_NA))) {
+			session_connected_set(s, (u && (u->status > EKG_STATUS_NA)));
+			session_status_set(s, (u ? u->status : EKG_STATUS_NA));
+		}
 	}
-#endif
 }
 
 	/* we need some dummy commands, e.g. /disconnect */
@@ -202,6 +201,7 @@ int jogger_plugin_init(int prio) {
 	query_connect_id(&jogger_plugin, PROTOCOL_STATUS, jogger_statuschanged, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_DISCONNECTED, jogger_statuscleanup, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_MESSAGE, jogger_msghandler, NULL);
+	query_connect_id(&jogger_plugin, CONFIG_POSTINIT, jogger_localize_texts, NULL);
 
 #define JOGGER_CMDFLAGS SESSION_MUSTBELONG
 #define JOGGER_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET
@@ -216,9 +216,9 @@ int jogger_plugin_init(int prio) {
 #undef JOGGER_CMDFLAGS_TARGET
 #undef JOGGER_CMDFLAGS
 
-	localize_texts();
+	jogger_free_texts(0); /* set NULLs */
 
-	plugin_register(&jogger_plugin, prio*3);
+	plugin_register(&jogger_plugin, prio);
 
 	return 0;
 }
@@ -226,7 +226,7 @@ int jogger_plugin_init(int prio) {
 static int jogger_plugin_destroy(void) {
 	plugin_unregister(&jogger_plugin);
 	
-	free_texts();
+	jogger_free_texts(1);
 
 	return 0;
 }

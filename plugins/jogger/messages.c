@@ -57,10 +57,21 @@ const char *utf_jogger_text[] = {
 
 char *jogger_text[JOGGER_TEXT_MAX];
 
-void localize_texts() {
+void jogger_free_texts(int real_free) {
+	int i;
+
+	for (i = 0; i < JOGGER_TEXT_MAX; i++) {
+		if (real_free)
+			xfree(jogger_text[i]);
+		jogger_text[i] = NULL;
+	}
+}
+
+QUERY(jogger_localize_texts) {
 	int i;
 	void *p = ekg_convert_string_init("UTF-8", NULL, NULL);
 
+	jogger_free_texts(1);
 	for (i = 0; i < JOGGER_TEXT_MAX; i++) {
 		char *s = ekg_convert_string_p(utf_jogger_text[i], p);
 
@@ -69,13 +80,8 @@ void localize_texts() {
 		jogger_text[i] = s;
 	}
 	ekg_convert_string_destroy(p);
-}
 
-void free_texts() {
-	int i;
-
-	for (i = 0; i < JOGGER_TEXT_MAX; i++)
-		xfree(jogger_text[i]);
+	return 0;
 }
 
 QUERY(jogger_msghandler) {
