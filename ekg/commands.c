@@ -3996,7 +3996,8 @@ static COMMAND(cmd_plugin) {
         }
 
 	if (params[0][0] == '+') {
-		if ((ret = plugin_load(params[0] + 1, -254, 0))) {
+		const int prio = (params[1] ? atoi(params[1]) : -254);
+		if ((ret = plugin_load(params[0] + 1, prio, 0))) {
 			/* if plugin cannot be founded || loaded don't reload theme. */
 			return ret;
 		}

@@ -1911,7 +1911,7 @@ void theme_init()
 	format_add("plugin_loaded", _("%> Plugin %T%1%n loaded%n\n"), 1);
 	format_add("plugin_unloaded", _("%> Plugin %T%1%n unloaded%n\n"), 1);
 	format_add("plugin_list", _("%> %T%1%n - %2%n\n"), 1);
-	format_add("plugin_prio_set", _("%> Plugin %T%1%n prio is setted to %T%2%n\n"), 1);
+	format_add("plugin_prio_set", _("%> Plugin %T%1%n prio has been changed to %T%2%n\n"), 1);
 	format_add("plugin_default", _("%> Plugins prio setted to default\n"), 1);
 
 	format_add("script_autorun_succ",	_("%> Script %W%1%n successful %G%2%n autorun dir"), 1);		/* XXX sciezka by sie przydala */
