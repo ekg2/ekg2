@@ -247,6 +247,9 @@ COMMAND(jogger_msg) {
 	const char *juid	= session_get(session, "used_uid");
 	int n;
 
+	if (!params[0]) /* we don't print anything, because it is only possible with inline_msg */
+		return 0;
+
 	if (!uid || !js || !juid) {
 		printq("invalid_session");	/* XXX, unprepared session? */
 		return -1;

@@ -178,6 +178,18 @@ static QUERY(jogger_print_version) {
 	return 0;
 }
 
+static QUERY(jogger_newsession) {
+	char *suid	= *(va_arg(ap, char **));
+	session_t *js	= session_find(suid);
+
+	if (!js || (js->plugin != &jogger_plugin))
+		return 1;
+
+	userlist_read(js);
+
+	return 0;
+}
+
 static int jogger_theme_init(void) {
 #ifndef NO_DEFAULT_THEME
 	format_add("jogger_noentry", _("%> (%1) No thread with id %2 found."), 1);
@@ -211,6 +223,7 @@ int jogger_plugin_init(int prio) {
 	query_connect_id(&jogger_plugin, PROTOCOL_STATUS, jogger_statuschanged, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_DISCONNECTED, jogger_statuscleanup, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_MESSAGE, jogger_msghandler, NULL);
+	query_connect_id(&jogger_plugin, SESSION_ADDED, jogger_newsession, NULL);
 	query_connect_id(&jogger_plugin, CONFIG_POSTINIT, jogger_localize_texts, NULL);
 
 #define JOGGER_CMDFLAGS SESSION_MUSTBELONG
