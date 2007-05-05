@@ -26,6 +26,8 @@
 #include <ekg/xmalloc.h>
 #include <ekg/vars.h>
 
+#define JOGGER_DATE "2007-05-04"
+
 static int jogger_theme_init(void);
 int jogger_plugin_init(int prio);
 static int jogger_plugin_destroy(void);
@@ -170,6 +172,12 @@ static COMMAND(jogger_null) {
 	return 0;
 }
 
+static QUERY(jogger_print_version) {
+	print("jogger_version", JOGGER_DATE);
+
+	return 0;
+}
+
 static int jogger_theme_init(void) {
 #ifndef NO_DEFAULT_THEME
 	format_add("jogger_noentry", _("%> (%1) No thread with id %2 found."), 1);
@@ -180,6 +188,7 @@ static int jogger_theme_init(void) {
 	format_add("jogger_comment_added", _("%)%| (%1) Your comment was added to entry %c%2%n."), 1);
 	format_add("jogger_modified", _("%>%| (%1) Subscribed entry has been modified: %c%2%n."), 1);
 	format_add("jogger_published", _("%)%| (%1) Your new entry has been published as: %c%2%n."), 1);
+	format_add("jogger_version", _("%> Jogger plugin match data dated %g%1%n."), 1);
 #endif
 	return 0;
 }
@@ -196,7 +205,8 @@ static plugins_params_t jogger_plugin_vars[] = {
 
 int jogger_plugin_init(int prio) {
 	jogger_plugin.params = jogger_plugin_vars;
-	
+
+	query_connect_id(&jogger_plugin, PLUGIN_PRINT_VERSION, jogger_print_version, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_VALIDATE_UID, jogger_validate_uid, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_STATUS, jogger_statuschanged, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_DISCONNECTED, jogger_statuscleanup, NULL);
