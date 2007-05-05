@@ -33,7 +33,7 @@ int jogger_plugin_init(int prio);
 static int jogger_plugin_destroy(void);
 
 	/* messages.c */
-QUERY(jogger_localize_texts);
+void jogger_localize_texts();
 void jogger_free_texts(int real_free);
 QUERY(jogger_msghandler);
 COMMAND(jogger_msg);
@@ -190,6 +190,21 @@ static QUERY(jogger_newsession) {
 	return 0;
 }
 
+static QUERY(jogger_postconfig) {
+	list_t l;
+
+	jogger_localize_texts();
+
+	for (l = sessions; l; l = l->next) {
+		session_t *js = l->data;
+
+		if ((js->plugin == &jogger_plugin) && !session_int_get(js, "userlist_keep"))
+			userlist_free(js);
+	}
+
+	return 0;
+}
+
 static int jogger_theme_init(void) {
 #ifndef NO_DEFAULT_THEME
 	format_add("jogger_noentry", _("%> (%1) No thread with id %c%2%n found."), 1);
@@ -211,6 +226,7 @@ static plugins_params_t jogger_plugin_vars[] = {
 	PLUGIN_VAR_ADD("own_commentformat",	0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("used_session",		0, VAR_STR, NULL, 0, jogger_usedchanged),
 	PLUGIN_VAR_ADD("used_uid",		0, VAR_STR, NULL, 0, jogger_usedchanged),
+	PLUGIN_VAR_ADD("userlist_keep",		0, VAR_BOOL, "0", 0, NULL),
 
 	PLUGIN_VAR_END()
 };
@@ -224,7 +240,7 @@ int jogger_plugin_init(int prio) {
 	query_connect_id(&jogger_plugin, PROTOCOL_DISCONNECTED, jogger_statuscleanup, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_MESSAGE, jogger_msghandler, NULL);
 	query_connect_id(&jogger_plugin, SESSION_ADDED, jogger_newsession, NULL);
-	query_connect_id(&jogger_plugin, CONFIG_POSTINIT, jogger_localize_texts, NULL);
+	query_connect_id(&jogger_plugin, CONFIG_POSTINIT, jogger_postconfig, NULL);
 
 #define JOGGER_CMDFLAGS SESSION_MUSTBELONG
 #define JOGGER_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET

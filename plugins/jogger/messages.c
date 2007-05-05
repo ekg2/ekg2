@@ -67,7 +67,7 @@ void jogger_free_texts(int real_free) {
 	}
 }
 
-QUERY(jogger_localize_texts) {
+void jogger_localize_texts() {
 	int i;
 	void *p = ekg_convert_string_init("UTF-8", NULL, NULL);
 
@@ -80,8 +80,6 @@ QUERY(jogger_localize_texts) {
 		jogger_text[i] = s;
 	}
 	ekg_convert_string_destroy(p);
-
-	return 0;
 }
 
 QUERY(jogger_msghandler) {
