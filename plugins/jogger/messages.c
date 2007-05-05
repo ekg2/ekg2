@@ -132,22 +132,24 @@ QUERY(jogger_msghandler) {
 		else if (!xstrncmp(msg, jogger_text[11], xstrlen(jogger_text[11])))
 			found = 12;
 
-		if (found == 0)
-			return 0;
-		else if (found <= 4) { /* we get id here */
+		if (found <= 4) { /* we get id here */
 			const char *tmp = xstrstr(msg, " (#");
 
 			if (!tmp)
-				return 0;
+				found	= 0;
 
-			const int oq	= (session_int_get(js, "newentry_open_query") || (found < 4));
+			const int oq	= ((found > 0) && (session_int_get(js, "newentry_open_query") || (found < 4)));
 			char *suid, *uid, *lmsg, *url;
 			char **rcpts	= NULL;
 			uint32_t *fmt	= NULL;
-			
+
+
 			if (found == 4) {
 				lmsg	= xstrdup(msg+xstrlen(jogger_text[12])+1);
 				url	= xstrndup(lmsg, tmp-msg-xstrlen(jogger_text[12])-1);
+			} else if (found == 0) {
+				lmsg	= xstrdup(msg);
+				url	= NULL;
 			} else {
 				url	= msg+xstrlen(found == 3 ? owncf : jogger_text[found-1])+1;
 
@@ -158,13 +160,21 @@ QUERY(jogger_msghandler) {
 				url	= xstrndup(url, tmp-url);
 			}
 
-			if (oq)
+			if (url && xstrncmp(url, "http://", 7)) { /* if URL is invalid, we probably have partial match */
+				xfree(url);
+				xfree(lmsg);
+
+				lmsg	= xstrdup(msg);
+				url	= NULL;
+			}
+
+			if (oq && url)
 				uid	= saprintf("jogger:%d", atoi(tmp+3));
 			else
 				uid	= xstrdup("jogger:");
 			suid		= xstrdup(session_uid_get(js));
 
-			{
+			if (url) {
 				userlist_t *u = userlist_find(js, uid);
 				
 				if (!u)
