@@ -1578,18 +1578,11 @@ void theme_init()
 	format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
 	format_add("user_info_block", _("%K| %nBlocked\n"), 1);
 	format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
-	format_add("user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
-	format_add("user_info_firewalled", _("%K| %nFirewalled/NATed\n"), 1);
-	format_add("user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
-	format_add("user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
 	format_add("user_info_groups", _("%K| %nGroups: %T%1%n\n"), 1);
 	format_add("user_info_never_seen", _("%K| %nNever seen\n"), 1);
 	format_add("user_info_last_seen", _("%K| %nLast seen: %T%1%n\n"), 1);
 	format_add("user_info_last_seen_time", "%Y-%m-%d %H:%M", 1);
-	format_add("user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
 	format_add("user_info_last_status", _("%K| %nLast status: %T%1%n\n"), 1);
-	format_add("user_info_version", _("%K| %nVersion: %T%1%n\n"),1);
-	format_add("user_info_voip", _("%K| %nHas voice talk\n"), 1);
 	format_add("user_info_footer", "%K`----- ---- --- -- -%n\n", 1);
 
 	format_add("user_info_avail", _("%Yavailable%n"), 1);
