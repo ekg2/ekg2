@@ -3969,7 +3969,7 @@ void resort_queries() { /* XXX: very experimental */
 		if (l->data) {
 			if (!(list_add_sorted(&tmplist, l->data, 0, query_compare))) {
 				debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
-				list_destroy(l, 0);
+				list_destroy(tmplist, 0);
 				return;
 			}
 		}
