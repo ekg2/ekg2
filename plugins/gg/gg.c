@@ -166,31 +166,31 @@ static QUERY(gg_userlist_info_handle) {
 		return 1;
 
 	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && up->last_name && xstrcmp(up->last_name, ""))
-		printq("user_info_name", up->first_name, up->last_name);
+		printq("gg_user_info_name", up->first_name, up->last_name);
 	if (up->first_name && xstrcmp(up->first_name, "") && (!up->last_name || !xstrcmp(up->last_name, "")))
-		printq("user_info_name", up->first_name, "");
+		printq("gg_user_info_name", up->first_name, "");
 	if ((!up->first_name || !xstrcmp(up->first_name, "")) && up->last_name && xstrcmp(up->last_name, ""))
-		printq("user_info_name", up->last_name, "");
+		printq("gg_user_info_name", up->last_name, "");
 
 	if (up->mobile && xstrcmp(up->mobile, ""))
-		printq("user_info_mobile", up->mobile);
+		printq("gg_user_info_mobile", up->mobile);
 
 	if (up->ip) {
 		char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->ip)), itoa(up->port));
-		printq("user_info_ip", ip_str);
+		printq("gg_user_info_ip", ip_str);
 		xfree(ip_str);
 	} else if (up->last_ip) {
 		char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->last_ip)), itoa(up->last_port));
-		printq("user_info_last_ip", last_ip_str);
+		printq("gg_user_info_last_ip", last_ip_str);
 		xfree(last_ip_str);
 	}
 
 	if (up->port == 2)
-		printq("user_info_not_in_contacts");
+		printq("gg_user_info_not_in_contacts");
 	if (up->port == 1)
-		printq("user_info_firewalled");
+		printq("gg_user_info_firewalled");
 	if ((up->protocol & GG_HAS_AUDIO_MASK))
-		printq("user_info_voip");
+		printq("gg_user_info_voip");
 
 	if ((up->protocol & 0x00ffffff)) {
 		int v = up->protocol & 0x00ffffff;
@@ -232,10 +232,10 @@ static QUERY(gg_userlist_info_handle) {
 			ver = ("7.7 (build >= 3315)");
 
 		if (ver) {
-			printq("user_info_version", ver);
+			printq("gg_user_info_version", ver);
 		} else {
-			char *tmp = saprintf(("nieznana (%#.2x)"), v);
-			printq("user_info_version", tmp);
+			char *tmp = saprintf(("unknown (%#.2x)"), v);
+			printq("gg_user_info_version", tmp);
 			xfree(tmp);
 		}
 	}
@@ -461,7 +461,7 @@ static QUERY(gg_remove_notify_handle) {
 
 static QUERY(gg_print_version) {
 	char protov[3];
-	char clientv[sizeof(GG_DEFAULT_CLIENT_VERSION)-3]; /* we should have three spaces here */
+	char clientv[sizeof(GG_DEFAULT_CLIENT_VERSION)];
 
 	{		/* that IMO would be lighter than array_make+array_join */
 		char *p, *q;
@@ -1511,8 +1511,17 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 
 static int gg_theme_init() {
 #ifndef NO_DEFAULT_THEME
-	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
-	/* pobieranie tokenu */
+	format_add("gg_version", _("%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"), 1);
+	/* /list */
+	format_add("gg_user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
+	format_add("gg_user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
+	format_add("gg_user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
+	format_add("gg_user_info_firewalled", _("%K| %nFirewalled/NATed\n"), 1);
+	format_add("gg_user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
+	format_add("gg_user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
+	format_add("gg_user_info_voip", _("%K| %nVoIP-capable\n"), 1);
+	format_add("gg_user_info_version", _("%K| %nVersion: %T%1%n\n"),1);
+	/* token things */
 	format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
 	format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
 	format_add("gg_token_body", "%1\n", 1);
@@ -1521,14 +1530,15 @@ static int gg_theme_init() {
 	format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
 	format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
 	format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
+	/* check_conn */
 	format_add("gg_user_is_connected", _("%> (%1) User %T%2%n is connected\n"), 1);
 	format_add("gg_user_is_not_connected", _("%> (%1) User %T%2%n is not connected\n"), 1);
+	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);
+	/* images */
 	format_add("gg_image_cant_open_file", _("%! Can't open file for image %1 (%2)\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	format_add("gg_image_ok_get", _("%> Image <%3> saved in %1\n"), 1);	/* %1 - path, %2 - uid, %3 - name of picture */
-	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);
-	format_add("gg_version", _("%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"), 1);
 #endif
 	return 0;
 }
