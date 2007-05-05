@@ -243,6 +243,7 @@ COMMAND(jogger_msg) {
 	const char *uid 	= get_uid(session, target);
 	session_t *js		= session_find(session_get(session, "used_session"));
 	const char *juid	= session_get(session, "used_uid");
+	const char *msg		= (is_inline ? params[0] : params[1]);
 	int n;
 
 	if (!params[0]) /* we don't print anything, because it is only possible with inline_msg */
@@ -256,9 +257,9 @@ COMMAND(jogger_msg) {
 
 	if (*uid == '\0') { /* redirect message to jogger uid */
 		if (is_inline)
-			return command_exec(juid, js, params[0], 0);
+			return command_exec(juid, js, msg, 0);
 		else
-			return command_exec_format(NULL, js, 0, "/%s \"%s\" %s", name, juid, params[1]);
+			return command_exec_format(NULL, js, 0, "/%s \"%s\" %s", name, juid, msg);
 	}
 	if (*uid == '#')
 		uid++;
@@ -268,11 +269,19 @@ COMMAND(jogger_msg) {
 		return -1;
 	}
 
+	{		/* skip #eid if (unnecessarily) added */
+		char *tmp = saprintf("#%d ", n);
+
+		if (!xstrncmp(msg, tmp, xstrlen(tmp)))
+			msg += xstrlen(tmp);
+		xfree(tmp);
+	}
+
 		/* post as comment-reply */
 	if (is_inline)
-		return command_exec_format(juid, js, 0, "#%d %s", n, params[0]);
+		return command_exec_format(juid, js, 0, "#%d %s", n, msg);
 	else
-		return command_exec_format(NULL, js, 0, "/%s \"%s\" #%d %s", name, juid, n, params[1]);
+		return command_exec_format(NULL, js, 0, "/%s \"%s\" #%d %s", name, juid, n, msg);
 }
 
 COMMAND(jogger_subscribe) {
