@@ -39,6 +39,10 @@ QUERY(jogger_msghandler);
 COMMAND(jogger_msg);
 COMMAND(jogger_subscribe);
 
+	/* drafts.c */
+COMMAND(jogger_prepare);
+COMMAND(jogger_publish);
+
 	/* we need to be 'protocol' to establish sessions */
 PLUGIN_DEFINE(jogger, PLUGIN_PROTOCOL, jogger_theme_init);
 
@@ -216,11 +220,18 @@ static int jogger_theme_init(void) {
 	format_add("jogger_modified", _("%> %|(%1) Subscribed entry has been modified: %c%2%n."), 1);
 	format_add("jogger_published", _("%) %|(%1) Your new entry has been published as: %c%2%n."), 1);
 	format_add("jogger_version", _("%> %TJogger:%n match data %g%1%n."), 1);
+
+	format_add("jogger_prepared", _("%) File %T%1%n is ready for submission."), 1);
+	format_add("jogger_notprepared", _("%! No filename given and no entry prepared!"), 1);
+	format_add("jogger_cantopen", _("%! Unable to open entry file!"), 1);
+	format_add("jogger_nonfile", _("%! Given path doesn't appear to be regular file!"), 1);
+	format_add("jogger_cantread", _("%! Unable to read entry file!"), 1);
 #endif
 	return 0;
 }
 
 static plugins_params_t jogger_plugin_vars[] = {
+	PLUGIN_VAR_ADD("entry_file",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
 	PLUGIN_VAR_ADD("newentry_open_query",	0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("own_commentformat",	0, VAR_STR, NULL, 0, NULL),
@@ -249,6 +260,8 @@ int jogger_plugin_init(int prio) {
 	command_add(&jogger_plugin, "jogger:connect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:disconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:msg", "!uU !", jogger_msg, JOGGER_CMDFLAGS_TARGET, NULL);
+	command_add(&jogger_plugin, "jogger:prepare", "!f", jogger_prepare, JOGGER_CMDFLAGS, NULL);
+	command_add(&jogger_plugin, "jogger:publish", "?f", jogger_publish, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:reconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:subscribe", "!uU", jogger_subscribe, JOGGER_CMDFLAGS_TARGET, NULL);
 	command_add(&jogger_plugin, "jogger:unsubscribe", "!uU", jogger_subscribe, JOGGER_CMDFLAGS_TARGET, NULL);
