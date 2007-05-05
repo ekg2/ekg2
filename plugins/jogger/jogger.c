@@ -193,13 +193,13 @@ static QUERY(jogger_newsession) {
 static int jogger_theme_init(void) {
 #ifndef NO_DEFAULT_THEME
 	format_add("jogger_noentry", _("%> (%1) No thread with id %2 found."), 1);
-	format_add("jogger_subscribed", _("%>%| (%1) The thread '%2' has been subscribed."), 1);
-	format_add("jogger_unsubscribed", _("%>%| (%1) The thread '%2' has been unsubscribed."), 1);
+	format_add("jogger_subscribed", _("%> %|(%1) The thread '%2' has been subscribed."), 1);
+	format_add("jogger_unsubscribed", _("%> %|(%1) The thread '%2' has been unsubscribed."), 1);
 	format_add("jogger_subscription_denied", _("%! (%1) Subscription denied because of no permission."), 1);
 	format_add("jogger_unsubscribed_earlier", _("%> (%1) The thread weren't subscribed."), 1);
-	format_add("jogger_comment_added", _("%)%| (%1) Your comment was added to entry %c%2%n."), 1);
-	format_add("jogger_modified", _("%>%| (%1) Subscribed entry has been modified: %c%2%n."), 1);
-	format_add("jogger_published", _("%)%| (%1) Your new entry has been published as: %c%2%n."), 1);
+	format_add("jogger_comment_added", _("%) %|(%1) Your comment was added to entry %c%2%n."), 1);
+	format_add("jogger_modified", _("%> %|(%1) Subscribed entry has been modified: %c%2%n."), 1);
+	format_add("jogger_published", _("%) %|(%1) Your new entry has been published as: %c%2%n."), 1);
 	format_add("jogger_version", _("%> Jogger plugin match data dated %g%1%n."), 1);
 #endif
 	return 0;
