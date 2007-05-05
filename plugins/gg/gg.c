@@ -456,21 +456,27 @@ static QUERY(gg_remove_notify_handle) {
  * Handler for: <i>PLUGIN_PRINT_VERSION</i>
  * print info about libgadu version.
  *
- * @todo	Too many string parsing functions :/ and think about "generic" format... maybe let's create new format?
- *
  * @return 0
  */
 
 static QUERY(gg_print_version) {
-	char **tmp1 = array_make(GG_DEFAULT_CLIENT_VERSION, ", ", 0, 1, 0);
-	char *tmp2 = array_join(tmp1, ".");
-	char *tmp3 = saprintf(("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
+	char protov[3];
+	char clientv[sizeof(GG_DEFAULT_CLIENT_VERSION)-3]; /* we should have three spaces here */
 
-	print("generic", tmp3);
+	{		/* that IMO would be lighter than array_make+array_join */
+		char *p, *q;
 
-	xfree(tmp3);
-	xfree(tmp2);
-	array_free(tmp1);
+		for (p = GG_DEFAULT_CLIENT_VERSION, q = clientv; *p; p++) {
+			if (*p == ',')
+				*(q++) = '.';
+			else if (*p != ' ')
+				*(q++) = *p;
+		}
+		*q = '\0';
+	}
+
+	snprintf(protov, 3, "%.2x", GG_DEFAULT_PROTOCOL_VERSION);
+	print("gg_version", gg_libgadu_version(), GG_LIBGADU_VERSION, clientv, protov);
 
 	return 0;
 }
@@ -1522,6 +1528,7 @@ static int gg_theme_init() {
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	format_add("gg_image_ok_get", _("%> Image <%3> saved in %1\n"), 1);	/* %1 - path, %2 - uid, %3 - name of picture */
 	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);
+	format_add("gg_version", _("%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"), 1);
 #endif
 	return 0;
 }
