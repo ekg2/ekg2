@@ -181,7 +181,7 @@ static int ekg_openfile(const char *fn, char **data, int *len, char **hash, cons
 		}
 
 		if (len)
-			*len = mylen;
+			*len = fs-rem;
 
 			/* I don't want to write my own hashing function, so using EKG2 one
 			 * it will fail to hash data after any \0 in file, if there're any
@@ -215,8 +215,9 @@ COMMAND(jogger_prepare) {
 		return -1;
 	}
 
-	if (ekg_openfile(prepare_path_user(fn), &entry, &len, &hash, 0, quiet))
+	if (ekg_openfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
 		return -1;
+	len = xstrlen(entry);
 	s = entry;
 
 	s += xstrspn(s, " \n\r");	/* get on to first real char */
