@@ -15,6 +15,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define _POSIX_SOURCE
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -22,6 +23,7 @@
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
 #endif
+#include <limits.h>
 
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -97,32 +99,31 @@ void jogger_localize_headers(void *p) {
 }
 
 /**
- * jogger_openfile()
+ * ekg_openfile()
  *
- * Opens given file and reads it.
+ * Tries to open given file, and reads it, if expected.
  *
  * @param	fn	- filename to open.
+ * @param	data	- pointer to store file contents or NULL, if don't want to read it.
  * @param	len	- pointer to store filelength or NULL, if not needed.
  * @param	hash	- pointer to store filehash or NULL, if not needed.
  *
- * @return	Pointer to file contents or NULL on failure.
- *
- * @sa	jogger_closefile	- close such opened file.
+ * @return	0 on success, errno on failure.
  */
-static char *jogger_openfile(const char *fn, int *len, char **hash) {
+static int ekg_openfile(const char *fn, char **data, int *len, char **hash, const int maxlen, const int quiet) {
 	static char jogger_hash[sizeof(int)*2+3];
-	char *out;
 	int mylen, fs, fd;
 
 	if (!fn)
-		return NULL;
+		return EINVAL;
 
 	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
-		if (errno == ENXIO)
-			print("io_nonfile");
+		const int err = errno;
+		if (err == ENXIO)
+			printq("io_nonfile");
 		else
-			print("io_cantopen");
-		return NULL;
+			printq("io_cantopen");
+		return err;
 	}
 
 	{
@@ -130,28 +131,34 @@ static char *jogger_openfile(const char *fn, int *len, char **hash) {
 
 		if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode)) {
 			close(fd);
-			print("io_nonfile");
-			return NULL;
+			printq("io_nonfile");
+			return EISDIR; /* nearest, I think */
 		}
 		if ((fs = st.st_size) == 0) {
 			close(fd);
-			print("io_emptyfile");
-			return NULL;
+			printq("io_emptyfile");
+			return EINVAL; /* like mmap */
+		} else if (maxlen && fs > maxlen) {
+			close(fd);
+			printq("io_toobig");
+			return EFBIG;
 		}
 	}
 
-	out = xmalloc(fs+1);
-	{
+	if (data) {
+		char *out = xmalloc(fs+1);
 		void *p = out;
 		int rem = fs, res = 1;
 
-		while ((res = read(fd, p, rem))) {
+		while ((res = read(fd, p, (rem <= SSIZE_MAX ? rem : SSIZE_MAX)))) {
 			if (res == -1) {
-				if (errno != EINTR && errno != EAGAIN) {
+				const int err = errno;
+				if (err != EINTR && err != EAGAIN) {
 					close(fd);
-					print("io_cantread");
-					return NULL;
+					printq("io_cantread");
+					return err;
 				}
+			} else {
 				p += res;
 				rem -= res;
 			}
@@ -159,26 +166,29 @@ static char *jogger_openfile(const char *fn, int *len, char **hash) {
 
 		mylen = xstrlen(out);
 		if (rem > 0)
-			print("io_truncated");
+			printq("io_truncated");
 		else if (fs > mylen)
-			print("io_binaryfile", itoa(mylen));
-	}
+			printq("io_binaryfile", itoa(mylen));
 
-	if (len)
-		*len = mylen;
+		if (len)
+			*len = mylen;
 
-		/* I don't want to write my own hashing function, so using EKG2 one
-		 * it will fail to hash data after any \0 in file, if there're any
-		 * but we also aren't prepared to handle them */
-	if (hash) {
-		char sizecont[8];
+			/* I don't want to write my own hashing function, so using EKG2 one
+			 * it will fail to hash data after any \0 in file, if there're any
+			 * but we also aren't prepared to handle them */
+		if (hash) {
+			char sizecont[8];
 
-		snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
-		snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
-		*hash = jogger_hash;
-	}
+			snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
+			snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
+			*hash = jogger_hash;
+		}
+		*data = out;
+	} else if (len)
+		*len = fs;
+	close(fd);
 
-	return out;
+	return 0;
 }
 
 #define WARN_PRINT(x) do { if (!outstarted) { outstarted++; print("jogger_warning"); } print(x, tmp); } while (0)
@@ -195,7 +205,7 @@ COMMAND(jogger_prepare) {
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(prepare_path_user(fn), &len, &hash)))
+	if (ekg_openfile(prepare_path_user(fn), &entry, &len, &hash, 0, quiet))
 		return -1;
 	s = entry;
 
@@ -330,7 +340,7 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(prepare_path_user(fn), NULL, &hash)))
+	if (ekg_openfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
