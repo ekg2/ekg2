@@ -40,7 +40,7 @@
 	/* 10 char-long don't use ':', because they're already on limit (longer ones are discarded) */
 const char *utf_jogger_header_keys[JOGGER_KEYS_MAX] = {
 	"tytul:",	"temat:",	"subject:",	"tytuł:",		NULL,
-	"poziom:",	"level:",						NULL,
+	"poziom:",	"level:",						NULL, /* 2 */
 	"tag:",									NULL, /* 3 */
 	"kategoria:",	"category:",	"kategorie:",	"categories",		NULL, /* 4 */
 	"trackback:",								NULL, /* 5 */
@@ -234,7 +234,12 @@ COMMAND(jogger_prepare) {
 
 			if (!p || !*p)
 				WARN_PRINT("jogger_warning_wrong_key");
-			else if (i == 3 || i == 4) {
+			else if (i == 2) {
+				char *lastn;
+				
+				if (strtol(sep+1, &lastn, 10) == 0 && lastn == sep+1)
+					WARN_PRINT("jogger_warning_wrong_value_level");
+			} else if (i == 3 || i == 4) {
 				const char *firstcomma	= xstrchr(sep+1, ',');
 				const char *firstspace	= xstrchr(sep+1, ' ');
 
