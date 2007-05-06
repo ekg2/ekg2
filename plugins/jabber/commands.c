@@ -77,9 +77,15 @@ static COMMAND(jabber_command_dcc) {
 		userlist_t *u;
 		dcc_t *d;
 		FILE *fd;
+		const char *fn;
 
 		if (!params[1] || !params[2]) {
 			wcs_printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!(fn = prepare_path_user(params[2]))) {
+			printq("generic_error", "path too long"); /* XXX? */
 			return -1;
 		}
 
@@ -98,12 +104,13 @@ static COMMAND(jabber_command_dcc) {
 			return -1;
 		}
 
-		if (!stat(params[2], &st) && S_ISDIR(st.st_mode)) {
+			/* XXX: if given path is a pipe, we get lovely stuck */
+		if (!stat(fn, &st) && S_ISDIR(st.st_mode)) {
 			printq("dcc_open_error", params[2], strerror(EISDIR));
 			return -1;
 		}
 
-		if ((fd = fopen(params[2], "r")) == NULL) {
+		if ((fd = fopen(fn, "r")) == NULL) {
 			printq("dcc_open_error", params[2], strerror(errno));
 			return -1;
 		}
@@ -119,7 +126,7 @@ static COMMAND(jabber_command_dcc) {
 			touid = saprintf("%s/%s", u->uid, ((ekg_resource_t *) (u->resources->data))->name);
 
 			d 	= dcc_add(session, touid, DCC_SEND, NULL);
-			d->filename 	= xstrdup(params[2]);
+			d->filename 	= xstrdup(fn);
 			d->size		= st.st_size;
 
 			dcc_close_handler_set(d, jabber_dcc_close_handler);
@@ -152,9 +159,10 @@ static COMMAND(jabber_command_dcc) {
 			p->sfd		= -1;
 			p->fd		= fd;
 
-			if ((pathtmp = xstrrchr(params[2], '/'))) 
+				/* XXX: introduce prepare_filename() */
+			if ((pathtmp = xstrrchr(fn, '/'))) 
 				pathtmp++;			/* skip '/' */ 
-			else 	pathtmp = (char*) params[2];		/* no '/' ok.  */
+			else 	pathtmp = (char*) fn;		/* no '/' ok.  */
 
 			filename = jabber_escape(pathtmp);	/* escape string */
 

@@ -231,9 +231,15 @@ COMMAND(gg_command_dcc)
 		gg_userlist_private_t *up;
 		dcc_t *d;
 		int fd;
+		const char *fn;
 
 		if (!params[1] || !params[2]) {
 			wcs_printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!(fn = prepare_path_user(params[2]))) {
+			printq("generic_error", "path too long"); /* XXX? */
 			return -1;
 		}
 
@@ -258,12 +264,13 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 		
-		if (!stat(params[2], &st) && S_ISDIR(st.st_mode)) {
+			/* XXX: if given path is a pipe, we get lovely stuck */
+		if (!stat(fn, &st) && S_ISDIR(st.st_mode)) {
 			printq("dcc_open_error", params[2], strerror(EISDIR));
 			return -1;
 		}
 		
-		if ((fd = open(params[2], O_RDONLY)) == -1) {
+		if ((fd = open(fn, O_RDONLY)) == -1) {
 			printq("dcc_open_error", params[2], strerror(errno));
 			return -1;
 		}
@@ -279,7 +286,7 @@ COMMAND(gg_command_dcc)
 				return -1;
 			}
 
-			if (gg_dcc_fill_file_info(gd, params[2]) == -1) {
+			if (gg_dcc_fill_file_info(gd, fn) == -1) {
 				printq("dcc_open_error", params[2], strerror(errno));
 				gg_free_dcc(gd);
 				return -1;
@@ -287,7 +294,7 @@ COMMAND(gg_command_dcc)
 		}
 		
 		d = dcc_add(session, u->uid, DCC_SEND, gd);
-		dcc_filename_set(d, params[2]);
+		dcc_filename_set(d, fn);
 		dcc_size_set(d, st.st_size);
 		if (gd)
 			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc_handler, gd);
