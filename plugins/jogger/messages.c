@@ -188,19 +188,22 @@ QUERY(jogger_msghandler) {
 			xfree(uid);
 			xfree(lmsg);
 		} else if (found <= 8) {
-			const char *formats[] = { "jogger_modified", "jogger_noentry", 
+			const char *formats[]	= { "jogger_modified", "jogger_noentry", 
 					"jogger_unsubscribed", "jogger_subscribed" };
+			const char *url		= msg+xstrlen(found > 6 ? jogger_text[7] : jogger_text[2])+1;
+			char *id		= (found == 6 ? saprintf("jogger:%d", atoi(url+1)) : NULL);
 
 			*(tmp-1) = '\0';
-			print(formats[found-5], session_name(js),
-					msg+xstrlen(found > 6 ? jogger_text[7] : jogger_text[2])+1);
+			print_window((id ? id : url), js, 0, formats[found-5], session_name(js), url);
 			*(tmp-1) = ' ';
+			xfree(id);
 		} else if (found <= 10) {
-			const char *formats[] = { "jogger_published", "jogger_comment_added" };
+			const char *formats[]	= { "jogger_published", "jogger_comment_added" };
+			const char *url		= msg+xstrlen(jogger_text[found-4])+1;
 
-			print(formats[found-9], session_name(js), msg+xstrlen(jogger_text[found-4])+1);
+			print_window(url, js, 0, formats[found-9], session_name(js), url);
 		} else if (found <= 12) {
-			const char *formats[] = { "jogger_subscription_denied", "jogger_unsubscribed_earlier" };
+			const char *formats[]	= { "jogger_subscription_denied", "jogger_unsubscribed_earlier" };
 
 			print(formats[found-12], session_name(js));
 		}
