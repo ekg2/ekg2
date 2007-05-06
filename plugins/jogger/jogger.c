@@ -243,6 +243,7 @@ static int jogger_theme_init(void) {
 	format_add("jogger_warning_deprecated_miniblog", _("%> %|* Key %Tminiblog%n is deprecated in favor of such category at: %c%1%n"), 1);
 	format_add("jogger_warning_miniblog_techblog", _("%> %|* Miniblog entry will be posted to Techblog at: %c%1%n"), 1);
 	format_add("jogger_warning_malformed_url", _("%> %|* Malformed URL found at: %c%1%n"), 1);
+	format_add("jogger_warning_spacesep", _("%> %|* Possibility of accidentially using space as a separator instead of commas: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_value", _("%> %|* Incorrect value found at: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_value_spaces", _("%> %|* Incorrent value found (try to remove leading&trailing spaces) at: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_value_empty", _("%> %|* Empty value found in header at: %c%1%n"), 1);

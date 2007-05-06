@@ -40,8 +40,8 @@
 	/* 10 char-long don't use ':', because they're already on limit (longer ones are discarded) */
 const char *utf_jogger_header_keys[JOGGER_KEYS_MAX] = {
 	"tytul:",	"temat:",	"subject:",	"tytuł:",		NULL,
-	"tag:",									NULL,
 	"poziom:",	"level:",						NULL,
+	"tag:",									NULL, /* 3 */
 	"kategoria:",	"category:",	"kategorie:",	"categories",		NULL, /* 4 */
 	"trackback:",								NULL, /* 5 */
 	"tidy",									NULL, /* 6 */
@@ -182,7 +182,7 @@ static void jogger_closefile(int fd, char *data, int fs) {
 	close(fd);
 }
 
-#define WARN_PRINT(x...) do { if (!outstarted) { outstarted++; print("jogger_warning"); } print(x); } while (0)
+#define WARN_PRINT(x) do { if (!outstarted) { outstarted++; print("jogger_warning"); } print(x, tmp); } while (0)
 
 COMMAND(jogger_prepare) {
 	int fd, fs, len;
@@ -206,14 +206,14 @@ COMMAND(jogger_prepare) {
 		xstrtr(tmp, '\n', 0);
 
 		if (!sep || !end || !next || (sep > end) || (end+1+xstrspn(end+1, " ") != next)) {
-			WARN_PRINT("jogger_warning_brokenheader", tmp);
+			WARN_PRINT("jogger_warning_brokenheader");
 			if (!next)
 				s = entry+len;
 			continue;
 		} else if ((*(s+1) == ' ') || (*(sep-1) == ' '))
-			WARN_PRINT("jogger_warning_wrong_key_spaces", tmp);
-		else if (end-sep <= xstrspn(sep+1, " "))
-			WARN_PRINT("jogger_warning_wrong_value_empty", tmp);
+			WARN_PRINT("jogger_warning_wrong_key_spaces");
+		else if (end-sep-1 <= xstrspn(sep+1, " "))
+			WARN_PRINT("jogger_warning_wrong_value_empty");
 		else {
 			int i = 1;
 			const char **p = (sep-s < 12 ? jogger_header_keys : NULL);
@@ -222,7 +222,7 @@ COMMAND(jogger_prepare) {
 				for (; *p; p++) { /* awaiting single NULL here */
 					if (!xstrncasecmp(tmp+1, *p, xstrlen(*p))) {
 						if (seen & (1<<i))
-							WARN_PRINT("jogger_warning_duplicated_header", tmp);
+							WARN_PRINT("jogger_warning_duplicated_header");
 						else
 							seen |= (1<<i);
 						break;
@@ -233,16 +233,23 @@ COMMAND(jogger_prepare) {
 			}
 
 			if (!p || !*p)
-				WARN_PRINT("jogger_warning_wrong_key", tmp);
-			else if (i == 4) {
-				char *values = xstrndup(sep+1, end-sep-1);
-				if (cssfind(values, "techblog", ',', 1) && cssfind(values, "miniblog", ',', 1))
-					WARN_PRINT("jogger_warning_miniblog_techblog", tmp);
-				xfree(values);
+				WARN_PRINT("jogger_warning_wrong_key");
+			else if (i == 3 || i == 4) {
+				const char *firstcomma	= xstrchr(sep+1, ',');
+				const char *firstspace	= xstrchr(sep+1, ' ');
+
+				if ((!firstcomma || (firstcomma > end)) && firstspace && (firstspace < end))
+					WARN_PRINT("jogger_warning_spacesep");
+				else if (i == 4) {
+					char *values		= xstrndup(sep+1, end-sep-1);
+					if (cssfind(values, "techblog", ',', 1) && cssfind(values, "miniblog", ',', 1))
+						WARN_PRINT("jogger_warning_miniblog_techblog");
+					xfree(values);
+				}
 			} else if (i == 5) {
 				const char *first = sep+1+xstrcspn(sep+1, " ");
 				if (xstrncmp(first, "http://", 7) && xstrncmp(first, "https://", 8)) /* XXX: https trackbacks? */
-					WARN_PRINT("jogger_warning_malformed_url", tmp);
+					WARN_PRINT("jogger_warning_malformed_url");
 			} else if (i == 6 || i == 7) {
 				const int jmax = i-5;
 				int j = 1;
@@ -264,16 +271,16 @@ COMMAND(jogger_prepare) {
 
 					if (n == 0 && endval == myval) {
 						if (*myval == ' ' || *(myval+xstrlen(myval)-1) == ' ')
-							WARN_PRINT("jogger_warning_wrong_value_spaces", tmp);
+							WARN_PRINT("jogger_warning_wrong_value_spaces");
 						else
-							WARN_PRINT("jogger_warning_wrong_value", tmp);
+							WARN_PRINT("jogger_warning_wrong_value");
 					}
 					if (n > jmax)
-						WARN_PRINT("jogger_warning_wrong_value", tmp);
+						WARN_PRINT("jogger_warning_wrong_value");
 				}
 				xfree(myval);
 			} else if (i == 8)
-				WARN_PRINT("jogger_warning_deprecated_miniblog", tmp);
+				WARN_PRINT("jogger_warning_deprecated_miniblog");
 		}
 
 		s = next+1;
@@ -285,14 +292,14 @@ COMMAND(jogger_prepare) {
 		strlcpy(tmp, s, 10);
 		xstrcpy(tmp+10, "...");
 		xstrtr(tmp, '\n', 0);
-		WARN_PRINT("jogger_warning_mislocated_header", tmp);
+		WARN_PRINT("jogger_warning_mislocated_header");
 	}
 	if (!xstrstr(s, "<EXCERPT>") && (len - (s-entry) > 4096)) {
 		char tmp[21];
 		strlcpy(tmp, s+4086, 20);
 		tmp[20] = 0;
 		xstrtr(tmp, '\n', ' '); /* sanitize */
-		WARN_PRINT("jogger_warning_noexcerpt", tmp);
+		WARN_PRINT("jogger_warning_noexcerpt");
 	}
 
 	jogger_closefile(fd, entry, fs);
