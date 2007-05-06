@@ -1611,55 +1611,64 @@ const char *prepare_path(const char *filename, int do_mkdir)
 const char *prepare_path_user(const char *path) {
 	static char out[PATH_MAX];
 	const char *in = path;
+	const char *homedir = NULL;
 
 	if (!in || (xstrlen(in)+1 > sizeof(out))) /* sorry, but I don't want to additionally play with '..' here */
 		return NULL;
 
+#ifndef NO_POSIX_SYSTEM
 	if (*in == '/') /* absolute path */
+#endif
 		xstrcpy(out, in);
 #ifndef NO_POSIX_SYSTEM
-	else if (*in == '~') { /* magical home directory handler */
-		in++;
-		*out = 0;
-		if (*in == '/') { /* own homedir */
-			if (!home_dir || strlcpy(out, home_dir, sizeof(out)-1) >= sizeof(out)-1)
-				return NULL;
-			xstrcat(out, "/");
-		} else {
-			struct passwd *p;
-			const char *slash = xstrchr(in, '/');
-			
-			if (slash) {
-				char *user = xstrndup(in, slash-in);
-				if ((p = getpwnam(user))) {
-					if (p->pw_dir && strlcpy(out, p->pw_dir, sizeof(out)-1) >= sizeof(out)-1)
-						return NULL;
-					in = slash;
+	else {
+		if (*in == '~') { /* magical home directory handler */
+			++in;
+			if (*in == '/') { /* own homedir */
+				if (!home_dir)
+					return NULL;
+				homedir = home_dir;
+			} else {
+				struct passwd *p;
+				const char *slash = xstrchr(in, '/');
+				
+				if (slash) {
+					char *user = xstrndup(in, slash-in);
+					if ((p = getpwnam(user))) {
+						homedir = p->pw_dir;
+						in = slash+1;
+					} else
+						homedir = "";
+					xfree(user);
 				}
-				xstrcat(out, "/");
-				xfree(user);
+				--in;
 			}
 		}
 
-		if (*out && strlcat(out, ++in, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
+		if (!homedir || *homedir != '/') {
+			if (!(getcwd(out, sizeof(out)-xstrlen(homedir)-xstrlen(in)-2)))
 				return NULL;
-#endif
-	} else
-		*out = 0;
-	
-	if (*out == 0) { /* relative path */
-		if (!(getcwd(out, sizeof(out)-1)))
-			return NULL;
-		xstrcat(out, "/");
-		if (strlcat(out, path, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
+			if (*out != '/') {
+				debug_error("prepare_path_user(): what the holy shmoly? getcwd() didn't return absolute path! (windows?)\n");
+				return NULL;
+			}
+			xstrcat(out, "/");
+		} else
+			*out = 0;
+		if (homedir && strlcat(out, homedir, sizeof(out)-xstrlen(out)-1) >= sizeof(out)-xstrlen(out)-1)
+			return NULL; /* we don't add slash here, 'cause in already has it */
+		if (strlcat(out, in, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
 			return NULL;
 	}
 
-	{		/* now we should play with '/../'
-			 * and as we will be just shortening the string, we don't need to care about length any longer! */
+	{
 		char *p;
 
-		while ((p = xstrstr(out, "/../"))) {
+		while ((p = xstrstr(out, "//"))) /* remove double slashes */
+			memmove(p, p+1, xstrlen(p+1)+1);
+		while ((p = xstrstr(out, "/./"))) /* single dots suck too */
+			memmove(p, p+2, xstrlen(p+2)+1);
+		while ((p = xstrstr(out, "/../"))) { /* and finally, '..' */
 			char *prev;
 
 			*p = 0;
@@ -1668,13 +1677,7 @@ const char *prepare_path_user(const char *path) {
 			memmove(prev, p+3, xstrlen(p+3)+1);
 		}
 
-		while ((p = xstrstr(out, "/./"))) /* single dots suck too */
-			memmove(p, p+2, xstrlen(p+2)+1);
-
-		while ((p = xstrstr(out, "//"))) /* and also remove double slashes */
-			memmove(p, p+1, xstrlen(p+1)+1);
-
-			/* clean out end of path */
+				/* clean out end of path */
 		p = out+xstrlen(out)-1;
 		if (*p == '.') {
 			if (*(p-1) == '/') /* '.' */
@@ -1694,8 +1697,8 @@ const char *prepare_path_user(const char *path) {
 		}
 		if (*p == '/' && out != p)
 			*p = 0;
-
 	}
+#endif
 
 	return out;
 }
