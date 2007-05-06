@@ -65,7 +65,9 @@
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
 #endif
-
+#ifndef HAVE_STRLCAT
+#  include "compat/strlcat.h"
+#endif
 
 #include "debug.h"
 #include "commands.h"
@@ -1618,40 +1620,29 @@ const char *prepare_path_user(const char *path) {
 #ifndef NO_POSIX_SYSTEM
 	else if (*in == '~') { /* magical home directory handler */
 		in++;
+		*out = 0;
 		if (*in == '/') { /* own homedir */
-			out[sizeof(out)-2] = 0;
-			xstrncpy(out, home_dir, sizeof(out)-1);
-			if (out[sizeof(out)-2] != 0) /* oversized */
+			if (!home_dir || strlcpy(out, home_dir, sizeof(out)-1) >= sizeof(out)-1)
 				return NULL;
+			xstrcat(out, "/");
 		} else {
 			struct passwd *p;
 			const char *slash = xstrchr(in, '/');
 			
-			*out = 0; /* treat as relative, if can't get anything */
 			if (slash) {
 				char *user = xstrndup(in, slash-in);
-				while ((p = getpwent())) {
-					if (!xstrcmp(user, p->pw_name)) {
-						out[sizeof(out)-2] = 0;
-						xstrncpy(out, p->pw_dir, sizeof(out)-1);
-						if (out[sizeof(out)-2] != 0) /* oversized */
-							return NULL;
-						break;
-					}
-				}
-
-				endpwent();
-				xfree(user);
-
-				if (*out)
+				if ((p = getpwnam(user))) {
+					if (p->pw_dir && strlcpy(out, p->pw_dir, sizeof(out)-1) >= sizeof(out)-1)
+						return NULL;
 					in = slash;
+				}
+				xstrcat(out, "/");
+				xfree(user);
 			}
 		}
 
-		if (*out) {
-			xstrcat(out, "/");
-			xstrncat(out, ++in, sizeof(out)-1-xstrlen(out));
-		}
+		if (*out && strlcat(out, ++in, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
+				return NULL;
 #endif
 	} else
 		*out = 0;
@@ -1660,10 +1651,11 @@ const char *prepare_path_user(const char *path) {
 		if (!(getcwd(out, sizeof(out)-1)))
 			return NULL;
 		xstrcat(out, "/");
-		xstrncat(out, path, sizeof(out)-1-xstrlen(out));
+		if (strlcat(out, path, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
+			return NULL;
 	}
 
-	{		/* now we should play with '../'
+	{		/* now we should play with '/../'
 			 * and as we will be just shortening the string, we don't need to care about length any longer! */
 		char *p;
 
@@ -1675,9 +1667,38 @@ const char *prepare_path_user(const char *path) {
 				prev = p;
 			memmove(prev, p+3, xstrlen(p+3)+1);
 		}
+
+		while ((p = xstrstr(out, "/./"))) /* single dots suck too */
+			memmove(p, p+2, xstrlen(p+2)+1);
+
+		while ((p = xstrstr(out, "//"))) /* and also remove double slashes */
+			memmove(p, p+1, xstrlen(p+1)+1);
+
+			/* clean out end of path */
+		p = out+xstrlen(out)-1;
+		if (*p == '.') {
+			if (*(p-1) == '/') /* '.' */
+				*(p--) = 0;
+			else if (*(p-1) == '.' && *(p-2) == '/') { /* '..' */
+				char *q;
+
+				p -= 2;
+				*p = 0;
+				if ((q = xstrrchr(out, '/')))
+					*(q+1) = 0;
+				else {
+					*p = '/';
+					*(p+1) = 0;
+				}
+			}
+		}
+		if (*p == '/' && out != p)
+			*p = 0;
+
 	}
 
-	return out;
+	debug_error("%s\n", out);
+	return NULL;
 }
 
 /**
