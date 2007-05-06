@@ -326,7 +326,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		return -1; /* we don't want to unlink such files */
 	} else if (fs == 0)
 		xdebug("empty file found, not submitting");
-	else {
+	else { /* XXX: move on to ekg_openfile() */
 		fd = open(f, O_RDONLY);
 		if (fd < 0)
 			xerrn("unable to open given file");
@@ -350,9 +350,13 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 
 			{
 				const char *charset = session_get(s, "charset");
+				char *tmp = xstrndup(msg, fs); /* temporary workaround for mmap() problems */
 
-				if (charset)
-					msgx = ekg_convert_string(msg, charset, NULL);
+				if (charset) {
+					msgx = ekg_convert_string(tmp, charset, NULL);
+					xfree(tmp);
+				} else
+					msgx = tmp;
 			}
 
 			xstrcpy(uid, "xmsg:");
@@ -369,7 +373,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 					*q = '\0';
 			}
 
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid, &rcpts, (msgx ? &msgx : &msg), &format, &sent, &class, &seq, &dobeep, &secure);
+			query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid, &rcpts, &msgx, &format, &sent, &class, &seq, &dobeep, &secure);
 
 			xfree(msgx);
 			xfree(uid);
