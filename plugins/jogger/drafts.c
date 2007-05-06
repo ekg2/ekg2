@@ -31,14 +31,16 @@
 #include <ekg/xmalloc.h>
 
 	/* XXX, iconvize */
+	/* 10 char-long don't use ':', because they're already on limit (longer ones are discarded) */
 const char *jogger_header_keys[] = {
 	"tytul:",	"temat:",	"subject:",	"tytuł:",		NULL,
-	"kategoria:",	"category:",	"kategorie:",	"categories",		NULL,
 	"tag:",									NULL,
 	"poziom:",	"level:",						NULL,
-	"trackback:",								NULL, /* 5 - XXX check URI? */
+	"kategoria:",	"category:",	"kategorie:",	"categories",		NULL, /* 4 */
+	"trackback:",								NULL, /* 5 */
 	"tidy",									NULL, /* 6 - XXX jhv, 1st */
 	"komentarze",	"comments:",						NULL, /* 7 - XXX jhv, 1&2 */
+	"miniblog:",								NULL, /* 8 - deprecated */
 	NULL
 };
 
@@ -130,9 +132,9 @@ COMMAND(jogger_prepare) {
 		const char *end		= xstrchr(s, ')');
 		const char *next	= xstrchr(s, '\n');
 
-		char tmp[12];		/* longest correct key has 10 chars + '(' + \0 */
-		xstrncpy(tmp, s, 11);
-		tmp[11] = 0;
+		char tmp[24];		/* longest correct key has 10 chars + '(' + \0 */
+		xstrncpy(tmp, s, 20);
+		xstrcpy(tmp+20, "..."); /* add ellipsis and \0 */
 		xstrtr(tmp, '\n', 0);
 
 		if (!sep || !end || !next || (sep > end) || (end+1+xstrspn(end+1, " ") != next)) {
@@ -142,7 +144,7 @@ COMMAND(jogger_prepare) {
 		} else if ((*(s+1) == ' ') || (*(sep-1) == ' '))
 			print("jogger_warning_wrongkey_spaces", tmp);
 		else {
-			int i = 0;
+			int i = 1;
 			const char **p = (sep-s < 12 ? jogger_header_keys : NULL);
 
 			for (; *p; i++, p++) { /* awaiting second NULL here */
@@ -161,6 +163,17 @@ COMMAND(jogger_prepare) {
 
 			if (!p || !*p)
 				print("jogger_warning_wrongkey", tmp);
+			else if (i == 4) {
+				char *values = xstrndup(sep+1, end-sep-1);
+				if (cssfind(values, "techblog", ',', 1) && cssfind(values, "miniblog", ',', 1))
+					print("jogger_warning_miniblog_techblog", tmp);
+				xfree(values);
+			} else if (i == 5) {
+				const char *first = sep+1+xstrcspn(sep+1, " ");
+				if (xstrncmp(first, "http://", 7) && xstrncmp(first, "https://", 8)) /* XXX: https trackbacks? */
+					print("jogger_warning_malformed_url", tmp);
+			} else if (i == 8)
+				print("jogger_warning_deprecated_miniblog", tmp);
 		}
 
 		s = next+1;
@@ -168,9 +181,9 @@ COMMAND(jogger_prepare) {
 
 	s += xstrspn(s, " \n\r");	/* get on to first real char (again) */
 	if (*s == '(') {
-		char tmp[11];
+		char tmp[14];
 		xstrncpy(tmp, s, 10);
-		tmp[10] = 0;
+		xstrcpy(tmp+10, "...");
 		xstrtr(tmp, '\n', 0);
 		print("jogger_warning_mislocated_header", tmp);
 	}
