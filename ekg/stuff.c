@@ -1607,19 +1607,6 @@ const char *prepare_path(const char *filename, int do_mkdir)
  */
 
 const char *prepare_path_user(const char *path) {
-	void unbackref(char *path) {
-		char *p;
-
-		while ((p = xstrstr(path, "/../"))) {
-			char *prev;
-
-			*p = 0;
-			if (!(prev = xstrrchr(path, '/')))
-				prev = p;
-			memmove(prev, p+3, xstrlen(p+3)+1);
-		}
-	}
-
 	static char out[PATH_MAX];
 	const char *in = path;
 
@@ -1676,9 +1663,19 @@ const char *prepare_path_user(const char *path) {
 		xstrncat(out, path, sizeof(out)-1-xstrlen(out));
 	}
 
-		/* now we should play with '../'
-		 * and as we will be just shortening the string, we don't need to care about length any longer! */
-	unbackref(out);
+	{		/* now we should play with '../'
+			 * and as we will be just shortening the string, we don't need to care about length any longer! */
+		char *p;
+
+		while ((p = xstrstr(out, "/../"))) {
+			char *prev;
+
+			*p = 0;
+			if (!(prev = xstrrchr(out, '/')))
+				prev = p;
+			memmove(prev, p+3, xstrlen(p+3)+1);
+		}
+	}
 
 	return out;
 }
