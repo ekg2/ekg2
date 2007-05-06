@@ -185,12 +185,18 @@ static void jogger_closefile(int fd, char *data, int fs) {
 #define WARN_PRINT(x) do { if (!outstarted) { outstarted++; print("jogger_warning"); } print(x, tmp); } while (0)
 
 COMMAND(jogger_prepare) {
+	const char *fn		= (params[0] ? params[0] : session_get(session, "entry_file"));
 	int fd, fs, len;
 	char *entry, *s, *hash;
-	int seen = 0;
-	int outstarted = 0;
+	int seen		= 0;
+	int outstarted		= 0;
 
-	if (!(entry = jogger_openfile(prepare_path_user(params[0]), &fd, &fs, &len, &hash)))
+	if (!fn) {
+		printq("invalid_params", name);
+		return -1;
+	}
+
+	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, &len, &hash)))
 		return -1;
 	s = entry;
 
@@ -308,9 +314,10 @@ COMMAND(jogger_prepare) {
 	}
 
 	jogger_closefile(fd, entry, fs);
-	session_set(session, "entry_file", params[0]);
+	if (params[0])
+		session_set(session, "entry_file", params[0]);
 	session_set(session, "entry_hash", hash);
-	printq("jogger_prepared", params[0]);
+	printq("jogger_prepared", fn);
 	return 0;
 }
 
@@ -325,7 +332,7 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, NULL, (oldhash ? &hash : NULL))))
+	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, NULL, &hash)))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
@@ -337,6 +344,9 @@ COMMAND(jogger_publish) {
 	command_exec("jogger:", session, entry, 0);
 
 	jogger_closefile(fd, entry, fs);
-	session_set(session, "entry_file", NULL);	/* XXX: reset always or only if using it? */
+	if (!oldhash) {
+		session_set(session, "entry_hash", hash);
+		session_set(session, "entry_file", fn);
+	}
 	return 0;
 }

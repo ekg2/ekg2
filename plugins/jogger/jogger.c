@@ -286,7 +286,7 @@ int jogger_plugin_init(int prio) {
 	command_add(&jogger_plugin, "jogger:connect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:disconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:msg", "!uU !", jogger_msg, JOGGER_CMDFLAGS_TARGET, NULL);
-	command_add(&jogger_plugin, "jogger:prepare", "!f", jogger_prepare, JOGGER_CMDFLAGS, NULL);
+	command_add(&jogger_plugin, "jogger:prepare", "?f", jogger_prepare, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:publish", "?f", jogger_publish, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:reconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:subscribe", "!uU", jogger_subscribe, JOGGER_CMDFLAGS_TARGET, NULL);
