@@ -25,13 +25,164 @@
 
 #include <ekg/commands.h>
 #include <ekg/debug.h>
+#include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
-COMMAND(jogger_prepare) {
-		/* XXX, check file and contents */
+	/* XXX, iconvize */
+const char *jogger_header_keys[] = {
+	"tytul:",	"temat:",	"subject:",	"tytuł:",		NULL,
+	"kategoria:",	"category:",	"kategorie:",	"categories",		NULL,
+	"tag:",									NULL,
+	"poziom:",	"level:",						NULL,
+	"trackback:",								NULL, /* 5 - XXX check URI? */
+	"tidy",									NULL, /* 6 - XXX jhv, 1st */
+	"komentarze",	"comments:",						NULL, /* 7 - XXX jhv, 1&2 */
+	NULL
+};
 
+const char *jogger_header_values[] = {
+	"off",		"no",		"nie",		"wylacz",	"wyłącz",
+	"on",		"yes",		"tak",		"wlacz",	"włącz",
+	"0",		"1",							NULL,
+
+	"jogger",	"2",							NULL,
+	NULL
+};
+
+/**
+ * jogger_openfile()
+ *
+ * Opens given file and mmaps it.
+ *
+ * @param	fn	- filename to open.
+ * @param	fd	- pointer to store fd.
+ * @param	fs	- pointer to store filesize.
+ *
+ * @return	Pointer to file contents or NULL on failure.
+ *
+ * @sa	jogger_closefile	- close such opened file.
+ */
+static char *jogger_openfile(const char *fn, int *fd, int *fs) {
+	char *out;
+
+	if ((*fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
+		if (errno == ENXIO)
+			print("jogger_nonfile");
+		else
+			print("jogger_cantopen");
+		return NULL;
+	}
+
+	{
+		struct stat st;
+
+		if ((fstat(*fd, &st) == -1) || !S_ISREG(st.st_mode)) {
+			close(*fd);
+			print("jogger_nonfile");
+			return NULL;
+		}
+		if ((*fs = st.st_size) == 0) {
+			close(*fd);
+			print("jogger_emptyfile");
+			return NULL;
+		}
+	}
+
+	if ((out = mmap(NULL, *fs, PROT_READ, MAP_PRIVATE, *fd, 0)) == MAP_FAILED) {
+		close(*fd);
+		print("jogger_cantread");
+		return NULL;
+	}
+
+	return out;
+}
+
+/**
+ * jogger_closefile()
+ *
+ * Closes file opened by jogger_openfile().
+ *
+ * @param	fd	- returned fd.
+ * @param	data	- returned data.
+ * @param	fs	- returned filesize.
+ *
+ * @sa	jogger_openfile	- open and mmap file.
+ */
+static void jogger_closefile(int fd, char *data, int fs) {
+	munmap(data, fs);
+	close(fd);
+}
+
+COMMAND(jogger_prepare) {
+	int fd, fs;
+	char *entry, *s;
+	int seen = 0;
+
+	if (!(entry = jogger_openfile(params[0], &fd, &fs)))
+		return -1;
+	s = entry;
+
+	s += xstrspn(s, " \n\r");	/* get on to first real char */
+	while (*s == '(') {	/* parse headers */
+		const char *sep		= xstrchr(s, ':');
+		const char *end		= xstrchr(s, ')');
+		const char *next	= xstrchr(s, '\n');
+
+		char tmp[12];		/* longest correct key has 10 chars + '(' + \0 */
+		xstrncpy(tmp, s, 11);
+		tmp[11] = 0;
+		xstrtr(tmp, '\n', 0);
+
+		if (!sep || !end || !next || (sep > end) || (end+1+xstrspn(end+1, " ") != next)) {
+			print("jogger_warning_brokenheader", tmp);
+			if (!next)
+				s = entry+fs;
+		} else if ((*(s+1) == ' ') || (*(sep-1) == ' '))
+			print("jogger_warning_wrongkey_spaces", tmp);
+		else {
+			int i = 0;
+			const char **p = (sep-s < 12 ? jogger_header_keys : NULL);
+
+			for (; *p; i++, p++) { /* awaiting second NULL here */
+				for (; *p; p++) { /* awaiting single NULL here */
+					if (!xstrncasecmp(tmp+1, *p, xstrlen(*p))) {
+						if (seen & (1<<i))
+							print("jogger_warning_duplicated_header", tmp);
+						else
+							seen |= (1<<i);
+						break;
+					}
+				}
+				if (*p)
+					break;
+			}
+
+			if (!p || !*p)
+				print("jogger_warning_wrongkey", tmp);
+		}
+
+		s = next+1;
+	}
+
+	s += xstrspn(s, " \n\r");	/* get on to first real char (again) */
+	if (*s == '(') {
+		char tmp[11];
+		xstrncpy(tmp, s, 10);
+		tmp[10] = 0;
+		xstrtr(tmp, '\n', 0);
+		print("jogger_warning_mislocated_header", tmp);
+	}
+	if (!xstrstr(s, "<EXCERPT>") && (fs - (s-entry) > 4096)) {
+		char tmp[21];
+		xstrncpy(tmp, s+4086, 20);
+		tmp[20] = 0;
+		xstrtr(tmp, '\n', ' '); /* sanitize */
+		print("jogger_warning_noexcerpt", tmp);
+	}
+
+	jogger_closefile(fd, entry, fs);
 	session_set(session, "entry_file", params[0]);
 	printq("jogger_prepared", params[0]);
 	return 0;
@@ -47,35 +198,12 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
-		if (errno == ENXIO)
-			printq("jogger_nonfile");
-		else
-			printq("jogger_cantopen");
+	if (!(entry = jogger_openfile(fn, &fd, &fs)))
 		return -1;
-	}
-
-	{
-		struct stat st;
-
-		if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode)) {
-			close(fd);
-			printq("jogger_nonfile");
-			return -1;
-		}
-		fs = st.st_size;
-	}
-
-	if ((entry = mmap(NULL, fs, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
-		close(fd);
-		printq("jogger_cantread");
-		return -1;
-	}
 
 	command_exec("jogger:", session, entry, 0);
 
-	munmap(entry, fs);
-	close(fd);
-	session_set(session, "entry_file");	/* XXX: reset always or only if using it? */
+	jogger_closefile(fd, entry, fs);
+	session_set(session, "entry_file", NULL);	/* XXX: reset always or only if using it? */
 	return 0;
 }

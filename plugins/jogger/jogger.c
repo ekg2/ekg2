@@ -226,6 +226,14 @@ static int jogger_theme_init(void) {
 	format_add("jogger_cantopen", _("%! Unable to open entry file!"), 1);
 	format_add("jogger_nonfile", _("%! Given path doesn't appear to be regular file!"), 1);
 	format_add("jogger_cantread", _("%! Unable to read entry file!"), 1);
+	format_add("jogger_emptyfile", _("%! File is empty!"), 1);
+	format_add("jogger_warning", _("%> During QA check of the entry, following warnings have been issued:"), 1);
+	format_add("jogger_warning_brokenheader", _("%> %|* Header with broken syntax found: %c%1%n..."), 1);
+	format_add("jogger_warning_wrongkey", _("%> %|* Header contains unknown/wrong key: %c%1%n..."), 1);
+	format_add("jogger_warning_wrongkey_spaces", _("%> %|* Key in header mustn't be followed or preceeded by spaces: %c%1%n..."), 1);
+	format_add("jogger_warning_duplicated_header", _("%> %|* Duplicated header found: %c%1%n..."), 1);
+	format_add("jogger_warning_mislocated_header", _("%> %|* Mislocated header (?): %c%1%n..."), 1);
+	format_add("jogger_warning_noexcerpt", _("%> %|* Entry text size exceeds 4096 bytes, but no <EXCERPT> tag has been found. It will be probably cut by Jogger near: ...%c%1%n..."), 1);
 #endif
 	return 0;
 }
