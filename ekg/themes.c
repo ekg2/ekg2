@@ -1940,6 +1940,13 @@ void theme_init()
 	format_add("aspell_init_success", "%> Zainicjowano modu³ sprawdzania pisowni\n", 1);
 	format_add("aspell_init_error", "%! B³±d modu³u sprawdzania pisowni: %T%1%n\n", 1);
 #endif 
+	/* jogger-like I/O */
+	format_add("io_cantopen", _("%! Unable to open file!"), 1);
+	format_add("io_nonfile", _("%! Given path doesn't appear to be regular file!"), 1);
+	format_add("io_cantread", _("%! Unable to read file!"), 1);
+	format_add("io_truncated", _("%! WARNING: EOF before reaching filesize. File probably truncated!"), 1);
+	format_add("io_emptyfile", _("%! File is empty!"), 1);
+	format_add("io_binaryfile", _("%! %|WARNING: The file probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %g%1%n (in bytes)!"), 1);
 
 	theme_plugins_init();
 #endif	/* !NO_DEFAULT_THEME */

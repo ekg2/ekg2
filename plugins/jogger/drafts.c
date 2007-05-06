@@ -119,9 +119,9 @@ static char *jogger_openfile(const char *fn, int *len, char **hash) {
 
 	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
 		if (errno == ENXIO)
-			print("jogger_nonfile");
+			print("io_nonfile");
 		else
-			print("jogger_cantopen");
+			print("io_cantopen");
 		return NULL;
 	}
 
@@ -130,12 +130,12 @@ static char *jogger_openfile(const char *fn, int *len, char **hash) {
 
 		if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode)) {
 			close(fd);
-			print("jogger_nonfile");
+			print("io_nonfile");
 			return NULL;
 		}
 		if ((fs = st.st_size) == 0) {
 			close(fd);
-			print("jogger_emptyfile");
+			print("io_emptyfile");
 			return NULL;
 		}
 	}
@@ -149,7 +149,7 @@ static char *jogger_openfile(const char *fn, int *len, char **hash) {
 			if (res == -1) {
 				if (errno != EINTR && errno != EAGAIN) {
 					close(fd);
-					print("jogger_cantread");
+					print("io_cantread");
 					return NULL;
 				}
 				p += res;
@@ -159,9 +159,9 @@ static char *jogger_openfile(const char *fn, int *len, char **hash) {
 
 		mylen = xstrlen(out);
 		if (rem > 0)
-			print("jogger_truncated");
+			print("io_truncated");
 		else if (fs > mylen)
-			print("jogger_binaryfile", itoa(mylen));
+			print("io_binaryfile", itoa(mylen));
 	}
 
 	if (len)
