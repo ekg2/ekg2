@@ -21,6 +21,7 @@
 #include <ekg/plugins.h>
 #include <ekg/queries.h>
 #include <ekg/sessions.h>
+#include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
@@ -40,6 +41,8 @@ COMMAND(jogger_msg);
 COMMAND(jogger_subscribe);
 
 	/* drafts.c */
+void jogger_localize_headers();
+void jogger_free_headers(int real_free);
 COMMAND(jogger_prepare);
 COMMAND(jogger_publish);
 
@@ -196,8 +199,11 @@ static QUERY(jogger_newsession) {
 
 static QUERY(jogger_postconfig) {
 	list_t l;
+	void *p = ekg_convert_string_init("UTF-8", NULL, NULL);
 
-	jogger_localize_texts();
+	jogger_localize_texts(p);
+	jogger_localize_headers(p);
+	ekg_convert_string_destroy(p);
 
 	for (l = sessions; l; l = l->next) {
 		session_t *js = l->data;
@@ -292,6 +298,7 @@ static int jogger_plugin_destroy(void) {
 	plugin_unregister(&jogger_plugin);
 	
 	jogger_free_texts(1);
+	jogger_free_headers(1);
 
 	return 0;
 }

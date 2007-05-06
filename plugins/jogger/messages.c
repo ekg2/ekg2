@@ -28,12 +28,12 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
+#define JOGGER_TEXT_MAX 13
+
 	/* jogger.c */
 session_t *jogger_session_find_uid(session_t *s, const char *uid);
 
-/* Thanks to sparrow, we need to pack big&stinky iconv into this small plugin */
-
-const char *utf_jogger_text[] = {
+const char *utf_jogger_text[JOGGER_TEXT_MAX] = {
 	"Do Twojego joggera został dodany komentarz",		/* [0] url (#eid[ / Texti*])\n----------------\n */
 	"Pojawil sie nowy komentarz do wpisu",			/* [1] as above */
 
@@ -53,8 +53,6 @@ const char *utf_jogger_text[] = {
 	"Do śledzonego joggera został dodany nowy wpis:",	/* [12] url (#eid[ / Texti*]) */
 };
 
-#define JOGGER_TEXT_MAX 13
-
 char *jogger_text[JOGGER_TEXT_MAX];
 
 void jogger_free_texts(int real_free) {
@@ -67,9 +65,8 @@ void jogger_free_texts(int real_free) {
 	}
 }
 
-void jogger_localize_texts() {
+void jogger_localize_texts(void *p) {
 	int i;
-	void *p = ekg_convert_string_init("UTF-8", NULL, NULL);
 
 	jogger_free_texts(1);
 	for (i = 0; i < JOGGER_TEXT_MAX; i++) {
@@ -79,7 +76,6 @@ void jogger_localize_texts() {
 			s = xstrdup(utf_jogger_text[i]);
 		jogger_text[i] = s;
 	}
-	ekg_convert_string_destroy(p);
 }
 
 QUERY(jogger_msghandler) {

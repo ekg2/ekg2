@@ -31,9 +31,11 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
-	/* XXX, iconvize */
+#define JOGGER_KEYS_MAX 25
+#define JOGGER_VALUES_MAX 14
+
 	/* 10 char-long don't use ':', because they're already on limit (longer ones are discarded) */
-const char *jogger_header_keys[] = {
+const char *utf_jogger_header_keys[JOGGER_KEYS_MAX] = {
 	"tytul:",	"temat:",	"subject:",	"tytuł:",		NULL,
 	"tag:",									NULL,
 	"poziom:",	"level:",						NULL,
@@ -45,13 +47,51 @@ const char *jogger_header_keys[] = {
 	NULL
 };
 
-const char *jogger_header_values[] = {
+const char *utf_jogger_header_values[JOGGER_VALUES_MAX] = {
 	"off",		"no",		"nie",		"wylacz",	"wyłącz",
 	"on",		"yes",		"tak",		"wlacz",	"włącz",	NULL,
 
 	"jogger",									NULL,
 	NULL
 };
+
+char *jogger_header_keys[JOGGER_KEYS_MAX];
+char *jogger_header_values[JOGGER_VALUES_MAX];
+
+void jogger_free_headers(int real_free) {
+	int i;
+
+	for (i = 0; i < JOGGER_KEYS_MAX; i++) {
+		if (real_free)
+			xfree(jogger_header_keys[i]);
+		jogger_header_keys[i] = NULL;
+	}
+	for (i = 0; i < JOGGER_VALUES_MAX; i++) {
+		if (real_free)
+			xfree(jogger_header_values[i]);
+		jogger_header_values[i] = NULL;
+	}
+}
+
+void jogger_localize_headers(void *p) {
+	int i;
+
+	jogger_free_headers(1);
+	for (i = 0; i < JOGGER_KEYS_MAX; i++) {
+		char *s = ekg_convert_string_p(utf_jogger_header_keys[i], p);
+
+		if (!s)
+			s = xstrdup(utf_jogger_header_keys[i]);
+		jogger_header_keys[i] = s;
+	}
+	for (i = 0; i < JOGGER_VALUES_MAX; i++) {
+		char *s = ekg_convert_string_p(utf_jogger_header_values[i], p);
+
+		if (!s)
+			s = xstrdup(utf_jogger_header_values[i]);
+		jogger_header_values[i] = s;
+	}
+}
 
 /**
  * jogger_openfile()
