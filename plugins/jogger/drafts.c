@@ -111,6 +111,9 @@ static char *jogger_openfile(const char *fn, int *fd, int *fs, char **hash) {
 	static char jogger_hash[sizeof(int)*2+3];
 	char *out;
 
+	if (!fn || !fd || !fs)
+		return NULL;
+
 	if ((*fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
 		if (errno == ENXIO)
 			print("jogger_nonfile");
@@ -175,7 +178,7 @@ COMMAND(jogger_prepare) {
 	char *entry, *s, *hash;
 	int seen = 0;
 
-	if (!(entry = jogger_openfile(params[0], &fd, &fs, &hash)))
+	if (!(entry = jogger_openfile(prepare_path_user(params[0]), &fd, &fs, &hash)))
 		return -1;
 	s = entry;
 
@@ -295,7 +298,7 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(fn, &fd, &fs, (oldhash ? &hash : NULL))))
+	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, (oldhash ? &hash : NULL))))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
