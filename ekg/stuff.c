@@ -1697,8 +1697,7 @@ const char *prepare_path_user(const char *path) {
 
 	}
 
-	debug_error("%s\n", out);
-	return NULL;
+	return out;
 }
 
 /**
