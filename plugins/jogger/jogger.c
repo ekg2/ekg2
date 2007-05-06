@@ -232,6 +232,7 @@ static int jogger_theme_init(void) {
 	format_add("jogger_cantopen", _("%! Unable to open entry file!"), 1);
 	format_add("jogger_nonfile", _("%! Given path doesn't appear to be regular file!"), 1);
 	format_add("jogger_cantread", _("%! Unable to read entry file!"), 1);
+	format_add("jogger_truncated", _("%! WARNING: EOF before reaching filesize. File probably truncated!"), 1);
 	format_add("jogger_emptyfile", _("%! File is empty!"), 1);
 	format_add("jogger_binaryfile", _("%! %|WARNING: The file probably contains NULs (is binary), so it can't be properly handled by this plugin. It will be read until first encountered NUL, i.e. to offset %g%1%n (in bytes)!"), 1);
 	format_add("jogger_hashdiffers", _("%! %|File contents (checksum) differs from the time it was prepared. If you changed anything in the entry file, please run %Tprepare%n again. If you want to force submission, please use %Tpublish%n again."), 1);

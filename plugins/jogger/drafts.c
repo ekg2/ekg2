@@ -15,10 +15,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
 #endif
@@ -99,26 +99,25 @@ void jogger_localize_headers(void *p) {
 /**
  * jogger_openfile()
  *
- * Opens given file and mmaps it.
+ * Opens given file and reads it.
  *
  * @param	fn	- filename to open.
- * @param	fd	- pointer to store fd.
- * @param	fs	- pointer to store filesize.
+ * @param	len	- pointer to store filelength or NULL, if not needed.
  * @param	hash	- pointer to store filehash or NULL, if not needed.
  *
  * @return	Pointer to file contents or NULL on failure.
  *
  * @sa	jogger_closefile	- close such opened file.
  */
-static char *jogger_openfile(const char *fn, int *fd, int *fs, int *len, char **hash) {
+static char *jogger_openfile(const char *fn, int *len, char **hash) {
 	static char jogger_hash[sizeof(int)*2+3];
 	char *out;
-	int mylen;
+	int mylen, fs, fd;
 
-	if (!fn || !fd || !fs)
+	if (!fn)
 		return NULL;
 
-	if ((*fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
+	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
 		if (errno == ENXIO)
 			print("jogger_nonfile");
 		else
@@ -129,26 +128,42 @@ static char *jogger_openfile(const char *fn, int *fd, int *fs, int *len, char **
 	{
 		struct stat st;
 
-		if ((fstat(*fd, &st) == -1) || !S_ISREG(st.st_mode)) {
-			close(*fd);
+		if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode)) {
+			close(fd);
 			print("jogger_nonfile");
 			return NULL;
 		}
-		if ((*fs = st.st_size) == 0) {
-			close(*fd);
+		if ((fs = st.st_size) == 0) {
+			close(fd);
 			print("jogger_emptyfile");
 			return NULL;
 		}
 	}
 
-	if ((out = mmap(NULL, *fs, PROT_READ, MAP_PRIVATE, *fd, 0)) == MAP_FAILED) {
-		close(*fd);
-		print("jogger_cantread");
-		return NULL;
+	out = xmalloc(fs+1);
+	{
+		void *p = out;
+		int rem = fs, res = 1;
+
+		while ((res = read(fd, p, rem))) {
+			if (res == -1) {
+				if (errno != EINTR && errno != EAGAIN) {
+					close(fd);
+					print("jogger_cantread");
+					return NULL;
+				}
+				p += res;
+				rem -= res;
+			}
+		}
+
+		mylen = xstrlen(out);
+		if (rem > 0)
+			print("jogger_truncated");
+		else if (fs > mylen)
+			print("jogger_binaryfile", itoa(mylen));
 	}
 
-	if (*fs > (mylen = xstrlen(out)))
-		print("jogger_binaryfile", itoa(mylen));
 	if (len)
 		*len = mylen;
 
@@ -166,27 +181,11 @@ static char *jogger_openfile(const char *fn, int *fd, int *fs, int *len, char **
 	return out;
 }
 
-/**
- * jogger_closefile()
- *
- * Closes file opened by jogger_openfile().
- *
- * @param	fd	- returned fd.
- * @param	data	- returned data.
- * @param	fs	- returned filesize.
- *
- * @sa	jogger_openfile	- open and mmap file.
- */
-static void jogger_closefile(int fd, char *data, int fs) {
-	munmap(data, fs);
-	close(fd);
-}
-
 #define WARN_PRINT(x) do { if (!outstarted) { outstarted++; print("jogger_warning"); } print(x, tmp); } while (0)
 
 COMMAND(jogger_prepare) {
 	const char *fn		= (params[0] ? params[0] : session_get(session, "entry_file"));
-	int fd, fs, len;
+	int len;
 	char *entry, *s, *hash;
 	int seen		= 0;
 	int outstarted		= 0;
@@ -196,7 +195,7 @@ COMMAND(jogger_prepare) {
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, &len, &hash)))
+	if (!(entry = jogger_openfile(prepare_path_user(fn), &len, &hash)))
 		return -1;
 	s = entry;
 
@@ -313,7 +312,7 @@ COMMAND(jogger_prepare) {
 		WARN_PRINT("jogger_warning_noexcerpt");
 	}
 
-	jogger_closefile(fd, entry, fs);
+	xfree(entry);
 	if (params[0])
 		session_set(session, "entry_file", params[0]);
 	session_set(session, "entry_hash", hash);
@@ -324,7 +323,6 @@ COMMAND(jogger_prepare) {
 COMMAND(jogger_publish) {
 	const char *fn = (params[0] ? params[0] : session_get(session, "entry_file"));
 	const char *oldhash = (!xstrcmp(session_get(session, "entry_file"), fn) ? session_get(session, "entry_hash") : NULL);
-	int fd, fs;
 	char *entry, *hash;
 
 	if (!fn) {
@@ -332,18 +330,18 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, NULL, &hash)))
+	if (!(entry = jogger_openfile(prepare_path_user(fn), NULL, &hash)))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
-		jogger_closefile(fd, entry, fs);
+		xfree(entry);
 		session_set(session, "entry_hash", hash);
 		return -1;
 	}
 
 	command_exec("jogger:", session, entry, 0);
 
-	jogger_closefile(fd, entry, fs);
+	xfree(entry);
 	if (!oldhash) {
 		session_set(session, "entry_hash", hash);
 		session_set(session, "entry_file", fn);
