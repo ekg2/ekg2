@@ -165,10 +165,20 @@ static int ekg_openfile(const char *fn, char **data, int *len, char **hash, cons
 		}
 
 		mylen = xstrlen(out);
-		if (rem > 0)
-			printq("io_truncated");
-		else if (fs > mylen)
-			printq("io_binaryfile", itoa(mylen));
+		{
+			struct stat st;
+
+			if (fstat(fd, &st) == -1)
+				debug_error("ekg_openfile(): unable to fstat() again!\n");
+			else if (st.st_size > fs)
+				printq("io_expanded");
+			else if (st.st_size < fs)
+				printq("io_truncated");
+			else if (rem > 0)
+				printq("io_truncated_read");
+			else if (fs > mylen)
+				printq("io_binaryfile", itoa(mylen));
+		}
 
 		if (len)
 			*len = mylen;
