@@ -942,6 +942,25 @@ void array_free_count(char **array, int count) {
  * @return Pointer to found element on success, or NULL on failure.
  */
 const char *cssfind(const char *haystack, const char *needle, const char sep, int caseinsensitive) {
+	const char *comma = haystack-1;
+	const int needlelen = xstrlen(needle);
+
+	do {
+		comma += xstrspn(comma+1, " \f\n\r\t\v")+1;
+		if (!(caseinsensitive ? xstrncasecmp(comma, needle, needlelen) : xstrncmp(comma, needle, needlelen))) {
+			const char *p, *q;
+
+			p = comma + needlelen;
+			if (!(q = xstrchr(p, sep)))
+				q = p + xstrlen(p);
+			if (q-p <= xstrspn(p, " \f\n\r\t\v")) /* '<' shouldn't happen */
+				return comma;
+		}
+	} while ((comma = xstrchr(comma, sep)));
+
+	return NULL;
+#if 0 /* old, exact-match code; uncomment when needed */
+{
 	const char *r = haystack-1;
 	const int needlelen = xstrlen(needle);
 
@@ -959,6 +978,8 @@ const char *cssfind(const char *haystack, const char *needle, const char sep, in
 	}
 
 	return r;
+}
+#endif
 }
 
 /*
