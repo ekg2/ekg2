@@ -319,6 +319,7 @@ int play_sound(const char *sound_path);
 
 const char *prepare_path(const char *filename, int do_mkdir);
 const char *prepare_pathf(const char *filename, ...);
+const char *prepare_path_user(const char *path);
 char *read_file(FILE *f, int alloc);
 
 const char *timestamp(const char *format);

@@ -49,6 +49,7 @@
 
 #ifndef NO_POSIX_SYSTEM
 #include <sched.h>
+#include <pwd.h>
 #endif
 
 #include <signal.h>
@@ -1591,6 +1592,95 @@ const char *prepare_path(const char *filename, int do_mkdir)
 		snprintf(path, sizeof(path), "%s/%s", config_dir, filename);
 	
 	return path;
+}
+
+/**
+ * prepare_path_user()
+ *
+ * Converts path given by user to absolute path.
+ *
+ * @bug		Behaves correctly only with POSIX slashes, need to be modified for NO_POSIX_SYSTEM.
+ *
+ * @param	path	- input path.
+ *
+ * @return	Pointer to output path or NULL, if longer than PATH_MAX.
+ */
+
+const char *prepare_path_user(const char *path) {
+	void unbackref(char *path) {
+		char *p;
+
+		while ((p = xstrstr(path, "/../"))) {
+			char *prev;
+
+			*p = 0;
+			if (!(prev = xstrrchr(path, '/')))
+				prev = p;
+			memmove(prev, p+3, xstrlen(p+3)+1);
+		}
+	}
+
+	static char out[PATH_MAX];
+	const char *in = path;
+
+	if (!in || (xstrlen(in)+1 > sizeof(out))) /* sorry, but I don't want to additionally play with '..' here */
+		return NULL;
+
+	if (*in == '/') /* absolute path */
+		xstrcpy(out, in);
+#ifndef NO_POSIX_SYSTEM
+	else if (*in == '~') { /* magical home directory handler */
+		in++;
+		if (*in == '/') { /* own homedir */
+			out[sizeof(out)-2] = 0;
+			xstrncpy(out, home_dir, sizeof(out)-1);
+			if (out[sizeof(out)-2] != 0) /* oversized */
+				return NULL;
+		} else {
+			struct passwd *p;
+			const char *slash = xstrchr(in, '/');
+			
+			*out = 0; /* treat as relative, if can't get anything */
+			if (slash) {
+				char *user = xstrndup(in, slash-in);
+				while ((p = getpwent())) {
+					if (!xstrcmp(user, p->pw_name)) {
+						out[sizeof(out)-2] = 0;
+						xstrncpy(out, p->pw_dir, sizeof(out)-1);
+						if (out[sizeof(out)-2] != 0) /* oversized */
+							return NULL;
+						break;
+					}
+				}
+
+				endpwent();
+				xfree(user);
+
+				if (*out)
+					in = slash;
+			}
+		}
+
+		if (*out) {
+			xstrcat(out, "/");
+			xstrncat(out, ++in, sizeof(out)-1-xstrlen(out));
+		}
+#endif
+	} else
+		*out = 0;
+	
+	if (*out == 0) { /* relative path */
+		if (!(getcwd(out, sizeof(out)-1)))
+			return NULL;
+		xstrcat(out, "/");
+		xstrncat(out, path, sizeof(out)-1-xstrlen(out));
+	}
+
+		/* now we should play with '../'
+		 * and as we will be just shortening the string, we don't need to care about length any longer! */
+	unbackref(out);
+
+	return out;
 }
 
 /**
