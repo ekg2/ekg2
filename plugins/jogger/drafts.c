@@ -101,12 +101,14 @@ void jogger_localize_headers(void *p) {
  * @param	fn	- filename to open.
  * @param	fd	- pointer to store fd.
  * @param	fs	- pointer to store filesize.
+ * @param	hash	- pointer to store filehash or NULL, if not needed.
  *
  * @return	Pointer to file contents or NULL on failure.
  *
  * @sa	jogger_closefile	- close such opened file.
  */
-static char *jogger_openfile(const char *fn, int *fd, int *fs) {
+static char *jogger_openfile(const char *fn, int *fd, int *fs, char **hash) {
+	static char jogger_hash[sizeof(int)*2+3];
 	char *out;
 
 	if ((*fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
@@ -138,6 +140,17 @@ static char *jogger_openfile(const char *fn, int *fd, int *fs) {
 		return NULL;
 	}
 
+		/* I don't want to write my own hashing function, so using EKG2 one
+		 * it will fail to hash data after any \0 in file, if there're any
+		 * but we also aren't prepared to handle them */
+	if (hash) {
+		char sizecont[8];
+
+		snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
+		snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
+		*hash = jogger_hash;
+	}
+
 	return out;
 }
 
@@ -159,10 +172,10 @@ static void jogger_closefile(int fd, char *data, int fs) {
 
 COMMAND(jogger_prepare) {
 	int fd, fs;
-	char *entry, *s;
+	char *entry, *s, *hash;
 	int seen = 0;
 
-	if (!(entry = jogger_openfile(params[0], &fd, &fs)))
+	if (!(entry = jogger_openfile(params[0], &fd, &fs, &hash)))
 		return -1;
 	s = entry;
 
@@ -266,22 +279,30 @@ COMMAND(jogger_prepare) {
 
 	jogger_closefile(fd, entry, fs);
 	session_set(session, "entry_file", params[0]);
+	session_set(session, "entry_hash", hash);
 	printq("jogger_prepared", params[0]);
 	return 0;
 }
 
 COMMAND(jogger_publish) {
 	const char *fn = (params[0] ? params[0] : session_get(session, "entry_file"));
+	const char *oldhash = (!xstrcmp(session_get(session, "entry_file"), fn) ? session_get(session, "entry_hash") : NULL);
 	int fd, fs;
-	char *entry;
+	char *entry, *hash;
 
 	if (!fn) {
 		printq("jogger_notprepared");
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(fn, &fd, &fs)))
+	if (!(entry = jogger_openfile(fn, &fd, &fs, (oldhash ? &hash : NULL))))
 		return -1;
+	if (oldhash && xstrcmp(oldhash, hash)) {
+		print("jogger_hashdiffers");
+		jogger_closefile(fd, entry, fs);
+		session_set(session, "entry_hash", hash);
+		return -1;
+	}
 
 	command_exec("jogger:", session, entry, 0);
 

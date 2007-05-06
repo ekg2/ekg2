@@ -233,6 +233,8 @@ static int jogger_theme_init(void) {
 	format_add("jogger_nonfile", _("%! Given path doesn't appear to be regular file!"), 1);
 	format_add("jogger_cantread", _("%! Unable to read entry file!"), 1);
 	format_add("jogger_emptyfile", _("%! File is empty!"), 1);
+	format_add("jogger_hashdiffers", _("%! %|File contents (checksum) differs from the time it was prepared. If you changed anything in the entry file, please run %Tprepare%n again. If you want to force submission, please use %Tpublish%n again."), 1);
+
 	format_add("jogger_warning", _("%> During QA check of the entry, following warnings have been issued:"), 1);
 	format_add("jogger_warning_brokenheader", _("%> %|* Header with broken syntax found at: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_key", _("%> %|* Header contains unknown/wrong key at: %c%1%n"), 1);
@@ -251,6 +253,7 @@ static int jogger_theme_init(void) {
 
 static plugins_params_t jogger_plugin_vars[] = {
 	PLUGIN_VAR_ADD("entry_file",		0, VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("entry_hash",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
 	PLUGIN_VAR_ADD("newentry_open_query",	0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("own_commentformat",	0, VAR_STR, NULL, 0, NULL),
