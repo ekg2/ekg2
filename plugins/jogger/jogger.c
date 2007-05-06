@@ -233,9 +233,10 @@ static int jogger_theme_init(void) {
 	format_add("jogger_nonfile", _("%! Given path doesn't appear to be regular file!"), 1);
 	format_add("jogger_cantread", _("%! Unable to read entry file!"), 1);
 	format_add("jogger_emptyfile", _("%! File is empty!"), 1);
+	format_add("jogger_binaryfile", _("%! %|WARNING: The file probably contains NULs (is binary), so it can't be properly handled by this plugin. It will be read until first encountered NUL, i.e. to offset %g%1%n (in bytes)!"), 1);
 	format_add("jogger_hashdiffers", _("%! %|File contents (checksum) differs from the time it was prepared. If you changed anything in the entry file, please run %Tprepare%n again. If you want to force submission, please use %Tpublish%n again."), 1);
 
-	format_add("jogger_warning", _("%> During QA check of the entry, following warnings have been issued:"), 1);
+	format_add("jogger_warning", _("%) %|During QA check of the entry, following warnings have been issued:"), 1);
 	format_add("jogger_warning_brokenheader", _("%> %|* Header with broken syntax found at: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_key", _("%> %|* Header contains unknown/wrong key at: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_key_spaces", _("%> %|* Key in header mustn't be followed or preceeded by spaces at: %c%1%n"), 1);
@@ -244,6 +245,7 @@ static int jogger_theme_init(void) {
 	format_add("jogger_warning_malformed_url", _("%> %|* Malformed URL found at: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_value", _("%> %|* Incorrect value found at: %c%1%n"), 1);
 	format_add("jogger_warning_wrong_value_spaces", _("%> %|* Incorrent value found (try to remove leading&trailing spaces) at: %c%1%n"), 1);
+	format_add("jogger_warning_wrong_value_empty", _("%> %|* Empty value found in header at: %c%1%n"), 1);
 	format_add("jogger_warning_duplicated_header", _("%> %|* Duplicated header found at: %c%1%n"), 1);
 	format_add("jogger_warning_mislocated_header", _("%> %|* Mislocated header (?) at: %c%1%n"), 1);
 	format_add("jogger_warning_noexcerpt", _("%> %|* Entry text size exceeds 4096 bytes, but no <EXCERPT> tag has been found. It will be probably cut by Jogger near: ...%c%1%n..."), 1);

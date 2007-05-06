@@ -19,6 +19,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
 
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -107,9 +110,10 @@ void jogger_localize_headers(void *p) {
  *
  * @sa	jogger_closefile	- close such opened file.
  */
-static char *jogger_openfile(const char *fn, int *fd, int *fs, char **hash) {
+static char *jogger_openfile(const char *fn, int *fd, int *fs, int *len, char **hash) {
 	static char jogger_hash[sizeof(int)*2+3];
 	char *out;
+	int mylen;
 
 	if (!fn || !fd || !fs)
 		return NULL;
@@ -143,6 +147,11 @@ static char *jogger_openfile(const char *fn, int *fd, int *fs, char **hash) {
 		return NULL;
 	}
 
+	if (*fs > (mylen = xstrlen(out)))
+		print("jogger_binaryfile", itoa(mylen));
+	if (len)
+		*len = mylen;
+
 		/* I don't want to write my own hashing function, so using EKG2 one
 		 * it will fail to hash data after any \0 in file, if there're any
 		 * but we also aren't prepared to handle them */
@@ -173,12 +182,15 @@ static void jogger_closefile(int fd, char *data, int fs) {
 	close(fd);
 }
 
+#define WARN_PRINT(x...) do { if (!outstarted) { outstarted++; print("jogger_warning"); } print(x); } while (0)
+
 COMMAND(jogger_prepare) {
-	int fd, fs;
+	int fd, fs, len;
 	char *entry, *s, *hash;
 	int seen = 0;
+	int outstarted = 0;
 
-	if (!(entry = jogger_openfile(prepare_path_user(params[0]), &fd, &fs, &hash)))
+	if (!(entry = jogger_openfile(prepare_path_user(params[0]), &fd, &fs, &len, &hash)))
 		return -1;
 	s = entry;
 
@@ -189,16 +201,19 @@ COMMAND(jogger_prepare) {
 		const char *next	= xstrchr(s, '\n');
 
 		char tmp[24];		/* longest correct key has 10 chars + '(' + \0 */
-		xstrncpy(tmp, s, 20);
+		strlcpy(tmp, s, 20);
 		xstrcpy(tmp+20, "..."); /* add ellipsis and \0 */
 		xstrtr(tmp, '\n', 0);
 
 		if (!sep || !end || !next || (sep > end) || (end+1+xstrspn(end+1, " ") != next)) {
-			print("jogger_warning_brokenheader", tmp);
+			WARN_PRINT("jogger_warning_brokenheader", tmp);
 			if (!next)
-				s = entry+fs;
+				s = entry+len;
+			continue;
 		} else if ((*(s+1) == ' ') || (*(sep-1) == ' '))
-			print("jogger_warning_wrong_key_spaces", tmp);
+			WARN_PRINT("jogger_warning_wrong_key_spaces", tmp);
+		else if (end-sep <= xstrspn(sep+1, " "))
+			WARN_PRINT("jogger_warning_wrong_value_empty", tmp);
 		else {
 			int i = 1;
 			const char **p = (sep-s < 12 ? jogger_header_keys : NULL);
@@ -207,7 +222,7 @@ COMMAND(jogger_prepare) {
 				for (; *p; p++) { /* awaiting single NULL here */
 					if (!xstrncasecmp(tmp+1, *p, xstrlen(*p))) {
 						if (seen & (1<<i))
-							print("jogger_warning_duplicated_header", tmp);
+							WARN_PRINT("jogger_warning_duplicated_header", tmp);
 						else
 							seen |= (1<<i);
 						break;
@@ -218,16 +233,16 @@ COMMAND(jogger_prepare) {
 			}
 
 			if (!p || !*p)
-				print("jogger_warning_wrong_key", tmp);
+				WARN_PRINT("jogger_warning_wrong_key", tmp);
 			else if (i == 4) {
 				char *values = xstrndup(sep+1, end-sep-1);
 				if (cssfind(values, "techblog", ',', 1) && cssfind(values, "miniblog", ',', 1))
-					print("jogger_warning_miniblog_techblog", tmp);
+					WARN_PRINT("jogger_warning_miniblog_techblog", tmp);
 				xfree(values);
 			} else if (i == 5) {
 				const char *first = sep+1+xstrcspn(sep+1, " ");
 				if (xstrncmp(first, "http://", 7) && xstrncmp(first, "https://", 8)) /* XXX: https trackbacks? */
-					print("jogger_warning_malformed_url", tmp);
+					WARN_PRINT("jogger_warning_malformed_url", tmp);
 			} else if (i == 6 || i == 7) {
 				const int jmax = i-5;
 				int j = 1;
@@ -249,16 +264,16 @@ COMMAND(jogger_prepare) {
 
 					if (n == 0 && endval == myval) {
 						if (*myval == ' ' || *(myval+xstrlen(myval)-1) == ' ')
-							print("jogger_warning_wrong_value_spaces", tmp);
+							WARN_PRINT("jogger_warning_wrong_value_spaces", tmp);
 						else
-							print("jogger_warning_wrong_value", tmp);
+							WARN_PRINT("jogger_warning_wrong_value", tmp);
 					}
 					if (n > jmax)
-						print("jogger_warning_wrong_value", tmp);
+						WARN_PRINT("jogger_warning_wrong_value", tmp);
 				}
 				xfree(myval);
 			} else if (i == 8)
-				print("jogger_warning_deprecated_miniblog", tmp);
+				WARN_PRINT("jogger_warning_deprecated_miniblog", tmp);
 		}
 
 		s = next+1;
@@ -267,17 +282,17 @@ COMMAND(jogger_prepare) {
 	s += xstrspn(s, " \n\r");	/* get on to first real char (again) */
 	if (*s == '(') {
 		char tmp[14];
-		xstrncpy(tmp, s, 10);
+		strlcpy(tmp, s, 10);
 		xstrcpy(tmp+10, "...");
 		xstrtr(tmp, '\n', 0);
-		print("jogger_warning_mislocated_header", tmp);
+		WARN_PRINT("jogger_warning_mislocated_header", tmp);
 	}
-	if (!xstrstr(s, "<EXCERPT>") && (fs - (s-entry) > 4096)) {
+	if (!xstrstr(s, "<EXCERPT>") && (len - (s-entry) > 4096)) {
 		char tmp[21];
-		xstrncpy(tmp, s+4086, 20);
+		strlcpy(tmp, s+4086, 20);
 		tmp[20] = 0;
 		xstrtr(tmp, '\n', ' '); /* sanitize */
-		print("jogger_warning_noexcerpt", tmp);
+		WARN_PRINT("jogger_warning_noexcerpt", tmp);
 	}
 
 	jogger_closefile(fd, entry, fs);
@@ -298,7 +313,7 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, (oldhash ? &hash : NULL))))
+	if (!(entry = jogger_openfile(prepare_path_user(fn), &fd, &fs, NULL, (oldhash ? &hash : NULL))))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
