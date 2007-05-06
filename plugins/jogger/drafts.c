@@ -17,9 +17,10 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-#include <sys/mman.h>		/* mmap */
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -38,18 +39,17 @@ const char *jogger_header_keys[] = {
 	"poziom:",	"level:",						NULL,
 	"kategoria:",	"category:",	"kategorie:",	"categories",		NULL, /* 4 */
 	"trackback:",								NULL, /* 5 */
-	"tidy",									NULL, /* 6 - XXX jhv, 1st */
-	"komentarze",	"comments:",						NULL, /* 7 - XXX jhv, 1&2 */
+	"tidy",									NULL, /* 6 */
+	"komentarze",	"comments:",						NULL, /* 7 */
 	"miniblog:",								NULL, /* 8 - deprecated */
 	NULL
 };
 
 const char *jogger_header_values[] = {
 	"off",		"no",		"nie",		"wylacz",	"wyłącz",
-	"on",		"yes",		"tak",		"wlacz",	"włącz",
-	"0",		"1",							NULL,
+	"on",		"yes",		"tak",		"wlacz",	"włącz",	NULL,
 
-	"jogger",	"2",							NULL,
+	"jogger",									NULL,
 	NULL
 };
 
@@ -142,7 +142,7 @@ COMMAND(jogger_prepare) {
 			if (!next)
 				s = entry+fs;
 		} else if ((*(s+1) == ' ') || (*(sep-1) == ' '))
-			print("jogger_warning_wrongkey_spaces", tmp);
+			print("jogger_warning_wrong_key_spaces", tmp);
 		else {
 			int i = 1;
 			const char **p = (sep-s < 12 ? jogger_header_keys : NULL);
@@ -162,7 +162,7 @@ COMMAND(jogger_prepare) {
 			}
 
 			if (!p || !*p)
-				print("jogger_warning_wrongkey", tmp);
+				print("jogger_warning_wrong_key", tmp);
 			else if (i == 4) {
 				char *values = xstrndup(sep+1, end-sep-1);
 				if (cssfind(values, "techblog", ',', 1) && cssfind(values, "miniblog", ',', 1))
@@ -172,6 +172,35 @@ COMMAND(jogger_prepare) {
 				const char *first = sep+1+xstrcspn(sep+1, " ");
 				if (xstrncmp(first, "http://", 7) && xstrncmp(first, "https://", 8)) /* XXX: https trackbacks? */
 					print("jogger_warning_malformed_url", tmp);
+			} else if (i == 6 || i == 7) {
+				const int jmax = i-5;
+				int j = 1;
+				char *myval = xstrndup(sep+1, end-sep-1);
+				const char **q = jogger_header_values;
+
+				for (; *q && j <= jmax; j++, q++) { /* second NULL or jmax */
+					for (; *q; q++) { /* first NULL */
+						if (!xstrcasecmp(myval, *q))
+							break;
+					}
+					if (*q)
+						break;
+				}
+
+				if (!*q || (j > jmax)) {
+					char *endval;
+					int n = strtol(myval, &endval, 10);
+
+					if (n == 0 && endval == myval) {
+						if (*myval == ' ' || *(myval+xstrlen(myval)-1) == ' ')
+							print("jogger_warning_wrong_value_spaces", tmp);
+						else
+							print("jogger_warning_wrong_value", tmp);
+					}
+					if (n > jmax)
+						print("jogger_warning_wrong_value", tmp);
+				}
+				xfree(myval);
 			} else if (i == 8)
 				print("jogger_warning_deprecated_miniblog", tmp);
 		}

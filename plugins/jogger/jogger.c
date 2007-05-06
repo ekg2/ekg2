@@ -229,11 +229,13 @@ static int jogger_theme_init(void) {
 	format_add("jogger_emptyfile", _("%! File is empty!"), 1);
 	format_add("jogger_warning", _("%> During QA check of the entry, following warnings have been issued:"), 1);
 	format_add("jogger_warning_brokenheader", _("%> %|* Header with broken syntax found at: %c%1%n"), 1);
-	format_add("jogger_warning_wrongkey", _("%> %|* Header contains unknown/wrong key at: %c%1%n"), 1);
-	format_add("jogger_warning_wrongkey_spaces", _("%> %|* Key in header mustn't be followed or preceeded by spaces at: %c%1%n"), 1);
+	format_add("jogger_warning_wrong_key", _("%> %|* Header contains unknown/wrong key at: %c%1%n"), 1);
+	format_add("jogger_warning_wrong_key_spaces", _("%> %|* Key in header mustn't be followed or preceeded by spaces at: %c%1%n"), 1);
 	format_add("jogger_warning_deprecated_miniblog", _("%> %|* Key %Tminiblog%n is deprecated in favor of such category at: %c%1%n"), 1);
 	format_add("jogger_warning_miniblog_techblog", _("%> %|* Miniblog entry will be posted to Techblog at: %c%1%n"), 1);
 	format_add("jogger_warning_malformed_url", _("%> %|* Malformed URL found at: %c%1%n"), 1);
+	format_add("jogger_warning_wrong_value", _("%> %|* Incorrect value found at: %c%1%n"), 1);
+	format_add("jogger_warning_wrong_value_spaces", _("%> %|* Incorrent value found (try to remove leading&trailing spaces) at: %c%1%n"), 1);
 	format_add("jogger_warning_duplicated_header", _("%> %|* Duplicated header found at: %c%1%n"), 1);
 	format_add("jogger_warning_mislocated_header", _("%> %|* Mislocated header (?) at: %c%1%n"), 1);
 	format_add("jogger_warning_noexcerpt", _("%> %|* Entry text size exceeds 4096 bytes, but no <EXCERPT> tag has been found. It will be probably cut by Jogger near: ...%c%1%n..."), 1);
