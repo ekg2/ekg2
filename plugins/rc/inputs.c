@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/un.h>
+#include <sys/socket.h>
 #endif
 
 #include <sys/types.h>
