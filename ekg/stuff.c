@@ -2699,12 +2699,18 @@ char *saprintf(const char *format, ...)
 void xstrtr(char *text, char from, char to)
 {
 	
-	if (!text || !from || !to)
+	if (!text || !from) /* 'to' might be \0 */
 		return;
 
-	while (*text++) 
-		if (*text == from)
+	while (*text++) {
+		if (*text == from) {
 			*text = to;
+#if 0 /* if we want to be more C-like than tr-like, uncomment this */
+			if (!to) /* if we put \0, we just cut the string */
+				break;
+#endif
+		}
+	}
 }
 
 /**
