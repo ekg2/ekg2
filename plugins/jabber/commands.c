@@ -338,7 +338,7 @@ static COMMAND(jabber_command_connect)
 		return -1;
 	}
 
-	if (!session_get(session, "__new_acount") && !(session_get(session, "password"))) {
+	if (!session_get(session, "__new_account") && !(session_get(session, "password"))) {
 		printq("no_config");
 		return -1;
 	}
@@ -1285,8 +1285,8 @@ static COMMAND(jabber_command_register)
 	const char *passwd = session_get(session, "password");
 	char **splitted	= NULL;
 
-	if (!session_connected_get(session) && (!passwd || !xstrcmp(passwd, "foo"))) {
-		session_set(session, "__new_acount", "1");
+	if (!session_connected_get(session) && (!passwd || !*passwd || !xstrcmp(passwd, "foo"))) {
+		session_set(session, "__new_account", "1");
 		if (params[0]) session_set(session, "password", params[0]);
 		jabber_command_connect(("connect"), NULL, session, target, quiet);
 		return 0;

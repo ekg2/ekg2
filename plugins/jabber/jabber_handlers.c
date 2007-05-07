@@ -2467,7 +2467,10 @@ JABBER_HANDLER(jabber_handle_iq) {
 						if (!xstrcmp(reg->name, "instructions")) continue;
 
 						jname = jabber_unescape(reg->name);
-						jdata = jabber_unescape(reg->data);
+						if (!xstrcmp(jname, "password"))
+							jdata = xstrdup("(...)");
+						else
+							jdata = jabber_unescape(reg->data);
 						print("jabber_registration_item", session_name(s), from_str, jname, jdata);
 						xfree(jname);
 						xfree(jdata);
@@ -2815,10 +2818,10 @@ static void jabber_session_connected(session_t *s) {
 
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
 
-	if (session_get(s, "__new_acount")) {
+	if (session_get(s, "__new_account")) {
 		print("register", __session);
 		if (!xstrcmp(session_get(s, "password"), "foo")) print("register_change_passwd", __session, "foo");
-		session_set(s, "__new_acount", NULL);
+		session_set(s, "__new_account", NULL);
 	}
 
 	session_int_set(s, "__roster_retrieved", 0);
