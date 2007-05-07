@@ -151,6 +151,16 @@ static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, 
 		void *p = out;
 		int rem = fs, res = 1;
 
+		{
+			int cf = fcntl(fd, F_GETFL);
+
+			if (cf == -1) /* evil thing */
+				cf = 0;
+			else
+				cf &= ~O_NONBLOCK;
+			fcntl(fd, F_SETFL, cf);
+		}
+
 		while ((res = read(fd, p, (rem <= SSIZE_MAX ? rem : SSIZE_MAX)))) {
 			if (res == -1) {
 				const int err = errno;
