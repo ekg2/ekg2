@@ -956,7 +956,7 @@ const char *cssfind(const char *haystack, const char *needle, const char sep, in
 			if (q-p <= xstrspn(p, " \f\n\r\t\v")) /* '<' shouldn't happen */
 				return comma;
 		}
-	} while ((comma = xstrchr(comma, sep)));
+	} while (sep && (comma = xstrchr(comma, sep)));
 
 	return NULL;
 #if 0 /* old, exact-match code; uncomment when needed */
