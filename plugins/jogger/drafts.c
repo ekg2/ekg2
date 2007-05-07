@@ -99,9 +99,10 @@ void jogger_localize_headers(void *p) {
 }
 
 /**
- * ekg_openfile()
+ * ekg_checkoutfile()
  *
- * Tries to open given file, and reads it, if expected.
+ * Tries to open given file (check), and reads it, if expected (checkout).
+ * It is designed to be proof to special file problems (especially named pipe ones).
  *
  * @param	fn	- filename to open.
  * @param	data	- pointer to store file contents or NULL, if don't want to read it.
@@ -110,7 +111,7 @@ void jogger_localize_headers(void *p) {
  *
  * @return	0 on success, errno on failure.
  */
-static int ekg_openfile(const char *fn, char **data, int *len, char **hash, const int maxlen, const int quiet) {
+static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, const int maxlen, const int quiet) {
 	static char jogger_hash[sizeof(int)*2+3];
 	int mylen, fs, fd;
 
@@ -145,7 +146,7 @@ static int ekg_openfile(const char *fn, char **data, int *len, char **hash, cons
 		}
 	}
 
-	if (data) {
+	if (data || hash) {
 		char *out = xmalloc(fs+1);
 		void *p = out;
 		int rem = fs, res = 1;
@@ -193,7 +194,10 @@ static int ekg_openfile(const char *fn, char **data, int *len, char **hash, cons
 			snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
 			*hash = jogger_hash;
 		}
-		*data = out;
+		if (data)
+			*data = out;
+		else
+			xfree(out);
 	} else if (len)
 		*len = fs;
 	close(fd);
@@ -215,7 +219,7 @@ COMMAND(jogger_prepare) {
 		return -1;
 	}
 
-	if (ekg_openfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
+	if (ekg_checkoutfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
 		return -1;
 	len = xstrlen(entry);
 	s = entry;
@@ -351,7 +355,7 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (ekg_openfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
+	if (ekg_checkoutfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
