@@ -353,8 +353,10 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 				char *tmp = xstrndup(msg, fs); /* temporary workaround for mmap() problems */
 
 				if (charset) {
-					msgx = ekg_convert_string(tmp, charset, NULL);
-					xfree(tmp);
+					if (!(msgx = ekg_convert_string(tmp, charset, NULL)))
+						msgx = tmp;
+					else
+						xfree(tmp);
 				} else
 					msgx = tmp;
 			}
