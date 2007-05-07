@@ -279,6 +279,8 @@ COMMAND(jogger_prepare) {
 					char *values		= xstrndup(sep+1, end-sep-1);
 					if (cssfind(values, "techblog", ',', 1) && cssfind(values, "miniblog", ',', 1))
 						WARN_PRINT("jogger_warning_miniblog_techblog");
+					else if (cssfind(values, "techblog", 0, 1))
+						WARN_PRINT("jogger_warning_techblog_only");
 					xfree(values);
 				}
 			} else if (i == 5) {
