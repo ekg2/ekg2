@@ -52,7 +52,7 @@ static char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
 static const char *timestamp_cache = NULL;
 
 static int no_prompt_cache = 0;
-static int no_promp_cache_hash = 2261954;	/* hash value of "no_promp_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
+static int no_prompt_cache_hash = 2261954;	/* hash value of "no_prompt_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
 
 struct format {
 	char *name;
@@ -873,7 +873,7 @@ void format_add(const char *name, const char *value, int replace) {
 
 	hash = ekg_hash(name);
 
-	if (hash == no_promp_cache_hash && !xstrcmp(name, "no_prompt_cache")) {
+	if (hash == no_prompt_cache_hash && !xstrcmp(name, "no_prompt_cache")) {
 		no_prompt_cache = 1;
 		return;
 	}
@@ -1095,7 +1095,7 @@ void theme_plugins_init() {
 void theme_init()
 {
 	theme_cache_reset();
-	no_promp_cache_hash = ekg_hash("no_promp_cache");
+	no_prompt_cache_hash = ekg_hash("no_prompt_cache");
 #ifndef NO_DEFAULT_THEME
 	/* wykorzystywane w innych formatach */
 	format_add("prompt", "%K:%g:%G:%n", 1);
