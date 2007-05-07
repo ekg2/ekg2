@@ -38,6 +38,9 @@ void xmlnode_handle_end(void *data, const char *name)
 	}
 
 	if (!(n = j->node)) {
+			/* XXX: dj, maybe we set some sessionvar here,
+			 * and then take a look at it before submitting PROTOCOL_DISCONNECTED
+			 * with some weird error? */
 		debug("[jabber] end tag within <stream>, ignoring\n");
 		return;
 	}
