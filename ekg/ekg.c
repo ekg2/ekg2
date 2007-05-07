@@ -153,8 +153,8 @@ void ekg_loop() {
 				int ispersist = t->persist;
 				
                                 if (ispersist) {
-                                        tv.tv_sec += t->period;
                                         memcpy(&t->ends, &tv, sizeof(tv));
+                                        t->ends.tv_sec += t->period;
                                 }
 
 				if ((t->function(0, t->data) == -1) || !ispersist)
