@@ -254,6 +254,7 @@ static int jogger_theme_init(void) {
 static plugins_params_t jogger_plugin_vars[] = {
 	PLUGIN_VAR_ADD("entry_file",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("entry_hash",		0, VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("ignore_outgoing_entries", 0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
 	PLUGIN_VAR_ADD("newentry_open_query",	0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("own_commentformat",	0, VAR_STR, NULL, 0, NULL),

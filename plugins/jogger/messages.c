@@ -228,7 +228,8 @@ QUERY(jogger_msghandler) {
 				lmsg		= tmp+1;
 				rcpts[0]	= saprintf("jogger:%d", n);
 			}
-		}
+		} else if (session_int_get(js, "ignore_outgoing_entries"))
+			return -1;
 		
 		lmsg		= xstrdup(lmsg);
 		suid		= xstrdup(session_uid_get(js));
@@ -238,6 +239,7 @@ QUERY(jogger_msghandler) {
 
 		query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcptsb, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
 	
+		xfree(rcpts[0]);
 		xfree(uid);
 		xfree(suid);
 		xfree(lmsg);
