@@ -1283,14 +1283,16 @@ static COMMAND(jabber_command_register)
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *passwd = session_get(session, "password");
+	const int unregister = !xstrcmp(name, "unregister");
 	char **splitted	= NULL;
 
-	if (!session_connected_get(session) && (!passwd || !*passwd || !xstrcmp(passwd, "foo"))) {
-		session_set(session, "__new_account", "1");
-		if (params[0]) session_set(session, "password", params[0]);
-		jabber_command_connect(("connect"), NULL, session, target, quiet);
-		return 0;
-	} else if (!session_connected_get(session)) {
+	if (!session_connected_get(session)) {
+		if ((!passwd || !*passwd || !xstrcmp(passwd, "foo"))) {
+			session_set(session, "__new_account", "1");
+			if (params[0]) session_set(session, "password", params[0]);
+			jabber_command_connect(("connect"), NULL, session, target, quiet);
+			return 0;
+		}
 		printq("not_connected", session_name(session));
 		return -1;
 	}
@@ -1302,7 +1304,9 @@ static COMMAND(jabber_command_register)
 		printq("invalid_params", name);
 		return -1;
 	}
-	watch_write(j->send_watch, "<iq type=\"%s\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", params[1] ? "set" : "get", server, j->id++);
+	watch_write(j->send_watch, "<iq type=\"%s\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", params[1] || unregister ? "set" : "get", server, j->id++);
+	if (unregister)
+		watch_write(j->send_watch, "<remove/>");
 	if (splitted) {
 		int i = 0;
 		int use_x_data = 0;
@@ -2732,6 +2736,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:unban"), "! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
 //	command_add(&jabber_plugin, ("jid:unignore"), "i ?", jabber_command_ignore, JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("jid:unregister"), "?", jabber_command_register, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:userinfo"), "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:vacation"), "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
