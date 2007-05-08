@@ -78,7 +78,7 @@ void format_add(const char *name, const char *value, int replace) {
 				}
 				return;
 			}
-			printf("nothit_add: %s vs %s\n", name, f->name);
+			printf("nothit_add: %s vs %s | %08x\n", name, f->name, hash);
 		}
 	}
 
@@ -91,12 +91,14 @@ void format_add(const char *name, const char *value, int replace) {
 	return;
 }
 
+
+#define ROL(x) (((x>>25)&0x7f)|((x<<7)&0xffffff80))
 hash_t ekg_hash(const char *name) {	/* ekg_hash() from stuff.c (rev: 1.1 to 1.203, and later) */
 	hash_t hash = 0;
-	
+
 	for (; *name; name++) {
 		hash ^= *name;
-		hash <<= 1;
+		hash = ROL(hash);
 	}
 
 	return hash;
