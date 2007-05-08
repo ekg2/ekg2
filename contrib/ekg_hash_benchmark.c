@@ -7,7 +7,7 @@
 
 typedef int hash_t;
 
-hash_t no_prompt_cache_hash = 2261954;	/* hash value of "no_promp_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
+hash_t no_prompt_cache_hash = 0x139dcbd6;	/* hash value of "no_promp_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
 
 hash_t ekg_hash(const char *name);
 
@@ -142,6 +142,8 @@ const char *format_find(const char *name) {
 
 int main() {
 	no_prompt_cache_hash = ekg_hash("no_prompt_cache");
+	fprintf(stderr, "no_prompt_cache %08x\n", no_prompt_cache_hash);
+
 	/* first of all we add all formats to list */
 #define _(x) x
 	format_add("prompt", "%K:%g:%G:%n", 1);
