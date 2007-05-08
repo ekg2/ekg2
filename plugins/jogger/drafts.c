@@ -108,12 +108,18 @@ void jogger_localize_headers(void *p) {
  * @param	data	- pointer to store file contents or NULL, if don't want to read it.
  * @param	len	- pointer to store filelength or NULL, if not needed.
  * @param	hash	- pointer to store filehash or NULL, if not needed.
+ * @param	maxlen	- maximum filesize to accept or 0, if n/a
+ * @param	flags	- bitmap field:<br>
+ * 				1 - quiet (not printing any errors),<br>
+ * 				2 - accept empty file.
  *
  * @return	0 on success, errno on failure.
  */
-static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, const int maxlen, const int quiet) {
+static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, const int maxlen, const int flags) {
 	static char jogger_hash[sizeof(int)*2+3];
 	int mylen, fs, fd;
+	
+	const int quiet	= (flags&1);
 
 	if (!fn)
 		return EINVAL;
@@ -135,7 +141,7 @@ static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, 
 			printq("io_nonfile");
 			return EISDIR; /* nearest, I think */
 		}
-		if ((fs = st.st_size) == 0) {
+		if (!(flags&2) && (fs = st.st_size) == 0) {
 			close(fd);
 			printq("io_emptyfile");
 			return EINVAL; /* like mmap */
@@ -151,27 +157,29 @@ static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, 
 		void *p = out;
 		int rem = fs, res = 1;
 
-		{
-			int cf = fcntl(fd, F_GETFL);
+		if (fs) {
+			{
+				int cf = fcntl(fd, F_GETFL);
 
-			if (cf == -1) /* evil thing */
-				cf = 0;
-			else
-				cf &= ~O_NONBLOCK;
-			fcntl(fd, F_SETFL, cf);
-		}
+				if (cf == -1) /* evil thing */
+					cf = 0;
+				else
+					cf &= ~O_NONBLOCK;
+				fcntl(fd, F_SETFL, cf);
+			}
 
-		while ((res = read(fd, p, (rem <= SSIZE_MAX ? rem : SSIZE_MAX)))) {
-			if (res == -1) {
-				const int err = errno;
-				if (err != EINTR && err != EAGAIN) {
-					close(fd);
-					printq("io_cantread");
-					return err;
+			while ((res = read(fd, p, (rem <= SSIZE_MAX ? rem : SSIZE_MAX)))) {
+				if (res == -1) {
+					const int err = errno;
+					if (err != EINTR && err != EAGAIN) {
+						close(fd);
+						printq("io_cantread");
+						return err;
+					}
+				} else {
+					p += res;
+					rem -= res;
 				}
-			} else {
-				p += res;
-				rem -= res;
 			}
 		}
 
