@@ -5,7 +5,11 @@
 #include <string.h>
 #include <errno.h>
 
-static int no_prompt_cache_hash = 2261954;	/* hash value of "no_promp_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
+typedef int hash_t;
+
+hash_t no_prompt_cache_hash = 2261954;	/* hash value of "no_promp_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
+
+hash_t ekg_hash(const char *name);
 
 struct list {
 	void *data;
@@ -41,35 +45,40 @@ void *list_add_beginning(list_t *list, void *data) {
 
 struct format {
 	char *name;
-	int name_hash;
+	hash_t name_hash;
 	char *value;
 };
-static list_t formats = NULL;
+list_t formats = NULL;
 
 void format_add(const char *name, const char *value, int replace) {
 	struct format *f;
 	list_t l;
-	int hash;
+	hash_t hash;
 
 	if (!name || !value)
 		return;
 
 	hash = ekg_hash(name);
 
-	if (hash == no_prompt_cache_hash && !xstrcmp(name, "no_prompt_cache")) {
-		no_prompt_cache_hash = no_prompt_cache_hash;
-		return;
+	if (hash == no_prompt_cache_hash) {
+		if (!xstrcmp(name, "no_prompt_cache")) {
+			no_prompt_cache_hash = no_prompt_cache_hash;
+			return;
+		}
+		printf("nothit_add0: %s vs no_prompt_cache\n", name);
 	}
 
 	for (l = formats; l; l = l->next) {
 		struct format *f = l->data;
-
-		if (hash == f->name_hash && !xstrcmp(name, f->name)) {
-			if (replace) {
-				xfree(f->value);
-				f->value = xstrdup(value);
+		if (hash == f->name_hash) {
+			if (!xstrcmp(name, f->name)) {
+				if (replace) {
+					xfree(f->value);
+					f->value = xstrdup(value);
+				}
+				return;
 			}
-			return;
+			printf("nothit_add: %s vs %s\n", name, f->name);
 		}
 	}
 
@@ -82,10 +91,9 @@ void format_add(const char *name, const char *value, int replace) {
 	return;
 }
 
-
-int ekg_hash(const char *name) {	/* ekg_hash() from stuff.c (rev: 1.1 to 1.203) */
-	int hash = 0;
-
+hash_t ekg_hash(const char *name) {	/* ekg_hash() from stuff.c (rev: 1.1 to 1.203, and later) */
+	hash_t hash = 0;
+	
 	for (; *name; name++) {
 		hash ^= *name;
 		hash <<= 1;
@@ -96,8 +104,42 @@ int ekg_hash(const char *name) {	/* ekg_hash() from stuff.c (rev: 1.1 to 1.203) 
 
 int i = 0;
 
+const char *format_find(const char *name) {
+	const char *tmp;
+	hash_t hash;
+	list_t l;
+
+	if (!name)
+		return "";
+
+	/* speech app */
+	if (!strchr(name, ',')) {
+		static char buf[1024];
+		const char *tmp;
+
+		snprintf(buf, sizeof(buf), "%s,speech", name);
+		tmp = format_find(buf);
+		if (tmp[0] != '\0')
+			return tmp;
+	}
+
+	hash = ekg_hash(name);
+
+	for (l = formats; l; l = l->next) {
+		struct format *f = l->data;
+
+		if (hash == f->name_hash) {
+			if (!xstrcmp(f->name, name))
+				return f->value;
+
+			printf("nothit_find: %s vs %s\n", name, f->name);
+		}
+	}
+	return "";
+}
+
 int main() {
-	no_prompt_cache_hash = ekg_hash("no_promp_cache");
+	no_prompt_cache_hash = ekg_hash("no_prompt_cache");
 	/* first of all we add all formats to list */
 #define _(x) x
 	format_add("prompt", "%K:%g:%G:%n", 1);
@@ -923,7 +965,16 @@ int main() {
 	format_add("xosd_welcome_message_line_1", _("ekg2 XOnScreenDisplay plugin"), 1);
 	format_add("xosd_welcome_message_line_2", _("Author: Adam 'dredzik' Kuczynski"), 1);
 
-	if (i++ < 100) main();
+	for (i = 0; i < 1; i++) {
+		list_t l;
+
+		for (l = formats; l; l = l->next) {
+			struct format *f = l->data;
+			
+			format_find(f->name);
+		}
+	}
+
 	return 0;
 }
 
