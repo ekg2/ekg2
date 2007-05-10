@@ -1941,15 +1941,15 @@ void theme_init()
 	format_add("aspell_init_error", "%! B³±d modu³u sprawdzania pisowni: %T%1%n\n", 1);
 #endif 
 	/* jogger-like I/O */
-	format_add("io_cantopen", _("%! Unable to open file!"), 1);
-	format_add("io_nonfile", _("%! Given path doesn't appear to be regular file!"), 1);
-	format_add("io_cantread", _("%! Unable to read file!"), 1);
-	format_add("io_truncated", _("%! %|WARNING: Filesize smaller than before. File probably truncated!"), 1);
-	format_add("io_truncated", _("%! %|WARNING: EOF before reaching filesize. File probably truncated (somehow)!"), 1);
-	format_add("io_expanded", _("%! %|WARNING: Filesize larger than before. File probably got expanded!"), 1);
-	format_add("io_emptyfile", _("%! File is empty!"), 1);
-	format_add("io_toobig", _("%! File size exceeds maximum allowed length!"), 1);
-	format_add("io_binaryfile", _("%! %|WARNING: The file probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %g%1%n (in bytes)!"), 1);
+	format_add("io_cantopen", _("%! %|Unable to open file: %T%1%n (%c%2%n)!"), 1);
+	format_add("io_nonfile", _("%! %|Given path doesn't appear to be regular file: %T%1%n!"), 1);
+	format_add("io_cantread", _("%! %|Unable to read file: %T%1%n (%c%2%n)!"), 1);
+	format_add("io_truncated", _("%! %|WARNING: Filesize smaller than before (%c%2%n vs. %c%3%n). File %T%1%n probably truncated!"), 1);
+	format_add("io_truncated", _("%! %|WARNING: EOF before reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably truncated (somehow)!"), 1);
+	format_add("io_expanded", _("%! %|WARNING: Filesize larger than before (%c%2%n vs. %c%3%n). File %T%1%n probably got expanded!"), 1);
+	format_add("io_emptyfile", _("%! File %T%1%n is empty!"), 1);
+	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (%c%2%n vs. %c%3%n)!"), 1);
+	format_add("io_binaryfile", _("%! %|WARNING: The file %T%1%n probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %c%2%n (vs. filesize of %c%3%n)!"), 1);
 
 	theme_plugins_init();
 #endif	/* !NO_DEFAULT_THEME */

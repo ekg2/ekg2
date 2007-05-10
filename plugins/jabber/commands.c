@@ -105,12 +105,12 @@ static COMMAND(jabber_command_dcc) {
 		}
 
 		if (!stat(fn, &st) && !S_ISREG(st.st_mode)) {
-			printq("io_nonfile");
+			printq("io_nonfile", params[2]);
 			return -1;
 		}
 
 		if ((fd = fopen(fn, "r")) == NULL) {
-			printq("io_cantopen");
+			printq("io_cantopen", params[2], strerror(errno));
 			return -1;
 		}
 

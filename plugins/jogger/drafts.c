@@ -18,6 +18,7 @@
 #define _POSIX_SOURCE
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #ifndef HAVE_STRLCPY
@@ -104,7 +105,7 @@ void jogger_localize_headers(void *p) {
  * Tries to open given file (check), and reads it, if expected (checkout).
  * It is designed to be proof to special file problems (especially named pipe ones).
  *
- * @param	fn	- filename to open.
+ * @param	file	- filename to open.
  * @param	data	- pointer to store file contents or NULL, if don't want to read it.
  * @param	len	- pointer to store filelength or NULL, if not needed.
  * @param	hash	- pointer to store filehash or NULL, if not needed.
@@ -115,10 +116,11 @@ void jogger_localize_headers(void *p) {
  *
  * @return	0 on success, errno on failure.
  */
-static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, const int maxlen, const int flags) {
+static int ekg_checkoutfile(const char *file, char **data, int *len, char **hash, const int maxlen, const int flags) {
 	static char jogger_hash[sizeof(int)*2+3];
 	int mylen, fs, fd;
-	
+
+	const char *fn	= prepare_path_user(file);
 	const int quiet	= (flags&1);
 
 	if (!fn)
@@ -127,9 +129,9 @@ static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, 
 	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
 		const int err = errno;
 		if (err == ENXIO)
-			printq("io_nonfile");
+			printq("io_nonfile", file);
 		else
-			printq("io_cantopen");
+			printq("io_cantopen", file, strerror(err));
 		return err;
 	}
 
@@ -138,16 +140,16 @@ static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, 
 
 		if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode)) {
 			close(fd);
-			printq("io_nonfile");
+			printq("io_nonfile", file);
 			return EISDIR; /* nearest, I think */
 		}
 		if (!(flags&2) && (fs = st.st_size) == 0) {
 			close(fd);
-			printq("io_emptyfile");
+			printq("io_emptyfile", file);
 			return EINVAL; /* like mmap */
 		} else if (maxlen && fs > maxlen) {
 			close(fd);
-			printq("io_toobig");
+			printq("io_toobig", file, itoa(fs), itoa(maxlen));
 			return EFBIG;
 		}
 	}
@@ -173,7 +175,7 @@ static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, 
 					const int err = errno;
 					if (err != EINTR && err != EAGAIN) {
 						close(fd);
-						printq("io_cantread");
+						printq("io_cantread", file, strerror(errno));
 						return err;
 					}
 				} else {
@@ -190,13 +192,14 @@ static int ekg_checkoutfile(const char *fn, char **data, int *len, char **hash, 
 			if (fstat(fd, &st) == -1)
 				debug_error("ekg_openfile(): unable to fstat() again!\n");
 			else if (st.st_size > fs)
-				printq("io_expanded");
+				printq("io_expanded", file, itoa(st.st_size), itoa(fs));
 			else if (st.st_size < fs)
-				printq("io_truncated");
+				printq("io_truncated", file, itoa(st.st_size), itoa(fs));
 			else if (rem > 0)
-				printq("io_truncated_read");
-			else if (fs > mylen)
-				printq("io_binaryfile", itoa(mylen));
+				printq("io_truncated_read", file, itoa(fs-rem), itoa(fs));
+			
+			if ((fs-rem) > mylen)
+				printq("io_binaryfile", file, itoa(mylen), itoa(fs));
 		}
 
 		if (len)
@@ -237,7 +240,7 @@ COMMAND(jogger_prepare) {
 		return -1;
 	}
 
-	if (ekg_checkoutfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
+	if (ekg_checkoutfile(fn, &entry, NULL, &hash, 0, quiet))
 		return -1;
 	len = xstrlen(entry);
 	s = entry;
@@ -375,7 +378,7 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (ekg_checkoutfile(prepare_path_user(fn), &entry, NULL, &hash, 0, quiet))
+	if (ekg_checkoutfile(fn, &entry, NULL, &hash, 0, quiet))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
