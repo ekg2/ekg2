@@ -390,7 +390,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				else if (!xstrcmp(ch->name, "bind"))
 					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Bind resource");
 				else if (!xstrcmp(ch->name, "register"))
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Reigster account using /register");
+					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Register account using /register");
 				else	print("xmpp_feature_unknown", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"));
 
 		}
