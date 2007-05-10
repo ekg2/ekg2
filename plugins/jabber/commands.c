@@ -104,14 +104,13 @@ static COMMAND(jabber_command_dcc) {
 			return -1;
 		}
 
-			/* XXX: if given path is a pipe, we get lovely stuck */
-		if (!stat(fn, &st) && S_ISDIR(st.st_mode)) {
-			printq("dcc_open_error", params[2], strerror(EISDIR));
+		if (!stat(fn, &st) && !S_ISREG(st.st_mode)) {
+			printq("io_nonfile");
 			return -1;
 		}
 
 		if ((fd = fopen(fn, "r")) == NULL) {
-			printq("dcc_open_error", params[2], strerror(errno));
+			printq("io_cantopen");
 			return -1;
 		}
 
