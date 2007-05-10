@@ -264,16 +264,13 @@ COMMAND(gg_command_dcc)
 			return -1;
 		}
 		
-		if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) {
-			if (errno == ENXIO)
-				printq("io_nonfile", params[2]);
-			else
-				printq("io_cantopen", params[2], strerror(errno));
+		if (!stat(fn, &st) && S_ISDIR(st.st_mode)) {
+			printq("dcc_open_error", params[2], strerror(EISDIR));
 			return -1;
 		}
-
-		if (!stat(fn, &st) && !S_ISREG(st.st_mode)) {
-			printq("io_nonfile", params[2]);
+		
+		if ((fd = open(fn, O_RDONLY)) == -1) {
+			printq("dcc_open_error", params[2], strerror(errno));
 			return -1;
 		}
 
