@@ -191,8 +191,7 @@ void variable_set_default()
 	else
 		config_console_charset = xstrdup("ISO-8859-2"); /* Default: ISO-8859-2 */
 #if USE_UNICODE
-		/* yep, that was a great idea to unset config_use_unicode if it wasn't set */
-	if (xstrcasecmp(console_charset, "UTF-8")) {
+	if (!config_use_unicode && xstrcasecmp(console_charset, "UTF-8")) {
 		debug("nl_langinfo(CODESET) == %s swapping config_use_unicode to 0\n", console_charset);
 		config_use_unicode = 0;
 	} else	config_use_unicode = 1;
