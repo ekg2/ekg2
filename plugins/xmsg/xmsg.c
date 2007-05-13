@@ -613,8 +613,10 @@ static COMMAND(xmsg_msg)
 	const char *msgcmd = session_get(session, "send_cmd");
 	char *msgx = NULL, *mymsg;
 	
-	if (!(uid = get_uid(session, target)))
-		uid = (char*) target;
+	if (!(uid = get_uid(session, target))) {
+		printq("invalid_session");
+		return -1;
+	}
 
 	if (!msgcmd || *msgcmd == '\0') {
 		printq("xmsg_nosendcmd", session_name(session));
