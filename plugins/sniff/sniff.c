@@ -292,14 +292,24 @@ static char *tcp_print_flags(u_char tcpflag) {
 }
 
 /*  ****************************************************** */
-static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32_t recpt, enum msgclass_t type, const char *msg) {
+static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32_t recpt, enum msgclass_t type, const char *msg, time_t sent) {
+	struct tm *tm_msg;
+	char timestamp[100] = { '\0' };
+	const char *timestamp_f;
+
 	const char *sender = build_gg_uid(recpt);
+
+	tm_msg = localtime(&sent);
+	timestamp_f = format_find((type == EKG_MSGCLASS_CHAT) ? "sent_timestamp" : "chat_timestamp");
+
+	if (timestamp_f[0] && !strftime(timestamp, sizeof(timestamp), timestamp_f, tm_msg))
+			xstrcpy(timestamp, "TOOLONG");
 
 	print_window(build_windowip_name(type == EKG_MSGCLASS_CHAT ? hdr->dstip : hdr->srcip) /* ip and/or gg# */, s, 1, 
 		type == EKG_MSGCLASS_CHAT ? "message" : "sent", 	/* formatka */
 
 		format_user(s, sender),			/* do kogo */
-		"timestamp", 				/* XXX timestamp */
+		timestamp, 				/* timestamp */
 		msg,					/* wiadomosc */
 		get_nickname(s, sender),		/* jego nickname */
 		sender,					/* jego uid */
@@ -378,7 +388,7 @@ SNIFF_HANDLER(sniff_gg_recv_msg, gg_recv_msg) {
 
 	CHECK_LEN(sizeof(gg_recv_msg))	len -= sizeof(gg_recv_msg);
 	msg = gg_cp_to_iso(xstrndup(pkt->msg_data, len));
-		sniff_gg_print_message(s, hdr, pkt->sender, EKG_MSGCLASS_CHAT, msg);
+		sniff_gg_print_message(s, hdr, pkt->sender, EKG_MSGCLASS_CHAT, msg, pkt->time);
 	xfree(msg);
 	return 0;
 }
@@ -388,7 +398,7 @@ SNIFF_HANDLER(sniff_gg_send_msg, gg_send_msg) {
 
 	CHECK_LEN(sizeof(gg_send_msg))  len -= sizeof(gg_send_msg);
 	msg = gg_cp_to_iso(xstrndup(pkt->msg_data, len));
-		sniff_gg_print_message(s, hdr, pkt->recipient, EKG_MSGCLASS_SENT_CHAT, msg);
+		sniff_gg_print_message(s, hdr, pkt->recipient, EKG_MSGCLASS_SENT_CHAT, msg, time(NULL));
 	xfree(msg);
 
 	return 0;
