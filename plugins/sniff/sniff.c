@@ -608,19 +608,29 @@ static const char *sniff_gg_userlist_reply_str(uint8_t type) {
 }
 
 SNIFF_HANDLER(sniff_gg_userlist_reply, gg_userlist_reply) {
+	char *data, *datatmp;
+	char *dataline;
 	CHECK_LEN(sizeof(gg_userlist_reply));	len -= sizeof(gg_userlist_reply);
 	
 	if (len) {
 		debug_error("sniff_gg_userlist_reply() stublen: %d\n", len);
-		tcp_print_payload(pkt->data, len);
+		tcp_print_payload((u_char *) pkt->data, len);
 	}
+
+	datatmp = data = len ? gg_cp_to_iso(xstrndup(pkt->data, len)) : NULL;
 	
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
-		len ? "sniff_gg_userlist_reply_data" : "sniff_gg_userlist_reply",
+		"sniff_gg_userlist_reply",
 		sniff_gg_userlist_reply_str(pkt->type),
-		build_hex(pkt->type),
-		len ? pkt->data : "");
+		build_hex(pkt->type));
 
+	while ((dataline = split_line(&datatmp))) {
+		print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_userlist_data", "REPLY",
+			dataline);
+	}
+
+	xfree(data);
 	return 0;
 }
 
@@ -637,19 +647,29 @@ static const char *sniff_gg_userlist_req_str(uint8_t type) {
 }
 
 SNIFF_HANDLER(sniff_gg_userlist_req, gg_userlist_request) {
+	char *data, *datatmp;
+	char *dataline;
 	CHECK_LEN(sizeof(gg_userlist_request));	len -= sizeof(gg_userlist_request);
 	
 	if (len) {
 		debug_error("sniff_gg_userlist_req() stublen: %d\n", len);
-		tcp_print_payload(pkt->data, len);
+		tcp_print_payload((u_char *) pkt->data, len);
 	}
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-		len ? "sniff_gg_userlist_req_data" : "sniff_gg_userlist_req",
-		sniff_gg_userlist_req_str(pkt->type),
-		build_hex(pkt->type),
-		len ? pkt->data : "");
+	datatmp = data = len ? gg_cp_to_iso(xstrndup(pkt->data, len)) : NULL;
 
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_userlist_req",
+		sniff_gg_userlist_req_str(pkt->type),
+		build_hex(pkt->type));
+
+	while ((dataline = split_line(&datatmp))) {
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_userlist_data", "REQUEST",
+			dataline);
+	}
+
+	xfree(data);
 	return 0;
 }
 
@@ -672,7 +692,7 @@ SNIFF_HANDLER(sniff_gg_pubdir50_reply, gg_pubdir50_reply) {
 
 	if (len) {
 		debug_error("sniff_gg_pubdir50_reply() stublen: %d\n", len);
-		tcp_print_payload(pkt->data, len);
+		tcp_print_payload((u_char *) pkt->data, len);
 	}
 	
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
@@ -689,7 +709,7 @@ SNIFF_HANDLER(sniff_gg_pubdir50_req, gg_pubdir50_request) {
 
 	if (len) {
 		debug_error("sniff_gg_pubdir50_req() stublen: %d\n", len);
-		tcp_print_payload(pkt->data, len);
+		tcp_print_payload((u_char *) pkt->data, len);
 	}
 
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
@@ -797,13 +817,13 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 
 		if (print_hash) {
 			debug_error("sniff_gg_dcc_new() NOT GG_DCC_REQUEST_FILE, pkt->hash NOT NULL, printing...\n");
-			tcp_print_payload(pkt->hash, sizeof(pkt->hash));
+			tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
 		}
 	}
 
-	tcp_print_payload(pkt->filename, sizeof(pkt->filename));	/* tutaj smieci */
+	tcp_print_payload((u_char *) pkt->filename, sizeof(pkt->filename));	/* tutaj smieci */
 
-	fname = xstrndup(pkt->filename, sizeof(pkt->filename));
+	fname = xstrndup((u_char *) pkt->filename, sizeof(pkt->filename));
 	debug("sniff_gg_dcc_new() code: %s uin1: %d uin2: %d fname: %s [%db]\n", 
 		build_code(pkt->code1), pkt->uin1, pkt->uin2, fname, pkt->size);
 	xfree(fname);
@@ -1524,9 +1544,9 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_login70_unknown",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gTYPE: %W%2"), 1);
 
 	format_add("sniff_gg_userlist_req",	_("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2)"), 1);
-	format_add("sniff_gg_userlist_req_data",_("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2) %gDATA: %W%3"), 1);
 	format_add("sniff_gg_userlist_reply",	_("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2)"), 1);
-	format_add("sniff_gg_userlist_reply_data",_("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2) %gDATA: %W%3"), 1);
+
+	format_add("sniff_gg_userlist_data",	_("%)   %b[%1] %gENTRY: %W%2"), 1);
 
 	format_add("sniff_gg_pubdir50_req",	_("%) %b[GG_PUBDIR50_REQUEST] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
 	format_add("sniff_gg_pubdir50_reply",	_("%) %b[GG_PUBDIR50_REPLY] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
