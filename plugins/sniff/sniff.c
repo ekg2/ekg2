@@ -721,6 +721,64 @@ SNIFF_HANDLER(sniff_gg_pubdir50_req, gg_pubdir50_request) {
 	return 0;
 }
 
+SNIFF_HANDLER(sniff_gg_list_first, gg_notify) {
+	CHECK_LEN(sizeof(gg_notify));
+
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_list", "GG_LIST_FIRST", itoa(len));
+
+	while (len >= sizeof(gg_notify)) {
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, "sniff_gg_list_data", 
+			"GG_LIST_FIRST",
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->dunno1));
+
+		pkt = (gg_notify *) pkt->data;
+		len -= sizeof(gg_notify);
+	}
+
+	if (len) {
+		debug_error("sniff_gg_list_first() leftlen: %d\n", len);
+		tcp_print_payload((u_char *) pkt, len);
+	}
+	return 0;
+}
+
+SNIFF_HANDLER(sniff_gg_list_last, gg_notify) {
+	CHECK_LEN(sizeof(gg_notify));
+
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_list", "GG_LIST_LAST", itoa(len));
+
+	while (len >= sizeof(gg_notify)) {
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, "sniff_gg_list_data", 
+			"GG_LIST_LAST",
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->dunno1));
+
+		pkt = (gg_notify *) pkt->data;
+		len -= sizeof(gg_notify);
+	}
+
+	if (len) {
+		debug_error("sniff_gg_list_last() leftlen: %d\n", len);
+		tcp_print_payload((u_char *) pkt, len);
+	}
+
+	return 0;
+}
+
+SNIFF_HANDLER(sniff_gg_list_empty, gg_notify) {
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_list", "GG_LIST_EMPTY", itoa(len));
+
+	if (len) {
+		debug_error("sniff_gg_list_empty() LIST EMPTY BUT len: %d (?)\n", len);
+		tcp_print_payload((u_char *) pkt, len);
+	}
+	return 0;
+}
+
 /* nie w libgadu */
 #define CHECK_PRINT(is, shouldbe) if (is != shouldbe) {\
 		if (sizeof(is) == 2)		debug_error("%s() values not match: %s [%.4x != %.4x]\n", __FUNCTION__, #is, is, shouldbe); \
@@ -1225,9 +1283,9 @@ static const struct {
 	{ GG_REMOVE_NOTIFY,	"GG_REMOVE_NOTIFY", 	SNIFF_OUTGOING, (void *) sniff_gg_del_notify, 0},
 	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_notify_reply60, 0}, 
 
-	{ GG_LIST_EMPTY,	"GG_LIST_EMPTY",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
-	{ GG_NOTIFY_FIRST,	"GG_NOTIFY_FIRST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
-	{ GG_NOTIFY_LAST,	"GG_NOTIFY_LAST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
+	{ GG_LIST_EMPTY,	"GG_LIST_EMPTY",	SNIFF_OUTGOING, (void *) sniff_gg_list_empty, 0},
+	{ GG_NOTIFY_FIRST,	"GG_NOTIFY_FIRST",	SNIFF_OUTGOING, (void *) sniff_gg_list_first, 0},
+	{ GG_NOTIFY_LAST,	"GG_NOTIFY_LAST",	SNIFF_OUTGOING, (void *) sniff_gg_list_last, 0},
 	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
 
 	{ GG_USERLIST_REQUEST,	"GG_USERLIST_REQUEST",	SNIFF_OUTGOING, (void *) sniff_gg_userlist_req, 0},
@@ -1547,6 +1605,9 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_userlist_reply",	_("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2)"), 1);
 
 	format_add("sniff_gg_userlist_data",	_("%)   %b[%1] %gENTRY: %W%2"), 1);
+
+	format_add("sniff_gg_list",		_("%) %b[%1] %gLEN: %W%2"), 1);
+	format_add("sniff_gg_list_data",	_("%)   %b[%1] %gENTRY: %W%2 %gTYPE: %W%3"), 1);
 
 	format_add("sniff_gg_pubdir50_req",	_("%) %b[GG_PUBDIR50_REQUEST] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
 	format_add("sniff_gg_pubdir50_reply",	_("%) %b[GG_PUBDIR50_REPLY] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);

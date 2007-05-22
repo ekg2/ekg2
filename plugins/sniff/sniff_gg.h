@@ -143,10 +143,11 @@ typedef struct {
 
 #define GG_NOTIFY 0x0010
 	
-struct gg_notify {
+typedef struct {
 	uint32_t uin;				/* numerek danej osoby */
 	uint8_t dunno1;				/* rodzaj wpisu w liście */
-} GG_PACKED;
+	char data[];
+} GG_PACKED gg_notify;
 
 #define GG_LOGIN70 0x19
 #define GG_LOGIN_HASH_GG32 0x01
