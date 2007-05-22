@@ -578,7 +578,13 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	debug_error("gg_notify_reply60: ip: %d port: %d ver: %x isize: %d\n", pkt->remote_ip, pkt->remote_port, pkt->version, pkt->image_size);
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_notify60",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(pkt->version), build_hex(pkt->version),
+		itoa(pkt->image_size));
 
 	if (pkt->uin & 0x40000000)
 		debug_error("gg_notify_reply60: GG_HAS_AUDIO_MASK set\n");
@@ -1613,6 +1619,7 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_pubdir50_reply",	_("%) %b[GG_PUBDIR50_REPLY] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
 
 	format_add("sniff_gg_status60", _("%) %b[GG_STATUS60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_notify60", _("%) %b[GG_NOTIFY60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_status77", _("%) %b[GG_STATUS77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_notify77", _("%) %b[GG_NOTIFY77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 
