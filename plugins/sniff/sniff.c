@@ -1513,8 +1513,13 @@ static COMMAND(sniff_command_disconnect) {
 		return -1;
 	}
 
-	session->connected = 0;
-	/* XXX, notify */
+	{
+		char *uid = session->uid;
+		char *reason = NULL;
+		int type = EKG_DISCONNECT_USER;
+
+		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &uid, &reason, &type);
+	}
 
 	if (!GET_DEV(session)) {
 		debug_error("sniff_command_disconnect() not dev?!\n");
@@ -1545,6 +1550,20 @@ static COMMAND(sniff_command_connections) {
 	return 0;
 }
 
+static QUERY(sniff_session_deinit) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
+	if (!s || !s->priv || s->plugin != &sniff_plugin)
+		return 1;
+
+	debug("sniff closing pcap dev: 0x%x\n", s->priv);
+	pcap_close(GET_DEV(s));	
+
+	s->priv = NULL;
+	return 0;
+}
+
 static QUERY(sniff_validate_uid) {
 	char    *uid    = *(va_arg(ap, char **));
 	int     *valid  = va_arg(ap, int *);
@@ -1556,7 +1575,6 @@ static QUERY(sniff_validate_uid) {
 		(*valid)++;
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -1650,6 +1668,7 @@ EXPORT int sniff_plugin_init(int prio) {
 	query_connect_id(&sniff_plugin, PROTOCOL_VALIDATE_UID,	sniff_validate_uid, NULL);
 	query_connect_id(&sniff_plugin, STATUS_SHOW, 		sniff_status_show, NULL);
 	query_connect_id(&sniff_plugin, PLUGIN_PRINT_VERSION,	sniff_print_version, NULL);
+	query_connect_id(&sniff_plugin, SESSION_REMOVED,	sniff_session_deinit, NULL);
 
 	command_add(&sniff_plugin, "sniff:connect", NULL, sniff_command_connect,    SESSION_MUSTBELONG, NULL);
 	command_add(&sniff_plugin, "sniff:connections", NULL, sniff_command_connections, SESSION_MUSTBELONG | SESSION_MUSTBECONNECTED, NULL);
@@ -1659,18 +1678,7 @@ EXPORT int sniff_plugin_init(int prio) {
 }
 
 static int sniff_plugin_destroy() {
-	list_t  l;
-
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-		if (GET_DEV(s) && !xstrncmp(s->uid, "sniff", 5)) {
-			debug("sniff closing pcap dev: 0x%x\n", s->priv);
-			pcap_close(GET_DEV(s));		
-		}
-	}
-
 	plugin_unregister(&sniff_plugin);
-
 	return 0;
 }
 
