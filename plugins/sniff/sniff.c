@@ -117,6 +117,17 @@ static char *build_windowip_name(struct in_addr ip) {
 	return buf;
 }
 
+static connection_t *sniff_udp_get(const struct iphdr *ip, const struct udphdr *udp) {
+	static connection_t d;
+	
+	d.srcip		= ip->ip_src;
+	d.srcport	= ntohs(udp->th_sport);
+
+	d.dstip		= ip->ip_dst;
+	d.dstport	= ntohs(udp->th_dport);
+	return &d;
+}
+
 /* XXX, make it only session-visible */
 static list_t tcp_connections;
 
@@ -1365,14 +1376,7 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
 	const struct ethhdr *ethernet;
 	const struct iphdr *ip;
-	const struct tcphdr *tcp;
-
-	connection_t *hdr;
-	const char *payload;
-	
 	int size_ip;
-	int size_tcp;
-	int size_payload;
 
 #define CHECK_LEN(x) \
 	if (header->caplen < x) {\
@@ -1388,41 +1392,65 @@ void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *pa
 		debug_error("sniff_loop()   * Invalid IP header length: %u bytes\n", size_ip);
 		return;
 	}
-
-	if (ip->ip_p != IPPROTO_TCP) return; /* XXX, tylko tcp */
-
-	CHECK_LEN(sizeof(struct ethhdr) + size_ip + sizeof(struct tcphdr))	tcp = (struct tcphdr*) (packet + SIZE_ETHERNET + size_ip);
-	size_tcp = TH_OFF(tcp)*4;
 	
-	if (size_tcp < 20) {
-		debug_error("sniff_loop()   * Invalid TCP header length: %u bytes\n", size_tcp);
-		return;
+	if (ip->ip_p == IPPROTO_TCP) {		/* here TCP packets */
+		/* XXX here, make some struct with known TCP services, and demangler-function */
+		const struct tcphdr *tcp;
+		int size_tcp;
+		connection_t *hdr;
+
+		const char *payload;
+		int size_payload;
+
+		CHECK_LEN(sizeof(struct ethhdr) + size_ip + sizeof(struct tcphdr))	tcp = (struct tcphdr*) (packet + SIZE_ETHERNET + size_ip);
+		size_tcp = TH_OFF(tcp)*4;
+
+		if (size_tcp < 20) {
+			debug_error("sniff_loop()   * Invalid TCP header length: %u bytes\n", size_tcp);
+			return;
+		}
+
+		size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
+
+		CHECK_LEN(SIZE_ETHERNET + size_ip + size_tcp + size_payload);
+
+		payload = (u_char *) (packet + SIZE_ETHERNET + size_ip + size_tcp);
+
+		hdr = sniff_tcp_find_connection(ip, tcp);
+
+		debug_function("sniff_loop() TCP %15s:%5d <==> %15s:%5d %s (SEQ: %lx ACK: %lx len: %d)\n", 
+				inet_ntoa(hdr->srcip), 		/* src ip */
+				hdr->srcport,			/* src port */
+				inet_ntoa(hdr->dstip), 		/* dest ip */
+				hdr->dstport, 			/* dest port */
+				tcp_print_flags(tcp->th_flags), /* tcp flags */
+				htonl(tcp->th_seq), 		/* seq */
+				htonl(tcp->th_ack), 		/* ack */
+				size_payload);			/* payload len */
+
+		/* XXX check tcp flags */
+		if (!size_payload) return;
+		/* XXX what proto ? check based on ip + port? */
+		sniff_gg((session_t *) data, hdr, (gg_header *) payload, size_payload);
+	} else if (ip->ip_p == IPPROTO_UDP) {	/* here UDP datagrams */
+		/* XXX here, make some struct with known UDP services, and demangler-function */
+		const struct udphdr *udp;
+		connection_t *hdr;
+
+		/* XXX, it's enough? */
+		CHECK_LEN(sizeof(struct ethhdr) + size_ip + sizeof(struct udphdr));	udp = (struct udphdr *) (packet + SIZE_ETHERNET + size_ip);
+
+		hdr = sniff_udp_get(ip, udp);
+
+		debug_function("sniff_loop() UDP %15s:%5d <==> %15s:%5d\n",
+				inet_ntoa(hdr->srcip), 		/* src ip */
+				hdr->srcport,			/* src port */
+				inet_ntoa(hdr->dstip), 		/* dest ip */
+				hdr->dstport); 			/* dest port */
+	} else {
+		/* other, implement if u want to || die. */
+
 	}
-
-	size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
-
-	CHECK_LEN(SIZE_ETHERNET + size_ip + size_tcp + size_payload);
-	
-	payload = (u_char *) (packet + SIZE_ETHERNET + size_ip + size_tcp);
-
-	hdr = sniff_tcp_find_connection(ip, tcp);
-
-	debug_function("sniff_loop() %15s:%5d <==> ", 
-			inet_ntoa(hdr->srcip), 		/* src ip */
-			hdr->srcport);			/* src port */
-
-	debug_function("%15s:%5d %s (SEQ: %lx ACK: %lx len: %d)\n", 
-			inet_ntoa(hdr->dstip), 		/* dest ip */
-			hdr->dstport, 			/* dest port */
-			tcp_print_flags(tcp->th_flags), /* tcp flags */
-			htonl(tcp->th_seq), 		/* seq */
-			htonl(tcp->th_ack), 		/* ack */
-			size_payload);			/* payload len */
-
-/* XXX check tcp flags */
-	if (!size_payload) return;
-/* XXX what proto ? check based on ip + port? */
-	sniff_gg((session_t *) data, hdr, (gg_header *) payload, size_payload);
 #undef CHECK_LEN
 }
 

@@ -61,3 +61,11 @@ struct tcphdr { /* TCP header */
 #define TH_CWR  0x80
 
 #define TH_FLAGS        (TH_FIN|TH_SYN|TH_RST|TH_ACK|TH_URG|TH_ECE|TH_CWR)
+
+struct udphdr {	/* UDP header */
+	u_short th_sport;		/* source port */
+	u_short th_dport;		/* destination port */
+	u_short th_len;			/* length */
+	u_short th_sum;			/* checksum */
+};
+
