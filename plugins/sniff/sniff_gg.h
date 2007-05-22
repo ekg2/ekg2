@@ -168,3 +168,16 @@ typedef struct {
 	char status_data[];
 } GG_PACKED gg_login70;
 
+#define GG_USERLIST_REPLY 0x0010
+typedef struct {
+	uint8_t type;
+	char data[];
+} GG_PACKED gg_userlist_reply;
+
+#define GG_USERLIST_REQUEST 0x0016
+
+typedef struct {
+	uint8_t type;
+	char data[];
+} GG_PACKED gg_userlist_request;
+

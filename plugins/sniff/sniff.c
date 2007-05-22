@@ -593,6 +593,66 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 	return 0;
 }
 
+static const char *sniff_gg_userlist_reply_str(uint8_t type) {
+#define GG_USERLIST_PUT_REPLY 0x00
+#define GG_USERLIST_PUT_MORE_REPLY 0x02
+#define GG_USERLIST_GET_REPLY 0x06
+#define GG_USERLIST_GET_MORE_REPLY 0x04
+	if (type == GG_USERLIST_PUT_REPLY) 	return "GG_USERLIST_PUT_REPLY";
+	if (type == GG_USERLIST_PUT_MORE_REPLY)	return "GG_USERLIST_PUT_MORE_REPLY";
+	if (type == GG_USERLIST_GET_REPLY)	return "GG_USERLIST_GET_REPLY";
+	if (type == GG_USERLIST_GET_MORE_REPLY)	return "GG_USERLIST_GET_MORE_REPLY";
+
+	debug_error("sniff_gg_userlist_reply_str() unk type: 0x%x\n", type);
+	return "unknown";
+}
+
+SNIFF_HANDLER(sniff_gg_userlist_reply, gg_userlist_reply) {
+	CHECK_LEN(sizeof(gg_userlist_reply));	len -= sizeof(gg_userlist_reply);
+	
+	if (len) {
+		debug_error("sniff_gg_userlist_reply() stublen: %d\n", len);
+		tcp_print_payload(pkt->data, len);
+	}
+	
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		len ? "sniff_gg_userlist_reply_data" : "sniff_gg_userlist_reply",
+		sniff_gg_userlist_reply_str(pkt->type),
+		build_hex(pkt->type),
+		len ? pkt->data : "");
+
+	return 0;
+}
+
+static const char *sniff_gg_userlist_req_str(uint8_t type) {
+#define GG_USERLIST_PUT 0x00
+#define GG_USERLIST_PUT_MORE 0x01
+#define GG_USERLIST_GET 0x02
+	if (type == GG_USERLIST_PUT) return "GG_USERLIST_PUT";
+	if (type == GG_USERLIST_PUT_MORE) return "GG_USERLIST_PUT_MORE";
+	if (type == GG_USERLIST_GET) return "GG_USERLIST_GET";
+
+	debug_error("sniff_gg_userlist_req_str() unk type: 0x%x\n", type);
+	return "unknown";
+}
+
+SNIFF_HANDLER(sniff_gg_userlist_req, gg_userlist_request) {
+	CHECK_LEN(sizeof(gg_userlist_request));	len -= sizeof(gg_userlist_request);
+	
+	if (len) {
+		debug_error("sniff_gg_userlist_req() stublen: %d\n", len);
+		tcp_print_payload(pkt->data, len);
+	}
+
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		len ? "sniff_gg_userlist_req_data" : "sniff_gg_userlist_req",
+		sniff_gg_userlist_req_str(pkt->type),
+		build_hex(pkt->type),
+		len ? pkt->data : "");
+
+	return 0;
+}
+
 /* nie w libgadu */
 #define CHECK_PRINT(is, shouldbe) if (is != shouldbe) {\
 		if (sizeof(is) == 2)		debug_error("%s() values not match: %s [%.4x != %.4x]\n", __FUNCTION__, #is, is, shouldbe); \
@@ -1102,6 +1162,9 @@ static const struct {
 	{ GG_NOTIFY_LAST,	"GG_NOTIFY_LAST",	SNIFF_OUTGOING, (void *) NULL, 0}, /* XXX */
 	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
 
+	{ GG_USERLIST_REQUEST,	"GG_USERLIST_REQUEST",	SNIFF_OUTGOING, (void *) sniff_gg_userlist_req, 0},
+	{ GG_USERLIST_REPLY,	"GG_USERLIST_REPLY",	SNIFF_INCOMING, (void *) sniff_gg_userlist_reply, 0},
+
 /* pakiety nie w libgadu: */
 	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_notify_reply77, 0},
 	{ GG_STATUS77,		"GG_STATUS77",		SNIFF_INCOMING, (void *) sniff_gg_status77, 0},
@@ -1409,6 +1472,10 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_login70_hash",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gHASH: %W%2"), 1);
 	format_add("sniff_gg_login70_unknown",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gTYPE: %W%2"), 1);
 
+	format_add("sniff_gg_userlist_req",	_("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2)"), 1);
+	format_add("sniff_gg_userlist_req_data",_("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2) %gDATA: %W%3"), 1);
+	format_add("sniff_gg_userlist_reply",	_("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2)"), 1);
+	format_add("sniff_gg_userlist_reply_data",_("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2) %gDATA: %W%3"), 1);
 
 	format_add("sniff_gg_status60", _("%) %b[GG_STATUS60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_status77", _("%) %b[GG_STATUS77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
