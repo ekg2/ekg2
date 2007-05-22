@@ -181,3 +181,19 @@ typedef struct {
 	char data[];
 } GG_PACKED gg_userlist_request;
 
+#define GG_PUBDIR50_REQUEST 0x0014
+
+typedef struct {
+	uint8_t type;			/* GG_PUBDIR50_* */
+	uint32_t seq;			/* czas wysłania zapytania */
+	char data[];
+} GG_PACKED gg_pubdir50_request;
+
+#define GG_PUBDIR50_REPLY 0x000e
+
+typedef struct {
+	uint8_t type;			/* GG_PUBDIR50_* */
+	uint32_t seq;			/* czas wysłania zapytania */
+	char data[];
+} GG_PACKED gg_pubdir50_reply;
+
