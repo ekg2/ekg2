@@ -253,7 +253,7 @@ int msg_queue_write()
 	if (!msg_queue)
 		return -1;
 
-	if (mkdir_recursive(prepare_path("queue", 0), 0))	/* create ~/.ekg2/[PROFILE/]queue/ */
+	if (mkdir_recursive(prepare_pathf("queue"), 1))		/* create ~/.ekg2/[PROFILE/]queue/ */
 		return -1;
 
 	for (l = msg_queue; l; l = l->next) {
@@ -290,33 +290,29 @@ int msg_queue_write()
  */
 
 int msg_queue_read() {
-	const char *path;
 	struct dirent *d;
 	DIR *dir;
 
-	path = prepare_path("queue", 0);
-
-	if (!(dir = opendir(path)))
+	if (!(dir = opendir(prepare_pathf("queue"))))		/* opendir() ~/.ekg2/[PROFILE/]/queue */
 		return -1;
 
 	while ((d = readdir(dir))) {
+		const char *fn;
+
 		msg_queue_t m;
 		struct stat st;
 		string_t msg;
-		char *fn, *buf;
+		char *buf;
 		FILE *f;
 
-		fn = saprintf("%s/%s", path, d->d_name);
-		
-		if (stat(fn, &st) || !S_ISREG(st.st_mode)) {
-			xfree(fn);
+		if (!(fn = prepare_pathf("queue/%s", d->d_name)))
 			continue;
-		}
 
-		if (!(f = fopen(fn, "r"))) {
-			xfree(fn);
+		if (stat(fn, &st) || !S_ISREG(st.st_mode))
 			continue;
-		}
+
+		if (!(f = fopen(fn, "r")))
+			continue;
 
 		memset(&m, 0, sizeof(m));
 
@@ -324,20 +320,17 @@ int msg_queue_read() {
 
 		if (!buf || xstrcmp(buf, "v1")) {
 			fclose(f);
-			xfree(fn);
 			continue;
 		}
 
 		if (!(m.session = read_file(f, 1))) {
 			fclose(f);
-			xfree(fn);
 			continue;
 		}
 	
 		if (!(m.rcpts = read_file(f, 1))) {
 			xfree(m.session);
 			fclose(f);
-			xfree(fn);
 			continue;
 		}
 
@@ -345,7 +338,6 @@ int msg_queue_read() {
 			xfree(m.session);
 			xfree(m.rcpts);
 			fclose(f);
-			xfree(fn);
 			continue;
 		}
 
@@ -355,7 +347,6 @@ int msg_queue_read() {
 			xfree(m.session);
 			xfree(m.rcpts);
 			fclose(f);
-			xfree(fn);
 			continue;
 		}
 		
@@ -376,7 +367,6 @@ int msg_queue_read() {
 
 		fclose(f);
 		unlink(fn);
-		xfree(fn);
 	}
 
 	closedir(dir);
