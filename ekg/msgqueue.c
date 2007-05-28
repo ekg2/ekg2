@@ -247,37 +247,28 @@ int msg_queue_count_session(const char *uid)
  */
 int msg_queue_write()
 {
-	const char *path;
 	list_t l;
 	int num = 0;
 
 	if (!msg_queue)
 		return -1;
 
-	path = prepare_path("queue", 1);
-#ifndef NO_POSIX_SYSTEM
-	if (mkdir(path, 0700) && errno != EEXIST)
-#else
-	if (mkdir(path) && errno != EEXIST) 
-#endif
+	if (mkdir_recursive(prepare_path("queue", 0), 0))	/* create ~/.ekg2/[PROFILE/]queue/ */
 		return -1;
+
 	for (l = msg_queue; l; l = l->next) {
 		msg_queue_t *m = l->data;
-		char *fn;
+		const char *fn;
 		FILE *f;
 
-		fn = saprintf("%s/%ld.%d", path, (long) m->time, num++);
-
-		if (!(f = fopen(fn, "w"))) {
-			xfree(fn);
+		if (!(fn = prepare_pathf("queue/%ld.%d", (long) m->time, num++)))	/* prepare_pathf() ~/.ekg2/[PROFILE/]queue/TIME.UNIQID */
 			continue;
-		}
+
+		if (!(f = fopen(fn, "w")))
+			continue;
 
 		chmod(fn, 0600);
-		xfree(fn);
-
 		fprintf(f, "v1\n%s\n%s\n%ld\n%s\n%s", m->session, m->rcpts, m->time, m->seq, m->message);
-
 		fclose(f);
 	}
 
