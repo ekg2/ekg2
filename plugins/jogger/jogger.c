@@ -225,6 +225,7 @@ static int jogger_theme_init(void) {
 	format_add("jogger_comment_added", _("%) %|(%1) Your comment was added to entry %c%2%n."), 1);
 	format_add("jogger_modified", _("%> %|(%1) Subscribed entry has been modified: %c%2%n."), 1);
 	format_add("jogger_published", _("%) %|(%1) Your new entry has been published as: %c%2%n."), 1);
+	format_add("jogger_posting_denied", _("%! (%1) Comment posting denied because of no permission."), 1);
 	format_add("jogger_version", _("%> %TJogger:%n match data %g%1%n."), 1);
 
 	format_add("jogger_prepared", _("%) File %T%1%n is ready for submission."), 1);

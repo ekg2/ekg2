@@ -28,7 +28,7 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
-#define JOGGER_TEXT_MAX 13
+#define JOGGER_TEXT_MAX 14
 
 	/* jogger.c */
 session_t *jogger_session_find_uid(session_t *s, const char *uid);
@@ -51,6 +51,7 @@ const char *utf_jogger_text[JOGGER_TEXT_MAX] = {
 	"Brak uprawnień do śledzenia tego wpisu",		/* [10] */
 	"Wpis nie był śledzony",				/* [11] */
 	"Do śledzonego joggera został dodany nowy wpis:",	/* [12] url (#eid[ / Texti*]) */
+	"Brak uprawnień do komentowania tego wpisu!"		/* [13] */
 };
 
 char *jogger_text[JOGGER_TEXT_MAX];
@@ -127,6 +128,8 @@ QUERY(jogger_msghandler) {
 			found = 11;
 		else if (!xstrncmp(msg, jogger_text[11], xstrlen(jogger_text[11])))
 			found = 12;
+		else if (!xstrncmp(msg, jogger_text[13], xstrlen(jogger_text[13])))
+			found = 13;
 
 		if (found <= 4) { /* we get id here */
 			const char *tmp = xstrstr(msg, " (#");
@@ -202,8 +205,9 @@ QUERY(jogger_msghandler) {
 			const char *url		= msg+xstrlen(jogger_text[found-4])+1;
 
 			print_window(url, js, 0, formats[found-9], session_name(js), url);
-		} else if (found <= 12) {
-			const char *formats[]	= { "jogger_subscription_denied", "jogger_unsubscribed_earlier" };
+		} else if (found <= 13) {
+			const char *formats[]	= { "jogger_subscription_denied", "jogger_unsubscribed_earlier",
+					"jogger_posting_denied" };
 
 			print(formats[found-12], session_name(js));
 		}
