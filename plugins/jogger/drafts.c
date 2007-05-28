@@ -305,7 +305,7 @@ COMMAND(jogger_prepare) {
 					xfree(values);
 				}
 			} else if (i == 5) {
-				const char *first = sep+1+xstrcspn(sep+1, " ");
+				const char *first = sep+1+xstrspn(sep+1, " ");
 				if (xstrncmp(first, "http://", 7) && xstrncmp(first, "https://", 8)) /* XXX: https trackbacks? */
 					WARN_PRINT("jogger_warning_malformed_url");
 			} else if (i == 6 || i == 7) {
