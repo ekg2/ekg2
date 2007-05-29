@@ -83,18 +83,23 @@
 #include "token.h"
 
 static COMMAND(gg_command_connect) {
+	int isreconnect = !xstrcmp(name, "reconnect");
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
-	
-	if (!xstrcmp(name, ("disconnect")) || (!xstrcmp(name, ("reconnect")))) {
+
+	if (!xstrcmp(name, ("disconnect")) || isreconnect) {
 	        /* if ,,reconnect'' timer exists we should stop doing */
-	        if (timer_remove_session(session, "reconnect") == 0) {
-			wcs_printq("auto_reconnect_removed", session_name(session));
+		/* if ,,gg:reconnect'' command is executed, we should always try to do 'disconnect; connect;' */
+	        if (timer_remove_session(session, "reconnect") == 0 && !isreconnect) {
+			printq("auto_reconnect_removed", session_name(session));
 	                return 0;
 		}
 
 		if (!g->sess) {
-			wcs_printq("not_connected", session_name(session));
+			/* don't print message when 'gg:reconnect' */
+			if (!isreconnect) 
+				printq("not_connected", session_name(session));
+
 		} else {
 			char *__session = xstrdup(session->uid);
 			const char *__reason = params[0];
@@ -132,7 +137,7 @@ static COMMAND(gg_command_connect) {
 		}
 	}
 
-	if (!xstrcmp(name, ("connect")) || !xstrcmp(name, ("reconnect"))) {
+	if (!xstrcmp(name, ("connect")) || isreconnect) {
 		struct gg_login_params p;
 		const char *tmp, *local_ip = session_get(session, "local_ip");
 		int tmpi;
