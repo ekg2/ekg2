@@ -205,7 +205,6 @@ static COMMAND(gg_command_connect) {
 		p.uin = uin;
 		p.password = (char*) password;
 		p.image_size = gg_config_image_size;
-/*		p.use_sha1 = 2; */
 
                 _status = GG_S(_status);
                 if (session_int_get(session, "private"))
