@@ -417,7 +417,7 @@ static TIMER(ekg_day_timer) {
 				window_t *w = l->data;
 				int oldact;
 				
-				if (!w || w->id == 0 || w->floating) continue; /* skip __contacts && floating windows. */
+				if (!w || w->id == 0 || w->floating) continue; /* skip __debug && (floatings windows [__lastlog, __contacts, ...]) */
 
 				oldact = w->act;	/* save old act */
 				w->lock++;		/* lock window */
