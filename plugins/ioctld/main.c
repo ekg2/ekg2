@@ -54,22 +54,10 @@
 
 #include "ioctld.h"
 
-static int ioctld_sock = -1;
+static int ioctld_sock = -1;		/* XXX, if this fd is -1, don't try to send data? don't register plugin? what? */
 static int ioctld_pid = -1;
-static const char *ioctld_sock_path = NULL;
 
 PLUGIN_DEFINE(ioctld, PLUGIN_GENERIC, NULL);
-
-/*
- * ioctld_kill()
- *
- * zajmuje siê usuniêciem ioctld z pamiêci.
- */
-static void ioctld_kill()
-{
-        if (ioctld_pid > 0)
-                kill(ioctld_pid, SIGINT);
-}
 
 /*
  * ioctld_parse_seq()
@@ -136,11 +124,15 @@ static int ioctld_socket(const char *path)
 	strlcpy(sockun.sun_path, path, sizeof(sockun.sun_path));
 
 	for (i = 5; i; i--) {
+		/* XXX, make it non-blocking.. use watches */
 		if (connect(ioctld_sock, (struct sockaddr*) &sockun, sizeof(sockun)) != -1)
 			return 0;
 
 		usleep(usecs);
 	}
+
+	close(ioctld_sock);
+	ioctld_sock = -1;
 
         return -1;
 }
@@ -165,7 +157,7 @@ static int ioctld_send(const char *seq, int act, int quiet)
 	if (!xisdigit(*seq)) {
 		const char *tmp = format_find(seq);
 
-		if (!xstrcmp(tmp, "")) {
+		if (tmp[0] == '\0') {
 			printq("events_seq_not_found", seq);
 			return -1;
 		}
@@ -179,6 +171,11 @@ static int ioctld_send(const char *seq, int act, int quiet)
 	}
 
 	data.act = act;
+
+	if (ioctld_sock == -1) {
+		printq("generic_error", "ioctld internal error, try /plugin -ioctl; /plugin +ioctl if it won't help report bugreport");
+		return -1;
+	}
 
 	return send(ioctld_sock, &data, sizeof(data), 0);
 }
@@ -203,8 +200,9 @@ static COMMAND(command_blink_leds)
 	return ((ioctld_send(params[0], ACT_BLINK_LEDS, quiet) == -1) ? -1 : 0);
 }
 
-int ioctld_plugin_init(int prio)
+EXPORT int ioctld_plugin_init(int prio)
 {
+	const char *ioctld_sock_path;
 	plugin_register(&ioctld_plugin, prio);
 
 	ioctld_sock_path = prepare_path(".socket", 1);
@@ -216,8 +214,6 @@ int ioctld_plugin_init(int prio)
 	
 	ioctld_socket(ioctld_sock_path);
 	
-	atexit(ioctld_kill);
-
 	command_add(&ioctld_plugin, ("ioctld:beeps_spk"), ("?"), command_beeps_spk, 0, NULL);
 	command_add(&ioctld_plugin, ("ioctld:blink_leds"), ("?"), command_blink_leds, 0, NULL);
 	
@@ -227,6 +223,9 @@ int ioctld_plugin_init(int prio)
 static int ioctld_plugin_destroy()
 {
 	plugin_unregister(&ioctld_plugin);
+
+	if (ioctld_pid > 0)
+		kill(ioctld_pid, SIGINT);
 
 	if (ioctld_sock != -1)
 		close(ioctld_sock);
