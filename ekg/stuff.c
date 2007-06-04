@@ -137,7 +137,6 @@ int config_completion_notify = 1;
 char *config_completion_char = NULL;
 time_t ekg_started = 0;
 int config_display_notify = 1;
-int config_display_unknown = 0;
 char *config_theme = NULL;
 int config_default_status_window = 0;
 char *home_dir = NULL;
