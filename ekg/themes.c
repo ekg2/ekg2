@@ -650,7 +650,7 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 		int oldact = w->act;
 		if (separate)
 			w->act = 2 | (w->act & 4);
-		else if (w->act != 2)
+		else if ((w->act & 3) != 2)
 			w->act = 1 | (w->act & 4);
 
 		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
