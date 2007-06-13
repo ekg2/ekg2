@@ -911,6 +911,84 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 	return result;
 }
 
+/**
+ * resort_queries()
+ *
+ * Reconnect queries connected with plugin
+ * Used at changing plugin prios
+ */
+
+void queries_reconnect(plugin_t *plugin) {
+	list_t first, last;			/* first && last encounter of plugin-query-item */
+	list_t prevfirst, l;
+
+	int onlyup = 0;		/* if set, than for sure we don't need moving plugin-query-list down */
+
+	if (!plugin)		/* sorry not implemented */
+		return;
+
+	/* 1) We look for first encounter of plugin on list */
+	for (first = queries; first; first = first->next) {
+		query_t *q = first->data;
+
+		if (q->plugin == plugin)
+			break;
+
+		prevfirst = first;		/* save ptr */
+	}
+	
+	/* If don't found, don't mess */
+	if (!first) return;
+
+	/* 2) We look for last encounter of plugin on list */
+	for (l = first; l; l = l->next) {		/* NOTE: it could be first->next, but then we MUST check if last == NULL, below. Double checking one item, won't hurt */
+		query_t *q = l->data;
+
+		if (q->plugin != plugin) {
+			if (q->plugin == NULL)		/* check if below is core stuff */
+				onlyup = 1;			/* if yes, we don't want to move list down... it would segv */
+			break;
+		}
+
+		last = l;		/* save ptr */
+	}
+
+	if (last->next == NULL)	{	/* this shouldn't happen, 'coz we should always have core queries below.. */
+		debug_error("queries_reconnect() INTERNAL ERROR\n");
+		return;
+	}
+
+	/* 3) Let's check if we want move it up, or down */
+	/* 3a) First check down */
+
+	if (!onlyup) {
+		query_t *q = last->next->data;
+/*
+		if ((plugin_register_compare(q->plugin, plugin)))
+*/
+		/* if less do nothing */
+
+		
+		/* here let's go down until we found something with less prio */
+		/* resort queries */
+		/* return */
+	}
+
+	/* 3b) Check up */
+	do {
+		query_t *q = prevfirst->data;
+/*
+		if ((plugin_register_compare(q->plugin, plugin)))
+ */
+		/* if bigger do nothing */
+		
+		/* Here let's go up until we found something with bigger prio */
+		/* resort queries */
+
+		break;
+	} while (prevfirst != NULL);
+}
+
 /*
  * watch_find()
  *
