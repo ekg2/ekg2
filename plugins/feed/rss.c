@@ -930,15 +930,25 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 static COMMAND(rss_command_check) {
 	list_t l;
+
+	if (params[0]) {
+		userlist_t *u = userlist_find(session, params[0]);
+
+		if (!u) {
+			printq("user_not_found", params[0]);
+			/* && try /rss:get ? */
+			return -1;	
+		}
+		
+		return rss_url_fetch(rss_feed_find(session, u->uid), quiet);
+	}
+
+	/* if param not given, check all */
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		rss_feed_t *f = rss_feed_find(session, u->uid);
 
-		if (params[0] && xstrcmp(u->uid, params[0])) continue;
-
 		rss_url_fetch(f, quiet);
-
-		if (params[0]) break;
 	}
 	return 0;
 }
