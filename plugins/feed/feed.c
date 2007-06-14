@@ -55,39 +55,50 @@ static QUERY(feed_validate_uid)
         return 0;
 }
 
-static QUERY(feed_session) {
+static QUERY(feed_session_init) {
 	char *session = *(va_arg(ap, char**));
 	session_t *s = session_find(session);
 
-        if (!s)
-                return -1;
+	feed_private_t *j;
 
-	if (s->plugin != &feed_plugin)
-		return 0;
+	if (!s || s->priv || s->plugin != &feed_plugin)
+		return 1;
 
-	if (data && !s->priv) {
-		feed_private_t *j 	= xmalloc(sizeof(feed_private_t));
+	j = xmalloc(sizeof(feed_private_t));
 #ifdef HAVE_EXPAT
-		j->isrss		= !xstrncasecmp(session, "rss:", 4);
-		if (j->isrss)		j->private = rss_protocol_init();
-		else
+	j->isrss = (tolower(s->uid[0]) == 'r');
+	if (j->isrss)		j->private = rss_protocol_init();
+	else
 #endif
-					j->private = nntp_protocol_init();
-		s->priv			= j;
-		userlist_read(s);
-	} else if (!data && s->priv) {
-		feed_private_t *j 	= s->priv;
-		userlist_write(s);
-		s->priv			= NULL;
-#ifdef HAVE_EXPAT
-		if (j->isrss) 		rss_protocol_deinit(j->private);
-		else
-#endif
-					nntp_protocol_deinit(j->private);
-		xfree(j);
-	}
+				j->private = nntp_protocol_init();
+
+	s->priv = j;
+	userlist_read(s);
 	return 0;
 }
+
+static QUERY(feed_session_deinit) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
+	feed_private_t *j;
+
+	if (!s || !(j = s->priv) || s->plugin != &feed_plugin)
+		return 1;
+
+	userlist_write(s);
+	s->priv			= NULL;
+#ifdef HAVE_EXPAT
+	if (j->isrss) 		rss_protocol_deinit(j->private);
+	else
+#endif
+				nntp_protocol_deinit(j->private);
+
+	xfree(j);
+
+	return 0;
+}
+
 	/* new: 
 	 * 	0x0 - old
 	 * 	0x1 - new
@@ -300,8 +311,8 @@ EXPORT int feed_plugin_init(int prio) {
 	feed_plugin.params = feed_plugin_vars;
 	plugin_register(&feed_plugin, prio);
 			/* common */
-	query_connect_id(&feed_plugin, SESSION_ADDED, feed_session, (void*) 1);
-	query_connect_id(&feed_plugin, SESSION_REMOVED, feed_session, (void*) 0);
+	query_connect_id(&feed_plugin, SESSION_ADDED, feed_session_init, NULL);
+	query_connect_id(&feed_plugin, SESSION_REMOVED, feed_session_deinit, NULL);
 	query_connect_id(&feed_plugin, PROTOCOL_VALIDATE_UID, feed_validate_uid, NULL);
 			/* common - rss, nntp */
 	query_connect_id(&feed_plugin, RSS_MESSAGE, rss_message, NULL);
