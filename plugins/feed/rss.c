@@ -54,6 +54,9 @@
 
 #include "feed.h"
 
+#define rss_convert_string(text, encoding) \
+	ekg_convert_string(text, encoding ? encoding : "UTF-8", NULL)
+
 typedef enum {
 	RSS_PROTO_UNKNOWN = 0,
 	RSS_PROTO_HTTP,
@@ -368,7 +371,7 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
 		for (i = 0; i < arrcount; i++) {
-			const char *s = ekg_convert_string(atts[i], j->no_unicode, NULL);
+			const char *s = rss_convert_string(atts[i], j->no_unicode);
 			newnode->atts[i] = (s ? s : xstrdup(atts[i]));
 		}
 	} else	newnode->atts = NULL; 
@@ -444,7 +447,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 	{		/* I think old version leaked, if I were wrong, let mi know */
 		char *tmp = recode;
 
-		recode = ekg_convert_string(recode, j->no_unicode, NULL);
+		recode = rss_convert_string(recode, j->no_unicode);
 		if (!recode)
 			recode = tmp;
 		else
