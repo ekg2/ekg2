@@ -199,7 +199,9 @@ static QUERY(rss_message) {
 
 			if ((value = xstrchr(tmp, ' '))) *value = 0;
 			if (dheaders && !xstrstr(dheaders, tmp)) {
-				debug("DHEADER: %s=%s skipping...\n", tmp, value+1);
+				if (value) 
+					debug("DHEADER: %s=%s skipping...\n", tmp, value+1);
+				else	debug("DHEADER: %s skipping.. (tag without value?\n", tmp);	
 				continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
 			}
 
