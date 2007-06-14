@@ -578,6 +578,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, USERLIST_CHANGED, ncurses_userlist_changed, NULL);
 	query_connect_id(&ncurses_plugin, USERLIST_ADDED, ncurses_userlist_changed, NULL);
 	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_userlist_changed, NULL);
