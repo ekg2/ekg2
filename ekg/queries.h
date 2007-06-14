@@ -14,6 +14,7 @@ enum query_arg_type {
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
 	QUERY_ARG_FSTRING, 	/* fstring_t	*/
 	QUERY_ARG_USERLIST,	/* userlist_t	*/
+	QUERY_ARG_SESSION	/* session_t	*/
 };
 
 struct query {
@@ -58,6 +59,7 @@ enum queries_id {
 	GET_PLUGIN_PROTOCOLS,
 
 	UI_WINDOW_UPDATE_LASTLOG,
+	SESSION_EVENT,
 	QUERY_EXTERNAL,
 };
 
@@ -409,6 +411,11 @@ const struct query query_list[] = {
 		QUERY_ARG_END } },
 
 	{ UI_WINDOW_UPDATE_LASTLOG, "ui-window-update-lastlog", {
+		QUERY_ARG_END } },
+
+	{ SESSION_EVENT, "session-event", {
+		QUERY_ARG_SESSION,		/* session */
+		QUERY_ARG_INT,			/* event type, [not used] */
 		QUERY_ARG_END } },
 };
 
