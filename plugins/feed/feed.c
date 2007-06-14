@@ -131,12 +131,31 @@ static QUERY(rss_message) {
 	int mw			= session_int_get(s, "make_window");
 
 	char *target		= NULL;
+	window_t *targetwnd	= NULL;
 
 	if (*new == 0) return 0;
 
+	switch (mw) {			/* XXX, __current ? */
+		case 0: 
+			target = "__status";
+			targetwnd = window_status;
+			break;
+		case 1:
+			target = session;
+			break;
+		case 2:
+		default:
+			if (!(target = get_nickname(s, uid)))
+				target = uid;
+			break;
+	}
+
+	if (mw)
+		targetwnd = window_new(target, s, 0);
+
 	switch (dmode) {
-		case 0:	 print_window(uid, s, 1, "none", "new message");	/* only notify */
-		case -1: return 0;						/* do nothing */
+		case 0:	 print_window_w(targetwnd, 1, "feed_message_new", title, url);	/* only notify */
+		case -1: return 0;							/* do nothing */
 
 		case 2:	body		= NULL;					/* only headers */
 		case 1:	if (dmode == 1) headers = NULL;				/* only body */
@@ -145,20 +164,7 @@ static QUERY(rss_message) {
 		case 4:	break;							/* shreaders+headers+body */
 	}
 
-	switch (mw) {			/* XXX, __current ? */
-		case 0: 
-			target = "__status";
-			break;
-		case 1:
-			target = session;
-			break;
-		case 2:
-		default:
-			target = uid;
-			break;
-	}
-	if (mw) window_new(uid, s, 0);
-	print_window(uid, s, 1, "feed_message_header", title, url);
+	print_window_w(targetwnd, 1, "feed_message_header", title, url);
 
 	if (sheaders) {
 		char *str = xstrdup(sheaders);
@@ -177,11 +183,11 @@ static QUERY(rss_message) {
 			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_server_header_generic"), tmp, value ? value+1 : "");
-			print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
 
 			xfree(formatka);
 		}
-		if (headers || body) print_window(uid, s, 1, "feed_message_body", "");	/* rozdziel */
+		if (headers || body) print_window_w(targetwnd, 1, "feed_message_body", "");	/* rozdziel */
 	}
 	if (headers) {
 		char *str, *org;
@@ -201,12 +207,12 @@ static QUERY(rss_message) {
 			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
-			print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
 			
 			xfree(formated);
 			xfree(formatka);
 		}
-		if (body) print_window(uid, s, 1, "feed_message_body", "");	/* rozdziel */
+		if (body) print_window_w(targetwnd, 1, "feed_message_body", "");	/* rozdziel */
 		xfree(org);
 	}
 	if (body) {
@@ -240,16 +246,16 @@ static QUERY(rss_message) {
 					if (f)	formated = format_string(f, tmp);
 				}
 
-				print_window(uid, s, 1, "feed_message_body", formated ? formated : tmp);
+				print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
 				xfree(formated);
 			}
 			xfree(org);
 		} else {
-			print_window(uid, s, 1, "feed_message_body", body);
+			print_window_w(targetwnd, 1, "feed_message_body", body);
 		}
 	}
 
-	print_window(uid, s, 1, "feed_message_footer");
+	print_window_w(targetwnd, 1, "feed_message_footer");
 
 	*new = 0;
 	return 0;
@@ -343,6 +349,8 @@ static int feed_theme_init() {
 	format_add("feed_exists_other", 	_("%! (%3) %T%1%n already subscribed as %2\n"), 1);
 	format_add("feed_not_found",		_("%) Subscription %1 not found, cannot unsubscribe"), 1);
 	format_add("feed_deleted", 		_("%) (%2) Removed from subscription %T%1%n\n"), 1);
+
+	format_add("feed_message_new",		_("%) New message: %Y%1%n (%W%2%n)"), 1);
 
 	format_add("feed_message_header",	_("%g,+=%G-----%y  %1 %n(ID: %W%2%n)"), 1);
 	format_add("feed_message_body",		_("%g||%n %|%1"), 1);
