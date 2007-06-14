@@ -491,7 +491,6 @@ static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
 		if (!xstrcmp(node->name, "channel")) {
 			/* DUZE XXX */
 
-
 		} else if (!xstrcmp(node->name, "item")) {
 			const char *itemtitle   = NULL;
 			const char *itemdescr   = NULL;
@@ -504,9 +503,13 @@ static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
 			for (subnode = node->children; subnode; subnode = subnode->next) {
 				if (!xstrcmp(subnode->name, "title"))		itemtitle	= subnode->data->str;
 				else if (!xstrcmp(subnode->name, "link"))	itemlink	= subnode->data->str;
-				else if (!xstrcmp(subnode->name, "description"))itemdescr	= subnode->data->str;
-				else {  /* other, format tag: value\n */
-/*					debug("rss_parsexml_rdf RDF->ITEMS: %s\n", subnode->name); */
+				else if (!xstrcmp(subnode->name, "content:encoded") || !xstrcmp(subnode->name, "description")) {
+					if (!itemdescr)
+						itemdescr = subnode->data->str;
+					else	debug_error("rss_parsexml_rdf: ignoring %s\n", subnode->name);
+
+				} else {  /* other, format tag: value\n */
+/*					debug_error("rss_parsexml_rdf RDF->ITEMS: %s\n", subnode->name); */
 					string_append(tmp, subnode->name);
 					string_append(tmp, ": ");
 					string_append(tmp, subnode->data->str);
@@ -519,7 +522,7 @@ static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
 			item->other_tags = tmp;
 
 
-		} else debug("rss_parsexml_rdf RSS: %s\n", node->name);
+		} else debug_error("rss_parsexml_rdf RSS: %s\n", node->name);
 	}
 }
 
