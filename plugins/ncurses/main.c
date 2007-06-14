@@ -80,8 +80,19 @@ static int dd_contacts(const char *name)
 	return (config_contacts);
 }
 
-static TIMER(ncurses_statusbar_timer)
-{
+/**
+ * ncurses_statusbar_timer()
+ *
+ * Timer, executed every second.
+ * It call update_statusbar(1)
+ *
+ * @sa update_statusbar()
+ *
+ * @return 0	[permanent timer]
+ */
+
+static TIMER(ncurses_statusbar_timer) {
+	if (type) return 0;
 	update_statusbar(1);
 	return 0;
 }
