@@ -114,18 +114,26 @@ static QUERY(ncurses_ui_is_initialized) {
 	else					return 0;
 }
 
+/*
+ * ncurses_ui_window_switch()
+ *
+ * Handler for: <i>UI_WINDOW_SWITCH</i><br>
+ *
+ * Buggy?
+ *
+ */
 
-static QUERY(ncurses_ui_window_switch)
-{
-	window_t **w = va_arg(ap, window_t **);
-	ncurses_window_t *n = (*w)->private;
+static QUERY(ncurses_ui_window_switch) {
+	window_t *w 	= *(va_arg(ap, window_t **));
+
+	ncurses_window_t *n = w->private;
 
         list_destroy(sorted_all_cache, 1);
         sorted_all_cache = NULL;
 	contacts_index = 0;
 
 	if (n->redraw)
-		ncurses_redraw(*w);
+		ncurses_redraw(w);
 
 	touchwin(n->window);
 
