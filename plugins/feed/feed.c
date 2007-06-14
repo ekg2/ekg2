@@ -243,7 +243,8 @@ static QUERY(rss_message) {
 						}
 						xfree(quote_name);
 					}
-					if (f)	formated = format_string(f, tmp);
+					if (f && f[0] != '\0')
+						formated = format_string(f, tmp);
 				}
 
 				print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
