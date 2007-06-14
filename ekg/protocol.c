@@ -157,9 +157,11 @@ static QUERY(protocol_disconnected) {
 
 	if (s) {
 		if (s->connected) {
+			int one = 1;
+
 			s->last_conn = time(NULL);
 			s->connected = 0;
-			/* XXX notify ui */
+			query_emit_id(NULL, SESSION_EVENT, &s, &one);	/* notify UI */
 		}
 		command_exec(NULL, s, "/session --unlock", 1);
 	}
@@ -244,12 +246,15 @@ static QUERY(protocol_connected) {
 		print("queue_flush", session_name(s));
 
 	if (s) {
+		int two = 2;
+
 		s->last_conn = time(NULL);
 		if (!s->activity) /* someone asks us to set activity */
 			s->activity  = s->last_conn;
 		s->connected = 1;
 		timer_remove_session(s, "reconnect");
-		/* XXX notify ui */
+
+		query_emit_id(NULL, SESSION_EVENT, &s, &two);	/* Notify UI */
 	}
 
 	return 0;
