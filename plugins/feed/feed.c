@@ -168,7 +168,10 @@ static QUERY(rss_message) {
 			char *formatka;
 
 			if ((value = xstrchr(tmp, ' '))) *value = 0;
-			if (dsheaders && !xstrstr(dsheaders, tmp)) continue;	/* jesli mamy display_server_headers a tego nie mamy na liscie to pomijamy */
+			if (dsheaders && !xstrstr(dsheaders, tmp)) {
+/*				debug("DSHEADER: %s=%s skipping..\n", tmp, value+1); */
+				continue;	/* jesli mamy display_server_headers a tego nie mamy na liscie to pomijamy */
+			}
 
 			formatka = saprintf("feed_server_header_%s", tmp);
 			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
@@ -190,7 +193,7 @@ static QUERY(rss_message) {
 
 			if ((value = xstrchr(tmp, ' '))) *value = 0;
 			if (dheaders && !xstrstr(dheaders, tmp)) {
-/*				debug("DHEADER: %s=%s\n", tmp, value+1);  */
+				debug("DHEADER: %s=%s skipping...\n", tmp, value+1);
 				continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
 			}
 
