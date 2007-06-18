@@ -257,9 +257,11 @@ static int rot13_theme_init() {
 }
 
 EXPORT int rot13_plugin_init(int prio) {
+	va_list dummy;
+
 	plugin_register(&rot13_plugin, prio);
 
-	rot13_setvar_default(NULL, NULL);
+	rot13_setvar_default(NULL, dummy);
 
 	query_connect_id(&rot13_plugin, SET_VARS_DEFAULT, rot13_setvar_default, NULL);
 	query_connect_id(&rot13_plugin, MESSAGE_ENCRYPT, message_parse, (void *) 1);

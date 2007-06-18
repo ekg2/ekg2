@@ -1154,10 +1154,11 @@ QUERY(ncurses_binding_default)
 
 void ncurses_binding_init()
 {
+	va_list dummy;
 	memset(ncurses_binding_map, 0, sizeof(ncurses_binding_map));
 	memset(ncurses_binding_map_meta, 0, sizeof(ncurses_binding_map_meta));
 
-	ncurses_binding_default(NULL, NULL);
+	ncurses_binding_default(NULL, dummy);
 	ncurses_binding_complete	= binding_complete;
 	ncurses_binding_accept_line	= binding_accept_line;
 }

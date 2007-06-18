@@ -635,10 +635,11 @@ static QUERY(logs_handler_newwin) {
 }
 
 EXPORT int logs_plugin_init(int prio) {
+	va_list dummy;
 	plugin_register(&logs_plugin, prio);
 	
 	buffer_lograw_tail = NULL;
-	logs_setvar_default(NULL, NULL);
+	logs_setvar_default(NULL, dummy);
 
 	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
 	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);

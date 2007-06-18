@@ -381,10 +381,12 @@ static void ncurses_changed_aspell(const char *var)
 
 static QUERY(ncurses_postinit)
 {
+	va_list dummy;
+
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
 #endif
-	ncurses_contacts_changed(NULL, NULL);
+	ncurses_contacts_changed(NULL, dummy);
 	return 0;
 }
 
@@ -550,6 +552,7 @@ EXPORT int ncurses_plugin_init(int prio)
 {
 	list_t l;
 	int is_UI = 0;
+	va_list dummy;
 
         query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
@@ -561,7 +564,7 @@ EXPORT int ncurses_plugin_init(int prio)
 #endif
 	plugin_register(&ncurses_plugin, prio);
 
-	ncurses_setvar_default(NULL, NULL);
+	ncurses_setvar_default(NULL, dummy);
 
 	query_connect_id(&ncurses_plugin, SET_VARS_DEFAULT, ncurses_setvar_default, NULL);
 	query_connect_id(&ncurses_plugin, UI_BEEP, ncurses_beep, NULL);

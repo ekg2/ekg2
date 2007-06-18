@@ -67,6 +67,8 @@ PLUGIN_DEFINE(logsoracle, PLUGIN_LOG, logsoracle_theme_init);
  */
 int logsoracle_plugin_init(int prio)
 {
+	va_list dummy;
+
 	plugin_register(&logsoracle_plugin, prio);
 
 	/* connect events with handlers */
@@ -78,7 +80,7 @@ int logsoracle_plugin_init(int prio)
 		
 
 	/* set default variable values (uses query function) */
-	logsoracle_handler_setvarsdef(NULL, NULL);
+	logsoracle_handler_setvarsdef(NULL, dummy);
 
 	/* register variables */
 	variable_add(&logsoracle_plugin, TEXT("auto_connect"), VAR_BOOL, 1, &logsoracle_config.auto_connect, NULL, NULL, NULL);

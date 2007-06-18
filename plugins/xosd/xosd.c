@@ -337,6 +337,8 @@ static void xosd_killed() {
 
 int xosd_plugin_init(int prio)
 {
+	va_list dummy;
+
 	osd = xosd_create(2);
 	if (!osd) {
 		debug("xosd: error creating osd: %s\n", xosd_error);
@@ -344,7 +346,7 @@ int xosd_plugin_init(int prio)
 	}
 	plugin_register(&xosd_plugin, prio);
 
-	xosd_setvar_default(NULL, NULL);
+	xosd_setvar_default(NULL, dummy);
 
 	variable_add(&xosd_plugin, ("colour"), VAR_STR, 1, &xosd_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, ("font"), VAR_STR, 1, &xosd_font, NULL, NULL, NULL);

@@ -1150,12 +1150,13 @@ QUERY(gtk_ui_beep) {
 }
 
 QUERY(ekg2_gtk_loop) {
+	va_list dummy;
 	ui_quit = 0;
 	config_use_unicode = 1;
 
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), window_current->id); /* current page */
 	gtk_contacts_update(NULL);		/* userlist */
-	gtk_ui_window_act_changed(NULL, NULL);	/* act */
+	gtk_ui_window_act_changed(NULL, dummy);	/* act */
 
 	while (gtk_loop());
 	return -1;
@@ -1177,6 +1178,7 @@ QUERY(gtk_ui_window_switch) {
 	window_t *w = *(va_arg(ap, window_t **));
 	gtk_window_t *n = w->private;
 	int realid;
+	va_list dummy;
 	if (!n)
 		return 1;
 	if (w->floating) {
@@ -1190,7 +1192,7 @@ QUERY(gtk_ui_window_switch) {
 
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), realid);
 		gtk_contacts_update(NULL);
-		gtk_ui_window_act_changed(NULL, NULL); /* ? */
+		gtk_ui_window_act_changed(NULL, dummy); /* ? */
 	}
 	return 0;
 }

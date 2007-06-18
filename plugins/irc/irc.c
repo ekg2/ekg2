@@ -2236,6 +2236,7 @@ EXPORT int irc_plugin_init(int prio)
 /* yeah, i know it's static. */
 	static char pwd_name[2000] 	= { '\0'};
 	static char pwd_realname[2000]	= { '\0'};
+	va_list dummy;
 
 	if (pwd_entry) {
 		xstrncpy(pwd_name, pwd_entry->pw_name, sizeof(pwd_name));
@@ -2334,7 +2335,7 @@ EXPORT int irc_plugin_init(int prio)
 
 	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
 
-	irc_setvar_default(NULL, NULL);
+	irc_setvar_default(NULL, dummy);
 
 /* irc_session by queries do it. */
 	return 0;

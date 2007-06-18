@@ -1615,10 +1615,11 @@ static plugins_params_t gg_plugin_vars[] = {
 };
 
 int EXPORT gg_plugin_init(int prio) {
+	va_list dummy;
 	gg_plugin.params = gg_plugin_vars;
 
 	plugin_register(&gg_plugin, prio);
-	gg_setvar_default(NULL, NULL);
+	gg_setvar_default(NULL, dummy);
 
 	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
 	query_connect_id(&gg_plugin, PROTOCOL_VALIDATE_UID, gg_validate_uid, NULL);
