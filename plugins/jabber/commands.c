@@ -793,7 +793,14 @@ static COMMAND(jabber_command_auth) {
 	const char *uid;
 	int payload = 4 + j->istlen;
 
-	if (!(uid = get_uid(session, params[1])) || (j->istlen && tolower(params[1][0]) == 'j') || (!j->istlen && tolower(params[1][0]) == 't')) {
+	if (params[1])
+		target = params[1];
+	else if (!target) {
+		printq("invalid_params", name);
+		return -1;
+	}
+
+	if (!(uid = get_uid(session, target)) || (j->istlen && tolower(uid[0]) == 'j') || (!j->istlen && tolower(uid[0]) == 't')) {
 		printq("invalid_session");
 		return -1;
 	}
@@ -824,7 +831,7 @@ static COMMAND(jabber_command_auth) {
 		action = "probe";
 		printq("jabber_auth_probe", uid+payload, session_name(session));
 	} else {
-		wcs_printq("invalid_params", name);
+		printq("invalid_params", name);
 		return -1;
 	}
 	/* NOTE: libtlen send this without id */
@@ -841,11 +848,19 @@ static COMMAND(jabber_command_modify) {
 	const char *uid = NULL;
 	char *nickname = NULL;
 	list_t m;
+	userlist_t *u;
+
+		/* instead of PARAMASTARGET, 'cause that one fails with /add username in query */
+	if (get_uid(session, params[0])) {
+			/* XXX: create&use shift()? */
+		target = params[0];
+		params++;
+	}
 	
-	userlist_t *u = userlist_find(session, target);
+	u = userlist_find(session, target);
 
 	if (u && addcom) {	/* don't allow to add user again */
-		printq("user_exists_other", params[0], format_user(session, u->uid), session_name(session));
+		printq("user_exists_other", (params[0] ? params[0] : target), format_user(session, u->uid), session_name(session));
 		return -1;
 	}
 
@@ -861,8 +876,8 @@ static COMMAND(jabber_command_modify) {
 
 	if (!u)	u = xmalloc(sizeof(userlist_t));		/* alloc temporary memory for /jid:add */
 
-	if (params[0] && params[1]) {
-		char **argv = array_make(params[1], " \t", 0, 1, 1);
+	if (params[0]) {
+		char **argv = array_make(params[0], " \t", 0, 1, 1);
 		int i;
 
 		for (i = 0; argv[i]; i++) {
@@ -2675,33 +2690,51 @@ static COMMAND(jabber_command_conversations)
 	return 0;
 }
 
+	/* like gg:find, mix of jid:userinfo & jid:search */
+static COMMAND(jabber_command_find)
+{
+	if (get_uid(session, params[0])) {
+		target = params[0];
+		params++;
+	}
+
+	if (params[0] || !target) /* shifted */
+		return jabber_command_search("search", params, session, NULL, quiet);
+	else
+		return jabber_command_userinfo("userinfo", params, session, target, quiet);
+}
+
 void jabber_register_commands()
 {
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define JABBER_FLAGS        JABBER_ONLY  | SESSION_MUSTBECONNECTED
-#define JABBER_FLAGS_TARGET JABBER_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+		/* XXX: I changed all '* | COMMAND_ENABLEREQPARAMS' to JABBER_FLAGS_REQ,
+		 * 'cause I don't see any sense in executing connection-requiring commands
+		 * without SESSION_MUSTBECONNECTED */
+#define JABBER_FLAGS_REQ    JABBER_FLAGS | COMMAND_ENABLEREQPARAMS
+#define JABBER_FLAGS_TARGET JABBER_FLAGS_REQ | COMMAND_PARAMASTARGET
 	commands_lock = &commands;	/* keep it sorted or die */
 
 	command_add(&jabber_plugin, ("jid:"), "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:_autoaway"), "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:_autoxa"), "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:_autoback"), "r", jabber_command_away,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:add"), "!U ?", jabber_command_modify, 	JABBER_FLAGS_TARGET, NULL); 
+	command_add(&jabber_plugin, ("jid:add"), "U ?", jabber_command_modify, 	JABBER_FLAGS, NULL); 
 	command_add(&jabber_plugin, ("jid:admin"), "! ?", jabber_muc_command_admin, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:auth"), "!p !uU", jabber_command_auth, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, 
+	command_add(&jabber_plugin, ("jid:auth"), "!p uU", jabber_command_auth, 	JABBER_FLAGS_REQ,
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, ("jid:away"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:back"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:ban"), "! ? ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:bookmark"), "!p ?", jabber_command_private, JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
+	command_add(&jabber_plugin, ("jid:bookmark"), "!p ?", jabber_command_private, JABBER_FLAGS_REQ, 
 			"-a --add -c --clear -d --display -m --modify -r --remove");
-	command_add(&jabber_plugin, ("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS , 
+	command_add(&jabber_plugin, ("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS_REQ, 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, ("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:config"), "!p", jabber_command_private,	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
+	command_add(&jabber_plugin, ("jid:config"), "!p", jabber_command_private,	JABBER_FLAGS_REQ, 
 			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, ("jid:connect"), NULL, jabber_command_connect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, ("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS_REQ, NULL);
 	command_add(&jabber_plugin, ("jid:conversations"), NULL, jabber_command_conversations,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
 			"send get resume voice close list");
@@ -2710,17 +2743,18 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 //	command_add(&jabber_plugin, ("jid:ignore"), "uUC I", jabber_command_ignore,	JABBER_ONLY, "status descr notify msg dcc events *");
 	command_add(&jabber_plugin, ("jid:ffc"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("jid:find"), "?", jabber_command_find, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:kick"), "! ! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:lastseen"), "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:modify"), "!Uu !", jabber_command_modify,JABBER_FLAGS_TARGET, 
+	command_add(&jabber_plugin, ("jid:modify"), "!Uu ?", jabber_command_modify,JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, ("jid:msg"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, ("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS_REQ, NULL);
 	command_add(&jabber_plugin, ("jid:privacy"), "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:private"), "!p ! ?", jabber_command_private,   JABBER_ONLY | COMMAND_ENABLEREQPARAMS, 
+	command_add(&jabber_plugin, ("jid:private"), "!p ! ?", jabber_command_private,   JABBER_FLAGS_REQ, 
 			"-c --clear -d --display -p --put");
 	command_add(&jabber_plugin, ("jid:pubsub"), "!p ? ? ?", jabber_command_pubsub, JABBER_FLAGS, 
 			"-c --create -C --configure -d --delete -P --purge -m --manage -g --get -l --list -p --publish -r --remove -s --subscribe -S --status");
@@ -2740,7 +2774,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("jid:vacation"), "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	command_add(&jabber_plugin, ("jid:xa"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:xml"), "!", jabber_command_xml, 	JABBER_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&jabber_plugin, ("jid:xml"), "!", jabber_command_xml, 	JABBER_FLAGS_REQ, NULL);
 
 	commands_lock = &commands;
 
@@ -2748,9 +2782,9 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("tlen:_autoaway"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:_autoxa"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:_autoback"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:add"), "!U ?",	jabber_command_modify,		JABBER_FLAGS_TARGET, NULL); 
+	command_add(&jabber_plugin, ("tlen:add"), "U ?",	jabber_command_modify,		JABBER_FLAGS, NULL); 
 	command_add(&jabber_plugin, ("tlen:alert"), "!u",	tlen_command_alert,		JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("tlen:auth"), "!p !uU", 	jabber_command_auth,		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS,
+	command_add(&jabber_plugin, ("tlen:auth"), "!p uU", 	jabber_command_auth,		JABBER_FLAGS_REQ,
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, ("tlen:away"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:back"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
@@ -2760,8 +2794,9 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("tlen:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("tlen:dnd"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:ffc"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, ("tlen:find"), "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, ("tlen:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:modify"), "!Uu !",	jabber_command_modify,		JABBER_FLAGS_TARGET, 
+	command_add(&jabber_plugin, ("tlen:modify"), "!Uu ?",	jabber_command_modify,		JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, ("tlen:msg"), "!uU !",	jabber_command_msg, 		JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, ("tlen:reconnect"), NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
