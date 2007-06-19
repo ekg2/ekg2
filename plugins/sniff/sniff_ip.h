@@ -69,3 +69,12 @@ struct udphdr {	/* UDP header */
 	u_short th_sum;			/* checksum */
 };
 
+struct icmphdr { /* ICMP header */
+	u_char icmp_type;
+	u_char icmp_code;
+	u_short icmp_cksum;
+};
+
+#define	ETHERTYPE_IP		0x0800		/* IP */
+#define	ETHERTYPE_ARP		0x0806		/* Address resolution */
+

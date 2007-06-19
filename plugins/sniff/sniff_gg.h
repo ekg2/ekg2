@@ -198,3 +198,5 @@ typedef struct {
 	char data[];
 } GG_PACKED gg_pubdir50_reply;
 
+#define GG_DISCONNECTING 0x000b
+
