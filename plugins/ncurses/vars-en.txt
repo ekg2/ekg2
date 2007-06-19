@@ -31,7 +31,7 @@ contacts
 	type: integer
 	default value: 2
 	
- 	defines if contact window shuold be displayed on the right side of the screen. 
+	defines if contact window shuold be displayed on the right side of the screen. 
 	If set on 2 information about status' change aren't displayed and ignore value of 
 	"display_notify" variable. 
 

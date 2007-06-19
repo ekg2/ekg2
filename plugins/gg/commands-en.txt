@@ -141,21 +141,21 @@ find
 	  -S, --stop	      stop all.
 
 image
- 	parameters:  <alias> <image>
+	parameters:  <alias> <image>
 	short description: send image to person
 	
 	Picture will be send as a separate message. Recipients' client 
 	must support images.
 
 invisible
- 	parameters:  [description/-]
+	parameters:  [description/-]
 	short description: change status to invisible
 	
 	If description won't be defined then ekg2 will use random description.
 	Giving ,,%T-%n'' instead of description will cause status without description.
 
 modify
- 	parameters:  <alias> <options>
+	parameters:  <alias> <options>
 	short description: change informations ni contact list
 	
 	You can use options like:
@@ -182,7 +182,7 @@ modify
 	Two last options are working when 'only for friends' mode is on.
 
 msg
- 	parameters: <uin/alias/@roup/*> <message>
+	parameters: <uin/alias/@roup/*> <message>
 	short description: send message
 
 passwd
