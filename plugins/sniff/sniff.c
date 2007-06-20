@@ -963,14 +963,6 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 	return 0;
 }
 
-#define GG_DCC_REJECT_XXX 0x22
-typedef struct {
-	uint32_t uid;
-	unsigned char code1[8];
-	uint32_t dunno1;		/* known values: 0x02 -> rejected, 0x06 -> invalid version (6.x) 
-							 0x01 -> niemozliwe teraz? [jak ktos przesyla inny plik do Ciebie?] */
-} GG_PACKED gg_dcc_reject;
-
 SNIFF_HANDLER(sniff_gg_dcc_reject_in, gg_dcc_reject) {
 	if (len != sizeof(gg_dcc_reject)) {
 		tcp_print_payload((u_char *) pkt, len);
@@ -979,7 +971,7 @@ SNIFF_HANDLER(sniff_gg_dcc_reject_in, gg_dcc_reject) {
 
 	debug_error("XXX sniff_gg_dcc_reject_in() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
 
-	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
+	CHECK_PRINT(pkt->reason, !pkt->reason);
 	return 0;
 }
 
@@ -991,36 +983,27 @@ SNIFF_HANDLER(sniff_gg_dcc_reject_out, gg_dcc_reject) {
 
 	debug_error("XXX sniff_gg_dcc_reject_out() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
 
-	CHECK_PRINT(pkt->dunno1, !pkt->dunno1);
+	CHECK_PRINT(pkt->reason, !pkt->reason);
 	return 0;
 }
 
-#define GG_DCC_1XXX 0x21
-
-typedef struct {
-	uint32_t uin;			/* uin */
-	unsigned char code1[8];		/* kod polaczenia */
-	uint32_t seek;			/* od ktorego miejsca chcemy/mamy wysylac. */
-	uint32_t empty;
-} GG_PACKED gg_dcc_1xx;
-
-SNIFF_HANDLER(sniff_gg_dcc1xx_in, gg_dcc_1xx) {
-	if (len != sizeof(gg_dcc_1xx)) {
+SNIFF_HANDLER(sniff_gg_dcc7_accept_in, gg_dcc7_accept) {
+	if (len != sizeof(gg_dcc7_accept)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
-	debug_error("XXX sniff_gg_dcc1xx_in() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
+	debug_error("XXX sniff_gg_dcc7_accept_in() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
 
 	CHECK_PRINT(pkt->empty, 0);
 	return 0;
 }
 
-SNIFF_HANDLER(sniff_gg_dcc1xx_out, gg_dcc_1xx) {
-	if (len != sizeof(gg_dcc_1xx)) {
+SNIFF_HANDLER(sniff_gg_dcc7_accept_out, gg_dcc7_accept) {
+	if (len != sizeof(gg_dcc7_accept)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
-	debug_error("XXX sniff_gg_dcc1xx_out() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
+	debug_error("XXX sniff_gg_dcc7_accept_out() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
 
 	CHECK_PRINT(pkt->empty, 0);
 	return 0;
@@ -1117,20 +1100,6 @@ SNIFF_HANDLER(sniff_gg_dcc_4xx_out, gg_dcc_4xx_out) {
 	return 0;
 }
 
-#define GG_NOTIFY_REPLY77 0x0018
-typedef struct {
-	uint32_t uin;			/* [gg_notify_reply60] numerek plus flagi w MSB */
-/* 14 bajtow */
-	uint8_t status;			/* [gg_notify_reply60] status danej osoby */
-	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
-	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
-	uint8_t version;		/* [gg_notify_reply60] wersja klienta */
-	uint8_t image_size;		/* [gg_notify_reply60] maksymalny rozmiar grafiki w KiB */
-	uint8_t dunno1;			/* 0x00 */
-	uint32_t dunno2;		/* 0x00000000 */
-	unsigned char next[];		/* [like gg_notify_reply60] nastepny (gg_notify_reply77), lub DLUGOSC_OPISU+OPIS + nastepny (gg_notify_reply77) */
-} GG_PACKED gg_notify_reply77;
-
 SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 	unsigned char *next;
 
@@ -1190,19 +1159,6 @@ SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 	return 0;
 }
 
-
-#define GG_STATUS77 0x17
-typedef struct {
-	uint32_t uin;			/* [gg_status60] numerek plus flagi w MSB */
-	uint8_t status;			/* [gg_status60] status danej osoby */
-	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
-	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
-	uint8_t version;		/* [gg_status60] wersja klienta */
-	uint8_t image_size;		/* [gg_status60] maksymalny rozmiar grafiki w KiB */
-	uint8_t dunno1;			/* 0x00 */
-	uint32_t dunno2;		/* 0x00 */
-	char status_data[];
-} GG_PACKED gg_status77;
 
 SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
 	uint32_t uin;
@@ -1351,19 +1307,19 @@ static const struct {
 	{ GG_PUBDIR50_REQUEST,	"GG_PUBDIR50_REQUEST",	SNIFF_OUTGOING, (void *) sniff_gg_pubdir50_req, 0},
 	{ GG_DISCONNECTING,	"GG_DISCONNECTING",	SNIFF_INCOMING, (void *) sniff_gg_disconnecting, 0},
 
-/* pakiety nie w libgadu: */
 	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_notify_reply77, 0},
 	{ GG_STATUS77,		"GG_STATUS77",		SNIFF_INCOMING, (void *) sniff_gg_status77, 0},
 
+/* pakiety [nie] w libgadu: [czesc mozliwie ze nieaktualna] */
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_INCOMING, (void *) sniff_gg_dcc_new_request_id_in, 0},
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_OUTGOING, (void *) sniff_gg_dcc_new_request_id_out, 0},
-	{ GG_DCC_REJECT_XXX,	"GG_DCC_REJECT ?",	SNIFF_INCOMING, (void *) sniff_gg_dcc_reject_in, 0},
-	{ GG_DCC_REJECT_XXX,	"GG_DCC_REJECT ?",	SNIFF_OUTGOING, (void *) sniff_gg_dcc_reject_out, 0},
+	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_INCOMING, (void *) sniff_gg_dcc_reject_in, 0},
+	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_OUTGOING, (void *) sniff_gg_dcc_reject_out, 0},
 /* unknown, 0x21 */
-	{ GG_DCC_1XXX,		"GG_DCC_1XXX",		SNIFF_INCOMING, (void *) sniff_gg_dcc1xx_in, 0}, 
-	{ GG_DCC_1XXX,		"GG_DCC_1XXX",		SNIFF_OUTGOING, (void *) sniff_gg_dcc1xx_out, 0}, 
+	{ GG_DCC_ACCEPT,	"GG_DCC_ACCEPT",	SNIFF_INCOMING, (void *) sniff_gg_dcc7_accept_in, 0}, 
+	{ GG_DCC_ACCEPT,	"GG_DCC_ACCEPT",	SNIFF_OUTGOING, (void *) sniff_gg_dcc7_accept_out, 0}, 
 /* unknown, 0x1f */
 	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_INCOMING, (void *) sniff_gg_dcc_2xx_in, 0},
 	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_2xx_out, 0},
@@ -1663,6 +1619,18 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 	switch (type) {
 		char *data;
 
+		case RIVCHAT_ME:
+			debug_function("sniff_rivchat() RIVCHAT_ME\n");
+
+			data = gg_cp_to_iso(xstrndup(pkt->data, sizeof(pkt->data)));
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+				"sniff_rivchat_me", inet_ntoa(hdr->srcip),
+				nick,
+				data);
+
+			xfree(data);
+			break;
+
 		case RIVCHAT_MESSAGE:
 			debug_error("sniff_rivchat() RIVCHAT_MESSAGE\n");
 			tcp_print_payload((u_char *) pkt->data, sizeof(pkt->data));
@@ -1672,13 +1640,16 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 			data = gg_cp_to_iso(xstrndup(pkt->data, sizeof(pkt->data)));
 			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
 				"sniff_rivchat_message", inet_ntoa(hdr->srcip),
-
+				nick,
 				data);
 
 			xfree(data);
-
 			break;
 
+		case RIVCHAT_INIT:
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+				"sniff_rivchat_init", inet_ntoa(hdr->srcip));
+			/* no break */
 		case RIVCHAT_PING:
 			debug_function("sniff_rivchat() RIVCHAT_PING\n");
 			sniff_rivchat_info(s, hdr, (rivchat_packet_rcinfo *) pkt->data, sizeof(pkt->data));
@@ -1694,6 +1665,15 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 
 				data);
 			xfree(data);
+			break;
+
+		case RIVCHAT_QUIT:
+			debug_function("sniff_rivchat() RIVCHAT_QUIT\n");
+			
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+				"sniff_rivchat_quit", inet_ntoa(hdr->srcip));
+				/* data discarded, however in some time maybe there'd be reason */
+
 			break;
 
 		default:
@@ -2107,9 +2087,12 @@ static int sniff_theme_init() {
 	format_add("sniff_dns_entry_ndisplay",	_("%)   %rZADEN REKORD NIE WYSWIETLONY DLA ZAPYTANIE POWYZEJ ;), OBEJRZYJ DEBUG"), 1);
 
 /* sniff rivchat */
+	format_add("sniff_rivchat_init",	_("%) %b[RIVCHAT_INIT, %r%1%b]"), 1);
+	format_add("sniff_rivchat_me",		_("%) %b[RIVCHAT_ME, %r%1%b] %W* %2 %3"), 1);
 	format_add("sniff_rivchat_away",	_("%) %b[RIVCHAT_AWAY, %r%1%b] %gREASON: %W%2"), 1);
+	format_add("sniff_rivchat_quit",	_("%) %b[RIVCHAT_QUIT, %r%1%b]"), 1);
 	format_add("sniff_rivchat_pingaway",	_("%) %b[RIVCHAT_PINGAWAY, %r%1%b] %gREASON: %W%2"), 1);
-	format_add("sniff_rivchat_message",	_("%) %b[RIVCHAT_MESSAGE, %r%1%b] %gDATA: %W%2"), 1);
+	format_add("sniff_rivchat_message",	_("%) %b[RIVCHAT_MESSAGE, %r%1%b] <%2> %W%3"), 1);
 	format_add("sniff_rivchat_rcinfo",	_("%) %b[RIVCHAT_INFO, %r%1%b] %gFINGER: %W%2@%3 %gOS: %W%4 %gPROGRAM: %W%5 %6"), 1);
 
 /* stats */

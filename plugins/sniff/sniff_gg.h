@@ -200,3 +200,46 @@ typedef struct {
 
 #define GG_DISCONNECTING 0x000b
 
+#define GG_STATUS77 0x17
+typedef struct {
+	uint32_t uin;			/* [gg_status60] numerek plus flagi w MSB */
+	uint8_t status;			/* [gg_status60] status danej osoby */
+	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
+	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
+	uint8_t version;		/* [gg_status60] wersja klienta */
+	uint8_t image_size;		/* [gg_status60] maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t dunno2;		/* 0x00 */
+	char status_data[];
+} GG_PACKED gg_status77;
+
+#define GG_NOTIFY_REPLY77 0x0018
+typedef struct {
+	uint32_t uin;			/* [gg_notify_reply60] numerek plus flagi w MSB */
+	uint8_t status;			/* [gg_notify_reply60] status danej osoby */
+	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
+	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
+	uint8_t version;		/* [gg_notify_reply60] wersja klienta */
+	uint8_t image_size;		/* [gg_notify_reply60] maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t dunno2;		/* 0x00000000 */
+	unsigned char next[];		/* [like gg_notify_reply60] nastepny (gg_notify_reply77), lub DLUGOSC_OPISU+OPIS + nastepny (gg_notify_reply77) */
+} GG_PACKED gg_notify_reply77;
+
+#define GG_DCC_ACCEPT 0x21
+
+typedef struct {
+	uint32_t uin;			/* uin */
+	unsigned char code1[8];		/* kod polaczenia */
+	uint32_t seek;			/* od ktorego miejsca chcemy/mamy wysylac. */
+	uint32_t empty;
+} GG_PACKED gg_dcc7_accept;
+
+#define GG_DCC7_REJECT 0x22
+typedef struct {
+	uint32_t uid;
+	unsigned char code1[8];
+	uint32_t reason;		/* known values: 0x02 -> rejected, 0x06 -> invalid version (6.x) 
+							 0x01 -> niemozliwe teraz? [jak ktos przesyla inny plik do Ciebie?] */
+} GG_PACKED gg_dcc_reject;
+

@@ -30,6 +30,9 @@ typedef struct {
 } rivchat_packet_rcinfo;
 
 #define RIVCHAT_MESSAGE 	0x00
+#define RIVCHAT_INIT		0x01
+#define RIVCHAT_QUIT		0x03
+#define RIVCHAT_ME		0x04
 #define RIVCHAT_PING		0x05
 #define RIVCHAT_AWAY		0x09
 #define RIVCHAT_PINGAWAY	0x13
