@@ -2613,7 +2613,7 @@ back:
  * XXX, info<br>
  * <b>ONLY TLEN PROTOCOL</b>
  *
- * @param params [0] - uid/nickname/$ of target [<b>ONLY</b> "tlen:" uids]
+ * @param params [0] - uid of target [target can be passed in params[0] COMMAND_PARAMASTARGET] [target is uid COMMAND_TARGET_VALID_UID]
  *
  * @return	-1 if wrong uid<br>
  * 		 0 on success<br>
@@ -2621,15 +2621,14 @@ back:
 
 static COMMAND(tlen_command_alert) {
 	jabber_private_t *j = jabber_private(session);
-	const char *uid;
 	
-	/* get uid of target and check if it's starts with 't' [tlen:, ONLY TLEN PROTOCOL] */
-	if (!(uid = get_uid(session, target)) || tolower(uid[0]) != 't') {
-		printq("invalid_session");
+	/* check if uid starts with 't' [tlen:, ONLY TLEN PROTOCOL] */
+	if (tolower(target[0] != 't')) {
+		printq("invalid_session");	/* HUH? */
 		return -1;
 	}
-
-	watch_write(j->send_watch, "<m to='%s' tp='a'/>", uid+5);	/* sound alert */
+	
+	watch_write(j->send_watch, "<m to='%s' tp='a'/>", target+5);	/* sound alert */
 	/* XXX, printq() jakies ze wyslano */
 	return 0;
 }
@@ -2711,8 +2710,9 @@ void jabber_register_commands()
 		/* XXX: I changed all '* | COMMAND_ENABLEREQPARAMS' to JABBER_FLAGS_REQ,
 		 * 'cause I don't see any sense in executing connection-requiring commands
 		 * without SESSION_MUSTBECONNECTED */
-#define JABBER_FLAGS_REQ    JABBER_FLAGS | COMMAND_ENABLEREQPARAMS
-#define JABBER_FLAGS_TARGET JABBER_FLAGS_REQ | COMMAND_PARAMASTARGET
+#define JABBER_FLAGS_REQ    		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS
+#define JABBER_FLAGS_TARGET 		JABBER_FLAGS_REQ | COMMAND_PARAMASTARGET
+#define JABBER_FLAGS_TARGET_VALID	JABBER_FLAGS_TARGET | COMMAND_TARGET_VALID_UID	/* need audit, if it can be used everywhere instead JABBER_FLAGS_TARGET */ 
 	commands_lock = &commands;	/* keep it sorted or die */
 
 	command_add(&jabber_plugin, ("jid:"), "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
@@ -2783,7 +2783,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, ("tlen:_autoxa"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:_autoback"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, ("tlen:add"), "U ?",	jabber_command_modify,		JABBER_FLAGS, NULL); 
-	command_add(&jabber_plugin, ("tlen:alert"), "!u",	tlen_command_alert,		JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, ("tlen:alert"), "!u",	tlen_command_alert,		JABBER_FLAGS_TARGET_VALID, NULL);
 	command_add(&jabber_plugin, ("tlen:auth"), "!p uU", 	jabber_command_auth,		JABBER_FLAGS_REQ,
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, ("tlen:away"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
