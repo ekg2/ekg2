@@ -474,14 +474,10 @@ static QUERY(logs_handler_killwin)  {
 }
 
 static int logs_print_window(session_t *s, window_t *w, const char *line, time_t ts) {
-	extern char *va_format_string(const char *format, va_list ap);		/* formats.c */
-
 	static plugin_t *ui_plugin = NULL;
 
 	char *fline;
 	fstring_t *fstr;
-
-	va_list dummy;
 
 	/* it's enough to look for ui_plugin once */
 	if (!ui_plugin) ui_plugin = plugin_find(("ncurses"));
@@ -491,7 +487,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 		return -1;
 	}
 
-	fline = va_format_string(line, dummy);		/* format string */
+	fline = format_string(line);		/* format string */
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */

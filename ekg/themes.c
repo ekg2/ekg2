@@ -187,15 +187,12 @@ static const char *format_ansi(char ch) {
  *  - format - warto¶æ, nie nazwa formatu,
  *  - ap - argumenty.
  */
-char *va_format_string(const char *format, va_list ap) {
+static char *va_format_string(const char *format, va_list ap) {
 	string_t buf = string_init(NULL);
 	static int dont_resolve = 0;
 	const char *p;
 	char *args[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	int i, argc = 0;
-
-	if (!ap) 
-		goto skip_param_count;
 
         /* liczymy ilo¶æ argumentów */
 	for (p = format; *p; p++) {
