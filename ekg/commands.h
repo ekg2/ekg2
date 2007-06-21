@@ -52,6 +52,9 @@
 #define SESSION_MUSTHAS			0x100
 	/* session must exist and has private struct */
 #define SESSION_MUSTHASPRIVATE		0x200
+	/* before executing handler, check if target (or params[0] if COMMAND_PARAMASTARGET set) is valid uid for current session, or we've got smb with this nickname
+	 * on userlist... (read: we check if get_uid(session, target) return smth, if not we print message) */
+#define COMMAND_TARGET_VALID_UID	0x400
 
 typedef COMMAND(command_func_t);
 
