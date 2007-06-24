@@ -134,61 +134,6 @@ static void SHA1Transform(uint32_t state[5], unsigned char buffer[64]) {
 	state[4] += e;
 }
 
-#if 0
-static void SHA1PASSUpdate(SHA1_CTX* context, const unsigned char* data, const unsigned int len) {
-	unsigned int i = 0;
-	unsigned int z;
-
-#if MAX_PASS_LEN>(63-1)
-#warning "MAX_PASS_LEN>62 SLOWDOWN!!!"
-	if (len > 63) {
-		/* slowdown :( */
-		char depassword[MAX_PASS_LEN];
-		size_t z;
-		
-		for (z = 0; z < len; z++)
-			depassword[z] = digit[data[z]];
-
-		memcpy(context->buffer, depassword, (i = 64));
-		SHA1Transform(context->state, context->buffer);
-
-		for ( ; i + 63 < len; i += 64) {
-			SHA1Transform(context->state, &depassword[i]);
-		}
-	}
-#endif
-	for (z=0; z < len - i; z++) 
-		context->buffer[z] = digit[data[i+z]];
-}
-
-static void SHA1HASHUpdate(SHA1_CTX* context, const unsigned char* seed, unsigned int j) {
-	unsigned int i = 0;
-
-	if ((context->count[0] += 4 << 3) < (4 << 3)) context->count[1]++;
-
-	if ((j + 4) > 63) {
-		memcpy(&context->buffer[j], seed, (i = 64-j));
-		SHA1Transform(context->state, context->buffer);
-		j = 0;
-	}
-	memcpy(&context->buffer[j], &seed[i], 4 - i);
-}
-#endif
-
-static void SHA1Update(SHA1_CTX* context, const unsigned char* data, const unsigned int len	/* len tutaj: 1, 1, 8 optimize. */) {
-	unsigned int i, j;
-
-	j = (context->count[0] >> 3) & 63;
-	if ((context->count[0] += len << 3) < (len << 3)) context->count[1]++;
-
-	if ((j + len) > 63) {
-		memcpy(&context->buffer[j], data, (i = 64-j));
-		SHA1Transform(context->state, context->buffer);
-		j = 0;
-	} else i = 0;
-	memcpy(&context->buffer[j], &data[i], len - i);
-}
-
 /* XXX, ?SHA-1 Broken?, XXX */
 static inline int gg_login_sha1hash(const unsigned char *password, const size_t passlen, const uint32_t seed, const uint32_t *dig) {
 	SHA1_CTX ctx;
@@ -203,53 +148,43 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 	ctx.state[2] = 0x98BADCFE;
 	ctx.state[3] = 0x10325476;
 	ctx.state[4] = 0xC3D2E1F0;
-/*	ctx.count[0] = ctx.count[1] = 0; */
-	
+
+	ctx.count[0] = (passlen+4) << 3;
+	ctx.count[1] = 0;
+
+	/* XXX, it's optimized but it'll work only for short passwords, shorter than 63-4-7 */
 	{
-#if MAX_PASS_LEN>58
-#warning "MAX_PASS_LEN>58 !!"
-
-		ctx.count[0] = (passlen << 3);
-	#if MAX_PASS_LEN>500000000
-		ctx.count[1] = (passlen >> 29);
-	#else
-		ctx.count[1] = 0;
-	#endif
-		SHA1PASSUpdate(&ctx, password, passlen);
-		SHA1HASHUpdate(&ctx, &seed, passlen & 63);
-#else
-		ctx.count[0] = (passlen+4) << 3;
-		ctx.count[1] = 0;
-
 		for (i = 0; i < passlen; i++) 
 			ctx.buffer[i] = digit[password[i]];
 
 		memcpy(&ctx.buffer[passlen], &seed, 4);
-#endif
 	}
 
 /* SHA1Final() */
 	/* Add padding and return the message digest. */
+	{
+		uint32_t i;
 
-/*	ROLLED:
-	for (i = 0; i < 8; i++)
-		finalcount[i] = (unsigned char)((ctx.count[(i >= 4 ? 0 : 1)] >> ((3-(i & 3)) * 8) ) & 255);
- */
-	finalcount[0] = (unsigned char) ((ctx.count[1] >> 24));
-	finalcount[1] = (unsigned char) ((ctx.count[1] >> 16) & 255);
-	finalcount[2] = (unsigned char) ((ctx.count[1] >>  8) & 255);
-	finalcount[3] = (unsigned char) ((ctx.count[1] >>  0) & 255);
-	finalcount[4] = (unsigned char) ((ctx.count[0] >> 24));
-	finalcount[5] = (unsigned char) ((ctx.count[0] >> 16) & 255);
-	finalcount[6] = (unsigned char) ((ctx.count[0] >>  8) & 255);
-	finalcount[7] = (unsigned char) ((ctx.count[0]      ) & 255);
+	/* pad */
+		ctx.buffer[passlen+4] = '\200';
+		for (i = passlen+5; i < 63-7; i++)
+			ctx.buffer[i] = '\0';
+			
+	/* finalcount */
+		for (i = 63-7; i < 63; i++)
+			ctx.buffer[i] = '\0';
 
-	SHA1Update(&ctx, (unsigned char *)"\200", 1);
-	while ((ctx.count[0] & 504) != 448) {
-		SHA1Update(&ctx, (unsigned char *)"\0", 1);
+		ctx.buffer[63] = (unsigned char) ((ctx.count[0] & 0xff));
 	}
 
-	SHA1Update(&ctx, finalcount, 8);  /* Should cause a SHA1Transform() */
+	SHA1Transform((ctx.state), (ctx.buffer));
+
+#if ULTRA_DEBUG
+	for (password = pass; *password; password++) {
+		printf("%c", digit[*password]);
+	}
+	printf(" -> %.8x%.8x%.8x%.8x%.8x\n", ctx.state[0], ctx.state[1], ctx.state[2], ctx.state[3], ctx.state[4]);
+#endif
 
 /* it returns 0 if digest match, 1 if not */
 	for (i = 0; i < 5; i++)
