@@ -83,18 +83,24 @@ static last_t *last_last;
 
 /* XXX, ?SHA-1 Broken?, XXX */
 static inline int gg_login_sha1hash(const unsigned char *password, const size_t passlen, const uint32_t seed, const uint32_t *dig) {
+#define SHA_STATE0 0x67452301
+#define SHA_STATE1 0xEFCDAB89
+#define SHA_STATE2 0x98BADCFE
+#define SHA_STATE3 0x10325476
+#define SHA_STATE4 0xC3D2E1F0
 	int i;
 
-	uint32_t state[5];
 	unsigned char buffer[64];
 
 /* SHA1Init() */
     /* SHA1 initialization constants */
-	state[0] = 0x67452301;
-	state[1] = 0xEFCDAB89;
-	state[2] = 0x98BADCFE;
-	state[3] = 0x10325476;
-	state[4] = 0xC3D2E1F0;
+
+	/* Copy context->state[] working vars, result digets - SHA_STATE* also */
+	uint32_t a = SHA_STATE0;
+	uint32_t b = SHA_STATE1;
+	uint32_t c = SHA_STATE2;
+	uint32_t d = SHA_STATE3;
+	uint32_t e = SHA_STATE4;
 
 	/* XXX, it's optimized but it'll work only for short passwords, shorter than 63-4-7 */
 	{
@@ -128,13 +134,6 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 
 		CHAR64LONG16* block = (CHAR64LONG16*) buffer;
 
-		/* Copy context->state[] to working vars */
-		uint32_t a = state[0];
-		uint32_t b = state[1];
-		uint32_t c = state[2];
-		uint32_t d = state[3];
-		uint32_t e = state[4];
-
 		/* 4 rounds of 20 operations each. Loop unrolled. */
 		R0(a,b,c,d,e, 0); R0(e,a,b,c,d, 1); R0(d,e,a,b,c, 2); R0(c,d,e,a,b, 3);
 		R0(b,c,d,e,a, 4); R0(a,b,c,d,e, 5); R0(e,a,b,c,d, 6); R0(d,e,a,b,c, 7);
@@ -157,12 +156,15 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 		R4(d,e,a,b,c,72); R4(c,d,e,a,b,73); R4(b,c,d,e,a,74); R4(a,b,c,d,e,75);
 		R4(e,a,b,c,d,76); R4(d,e,a,b,c,77); R4(c,d,e,a,b,78); R4(b,c,d,e,a,79);
 
+		/* this below, is also useless, 'coz we sub initial vectors @ startup */
+#if 0
 		/* Add the working vars back into context.state[] */
 		state[0] += a;
 		state[1] += b;
 		state[2] += c;
 		state[3] += d;
 		state[4] += e;
+#endif
 	}
 
 #if ULTRA_DEBUG
@@ -173,9 +175,12 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 #endif
 
 /* it returns 0 if digest match, 1 if not */
-	for (i = 0; i < 5; i++)
-		if (dig[i] != state[i])
-			return 1;
+	if (dig[0] != a) return 1;
+	if (dig[1] != b) return 1;
+	if (dig[2] != c) return 1;
+	if (dig[3] != d) return 1;
+	if (dig[4] != e) return 1;
+
 	return 0;
 }
 
@@ -325,6 +330,13 @@ int main() {
 	digstate[2] = digest[ 8] << 24 | digest[ 9] << 16 | digest[10] << 8 | digest[11];
 	digstate[3] = digest[12] << 24 | digest[13] << 16 | digest[14] << 8 | digest[15];
 	digstate[4] = digest[16] << 24 | digest[17] << 16 | digest[18] << 8 | digest[19];
+
+/* substract SHA1 initial vectors, to speedup computing @ loop... 4 add instruction less per loop */
+	digstate[0] -= SHA_STATE0;
+	digstate[1] -= SHA_STATE1;
+	digstate[2] -= SHA_STATE2;
+	digstate[3] -= SHA_STATE3;
+	digstate[4] -= SHA_STATE4;
 #endif
 	
 	memset(pass, 0, sizeof(pass));
