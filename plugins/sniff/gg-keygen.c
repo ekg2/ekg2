@@ -64,12 +64,6 @@ static last_t *last_last;
 
 /* SHA1 STUFF */
 
-typedef struct {
-    uint32_t state[5];
-    uint32_t count[2];
-    unsigned char buffer[64];
-} SHA1_CTX;
-
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
 /* blk0() and blk() perform the initial expand. */
@@ -87,108 +81,100 @@ typedef struct {
 #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
 
-/* Hash a single 512-bit block. This is the core of the algorithm. */
-
-static void SHA1Transform(uint32_t state[5], unsigned char buffer[64]) {
-	typedef union {
-		unsigned char c[64];
-		uint32_t l[16];
-	} CHAR64LONG16;
-
-	CHAR64LONG16* block = (CHAR64LONG16*) buffer;
-
-	/* Copy context->state[] to working vars */
-	uint32_t a = state[0];
-	uint32_t b = state[1];
-	uint32_t c = state[2];
-	uint32_t d = state[3];
-	uint32_t e = state[4];
-
-	/* 4 rounds of 20 operations each. Loop unrolled. */
-	R0(a,b,c,d,e, 0); R0(e,a,b,c,d, 1); R0(d,e,a,b,c, 2); R0(c,d,e,a,b, 3);
-	R0(b,c,d,e,a, 4); R0(a,b,c,d,e, 5); R0(e,a,b,c,d, 6); R0(d,e,a,b,c, 7);
-	R0(c,d,e,a,b, 8); R0(b,c,d,e,a, 9); R0(a,b,c,d,e,10); R0(e,a,b,c,d,11);
-	R0(d,e,a,b,c,12); R0(c,d,e,a,b,13); R0(b,c,d,e,a,14); R0(a,b,c,d,e,15);
-	R1(e,a,b,c,d,16); R1(d,e,a,b,c,17); R1(c,d,e,a,b,18); R1(b,c,d,e,a,19);
-	R2(a,b,c,d,e,20); R2(e,a,b,c,d,21); R2(d,e,a,b,c,22); R2(c,d,e,a,b,23);
-	R2(b,c,d,e,a,24); R2(a,b,c,d,e,25); R2(e,a,b,c,d,26); R2(d,e,a,b,c,27);
-	R2(c,d,e,a,b,28); R2(b,c,d,e,a,29); R2(a,b,c,d,e,30); R2(e,a,b,c,d,31);
-	R2(d,e,a,b,c,32); R2(c,d,e,a,b,33); R2(b,c,d,e,a,34); R2(a,b,c,d,e,35);
-	R2(e,a,b,c,d,36); R2(d,e,a,b,c,37); R2(c,d,e,a,b,38); R2(b,c,d,e,a,39);
-	R3(a,b,c,d,e,40); R3(e,a,b,c,d,41); R3(d,e,a,b,c,42); R3(c,d,e,a,b,43);
-	R3(b,c,d,e,a,44); R3(a,b,c,d,e,45); R3(e,a,b,c,d,46); R3(d,e,a,b,c,47);
-	R3(c,d,e,a,b,48); R3(b,c,d,e,a,49); R3(a,b,c,d,e,50); R3(e,a,b,c,d,51);
-	R3(d,e,a,b,c,52); R3(c,d,e,a,b,53); R3(b,c,d,e,a,54); R3(a,b,c,d,e,55);
-	R3(e,a,b,c,d,56); R3(d,e,a,b,c,57); R3(c,d,e,a,b,58); R3(b,c,d,e,a,59);
-	R4(a,b,c,d,e,60); R4(e,a,b,c,d,61); R4(d,e,a,b,c,62); R4(c,d,e,a,b,63);
-	R4(b,c,d,e,a,64); R4(a,b,c,d,e,65); R4(e,a,b,c,d,66); R4(d,e,a,b,c,67);
-	R4(c,d,e,a,b,68); R4(b,c,d,e,a,69); R4(a,b,c,d,e,70); R4(e,a,b,c,d,71);
-	R4(d,e,a,b,c,72); R4(c,d,e,a,b,73); R4(b,c,d,e,a,74); R4(a,b,c,d,e,75);
-	R4(e,a,b,c,d,76); R4(d,e,a,b,c,77); R4(c,d,e,a,b,78); R4(b,c,d,e,a,79);
-
-	/* Add the working vars back into context.state[] */
-	state[0] += a;
-	state[1] += b;
-	state[2] += c;
-	state[3] += d;
-	state[4] += e;
-}
-
 /* XXX, ?SHA-1 Broken?, XXX */
 static inline int gg_login_sha1hash(const unsigned char *password, const size_t passlen, const uint32_t seed, const uint32_t *dig) {
-	SHA1_CTX ctx;
+	int i;
 
-	uint32_t i;
-	unsigned char finalcount[8];
+	uint32_t state[5];
+	unsigned char buffer[64];
 
 /* SHA1Init() */
     /* SHA1 initialization constants */
-	ctx.state[0] = 0x67452301;
-	ctx.state[1] = 0xEFCDAB89;
-	ctx.state[2] = 0x98BADCFE;
-	ctx.state[3] = 0x10325476;
-	ctx.state[4] = 0xC3D2E1F0;
-
-	ctx.count[0] = (passlen+4) << 3;
-	ctx.count[1] = 0;
+	state[0] = 0x67452301;
+	state[1] = 0xEFCDAB89;
+	state[2] = 0x98BADCFE;
+	state[3] = 0x10325476;
+	state[4] = 0xC3D2E1F0;
 
 	/* XXX, it's optimized but it'll work only for short passwords, shorter than 63-4-7 */
 	{
 		for (i = 0; i < passlen; i++) 
-			ctx.buffer[i] = digit[password[i]];
+			buffer[i] = digit[password[i]];
 
-		memcpy(&ctx.buffer[passlen], &seed, 4);
+		memcpy(&buffer[passlen], &seed, 4);
 	}
 
 /* SHA1Final() */
 	/* Add padding and return the message digest. */
 	{
-		uint32_t i;
-
 	/* pad */
-		ctx.buffer[passlen+4] = '\200';
+		buffer[passlen+4] = '\200';
 		for (i = passlen+5; i < 63-7; i++)
-			ctx.buffer[i] = '\0';
+			buffer[i] = '\0';
 			
 	/* finalcount */
 		for (i = 63-7; i < 63; i++)
-			ctx.buffer[i] = '\0';
+			buffer[i] = '\0';
 
-		ctx.buffer[63] = (unsigned char) ((ctx.count[0] & 0xff));
+		buffer[63] = (unsigned char) (((passlen+4) << 3) & 0xff);
 	}
+/* SHA1Transform() */
+	/* Hash a single 512-bit block. This is the core of the algorithm. */
+	{
+		typedef union {
+			unsigned char c[64];
+			uint32_t l[16];
+		} CHAR64LONG16;
 
-	SHA1Transform((ctx.state), (ctx.buffer));
+		CHAR64LONG16* block = (CHAR64LONG16*) buffer;
+
+		/* Copy context->state[] to working vars */
+		uint32_t a = state[0];
+		uint32_t b = state[1];
+		uint32_t c = state[2];
+		uint32_t d = state[3];
+		uint32_t e = state[4];
+
+		/* 4 rounds of 20 operations each. Loop unrolled. */
+		R0(a,b,c,d,e, 0); R0(e,a,b,c,d, 1); R0(d,e,a,b,c, 2); R0(c,d,e,a,b, 3);
+		R0(b,c,d,e,a, 4); R0(a,b,c,d,e, 5); R0(e,a,b,c,d, 6); R0(d,e,a,b,c, 7);
+		R0(c,d,e,a,b, 8); R0(b,c,d,e,a, 9); R0(a,b,c,d,e,10); R0(e,a,b,c,d,11);
+		R0(d,e,a,b,c,12); R0(c,d,e,a,b,13); R0(b,c,d,e,a,14); R0(a,b,c,d,e,15);
+		R1(e,a,b,c,d,16); R1(d,e,a,b,c,17); R1(c,d,e,a,b,18); R1(b,c,d,e,a,19);
+		R2(a,b,c,d,e,20); R2(e,a,b,c,d,21); R2(d,e,a,b,c,22); R2(c,d,e,a,b,23);
+		R2(b,c,d,e,a,24); R2(a,b,c,d,e,25); R2(e,a,b,c,d,26); R2(d,e,a,b,c,27);
+		R2(c,d,e,a,b,28); R2(b,c,d,e,a,29); R2(a,b,c,d,e,30); R2(e,a,b,c,d,31);
+		R2(d,e,a,b,c,32); R2(c,d,e,a,b,33); R2(b,c,d,e,a,34); R2(a,b,c,d,e,35);
+		R2(e,a,b,c,d,36); R2(d,e,a,b,c,37); R2(c,d,e,a,b,38); R2(b,c,d,e,a,39);
+		R3(a,b,c,d,e,40); R3(e,a,b,c,d,41); R3(d,e,a,b,c,42); R3(c,d,e,a,b,43);
+		R3(b,c,d,e,a,44); R3(a,b,c,d,e,45); R3(e,a,b,c,d,46); R3(d,e,a,b,c,47);
+		R3(c,d,e,a,b,48); R3(b,c,d,e,a,49); R3(a,b,c,d,e,50); R3(e,a,b,c,d,51);
+		R3(d,e,a,b,c,52); R3(c,d,e,a,b,53); R3(b,c,d,e,a,54); R3(a,b,c,d,e,55);
+		R3(e,a,b,c,d,56); R3(d,e,a,b,c,57); R3(c,d,e,a,b,58); R3(b,c,d,e,a,59);
+		R4(a,b,c,d,e,60); R4(e,a,b,c,d,61); R4(d,e,a,b,c,62); R4(c,d,e,a,b,63);
+		R4(b,c,d,e,a,64); R4(a,b,c,d,e,65); R4(e,a,b,c,d,66); R4(d,e,a,b,c,67);
+		R4(c,d,e,a,b,68); R4(b,c,d,e,a,69); R4(a,b,c,d,e,70); R4(e,a,b,c,d,71);
+		R4(d,e,a,b,c,72); R4(c,d,e,a,b,73); R4(b,c,d,e,a,74); R4(a,b,c,d,e,75);
+		R4(e,a,b,c,d,76); R4(d,e,a,b,c,77); R4(c,d,e,a,b,78); R4(b,c,d,e,a,79);
+
+		/* Add the working vars back into context.state[] */
+		state[0] += a;
+		state[1] += b;
+		state[2] += c;
+		state[3] += d;
+		state[4] += e;
+	}
 
 #if ULTRA_DEBUG
 	for (password = pass; *password; password++) {
 		printf("%c", digit[*password]);
 	}
-	printf(" -> %.8x%.8x%.8x%.8x%.8x\n", ctx.state[0], ctx.state[1], ctx.state[2], ctx.state[3], ctx.state[4]);
+	printf(" -> %.8x%.8x%.8x%.8x%.8x\n", state[0], state[1], state[2], state[3], state[4]);
 #endif
 
 /* it returns 0 if digest match, 1 if not */
 	for (i = 0; i < 5; i++)
-		if (dig[i] != ctx.state[i])
+		if (dig[i] != state[i])
 			return 1;
 	return 0;
 }
@@ -294,10 +280,10 @@ static inline void incr() {
 #endif
 
 /* with apended '2' to digit: [static const char digit[] = "\0abcdefghijklmnoprstuwxyz2"] */
-#if 0 /* qwerty2 */
+#if 0	/* qwerty2 */	/* */
 #define SEED 0xb2b9eec8
 #define HASH_SHA1 "a266db74a7289913ec30a7872b7384ecc119e4ec"
-#endif			/* dlugo, nie chce mi sie. */
+#endif
 
 #define NOT_STOP_ON_FIRST 0
 
