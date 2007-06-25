@@ -94,8 +94,6 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 
 /* SHA1Init() */
     /* SHA1 initialization constants */
-
-	/* Copy context->state[] working vars, result digets - SHA_STATE* also */
 	uint32_t a = SHA_STATE0;
 	uint32_t b = SHA_STATE1;
 	uint32_t c = SHA_STATE2;
@@ -155,16 +153,6 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 		R4(c,d,e,a,b,68); R4(b,c,d,e,a,69); R4(a,b,c,d,e,70); R4(e,a,b,c,d,71);
 		R4(d,e,a,b,c,72); R4(c,d,e,a,b,73); R4(b,c,d,e,a,74); R4(a,b,c,d,e,75);
 		R4(e,a,b,c,d,76); R4(d,e,a,b,c,77); R4(c,d,e,a,b,78); R4(b,c,d,e,a,79);
-
-		/* this below, is also useless, 'coz we sub initial vectors @ startup */
-#if 0
-		/* Add the working vars back into context.state[] */
-		state[0] += a;
-		state[1] += b;
-		state[2] += c;
-		state[3] += d;
-		state[4] += e;
-#endif
 	}
 
 #if ULTRA_DEBUG
