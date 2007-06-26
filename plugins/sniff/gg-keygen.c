@@ -16,20 +16,8 @@
  */
 
 /* gg_login_hash() copied from libgadu copyrighted under LGPL-2.1 (C) libgadu developers */
+/* orginal version of SHA-1 in C by Steve Reid <steve@edmweb.com> */
 
-/*
-SHA-1 in C
-By Steve Reid <steve@edmweb.com>
-100% Public Domain
-
-Test Vectors (from FIPS PUB 180-1)
-"abc"
-  A9993E36 4706816A BA3E2571 7850C26C 9CD0D89D
-"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
-  84983E44 1C3BD26E BAAE4AA1 F95129E5 E54670F1
-A million repetitions of "a"
-  34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
-*/
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -46,21 +34,9 @@ static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde
 #define ULTRA_DEBUG 	0	/* sprawdza czy dobrze generujemy hasla (w/g digit, b. niepotrzebne i b. wolne) */
 #define ULTRA_VERBOSE	0	/* rysuje kropki */
 #define ULTRA_SAFE	0	/* sprawdza czy nie bedziemy rysowac po pamieci jesli haslo zacznie miec wiecej niz MAX_PASS_LEN znakow */
-#define ULTRA_CACHE 	0	/* XXX keszuje wyniki, jak komus sie chce napisac. */
 
 static unsigned char pass[MAX_PASS_LEN];
 static size_t pass_pos = 0;
-
-#if ULTRA_CACHE
-typedef struct {
-	unsigned int x;
-	unsigned int y;
-} last_t;
-
-static last_t lasts[MAX_PASS_LEN];
-static last_t *last_last;
-
-#endif
 
 /* SHA1 STUFF */
 
@@ -185,14 +161,8 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 }
 
 /* stolen from libgadu */
-static inline unsigned int gg_login_hash(const unsigned char *password, unsigned int y /* seed */
-#if ULTRA_CACHE
-, unsigned int x
-#endif
-) {
-#if !ULTRA_CACHE
+static inline unsigned int gg_login_hash(const unsigned char *password, unsigned int y /* seed */) {
 	unsigned int x = 0;
-#endif
 	unsigned int z;
 
 /* I have no idea, how to crack/optimize this algo. Maybe someone? */
@@ -284,7 +254,7 @@ static inline void incr() {
 #define HASH 0x9f9b9205
 #endif
 
-/* with apended '2' to digit: [static const char digit[] = "\0abcdefghijklmnoprstuwxyz2"] */
+/* with apended 'q2' to digit: [static const char digit[] = "\0abcdefghijklmnoprstuwxyzq2"] */
 #if 0	/* qwerty2 */	/* */
 #define SEED 0xb2b9eec8
 #define HASH_SHA1 "a266db74a7289913ec30a7872b7384ecc119e4ec"
@@ -347,11 +317,7 @@ int main() {
 #ifdef HASH_SHA1
 			(gg_login_sha1hash(pass, pass_pos+1, SEED, digstate));
 #else
-			((hash = gg_login_hash(pass, SEED
-	#if ULTRA_CACHE
-						,0
-	#endif
-					      )) != HASH);
+			((hash = gg_login_hash(pass, SEED)) != HASH);
 #endif
 		print_pass(pass);
 	} while(NOT_STOP_ON_FIRST);
