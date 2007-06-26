@@ -147,7 +147,7 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 	for (password = pass; *password; password++) {
 		printf("%c", digit[*password]);
 	}
-	printf(" -> %.8x%.8x%.8x%.8x%.8x\n", state[0], state[1], state[2], state[3], state[4]);
+	printf(" -> %.8x%.8x%.8x%.8x%.8x\n", a, b, c, d, e);
 #endif
 
 /* it returns 0 if digest match, 1 if not */
@@ -189,7 +189,22 @@ static inline unsigned int gg_login_hash(const unsigned char *password, unsigned
 #endif
 	return y;
 }
-  
+
+static inline int check_text(const unsigned char *password, const unsigned char *text) {
+#if ULTRA_DEBUG
+	char *password2;
+	for (password2 = pass; *password2; password2++)
+		printf("%c", digit[*password2]);
+	printf("\n");
+#endif
+
+	for (; *password && *text; password++, text++) {
+		if (*text != digit[*password])
+			return 1;
+	}
+
+	return !(*password == '\0' && *text == '\0');
+}
 
 static void bonce(unsigned char *buf, size_t len) {
 	size_t i;
@@ -260,6 +275,8 @@ static inline void incr() {
 #define HASH_SHA1 "a266db74a7289913ec30a7872b7384ecc119e4ec"
 #endif
 
+/* #define TEXT "alamaka" */		/* algo test */
+
 #define NOT_STOP_ON_FIRST 0
 
 int main() {
@@ -314,11 +331,15 @@ int main() {
 		do {
 			incr();
 		} while 
-#ifdef HASH_SHA1
+#ifdef HASH_SHA1		/* (HAS_SHA1) */
 			(gg_login_sha1hash(pass, pass_pos+1, SEED, digstate));
 #else
+#ifdef TEXT			/* !(HAS_SHA1) && (TEXT) */
+			(check_text(pass, TEXT));
+#else				/* !(HAS_SHA1) && (!(TEXT)) */
 			((hash = gg_login_hash(pass, SEED)) != HASH);
-#endif
+#endif		/* !(HASH_SHA1) && ((TEXT) */
+#endif		/* !(HASH_SHA1) */
 		print_pass(pass);
 	} while(NOT_STOP_ON_FIRST);
 	return 0;
