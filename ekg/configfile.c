@@ -541,13 +541,28 @@ int config_write()
  * 
  * 0/-1
  */
+/* BIG BUGNOTE:
+ * 	Ta funkcja jest zle zportowana z ekg1, zle napisana, wolna, etc..
+ * 	Powinnismy robic tak:
+ * 		- dla kazdej zmiennej w vars[] znalezc variable_t * jej odpowiadajace i do tablicy vars_ptr[]
+ * 		- dla kazdej zmiennej w vars[] policzyc dlugosc i do vars_len[]
+ * 	- nastepnie otworzyc "config-%s", vars_ptr[0]->plugin->name (lub "config" gdy nie plugin)
+ * 		- zrobic to co tutaj robimy, czyli poszukac tej zmiennej.. oraz nastepnie wszystkie inne ktore maja taki
+ * 			sam vars_ptr[]->plugin jak vars_ptr[0]->plugin, powtarzac dopoki sie skoncza takie.
+ * 	- nastepnie wziasc zmienna ktora ma inny plugin.. i j/w
+ *	
+ *	boring. ta funkcja w sumie jest wykorzystywana tylko przy ekg_exit() dla zmiennych z konfigu...
+ *	wiec aktualny workaround to zakomentowanie tego if (first) { } 
+ *	bo mnie wkurza jak sie zapisuja okienka we wszystkie config-*
+ *	
+ *	albo podawanie zamiast filename, plugin_t i vars[] maja byc zmienne tylko z tego plugina.
+ */
 int config_write_partly(const char *filename, const char **vars)
 {
 	char *newfn;
 	char *line;
 	FILE *fi, *fo;
 	int *wrote, i, first = (filename) ? 0 : 1;
-	list_t l;
 
 	if (!vars)
 		return -1;
@@ -594,7 +609,12 @@ int config_write_partly(const char *filename, const char **vars)
 			tmp += 4;
 		
 		for (i = 0; vars[i]; i++) {
-			int len = xstrlen(vars[i]);
+			int len;
+
+			if (wrote[i])
+				continue;
+			
+			len = xstrlen(vars[i]);
 
 			if (xstrlen(tmp) < len + 1)
 				continue;
@@ -630,8 +650,9 @@ pass:
 	rename(newfn, filename);
 
 	xfree(newfn);
-
+#if 0
 	if (first) {
+		list_t l;
 		for (l = plugins; l; l = l->next) {
 			plugin_t *p = l->data;
 			char *tmp = saprintf("config-%s", p->name);
@@ -641,7 +662,7 @@ pass:
 			xfree(tmp);
 		}
 	}
-
+#endif
 	return 0;
 }
 
