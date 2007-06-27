@@ -179,6 +179,7 @@ typedef struct {
 #define T_A		1		/* (IN) A */
 #define T_CNAME		5		/* (IN) CNAME */
 #define T_PTR		12		/* (IN) PTR */
+#define T_MX		15		/* (IN) MX */
 #define T_AAAA		28		/* (IN) AAAA */
 #define T_SRV		33		/* (IN) SRV */
 

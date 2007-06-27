@@ -1520,6 +1520,26 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 						displayed = 1;
 						break;
 
+					case T_MX: {
+						int prio;
+						if (payload < 2) {
+							debug_error("T_MX record but size < 2 [%d]\n", payload);
+							break;
+						}
+					/* LE STUFF */
+						prio = cur[0] << 8 | cur[1];
+						
+						if ((len = dn_expand(beg, eom, cur + 2, tmp_addr, sizeof(tmp_addr))) < 0) {
+							debug_error("dn_expand() on T_MX failed\n");
+							break;
+						}
+
+						print_window_w(window_status, 1, "sniff_dns_entry_mx",
+							host, tmp_addr, itoa(prio));
+						displayed = 1;
+						break;
+					}
+
 					case T_SRV: {
 						int prio, weight, port;
 						if (payload < 6) {
@@ -2082,6 +2102,7 @@ static int sniff_theme_init() {
 	format_add("sniff_dns_entry_aaaa",	_("%)      %b[IN_AAAA] %gDOMAIN: %W%1 %gIP6: %W%2"), 1);
 	format_add("sniff_dns_entry_cname",	_("%)     %b[IN_CNAME] %gDOMAIN: %W%1 %gCNAME: %W%2"), 1);
 	format_add("sniff_dns_entry_ptr",	_("%)       %b[IN_PTR] %gIP_PTR: %W%1 %gDOMAIN: %W%2"), 1);
+	format_add("sniff_dns_entry_mx",	_("%)        %b[IN_MX] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPREF: %W%3"), 1);
 	format_add("sniff_dns_entry_srv",	_("%)       %b[IN_SRV] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPORT: %W%3 %gPRIO: %W%4 %gWEIGHT: %W%5"), 1);
 	format_add("sniff_dns_entry_?",		_("%)         %b[IN_?] %gDOMAIN: %W%1 %gTYPE: %W%2 %gLEN: %W%3"), 1);
 	format_add("sniff_dns_entry_ndisplay",	_("%)   %rZADEN REKORD NIE WYSWIETLONY DLA ZAPYTANIE POWYZEJ ;), OBEJRZYJ DEBUG"), 1);
