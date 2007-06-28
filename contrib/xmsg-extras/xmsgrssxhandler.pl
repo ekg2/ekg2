@@ -8,6 +8,8 @@ use FindBin;
 use lib "$FindBin::RealBin";
 use SimpleXMSG qw/replyxmsg/;
 use File::Temp qw/tempfile/;
+use YAML qw/DumpFile LoadFile Dump/;
+use Digest::MD5 qw/md5_hex/;
 
 our $helpmsg =
 	"XMSG-RSS command interface\n" .
@@ -26,52 +28,34 @@ sub DoRemove
 	my $what = shift;
 	
 	eval {
-		my ($out, $line, @arr);
-		my ($found, $confirmed) = (0, 0);
+		my @db = LoadFile($dbfile);
+		my $r;
 
-		open($f, "+<$dbfile") or die('unable to open database');
-		while (<$f>) {
-			$out .= $_, next if (/^#/ || /^$/);
-			$line = $_;
-			@arr = split(/##/);
-			if ($arr[0] eq $what) {
-				if ($arr[2] ne '1') {
-					$arr[2] = '1';
-					$out .= join('##', @arr);
-				} else {
-					$confirmed = 1;
-				}
-				$found = 1;
-			} else {
-				if ($arr[2] eq '1') {
-					$arr[2] = '0';
-					$out .= join('##', @arr);
-				} else {
-					$out .= $line;
-				}
+		foreach (@db) {
+			if ($$_{Delete_Confirmation} eq $what) {
+				my @newdb;
+				$$_{Delete_Confirmation} eq $what or push(@newdb, $_) foreach (@db);
+				DumpFile($dbfile, @newdb);
+				die('Feed removed successfully');
+			} elsif ($$_{Name} eq $what) {
+				$$_{Delete_Confirmation} = md5_hex(rand());
+				DumpFile($dbfile, @db);
+				die("Please confirm feed removal by typing 'rm $$_{Delete_Confirmation}'");
 			}
 		}
-		close($f), die('feed not found') if (!$found);
-		
-		seek($f, 0, 0);
-		truncate($f, 0);
-		print($f $out);
-		close($f);
-		
-		die('Please confirm feed deletion by typing rm command again') if (!$confirmed);
+
+		die('feed not found');
 	};
 	
 	if ($@) {
 		local $_ = $@;
 		s/ at.*$//;
 		chomp;
-		if (/confirm/) {
+		if (/(confirm|successfully)/) {
 			replyxmsg($_);
 		} else {
 			replyxmsg("Unable to remove feed: $_");
 		}
-	} else {
-		replyxmsg('Feed removed successfully.');
 	}
 }
 
@@ -107,15 +91,11 @@ if ($ARGV[0] =~ /^rss-(.*)$/) {
 		my ($outmsg, @arr);
 		
 		eval {
-			open($f, "<$dbfile") or die;
-			while (<$f>) {
-				chomp;
-				next if (/^#/ || /^$/);
-				@arr = split(/##/);
-				
-				$outmsg .= "$arr[0] = $arr[1]\n";
+			my @arr = LoadFile($dbfile);
+			foreach (@arr) {
+				my %h = %$_;
+				$outmsg .= "$h{Name} => $h{URL}\n";
 			}
-			close($f);
 			if ($outmsg) {
 				chomp $outmsg;
 				replyxmsg($outmsg);
@@ -127,8 +107,10 @@ if ($ARGV[0] =~ /^rss-(.*)$/) {
 		replyxmsg('Unable to open database') if ($@);
 	} elsif ($cmd =~ /^add[[:space:]]+(.*?)[[:space:]]+(https?:\/\/.*)$/) {
 		eval {
+			my @tmparr = ({Name => $1, URL => $2});
+
 			open($f, ">>$dbfile") or die('unable to open database');
-			print($f "$1##$2##0####\n") or die('db write error');
+			print($f Dump(@tmparr)) or die('db write error');
 			close($f);
 		};
 		

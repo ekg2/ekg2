@@ -10,11 +10,14 @@ use File::Temp qw/tempfile/;
 use Sys::Syslog;
 use XML::Feed;
 use Encode;
+use YAML qw/DumpFile LoadFile/;
+use List::Util qw/first/;
 
-our $myemail = 'peres@peres.int.pl'; # remove this, if you don't want to send From: header
+our $myemail	= 'me@someserver.pl'; # set to '', if you don't want to send From: header
+our $myua	= 'xmsgrss/0.1 (I hate feedburner!)'; # attached to LWP UA, if set; this one disables WordPress->FeedBurner redirects
 
-our $dbfile = "$FindBin::RealBin/db";
-our $dtformat = '%x %X';
+our $dbfile	= "$FindBin::RealBin/db";
+our $dtformat	= '%x %X';
 
 $dbfile = $ARGV[0] if ($ARGV[0]);
 
@@ -23,49 +26,45 @@ sub Loguj {
 	syslog('info', $msg);
 }
 
-# db format:
-#   name ; url ; internaluse (= 0) [; lastnews [; lastmodified]]
-
-my ($f, @arr, $ua, $r, @outarr, $feed, $hl);
 $\ = "\n";
 
-$ua = LWP::UserAgent->new;
+my $ua = LWP::UserAgent->new;
 $ua->timeout(30);
 $ua->env_proxy;
 $ua->default_header('Accept' => 'application/rss+xml, application/rdf+xml, application/rss+rdf+xml, text/xml;q=0.7');
 $ua->default_header('Accept-Language' => 'pl, en;q=0.5');
 $ua->default_header('Accept-Charset' => 'utf-8, *;q=0.5');
 $ua->default_header('From' => $myemail) if ($myemail);
+$ua->agent($ua->_agent() . " $myua") if ($myua);
 
 openlog('rssxmsg', 'nofatal,pid', 'user');
 
-open ($f, "+<$dbfile") or die('Cannot open db R/W');
-while (<$f>) {
-	chomp;
-	next if (/^#/ || /^$/);
-	@arr = split (/##/);
-	next if (@arr < 3);
+die('Database not writable') if (! -w $dbfile);
+my @db = LoadFile($dbfile);
+foreach (@db) {
+	my $arr = $_;
+	my $r;
 	
-	if ($arr[4]) {
-		$r = $ua->get($arr[1], 'If-Modified-Since' => $arr[4]);
-		push(@outarr, [@arr]), Loguj("$arr[0]: Skipping because of Last-Modified"), next if (($r->code == 304) || ($r->header('Last-Modified') eq $arr[4]));
+	if ($$arr{Last_Modified}) {
+		$r = $ua->get($$arr{URL}, 'If-Modified-Since' => $$arr{Last_Modified});
+		Loguj("$$arr{Name}: Skipping because of Last-Modified"), next if (($r->code == 304) || ($r->header('Last-Modified') eq $$arr{Last_Modified}));
 	} else {
-		$r = $ua->get($arr[1]);
+		$r = $ua->get($$arr{URL});
 	}
-	push(@outarr, [@arr]), Loguj("$arr[0]: Download failed"), next if (!$r->is_success);
+	Loguj("$$arr{Name}: Download failed"), next if (!$r->is_success);
 	
-	$arr[4] = $r->header('Last-Modified');
+	$$arr{Last_Modified} = $r->header('Last-Modified');
 	
-	$feed = XML::Feed->parse(\$r->content);
+	my $feed = XML::Feed->parse(\$r->content);
 	if ($feed) {
 		my $sawfirst = 0;
 		my $newid = '';
 		my ($msgtext, $xtext, $content, @wholemsg);
 
-		foreach $hl ($feed->entries) {
-			last if ($hl->id eq $arr[3]);
+		foreach my $hl ($feed->entries) {
+			next if (first { $_ eq $hl->id } @{$$arr{Seen}});
+			push(@{$$arr{Seen}}, $hl->id);
 			if (!$sawfirst) {
-				$newid = $hl->id;
 				$msgtext = sprintf("[ %s ]\n< %s >", $feed->title, $feed->link);
 				$sawfirst = 1;
 			}
@@ -90,33 +89,16 @@ while (<$f>) {
 				$msgtext = encode('iso-8859-1', $msgtext);
 			}
 
-			sendxmsg("rss-$arr[0]", $msgtext);
-			$arr[3] = $newid if ($newid);
-			Loguj("$arr[0]: New headlines sent");
+			sendxmsg("rss-$$arr{Name}", $msgtext);
+			Loguj("$$arr{Name}: New headlines sent");
 		} else {
-			Loguj("$arr[0]: No new headlines");
+			Loguj("$$arr{Name}: No new headlines");
 		}
 	} else {
-		$arr[3] = '';
-		Loguj("$arr[0]: Feed parsing failed");
+		Loguj("$$arr{Name}: Feed parsing failed");
 	}
-	
-	push(@outarr, [@arr]);
 }
 
-seek($f, 0, 0);
-truncate($f, 0);
-if ($0 =~ /^\//) {
-	print($f "#!$0");
-} elsif ($0 =~ /^\.\//) {
-	print($f "#!$Bin/" . substr($0, 2));
-} else {
-	print($f "#!$Bin/$0");
-}
-print($f "#name##url##reserved[##lastid[##lastmodified]]");
-foreach my $val (@outarr) {
-	print($f join('##', @{$val}));
-}
-close($f);
+DumpFile($dbfile, @db);
+closelog();
 
-closelog;
