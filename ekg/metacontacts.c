@@ -223,14 +223,11 @@ metacontact_t *metacontact_find(const char *name)
  *
  * helpfull function when adding to the metacontacts list 
  */
-static int metacontact_add_compare(void *data1, void *data2)
-{
-        metacontact_t *a = data1, *b = data2;
-
-        if (!a || !a->name || !b || !b->name)
+static LIST_ADD_COMPARE(metacontact_add_compare, metacontact_t *) {
+        if (!data1 || !data1->name || !data2 || !data2->name)
                 return 0;
 
-        return xstrcasecmp(a->name, b->name);
+        return xstrcasecmp(data1->name, data2->name);
 }
 
 /*
@@ -249,7 +246,7 @@ metacontact_t *metacontact_add(const char *name)
 	m = xmalloc(sizeof(metacontact_t));
 	m->name = xstrdup(name);
 
-	return list_add_sorted(&metacontacts, m, 0, metacontact_add_compare);
+	return LIST_ADD_SORTED(&metacontacts, m, 0, metacontact_add_compare);
 }
 
 /*
@@ -257,17 +254,14 @@ metacontact_t *metacontact_add(const char *name)
  * 
  * heplfull when adding to items list
  */
-static int metacontact_add_item_compare(void *data1, void *data2)
-{
-        metacontact_item_t *a = data1, *b = data2;
-
-        if (!a || !a->name || !a->s_uid || !b || !b->name || !b->s_uid)
+static LIST_ADD_COMPARE(metacontact_add_item_compare, metacontact_item_t *) {
+        if (!data1 || !data1->name || !data1->s_uid || !data2 || !data2->name || !data2->s_uid)
                 return 0;
 
-	if (!xstrcasecmp(a->s_uid, b->s_uid))
-		return xstrcasecmp(a->name, b->name);
+	if (!xstrcasecmp(data1->s_uid, data2->s_uid))
+		return xstrcasecmp(data1->name, data2->name);
 
-        return xstrcasecmp(session_alias_uid_n(a->s_uid), session_alias_uid_n(b->s_uid));
+        return xstrcasecmp(session_alias_uid_n(data1->s_uid), session_alias_uid_n(data2->s_uid));
 }
 
 /*
@@ -332,7 +326,7 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 	i->s_uid	= xstrdup(s->uid);
 	i->prio		= prio;
 
-	list_add_sorted(&m->metacontact_items, i, 0, metacontact_add_item_compare);
+	LIST_ADD_SORTED(&m->metacontact_items, i, 0, metacontact_add_item_compare);
 
 	return 1;
 }
