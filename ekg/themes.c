@@ -244,7 +244,6 @@ static char *va_format_string(const char *format, va_list ap) {
 	for (i = 0; i < argc; i++)
 		args[i] = va_arg(ap, char *);
 
-skip_param_count:
 	if (!dont_resolve) {
 		dont_resolve = 1;
 		if (no_prompt_cache) {
