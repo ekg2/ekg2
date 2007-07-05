@@ -316,7 +316,10 @@ static COMMAND(jabber_command_connect)
 	if (j->istlen) server = TLEN_HUB;
 	if (!realserver) realserver = server;
 
-	ekg_resolver2(&jabber_plugin, realserver, jabber_handle_resolver, session);
+	if (ekg_resolver2(&jabber_plugin, realserver, jabber_handle_resolver, session) == -1) {
+		printq("generic_error", strerror(errno));
+		return -1;
+	}
 
 	if (!resource)
 		resource = JABBER_DEFAULT_RESOURCE;
