@@ -535,7 +535,7 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 	if (!type || !str)
 		return -1;
 
-	for (sep = str; xisdigit(*sep); sep++) {	
+	for (sep = str; xisdigit(*sep); sep++) {
 		/* XXX check if there's no time_t overflow? */
 		ts *= 10;
 		ts += (*sep - '0');
