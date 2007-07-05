@@ -749,7 +749,8 @@ static int rss_url_fetch(rss_feed_t *f, int quiet);
 static WATCHER(rss_url_fetch_resolver) {
 	rss_resolver_t *b = data;
 	rss_feed_t *f;
-	char buf[25];	/* v4 */
+
+	struct in_addr a;
 	int len;
 
 	debug("rss_url_fetch_resolver() fd: %d type: %d\n", fd, type);
@@ -769,18 +770,19 @@ static WATCHER(rss_url_fetch_resolver) {
 		xfree(b);
 		return 0;
 	}
+	
+	len = read(fd, &a, sizeof(a));
 
-	if ((len = read(fd, &buf[0], sizeof(buf)-1)) > 0) {
-
-		buf[len] = 0;
-
-		rss_set_descr(b->uid, saprintf("Resolved to: %s (read: %d bytes)", buf, len));
-
-		f->ip = xstrdup(buf);
-	} else {
+	if ((len != sizeof(a)) || (len && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
 		rss_set_statusdescr(b->uid, EKG_STATUS_ERROR, 
 			saprintf("Resolver ERROR read: %d bytes (%s)", len, len == -1 ? strerror(errno) : ""));
-	}
+
+		return -1;
+        }
+
+	f->ip = xstrdup(inet_ntoa(a));
+	rss_set_descr(b->uid, saprintf("Resolved to: %s", f->ip));
+
 	return -1;
 }
 
@@ -882,51 +884,19 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 			watch_add(&feed_plugin, fd, WATCH_WRITE, rss_fetch_handler_connect, f);
 		} else {
-			int fd[2];
-			int res;
+			watch_t *w;
+			rss_resolver_t *b;
 
-			if (pipe(fd) == -1) {
-				rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, saprintf("Resolver error @ pipe() %s\n", strerror(errno)));
+			if (!(w = ekg_resolver2(&feed_plugin, f->host, rss_url_fetch_resolver, NULL))) {
+				rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, saprintf("Resolver error: %s\n", strerror(errno)));
 				return -1;
 			}
+			w->data = b = xmalloc(sizeof(rss_resolver_t));
+			b->session 	= xstrdup(f->session);
+			b->uid		= saprintf("rss:%s", f->url);
 
-			f->resolving = 1;
-			if ((res = fork()) == -1) {
-				rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, saprintf("Resolver error @ fork() %s\n", strerror(errno)));
-				close(fd[0]);
-				close(fd[1]);
-				f->resolving = 0;
-				return -1;
-			}
-			
-			if (res) {
-				rss_resolver_t *b = xmalloc(sizeof(rss_resolver_t));
-				watch_t *w; 
-
-				close(fd[1]);
-
-				b->session 	= xstrdup(f->session);
-				b->uid		= saprintf("rss:%s", f->url);
-
-				rss_set_descr(f->uid, xstrdup("Resolving..."));
-	
-				w = watch_add(&feed_plugin, fd[0], WATCH_READ, rss_url_fetch_resolver, b);
-				watch_timeout_set(w, 10);	/* 10 sec resolver timeout */
-			} else {
-				struct hostent *he;
-				close(fd[0]);
-				if ((he = gethostbyname(f->host))) {
-					struct in_addr a;
-					char *ip;
-
-					memcpy(&a, he->h_addr, sizeof(a));
-					ip = inet_ntoa(a);
-
-					write(fd[1], ip, xstrlen(ip));
-				}
-				sleep(2);
-				exit(0);
-			}
+			rss_set_descr(f->uid, xstrdup("Resolving..."));
+			watch_timeout_set(w, 10);	/* 10 sec resolver timeout */
 		}
 		return fd;
 	}
