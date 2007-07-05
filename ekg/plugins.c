@@ -443,10 +443,8 @@ int plugin_unload(plugin_t *p)
  * @return Result of prio subtraction
  */
 
-static int plugin_register_compare(void *data1, void *data2) {
-        plugin_t *a = data1, *b = data2;
-
-        return b->prio - a->prio;
+static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) {
+        return data2->prio - data1->prio;
 }
 
 
@@ -526,7 +524,7 @@ int plugin_register(plugin_t *p, int prio) {
 		p->prio = prio;
 	}
 
-	list_add_sorted(&plugins, p, 0, plugin_register_compare);
+	LIST_ADD_SORTED(&plugins, p, 0, plugin_register_compare);
 
 	return 0;
 }
@@ -932,7 +930,7 @@ void queries_reconnect() {
 
 	for (l = queries; l; l = l->next) {
 		if (l->data) {
-			if (!(list_add_sorted(&tmplist, l->data, 0, query_compare))) {
+			if (!(LIST_ADD_SORTED(&tmplist, l->data, 0, query_compare))) {
 				debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
 				list_destroy(tmplist, 0);
 				return;
