@@ -1947,6 +1947,9 @@ void theme_init()
 	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (%c%2%n vs. %c%3%n)!"), 1);
 	format_add("io_binaryfile", _("%! %|WARNING: The file %T%1%n probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %c%2%n (vs. filesize of %c%3%n)!"), 1);
 
+	/* dns stuff */
+	format_add("dns2_resolved",	_("%) DNS2 RESOLVED %G%1: %W%2%n"), 1);
+
 	theme_plugins_init();
 #endif	/* !NO_DEFAULT_THEME */
 }

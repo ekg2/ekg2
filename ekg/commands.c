@@ -2017,6 +2017,38 @@ static COMMAND(cmd_debug_query)
 	return 0;
 }
 
+static WATCHER(cmd_test_dns2_watch) {
+	struct in_addr a;
+	int len;
+
+	if (type) {
+		xfree(data);
+		close(fd);
+		return -1;
+	}
+
+	len = read(fd, &a, sizeof(a));
+
+	if (len != sizeof(a)) {
+		print("generic_error", "ekg2-resolver-internal-error");
+	} else {
+		print("dns2_resolved", (char *) data, inet_ntoa(a));
+	}
+
+	return -1;
+}
+
+static COMMAND(cmd_test_dns2) {
+	watch_t *w;
+
+	if (!(w = ekg_resolver2(NULL, params[0], cmd_test_dns2_watch, NULL))) {
+		printq("generic_error", strerror(errno));
+		return -1;
+	}
+	w->data = xstrdup(params[0]);
+	return 0;
+}
+
 /**
  * cmd_test_mem()
  *
@@ -4220,6 +4252,8 @@ void command_init()
 
 	command_add(NULL, ("_desc"), "r", cmd_desc, SESSION_MUSTHAS, NULL);
 
+	command_add(NULL, ("_dns2"), "!", cmd_test_dns2, COMMAND_ENABLEREQPARAMS, NULL);
+
 	command_add(NULL, ("_event_test"), "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(NULL, ("_fds"), NULL, cmd_test_fds, 0, NULL);
@@ -4260,7 +4294,7 @@ void command_init()
 	  "send rsend get resumce rvoice voice close list");
 
 	command_add(NULL, ("del"), "u ?", cmd_del, 0, NULL);
-	
+
 	command_add(NULL, ("echo"), "?", cmd_echo, 0, NULL);
 	  
 	command_add(NULL, ("eval"), "!", cmd_eval, COMMAND_ENABLEREQPARAMS, NULL);
