@@ -911,6 +911,40 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 	return result;
 }
 
+/**
+ * queries_reconnect()
+ *
+ * Reconnect (resort) all queries, e.g. after plugin prio change.
+ */
+
+void queries_reconnect() {
+
+	int query_compare(query_t *a, query_t *b) {
+				/*	any other suggestions: vvv ? */
+		const int ap = (a->plugin ? a->plugin->prio : -666);
+		const int bp = (b->plugin ? b->plugin->prio : -666);
+		
+		return (bp-ap);
+	}
+
+	list_t tmplist	= NULL;
+	list_t l;
+
+	for (l = queries; l; l = l->next) {
+		if (l->data) {
+			if (!(list_add_sorted(&tmplist, l->data, 0, query_compare))) {
+				debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
+				list_destroy(tmplist, 0);
+				return;
+			}
+		}
+	}
+
+	list_destroy(queries, 0);
+	queries = tmplist;
+
+}
+
 /*
  * watch_find()
  *

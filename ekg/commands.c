@@ -3957,37 +3957,6 @@ COMMAND(cmd_dcc)
 }
 
 /**
- * resort_queries()
- *
- * Resorts all queries, e.g. after plugin prio change.
- */
-void resort_queries() { /* XXX: very experimental */
-	int query_compare(query_t *a, query_t *b) {
-				/*	any other suggestions: vvv ? */
-		const int ap = (a->plugin ? a->plugin->prio : -666);
-		const int bp = (b->plugin ? b->plugin->prio : -666);
-		
-		return (bp-ap);
-	}
-
-	list_t tmplist	= NULL;
-	list_t l;
-
-	for (l = queries; l; l = l->next) {
-		if (l->data) {
-			if (!(list_add_sorted(&tmplist, l->data, 0, query_compare))) {
-				debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
-				list_destroy(tmplist, 0);
-				return;
-			}
-		}
-	}
-
-	list_destroy(queries, 0);
-	queries = tmplist;
-}
-
-/**
  * cmd_plugin()
  *
  * Manage plugins in ekg2 load/unload/list/change plugin prios<br>
@@ -4029,7 +3998,7 @@ static COMMAND(cmd_plugin) {
                         plugin_register(p, -254);
                 }
 
-		resort_queries();
+		queries_reconnect();
 		config_changed = 1;
 		printq("plugin_default");
         }
@@ -4041,7 +4010,7 @@ static COMMAND(cmd_plugin) {
 			return ret;
 		}
 
-		resort_queries();
+		queries_reconnect();
 		changed_theme(NULL); 
 		return 0;
 	}
@@ -4060,7 +4029,7 @@ static COMMAND(cmd_plugin) {
 		list_remove(&plugins, pl, 0);
 		plugin_register(pl, atoi(params[1])); 
 
-		resort_queries();
+		queries_reconnect();
 		config_changed = 1;
 		printq("plugin_prio_set", pl->name, params[1]);
 

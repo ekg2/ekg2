@@ -156,6 +156,7 @@ void query_external_free();
 
 int query_emit_id(plugin_t *, const int, ...);
 int query_emit(plugin_t *, const char *, ...);
+void queries_reconnect();
 
 const char *query_name(const int id);
 const struct query *query_struct(const int id);
