@@ -633,7 +633,7 @@ int python_plugin_init(int prio)
 {
 	plugin_register(&python_plugin, prio);
 
-	scriptlang_register(&python_lang, 1);
+	scriptlang_register(&python_lang);
 	command_add(&python_plugin, ("python:eval"),   ("!"),	python_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:run"),    ("!"),	python_command_run,    COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:load"),   ("!"),	python_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
