@@ -67,17 +67,9 @@ scriptlang_t *scriptlang_from_ext(char *name)
 	return NULL;
 }
 
-static int script_register_compare(void *data1, void *data2) 
+int scriptlang_register(scriptlang_t *s)
 {
-	scriptlang_t *scr1 = data1;
-	scriptlang_t *scr2 = data2;
-	return scr1->prio - scr2->prio;
-}
-
-int scriptlang_register(scriptlang_t *s, int prio)
-{
-	s->prio = prio;
-	list_add_sorted(&scriptlang, s, 0, script_register_compare);
+	list_add(&scriptlang, s, 0);
 
 	s->init();
 	

@@ -90,7 +90,6 @@ typedef int (script_free_bind_t)      (script_t *, void *, int, void *, ...);
 typedef struct {
 	char  	 *name;		/* perl, python, php *g* and so on. */
 	char 	 *ext;		/*  .pl,    .py, .php ... */
-	int  	 prio;
 	plugin_t *plugin;
 
 	scriptlang_initialize_t *init;
@@ -164,7 +163,7 @@ int script_list(scriptlang_t *s);
 int script_unload_name(scriptlang_t *s, char *name);
 int script_load(scriptlang_t *s, char *name);
 
-int scriptlang_register(scriptlang_t *s, int prio);
+int scriptlang_register(scriptlang_t *s);
 int scriptlang_unregister(scriptlang_t *s);
 
 int scripts_init();
