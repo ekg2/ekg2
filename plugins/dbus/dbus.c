@@ -198,8 +198,6 @@ void ekg2_dbus_toggle_watch(DBusWatch *watch, void *data)
 EXPORT int dbus_plugin_init(int prio) {
 	int ret, i;
 
-	plugin_register(&dbus_plugin, prio);
-
    	dbus_error_init(&err);
 
 	conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
@@ -243,12 +241,13 @@ EXPORT int dbus_plugin_init(int prio) {
 	dbus_connection_add_filter(conn, ekg2_dbus_message_handler, NULL, NULL);
 	dbus_connection_flush(conn);
 
+	plugin_register(&dbus_plugin, prio);
+
 	debug("plugin initialized!\n");
 	return 0;
 }
 
 static int dbus_plugin_destroy() {
-	plugin_unregister(&dbus_plugin);
 	debug("destroying plugin\n");
 	if (conn)
 	{
@@ -257,5 +256,7 @@ static int dbus_plugin_destroy() {
 		debug("+after call!\n");
 		dbus_connection_close(conn);
 	}
+
+	plugin_unregister(&dbus_plugin);
 	return 0;
 }
