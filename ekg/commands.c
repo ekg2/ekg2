@@ -4072,14 +4072,11 @@ static COMMAND(cmd_desc) {
  *
  * zwraca wynik xstrcasecmp() na nazwach komend.
  */
-static int command_add_compare(void *data1, void *data2)
-{
-	command_t *a = data1, *b = data2;
-
-	if (!a || !a->name || !b || !b->name)
+static LIST_ADD_COMPARE(command_add_compare, command_t *) {
+	if (!data1 || !data1->name || !data2 || !data2->name)
 		return 0;
 
-	return xstrcasecmp((char *) a->name, (char *) b->name);
+	return xstrcasecmp((char *) data1->name, (char *) data2->name);
 }
 
 /**
@@ -4131,7 +4128,7 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 		list_add_beginning(commands_lock, c, 0);	/* add to commands */
 		return c;
 	}
-	return list_add_sorted(&commands, c, 0, command_add_compare);
+	return LIST_ADD_SORTED(&commands, c, 0, command_add_compare);
 }
 
 /*
