@@ -316,10 +316,11 @@ static COMMAND(jabber_command_connect)
 	if (j->istlen) server = TLEN_HUB;
 	if (!realserver) realserver = server;
 
-	if (ekg_resolver2(&jabber_plugin, realserver, jabber_handle_resolver, session) == -1) {
+	if (ekg_resolver2(&jabber_plugin, realserver, jabber_handle_resolver, session) == NULL) {
 		printq("generic_error", strerror(errno));
 		return -1;
 	}
+	/* XXX, set resolver-watch timeout? */
 
 	if (!resource)
 		resource = JABBER_DEFAULT_RESOURCE;
