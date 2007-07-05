@@ -124,14 +124,11 @@ COMMAND(cmd_on)
  * it helps in list_add() of events
  *
  */
-static int event_add_compare(void *data1, void *data2)
-{
-        event_t *a = data1, *b = data2;
-
-        if (!a || !a->id || !b || !b->id)
+static LIST_ADD_COMPARE(event_add_compare, event_t *) {
+        if (!data1 || !data1->id || !data2 || !data2->id)
                 return 0;
 
-        return a->id - b->id;
+        return data1->id - data2->id;
 }
 
 
@@ -174,7 +171,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	ev->prio 	= prio;
 	ev->target 	= xstrdup(target);
 	ev->action 	= xstrdup(action);
-	list_add_sorted(&events, ev, 0, event_add_compare);
+	LIST_ADD_SORTED(&events, ev, 0, event_add_compare);
 
 	tmp = xstrdup(name);
 	query_emit_id(NULL, EVENT_ADDED, &tmp);
