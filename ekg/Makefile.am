@@ -4,7 +4,7 @@ ekg2_headers = audio.h audio_wav.h configfile.h dynstuff.h events.h metacontacts
 bin_PROGRAMS = ekg2
 bin_SCRIPTS = ekg2-config
 ekg2_SOURCES = audio.c commands.c configfile.c dynstuff.c ekg.c emoticons.c events.c legacyconfig.c log.c metacontacts.c \
-       msgqueue.c plugins.c protocol.c sessions.c stuff.c themes.c userlist.c vars.c queries.h windows.c xmalloc.c scripts.c win32.c $(ekg2_headers)
+       msgqueue.c plugins.c protocol.c sessions.c stuff.c themes.c userlist.c vars.c queries.h windows.c xmalloc.c resolver.c scripts.c win32.c $(ekg2_headers)
 
 ekg2includedir = $(includedir)/ekg2
 ekg2include_HEADERS = $(ekg2_headers) 
