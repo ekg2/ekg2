@@ -89,14 +89,11 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
  *
  * @return zwraca wynik xstrcasecmp() na nazwach userów.
  */
-static int userlist_compare(void *data1, void *data2)
-{
-	userlist_t *a = data1, *b = data2;
-	
-	if (!a || !a->nickname || !b || !b->nickname)
+static LIST_ADD_COMPARE(userlist_compare, userlist_t *) {
+	if (!data1 || !data1->nickname || !data2 || !data2->nickname)
 		return 0;
 
-	return xstrcasecmp(a->nickname, b->nickname);
+	return xstrcasecmp(data1->nickname, data2->nickname);
 }
 
 /**
@@ -114,16 +111,13 @@ static int userlist_compare(void *data1, void *data2)
  * 	Otherwise result of xstrcasecmp() by resources name
  */
 
-static int userlist_resource_compare(void *data1, void *data2)
-{
-	ekg_resource_t *a = data1, *b = data2;
-	
-	if (!a || !b)
+static LIST_ADD_COMPARE(userlist_resource_compare, ekg_resource_t *) {
+	if (!data1 || !data2)
 		return 0;
 
-	if (a->prio != b->prio) return (b->prio - a->prio);		/* first sort by prio,	first users with larger prio! */
+	if (data1->prio != data2->prio) return (data2->prio - data1->prio);	/* first sort by prio,	first users with larger prio! */
 
-	return xstrcmp(a->name, b->name);				/* than sort by name */
+	return xstrcmp(data1->name, data2->name);				/* than sort by name */
 }
 
 /*
@@ -179,7 +173,7 @@ void userlist_add_entry(session_t *session, const char *line)
 		NULL;
 	
 	array_free_count(entry, count);
-	list_add_sorted(&(session->userlist), u, 0, userlist_compare);
+	LIST_ADD_SORTED(&(session->userlist), u, 0, userlist_compare);
 }
 
 /**
@@ -448,7 +442,7 @@ ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio)
 	r->prio		= prio;				/* resource prio */
 	r->status	= EKG_STATUS_NA;		/* this is quite stupid but we must be legal with ekg2 ABI ? */
 
-	list_add_sorted(&(u->resources), r, 0, userlist_resource_compare);	/* add to list sorted by prio && than by name */
+	LIST_ADD_SORTED(&(u->resources), r, 0, userlist_resource_compare);	/* add to list sorted by prio && than by name */
 	return r;
 }
 
@@ -558,7 +552,7 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
         u->last_descr = NULL;
         u->resources = NULL;
 #endif
-        return list_add_sorted(userlist, u, 0, userlist_compare);
+        return LIST_ADD_SORTED(userlist, u, 0, userlist_compare);
 }
 
 /*
@@ -632,7 +626,7 @@ int userlist_replace(session_t *session, userlist_t *u)
 		return -1;
 	if (list_remove(&(session->userlist), u, 0))
 		return -1;
-	if (!list_add_sorted(&(session->userlist), u, 0, userlist_compare))
+	if (!LIST_ADD_SORTED(&(session->userlist), u, 0, userlist_compare))
 		return -1;
 
 	return 0;
