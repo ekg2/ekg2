@@ -90,7 +90,7 @@ int perl_plugin_init(int prio)
 	auto_load = 1;
 	
 	plugin_register(&perl_plugin, prio);
-	scriptlang_register(&perl_lang, 0);
+	scriptlang_register(&perl_lang);
 /* TODO
  *	command_add(&perl_plugin, "perl:eval",   "!",  perl_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
  *	command_add(&perl_plugin, "perl:test",   "!",  perl_command_test,   COMMAND_ENABLEREQPARAMS, NULL);
