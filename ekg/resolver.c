@@ -53,18 +53,19 @@
  *  THX.
  */
 
-int ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data) {
+watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data) {
 	int res, fd[2];
 
 	if (!server) {
 		errno = EFAULT;
-		return -1;
+		return NULL;
 	}
 
 	debug("ekg_resolver2() resolving: %s\n", server);
 
-	if (pipe(fd) == -1)
-		return -1;
+	if (pipe(fd) == -1) {
+		return NULL;
+	}
 
 	debug("ekg_resolver2() resolver pipes = { %d, %d }\n", fd[0], fd[1]);
 
@@ -74,7 +75,7 @@ int ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t a
 		close(fd[0]);
 		close(fd[1]);
 		errno = errno2;
-		return -1;
+		return NULL;
 	}
 
 	if (!res) {
@@ -99,8 +100,6 @@ int ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t a
 	/* parent */
 	close(fd[1]);
 	/* XXX dodaæ dzieciaka do przegl±dania */
-	watch_add(plugin, fd[0], WATCH_READ, async, data);
-
-	return res;
+	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
 

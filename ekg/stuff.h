@@ -370,7 +370,7 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to);
 void ekg_exit();
 void ekg_debug_handler(int level, const char *format, va_list ap);
 /* funkcje w resolver.c */
-int ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
+watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 
 #endif
 	
