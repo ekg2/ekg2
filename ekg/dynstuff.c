@@ -552,6 +552,28 @@ string_t string_init(const char *value) {
 }
 
 /**
+ * string_remove()
+ *
+ * Remove first @a count chars from string.
+ *
+ */
+
+void string_remove(string_t s, int count) {
+	if (!s || count <= 0)
+		return;
+	
+	if (count >= s->len) {
+		/* string_clear() */
+		s->str[0]	= '\0';
+		s->len		= 0;
+
+	} else {
+		memmove(s->str, s->str + count, s->len - count);
+		s->len -= count;
+	}
+}
+
+/**
  * string_clear()
  *
  * Clear s->str (s->str[0] == '\\0')<br>
