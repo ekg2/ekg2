@@ -976,38 +976,43 @@ static int token_gif_load (char *fname, struct token_t *token) {
 	int fd;
 	fd = open(fname, O_RDONLY);
 	if (fd == -1) {
-		snprintf (errbuf, sizeof(errbuf), "open(%s): %m", fname);
+		snprintf(errbuf, sizeof(errbuf), "open(%s): %m", fname);
 		goto err;
 	}
 	
 	if (!(file = DGifOpenFileHandle(fd))) {
-		snprintf (errbuf, sizeof(errbuf), "DGifOpenFileHandle(): %d", 
-		    GifLastError());
+		snprintf(errbuf, sizeof(errbuf), "DGifOpenFileHandle(): %d", 
+			GifLastError());
 		goto err2;
+	}
+
+	if (file->SWidth <= 0 || file->SWidth > 1024 || file->SHeight <= 0 || file->SHeight > 1024) {
+		snprintf(errbuf, sizeof(errbuf), "Invalid image size: %d,%d", file->SWidth, file->SHeight);
+		goto err3;
 	}
 	
 	if (DGifSlurp(file) != GIF_OK) {
-		snprintf (errbuf, sizeof(errbuf), "DGifSlurp(): %d", GifLastError());
+		snprintf(errbuf, sizeof(errbuf), "DGifSlurp(): %d", GifLastError());
 		goto err3;
 	}
 
 	if (file->ImageCount != 1) {
-		snprintf (errbuf, sizeof(errbuf), "ImageCount = %d", file->ImageCount);
+		snprintf(errbuf, sizeof(errbuf), "ImageCount = %d", file->ImageCount);
 		goto err3;
 	}
 	token->sx = file->SavedImages[0].ImageDesc.Width;
 	token->sy = file->SavedImages[0].ImageDesc.Height;
 	token->data = (unsigned char *) xmalloc(token->sx * token->sy);
 
-	memcpy (token->data, file->SavedImages[0].RasterBits, token->sx * token->sy);
-	DGifCloseFile (file);
+	memcpy(token->data, file->SavedImages[0].RasterBits, token->sx * token->sy);
+	DGifCloseFile(file);
 
 	return 0;
 
 err3:
-	DGifCloseFile (file);
+	DGifCloseFile(file);
 err2:
-	close (fd);
+	close(fd);
 err:
 	token->data = (unsigned char *) xstrdup(errbuf);
 	return -1;
@@ -1092,7 +1097,7 @@ static void token_gif_strip (struct token_t *token) {
 			new_data[y * token->sx + x] = new_pixel;	// ? 1 : 0;
 	}
 
-	xfree (token->data);
+	xfree(token->data);
 	token->data = new_data;
 }
 
@@ -1134,7 +1139,7 @@ static char *token_gif_strip_txt (char *buf) {
 		return NULL;
 
 	new_buf = (char *) xmalloc(end - start + 2);
-	memcpy (new_buf, buf + start, end - start);
+	memcpy(new_buf, buf + start, end - start);
 	new_buf[end - start - 1] = '\n';
 	new_buf[end - start] = 0;
 
@@ -1157,7 +1162,7 @@ static char *token_gif_to_txt (struct token_t *token) {
 	char mappings[256];
 	int cur_char = 0;	/* Kolejny znaczek z chars[]. */
 
-	memset (mappings, 0, sizeof(mappings));
+	memset(mappings, 0, sizeof(mappings));
 	buf = bptr = (char *) xmalloc((token->sx * (token->sy + 1))+1);
 
 	for (x = 0; x < token->sx; x++) {
@@ -1185,7 +1190,7 @@ static char *token_gif_to_txt (struct token_t *token) {
 
 	bptr = token_gif_strip_txt(buf);
 	if (bptr) {
-		xfree (buf);
+		xfree(buf);
 		return bptr;
 	}
 
