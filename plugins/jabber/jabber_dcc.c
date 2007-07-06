@@ -282,7 +282,8 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 
 WATCHER(jabber_dcc_handle_accept) {
 	struct sockaddr_in sin;
-	int newfd, sin_len = sizeof(sin);
+	int newfd;
+	socklen_t sin_len = sizeof(sin);
 
 	if (type) {
 		close(fd);
