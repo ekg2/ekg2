@@ -1134,7 +1134,7 @@ int watch_handle_write(watch_t *w) {
 		res = 0;
 	}
 
-	string_remove(w, res);
+	string_remove(w->buf, res);
 	debug_io("left: %d bytes\n", w->buf->len);
 
 	w->removed = 0;
