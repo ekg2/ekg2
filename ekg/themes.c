@@ -1549,7 +1549,7 @@ void theme_init()
 	format_add("search_results_multi_unknown", "-", 1);
 	/*      format_add("search_results_multi_female", "k", 1); */
 	/*      format_add("search_results_multi_male", "m", 1); */
-	format_add("search_results_multi", "%7 %[-7]1 %K|%n %[12]3 %K|%n %[12]2 %K|%n %[4]5 %K|%n %[12]4\n", 1);
+	format_add("search_results_multi", "%7 %[-8]1 %K|%n %[12]3 %K|%n %[12]2 %K|%n %[4]5 %K|%n %[12]4\n", 1);
 
 	format_add("search_results_single_avail", _("%Y(available)%N"), 1);
 	format_add("search_results_single_away", _("%G(away)%n"), 1);
