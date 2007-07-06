@@ -626,8 +626,7 @@ WATCHER(stream_handle) {
 			}
 /*			debug("[AUDIO, CODEC, RECODE]: %d\n", res); */
 			if (res > 0) {
-				memmove(audio->buffer->str, audio->buffer->str + res, audio->buffer->len - res);
-				audio->buffer->len -= res;
+				string_remove(audio->buffer, res);
 				s->input->outb += res;
 			}
 		}
@@ -638,8 +637,7 @@ WATCHER(stream_handle) {
 			res = s->output->a->write_handler(type, -1, s->output->buffer, s->output->private);
 			debug(" ... wrote:%d bytes (handler: 0x%x) ", res, s->output->a->write_handler);
 			if (res > 0) {
-				memmove(s->output->buffer->str, s->output->buffer->str + res, s->output->buffer->len - res);
-				s->output->buffer->len -= res;
+				string_remove(s->output->buffer, res):
 				s->output->outb += res;
 			}
 			debug(" ... left:%d bytes\n", s->output->buffer->len);
