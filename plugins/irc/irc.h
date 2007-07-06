@@ -54,7 +54,16 @@ typedef struct {
 	char *sopt[SERVOPTS];		/* just a few options from
 					 * www.irc.org/tech_docs/005.html
 					 * server's response */
+
+	list_t awaylog;
 } irc_private_t;
+
+typedef struct {
+	char *channame;	/* channel name, (null if priv) */
+	char *uid;	/* nickname who wrote to us	*/
+	char *msg;	/* msg 				*/
+	time_t t;	/* time_t when we recv message 	*/
+} irc_awaylog_t;
 
 #define SOP(x) (j->sopt[x])
 

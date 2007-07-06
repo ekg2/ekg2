@@ -585,7 +585,7 @@ static void irc_changed_resolve(session_t *s, const char *var) {
 	exit(0);
 #endif
 	return;
- }
+}
 
 /*                                                                       *
  * ======================================== HANDLERS ------------------- *
@@ -1322,6 +1322,33 @@ static COMMAND(irc_command_away) {
 			watch_write(j->send_watch, "AWAY :%s\r\n", status);
 	} else {
 		watch_write(j->send_watch, "AWAY :\r\n");
+
+		/* @ back, display awaylog. */
+
+		if (j->awaylog) {
+			list_t l;
+			const char *awaylog_timestampf = format_find("irc_awaylog_timestamp");
+
+			print_status("irc_awaylog_begin", session_name(session));
+			for (l = j->awaylog; l; l = l->next) {
+				irc_awaylog_t *e = l->data;
+
+				if (e->channame)
+					print_status("irc_awaylog_msg_chan", session_name(session),
+						timestamp_time(awaylog_timestampf, e->t), (e->channame)+4, (e->uid)+4, e->msg);
+				else
+					print_status("irc_awaylog_msg", session_name(session),
+						timestamp_time(awaylog_timestampf, e->t), "", (e->uid)+4, e->msg);
+
+				xfree(e->channame);
+				xfree(e->uid);
+				xfree(e->msg);
+			}
+			print_status("irc_awaylog_end", session_name(session));
+		}
+
+		list_destroy(j->awaylog, 1);
+		j->awaylog = NULL;
 	}
 	return 0;
 }
@@ -2112,6 +2139,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_reconnect",	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "10", 0, NULL), 
 	PLUGIN_VAR_ADD("auto_channel_sync",	0, VAR_BOOL, "1", 0, NULL),				/* like channel_sync in irssi; better DO NOT turn it off! */
 	PLUGIN_VAR_ADD("auto_lusers_sync", 	0, VAR_BOOL, "0", 0, NULL),				/* sync lusers, stupid ;(,  G->dj: well why ? */
+	PLUGIN_VAR_ADD("away_log",		0, VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("ban_type", 		0, VAR_INT, "10", 0, NULL),
 	PLUGIN_VAR_ADD("connect_timeout",	SESSION_VAR_CONNECT_TIMEOUT, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("close_windows", 	0, VAR_BOOL, "0", 0, NULL),
@@ -2416,6 +2444,14 @@ static int irc_theme_init()
 
 	format_add("irc_access_added",	_("%> (%1) %3 [#%2] was added to accesslist chan: %4 (flags: %5)"), 1);
 	format_add("irc_access_known", "a-> %2!%3@%4", 1);	/* %2 is nickname, not uid ! */
+
+
+	/* away log */
+	format_add("irc_awaylog_begin",		_("%G.+===%g----- Awaylog for: (%1)\n"), 1);
+	format_add("irc_awaylog_msg",		_("%G|| %n[%Y%2%n] <%W%4%n> %5\n"), 1);
+	format_add("irc_awaylog_msg_chan",	_("%G|| %n[%Y%2%n] [%G%3%n] <%W%4%n> %5\n"), 1);
+	format_add("irc_awaylog_end",		_("%G`+===%g-----\n"), 1);
+	format_add("irc_awaylog_timestamp", "%d-%m-%Y %H:%M:%S", 1);
 
 
 #endif	/* !NO_DEFAULT_THEME */

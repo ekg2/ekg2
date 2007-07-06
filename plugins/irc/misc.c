@@ -967,6 +967,24 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 				&xosd_to_us, &xosd_is_priv, &dest);
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
+		if (xosd_to_us && session_int_get(s, "away_log") == 1) {
+			irc_awaylog_t *e = xmalloc(sizeof(irc_awaylog_t));
+
+			if (xosd_is_priv) {
+				e->channame 	= NULL;
+				e->uid		= xstrdup(dest);
+			} else {
+				e->uid		= saprintf("irc:%s", xosd_nick);
+				e->channame	= xstrdup(dest);
+			}
+				
+			e->msg		= xstrdup(coloured);
+			e->t 		= time(NULL);
+
+			list_add(&(j->awaylog), e, 0);
+
+		}
+
 		xfree(ctcpstripped);
 		xfree(coloured);
 		xfree(me);
