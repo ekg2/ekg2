@@ -1175,7 +1175,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 		/* 0th, get basedir */
 				image_basedir = gg_config_images_dir ? 
 					gg_config_images_dir : 			/* dir specified by config */
-					prepare_path("images", 1);		/* (ekg_config)/images */
+					prepare_pathf("images");		/* (ekg_config)/images */
 
 		/* 1st, create directories.. */
 				if (mkdir_recursive(image_basedir, 1)) {
