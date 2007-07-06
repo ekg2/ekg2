@@ -967,7 +967,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 				&xosd_to_us, &xosd_is_priv, &dest);
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
-		if (xosd_to_us && session_int_get(s, "away_log") == 1) {
+		if (xosd_to_us && s->status == EKG_STATUS_AWAY && session_int_get(s, "away_log") == 1) {
 			irc_awaylog_t *e = xmalloc(sizeof(irc_awaylog_t));
 
 			if (xosd_is_priv) {
