@@ -22,6 +22,7 @@ A million repetitions of "a"
 
 #include <stdint.h>
 
+#include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 
 #include "jabber.h"
@@ -476,7 +477,7 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
  * @return <b>static</b> buffer, with 40 digit SHA1 hash + NUL char
  */
 
-char *jabber_digest(const char *sid, const char *password, void *charset) {
+char *jabber_digest(const char *sid, const char *password, void *charset_out) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
@@ -485,11 +486,11 @@ char *jabber_digest(const char *sid, const char *password, void *charset) {
 
 	SHA1Init(&ctx);
 
-	tmp = ekg_convert_string_p(sid, charset);
+	tmp = ekg_convert_string_p(sid, charset_out);
 	SHA1Update(&ctx, (tmp ? tmp : sid), xstrlen(tmp ? tmp : sid));
 	xfree(tmp);
 
-	tmp = ekg_convert_string_p(password, charset);
+	tmp = ekg_convert_string_p(password, charset_out);
 	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : password));
 	xfree(tmp);
 
