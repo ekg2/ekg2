@@ -570,6 +570,7 @@ void string_remove(string_t s, int count) {
 	} else {
 		memmove(s->str, s->str + count, s->len - count);
 		s->len -= count;
+		s->str[s->len] = '\0';
 	}
 }
 
