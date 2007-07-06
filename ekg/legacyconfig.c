@@ -60,6 +60,11 @@ void config_upgrade() {
 			print("config_upgrade_minor", 
 				_("'allow_autoresponder' session variables have been replaced by 'allowed_sessions' plugin variable. "	\
 				"The same way future plugins will be enabled."), "3");
+
+		case 3:
+			print("config_upgrade_minor",
+				_("'logs:away_log' plugin variable have been replaced by 'away_log' irc session variable. " \
+				"Also away_log_* formats have been changed to irc_awaylog_* formats. Enjoy"), "4");
 	}
 
 	config_version = current_config_version;
