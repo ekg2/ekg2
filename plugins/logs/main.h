@@ -42,18 +42,6 @@ struct {
 	log_window_t *lw;
 } typedef logs_log_t;
 
-struct {
-	char *chname;	/* channel name, (null if priv) */
-	char *uid;	/* user name kto do nas pisal */
-	char *msg;	/* msg */
-	time_t t;	/* czas o ktorej dostalismy wiadomosc */
-} typedef log_session_away_t;
-
-struct {
-	char	*sname;		/* session name */
-	list_t	messages; 	/* lista z log_session_away_t */
-} typedef log_away_t;
-
 static char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
 static const char *prepare_timestamp_format(const char *format, time_t t);
 
@@ -75,9 +63,7 @@ static void logs_gaim();
 #endif
 
 static list_t log_logs = NULL; 
-static list_t log_awaylog = NULL;
 
-static int config_away_log = 0;
 static int config_logs_log;
 static int config_logs_log_raw;
 static int config_logs_log_ignored;

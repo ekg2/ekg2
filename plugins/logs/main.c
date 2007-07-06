@@ -346,127 +346,6 @@ static QUERY(logs_postinit) {
 	return 0;
 }
 
-static log_away_t *logs_away_find(char *session) {
-	list_t l;
-	if (!session)
-		return NULL;
-	if (!config_away_log)
-		return NULL;
-
-	for (l = log_awaylog; l; l = l->next) {
-		log_away_t *la = l->data;
-		if (!xstrcmp(session, la->sname))
-			return la;
-	}
-	return NULL;
-}
-
-static int logs_away_append(log_away_t *la, const char *channel, const char *uid, const char *message) {
-	log_session_away_t *lsa;
-	if (!la)
-		return 0;
-
-	lsa = xmalloc(sizeof(log_session_away_t));
-	lsa->chname	= xstrdup(channel);
-	lsa->uid 	= xstrdup(uid);
-	lsa->msg	= xstrdup(message);
-	lsa->t 		= time(NULL);
-
-	list_add(&(la->messages), lsa, 0);
-
-	return 1;
-}
-
-static int logs_away_display(log_away_t *la, int quiet, int free) {
-	list_t l;
-	if (!la)
-		return 0;
-	if (list_count(la->messages) != 0) {
-		print_status("away_log_begin", la->sname);
-		for (l = la->messages; l; l = l->next) {
-			log_session_away_t *lsa = l->data;
-			print_status("away_log_msg",
-					prepare_timestamp_format(format_find("away_log_timestamp"), lsa->t),
-					lsa->chname ? (lsa->chname)+4 : "", (lsa->uid)+4, lsa->msg);
-			if (free) {
-				xfree(lsa->chname);
-				xfree(lsa->uid);
-				xfree(lsa->msg);
-			}
-		}
-		print_status("away_log_end");
-	}
-	if (free) {
-		list_destroy(la->messages, 1);
-		xfree(la->sname);
-		list_remove(&log_awaylog, la, 1);
-	}
-	return 0;
-}
-
-static log_away_t *logs_away_create(char *session) {
-	log_away_t *la;
-
-	if (!session_check(session_find(session), 0, "irc")) /* na razie dla irca... */
-		return NULL;
-/* session_int_get(session_find(session), "awaylog")) ? */
-
-	if (logs_away_find(session))
-		return NULL;
-
-	debug("[logs] turning awaylog on for session %s\n", __(session));
-
-	la = xmalloc(sizeof(log_away_t));
-	la->sname = xstrdup(session);
-	return list_add(&log_awaylog, la, 0);
-}
-
-static void logs_changed_awaylog(const char *var) {
-	list_t l;
-	if (in_autoexec)
-		return;
-
-	debug("%s: %d\n", var, config_away_log);
-
-	if (config_away_log) {
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
-			if (s->status == EKG_STATUS_AWAY)
-				logs_away_create(s->uid);
-		}
-	} else {
-		for (l = log_awaylog; l;) {
-			log_away_t *a = l->data;
-			l = l->next;
-			logs_away_display(a, 0, 1);
-		}
-	}
-}
-
-static QUERY(logs_sestatus_handler) {
-	char *session	= *(va_arg(ap, char **));
-	int status	= *(va_arg(ap, int *));
-
-	debug("[LOGS_SESTATUS HANDLER %s %s\n", __(session), __(ekg_status_string(status, 2)));
-
-	if (!config_away_log)
-		return 0;
-
-	if (!session_check(session_find(session), 0, "irc")) /* na razie dla irca... */
-		return 0;
-/* session_int_get(session_find(session), "awaylog")) ? */
-
-	if ((status == EKG_STATUS_AWAY) || (status == EKG_STATUS_AUTOAWAY)) {
-		logs_away_create(session);
-	} else if ((status == EKG_STATUS_AVAIL) || (status == EKG_STATUS_AUTOBACK)) {
-		if (logs_away_display(logs_away_find(session), 0, 1)) { /* strange */
-			debug("[LOGS_SESTATUS] strange no away turned on for this session = %s\n", __(session));
-			return 0; 
-		}
-	}
-	return 0;
-}
-
 static QUERY(logs_handler_killwin)  {
 	window_t *w = *(va_arg(ap, window_t **));
 	logs_window_close(logs_log_find(w->session ? w->session->uid : NULL, w->target, 0), 1);
@@ -645,11 +524,8 @@ EXPORT int logs_plugin_init(int prio) {
 	query_connect_id(&logs_plugin, UI_WINDOW_KILL,	logs_handler_killwin, NULL);
 	query_connect_id(&logs_plugin, PROTOCOL_STATUS, logs_status_handler, NULL);
 	query_connect_id(&logs_plugin, CONFIG_POSTINIT, logs_postinit, NULL);
-	query_connect_id(&logs_plugin, SESSION_STATUS,	logs_sestatus_handler, NULL);
 	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
 
-	/* TODO: moze zmienna sesyjna ? ;> */
-	variable_add(&logs_plugin, ("away_log"), VAR_INT, 1, &config_away_log, &logs_changed_awaylog, NULL, NULL);
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
 	variable_add(&logs_plugin, ("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, &logs_changed_maxfd, NULL, NULL); 
 	variable_add(&logs_plugin, ("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
@@ -664,8 +540,6 @@ EXPORT int logs_plugin_init(int prio) {
 	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
 	variable_add(&logs_plugin, ("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
 	variable_add(&logs_plugin, ("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
-
-	logs_changed_awaylog(NULL); /* nie robi sie automagicznie to trzeba sila. */
 
 	return 0;
 }
@@ -704,12 +578,6 @@ static int logs_plugin_destroy() {
 		xfree(ll->uid);
 	}
 	list_destroy(old_logs, 1);	log_logs = NULL;
-
-	for (l = log_awaylog; l;) {
-		log_away_t *a = l->data;
-		l = l->next;	
-		logs_away_display(a, 1, 1);
-	}
 
 	if (config_logs_log_raw) for (l = buffer_lograw; l;) {
 		struct buffer *b = l->data;
@@ -1064,16 +932,6 @@ static QUERY(logs_handler_irc) {
 	char *channame	= *(va_arg(ap, char**));
 
 	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
-
-	if (foryou) { /* only messages to us */
-		if (private) {
-			logs_away_append(logs_away_find(session), NULL, channame, text);
-		} else {
-			char *tmp = saprintf("irc:%s", __(uid)); /* czemu uid nie ma irc: ? */
-			logs_away_append(logs_away_find(session), channame, tmp, text);
-			xfree(tmp);
-		}
-	}
 
 	if (!lw) {
 		debug("[LOGS:%d] logs_handler_irc, shit happen\n", __LINE__);
