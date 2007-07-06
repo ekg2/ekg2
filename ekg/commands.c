@@ -1364,7 +1364,7 @@ COMMAND(cmd_list)
 	params0 = strip_quotes(tparams0);
 
 	if (params0 && (*params0 != '-' || userlist_find(session, params0))) {
-		char *status, *last_status;
+		char *status;
 		const char *group = params0;
 		userlist_t *u;
 		list_t res;
@@ -1464,9 +1464,6 @@ list_user:
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), 
 				u->nickname, u->descr);
 
-                last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), 
-				u->nickname, u->last_descr);
-
 		printq("user_info_header", u->nickname, u->uid);
 		if (u->nickname && xstrcmp(u->nickname, u->nickname)) 
 			printq("user_info_nickname", u->nickname);
@@ -1484,8 +1481,12 @@ list_user:
 			printq("user_info_status_time", buf);
 		}
 
-		if (u->last_status)
+		if (u->last_status) {
+			char *last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), 
+							u->nickname, u->last_descr);
 			printq("user_info_last_status", last_status);
+			xfree(last_status);
+		}
 
 		for (res = u->resources; res; res = res->next) {
 			ekg_resource_t *r = res->data;
@@ -1526,7 +1527,6 @@ list_user:
 		printq("user_info_footer", u->nickname, u->uid);
 		
 		xfree(status);
-		xfree(last_status);
 		xfree(tparams0);
 		return 0;
 	}
