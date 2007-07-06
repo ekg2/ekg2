@@ -2698,9 +2698,10 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res && last_command->flags & COMMAND_TARGET_VALID_UID) {
+				char *tmp = target;
 				if (!(target = get_uid(session, target))) {
 					/* user_not_found vs invalid_uid */
-					printq("user_not_found", target);
+					printq("user_not_found", tmp);
 					res = -1;
 				}
 			}
