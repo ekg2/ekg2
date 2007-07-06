@@ -42,6 +42,7 @@ echo -ne \
 		"\"BINDING_FUNCTION(x)=void x(const char *arg)\"" \
 		"\"TIMER(x)=int x(int type, void *data)\"" \
 		"\"TIMER_SESSION(x)=int x(int type, session_t *s)\"" \
+		"\"LIST_ADD_COMPARE(x, type)= int x(type data1, type data2)\"" \
 		\
 		"\"SNIFF_HANDLER(x, type)=static int x(session_t *s, const connection_t *hdr, const type *pkt, int len)\"" \
 		"\"GG_PACKED=\""	\
