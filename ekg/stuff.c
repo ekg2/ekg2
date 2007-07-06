@@ -1837,8 +1837,21 @@ const char *timestamp(const char *format) {
 	time(&t);
 	tm = localtime(&t);
 	if (!strftime(buf, sizeof(buf), format, tm))
-		xstrcpy(buf, "TOOLONG");
+		return "TOOLONG";
+	return buf;
+}
 
+const char *timestamp_time(const char *format, time_t t) {
+	struct tm *tm;
+	static char buf[100];
+
+	if (!format || format[0] == '\0')
+		return itoa(t);
+
+	tm = localtime(&t);
+
+	if (!strftime(buf, sizeof(buf), format, tm))
+		return "TOOLONG";
 	return buf;
 }
 
