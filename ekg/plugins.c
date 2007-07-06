@@ -300,8 +300,12 @@ int plugin_load(const char *name, int prio, int quiet)
 
 	if ((pl = plugin_find(name))) {
 		pl->dl = plugin;
-	} else 
+	} else {
 		debug_error("plugin_load() plugin_find(%s) not found.\n", name);
+		/* It's FATAL */
+	}
+
+	query_emit_id(pl, SET_VARS_DEFAULT);
 
 	printq("plugin_loaded", name);
 
