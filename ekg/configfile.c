@@ -537,6 +537,7 @@ int config_write()
  *
  * zapisuje podane zmienne, nie zmieniaj±c reszty konfiguracji.
  *  
+ *  - plugin - zmienne w vars, maja byc z tego pluginu, lub NULL gdy to sa zmienne z core.
  *  - vars - tablica z nazwami zmiennych do zapisania.
  * 
  * 0/-1
@@ -550,24 +551,23 @@ int config_write()
  * 		- zrobic to co tutaj robimy, czyli poszukac tej zmiennej.. oraz nastepnie wszystkie inne ktore maja taki
  * 			sam vars_ptr[]->plugin jak vars_ptr[0]->plugin, powtarzac dopoki sie skoncza takie.
  * 	- nastepnie wziasc zmienna ktora ma inny plugin.. i j/w
- *	
- *	boring. ta funkcja w sumie jest wykorzystywana tylko przy ekg_exit() dla zmiennych z konfigu...
- *	wiec aktualny workaround to zakomentowanie tego if (first) { } 
- *	bo mnie wkurza jak sie zapisuja okienka we wszystkie config-*
- *	
- *	albo podawanie zamiast filename, plugin_t i vars[] maja byc zmienne tylko z tego plugina.
  */
-int config_write_partly(const char *filename, const char **vars)
+int config_write_partly(plugin_t *plugin, const char **vars)
 {
+	const char *filename;
 	char *newfn;
 	char *line;
 	FILE *fi, *fo;
-	int *wrote, i, first = (filename) ? 0 : 1;
+	int *wrote, i;
 
 	if (!vars)
 		return -1;
 
-	if (!filename && !(filename = prepare_path("config", 1)))
+	if (plugin)
+		filename = prepare_pathf("config-%s", plugin->name);
+	else	filename = prepare_pathf("config");
+
+	if (!filename)
 		return -1;
 	
 	if (!(fi = fopen(filename, "r")))
@@ -650,19 +650,6 @@ pass:
 	rename(newfn, filename);
 
 	xfree(newfn);
-#if 0
-	if (first) {
-		list_t l;
-		for (l = plugins; l; l = l->next) {
-			plugin_t *p = l->data;
-			char *tmp = saprintf("config-%s", p->name);
-	
-			config_write_partly(prepare_path(tmp, 1), vars);
-	
-			xfree(tmp);
-		}
-	}
-#endif
 	return 0;
 }
 
