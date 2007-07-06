@@ -637,7 +637,7 @@ WATCHER(stream_handle) {
 			res = s->output->a->write_handler(type, -1, s->output->buffer, s->output->private);
 			debug(" ... wrote:%d bytes (handler: 0x%x) ", res, s->output->a->write_handler);
 			if (res > 0) {
-				string_remove(s->output->buffer, res):
+				string_remove(s->output->buffer, res);
 				s->output->outb += res;
 			}
 			debug(" ... left:%d bytes\n", s->output->buffer->len);
@@ -762,7 +762,7 @@ int audio_initialize() {
 int audio_deinitialize() {
 	/* trzeba dorobic */
 	audio_unregister(&stream_audio);
-
+	return 0;
 }
 
 /*
