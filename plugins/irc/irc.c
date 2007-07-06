@@ -230,6 +230,15 @@ static QUERY(irc_session_deinit) {
 	list_destroy(j->connlist, 1);
 	/* XXX, hilights list_t */
 
+	/* NOTE: j->awaylog shouldn't exists here */
+	for (tmplist=j->awaylog; tmplist; tmplist=tmplist->next) {
+		irc_awaylog_t *e = tmplist->data;
+		xfree(e->channame);
+		xfree(e->uid);
+		xfree(e->msg);
+	}
+	list_destroy(j->awaylog, 1);
+
 	irc_free_people(s, j);
 
 	for (i = 0; i<SERVOPTS; i++) 
@@ -2205,8 +2214,8 @@ EXPORT int irc_plugin_init(int prio)
 #endif
 
 /* magic stuff */
-	irc_plugin_vars[19].value = pwd_name;
-	irc_plugin_vars[22].value = pwd_realname;
+	irc_plugin_vars[20].value = pwd_name;
+	irc_plugin_vars[23].value = pwd_realname;
 
 	irc_plugin.params = irc_plugin_vars;
 
