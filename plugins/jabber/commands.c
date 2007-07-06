@@ -2546,13 +2546,14 @@ static COMMAND(tlen_command_alert) {
 	jabber_private_t *j = jabber_private(session);
 	
 	/* check if uid starts with 't' [tlen:, ONLY TLEN PROTOCOL] */
-	if (tolower(target[0] != 't')) {
+	if (j->istlen && tolower(target[0] != 't')) {
 		printq("invalid_session");	/* HUH? */
 		return -1;
 	}
 	
 	watch_write(j->send_watch, "<m to='%s' tp='a'/>", target+5);	/* sound alert */
-	/* XXX, printq() jakies ze wyslano */
+
+	printq("tlen_alert_send", session_name(session), format_user(sesssion, target));
 	return 0;
 }
 
