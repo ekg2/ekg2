@@ -2538,22 +2538,26 @@ back:
  *
  * @param params [0] - uid of target [target can be passed in params[0] COMMAND_PARAMASTARGET] [target is uid COMMAND_TARGET_VALID_UID]
  *
- * @return	-1 if wrong uid<br>
+ * @return	-1 if wrong uid/session<br>
  * 		 0 on success<br>
  */
 
 static COMMAND(tlen_command_alert) {
 	jabber_private_t *j = jabber_private(session);
-	
-	/* check if uid starts with 't' [tlen:, ONLY TLEN PROTOCOL] */
-	if (j->istlen && tolower(target[0] != 't')) {
-		printq("invalid_session");	/* HUH? */
+
+	if (!j->istlen) {				/* check if this is tlen session */
+		printq("invalid_session");
+		return -1;
+	}
+
+	if (tolower(target[0] != 't')) {		/* check if uid starts with 't' [tlen:] */
+		printq("invalid_uid");
 		return -1;
 	}
 	
 	watch_write(j->send_watch, "<m to='%s' tp='a'/>", target+5);	/* sound alert */
 
-	printq("tlen_alert_send", session_name(session), format_user(sesssion, target));
+	printq("tlen_alert_send", session_name(session), format_user(session, target));
 	return 0;
 }
 
