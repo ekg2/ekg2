@@ -1055,10 +1055,9 @@ void watch_handle_line(watch_t *w)
 			xfree(line);
 			break;
 		}
-	/* maybe simple memmove() insteasd of string_free() + string_init() ? */
-		new = string_init(w->buf->str + strlen + 1);
-		string_free(w->buf, 1);
-		w->buf = new;
+
+		string_remove(w->buf, strlen + 1);
+
 		xfree(line);
 	}
 
@@ -1135,12 +1134,7 @@ int watch_handle_write(watch_t *w) {
 		res = 0;
 	}
 
-	if (res == len) {
-		string_clear(w->buf);
-	} else {
-		memmove(w->buf->str, w->buf->str + res, len - res);
-		w->buf->len -= res;
-	}
+	string_remove(w, res);
 	debug_io("left: %d bytes\n", w->buf->len);
 
 	w->removed = 0;
