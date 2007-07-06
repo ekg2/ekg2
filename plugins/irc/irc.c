@@ -2095,48 +2095,6 @@ static COMMAND(irc_command_test) {
 	return 0;
 }
 
-static COMMAND(irc_command_genkey) {
-#ifndef NO_POSIX_SYSTEM
-	extern int sim_key_generate(const char *uid); /* sim plugin */
-	char *uid = NULL;
-
-	if (params[0]) 
-		uid = saprintf("%s:%s", IRC3, params[0]);
-	else    uid = xstrdup(target);
-	
-	if (!uid) 
-		return -1;
-
-	if ((plugin_find(("sim")))) {
-#if 0
-		struct stat st;
-		char *temp1, *temp2;
-		int  ret = 0;
-
-                temp1 = saprintf("%s/%s.pem", prepare_path("keys", 0), uid);
-                temp2 = saprintf("%s/private-%s.pem", prepare_path("keys", 0), uid);
-
-                if (!stat(temp1, &st) && !stat(temp2, &st)) {
-                        printq("key_private_exist");
-			ret = -1;
-                }
-		xfree(temp1); xfree(temp2);
-
-		if (!ret) {
-			printq("key_generating");
-			ret = sim_key_generate(uid);
-			printq("key_generating_success");
-		}
-#endif
-	}
-	// etc.. 	
-	xfree(uid);
-	return 0;
-#else
-	return -1;
-#endif
-}
-
 /*                                                                       *
  * ======================================== INIT/DESTROY --------------- *
  *                                                                       */
@@ -2246,7 +2204,6 @@ EXPORT int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:_autoaway"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_autoback"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_conntest"), "?",	irc_command_test, 	IRC_ONLY, NULL);
-	command_add(&irc_plugin, ("irc:_genkeys"),  "?",  irc_command_genkey, 0, NULL);
 	command_add(&irc_plugin, ("irc:access"), "p uUw ? ?",	irc_command_alist, 0, "-a --add -d --delete -e --edit -s --show -l --list -S --sync");
 	command_add(&irc_plugin, ("irc:add"), NULL,	irc_command_add, 	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
 	command_add(&irc_plugin, ("irc:away"), "?",	irc_command_away,	IRC_FLAGS, NULL);
