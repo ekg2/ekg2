@@ -1134,39 +1134,6 @@ static COMMAND(irc_command_inline_msg) {
 	return irc_command_msg(("msg"), p, session, target, quiet);
 }
 
-static COMMAND(irc_command_parse) {
-	string_t temp = string_init(NULL);
-	const char *t = params[0];
-
-	if (!irc_private(session)->recv_watch) {
-		debug_error("NO RECV WATCH!\n");
-		return -1;
-	}
-
-	while (*t) {
-		if (*t == '\\' && t[1]) {
-			t++;
-			if (*t == 'n') string_append_c(temp, '\n');
-			else if (*t == 'r') string_append_c(temp, '\r');
-			else {
-				string_append_c(temp, '\\');
-				string_append_c(temp, *t);
-			}
-
-		} else string_append_c(temp, *t);
-		t++;
-	}
-
-	debug_error("ff() %s\n", temp->str);
-
-	string_insert(irc_private(session)->recv_watch->buf, 0, temp->str);
-	watch_handle_line(irc_private(session)->recv_watch);
-
-	string_free(temp, 1);
-
-	return 0;
-}
-
 static COMMAND(irc_command_quote) {
 	watch_write(irc_private(session)->send_watch, "%s\r\n", params[0]);
 	return 0;
@@ -2312,7 +2279,6 @@ EXPORT int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:ping"), "uUw ?",	irc_command_ping, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:query"), "uUw",	irc_command_query,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:quote"), "!",	irc_command_quote,	IRC_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&irc_plugin, ("irc:_parse"), "!",	irc_command_parse,	IRC_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&irc_plugin, ("irc:reconnect"), "r ?",irc_command_reconnect,	IRC_ONLY, NULL);
 	command_add(&irc_plugin, ("irc:topic"), "w ?",	irc_command_topic, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:umode"), "?",	irc_command_umode, 	IRC_ONLY /* _FLAGS ? */, NULL);
