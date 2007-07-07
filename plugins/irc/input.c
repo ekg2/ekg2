@@ -396,7 +396,6 @@ CTCP_COMMAND(ctcp_main_noti)
 	int		mw = session_int_get(s, "make_window");
 	char		*t, *win;
 	window_t	*w;
-	struct timeval	tv;
 
 	if (space) while ((*space) && (*space == ' ')) space++;
 
@@ -405,15 +404,11 @@ CTCP_COMMAND(ctcp_main_noti)
 	if (!ischn && !w && !(mw&4)) win = window_current->target;
 
 	t = irc_ircoldcolstr_to_ekgcolstr(s, space,1);
-	if (number == CTCP_PING) {
-		gettimeofday(&tv, NULL);
-		
-		/* TODO, arraymake() ? */
-/*	GiM->dj: W!T!F! you want to do here ?
- *		debug("[IRC_PING] %d, %d - %s\n", tv.tv_sec, tv.tv_usec, t);
-		debug("%d\n", ((tv.tv_sec -t[0]) * 1000 + (tv.tv_usec -t[1])));
-*/		
-	}
+	/* if number == CTCP_PING, we could display 
+	 * 	differences between current gettimeofday() && recv
+	 * 	like most irc clients do.
+	 */
+
 	print_window(win, s, ischn?(mw&1):!!(mw&8),
 			"irc_ctcp_reply", session_name(s),
 			ctcps[number-1].name, sender+4, idhost, t);
