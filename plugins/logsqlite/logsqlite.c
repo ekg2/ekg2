@@ -546,20 +546,20 @@ QUERY(logsqlite_msg_handler)
 /**
  * handler statusów
  */
-QUERY(logsqlite_status_handler)
-{
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        char **__status = va_arg(ap, char**), *status = *__status;
-        char **__descr = va_arg(ap, char**), *descr = *__descr;
-	session_t *s = session_find((const char*)session);
+QUERY(logsqlite_status_handler) {
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	int nstatus	= *(va_arg(ap, int*));
+	char *descr	= *(va_arg(ap, char**));
+	char *status;
+
+	session_t *s	= session_find(session);
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
 	sqlite_t * db;
 #ifdef HAVE_SQLITE3	
 	sqlite3_stmt *stmt;
 #endif 
-
 
 	if (!config_logsqlite_log_status)
 		return 0;
@@ -578,9 +578,10 @@ QUERY(logsqlite_status_handler)
 	if ( gotten_nickname == NULL )
 		gotten_nickname = uid;
 
+	status =  ekg_status_string(status, 0);
+
 	if ( descr == NULL )
 		descr = "";
-
 
 	debug("[logsqlite] running status query\n");
 
