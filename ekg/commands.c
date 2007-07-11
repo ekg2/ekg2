@@ -2152,7 +2152,7 @@ static COMMAND(cmd_test_fds)
 {
 #ifndef NO_POSIX_SYSTEM
 	struct stat st;
-	char buf[1000]; /* XXX: shouldn't we care more about buffer length? */
+	char buf[PATH_MAX+1000];
 	int i;
 	
 	for (i = 0; i < 2048; i++) {
