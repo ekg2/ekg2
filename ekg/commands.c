@@ -2152,7 +2152,7 @@ static COMMAND(cmd_test_fds)
 {
 #ifndef NO_POSIX_SYSTEM
 	struct stat st;
-	char buf[1000];
+	char buf[1000]; /* XXX: shouldn't we care more about buffer length? */
 	int i;
 	
 	for (i = 0; i < 2048; i++) {
@@ -2161,8 +2161,20 @@ static COMMAND(cmd_test_fds)
 
 		sprintf(buf, "%d: ", i);
 
-		if (S_ISREG(st.st_mode))
-			sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
+		if (S_ISREG(st.st_mode)) {
+				/* XXX: I dunno how about BSD and likes */
+			char *mypath = saprintf("/proc/%d/fd/%d", getpid(), i);
+			char newpath[PATH_MAX];
+			int r = readlink(mypath, newpath, sizeof(newpath)-1);
+
+			xfree(mypath);
+			if (r <= 0)
+				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
+			else {
+				newpath[r] = 0;
+				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu, path %s", st.st_ino, st.st_size, newpath);
+			}
+		}
 
 		if (S_ISSOCK(st.st_mode)) {
 			/* GiM: ten sock_n, bo sockaddr_in6 > sockaddr_in */

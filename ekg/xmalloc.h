@@ -42,6 +42,15 @@
 typedef unsigned int socklen_t;
 #endif
 
+/* buffer lengths in stuff.c */
+#ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
+#  define PATH_MAX _POSIX_PATH_MAX
+# endif
+#endif
+
 #ifndef EKG2_WIN32_NOFUNCTION
 
 void ekg_oom_handler();

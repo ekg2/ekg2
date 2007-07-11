@@ -82,14 +82,6 @@
 
 #include "queries.h"
 
-#ifndef PATH_MAX
-# ifdef MAX_PATH
-#  define PATH_MAX MAX_PATH
-# else
-#  define PATH_MAX _POSIX_PATH_MAX
-# endif
-#endif
-
 list_t children = NULL;
 list_t aliases = NULL;
 list_t autofinds = NULL;
