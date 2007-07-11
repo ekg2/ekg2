@@ -2162,7 +2162,7 @@ static COMMAND(cmd_test_fds)
 		sprintf(buf, "%d: ", i);
 
 		if (S_ISREG(st.st_mode)) {
-				/* XXX: I dunno how about BSD and likes */
+#ifdef __linux__
 			char *mypath = saprintf("/proc/%d/fd/%d", getpid(), i);
 			char newpath[PATH_MAX];
 			int r = readlink(mypath, newpath, sizeof(newpath)-1);
@@ -2174,6 +2174,9 @@ static COMMAND(cmd_test_fds)
 				newpath[r] = 0;
 				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu, path %s", st.st_ino, st.st_size, newpath);
 			}
+#else
+			sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
+#endif
 		}
 
 		if (S_ISSOCK(st.st_mode)) {
