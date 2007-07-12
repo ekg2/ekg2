@@ -578,7 +578,7 @@ QUERY(logsqlite_status_handler) {
 	if ( gotten_nickname == NULL )
 		gotten_nickname = uid;
 
-	status =  ekg_status_string(status, 0);
+	status = ekg_status_string(nstatus, 0);
 
 	if ( descr == NULL )
 		descr = "";
