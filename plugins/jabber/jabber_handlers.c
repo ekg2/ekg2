@@ -2502,8 +2502,12 @@ JABBER_HANDLER(jabber_handle_iq) {
 					char *uid;
 
 					if (j->istlen) {
-						if (xstrstr(jid, "@tlen.pl")) 	uid = saprintf("tlen:%s", jid);
-						else				uid = saprintf("tlen:%s@tlen.pl", jid);		/* fast hack */
+							/* do it like tlen does with roster - always @tlen.pl */
+						char *atsign	= xstrchr(jid, '@');
+
+						if (atsign)
+							*atsign	= 0;
+						uid = saprintf("tlen:%s@tlen.pl", jid);
 					} else  uid = saprintf("jid:%s", jid);
 
 					/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
