@@ -129,8 +129,10 @@ static QUERY(xosd_protocol_status)
 {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-	char *status	= *(va_arg(ap, char**));
+	int nstatus	= *(va_arg(ap, int*));
 	char *descr	= *(va_arg(ap, char**));
+
+	char *status	= ekg_status_string(nstatus, 0);
 
 	userlist_t *u;
 	session_t *s;
