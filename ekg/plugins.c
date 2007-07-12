@@ -1045,7 +1045,6 @@ void watch_handle_line(watch_t *w)
 	while ((tmp = xstrchr(w->buf->str, '\n'))) {
 		size_t strlen = tmp - w->buf->str;		/* get len of str from begining to \n char */
 		char *line = xstrndup(w->buf->str, strlen);	/* strndup() str with len == strlen */
-		string_t new;
 
 		/* we strndup() str with len == strlen, so we don't need to call xstrlen() */
 		if (strlen > 1 && line[strlen - 1] == '\r')
