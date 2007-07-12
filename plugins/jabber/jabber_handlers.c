@@ -2762,6 +2762,16 @@ JABBER_HANDLER(jabber_handle_presence) {
 			xfree(etext);
 
 			status = EKG_STATUS_ERROR;
+
+			if (istlen) { /* we need to get&fix the UID - userlist entry is sent with @tlen.pl, but error with user-given host */
+				char *tmp	= tlenjabber_unescape(jabber_attr(n->atts, "to"));
+				char *atsign	= xstrchr(tmp, '@');
+
+				if (atsign)
+					*atsign	= 0;
+				uid = saprintf("tlen:%s@tlen.pl", tmp);
+				xfree(tmp);
+			}
 		} 
 		if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
 			xfree(descr);
