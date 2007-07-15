@@ -1119,7 +1119,6 @@ COMMAND(session_command)
 		const char *key;	/* variable name */
 		const char *var;	/* variable value */
 		int secret	= 0;	/* if variable should be hidden, for example passwords */
-		int notstring	= 0;	/* if variable type is different than VAR_STR */
 		int paid;		/* `plugin params id`, if it's _global_ session variable */
 
 		char *tmp = NULL;
@@ -1155,8 +1154,6 @@ COMMAND(session_command)
 
 			var = s->values[paid-1];
 			secret = pa->secret;
-
-			notstring = (pa->type != VAR_STR);
 		} else {
 		/* XXX, idea, here we can do: session_localvar_find() to check if this is _local_ variable, and eventually print other info.. 
 		 * 	The same at --set ? 
