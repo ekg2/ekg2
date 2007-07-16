@@ -73,9 +73,10 @@ proxy
 	typ: tekst
 	domy¶lna warto¶æ: brak 
 	
-	zmienna dostêpna tylko gdy w systemie jest biblioteka pozwalaj±ca
-	dekodowaæ pliki JPEG. wy³±czenie jej spowoduje dzia³anie ekg tak,
-	jakby biblioteki nie by³o, tj. zapisywanie tokenów do pliku.
+	adres i port serwera proxy, oddzielone dwukropkiem. je¶li nie podano
+	portu, domy¶lnie jest przyjmowany 8080. je¶li serwer proxy wymaga
+	autoryzacji, nale¿y poprzedziæ go nazw± u¿ytkownika, dwukropkiem,
+	has³em i ma³p± (np. ,,jan:tajnehas³o@serwer'')
 
 proxy_forwarding
 	typ: tekst
