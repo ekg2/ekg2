@@ -121,7 +121,7 @@ void ekg2_bless_command(HV *hv, command_t *command)
 
 void ekg2_bless_fstring(HV *hv, fstring_t *fstr)
 {
-	hv_store(hv, "str", 3, new_pv(fstr->str), 0);
+	hv_store(hv, "str", 3, new_pv(fstr->str.b), 0);
 	hv_store(hv, "ts",  2, newSViv(fstr->ts), 0);
 	hv_store(hv, "attr",4, create_sv_ptr(fstr->attr), 0);
 }

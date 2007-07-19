@@ -205,7 +205,7 @@ static char *readline_ui_window_print_helper(char *str, short *attr) {
 static QUERY(readline_ui_window_print) {
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *l = *(va_arg(ap, fstring_t **));
-	char *str = readline_ui_window_print_helper(l->str, l->attr);
+	char *str = readline_ui_window_print_helper(l->str.b, l->attr);
 
 	ui_readline_print(w, 1, str);
 	xfree(str);

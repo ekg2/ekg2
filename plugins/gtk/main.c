@@ -1103,12 +1103,12 @@ QUERY(gtk_ui_window_print) {
 		char *tmp = format_string(config_timestamp);
 		char *ts  = saprintf(("%s "), timestamp(tmp));
 		fstring_t *t = fstring_new(ts);
-		gtk_process_str(w, buffer, t->str, t->attr, 1);
+		gtk_process_str(w, buffer, t->str.b, t->attr, 1);
 		xfree(tmp);
 		xfree(ts);
 		fstring_free(t);
 	}
-	gtk_process_str(w, buffer, line->str, line->attr, 0);
+	gtk_process_str(w, buffer, line->str.b, line->attr, 0);
 
 	gtk_text_buffer_get_iter_at_offset (buffer, &iter, -1);
 	gtk_text_buffer_insert_with_tags(buffer, &iter, "\n", -1, NULL);

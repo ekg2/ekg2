@@ -3,21 +3,6 @@
 #ifndef __EKG_NCURSES_ECURSES_H
 #define __EKG_NCURSES_ECURSES_H
 
-#include "ekg2-config.h"
-
-#if USE_UNICODE
-# define _XOPEN_SOURCE_EXTENDED
-# include <ncursesw/ncurses.h>
-#else	/* USE_UNICODE */
-# ifdef HAVE_NCURSES_H
-#   include <ncurses.h>
-#  else	/* HAVE_NCURSES_H */
-#   ifdef HAVE_NCURSES_NCURSES_H
-#     include <ncurses/ncurses.h>
-#   endif	/* HAVE_NCURSES_NCURSES_H */
-# endif	/* HAVE_NCURSES_H */
-#endif	/* USE_UNICODE */
-
 /*
  *  (C) Copyright 2003-2006 Maciej Pietrzak <maciej@hell.org.pl>
  *  		  	    Jakub Zawadzki <darkjames@darkjames.ath.cx>
@@ -37,70 +22,21 @@
  */
 
 #if USE_UNICODE
-#include <errno.h>
-extern int config_use_unicode;	/* not everyone want to include stuff.h */
-extern int sizeofchart;
-
-#define CHAR_T wchar_t 	
-	/* be carefull!   use __S() macro to get true value. */
-	/* be carefull111 use __SN() macr^H^H ekhm, function to move to real index */
-	/* 		  use __SPTR() function to get ptr to real index */
-	/*		  use __SREP() function to replace real char with anotherone */
-#define CHAR CHAR_T 	/* silent warnings */
-
-#define TEXT(x) (config_use_unicode ? (CHAR_T *) L##x : (CHAR_T *) x)
-
-#define __S(str, i) (CHAR_T) (config_use_unicode ? ((wchar_t *) str)[i] : ((unsigned char *) str)[i]) 
-
-static inline CHAR_T *__SPTR(CHAR_T *str, int offset) { /* #define __SPTR(str, i) (CHAR_T *) (config_use_unicode ? &((wchar_t *) str[i]) : &((unsigned char *) str)[i]) */
-	if (config_use_unicode) return (CHAR_T *) (str + offset);
-	else 			return (CHAR_T *) (((char *) str) + offset);
-}
-
-static inline void __SREP(CHAR_T *str, int offset, CHAR_T newchar) {
-	if (config_use_unicode) (*__SPTR(str, offset)) = newchar;
-	else			(* ((char *) __SPTR(str, offset))) = newchar;
-}
-
-static inline CHAR_T *__SN(CHAR_T **str, int offset) { /* #define __SN(str) (CHAR_T) (config_use_unicode ? ((wchar_t *) str)++ : ((unsigned char *) str)++) */
-	if (config_use_unicode) return (CHAR_T *) ((*str) += offset);
-	else 			return (CHAR_T *) ((*((char **) str)) += offset);
-}
-#define free_utf(ptr)  do { if (ptr && config_use_unicode) free(ptr); } while(0)
-
-inline int xwcslen(CHAR_T *str);
-inline CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src);
-inline CHAR_T *xwcsdup(CHAR_T *str);
-inline CHAR_T *xwcscat(CHAR_T *dst, const CHAR_T *src);
-inline int xwcscmp(const CHAR_T *s1, const CHAR_T *s2);
-inline CHAR_T *xwcschr(const CHAR_T *s, CHAR_T c);
-inline char *wcs_to_normal(const CHAR_T *str);
-inline CHAR_T *normal_to_wcs(const char *str);
-inline CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes);
-inline CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep);
-inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
-
+# ifndef _XOPEN_SOURCE_EXTENDED
+#  define _XOPEN_SOURCE_EXTENDED
+# endif
+# include <ncursesw/ncurses.h>
 #else	/* USE_UNICODE */
-#define CHAR_T unsigned char
-#define sizeofchart sizeof(char)
-#define TEXT(x) x
-#define __S(str, i) str[i]
-#define __SN(str, i) ((*str) += i)
-#define __SPTR(str, i) (&str[i]) 
-#define __SREP(str, i, newchar) str[i] = newchar
-#define xwcslen(str) xstrlen((char *) str)
-#define xwcscpy(dst, str) xstrcpy((char *) dst, (char *) str)
-#define xwcsdup(str) (CHAR_T *) xstrdup((char *) str)
-#define xwcscat(dst, src) xstrcat((char *) dst, (char *) src)
-#define xwcscmp(s1, s2)	xstrcmp((char *) s1, s2)
-#define xwcschr(s, c) xstrchr((char *) s, c)
-#define wcs_array_make(str, sep, max, trim, quotes) (CHAR_T **) array_make((char *) str, sep, max, trim, quotes)
-#define wcs_to_normal(x) (char *) x
-#define free_utf(x) 
-#define wcs_array_join(arr, sep) (CHAR_T *) array_join((char **) arr, sep)
-#define xwcslcpy(dst, src, size) strlcpy((char *) dst, (char *) src, size)
-
+# ifdef HAVE_NCURSES_H
+#   include <ncurses.h>
+#  else	/* HAVE_NCURSES_H */
+#   ifdef HAVE_NCURSES_NCURSES_H
+#     include <ncurses/ncurses.h>
+#   endif	/* HAVE_NCURSES_NCURSES_H */
+# endif	/* HAVE_NCURSES_H */
 #endif	/* USE_UNICODE */
+
+#include <ekg/strings.h>
 
 #endif	/* __EKG_NCURSES_ECURSES_H */
 

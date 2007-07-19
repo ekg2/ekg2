@@ -1031,7 +1031,7 @@ static QUERY(logs_handler_raw) {
 
 	/* line->str + line->attr == ascii str with formats */
 	path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0);
-	str  = logs_fstring_to_string(line->str, line->attr);
+	str  = logs_fstring_to_string(line->str.b, line->attr);
 
 	logs_buffer_raw_add(path, str);
 

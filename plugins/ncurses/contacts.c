@@ -768,9 +768,9 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 	if (y > n->backlog_size)
 		return;
 
-	name = n->backlog[n->backlog_size - y]->str;
+	name = n->backlog[n->backlog_size - y]->str.w;
 
-	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[n->backlog_size - y ]->private);
+	command_exec_format(NULL, NULL, 0, ("/query \"" STRING_FORMAT "\""), n->backlog[n->backlog_size - y ]->private);
 	return;
 }
 

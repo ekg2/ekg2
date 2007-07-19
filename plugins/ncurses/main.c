@@ -558,10 +558,6 @@ EXPORT int ncurses_plugin_init(int prio)
 
         if (is_UI) 
                 return -1;
-#if USE_UNICODE
-	if (config_use_unicode)		sizeofchart = sizeof(wchar_t);
-	else				sizeofchart = sizeof(char);
-#endif
 	plugin_register(&ncurses_plugin, prio);
 
 	ncurses_setvar_default(NULL, dummy);
