@@ -20,8 +20,6 @@
 #ifndef __EKG_NCURSES_BINDINGS_H
 #define __EKG_NCURSES_BINDINGS_H
 
-#include "ekg2-config.h"
-
 #include "ecurses.h"
 
 #include <ekg/stuff.h>

@@ -1,6 +1,8 @@
 #ifndef __EKG_NCURSES_OLD_H
 #define __EKG_NCURSES_OLD_H
 
+#include "ekg2-config.h"
+
 #include "ecurses.h"
 
 #include <ekg/plugins.h>

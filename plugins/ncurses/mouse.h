@@ -20,9 +20,6 @@
 #ifndef __EKG_NCURSES_MOUSE_H
 #define __EKG_NCURSES_MOUSE_H
 
-
-#include "ekg2-config.h"
-
 void ncurses_enable_mouse();
 void ncurses_disable_mouse();
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
