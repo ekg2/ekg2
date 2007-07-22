@@ -34,10 +34,6 @@
 #include "oralog.h"
 #include "commands.h"
 
-#ifndef TEXT(x)
-#define TEXT(x) x
-#endif
-
 /* If not provided then these values will be put into the db */
 #define EMPTY_STATUS		""
 #define EMPTY_DESCR		""
@@ -67,33 +63,27 @@ PLUGIN_DEFINE(logsoracle, PLUGIN_LOG, logsoracle_theme_init);
  */
 int logsoracle_plugin_init(int prio)
 {
-	va_list dummy;
-
 	plugin_register(&logsoracle_plugin, prio);
 
 	/* connect events with handlers */
-	query_connect(&logsoracle_plugin, TEXT("set-vars-default"), logsoracle_handler_setvarsdef, NULL);
-	query_connect(&logsoracle_plugin, TEXT("config-postinit"), logsoracle_handler_postinit, NULL);
-	query_connect(&logsoracle_plugin, TEXT("session-status"), logsoracle_handler_sestatus, NULL);	
-        query_connect(&logsoracle_plugin, TEXT("protocol-status"), logsoracle_handler_prstatus, NULL);
-	query_connect(&logsoracle_plugin, TEXT("protocol-message-post"), logsoracle_handler_prmsg, NULL);
+	query_connect(&logsoracle_plugin, ("set-vars-default"), logsoracle_handler_setvarsdef, NULL);
+	query_connect(&logsoracle_plugin, ("config-postinit"), logsoracle_handler_postinit, NULL);
+	query_connect(&logsoracle_plugin, ("session-status"), logsoracle_handler_sestatus, NULL);	
+	query_connect(&logsoracle_plugin, ("protocol-status"), logsoracle_handler_prstatus, NULL);
+	query_connect(&logsoracle_plugin, ("protocol-message-post"), logsoracle_handler_prmsg, NULL);
 		
-
-	/* set default variable values (uses query function) */
-	logsoracle_handler_setvarsdef(NULL, dummy);
-
 	/* register variables */
-	variable_add(&logsoracle_plugin, TEXT("auto_connect"), VAR_BOOL, 1, &logsoracle_config.auto_connect, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, TEXT("logging_active"), VAR_BOOL, 1, &logsoracle_config.logging_active, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, TEXT("log_messages"), VAR_BOOL, 1, &logsoracle_config.log_messages, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, TEXT("log_status"), VAR_BOOL, 1, &logsoracle_config.log_status, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, TEXT("db_login"), VAR_STR, 1, &logsoracle_config.db_login, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, TEXT("db_password"), VAR_STR, 1, &logsoracle_config.db_password, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, ("auto_connect"), VAR_BOOL, 1, &logsoracle_config.auto_connect, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, ("logging_active"), VAR_BOOL, 1, &logsoracle_config.logging_active, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, ("log_messages"), VAR_BOOL, 1, &logsoracle_config.log_messages, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, ("log_status"), VAR_BOOL, 1, &logsoracle_config.log_status, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, ("db_login"), VAR_STR, 1, &logsoracle_config.db_login, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, ("db_password"), VAR_STR, 1, &logsoracle_config.db_password, NULL, NULL, NULL);
 
 	/* register commands */
-	command_add(&logsoracle_plugin, TEXT("logsoracle:connect"), NULL, logsoracle_cmd_db_connect, 0, NULL);	
-        command_add(&logsoracle_plugin, TEXT("logsoracle:disconnect"), NULL, logsoracle_cmd_db_disconnect, 0, NULL);
-	command_add(&logsoracle_plugin, TEXT("logsoracle:status"), NULL, logsoracle_cmd_status, 0, NULL);
+	command_add(&logsoracle_plugin, ("logsoracle:connect"), NULL, logsoracle_cmd_db_connect, 0, NULL);	
+	command_add(&logsoracle_plugin, ("logsoracle:disconnect"), NULL, logsoracle_cmd_db_disconnect, 0, NULL);
+	command_add(&logsoracle_plugin, ("logsoracle:status"), NULL, logsoracle_cmd_status, 0, NULL);
 		
 	return 0;
 }
