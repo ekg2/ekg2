@@ -219,7 +219,7 @@ QUERY(jogger_msghandler) {
 		char *suid, *uid;
 		char *lmsg	= (char*) msg;
 		char *rcpts[2]	= { NULL, NULL };
-		char **rcptsb	= &rcpts; /* this is REALLY necessary, please do not remove or else we get segv */
+		char **rcptsb	= rcpts; /* this is REALLY necessary, please do not remove or else we get segv */
 		uint32_t *fmt	= NULL;
 
 		if (*lmsg == '#') {
