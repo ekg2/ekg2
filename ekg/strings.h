@@ -48,6 +48,8 @@ inline CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max,
 inline CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep);
 inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 
+#define free_utf(x) xfree(x)
+
 #else	/* USE_UNICODE */
 
 #include <ekg/xmalloc.h>
@@ -68,6 +70,7 @@ inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 #define wcs_array_make(str, sep, max, trim, quotes) (CHAR_T **) array_make((char *) str, sep, max, trim, quotes)
 #define wcs_array_join(arr, sep) (CHAR_T *) array_join((char **) arr, sep)
 #define xwcslcpy(dst, src, size) strlcpy((char *) dst, (char *) src, size)
+#define free_utf(x)
 
 #endif	/* USE_UNICODE */
 

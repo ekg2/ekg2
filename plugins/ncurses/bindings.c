@@ -102,7 +102,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 			if (!xwcscmp(lines[i], TEXT("")) && !lines[i + 1])
 				break;
 
-			string_append(s, (tmp = wcs_to_normal(lines[i])));	xfree(tmp);
+			string_append(s, (tmp = wcs_to_normal(lines[i])));	free_utf(tmp);
 			string_append(s, ("\r\n"));
 		}
 
@@ -234,7 +234,7 @@ static BINDING_FUNCTION(binding_accept_line)
 	
 		return;
 	}
-	command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);	xfree(txt);
+	command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);	free_utf(txt);
 
 	if (ncurses_plugin_destroyed)
 		return;
