@@ -115,6 +115,7 @@ char *config_dcc_dir;
 int config_display_blinking = 1;
 int config_display_pl_chars = 1;
 int config_events_delay = 3;
+int config_expert_mode = 0;
 char *config_sound_msg_file = NULL;
 char *config_sound_chat_file = NULL;
 char *config_sound_notify_file = NULL;

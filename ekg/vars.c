@@ -114,6 +114,7 @@ void variable_init()
 	variable_add(NULL, ("display_welcome"), VAR_BOOL, 1, &config_display_welcome, NULL, NULL, NULL);
 	variable_add(NULL, ("emoticons"), VAR_BOOL, 1, &config_emoticons, NULL, NULL, NULL);
 	variable_add(NULL, ("events_delay"), VAR_INT, 1, &config_events_delay, NULL, NULL, NULL);
+	variable_add(NULL, ("expert_mode"), VAR_INT, 1, &config_expert_mode, NULL, NULL, NULL);
 	variable_add(NULL, ("exit_exec"), VAR_STR, 1, &config_exit_exec, NULL, NULL, NULL);
 	variable_add(NULL, ("keep_reason"), VAR_INT, 1, &config_keep_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("last"), VAR_MAP, 1, &config_last, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "separate", 4, 0, "sent"), NULL);

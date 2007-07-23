@@ -392,7 +392,8 @@ int plugin_unload(plugin_t *p)
 	if (!p)
 		return -1;
 
-	if (p->pclass == PLUGIN_UI) {
+
+	if (config_expert_mode == 0 && p->pclass == PLUGIN_UI) {
 		list_t l;
 		int unloadable = 0;
 		for (l=plugins; l; l = l->next) {

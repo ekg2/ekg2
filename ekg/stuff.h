@@ -195,6 +195,7 @@ extern int config_display_sent;
 extern int config_display_welcome;
 extern int config_emoticons;
 extern int config_events_delay;
+extern int config_expert_mode;
 extern int config_keep_reason;
 extern int config_last;
 extern int config_last_size;
