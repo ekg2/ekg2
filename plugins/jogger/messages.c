@@ -219,6 +219,7 @@ QUERY(jogger_msghandler) {
 		char *suid, *uid;
 		char *lmsg	= (char*) msg;
 		char *rcpts[2]	= { NULL, NULL };
+		char **rcptsb	= &rcpts; /* this is REALLY necessary, please do not remove or else we get segv */
 		uint32_t *fmt	= NULL;
 
 		if (*lmsg == '#') {
@@ -240,7 +241,7 @@ QUERY(jogger_msghandler) {
 		if (!rcpts[0])
 			rcpts[0]	= xstrdup("jogger:");
 
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcpts, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
+		query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcptsb, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
 	
 		xfree(rcpts[0]);
 		xfree(uid);
