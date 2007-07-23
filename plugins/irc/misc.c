@@ -714,6 +714,7 @@ IRC_COMMAND(irc_c_list)
 				print_window(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
 				break;
 			case (IRC_LISTWHO): 
+				/* ok new irc-find-person checked */
 				osoba    = irc_find_person(j->people, IOK(7));
 				realname = xstrchr(IOK2(9), ' ');
 				PRINT_WINDOW(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
@@ -804,7 +805,8 @@ IRC_COMMAND(irc_c_nick)
 		xfree(j->nick);
 		j->nick = xstrdup(OMITCOLON(param[2]));	
 	} else {
-		(per = irc_find_person(j->people, OMITCOLON(param[2])));
+		/* ok new irc-find-person checked */
+		per = irc_find_person(j->people, OMITCOLON(param[2]));
 		debug("[irc]_c_nick %08X %s\n", per, param[0]+1);
 		if (nickdisp || !per)
 			print_window(nickdisp==2?window_current->target:"__status",
@@ -918,6 +920,7 @@ IRC_COMMAND(irc_c_msg)
 		format = saprintf("irc_%s_f_chan%s%s", prv?"msg":"not",
 					(!w)?"":"_n", ekgbeep?"h":"");
 
+		/* ok new irc-find-person checked */
 		if ((person = irc_find_person(j->people, param[0]+1)))
 		{
 			/* G->dj: I'm not sure if this what I've added
@@ -1336,6 +1339,8 @@ IRC_COMMAND(irc_c_mode)
 			if (xstrchr(param[k], ' '))
 				*xstrchr(param[k], ' ') = '\0';
 
+
+			/* ok new irc-find-person checked */
 			per = irc_find_person(j->people, param[k]);
 			if (!per) goto notreallyok;
 			ch = irc_find_person_chan(per->channels, param[2]); 
@@ -1352,7 +1357,7 @@ IRC_COMMAND(irc_c_mode)
 notreallyok:
 		if (xstrchr(add, *t)) k++;
 		else if (xstrchr(mode_abc, *t) && (act || !xstrchr(mode_c, *t))) k++;
-				
+											
 		if (!param[k]) break;
 	}
 

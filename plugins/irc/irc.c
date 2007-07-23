@@ -1059,6 +1059,7 @@ static COMMAND(irc_command_msg) {
 	prv = xstrcmp(name, ("notice"));
 	ischn = !!xstrchr(SOP(_005_CHANTYPES), uid[4]);
 /* PREFIX */
+	/* ok new irc-find-person checked */
 	if ((ischn && (person = irc_find_person(j->people, j->nick)) && (perchn = irc_find_person_chan(person->channels, (char *)uid))))
 		prefix[0] = *(perchn->sign);
 
@@ -1439,8 +1440,10 @@ static QUERY(irc_topic_header) {
 			*setby = xstrdup(chanp->topicby);
 			*modes = xstrdup(chanp->mode_str);
 			return 1;
+
 		/* person */
-		} else if ((per = irc_find_person((j->people), targ))) { 
+		/* ok new irc-find-person checked */
+		} else if ((per = irc_find_person((j->people), targ+4))) { 
 			*top   = saprintf("%s@%s", per->ident, per->host);
 			*setby = xstrdup(per->realname);
 			return 2;
@@ -1773,6 +1776,17 @@ static COMMAND(irc_command_ban) {
 	if (!(*mp))
 		watch_write(j->send_watch, "MODE %s +b \r\n", chan+4);
 	else {
+		/* if parameter to /ban is prefixed with irc: like /ban irc:xxx
+		 * we don't care, since this is what user requested ban user with
+		 * nickname: 'irc:xxx' [this is quite senseless, since IRC servers
+		 * doesn't allow ':' in nickname (an they probably never will)
+		 *
+		 * calling /ban irc:xxx will cause:
+		 *   programmer's mistake in call to irc_find_person!: irc:xxx
+		 * in debug window, but please do not report it, according to
+		 * what is written above this is normal, DELETE THIS NOTE L8R
+		 */
+		/* ok new irc-find-person checked */
 		person = irc_find_person(j->people, (char *) *mp);
 		if (person) 
 			temp = irc_make_banmask(session, person->nick+4, person->ident, person->host);

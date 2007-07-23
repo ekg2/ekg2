@@ -30,18 +30,42 @@
 #include "people.h"
 #include "irc.h"
 
-/* tmp = private->channels || private->people->channels->onchan */
+enum { OTHER_NETWORK };
+
+/* add others
+ */
+int irc_xstrcasecmp_default(char *str1, char *str2)
+{
+	return xstrcasecmp(str1, str2);
+}
+
+/* this function searches for a given nickname on a given list
+ * nick MUST BE without preceeding 'irc:' string
+ * nick can contain mode prefix (one of): '@%+'
+ *
+ * list should be one of:
+ *     private->channels 
+ *     private->people->channels->onchan
+ */
 people_t *irc_find_person(list_t p, char *nick)
 {
+	int (*comp_func)(char *,char*);
 	people_t *person;
+
 	if (!(nick && p)) return NULL;
-	if (*nick=='+' || *nick=='@') nick++;
+
+	/* debug only, delete after proper testing */
+	if (!xstrncmp(nick, IRC4, 4))
+		debug_error("programmer's mistake in call to irc_find_person!: %s\n", nick);
+
+	if (*nick == '+' || *nick == '%' || *nick == '@') nick++;
+
+	comp_func = irc_xstrcasecmp_default;
 
 	for (; p; p=p->next)
 	{
 		person = (people_t *)(p->data);
-		if (person->nick && (!xstrcmp(person->nick, nick) ||
-					!xstrcmp((person->nick)+4, nick)))
+		if (person->nick && !comp_func(nick, person->nick+4))
 			return person;
 	}
 	return NULL;
@@ -81,6 +105,22 @@ people_chan_t *irc_find_person_chan(list_t p, char *channame)
 	return NULL;
 }
 
+/* irc_add_person_int()
+ *
+ * this is internal function
+ *
+ * this function adds person given by nick to internal structures of
+ * irc plugin
+ *
+ * @param s - current session structure
+ * @param j - irc private structure of current session
+ * @param nick - nickname of user without <em>'irc:'</em>
+ *   prefix, and possibly with '@%+' prefix
+ * @param chan - channel structure, on which nick appeared,
+ *   unfortunatelly it can't be NULL in current implementation
+ *
+ * @return pointer to allocated people_t structure.
+ */
 static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		char *nick, channel_t *chan)
 {
@@ -103,31 +143,33 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 
 	ircnick = saprintf("%s%s", IRC4, nick);
 	w = window_find_s(s, chan->name);
+	/* add user to userlist of window (of a given channel) if not yet there */
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
-	/* add entry in window's userlist */
 		debug("+userlisty %d, ", mode);
 		ulist = userlist_add_u(&(w->userlist), ircnick, nick);
 		irccol = irc_color_in_contacts(modes, mode, ulist);
 	}
 
+	/* add entry in private->people if nick's not yet there */
+	/* ok new irc-find-person checked */
 	if (!(person = irc_find_person(j->people, nick))) {
-	/* add entry in private->people  */
 		debug("+%s lista ludzi, ", nick); 
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
 		/* K&Rv2 5.4 */
 		list_add(&(j->people), person, 0);
 	}
+	/* add entry in private->channels->onchan if nick's not yet there */
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
-	/* add entry in private->channels->onchan */
 		debug("+do kana³u, "); 
 		list_add(&(chan->onchan), person, 0);
 	}
 	xfree(ircnick);
 
+	/* if channel's not yet on given user channels, add it to his channels */
+	/* as I haven't looked here for a longer time I'm wondering is this check needed at all */
 	if (!(pch_tmp = irc_find_person_chan(person->channels, chan->name)))
 	{
-	/* add entry in private->people->channels */
 		debug("+lista kana³ów usera %08X ", person->channels); 
 		pch_tmp = xmalloc(sizeof(people_chan_t));
 		pch_tmp->mode = mode;
@@ -194,7 +236,10 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	people_chan_t *tmp;
 	window_t *w;
 	if (!(nick && chan))
+	{
+		debug_error("programmer's mistake in call to irc_del_channel_int: nick %s chan %s\n", nick?nick:":NULL:", chan?chan:":NULL:");
 		return -1;
+	}
 	
 	/* GiM: We can't use chan->window->userlist,
 	 * cause, window could be already destroyed. ;/ 
@@ -232,7 +277,20 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	list_remove(&(chan->onchan), nick, 0);
 	return 0;
 }
-
+/* irc_del_person_channel()
+ * 
+ * deletes data from internal structures, when user has been kicked of or parts from a given channel
+ *
+ * @param s - current session structure
+ * @param j - irc private structure of current session
+ * @param nick - nickname of user without <em>'irc:'</em>
+ *   prefix, can contain '@%+' prefix
+ * @param chan - channel structure, where part/kick occured
+ *
+ * @return	-1 - no such channel, no such user <br />
+ * 		0 - user removed from given channel <br />
+ * 		1 - user removed from given channel and that was the last channel shared with that user
+ */
 int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *channame)
 {
 	people_t *person;
@@ -245,6 +303,21 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 	return irc_del_person_channel_int(s, j, person, chan);
 }
 
+/* irc_del_person()
+ *
+ * this is quite silly way of deleting structures of given user e/g when he
+ * /quits from IRC, this function is poorly written, and
+ * porbably should be changed ;/
+ *
+ * @param s - current session structure
+ * @param j - irc private structure of current session
+ * @param nick - nickname of user without <em>'irc:'</em>
+ *   prefix, can contain '@%+' prefix
+ * @param chan - channel structure, where part/kick occured
+ *
+ * @return 	-1 - no such nickname
+ * 		1 - user entry deleted from internal structures
+ */
 int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		char *wholenick, char *reason, int doprint)
 {
@@ -271,7 +344,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 			if (session_int_get(s, "close_windows") > 0) {
 				debug("[irc] del_person() window_kill(w, 1); %s\n", w->target);
 				window_kill(w);
-		    		window_switch(window_current->id);
+				window_switch(window_current->id);
 			}
 			if (doprint)
 				print_window(temp,s, 0, "irc_quit",
@@ -389,6 +462,19 @@ int irc_nick_prefix(irc_private_t *j, people_chan_t *ch, int irc_color)
 	return 0;
 }
 		
+/* irc_nick_change()
+ *
+ * this is internal function called when give person changes nick
+ *
+ * @param s - current session structure
+ * @param j - irc private structure of current session
+ * @param old - old nickname of user without <em>'irc:'</em>
+ *   prefix, and WITHOUT '@%+' prefix
+ * @param new - new nickname of user without <em>'irc:'</em>
+ *   prefix, and WITHOUT '@%+' prefix
+ *
+ * @return	0
+ */
 int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 {
 	userlist_t *ulist, *newul;
