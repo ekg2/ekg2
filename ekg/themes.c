@@ -341,7 +341,8 @@ static char *va_format_string(const char *format, va_list ap) {
 						string_append(buf, "a");
 					else
 						string_append(buf, "y");
-				}
+				} else
+					string_append(buf, "y"); /* display_notify&4, I think male form would be fine for UIDs */
 				p += 2;
 				continue;
 			}
