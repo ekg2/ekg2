@@ -562,7 +562,8 @@ static char *prepare_batch_line(int argc, char *argv[], int n)
  */
 static WATCHER_LINE(handle_stderr)	/* sta³y */
 {
-        print("stderr", watch);
+/* XXX */
+/*	print("stderr", watch); */
 	return 0;
 }
 
