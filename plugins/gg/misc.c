@@ -137,7 +137,7 @@ static const unsigned short table_cp1250[] = {
 unsigned char *gg_locale_to_cp(unsigned char *buf) {
 	if (!buf)
 		return NULL;
-#if USE_UNICODE
+#if (USE_UNICODE || USE_GTK)
 	if (config_use_unicode) {	/* why not iconv? iconv is too big for recoding only utf-8 <==> cp1250 */
 		int len 	= mbstowcs(NULL, buf, 0)+1;	/* it's safe mbstowcs() can return -1 */
 		wchar_t *tmp	= xmalloc(len*sizeof(wchar_t)); /* so here we malloc(0) it returns NULL */
@@ -180,7 +180,7 @@ unsigned char *gg_locale_to_cp(unsigned char *buf) {
 char *gg_cp_to_locale(unsigned char *buf) {
 	if (!buf)
 		return NULL;
-#if USE_UNICODE
+#if (USE_UNICODE || USE_GTK)
 	if (config_use_unicode) { /* shitty way with string_t */
 	/* wchar */
 		int len = xstrlen(buf);
@@ -440,7 +440,7 @@ QUERY(gg_convert_string_init) {
 	gg_convert_string_destroy(); /* reinit? */
 
 	if (
-#if USE_UNICODE
+#if (USE_UNICODE || USE_GTK)
 			config_use_unicode ||
 #endif
 			!xstrcasecmp(config_console_charset, "ISO-8859-2"))
