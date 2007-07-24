@@ -917,7 +917,9 @@ int main(int argc, char **argv)
 #ifdef HAVE_NCURSES
         if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("ncurses"), -254, 1);
 #endif
-	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("gtk"), -254, 1);	/* XXX, HAVE_GTK ? */
+#ifdef HAVE_GTK
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("gtk"), -254, 1);
+#endif
 #ifdef HAVE_READLINE
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif

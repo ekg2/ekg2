@@ -373,6 +373,7 @@ if test "x$with_gtk" != "xno"; then
 	AC_CHECK_GTK2([], [have_gtk="yes"], [have_gtk=x"no"], []) 
 	if test "x$have_gtk" = "xyes"; then
 		PLUGINS="$PLUGINS gtk"
+		AC_DEFINE(HAVE_GTK, 1, [define if you have gtk2])
 	fi
 fi
 
