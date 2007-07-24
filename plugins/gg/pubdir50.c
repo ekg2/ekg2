@@ -164,13 +164,13 @@ COMMAND(gg_command_find)
 		wcs_printq("invalid_params", name);
 		gg_pubdir50_free(req);
 
-#if USE_UNICODE
+#if (USE_UNICODE || HAVE_GTK)
 		if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);	/* wrong? */
 #endif
 		xfree(uargv);
 		return -1;
 	}
-#if USE_UNICODE
+#if (USE_UNICODE || HAVE_GTK)
 	if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);		/* wrongx2? */
 #endif
 	xfree(uargv);
@@ -262,7 +262,7 @@ COMMAND(gg_command_change)
 				continue;
 			}
 			wcs_printq("invalid_params", name);
-#if USE_UNICODE
+#if (USE_UNICODE || HAVE_GTK)
 			if (config_use_unicode) { 
 				for (i = 0; argv[i]; i++) {
 					if (argv[i] != uargv[i]) 	xfree(uargv[i]);
@@ -277,7 +277,7 @@ COMMAND(gg_command_change)
 			gg_pubdir50_free(req);
 			return -1;
 		}
-#if USE_UNICODE
+#if (USE_UNICODE || HAVE_GTK)
 		if (config_use_unicode) {
 			for (i = 0; argv[i]; i++) {
 				if (argv[i] != uargv[i]) 	xfree(uargv[i]);
