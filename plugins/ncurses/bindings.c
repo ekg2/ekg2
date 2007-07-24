@@ -161,7 +161,7 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 	}
 }
 
-static BINDING_FUNCTION(window_kill_binding)
+static BINDING_FUNCTION(binding_window_kill)
 {
         char * ptr;
         ptr = xstrstr(window_current->target, "irc:");
@@ -724,7 +724,7 @@ static void binding_parse(struct binding *b, const char *action)
 	__action("backward-page", binding_backward_page)
 	__action("forward-page", binding_forward_page)
 	__action("kill-line", binding_kill_line)
-        __action("window-kill", window_kill_binding)
+	__action("window-kill", binding_window_kill)
 	__action("yank", binding_yank)
 	__action("accept-line", binding_accept_line)
 	__action("line-discard", binding_line_discard)
