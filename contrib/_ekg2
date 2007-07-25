@@ -1,0 +1,26 @@
+#compdef ekg2
+#
+# completion for zsh by Michal 'GiM' Spadlinski
+# 
+
+local userprofiles userthemes userfrontends
+userprofiles=(`find ~/.ekg2/* -type d -exec test -f '{}/config' \; -exec basename {} \;`)
+userthemes=(`ls $(ekg2-config --data-dir)/themes `)
+userfrontends=(`find /usr/local/share/ekg2/plugins -type d \( -iname 'ncurses' -or -iname 'gtk' -or -iname 'gtk2' \) -exec basename {} \;`)
+
+_arguments -s \
+    '(-u --user)'{-u,--user}'+[uses given profile]:profile name:( $userprofiles )' \
+    '(-t --theme)'{-t,--theme}'+[loads theme from given file]:theme filename:( $userthemes )' \
+    '(-n --no-auto)'{-n,--no-auto}'[does not connect to server(s) automatically]' \
+    '(-m --no-mouse)'{-m,--no-mouse}'[does not load mouse support]' \
+    '(-N --no-global-config)'{-N,--no-global-config}'[ignores global configuration file]' \
+    '(-F --frontend)'{-F,--frontend}'+[uses given frontend (default ncurses)]:frontend name:( $userfrontends )' \
+    '(-a --away -b --back -i --invisible -d --dnd -f --free-for-chat -x --xa)'{-a,--away}'+[changes status to ``away``]' \
+    '(-a --away -b --back -i --invisible -d --dnd -f --free-for-chat -x --xa)'{-b,--back}'+[changes status to ``available``]' \
+    '(-a --away -b --back -i --invisible -d --dnd -f --free-for-chat -x --xa)'{-i,--invisible}'+[changes status to ``invisible``]' \
+    '(-a --away -b --back -i --invisible -d --dnd -f --free-for-chat -x --xa)'{-d,--dnd}'+[changes status to ``do not disturb``]' \
+    '(-a --away -b --back -i --invisible -d --dnd -f --free-for-chat -x --xa)'{-f,--free-for-chat}'+[changes status to ``free for chat``]' \
+    '(-a --away -b --back -i --invisible -d --dnd -f --free-for-chat -x --xa)'{-x,--xa}'+[changes status to ``very busy``]' \
+    '(-h --help)'{-h,--help}'[display this help and exit]' \
+    '(-v --version)'{-v,--version}'[output version information and exit]'
+			    
