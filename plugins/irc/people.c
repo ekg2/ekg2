@@ -138,14 +138,14 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	if ((t = xstrchr(modes, *nick)))
 		mode = 1<<(k-(t-modes)-2);
 
-	debug("irc_add_person_int: %s %d %d\n", modes, mode, k);
+	/* debug("irc_add_person_int: %s %d %d\n", modes, mode, k); */
 	if (mode) nick++;
 
 	ircnick = saprintf("%s%s", IRC4, nick);
 	w = window_find_s(s, chan->name);
 	/* add user to userlist of window (of a given channel) if not yet there */
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
-		debug("+userlisty %d, ", mode);
+	/*	debug("+userlisty %d, ", mode); */
 		ulist = userlist_add_u(&(w->userlist), ircnick, nick);
 		irccol = irc_color_in_contacts(modes, mode, ulist);
 	}
@@ -153,7 +153,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	/* add entry in private->people if nick's not yet there */
 	/* ok new irc-find-person checked */
 	if (!(person = irc_find_person(j->people, nick))) {
-		debug("+%s lista ludzi, ", nick); 
+	/*	debug("+%s lista ludzi, ", nick); */
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
 		/* K&Rv2 5.4 */
@@ -161,7 +161,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	}
 	/* add entry in private->channels->onchan if nick's not yet there */
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
-		debug("+do kana³u, "); 
+	/*	debug("+do kana³u, "); */
 		list_add(&(chan->onchan), person, 0);
 	}
 	xfree(ircnick);
@@ -170,13 +170,13 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	/* as I haven't looked here for a longer time I'm wondering is this check needed at all */
 	if (!(pch_tmp = irc_find_person_chan(person->channels, chan->name)))
 	{
-		debug("+lista kana³ów usera %08X ", person->channels); 
+	/*	debug("+lista kana³ów usera %08X ", person->channels); */
 		pch_tmp = xmalloc(sizeof(people_chan_t));
 		pch_tmp->mode = mode;
 		pch_tmp->chanp = chan;
 		irc_nick_prefix(j, pch_tmp, irccol);
 		list_add(&(person->channels), pch_tmp, 0);
-		debug(" %08X\n", person->channels);
+	/*	debug(" %08X\n", person->channels); */
 	} //else { pch_tmp->mode = mode; }
 
 	xfree(modes);
@@ -225,6 +225,7 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 		irc_add_person_int(s, j, *nick, chan);
 		nick++;
 	}
+
 	array_free(save);
 	return 0;	
 }
