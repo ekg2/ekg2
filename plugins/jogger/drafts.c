@@ -248,8 +248,10 @@ COMMAND(jogger_prepare) {
 	s += xstrspn(s, " \n\r");	/* get on to first real char */
 	while (*s == '(') {	/* parse headers */
 		const char *sep		= xstrchr(s, ':');
-		const char *end		= xstrchr(s, ')');
-		const char *next	= xstrchr(s, '\n');
+		char *next		= xstrchr(s, '\n');
+		if (next)	*next	= 0;
+		const char *end		= xstrrchr(s, ')');
+		if (next)	*next	= '\n';
 
 		char tmp[24];		/* longest correct key has 10 chars + '(' + \0 */
 		strlcpy(tmp, s, 20);
