@@ -190,6 +190,12 @@ void window_switch(int id)
 	list_t l;
 	userlist_t *u;
 
+#if 0
+	/* XXX, need testing */
+	if (window_current && window_current->id == id)
+		return;
+#endif
+
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 
