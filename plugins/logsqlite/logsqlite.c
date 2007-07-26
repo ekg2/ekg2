@@ -619,18 +619,69 @@ QUERY(logsqlite_status_handler) {
  * but more Konnekt-like (i.e. message-oriented, not console dump) */
 
 static QUERY(logsqlite_newwin_handler) {
-	window_t *w = *(va_arg(ap, window_t **));
-	const char *uid;
+	window_t	*w	= *(va_arg(ap, window_t **));
+	const char	*uid;
+	int		class;
+	time_t		ts;
+	const char	*rcpts[2] = { NULL, NULL };
+
+	sqlite_t	*db;
+#ifdef HAVE_SQLITE3
+	sqlite3_stmt	*stmt;
+#else
+	char		*sql;
+	const char	**results;
+	const char	**fields;
+	sqlite_vm	*vm;
+
+	char		*errors;
+	int		count;
+#endif
 
 	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session || w->id == 1000
-			|| !(uid = get_uid_any(w->session, w->target)))
+			|| !(uid = get_uid_any(w->session, w->target))
+			|| !(db = logsqlite_prepare_db(w->session, time(0))))
 		return 0;
 
 		/* as we don't log raw messages, we can normally print the old ones
 		 * and we can simply the thing one step more by using message_print(),
-		 * which is hopefully exported by core - but should think about magically
-		 * using some other formats to distinguish - for example darker */
-	/* TODO: read lastlog and print it */
+		 * which is hopefully exported by core */
+
+			/* these ones stolen from /last cmd */
+#ifdef HAVE_SQLITE3
+	sqlite3_prepare(db, "SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = ?1 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+	sqlite3_bind_text(stmt, 1, uid, -1, SQLITE_STATIC);
+	sqlite3_bind_int(stmt, 2, config_logsqlite_last_limit);
+	while (sqlite3_step(stmt) == SQLITE_ROW) {
+		ts = (time_t) sqlite3_column_int(stmt, 0);
+
+		if (sqlite3_column_int(stmt, 2) == 0) {
+#else
+	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, config_logsqlite_last_limit);
+	sqlite_compile(db, sql, NULL, &vm, &errors);
+	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
+		ts = (time_t) atoi(results[0]);
+
+		if (!xstrcmp(results[2], "0")) {
+#endif
+			class = EKG_MSGCLASS_CHAT;
+			rcpts[0] = NULL;
+		} else {
+			class = EKG_MSGCLASS_SENT_CHAT;
+			rcpts[0] = uid;
+		}
+
+			/* TODO: some more distinction between normal and old messages... maybe some weird, new msgclasses?
+			 * something like EKG_MSGCLASS_LOG_RECV & EKG_MSGCLASS_LOG_SENT, I mean */
+			/* TODO: maybe somehow move these things after 'query started' msg? but haven't got an idea how to */
+		message_print(session_uid_get(w->session), (class == EKG_MSGCLASS_CHAT ? uid : session_uid_get(w->session)), rcpts, 
+#ifdef HAVE_SQLITE3
+			sqlite3_column_text(stmt, 1),
+#else
+			results[1],
+#endif
+			NULL, ts, class, NULL, 0, 0);
+	};
 
 	return 0;
 }
@@ -671,7 +722,7 @@ int logsqlite_plugin_init(int prio)
 	variable_add(&logsqlite_plugin, ("last_open_window"), VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_in_window"), VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_limit"), VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, ("last_print_on_open"), VAR_INT, 1, &config_logsqlite_last_print_on_open, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("last_print_on_open"), VAR_BOOL, 1, &config_logsqlite_last_print_on_open, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_ignored"), VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_status"), VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log"), VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
