@@ -28,6 +28,7 @@
 #include <ekg/log.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
+#include <ekg/queries.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -63,6 +64,7 @@ char *config_logsqlite_path = NULL;
 int config_logsqlite_last_in_window = 0;
 int config_logsqlite_last_open_window = 0;
 int config_logsqlite_last_limit = 10;
+int config_logsqlite_last_print_on_open = 0;
 int config_logsqlite_log = 0;
 int config_logsqlite_log_ignored = 0;
 int config_logsqlite_log_status = 0;
@@ -551,7 +553,7 @@ QUERY(logsqlite_status_handler) {
 	char *uid	= *(va_arg(ap, char**));
 	int nstatus	= *(va_arg(ap, int*));
 	char *descr	= *(va_arg(ap, char**));
-	char *status;
+	const char *status;
 
 	session_t *s	= session_find(session);
 	char * gotten_uid = get_uid(s, uid);
@@ -613,6 +615,26 @@ QUERY(logsqlite_status_handler) {
 	return 0;
 }
 
+/* here we print last few messages, like raw_log feature of logs plugin does,
+ * but more Konnekt-like (i.e. message-oriented, not console dump) */
+
+static QUERY(logsqlite_newwin_handler) {
+	window_t *w = *(va_arg(ap, window_t **));
+	const char *uid;
+
+	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session || w->id == 1000
+			|| !(uid = get_uid_any(w->session, w->target)))
+		return 0;
+
+		/* as we don't log raw messages, we can normally print the old ones
+		 * and we can simply the thing one step more by using message_print(),
+		 * which is hopefully exported by core - but should think about magically
+		 * using some other formats to distinguish - for example darker */
+	/* TODO: read lastlog and print it */
+
+	return 0;
+}
+
 int logsqlite_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("logsqlite_open_error", "%! Can't open database: %1\n", 1);
@@ -642,11 +664,14 @@ int logsqlite_plugin_init(int prio)
 
 	command_add(&logsqlite_plugin, "logsqlite:last", "puU puU puU puU puU", logsqlite_cmd_last, 0, "-n --number -s --search");
 
-	query_connect(&logsqlite_plugin, ("protocol-message-post"), logsqlite_msg_handler, NULL);
-	query_connect(&logsqlite_plugin, ("protocol-status"), logsqlite_status_handler, NULL);
+	query_connect_id(&logsqlite_plugin, PROTOCOL_MESSAGE_POST, logsqlite_msg_handler, NULL);
+	query_connect_id(&logsqlite_plugin, PROTOCOL_STATUS, logsqlite_status_handler, NULL);
+	query_connect_id(&logsqlite_plugin, UI_WINDOW_NEW,	logsqlite_newwin_handler, NULL);
+
 	variable_add(&logsqlite_plugin, ("last_open_window"), VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_in_window"), VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_limit"), VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("last_print_on_open"), VAR_INT, 1, &config_logsqlite_last_print_on_open, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_ignored"), VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_status"), VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log"), VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);

@@ -63,3 +63,10 @@ last_open_window
 	lastlog w okienku rozmowy z ni±, to okienko bêdzie otwierane je¶li
 	jeszcze nie istnieje (kto¶ zrozumia³ co tu napisa³em?)
 
+last_print_on_open
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la, czy po otwarciu nowego okna rozmowy, logsqlite wypisze w nim
+	last_limit ostatnich wiadomo¶ci powi±zanych z rozmówc±
+

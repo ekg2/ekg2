@@ -44,6 +44,7 @@ extern char *config_logsqlite_path;
 extern int config_logsqlite_last_in_window;
 extern int config_logsqlite_last_open_window;
 extern int config_logsqlite_last_limit;
+extern int config_logsqlite_last_print_on_open;
 extern int config_logsqlite_log;
 extern int config_logsqlite_log_ignored;
 extern int config_logsqlite_log_status;
