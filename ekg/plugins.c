@@ -54,6 +54,7 @@
 list_t plugins = NULL;
 list_t queries = NULL;
 list_t watches = NULL;
+list_t idles   = NULL;
 
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
@@ -575,6 +576,15 @@ int plugin_unregister(plugin_t *p)
 
 		if (t->plugin == p)
 			timer_free(t);
+	}
+
+	for (l = idles; l; ) {
+		idle_t *i = l->data;
+
+		l = l->next;
+
+		if (i->plugin == p)
+			list_remove(&idles, i, 1);
 	}
 
 	for (l = sessions; l; ) {
@@ -1280,6 +1290,31 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 	}
 
 	return res;
+}
+
+void idle_handle(idle_t *i) {
+/*	debug_function("idle_handle() %p(%p)\n", i->handler, i->data); */
+
+	if (i->handler(i->data) == -1) {
+		/* remove idler */
+		xfree(i);
+			
+	} else {
+		/* add idler again [at end] */
+		list_add(&idles, i, 0);
+	}
+}
+
+idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
+	idle_t *i	= xmalloc(sizeof(idle_t));
+	i->plugin	= plugin;
+	i->handler	= handler;
+	i->data		= data;
+
+	/* XXX, prios? */
+	list_add_beginning(&idles, i, 0);		/* first item */
+
+	return i;
 }
 
 /**

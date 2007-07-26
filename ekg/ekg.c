@@ -332,61 +332,23 @@ void ekg_loop() {
 	
                 /* na wszelki wypadek sprawd¼ warto¶ci */
 
-		if (stv.tv_sec != 1) 
+		if (idles) {
 			stv.tv_sec = 0;
-		if (stv.tv_usec < 0)
-			stv.tv_usec = 1;
+			if (stv.tv_usec > 20000)
+				stv.tv_usec = 20000;
+			/* max 50 times per second for idler.. i think it's ok */
+
+			/* execute idles only when stv.tv_usec > 20000? */
+		} else {
+
+			if (stv.tv_sec != 1) 
+				stv.tv_sec = 0;
+			if (stv.tv_usec < 0)
+				stv.tv_usec = 1;
+		}
                 /* sprawd¼, co siê dzieje */
-/* XXX, on win32 we must do select() on only SOCKETS.
- *    , on files we must do "WaitForSingleObjectEx() 
- *    , REWRITE.
- *    modify w->type to support WATCH_PIPE? on windows it's bitmask. on other systen it;s 0.
- */
-#ifdef NO_POSIX_SYSTEM
-		ret = 0;
-		if (watches) {
-			struct timeval stv = { 0, 0 };
-			WSASetLastError(0);
-#endif
-                	ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
-#ifdef NO_POSIX_SYSTEM
-			if (ret != 0) printf("select() ret = %d WSAErr: %d.\n", ret, WSAGetLastError());
-		}
-		{ 
-			HANDLE rwat[5] = {0, 0, 0, 0, 0};
-			HANDLE wwat[5] = {0, 0, 0, 0, 0};
-			HANDLE wat;
-			int rcur = 0, wcur = 0;
-			int res;
-			int i;
+		ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
 
-			if (ret == -1) for (i = 0; i < rd.fd_count; i++) rwat[rcur++] = rd.fd_array[i];
-			if (ret == -1) for (i = 0; i < wd.fd_count; i++) wwat[wcur++] = wd.fd_array[i];
-			if (ret == -1) { FD_ZERO(&rd); FD_ZERO(&wd); }
-			if (ret == -1) ret = 0;
-
-			for (i = 0; i < rcur; i++) {
-				res = WaitForSingleObjectEx(rwat[i], 0, FALSE);
-				if (res != -1) {
-					debug("WaitForSingleObjectEx(): rwat[%d]: %d = %d\n", i, rwat[i], res);
-					FD_SET(rwat[i], &rd);
-					ret++;
-				}
-			}
-			for (i = 0; i < wcur; i++) {
-				res = WaitForSingleObjectEx(wwat[i], 0, FALSE);
-				if (res != -1) {
-					debug("WaitForSingleObjectEx(): wwat[%d]: %d = %d\n", i, wwat[i], res);
-					FD_SET(wwat[i], &wd);
-					ret++;
-				}
-			}
-			if (!ret) {
-/*				debug("Waiting max... %d\n", tv.tv_sec * 1000 + (tv.tv_usec / 1000)); */
-				MsgWaitForMultipleObjects(0, &wat, FALSE, stv.tv_sec * 1000 + (stv.tv_usec / 1000), QS_ALLEVENTS);
-			}
-		}
-#endif
                 /* je¶li wyst±pi³ b³±d, daj znaæ */
 		if (ret == -1) {
                         /* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
@@ -406,6 +368,24 @@ void ekg_loop() {
 			} else if (errno != EINTR)
 				debug("select() failed: %s\n", strerror(errno));
 			return;
+		}
+
+		/* execute idle tasks only when select() return no new data */
+		if (idles && ret == 0) {
+			/* idles works this way:
+			 *  - if handler want to keep idler alive, in idle_handle() we add again to list.. [here we remove old item]
+			 *  - else private data is freed in idle_handle() and here we remove only list_t internal struct.
+			 *
+			 *  yeah, i know it can be do better. note: it's just for gtk.. maybe later we have prios and so (and ekg2 become operation system with scheduler)
+			 */
+
+			idle_handle((idle_t *) idles->data);
+			list_remove(&idles, idles->data, 0);
+
+			/* Here I think we can do return; coz select() return 0 when nothing happen on given fds */
+			/* but to avoid regression on broken systems */
+
+			/* return; */
 		}
 
                 /* przejrzyj deskryptory */
