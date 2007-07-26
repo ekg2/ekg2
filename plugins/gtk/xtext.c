@@ -461,11 +461,11 @@ inline static int backend_get_char_width(GtkXText * xtext, unsigned char *str, i
 static void
 xtext_draw_layout_line(GdkDrawable * drawable, GdkGC * gc, gint x, gint y, PangoLayoutLine * line)
 {
-	GSList *tmp_list = line->runs;
+	GSList *tmp_list;
 	PangoRectangle logical_rect;
 	gint x_off = 0;
 
-	while (tmp_list) {
+	for (tmp_list = line->runs; tmp_list; tmp_list = tmp_list->next) {
 		PangoLayoutRun *run = tmp_list->data;
 
 		pango_glyph_string_extents(run->glyphs, run->item->analysis.font,
@@ -475,7 +475,6 @@ xtext_draw_layout_line(GdkDrawable * drawable, GdkGC * gc, gint x, gint y, Pango
 				x + x_off / PANGO_SCALE, y, run->glyphs);
 
 		x_off += logical_rect.width;
-		tmp_list = tmp_list->next;
 	}
 }
 
@@ -976,8 +975,7 @@ static int gtk_xtext_selection_clear(xtext_buffer * buf)
 	textentry *ent;
 	int ret = 0;
 
-	ent = buf->last_ent_start;
-	while (ent) {
+	for (ent = buf->last_ent_start; ent; ent = ent->next) {
 		if (ent->mark_start != -1)
 			ret = 1;
 		ent->mark_start = -1;
@@ -1329,8 +1327,7 @@ gtk_xtext_selection_render(GtkXText * xtext,
 	else if (xtext->buffer->last_ent_start == start_ent &&
 		 xtext->buffer->last_offset_start == start_offset) {
 		/* find the range that covers both old and new selection */
-		ent = start_ent;
-		while (ent) {
+		for (ent = start_ent; ent; ent = ent->next) {
 			if (ent == xtext->buffer->last_ent_end) {
 				gtk_xtext_selection_down(xtext, ent, end_ent, end_offset);
 				/*gtk_xtext_render_ents (xtext, ent, end_ent); */
@@ -1342,14 +1339,12 @@ gtk_xtext_selection_render(GtkXText * xtext,
 				/*gtk_xtext_render_ents (xtext, ent, xtext->buffer->last_ent_end); */
 				break;
 			}
-			ent = ent->next;
 		}
 	}
 	/* marking upward? */
 	else if (xtext->buffer->last_ent_end == end_ent &&
 		 xtext->buffer->last_offset_end == end_offset) {
-		ent = end_ent;
-		while (ent) {
+		for (ent = end_ent; ent; ent = ent->prev) {
 			if (ent == start_ent) {
 				gtk_xtext_selection_up(xtext, xtext->buffer->last_ent_start, ent,
 						       start_offset);
@@ -1361,7 +1356,6 @@ gtk_xtext_selection_render(GtkXText * xtext,
 				/*gtk_xtext_render_ents (xtext, start_ent, ent); */
 				break;
 			}
-			ent = ent->prev;
 		}
 	} else {		/* cross-over mark (stretched or shrunk at both ends) */
 
@@ -1462,11 +1456,9 @@ static void gtk_xtext_selection_draw(GtkXText * xtext, GdkEventMotion * event, g
 		}
 
 		/* set all the mark_ fields of the ents within the selection */
-		ent = ent_start->next;
-		while (ent && ent != ent_end) {
+		for (ent = ent_start->next; (ent && ent != ent_end); ent = ent->next) {
 			ent->mark_start = 0;
 			ent->mark_end = ent->str_len;
-			ent = ent->next;
 		}
 	}
 
@@ -1775,8 +1767,7 @@ static void gtk_xtext_set_clip_owner(GtkWidget *xtext, GdkEventButton * event)
 
 	GTK_XTEXT(xtext)->selection_buffer = GTK_XTEXT(xtext)->buffer;
 
-	str = gtk_xtext_selection_get_text(GTK_XTEXT(xtext), &len);
-	if (str) {
+	if ((str = gtk_xtext_selection_get_text(GTK_XTEXT(xtext), &len))) {
 #if (GTK_MAJOR_VERSION == 2) && (GTK_MINOR_VERSION == 0)
 		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), str, len);
 #else
@@ -1968,8 +1959,8 @@ static char *gtk_xtext_selection_get_text(GtkXText * xtext, int *len_ret)
 
 	/* first find out how much we need to malloc ... */
 	len = 0;
-	ent = buf->last_ent_start;
-	while (ent) {
+
+	for (ent = buf->last_ent_start; ent; ent = ent->next) {
 		if (ent->mark_start != -1) {
 			/* include timestamp? */
 			if (ent->mark_start == 0 && xtext->mark_stamp) {
@@ -1985,7 +1976,6 @@ static char *gtk_xtext_selection_get_text(GtkXText * xtext, int *len_ret)
 		}
 		if (ent == buf->last_ent_end)
 			break;
-		ent = ent->next;
 	}
 
 	if (len < 1)
@@ -1993,8 +1983,7 @@ static char *gtk_xtext_selection_get_text(GtkXText * xtext, int *len_ret)
 
 	/* now allocate mem and copy buffer */
 	pos = txt = malloc(len);
-	ent = buf->last_ent_start;
-	while (ent) {
+	for (ent = buf->last_ent_start; ent; ent = ent->next) {
 		if (ent->mark_start != -1) {
 			if (!first) {
 				*pos = '\n';
@@ -2019,7 +2008,6 @@ static char *gtk_xtext_selection_get_text(GtkXText * xtext, int *len_ret)
 		}
 		if (ent == buf->last_ent_end)
 			break;
-		ent = ent->next;
 	}
 	*pos = 0;
 
@@ -2039,8 +2027,7 @@ gtk_xtext_selection_get(GtkWidget *widget,
 	int len;
 	gsize glen;
 
-	stripped = gtk_xtext_selection_get_text(xtext, &len);
-	if (!stripped)
+	if (!(stripped = gtk_xtext_selection_get_text(xtext, &len)))
 		return;
 
 	switch (info) {
@@ -3182,8 +3169,7 @@ static int gtk_xtext_find_subline(GtkXText * xtext, textentry * ent, int line)
 		line_pos++;
 		if (line_pos >= line)
 			return str_pos;
-	}
-	while (str < ent->str + ent->str_len);
+	} while (str < ent->str + ent->str_len);
 
 	return 0;
 }
@@ -3369,8 +3355,7 @@ static void gtk_xtext_recalc_widths(xtext_buffer * buf, int do_str_width)
 	textentry *ent;
 
 	/* since we have a new font, we have to recalc the text widths */
-	ent = buf->text_first;
-	while (ent) {
+	for (ent = buf->text_first; ent; ent = ent->next) {
 		if (do_str_width) {
 			ent->str_width = gtk_xtext_text_width(buf->xtext, ent->str,
 							      ent->str_len, NULL);
@@ -3384,7 +3369,6 @@ static void gtk_xtext_recalc_widths(xtext_buffer * buf, int do_str_width)
 			if (ent->indent < MARGIN)
 				ent->indent = MARGIN;
 		}
-		ent = ent->next;
 	}
 
 	gtk_xtext_calc_lines(buf, FALSE);
@@ -3510,8 +3494,7 @@ static int gtk_xtext_lines_taken(xtext_buffer * buf, textentry * ent)
 		indent = buf->indent;
 		taken++;
 		str += len;
-	}
-	while (str < ent->str + ent->str_len);
+	} while (str < ent->str + ent->str_len);
 
 	return taken;
 }
