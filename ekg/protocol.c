@@ -582,6 +582,8 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		}
 	}
 
+		/* XXX: I personally think this should be moved outta here
+		 * I don't think that beeping should be considered as 'printing' */
 	/* daj znaæ d¼wiêkiem i muzyczk± */
 	if (class == EKG_MSGCLASS_CHAT) {
 
