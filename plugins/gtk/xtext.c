@@ -2161,37 +2161,27 @@ GtkType gtk_xtext_get_type(void)
 	return xtext_type;
 }
 
-/* strip MIRC colors and other attribs. */
+/* was: strip MIRC colors and other attribs. */
 
 /* currently it only copy from one buf to another */
 
-static unsigned char *gtk_xtext_strip_color(unsigned char *text, int len, unsigned char *outbuf,
-					    int *mb_ret)
+static unsigned char *gtk_xtext_strip_color(unsigned char *text, int len, unsigned char *outbuf, int *mb_ret)
 {
 	int i = 0;
-	unsigned char *new_str;
 	int mb = FALSE;
 
-	if (outbuf == NULL)
-		new_str = malloc(len + 2);
-	else
-		new_str = outbuf;
-
-	while (len > 0) {
-		if (*text >= 128)
+	for (i = 0; i < len; i++) {
+		if (text[i] >= 128)
 			mb = TRUE;
 
-		new_str[i++] = *text;
-		text++;
-		len--;
+		outbuf[i] = *text;
 	}
-
-	new_str[i] = 0;
+	outbuf[len] = 0;
 
 	if (mb_ret != NULL)
 		*mb_ret = mb;
 
-	return new_str;
+	return outbuf;
 }
 
 /* gives width of a string, excluding the mIRC codes */
@@ -3543,11 +3533,10 @@ static void gtk_xtext_calc_lines(xtext_buffer * buf, int fire_signal)
 		return;
 
 	lines = 0;
-	ent = buf->text_first;
-	while (ent) {
+
+	for (ent = buf->text_first; ent; ent = ent->next) {
 		ent->lines_taken = gtk_xtext_lines_taken(buf, ent);
 		lines += ent->lines_taken;
-		ent = ent->next;
 	}
 
 	buf->pagetop_ent = NULL;
@@ -4010,7 +3999,6 @@ static void gtk_xtext_append_entry(xtext_buffer * buf, textentry * ent)
 void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 {
 	textentry *ent;
-	unsigned char *str;
 	int space;
 	int tempindent;
 
