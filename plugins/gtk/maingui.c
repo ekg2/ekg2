@@ -86,6 +86,9 @@
 
 void fe_userlist_numbers(window_t *sess);
 
+/* forward */
+void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
+
 #if 0
 
 #include "../common/xchat.h"
@@ -125,10 +128,7 @@ enum {
 #define TAG_IRC 0		/* server, channel, dialog */
 #define TAG_UTIL 1		/* dcc, notify, chanlist */
 
-#if 0
 static void mg_link_irctab(window_t *sess, int focus);
-#endif
-
 static void mg_create_entry(window_t *sess, GtkWidget *box);
 
 static gtk_window_ui_t static_mg_gui;
@@ -520,24 +520,6 @@ static void mg_userlist_showhide(window_t *sess, int show) {
 	mg_hide_empty_boxes(gui);
 }
 
-#if 0
-
-static gboolean mg_is_userlist_and_tree_combined(void) {
-	if (prefs.tab_pos == POS_TOPLEFT && prefs.gui_ulist_pos == POS_BOTTOMLEFT)
-		return TRUE;
-	if (prefs.tab_pos == POS_BOTTOMLEFT && prefs.gui_ulist_pos == POS_TOPLEFT)
-		return TRUE;
-
-	if (prefs.tab_pos == POS_TOPRIGHT && prefs.gui_ulist_pos == POS_BOTTOMRIGHT)
-		return TRUE;
-	if (prefs.tab_pos == POS_BOTTOMRIGHT && prefs.gui_ulist_pos == POS_TOPRIGHT)
-		return TRUE;
-
-	return FALSE;
-}
-
-#endif
-
 /* decide if the userlist should be shown or hidden for this tab */
 
 void mg_decide_userlist(window_t *sess, gboolean switch_to_current) {
@@ -549,24 +531,10 @@ void mg_decide_userlist(window_t *sess, gboolean switch_to_current) {
 		mg_userlist_showhide(sess, FALSE);
 		return;
 	}
-#if 0
 
-	switch (sess->type) {
-	case SESS_SERVER:
-	case SESS_DIALOG:
-	case SESS_NOTICES:
-	case SESS_SNOTICES:
-		if (mg_is_userlist_and_tree_combined())
-			mg_userlist_showhide(sess, TRUE);	/* show */
-		else
-			mg_userlist_showhide(sess, FALSE);	/* hide */
-		break;
-	default:
-		mg_userlist_showhide(sess, TRUE);	/* show */
-	}
-#else
+	/* xchat->ekg2 XXX, here: mg_is_userlist_and_tree_combined() stuff */
+
 	mg_userlist_showhide(sess, TRUE);	/* show */
-#endif
 }
 
 
@@ -949,8 +917,6 @@ void mg_close_sess(window_t *sess) {
 	window_kill(sess);	/* fe_close_window() */
 }
 
-#if 0
-
 static int mg_chan_remove(chan * ch) {
 	/* remove the tab from chanview */
 	chan_remove(ch, TRUE);
@@ -969,76 +935,24 @@ static int mg_chan_remove(chan * ch) {
 	return FALSE;
 }
 
-/* destroy non-irc tab/window */
-
-static void mg_close_gen(chan * ch, GtkWidget *box) {
-	char *title = g_object_get_data(G_OBJECT(box), "title");
-
-	if (title)
-		free(title);
-	if (!ch)
-		ch = g_object_get_data(G_OBJECT(box), "ch");
-	if (ch) {
-		/* remove from notebook */
-		gtk_widget_destroy(box);
-		/* remove the tab from chanview */
-		mg_chan_remove(ch);
-	} else {
-		gtk_widget_destroy(gtk_widget_get_toplevel(box));
-	}
-}
-
-#endif
-
 /* the "X" close button has been pressed (tab-view) */
 
 static void mg_xbutton_cb(chanview * cv, chan * ch, int tag, gpointer userdata) {
 	printf("mg_xbutoon_cb(%p) [%d [TAG_IRC: %d]\n", userdata, tag, TAG_IRC);
 	if (tag == TAG_IRC)	/* irc tab */
 		mg_close_sess(userdata);
-#if 0
-	else			/* non-irc utility tab */
-		mg_close_gen(ch, userdata);
-#endif
+
+#warning "xchat->ekg2, removed support for generic tabs"
 }
 
-
-#if 0
-
-static void mg_link_gentab(chan * ch, GtkWidget *box) {
-	int num;
-	GtkWidget *win;
-
-	g_object_ref(box);
-
-	num = gtk_notebook_page_num(GTK_NOTEBOOK(mg_gui->note_book), box);
-	gtk_notebook_remove_page(GTK_NOTEBOOK(mg_gui->note_book), num);
-	mg_chan_remove(ch);
-
-	win = gtkutil_window_new(g_object_get_data(G_OBJECT(box), "title"), "",
-				 GPOINTER_TO_INT(g_object_get_data(G_OBJECT(box), "w")),
-				 GPOINTER_TO_INT(g_object_get_data(G_OBJECT(box), "h")), 3);
-	/* so it doesn't try to chan_remove (there's no tab anymore) */
-	g_object_steal_data(G_OBJECT(box), "ch");
-	gtk_container_set_border_width(GTK_CONTAINER(box), 0);
-	gtk_container_add(GTK_CONTAINER(win), box);
-	gtk_widget_show(win);
-
-	g_object_unref(box);
-}
-#endif
 
 static void mg_detach_tab_cb(GtkWidget *item, chan * ch) {
-#if 0
 	if (chan_get_tag(ch) == TAG_IRC) {	/* IRC tab */
 		/* userdata is session * */
 		mg_link_irctab(chan_get_userdata(ch), 1);
 		return;
 	}
-
-	/* userdata is GtkWidget * */
-	mg_link_gentab(ch, chan_get_userdata(ch));	/* non-IRC tab */
-#endif
+#warning "xchat->ekg2, removed support for generic tabs"
 }
 
 static void mg_destroy_tab_cb(GtkWidget *item, chan * ch) {
@@ -1278,48 +1192,48 @@ static void mg_tabwindow_kill_cb(GtkWidget *win, gpointer userdata) {
 #endif
 }
 
-#if 0
-
-static GtkWidget * mg_changui_destroy(session *sess) {
+static GtkWidget *mg_changui_destroy(window_t *sess) {
 	GtkWidget *ret = NULL;
 
-	if (sess->gui->is_tab) {
+	if (gtk_private_ui(sess)->is_tab) {
 		/* avoid calling the "destroy" callback */
-		g_signal_handlers_disconnect_by_func(G_OBJECT(sess->gui->window),
+		g_signal_handlers_disconnect_by_func(G_OBJECT(gtk_private_ui(sess)->window),
 						     mg_tabwindow_kill_cb, 0);
 		/* remove the tab from the chanview */
-		if (!mg_chan_remove(sess->res->tab))
+		if (!mg_chan_remove(gtk_private(sess)->tab))
 			/* if the window still exists, restore the signal handler */
-			g_signal_connect(G_OBJECT(sess->gui->window), "destroy",
+			g_signal_connect(G_OBJECT(gtk_private_ui(sess)->window), "destroy",
 					 G_CALLBACK(mg_tabwindow_kill_cb), 0);
 	} else {
 		/* avoid calling the "destroy" callback */
-		g_signal_handlers_disconnect_by_func(G_OBJECT(sess->gui->window),
+		g_signal_handlers_disconnect_by_func(G_OBJECT(gtk_private_ui(sess)->window),
 						     mg_topdestroy_cb, sess);
 		/*gtk_widget_destroy (sess->gui->window); */
 		/* don't destroy until the new one is created. Not sure why, but */
 		/* it fixes: Gdk-CRITICAL **: gdk_colormap_get_screen: */
 		/*           assertion `GDK_IS_COLORMAP (cmap)' failed */
-		ret = sess->gui->window;
-		free(sess->gui);
-		sess->gui = NULL;
+		ret = gtk_private_ui(sess)->window;
+		free(gtk_private_ui(sess));
+		gtk_private(sess)->gui = NULL;
 	}
 	return ret;
 }
 
-static void mg_link_irctab(session *sess, int focus) {
+static void mg_link_irctab(window_t *sess, int focus) {
 	GtkWidget *win;
 
-	if (sess->gui->is_tab) {
+	if (gtk_private_ui(sess)->is_tab) {
 		win = mg_changui_destroy(sess);
-		mg_changui_new(sess, sess->res, 0, focus);
+		mg_changui_new(sess, gtk_private(sess), 0, focus);
 		mg_populate(sess);
+#if 0
 		xchat_is_quitting = FALSE;
+#endif
 		if (win)
 			gtk_widget_destroy(win);
 		return;
 	}
-
+#if 0
 	mg_unpopulate(sess);
 	win = mg_changui_destroy(sess);
 	mg_changui_new(sess, sess->res, 1, focus);
@@ -1327,7 +1241,10 @@ static void mg_link_irctab(session *sess, int focus) {
 	((xtext_buffer *) sess->res->buffer)->xtext = (GtkXText *) sess->gui->xtext;
 	if (win)
 		gtk_widget_destroy(win);
+#endif
 }
+
+#if 0
 
 void mg_detach(session *sess, int mode) {
 	switch (mode) {
@@ -2206,13 +2123,14 @@ void fe_set_channel(window_t *sess) {
 		chan_rename(gtk_private(sess)->tab, gtk_window_target(sess), truncchans_config);
 }
 
-void mg_changui_new(window_t *sess, int tab, int focus) {
+void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus) {
 	int first_run = FALSE;
 	gtk_window_t	*gtk_window;
 	gtk_window_ui_t *gui;
 
-
-	gtk_window = xmalloc(sizeof(gtk_window_t));
+	if (res)
+		gtk_window = res;
+	else	gtk_window = xmalloc(sizeof(gtk_window_t));
 
 #if DARK
 	struct User *user = NULL;
@@ -2333,20 +2251,6 @@ mg_set_title(GtkWidget *vbox, char *title)
 	}
 }
 
-void
-fe_server_callback(server * serv)
-{
-	joind_close(serv);
-
-	if (serv->gui->chanlist_window)
-		mg_close_gen(NULL, serv->gui->chanlist_window);
-
-	if (serv->gui->rawlog_window)
-		mg_close_gen(NULL, serv->gui->rawlog_window);
-
-	free(serv->gui);
-}
-
 #endif
 
 /* called when a session is being killed */
@@ -2376,3 +2280,9 @@ void fe_close_window(window_t *sess) {
  */
 
 /* mg_count_dccs() mg_count_networks() */
+
+/* inne okienka, ,,generic'':
+ *	mg_link_gentab() wywolywany z mg_detach_tab_cb() 
+ *	mg_close_gen() wywolywany z mg_xbutton_cb() 
+ */
+

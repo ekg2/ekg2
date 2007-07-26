@@ -58,7 +58,7 @@
 
 /* extern */
 void fe_set_channel(session_t *sess);
-void mg_changui_new(window_t *sess, int tab, int focus);
+void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
 void fe_set_tab_color(window_t *sess, int col);
 void fe_close_window(window_t *sess);
 void mg_apply_setup(void);
@@ -168,7 +168,7 @@ void ekg_gtk_window_new(window_t *w) {			/* fe_new_window() */
 
 	/* tab == new_window_in_tab */
 
-	mg_changui_new(w, tab, 0);
+	mg_changui_new(w, NULL, tab, 0);
 }
 
 static QUERY(gtk_ui_window_new) {			/* fe_new_window() */
