@@ -156,6 +156,13 @@ static WATCHER(ekg2_xorg_watcher) {
 	return 0;
 }
 
+static IDLER(ekg2_xorg_idle) {
+	while (gtk_events_pending()) {
+		gtk_main_iteration();
+	}
+	return 0;
+}
+
 void ekg_gtk_window_new(window_t *w) {			/* fe_new_window() */
 	int tab = TRUE;
 
@@ -406,6 +413,8 @@ EXPORT int gtk_plugin_init(int prio) {
 	printf("[HELLO ekg2-GTK] XFD: %d\n", xfd);
 	if (xfd != -1)
 		watch_add(&gtk_plugin, xfd, WATCH_READ, ekg2_xorg_watcher, NULL);
+
+	idle_add(&gtk_plugin, ekg2_xorg_idle, NULL);
 
 	for (l = windows; l; l = l->next)
 		ekg_gtk_window_new(l->data);	
