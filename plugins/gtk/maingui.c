@@ -68,9 +68,10 @@
 #include <gtk/gtkvscrollbar.h>
 
 
-#include <ekg2/windows.h>
-#include <ekg2/stuff.h>
-#include <ekg2/xmalloc.h>
+#include <ekg/plugins.h>
+#include <ekg/windows.h>
+#include <ekg/stuff.h>
+#include <ekg/xmalloc.h>
 
 #include "main.h"
 #include "xtext.h"
@@ -641,6 +642,11 @@ static gboolean mg_populate_userlist(window_t *sess) {
 	return 0;
 }
 
+static IDLER(mg_populate_userlist_idle) {
+	mg_populate_userlist((window_t *) data);
+	return -1;
+}
+
 /* fill the irc tab with a new channel */
 
 static void mg_populate(window_t *sess) {
@@ -716,10 +722,8 @@ static void mg_populate(window_t *sess) {
 	if (!gui->is_tab) {
 		mg_populate_userlist(sess);
 	} else {
-#if 0
 		if (ul_tag == 0)
-			ul_tag = g_idle_add((GSourceFunc) mg_populate_userlist, NULL);
-#endif
+			ul_tag = idle_add(&gtk_plugin, mg_populate_userlist_idle, NULL);
 	}
 	fe_userlist_numbers(sess);
 
@@ -1589,16 +1593,16 @@ mg_create_userlist(gtk_window_ui_t *gui, GtkWidget *box)
 #endif
 }
 
-#if 0
-
 static void
-mg_leftpane_cb(GtkPaned * pane, GParamSpec * param, session_gui * gui)
+mg_leftpane_cb(GtkPaned * pane, GParamSpec * param, gtk_window_ui_t* gui)
 {
+#if DARK
 	prefs.gui_pane_left_size = gtk_paned_get_position(pane);
+#endif
 }
 
 static void
-mg_rightpane_cb(GtkPaned * pane, GParamSpec * param, session_gui * gui)
+mg_rightpane_cb(GtkPaned * pane, GParamSpec * param, gtk_window_ui_t* gui)
 {
 	int handle_size;
 
@@ -1608,22 +1612,21 @@ mg_rightpane_cb(GtkPaned * pane, GParamSpec * param, session_gui * gui)
 		return;*/
 
 	gtk_widget_style_get(GTK_WIDGET(pane), "handle-size", &handle_size, NULL);
+#if DARK
 	/* record the position from the RIGHT side */
 	prefs.gui_pane_right_size =
 		GTK_WIDGET(pane)->allocation.width - gtk_paned_get_position(pane) - handle_size;
+#endif
 }
 
-static gboolean
-mg_add_pane_signals(session_gui * gui)
-{
+static IDLER(mg_add_pane_signals) {
+	gtk_window_ui_t *gui = data;
 	g_signal_connect(G_OBJECT(gui->hpane_right), "notify::position",
 			 G_CALLBACK(mg_rightpane_cb), gui);
 	g_signal_connect(G_OBJECT(gui->hpane_left), "notify::position",
 			 G_CALLBACK(mg_leftpane_cb), gui);
-	return FALSE;
+	return -1;
 }
-
-#endif
 
 static void
 mg_create_center(window_t *sess, gtk_window_ui_t *gui, GtkWidget *box)
@@ -1672,9 +1675,7 @@ mg_create_center(window_t *sess, gtk_window_ui_t *gui, GtkWidget *box)
 	mg_create_textarea(sess, vbox);
 	mg_create_entry(sess, vbox);
 
-#if DARK
-	g_idle_add((GSourceFunc) mg_add_pane_signals, gui);
-#endif
+	idle_add(&gtk_plugin, mg_add_pane_signals, gui);
 }
 
 static void mg_sessionclick_cb(GtkWidget *button, gpointer userdata) {
