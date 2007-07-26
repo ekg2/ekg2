@@ -1292,51 +1292,6 @@ menu_layout_cb(GtkWidget *item, gpointer none)
 	menu_change_layout();
 }
 
-static void
-menu_apply_metres_cb(session *sess)
-{
-	mg_update_meters(sess->gui);
-}
-
-static void
-menu_metres_off(GtkWidget *item, gpointer none)
-{
-	if (GTK_CHECK_MENU_ITEM(item)->active) {
-		prefs.lagometer = 0;
-		prefs.throttlemeter = 0;
-		menu_setting_foreach(menu_apply_metres_cb, -1, 0);
-	}
-}
-
-static void
-menu_metres_text(GtkWidget *item, gpointer none)
-{
-	if (GTK_CHECK_MENU_ITEM(item)->active) {
-		prefs.lagometer = 2;
-		prefs.throttlemeter = 2;
-		menu_setting_foreach(menu_apply_metres_cb, -1, 0);
-	}
-}
-
-static void
-menu_metres_graph(GtkWidget *item, gpointer none)
-{
-	if (GTK_CHECK_MENU_ITEM(item)->active) {
-		prefs.lagometer = 1;
-		prefs.throttlemeter = 1;
-		menu_setting_foreach(menu_apply_metres_cb, -1, 0);
-	}
-}
-
-static void
-menu_metres_both(GtkWidget *item, gpointer none)
-{
-	if (GTK_CHECK_MENU_ITEM(item)->active) {
-		prefs.lagometer = 3;
-		prefs.throttlemeter = 3;
-		menu_setting_foreach(menu_apply_metres_cb, -1, 0);
-	}
-}
 #endif
 
 #if 0
@@ -1383,12 +1338,6 @@ static struct mymenu mymenu[] = {
 	{N_("T_ree"), 0, 0, M_MENURADIO, MENU_ID_LAYOUT_TREE, 0, 1},
 	{0, 0, 0, M_END, 0, 0, 0},
 	{N_("_Network Meters"), 0, 0, M_MENUSUB, 0, 0, 1},	/* 27 */
-#define METRE_OFFSET (28)
-	{N_("Off"), menu_metres_off, 0, M_MENURADIO, 0, 0, 1},
-	{N_("Graph"), menu_metres_graph, 0, M_MENURADIO, 0, 0, 1},
-	{N_("Text"), menu_metres_text, 0, M_MENURADIO, 0, 0, 1},
-	{N_("Both"), menu_metres_both, 0, M_MENURADIO, 0, 0, 1},
-	{0, 0, 0, M_END, 0, 0, 0},	/* 32 */
 
 	{N_("_Server"), 0, 0, M_NEWMENU, 0, 0, 1},
 	{N_("_Disconnect"), menu_disconnect, GTK_STOCK_DISCONNECT, M_MENUSTOCK, MENU_ID_DISCONNECT,
@@ -1870,23 +1819,6 @@ menu_create_main(void *accel_group, int bar, int away, int toplevel, GtkWidget *
 		mymenu[TABS_OFFSET + 1].state = 1;
 	}
 
-	mymenu[METRE_OFFSET].state = 0;
-	mymenu[METRE_OFFSET + 1].state = 0;
-	mymenu[METRE_OFFSET + 2].state = 0;
-	mymenu[METRE_OFFSET + 3].state = 0;
-	switch (prefs.lagometer) {
-	case 0:
-		mymenu[METRE_OFFSET].state = 1;
-		break;
-	case 1:
-		mymenu[METRE_OFFSET + 1].state = 1;
-		break;
-	case 2:
-		mymenu[METRE_OFFSET + 2].state = 1;
-		break;
-	default:
-		mymenu[METRE_OFFSET + 3].state = 1;
-	}
 
 	/* change Close binding to ctrl-shift-w when using emacs keys */
 	settings = gtk_widget_get_settings(menu_bar);

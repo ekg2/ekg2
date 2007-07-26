@@ -13,8 +13,8 @@ typedef struct {
 	 *xtext, *vscrollbar, *window,	/* toplevel */
 	 *topic_entry, *note_book, *main_table, *user_tree,	/* GtkTreeView */
 	 *user_box,		/* userlist box */
-	 *dialogbutton_box, *topicbutton_box, *meter_box,	/* all the meters inside this */
-	 *lagometer, *laginfo, *throttlemeter, *throttleinfo, *topic_bar, *hpane_left, *hpane_right, *vpane_left, *vpane_right, *menu, *bar,	/* connecting progress bar */
+	 *dialogbutton_box, *topicbutton_box, 
+	 *topic_bar, *hpane_left, *hpane_right, *vpane_left, *vpane_right, *menu, *bar,	/* connecting progress bar */
 	 *nick_box,		/* contains label to the left of input_box */
 	 *nick_label, *op_xpm,	/* icon to the left of nickname */
 	 *namelistinfo,		/* label above userlist */
@@ -24,8 +24,6 @@ typedef struct {
 	GtkWidget *menu_item[MENU_ID_NUM + 1];	/* some items we may change state of */
 
 	void *chanview;		/* chanview.h */
-
-	int bartag;		/*connecting progressbar timeout */
 
 	int pane_left_size;	/*last position of the pane */
 	int pane_right_size;
@@ -37,25 +35,12 @@ typedef struct {
 typedef struct {
 	gtk_window_ui_t *gui;
 
-	/* banlist stuff */
-	GtkWidget *banlist_window;
-	GtkWidget *banlist_treeview;
-	GtkWidget *banlist_butRefresh;
-
 	void *tab;                      /* (chan *) */
 
 	/* information stored when this tab isn't front-most */
 	void *user_model;       /* for filling the GtkTreeView */
 	void *buffer;           /* xtext_Buffer */
-	char *input_text;       /* input text buffer (while not-front tab) */
-	char *topic_text;       /* topic GtkEntry buffer */
-	char *key_text;
-	char *limit_text;
 	gfloat old_ul_value;    /* old userlist value (for adj) */
-	gfloat queue_value; /* outbound queue meter */
-	char *queue_text;               /* outbound queue text */
-	char *queue_tip;                /* outbound queue tooltip */
-	unsigned int c_graph:1; /* connecting graph, is there one? */
 } gtk_window_t;
 
 

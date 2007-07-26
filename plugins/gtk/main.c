@@ -329,6 +329,8 @@ static QUERY(gtk_setvar_default) {
 	xfree(font_normal_config);
 	font_normal_config = xstrdup("Monospace 9");
 
+	contacts_config			= 2;
+
 	return 0;
 }
 

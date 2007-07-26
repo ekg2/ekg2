@@ -1209,7 +1209,7 @@ static void gtk_xtext_paint(GtkWidget *widget, GdkRectangle * area)
 	xtext->clip_y = 0;
 	xtext->clip_y2 = 1000000;
 
-      xit:
+xit:
 	x = xtext->buffer->indent - ((xtext->space_width + 1) / 2);
 	if (area->x <= x)
 		gtk_xtext_draw_sep(xtext, -1);

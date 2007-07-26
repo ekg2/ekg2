@@ -459,41 +459,6 @@ static void mg_focus(window_t *sess) {
 
 #if 0
 
-static void mg_restore_label(GtkWidget *label, char **text) {
-	if (!label)
-		return;
-
-	if (*text) {
-		gtk_label_set_text(GTK_LABEL(label), *text);
-		free(*text);
-		*text = NULL;
-	} else {
-		gtk_label_set_text(GTK_LABEL(label), "");
-	}
-}
-
-static void mg_restore_entry(GtkWidget *entry, char **text) {
-	if (*text) {
-		gtk_entry_set_text(GTK_ENTRY(entry), *text);
-		free(*text);
-		*text = NULL;
-	} else {
-		gtk_entry_set_text(GTK_ENTRY(entry), "");
-	}
-	gtk_editable_set_position(GTK_EDITABLE(entry), -1);
-}
-
-static void mg_restore_speller(GtkWidget *entry, char **text) {
-	if (*text) {
-		SPELL_ENTRY_SET_TEXT(entry, *text);
-		free(*text);
-		*text = NULL;
-	} else {
-		SPELL_ENTRY_SET_TEXT(entry, "");
-	}
-	SPELL_ENTRY_SET_POS(entry, -1);
-}
-
 void mg_set_topic_tip(session *sess) {
 	char *text;
 
@@ -580,11 +545,11 @@ void mg_decide_userlist(window_t *sess, gboolean switch_to_current) {
 	if (gtk_private_ui(sess) == mg_gui && switch_to_current)
 		sess = window_current;
 
-#if 0
-	if (prefs.hideuserlist) {
+	if (!contacts_config) {
 		mg_userlist_showhide(sess, FALSE);
 		return;
 	}
+#if 0
 
 	switch (sess->type) {
 	case SESS_SERVER:
@@ -705,10 +670,7 @@ static void mg_populate(window_t *sess) {
 	gtk_xtext_buffer_show(GTK_XTEXT(gui->xtext), res->buffer, render);
 	if (gui->is_tab)
 		gtk_widget_set_sensitive(gui->menu, TRUE);
-#if 0
-	/* restore all the GtkEntry's */
-	mg_restore_speller(gui->input_box, &res->input_text);
-#endif
+
 	mg_focus(sess);
 	fe_set_title(sess);
 
@@ -2194,10 +2156,6 @@ fe_clear_channel(window_t *sess)
 			gui->op_xpm = 0;
 		}
 	} else {
-		if (sess->res->topic_text) {
-			free(sess->res->topic_text);
-			sess->res->topic_text = NULL;
-		}
 	}
 }
 
@@ -2400,33 +2358,6 @@ void fe_close_window(window_t *sess) {
 		mg_tab_close(sess);
 	else
 		gtk_widget_destroy(gtk_private_ui(sess)->window);
-
-
-/* fe_session_callback() */
-#if 0
-	if (sess->res->banlist_window)
-		mg_close_gen(NULL, sess->res->banlist_window);
-
-	if (sess->res->input_text)
-		free(sess->res->input_text);
-
-	if (sess->res->topic_text)
-		free(sess->res->topic_text);
-
-	if (sess->res->limit_text)
-		free(sess->res->limit_text);
-
-	if (sess->res->key_text)
-		free(sess->res->key_text);
-
-	if (sess->res->queue_text)
-		free(sess->res->queue_text);
-	if (sess->res->queue_tip)
-		free(sess->res->queue_tip);
-
-	if (sess->gui->bartag)
-		fe_timeout_remove(sess->gui->bartag);
-#endif
 
 	if (gtk_private_ui(sess) != &static_mg_gui)
 		xfree(gtk_private_ui(sess));		/* free gui, if not static */
