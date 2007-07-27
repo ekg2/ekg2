@@ -2312,7 +2312,6 @@ static void gtk_xtext_reset(GtkXText * xtext, int mark, int attribs)
 	}
 	xtext->col_fore = XTEXT_FG;
 	xtext->col_back = XTEXT_BG;
-	xtext->parsing_backcolor = FALSE;
 	xtext->nc = 0;
 }
 

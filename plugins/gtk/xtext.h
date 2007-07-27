@@ -175,10 +175,8 @@ struct _GtkXText {
 	unsigned int bold:1;
 	unsigned int underline:1;
 	unsigned int italics:1;
-	unsigned int hidden:1;
 
 	/* text parsing states */
-	unsigned int parsing_backcolor:1;
 	unsigned int backcolor:1;
 
 	/* various state information */
