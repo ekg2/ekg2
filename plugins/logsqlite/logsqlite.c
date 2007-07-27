@@ -478,11 +478,6 @@ QUERY(logsqlite_msg_handler)
 	if (!session)
 		return 0;
 
-	db = logsqlite_prepare_db(s, sent, 1);
-	if (!db) {
-		return 0;
-	}
-
 	switch ((enum msgclass_t)class) {
 		case EKG_MSGCLASS_MESSAGE:
 			type = xstrdup("msg");
@@ -531,6 +526,22 @@ QUERY(logsqlite_msg_handler)
 
 	}
 
+		/* very, very, very, very, very, ..., and very dirty hack
+		 * this should prevent double-printing of newly-received message
+		 * with 'last_print_on_open' set and window not open yet */
+	if (config_logsqlite_last_print_on_open
+			&& (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT
+			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT)))) {
+		debug_error("[logsqlite] very dirty hack activated!\n");
+		print_window(gotten_uid, s, 1, NULL); /* this isn't meant to print anything, just open the window */
+	}
+
+		/* moved to not break transaction due to above hack, sorry */
+	db = logsqlite_prepare_db(s, sent, 1);
+	if (!db) {
+		xfree(type);
+		return 0;
+	}
 
 	debug("[logsqlite] running msg query\n");
 
@@ -559,7 +570,6 @@ QUERY(logsqlite_msg_handler)
 		sent,
 		text);
 #endif 
-
 
 	xfree(type);
 
