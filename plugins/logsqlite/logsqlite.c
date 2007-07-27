@@ -69,6 +69,7 @@ int config_logsqlite_log = 0;
 int config_logsqlite_log_ignored = 0;
 int config_logsqlite_log_status = 0;
 int config_logsqlite_remind_number = 0;
+int config_logsqlite_persistent_open = 1;
 
 static sqlite_t * logsqlite_current_db = NULL;
 static char * logsqlite_current_db_path = NULL;
@@ -224,7 +225,7 @@ COMMAND(logsqlite_cmd_last)
 	xfree(sql);
 	sqlite_finalize(vm, &errors);
 #endif
-	logsqlite_close_db(db);
+	logsqlite_close_db(db, 0);
 	return 0;
 }
 
@@ -307,7 +308,7 @@ sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent)
 		db = logsqlite_current_db;
 		debug("[logsqlite] keeping old db\n");
 	} else {
-		logsqlite_close_db(logsqlite_current_db);
+		logsqlite_close_db(logsqlite_current_db, 1);
 		db = logsqlite_open_db(session, sent, path);
 		logsqlite_current_db = db;
 		xfree(logsqlite_current_db_path);
@@ -410,10 +411,14 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 
 /*
  * close db
+ *
+ * 'force' determines whether database should really be closed
+ * if we have 'persistent open' set, so that it should be used
+ * for example on filename change
  */
-void logsqlite_close_db(sqlite_t * db)
+void logsqlite_close_db(sqlite_t * db, int force)
 {
-	if (!db) {
+	if (!db || (!force && config_logsqlite_persistent_open)) {
 		return;
 	}
 	debug("[logsqlite] close db\n");
@@ -540,7 +545,7 @@ QUERY(logsqlite_msg_handler)
 
 
 	xfree(type);
-	logsqlite_close_db(db);
+	logsqlite_close_db(db, 0);
 
 	return 0;
 };
@@ -610,7 +615,7 @@ QUERY(logsqlite_status_handler) {
 #endif 
 
 
-	logsqlite_close_db(db);
+	logsqlite_close_db(db, 0);
 
 	return 0;
 }
@@ -689,7 +694,7 @@ static QUERY(logsqlite_newwin_handler) {
 	xfree(sql); /* XXX: if we use sqlite_mprintf(), shouldn't we use also sqlite_free()? */
 	sqlite_finalize(vm, &errors);
 #endif
-	logsqlite_close_db(db);
+	logsqlite_close_db(db, 0);
 	return 0;
 }
 
@@ -704,7 +709,7 @@ static int logsqlite_plugin_destroy()
 {
 
 	if (logsqlite_current_db) {
-		logsqlite_close_db(logsqlite_current_db);
+		logsqlite_close_db(logsqlite_current_db, 1);
 	}
 
 	plugin_unregister(&logsqlite_plugin);
@@ -734,6 +739,7 @@ int logsqlite_plugin_init(int prio)
 	variable_add(&logsqlite_plugin, ("log_status"), VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log"), VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("path"), VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("persistent_open"), VAR_BOOL, 1, &config_logsqlite_persistent_open, NULL, NULL, NULL);
 
 	debug("[logsqlite] plugin registered\n");
 

@@ -70,3 +70,11 @@ last_print_on_open
 	okre¶la, czy po otwarciu nowego okna rozmowy, logsqlite wypisze w nim
 	last_limit ostatnich wiadomo¶ci powi±zanych z rozmówc±
 
+persistent_open
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	okre¶la, czy baza ma byæ otwierana jednorazowo po za³adowaniu wtyczki
+	i zamykana przy jej wy³adowaniu (1), czy te¿ otwierana ka¿dorazowo przy
+	wywo³aniu ¿±dania (0)
+
