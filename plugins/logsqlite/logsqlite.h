@@ -37,7 +37,7 @@ extern QUERY(logsqlite_status_handler);
 extern int logsqlite_theme_init();
 extern sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent, int mode);
 extern sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path);
-extern void logsqlite_close_db(sqlite_t * db, int force);
+extern void logsqlite_close_db(sqlite_t * db);
 extern void logsqlite_setvar_default();
 
 extern char *config_logsqlite_path;
@@ -48,7 +48,5 @@ extern int config_logsqlite_last_print_on_open;
 extern int config_logsqlite_log;
 extern int config_logsqlite_log_ignored;
 extern int config_logsqlite_log_status;
-extern int config_logsqlite_remind_number;
-extern int config_logsqlite_persistent_open;
 
 #endif

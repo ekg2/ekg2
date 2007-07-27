@@ -68,8 +68,6 @@ int config_logsqlite_last_print_on_open = 0;
 int config_logsqlite_log = 0;
 int config_logsqlite_log_ignored = 0;
 int config_logsqlite_log_status = 0;
-int config_logsqlite_remind_number = 0;
-int config_logsqlite_persistent_open = 1;
 
 static sqlite_t * logsqlite_current_db = NULL;
 static char * logsqlite_current_db_path = NULL;
@@ -226,7 +224,6 @@ COMMAND(logsqlite_cmd_last)
 	xfree(sql);
 	sqlite_finalize(vm, &errors);
 #endif
-	logsqlite_close_db(db, 0);
 	return 0;
 }
 
@@ -308,28 +305,26 @@ sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent, int mode)
 		logsqlite_current_db_path = xstrdup(path);
 		logsqlite_current_db = db;
 
-		if (mode && config_logsqlite_persistent_open)
+		if (mode)
 			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
 		logsqlite_in_transaction = mode;
 	} else if (!xstrcmp(path, logsqlite_current_db_path) && logsqlite_current_db) {
 		db = logsqlite_current_db;
 		debug("[logsqlite] keeping old db\n");
 
-		if (!config_logsqlite_persistent_open)
-			debug_error("[logsqlite] database not closed with 'persistent_open' off, something nasty happens\n");
-		else if (mode && !logsqlite_in_transaction)
+		if (mode && !logsqlite_in_transaction)
 			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
 		else if (!mode && logsqlite_in_transaction)
 			sqlite_n_exec(db, "COMMIT", NULL, NULL, NULL);
 		logsqlite_in_transaction = mode;
 	} else {
-		logsqlite_close_db(logsqlite_current_db, 1);
+		logsqlite_close_db(logsqlite_current_db);
 		db = logsqlite_open_db(session, sent, path);
 		logsqlite_current_db = db;
 		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = xstrdup(path);
 
-		if (mode && config_logsqlite_persistent_open)
+		if (mode)
 			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
 		logsqlite_in_transaction = mode;
 	}
@@ -435,9 +430,9 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
  * if we have 'persistent open' set, so that it should be used
  * for example on filename change
  */
-void logsqlite_close_db(sqlite_t * db, int force)
+void logsqlite_close_db(sqlite_t * db)
 {
-	if (!db || (!force && config_logsqlite_persistent_open)) {
+	if (!db) {
 		return;
 	}
 	debug("[logsqlite] close db\n");
@@ -446,7 +441,7 @@ void logsqlite_close_db(sqlite_t * db, int force)
 		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = NULL;
 
-		if (logsqlite_in_transaction && config_logsqlite_persistent_open)
+		if (logsqlite_in_transaction)
 			sqlite_n_exec(db, "COMMIT", NULL, NULL, NULL);
 	}
 	sqlite_n_close(db);
@@ -567,7 +562,6 @@ QUERY(logsqlite_msg_handler)
 
 
 	xfree(type);
-	logsqlite_close_db(db, 0);
 
 	return 0;
 };
@@ -635,9 +629,6 @@ QUERY(logsqlite_status_handler) {
 		status,
 		descr);
 #endif 
-
-
-	logsqlite_close_db(db, 0);
 
 	return 0;
 }
@@ -716,7 +707,6 @@ static QUERY(logsqlite_newwin_handler) {
 	xfree(sql); /* XXX: if we use sqlite_mprintf(), shouldn't we use also sqlite_free()? */
 	sqlite_finalize(vm, &errors);
 #endif
-	logsqlite_close_db(db, 0);
 	return 0;
 }
 
@@ -730,9 +720,8 @@ int logsqlite_theme_init() {
 static int logsqlite_plugin_destroy()
 {
 
-	if (logsqlite_current_db) {
-		logsqlite_close_db(logsqlite_current_db, 1);
-	}
+	if (logsqlite_current_db)
+		logsqlite_close_db(logsqlite_current_db);
 
 	plugin_unregister(&logsqlite_plugin);
 
@@ -761,7 +750,6 @@ int logsqlite_plugin_init(int prio)
 	variable_add(&logsqlite_plugin, ("log_status"), VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log"), VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("path"), VAR_DIR, 1, &config_logsqlite_path, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, ("persistent_open"), VAR_BOOL, 1, &config_logsqlite_persistent_open, NULL, NULL, NULL);
 
 	debug("[logsqlite] plugin registered\n");
 
