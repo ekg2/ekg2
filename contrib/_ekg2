@@ -6,7 +6,7 @@
 local userprofiles userthemes userfrontends
 userprofiles=(`find ~/.ekg2/* -type d -exec test -f '{}/config' \; -exec basename {} \;`)
 userthemes=(`ls $(ekg2-config --data-dir)/themes `)
-userfrontends=(`find /usr/local/share/ekg2/plugins -type d \( -iname 'ncurses' -or -iname 'gtk' -or -iname 'gtk2' \) -exec basename {} \;`)
+userfrontends=(`find /usr/local/share/ekg2/plugins -type d \( -iname 'ncurses' -or -iname 'gtk' -or -iname 'readline' \) -exec basename {} \;`)
 
 _arguments -s \
     '(-u --user)'{-u,--user}'+[uses given profile]:profile name:( $userprofiles )' \
