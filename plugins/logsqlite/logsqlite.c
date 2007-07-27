@@ -73,6 +73,7 @@ int config_logsqlite_persistent_open = 1;
 
 static sqlite_t * logsqlite_current_db = NULL;
 static char * logsqlite_current_db_path = NULL;
+static int logsqlite_in_transaction = 0;
 
 
 /*
@@ -135,7 +136,7 @@ COMMAND(logsqlite_cmd_last)
 		keep_nick = (char *) params[i];
 	}
 
-	if (! (db = logsqlite_prepare_db(session, time(0))))
+	if (! (db = logsqlite_prepare_db(session, time(0), 0)))
 		return -1;
 
 	keep_nick = xstrdup(keep_nick);
@@ -290,8 +291,10 @@ char *logsqlite_prepare_path(session_t *session, time_t sent)
 
 /*
  * prepare db handler
+ *
+ * 'mode': 0 = read, 1 = write (determines whether transaction should be used)
  */
-sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent)
+sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent, int mode)
 {
 	char * path;
 	sqlite_t * db;
@@ -304,15 +307,31 @@ sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent)
                 xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = xstrdup(path);
 		logsqlite_current_db = db;
+
+		if (mode && config_logsqlite_persistent_open)
+			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+		logsqlite_in_transaction = mode;
 	} else if (!xstrcmp(path, logsqlite_current_db_path) && logsqlite_current_db) {
 		db = logsqlite_current_db;
 		debug("[logsqlite] keeping old db\n");
+
+		if (!config_logsqlite_persistent_open)
+			debug_error("[logsqlite] database not closed with 'persistent_open' off, something nasty happens\n");
+		else if (mode && !logsqlite_in_transaction)
+			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+		else if (!mode && logsqlite_in_transaction)
+			sqlite_n_exec(db, "COMMIT", NULL, NULL, NULL);
+		logsqlite_in_transaction = mode;
 	} else {
 		logsqlite_close_db(logsqlite_current_db, 1);
 		db = logsqlite_open_db(session, sent, path);
 		logsqlite_current_db = db;
 		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = xstrdup(path);
+
+		if (mode && config_logsqlite_persistent_open)
+			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+		logsqlite_in_transaction = mode;
 	}
 	xfree(path);
 	return db;
@@ -426,6 +445,9 @@ void logsqlite_close_db(sqlite_t * db, int force)
 		logsqlite_current_db = NULL;
 		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = NULL;
+
+		if (logsqlite_in_transaction && config_logsqlite_persistent_open)
+			sqlite_n_exec(db, "COMMIT", NULL, NULL, NULL);
 	}
 	sqlite_n_close(db);
 }
@@ -461,7 +483,7 @@ QUERY(logsqlite_msg_handler)
 	if (!session)
 		return 0;
 
-	db = logsqlite_prepare_db(s, sent);
+	db = logsqlite_prepare_db(s, sent, 1);
 	if (!db) {
 		return 0;
 	}
@@ -574,7 +596,7 @@ QUERY(logsqlite_status_handler) {
 	if (!session)
 		return 0;
 
-	db = logsqlite_prepare_db(s, time(0));
+	db = logsqlite_prepare_db(s, time(0), 1);
 	if (!db) {
 		return 0;
 	}
@@ -645,7 +667,7 @@ static QUERY(logsqlite_newwin_handler) {
 
 	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session || w->id == 1000
 			|| !(uid = get_uid_any(w->session, w->target))
-			|| !(db = logsqlite_prepare_db(w->session, time(0))))
+			|| !(db = logsqlite_prepare_db(w->session, time(0), 0)))
 		return 0;
 
 		/* as we don't log raw messages, we can normally print the old ones

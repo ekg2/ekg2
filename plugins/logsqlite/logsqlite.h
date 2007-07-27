@@ -35,7 +35,7 @@ extern char *logsqlite_prepare_path();
 extern QUERY(logsqlite_msg_handler);
 extern QUERY(logsqlite_status_handler);
 extern int logsqlite_theme_init();
-extern sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent);
+extern sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent, int mode);
 extern sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path);
 extern void logsqlite_close_db(sqlite_t * db, int force);
 extern void logsqlite_setvar_default();
