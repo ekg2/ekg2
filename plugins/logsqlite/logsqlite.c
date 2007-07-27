@@ -531,10 +531,8 @@ QUERY(logsqlite_msg_handler)
 		 * with 'last_print_on_open' set and window not open yet */
 	if (config_logsqlite_last_print_on_open
 			&& (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT
-			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT)))) {
-		debug_error("[logsqlite] very dirty hack activated!\n");
+			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))))
 		print_window(gotten_uid, s, 1, NULL); /* this isn't meant to print anything, just open the window */
-	}
 
 		/* moved to not break transaction due to above hack, sorry */
 	db = logsqlite_prepare_db(s, sent, 1);
