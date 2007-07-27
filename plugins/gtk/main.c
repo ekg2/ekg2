@@ -338,6 +338,14 @@ static void gtk_tab_layout_change(const char *var) {
 	mg_change_layout(tab_layout_config);
 }
 
+static QUERY(gtk_variable_changed) {
+	char *name = *(va_arg(ap, char**));
+
+        if (!xstrcasecmp(name, "timestamp_show")) {
+		mg_apply_setup();
+	}
+}
+
 EXPORT int gtk_plugin_init(int prio) {
 	const char ekg2_another_ui[] = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
 	const char ekg2_no_display[] = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
@@ -408,6 +416,8 @@ EXPORT int gtk_plugin_init(int prio) {
 	query_connect_id(&gtk_plugin, UI_WINDOW_KILL,		gtk_ui_window_kill, NULL);	/* fe_session_callback() */
 	query_connect_id(&gtk_plugin, UI_WINDOW_SWITCH,		gtk_ui_window_switch, NULL);
 	query_connect_id(&gtk_plugin, UI_WINDOW_TARGET_CHANGED, gtk_ui_window_target_changed, NULL);	/* fe_set_channel() */
+
+	query_connect_id(&gtk_plugin, VARIABLE_CHANGED,		gtk_variable_changed, NULL);
 
 	variable_add(&gtk_plugin, ("tab_layout"), VAR_INT, 1, &tab_layout_config, gtk_tab_layout_change, NULL, NULL);	/* XXX, variable_map() 0 -> 2-> */
 
