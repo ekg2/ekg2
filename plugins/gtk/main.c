@@ -77,7 +77,7 @@ int tab_small_config;
 int tab_pos_config;
 int max_auto_indent_config;
 int thin_separator_config;
-int max_lines_config;
+int backlog_size_config;
 int show_marker_config;
 int tint_red_config;
 int tint_green_config;
@@ -318,7 +318,7 @@ static QUERY(gtk_setvar_default) {
 	thin_separator_config		= 1;
 
 	max_auto_indent_config = 256;
-	max_lines_config = 500;
+	backlog_size_config = 1000;
 	tint_red_config = tint_green_config = tint_blue_config = 195;
 
 	gui_ulist_pos_config = 3;
@@ -419,6 +419,9 @@ EXPORT int gtk_plugin_init(int prio) {
 
 	query_connect_id(&gtk_plugin, VARIABLE_CHANGED,		gtk_variable_changed, NULL);
 
+#define gtk_backlog_change NULL
+#warning "gtk_backlog_change == NULL, need research"
+	variable_add(&gtk_plugin, ("backlog_size"), VAR_INT, 1, &backlog_size_config, gtk_backlog_change, NULL, NULL);
 	variable_add(&gtk_plugin, ("tab_layout"), VAR_INT, 1, &tab_layout_config, gtk_tab_layout_change, NULL, NULL);	/* XXX, variable_map() 0 -> 2-> */
 
 	xfd = XConnectionNumber(gdk_x11_get_default_xdisplay());

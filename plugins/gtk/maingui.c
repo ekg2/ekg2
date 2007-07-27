@@ -1383,7 +1383,7 @@ mg_update_xtext(GtkWidget *wid)
 	GtkXText *xtext = GTK_XTEXT(wid);
 
 	gtk_xtext_set_palette(xtext, colors);
-	gtk_xtext_set_max_lines(xtext, max_lines_config);
+	gtk_xtext_set_max_lines(xtext, backlog_size_config);
 	gtk_xtext_set_tint(xtext, tint_red_config, tint_green_config, tint_blue_config);
 //      gtk_xtext_set_background (xtext, channelwin_pix, transparent_config);
 	gtk_xtext_set_wordwrap(xtext, wordwrap_config);
@@ -1437,7 +1437,7 @@ mg_create_textarea(window_t *sess, GtkWidget *box)
 	gtk_xtext_set_thin_separator(xtext, thin_separator_config);
 	gtk_xtext_set_error_function(xtext, mg_xtext_error);
 	gtk_xtext_set_urlcheck_function(xtext, mg_word_check);
-	gtk_xtext_set_max_lines(xtext, max_lines_config);
+	gtk_xtext_set_max_lines(xtext, backlog_size_config);
 	gtk_container_add(GTK_CONTAINER(frame), GTK_WIDGET(xtext));
 	mg_update_xtext(GTK_WIDGET(xtext));
 

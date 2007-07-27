@@ -53,7 +53,6 @@ extern int tab_small_config;
 extern int tab_pos_config;
 extern int max_auto_indent_config;
 extern int thin_separator_config;
-extern int max_lines_config;
 
 extern int show_marker_config;
 extern int tint_red_config;
@@ -71,6 +70,7 @@ extern int tab_pos_config;
 
 extern int tab_layout_config;
 extern int contacts_config;
+extern int backlog_size_config;
 
 #define hidemenu_config 0
 #define topicbar_config 1
