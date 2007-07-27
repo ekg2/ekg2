@@ -135,7 +135,7 @@ static unsigned char *gtk_xtext_strip_color(unsigned char *text, int len, unsign
 
 /* some utility functions first */
 
-/* gives width of a 8bit string - with no mIRC codes in it */
+/* gives width of a 8bit string */
 
 static int gtk_xtext_text_width_8bit(GtkXText * xtext, unsigned char *str, int len)
 {
@@ -2143,9 +2143,8 @@ GtkType gtk_xtext_get_type(void)
 	return xtext_type;
 }
 
-/* was: strip MIRC colors and other attribs. */
-
-/* currently it only copy from one buf to another */
+/* copy text to outbuf, [len bytes], terminate with \0
+ * set *mb_ret to TRUE, if there're chars with ANSI code >= 128 */
 
 static unsigned char *gtk_xtext_strip_color(unsigned char *text, int len, unsigned char *outbuf, int *mb_ret)
 {
@@ -2166,7 +2165,7 @@ static unsigned char *gtk_xtext_strip_color(unsigned char *text, int len, unsign
 	return outbuf;
 }
 
-/* gives width of a string, excluding the mIRC codes */
+/* gives width of a string */
 
 static int gtk_xtext_text_width(GtkXText * xtext, unsigned char *text, int len, int *mb_ret)
 {
@@ -2317,7 +2316,7 @@ static void gtk_xtext_reset(GtkXText * xtext, int mark, int attribs)
 	xtext->nc = 0;
 }
 
-/* render a single line, which WONT wrap, and parse mIRC colors */
+/* render a single line, which WONT wrap, and parse fstring_t attr */
 
 static int
 gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
