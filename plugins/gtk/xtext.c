@@ -3060,7 +3060,6 @@ static int find_next_wrap(GtkXText * xtext, textentry * ent, unsigned char *str,
 	int mbl;
 	int char_width;
 	int ret;
-	int limit_offset = 0;
 
 	/* single liners */
 	if (win_width >= ent->str_width + ent->indent)
@@ -3073,14 +3072,11 @@ static int find_next_wrap(GtkXText * xtext, textentry * ent, unsigned char *str,
 	}
 
 	while (1) {
-#warning "XXX, ATTR_* stuff"
-	/* was: when we have ATTR_* then limit_offset++; */
-
 		char_width = backend_get_char_width(xtext, str, &mbl);
 		str_width += char_width;
 		if (str_width > win_width) {
 			if (xtext->wordwrap) {
-				if (str - last_space > WORDWRAP_LIMIT + limit_offset)
+				if (str - last_space > WORDWRAP_LIMIT)
 					ret = str - orig_str;	/* fall back to character wrap */
 				else {
 					if (*last_space == ' ')
@@ -3096,10 +3092,8 @@ static int find_next_wrap(GtkXText * xtext, textentry * ent, unsigned char *str,
 		}
 
 		/* keep a record of the last space, for wordwrapping */
-		if (is_del(*str)) {
+		if (is_del(*str))
 			last_space = str;
-			limit_offset = 0;
-		}
 
 		/* progress to the next char */
 		str += mbl;
