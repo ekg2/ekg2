@@ -683,6 +683,13 @@ static QUERY(logsqlite_newwin_handler) {
 			NULL, ts, class, NULL, 0, 0);
 	};
 
+#ifdef HAVE_SQLITE3
+	sqlite3_finalize(stmt);
+#else
+	xfree(sql); /* XXX: if we use sqlite_mprintf(), shouldn't we use also sqlite_free()? */
+	sqlite_finalize(vm, &errors);
+#endif
+	logsqlite_close_db(db);
 	return 0;
 }
 
