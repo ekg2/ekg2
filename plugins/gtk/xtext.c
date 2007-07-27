@@ -693,15 +693,12 @@ static void gtk_xtext_adjustment_changed(GtkAdjustment * adj, GtkXText * xtext)
 	xtext->buffer->old_value = adj->value;
 }
 
-GtkWidget *gtk_xtext_new(GdkColor palette[], int separator)
-{
-	GtkXText *xtext;
-
-	xtext = g_object_new(gtk_xtext_get_type(), NULL);
-	xtext->separator = separator;
-	xtext->wordwrap = TRUE;
-	xtext->buffer = gtk_xtext_buffer_new(xtext);
-	xtext->orig_buffer = xtext->buffer;
+GtkWidget *gtk_xtext_new(GdkColor palette[], int separator) {
+	GtkXText *xtext	= g_object_new(gtk_xtext_get_type(), NULL);
+	xtext->separator	= separator;
+	xtext->wordwrap		= TRUE;
+	xtext->buffer		= gtk_xtext_buffer_new(xtext);
+	xtext->orig_buffer	= xtext->buffer;
 
 	gtk_widget_set_double_buffered(GTK_WIDGET(xtext), FALSE);
 	gtk_xtext_set_palette(xtext, palette);
@@ -1055,8 +1052,7 @@ static textentry *gtk_xtext_find_char(GtkXText * xtext, int x, int y, int *off, 
 	int subline;
 
 	line = (y + xtext->pixel_offset) / xtext->fontsize;
-	ent = gtk_xtext_nth(xtext, line + (int)xtext->adj->value, &subline);
-	if (!ent)
+	if (!(ent = gtk_xtext_nth(xtext, line + (int)xtext->adj->value, &subline)))
 		return 0;
 
 	if (off)
@@ -4145,10 +4141,10 @@ void gtk_xtext_buffer_show(GtkXText * xtext, xtext_buffer * buf, int render)
 	dontscroll(buf);	/* force scrolling off */
 	xtext->adj->value = buf->old_value;
 	xtext->adj->upper = buf->num_lines;
-	if (xtext->adj->upper == 0)
+	if (xtext->adj->upper == 0) {
 		xtext->adj->upper = 1;
 	/* sanity check */
-	else if (xtext->adj->value > xtext->adj->upper - xtext->adj->page_size) {
+	} else if (xtext->adj->value > xtext->adj->upper - xtext->adj->page_size) {
 		/*buf->pagetop_ent = NULL; */
 		xtext->adj->value = xtext->adj->upper - xtext->adj->page_size;
 		if (xtext->adj->value < 0)
@@ -4177,23 +4173,19 @@ void gtk_xtext_buffer_show(GtkXText * xtext, xtext_buffer * buf, int render)
 	}
 }
 
-xtext_buffer *gtk_xtext_buffer_new(GtkXText * xtext)
-{
-	xtext_buffer *buf;
-
-	buf = xmalloc(sizeof(xtext_buffer));
-	buf->old_value = -1;
-	buf->xtext = xtext;
-	buf->scrollbar_down = TRUE;
-	buf->indent = xtext->space_width * 2;
+xtext_buffer *gtk_xtext_buffer_new(GtkXText * xtext) {
+	xtext_buffer *buf = xmalloc(sizeof(xtext_buffer));
+	buf->old_value 		= -1;
+	buf->xtext 		= xtext;
+	buf->scrollbar_down	= TRUE;
+	buf->indent		= xtext->space_width * 2;
 	dontscroll(buf);
 
 	return buf;
 }
 
-void gtk_xtext_buffer_free(xtext_buffer * buf)
-{
-	textentry *ent, *next;
+void gtk_xtext_buffer_free(xtext_buffer * buf) {
+	textentry *ent;
 
 	if (buf->xtext->buffer == buf)
 		buf->xtext->buffer = buf->xtext->orig_buffer;
@@ -4201,10 +4193,10 @@ void gtk_xtext_buffer_free(xtext_buffer * buf)
 	if (buf->xtext->selection_buffer == buf)
 		buf->xtext->selection_buffer = NULL;
 
-	ent = buf->text_first;
-	while (ent) {
-		next = ent->next;
+	for (ent = buf->text_first; ent;) {
+		textentry *next = ent->next;
 		free(ent);
+		/* XXX, fstring_t */
 		ent = next;
 	}
 
