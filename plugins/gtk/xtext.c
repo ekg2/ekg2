@@ -70,9 +70,9 @@
 #define charlen(str) g_utf8_skip[*(guchar *)(str)]
 
 /* is delimiter */
-#define is_del(c) \
-	(c == ' ' || c == '\n' || c == ')' || c == '(' || \
-	 c == '>' || c == '<' || c == ATTR_RESET || c == ATTR_BOLD || c == 0)
+#define is_del(c) 	(c == ' ' || c == '\n' || c == ')' || c == '(' || c == '>' || c == '<' || c == 0)
+#warning "XXX, ATTR_* stuff"
+/* is_del includes ATTR_RESET, ATTR_BOLD */
 
 #ifdef SCROLL_HACK
 /* force scrolling off */
@@ -387,7 +387,7 @@ static PangoFontDescription *backend_font_open_real(char *name)
 	font = pango_font_description_from_string(name);
 	if (font && pango_font_description_get_size(font) == 0) {
 		pango_font_description_free(font);
-		font = pango_font_description_from_string("sans 11");
+		font = NULL;	/* we'll try again, with sans 11 */
 	}
 	if (!font)
 		font = pango_font_description_from_string("sans 11");
@@ -979,7 +979,6 @@ static int gtk_xtext_selection_clear(xtext_buffer * buf)
 		ent->mark_end = -1;
 		if (ent == buf->last_ent_end)
 			break;
-		ent = ent->next;
 	}
 
 	return ret;
@@ -3074,54 +3073,43 @@ static int find_next_wrap(GtkXText * xtext, textentry * ent, unsigned char *str,
 	}
 
 	while (1) {
-		switch (*str) {
-		case ATTR_COLOR:
-		case ATTR_BEEP:
-		case ATTR_RESET:
-		case ATTR_REVERSE:
-		case ATTR_BOLD:
-		case ATTR_UNDERLINE:
-		case ATTR_ITALICS:
-			limit_offset++;
-			str++;
-			break;
-		default:
-			char_width = backend_get_char_width(xtext, str, &mbl);
-			str_width += char_width;
-			if (str_width > win_width) {
-				if (xtext->wordwrap) {
-					if (str - last_space > WORDWRAP_LIMIT + limit_offset)
-						ret = str - orig_str;	/* fall back to character wrap */
-					else {
-						if (*last_space == ' ')
-							last_space++;
-						ret = last_space - orig_str;
-						if (ret == 0)	/* fall back to character wrap */
-							ret = str - orig_str;
-					}
-					goto done;
+#warning "XXX, ATTR_* stuff"
+	/* was: when we have ATTR_* then limit_offset++; */
+
+		char_width = backend_get_char_width(xtext, str, &mbl);
+		str_width += char_width;
+		if (str_width > win_width) {
+			if (xtext->wordwrap) {
+				if (str - last_space > WORDWRAP_LIMIT + limit_offset)
+					ret = str - orig_str;	/* fall back to character wrap */
+				else {
+					if (*last_space == ' ')
+						last_space++;
+					ret = last_space - orig_str;
+					if (ret == 0)	/* fall back to character wrap */
+						ret = str - orig_str;
 				}
-				ret = str - orig_str;
 				goto done;
 			}
-
-			/* keep a record of the last space, for wordwrapping */
-			if (is_del(*str)) {
-				last_space = str;
-				limit_offset = 0;
-			}
-
-			/* progress to the next char */
-			str += mbl;
-
+			ret = str - orig_str;
+			goto done;
 		}
+
+		/* keep a record of the last space, for wordwrapping */
+		if (is_del(*str)) {
+			last_space = str;
+			limit_offset = 0;
+		}
+
+		/* progress to the next char */
+		str += mbl;
 
 		if (str >= ent->str + ent->str_len) {
 			ret = str - orig_str;
 			goto done;
 		}
 	}
-      done:
+done:
 	/* must make progress */
 	if (ret < 1)
 		ret = 1;

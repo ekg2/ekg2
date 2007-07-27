@@ -20,15 +20,6 @@
 #define GTK_IS_XTEXT_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_XTEXT))
 #define GTK_XTEXT_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_XTEXT, GtkXTextClass))
 
-#define ATTR_BOLD			'\002'
-#define ATTR_COLOR		'\003'
-#define ATTR_BLINK		'\006'
-#define ATTR_BEEP			'\007'
-#define ATTR_RESET		'\017'
-#define ATTR_REVERSE		'\026'
-#define ATTR_ITALICS		'\035'
-#define ATTR_UNDERLINE	'\037'
-
 /* these match palette.h */
 #define XTEXT_MIRC_COLS 32
 #define XTEXT_COLS 37		/* 32 plus 5 for extra stuff below */
