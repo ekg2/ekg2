@@ -4,19 +4,23 @@
 # (C) 2007 Michał Górny
 #
 
-use Fuse;
+use strict;
+use warnings;
 #use threads;
 #use threads::shared;
+
+use Fuse;
 use File::Spec;
 use File::HomeDir;
-use POSIX qw/ENOENT ENOTDIR/;
+use POSIX qw/ENOENT ENOTDIR EISDIR EROFS O_RDONLY O_WRONLY O_RDWR/;
 use DBI;
 use List::Util qw/first/;
+use Cache::MemoryCache;
 
 $, = ' / ';
 $\ = "\n";
 
-die "syntax: $0 mountpoint [mountopts]" unless (@ARGV > 0);
+#die "syntax: $0 mountpoint [mountopts]" unless (@ARGV > 0);
 
 my $dbpath = File::HomeDir->my_home . '/.ekg2/logsqlite.db';
 
@@ -26,9 +30,12 @@ my $dbq_getuids = $db->prepare('SELECT DISTINCT uid FROM log_msg WHERE session =
 my $dbq_getn	= $db->prepare('SELECT ts FROM log_msg ORDER BY ts DESC LIMIT 1;');
 my $dbq_getns	= $db->prepare('SELECT ts FROM log_msg WHERE session = ?1 ORDER BY ts DESC LIMIT 1;');
 my $dbq_getnu	= $db->prepare('SELECT ts FROM log_msg WHERE session = ?1 AND uid = ?2 ORDER BY ts DESC LIMIT 1;');
+my $dbq_getdata = $db->prepare('SELECT nick, type, sent, ts, sentts, body FROM log_msg WHERE session = ?1 AND uid = ?2 ORDER BY ts ASC LIMIT 20;');
 
-Fuse::main(debug => 0, mountpoint => shift, mountopts => '', threaded => 0,
-	getattr => \&myGetAttr, getdir => \&myGetDir);
+my $cache = Cache::MemoryCache->new({namespace => 'logsqliteFuseCache', default_expires_in => 300});
+
+Fuse::main(debug => 1, mountpoint => shift, threaded => 0,
+	getattr => \&main::myGetAttr, getdir => \&main::myGetDir, open => \&main::myOpen, read => \&main::myRead);
 
 sub myGetAttr {
 	my (undef, $sid, $uid, @rest) = File::Spec->splitdir($_[0]);
@@ -54,9 +61,9 @@ sub myGetAttr {
 		@r = $dbq_getn->fetchrow_array();
 	}
 	return -ENOENT() unless (@r);
-	$timestamp = $r[0];
+	my $timestamp = $r[0];
 
-	return (0, 0, ($uid ? 0100444 : 040555), 1, $<, $(, 0, 0, $timestamp, $timestamp, $timestamp, 4096, 1);
+	return (0, 0, ($uid ? 0100444 : 040555), 1, $<, $(, 0, 0, $timestamp, $timestamp, $timestamp, 1024, 0);
 }
 
 sub myGetDir {
@@ -79,3 +86,71 @@ sub myGetDir {
 	return @out, 0;
 }
 
+sub myOpen {
+	my ($path, $mode) = @_;
+	my $r = myGetAttr($path);
+	print STDERR ('myOpen', $path, sprintf '0x%x', $mode);
+	return $r unless ($r >= 0);
+
+	my (undef, $sid, $uid) = File::Spec->splitdir($path);
+	return -EEISDIR() if (!$uid);
+	return -EROFS() if ($mode & O_WRONLY() || $mode & O_RDWR());
+
+	return 0;
+}
+
+sub myRead {
+	my ($path, $count, $offset) = @_;
+	my (undef, $sid, $uid) = File::Spec->splitdir($path);
+	my $cacheref = $cache->get("$sid/$uid");
+	my %cachedata;
+	my $outbuf = '';
+
+	print STDERR ('myRead', $path, $count, $offset);
+
+	%cachedata = %$cacheref if ($cacheref);
+	%cachedata = (db_offset => 0, text_offset => 0, buffer_size => 0, buffer => undef) if (!%cachedata || $cachedata{text_offset} > $offset);
+
+	while ($cachedata{text_offset} + $cachedata{buffer_size} < $offset) {
+		myStepBuf(\%cachedata, $sid, $uid);
+	}
+
+	return 0;
+}
+
+sub myStepBuf {
+	my ($cachedata, $sid, $uid) = @_;
+
+	$$cachedata{text_offset} += $$cachedata{buffer_size};
+	$$cachedata{buffer} = '';
+
+	$dbq_getdata->execute($sid, $uid, $$cachedata{db_offset});
+	while (my @row = $dbq_getdata->fetchrow_array()) {
+		my $out_type;
+
+		if ($row[1] eq 'system') {
+			$out_type = 'msgsystem';
+		} else {
+			if ($row[1] eq 'msg') {
+				$out_type = 'msg';
+			} else {
+				$out_type = 'chat';
+			}
+			if ($row[2]) {
+				$out_type .= 'send';
+			} else {
+				$out_type .= 'recv';
+			}
+		}
+
+		my $body = logEscape($row[5]);
+
+		$$cachedata{buffer} = sprintf('%s,%s,%s,%d,%s', $out_type, $uid, $row[0], $row[3], ($row[2] ? $body : sprintf('%d,%s', $row[4], $body)));
+		$$cachedata{db_offset}++;
+	}
+
+	$$cachedata{buffer_size} = length($$cachedata{buffer});
+
+	use YAML qw/Dump/;
+	print STDERR Dump(%$cachedata);
+}
