@@ -644,6 +644,7 @@ static BINDING_FUNCTION(binding_quick_list_wrapper)
 static BINDING_FUNCTION(binding_toggle_contacts_wrapper)
 {
 	static int last_contacts = -1;
+	va_list dummy;
 
 	if (!config_contacts) {
 		if ((config_contacts = last_contacts) == -1)
@@ -653,7 +654,7 @@ static BINDING_FUNCTION(binding_toggle_contacts_wrapper)
 		config_contacts = 0;
 	}
 
-	ncurses_contacts_changed("contacts", NULL);
+	ncurses_contacts_changed("contacts", dummy);
 }
 
 static BINDING_FUNCTION(binding_next_contacts_group)

@@ -735,9 +735,10 @@ QUERY(ncurses_contacts_changed)
  */
 QUERY(ncurses_all_contacts_changed)
 {
+	va_list dummy;
 	list_destroy(sorted_all_cache, 1);
 	sorted_all_cache = NULL;
-	ncurses_contacts_changed(data, NULL);
+	ncurses_contacts_changed(data, dummy);
 	return 0;
 }
 

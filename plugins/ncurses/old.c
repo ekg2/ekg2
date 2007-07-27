@@ -1447,6 +1447,7 @@ static void sigwinch_handler()
 void ncurses_init()
 {
 	int background;
+	va_list dummy;
 
 	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
 	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
@@ -1510,7 +1511,7 @@ void ncurses_init()
 
 #undef __init_bg
 
-	ncurses_contacts_changed("contacts", NULL);
+	ncurses_contacts_changed("contacts", dummy);
 	ncurses_commit();
 
 	/* deaktywujemy klawisze INTR, QUIT, SUSP i DSUSP */
