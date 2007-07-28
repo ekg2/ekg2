@@ -4,4 +4,4 @@ sent %K>%g>%G> %|%3\n
 conference %c<%C%1%c>%n %|%3\n
 -query_started_window
 log %K<%c<%c< %|%c%2%n%3\n
-sent_log %K<%g<%g< %|%3\n
+sent_log %K>%g>%g> %|%3\n
