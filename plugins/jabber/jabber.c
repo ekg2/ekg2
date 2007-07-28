@@ -260,12 +260,23 @@ static QUERY(jabber_validate_uid) {
 	char *uid = *(va_arg(ap, char **));
 	int *valid = va_arg(ap, int *);
 	const char *m;
+	static char *lastdeprecated = NULL;
 
 	if (!uid)
 		return 0;
 
 	/* minimum: jid:a@b */
 	if (!xstrncasecmp(uid, "jid:", 4) && (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0') {
+		if (xstrcmp(lastdeprecated, uid+4)) { /* avoid repeating the same if function called multiple times */
+			print("jabber_deprecated_uid_warning", uid+4);
+			xfree(lastdeprecated);
+			lastdeprecated = xstrdup(uid+4);
+		}
+		(*valid)++;
+		return -1;
+	}
+
+	if (!xstrncasecmp(uid, "xmpp:", 5) && (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0') {
 		(*valid)++;
 		return -1;
 	}
@@ -299,6 +310,7 @@ static QUERY(jabber_protocols) {
 
 	array_add(arr, "tlen:");
 	array_add(arr, "jid:");
+	array_add(arr, "xmpp:");
 	return 0;
 }
 
@@ -309,9 +321,10 @@ static QUERY(jabber_window_kill) {
 
 	char *status = NULL;
 
-	if (w && w->id && w->target && session_check(w->session, 1, "jid") && (c = newconference_find(w->session, w->target)) &&
+	if (w && w->id && w->target && session_check(w->session, 1, "xmpp") && (c = newconference_find(w->session, w->target)) &&
 			(j = jabber_private(w->session)) && session_connected_get(w->session)) {
-		watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target+4, c->private, status ? status : "");
+														/* XXX: check really needed? vv */
+		watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target + (tolower(w->target[0]) == 'j' ? 4 : 5), c->private, status ? status : "");
 		newconference_destroy(c, 0);
 	}
 
@@ -462,13 +475,12 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
         if (/* !j->node && */ !(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
 		const char *passwd	= session_get(s, "password");
 
-		int payload = 4 + j->istlen;
 		char *username;
 		char *tmp;
 
-		if ((tmp = xstrchr(s->uid + payload, '@')))
-			username = xstrndup(s->uid + payload, tmp - s->uid - payload);
-		else	username = xstrdup(s->uid + payload);
+		if ((tmp = xstrchr(s->uid + 5, '@')))
+			username = xstrndup(s->uid + 5, tmp - s->uid - 5);
+		else	username = xstrdup(s->uid + 5);
 
 		if (!j->istlen && session_get(s, "__new_account")) {
 			char *epasswd	= jabber_escape(passwd);
@@ -1330,6 +1342,8 @@ static int jabber_theme_init() {
 	format_add("jabber_conversations_end",		_("%g`+=%G-- End of the available Reply-ID list%n"), 1);
 	format_add("jabber_conversations_nothread",	_("non-threaded"), 1);
 	format_add("jabber_conversations_nosubject",	_("[no subject]"), 1);
+
+	format_add("jabber_deprecated_uid_warning",	_("%! Used UID is now deprecated, please use %Gxmpp:%1%n next time."), 1);
 
 #endif	/* !NO_DEFAULT_THEME */
         return 0;

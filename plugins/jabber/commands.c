@@ -173,7 +173,7 @@ static COMMAND(jabber_command_dcc) {
 					"<field type=\"list-single\" var=\"stream-method\">"
 					"<option><value>http://jabber.org/protocol/bytestreams</value></option>"
 /*					"<option><value>http://jabber.org/protocol/ibb</value></option>" */
-					"</field></x></feature></si></iq>", p->req, d->uid+4, p->sid, st.st_size, filename);
+					"</field></x></feature></si></iq>", p->req, d->uid+5, p->sid, st.st_size, filename);
 			xfree(filename);
 			xfree(touid);
 		}
@@ -220,7 +220,7 @@ static COMMAND(jabber_command_dcc) {
 			return -1;
 		}
 
-		if (xstrncmp(d->uid, "jid:", 4)) {
+		if (xstrncmp(d->uid, "xmpp:", 5)) {
 			debug_error("%s:%d /dcc command, incorrect `%s`!\n", __FILE__, __LINE__, __(d->uid));
 			printq("generic_error", "Use /dcc on correct session, sorry");
 			return -1;
@@ -266,7 +266,7 @@ static COMMAND(jabber_command_dcc) {
 					"<si xmlns=\"http://jabber.org/protocol/si\"><feature xmlns=\"http://jabber.org/protocol/feature-neg\">"
 					"<x xmlns=\"jabber:x:data\" type=\"submit\">"
 					"<field var=\"stream-method\"><value>http://jabber.org/protocol/bytestreams</value></field>"
-					"</x></feature></si></iq>", d->uid+4, p->req);
+					"</x></feature></si></iq>", d->uid+5, p->req);
 		}
 		return 0;
 	}
@@ -413,7 +413,7 @@ static const char *jid_target2uid(session_t *s, const char *target, int quiet) {
 /* XXX, get_uid() checks if this plugin is ok to handle it. so we have here tlen: or jid: but, we must check
  * 		if this uid match istlen.. However doesn't matter which protocol is, function should work...
  */
-	if (((!istlen && xstrncasecmp(uid, "jid:", 4)) || (istlen && xstrncasecmp(uid, "tlen:", 5)))) {
+	if (((!istlen && xstrncasecmp(uid, "xmpp:", 5) && xstrncasecmp(uid, "jid:", 4)) || (istlen && xstrncasecmp(uid, "tlen:", 5)))) {
 		printq("invalid_session");
 		return NULL;
 	}
@@ -443,6 +443,8 @@ static COMMAND(jabber_command_msg)
 	}
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
+	if (tolower(uid[0]) == 'x')
+		payload++;
 
 		/* threaded messages */
 	if (!xstrcmp(name, "tmsg")) {
@@ -691,7 +693,7 @@ static COMMAND(jabber_command_passwd)
 	char *username;
 	char *passwd;
 
-	username = xstrdup(session->uid + 4);
+	username = xstrdup(session->uid + 5);
 	*(xstrchr(username, '@')) = 0;
 
 //	username = xstrndup(session->uid + 4, xstrchr(session->uid+4, '@') - session->uid+4);
@@ -723,10 +725,13 @@ static COMMAND(jabber_command_auth) {
 		return -1;
 	}
 
-	if (!(uid = get_uid(session, target)) || (j->istlen && tolower(uid[0]) == 'j') || (!j->istlen && tolower(uid[0]) == 't')) {
+		/* XXX: shouldn't we use our magical jid_target2uid() here? */
+	if (!(uid = get_uid(session, target)) || (j->istlen && (tolower(uid[0]) == 'j' || tolower(uid[0]) == 'x')) || (!j->istlen && tolower(uid[0]) == 't')) {
 		printq("invalid_session");
 		return -1;
 	}
+	if (tolower(uid[0]) == 'x')
+		payload++;
 
 	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
 	tabnick_add(uid);
@@ -792,10 +797,13 @@ static COMMAND(jabber_command_modify) {
 		return -1;
 	}
 
-	if (!(uid = get_uid(session, target)) || (j->istlen && tolower(uid[0]) == 'j') || (!j->istlen && tolower(uid[0]) == 't')) {
+		/* XXX: jid_target2uid() ? */
+	if (!(uid = get_uid(session, target)) || (j->istlen && (tolower(uid[0]) == 'j' || tolower(uid[0]) == 'x')) || (!j->istlen && tolower(uid[0]) == 't')) {
 		printq("invalid_session");
 		return -1;
 	}
+	if (tolower(uid[0]) == 'x')
+		payload++;
 
 	if (!u)	u = xmalloc(sizeof(userlist_t));		/* alloc temporary memory for /jid:add */
 
@@ -906,10 +914,13 @@ static COMMAND(jabber_command_del) {
 	int payload = 4 + j->istlen;
 	const char *uid;
 
-	if (!(uid = get_uid(session, target)) || (j->istlen && tolower(uid[0]) == 'j') || (!j->istlen && tolower(uid[0]) == 't')) {
+		/* XXX: jid_target2uid()? */
+	if (!(uid = get_uid(session, target)) || (j->istlen && (tolower(uid[0]) == 'j' || tolower(uid[0]) == 'x')) || (!j->istlen && tolower(uid[0]) == 't')) {
 		printq("invalid_session");
 		return -1;
 	}
+	if (tolower(uid[0]) == 'x')
+		payload++;
 
 	watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
 	watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/></query></iq>", uid+payload);
@@ -953,7 +964,8 @@ static COMMAND(jabber_command_ver)
 		ekg_resource_t *r = l->data;
 
 		char *xquery_res = jabber_escape(r->name);
-		char *xuid = jabber_escape(uid+4);
+			/* XXX: in most functions we don't escape UIDs, should we do it here? */
+		char *xuid = jabber_escape(uid + (tolower(uid[0]) == 'x' ? 5 : 4));
        		watch_write(j->send_watch, "<iq id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
 			     j->id++, xuid, xquery_res);
 		xfree(xuid);
@@ -971,7 +983,8 @@ static COMMAND(jabber_command_userinfo)
 		return -1;
 	{ 
 		jabber_private_t *j = session_private_get(session);
-		char *xuid = jabber_escape(uid+4);
+			/* XXX: like above */
+		char *xuid = jabber_escape(uid + (tolower(uid[0]) == 'x' ? 5 : 4));
        		watch_write(j->send_watch, "<iq id='%d' to='%s' type='get'><vCard xmlns='vcard-temp'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
@@ -1029,7 +1042,8 @@ static COMMAND(jabber_command_lastseen)
 #endif
 	{
 		jabber_private_t *j = session_private_get(session);
-		char *xuid = jabber_escape(uid+4);
+			/* XXX: like above, really worth escaping? */
+		char *xuid = jabber_escape(uid + (tolower(uid[0]) == 'x' ? 5 : 4));
 	       	watch_write(j->send_watch, "<iq id='%d' to='%s' type='get'><query xmlns='jabber:iq:last'/></iq>", \
 			     j->id++, xuid);
 		xfree(xuid);
@@ -1133,7 +1147,7 @@ static COMMAND(tlen_command_pubdir) {
 	int issearch = !xstrcmp(name, ("search"));
 
 	if (!issearch && !xstrcmp(params[0], "show")) 
-		return command_exec(target, session, ("/jid:register tuba"), quiet);
+		return command_exec(target, session, ("/xmpp:register tuba"), quiet);
 	if (params[0]) {
 		int res;
 		char **splitted;
@@ -1148,8 +1162,8 @@ static COMMAND(tlen_command_pubdir) {
 			/* execute jabber_command_search.. | _register */
 				/* params[0] == "tuba" */
 				/* params[1] == parsed params[0] */
-		if (issearch)	str = string_init(("/jid:search tuba "));
-		else		str = string_init(("/jid:register tuba "));
+		if (issearch)	str = string_init(("/xmpp:search tuba "));
+		else		str = string_init(("/xmpp:register tuba "));
 
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
 			char *valname = 0;
@@ -1733,6 +1747,7 @@ static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921)
 		}
 
 		if (!xstrncmp(params[1], "jid:", 4))	{ type = "jid";		value = params[1]+4; }
+		else if (!xstrncmp(params[1], "xmpp:", 5)) { type = "jid";	value = params[1]+5; }
 		else if (params[1][0] == '@')		{ type = "group";	value = params[1]+1; }
 		else if (!xstrcmp(params[1], "none") || !xstrcmp(params[1], "both") || !xstrcmp(params[1], "from") || !xstrcmp(params[1], "to"))
 							{ type = "subscription"; value = params[1]; }
@@ -2072,7 +2087,7 @@ static COMMAND(jabber_muc_command_join) {
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *conf;
 	char *tmp;
-	char *username = (params[1]) ? xstrdup(params[1]) : (tmp = xstrchr(session->uid, '@')) ? xstrndup(session->uid+4, tmp-session->uid-4) : NULL;
+	char *username = (params[1]) ? xstrdup(params[1]) : (tmp = xstrchr(session->uid, '@')) ? xstrndup(session->uid+5, tmp-session->uid-5) : NULL;
 	char *password = (params[1] && params[2]) ? saprintf("<password>%s</password>", params[2]) : NULL;
 
 	if (!username) { /* rather impossible */
@@ -2081,11 +2096,12 @@ static COMMAND(jabber_muc_command_join) {
 	}
 
 	if (!xstrncmp(target, "jid:", 4)) target += 4; /* remove jid: */
+	else if (!xstrncmp(target, "xmpp:", 5)) target += 5;
 
 	watch_write(j->send_watch, "<presence to='%s/%s'><x xmlns='http://jabber.org/protocol/muc#user'>%s</x></presence>", 
 			target, username, password ? password : "");
 	{
-		char *uid = saprintf("jid:%s", target);
+		char *uid = saprintf("xmpp:%s", target);
 		conf = newconference_create(session, uid, 1);
 		conf->private = xstrdup(username);
 		xfree(uid);
@@ -2102,13 +2118,13 @@ static COMMAND(jabber_muc_command_part) {
 	char *status;
 
 	if (!(c = newconference_find(session, target))) {
-		printq("generic_error", "/jid:part only valid in MUC");
+		printq("generic_error", "/xmpp:part only valid in MUC");
 		return -1;
 	}
 
 	status = (params[0] && params[1]) ? saprintf(" <status>%s</status> ", params[1]) : NULL;
 
-	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", c->name+4, c->private, status ? status : "");
+	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", c->name+5, c->private, status ? status : "");
 
 	xfree(status);
 	newconference_destroy(c, 1 /* XXX, dorobic zmienna */);
@@ -2120,7 +2136,7 @@ static COMMAND(jabber_muc_command_admin) {
 	newconference_t *c;
 
 	if (!(c = newconference_find(session, target))) {
-		printq("generic_error", "/jid:admin only valid in MUC");
+		printq("generic_error", "/xmpp:admin only valid in MUC");
 		return -1;
 	}
 
@@ -2128,7 +2144,7 @@ static COMMAND(jabber_muc_command_admin) {
 		watch_write(j->send_watch,
 			"<iq id=\"mucadmin%d\" to=\"%s\" type=\"get\">"
 			"<query xmlns=\"http://jabber.org/protocol/muc#owner\"/>"
-			"</iq>", j->id++, c->name+4);
+			"</iq>", j->id++, c->name+5);
 	} else {
 		char **splitted = NULL;
 		int i;
@@ -2139,7 +2155,7 @@ static COMMAND(jabber_muc_command_admin) {
 				"<iq type=\"set\" to=\"%s\" id=\"mucadmin%d\">"
 				"<query xmlns=\"http://jabber.org/protocol/muc#owner\">"
 				"<x xmlns=\"jabber:x:data\" type=\"submit\"/>"
-				"</query></iq>", c->name+4, j->id++);
+				"</query></iq>", c->name+5, j->id++);
 			return 0;
 		}
 
@@ -2155,7 +2171,7 @@ static COMMAND(jabber_muc_command_admin) {
 				"<query xmlns=\"http://jabber.org/protocol/muc#owner\">"
 				"<x xmlns=\"jabber:x:data\" type=\"submit\">"
 /*				"<field var=\"FORM_TYPE\"><value>http://jabber.org/protocol/muc#roomconfig/value></field>" */
-				,c->name+4, j->id++);
+				,c->name+5, j->id++);
 
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
 			char *name	= jabber_escape(splitted[i]);
@@ -2177,7 +2193,7 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 	newconference_t *c;
 	
 	if (!(c = newconference_find(session, target))) {
-		printq("generic_error", "/jid:ban && /jin:kick && /jid:unban only valid in MUC");
+		printq("generic_error", "/xmpp:ban && /xmpp:kick && /xmpp:unban only valid in MUC");
 		return -1;
 	}
 /* XXX, make check if command = "kick" than check if user is on the muc channel... cause we can make /unban */
@@ -2186,17 +2202,18 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 		watch_write(j->send_watch, 
 			"<iq id=\"%d\" to=\"%s\" type=\"get\">"
 			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"outcast\"/></query>"
-			"</iq>", j->id++, c->name+4);
+			"</iq>", j->id++, c->name+5);
 	} else {
 		char *reason	= jabber_escape(params[2]);
 		const char *jid	= params[1];
 
 		if (!xstrncmp(jid, "jid:", 4)) jid += 4;
+		else if (!xstrncmp(jid, "xmpp:", 5)) jid += 5;
 
 		watch_write(j->send_watch,
 			"<iq id=\"%d\" to=\"%s\" type=\"set\">"
 			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"%s\" jid=\"%s\"><reason>%s</reason></item></query>"
-			"</iq>", j->id++, c->name+4, 
+			"</iq>", j->id++, c->name+5, 
 				!xstrcmp(name, "ban") ? /* ban */ "outcast" : /* unban+kick */ "none", 
 			jid, reason ? reason : "");
 		xfree(reason);
@@ -2209,7 +2226,7 @@ static COMMAND(jabber_muc_command_topic) {
 	newconference_t *c;
 /* XXX da, /topic is possible in normal talk too... current limit only to muc. */
 	if (!(c = newconference_find(session, target))) {
-		printq("generic_error", "/jid:topic only valid in MUC");
+		printq("generic_error", "/xmpp:topic only valid in MUC");
 		return -1;
 	}
 	
@@ -2218,7 +2235,7 @@ static COMMAND(jabber_muc_command_topic) {
 
 	} else {
 		char *subject = jabber_escape(params[1]);
-		watch_write(j->send_watch, "<message to=\"%s\" type=\"groupchat\"><subject>%s</subject></message>", c->name+4, subject);
+		watch_write(j->send_watch, "<message to=\"%s\" type=\"groupchat\"><subject>%s</subject></message>", c->name+5, subject);
 	} 
 
 	return 0;
@@ -2240,7 +2257,7 @@ static COMMAND(jabber_command_control) {
 		uid		= xstrndup(params[0], tmp-params[0]);
 		resource	= xstrdup(tmp+1);
 	} else {
-		uid		= xstrdup(session->uid+4);
+		uid		= xstrdup(session->uid+5);
 		resource	= xstrdup(params[0]);
 	}
 	debug("jabber_command_control() uid: %s res: %s\n", uid, resource);
@@ -2324,7 +2341,7 @@ static COMMAND(jabber_command_private) {
 	int config = 0;			/* 1 if name == jid:config */
 	int bookmark = 0;		/* 1 if name == jid:bookmark */
 
-	if (!xstrcmp(name, ("config")))	config = 1;
+	if (!xstrcmp(name, ("config")))		config = 1;
 	if (!xstrcmp(name, ("bookmark")))	bookmark = 1;
 	
 	if (config)		namespace = ("ekg2 xmlns=\"ekg2:prefs\"");
@@ -2617,7 +2634,7 @@ static COMMAND(jabber_command_conversations)
 	return 0;
 }
 
-	/* like gg:find, mix of jid:userinfo & jid:search */
+	/* like gg:find, mix of xmpp:userinfo & xmpp:search */
 static COMMAND(jabber_command_find)
 {
 	if (get_uid(session, params[0])) {
@@ -2643,92 +2660,98 @@ void jabber_register_commands()
 #define JABBER_FLAGS_TARGET_VALID	JABBER_FLAGS_TARGET | COMMAND_TARGET_VALID_UID	/* need audit, if it can be used everywhere instead JABBER_FLAGS_TARGET */ 
 	commands_lock = &commands;	/* keep it sorted or die */
 
-	command_add(&jabber_plugin, ("jid:"), "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:_autoaway"), "r", jabber_command_away,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:_autoxa"), "r", jabber_command_away,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:_autoback"), "r", jabber_command_away,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:add"), "U ?", jabber_command_modify, 	JABBER_FLAGS, NULL); 
-	command_add(&jabber_plugin, ("jid:admin"), "! ?", jabber_muc_command_admin, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:auth"), "!p uU", jabber_command_auth, 	JABBER_FLAGS_REQ,
+	/* XXX: VERY, VERY, VERY BIG, FAT WARNING:
+	 * Follow macro is used for the time that legacy 'jid:' prefix still allowed
+	 * I know we already change session UID, but some users may still like to explicitly use 'jid:'
+	 */
+#define COMMAND_ADD_J(a, b, c...) command_add(a, "jid:" b, c); command_add(a, "xmpp:" b, c);
+
+	COMMAND_ADD_J(&jabber_plugin, "", "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "_autoaway", "r", jabber_command_away,	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "_autoxa", "r", jabber_command_away,	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "_autoback", "r", jabber_command_away,	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "add", "U ?", jabber_command_modify, 	JABBER_FLAGS, NULL); 
+	COMMAND_ADD_J(&jabber_plugin, "admin", "! ?", jabber_muc_command_admin, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "auth", "!p uU", jabber_command_auth, 	JABBER_FLAGS_REQ,
 			"-a --accept -d --deny -r --request -c --cancel");
-	command_add(&jabber_plugin, ("jid:away"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:back"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:ban"), "! ? ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:bookmark"), "!p ?", jabber_command_private, JABBER_FLAGS_REQ, 
+	COMMAND_ADD_J(&jabber_plugin, "away", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "back", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "ban", "! ? ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "bookmark", "!p ?", jabber_command_private, JABBER_FLAGS_REQ, 
 			"-a --add -c --clear -d --display -m --modify -r --remove");
-	command_add(&jabber_plugin, ("jid:change"), "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS_REQ, 
+	COMMAND_ADD_J(&jabber_plugin, "change", "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS_REQ, 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
-	command_add(&jabber_plugin, ("jid:chat"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:config"), "!p", jabber_command_private,	JABBER_FLAGS_REQ, 
+	COMMAND_ADD_J(&jabber_plugin, "chat", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "config", "!p", jabber_command_private,	JABBER_FLAGS_REQ, 
 			"-c --clear -d --display -g --get -p --put");
-	command_add(&jabber_plugin, ("jid:connect"), NULL, jabber_command_connect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:control"), "! ? ?", jabber_command_control, JABBER_FLAGS_REQ, NULL);
-	command_add(&jabber_plugin, ("jid:conversations"), NULL, jabber_command_conversations,	JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:dcc"), "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
+	COMMAND_ADD_J(&jabber_plugin, "connect", NULL, jabber_command_connect, JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "control", "! ? ?", jabber_command_control, JABBER_FLAGS_REQ, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "conversations", NULL, jabber_command_conversations,	JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "dcc", "p uU f ?", jabber_command_dcc,	JABBER_ONLY, 
 			"send get resume voice close list");
-	command_add(&jabber_plugin, ("jid:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:disconnect"), "r", jabber_command_disconnect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:dnd"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-//	command_add(&jabber_plugin, ("jid:ignore"), "uUC I", jabber_command_ignore,	JABBER_ONLY, "status descr notify msg dcc events *");
-	command_add(&jabber_plugin, ("jid:ffc"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:find"), "?", jabber_command_find, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:join"), "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:kick"), "! ! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:lastseen"), "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:modify"), "!Uu ?", jabber_command_modify,JABBER_FLAGS_REQ, 
+	COMMAND_ADD_J(&jabber_plugin, "del", "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "disconnect", "r", jabber_command_disconnect, JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "dnd", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+//	COMMAND_ADD_J(&jabber_plugin, "ignore", "uUC I", jabber_command_ignore,	JABBER_ONLY, "status descr notify msg dcc events *");
+	COMMAND_ADD_J(&jabber_plugin, "ffc", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "find", "?", jabber_command_find, JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "invisible", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "join", "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "kick", "! ! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "lastseen", "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "modify", "!Uu ?", jabber_command_modify,JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
-	command_add(&jabber_plugin, ("jid:msg"), "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:part"), "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:passwd"), "!", jabber_command_passwd, 	JABBER_FLAGS_REQ, NULL);
-	command_add(&jabber_plugin, ("jid:privacy"), "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:private"), "!p ! ?", jabber_command_private,   JABBER_FLAGS_REQ, 
+	COMMAND_ADD_J(&jabber_plugin, "msg", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "passwd", "!", jabber_command_passwd, 	JABBER_FLAGS_REQ, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "privacy", "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "private", "!p ! ?", jabber_command_private,   JABBER_FLAGS_REQ, 
 			"-c --clear -d --display -p --put");
-	command_add(&jabber_plugin, ("jid:pubsub"), "!p ? ? ?", jabber_command_pubsub, JABBER_FLAGS, 
+	COMMAND_ADD_J(&jabber_plugin, "pubsub", "!p ? ? ?", jabber_command_pubsub, JABBER_FLAGS, 
 			"-c --create -C --configure -d --delete -P --purge -m --manage -g --get -l --list -p --publish -r --remove -s --subscribe -S --status");
-	command_add(&jabber_plugin, ("jid:reconnect"), NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:register"), "? ?", jabber_command_register, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:reply"), "! !", jabber_command_reply, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:search"), "? ?", jabber_command_search, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:stats"), "? ?", jabber_command_stats, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:tmsg"), "!uU ! !", jabber_command_msg, JABBER_FLAGS_TARGET, NULL); /* threaded msg */
-	command_add(&jabber_plugin, ("jid:topic"), "! ?", jabber_muc_command_topic, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:transpinfo"), "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:transports"), "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:unban"), "! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
-//	command_add(&jabber_plugin, ("jid:unignore"), "i ?", jabber_command_ignore, JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:unregister"), "?", jabber_command_register, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:userinfo"), "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("jid:vacation"), "?", jabber_command_vacation, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("jid:ver"), "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
-	command_add(&jabber_plugin, ("jid:xa"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("jid:xml"), "!", jabber_command_xml, 	JABBER_FLAGS_REQ, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "reconnect", NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "register", "? ?", jabber_command_register, JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "reply", "! !", jabber_command_reply, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "search", "? ?", jabber_command_search, JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "stats", "? ?", jabber_command_stats, JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "tmsg", "!uU ! !", jabber_command_msg, JABBER_FLAGS_TARGET, NULL); /* threaded msg */
+	COMMAND_ADD_J(&jabber_plugin, "topic", "! ?", jabber_muc_command_topic, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "transpinfo", "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "transports", "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "unban", "! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+//	COMMAND_ADD_J(&jabber_plugin, "unignore", "i ?", jabber_command_ignore, JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "unregister", "?", jabber_command_register, JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "userinfo", "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "vacation", "?", jabber_command_vacation, JABBER_FLAGS, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "ver", "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
+	COMMAND_ADD_J(&jabber_plugin, "xa", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "xml", "!", jabber_command_xml, 	JABBER_FLAGS_REQ, NULL);
 
 	commands_lock = &commands;
 
-	command_add(&jabber_plugin, ("tlen:"), "?",		jabber_command_inline_msg, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:_autoaway"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:_autoxa"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:_autoback"), "r", 	jabber_command_away,		JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:add"), "U ?",	jabber_command_modify,		JABBER_FLAGS, NULL); 
-	command_add(&jabber_plugin, ("tlen:alert"), "!u",	tlen_command_alert,		JABBER_FLAGS_TARGET_VALID, NULL);
-	command_add(&jabber_plugin, ("tlen:auth"), "!p uU", 	jabber_command_auth,		JABBER_FLAGS_REQ,
+	command_add(&jabber_plugin, "tlen:", "?",		jabber_command_inline_msg, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:_autoaway", "r", 	jabber_command_away,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:_autoxa", "r", 	jabber_command_away,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:_autoback", "r", 	jabber_command_away,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:add", "U ?",	jabber_command_modify,		JABBER_FLAGS, NULL); 
+	command_add(&jabber_plugin, "tlen:alert", "!u",	tlen_command_alert,		JABBER_FLAGS_TARGET_VALID, NULL);
+	command_add(&jabber_plugin, "tlen:auth", "!p uU", 	jabber_command_auth,		JABBER_FLAGS_REQ,
 			"-a --accept -d --deny -r --request -c --cancel");
-	command_add(&jabber_plugin, ("tlen:away"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:back"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:change"), "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("tlen:connect"), "r ?",	jabber_command_connect,		JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:disconnect"), "r ?",	jabber_command_disconnect,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:del"), "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("tlen:dnd"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:ffc"), "r",	jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:find"), "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, ("tlen:invisible"), "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:modify"), "!Uu ?",	jabber_command_modify,		JABBER_FLAGS_REQ, 
+	command_add(&jabber_plugin, "tlen:away", "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:back", "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:change", "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, "tlen:connect", "r ?",	jabber_command_connect,		JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:disconnect", "r ?",	jabber_command_disconnect,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:del", "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "tlen:dnd", "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:ffc", "r",	jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:find", "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, "tlen:invisible", "r", jabber_command_away, 	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:modify", "!Uu ?",	jabber_command_modify,		JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
-	command_add(&jabber_plugin, ("tlen:msg"), "!uU !",	jabber_command_msg, 		JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, ("tlen:reconnect"), NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, ("tlen:search"), "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, "tlen:msg", "!uU !",	jabber_command_msg, 		JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "tlen:reconnect", NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:search", "?",	tlen_command_pubdir, 		JABBER_FLAGS, NULL);
 
 	commands_lock = NULL;
 };
