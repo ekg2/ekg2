@@ -3,6 +3,14 @@
 # FUSE-based logs plugin-like directory structure emulator for logsqlite
 # (C) 2007 Michał Górny
 #
+# NOTE: Not finished, not working, probably unfinishable even
+# Looks like that stupid FUSE wants me to give EXACT file size on getattr()
+# Yep, I'd be so happy to convert all the database on 'ls'
+# Especially as my database has already size of 100M, and will be still growing
+# Great idea, folks, thank you soooo much
+# More info [in Polish]:
+# 	http://mgorny.jogger.pl/2007/07/28/113/
+#
 
 use strict;
 use warnings;
@@ -34,6 +42,7 @@ my $dbq_getdata = $db->prepare('SELECT nick, type, sent, ts, sentts, body FROM l
 
 my $cache = Cache::MemoryCache->new({namespace => 'logsqliteFuseCache', default_expires_in => 300});
 
+die unless (@ARGV);
 Fuse::main(debug => 1, mountpoint => shift, threaded => 0,
 	getattr => \&main::myGetAttr, getdir => \&main::myGetDir, open => \&main::myOpen, read => \&main::myRead);
 
