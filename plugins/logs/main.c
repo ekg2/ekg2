@@ -915,9 +915,9 @@ static QUERY(logs_status_handler) {
 		xfree(_what);
 
 	} else if (lw->logformat == LOG_FORMAT_SIMPLE) {
-		logs_simple(lw->file, session, uid, descr, time(NULL), 6, ekg_status_string(status, 0));
+		logs_simple(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, ekg_status_string(status, 0));
 	} else if (lw->logformat == LOG_FORMAT_XML) {
-		/*		logs_xml(lw->file, session, uid, descr, time(NULL), 6, status); */
+		/*		logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status); */
 	}
 	return 0;
 }
@@ -927,8 +927,8 @@ static QUERY(logs_handler_irc) {
 	char *uid	= *(va_arg(ap, char**));
 	char *text	= *(va_arg(ap, char**));
 	{	int  *UNUSED(isour) 	= va_arg(ap, int*);	}
-	int  foryou	= *(va_arg(ap, int*));
-	int  private	= *(va_arg(ap, int*));
+	{	int  *UNUSED(foryou)	= va_arg(ap, int*);	}
+	{	int  *UNUSED(private)	= va_arg(ap, int*);	}
 	char *channame	= *(va_arg(ap, char**));
 
 	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
@@ -1046,7 +1046,7 @@ static QUERY(logs_handler_raw) {
  * typ,uid,nickname,timestamp,{timestamp wyslania dla odleglych}, text
  */
 
-static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, const char *status) {
+static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, enum msgclass_t class, const char *status) {
 	char *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(0));
 
@@ -1061,24 +1061,22 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	if (!gotten_uid)	gotten_uid = uid;
 	if (!gotten_nickname)	gotten_nickname = uid;
 
-	if (class!=6) {
-		switch ((enum msgclass_t)class) {
-			case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv,", file);
-							  break;
-			case EKG_MSGCLASS_CHAT		: fputs("chatrecv,", file);
-							  break;
-			case EKG_MSGCLASS_SENT		: fputs("msgsend,", file);
-							  break;
-			case EKG_MSGCLASS_SENT_CHAT	: fputs("chatsend,", file);
-							  break;
-			case EKG_MSGCLASS_SYSTEM	: fputs("msgsystem,", file);
-							  break;
-			default				: fputs("chatrecv,", file);
-							  break;
-		};
-	} else {
-		fputs("status,",file);
-	}
+	switch (class) {
+		case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv,", file);
+						  break;
+		case EKG_MSGCLASS_CHAT		: fputs("chatrecv,", file);
+						  break;
+		case EKG_MSGCLASS_SENT		: fputs("msgsend,", file);
+						  break;
+		case EKG_MSGCLASS_SENT_CHAT	: fputs("chatsend,", file);
+						  break;
+		case EKG_MSGCLASS_SYSTEM	: fputs("msgsystem,", file);
+						  break;
+		case EKG_MSGCLASS_PRIV_STATUS	: fputs("status,", file);
+						  break;
+		default				: fputs("chatrecv,", file);
+						  break;
+	};
 
 	/*
 	 * chatsend,<numer>,<nick>,<czas>,<tre¶æ>
@@ -1088,7 +1086,7 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 
 	fputs(gotten_uid, file);      fputc(',', file);
 	fputs(gotten_nickname, file); fputc(',', file);
-	if (class==6)
+	if (class == EKG_MSGCLASS_PRIV_STATUS)
 		fputc(',', file);
 
 	fputs(timestamp, file); fputc(',', file);
@@ -1097,7 +1095,7 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 		const char *senttimestamp = prepare_timestamp_format(config_logs_timestamp, sent);
 		fputs(senttimestamp, file);
 		fputc(',', file);
-	} else if (class==6) {
+	} else if (class == EKG_MSGCLASS_PRIV_STATUS) {
 		fputs(status, file); 
 		fputc(',', file);
 	}
@@ -1112,7 +1110,7 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
  * zapis w formacie xml
  */
 
-static void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class) {
+static void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, enum msgclass_t class) {
 	session_t *s;
 	char *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(NULL));
@@ -1149,7 +1147,7 @@ static void logs_xml(FILE *file, const char *session, const char *uid, const cha
 
 	fputs("<message class=\"",file);
 
-	switch ((enum msgclass_t)class) {
+	switch (class) {
 		case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv", file);	  break;
 		case EKG_MSGCLASS_CHAT		: fputs("chatrecv", file);	  break;
 		case EKG_MSGCLASS_SENT		: fputs("msgsend", file);	  break;
