@@ -690,17 +690,14 @@ static QUERY(logsqlite_newwin_handler) {
 
 		if (!xstrcmp(results[2], "0")) {
 #endif
-			class = EKG_MSGCLASS_CHAT;
+			class = EKG_MSGCLASS_LOG;
 			rcpts[0] = NULL;
 		} else {
-			class = EKG_MSGCLASS_SENT_CHAT;
+			class = EKG_MSGCLASS_SENT_LOG;
 			rcpts[0] = uid;
 		}
 
-			/* TODO: some more distinction between normal and old messages... maybe some weird, new msgclasses?
-			 * something like EKG_MSGCLASS_LOG_RECV & EKG_MSGCLASS_LOG_SENT, I mean */
-			/* TODO: maybe somehow move these things after 'query started' msg? but haven't got an idea how to */
-		message_print(session_uid_get(w->session), (class == EKG_MSGCLASS_CHAT ? uid : session_uid_get(w->session)), rcpts, 
+		message_print(session_uid_get(w->session), (class < EKG_MSGCLASS_SENT ? uid : session_uid_get(w->session)), rcpts, 
 #ifdef HAVE_SQLITE3
 			sqlite3_column_text(stmt, 1),
 #else
