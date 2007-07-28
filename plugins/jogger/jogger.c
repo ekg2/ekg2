@@ -136,6 +136,18 @@ static QUERY(jogger_statuscleanup) {
 
 static void jogger_usedchanged(session_t *s, const char *varname) {
 	const char *tmp, *tmpb;
+		/* temporary jid: -> xmpp: hack */
+	if (!xstrncasecmp(session_get(s, "used_session"), "jid:", 4)) {
+		char *tmp = saprintf("xmpp:%s", session_get(s, "used_session") + 4);
+		session_set(s, "used_session", tmp);
+		xfree(tmp);
+	}
+	if (!xstrncasecmp(session_get(s, "used_uid"), "jid:", 4)) {
+		char *tmp = saprintf("xmpp:%s", session_get(s, "used_uid") + 4);
+		session_set(s, "used_uid", tmp);
+		xfree(tmp);
+	}
+		/* /hack */
 		/* first check if session is correct */
 	session_t *js = session_find((tmp = session_get(s, "used_session")));
 
