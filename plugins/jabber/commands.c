@@ -965,7 +965,7 @@ static COMMAND(jabber_command_ver)
 
 		char *xquery_res = jabber_escape(r->name);
 			/* XXX: in most functions we don't escape UIDs, should we do it here? */
-		char *xuid = jabber_escape(uid + (tolower(uid[0]) == 'x' ? 5 : 4));
+		char *xuid = jabber_escape(uid + 5);
        		watch_write(j->send_watch, "<iq id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
 			     j->id++, xuid, xquery_res);
 		xfree(xuid);
