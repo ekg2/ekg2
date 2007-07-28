@@ -663,8 +663,10 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 		return NULL;
 
 		/* another weird 'jid:' hack, to be reverted when 'jid:' support abandomed */
-	if (!xstrncasecmp(uid, "jid:", 4))
+	if (!xstrncasecmp(uid, "jid:", 4)) {
+		valid_uid(uid); /* make warning appear */
 		myuid = saprintf("xmpp:%s", uid+4);
+	}
 
 	for (l = *userlist; l; l = l->next) {
 		userlist_t *u = l->data;
