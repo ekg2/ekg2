@@ -218,10 +218,10 @@ COMMAND(logsqlite_cmd_last)
 	xfree(keep_nick);
 
 #ifdef HAVE_SQLITE3
-	xfree(sql_search);
+	sqlite3_free(sql_search);
 	sqlite3_finalize(stmt);
 #else
-	xfree(sql);
+	sqlite_freemem(sql);
 	sqlite_finalize(vm, &errors);
 #endif
 	return 0;
@@ -416,7 +416,7 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 #ifdef HAVE_SQLITE3
 		sqlite3_close(db);		// czy to konieczne?
 #else
-		xfree(errormsg);
+		if (errormsg) sqlite_freemem(errormsg);
 #endif
 		return 0;
 	}
@@ -712,7 +712,7 @@ static QUERY(logsqlite_newwin_handler) {
 #ifdef HAVE_SQLITE3
 	sqlite3_finalize(stmt);
 #else
-	xfree(sql); /* XXX: if we use sqlite_mprintf(), shouldn't we use also sqlite_free()? */
+	sqlite_freemem(sql);
 	sqlite_finalize(vm, &errors);
 #endif
 	return 0;
