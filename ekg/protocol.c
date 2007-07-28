@@ -473,7 +473,15 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			class_str = "system";
 			target = "__status";
 			break;
+		case EKG_MSGCLASS_LOG:
+			class_str = "log";
+			break;
+		case EKG_MSGCLASS_SENT_LOG:
+			class_str = "sent_log";
+			target = (rcpts) ? rcpts[0] : NULL;
+			break;
 		default:
+			debug("[message_print] got unexpected class = %d\n", class);
 			class_str = "message";
 	}
 
@@ -550,7 +558,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	{
 		int recipients_count = array_count((char **) rcpts);
 
-		if (xstrcmp(class_str, "sent") && recipients_count > 0) {
+		if ((class < EKG_MSGCLASS_SENT) && recipients_count > 0) {
 			c = conference_find_by_uids(s, sender, rcpts, recipients_count, 0);
 
 	                if (!c) {
@@ -606,7 +614,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
         if (config_last & 3 && xstrcmp(class_str, "sent")) 
 	        last_add(0, sender, now, sent, text);
 	
-	user = xstrcmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
+	user = (class < EKG_MSGCLASS_SENT) ? format_user(s, sender) : session_format_n(sender);
 
 	if (config_emoticons && text)
 		emotted = emoticon_expand(text);
@@ -618,16 +626,16 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		securestr = format_string(format_find("secure"));
 
 	print_window(target, s, 
-		(class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT
+		(class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT || class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG
 			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))),
 		class_str, 
 		user, 
 		timestamp, 
 		(emotted) ? emotted : text, 
 					/* XXX, get_uid() get_nickname() */
-		(!xstrcmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), 
-		(!xstrcmp(class_str, "sent")) ? s->uid : get_uid(s, sender), 
-		(secure) ? securestr : "");
+		(class >= EKG_MSGCLASS_SENT ? session_alias_uid(s) : get_nickname(s, sender)), 
+		(class >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)), 
+		(secure ? securestr : ""));
 
 	xfree(text);
 	xfree(securestr);

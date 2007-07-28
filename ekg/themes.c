@@ -1423,6 +1423,21 @@ void theme_init()
 	format_add("sent_timestamp_now", "", 1);
 	format_add("sent,speech", "", 1);
 
+		/* XXX: change default colors for these two, but dunno to what
+		 * they should be darker than standard ones to emphasize that
+		 * these are jest old messages loaded from the db, not received */
+	format_add("log", "%c.-- %n%1 %c%2%n%6%n%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
+	format_add("log_timestamp", "(%Y-%m-%d %H:%M) ", 1);
+	format_add("log_timestamp_today", "(%H:%M) ", 1);
+	format_add("log_timestamp_now", "", 1);
+	format_add("log,speech", _("message from %1: %3."), 1);
+
+	format_add("sent_log", "%b.-- %n%1 %c%2%n%6%n%b--- -- -%n\n%b|%n %|%3%n\n%|%b`----- ---- --- -- -%n\n", 1);
+	format_add("sent_log_timestamp", "(%Y-%m-%d %H:%M) ", 1);
+	format_add("sent_log_timestamp_today", "(%H:%M) ", 1);
+	format_add("sent_log_timestamp_now", "", 1);
+	format_add("sent_log,speech", "", 1);
+
 	format_add("system", _("%m.-- %TSystem message%m --- -- -%n\n%m|%n %|%3%n\n%|%m`----- ---- --- -- -%n\n"), 1);
 	format_add("system,speech", _("system message: %3."), 1);
 
