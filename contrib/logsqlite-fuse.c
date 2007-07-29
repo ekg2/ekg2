@@ -22,7 +22,7 @@
 #include <fuse.h>
 #include <sqlite3.h>
 
-#define QUERY_COUNT 6
+#define QUERY_COUNT 7
 #define READ_ROW_COUNT "20"
 #define BUF_START_SIZE 4096
 
@@ -51,6 +51,7 @@ static const char *queries[QUERY_COUNT+1] = {
 	"SELECT DISTINCT session FROM log_msg ORDER BY session ASC LIMIT -1 OFFSET ?1;",
 	"SELECT DISTINCT uid FROM log_msg WHERE session = ?2 ORDER BY uid ASC LIMIT -1 OFFSET ?1;",
 	"SELECT type, sent, uid, nick, ts, sentts, body FROM log_msg WHERE session = ?1 AND uid = ?2 ORDER BY ts ASC LIMIT " READ_ROW_COUNT " OFFSET ?3;",
+	"DELETE FROM log_msg WHERE session = ?1 AND uid = ?2;",
 	NULL
 };
 
@@ -60,7 +61,8 @@ enum statement_n {
 	GET_NEWEST_UID,
 	GET_SESSIONS,
 	GET_UIDS,
-	GET_DATA
+	GET_DATA,
+	REMOVE_UID
 };
 
 int mySplitPath(const char *path, const char **sid, const char **uid) {
@@ -72,13 +74,15 @@ int mySplitPath(const char *path, const char **sid, const char **uid) {
 	*sid = sidbuf;
 	*uid = uidbuf;
 
+		/* XXX: rewrite, replace with some magic loop */
+
 	path++; /* skip leading '/' */
-	if (tmp = strchr(path, '/')) {
+	if ((tmp = strchr(path, '/'))) {
 		strncpy(sidbuf, path, tmp-path);
 		sidbuf[tmp-path] = 0;
 		path = tmp+1;
 
-		if (tmp = strchr(path, '/')) {
+		if ((tmp = strchr(path, '/'))) {
 			strncpy(uidbuf, path, tmp-path);
 			uidbuf[tmp-path] = 0;
 			path = tmp+1;
@@ -325,12 +329,12 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 
 int myReadFile(const char *path, char *out, size_t count, off_t offset, struct fuse_file_info *fi) {
 	const char *sid, *uid;
-	const int pathargs = mySplitPath(path, &sid, &uid);
 	myDB *db = fuse_get_context()->private_data;
 	sqlite3_stmt *stmt = db->stmt[GET_DATA];
 	myBuffer_t *buf = myBufferFind(db, sid, uid, offset);
 	int written = 0;
 
+	mySplitPath(path, &sid, &uid);
 	sqlite3_bind_text(stmt, 1, sid, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 2, uid, -1, SQLITE_STATIC);
 
@@ -356,10 +360,27 @@ int myReadFile(const char *path, char *out, size_t count, off_t offset, struct f
 	return written;
 };
 
+int myUnlink(const char *path) {
+	const char *sid, *uid;
+	myDB *db = fuse_get_context()->private_data;
+	sqlite3_stmt *stmt = db->stmt[REMOVE_UID];
+
+	mySplitPath(path, &sid, &uid);
+	sqlite3_bind_text(stmt, 1, sid, -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 2, uid, -1, SQLITE_STATIC);
+
+	sqlite3_reset(stmt);
+	if (sqlite3_step(stmt) != SQLITE_DONE)
+		return -EIO;
+
+	return 0;
+}
+
 static struct fuse_operations ops = {
 	.getattr	= &myGetAttr,
 	.readdir	= &myReadDir,
-	.read		= &myReadFile
+	.read		= &myReadFile,
+	.unlink		= &myUnlink
 };
 
 int main(int argc, char *argv[]) {
@@ -400,4 +421,6 @@ int main(int argc, char *argv[]) {
 
 		fuse_main(fuse_argc, fuse_argv, &ops, &db);
 	}
+
+	return 0;
 }
