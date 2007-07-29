@@ -26,6 +26,11 @@
 #define QUERY_COUNT 7
 #define READ_ROW_COUNT "20"
 #define BUF_SIZE_FACTOR 4096
+#define BUF_MAX_UNUSED 5 * 60
+
+//#define DT_FORMAT "%c"
+#define DT_BUF_FACTOR 16
+#define DT_MAX_TRIES 4
 
 #ifdef NODEBUG
 #define DEBUG(x...)
@@ -88,15 +93,15 @@ void myGC(myDB_t *db) {
 
 	for (curr = db->buffers, prev = NULL; curr; prev = curr, curr = curr->next) {
 		while (curr->last_use - now > BUF_MAX_UNUSED) {
-			if (buf->data)
-				free(buf->data);
+			if (curr->data)
+				free(curr->data);
 			if (prev)
-				prev->next	= buf->next;
+				prev->next	= curr->next;
 			else
-				db->buffers	= buf->next;
+				db->buffers	= curr->next;
 
-			curr = buf->next;
-			free(buf);
+			curr = curr->next;
+			free(curr);
 		}
 	}
 }
@@ -313,6 +318,54 @@ const char *myBodyEscape(const char *in) {
 	return (hadto ? out : out+1);
 }
 
+const char *myTimestampFormat(const time_t timestamp) {
+	static char *bufa	= NULL;
+	static size_t bufasize	= DT_BUF_FACTOR;
+	static char *bufb	= NULL;
+	static size_t bufbsize	= DT_BUF_FACTOR;
+	static int bufswitch	= 0;
+
+	char **buf		= (bufswitch ? &bufb : &bufa);
+	size_t *bufsize		= (bufswitch ? &bufbsize : &bufasize);
+	const struct tm *ts	= localtime(&timestamp);
+	int n 			= 0;
+	int r;
+
+	bufswitch		^= 1;
+	if (!*buf)
+		*buf		= malloc(*bufsize);
+
+#ifdef DT_FORMAT
+	while (strftime(*buf, *bufsize, DT_FORMAT, ts) == 0) {
+		if (++n >= DT_MAX_TRIES)
+			break;
+
+		free(*buf);
+		*bufsize	+= DT_BUF_FACTOR;
+		*buf		= malloc(*bufsize);
+	}
+
+	if (n < DT_MAX_TRIES)
+		return *buf;
+#endif
+
+		/* fallback */
+	do {
+		r	= snprintf(*buf, *bufsize, "%d", timestamp);
+
+		if (r >= *bufsize) {
+			*bufsize	= ((r + 1) / DT_BUF_FACTOR + 1) * DT_BUF_FACTOR;
+			*buf		= realloc(*buf, *bufsize);
+			r		= -1;
+		} else if (r == -1) {
+			*bufsize	+= DT_BUF_FACTOR;
+			*buf		= realloc(*buf, *bufsize);
+		}
+	} while (r == -1);
+
+	return *buf;
+}
+
 void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 	if (buf->eof)
 		return;
@@ -331,7 +384,7 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 		const int is_sent	= sqlite3_column_int(stmt, 1);
 		const char *type	= sqlite3_column_text(stmt, 0);
 		char *body		= myBodyEscape(sqlite3_column_text(stmt, 6));
-		char tsbuf[12];
+		char tsbuf[2], *sts;
 		int r;
 
 		if (!strcmp(type, "msg")) {
@@ -344,19 +397,22 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 			else		type = "chatrecv";
 		}
 
-		if (is_sent)
+		if (is_sent) {
 			tsbuf[0]	= 0;
-		else {
-			const int sts	= sqlite3_column_int(stmt, 5);
-			r	= snprintf(tsbuf, sizeof(tsbuf), "%d,", (sts ? sts : sqlite3_column_int(stmt, 4)));
-			if (r == -1 || r >= sizeof(tsbuf))
-				tsbuf[0]	= 0; /* ignore second timestamp, if shit happens */
+			sts		= "";
+		} else {
+			int stsn	= sqlite3_column_int(stmt, 5);
+			if (stsn == 0)
+				stsn	= sqlite3_column_int(stmt, 4);
+			sts		= myTimestampFormat(stsn);
+			tsbuf[0]	= ',';
+			tsbuf[1]	= 0;
 		}
 
 		do {
-			r	= snprintf(buf->data + buf->data_size, buf->buf_size - buf->data_size, "%s,%s,%s,%d,%s%s\n",
+			r	= snprintf(buf->data + buf->data_size, buf->buf_size - buf->data_size, "%s,%s,%s,%s,%s%s%s\n",
 					type, sqlite3_column_text(stmt, 2), sqlite3_column_text(stmt, 3),
-					sqlite3_column_int(stmt, 4), tsbuf, body);
+					myTimestampFormat(sqlite3_column_int(stmt, 4)), sts, tsbuf, body);
 
 			if (r >= (buf->buf_size - buf->data_size)) {
 				buf->buf_size	= ((buf->data_size + r + 1) / BUF_SIZE_FACTOR + 1) * BUF_SIZE_FACTOR;
