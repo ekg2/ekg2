@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
+#include <time.h>
 
 #include <errno.h>
 
@@ -25,6 +26,7 @@
 #define QUERY_COUNT 7
 #define READ_ROW_COUNT "20"
 #define BUF_START_SIZE 4096
+#define BUF_ROUNDUP_TO 4096
 
 typedef struct {
 	char		*sid,
@@ -35,6 +37,7 @@ typedef struct {
 			buf_size;
 	int		db_off,
 			eof;
+	time_t		last_use;
 	void		*next;
 } myBuffer_t;
 
@@ -42,7 +45,7 @@ typedef struct {
 	sqlite3		*db;
 	sqlite3_stmt	*stmt[QUERY_COUNT];
 	myBuffer_t	*buffers;
-} myDB;
+} myDB_t;
 
 static const char *queries[QUERY_COUNT+1] = {
 	"SELECT ts FROM log_msg ORDER BY ts DESC LIMIT 1;",
@@ -100,7 +103,7 @@ int mySplitPath(const char *path, const char **sid, const char **uid) {
 int myGetAttr(const char *path, struct stat *out) {
 	const char *sid, *uid;
 	const int pathargs = mySplitPath(path, &sid, &uid);
-	myDB *db = fuse_get_context()->private_data;
+	myDB_t *db = fuse_get_context()->private_data;
 	sqlite3_stmt *stmt;
 	int timestamp;
 
@@ -145,7 +148,7 @@ int myGetAttr(const char *path, struct stat *out) {
 int myReadDir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	const char *sid, *uid;
 	const int pathargs = mySplitPath(path, &sid, &uid);
-	myDB *db = fuse_get_context()->private_data;
+	myDB_t *db = fuse_get_context()->private_data;
 	sqlite3_stmt *stmt;
 	char *nextrow = NULL, *myrow = NULL;
 	
@@ -178,12 +181,16 @@ int myReadDir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,
 	return 0;
 }
 
-myBuffer_t *myBufferFind(myDB *db, const char *sid, const char *uid, off_t offset) {
+	/* offset = -1 -> remove */
+myBuffer_t *myBufferFind(myDB_t *db, const char *sid, const char *uid, off_t offset) {
 	myBuffer_t *out, *prev;
 
 	for (out = db->buffers, prev = NULL; out && (strcmp(out->sid, sid) || strcmp(out->uid, uid)); prev = out, out = out->next);
 
 	if (!out) { /* create */
+		if (offset == -1)
+			return NULL;
+
 		out		= malloc(sizeof(myBuffer_t));
 		out->sid	= strdup(sid);
 		out->uid	= strdup(uid);
@@ -198,6 +205,16 @@ myBuffer_t *myBufferFind(myDB *db, const char *sid, const char *uid, off_t offse
 			prev->next	= out;
 		else
 			db->buffers	= out;
+	} else if (offset == -1) { /* remove */
+		if (out->data)
+			free(out->data);
+		if (prev)
+			prev->next	= out->next;
+		else
+			db->buffers	= out->next;
+		free(out);
+
+		return NULL;
 	} else if (offset < out->data_off) { /* rewind */
 		if (out->data) {
 			free(out->data);
@@ -209,58 +226,59 @@ myBuffer_t *myBufferFind(myDB *db, const char *sid, const char *uid, off_t offse
 		out->db_off	= 0;
 		out->eof	= 0;
 	}
+	out->last_use	= time(NULL);
 
 	return out;
 }
 
-/* shamelessly ripped from EKG2, XXX: rewrite to use static buf */
-char *log_escape(const char *str)
-{
-	const char *p;
-	char *res, *q;
-	int size, needto = 0;
+/* based on log_escape() from EKG2 */
+	/* XXX: add/fix utf-8 handling ? */
+const char *myBodyEscape(const char *in) {
+	static char *out	= NULL;
+	static size_t bufsize	= 0;
 
-	if (!str)
-		return NULL;
-	
-	for (p = str; *p; p++) {
-		if (*p == '"' || *p == '\'' || *p == '\r' || *p == '\n' || *p == ',')
-			needto = 1;
+	const int needbuf	= strlen(in) * 2 + 3;
+
+	if (bufsize < needbuf) {
+		bufsize = (needbuf / BUF_ROUNDUP_TO + 1) * BUF_ROUNDUP_TO;
+			/* we don't use realloc(), 'cause we don't need data copying */
+		if (out) free(out);
+		out = malloc(bufsize);
+		out[0] = '"';
 	}
 
-	if (!needto)
-		return strdup(str);
+	char *p, *q;
+	int hadto = 0;
 
-	for (p = str, size = 0; *p; p++) {
-		if (*p == '"' || *p == '\'' || *p == '\r' || *p == '\n' || *p == '\\')
-			size += 2;
-		else
-			size++;
+	for (p = in, q = out+1; *p; p++, q++) {
+		switch (*p) {
+			case '\n':
+				*q++	= '\\';
+				*q	= 'n';
+				hadto	= 1;
+				break;
+			case '\r':
+				*q++	= '\\';
+				*q	= 'r';
+				hadto	= 1;
+				break;
+			case '\\':
+			case '"':
+			case '\'':
+				*q++	= '\\';
+				hadto	= 1;
+			default:
+				*q	= *p;
+		}
 	}
 
-	q = res = malloc(size + 3);
-	
-	*q++ = '"';
-	
-	for (p = str; *p; p++, q++) {
-		if (*p == '\\' || *p == '"' || *p == '\'') {
-			*q++ = '\\';
-			*q = *p;
-		} else if (*p == '\n') {
-			*q++ = '\\';
-			*q = 'n';
-		} else if (*p == '\r') {
-			*q++ = '\\';
-			*q = 'r';
-		} else
-			*q = *p;
-	}
-	*q++ = '"';
-	*q = 0;
+	if (hadto)
+		*q++	= '"';
 
-	return res;
+	*q	= 0;
+	
+	return (hadto ? out : out+1);
 }
-/* /EKG2 */
 
 void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 	if (buf->eof)
@@ -279,7 +297,7 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		const int is_sent	= sqlite3_column_int(stmt, 1);
 		const char *type	= sqlite3_column_text(stmt, 0);
-		char *body		= log_escape(sqlite3_column_text(stmt, 6));
+		char *body		= myBodyEscape(sqlite3_column_text(stmt, 6));
 		char tsbuf[12];
 		int r;
 
@@ -319,7 +337,6 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 		} while (r == -1);
 
 		buf->db_off++;
-		free(body);
 	}
 	sqlite3_reset(stmt);
 
@@ -329,12 +346,13 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 
 int myReadFile(const char *path, char *out, size_t count, off_t offset, struct fuse_file_info *fi) {
 	const char *sid, *uid;
-	myDB *db = fuse_get_context()->private_data;
+	myDB_t *db = fuse_get_context()->private_data;
 	sqlite3_stmt *stmt = db->stmt[GET_DATA];
-	myBuffer_t *buf = myBufferFind(db, sid, uid, offset);
+	myBuffer_t *buf;
 	int written = 0;
 
 	mySplitPath(path, &sid, &uid);
+	buf = myBufferFind(db, sid, uid, offset);
 	sqlite3_bind_text(stmt, 1, sid, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 2, uid, -1, SQLITE_STATIC);
 
@@ -362,7 +380,7 @@ int myReadFile(const char *path, char *out, size_t count, off_t offset, struct f
 
 int myUnlink(const char *path) {
 	const char *sid, *uid;
-	myDB *db = fuse_get_context()->private_data;
+	myDB_t *db = fuse_get_context()->private_data;
 	sqlite3_stmt *stmt = db->stmt[REMOVE_UID];
 
 	mySplitPath(path, &sid, &uid);
@@ -376,15 +394,26 @@ int myUnlink(const char *path) {
 	return 0;
 }
 
+int myReleaseFile(const char *path, struct fuse_file_info *fi) {
+	const char *sid, *uid;
+	myDB_t *db = fuse_get_context()->private_data;
+
+	mySplitPath(path, &sid, &uid);
+	myBufferFind(db, sid, uid, -1);
+
+	return 0;
+}
+
 static struct fuse_operations ops = {
 	.getattr	= &myGetAttr,
 	.readdir	= &myReadDir,
 	.read		= &myReadFile,
-	.unlink		= &myUnlink
+	.unlink		= &myUnlink,
+	.release	= &myReleaseFile
 };
 
 int main(int argc, char *argv[]) {
-	myDB	db;
+	myDB_t	db;
 
 	if (argc < 3) {
 		fprintf(stderr, "SYNOPSIS: %s database-path mount-point\n", argv[0]);
