@@ -25,8 +25,21 @@
 
 #define QUERY_COUNT 7
 #define READ_ROW_COUNT "20"
-#define BUF_START_SIZE 4096
-#define BUF_ROUNDUP_TO 4096
+#define BUF_SIZE_FACTOR 4096
+
+#ifdef NODEBUG
+#define DEBUG(x...)
+#else
+
+#ifndef DEBUG
+#define DEBUG(x...) fprintf(stderr, x)
+#endif
+
+#ifndef FUSE_DEBUG
+#define FUSE_DEBUG ",debug"
+#endif
+
+#endif
 
 typedef struct {
 	char		*sid,
@@ -67,6 +80,26 @@ enum statement_n {
 	GET_DATA,
 	REMOVE_UID
 };
+
+	/* garbage cleaner for buffers */
+void myGC(myDB_t *db) {
+	const time_t now = time(NULL);
+	myBuffer_t *curr, *prev;
+
+	for (curr = db->buffers, prev = NULL; curr; prev = curr, curr = curr->next) {
+		while (curr->last_use - now > BUF_MAX_UNUSED) {
+			if (buf->data)
+				free(buf->data);
+			if (prev)
+				prev->next	= buf->next;
+			else
+				db->buffers	= buf->next;
+
+			curr = buf->next;
+			free(buf);
+		}
+	}
+}
 
 int mySplitPath(const char *path, const char **sid, const char **uid) {
 	static char sidbuf[PATH_MAX], uidbuf[PATH_MAX];
@@ -160,7 +193,7 @@ int myReadDir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,
 	}
 	sqlite3_bind_int(stmt, 1, offset);
 
-	fprintf(stderr, "myReadDir: path = %s, off = %d\n", path, offset);
+	DEBUG("myReadDir: path = %s, off = %d\n", path, offset);
 
 	do {
 		if (myrow)
@@ -168,7 +201,7 @@ int myReadDir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,
 		myrow = nextrow;
 		nextrow = (sqlite3_step(stmt) == SQLITE_ROW ? strdup(sqlite3_column_text(stmt, 0)) : NULL);
 
-		fprintf(stderr, "myReadDir-loop: myrow = %s, nextrow = %s, offset = %d\n", myrow, nextrow, offset);
+		DEBUG("myReadDir-loop: myrow = %s, nextrow = %s, offset = %d\n", myrow, nextrow, offset);
 
 		if (myrow && filler(buf, myrow, NULL, (nextrow ? ++offset : 0)) == 1)
 				break;
@@ -240,7 +273,7 @@ const char *myBodyEscape(const char *in) {
 	const int needbuf	= strlen(in) * 2 + 3;
 
 	if (bufsize < needbuf) {
-		bufsize = (needbuf / BUF_ROUNDUP_TO + 1) * BUF_ROUNDUP_TO;
+		bufsize = (needbuf / BUF_SIZE_FACTOR + 1) * BUF_SIZE_FACTOR;
 			/* we don't use realloc(), 'cause we don't need data copying */
 		if (out) free(out);
 		out = malloc(bufsize);
@@ -287,11 +320,11 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 	buf->data_off	+= buf->data_size;
 	buf->data_size	= 0;
 	if (!buf->data) {
-		buf->data	= malloc(BUF_START_SIZE);
-		buf->buf_size	= BUF_START_SIZE;
+		buf->data	= malloc(BUF_SIZE_FACTOR);
+		buf->buf_size	= BUF_SIZE_FACTOR;
 	}
 
-	fprintf(stderr, "myBufferStep: data_off = %d, buf_size = %d\n", buf->data_off, buf->buf_size);
+	DEBUG("myBufferStep: data_off = %d, buf_size = %d\n", buf->data_off, buf->buf_size);
 
 	sqlite3_bind_int(stmt, 3, buf->db_off);
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -326,11 +359,11 @@ void myBufferStep(sqlite3_stmt *stmt, myBuffer_t *buf) {
 					sqlite3_column_int(stmt, 4), tsbuf, body);
 
 			if (r >= (buf->buf_size - buf->data_size)) {
-				buf->buf_size	= buf->data_size + r + 1;
+				buf->buf_size	= ((buf->data_size + r + 1) / BUF_SIZE_FACTOR + 1) * BUF_SIZE_FACTOR;
 				buf->data	= realloc(buf->data, buf->buf_size);
 				r		= -1;
 			} else if (r == -1) {
-				buf->buf_size	= buf->data_size + BUF_START_SIZE;
+				buf->buf_size	= buf->data_size + BUF_SIZE_FACTOR;
 				buf->data	= realloc(buf->data, buf->buf_size);
 			} else
 				buf->data_size += r;
@@ -356,7 +389,7 @@ int myReadFile(const char *path, char *out, size_t count, off_t offset, struct f
 	sqlite3_bind_text(stmt, 1, sid, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 2, uid, -1, SQLITE_STATIC);
 
-	fprintf(stderr, "myReadFile: path = %s, count = %d, offset = %d\n", path, count, offset);
+	DEBUG("myReadFile: path = %s, count = %d, offset = %d\n", path, count, offset);
 	while (count > 0) {
 		while (offset >= buf->data_off + buf->data_size && !buf->eof)
 			myBufferStep(stmt, buf);
@@ -366,7 +399,7 @@ int myReadFile(const char *path, char *out, size_t count, off_t offset, struct f
 		const int toend		= buf->data_size - buf->data_off;
 		const int towrite	= (count > toend ? toend : count);
 
-		fprintf(stderr, "myReadFile-loop: count = %d, offset = %d, toend = %d, towrite = %d, written = %d\n", count, offset, toend, towrite, written);
+		DEBUG("myReadFile-loop: count = %d, offset = %d, toend = %d, towrite = %d, written = %d\n", count, offset, toend, towrite, written);
 		memcpy(out, buf->data + (offset - buf->data_off), towrite);
 		
 		out	+= towrite;
@@ -416,7 +449,7 @@ int main(int argc, char *argv[]) {
 	myDB_t	db;
 
 	if (argc < 3) {
-		fprintf(stderr, "SYNOPSIS: %s database-path mount-point\n", argv[0]);
+		DEBUG("SYNOPSIS: %s database-path mount-point\n", argv[0]);
 
 		return 1;
 	}
@@ -425,7 +458,7 @@ int main(int argc, char *argv[]) {
 	{		/* make the db really open */
 		char *err;
 		if (sqlite3_exec(db.db, "SELECT * FROM log_msg LIMIT 1;", NULL, NULL, &err) != SQLITE_OK) {
-			fprintf(stderr, "Unable to open the database: %s.\n", err);
+			DEBUG("Unable to open the database: %s.\n", err);
 			sqlite3_free(err);
 			return 2;
 		}
@@ -437,7 +470,7 @@ int main(int argc, char *argv[]) {
 
 		for (query = queries, stmt = db.stmt; *query; query++, stmt++) {
 			if (sqlite3_prepare(db.db, *query, -1, stmt, NULL) != SQLITE_OK) {
-				fprintf(stderr, "Unable to compile queries: %s [on %s].\n", sqlite3_errmsg(db.db), *query);
+				DEBUG("Unable to compile queries: %s [on %s].\n", sqlite3_errmsg(db.db), *query);
 				return 3;
 			}
 		}
@@ -446,7 +479,7 @@ int main(int argc, char *argv[]) {
 
 	{
 		int fuse_argc = 4;
-		char *fuse_argv[] = {"fusermount", "-o", "direct_io,rw,debug", argv[2], NULL};
+		char *fuse_argv[] = {"fusermount", "-o", "direct_io,rw" FUSE_DEBUG, argv[2], NULL};
 
 		fuse_main(fuse_argc, fuse_argv, &ops, &db);
 	}
