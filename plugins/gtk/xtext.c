@@ -1052,7 +1052,7 @@ static textentry *gtk_xtext_find_char(GtkXText * xtext, int x, int y, int *off, 
 
 	line = (y + xtext->pixel_offset) / xtext->fontsize;
 	if (!(ent = gtk_xtext_nth(xtext, line + (int)xtext->adj->value, &subline)))
-		return 0;
+		return NULL;
 
 	if (off)
 		*off = gtk_xtext_find_x(xtext, x, ent, subline, line, out_of_bounds);
@@ -1538,16 +1538,16 @@ static char *gtk_xtext_get_word(GtkXText * xtext, int x, int y, textentry ** ret
 
 	ent = gtk_xtext_find_char(xtext, x, y, &offset, &out_of_bounds);
 	if (!ent)
-		return 0;
+		return NULL;
 
 	if (out_of_bounds)
-		return 0;
+		return NULL;
 
 	if (offset == ent->str_len)
-		return 0;
+		return NULL;
 
 	if (offset < 1)
-		return 0;
+		return NULL;
 
 	/*offset--; *//* FIXME: not all chars are 1 byte */
 
@@ -1977,7 +1977,7 @@ static char *gtk_xtext_selection_get_text(GtkXText * xtext, int *len_ret)
 		return NULL;
 
 	/* now allocate mem and copy buffer */
-	pos = txt = malloc(len);
+	pos = txt = xmalloc(len);
 	for (ent = buf->last_ent_start; ent; ent = ent->next) {
 		if (ent->mark_start != -1) {
 			if (!first) {
@@ -3536,7 +3536,7 @@ static textentry *gtk_xtext_nth(GtkXText * xtext, int line, int *subline)
 					break;
 				lines -= ent->lines_taken;
 			}
-			return 0;
+			return NULL;
 		}
 	}
 	/* -- end of optimization -- */
@@ -3549,7 +3549,7 @@ static textentry *gtk_xtext_nth(GtkXText * xtext, int line, int *subline)
 		}
 		ent = ent->next;
 	}
-	return 0;
+	return NULL;
 }
 
 /* render enta (or an inclusive range enta->entb) */
