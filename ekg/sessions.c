@@ -183,7 +183,9 @@ session_t *session_add(const char *uid) {
 	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
 		window_current->session = s;
 		session_current = s;
-		/* XXX, notify ui */
+
+		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_current);
+		query_emit_id(NULL, SESSION_CHANGED);
 	}
 
 
