@@ -235,7 +235,7 @@ session_t *session_add(const char *uid) {
 		if (!w->session && !w->floating && get_uid(s, w->target)) {
 			w->session = s;
 
-			/* XXX, notify ui-plugin */
+			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 
 			if (w == window_current)
 				query_emit_id(NULL, SESSION_CHANGED);
