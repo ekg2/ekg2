@@ -74,30 +74,122 @@ static struct inotify_event *ev = NULL;
 static int config_maxinotifycount = XMSG_MAXFC_INOTIFY;
 #endif
 
-/* function declarations */
-static char *xmsg_dirfix(const char *path);
-#ifdef HAVE_INOTIFY
-static WATCHER(xmsg_handle_data);
-#endif /*HAVE_INOTIFY*/
-static TIMER_SESSION(xmsg_iterate_dir);
-static int xmsg_handle_file(session_t *s, const char *fn);
-static QUERY(xmsg_validate_uid);
-static COMMAND(xmsg_connect);
-static COMMAND(xmsg_disconnect);
-static COMMAND(xmsg_reconnect);
-static inline int xmsg_add_watch(session_t *s, const char *f);
-static void xmsg_timer_change(session_t *s, const char *varname);
-static void xmsg_unlink_dotfiles(session_t *s, const char *varname);
-static COMMAND(xmsg_inline_msg);
-static COMMAND(xmsg_msg);
-static int xmsg_theme_init(void);
-int xmsg_plugin_init(int prio);
-static int xmsg_plugin_destroy(void);
-
 /* constructor */
+static int xmsg_theme_init(void); /* the only needed prototype */
 PLUGIN_DEFINE(xmsg, PLUGIN_PROTOCOL, xmsg_theme_init);
 
 /* the code */
+
+/* stolen from (my) 'jogger' plugin */
+static int ekg_checkoutfile(const char *file, char **data, int *len, char **hash, const int maxlen, const int flags) {
+	static char jogger_hash[sizeof(int)*2+3];
+	int mylen, fs, fd;
+
+	const char *fn	= prepare_path_user(file);
+	const int quiet	= (flags&1);
+
+	if (!fn)
+		return EINVAL;
+
+	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
+		const int err = errno;
+		if (err == ENXIO)
+			printq("io_nonfile", file);
+		else
+			printq("io_cantopen", file, strerror(err));
+		return err;
+	}
+
+	{
+		struct stat st;
+
+		if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode)) {
+			close(fd);
+			printq("io_nonfile", file);
+			return EISDIR; /* nearest, I think */
+		}
+		if (!(flags&2) && (fs = st.st_size) == 0) {
+			close(fd);
+			printq("io_emptyfile", file);
+			return EINVAL; /* like mmap */
+		} else if (maxlen && fs > maxlen) {
+			close(fd);
+			printq("io_toobig", file, itoa(fs), itoa(maxlen));
+			return EFBIG;
+		}
+	}
+
+	if (data || hash) {
+		char *out = xmalloc(fs+1);
+		void *p = out;
+		int rem = fs, res = 1;
+
+		if (fs) {
+			{
+				int cf = fcntl(fd, F_GETFL);
+
+				if (cf == -1) /* evil thing */
+					cf = 0;
+				else
+					cf &= ~O_NONBLOCK;
+				fcntl(fd, F_SETFL, cf);
+			}
+
+			while ((res = read(fd, p, (rem <= SSIZE_MAX ? rem : SSIZE_MAX)))) {
+				if (res == -1) {
+					const int err = errno;
+					if (err != EINTR && err != EAGAIN) {
+						close(fd);
+						printq("io_cantread", file, strerror(errno));
+						return err;
+					}
+				} else {
+					p += res;
+					rem -= res;
+				}
+			}
+		}
+
+		mylen = xstrlen(out);
+		{
+			struct stat st;
+
+			if (fstat(fd, &st) == -1)
+				debug_error("ekg_openfile(): unable to fstat() again!\n");
+			else if (st.st_size > fs)
+				printq("io_expanded", file, itoa(st.st_size), itoa(fs));
+			else if (st.st_size < fs)
+				printq("io_truncated", file, itoa(st.st_size), itoa(fs));
+			else if (rem > 0)
+				printq("io_truncated_read", file, itoa(fs-rem), itoa(fs));
+			
+			if ((fs-rem) > mylen)
+				printq("io_binaryfile", file, itoa(mylen), itoa(fs));
+		}
+
+		if (len)
+			*len = fs-rem;
+
+			/* I don't want to write my own hashing function, so using EKG2 one
+			 * it will fail to hash data after any \0 in file, if there're any
+			 * but we also aren't prepared to handle them */
+		if (hash) {
+			char sizecont[8];
+
+			snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
+			snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
+			*hash = jogger_hash;
+		}
+		if (data)
+			*data = out;
+		else
+			xfree(out);
+	} else if (len)
+		*len = fs;
+	close(fd);
+
+	return 0;
+}
 
 static char *xmsg_dirfix(const char *path)
 {
@@ -114,136 +206,6 @@ static char *xmsg_dirfix(const char *path)
 	xdebug("in: %s, out: %s", path, tmp);
 
 	return tmp;
-#undef __FUNC__
-}
-
-#ifdef HAVE_INOTIFY
-static WATCHER(xmsg_handle_data)
-{
-#define __FUNC__ "xmsg_handle_data"
-	int n;
-	int c = 0;
-	struct inotify_event *evp;
-
-	if (type)
-		return -1;
-
-	ioctl(fd, FIONREAD, &n);
-	if (n == 0)
-		return 0;
-
-	ev = xrealloc(ev, n);
-	n = read(fd, ev, n);
-
-	if (n < 0)
-		xerrn("inotify read() failed");
-	
-	for (evp = ev; n > 0; n -= (evp->len + sizeof(struct inotify_event)), evp = (void*) evp + (evp->len + sizeof(struct inotify_event))) {
-		list_t sp;
-		session_t *s = NULL;
-
-		for (sp = sessions; sp; sp = sp->next) {
-			s = sp->data;
-
-			if (s && (s->priv == (void*) evp->wd) && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
-				break;
-		}
-		
-		xdebug("n = %d, wd = %d, str = %s", n, evp->wd, evp->name);
-			
-		if ((evp->mask & IN_IGNORED) || !s || !session_connected_get(s))
-			continue;
-		else if (evp->mask & IN_UNMOUNT)
-			xmsg_disconnect(NULL, NULL, s, NULL, -1);
-		else if (!(evp->mask & IN_Q_OVERFLOW) && (c != -1) && (!xmsg_handle_file(s, evp->name))) 
-			c++;
-		
-		if ((evp->mask & IN_Q_OVERFLOW) || ((config_maxinotifycount > 0) && c >= config_maxinotifycount)) {
-			for (sp = sessions; sp; sp = sp->next) {
-				s = sp->data;
-
-				if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5)) {
-					const int i = session_int_get(s, "oneshot_resume_timer");
-					if (!timer_remove_session(s, "o"))
-						xdebug("old oneshot resume timer removed");
-					if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir)) {
-						xdebug("oneshot resume timer added");
-						session_status_set(s, EKG_STATUS_AWAY);
-					} else
-						session_status_set(s, EKG_STATUS_AVAIL);
-					c = -1;
-				}
-			}
-		}
-	}
-	if (c >= 0)
-		xdebug("processed %d files", c);
-	else
-		xdebug("reached max_inotifycount");
-
-	return 0;
-#undef __FUNC__
-}
-#endif /*HAVE_INOTIFY*/
-
-static TIMER_SESSION(xmsg_iterate_dir)
-{
-#define __FUNC__ "xmsg_iterate_dir"
-	char *dir;
-	DIR *d;
-	struct dirent *de;
-	int n = 0;
-	const int maxn = session_int_get(s, "max_oneshot_files");
-
-	if (type || !s || !session_connected_get(s))
-		return -1;
-	
-	session_status_set(s, EKG_STATUS_AVAIL);
-	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
-	d = opendir(dir);
-	xfree(dir);
-
-	if (!d) {
-		xdebug("unable to open specified directory");
-		return 0;
-	}
-	
-	while ((de = readdir(d))) {
-		if (!xmsg_handle_file(s, de->d_name))
-			n++;
-		
-		if ((maxn > 0) && n >= maxn) {
-			const int i = session_int_get(s, "oneshot_resume_timer");
-			if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
-				xdebug("oneshot resume timer added");
-			session_status_set(s, EKG_STATUS_AWAY);
-			break;
-		}
-	}
-	closedir(d);
-	xdebug("processed %d files", n);
-
-	return 0;
-#undef s
-#undef __FUNC__
-}
-
-static QUERY(xmsg_handle_sigusr)
-{
-#define __FUNC__ "xmsg_handle_sigusr"
-	list_t sp;
-	session_t *s;
-
-	for (sp = sessions; sp; sp = sp->next) {
-		s = sp->data;
-
-		if (!timer_remove_session(s, "o"))
-			xdebug("old oneshot resume timer removed");
-		if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
-			xmsg_iterate_dir(0, (void*) s);
-	}
-
-	return 0;
 #undef __FUNC__
 }
 
@@ -396,6 +358,189 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 #undef __FUNC__
 }
 
+static TIMER_SESSION(xmsg_iterate_dir)
+{
+#define __FUNC__ "xmsg_iterate_dir"
+	char *dir;
+	DIR *d;
+	struct dirent *de;
+	int n = 0;
+	const int maxn = session_int_get(s, "max_oneshot_files");
+
+	if (type || !s || !session_connected_get(s))
+		return -1;
+	
+	session_status_set(s, EKG_STATUS_AVAIL);
+	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
+	d = opendir(dir);
+	xfree(dir);
+
+	if (!d) {
+		xdebug("unable to open specified directory");
+		return 0;
+	}
+	
+	while ((de = readdir(d))) {
+		if (!xmsg_handle_file(s, de->d_name))
+			n++;
+		
+		if ((maxn > 0) && n >= maxn) {
+			const int i = session_int_get(s, "oneshot_resume_timer");
+			if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir))
+				xdebug("oneshot resume timer added");
+			session_status_set(s, EKG_STATUS_AWAY);
+			break;
+		}
+	}
+	closedir(d);
+	xdebug("processed %d files", n);
+
+	return 0;
+#undef s
+#undef __FUNC__
+}
+
+static void xmsg_timer_change(session_t *s, const char *varname)
+{
+#define __FUNC__ "xmsg_timer_change"
+	int n = (varname ? session_int_get(s, varname) : 0);
+	
+	xdebug("n = %d", n);
+	if (!varname || session_connected_get(s)) {
+		if (!timer_remove_session(s, "w"))
+			xdebug("old timer removed");
+		if (n > 0) {
+			if (timer_add_session(s, "w", n, 1, xmsg_iterate_dir))
+				xdebug("new timer added");
+		}
+	}
+#undef __FUNC__
+}
+
+/* we return 0 even if rmwatch fails, because xmsg_handle_data checks
+ * if our session is still connected, so it'll ignore unneeded events */
+static COMMAND(xmsg_disconnect)
+{
+#define __FUNC__ "xmsg_disconnect"
+	if (!session_connected_get(session)) {
+		printq("not_connected", session_name(session));
+		return -1;
+	}
+	
+	xmsg_timer_change(session, NULL);
+	if (!timer_remove_session(session, "o"))
+		xdebug("old oneshot resume timer removed");
+	session_status_set(session, EKG_STATUS_NA);
+	{
+		char *sess = xstrdup(session_uid_get(session));
+		char *reason = (quiet == -1 ? xstrdup(format_find("xmsg_umount")) : NULL);
+		int type = (quiet == -1 ? EKG_DISCONNECT_NETWORK : EKG_DISCONNECT_USER);
+		
+		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &sess, &reason, &type, NULL);
+		
+		xfree(reason);
+		xfree(sess);
+	}
+
+#ifdef HAVE_INOTIFY
+	if (session->priv && inotify_rm_watch(in_fd, (uint32_t) session->priv))
+		xdebug2(DEBUG_ERROR, "rmwatch failed");
+	else
+		xdebug("inotify watch removed: %d", (uint32_t) session->priv);
+#endif /*HAVE_INOTIFY*/
+
+	return 0;
+#undef __FUNC__
+}
+
+#ifdef HAVE_INOTIFY
+static WATCHER(xmsg_handle_data)
+{
+#define __FUNC__ "xmsg_handle_data"
+	int n;
+	int c = 0;
+	struct inotify_event *evp;
+
+	if (type)
+		return -1;
+
+	ioctl(fd, FIONREAD, &n);
+	if (n == 0)
+		return 0;
+
+	ev = xrealloc(ev, n);
+	n = read(fd, ev, n);
+
+	if (n < 0)
+		xerrn("inotify read() failed");
+	
+	for (evp = ev; n > 0; n -= (evp->len + sizeof(struct inotify_event)), evp = (void*) evp + (evp->len + sizeof(struct inotify_event))) {
+		list_t sp;
+		session_t *s = NULL;
+
+		for (sp = sessions; sp; sp = sp->next) {
+			s = sp->data;
+
+			if (s && (s->priv == (void*) evp->wd) && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
+				break;
+		}
+		
+		xdebug("n = %d, wd = %d, str = %s", n, evp->wd, evp->name);
+			
+		if ((evp->mask & IN_IGNORED) || !s || !session_connected_get(s))
+			continue;
+		else if (evp->mask & IN_UNMOUNT)
+			xmsg_disconnect(NULL, NULL, s, NULL, -1);
+		else if (!(evp->mask & IN_Q_OVERFLOW) && (c != -1) && (!xmsg_handle_file(s, evp->name))) 
+			c++;
+		
+		if ((evp->mask & IN_Q_OVERFLOW) || ((config_maxinotifycount > 0) && c >= config_maxinotifycount)) {
+			for (sp = sessions; sp; sp = sp->next) {
+				s = sp->data;
+
+				if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5)) {
+					const int i = session_int_get(s, "oneshot_resume_timer");
+					if (!timer_remove_session(s, "o"))
+						xdebug("old oneshot resume timer removed");
+					if ((i > 0) && timer_add_session(s, "o", i, 0, xmsg_iterate_dir)) {
+						xdebug("oneshot resume timer added");
+						session_status_set(s, EKG_STATUS_AWAY);
+					} else
+						session_status_set(s, EKG_STATUS_AVAIL);
+					c = -1;
+				}
+			}
+		}
+	}
+	if (c >= 0)
+		xdebug("processed %d files", c);
+	else
+		xdebug("reached max_inotifycount");
+
+	return 0;
+#undef __FUNC__
+}
+#endif /*HAVE_INOTIFY*/
+
+static QUERY(xmsg_handle_sigusr)
+{
+#define __FUNC__ "xmsg_handle_sigusr"
+	list_t sp;
+	session_t *s;
+
+	for (sp = sessions; sp; sp = sp->next) {
+		s = sp->data;
+
+		if (!timer_remove_session(s, "o"))
+			xdebug("old oneshot resume timer removed");
+		if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
+			xmsg_iterate_dir(0, (void*) s);
+	}
+
+	return 0;
+#undef __FUNC__
+}
+
 static QUERY(xmsg_validate_uid)
 {
 #define __FUNC__ "xmsg_validate_uid"
@@ -472,42 +617,6 @@ static COMMAND(xmsg_connect)
 #undef __FUNC__
 }
 
-/* we return 0 even if rmwatch fails, because xmsg_handle_data checks
- * if our session is still connected, so it'll ignore unneeded events */
-static COMMAND(xmsg_disconnect)
-{
-#define __FUNC__ "xmsg_disconnect"
-	if (!session_connected_get(session)) {
-		printq("not_connected", session_name(session));
-		return -1;
-	}
-	
-	xmsg_timer_change(session, NULL);
-	if (!timer_remove_session(session, "o"))
-		xdebug("old oneshot resume timer removed");
-	session_status_set(session, EKG_STATUS_NA);
-	{
-		char *sess = xstrdup(session_uid_get(session));
-		char *reason = (quiet == -1 ? xstrdup(format_find("xmsg_umount")) : NULL);
-		int type = (quiet == -1 ? EKG_DISCONNECT_NETWORK : EKG_DISCONNECT_USER);
-		
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &sess, &reason, &type, NULL);
-		
-		xfree(reason);
-		xfree(sess);
-	}
-
-#ifdef HAVE_INOTIFY
-	if (session->priv && inotify_rm_watch(in_fd, (uint32_t) session->priv))
-		xdebug2(DEBUG_ERROR, "rmwatch failed");
-	else
-		xdebug("inotify watch removed: %d", (uint32_t) session->priv);
-#endif /*HAVE_INOTIFY*/
-
-	return 0;
-#undef __FUNC__
-}
-
 static COMMAND(xmsg_reconnect)
 {
 #define __FUNC__ "xmsg_reconnect"
@@ -516,23 +625,6 @@ static COMMAND(xmsg_reconnect)
 	}
 
 	return xmsg_connect(name, params, session, target, quiet);
-#undef __FUNC__
-}
-
-static void xmsg_timer_change(session_t *s, const char *varname)
-{
-#define __FUNC__ "xmsg_timer_change"
-	int n = (varname ? session_int_get(s, varname) : 0);
-	
-	xdebug("n = %d", n);
-	if (!varname || session_connected_get(s)) {
-		if (!timer_remove_session(s, "w"))
-			xdebug("old timer removed");
-		if (n > 0) {
-			if (timer_add_session(s, "w", n, 1, xmsg_iterate_dir))
-				xdebug("new timer added");
-		}
-	}
 #undef __FUNC__
 }
 
@@ -587,17 +679,6 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		xfree(df);
 		xfree(dfd);
 	}
-#undef __FUNC__
-}
-
-static COMMAND(xmsg_inline_msg)
-{
-#define __FUNC__ "xmsg_inline_msg"
-	const char *par[2] = {NULL, params[0]};
-	if (!params[0] || !target)
-		return -1;
-	
-	return xmsg_msg(("chat"), par, session, target, quiet);
 #undef __FUNC__
 }
 
@@ -682,6 +763,17 @@ static COMMAND(xmsg_msg)
 	}
 			
 	return 0;
+#undef __FUNC__
+}
+
+static COMMAND(xmsg_inline_msg)
+{
+#define __FUNC__ "xmsg_inline_msg"
+	const char *par[2] = {NULL, params[0]};
+	if (!params[0] || !target)
+		return -1;
+	
+	return xmsg_msg(("chat"), par, session, target, quiet);
 #undef __FUNC__
 }
 
