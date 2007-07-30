@@ -272,6 +272,7 @@ static COMMAND(jabber_command_dcc) {
 	}
 
 	if (!xstrncasecmp(params[0], "vo", 2)) { /* voice */
+		printq("not_implemented");
 		return -1;
 	}
 	return cmd_dcc(name, params, session, target, quiet);
@@ -1723,13 +1724,13 @@ static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921)
 	}
 
 	if (!xstrcmp(params[0], "--modify")) {		/* modify list's entry */
-		printq("generic_error", "not impl, sorry");
+		printq("not_implemented");
 		return -1;
 		needsync = 1;
 	}
 
 	if (!xstrcmp(params[0], "--delete")) {		/* delete list's entry */
-		printq("generic_error", "not impl, sorry");
+		printq("not_implemented");
 		return -1;
 		needsync = 1;
 	}
