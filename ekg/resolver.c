@@ -34,6 +34,7 @@
 
 #include "debug.h"
 #include "plugins.h"
+#include "xmalloc.h"
 
 /*
  * ekg_resolver2()
@@ -55,6 +56,7 @@
 
 watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data) {
 	int res, fd[2];
+	char *myserver;
 
 	if (!server) {
 		errno = EFAULT;
@@ -69,11 +71,13 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 	debug("ekg_resolver2() resolver pipes = { %d, %d }\n", fd[0], fd[1]);
 
+	myserver = xstrdup(server);
 	if ((res = fork()) == -1) {
 		int errno2 = errno;
 
 		close(fd[0]);
 		close(fd[1]);
+		xfree(myserver);
 		errno = errno2;
 		return NULL;
 	}
@@ -84,8 +88,8 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 		close(fd[0]);
 
-		if ((a.s_addr = inet_addr(server)) == INADDR_NONE) {
-			struct hostent *he = gethostbyname(server);
+		if ((a.s_addr = inet_addr(myserver)) == INADDR_NONE) {
+			struct hostent *he = gethostbyname(myserver);
 
 			if (!he)
 				a.s_addr = INADDR_NONE;
@@ -93,12 +97,14 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 				memcpy(&a, he->h_addr, sizeof(a));
 		}
 		write(fd[1], &a, sizeof(a));
+		xfree(myserver);
 		sleep(1);
 		exit(0);
 	}
 
 	/* parent */
 	close(fd[1]);
+	xfree(myserver);
 	/* XXX dodaæ dzieciaka do przegl±dania */
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
