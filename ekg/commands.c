@@ -1664,7 +1664,7 @@ static COMMAND(cmd_save) {
 		xfree(config_session_default); config_session_default = xstrdup(session_current->uid);
 	}
 
-	if ((session || session_current) && session_write()) ret = -1;
+	if (session_write())		ret = -1;
 	if (config_write(params[0]))	ret = -1;
 	if (metacontact_write())	ret = -1;
 	if (script_variables_write())	ret = -1;
