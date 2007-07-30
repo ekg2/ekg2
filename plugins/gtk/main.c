@@ -360,6 +360,14 @@ static QUERY(gtk_statusbar_query) {
 	return 0;
 }
 
+static QUERY(gtk_ui_window_clear) {
+	window_t *w = *(va_arg(ap, window_t **));
+
+#warning "This is real clear, not ncurses-like"
+	gtk_xtext_clear(gtk_private(w)->buffer);
+	return 0;
+}
+
 EXPORT int gtk_plugin_init(int prio) {
 	const char ekg2_another_ui[] = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
 	const char ekg2_no_display[] = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
@@ -430,6 +438,7 @@ EXPORT int gtk_plugin_init(int prio) {
 	query_connect_id(&gtk_plugin, UI_WINDOW_KILL,		gtk_ui_window_kill, NULL);	/* fe_session_callback() */
 	query_connect_id(&gtk_plugin, UI_WINDOW_SWITCH,		gtk_ui_window_switch, NULL);
 	query_connect_id(&gtk_plugin, UI_WINDOW_TARGET_CHANGED, gtk_ui_window_target_changed, NULL);	/* fe_set_channel() */
+	query_connect_id(&gtk_plugin, UI_WINDOW_CLEAR,		gtk_ui_window_clear, NULL);
 
 	query_connect_id(&gtk_plugin, SESSION_CHANGED,		gtk_session_changed, NULL);
 	query_connect_id(&gtk_plugin, SESSION_EVENT,		gtk_statusbar_query, NULL);
@@ -438,10 +447,7 @@ EXPORT int gtk_plugin_init(int prio) {
 
 	query_connect_id(&gtk_plugin, VARIABLE_CHANGED,		gtk_variable_changed, NULL);
 /*
-	query_connect_id(&ncurses_plugin, UI_WINDOW_TARGET_CHANGED, ncurses_ui_window_target_changed, NULL);
-	query_connect_id(&ncurses_plugin, UI_WINDOW_ACT_CHANGED, ncurses_ui_window_act_changed, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
-	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
