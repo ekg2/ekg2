@@ -573,18 +573,20 @@ static void window_move(int first, int second) {
  * @todo Make it const?
  *
  * @return 	Never NULL pointer [to don't care about it] look below for more details:
+ * 		if @a window->target is not NULL return it<br>
+ * 		else: <br>
  * 		- __current	if @a window is NULL<br>
  * 		- __status	if @a window->id == 1<br>
  * 		- __debug	if @a window->id == 0<br>
- * 		- else if @a window->target is not NULL return it<br>
- * 		- else return ""
+ * 		else return ""
  */
 
 char *window_target(window_t *window) {
 	if (!window)			return "__current";
-	if (window->id == 1)		return "__status";
+
+	if (window->target)       	return window->target;
+	else if (window->id == 1)	return "__status";
 	else if (window->id == 0)	return "__debug";
-	else if (window->target)        return window->target;
         else                            return "";
 }
 

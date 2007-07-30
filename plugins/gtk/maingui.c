@@ -156,9 +156,10 @@ const char *gtk_session_target(session_t *sess) {
 
 const char *gtk_window_target(window_t *window) {
 	if (!window)			return "";
-	if (window->id == 1)		return "__status";
+
+	if (window->target)		return window->target;
+	else if (window->id == 1)	return "__status";
 	else if (window->id == 0)	return "__debug";
-	else if (window->target)        return window->target;
         else                            return "";
 }
 
