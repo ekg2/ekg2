@@ -313,8 +313,13 @@ static COMMAND(jabber_command_connect)
 	xfree(j->server);
 	j->server	= xstrdup(++server);
 
-	if (j->istlen) server = TLEN_HUB;
-	if (!realserver) realserver = server;
+	if (!realserver) {
+		if (j->istlen) {
+			j->istlen++;
+			realserver = TLEN_HUB;
+		} else
+			realserver = server;
+	}
 
 	if (ekg_resolver2(&jabber_plugin, realserver, jabber_handle_resolver, session) == NULL) {
 		printq("generic_error", strerror(errno));

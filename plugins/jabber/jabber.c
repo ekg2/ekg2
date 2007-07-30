@@ -679,15 +679,10 @@ static TIMER_SESSION(jabber_ping_timer_handler) {
 
 static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 	session_t *s = (session_t *) data;
-	if (type) return 0;
-	debug_error("Connecting to HUB, currectly not works ;/");
-	jabber_handle_disconnect(s, "Unimplemented do: /eval \"/session server s1.tlen.pl\" \"/session port 443\" \"/connect\" sorry.", EKG_DISCONNECT_FAILURE);
-	return -1;
 
-#if 0
 	if (type) {
-		close(fd);
-		if (type == 2) debug("TIMEOUT\n");
+		if (watch != WATCH_WRITE) close(fd);
+		if (type == 2) debug_error("[TLEN, HUB] TIMEOUT\n");
 		return 0;
 	}
 	
@@ -698,7 +693,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 			jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
 			return -1;
 		}
-		esc = tlen_encode(s->uid+4);
+		esc = tlen_encode(s->uid+5);
 		req = saprintf("GET /4starters.php?u=%s&v=10 HTTP/1.0\r\nHost: %s\r\n\r\n", esc, TLEN_HUB);	/* libtlen */
 		write(fd, req, xstrlen(req));
 		xfree(req);
@@ -708,6 +703,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 		watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_connect_tlen_hub, data);	/* WATCH_READ_LINE? */
 		return -1;
 	} else if ((int) watch == WATCH_READ) {	/* libtlen */
+		jabber_private_t *j = jabber_private(s);
 		char *header, *body;
 		char buf[1024];
 		int len;
@@ -718,20 +714,40 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 		header	= xstrstr(buf, "\r\n");
 		body	= xstrstr(buf, "\r\n\r\n");
 		if (header && body) {
-			xmlnode_t *rv;
-
 			*header = '\0';
 			body += 4;
-			if (xstrstr(buf, " 200 ")) {
-				debug_function("[TLEN, HUB]: %s\n", body);
+			debug_function("[TLEN, HUB]: %s / %s\n", buf, body);
+			if (!xstrstr(buf, " 200 "))
 				return -1;
-			}
-		} else debug_error("[TLEN, HUB]: FAILED\n");
 
+			/* XXX: use XML parser instead of hardcoded lengths */
+			/* <t s='s1.tlen.pl' p='443' v='91' c='0' i='83.20.106.210'>91</t> */
+			{
+				char *end, *endb;
+
+				body += 6;
+				if ((end = xstrchr(body, '\''))) {
+					*end	= 0;
+					end	+= 5;
+					if ((endb = xstrchr(end, '\'')))
+						*endb	= 0;
+					
+					const int newport	= atoi(end);
+					if (newport != 0)
+						j->port	= newport;
+				}
+			}
+
+			debug_function("[TLEN, HUB]: host = %s, port = %d\n", body, j->port);
+			if (ekg_resolver2(&jabber_plugin, body, jabber_handle_resolver, s) == NULL)
+				print("generic_error", strerror(errno));
+
+			return -1;
+		}
+			/* XXX: hm? */
 		if (len == 0)	return -1;
 		else		return 0;
 	} else return -1;
-#endif
 }
 
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
@@ -810,12 +826,11 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 	int use_ssl = session_int_get(s, "use_ssl");
 #endif
 
-	int tlenishub = !session_get(s, "server") && j->istlen;
-        if (type) {
+	const int tlenishub = (j->istlen > 1);
+        if (type)
                 return 0;
-	}
 
-        debug_function("[jabber] jabber_handle_resolver()\n", type);
+        debug_function("[jabber] jabber_handle_resolver(), tlenishub = %d\n", tlenishub);
 #ifdef NO_POSIX_SYSTEM
 	int ret = ReadFile(fd, &a, sizeof(a), &res, NULL);
 #else
@@ -895,8 +910,10 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 		return -1;
         } // use_ssl
 #endif
-	if (j->istlen && tlenishub)	watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_tlen_hub, s);
-	else				watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
+	if (tlenishub) {
+		j->istlen = 1;		/* reset */
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_tlen_hub, s);
+	} else	watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
 	return -1;
 }
 
