@@ -346,6 +346,20 @@ static QUERY(gtk_variable_changed) {
 	}
 }
 
+static QUERY(gtk_session_changed) {
+	mg_populate(window_current);
+
+	return 0;
+}
+
+static QUERY(gtk_statusbar_query) {
+#warning "gtk_statusbar_query() workaround"
+	/* XXX, here, we update whole window, it's enough to update only statusbar, headerbar */
+	mg_populate(window_current);
+
+	return 0;
+}
+
 EXPORT int gtk_plugin_init(int prio) {
 	const char ekg2_another_ui[] = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
 	const char ekg2_no_display[] = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
@@ -417,8 +431,35 @@ EXPORT int gtk_plugin_init(int prio) {
 	query_connect_id(&gtk_plugin, UI_WINDOW_SWITCH,		gtk_ui_window_switch, NULL);
 	query_connect_id(&gtk_plugin, UI_WINDOW_TARGET_CHANGED, gtk_ui_window_target_changed, NULL);	/* fe_set_channel() */
 
-	query_connect_id(&gtk_plugin, VARIABLE_CHANGED,		gtk_variable_changed, NULL);
+	query_connect_id(&gtk_plugin, SESSION_CHANGED,		gtk_session_changed, NULL);
+	query_connect_id(&gtk_plugin, SESSION_EVENT,		gtk_statusbar_query, NULL);
+	query_connect_id(&gtk_plugin, SESSION_RENAMED,		gtk_statusbar_query, NULL);
 
+
+	query_connect_id(&gtk_plugin, VARIABLE_CHANGED,		gtk_variable_changed, NULL);
+/*
+	query_connect_id(&ncurses_plugin, UI_WINDOW_TARGET_CHANGED, ncurses_ui_window_target_changed, NULL);
+	query_connect_id(&ncurses_plugin, UI_WINDOW_ACT_CHANGED, ncurses_ui_window_act_changed, NULL);
+	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
+	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
+	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
+	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
+	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_CHANGED, ncurses_userlist_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_ADDED, ncurses_userlist_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_userlist_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_userlist_changed, NULL);
+	query_connect_id(&ncurses_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
+	query_connect_id(&ncurses_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
+	query_connect_id(&ncurses_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
+	query_connect_id(&ncurses_plugin, VARIABLE_CHANGED, ncurses_variable_changed, NULL);
+	query_connect_id(&ncurses_plugin, CONFERENCE_RENAMED, ncurses_conference_renamed, NULL);
+
+	query_connect_id(&ncurses_plugin, METACONTACT_ADDED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, METACONTACT_REMOVED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_ADDED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_REMOVED, ncurses_all_contacts_changed, NULL);
+*/
 #define gtk_backlog_change NULL
 #warning "gtk_backlog_change == NULL, need research"
 	variable_add(&gtk_plugin, ("backlog_size"), VAR_INT, 1, &backlog_size_config, gtk_backlog_change, NULL, NULL);
