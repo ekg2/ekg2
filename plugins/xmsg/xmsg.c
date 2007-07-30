@@ -60,11 +60,20 @@
 #define XMSG_TIMER_DEF "300"
 #endif
 
+/* __func__ fallback (from 'info gcc') */
+#if __STDC_VERSION__ < 199901L
+# if __GNUC__ >= 2
+#  define __func__ __FUNCTION__
+# else
+#  define __func__ itoa(__LINE__)
+# endif
+#endif
+
 /* debugs */
-#define xerr(txt, ...) do { debug_error("[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__); XERRADD return -1; } while (0)
-#define xerrn(txt, ...) do { debug_error("[xmsg] " __FUNC__ ": " txt ": %s\n", ##__VA_ARGS__, strerror(errno)); XERRADD return -1; } while (0)
-#define xdebug(txt, ...) debug("[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__)
-#define xdebug2(lvl, txt, ...) debug_ext(lvl, "[xmsg] " __FUNC__ ": " txt "\n", ##__VA_ARGS__)
+#define xerr(txt, ...) do { debug_error("[xmsg:%s] " txt "\n", __func__, ##__VA_ARGS__); XERRADD return -1; } while (0)
+#define xerrn(txt, ...) do { debug_error("[xmsg:%s] " txt ": %s\n", __func__, ##__VA_ARGS__, strerror(errno)); XERRADD return -1; } while (0)
+#define xdebug(txt, ...) debug("[xmsg:%s] " txt "\n", __func__, ##__VA_ARGS__)
+#define xdebug2(lvl, txt, ...) debug_ext(lvl, "[xmsg:%s] " txt "\n", __func__, ##__VA_ARGS__)
 #define XERRADD
 
 /* global vars */
@@ -193,7 +202,6 @@ static int ekg_checkoutfile(const char *file, char **data, int *len, char **hash
 
 static char *xmsg_dirfix(const char *path)
 {
-#define __FUNC__ "xmsg_dirfix"
 	char *tmp = xstrdup(path), *p;
 	
 	/* if path starts with slash, we leave it as is,
@@ -206,12 +214,10 @@ static char *xmsg_dirfix(const char *path)
 	xdebug("in: %s, out: %s", path, tmp);
 
 	return tmp;
-#undef __FUNC__
 }
 
 static int xmsg_handle_file(session_t *s, const char *fn)
 {
-#define __FUNC__ "xmsg_handle_file"
 	char *dir;
 #undef XERRADD
 #define XERRADD xfree(dir);
@@ -355,12 +361,10 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 #define XERRADD
 
 	return 0;
-#undef __FUNC__
 }
 
 static TIMER_SESSION(xmsg_iterate_dir)
 {
-#define __FUNC__ "xmsg_iterate_dir"
 	char *dir;
 	DIR *d;
 	struct dirent *de;
@@ -397,12 +401,10 @@ static TIMER_SESSION(xmsg_iterate_dir)
 
 	return 0;
 #undef s
-#undef __FUNC__
 }
 
 static void xmsg_timer_change(session_t *s, const char *varname)
 {
-#define __FUNC__ "xmsg_timer_change"
 	int n = (varname ? session_int_get(s, varname) : 0);
 	
 	xdebug("n = %d", n);
@@ -414,14 +416,12 @@ static void xmsg_timer_change(session_t *s, const char *varname)
 				xdebug("new timer added");
 		}
 	}
-#undef __FUNC__
 }
 
 /* we return 0 even if rmwatch fails, because xmsg_handle_data checks
  * if our session is still connected, so it'll ignore unneeded events */
 static COMMAND(xmsg_disconnect)
 {
-#define __FUNC__ "xmsg_disconnect"
 	if (!session_connected_get(session)) {
 		printq("not_connected", session_name(session));
 		return -1;
@@ -450,13 +450,11 @@ static COMMAND(xmsg_disconnect)
 #endif /*HAVE_INOTIFY*/
 
 	return 0;
-#undef __FUNC__
 }
 
 #ifdef HAVE_INOTIFY
 static WATCHER(xmsg_handle_data)
 {
-#define __FUNC__ "xmsg_handle_data"
 	int n;
 	int c = 0;
 	struct inotify_event *evp;
@@ -518,13 +516,11 @@ static WATCHER(xmsg_handle_data)
 		xdebug("reached max_inotifycount");
 
 	return 0;
-#undef __FUNC__
 }
 #endif /*HAVE_INOTIFY*/
 
 static QUERY(xmsg_handle_sigusr)
 {
-#define __FUNC__ "xmsg_handle_sigusr"
 	list_t sp;
 	session_t *s;
 
@@ -538,12 +534,10 @@ static QUERY(xmsg_handle_sigusr)
 	}
 
 	return 0;
-#undef __FUNC__
 }
 
 static QUERY(xmsg_validate_uid)
 {
-#define __FUNC__ "xmsg_validate_uid"
 	char *uid = *(va_arg(ap, char**));
 	int *valid = va_arg(ap, int*);
 	
@@ -553,12 +547,10 @@ static QUERY(xmsg_validate_uid)
 	}
 
 	return 0;
-#undef __FUNC__
 }
 
 static inline int xmsg_add_watch(session_t *s, const char *f)
 {
-#define __FUNC__ "xmsg_add_watch"
 	struct stat fs;
 	char *dir = xmsg_dirfix(f);
 #undef XERRADD
@@ -583,12 +575,10 @@ static inline int xmsg_add_watch(session_t *s, const char *f)
 #undef XERRADD
 #define XERRADD
 	return 0;
-#undef __FUNC__
 }
 
 static COMMAND(xmsg_connect)
 {
-#define __FUNC__ "xmsg_connect"
 	if (session_connected_get(session)) {
 		printq("already_connected", session_name(session));
 		return -1;
@@ -614,24 +604,20 @@ static COMMAND(xmsg_connect)
 	xmsg_timer_change(session, "rescan_timer");
 
 	return 0;
-#undef __FUNC__
 }
 
 static COMMAND(xmsg_reconnect)
 {
-#define __FUNC__ "xmsg_reconnect"
 	if (session_connected_get(session)) {
 		xmsg_disconnect(name, params, session, target, quiet);
 	}
 
 	return xmsg_connect(name, params, session, target, quiet);
-#undef __FUNC__
 }
 
 /* kind = 0 for sent, 1 for toobig */
 static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 {
-#define __FUNC__ "xmsg_unlink_dotfiles"
 	if (session_int_get(s, varname)) {
 		const int kind = !xstrcasecmp(varname, "unlink_sent");
 		const int maxfs = session_int_get(s, "max_filesize");
@@ -679,12 +665,10 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		xfree(df);
 		xfree(dfd);
 	}
-#undef __FUNC__
 }
 
 static COMMAND(xmsg_msg)
 {
-#define __FUNC__ "xmsg_msg"
 	char *fn;
 	int fd;
 	char *msg = (char*) params[1];
@@ -763,23 +747,19 @@ static COMMAND(xmsg_msg)
 	}
 			
 	return 0;
-#undef __FUNC__
 }
 
 static COMMAND(xmsg_inline_msg)
 {
-#define __FUNC__ "xmsg_inline_msg"
 	const char *par[2] = {NULL, params[0]};
 	if (!params[0] || !target)
 		return -1;
 	
 	return xmsg_msg(("chat"), par, session, target, quiet);
-#undef __FUNC__
 }
 
 static int xmsg_theme_init(void)
 {
-#define __FUNC__ "xmsg_theme_init"
 #ifndef NO_DEFAULT_THEME
 	format_add("xmsg_addwatch_failed", _("Unable to add inotify watch (wrong path?)"), 1);
 	format_add("xmsg_nosendcmd", _("%> (%1) You need to set %csend_cmd%n to be able to send msgs"), 1);
@@ -788,7 +768,6 @@ static int xmsg_theme_init(void)
 	format_add("xmsg_umount", _("volume containing watched directory was unmounted"), 1);
 #endif
 	return 0;
-#undef __FUNC__
 }
 
 static plugins_params_t xmsg_plugin_vars[] = {
@@ -810,7 +789,6 @@ static plugins_params_t xmsg_plugin_vars[] = {
 
 int xmsg_plugin_init(int prio)
 {
-#define __FUNC__ "xmsg_plugin_init"
 #ifdef HAVE_INOTIFY
 	if ((in_fd = inotify_init()) == -1)
 		xerrn("unable to init inotify");
@@ -841,17 +819,14 @@ int xmsg_plugin_init(int prio)
 #endif /*HAVE_INOTIFY*/
 	
 	return 0;
-#undef __FUNC__
 }
 
 static int xmsg_plugin_destroy(void)
 {
-#define __FUNC__ "xmsg_plugin_destroy"
 	plugin_unregister(&xmsg_plugin);
 
 	close(in_fd);
 	xfree(ev);
 
 	return 0;
-#undef __FUNC__
 }
