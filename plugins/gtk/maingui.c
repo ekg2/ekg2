@@ -85,6 +85,8 @@
 /* extern */
 
 void fe_userlist_numbers(window_t *sess);
+void fe_userlist_clear(window_t *sess);
+void fe_userlist_insert(window_t *sess, userlist_t *u);
 
 /* forward */
 void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
@@ -557,13 +559,27 @@ static void mg_userlist_toggle_cb(GtkWidget *button, gpointer userdata) {
 
 static idle_t *ul_tag = NULL;
 
-static gboolean mg_populate_userlist(window_t *sess) {
+/* static */ gboolean mg_populate_userlist(window_t *sess) {
 	gtk_window_ui_t *gui;
 
 	if (!sess)
 		sess = window_current;
 
+#warning "mg_populate_userlist() hack, slowdown"
+	fe_userlist_clear(sess);
+
 #warning "xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX"
+
+	if (sess->session) {
+		list_t l;
+
+		for (l = sess->session->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+
+			fe_userlist_insert(sess, u);
+		}
+	}
+
 
 //	if (is_session(sess)) 	-> if (window_find_ptr(sess)
 	if (1)

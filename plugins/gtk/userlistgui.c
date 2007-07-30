@@ -34,6 +34,7 @@
 #include <gtk/gtkliststore.h>
 #include <gdk/gdkkeysyms.h>
 
+#include <ekg/userlist.h>
 #include <ekg/windows.h>
 
 #include "main.h"
@@ -272,12 +273,14 @@ void fe_userlist_rehash(session *sess, struct User *user)
 #endif
 
 /* void fe_userlist_insert(window_t *sess, struct User *newuser, int row, int sel)  */
-void fe_userlist_insert(window_t *sess, const char *name)
+void fe_userlist_insert(window_t *sess, userlist_t *u)
 {
 	GtkTreeModel *model = gtk_private(sess)->user_model;
 	GdkPixbuf *pix = NULL;	/* get_user_icon (sess->server, newuser); */
 	GtkTreeIter iter;
 	int do_away = TRUE;
+
+	int sel = 0;
 
 #if 0
 	if (prefs.away_size_max < 1 || !prefs.away_track)
@@ -286,8 +289,8 @@ void fe_userlist_insert(window_t *sess, const char *name)
 #endif
 	gtk_list_store_insert_with_values(GTK_LIST_STORE(model), &iter, 0, /* row, */
 					  0, pix,
-					  1, /* newuser->nick, */ name, 
-					  2, /* newuser->hostname, */ "test2",
+					  1, u->uid,
+					  2, u->nickname,
 //					  3, /* newuser, */ NULL,
 //					  4, /* (do_away) */ FALSE,
 //					  /* ? (newuser->away ? &colors[COL_AWAY] : NULL) : */ (NULL),
@@ -308,7 +311,7 @@ void fe_userlist_insert(window_t *sess, const char *name)
 
 #endif
 	/* is it the front-most tab? */
-	if (gtk_tree_view_get_model(GTK_TREE_VIEW(gtk_private_ui(sess)->user_tree)) == model /* && sel */) {
+	if (sel && gtk_tree_view_get_model(GTK_TREE_VIEW(gtk_private_ui(sess)->user_tree)) == model) {
 		gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(gtk_private_ui(sess)->user_tree)), &iter);
 	}
 }
@@ -319,12 +322,12 @@ void fe_userlist_move(session *sess, struct User *user, int new_row)
 {
 	fe_userlist_insert(sess, user, new_row, fe_userlist_remove(sess, user));
 }
-
-void fe_userlist_clear(session *sess)
-{
-	gtk_list_store_clear(sess->res->user_model);
-}
 #endif
+
+void fe_userlist_clear(window_t *sess)
+{
+	gtk_list_store_clear(gtk_private(sess)->user_model);
+}
 
 void *userlist_create_model(void)
 {
