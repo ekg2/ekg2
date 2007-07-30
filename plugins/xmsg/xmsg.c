@@ -43,6 +43,7 @@
 #define XMSG_MAXFS_DEF "16384"
 #define XMSG_MAXFC_DEF "25"
 #define XMSG_MAXFC_TIMER "3"
+#define XMSG_TMPFILE_PATH "/tmp/xmsg.XXXXXX"
 
 #ifndef NAME_MAX
 #ifdef MAXNAMLEN /* BSD */
@@ -400,7 +401,6 @@ static TIMER_SESSION(xmsg_iterate_dir)
 	xdebug("processed %d files", n);
 
 	return 0;
-#undef s
 }
 
 static void xmsg_timer_change(session_t *s, const char *varname)
@@ -553,8 +553,6 @@ static inline int xmsg_add_watch(session_t *s, const char *f)
 {
 	struct stat fs;
 	char *dir = xmsg_dirfix(f);
-#undef XERRADD
-#define XERRADD xfree(dir);
 
 	if (!stat(dir, &fs)) {
 		if (!S_ISDIR(fs.st_mode))
@@ -565,15 +563,15 @@ static inline int xmsg_add_watch(session_t *s, const char *f)
 	}
 
 #ifdef HAVE_INOTIFY
-	if ((s->priv = (void*) inotify_add_watch(in_fd, dir, (IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR))) == (void*) -1)
+	if ((s->priv = (void*) inotify_add_watch(in_fd, dir, (IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR))) == (void*) -1) {
+		xfree(dir);
 		xerrn("unable to add inotify watch");
+	}
 	
 	xdebug("inotify watch added: %d", (uint32_t) s->priv);
 #endif /*HAVE_INOTIFY*/
 	
 	xfree(dir);
-#undef XERRADD
-#define XERRADD
 	return 0;
 }
 
@@ -669,7 +667,7 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 
 static COMMAND(xmsg_msg)
 {
-	char *fn;
+	char fn[sizeof(XMSG_TMPFILE_PATH)];
 	int fd;
 	char *msg = (char*) params[1];
 	char *uid;
@@ -688,9 +686,7 @@ static COMMAND(xmsg_msg)
 		return -1;
 	}
 	
-	fn = xstrdup("/tmp/xmsg.XXXXXX");
-#undef XERRADD
-#define XERRADD xfree(fn);
+	xstrcpy(fn, XMSG_TMPFILE_PATH);
 	
 	fd = mkstemp(fn);
 	if (fd == -1)
@@ -703,25 +699,22 @@ static COMMAND(xmsg_msg)
 		mymsg = (msgx ? msgx : msg);
 	}
 	fs = xstrlen(mymsg);
-#undef XERRADD
-#define XERRADD close(fd); unlink(fn); xfree(fn); xfree(msgx);
 
 	while (fs > 0) {
-		if ((n = write(fd, mymsg, fs)) == -1)
+		if ((n = write(fd, mymsg, fs)) == -1) {
+			unlink(fn);
+			close(fd);
+			xfree(msgx);
 			xerrn("Unable to write message into temp file");
+		}
 		fs -= n;
 		mymsg += n;
 	}
-	
+
+	xfree(msgx);	
 	close(fd);
-#undef XERRADD
-#define XERRADD xfree(fn);
 	if ((command_exec_format(NULL, session, 1, "!^%s \"%s\" \"%s\"", msgcmd, target+XMSG_UID_DIROFFSET, fn)))
 		xerr("msgcmd exec failed");
-	
-	xfree(fn);
-#undef XERRADD
-#define XERRADD
 	
 	{
 		char *sess	= xstrdup(session_uid_get(session));
