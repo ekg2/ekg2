@@ -146,7 +146,7 @@ static QUERY(gpg_message_encrypt) {
 
 	char *gpg_data	= *message;
 
-	egpg_key_t *key = gpg_keydb_find_uid(uid);
+	egpg_key_t *key;
 
 	*error = NULL;
 
