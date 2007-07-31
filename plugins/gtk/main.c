@@ -97,6 +97,9 @@ char *font_normal_config;
 
 int ui_quit = 0;
 
+int gui_pane_left_size_config;
+int gui_pane_right_size_config;
+
 
 /* TODO:
  *    - wrzucic zmienne do variable_add() przynajmniej te wazne..
@@ -330,6 +333,10 @@ static QUERY(gtk_setvar_default) {
 	font_normal_config = xstrdup("Monospace 9");
 
 	contacts_config			= 2;
+
+	gui_pane_left_size_config = 100;
+	gui_pane_right_size_config = 100;
+
 
 	return 0;
 }

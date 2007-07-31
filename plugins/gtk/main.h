@@ -72,6 +72,9 @@ extern int tab_layout_config;
 extern int contacts_config;
 extern int backlog_size_config;
 
+extern int gui_pane_left_size_config;
+extern int gui_pane_right_size_config;
+
 #define hidemenu_config 0
 #define topicbar_config 1
 
@@ -94,7 +97,6 @@ extern int backlog_size_config;
 
 #define FOCUS_NEW_ALL	     1
 #define FOCUS_NEW_ONLY_ASKED 2
-#define gui_pane_right_size_config 100
 
 #define paned_userlist_config 0		/* XXX xchat def: 1 */
 #define style_inputbox_config 0		/* XXX xchat commented def: 1 */

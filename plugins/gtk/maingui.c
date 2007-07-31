@@ -1497,9 +1497,7 @@ mg_create_userlist(gtk_window_ui_t *gui, GtkWidget *box)
 static void
 mg_leftpane_cb(GtkPaned * pane, GParamSpec * param, gtk_window_ui_t* gui)
 {
-#if DARK
-	prefs.gui_pane_left_size = gtk_paned_get_position(pane);
-#endif
+	gui_pane_left_size_config = gtk_paned_get_position(pane);
 }
 
 static void
@@ -1513,11 +1511,10 @@ mg_rightpane_cb(GtkPaned * pane, GParamSpec * param, gtk_window_ui_t* gui)
 		return;*/
 
 	gtk_widget_style_get(GTK_WIDGET(pane), "handle-size", &handle_size, NULL);
-#if DARK
+
 	/* record the position from the RIGHT side */
-	prefs.gui_pane_right_size =
+	gui_pane_right_size_config =
 		GTK_WIDGET(pane)->allocation.width - gtk_paned_get_position(pane) - handle_size;
-#endif
 }
 
 static IDLER(mg_add_pane_signals) {
