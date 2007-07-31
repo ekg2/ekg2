@@ -37,13 +37,9 @@
 #endif
 #endif /*HAVE_INOTIFY*/
 
-/* some additional defines */
-#define XMSG_UID_DIROFFSET 5
-#define XMSG_NAMESEP_DEF "."
-#define XMSG_MAXFS_DEF "16384"
-#define XMSG_MAXFC_DEF "25"
-#define XMSG_MAXFC_TIMER "3"
-#define XMSG_TMPFILE_PATH "/tmp/xmsg.XXXXXX"
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
 
 #ifndef NAME_MAX
 #ifdef MAXNAMLEN /* BSD */
@@ -53,14 +49,6 @@
 #endif
 #endif /* NAME_MAX */
 
-/* if we have inotify, we don't need that timer */
-#ifdef HAVE_INOTIFY
-#define XMSG_MAXFC_INOTIFY 25
-#define XMSG_TIMER_DEF "0"
-#else
-#define XMSG_TIMER_DEF "300"
-#endif
-
 /* __func__ fallback (from 'info gcc') */
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -68,6 +56,22 @@
 # else
 #  define __func__ itoa(__LINE__)
 # endif
+#endif
+
+/* some additional defines */
+#define XMSG_UID_DIROFFSET 5
+#define XMSG_NAMESEP_DEF "."
+#define XMSG_MAXFS_DEF "16384"
+#define XMSG_MAXFC_DEF "25"
+#define XMSG_MAXFC_TIMER "3"
+#define XMSG_TMPFILE_PATH "/tmp/xmsg.XXXXXX"
+
+/* if we have inotify, we don't need that timer */
+#ifdef HAVE_INOTIFY
+#define XMSG_MAXFC_INOTIFY 25
+#define XMSG_TIMER_DEF "0"
+#else
+#define XMSG_TIMER_DEF "300"
 #endif
 
 /* debugs */
@@ -201,27 +205,32 @@ static int ekg_checkoutfile(const char *file, char **data, int *len, char **hash
 	return 0;
 }
 
-static char *xmsg_dirfix(const char *path)
+static const char *xmsg_dirfix(const char *path)
 {
-	char *tmp = xstrdup(path), *p;
+	char *buf = (char*) prepare_pathf(NULL); /* steal the buffer */
 	
+	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX) { /* buffer too small */
+		xdebug2(DEBUG_ERROR, "Buffer too small for: in = %s, len = %d, PATH_MAX = %d\n", path, xstrlen(path), PATH_MAX);
+		return NULL;
+	}
+
 	/* if path starts with slash, we leave it as is,
 	 * otherwise we convert # to / */
-	if (*tmp != '/') {
-		for (p = xstrchr(tmp, '#'); p; p = xstrchr(p+1, '#'))
+	if (*buf != '/') {
+		char *p;
+
+		for (p = xstrchr(buf, '#'); p; p = xstrchr(p+1, '#'))
 			*p = '/';
 	}
 
-	xdebug("in: %s, out: %s", path, tmp);
+	xdebug("in: %s, out: %s", path, buf);
 
-	return tmp;
+	return buf;
 }
 
 static int xmsg_handle_file(session_t *s, const char *fn)
 {
-	char *dir;
-#undef XERRADD
-#define XERRADD xfree(dir);
+	const char *dir;
 	const int nounlink = !session_int_get(s, "unlink_sent");
 	const int utb = session_int_get(s, "unlink_toobig");
 	const int maxfs = session_int_get(s, "max_filesize");
@@ -238,7 +247,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
 	f = xmalloc(xstrlen(dir) + xstrlen(fn) + 2);
 #undef XERRADD
-#define XERRADD xfree(f); xfree(dir);
+#define XERRADD xfree(f);
 	xstrcpy(f, dir);
 	xstrcat(f, "/"); /* double trailing slash shouldn't make any problems */
 	xstrcat(f, fn);
@@ -253,7 +262,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		if (nounlink || !utb) {
 			dotf = xmalloc(xstrlen(f) + 2 + xstrlen(dfsuffix));
 #undef XERRADD
-#define XERRADD xfree(f); xfree(dotf); xfree(dir);
+#define XERRADD xfree(f); xfree(dotf);
 			xstrcpy(dotf, dir);
 			xstrcat(dotf, "/.");
 			xstrcat(dotf, fn);
@@ -285,7 +294,6 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 #undef XERRADD
 #define XERRADD xfree(f);
 	}
-	xfree(dir);
 	
 	if (maxfs && (fs > maxfs)) {
 		print((utb ? "xmsg_toobigrm" : "xmsg_toobig"), fn, session_name(s));
@@ -366,7 +374,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 
 static TIMER_SESSION(xmsg_iterate_dir)
 {
-	char *dir;
+	const char *dir;
 	DIR *d;
 	struct dirent *de;
 	int n = 0;
@@ -376,12 +384,10 @@ static TIMER_SESSION(xmsg_iterate_dir)
 		return -1;
 	
 	session_status_set(s, EKG_STATUS_AVAIL);
-	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
-	d = opendir(dir);
-	xfree(dir);
+	if (!(dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET))
+			|| !(d = opendir(dir))) {
 
-	if (!d) {
-		xdebug("unable to open specified directory");
+		xerr("unable to open specified directory");
 		return 0;
 	}
 	
@@ -552,9 +558,11 @@ static QUERY(xmsg_validate_uid)
 static inline int xmsg_add_watch(session_t *s, const char *f)
 {
 	struct stat fs;
-	char *dir = xmsg_dirfix(f);
+	const char *dir = xmsg_dirfix(f);
 
-	if (!stat(dir, &fs)) {
+	if (!dir)
+		return 0;
+	else if (!stat(dir, &fs)) {
 		if (!S_ISDIR(fs.st_mode))
 			xerr("given path is a file, not a directory");
 	} else {
@@ -563,15 +571,12 @@ static inline int xmsg_add_watch(session_t *s, const char *f)
 	}
 
 #ifdef HAVE_INOTIFY
-	if ((s->priv = (void*) inotify_add_watch(in_fd, dir, (IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR))) == (void*) -1) {
-		xfree(dir);
+	if ((s->priv = (void*) inotify_add_watch(in_fd, dir, (IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR))) == (void*) -1)
 		xerrn("unable to add inotify watch");
-	}
 	
 	xdebug("inotify watch added: %d", (uint32_t) s->priv);
 #endif /*HAVE_INOTIFY*/
 	
-	xfree(dir);
 	return 0;
 }
 
@@ -620,13 +625,13 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		const int kind = !xstrcasecmp(varname, "unlink_sent");
 		const int maxfs = session_int_get(s, "max_filesize");
 		const char *dfsuffix = session_get(s, "dotfile_suffix");
-		char *dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
-		DIR *d = opendir(dir);
+		const char *dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
+		DIR *d;
 		struct dirent *de;
 		struct stat st, std;
 		char *df, *dfd, *dp, *dpd;
 		
-		if (!d) {
+		if (!dir || !(d = opendir(dir))) {
 			xdebug("unable to open specified directory");
 			return;
 		}
@@ -634,7 +639,6 @@ static void xmsg_unlink_dotfiles(session_t *s, const char *varname)
 		df = xmalloc(xstrlen(dir) + NAME_MAX + 2);
 		dfd = xmalloc(xstrlen(dir) + NAME_MAX + 3 + xstrlen(dfsuffix));
 		xstrcpy(df, dir);
-		xfree(dir);
 		dp = df + xstrlen(df);
 		*(dp++) = '/';
 		xstrcpy(dfd, df);
