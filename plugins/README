@@ -13,7 +13,7 @@ irc		gim		obs³uga protoko³u irc		-
 jabber		wojtekka	obs³uga protoko³u XMPP/Jabber	expat
 jogger		peres		komunikacja z botem Jogger.pl	-
 logs		zdzichu		logowanie wiadomo¶ci		-
-logsoracle	simon		logowanie wiadomo¶ci do oracle	oracle
+logsoracle	ecimon		logowanie wiadomo¶ci do oracle	oracle
 logsqlite	leafnode	logowanie wiadomo¶ci do sqlite	sqlite
 mail		szalik		sprawdzanie poczty		-
 ncurses		*		interfejs tekstowy		ncurses
