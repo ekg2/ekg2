@@ -266,7 +266,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		unlink(dir);
 
 		/* here: dir = dotf */
-	memmove(dir+dirlen+2, dir+dirlen+1, xstrlen(dir) - dirlen - 1);
+	memmove(dir+dirlen+2, dir+dirlen+1, xstrlen(dir) - dirlen);
 	dir[dirlen+1] = '.';
 	xstrcpy(dir+xstrlen(dir), dfsuffix); /* we've already checked whether it fits */
 	
@@ -321,11 +321,9 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 			{
 				const char *charset = session_get(s, "charset");
 
-				if (charset) {
-					msgx = ekg_convert_string(msg, charset, NULL);
+				if (charset && (msgx = ekg_convert_string(msg, charset, NULL)))
 					xfree(msg);
-				}
-				if (!msgx)
+				else
 					msgx = msg;
 			}
 
