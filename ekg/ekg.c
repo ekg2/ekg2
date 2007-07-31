@@ -705,23 +705,16 @@ int main(int argc, char **argv)
 
         strlcpy(argv0, argv[0], sizeof(argv0));
 
-#ifdef NO_POSIX_SYSTEM
-	{
-#if 0
-		USER_INFO_1 *user = NULL;
-		if (NetUserGetInfo(NULL /* for localhost? */, (LPCWSTR) ("darkjames"), 1, (LPBYTE *) &user) == NERR_Success) {
-			debug("%ls\n", user->usri1_home_dir);
-			home_dir = saprintf("%ls", user->usri1_home_dir);
-		}
-		if (user) NetApiBufferFree(user);
-#endif
-		home_dir = xstrdup("c:\\");
-	}
-#else
         if (!(home_dir = xstrdup(getenv("HOME")))) {
                 if ((pw = getpwuid(getuid())))
                         home_dir = xstrdup(pw->pw_dir);
 	}
+#ifdef NO_POSIX_SYSTEM
+	if (!home_dir)
+		home_dir = xstrdup(getenv("USERPROFILE"));
+
+	if (!home_dir)
+		home_dir = xstrdup("c:\\");
 #endif
 	if (!home_dir) {
 		fprintf(stderr, _("Can't find user's home directory. Ask administration to fix it.\n"));
