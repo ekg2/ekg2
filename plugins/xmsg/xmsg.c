@@ -75,11 +75,10 @@
 #endif
 
 /* debugs */
-#define xerr(txt, ...) do { debug_error("[xmsg:%s] " txt "\n", __func__, ##__VA_ARGS__); XERRADD return -1; } while (0)
-#define xerrn(txt, ...) do { debug_error("[xmsg:%s] " txt ": %s\n", __func__, ##__VA_ARGS__, strerror(errno)); XERRADD return -1; } while (0)
+#define xerr(txt, ...) do { debug_error("[xmsg:%s] " txt "\n", __func__, ##__VA_ARGS__); return -1; } while (0)
+#define xerrn(txt, ...) do { debug_error("[xmsg:%s] " txt ": %s\n", __func__, ##__VA_ARGS__, strerror(errno)); return -1; } while (0)
 #define xdebug(txt, ...) debug("[xmsg:%s] " txt "\n", __func__, ##__VA_ARGS__)
 #define xdebug2(lvl, txt, ...) debug_ext(lvl, "[xmsg:%s] " txt "\n", __func__, ##__VA_ARGS__)
-#define XERRADD
 
 /* global vars */
 static int in_fd = 0;
@@ -210,7 +209,7 @@ static const char *xmsg_dirfix(const char *path)
 	char *buf = (char*) prepare_pathf(NULL); /* steal the buffer */
 	
 	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX) { /* buffer too small */
-		xdebug2(DEBUG_ERROR, "Buffer too small for: in = %s, len = %d, PATH_MAX = %d\n", path, xstrlen(path), PATH_MAX);
+		xdebug2(DEBUG_ERROR, "Buffer too small for: in = %s, len = %d, PATH_MAX = %d", path, xstrlen(path), PATH_MAX);
 		return NULL;
 	}
 
@@ -230,89 +229,83 @@ static const char *xmsg_dirfix(const char *path)
 
 static int xmsg_handle_file(session_t *s, const char *fn)
 {
-	const char *dir;
 	const int nounlink = !session_int_get(s, "unlink_sent");
 	const int utb = session_int_get(s, "unlink_toobig");
 	const int maxfs = session_int_get(s, "max_filesize");
 	const char *dfsuffix = session_get(s, "dotfile_suffix");
 	char *namesep = (char*) session_get(s, "name_separator");
+	char *dir;
+	int dirlen;
 
-	char *msg;
-	char *f;
-	int fd, fs;
+	char *msg = NULL;
+	int err, fs;
 	time_t ft;
 	
 	if (*fn == '.') /* we're skipping ALL dotfiles */
 		return -1;
-	dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
-	f = xmalloc(xstrlen(dir) + xstrlen(fn) + 2);
-#undef XERRADD
-#define XERRADD xfree(f);
-	xstrcpy(f, dir);
-	xstrcat(f, "/"); /* double trailing slash shouldn't make any problems */
-	xstrcat(f, fn);
-	
-	xdebug("s = %s, d = %s, fn = %s, f = %s", session_uid_get(s), dir, fn, f);
+	dir = (char*) xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
+	dirlen = xstrlen(dir);
+		/* first check if buffer is long enough to fit the whole path for dotfile */
+	if (strlcpy(dir+dirlen+1, fn, PATH_MAX-dirlen-2-xstrlen(dfsuffix)) >= PATH_MAX-dirlen-2-xstrlen(dfsuffix))
+		xerr("Buffer too small for: fn = %s, len(fn) = %d, dirlen = %d, dfsuffixlen = %d", fn, xstrlen(fn), dirlen, xstrlen(dfsuffix));
+
+		/* then fill in middle part of path */
+	dir[dirlen] = '/';
+		/* and take a much closer look the file */	
+	xdebug("s = %s, d = %s, fn = %s", session_uid_get(s), dir, fn);
+	if ((err = ekg_checkoutfile(dir, &msg, &fs, NULL, maxfs, 0))) {
+		if (err == EFBIG) {
+			print((utb ? "xmsg_toobigrm" : "xmsg_toobig"), fn, session_name(s));
+			if (utb) {
+				unlink(dir);
+				return -1;
+			} /* else we need to create the dotfile first */
+		} else if (err != ENOENT && err != EINVAL)
+			return -1;
+	} else if (!nounlink && (utb == (err == EFBIG)))
+		unlink(dir);
+
+		/* here: dir = dotf */
+	memmove(dir+dirlen+2, dir+dirlen+1, xstrlen(dir) - dirlen - 1);
+	dir[dirlen+1] = '.';
+	xstrcpy(dir+xstrlen(dir), dfsuffix); /* we've already checked whether it fits */
 	
 	{
-		struct stat st, std;
-		char *dotf = NULL;
+		struct stat st;
 		int r;
 		
 		if (nounlink || !utb) {
-			dotf = xmalloc(xstrlen(f) + 2 + xstrlen(dfsuffix));
-#undef XERRADD
-#define XERRADD xfree(f); xfree(dotf);
-			xstrcpy(dotf, dir);
-			xstrcat(dotf, "/.");
-			xstrcat(dotf, fn);
-			xstrcat(dotf, dfsuffix);
-			
-			r = !(stat(dotf, &std) || S_ISDIR(std.st_mode));
+			r = !(stat(dir, &st) || S_ISDIR(st.st_mode));
 		} else
 			r = 0;
 		
-		if (stat(f, &st) || !S_ISREG(st.st_mode)) {
+		if (err == ENOENT) {
 			if (r) /* clean up stale dotfile */
-				unlink(dotf);
-			XERRADD
+				unlink(dir);
+			xfree(msg);
 			return -1;
 		} else if (r) {
-			XERRADD
+			xfree(msg); /* XXX: I think that we rather shouldn't first read, then check if it is needed,
+					at least for nounlink mode */
 			return -1;
-		} else if (nounlink || (!utb && maxfs && (st.st_size > maxfs))) {
-			if (!(maxfs && (st.st_size > maxfs) && utb))
-				close(open(dotf, O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600));
-		}
+		} else if ((nounlink && !(utb && err == EFBIG)) || (!utb && err == EFBIG))
+			close(open(dir, O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600));
 		
-		fs = st.st_size;
+#if 0 /* XXX */
 		/* mtime > ctime > atime > time(NULL) */
 #define X(x,y) (x ? x : y)
 		ft = X(st.st_mtime, X(st.st_ctime, X(st.st_atime, time(NULL))));
 #undef X
-		xfree(dotf);
-#undef XERRADD
-#define XERRADD xfree(f);
+#else
+		ft = time(NULL);
+#endif
 	}
 	
-	if (maxfs && (fs > maxfs)) {
-		print((utb ? "xmsg_toobigrm" : "xmsg_toobig"), fn, session_name(s));
-		if (utb)
-			unlink(f);
-		XERRADD
-		return -1; /* we don't want to unlink such files */
-	} else if (fs == 0)
-		xdebug("empty file found, not submitting");
-	else { /* XXX: move on to ekg_openfile() */
-		fd = open(f, O_RDONLY);
-		if (fd < 0)
-			xerrn("unable to open given file");
-#undef XERRADD
-#define XERRADD close(fd); xfree(f);
-		
-		if ((msg = mmap(NULL, fs, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
-			xerrn("mmap failed");
-		
+	if (err == EFBIG)
+		return -1;
+	else if (err == EINVAL)
+		xdebug("empty file, not submitting");
+	else {
 		{
 			char *session	= xstrdup(session_uid_get(s));
 			char *uid	= xmalloc(strlen(fn) + 6);
@@ -327,15 +320,13 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 
 			{
 				const char *charset = session_get(s, "charset");
-				char *tmp = xstrndup(msg, fs); /* temporary workaround for mmap() problems */
 
 				if (charset) {
-					if (!(msgx = ekg_convert_string(tmp, charset, NULL)))
-						msgx = tmp;
-					else
-						xfree(tmp);
-				} else
-					msgx = tmp;
+					msgx = ekg_convert_string(msg, charset, NULL);
+					xfree(msg);
+				}
+				if (!msgx)
+					msgx = msg;
 			}
 
 			xstrcpy(uid, "xmsg:");
@@ -358,17 +349,8 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 			xfree(uid);
 			xfree(session);
 		}
-		
-		munmap(msg, fs);
-		close(fd);
 	}
 	
-	if (!nounlink)
-		unlink(f);
-	xfree(f);
-#undef XERRADD
-#define XERRADD
-
 	return 0;
 }
 
