@@ -46,7 +46,6 @@ int last_count(const char *uid);
 void last_free();
 
 char *xml_escape(const char *text);
-char *log_escape(const char *str);
 
 #endif
 

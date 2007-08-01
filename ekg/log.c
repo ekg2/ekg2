@@ -199,62 +199,6 @@ void last_free()
 }
 
 /*
- * log_escape()
- *
- * je¶li trzeba, eskejpuje tekst do logów.
- * 
- *  - str - tekst.
- *
- * zaalokowany bufor.
- */
-char *log_escape(const char *str)
-{
-	const char *p;
-	char *res, *q;
-	int size, needto = 0;
-
-	if (!str)
-		return NULL;
-	
-	for (p = str; *p; p++) {
-		if (*p == '"' || *p == '\'' || *p == '\r' || *p == '\n' || *p == ',')
-			needto = 1;
-	}
-
-	if (!needto)
-		return xstrdup(str);
-
-	for (p = str, size = 0; *p; p++) {
-		if (*p == '"' || *p == '\'' || *p == '\r' || *p == '\n' || *p == '\\')
-			size += 2;
-		else
-			size++;
-	}
-
-	q = res = xmalloc(size + 3);
-	
-	*q++ = '"';
-	
-	for (p = str; *p; p++, q++) {
-		if (*p == '\\' || *p == '"' || *p == '\'') {
-			*q++ = '\\';
-			*q = *p;
-		} else if (*p == '\n') {
-			*q++ = '\\';
-			*q = 'n';
-		} else if (*p == '\r') {
-			*q++ = '\\';
-			*q = 'r';
-		} else
-			*q = *p;
-	}
-	*q++ = '"';
-	*q = 0;
-
-	return res;
-}
-
-/*
  * xml_escape()
  *
  *    escapes text to be xml-compliant

@@ -43,6 +43,7 @@ struct {
 	log_window_t *lw;
 } typedef logs_log_t;
 
+static char *log_escape(const char *str);
 static char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
 static const char *prepare_timestamp_format(const char *format, time_t t);
 
