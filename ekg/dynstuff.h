@@ -51,7 +51,7 @@ struct list {
 typedef struct list *list_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-#define LIST_ADD_COMPARE(x, type)			int x(type data1, type data2)
+#define LIST_ADD_COMPARE(x, type)			int x(const type data1, const type data2)
 #define LIST_ADD_SORTED(list, data, alloc_size, comp)	list_add_sorted(list, data, alloc_size, (void *) comp)
 
 void *list_add(list_t *list, void *data, int alloc_size);

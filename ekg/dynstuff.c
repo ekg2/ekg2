@@ -78,9 +78,8 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 			}
 			
 			if (!prev) {
-				tmp = *list;
+				new->next = *list;
 				*list = new;
-				new->next = tmp;
 			} else {
 				prev->next = new;
 				new->next = tmp;

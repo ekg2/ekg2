@@ -2636,7 +2636,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	if ((last_command && abbrs == 1 && !abbrs_plugins) || ( (last_command = last_command_plugin) && abbrs_plugins == 1 && !abbrs)) {
 		session_t *s = session ? session : window_current->session;
-		char *last_name    = last_command->name;
+		const char *last_name    = last_command->name;
 		char *tmp;
 		int last_alias	   = 0;
 		int res		   = 0;
@@ -2713,7 +2713,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res && last_command->flags & COMMAND_TARGET_VALID_UID) {
-				char *tmp = target;
+				const char *tmp = target;
 				if (!(target = get_uid(session, target))) {
 					/* user_not_found vs invalid_uid */
 					printq("user_not_found", tmp);
@@ -4124,7 +4124,7 @@ static LIST_ADD_COMPARE(command_add_compare, command_t *) {
 	if (!data1 || !data1->name || !data2 || !data2->name)
 		return 0;
 
-	return xstrcasecmp((char *) data1->name, (char *) data2->name);
+	return xstrcasecmp(data1->name, data2->name);
 }
 
 /**
@@ -4161,7 +4161,7 @@ static LIST_ADD_COMPARE(command_add_compare, command_t *) {
 command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities) {
 	command_t *c = xmalloc(sizeof(command_t));
 
-	c->name = xstrdup(name);
+	c->name = name;
 	c->params = params ? array_make(params, (" "), 0, 1, 1) : NULL;
 	c->function = function;
 	c->flags = flags;
@@ -4192,7 +4192,6 @@ void command_freeone(command_t *c)
 {
 	if (!c)
 		return;
-	xfree(c->name);
 	array_free(c->params);
 	array_free(c->possibilities);
 	list_remove(&commands, c, 1);
@@ -4413,7 +4412,6 @@ void command_free() {
 	for (l = commands; l; l = l->next) {
 		command_t *c = l->data;
 
-		xfree(c->name);
 		array_free(c->params);
 		array_free(c->possibilities);
 	}
