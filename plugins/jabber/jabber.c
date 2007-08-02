@@ -1252,13 +1252,13 @@ static int jabber_theme_init() {
 	format_add("jabber_private_list_empty",	  _("%! No list: %T%2/%3%n"), 1);
 
 	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
-	format_add("jabber_transport_list_begin", _("%g,+=%G----- Avalible agents on: %T%2%n"), 1);
+	format_add("jabber_transport_list_begin", _("%g,+=%G----- Available agents on: %T%2%n"), 1);
 	format_add("jabber_transport_list_item",  _("%g|| %n %6 - %W%3%n (%5)"), 1);
 	format_add("jabber_transport_list_item_node",("%g|| %n %6 - %W%3%n node: %g%4%n (%5)"), 1);
 	format_add("jabber_transport_list_end",   _("%g`+=%G----- End of the agents list%n\n"), 1);
 	format_add("jabber_transport_list_nolist", _("%! No agents @ %T%2%n"), 1);
 
-	format_add("jabber_remotecontrols_list_begin", _("%g,+=%G----- Avalible remote controls on: %T%2%n"), 1);
+	format_add("jabber_remotecontrols_list_begin", _("%g,+=%G----- Available remote controls on: %T%2%n"), 1);
 	format_add("jabber_remotecontrols_list_item",  _("%g|| %n %6 - %W%4%n (%5)"), 1);		/* %3 - jid %4 - node %5 - descr %6 - seqid */
 	format_add("jabber_remotecontrols_list_end",   _("%g`+=%G----- End of the remote controls list%n\n"), 1);
 	format_add("jabber_remotecontrols_list_nolist", _("%! No remote controls @ %T%2%n"), 1);
