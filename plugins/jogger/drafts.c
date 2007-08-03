@@ -100,7 +100,7 @@ void jogger_localize_headers(void *p) {
 }
 
 /**
- * ekg_checkoutfile()
+ * jogger_checkoutfile()
  *
  * Tries to open given file (check), and reads it, if expected (checkout).
  * It is designed to be proof to special file problems (especially named pipe ones).
@@ -109,19 +109,16 @@ void jogger_localize_headers(void *p) {
  * @param	data	- pointer to store file contents or NULL, if don't want to read it.
  * @param	len	- pointer to store filelength or NULL, if not needed.
  * @param	hash	- pointer to store filehash or NULL, if not needed.
- * @param	maxlen	- maximum filesize to accept or 0, if n/a
- * @param	flags	- bitmap field:<br>
- * 				1 - quiet (not printing any errors),<br>
- * 				2 - accept empty file.
+ * @param	maxlen	- maximum filesize to accept (not counting additional NUL) or 0, if n/a.
+ * @param	quiet	- if set, don't output anything to __status.
  *
  * @return	0 on success, errno on failure.
  */
-static int ekg_checkoutfile(const char *file, char **data, int *len, char **hash, const int maxlen, const int flags) {
+static int jogger_checkoutfile(const char *file, char **data, int *len, char **hash, const int maxlen, const int quiet) {
 	static char jogger_hash[sizeof(int)*2+3];
 	int mylen, fs, fd;
 
 	const char *fn	= prepare_path_user(file);
-	const int quiet	= (flags&1);
 
 	if (!fn)
 		return EINVAL;
@@ -143,85 +140,83 @@ static int ekg_checkoutfile(const char *file, char **data, int *len, char **hash
 			printq("io_nonfile", file);
 			return EISDIR; /* nearest, I think */
 		}
-		if (!(flags&2) && (fs = st.st_size) == 0) {
-			close(fd);
-			printq("io_emptyfile", file);
-			return EINVAL; /* like mmap */
-		} else if (maxlen && fs > maxlen) {
-			close(fd);
-			printq("io_toobig", file, itoa(fs), itoa(maxlen));
-			return EFBIG;
-		}
+
+		fs = st.st_size;
 	}
 
-	if (data || hash) {
-		char *out = xmalloc(fs+1);
-		void *p = out;
-		int rem = fs, res = 1;
+	int bufsize	= (fs ? (maxlen && fs > maxlen ? maxlen+1 : fs+1) : 0x4000); /* we leave 1 byte for additional NUL */
+	char *out	= xmalloc(bufsize);
+	void *p		= out;
+	int _read = 0, res;
 
-		if (fs) {
-			{
-				int cf = fcntl(fd, F_GETFL);
+	{
+		int cf	= fcntl(fd, F_GETFL);
 
-				if (cf == -1) /* evil thing */
-					cf = 0;
-				else
-					cf &= ~O_NONBLOCK;
-				fcntl(fd, F_SETFL, cf);
-			}
-
-			while ((res = read(fd, p, (rem <= SSIZE_MAX ? rem : SSIZE_MAX)))) {
-				if (res == -1) {
-					const int err = errno;
-					if (err != EINTR && err != EAGAIN) {
-						close(fd);
-						printq("io_cantread", file, strerror(errno));
-						return err;
-					}
-				} else {
-					p += res;
-					rem -= res;
-				}
-			}
-		}
-
-		mylen = xstrlen(out);
-		{
-			struct stat st;
-
-			if (fstat(fd, &st) == -1)
-				debug_error("ekg_openfile(): unable to fstat() again!\n");
-			else if (st.st_size > fs)
-				printq("io_expanded", file, itoa(st.st_size), itoa(fs));
-			else if (st.st_size < fs)
-				printq("io_truncated", file, itoa(st.st_size), itoa(fs));
-			else if (rem > 0)
-				printq("io_truncated_read", file, itoa(fs-rem), itoa(fs));
-			
-			if ((fs-rem) > mylen)
-				printq("io_binaryfile", file, itoa(mylen), itoa(fs));
-		}
-
-		if (len)
-			*len = fs-rem;
-
-			/* I don't want to write my own hashing function, so using EKG2 one
-			 * it will fail to hash data after any \0 in file, if there're any
-			 * but we also aren't prepared to handle them */
-		if (hash) {
-			char sizecont[8];
-
-			snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
-			snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
-			*hash = jogger_hash;
-		}
-		if (data)
-			*data = out;
+		if (cf == -1) /* evil thing */
+			cf = 0;
 		else
-			xfree(out);
-	} else if (len)
-		*len = fs;
+			cf &= ~O_NONBLOCK;
+		fcntl(fd, F_SETFL, cf);
+	}
+
+	while ((res = read(fd, p, bufsize-_read))) {
+		if (res == -1) {
+			const int err = errno;
+			if (err != EINTR && err != EAGAIN) {
+				close(fd);
+				printq("io_cantread", file, strerror(errno));
+				return err;
+			}
+		} else {
+			_read += res;
+			if (maxlen && _read > maxlen) {
+				xfree(out);
+				printq("io_toobig", file, itoa(_read > fs ? _read : fs), itoa(maxlen));
+				return EFBIG;
+			} else if (_read == bufsize) { /* fs sucks? */
+				bufsize += 0x4000;
+				out	= xrealloc(out, bufsize);
+				p	= out+_read;
+			} else
+				p	+= res;
+		}
+	}
 	close(fd);
+
+	if (_read == 0) {
+		xfree(out);
+		printq("io_emptyfile", file);
+		return EINVAL; /* like mmap() */
+	} else if (_read+1 != bufsize) {
+		out		= xrealloc(out, _read+1);
+		out[_read]	= 0; /* add NUL */
+	}
+
+	mylen = xstrlen(out);
+	if (fs && _read > fs)
+		printq("io_expanded", file, itoa(_read), itoa(fs));
+	else if (_read < fs)
+		printq("io_truncated", file, itoa(_read), itoa(fs));
+	if (_read > mylen)
+		printq("io_binaryfile", file, itoa(mylen), itoa(_read));
+	if (len)
+		*len = _read;
+
+		/* I don't want to write my own hashing function, so using EKG2 one
+		 * it will fail to hash data after any \0 in file, if there're any
+		 * but we also aren't prepared to handle them */
+	if (hash) {
+		char sizecont[8];
+
+		snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
+		snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
+		*hash = jogger_hash;
+	}
+
+	if (data)
+		*data = out;
+	else
+		xfree(out);
 
 	return 0;
 }
@@ -240,7 +235,7 @@ COMMAND(jogger_prepare) {
 		return -1;
 	}
 
-	if (ekg_checkoutfile(fn, &entry, NULL, &hash, 0, quiet))
+	if (jogger_checkoutfile(fn, &entry, NULL, &hash, 0, quiet))
 		return -1;
 	len = xstrlen(entry);
 	s = entry;
@@ -380,7 +375,7 @@ COMMAND(jogger_publish) {
 		return -1;
 	}
 
-	if (ekg_checkoutfile(fn, &entry, NULL, &hash, 0, quiet))
+	if (jogger_checkoutfile(fn, &entry, NULL, &hash, 0, quiet))
 		return -1;
 	if (oldhash && xstrcmp(oldhash, hash)) {
 		print("jogger_hashdiffers");
