@@ -93,116 +93,93 @@ PLUGIN_DEFINE(xmsg, PLUGIN_PROTOCOL, xmsg_theme_init);
 
 /* the code */
 
-/* stolen from (my) 'jogger' plugin */
-static int ekg_checkoutfile(const char *file, char **data, int *len, char **hash, const int maxlen, const int flags) {
-	static char jogger_hash[sizeof(int)*2+3];
-	int mylen, fs, fd;
+/* like that in mine 'jogger' plugin, but slightly modified for xmsg
+ * - quiet always 1, so removed all prints,
+ * - hash not needed, giving timestamp instead.
+ */
+static int xmsg_checkoutfile(const char *file, char **data, int *len, time_t *ts, const int maxlen) {
+	int fs, fd;
 
 	const char *fn	= prepare_path_user(file);
-	const int quiet	= (flags&1);
 
 	if (!fn)
 		return EINVAL;
 
-	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) { /* we use O_NONBLOCK to get rid of FIFO problems */
-		const int err = errno;
-		if (err == ENXIO)
-			printq("io_nonfile", file);
-		else
-			printq("io_cantopen", file, strerror(err));
-		return err;
-	}
+	if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) /* we use O_NONBLOCK to get rid of FIFO problems */
+		return errno;
 
 	{
 		struct stat st;
 
 		if ((fstat(fd, &st) == -1) || !S_ISREG(st.st_mode)) {
 			close(fd);
-			printq("io_nonfile", file);
 			return EISDIR; /* nearest, I think */
 		}
-		if (!(flags&2) && (fs = st.st_size) == 0) {
-			close(fd);
-			printq("io_emptyfile", file);
-			return EINVAL; /* like mmap */
-		} else if (maxlen && fs > maxlen) {
-			close(fd);
-			printq("io_toobig", file, itoa(fs), itoa(maxlen));
-			return EFBIG;
-		}
+
+		fs = st.st_size;
+		/* mtime > ctime > atime > time(NULL) */
+#define X(x,y) (x ? x : y)
+		if (ts)
+			*ts = X(st.st_mtime, X(st.st_ctime, X(st.st_atime, time(NULL))));
+#undef X
 	}
 
-	if (data || hash) {
-		char *out = xmalloc(fs+1);
-		void *p = out;
-		int rem = fs, res = 1;
+	int bufsize	= (fs ? (maxlen && fs > maxlen ? maxlen+1 : fs+1) : 0x4000); /* we leave 1 byte for additional NUL */
+	char *out	= xmalloc(bufsize);
+	void *p		= out;
+	int _read = 0, res;
 
-		if (fs) {
-			{
-				int cf = fcntl(fd, F_GETFL);
+	{
+		int cf	= fcntl(fd, F_GETFL);
 
-				if (cf == -1) /* evil thing */
-					cf = 0;
-				else
-					cf &= ~O_NONBLOCK;
-				fcntl(fd, F_SETFL, cf);
-			}
-
-			while ((res = read(fd, p, (rem <= SSIZE_MAX ? rem : SSIZE_MAX)))) {
-				if (res == -1) {
-					const int err = errno;
-					if (err != EINTR && err != EAGAIN) {
-						close(fd);
-						printq("io_cantread", file, strerror(errno));
-						return err;
-					}
-				} else {
-					p += res;
-					rem -= res;
-				}
-			}
-		}
-
-		mylen = xstrlen(out);
-		{
-			struct stat st;
-
-			if (fstat(fd, &st) == -1)
-				debug_error("ekg_openfile(): unable to fstat() again!\n");
-			else if (st.st_size > fs)
-				printq("io_expanded", file, itoa(st.st_size), itoa(fs));
-			else if (st.st_size < fs)
-				printq("io_truncated", file, itoa(st.st_size), itoa(fs));
-			else if (rem > 0)
-				printq("io_truncated_read", file, itoa(fs-rem), itoa(fs));
-			
-			if ((fs-rem) > mylen)
-				printq("io_binaryfile", file, itoa(mylen), itoa(fs));
-		}
-
-		if (len)
-			*len = fs-rem;
-
-			/* I don't want to write my own hashing function, so using EKG2 one
-			 * it will fail to hash data after any \0 in file, if there're any
-			 * but we also aren't prepared to handle them */
-		if (hash) {
-			char sizecont[8];
-
-			snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
-			snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
-			*hash = jogger_hash;
-		}
-		if (data)
-			*data = out;
+		if (cf == -1) /* evil thing */
+			cf = 0;
 		else
-			xfree(out);
-	} else if (len)
-		*len = fs;
+			cf &= ~O_NONBLOCK;
+		fcntl(fd, F_SETFL, cf);
+	}
+
+	while ((res = read(fd, p, bufsize-_read))) {
+		if (res == -1) {
+			const int err = errno;
+			if (err != EINTR && err != EAGAIN) {
+				close(fd);
+				return err;
+			}
+		} else {
+			_read += res;
+			if (maxlen && _read > maxlen) {
+				xfree(out);
+				return EFBIG;
+			} else if (_read == bufsize) { /* fs sucks? */
+				bufsize += 0x4000;
+				out	= xrealloc(out, bufsize);
+				p	= out+_read;
+			} else
+				p	+= res;
+		}
+	}
 	close(fd);
+
+	if (_read == 0) {
+		xfree(out);
+		return EINVAL; /* like mmap() */
+	} else if (_read+1 != bufsize) {
+		out		= xrealloc(out, _read+1);
+		out[_read]	= 0; /* add NUL */
+	}
+
+	if (len)
+		*len = _read;
+
+	if (data)
+		*data = out;
+	else
+		xfree(out);
 
 	return 0;
 }
+
 
 static const char *xmsg_dirfix(const char *path)
 {
@@ -253,7 +230,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	dir[dirlen] = '/';
 		/* and take a much closer look the file */	
 	xdebug("s = %s, d = %s, fn = %s", session_uid_get(s), dir, fn);
-	if ((err = ekg_checkoutfile(dir, &msg, &fs, NULL, maxfs, 0))) {
+	if ((err = xmsg_checkoutfile(dir, &msg, &fs, &ft, maxfs))) {
 		if (err == EFBIG) {
 			print((utb ? "xmsg_toobigrm" : "xmsg_toobig"), fn, session_name(s));
 			if (utb) {
@@ -290,15 +267,6 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 			return -1;
 		} else if ((nounlink && !(utb && err == EFBIG)) || (!utb && err == EFBIG))
 			close(open(dir, O_WRONLY|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600));
-		
-#if 0 /* XXX */
-		/* mtime > ctime > atime > time(NULL) */
-#define X(x,y) (x ? x : y)
-		ft = X(st.st_mtime, X(st.st_ctime, X(st.st_atime, time(NULL))));
-#undef X
-#else
-		ft = time(NULL);
-#endif
 	}
 	
 	if (err == EFBIG)
