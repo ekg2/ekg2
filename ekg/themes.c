@@ -1953,7 +1953,7 @@ void theme_init()
 	format_add("io_truncated", _("%! %|WARNING: EOF before reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably truncated (somehow)!"), 1);
 	format_add("io_expanded", _("%! %|WARNING: EOF after reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably got expanded!"), 1);
 	format_add("io_emptyfile", _("%! File %T%1%n is empty!"), 1);
-	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (%c%2%n vs. %c%3%n)!"), 1);
+	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (at least %c%2%n vs. %c%3%n)!"), 1);
 	format_add("io_binaryfile", _("%! %|WARNING: The file %T%1%n probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %c%2%n (vs. filesize of %c%3%n)!"), 1);
 
 	/* dns stuff */
