@@ -2664,7 +2664,9 @@ void jabber_register_commands()
 #define JABBER_FLAGS_REQ    		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS
 #define JABBER_FLAGS_TARGET 		JABBER_FLAGS_REQ | COMMAND_PARAMASTARGET
 #define JABBER_FLAGS_TARGET_VALID	JABBER_FLAGS_TARGET | COMMAND_TARGET_VALID_UID	/* need audit, if it can be used everywhere instead JABBER_FLAGS_TARGET */ 
+#if 0 /* disabled until 'jid:' support removal */
 	commands_lock = &commands;	/* keep it sorted or die */
+#endif
 
 	/* XXX: VERY, VERY, VERY BIG, FAT WARNING:
 	 * Follow macro is used for the time that legacy 'jid:' prefix still allowed
