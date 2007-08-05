@@ -107,9 +107,9 @@ AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
 AM_ICONV
 
-dnl AC_CHECK_HEADERS(sys/epoll.h, [AC_CHECK_FUNC([epoll_ctl], [
-dnl	 AC_DEFINE(HAVE_EPOLL, 1, [define if you want to use epoll instead of select()])
-dnl ])])
+AC_CHECK_HEADERS(sys/epoll.h, [AC_CHECK_FUNC([epoll_ctl], [
+	AC_DEFINE(HAVE_EPOLL, 1, [define if you want to use epoll instead of select()])
+])])
 
 AC_CONFIG_FILES([Makefile ekg/Makefile ekg/ekg2-config compat/Makefile docs/Makefile po/Makefile.in])
 AC_CONFIG_FILES([contrib/Makefile contrib/python/Makefile contrib/perl/Makefile])
