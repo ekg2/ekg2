@@ -426,10 +426,15 @@ void ekg_loop() {
 			if (cev->events & (EPOLLERR | EPOLLHUP)) /* removed fd? */
 				continue;
 
-			watch_t *w = cev->data.ptr;
+			cev->events &= EPOLLIN | EPOLLOUT;
 
-#define IFREAD		(cev->events & EPOLLIN)
-#define IFWRITE		(cev->events & EPOLLOUT)
+		while (cev->events > 0) { /* we can have both read & write event on the same fd */
+			
+			watch_t *w = watch_find((void*) -1, cev->data.fd, (cev->events & EPOLLIN ? WATCH_READ : WATCH_WRITE));
+			cev->events &= ~(cev->events & EPOLLIN ? EPOLLIN : EPOLLOUT);
+
+#define IFREAD		1 /* at that moment we're sure that watch contains right direction */
+#define IFWRITE		1
 #endif
 
 			if (!w || (!IFREAD && !IFWRITE))
@@ -468,6 +473,9 @@ void ekg_loop() {
 			}
 #undef IFREAD
 #undef IFWRITE
+#ifdef HAVE_EPOLL
+		} /* additional while() */
+#endif
 		}
 
 		if (ekg_watches_removed > 0) {

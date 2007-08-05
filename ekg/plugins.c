@@ -978,7 +978,8 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-		if (w && w->plugin == plugin && w->fd == fd && w->type == type && !(w->removed > 0))
+			/* XXX: added simple plugin ignoring, make something nicer? */
+		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && w->type == type && !(w->removed > 0))
 			return w;
 	}
 
@@ -1246,8 +1247,6 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->type		= type;
 
 	if (w->type == WATCH_READ_LINE) {
-		debug_error("watch_add(): got linewriter at fd %d\n", fd);
-	
 		w->type = WATCH_READ;
 		w->buf = string_init(NULL);
 	} else if (w->type == WATCH_WRITE_LINE) {
@@ -1267,15 +1266,18 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 		int r;
 
 		ev.events		= EPOLLERR | EPOLLHUP;
-		ev.data.ptr 		= w;
+		ev.data.fd 		= fd;
 		if (w->type == WATCH_READ)
 			ev.events	|= EPOLLIN;
 		else if (w->type == WATCH_WRITE)
 			ev.events	|= EPOLLOUT;
 		
 		if ((r = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev))) {
-			if (errno == EEXIST)
+			if (errno == EEXIST) {
+				if (watch_find(plugin, fd, (w->type == WATCH_READ ? WATCH_WRITE : WATCH_READ))) /* creating watch of other type? */
+					ev.events |= (w->type == WATCH_READ ? EPOLLOUT : EPOLLIN);
 				r = epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev);
+			}
 
 			if (r)
 				debug_error("watch_add: epoll_ctl() failed, epoll_fd = %d, fd = %d, errno = %s\n", epoll_fd, fd, strerror(errno));
