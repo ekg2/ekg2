@@ -300,9 +300,10 @@ void ekg_loop() {
                         }
                 }
 #endif
-                /* zerknij na wszystkie niezbêdne deskryptory */
 
 #ifndef HAVE_EPOLL
+                /* zerknij na wszystkie niezbêdne deskryptory */
+
                 FD_ZERO(&rd);
                 FD_ZERO(&wd);
 
@@ -318,7 +319,7 @@ void ekg_loop() {
                                 FD_SET(w->fd, &rd);
                         if ((w->type & WATCH_WRITE)) {
 				if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
-				FD_SET(w->fd, &wd); 
+				FD_SET(w->fd, &wd);
 			}
                 }
 #endif
@@ -434,10 +435,6 @@ void ekg_loop() {
 			if (!w || (!IFREAD && !IFWRITE))
 				continue;
 
-#ifdef HAVE_EPOLL
-			if (w->buf && !w->buf->len) continue;
-#endif
-
 			if (w->fd == 0) {
 				list_t session_list;
 				for (
@@ -462,7 +459,12 @@ void ekg_loop() {
 					watch_handle(w);
 			} else {
 				if (IFREAD && w->type == WATCH_READ) 		watch_handle_line(w);
-				else if (IFWRITE && w->type == WATCH_WRITE)	watch_handle_write(w);
+				else if (IFWRITE && w->type == WATCH_WRITE) {
+#ifdef HAVE_EPOLL
+					if (!w->buf || w->buf->len)
+#endif
+						watch_handle_write(w);
+				}
 			}
 #undef IFREAD
 #undef IFWRITE

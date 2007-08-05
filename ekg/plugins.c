@@ -1268,9 +1268,9 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 
 		ev.events		= EPOLLERR | EPOLLHUP;
 		ev.data.ptr 		= w;
-		if (w->type & WATCH_READ)
+		if (w->type == WATCH_READ)
 			ev.events	|= EPOLLIN;
-		if (w->type & WATCH_WRITE)
+		else if (w->type == WATCH_WRITE)
 			ev.events	|= EPOLLOUT;
 		
 		if ((r = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev))) {
