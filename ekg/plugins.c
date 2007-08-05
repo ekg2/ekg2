@@ -979,7 +979,7 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 			/* XXX: added simple plugin ignoring, make something nicer? */
-		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && w->type == type && !(w->removed > 0))
+		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type) && !(w->removed > 0))
 			return w;
 	}
 

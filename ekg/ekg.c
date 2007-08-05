@@ -423,8 +423,12 @@ void ekg_loop() {
 #define IFWRITE		FD_ISSET(w->fd, &wd)
 #else
 		for (cev = ev; cev < &ev[ret]; cev++) {
-			if (cev->events & (EPOLLERR | EPOLLHUP)) /* removed fd? */
+			if (cev->events & (EPOLLERR | EPOLLHUP)) { /* removed fd? */
+				debug_error("EPOLL%s on fd %d\n", (cev->events & EPOLLERR ? "ERR" : "HUP"), cev->data.fd);
+				close(cev->data.fd);
+				watch_remove((void*) -1, cev->data.fd, WATCH_READ | WATCH_WRITE);
 				continue;
+			}
 
 			cev->events &= EPOLLIN | EPOLLOUT;
 
