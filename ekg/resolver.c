@@ -25,6 +25,10 @@
 #include <sys/filio.h>
 #endif
 
+#ifdef LIBIDN
+# include <idna.h>
+#endif
+
 /* NOTE:
  * 	Includes were copied from jabber.c, where there's ? in comment, it's possibly not needed.
  * 	It was done this way, to avoid regression.
@@ -35,6 +39,13 @@
 #include "debug.h"
 #include "plugins.h"
 #include "xmalloc.h"
+
+#ifdef LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
+static const char valid_hostname_chars_u[] =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"abcdefghijklmnopqrstuvwxyz"
+	"0123456789-._";
+#endif
 
 /*
  * ekg_resolver2()
@@ -88,6 +99,17 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 		close(fd[0]);
 
+#ifdef LIBIDN
+		{
+			char *tmp;
+
+			if ((xstrspn(myserver, valid_hostname_chars_u) != xstrlen(myserver)) && /* need to escape */
+				(idna_to_ascii_8z(myserver, &tmp, 0) == IDNA_SUCCESS)) {
+				xfree(myserver);
+				myserver = tmp;
+			}
+		}
+#endif
 		if ((a.s_addr = inet_addr(myserver)) == INADDR_NONE) {
 			struct hostent *he = gethostbyname(myserver);
 
