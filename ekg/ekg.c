@@ -134,7 +134,7 @@ int no_mouse = 0;
 
 #ifdef HAVE_EPOLL
 int epoll_fd = 0;
-#define EPOLL_EVENTS 8
+#define EPOLL_EVENTS 1
 #endif
 
 /*
