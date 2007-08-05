@@ -423,18 +423,19 @@ void ekg_loop() {
 #define IFWRITE		FD_ISSET(w->fd, &wd)
 #else
 		for (cev = ev; cev < &ev[ret]; cev++) {
-			if (cev->events & (EPOLLERR | EPOLLHUP)) { /* removed fd? */
+			cev->events &= (EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP);
+
+		while (cev->events > 0) { /* we can have both read & write event on the same fd */
+			watch_t *w;
+
+			if (!(cev->events & (EPOLLIN | EPOLLOUT))) {
 				debug_error("EPOLL%s on fd %d\n", (cev->events & EPOLLERR ? "ERR" : "HUP"), cev->data.fd);
 				close(cev->data.fd);
 				watch_remove((void*) -1, cev->data.fd, WATCH_READ | WATCH_WRITE);
-				continue;
+				break;
 			}
-
-			cev->events &= EPOLLIN | EPOLLOUT;
-
-		while (cev->events > 0) { /* we can have both read & write event on the same fd */
 			
-			watch_t *w = watch_find((void*) -1, cev->data.fd, (cev->events & EPOLLIN ? WATCH_READ : WATCH_WRITE));
+			w = watch_find((void*) -1, cev->data.fd, (cev->events & EPOLLIN ? WATCH_READ : WATCH_WRITE));
 			cev->events &= ~(cev->events & EPOLLIN ? EPOLLIN : EPOLLOUT);
 
 #define IFREAD		1 /* at that moment we're sure that watch contains right direction */
