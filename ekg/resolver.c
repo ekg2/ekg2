@@ -120,7 +120,7 @@ int ekg_resolver_readconf(resolver_t *out) {
 
 		if (!((ns->s_addr = inet_addr(p))))
 			continue;
-		debug("ekg_resolver_readconf: found ns %s", p); /* 'p' already contains LF */
+		debug("ekg_resolver_readconf(), found ns %s", p); /* 'p' already contains LF */
 		if (++ns >= &out->nameservers[MAXNS])
 			break;
 	}
@@ -173,20 +173,18 @@ int ekg_resolver_send(resolver_t *res) {
 				pkt[0]++;
 			res->id = pkt[0];
 		} else {
-			old_id		= pkt[0]; /* keep&restore old id, so new queries won't get already used id */
+			old_id	= pkt[0]; /* keep&restore old id, so new queries will get already used id after 65535 retries */
 			pkt[0]	= res->id;
 		}
 
+		pkt[1]		= htons(256);	/* RA? 'host' sets this */
 		pkt[2]		= htons(1);	/* 1 question */
-
-		if (old_id)
-			pkt[0]	= old_id;
 
 		{
 			char *p, *q, *r;
 			uint16_t *z;
 
-			for (p = res->hostname, q = (char*) &pkt[5], r = q + 1;; p++, r++) {
+			for (p = res->hostname, q = (char*) &pkt[6], r = q + 1;; p++, r++) {
 				if (*p == '.' || *p == 0) {
 					*q = (r - q - 1);
 					if (!*p)
@@ -208,13 +206,13 @@ int ekg_resolver_send(resolver_t *res) {
 			sin.sin_family		= AF_INET;
 			sin.sin_addr.s_addr	= cfd->s_addr;
 			sin.sin_port		= htons(53);
-/*
-sendmsg(20, {msg_name(16)={sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("192.168.0.1")}, msg_iov(1)=[{"\214(\1\0\0\1\0\0\0\0\0\0\3www\6google\3com\0\0\1\0\1", 32}], msg_controllen=0, msg_flags=0}, 0) = 32
- */
 
-			debug("ekg_resolver_send(), sending query for %s to %s:53\n", res->hostname, inet_ntoa(*cfd));
+			debug("ekg_resolver_send(), sending query for %s to %s:53, id: %04x\n", res->hostname, inet_ntoa(*cfd), pkt[0]);
 
-			if ((sendto(ekg_resolver_fd, pkt, xstrlen(res->hostname) + 15, 0, (struct sockaddr*) &sin, sizeof(sin)) == -1)) {
+			if ((sendto(ekg_resolver_fd, pkt, xstrlen(res->hostname) + 17, 0, (struct sockaddr*) &sin, sizeof(sin)) == -1)) {
+				if (old_id)
+					pkt[0]	= old_id;
+
 				debug_error("ekg_resolver_send(), sendto() failed: %s\n", strerror(errno));
 				continue; /* treat as no-response, i.e. retry */
 			}
@@ -232,6 +230,9 @@ sendmsg(20, {msg_name(16)={sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_
 			}
 		}
 
+		if (old_id)
+			pkt[0]	= old_id;
+
 		return 0;
 	}
 
@@ -245,8 +246,6 @@ sendmsg(20, {msg_name(16)={sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_
  * Watch-triggered function, fetching data sent by DNS server and parsing it.
  */
 WATCHER(ekg_resolver_recv) {
-	debug_error("ekg_resolver_recv(), NOT IMPLEMENTED, type = %d!\n", type);
-
 	if (type == 2) {
 		list_t l;
 		const time_t now	= time(NULL);
@@ -271,10 +270,23 @@ WATCHER(ekg_resolver_recv) {
 		struct sockaddr_in from;
 		socklen_t fromlen		= sizeof(from);
 		resolver_t *res;
+		struct in_addr *ns;
 
 		if (recvfrom(ekg_resolver_fd, pkt, sizeof(ekg_resolver_pkt), 0, (struct sockaddr*) &from, &fromlen) == -1) {
 			debug_error("ekg_resolver_recv(), recvfrom() failed: %s\n", strerror(errno));
 			close(ekg_resolver_fd); /* if we don't clean up this mess, handler would be executed again and again, and again... */
+			return -1;
+		}
+
+		if (fromlen != sizeof(struct sockaddr_in)) {
+			debug_error("ekg_resolver_recv(), wrong 'fromlen' from recvfrom(), WTF?!\n");
+			close(ekg_resolver_fd);
+			return -1; /* XXX: not too hard? */
+		}
+
+		if (from.sin_addr.s_addr == INADDR_NONE) {
+			debug_error("ekg_resolver_recv(), INADDR_NONE in 'from' from recvfrom(), WTF?!\n");
+			close(ekg_resolver_fd);
 			return -1;
 		}
 
@@ -283,8 +295,14 @@ WATCHER(ekg_resolver_recv) {
 
 			for (l = ekg_resolvers; l; l = l->next) {
 				res = l->data;
-				if (res->id == pkt[0])
-					break;
+				if (res->id == pkt[0]) {
+					for (ns = res->nameservers; ns < &res->nameservers[MAXNS]; ns++) {
+						if (ns->s_addr == from.sin_addr.s_addr)
+							break;
+					}
+					if (ns < &res->nameservers[MAXNS])
+						break;
+				}
 			}
 
 			if (!l) {
@@ -292,6 +310,29 @@ WATCHER(ekg_resolver_recv) {
 				return 0;
 			}
 		}
+
+		{
+			const uint8_t rcode = ntohs(pkt[1]) & 0xF;
+			const char *rtext;
+
+			switch (rcode) { /* short names shamelessly stolen from bind */
+				case 1: rtext = "FORMERR";	break;
+				case 2: rtext = "SERVFAIL";	break;
+				case 3: rtext = "NXDOMAIN";	break;
+				case 4: rtext = "NOTIMP";	break;
+				case 5: rtext = "REFUSED";	break;
+				default: rtext = NULL;
+			}
+
+			if (rcode) {
+				debug_error("ekg_resolver_recv(), from: %s, flags: %04x, err: [%d] %s\n", inet_ntoa(from.sin_addr), ntohs(pkt[1]), rcode, rtext);
+				ns->s_addr = INADDR_NONE; /* disable retry with this server */
+				return 0;
+			}
+		}
+
+		/* XXX: parse answer */
+
 	}
 
 	return 0;
