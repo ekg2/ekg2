@@ -132,7 +132,7 @@ int ekg_resolver_readconf(resolver_t *out) {
 
 		if (!((ns->s_addr = inet_addr(p))))
 			continue;
-		debug("ekg_resolver_readconf: found ns %s\n", p);
+		debug("ekg_resolver_readconf: found ns %s", p); /* 'p' already contains LF */
 		if (++ns >= &out->nameservers[MAXNS])
 			break;
 	}
@@ -251,6 +251,9 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 	resolver_t *res	= xmalloc(sizeof(resolver_t));
 	int r;
 
+	if (!hostname || !*hostname)
+		return EINVAL;
+
 	if ((r = ekg_resolver_readconf(res))) {
 		xfree(res);
 		return r;
@@ -278,19 +281,39 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 		/* XXX: here we should add watch */
 	}
 
-	/* XXX: here we should check hostname:
-	 * - remove double dots (those would cause confusion to server)
-	 * - add trailing dot (else we'd get unterminated hostname in question)
-	 * - escape to punycode if needed
-	 */
+	{ /* XXX: idn */
+		const char *p = hostname;
+		char *q;
 
-	res->hostname	= xstrdup(hostname);
+		res->hostname	= xmalloc(xstrlen(hostname)+2);
+		while (*p == '.') p++; /* skip leading dots */
+
+		for (q = res->hostname; *p; p++, q++) {
+			if (*p == '.') {
+				while (*(p+1) == '.')
+					p++; /* skip multiple dots */
+			}
+			*q = *p;
+		}
+
+		if (*(p-1) != '.') /* we are already sure that p is not empty */
+			*(q++) = '.'; /* add trailing dot */
+		*q = 0;
+	}
+#ifdef LIBIDN
+	{
+		char *tmp;
+
+		if ((xstrspn(res->hostname, valid_hostname_chars_u) != xstrlen(res->hostname)) && /* need to escape */
+			(idna_to_ascii_8z(res->hostname, &tmp, 0) == IDNA_SUCCESS)) {
+			xfree(res->hostname);
+			res->hostname = tmp;
+		}
+	}
+#endif
+
 	res->handler	= async;
 	res->userdata	= data;
-#if 0 /* xmalloc() zeroes the buffer */
-	res->retry	= 0;
-	res->id		= 0;
-#endif
 	
 	if ((r = ekg_resolver_send(res)))
 		return r;
