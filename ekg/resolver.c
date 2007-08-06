@@ -77,6 +77,8 @@ typedef enum {
 #define EKG_RESOLVER_RETRIES	3
 #define EKG_RESOLVER_QUERYMODE	EKG_RESOLVER_ROUNDROBIN /* currently no other supported */
 
+int ekg_resolver_fd = -1;
+
 /**
  * resolver_t
  *
@@ -84,17 +86,20 @@ typedef enum {
  */
 typedef struct { /* this will be reordered when resolver is finished */
 		/* user data */
-	char			*hostname;		/**< Hostname to resolve. */
+	char			*hostname;		/**< Hostname to resolve. >*/
 	query_handler_func_t	*handler;		/**< Result handler function. >*/
 	void			*userdata;		/**< User data passed to result handler. >*/
 		
 		/* private data */
-	int			retry;			/**< Current retry num. */
-	struct resolver_ns {				/**< Nameservers from resolv.conf. >*/
-		struct in_addr	addr;
-		int		fd;
-	}			nameservers[MAXNS];
+	int			retry;			/**< Current retry num. >*/
+	struct in_addr		nameservers[MAXNS];	/**< Nameservers from resolv.conf. >*/
+	uint16_t		id;			/**< ID of request, used to distinguish between resolved hostnames. >*/
 } resolver_t;
+
+union ekg_resolver_packet { /* 512 bytes is max DNS UDP packet size */
+	unsigned char	byte[512];
+	uint16_t	word[256];
+};
 
 /**
  * ekg_resolver_readconf()
@@ -108,7 +113,7 @@ typedef struct { /* this will be reordered when resolver is finished */
 int ekg_resolver_readconf(resolver_t *out) {
 	FILE *f;
 	char line[64]; /* this shouldn't be long */
-	struct resolver_ns *ns = out->nameservers;
+	struct in_addr *ns = out->nameservers;
 
 	if (!(f = fopen("/etc/resolv.conf", "r"))) /* XXX: stat() first? */
 		return errno;
@@ -126,16 +131,15 @@ int ekg_resolver_readconf(resolver_t *out) {
 		p += 10;
 		p += xstrspn(p, " \f\n\r\t\v");
 
-		if (!((ns->addr.s_addr = inet_addr(p))))
+		if (!((ns->s_addr = inet_addr(p))))
 			continue;
-		ns->fd = 0;
 		debug("ekg_resolver_readconf: found ns %s\n", p);
 		if (++ns >= &out->nameservers[MAXNS])
 			break;
 	}
 
 	for (; ns < &out->nameservers[MAXNS]; ns++)
-		ns->addr.s_addr = INADDR_NONE;
+		ns->s_addr = INADDR_NONE;
 
 	fclose(f);
 	return 0;
@@ -151,12 +155,6 @@ int ekg_resolver_readconf(resolver_t *out) {
  * @param	addrtype	- AF_* constant determining IP address type (AF_INET or AF_INET6, currently).
  */
 void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
-	struct resolver_ns *cfd;
-
-	for (cfd = res->nameservers; cfd < &res->nameservers[MAXNS]; cfd++) {
-		if (cfd->fd)
-			close(cfd->fd);
-	}
 	xfree(res->hostname);
 	xfree(res);
 
@@ -173,25 +171,27 @@ void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
  * @return	New watch_t pointer on success, NULL on failure or when no nameservers left (after all retries).
  */
 watch_t *ekg_resolver_send(resolver_t *res) {
-	struct resolver_ns *cfd;
-	struct sockaddr_in sin;
-
 	do {
-		if ((cfd = &res->nameservers[(res->retry++) % MAXNS])->addr.s_addr == INADDR_NONE)
+		static union ekg_resolver_packet pkt;
+		struct in_addr *cfd;
+		uint16_t old_id = 0;
+
+		if ((cfd = &res->nameservers[(res->retry++) % MAXNS])->s_addr == INADDR_NONE)
 			continue;
 
-		sin.sin_family		= AF_INET;
-		sin.sin_port		= INADDR_ANY;
-		sin.sin_addr.s_addr	= INADDR_ANY;
-
-		if (!(cfd->fd = socket(AF_INET, SOCK_DGRAM, 0)) || bind(cfd->fd, (struct sockaddr *) &sin, sizeof(sin))) {
-			if (cfd->fd)
-				close(cfd->fd);
-			continue;
+		if (res->id == 0) {
+			if (!(++pkt.word[0])) /* id != 0 */
+				pkt.word[0]++;
+			res->id = pkt.word[0];
+		} else {
+			old_id		= pkt.word[0]; /* keep&restore old id, so new queries won't get already used id */
+			pkt.word[0]	= res->id;
 		}
 
 		/* XXX: prepare & send packet, create watch */
 
+		if (old_id)
+			pkt.word[0]	= old_id;
 	} while (res->retry <= EKG_RESOLVER_RETRIES * MAXNS);
 
 	ekg_resolver_finish(res, NULL, 0);
@@ -221,13 +221,31 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 		return r;
 	}
 
-	if (res->nameservers[0].addr.s_addr == INADDR_NONE)
+	if (res->nameservers[0].s_addr == INADDR_NONE)
 		ekg_resolver_finish(res, NULL, 0);
+
+	if (ekg_resolver_fd == -1) {
+		struct sockaddr_in sin;
+
+		sin.sin_family		= AF_INET;
+		sin.sin_port		= INADDR_ANY;
+		sin.sin_addr.s_addr	= INADDR_ANY;
+
+		if ((ekg_resolver_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1 || bind(ekg_resolver_fd, (struct sockaddr *) &sin, sizeof(sin))) {
+			const int err = errno;
+
+			ekg_resolver_finish(res, NULL, 0);
+			return err;
+		}
+	}
 
 	res->hostname	= xstrdup(hostname);
 	res->handler	= async;
 	res->userdata	= data;
+#if 0 /* xmalloc() zeroes the buffer */
 	res->retry	= 0;
+	res->fd		= 0;
+#endif
 
 	return ENOSYS;
 }
