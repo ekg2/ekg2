@@ -1,5 +1,5 @@
 #include "ekg2-config.h"
-#include <ekg/win32.h>
+#include "win32.h"
 
 #include <sys/types.h>
 #include <sys/param.h> /* PATH_MAX, funny, I know */
@@ -49,6 +49,7 @@
 #endif
 
 #include "debug.h"
+#include "dynstuff.h"
 #include "plugins.h"
 #include "stuff.h"
 #include "xmalloc.h"
@@ -77,7 +78,8 @@ typedef enum {
 #define EKG_RESOLVER_RETRIES	3
 #define EKG_RESOLVER_QUERYMODE	EKG_RESOLVER_ROUNDROBIN /* currently no other supported */
 
-int ekg_resolver_fd = -1;
+int ekg_resolver_fd	= -1;
+list_t ekg_resolvers	= NULL;
 
 /**
  * resolver_t
@@ -96,10 +98,7 @@ typedef struct { /* this will be reordered when resolver is finished */
 	uint16_t		id;			/**< ID of request, used to distinguish between resolved hostnames. >*/
 } resolver_t;
 
-union ekg_resolver_packet { /* 512 bytes is max DNS UDP packet size */
-	unsigned char	byte[512];
-	uint16_t	word[256];
-};
+static char ekg_resolver_pkt[512]; /* 512 bytes is max DNS UDP packet size */
 
 /**
  * ekg_resolver_readconf()
@@ -168,34 +167,59 @@ void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
  *
  * @param	res		- resolver_t struct.
  *
- * @return	New watch_t pointer on success, NULL on failure or when no nameservers left (after all retries).
+ * @return	0 on success, -1 on failure or when no servers (& tries) left.
  */
-watch_t *ekg_resolver_send(resolver_t *res) {
+int ekg_resolver_send(resolver_t *res) {
 	do {
-		static union ekg_resolver_packet pkt;
+		char *pkt = ekg_resolver_pkt;
 		struct in_addr *cfd;
 		uint16_t old_id = 0;
 
 		if ((cfd = &res->nameservers[(res->retry++) % MAXNS])->s_addr == INADDR_NONE)
 			continue;
 
+		memset(&pkt[1], 0, 510); /* leave id */
 		if (res->id == 0) {
-			if (!(++pkt.word[0])) /* id != 0 */
-				pkt.word[0]++;
-			res->id = pkt.word[0];
+			if (!(++pkt[0])) /* id != 0 */
+				pkt[0]++;
+			res->id = pkt[0];
 		} else {
-			old_id		= pkt.word[0]; /* keep&restore old id, so new queries won't get already used id */
-			pkt.word[0]	= res->id;
+			old_id		= pkt[0]; /* keep&restore old id, so new queries won't get already used id */
+			pkt[0]	= res->id;
 		}
 
-		/* XXX: prepare & send packet, create watch */
+		pkt[2]		= htons(1);	/* 1 question */
 
 		if (old_id)
-			pkt.word[0]	= old_id;
+			pkt[0]	= old_id;
+
+		{
+			char *p, *q, *r;
+			uint16_t *z;
+
+			for (p = res->hostname, q = &pkt[5], r = q + 1;; p++, r++) {
+
+				if (*p == '.' || *p == 0) {
+					*q = (r - q - 1);
+					if (!*p)
+						break;
+					q = r;
+				} else
+					*r = *p;
+			}
+
+			*(r++) = 0;
+			z = (uint16_t*) r;
+
+			/* XXX: QTYPE, QCLASS */
+
+		}
+
+		return 0;
 	} while (res->retry <= EKG_RESOLVER_RETRIES * MAXNS);
 
 	ekg_resolver_finish(res, NULL, 0);
-	return NULL;
+	return -1;
 }
 
 /**
@@ -221,8 +245,10 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 		return r;
 	}
 
-	if (res->nameservers[0].s_addr == INADDR_NONE)
+	if (res->nameservers[0].s_addr == INADDR_NONE) {
 		ekg_resolver_finish(res, NULL, 0);
+		return ENOENT;
+	}
 
 	if (ekg_resolver_fd == -1) {
 		struct sockaddr_in sin;
@@ -237,6 +263,8 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 			ekg_resolver_finish(res, NULL, 0);
 			return err;
 		}
+
+		/* XXX: here we should add watch */
 	}
 
 	res->hostname	= xstrdup(hostname);
@@ -244,10 +272,14 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 	res->userdata	= data;
 #if 0 /* xmalloc() zeroes the buffer */
 	res->retry	= 0;
-	res->fd		= 0;
+	res->id		= 0;
 #endif
+	
+	if ((r = ekg_resolver_send(res)))
+		return r;
 
-	return ENOSYS;
+	list_add(&ekg_resolvers, res, 0);
+	return 0;
 }
 
 /*
