@@ -170,7 +170,7 @@ void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
  * @return	0 on success, -1 on failure or when no servers (& tries) left.
  */
 int ekg_resolver_send(resolver_t *res) {
-	do {
+	while (res->retry < EKG_RESOLVER_RETRIES * MAXNS) {
 		char *pkt = ekg_resolver_pkt;
 		struct in_addr *cfd;
 		uint16_t old_id = 0;
@@ -198,7 +198,6 @@ int ekg_resolver_send(resolver_t *res) {
 			uint16_t *z;
 
 			for (p = res->hostname, q = &pkt[5], r = q + 1;; p++, r++) {
-
 				if (*p == '.' || *p == 0) {
 					*q = (r - q - 1);
 					if (!*p)
@@ -208,15 +207,27 @@ int ekg_resolver_send(resolver_t *res) {
 					*r = *p;
 			}
 
-			*(r++) = 0;
 			z = (uint16_t*) r;
 
-			/* XXX: QTYPE, QCLASS */
+			*(z++)	= htons(1); /* QTYPE => A */
+			*z	= htons(1); /* QCLASS => IN (internet) */
+		}
 
+		{
+			struct sockaddr_in sin;
+
+			sin.sin_family		= AF_INET;
+			sin.sin_addr.s_addr	= cfd->s_addr;
+			sin.sin_port		= htons(53);
+
+			if ((sendto(ekg_resolver_fd, pkt, xstrlen(res->hostname) + 15, 0, (struct sockaddr*) &sin, sizeof(sin)) == -1)) {
+				debug_error("ekg_resolver_send(), sendto() failed: %s\n", strerror(errno));
+				continue; /* treat as no-response, i.e. retry */
+			}
 		}
 
 		return 0;
-	} while (res->retry <= EKG_RESOLVER_RETRIES * MAXNS);
+	}
 
 	ekg_resolver_finish(res, NULL, 0);
 	return -1;
@@ -266,6 +277,12 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 
 		/* XXX: here we should add watch */
 	}
+
+	/* XXX: here we should check hostname:
+	 * - remove double dots (those would cause confusion to server)
+	 * - add trailing dot (else we'd get unterminated hostname in question)
+	 * - escape to punycode if needed
+	 */
 
 	res->hostname	= xstrdup(hostname);
 	res->handler	= async;
