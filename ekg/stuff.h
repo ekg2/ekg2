@@ -374,6 +374,12 @@ void ekg_debug_handler(int level, const char *format, va_list ap);
 /* funkcje w resolver.c */
 watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 
+/* addr - socket address, query first field for type, automagically freed on return, if NULL - resolution failed.
+ * data - user data given to ekg_resolver().
+ */
+typedef void (*resolver_handler_func_t)(struct sockaddr *addr, void *data);
+int ekg_resolver(const char *hostname, int type, resolver_handler_func_t handler, void *data);
+
 #endif
 	
 #endif /* __EKG_STUFF_H */

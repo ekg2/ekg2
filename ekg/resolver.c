@@ -76,7 +76,7 @@ list_t ekg_resolvers	= NULL;
 typedef struct { /* this will be reordered when resolver is finished */
 		/* user data */
 	char			*hostname;		/**< Hostname to resolve. >*/
-	query_handler_func_t	*handler;		/**< Result handler function. >*/
+	resolver_handler_func_t	handler;		/**< Result handler function. >*/
 	void			*userdata;		/**< User data passed to result handler. >*/
 		
 		/* private data */
@@ -141,12 +141,11 @@ int ekg_resolver_readconf(resolver_t *out) {
  * @param	addr		- resolved IP address (and port, if SRV applies) or NULL, if failed.
  */
 void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr) {
+	(res->handler)(addr, res->userdata);
+
 	xfree(res->hostname);
 	xfree(res);
 	list_remove(&ekg_resolvers, res, 0);
-
-	/* XXX: query */
-
 	xfree(addr);
 }
 
@@ -238,7 +237,7 @@ int ekg_resolver_send(resolver_t *res) {
 		return 0;
 	}
 
-	ekg_resolver_finish(res, NULL, 0);
+	ekg_resolver_finish(res, NULL);
 	return -1;
 }
 
@@ -382,7 +381,7 @@ WATCHER(ekg_resolver_recv) {
 					debug("ekg_resolver_recv(), for %s got IP %s\n",
 							res->hostname, inet_ntoa(sin->sin_addr));
 
-					ekg_resolver_finish(res, sin);
+					ekg_resolver_finish(res, (struct sockaddr*) sin);
 					
 					return 0;
 				} /* XXX: AAAA, for example */
@@ -401,19 +400,18 @@ WATCHER(ekg_resolver_recv) {
  *
  * Simple watch-based resolver.
  *
- * @param	plugin		- calling plugin.
  * @param	hostname	- hostname to resolve.
- * @param	type		- bitmask of (1 << (PF_* - 1)), probably PF_INET & PF_INET6 will be supported.
- * @param	async		- function handling resolved data (XXX: create some query).
+ * @param	type		- type of accepted answer records (XXX: some contants or something), currently ignored.
+ * @param	handler		- function handling resolved data
  * @param	data		- user data to pass to the function.
  *
- * @note	Given handler function MAY be executed BEFORE this routine returns, but that can happen
- * 		ONLY if resolving can't be done.
+ * @note	Given handler function MAY be executed BEFORE this routine returns, for example if failure occurs
+ * 		before question is sent or if IP address is given as 'hostname'.
  *
  * @return	0 on success, else errno-like constant.
  */
 
-int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler_func_t async, void *data) {
+int ekg_resolver(const char *hostname, int type, resolver_handler_func_t handler, void *data) {
 	resolver_t *res	= xmalloc(sizeof(resolver_t));
 	int r;
 
@@ -421,19 +419,31 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 
 	return EINVAL;
 
-	/* XXX: check if hostname is an IP address - then all the resolving is unneeded */
-	
-		/* these two are needed for ekg_resolver_finish() to send failure query */
-	res->handler	= async;
+		/* these two are needed for ekg_resolver_finish() to use handler */
+	res->handler	= handler;
 	res->userdata	= data;
+
+	{
+		struct in_addr addr;
+
+		if ((addr.s_addr = inet_addr(hostname)) != -1) {
+			struct sockaddr_in *sin = xmalloc(sizeof(struct sockaddr_in));
+			sin->sin_addr	= addr;
+			sin->sin_port	= 0;
+			sin->sin_family	= AF_INET;
+
+			ekg_resolver_finish(res, (struct sockaddr*) &sin);
+			return 0;
+		}
+	}
 	
 	if ((r = ekg_resolver_readconf(res))) {
-		ekg_resolver_finish(res, NULL, 0);
+		ekg_resolver_finish(res, NULL);
 		return r;
 	}
 
 	if (res->nameservers[0].s_addr == INADDR_NONE) {
-		ekg_resolver_finish(res, NULL, 0);
+		ekg_resolver_finish(res, NULL);
 		return ENOENT;
 	}
 
@@ -448,7 +458,7 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 			const int err = errno;
 
 			debug_error("ekg_resolver(), socket open/bind failed with: %s\n", strerror(err));
-			ekg_resolver_finish(res, NULL, 0);
+			ekg_resolver_finish(res, NULL);
 			return err;
 		}
 
@@ -531,9 +541,6 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	}
 
 	debug("ekg_resolver2() resolver pipes = { %d, %d }\n", fd[0], fd[1]);
-
-	ekg_resolver(plugin, server, AF_INET, async, data);
-	return NULL;
 
 	myserver = xstrdup(server);
 	if ((res = fork()) == -1) {
