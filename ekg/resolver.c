@@ -62,8 +62,25 @@ static const char valid_hostname_chars_u[] =
 
 #define MAXNS 3 /* I don't want to include resolv.h */
 
+/**
+ * resolver_query_t
+ *
+ * Mode of querying the nameservers by resolver.
+ */
+typedef enum {
+	EKG_RESOLVER_SEQUENCE,		/**< Query first server 'retry' times, then second one, then third >*/
+	EKG_RESOLVER_ROUNDROBIN,	/**< Query first server, then second, then third, then retry first >*/
+	EKG_RESOLVER_PROGRESSIVE,	/**< Query first server, then retry first and query second, then retry second and query third, etc. >*/
+	EKG_RESOLVER_ALLATONCE		/**< Query all servers at once, then retry them all */
+} resolver_query_t;
+
+#define EKG_RESOLVER_RETRIES	3
+#define EKG_RESOLVER_QUERYMODE	EKG_RESOLVER_ROUNDROBIN
+
 typedef struct {
-	struct in_addr nameservers[MAXNS];
+	struct in_addr		nameservers[MAXNS];	/* available nameservers */
+	query_handler_func_t	*handler;
+	void			*userdata;
 } resolver_t;
 
 /**
@@ -105,6 +122,38 @@ int ekg_resolver_readconf(resolver_t *out) {
 
 	fclose(f);
 	return 0;
+}
+
+/**
+ * ekg_resolver()
+ *
+ * Simple watch-based resolver.
+ *
+ * @param	plugin		- calling plugin.
+ * @param	hostname	- hostname to resolve.
+ * @param	type		- bitmask of (1 << (PF_* - 1)), probably PF_INET & PF_INET6 will be supported.
+ * @param	async		- function handling resolved data (XXX: create some query).
+ * @param	data		- user data to pass to the function.
+ *
+ * @return	0 on success, else errno-like constant.
+ */
+
+int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler_func_t async, void *data) {
+	resolver_t *res	= xmalloc(sizeof(resolver_t));
+	int r;
+
+	if ((r = ekg_resolver_readconf(res))) {
+		xfree(res);
+		return r;
+	}
+
+	res->handler	= async;
+	res->userdata	= data;
+
+#if 1 /* TMP */
+	xfree(res);
+#endif
+	return ENOSYS;
 }
 
 /*
