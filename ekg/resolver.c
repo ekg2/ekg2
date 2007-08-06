@@ -61,22 +61,8 @@ static const char valid_hostname_chars_u[] =
 	"0123456789-._";
 #endif
 
-/**
- * resolver_query_t
- *
- * Mode of querying the nameservers by resolver. Currently only EKG_RESOLVER_ROUNDROBIN implemented and always used,
- * it is possible that we even remove all this mode-stuff and stay with this one.
- */
-typedef enum {
-	EKG_RESOLVER_SEQUENCE,		/**< Query first server 'retry' times, then second one, then third >*/
-	EKG_RESOLVER_ROUNDROBIN,	/**< Query first server, then second, then third, then retry first >*/
-	EKG_RESOLVER_PROGRESSIVE,	/**< Query first server, then retry first and query second, then retry second and query third, etc. >*/
-	EKG_RESOLVER_ALLATONCE		/**< Query all servers at once, then retry them all >*/
-} resolver_query_t;
-
-#define MAXNS 3 /* I don't want to include resolv.h */
+#define MAXNS			3 /* I don't want to include resolv.h */
 #define EKG_RESOLVER_RETRIES	3
-#define EKG_RESOLVER_QUERYMODE	EKG_RESOLVER_ROUNDROBIN /* currently no other supported */
 
 int ekg_resolver_fd	= -1;
 list_t ekg_resolvers	= NULL;
@@ -96,6 +82,7 @@ typedef struct { /* this will be reordered when resolver is finished */
 	int			retry;			/**< Current retry num. >*/
 	struct in_addr		nameservers[MAXNS];	/**< Nameservers from resolv.conf. >*/
 	uint16_t		id;			/**< ID of request, used to distinguish between resolved hostnames. >*/
+	time_t			sent;			/**< Timestamp of last question sending, used for timeout detection. >*/
 } resolver_t;
 
 static char ekg_resolver_pkt[512]; /* 512 bytes is max DNS UDP packet size */
@@ -156,6 +143,7 @@ int ekg_resolver_readconf(resolver_t *out) {
 void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
 	xfree(res->hostname);
 	xfree(res);
+	list_remove(&ekg_resolvers, res, 0);
 
 	/* XXX: query */
 }
@@ -219,10 +207,26 @@ int ekg_resolver_send(resolver_t *res) {
 			sin.sin_family		= AF_INET;
 			sin.sin_addr.s_addr	= cfd->s_addr;
 			sin.sin_port		= htons(53);
+/*
+sendmsg(20, {msg_name(16)={sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("192.168.0.1")}, msg_iov(1)=[{"\214(\1\0\0\1\0\0\0\0\0\0\3www\6google\3com\0\0\1\0\1", 32}], msg_controllen=0, msg_flags=0}, 0) = 32
+ */
+
+			debug("ekg_resolver_send(), sending query for %s to %s:53\n", res->hostname, inet_ntoa(*cfd));
 
 			if ((sendto(ekg_resolver_fd, pkt, xstrlen(res->hostname) + 15, 0, (struct sockaddr*) &sin, sizeof(sin)) == -1)) {
 				debug_error("ekg_resolver_send(), sendto() failed: %s\n", strerror(errno));
 				continue; /* treat as no-response, i.e. retry */
+			}
+
+			{
+				watch_t *w = watch_find(NULL, ekg_resolver_fd, WATCH_READ);
+
+				if (!w)
+					debug_error("ekg_resolver_send(), watch not found - wtf?!\n");
+				else if (w->timeout == 0) { /* don't overwrite awaiting timeouts */
+						w->timeout = 3;
+						w->started = time(NULL);
+				}
 			}
 		}
 
@@ -231,6 +235,31 @@ int ekg_resolver_send(resolver_t *res) {
 
 	ekg_resolver_finish(res, NULL, 0);
 	return -1;
+}
+
+/**
+ * ekg_resolver_recv()
+ *
+ * Watch-triggered function, fetching data sent by DNS server and parsing it.
+ */
+WATCHER(ekg_resolver_recv) {
+	debug_error("ekg_resolver_recv(), NOT IMPLEMENTED, type = %d!\n", type);
+
+	if (type == 2) {
+		list_t l;
+
+		for (l = ekg_resolvers; l; l = l->next) {
+			ekg_resolver_t *res = l->data;
+
+			/* XXX: check timeout and resend query */
+		}
+
+#if 1 /*<TMP>*/
+		w->timeout = 0;
+#endif
+	}
+
+	return 0;
 }
 
 /**
@@ -252,10 +281,15 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 	int r;
 
 	if (!hostname || !*hostname)
-		return EINVAL;
 
+	return EINVAL;
+	
+		/* these two are needed for ekg_resolver_finish() to send failure query */
+	res->handler	= async;
+	res->userdata	= data;
+	
 	if ((r = ekg_resolver_readconf(res))) {
-		xfree(res);
+		ekg_resolver_finish(res, NULL, 0);
 		return r;
 	}
 
@@ -271,17 +305,20 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 		sin.sin_port		= INADDR_ANY;
 		sin.sin_addr.s_addr	= INADDR_ANY;
 
-		if ((ekg_resolver_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1 || bind(ekg_resolver_fd, (struct sockaddr *) &sin, sizeof(sin))) {
+		if ((ekg_resolver_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1 || bind(ekg_resolver_fd, (struct sockaddr *) &sin, sizeof(sin))) {
 			const int err = errno;
 
+			debug_error("ekg_resolver(), socket open/bind failed with: %s\n", strerror(err));
 			ekg_resolver_finish(res, NULL, 0);
 			return err;
 		}
 
-		/* XXX: here we should add watch */
+		watch_add(NULL, ekg_resolver_fd, WATCH_READ, &ekg_resolver_recv, NULL);
+
+		debug("ekg_resolver(), socket open as fd %d\n", ekg_resolver_fd);
 	}
 
-	{ /* XXX: idn */
+	{
 		const char *p = hostname;
 		char *q;
 
@@ -312,9 +349,6 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 	}
 #endif
 
-	res->handler	= async;
-	res->userdata	= data;
-	
 	if ((r = ekg_resolver_send(res)))
 		return r;
 
@@ -356,6 +390,8 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	}
 
 	debug("ekg_resolver2() resolver pipes = { %d, %d }\n", fd[0], fd[1]);
+
+	ekg_resolver(plugin, server, AF_INET, async, data);
 
 	myserver = xstrdup(server);
 	if ((res = fork()) == -1) {
