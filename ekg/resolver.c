@@ -63,6 +63,7 @@ static const char valid_hostname_chars_u[] =
 
 #define MAXNS			3 /* I don't want to include resolv.h */
 #define EKG_RESOLVER_RETRIES	3
+#define EKG_RESOLVER_TIMEOUT	3
 
 int ekg_resolver_fd	= -1;
 list_t ekg_resolvers	= NULL;
@@ -85,7 +86,7 @@ typedef struct { /* this will be reordered when resolver is finished */
 	time_t			sent;			/**< Timestamp of last question sending, used for timeout detection. >*/
 } resolver_t;
 
-static char ekg_resolver_pkt[512]; /* 512 bytes is max DNS UDP packet size */
+static uint16_t ekg_resolver_pkt[256]; /* 512 bytes is max DNS UDP packet size */
 
 /**
  * ekg_resolver_readconf()
@@ -159,7 +160,7 @@ void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
  */
 int ekg_resolver_send(resolver_t *res) {
 	while (res->retry < EKG_RESOLVER_RETRIES * MAXNS) {
-		char *pkt = ekg_resolver_pkt;
+		uint16_t *pkt = ekg_resolver_pkt;
 		struct in_addr *cfd;
 		uint16_t old_id = 0;
 
@@ -185,7 +186,7 @@ int ekg_resolver_send(resolver_t *res) {
 			char *p, *q, *r;
 			uint16_t *z;
 
-			for (p = res->hostname, q = &pkt[5], r = q + 1;; p++, r++) {
+			for (p = res->hostname, q = (char*) &pkt[5], r = q + 1;; p++, r++) {
 				if (*p == '.' || *p == 0) {
 					*q = (r - q - 1);
 					if (!*p)
@@ -217,6 +218,7 @@ sendmsg(20, {msg_name(16)={sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_
 				debug_error("ekg_resolver_send(), sendto() failed: %s\n", strerror(errno));
 				continue; /* treat as no-response, i.e. retry */
 			}
+			res->sent = time(NULL);
 
 			{
 				watch_t *w = watch_find(NULL, ekg_resolver_fd, WATCH_READ);
@@ -224,8 +226,8 @@ sendmsg(20, {msg_name(16)={sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_
 				if (!w)
 					debug_error("ekg_resolver_send(), watch not found - wtf?!\n");
 				else if (w->timeout == 0) { /* don't overwrite awaiting timeouts */
-						w->timeout = 3;
-						w->started = time(NULL);
+					w->timeout = EKG_RESOLVER_TIMEOUT;
+					w->started = res->sent;
 				}
 			}
 		}
@@ -247,16 +249,49 @@ WATCHER(ekg_resolver_recv) {
 
 	if (type == 2) {
 		list_t l;
+		const time_t now	= time(NULL);
+		int lowest		= 0;
+		watch_t *w		= watch_find(NULL, fd, WATCH_READ);
 
 		for (l = ekg_resolvers; l; l = l->next) {
-			ekg_resolver_t *res = l->data;
+			resolver_t *res = l->data;
 
-			/* XXX: check timeout and resend query */
+			if (now - res->sent >= EKG_RESOLVER_TIMEOUT)
+				ekg_resolver_send(res);
+			lowest = EKG_RESOLVER_TIMEOUT - (now - res->sent);
 		}
 
-#if 1 /*<TMP>*/
-		w->timeout = 0;
-#endif
+		if (w) {
+			w->started = now;
+			w->timeout = lowest;
+		} else
+			debug_error("ekg_resolver_recv(), can't find myself, WTF?!\n");
+	} else if (type == 0) {
+		uint16_t *pkt			= ekg_resolver_pkt;
+		struct sockaddr_in from;
+		socklen_t fromlen		= sizeof(from);
+		resolver_t *res;
+
+		if (recvfrom(ekg_resolver_fd, pkt, sizeof(ekg_resolver_pkt), 0, (struct sockaddr*) &from, &fromlen) == -1) {
+			debug_error("ekg_resolver_recv(), recvfrom() failed: %s\n", strerror(errno));
+			close(ekg_resolver_fd); /* if we don't clean up this mess, handler would be executed again and again, and again... */
+			return -1;
+		}
+
+		{
+			list_t l;
+
+			for (l = ekg_resolvers; l; l = l->next) {
+				res = l->data;
+				if (res->id == pkt[0])
+					break;
+			}
+
+			if (!l) {
+				debug("ekg_resolver_recv(), unknown id: %04x (junk?)\n", pkt[0]);
+				return 0;
+			}
+		}
 	}
 
 	return 0;
@@ -272,6 +307,9 @@ WATCHER(ekg_resolver_recv) {
  * @param	type		- bitmask of (1 << (PF_* - 1)), probably PF_INET & PF_INET6 will be supported.
  * @param	async		- function handling resolved data (XXX: create some query).
  * @param	data		- user data to pass to the function.
+ *
+ * @note	Given handler function MAY be executed BEFORE this routine returns, but that can happen
+ * 		ONLY if resolving can't be done.
  *
  * @return	0 on success, else errno-like constant.
  */
@@ -392,6 +430,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	debug("ekg_resolver2() resolver pipes = { %d, %d }\n", fd[0], fd[1]);
 
 	ekg_resolver(plugin, server, AF_INET, async, data);
+	return NULL;
 
 	myserver = xstrdup(server);
 	if ((res = fork()) == -1) {
