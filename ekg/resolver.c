@@ -76,7 +76,7 @@ list_t ekg_resolvers	= NULL;
 typedef struct { /* this will be reordered when resolver is finished */
 		/* user data */
 	char			*hostname;		/**< Hostname to resolve. >*/
-	resolver_handler_func_t	handler;		/**< Result handler function. >*/
+	resolver_handler_func_t	*handler;		/**< Result handler function. >*/
 	void			*userdata;		/**< User data passed to result handler. >*/
 		
 		/* private data */
@@ -141,7 +141,8 @@ int ekg_resolver_readconf(resolver_t *out) {
  * @param	addr		- resolved IP address (and port, if SRV applies) or NULL, if failed.
  */
 void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr) {
-	(res->handler)(addr, res->userdata);
+	if (res->handler)
+		(res->handler)(addr, res->userdata);
 
 	xfree(res->hostname);
 	xfree(res);
@@ -372,9 +373,14 @@ WATCHER(ekg_resolver_recv) {
 				p = (uint8_t *) &q[5] + ntohs(q[4]);
 
 				if (ntohs(q[0]) == 1) { /* A record */
+					if (ntohs(q[4]) != 4) {
+						debug_error("ekg_resolver_recv(), A record data length (%d) != 4\n", ntohs(q[4]));
+						continue;
+					}
+
 					struct sockaddr_in *sin = xmalloc(sizeof(struct sockaddr_in));
 
-					sin->sin_addr.s_addr	= q[5];
+					sin->sin_addr.s_addr	= *((uint32_t *) &q[5]);
 					sin->sin_port		= 0;
 					sin->sin_family		= AF_INET;
 
@@ -408,6 +414,9 @@ WATCHER(ekg_resolver_recv) {
  * @note	Given handler function MAY be executed BEFORE this routine returns, for example if failure occurs
  * 		before question is sent or if IP address is given as 'hostname'.
  *
+ * @note	When unloading plugin using ekg_resolver(), please call ekg_resolver(NULL, -1, handler, NULL)
+ * 		to remove all awaiting resolutions with used handler (to avoid SEGV).
+ *
  * @return	0 on success, else errno-like constant.
  */
 
@@ -415,9 +424,24 @@ int ekg_resolver(const char *hostname, int type, resolver_handler_func_t handler
 	resolver_t *res	= xmalloc(sizeof(resolver_t));
 	int r;
 
-	if (!hostname || !*hostname)
+	if (!hostname && type == -1 && handler) {
+			/* special syntax used to clear resolvers for unloaded plugin (i.e. for given handler function) */
+		list_t l;
 
-	return EINVAL;
+		for (l = ekg_resolvers; l; l = l->next) {
+			resolver_t *res = l->data;
+
+			if (res->handler == handler) {
+				xfree(res->hostname);
+				list_remove_safe(&ekg_resolvers, res, 1);
+			}
+		}
+
+		list_cleanup(&ekg_resolvers);
+		return 0;
+	}
+	if (!hostname || !*hostname)
+		return EINVAL;
 
 		/* these two are needed for ekg_resolver_finish() to use handler */
 	res->handler	= handler;
@@ -432,7 +456,7 @@ int ekg_resolver(const char *hostname, int type, resolver_handler_func_t handler
 			sin->sin_port	= 0;
 			sin->sin_family	= AF_INET;
 
-			ekg_resolver_finish(res, (struct sockaddr*) &sin);
+			ekg_resolver_finish(res, (struct sockaddr*) sin);
 			return 0;
 		}
 	}

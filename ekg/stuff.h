@@ -377,7 +377,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 /* addr - socket address, query first field for type, automagically freed on return, if NULL - resolution failed.
  * data - user data given to ekg_resolver().
  */
-typedef void (*resolver_handler_func_t)(struct sockaddr *addr, void *data);
+typedef void (resolver_handler_func_t)(struct sockaddr *addr, void *data);
 int ekg_resolver(const char *hostname, int type, resolver_handler_func_t handler, void *data);
 
 #endif
