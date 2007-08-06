@@ -139,14 +139,15 @@ int ekg_resolver_readconf(resolver_t *out) {
  *
  * @param	res		- resolver_t struct.
  * @param	addr		- resolved IP address (and port, if SRV applies) or NULL, if failed.
- * @param	addrtype	- AF_* constant determining IP address type (AF_INET or AF_INET6, currently).
  */
-void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
+void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr) {
 	xfree(res->hostname);
 	xfree(res);
 	list_remove(&ekg_resolvers, res, 0);
 
 	/* XXX: query */
+
+	xfree(addr);
 }
 
 /**
@@ -181,10 +182,11 @@ int ekg_resolver_send(resolver_t *res) {
 		pkt[2]		= htons(1);	/* 1 question */
 
 		{
-			char *p, *q, *r;
+			const char *p;
+			uint8_t *q, *r;
 			uint16_t *z;
 
-			for (p = res->hostname, q = (char*) &pkt[6], r = q + 1;; p++, r++) {
+			for (p = res->hostname, q = (uint8_t *) &pkt[6], r = q + 1;; p++, r++) {
 				if (*p == '.' || *p == 0) {
 					*q = (r - q - 1);
 					if (!*p)
@@ -267,6 +269,7 @@ WATCHER(ekg_resolver_recv) {
 			debug_error("ekg_resolver_recv(), can't find myself, WTF?!\n");
 	} else if (type == 0) {
 		uint16_t *pkt			= ekg_resolver_pkt;
+		uint8_t *p;
 		struct sockaddr_in from;
 		socklen_t fromlen		= sizeof(from);
 		resolver_t *res;
@@ -331,8 +334,63 @@ WATCHER(ekg_resolver_recv) {
 			}
 		}
 
-		/* XXX: parse answer */
+		p = (uint8_t *) &pkt[6];
 
+		{ /* skip question section */
+			uint16_t qucount = ntohs(pkt[2]);
+
+			while (qucount--) {
+				while (*p) { /* skip hostname */
+					if (*p & 0xC0) { /* 'compression' */
+						p++; /* offset is contained within two bytes */
+						break;
+					} else
+						p += *p + 1;
+				}
+
+					/* now we are on QTYPE & QCLASS */
+				p += 5;
+			}
+		}
+
+		{ /* XXX: we currently just simply get first A record off the results
+		     in future we should check if it's really what CNAME is pointing to
+		     and think about fetching multiple IPs */
+			uint16_t ancount = ntohs(pkt[3]);
+			uint16_t *q;
+
+			while (ancount--) {
+				while (*p) {
+					if (*p & 0xC0) { /* 'compression' */
+						p++; /* offset is contained within two bytes */
+						break;
+					} else
+						p += *p + 1;
+				}
+			
+				p++;
+				q = (uint16_t *) p; /* returning to 16-bit fields */
+				p = (uint8_t *) &q[5] + ntohs(q[4]);
+
+				if (ntohs(q[0]) == 1) { /* A record */
+					struct sockaddr_in *sin = xmalloc(sizeof(struct sockaddr_in));
+
+					sin->sin_addr.s_addr	= q[5];
+					sin->sin_port		= 0;
+					sin->sin_family		= AF_INET;
+
+					debug("ekg_resolver_recv(), for %s got IP %s\n",
+							res->hostname, inet_ntoa(sin->sin_addr));
+
+					ekg_resolver_finish(res, sin);
+					
+					return 0;
+				} /* XXX: AAAA, for example */
+				
+			}
+		}
+
+		ns->s_addr = INADDR_NONE; /* disable retry with this server, as it didn't give us any results */
 	}
 
 	return 0;
@@ -362,6 +420,8 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 	if (!hostname || !*hostname)
 
 	return EINVAL;
+
+	/* XXX: check if hostname is an IP address - then all the resolving is unneeded */
 	
 		/* these two are needed for ekg_resolver_finish() to send failure query */
 	res->handler	= async;
@@ -427,6 +487,8 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 		}
 	}
 #endif
+
+	/* XXX: check /etc/hosts first */
 
 	if ((r = ekg_resolver_send(res)))
 		return r;
