@@ -76,15 +76,11 @@ typedef struct {
  * @return	0 on success, errno-like constant on failure.
  */
 int ekg_resolver_readconf(resolver_t *out) {
-	char *path = (char*) prepare_path_user(SYSCONFDIR);
 	FILE *f;
 	char line[64]; /* this shouldn't be long */
 	struct in_addr *ns = out->nameservers;
 
-	if (!path || (strlcat(path, "/resolv.conf", PATH_MAX) >= PATH_MAX))
-		return ENAMETOOLONG;
-
-	if (!(f = fopen(path, "r"))) /* XXX: stat() first? */
+	if (!(f = fopen("/etc/resolv.conf", "r"))) /* XXX: stat() first? */
 		return errno;
 
 	while ((fgets(line, sizeof(line), f))) {
@@ -94,14 +90,15 @@ int ekg_resolver_readconf(resolver_t *out) {
 			continue;
 
 		p = line + xstrspn(line, " \f\n\r\t\v");
-		if (!xstrncasecmp("nameserver", p, 10)) /* skip other keys */
+		if (xstrncasecmp("nameserver", p, 10)) /* skip other keys */
 			continue;
 
 		p += 10;
-		p += xstrspn(line, " \f\n\r\t\v");
+		p += xstrspn(p, " \f\n\r\t\v");
 
-		if (!((*p = inet_addr(p))))
+		if (!((ns->s_addr = inet_addr(p))))
 			continue;
+		debug("ekg_resolver_readconf: found ns %s\n", p);
 		if (++ns >= &out->nameservers[MAXNS])
 			break;
 	}
