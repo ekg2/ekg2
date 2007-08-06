@@ -2,6 +2,7 @@
 #include <ekg/win32.h>
 
 #include <sys/types.h>
+#include <sys/param.h> /* PATH_MAX, funny, I know */
 
 #ifndef NO_POSIX_SYSTEM
 #include <sys/socket.h>
@@ -35,9 +36,21 @@
  * 	THX.
  */
 
+#ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
+#  define PATH_MAX _POSIX_PATH_MAX
+# endif
+#endif
+
+#ifndef HAVE_STRLCAT
+#  include "compat/strlcat.h"
+#endif
 
 #include "debug.h"
 #include "plugins.h"
+#include "stuff.h"
 #include "xmalloc.h"
 
 #ifdef LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
@@ -46,6 +59,56 @@ static const char valid_hostname_chars_u[] =
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789-._";
 #endif
+
+#define MAXNS 3 /* I don't want to include resolv.h */
+
+typedef struct {
+	struct in_addr nameservers[MAXNS];
+} resolver_t;
+
+/**
+ * ekg_resolver_readconf()
+ *
+ * Read ${SYSCONFDIR}/resolv.conf and fill in nameservers in given @a resolver_t.
+ *
+ * @param	out	- structure to be filled.
+ *
+ * @return	0 on success, errno-like constant on failure.
+ */
+int ekg_resolver_readconf(resolver_t *out) {
+	char *path = (char*) prepare_path_user(SYSCONFDIR);
+	FILE *f;
+	char line[64]; /* this shouldn't be long */
+	struct in_addr *ns = out->nameservers;
+
+	if (!path || (strlcat(path, "/resolv.conf", PATH_MAX) >= PATH_MAX))
+		return ENAMETOOLONG;
+
+	if (!(f = fopen(path, "r"))) /* XXX: stat() first? */
+		return errno;
+
+	while ((fgets(line, sizeof(line), f))) {
+		char *p;
+
+		if (!xstrchr(line, 10)) /* skip too long lines */
+			continue;
+
+		p = line + xstrspn(line, " \f\n\r\t\v");
+		if (!xstrncasecmp("nameserver", p, 10)) /* skip other keys */
+			continue;
+
+		p += 10;
+		p += xstrspn(line, " \f\n\r\t\v");
+
+		if (!((*p = inet_addr(p))))
+			continue;
+		if (++ns >= &out->nameservers[MAXNS])
+			break;
+	}
+
+	fclose(f);
+	return 0;
+}
 
 /*
  * ekg_resolver2()
