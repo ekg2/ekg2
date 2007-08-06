@@ -60,27 +60,40 @@ static const char valid_hostname_chars_u[] =
 	"0123456789-._";
 #endif
 
-#define MAXNS 3 /* I don't want to include resolv.h */
-
 /**
  * resolver_query_t
  *
- * Mode of querying the nameservers by resolver.
+ * Mode of querying the nameservers by resolver. Currently only EKG_RESOLVER_ROUNDROBIN implemented and always used,
+ * it is possible that we even remove all this mode-stuff and stay with this one.
  */
 typedef enum {
 	EKG_RESOLVER_SEQUENCE,		/**< Query first server 'retry' times, then second one, then third >*/
 	EKG_RESOLVER_ROUNDROBIN,	/**< Query first server, then second, then third, then retry first >*/
 	EKG_RESOLVER_PROGRESSIVE,	/**< Query first server, then retry first and query second, then retry second and query third, etc. >*/
-	EKG_RESOLVER_ALLATONCE		/**< Query all servers at once, then retry them all */
+	EKG_RESOLVER_ALLATONCE		/**< Query all servers at once, then retry them all >*/
 } resolver_query_t;
 
+#define MAXNS 3 /* I don't want to include resolv.h */
 #define EKG_RESOLVER_RETRIES	3
-#define EKG_RESOLVER_QUERYMODE	EKG_RESOLVER_ROUNDROBIN
+#define EKG_RESOLVER_QUERYMODE	EKG_RESOLVER_ROUNDROBIN /* currently no other supported */
 
-typedef struct {
-	struct in_addr		nameservers[MAXNS];	/* available nameservers */
-	query_handler_func_t	*handler;
-	void			*userdata;
+/**
+ * resolver_t
+ *
+ * Private resolver structure, containing inter-function data.
+ */
+typedef struct { /* this will be reordered when resolver is finished */
+		/* user data */
+	char			*hostname;		/**< Hostname to resolve. */
+	query_handler_func_t	*handler;		/**< Result handler function. >*/
+	void			*userdata;		/**< User data passed to result handler. >*/
+		
+		/* private data */
+	int			retry;			/**< Current retry num. */
+	struct resolver_ns {				/**< Nameservers from resolv.conf. >*/
+		struct in_addr	addr;
+		int		fd;
+	}			nameservers[MAXNS];
 } resolver_t;
 
 /**
@@ -95,7 +108,7 @@ typedef struct {
 int ekg_resolver_readconf(resolver_t *out) {
 	FILE *f;
 	char line[64]; /* this shouldn't be long */
-	struct in_addr *ns = out->nameservers;
+	struct resolver_ns *ns = out->nameservers;
 
 	if (!(f = fopen("/etc/resolv.conf", "r"))) /* XXX: stat() first? */
 		return errno;
@@ -113,15 +126,76 @@ int ekg_resolver_readconf(resolver_t *out) {
 		p += 10;
 		p += xstrspn(p, " \f\n\r\t\v");
 
-		if (!((ns->s_addr = inet_addr(p))))
+		if (!((ns->addr.s_addr = inet_addr(p))))
 			continue;
+		ns->fd = 0;
 		debug("ekg_resolver_readconf: found ns %s\n", p);
 		if (++ns >= &out->nameservers[MAXNS])
 			break;
 	}
 
+	for (; ns < &out->nameservers[MAXNS]; ns++)
+		ns->addr.s_addr = INADDR_NONE;
+
 	fclose(f);
 	return 0;
+}
+
+/**
+ * ekg_resolver_finish()
+ *
+ * Frees private resolver structure and sends final query.
+ *
+ * @param	res		- resolver_t struct.
+ * @param	addr		- resolved IP address (and port, if SRV applies) or NULL, if failed.
+ * @param	addrtype	- AF_* constant determining IP address type (AF_INET or AF_INET6, currently).
+ */
+void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr, int type) {
+	struct resolver_ns *cfd;
+
+	for (cfd = res->nameservers; cfd < &res->nameservers[MAXNS]; cfd++) {
+		if (cfd->fd)
+			close(cfd->fd);
+	}
+	xfree(res->hostname);
+	xfree(res);
+
+	/* XXX: query */
+}
+
+/**
+ * ekg_resolver_send()
+ *
+ * Send query to next nameserver in sequence.
+ *
+ * @param	res		- resolver_t struct.
+ *
+ * @return	New watch_t pointer on success, NULL on failure or when no nameservers left (after all retries).
+ */
+watch_t *ekg_resolver_send(resolver_t *res) {
+	struct resolver_ns *cfd;
+	struct sockaddr_in sin;
+
+	do {
+		if ((cfd = &res->nameservers[(res->retry++) % MAXNS])->addr.s_addr == INADDR_NONE)
+			continue;
+
+		sin.sin_family		= AF_INET;
+		sin.sin_port		= INADDR_ANY;
+		sin.sin_addr.s_addr	= INADDR_ANY;
+
+		if (!(cfd->fd = socket(AF_INET, SOCK_DGRAM, 0)) || bind(cfd->fd, (struct sockaddr *) &sin, sizeof(sin))) {
+			if (cfd->fd)
+				close(cfd->fd);
+			continue;
+		}
+
+		/* XXX: prepare & send packet, create watch */
+
+	} while (res->retry <= EKG_RESOLVER_RETRIES * MAXNS);
+
+	ekg_resolver_finish(res, NULL, 0);
+	return NULL;
 }
 
 /**
@@ -147,12 +221,14 @@ int ekg_resolver(plugin_t *plugin, const char *hostname, int type, query_handler
 		return r;
 	}
 
+	if (res->nameservers[0].addr.s_addr == INADDR_NONE)
+		ekg_resolver_finish(res, NULL, 0);
+
+	res->hostname	= xstrdup(hostname);
 	res->handler	= async;
 	res->userdata	= data;
+	res->retry	= 0;
 
-#if 1 /* TMP */
-	xfree(res);
-#endif
 	return ENOSYS;
 }
 
