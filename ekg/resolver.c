@@ -99,9 +99,40 @@ typedef struct { /* this will be reordered when resolver is finished */
 static uint16_t ekg_resolver_pkt[256]; /* 512 bytes is max DNS UDP packet size */
 
 /**
+ * ekg_resolver_hostname()
+ *
+ * Convert given hostname to format used in ekg_resolver() DNS queries.
+ *
+ * @param	p	- hostname to convert.
+ *
+ * @return	Newly-allocated, converted hostname, which need to be freed by caller.
+ */
+char *ekg_resolver_hostname(const char *p) {
+	char *out = xmalloc(xstrlen(p)+2);
+	char *q;
+
+	while (*p == '.')
+		p++; /* skip leading dots */
+
+	for (q = out; *p; p++, q++) {
+		if (*p == '.') {
+			while (*(p+1) == '.')
+				p++; /* skip multiple dots */
+		}
+		*q = *p;
+	}
+
+	if (*(p-1) != '.') /* we are already sure that p is not empty */
+		*(q++) = '.'; /* add trailing dot */
+	*q = 0;
+
+	return out;
+}
+
+/**
  * ekg_resolver_readconf()
  *
- * Read ${SYSCONFDIR}/resolv.conf and fill in nameservers in given @a resolver_t.
+ * Read /etc/resolv.conf and fill in nameservers in given @a resolver_t.
  *
  * @param	out	- structure to be filled.
  *
@@ -140,6 +171,20 @@ int ekg_resolver_readconf(resolver_t *out) {
 
 	fclose(f);
 	return 0;
+}
+
+/**
+ * ekg_resolver_hosts_lookup()
+ *
+ * Lookup /etc/hosts for given hostname.
+ *
+ * @param	res	- resolver_t with filled in hostname and handler data.
+ *
+ * @return	0 on success (and handler function called), errno if host not found in /etc/hosts (which shouldn't be considered as error).
+ */
+int ekg_resolver_hosts_lookup(resolver_t *res) {
+		/* XXX */
+	return ENOSYS;
 }
 
 /**
@@ -471,6 +516,24 @@ int ekg_resolver(const char *hostname, int type, resolver_handler_func_t handler
 		}
 	}
 	
+	res->hostname = ekg_resolver_hostname(hostname);
+	if (!ekg_resolver_hosts_lookup(res))
+		return 0;
+#ifdef LIBIDN
+	{
+		char *tmp;
+			
+			/* XXX: in non-utf environments we should first recode URL from local to utf */
+		if ((xstrspn(res->hostname, valid_hostname_chars_u) != xstrlen(res->hostname)) && /* need to escape */
+			(idna_to_ascii_8z(res->hostname, &tmp, 0) == IDNA_SUCCESS)) {
+			xfree(res->hostname);
+			res->hostname = tmp;
+
+			if (!ekg_resolver_hosts_lookup(res)) /* the domain may be specified by user in hosts as UTF-8 or punycode, I think */
+				return 0;
+		}
+	}
+#endif
 	if ((r = ekg_resolver_readconf(res))) {
 		ekg_resolver_finish(res, NULL);
 		return r;
@@ -500,39 +563,6 @@ int ekg_resolver(const char *hostname, int type, resolver_handler_func_t handler
 
 		debug("ekg_resolver(), socket open as fd %d\n", ekg_resolver_fd);
 	}
-
-	{
-		const char *p = hostname;
-		char *q;
-
-		res->hostname	= xmalloc(xstrlen(hostname)+2);
-		while (*p == '.') p++; /* skip leading dots */
-
-		for (q = res->hostname; *p; p++, q++) {
-			if (*p == '.') {
-				while (*(p+1) == '.')
-					p++; /* skip multiple dots */
-			}
-			*q = *p;
-		}
-
-		if (*(p-1) != '.') /* we are already sure that p is not empty */
-			*(q++) = '.'; /* add trailing dot */
-		*q = 0;
-	}
-#ifdef LIBIDN
-	{
-		char *tmp;
-
-		if ((xstrspn(res->hostname, valid_hostname_chars_u) != xstrlen(res->hostname)) && /* need to escape */
-			(idna_to_ascii_8z(res->hostname, &tmp, 0) == IDNA_SUCCESS)) {
-			xfree(res->hostname);
-			res->hostname = tmp;
-		}
-	}
-#endif
-
-	/* XXX: check /etc/hosts first */
 
 	if ((r = ekg_resolver_send(res)))
 		return r;
