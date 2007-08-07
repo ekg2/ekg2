@@ -480,27 +480,29 @@ QUERY(logsqlite_msg_handler)
 
 	switch ((enum msgclass_t)class) {
 		case EKG_MSGCLASS_MESSAGE:
-			type = xstrdup("msg");
+			type = ("msg");
 			is_sent = 0;
 			break;
+#if 0	/* equals to 'default' */
 		case EKG_MSGCLASS_CHAT:
 			type = xstrdup("chat");
 			is_sent = 0;
 			break;
+#endif
 		case EKG_MSGCLASS_SENT:
-			type = xstrdup("msg");
+			type = ("msg");
 			is_sent = 1;
 			break;
 		case EKG_MSGCLASS_SENT_CHAT:
-			type = xstrdup("chat");
+			type = ("chat");
 			is_sent = 1;
 			break;
 		case EKG_MSGCLASS_SYSTEM:
-			type = xstrdup("system");
+			type = ("system");
 			is_sent = 0;
 			break;
 		default:
-			type = xstrdup("chat");
+			type = ("chat");
 			is_sent = 0;
 			break;
 	};
@@ -536,13 +538,12 @@ QUERY(logsqlite_msg_handler)
 
 		/* moved to not break transaction due to above hack, sorry */
 	db = logsqlite_prepare_db(s, sent, 1);
-	if (!db) {
-		xfree(type);
+	if (!db)
 		return 0;
-	}
 
 	debug("[logsqlite] running msg query\n");
 
+		/* XXX: remove resource from UID? */
 #ifdef HAVE_SQLITE3
 	sqlite3_prepare(db, "INSERT INTO log_msg VALUES (?, ?, ?, ?, ?, ?, ?, ?)", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, session, -1, SQLITE_STATIC);
@@ -568,8 +569,6 @@ QUERY(logsqlite_msg_handler)
 		sent,
 		text);
 #endif 
-
-	xfree(type);
 
 	return 0;
 };
@@ -675,15 +674,16 @@ static QUERY(logsqlite_newwin_handler) {
 
 			/* these ones stolen from /last cmd */
 #ifdef HAVE_SQLITE3
-	sqlite3_prepare(db, "SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = ?1 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+	sqlite3_prepare(db, "SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = ?1 OR uid LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, uid, -1, SQLITE_STATIC);
 	sqlite3_bind_int(stmt, 2, config_logsqlite_last_limit);
+	sqlite3_bind_text(stmt, 3, saprintf("%s/%%", uid), -1, xfree);
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		ts = (time_t) sqlite3_column_int(stmt, 0);
 
 		if (sqlite3_column_int(stmt, 2) == 0) {
 #else
-	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, config_logsqlite_last_limit);
+	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' OR uid LIKE '%q/%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, uid, config_logsqlite_last_limit);
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		ts = (time_t) atoi(results[0]);
