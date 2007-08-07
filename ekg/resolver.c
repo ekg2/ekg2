@@ -1,3 +1,13 @@
+/*
+ * Very simple resolver based on RFC 1035
+ * In distinct from ekg_resolver2() - has slightly more operative API and is fork-free & pipe-free
+ * All the resolutions are handled asynchronically using EKG2 watches
+ * Tested on my machine and some ol' Debian shell, dunno how it works under BSD and others,
+ * 	and probably won't work on NO_POSIX_SYSTEM.
+ * Also tested on my local djbdns and TP SA DNS servers.
+ * Please report any bugs directly to me at <peres@peres.int.pl>
+ */
+
 #include "ekg2-config.h"
 #include "win32.h"
 
