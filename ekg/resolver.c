@@ -147,7 +147,7 @@ int ekg_resolver_readconf(resolver_t *out) {
 		return errno;
 
 	while ((fgets(line, sizeof(line), f))) {
-		char *p;
+		const char *p;
 
 		if (!xstrchr(line, 10)) /* skip too long lines */
 			continue;
@@ -174,20 +174,6 @@ int ekg_resolver_readconf(resolver_t *out) {
 }
 
 /**
- * ekg_resolver_hosts_lookup()
- *
- * Lookup /etc/hosts for given hostname.
- *
- * @param	res	- resolver_t with filled in hostname and handler data.
- *
- * @return	0 on success (and handler function called), errno if host not found in /etc/hosts (which shouldn't be considered as error).
- */
-int ekg_resolver_hosts_lookup(resolver_t *res) {
-		/* XXX */
-	return ENOSYS;
-}
-
-/**
  * ekg_resolver_finish()
  *
  * Frees private resolver structure and sends final query.
@@ -203,6 +189,62 @@ void ekg_resolver_finish(resolver_t *res, struct sockaddr *addr) {
 	xfree(res);
 	list_remove(&ekg_resolvers, res, 0);
 	xfree(addr);
+}
+
+/**
+ * ekg_resolver_hosts_lookup()
+ *
+ * Lookup /etc/hosts for given hostname.
+ *
+ * @param	res	- resolver_t with filled in hostname and handler data.
+ *
+ * @return	0 on success (and handler function called), errno if host not found in /etc/hosts (which shouldn't be considered as error).
+ */
+int ekg_resolver_hosts_lookup(resolver_t *res) { /* XXX: IPv6 */
+	FILE *f;
+	char line[256];
+
+	if (!(f = fopen("/etc/hosts", "r")))
+		return errno;
+
+	while ((fgets(line, sizeof(line), f))) {
+		char *p;
+		struct in_addr in;
+
+		if (!xstrchr(line, 10)) /* skip too long lines */
+			continue;
+		
+		p = line + xstrspn(line, " \f\n\r\t\v");
+		if (*p == '#' || ((in.s_addr = inet_addr(p))) == INADDR_NONE)
+			continue;
+
+		p += xstrcspn(p, " \f\n\r\t\v");
+		while (*(p += xstrspn(p, " \f\n\r\t\v"))) {
+			char *q = p + xstrcspn(p, " \f\n\r\t\v");
+			char *tmp;
+			
+			*q = 0;
+			tmp = ekg_resolver_hostname(p);
+			
+			if (!xstrcasecmp(tmp, res->hostname)) {
+				struct sockaddr_in *sin = xmalloc(sizeof(struct sockaddr_in));
+				sin->sin_addr	= in;
+				sin->sin_port	= 0;
+				sin->sin_family	= AF_INET;
+
+				xfree(tmp);
+				debug("ekg_resolver_hosts_lookup(), hostname %s resolved to %s\n", res->hostname, inet_ntoa(in));
+				ekg_resolver_finish(res, (struct sockaddr*) sin);
+				return 0;
+			}
+
+			xfree(tmp);
+			*q = ' ';
+			p = q;
+		}
+	}
+
+	return ENOENT;
 }
 
 /**
