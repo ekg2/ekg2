@@ -192,7 +192,7 @@ void jabber_convert_string_destroy();
 QUERY(jabber_convert_string_reinit);
 
 void jabber_reconnect_handler(int type, void *data);
-void jabber_handle_resolver(struct sockaddr *addr, void *data);
+WATCHER(jabber_handle_resolver);
 
 int jabber_privacy_add_compare(void *data1, void *data2);
 int jabber_privacy_free(jabber_private_t *j);

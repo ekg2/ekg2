@@ -706,7 +706,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 		jabber_private_t *j = jabber_private(s);
 		char *header, *body;
 		char buf[1024];
-		int len, res;
+		int len;
 
 		len = read(fd, buf, sizeof(buf));
 		buf[len] = 0;
@@ -739,8 +739,8 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 			}
 
 			debug_function("[TLEN, HUB]: host = %s, port = %d\n", body, j->port);
-			if ((res = ekg_resolver(body, 0, jabber_handle_resolver, s)))
-				print("generic_error", strerror(res));
+			if (ekg_resolver2(&jabber_plugin, body, jabber_handle_resolver, s) == NULL)
+				print("generic_error", strerror(errno));
 
 			return -1;
 		}
@@ -813,7 +813,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
 	return -1;
 }
 
-void jabber_handle_resolver(struct sockaddr *addr, void *data)
+WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 {
 	session_t *s = (session_t *) data;
 	jabber_private_t *j = jabber_private(s);
@@ -825,26 +825,40 @@ void jabber_handle_resolver(struct sockaddr *addr, void *data)
 	int ssl_port = session_int_get(s, "ssl_port");
 	int use_ssl = session_int_get(s, "use_ssl");
 #endif
-	int fd;
 
 	const int tlenishub = (j->istlen > 1);
+        if (type)
+                return 0;
 
         debug_function("[jabber] jabber_handle_resolver(), tlenishub = %d\n", tlenishub);
-
-	if (!addr) {
+#ifdef NO_POSIX_SYSTEM
+	int ret = ReadFile(fd, &a, sizeof(a), &res, NULL);
+#else
+	res = read(fd, &a, sizeof(a));
+#endif
+	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
+                if (res == -1)
+                        debug_error("[jabber] unable to read data from resolver: %s\n", strerror(errno));
+                else
+                        debug_error("[jabber] read %d bytes from resolver. not good\n", res);
+                close(fd);
                 print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
                 /* no point in reconnecting by jabber_handle_disconnect() */
                 j->connecting = 0;
-                return;
+                return -1;
         }
-	a = ((struct sockaddr_in *) addr)->sin_addr;
 
         debug_function("[jabber] resolved to %s\n", inet_ntoa(a));
+#ifdef NO_POSIX_SYSTEM
+	CloseHandle((HANDLE) fd);
+#else
+        close(fd);
+#endif
 
         if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                 debug_error("[jabber] socket() failed: %s\n", strerror(errno));
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return;
+                return -1;
         }
 
         debug_function("[jabber] socket() = %d\n", fd);
@@ -854,7 +868,7 @@ void jabber_handle_resolver(struct sockaddr *addr, void *data)
         if (ioctl(fd, FIONBIO, &one) == -1) {
                 debug_error("[jabber] ioctl() failed: %s\n", strerror(errno));
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return;
+                return -1;
         }
 
         /* failure here isn't fatal, don't bother with checking return code */
@@ -887,20 +901,20 @@ void jabber_handle_resolver(struct sockaddr *addr, void *data)
 		) {
                 debug_error("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return;
+                return -1;
         }
 
 #ifdef JABBER_HAVE_SSL
         if (use_ssl) {
 		jabber_handle_connect_ssl(-1, fd, 0, s);
-		return;
+		return -1;
         } // use_ssl
 #endif
 	if (tlenishub) {
 		j->istlen = 1;		/* reset */
 		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_tlen_hub, s);
 	} else	watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
-	return;
+	return -1;
 }
 
 #ifdef JABBER_HAVE_SSL
@@ -1570,7 +1584,6 @@ static int jabber_plugin_destroy() {
 #ifdef JABBER_HAVE_SSL
 	SSL_GLOBAL_DEINIT();
 #endif
-	ekg_resolver(NULL, -1, jabber_handle_resolver, NULL); /* cleanup */
 	jabber_convert_string_destroy();
         plugin_unregister(&jabber_plugin);
 

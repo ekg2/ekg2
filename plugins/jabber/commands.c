@@ -322,8 +322,8 @@ static COMMAND(jabber_command_connect)
 			realserver = server;
 	}
 
-	if ((res = ekg_resolver(realserver, 0, jabber_handle_resolver, session))) {
-		printq("generic_error", strerror(res));
+	if (ekg_resolver2(&jabber_plugin, realserver, jabber_handle_resolver, session) == NULL) {
+		printq("generic_error", strerror(errno));
 		return -1;
 	}
 	/* XXX, set resolver-watch timeout? */
