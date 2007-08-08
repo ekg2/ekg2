@@ -380,8 +380,8 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 #endif
 
 		sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
-		sqlite_n_exec(db, "CREATE TABLE log_msg (session , uid , nick , type , sent INT, ts INT, sentts INT, body )", NULL, NULL, NULL);
-		sqlite_n_exec(db, "CREATE TABLE log_status (session , uid , nick , ts INT, status , desc )", NULL, NULL, NULL);
+		sqlite_n_exec(db, "CREATE TABLE log_msg (session TEXT, uid TEXT, nick TEXT, type TEXT, sent INT, ts INT, sentts INT, body TEXT)", NULL, NULL, NULL);
+		sqlite_n_exec(db, "CREATE TABLE log_status (session TEXT, uid TEXT, nick TEXT, ts INT, status TEXT, desc TEXT)", NULL, NULL, NULL);
 
 #ifdef HAVE_SQLITE3
 		sqlite3_exec(db, "CREATE INDEX ts ON log_msg(ts)", NULL, NULL, NULL); 
