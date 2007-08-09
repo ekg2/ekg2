@@ -1,5 +1,7 @@
 dnl copied as-is from 'info libidn'
 
+AC_SUBST(IDN_LIBS)
+
 AC_DEFUN([AC_CHECK_LIBIDN], [
      AC_ARG_WITH(libidn, AC_HELP_STRING([--with-libidn=[DIR]],
                                      [Support IDN (needs GNU Libidn)]),
@@ -11,7 +13,7 @@ AC_DEFUN([AC_CHECK_LIBIDN], [
        fi
        AC_CHECK_HEADER(idna.h,
          AC_CHECK_LIB(idn, stringprep_check_version,
-           [libidn=yes LIBS="${LIBS} -lidn"], libidn=no),
+           [libidn=yes IDN_LIBS="-lidn"], libidn=no),
          libidn=no)
      fi
      if test "$libidn" != "no" ; then

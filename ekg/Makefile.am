@@ -9,7 +9,7 @@ ekg2_SOURCES = audio.c commands.c configfile.c dynstuff.c ekg.c emoticons.c even
 ekg2includedir = $(includedir)/ekg2
 ekg2include_HEADERS = $(ekg2_headers) 
 
-ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ @STATIC_PLUGINS_LIB@ @DLLIB@ 
+ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ @STATIC_PLUGINS_LIB@ @DLLIB@ @IDN_LIBS@
 ekg2_LDFLAGS = -export-dynamic
 ekg2_DEPENDENCIES = 
 
