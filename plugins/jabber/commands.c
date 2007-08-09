@@ -931,7 +931,7 @@ static COMMAND(jabber_command_del) {
 	watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
 	watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/></query></iq>", uid+payload);
 
-	print("user_deleted", target, session_name(session));
+	printq("user_deleted", target, session_name(session));
 	return 0;
 }
 
@@ -2654,6 +2654,31 @@ static COMMAND(jabber_command_find)
 		return jabber_command_userinfo("userinfo", params, session, target, quiet);
 }
 
+static COMMAND(jabber_command_userlist)
+{
+	if (match_arg(params[0], 'c', "clear", 2) || match_arg(params[0], 'G', "replace", 2)) {	/* clear the userlist */
+		list_t l;
+
+		for (l = session->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+			const char *args[] = { NULL };
+
+			if (u)
+				jabber_command_del("del", args, session, u->uid, 1);
+		}
+
+		printq("user_cleared_list", session_name(session));
+	}
+
+	if (match_arg(params[0], 'g', "get", 2) || match_arg(params[0], 'G', "replace", 2)) {	/* fill userlist with data from file */
+
+	} else if (match_arg(params[0], 'p', "put", 2)) {	/* write userlist into file */
+
+	}
+
+	return 0;
+}
+
 void jabber_register_commands()
 {
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
@@ -2730,6 +2755,8 @@ void jabber_register_commands()
 //	COMMAND_ADD_J(&jabber_plugin, "unignore", "i ?", jabber_command_ignore, JABBER_ONLY, NULL);
 	COMMAND_ADD_J(&jabber_plugin, "unregister", "?", jabber_command_register, JABBER_FLAGS, NULL);
 	COMMAND_ADD_J(&jabber_plugin, "userinfo", "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "userlist", "! ?", jabber_command_userlist, JABBER_FLAGS_REQ,
+			"-g --get -p --put"); /* BFW: it is unlike GG, -g gets userlist from file, -p writes it into it */
 	COMMAND_ADD_J(&jabber_plugin, "vacation", "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	COMMAND_ADD_J(&jabber_plugin, "ver", "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	COMMAND_ADD_J(&jabber_plugin, "xa", "r", jabber_command_away, 	JABBER_ONLY, NULL);
