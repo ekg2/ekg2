@@ -1226,7 +1226,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 	switch (e->event.userlist.type) {
 		case GG_USERLIST_GET_REPLY:
-			print("userlist_get_ok");
+			print("userlist_get_ok", session_name(s));
 
 			if (e->event.userlist.reply) {
 				char *reply;
@@ -1255,10 +1255,10 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 
 		case GG_USERLIST_PUT_REPLY:
 			switch (session_int_get(s, "__userlist_put_config")) {
-				case 0:	print("userlist_put_ok");		break;
-				case 1:	print("userlist_config_put_ok");	break;
-				case 2:	print("userlist_clear_ok");		break;
-				case 3:	print("userlist_config_clear_ok");	break;
+				case 0:	print("userlist_put_ok", session_name(s));		break;
+				case 1:	print("userlist_config_put_ok", session_name(s));	break;
+				case 2:	print("userlist_clear_ok", session_name(s));		break;
+				case 3:	print("userlist_config_clear_ok", session_name(s));	break;
 				default:
 					debug_error("gg_session_handler_userlist() occur, but __userlist_put_config: %d\n", session_int_get(s, "__userlist_put_config"));
 			}
