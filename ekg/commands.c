@@ -1017,7 +1017,8 @@ static COMMAND(cmd_help)
 			return 0;
 		}
 
-                if (!xstrcasecmp(p, ("session")) && params[1]) {
+						/* vvv - allow /help sess sth */
+                if (!xstrncasecmp(p, ("session"), xstrlen(p) > 3 ? xstrlen(p) : 3) && params[1]) {
                         if (!quiet)
                                 session_help(session, params[1]);
                         return 0;
