@@ -909,7 +909,7 @@ static COMMAND(jabber_command_modify) {
 	xfree(nickname);
 	if (addcom) {
 		xfree(u);
-		return command_exec_format(target, session, 0, ("/auth --request %s"), uid);
+		return command_exec_format(target, session, quiet, ("/auth --request %s"), uid);
 	}
 	return 0;
 }
@@ -2656,9 +2656,11 @@ static COMMAND(jabber_command_find)
 
 static COMMAND(jabber_command_userlist)
 {
-	if (match_arg(params[0], 'c', "clear", 2) || match_arg(params[0], 'G', "replace", 2)) {	/* clear the userlist */
-		list_t l;
+								/* we must use other userlist path, so that ekg2 will not overwrite it */
+	const char *listfile	= (params[1] ? prepare_path_user(params[1]) : prepare_pathf("%s-userlist-backup", session_uid_get(session)));
+	list_t l;
 
+	if (match_arg(params[0], 'c', "clear", 2) || match_arg(params[0], 'G', "replace", 2)) {	/* clear the userlist */
 		for (l = session->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 			const char *args[] = { NULL };
@@ -2671,9 +2673,73 @@ static COMMAND(jabber_command_userlist)
 	}
 
 	if (match_arg(params[0], 'g', "get", 2) || match_arg(params[0], 'G', "replace", 2)) {	/* fill userlist with data from file */
+		FILE *f = fopen(listfile, "r");
+		char line[512];
 
+		if (!f) {
+			printq("io_cantopen", listfile, strerror(errno));
+			return -1;
+		}
+
+		while (fgets(line, sizeof(line), f)) {
+			const int istlen = jabber_private(session)->istlen;
+			char *uid = &line[2];
+			char *nickname;
+
+			if (!xstrchr(line, 10)) /* discard line if too long */
+				continue;
+
+			if (xstrncmp(line, "+,", 2)) { /* XXX: '-'? */
+				debug_error("jabber_command_userlist(), unknown op on '%s'\n", line);
+				continue;
+			}
+
+			if ((nickname = xstrchr(uid, ','))) {
+				char *p;
+
+				*(nickname++) = 0;
+				if ((p = xstrchr(nickname, ',')))
+					*p = 0;
+			}
+
+			uid = saprintf(istlen ? "tlen:%s" : "xmpp:%s", uid);
+
+			debug("XXX, %s, %s\n", uid, nickname);
+
+			if (userlist_find(session, uid)) {
+				if (nickname) {
+					const char *args[] = { uid, "-n", nickname, NULL };
+
+					jabber_command_modify("modify", args, session, NULL, 1);
+				}
+			} else {
+				const char *args[] = { uid, nickname, NULL };
+
+				jabber_command_modify("add", args, session, NULL, 1);
+			}
+
+			xfree(uid);
+		}
+
+		fclose(f);
+		printq("userlist_get_ok", session_name(session));
 	} else if (match_arg(params[0], 'p', "put", 2)) {	/* write userlist into file */
+		FILE *f = fopen(listfile, "w");
 
+		if (!f) {
+			printq("io_cantopen", listfile, strerror(errno));
+			return -1;
+		}
+
+		for (l = session->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+
+			if (u)
+				fprintf(f, "+,%s,%s,\n", u->uid+5, u->nickname /*, XXX? */); /* JRU syntax */ 
+		}
+
+		fclose(f);
+		printq("userlist_put_ok", session_name(session));
 	}
 
 	return 0;
