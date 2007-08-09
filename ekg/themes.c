@@ -1726,12 +1726,12 @@ void theme_init()
 	format_add("events_del_noexist", _("%! Event %T%1%n do not exist\n"), 1);
 
 	/* contact list from the server */
-	format_add("userlist_put_ok", _("%> Roster saved on server\n"), 1);
-	format_add("userlist_put_error", _("%! Error sending roster\n"), 1);
-	format_add("userlist_get_ok", _("%> Roster read from server\n"), 1);
-	format_add("userlist_get_error", _("%! Error getting roster\n"), 1);
-	format_add("userlist_clear_ok", _("%) Removed roster from server\n"), 1);
-	format_add("userlist_clear_error", _("%! Error removing roster from server\n"), 1);
+	format_add("userlist_put_ok", _("%> (%1) Roster exported\n"), 1);
+	format_add("userlist_put_error", _("%! (%1) Error exporting roster\n"), 1);
+	format_add("userlist_get_ok", _("%> (%1) Roster imported\n"), 1);
+	format_add("userlist_get_error", _("%! (%1) Error importing roster\n"), 1);
+	format_add("userlist_clear_ok", _("%) (%1) Removed roster from server\n"), 1);
+	format_add("userlist_clear_error", _("%! (%1) Error removing roster from server\n"), 1);
 
 	/* szybka lista kontaktów pod F2 */
 	format_add("quick_list", "%)%1\n", 1);
