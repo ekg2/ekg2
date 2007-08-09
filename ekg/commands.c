@@ -111,10 +111,6 @@ static int quit_command = 0;
 list_t commands = NULL;
 list_t *commands_lock = NULL;
 
-#ifdef HAVE_EPOLL
-extern int epoll_fd;
-#endif
-
 /*
  * match_arg()
  *
@@ -2164,11 +2160,6 @@ static COMMAND(cmd_test_fds)
 			continue;
 
 		sprintf(buf, "%d: ", i);
-
-#ifdef HAVE_EPOLL
-		if (i == epoll_fd)
-			sprintf(buf + xstrlen(buf), "epoll");
-#endif
 
 		if (S_ISREG(st.st_mode)) {
 #ifdef __linux__

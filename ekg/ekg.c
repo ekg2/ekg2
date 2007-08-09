@@ -24,7 +24,6 @@
  */
 
 #include "ekg2-config.h"
-
 #include "win32.h"
 
 #ifndef __FreeBSD__
@@ -49,12 +48,8 @@
 #include <sys/resource.h>	/* rlimit */
 #endif
 
-#ifdef HAVE_EPOLL
-# include <sys/epoll.h>
-#else
-# ifdef __FreeBSD__
+#ifdef __FreeBSD__
 #  include <sys/select.h>
-# endif
 #endif
 
 #include <dirent.h>
@@ -132,11 +127,6 @@ static int stderr_backup = -1;
 
 int no_mouse = 0;
 
-#ifdef HAVE_EPOLL
-int epoll_fd = 0;
-#define EPOLL_EVENTS 1
-#endif
-
 /*
  * ekg_loop()
  *
@@ -148,14 +138,8 @@ void ekg_loop() {
 	struct timeval tv;
         struct timeval stv;
         list_t l;
-#ifndef HAVE_EPOLL
         fd_set rd, wd;
-	int maxfd;
-#else
-	struct epoll_event ev[EPOLL_EVENTS];
-	struct epoll_event *cev;
-#endif
-        int ret, pid, status;
+        int ret, maxfd, pid, status;
 
 	gettimeofday(&tv, NULL);
 
@@ -300,8 +284,6 @@ void ekg_loop() {
                         }
                 }
 #endif
-
-#ifndef HAVE_EPOLL
                 /* zerknij na wszystkie niezbêdne deskryptory */
 
                 FD_ZERO(&rd);
@@ -319,10 +301,9 @@ void ekg_loop() {
                                 FD_SET(w->fd, &rd);
                         if ((w->type & WATCH_WRITE)) {
 				if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
-				FD_SET(w->fd, &wd);
+				FD_SET(w->fd, &wd); 
 			}
                 }
-#endif
 
 		stv.tv_sec = 1;
 		stv.tv_usec = 0;
@@ -365,7 +346,6 @@ void ekg_loop() {
 			if (stv.tv_usec < 0)
 				stv.tv_usec = 1;
 		}
-#ifndef HAVE_EPOLL
                 /* sprawd¼, co siê dzieje */
 		ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
 
@@ -389,12 +369,6 @@ void ekg_loop() {
 				debug("select() failed: %s\n", strerror(errno));
 			return;
 		}
-#else
-		ret = epoll_wait(epoll_fd, ev, EPOLL_EVENTS, 0);
-
-		if (ret == -1 && errno != EINTR)
-			debug_error("epoll_wait() failed: epoll_fd = %d, errno = %s\n", epoll_fd, strerror(errno));
-#endif
 
 		/* execute idle tasks only when select() return no new data */
 		if (idles && ret == 0) {
@@ -414,35 +388,11 @@ void ekg_loop() {
 			/* return; */
 		}
 
-		/* przejrzyj deskryptory */
-#ifndef HAVE_EPOLL
+                /* przejrzyj deskryptory */
 		for (l = watches; l; l = l->next) {
 			watch_t *w = l->data;
 
-#define IFREAD		FD_ISSET(w->fd, &rd)
-#define IFWRITE		FD_ISSET(w->fd, &wd)
-#else
-		for (cev = ev; cev < &ev[ret]; cev++) {
-			cev->events &= (EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP);
-
-		while (cev->events > 0) { /* we can have both read & write event on the same fd */
-			watch_t *w;
-
-			if (!(cev->events & (EPOLLIN | EPOLLOUT))) {
-				debug_error("EPOLL%s on fd %d\n", (cev->events & EPOLLERR ? "ERR" : "HUP"), cev->data.fd);
-				close(cev->data.fd);
-				watch_remove((void*) -1, cev->data.fd, WATCH_READ | WATCH_WRITE);
-				break;
-			}
-			
-			w = watch_find((void*) -1, cev->data.fd, (cev->events & EPOLLIN ? WATCH_READ : WATCH_WRITE));
-			cev->events &= ~(cev->events & EPOLLIN ? EPOLLIN : EPOLLOUT);
-
-#define IFREAD		1 /* at that moment we're sure that watch contains right direction */
-#define IFWRITE		1
-#endif
-
-			if (!w || (!IFREAD && !IFWRITE))
+			if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
 				continue;
 
 			if (w->fd == 0) {
@@ -464,23 +414,13 @@ void ekg_loop() {
 				}
 			}
 			if (!w->buf) {
-				if (((w->type == WATCH_WRITE) && IFWRITE) ||
-						((w->type == WATCH_READ) && IFREAD))
+				if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
+						((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
 					watch_handle(w);
 			} else {
-				if (IFREAD && w->type == WATCH_READ) 		watch_handle_line(w);
-				else if (IFWRITE && w->type == WATCH_WRITE) {
-#ifdef HAVE_EPOLL
-					if (!w->buf || w->buf->len)
-#endif
-						watch_handle_write(w);
-				}
+				if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
+				else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
 			}
-#undef IFREAD
-#undef IFWRITE
-#ifdef HAVE_EPOLL
-		} /* additional while() */
-#endif
 		}
 
 		if (ekg_watches_removed > 0) {
@@ -935,10 +875,6 @@ int main(int argc, char **argv)
         if (!no_global_config)
                 config_read(SYSCONFDIR "/ekg2.conf");
 
-#ifdef HAVE_EPOLL
-	epoll_fd = epoll_create(32);
-#endif
-
         if (frontend) {
                 plugin_load(frontend, -254, 1);
 		config_changed = 1;
@@ -1266,9 +1202,6 @@ void ekg_exit()
 	mesg_set(mesg_startup);
 #ifdef NO_POSIX_SYSTEM
 	WSACleanup();
-#endif
-#ifdef HAVE_EPOLL
-	close(epoll_fd);
 #endif
 	close(stderr_backup);
 

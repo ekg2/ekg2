@@ -17,7 +17,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 #include "win32.h"
 
 #include <stdlib.h>
@@ -44,9 +43,6 @@
 #include "themes.h"
 #include "xmalloc.h"
 
-#ifdef HAVE_EPOLL
-# include <sys/epoll.h>
-#endif
 
 #define __DECLARE_QUERIES_STUFF
 #include "queries.h"
@@ -63,11 +59,6 @@ list_t idles   = NULL;
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
 # include "win32_helper.h"
-#endif
-
-#ifdef HAVE_EPOLL
-/* ekg.c */
-extern int epoll_fd;
 #endif
 
 int ekg2_dlinit() {
@@ -1259,31 +1250,6 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->data    = data;
 
 	list_add_beginning(&watches, w, 0);
-
-#ifdef HAVE_EPOLL
-	{
-		struct epoll_event ev;
-		int r;
-
-		ev.events		= EPOLLERR | EPOLLHUP;
-		ev.data.fd 		= fd;
-		if (w->type == WATCH_READ)
-			ev.events	|= EPOLLIN;
-		else if (w->type == WATCH_WRITE)
-			ev.events	|= EPOLLOUT;
-		
-		if ((r = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev))) {
-			if (errno == EEXIST) {
-				if (watch_find(plugin, fd, (w->type == WATCH_READ ? WATCH_WRITE : WATCH_READ))) /* creating watch of other type? */
-					ev.events |= (w->type == WATCH_READ ? EPOLLOUT : EPOLLIN);
-				r = epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev);
-			}
-
-			if (r)
-				debug_error("watch_add: epoll_ctl() failed, epoll_fd = %d, fd = %d, errno = %s\n", epoll_fd, fd, strerror(errno));
-		}
-	}
-#endif
 
 	return w;
 }
