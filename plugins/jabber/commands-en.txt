@@ -148,6 +148,23 @@ userinfo
 	parameters: 
 	short description: retrieves Jabber Directory info about given jid
 
+userlist
+	parameters: <arg>
+	short description: userlist import/export (JRU-like)
+	
+	Depending on arg:
+	
+	-c, --clear			clears current userlist (equal to 'del *')
+	
+	-g, --get [filename]		imports userlist from file
+	
+	-p, --put [filename]		exports userlist to file
+	
+	-G, --replace [filename]	clear userlist & import new from file
+	
+	Userlist export file format is same as with JRU
+	(http://jru.jabberstudio.org).
+
 ver
 	parameters: 
 	short description: retrieves information about OS and client of given jid
