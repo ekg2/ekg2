@@ -1,30 +1,34 @@
 #include <ekg/debug.h>
+#include <ekg/sessions.h> /* sessions */
 #include <ekg/xmalloc.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/queries.h>
+#include <ekg/stuff.h> /* ekg_status_int */
+#include <ekg/userlist.h> /* EKG_STATUS_UNKNOWN */
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
 #include "dbus.h"
 
 static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getProtocols);
+static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_setStatus);
 
-static const ekg2_dbus_iface_function_t ekg2_dbus_iface_im_functions[] = {
-	{ "getProtocols", DBUS_MESSAGE_TYPE_METHOD_CALL, ekg2_dbus_iface_im_getProtocols }
+static ekg2_dbus_iface_function_t const ekg2_dbus_iface_im_functions[] = {
+	{ "getProtocols", DBUS_MESSAGE_TYPE_METHOD_CALL, ekg2_dbus_iface_im_getProtocols },
+	{ "setStatus", DBUS_MESSAGE_TYPE_METHOD_CALL, ekg2_dbus_iface_im_setStatus }
 };
 
 static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getProtocols)
 {
 #define __FUNCTION__ "ekg2_dbus_iface_im_getProtocols"
 
-	EKG2_DBUS_CALL_HANDLER;
+	EKG2_DBUS_CALL_HANDLER_VARIABLES;
 	char **protos = NULL;
 	int i;
-	
+
 	query_emit_id (NULL, GET_PLUGIN_PROTOCOLS, &protos);
-	
-	reply = dbus_message_new_method_return(msg);
-	dbus_message_iter_init_append(reply, &args);
+
+	EKG2_DBUS_INIT_REPLY;
 	i = 0;
 	while (protos[i])
 	{
@@ -37,6 +41,60 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getProtocols)
 	return DBUS_HANDLER_RESULT_HANDLED;
 #undef __FUNCTION__
 }
+
+/* m setStatus(DBUS_TYPE_STRING:presence, DBUS_TYPE_STRING:description) */
+static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_setStatus)
+{
+#define __FUNCTION__ "ekg2_dbus_iface_im_setStatus"
+	EKG2_DBUS_CALL_HANDLER_VARIABLES;
+	static char const status_errory[][20] = { "OK", "wrong argument", "session not found" };
+	char *error;
+	DBusMessageIter iter;
+	char const *param, *cmd;
+	int current_type, st;
+	session_t *s;
+	list_t l;
+
+	EKG2_DBUS_INIT_REPLY;
+
+	dbus_message_iter_init (msg, &iter);
+	if ((current_type = dbus_message_iter_get_arg_type (&iter)) != DBUS_TYPE_STRING)
+	{
+		error = status_errory[1];
+		EKG2_DBUS_ADD_STRING(&error);
+		goto send_and_return;
+	} 
+	dbus_message_iter_get_basic (&iter, &param);
+	st = ekg_status_int(param);
+
+	dbus_message_iter_next (&iter);
+	if ((current_type = dbus_message_iter_get_arg_type (&iter)) != DBUS_TYPE_STRING)
+	{
+		error = status_errory[1];
+		EKG2_DBUS_ADD_STRING(&error);
+		goto send_and_return;
+	} 
+	dbus_message_iter_get_basic (&iter, &param);
+
+	cmd = ekg_status_string(st, 1);
+	for (l = sessions; l; l = l->next)
+	{
+		s = l->data;
+		debug ("changing (%s) to: %s %s\n", s->uid, cmd, param);
+		command_exec_format(NULL, s, 1, ("/%s %s"), cmd, param);
+	}
+
+	error = status_errory[0];
+	EKG2_DBUS_ADD_STRING(&error);
+
+send_and_return:
+	EKG2_DBUS_SEND_REPLY;
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+
+#undef __FUNCTION__
+}
+
 
 static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getPresence)
 {
@@ -72,9 +130,9 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getPresence)
 EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im)
 {
 	int i, type;
-	const char *function_name;
+	char const * const function_name = dbus_message_get_member(msg);
 	type = dbus_message_get_type(msg);
-	function_name = dbus_message_get_member(msg);
+
 	debug_error("zzzz> %s %d == %d\n", function_name, type,DBUS_MESSAGE_TYPE_METHOD_CALL );
 	for (i = 0; i < sizeof(ekg2_dbus_iface_im_functions) / sizeof(ekg2_dbus_iface_function_t); i++)
 	{

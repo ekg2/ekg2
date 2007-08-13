@@ -1,5 +1,4 @@
 #include <stdio.h>
-#define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
 
 int main(int argc, char **argv)
@@ -100,7 +99,7 @@ int main(int argc, char **argv)
 	
    // free reply and close connection
    dbus_message_unref(msg);   
-   dbus_connection_close(conn);
+   //dbus_connection_close(conn);
    /*
 	// send the message and flush the connection
 	if (!dbus_connection_send(conn, msg, &serial)) { 

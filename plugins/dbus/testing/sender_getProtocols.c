@@ -1,5 +1,5 @@
 #include <stdio.h>
-#define DBUS_API_SUBJECT_TO_CHANGE
+//#define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
 
 int main(int argc, char **argv)

@@ -1,3 +1,5 @@
+TODO: Add support for telepathy and galago-project (system notifications)
+
 1. I weren't sure which plugin_class to associate, so I've chosen PLUGIN_GENERIC...
 
 my initial idea of available interfaces:
@@ -13,14 +15,20 @@ org.freedesktop.im
      DBUS_TYPE_STRING:'irc:'
      DBUS_TYPE_STRING:'gg:'
      DBUS_TYPE_STRING:'tlen:'
-     DBUS_TYPE_STRING:'jid:' [not xmpp:]
+     DBUS_TYPE_STRING:'xmpp:' [or 'jid:' in ekg 0.1] 
 
- m getPresence(contactUri)
+ m getPresence(DBUS_TYPE_STRING:contactUri)
    not yet available
- m openChat(contactUri)
+ m openChat(DBUS_TYPE_STRING:contactUri)
    not yet available
 
 the following additional interfaces will be implemented:
+org.freedesktop.im
+ m setStatus(DBUS_TYPE_STRING:presence, DBUS_TYPE_STRING:description)
+   set given status in ALL sessions, that supports given presence
+   (e.g: all protocols should support 'back' and 'away', but not
+    every supports 'ffc' or 'xa')
+
 org.freedesktop.im.ekg2.
  m getProtcols
    not yet available
@@ -30,6 +38,8 @@ org.freedesktop.im.ekg2.
      (DBUS_TYPE_STRING:uid, DBUS_TYPE_BOOL:connected, DBUS_TYPE_STRING:status, DBUS_TYPE_STRING:description), [...]
  m getPlugins
  + .session
+   m setStatus(DBUS_TYPE_STRING:sessionName, DBUS_TYPE_STRING:presence, DBUS_TYPE_STRING:description)
+     set the given status in given session. Presence (e.g: back, away) must be supported by given session
    ...
  + .ui
    m getWindows()
@@ -45,9 +55,6 @@ org.freedesktop.im.ekg2.
    + .protocol.jabber
      ...
    + .protocol.polchat
-     ...
- + .session
-     m set_status(sessionName, ofiPresence, description)
      ...
  + .crypto
    + .crypto.rot13 :D

@@ -38,7 +38,7 @@ PLUGIN_DEFINE(dbus, PLUGIN_GENERIC, NULL);
 static DBusConnection *conn;
 static DBusError err;
 
-static const ekg2_dbus_iface_proto_t ekg2_dbus_interfaces[] =
+static ekg2_dbus_iface_proto_t const ekg2_dbus_interfaces[] =
 {
 	{ "interface='" DBUS_ORG_FREEDESKTOP_IM_INTERFACE "'",
 		DBUS_ORG_FREEDESKTOP_IM_INTERFACE,
@@ -79,23 +79,30 @@ struct ekg2_dbus_watch_data {
 };
 typedef struct ekg2_dbus_watch_data * ekg_dbus_watch_data_t;
 
+/* This is main message (from dbus) handler.
+ *
+ * This function iterates over ekg2_dbus_interfaces (you have read
+ * README, don't you?), finds proper interface handler, and passes
+ * control to it. Proper interface handlers are responsible for further
+ * parsing.
+ */
 DBusHandlerResult ekg2_dbus_message_handler(DBusConnection *conn, DBusMessage *msg, void *empty)
 {
-	const char *iface;
 	int i;
-	
-	if (NULL == msg)
+
+	if (NULL == msg) {
 		return DBUS_HANDLER_RESULT_HANDLED;
-	
-	debug("path: %s signal:%d\n", dbus_message_get_path(msg), dbus_message_get_type(msg) == DBUS_MESSAGE_TYPE_SIGNAL);
-	debug("interface: %s\n", dbus_message_get_interface(msg));
+	} else {
+		char const * const iface = dbus_message_get_interface(msg);
 
-	iface = dbus_message_get_interface(msg);
+		debug("path: %s signal:%d\n", dbus_message_get_path(msg), dbus_message_get_type(msg) == DBUS_MESSAGE_TYPE_SIGNAL);
+		debug("interface: %s\n", dbus_message_get_interface(msg));
 
-	for (i = 0; i < sizeof(ekg2_dbus_interfaces)/sizeof(ekg2_dbus_iface_proto_t); i++)
-		if (!xstrcmp(iface, ekg2_dbus_interfaces[i].name) && ekg2_dbus_interfaces[i].handler)
-			return ekg2_dbus_interfaces[i].handler(conn, msg, empty);
+		for (i = 0; i < sizeof(ekg2_dbus_interfaces)/sizeof(ekg2_dbus_iface_proto_t); i++)
+			if (!xstrcmp(iface, ekg2_dbus_interfaces[i].name) && ekg2_dbus_interfaces[i].handler)
+				return ekg2_dbus_interfaces[i].handler(conn, msg, empty);
 
+	}
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -195,6 +202,12 @@ void ekg2_dbus_toggle_watch(DBusWatch *watch, void *data)
 		ekg2_dbus_remove_watch(watch, data);
 }
 
+/* This function connects plugin to dbus session in a system
+ * it set up some dummy watch functions, finally, it informs
+ * dbus about interfaces, we want to watch (defined in
+ * ekg2_dbus_interfaces array) and associate main filter:
+ * ekg2_dbus_message_handler()
+ */
 EXPORT int dbus_plugin_init(int prio) {
 	int ret, i;
 

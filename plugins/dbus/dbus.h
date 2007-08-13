@@ -22,7 +22,7 @@ struct ekg2_dbus_iface_function {
 };
 typedef struct ekg2_dbus_iface_function ekg2_dbus_iface_function_t;
 
-#define EKG2_DBUS_CALL_HANDLER DBusMessage *reply; \
+#define EKG2_DBUS_CALL_HANDLER_VARIABLES DBusMessage *reply; \
 		DBusMessageIter args; \
 		dbus_uint32_t serial = 0;
 
