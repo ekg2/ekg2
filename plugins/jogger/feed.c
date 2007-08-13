@@ -91,11 +91,13 @@ void jogger_feeds_cleanup(session_t *s) {
 }
 
 void jogger_feed_send(jogger_feed_t *priv) {
+	const int oq		= session_int_get(priv->session, "newentry_open_query");
+
 	char *title		= string_free(priv->title, 0);
 	char *categories	= string_free(priv->categories, 0);
 	char *content		= string_free(priv->content, 0);
 	char *msg		= saprintf("[ %s ]\n( %s )\n\n%s", title ? title : _("(untitled)"), categories ? categories+2 : _("[no categories]"), content);
-	char *uid		= saprintf("jogger:%d", priv->eid);
+	char *uid		= (oq ? saprintf("jogger:%d", priv->eid) : xstrdup("jogger:"));
 
 	const char *suid	= session_uid_get(priv->session);
 	const char **rcpts	= NULL;
@@ -313,6 +315,8 @@ TIMER(jogger_feed_timer) {
 			if ((fd == -1) || (ioctl(fd, FIONBIO, &one) == -1)
 					|| (connect(fd, (struct sockaddr*) &sin, sizeof(sin)) == 1 && errno != EINPROGRESS)) {
 				debug_error("[jogger] jogger_feed_timer(), connecting failed: %s\n", strerror(errno));
+				if (fd != -1)
+					close(fd);
 				xfree(priv->url);
 				xfree(priv);
 				return -1;
