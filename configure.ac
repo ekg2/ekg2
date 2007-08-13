@@ -335,7 +335,7 @@ if test "x$with_openssl" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(expat,		AC_HELP_STRING([--without-expat],		[Compile without expat (jabber&feed plugins)]))
+AC_ARG_WITH(expat,		AC_HELP_STRING([--without-expat],		[Compile without expat (jabber&feed[&jogger] plugins)]))
 
 if test "x$with_expat" != "xno"; then
 	AC_CHECK_EXPAT
