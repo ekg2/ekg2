@@ -162,7 +162,7 @@ void ekg_loop() {
                         }
                 }
 
-                /* sprawd¼ timeouty ró¿nych deskryptorów, oraz przy okazji w->removed jesli rowne 1, to timer powinien zostac usuniety. */
+		/* removed 'w->removed' watches, timeout checking moved below select() */
                 for (l = watches; l; l = l->next) {
                         watch_t *w = l->data;
 
@@ -174,27 +174,7 @@ void ekg_loop() {
 				watch_free(w);
 				continue;
 			}
-
-                        if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
-                                continue;
-			w->removed = -1;
-                        if (w->buf) {
-                                int (*handler)(int, int, char*, void*) = w->handler;
-                                if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
-					w->removed = 0;
-					watch_free(w);
-					continue;
-				}
-                        } else {
-                                int (*handler)(int, int, int, void*) = w->handler;
-				if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
-					w->removed = 0;
-					watch_free(w);
-					continue;
-				}
-                        }
-			w->removed = 0;
-                }
+		}
 
                 /* sprawd¼ autoawaye ró¿nych sesji */
                 for (l = sessions; l; l = l->next) {
@@ -388,12 +368,38 @@ void ekg_loop() {
 			/* return; */
 		}
 
+		for (l = watches; l; l = l->next) {
+                }
                 /* przejrzyj deskryptory */
 		for (l = watches; l; l = l->next) {
 			watch_t *w = l->data;
 
-			if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
+			if (!w)
 				continue;
+
+			if (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)) { /* timeout checking */
+				if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
+					continue;
+				w->removed = -1;
+				if (w->buf) {
+					int (*handler)(int, int, char*, void*) = w->handler;
+					if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
+						w->removed = 0;
+						watch_free(w);
+						continue;
+					}
+				} else {
+					int (*handler)(int, int, int, void*) = w->handler;
+					if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
+						w->removed = 0;
+						watch_free(w);
+						continue;
+					}
+				}
+				w->removed = 0;
+
+				continue;
+			}
 
 			if (w->fd == 0) {
 				list_t session_list;
