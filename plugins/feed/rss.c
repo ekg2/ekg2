@@ -343,7 +343,7 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 	int i;
 
 	if (!data || !name) {
-		debug("[rss] xmlnode_handle_end() invalid parameters\n");
+		debug("[rss] rss_handle_start() invalid parameters\n");
 		return;
 	}
 
@@ -384,7 +384,7 @@ static void rss_handle_end(void *data, const char *name) {
 	xmlnode_t *n;
 
 	if (!data || !name) {
-		debug("[rss] xmlnode_handle_end() invalid parameters\n");
+		debug("[rss] rss_handle_end() invalid parameters\n");
 		return;
 	}
 	if (!(n = j->node)) return;
@@ -400,7 +400,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 	int rlen;
 
 	if (!j || !text) {
-		debug("[rss] xmlnode_handle_cdata() invalid parameters\n");
+		debug("[rss] rss_handle_cdata() invalid parameters\n");
 		return;
 	}
 
