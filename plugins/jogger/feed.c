@@ -182,19 +182,21 @@ WATCHER_LINE(jogger_feed_response) {
 
 	if (type) {
 		close(fd);
-		if (priv->parser) {
+		if (priv->mode >= JOGGER_XML) {
 			if (priv->mode != JOGGER_FINISHED && XML_Parse(priv->parser, NULL, 0, 1) != XML_STATUS_OK)
 				debug_error("[jogger] jogger_feed_response(), finalization error: %s\n", XML_ErrorString(XML_GetErrorCode(priv->parser)));
 			else
 				debug("[jogger] jogger_feed_response(), parsing finished\n");
 			XML_ParserFree(priv->parser);
+			
+			if (priv->mode != JOGGER_FINISHED) {
+				string_free(priv->title, 1);
+				string_free(priv->categories, 1);
+				string_free(priv->content, 1);
+			}
 		}
+
 		xfree(priv->url);
-		if (priv->mode != JABBER_FINISHED) {
-			string_free(priv->title, 1);
-			string_free(priv->categories, 1);
-			string_free(priv->content, 1);
-		}
 		list_remove(&jogger_feeds, priv, 1);
 
 		return -1;
