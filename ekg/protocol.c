@@ -481,7 +481,8 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			target = (rcpts) ? rcpts[0] : NULL;
 			break;
 		default:
-			debug("[message_print] got unexpected class = %d\n", class);
+			if (class != EKG_MSGCLASS_MESSAGE)
+				debug("[message_print] got unexpected class = %d\n", class);
 			class_str = "message";
 	}
 
