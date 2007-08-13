@@ -16,6 +16,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2-config.h"
+
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
@@ -45,6 +47,11 @@ void jogger_localize_headers();
 void jogger_free_headers(int real_free);
 COMMAND(jogger_prepare);
 COMMAND(jogger_publish);
+
+#ifdef HAVE_EXPAT_H
+	/* feed.c */
+void jogger_feeds_cleanup(session_t *s);
+#endif
 
 	/* we need to be 'protocol' to establish sessions */
 PLUGIN_DEFINE(jogger, PLUGIN_PROTOCOL, jogger_theme_init);
@@ -186,8 +193,13 @@ static void jogger_usedchanged(session_t *s, const char *varname) {
 	}
 }
 
-	/* we need some dummy commands, e.g. /disconnect */
+	/* we need some dummy commands, e.g. /disconnect
+	 * UPD: now it's only almost dummy */
 static COMMAND(jogger_null) {
+#ifdef HAVE_EXPAT_H
+	jogger_feeds_cleanup(session);
+#endif
+
 	return 0;
 }
 
@@ -265,6 +277,7 @@ static int jogger_theme_init(void) {
 }
 
 static plugins_params_t jogger_plugin_vars[] = {
+	PLUGIN_VAR_ADD("entries_try_fetch",	0, VAR_INT, "10", 0, NULL),
 	PLUGIN_VAR_ADD("entry_file",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("entry_hash",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("ignore_outgoing_entries", 0, VAR_BOOL, "0", 0, NULL),
