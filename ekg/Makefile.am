@@ -11,9 +11,12 @@ ekg2include_HEADERS = $(ekg2_headers)
 
 ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ @STATIC_PLUGINS_LIB@ @DLLIB@ @IDN_LIBS@
 ekg2_LDFLAGS = -export-dynamic
-ekg2_DEPENDENCIES = 
+ekg2_DEPENDENCIES = $(top_builddir)/compat/libcompat.a
 
 localedir = $(datadir)/locale
 
 INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
        -DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\"
+
+$(top_builddir)/compat/libcompat.a:
+	make -C $(top_builddir)/compat
