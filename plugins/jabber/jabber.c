@@ -266,7 +266,11 @@ static QUERY(jabber_validate_uid) {
 		return 0;
 
 	/* minimum: jid:a@b */
-	if (!xstrncasecmp(uid, "jid:", 4) && (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0') {
+	if (!xstrncasecmp(uid, "jid:", 4)
+#if 0 /* disable because we can also have JID without '@' - a transport, for example */
+			&& (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0'
+#endif
+			) {
 		if (xstrcmp(lastdeprecated, uid+4)) { /* avoid repeating the same if function called multiple times */
 			print("jabber_deprecated_uid_warning", uid+4);
 			xfree(lastdeprecated);
@@ -276,7 +280,11 @@ static QUERY(jabber_validate_uid) {
 		return -1;
 	}
 
-	if (!xstrncasecmp(uid, "xmpp:", 5) && (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0') {
+	if (!xstrncasecmp(uid, "xmpp:", 5)
+#if 0 /* like above */
+			&& (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0'
+#endif
+			) {
 		(*valid)++;
 		return -1;
 	}
@@ -1477,7 +1485,7 @@ static QUERY(jabber_userlist_priv_handler) {
 	return 0;
 }
 
-
+	/* KEEP IT SORTED, MEN! */
 static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("allow_add_reply_id",	0, VAR_INT, "1", 0, NULL),
@@ -1488,9 +1496,9 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_away_descr",	SESSION_VAR_AUTO_AWAY_DESCR, VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("auto_back", 		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_bookmark_sync", 	0, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_privacylist_sync", 0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_find", 		SESSION_VAR_AUTO_FIND, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_privacylist_sync", 0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_reconnect", 	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_xa", 		SESSION_VAR_AUTO_XA, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_xa_descr", 	SESSION_VAR_AUTO_XA_DESCR, VAR_STR, 0, 0, NULL),

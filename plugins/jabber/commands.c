@@ -617,6 +617,12 @@ static COMMAND(jabber_command_inline_msg)
 static COMMAND(jabber_command_xml)
 {
 	jabber_private_t *j = session_private_get(session);
+
+	if (!(j->send_watch)) {
+		printq("not_connected", session_name(session));
+		return -1;
+	}
+
 	watch_write(j->send_watch, "%s", params[0]);
 	return 0;
 }
@@ -2826,7 +2832,7 @@ void jabber_register_commands()
 	COMMAND_ADD_J(&jabber_plugin, "vacation", "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	COMMAND_ADD_J(&jabber_plugin, "ver", "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	COMMAND_ADD_J(&jabber_plugin, "xa", "r", jabber_command_away, 	JABBER_ONLY, NULL);
-	COMMAND_ADD_J(&jabber_plugin, "xml", "!", jabber_command_xml, 	JABBER_FLAGS_REQ, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "xml", "!", jabber_command_xml, 	JABBER_ONLY, NULL);
 
 	commands_lock = &commands;
 
