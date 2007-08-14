@@ -32,6 +32,7 @@
 
 #include <expat.h>
 
+#include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
@@ -346,6 +347,98 @@ void jogger_feed_init(session_t *s, const char *url, const int eid) {
 
 		timer_add(&jogger_plugin, priv->url, 30, 0, &jogger_feed_timer, priv);
 	}
+}
+
+	/* here we manage authids for feeds */
+COMMAND(jogger_auth) {
+	char **auths, **a;
+	int mode	= 4;
+	int rewrite	= 0;
+	int n 		= 0;
+
+	if (match_arg(params[0], 'c', "clear", 2)) {
+		session_set(session, "auth_ids", NULL);
+		printq("jogger_auth_cleared");
+		return 0;
+	} else if (match_arg(params[0], 'a', "add", 3))
+		mode = 1;
+	else if (match_arg(params[0], 'm', "modify", 3))
+		mode = 2;
+	else if (match_arg(params[0], 'd', "delete", 3))
+		mode = 3;
+	else if (!match_arg(params[0], 'l', "list", 3))
+		params--; /* neutralize below */
+
+	params++; /* shift */
+
+	if (mode < 4 && (!params[0] || (mode < 3 && !params[1]))) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+
+	auths = array_make(session_get(session, "auth_ids"), ";", 0, 0, 0);
+
+	for (a = auths; a[0] && a[1]; a += 2) {
+		if ((!params[0] /* list */ || !xstrcasecmp(params[0], a[0]))) {
+			switch (mode) {
+				case 2:
+					xfree(a[1]);
+					a[1] = xstrdup(params[1]);
+					break;
+				case 3:
+					xfree(a[0]);
+					xfree(a[1]);
+					memmove(a, &a[2], sizeof(char *) * (array_count(&a[2]) + 1));
+					break;
+				case 4:
+					print("jogger_auth_id", a[0], a[1]);
+			}
+			n++;
+		}
+	}
+
+	if (a[0]) { /* remove trailing shit */
+		xfree(a[0]);
+		a[0] = NULL;
+		rewrite = 1;
+	}
+	
+	if (!n) {
+		if (!params[0])
+			printq("jogger_auth_none");
+		else if (mode > 1)
+			printq("jogger_auth_notfound", params[0]);
+		else { /* add */
+			array_add(&auths, xstrdup(params[0]));
+			array_add(&auths, xstrdup(params[1]));
+			printq("jogger_auth_added", params[0]);
+
+			rewrite = 1;
+		}
+	} else {
+		if (mode == 1)
+			printq("jogger_auth_already", params[0]);
+		else if (mode < 4) {
+			rewrite = 1;
+			if (mode == 2)
+				printq("jogger_auth_modified", params[0]);
+			else
+				printq("jogger_auth_deleted", params[0]);
+		}
+		
+		if (params[0] && n > 1)
+			debug_error("[jogger] jogger_auth(), multiple matching auth-IDs, wtf?!\n");
+	}
+
+	if (rewrite) {
+		char *tmp = array_join(auths, ";");
+
+		session_set(session, "auth_ids", tmp);
+		xfree(tmp);
+	}
+
+	array_free(auths);
+	return 0;
 }
 
 #endif
