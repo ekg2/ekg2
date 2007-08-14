@@ -255,6 +255,7 @@ WATCHER_LINE(jogger_feed_response) {
 WATCHER(jogger_feed_request) {
 	jogger_feed_t *priv	= data;
 	char *p, *q;
+	char *auth = NULL;
 
 	if (type) {
 		if (type == 2) { /* timeout */
@@ -270,6 +271,22 @@ WATCHER(jogger_feed_request) {
 		return -1;
 	}
 
+	*q = 0;
+
+	{
+		char **auths = array_make(session_get(priv->session, "auth_ids"), ";", 0, 0, 0);
+		char **a;
+
+		for (a = auths; a[0] && a[1]; a += 2) {
+			if (!xstrcasecmp(p, a[0])) {
+				auth = saprintf("/auth/%s", a[1]);
+				break;
+			}
+		}
+
+		array_free(auths);
+	}
+
 	{
 		const int etf = session_int_get(priv->session, "entries_try_fetch");
 		if (!etf) /* user can change etf value between commencing socket open and its' opening */
@@ -277,18 +294,18 @@ WATCHER(jogger_feed_request) {
 
 		priv->watch = watch_add_line(&jogger_plugin, fd, WATCH_WRITE_LINE, NULL, priv);
 
-		*q = 0;
 			/* use of HTTP/1.1 makes Jogger use some funky transfer encoding,
 			 * so we just use 1.0 with some 1.1 headers */
-		watch_write(priv->watch, "GET /atom/content/%d HTTP/1.0\r\n"
+		watch_write(priv->watch, "GET /atom%s/content/%d HTTP/1.0\r\n"
 				"Host: %s\r\nUser-Agent: EKG2 (Mozilla-incompatible, Opera rox)\r\n"
 				"Accept: application/atom+xml, application/xml; q=0.8, "
 				"text/xml; q=0.5, */*; q=0.1\r\nAccept-Charset: UTF-8\r\n\r\n",
-				etf, p);
-		*q = '/';
-
+				(auth ? auth : ""), etf, p);
+		xfree(auth);
 		watch_add_line(&jogger_plugin, fd, WATCH_READ_LINE, &jogger_feed_response, priv);
 	}
+
+	*q = '/';
 
 	return -1;
 }
