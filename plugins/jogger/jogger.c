@@ -16,8 +16,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
@@ -47,12 +45,6 @@ void jogger_localize_headers();
 void jogger_free_headers(int real_free);
 COMMAND(jogger_prepare);
 COMMAND(jogger_publish);
-
-#ifdef HAVE_EXPAT_H
-	/* feed.c */
-void jogger_feeds_cleanup(session_t *s);
-COMMAND(jogger_auth);
-#endif
 
 	/* we need to be 'protocol' to establish sessions */
 PLUGIN_DEFINE(jogger, PLUGIN_PROTOCOL, jogger_theme_init);
@@ -194,13 +186,8 @@ static void jogger_usedchanged(session_t *s, const char *varname) {
 	}
 }
 
-	/* we need some dummy commands, e.g. /disconnect
-	 * UPD: now it's only almost dummy */
+	/* we need some dummy commands, e.g. /disconnect */
 static COMMAND(jogger_null) {
-#ifdef HAVE_EXPAT_H
-	jogger_feeds_cleanup(session);
-#endif
-
 	return 0;
 }
 
@@ -242,7 +229,6 @@ static QUERY(jogger_postconfig) {
 
 static int jogger_theme_init(void) {
 #ifndef NO_DEFAULT_THEME
-		/* messages.c */
 	format_add("jogger_noentry", _("%> (%1) No thread with id %c%2%n found."), 1);
 	format_add("jogger_subscribed", _("%> %|(%1) The thread %T%2%n has been subscribed."), 1);
 	format_add("jogger_unsubscribed", _("%> %|(%1) The thread %T%2%n has been unsubscribed."), 1);
@@ -254,7 +240,6 @@ static int jogger_theme_init(void) {
 	format_add("jogger_posting_denied", _("%! (%1) Comment posting denied because of no permission."), 1);
 	format_add("jogger_version", _("%> %TJogger:%n match data %g%1%n."), 1);
 
-		/* drafts.c */
 	format_add("jogger_prepared", _("%) File %T%1%n is ready for submission."), 1);
 	format_add("jogger_notprepared", _("%! No filename given and no entry prepared!"), 1);
 	format_add("jogger_hashdiffers", _("%! %|File contents (checksum) differs from the time it was prepared. If you changed anything in the entry file, please run %Tprepare%n again. If you want to force submission, please use %Tpublish%n again."), 1);
@@ -275,25 +260,11 @@ static int jogger_theme_init(void) {
 	format_add("jogger_warning_duplicated_header", _("%> %|* Duplicated header found at: %c%1%n"), 1);
 	format_add("jogger_warning_mislocated_header", _("%> %|* Mislocated header (?) at: %c%1%n"), 1);
 	format_add("jogger_warning_noexcerpt", _("%> %|* Entry text size exceeds 4096 bytes, but no <EXCERPT> tag has been found. It will be probably cut by Jogger near: ...%c%1%n..."), 1);
-
-		/* feed.c */
-	format_add("jogger_auth_id", _("%) %|%T%1%n => %g%2%n"), 1);
-	format_add("jogger_auth_notfound", _("%! %|Auth-ID for %T%1%n not found!"), 1);
-	format_add("jogger_auth_none", _("%> No auth-IDs defined."), 1);
-	format_add("jogger_auth_added", _("%> Auth-ID for %T%1%n added."), 1);
-	format_add("jogger_auth_already", _("%! Auth-ID for %T%1%n already exists!"), 1);
-	format_add("jogger_auth_modified", _("%> Auth-ID for %T%1%n modified."), 1);
-	format_add("jogger_auth_deleted", _("%> Auth-ID for %T%1%n deleted."), 1);
-	format_add("jogger_auth_cleared", _("%> All auth-IDs removed."), 1);
 #endif
 	return 0;
 }
 
 static plugins_params_t jogger_plugin_vars[] = {
-#ifdef HAVE_EXPAT_H
-	PLUGIN_VAR_ADD("auth_ids",		0, VAR_STR, NULL, 0, NULL),
-#endif
-	PLUGIN_VAR_ADD("entries_try_fetch",	0, VAR_INT, "10", 0, NULL),
 	PLUGIN_VAR_ADD("entry_file",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("entry_hash",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("ignore_outgoing_entries", 0, VAR_BOOL, "0", 0, NULL),
@@ -321,10 +292,6 @@ int jogger_plugin_init(int prio) {
 #define JOGGER_CMDFLAGS SESSION_MUSTBELONG
 #define JOGGER_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET
 	command_add(&jogger_plugin, "jogger:", "?", jogger_msg, JOGGER_CMDFLAGS, NULL);
-#ifdef HAVE_EXPAT_H
-	command_add(&jogger_plugin, "jogger:auth", "? ? ?", jogger_auth, JOGGER_CMDFLAGS,
-			"-a --add -d --delete -l --list -m --modify");
-#endif
 	command_add(&jogger_plugin, "jogger:chat", "!uU !", jogger_msg, JOGGER_CMDFLAGS_TARGET, NULL);
 	command_add(&jogger_plugin, "jogger:connect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);
 	command_add(&jogger_plugin, "jogger:disconnect", NULL, jogger_null, JOGGER_CMDFLAGS, NULL);

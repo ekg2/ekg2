@@ -15,8 +15,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -34,10 +32,6 @@
 
 	/* jogger.c */
 session_t *jogger_session_find_uid(session_t *s, const char *uid);
-	/* feed.c */
-#ifdef HAVE_EXPAT_H
-void jogger_feed_init(session_t *s, const char *url, const int eid);
-#endif
 
 const char *utf_jogger_text[JOGGER_TEXT_MAX] = {
 	"Do Twojego joggera został dodany komentarz",		/* [0] url (#eid[ / Texti*])\n----------------\n */
@@ -156,13 +150,13 @@ QUERY(jogger_msghandler) {
 				lmsg	= xstrdup(msg);
 				url	= NULL;
 			} else {
-				const char *utmp = msg+xstrlen(found == 3 ? owncf : jogger_text[found-1])+1;
+				url	= msg+xstrlen(found == 3 ? owncf : jogger_text[found-1])+1;
 
 				if (!(lmsg = xstrchr(tmp, '\n')) || !(lmsg = xstrchr(lmsg+1, '\n')))
 					return 0;
 
 				lmsg	= xstrdup(lmsg+1);
-				url	= xstrndup(utmp, tmp-utmp);
+				url	= xstrndup(url, tmp-url);
 			}
 
 			if (url && xstrncmp(url, "http://", 7)) { /* if URL is invalid, we probably have partial match */
@@ -181,13 +175,14 @@ QUERY(jogger_msghandler) {
 
 			if (url) {
 				userlist_t *u = userlist_find(js, uid);
-
+				
 				if (!u)
 					userlist_add(js, uid, url);
 				else if (xstrcmp(u->nickname, url)) {
 					xfree(u->nickname);
-					u->nickname = xstrdup(url);
-				}
+					u->nickname = url;
+				} else
+					xfree(url);
 			}
 
 			query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcpts, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
@@ -195,13 +190,6 @@ QUERY(jogger_msghandler) {
 			xfree(suid);
 			xfree(uid);
 			xfree(lmsg);
-
-#ifdef HAVE_EXPAT_H
-			if (url && found == 4)
-				jogger_feed_init(js, url, atoi(tmp+3));
-#endif
-
-			xfree(url);
 		} else if (found <= 8) {
 			const char *formats[]	= { "jogger_modified", "jogger_noentry", 
 					"jogger_unsubscribed", "jogger_subscribed" };
