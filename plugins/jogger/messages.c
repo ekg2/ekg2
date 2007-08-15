@@ -35,7 +35,7 @@ session_t *jogger_session_find_uid(session_t *s, const char *uid);
 
 const char *utf_jogger_text[JOGGER_TEXT_MAX] = {
 	"Do Twojego joggera został dodany komentarz",		/* [0] url (#eid[ / Texti*])\n----------------\n */
-	"Pojawil sie nowy komentarz do wpisu",			/* [1] as above */
+	"Pojawił się nowy komentarz do wpisu",			/* [1] as above */
 
 	"Wpis",							/* [2] */
 	"został zmodyfikowany",					/* url [3] */
