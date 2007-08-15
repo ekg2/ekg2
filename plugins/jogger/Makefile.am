@@ -1,11 +1,8 @@
 EXTRA_DIST =
 
 lib_LTLIBRARIES = jogger.la
-jogger_la_SOURCES = jogger.c messages.c drafts.c feed.c
+jogger_la_SOURCES = jogger.c messages.c drafts.c
 jogger_la_LDFLAGS = -module -avoid-version
-jogger_la_LIBADD = $(EXPAT_LIBS)
-jogger_la_CPPFLAGS = $(EXPAT_CPPFLAGS)
-
 
 libdir = $(plugindir)
 
