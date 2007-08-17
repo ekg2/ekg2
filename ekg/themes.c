@@ -1942,9 +1942,9 @@ void theme_init()
 
 #ifdef WITH_ASPELL
 	/* aspell */
-	format_add("aspell_init", "%> Czekaj, inicjujê modu³ sprawdzania pisowni...\n", 1);
-	format_add("aspell_init_success", "%> Zainicjowano modu³ sprawdzania pisowni\n", 1);
-	format_add("aspell_init_error", "%! B³±d modu³u sprawdzania pisowni: %T%1%n\n", 1);
+	format_add("aspell_init", "%> Please wait while initiating spellcheck...", 1);
+	format_add("aspell_init_success", "%> Spellcheck initiated.", 1);
+	format_add("aspell_init_error", "%! Spellcheck error: %T%1%", 1);
 #endif 
 	/* jogger-like I/O */
 	format_add("io_cantopen", _("%! %|Unable to open file: %T%1%n (%c%2%n)!"), 1);
