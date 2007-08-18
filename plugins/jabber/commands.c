@@ -930,7 +930,7 @@ static COMMAND(jabber_command_del) {
 		/* This is weird, I know. But it should take care of both single and multiple
 		 * removal the simplest way, I think */
 	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = (del_all ? l->data : userlist_find(session, uid));
+		userlist_t *u = (del_all ? l->data : userlist_find_u(&l, target));
 
 		if (u) {
 			if (!(uid = u->uid) || (j->istlen && (tolower(uid[0]) == 'j' || tolower(uid[0]) == 'x')) || (!j->istlen && tolower(uid[0]) == 't')) {
