@@ -921,23 +921,45 @@ static COMMAND(jabber_command_modify) {
 }
 
 static COMMAND(jabber_command_del) {
-	jabber_private_t *j = session->priv;
-	int del_all = !xstrcmp(params[0], "*");
-	int payload = 4 + j->istlen;
+	jabber_private_t *j	= session->priv;
+	int del_all		= !xstrcmp(params[0], "*");
+	int n			= 0;
 	const char *uid;
+	list_t l;
 
-		/* XXX: jid_target2uid()? */
-	if (!(uid = get_uid(session, target)) || (j->istlen && (tolower(uid[0]) == 'j' || tolower(uid[0]) == 'x')) || (!j->istlen && tolower(uid[0]) == 't')) {
-		printq("invalid_session");
-		return -1;
+		/* This is weird, I know. But it should take care of both single and multiple
+		 * removal the simplest way, I think */
+	for (l = session->userlist; l; l = l->next) {
+		userlist_t *u = (del_all ? l->data : userlist_find(session, uid));
+
+		if (u) {
+			if (!(uid = u->uid) || (j->istlen && (tolower(uid[0]) == 'j' || tolower(uid[0]) == 'x')) || (!j->istlen && tolower(uid[0]) == 't')) {
+				printq("invalid_session");
+				return -1;
+			}
+
+			if (!n) {
+				j->send_watch->transfer_limit = -1;
+				watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
+			}
+			watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/>", uid+5);
+
+			n++;
+		}
+
+		if (!del_all)
+			break;
 	}
-	if (tolower(uid[0]) == 'x')
-		payload++;
 
-	watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
-	watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/></query></iq>", uid+payload);
+	if (n) {
+		watch_write(j->send_watch, "</query></iq>");
+		JABBER_COMMIT_DATA(j->send_watch);
+	}
 
-	printq("user_deleted", target, session_name(session));
+	if (del_all)
+		printq(n ? "user_cleared_list" : "list_empty", session_name(session));
+	else
+		printq(n ? "user_deleted" : "user_not_found", target, session_name(session));
 	return 0;
 }
 
@@ -2665,20 +2687,16 @@ static COMMAND(jabber_command_userlist)
 								/* we must use other userlist path, so that ekg2 will not overwrite it */
 	const char *listfile	= (params[1] ? prepare_path_user(params[1]) : prepare_pathf("%s-userlist-backup", session_uid_get(session)));
 	list_t l;
+	const int replace = match_arg(params[0], 'G', "replace", 2);
 
-	if (match_arg(params[0], 'c', "clear", 2) || match_arg(params[0], 'G', "replace", 2)) {	/* clear the userlist */
-		for (l = session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
-			const char *args[] = { NULL };
+	if (match_arg(params[0], 'c', "clear", 2) || replace) {	/* clear the userlist */
+		const char *args[] = { "*", NULL };
 
-			if (u)
-				jabber_command_del("del", args, session, u->uid, 1);
-		}
-
-		printq("user_cleared_list", session_name(session));
+			/* if using 'replace', we don't wan't any output from 'del *' */
+		jabber_command_del("del", args, session, NULL, replace);
 	}
 
-	if (match_arg(params[0], 'g', "get", 2) || match_arg(params[0], 'G', "replace", 2)) {	/* fill userlist with data from file */
+	if (match_arg(params[0], 'g', "get", 2) || replace) {	/* fill userlist with data from file */
 		FILE *f = fopen(listfile, "r");
 		char line[512];
 
@@ -2709,8 +2727,6 @@ static COMMAND(jabber_command_userlist)
 			}
 
 			uid = saprintf(istlen ? "tlen:%s" : "xmpp:%s", uid);
-
-			debug("XXX, %s, %s\n", uid, nickname);
 
 			if (userlist_find(session, uid)) {
 				if (nickname) {
