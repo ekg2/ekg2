@@ -120,8 +120,9 @@ void userlist_select(session *sess, char *name)
 	}
 }
 
-char **userlist_selection_list(GtkWidget *widget, int *num_ret)
-{
+#endif
+
+char **userlist_selection_list(GtkWidget *widget, int *num_ret) {
 	GtkTreeIter iter;
 	GtkTreeView *treeview = (GtkTreeView *) widget;
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(treeview);
@@ -143,7 +144,7 @@ char **userlist_selection_list(GtkWidget *widget, int *num_ret)
 	if (num_sel < 1)
 		return NULL;
 
-	nicks = malloc(sizeof(char *) * (num_sel + 1));
+	nicks = xmalloc(sizeof(char *) * (num_sel + 1));
 
 	i = 0;
 	gtk_tree_model_get_iter_first(model, &iter);
@@ -153,12 +154,13 @@ char **userlist_selection_list(GtkWidget *widget, int *num_ret)
 			i++;
 			nicks[i] = NULL;
 		}
-	}
-	while (gtk_tree_model_iter_next(model, &iter));
+	} while (gtk_tree_model_iter_next(model, &iter));
 
 	*num_ret = i;
 	return nicks;
 }
+
+#if 0
 
 void fe_userlist_set_selected(struct session *sess)
 {
@@ -364,9 +366,7 @@ static void userlist_add_columns(GtkTreeView * treeview)
 #endif
 }
 
-static gint userlist_click_cb(GtkWidget *widget, GdkEventButton * event, gpointer userdata)
-{
-#if 0
+static gint userlist_click_cb(GtkWidget *widget, GdkEventButton * event, gpointer userdata) {
 	char **nicks;
 	int i;
 	GtkTreeSelection *sel;
@@ -375,12 +375,12 @@ static gint userlist_click_cb(GtkWidget *widget, GdkEventButton * event, gpointe
 	if (!event)
 		return FALSE;
 
-	if (!(event->state & GDK_CONTROL_MASK) &&
-	    event->type == GDK_2BUTTON_PRESS && prefs.doubleclickuser[0]) {
+	if (!(event->state & GDK_CONTROL_MASK) && event->type == GDK_2BUTTON_PRESS /* && prefs.doubleclickuser[0] */) {
 		nicks = userlist_selection_list(widget, &i);
 		if (nicks) {
-			nick_command_parse(current_sess, prefs.doubleclickuser, nicks[0],
-					   nicks[0]);
+/*			nick_command_parse(current_sess, prefs.doubleclickuser, nicks[0], nicks[0]); */
+			command_exec_format(NULL, NULL, 0, ("/query \"%s\""), nicks[0]);
+
 			while (i) {
 				i--;
 				g_free(nicks[i]);
@@ -394,7 +394,7 @@ static gint userlist_click_cb(GtkWidget *widget, GdkEventButton * event, gpointe
 		/* do we have a multi-selection? */
 		nicks = userlist_selection_list(widget, &i);
 		if (nicks && i > 1) {
-			menu_nickmenu(current_sess, event, nicks[0], i);
+			menu_nickmenu(window_current, event, nicks[0], i);
 			while (i) {
 				i--;
 				g_free(nicks[i]);
@@ -415,7 +415,7 @@ static gint userlist_click_cb(GtkWidget *widget, GdkEventButton * event, gpointe
 			gtk_tree_path_free(path);
 			nicks = userlist_selection_list(widget, &i);
 			if (nicks) {
-				menu_nickmenu(current_sess, event, nicks[0], i);
+				menu_nickmenu(window_current, event, nicks[0], i);
 				while (i) {
 					i--;
 					g_free(nicks[i]);
@@ -428,7 +428,6 @@ static gint userlist_click_cb(GtkWidget *widget, GdkEventButton * event, gpointe
 
 		return TRUE;
 	}
-#endif
 	return FALSE;
 }
 

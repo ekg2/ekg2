@@ -56,6 +56,9 @@
 #include <gtk/gtkversion.h>
 #include <gdk/gdkkeysyms.h>
 
+#include <ekg/windows.h>
+#include <ekg/userlist.h>
+
 #include "main.h"
 
 #if 0
@@ -237,6 +240,7 @@ userlist_button_cb(GtkWidget *button, char *cmd)
 	free(nicks);
 	free(allnicks);
 }
+#endif
 
 /* a popup-menu-item has been selected */
 
@@ -247,7 +251,7 @@ popup_menu_cb(GtkWidget *item, char *cmd)
 
 	/* the userdata is set in menu_quick_item() */
 	nick = g_object_get_data(G_OBJECT(item), "u");
-
+#if 0
 	if (!nick) {		/* userlist popup menu */
 		/* treat it just like a userlist button */
 		userlist_button_cb(NULL, cmd);
@@ -258,7 +262,10 @@ popup_menu_cb(GtkWidget *item, char *cmd)
 		nick_command_parse(sess_list->data, cmd, nick, nick);
 	else
 		nick_command_parse(current_sess, cmd, nick, nick);
+#endif
 }
+
+#if 0
 
 GtkWidget *
 menu_toggle_item(char *label, GtkWidget *menu, void *callback, void *userdata, int state)
@@ -273,6 +280,8 @@ menu_toggle_item(char *label, GtkWidget *menu, void *callback, void *userdata, i
 
 	return item;
 }
+
+#endif
 
 static GtkWidget *
 menu_quick_item(char *cmd, char *label, GtkWidget *menu, int flags, gpointer userdata, char *icon)
@@ -324,6 +333,8 @@ menu_quick_item(char *cmd, char *label, GtkWidget *menu, int flags, gpointer use
 
 	return item;
 }
+
+#if 0
 
 static void
 menu_quick_item_with_callback(void *callback, char *label, GtkWidget *menu, void *arg)
@@ -475,6 +486,7 @@ menu_create(GtkWidget *menu, GSList * list, char *target, int check_path)
 	while (submenu_list)
 		submenu_list = g_slist_remove(submenu_list, submenu_list->data);
 }
+#endif
 
 static void
 menu_destroy(GtkWidget *menu, gpointer objtounref)
@@ -500,34 +512,38 @@ menu_popup(GtkWidget *menu, GdkEventButton * event, gpointer objtounref)
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, 0, event ? event->time : 0);
 }
 
-static char *str_copy = 0;	/* for all pop-up menus */
+static char *str_copy = NULL;	/* for all pop-up menus */
 
-void
-menu_nickmenu(session *sess, GdkEventButton * event, char *nick, int num_sel)
+void menu_nickmenu(window_t *sess, GdkEventButton * event, char *nick, int num_sel)
 {
 	char buf[512];
+	GtkWidget *menu = gtk_menu_new();
+	userlist_t *user;
+
+#if 0
 	char *real, *fmt;
-	struct User *user;
 	struct away_msg *away;
-	GtkWidget *submenu, *menu = gtk_menu_new();
 
 	if (str_copy)
 		free(str_copy);
 	str_copy = strdup(nick);
 
 	submenu_list = 0;	/* first time through, might not be 0 */
-
+#endif
 	/* more than 1 nick selected? */
 	if (num_sel > 1) {
 		snprintf(buf, sizeof(buf), "%d nicks selected.", num_sel);
 		menu_quick_item(0, buf, menu, 0, 0, 0);
 		menu_quick_item(0, 0, menu, XCMENU_SHADED, 0, 0);
 	} else {
-		user = userlist_find(sess, nick);	/* lasttalk is channel specific */
+		user = userlist_find(sess->session, nick);
+#if 0
 		if (!user)
 			user = userlist_find_global(current_sess->server, nick);
+#endif
 		if (user) {
-			submenu = menu_quick_sub(nick, menu, NULL, XCMENU_DOLIST, -1);
+#if 0
+			GtkWidget *submenu = menu_quick_sub(nick, menu, NULL, XCMENU_DOLIST, -1);
 
 			/* let the translators tweak this if need be */
 			fmt = _("<tt><b>%-11s</b></tt> %s");
@@ -580,10 +596,11 @@ menu_nickmenu(session *sess, GdkEventButton * event, char *nick, int num_sel)
 			menu_quick_item(0, buf, submenu, XCMENU_MARKUP, 0, 0);
 
 			menu_quick_endsub();
+#endif
 			menu_quick_item(0, 0, menu, XCMENU_SHADED, 0, 0);
 		}
 	}
-
+#if 0
 	if (num_sel > 1)
 		menu_create(menu, popup_list, NULL, FALSE);
 	else
@@ -593,9 +610,11 @@ menu_nickmenu(session *sess, GdkEventButton * event, char *nick, int num_sel)
 		menu_add_plugin_items(menu, "\x5$NICK", str_copy);
 	else			/* userlist treeview click */
 		menu_add_plugin_items(menu, "\x5$NICK", NULL);
-
+#endif
 	menu_popup(menu, event, NULL);
 }
+
+#if 0
 
 /* stuff for the View menu */
 
@@ -1108,94 +1127,6 @@ menu_banlist(GtkWidget *wid, gpointer none)
 	banlist_opengui(current_sess);
 }
 
-#ifdef USE_PLUGIN
-
-static void
-menu_loadplugin(void)
-{
-	plugingui_load();
-}
-
-static void
-menu_pluginlist(void)
-{
-	plugingui_open();
-}
-
-#else
-
-#define menu_pluginlist 0
-#define menu_loadplugin 0
-
-#endif
-
-#define usercommands_help  _("User Commands - Special codes:\n\n"\
-                           "%c  =  current channel\n"\
-									"%e  =  current network name\n"\
-									"%m  =  machine info\n"\
-                           "%n  =  your nick\n"\
-									"%t  =  time/date\n"\
-                           "%v  =  xchat version\n"\
-                           "%2  =  word 2\n"\
-                           "%3  =  word 3\n"\
-                           "&2  =  word 2 to the end of line\n"\
-                           "&3  =  word 3 to the end of line\n\n"\
-                           "eg:\n"\
-                           "/cmd john hello\n\n"\
-                           "%2 would be \042john\042\n"\
-                           "&2 would be \042john hello\042.")
-
-#define ulbutton_help       _("Userlist Buttons - Special codes:\n\n"\
-                           "%a  =  all selected nicks\n"\
-                           "%c  =  current channel\n"\
-									"%e  =  current network name\n"\
-                           "%h  =  selected nick's hostname\n"\
-									"%m  =  machine info\n"\
-                           "%n  =  your nick\n"\
-                           "%s  =  selected nick\n"\
-									"%t  =  time/date\n")
-
-#define dlgbutton_help      _("Dialog Buttons - Special codes:\n\n"\
-                           "%a  =  all selected nicks\n"\
-                           "%c  =  current channel\n"\
-									"%e  =  current network name\n"\
-                           "%h  =  selected nick's hostname\n"\
-									"%m  =  machine info\n"\
-                           "%n  =  your nick\n"\
-                           "%s  =  selected nick\n"\
-									"%t  =  time/date\n")
-
-#define ctcp_help          _("CTCP Replies - Special codes:\n\n"\
-                           "%d  =  data (the whole ctcp)\n"\
-									"%e  =  current network name\n"\
-									"%m  =  machine info\n"\
-                           "%s  =  nick who sent the ctcp\n"\
-                           "%t  =  time/date\n"\
-                           "%2  =  word 2\n"\
-                           "%3  =  word 3\n"\
-                           "&2  =  word 2 to the end of line\n"\
-                           "&3  =  word 3 to the end of line\n\n")
-
-#define url_help           _("URL Handlers - Special codes:\n\n"\
-                           "%s  =  the URL string\n\n"\
-                           "Putting a ! infront of the command\n"\
-                           "indicates it should be sent to a\n"\
-                           "shell instead of XChat")
-
-static void
-menu_usercommands(void)
-{
-	editlist_gui_open(NULL, NULL, command_list, _("XChat: User Defined Commands"),
-			  "commands", "commands.conf", usercommands_help);
-}
-
-static void
-menu_ulpopup(void)
-{
-	editlist_gui_open(NULL, NULL, popup_list, _("XChat: Userlist Popup menu"), "popup",
-			  "popup.conf", ulbutton_help);
-}
-
 static void
 menu_rpopup(void)
 {
@@ -1215,45 +1146,6 @@ menu_evtpopup(void)
 {
 	pevent_dialog_show();
 }
-
-static void
-menu_keypopup(void)
-{
-	key_dialog_show();
-}
-
-static void
-menu_ulbuttons(void)
-{
-	editlist_gui_open(NULL, NULL, button_list, _("XChat: Userlist buttons"), "buttons",
-			  "buttons.conf", ulbutton_help);
-}
-
-static void
-menu_dlgbuttons(void)
-{
-	editlist_gui_open(NULL, NULL, dlgbutton_list, _("XChat: Dialog buttons"), "dlgbuttons",
-			  "dlgbuttons.conf", dlgbutton_help);
-}
-
-static void
-menu_ctcpguiopen(void)
-{
-	editlist_gui_open(NULL, NULL, ctcp_list, _("XChat: CTCP Replies"), "ctcpreply",
-			  "ctcpreply.conf", ctcp_help);
-}
-
-static void
-menu_docs(GtkWidget *wid, gpointer none)
-{
-	fe_open_url("http://xchat.org/docs/");
-}
-
-/*static void
-menu_webpage (GtkWidget *wid, gpointer none)
-{
-	fe_open_url ("http://xchat.org");
-}*/
 
 static void
 menu_dcc_win(GtkWidget *wid, gpointer none)
@@ -1298,24 +1190,20 @@ menu_layout_cb(GtkWidget *item, gpointer none)
 
 static struct mymenu mymenu[] = {
 	{N_("_XChat"), 0, 0, M_NEWMENU, 0, 0, 1},
-	{N_("Network Li_st..."), menu_open_server_list, (char *)&pix_book, M_MENUPIX, 0, 0, 1,
-	 GDK_s},
+		{N_("Network Li_st..."), menu_open_server_list, (char *)&pix_book, M_MENUPIX, 0, 0, 1, GDK_s},
+		{0, 0, 0, M_SEP, 0, 0, 0},
+
+		{N_("_New"), 0, GTK_STOCK_NEW, M_MENUSUB, 0, 0, 1},
+		{N_("Server Tab..."), menu_newserver_tab, 0, M_MENUITEM, 0, 0, 1, GDK_t},
+		{N_("Channel Tab..."), menu_newchannel_tab, 0, M_MENUITEM, 0, 0, 1},
+		{N_("Server Window..."), menu_newserver_window, 0, M_MENUITEM, 0, 0, 1},
+		{N_("Channel Window..."), menu_newchannel_window, 0, M_MENUITEM, 0, 0, 1},
+		{0, 0, 0, M_END, 0, 0, 0},
 	{0, 0, 0, M_SEP, 0, 0, 0},
 
-	{N_("_New"), 0, GTK_STOCK_NEW, M_MENUSUB, 0, 0, 1},
-	{N_("Server Tab..."), menu_newserver_tab, 0, M_MENUITEM, 0, 0, 1, GDK_t},
-	{N_("Channel Tab..."), menu_newchannel_tab, 0, M_MENUITEM, 0, 0, 1},
-	{N_("Server Window..."), menu_newserver_window, 0, M_MENUITEM, 0, 0, 1},
-	{N_("Channel Window..."), menu_newchannel_window, 0, M_MENUITEM, 0, 0, 1},
-	{0, 0, 0, M_END, 0, 0, 0},
-	{0, 0, 0, M_SEP, 0, 0, 0},
+/*	{N_("_Load Plugin or Script..."), menu_loadplugin, GTK_STOCK_REVERT_TO_SAVED, M_MENUSTOCK, 0, 0, 1}, */
+	{N_("_Load Plugin or Script..."), NULL, GTK_STOCK_REVERT_TO_SAVED, M_MENUSTOCK, 0, 0, 0},
 
-#ifdef USE_PLUGIN
-	{N_("_Load Plugin or Script..."), menu_loadplugin, GTK_STOCK_REVERT_TO_SAVED, M_MENUSTOCK,
-	 0, 0, 1},
-#else
-	{N_("_Load Plugin or Script..."), 0, GTK_STOCK_REVERT_TO_SAVED, M_MENUSTOCK, 0, 0, 0},
-#endif
 	{0, 0, 0, M_SEP, 0, 0, 0},	/* 11 */
 #define DETACH_OFFSET (12)
 	{0, menu_detach, GTK_STOCK_REDO, M_MENUSTOCK, 0, 0, 1, GDK_I},	/* 12 */
@@ -1357,13 +1245,9 @@ static struct mymenu mymenu[] = {
 	{N_("Advanced"), 0, GTK_STOCK_JUSTIFY_LEFT, M_MENUSUB, 0, 0, 1},
 	{N_("Auto Replace..."), menu_rpopup, 0, M_MENUITEM, 0, 0, 1},
 	{N_("CTCP Replies..."), menu_ctcpguiopen, 0, M_MENUITEM, 0, 0, 1},
-	{N_("Dialog Buttons..."), menu_dlgbuttons, 0, M_MENUITEM, 0, 0, 1},
-	{N_("Keyboard Shortcuts..."), menu_keypopup, 0, M_MENUITEM, 0, 0, 1},
 	{N_("Text Events..."), menu_evtpopup, 0, M_MENUITEM, 0, 0, 1},
 	{N_("URL Handlers..."), menu_urlhandlers, 0, M_MENUITEM, 0, 0, 1},
-	{N_("User Commands..."), menu_usercommands, 0, M_MENUITEM, 0, 0, 1},
 	{N_("Userlist Buttons..."), menu_ulbuttons, 0, M_MENUITEM, 0, 0, 1},
-	{N_("Userlist Popup..."), menu_ulpopup, 0, M_MENUITEM, 0, 0, 1},
 	{0, 0, 0, M_END, 0, 0, 0},	/* 52 */
 
 	{N_("_Window"), 0, 0, M_NEWMENU, 0, 0, 1},
@@ -1384,7 +1268,6 @@ static struct mymenu mymenu[] = {
 	{N_("Save Text..."), menu_savebuffer, GTK_STOCK_SAVE, M_MENUSTOCK, 0, 0, 1},
 
 	{N_("_Help"), 0, 0, M_NEWMENU, 0, 0, 1},	/* 69 */
-	{N_("_Contents"), menu_docs, GTK_STOCK_HELP, M_MENUSTOCK, 0, 0, 1, GDK_F1},
 	{N_("_About"), menu_about, GTK_STOCK_ABOUT, M_MENUSTOCK, 0, 0, 1},
 
 	{0, 0, 0, M_END, 0, 0, 0},
