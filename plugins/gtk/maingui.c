@@ -576,6 +576,9 @@ static idle_t *ul_tag = NULL;
 		for (l = sess->session->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 
+			if (!u || !u->nickname || !u->status)
+				continue;
+
 			fe_userlist_insert(sess, u);
 		}
 	}
