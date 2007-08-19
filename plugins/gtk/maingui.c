@@ -824,16 +824,6 @@ void mg_create_icon_item(char *label, char *stock, GtkWidget *menu, void *callba
 }
 
 void mg_open_quit_dialog(gboolean minimize_button) {
-	/* xchat->ekg2:
-	 * 	xchat count dcc's + connected network, and display warning about it.
-	 *
-	 * 		"<span weight=\"bold\" size=\"larger\">Are you sure you want to quit?</span>\n
-	 * 			"You are connected to %i IRC networks."
-	 * 			"Some file transfers are still active."
-	 */
-
-#warning "Display question if user want to /save config"
-
 	static GtkWidget *dialog = NULL;
 	GtkWidget *dialog_vbox1;
 	GtkWidget *table1;
@@ -853,6 +843,24 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 		ekg_exit();
 		return;
 	}
+
+	if (config_save_quit == 1) {
+#warning "Display question if user want to /save config"
+/*
+		if (config_changed) 				format_find("config_changed")
+		else if (config_keep_reason && reason_changed)	format_find("quit_keep_reason");
+*/
+		config_save_quit = 0;
+	}
+
+#warning "xchat->ekg2 XXX"
+	/* 	xchat count dcc's + connected network, and display warning about it.
+	 *
+	 * 		"<span weight=\"bold\" size=\"larger\">Are you sure you want to quit?</span>\n
+	 * 			"You are connected to %i IRC networks."
+	 * 			"Some file transfers are still active."
+	 */
+
 
 	dialog = gtk_dialog_new();
 	gtk_container_set_border_width(GTK_CONTAINER(dialog), 6);
@@ -919,8 +927,11 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 		if (GTK_TOGGLE_BUTTON(checkbutton1)->active)
 			gui_quit_dialog_config = 0;
 		xchat_exit();
+#endif
+		ekg_exit();
 		break;
 	case 1:		/* minimize to tray */
+#if 0
 		if (GTK_TOGGLE_BUTTON(checkbutton1)->active) {
 			gui_tray_flags_config |= 1;
 			/*prefs.gui_quit_dialog = 0; */
