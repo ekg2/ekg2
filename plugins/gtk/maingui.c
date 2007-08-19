@@ -301,6 +301,28 @@ void mg_set_access_icon(gtk_window_ui_t *gui, GdkPixbuf *pix, gboolean away) {
 
 #endif
 
+static gboolean mg_inputbox_focus(GtkWidget *widget, GdkEventFocus *event, gtk_window_ui_t *gui) {
+	list_t l;
+
+	if (gui->is_tab)
+		return FALSE;
+
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+
+		if (gtk_private(w)->gui == gui) {
+#warning "window_switch() XXX"
+			window_switch(w->id);
+			return FALSE;
+		}
+
+	}
+
+	printf("mg_inputbox_focus() internal error!\n");
+
+	return FALSE;
+}
+
 void mg_inputbox_cb(GtkWidget *igad, gtk_window_ui_t *gui) {
 	static int ignore = FALSE;
 	window_t *sess = NULL;
@@ -1772,18 +1794,7 @@ mg_create_entry(window_t *sess, GtkWidget *box)
 	g_signal_connect(G_OBJECT(entry), "key_press_event",
 			 G_CALLBACK(key_handle_key_press), NULL);
 
-#warning "xchat->ekg2, mg_inputbox_focus()"
-	/* mg_inputbox_focus()
-	 * 	Uzywane do tego, ze jak sie klinie okienko nie z tabem (gui->is_tab == 0)
-	 * 	to wtedy zmieniamy window_current/session_current na wybrana sesje...
-	 * 		[gtk_private_ui(window_current) == gui]
-	 *
-	 * 	zawsze return FALSE;
-	 *
-	 * 	nie wiem czy to prawidlowy behavior dla ekg2, wiec nie ma.
-	 *
-	 * 	g_signal_connect(G_OBJECT(entry), "focus_in_event", G_CALLBACK(mg_inputbox_focus), gui);
-	 */
+	g_signal_connect(G_OBJECT(entry), "focus_in_event", G_CALLBACK(mg_inputbox_focus), gui);
 	g_signal_connect(G_OBJECT(entry), "populate_popup", G_CALLBACK(mg_inputbox_rightclick), NULL);
 
 	gtk_widget_grab_focus(entry);
