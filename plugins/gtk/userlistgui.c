@@ -39,6 +39,8 @@
 
 #include "main.h"
 
+#define show_descr_in_userlist_config 1
+
 #if 0
 #include "fe-gtk.h"
 
@@ -276,6 +278,8 @@ void fe_userlist_rehash(session *sess, struct User *user)
 
 #endif
 
+#warning "fe_userlist_rehash() dobre do zmian stanow"
+
 /* void fe_userlist_insert(window_t *sess, struct User *newuser, int row, int sel)  */
 void fe_userlist_insert(window_t *sess, userlist_t *u)
 {
@@ -293,8 +297,9 @@ void fe_userlist_insert(window_t *sess, userlist_t *u)
 #endif
 	gtk_list_store_insert_with_values(GTK_LIST_STORE(model), &iter, 0, /* row, */
 					  0, pix,
-					  1, u->uid,
-					  2, u->nickname,
+					  1, u->nickname,
+					  /* XXX, u->uid */
+					  2, u->descr,
 //					  3, /* newuser, */ NULL,
 //					  4, /* (do_away) */ FALSE,
 //					  /* ? (newuser->away ? &colors[COL_AWAY] : NULL) : */ (NULL),
@@ -354,8 +359,7 @@ static void userlist_add_columns(GtkTreeView * treeview)
 	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview),
 						    -1, NULL, renderer,
 						    "text", 1, "foreground-gdk", 4, NULL);
-#if 0
-	if (prefs.showhostname_in_userlist) {
+	if (show_descr_in_userlist_config) {
 		/* hostname column */
 		renderer = gtk_cell_renderer_text_new();
 		gtk_cell_renderer_text_set_fixed_height_from_font(GTK_CELL_RENDERER_TEXT(renderer),
@@ -363,7 +367,6 @@ static void userlist_add_columns(GtkTreeView * treeview)
 		gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), -1, NULL,
 							    renderer, "text", 2, NULL);
 	}
-#endif
 }
 
 static gint userlist_click_cb(GtkWidget *widget, GdkEventButton * event, gpointer userdata) {
@@ -453,13 +456,7 @@ GtkWidget *userlist_create(GtkWidget *box)
 	sw = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_ETCHED_IN);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
-#if DARK
-			prefs.showhostname_in_userlist ?
-			GTK_POLICY_AUTOMATIC :
-			GTK_POLICY_NEVER, 
-#else
-			GTK_POLICY_NEVER,
-#endif		
+			show_descr_in_userlist_config ? GTK_POLICY_AUTOMATIC : GTK_POLICY_NEVER, 
 			GTK_POLICY_AUTOMATIC);
 	gtk_box_pack_start(GTK_BOX(box), sw, TRUE, TRUE, 0);
 	gtk_widget_show(sw);
