@@ -158,7 +158,6 @@ static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 
 	const char *text;
 	int cursor_pos;
-	int line_start;
 
 /* in fjuczer, use g_completion_new() ? */
 
@@ -171,10 +170,7 @@ static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 	if (strlcpy(buf, text, sizeof(buf)) >= sizeof(buf))
 		printf("key_action_tab_comp(), strlcpy() UUUUUUUCH!\n");
 
-/* XXX, i don't remember line_start */
-	line_start = 0;		/* XXX */
-
-	ncurses_complete(&line_start, &cursor_pos, buf);
+	ncurses_complete(&cursor_pos, buf);
 
 	gtk_entry_set_text(GTK_ENTRY(wid), buf);
 	gtk_editable_set_position(GTK_EDITABLE(wid), cursor_pos);

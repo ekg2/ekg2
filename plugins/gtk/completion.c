@@ -700,7 +700,7 @@ static struct {
  *   podany wyraz ma zostañ "wsadzony", st±d konieczna jest tablica separatorów, tablica wszystkich wyrazów itd ...
  * - przeskakiwanie miêdzy dope³nieniami po drugim TABie
  */
-void ncurses_complete(int *line_start, int *line_index, char *line)
+void ncurses_complete(int *line_index, char *line)
 {
 	char *start, **words, *separators;
 	char *cmd;
@@ -953,7 +953,6 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 			snprintf(line, COMPLETION_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
 		} else
 			snprintf(line, COMPLETION_MAXLEN, "%s", cmd);
-		*line_start = 0;
 		*line_index = xstrlen(line);
 
                 array_free(completions);

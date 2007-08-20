@@ -3,7 +3,7 @@
 
 #define COMPLETION_MAXLEN 2048		/* rozmiar linii */
 
-void ncurses_complete(int *line_start, int *line_index, char *line);
+void ncurses_complete(int *line_index, char *line);
 void ncurses_complete_clear();
 
 #endif
