@@ -11,3 +11,18 @@ extern GdkColor colors[];
 #define COL_AWAY 40
 
 void palette_alloc(GtkWidget *widget);
+void pixmaps_init(void);
+
+extern GdkPixbuf *pix_ekg2;
+extern GdkPixbuf *gg_pixs[];
+
+#define PIXBUF_FFC 0
+#define PIXBUF_AVAIL 1
+#define PIXBUF_AWAY 2
+#define PIXBUF_DND 3
+#define PIXBUF_XA 4
+#define PIXBUF_INVISIBLE 5
+#define PIXBUF_NOTAVAIL 6
+
+#define STATUS_PIXBUFS 7 /* FFC, AVAIL, AWAY, DND, XA, INVISIBLE, NOTAVAIL */
+

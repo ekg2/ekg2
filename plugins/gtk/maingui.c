@@ -86,7 +86,7 @@
 
 void fe_userlist_numbers(window_t *sess);
 void fe_userlist_clear(window_t *sess);
-void fe_userlist_insert(window_t *sess, userlist_t *u);
+void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf *pixmaps);
 
 /* forward */
 void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
@@ -583,6 +583,7 @@ static idle_t *ul_tag = NULL;
 
 /* static */ gboolean mg_populate_userlist(window_t *sess) {
 	gtk_window_ui_t *gui;
+	GdkPixmap *pixs;
 
 	if (!sess)
 		sess = window_current;
@@ -591,6 +592,9 @@ static idle_t *ul_tag = NULL;
 	fe_userlist_clear(sess);
 
 #warning "xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX"
+
+#warning "check what network, and select pixs"
+	pixs = gg_pixs;
 
 	if (sess->session) {
 		list_t l;
@@ -601,7 +605,7 @@ static idle_t *ul_tag = NULL;
 			if (!u || !u->nickname || !u->status)
 				continue;
 
-			fe_userlist_insert(sess, u);
+			fe_userlist_insert(sess, u, pixs);
 		}
 	}
 

@@ -40,13 +40,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gdk-pixbuf/gdk-pixdata.h>
+#include <gtk/gtkstock.h>
+
 #include "main.h"
 #include "palette.h"
+
+#include "inline_pngs_gg.h"
 
 /* XXX, todo: colors[0..15] are ok, than colors[16..31] are not ok [duplication of above], invistigate xchat sources if they needed, fix and remove. */
 #warning "XXX, colors[16..31] remove!"
@@ -167,3 +174,23 @@ void palette_alloc(GtkWidget *widget)
 			gdk_colormap_alloc_color(cmap, &colors[i], FALSE, TRUE);
 	}
 }
+
+GdkPixbuf *pix_ekg2;
+GdkPixbuf *gg_pixs[STATUS_PIXBUFS];
+
+
+void pixmaps_init(void)
+{
+	/* XXX, here load from file, or inline from .h */
+		/* gdk_pixbuf_new_from_file() */
+		/* gdk_pixbuf_new_from_inline() */
+	pix_ekg2 = NULL;
+
+	memset(gg_pixs, 0, sizeof(gg_pixs));
+
+	gg_pixs[PIXBUF_AVAIL] = gdk_pixbuf_new_from_inline(-1, gg_avail, FALSE, 0);
+	gg_pixs[PIXBUF_AWAY] = gdk_pixbuf_new_from_inline(-1, gg_away, FALSE, 0);
+	gg_pixs[PIXBUF_INVISIBLE] = gdk_pixbuf_new_from_inline(-1, gg_invisible, FALSE, 0);
+	gg_pixs[PIXBUF_NOTAVAIL] = gdk_pixbuf_new_from_inline(-1, gg_notavail, FALSE, 0);
+}
+

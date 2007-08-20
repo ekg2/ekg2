@@ -422,8 +422,8 @@ EXPORT int gtk_plugin_init(int prio) {
 
 	/* fe_init() */
 	gtk_binding_init();
-#if 0
 	pixmaps_init();
+#if 0
 	channelwin_pix	= pixmap_load_from_file(prefs.background);
 	input_style	= create_input_style(gtk_style_new());
 #endif

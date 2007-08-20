@@ -35,9 +35,11 @@
 #include <gdk/gdkkeysyms.h>
 
 #include <ekg/userlist.h>
+#include <ekg/stuff.h>
 #include <ekg/windows.h>
 
 #include "main.h"
+#include "palette.h"
 
 #define show_descr_in_userlist_config 1
 
@@ -55,7 +57,6 @@
 #include "palette.h"
 #include "maingui.h"
 #include "menu.h"
-#include "pixmaps.h"
 #include "userlistgui.h"
 
 #endif
@@ -281,7 +282,7 @@ void fe_userlist_rehash(session *sess, struct User *user)
 #warning "fe_userlist_rehash() dobre do zmian stanow"
 
 /* void fe_userlist_insert(window_t *sess, struct User *newuser, int row, int sel)  */
-void fe_userlist_insert(window_t *sess, userlist_t *u)
+void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 {
 	GtkTreeModel *model = gtk_private(sess)->user_model;
 	GdkPixbuf *pix = NULL;	/* get_user_icon (sess->server, newuser); */
@@ -289,6 +290,21 @@ void fe_userlist_insert(window_t *sess, userlist_t *u)
 	int do_away = TRUE;
 
 	int sel = 0;
+
+	if (pixmaps) {
+		const char *str;
+		
+	/* blah, awful */
+		str = ekg_status_string(u->status, 0);
+
+		if (!xstrcmp(str, "notavail")) 		pix = pixmaps[PIXBUF_NOTAVAIL];
+		else if (!xstrcmp(str, "invisible"))	pix = pixmaps[PIXBUF_INVISIBLE];
+		else if (!xstrcmp(str, "xa"))		pix = pixmaps[PIXBUF_XA];
+		else if (!xstrcmp(str, "dnd"))		pix = pixmaps[PIXBUF_DND];
+		else if (!xstrcmp(str, "away"))		pix = pixmaps[PIXBUF_AWAY];
+		else if (!xstrcmp(str, "avail"))	pix = pixmaps[PIXBUF_AVAIL];
+		else if (!xstrcmp(str, "ffc"))		pix = pixmaps[PIXBUF_FFC];
+	}
 
 #if 0
 	if (prefs.away_size_max < 1 || !prefs.away_track)
