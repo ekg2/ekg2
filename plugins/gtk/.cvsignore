@@ -5,3 +5,4 @@ Makefile.in
 *.lo
 *.la
 inline_pngs_gg.h
+inline_pngs.h
