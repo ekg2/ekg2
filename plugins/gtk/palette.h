@@ -14,6 +14,7 @@ void palette_alloc(GtkWidget *widget);
 void pixmaps_init(void);
 
 extern GdkPixbuf *pix_ekg2;
+extern GdkPixbuf *pixs[];
 extern GdkPixbuf *gg_pixs[];
 
 #define PIXBUF_FFC 0

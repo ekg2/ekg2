@@ -583,7 +583,7 @@ static idle_t *ul_tag = NULL;
 
 /* static */ gboolean mg_populate_userlist(window_t *sess) {
 	gtk_window_ui_t *gui;
-	GdkPixmap *pixs;
+	GdkPixmap *pxs;
 
 	if (!sess)
 		sess = window_current;
@@ -593,11 +593,12 @@ static idle_t *ul_tag = NULL;
 
 #warning "xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX"
 
-#warning "check what network, and select pixs"
-	pixs = gg_pixs;
-
 	if (sess->session) {
 		list_t l;
+		
+	/* check what network, and select pixs */
+		if (sess->session->plugin == plugin_find("gg"))	pxs = gg_pixs;
+		else						pxs = pixs;
 
 		for (l = sess->session->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
@@ -605,7 +606,7 @@ static idle_t *ul_tag = NULL;
 			if (!u || !u->nickname || !u->status)
 				continue;
 
-			fe_userlist_insert(sess, u, pixs);
+			fe_userlist_insert(sess, u, pxs);
 		}
 	}
 
