@@ -2508,7 +2508,14 @@ JABBER_HANDLER(jabber_handle_iq) {
 						if (atsign)
 							*atsign	= 0;
 						uid = saprintf("tlen:%s@tlen.pl", jid);
-					} else  uid = saprintf("xmpp:%s", jid);
+					} else {
+							/* newer jabberd2 workaround - strip resource */
+						char *tmp	= xstrchr(jid, "/");
+						
+						if (tmp)
+							*tmp	= 0;
+						uid		= saprintf("xmpp:%s", jid);
+					}
 
 					/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
 					w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
@@ -2524,15 +2531,14 @@ JABBER_HANDLER(jabber_handle_iq) {
 						char *nickname 	= tlenjabber_unescape(jabber_attr(item->atts, "name"));
 						const char *authval;
 						xmlnode_t *group = xmlnode_find_child(item,"group");
-						/* czemu sluzy dodanie usera z nickname uid jesli nie ma nickname ? */
-						u = userlist_add(s, uid, nickname ? nickname : uid); 
+						u = userlist_add(s, uid, nickname); 
 
 						if ((authval = jabber_attr(item->atts, "subscription"))) {
 							jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
 								/* case dependent? */
 							if (up)
-								for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
+								for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
 
 							if (!up || !(up->authtype & EKG_JABBER_AUTH_TO)) {
 								if (u && u->status == EKG_STATUS_NA)
