@@ -2510,7 +2510,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 						uid = saprintf("tlen:%s@tlen.pl", jid);
 					} else {
 							/* newer jabberd2 workaround - strip resource */
-						char *tmp	= xstrchr(jid, "/");
+						char *tmp	= xstrchr(jid, '/');
 						
 						if (tmp)
 							*tmp	= 0;
@@ -2531,12 +2531,11 @@ JABBER_HANDLER(jabber_handle_iq) {
 						char *nickname 	= tlenjabber_unescape(jabber_attr(item->atts, "name"));
 						const char *authval;
 						xmlnode_t *group = xmlnode_find_child(item,"group");
-						u = userlist_add(s, uid, nickname); 
+						u = userlist_add(s, uid, nickname ? nickname : jid); 
 
 						if ((authval = jabber_attr(item->atts, "subscription"))) {
 							jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
-								/* case dependent? */
 							if (up)
 								for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
 
