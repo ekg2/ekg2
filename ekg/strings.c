@@ -47,6 +47,10 @@ inline int xwcslen(CHAR_T *str) {
 	return wcslen(ufix(str));
 }
 
+inline int xmbslen(const char *str) {
+	return mbstowcs(NULL, str ? str : "", 0);
+}
+
 inline CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src) {
 	return wcscpy(ufix(dst), ufix(src));
 }
@@ -84,7 +88,7 @@ inline char *wcs_to_normal(const CHAR_T *str) {
 inline CHAR_T *normal_to_wcs(const char *str) {
 	if (!str) return NULL;
 	{
-		int len = mbstowcs(NULL, str, 0)+1;
+		int len = xmbslen(str)+1;
 		wchar_t *tmp = xcalloc(len+1, sizeof(wchar_t));
 		mbstowcs(tmp, str, len);
 		return (CHAR_T *) tmp;

@@ -37,6 +37,7 @@ extern int config_use_unicode;	/* not everyone want to include stuff.h */
 #define CHAR_FORMAT "%lc"
 
 inline int xwcslen(CHAR_T *str);
+inline int xmbslen(const char *str);
 inline CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src);
 inline CHAR_T *xwcsdup(CHAR_T *str);
 inline CHAR_T *xwcscat(CHAR_T *dst, const CHAR_T *src);
@@ -61,6 +62,7 @@ inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 #define CHAR_FORMAT "%c"
 
 #define xwcslen(str) xstrlen((char *) str)
+#define xmbslen(str) xstrlen(str)
 #define xwcscpy(dst, str) xstrcpy((char *) dst, (char *) str)
 #define xwcsdup(str) (CHAR_T *) xstrdup((char *) str)
 #define xwcscat(dst, src) xstrcat((char *) dst, (char *) src)
