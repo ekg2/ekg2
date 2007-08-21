@@ -2531,7 +2531,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 						char *nickname 	= tlenjabber_unescape(jabber_attr(item->atts, "name"));
 						const char *authval;
 						xmlnode_t *group = xmlnode_find_child(item,"group");
-						u = userlist_add(s, uid, nickname ? nickname : jid); 
+						u = userlist_add(s, uid, nickname); 
 
 						if ((authval = jabber_attr(item->atts, "subscription"))) {
 							jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
@@ -2561,6 +2561,46 @@ JABBER_HANDLER(jabber_handle_iq) {
 					}
 					xfree(uid);
 				}; /* for */
+
+				{		/* nickname generator */
+					list_t l;
+
+					for (l = s->userlist; l; l = l->next) {
+						userlist_t *u = l->data;
+
+						if (u && !u->nickname) {
+							char *userpart	= xstrdup(u->uid);
+							char *tmp	= xstrchr(userpart, '@');
+							const char **cp;
+							
+							const char *possibilities[] = { userpart+5, u->uid+5, u->uid, NULL };
+
+							if (tmp) *tmp	= 0;
+
+							for (cp = possibilities; *cp; cp++) {
+								list_t m;
+
+								for (m = s->userlist; m; m = m->next) {
+									userlist_t *w = m->data;
+
+									if (w && w->nickname && !xstrcasecmp(w->nickname, *cp))
+										break;
+								}
+
+								if (!m)
+									break;
+							}
+
+							if (*cp)
+								u->nickname = xstrdup(*cp);
+							else
+								debug_error("[jabber] can't find any free nickname for UID %s.. that's kinda bitch!\n", u->uid);
+
+							xfree(userpart);
+						}
+					}
+				}
+
 				session_int_set(s, "__roster_retrieved", 1);
 			} /* jabber:iq:roster */
 		} /* if query */
