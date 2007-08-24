@@ -679,7 +679,7 @@ static TIMER_SESSION(jabber_ping_timer_handler) {
 		return 0;
 	}
 	
-	if (session_int_get(s, "ping-server") == 0) return -1;
+	if (session_int_get(s, "ping_server") == 0) return -1;
 
 	jabber_write(s, "<iq/>"); /* leafnode idea */
 	return 0;
@@ -811,7 +811,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
         j->id = 1;
 	j->parser = jabber_parser_recreate(NULL, s);
 
-	if (j->istlen || (session_int_get(s, "ping-server") != 0)) {
+	if (j->istlen || (session_int_get(s, "ping_server") != 0)) {
 		if (timer_find_session(s, "ping") == NULL) {
 			/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
 			timer_add_session(s, "ping", j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
@@ -1512,7 +1512,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("msg_gen_thread",	0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd", 	0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("ping-server", 		0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("ping_server", 		0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, "5222", 0, NULL),
 	PLUGIN_VAR_ADD("priority", 		0, VAR_INT, "5", 0, NULL),
 	PLUGIN_VAR_ADD("privacy_list", 		0, VAR_STR, 0, 0, NULL),
