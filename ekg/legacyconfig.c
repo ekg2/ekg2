@@ -26,7 +26,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 5;
+	const int current_config_version = 6;
 
 	if (xstrcasecmp(console_charset, config_console_charset)) 
 		print("console_charset_bad", console_charset, config_console_charset);
@@ -70,6 +70,11 @@ void config_upgrade() {
 			print("config_upgrade_major",
 				_("Jabber UIDs prefix has been changed from 'jid:' to 'xmpp:'. Your session UIDs were changed " \
 				"automagically, and in other areas old prefix will be still supported for some time."), "5");
+
+		case 5:
+			print("config_upgrade_minor",
+				_("'ping-server' jabber session variable has been renamed to 'ping_server', please set it by hand " \
+				"where needed. Sorry for that inconvenience."), "6");
 	}
 
 	config_version = current_config_version;
