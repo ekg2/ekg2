@@ -294,16 +294,34 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 	if (pixmaps) {
 		const char *str;
 		
-	/* blah, awful */
-		str = ekg_status_string(u->status, 0);
-
-		if (!xstrcmp(str, "notavail")) 		pix = pixmaps[PIXBUF_NOTAVAIL];
-		else if (!xstrcmp(str, "invisible"))	pix = pixmaps[PIXBUF_INVISIBLE];
-		else if (!xstrcmp(str, "xa"))		pix = pixmaps[PIXBUF_XA];
-		else if (!xstrcmp(str, "dnd"))		pix = pixmaps[PIXBUF_DND];
-		else if (!xstrcmp(str, "away"))		pix = pixmaps[PIXBUF_AWAY];
-		else if (!xstrcmp(str, "avail"))	pix = pixmaps[PIXBUF_AVAIL];
-		else if (!xstrcmp(str, "ffc"))		pix = pixmaps[PIXBUF_FFC];
+		switch (u->status) {
+			case EKG_STATUS_NA:
+				pix = pixmaps[PIXBUF_NOTAVAIL];
+				break;
+			case EKG_STATUS_INVISIBLE:
+				pix = pixmaps[PIXBUF_INVISIBLE];
+				break;
+			case EKG_STATUS_XA:
+				pix = pixmaps[PIXBUF_XA];
+				break;
+			case EKG_STATUS_DND:
+				pix = pixmaps[PIXBUF_DND];
+				break;
+			case EKG_STATUS_AWAY:
+				pix = pixmaps[PIXBUF_AWAY];
+				break;
+			case EKG_STATUS_AVAIL:
+				pix = pixmaps[PIXBUF_AVAIL];
+				break;
+			case EKG_STATUS_FFC:
+				pix = pixmaps[PIXBUF_FFC];
+				break;
+			case EKG_STATUS_ERROR:
+				pix = pixmaps[PIXBUF_ERROR];
+				break;
+			default: /* + EKG_STATUS_UNKNOWN */
+				pix = pixmaps[PIXBUF_UNKNOWN];
+		}
 	}
 
 #if 0

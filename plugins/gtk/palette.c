@@ -201,5 +201,7 @@ void pixmaps_init(void)
 	pixs[PIXBUF_XA] = gdk_pixbuf_new_from_inline(-1, xa, FALSE, 0);
 	pixs[PIXBUF_INVISIBLE] = gdk_pixbuf_new_from_inline(-1, invisible, FALSE, 0);
 	pixs[PIXBUF_NOTAVAIL] = gdk_pixbuf_new_from_inline(-1, notavail, FALSE, 0);
+	pixs[PIXBUF_ERROR] = gdk_pixbuf_new_from_inline(-1, icon_error, FALSE, 0);
+	pixs[PIXBUF_UNKNOWN] = gdk_pixbuf_new_from_inline(-1, icon_unknown, FALSE, 0);
 }
 
