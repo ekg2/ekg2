@@ -915,7 +915,8 @@ static COMMAND(jabber_command_modify) {
 	xfree(nickname);
 	if (addcom) {
 		xfree(u);
-		return command_exec_format(target, session, quiet, ("/auth --request %s"), uid);
+		return (session_int_get(session, "auto_auth") & 16 ? 0 :
+			command_exec_format(target, session, quiet, ("/auth --request %s"), uid));
 	}
 	return 0;
 }

@@ -33,6 +33,8 @@ auto_auth
 		5 - ignore subscribe requests
 	
 		10 - ignore unsubscribe requests
+	
+		16 - when adding contacts, don't request auth
 
 display_notify
 	type: integer

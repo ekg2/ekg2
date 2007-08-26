@@ -34,6 +34,8 @@ auto_auth
 		5 - (1+4) ignoruje ¿±dania autoryzacji
 	
 		10 - (8+2) ignoruje ¿±dania cofniêcia autoryzacji
+	
+		16 - przy dodawaniu kontaktów, nie wysy³a pro¶by o autoryzacjê
 
 display_notify
 	typ: liczba
