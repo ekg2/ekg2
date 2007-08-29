@@ -19,7 +19,6 @@ A million repetitions of "a"
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 #include <ekg/debug.h>
-#include <ekg/stuff.h>
 
 #include <stdint.h>
 
