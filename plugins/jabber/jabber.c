@@ -1499,10 +1499,10 @@ static QUERY(jabber_typing_out) {
 		return 0;
 
 	j = jabber_private(s);
-	
-	watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\" id=\"%d\">\n"
-			"<x xmlns=\"jabber:x:event\"><composing/></x>\n"
-			"</message>\n", jid, time(NULL) /* ? */);
+
+	watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">\n"
+			"<x xmlns=\"jabber:x:event\"%s>\n"
+			"</message>\n", jid, (len ? "><composing/></x" : "/"));
 
 	return -1;
 }
