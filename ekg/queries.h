@@ -61,6 +61,8 @@ enum queries_id {
 	UI_WINDOW_UPDATE_LASTLOG,
 	SESSION_EVENT,
 	UI_REFRESH,
+	PROTOCOL_TYPING_OUT,
+
 	QUERY_EXTERNAL,
 };
 
@@ -420,6 +422,12 @@ const struct query query_list[] = {
 		QUERY_ARG_END } },
 
 	{ UI_REFRESH, "ui-refresh", {
+		QUERY_ARG_END } },
+
+	{ PROTOCOL_TYPING_OUT, "protocol-typing-out", {
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_INT,			/* typed-in data length */
 		QUERY_ARG_END } },
 };
 
