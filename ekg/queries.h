@@ -428,6 +428,8 @@ const struct query query_list[] = {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_INT,			/* typed-in data length */
+		QUERY_ARG_INT,			/* whether this is first typing notification in order
+						   or only length change */
 		QUERY_ARG_END } },
 };
 
