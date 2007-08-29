@@ -112,24 +112,36 @@ int ncurses_lineslen() {
 		return (ncurses_line[0] == '/' ? 0 : xwcslen(ncurses_line));
 }
 
+inline void ncurses_typingsend(const int len, const int first) {
+	const char *sid	= session_uid_get(ncurses_typing_win->session);
+	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
+	
+	if (uid)
+		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
+}
+
 TIMER(ncurses_typing) {
 	if (ncurses_typing_mod) { /* need to update status */
 		const int curlen	= ncurses_lineslen();
+		const int winchange	= (ncurses_typing_win != window_current);
 
-		if (ncurses_typing_win != window_current && ncurses_typing_win && ncurses_typing_win->target)
+		if (winchange && ncurses_typing_win && ncurses_typing_win->target)
 			ncurses_typing_time = 0; /* this should force check below */
 
 		if (window_current && window_current->target && curlen &&
-				(ncurses_typing_win != window_current || ncurses_typing_count != curlen)) {
+				(winchange || ncurses_typing_count != curlen)) {
 
+#if 0
 			debug_function("ncurses_typing(), [UNIMPL] got change for %s [%s] vs %s [%s], %d vs %d!\n",
 					window_current->target, session_uid_get(window_current->session),
 					ncurses_typing_win ? ncurses_typing_win->target : NULL,
 					ncurses_typing_win ? session_uid_get(ncurses_typing_win->session) : NULL,
 					curlen, ncurses_typing_count);
+#endif
 
 			ncurses_typing_win	= window_current;
 			ncurses_typing_count	= curlen;
+			ncurses_typingsend(curlen, winchange);
 		}
 
 		ncurses_typing_time	= time(NULL);
@@ -144,9 +156,11 @@ TIMER(ncurses_typing) {
 					config_typing_timeout_empty : config_typing_timeout);
 
 		if (ncurses_typing_win && ((timeout && time(NULL) - ncurses_typing_time > timeout) || !ncurses_typing_time)) {
+			ncurses_typingsend(0, 1);
+#if 0
 			debug_function("ncurses_typing(), [UNIMPL] disabling for %s [%s]\n",
 					ncurses_typing_win->target, session_uid_get(ncurses_typing_win->session));
-
+#endif
 			ncurses_typing_win = NULL;
 		}
 	}
