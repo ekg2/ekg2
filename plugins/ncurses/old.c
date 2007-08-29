@@ -127,6 +127,8 @@ TIMER(ncurses_typing) {
 
 		if (winchange && ncurses_typing_win && ncurses_typing_win->target)
 			ncurses_typing_time = 0; /* this should force check below */
+		else
+			ncurses_typing_time	= time(NULL);
 
 		if (window_current && window_current->target && curlen &&
 				(winchange || ncurses_typing_count != curlen)) {
@@ -144,7 +146,6 @@ TIMER(ncurses_typing) {
 			ncurses_typingsend(curlen, winchange);
 		}
 
-		ncurses_typing_time	= time(NULL);
 		ncurses_typing_mod	= 0;
 	}
 
