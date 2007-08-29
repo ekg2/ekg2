@@ -54,6 +54,9 @@ int config_kill_irc_window = 1;
 int config_statusbar_size;
 int config_lastlog_size;
 int config_lastlog_lock;
+int config_typing_interval	= 1;
+int config_typing_timeout	= 30;
+int config_typing_timeout_empty = 10;
 
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
@@ -541,7 +544,7 @@ static void ncurses_display_transparent_changed(const char *var)
         endwin();
         refresh();
         /* it will call what's needed */
-	header_statusbar_resize();
+	header_statusbar_resize(NULL);
 
 	changed_backlog_size("backlog_size");
 }
@@ -559,6 +562,12 @@ static void ncurses_sigint_handler(int s)
 		ncurses_watch_stdin(0, 0, 0, NULL);
 		signal(SIGINT, ncurses_sigint_handler); /* odswiezenie handlera */
 	}
+}
+
+static void ncurses_typing_retimer(const char *dummy) {
+	timer_remove(&ncurses_plugin, "ncurses:typing");
+	if (config_typing_interval > 0)
+		timer_add(&ncurses_plugin, "ncurses:typing", config_typing_interval, 1, ncurses_typing, NULL);
 }
 
 EXPORT int ncurses_plugin_init(int prio)
@@ -630,6 +639,10 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("kill_irc_window"),  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
         variable_add(&ncurses_plugin, ("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
+
+	variable_add(&ncurses_plugin, ("typing_interval"), VAR_INT, 1, &config_typing_interval, ncurses_typing_retimer, NULL, NULL);
+	variable_add(&ncurses_plugin, ("typing_timeout"), VAR_INT, 1, &config_typing_timeout, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("typing_timeout_empty"), VAR_INT, 1, &config_typing_timeout_empty, NULL, NULL, NULL);
 	
 	have_winch_pipe = 0;
 #ifdef SIGWINCH
@@ -648,7 +661,8 @@ EXPORT int ncurses_plugin_init(int prio)
 
 	ncurses_init();
 	
-	header_statusbar_resize("foo");
+	header_statusbar_resize(NULL);
+	ncurses_typing_retimer(NULL);
 
 	for (l = windows; l; l = l->next)
 		ncurses_window_new(l->data);

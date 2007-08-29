@@ -42,6 +42,9 @@
 #include "old.h"
 #include "contacts.h"
 
+extern int ncurses_typing_mod;
+extern window_t *ncurses_typing_win;
+
 struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
 
@@ -150,14 +153,12 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 
 		lines_index--;
 		lines_adjust();
-
-		return;
-	}
-
-	if (xwcslen(line) > 0 && line_index > 0) {
+		ncurses_typing_mod = 1;
+	} else if (xwcslen(line) > 0 && line_index > 0) {
 		memmove(line + line_index - 1, line + line_index, (LINE_MAXLEN - line_index) * sizeof(CHAR_T));
 		line[LINE_MAXLEN - 1] = 0;
 		line_index--;
+		ncurses_typing_mod = 1;
 	}
 }
 
@@ -201,13 +202,11 @@ static BINDING_FUNCTION(binding_delete_char)
 		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_adjust();
-	
-		return;
-	}
-				
-	if (line_index < xwcslen(line)) {
+		ncurses_typing_mod = 1;
+	} else if (line_index < xwcslen(line)) {
 		memmove(line + line_index, line + line_index + 1, (LINE_MAXLEN - line_index - 1) * sizeof(CHAR_T));
 		line[LINE_MAXLEN - 1] =  0;
+		ncurses_typing_mod = 1;
 	}
 }
 				
@@ -254,6 +253,9 @@ static BINDING_FUNCTION(binding_accept_line)
 	history_index = 0;
 	*line = 0;
 	line_adjust();
+
+	/* we here assume that typing notifications are already disabled by protocol handler */
+	ncurses_typing_win = NULL;
 }
 
 static BINDING_FUNCTION(binding_line_discard)
@@ -275,6 +277,7 @@ static BINDING_FUNCTION(binding_line_discard)
 
 		lines_adjust();
 	}
+
 }
 
 static BINDING_FUNCTION(binding_quoted_insert)

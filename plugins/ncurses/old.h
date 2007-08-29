@@ -85,6 +85,7 @@ struct format_data {
 extern WINDOW *ncurses_contacts;
 extern WINDOW *ncurses_input;
 
+TIMER(ncurses_typing);
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state);
 
 void ncurses_resize();
@@ -128,7 +129,7 @@ extern int ncurses_lines_index;
 extern int ncurses_input_size;
 extern int ncurses_debug;
 
-void header_statusbar_resize();
+void header_statusbar_resize(const char *dummy);
 #ifdef WITH_ASPELL
 void ncurses_spellcheck_init();
 
@@ -144,6 +145,9 @@ extern int config_header_size;
 extern int config_margin_size;
 extern int config_statusbar_size;
 extern int config_kill_irc_window;
+
+extern int config_typing_timeout;
+extern int config_typing_timeout_empty;
 
 int ncurses_lastlog_update(window_t *w);
 void ncurses_lastlog_new(window_t *w);

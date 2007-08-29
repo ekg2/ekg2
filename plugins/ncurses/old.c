@@ -91,10 +91,67 @@ static AspellConfig  *spell_config  = NULL;
 #endif
 
 /* typing */
-static int ncurses_typing_mod		= 0;	/* whether buffer was modified */
+int ncurses_typing_mod			= 0;	/* whether buffer was modified */
 static int ncurses_typing_count		= 0;	/* last count sent */
-static window_t *ncurses_typing_win	= NULL;	/* last window for which typing was sent */
+window_t *ncurses_typing_win		= NULL;	/* last window for which typing was sent */
 static time_t ncurses_typing_time	= 0;	/* time at which last typing was sent */
+
+int ncurses_lineslen() {
+	if (ncurses_lines) {
+		int n = -1;
+		CHAR_T **l;
+
+		if (ncurses_lines[0][0] == '/')
+			return 0;
+
+		for (l = ncurses_lines; *l; l++)
+			n += xwcslen(*l) + 1;
+
+		return n;
+	} else
+		return (ncurses_line[0] == '/' ? 0 : xwcslen(ncurses_line));
+}
+
+TIMER(ncurses_typing) {
+	if (ncurses_typing_mod) { /* need to update status */
+		const int curlen	= ncurses_lineslen();
+
+		if (ncurses_typing_win != window_current && ncurses_typing_win && ncurses_typing_win->target)
+			ncurses_typing_time = 0; /* this should force check below */
+
+		if (window_current && window_current->target && curlen &&
+				(ncurses_typing_win != window_current || ncurses_typing_count != curlen)) {
+
+			debug_function("ncurses_typing(), [UNIMPL] got change for %s [%s] vs %s [%s], %d vs %d!\n",
+					window_current->target, session_uid_get(window_current->session),
+					ncurses_typing_win ? ncurses_typing_win->target : NULL,
+					ncurses_typing_win ? session_uid_get(ncurses_typing_win->session) : NULL,
+					ncurses_typing_count, curlen);
+
+			ncurses_typing_win	= window_current;
+			ncurses_typing_count	= curlen;
+		}
+
+		ncurses_typing_time	= time(NULL);
+		ncurses_typing_mod	= 0;
+	}
+
+	{
+		const int isempty = (ncurses_lines
+				? (!ncurses_lines[0][0] && !ncurses_lines[1]) || ncurses_lines[0][0] == '/'
+				: !ncurses_line[0] || ncurses_line[0] == '/');
+		const int timeout = (config_typing_timeout_empty && isempty ?
+					config_typing_timeout_empty : config_typing_timeout);
+
+		if (ncurses_typing_win && ((timeout && time(NULL) - ncurses_typing_time > timeout) || !ncurses_typing_time)) {
+			debug_function("ncurses_typing(), [UNIMPL] disabling for %s\n", ncurses_typing_win->target);
+
+			ncurses_typing_win = NULL;
+		}
+	}
+
+	return 0;
+}
 
 /*
  * ncurses_spellcheck_init()
@@ -1423,13 +1480,22 @@ int ncurses_window_kill(window_t *w)
 	}
 		
 	xfree(n->prompt);
-	n->prompt = NULL;
+//	n->prompt = NULL;
 	delwin(n->window);
-	n->window = NULL;
+//	n->window = NULL;
 	xfree(n);
 	w->private = NULL;
 
 //	ncurses_resize();
+
+	if (w == ncurses_typing_win) { /* don't allow timer to touch removed window */
+		const int tmp = ncurses_typing_mod;
+
+		ncurses_typing_time	= 0;
+		ncurses_typing_mod	= 0; /* prevent ncurses_typing_time modification & main loop behavior */
+		ncurses_typing(0, NULL);
+		ncurses_typing_mod = tmp;
+	}
 
 	return 0;
 }
@@ -1863,7 +1929,7 @@ WATCHER(ncurses_watch_winch)
 	refresh();
 	keypad(input, TRUE);
 	/* wywo³a wszystko, co potrzebne */
-	header_statusbar_resize();
+	header_statusbar_resize(NULL);
 	changed_backlog_size(("backlog_size"));
 	return 0;
 }
@@ -2247,7 +2313,7 @@ loop:
  *
  * zmienia rozmiar paska stanu i/lub nag³ówka okna.
  */
-void header_statusbar_resize()
+void header_statusbar_resize(const char *dummy)
 {
 /*	if (in_autoexec) return; */
 	if (!ncurses_status)
