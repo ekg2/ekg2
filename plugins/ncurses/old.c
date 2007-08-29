@@ -126,7 +126,7 @@ TIMER(ncurses_typing) {
 					window_current->target, session_uid_get(window_current->session),
 					ncurses_typing_win ? ncurses_typing_win->target : NULL,
 					ncurses_typing_win ? session_uid_get(ncurses_typing_win->session) : NULL,
-					ncurses_typing_count, curlen);
+					curlen, ncurses_typing_count);
 
 			ncurses_typing_win	= window_current;
 			ncurses_typing_count	= curlen;
@@ -144,7 +144,8 @@ TIMER(ncurses_typing) {
 					config_typing_timeout_empty : config_typing_timeout);
 
 		if (ncurses_typing_win && ((timeout && time(NULL) - ncurses_typing_time > timeout) || !ncurses_typing_time)) {
-			debug_function("ncurses_typing(), [UNIMPL] disabling for %s\n", ncurses_typing_win->target);
+			debug_function("ncurses_typing(), [UNIMPL] disabling for %s [%s]\n",
+					ncurses_typing_win->target, session_uid_get(ncurses_typing_win->session));
 
 			ncurses_typing_win = NULL;
 		}
