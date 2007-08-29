@@ -1485,6 +1485,28 @@ static QUERY(jabber_userlist_priv_handler) {
 	return 0;
 }
 
+static QUERY(jabber_typing_out) {
+	const char *session	= *va_arg(ap, const char **);
+	const char *uid		= *va_arg(ap, const char **);
+	const int len		= *va_arg(ap, const int *);
+	const int first		= *va_arg(ap, const int *);
+
+	const char *jid		= uid + (*uid == 'j' ? 4 : 5);
+	session_t *s		= session_find(session);
+	jabber_private_t *j;
+
+	if (!first || !s || s->plugin != &jabber_plugin)
+		return 0;
+
+	j = jabber_private(s);
+	
+	watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\" id=\"%d\">\n"
+			"<x xmlns=\"jabber:x:event\"><composing/></x>\n"
+			"</message>\n", jid, time(NULL) /* ? */);
+
+	return -1;
+}
+
 	/* KEEP IT SORTED, MEN! */
 static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
@@ -1563,6 +1585,7 @@ EXPORT int jabber_plugin_init(int prio) {
 	query_connect_id(&jabber_plugin, CONFIG_POSTINIT,	jabber_convert_string_reinit, NULL);
 	query_connect_id(&jabber_plugin, USERLIST_INFO,		jabber_userlist_info, NULL);
 	query_connect_id(&jabber_plugin, USERLIST_PRIVHANDLE,	jabber_userlist_priv_handler, NULL);
+	query_connect_id(&jabber_plugin, PROTOCOL_TYPING_OUT,	jabber_typing_out, NULL);
 
 	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);
