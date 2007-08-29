@@ -262,6 +262,19 @@ static QUERY(ncurses_ui_window_refresh)
 	return 0;
 }
 
+static QUERY(ncurses_ui_refresh)
+{
+/* XXX, code from ncurses_ui_window_refresh() */
+	ncurses_refresh();
+	ncurses_commit();
+/* XXX, code from ekg1 /window refresh */
+/*	window_floating_update(0); */		/* done by ncurses_refresh() */
+	wrefresh(curscr);
+
+/* XXX, research */
+	return 0;
+}
+
 static QUERY(ncurses_ui_window_clear)
 {
 	window_t **w = va_arg(ap, window_t **);
@@ -574,6 +587,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
+	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);
