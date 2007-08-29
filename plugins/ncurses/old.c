@@ -90,6 +90,12 @@ static AspellSpeller *spell_checker = NULL;
 static AspellConfig  *spell_config  = NULL;
 #endif
 
+/* typing */
+static int ncurses_typing_mod		= 0;	/* whether buffer was modified */
+static int ncurses_typing_count		= 0;	/* last count sent */
+static window_t *ncurses_typing_win	= NULL;	/* last window for which typing was sent */
+static time_t ncurses_typing_time	= 0;	/* time at which last typing was sent */
+
 /*
  * ncurses_spellcheck_init()
  * 
@@ -2212,6 +2218,8 @@ end:
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, sizeof(CHAR_T) * (LINE_MAXLEN - line_index - 1));
 					/* put in ncurses_line[lindex_index] current char */
 			ncurses_line[line_index++] = ch;
+
+			ncurses_typing_mod = 1;
 		}
 	}
 then:
