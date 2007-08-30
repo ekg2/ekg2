@@ -952,6 +952,11 @@ JABBER_HANDLER(jabber_handle_message) {
 					xfree(__rcpt);
 					/* xfree(__seq); */
 				}
+
+				if (!(acktype & 4) && (xitem = xmlnode_find_child(n, "composing"))
+						&& !xstrcmp(jabber_attr(xitem->atts, "xmlns"),
+							"http://jabber.org/protocol/chatstates"))
+					acktype |= 4;
 				
 				{
 					char *__session = xstrdup(session_uid_get(s));
@@ -1385,6 +1390,7 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco_info) {
 			"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
 			"<feature var=\"http://jabber.org/protocol/si\"/>"
 			"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
+			"<feature var=\"http://jabber.org/protocol/chatstates\"/>"
 			"</query></iq>", from, id);
 
 

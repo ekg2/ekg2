@@ -1505,9 +1505,14 @@ static QUERY(jabber_typing_out) {
 
 	j = jabber_private(s);
 
-	watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">\n"
-			"<x xmlns=\"jabber:x:event\"%s>\n"
-			"</message>\n", jid, (len ? "><composing/></x" : "/"));
+	watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">"
+			"<x xmlns=\"jabber:x:event\"%s>"
+			"<%s xmlns=\"http://jabber.org/protocol/chatstates\"/>"
+			"</message>\n", jid, (len ? "><composing/></x" : "/"),
+			(len ? "composing" :
+			 first == 3 ? "gone" :
+			 first == 2 ? "inactive" :
+			 "paused"));
 
 	return -1;
 }

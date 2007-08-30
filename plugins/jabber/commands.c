@@ -570,9 +570,10 @@ static COMMAND(jabber_command_msg)
 
 nomsg:
 	if (!j->istlen) 
-		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>", 
-			( config_display_ack & 1 ? "<delivered/>" : ""),
-			( config_display_ack & 2 ? "<offline/>"   : "") );
+		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>"
+				"<active xmlns=\"http://jabber.org/protocol/chatstates\"/>", 
+			( config_display_ack & 1 ? "<delivered/>" : ""), /* ? */
+			( config_display_ack & 2 ? "<offline/>"   : "") /* ? */);
 
 	watch_write(j->send_watch, "</message>");
 	JABBER_COMMIT_DATA(j->send_watch);
