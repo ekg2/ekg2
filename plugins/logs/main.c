@@ -50,6 +50,7 @@
 #include <ekg/queries.h>
 
 #include <sys/stat.h>
+#include <sys/types.h>
 #ifndef NO_POSIX_SYSTEM
 #include <sys/mman.h>
 #include <arpa/inet.h>
@@ -57,6 +58,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
