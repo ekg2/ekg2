@@ -953,10 +953,14 @@ JABBER_HANDLER(jabber_handle_message) {
 					/* xfree(__seq); */
 				}
 
-				if (!(acktype & 4) && (xitem = xmlnode_find_child(n, "composing"))
-						&& !xstrcmp(jabber_attr(xitem->atts, "xmlns"),
-							"http://jabber.org/protocol/chatstates"))
-					acktype |= 4;
+				{
+					xmlnode_t *tmp;
+
+					if (!(acktype & 4) && (tmp = xmlnode_find_child(n, "composing"))
+							&& !xstrcmp(jabber_attr(tmp->atts, "xmlns"),
+								"http://jabber.org/protocol/chatstates"))
+						acktype |= 4;
+				}
 				
 				{
 					char *__session = xstrdup(session_uid_get(s));
