@@ -749,7 +749,7 @@ int audio_initialize() {
 	format_add("audio_device", 	_("%> Audio device: %1"), 1);
 	format_add("audio_codec",	_("%> Audio codec: %1"), 1);
 
-	format_add("audio_not_found",	_("%! Audio not found: %1"), 1);
+	format_add("audio_not_found",	_("%! Audio device not found: %1"), 1);
 	format_add("codec_not_found",	_("%! Codec not found: %1"), 1);
 
 	format_add("stream_info",	_("%> Stream name: %1"), 1);

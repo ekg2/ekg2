@@ -1230,7 +1230,7 @@ static int jabber_theme_init() {
 	format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
 	format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
-	format_add("register_change_passwd", _("%> Your password for account %T%1%n is '%T%2%n'. Change it as soon as possible, using command /jid:passwd <newpassword>"), 1);
+	format_add("register_change_passwd", _("%> Your password for account %T%1%n is '%T%2%n'. Change it as soon as possible, using command /xmpp:passwd <newpassword>"), 1);
 
 	/* %1 - session_name, %2 - server/ uid */
 	format_add("jabber_privacy_list_begin",   _("%g,+=%G----- Privacy list on %T%2%n"), 1);
