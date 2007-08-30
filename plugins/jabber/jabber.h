@@ -130,10 +130,8 @@ typedef struct {
 	int port;			/**< server's port number */
 	int connecting;			/**< whether we're connecting, 2 if connecting over SASL */
 	char *resource;			/**< resource used when connecting to daemon */
-#ifdef GMAIL_MAIL_NOTIFY
 	char *last_gmail_result_time; 	/**< last time we're checking mail (this seems not to work correctly ;/) */
 	char *last_gmail_tid;		/**< lastseen mail thread-id */
-#endif
 	list_t privacy;			/**< for jabber:iq:privacy */
 	list_t bookmarks;		/**< for jabber:iq:private <storage xmlns='storage:bookmarks'> */
 
