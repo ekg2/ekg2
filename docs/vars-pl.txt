@@ -5,14 +5,14 @@
 auto_save
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	po jakim czasie automatycznie zapisaæ ustawienia, w sekundach.
 	je¶li 0, nie zapisuje automatycznie.
 
 auto_user_add
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy osoby których nie mamy w kontaktach a dostajemy 
 	informacjê o ich stanie maj± byæ dodawane automatycznie do listy
 	kontaktów
@@ -23,21 +23,21 @@ auto_user_add
 away_reason
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	domy¶lny opis stanu zajêtego, ustawiany przy zmianie bez podania 
 	parametru.
 
 back_reason
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	domy¶lny opis stanu dostêpnego, ustawiany przy zmianie bez podania 
 	parametru.
 
 beep
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la, czy klient ma beepaæ w ró¿nych sytuacjach. wy³±czenie tej
 	opcji spowoduje, ¿e w przypadku ¿adnych zdarzeñ zwi±zanych z GG nie
 	bêdzie podnosiæ alarmu. niestety nie obejmuje to zdarzeñ zwi±zanych
@@ -46,28 +46,28 @@ beep
 beep_msg
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	czy beepaæ przy nadchodz±cych wiadomo¶ciach. wy³±czenie ,,beep''
 	wy³±cza równie¿ tê opcjê.
 
 beep_chat
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	czy beepaæ przy rozmowach. wy³±czenie ,,beep'' wy³±cza równie¿ tê
 	opcjê.
 
 beep_notify
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	czy beepaæ przy zmianie stanu którego¶ ze znajomych. wy³±czenie
 	,,beep'' wy³±cza równie¿ tê opcjê.
 
 completion_notify
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la, czy po pojawieniu siê którego¶ ze znajomych jego nick
 	ma byæ dopisywany do listy dope³niania klawiszem Tab. je¶li jest
 	równa 2, jest równie¿ usuwany po przej¶ciu w stan niedostêpny.
@@ -78,13 +78,13 @@ completion_notify
 dcc_dir
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	okre¶la katalog, do którego bêd± zapisywane pobierane pliki.
 
 default_status_window
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy wyniki poleceñ maj± trafiaæ domy¶lnie do okna statusu. 
 	je¿eli 0 to wyniki poleceñ trafiaj± do aktualnego okienka, je¿eli 1
 	to wszystkie komunikaty trafiaj± do okna statusu 
@@ -92,7 +92,7 @@ default_status_window
 display_ack
 	typ: liczba
 	domy¶lna warto¶æ: 3
-
+	
 	okre¶la, czy i które powiadomienia o wys³aniu wiadomo¶ci maj±
 	byæ wy¶wietlane. 0 - ¿adne, 1 - wszystkie, 2 - tylko kiedy wiadomo¶æ
 	dotar³a do adresata, 3 - tylko kiedy adresat jest niedostêpny i
@@ -101,14 +101,14 @@ display_ack
 display_blinking
         typ: bool
         domy¶lna warto¶æ: 1
-
+	
 	okre¶la czy powinny zostawaæ pod¶wietlane osoby, które do nas
 	aktualnie pisz± 
 
 display_color
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	warto¶æ 0 wy³±cza wy¶wietlanie kolorów, warto¶æ 1 w³±cza. warto¶æ
 	2 ma znaczenie tylko w interfejsie ncurses i powoduje wy¶wietlanie
 	kolorów wszêdzie poza paskiem stanu i nag³ówkiem okna.
@@ -116,7 +116,7 @@ display_color
 display_color_map
 	typ: tekst
 	domy¶lna warto¶æ: "nTgGbBrR"
-
+	
 	okre¶la jakie kolory bêd± przypisane ró¿nym atrybutom tekstu.
 	musi zawieraæ 8 znaków zgodnych ze spisem z pliku docs/themes.txt.
 	ka¿dy z nich okre¶la kolejno kolor dla:
@@ -140,7 +140,7 @@ display_crap
 display_notify
 	typ: liczba
 	domy¶lna warto¶æ: 1
-
+	
 	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
 	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
 	tylko zmiany z niedostêpnego na dostêpny i na odwrót. wiêkszy 
@@ -151,7 +151,7 @@ display_notify
 display_pl_chars
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	je¶li w³±czone, wy¶wietlane s± polskie literki na terminalu.
 	w przeciwnym wypadku, zamieniane s± na odpowiadaj±ce im literki
 	ASCII.
@@ -159,7 +159,7 @@ display_pl_chars
 display_sent
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	je¶li w³±czone, wy¶wietlane s± równie¿ wysy³ane wiadomo¶ci. nale¿y
 	zwróciæ uwagê, ¿e przy make_window = 2, wys³anie wiadomo¶ci utworzy
 	automatycznie okienko rozmowy, a przy make_window = 1 tylko wtedy,
@@ -168,20 +168,20 @@ display_sent
 display_welcome
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	mówi, czy ekg ma wy¶wietliæ tekst powitalny po uruchomieniu.
 
 emoticons
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	uruchamia rozwijanie emotikonów w zdefiniowane teksty. wiêcej
 	szczegó³ów w pliku docs/files.txt w sekcji 5-tej.
 
 events_delay
 	typ: liczba
 	domy¶lna warto¶æ: 3
-
+	
 	okre¶la, po ilu sekundach od po³±czenia z serwerem zaczn± dzia³aæ
 	zdarzenia ,,on'', d¼wiêki zwi±zane ze zmianami stanu i bêd± wy¶wietlane
 	informacje o niedostêpno¶ci osób. chodzi o to, aby nie traktowaæ
@@ -191,7 +191,7 @@ events_delay
 keep_reason
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	je¶li w³±czona, komendy ,,away'', ,,back'', ,,invisible'', ,,quit''
 	i ,,disconnect'' bez podanego powodu przejm± aktualny opis. zostanie
 	on wraz ze stanem zapisany bez wyra¼nego wydawania komendy zapisu 
@@ -200,7 +200,7 @@ keep_reason
 last
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	wskazuje, czy zapisywaæ ostatnie wiadomo¶ci do podrêcznego bufora
 	(,,last_size'' musi byæ wiêksze od 0). dla 1, bêdzie zapisywaæ tylko
 	last_size wszystkich wiadomo¶ci przychodz±cych, dla 2, last_size
@@ -211,13 +211,13 @@ last
 last_size
 	typ: liczba
 	domy¶lna warto¶æ: 0
-
+	
 	wskazuje, ile ma byæ zapisywanych wiadomo¶ci dla komendy ,,last''.
 
 make_window
 	typ: liczba
 	domy¶lna warto¶æ: 2
-
+	
 	okre¶la czy bêd± tworzone nowe okienka dla nowych rozmów. dla 1 bêdzie
 	wykorzystane pierwsze wolne okno (na którym z nikim jeszcze siê nie
 	rozmawia), lub tworzone nowe w przypadku braku wolnych. dla 2
@@ -227,7 +227,7 @@ make_window
 mesg
 	typ: liczba
 	domy¶lna warto¶æ: 2
-
+	
 	ustala, czy zezwalamy na wysy³anie do nas komunikatów za pomoc± write,
 	talk lub wall. dla 0 nie wyra¿amy na to zgody, dla 1 zezwalamy na
 	pisanie na nasz terminal. w przypadku warto¶ci 2 u¿ywane s± ustawienia
@@ -236,20 +236,20 @@ mesg
 query_commands
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	mo¿liwo¶æ wydawania d³ugich poleceñ podczas rozmowy z u¿ytkownikiem
 	bez poprzedzania ich znakiem '/'.
 
 quit_reason
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	domy¶lny opis stanu niedostêpnego, ustawiany przy wychodzeniu.
 
 reason_limit
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la czy opisy stanu musz± mie¶ciæ siê w okre¶lonym przez
 	protokó³ limicie. je¶li opcja jest aktywna i d³ugo¶æ opisu
 	przekracza t± d³ugo¶æ, komendy /away, /back i /invisible nie
@@ -258,7 +258,7 @@ reason_limit
 save_password
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la czy has³o ma byæ zapisywane w pliku konfiguracyjnym. opcja
 	ta mo¿e przydaæ siê, gdy boimy siê administratora przegl±daj±cego
 	pliki u¿ytkowników.
@@ -275,7 +275,7 @@ save_quit
 slash_messages
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la, czy wiadomo¶ci zaczynaj±ce siê od ,,/'' maj± byæ traktowane 
 	w pewnych warunkach jak wiadomo¶ci. wy³±czenie tej opcji sprawia, ¿e 
 	wszystko, co zostanie wpisane w oknie rozmowy a zaczyna siê od ,,/'' 
@@ -284,7 +284,7 @@ slash_messages
 sessions_save
         typ: bool
         domy¶lna warto¶æ: 0
-
+	
 	okre¶la, czy aktualna sesja ma byæ ustawiona jako domy¶lna - przy 
 	nastêpnym uruchomieniu bêdzie ona ustawiona jako aktywna. przy 
 	wychodzeniu z programu pojawi siê monit o zapisanie zmian.
@@ -292,7 +292,7 @@ sessions_save
 sort_windows
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	w³±czenie tej opcji spowoduje przesuwanie okien przy usuniêciu
 	którego¶ ze ¶rodka i likwidowanie luk w numeracji. na przyk³ad,
 	gdy mamy okna 1,2,3, to po usuniêciu drugiego otrzymamy 1,2
@@ -301,7 +301,7 @@ sort_windows
 sound_app
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	pe³na ¶cie¿ka do programu odtwarzaj±cego pliki zdefiniowane w
 	zmiennych ,,sound_{msg,chat,sysmsg}_file''. program musi braæ
 	za pierwszy (i jedyny) parametr nazwê pliku. wavplay i mpg123
@@ -310,37 +310,37 @@ sound_app
 sound_msg_file
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	plik d¼wiêkowy odtwarzany po otrzymaniu wiadomo¶ci.
 
 sound_chat_file
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	plik d¼wiêkowy odtwarzany w czasie rozmowy.
 
 sound_notify_file
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	plik d¼wiêkowy odtwarzany po zmianie stanu którego¶ ze znajomych.
 
 sound_sysmsg_file
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	plik d¼wiêkowy odtwarzany po otrzymaniu wiadomo¶ci systemowej.
 
 sound_mail_file
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	plik d¼wiêkowy odtwarzany po otrzymaniu nowej wiadomo¶ci e-mail.
 
 speech_app
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	aplikacja u¿ywana do odczytywania tekstów wy¶wietlanych na ekranie.
 	jej ustawienie powoduje równie¿ zmianê motywu na taki, który jest
 	³atwiejszy do wymówienia.
@@ -348,7 +348,7 @@ speech_app
 tab_command
 	typ: tekst
 	domy¶lna warto¶æ: "chat"
-
+	
 	komenda, która bêdzie wstawiana w linii poleceñ z kolejn±
 	dostêpn± (patrz zmienna ,,completion_notify'') osob± z listy
 	kontaktów po wci¶niêciu klawisza Tab.
@@ -356,13 +356,13 @@ tab_command
 theme
 	typ: tekst
 	domy¶lna warto¶æ: brak
-
+	
 	zawiera nazwê pliku okre¶laj±cego motyw.
 
 time_deviation
 	typ: liczba
 	domy¶lna warto¶æ: 300
-
+	
 	okre¶la zakres rozbie¿no¶ci czasu odbieranych wzglêdem czasu
 	systemowego w sekundach, który jest traktowany jako chwila
 	aktualna. ma to wp³yw na wy¶wietlanie timestampów przy odbieranych
@@ -372,7 +372,7 @@ time_deviation
 timestamp
 	typ: tekst
 	domy¶lna warto¶æ: "\%H:\%M:\%S"
-
+	
 	w interfejsie ncurses okre¶la format czasu wy¶wietlanego na
 	pocz±tku ka¿dej linii. dok³adny opis formatu zawiera strona
 	manuala strftime(3). znaki formatu nale¿y poprzedziæ znakiem
@@ -381,20 +381,20 @@ timestamp
 timestamp_show
 	typ: bool
 	domy¶lna warto¶æ: 1
-
+	
 	okre¶la czy mamy wy¶wietlaæ timestamp, okre¶lany zmienn± timestamp
 
 windows_save
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
 	uruchomieniu programu. przy wychodzeniu z programu pojawi siê 
 	monit o zapisanie zmian.
 
 windows_layout
 	typ: tekst, zmienna wewnêtrzna, ukryta
-
+	
 	zawiera informacje o okienkach. wpis ka¿dego okna jest rozdzielony
 	znakiem ,,|''. je¶li okno nie ma przypisanej rozmowy, wpis jest
 	pusty. je¶li okno nie istnieje, wpis zawiera ,,-''.

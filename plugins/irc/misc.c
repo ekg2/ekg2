@@ -350,6 +350,7 @@ IRC_COMMAND(irc_c_init)
 			s->last_conn = time(NULL);
 			session_unidle(s);
 			t = xstrchr(param[3], '!');
+			xfree(j->host_ident);
 			if (t)  j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
 			debug("\nspoko miejscówka ziom!...[%s:%s]\n", j->nick, j->host_ident);

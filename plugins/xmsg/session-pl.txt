@@ -4,6 +4,14 @@ auto_connect
 	
 	Okre¶la, czy sesja bêdzie ³±czona automagicznie przy starcie programu.
 
+dotfile_suffix
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	Okre¶la sufiks dodawany do ukrytych plików tworzonych po odebraniu
+	wiadomo¶ci. Opcja ta pozwala obs³ugiwaæ jeden katalog wiadomo¶ci przez
+	kilka niezale¿nych od siebie klientów.
+
 max_filesize
 	typ: liczba
 	domy¶lna warto¶æ: 16384
