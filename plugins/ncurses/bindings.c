@@ -124,6 +124,12 @@ static BINDING_FUNCTION(binding_toggle_input)
 		ncurses_input_update();
 
 		command_exec(window_current->target, window_current->session, tmp, 0);
+
+		if (!tmp[0] || tmp[0] == '/' || !window_current->target)
+			ncurses_typing_mod = 1;
+		else
+			ncurses_typing_win = NULL;
+
 		xfree(tmp);
 	}
 }
@@ -133,6 +139,7 @@ static BINDING_FUNCTION(binding_cancel_input)
 	if (input_size == 5) {
 		input_size = 1;
 		ncurses_input_update();
+		ncurses_typing_mod = 1;
 	}
 }
 
@@ -237,6 +244,10 @@ static BINDING_FUNCTION(binding_accept_line)
 
 	if (ncurses_plugin_destroyed)
 		return;
+	if (!line[0] || line[0] == '/' || !window_current->target) /* if empty or command, just mark as modified */
+		ncurses_typing_mod = 1;
+	else /* if message, assume that its' handler has already disabled typing */
+		ncurses_typing_win = NULL;
 
 	if (xwcscmp(line, TEXT(""))) {
 		if (history[0] != line)
@@ -253,9 +264,6 @@ static BINDING_FUNCTION(binding_accept_line)
 	history_index = 0;
 	*line = 0;
 	line_adjust();
-
-	/* we here assume that typing notifications are already disabled by protocol handler */
-	ncurses_typing_win = NULL;
 }
 
 static BINDING_FUNCTION(binding_line_discard)
