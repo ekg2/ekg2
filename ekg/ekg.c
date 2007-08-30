@@ -703,6 +703,7 @@ int main(int argc, char **argv)
 
         ekg2_dlinit();
         setlocale(LC_ALL, "");
+	tzset();
 #ifdef ENABLE_NLS
         bindtextdomain("ekg2",LOCALEDIR);
 	textdomain("ekg2");
