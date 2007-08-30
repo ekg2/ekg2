@@ -36,8 +36,10 @@
 
 #include <ekg2-config.h>
 
+#include <X11/Xlib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#include <gdk/gdkx.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +57,10 @@
 #include "palette.h"
 #include "xtext.h"
 #include "bindings.h"
+
+	/* maingui.c */
+gboolean mg_populate_userlist(window_t *sess);
+void mg_populate(window_t *sess);
 
 /* extern */
 void fe_set_channel(session_t *sess);

@@ -18,6 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define _XOPEN_SOURCE 600
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
