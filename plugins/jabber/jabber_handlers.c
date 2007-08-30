@@ -2943,7 +2943,10 @@ static time_t jabber_try_xdelay(const char *stamp) {
 
 		setenv("TZ", "UTC", 1);
 		out = mktime(&tm);
-		setenv("TZ", tmp, 1);
+		if (tmp)
+			setenv("TZ", tmp, 1);
+		else
+			unsetenv("TZ");
 		xfree(tmp);
 
 		return out;
