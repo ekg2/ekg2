@@ -28,7 +28,6 @@
 #define tlenjabber_unescape(str) (j->istlen ? tlen_decode(str) : jabber_unescape(str))
 
 #define WITH_JABBER_JINGLE 0
-#define GMAIL_MAIL_NOTIFY 1
 
 struct xmlnode_s {
 	char *name;

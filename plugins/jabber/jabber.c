@@ -667,6 +667,8 @@ static WATCHER_SESSION(jabber_handle_stream) {
 }
 
 static TIMER_SESSION(jabber_ping_timer_handler) {
+	jabber_private_t *j;
+
 	if (type == 1)
 		return 0;
 
@@ -674,14 +676,17 @@ static TIMER_SESSION(jabber_ping_timer_handler) {
 		return -1;
 	}
 
-	if (jabber_private(s)->istlen) {
-		jabber_write(s, "  \t  ");	/* ping according to libtlen */
+	j = jabber_private(s);
+	if (j->istlen) {
+		watch_write(j->send_watch, "  \t  ");	/* ping according to libtlen */
 		return 0;
 	}
 	
 	if (session_int_get(s, "ping_server") == 0) return -1;
 
-	jabber_write(s, "<iq/>"); /* leafnode idea */
+		/* XEP-0199 */
+	watch_write(j->send_watch, "<iq to=\"%s\" id=\"ping%d\" type=\"get\"><ping xmlns=\"urn:xmpp:ping\"/></iq>\n",
+			j->server, j->id++);
 	return 0;
 }
 

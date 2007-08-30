@@ -2272,9 +2272,6 @@ JABBER_HANDLER(jabber_handle_iq) {
 		return;			/* we don't need to go down */
 	}
 
-/* thx to Michal Gorny for following code. 
- * handle google mail notify. */
-#if GMAIL_MAIL_NOTIFY
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify"))
 		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
 	if (type == JABBER_IQ_TYPE_SET && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
@@ -2285,10 +2282,10 @@ JABBER_HANDLER(jabber_handle_iq) {
 		else
 			watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
 	}
+
 	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
 		jabber_handle_gmail_result_mailbox(s, q, from, id);
 	}
-#endif
 
 	if (!xstrcmp(id, "auth")) {
 		if (type == JABBER_IQ_TYPE_RESULT) {
@@ -2629,6 +2626,11 @@ JABBER_HANDLER(jabber_handle_iq) {
 			}
 
 		} /* if query */
+
+			/* XEP-0199 */
+		if ((q = xmlnode_find_child(n, "ping")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "urn:xmpp:ping"))
+			watch_write(j->send_watch, "<iq to=\"%s\" id=\"%s\" type=\"result\"/>\n",
+					from, id);
 	} /* type == get */
 } /* iq */
 
@@ -2897,7 +2899,6 @@ static void jabber_session_connected(session_t *s) {
 		command_exec_format(NULL, s, 1, ("/xmpp:privacy --get %s"), 	list);	/* synchronize list */
 		command_exec_format(NULL, s, 1, ("/xmpp:privacy --session %s"), 	list); 	/* set as active */
 	}
-#if GMAIL_MAIL_NOTIFY
 	/* talk.google.com should work also for Google Apps for your domain */
 	if (!xstrcmp(session_get(s, "server"), "talk.google.com")) {
 		watch_write(j->send_watch,
@@ -2908,7 +2909,6 @@ static void jabber_session_connected(session_t *s) {
 			"<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>",
 			j->id++);
 	}
-#endif
 	xfree(__session);
 }
 
