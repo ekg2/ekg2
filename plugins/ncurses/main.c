@@ -61,6 +61,8 @@ int config_typing_timeout_empty = 5;
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
+QUERY(ncurses_password_input); /* old.c */
+
 /**
  * ncurses_beep()
  *
@@ -597,6 +599,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
 	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
+	query_connect_id(&ncurses_plugin, UI_PASSWORD_INPUT, ncurses_password_input, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);

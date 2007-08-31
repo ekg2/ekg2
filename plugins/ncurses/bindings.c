@@ -56,6 +56,9 @@ int bindings_added_max = 0;
 #define line ncurses_line
 #define lines ncurses_lines
 
+int ncurses_noecho;
+CHAR_T *ncurses_passbuf;
+
 static BINDING_FUNCTION(binding_backward_word)
 {
 	while (line_index > 0 && line[line_index - 1] == ' ')
@@ -220,6 +223,15 @@ static BINDING_FUNCTION(binding_delete_char)
 static BINDING_FUNCTION(binding_accept_line)
 {
 	char *txt;
+
+	if (ncurses_noecho) { /* we are running ui-password-input */
+		ncurses_noecho = 0;
+		ncurses_passbuf = xwcsdup(line);
+		line[0] = 0;
+		line_adjust();
+		return;
+	}
+
 	if (lines) {
 		int i;
 
@@ -268,8 +280,10 @@ static BINDING_FUNCTION(binding_accept_line)
 
 static BINDING_FUNCTION(binding_line_discard)
 {
-	xfree(yanked);
-	yanked = xwcsdup(line);
+	if (ncurses_noecho) { /* we don't want to yank passwords */
+		xfree(yanked);
+		yanked = xwcsdup(line);
+	}
 	*line = 0;
 	line_adjust();
 

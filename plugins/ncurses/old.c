@@ -77,6 +77,7 @@ int ncurses_lines_index = 0;		/* w której linii jeste¶my? */
 int ncurses_input_size = 1;		/* rozmiar okna wpisywania tekstu */
 int ncurses_debug = 0;			/* debugowanie */
 
+int ncurses_noecho = 0;
 static int ncurses_screen_height;
 static int ncurses_screen_width;
 
@@ -96,6 +97,64 @@ static int ncurses_typing_count		= 0;	/* last count sent */
 window_t *ncurses_typing_win		= NULL;	/* last window for which typing was sent */
 static time_t ncurses_typing_time	= 0;	/* time at which last typing was sent */
 
+CHAR_T *ncurses_passbuf;
+
+QUERY(ncurses_password_input) {
+	char **buf		= va_arg(ap, char**);
+	char *oldprompt;
+	CHAR_T *oldline, *passa, *passb = NULL;
+	CHAR_T **oldlines;
+	int oldpromptlen;
+	
+	*buf				= NULL;
+	ncurses_noecho			= 1;
+	oldprompt			= ncurses_current->prompt;
+	oldpromptlen			= ncurses_current->prompt_len;
+	oldline				= ncurses_line;
+	oldlines			= ncurses_lines;
+	ncurses_current->prompt		= (char*) format_find("password_input");
+	ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
+	ncurses_lines			= NULL;
+	ncurses_line			= xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+	ncurses_line_adjust();
+	mvwaddstr(input, 0, 0, ncurses_current->prompt);
+	
+	while (ncurses_noecho)
+		ncurses_watch_stdin(0, 0, WATCH_READ, NULL);
+	passa = ncurses_passbuf;
+	
+	if (xwcslen(passa)) {
+		ncurses_current->prompt		= (char*) format_find("password_repeat");
+		ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
+		ncurses_noecho			= 1;
+		mvwaddstr(input, 0, 0, ncurses_current->prompt);
+		
+		while (ncurses_noecho)
+			ncurses_watch_stdin(0, 0, WATCH_READ, NULL);
+		passb = ncurses_passbuf;
+		
+		if (wcscmp(passa, passb))
+			print("password_nomatch");
+		else
+#if USE_UNICODE
+			*buf = wcs_to_normal(passa);
+#else
+			*buf = xstrdup(passa);
+#endif
+	} else
+		print("password_empty");
+	
+	xfree(ncurses_line);
+	ncurses_passbuf			= NULL;
+	ncurses_line			= oldline;
+	ncurses_lines			= oldlines;
+	ncurses_current->prompt		= oldprompt;
+	ncurses_current->prompt_len	= oldpromptlen;
+	xfree(passa);
+	xfree(passb);
+	
+	return -1;
+}
 int ncurses_lineslen() {
 	if (ncurses_lines) {
 		int n = -1;
@@ -2109,6 +2168,9 @@ void ncurses_redraw_input(unsigned int ch) {
 
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
+
+		if (ncurses_noecho)
+			return;
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
 			aspell_line = xmalloc(linelen + 1);

@@ -1115,6 +1115,12 @@ void theme_init()
 	format_add("statusbar_act_important_typing", "%C", 1);
 	format_add("statusbar_timestamp", "%H:%M", 1);
 
+	/* ui-password-input */
+	format_add("password_input", _("Please input your password: "), 1);
+	format_add("password_repeat", _("Please repeat your password: "), 1);
+	format_add("password_empty", _("%! No password entered"), 1);
+	format_add("password_nomatch", _("%! Entered passwords do not match"), 1);
+
 	/* dla funkcji format_user() */
 	format_add("known_user", "%T%1%n/%2", 1);
 	format_add("known_user,speech", "%1", 1);

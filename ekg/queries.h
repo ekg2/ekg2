@@ -62,6 +62,7 @@ enum queries_id {
 	SESSION_EVENT,
 	UI_REFRESH,
 	PROTOCOL_TYPING_OUT,
+	UI_PASSWORD_INPUT,
 
 	QUERY_EXTERNAL,
 };
@@ -430,6 +431,10 @@ const struct query query_list[] = {
 		QUERY_ARG_INT,			/* typed-in data length */
 		QUERY_ARG_INT,			/* whether this is first typing notification in order
 						   or only length change */
+		QUERY_ARG_END } },
+
+	{ UI_PASSWORD_INPUT, "ui-password-input", {
+		QUERY_ARG_CHARP,		/* password pointer storage */
 		QUERY_ARG_END } },
 };
 
