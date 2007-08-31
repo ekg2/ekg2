@@ -55,8 +55,8 @@ int config_statusbar_size;
 int config_lastlog_size;
 int config_lastlog_lock;
 int config_typing_interval	= 1;
-int config_typing_timeout	= 30;
-int config_typing_timeout_empty = 10;
+int config_typing_timeout	= 10;
+int config_typing_timeout_empty = 5;
 
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
