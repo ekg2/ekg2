@@ -42,7 +42,6 @@
 #include <ekg/themes.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
-#include <ekg/queries.h>
 
 #include "python.h"
 #include "python-user.h"
@@ -143,7 +142,6 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                 } else {
                         Py_RETURN_NONE;
                 }
-#if 0 /* using PRIVHANDLER below */
         } else if (!xstrcmp(attr, "first_name")) {
                 if (u->first_name) {
                         return PyString_FromString(u->first_name);
@@ -162,32 +160,28 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                 } else {
                         Py_RETURN_NONE;
                 }
-#endif
         } else if (!xstrcmp(attr, "status")) {
                 if (u->status) {
                         if (u->descr) {
-                                return Py_BuildValue("(ss)", ekg_status_string(u->status, 0), u->descr);
+                                return Py_BuildValue("(ss)", u->status, u->descr);
                         } else {
-                                return Py_BuildValue("(so)", ekg_status_string(u->status, 0), Py_None);
+                                return Py_BuildValue("(so)", u->status, Py_None);
                         }
                 } else {
                         Py_RETURN_NONE;
                 }
-#if 0 /* XXX */
         } else if (!xstrcmp(attr, "resource")) {
                 if (u->resource) {
                         return PyString_FromString(u->resource);
                 } else {
                         Py_RETURN_NONE;
                 }
-#endif
         } else if (!xstrcmp(attr, "last_seen")) {
                 if (u->last_seen) {
                         return Py_BuildValue("i", u->last_seen);
                 } else {
                         Py_RETURN_NONE;
                 }
-#if 0 /* using PRIVHANDLER below */
         } else if (!xstrcmp(attr, "ip")) {
                 if (u->ip) {
                         struct sockaddr_in sin;
@@ -204,7 +198,6 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                 } else {
                         Py_RETURN_NONE;
                 }
-#endif
         } else if (!xstrcmp(attr, "status_time")) {
                 if (u->status_time) {
                         return Py_BuildValue("i", u->status_time);
@@ -213,19 +206,12 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                 }
         } else if (!xstrcmp(attr, "last_status")) {
                 if(u->last_status) {
-                        return Py_BuildValue("(ss)", ekg_status_string(u->last_status, 0), u->last_descr);
+                        return Py_BuildValue("(ss)", u->last_status, u->last_descr);
                 } else {
                         Py_RETURN_NONE;
                 }
-        } else { /* XXX, take a look at this */
-		char **val;
-		int f = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
-
-		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &f, &attr, &val);
-		if (val)
-                        return PyString_FromString(*val);
-		else
-	                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr);
+        } else {
+                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr);
         }
 }
 

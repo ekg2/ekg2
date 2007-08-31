@@ -129,10 +129,8 @@ static QUERY(xosd_protocol_status)
 {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-	int nstatus	= *(va_arg(ap, int*));
+	char *status	= *(va_arg(ap, char**));
 	char *descr	= *(va_arg(ap, char**));
-
-	char *status	= ekg_status_string(nstatus, 0);
 
 	userlist_t *u;
 	session_t *s;
@@ -339,8 +337,6 @@ static void xosd_killed() {
 
 int xosd_plugin_init(int prio)
 {
-	va_list dummy;
-
 	osd = xosd_create(2);
 	if (!osd) {
 		debug("xosd: error creating osd: %s\n", xosd_error);
@@ -348,7 +344,7 @@ int xosd_plugin_init(int prio)
 	}
 	plugin_register(&xosd_plugin, prio);
 
-	xosd_setvar_default(NULL, dummy);
+	xosd_setvar_default(NULL, NULL);
 
 	variable_add(&xosd_plugin, ("colour"), VAR_STR, 1, &xosd_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, ("font"), VAR_STR, 1, &xosd_font, NULL, NULL, NULL);

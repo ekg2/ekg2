@@ -83,7 +83,9 @@ void print(int dest, char *str)
 CODE:
 	char *line;
         while ((line = split_line(&str))) {
-                window_print(window_exist(dest), fstring_new(format_string(line)));
+		char *tmp = format_string(line);
+		window_print(window_exist(dest), fstring_new(tmp));
+		xfree(tmp);
         }
 
 void init()

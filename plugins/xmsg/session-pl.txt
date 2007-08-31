@@ -4,14 +4,6 @@ auto_connect
 	
 	Okre¶la, czy sesja bêdzie ³±czona automagicznie przy starcie programu.
 
-charset
-	typ: tekst
-	domy¶lna warto¶æ: brak
-	
-	Kodowanie u¿ywane w wiadomo¶ciach przychodz±cych i wychodz±cych. Je¶li
-	nieustalone, xmsg nie bêdzie dokonywa³ konwersji - tzn. wykorzystane
-	bêdzie aktualne kodowanie ekg2.
-
 dotfile_suffix
 	typ: tekst
 	domy¶lna warto¶æ: brak

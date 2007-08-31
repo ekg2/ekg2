@@ -221,16 +221,16 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
         for (i=0; i < scr_que->argc; i++) {
                 PyObject *w = NULL;
                 switch ( scr_que->argv_type[i] ) {
-                        case (QUERY_ARG_INT):
+                        case (SCR_ARG_INT):
                                 w = PyInt_FromLong((long) *(int *) args[i] );
                                 break;
-                        case (QUERY_ARG_CHARP): {
+                        case (SCR_ARG_CHARP): {
                                 char *tmp = *(char **) args[i];
 				if (tmp)
                                         w = PyString_FromString(tmp);
                                 break;
                         }
-                        case (QUERY_ARG_CHARPP): {
+                        case (SCR_ARG_CHARPP): {
                                 char *tmp = array_join((char **) args[i], " ");
                                 w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
                                 xfree(tmp);
@@ -250,17 +250,17 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 		for (i=0; i < scr_que->argc; i++) {
 			PyObject *w = PyTuple_GetItem(__py_r, i);
 			switch (scr_que->argv_type[i]) {
-				case (QUERY_ARG_INT):
+				case (SCR_ARG_INT):
 					if (PyInt_Check(w)) *( (int *) args[i]) = PyInt_AsLong(w);
 					else debug("[recvback,script error] not int ?!\n");
 					break;
-				case (QUERY_ARG_CHARP):
+				case (SCR_ARG_CHARP):
 					if (PyString_Check(w)) {
 						xfree(*(char **) args[i]);
 						*( (char **) args[i]) = xstrdup(PyString_AsString(w));
 					} else debug("[recvback,script error] not string?!\n");
 					break;
-				case (QUERY_ARG_CHARPP): /* wazne, zrobic. */
+				case (SCR_ARG_CHARPP): /* wazne, zrobic. */
 				default:
 					debug("[NIMP, recvback] %d %d -> 0x%x\n", i, scr_que->argv_type[i], w);
 			}
@@ -556,19 +556,17 @@ int python_initialize()
 	PyModule_AddIntConstant(ekg, "MSGCLASS_SYSTEM",		EKG_MSGCLASS_SYSTEM);
 
 	// Const - status types
-	/* XXX, someone take a look at it? */
-	PyModule_AddStringConstant(ekg, "STATUS_NA",		ekg_status_string(EKG_STATUS_NA, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		ekg_status_string(EKG_STATUS_AVAIL, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		ekg_status_string(EKG_STATUS_AWAY, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	ekg_status_string(EKG_STATUS_AUTOAWAY, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	ekg_status_string(EKG_STATUS_INVISIBLE, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_XA",		ekg_status_string(EKG_STATUS_XA, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_DND",		ekg_status_string(EKG_STATUS_DND, 0));
-		/* XXX, break compatibility and use FFC? */
-	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	ekg_status_string(EKG_STATUS_FFC, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	ekg_status_string(EKG_STATUS_BLOCKED, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	ekg_status_string(EKG_STATUS_UNKNOWN, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		ekg_status_string(EKG_STATUS_ERROR, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_NA",		EKG_STATUS_NA);
+	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		EKG_STATUS_AVAIL);
+	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		EKG_STATUS_AWAY);
+	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	EKG_STATUS_AUTOAWAY);
+	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	EKG_STATUS_INVISIBLE);
+	PyModule_AddStringConstant(ekg, "STATUS_XA",		EKG_STATUS_XA);
+	PyModule_AddStringConstant(ekg, "STATUS_DND",		EKG_STATUS_DND);
+	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	EKG_STATUS_FREE_FOR_CHAT);
+	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	EKG_STATUS_BLOCKED);
+	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	EKG_STATUS_UNKNOWN);
+	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		EKG_STATUS_ERROR);
 
 	// Const - ignore levels
 	PyModule_AddIntConstant(ekg, "IGNORE_STATUS",		IGNORE_STATUS);
@@ -633,7 +631,7 @@ int python_plugin_init(int prio)
 {
 	plugin_register(&python_plugin, prio);
 
-	scriptlang_register(&python_lang);
+	scriptlang_register(&python_lang, 1);
 	command_add(&python_plugin, ("python:eval"),   ("!"),	python_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:run"),    ("!"),	python_command_run,    COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:load"),   ("!"),	python_command_load,   COMMAND_ENABLEREQPARAMS, NULL);

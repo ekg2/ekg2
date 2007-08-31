@@ -1,5 +1,0 @@
-Every string added to arguments with
-dbus_message_iter_append (..., DBUS_STRING, ...)
-
-	MUST BE UTF-8 encoded!
-

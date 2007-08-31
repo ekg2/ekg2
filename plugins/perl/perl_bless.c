@@ -121,7 +121,7 @@ void ekg2_bless_command(HV *hv, command_t *command)
 
 void ekg2_bless_fstring(HV *hv, fstring_t *fstr)
 {
-	hv_store(hv, "str", 3, new_pv(fstr->str.b), 0);
+	hv_store(hv, "str", 3, new_pv(fstr->str), 0);
 	hv_store(hv, "ts",  2, newSViv(fstr->ts), 0);
 	hv_store(hv, "attr",4, create_sv_ptr(fstr->attr), 0);
 }
@@ -150,10 +150,8 @@ void ekg2_bless_user(HV *hv, userlist_t *user)
 	debug_bless("blessing user %s\n", user->uid);
 	hv_store(hv, "uid", 3, new_pv(user->uid), 0);
 	hv_store(hv, "nickname", 8, new_pv(user->nickname), 0);
-	hv_store(hv, "status", 6, new_pv(ekg_status_string(user->status, 0)), 0);
-#if 0 /* XXX? */
+	hv_store(hv, "status", 6, new_pv(user->status), 0);
 	hv_store(hv, "ip", 2, 	  new_pv(inet_ntoa_u(user->ip)), 0);
-#endif
 }
 
 void ekg2_bless_session(HV *hv, session_t *session)
@@ -161,7 +159,7 @@ void ekg2_bless_session(HV *hv, session_t *session)
         debug_bless("blessing session %s\n", session->uid);
         hv_store(hv, "connected", 9, newSViv(session->connected), 0);
         hv_store(hv, "uid",       3, new_pv(session->uid), 0);
-	hv_store(hv, "status",	  6, new_pv(ekg_status_string(session->status, 0)), 0);
+	hv_store(hv, "status",	  6, new_pv(session->status), 0);
 //	hv_store(hv, "userlist",  8, create_sv_ptr(session->userlist), 0);
 //	hv_store(hv, "userlist",  8, ekg2_bless(BLESS_LIST, 1, session->userlist), 0); // obsolete call userlist()
 	hv_store(hv, "alias",	  5, new_pv(session->alias), 0);

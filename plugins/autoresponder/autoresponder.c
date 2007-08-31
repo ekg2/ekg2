@@ -26,7 +26,6 @@ static int autoresponder_plugin_destroy(void);
 static char *config_autoresponder_question = NULL;
 static char *config_autoresponder_answer = NULL;
 static char *config_autoresponder_greeting = NULL;
-static char *config_autoresponder_allowed_sessions = NULL;
 static int config_autoresponder_match_mode = 1;
 static regex_t *autoresponder_answer_regex = NULL;
 
@@ -64,11 +63,9 @@ static QUERY(autoresponder_message)
 	
 	if ((class >= EKG_MSGCLASS_SENT) /* at first, skip our messages */
 			|| !config_autoresponder_question || !(*config_autoresponder_question) /* are we configured? */
-			|| !(s = session_find(session)) /* session really exists? */
-			|| !(cssfind(config_autoresponder_allowed_sessions, session, ',', 0) /* check, if session allows autoresponding */
-				|| cssfind(config_autoresponder_allowed_sessions, session_alias_get(s), ',', 0)) /* and by alias */
-			|| (userlist_find(s, uid)) /* check if it isn't currently on our roster */
-			|| (window_find_s(s, uid)) /* or maybe we've already opened query? */
+			|| !(s = session_find(session)) || !(session_int_get(s, "allow_autoresponder") == 1) /* check, if session allows autoreponding */
+			|| (userlist_find(s, uid)) /* check if it aren't currently on our roster */
+			|| (window_find_s(s, uid)) /* or maybe opened query? */
 			|| (list_find_str(autoresponder_allowed_uids, uid))) /* search the allowed uids list */
 		return 0;
 	
@@ -129,17 +126,16 @@ static void autoresponder_varchange(const char *varname)
 	}
 }
 
-EXPORT int autoresponder_plugin_init(int prio)
+int autoresponder_plugin_init(int prio)
 {
 	plugin_register(&autoresponder_plugin, prio);
 	
 	query_connect_id(&autoresponder_plugin, PROTOCOL_MESSAGE, autoresponder_message, NULL);
-	variable_add(&autoresponder_plugin, "allowed_sessions", VAR_STR, 1, &config_autoresponder_allowed_sessions, NULL, NULL, NULL);
+	variable_add(&autoresponder_plugin, "question", VAR_STR, 1, &config_autoresponder_question, NULL, NULL, NULL);
 	variable_add(&autoresponder_plugin, "answer", VAR_STR, 1, &config_autoresponder_answer, autoresponder_varchange, NULL, NULL);
 	variable_add(&autoresponder_plugin, "greeting", VAR_STR, 1, &config_autoresponder_greeting, NULL, NULL, NULL);
 	variable_add(&autoresponder_plugin, "match_mode", VAR_INT, 1, &config_autoresponder_match_mode, autoresponder_varchange,
 			variable_map(3, 0, 0, "exact", 1, 2, "substring", 2, 1, "regex"), NULL);
-	variable_add(&autoresponder_plugin, "question", VAR_STR, 1, &config_autoresponder_question, NULL, NULL, NULL);
 	
 	return 0;
 }

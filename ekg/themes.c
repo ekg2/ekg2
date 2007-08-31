@@ -341,8 +341,7 @@ static char *va_format_string(const char *format, va_list ap) {
 						string_append(buf, "a");
 					else
 						string_append(buf, "y");
-				} else
-					string_append(buf, "y"); /* display_notify&4, I think male form would be fine for UIDs */
+				}
 				p += 2;
 				continue;
 			}
@@ -464,7 +463,7 @@ fstring_t *fstring_new(const char *str) {
 	}
 
 	res			= xmalloc(sizeof(fstring_t));
-	res->str.b = tmpstr	= xmalloc((len + 1) * sizeof(char));
+	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
         res->attr		= xmalloc((len + 1) * sizeof(short));
 
         res->margin_left = -1;
@@ -597,7 +596,7 @@ void fstring_free(fstring_t *str)
         if (!str)
                 return;
 
-        xfree(str->str.b);
+        xfree(str->str);
         xfree(str->attr);
         xfree(str->private);
         xfree(str);
@@ -724,7 +723,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	/* 1) let's check if we have such window as target... */
 
 		/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
-		if ((!xstrncmp(target, "jid:", 4) || !xstrncmp(target, "xmpp:", 5)) && (tmp = xstrchr(target, '/'))) {
+		if (!xstrncmp(target, "jid:", 3) && (tmp = xstrchr(target, '/'))) {
 			newtarget = xstrndup(target, tmp - target);
 			w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
 			/* even if w == NULL here, we use newtarget to create window without resource */
@@ -1423,21 +1422,6 @@ void theme_init()
 	format_add("sent_timestamp_now", "", 1);
 	format_add("sent,speech", "", 1);
 
-		/* XXX: change default colors for these two, but dunno to what
-		 * they should be darker than standard ones to emphasize that
-		 * these are jest old messages loaded from the db, not received */
-	format_add("log", "%c.-- %n%1 %c%2%n%6%n%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
-	format_add("log_timestamp", "(%Y-%m-%d %H:%M) ", 1);
-	format_add("log_timestamp_today", "(%H:%M) ", 1);
-	format_add("log_timestamp_now", "", 1);
-	format_add("log,speech", _("message from %1: %3."), 1);
-
-	format_add("sent_log", "%b.-- %n%1 %c%2%n%6%n%b--- -- -%n\n%b|%n %|%3%n\n%|%b`----- ---- --- -- -%n\n", 1);
-	format_add("sent_log_timestamp", "(%Y-%m-%d %H:%M) ", 1);
-	format_add("sent_log_timestamp_today", "(%H:%M) ", 1);
-	format_add("sent_log_timestamp_now", "", 1);
-	format_add("sent_log,speech", "", 1);
-
 	format_add("system", _("%m.-- %TSystem message%m --- -- -%n\n%m|%n %|%3%n\n%|%m`----- ---- --- -- -%n\n"), 1);
 	format_add("system,speech", _("system message: %3."), 1);
 
@@ -1504,10 +1488,10 @@ void theme_init()
 	format_add("variable", "%> %1 = %2\n", 1);
 	format_add("variable_not_found", _("%! Unknown variable: %T%1%n\n"), 1);
 	format_add("variable_invalid", _("%! Invalid session variable value\n"), 1);
-	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
-	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or xmpp: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
-	format_add("no_config_gg_not_loaded", _("%! Incomplete configuration. Use:\n%!   %T/plugin +gg%n - to load gg plugin\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
-	format_add("no_config_no_libgadu", _("%! Incomplete configuration. %TBIG FAT WARNING:%n\n%!    %Tgg plugin has not been compiled, probably there is no libgadu library in the system\n%! Use:\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
+	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
+	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or jid: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
+	format_add("no_config_gg_not_loaded", _("%! Incomplete configuration. Use:\n%!   %T/plugin +gg%n - to load gg plugin\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
+	format_add("no_config_no_libgadu", _("%! Incomplete configuration. %TBIG FAT WARNING:%n\n%!    %Tgg plugin has not been compiled, probably there is no libgadu library in the system\n%! Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
 	format_add("error_reading_config", _("%! Error reading configuration file: %1\n"), 1);
 	format_add("config_read_success", _("%> Configuratin read correctly.%n\n"), 1);
 	format_add("config_line_incorrect", _("%! Invalid line '%T%1%n', skipping\n"), 1);
@@ -1726,12 +1710,12 @@ void theme_init()
 	format_add("events_del_noexist", _("%! Event %T%1%n do not exist\n"), 1);
 
 	/* contact list from the server */
-	format_add("userlist_put_ok", _("%> (%1) Roster exported\n"), 1);
-	format_add("userlist_put_error", _("%! (%1) Error exporting roster\n"), 1);
-	format_add("userlist_get_ok", _("%> (%1) Roster imported\n"), 1);
-	format_add("userlist_get_error", _("%! (%1) Error importing roster\n"), 1);
-	format_add("userlist_clear_ok", _("%) (%1) Removed roster from server\n"), 1);
-	format_add("userlist_clear_error", _("%! (%1) Error removing roster from server\n"), 1);
+	format_add("userlist_put_ok", _("%> Roster saved on server\n"), 1);
+	format_add("userlist_put_error", _("%! Error sending roster\n"), 1);
+	format_add("userlist_get_ok", _("%> Roster read from server\n"), 1);
+	format_add("userlist_get_error", _("%! Error getting roster\n"), 1);
+	format_add("userlist_clear_ok", _("%) Removed roster from server\n"), 1);
+	format_add("userlist_clear_error", _("%! Error removing roster from server\n"), 1);
 
 	/* szybka lista kontaktów pod F2 */
 	format_add("quick_list", "%)%1\n", 1);
@@ -1942,18 +1926,19 @@ void theme_init()
 
 #ifdef WITH_ASPELL
 	/* aspell */
-	format_add("aspell_init", "%> Please wait while initiating spellcheck...", 1);
-	format_add("aspell_init_success", "%> Spellcheck initiated.", 1);
-	format_add("aspell_init_error", "%! Spellcheck error: %T%1%", 1);
+	format_add("aspell_init", "%> Czekaj, inicjujê modu³ sprawdzania pisowni...\n", 1);
+	format_add("aspell_init_success", "%> Zainicjowano modu³ sprawdzania pisowni\n", 1);
+	format_add("aspell_init_error", "%! B³±d modu³u sprawdzania pisowni: %T%1%n\n", 1);
 #endif 
 	/* jogger-like I/O */
 	format_add("io_cantopen", _("%! %|Unable to open file: %T%1%n (%c%2%n)!"), 1);
 	format_add("io_nonfile", _("%! %|Given path doesn't appear to be regular file: %T%1%n!"), 1);
 	format_add("io_cantread", _("%! %|Unable to read file: %T%1%n (%c%2%n)!"), 1);
+	format_add("io_truncated", _("%! %|WARNING: Filesize smaller than before (%c%2%n vs. %c%3%n). File %T%1%n probably truncated!"), 1);
 	format_add("io_truncated", _("%! %|WARNING: EOF before reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably truncated (somehow)!"), 1);
-	format_add("io_expanded", _("%! %|WARNING: EOF after reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably got expanded!"), 1);
+	format_add("io_expanded", _("%! %|WARNING: Filesize larger than before (%c%2%n vs. %c%3%n). File %T%1%n probably got expanded!"), 1);
 	format_add("io_emptyfile", _("%! File %T%1%n is empty!"), 1);
-	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (at least %c%2%n vs. %c%3%n)!"), 1);
+	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (%c%2%n vs. %c%3%n)!"), 1);
 	format_add("io_binaryfile", _("%! %|WARNING: The file %T%1%n probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %c%2%n (vs. filesize of %c%3%n)!"), 1);
 
 	/* dns stuff */
