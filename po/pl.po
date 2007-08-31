@@ -12,14 +12,13 @@ msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-08-30 22:56+0200\n"
-"PO-Revision-Date: 2005-01-29 12:32+0100\n"
-"Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
+"PO-Revision-Date: 2007-08-31 10:58+0200\n"
+"Last-Translator: Micha³ Górny <peres@peres.int.pl>\n"
 "Language-Team: Polski\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Report-msgstr-Bugs-To: \n"
-"X-Generator: KBabel 1.9.1\n"
+"Report-msgstr-Bugs-To: EKG2 users mailinglist <ekg2-users@lists.ziew.org>\n"
 
 #: compat/getopt.c:430
 msgid "%s: option `%s' is ambiguous\n"
@@ -2579,108 +2578,115 @@ msgstr ""
 
 #: plugins/jabber/jabber.c:958
 msgid "No peer certificate"
-msgstr ""
+msgstr "Brak certyfikatu peera"
 
 #: plugins/jabber/jabber.c:963
 msgid "Unable to get issuer certificate"
-msgstr ""
+msgstr "Nie mo¿na uzyskaæ certyfikatu wystawcy"
 
 #: plugins/jabber/jabber.c:964
 msgid "Unable to get certificate CRL"
-msgstr ""
+msgstr "Nie mo¿na uzyskaæ CRL-a certyfikatu"
 
 #: plugins/jabber/jabber.c:965
 msgid "Unable to decrypt certificate's signature"
-msgstr ""
+msgstr "Nie mo¿na zdeszyfrowaæ sygnatury certyfikatu"
 
 #: plugins/jabber/jabber.c:966
 msgid "Unable to decrypt CRL's signature"
-msgstr ""
+msgstr "Nie mo¿na zdeszyfrowaæ sygnatury CRL-a"
 
 #: plugins/jabber/jabber.c:967
 msgid "Unable to decode issuer public key"
-msgstr ""
+msgstr "Nie mo¿na zdeszyfrowaæ klucza publicznego wystawcy "
 
 #: plugins/jabber/jabber.c:968
 msgid "Invalid certificate signature"
-msgstr ""
+msgstr "Nieprawid³owa sygnatura certyfikatu"
 
 #: plugins/jabber/jabber.c:969
 msgid "Invalid CRL signature"
-msgstr ""
+msgstr "Nieprawid³owa sygnatura CRL-a"
 
 #: plugins/jabber/jabber.c:970
 msgid "Certificate not yet valid"
-msgstr ""
+msgstr "Certyfikat nie jest jeszcze poprawny"
 
 #: plugins/jabber/jabber.c:971
 msgid "Certificate has expired"
-msgstr ""
+msgstr "Certyfikat wygas³"
 
 #: plugins/jabber/jabber.c:972
 msgid "CRL not yet valid"
-msgstr ""
+msgstr "CRL nie jest jeszcze poprawny"
 
 #: plugins/jabber/jabber.c:973
 msgid "CRL has expired"
-msgstr ""
+msgstr "CRL wygas³"
 
 #: plugins/jabber/jabber.c:974
 msgid "Invalid time in certifiate's notBefore field"
-msgstr ""
+msgstr "Nieprawid³owa data w polu notBefore certyfikatu"
 
 #: plugins/jabber/jabber.c:975
 msgid "Invalid time in certificate's notAfter field"
-msgstr ""
+msgstr "Nieprawid³owa data w polu notAfter certyfikatu"
 
 #: plugins/jabber/jabber.c:976
 msgid "Invalid time in CRL's lastUpdate field"
-msgstr ""
+msgstr "Nieprawid³owa data w polu lastUpdate CRL-a"
 
 #: plugins/jabber/jabber.c:977
 msgid "Invalid time in CRL's nextUpdate field"
-msgstr ""
+msgstr "Nieprawid³owa data w polu nextUpdate CRL-a"
 
 #: plugins/jabber/jabber.c:978
 msgid "Out of memory while checking the certificate chain"
 msgstr ""
+"Niewystarczaj±ca ilo¶æ wolnej pamiêci dla sprawdzenia ³añcucha certyfikatów"
 
 #: plugins/jabber/jabber.c:979
 msgid ""
 "Certificate is self-signed but isn't found in the list of trusted "
 "certificates"
 msgstr ""
+"Certyfikat jest samopodpisany, ale nie znajduje siê na li¶cie certyfikatów "
+"zaufanych"
 
 #: plugins/jabber/jabber.c:980
 msgid ""
 "Certificate chain ends in a self-signed cert that isn't found in the list of "
 "trusted certificates"
 msgstr ""
+"£añcuch certyfikatów koñczy siê samopodpisanym certyfikatem, który nie "
+"znajduje siê na li¶cie certyfikatów zaufanych"
 
 #: plugins/jabber/jabber.c:981
 msgid "Unable to get issuer certificate locally"
-msgstr ""
+msgstr "Nie mo¿na uzyskaæ lokalnej kopii certyfikatu wystawcy"
 
 #: plugins/jabber/jabber.c:982
 msgid ""
 "Certificate chain contains only one certificate and it's not self-signed"
 msgstr ""
+"£añcuch certyfikatów zawiera tylko jeden certyfikat, który nie jest "
+"samopodpisany"
 
 #: plugins/jabber/jabber.c:983
 msgid "Certificate chain too long"
-msgstr ""
+msgstr "£añcuch certyfikatów zbyt d³ugi"
 
 #: plugins/jabber/jabber.c:984
 msgid "Certificate is revoked"
-msgstr ""
+msgstr "Certyfikat zosta³ uniewa¿niony"
 
 #: plugins/jabber/jabber.c:985
 msgid "Invalid CA certificate"
-msgstr ""
+msgstr "Nieprawid³owy certyfikat CA"
 
 #: plugins/jabber/jabber.c:986
 msgid "Maximum certificate chain length exceeded"
-msgstr ""
+msgstr "Przekroczono maksymaln± d³ugo¶æ ³añcucha certyfikatów"
 
 #: plugins/jabber/jabber.c:987
 msgid "Invalid certificate purpose"
@@ -2712,7 +2718,7 @@ msgstr ""
 
 #: plugins/jabber/jabber.c:995
 msgid "Unknown/Generic SSL_get_verify_result() result"
-msgstr ""
+msgstr "Nieznany/ogólny wynik SSL_get_verify_result()"
 
 #: plugins/jabber/jabber.c:1211
 msgid "%K| %nSubscription type: %T%1%n\n"
@@ -3079,7 +3085,7 @@ msgstr "%> (%1) Zmieni³a siê zawarto¶æ Twojej skrzynki pocztowej."
 
 #: plugins/jabber/jabber.c:1352
 msgid "%> (%1) You have %T%2%n new thread(s) on your gmail account."
-msgstr "%> (%1) Nowych wiadomo¶ci na Twojej skrzynce pocztowej: %T%2%n."
+msgstr "%> (%1) Nowych wiadomo¶ci w Twojej skrzynce pocztowej: %T%2%n."
 
 #: plugins/jabber/jabber.c:1355
 msgid "%> (%1) New mail from %T%2%n, with subject: %G%3%n"
@@ -3242,78 +3248,91 @@ msgstr ""
 
 #: plugins/jogger/jogger.c:247
 msgid "%) %|During QA check of the entry, following warnings have been issued:"
-msgstr ""
+msgstr "%) %|Sprawdzenie jako¶ci wpisu wykry³o nastêpuj±ce nieprawid³owo¶ci:"
 
 #: plugins/jogger/jogger.c:248
 msgid "%> %|* Header with broken syntax found at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Nag³ówek z nieprawid³ow± sk³adni±, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:249
 msgid "%> %|* Header contains unknown/wrong key at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Nag³ówek z nieprawid³owym/nieznanym kluczem, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:250
 msgid ""
 "%> %|* Key in header mustn't be followed or preceeded by spaces at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Spacje przed lub za kluczem w nag³ówku, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:251
 msgid ""
 "%> %|* Key %Tminiblog%n is deprecated in favor of such category at: %c%1%n"
 msgstr ""
+"%> %|* Klucz %Tminiblog%n zosta³ zast±piony odpowiedni± kategori±, "
+"przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:252
 msgid "%> %|* Miniblog entry will be posted to Techblog at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Wpis miniblogowy jest postowany na Techblogu, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:253
 msgid ""
 "%> * Entries posted to Techblog should have also some normal category: %c%1%n"
 msgstr ""
+"%> %|* Wpisy publikowane na Techblogu powinny posiadaæ przypisan± równie¿ "
+"zwyk³± kategoriê, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:254
 msgid "%> %|* Malformed URL found at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Nieprawid³owy URL, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:255
 msgid ""
 "%> %|* Possibility of accidentially using space as a separator instead of "
 "commas: %c%1%n"
 msgstr ""
+"%> %|* Ryzyko przypadkowego u¿ycia spacji jako separatora zamiast przecinka: "
+"%c%1%n"
 
 #: plugins/jogger/jogger.c:256
 msgid "%> %|* Incorrect value found at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Nieprawid³owa warto¶æ, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:257
 msgid ""
 "%> %|* Wrong %Tlevel%n found (level %Tnumber%n should be used), entry would "
 "be published on %Tzeroth%n level (not default) at: %c%1%n"
 msgstr ""
+"%> %|* Nieprawid³owy poziom (u¿yty winien zostaæ %Tnumer%n poziomu), wpis "
+"zostanie opublikowany na poziomie %Tzerowym%n (nie za¶ domy¶lnym), przy: "
+"%c%1%n"
 
 #: plugins/jogger/jogger.c:258
 msgid ""
 "%> %|* Incorrent value found (try to remove leading&trailing spaces) at: %c%"
 "1%n"
 msgstr ""
+"%> %|* Nieprawid³owa warto¶æ (spróbuj usun±æ spacje po jej obu stronach), "
+"przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:259
 msgid "%> %|* Empty value found in header at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Pusta warto¶æ, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:260
 msgid "%> %|* Duplicated header found at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Duplikowany nag³ówek, przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:261
 msgid "%> %|* Mislocated header (?) at: %c%1%n"
-msgstr ""
+msgstr "%> %|* Przemieszczony nag³ówek (?), przy: %c%1%n"
 
 #: plugins/jogger/jogger.c:262
 msgid ""
 "%> %|* Entry text size exceeds 4096 bytes, but no <EXCERPT> tag has been "
 "found. It will be probably cut by Jogger near: ...%c%1%n..."
 msgstr ""
+"%> %|* D³ugo¶æ wpisu przekracza 4096 bajtów, ale nie odnaleziono tagu "
+"<EXCERPT>. Wpis zostanie uciêty przez Joggera w pobli¿u: ...%c%1%n..."
 
 #: plugins/logsoracle/main.c:111
 msgid "%> logsoracle status\n"
