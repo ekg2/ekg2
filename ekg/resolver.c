@@ -25,10 +25,6 @@
 #include <sys/filio.h>
 #endif
 
-#ifdef LIBIDN
-# include <idna.h>
-#endif
-
 /* NOTE:
  * 	Includes were copied from jabber.c, where there's ? in comment, it's possibly not needed.
  * 	It was done this way, to avoid regression.
@@ -38,14 +34,6 @@
 
 #include "debug.h"
 #include "plugins.h"
-#include "xmalloc.h"
-
-#ifdef LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
-static const char valid_hostname_chars_u[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz"
-	"0123456789-._";
-#endif
 
 /*
  * ekg_resolver2()
@@ -67,7 +55,6 @@ static const char valid_hostname_chars_u[] =
 
 watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data) {
 	int res, fd[2];
-	char *myserver;
 
 	if (!server) {
 		errno = EFAULT;
@@ -82,13 +69,11 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 	debug("ekg_resolver2() resolver pipes = { %d, %d }\n", fd[0], fd[1]);
 
-	myserver = xstrdup(server);
 	if ((res = fork()) == -1) {
 		int errno2 = errno;
 
 		close(fd[0]);
 		close(fd[1]);
-		xfree(myserver);
 		errno = errno2;
 		return NULL;
 	}
@@ -99,19 +84,8 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 		close(fd[0]);
 
-#ifdef LIBIDN
-		{
-			char *tmp;
-
-			if ((xstrspn(myserver, valid_hostname_chars_u) != xstrlen(myserver)) && /* need to escape */
-				(idna_to_ascii_8z(myserver, &tmp, 0) == IDNA_SUCCESS)) {
-				xfree(myserver);
-				myserver = tmp;
-			}
-		}
-#endif
-		if ((a.s_addr = inet_addr(myserver)) == INADDR_NONE) {
-			struct hostent *he = gethostbyname(myserver);
+		if ((a.s_addr = inet_addr(server)) == INADDR_NONE) {
+			struct hostent *he = gethostbyname(server);
 
 			if (!he)
 				a.s_addr = INADDR_NONE;
@@ -119,14 +93,12 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 				memcpy(&a, he->h_addr, sizeof(a));
 		}
 		write(fd[1], &a, sizeof(a));
-		xfree(myserver);
 		sleep(1);
 		exit(0);
 	}
 
 	/* parent */
 	close(fd[1]);
-	xfree(myserver);
 	/* XXX dodaæ dzieciaka do przegl±dania */
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }

@@ -1,9 +1,9 @@
-allowed_sessions
+question
 	type: string
 	default value: (none)
 	
-	Comma-separated list of sessions, for which autoresponder plugin
-	will be used. Both UIDs, and aliases can be used.
+	Question sent to unknown user on incoming message receival. If null,
+	autoresponder will be disabled.
 
 answer
 	type: string
@@ -29,11 +29,4 @@ match_mode
 		0 - exact match
 		1 - substring match (answer must be somewhere in msg)
 		2 - POSIX regular expression match
-
-question
-	type: string
-	default value: (none)
-	
-	Question sent to unknown user on incoming message receival. If null,
-	autoresponder will be disabled.
 

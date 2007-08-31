@@ -108,10 +108,16 @@ void ekg_session_dealloc(ekg_sessionObj * o)
 
 int ekg_session_len(ekg_sessionObj * self)
 {
+	int cnt = 0;
 	session_t * s;
 	s = session_find(self->name);
-	/* XXX, leafnode what about _local_ ones? */
-	return s ? s->global_vars_count : 0;
+	if (s->params) {
+		list_t l;
+		for (l = s->params; l; l = l->next) {
+			cnt++;
+		}
+	}
+	return cnt;
 }
 
 /**
@@ -150,13 +156,16 @@ PyObject *ekg_session_get(ekg_sessionObj * self, PyObject * key)
 PyObject *ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * value)
 {
 	session_t * s;
+	session_param_t * p;
 	const char *name = PyString_AsString(key);
 	s = session_find(self->name);
 
 	debug("[python] Setting '%s' option to '%s' for session %s\n", name,
 		PyString_AsString(value), self->name);
 
-	if (session_is_var(s, name) != 1) {
+	p = session_var_find(s, name);
+
+	if (!p) {
 		PyErr_SetString(PyExc_LookupError, "unknown variable");
 		return NULL;
     }
@@ -302,17 +311,21 @@ PyObject *ekg_session_status_set(ekg_sessionObj * self, PyObject * pyargs)
         char *status = NULL;
         char *descr = NULL;
         char *command = NULL;
-	char *s;
 
         if (!PyArg_ParseTuple(pyargs, "s|s", &status, &descr))
                 return NULL;
 
-	command = ekg_status_string(ekg_status_int(status), 1);
-        if (descr == NULL)
+        if (xstrcmp(status, EKG_STATUS_AVAIL) == 0) {
+                command = xstrdup("back");
+        } else if (xstrcmp(status, EKG_STATUS_FREE_FOR_CHAT) == 0) {
+                command = xstrdup("ffc");
+        } else {
+                command = xstrdup(status);
+        }
+        if (descr == NULL) {
                 descr = xstrdup("-");
-
-        command_exec(NULL, session_find(self->name), (s = saprintf("/%s %s", command, descr)), 0);
-	xfree(s); xfree(descr); xfree(status); /* ? */
+        }
+        command_exec(NULL, session_find(self->name), saprintf("/%s %s", command, descr), 0);
         Py_RETURN_TRUE;
 }
 
@@ -326,7 +339,7 @@ PyObject *ekg_session_status_set(ekg_sessionObj * self, PyObject * pyargs)
 PyObject *ekg_session_status(ekg_sessionObj * self)
 {
         session_t * s = session_find(self->name);
-        return Py_BuildValue("(ss)", ekg_status_string(session_status_get(s), 2), session_descr_get(s));
+        return Py_BuildValue("(ss)", session_status_get(s), session_descr_get(s));
 }
 
 /*

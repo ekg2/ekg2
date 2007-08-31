@@ -877,7 +877,7 @@ COMMAND(cmd_window)
 
 	
 	if (!xstrcasecmp(params[0], ("refresh"))) {
-		query_emit_id(NULL, UI_WINDOW_REFRESH);
+		query_emit_id(NULL, UI_REFRESH);
 		return 0;
 	}
 

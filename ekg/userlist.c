@@ -657,46 +657,33 @@ userlist_t *userlist_find(session_t *session, const char *uid)
 userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 {
 	list_t l;
-	char *myuid = NULL;
 
 	if (!uid || !userlist)
 		return NULL;
-
-		/* another weird 'jid:' hack, to be reverted when 'jid:' support abandomed */
-	if (!xstrncasecmp(uid, "jid:", 4)) {
-		valid_uid(uid); /* make warning appear */
-		myuid = saprintf("xmpp:%s", uid+4);
-	}
 
 	for (l = *userlist; l; l = l->next) {
 		userlist_t *u = l->data;
 		const char *tmp;
 		int len;
 
-		if (!xstrcasecmp(u->uid, myuid ? myuid : uid)) {
-			xfree(myuid);
+		if (!xstrcasecmp(u->uid, uid))
 			return u;
-		}
 
-		if (u->nickname && !xstrcasecmp(u->nickname, uid)) {
-			xfree(myuid);
+		if (u->nickname && !xstrcasecmp(u->nickname, uid))
 			return u;
-		}
 
 		/* porównujemy resource; if (len > 0) */
 
-		if (!(tmp = xstrchr(uid, '/')) || (xstrncmp(uid, "jid:", 4) && xstrncmp(uid, "xmpp:", 5)))
+		if (!(tmp = xstrchr(uid, '/')) || xstrncmp(uid, "jid:", 4))
 			continue;
 
 		len = (int)(tmp - uid);
 
-		if (len > 0 && !xstrncasecmp(myuid ? myuid : uid, u->uid, len)) {
-			xfree(myuid);
+		if (len > 0 && !xstrncasecmp(uid, u->uid, len))
 			return u;
-		}
+
 	}
 
-	xfree(myuid);
 	return NULL;
 }
 

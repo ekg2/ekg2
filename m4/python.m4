@@ -52,6 +52,7 @@ AC_DEFUN([AM_CHECK_PYTHON],
 
 				PYTHON_LIBS="-L$PY_EXEC_PREFIX/lib $PY_LIB_LOC -lpython$PY_VERSION $PY_LIBS"
 				PYTHON_CFLAGS="$PY_CFLAGS"
+				AC_DEFINE(WITH_PYTHON, 1, [define if You want python])
 				have_python=yes
 			fi
 		fi

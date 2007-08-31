@@ -20,8 +20,6 @@
 #ifndef __EKG_THEMES_H
 #define __EKG_THEMES_H
 
-#include "strings.h"
-
 #include "gettext.h" 
 #define _(a) gettext(a)
 #define N_(a) gettext_noop(a)
@@ -30,13 +28,7 @@
 #include "sessions.h"
 
 typedef struct {
-	union {
-		char *b;	/* possibly multibyte string */
-		CHAR_T *w;	/* wide char string */
-	} str;		/* A \0-terminated string of characters. Before the
-	fstring_t is added to history, should be referred to using 'str->b'.
-	Adding to history recodes it to CHAR_T, so afterwards it should be
-	referred to by 'str->w'. */
+	char *str;	/* znaki, ci±g zakoñczony \0 */
 	short *attr;	/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	int ts;		/* timestamp */
 
