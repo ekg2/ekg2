@@ -3207,6 +3207,28 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 	return r;
 }
 
+/**
+ * password_input()
+ *
+ * Try to get password through UI_PASSWORD_INPUT, printing error messages if needed.
+ *
+ * @return	Pointer to new password (which needs to be freed) or NULL, if not
+ * 		succeeded (wrong input / no support).
+ */
+
+char *password_input() {
+	char *pass = (void*) -1;
+
+	query_emit_id(NULL, UI_PASSWORD_INPUT, &pass);
+
+	if (pass == (void*) -1) {
+		print("password_nosupport");
+		pass++;
+	}
+
+	return pass;
+}
+
 /*
  * Local Variables:
  * mode: c

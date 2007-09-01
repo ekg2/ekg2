@@ -1225,16 +1225,13 @@ COMMAND(session_command)
 			}
 
 			if (!xstrcmp(params[1], "password")) {
-				char *pass = (void*) -1;
+				char *pass = password_input();
 
-				query_emit_id(NULL, UI_PASSWORD_INPUT, &pass);
-
-				if (pass == (void*) -1)
-					printq("password_nosupport");
-				else if (pass) {
+				if (pass) {
 					session_set(session, params[1], pass);
 					config_changed = 1;
 					command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, session->uid, params[1]);
+					xfree(pass);
 				}
 				
 				return 0;
@@ -1269,16 +1266,13 @@ COMMAND(session_command)
 		}
 		
 		if (!xstrcmp(params[2], "password")) {
-			char *pass = (void*) -1;
+			char *pass = password_input();
 
-			query_emit_id(NULL, UI_PASSWORD_INPUT, &pass);
-
-			if (pass == (void*) -1)
-				printq("password_nosupport");
-			else if (pass) {
+			if (pass) {
 				session_set(session, params[1], pass);
 				config_changed = 1;
-				command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, session->uid, params[1]);
+				command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, session->uid, params[2]);
+				xfree(pass);
 			}
 			
 			return 0;
