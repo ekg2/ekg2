@@ -1223,6 +1223,22 @@ COMMAND(session_command)
 				printq("session_doesnt_exist", params[1]);
 				return -1;
 			}
+
+			if (!xstrcmp(params[1], "password")) {
+				char *pass = (void*) -1;
+
+				query_emit_id(NULL, UI_PASSWORD_INPUT, &pass);
+
+				if (pass == (void*) -1)
+					printq("password_nosupport");
+				else if (pass) {
+					session_set(session, params[1], pass);
+					config_changed = 1;
+					command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, session->uid, params[1]);
+				}
+				
+				return 0;
+			}
 			
     		    	printq("invalid_params", name);
 			return -1;
@@ -1252,6 +1268,22 @@ COMMAND(session_command)
 			return 0;
 		}
 		
+		if (!xstrcmp(params[2], "password")) {
+			char *pass = (void*) -1;
+
+			query_emit_id(NULL, UI_PASSWORD_INPUT, &pass);
+
+			if (pass == (void*) -1)
+				printq("password_nosupport");
+			else if (pass) {
+				session_set(session, params[1], pass);
+				config_changed = 1;
+				command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, session->uid, params[1]);
+			}
+			
+			return 0;
+		}
+
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -1379,7 +1411,10 @@ COMMAND(session_command)
 		}
 		
 		if(params[1]) {
-			command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, params[0], params[1]);
+			if (!xstrcmp(params[1], "password"))
+				command_exec_format(NULL, s, 0, ("%s --set %s %s"), name, params[0], params[1]);
+			else
+				command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, params[0], params[1]);
 			config_changed = 1;
 			return 0;		
 		}
@@ -1425,10 +1460,11 @@ COMMAND(session_command)
         }
 	
 	if (params[0] && params[0][0] != '-' && session && session->uid) {
-		command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, session_alias_uid(session), params[0]);
+		command_exec_format(NULL, s, 0, ("%s --%cet %s %s"), name,
+				!xstrcmp(params[0], "password") ? 's' : 'c', session_alias_uid(session), params[0]);
 		return 0;
 	}
-	
+
 	if (params[0] && params[0][0] == '-' && session && session->uid) {
 		command_exec_format(NULL, s, 0, ("%s --set %s %s"), name, session_alias_uid(session), params[0]);
 		return 0;
