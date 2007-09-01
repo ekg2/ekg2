@@ -1984,17 +1984,18 @@ static COMMAND(cmd_debug_queries)
 {
 	list_t l, *ll;
 	
-	printq("generic", ("name                             | plugin   | count"));
-	printq("generic", ("---------------------------------|----------|------"));
+	printq("generic", ("name                             | plugin      | count"));
+	printq("generic", ("---------------------------------|-------------|------"));
 	
 	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+		if (ll == &queries[QUERY_EXTERNAL] && *ll)
+			printq("generic", ("------EXTERNAL-QUERIES-----------|-------------|-----"));
 		for (l = *ll; l; l = l->next) {
-			query_t *q = l->data;
 			char buf[256];
-			char *plugin;
+			query_t *q = l->data;
+			const char *plugin = (q->plugin) ? q->plugin->name : ("-");
 
-			plugin = (q->plugin) ? q->plugin->name : ("-");
-			snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", __(query_name(q->id)), plugin, q->count);
+			snprintf(buf, sizeof(buf), "%-32s | %-11s | %d", __(query_name(q->id)), plugin, q->count);
 			printq("generic", buf);
 		}
 	}
